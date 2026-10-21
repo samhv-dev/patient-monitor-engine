@@ -31,6 +31,8 @@ commit and creates the GitHub release with its assets.
    `docs/gates/fu-11-d/step4-*.json`: n ≈ 60 per second): the intervals between `requestAnimationFrame` callbacks in
    the host window, collected by a Playwright script on the dev server (that gate's script was a scratch file, not
    committed) or pasted into the host window's console, and their 95th percentile over the 10 minutes.
+10. Classroom kit on Windows: until the owner has ticked the 10-line checklist in the kit's `READ ME FIRST.txt` (section
+   WINDOWS) on a Windows PC, the release notes say "Windows launchers (`.cmd`): untested on Windows at this release".
 
 ## Tag (orchestrator only)
 

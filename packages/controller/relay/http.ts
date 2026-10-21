@@ -6,7 +6,7 @@
 import { createReadStream, realpathSync, statSync } from 'node:fs';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { networkInterfaces } from 'node:os';
-import { extname, join } from 'node:path';
+import { extname, isAbsolute, join, relative, sep } from 'node:path';
 
 const MIME: Readonly<Record<string, string>> = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
@@ -15,9 +15,19 @@ const MIME: Readonly<Record<string, string>> = {
   '.webp': 'image/webp', '.woff2': 'font/woff2', '.woff': 'font/woff', '.ttf': 'font/ttf', '.txt': 'text/plain; charset=utf-8',
 };
 
-/** Interfaces phones are most likely on, first: this Mac's own hotspot (macOS Internet Sharing: bridge*), then Wi-Fi or
- *  Ethernet (en*), then the rest (virtual machines, containers). */
-const rank = (name: string) => (/^bridge/.test(name) ? 0 : /^en/.test(name) ? 1 : 2);
+/** Interfaces phones are most likely on, first: this computer's own hotspot (macOS Internet Sharing: bridge*; Windows
+ *  Mobile hotspot: "Local Area Connection* N"), then Wi-Fi or Ethernet (macOS en*; Windows "Wi-Fi", "WLAN", "Ethernet N"),
+ *  then the rest, and last the virtual adapters Windows lists early (Hyper-V and WSL "vEthernet (...)", VirtualBox,
+ *  VMware, Bluetooth): without that, a Windows QR code could point at a virtual switch no phone can reach. */
+const rank = (name: string): number =>
+  /^bridge|^Local Area Connection\*/.test(name) ? 0 : /^en/.test(name) || /^(Wi-?Fi|WLAN|Ethernet)/i.test(name) ? 1 : /^(vEthernet|VirtualBox|VMware|Bluetooth)/i.test(name) ? 3 : 2;
+
+/** `file` lies inside the folder `root` (both real paths). A '/' prefix test is not enough: on Windows the separator is
+ *  '\\', and that test refused every file of the app. `p` is node:path's own functions; a test passes `path.win32`. */
+export function isInside(root: string, file: string, p: { relative: typeof relative; isAbsolute: typeof isAbsolute; sep: string } = { relative, isAbsolute, sep }): boolean {
+  const r = p.relative(root, file);
+  return r !== '' && r !== '..' && !r.startsWith(`..${p.sep}`) && !p.isAbsolute(r);
+}
 
 /** This machine's IPv4 addresses another device can reach, best first (no loopback, no link-local 169.254/16). */
 export function lanAddresses(ifs: ReturnType<typeof networkInterfaces> = networkInterfaces()): string[] {
@@ -72,7 +82,7 @@ export function httpHandler(o: { staticDir?: string; info: () => RelayInfo }): (
       if (path.endsWith('/') || statSync(file).isDirectory()) file = join(file, 'index.html');
       const real = realpathSync(file);
       const st = statSync(real);
-      if (!real.startsWith(root + '/') || !st.isFile()) return text(res, 404, 'Not found\n', head);
+      if (!isInside(root, real) || !st.isFile()) return text(res, 404, 'Not found\n', head);
       res.writeHead(200, { 'Content-Type': MIME[extname(real).toLowerCase()] ?? 'application/octet-stream', 'Content-Length': st.size, 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff' });
       if (head) return res.end();
       createReadStream(real).on('error', () => res.destroy()).pipe(res);

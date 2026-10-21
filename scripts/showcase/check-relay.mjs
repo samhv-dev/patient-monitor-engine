@@ -2,16 +2,18 @@
 // Kit smoke test for the classroom relay (KR-A1): the BUILT kit's server/relay.mjs must survive real WebSocket frames.
 // An HTTP request alone does not exercise the frame path: the KR-A1 kits answered /pme-relay.json and /?join= and then
 // exited at the first client frame of 32 bytes or more ("bufferUtil$1.unmask is not a function").
-// Two runs, each with no WS_NO_* variable inherited and no native module installed beside the kit:
+// Three runs, each with no WS_NO_* variable inherited and no native module installed beside the kit:
 //   1. relay.mjs alone (node server/relay.mjs --port 0 --static app): the bundle itself must take ws's pure-JS path;
-//   2. through "Start Classroom.command" (PME_NO_OPEN=1, PME_PORT=<port>, stripped environment), as the presenter starts it.
+//   2. through "Start Classroom.command" (PME_NO_OPEN=1, PME_PORT=<port>, stripped environment), as the presenter starts it;
+//   3. through server/launch.mjs classroom, what "Start Classroom.cmd" runs on Windows (here on this OS's Node.js).
+// Before the runs: the kit's Windows launchers (.cmd) exist, end every line with CRLF and hold only ASCII.
 // Per run: a 64-byte binary frame (the relay drops it), a host hello of >= 64 bytes (answer: the relay's `peers` frame),
 // a controller hello, a 1 KB host event that the relay forwards to the controller byte for byte, /pme-relay.json still
 // answers, the relay is still running; then the relay is stopped and the port is free again.
 //   node scripts/showcase/check-relay.mjs [KIT_DIR] [--port 8690] [--json OUT.json]
 // Needs Node.js >= 22 (its built-in WebSocket client). Port 8690 (and the next 9) keeps clear of a classroom on 8650.
 import { spawn } from 'node:child_process';
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { connect } from 'node:net';
 import { join, resolve } from 'node:path';
 
@@ -25,7 +27,8 @@ const launcherPort = Number(opt('--port') ?? 8690);
 const jsonOut = opt('--json') ? resolve(opt('--json')) : null;
 const RELAY = join(kit, 'server/relay.mjs');
 const LAUNCHER = join(kit, 'Start Classroom.command');
-for (const f of [RELAY, LAUNCHER, join(kit, 'app/index.html')]) if (!existsSync(f)) throw new Error(`not a classroom kit: no ${f}`);
+const WIN_LAUNCH = join(kit, 'server/launch.mjs');
+for (const f of [RELAY, LAUNCHER, WIN_LAUNCH, join(kit, 'app/index.html')]) if (!existsSync(f)) throw new Error(`not a classroom kit: no ${f}`);
 if (typeof WebSocket !== 'function') throw new Error(`Node.js ${process.version} has no built-in WebSocket (needs >= 22)`);
 
 const T = 8000;
@@ -157,8 +160,29 @@ const runs = [
     name: `Start Classroom.command (PME_PORT=${launcherPort}, stripped environment)`,
     go: () => start('/usr/bin/env', ['-i', 'PATH=/usr/bin:/bin', 'PME_NO_OPEN=1', `PME_PORT=${launcherPort}`, `PME_NODE=${process.execPath}`, '/bin/bash', LAUNCHER], undefined, /ADDRESS: http:\/\/127\.0\.0\.1:(\d+)\//),
   },
+  {
+    name: `server/launch.mjs classroom, as Start Classroom.cmd runs it (PME_PORT=${launcherPort}, stripped environment)`,
+    go: () => start(process.execPath, [WIN_LAUNCH, 'classroom'], { PATH: '/usr/bin:/bin', PME_NO_OPEN: '1', PME_PORT: String(launcherPort) }, /ADDRESS: http:\/\/127\.0\.0\.1:(\d+)\//),
+  },
 ];
 const results = [];
+{
+  // the Windows launchers: cmd.exe needs CRLF (an LF-only batch file loses its goto labels) and reads them in the OEM code page
+  console.log('\n== Windows launchers (.cmd): CRLF line endings, ASCII only');
+  const steps = [];
+  let error = null;
+  for (const name of ['Start Classroom.cmd', 'Start Simulator.cmd']) {
+    const f = join(kit, name);
+    const b = existsSync(f) ? readFileSync(f) : null;
+    const lf = b ? b.filter((c, i) => c === 0x0a && b[i - 1] !== 0x0d).length : 0;
+    const high = b ? b.filter((c) => c > 0x7e || (c < 0x20 && c !== 0x09 && c !== 0x0a && c !== 0x0d)).length : 0;
+    const why = !b ? 'missing' : lf ? `${lf} line(s) end in LF alone` : high ? `${high} non-ASCII byte(s)` : !b.includes('server\\launch.mjs') ? 'does not run server\\launch.mjs' : null;
+    if (why) error ??= `${name}: ${why}`;
+    else steps.push(`${name}: ${b.length} bytes, CRLF, ASCII`);
+    console.log(`  ${why ? 'FAIL' : 'ok '}  ${name}: ${why ?? 'CRLF, ASCII, runs server\\launch.mjs'}`);
+  }
+  results.push({ run: 'Windows launchers (.cmd files)', pass: !error, steps, ...(error ? { error } : {}) });
+}
 for (const run of runs) {
   console.log(`\n== ${run.name}`);
   const steps = [];

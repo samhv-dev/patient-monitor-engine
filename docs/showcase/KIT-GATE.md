@@ -202,6 +202,9 @@ Launcher: server chain bundled node → /usr/bin/ruby (WEBrick) → /usr/bin/per
 /usr/bin/python3 stub only if `xcode-select -p` succeeds); 127.0.0.1, port 8642 or the next free of 49; temp files
 only under $TMPDIR; opens `/#/`; plain banner; closing the window stops the server; failure text points to the rescue
 card and the videos folder.
+Windows (rc.3, UNTESTED ON WINDOWS until the owner's checklist in `READ ME FIRST.txt` is ticked): `Start Classroom.cmd`
+and `Start Simulator.cmd` (CRLF, ASCII; Node.js >= 22 on the PC) run `server/launch.mjs`; `check-relay.mjs` checks the
+`.cmd` files and runs `launch.mjs classroom` through the same frames on macOS and Linux.
 
 ## (a) Server variants — `check-servers.mjs` (launcher selection, `env -i PATH=/usr/bin:/bin`)
 All PASS on the rebuilt kit (`results/servers.json`): ruby, perl, python3 (real), node (stand-in: this Mac's node
