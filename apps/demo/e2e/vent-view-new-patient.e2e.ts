@@ -27,8 +27,16 @@ test('the cockpit is unloaded by a new patient and reloads fresh on the next vis
   const cockpit = () => page.frames().find((f) => f.url().includes('vent-hamilton'));
   await cockpit()?.evaluate(() => void ((window as unknown as { __old?: boolean }).__old = true));
   await restart(page);
-  const fresh = async () => (await cockpit()?.evaluate(() => !(window as unknown as { __old?: boolean }).__old && '__vent' in window).catch(() => false)) ?? false;
-  await expect.poll(fresh, { timeout: 10_000 }).toBe(true);
+  // The state, not a boolean: CI's 3/3 failures (main 38097625873, 39526534572) said only "false" — not reloaded, still
+  // loading, or no frame at all would each point somewhere else
+  const state = async () => {
+    const f = cockpit();
+    if (!f) return `no cockpit frame (iframe src ${await page.locator('iframe.vent').getAttribute('src')})`;
+    return f
+      .evaluate(() => ((window as unknown as { __old?: boolean }).__old ? 'the old cockpit (not reloaded)' : '__vent' in window ? 'fresh' : `loading (${document.readyState})`))
+      .catch((e: unknown) => `evaluate failed: ${String(e).slice(0, 120)}`);
+  };
+  await expect.poll(state, { timeout: 10_000 }).toBe('fresh');
 });
 
 // fix-main-webkit: the route the URL names decides "on screen", not the last hashchange handled. A restart in the same
