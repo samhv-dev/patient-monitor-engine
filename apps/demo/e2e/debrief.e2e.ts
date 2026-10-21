@@ -250,7 +250,9 @@ const VERDICT = /Observed|Not observed|Not assessable|Discuss|✓|✗|◆/;
  *  simulation paused first, so nothing is added to it; the Debrief opened by its route, not the session-bar link. */
 async function showRecorded(page: Page, run = A31, card = TAMPONADE): Promise<void> {
   const rec = JSON.parse(readFileSync(run, 'utf8')).record;
-  rec.doc.objectives = JSON.parse(readFileSync(card, 'utf8')).objectives;
+  const doc = JSON.parse(readFileSync(card, 'utf8'));
+  rec.doc.objectives = doc.objectives;
+  rec.doc.takeHome = doc.takeHome; // rc.3: the owner's take-home lines (the recordings predate them)
   await page.setViewportSize({ width: Math.round(182 * MM), height: 1000 }); // the A4 content width (182 mm)
   await openApp(page, base, '#/teach', { warmMs: 1000 });
   await page.locator('.sessionbar').getByRole('button', { name: 'Pause' }).click();
@@ -349,7 +351,10 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   });
   expect(seen.shown).toEqual(browserName === 'webkit' ? ['db-handout', 'db-foot db-runfoot'] : ['db-handout']); // the footer: margin boxes or Safari's line
   expect(seen.text).toContain('Questions to think about');
-  expect(seen.text).toContain('Your take-home points'); // no takeHome on the card: blank lines (Decision 6)
+  const take = JSON.parse(readFileSync(TAMPONADE, 'utf8')).takeHome as string[];
+  expect(take).toHaveLength(3); // the owner's confirmed lines (rc.3), printed as written instead of the blank lines
+  for (const t of take) expect(seen.text).toContain(t);
+  expect(seen.text).not.toContain('Your take-home points');
   expect(seen.text).not.toMatch(VERDICT);
   for (const o of JSON.parse(readFileSync(TAMPONADE, 'utf8')).objectives as Array<{ text: string }>) expect(seen.text).not.toContain(o.text);
   if (browserName === 'webkit') expect(seen.text).toContain(foot); // Safari's footer line (Chromium prints it in the margin)

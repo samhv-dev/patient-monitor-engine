@@ -12,6 +12,11 @@
     { "text": "Stop CPR (“Pulse back”) within 30 s of the pulse returning on the arterial line and the capnogram", "rule": { "kind": "eventWithin", "after": "rosc", "event": "state:rosc", "withinS": 30 } },
     { "text": "Better: pericardiocentesis before the pulse loss, while the systolic pressure is above 60 mmHg — then no PEA follows", "rule": { "kind": "never", "event": "pulseLoss" }, "debrief": "discuss" }
   ],
+  "takeHome": [
+    "Tachycardia, a narrow pulse pressure and a raised CVP after a chest wound: think of tamponade.",
+    "Drainage is the treatment: plan it before the pressure falls.",
+    "In PEA from tamponade, CPR alone cannot bring the pulse back; drainage during CPR can."
+  ],
   "notes": "Showcase case (Stage 11). MODELED: the physiology produces every change; the buttons only give what their label says. Measured course and bands: docs/plans/stage-11-scenarios.md.",
   "seed": 7,
   "mode": "modeled",

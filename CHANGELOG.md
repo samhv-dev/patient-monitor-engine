@@ -24,6 +24,13 @@ the public API is what the packages export (see the API reference), the `pme-sce
   `serve.mjs` now test "inside the app folder" with `path.relative` (the `'/'` prefix test refused every file on
   Windows paths), and the QR code's address list puts a Windows Mobile hotspot, Wi-Fi and Ethernet before Hyper-V,
   WSL, VirtualBox, VMware and Bluetooth adapters.
+- Take-home lines (`takeHome`, three each) on the tamponade, malignant hyperthermia and bronchospasm cards, in the
+  owner's confirmed words (2026-10-21): the learner handout prints them instead of the blank lines. Their Persian
+  versions are in `docs/showcase/i18n/fa-debrief.json` (group `takeHome`) as unreviewed drafts (`"reviewed": false`) for
+  the owner's review; the Persian handout script does not print the learner handout yet.
+- Classroom kit `READ ME FIRST.txt`: a "Room network" section (a dedicated travel router in router mode, DHCP on, no WAN
+  cable, client/AP isolation off, one network name on both bands; the presenting Mac joins it before "Start
+  Classroom"; two suggested units, whose listed client counts are vendor maximums).
 
 ### Changed
 
@@ -68,6 +75,14 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Fixed
 
+- README: the classroom kit no longer reads as untested with a real phone. The owner ran it with one real phone over
+  his Mac's hotspot through the six showcase cards (2026-10-18); a room full of phones is untested, and the README
+  points to the kit's "Room network" section. It also names the Windows launchers (untested on Windows).
+- `docs/guides/known-deviations.md`: a section for this week's browser-test evidence, one row each: PR #106 (the FX-24
+  follower e2e judged on the phone's own clock), PR #108 (the Debrief and FX-25 e2e on the loaded CI WebKit runner),
+  PR #109 (the print-font check waits for the view's own font load), `vent-view-new-patient` (`@known-flaky` on
+  WebKit, 3/3 on main `cd9195f8`), the "a retry is not a pass" rule (enforced on Chromium, warn-only on WebKit until
+  the demo of 28 October), and the hidden-tab pause (owner ruling E82: kept for the demo, a proper fix later).
 - FX-25: attaching the CO2 sampling line (on the instructor's Devices tab, or by the Ventilator view when it starts
   ventilating) painted the CO2 lane, within a second, from its left edge to the sweep cursor with the first moments of
   the capnogram drawn over and over side by side; on a ventilated patient with the Saadat-like fill that was a solid

@@ -340,6 +340,17 @@
    {"en": "the return of circulation", "fa": "بازگشت گردش خون", "source": "apps/demo/src/app/debrief.ts eventWords()", "reviewed": false},
    {"en": "the airway change", "fa": "تغییر وضعیت راه هوایی", "source": "apps/demo/src/app/debrief.ts eventWords()", "reviewed": false},
    {"en": "the event", "fa": "رویداد", "source": "apps/demo/src/app/debrief.ts eventWords()", "reviewed": false}
+  ],
+  "takeHome": [
+   {"en": "Tachycardia, a narrow pulse pressure and a raised CVP after a chest wound: think of tamponade.", "fa": "تاکی‌کاردی، فشار نبض باریک و CVP بالا پس از زخم قفسه‌ی سینه: به تامپوناد فکر کنید.", "source": "apps/demo/src/app/showcase/showcase-tamponade.json takeHome (owner-confirmed English, 2026-10-21)", "reviewed": false},
+   {"en": "Drainage is the treatment: plan it before the pressure falls.", "fa": "درمان، تخلیه است: پیش از آنکه فشار افت کند، برای آن برنامه‌ریزی کنید.", "source": "apps/demo/src/app/showcase/showcase-tamponade.json takeHome (owner-confirmed English, 2026-10-21)", "reviewed": false},
+   {"en": "In PEA from tamponade, CPR alone cannot bring the pulse back; drainage during CPR can.", "fa": "در PEA ناشی از تامپوناد، CPR به‌تنهایی نمی‌تواند نبض را برگرداند؛ تخلیه در حین CPR می‌تواند.", "source": "apps/demo/src/app/showcase/showcase-tamponade.json takeHome (owner-confirmed English, 2026-10-21)", "reviewed": false},
+   {"en": "A rising EtCO₂ at the same ventilation with a rising heart rate: think of MH early.", "fa": "افزایش EtCO₂ با تهویه‌ی ثابت، همراه با افزایش ضربان قلب: زود به MH فکر کنید.", "source": "apps/demo/src/app/showcase/showcase-mh.json takeHome (owner-confirmed English, 2026-10-21)", "reviewed": false},
+   {"en": "Trigger off, 100 % oxygen at high flow, hyperventilation, and dantrolene 2.5 mg/kg.", "fa": "حذف عامل محرک، اکسیژن ۱۰۰ ٪ با جریان بالا، هیپرونتیلاسیون و دانترولن ۲٫۵ mg/kg.", "note": "Persian digits in prose by the rc.3 brief («۱۰۰ ٪»، «۲٫۵ mg/kg»); the older objective entries keep Western digits in doses («O₂ 100 %»).", "source": "apps/demo/src/app/showcase/showcase-mh.json takeHome (owner-confirmed English, 2026-10-21)", "reviewed": false},
+   {"en": "Keep hyperventilating until the EtCO₂ has stayed down, and treat the potassium.", "fa": "هیپرونتیلاسیون را ادامه دهید تا EtCO₂ پایین بیاید و پایین بماند، و افزایش پتاسیم را درمان کنید.", "note": "Uncertain: \"treat the potassium\" as «افزایش پتاسیم را درمان کنید» (treat the rising potassium, the MH state's own words); the literal «پتاسیم را درمان کنید» reads oddly in Persian.", "source": "apps/demo/src/app/showcase/showcase-mh.json takeHome (owner-confirmed English, 2026-10-21)", "reviewed": false},
+   {"en": "High peak pressure, a shark-fin capnogram and auto-PEEP: think of bronchospasm.", "fa": "فشار اوج بالا، کاپنوگرام به شکل باله‌ی کوسه و auto-PEEP: به برونکواسپاسم فکر کنید.", "source": "apps/demo/src/app/showcase/showcase-bronchospasm.json takeHome (owner-confirmed English, 2026-10-21)", "reviewed": false},
+   {"en": "Treat with a bronchodilator.", "fa": "با برونکودیلاتور درمان کنید.", "source": "apps/demo/src/app/showcase/showcase-bronchospasm.json takeHome (owner-confirmed English, 2026-10-21)", "reviewed": false},
+   {"en": "Watch the delivered tidal volume and minute volume recover as air trapping eases.", "fa": "با کاهش احتباس هوا، بازگشت حجم جاری تحویلی و حجم دقیقه‌ای را زیر نظر بگیرید.", "source": "apps/demo/src/app/showcase/showcase-bronchospasm.json takeHome (owner-confirmed English, 2026-10-21)", "reviewed": false}
   ]
  },
  "strings": [
