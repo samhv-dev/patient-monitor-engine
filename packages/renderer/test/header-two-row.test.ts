@@ -87,11 +87,11 @@ describe('F28: the idle message bar on a phone in portrait', () => {
     ui.destroy();
   });
 
-  it('saadat-like in landscape (the two-row header) keeps its idle grey bar', () => {
+  it('saadat-like in landscape (the two-row header) paints no idle bar either (Saadat pass 2, C3: IMG_8113 has no grey box)', () => {
     const ui = new DeviceUI(document, document.createElement('div'), resolveSkin('saadat-like'));
     ui.onEvent(status(5, 'adult'));
     ui.paint(5);
-    expect(['#E0E0E0', 'rgb(224, 224, 224)']).toContain(bg(ui));
+    expect(bg(ui)).toBe('transparent');
     ui.destroy();
   });
 });
