@@ -1,0 +1,19 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;height:100%;background:#000;overflow:hidden}#m{position:absolute;inset:0;display:flex}</style></head>
+<body><div id="m"></div><script type="module">
+import { mountMonitor } from '@pme/renderer';
+const q = new URLSearchParams(location.search);
+const m = mountMonitor(document.getElementById('m'), { skin: q.get('skin') || 'saadat-like', worker: 'off', engine: { seed: 1 }, portrait: q.get('portrait') === '1' });
+window.__h = { m };
+// the photo state (IMG_8113, as the rc.3 review drove it): manual mode, CO2 line on a ventilator at 12/min, CVP in IBP2,
+// no IBP1 line, temperature probes off, NIBP AUTO 20 min, the photo values as targets
+const C = [
+  { type: "setMode", mode: "manual" },
+  { type: "attachSensor", sensor: "co2", state: "on" },
+  { type: "attachSensor", sensor: "cvp", state: "connected" },
+  { type: "attachSensor", sensor: "temp", state: "off" },
+  { type: "applyEvent", event: { kind: "ventilation", source: "ventilator", rr: 12, vtMl: 500, peep: 5, fio2: 0.5 } },
+  { type: "device", action: { device: "nibp", action: "auto", intervalMin: 20 } },
+  ...Object.entries({ hr: 98, sbp: 119, dbp: 90, spo2: 100, pi: 2.8, etco2: 32, rr: 12 }).map(([variable, value]) => ({ type: "setTarget", variable, value })),
+];
+window.__h.photo = () => Promise.all(C.map((c, k) => m.dispatch({ id: "photo-" + k, issuedBy: "harness", ...c })));
+</script></body></html>
