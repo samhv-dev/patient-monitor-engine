@@ -7,6 +7,18 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ## [Unreleased]
 
+### Fixed
+
+- **F28: the Saadat-like learner monitor on a phone held upright.** At a phone's real visible height (Safari with its
+  toolbars, 390 × 664) the six lanes get ≈ 30–41 px each and the owner's photo showed overprinted IBP scale values, lane
+  labels ("NORMAL", "IBP", "RESP") erased by the speed text's cleared box, the NIBP header running into IBP1 and an empty
+  grey box in the header. Fit guards, measured by the ink of a 14 px glyph: the middle IBP scale value is left out on
+  lanes under 60 px and the bottom one moves down to clear the top one under 35 px; a lane's second line goes under
+  55 px and its speed text under 37 px, the label always stays; a portrait tile header wider than its tile drops its unit
+  and shortens "AUTO(5Min)" to "AUTO 5min"; a phone's message bar is painted only when there is a message. Landscape
+  lanes are ≥ 77 px, so the instructor's screen is unchanged (pixel comparison in `docs/gates/f28/`); at 390 × 844 every
+  lane text is still drawn.
+
 ## [1.0.0-rc.3] - 2026-10-23
 
 Third public **pre-release** (release candidate) of a teaching simulator. It is for education only: it is not a
