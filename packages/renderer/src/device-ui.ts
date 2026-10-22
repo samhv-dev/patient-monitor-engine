@@ -43,9 +43,13 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-hdr.two{height:auto;flex-direction:column;align-items:stretch;gap:0;padding:0}',
     '.pme-hdr.two .r1{display:flex;align-items:center;gap:10px;height:max(40px,calc(5.8 * var(--pme-h, 0px) / 100));padding:0 8px;box-sizing:border-box}',
     '.pme-hdr.two .r2{display:flex;align-items:center;gap:8px;height:max(22px,calc(3 * var(--pme-h, 0px) / 100));padding:0 8px 0 0;box-sizing:border-box}',
-    '.pme-hdr.two .r2 .pme-bar{flex:none;width:calc(0.43 * (100% - var(--pme-tiles-w, 0px)));font-weight:400}',
-    '.pme-hdr.two .pg{font-size:18px;padding:2px 8px;font-weight:600}',
-    '.pme-hdr.two .stk{display:flex;flex-direction:column;font-size:15px;line-height:17px;white-space:nowrap}',
+    // pass 2 (IMG_8113): the rule under row 1, not under the bar row (G3); the bar 45 px in, its text centred (C3); the
+    // page box the full row high, flush left, regular (G4, T13); the header text 17 px (T13)
+    '.pme-hdr.two .r1{border-bottom:1px solid var(--pme-hdr-rule, transparent)}',
+    '.pme-hdr.two .r2{padding-left:5.5%}',
+    '.pme-hdr.two .r2 .pme-bar{flex:none;width:calc(0.43 * (100% - var(--pme-tiles-w, 0px)));font-weight:400;text-align:center}',
+    '.pme-hdr.two .pg{font-size:16px;padding:0 10px;margin-left:-8px;font-weight:400;align-self:stretch;display:flex;align-items:center}',
+    '.pme-hdr.two .stk{display:flex;flex-direction:column;font-size:17px;line-height:19px;white-space:nowrap}',
     '.pme-hdr.two .sp{flex:1}',
     '.pme-hdr.two .dt{text-align:right;font-variant-numeric:tabular-nums}',
     '.pme-stile{padding:4px 10px;line-height:1.05;border-top:1px solid var(--pme-divider)}',
@@ -137,7 +141,60 @@ function gridCss(g: LayoutGrid): string {
     '.pme-sfield .ph{display:flex;justify-content:center;gap:6px;white-space:nowrap}',
     '.pme-sfield .u{opacity:.85}',
     '.pme-sfield [data-pme="fv"]{font-variant-numeric:tabular-nums;min-height:1.05em}',
+    ...photoCss(g),
   ].join('\n');
+}
+
+/**
+ * Saadat fidelity pass 2 (the rc.3 photo review, IMG_8113): text sizes and positions of the grid's tiles. Grid mode
+ * only — so every skin without `layout.grid`, and a phone in portrait, draws exactly as before. Sizes are px at an
+ * 800 px monitor, scaled with its height like the rest of the grid.
+ */
+function photoCss(g: LayoutGrid): string[] {
+  const f = (px: number) => gridFont(px);
+  const w = g.labelWeight;
+  const own = Object.entries(g.labelPx ?? {}).map(
+    ([p, px]) => `.pme-grid .pme-stile[data-param="${p}"] [data-pme="lbl"],.pme-grid .pme-stile[data-param="${p}"] .ph .pl{font-size:${f(px)}}`,
+  );
+  return [
+    // T3: label weight (tiles, split parts, the strip)
+    ...(w ? [`.pme-grid .pme-stile [data-pme="lbl"],.pme-grid .pme-stile .ph .pl,.pme-strip .pme-stile [data-pme="lbl"],.pme-sfield .pl{font-weight:${w}}`] : []),
+    // T4/T5/T10: a tile's own label size (PR 37, EtCo2 21, T1/T2/DT 20)
+    ...own,
+    // T4: "BPM" beside the PR label on its baseline; T12: units 14 px
+    '.pme-grid .pme-stile.rc3 .h .u{font-size:' + f(14) + '}',
+    '.pme-grid .pme-stile.rc3[data-param="HR"] .h{align-items:baseline}',
+    '.pme-grid .pme-stile.rc3[data-param="HR"] .h .u{margin-left:0}',
+    // T6: the rate source "(ECG)" / "(SPO2)" 18 px, centred at the top of the PR tile
+    `.pme-grid .pme-stile.rc3 [data-pme="src"]{position:absolute;left:44%;top:${f(10)};transform:translateX(-50%);font-size:${f(18)}}`,
+    // T7: PACE / ST / PVCs 15 px, spread down the tile's right column
+    `.pme-grid .pme-stile.rc3 [data-pme="st"]{top:24%;bottom:0;display:flex;flex-direction:column;justify-content:space-between;font-size:${f(15)}}`,
+    `.pme-grid .pme-stile.rc3 [data-pme="heart"]{position:absolute;right:${f(16)};top:${f(14)}}`,
+    // (L1, part) the PR limits at the bottom left of the tile
+    '.pme-grid .pme-stile.rc3[data-param="HR"] .lim.a{align-self:flex-end}',
+    // T8: the NIBP mean 30 px under the slash, its limits left of it; T9: the mode 16 px centred at the top
+    `.pme-grid .pme-stile.rc3[data-param="NIBP"] .srow .s{font-size:${f(30)};text-align:center}`,
+    `.pme-grid .pme-stile.rc3[data-param="NIBP"] .lim.c{margin-left:${f(70)}}`,
+    `.pme-grid .pme-stile.rc3[data-param="NIBP"] [data-pme="ntime"]{font-size:${f(15)};margin-right:${f(50)}}`,
+    `.pme-grid .pme-stile.rc3[data-param="NIBP"] [data-pme="mode"]{position:absolute;left:50%;top:${f(4)};transform:translateX(-50%);font-size:${f(16)}}`,
+    // T10: the T column — limits 11 px under each label, "°C" 18 px at the bottom right
+    `.pme-grid .pme-stile.split.column .part .lim{font-size:${f(13)}}`,
+    `.pme-grid .pme-stile.split.column .part{min-height:${f(78)};margin-bottom:0}`,
+    `.pme-grid .pme-stile.split.column>.h{top:auto;bottom:${f(4)}}`,
+    `.pme-grid .pme-stile.split.column>.h .u{font-size:${f(18)}}`,
+    // T11 (L3): EtCo2 with its unit beside it; FiCo2 and AWRR over their units; values centred in thirds; the AWRR
+    // limits beside its label at the top right
+    `.pme-grid .pme-stile.split.row .part:not(:first-child) .ph{flex-direction:column;align-items:center;gap:0}`,
+    `.pme-grid .pme-stile.split.row .pu{font-size:${f(13)}}`,
+    '.pme-grid .pme-stile.split.row .pv{text-align:center}',
+    '.pme-grid .pme-stile.split.row .part{position:relative}',
+    '.pme-grid .pme-stile.split.row .part:last-child:not(:first-child) .lim{position:absolute;right:0;top:0}',
+    // G6: the %SPO2 value left of centre, after its limits
+    `.pme-strip .pme-stile .v{text-align:left;padding-left:${f(18)}}`,
+    // G5: the strip as a framed box (x 6–1278)
+    '.pme-strip{position:relative}',
+    '.pme-strip::after{content:"";position:absolute;left:6px;right:2px;top:0;bottom:2px;border:1px solid var(--pme-divider);pointer-events:none}',
+  ];
 }
 
 /** Defibrillator / pacer readout for the header (brief §6.5: energy, charging/ready, SYNC; pacer mode, rate, output). */
@@ -256,7 +313,9 @@ export class DeviceUI {
     const grid = gridOf(r, this.portrait);
     this.style.textContent = grid ? `${flashCss(r)}\n${gridCss(grid)}` : flashCss(r);
     this.buildHeader();
-    this.header.style.cssText = `background:${r.render.background};color:${r.render.foreground};font-family:${r.render.fontStack};border-bottom:1px solid ${r.skin.chrome.divider};`;
+    // the two-row header rules row 1 instead of its foot (G3); the foot keeps its pixel, transparent, so nothing moves
+    this.header.style.cssText = `background:${r.render.background};color:${r.render.foreground};font-family:${r.render.fontStack};border-bottom:1px solid ${this.two ? 'transparent' : r.skin.chrome.divider};`;
+    if (this.two) this.header.style.setProperty('--pme-hdr-rule', r.skin.chrome.divider);
     // the bar is 43 % of the WAVE-AREA width [MOCKUP]; in the columns layout the header also spans the tile columns
     // (with layout.grid the header lies in the wave column, D5)
     if (this.two) this.header.style.setProperty('--pme-tiles-w', grid ? '0px' : `${r.skin.layout.tiles.length * 181}px`);
@@ -335,7 +394,7 @@ export class DeviceUI {
       const el = doc.createElement('div');
       el.className = 'pme-sfield';
       el.dataset.field = f.label;
-      el.style.color = (f.color && r.skin.colors[f.color]) || r.render.foreground;
+      el.style.color = (f.color?.startsWith('#') ? f.color : f.color && r.skin.colors[f.color as keyof typeof r.skin.colors]) || r.render.foreground; // C6: a hex of its own
       el.innerHTML = '<div class="ph"><span class="pl"></span><span class="u"></span></div><div data-pme="fv"></div>';
       (el.querySelector('.pl') as HTMLElement).textContent = f.label;
       (el.querySelector('.u') as HTMLElement).textContent = f.unit ?? '';
@@ -481,7 +540,8 @@ export class DeviceUI {
     this.header.replaceChildren(h.r1, h.r2);
     h.page.style.background = r.skin.chrome.pageBox.bg;
     h.page.style.color = r.skin.chrome.pageBox.fg;
-    h.bed.style.color = h.cat.style.color = r.skin.chrome.patientCategoryColor;
+    h.cat.style.color = r.skin.chrome.patientCategoryColor;
+    h.bed.style.color = r.render.foreground; // C4: BED 01 white, only the category in its colour (IMG_8113)
     show(h.page, items.has('page'));
     show(h.bed, items.has('bed'));
     show(h.cat, items.has('category'));
@@ -665,7 +725,7 @@ export class DeviceUI {
       } else if (TILE_NUMERICS[p].numerics.length === 3) {
         const [s, d, m] = TILE_NUMERICS[p].numerics.map((k) => v[k]);
         main = `${this.text(s)}/${this.text(d)}`;
-        sub = `(${this.text(m)})`;
+        sub = `(${this.text(m) || ' '})`; // a blank mean reads "( )" (T12; only an empty noValue glyph is blank)
       } else if (TILE_NUMERICS[p].numerics.length === 1) {
         const id = TILE_NUMERICS[p].numerics[0] as NumericId;
         main = this.text(v[id], p === 'TEMP' || p === 'ST' ? 1 : 0, id);
@@ -729,8 +789,9 @@ export class DeviceUI {
   private paintHeader(t: number): void {
     const b = barView(this.status, this.r, t, this.pump);
     this.bar.textContent = b.text;
-    // F28: a phone's one-row header paints the bar only with a message (no empty grey box for the Saadat-like idle colour)
-    this.bar.style.background = this.portrait && !b.text ? 'transparent' : b.bg;
+    // the bar is painted only with a message on a phone (F28) and in the two-row header (pass 2, C3: IMG_8113 has no idle
+    // grey box); the two-row header shows the lamp only with an alarm (C2: the real lamp is an LED)
+    this.bar.style.background = (this.portrait || this.two) && !b.text ? 'transparent' : b.bg;
     this.bar.style.color = b.fg;
     this.bar.className = `pme-bar${b.latched ? ' latched' : ''}`;
     this.bar.dataset.latched = String(b.latched);
@@ -743,6 +804,7 @@ export class DeviceUI {
     this.lamp.style.border = `1px solid ${this.r.skin.chrome.divider}`;
     this.lamp.className = `pme-lamp${b.flashHz > 0 ? (b.flashHz === this.r.skin.alarms.lamp.flashHz.L1 ? ' pme-f1' : ' pme-f2') : ''}`;
     this.lamp.dataset.lamp = b.lamp;
+    this.lamp.style.visibility = this.two && b.lamp === 'off' ? 'hidden' : '';
     this.cd.textContent = b.countdownS !== null ? `${b.countdownKind === 'pause' ? 'PAUSE' : '🔇'} ${b.countdownS}s` : '';
     this.cd.className = `pme-cd${b.countdownKind === 'silence' ? ' pme-f2' : ''}`;
     this.allOff.innerHTML = b.allOffBell ? BELL_OFF_SVG : '';

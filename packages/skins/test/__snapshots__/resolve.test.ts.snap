@@ -369,7 +369,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
       "RR",
       "apneaS",
       "gasApneaS",
-      "EtCO2_pctV",
+      "EtCO2",
       "FiCO2_pctV_high",
       "T1",
       "T2",
@@ -391,7 +391,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
       "RR",
       "apneaS",
       "gasApneaS",
-      "EtCO2_pctV",
+      "EtCO2",
       "FiCO2_pctV_high",
       "T1",
       "T2",
@@ -429,7 +429,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
   "limits": {
     "adult": {
       "ART_D": [
-        50,
+        35,
         100,
       ],
       "ART_M": [
@@ -437,8 +437,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         115,
       ],
       "ART_S": [
-        80,
-        150,
+        70,
+        165,
       ],
       "AWRR": [
         5,
@@ -448,9 +448,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         -5,
         15,
       ],
-      "EtCO2_pctV": [
-        2.6,
-        6.5,
+      "EtCO2": [
+        30,
+        50,
       ],
       "FiCO2_pctV_high": 1.3,
       "HR": [
@@ -467,7 +467,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
       ],
       "NIBP_D": [
         50,
-        90,
+        100,
       ],
       "NIBP_M": [
         60,
@@ -510,8 +510,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         39,
       ],
       "T2": [
-        36,
-        40,
+        35,
+        39,
       ],
       "apneaS": 10,
       "dT": [
@@ -522,7 +522,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
     },
     "neo": {
       "ART_D": [
-        50,
+        35,
         100,
       ],
       "ART_M": [
@@ -530,8 +530,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         115,
       ],
       "ART_S": [
-        80,
-        150,
+        70,
+        165,
       ],
       "AWRR": [
         15,
@@ -541,9 +541,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         -5,
         15,
       ],
-      "EtCO2_pctV": [
-        2.6,
-        6.5,
+      "EtCO2": [
+        30,
+        50,
       ],
       "FiCO2_pctV_high": 1.3,
       "HR": [
@@ -603,8 +603,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         39,
       ],
       "T2": [
-        36,
-        40,
+        35,
+        39,
       ],
       "apneaS": 10,
       "dT": [
@@ -615,7 +615,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
     },
     "paed": {
       "ART_D": [
-        50,
+        35,
         100,
       ],
       "ART_M": [
@@ -623,8 +623,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         115,
       ],
       "ART_S": [
-        80,
-        150,
+        70,
+        165,
       ],
       "AWRR": [
         5,
@@ -634,9 +634,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         -5,
         15,
       ],
-      "EtCO2_pctV": [
-        2.6,
-        6.5,
+      "EtCO2": [
+        30,
+        50,
       ],
       "FiCO2_pctV_high": 1.3,
       "HR": [
@@ -696,8 +696,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         39,
       ],
       "T2": [
-        36,
-        40,
+        35,
+        39,
       ],
       "apneaS": 10,
       "dT": [
@@ -719,7 +719,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
       "exact": false,
       "name": "MONITOR",
     },
-    "eraseGapPx": 4,
+    "eraseGapPx": 10,
     "fontStack": "Arial, 'Liberation Sans', Helvetica, sans-serif",
     "foreground": "#E8F4F6",
     "grid": null,
@@ -761,7 +761,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         "mmPerS": 12.5,
       },
     ],
-    "lineWidth": 1.5,
+    "lineWidth": 2,
     "numericWeight": 400,
     "tileColors": {
       "AGENTS": "#F0F000",
@@ -798,7 +798,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
       "RR",
       "apneaS",
       "gasApneaS",
-      "EtCO2_pctV",
+      "EtCO2",
       "FiCO2_pctV_high",
       "T1",
       "T2",
@@ -820,7 +820,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
       "RR",
       "apneaS",
       "gasApneaS",
-      "EtCO2_pctV",
+      "EtCO2",
       "FiCO2_pctV_high",
       "T1",
       "T2",
@@ -858,7 +858,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
   "limits": {
     "adult": {
       "ART_D": [
-        50,
+        35,
         100,
       ],
       "ART_M": [
@@ -866,8 +866,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         115,
       ],
       "ART_S": [
-        80,
-        150,
+        70,
+        165,
       ],
       "AWRR": [
         5,
@@ -877,9 +877,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         -5,
         15,
       ],
-      "EtCO2_pctV": [
-        2.6,
-        6.5,
+      "EtCO2": [
+        30,
+        50,
       ],
       "FiCO2_pctV_high": 1.3,
       "HR": [
@@ -896,7 +896,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
       ],
       "NIBP_D": [
         50,
-        90,
+        100,
       ],
       "NIBP_M": [
         60,
@@ -939,8 +939,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         39,
       ],
       "T2": [
-        36,
-        40,
+        35,
+        39,
       ],
       "apneaS": 10,
       "dT": [
@@ -951,7 +951,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
     },
     "neo": {
       "ART_D": [
-        50,
+        35,
         100,
       ],
       "ART_M": [
@@ -959,8 +959,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         115,
       ],
       "ART_S": [
-        80,
-        150,
+        70,
+        165,
       ],
       "AWRR": [
         15,
@@ -970,9 +970,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         -5,
         15,
       ],
-      "EtCO2_pctV": [
-        2.6,
-        6.5,
+      "EtCO2": [
+        30,
+        50,
       ],
       "FiCO2_pctV_high": 1.3,
       "HR": [
@@ -1032,8 +1032,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         39,
       ],
       "T2": [
-        36,
-        40,
+        35,
+        39,
       ],
       "apneaS": 10,
       "dT": [
@@ -1044,7 +1044,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
     },
     "paed": {
       "ART_D": [
-        50,
+        35,
         100,
       ],
       "ART_M": [
@@ -1052,8 +1052,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         115,
       ],
       "ART_S": [
-        80,
-        150,
+        70,
+        165,
       ],
       "AWRR": [
         5,
@@ -1063,9 +1063,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         -5,
         15,
       ],
-      "EtCO2_pctV": [
-        2.6,
-        6.5,
+      "EtCO2": [
+        30,
+        50,
       ],
       "FiCO2_pctV_high": 1.3,
       "HR": [
@@ -1125,8 +1125,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         39,
       ],
       "T2": [
-        36,
-        40,
+        35,
+        39,
       ],
       "apneaS": 10,
       "dT": [
@@ -1148,7 +1148,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
       "exact": false,
       "name": "MONITOR",
     },
-    "eraseGapPx": 4,
+    "eraseGapPx": 10,
     "fontStack": "Arial, 'Liberation Sans', Helvetica, sans-serif",
     "foreground": "#000000",
     "grid": {
@@ -1195,7 +1195,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         "mmPerS": 12.5,
       },
     ],
-    "lineWidth": 1.5,
+    "lineWidth": 2,
     "numericWeight": 400,
     "tileColors": {
       "AGENTS": "#777700",
@@ -1232,7 +1232,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
       "RR",
       "apneaS",
       "gasApneaS",
-      "EtCO2_pctV",
+      "EtCO2",
       "FiCO2_pctV_high",
       "T1",
       "T2",
@@ -1254,7 +1254,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
       "RR",
       "apneaS",
       "gasApneaS",
-      "EtCO2_pctV",
+      "EtCO2",
       "FiCO2_pctV_high",
       "T1",
       "T2",
@@ -1292,7 +1292,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
   "limits": {
     "adult": {
       "ART_D": [
-        50,
+        35,
         100,
       ],
       "ART_M": [
@@ -1300,8 +1300,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         115,
       ],
       "ART_S": [
-        80,
-        150,
+        70,
+        165,
       ],
       "AWRR": [
         5,
@@ -1311,9 +1311,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         -5,
         15,
       ],
-      "EtCO2_pctV": [
-        2.6,
-        6.5,
+      "EtCO2": [
+        30,
+        50,
       ],
       "FiCO2_pctV_high": 1.3,
       "HR": [
@@ -1330,7 +1330,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
       ],
       "NIBP_D": [
         50,
-        90,
+        100,
       ],
       "NIBP_M": [
         60,
@@ -1373,8 +1373,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         39,
       ],
       "T2": [
-        36,
-        40,
+        35,
+        39,
       ],
       "apneaS": 10,
       "dT": [
@@ -1385,7 +1385,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
     },
     "neo": {
       "ART_D": [
-        50,
+        35,
         100,
       ],
       "ART_M": [
@@ -1393,8 +1393,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         115,
       ],
       "ART_S": [
-        80,
-        150,
+        70,
+        165,
       ],
       "AWRR": [
         15,
@@ -1404,9 +1404,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         -5,
         15,
       ],
-      "EtCO2_pctV": [
-        2.6,
-        6.5,
+      "EtCO2": [
+        30,
+        50,
       ],
       "FiCO2_pctV_high": 1.3,
       "HR": [
@@ -1466,8 +1466,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         39,
       ],
       "T2": [
-        36,
-        40,
+        35,
+        39,
       ],
       "apneaS": 10,
       "dT": [
@@ -1478,7 +1478,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
     },
     "paed": {
       "ART_D": [
-        50,
+        35,
         100,
       ],
       "ART_M": [
@@ -1486,8 +1486,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         115,
       ],
       "ART_S": [
-        80,
-        150,
+        70,
+        165,
       ],
       "AWRR": [
         5,
@@ -1497,9 +1497,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         -5,
         15,
       ],
-      "EtCO2_pctV": [
-        2.6,
-        6.5,
+      "EtCO2": [
+        30,
+        50,
       ],
       "FiCO2_pctV_high": 1.3,
       "HR": [
@@ -1559,8 +1559,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         39,
       ],
       "T2": [
-        36,
-        40,
+        35,
+        39,
       ],
       "apneaS": 10,
       "dT": [
@@ -1582,7 +1582,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
       "exact": false,
       "name": "MONITOR",
     },
-    "eraseGapPx": 4,
+    "eraseGapPx": 10,
     "fontStack": "Arial, 'Liberation Sans', Helvetica, sans-serif",
     "foreground": "#000000",
     "grid": null,
@@ -1624,7 +1624,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
         "mmPerS": 12.5,
       },
     ],
-    "lineWidth": 1.5,
+    "lineWidth": 2,
     "numericWeight": 400,
     "tileColors": {
       "AGENTS": "#7A7A00",
@@ -3791,7 +3791,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
       "RR",
       "apneaS",
       "gasApneaS",
-      "EtCO2_pctV",
+      "EtCO2",
       "FiCO2_pctV_high",
       "T1",
       "T2",
@@ -3813,7 +3813,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
       "RR",
       "apneaS",
       "gasApneaS",
-      "EtCO2_pctV",
+      "EtCO2",
       "FiCO2_pctV_high",
       "T1",
       "T2",
@@ -3851,7 +3851,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
   "limits": {
     "adult": {
       "ART_D": [
-        50,
+        35,
         100,
       ],
       "ART_M": [
@@ -3859,8 +3859,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         115,
       ],
       "ART_S": [
-        80,
-        150,
+        70,
+        165,
       ],
       "AWRR": [
         5,
@@ -3870,9 +3870,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         -5,
         15,
       ],
-      "EtCO2_pctV": [
-        2.6,
-        6.5,
+      "EtCO2": [
+        30,
+        50,
       ],
       "FiCO2_pctV_high": 1.3,
       "HR": [
@@ -3889,7 +3889,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
       ],
       "NIBP_D": [
         50,
-        90,
+        100,
       ],
       "NIBP_M": [
         60,
@@ -3932,8 +3932,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         39,
       ],
       "T2": [
-        36,
-        40,
+        35,
+        39,
       ],
       "apneaS": 10,
       "dT": [
@@ -3944,7 +3944,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
     },
     "neo": {
       "ART_D": [
-        50,
+        35,
         100,
       ],
       "ART_M": [
@@ -3952,8 +3952,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         115,
       ],
       "ART_S": [
-        80,
-        150,
+        70,
+        165,
       ],
       "AWRR": [
         15,
@@ -3963,9 +3963,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         -5,
         15,
       ],
-      "EtCO2_pctV": [
-        2.6,
-        6.5,
+      "EtCO2": [
+        30,
+        50,
       ],
       "FiCO2_pctV_high": 1.3,
       "HR": [
@@ -4025,8 +4025,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         39,
       ],
       "T2": [
-        36,
-        40,
+        35,
+        39,
       ],
       "apneaS": 10,
       "dT": [
@@ -4037,7 +4037,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
     },
     "paed": {
       "ART_D": [
-        50,
+        35,
         100,
       ],
       "ART_M": [
@@ -4045,8 +4045,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         115,
       ],
       "ART_S": [
-        80,
-        150,
+        70,
+        165,
       ],
       "AWRR": [
         5,
@@ -4056,9 +4056,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         -5,
         15,
       ],
-      "EtCO2_pctV": [
-        2.6,
-        6.5,
+      "EtCO2": [
+        30,
+        50,
       ],
       "FiCO2_pctV_high": 1.3,
       "HR": [
@@ -4118,8 +4118,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         39,
       ],
       "T2": [
-        36,
-        40,
+        35,
+        39,
       ],
       "apneaS": 10,
       "dT": [
@@ -4141,7 +4141,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
       "exact": true,
       "name": "NORMAL",
     },
-    "eraseGapPx": 4,
+    "eraseGapPx": 10,
     "fontStack": "Arial, 'Liberation Sans', Helvetica, sans-serif",
     "foreground": "#E8F4F6",
     "grid": null,
@@ -4199,7 +4199,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         "mmPerS": 25,
       },
     ],
-    "lineWidth": 1.5,
+    "lineWidth": 2,
     "numericWeight": 400,
     "tileColors": {
       "AGENTS": "#F0F000",
@@ -4236,7 +4236,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
       "RR",
       "apneaS",
       "gasApneaS",
-      "EtCO2_pctV",
+      "EtCO2",
       "FiCO2_pctV_high",
       "T1",
       "T2",
@@ -4258,7 +4258,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
       "RR",
       "apneaS",
       "gasApneaS",
-      "EtCO2_pctV",
+      "EtCO2",
       "FiCO2_pctV_high",
       "T1",
       "T2",
@@ -4296,7 +4296,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
   "limits": {
     "adult": {
       "ART_D": [
-        50,
+        35,
         100,
       ],
       "ART_M": [
@@ -4304,8 +4304,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         115,
       ],
       "ART_S": [
-        80,
-        150,
+        70,
+        165,
       ],
       "AWRR": [
         5,
@@ -4315,9 +4315,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         -5,
         15,
       ],
-      "EtCO2_pctV": [
-        2.6,
-        6.5,
+      "EtCO2": [
+        30,
+        50,
       ],
       "FiCO2_pctV_high": 1.3,
       "HR": [
@@ -4334,7 +4334,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
       ],
       "NIBP_D": [
         50,
-        90,
+        100,
       ],
       "NIBP_M": [
         60,
@@ -4377,8 +4377,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         39,
       ],
       "T2": [
-        36,
-        40,
+        35,
+        39,
       ],
       "apneaS": 10,
       "dT": [
@@ -4389,7 +4389,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
     },
     "neo": {
       "ART_D": [
-        50,
+        35,
         100,
       ],
       "ART_M": [
@@ -4397,8 +4397,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         115,
       ],
       "ART_S": [
-        80,
-        150,
+        70,
+        165,
       ],
       "AWRR": [
         15,
@@ -4408,9 +4408,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         -5,
         15,
       ],
-      "EtCO2_pctV": [
-        2.6,
-        6.5,
+      "EtCO2": [
+        30,
+        50,
       ],
       "FiCO2_pctV_high": 1.3,
       "HR": [
@@ -4470,8 +4470,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         39,
       ],
       "T2": [
-        36,
-        40,
+        35,
+        39,
       ],
       "apneaS": 10,
       "dT": [
@@ -4482,7 +4482,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
     },
     "paed": {
       "ART_D": [
-        50,
+        35,
         100,
       ],
       "ART_M": [
@@ -4490,8 +4490,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         115,
       ],
       "ART_S": [
-        80,
-        150,
+        70,
+        165,
       ],
       "AWRR": [
         5,
@@ -4501,9 +4501,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         -5,
         15,
       ],
-      "EtCO2_pctV": [
-        2.6,
-        6.5,
+      "EtCO2": [
+        30,
+        50,
       ],
       "FiCO2_pctV_high": 1.3,
       "HR": [
@@ -4563,8 +4563,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         39,
       ],
       "T2": [
-        36,
-        40,
+        35,
+        39,
       ],
       "apneaS": 10,
       "dT": [
@@ -4586,7 +4586,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
       "exact": true,
       "name": "NORMAL",
     },
-    "eraseGapPx": 4,
+    "eraseGapPx": 10,
     "fontStack": "Arial, 'Liberation Sans', Helvetica, sans-serif",
     "foreground": "#000000",
     "grid": {
@@ -4649,7 +4649,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         "mmPerS": 25,
       },
     ],
-    "lineWidth": 1.5,
+    "lineWidth": 2,
     "numericWeight": 400,
     "tileColors": {
       "AGENTS": "#777700",
@@ -4686,7 +4686,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
       "RR",
       "apneaS",
       "gasApneaS",
-      "EtCO2_pctV",
+      "EtCO2",
       "FiCO2_pctV_high",
       "T1",
       "T2",
@@ -4708,7 +4708,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
       "RR",
       "apneaS",
       "gasApneaS",
-      "EtCO2_pctV",
+      "EtCO2",
       "FiCO2_pctV_high",
       "T1",
       "T2",
@@ -4746,7 +4746,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
   "limits": {
     "adult": {
       "ART_D": [
-        50,
+        35,
         100,
       ],
       "ART_M": [
@@ -4754,8 +4754,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         115,
       ],
       "ART_S": [
-        80,
-        150,
+        70,
+        165,
       ],
       "AWRR": [
         5,
@@ -4765,9 +4765,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         -5,
         15,
       ],
-      "EtCO2_pctV": [
-        2.6,
-        6.5,
+      "EtCO2": [
+        30,
+        50,
       ],
       "FiCO2_pctV_high": 1.3,
       "HR": [
@@ -4784,7 +4784,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
       ],
       "NIBP_D": [
         50,
-        90,
+        100,
       ],
       "NIBP_M": [
         60,
@@ -4827,8 +4827,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         39,
       ],
       "T2": [
-        36,
-        40,
+        35,
+        39,
       ],
       "apneaS": 10,
       "dT": [
@@ -4839,7 +4839,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
     },
     "neo": {
       "ART_D": [
-        50,
+        35,
         100,
       ],
       "ART_M": [
@@ -4847,8 +4847,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         115,
       ],
       "ART_S": [
-        80,
-        150,
+        70,
+        165,
       ],
       "AWRR": [
         15,
@@ -4858,9 +4858,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         -5,
         15,
       ],
-      "EtCO2_pctV": [
-        2.6,
-        6.5,
+      "EtCO2": [
+        30,
+        50,
       ],
       "FiCO2_pctV_high": 1.3,
       "HR": [
@@ -4920,8 +4920,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         39,
       ],
       "T2": [
-        36,
-        40,
+        35,
+        39,
       ],
       "apneaS": 10,
       "dT": [
@@ -4932,7 +4932,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
     },
     "paed": {
       "ART_D": [
-        50,
+        35,
         100,
       ],
       "ART_M": [
@@ -4940,8 +4940,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         115,
       ],
       "ART_S": [
-        80,
-        150,
+        70,
+        165,
       ],
       "AWRR": [
         5,
@@ -4951,9 +4951,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         -5,
         15,
       ],
-      "EtCO2_pctV": [
-        2.6,
-        6.5,
+      "EtCO2": [
+        30,
+        50,
       ],
       "FiCO2_pctV_high": 1.3,
       "HR": [
@@ -5013,8 +5013,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         39,
       ],
       "T2": [
-        36,
-        40,
+        35,
+        39,
       ],
       "apneaS": 10,
       "dT": [
@@ -5036,7 +5036,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
       "exact": true,
       "name": "NORMAL",
     },
-    "eraseGapPx": 4,
+    "eraseGapPx": 10,
     "fontStack": "Arial, 'Liberation Sans', Helvetica, sans-serif",
     "foreground": "#000000",
     "grid": null,
@@ -5094,7 +5094,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         "mmPerS": 25,
       },
     ],
-    "lineWidth": 1.5,
+    "lineWidth": 2,
     "numericWeight": 400,
     "tileColors": {
       "AGENTS": "#7A7A00",

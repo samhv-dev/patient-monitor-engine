@@ -74,7 +74,7 @@ describe('saadat-like tile skeleton', () => {
   it('(d) the split CO2 tile: three parts, one element for the main value (no "36" twice), whole-mmHg limits', () => {
     const { ui, tile, all } = mount('saadat-like', true);
     ui.onEvent(meas(20, { etco2: m(36, 20), imco2: m(0, 20), awrr: m(12, 20) }));
-    ui.onEvent(status(20, { EtCO2_pctV: { low: 19.76, high: 49.4 }, AWRR: { low: 5, high: 30 } }));
+    ui.onEvent(status(20, { EtCO2: { low: 30, high: 50 }, AWRR: { low: 5, high: 30 } })); // E115: mmHg
     ui.paint(20);
     expect(all('CO2', '[data-part] .pl')).toEqual(['EtCo2', 'FiCo2', 'AWRR']);
     expect(all('CO2', '[data-part] .pv')).toEqual(['36', '0', '12']);
@@ -82,7 +82,7 @@ describe('saadat-like tile skeleton', () => {
     expect(tile('CO2').querySelector('[data-pme="lbl"]')?.textContent).toBe('EtCo2');
     expect(tile('CO2').querySelectorAll('[data-pme="v"]')).toHaveLength(1);
     expect((tile('CO2').textContent ?? '').match(/36/g)).toHaveLength(1);
-    expect(all('CO2', '[data-part="0"] [data-lim="EtCO2_pctV"] span')).toEqual(['49', '20']);
+    expect(all('CO2', '[data-part="0"] [data-lim="EtCO2"] span')).toEqual(['50', '30']);
     expect(all('CO2', '[data-part="2"] [data-lim="AWRR"] span')).toEqual(['30', '5']);
   });
 
@@ -92,7 +92,7 @@ describe('saadat-like tile skeleton', () => {
     const v = (p: string, k = 'v') => tile(p).querySelector(`[data-pme="${k}"]`)?.textContent;
     expect(v('HR')).toBe('');
     expect(v('IBP1')).toBe('/');
-    expect(v('IBP1', 's')).toBe('()');
+    expect(v('IBP1', 's')).toBe('( )'); // pass 2 (T12): the blank mean reads "( )", as photographed
     expect(v('NIBP')).toBe('/');
     expect(tile('BFA').style.display).toBe('');
     expect(all('BFA', '[data-part] .pl')).toEqual(['BFI%', 'BS%', 'SQI%', 'EMG%']);

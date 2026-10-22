@@ -54,7 +54,8 @@ describe('the saadat-like screen layout (layout.grid)', () => {
     expect(fields.map((f) => f.querySelector('[data-pme="fv"]')?.textContent)).toEqual(['2.8', '', '', '', '', '']);
     expect(fields.every((f) => f.querySelector('[data-lim]') === null)).toBe(true); // no limits the status does not carry (E100)
     const c = resolveSkin('saadat-like').skin.colors;
-    expect(fields.map((f) => f.style.color.toUpperCase())).toEqual([c.PI, c.PI, c.PI, c.IBP1, c.CO2, c.PI]); // happy-dom keeps the hex
+    // pass 2 (C5, C6): %SpMet in its own #ECE84A, SpHb white (the NIBP key)
+    expect(fields.map((f) => f.style.color.toUpperCase())).toEqual([c.PI, c.PI, c.PI, c.IBP1, '#ECE84A', c.NIBP]); // happy-dom keeps the hex
   });
 
   it('the RR cell swaps to the CO2 tile in place', () => {

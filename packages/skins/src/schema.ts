@@ -145,7 +145,16 @@ export const skinSchema: JsonSchema = {
       whenAttached: obj({}, Object.fromEntries(SWAP_SENSORS.map((k) => [k, sensorSwap]))),
       headerStyle: en(['two-row']),
       showAlways: arr(en(TILE_PARAMS), 1),
-      laneText: obj({}, { labels: obj({}, Object.fromEntries(LANE_IDS.map((k) => [k, obj({ text: str }, { color: hex, sub: str })]))) }),
+      laneText: obj({}, {
+        labels: obj({}, Object.fromEntries(LANE_IDS.map((k) => [k, obj({ text: str }, { color: hex, sub: str })]))),
+        // pass 2 (opt-in, landscape only): lane text size, the trace gutter, the right inset, the ECG label anchors and
+        // the scale-value columns (types.ts LaneText)
+        fontPx: num(8, 40),
+        gutterPx: obj({ ecg: num(0, 56), wave: num(0, 56) }),
+        rightInsetPx: num(0, 200),
+        ecgLabelX: arr(num(0, 800), 1),
+        scaleX: obj({ edge: num(0, 200), mid: num(0, 200) }),
+      }),
       grid: obj({
         laneWeights: arr(num(1, 1000), 1),
         columns: arr(num(1, 1000), 1),
@@ -155,8 +164,12 @@ export const skinSchema: JsonSchema = {
         strip: obj({
           heightPct: num(5, 30),
           tile: obj({ param: en(TILE_PARAMS), widthPct: num(5, 60) }, { extras: arr(str) }),
-          fields: arr(obj({ label: str }, { unit: str, numeric: { type: 'string', pattern: '^[a-zA-Z0-9]+$' }, digits: int(0, 3), color: en(COLOR_KEYS) })),
+          fields: arr(obj({ label: str }, { unit: str, numeric: { type: 'string', pattern: '^[a-zA-Z0-9]+$' }, digits: int(0, 3), color: { anyOf: [en(COLOR_KEYS), hex] } })),
         }),
+      }, {
+        // pass 2 (optional): per-tile label sizes and the label weight (types.ts LayoutGrid)
+        labelPx: obj({}, Object.fromEntries(TILE_PARAMS.map((k) => [k, num(6, 200)]))),
+        labelWeight: int(100, 900),
       }),
     }),
     pages: arr(page, 1),
@@ -170,7 +183,7 @@ export const skinSchema: JsonSchema = {
     sweep: obj({
       ecg: sweepChannel, pleth: sweepChannel, ibp: sweepChannel, resp: sweepChannel, co2: sweepChannel,
       style: { const: 'erase-bar' }, gapPx: num(2, 24), cursorLine: bool, lineWidthPx: num(1, 3),
-    }),
+    }, { pxPerMm: num(1, 10) }),
     ecg: obj({
       gainOptions: arr({ anyOf: [num(0.1, 8), { const: 'AUTO' }] }, 1),
       gainDefault: { anyOf: [num(0.1, 8), { const: 'AUTO' }] },
@@ -225,7 +238,7 @@ export const skinSchema: JsonSchema = {
     ),
     co2: obj(
       { unit: en(['mmHg', 'kPa', '%']), scale: num(1, 100), scaleUnit: en(['mmHg', '%']), sidestreamDelayS: num(0, 10), riseTimeMs: num(20, 1000) },
-      { fill: bool, displaySmoothMs: num(0, 500) },
+      { fill: bool, displaySmoothMs: num(0, 500), scaleLineTop: bool },
     ),
     alarms,
     limits: obj({ adult: limitBand, paed: limitBand, neo: limitBand }),

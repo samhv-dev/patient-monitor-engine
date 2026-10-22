@@ -35,7 +35,7 @@ export class FakeCtx implements Ctx2D {
   }
   fillText(text: string, x: number, y: number): void {
     this.texts.push(text);
-    this.calls.push({ op: 'fillText', args: [x, y], style: `${this.textAlign}:${text}`, color: String(this.fillStyle) });
+    this.calls.push({ op: 'fillText', args: [x, y], style: `${this.textAlign}:${text}`, color: String(this.fillStyle), clip: this.clipRect });
   }
   setTransform(): void {}
   /** Active clip: a union of rectangles [x, y, w, h] (null = whole canvas); tracked through save/restore. */

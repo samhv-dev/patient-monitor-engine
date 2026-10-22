@@ -126,11 +126,11 @@ None recorded.
 
 ## Tests
 
-79 tests in 15 files; 0 expected failures, 0 skipped.
+80 tests in 15 files; 0 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
-| [`engine/alarms-engine.test.ts`](../../packages/engine-core/test/engine/alarms-engine.test.ts) | 8 | 0 | 0 |
+| [`engine/alarms-engine.test.ts`](../../packages/engine-core/test/engine/alarms-engine.test.ts) | 9 | 0 | 0 |
 | [`engine/alarms-limit-text.test.ts`](../../packages/engine-core/test/engine/alarms-limit-text.test.ts) | 1 | 0 | 0 |
 | [`engine/alarms-resp-events.test.ts`](../../packages/engine-core/test/engine/alarms-resp-events.test.ts) | 3 | 0 | 0 |
 | [`l3/alarms/apnoea-hooks.test.ts`](../../packages/engine-core/test/l3/alarms/apnoea-hooks.test.ts) | 5 | 0 | 0 |

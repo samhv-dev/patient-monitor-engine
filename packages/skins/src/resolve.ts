@@ -113,6 +113,7 @@ function applyTheme(skin: Skin, themeId: string): Skin {
   for (const k of Object.keys(out.provenance)) if (k.startsWith('colors.')) delete out.provenance[k];
   out.provenance.colors = { tag: 'eng', source: `ENG: theme ${themeId} darkens the skin colours to ${min}:1` };
   for (const l of Object.values(out.layout.laneText?.labels ?? {})) if (l?.color) l.color = darkenToContrast(l.color, theme.background, min);
+  for (const f of out.layout.grid?.strip.fields ?? []) if (f.color?.startsWith('#')) f.color = darkenToContrast(f.color, theme.background, min); // a strip field's own hex (pass 2)
   if (out.ibp.scaleLineColor) {
     out.ibp.scaleLineColor = darkenToContrast(out.ibp.scaleLineColor, theme.background, min);
     out.provenance['ibp.scaleLineColor'] = out.provenance.colors;

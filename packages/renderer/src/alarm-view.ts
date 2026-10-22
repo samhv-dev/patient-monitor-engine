@@ -121,7 +121,8 @@ export function hrStatusLines(r: ResolvedSkin, st: AlarmStatus | null, stII: str
   const arr = st?.arrhythmiaAnalysis === true;
   return [
     { text: `PACE: ${r.skin.ecg.paceDetectDefault ? 'ON' : 'OFF'}`, bellOff: false },
-    { text: r.skin.st.defaultOn ? `ST: ${stII}` : 'ST: OFF', bellOff: !st?.limits.ST_mV?.enabled },
+    // ST analysis off cannot alarm: its bell is crossed whatever the ST limit switch (pass 2, E114: alarms on, IMG_8113)
+    { text: r.skin.st.defaultOn ? `ST: ${stII}` : 'ST: OFF', bellOff: !r.skin.st.defaultOn || !st?.limits.ST_mV?.enabled },
     { text: arr ? 'PVCs: ' : 'PVCs: OFF', bellOff: !arr },
   ];
 }

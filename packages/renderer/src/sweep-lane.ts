@@ -51,6 +51,8 @@ export interface LaneConfig {
   /** FX-24: the first sample index the source holds (default 0). A restored engine holds nothing before its snapshot,
    *  and a read from earlier returns its first sample as if it were the one asked for, so the backfill starts here. */
   firstIndex?: number;
+  /** Keep the rects each draw clears for `takeBand()` (lane text over the trace, pass 2); off = nothing is kept. */
+  recordBand?: boolean;
 }
 
 /** Reads samples starting at absolute index `from` into `out`; returns the count (out[0] = sample `from`). */
@@ -104,6 +106,14 @@ export class SweepLane {
   }
 
   private resets = 0;
+  /** The rects the last draw cleared and drew (lane text drawn over the trace is repainted in them, pass 2). */
+  private band: Rect[] = [];
+  /** Take (and forget) the rects drawn since the last call. */
+  takeBand(): Rect[] {
+    const b = this.band;
+    this.band = [];
+    return b;
+  }
   /** Counts the times the lane was cleared whole, so text drawn over it knows to come back. */
   get generation(): number {
     return this.resets;
@@ -244,6 +254,7 @@ export class SweepLane {
     const last = first + got - 1;
     const xFrom = this.lastCol >= 0 ? this.bandStart(this.lastCol) : this.xOf(first);
     const band = this.clearSpan(ctx, xFrom, this.xOf(last) + c.eraseGapPx);
+    if (c.recordBand) this.band.push(...band);
 
     this.cols.length = 0;
     decimateMinMax(out, got, first, c.rate, this.pxPerS, this.dpr, this.cols);

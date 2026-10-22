@@ -17,13 +17,14 @@ describe('resolveSkin: saadat-like and the renderer/audio contract', () => {
   it('saadat-like: lanes, gap, filter, HR method, audio', () => {
     const r = resolveSkin('saadat-like');
     expect(r.render.background).toBe('#000000');
-    expect(r.render.eraseGapPx).toBe(4);
+    expect(r.render.eraseGapPx).toBe(10); // pass 2 (W3, IMG_8113); 2 px traces (W4)
+    expect(r.render.lineWidth).toBe(2);
     expect(r.render.lanes.map((l) => [l.lane, l.color, l.mmPerS])).toEqual([
       // research/34 Tuesday set (owner's photo IMG_8113): ECG, ECG, CO2/RESP, IBP1, IBP2 in mid blue (T4), pleth last (T3)
       ['ECG1', '#22F046', 25], ['ECG2', '#22F046', 25], ['RESP', '#F0F000', 6], ['IBP1', '#FF9A96', 25], ['IBP2', '#5C9CFF', 25], ['PLETH', '#D060FF', 25],
     ]);
     expect(r.render.lanes[0]).toMatchObject({ gainMmPerMv: 10, autoGain: true, label: 'II  X1  NORMAL' });
-    expect(r.render.lanes[1]).toMatchObject({ autoGain: true, label: 'II  X1  NORMAL' }); // second lead not in the photo (E70): laneLeads[0] reused
+    expect(r.render.lanes[1]).toMatchObject({ autoGain: true, label: 'II  X1  NORMAL' }); // E116: the second ECG lane repeats lead II, as photographed
     expect(r.render.ecgFilter).toEqual({ name: 'NORMAL', band: [0.5, 40], engineMode: 'monitor', exact: true });
     expect(r.render.hrMethod).toEqual({ skin: 'moving-average-seconds', engine: null });
     expect(r.render.tileColors).toMatchObject({ HR: '#22F046', SpO2: '#DD44FF', NIBP: '#F0F0F0', TEMP: '#00F0F0', RR: '#F0F000' });

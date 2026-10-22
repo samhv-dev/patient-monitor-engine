@@ -19,7 +19,11 @@ describe('renderPlan', () => {
     expect(p.scaleLineColor).toBe('#8A8C92');
     expect(p.lanes[2]?.mmPerS).toBe(6);
     expect(p.lanes[5]).toMatchObject({ channel: 'pleth', mmPerS: 25, range: null });
-    expect(p.eraseGapPx).toBe(4);
+    expect(p.eraseGapPx).toBe(10); // pass 2 (W3)
+    expect(p.lineWidth).toBe(2); // pass 2 (W4)
+    expect(p.pxPerMm).toBe(3.1); // pass 2 (W1)
+    expect(p.calBar).toBe(false); // pass 2 (W2): a gutter, and ecg.calPulse.defaultOn false
+    expect(p.laneText).toEqual({ color: '#E8F4F6', fontPx: 18, gutter: { ecg: 0, wave: 18 }, insetPx: 45, ecgLabelX: [10, 65, 183], scaleX: { edge: 30, mid: 85 } });
     expect(p.filterNames.monitor).toBe('NORMAL');
     expect(p.filterNames['band:0.5-24']).toBe('MONITOR');
     expect(ecgLabel(p.lanes[0]!.label, 'ecgII', 2, p.gainLabel, 'NORMAL')).toBe('II  X2  NORMAL');

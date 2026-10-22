@@ -23,7 +23,7 @@ describe('layout.whenAttached: the Saadat-style capnogram', () => {
     expect(tileParams(id, true)).toEqual(offTiles.map((p) => (p === 'RR' ? 'CO2' : p)));
     expect(on.skin.layout.tiles.flat().find((t) => t.param === 'CO2')).toEqual({
       param: 'CO2', extras: ['IMCO2', 'AWRR'], split: 'row',
-      parts: [{ label: 'EtCo2', unit: 'mmHg', limit: 'EtCO2_pctV' }, { label: 'FiCo2', unit: 'mmHg' }, { label: 'AWRR', unit: 'BrPM', limit: 'AWRR' }],
+      parts: [{ label: 'EtCo2', unit: 'mmHg', limit: 'EtCO2' }, { label: 'FiCo2', unit: 'mmHg' }, { label: 'AWRR', unit: 'BrPM', limit: 'AWRR' }],
     }); // rc.3: the split EtCo2 | FiCo2 | AWRR tile as photographed (research/34 §3 row 14, IMG_8113)
     expect(on.render.tileColors.CO2).toBe(on.skin.colors.CO2);
     expect(on.render.tileColors.RR).toBeUndefined();

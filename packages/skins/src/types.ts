@@ -80,6 +80,27 @@ export interface LaneTextLabel {
   color?: string;
   sub?: string;
 }
+/**
+ * layout.laneText: lane text as on the real unit. Every key but `labels` is optional and opt-in (Saadat fidelity pass 2,
+ * landscape only — a phone in portrait keeps the 14 px chrome): absent, the lanes draw exactly as before.
+ */
+export interface LaneText {
+  labels?: Partial<Record<LaneId, LaneTextLabel>>;
+  /** Lane text size in CSS px (default 14). */
+  fontPx?: number;
+  /**
+   * The black band left of the traces, per lane kind (default: none, the 56 px chrome column). Set, the traces start at
+   * these x, the lane text is drawn OVER the trace and repainted where the sweep has just drawn (no black boxes), and the
+   * 1 mV bar follows `ecg.calPulse.defaultOn`.
+   */
+  gutterPx?: { ecg: number; wave: number };
+  /** Right-hand lane text: its right edge this far inside the wave column (default 6). */
+  rightInsetPx?: number;
+  /** The ECG label's parts (split at double spaces: "II", "X1", "NORMAL") at these x (default: one string at x 6). */
+  ecgLabelX?: number[];
+  /** Scale values at x `edge` (top and bottom) and `mid` (the middle value, centred on its dotted line). */
+  scaleX?: { edge: number; mid: number };
+}
 export type SwapSensor = (typeof SWAP_SENSORS)[number];
 /** One cell of layout.grid: the tiles of `params` side by side, at a 1-based row and column of the tile grid. */
 export interface GridCell {
@@ -95,7 +116,8 @@ export interface StripField {
   unit?: string;
   numeric?: string;
   digits?: number;
-  color?: ColorKey;
+  /** A colour key, or a hex of its own (pass 2: %SpMet #ECE84A, a hue no key holds). */
+  color?: ColorKey | string;
 }
 /** layout.grid (rc.3, saadat-like): see Skin['layout']['grid']. Track and lane sizes are relative weights. */
 export interface LayoutGrid {
@@ -107,6 +129,10 @@ export interface LayoutGrid {
   rows: number[];
   /** Font sizes in px at an 800 px monitor height (scaled with the height): tile main values, strip values, labels, limits. */
   fontPx: Partial<Record<TileParam | 'field' | 'label' | 'limit', number>>;
+  /** Pass 2 (optional): a tile's own label size (px at 800 px), over `fontPx.label` (saadat-like PR 37, EtCo2 21). */
+  labelPx?: Partial<Record<TileParam, number>>;
+  /** Pass 2 (optional): the tile and strip label weight (default 400). */
+  labelWeight?: number;
   cells: GridCell[];
   /** Full-width strip under the waves and the tiles: one tile, then label fields of equal width. */
   strip: { heightPct: number; tile: { param: TileParam; widthPct: number; extras?: string[] }; fields: StripField[] };
@@ -195,7 +221,7 @@ export interface Skin {
      * labels and the sweep speeds at the right of each lane, and the CO2 scale with its unit. `labels` overrides a
      * lane's right-hand label (text, colour, and a second line `sub` in the foreground). Themes darken the colours.
      */
-    laneText?: { labels?: Partial<Record<LaneId, LaneTextLabel>> };
+    laneText?: LaneText;
     /**
      * 'two-row': the header's first row holds the page box, bed, patient category, lamp and date over time; the message
      * bar has a row of its own under it (saadat-like, research/34 §3 row 7). Absent = the one-row header.
@@ -224,6 +250,11 @@ export interface Skin {
     gapPx: number;
     cursorLine: boolean;
     lineWidthPx: number;
+    /**
+     * Pass 2 (optional): the screen's CSS px per mm, which the sweep speed and the ECG gain are drawn at until the user
+     * calibrates (saadat-like 3.10: the photo's 47.5 px per beat at HR 98). Absent = 96 dpi (3.78).
+     */
+    pxPerMm?: number;
   };
   ecg: {
     /** Multipliers of 10 mm/mV (×1 = 10 mm/mV), plus 'AUTO'. */
@@ -304,6 +335,8 @@ export interface Skin {
     fill?: boolean;
     /** Display-side smoothing (ms) of the DRAWN capnogram only; the engine signal and EtCO2 are unchanged (absent = 0). */
     displaySmoothMs?: number;
+    /** Pass 2 (optional): a dotted line at the top of the CO2 scale, as on the IBP lanes (`ibp.scaleLineColor`). */
+    scaleLineTop?: boolean;
   };
   alarms: {
     levels: 3;

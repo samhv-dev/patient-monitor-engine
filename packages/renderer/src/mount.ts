@@ -335,7 +335,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     ...(opts.waves ? { waves: opts.waves } : {}),
     ...(opts.fps ? { fps: opts.fps } : {}),
     ...(opts.pxPerMm ? { pxPerMm: opts.pxPerMm } : {}),
-    ...(r ? { plan: renderPlan(r, page, only) } : {}),
+    ...(r ? { plan: renderPlan(r, page, only, opts.portrait === true) } : {}),
   };
   /** The lanes the canvas draws, as data for tests and embedders (the labels themselves are canvas pixels). */
   const markLanes = (lanes: ReadonlyArray<{ id: string }>) => void (canvas.dataset.lanes = lanes.map((l) => l.id).join(' '));
@@ -394,7 +394,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   };
   /** The plan for the current skin, with the ECG leads chosen on this skin kept. */
   const planNow = (sk: ResolvedSkin) => {
-    const p = renderPlan(sk, page, only);
+    const p = renderPlan(sk, page, only, opts.portrait === true);
     let k = 0;
     for (const l of p.lanes) if (l.kind === 'ecg') l.channel = leads.get(k++) ?? l.channel;
     return p;
@@ -510,7 +510,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       r = next;
       page = o.page;
       leads.clear();
-      const plan = renderPlan(next, page, only);
+      const plan = renderPlan(next, page, only, opts.portrait === true);
       h.control({ type: 'plan', plan });
       markLanes(plan.lanes);
       ui.setSkin(next, page);

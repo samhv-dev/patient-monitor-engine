@@ -14,8 +14,8 @@ const beat = (t: number, origin: 'sinus' | 'ventricular', template = origin === 
 });
 
 describe('alarm conditions', () => {
-  it('limit alarms need the switch ON (saadat-like factory OFF); fresh values only', () => {
-    const s = createAlarmMgr(deviceProfile('saadat-like'));
+  it('limit alarms need the switch ON (iran-icu-as-found: HR off as found); fresh values only', () => {
+    const s = createAlarmMgr(deviceProfile('iran-icu-as-found'));
     const inp = createInputs();
     observeQrs(inp, 9.5);
     observeEvent(inp, meas(10, { hr: 170 }));

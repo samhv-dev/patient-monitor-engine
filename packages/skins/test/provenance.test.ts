@@ -32,7 +32,7 @@ describe('provenance', () => {
     expect(p['colors.IBP3']?.tag).toBe('conflict');
     expect(p['colors.IBP4']?.tag).toBe('conflict');
     expect(p['alarms.lamp.flashHz']?.tag).toBe('assumed');
-    expect(p['sweep.gapPx']?.tag).toBe('inferred');
+    expect(p['sweep.cursorLine']?.tag).toBe('inferred'); // sweep.gapPx is measured since pass 2 (IMG_8113, W3)
     expect(p['colors.AGENTS']?.tag).toBe('unverified');
     expect(p['arrhythmia.asystoleS']?.tag).toBe('conflict');
     expect(p['beep.pitchMap']?.tag).toBe('unverified');

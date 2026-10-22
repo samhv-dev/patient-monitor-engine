@@ -25,14 +25,29 @@ describe('alarm engine in the engine', () => {
     expect(r.text).toMatch(/^\*\*HR \d+>120$/);
   });
 
-  it('saadat-like: nothing is raised for HR 170 while alarms are factory OFF; switched ON, HR TOO HIGH follows after the 1 s delay, level 1', () => {
+  it('saadat-like (E114, E115): alarms ON at power-on; HR driven past the 150 the tile prints raises HR TOO HIGH after the 1 s delay, level 1', () => {
     const { e, ev } = devRig('saadat-like');
+    e.advanceTo(5);
+    const st0 = ev.filter((x) => x.type === 'alarmStatus').pop() as Extract<EngineEvent, { type: 'alarmStatus' }>;
+    expect(st0.allOff).toBe(false);
+    expect(st0.limits.HR).toMatchObject({ enabled: true, low: 50, high: 150 }); // the pair the PR tile prints (alarm-view pairs)
+    e.dispatch(cmd({ type: 'setTarget', variable: 'hr', value: 160 }));
+    e.advanceTo(40);
+    const first = hrAbove(ev, 150)!;
+    const r = alarmsOf(ev, 'HR_HIGH', 'raised')[0]!;
+    expect(r.t - first.t).toBeGreaterThanOrEqual(1 - 1e-9); // skin alarms.delayS = 1
+    expect(r.t - first.t).toBeLessThanOrEqual(1 + 0.02 + 1e-9);
+    expect(r).toMatchObject({ priority: 'high', level: 1, text: 'HR TOO HIGH' });
+  });
+
+  it('iran-icu-as-found: nothing is raised for HR 170 while its HR alarm is off as found; switched ON, HR TOO HIGH follows after the 1 s delay, level 1', () => {
+    const { e, ev } = devRig('iran-icu-as-found');
     e.advanceTo(5);
     e.dispatch(cmd({ type: 'setTarget', variable: 'hr', value: 170 }));
     e.advanceTo(30);
-    expect(alarmsOf(ev)).toEqual([]);
+    expect(alarmsOf(ev, 'HR_HIGH')).toEqual([]);
     const st = ev.filter((x) => x.type === 'alarmStatus').pop() as Extract<EngineEvent, { type: 'alarmStatus' }>;
-    expect(st.allOff).toBe(true);
+    expect(st.limits.HR?.enabled).toBe(false);
     e.dispatch(cmd({ type: 'device', action: { device: 'alarm', action: 'enable', param: 'HR', value: true } }));
     const on = e.now().simT + 0.02; // the switch applies on the next tick
     e.advanceTo(40);

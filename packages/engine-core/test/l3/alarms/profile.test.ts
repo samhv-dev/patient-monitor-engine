@@ -1,11 +1,12 @@
 // DeviceProfile from the skins (brief §6.4.1, §6.8 tables).
 import { describe, expect, it } from 'vitest';
-import { BAROMETRIC_MMHG, deviceProfile, limitGroup, skinBand } from '../../../src/l3/alarms/profile.ts';
+import { deviceProfile, limitGroup, skinBand } from '../../../src/l3/alarms/profile.ts';
 
 describe('deviceProfile', () => {
-  it('saadat-like: factory OFF, the four always-on alarms, 120 s silence that hides visuals, no pause, 10 s asystole', () => {
+  it('saadat-like: factory ON (E114; the as-found preset OFF), the four always-on alarms, 120 s silence that hides visuals, no pause, 10 s asystole', () => {
     const p = deviceProfile('saadat-like');
-    expect(p.factoryEnabled).toBe(false);
+    expect(p.factoryEnabled).toBe(true);
+    expect(deviceProfile('iran-icu-as-found').factoryEnabled).toBe(false);
     expect(p.alwaysOn).toEqual(['ASYSTOLE', 'VFIB', 'VTAC', 'APNEA']);
     expect(p.silence).toEqual({ mode: 'mute', durationS: 120, suppressesVisual: true, cancelOnNewAlarm: true, technicalActsAsAck: true });
     expect(p.pauseS).toBeNull();
@@ -14,8 +15,10 @@ describe('deviceProfile', () => {
     expect(p.arrhythmia.asystoleS).toBe(10);
     expect(p.arrhythmia.vtacRate).toBe(120);
     expect(p.limits.HR).toMatchObject({ numeric: 'hr', low: 50, high: 150, level: 1 });
-    expect(p.limits.EtCO2_pctV?.low).toBeCloseTo((2.6 * BAROMETRIC_MMHG) / 100, 6);
-    expect(p.limits.EtCO2_pctV?.level).toBe(2);
+    expect(p.limits.EtCO2).toMatchObject({ low: 30, high: 50, level: 2 }); // E115: in mmHg, as the CO2 tile prints it (was 2.6–6.5 %V)
+    expect(p.limits.EtCO2_pctV).toBeUndefined();
+    // E115: the NIBP and ART pairs as the tiles print them
+    expect([p.limits.NIBP_S, p.limits.NIBP_D, p.limits.ART_S, p.limits.ART_D, p.limits.T1, p.limits.T2].map((l) => [l?.low, l?.high])).toEqual([[90, 160], [50, 100], [70, 165], [35, 100], [35, 39], [35, 39]]);
     expect(p.defib).toBeNull();
     expect(p.pacer).toBeNull();
   });

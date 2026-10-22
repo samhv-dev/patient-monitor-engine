@@ -10,7 +10,8 @@
     "ecg": { "laneLeads": ["II", "II"], "gainDefault": 2, "filterDefault": "MONITOR" },
     "hr": { "windowDefault": 16, "source": "ECG" },
     "beep": { "defaultOn": false },
-    "sweep": { "resp": { "options": [3, 6, 12.5, 25], "default": 12.5 } }
+    "sweep": { "resp": { "options": [3, 6, 12.5, 25], "default": 12.5 } },
+    "alarms": { "factoryEnabled": false }
   },
   "alarmSwitches": { "HR": false, "RR": false, "NIBP": true, "SpO2": true },
   "startState": { "apneaLimit": "OFF" },
@@ -23,6 +24,7 @@
     "overrides.hr.windowDefault": { "tag": "documented", "source": "research/06 §3.1 F7 (HR AVERAGE 16); brief §6.9" },
     "overrides.hr.source": { "tag": "documented", "source": "research/06 §3.1 F7 (HR SOURCE ECG)" },
     "overrides.beep.defaultOn": { "tag": "documented", "source": "research/06 §3.1 F7 (BEAT VOLUME OFF); brief §6.9" },
+    "overrides.alarms.factoryEnabled": { "tag": "documented", "source": "research/06 §3.1 F7 (S8: crossed bells at power-on)", "note": "pass 2 (E114) turned the saadat-like factory alarms on; the ICU as found keeps every parameter alarm off but the switches above (\"turning them on is step one\")" },
     "overrides.sweep.resp": { "tag": "documented", "source": "research/06 §3.1 F7 ('RA_LA X0.25 12.5 mm/s')" },
     "alarmSwitches": { "tag": "documented", "source": "research/06 §3.1 F7 (crossed bells on HR and RR; NIBP and SpO2 limits shown)", "note": "n = 1 video [S8]" },
     "startState.apneaLimit": { "tag": "documented", "source": "research/06 §3.1 F7 ('APNEA LIMIT: OFF'); brief §6.9" }
