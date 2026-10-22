@@ -3,8 +3,9 @@
 // schema pme-debrief/1 or pme-debrief/2, Stage 13 Q3; /2 adds `version` and the redesign's verdict words) and prints a
 // right-to-left A4 PDF with the English report's sections in its order: the case, objectives with their verdicts,
 // measured facts (the labs row included), trends, drugs and fluids, the timeline (the undone course struck through),
-// bookmarks, the talking points (/2 only), notes and the one-row-per-minute appendix; the footer (the
-// release wording of views/debrief.ts FOOT, with the version and the build) and "page n of N" on every page. A handout
+// bookmarks, the talking points (/2 only), the take-home points (the learner handout's section: the card's lines, else
+// ruled lines), notes and the one-row-per-minute appendix; the footer (the release wording of views/debrief.ts FOOT,
+// with the version and the build) and "page n of N" on every page. A handout
 // script, NOT an app feature: the app and its tests are untouched (the in-app translation is planned for a later
 // release). Words come from docs/showcase/i18n/fa-debrief.json; a string the table does not cover is printed in English
 // and listed at the end of the run. Clinical values (vital signs, doses, times) keep Western digits and their units;
@@ -16,10 +17,10 @@
 //   --fonts: a folder with Vazirmatn-Regular.ttf and Vazirmatn-Bold.ttf (or the variable Vazirmatn[wght].ttf); else
 //            $PME_FA_FONTS, ~/Library/Fonts, ~/.fonts, /Library/Fonts, /usr/share/fonts/truetype/vazirmatn
 //   --html / --text: also write the HTML, and the printed Persian text one string per line (for a spelling pass)
-import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
-import { chromium } from '@playwright/test';
+import { fileURLToPath } from 'node:url';
 
 const REPO = resolve(import.meta.dirname, '../..');
 const TABLE_PATH = join(REPO, 'docs/showcase/i18n/fa-debrief.json');
@@ -167,6 +168,18 @@ class Doc {
     const fa = tr(en, used, missing);
     for (const e of used) this.used.add(e);
     for (const m of missing) this.missing.set(m, (this.missing.get(m) ?? 0) + 1);
+    if (fa === null) {
+      this.missing.set(en, (this.missing.get(en) ?? 0) + 1);
+      return `<bdi dir="ltr" class="en">${esc(en)}</bdi>`;
+    }
+    this.printed.push(fa);
+    return bidi(fa);
+  }
+  /** The Persian of `en` from one group only (exact English: a take-home line), else the English, marked and counted. */
+  group(g, en) {
+    const used = [];
+    const fa = inGroup(g, en, used);
+    for (const e of used) this.used.add(e);
     if (fa === null) {
       this.missing.set(en, (this.missing.get(en) ?? 0) + 1);
       return `<bdi dir="ltr" class="en">${esc(en)}</bdi>`;
@@ -354,14 +367,16 @@ table.minutes td { direction: ltr; unicode-bidi: isolate; font-variant-numeric: 
 table.minutes th .unit { display: block; font-weight: 400; }
 .notes { border: 0.6pt solid #000; min-height: 30mm; }
 #trends, #timeline, #minutes { break-before: page; }
-#objectives, #facts, #bookmarks, #pearls, #notes { break-inside: avoid; }
+ol.take { padding-inline-start: 6mm; margin: 0; list-style-type: persian; }
+.ruled { border-bottom: 0.6pt solid #000; height: 8mm; }
+#objectives, #facts, #bookmarks, #pearls, #takehome, #notes { break-inside: avoid; }
 .muted { color: #333; }
 .totals { margin: 2mm 0 0; padding-inline-start: 5mm; }
 p { orphans: 2; widows: 2; }
 sub, sup { font-size: 70%; line-height: 0; }
 `;
 
-function render(j, fontsCss, version) {
+export function render(j, fontsCss, version) {
   const D = new Doc();
   const d = j.record;
   const end = endOf(d);
@@ -408,6 +423,12 @@ function render(j, fontsCss, version) {
   const keys = [...TREND_KEYS, ...LAB_KEYS];
   const minutes = `<table class="minutes"><thead><tr><th>${D.t('Time')}</th>${keys.map((k) => `<th>${D.t(META[k][0])}${META[k][1] ? `<span class="unit"><bdi dir="ltr">${esc(META[k][1])}</bdi></span>` : ''}</th>`).join('')}</tr></thead><tbody>${j.minutes
     .map((r) => `<tr><td>${mmss(r.t)}</td>${keys.map((k) => `<td>${r.values[k] === null || r.values[k] === undefined ? '–' : r.values[k].toFixed(META[k][2])}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  // the card's take-home lines (views/debrief.ts takeHomeSection): the export's record carries the card, so a card with
+  // `takeHome` brings its lines; each prints through the takeHome group, else three ruled lines to write on
+  const take = d.doc?.takeHome ?? [];
+  const takeHome = take.length
+    ? `<ol class="take">${take.map((x) => `<li>${D.group('takeHome', x)}</li>`).join('')}</ol>`
+    : `<p>${D.t('Your take-home points')}</p>${'<div class="ruled"></div>'.repeat(3)}`;
 
   const body = [
     section('objectives', D.t('Objectives'), obj),
@@ -417,6 +438,7 @@ function render(j, fontsCss, version) {
     section('timeline', D.t('Timeline'), timeline),
     section('bookmarks', D.t('Bookmarks'), bookmarks),
     j.schema === 'pme-debrief/2' ? section('pearls', D.t('Talking points'), `<div class="pearls">${PEARLS.map(([ph, pr]) => `<div class="pearl"><b>${D.t(ph)}</b><p>${D.t(pr)}</p></div>`).join('')}</div>`) : '',
+    section('takehome', D.t('Take-home points'), takeHome),
     section('notes', D.t('Notes'), '<div class="notes"></div>'),
     section('minutes', D.t('Appendix: one row per minute'), minutes),
   ].join('\n');
@@ -440,55 +462,59 @@ ${body}
 }
 
 // ---------------------------------------------------------------------------------------------------- run
-const args = process.argv.slice(2);
-const opt = (name) => {
-  const i = args.indexOf(name);
-  return i >= 0 ? args.splice(i, 2)[1] : undefined;
-};
-const flag = (name) => {
-  const i = args.indexOf(name);
-  return i >= 0 ? (args.splice(i, 1), true) : false;
-};
-const outDir = opt('--out-dir');
-const fontsDir = findFonts(opt('--fonts'));
-const wantHtml = flag('--html');
-const wantText = flag('--text');
-const versionArg = opt('--version');
-const USAGE = 'usage: node scripts/showcase/debrief-fa.mjs <debrief.json>... --version X.Y.Z [--out-dir DIR] [--fonts DIR] [--html] [--text]';
-if (!args.length) {
-  console.error(USAGE);
-  process.exit(1);
-}
-const inputs = args.map((file) => {
-  const j = JSON.parse(readFileSync(file, 'utf8'));
-  if (j.schema !== 'pme-debrief/1' && j.schema !== 'pme-debrief/2') throw new Error(`${file}: not a Debrief export (schema ${j.schema}; pme-debrief/1 or pme-debrief/2 expected)`);
-  const version = j.version ?? versionArg;
-  if (!version) {
-    console.error(`${file}: the Debrief JSON carries the build (${j.build}) but not the version. Pass --version with the version that build printed on its Start screen and in the English Debrief footer (e.g. --version 1.0.0-rc.1).\n${USAGE}`);
+// run only as a command: a test imports render() without printing anything
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const args = process.argv.slice(2);
+  const opt = (name) => {
+    const i = args.indexOf(name);
+    return i >= 0 ? args.splice(i, 2)[1] : undefined;
+  };
+  const flag = (name) => {
+    const i = args.indexOf(name);
+    return i >= 0 ? (args.splice(i, 1), true) : false;
+  };
+  const outDir = opt('--out-dir');
+  const fontsDir = findFonts(opt('--fonts'));
+  const wantHtml = flag('--html');
+  const wantText = flag('--text');
+  const versionArg = opt('--version');
+  const USAGE = 'usage: node scripts/showcase/debrief-fa.mjs <debrief.json>... --version X.Y.Z [--out-dir DIR] [--fonts DIR] [--html] [--text]';
+  if (!args.length) {
+    console.error(USAGE);
     process.exit(1);
   }
-  return { file, j, version };
-});
-const fontsCss = fontFaces(fontsDir);
-const browser = await chromium.launch();
-try {
-  for (const { file, j, version } of inputs) {
-    const { html, D } = render(j, fontsCss, version);
-    const base = join(outDir ?? dirname(file), basename(file).replace(/\.json$/, '') + '.fa');
-    if (wantHtml) writeFileSync(`${base}.html`, html);
-    if (wantText) writeFileSync(`${base}.txt`, [...new Set(D.printed)].join('\n') + '\n');
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'load' });
-    await page.evaluate(() => document.fonts.ready);
-    const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
-    await page.close();
-    writeFileSync(`${base}.pdf`, pdf);
-    const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page\b(?!s)/g) ?? []).length;
-    const entries = [...D.used];
-    console.log(`${base}.pdf: ${pages} A4 pages; ${entries.length} table entries used (${entries.filter((e) => !e.reviewed).length} unreviewed)`);
-    console.log(`${D.missing.size} strings without translation${D.missing.size ? ':' : ''}`);
-    for (const [en, n] of D.missing) console.log(`  ${n}× ${en}`);
+  const inputs = args.map((file) => {
+    const j = JSON.parse(readFileSync(file, 'utf8'));
+    if (j.schema !== 'pme-debrief/1' && j.schema !== 'pme-debrief/2') throw new Error(`${file}: not a Debrief export (schema ${j.schema}; pme-debrief/1 or pme-debrief/2 expected)`);
+    const version = j.version ?? versionArg;
+    if (!version) {
+      console.error(`${file}: the Debrief JSON carries the build (${j.build}) but not the version. Pass --version with the version that build printed on its Start screen and in the English Debrief footer (e.g. --version 1.0.0-rc.1).\n${USAGE}`);
+      process.exit(1);
+    }
+    return { file, j, version };
+  });
+  const fontsCss = fontFaces(fontsDir);
+  const { chromium } = await import('@playwright/test');
+  const browser = await chromium.launch();
+  try {
+    for (const { file, j, version } of inputs) {
+      const { html, D } = render(j, fontsCss, version);
+      const base = join(outDir ?? dirname(file), basename(file).replace(/\.json$/, '') + '.fa');
+      if (wantHtml) writeFileSync(`${base}.html`, html);
+      if (wantText) writeFileSync(`${base}.txt`, [...new Set(D.printed)].join('\n') + '\n');
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'load' });
+      await page.evaluate(() => document.fonts.ready);
+      const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+      await page.close();
+      writeFileSync(`${base}.pdf`, pdf);
+      const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page\b(?!s)/g) ?? []).length;
+      const entries = [...D.used];
+      console.log(`${base}.pdf: ${pages} A4 pages; ${entries.length} table entries used (${entries.filter((e) => !e.reviewed).length} unreviewed)`);
+      console.log(`${D.missing.size} strings without translation${D.missing.size ? ':' : ''}`);
+      for (const [en, n] of D.missing) console.log(`  ${n}× ${en}`);
+    }
+  } finally {
+    await browser.close();
   }
-} finally {
-  await browser.close();
 }
