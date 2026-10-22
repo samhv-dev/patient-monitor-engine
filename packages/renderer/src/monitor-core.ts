@@ -455,16 +455,22 @@ export class MonitorCore {
       if (pl.scaleMid !== null) {
         const [lo, hi] = pl.range;
         const lineY = y0 + ((hi - pl.scaleMid) / (hi - lo)) * h;
-        left(String(pl.scaleMid), lt.scaleX?.mid ?? MID_LABEL_X, lt.scaleX ? lineY - lt.fontPx / 2 : midLabelY(pl, y0, h));
+        const midY = lt.scaleX ? lineY - lt.fontPx / 2 : midLabelY(pl, y0, h);
+        // a short lane (a small landscape screen) leaves the middle value out rather than print it over its neighbours
+        if (midY >= y0 + OVER_TOP_Y + row && midY + row <= y0 + h - row) left(String(pl.scaleMid), lt.scaleX?.mid ?? MID_LABEL_X, midY);
       }
       left(String(pl.range[0]), edge, y0 + h - row);
     }
+    // the right-hand rows never overlap: on a short lane the second line goes first, then the speed (as F28 does for the
+    // rc.3 chrome on a phone); the label stays
     const right = this.size.cssW - lt.insetPx;
+    const speedY = y0 + h - row;
+    const fits = (y: number) => y + row <= speedY;
     if (pl.rightLabel) {
       out.push({ text: pl.rightLabel.text, color: pl.rightLabel.color, x: right, y: y0 + OVER_RIGHT_Y, align: 'right' });
-      if (pl.rightLabel.sub) out.push({ text: pl.rightLabel.sub, color: lt.color, x: right, y: y0 + OVER_RIGHT_Y + row, align: 'right' });
+      if (pl.rightLabel.sub && fits(y0 + OVER_RIGHT_Y + row)) out.push({ text: pl.rightLabel.sub, color: lt.color, x: right, y: y0 + OVER_RIGHT_Y + row, align: 'right' });
     }
-    out.push({ text: formatSpeed(pl.mmPerS), color: lt.color, x: right, y: y0 + h - row, align: 'right' });
+    if (!pl.rightLabel || fits(y0 + OVER_RIGHT_Y)) out.push({ text: formatSpeed(pl.mmPerS), color: lt.color, x: right, y: speedY, align: 'right' });
     return out;
   }
 

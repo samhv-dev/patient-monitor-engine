@@ -232,6 +232,20 @@ describe('saadat-like lane text, pass 2 (landscape: IMG_8113 rows T1, T2, G1, G2
     expect(renderPlan(resolveSkin('philips-like')).pxPerMm).toBeNull();
   });
 
+  it('fit guards: a short landscape lane (1024 × 640: a 485 px canvas, PLETH ≈ 68 px) drops the pleth "X1" before its speed; no right-hand rows overlap', () => {
+    const rows = (ctx: FakeCtx) => ctx.calls.filter((c) => c.op === 'fillText' && c.style?.startsWith('right:')).map((c) => c.args[1]!).sort((a, b) => a - b);
+    const tall = make({}, 1056, 614, 'pass2').ctx;
+    expect(tall.texts.slice(-3)).toEqual(['NORMAL', 'X1', '25 mm/s']); // the photo's 614 px of lanes: all three
+    const short = make({}, 1056, 485, 'pass2').ctx;
+    expect(short.texts.slice(-2)).toEqual(['NORMAL', '25 mm/s']);
+    for (const ctx of [tall, short]) {
+      const ys = rows(ctx);
+      for (let k = 1; k < ys.length; k++) expect(ys[k]! - ys[k - 1]!).toBeGreaterThanOrEqual(22); // one 22 px row each (18 px text)
+    }
+    expect(short.texts).toEqual(expect.arrayContaining(['120', '10'])); // the middle IBP values still fit at 485 px
+    expect(make({}, 1056, 300, 'pass2').ctx.texts).not.toContain('120'); // … and are left out when they would not
+  });
+
   it('W10: a dotted line at the CO2 scale top (co2.scaleLineTop)', () => {
     const p = pass2(true);
     expect(p.lanes.find((l) => l.channel === 'co2')!.scaleLines).toEqual([50]);
