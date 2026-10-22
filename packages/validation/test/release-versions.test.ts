@@ -1,4 +1,4 @@
-// Stage 8b: every package's exported `version` constant equals its package.json version (1.0.0-rc.2 now), and all
+// Stage 8b: every package's exported `version` constant equals its package.json version (1.0.0-rc.3 now), and all
 // library packages share one version — one number, checked in one place. The constants are read as source text so
 // this package does not type-check the renderer's worker import (vite/client types).
 import { readFileSync } from 'node:fs';

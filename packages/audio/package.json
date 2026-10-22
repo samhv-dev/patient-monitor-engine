@@ -1,6 +1,6 @@
 {
   "name": "@pme/audio",
-  "version": "1.0.0-rc.2",
+  "version": "1.0.0-rc.3",
   "description": "Web Audio QRS beep and IEC-style / traditional / Saadat alarm tones for the patient-monitor engine.",
   "license": "MIT",
   "author": "Ali Mahdavi",

@@ -7,6 +7,13 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ## [Unreleased]
 
+## [1.0.0-rc.3] - 2026-10-23
+
+Third public **pre-release** (release candidate) of a teaching simulator. It is for education only: it is not a
+medical device and it is not clinically validated. It is not the final 1.0.0: the calibration pass and the blind
+realism review have not run. The known limitations listed under 1.0.0-rc.2 and 1.0.0-rc.1 still apply, except where
+this section says otherwise.
+
 ### Added
 
 - Optional skin keys (`pme-skin/1`; a skin without them draws as before): `co2.fill`, `co2.displaySmoothMs`,
@@ -136,6 +143,24 @@ the public API is what the packages export (see the API reference), the `pme-sce
   question E82: `'pause'` by default; `'continue'` does nothing on hide, and the clock then credits the hidden span in
   full on return, as a jump without a fast-forward banner. The monitor's clock credits a frame gap over 1 s
   (`STALL_MS`) in full, as a hidden stretch, instead of clamping it to 250 ms.
+
+### Known limitations
+
+- Windows launchers (`.cmd`): untested on Windows at this release.
+- The classroom kit (the app, the relay for learners' phones and the launchers) is still built from a source checkout
+  with `node scripts/showcase/make-bundle.mjs` (Node.js ≥ 22); it is not a release asset of this release candidate.
+- Not run at this release: the two release-checklist runs of `RELEASE.md` — the 600 s tick-cost gate on an idle
+  machine (item 8) and the 10-minute soak with a busy Ventilator view and a paired Remote (item 9).
+- Browser coverage as for 1.0.0-rc.2: on the WebKit CI runner a test that passes only on a retry is still recorded
+  as a warning, not a failure, until the demo of 28 October (docs/gates/stage-14.md, "Temporary relaxation");
+  Chromium still fails on it. Tests that passed only on a retry are listed in docs/guides/known-deviations.md.
+- A hidden instructor tab pauses the session and resumes it on return (owner ruling E82); this replaces the FX-15
+  limitation listed under 1.0.0-rc.2. The proper fix, a session that keeps running while the tab is hidden, is for a
+  later release.
+- The Persian Debrief handout prints the owner-approved take-home lines; its other terms are drafts marked unreviewed
+  until the owner's term review.
+- The owner's checks: this release candidate gets a smoke check after the tag, recorded in the repository's gate
+  notes.
 
 ## [1.0.0-rc.2] - 2026-10-20
 
@@ -298,6 +323,7 @@ realism review have not run, and the limits below are known.
   the documentation, and a few developer pages are leftovers; a clean-up follows this release candidate, then the
   calibration pass and the realism review.
 
-[Unreleased]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.2...HEAD
+[Unreleased]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.3...HEAD
+[1.0.0-rc.3]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.2...v1.0.0-rc.3
 [1.0.0-rc.2]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.1...v1.0.0-rc.2
 [1.0.0-rc.1]: https://github.com/samhv-dev/patient-monitor-engine/releases/tag/v1.0.0-rc.1
