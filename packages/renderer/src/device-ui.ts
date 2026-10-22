@@ -86,7 +86,8 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-watermark{position:absolute;left:30%;top:2%;font-size:64px;font-weight:700;opacity:.25;pointer-events:none}',
     // Portrait tiles (a phone): a third of the width each, numerics as large as that leaves
     '.pme-portrait .pme-stile{padding:3px 6px;border-left:1px solid var(--pme-divider);min-width:0}',
-    '.pme-portrait .pme-stile .h{font-size:12px;gap:3px}',
+    '.pme-portrait .pme-stile .h{font-size:12px;gap:3px;overflow:hidden}', // F28: a header never runs into the next tile
+    '.pme-portrait .pme-stile .h.tight .u{display:none}', // F28: … and drops its unit when it is wider than the tile (fitHead)
     '.pme-portrait .pme-stile .lim{display:none}',
     '.pme-portrait .pme-stile .v{font-size:min(9vw,36px);white-space:nowrap}',
     '.pme-portrait .pme-stile.large .v{font-size:min(11vw,44px)}',
@@ -652,9 +653,13 @@ export class DeviceUI {
           const measuring = this.nibpEv?.phase === 'inflating' || this.nibpEv?.phase === 'deflating';
           if (!measuring && this.nibpEv?.phase !== 'failed' && this.nibpLast) main = `${this.nibpLast.sys} / ${this.nibpLast.dia}`;
           if (!measuring) sub = n.sub === '(---)' ? '' : n.sub;
-          const mode = tile.el.querySelector('[data-pme="mode"]');
+          const mode = tile.el.querySelector<HTMLElement>('[data-pme="mode"]');
           const time = tile.el.querySelector('[data-pme="ntime"]');
-          if (mode) mode.textContent = nibpModeLabel(this.nibpEv);
+          const label = nibpModeLabel(this.nibpEv);
+          if (mode && mode.dataset.full !== label) {
+            mode.dataset.full = mode.textContent = label;
+            if (this.portrait) this.fitHead(tile.el);
+          }
           if (time) time.textContent = this.nibpWallMs !== null ? formatWallTime(this.nibpWallMs) : '';
         }
       } else if (TILE_NUMERICS[p].numerics.length === 3) {
@@ -706,10 +711,26 @@ export class DeviceUI {
     }
   }
 
+  /**
+   * F28: a portrait tile header wider than its tile (the NIBP "AUTO(5Min) (mmHg)" needs 155 px of a phone's 117) drops
+   * its unit and shortens the mode to "AUTO 5min". Measured only in portrait, so landscape is never touched.
+   */
+  private fitHead(el: HTMLElement): void {
+    const h = el.querySelector('.h') as HTMLElement;
+    const mode = h.querySelector('[data-pme="mode"]') as HTMLElement | null;
+    const full = mode?.dataset.full ?? '';
+    h.classList.remove('tight');
+    if (mode) mode.textContent = full;
+    if (h.scrollWidth <= h.clientWidth) return;
+    h.classList.add('tight');
+    if (mode) mode.textContent = full.replace(/\((\d*)Min\)/, ' $1min');
+  }
+
   private paintHeader(t: number): void {
     const b = barView(this.status, this.r, t, this.pump);
     this.bar.textContent = b.text;
-    this.bar.style.background = b.bg;
+    // F28: a phone's one-row header paints the bar only with a message (no empty grey box for the Saadat-like idle colour)
+    this.bar.style.background = this.portrait && !b.text ? 'transparent' : b.bg;
     this.bar.style.color = b.fg;
     this.bar.className = `pme-bar${b.latched ? ' latched' : ''}`;
     this.bar.dataset.latched = String(b.latched);

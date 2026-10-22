@@ -18,6 +18,9 @@ const LABEL_CHAR_W = 8.5; // CSS px per character of the 14 px label font, gener
 /** A width per character that holds capitals and "m" ("NORMAL" ≈ 60 px, "50mmHg" ≈ 57 px at 14 px): lane-text boxes are clipped. */
 const WIDE_CHAR_W = 10.5;
 const LABEL_STRIP_H = 18; // CSS px: the 14 px label row [ENG]
+/** F28: the row a 14 px scale value occupies. A phone in portrait gives the Saadat-like lanes ≈ 30–41 px, where the
+ *  middle IBP value lands on the top one; it is left out below ≈ 66 px (landscape lanes are ≥ 77 px) [ENG]. */
+const SCALE_ROW_H = 14;
 /** Display smoothing of a capnogram (skin `co2.displaySmoothMs`, owner correction M2): a window whose range is under
  *  1.5 mmHg (the cardiogenic ripple, ≈ 1 mmHg peak to peak) is averaged in full; one over 3 mmHg (an upstroke, a curare
  *  cleft of 3–15 mmHg) is drawn as it is [ENG]. */
@@ -398,11 +401,15 @@ export class MonitorCore {
     const pl = p.lanes[i] as PlanLane;
     const { y: y0, h } = this.laneBox(i);
     const out: Array<{ text: string; color: string; y: number }> = [];
+    // F28: the speed's cleared box must not cover a row above it. On a short lane (a phone in portrait) the second
+    // line goes first (below 60 px), then the speed (below 42 px); the label always stays. Landscape lanes are ≥ 77 px.
+    const speedY = y0 + h - 18;
+    const fits = (y: number) => y + LABEL_STRIP_H <= speedY;
     if (pl.rightLabel) {
       out.push({ text: pl.rightLabel.text, color: pl.rightLabel.color, y: y0 + 6 });
-      if (pl.rightLabel.sub) out.push({ text: pl.rightLabel.sub, color: p.laneText.color, y: y0 + 6 + LABEL_STRIP_H });
+      if (pl.rightLabel.sub && fits(y0 + 6 + LABEL_STRIP_H)) out.push({ text: pl.rightLabel.sub, color: p.laneText.color, y: y0 + 6 + LABEL_STRIP_H });
     }
-    out.push({ text: formatSpeed(pl.mmPerS), color: p.laneText.color, y: y0 + h - 18 });
+    if (!pl.rightLabel || fits(y0 + 6)) out.push({ text: formatSpeed(pl.mmPerS), color: p.laneText.color, y: speedY });
     return out;
   }
 
@@ -513,8 +520,10 @@ export class MonitorCore {
           this.labelTail[i] = w > 0 ? { text: top, w } : null; // the top value at the label row is repainted like a label
         }
         if (pl.range && !p.hideScaleNumbers) {
-          ctx.fillText(`${pl.range[1]}${pl.scaleSuffix}`, 6, lt ? y0 + 6 : y0 + 24);
-          if (pl.scaleMid !== null) ctx.fillText(String(pl.scaleMid), MID_LABEL_X, midLabelY(pl, y0, h));
+          const topY = lt ? y0 + 6 : y0 + 24;
+          ctx.fillText(`${pl.range[1]}${pl.scaleSuffix}`, 6, topY);
+          const midY = pl.scaleMid !== null ? midLabelY(pl, y0, h) : NaN; // NaN: no middle value
+          if (midY >= topY + SCALE_ROW_H && midY + SCALE_ROW_H <= y0 + h - 18) ctx.fillText(String(pl.scaleMid), MID_LABEL_X, midY);
           ctx.fillText(String(pl.range[0]), 6, y0 + h - 18);
         }
         for (const t of this.rightTexts(i)) this.paintRightText(t);
