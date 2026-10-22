@@ -18,9 +18,9 @@ const LABEL_CHAR_W = 8.5; // CSS px per character of the 14 px label font, gener
 /** A width per character that holds capitals and "m" ("NORMAL" ≈ 60 px, "50mmHg" ≈ 57 px at 14 px): lane-text boxes are clipped. */
 const WIDE_CHAR_W = 10.5;
 const LABEL_STRIP_H = 18; // CSS px: the 14 px label row [ENG]
-/** F28: the row a 14 px scale value occupies. A phone in portrait gives the Saadat-like lanes ≈ 30–41 px, where the
- *  middle IBP value lands on the top one; it is left out below ≈ 66 px (landscape lanes are ≥ 77 px) [ENG]. */
-const SCALE_ROW_H = 14;
+/** F28: how far below its top a 14 px capital or digit inks (≈ 10 px, one to spare). A phone in portrait gives the
+ *  Saadat-like lanes ≈ 30–41 px (390 × 664) or ≈ 55–75 px (390 × 844); landscape lanes are ≥ 77 px [ENG]. */
+const INK_H = 11;
 /** Display smoothing of a capnogram (skin `co2.displaySmoothMs`, owner correction M2): a window whose range is under
  *  1.5 mmHg (the cardiogenic ripple, ≈ 1 mmHg peak to peak) is averaged in full; one over 3 mmHg (an upstroke, a curare
  *  cleft of 3–15 mmHg) is drawn as it is [ENG]. */
@@ -401,10 +401,10 @@ export class MonitorCore {
     const pl = p.lanes[i] as PlanLane;
     const { y: y0, h } = this.laneBox(i);
     const out: Array<{ text: string; color: string; y: number }> = [];
-    // F28: the speed's cleared box must not cover a row above it. On a short lane (a phone in portrait) the second
-    // line goes first (below 60 px), then the speed (below 42 px); the label always stays. Landscape lanes are ≥ 77 px.
+    // F28: the speed's cleared box (from speedY − 2) must not reach the ink of a row above it. On a short lane (a phone
+    // in portrait) the second line goes first (lanes under 55 px), then the speed (under 37 px); the label always stays.
     const speedY = y0 + h - 18;
-    const fits = (y: number) => y + LABEL_STRIP_H <= speedY;
+    const fits = (y: number) => y + INK_H <= speedY - 2;
     if (pl.rightLabel) {
       out.push({ text: pl.rightLabel.text, color: pl.rightLabel.color, y: y0 + 6 });
       if (pl.rightLabel.sub && fits(y0 + 6 + LABEL_STRIP_H)) out.push({ text: pl.rightLabel.sub, color: p.laneText.color, y: y0 + 6 + LABEL_STRIP_H });
@@ -522,9 +522,12 @@ export class MonitorCore {
         if (pl.range && !p.hideScaleNumbers) {
           const topY = lt ? y0 + 6 : y0 + 24;
           ctx.fillText(`${pl.range[1]}${pl.scaleSuffix}`, 6, topY);
-          const midY = pl.scaleMid !== null ? midLabelY(pl, y0, h) : NaN; // NaN: no middle value
-          if (midY >= topY + SCALE_ROW_H && midY + SCALE_ROW_H <= y0 + h - 18) ctx.fillText(String(pl.scaleMid), MID_LABEL_X, midY);
-          ctx.fillText(String(pl.range[0]), 6, y0 + h - 18);
+          // F28: the bottom value never inks over the top one (it moves down on lanes under 35 px); the middle one is
+          // left out where it would ink over either (lanes under 60 px)
+          const botY = Math.max(y0 + h - 18, topY + INK_H);
+          const midY = pl.scaleMid !== null ? midLabelY(pl, y0, h) : NaN;
+          if (midY >= topY + INK_H && midY + INK_H <= botY) ctx.fillText(String(pl.scaleMid), MID_LABEL_X, midY);
+          ctx.fillText(String(pl.range[0]), 6, botY);
         }
         for (const t of this.rightTexts(i)) this.paintRightText(t);
         continue;

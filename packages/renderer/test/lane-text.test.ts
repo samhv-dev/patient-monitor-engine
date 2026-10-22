@@ -103,14 +103,20 @@ describe('saadat-like lane text', () => {
     for (const t of ['200', '40', '30', '-10']) expect(ctx.texts).toContain(t);
     expect(ctx.texts).not.toContain('120');
     expect(ctx.texts).not.toContain('10');
+    // the bottom value starts below the top value's ink (≈ 11 px of a 14 px digit): IBP2 is ≈ 34 px, where y0 + h − 18 is 10 px down
+    for (const [top, bottom] of [['200', '40'], ['30', '-10']]) expect(fillTexts(ctx, bottom!)[0]!.args[1]! - fillTexts(ctx, top!)[0]!.args[1]!).toBeGreaterThanOrEqual(11);
   });
 
   it("F28: on a short lane the speed text's cleared box never covers the lane label (NORMAL, IBP, RESP stay whole)", () => {
     const { ctx } = make({}, 390, 215);
     for (const t of ['NORMAL', 'IBP', 'RESP']) expect(ctx.texts).toContain(t);
     const ys = rightRows(ctx);
-    for (let k = 1; k < ys.length; k++) expect(ys[k]! - ys[k - 1]!).toBeGreaterThanOrEqual(18); // one 18 px row each, no overlap
+    for (let k = 1; k < ys.length; k++) expect(ys[k]! - ys[k - 1]!).toBeGreaterThanOrEqual(13); // a cleared box (from y − 2) never reaches the ink (11 px) of the row above
     expect(ctx.texts.filter((t) => t === '25 mm/s')).toHaveLength(1); // the ECG lane, which has no right-hand label, keeps its speed
+  });
+
+  it('F28: a phone at 390 × 844 (394 px: IBP ≈ 63–66 px, PLETH ≈ 55 px) still draws every lane text, as before the guards', () => {
+    expect(make({}, 390, 394).ctx.texts).toEqual(['II  X1  NORMAL', '25 mm/s', 'RESP', '6 mm/s', '200', '120', '40', 'IBP', '25 mm/s', '30', '10', '-10', 'IBP', '25 mm/s', 'NORMAL', 'X1', '25 mm/s']);
   });
 
   it('F28: the smallest landscape canvas (548 px, 1366 × 768: PLETH ≈ 77 px) draws every lane text, the guards do not fire', () => {
