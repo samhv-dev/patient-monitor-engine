@@ -72,6 +72,11 @@ the public API is what the packages export (see the API reference), the `pme-sce
   waves, a tile grid with the PR tile at the top edge and the narrow T column, and a full-width bottom strip with
   %SPO2, PI and the pulse-oximetry labels) (pre-release). Opt-in by the optional skin key `layout.grid`
   (`packages/skins/CONTRACT.md`); other skins keep their tile columns.
+- Persian take-home lines: the owner approved the nine lines of the three showcase-2 cards (2026-10-22, three of them
+  with his edits), now `reviewed: true` in `docs/showcase/i18n/fa-debrief.json`. The Persian Debrief handout
+  (`scripts/showcase/debrief-fa.mjs`) prints a take-home section after the talking points, before the notes, as the
+  English learner handout does: the card's lines in Persian, or three ruled lines when the card has none. Its title
+  «نکته‌های کلیدی» is not yet reviewed, so the handout keeps its unreviewed notice.
 
 ### Fixed
 

@@ -41,7 +41,8 @@ Everything the English Debrief prints, in its order: the title, the case lines (
 duration) and the "Run by" line; the objectives with their verdict words and the reason line; the measured facts with
 the labs row (one lab per line); the six trend charts (captions; the time axis runs left to right as on the monitor);
 drugs and fluids with the bolus totals; the timeline with the undone course struck through and marked «لغوشده با
-بازگشت n»; bookmarks; an empty notes box; the one-row-per-minute appendix; the footer (the release wording of the
+بازگشت n»; bookmarks; the take-home points of the learner handout (the card's lines, else three ruled lines under
+«نکته‌های کلیدی شما»); an empty notes box; the one-row-per-minute appendix; the footer (the release wording of the
 English footer, "Not a medical device and not clinically validated", then the version, «(پیش‌انتشار)» for a
 pre-release, and the build) and «صفحه‌ی n از N» on every page.
 
@@ -68,8 +69,8 @@ from) and `reviewed` (`false` until the owner approves it). It has three parts:
   objective text and the `heldThen` reason lines, written against branch `fix-e22-mh-rule` and on main since PR #69:
   kit round Q1 printed the release build's MH report with 0 strings left in English). The group **takeHome**, last so it
   never shadows an earlier entry, holds the nine take-home lines of the three showcase-2 cards (the owner's English,
-  confirmed 2026-10-21; the Persian is unreviewed). The script does not print the learner handout yet, so it does not
-  use them;
+  confirmed 2026-10-21; the Persian owner-approved 2026-10-22). The script prints them in its take-home section, matched
+  by their exact English;
 - **strings**: exact strings (section titles, verdict words, fixed timeline lines);
 - **templates**: the sentences the app builds (`describe.ts` event lines, `debrief.ts` reasons and facts,
   `alarms.ts` "label high/low") with placeholders: `{t}` mm:ss, `{span}` a duration, `{n}` a number, `{u}` a unit,
@@ -100,7 +101,7 @@ are written in Persian script (اپی‌نفرین، دانترولن، سالب
 
 ## Review status
 
-**Every one of the 495 entries is `reviewed: false`: an unreviewed machine translation until the project's clinical owner reads it.**
+**An entry is `reviewed: false` (an unreviewed machine translation) until the project's clinical owner reads it; 10 of the table's 551 entries are owner-approved (below).**
 While any entry printed in a PDF is unreviewed, the first page carries the line «ترجمه‌ی فارسی این گزارش هنوز به
 تأیید بالینی نرسیده است. متن مرجع، گزارش انگلیسی همین اجراست.»; it disappears by itself when every entry used is set
 to `reviewed: true`. To correct a term, edit its `fa` (keep the placeholders) and set `reviewed: true`; a `note` field
@@ -112,7 +113,12 @@ true of the table until those flags are set.
 
 **Owner approval, 2026-10-19:** the E60 sentence under the key-moments table ("SpO₂ –: no reliable saturation reading
 without a pulse; …") is the first entry set to `reviewed: true`, with the owner's own Persian. His rule for it: the
-prefix "SpO₂ –:" is what the cell shows and is not translated. Every other entry is still `reviewed: false`.
+prefix "SpO₂ –:" is what the cell shows and is not translated.
+
+**Owner approval, 2026-10-22:** the nine take-home lines (group `takeHome`) are `reviewed: true`, three with his edits:
+«نافذ» added to the tamponade line, «از همان ابتدا» for "early" in the MH line, and "Peak" kept in Latin in the
+bronchospasm line. Every other entry (the section title «نکته‌های کلیدی» included) is still `reviewed: false`, so a
+handout still carries the notice above.
 
 ## The Persian-writing pass (skill `persian-writing` 1.4.0)
 
