@@ -71,6 +71,31 @@ describe('two-row header (saadat-like)', () => {
   });
 });
 
+describe('F28: the idle message bar on a phone in portrait', () => {
+  const leads = { id: 'ecgLeadsOff', level: 3 as const, category: 'technical' as const, text: 'ECG CHECK LA/RA/LL', since: 3, latched: false, acked: false };
+  const bg = (ui: DeviceUI) => (ui.header.querySelector('.pme-bar') as HTMLElement).style.background;
+
+  it('saadat-like in portrait: no empty grey box; the bar takes its colour only with a message', () => {
+    const ui = new DeviceUI(document, document.createElement('div'), resolveSkin('saadat-like'), undefined, true);
+    ui.onEvent(status(5, 'adult'));
+    ui.paint(5);
+    expect(bg(ui)).toBe('transparent');
+    ui.onEvent({ ...status(6, 'adult'), active: [leads] } as EngineEvent);
+    ui.paint(6);
+    expect(ui.header.querySelector('.pme-bar')?.textContent).toBe('ECG CHECK LA/RA/LL');
+    expect(bg(ui)).not.toBe('transparent');
+    ui.destroy();
+  });
+
+  it('saadat-like in landscape (the two-row header) keeps its idle grey bar', () => {
+    const ui = new DeviceUI(document, document.createElement('div'), resolveSkin('saadat-like'));
+    ui.onEvent(status(5, 'adult'));
+    ui.paint(5);
+    expect(['#E0E0E0', 'rgb(224, 224, 224)']).toContain(bg(ui));
+    ui.destroy();
+  });
+});
+
 describe('one-row header (philips-like) unchanged', () => {
   it('no second row, no bed; the date as before', () => {
     const r = resolveSkin('philips-like');

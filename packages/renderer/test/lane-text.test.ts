@@ -95,6 +95,31 @@ describe('saadat-like lane text', () => {
     expect(ctx.texts).toContain('IBP');
   });
 
+  // F28 (a phone in portrait, 390 × 664 in Safari: 215 px of canvas for six lanes, ≈ 30–41 px each)
+  const rightRows = (ctx: FakeCtx) => ctx.calls.filter((c) => c.op === 'fillText' && c.style?.startsWith('right:')).map((c) => c.args[1]!).sort((a, b) => a - b);
+
+  it('F28: on a short lane the middle IBP scale value is left out instead of overprinting the top value', () => {
+    const { ctx } = make({}, 390, 215);
+    for (const t of ['200', '40', '30', '-10']) expect(ctx.texts).toContain(t);
+    expect(ctx.texts).not.toContain('120');
+    expect(ctx.texts).not.toContain('10');
+  });
+
+  it("F28: on a short lane the speed text's cleared box never covers the lane label (NORMAL, IBP, RESP stay whole)", () => {
+    const { ctx } = make({}, 390, 215);
+    for (const t of ['NORMAL', 'IBP', 'RESP']) expect(ctx.texts).toContain(t);
+    const ys = rightRows(ctx);
+    for (let k = 1; k < ys.length; k++) expect(ys[k]! - ys[k - 1]!).toBeGreaterThanOrEqual(18); // one 18 px row each, no overlap
+    expect(ctx.texts.filter((t) => t === '25 mm/s')).toHaveLength(1); // the ECG lane, which has no right-hand label, keeps its speed
+  });
+
+  it('F28: the smallest landscape canvas (548 px, 1366 × 768: PLETH ≈ 77 px) draws every lane text, the guards do not fire', () => {
+    const at = (h: number) => make({}, 1056, h).ctx.texts;
+    const small = at(548);
+    expect(small).toEqual(at(600));
+    expect(small).toEqual(['II  X1  NORMAL', '25 mm/s', 'RESP', '6 mm/s', '200', '120', '40', 'IBP', '25 mm/s', '30', '10', '-10', 'IBP', '25 mm/s', 'NORMAL', 'X1', '25 mm/s']);
+  });
+
   it('pages that name their lanes keep the old chrome', () => {
     const p = renderPlan(resolveSkin('saadat-like'), undefined, { lanes: ['ecgII'], waves: ['abp'] });
     expect(p.laneText).toBeNull();
