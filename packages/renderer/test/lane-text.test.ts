@@ -141,6 +141,14 @@ describe('saadat-like lane text, the rc.3 chrome (a phone in portrait)', () => {
     expect(small).toEqual(['II  X1  NORMAL', '25 mm/s', 'RESP', '6 mm/s', '200', '120', '40', 'IBP', '25 mm/s', '30', '10', '-10', 'IBP', '25 mm/s', 'NORMAL', 'X1', '25 mm/s']);
   });
 
+
+  it('F28 after pass 2: on a 37–40 px lane the label\'s cleared box never reaches the speed\'s ink (the speed goes)', () => {
+    for (const cssH of [215, 223, 230, 240, 250]) {
+      const { ctx } = make({}, 390, cssH);
+      const rows = ctx.calls.filter((c) => c.op === 'fillText' && c.style?.startsWith('right:')).map((c) => c.args[1]!).sort((a, b) => a - b);
+      for (let k = 1; k < rows.length; k++) expect(rows[k]! - rows[k - 1]!, `${cssH} px`).toBeGreaterThanOrEqual(16); // box y − 2 … y + 16 vs ink from y + 0.6
+    }
+  });
 });
 
 describe('saadat-like lane text, pass 2 (landscape: IMG_8113 rows T1, T2, G1, G2, W2, W5, W10, W11)', () => {

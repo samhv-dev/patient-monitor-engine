@@ -599,7 +599,9 @@ export class MonitorCore {
       out.push({ text: pl.rightLabel.text, color: pl.rightLabel.color, y: y0 + 6 });
       if (pl.rightLabel.sub && fits(y0 + 6 + LABEL_STRIP_H)) out.push({ text: pl.rightLabel.sub, color: p.laneText.color, y: y0 + 6 + LABEL_STRIP_H });
     }
-    if (!pl.rightLabel || fits(y0 + 6)) out.push({ text: formatSpeed(pl.mmPerS), color: p.laneText.color, y: speedY });
+    // … and the label's own cleared box (to y + 16) must not reach the speed's ink (from speedY): lanes of 37–40 px, which
+    // a phone gets once E114 drops the CO2 tile's bell row (Saadat pass 2), kept both and the label's box cut the speed
+    if (!pl.rightLabel || (fits(y0 + 6) && y0 + 6 + LABEL_STRIP_H - 2 <= speedY)) out.push({ text: formatSpeed(pl.mmPerS), color: p.laneText.color, y: speedY });
     return out;
   }
 
