@@ -1,6 +1,6 @@
 {
   "name": "@pme/skins",
-  "version": "1.0.0-rc.2",
+  "version": "1.0.0-rc.3",
   "description": "Data-only monitor skins and themes (saadat-like, philips-like, zoll-like, ge-like, mindray-like, lifepak-like) with JSON Schemas and provenance.",
   "license": "MIT",
   "author": "Ali Mahdavi",

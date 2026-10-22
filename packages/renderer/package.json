@@ -1,6 +1,6 @@
 {
   "name": "@pme/renderer",
-  "version": "1.0.0-rc.2",
+  "version": "1.0.0-rc.3",
   "description": "Canvas2D sweep renderer, numerics and mountMonitor() for the patient-monitor engine; also ships the single-file IIFE (window.PatientMonitor).",
   "license": "MIT",
   "author": "Ali Mahdavi",
