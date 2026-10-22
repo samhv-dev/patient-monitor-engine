@@ -59,8 +59,11 @@ shots.
   this branch alone, because they are what F28 fixes. Merging the two PRs needs:
   - one hand-merge in `paintHeader`: `(this.two || this.portrait) && !b.text`;
   - one flipped expectation in F28's `header-two-row.test.ts`: the two-row idle bar is now transparent (C3).
-- **Landscape 1024 × 640.** The pleth lane is about 68 px high, so its "X1" line gives way to the speed (a new fit
-  guard). Every other text stays.
+- **Landscape 1024 × 640.** The pleth lane is about 68 px high. Every lane text still fits, because "X1" shares the
+  speed's row, left of it, as in the photo. New fit guards drop a second right-aligned line, and then a middle scale
+  value, when a lane is too short for them (unit-tested).
+- **`sweep.pxPerMm` applies in portrait too:** it is the device's screen scale, not lane chrome.
+- **In-run review:** a fresh reviewer scored every row. Its fixes are in, and the record is in the run notes.
 
 Superseded: the saadat-like shots in `../saadat-pr-g/`, `../saadat-pr-l/` and `../saadat-pr-t/` show rc.3, not this
 pass.
