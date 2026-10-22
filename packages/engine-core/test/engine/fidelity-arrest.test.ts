@@ -109,7 +109,11 @@ describe('an agonal rhythm shows ONE arrest alarm', () => {
     async (skin) => {
       const run = await monitorRun({ mode: 'manual', skin, tEnd: 300, steps: [...VENTED, [60, M.rhythm('agonal', { pulseless: true })]] });
       expect(raisedAt(run, 'ASYSTOLE').length).toBeLessThanOrEqual(1);
-      expect(run.alarms.filter((a) => a.state === 'raised' && (a.id === 'EXTREME_BRADY' || a.id === 'HR_LOW') && a.t > 60).map((a) => `${a.id}@${a.t}`)).toEqual([]);
+      // E114 (Saadat fidelity pass 2): saadat-like now powers on with its limit alarms ON, and it has no EXTREME BRADY (its
+      // BRADY is an arrhythmia alarm, off by default) — so a 12/min agonal rhythm under the 50 limit is HR TOO LOW, beside
+      // the arrest alarm, as on the real unit; the other skins chain it under EXTREME BRADY / ASYSTOLE
+      const brady = skin === 'saadat-like' ? ['EXTREME_BRADY'] : ['EXTREME_BRADY', 'HR_LOW'];
+      expect(run.alarms.filter((a) => a.state === 'raised' && brady.includes(a.id) && a.t > 60).map((a) => `${a.id}@${a.t}`)).toEqual([]);
       const red = run.alarms.filter((a) => a.level === 1 && a.t > 60);
       for (let i = 0; i + 1 < red.length; i++) if (red[i]?.state === 'raised') {
         const c = red.slice(i + 1).find((x) => x.id === red[i]?.id);
