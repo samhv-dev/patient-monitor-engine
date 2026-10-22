@@ -79,6 +79,11 @@ export interface LaneTextLabel {
   text: string;
   color?: string;
   sub?: string;
+  /**
+   * Pass 2 (optional, with `gutterPx`): the label LEFT-aligned this far left of the wave column's right edge, its second
+   * line on the speed's row (IMG_8113: the pleth "NORMAL" over "X1" at x 602, beside "25 mm/s"). Absent = right-aligned.
+   */
+  leftInsetPx?: number;
 }
 /**
  * layout.laneText: lane text as on the real unit. Every key but `labels` is optional and opt-in (Saadat fidelity pass 2,

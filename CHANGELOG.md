@@ -13,7 +13,7 @@ the public API is what the packages export (see the API reference), the `pme-sce
   rc.3 photo review. Lanes: 18 px lane text, traces from x 0 (ECG) and x 18 (the others) with the text printed over the
   trace and the CO2 fill (no black boxes), the ECG label's parts and the scale values in their photographed columns,
   the right-hand texts 45 px in, no 1 mV bar, a 10 px erase gap, 2 px traces, the screen's 3.10 px/mm and a dotted
-  line at the CO2 scale top. Tiles: bold labels at the photographed sizes (PR 37 px, EtCo2 21 px), the rate source
+  line at the CO2 scale top. Tiles: bold labels at the photographed sizes (EtCo2 21 px; the PR label 41 px, regular), the rate source
   centred, the PACE/ST/PVCs lines spread down the PR tile, the NIBP mean 30 px and its mode centred, the T column, the
   CO2 parts and units, "( )" for a blank mean, the strip framed, %SpMet and SpHb in their photographed colours.
   Header: the rule under the first row, BED 01 white, the page box the full row high, no grey bar and no lamp while
@@ -25,7 +25,7 @@ the public API is what the packages export (see the API reference), the `pme-sce
   - E116: the second ECG lane repeats lead II (`ecg.laneLeads: ["II", "II"]`).
 
   New optional skin keys (a skin without them draws as before; a phone in portrait keeps the rc.3 lane chrome):
-  `layout.laneText.fontPx`, `gutterPx`, `rightInsetPx`, `ecgLabelX`, `scaleX`; `layout.grid.labelPx`, `labelWeight`;
+  `layout.laneText.fontPx`, `gutterPx`, `rightInsetPx`, `ecgLabelX`, `scaleX`, `labels.<lane>.leftInsetPx`; `layout.grid.labelPx`, `labelWeight`;
   `sweep.pxPerMm`; `co2.scaleLineTop`; a strip field's `color` may be a hex. See `packages/skins/CONTRACT.md`.
 
 ### Fixed

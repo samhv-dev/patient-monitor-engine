@@ -466,11 +466,17 @@ export class MonitorCore {
     const right = this.size.cssW - lt.insetPx;
     const speedY = y0 + h - row;
     const fits = (y: number) => y + row <= speedY;
-    if (pl.rightLabel) {
+    const li = pl.rightLabel?.leftInsetPx;
+    if (pl.rightLabel && li !== undefined) {
+      // a left-aligned block (the pleth "NORMAL" over "X1"): its second line on the speed's row, left of the speed
+      const x = this.size.cssW - li;
+      out.push({ text: pl.rightLabel.text, color: pl.rightLabel.color, x, y: y0 + OVER_RIGHT_Y, align: 'left' });
+      if (pl.rightLabel.sub && speedY >= y0 + OVER_RIGHT_Y + row) out.push({ text: pl.rightLabel.sub, color: lt.color, x, y: speedY, align: 'left' });
+    } else if (pl.rightLabel) {
       out.push({ text: pl.rightLabel.text, color: pl.rightLabel.color, x: right, y: y0 + OVER_RIGHT_Y, align: 'right' });
       if (pl.rightLabel.sub && fits(y0 + OVER_RIGHT_Y + row)) out.push({ text: pl.rightLabel.sub, color: lt.color, x: right, y: y0 + OVER_RIGHT_Y + row, align: 'right' });
     }
-    if (!pl.rightLabel || fits(y0 + OVER_RIGHT_Y)) out.push({ text: formatSpeed(pl.mmPerS), color: lt.color, x: right, y: speedY, align: 'right' });
+    if (!pl.rightLabel || li !== undefined || fits(y0 + OVER_RIGHT_Y)) out.push({ text: formatSpeed(pl.mmPerS), color: lt.color, x: right, y: speedY, align: 'right' });
     return out;
   }
 

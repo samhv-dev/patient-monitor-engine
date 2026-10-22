@@ -169,7 +169,9 @@ export class SweepLane {
     ctx.clip();
     ctx.fillStyle = h.color;
     for (const v of h.values) {
-      const y = Math.min(c.y + c.height - s, Math.max(c.y, Math.round(this.yOf(v) * this.dpr) / this.dpr));
+      // a line on either edge is drawn one dot inside the lane (review L-1; pass 2 W10: a top-edge dot on a fractional lane
+      // top was half outside the lane and faded to 34/255)
+      const y = Math.min(c.y + c.height - s, Math.max(Math.ceil(c.y * this.dpr) / this.dpr + s, Math.round(this.yOf(v) * this.dpr) / this.dpr));
       for (let k = Math.max(0, Math.ceil((r[0] - c.x - s) / DOT_PITCH_PX)); c.x + k * DOT_PITCH_PX < Math.min(r[0] + r[2], c.x + c.width); k++) {
         ctx.fillRect(c.x + k * DOT_PITCH_PX, y, s, s);
       }

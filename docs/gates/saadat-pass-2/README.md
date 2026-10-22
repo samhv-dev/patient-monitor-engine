@@ -34,7 +34,7 @@ shots.
 
 | File | What |
 |---|---|
-| `composite-photo-vs-build-1280x800.png` | photo, then this branch, then the 50 % overlay |
+| `composite-photo-vs-build-1280x800.png` | photo, then this branch (after the in-run review fixes), then the 50 % overlay |
 | `composite-photo-vs-main-1280x800.png` | the same composite for main 695ca78c (the "before") |
 | `build-1280x800.png`, `build-1920x1080.png`, `build-1024x640.png` | this branch at three landscape sizes |
 | `portrait-390x664-chromium.png`, `portrait-390x664-webkit.png` | this branch on a phone in portrait (`mountMonitor` `portrait`) |

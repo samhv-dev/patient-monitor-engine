@@ -11,7 +11,7 @@ describe('pass 2 skin keys', () => {
   it('saadat-like carries them; no other skin does', () => {
     const s = resolveSkin('saadat-like').skin;
     expect(s.layout.laneText).toMatchObject({ fontPx: 18, gutterPx: { ecg: 0, wave: 18 }, rightInsetPx: 45, ecgLabelX: [10, 65, 183], scaleX: { edge: 30, mid: 85 } });
-    expect(s.layout.grid).toMatchObject({ labelPx: { HR: 37, CO2: 21, TEMP: 20 }, labelWeight: 700 });
+    expect(s.layout.grid).toMatchObject({ labelPx: { HR: 41, CO2: 21, TEMP: 20 }, labelWeight: 700 });
     expect(s.sweep).toMatchObject({ gapPx: 10, lineWidthPx: 2, pxPerMm: 3.1 });
     expect(s.co2.scaleLineTop).toBe(true);
     expect(s.ecg.laneLeads).toEqual(['II', 'II']); // E116

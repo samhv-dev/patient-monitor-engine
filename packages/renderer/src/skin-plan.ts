@@ -30,7 +30,7 @@ export interface PlanLane {
   /** The middle scale value printed beside its line; null = none. */
   scaleMid: number | null;
   /** The label at the right of a wave lane (skin `layout.laneText`); null = the old label at the left. */
-  rightLabel: { text: string; color: string; sub?: string } | null;
+  rightLabel: { text: string; color: string; sub?: string; leftInsetPx?: number } | null;
   /** Unit printed after the top scale value ('mmHg' on a CO2 lane with lane text, as "50mmHg"); '' = none. */
   scaleSuffix: string;
 }
@@ -156,7 +156,7 @@ export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride, 
     return { id, kind: 'wave', channel: WAVE_CHANNEL[id] ?? null, color, mmPerS, gainMmPerMv: 10, autoGain: false, gainOptions: [], range, label: id === 'PLETH' ? 'PLETH' : id, fill: id === 'CO2' && s.co2.fill === true,
       smoothMs: id === 'CO2' ? (s.co2.displaySmoothMs ?? 0) : 0,
       scaleLines: dotted && sc ? [sc[2], sc[1], sc[0]] : id === 'CO2' && s.co2.scaleLineTop && range ? [range[1]] : null, scaleMid: dotted && sc ? sc[1] : null,
-      rightLabel: lt ? rightLabel(lt.labels?.[id], id === 'PLETH' ? 'PLETH' : id, r.render.foreground) : null,
+      rightLabel: lt ? rightLabel(lt.labels?.[id], id === 'PLETH' ? 'PLETH' : id, r.render.foreground, !portrait) : null,
       scaleSuffix: lt && id === 'CO2' ? s.co2.scaleUnit : '' };
   });
   return {
@@ -198,8 +198,8 @@ function laneTextPlan(lt: LaneText, color: string, portrait: boolean): LaneTextP
   };
 }
 
-function rightLabel(l: LaneTextLabel | undefined, text: string, fg: string): PlanLane['rightLabel'] {
-  return { text: l?.text ?? text, color: l?.color ?? fg, ...(l?.sub ? { sub: l.sub } : {}) };
+function rightLabel(l: LaneTextLabel | undefined, text: string, fg: string, landscape: boolean): PlanLane['rightLabel'] {
+  return { text: l?.text ?? text, color: l?.color ?? fg, ...(l?.sub ? { sub: l.sub } : {}), ...(landscape && l?.leftInsetPx !== undefined ? { leftInsetPx: l.leftInsetPx } : {}) };
 }
 
 /** The legacy look (monitor-core THEME, WAVE_STYLE) for pages that pass `lanes`/`waves` and no skin. */

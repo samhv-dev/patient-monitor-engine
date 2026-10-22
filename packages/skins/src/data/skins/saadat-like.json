@@ -58,7 +58,7 @@
       "co2": { "lanes": { "RESP": "CO2" }, "tiles": { "RR": { "param": "CO2", "extras": ["IMCO2", "AWRR"], "split": "row", "parts": [{ "label": "EtCo2", "unit": "mmHg", "limit": "EtCO2" }, { "label": "FiCo2", "unit": "mmHg" }, { "label": "AWRR", "unit": "BrPM", "limit": "AWRR" }] } } }
     },
     "laneText": {
-      "labels": { "IBP1": { "text": "IBP" }, "IBP2": { "text": "IBP" }, "PLETH": { "text": "NORMAL", "color": "#ECE84A", "sub": "X1" } },
+      "labels": { "IBP1": { "text": "IBP" }, "IBP2": { "text": "IBP" }, "PLETH": { "text": "NORMAL", "color": "#ECE84A", "sub": "X1", "leftInsetPx": 218 } },
       "fontPx": 18,
       "gutterPx": { "ecg": 0, "wave": 18 },
       "rightInsetPx": 45,
@@ -70,7 +70,7 @@
       "columns": [362, 97],
       "rows": [175, 138, 101, 97, 96, 77],
       "fontPx": { "HR": 109, "NIBP": 57, "CO2": 52, "IBP1": 46, "IBP2": 46, "SpO2": 78, "field": 57, "label": 18, "limit": 15 },
-      "labelPx": { "HR": 37, "CO2": 21, "TEMP": 20 },
+      "labelPx": { "HR": 41, "CO2": 21, "TEMP": 20 },
       "labelWeight": 700,
       "cells": [
         { "params": ["HR"], "row": 1, "col": 1, "colSpan": 2 },
@@ -292,11 +292,12 @@
     "layout.laneText.fontPx": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (T1)", "note": "pass 2: \"25 mm/s\" is 70 px wide (14 px Arial: 54 px), digits 13 px high; was 14 px" },
     "layout.laneText.gutterPx": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (G1, W2, W5)", "note": "pass 2: the ECG traces start at x ≈ 0, the CO2/IBP/pleth traces at x ≈ 18; the lane text and scale values are printed over the trace, the fill visible around them; no 1 mV bar (ecg.calPulse.defaultOn false). Was the 56 px chrome column" },
     "layout.laneText.rightInsetPx": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (G2)", "note": "pass 2: \"25 mm/s\", \"IBP\" and the CO2 label end at x ≈ 775 of the 820 px wave column; was 6" },
+    "layout.laneText.labels.PLETH.leftInsetPx": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; in-run review of pass 2 (G2, pleth)", "note": "pass 2: \"NORMAL\" over \"X1\" left-aligned at x ≈ 602 of the 820 px wave column (218 px from its right edge), \"X1\" on the speed's row" },
     "layout.laneText.ecgLabelX": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (T2)", "note": "pass 2: \"II\" x 10, \"X4\" x 65, \"NORMAL\" x 183" },
     "layout.laneText.scaleX": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (W11)", "note": "pass 2: \"130\"/\"30\" and \"100\"/\"40\" at x ≈ 30, the middle \"80\"/\"70\" at x ≈ 85 across its dotted line" },
     "layout.laneText.labels.PLETH.color": { "tag": "measured", "source": "research/34 §8 (owner-approved mock-up, scratch/skin-mockup/NOTES.md colours, white-balance corrected, 2026-10-20)", "note": "pleth \"NORMAL\" label" },
     "layout.grid.fontPx.label": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (T3)", "note": "pass 2: tile labels cap height ≈ 13 px; was 16 px" },
-    "layout.grid.labelPx": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (T4, T5, T10)", "note": "pass 2: \"PR\" 37 px, \"EtCo2\" 21 px, T1/T2/DT 20 px" },
+    "layout.grid.labelPx": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (T4, T5, T10)", "note": "pass 2: \"PR\" 41 px (cap height 30 px, regular weight), \"EtCo2\" 21 px, T1/T2/DT 20 px" },
     "layout.grid.labelWeight": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (T3)", "note": "pass 2: the tile and strip labels are bold (NIBP, IBP1, EtCo2, %SPO2, PI …); was regular" },
     "layout.grid.strip.fields": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (C5, C6)", "note": "pass 2: SpHb label white (the NIBP key, was the PI purple); %SpMet #ECE84A, its own hue (was the CO2 key #F0F000)" },
     "layout.headerStyle": { "tag": "measured", "source": "research/34 §3 row 7 (IMG_8113); research/34 §8 (owner-approved mock-up, scratch/skin-mockup/NOTES.md, 2026-10-20)", "note": "BED 01 and PEDIATRIC in yellow at the left, date over time at the right; the message bar on its own row under them, 43 % of the wave-area width. Header row 5.8 %, bar row 3.0 % of the screen height [MOCKUP]" },

@@ -232,18 +232,33 @@ describe('saadat-like lane text, pass 2 (landscape: IMG_8113 rows T1, T2, G1, G2
     expect(renderPlan(resolveSkin('philips-like')).pxPerMm).toBeNull();
   });
 
-  it('fit guards: a short landscape lane (1024 × 640: a 485 px canvas, PLETH ≈ 68 px) drops the pleth "X1" before its speed; no right-hand rows overlap', () => {
+  it('fit guards: on a short landscape lane (1024 × 640: a 485 px canvas, PLETH ≈ 68 px) no right-hand rows overlap; a second right-aligned line goes before the speed', () => {
     const rows = (ctx: FakeCtx) => ctx.calls.filter((c) => c.op === 'fillText' && c.style?.startsWith('right:')).map((c) => c.args[1]!).sort((a, b) => a - b);
     const tall = make({}, 1056, 614, 'pass2').ctx;
     expect(tall.texts.slice(-3)).toEqual(['NORMAL', 'X1', '25 mm/s']); // the photo's 614 px of lanes: all three
     const short = make({}, 1056, 485, 'pass2').ctx;
-    expect(short.texts.slice(-2)).toEqual(['NORMAL', '25 mm/s']);
+    expect(short.texts.slice(-3)).toEqual(['NORMAL', 'X1', '25 mm/s']); // the pleth block is left-aligned: X1 shares the speed's row
+    // a right-aligned label with a second line (the pleth without its leftInsetPx) loses the second line first
+    const plain = pass2(false);
+    const pleth = plain.lanes.find((l) => l.id === 'PLETH')!;
+    delete pleth.rightLabel!.leftInsetPx;
+    const ctx2 = new FakeCtx();
+    new MonitorCore({ width: 0, height: 0 }, ctx2, { cssW: 1056, cssH: 485, dpr: 1 }, { engine: { seed: 1, device: { skin: 'saadat-like' } }, plan: plain }, () => {});
+    expect(ctx2.texts.slice(-2)).toEqual(['NORMAL', '25 mm/s']);
     for (const ctx of [tall, short]) {
       const ys = rows(ctx);
       for (let k = 1; k < ys.length; k++) expect(ys[k]! - ys[k - 1]!).toBeGreaterThanOrEqual(22); // one 22 px row each (18 px text)
     }
     expect(short.texts).toEqual(expect.arrayContaining(['120', '10'])); // the middle IBP values still fit at 485 px
     expect(make({}, 1056, 300, 'pass2').ctx.texts).not.toContain('120'); // … and are left out when they would not
+  });
+
+  it('G2 (pleth): "NORMAL" over "X1" left-aligned 218 px left of the right edge, "X1" on the speed\'s row (labels.PLETH.leftInsetPx)', () => {
+    const { ctx } = make({}, 1056, 600, 'pass2');
+    const [n, x1, sp] = [fillTexts(ctx, 'NORMAL').find((c) => c.color === '#ECE84A')!, fillTexts(ctx, 'X1').at(-1)!, fillTexts(ctx, '25 mm/s').at(-1)!];
+    expect([n.style, n.args[0]]).toEqual(['left:NORMAL', 1056 - 218]);
+    expect([x1.style, x1.args[0], x1.args[1]]).toEqual(['left:X1', 1056 - 218, sp.args[1]]);
+    expect(renderPlan(resolveSkin('saadat-like'), undefined, undefined, true).lanes.at(-1)!.rightLabel!.leftInsetPx).toBeUndefined(); // portrait: rc.3
   });
 
   it('W10: a dotted line at the CO2 scale top (co2.scaleLineTop)', () => {

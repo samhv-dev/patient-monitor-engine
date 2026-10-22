@@ -146,7 +146,7 @@ export const skinSchema: JsonSchema = {
       headerStyle: en(['two-row']),
       showAlways: arr(en(TILE_PARAMS), 1),
       laneText: obj({}, {
-        labels: obj({}, Object.fromEntries(LANE_IDS.map((k) => [k, obj({ text: str }, { color: hex, sub: str })]))),
+        labels: obj({}, Object.fromEntries(LANE_IDS.map((k) => [k, obj({ text: str }, { color: hex, sub: str, leftInsetPx: num(0, 800) })]))),
         // pass 2 (opt-in, landscape only): lane text size, the trace gutter, the right inset, the ECG label anchors and
         // the scale-value columns (types.ts LaneText)
         fontPx: num(8, 40),

@@ -45,7 +45,7 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-hdr.two .r2{display:flex;align-items:center;gap:8px;height:max(22px,calc(3 * var(--pme-h, 0px) / 100));padding:0 8px 0 0;box-sizing:border-box}',
     // pass 2 (IMG_8113): the rule under row 1, not under the bar row (G3); the bar 45 px in, its text centred (C3); the
     // page box the full row high, flush left, regular (G4, T13); the header text 17 px (T13)
-    '.pme-hdr.two .r1{border-bottom:1px solid var(--pme-hdr-rule, transparent)}',
+    '.pme-hdr.two .r1{border-bottom:1px solid var(--pme-hdr-rule, transparent);gap:2px}',
     '.pme-hdr.two .r2{padding-left:5.5%}',
     '.pme-hdr.two .r2 .pme-bar{flex:none;width:calc(0.43 * (100% - var(--pme-tiles-w, 0px)));font-weight:400;text-align:center}',
     '.pme-hdr.two .pg{font-size:16px;padding:0 10px;margin-left:-8px;font-weight:400;align-self:stretch;display:flex;align-items:center}',
@@ -159,10 +159,13 @@ function photoCss(g: LayoutGrid): string[] {
   return [
     // T3: label weight (tiles, split parts, the strip)
     ...(w ? [`.pme-grid .pme-stile [data-pme="lbl"],.pme-grid .pme-stile .ph .pl,.pme-strip .pme-stile [data-pme="lbl"],.pme-sfield .pl{font-weight:${w}}`] : []),
-    // T4/T5/T10: a tile's own label size (PR 37, EtCo2 21, T1/T2/DT 20)
+    // T4/T5/T10: a tile's own label size (PR 41, EtCo2 21, T1/T2/DT 20); the PR label itself is regular weight (IMG_8113:
+    // 2–3 px stems at a 30 px cap height)
     ...own,
+    '.pme-grid .pme-stile.rc3[data-param="HR"] [data-pme="lbl"]{font-weight:400}',
     // T4: "BPM" beside the PR label on its baseline; T12: units 14 px
     '.pme-grid .pme-stile.rc3 .h .u{font-size:' + f(14) + '}',
+    `.pme-grid .pme-stile.rc3[data-param^="IBP"] .h .u{font-size:${f(18)}}`, // the IBP "(mmHg)" is larger (62 px wide)
     '.pme-grid .pme-stile.rc3[data-param="HR"] .h{align-items:baseline}',
     '.pme-grid .pme-stile.rc3[data-param="HR"] .h .u{margin-left:0}',
     // T6: the rate source "(ECG)" / "(SPO2)" 18 px, centred at the top of the PR tile
@@ -174,6 +177,7 @@ function photoCss(g: LayoutGrid): string[] {
     '.pme-grid .pme-stile.rc3[data-param="HR"] .lim.a{align-self:flex-end}',
     // T8: the NIBP mean 30 px under the slash, its limits left of it; T9: the mode 16 px centred at the top
     `.pme-grid .pme-stile.rc3[data-param="NIBP"] .srow .s{font-size:${f(30)};text-align:center}`,
+    `.pme-grid .pme-stile.rc3[data-param="NIBP"] .srow{margin-top:${f(14)}}`,
     `.pme-grid .pme-stile.rc3[data-param="NIBP"] .lim.c{margin-left:${f(70)}}`,
     `.pme-grid .pme-stile.rc3[data-param="NIBP"] [data-pme="ntime"]{font-size:${f(15)};margin-right:${f(50)}}`,
     `.pme-grid .pme-stile.rc3[data-param="NIBP"] [data-pme="mode"]{position:absolute;left:50%;top:${f(4)};transform:translateX(-50%);font-size:${f(16)}}`,
@@ -189,6 +193,8 @@ function photoCss(g: LayoutGrid): string[] {
     '.pme-grid .pme-stile.split.row .pv{text-align:center}',
     '.pme-grid .pme-stile.split.row .part{position:relative}',
     '.pme-grid .pme-stile.split.row .part:last-child:not(:first-child) .lim{position:absolute;right:0;top:0}',
+    // … so the split row's bell goes to the bottom right, as the T column's °C does (it printed over the AWRR limit)
+    `.pme-grid .pme-stile.split.row>.h{top:auto;bottom:${f(4)}}`,
     // G6: the %SPO2 value left of centre, after its limits
     `.pme-strip .pme-stile .v{text-align:left;padding-left:${f(18)}}`,
     // G5: the strip as a framed box (x 6–1278)
