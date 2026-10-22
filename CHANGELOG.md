@@ -7,6 +7,27 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ## [Unreleased]
 
+### Changed
+
+- Saadat fidelity pass 2: the Saadat-like skin drawn as the owner's photo of a real unit (IMG_8113), row by row from the
+  rc.3 photo review. Lanes: 18 px lane text, traces from x 0 (ECG) and x 18 (the others) with the text printed over the
+  trace and the CO2 fill (no black boxes), the ECG label's parts and the scale values in their photographed columns,
+  the right-hand texts 45 px in, no 1 mV bar, a 10 px erase gap, 2 px traces, the screen's 3.10 px/mm and a dotted
+  line at the CO2 scale top. Tiles: bold labels at the photographed sizes (EtCo2 21 px; the PR label 41 px, regular), the rate source
+  centred, the PACE/ST/PVCs lines spread down the PR tile, the NIBP mean 30 px and its mode centred, the T column, the
+  CO2 parts and units, "( )" for a blank mean, the strip framed, %SpMet and SpHb in their photographed colours.
+  Header: the rule under the first row, BED 01 white, the page box the full row high, no grey bar and no lamp while
+  nothing alarms. Owner rulings:
+  - E114: the Saadat-like parameter alarms are ON at power-on (`alarms.factoryEnabled: true`); a crossed bell shows
+    only beside an alarm that is off (ST and PVCs analysis are off). The `iran-icu-as-found` preset keeps them off.
+  - E115: limits the tiles print and the alarms honour: HR 150/50, SpO2 90, NIBP 160/90 and 100/50, EtCO2 50/30 mmHg
+    (the `EtCO2` key, was `EtCO2_pctV` 6.5/2.6 %V), AWRR 30/5, arterial line 165/70 and 100/35, T1 and T2 39.0/35.0.
+  - E116: the second ECG lane repeats lead II (`ecg.laneLeads: ["II", "II"]`).
+
+  New optional skin keys (a skin without them draws as before; a phone in portrait keeps the rc.3 lane chrome):
+  `layout.laneText.fontPx`, `gutterPx`, `rightInsetPx`, `ecgLabelX`, `scaleX`, `labels.<lane>.leftInsetPx`; `layout.grid.labelPx`, `labelWeight`;
+  `sweep.pxPerMm`; `co2.scaleLineTop`; a strip field's `color` may be a hex. See `packages/skins/CONTRACT.md`.
+
 ### Fixed
 
 - **F28: the Saadat-like learner monitor on a phone held upright.** At a phone's real visible height (Safari with its

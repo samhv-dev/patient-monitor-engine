@@ -8,7 +8,7 @@ import { DEFAULT_PX_PER_MM } from './calibration.ts';
 import type { Ctx2D } from './ctx.ts';
 import { drawLeadOffDashes, drawMark, Overlays, shows } from './overlays.ts';
 import type { ClockAnchor, CoreOptions, Size } from './protocol.ts';
-import { ecgLabel, formatSpeed, legacyPlan, type PlanLane, type RenderPlan } from './skin-plan.ts';
+import { ecgLabel, formatSpeed, legacyPlan, type LaneTextPlan, type PlanLane, type RenderPlan } from './skin-plan.ts';
 import { SweepLane } from './sweep-lane.ts';
 import { autoRange, scaleFor } from './wave-lanes.ts';
 
@@ -31,6 +31,19 @@ function midLabelY(pl: PlanLane, y0: number, h: number): number {
   const [lo, hi] = pl.range as [number, number];
   return y0 + ((hi - (pl.scaleMid as number)) / (hi - lo)) * h - 13;
 }
+/** Pass 2 (lane-text gutter): a lane text drawn over the trace, left- or right-aligned at x, its top at y (CSS px). */
+interface OverText {
+  text: string;
+  color: string;
+  x: number;
+  y: number;
+  align: 'left' | 'right';
+}
+const sameText = (a: OverText, b: OverText) => a.text === b.text && a.color === b.color && a.x === b.x && a.y === b.y && a.align === b.align;
+/** Pass 2: how far under the lane top the ECG label, the top scale value and the right-hand label start (IMG_8113, ±2 px). */
+const OVER_ECG_Y = 14;
+const OVER_TOP_Y = 6;
+const OVER_RIGHT_Y = 12;
 const LABEL_REPAINT_SLACK_PX = 24; // keep repainting the label tail a few frames after the erase bar passed [ENG]
 // Impedance auto-scale never spans less than 0.5 units (a 250 mL breath), so the cardiogenic ripple (0.1) stays small
 // in apnoea instead of being gained up to a full-height trace that reads as tachypnoea.
@@ -73,7 +86,11 @@ export class MonitorCore {
   private rightGen: number[] = [];
   private readonly overlays = new Overlays();
   private size: Size;
-  private pxPerMm: number;
+  /** The user's calibration (mount `pxPerMm` or calibrate()); null = the skin's `sweep.pxPerMm`, else 96 dpi. */
+  private userPxPerMm: number | null;
+  /** Pass 2: the lane texts painted over each lane's trace, and the lane generation they were painted on. */
+  private over: OverText[][] = [];
+  private overGen: number[] = [];
   private fps: 60 | 30;
   private filterMode = 'monitor';
   private lastEpoch: number | null = null;
@@ -99,7 +116,7 @@ export class MonitorCore {
     this.post = post;
     this.engine = createEngine(opts.engine ?? {});
     this.plan = opts.plan ?? legacyPlan(opts.lanes ?? ['ecgII', 'V5'], opts.waves ?? []);
-    this.pxPerMm = opts.pxPerMm ?? DEFAULT_PX_PER_MM;
+    this.userPxPerMm = opts.pxPerMm ?? null;
     this.fps = opts.fps ?? 60;
     this.size = size;
     this.sendLeads();
@@ -174,8 +191,13 @@ export class MonitorCore {
     this.layout();
   }
 
+  /** CSS px per mm the lanes are drawn at: the user's calibration, else the skin's screen (W1), else 96 dpi. */
+  private get pxPerMm(): number {
+    return this.userPxPerMm ?? this.plan.pxPerMm ?? DEFAULT_PX_PER_MM;
+  }
+
   calibrate(pxPerMm: number): void {
-    this.pxPerMm = pxPerMm;
+    this.userPxPerMm = pxPerMm;
     this.layout();
   }
 
@@ -244,12 +266,14 @@ export class MonitorCore {
         const lane = this.lanes[i] as SweepLane;
         if (pl.kind === 'wave') {
           this.drawWave(pl, i, t);
+          if (this.overprint) return this.overprintLane(i);
           this.repaintLabelTail(i, lane); // "50mmHg" (lane text) runs past the chrome, as a long ECG label does
           return this.repaintRightTexts(i, lane); // review L-3: most right-hand texts are on wave lanes
         }
         const before = lane.lastDrawnIndex;
         lane.draw(this.ctx, t, (from, out) => this.engine.readSamples(pl.channel as LeadId, from, out));
         if (this.overlays.leadsOff && before >= 0) drawLeadOffDashes(this.ctx, lane, before, lane.lastDrawnIndex);
+        if (this.overprint) return this.overprintLane(i);
         this.repaintLabelTail(i, lane);
         this.repaintRightTexts(i, lane);
       });
@@ -347,16 +371,18 @@ export class MonitorCore {
     // FX-24: the ECG gain survives a resize or a restore (the auto-gain re-judges it); a new plan starts from its own
     if (this.gainMult.length !== p.lanes.length) this.gainMult = p.lanes.map((l) => l.gainMmPerMv / 10);
     this.labelTail = [];
+    this.over = [];
+    this.overGen = [];
     this.lanes = p.lanes.map((pl, i) => {
       const rate = pl.kind === 'ecg' ? 500 : pl.channel ? this.engine.sampleRate(pl.channel) : 125;
       const [lo, hi] = pl.range ?? [-0.5, 3];
       const { y, h } = this.laneBox(i);
       const lane = new SweepLane(
         {
-          x: LABEL_W, y, width: cssW - LABEL_W, height: h, rate, mmPerS: pl.mmPerS, pxPerMm: this.pxPerMm, color: pl.color, firstIndex: Math.ceil(this.historyT * rate - 1e-6),
+          x: this.laneX(i), y, width: cssW - this.laneX(i), height: h, rate, mmPerS: pl.mmPerS, pxPerMm: this.pxPerMm, color: pl.color, firstIndex: Math.ceil(this.historyT * rate - 1e-6),
           background: p.background, lineWidth: p.lineWidth, eraseGapPx: p.eraseGapPx, grid: p.grid, cursorLine: p.cursorLine, fill: pl.fill,
           smoothN: Math.max(1, Math.round((pl.smoothMs / 1000) * rate)), smoothGate: SMOOTH_GATE_MMHG,
-          hLines: pl.scaleLines ? { values: pl.scaleLines, color: p.scaleLineColor ?? pl.color } : null,
+          hLines: pl.scaleLines ? { values: pl.scaleLines, color: p.scaleLineColor ?? pl.color } : null, recordBand: this.overprint,
           ...(pl.kind === 'ecg' ? { baseline: 0.6, gainMmPerMv: (this.gainMult[i] as number) * 10 } : scaleFor(lo, hi, h, this.pxPerMm)),
         },
         dpr,
@@ -387,6 +413,170 @@ export class MonitorCore {
     return { y: (cssH * before) / sum, h: (cssH * (w[i] ?? 0)) / sum };
   }
 
+  /** Pass 2: the skin sets a lane-text gutter, so the lane text is drawn over the trace (no chrome column, no boxes). */
+  private get overprint(): boolean {
+    return this.plan.laneText?.gutter != null;
+  }
+
+  /** Where lane i's trace starts (CSS px): the skin's gutter for its kind, else the 56 px chrome column. */
+  private laneX(i: number): number {
+    const g = this.plan.laneText?.gutter;
+    if (!g) return LABEL_W;
+    return (this.plan.lanes[i] as PlanLane).kind === 'ecg' ? g.ecg : g.wave;
+  }
+
+  /**
+   * Pass 2: every text of lane i in overprint mode, as IMG_8113 places them — the ECG label's parts at their anchors, the
+   * scale values (top and bottom at the edge column, the middle one centred on its dotted line), and at the right the
+   * label, its second line and the sweep speed, inset from the edge.
+   */
+  private overTexts(i: number): OverText[] {
+    const p = this.plan;
+    const lt = p.laneText as LaneTextPlan;
+    const pl = p.lanes[i] as PlanLane;
+    const { y: y0, h } = this.laneBox(i);
+    const row = lt.fontPx + 4;
+    const out: OverText[] = [];
+    const left = (text: string, x: number, y: number, color = lt.color) => out.push({ text, color, x, y, align: 'left' });
+    if (pl.kind === 'ecg') {
+      if (this.ecgUnlabelled(i)) return out;
+      const filterName = p.filterNames[this.filterMode] ?? this.filterMode.replace('band:', '');
+      const text = ecgLabel(pl.label, pl.channel as LeadId, this.gainMult[i] ?? 1, p.gainLabel, filterName);
+      const xs = lt.ecgLabelX;
+      if (!xs) left(text, 6, y0 + OVER_ECG_Y);
+      else {
+        const parts = text.split(/\s{2,}/);
+        const n = xs.length;
+        [...parts.slice(0, n - 1), parts.slice(n - 1).join('  ')].forEach((t, k) => t && left(t, xs[k] as number, y0 + OVER_ECG_Y));
+      }
+    } else if (pl.range && !p.hideScaleNumbers) {
+      const edge = lt.scaleX?.edge ?? 6;
+      left(`${pl.range[1]}${pl.scaleSuffix}`, edge, y0 + OVER_TOP_Y);
+      if (pl.scaleMid !== null) {
+        const [lo, hi] = pl.range;
+        const lineY = y0 + ((hi - pl.scaleMid) / (hi - lo)) * h;
+        const midY = lt.scaleX ? lineY - lt.fontPx / 2 : midLabelY(pl, y0, h);
+        // a short lane (a small landscape screen) leaves the middle value out rather than print it over its neighbours
+        if (midY >= y0 + OVER_TOP_Y + row && midY + row <= y0 + h - row) left(String(pl.scaleMid), lt.scaleX?.mid ?? MID_LABEL_X, midY);
+      }
+      left(String(pl.range[0]), edge, y0 + h - row);
+    }
+    // the right-hand rows never overlap: on a short lane the second line goes first, then the speed (as F28 does for the
+    // rc.3 chrome on a phone); the label stays
+    const right = this.size.cssW - lt.insetPx;
+    const speedY = y0 + h - row;
+    const fits = (y: number) => y + row <= speedY;
+    const li = pl.rightLabel?.leftInsetPx;
+    if (pl.rightLabel && li !== undefined) {
+      // a left-aligned block (the pleth "NORMAL" over "X1"): its second line on the speed's row, left of the speed
+      const x = this.size.cssW - li;
+      out.push({ text: pl.rightLabel.text, color: pl.rightLabel.color, x, y: y0 + OVER_RIGHT_Y, align: 'left' });
+      if (pl.rightLabel.sub && speedY >= y0 + OVER_RIGHT_Y + row) out.push({ text: pl.rightLabel.sub, color: lt.color, x, y: speedY, align: 'left' });
+    } else if (pl.rightLabel) {
+      out.push({ text: pl.rightLabel.text, color: pl.rightLabel.color, x: right, y: y0 + OVER_RIGHT_Y, align: 'right' });
+      if (pl.rightLabel.sub && fits(y0 + OVER_RIGHT_Y + row)) out.push({ text: pl.rightLabel.sub, color: lt.color, x: right, y: y0 + OVER_RIGHT_Y + row, align: 'right' });
+    }
+    if (!pl.rightLabel || li !== undefined || fits(y0 + OVER_RIGHT_Y)) out.push({ text: formatSpeed(pl.mmPerS), color: lt.color, x: right, y: speedY, align: 'right' });
+    return out;
+  }
+
+  /** Pass 2: the box a lane text covers (a generous width per character, as the rc.3 boxes; clipped to its lane). */
+  private overBox(t: OverText): [number, number, number, number] {
+    const fpx = (this.plan.laneText as LaneTextPlan).fontPx;
+    const w = t.text.length * WIDE_CHAR_W * (fpx / 14);
+    return [t.align === 'right' ? t.x - w : t.x, t.y - 2, w, fpx + 4];
+  }
+
+  private paintOver(t: OverText): void {
+    const ctx = this.ctx;
+    ctx.font = `${(this.plan.laneText as LaneTextPlan).fontPx}px ${this.plan.font}`;
+    ctx.textBaseline = 'top';
+    ctx.textAlign = t.align;
+    ctx.fillStyle = t.color;
+    ctx.fillText(t.text, t.x, t.y);
+    ctx.textAlign = 'start';
+  }
+
+  /**
+   * Pass 2: paint lane i's texts over what is under them, each pixel once since it was last cleared. A lane cleared
+   * whole (a new generation) gets every text back, its gutter cleared first; otherwise each text is drawn again only
+   * inside the rects the sweep has just cleared and drawn (W5: the trace and the CO2 fill stay visible around the text).
+   */
+  private overprintLane(i: number, texts: OverText[] = this.over[i] ?? []): void {
+    const lane = this.lanes[i] as SweepLane;
+    const band = lane.takeBand();
+    const ctx = this.ctx;
+    const { y: y0, h } = this.laneBox(i);
+    let clip: Array<[number, number, number, number]> = band;
+    if (lane.generation !== this.overGen[i]) {
+      this.overGen[i] = lane.generation;
+      ctx.fillStyle = this.plan.background;
+      if (lane.cfg.x > 0) ctx.fillRect(0, y0, lane.cfg.x, h); // the gutter: cleared, so it too is painted once
+      clip = [[0, y0, this.size.cssW, h]];
+    }
+    const hit = (b: number[]) => clip.some((r) => b[0]! < r[0] + r[2] && b[0]! + b[2]! > r[0] && b[1]! < r[1] + r[3] && b[1]! + b[3]! > r[1]);
+    const due = texts.filter((t) => hit(this.overBox(t)));
+    if (due.length === 0) return;
+    ctx.save();
+    ctx.beginPath();
+    for (const r of clip) ctx.rect(r[0], Math.max(r[1], y0), r[2], Math.min(r[1] + r[3], y0 + h) - Math.max(r[1], y0));
+    ctx.clip();
+    for (const t of due) this.paintOver(t);
+    ctx.restore();
+  }
+
+  /**
+   * Pass 2 chrome of lane i: its texts are recomputed; on a cleared lane all are painted, otherwise only a text that
+   * changed (an ECG gain or filter) — its old box is cleared first (the trace under it returns with the next sweep).
+   * The 1 mV bar only when the skin turns it on (`ecg.calPulse.defaultOn`, W2), in a box of its own.
+   */
+  private overChrome(i: number): void {
+    const ctx = this.ctx;
+    const lane = this.lanes[i] as SweepLane;
+    const old = this.over[i] ?? [];
+    const next = this.overTexts(i);
+    this.over[i] = next;
+    if (lane.generation !== this.overGen[i]) this.overprintLane(i, next);
+    else {
+      const gone = old.filter((t) => !next.some((u) => sameText(t, u)));
+      const fresh = next.filter((t) => !old.some((u) => sameText(t, u)));
+      const { y: y0, h } = this.laneBox(i);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, y0, this.size.cssW, h);
+      ctx.clip();
+      ctx.fillStyle = this.plan.background;
+      for (const t of gone) ctx.fillRect(...this.overBox(t));
+      for (const t of fresh) this.paintOver(t);
+      ctx.restore();
+    }
+    const pl = this.plan.lanes[i] as PlanLane;
+    if (pl.kind === 'ecg' && this.plan.calBar) this.drawCalBar(i, true);
+  }
+
+  /** The ECG lane's 1 mV bar at the lane gain (cleared first when it is drawn over a trace, pass 2). */
+  private drawCalBar(i: number, clear = false): void {
+    const ctx = this.ctx;
+    const pl = this.plan.lanes[i] as PlanLane;
+    const { y: y0, h } = this.laneBox(i);
+    const base = y0 + 0.6 * h;
+    const mv = Math.min(0.5 * h, (this.gainMult[i] ?? 1) * 10 * this.pxPerMm); // 1 mV at the lane gain
+    if (clear) {
+      ctx.fillStyle = this.plan.background;
+      ctx.fillRect(12, y0 + 0.1 * h - 2, 36, 0.5 * h + 4);
+    }
+    ctx.strokeStyle = pl.color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(14, base);
+    ctx.lineTo(24, base);
+    ctx.lineTo(24, base - mv);
+    ctx.lineTo(36, base - mv);
+    ctx.lineTo(36, base);
+    ctx.lineTo(46, base);
+    ctx.stroke();
+  }
+
   /** With lane text, an ECG lane showing the same lead as an earlier ECG lane has no label and no speed (IMG_8113). */
   private ecgUnlabelled(i: number): boolean {
     const p = this.plan;
@@ -409,7 +599,9 @@ export class MonitorCore {
       out.push({ text: pl.rightLabel.text, color: pl.rightLabel.color, y: y0 + 6 });
       if (pl.rightLabel.sub && fits(y0 + 6 + LABEL_STRIP_H)) out.push({ text: pl.rightLabel.sub, color: p.laneText.color, y: y0 + 6 + LABEL_STRIP_H });
     }
-    if (!pl.rightLabel || fits(y0 + 6)) out.push({ text: formatSpeed(pl.mmPerS), color: p.laneText.color, y: speedY });
+    // … and the label's own cleared box (to y + 16) must not reach the speed's ink (from speedY): lanes of 37–40 px, which
+    // a phone gets once E114 drops the CO2 tile's bell row (Saadat pass 2), kept both and the label's box cut the speed
+    if (!pl.rightLabel || (fits(y0 + 6) && y0 + 6 + LABEL_STRIP_H - 2 <= speedY)) out.push({ text: formatSpeed(pl.mmPerS), color: p.laneText.color, y: speedY });
     return out;
   }
 
@@ -492,6 +684,10 @@ export class MonitorCore {
   private drawChrome(lanes: number[]): void {
     const ctx = this.ctx;
     const p = this.plan;
+    if (this.overprint) {
+      for (const i of lanes) this.overChrome(i);
+      return;
+    }
     for (const i of lanes) {
       const { y, h } = this.laneBox(i);
       ctx.fillStyle = p.background;
@@ -551,17 +747,7 @@ export class MonitorCore {
         ctx.fillText(text, 6, y0 + 6);
         for (const t of this.rightTexts(i)) this.paintRightText(t);
       }
-      const base = y0 + 0.6 * h;
-      const mv = Math.min(0.5 * h, (this.gainMult[i] ?? 1) * 10 * this.pxPerMm); // 1 mV at the lane gain
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(14, base);
-      ctx.lineTo(24, base);
-      ctx.lineTo(24, base - mv);
-      ctx.lineTo(36, base - mv);
-      ctx.lineTo(36, base);
-      ctx.lineTo(46, base);
-      ctx.stroke();
+      if (p.calBar) this.drawCalBar(i);
     }
   }
 }

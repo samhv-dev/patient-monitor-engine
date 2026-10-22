@@ -8,7 +8,7 @@ import { FakeCtx } from './fake-ctx.ts';
 
 it('saadat-like: the label tail is repainted once per sweep, clipped to x ≥ 56 px', () => {
   const ctx = new FakeCtx();
-  const core = new MonitorCore({ width: 0, height: 0 }, ctx, { cssW: 1056, cssH: 500, dpr: 1 }, { engine: { seed: 1, device: { skin: 'saadat-like' } }, plan: renderPlan(resolveSkin('saadat-like')) }, () => {});
+  const core = new MonitorCore({ width: 0, height: 0 }, ctx, { cssW: 1056, cssH: 500, dpr: 1 }, { engine: { seed: 1, device: { skin: 'saadat-like' } }, plan: { ...renderPlan(resolveSkin('saadat-like'), undefined, undefined, true), pxPerMm: null } }, () => {}); // the rc.3 chrome (a phone keeps it)
   ctx.texts = [];
   ctx.clear();
   for (let k = 0; k < 60 * 25; k++) core.frame(1000 + (k * 1000) / 60); // 25 s: at least two sweeps of the ECG lane

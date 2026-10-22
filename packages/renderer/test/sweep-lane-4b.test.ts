@@ -146,8 +146,9 @@ describe('SweepLane 4b options', () => {
     const dots = () => ctx.calls.filter((k) => k.op === 'fillRect' && k.style === '#8A8C92').map((k) => k.args);
     const rows = new Map<number, number[]>();
     for (const [x, y] of dots()) rows.set(y!, [...(rows.get(y!) ?? []), x!]);
-    // 200 at the lane top, 120 at yOf(120), 40 one pixel inside the bottom edge (review L-1: never clipped away)
-    expect([...rows.keys()].sort((a, b) => a - b)).toEqual([0, 50, 99]);
+    // 200 one pixel inside the top edge (pass 2 W10: a dot on the edge row faded under the lane above), 120 at yOf(120),
+    // 40 one pixel inside the bottom edge (review L-1: never clipped away)
+    expect([...rows.keys()].sort((a, b) => a - b)).toEqual([1, 50, 99]);
     for (const xs of rows.values()) {
       expect(Math.abs(xs.length - Math.floor(400 / 14))).toBeLessThanOrEqual(1);
       expect(xs.every((x) => x % 14 === 0)).toBe(true); // anchored to the lane's left edge: the dots do not crawl

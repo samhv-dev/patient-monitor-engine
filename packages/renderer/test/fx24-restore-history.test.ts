@@ -10,7 +10,8 @@ import { renderPlan } from '../src/skin-plan.ts';
 import type { SweepLane } from '../src/sweep-lane.ts';
 import { FakeCtx } from './fake-ctx.ts';
 
-const plan = () => renderPlan(resolveSkin('saadat-like'));
+// the rc.3 chrome (one label string) at 96 dpi: the gain logic under test, without the pass-2 lane text and screen scale
+const plan = () => ({ ...renderPlan(resolveSkin('saadat-like'), undefined, undefined, true), pxPerMm: null });
 const make = (ctx = new FakeCtx()) =>
   new MonitorCore({ width: 0, height: 0 }, ctx, { cssW: 1056, cssH: 444, dpr: 1 }, { engine: { seed: 1, device: { skin: 'saadat-like' } }, plan: plan() }, () => {});
 const lanes = (c: MonitorCore) => (c as unknown as { lanes: SweepLane[] }).lanes;

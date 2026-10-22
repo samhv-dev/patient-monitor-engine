@@ -6,7 +6,7 @@
 // attach point, the capnogram from there on at the sweep speed. Same for a skin whose capnogram is an unfilled line.
 import { describe, expect, it } from 'vitest';
 import { resolveSkin } from '@pme/skins';
-import { LABEL_W, MonitorCore } from '../src/monitor-core.ts';
+import { MonitorCore } from '../src/monitor-core.ts';
 import { renderPlan, type RenderPlan } from '../src/skin-plan.ts';
 import type { SweepLane } from '../src/sweep-lane.ts';
 import { FakeCtx } from './fake-ctx.ts';
@@ -45,13 +45,13 @@ function attachAndWatch(skin: string, before: RenderPlan, after: RenderPlan): vo
   // Every trace point in the CO2 lane lies between the attach point and the cursor (the lane left of it stays blank).
   const l = lanes(core)[i] as SweepLane;
   const c = l.cfg;
-  const x0 = (l.xOf(attach) % c.width) + LABEL_W;
+  const x0 = (l.xOf(attach) % c.width) + c.x; // the lane's own left edge (pass 2: the Saadat-like gutter, 18 px)
   const reach = l.xOf(prev) - l.xOf(attach);
   let pts = 0;
   for (const call of ctx.calls) {
     if (call.op !== 'lineTo') continue;
     const [x, y] = call.args as [number, number];
-    if (x < LABEL_W || y < c.y || y > c.y + c.height) continue; // another lane, or the chrome
+    if (x < c.x || y < c.y || y > c.y + c.height) continue; // another lane, or the chrome
     pts++;
     const d = ((((x - x0 + 3) % c.width) + c.width) % c.width) - 3; // distance right of the attach point, round the wrap
     expect(d, `${skin}: a point at x ${x.toFixed(1)}, attach point ${x0.toFixed(1)}`).toBeLessThanOrEqual(reach + 3); // ± a column

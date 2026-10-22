@@ -51,6 +51,8 @@ export interface LaneConfig {
   /** FX-24: the first sample index the source holds (default 0). A restored engine holds nothing before its snapshot,
    *  and a read from earlier returns its first sample as if it were the one asked for, so the backfill starts here. */
   firstIndex?: number;
+  /** Keep the rects each draw clears for `takeBand()` (lane text over the trace, pass 2); off = nothing is kept. */
+  recordBand?: boolean;
 }
 
 /** Reads samples starting at absolute index `from` into `out`; returns the count (out[0] = sample `from`). */
@@ -104,6 +106,14 @@ export class SweepLane {
   }
 
   private resets = 0;
+  /** The rects the last draw cleared and drew (lane text drawn over the trace is repainted in them, pass 2). */
+  private band: Rect[] = [];
+  /** Take (and forget) the rects drawn since the last call. */
+  takeBand(): Rect[] {
+    const b = this.band;
+    this.band = [];
+    return b;
+  }
   /** Counts the times the lane was cleared whole, so text drawn over it knows to come back. */
   get generation(): number {
     return this.resets;
@@ -159,7 +169,9 @@ export class SweepLane {
     ctx.clip();
     ctx.fillStyle = h.color;
     for (const v of h.values) {
-      const y = Math.min(c.y + c.height - s, Math.max(c.y, Math.round(this.yOf(v) * this.dpr) / this.dpr));
+      // a line on either edge is drawn one dot inside the lane (review L-1; pass 2 W10: a top-edge dot on a fractional lane
+      // top was half outside the lane and faded to 34/255)
+      const y = Math.min(c.y + c.height - s, Math.max(Math.ceil(c.y * this.dpr) / this.dpr + s, Math.round(this.yOf(v) * this.dpr) / this.dpr));
       for (let k = Math.max(0, Math.ceil((r[0] - c.x - s) / DOT_PITCH_PX)); c.x + k * DOT_PITCH_PX < Math.min(r[0] + r[2], c.x + c.width); k++) {
         ctx.fillRect(c.x + k * DOT_PITCH_PX, y, s, s);
       }
@@ -244,6 +256,7 @@ export class SweepLane {
     const last = first + got - 1;
     const xFrom = this.lastCol >= 0 ? this.bandStart(this.lastCol) : this.xOf(first);
     const band = this.clearSpan(ctx, xFrom, this.xOf(last) + c.eraseGapPx);
+    if (c.recordBand) this.band.push(...band);
 
     this.cols.length = 0;
     decimateMinMax(out, got, first, c.rate, this.pxPerS, this.dpr, this.cols);

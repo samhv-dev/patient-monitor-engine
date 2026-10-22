@@ -55,14 +55,23 @@
     "headerStyle": "two-row",
     "showAlways": ["BFA"],
     "whenAttached": {
-      "co2": { "lanes": { "RESP": "CO2" }, "tiles": { "RR": { "param": "CO2", "extras": ["IMCO2", "AWRR"], "split": "row", "parts": [{ "label": "EtCo2", "unit": "mmHg", "limit": "EtCO2_pctV" }, { "label": "FiCo2", "unit": "mmHg" }, { "label": "AWRR", "unit": "BrPM", "limit": "AWRR" }] } } }
+      "co2": { "lanes": { "RESP": "CO2" }, "tiles": { "RR": { "param": "CO2", "extras": ["IMCO2", "AWRR"], "split": "row", "parts": [{ "label": "EtCo2", "unit": "mmHg", "limit": "EtCO2" }, { "label": "FiCo2", "unit": "mmHg" }, { "label": "AWRR", "unit": "BrPM", "limit": "AWRR" }] } } }
     },
-    "laneText": { "labels": { "IBP1": { "text": "IBP" }, "IBP2": { "text": "IBP" }, "PLETH": { "text": "NORMAL", "color": "#ECE84A", "sub": "X1" } } },
+    "laneText": {
+      "labels": { "IBP1": { "text": "IBP" }, "IBP2": { "text": "IBP" }, "PLETH": { "text": "NORMAL", "color": "#ECE84A", "sub": "X1", "leftInsetPx": 218 } },
+      "fontPx": 18,
+      "gutterPx": { "ecg": 0, "wave": 18 },
+      "rightInsetPx": 45,
+      "ecgLabelX": [10, 65, 183],
+      "scaleX": { "edge": 30, "mid": 85 }
+    },
     "grid": {
       "laneWeights": [115, 117, 96, 102, 98, 86],
       "columns": [362, 97],
       "rows": [175, 138, 101, 97, 96, 77],
-      "fontPx": { "HR": 109, "NIBP": 57, "CO2": 52, "IBP1": 46, "IBP2": 46, "SpO2": 78, "field": 57, "label": 16, "limit": 15 },
+      "fontPx": { "HR": 109, "NIBP": 57, "CO2": 52, "IBP1": 46, "IBP2": 46, "SpO2": 78, "field": 57, "label": 18, "limit": 15 },
+      "labelPx": { "HR": 41, "CO2": 21, "TEMP": 20 },
+      "labelWeight": 700,
       "cells": [
         { "params": ["HR"], "row": 1, "col": 1, "colSpan": 2 },
         { "params": ["NIBP"], "row": 2, "col": 1 },
@@ -78,7 +87,7 @@
         "fields": [
           { "label": "PI", "numeric": "pi", "digits": 1, "color": "PI" },
           { "label": "PVI", "color": "PI" }, { "label": "SpOC", "color": "PI" }, { "label": "%SpCo", "color": "IBP1" },
-          { "label": "%SpMet", "color": "CO2" }, { "label": "SpHb", "unit": "g/dL", "color": "PI" }
+          { "label": "%SpMet", "color": "#ECE84A" }, { "label": "SpHb", "unit": "g/dL", "color": "NIBP" }
         ]
       }
     }
@@ -106,9 +115,10 @@
     "resp": { "options": [3, 6, 12.5, 25], "default": 6 },
     "co2": { "options": [3, 6, 12.5, 25], "default": 6 },
     "style": "erase-bar",
-    "gapPx": 4,
+    "gapPx": 10,
     "cursorLine": false,
-    "lineWidthPx": 1.5
+    "lineWidthPx": 2,
+    "pxPerMm": 3.1
   },
   "ecg": {
     "gainOptions": [0.25, 0.5, 1, 2, 4, "AUTO"],
@@ -117,7 +127,7 @@
     "filters": { "MONITOR": [0.5, 24], "NORMAL": [0.5, 40], "EXTENDED": [0.05, 100] },
     "filterDefault": "NORMAL",
     "filterLabel": "name",
-    "laneLeads": ["II"],
+    "laneLeads": ["II", "II"],
     "cableDefault": "3-wire",
     "calPulse": { "mV": 1, "ms": 500, "defaultOn": false },
     "paceDetectDefault": false,
@@ -165,7 +175,7 @@
       "LAP": [-10, 15, 40], "RAP": [-10, 10, 30], "ICP": [-10, 15, 40]
     }
   },
-  "co2": { "unit": "mmHg", "scale": 50, "scaleUnit": "mmHg", "sidestreamDelayS": 2.6, "riseTimeMs": 200, "fill": true, "displaySmoothMs": 320 },
+  "co2": { "unit": "mmHg", "scale": 50, "scaleUnit": "mmHg", "sidestreamDelayS": 2.6, "riseTimeMs": 200, "fill": true, "displaySmoothMs": 320, "scaleLineTop": true },
   "alarms": {
     "levels": 3,
     "levelNames": ["1", "2", "3"],
@@ -186,7 +196,7 @@
     "numericFlash": true,
     "limitsDisplay": "always",
     "limitsColor": "#F05A3C",
-    "factoryEnabled": false,
+    "factoryEnabled": true,
     "alwaysOn": ["ASYSTOLE", "VFIB", "VTAC", "APNEA"],
     "alarmOffIcon": "crossed-bell-red",
     "silence": { "mode": "mute", "durationS": 120, "suppressesVisual": true, "cancelOnNewAlarm": true, "headerCountdown": true, "technicalActsAsAck": true },
@@ -202,13 +212,13 @@
     "adult": {
       "values": {
         "HR": [50, 150], "SpO2": [90, 100],
-        "NIBP_S": [90, 160], "NIBP_D": [50, 90], "NIBP_M": [60, 110],
-        "ART_S": [80, 150], "ART_D": [50, 100], "ART_M": [60, 115],
+        "NIBP_S": [90, 160], "NIBP_D": [50, 100], "NIBP_M": [60, 110],
+        "ART_S": [70, 165], "ART_D": [35, 100], "ART_M": [60, 115],
         "PAP_S": [5, 40], "PAP_D": [-5, 20], "PAP_M": [0, 30],
         "CVP_M": [-5, 15], "RAP_M": [-5, 15], "LAP_M": [-5, 20], "ICP": [0, 10],
         "RR": [5, 25], "apneaS": 10, "AWRR": [5, 30], "gasApneaS": 20,
-        "EtCO2_pctV": [2.6, 6.5], "FiCO2_pctV_high": 1.3,
-        "T1": [35, 39], "T2": [36, 40], "dT": [1, 5], "ST_mV": [-0.2, 0.2]
+        "EtCO2": [30, 50], "FiCO2_pctV_high": 1.3,
+        "T1": [35, 39], "T2": [35, 39], "dT": [1, 5], "ST_mV": [-0.2, 0.2]
       }
     },
     "paed": { "inherit": "adult", "values": { "NIBP_S": [70, 120], "NIBP_D": [40, 70], "NIBP_M": [50, 90], "ICP": [0, 4], "AWRR": [5, 30] } },
@@ -279,7 +289,17 @@
     "layout.header": { "tag": "documented", "source": "research/06 §3.1 F1; research/06 §3.2", "note": "rc.3: read by the two-row header (layout.headerStyle); battery, recorder and network are not modelled and not drawn" },
     "layout.messageBars": { "tag": "documented", "source": "research/06 §3.1 F1-F2 (M p.36)" },
     "layout.laneText": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113: white lane text; labels at the right; \"25 mm/s\"/\"6 mm/s\" on every lane; pleth \"NORMAL\" in yellow over \"X1\"; the CO2 label printed CO2, not the photo's module name; no label on the second ECG lane)" },
+    "layout.laneText.fontPx": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (T1)", "note": "pass 2: \"25 mm/s\" is 70 px wide (14 px Arial: 54 px), digits 13 px high; was 14 px" },
+    "layout.laneText.gutterPx": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (G1, W2, W5)", "note": "pass 2: the ECG traces start at x ≈ 0, the CO2/IBP/pleth traces at x ≈ 18; the lane text and scale values are printed over the trace, the fill visible around them; no 1 mV bar (ecg.calPulse.defaultOn false). Was the 56 px chrome column" },
+    "layout.laneText.rightInsetPx": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (G2)", "note": "pass 2: \"25 mm/s\", \"IBP\" and the CO2 label end at x ≈ 775 of the 820 px wave column; was 6" },
+    "layout.laneText.labels.PLETH.leftInsetPx": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; in-run review of pass 2 (G2, pleth)", "note": "pass 2: \"NORMAL\" over \"X1\" left-aligned at x ≈ 602 of the 820 px wave column (218 px from its right edge), \"X1\" on the speed's row" },
+    "layout.laneText.ecgLabelX": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (T2)", "note": "pass 2: \"II\" x 10, \"X4\" x 65, \"NORMAL\" x 183" },
+    "layout.laneText.scaleX": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (W11)", "note": "pass 2: \"130\"/\"30\" and \"100\"/\"40\" at x ≈ 30, the middle \"80\"/\"70\" at x ≈ 85 across its dotted line" },
     "layout.laneText.labels.PLETH.color": { "tag": "measured", "source": "research/34 §8 (owner-approved mock-up, scratch/skin-mockup/NOTES.md colours, white-balance corrected, 2026-10-20)", "note": "pleth \"NORMAL\" label" },
+    "layout.grid.fontPx.label": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (T3)", "note": "pass 2: tile labels cap height ≈ 13 px; was 16 px" },
+    "layout.grid.labelPx": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (T4, T5, T10)", "note": "pass 2: \"PR\" 41 px (cap height 30 px, regular weight), \"EtCo2\" 21 px, T1/T2/DT 20 px" },
+    "layout.grid.labelWeight": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (T3)", "note": "pass 2: the tile and strip labels are bold (NIBP, IBP1, EtCo2, %SPO2, PI …); was regular" },
+    "layout.grid.strip.fields": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (C5, C6)", "note": "pass 2: SpHb label white (the NIBP key, was the PI purple); %SpMet #ECE84A, its own hue (was the CO2 key #F0F000)" },
     "layout.headerStyle": { "tag": "measured", "source": "research/34 §3 row 7 (IMG_8113); research/34 §8 (owner-approved mock-up, scratch/skin-mockup/NOTES.md, 2026-10-20)", "note": "BED 01 and PEDIATRIC in yellow at the left, date over time at the right; the message bar on its own row under them, 43 % of the wave-area width. Header row 5.8 %, bar row 3.0 % of the screen height [MOCKUP]" },
     "layout.showAlways": { "tag": "documented", "source": "research/34 §8 O1", "note": "rc.3: the BFA module tile is drawn with blank values when no depth monitor publishes, as photographed (IMG_8113)" },
     "layout.whenAttached": { "tag": "documented", "source": "research/06 §3.1 F6 (DEMO screen: a CO2 lane, EtCO2/FiCO2/AWRR tile), §3.2 layout row (\"RR (or CO2)\"), §5 tiles (\"RR|CO2(EtCO2,FiCO2,AWRR)\"); research/00 rulings, showcase S1 answered by Ali 2026-10-04", "note": "With the CO2 line attached the CO2 waveform takes the RESP lane's place and the RR tile becomes the CO2 tile (EtCO2 large, FiCO2 and awRR below); detached, RESP and RR return. Colour and sweep are the skin's own CO2 entries. rc.3 (research/34 §3 row 14, IMG_8113): the CO2 tile is split EtCo2 | FiCo2 | AWRR, each with its unit, at normal weight (owner correction M1)" },
@@ -295,16 +315,17 @@
     "sweep.co2": { "tag": "documented", "source": "research/06 §3.2 (M p.302-306)" },
     "sweep.co2.default": { "tag": "measured", "source": "owner's photos of a real unit, 2026-10-18, research/34 §3 row 2 (\"6 mm/s\" on the CO2 lane, 4 of 4 units)", "note": "Tuesday set T1: was 12.5" },
     "sweep.style": { "tag": "inferred", "source": "research/06 §3.1 F7 (S8)" },
-    "sweep.gapPx": { "tag": "inferred", "source": "research/06 §3.1 F7 (S8); brief §3.5", "note": "very narrow gap; verify with checklist photo 2" },
+    "sweep.gapPx": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (W3)", "note": "pass 2: ≈ 8 px on the ECG at a 3x crop, NOTES.md reads 18 px; 10. Was 4 (research/06 §3.1 F7 (S8): very narrow)" },
     "sweep.cursorLine": { "tag": "inferred", "source": "research/06 §3.1 F7 (S8); brief §3.5" },
-    "sweep.lineWidthPx": { "tag": "eng", "source": "brief §3.5 [ENG]" },
+    "sweep.lineWidthPx": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (W4)", "note": "pass 2: ECG, IBP and pleth traces 2–2.3 px; was 1.5 (brief §3.5 [ENG])" },
+    "sweep.pxPerMm": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (W1)", "note": "pass 2: 47.5 px per beat at HR 98 and 25 mm/s = 3.10 px/mm (≈ 17 beats per lane); the 96 dpi default draws 3.78. Used until the user calibrates" },
     "ecg.gainOptions": { "tag": "documented", "source": "research/06 §3.2 (M p.65, 264, 302)" },
     "ecg.gainDefault": { "tag": "documented", "source": "research/06 §3.2 (M p.302)" },
     "ecg.gainLabel": { "tag": "documented", "source": "research/06 §3.1 F1 ('X4')" },
     "ecg.filters": { "tag": "documented", "source": "research/06 §3.2 (M p.65, 264); brief §3.8" },
     "ecg.filterDefault": { "tag": "documented", "source": "research/06 §3.2; brief §6.8" },
     "ecg.filterLabel": { "tag": "documented", "source": "research/06 §3.1 F1 ('NORMAL')" },
-    "ecg.laneLeads": { "tag": "documented", "source": "research/06 §3.2 (M p.63-64, 302)" },
+    "ecg.laneLeads": { "tag": "documented", "source": "research/06 §3.2 (M p.63-64, 302); owner ruling E116 (2026-10-22)", "note": "pass 2: the second ECG lane repeats lead II, as photographed (E116; was [\"II\"], which already drew II on both)" },
     "ecg.cableDefault": { "tag": "documented", "source": "research/06 §3.2 (M p.302)" },
     "ecg.calPulse": { "tag": "documented", "source": "research/06 §3.2 (M p.264)" },
     "ecg.paceDetectDefault": { "tag": "documented", "source": "research/06 §4.2 (M p.67, 69); brief §6.5" },
@@ -329,6 +350,7 @@
     "co2.scale": { "tag": "measured", "source": "owner's photos of a real unit, 2026-10-18, research/34 §3 row 2 (\"50mmHg\" scale label, IMG_8112–8116)", "note": "Tuesday set T2: was 10 %V (research/06 §3.2, M p.305). Values above 50 mmHg clip at the lane top, as on the real unit; the EtCO2 number is unaffected (owner E63, accepted 2026-10-18)" },
     "co2.fill": { "tag": "measured", "source": "research/34 §3 row 2 (IMG_8113: area under the capnogram filled yellow, 4 of 4 units)" },
     "co2.displaySmoothMs": { "tag": "measured", "source": "research/34 §8 M2 (owner, 2026-10-20: cardiogenic oscillations softer and fainter than the mock-up)", "note": "display-side only: the engine's co2 channel and EtCO2 are unchanged (capno.ts CARDIO_MMHG kept); measured at planning ±0.3–0.5 mmHg with plateau steps 0.16 mmHg (plan D12). 320 ms halves the late-plateau ripple (0.90 → 0.43 mmHg peak to peak, seed 1, HR 98, RR 12); the renderer averages only windows whose range is under 1.5–3 mmHg, so the upstroke and a curare cleft are drawn as they are" },
+    "co2.scaleLineTop": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (W10)", "note": "pass 2: a dotted line at the 50 mmHg level, as on the IBP lanes" },
     "co2.scaleUnit": { "tag": "measured", "source": "owner's photos of a real unit, 2026-10-18, research/34 §3 row 2 (\"50mmHg\" scale label, IMG_8112–8116)", "note": "Tuesday set T2: was \"%\"" },
     "alarms.levels": { "tag": "documented", "source": "research/06 §4.2 (M p.21, 47); brief §6.4.1" },
     "alarms.levelNames": { "tag": "documented", "source": "research/06 §4.2; brief §6.4.1" },
@@ -345,7 +367,7 @@
     "alarms.numericFlash": { "tag": "documented", "source": "research/06 §4.2 (M p.47-48)" },
     "alarms.limitsDisplay": { "tag": "measured", "source": "research/34 §3 row 12 (IMG_8113)", "note": "rc.3: every limit pair is printed, ON or OFF, small, high over low beside the value; only limits the engine's alarm status carries are printed (research/34 §8 O1)" },
     "alarms.limitsColor": { "tag": "measured", "source": "research/34 §3 row 12 (IMG_8113); research/34 §8 (owner-approved mock-up, scratch/skin-mockup/NOTES.md, 2026-10-20)", "note": "rc.3: the mock-up's white-balance corrected #F05A3C (research/34 read ≈ #F05D44)" },
-    "alarms.factoryEnabled": { "tag": "documented", "source": "research/06 §4.2 (M p.48, 302-306); brief §6.4.1" },
+    "alarms.factoryEnabled": { "tag": "documented", "source": "owner ruling E114 (2026-10-22); research/34 §3 row 12 (IMG_8113: no crossed bells on the parameter tiles)", "note": "pass 2: parameter alarms ON at power-on, at the limits below (was false, research/06 §4.2 M p.48, 302-306). The crossed bell appears only on an alarm switched off. The iran-icu-as-found preset keeps them off" },
     "alarms.alwaysOn": { "tag": "documented", "source": "research/06 §4.2 (M p.49, 76, 78, 98); brief §6.4.1" },
     "alarms.alarmOffIcon": { "tag": "documented", "source": "research/06 §3.2 (M p.48, 98)" },
     "alarms.silence": { "tag": "documented", "source": "research/06 §4.2 (M p.38-39, 44, 50); brief §6.4.1" },
@@ -357,7 +379,7 @@
     "alarms.spo2DelayS": { "tag": "unverified", "source": "research/06 §4.2", "note": "not stated beyond averaging" },
     "alarms.alarmFreezeOption": { "tag": "documented", "source": "research/06 §4.2 (M p.49)", "note": "default not stated [unverified]" },
     "alarms.recall": { "tag": "documented", "source": "research/06 §4.2 (M p.238-239, 276)" },
-    "limits.adult": { "tag": "documented", "source": "research/06 §4.3 (M p.302-306); brief §6.8" },
+    "limits.adult": { "tag": "documented", "source": "research/06 §4.3 (M p.302-306); brief §6.8; owner ruling E115 (2026-10-22)", "note": "pass 2 (E115, clinically sensible limits the alarms honour): NIBP dia 100/50 (was 90/50); ART sys 165/70 (was 150/80) and dia 100/35 (was 100/50), as IMG_8113 prints them; EtCO2 50/30 mmHg (was 6.5/2.6 %V, printed 49/20); T2 39.0/35.0 (was 40/36). HR 150/50, SpO2 90, NIBP sys 160/90, AWRR 30/5, ART mean 115/60, CVP 15/−5 and T1 39.0/35.0 unchanged" },
     "limits.paed.inherit": { "tag": "unverified", "source": "research/06 §4.3; brief §6.8", "note": "HR, SpO2, RR, Temp not banded in the manual; adult values inherited and marked approximate" },
     "limits.paed.values": { "tag": "documented", "source": "research/06 §4.3 (M p.302-306)" },
     "limits.neo.inherit": { "tag": "unverified", "source": "research/06 §4.3; brief §6.8", "note": "adult HR 50-150 is clinically wrong for neonates" },

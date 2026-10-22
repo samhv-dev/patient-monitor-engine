@@ -1,7 +1,7 @@
 // ResolvedSkin → RenderPlan: the plain-data lane layout the worker draws from. It runs on the main thread (where
 // @pme/skins is resolved) and crosses to the worker as JSON. A plan built from the legacy options (`legacyPlan`)
 // reproduces the old hard-coded look exactly, so pages without a skin keep it.
-import { engineFilterFor, type LaneId, type LaneTextLabel, type ResolvedSkin, type Skin } from '@pme/skins';
+import { engineFilterFor, type LaneId, type LaneText, type LaneTextLabel, type ResolvedSkin, type Skin } from '@pme/skins';
 import type { ChannelId, EcgFilterMode, LeadId } from '@pme/engine-core';
 import { WAVE_STYLE, type WaveLaneId } from './wave-lanes.ts';
 
@@ -24,12 +24,13 @@ export interface PlanLane {
   fill: boolean;
   /** Display-side smoothing window (ms) of the drawn trace; 0 = none (a CO2 lane of a skin with `co2.displaySmoothMs`). */
   smoothMs: number;
-  /** Dotted scale lines [upper, middle, lower] (skin `ibp.scaleLines` 'dotted-upper-mid-lower' on an IBP lane); null = none. */
-  scaleLines: [number, number, number] | null;
+  /** Dotted scale lines [upper, middle, lower] (skin `ibp.scaleLines` 'dotted-upper-mid-lower' on an IBP lane), or the CO2
+   *  scale top (skin `co2.scaleLineTop`); null = none. */
+  scaleLines: number[] | null;
   /** The middle scale value printed beside its line; null = none. */
   scaleMid: number | null;
   /** The label at the right of a wave lane (skin `layout.laneText`); null = the old label at the left. */
-  rightLabel: { text: string; color: string; sub?: string } | null;
+  rightLabel: { text: string; color: string; sub?: string; leftInsetPx?: number } | null;
   /** Unit printed after the top scale value ('mmHg' on a CO2 lane with lane text, as "50mmHg"); '' = none. */
   scaleSuffix: string;
 }
@@ -56,11 +57,31 @@ export interface RenderPlan {
   /** Colour of the dotted scale lines (skin `ibp.scaleLineColor`, theme-darkened); null = the lane colour. */
   scaleLineColor: string | null;
   /** Lane text as on the real unit (skin `layout.laneText`; not on pages that name their lanes); null = the old chrome. */
-  laneText: { color: string } | null;
+  laneText: LaneTextPlan | null;
+  /** Draw the ECG lanes' 1 mV bar (always, unless a lane-text gutter is set: then skin `ecg.calPulse.defaultOn`). */
+  calBar: boolean;
+  /** The screen's CSS px per mm until the user calibrates (skin `sweep.pxPerMm`); null = 96 dpi. */
+  pxPerMm: number | null;
   /** Relative lane heights (skin `layout.grid.laneWeights`, one per lane); null = equal lanes. */
   laneWeights: number[] | null;
   lanes: PlanLane[];
 }
+
+/**
+ * Lane text (skin `layout.laneText`). The defaults are the rc.3 chrome: 14 px, the 56 px chrome column, right texts 6 px
+ * from the edge, the ECG label as one string at x 6. The pass-2 keys apply in landscape only (a phone in portrait keeps
+ * the defaults, which the F28 fit guards measure against).
+ */
+export interface LaneTextPlan {
+  color: string;
+  fontPx: number;
+  /** Trace start per lane kind (CSS px); null = the 56 px chrome column with its black boxes (rc.3). */
+  gutter: { ecg: number; wave: number } | null;
+  insetPx: number;
+  ecgLabelX: number[] | null;
+  scaleX: { edge: number; mid: number } | null;
+}
+export const LANE_TEXT_PX = 14;
 
 /** A sweep speed as the lane prints it: '25 mm/s', '6 mm/s', '12.5 mm/s'. */
 export function formatSpeed(mmPerS: number): string {
@@ -107,7 +128,7 @@ export interface LaneOverride {
 }
 const WAVE_LANE: Record<WaveLaneId, LaneId> = { abp: 'ART', pleth: 'PLETH', cvp: 'CVP', pap: 'PAP', co2: 'CO2', resp: 'RESP', icp: 'ICP' }; // co2, resp, icp
 
-export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride): RenderPlan {
+export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride, portrait = false): RenderPlan {
   const s = r.skin;
   const pg = s.pages.find((p) => p.id === (page ?? s.defaultPage));
   const laneIds: readonly LaneId[] = only
@@ -134,8 +155,8 @@ export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride):
       id === 'PLETH' || id === 'RESP' ? null : id === 'CO2' ? [0, s.co2.scaleUnit === '%' ? (s.co2.scale * 760) / 100 : s.co2.scale] : sc ? [sc[0], sc[2]] : id === 'ICP' ? [0, 40] : [0, 150]; // A skin without an ICP scale row (philips-like) draws ICP 0–40 (WAVE_STYLE.icp), not the IBP 0–150
     return { id, kind: 'wave', channel: WAVE_CHANNEL[id] ?? null, color, mmPerS, gainMmPerMv: 10, autoGain: false, gainOptions: [], range, label: id === 'PLETH' ? 'PLETH' : id, fill: id === 'CO2' && s.co2.fill === true,
       smoothMs: id === 'CO2' ? (s.co2.displaySmoothMs ?? 0) : 0,
-      scaleLines: dotted && sc ? [sc[2], sc[1], sc[0]] : null, scaleMid: dotted && sc ? sc[1] : null,
-      rightLabel: lt ? rightLabel(lt.labels?.[id], id === 'PLETH' ? 'PLETH' : id, r.render.foreground) : null,
+      scaleLines: dotted && sc ? [sc[2], sc[1], sc[0]] : id === 'CO2' && s.co2.scaleLineTop && range ? [range[1]] : null, scaleMid: dotted && sc ? sc[1] : null,
+      rightLabel: lt ? rightLabel(lt.labels?.[id], id === 'PLETH' ? 'PLETH' : id, r.render.foreground, !portrait) : null,
       scaleSuffix: lt && id === 'CO2' ? s.co2.scaleUnit : '' };
   });
   return {
@@ -155,7 +176,9 @@ export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride):
     syncMarker: s.syncMarker,
     hideScaleNumbers: pg?.pump?.hideScaleNumbers ?? false,
     scaleLineColor: s.ibp.scaleLineColor ?? null,
-    laneText: lt ? { color: r.render.foreground } : null,
+    laneText: lt ? laneTextPlan(lt, r.render.foreground, portrait) : null,
+    calBar: !(lt?.gutterPx && !portrait) || s.ecg.calPulse.defaultOn,
+    pxPerMm: s.sweep.pxPerMm ?? null,
     // the photo's lane heights only for the skin's own lanes (not a page or a demo that names its lanes) and only when
     // the counts match (the iran-icu-as-found preset's four lanes are equal)
     laneWeights: !only && !pg?.lanes && s.layout.grid?.laneWeights.length === laneIds.length ? [...s.layout.grid.laneWeights] : null,
@@ -163,8 +186,20 @@ export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride):
   };
 }
 
-function rightLabel(l: LaneTextLabel | undefined, text: string, fg: string): PlanLane['rightLabel'] {
-  return { text: l?.text ?? text, color: l?.color ?? fg, ...(l?.sub ? { sub: l.sub } : {}) };
+function laneTextPlan(lt: LaneText, color: string, portrait: boolean): LaneTextPlan {
+  if (portrait) return { color, fontPx: LANE_TEXT_PX, gutter: null, insetPx: 6, ecgLabelX: null, scaleX: null };
+  return {
+    color,
+    fontPx: lt.fontPx ?? LANE_TEXT_PX,
+    gutter: lt.gutterPx ? { ...lt.gutterPx } : null,
+    insetPx: lt.rightInsetPx ?? 6,
+    ecgLabelX: lt.ecgLabelX ? [...lt.ecgLabelX] : null,
+    scaleX: lt.scaleX ? { ...lt.scaleX } : null,
+  };
+}
+
+function rightLabel(l: LaneTextLabel | undefined, text: string, fg: string, landscape: boolean): PlanLane['rightLabel'] {
+  return { text: l?.text ?? text, color: l?.color ?? fg, ...(l?.sub ? { sub: l.sub } : {}), ...(landscape && l?.leftInsetPx !== undefined ? { leftInsetPx: l.leftInsetPx } : {}) };
 }
 
 /** The legacy look (monitor-core THEME, WAVE_STYLE) for pages that pass `lanes`/`waves` and no skin. */
@@ -180,7 +215,7 @@ export function legacyPlan(leads: readonly LeadId[], waves: readonly WaveLaneId[
   return {
     skin: 'legacy', background: '#000', foreground: '#00ff66', lineWidth: 1.75, eraseGapPx: 16, cursorLine: false, grid: null,
     font: 'system-ui, sans-serif', gainLabel: 'mm-per-mV', filterNames: { monitor: 'M', diagnostic: 'D' },
-    paceMarker: { style: 'marker-above', heightMm: 2 }, paceDetect: false, devicePacer: false, syncMarker: null, hideScaleNumbers: false, scaleLineColor: null, laneText: null, laneWeights: null,
+    paceMarker: { style: 'marker-above', heightMm: 2 }, paceDetect: false, devicePacer: false, syncMarker: null, hideScaleNumbers: false, scaleLineColor: null, laneText: null, calBar: true, pxPerMm: null, laneWeights: null,
     lanes: [...ecg, ...wv],
   };
 }

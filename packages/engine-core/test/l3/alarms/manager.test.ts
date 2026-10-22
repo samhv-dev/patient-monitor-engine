@@ -166,12 +166,12 @@ describe('alarm manager', () => {
     expect(alarms(ev, 'raised').find((a) => a.id === 'SpO2_LOW')?.t).toBeCloseTo(15.02, 6);
   });
 
-  it('alarmStatus on every change and at 1 Hz; saadat-like starts all-off, the preset turns NIBP and SpO2 on', () => {
+  it('alarmStatus on every change and at 1 Hz; saadat-like starts all-on (E114), the as-found preset all-off but NIBP and SpO2', () => {
     const s = createAlarmMgr(deviceProfile('saadat-like'));
     const st = run(s, 0, 3, () => []).filter((e): e is Status => e.type === 'alarmStatus');
     expect(st.map((e) => e.t)).toEqual([0, 1, 2, 3]);
-    expect(st[0]!.allOff).toBe(true);
-    expect(st[0]!.limits.HR).toMatchObject({ enabled: false, low: 50, high: 150 });
+    expect(st[0]!.allOff).toBe(false);
+    expect(st[0]!.limits.HR).toMatchObject({ enabled: true, low: 50, high: 150 });
     const pre = createAlarmMgr(deviceProfile('iran-icu-as-found'));
     const ps = run(pre, 0, 0, () => []).find((e): e is Status => e.type === 'alarmStatus')!;
     expect(ps.limits.NIBP_S?.enabled).toBe(true);

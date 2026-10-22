@@ -38,9 +38,11 @@ describe('technical alarms', () => {
     ]);
     observeEvent(inp, meas(31, { abpSys: { value: 3 }, abpDia: { value: 1 }, abpMean: { value: 2 }, prAbp: { flag: 'invalid' } }));
     expect(tech('philips-like', inp, 31)).toEqual([['abpNonPulsatile', 'ABP NON-PULSATILE', 'prAbp'], ['abpDisconnect', '***ABP DISCONNECT', 'abpMean']]);
-    // saadat-like ('mean-only', research/06 §4.1): S/D invalid, the mean shown; the catheter-disconnect alarm is OFF
+    // saadat-like ('mean-only', research/06 §4.1): S/D invalid, the mean shown; the catheter-disconnect alarm is OFF (the
+    // as-found preset, its parameter alarms off, so only the technical alarm; factory saadat-like adds ART MEAN LOW, E114)
     observeEvent(inp, meas(32, { abpSys: { flag: 'invalid' }, abpDia: { flag: 'invalid' }, abpMean: { value: 2 }, prAbp: { flag: 'invalid' } }));
-    expect(tech('saadat-like', inp, 32)).toEqual([['abpNonPulsatile', 'IBP1 STATIC PRESSURE', 'abpSys']]);
+    expect(tech('iran-icu-as-found', inp, 32)).toEqual([['abpNonPulsatile', 'IBP1 STATIC PRESSURE', 'abpSys']]);
+    expect(tech('saadat-like', inp, 32).map((x) => x[0])).toEqual(['ART_M_LOW', 'abpNonPulsatile']);
     inp.abp = 'zeroing';
     observeEvent(inp, meas(33, { abpSys: { flag: 'invalid' }, abpDia: { flag: 'invalid' }, abpMean: { flag: 'invalid' } }));
     expect(tech('philips-like', inp, 33)).toEqual([['abpZero', 'ABP ZEROING', 'abpMean']]);
