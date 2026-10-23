@@ -50,6 +50,10 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Fixed
 
+- Debrief timeline and log (F29): a bag-mask ventilation event printed "PEEP undefined cmH₂O" (the healthy
+  induction's "Bag-mask ventilate, FiO₂ 1.0"). The words now follow what the engine applies: bag-mask ventilation has
+  no PEEP in the model, so it prints PEEP 0 whatever the event says; a ventilator event without a PEEP keeps the
+  ventilator's previous PEEP, so its line leaves PEEP out. The Persian handout table has the new line (reviewed: false).
 - Saadat-like tiles on the Instructor view (pass 3, the owner's 2026-10-23 review at the demo laptop's window, monitor
   pane ≈ 1430 × 820): the split tiles were classed `row`, which the app's own `.row { display: flex }` also styles, so
   the EtCo2/FiCo2/AWRR and BFI%/BS%/SQI%/EMG% parts packed together ("EtCo2 mmHg" ran into "FiCo2", SQI% into EMG%) and
