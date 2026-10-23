@@ -17,8 +17,10 @@ describe('pass 2: grid labels from the skin (T3, T4, T5, T10)', () => {
   it('layout.grid.labelPx sizes a tile\'s own label; labelWeight makes the labels bold; both scale with the monitor height', () => {
     const ui = make('saadat-like');
     const c = css();
-    expect(c).toContain('.pme-grid .pme-stile[data-param="HR"] [data-pme="lbl"],.pme-grid .pme-stile[data-param="HR"] .ph .pl{font-size:calc(41 * var(--pme-h, 800px) / 800)}');
-    expect(c).toContain('[data-param="CO2"] .ph .pl{font-size:calc(21 * var(--pme-h, 800px) / 800)}');
+    // pass 3: the same rule also sizes a tile standing in for this one ([data-as], rule O4)
+    expect(c).toContain('.pme-grid .pme-stile[data-param="HR"] [data-pme="lbl"],.pme-grid .pme-stile[data-param="HR"] .ph .pl,');
+    expect(c).toContain('.pme-grid .pme-stile[data-as="HR"] .ph .pl{font-size:calc(41 * var(--pme-h, 800px) / 800)}');
+    expect(c).toContain('[data-as="CO2"] .ph .pl{font-size:calc(21 * var(--pme-h, 800px) / 800)}');
     expect(c).toContain('.pme-sfield .pl{font-weight:700}');
     ui.destroy();
   });

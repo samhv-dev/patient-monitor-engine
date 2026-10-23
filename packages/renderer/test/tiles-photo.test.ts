@@ -48,7 +48,7 @@ describe('saadat-like tile skeleton', () => {
     const { tile } = mount('saadat-like');
     expect(tile('HR').querySelector('.u')?.textContent).toBe('BPM');
     expect(tile('NIBP').querySelector('.u')?.textContent).toBe('(mmHg)');
-    expect(tile('RR').querySelector('.u')?.textContent).toBe('BrPM');
+    expect(tile('RR').querySelector('[data-part="0"] .pu')?.textContent).toBe('BrPM'); // pass 3: beside its label, as EtCo2's mmHg
   });
 
   it('(c) weights: HR upright bold (D11), NIBP regular', () => {

@@ -7,6 +7,7 @@ import { formatDate, type LayoutGrid, type ResolvedSkin, type StripField, type T
 import { barView, hrStatusLines, tileAlarmView, TILE_NUMERICS, type AlarmStatus } from './alarm-view.ts';
 import { formatNibp, formatWallTime, nibpModeLabel } from './numerics-hemo.ts';
 import { formatAgents, formatBfa, formatNmt, modulePresent } from './numerics-neuro.ts';
+import { fitTile, type LimSide } from './tile-fit.ts';
 
 type NibpEvent = Extract<EngineEvent, { type: 'nibp' }>;
 type DeviceStatus = Extract<EngineEvent, { type: 'deviceStatus' }>;
@@ -73,15 +74,15 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-stile.rc3 .h .u{font-size:11px}',
     '.pme-stile.rc3 [data-pme="mode"]{font-size:11px}',
     '.pme-stile.split .parts{display:flex;gap:4px}',
-    '.pme-stile.split.column .parts{flex-direction:column;gap:0}',
+    '.pme-stile.split-column .parts{flex-direction:column;gap:0}',
     '.pme-stile.split .part{flex:1;min-width:0}',
     '.pme-stile.split .ph{display:flex;gap:4px;align-items:baseline;font-size:13px;white-space:nowrap}',
-    '.pme-stile.split.row .ph{flex-direction:column;align-items:flex-start;gap:0;line-height:1.1}', // label over unit: three parts fit a 180 px column
+    '.pme-stile.split-row .ph{flex-direction:column;align-items:flex-start;gap:0;line-height:1.1}', // label over unit: three parts fit a 180 px column
     '.pme-stile.split .pu{font-size:10px;opacity:.85}',
     '.pme-stile.split .pr{display:flex;align-items:center;gap:3px}',
     '.pme-stile.split .pv{flex:1;font-size:28px;line-height:1.05;min-height:1.05em;text-align:right;font-variant-numeric:tabular-nums}',
-    '.pme-stile.split.column .pv{font-size:20px}',
-    '.pme-stile.split.column .part{margin-bottom:3px}',
+    '.pme-stile.split-column .pv{font-size:20px}',
+    '.pme-stile.split-column .part{margin-bottom:3px}',
     '.pme-stile.split .s:empty{display:none}',
     '.pme-stile.rc3 [data-pme="heart"]{margin-left:6px;opacity:0}',
     '.pme-stile.rc3 [data-pme="heart"].on{opacity:1}',
@@ -109,6 +110,15 @@ export function gridOf(r: ResolvedSkin, portrait: boolean): LayoutGrid | null {
   return portrait ? null : (r.skin.layout.grid ?? null);
 }
 
+/** The tile that takes this tile's place while a sensor is attached (skin layout.whenAttached), if any. */
+function replacementOf(r: ResolvedSkin, param: TileParam): TileSpec | undefined {
+  for (const rule of Object.values(r.skin.layout.whenAttached ?? {})) {
+    const t = rule?.tiles?.[param];
+    if (t && t.param !== param) return t;
+  }
+  return undefined;
+}
+
 /** A font size of layout.grid (px at an 800 px monitor) scaled with the monitor height (--pme-h, set by the mount). */
 const gridFont = (px: number): string => `calc(${px} * var(--pme-h, 800px) / 800)`;
 
@@ -128,10 +138,10 @@ function gridCss(g: LayoutGrid): string {
     '.pme-grid .pme-stile.rc3:has([data-pme="st"]) .vrow{padding-right:calc(100 * var(--pme-h, 800px) / 800)}',
     '.pme-grid .pme-stile.rc3:has(.limrow) .srow{position:absolute;right:8px;top:32%}',
     '.pme-grid .pme-stile.rc3:has(.limrow) .s{font-size:calc(30 * var(--pme-h, 800px) / 800);min-height:0}',
+    ...ibpCss(),
     // split tiles: the bell and the unit at the top right, so the parts take the cell's height (CO2 row 12.6 %)
     '.pme-grid .pme-stile.split>.h{position:absolute;right:6px;top:2px}',
     '.pme-grid .pme-stile.split .pv{line-height:1}',
-    '.pme-grid .pme-stile.split.row .ph{flex-direction:row;align-items:baseline;gap:4px}',
     // the strip's tile has no sub-line (its extras are the strip's fields)
     '.pme-strip .pme-stile.rc3 .srow{display:none}',
     '.pme-strip .pme-stile .v{line-height:1}',
@@ -146,6 +156,27 @@ function gridCss(g: LayoutGrid): string {
 }
 
 /**
+ * Pass 3 (IBP1, IMG_8113): an IBP tile with its three pairs (systolic, diastolic, mean) in three columns: the value over
+ * the first two, the mean in brackets right of it in the same row, under (mmHg); each pair under its part. A tile with
+ * one pair (IBP2 as CVP, mean only) keeps the pass-2 layout.
+ */
+function ibpCss(): string[] {
+  const t = '.pme-grid .pme-stile.rc3:has(.limrow [data-lim$="_S"])'; // a systolic pair: IBP2 as CVP (CVP_M alone) keeps pass 2
+  const cols = 'grid-template-columns:44fr 28fr 28fr';
+  return [
+    `${t}{display:grid;${cols};grid-template-rows:auto minmax(0,1fr) auto;align-items:center}`,
+    `${t}>.h{grid-column:1/-1;grid-row:1}`,
+    `${t}>.vrow{grid-column:1/3;grid-row:2}`,
+    `${t}>.srow{grid-column:3;grid-row:2;position:static}`,
+    `${t} .srow .s{text-align:center}`,
+    `${t}>.limrow{grid-column:1/-1;grid-row:3;display:grid;${cols};justify-items:center}`,
+    `${t} .limrow [data-lim$="_S"]{grid-column:1}`,
+    `${t} .limrow [data-lim$="_D"]{grid-column:2}`,
+    `${t} .limrow [data-lim$="_M"]{grid-column:3}`,
+  ];
+}
+
+/**
  * Saadat fidelity pass 2 (the rc.3 photo review, IMG_8113): text sizes and positions of the grid's tiles. Grid mode
  * only — so every skin without `layout.grid`, and a phone in portrait, draws exactly as before. Sizes are px at an
  * 800 px monitor, scaled with its height like the rest of the grid.
@@ -154,7 +185,9 @@ function photoCss(g: LayoutGrid): string[] {
   const f = (px: number) => gridFont(px);
   const w = g.labelWeight;
   const own = Object.entries(g.labelPx ?? {}).map(
-    ([p, px]) => `.pme-grid .pme-stile[data-param="${p}"] [data-pme="lbl"],.pme-grid .pme-stile[data-param="${p}"] .ph .pl{font-size:${f(px)}}`,
+    ([p, px]) =>
+      `.pme-grid .pme-stile[data-param="${p}"] [data-pme="lbl"],.pme-grid .pme-stile[data-param="${p}"] .ph .pl,` +
+      `.pme-grid .pme-stile[data-as="${p}"] [data-pme="lbl"],.pme-grid .pme-stile[data-as="${p}"] .ph .pl{font-size:${f(px)}}`, // O4: and its stand-in
   );
   return [
     // T3: label weight (tiles, split parts, the strip)
@@ -181,22 +214,47 @@ function photoCss(g: LayoutGrid): string[] {
     `.pme-grid .pme-stile.rc3[data-param="NIBP"] .lim.c{margin-left:${f(70)}}`,
     `.pme-grid .pme-stile.rc3[data-param="NIBP"] [data-pme="ntime"]{font-size:${f(15)};margin-right:${f(50)}}`,
     `.pme-grid .pme-stile.rc3[data-param="NIBP"] [data-pme="mode"]{position:absolute;left:50%;top:${f(4)};transform:translateX(-50%);font-size:${f(16)}}`,
-    // T10: the T column — limits 11 px under each label, "°C" 18 px at the bottom right
-    `.pme-grid .pme-stile.split.column .part .lim{font-size:${f(13)}}`,
-    `.pme-grid .pme-stile.split.column .part{min-height:${f(78)};margin-bottom:0}`,
-    `.pme-grid .pme-stile.split.column>.h{top:auto;bottom:${f(4)}}`,
-    `.pme-grid .pme-stile.split.column>.h .u{font-size:${f(18)}}`,
-    // T11 (L3): EtCo2 with its unit beside it; FiCo2 and AWRR over their units; values centred in thirds; the AWRR
-    // limits beside its label at the top right
-    `.pme-grid .pme-stile.split.row .part:not(:first-child) .ph{flex-direction:column;align-items:center;gap:0}`,
-    `.pme-grid .pme-stile.split.row .pu{font-size:${f(13)}}`,
-    '.pme-grid .pme-stile.split.row .pv{text-align:center}',
-    '.pme-grid .pme-stile.split.row .part{position:relative}',
-    '.pme-grid .pme-stile.split.row .part:last-child:not(:first-child) .lim{position:absolute;right:0;top:0}',
-    // … so the split row's bell goes to the bottom right, as the T column's °C does (it printed over the AWRR limit)
-    `.pme-grid .pme-stile.split.row>.h{top:auto;bottom:${f(4)}}`,
-    // G6: the %SPO2 value left of centre, after its limits
-    `.pme-strip .pme-stile .v{text-align:left;padding-left:${f(18)}}`,
+    // T10 (pass 3): the T column as the photo — each label over its limits in a narrow column, the value right-aligned
+    // beside them inside the tile, "°C" 18 px in the tile's title row (it floated under DT)
+    `.pme-grid .pme-stile.split-column .part .lim{font-size:calc(${f(13)} * var(--pme-lim-k, 1))}`,
+    `.pme-grid .pme-stile.split-column .part{min-height:${f(78)};margin-bottom:0;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:4px;align-content:start}`,
+    '.pme-grid .pme-stile.split-column .pr{display:contents}',
+    '.pme-grid .pme-stile.split-column .ph{grid-column:1/-1;grid-row:1}',
+    '.pme-grid .pme-stile.split-column .lim{grid-column:1;grid-row:2}',
+    `.pme-grid .pme-stile.split-column .pv{grid-column:2;grid-row:2;text-align:right;align-self:center;font-size:${f(20)}}`,
+    `.pme-grid .pme-stile.split-column>.h{top:${f(4)};bottom:auto}`,
+    `.pme-grid .pme-stile.split-column>.h .u{font-size:${f(18)}}`,
+    // T11 (L3, pass 3): the parts share the tile's width. Each part is a head over its value with its limits in a narrow
+    // column: the first part (EtCo2, or the RR standing in for it) has its unit beside the label and its limits left of
+    // the value; the others (FiCo2, AWRR) have the label over the unit, centred, the limits right of them, the value
+    // centred under both. Nothing is placed absolutely, so no text can print over another; tile-fit.ts puts the unit
+    // under the label (.unit-under) and then shrinks the limits (--pme-lim-k) when a part is short.
+    // the parts fill the tile's height, heads at the top and values at the foot, so the digits share one line whatever
+    // the heads' heights (EtCo2's one line, FiCo2's two) and a stand-in's digits sit where the EtCo2 digits do
+    '.pme-grid .pme-stile.split-row{display:flex;flex-direction:column}',
+    '.pme-grid .pme-stile.split-row .parts{flex:1 1 auto;min-height:0}',
+    '.pme-grid .pme-stile.split-row .part{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;align-content:space-between;column-gap:4px;align-items:center}',
+    '.pme-grid .pme-stile.split-row .pr{display:contents}',
+    '.pme-grid .pme-stile.split-row .ph{grid-column:1/-1;grid-row:1;flex-direction:row;align-items:baseline;gap:4px;align-self:start}',
+    '.pme-grid .pme-stile.split-row .lim{grid-column:1;grid-row:2}',
+    '.pme-grid .pme-stile.split-row .pv{grid-column:2;grid-row:2;text-align:center}',
+    '.pme-grid .pme-stile.split-row .part:not(:first-child){grid-template-columns:minmax(0,1fr) auto}',
+    '.pme-grid .pme-stile.split-row .part:not(:first-child) .ph{grid-column:1;flex-direction:column;align-items:center;gap:0}',
+    '.pme-grid .pme-stile.split-row .part:not(:first-child):has(.pu:empty) .ph{align-items:flex-start}', // BFA: labels at their parts' starts
+    '.pme-grid .pme-stile.split-row .part:not(:first-child) .lim{grid-column:2;grid-row:1;align-self:start}',
+    '.pme-grid .pme-stile.split-row .part:not(:first-child) .pv{grid-column:1/-1}',
+    '.pme-grid .pme-stile.split-row.unit-under .part:first-child .ph{flex-direction:column;align-items:flex-start;gap:0}',
+    `.pme-grid .pme-stile.split-row .part .lim{font-size:calc(${gridFont(g.fontPx.limit ?? 11)} * var(--pme-lim-k, 1))}`,
+    `.pme-grid .pme-stile.split-row .pu{font-size:${f(13)}}`,
+    // O4: a tile standing in for a split tile (RR for the CO2 tile) gives its part the width of the replacement's part
+    '.pme-grid .pme-stile.stand-in .part{flex:0 0 calc((100% - (var(--pme-slots) - 1) * 4px) / var(--pme-slots))}',
+    // the split row's bell at the bottom right, as the T column's was (it printed over the AWRR limit)
+    `.pme-grid .pme-stile.split-row>.h{top:auto;bottom:${f(4)}}`,
+    // NIBP while the cuff runs: "mmHg NBP inflating" on one line at the time size (it wrapped at the mean's 30 px)
+    `.pme-grid .pme-stile.rc3[data-param="NIBP"] .srow .s.busy{font-size:${f(15)};white-space:nowrap}`,
+    // G6: the %SPO2 value left of centre, after its limits; the limits keep their column and the digits their field
+    `.pme-strip .pme-stile .v{text-align:left;padding-left:${f(18)};white-space:nowrap}`,
+    '.pme-strip .pme-stile.rc3 .vrow .lim.a{flex:none}',
     // G5: the strip as a framed box (x 6–1278)
     '.pme-strip{position:relative}',
     '.pme-strip::after{content:"";position:absolute;left:6px;right:2px;top:0;bottom:2px;border:1px solid var(--pme-divider);pointer-events:none}',
@@ -234,6 +292,8 @@ interface TileRc3 {
   parts: Array<{ label: HTMLElement; value: HTMLElement; lim: HTMLElement; limitKey: string | undefined }>;
   /** Last limit HTML per slot (a repaint only touches the DOM when it changes). */
   painted: Map<HTMLElement, string>;
+  /** Pass 3: what the parts were last fitted for (width and texts); a repaint re-measures only when it changes. */
+  fitKey?: string;
 }
 
 export class DeviceUI {
@@ -414,7 +474,7 @@ export class DeviceUI {
 
   /** Grid mode: a tile's main value (or each split part) at the skin's size, scaled with the monitor height. */
   private sizeValues(tile: Tile, g: LayoutGrid): void {
-    const px = g.fontPx[tile.spec.param];
+    const px = g.fontPx[(tile.el.dataset.as ?? tile.spec.param) as TileParam] ?? g.fontPx[tile.spec.param]; // O4: a stand-in at its replacement's size
     if (px === undefined) return;
     const parts = tile.rc3?.parts ?? [];
     for (const e of parts.length > 0 ? parts.map((pt) => pt.value) : [tile.value]) e.style.fontSize = gridFont(px);
@@ -442,8 +502,17 @@ export class DeviceUI {
       return { spec, el, label: q('[data-pme="lbl"]'), value: v, sub: q('[data-pme="s"]'), bell: q('[data-pme="bell"]'), lim: q('[data-pme="lim"]'), rc3: null };
     }
     el.classList.add('rc3');
+    // O4 (pass 3): in the grid, a tile another takes the place of while a sensor is attached (RR for the CO2 tile) is
+    // set as that tile: its colour, sizes and part width; only the content differs
+    const as = gridOf(r, this.portrait) ? replacementOf(r, spec.param) : undefined;
+    if (as) {
+      el.dataset.as = as.param;
+      el.classList.add('stand-in');
+      el.style.setProperty('--pme-slots', String(as.parts?.length ?? 1));
+      el.style.color = r.render.tileColors[as.param] ?? el.style.color;
+    }
     if (spec.split) {
-      el.classList.add('split', spec.split);
+      el.classList.add('split', `split-${spec.split}`); // never the bare "row": a host page's .row{display:flex} packs the parts (pass 3)
       const parts = spec.parts ?? [{ label: spec.label ?? spec.param }];
       el.innerHTML =
         `<div class="h"><span data-pme="bell"></span><span class="u">${spec.unit ?? ''}</span></div><div class="parts">` +
@@ -719,6 +788,7 @@ export class DeviceUI {
           const measuring = this.nibpEv?.phase === 'inflating' || this.nibpEv?.phase === 'deflating';
           if (!measuring && this.nibpEv?.phase !== 'failed' && this.nibpLast) main = `${this.nibpLast.sys} / ${this.nibpLast.dia}`;
           if (!measuring) sub = n.sub === '(---)' ? '' : n.sub;
+          tile.sub.classList.toggle('busy', measuring);
           const mode = tile.el.querySelector<HTMLElement>('[data-pme="mode"]');
           const time = tile.el.querySelector('[data-pme="ntime"]');
           const label = nibpModeLabel(this.nibpEv);
@@ -765,6 +835,42 @@ export class DeviceUI {
       const bar = av.flash !== null ? this.r.skin.alarms.messageBar[`L${av.flash}`] : null;
       tile.value.style.background = box && bar ? bar.bg : '';
       tile.value.style.color = box && bar ? bar.fg : '';
+    }
+    if (grid) this.fitSplits();
+  }
+
+  /**
+   * Pass 3: in the grid, each split tile's parts fitted to their width (tile-fit.ts): the unit under the label, then the
+   * limits smaller, so nothing overlaps from the 1024 × 640 skin shot to 1920 × 1080. The width is the part's measured
+   * width (the tile's share of the grid), never the viewport; a repaint re-measures only when the width or a text changes.
+   */
+  private fitSplits(): void {
+    for (const tile of this.tileList) {
+      const b = tile.rc3;
+      const part = b?.parts[0]?.label.closest('.part') as HTMLElement | null | undefined;
+      if (!b || !part || tile.el.style.display === 'none') continue;
+      const w = part.clientWidth;
+      const key = `${w}|${b.parts.map((p) => `${p.label.textContent}/${p.value.textContent?.length ?? 0}/${p.lim.textContent}`).join('|')}`;
+      if (w <= 0 || b.fitKey === key) continue;
+      b.fitKey = key;
+      const el = tile.el;
+      el.classList.remove('unit-under');
+      el.style.removeProperty('--pme-lim-k');
+      const width = (e: Element | null) => (e ? e.getBoundingClientRect().width : 0);
+      const text = (e: HTMLElement) => {
+        if (!e.firstChild) return 0;
+        const range = e.ownerDocument.createRange();
+        range.selectNodeContents(e);
+        return range.getBoundingClientRect().width;
+      };
+      const row = tile.spec.split === 'row';
+      const parts = b.parts.map((p, k) => ({
+        widths: { label: width(p.label), unit: width(p.label.nextElementSibling), lim: width(p.lim), value: text(p.value) },
+        side: (row && k > 0 ? 'head' : 'value') as LimSide,
+      }));
+      const fit = fitTile(w, parts, 4);
+      el.classList.toggle('unit-under', fit.unitUnder);
+      if (fit.limScale < 1) el.style.setProperty('--pme-lim-k', fit.limScale.toFixed(3));
     }
   }
 
