@@ -718,3 +718,104 @@ F7 no (0 errors) · F8 no (A4, 6 pages) · F9 no (note 2) · F10 no. **No F-fail
 
 **Page counts:** facilitator report (tamponade, Chromium) **6 A4 pages** in the talk and in the A3 test; learner handout
 **1 A4 page**; Persian handouts 6 / 6 / 7.
+
+## Q2 on rc.3 — the rehearsal on the rc.3 tag kit (fcf99b70, v1.0.0-rc.3)
+
+*Measured 2026-10-23 (13:58–15:30 +0330) on kit `pme-showcase-kit-fcf99b70`, built by `make-bundle.mjs` from a
+clean worktree of the tag `v1.0.0-rc.3` = main **fcf99b70** (#116). `VERSION.txt`: `Commit: fcf99b706e2c…`, no
+"(with uncommitted changes)", `Branch: HEAD`; the app's build id **`fcf99b70 2026-10-23`** (no `+`); `1.0.0-rc.3` in 3
+of the app's scripts, rc.1/rc.2 in none. Served as built by its own Start Classroom launcher; three emulated phones
+(Pixel 7 on Chromium, iPhone 13 on WebKit) joined once at the QR moment. One run at a time; load average ≈ 2–3.7.
+Script: `kit-round-a.kitround.ts` as on the tag (the close's bounded "Return here" click came with the bump PR,
+88fe8b75) with the talk's Notes line naming rc.3. Folders: `docs/showcase/kit-round-a/q2-rc3/` (the talk, both
+engines; the set this section and the Persian handouts read) and `q2-rc3-a3/` (the A3 test). The rc.2 numbers beside
+these are the rc.2 tag run's (§"Q2" on the rc.2 docs PR #97, folder `q2-rerun/`; that PR is still a draft).*
+
+**The kit.** `check-relay.mjs`: both `.cmd` files "CRLF, ASCII, runs server\launch.mjs"; **PASS, 4 of 4 runs**, node
+v26.12.1 (`q2-rc3/relay-fcf99b70.json`; rc.2 2 of 2). The Start view and Settings → About read **"Version 1.0.0-rc.3
+(pre-release). For education only. Not a medical device and not clinically validated: never use it for patient
+care."** (both engines). The Debrief footer reads "… Version 1.0.0-rc.3 (pre-release), build fcf99b70 2026-10-23."
+(both engines; all 6 pages of the Chromium PDF). `about.preRelease` reads `false`: the script's regex still names rc.1.
+
+**How it ran.** First time through, no re-run: **Chromium 1 passed (9.7 min), WebKit 1 passed (9.7 min)**; 9 min 38 s
+of wall from the opening to the end of the close on both (rc.2 9 min 24 s / 9 min 39 s). No hang in the close. 34
+files with the relay JSON. A3: **2 passed (7.7 min)** (rc.2 7.6 min).
+
+**Verdict marks** — every mark the same KIND as the table, both engines:
+
+| Segment | rc.2 Q2 (C / W) | rc.3 Chromium | rc.3 WebKit |
+|---|---|---|---|
+| 0 Opening + QR | rc.2 label · 3 phones · joins 2.4 / 2.8 s | rc.3 label · `3 phones following` · join 2.5 s | same · 2.9 s |
+| 1 Bronchospasm + H21 | – ✓ – (02:06) · hold/cockpit `true` · 1 506 frames | **– ✓ –** (salbutamol 02:07) · `true`/`true` · 1 507 contiguous frames, EtCO₂ 34, awRR 14 throughout | **– ✓ –** (02:06) · `true`/`true` · 1 505 |
+| 2 Tamponade + Debrief | ✓✓✓✓◆ · recognition 01:05 / 01:06 · CPR 3 s · drainage 1:30 · stop 2 s · PDF A4 6 pp | **✓✓✓✓◆** · 01:06 · 3 s · 1 min 30 s · 2 s · pulseless 3 min 07 s · **PDF A4, 6 pages** · load → crystalloid 222.4 s | **✓✓✓✓◆** · 01:04 · 3 s · 1 min 30 s · 2 s · 3 min 07 s · print-media PNG · 221.6 s |
+| 4 MH early call, 13:03 | ✓✓✓––✓ · Early signs 06:52 · call 07:02 / 07:03 · press 13:03 / 13:04 · < 40 07:28 / 07:29 | **✓✓✓––✓** · 06:52 · call 07:02 (10 s) · dantrolene 07:23 (21 s) · press 13:03 · < 40 07:28 | **✓✓✓––✓** · 06:51 · 07:02 (11 s) · 07:23 · 13:03 · < 40 07:27 |
+
+**States as the cards** (both engines): tamponade deteriorating 06:14, pulse lost 07:48 / PEA 07:49, CPR 07:51,
+drained 09:21, ROSC 10:57 — **the cue cards' 7:48 / 9:21 / 10:57 hold exactly**; MH surgery 04:01 / 04:02, Early signs
+06:52 / 06:51, trigger off 07:02, dantrolene 07:23, recovering 08:36, normoventilated 13:04 / 13:03. MH EtCO₂ after
+the press, per minute: 38 · 49 · 52 / 51 · 53 · 54 · 49 / 47 · 44 · 44 · 43 · 43 · 43, peak **55 at 17:27** (rc.2 peak 55
+at 17:17 / 17:32). Key moments: bronchospasm 1, **tamponade 7**, MH 9. Timeline rows: bronchospasm 18 / 17,
+tamponade 44 / 42, MH 42 / 41 (rc.2 17 / 17, 42 / 44, 42 / 43). Errors (page and console): **0** everywhere.
+
+**A3 on the tag kit** (`q2-rc3-a3/`, F10): marks ✓✓✓✓◆ on both; **learner handout 1 A4 page, 0 verdict words**, its
+"Take-home points" the card's three owner lines (the second: "Drainage is the treatment: plan it before the pressure
+falls."); `pdffonts`: Inter-Regular and Inter-Regular_Bold embedded (plus `.SFNS` and one Helvetica-Bold face, the
+system fallback for a few glyphs); facilitator PDF 6 A4 pages. keyTimes on both: recognition 1 min 08 s · first team
+action 7 min 51 s · CPR 3 s (C) / 4 s (W) · drainage 1 min 30 s · stop CPR 2 s (C 10:55 → 10:57, W 10:56 → 10:58) ·
+pulseless 3 min 07 s (C) / 3 min 08 s (W) (rc.2: 1 min 07 s, 7 min 51 s, 3 s, 1 min 30 s, 2 s, 3 min 07 / 08 s);
+**moments 7**; errors 0. F10 does not fire.
+
+**The six monitor captures** (`q2-rc3/q2-*-monitor-{chromium,webkit}.png`, 1000 × 800, the Saadat-like photo layout):
+on all six, a two-row header (P1, BED 01 / ADULT, the date and time) over six lanes — ECG labelled "II X1 NORMAL", a
+second ECG unlabelled, CO₂ filled yellow breath by breath (never a solid block: FX-25 holds), IBP1 (ART) with dotted
+200/120/40 scale lines, IBP2 (30/10/−10), pleth "NORMAL X1" — each with its speed at the right; at the right the HR
+tile, NIBP with the T1/T2/DT column, the EtCo2 | FiCo2 | AWRR row, IBP1, IBP2, the BFI row; a full-width bottom strip
+(%SPO2, PI, PVI, SpOC, %SpCo, %SpMet, SpHb); red limits beside the values. Tamponade at 1:00: IBP2 the CVP wave (blue),
+tile 17 (C) / 18 (W), "CVP MEAN TOO HIGH" in the alarm bar. Bronchospasm and MH: IBP2 lane empty and its tile blank
+(neither card connects a CVP line: not a missing lane). MH at Early signs: EtCO₂ 46, the EtAA tile 0.8 (MAC 0.4).
+
+**The six showcase-card shots, re-taken** (`rehearsal.showcase.ts`, one worker): **16 passed (55.7 min**; 27.7 min Chromium, 28.0 min WebKit; rc.2 55.5 min); **64 of 64 soft checks** pass and no page or console error, although another job held the Mac at a load average of up to ≈ 134 during it. 48 files: 16 modified (the four tests whose shots main already had: healthy induction, anaphylaxis, class IV haemorrhage, the second-scenario clock; JPG + JSON per engine), 32 new (the other four tests' JPG + JSON per engine, first committed here, and 16 `results/run-sheet-*.md`); 49 older files the run no longer writes are kept (e.g. `severe-tamponade-then-induction-*`, `…-vent-first-OLD-4a1cc3f7`, `multiwindow-*`). Tamponade (Chromium), MH (WebKit) and anaphylaxis (Chromium) opened: the Saadat-like grid and six lanes as in the Q2 captures.
+
+**macOS WebKit e2e** (tag worktree, `env -u CI`): FX-16 `--repeat-each 3` **3 passed**, none skipped: phone / host
+beeps 93 / 94 (**99 %**), 93 / 94 (**99 %**), 93 / 93 (**100 %**), 0 dropped on either side (rc.2 99 / 100 / 100 %);
+FX-14 (hidden tab pauses, "(paused)", the toast on return), FX-24 (the follower after a fast-forward and on join),
+FX-25 (the CO₂ lane after attach) **3 passed**, none skipped.
+
+**Persian, the three exports** (`q2-rc3/` Chromium JSONs, `debrief-fa.mjs --version 1.0.0-rc.3 --fonts <Vazirmatn>
+--text`): bronchospasm **6 A4 pages** (82 entries, 79 unreviewed), tamponade **7** (110, 107), MH **8** (112, 109); **0
+strings without translation** each; `verify_pdf.py --expect-font Vazirmatn` exit 0, 0 unexpected fonts, 0 errors, 0
+WARN. Each names 1.0.0-rc.3 and fcf99b70. The three owner-approved take-home lines (#112) print on each, the only
+reviewed entries each report uses. The owner's copies: `_sandbox/pme-debrief-fa/debrief-fa-*-2026-10-23.pdf`.
+
+**Phones and relay.** `3 phones following` at the QR moment; every phone `synced` at every segment's end; H21's hold
+kept every 2-s sample. Resyncs per phone: 5 / 6–7 by bronchospasm's end, 10 / 10–11 by the tamponade's end, 18–19 by
+the close. Largest phone-vs-instructor difference: bronchospasm 0 s; tamponade HR 1.5 s (C) and **4 s (W)**; at the
+close the AGENTS tile, 29.6 s: instructor "0.0", every phone "---", after the style change (S12-F2 as before).
+
+**The close (FX-12).** After Restart patient the session bar reads "No scenario" on both engines (as before); the bounded
+"Return here" click returned (`returnClicked: true`) on both.
+
+**Gate reading (Task 4 Step 7):** F1 no · F2 no (4/4) · F3 no (rc.3 label and footer; no rc.1/rc.2 anywhere) · F4 no
+· F5 no · F6 no (PEA, ROSC, Early signs, Recovering all came) · F7 no (0 errors) · F8 no (A4, 6 pages) · F9 no (IBP2
+empty by scenario) · F10 no. **No F-failure.**
+
+**Findings** (recorded, not fixed):
+1. **Tile text collides at 1000 × 800** on all six captures: the EtCo2 tile's "mmHg" runs under "FiCo2"; "AWRR"
+   overprints its red limits (30 / 5); "SQI%EMG%" has no gap; in MH the EtAA tile covers "SQI%EMG%" ("SQI%EI"); MH's
+   capnogram plateau inks over the lane's "CO2" and "50mmHg" labels. The gate reference
+   (`docs/gates/saadat-pr-g/after-co2-ventilated-1280x800.png`) is 1280 × 800: for the renderer's pass 3.
+2. **The NIBP tile on the three cards reads "/"** with no value and no "AUTO(5Min)" label at the capture moments (O2's
+   AUTO 5 min is the free-play default; the smoke check's item 2 looks at it).
+3. **WebKit, tamponade at 1:00:** the IBP2 value "18" drawn almost black (the alarm blink's dark phase at the capture
+   instant).
+4. **WebKit, tamponade:** one phone-vs-instructor HR difference of 4 s (instructor 54 → 112, phone 49 → 117, at 104.8 s
+   of wall, while HR changed fast); rc.2 1.5 s. Over the script's 2-s S12-F2 rule; the phones were `synced`.
+5. Persian pages 7 and 8 for tamponade and MH (rc.2 6 and 7): +1 each, within the plan's ±1.
+6. The A3 handout embeds `.SFNS` and Helvetica-Bold faces beside Inter (system fallback for a few glyphs); the smoke
+   check's item 7 compares the print in Safari and Chrome by eye.
+7. Times within ±2 s sim of rc.2's Q2 on every card (recognition 01:04–01:08 is the script's tick, not the model).
+8. The release workflow's `playwright install --with-deps` took ≈ 20 min (the whole rc.2 run ≈ 5 min); the release
+   succeeded.
+
+**Not measured** (the smoke check and W cover these in part): real Safari, real phones, sound by ear, a real print
+dialog, the NIBP AUTO 5 min and IBP-off free-play defaults (no capture in free play), Windows.
