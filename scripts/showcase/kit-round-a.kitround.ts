@@ -1511,7 +1511,7 @@ test('Q1 30-minute talk on the release build: opening, bronchospasm + H21, tampo
     const view = page.locator('[data-view=debrief]');
     await view.getByRole('heading', { level: 1, name: 'Debrief' }).waitFor({ timeout: 15_000 });
     await view.getByRole('textbox', { name: 'Run by' }).fill('Showcase 2, 28 October');
-    await view.getByRole('textbox', { name: 'Notes' }).fill('Kit round Q2 rehearsal on the rc.2 release build.').catch(() => undefined);
+    await view.getByRole('textbox', { name: 'Notes' }).fill('Kit round Q2 rehearsal on the rc.3 release build.').catch(() => undefined);
     await page.emulateMedia({ media: 'print' });
     mkdirSync(OUTDIR, { recursive: true });
     await page.screenshot({ path: join(OUTDIR, `q1-tamponade-debrief-print-${Tm.r.browser}.png`), fullPage: true }).catch(() => undefined);
