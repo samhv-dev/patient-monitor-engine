@@ -53,6 +53,27 @@ describe('pass 3: the fit rules of a split part (tile-fit.ts)', () => {
   });
 });
 
+describe('pass 3: fitting reads no layout on an ordinary repaint (CI WebKit: a forced layout per paint starved the app)', () => {
+  it('repaints read no clientWidth or getBoundingClientRect; the part width comes from a ResizeObserver', () => {
+    const { ui } = mount('saadat-like', true);
+    let reads = 0;
+    const proto = HTMLElement.prototype;
+    const cw = Object.getOwnPropertyDescriptor(Element.prototype, 'clientWidth') ?? Object.getOwnPropertyDescriptor(proto, 'clientWidth');
+    const owner = Object.getOwnPropertyDescriptor(Element.prototype, 'clientWidth') ? Element.prototype : proto;
+    const gbcr = Element.prototype.getBoundingClientRect;
+    Object.defineProperty(owner, 'clientWidth', { configurable: true, get() { reads++; return 0; } });
+    Element.prototype.getBoundingClientRect = function (this: Element) { reads++; return gbcr.call(this); };
+    try {
+      for (let t = 1; t <= 5; t++) ui.paint(t);
+      expect(reads).toBe(0);
+    } finally {
+      if (cw) Object.defineProperty(owner, 'clientWidth', cw);
+      Element.prototype.getBoundingClientRect = gbcr;
+      ui.destroy();
+    }
+  });
+});
+
 describe('pass 3: split tiles never use a class a host page may style', () => {
   it('the CO2, T and BFA tiles are split-row / split-column, never "row" or "column" (app.css .row{display:flex})', () => {
     const { ui, tile } = mount('saadat-like', true);

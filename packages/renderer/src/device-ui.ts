@@ -312,6 +312,8 @@ interface TileRc3 {
   painted: Map<HTMLElement, string>;
   /** Pass 3: what the parts were last fitted for (width and texts); a repaint re-measures only when it changes. */
   fitKey?: string;
+  /** Pass 3: the first part's width as the ResizeObserver last reported it (0 while hidden). */
+  partW?: number;
 }
 
 export class DeviceUI {
@@ -326,6 +328,13 @@ export class DeviceUI {
   private r: ResolvedSkin;
   private pump = false;
   private tileList: Tile[] = [];
+  /**
+   * Pass 3: the split parts' widths come from a ResizeObserver, so a repaint reads no layout. Reading clientWidth on every
+   * paint forced a synchronous layout of the whole page (also of a heavy Debrief or Explore page with the monitor hidden)
+   * and starved the app on CI's WebKit.
+   */
+  private readonly fitObs: ResizeObserver | null;
+  private readonly fitOf = new Map<Element, TileRc3>();
   private values: Partial<Record<NumericId, Measured>> = {};
   private nibpLast: { sys: number; dia: number; map: number; at: number } | null = null;
   private nibpEv: NibpEvent | undefined;
@@ -384,6 +393,16 @@ export class DeviceUI {
     this.watermark = doc.createElement('div');
     this.watermark.className = 'pme-watermark';
     waveArea.append(this.watermark);
+    const RO = (doc.defaultView as (Window & typeof globalThis) | null)?.ResizeObserver;
+    this.fitObs = RO
+      ? new RO((entries) => {
+          for (const e of entries) {
+            const b = this.fitOf.get(e.target);
+            if (b) b.partW = e.contentRect.width;
+          }
+          this.fitSplits();
+        })
+      : null;
     this.setSkin(r, page);
   }
 
@@ -415,6 +434,8 @@ export class DeviceUI {
     this.strip.className = 'pme-strip';
     this.strip.style.cssText = 'display:none';
     this.tileList = [];
+    this.fitObs?.disconnect();
+    this.fitOf.clear();
     this.fields = [];
     if (grid) this.placeGrid(grid);
     else this.placeColumns();
@@ -458,6 +479,11 @@ export class DeviceUI {
       const tile = this.buildTile(spec);
       this.tileList.push(tile);
       this.sizeValues(tile, g);
+      const part = tile.rc3?.parts[0]?.label.closest('.part');
+      if (part && tile.rc3 && this.fitObs) {
+        this.fitOf.set(part, tile.rc3);
+        this.fitObs.observe(part);
+      }
       parent.append(tile.el);
       return tile.el;
     };
@@ -869,14 +895,14 @@ export class DeviceUI {
   /**
    * Pass 3: in the grid, each split tile's parts fitted to their width (tile-fit.ts): the unit under the label, then the
    * limits smaller, so nothing overlaps from the 1024 × 640 skin shot to 1920 × 1080. The width is the part's measured
-   * width (the tile's share of the grid), never the viewport; a repaint re-measures only when the width or a text changes.
+   * width (the tile's share of the grid, from the ResizeObserver), never the viewport. A repaint reads no layout: the texts
+   * are measured only when the width or a text's length changes.
    */
   private fitSplits(): void {
     for (const tile of this.tileList) {
       const b = tile.rc3;
-      const part = b?.parts[0]?.label.closest('.part') as HTMLElement | null | undefined;
-      if (!b || !part || tile.el.style.display === 'none') continue;
-      const w = part.clientWidth;
+      if (!b || b.parts.length === 0 || tile.el.style.display === 'none') continue;
+      const w = b.partW ?? 0;
       const key = `${w}|${b.parts.map((p) => `${p.label.textContent}/${p.value.textContent?.length ?? 0}/${p.lim.textContent}`).join('|')}`;
       if (w <= 0 || b.fitKey === key) continue;
       b.fitKey = key;
@@ -977,6 +1003,8 @@ export class DeviceUI {
   }
 
   destroy(): void {
+    this.fitObs?.disconnect();
+    this.fitOf.clear();
     if (this.clock !== null) clearInterval(this.clock);
     this.clock = null;
     if (this.heartTimer !== null) clearTimeout(this.heartTimer);
