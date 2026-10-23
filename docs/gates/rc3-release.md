@@ -16,7 +16,7 @@ Nothing in this note changed a product file.*
   success; the build job's "tick benchmark (alone)" success (#101). Retry-only passes: Chromium none (enforced);
   WebKit `return-here-restore.e2e.ts:15` (already in `docs/guides/known-deviations.md`).
 - **Release files on the tag:** `## [Unreleased]` empty, `## [1.0.0-rc.3] - 2026-10-23`; `CITATION.cff` 1.0.0-rc.3 /
-  2026-10-23; the notes' wording checks 2 / 0 (`v1.1`); README names 1.0.0-rc.3 twice and F27's sentence is gone;
+  2026-10-23; the notes carry both required phrases and no named future version; README names 1.0.0-rc.3 twice and F27's sentence is gone;
   known-deviations rows 6. Tag worktree: install OK, `release-versions` + `docs-honesty` 11/11, renderer 1.0.0-rc.3,
   clean.
 - **RELEASE.md item 2** (physiology since rc.2): `packages/engine-core/src` changed only in `nibp.ts` (the device events
