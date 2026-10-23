@@ -27,6 +27,26 @@ the public API is what the packages export (see the API reference), the `pme-sce
   loss, drainage, ROSC) is unchanged.
 - Engine (E118, not met): pulsus paradoxus in severe tamponade stays a known miss (3.4 mmHg against ≥ 10, Spodick
   2003). The measured candidate mechanisms and why none was added for this release are in `docs/model/circulation.md`.
+- Showcase MH card (E119, E121; card only, no engine change): a real induction sequence, one instructor button per
+  step: awake on room air → premedicated (midazolam 2 mg, fentanyl 100 µg) → preoxygenated (100 % O₂ by face mask) →
+  induced (propofol 2 mg/kg, then succinylcholine 1.5 mg/kg; the MH condition starts here; the masseter note stays) →
+  intubated (ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 % at 2 L/min) → surgery (rocuronium) → the
+  unchanged early signs … CPR chain. Oxygen is never implicit: induced without "Preoxygenate", SpO₂ is 90 % at the
+  induction and 63 % when the tube goes in 60 s later (99 % with it). On the kit-round path (succinylcholine at 4:00)
+  the early signs come 4 min 32 s after the succinylcholine (was 6:52: the premedication and the apnoea leave the CO₂
+  up), the established crisis at 19:04 and VF at 44:32 after it as before. The fentanyl premedication gates the E117
+  sympathetic term: HR at the established crisis 126 (was 166), the early path's HR peak 86 (was 122). Objectives,
+  take-home lines and their Persian entries are unchanged; the Explore baseline at 1:00 is now the awake patient (ART
+  M, SVR and CMRO₂ read down at the late call).
+- Showcase haemorrhage card (E120, E121; card only): the owner's course, class IV bleeding on room air → oxygen and
+  the ventilator from the card's steps → PEA on a junctional rhythm (≈ 11:00) → asystole untreated (≈ 4.5 min later)
+  → CPR with bag ventilation, 2 L warmed crystalloid, 2 units of red cells and epinephrine → VF at the first pulse
+  check → shock. The card sets the junctional rhythm and VF; the pulse loss, the PEA decay to asystole, the CPP (19 at
+  1 min of CPR, 28 at the pulse check), each shock's outcome and the ROSC are the model's. With the app's engine seed
+  the first shock ends VF in asystole (the outcome table's draw is the same whatever the timing), so VF returns at the
+  second pulse check (card) and the second shock leaves an organised rhythm; the pulse returns 63 s after it. Without
+  the ventilator step the patient compensates (systolic ≈ 76) and does not arrest. No take-home lines yet (the owner
+  writes them).
 
 ### Fixed
 

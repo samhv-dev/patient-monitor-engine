@@ -55,7 +55,8 @@ const once = (fn: (t: number, rec: RunRecord) => boolean, tr: string) => {
   let done = false;
   return (t: number, rec: RunRecord) => (!done && fn(t, rec) ? ((done = true), tr) : null);
 };
-/** The MH early call as the cue card runs it (call 9 s into Early signs, dantrolene +20 s, cooling +30 s), then
+/** The MH early call as the cue card runs it after the E119 induction sequence (premedication 0:05, preoxygenation 0:10,
+ *  induction 1:00, intubation 2:00, surgery 2:30; call 9 s into Early signs, dantrolene +20 s, cooling +30 s), then
  *  "ventilation back" when `normo` says so. */
 const mhPresses = (normo: (t: number, rec: RunRecord, at: (id: string) => number | undefined) => boolean) => {
   const done = new Set<string>();
@@ -64,7 +65,7 @@ const mhPresses = (normo: (t: number, rec: RunRecord, at: (id: string) => number
     const go = (tr: string, ok: boolean) => (ok && !done.has(tr) ? (done.add(tr), tr) : null);
     const early = at('earlySigns');
     const off = at('triggerOff');
-    return go('surgery', t >= 240) ?? go('crisis-earlySigns', early !== undefined && t >= early + 9) ?? go('dant', off !== undefined && t >= off + 20)
+    return go('premed', t >= 5) ?? go('preox', t >= 10) ?? go('induce', t >= 60) ?? go('intubate', t >= 120) ?? go('surgery', t >= 150) ?? go('crisis-earlySigns', early !== undefined && t >= early + 9) ?? go('dant', off !== undefined && t >= off + 20)
       ?? go('cool-treating', off !== undefined && t >= off + 30 && at('treating') !== undefined) ?? go('normo', at('recovering') !== undefined && normo(t, rec, at));
   };
 };
@@ -116,7 +117,7 @@ describe('the showcase objectives as rules', () => {
 
   it('E22 MH: ventilation back at "Recovering" is not met; after 2 min of EtCO₂ below 40 it is met', async () => {
     const vent = (rec: RunRecord) => objectives(rec.data)[5]?.verdict; // after E52's recognition objective
-    const early = await hostRun(mh, 560, mhPresses((t, _r, at) => t >= (at('recovering') as number) + 8));
+    const early = await hostRun(mh, 640, mhPresses((t, _r, at) => t >= (at('recovering') as number) + 8));
     expect(objectives(early.data).map((o) => o.verdict.status).slice(0, 3)).toEqual(['not assessable', 'met', 'met']); // E52: recognition is the instructor's tick
     expect(vent(early)?.status).toBe('not met');
     expect(vent(early)?.why).toMatch(/^The state "Ventilation back to 12 × 500, O₂ 100 %" at \d\d:\d\d, when EtCO₂ had been below 40 mmHg for 1 min \d\d s \(2 min 00 s asked\)\.$/);
@@ -126,7 +127,7 @@ describe('the showcase objectives as rules', () => {
       const bad = xs.filter((s) => s.etco2 === null || s.etco2 >= 40).at(-1);
       return bad !== undefined && t >= bad.t + 1 + 120 + 5;
     };
-    const kept = await hostRun(mh, 640, mhPresses(held));
+    const kept = await hostRun(mh, 720, mhPresses(held));
     expect(vent(kept)?.status).toBe('met');
     expect(vent(kept)?.why).toMatch(/^The state "Ventilation back to 12 × 500, O₂ 100 %" at \d\d:\d\d, after EtCO₂ had stayed below 40 mmHg for 2 min 00 s \(\d\d:\d\d → \d\d:\d\d\)\.$/);
   }, 300_000);
