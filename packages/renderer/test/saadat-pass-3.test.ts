@@ -20,10 +20,10 @@ function mount(id: string, co2 = false, portrait = false) {
 describe('pass 3: the fit rules of a split part (tile-fit.ts)', () => {
   const etco2 = { label: 62, unit: 33, lim: 17, value: 54 }; // EtCo2 mmHg, 50/30, "36" at the 1430 × 820 pane
   it('a wide part keeps the unit beside the label and the limits at full size', () => {
-    expect(fitPart(127, etco2, 'value', 4)).toEqual({ unitUnder: false, limScale: 1 });
+    expect(fitPart(127, etco2, 'value', 4)).toEqual({ unitUnder: false, limScale: 1, valScale: 1 });
   });
   it('label + gap + unit wider than the part: the unit goes under the label first', () => {
-    expect(fitPart(95, etco2, 'value', 4)).toEqual({ unitUnder: true, limScale: 1 });
+    expect(fitPart(95, etco2, 'value', 4)).toEqual({ unitUnder: true, limScale: 1, valScale: 1 });
   });
   it('then the limits shrink until limits + gap + value fits, never below the floor', () => {
     expect(fitPart(70, etco2, 'value', 4).limScale).toBeCloseTo(12 / 17, 5);
@@ -31,12 +31,20 @@ describe('pass 3: the fit rules of a split part (tile-fit.ts)', () => {
   });
   it('limits beside the head (AWRR): the head is the wider of label and unit, the unit always under it', () => {
     const awrr = { label: 55, unit: 33, lim: 17, value: 54 };
-    expect(fitPart(127, awrr, 'head', 4)).toEqual({ unitUnder: false, limScale: 1 });
+    expect(fitPart(127, awrr, 'head', 4)).toEqual({ unitUnder: false, limScale: 1, valScale: 1 });
     expect(fitPart(70, awrr, 'head', 4).limScale).toBeCloseTo(11 / 17, 5);
   });
   it('a part with no limits never scales; a part not laid out (width 0) is left alone', () => {
-    expect(fitPart(40, { label: 50, unit: 0, lim: 0, value: 30 }, 'head', 4)).toEqual({ unitUnder: false, limScale: 1 });
-    expect(fitPart(0, etco2, 'value', 4)).toEqual({ unitUnder: false, limScale: 1 });
+    expect(fitPart(40, { label: 50, unit: 0, lim: 0, value: 30 }, 'head', 4)).toEqual({ unitUnder: false, limScale: 1, valScale: 1 });
+    expect(fitPart(0, etco2, 'value', 4)).toEqual({ unitUnder: false, limScale: 1, valScale: 1 });
+  });
+  it('review: a 3-digit value that still does not fit at the limits floor shrinks the digits last (EtCO2 100 at a 1000 px pane)', () => {
+    const f = fitPart(90, { label: 62, unit: 29, lim: 14, value: 85 }, 'value', 4);
+    expect(f.unitUnder).toBe(true);
+    expect(f.limScale).toBe(LIM_MIN_SCALE);
+    expect(f.valScale).toBeCloseTo((90 - 4 - 14 * LIM_MIN_SCALE) / 85, 5);
+    expect(fitPart(127, etco2, 'value', 4).valScale).toBe(1);
+    expect(fitPart(40, { label: 30, unit: 20, lim: 0, value: 50 }, 'head', 4).valScale).toBeCloseTo(40 / 50, 5); // a centred value wider than its part
   });
   it('a tile takes the unit under if any part needs it, and one limit scale (the smallest) for all its pairs', () => {
     const f = fitTile(70, [{ widths: etco2, side: 'value' }, { widths: { label: 55, unit: 33, lim: 0, value: 20 }, side: 'head' }, { widths: { label: 55, unit: 33, lim: 17, value: 30 }, side: 'head' }], 4);
@@ -68,7 +76,7 @@ describe('pass 3: the RR tile is set as the EtCO2 part it stands in for (rule O4
     expect([...rr.querySelectorAll('[data-part] .pl')].map((e) => e.textContent)).toEqual(['RR']);
     expect(rr.querySelector('[data-part="0"] .pu')?.textContent).toBe('BrPM');
     const v = rr.querySelector('[data-part="0"] .pv') as HTMLElement;
-    expect(v.style.fontSize).toBe('calc(52 * var(--pme-h, 800px) / 800)'); // fontPx.CO2
+    expect(v.style.fontSize).toBe('calc(calc(52 * var(--pme-h, 800px) / 800) * var(--pme-val-k, 1))'); // fontPx.CO2
     expect(rr.style.color.toUpperCase()).toBe(resolveSkin('saadat-like', { sensors: { co2: true } }).render.tileColors.CO2?.toUpperCase()); // the digits' colour
     expect(css()).toContain('[data-as="CO2"] .ph .pl{font-size:calc(21 * var(--pme-h, 800px) / 800)}'); // labelPx.CO2
     ui.destroy();
@@ -114,6 +122,18 @@ describe('pass 3: grid rules for the T column, the IBP limits row, the NIBP meas
     expect(c).toContain(':has(.limrow [data-lim$="_S"])'); // IBP2 as CVP (CVP_M only) keeps the pass-2 layout
     expect(c).toContain('[data-lim$="_S"]{grid-column:1}');
     expect(c).toContain('[data-lim$="_M"]{grid-column:3}');
+    ui.destroy();
+  });
+
+  it('review: an IBP value with a systolic pair is drawn as systolic, slash and diastolic, each over its own pair', () => {
+    const { ui, tile } = mount('saadat-like');
+    const m = (value: number) => ({ value, flag: 'valid', at: 5 });
+    ui.onEvent({ type: 'measurement', t: 5, values: { abpSys: m(120), abpDia: m(80), abpMean: m(93) } } as unknown as EngineEvent);
+    ui.paint(5);
+    const v = tile('IBP1').querySelector('[data-pme="v"]') as HTMLElement;
+    expect([...v.children].map((e) => [e.className, e.textContent])).toEqual([['sys', '120'], ['sl', '/'], ['dia', '80']]);
+    expect(v.textContent).toBe('120/80');
+    expect(css()).toContain('.vrow .v .dia{grid-column:2');
     ui.destroy();
   });
 

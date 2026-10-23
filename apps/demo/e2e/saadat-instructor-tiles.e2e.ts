@@ -161,7 +161,10 @@ for (const [w, h, paneW, pane] of [[1990, 920, 1430, 820], [1990, 1080, 1430, 98
     await tab(page, 'devices');
     await page.getByRole('button', { name: 'CO₂ sampling line' }).click();
     await expect(page.locator('.stage .pme-stile[data-param="CO2"]')).toBeVisible({ timeout: 5_000 });
-    await page.waitForTimeout(6_000); // the CO2 numerics fill
+    // the CO2 numerics fill: EtCO2 and the AWRR (the ventilator's rate) both printed
+    const co2Filled = () =>
+      page.evaluate(() => [...document.querySelectorAll('.stage .pme-stile[data-param="CO2"] .pv')].filter((e) => /\d/.test(e.textContent ?? '')).length);
+    await expect.poll(co2Filled, { timeout: 30_000, intervals: [500] }).toBe(3);
     const b = await inks(page, [...TILES, 'CO2']);
     await shot(page, `${w}x${h}-etco2`, browserName);
     const co2 = await type(page, 'CO2');

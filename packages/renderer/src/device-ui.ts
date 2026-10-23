@@ -179,6 +179,15 @@ function ibpCss(): string[] {
     `${t} .limrow [data-lim$="_S"]{grid-column:1}`,
     `${t} .limrow [data-lim$="_D"]{grid-column:2}`,
     `${t} .limrow [data-lim$="_M"]{grid-column:3}`,
+    // review: each pair spread as photographed (≈ 18 % of the tile: low left, high right)
+    `${t} .limrow [data-lim]{justify-content:space-between}`,
+    `${t} .limrow [data-lim$="_S"]{width:41%}`,
+    `${t} .limrow [data-lim$="_D"],${t} .limrow [data-lim$="_M"]{width:64%}`,
+    // review: the systolic over its pair, the diastolic over its pair, the slash between (the columns of the limits row)
+    `${t} .vrow .v{display:grid;grid-template-columns:44fr 28fr;align-items:center;justify-items:center}`,
+    `${t} .vrow .v .sys{grid-column:1;grid-row:1}`,
+    `${t} .vrow .v .sl{grid-column:1;grid-row:1;justify-self:end;transform:translateX(50%)}`,
+    `${t} .vrow .v .dia{grid-column:2;grid-row:1}`,
   ];
 }
 
@@ -223,12 +232,14 @@ function photoCss(g: LayoutGrid): string[] {
     // T10 (pass 3): the T column as the photo — each label over its limits in a narrow column, the value right-aligned
     // beside them inside the tile, "°C" 18 px in the tile's title row (it floated under DT)
     `.pme-grid .pme-stile.split-column .part .lim{font-size:calc(${f(13)} * var(--pme-lim-k, 1))}`,
-    `.pme-grid .pme-stile.split-column .part{min-height:${f(78)};margin-bottom:0;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:4px;align-content:start}`,
-    '.pme-grid .pme-stile.split-column{padding-left:4px;padding-right:4px}', // the narrow column (≈ 60 px at a 1000 px pane) keeps 8 px more for its limits
+    `.pme-grid .pme-stile.split-column .part{min-height:${f(78)};margin-bottom:0;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:6px;align-content:start}`,
+    // the values ≈ 10 px in from the edge (108 px wide at the owner's 1430 px pane), the inset giving way first as the
+    // column narrows (4 px at a 1000 px pane's 76 px), before the limits shrink; % is of the cell, the tile's own width
+    '.pme-grid .pme-stile.split-column{padding-left:4px;padding-right:clamp(4px, calc((100% - 66px) / 4), 10px)}',
     '.pme-grid .pme-stile.split-column .pr{display:contents}',
     '.pme-grid .pme-stile.split-column .ph{grid-column:1/-1;grid-row:1}',
     '.pme-grid .pme-stile.split-column .lim{grid-column:1;grid-row:2}',
-    `.pme-grid .pme-stile.split-column .pv{grid-column:2;grid-row:2;text-align:right;align-self:center;font-size:${f(20)}}`,
+    `.pme-grid .pme-stile.split-column .pv{grid-column:2;grid-row:2;text-align:right;align-self:center;font-size:calc(${f(20)} * var(--pme-val-k, 1))}`,
     `.pme-grid .pme-stile.split-column>.h{top:${f(4)};bottom:auto}`,
     `.pme-grid .pme-stile.split-column>.h .u{font-size:${f(18)}}`,
     // T11 (L3, pass 3): the parts share the tile's width. Each part is a head over its value with its limits in a narrow
@@ -484,7 +495,9 @@ export class DeviceUI {
     const px = g.fontPx[(tile.el.dataset.as ?? tile.spec.param) as TileParam] ?? g.fontPx[tile.spec.param]; // O4: a stand-in at its replacement's size
     if (px === undefined) return;
     const parts = tile.rc3?.parts ?? [];
-    for (const e of parts.length > 0 ? parts.map((pt) => pt.value) : [tile.value]) e.style.fontSize = gridFont(px);
+    // a split tile's digits scale with --pme-val-k, the fit's last step (tile-fit.ts); 1 unless a part is very short
+    if (parts.length > 0) for (const pt of parts) pt.value.style.fontSize = `calc(${gridFont(px)} * var(--pme-val-k, 1))`;
+    else tile.value.style.fontSize = gridFont(px);
   }
 
   /**
@@ -781,6 +794,7 @@ export class DeviceUI {
       // NMT/BFA only while the module publishes, unless the skin shows the module always (blank, research/34 §8 O1)
       tile.el.style.display = modulePresent(p, v, t) || this.r.skin.layout.showAlways?.includes(p) ? '' : 'none';
       let source: string | null = null; // the HR tile's rate source (ECG, IBP1, SpO2)
+      let parts3: string[] | null = null; // pass 3: an IBP value as its three spans
       if (p === 'HR') ({ main, label, source } = this.hrTile());
       else if (p === 'NMT') ({ main, sub } = formatNmt(v, g.noValue));
       else if (p === 'BFA') ({ main, sub } = formatBfa(v, tile.spec.extras?.[0] ?? 'SR', g.noValue));
@@ -813,6 +827,7 @@ export class DeviceUI {
         const [s, d, m] = TILE_NUMERICS[p].numerics.map((k) => v[k]);
         main = `${this.text(s)}/${this.text(d)}`;
         sub = `(${this.text(m) || ' '})`; // a blank mean reads "( )" (T12; only an empty noValue glyph is blank)
+        if (grid && tile.rc3?.slots.row) parts3 = [this.text(s), '/', this.text(d)]; // review: systolic, slash, diastolic
       } else if (TILE_NUMERICS[p].numerics.length === 1) {
         const id = TILE_NUMERICS[p].numerics[0] as NumericId;
         main = this.text(v[id], p === 'TEMP' || p === 'ST' ? 1 : 0, id);
@@ -830,7 +845,8 @@ export class DeviceUI {
         label = tile.spec.parts?.[0]?.label ?? label;
       }
       tile.label.textContent = label;
-      tile.value.textContent = main;
+      if (parts3) this.paintPressure(tile.value, parts3);
+      else tile.value.textContent = main;
       if (p === 'HR' && tile.rc3) this.paintPrTile(tile, source);
       // a three-part pressure ("117/80") overflows a 180 px column at the 40 px numeric size on wide skin fonts [ENG];
       // the grid sizes its values from the skin (layout.grid.fontPx)
@@ -867,6 +883,7 @@ export class DeviceUI {
       const el = tile.el;
       el.classList.remove('unit-under');
       el.style.removeProperty('--pme-lim-k');
+      el.style.removeProperty('--pme-val-k');
       const width = (e: Element | null) => (e ? e.getBoundingClientRect().width : 0);
       const text = (e: HTMLElement) => {
         if (!e.firstChild) return 0;
@@ -879,10 +896,25 @@ export class DeviceUI {
         widths: { label: width(p.label), unit: width(p.label.nextElementSibling), lim: width(p.lim), value: text(p.value) },
         side: (row && k > 0 ? 'head' : 'value') as LimSide,
       }));
-      const fit = fitTile(w, parts, 4);
+      const fit = fitTile(w, parts, row ? 4 : 6); // the column-gap of the part grid
       el.classList.toggle('unit-under', fit.unitUnder);
       if (fit.limScale < 1) el.style.setProperty('--pme-lim-k', fit.limScale.toFixed(3));
+      if (fit.valScale < 1) el.style.setProperty('--pme-val-k', fit.valScale.toFixed(3));
     }
+  }
+
+  /**
+   * Pass 3 (review): a grid IBP value as three spans (systolic, slash, diastolic) that ibpCss sets over the limit pairs.
+   * Its text stays "120/80"; the spans are rebuilt only when a part changes.
+   */
+  private paintPressure(v: HTMLElement, parts: string[]): void {
+    if (v.children.length !== 3) {
+      v.replaceChildren(...['sys', 'sl', 'dia'].map((c) => Object.assign(v.ownerDocument.createElement('span'), { className: c })));
+    }
+    parts.forEach((t, k) => {
+      const e = v.children[k] as HTMLElement;
+      if (e.textContent !== t) e.textContent = t;
+    });
   }
 
   /** The strip's label fields: the engine numeric each names, or blank (research/34 §8 O1). */

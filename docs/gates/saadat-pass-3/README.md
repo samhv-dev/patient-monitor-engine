@@ -42,6 +42,12 @@ fake clock. Each size has both states, `rr` and `co2`.
 - **Chromium:** 1430 × 820, 1000 × 800, 1280 × 800, 1366 × 768, 1920 × 1080 and 1024 × 640.
 - **WebKit:** 1430 × 820 and 1000 × 800.
 
+After the in-run review, two more states were shot on both engines, with the CO₂ line attached:
+
+- `after-1430x820-co2-art-*`: an arterial line in IBP1, so the IBP value prints over its limit pairs;
+- `after-1000x800-co2-art-hi-*`: also an EtCO₂ of 101 at the 1000 × 800 pane, which takes the fit's last step (the
+  digits scale down).
+
 The same ink probe ran on every image:
 
 - **Before:** every `co2` image has the two CO2 overlaps. At 1024 × 640 the FiCo2 and AWRR digits also fall outside
