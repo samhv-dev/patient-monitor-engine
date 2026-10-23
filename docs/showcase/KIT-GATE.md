@@ -43,6 +43,12 @@ at 2 min and systolic > 110 within 60 s of epinephrine; bronchospasm VTE rises �
 
 ---
 
+## rc.3 release kit (2026-10-23)
+
+2026-10-23: `rehearsal/` and `results/` re-taken on the rc.3 kit `fcf99b70` (kit round Q2 on rc.3, the Saadat-like
+photo layout): 16 passed (55.7 min), 64/64 soft checks; 16 `results/run-sheet-*.md` added; files the run no longer
+writes are kept (`SHOWCASE-2-MEASUREMENTS.md` section "Q2 on rc.3"; `docs/gates/rc3-release.md`).
+
 ## Round 4 — FINAL showcase build, main 41678d0b (FU-9 Part B, FU-10 Part A, FU-8 Part B since round 3)
 *2026-10-05. The kit was built into `_sandbox/pme-showcase-next` first, and all proofs ran against that folder. The
 4a1cc3f7 kit stayed in place as the fallback until everything had passed. `VERSION.txt`: `Commit: 41678d0b… (with
