@@ -12,17 +12,17 @@ the public API is what the packages export (see the API reference), the `pme-sce
 - Engine (E117): malignant hyperthermia now shows its tachycardia early. The MH sympathetic drive is front-loaded (it
   approaches its full level, 2.5 in stress-activity units, with τ 2 min from the trigger instead of following the
   15-min metabolic ramp, and falls with dantrolene on the same τ); hypercapnia adds a small sympathetic term, 0.03 per
-  mmHg of PaCO2 above 45 up to 0.3, gated by brainstem perfusion; and the hypermetabolic muscle's own vasodilation
+  mmHg of PaCO2 above 45 up to 0.3, gated by brainstem perfusion and by the anaesthetic's sympatholysis; and the hypermetabolic muscle's own vasodilation
   lowers SVR by up to 20 % with the MH activity, so the pressure does not climb with the heart rate (Somers et al.,
   J Appl Physiol 1989; tachycardia as an early MH sign: Miller's Anesthesia 10e; catecholamines in porcine MH: Gronert
   et al., Anesthesiology 1977). The MH potassium efflux is 2.35 (was 2.2) to keep K 5.5–6.5 at 20 min. On the showcase
   MH induction at constant ventilation the HR is rising (80 → 94; 74 without MH) before the EtCO2 leaves its baseline
-  and is 129 when the EtCO2 passes 55 mmHg (was 99; target ≥ 120). Without MH, hypoventilation to PaCO2 51 adds 3 bpm
-  and to PaCO2 68 adds 18 (was 13). After dantrolene the HR falls ≥ 15 % from its peak by +20 min (target audit row
+  and is 126 when the EtCO2 passes 55 mmHg (was 99; target ≥ 120). Without MH, hypoventilation to PaCO2 51 adds 2 bpm
+  and to PaCO2 68 adds 16 (was 13). After dantrolene the HR falls ≥ 15 % from its peak by +20 min (target audit row
   133 band (b)); the "HR < 100 by +20 min" known miss is replaced by that band. New known miss: dantrolene's 10-min
   EtCO2 effect in the DI-65 guard is −4.6 mmHg (band ≤ −5; −5.5 before). Showcase MH: HR at the established crisis
-  ≈ 173 (was 142–148) and MAP 92 (was 98), the early-treated path's HR peak 122 (was 93), the late path's highest
-  systolic 141 (was 158). Showcase tamponade: the highest 1-Hz systolic in the minute after ROSC is 199 mmHg (was 155;
+  ≈ 166 (was 142–148) and MAP 92 (was 98), the early-treated path's HR peak 119 (was 93), the late path's highest
+  systolic 141 (was 158) and MAP at 60 min 107 (was 112). Showcase tamponade: the highest 1-Hz systolic in the minute after ROSC is 199 mmHg (was 155;
   a single-beat transient, 122 at +60 s as before). Every scenario timing (early signs, established crisis, pulse
   loss, drainage, ROSC) is unchanged.
 - Engine (E118, not met): pulsus paradoxus in severe tamponade stays a known miss (3.4 mmHg against ≥ 10, Spodick

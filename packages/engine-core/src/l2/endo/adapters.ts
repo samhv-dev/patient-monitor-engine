@@ -101,7 +101,9 @@ export function readEndoInputs(ctx: EndoCtx, es: EndoState, t: number): EndoInpu
     mapMmHg: mapOf(ctx, t), mapSetMmHg: ctx.hemo?.circ?.baro?.set ?? 85, sao2: ctx.resp.o2.sa, paco2: ctx.resp.co2.pf, ph: phOf(bloodOf(ctx.ps)), tempC: th.tc,
     mhActivity: mhActivity(th.mh, t),
     mhSymp: mhSympDrive(th.mh, t), // E117: the front-loaded sympathetic share
-    brainF: brainstemOutF(circOf(ctx)?.ext?.cbfRel as number | undefined), // E117: the chemoreflex needs a perfused brainstem
+    // E117: the central chemoreflex needs a perfused brainstem and is suppressed by the anaesthetic exactly as the
+    // baroreflex's sympathetic output is (the drug model's delivered-output factor `ext.drug.symp`, 1 = none)
+    brainF: brainstemOutF(circOf(ctx)?.ext?.cbfRel as number | undefined) * ((circOf(ctx)?.ext?.drug as { symp?: number } | undefined)?.symp ?? 1),
     liverF: (ctx.ps as { organs?: { liver?: { glucoseF?: number } } }).organs?.liver?.glucoseF ?? 1,
     weightKg: es.weightKg, betaBlock: prof?.betaBlock ?? 0, betaBlockC: prof?.betaBlockC ?? 0,
     epiExoPgMl: (pk?.bus?.agents?.epinephrine?.brain ?? 0) * EPI_EXO_PG_PER_RATE_EQ,

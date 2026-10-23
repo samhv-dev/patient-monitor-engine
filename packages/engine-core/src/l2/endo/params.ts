@@ -57,7 +57,7 @@ export const DRIVE_HYPERCAPNIA_PER_MMHG = 0.05; // above PaCO2 50: +1 per 20 mmH
 /**
  * E117: the MH sympathetic drive, in units of stress activity, at full front-loaded drive (`mhSympDrive` 1). The old
  * coupling was 2 × the metabolic activity (kept when `mhSymp` is absent); 2.5 [ENG] so that, with the hypercapnic term
- * below kept small, the MH patient reaches HR ≥ 120 by EtCO2 55 (target E117; measured 129). The stress activity's
+ * below kept small, the MH patient reaches HR ≥ 120 by EtCO2 55 (target E117; measured 126). The stress activity's
  * SYMP_MAX 3 still bounds the sum.
  */
 export const MH_SYMP_GAIN = 2.5;
@@ -81,7 +81,7 @@ export const MH_SVR_DILATION = 0.2;
  * The term is deliberately SMALL because it is not alone (KNOWN OVERLAP, owner note): the ADRENAL hypercapnia drive
  * (DRIVE_HYPERCAPNIA_PER_MMHG, above 50) and the circulation's chemoreflex pressor term (circ `chemoFactors`, +1 %/mmHg
  * HR and SVR above 50, capped 20 %) answer the same stimulus. Measured without MH: PaCO2 51 adds 2–3 bpm (limit 10);
- * PaCO2 ≈ 68 adds ≈ 18 bpm where the old engine added 13 (limit 20); an uncapped 0.06/mmHg term gave +30 bpm at 68.
+ * PaCO2 ≈ 68 adds ≈ 16 bpm where the old engine added 13 (limit 20); an uncapped 0.06/mmHg term gave +30 bpm at 68.
  * (The tamponade showcase's post-ROSC systolic peak, 155 → 199, is NOT changed by the cap: 200 uncapped.)
  * Folding `chemoFactors`' hypercapnic arm into this term
  * is the clean form but re-tunes every hypercapnic MODELED band: not done for rc.4. The metabolic acidaemia is NOT a
@@ -89,7 +89,11 @@ export const MH_SVR_DILATION = 0.2;
  * carotid bodies do sense metabolic H+, but such a term would move the sourced sepsis/DKA/haemorrhage HR bands the
  * circulation already meets. The term is a CENTRAL chemoreflex: the endocrine adapters scale it by the vasomotor
  * centre's perfusion gate (`brainstemOutF(cbfRel)`, the baroreflex's own), so the CO2 retained during an arrest does
- * not drive it while the brainstem is unperfused.
+ * not drive it while the brainstem is unperfused — and by the anaesthetic's sympatholysis, the drug model's delivered-
+ * output factor (`ext.drug.symp`) that already scales the baroreflex's sympathetic output: propofol and the volatiles
+ * suppress muscle sympathetic nerve activity (Ebert TJ, Muzi M, Berens R, Goff D, Kampine JP, Anesthesiology
+ * 1992;76:725–733, propofol) [P direction]. Without it the CO2 a fentanyl-premedicated patient retains propped the
+ * propofol induction pressure and broke the FU-7.1 opioid-synergy band (ratio 1.13 against ≥ 1.15; main 1.16).
  */
 export const SYMP_HYPERCAPNIA_FROM_MMHG = 45;
 export const SYMP_HYPERCAPNIA_PER_MMHG = 0.03;
