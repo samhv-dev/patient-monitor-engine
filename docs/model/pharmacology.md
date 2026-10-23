@@ -342,6 +342,7 @@ Exported without a doc comment: `combine`, `decrementFromNowMin`, `decrementTime
 | the Bailey pair, a POPULATION claim over seeds 1–20: apnoea (VE < 1 L/min) in ≥ 4 of 20 | 0 of 20 | Bailey 1990 | RIGHT ([audit row 145](../../docs/validation/target-audit/30-target-audit.md#row-145)) | keep >= 4/20, but score apnoea as >= 15 s with no committed effort (Bailey's own definition) so the engine measures what Bailey measured | [`drug-apnoea.test.ts`](../../packages/engine-core/test/engine/drug-apnoea.test.ts) |
 | … and the flag clears once effort returns (the trigger is visible: rr > 0) | the committed rate stays 0 for all 1200 s | — | MIS-SPECIFIED ([audit row 146](../../docs/validation/target-audit/30-target-audit.md#row-146)) | keep the assertion but move it to a rig where effort can return (reduced MV, or naloxone/remifentanil washout), or demote it to a unit test on the flag's state machine | [`drug-apnoea.test.ts`](../../packages/engine-core/test/engine/drug-apnoea.test.ts) |
 | a 3 → 12 % desflurane step raises HR 8–35 bpm, the rise lasting 2–4 min | ΔHR +1.1 | tables §6.3 | TOO NARROW ([audit row 161](../../docs/validation/target-audit/30-target-audit.md#row-161)) | opioid-free rig: peak delta HR +25-70 bpm, peaking 1-2 min after the step, >= 8 bpm for 1-5 min; with fentanyl >= 1.5 ug/kg: +8-30 bpm. Remove the "above 1 MAC" trigger gate (Muzi 1996). | [`drug-desflurane-surge.test.ts`](../../packages/engine-core/test/engine/drug-desflurane-surge.test.ts) |
+| … and dantrolene 2.5 mg/kg lowers EtCO2 by 5–40 within 10 min | −4.6 | DI-65 | not audited | — | [`drug-layer-guards.test.ts`](../../packages/engine-core/test/engine/drug-layer-guards.test.ts) |
 | … EtCO2 52–70 by 10 min at constant MV | 42.2 | DI-65; tables §7 check 21 | UNSUPPORTED ([audit row 147](../../docs/validation/target-audit/30-target-audit.md#row-147)) | EtCO2 rising >= 3 mmHg/min at constant MV with a 10-min window of 50-90 mmHg, tagged [ENG] until a measured series exists | [`drug-layer-guards.test.ts`](../../packages/engine-core/test/engine/drug-layer-guards.test.ts) |
 | … without overshoot: Ce peak 2.99–3.01 (earlier measured max 3.0005) | 3.110 | — | UNSUPPORTED ([audit row 148](../../docs/validation/target-audit/30-target-audit.md#row-148)) | Ce peak <= 1.02 x target (<= 3.06 at a 3.0 target), stated as an [ENG] controller tolerance with the integration step named | [`drug-layer-guards.test.ts`](../../packages/engine-core/test/engine/drug-layer-guards.test.ts) |
 | verapamil 5 mg in pre-excited AF produces VF or a faster ventricular rate than the same rhythm without it (DI-15; ALS — the AV-nodal-blocker hazard; AF arm at natural length: Task 0 Step 6b PASSED) | no change | DI-15; ALS | MIS-SPECIFIED ([audit row 149](../../docs/validation/target-audit/30-target-audit.md#row-149)) | shortest pre-excited RR shortens by 10-20 % (279 -> 236 ms) in the pre-excited subset, and/or the VF hazard rises (probabilistic), instead of "VF or +10 bpm mean rate" in every run | [`drug-layer-guards.test.ts`](../../packages/engine-core/test/engine/drug-layer-guards.test.ts) |
@@ -373,7 +374,7 @@ Exported without a doc comment: `combine`, `decrementFromNowMin`, `decrementTime
 
 ## Tests
 
-243 tests in 44 files; 34 expected failures, 0 skipped.
+244 tests in 44 files; 35 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -381,7 +382,7 @@ Exported without a doc comment: `combine`, `decrementFromNowMin`, `decrementTime
 | [`engine/drug-desflurane-surge.test.ts`](../../packages/engine-core/test/engine/drug-desflurane-surge.test.ts) | 1 | 1 | 0 |
 | [`engine/drug-hypokalaemia-rocuronium.test.ts`](../../packages/engine-core/test/engine/drug-hypokalaemia-rocuronium.test.ts) | 1 | 0 | 0 |
 | [`engine/drug-layer-guards-csht.test.ts`](../../packages/engine-core/test/engine/drug-layer-guards-csht.test.ts) | 1 | 0 | 0 |
-| [`engine/drug-layer-guards.test.ts`](../../packages/engine-core/test/engine/drug-layer-guards.test.ts) | 12 | 3 | 0 |
+| [`engine/drug-layer-guards.test.ts`](../../packages/engine-core/test/engine/drug-layer-guards.test.ts) | 13 | 4 | 0 |
 | [`engine/drug-layer.test.ts`](../../packages/engine-core/test/engine/drug-layer.test.ts) | 31 | 11 | 0 |
 | [`engine/drug-nmb-volatile-sux.test.ts`](../../packages/engine-core/test/engine/drug-nmb-volatile-sux.test.ts) | 2 | 0 | 0 |
 | [`engine/drug-opioid-induction-synergy.test.ts`](../../packages/engine-core/test/engine/drug-opioid-induction-synergy.test.ts) | 2 | 1 | 0 |

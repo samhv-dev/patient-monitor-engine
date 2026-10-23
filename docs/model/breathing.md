@@ -193,7 +193,6 @@ Exported without a doc comment: `createDriver`, `preoxActive`, `frameAt`, `creat
 
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
-| 12 × 100 mL: displayed EtCO2 < 15 | 15.0 | — | UNSUPPORTED ([audit row 74](../../docs/validation/target-audit/30-target-audit.md#row-74)) | Make it relative: EtCO2 ≤ 0.5 × PaCO2 with no phase-III plateau whenever VT ≤ VDaw; EtCO2 near 0 only when VT ≤ ~0.5 VDaw [ENG/DERIVED] | [`resp-capno-deadspace.test.ts`](../../packages/engine-core/test/engine/resp-capno-deadspace.test.ts) |
 | awake: PaCO2 35–45, VT 4.2–10.4 mL/kg, lactate rise < 0.5 over 15 min | VT 15.4 mL/kg | — | RIGHT ([audit row 75](../../docs/validation/target-audit/30-target-audit.md#row-75)) | keep; add RR 17–30 /min for a 3–5-year-old | [`resp-child-baseline.test.ts`](../../packages/engine-core/test/engine/resp-child-baseline.test.ts) |
 | preoxygenated apnoea: displayed SpO2 < 90 no more than 20 s after SaO2 < 90 | 22 s | — | TOO NARROW ([audit row 189](../../docs/validation/target-audit/30-target-audit.md#row-189)) | ≤ 30 s from arterial SaO2 < 90 to displayed SpO2 < 90 (child, finger, normal CO); or keep ≤ 20 s but start the clock at the site (after the dead time) | [`resp-child-baseline.test.ts`](../../packages/engine-core/test/engine/resp-child-baseline.test.ts) |
 | CPR (quality 1, 110/min): the adult’s coRatio in the same 0.25–0.33 | 0.363 | — | RIGHT ([audit row 32](../../docs/validation/target-audit/30-target-audit.md#row-32)) | keep 0.25-0.33 at q 1 (a lower quality should scale below 0.25) | [`resp-child-rest.test.ts`](../../packages/engine-core/test/engine/resp-child-rest.test.ts) |
@@ -217,7 +216,7 @@ Exported without a doc comment: `createDriver`, `preoxActive`, `frameAt`, `creat
 
 ## Tests
 
-125 tests in 32 files; 21 expected failures, 0 skipped.
+125 tests in 32 files; 20 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -226,7 +225,7 @@ Exported without a doc comment: `createDriver`, `preoxActive`, `frameAt`, `creat
 | [`engine/resp-breath-delivered-vt.test.ts`](../../packages/engine-core/test/engine/resp-breath-delivered-vt.test.ts) | 2 | 0 | 0 |
 | [`engine/resp-bronchodilation.test.ts`](../../packages/engine-core/test/engine/resp-bronchodilation.test.ts) | 8 | 0 | 0 |
 | [`engine/resp-bronchospasm-one.test.ts`](../../packages/engine-core/test/engine/resp-bronchospasm-one.test.ts) | 2 | 0 | 0 |
-| [`engine/resp-capno-deadspace.test.ts`](../../packages/engine-core/test/engine/resp-capno-deadspace.test.ts) | 2 | 1 | 0 |
+| [`engine/resp-capno-deadspace.test.ts`](../../packages/engine-core/test/engine/resp-capno-deadspace.test.ts) | 2 | 0 | 0 |
 | [`engine/resp-capnogram.test.ts`](../../packages/engine-core/test/engine/resp-capnogram.test.ts) | 6 | 0 | 0 |
 | [`engine/resp-child-baseline.test.ts`](../../packages/engine-core/test/engine/resp-child-baseline.test.ts) | 2 | 2 | 0 |
 | [`engine/resp-child-rest.test.ts`](../../packages/engine-core/test/engine/resp-child-rest.test.ts) | 4 | 1 | 0 |

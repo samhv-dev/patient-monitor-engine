@@ -16,9 +16,11 @@ async function bag(vtMl: number) {
 
 describe('no plateau below the dead space', { timeout: 120_000 }, () => {
   // R45: after FU-4's ONE physical dead space (≈ 127 mL for this ventilated adult, was 204) a 100 mL breath is 0.79 × VDs
-  // and draws a LOW partial plateau (alvFrac ≈ 0.24) — the plan predicted this row as the one at risk; it misses by the
-  // display's resolution. Not re-fitted (the plan: "a band the mechanism now misses becomes it.fails").
-  it.fails('12 × 100 mL: displayed EtCO2 < 15 — measured 15.0 (band < 15)', async () => {
+  // and draws a LOW partial plateau (alvFrac ≈ 0.24) — the plan predicted this row as the one at risk; it missed by the
+  // display's resolution (15.0) and was an it.fails. E117 (the hypercapnic sympathetic drive of this hypoventilated
+  // patient; the path from it to the displayed EtCO2 is not isolated) moves it back inside: measured 14 — one display step
+  // from the limit, so fragile — the pre-declared band is met, flipped (R45). Not re-fitted.
+  it('12 × 100 mL: displayed EtCO2 < 15 (measured 14 after E117; 15.0 before)', async () => {
     expect(await bag(100)).toBeLessThan(15);
   });
   it('12 × 500 mL: displayed EtCO2 ≥ 30 (normal breaths keep their plateau)', async () => {

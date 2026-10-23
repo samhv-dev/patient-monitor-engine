@@ -39,6 +39,16 @@ describe('endocrine core', { timeout: 60_000 }, () => {
     expect(c.out.kShift).toBeGreaterThan(0.5); // efflux minus the endogenous-epinephrine β2 uptake
   });
 
+  it('E117: the MH muscle vasodilation follows the METABOLIC activity, apart from the sympathetic drive (SVR × (1 − 0.2 × activity))', () => {
+    const svr = (mhActivity: number) => {
+      const c = createEndoCore();
+      for (let s = 0; s < 600; s++) stepEndoCore(c, { ...X, mhActivity, mhSymp: 0 }, 1); // the sympathetic share held at 0
+      return c.out.svrF;
+    };
+    expect(svr(1) / svr(0)).toBeCloseTo(0.8, 6);
+    expect(svr(0.5) / svr(0)).toBeCloseTo(0.9, 6);
+  });
+
   it('fever HR is a temperature term apart from the β-mediated hrF: 39 °C → × 1.18 even with full circulation β-blockade', () => {
     const c = createEndoCore();
     stepEndoCore(c, { ...X, tempC: 39, betaBlock: 1, betaBlockC: 1 }, 1);

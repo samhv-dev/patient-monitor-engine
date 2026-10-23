@@ -7,11 +7,14 @@ import { ConsoleModel } from '../../physiology-console/model.ts';
 import { labelOf } from '../glossary.ts';
 import { bands, entered, first, near, range, runCard, type Act, type Sample } from './harness.ts';
 
-/** Bands: the measured prototype ± a stated tolerance. Never widened. */
+/** Bands: the measured prototype ± a stated tolerance. Never widened. E117 (owner-confirmed 2026-10-23: MH tachycardia from
+ *  the front-loaded sympathetic drive and hypercapnia; the MH muscle vasodilation) re-centred four bands on the new
+ *  measurement, same ± 5: S1 untreated hrAtEstablished 142 → 173 and mapAtEstablished 98 → 92, S1 early hrMax
+ *  93 → 122, S1 late sysMaxAfterCall 158 → 141. Every timing and every other number stayed in its band. */
 const BANDS = {
-  'S1 untreated': { refused: [0, 0], earlyMin: [6.16, 7.54], establishedMin: [16.89, 20.65], etco2AtEstablished: [78, 84], hrAtEstablished: [137, 147], phAtEstablished: [7.06, 7.12], kAtEstablished: [5.4, 6], lactateAtEstablished: [4.1, 5.1], mapAtEstablished: [93, 103], hrMax: [185, 195], kMax: [6.1, 6.7], lossMin: [39.91, 48.79], tcAtLoss: [42.14, 42.54], kAtLoss: [6.1, 6.7], vf: [1, 1], arrestStateMin: [40.23, 49.17] },
-  'S1 early': { refused: [0, 0], crisisMin: [7.96, 9.73], pulseLost: [0, 0], recoveringMin: [15.27, 18.67], established: [0, 0], tcMax: [37.81, 38.21], hrMax: [88, 98], kMax: [4.5, 5.1], etco2Plus5: [44, 50], hrPlus15: [80, 90] },
-  'S1 late': { refused: [0, 0], crisisMin: [17.79, 21.75], dantroleneMin: [18.69, 22.85], pulseLost: [0, 0], etco2AtCall: [57, 63], tcAtCall: [38.51, 38.91], kAtCall: [5.5, 6.1], phAtCall: [7.16, 7.22], etco2Plus2: [51, 57], tcMax: [39.3, 39.7], tcPeakMin: [28.05, 34.29], kMax: [5.6, 6.2], lactateMax: [6.9, 7.9], recoveringMin: [27.72, 33.88], normoMin: [35.04, 42.82], hrAt60: [86, 96], mapAt60: [107, 117], tcAt60: [38.5, 38.9], etco2At60: [35, 41], phAt60: [7.35, 7.41], kAt60: [3.5, 4.1], sysMaxAfterCall: [153, 163] },
+  'S1 untreated': { refused: [0, 0], earlyMin: [6.16, 7.54], establishedMin: [16.89, 20.65], etco2AtEstablished: [78, 84], hrAtEstablished: [168, 178], phAtEstablished: [7.06, 7.12], kAtEstablished: [5.4, 6], lactateAtEstablished: [4.1, 5.1], mapAtEstablished: [87, 97], hrMax: [185, 195], kMax: [6.1, 6.7], lossMin: [39.91, 48.79], tcAtLoss: [42.14, 42.54], kAtLoss: [6.1, 6.7], vf: [1, 1], arrestStateMin: [40.23, 49.17] },
+  'S1 early': { refused: [0, 0], crisisMin: [7.96, 9.73], pulseLost: [0, 0], recoveringMin: [15.27, 18.67], established: [0, 0], tcMax: [37.81, 38.21], hrMax: [117, 127], kMax: [4.5, 5.1], etco2Plus5: [44, 50], hrPlus15: [80, 90] },
+  'S1 late': { refused: [0, 0], crisisMin: [17.79, 21.75], dantroleneMin: [18.69, 22.85], pulseLost: [0, 0], etco2AtCall: [57, 63], tcAtCall: [38.51, 38.91], kAtCall: [5.5, 6.1], phAtCall: [7.16, 7.22], etco2Plus2: [51, 57], tcMax: [39.3, 39.7], tcPeakMin: [28.05, 34.29], kMax: [5.6, 6.2], lactateMax: [6.9, 7.9], recoveringMin: [27.72, 33.88], normoMin: [35.04, 42.82], hrAt60: [86, 96], mapAt60: [107, 117], tcAt60: [38.5, 38.9], etco2At60: [35, 41], phAt60: [7.35, 7.41], kAt60: [3.5, 4.1], sysMaxAfterCall: [136, 146] },
 } as const;
 
 const ID = 'showcase-mh';

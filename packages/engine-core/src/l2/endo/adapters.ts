@@ -11,10 +11,11 @@
 import { l1Value, type L1State } from '../../l1/state.ts';
 import type { Modifiers } from '../../types.ts';
 import { leakSigma } from '../blood/fluids.ts';
+import { brainstemOutF } from '../circ/baroreflex.ts';
 import { betaBlunt } from '../pk/pd.ts';
 import { applyLungSpecs, type RespState } from '../resp/pipeline.ts';
 import { cascade } from '../thermal/metabolic.ts';
-import { mhActivity } from '../thermal/mh.ts';
+import { mhActivity, mhSympDrive } from '../thermal/mh.ts';
 import type { ThermalState } from '../thermal/heat.ts';
 import type { EndoInputs } from './core.ts';
 import { dextroseBolus, dextroseInfusion, insulinBolus, insulinInfusion } from './glucose.ts';
@@ -99,6 +100,8 @@ export function readEndoInputs(ctx: EndoCtx, es: EndoState, t: number): EndoInpu
     antinocOp: num(n?.antinocOp) && pkActive(pk) ? n.antinocOp : antinoc,
     mapMmHg: mapOf(ctx, t), mapSetMmHg: ctx.hemo?.circ?.baro?.set ?? 85, sao2: ctx.resp.o2.sa, paco2: ctx.resp.co2.pf, ph: phOf(bloodOf(ctx.ps)), tempC: th.tc,
     mhActivity: mhActivity(th.mh, t),
+    mhSymp: mhSympDrive(th.mh, t), // E117: the front-loaded sympathetic share
+    brainF: brainstemOutF(circOf(ctx)?.ext?.cbfRel as number | undefined), // E117: the chemoreflex needs a perfused brainstem
     liverF: (ctx.ps as { organs?: { liver?: { glucoseF?: number } } }).organs?.liver?.glucoseF ?? 1,
     weightKg: es.weightKg, betaBlock: prof?.betaBlock ?? 0, betaBlockC: prof?.betaBlockC ?? 0,
     epiExoPgMl: (pk?.bus?.agents?.epinephrine?.brain ?? 0) * EPI_EXO_PG_PER_RATE_EQ,

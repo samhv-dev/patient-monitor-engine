@@ -35,6 +35,18 @@ reads it for the per-beat truths the monitor and the other organ models consume.
   (`l2/circ/circuit.ts`).
 - The pericardium adds an exponential pressure in the combined ventricular volume plus any effusion, floored at 0
   (tables §2.2; `l2/circ/circuit.ts`); tamponade adds up to 250 mL × severity of fluid (`l2/circ/conditions.ts`).
+- Pulsus paradoxus in severe tamponade (E118, target ≥ 10 mmHg, Spodick 2003) is NOT met in rc.4 and no mechanism was
+  added. The circuit's own interdependence is right in kind — in severe tamponade venous return is confined to
+  ventricular systole and falls back in diastole (the backflow is smallest in inspiration), and each inspiration moves about 6 mL from the left to the right
+  ventricle at a fixed total volume — but small: SBP swing 3.4 mmHg (healthy 2.4; the it.fails title still quotes FU-4's 3.1). Measured candidate mechanisms
+  (2026-10-23, 250 mL, spontaneous breathing): a larger pleural swing alone (8 / 12 cmH2O → 5.2 / 7.1 mmHg); the
+  abdominal pump of the descending diaphragm (pSv rising with the pleural fall, × 1–2); extra-alveolar pulmonary-venous
+  pooling; the atria inside the pericardial volume (no gain at matched severity). None reaches 10 mmHg at a
+  physiological gain while keeping the healthy swing ≤ 5 mmHg; the one combination that did (a 15 cmH2O effort plus
+  an abdominal pump of gain 1: 11.5 mmHg) needs a distressed breathing pattern the MODELED respiratory drive does not
+  produce in tamponade (it breathes about 16 × 530 mL). A published model of the same class needs the same two things
+  — a large effusion and deep breaths — and attributes the swing to both series and septal (parallel) interaction
+  (Ramachandran et al., Theor Biol Med Model 2009;6:15); this circuit has no septum. Owner decision pending.
 - Pleural pressure rises with alveolar pressure in a positive-pressure breath and falls with the tidal volume in a
   spontaneous one (`l2/circ/pleural.ts`).
 - The baroreflex senses the 1 s low-passed MAP (plus a pulse-pressure term, Chapleau & Abboud 1987) against its set
