@@ -1,6 +1,8 @@
 # Showcase 2: run sheet (30 minutes, the owner's slot)
 
-*Thursday 2026-10-22 (slack to the 25th), university deans and clinical staff. Presenter: the owner. Kit round C,
+*Wednesday 2026-10-28 (moved from Thursday 2026-10-22), university deans and clinical staff. **The demo kit is the
+rc.3 release build `pme-showcase-kit-fcf99b70` (v1.0.0-rc.3, pre-release); the rc.2 kit `pme-showcase-kit-b39b3d87` is
+the fallback** [KIT; Q2R3]. Presenter: the owner. Kit round C,
 2026-10-17: the kit-round-B sheet (PR #65) cut to the owner's confirmed slot of **30 minutes or less**, with his final
 answers of 2026-10-17 applied and the kit-round-A3 measurements of 2026-10-17 folded in. The four cases dropped from
 the slot are kept, unchanged, in the appendix "Cases held in reserve". Where something is still not measured, the
@@ -76,6 +78,7 @@ unchanged [MEAS §7]; a higher-priority alarm ends an alarm pause [R00 2026-10-1
 |---|---|
 | MEAS | `docs/showcase/SHOWCASE-2-MEASUREMENTS.md` (kit round A, 2026-10-13; § numbers) |
 | Q1 | the same file, section **Q1** (kit round Q1, 2026-10-18, the release build `pme-showcase-kit-3db25a3b`); raw rows in `docs/showcase/kit-round-a/q1/` |
+| Q2R3 | the same file, section **Q2 on rc.3** (kit round Q2 on the rc.3 tag, 2026-10-23, the demo kit `pme-showcase-kit-fcf99b70`); raw rows in `docs/showcase/kit-round-a/q2-rc3/` and `q2-rc3-a3/` |
 | A3 | the same file, section **A3** (kit round A3, 2026-10-17, kit `pme-showcase-kit-ca0d2dbb`; PR #67, branch `kit-round-a3`); raw rows in `docs/showcase/kit-round-a/a3-*` |
 | KR | `docs/showcase/kit-round-a/<case>-kit-round-<chromium/webkit>.md` (the raw rows). "KR62" = the files ending `-kit-62e521c3` (the re-check on the fixed kit). "KR MH early-call" = `malignant-hyperthermia-early-call-kit-round-*.md` |
 | G10 | `docs/gates/stage-10.md` (Stage 10 dry run, time control) |
@@ -85,7 +88,7 @@ unchanged [MEAS §7]; a higher-priority alarm ends an alarm pause [R00 2026-10-1
 | G12 / G12P | `docs/gates/stage-12.md` / `docs/gates/stage-12-real-phone.md` (phones; the owner's step) |
 | CR12 | `docs/showcase/CLASSROOM.md` (also `_sandbox/pme-classroom-dryrun/CLASSROOM.md`) |
 | PF / OPT | `_sandbox/pme-classroom-dryrun/PRE-FLIGHT.md` / `OWN-PHONE-TEST.md` |
-| KIT | `_sandbox/pme-classroom-dryrun/kit/VERSION.txt`; `_sandbox/pme-kit-release-3db25a3b/README.txt` (the release-build kit). The owner's sandbox kits are now the 3db25a3b release build: `pme-classroom-dryrun/kit` and `pme-debrief-dryrun/pme-showcase-kit-3db25a3b` |
+| KIT | `_sandbox/pme-classroom-dryrun/kit/VERSION.txt`; `_sandbox/pme-kit-release-fcf99b70/README.txt` (the rc.3 release-build kit, the demo kit; with `pme-showcase-kit-fcf99b70.zip` for a Windows PC). The owner's sandbox kits are now the fcf99b70 release build: `pme-classroom-dryrun/kit` and `pme-debrief-dryrun/pme-showcase-kit-fcf99b70`. The fallback is the rc.2 kit in `_sandbox/pme-kit-release-b39b3d87/` (its README's first line says so) |
 | G13 / DB-T / DB-MH | `docs/gates/stage-13.md` / `docs/gates/stage-13/rehearsal/debrief-tamponade-*.json` / `debrief-mh-*.json` (kit 58b2c13c) |
 | PRINT | `_sandbox/pme-debrief-dryrun/HOW-TO-CHECK-THE-PRINT.txt` |
 | CARD | `apps/demo/src/app/showcase/showcase-*.json` (objective text, Debrief rule, states, button labels) |
@@ -152,14 +155,16 @@ Owner questions this checklist depends on: **E13** which Mac presents and its No
 phones [R31 §3]. Tick every line.
 
 **The kit** (matches `PRE-FLIGHT.md` [PF])
-- [ ] The kit is built from **main at 62e521c3 or later**: the kit's `VERSION.txt` line `Commit:` reads `62e521c3…` or a
-      later main commit [KIT: the owner's sandbox kits are now the 3db25a3b release build, `pme-classroom-dryrun/kit`
-      ("Commit: 3db25a3b3f1c…") and `pme-debrief-dryrun/pme-showcase-kit-3db25a3b`; the owner's hand checks of
-      2026-10-18 ran on the 62e521c3 kit, built 2026-10-13]. Older kits (51a37063 to 56f3761f) have the
+- [ ] The kit is **the rc.3 release build**: the kit's `VERSION.txt` line `Commit:` reads `fcf99b706e2c…` (tag
+      v1.0.0-rc.3) and the Start view reads "Version 1.0.0-rc.3 (pre-release) …" [KIT: the owner's sandbox kits are now
+      the fcf99b70 release build, `pme-classroom-dryrun/kit` and `pme-debrief-dryrun/pme-showcase-kit-fcf99b70`; Q2R3].
+      Take the rc.2 kit (`pme-kit-release-b39b3d87`, "Commit: b39b3d8774b5…") on the stick as the fallback; do not mix
+      the two kits in one classroom (bookmarks from rc.2 do not restore in rc.3). The owner's hand checks of
+      2026-10-18 ran on the 62e521c3 kit, built 2026-10-13. Older kits (51a37063 to 56f3761f) have the
       relay that dies at the first phone (KR-A1) [MEAS §9 item 1]. A3 ran on a ca0d2dbb kit, relay test 2 of 2 [A3].
       **For the MH card: a kit that carries the E22 rule (PR fix-e22-mh-rule) once it is merged**; on an older kit the
       Debrief's MH ventilation line still uses the old rule.
-- [ ] **The relay test passed**: the kit's README says `check-relay.mjs` **PASS** (the 62e521c3 kits: 2 of 2 runs; the 3db25a3b release kit: 2 of 2 runs, 2026-10-18)
+- [ ] **The relay test passed**: the kit's README says `check-relay.mjs` **PASS** (the rc.3 release kit fcf99b70: **4 of 4 runs**, 2026-10-23, one of them `server/launch.mjs` as `Start Classroom.cmd` runs it, on macOS; earlier kits 2 of 2)
       [KIT README; MEAS §11]; and on this Mac, 10 s after the simulator opens, the black window still says **THE
       CLASSROOM IS RUNNING** [PF §2].
 - [ ] Presenting Mac has **Node.js 22 or later**: Terminal `node -v` prints `v22…` or later; otherwise install the LTS
@@ -187,8 +192,11 @@ phones [R31 §3]. Tick every line.
 - [x] **H19** hidden tab: the Instructor page behind another tab for at least 6.5–7 min in real Chrome and Safari, then
       Bookmark or a command: the monitor is live, no "The monitor stopped" message [R31 H19; F11A §5: never measured on
       any machine]. **FAIL, 2026-10-18** (Safari, tab hidden 7 min): the phone lost the session (FX-14) and the Mac's
-      scenario clock did not advance while the tab was hidden (FX-15); both for a later release. **Day rule: the Mac's
-      tab stays visible and frontmost for the whole talk** [G12P].
+      scenario clock did not advance while the tab was hidden (FX-15). **rc.3 (E82, #95): a hidden instructor tab now
+      pauses the case; the phones show "(paused)"; on return the toast "Paused while this tab was hidden (…)" says how
+      long, and the clock runs again** (macOS WebKit e2e passed on the tag, 2026-10-23 [Q2R3]; the owner's smoke item 6
+      checks it in real Safari). **Day rule unchanged: keep the Mac's tab visible and frontmost**, or the case stops
+      for as long as it is hidden [G12P].
 - [x] **H20** the second screen in real Safari follows within 5 s [R31 H20]. **PASS, 2026-10-18**: the learner's
       monitor window opened from the first page stays in sync, including after fast-forward [G12P].
 - [x] **H21** bronchospasm with the Ventilator view, the main screen on the Monitor view for 30 s: the phone keeps its
@@ -206,8 +214,14 @@ phones [R31 §3]. Tick every line.
 - [ ] Settings → Monitor: **Saadat-style** (the default). On it, **Pause alarms** is greyed out with "This monitor has
       no alarm pause. Silence mutes for 120 s." [MEAS §7].
 - [ ] Do not change the monitor style during the talk (FX-9) [MEAS §8].
-- Lane order changed in rc.2; screenshots re-taken in the Wednesday rehearsal (ECG, ECG, CO2, IBP1, IBP2, pleth;
-  research/34 T3).
+- **The rc.3 screen is the Saadat-like photo layout** (#99, #100, #104): a two-row header over six lanes (ECG II
+  labelled, a second ECG unlabelled, CO₂ filled yellow, IBP1 and IBP2 with dotted scale lines, pleth "NORMAL X1"), the
+  tile grid at the right (HR; NIBP with T1/T2/DT; EtCo2 | FiCo2 | AWRR; IBP1; IBP2; BFI%), and a full-width bottom
+  strip (%SPO2, PI …). In free play IBP1/IBP2 are off (empty lanes, blank tiles), the third lane is RESP with an RR
+  tile until the CO₂ sampling line is attached, and NIBP runs AUTO every 5 min; tiles of unconnected probes are blank,
+  not "---". The showcase cards attach their own lines (tamponade: ART + CVP on IBP2; MH and bronchospasm: ART only,
+  so IBP2 stays empty there by design). Screens: `docs/showcase/kit-round-a/q2-rc3/q2-*-monitor-*.png` and
+  `docs/showcase/rehearsal/*.jpg` [Q2R3].
 
 **Limit alarms** (the factory state, and the state after every Load, is "Limit alarms off"; the owner's answer E21)
 - [ ] Instructor → **Devices & alarms** → **All alarms on**: the top-right alarm button then reads **No alarms** [KR
@@ -270,12 +284,15 @@ While the amber fast-forward panel shows, the page refuses commands: do not pres
 [G10, Stage 10 plan D-6]. **The speed after a fast-forward is the speed before it** (×4 stays ×4, ×8 stays ×8): set the
 next speed yourself, and press **×1** when you want to talk in real time [MEAS §7; A3.3].
 
-**What the audience sees during a fast-forward** (the same on the projector, the second screen and the phones): the page
-dimmed and blurred, an amber panel "FAST FORWARD · 5 MIN" (or "· 2 MIN") with a running clock over a progress bar and
-"sound muted", for **10.0–10.6 s** [MEAS §7]; the beat tone is off above ×4 [G10 §6b]; at the end one two-tone cue, a
-seam with its time on every waveform lane, a banner "Fast-forwarded N min, mm:ss → mm:ss. During it: …" listing the
-alarms raised, and those alarms latched silently on the monitor until the next acknowledge [G10 §6]. The phones show
-the panel too and resync at its end [MEAS §8].
+**What the audience sees during a fast-forward** (the same on the projector, the second screen and the phones). **rc.3
+(FX-23, #98):** during it a double chevron blinks inside an amber ring, with no clock text beside it, no times on the
+progress bar and the mute icon alone, for **10.0–10.6 s** [MEAS §7; Q2R3: 10.4–10.5 s]; the beat tone is off above ×4
+[G10 §6b]; at the end one two-tone cue and a larger banner of three lines, "Fast-forwarded N min" / "mm:ss → mm:ss" /
+the alarms raised or "No alarms" (Q2R3: "Fast-forwarded 2 min 04:07 → 06:07 No alarms"), with no vertical seam marks
+or time labels on the lanes; the alarms raised stay latched silently on the monitor until the next acknowledge
+[G10 §6]. The phones show it too and resync at its end, their waves sweeping at the cursor with the ECG gain kept
+(FX-24, #103) [MEAS §8; Q2R3]. Before rc.3 (the rc.2 fallback kit): a dimmed, blurred page with an amber "FAST
+FORWARD · 5 MIN" panel, a running clock, and a seam with its time on every lane.
 
 **Monitor style:** Saadat-style, no change during a case (E20) [MEAS §8].
 
@@ -385,7 +402,7 @@ before the arrest [CARD: objective 5, whose rule is that the pulse loss never ha
 | T+ (within the slot) | Do | The audience sees |
 |---|---|---|
 | 0:00 | Session bar → **Debrief** | the report of the run just finished: page 1 the header, **Key times**, **The course** and the objectives; page 2 the **Key moments** and the measured facts [Debrief redesign B] |
-| 0:15 | **Run by**: "Showcase 2, 22 October"; one line in **Notes** | — |
+| 0:15 | **Run by**: "Showcase 2, 28 October"; one line in **Notes** | — |
 | 0:30 | Read the **Key times** tiles, then the objectives aloud | tiles: recognition = the time you ticked (≈ 1 min) · start → first team action **7 min 51 s** · CPR **3 s** (asked ≤ 10 s) · drainage **1 min 30 s** (asked ≤ 2 min) · stop CPR **2 s** (asked ≤ 30 s) · pulseless in all **3 min 07 s** [A3.1 record, B e2e]. Objectives: ✓ Observed: name the tamponade ("Observed by the instructor at mm:ss." when ticked; – Not assessable if not) · ✓ Observed: CPR 3 s · ✓ Observed: pericardiocentesis 1 min 30 s · ✓ Observed: stop CPR 2 s · **◆ Discuss: "Better: pericardiocentesis before the pulse loss…" — "The pulse loss at 07:48"** [A3.1] |
 | 1:00 | Say: *"Everything was done in time, and the report still marks one line to discuss: the better course was to drain before he lost his pulse. That is the lesson."* | — |
 | 1:20 | Point at **Key moments** (page 2; the numbers match the course strip) | 7 rows: 06:13 deteriorating · 07:48 pulse lost · PEA · 07:51 CPR · 09:21 drained · 10:55 circulation returned · 10:57 CPR stopped · 11:27 crystalloid, each with HR, MAP, SpO₂ and EtCO₂ at that second; SpO₂ prints "–" from the pulse loss to the return of circulation, with the sentence that says why (E60) [A3.1 record, B e2e]. **Measured facts** follow: lowest SpO₂ 95 % at 00:28 · lowest ART M / NIBP M **20 mmHg at 07:51** · highest EtCO₂ 36 at 00:09 · **pulseless 3 min 07 s in all, first lost at 07:48** · return of circulation 3 min 07 s after the pulse loss (10:55) · labs: K⁺ 4.2 · lactate 2.2 · pH 7.28 [A3.1] |
@@ -500,6 +517,7 @@ rule: the instructor judges it) · – potassium (**not assessable**: K⁺ never
 | A phone says "This session is full" | 60 phones are following: ask a neighbour to share | [CR12] |
 | A phone says "The ventilator is on the main screen" | Expected during the bronchospasm case | [CR12; MEAS §6; A3.3] |
 | The phones show "---" where the screen shows a number after a style change | You changed the monitor style mid-session (FX-9). Change it back, or re-load the case | [MEAS §8] |
+| The phones show "(paused)"; back on the Mac the toast "Paused while this tab was hidden (…)" | rc.3 (E82): the instructor tab was hidden, so the case paused for that long; the clock runs again on return. Say so, and keep the tab frontmost from here | [Q2R3 FX-14 e2e] |
 | "The monitor stopped" toast (hidden-tab watchdog) | Reload the page and re-load the card; if this showed in H19, do not switch tabs during the talk. H19 in Safari (2026-10-18): with the tab hidden 7 min the phone lost the session and the scenario clock did not advance (FX-14, FX-15): **keep the Mac's tab visible and frontmost for the whole talk** | [ADD2 H19; F11A §5; G12P] |
 | Running long | Cut questions, then the MH third span, then the bronchospasm Explore line (§ "The programme at a glance") | — |
 

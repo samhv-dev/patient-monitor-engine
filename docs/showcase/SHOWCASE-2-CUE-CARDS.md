@@ -1,10 +1,13 @@
-# Showcase 2: cue cards (22 October 2026, the 30-minute slot)
+# Showcase 2: cue cards (28 October 2026, the 30-minute slot)
 
 *One card per page, for the lectern. Print from a Markdown preview at 150 % or more, one card per page (a page break
 follows each card). Clock = the session-bar clock (Load = 0:00). Every number is measured: kit round A (13 October)
 and kit round A3 (17 October) (`SHOWCASE-2-MEASUREMENTS.md`, section given at the foot of each card). The owner's final
 answers of 17 October are marked ◆. The MH press time, **13:03 (as fast-forward 1 ends; any press from 12:41 is met)**,
-is the E22 measurement (owner ruling E23: ordering A). The run sheet has the full rows and sources. The four dropped cases are at
+is the E22 measurement (owner ruling E23: ordering A). **Re-checked on the demo kit** (rc.3 release build fcf99b70,
+kit round Q2 on rc.3, 23 October, both engines): every verdict as these cards say; tamponade pulse loss 07:48, CPR
+07:51, pericardiocentesis 09:21, ROSC 10:57; MH Early signs 06:51–06:52, call 07:02, press 13:03 (Q2R3). The run sheet
+has the full rows and sources. The four dropped cases are at
 the end, under "Cases held in reserve".*
 
 <div style="page-break-after: always;"></div>
@@ -122,7 +125,7 @@ before the pulse loss"** (the one line to discuss: the lesson, not a timing).
 | Within the slot | Do |
 |---|---|
 | 0:00 | Session bar **Debrief** |
-| 0:15 | **Run by**: "Showcase 2, 22 October"; one line in **Notes** |
+| 0:15 | **Run by**: "Showcase 2, 28 October"; one line in **Notes** |
 | 0:30 | read the **Key times** tiles: your tick · 7 min 51 s to the first team action · CPR 3 s · drainage 1 min 30 s · stop CPR 2 s · pulseless 3 min 07 s; then the objectives |
 | 1:00 | ◆ *"Everything was done in time, and the report still marks one line to discuss: the better course was to drain before he lost his pulse. That is the lesson."* |
 | 1:20 | **Key moments** (page 2): 7 rows, the numbers of the course strip; SpO₂ "–" while pulseless (07:48 → 10:55) |

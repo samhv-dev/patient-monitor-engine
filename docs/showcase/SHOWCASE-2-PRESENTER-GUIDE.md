@@ -1,6 +1,6 @@
 # Showcase 2: presenter guide (one page, the 30-minute slot)
 
-*22 October 2026, 30 minutes. Rehearse from [`SHOWCASE-2-RUN-SHEET.md`](SHOWCASE-2-RUN-SHEET.md); print
+*28 October 2026, 30 minutes. Rehearse from [`SHOWCASE-2-RUN-SHEET.md`](SHOWCASE-2-RUN-SHEET.md); print
 [`SHOWCASE-2-CUE-CARDS.md`](SHOWCASE-2-CUE-CARDS.md) for the lectern. This page is what to remember. Source keys are
 those of the run sheet; MEAS = `SHOWCASE-2-MEASUREMENTS.md` (kit round A, 2026-10-13), A3 = its section A3 (kit round
 A3, 2026-10-17). The owner's final answers of 2026-10-17 (E17, E19a, E19c, E20, E21, E22) are listed at the top of the
@@ -21,8 +21,11 @@ anaphylaxis and haemorrhage are in the reserve appendix of the run sheet and the
    phones stay synced [MEAS §7].
 2. **QR first.** Phones are synced before case 1; they start silent; up to 60 per session [CR12].
 3. **The speed after a fast-forward is the speed before it** (×8 stays ×8). A fast-forward takes 10–11 s of wall;
-   nothing can be pressed while the amber panel shows; then set the next speed yourself, **×1** when you want real time
-   [MEAS §7; A3.3; G10].
+   nothing can be pressed while it runs (rc.3: a blinking double chevron in an amber ring); then a three-line banner
+   ("Fast-forwarded N min" / "mm:ss → mm:ss" / the alarms or "No alarms"); then set the next speed yourself, **×1** when
+   you want real time [MEAS §7; A3.3; G10; Q2R3].
+3a. **Keep the instructor tab frontmost.** rc.3 (E82): a hidden instructor tab pauses the case and the phones show
+   "(paused)"; on return the toast "Paused while this tab was hidden (…)" says how long [Q2R3].
 4. **Bronchospasm: load first, then the Ventilator view; reload the page after it**, then Sound on [RUN4; R00
    2026-10-04; MEAS §7]. Speed and fast-forward are on the Instructor view's session bar: pressing them there, with the
    cockpit hidden, is measured safe (the cockpit keeps ventilating, the phones keep their hold) [A3.3].
@@ -43,7 +46,8 @@ anaphylaxis and haemorrhage are in the reserve appendix of the run sheet and the
    line as the lesson, the better course of action (drain before the arrest), not a timing (E17, E43) [A3.1].
 8. **Debrief before loading the next case**: it reports the current run. Page 1 reads the **Key times**, **The course**
    and the objectives; page 2 the **Key moments** (SpO₂ "–" while pulseless). It prints **6 A4 pages** on this path
-   [A3.1; B e2e], and **Print the learner handout** prints the learner's sheet on 1 page, without marks (optional).
+   [A3.1; B e2e; Q2R3 on the rc.3 kit], and **Print the learner handout** prints the learner's sheet on 1 page,
+   without marks, ending with the card's three take-home points (optional) [Q2R3].
    Print from Chrome if you can (footer on every page); Safari puts the footer only at section ends [PRINT].
    **In the print dialog, untick Headers and footers (Chrome: More settings; Safari: Show Details → Print headers and footers).**
 9. **Saadat-style monitor, and no style change during the talk** (E20): the phones' AGENTS tile read "---" for 30 s

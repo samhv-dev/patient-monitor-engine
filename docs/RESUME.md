@@ -11,6 +11,20 @@ main 62e521c3).*
 - pnpm is not installed: run every pnpm command as `npx -y pnpm@9.15.9 …`. No `timeout` on macOS. Playwright's own Chromium and WebKit are installed.
 - Showcase kits: built with `node scripts/showcase/make-bundle.mjs <dir>`; the current one from main is `_sandbox/pme-kit-main-62e521c3/` (also in `_sandbox/pme-classroom-dryrun/kit/` and `_sandbox/pme-debrief-dryrun/`); smoke-test a kit's classroom relay with `node scripts/showcase/check-relay.mjs <kit>`.
 
+## State on 2026-10-23 (tag v1.0.0-rc.3 = main fcf99b70)
+
+- **`v1.0.0-rc.3` is tagged** (annotated) on main **fcf99b70** (#116), pushed 13:55 +0330; release run 39938963544
+  success; the GitHub release is a **Pre-release** with 8 assets, `SHA256SUMS.txt` 7/7 OK (`RELEASE.md` "After the
+  workflow"). GitHub Pages serves the tag's build (`gh-pages` ceac7b47; `gh-pages-rc2` kept as the rollback).
+- **The demo kit** (Wednesday 28 October) is `_sandbox/pme-kit-release-fcf99b70/` (also `pme-classroom-dryrun/kit` and
+  `pme-debrief-dryrun/pme-showcase-kit-fcf99b70`; a Windows zip beside it). **The fallback** is the rc.2 kit
+  `_sandbox/pme-kit-release-b39b3d87/`. The rc.1 kit is retired (moved to `_to_delete/`).
+- Kit round **Q2 on rc.3** passed on both engines with no F-failure; the three Persian handouts were re-rendered
+  (`docs/gates/rc3-release.md`; `SHOWCASE-2-MEASUREMENTS.md` §"Q2 on rc.3").
+- **Open:** the owner's smoke check and live rehearsal (Saturday 24 October), the Windows checklist on the room's PC,
+  E13 (the presenting Mac's Node) and E14 (the router test); the Persian reviews; PR #97 (the rc.2 docs) is still a
+  draft. rc.4 work (renderer pass 3, engine E117/E118) is on other branches.
+
 ## State on 2026-10-13 (main 62e521c3)
 
 **v1.0 feature work is merged.** Everything up to FU-11 and the five showcase-2 stages is on main:
