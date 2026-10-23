@@ -74,13 +74,22 @@ describe('pass 3: the RR tile is set as the EtCO2 part it stands in for (rule O4
     ui.destroy();
   });
 
-  it('with the CO2 line: the CO2 tile is itself (no stand-in mark); portrait keeps its sizes (no grid)', () => {
+  it('with the CO2 line: the CO2 tile is itself (no stand-in mark)', () => {
     const a = mount('saadat-like', true);
     expect(a.tile('CO2').dataset.as).toBeUndefined();
     a.ui.destroy();
+  });
+
+  it('a phone in portrait (no grid, F28) is unchanged: RR is its own tile, split tiles keep their rc.3 classes', () => {
     const b = mount('saadat-like', false, true);
-    expect((b.tile('RR').querySelector('[data-part="0"] .pv') as HTMLElement).style.fontSize).toBe('');
+    expect(b.tile('RR').dataset.as).toBeUndefined();
+    expect(b.tile('RR').classList.contains('split')).toBe(false);
+    expect(b.tile('RR').querySelector('.u')?.textContent).toBe('BrPM');
+    expect(b.tile('TEMP').classList.contains('column')).toBe(true);
     b.ui.destroy();
+    const c = mount('saadat-like', true, true);
+    expect(c.tile('CO2').classList.contains('row')).toBe(true);
+    c.ui.destroy();
   });
 
   it('a skin with no swap rule has no stand-in tiles', () => {

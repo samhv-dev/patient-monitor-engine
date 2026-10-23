@@ -128,16 +128,16 @@ async function shot(page: Page, name: string, browserName: string): Promise<void
 }
 
 // The owner's window: 1990 × 1080 outside, Safari's toolbars, tab and bookmarks bars take ≈ 160 px, so the page is
-// 1990 × 920 and the monitor pane 1430 × 820 (the photo's). The full 1080 high viewport is checked too.
-for (const [w, h, pane] of [[1990, 920, 820], [1990, 1080, 980]] as const) {
+// 1990 × 920 and the monitor pane 1430 × 820 (the photo's). The full 1080 high viewport is checked too, and a 1000 × 800
+// pane (1420 × 900: the 420 px panel), where the release-day rehearsal on the rc.3 kit found the same overlaps.
+for (const [w, h, paneW, pane] of [[1990, 920, 1430, 820], [1990, 1080, 1430, 980], [1420, 900, 1000, 800]] as const) {
   test(`Saadat-like on the Instructor view at ${w} × ${h}: no tile text overlaps; the RR tile is set as the EtCO2 tile`, async ({ page, browserName }) => {
     test.setTimeout(150_000);
     await page.setViewportSize({ width: w, height: h });
     await openApp(page, base, '#/teach', { warmMs: 2500 });
     const host = await page.locator('.stage > .monitor-host').boundingBox();
     console.log(`saadat-p3 ${browserName} ${w}x${h}: monitor pane ${host?.width.toFixed(0)} × ${host?.height.toFixed(0)}`);
-    expect(host?.width ?? 0).toBeGreaterThan(1400); // the instructor panel is open beside the monitor
-    expect(host?.width ?? 0).toBeLessThan(1460);
+    expect(Math.abs((host?.width ?? 0) - paneW)).toBeLessThan(15); // the instructor panel is open beside the monitor
     expect(Math.abs((host?.height ?? 0) - pane)).toBeLessThan(15);
 
     // no capnograph: the RR tile stands in for the CO2 tile. First while the cuff's first cycle is running (the NIBP tile

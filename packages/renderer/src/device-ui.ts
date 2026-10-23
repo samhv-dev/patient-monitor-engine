@@ -119,6 +119,12 @@ function replacementOf(r: ResolvedSkin, param: TileParam): TileSpec | undefined 
   return undefined;
 }
 
+/** A stand-in tile as one split part: its label, its unit beside it, its own limit key (pass 3, O4). */
+function standInPart(spec: TileSpec): TileSpec {
+  const { unit, ...rest } = spec;
+  return { ...rest, split: 'row', parts: [{ label: spec.label ?? spec.param, unit: unit ?? UNIT[spec.param] ?? '', limit: spec.param }] };
+}
+
 /** A font size of layout.grid (px at an 800 px monitor) scaled with the monitor height (--pme-h, set by the mount). */
 const gridFont = (px: number): string => `calc(${px} * var(--pme-h, 800px) / 800)`;
 
@@ -218,6 +224,7 @@ function photoCss(g: LayoutGrid): string[] {
     // beside them inside the tile, "°C" 18 px in the tile's title row (it floated under DT)
     `.pme-grid .pme-stile.split-column .part .lim{font-size:calc(${f(13)} * var(--pme-lim-k, 1))}`,
     `.pme-grid .pme-stile.split-column .part{min-height:${f(78)};margin-bottom:0;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:4px;align-content:start}`,
+    '.pme-grid .pme-stile.split-column{padding-left:4px;padding-right:4px}', // the narrow column (≈ 60 px at a 1000 px pane) keeps 8 px more for its limits
     '.pme-grid .pme-stile.split-column .pr{display:contents}',
     '.pme-grid .pme-stile.split-column .ph{grid-column:1/-1;grid-row:1}',
     '.pme-grid .pme-stile.split-column .lim{grid-column:1;grid-row:2}',
@@ -484,8 +491,13 @@ export class DeviceUI {
    * One tile. The old skeleton (label, bell, unit / "50–150" / value / sub-line) for every skin that does not opt in;
    * the rc.3 skeleton when the skin prints limits always (`alarms.limitsDisplay`) or the tile is split (`split`).
    */
-  private buildTile(spec: TileSpec): Tile {
+  private buildTile(given: TileSpec): Tile {
     const r = this.r;
+    // O4 (pass 3): in the grid, a tile another takes the place of while a sensor is attached (RR for the CO2 tile) is
+    // set as that tile — its colour, sizes and part width; only the content differs. A stand-in for a split row is
+    // drawn as one part of it: its label with its unit beside it, its own limit pair left of its digits
+    const as = gridOf(r, this.portrait) ? replacementOf(r, given.param) : undefined;
+    const spec: TileSpec = as?.split === 'row' && !given.split ? standInPart(given) : given;
     const doc = this.tiles.ownerDocument;
     const el = doc.createElement('div');
     // The HR tile keeps the original class `pme-tile`, which the IIFE smoke test (and embedders) look up
@@ -502,9 +514,6 @@ export class DeviceUI {
       return { spec, el, label: q('[data-pme="lbl"]'), value: v, sub: q('[data-pme="s"]'), bell: q('[data-pme="bell"]'), lim: q('[data-pme="lim"]'), rc3: null };
     }
     el.classList.add('rc3');
-    // O4 (pass 3): in the grid, a tile another takes the place of while a sensor is attached (RR for the CO2 tile) is
-    // set as that tile: its colour, sizes and part width; only the content differs
-    const as = gridOf(r, this.portrait) ? replacementOf(r, spec.param) : undefined;
     if (as) {
       el.dataset.as = as.param;
       el.classList.add('stand-in');
@@ -512,7 +521,9 @@ export class DeviceUI {
       el.style.color = r.render.tileColors[as.param] ?? el.style.color;
     }
     if (spec.split) {
-      el.classList.add('split', `split-${spec.split}`); // never the bare "row": a host page's .row{display:flex} packs the parts (pass 3)
+      // pass 3: split-row / split-column, never the bare "row" in the grid: the app's .row{display:flex} packed the parts.
+      // A phone in portrait keeps both (its F28 layout was reviewed with the host's .row applied)
+      el.classList.add('split', `split-${spec.split}`, ...(gridOf(r, this.portrait) ? [] : [spec.split]));
       const parts = spec.parts ?? [{ label: spec.label ?? spec.param }];
       el.innerHTML =
         `<div class="h"><span data-pme="bell"></span><span class="u">${spec.unit ?? ''}</span></div><div class="parts">` +

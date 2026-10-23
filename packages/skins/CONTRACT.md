@@ -62,8 +62,8 @@ so `iran-icu-as-found`) declares `co2: RESP → CO2` and `RR → CO2 (IMCO2, AWR
 renderer's `mountMonitor` starts from the engine's `patient.sensors.co2` and follows every accepted `attachSensor co2`.
 In `layout.grid` (landscape), a tile named in a rule is drawn as its replacement's stand-in while the sensor is off
 (rule O4, pass 3): the replacement's colour, value size (`grid.fontPx`), label size (`grid.labelPx`) and, for a split
-row, its parts' width (`data-as`, `--pme-slots`), so the swap shows only in the content. Saadat-like's RR tile is one
-split part (RR, BrPM beside it, its limits left of the digits) so it is set exactly as the EtCo2 part.
+row, its parts' width (`data-as`, `--pme-slots`), so the swap shows only in the content. A stand-in for a split row is
+drawn as one part of it (Saadat-like's RR: RR with BrPM beside it, its limits left of the digits, as the EtCo2 part).
 
 ## Lanes as on the real unit (rc.3, PR-L; every key optional)
 
