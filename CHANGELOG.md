@@ -28,6 +28,22 @@ the public API is what the packages export (see the API reference), the `pme-sce
 - Engine (E118, not met): pulsus paradoxus in severe tamponade stays a known miss (3.4 mmHg against ≥ 10, Spodick
   2003). The measured candidate mechanisms and why none was added for this release are in `docs/model/circulation.md`.
 
+### Fixed
+
+- Saadat-like tiles on the Instructor view (pass 3, the owner's 2026-10-23 review at the demo laptop's window, monitor
+  pane ≈ 1430 × 820): the split tiles were classed `row`, which the app's own `.row { display: flex }` also styles, so
+  the EtCo2/FiCo2/AWRR and BFI%/BS%/SQI%/EMG% parts packed together ("EtCo2 mmHg" ran into "FiCo2", SQI% into EMG%) and
+  the AWRR limits printed over the AWRR label. In the grid, split tiles are now `split-row` / `split-column` (a phone in
+  portrait keeps its F28 layout); each part is a head over its value with its limits in a narrow column, and a part that
+  is short of width puts its unit under the label and then shrinks its limits (and, last, a 3-digit value), measured
+  from the part's own width (no text overlaps at the owner's pane, at a 1000 × 800 pane, or at any size from 1024 × 640
+  to 1920 × 1080).
+- The RR tile (no capnograph) is set, in the grid, exactly as the EtCo2 part that replaces it: same label, digit and
+  limit type, colour and place (rule O4).
+- The T column: each label over its limits, the value right-aligned beside them, "°C" in the title row. IBP1: the value
+  and the bracketed mean in one row; the systolic, the slash and the diastolic each over its own limit pair. NIBP: "mmHg
+  NBP inflating" no longer wraps out of the tile while the cuff runs.
+
 ## [1.0.0-rc.3] - 2026-10-23
 
 Third public **pre-release** (release candidate) of a teaching simulator. It is for education only: it is not a

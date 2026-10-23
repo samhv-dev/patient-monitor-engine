@@ -107,7 +107,7 @@ describe('the saadat-like screen layout (layout.grid)', () => {
     expect(v(ui.tiles, 'NIBP')).toBe('calc(57*var(--pme-h,800px)/800)');
     expect(v(ui.tiles, 'IBP1')).toBe('calc(46*var(--pme-h,800px)/800)');
     const parts = [...ui.tiles.querySelectorAll('.pme-stile[data-param="CO2"] .pv')] as HTMLElement[];
-    expect(parts.map((e) => e.style.fontSize.replace(/\s/g, ''))).toEqual(Array(3).fill('calc(52*var(--pme-h,800px)/800)'));
+    expect(parts.map((e) => e.style.fontSize.replace(/\s/g, ''))).toEqual(Array(3).fill('calc(calc(52*var(--pme-h,800px)/800)*var(--pme-val-k,1))')); // pass 3: × the fit's value step
     expect(v(ui.strip, 'SpO2')).toBe('calc(78*var(--pme-h,800px)/800)');
     expect((ui.strip.querySelector('[data-pme="fv"]') as HTMLElement).style.fontSize.replace(/\s/g, '')).toBe('calc(57*var(--pme-h,800px)/800)');
     // the columns' shrink of long values is not applied in the grid

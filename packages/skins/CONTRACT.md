@@ -60,6 +60,10 @@ every page that lists its own lanes) and each named tile is replaced by the give
 tiles. A skin without the rule resolves byte-identically either way (test `sensor-swap.test.ts`). `saadat-like` (and
 so `iran-icu-as-found`) declares `co2: RESP → CO2` and `RR → CO2 (IMCO2, AWRR)` (research/06 §3.1 F6, §5). The
 renderer's `mountMonitor` starts from the engine's `patient.sensors.co2` and follows every accepted `attachSensor co2`.
+In `layout.grid` (landscape), a tile named in a rule is drawn as its replacement's stand-in while the sensor is off
+(rule O4, pass 3): the replacement's colour, value size (`grid.fontPx`), label size (`grid.labelPx`) and, for a split
+row, its parts' width (`data-as`, `--pme-slots`), so the swap shows only in the content. A stand-in for a split row is
+drawn as one part of it (Saadat-like's RR: RR with BrPM beside it, its limits left of the digits, as the EtCo2 part).
 
 ## Lanes as on the real unit (rc.3, PR-L; every key optional)
 
