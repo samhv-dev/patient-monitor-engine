@@ -1,5 +1,27 @@
 # The v1.0.0-rc.3 release day: version bump, tag, release, kits, rehearsal, Persian handouts, Pages, the owner's smoke — Plan
 
+**RUN 2026-10-23/24.** Tagged `v1.0.0-rc.3` on **fcf99b70** (#116) at 13:55 +0330 on Friday 23 October; release run
+39938963544 success (Pre-release, 8 assets, SHA256SUMS 7/7); Tasks 3, 4 and 5 by the executor from 13:57; Pages
+(Task 6) by the orchestrator (`gh-pages` ceac7b47). **No gate failure (F1–F10 all no): the rc.3 kit is the demo kit;
+the rc.2 kit is the fallback.** Record: [`docs/gates/rc3-release.md`](../gates/rc3-release.md) and
+`SHOWCASE-2-MEASUREMENTS.md` §"Q2 on rc.3". Deviations from the plan as written:
+1. **The freeze moved.** The version bump (#113, 695ca78c) is `FREEZE_SHA`; three owner-approved product PRs merged
+   after it (option 1, 2026-10-23 00:05): #114 F28, #115 Saadat pass 2, #116 the notes. The tag is on #116's merge,
+   not 12:00 Friday but 13:55.
+2. **#97 stayed a draft**; the kit-round close fix reached the tag through the bump PR (88fe8b75), so Task 4 Step 2
+   was the Notes line only (+1/−1) and no cherry-pick (Decision 4).
+3. **One worktree for the rehearsal and the docs PR:** `scratch/wt-rc3-docs` on `docs-rc3-release` from `origin/main`
+   (= the tag commit), in place of `wt-rc3-q2` (the executor's brief).
+4. **Task 3 Step 1 verified the kit built that morning** (04:45Z, from the tag worktree) with the step's checks instead
+   of rebuilding it; no `kit-build.log` was kept.
+5. **The release workflow took ≈ 26 min** (its `playwright install --with-deps` step ≈ 20 min); the executor's 20-min
+   poll ended before it, then it finished `success`, so Task 3 Step 6 used the release's embed zip, not the local build.
+6. The relay test printed **4 of 4** (unverified in the plan: confirmed); the macOS WebKit FX-14/24/25 e2e passed
+   (unverified in the plan: confirmed); Inter's `pdffonts` names are `Inter-Regular` / `Inter-Regular_Bold`; the zip is
+   1.0 MB; the Persian handouts print the take-home lines (E113: the tag's script prints the owner-approved lines,
+   #112).
+7. Task 4 Step 6: 16 passed (55.7 min), 64/64 soft checks; 48 files (16 modified, 32 new, as prep correction 2 expected), 49 stale files left in place; another job held the Mac at a load average up to ≈ 134 during it, without effect on the checks.
+
 **STATUS: WRITTEN 2026-10-21 (+0330), UNREVIEWED.** Written by the planner (Opus) from the brief
 `scratch/briefs/plan-rc3-release-day.md`, on `origin/main` **a8979ec9** (#107, the Windows kit launchers). Source: the rc.2
 runbook (`docs/plans/rc2-release-day.md`, REVIEWED-FIXED, run on 2026-10-20; untracked in `repo/`, committed on the
