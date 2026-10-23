@@ -277,7 +277,8 @@
    {"en": "Severe bronchospasm on the ventilator", "fa": "برونکواسپاسم شدید در بیمار تحت تهویه‌ی مکانیکی", "source": "apps/demo/src/app/showcase/showcase-bronchospasm.json title", "reviewed": false},
    {"en": "Stab wound: tamponade, PEA and pericardiocentesis", "fa": "زخم چاقو: تامپوناد قلبی، PEA و پریکاردیوسنتز", "source": "apps/demo/src/app/showcase/showcase-tamponade.json title", "reviewed": false},
    {"en": "Malignant hyperthermia", "fa": "هیپرترمی بدخیم", "source": "apps/demo/src/app/showcase/showcase-mh.json title", "reviewed": false},
-   {"en": "case", "fa": "مورد", "source": "apps/demo/src/app/describe.ts (scenario load without a title)", "reviewed": false}
+   {"en": "case", "fa": "مورد", "source": "apps/demo/src/app/describe.ts (scenario load without a title)", "reviewed": false},
+   {"en": "Class IV haemorrhage, PEA and resuscitation", "fa": "خونریزی کلاس IV، ایست با PEA و احیا", "source": "apps/demo/src/app/showcase/showcase-haemorrhage.json title", "reviewed": false}
   ],
   "state": [
    {"en": "Severe bronchospasm", "fa": "برونکواسپاسم شدید", "source": "apps/demo/src/app/showcase/showcase-bronchospasm.json states", "reviewed": false},
@@ -311,7 +312,26 @@
    {"en": "Ventilation back to 12 × 500, O₂ 100 %", "fa": "بازگشت تهویه به 12 × 500، O₂ 100 %", "source": "apps/demo/src/app/showcase/showcase-mh.json states", "reviewed": false},
    {"en": "Cardiac arrest", "fa": "ایست قلبی", "source": "apps/demo/src/app/showcase/showcase-mh.json states", "reviewed": false},
    {"en": "CPR (defibrillate VF from the Devices tab)", "fa": "احیای قلبی‌ریوی (دفیبریلاسیون VF از زبانه‌ی Devices)", "source": "apps/demo/src/app/showcase/showcase-mh.json states", "reviewed": false},
-   {"en": "next state", "fa": "وضعیت بعدی", "source": "apps/demo/src/app/showcase/../record.ts (a state the record does not know)", "reviewed": false}
+   {"en": "next state", "fa": "وضعیت بعدی", "source": "apps/demo/src/app/showcase/../record.ts (a state the record does not know)", "reviewed": false},
+   {"en": "Awake on the table, monitoring on, breathing room air", "fa": "بیدار روی تخت عمل، مانیتورینگ وصل، تنفس با هوای اتاق", "source": "apps/demo/src/app/showcase/showcase-mh.json states (E119)", "reviewed": false},
+   {"en": "Midazolam 2 mg and fentanyl 100 µg given, breathing room air", "fa": "میدازولام 2 mg و فنتانیل 100 µg داده شد، تنفس با هوای اتاق", "source": "apps/demo/src/app/showcase/showcase-mh.json states (E119)", "reviewed": false},
+   {"en": "Preoxygenating: 100 % O₂ by face mask", "fa": "پره‌اکسیژناسیون: O₂ 100 % با ماسک صورت", "source": "apps/demo/src/app/showcase/showcase-mh.json states (E119)", "reviewed": false},
+   {"en": "Induced: propofol 2 mg/kg, succinylcholine 1.5 mg/kg (masseter rigidity); airway not yet secured", "fa": "القای بیهوشی: پروپوفول 2 mg/kg، سوکسینیل‌کولین 1.5 mg/kg (سفتی عضله‌ی ماستر)؛ راه هوایی هنوز ایمن نشده", "source": "apps/demo/src/app/showcase/showcase-mh.json states (E119)", "reviewed": false},
+   {"en": "Intubated: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 % at 2 L/min", "fa": "لوله‌گذاری تراشه: ونتیلاتور 12 × 500، PEEP 5، FiO₂ 0.5؛ سووفلوران 2 % با جریان 2 L/min", "source": "apps/demo/src/app/showcase/showcase-mh.json states (E119)", "reviewed": false},
+   {"en": "Bleeding 2.5 L over 10 min, breathing room air", "fa": "خونریزی 2.5 L در 10 دقیقه، تنفس با هوای اتاق", "source": "apps/demo/src/app/showcase/showcase-haemorrhage.json states (E120)", "reviewed": false},
+   {"en": "Bleeding, oxygen by face mask (FiO₂ 1.0)", "fa": "خونریزی، اکسیژن با ماسک صورت (FiO₂ 1.0)", "source": "apps/demo/src/app/showcase/showcase-haemorrhage.json states (E120)", "reviewed": false},
+   {"en": "Bleeding, intubated and ventilated (12 × 500, PEEP 5, FiO₂ 1.0)", "fa": "خونریزی، لوله‌گذاری تراشه و تهویه‌ی مکانیکی (12 × 500، PEEP 5، FiO₂ 1.0)", "source": "apps/demo/src/app/showcase/showcase-haemorrhage.json states (E120)", "reviewed": false},
+   {"en": "Pre-arrest: junctional rhythm 50/min", "fa": "پیش از ایست: ریتم جانکشنال 50/min", "source": "apps/demo/src/app/showcase/showcase-haemorrhage.json states (E120)", "reviewed": false},
+   {"en": "PEA: junctional rhythm, no pulse", "fa": "ایست با PEA: ریتم جانکشنال بدون نبض", "source": "apps/demo/src/app/showcase/showcase-haemorrhage.json states (E120)", "reviewed": false},
+   {"en": "Asystole", "fa": "آسیستول", "source": "apps/demo/src/app/showcase/showcase-haemorrhage.json states (E120)", "reviewed": false},
+   {"en": "CPR: compressions 110/min, bag via the tube 10/min, FiO₂ 1.0", "fa": "احیای قلبی‌ریوی: ماساژ قلبی 110/min، تهویه با بگ از راه لوله‌ی تراشه 10/min، FiO₂ 1.0", "source": "apps/demo/src/app/showcase/showcase-haemorrhage.json states (E120)", "reviewed": false},
+   {"en": "CPR: 2 L warmed crystalloid and 2 units of red cells running", "fa": "احیای قلبی‌ریوی: انفوزیون 2 L کریستالوئید گرم و 2 واحد گلبول قرمز", "source": "apps/demo/src/app/showcase/showcase-haemorrhage.json states (E120)", "reviewed": false},
+   {"en": "CPR continuing", "fa": "ادامه‌ی احیای قلبی‌ریوی", "source": "apps/demo/src/app/showcase/showcase-haemorrhage.json states (E120)", "reviewed": false},
+   {"en": "Pulse check: VF", "fa": "بررسی نبض: VF", "source": "apps/demo/src/app/showcase/showcase-haemorrhage.json states (E120)", "reviewed": false},
+   {"en": "Shocked: CPR on for 2 min", "fa": "شوک داده شد: ادامه‌ی احیای قلبی‌ریوی به مدت 2 دقیقه", "source": "apps/demo/src/app/showcase/showcase-haemorrhage.json states (E120)", "reviewed": false},
+   {"en": "Pulse check: VF again", "fa": "بررسی نبض: دوباره VF", "source": "apps/demo/src/app/showcase/showcase-haemorrhage.json states (E120)", "reviewed": false},
+   {"en": "Shocked again: CPR on", "fa": "شوک دوم داده شد: ادامه‌ی احیای قلبی‌ریوی", "source": "apps/demo/src/app/showcase/showcase-haemorrhage.json states (E120)", "reviewed": false},
+   {"en": "Return of circulation: CPR stopped, ventilator 12 × 500, PEEP 5, FiO₂ 1.0", "fa": "بازگشت گردش خون: توقف احیای قلبی‌ریوی، ونتیلاتور 12 × 500، PEEP 5، FiO₂ 1.0", "source": "apps/demo/src/app/showcase/showcase-haemorrhage.json states (E120)", "reviewed": false}
   ],
   "objective": [
    {"en": "Recognise bronchospasm on the ventilator: high peak pressure, shark-fin capnogram, auto-PEEP", "fa": "تشخیص برونکواسپاسم از روی ونتیلاتور: فشار اوج بالا، کاپنوگرام به شکل باله‌ی کوسه، auto-PEEP", "note": "Uncertain: \"shark-fin\" as «به شکل باله‌ی کوسه»; auto-PEEP kept in Latin.", "source": "apps/demo/src/app/showcase/showcase-bronchospasm.json objectives", "reviewed": false},
@@ -328,7 +348,10 @@
    {"en": "Treat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L", "fa": "درمان هیپرکالمی (کلرید کلسیم، انسولین همراه با دکستروز) ظرف 300 ثانیه پس از افزایش K⁺ به بیش از 5.5 mmol/L", "source": "apps/demo/src/app/showcase/showcase-mh.json objectives", "reviewed": false},
    {"en": "Bring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg", "fa": "بازگرداندن تهویه به 12 × 500 ظرف 300 ثانیه پس از کاهش EtCO₂ به کمتر از 40 mmHg", "source": "apps/demo/src/app/showcase/showcase-mh.json objectives", "reviewed": false},
    {"en": "Hyperventilation kept until EtCO₂ has stayed below 40 mmHg for 2 min, then ventilation normalised (back to 12 × 500)", "fa": "ادامه‌ی هیپرونتیلاسیون تا زمانی که EtCO₂ به مدت 2 دقیقه کمتر از 40 mmHg بماند، سپس عادی‌سازی تهویه (بازگشت به 12 × 500)", "source": "apps/demo/src/app/showcase/showcase-mh.json objectives (E22, PR #69, on main since ab10903e)", "reviewed": false},
-   {"en": "Name malignant hyperthermia from the monitor: EtCO₂ above 45 mmHg at the same ventilation, tachycardia (instructor-assessed)", "fa": "تشخیص هیپرترمی بدخیم از روی مانیتور: EtCO₂ بالاتر از 45 mmHg با تهویه‌ی ثابت، تاکی‌کاردی (ارزیابی با مربی)", "note": "E52: the new first MH objective (owner item 9; its words await his confirmation).", "source": "apps/demo/src/app/showcase/showcase-mh.json objectives (Debrief redesign A, E52)", "reviewed": false}
+   {"en": "Name malignant hyperthermia from the monitor: EtCO₂ above 45 mmHg at the same ventilation, tachycardia (instructor-assessed)", "fa": "تشخیص هیپرترمی بدخیم از روی مانیتور: EtCO₂ بالاتر از 45 mmHg با تهویه‌ی ثابت، تاکی‌کاردی (ارزیابی با مربی)", "note": "E52: the new first MH objective (owner item 9; its words await his confirmation).", "source": "apps/demo/src/app/showcase/showcase-mh.json objectives (Debrief redesign A, E52)", "reviewed": false},
+   {"en": "Recognise PEA from hypovolaemia", "fa": "تشخیص PEA ناشی از هیپوولمی", "source": "apps/demo/src/app/showcase/showcase-haemorrhage.json objectives", "reviewed": false},
+   {"en": "Start high-quality CPR without delay (debrief: within 30 s of the pulse loss — draft, owner to confirm)", "fa": "شروع بی‌درنگ احیای قلبی‌ریوی باکیفیت (معیار دبریف: ظرف 30 ثانیه پس از قطع نبض؛ پیش‌نویس، در انتظار تأیید نویسنده‌ی سناریو)", "source": "apps/demo/src/app/showcase/showcase-haemorrhage.json objectives", "reviewed": false},
+   {"en": "Give volume and epinephrine; recognise the return of circulation on the arterial line and capnogram (debrief: the pulse back within 6 min of its loss — draft, owner to confirm)", "fa": "تجویز مایع و اپی‌نفرین؛ تشخیص بازگشت گردش خون روی موج فشار شریانی و کاپنوگرام (معیار دبریف: بازگشت نبض ظرف 6 دقیقه پس از قطع آن؛ پیش‌نویس، در انتظار تأیید نویسنده‌ی سناریو)", "source": "apps/demo/src/app/showcase/showcase-haemorrhage.json objectives", "reviewed": false}
   ],
   "ev": [
    {"en": "the start", "fa": "شروع اجرا", "source": "apps/demo/src/app/debrief.ts eventWords()", "reviewed": false},

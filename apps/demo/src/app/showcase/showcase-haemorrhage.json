@@ -3,14 +3,14 @@
   "id": "showcase-haemorrhage",
   "title": "Class IV haemorrhage, PEA and resuscitation",
   "category": "Showcase",
-  "durationMin": 20,
-  "story": "A ventilated 35-year-old man bleeding 2.5 L over 10 minutes. He loses his pulse (PEA) at about 10½ minutes. Start CPR, give 2 L of warmed fluid and epinephrine 1 mg: the pulse returns about three minutes into CPR.",
+  "durationMin": 25,
+  "story": "A 35-year-old man bleeding 2.5 L over 10 minutes, breathing room air: oxygen and the ventilator come only from your steps. Intubated and ventilated, he loses his pulse at about 10½ minutes on a junctional rhythm (PEA), which, left untreated, slows into asystole about 5 minutes later. Start CPR with ventilation and give 2 L of warmed crystalloid and 2 units of red cells: at the first pulse check he is in VF. Shock it; at the second pulse check VF is back; the second shock leaves an organised rhythm and the pulse returns about a minute later.",
   "objectives": [
     "Recognise PEA from hypovolaemia",
     { "text": "Start high-quality CPR without delay (debrief: within 30 s of the pulse loss — draft, owner to confirm)", "rule": { "kind": "eventWithin", "after": "pulseLoss", "event": "cpr", "withinS": 30 } },
     { "text": "Give volume and epinephrine; recognise the return of circulation on the arterial line and capnogram (debrief: the pulse back within 6 min of its loss — draft, owner to confirm)", "rule": { "kind": "eventWithin", "after": "pulseLoss", "event": "rosc", "withinS": 360 } }
   ],
-  "notes": "Showcase case (Stage 9 Task 26): the fu4 page's class IV run (bleed 2.5 L over 600 s; CPR + 2 L over 180 s + epinephrine 1 mg; pulse lost ≈ 10:29, back ≈ 3 min into CPR — Stage 11, measured on the FU-7.1 physiology; it was ≈ 10:05 and ≈ 4.5 min).",
+  "notes": "Showcase case (Stage 9 Task 26; the course E120, 2026-10-24). MODELED. Oxygen is never implicit (E121): room air until Oxygen by face mask or Intubate and ventilate; ventilation during CPR is the CPR step itself (bag via the tube). Without the ventilator step he compensates (systolic about 76 at 10 min) and does not arrest. THE CARD SETS THE RHYTHM three times: the junctional rhythm 50/min (when the systolic stays below 60 for 10 s, or its button) and VF at the first and at the second pulse check. Everything else is the physiology: the pulse loss, the PEA on the running junctional rhythm, its decay to an idioventricular rhythm and asystole (the seeded hazard), the rise of the coronary perfusion pressure with CPR and volume, each shock's outcome (the defibrillator's outcome table on the engine seed: the first shock ends VF in asystole, the second in an organised rhythm) and the pulse returning once the perfusion pressure (at least 15 mmHg) and the myocardium have held for 60 s. Measured course: the E120 rows of docs/showcase/SHOWCASE-2-RUN-SHEET.md.",
   "seed": 7,
   "mode": "modeled",
   "patient": {
@@ -32,26 +32,8 @@
   "states": [
     {
       "id": "bleeding",
-      "label": "Bleeding 2.5 L over 10 min",
+      "label": "Bleeding 2.5 L over 10 min, breathing room air",
       "onEnter": [
-        {
-          "type": "applyEvent",
-          "event": {
-            "kind": "airwayDevice",
-            "device": "ett"
-          }
-        },
-        {
-          "type": "applyEvent",
-          "event": {
-            "kind": "ventilation",
-            "source": "ventilator",
-            "rr": 12,
-            "vtMl": 500,
-            "peep": 5,
-            "fio2": 0.5
-          }
-        },
         {
           "type": "applyEvent",
           "event": {
@@ -63,20 +45,188 @@
       ],
       "transitions": [
         {
-          "id": "resus",
-          "label": "Start CPR, 2 L and epinephrine",
-          "to": "resuscitation",
+          "id": "oxygen",
+          "label": "Oxygen by face mask, FiO₂ 1.0",
+          "to": "bleedingO2",
           "when": {
             "manual": {
-              "label": "Start CPR, 2 L and epinephrine"
+              "label": "Oxygen by face mask, FiO₂ 1.0"
+            }
+          }
+        },
+        {
+          "id": "intubate",
+          "label": "Intubate and ventilate, FiO₂ 1.0",
+          "to": "ventilated",
+          "when": {
+            "manual": {
+              "label": "Intubate and ventilate, FiO₂ 1.0"
             }
           }
         }
       ]
     },
     {
-      "id": "resuscitation",
-      "label": "CPR, 2 L warmed fluid, epinephrine 1 mg",
+      "id": "bleedingO2",
+      "label": "Bleeding, oxygen by face mask (FiO₂ 1.0)",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "preoxygenate",
+            "fio2": 1,
+            "durationS": 3600
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "intubate-o2",
+          "label": "Intubate and ventilate, FiO₂ 1.0",
+          "to": "ventilated",
+          "when": {
+            "manual": {
+              "label": "Intubate and ventilate, FiO₂ 1.0"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "ventilated",
+      "label": "Bleeding, intubated and ventilated (12 × 500, PEEP 5, FiO₂ 1.0)",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "airwayDevice",
+            "device": "ett"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "preoxygenate",
+            "fio2": 0.21,
+            "durationS": 1
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "ventilation",
+            "source": "ventilator",
+            "rr": 12,
+            "vtMl": 500,
+            "peep": 5,
+            "fio2": 1
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "junctional",
+          "label": "Pre-arrest: junctional rhythm",
+          "to": "junctional",
+          "when": {
+            "any": [
+              {
+                "manual": {
+                  "label": "Pre-arrest: junctional rhythm"
+                }
+              },
+              {
+                "vital": {
+                  "var": "sbp",
+                  "op": "<",
+                  "value": 60,
+                  "forS": 10
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "junctional",
+      "label": "Pre-arrest: junctional rhythm 50/min",
+      "onEnter": [
+        {
+          "type": "setRhythm",
+          "rhythm": "junctionalEscape",
+          "opts": {
+            "rateBpm": 50
+          },
+          "when": "nextBeat"
+        }
+      ],
+      "transitions": [
+        {
+          "id": "pea",
+          "label": "No pulse",
+          "to": "pea",
+          "when": {
+            "vital": {
+              "var": "sbp",
+              "op": "<",
+              "value": 25,
+              "forS": 10
+            }
+          }
+        }
+      ],
+      "notes": "The card sets the rhythm: a junctional rhythm at 50/min (an instructor rhythm event, not the physiology). The pulse loss that follows is the model's."
+    },
+    {
+      "id": "pea",
+      "label": "PEA: junctional rhythm, no pulse",
+      "transitions": [
+        {
+          "id": "asystole",
+          "label": "Asystole",
+          "to": "asystole",
+          "when": {
+            "vital": {
+              "var": "hr",
+              "op": "<",
+              "value": 1,
+              "forS": 5
+            }
+          }
+        },
+        {
+          "id": "cpr-pea",
+          "label": "Start CPR: compressions, bag via the tube 10/min, FiO₂ 1.0",
+          "to": "cpr",
+          "when": {
+            "manual": {
+              "label": "Start CPR: compressions, bag via the tube 10/min, FiO₂ 1.0"
+            }
+          }
+        }
+      ],
+      "notes": "The model's PEA on the running junctional rhythm. On the owner's course it is left untreated: it slows, becomes idioventricular and turns to asystole about 5 minutes after the pulse loss."
+    },
+    {
+      "id": "asystole",
+      "label": "Asystole",
+      "transitions": [
+        {
+          "id": "cpr",
+          "label": "Start CPR: compressions, bag via the tube 10/min, FiO₂ 1.0",
+          "to": "cpr",
+          "when": {
+            "manual": {
+              "label": "Start CPR: compressions, bag via the tube 10/min, FiO₂ 1.0"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "cpr",
+      "label": "CPR: compressions 110/min, bag via the tube 10/min, FiO₂ 1.0",
       "onEnter": [
         {
           "type": "applyEvent",
@@ -90,12 +240,96 @@
         {
           "type": "applyEvent",
           "event": {
+            "kind": "ventilation",
+            "source": "bvm",
+            "rr": 10,
+            "vtMl": 500,
+            "peep": 5,
+            "fio2": 1
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "volume",
+          "label": "2 L warmed crystalloid and 2 units of red cells",
+          "to": "cprVolume",
+          "when": {
+            "manual": {
+              "label": "2 L warmed crystalloid and 2 units of red cells"
+            }
+          }
+        },
+        {
+          "id": "epi",
+          "label": "Epinephrine 1 mg",
+          "to": "cprEpi",
+          "when": {
+            "manual": {
+              "label": "Epinephrine 1 mg"
+            }
+          }
+        },
+        {
+          "id": "pulseCheck1",
+          "label": "Pulse check",
+          "to": "vf",
+          "when": {
+            "manual": {
+              "label": "Pulse check"
+            }
+          }
+        },
+        {
+          "id": "stop-cpr",
+          "label": "Pulse back: stop CPR",
+          "to": "rosc",
+          "when": {
+            "manual": {
+              "label": "Pulse back: stop CPR"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "cprVolume",
+      "label": "CPR: 2 L warmed crystalloid and 2 units of red cells running",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
             "kind": "fluid",
             "fluid": "balanced",
             "volumeMl": 2000,
             "overS": 180
           }
         },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "fluid",
+            "fluid": "blood",
+            "volumeMl": 600,
+            "overS": 300
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "back-volume",
+          "label": "Back to CPR",
+          "to": "cprRunning",
+          "when": {
+            "afterS": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "cprEpi",
+      "label": "CPR: epinephrine 1 mg given",
+      "onEnter": [
         {
           "type": "applyEvent",
           "event": {
@@ -109,7 +343,144 @@
       ],
       "transitions": [
         {
-          "id": "stopCpr",
+          "id": "back-epi",
+          "label": "Back to CPR",
+          "to": "cprRunning",
+          "when": {
+            "afterS": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "cprRunning",
+      "label": "CPR continuing",
+      "transitions": [
+        {
+          "id": "volume-running",
+          "label": "2 L warmed crystalloid and 2 units of red cells",
+          "to": "cprVolume",
+          "when": {
+            "manual": {
+              "label": "2 L warmed crystalloid and 2 units of red cells"
+            }
+          }
+        },
+        {
+          "id": "epi-running",
+          "label": "Epinephrine 1 mg",
+          "to": "cprEpi",
+          "when": {
+            "manual": {
+              "label": "Epinephrine 1 mg"
+            }
+          }
+        },
+        {
+          "id": "pulseCheck1-running",
+          "label": "Pulse check",
+          "to": "vf",
+          "when": {
+            "manual": {
+              "label": "Pulse check"
+            }
+          }
+        },
+        {
+          "id": "stop-running",
+          "label": "Pulse back: stop CPR",
+          "to": "rosc",
+          "when": {
+            "manual": {
+              "label": "Pulse back: stop CPR"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "vf",
+      "label": "Pulse check: VF",
+      "onEnter": [
+        {
+          "type": "setRhythm",
+          "rhythm": "vfCoarse",
+          "when": "now"
+        }
+      ],
+      "transitions": [
+        {
+          "id": "shock1",
+          "label": "Shock from the Defib tab",
+          "to": "postShock1",
+          "when": {
+            "event": {
+              "kind": "defib",
+              "action": "shock"
+            }
+          }
+        }
+      ],
+      "notes": "The card sets the rhythm: VF at the first pulse check (an instructor rhythm event). Shock from the Defib tab (Defib, pacing & CPR); CPR stays on."
+    },
+    {
+      "id": "postShock1",
+      "label": "Shocked: CPR on for 2 min",
+      "transitions": [
+        {
+          "id": "pulseCheck2",
+          "label": "Pulse check",
+          "to": "vf2",
+          "when": {
+            "manual": {
+              "label": "Pulse check"
+            }
+          }
+        },
+        {
+          "id": "stop-shock1",
+          "label": "Pulse back: stop CPR",
+          "to": "rosc",
+          "when": {
+            "manual": {
+              "label": "Pulse back: stop CPR"
+            }
+          }
+        }
+      ],
+      "notes": "The shock's outcome is the defibrillator's outcome table on the engine seed: on this course the first shock ends VF in asystole. Keep CPR going for 2 min, then Pulse check."
+    },
+    {
+      "id": "vf2",
+      "label": "Pulse check: VF again",
+      "onEnter": [
+        {
+          "type": "setRhythm",
+          "rhythm": "vfCoarse",
+          "when": "now"
+        }
+      ],
+      "transitions": [
+        {
+          "id": "shock2",
+          "label": "Shock from the Defib tab",
+          "to": "postShock2",
+          "when": {
+            "event": {
+              "kind": "defib",
+              "action": "shock"
+            }
+          }
+        }
+      ],
+      "notes": "The card sets the rhythm again: VF at the second pulse check. Shock from the Defib tab; CPR stays on; the pulse returns about a minute after the shock."
+    },
+    {
+      "id": "postShock2",
+      "label": "Shocked again: CPR on",
+      "transitions": [
+        {
+          "id": "stop",
           "label": "Pulse back: stop CPR",
           "to": "rosc",
           "when": {
@@ -122,13 +493,24 @@
     },
     {
       "id": "rosc",
-      "label": "Return of circulation",
+      "label": "Return of circulation: CPR stopped, ventilator 12 × 500, PEEP 5, FiO₂ 1.0",
       "onEnter": [
         {
           "type": "applyEvent",
           "event": {
             "kind": "cpr",
             "active": false
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "ventilation",
+            "source": "ventilator",
+            "rr": 12,
+            "vtMl": 500,
+            "peep": 5,
+            "fio2": 1
           }
         }
       ]

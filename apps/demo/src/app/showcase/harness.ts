@@ -16,11 +16,15 @@ export interface Sample {
   sys: number | null; dia: number | null; map: number | null; cvp: number | null; temp: number | null;
   rhythm: string; pulse: boolean; cpr: boolean;
   sao2: number; tc: number; ph: number; paco2: number; k: number; lactate: number; be: number;
+  /** The coronary perfusion pressure the arrest rules read (mmHg) and the myocardial state kIsch·(1 − hyp) (arrest.ts). */
+  cpp: number; myo: number;
 }
 
 /** Press the button labelled `press` in the current state at sim time `t`, or `delayS` after `when` first holds (and not
- *  before `t`, if given). An act fires once; one that never finds its button stays NaN in `Run.pressed`. */
-export interface Act { press: string; t?: number; when?: (s: Sample) => boolean; delayS?: number }
+ *  before `t`, if given). An act fires once; one that never finds its button stays NaN in `Run.pressed`. `send` instead
+ *  of a press: a clinical event sent as an instructor panel control sends it (e.g. the Defib tab's Charge and Shock), through
+ *  the driver so the card's `event` transitions see it; `press` is then only the act's name. */
+export interface Act { press: string; send?: Record<string, unknown>; t?: number; when?: (s: Sample) => boolean; delayS?: number }
 
 export interface Run {
   rows: Sample[];
@@ -95,6 +99,7 @@ export async function runCard(id: string, acts: readonly Act[], untilS: number, 
     rhythm, pulse: tree === null || at(tree, 'hemo.circ.arrest') === null, cpr: at(tree, 'hemo.cpr.active') === true, // no truth yet: alive
     sao2: num(at(tree, 'organs.view.sao2')), tc: num(at(tree, 'resp.temp.tc')),
     ph: labs.ph ?? Number.NaN, paco2: labs.pco2 ?? Number.NaN, k: labs.k ?? Number.NaN, lactate: labs.lactate ?? Number.NaN, be: labs.be ?? Number.NaN,
+    cpp: num(at(tree, 'hemo.circ.cor.cpp')), myo: num(at(tree, 'hemo.circ.cor.kIsch')) * (1 - num(at(tree, 'hemo.circ.cor.hyp'))),
   });
   let lastYield = 0;
   let nextRow = 1;
@@ -110,6 +115,13 @@ export async function runCard(id: string, acts: readonly Act[], untilS: number, 
         armed.set(i, t);
       }
       if (t + 1e-9 < (a.when ? (armed.get(i) as number) : (a.t as number)) + (a.delayS ?? 0)) continue;
+      if (a.send) {
+        const r = driver.host.dispatch({ type: 'applyEvent', event: a.send, id: `act-${i}`, issuedBy: 'instructor' } as never) as { accepted: boolean };
+        if (!r.accepted) continue;
+        driver.poll();
+        run.pressed[i] = t;
+        continue;
+      }
       const tr = driver.runner?.state().transitions?.find((x) => 'manual' in x.when && x.when.manual.label === a.press);
       if (!tr || !driver.runner?.trigger(t, tr.id).ok) continue;
       driver.poll(); // as the host does on a button press: it acts on this tick
