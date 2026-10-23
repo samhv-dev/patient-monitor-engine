@@ -7,13 +7,16 @@
 // creeps back up as the drug curve wanes (recrudescence). Without dantrolene s stays undefined and a(t) is exactly the
 // temperature model's MH factor ramp.
 import {
-  DANT_GAIN, MH_ONSET_S, MH_PROFILE_SEVERITY, MH_RELAX_TAU_S, MH_SUX_LATENCY_S, MH_VOLATILE_LATENCY_DEFAULT_S, MH_VOLATILE_LATENCY_S,
+  DANT_GAIN, MH_ONSET_S, MH_PROFILE_SEVERITY, MH_RELAX_TAU_S, MH_SYMP_TAU_S, MH_SUX_LATENCY_S, MH_VOLATILE_LATENCY_DEFAULT_S, MH_VOLATILE_LATENCY_S,
 } from './params.ts';
 
 export interface MhState {
   severity: number; // 0–1
   t0: number; // trigger time, s
   s?: number; // unsuppressed fraction (absent = 1)
+  /** E117: the unsuppressed fraction as the SYMPATHETIC drive sees it — the same dantrolene target, followed with
+   * MH_SYMP_TAU_S (absent = `s`, i.e. 1 untreated; older snapshots have neither). */
+  sSymp?: number;
 }
 
 /** MH activity 0–1 at time t (the onset ramp × the dantrolene-unsuppressed fraction). */
@@ -21,6 +24,17 @@ export function mhActivity(mh: MhState | null, t: number): number {
   if (!mh) return 0;
   const r = Math.min(1, Math.max(0, (t - mh.t0) / MH_ONSET_S));
   return mh.severity * r * (mh.s ?? 1);
+}
+
+/**
+ * The MH SYMPATHETIC drive 0–1 at time t (E117): severity × (1 − e^{−(t − t0)/MH_SYMP_TAU_S}) × `sSymp`. The same muscle
+ * process as `mhActivity`, but the catecholamine surge follows the muscle's Ca²⁺-driven crisis within minutes both ways:
+ * it is front-loaded (τ MH_SYMP_TAU_S, not the 15-min metabolic ramp) and it falls with dantrolene's suppression on the
+ * same τ (`sSymp`), whereas the metabolic excess (`s`: VCO2, heat) decays over 10–20 min (MH_RELAX_TAU_S).
+ */
+export function mhSympDrive(mh: MhState | null, t: number): number {
+  if (!mh || t <= mh.t0) return 0;
+  return mh.severity * (1 - Math.exp(-(t - mh.t0) / MH_SYMP_TAU_S)) * (mh.sSymp ?? mh.s ?? 1);
 }
 
 /** An MH-susceptible patient's trigger exposure (`ps.neuro.mhExposure`, times in s). */
@@ -61,5 +75,7 @@ export function stepMh(mh: MhState | null, dantE: number, dtS: number): void {
   if (!(dantE > 0) && mh.s === undefined) return; // Untreated: the temperature model's ramp only
   const target = Math.max(0, 1 - DANT_GAIN * Math.min(1, Math.max(0, dantE)));
   const s = mh.s ?? 1;
+  const ss = mh.sSymp ?? s;
   mh.s = target + (s - target) * Math.exp(-dtS / MH_RELAX_TAU_S);
+  mh.sSymp = target + (ss - target) * Math.exp(-dtS / MH_SYMP_TAU_S); // E117: the catecholamine share follows faster
 }

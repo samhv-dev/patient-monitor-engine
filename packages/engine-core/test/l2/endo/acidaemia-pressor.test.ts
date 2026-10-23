@@ -2,13 +2,15 @@
 // catecholamines — the vascular arm of the stress response — with the same curve 7g applies to an infused one.
 import { describe, expect, it } from 'vitest';
 import { createEndoCore, NEUTRAL_ENDO_INPUTS, stepEndoCore } from '../../../src/l2/endo/core.ts';
+import { MH_SVR_DILATION } from '../../../src/l2/endo/params.ts';
 import { acidosisFactor } from '../../../src/l2/pk/pd.ts';
 
 /** A patient under a standing sympathetic drive (the MH surge's size), stepped to a steady state at this pH. */
 function surge(ph: number): { svrF: number; hrF: number; vasoResp: number } {
   const c = createEndoCore();
   for (let i = 0; i < 1800; i++) stepEndoCore(c, { ...NEUTRAL_ENDO_INPUTS, ph, mhActivity: 1, tempC: 39.5 }, 1);
-  return { svrF: c.out.svrF, hrF: c.out.hrF, vasoResp: c.out.vasoResp };
+  // E117: MH's own muscle vasodilation (× (1 − MH_SVR_DILATION) at activity 1) is not a catecholamine effect: divided out
+  return { svrF: c.out.svrF / (1 - MH_SVR_DILATION), hrF: c.out.hrF, vasoResp: c.out.vasoResp };
 }
 
 describe('acidaemia and the endogenous pressor response', () => {

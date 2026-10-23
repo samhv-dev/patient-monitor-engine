@@ -73,7 +73,10 @@ describe('endocrine seams (engine)', { timeout: 300_000 }, () => {
     expect(s.cond.vasoResp).toBeCloseTo(s.endo.core.out.vasoResp, 12);
     expect(s.blood.core.fl.kfMult).toBeGreaterThan(3);
     const a = s.resp.lungSpecs.find((x: { id: string }) => x.id === 'anaphylaxis');
-    expect(a.severity).toBeGreaterThan(0.3);
+    // The seam is that the mediator reaches the lungs at all. E117: this unventilated rig is at PaCO2 ≈ 165, so the
+    // hypercapnic sympathetic drive raises endogenous epinephrine (≈ 960 → 1690 pg/mL), whose β2 bronchodilation lowers
+    // the lung severity from 0.32 to 0.30 (grade III's nominal 0.6 × (1 − 0.6 × bronchodilation))
+    expect(a.severity).toBeGreaterThan(0.25);
   });
 
   it('neuro hand-overs: the endocrine model alone validates `stimulus` and neuro observes it; neuro reads endo.cascade.macF', async () => {

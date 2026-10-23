@@ -88,6 +88,16 @@ export const EMERGE_TAU_S = 600;
 // --- MH and dantrolene (tables §5.3, §7 check 21) -----------------------------------------------------------
 export const MH_HEAT_X = 8; // muscle heat × m0 added at activity 1: core +1 °C by 15 min of the trigger (tables §7 check 21) [ENG]
 export const MH_VO2_FACTOR = 2.5; // VO2 × 2–3 (tables) [TXT]
+/**
+ * E117: the SYMPATHETIC share of MH (its `extraSymp`, endo/core.ts) is front-loaded — it approaches severity × the
+ * unsuppressed fraction with this τ from the trigger instead of following the 15-min metabolic ramp, so the heart rate
+ * is rising before the EtCO2 leaves its baseline. Tachycardia is among the earliest and most consistent signs of MH
+ * (Miller's Anesthesia 10e, malignant hyperthermia chapter; Larach MG et al., Anesth Analg 2010;110:498–507), and in
+ * porcine MH the plasma catecholamines rise many-fold, as a consequence of the hypermetabolism rather than its cause
+ * (Gronert GA, Milde JH, Theye RA, Anesthesiology 1977;47:411–415) [TXT direction]. The 2-min τ is [ENG]: chosen in
+ * the brief's 2–4 min order to meet the owner's target E117, not taken from a source.
+ */
+export const MH_SYMP_TAU_S = 120;
 export const MH_RELAX_TAU_S = 600; // the unsuppressed fraction follows dantrolene with τ 10 min (tables "VCO2 excess decays τ 10–20 min") [ENG]
 /**
  * Dantrolene's PK and effect curve are the drug model's: `bus.metabolic.dantroleneE` = C/(C + 1) with C in 2.5 mg/kg

@@ -343,7 +343,7 @@ Clock = the scenario clock at ×1; the real time at ×4 is clock ÷ 4, at ×8 cl
 | 4:00 | press **Start surgery: rocuronium 0.6 mg/kg** | |
 | 6:51 | (state "Early signs: EtCO₂ rising at the same ventilation, tachycardia"); EtCO2 46, HR 85 | "Same minute ventilation, rising CO2: more CO2 is being made." **Short version:** press the crisis at 8:51 (below, "early"). |
 | 9:00 → 17:00 | EtCO2 51 → 76; HR 93 → 139; core 36.9 → 38.1; pH 7.28 → 7.12; K 4.7 → 5.5; **EXTREME TACHY** 17:09 | (fast-forward 5 min twice here, Stage 10) |
-| 18:46 | (state "Established MH: hyperthermia, acidosis, rising potassium"); core 38.5, EtCO2 79–81, HR 142–148, awRR 22 (he triggers the ventilator: rocuronium is wearing off) | Explore → "Changed only" (the rows listed under S1 above): Blood/acid–base, then Endocrine "MH activity". |
+| 18:46 | (state "Established MH: hyperthermia, acidosis, rising potassium"); core 38.5, EtCO2 79–81, HR ≈ 166 (rc.4, E117; 142–148 before), awRR 22 (he triggers the ventilator: rocuronium is wearing off) | Explore → "Changed only" (the rows listed under S1 above): Blood/acid–base, then Endocrine "MH activity". |
 | 19:46 | press **MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate** | ventilation 20 × 600, FiO2 1.0 |
 | 20:46 | press **Dantrolene 2.5 mg/kg** | |
 | 21:16 / 21:46 / 22:16 | press **Cool: 2 L saline at room temperature**, **Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose**, **Sodium bicarbonate 1 mmol/kg** | K 5.9 at the call |

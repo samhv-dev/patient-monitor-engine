@@ -13,7 +13,7 @@ import {
   AI_CORT_BASAL_F, ETOM_SUPPR_MAX, ETOM_SUPPR_T12_S, HYPEROSM_FROM_MGDL, HYPEROSM_K_PER_MGDL, KETO_K_EFFLUX, KETO_MMOL_MIN_MAX,
   KETO_TAU_S, KETO_UTIL_INS_MAX, KETO_UTIL_PER_MIN,
   EPI_BASAL_PG_ML, HYPO_EPI_THRESHOLD_MGDL, IB_UU_ML, INS_K_PER_UU, INS_N_PER_MIN, MGDL_PER_MMOL, MH_K_EFFLUX, NEUROGLYCOPENIA_MGDL,
-  SYMP_HYPOGLY_PER_MGDL, VI_ML_KG,
+  MH_SVR_DILATION, MH_SYMP_GAIN, SYMP_HYPERCAPNIA_FROM_MMHG, SYMP_HYPERCAPNIA_MAX, SYMP_HYPERCAPNIA_PER_MMHG, SYMP_HYPOGLY_PER_MGDL, VI_ML_KG,
 } from './params.ts';
 import { thyroidEffects, type ThyroidState } from './thyroid.ts';
 
@@ -51,6 +51,11 @@ export interface EndoInputs {
   ph?: number;
   tempC: number; // core temperature (the fever HR term)
   mhActivity: number; // thermal (0–1)
+  /** E117: the front-loaded MH sympathetic drive 0–1 (`mhSympDrive`); absent = `mhActivity` (the old coupling). */
+  mhSymp?: number;
+  /** E117: the vasomotor centre's perfusion gate on the hypercapnic (central chemoreflex) term, 0–1 — the circulation's
+   * `brainstemOutF(cbfRel)`, the same gate the baroreflex's sympathetic output has; absent = 1. */
+  brainF?: number;
   liverF: number; // `organs.liver.glucoseF` (1 normal)
   weightKg: number;
   betaBlock: number; // The circulation's `prof.betaBlock` (HR)
@@ -194,7 +199,8 @@ function compose(c: EndoCore): EndoOut {
     // MANUAL: the fever tachycardia of a condition is already in its HR row, so the temperature term sees only the core
     // ABOVE the endocrine set-point shift (MH, exogenous heat, a MANUAL target) — prototype: counting it twice gave HR 153
     feverHrFExcess: tempHrF(x.tempC - setShiftC),
-    svrF: alpha(st.svrF) * th.svrF * cd.svrF * st.humSvrF, // The humoral arm is outside alpha() (V1/AT1, not catecholamine-responsiveness-scaled)
+    // E117: the hypermetabolic MH muscle's own (functional, metabolic) vasodilation lowers SVR with the activity
+    svrF: alpha(st.svrF) * th.svrF * cd.svrF * st.humSvrF * (1 - MH_SVR_DILATION * x.mhActivity), // The humoral arm is outside alpha() (V1/AT1, not catecholamine-responsiveness-scaled)
     eesF: beta(st.eesF) * th.eesF * cd.eesF,
     dV0Frac: st.dV0Frac + cd.dV0Frac,
     humDV0Frac: st.humDV0Frac,
@@ -244,7 +250,7 @@ export function stepEndoCore(c: EndoCore, x: EndoInputs, dtS: number): void {
   const kd = glucoseProfile(c.profile).beta === 0 ? Math.max(0, 1 - g.i / IB_UU_ML) : 0;
   c.ketoDef = kd + ((c.ketoDef ?? 0) - kd) * Math.exp(-dtS / KETO_TAU_S);
   stepHormones(c.hormones, {
-    noxious: x.noxious, antinoc: x.antinoc, antinocOp: x.antinocOp, extraSymp: cd.extraSymp + hypo + 2 * x.mhActivity + (x.sympDrug ?? 0) * c.out.catReserve,
+    noxious: x.noxious, antinoc: x.antinoc, antinocOp: x.antinocOp, extraSymp: cd.extraSymp + hypo + (x.mhSymp === undefined ? 2 * x.mhActivity : MH_SYMP_GAIN * x.mhSymp) + (x.brainF ?? 1) * Math.min(SYMP_HYPERCAPNIA_MAX, SYMP_HYPERCAPNIA_PER_MMHG * Math.max(0, x.paco2 - SYMP_HYPERCAPNIA_FROM_MMHG)) + (x.sympDrug ?? 0) * c.out.catReserve,
     glucoseMgDl: g.g, mapMmHg: x.mapMmHg, mapSetMmHg: x.mapSetMmHg, sao2: x.sao2, paco2: x.paco2,
     cortResponse: cortResponseOf(c), cortBasalF: cortBasalF(c.profile), epiExoPgMl: x.epiExoPgMl,
   }, dtS);

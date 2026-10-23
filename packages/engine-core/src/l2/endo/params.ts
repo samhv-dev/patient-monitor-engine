@@ -54,6 +54,50 @@ export const NE_SPILL_GAIN = 1.5; // NE spillover × (1 + 1.5·symp) [ENG]
 export const DRIVE_HYPOTENSION_PER_MMHG = 0.1; // below MAP 65: +1 per 10 mmHg
 export const DRIVE_HYPOXIA_PER_SAT = 10; // below SaO2 0.85: +1 per 10 %
 export const DRIVE_HYPERCAPNIA_PER_MMHG = 0.05; // above PaCO2 50: +1 per 20 mmHg
+/**
+ * E117: the MH sympathetic drive, in units of stress activity, at full front-loaded drive (`mhSympDrive` 1). The old
+ * coupling was 2 × the metabolic activity (kept when `mhSymp` is absent); 2.5 [ENG] so that, with the hypercapnic term
+ * below kept small, the MH patient reaches HR ≥ 120 by EtCO2 55 (target E117; measured 126). The stress activity's
+ * SYMP_MAX 3 still bounds the sum.
+ */
+export const MH_SYMP_GAIN = 2.5;
+/**
+ * E117: the hypermetabolic MH muscle dilates its own vessels (functional, metabolic hyperaemia: local flow follows
+ * the tissue's O2 consumption, and skeletal muscle is ≈ 40 % of body mass; MH multiplies whole-body VO2 by 2–3) —
+ * SVR × (1 − MH_SVR_DILATION × the metabolic activity), as the thyroid storm's hypermetabolism already lowers SVR
+ * (`thyroid.ts`). Direction [TXT, textbook functional hyperaemia; no MH-specific source]; size [ENG]: without it the larger E117 sympathetic
+ * drive raised the untreated MAP at +20 min from 99 to 115 against the FU-7.1 band (≤ 104, research/24 P2); with
+ * 0.2 it is 101, and the pressure still peaks and falls back as the pH does.
+ */
+export const MH_SVR_DILATION = 0.2;
+/**
+ * E117: hypercapnia raises NEURAL sympathetic activity — the chemoreflex. In conscious humans breathing CO2 to raise
+ * end-tidal PCO2 by ≈ 10 mmHg, muscle sympathetic nerve activity rose markedly while the pressure rose a few mmHg
+ * (Somers VK, Mark AL, Zavala DC, Abboud FM. Contrasting effects of hypoxia and hypercapnia on ventilation and
+ * sympathetic activity in humans. J Appl Physiol 1989;67:2101–2106) [P: the direction of the VASCULAR sympathetic
+ * outflow, in conscious subjects]. Here `symp` gains SYMP_HYPERCAPNIA_PER_MMHG per mmHg of PaCO2 above
+ * SYMP_HYPERCAPNIA_FROM_MMHG, up to SYMP_HYPERCAPNIA_MAX (reached at PaCO2 55). `symp` also acts on HR, contractility
+ * and venous tone: those arms, the size, and the size under anaesthesia (volatiles blunt the reflex) are [ENG].
+ * The term is deliberately SMALL because it is not alone (KNOWN OVERLAP, owner note): the ADRENAL hypercapnia drive
+ * (DRIVE_HYPERCAPNIA_PER_MMHG, above 50) and the circulation's chemoreflex pressor term (circ `chemoFactors`, +1 %/mmHg
+ * HR and SVR above 50, capped 20 %) answer the same stimulus. Measured without MH: PaCO2 51 adds 2–3 bpm (limit 10);
+ * PaCO2 ≈ 68 adds ≈ 16 bpm where the old engine added 13 (limit 20); an uncapped 0.06/mmHg term gave +30 bpm at 68.
+ * (The tamponade showcase's post-ROSC systolic peak, 155 → 199, is NOT changed by the cap: 200 uncapped.)
+ * Folding `chemoFactors`' hypercapnic arm into this term
+ * is the clean form but re-tunes every hypercapnic MODELED band: not done for rc.4. The metabolic acidaemia is NOT a
+ * second input: the central chemoreceptors track PaCO2 (the blood–brain barrier delays a metabolic H+ signal); the
+ * carotid bodies do sense metabolic H+, but such a term would move the sourced sepsis/DKA/haemorrhage HR bands the
+ * circulation already meets. The term is a CENTRAL chemoreflex: the endocrine adapters scale it by the vasomotor
+ * centre's perfusion gate (`brainstemOutF(cbfRel)`, the baroreflex's own), so the CO2 retained during an arrest does
+ * not drive it while the brainstem is unperfused — and by the anaesthetic's sympatholysis, the drug model's delivered-
+ * output factor (`ext.drug.symp`) that already scales the baroreflex's sympathetic output: propofol and the volatiles
+ * suppress muscle sympathetic nerve activity (Ebert TJ, Muzi M, Berens R, Goff D, Kampine JP, Anesthesiology
+ * 1992;76:725–733, propofol) [P direction]. Without it the CO2 a fentanyl-premedicated patient retains propped the
+ * propofol induction pressure and broke the FU-7.1 opioid-synergy band (ratio 1.13 against ≥ 1.15; main 1.16).
+ */
+export const SYMP_HYPERCAPNIA_FROM_MMHG = 45;
+export const SYMP_HYPERCAPNIA_PER_MMHG = 0.03;
+export const SYMP_HYPERCAPNIA_MAX = 0.3;
 export const HYPO_EPI_THRESHOLD_MGDL = 65; // counter-regulatory epinephrine threshold 3.6–3.9 mmol/L (ADA) [TXT]
 export const DRIVE_HYPOGLY_PER_MGDL = 0.4; // 50 mg/dL → epinephrine ≈ 19× basal (hypoglycaemic clamps: 10–20×) [TXT]
 export const SYMP_HYPOGLY_PER_MGDL = 0.06; // neural sympathoadrenal activation: 50 mg/dL → symp 0.9 [ENG: with G_SYMP_HR 0.18 keeps the hypoglycaemic HR ≥ × 1.2]
@@ -153,7 +197,7 @@ export const KETO_K_EFFLUX = 1.4;
  * with insulin does not shift K out) [ENG; Kitabchi 2009]. */
 export const HYPEROSM_K_PER_MGDL = 0.002;
 export const HYPEROSM_FROM_MGDL = 200;
-export const MH_K_EFFLUX = 2.2; // MH muscle K efflux, kSet +3 mmol/L at activity 1 — net of the endogenous-epinephrine β2 uptake and with the acidosis term: K 5.5–6.5 by 20 min (tables §7 21) [ENG]
+export const MH_K_EFFLUX = 2.35; // MH muscle K efflux, kSet + MH_K_EFFLUX mmol/L at activity 1 — net of the endogenous-epinephrine β2 uptake and with the acidosis term: K 5.5–6.5 by 20 min (tables §7 21) [ENG; E117: 2.2 → 2.35, as its larger catecholamine surge takes more K into the cells (DI-65 K 5.57 → 5.45 → 5.58)]
 /**
  * The drug model's epinephrine concentration is a RATE EQUIVALENT (µg/kg/min, the infusion that would hold it). Its
  * plasma level is rate/clearance: 1 µg/kg/min ÷ Pulse's 68.66 mL/min/kg = 14 564 pg/mL (0.05 µg/kg/min → 728 pg/mL)
