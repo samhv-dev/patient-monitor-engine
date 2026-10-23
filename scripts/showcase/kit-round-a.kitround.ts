@@ -149,7 +149,7 @@ class Run {
     await this.row(`after the ${min}-min fast-forward`);
     return span;
   }
-  async teachTab(tab: 'scenario' | 'devices' | 'drugs'): Promise<void> {
+  async teachTab(tab: 'scenario' | 'devices' | 'drugs' | 'defib'): Promise<void> {
     if (!(await this.page.evaluate(() => location.hash)).startsWith('#/teach')) {
       await this.page.evaluate(() => (location.hash = '#/teach'));
       await this.page.waitForTimeout(800);
@@ -1695,6 +1695,183 @@ test('Q1 FX-12 probe: Restart patient, then Return here; does the restored case 
       return (/Scenario\s*\n?\s*([^\n]+)/.exec(t)?.[1] ?? '').trim();
     })();
     R.r.measures.fx12probe = fx;
+  } finally {
+    await R.finish();
+  }
+});
+
+// ------------------------------------------------------------------------------- kit round A4 (24 Oct): the live-demo cards
+
+/** The Debrief moment of an A4 path: read it (with the JSON export, the Persian handout's input), then Run by + Notes, the
+ *  report printed (Chromium: PDF and its page count; WebKit: print-media screenshot) and the learner handout (E51). */
+async function a4Debrief(R: Run, page: Page, key: string): Promise<void> {
+  await R.debrief({ json: true });
+  await page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }).click();
+  const view = page.locator('[data-view=debrief]');
+  await view.getByRole('heading', { level: 1, name: 'Debrief' }).waitFor({ timeout: 15_000 });
+  await view.getByRole('textbox', { name: 'Run by' }).fill('Live demo, 28 October');
+  await view.getByRole('textbox', { name: 'Notes' }).fill('Kit round A4 rehearsal of the live-demo path.').catch(() => undefined);
+  await page.emulateMedia({ media: 'print' });
+  mkdirSync(OUTDIR, { recursive: true });
+  await page.screenshot({ path: join(OUTDIR, `a4-${key}-debrief-print-${R.r.browser}.png`), fullPage: true }).catch(() => undefined);
+  if (R.r.browser === 'chromium') {
+    const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    writeFileSync(join(OUTDIR, `a4-${key}-debrief-chromium.pdf`), pdf);
+    const info = pdfInfo(pdf);
+    R.r.measures.pdf = { pages: info.boxes.length, a4: info.boxes.every((b) => Math.round(b[2] ?? 0) === 595 && Math.round(b[3] ?? 0) === 842), title: info.title };
+  } else R.r.measures.pdf = 'WebKit: Playwright has no page.pdf(); print-media screenshot only';
+  await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
+  await page.screenshot({ path: join(OUTDIR, `a4-${key}-handout-print-${R.r.browser}.png`), fullPage: true }).catch(() => undefined);
+  if (R.r.browser === 'chromium') {
+    const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    writeFileSync(join(OUTDIR, `a4-${key}-handout-chromium.pdf`), pdf);
+    R.r.measures.handoutPdf = { pages: pdfInfo(pdf).boxes.length };
+  }
+  await page.evaluate(() => document.querySelector('.debrief')?.removeAttribute('data-print'));
+  await page.emulateMedia({ media: 'screen' });
+  await page.evaluate(() => (location.hash = '#/teach'));
+  await page.waitForTimeout(800);
+}
+
+/** Every state entry of the run, with its sim time, from the page's own state log (R.start records it every 100 ms). */
+const stateLog = (page: Page) => page.evaluate(() => ((window as unknown as Hook).__st ?? []).map((x) => ({ t: Math.round(x.t * 10) / 10, id: x.id })));
+
+test('A4 MH (E119): the induction sequence, early call, three 5-min fast-forwards, Debrief printed', async ({ page, browser }) => {
+  const R = new Run(page, browser, 'A4 MH E119 induction sequence and early call (kit round)');
+  try {
+    // cue card: Load · All alarms on · Bookmark · ×8
+    await R.start('Malignant hyperthermia', 8, 'after-alarms');
+    await R.untilT(R.t0 + 30);
+    await R.press('Premedicate: midazolam 2 mg, fentanyl 100 µg', 'premedicated');
+    await R.untilT(R.t0 + 60);
+    await R.press('Preoxygenate: 100 % O₂ by face mask', 'preoxygenated');
+    await R.untilT(R.t0 + 240);
+    const tInd = await R.press('Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg', 'induced');
+    await R.untilT(R.t0 + 300);
+    const tInt = await R.press('Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %', 'intubated');
+    await R.untilT(R.t0 + 360);
+    await R.press('Start surgery: rocuronium 0.6 mg/kg', 'surgery');
+    await R.untilT(R.t0 + 450);
+    await R.speed(4);
+    await R.row('7:30 ×4: watch the CO₂ tile');
+    const tEarly = await R.until('earlySigns', 300);
+    await R.row('state Early signs');
+    await R.tick(/^Name malignant hyperthermia/);
+    const tCall = await R.press(CRISIS, 'triggerOff');
+    await R.untilT(tCall + 20);
+    await R.press('Dantrolene 2.5 mg/kg', 'dantrolene');
+    await R.untilT(tCall + 30);
+    await R.press('Cool: 2 L saline at room temperature', 'cooling');
+    const below40 = await R.waitSim(120, (_n, v) => (v.etco2 ?? 99) < 40);
+    await R.row('EtCO₂ below 40');
+    await R.ff(5);
+    // E22: ventilation back once EtCO2 has stayed below 40 for 2 min, in Recovering (the button is offered only there)
+    const tNormo = (await stateId(page)) === 'recovering' ? await R.press('EtCO₂ normal: ventilation back to 12 × 500', 'normoventilated') : null;
+    if (tNormo === null) R.r.notes.push(`after span 1 the state was ${await stateId(page)}: ventilation back NOT pressed`);
+    await R.ff(5);
+    await R.ff(5);
+    await R.pauseToggle();
+    await R.row('end: paused');
+    const h = await hist(page, tInd, tInt + 60);
+    R.r.measures.a4mh = {
+      states: await stateLog(page), inducedAt: mmss(tInd), intubatedAt: mmss(tInt), earlySignsAt: tEarly === null ? null : mmss(tEarly),
+      earlyAfterSuxS: tEarly === null ? null : r1(tEarly - tInd), callAt: mmss(tCall), callAfterEarlyS: tEarly === null ? null : r1(tCall - tEarly),
+      etco2Below40At: below40 === null ? null : mmss(below40), normoAt: tNormo === null ? null : mmss(tNormo), spo2MinInductionToTube: r1(minOf(h, 'spo2')),
+    };
+    await R.pauseToggle();
+    await a4Debrief(R, page, 'mh');
+  } finally {
+    await R.finish();
+  }
+});
+
+/** The engine's rhythm changes, from the session's own events (installed after Load). */
+const logRhythms = (page: Page) => page.evaluate(() => {
+  const w = window as unknown as { __rh?: Array<{ t: number; id: string }>; __pmeApp: { session: { onEvent(fn: (e: { type: string; t: number; rhythm?: { id: string } }) => void): () => void } } };
+  w.__rh = [];
+  w.__pmeApp.session.onEvent((e) => {
+    if (e.type === 'state' && e.rhythm && w.__rh!.at(-1)?.id !== e.rhythm.id) w.__rh!.push({ t: e.t, id: e.rhythm.id });
+  });
+});
+const rhythmLog = (page: Page) => page.evaluate(() => (window as unknown as { __rh?: Array<{ t: number; id: string }> }).__rh ?? []);
+
+/** The model's defibrillator, as the Defib tab mirrors it. */
+const defibNow = (page: Page) => page.evaluate(() => (window as unknown as { __pmeApp: { link: { device?: { defib?: { state: string; shocks: number; lastShock: { t: number; outcome: string } | null } | null } } } }).__pmeApp.link.device?.defib ?? null);
+
+/** Defib tab: Charge (200 J, the default), Shock once ready; back to the Scenario tab. Returns the shock's sim time and outcome. */
+async function chargeAndShock(R: Run, page: Page): Promise<{ t: number; outcome: string | null }> {
+  await R.teachTab('defib');
+  const shocks0 = (await defibNow(page))?.shocks ?? 0;
+  await page.getByRole('button', { name: 'Charge', exact: true }).click();
+  await R.waitSim(30, async () => (await defibNow(page))?.state === 'ready');
+  await page.getByRole('button', { name: 'Shock', exact: true }).click();
+  await R.waitSim(10, async () => ((await defibNow(page))?.shocks ?? 0) > shocks0);
+  const d = await defibNow(page);
+  await R.row(`Defib tab: Shock 200 J → ${d?.lastShock?.outcome ?? '?'}`);
+  await R.teachTab('scenario');
+  return { t: d?.lastShock?.t ?? (await R.sim()), outcome: d?.lastShock?.outcome ?? null };
+}
+
+test('A4 haemorrhage (E120): PEA on a junctional rhythm → asystole → CPR, volume → VF → two shocks → ROSC, Debrief printed', async ({ page, browser }) => {
+  const R = new Run(page, browser, 'A4 haemorrhage E120 course (kit round)');
+  try {
+    await R.start('Class IV haemorrhage, PEA and resuscitation', 8, 'after-alarms');
+    await logRhythms(page);
+    await R.untilT(R.t0 + 30);
+    await R.press('Oxygen by face mask, FiO₂ 1.0', 'bleedingO2');
+    await R.untilT(R.t0 + 60);
+    await R.press('Intubate and ventilate, FiO₂ 1.0', 'ventilated');
+    await R.untilT(R.t0 + 240);
+    await R.row('4:00');
+    await R.untilT(R.t0 + 480);
+    await R.row('8:00');
+    const tJ = await R.until('junctional', 300);
+    await R.row('the card sets the junctional rhythm');
+    await R.speed(4);
+    const tPea = await R.until('pea', 240);
+    await R.row('state PEA');
+    const tLoss = await R.waitSim(120, async () => (await modelPulse(page)) === false);
+    await R.row('the model\'s pulse loss');
+    await R.speed(8);
+    const tAsy = await R.until('asystole', 600);
+    const tAgonal = (await rhythmLog(page)).find((x) => x.id === 'agonal')?.t ?? null;
+    await R.speed(1);
+    await R.row('state Asystole');
+    await R.react();
+    const tCpr = await R.press('Start CPR: compressions, bag via the tube 10/min, FiO₂ 1.0', 'cpr');
+    await R.press('2 L warmed crystalloid and 2 units of red cells', 'cprVolume');
+    await R.untilT(tCpr + 20);
+    await R.press('Epinephrine 1 mg', 'cprEpi');
+    await R.speed(4);
+    await R.untilT(tCpr + 60);
+    await R.row('1 min into CPR');
+    await R.untilT(tCpr + 118);
+    await R.speed(1);
+    const tPc1 = await R.press('Pulse check', 'vf');
+    const s1 = await chargeAndShock(R, page);
+    await R.speed(4);
+    await R.untilT(s1.t + 60);
+    await R.row('1 min after the first shock');
+    await R.untilT(s1.t + 118);
+    await R.speed(1);
+    const tPc2 = await R.press('Pulse check', 'vf2');
+    const s2 = await chargeAndShock(R, page);
+    const tBack = await R.waitSim(240, async () => (await modelPulse(page)) === true);
+    await R.row('return of circulation (the model)');
+    await R.react();
+    const tStop = await R.press('Pulse back: stop CPR', 'rosc');
+    await R.speed(4);
+    await R.untilT(tStop + 60);
+    await R.row('1 min after stopping CPR');
+    const hc = await hist(page, tCpr, tPc1);
+    R.r.measures.a4haemorrhage = {
+      states: await stateLog(page), junctionalAt: tJ === null ? null : mmss(tJ), peaStateAt: tPea === null ? null : mmss(tPea), pulseLossAt: tLoss === null ? null : mmss(tLoss),
+      idioventricularAt: tAgonal === null ? null : mmss(tAgonal), asystoleAt: tAsy === null ? null : mmss(tAsy), asystoleAfterLossS: tAsy === null || tLoss === null ? null : r1(tAsy - tLoss),
+      cprAt: mmss(tCpr), pulseCheck1At: mmss(tPc1), shock1At: mmss(s1.t), shock1: s1.outcome, pulseCheck2At: mmss(tPc2), shock2At: mmss(s2.t), shock2: s2.outcome,
+      roscAt: tBack === null ? null : mmss(tBack), roscAfterShock2S: tBack === null ? null : r1(tBack - s2.t), roscAfterLossS: tBack === null || tLoss === null ? null : r1(tBack - tLoss),
+      rhythms: (await rhythmLog(page)).map((x) => `${mmss(x.t)} ${x.id}`), stopAt: mmss(tStop), artMeanMaxInCpr: r1(maxOf(hc, 'abpMean')), etco2MaxInCpr: r1(maxOf(hc, 'etco2')),
+    };
+    await a4Debrief(R, page, 'haemorrhage');
   } finally {
     await R.finish();
   }
