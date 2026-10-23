@@ -244,6 +244,7 @@
             "source": "bvm",
             "rr": 10,
             "vtMl": 500,
+            "peep": 5,
             "fio2": 1
           }
         }
