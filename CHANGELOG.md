@@ -9,6 +9,12 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Changed
 
+- Showcase tamponade card (card text only): the monitor alone does not identify a tamponade, so the card now
+  narrates the bedside finding. Arrival (where the recognition cues appear, about 1:00, and the instructor ticks *Name
+  the tamponade*) and Deteriorating carry the note "Bedside FAST: pericardial fluid, right-ventricular collapse", shown
+  under the state on the Scenario tab; the cue cards and the run sheet tell the presenter to read it out. The card's
+  states, transitions, timings and objectives are unchanged (the A3 cue-card path, re-measured on Chromium, gives the
+  same times).
 - Engine (E117): malignant hyperthermia now shows its tachycardia early. The MH sympathetic drive is front-loaded (it
   approaches its full level, 2.5 in stress-activity units, with τ 2 min from the trigger instead of following the
   15-min metabolic ramp, and falls with dantrolene on the same τ); hypercapnia adds a small sympathetic term, 0.03 per

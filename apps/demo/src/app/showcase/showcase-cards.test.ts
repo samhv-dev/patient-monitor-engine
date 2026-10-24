@@ -53,6 +53,13 @@ describe('Showcase cards', () => {
     }
   });
 
+  it('the tamponade card narrates the FAST finding where the recognition cues appear (the monitor alone cannot diagnose it)', () => {
+    const doc: ScenarioDoc = showcaseDoc('showcase-tamponade');
+    const fast = '“Bedside FAST: pericardial fluid, right-ventricular collapse.”';
+    for (const id of ['arrival', 'deteriorating']) expect(doc.states.find((s) => s.id === id)?.notes, id).toContain(fast);
+    expect(doc.states.find((s) => s.id === 'arrival')?.notes).toMatch(/^Say it when the cues appear \(about 1:00\)/);
+  });
+
   it('the MH ventilation objective judges 2 min of EtCO₂ below 40 before the ventilation goes back', () => {
     const doc: ScenarioDoc = showcaseDoc('showcase-mh');
     const vent = (doc.objectives ?? []).find((o) => typeof o !== 'string' && o.rule?.kind === 'heldThen');

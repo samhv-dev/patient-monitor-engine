@@ -41,6 +41,7 @@
     {
       "id": "arrival",
       "label": "Arrival: tachycardic, narrow pulse pressure, raised CVP",
+      "notes": "Say it when the cues appear (about 1:00): “Bedside FAST: pericardial fluid, right-ventricular collapse.” The monitor alone cannot make the diagnosis; the scan does.",
       "onEnter": [
         {
           "type": "applyEvent",
@@ -100,6 +101,7 @@
     {
       "id": "deteriorating",
       "label": "Deteriorating: systolic below 80",
+      "notes": "Say it, if not said yet: “Bedside FAST: pericardial fluid, right-ventricular collapse.” The monitor alone cannot make the diagnosis; the scan does.",
       "transitions": [
         {
           "id": "drain-deteriorating",
