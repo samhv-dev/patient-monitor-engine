@@ -7,7 +7,7 @@ import { brainstemOutF, createBaro, K_PP, stepBaro, V0_RECRUIT_MAX_ML_KG, type B
 import { createOut, evaluate, S, stepCirc, type CircDrive, type CircOut, type CircParams } from './circuit.ts';
 import { bolusScale, drugEffect, pruneBoluses, type Bolus, type DrugEffect, type DrugId } from './drugs.ts';
 import { betaBlunt } from '../pk/pd.ts';
-import { ATRIAL_DELAY_S, ATRIAL_T_S, DYSSYNC, H_S, HIST_SVR, HIST_V0, K_PVR_CO2, P_PL0, SEPT_C_MAX, SEPT_P_HALF, SEPT_TAU_S } from './params.ts';
+import { ATRIAL_DELAY_S, ATRIAL_T_S, DYSSYNC, H_S, HIST_SVR, HIST_V0, K_PVR_CO2, P_PL0, SEPT_C_MAX, SEPT_P_HALF, SEPT_P_ON, SEPT_TAU_S } from './params.ts';
 import { DEFAULT_PROFILE, resolveProfile, type CircProfile, type ResolvedProfile } from './profile.ts';
 import { stabilise, type Stabilised } from './stabilise.ts';
 import { createCoronary, G_ISCH, type CoronaryState } from './coronary.ts';
@@ -358,7 +358,7 @@ function control(m: CircModelState, env: CircEnv): void {
   p.vFluid = base.vFluid + m.ext.vFluid;
   const sp = m.sept;
   if (sp) {
-    const pk = Math.max(0, sp.peri);
+    const pk = Math.max(0, sp.peri - SEPT_P_ON);
     p.septC = (SEPT_C_MAX * pk) / (pk + SEPT_P_HALF);
     p.septLvRef = sp.lv;
     p.septRvRef = sp.rv;

@@ -519,7 +519,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   }, GAS_DT_S);
   writeCircPvr(h, rs.lung.perf.pvrMult, rs.lung.lp.pvr); // Per-lung + global lung PVR (circulation seams, duck-typed)
   rs.circPtx = circPtx(h);
-  const swingF = l1.mode === 'modeled' ? tamponadeSwingF(circPericardial(h)) : 1; // The breathing of severe tamponade (E118)
+  const swingF = l1.mode === 'modeled' ? tamponadeSwingF(circPericardial(h), ctx.cbfRel ?? 1) : 1; // The breathing of severe tamponade (E118)
   if (swingF > 1) rs.pplF = swingF;
   else delete rs.pplF;
   // MANUAL etco2 target → physiological dead space that holds it at the current settings. Calibrate only in MANUAL; in

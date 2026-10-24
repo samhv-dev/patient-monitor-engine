@@ -40,10 +40,20 @@ export interface TamponadeOpts {
 export const TAMPONADE_SWING_CMH2O = 18;
 export const TAMPONADE_EFFORT_P_LO = 5;
 export const TAMPONADE_EFFORT_P_HI = 20;
-/** The spontaneous pleural-swing multiplier for a diastolic pericardial pressure (mmHg). */
-export function tamponadeSwingF(periMmHg: number): number {
+/**
+ * The distressed effort is the conscious patient's: it fades as the cerebral blood flow falls toward the syncope range
+ * (consciousness is lost at a 50–60 % fall in CBF — Van Lieshout, Wieling, Karemaker & Secher, J Appl Physiol
+ * 2003;94:833 [P, not re-read]), from CBF 0.7 to 0.4 of rest, and the circulation's arrest ends it (circ-link.ts); the
+ * agonal pattern below that is the drive's own (neuro/spont.ts). Without the fade the deep breaths held the displayed
+ * systolic above the card's PEA threshold for 10–13 s after the pulse was lost [ENG ramp].
+ */
+export const TAMPONADE_EFFORT_CBF_LO = 0.4;
+export const TAMPONADE_EFFORT_CBF_HI = 0.7;
+/** The spontaneous pleural-swing multiplier for a diastolic pericardial pressure (mmHg) and a relative CBF. */
+export function tamponadeSwingF(periMmHg: number, cbfRel = 1): number {
   const x = Math.min(1, Math.max(0, (periMmHg - TAMPONADE_EFFORT_P_LO) / (TAMPONADE_EFFORT_P_HI - TAMPONADE_EFFORT_P_LO)));
-  return 1 + (TAMPONADE_SWING_CMH2O / SPONT_SWING_CMH2O - 1) * x;
+  const g = Math.min(1, Math.max(0, (cbfRel - TAMPONADE_EFFORT_CBF_LO) / (TAMPONADE_EFFORT_CBF_HI - TAMPONADE_EFFORT_CBF_LO)));
+  return 1 + (TAMPONADE_SWING_CMH2O / SPONT_SWING_CMH2O - 1) * x * g;
 }
 export const PE_MAX_FRAC = 0.8;
 export const PE_VASO = 1.0;

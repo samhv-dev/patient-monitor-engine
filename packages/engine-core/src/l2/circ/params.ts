@@ -95,7 +95,8 @@ export const PERI_EXTRA_ML = 0;
  * over SEPT_TAU_S, longer than a breath), so the septum moves with the breath and the calibrated mean filling is not
  * moved. The interaction is small with an unloaded pericardium and dominant when the pericardium pins the total heart
  * volume (Janicki & Weber 1980 Am J Physiol 238:H494; Santamore & Dell'Italia 1998 Prog Cardiovasc Dis 40:289):
- * c = SEPT_C_MAX·P̄/(P̄ + SEPT_P_HALF), P̄ the diastolic pericardial pressure. A passive wall cannot move by more than
+ * c = SEPT_C_MAX·p/(p + SEPT_P_HALF), p = P̄ − SEPT_P_ON ≥ 0, P̄ the diastolic pericardial pressure (healthy 0.04 mmHg,
+ * so an unloaded pericardium leaves the circuit bit-identical; 100 mL ≈ 2.8, 250 mL ≈ 24). A passive wall cannot move by more than
  * the volume difference that pushes it, so c ≤ 1 keeps the ventricular stiffness positive-definite (partition
  * stiffness (E_LV + E_RV)(1 − c) ≥ 0); a cross-elastance larger than the free walls' own stiffness was measured while
  * writing to give the inspiratory LV stroke-volume fall of tamponade (−33 %) but flipped the whole volume between the
@@ -103,6 +104,7 @@ export const PERI_EXTRA_ML = 0;
  */
 export const SEPT_C_MAX = 1;
 export const SEPT_P_HALF = 10; // mmHg
+export const SEPT_P_ON = 1; // mmHg
 export const SEPT_TAU_S = 15;
 export const P_PL0 = -4; // mmHg supine resting pleural (Smith 2004 P_th)
 /**

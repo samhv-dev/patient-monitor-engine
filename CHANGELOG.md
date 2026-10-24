@@ -39,7 +39,8 @@ the public API is what the packages export (see the API reference), the `pme-sce
     compensated tamponade a normal breath. As the diastolic pericardial pressure rises from 5 to 20 mmHg, the
     spontaneous pleural swing deepens from 4 to 18 cmH2O peak to trough. The extra swing is centred on the breath:
     inspiration falls 12.7 cmH2O below the end-expiratory pressure and an active expiration rises 5.3 cmH2O above it,
-    so the mean intrathoracic pressure is unchanged. The effort stops at the arrest. Sources: dyspnoea in Roy et al.,
+    so the mean intrathoracic pressure is unchanged. The effort fades as cerebral blood flow falls from 0.7 to 0.4
+    of rest (consciousness lost) and stops at the arrest. Sources: dyspnoea in Roy et al.,
     JAMA 2007; the depth dependence in Shabetai et al., Am J Cardiol 1970; the deep breaths of the Ramachandran et
     al. model, Theor Biol Med Model 2009.
   - **Ventricular interdependence through the septum.** When the RV fills more than the LV, the septum moves into
@@ -49,11 +50,12 @@ the public API is what the packages export (see the API reference), the `pme-sce
     the pericardium already pins the total volume of the slack, underfilled ventricles.
   - **RV coronary balance.** It now averages the beats of the last 6 s instead of the last beat, so the deep breaths'
     pleural swing is no longer sampled into an ischaemic debt.
-  - **A3 cue-card path.** Pulse loss is at 464 s (was 471), the PEA state at 473 (472), drainage at 603 (602) and
-    ROSC 96 s after drainage (96).
+  - **A3 cue-card path (engine harness).** Pulse loss is at 462 s (was 471), the PEA state at 463 (472), drainage at
+    593 (602) and ROSC 96 s after drainage (96).
   - **Showcase tamponade bands re-centred, same tolerances.** The card's 1-Hz pulsus is 2.4 / 4.0 mmHg mean / max
-    (was 0.9 / 1.6). The post-ROSC single-beat systolic peak is 217 (was 199). In the early-drain branch the systolic
-    at drainage is 51 (was 60) and the post-drain peak 138 (was 155); it still keeps its pulse.
+    (was 0.9 / 1.6). The systolic 60 s after ROSC is 123.5 (was 122) and the post-ROSC single-beat peak 185 (was 199).
+    In the early-drain branch the systolic at drainage is 48 (was 60) and the post-drain peak 136 (was 155); it still
+    keeps its pulse.
   - **Known misses.** The pulsus known miss is removed.
 - Showcase MH card (E119, E121; card only, no engine change): a real induction sequence, one instructor button per
   step: awake on room air → premedicated (midazolam 2 mg, fentanyl 100 µg) → preoxygenated (100 % O₂ by face mask) →
