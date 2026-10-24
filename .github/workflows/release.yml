@@ -30,8 +30,17 @@ jobs:
       - run: pnpm check-notices
       - run: pnpm check-licences
       - run: pnpm check-size
-      - run: pnpm exec playwright install --with-deps chromium webkit
-      - run: pnpm exec playwright test apps/demo/e2e/iife-smoke.e2e.ts apps/demo/e2e/vent-embed.e2e.ts
+      # The two browser tests run on the files this job just built, inside the official Playwright image (the lockfile's
+      # version; browsers and their system libraries baked in), so the release does not run `playwright install
+      # --with-deps` and its apt step, which stalled up to 40 min on the runner's Ubuntu mirror (docs/gates/stage-14.md,
+      # "The known-flaky WebKit quarantine"). Same workspace path, the runner's user, CI set as on the runner.
+      - name: release browser tests (iife-smoke, vent-embed; chromium + webkit) in the Playwright container
+        run: |
+          v=$(pnpm exec playwright --version | awk '{print $2}')
+          echo "$v" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error::unexpected Playwright version: '$v'"; exit 1; }
+          docker run --rm --ipc=host --user "$(id -u):$(id -g)" -e CI -e HOME=/tmp -v "$PWD:$PWD" -w "$PWD" \
+            "mcr.microsoft.com/playwright:v$v-noble" \
+            node_modules/.bin/playwright test apps/demo/e2e/iife-smoke.e2e.ts apps/demo/e2e/vent-embed.e2e.ts
       - run: pnpm pack-smoke "$RUNNER_TEMP/pack-smoke"
       - run: pnpm docs:api
       - name: Assemble the release assets
