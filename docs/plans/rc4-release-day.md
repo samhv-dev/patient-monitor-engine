@@ -18,16 +18,17 @@ report (`scratch/plans-backup/rc3-release-day-run-2026-10-23.md`), `scratch/rc3-
 - Since the rc.3 tag, main carries: #118 E117 (MH tachycardia; E118 pulsus paradoxus NOT met, evidence only), #119
   Saadat pass 3, #120 the live-demo cards (E119 MH induction sequence, E120 haemorrhage course, E121 oxygen never
   implicit) with kit round A4, #121 F29, #122 CI in the Playwright container + WebKit quarantine, #123 the tamponade
-  FAST line.
-- Open before the freeze: **#125** (the container + `dry_run`; dry run 40073337152 green on its branch, 6.5 min);
-  **#124** E121b (held); the owner's haemorrhage objectives and take-home lines and his rulings on the 13
-  clinical-review findings (may change both demo cards; by the freeze). **E118** (pulsus) is post-demo, not in rc.4
-  (owner, 24 October). **#117** is closed (R4-Q2 (b)).
-- **The kit-round script on main cannot run the rc.4 talk** (read, not run): the Q1 MH segment presses "Start surgery"
-  4 min after Load (`kit-round-a.kitround.ts:1538–1540`), but since E119 the card offers it only once *intubated*
-  (`showcase-mh.json`): the click waits for the 75-min time-out. Run by says 28 October (`:1513`, `:1712`), the Notes
-  line rc.2 (`:1514`). Task 0 Step 3 fixes all three. `rehearsal.showcase.ts` (six cards) presses removed buttons too
-  (MH `:195`; haemorrhage "Start CPR, 2 L and epinephrine"): not run (Decision 4).
+  FAST line. Since then, merged and green on main **2ebd743d**: **#125** (the release in the container + `dry_run`),
+  **#128** (the kit-round tooling, Task 0 Step 3), **#124** E121b (oxygen by mask).
+- Open before the freeze: the owner's haemorrhage objectives and take-home lines and his rulings on the 13
+  clinical-review findings (may change both demo cards; by the freeze); the **two-demos talk** tooling PR (branch
+  `test-kitround-two-demos`, this evening; Decision 4). **E118** (pulsus) is post-demo, not in rc.4 (owner, 24
+  October). **#117** is closed (R4-Q2 (b)).
+- **The kit-round script on a4163165 could not run the rc.4 talk** (read, not run): the Q1 MH segment pressed "Start
+  surgery" 4 min after Load (`kit-round-a.kitround.ts:1538–1540`), but since E119 the card offers it only once
+  *intubated* (`showcase-mh.json`). #128 fixed that; the two-demos PR now rewrites the talk to the programme of R4-Q3
+  (Decision 4). `rehearsal.showcase.ts` (six cards) presses removed buttons too (MH `:195`; haemorrhage "Start CPR, 2 L
+  and epinephrine"): not run (Decision 4).
 
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax. The
 > orchestrator does every step marked **(orch)**: merge, the release dry run, push the tag, push `gh-pages`. An executor
@@ -68,7 +69,7 @@ sources above; `docs/gates/stage-14.md` (the quarantine); the run sheet's §5 an
 ## Global Constraints
 
 - **Freeze.** No product change after **Saturday 31 October 12:00 (+0330)** except the version-bump PR. `.github/`
-  counts as product: #125 lands before the freeze or not at all. After the tag, only docs, each PR after main green. The
+  counts as product: #125 is merged (2ebd743d). After the tag, only docs, each PR after main green. The
   kit-round script is test tooling that ships in no kit: its edits are allowed at any time.
 - **Never edit the main checkout** `repo/` (`git fetch`, `git tag`, pushing a tag or `gh-pages` from it are fine).
 - **Shell.** Nothing that waits on stdin (`gh run watch` only with a run id, `git commit -m`, no heredoc: the editor
@@ -96,8 +97,11 @@ sources above; `docs/gates/stage-14.md` (the quarantine); the run sheet's §5 an
    red dry run is fixed by a workflow-only PR before the tag (the release path, not the product), then repeated.
 3. **The kit-round edits land before the freeze** in one test-tooling PR (`test-kitround-rc4`, Task 0 Step 3); late:
    Task 0 Step 5 and Task 4 Step 2 cherry-pick it.
-4. **Q1 + A4, both engines.** A3 is not run (A4 prints both demo handouts; the tamponade card changed text only and
-   still prints in Q1); nor the six-card shots (not in the brief; two of their tests press removed buttons; R4-Q6).
+4. **Q1 + A4, both engines; Q1 is the two-demos talk.** The tooling PR on `test-kitround-two-demos` (this evening)
+   rewrites the Q1 talk to the programme of R4-Q3: opening → MH (E119) → haemorrhage (E120) + Debrief → close, with
+   Run by `'Showcase 2, 3 November'` / `'Live demo, 3 November'`; bronchospasm and tamponade leave the talk. A3 is not
+   run (A4 prints both demo handouts; the tamponade card changed text only and is not shown at the demo); nor the
+   six-card shots (not in the brief; two of their tests press removed buttons; R4-Q6).
 5. **Folders** `kit-round-a/q2-rc4/` (talk), `q2-rc4-a4/` (A4), `q2-rc4-rerun/` (8.1), never in place; write-up
    MEASUREMENTS §"Q2 on rc.4".
 6. **The expected values are the prep run's** (Task 0 Step 5): the cards may still change before the freeze; the tables
@@ -119,14 +123,14 @@ sources above; `docs/gates/stage-14.md` (the quarantine); the run sheet's §5 an
 |---|---|---|
 | **E119 MH card** (#120) | Task 4 Step 3c (A4 MH); Step 3 (Q1 MH, after the tooling edit); smoke 7 | States awake → premedicated → preoxygenated → induced → intubated → surgery → earlySigns → triggerOff → … → recovering → normoventilated; marks `["observed","observed","observed","not-assessable","not-assessable","observed"]`; A4 record (kit 52b0390b, C / W): induced 04:05, intubated 05:04 / 05:05, early signs 08:38 / 08:39, call 08:40, EtCO₂ < 40 at 09:14 / 09:15, normo 14:28; PDF A4 **7** pages; handout **1** page with the three MH take-home lines; errors 0 |
 | **E117 MH tachycardia** (#118) | A4 and Q1 MH rows; smoke 7 | HR rises before the CO₂ tile leaves its baseline (A4: 71 at surgery, 78–80 at the early signs, fentanyl-blunted); timings within ±10 s of the prep run |
-| **E120 haemorrhage card** (#120) | Task 4 Step 3c (A4 haemorrhage); smoke 8; live rehearsal | A4 record (kit 33a6c92b, C / W): junctional 09:19 / 09:17, PEA 10:27 / 10:26, pulse loss 10:59 / 11:00, asystole 15:38 / 15:36, CPR 15:41 / 15:38, pulse check 1 17:39 / 17:37 → VF → shock 1 → **asystole**, pulse check 2 19:46 / 19:45 → VF → shock 2 → **organised** (`pea`), ROSC **20:57**; marks `["not-assessable","not-observed","not-observed"]` while the objectives are drafts (a NOTE); PDF **8** pages; handout **1** page with ruled take-home lines |
+| **E120 haemorrhage card** (#120) | Task 4 Step 3c (A4 haemorrhage); Step 3 (Q1 haemorrhage, the two-demos talk); smoke 8; live rehearsal | A4 record (kit 33a6c92b, C / W): junctional 09:19 / 09:17, PEA 10:27 / 10:26, pulse loss 10:59 / 11:00, asystole 15:38 / 15:36, CPR 15:41 / 15:38, pulse check 1 17:39 / 17:37 → VF → shock 1 → **asystole**, pulse check 2 19:46 / 19:45 → VF → shock 2 → **organised** (`pea`), ROSC **20:57**; marks `["not-assessable","not-observed","not-observed"]` while the objectives are drafts (a NOTE); PDF **8** pages; handout **1** page with ruled take-home lines |
 | **E121 oxygen never implicit** (#120) | A4 rows | MH with Preoxygenate: SpO₂ minimum 99 induction → tube + 60 s; haemorrhage SpO₂ 96 on room air until its oxygen step |
-| **Saadat pass 3** (#119) | Task 4 Step 4 (six `q2-*-monitor-*.png`, 1000 × 800); smoke 2–3 | rc.3's run-report note (1) gone: EtCo2 / FiCo2 / AWRR parts apart (no "mmHg" under FiCo2, AWRR limits off its label), "SQI%" and "EMG%" apart, MH's EtAA tile clear of SQI/EMG; the RR tile set as the EtCo2 part; "°C" in the T column's title row |
+| **Saadat pass 3** (#119) | Task 4 Step 4 (the `q2-*-monitor-*.png` set, 1000 × 800); smoke 2–3 | rc.3's run-report note (1) gone: EtCo2 / FiCo2 / AWRR parts apart (no "mmHg" under FiCo2, AWRR limits off its label), "SQI%" and "EMG%" apart, MH's EtAA tile clear of SQI/EMG; the RR tile set as the EtCo2 part; "°C" in the T column's title row |
 | **F29** (#121) | Task 4 Step 3c | `PEEP undefined` 0 times in both A4 Debrief PDFs |
-| **Tamponade FAST line** (#123) | Q1 tamponade segment | Marks ✓✓✓✓◆ and PEA 07:49, CPR 07:51, drained 09:21, ROSC 10:57 as rc.3. The note itself: not read by the script (unverified); the live rehearsal sees it |
+| **Tamponade FAST line** (#123) | Not shown at the demo; still printed by A3 if run | — (A3 is not run, Decision 4) |
 | **CI container + quarantine** (#122) | Task 1 Step 2 | `e2e (chromium)`, `e2e (webkit)` success; `e2e-quarantine (webkit)` any (counts recorded) |
-| **Release in the container, dry run** (#125, if merged) | Task 0 Step 6; Task 2 Step 2 | Each ≈ 7 min, no `playwright install` step; 8 assets |
-| **E121b oxygen by mask** (#124, only if merged) | smoke 11 | A breathing patient's SpO₂ rises; the control is disabled with an airway device or the ventilator (unverified: its words) |
+| **Release in the container, dry run** (#125) | Task 0 Step 6; Task 2 Step 2 | Each ≈ 7 min, no `playwright install` step; 8 assets |
+| **E121b oxygen by mask** (#124) | smoke 11 | A breathing patient's SpO₂ rises; the control is disabled with an airway device or the ventilator (unverified: its words) |
 | **E118 pulsus**: post-demo, not in rc.4 (owner, 24 October) | — | The Known limitation stays; tamponade times as rc.3 |
 
 **Rollback line.** If the tag build fails the rehearsal gate or the owner's smoke (Task 7 items 1, 2, 7 or 8), **the rc.3
@@ -137,7 +141,9 @@ kit (fcf99b70) is the demo build and Pages returns to rc.3** (ceac7b47). Task 8.
 ## Timeline
 
 ```
-Mon 26–Sat 31   #125 merged (orch); the tooling PR (Task 0 Step 3) merged; #117 closed (R4-Q2 (b));
+Sat 24           merged on main 2ebd743d: #125, #128 (tooling), #124 (E121b); #117 closed (R4-Q2 (b));
+                 evening: the two-demos tooling PR (`test-kitround-two-demos`, Decision 4)
+Mon 26–Sat 31   the two-demos PR merged (orch); the "Run by" follow-up if still needed (Task 0 Step 3);
                  Mon 26 02:00 UTC: the weekly `validation` cron run on main (unverified what it writes)
 Sat 31  ≤ 12:00  freeze: every rc.4 product PR merged, main green → FREEZE_SHA (orch)
         12:00    Task 0 Step 4: the bump PR (executor ≈ 1 h); its CI ≈ 35 min
@@ -167,7 +173,7 @@ A gate failure in Task 4 or in the smoke sends the day to Task 8 (≈ 1 h; the r
 | Task | Who | Hours | CI / machine |
 |---|---|---|---|
 | 0 Scope, tooling, bump, prep, dry run | executor + orch | 2.5 + 0.5 | 4 runs ≈ 35 min; dry run ≈ 7 min |
-| 1–3 Verify, tag, release, kits | orch + executor | 0.5 + 1.0 | release ≈ 7 min (≈ 26 without #125); build ≈ 4 min |
+| 1–3 Verify, tag, release, kits | orch + executor | 0.5 + 1.0 | release ≈ 7 min (#125); build ≈ 4 min |
 | 4 Q1 ×2, macOS WebKit e2e, A4 ×4 | executor | 1.5 | machine ≈ 50 min (A4 ≈ 15 min, unverified: 2 and 5 min of wall per engine on 24 October, plus setup) |
 | 5–6 Persian, Pages; 7 smoke, rehearsal, room | executor + orch; owner | 1.0 + 0.5 | owner ≈ 35 + 45 min, room ≈ 1 h |
 | 8 Rollback (on a failure); 9 Docs PR + review | orch + executor; reviewer | 1.0; 2.0 + 0.5 | 2 runs ≈ 35 min |
@@ -179,8 +185,8 @@ A gate failure in Task 4 or in the smoke sends the day to Task 8 (≈ 1 h; the r
 
 ### Task 0 (executor prepares, orch merges): before and at the freeze — Monday 26 to Saturday 31 October
 
-- [ ] **Step 1 (orch). Scope.** Merge #125 (`merge-one-v2.sh 125`) once green. #117 is closed (R4-Q2 (b)). Every other
-  rc.4 product PR (E121b, the owner's card words and clinical rulings) merges by Saturday 31 October 12:00 or waits;
+- [ ] **Step 1 (orch). Scope.** #125 and #124 (E121b) are merged (2ebd743d, green); #117 is closed (R4-Q2 (b)). Every
+  other rc.4 product PR (the owner's card words and clinical rulings) merges by Saturday 31 October 12:00 or waits;
   E118 is post-demo, not in rc.4.
 - [ ] **Step 2 (orch). The freeze.** At Saturday 12:00 (or when the last product PR's main run is green, whichever is
   later): `git -C $R/repo fetch -q && git -C $R/repo rev-parse origin/main` → `FREEZE_SHA`; its push run `completed`/`success`
@@ -201,8 +207,11 @@ cd ../scratch/wt-kitround-rc4 && grep -n -E "M\.untilT\(M\.t0 \+ (240|390)\)|fil
   the early signs (≈ 08:38) and `untilT` returns at once, so span 1 follows the cooling and the E22 press comes in
   Recovering, as in A4 (14:28) (unverified until the prep run); (2) `:1513` → `'Showcase 2, 3 November'`, `:1712` →
   `'Live demo, 3 November'`; (3) `:1514` → `'Kit round Q2 rehearsal on the rc.4 release build.'`. (#128 merged this
-  step on 24 October with "4 November", now `:1514` and `:1721` on main: a one-line tooling PR sets both to
-  "3 November" before the freeze.)
+  step on 24 October with "4 November", now `:1514` and `:1721` on main. The two-demos tooling PR
+  (`test-kitround-two-demos`, Decision 4) rewrites the Q1 talk to opening → MH (E119) → haemorrhage (E120) + Debrief →
+  close and sets both strings to `'Showcase 2, 3 November'` / `'Live demo, 3 November'`; only if it does not, a
+  one-line tooling PR sets them before the freeze. Its test titles, record names and `--list` count are per that PR's
+  body.)
 
 ```bash
 cd /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/wt-kitround-rc4
@@ -283,7 +292,7 @@ node scripts/showcase/debrief-fa.mjs $P/a4/debrief-a4-mh-*-chromium.json $P/a4/d
   values**. Look at the three `q2-*-monitor-chromium.png`. A surprise goes to the orchestrator that afternoon, before 17:30 (a script
   fix: tooling; a missing Persian string: the orchestrator via the skill, `reviewed: false`, a docs PR before the tag).
   Then remove the worktree (`git -C …/repo worktree remove --force …/scratch/wt-rc4-prep`).
-- [ ] **Step 6 (orch). The release dry run on main** (Decision 2; after the bump merge, main green; needs #125):
+- [ ] **Step 6 (orch). The release dry run on main** (Decision 2; after the bump merge, main green; #125 is merged):
 
 ```bash
 cd /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo && git fetch -q && git rev-parse origin/main
@@ -297,8 +306,7 @@ gh release list -R samhv-dev/patient-monitor-engine --limit 2
 
   Expected: `headSha` = main's (repeat the list until it shows); exit 0 in ≈ 7 min; 9 files (the 8 assets with
   `-v1.0.0-rc.4` in the two zip names, + `NOTES.md`); 7 × `: OK`; a blank line, "Fourth public **pre-release** …";
-  `/*! patient-monitor-engine 1.0.0-rc.4`; no rc.4 release. Record the run id. **Without #125**: skip, say so in the
-  gate note, budget ≈ 26 min for Task 2 Step 2.
+  `/*! patient-monitor-engine 1.0.0-rc.4`; no rc.4 release. Record the run id.
 
 ### Task 1 (orch): verify the tag commit — Sunday 1 November ≈ 10:00
 
@@ -336,7 +344,7 @@ git ls-remote --tags origin "$V*"
 
   Expected: `has-freeze`; the bump (+ tooling/docs) merges; only version strings, the `ci.yml` comments and the
   kit-round script; `success`; `build`, `e2e (chromium)`, `e2e (webkit)` success, quarantine any (counts to the gate
-  note); tick bench `success`; the dry run `success` (absent without #125); no Chromium retry-only line (WebKit's to
+  note); tick bench `success`; the dry run `success`; no Chromium retry-only line (WebKit's to
   the gate note, new ones to Task 9); no remote tag.
 - [ ] **Step 3. The release files on the commit.**
 
@@ -389,7 +397,7 @@ gh run list -R $GHR --workflow release --event push --commit "$TAG_SHA" --limit 
 gh run watch <databaseId> -R $GHR --exit-status --interval 30
 ```
 
-  Expected: `headBranch` `v1.0.0-rc.4`; exit 0 in ≈ 7 min (≈ 26 without #125: poll 30 min, not rc.3's 20). A failed
+  Expected: `headBranch` `v1.0.0-rc.4`; exit 0 in ≈ 7 min (#125's container). A failed
   browser-test step: `gh run rerun <id> -R $GHR --failed`, at most twice; anything else: no release, tag and `main`
   untouched, Tasks 3–7 go on with Task 3 Step 6's local build.
 - [ ] **Step 3. The release page.**
@@ -535,11 +543,14 @@ grep -c -F "Preoxygenate: 100 % O₂ by face mask" scripts/showcase/kit-round-a.
 grep -n -E "fill\('(Showcase 2|Live demo), [0-9]+ (October|November)'\)|Kit round Q2 rehearsal on the rc" scripts/showcase/kit-round-a.kitround.ts
 ```
 
-  Expected: `2` (the tooling PR is in the tag); 3 November; rc.4.
-- [ ] **Step 2. Only if Step 1 printed `1`:** `git fetch -q origin test-kitround-rc4 && git cherry-pick -x
-  origin/test-kitround-rc4` (a date or Notes line still wrong: Task 0 Step 3's one-line edits); the prep run's script
-  fixes too, committed before Step 3; then Task 0 Step 3's `--list` → "Total: 6 tests".
-- [ ] **Step 3. The talk, Chromium then WebKit** (machine exclusive; ≈ 10 min each):
+  Expected: `2` (#128 is in the tag); 3 November (the two-demos PR's strings); rc.4. The Q1 talk in the tag is the
+  two-demos talk: opening → MH (E119) → haemorrhage (E120) + Debrief → close (Decision 4).
+- [ ] **Step 2. Only if Step 1 shows the two-demos talk missing or a date still 4 November:** `git fetch -q origin
+  test-kitround-two-demos && git cherry-pick -x` its commits (a date or Notes line still wrong: Task 0 Step 3's
+  one-line edits); the prep run's script fixes too, committed before Step 3; then `--list` → the count per the
+  tooling PR's body.
+- [ ] **Step 3. The two-demos talk, Chromium then WebKit** (machine exclusive; time per the prep run). The test
+  title in `-g` and the record names are per the tooling PR's body (below: the current title):
 
 ```bash
 . /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/rc4-release/env.sh
@@ -549,8 +560,9 @@ env -u CI SHOWCASE_KIT="$KIT" KITROUND_OUTDIR=$Q npx playwright test -c scripts/
 cp -n $W/relay-$SHA8.json $Q/; ls $Q | wc -l
 ```
 
-  Expected: "No such file or directory"; `1 passed` each (rc.3 9.7 min); "kit … served at http://127.0.0.1:8760/?relay
-  by Start Classroom.command"; ≈ 34 files. **No new file for 15 min** after the tamponade Debrief JSON: a hang; Task 8.1.
+  Expected: "No such file or directory"; `1 passed` each; "kit … served at http://127.0.0.1:8760/?relay by Start
+  Classroom.command"; the file count per the prep run (rc.3's six-segment talk: ≈ 34). **No new file for 15 min**
+  after the haemorrhage Debrief JSON: a hang; Task 8.1.
 - [ ] **Step 3b. The local macOS WebKit e2e set** (≈ 8 min):
 
 ```bash
@@ -591,12 +603,14 @@ for (const f of fs.readdirSync(d).filter(f=>/^q1-[0-4]-.*\.json$/.test(f))) {
 }'
 ```
 
-  | Segment | Expected, both engines (rc.3's Q2; the prep run's values win) |
+  The record names (and the reader's file filter) are per the tooling PR's body; the rows below name the segments.
+
+  | Segment | Expected, both engines (the prep run's values win) |
   |---|---|
-  | `q1-0-opening-and-qr` | kit = `$SHA8`; errors 0; about contains **"Version 1.0.0-rc.4 (pre-release). For education only. Not a medical device and not clinically validated"**; `3 phones following` |
-  | `q1-1-bronchospasm-ventilator-view-h21` | marks `["not-assessable","observed","not-assessable"]` (salbutamol ≈ 02:06); h21 `true` / `true`; errors 0 |
-  | `q1-2-tamponade-a3-path-and-3-debrief` | marks `["observed","observed","observed","observed","discuss"]`; footer `Version 1.0.0-rc.4 (pre-release), build <SHA8>`; Chromium pdf `a4: true`, 6 pages (more: a NOTE); errors 0 |
-  | `q1-4-malignant-hyperthermia-early-call-13-03` | marks `["observed","observed","observed","not-assessable","not-assessable","observed"]`; e22: early signs ≈ 08:38, call ≈ 08:40, press after span 1 in Recovering (the prep run's time; rc.3's 13:03 no longer applies); errors 0; fx12 `true` |
+  | opening and QR | kit = `$SHA8`; errors 0; about contains **"Version 1.0.0-rc.4 (pre-release). For education only. Not a medical device and not clinically validated"**; `3 phones following` |
+  | malignant hyperthermia (E119) | marks `["observed","observed","observed","not-assessable","not-assessable","observed"]`; e22: early signs ≈ 08:38, call ≈ 08:40, press after span 1 in Recovering (the prep run's time; rc.3's 13:03 no longer applies); errors 0; fx12 `true` |
+  | class IV haemorrhage (E120) + Debrief | the states and shock outcomes of the E120 row (the prep run's times); footer `Version 1.0.0-rc.4 (pre-release), build <SHA8>`; Chromium pdf `a4: true` (pages per the prep run); errors 0 |
+  | close | per the tooling PR's body; errors 0 |
 
   The two cards (this reader printed the 24 October records' values quoted in "What rc.4 adds"):
 
@@ -610,9 +624,9 @@ for (const f of fs.readdirSync(d).filter(f=>/^a4-.*-kit-round-(chromium|webkit)\
 }'
 ```
 
-  Expected: four lines, kit `$SHA8`, errors 0, the E119/E120 rows' values. Open the six `q2-*-monitor-*.png` against
-  the pass-3 row and rc.3's notes (a)–(c) (`scratch/rc3-release/gate-notes.md`): no overlapping tile text; capnogram
-  breath by breath; tamponade IBP2 = CVP; IBP2 empty in MH and bronchospasm (not F9); no older rc. One A4 PNG per card.
+  Expected: four lines, kit `$SHA8`, errors 0, the E119/E120 rows' values. Open the `q2-*-monitor-*.png` set (names per the
+  tooling PR's body) against the pass-3 row and rc.3's notes (a)–(c) (`scratch/rc3-release/gate-notes.md`): no
+  overlapping tile text; capnogram breath by breath; IBP2 empty in MH (not F9); no older rc. One A4 PNG per card.
 - [ ] **Step 5. The print PDFs for the owner** (`cp -n` only):
 
 ```bash
@@ -741,7 +755,7 @@ One AskUserQuestion step per item, **≈ 35 min** (tell him); his Mac (Safari, C
 | 8 | 4 | **Class IV haemorrhage**: Load · All alarms on · ×8; **Oxygen by face mask**, **Intubate and ventilate**; watch to the junctional rhythm and PEA (≈ 11:00 sim); Debrief → **Print the learner handout** | Junctional, then PEA; SpO₂ ≈ 96 on room air before the oxygen step; handout 1 page, ruled take-home lines (unless his lines landed) |
 | 9 | 1 | Open the two `_sandbox/pme-debrief-fa/debrief-fa-*-<date>.pdf` in Preview (read only) | Right-to-left Persian; footer نسخه‌ی 1.0.0-rc.4 (پیش‌انتشار) and the build; the page-1 notice (unless the term review landed) |
 | 10 | 1.5 | Close the black window (Terminate). Double-click `_sandbox/pme-embed-rc4/ventilator-monitor.html` (Safari), Develop → Show JavaScript Console | H22 on rc.4: breathes within 20 s; HR, SpO₂ > 90, EtCO₂, awRR 14; no console error |
-| 11 | 1 | Only if E121b landed: free play, **oxygen by mask** on the breathing patient; then with the ventilator on | SpO₂ rises; the control disabled with the ventilator (unverified: its words) |
+| 11 | 1 | E121b (#124, merged): free play, **oxygen by mask** on the breathing patient; then with the ventilator on | SpO₂ rises; the control disabled with the ventilator (unverified: its words) |
 | 12 | 0.5 | https://samhv-dev.github.io/patient-monitor-engine/ in Safari | "Version 1.0.0-rc.4 (pre-release) …"; no phone pairing from Pages (expected) |
 
 **Gate items** 1, 2, 7, 8 → Task 8. The rest are findings: 4 → "phones silent, the Mac is the alarm source"; 5, 6 →
