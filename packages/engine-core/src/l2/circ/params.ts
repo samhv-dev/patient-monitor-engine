@@ -86,6 +86,24 @@ export const PERI_LAMBDA = 0.03; // /mL (Smith)
  */
 export const PERI_RESERVE = 1.0;
 export const PERI_EXTRA_ML = 0;
+/**
+ * Diastolic ventricular interaction through the interventricular septum (E118). The septum is the wall the two
+ * ventricles share (the three-wall structure of Smith et al. 2004, Med Eng Phys 26:131, whose free-wall and pericardial
+ * constants this circuit already uses): when the RV fills more than the LV, the septum moves into the LV by
+ * x = c·(ΔV_RV − ΔV_LV)/2 and each relaxed ventricle's passive (EDPVR) pressure is read at its wall volume — the LV's
+ * at V_LV + x, the RV's at V_RV − x. ΔV is the deviation from the operating point (the diastole-weighted mean volume
+ * over SEPT_TAU_S, longer than a breath), so the septum moves with the breath and the calibrated mean filling is not
+ * moved. The interaction is small with an unloaded pericardium and dominant when the pericardium pins the total heart
+ * volume (Janicki & Weber 1980 Am J Physiol 238:H494; Santamore & Dell'Italia 1998 Prog Cardiovasc Dis 40:289):
+ * c = SEPT_C_MAX·P̄/(P̄ + SEPT_P_HALF), P̄ the diastolic pericardial pressure. A passive wall cannot move by more than
+ * the volume difference that pushes it, so c ≤ 1 keeps the ventricular stiffness positive-definite (partition
+ * stiffness (E_LV + E_RV)(1 − c) ≥ 0); a cross-elastance larger than the free walls' own stiffness was measured while
+ * writing to give the inspiratory LV stroke-volume fall of tamponade (−33 %) but flipped the whole volume between the
+ * ventricles at 1.2 × its gain, and was withdrawn [ENG sizes; measured contribution: run report E118].
+ */
+export const SEPT_C_MAX = 1;
+export const SEPT_P_HALF = 10; // mmHg
+export const SEPT_TAU_S = 15;
 export const P_PL0 = -4; // mmHg supine resting pleural (Smith 2004 P_th)
 /**
  * Fraction of alveolar pressure reaching the pleura. Tables tIt 0.4 (Q28 default; range 0.2–0.7). Raised to

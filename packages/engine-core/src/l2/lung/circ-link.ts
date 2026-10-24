@@ -31,6 +31,12 @@ export function writeCircPvr(hemo: unknown, pvrMult: readonly number[], global =
   return true;
 }
 
+/** The circulation's diastolic pericardial pressure (mmHg; its septal operating point), 0 when absent. */
+export function circPericardial(hemo: unknown): number {
+  const v = (hemo as { circ?: { sept?: { peri?: unknown } } } | null)?.circ?.sept?.peri;
+  return typeof v === 'number' && Number.isFinite(v) ? v : 0;
+}
+
 /** The circulation model's own pleural pressure from its tension-pneumothorax condition (mmHg), 0 when absent. */
 export function circPtx(hemo: unknown): number {
   const v = (hemo as CircLike | null)?.circ?.ext?.pPtx;
