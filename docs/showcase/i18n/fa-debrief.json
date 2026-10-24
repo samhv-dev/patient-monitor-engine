@@ -573,6 +573,7 @@
   {"en": "Blood loss {n} mL over {n} min", "fa": "از دست رفتن {n} mL خون طی {n} دقیقه", "source": "apps/demo/src/app/describe.ts event()", "reviewed": false},
   {"en": "Blood loss {n} mL over {n} s", "fa": "از دست رفتن {n} mL خون طی {n} ثانیه", "source": "apps/demo/src/app/describe.ts event()", "reviewed": false},
   {"en": "Ventilator: RR {n} /min, VT {n} mL, PEEP {n} cmH₂O, FiO₂ {n} %", "fa": "ونتیلاتور: RR {n} /min، VT {n} mL، PEEP {n} cmH₂O، FiO₂ {n} %", "source": "apps/demo/src/app/describe.ts event()", "reviewed": false},
+  {"en": "Ventilator: RR {n} /min, VT {n} mL, FiO₂ {n} %", "fa": "ونتیلاتور: RR {n} /min، VT {n} mL، FiO₂ {n} %", "source": "apps/demo/src/app/describe.ts event() (F29: no PEEP in the event)", "reviewed": false},
   {"en": "Bag-mask: RR {n} /min, VT {n} mL, PEEP {n} cmH₂O, FiO₂ {n} %", "fa": "تهویه با بگ و ماسک: RR {n} /min، VT {n} mL، PEEP {n} cmH₂O، FiO₂ {n} %", "source": "apps/demo/src/app/describe.ts event()", "reviewed": false},
   {"en": "Preoxygenation, FiO₂ {n} %", "fa": "پیش‌اکسیژناسیون، FiO₂ {n} %", "source": "apps/demo/src/app/describe.ts event()", "reviewed": false},
   {"en": "CPR started, {n} /min", "fa": "احیای قلبی‌ریوی آغاز شد، {n} /min", "source": "apps/demo/src/app/describe.ts event()", "reviewed": false},
