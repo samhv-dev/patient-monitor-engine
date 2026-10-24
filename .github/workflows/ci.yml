@@ -151,7 +151,7 @@ jobs:
           if-no-files-found: warn
       # ci-stabilise: the quarantine's own record. Per test: passed first time ("expected"), passed only on a retry
       # ("flaky"), failed every attempt ("unexpected"), skipped. Warnings only; a missing report is an error annotation.
-      - name: quarantined @known-flaky tests (WebKit, non-blocking: pass / retry / fail counts)
+      - name: quarantined @known-flaky tests (WebKit, non-blocking) - pass / retry / fail counts
         if: ${{ !cancelled() && matrix.set == 'known-flaky' }}
         run: |
           f=playwright-report-${{ matrix.report }}.json
