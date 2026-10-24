@@ -9,7 +9,7 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Changed
 
-- Showcase tamponade card (card text only): a tamponade cannot be diagnosed from the monitor alone, so the card now
+- Showcase tamponade card (card text only): the monitor alone does not identify a tamponade, so the card now
   narrates the bedside finding. Arrival (where the recognition cues appear, about 1:00, and the instructor ticks *Name
   the tamponade*) and Deteriorating carry the note "Bedside FAST: pericardial fluid, right-ventricular collapse", shown
   under the state on the Scenario tab; the cue cards and the run sheet tell the presenter to read it out. The card's
