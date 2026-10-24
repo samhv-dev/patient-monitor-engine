@@ -50,7 +50,7 @@ describe('pulsus paradoxus (E118)', () => {
     console.log(`mild tamponade SBP swing ${swing.toFixed(2)} mmHg`);
     expect(swing).toBeLessThanOrEqual(5);
   }, 300_000);
-  it('severe tamponade (250 mL), spontaneous: pulsus paradoxus ≥ 10 mmHg (Spodick 2003; measured 11.0)', async () => {
+  it('severe tamponade (250 mL), spontaneous: pulsus paradoxus ≥ 10 mmHg (Spodick 2003; measured 10.8)', async () => {
     const { swing, corr } = await run(1);
     console.log(`severe tamponade SBP swing ${swing.toFixed(2)} mmHg (corr ${corr.toFixed(2)})`);
     expect(swing).toBeGreaterThanOrEqual(10);

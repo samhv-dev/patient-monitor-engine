@@ -8,13 +8,18 @@ import { bands, entered, first, near, range, runCard, type Act } from './harness
 /** Bands: the measured prototype ± a stated tolerance. Never widened. E117 (rc.4) re-centred ONE band on the new
  *  measurement, same ± 5: sysMaxAtRosc 155 → 199 (the highest 1-Hz systolic in the minute after ROSC — a single-beat
  *  transient; 60 s later the systolic is 122, inside its unchanged band). Every timing (pulse loss, PEA, drainage, ROSC)
- *  and every other number stayed in its band. */
+ *  and every other number stayed in its band. E118 (rc.4, the tamponade's deep breathing and the septum) re-centred, same
+ *  tolerances: pulsusMean ≤ 1.9 → ≤ 3.4 and pulsusMax ≤ 2.6 → ≤ 5.0 (the card's 1-Hz systolic swing, 0.85 / 1.58 → 2.37
+ *  / 3.96 — the pulsus the target asks for); sysMaxAtRosc 199 → 217 (the same single-beat transient); early drain
+ *  sysAtDrain 60 → 51 and sysMax 155 → 138 (the decompensated heart falls faster once the systolic is below 80 — drained
+ *  60 s later it still never loses its pulse). Pulse loss 471 → 464, PEA state 472 → 473, drainage 602 → 603, ROSC
+ *  +96 → +96: every timing in its band and within ± 10 s. */
 const BANDS = {
-  'S2 happy': { refused: [0, 0], hrAt60: [94, 104], sysAt60: [101, 111], diaAt60: [82, 92], cvpAt60: [15, 19], etco2At60: [29, 35], pulsusMean: [0, 1.9], pulsusMax: [0, 2.6], deterioratingS: [336, 410], hrAtDeteriorating: [130, 140], cvpAtDeteriorating: [18, 22], pulseLossS: [424, 518], peaStateS: [425, 519], pea: [1, 1], drainS: [542, 662], roscAfterDrainS: [81, 111], sysPlus60: [113, 123], hrPlus60: [58, 68], cvpPlus60: [8, 12], etco2Plus60: [32, 38], sysMaxAtRosc: [194, 204], pulseHeld: [1, 1] },
+  'S2 happy': { refused: [0, 0], hrAt60: [94, 104], sysAt60: [101, 111], diaAt60: [82, 92], cvpAt60: [15, 19], etco2At60: [29, 35], pulsusMean: [0, 3.4], pulsusMax: [0, 5.0], deterioratingS: [336, 410], hrAtDeteriorating: [130, 140], cvpAtDeteriorating: [18, 22], pulseLossS: [424, 518], peaStateS: [425, 519], pea: [1, 1], drainS: [542, 662], roscAfterDrainS: [81, 111], sysPlus60: [113, 123], hrPlus60: [58, 68], cvpPlus60: [8, 12], etco2Plus60: [32, 38], sysMaxAtRosc: [212, 222], pulseHeld: [1, 1] },
   'S2 epinephrine': { refused: [0, 0], roscAfterDrainS: [79, 109] },
   'S2 undrained': { refused: [0, 0], pulseBack: [0, 0], cvpMax: [30, 34], etco2Plus3: [6, 12] },
   'S2 at ×8 poll': { refused: [0, 0], pulseLossS: [424, 518], peaStateS: [426, 520], roscAfterDrainS: [80, 110] },
-  'S2 early drain': { refused: [0, 0], pulseLost: [0, 0], sysAtDrain: [55, 65], sysPlus60: [117, 127], hrPlus60: [64, 74], cvpPlus60: [5, 9], sysMax: [150, 160] },
+  'S2 early drain': { refused: [0, 0], pulseLost: [0, 0], sysAtDrain: [46, 56], sysPlus60: [117, 127], hrPlus60: [64, 74], cvpPlus60: [5, 9], sysMax: [133, 143] },
 } as const;
 
 const ID = 'showcase-tamponade';
