@@ -19,8 +19,12 @@ the public API is what the packages export (see the API reference), the `pme-sce
   60 %)" and "Oxygen off: room air (FiO₂ 21 %)". A card's spontaneous breathing with a FiO₂ now prints it too
   ("Breathing spontaneously, FiO₂ 50 %" at the tamponade's arrival). The Vitals tab shows the patient's FiO₂ follow
   it. On a hypoxaemic patient (severe pneumonia) the face mask at 10 L/min raises SpO₂ from 78 to 84 % in 5 min.
-  Persian Debrief entries added (reviewed: false). The control sets Breathing to Spontaneous, so it is for a patient
-  who is not on the bag or the ventilator.
+  Persian Debrief entries added (reviewed: false). The control acts only while the patient breathes spontaneously with
+  no airway device: on the bag, a ventilator (or the Ventilator view) or with a tracheal tube or supraglottic airway it
+  is disabled ("FiO₂ is set on the ventilator / bag"), an oxygen already staged is taken back, and its spontaneous
+  event is never sent (it would have taken the patient off the tube or the bag). For this the engine's 1 Hz `state`
+  event carries a new optional `breathing: { source, device }` (source spontaneous / bvm / ventilator / none /
+  external; device none / ett / sga).
 
 ### Changed
 

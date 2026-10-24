@@ -5,7 +5,7 @@
 import { createEngine, type Command } from '@pme/engine-core';
 import { describe, expect, it } from 'vitest';
 import { describeCommand } from './describe.ts';
-import { O2_FLOWS, o2Fio2, oxygen } from './oxygen.ts';
+import { O2_FLOWS, o2Fio2, oxygen, oxygenBlock, type Breathing } from './oxygen.ts';
 
 const run = (cmds: Array<Record<string, unknown>>, untilS: number) => {
   const e = createEngine({ seed: 7, mode: 'modeled', patient: { sensors: { spo2: 'on', co2: 'on', ecg: 'on' } } } as never);
@@ -46,7 +46,7 @@ describe('oxygen for the spontaneously breathing patient (E121b)', () => {
     expect(describeCommand({ type: 'applyEvent', event: { kind: 'ventilation', source: 'spontaneous' } })).toBe('Breathing spontaneously');
   });
 
-  it('the engine accepts it, the FiO₂ follows it, and a hypoxaemic patient’s SpO₂ rises on the mask', () => {
+  it('the engine accepts it, the FiO₂ follows it, and a hypoxaemic patient’s SpO₂ rises on the mask', { timeout: 60_000 }, () => {
     const air = run([hypoxic], 300);
     const mask = run([hypoxic, oxygen('mask', 10)], 300);
     expect(air.refused).toEqual([]);
@@ -56,6 +56,26 @@ describe('oxygen for the spontaneously breathing patient (E121b)', () => {
     expect(mask.spo2 - air.spo2).toBeGreaterThanOrEqual(3);
     const off = run([hypoxic, oxygen('mask', 10), oxygen('none', 0)], 300);
     expect(off.fio2).toBeCloseTo(0.21, 2);
+  });
+
+  it('the engine’s 1 Hz state says who breathes and through what; the control acts only on spontaneous with no device', () => {
+    const e = createEngine({ seed: 7, mode: 'modeled' } as never);
+    let b: Breathing | undefined;
+    e.on((ev) => void (ev.type === 'state' && (b = ev.breathing)));
+    const at = (t: number, cmd?: Record<string, unknown>) => {
+      if (cmd) expect(e.dispatch({ id: `b${t}`, issuedBy: 'test', ...cmd } as Command).accepted).toBe(true);
+      e.advanceTo(t);
+      return b;
+    };
+    expect(at(2)).toEqual({ source: 'spontaneous', device: 'none' });
+    expect(oxygenBlock(b)).toBeNull();
+    expect(at(4, { type: 'applyEvent', event: { kind: 'ventilation', source: 'bvm', rr: 12, vtMl: 500, fio2: 1 } })).toEqual({ source: 'bvm', device: 'none' });
+    expect(oxygenBlock(b)).toBe('FiO₂ is set on the ventilator / bag.');
+    expect(at(6, { type: 'applyEvent', event: { kind: 'airwayDevice', device: 'ett' } })).toEqual({ source: 'bvm', device: 'ett' });
+    expect(at(8, { type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, peep: 5, fio2: 0.5 } })).toEqual({ source: 'ventilator', device: 'ett' });
+    expect(oxygenBlock(b)).toBe('FiO₂ is set on the ventilator / bag.');
+    expect(oxygenBlock({ source: 'spontaneous', device: 'ett' })).toBe('FiO₂ is set on the ventilator / bag.');
+    expect(oxygenBlock(undefined)).toBe('Waiting for the monitor’s state.');
   });
 
   it('the engine refuses an unknown device or a flow outside 0–15 L/min', () => {

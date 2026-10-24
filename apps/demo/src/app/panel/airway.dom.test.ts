@@ -1,14 +1,26 @@
 // @vitest-environment happy-dom
 // E121b: the Airway & ventilation tab's Oxygen control. Room air by default; choosing a device offers its flows and
 // shows the FiO₂ they give; Stage stages ONE oxygen event under its own key (Stage / Apply / Commit like every panel
-// action), with the clinical line the log and the Debrief print.
+// action), with the clinical line the log and the Debrief print. It acts only while the patient breathes
+// spontaneously with no airway device, bag or ventilator: otherwise it is disabled with the reason, a staged oxygen is
+// taken back, and its `source: 'spontaneous'` event is never sent (it would take the patient off the tube or the bag).
 import { beforeEach, describe, expect, it } from 'vitest';
+import type { Breathing } from '../oxygen.ts';
 import type { PanelCtx } from './ctx.ts';
 import { airwayTab } from './airway.ts';
 
-function rig() {
+const SPONT: Breathing = { source: 'spontaneous', device: 'none' };
+
+function rig(start: Breathing | null = SPONT) {
   const staged: Array<{ c: unknown; key: string; text: string }> = [];
-  const ctx = { link: {}, staging: { submit: (c: unknown, key: string, text: string) => staged.push({ c, key, text }) }, site: {}, weightKg: () => 70, onRefresh: () => undefined, goTab: () => undefined } as unknown as PanelCtx;
+  const state: { breathing: Breathing | undefined } = { breathing: start ?? undefined };
+  let refresh = () => undefined as void;
+  const staging = {
+    submit: (c: unknown, key: string, text: string) => staged.push({ c, key, text }),
+    has: (key: string) => staged.some((s) => s.key === key),
+    drop: (key: string) => staged.splice(0, staged.length, ...staged.filter((s) => s.key !== key)),
+  };
+  const ctx = { link: { ctl: { state } }, staging, site: {}, weightKg: () => 70, onRefresh: (fn: () => void) => (refresh = fn), goTab: () => undefined } as unknown as PanelCtx;
   const el = airwayTab(ctx);
   document.body.append(el);
   const o2 = el.querySelector<HTMLElement>('[role=group][aria-label=Oxygen]')!;
@@ -16,12 +28,17 @@ function rig() {
   const flow = [...el.querySelectorAll<HTMLSelectElement>('select')].find((s) => s.labels?.[0]?.textContent === 'Flow')!;
   const hint = flow.closest('.field')!.nextElementSibling as HTMLElement;
   // the Stage button of the Oxygen section: the first row after its heading
-  const stageOxygen = () => {
+  const oxygenStage = () => {
     let n: Element | null = [...el.querySelectorAll('h3')].find((x) => x.textContent === 'Oxygen')!;
     while (n && !(n.classList.contains('row') && n.querySelector('button')?.textContent === 'Stage')) n = n.nextElementSibling;
-    (n!.querySelector('button') as HTMLButtonElement).click();
+    return n!.querySelector('button') as HTMLButtonElement;
   };
-  return { el, o2, choose, flow, hint, staged, stageOxygen };
+  const stageOxygen = () => oxygenStage().click();
+  /** The engine's next 1 Hz state reports this breathing; the panel repaints. */
+  const breathe = (b: Breathing | undefined) => ((state.breathing = b), refresh());
+  /** The state changes and the panel has not repainted yet. */
+  const breatheQuiet = (b: Breathing) => void (state.breathing = b);
+  return { el, o2, choose, flow, hint, staged, stageOxygen, oxygenStage, breathe, breatheQuiet };
 }
 
 describe('Airway & ventilation: oxygen for the spontaneously breathing patient (E121b)', () => {
@@ -59,5 +76,58 @@ describe('Airway & ventilation: oxygen for the spontaneously breathing patient (
     choose('Off (room air)');
     stageOxygen();
     expect(staged.map((s) => [s.key, s.text])).toEqual([['oxygen', 'Oxygen by nasal cannula 4 L/min (FiO₂ 36 %)'], ['oxygen', 'Oxygen off: room air (FiO₂ 21 %)']]);
+  });
+
+  const HELD: Array<[string, Breathing]> = [
+    ['bag-mask', { source: 'bvm', device: 'none' }],
+    ['ventilator', { source: 'ventilator', device: 'ett' }],
+    ['Ventilator view', { source: 'external', device: 'ett' }],
+    ['tracheal tube, breathing spontaneously', { source: 'spontaneous', device: 'ett' }],
+    ['supraglottic airway, breathing spontaneously', { source: 'spontaneous', device: 'sga' }],
+  ];
+  it.each(HELD)('%s: the control is disabled with "FiO₂ is set on the ventilator / bag" and Stage sends nothing', (_, b) => {
+    const { o2, flow, hint, staged, oxygenStage, choose } = rig(b);
+    choose('Face mask');
+    expect(oxygenStage().disabled).toBe(true);
+    expect(flow.disabled).toBe(true);
+    expect([...o2.querySelectorAll('button')].every((x) => x.disabled)).toBe(true);
+    expect(hint.textContent).toBe('FiO₂ is set on the ventilator / bag.');
+    oxygenStage().dispatchEvent(new MouseEvent('click')); // even a press that reaches the handler
+    oxygenStage().click();
+    expect(staged).toEqual([]);
+  });
+
+  it('a staged oxygen is taken back when the patient is intubated before Commit; spontaneous again re-enables it', () => {
+    const { staged, stageOxygen, oxygenStage, choose, breathe, hint } = rig();
+    choose('Face mask');
+    stageOxygen();
+    expect(staged.map((s) => s.key)).toEqual(['oxygen']);
+    breathe({ source: 'ventilator', device: 'ett' });
+    expect(staged).toEqual([]);
+    expect(oxygenStage().disabled).toBe(true);
+    breathe(SPONT);
+    expect(oxygenStage().disabled).toBe(false);
+    expect(hint.textContent).toMatch(/^FiO₂ about 60 %/);
+  });
+
+  it('a press between the engine’s new state and the next repaint (button still enabled) sends nothing either', () => {
+    const r = rig();
+    r.choose('Face mask');
+    expect(r.oxygenStage().disabled).toBe(false);
+    r.breatheQuiet({ source: 'bvm', device: 'none' });
+    r.stageOxygen();
+    expect(r.staged).toEqual([]);
+    expect(r.hint.textContent).toBe('FiO₂ is set on the ventilator / bag.');
+  });
+
+  it('before the monitor’s first state, or with a breathing change staged, it waits', () => {
+    const r = rig(null);
+    expect(r.oxygenStage().disabled).toBe(true);
+    expect(r.hint.textContent).toBe('Waiting for the monitor’s state.');
+    r.breathe(SPONT);
+    r.staged.push({ c: {}, key: 'ventilation', text: 'Ventilator' });
+    r.breathe(SPONT);
+    expect(r.oxygenStage().disabled).toBe(true);
+    expect(r.hint.textContent).toBe('A breathing change is staged: commit it first.');
   });
 });

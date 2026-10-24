@@ -1,6 +1,7 @@
 // E121b: oxygen is never assumed. On the default patient, breathing spontaneously at room air, the Instructor panel's
 // Airway & ventilation tab gives oxygen by face mask at 10 L/min through Stage and Commit; the patient's FiO₂ on the
-// Vitals tab goes from 21 % to 60 %, the log and the Debrief's timeline print the line, and Off brings back room air.
+// Vitals tab goes from 21 % to 60 %, the log and the Debrief's timeline print the line, Off brings back room air, and on
+// the ventilator the control is disabled ("FiO₂ is set on the ventilator / bag").
 // Driven through the visible UI only. Chromium only (one engine path; CI amendment rules).
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
@@ -39,6 +40,16 @@ test('oxygen by face mask on the breathing patient: FiO₂ 21 → 60 %, logged, 
 
   await giveOxygen(page, 'Off (room air)');
   await expect.poll(() => fio2(page), { timeout: 15_000 }).toBe('21');
+
+  // on the ventilator the control is off: FiO₂ is the ventilator's, and Oxygen must never take the patient off it
+  await tab(page, 'airway');
+  await page.getByRole('group', { name: 'Breathing' }).getByRole('button', { name: 'Ventilator' }).click();
+  await page.locator('h3:text-is("Breathing") ~ .row').first().getByRole('button', { name: 'Stage' }).click();
+  await page.locator('.stagebar button.primary').click(); // Commit
+  const o2Stage = page.locator('h3:text-is("Oxygen") ~ .row').first().getByRole('button', { name: 'Stage' });
+  await expect(o2Stage).toBeDisabled({ timeout: 10_000 });
+  await expect(page.getByText('FiO₂ is set on the ventilator / bag.')).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Oxygen' }).getByRole('button', { name: 'Face mask' })).toBeDisabled();
 
   await page.click('.sessionbar >> text=Debrief');
   const timeline = page.locator('.db-timeline');

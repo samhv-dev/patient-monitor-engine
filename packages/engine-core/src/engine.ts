@@ -726,7 +726,12 @@ class Engine implements MonitorEngine {
     this.st.endo.out = keep(this.st.endo.out);
     this.st.organs.out = keep(this.st.organs.out);
     due.sort((a, b) => (a as { t: number }).t - (b as { t: number }).t);
-    for (const e of due) if (e.type === 'state') e.sensors = sensorMap(this.st); // 1 Hz, built only here
+    for (const e of due) {
+      if (e.type !== 'state') continue;
+      e.sensors = sensorMap(this.st); // 1 Hz, built only here
+      const dev = this.st.neuro.airway;
+      e.breathing = { source: this.st.resp.driver.source, device: dev === 'auto' ? 'none' : dev }; // E121b
+    }
     return due;
   }
 
