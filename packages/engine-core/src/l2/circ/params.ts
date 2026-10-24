@@ -94,18 +94,22 @@ export const PERI_EXTRA_ML = 0;
  * at V_LV + x, the RV's at V_RV − x. ΔV is the deviation from the operating point (the diastole-weighted mean volume
  * over SEPT_TAU_S, longer than a breath), so the septum moves with the breath and the calibrated mean filling is not
  * moved. The interaction is small with an unloaded pericardium and dominant when the pericardium pins the total heart
- * volume (Janicki & Weber 1980 Am J Physiol 238:H494; Santamore & Dell'Italia 1998 Prog Cardiovasc Dis 40:289):
+ * volume (Janicki & Weber 1980 Am J Physiol 238:H494; Belenkie, Smith & Tyberg 2001 Ann Med 33:236):
  * c = SEPT_C_MAX·p/(p + SEPT_P_HALF), p = P̄ − SEPT_P_ON ≥ 0, P̄ the diastolic pericardial pressure (healthy 0.04 mmHg,
- * so an unloaded pericardium leaves the circuit bit-identical; 100 mL ≈ 2.8, 250 mL ≈ 24). A passive wall cannot move by more than
- * the volume difference that pushes it, so c ≤ 1 keeps the ventricular stiffness positive-definite (partition
- * stiffness (E_LV + E_RV)(1 − c) ≥ 0); a cross-elastance larger than the free walls' own stiffness was measured while
+ * so an unloaded pericardium leaves the circuit bit-identical; 100 mL ≈ 2.8 → c 0.15, 250 mL ≈ 24 → c 0.69). A wall
+ * cannot move by more than the volume difference that pushes it: for a pure shift between the ventricles the
+ * partition stiffness is (E_LV + E_RV)(1 − c) ≥ 0. The term is not derived from an energy function (its cross terms
+ * are ½c·E_LV and ½c·E_RV, equal only when the two walls are equally stiff), so passive is exact only for equal walls;
+ * c reaches 0.92 for seconds at a tamponade's onset (P̄ overshoots to ≈ 110 mmHg) and stayed stable. A cap of 0.8 was
+ * measured: 0.2 mmHg less pulsus and the A3 PEA 4 s earlier, so c ≤ 1 is kept. It cannot hold a sustained
+ * septal shift (PE, RV overload): the operating point follows over SEPT_TAU_S. A cross-elastance larger than the free walls' own stiffness was measured while
  * writing to give the inspiratory LV stroke-volume fall of tamponade (−33 %) but flipped the whole volume between the
  * ventricles at 1.2 × its gain, and was withdrawn [ENG sizes; measured contribution: run report E118].
  */
-export const SEPT_C_MAX = 1;
-export const SEPT_P_HALF = 10; // mmHg
-export const SEPT_P_ON = 1; // mmHg
-export const SEPT_TAU_S = 15;
+export const SEPT_C_MAX = 1; // [ENG]
+export const SEPT_P_HALF = 10; // mmHg [ENG]
+export const SEPT_P_ON = 1; // mmHg [ENG]
+export const SEPT_TAU_S = 15; // s [ENG]
 export const P_PL0 = -4; // mmHg supine resting pleural (Smith 2004 P_th)
 /**
  * Fraction of alveolar pressure reaching the pleura. Tables tIt 0.4 (Q28 default; range 0.2–0.7). Raised to

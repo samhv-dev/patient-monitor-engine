@@ -31,31 +31,36 @@ the public API is what the packages export (see the API reference), the `pme-sce
   systolic 141 (was 158) and MAP at 60 min 107 (was 112). Showcase tamponade: the highest 1-Hz systolic in the minute after ROSC is 199 mmHg (was 155;
   a single-beat transient, 122 at +60 s as before). Every scenario timing (early signs, established crisis, pulse
   loss, drainage, ROSC) is unchanged.
-- Engine (E118): severe tamponade now shows pulsus paradoxus. Severe tamponade means 250 mL, spontaneous breathing;
-  the inspiratory systolic fall is 10.8 mmHg (was 3.4; target > 10, Spodick, NEJM 2003). Mild tamponade (100 mL)
-  gives 4.1 and a healthy patient 2.4 (both ≤ 5). Positive-pressure ventilation keeps its reversed sign and size:
-  2.75 mmHg in severe tamponade (2.58 before) and 1.50 healthy (unchanged).
-  - **The tamponade's breathing.** Tamponade has its own effort factor, because the chemical drive gives a
-    compensated tamponade a normal breath. As the diastolic pericardial pressure rises from 5 to 20 mmHg, the
-    spontaneous pleural swing deepens from 4 to 18 cmH2O peak to trough. The extra swing is centred on the breath:
-    inspiration falls 12.7 cmH2O below the end-expiratory pressure and an active expiration rises 5.3 cmH2O above it,
-    so the mean intrathoracic pressure is unchanged. The effort fades as cerebral blood flow falls from 0.7 to 0.4
-    of rest (consciousness lost) and stops at the arrest. Sources: dyspnoea in Roy et al.,
-    JAMA 2007; the depth dependence in Shabetai et al., Am J Cardiol 1970; the deep breaths of the Ramachandran et
-    al. model, Theor Biol Med Model 2009.
-  - **Ventricular interdependence through the septum.** When the RV fills more than the LV, the septum moves into
-    the LV by a share c of the difference, with c = P̄/(P̄ + 10 mmHg): ≈ 0 healthy, 0.7 at 250 mL. The septum is
-    passive (c ≤ 1). Sources: the three-wall structure of Smith et al., Med Eng Phys 2004; the pericardial
-    amplification in Janicki & Weber 1980 and Santamore & Dell'Italia 1998. Its measured share is 0.7 mmHg, because
-    the pericardium already pins the total volume of the slack, underfilled ventricles.
-  - **RV coronary balance.** It now averages the beats of the last 6 s instead of the last beat, so the deep breaths'
-    pleural swing is no longer sampled into an ischaemic debt.
-  - **A3 cue-card path (engine harness).** Pulse loss is at 462 s (was 471), the PEA state at 463 (472), drainage at
-    593 (602) and ROSC 96 s after drainage (96).
-  - **Showcase tamponade bands re-centred, same tolerances.** The card's 1-Hz pulsus is 2.4 / 4.0 mmHg mean / max
-    (was 0.9 / 1.6). The systolic 60 s after ROSC is 123.5 (was 122) and the post-ROSC single-beat peak 185 (was 199).
-    In the early-drain branch the systolic at drainage is 48 (was 60) and the post-drain peak 136 (was 155); it still
-    keeps its pulse.
+- Engine (E118): severe tamponade now shows pulsus paradoxus.
+  - **Measured.** Severe tamponade is 250 mL with spontaneous breathing. Its beat-to-beat systolic swing (peak to
+    trough) is 10.8 mmHg (was 3.4; target > 10, Spodick, NEJM 2003). Its inspiratory LV stroke-volume fall is 38 %
+    (aortic VTI −33 ± 13 % in Leeman et al., JACC 1988). Mild tamponade (100 mL) gives 4.1 and a healthy patient 2.4,
+    both ≤ 5. Positive-pressure ventilation keeps its reversed sign and size: 2.73 mmHg in severe tamponade (2.58
+    before) and 1.50 healthy (unchanged).
+  - **The tamponade's breathing.** The chemical drive gives a compensated tamponade a normal breath, so the condition
+    has its own effort factor; its size is fitted to the targets. As the diastolic pericardial pressure rises from 5
+    to 20 mmHg, the spontaneous pleural swing deepens from 4 to 18 cmH2O peak to trough. The brief proposed 8–12
+    cmH2O; that gives 5.5–7.6 mmHg (owner decision). The extra swing is centred on the breath: inspiration falls 12.7
+    cmH2O and an active expiration rises 5.3 cmH2O, so the mean intrathoracic pressure is unchanged. The effort scales
+    with wakefulness, fades as cerebral blood flow falls from 0.7 to 0.4 of rest, and stops at the arrest. The tidal
+    volume is unchanged. At the same effort a healthy heart swings 7.7 mmHg, so most of the pulsus is the deeper
+    breath; tamponade amplifies it about 1.4×. Sources: Roy et al., JAMA 2007 (dyspnoea); Shabetai et al., J Clin
+    Invest 1965 (depth of breath); Ramachandran et al., Theor Biol Med Model 2009; Van Lieshout et al., J Appl Physiol
+    2003.
+  - **The septum.** When the RV fills more than the LV, the septum moves into the LV by a share c of the difference.
+    c = p/(p + 10), where p is the diastolic pericardial pressure minus 1 mmHg: a healthy heart is bit-identical, c is
+    0.15 at 100 mL and 0.69 at 250 mL. Sources: the three-wall structure of Smith et al., Med Eng Phys 2004; Janicki
+    & Weber 1980; Belenkie, Smith & Tyberg 2001. Its measured share is 0.7 mmHg: the pericardium already pins the
+    total volume of the slack, underfilled ventricles.
+  - **The RV coronary balance** now averages the beats of the last 6 s instead of reading the last beat. This stops
+    the pleural swing of the deep breaths being sampled into an ischaemic debt.
+  - **A3 cue-card path (kit round, Chromium).** PEA 7:50, CPR 7:52, drainage 9:22, ROSC 10:57 and stop 10:59, against
+    the cue card's 7:49, 7:51, 9:21, 10:55 and 10:57 (+1 to +2 s).
+  - **Showcase tamponade bands re-centred, same tolerances.**
+    - The card's 1-Hz pulsus is 2.4 mean and 4.0 max (was 0.9 and 1.6); its bands now have a floor.
+    - The systolic 60 s after ROSC is 123.5 (was 122), and the post-ROSC single-beat peak is 185 (was 199).
+    - In the early-drain branch the systolic at drainage is 48 (was 60) and the post-drain peak is 136 (was 155). It
+      still keeps its pulse.
   - **Known misses.** The pulsus known miss is removed.
 - Showcase MH card (E119, E121; card only, no engine change): a real induction sequence, one instructor button per
   step: awake on room air → premedicated (midazolam 2 mg, fentanyl 100 µg) → preoxygenated (100 % O₂ by face mask) →

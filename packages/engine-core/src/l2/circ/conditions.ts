@@ -37,23 +37,28 @@ export interface TamponadeOpts {
  * gas exchange is unchanged (a stated simplification: the deeper effort is not given a larger breath). [ENG ramp and
  * size; fit targets: severe ≥ 10 mmHg, mild ≤ 5; a 12 cmH2O peak-to-trough swing gives 7.6 mmHg here (run report).]
  */
-export const TAMPONADE_SWING_CMH2O = 18;
-export const TAMPONADE_EFFORT_P_LO = 5;
-export const TAMPONADE_EFFORT_P_HI = 20;
+export const TAMPONADE_SWING_CMH2O = 18; // cmH2O peak to trough [ENG]
+export const TAMPONADE_EFFORT_P_LO = 5; // mmHg diastolic pericardial [ENG]
+export const TAMPONADE_EFFORT_P_HI = 20; // mmHg diastolic pericardial [ENG]
 /**
  * The distressed effort is the conscious patient's: it fades as the cerebral blood flow falls toward the syncope range
  * (consciousness is lost at a 50–60 % fall in CBF — Van Lieshout, Wieling, Karemaker & Secher, J Appl Physiol
  * 2003;94:833 [P, not re-read]), from CBF 0.7 to 0.4 of rest, and the circulation's arrest ends it (circ-link.ts); the
  * agonal pattern below that is the drive's own (neuro/spont.ts). Without the fade the deep breaths held the displayed
- * systolic above the card's PEA threshold for 10–13 s after the pulse was lost [ENG ramp].
+ * systolic above the card's PEA threshold for 10–13 s after the pulse was lost [ENG ramp]. It also scales with
+ * wakefulness (1 − max(loss of consciousness, the anaesthetised-lung state)): a sedated or anaesthetised tamponade
+ * patient breathing spontaneously is not making a dyspnoeic effort [ENG].
  */
-export const TAMPONADE_EFFORT_CBF_LO = 0.4;
-export const TAMPONADE_EFFORT_CBF_HI = 0.7;
-/** The spontaneous pleural-swing multiplier for a diastolic pericardial pressure (mmHg) and a relative CBF. */
-export function tamponadeSwingF(periMmHg: number, cbfRel = 1): number {
+export const TAMPONADE_EFFORT_CBF_LO = 0.4; // × resting CBF [ENG]
+export const TAMPONADE_EFFORT_CBF_HI = 0.7; // × resting CBF [ENG]
+/**
+ * The spontaneous pleural-swing multiplier for a diastolic pericardial pressure (mmHg), a relative CBF and wakefulness
+ * (0 unconscious … 1 awake).
+ */
+export function tamponadeSwingF(periMmHg: number, cbfRel = 1, awake = 1): number {
   const x = Math.min(1, Math.max(0, (periMmHg - TAMPONADE_EFFORT_P_LO) / (TAMPONADE_EFFORT_P_HI - TAMPONADE_EFFORT_P_LO)));
   const g = Math.min(1, Math.max(0, (cbfRel - TAMPONADE_EFFORT_CBF_LO) / (TAMPONADE_EFFORT_CBF_HI - TAMPONADE_EFFORT_CBF_LO)));
-  return 1 + (TAMPONADE_SWING_CMH2O / SPONT_SWING_CMH2O - 1) * x * g;
+  return 1 + (TAMPONADE_SWING_CMH2O / SPONT_SWING_CMH2O - 1) * x * g * Math.min(1, Math.max(0, awake));
 }
 export const PE_MAX_FRAC = 0.8;
 export const PE_VASO = 1.0;
