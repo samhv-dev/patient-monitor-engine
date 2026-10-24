@@ -61,7 +61,9 @@ the public API is what the packages export (see the API reference), the `pme-sce
     - The systolic 60 s after ROSC is 123.5 (was 122), and the post-ROSC single-beat peak is 185 (was 199).
     - In the early-drain branch the systolic at drainage is 48 (was 60) and the post-drain peak is 136 (was 155). It
       still keeps its pulse.
-  - **Known misses.** The pulsus known miss is removed.
+  - **Known misses.** The pulsus known miss is removed. The low-flow SpO2 miss in the ventilated tamponade case
+    (fidelity-lowflow, "SpO2 shown valid at MAP < 30") now passes; this is incidental, because the septum changes that
+    case's low-flow course.
 - Showcase MH card (E119, E121; card only, no engine change): a real induction sequence, one instructor button per
   step: awake on room air → premedicated (midazolam 2 mg, fentanyl 100 µg) → preoxygenated (100 % O₂ by face mask) →
   induced (propofol 2 mg/kg, then succinylcholine 1.5 mg/kg; the MH condition starts here; the masseter note stays) →

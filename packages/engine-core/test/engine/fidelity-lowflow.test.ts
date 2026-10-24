@@ -75,7 +75,9 @@ describe('SpO2, PI and pleth follow the perfusion', () => {
   // (brief §4.3, PI 0.3), so the oximeter shows SpO2 99 valid at MAP 19–20 for 6 s (rows 760–765). It is the FU-5 audit's
   // own M1 class of defect (a normal saturation in a nearly pulseless patient), 0.03 of PI wide and 6 s long, and it
   // goes back to the owner with these numbers (FU-7.1 Q10) rather than being hidden by a wider bound.
-  it.fails("MODELED Ali's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 99 valid at 760–765 s (MAP 19–20, PI 0.31–0.33) with the alveolar washout", async () => {
+  // E118 (rc.4): met — the septal interaction changes this ventilated tamponade's low-flow course (an incidental pass,
+  // not a pulse-oximetry fix). Before: SpO2 99 shown valid at 760–765 s (MAP 19–20, PI 0.31–0.33)
+  it("MODELED Ali's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 (met after E118; was SpO2 99 valid at 760–765 s)", async () => {
     const { rows } = await aliRun();
     const on = lowFlowOnset(rows);
     const after = rows.filter((r) => r.t >= (on as MonRow).t + 20);
