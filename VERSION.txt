@@ -1,0 +1,10 @@
+patient-monitor-engine 1.0.0-rc.4 candidate (main 5821c83c, 2026-10-24) — a PRE-RELEASE, not a final 1.0.0
+For education only. Not a medical device and not clinically validated: never use it for patient care.
+
+Commit:  5821c83cd7f4074db6e72e602b7a4b992bb08461 (main, "Merge pull request #120 from samhv-dev/demo-cards-rc4"; ahead of tag v1.0.0-rc.3, before the rc.4 tag)
+Built:   2026-10-24, `node scripts/showcase/make-bundle.mjs` (vite build --base ./ in apps/demo), the app/ folder of that kit
+Site:    https://samhv-dev.github.io/patient-monitor-engine/
+
+This static copy cannot pair learners' phones: phones follow the instructor over the classroom relay of the local kit
+(built from a source checkout with `node scripts/showcase/make-bundle.mjs`; Node.js >= 22 on the instructor's computer).
+Licence: MIT (LICENSE); third-party notices in NOTICES.md and the texts in LICENSES/.
