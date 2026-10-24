@@ -60,6 +60,10 @@ the public API is what the packages export (see the API reference), the `pme-sce
   uploaded and whose job summary gives their pass / retry-only / failed counts; the gating `e2e (webkit)` job runs
   every other test with the existing retry rule, and `e2e (chromium)` still runs every test, enforced. No test
   changed. See `docs/gates/stage-14.md`, "The known-flaky WebKit quarantine".
+- CI (release, validation): the release workflow's browser tests (`iife-smoke`, `vent-embed`, Chromium and WebKit,
+  on the files the release job built) and the validation workflow's Chromium soak run in the same Playwright
+  container (`docker run`, the lockfile's version), so neither runs `playwright install --with-deps` or depends on the
+  runner's apt mirror. What the release builds and publishes, and the job timeouts, are unchanged.
 
 ### Fixed
 
