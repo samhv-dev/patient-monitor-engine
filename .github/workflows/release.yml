@@ -7,6 +7,15 @@ name: release
 on:
   push:
     tags: ['v*']
+  # Dry run on any branch (`gh workflow run release.yml --ref <branch> -f dry_run=true`): every step through the browser
+  # tests and the asset build, then the assets are uploaded as a workflow artifact instead of published. Off a branch
+  # the version is the packages' (the tag check needs a tag); publishing needs a tag ref and dry_run false.
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'build and check everything, publish nothing'
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -24,6 +33,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: The tag matches the package versions
+        if: github.ref_type == 'tag'
         run: test "$GITHUB_REF_NAME" = "v$(node -p "require('./packages/renderer/package.json').version")"
       - run: pnpm typecheck
       - run: PME_BUILD="${GITHUB_SHA::7}" pnpm build # the build-unique engine key (Task 5, FU-11 A1); CI and local builds say 'dev'
@@ -47,6 +57,7 @@ jobs:
         run: |
           set -euo pipefail
           V="$GITHUB_REF_NAME"
+          [ "$GITHUB_REF_TYPE" = tag ] || V="v$(node -p "require('./packages/renderer/package.json').version")" # dry run off a branch
           mkdir -p release
           cp packages/renderer/dist/patient-monitor.iife.js packages/renderer/dist/patient-monitor.iife.js.map LICENSE NOTICES.md release/
           zip -qr release/LICENSES.zip LICENSES   # the full third-party texts, beside the standalone IIFE
@@ -61,7 +72,15 @@ jobs:
           test -s release/NOTES.md
           (cd release && sha256sum patient-monitor.iife.js patient-monitor.iife.js.map "ventilator-monitor-embed-$V.zip" "api-reference-$V.zip" \
             LICENSES.zip LICENSE NOTICES.md > SHA256SUMS.txt)
+      - name: Upload the assets (dry run only; nothing is published)
+        if: ${{ inputs.dry_run }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-dry-run
+          path: release/
+          if-no-files-found: error
       - name: Publish the GitHub release
+        if: ${{ !inputs.dry_run && github.ref_type == 'tag' }} # a tag push has no inputs, so it publishes as before
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
