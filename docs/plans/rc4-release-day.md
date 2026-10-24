@@ -1,6 +1,8 @@
 # The v1.0.0-rc.4 release day: freeze, version bump, release dry run, tag, release, kits, rehearsal, Persian handouts, Pages, the owner's smoke, the room dry run — Plan
 
-**STATUS: WRITTEN 2026-10-24 (+0330), UNREVIEWED.** By the planner (Opus) from `scratch/briefs/plan-rc4-release-day.md`,
+**STATUS: WRITTEN 2026-10-24 (+0330), UNREVIEWED. DATES REVISED 2026-10-24 by the owner's ruling:** the demo is
+Tuesday 3 November (12 Aban 1405), the freeze Saturday 31 October 12:00, the tag Sunday 1 November; R4-Q2 and R4-Q3
+answered; E118 post-demo. By the planner (Opus) from `scratch/briefs/plan-rc4-release-day.md`,
 on `origin/main` **a4163165** (#123), from the rc.3 runbook (`docs/plans/rc3-release-day.md`, run 2026-10-23), its run
 report (`scratch/plans-backup/rc3-release-day-run-2026-10-23.md`), `scratch/rc3-release/gate-notes.md`, the rulings,
 `release.yml` on #125's branch and the A4 records. Documentation only; what was not checked is **(unverified)**.
@@ -8,30 +10,32 @@ report (`scratch/plans-backup/rc3-release-day-run-2026-10-23.md`), `scratch/rc3-
 **Base and preconditions.**
 - rc.3 is tagged on **fcf99b70** (annotated, 2026-10-23 13:55; release run 39938963544; its Pages build is the local
   branch `gh-pages-rc3`, **ceac7b47**). The rc.3 kit `_sandbox/pme-kit-release-fcf99b70/` (with its zip) **becomes the
-  fallback for the demo on Wednesday 4 November 2026** (13 Aban 1405, postponed from 28 October; the owner confirms the
-  date). The rc.2 set (`pme-kit-release-b39b3d87/` with `fa-handouts-rc2/`, `pme-debrief-rc2/`, `pme-embed-rc2/`) is
-  retired (moved to `$TD`, never deleted).
+  fallback for the demo on Tuesday 3 November 2026** (12 Aban 1405; postponed from 28 October to Wednesday 4 November,
+  then moved to Tuesday 3 November by the owner's ruling of 2026-10-24). The rc.2 set (`pme-kit-release-b39b3d87/`
+  with `fa-handouts-rc2/`, `pme-debrief-rc2/`, `pme-embed-rc2/`) is retired (moved to `$TD`, never deleted).
 - Pages today is **0777a977** (an rc.4 candidate, main 5821c83c, local branch `gh-pages-rc4c`); Task 1 reads the remote
   value on the day and Task 6 leases on it, so an earlier republish by the orchestrator is fine.
 - Since the rc.3 tag, main carries: #118 E117 (MH tachycardia; E118 pulsus paradoxus NOT met, evidence only), #119
   Saadat pass 3, #120 the live-demo cards (E119 MH induction sequence, E120 haemorrhage course, E121 oxygen never
   implicit) with kit round A4, #121 F29, #122 CI in the Playwright container + WebKit quarantine, #123 the tamponade
-  FAST line.
-- Open before the freeze: **#125** (the container + `dry_run`; dry run 40073337152 green on its branch, 6.5 min);
-  **#124** E121b (held); **E118** second attempt (deadline Thursday 18:00); the owner's haemorrhage objectives and
-  take-home lines and his rulings on the 13 clinical-review findings (may change both demo cards); **#117** (DRAFT).
-- **The kit-round script on main cannot run the rc.4 talk** (read, not run): the Q1 MH segment presses "Start surgery"
-  4 min after Load (`kit-round-a.kitround.ts:1538–1540`), but since E119 the card offers it only once *intubated*
-  (`showcase-mh.json`): the click waits for the 75-min time-out. Run by says 28 October (`:1513`, `:1712`), the Notes
-  line rc.2 (`:1514`). Task 0 Step 3 fixes all three. `rehearsal.showcase.ts` (six cards) presses removed buttons too
-  (MH `:195`; haemorrhage "Start CPR, 2 L and epinephrine"): not run (Decision 4).
+  FAST line. Since then, merged and green on main **2ebd743d**: **#125** (the release in the container + `dry_run`),
+  **#128** (the kit-round tooling, Task 0 Step 3), **#124** E121b (oxygen by mask).
+- Open before the freeze: the owner's haemorrhage objectives and take-home lines and his rulings on the 13
+  clinical-review findings (may change both demo cards; by the freeze); the **two-demos talk** tooling PR (branch
+  `test-kitround-two-demos`, this evening; Decision 4). **E118** (pulsus) is post-demo, not in rc.4 (owner, 24
+  October). **#117** is closed (R4-Q2 (b)).
+- **The kit-round script on a4163165 could not run the rc.4 talk** (read, not run): the Q1 MH segment pressed "Start
+  surgery" 4 min after Load (`kit-round-a.kitround.ts:1538–1540`), but since E119 the card offers it only once
+  *intubated* (`showcase-mh.json`). #128 fixed that; the two-demos PR now rewrites the talk to the programme of R4-Q3
+  (Decision 4). `rehearsal.showcase.ts` (six cards) presses removed buttons too (MH `:195`; haemorrhage "Start CPR, 2 L
+  and epinephrine"): not run (Decision 4).
 
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax. The
 > orchestrator does every step marked **(orch)**: merge, the release dry run, push the tag, push `gh-pages`. An executor
 > never tags, merges or pushes `gh-pages` (`RELEASE.md`: "executors never tag").
 
-**Goal.** By Friday 30 October evening (product unchanged after the Thursday 18:00 freeze except the version bump), and
-by Saturday 31 October late morning for the owner's part:
+**Goal.** By Sunday 1 November afternoon (product unchanged after the Saturday 31 October 12:00 freeze except the
+version bump), and by Monday 2 November for the owner's part:
 1. `v1.0.0-rc.4` is tagged (annotated) on a commit green on `main`, after a green `release.yml` dry run on it.
 2. Its GitHub release is a **Pre-release** with 8 assets whose `SHA256SUMS.txt` checks.
 3. The kit is rebuilt from the tag and placed in the owner's folders, with a Windows zip; rc.3 is the fallback.
@@ -39,7 +43,8 @@ by Saturday 31 October late morning for the owner's part:
    haemorrhage).
 5. The Persian handouts of the demo's two cases are regenerated from that rehearsal.
 6. GitHub Pages serves the tag's build.
-7. Saturday: the owner's smoke (≈ 35 min) and live rehearsal. Monday 2 or Tuesday 3 November: the room dry run.
+7. Sunday 1 November evening (or Monday 2 November morning, his choice): the owner's smoke (≈ 35 min) and live
+   rehearsal. Monday 2 November: the room dry run.
 
 After the smoke, one docs PR records all of it.
 
@@ -56,14 +61,15 @@ After the smoke, one docs PR records all of it.
   `scratch/rc2-release/merge-one-v2.sh <PR>` (0 merged + main green; 2 main red; 3 PR failed; 4 red after; 5 time-out).
 
 **Spec.** The brief; `RELEASE.md`; the rulings 2026-10-23/24 (E117–E121b, the 09:10 postponement and scope, the CI
-entries); the rc.3 sources above; `docs/gates/stage-14.md` (the quarantine); the run sheet's §5 and haemorrhage section.
+entries, the dates ruling of 24 October: demo Tuesday 3 November, freeze Saturday 31 October 12:00); the rc.3
+sources above; `docs/gates/stage-14.md` (the quarantine); the run sheet's §5 and haemorrhage section.
 
 ---
 
 ## Global Constraints
 
-- **Freeze.** No product change after **Thursday 29 October 18:00 (+0330)** except the version-bump PR. `.github/`
-  counts as product: #125 lands before the freeze or not at all. After the tag, only docs, each PR after main green. The
+- **Freeze.** No product change after **Saturday 31 October 12:00 (+0330)** except the version-bump PR. `.github/`
+  counts as product: #125 is merged (2ebd743d). After the tag, only docs, each PR after main green. The
   kit-round script is test tooling that ships in no kit: its edits are allowed at any time.
 - **Never edit the main checkout** `repo/` (`git fetch`, `git tag`, pushing a tag or `gh-pages` from it are fine).
 - **Shell.** Nothing that waits on stdin (`gh run watch` only with a run id, `git commit -m`, no heredoc: the editor
@@ -77,21 +83,25 @@ entries); the rc.3 sources above; `docs/gates/stage-14.md` (the quarantine); the
   validated"; no unearned claim; "a later release", never "v1.1"; Persian only via the `persian-writing` skill, by
   the orchestrator.
 - **Downloads.** Only the project's own, each into a new empty folder: the dry-run artifact, the 8 assets (≈ 8 MB).
-- **Usage.** The weekly allowance resets Saturday 17:30: check usage before each executor launch (R4-Q7).
+- **Usage.** The weekly allowance resets Saturday 31 October 17:30, on freeze day: the bump PR, the prep run, the bump
+  merge and the release dry run finish before it. Check usage before each executor launch (R4-Q7).
 - **Commit trailer.** Commits made from this plan end with the trailer the session's attribution rule names.
 
 ---
 
 ## Decisions this plan makes where the brief or the rulings were silent
 
-1. **One case.** `TAG_SHA` = `origin/main` after the bump merge, green, with a green dry run; not green by **Friday
-   14:00**: no tag that day (R4-Q1).
+1. **One case.** `TAG_SHA` = `origin/main` after the bump merge, green, with a green dry run; not green by **Sunday 1
+   November 12:00**: no tag that day (R4-Q1).
 2. **The dry run is the pre-flight** (Task 0 Step 6): the rc.4 notes cut and asset names on the commit to be tagged. A
    red dry run is fixed by a workflow-only PR before the tag (the release path, not the product), then repeated.
 3. **The kit-round edits land before the freeze** in one test-tooling PR (`test-kitround-rc4`, Task 0 Step 3); late:
    Task 0 Step 5 and Task 4 Step 2 cherry-pick it.
-4. **Q1 + A4, both engines.** A3 is not run (A4 prints both demo handouts; the tamponade card changed text only and
-   still prints in Q1); nor the six-card shots (not in the brief; two of their tests press removed buttons; R4-Q6).
+4. **Q1 + A4, both engines; Q1 is the two-demos talk.** The tooling PR on `test-kitround-two-demos` (this evening)
+   rewrites the Q1 talk to the programme of R4-Q3: opening → MH (E119) → haemorrhage (E120) + Debrief → close, with
+   Run by `'Showcase 2, 3 November'` / `'Live demo, 3 November'`; bronchospasm and tamponade leave the talk. A3 is not
+   run (A4 prints both demo handouts; the tamponade card changed text only and is not shown at the demo); nor the
+   six-card shots (not in the brief; two of their tests press removed buttons; R4-Q6).
 5. **Folders** `kit-round-a/q2-rc4/` (talk), `q2-rc4-a4/` (A4), `q2-rc4-rerun/` (8.1), never in place; write-up
    MEASUREMENTS §"Q2 on rc.4".
 6. **The expected values are the prep run's** (Task 0 Step 5): the cards may still change before the freeze; the tables
@@ -102,7 +112,8 @@ entries); the rc.3 sources above; `docs/gates/stage-14.md` (the quarantine); the
    `$TD/owner-notes-before-rc4/` first and restored by Task 8.
 8. **rc.2 is retired whole.** rc.3's Persian set moves into `pme-kit-release-fcf99b70/fa-handouts-rc3/`;
    `pme-debrief-rc3/` and `pme-embed-rc3/` stay. **Persian: the demo's two cases only**, from the A4 Chromium JSONs.
-9. **#117 is settled before the freeze** (R4-Q2); the rc.4 docs PR does not depend on it.
+9. **#117 is closed** (R4-Q2 answered (b)); its branch `docs-rc3-release` is an input of the rc.4 docs PR (Task 9
+   Step 2).
 
 ---
 
@@ -112,15 +123,15 @@ entries); the rc.3 sources above; `docs/gates/stage-14.md` (the quarantine); the
 |---|---|---|
 | **E119 MH card** (#120) | Task 4 Step 3c (A4 MH); Step 3 (Q1 MH, after the tooling edit); smoke 7 | States awake → premedicated → preoxygenated → induced → intubated → surgery → earlySigns → triggerOff → … → recovering → normoventilated; marks `["observed","observed","observed","not-assessable","not-assessable","observed"]`; A4 record (kit 52b0390b, C / W): induced 04:05, intubated 05:04 / 05:05, early signs 08:38 / 08:39, call 08:40, EtCO₂ < 40 at 09:14 / 09:15, normo 14:28; PDF A4 **7** pages; handout **1** page with the three MH take-home lines; errors 0 |
 | **E117 MH tachycardia** (#118) | A4 and Q1 MH rows; smoke 7 | HR rises before the CO₂ tile leaves its baseline (A4: 71 at surgery, 78–80 at the early signs, fentanyl-blunted); timings within ±10 s of the prep run |
-| **E120 haemorrhage card** (#120) | Task 4 Step 3c (A4 haemorrhage); smoke 8; live rehearsal | A4 record (kit 33a6c92b, C / W): junctional 09:19 / 09:17, PEA 10:27 / 10:26, pulse loss 10:59 / 11:00, asystole 15:38 / 15:36, CPR 15:41 / 15:38, pulse check 1 17:39 / 17:37 → VF → shock 1 → **asystole**, pulse check 2 19:46 / 19:45 → VF → shock 2 → **organised** (`pea`), ROSC **20:57**; marks `["not-assessable","not-observed","not-observed"]` while the objectives are drafts (a NOTE); PDF **8** pages; handout **1** page with ruled take-home lines |
+| **E120 haemorrhage card** (#120) | Task 4 Step 3c (A4 haemorrhage); Step 3 (Q1 haemorrhage, the two-demos talk); smoke 8; live rehearsal | A4 record (kit 33a6c92b, C / W): junctional 09:19 / 09:17, PEA 10:27 / 10:26, pulse loss 10:59 / 11:00, asystole 15:38 / 15:36, CPR 15:41 / 15:38, pulse check 1 17:39 / 17:37 → VF → shock 1 → **asystole**, pulse check 2 19:46 / 19:45 → VF → shock 2 → **organised** (`pea`), ROSC **20:57**; marks `["not-assessable","not-observed","not-observed"]` while the objectives are drafts (a NOTE); PDF **8** pages; handout **1** page with ruled take-home lines |
 | **E121 oxygen never implicit** (#120) | A4 rows | MH with Preoxygenate: SpO₂ minimum 99 induction → tube + 60 s; haemorrhage SpO₂ 96 on room air until its oxygen step |
-| **Saadat pass 3** (#119) | Task 4 Step 4 (six `q2-*-monitor-*.png`, 1000 × 800); smoke 2–3 | rc.3's run-report note (1) gone: EtCo2 / FiCo2 / AWRR parts apart (no "mmHg" under FiCo2, AWRR limits off its label), "SQI%" and "EMG%" apart, MH's EtAA tile clear of SQI/EMG; the RR tile set as the EtCo2 part; "°C" in the T column's title row |
+| **Saadat pass 3** (#119) | Task 4 Step 4 (the `q2-*-monitor-*.png` set, 1000 × 800); smoke 2–3 | rc.3's run-report note (1) gone: EtCo2 / FiCo2 / AWRR parts apart (no "mmHg" under FiCo2, AWRR limits off its label), "SQI%" and "EMG%" apart, MH's EtAA tile clear of SQI/EMG; the RR tile set as the EtCo2 part; "°C" in the T column's title row |
 | **F29** (#121) | Task 4 Step 3c | `PEEP undefined` 0 times in both A4 Debrief PDFs |
-| **Tamponade FAST line** (#123) | Q1 tamponade segment | Marks ✓✓✓✓◆ and PEA 07:49, CPR 07:51, drained 09:21, ROSC 10:57 as rc.3. The note itself: not read by the script (unverified); the live rehearsal sees it |
+| **Tamponade FAST line** (#123) | Not shown at the demo; still printed by A3 if run | — (A3 is not run, Decision 4) |
 | **CI container + quarantine** (#122) | Task 1 Step 2 | `e2e (chromium)`, `e2e (webkit)` success; `e2e-quarantine (webkit)` any (counts recorded) |
-| **Release in the container, dry run** (#125, if merged) | Task 0 Step 6; Task 2 Step 2 | Each ≈ 7 min, no `playwright install` step; 8 assets |
-| **E121b oxygen by mask** (#124, only if merged) | smoke 11 | A breathing patient's SpO₂ rises; the control is disabled with an airway device or the ventilator (unverified: its words) |
-| **E118 pulsus** (only if it lands) | its PR's evidence; Q1 tamponade | Tamponade times as rc.3; else the Known limitation stays |
+| **Release in the container, dry run** (#125) | Task 0 Step 6; Task 2 Step 2 | Each ≈ 7 min, no `playwright install` step; 8 assets |
+| **E121b oxygen by mask** (#124) | smoke 11 | A breathing patient's SpO₂ rises; the control is disabled with an airway device or the ventilator (unverified: its words) |
+| **E118 pulsus**: post-demo, not in rc.4 (owner, 24 October) | — | The Known limitation stays; tamponade times as rc.3 |
 
 **Rollback line.** If the tag build fails the rehearsal gate or the owner's smoke (Task 7 items 1, 2, 7 or 8), **the rc.3
 kit (fcf99b70) is the demo build and Pages returns to rc.3** (ceac7b47). Task 8.
@@ -130,24 +141,27 @@ kit (fcf99b70) is the demo build and Pages returns to rc.3** (ceac7b47). Task 8.
 ## Timeline
 
 ```
-Mon 26–Wed 28    #125 merged (orch); the tooling PR (Task 0 Step 3) merged; #117 settled (R4-Q2);
+Sat 24           merged on main 2ebd743d: #125, #128 (tooling), #124 (E121b); #117 closed (R4-Q2 (b));
+                 evening: the two-demos tooling PR (`test-kitround-two-demos`, Decision 4)
+Mon 26–Sat 31   the two-demos PR merged (orch); the "Run by" follow-up if still needed (Task 0 Step 3);
                  Mon 26 02:00 UTC: the weekly `validation` cron run on main (unverified what it writes)
-Thu 29  ≤ 18:00  freeze: every rc.4 product PR merged, main green → FREEZE_SHA (orch)
-        18:00    Task 0 Step 4: the bump PR (executor ≈ 1 h); its CI ≈ 35 min
-        18:30    Task 0 Step 5: prep run on FREEZE_SHA (executor, machine exclusive ≈ 1 h)
-        ≈ 20:00  (orch) merge the bump PR; main CI ≈ 35 min → main green = the rc.4 commit
-        ≈ 20:45  Task 0 Step 6 (orch): release.yml dry run on main ≈ 7 min; its assets checked
-Fri 30  12:00    Task 1 → Task 2 (orch): tag, release ≈ 7 min, assets
-        12:20    Task 3 (executor): kits, relay, READ ME, placement, zip, embed      ≈ 1 h
-        13:20    Task 4: Q1 talk ×2, macOS WebKit e2e, A4 ×2 ×2 engines, reading    ≈ 1.5 h
-        14:50    Task 5: Persian ≈ 0.5 h → Task 6: Pages ≈ 0.5 h (push by orch)
-        ≈ 16:00  Task 9 Steps 1–3, 4.1–4.3 (no push)
-Sat 31  09:00    Task 7: smoke ≈ 35 min, then the live rehearsal ≈ 45 min (his Mac)
-        ≈ 11:00  Task 9 Steps 4.4–6: the PR opens (CI ≈ 35 min)
-        17:30    the weekly allowance resets
-Sun 1   ≤ 18:00  Task 9 Step 7: review → merge (the final run sheet before the room)
-Mon 2 / Tue 3    the room dry run: Windows checklist (W), router (E14), phones, E13
-Wed 4            Demo: the rc.4 kit, the rc.3 kit and both zips on the stick
+Sat 31  ≤ 12:00  freeze: every rc.4 product PR merged, main green → FREEZE_SHA (orch)
+        12:00    Task 0 Step 4: the bump PR (executor ≈ 1 h); its CI ≈ 35 min
+        12:30    Task 0 Step 5: prep run on FREEZE_SHA (executor, machine exclusive ≈ 1 h)
+        ≈ 14:00  (orch) merge the bump PR; main CI ≈ 35 min → main green = the rc.4 commit
+        ≈ 14:45  Task 0 Step 6 (orch): release.yml dry run on main ≈ 7 min; its assets checked
+        17:30    the weekly allowance resets: everything above done before it
+Sun 1   ≈ 10:00  Task 1 → Task 2 (orch): tag, release ≈ 7 min, assets
+        ≈ 10:20  Task 3 (executor): kits, relay, READ ME, placement, zip, embed      ≈ 1 h
+        ≈ 11:20  Task 4: Q1 talk ×2, macOS WebKit e2e, A4 ×2 ×2 engines, reading    ≈ 1.5 h
+        ≈ 12:50  Task 5: Persian ≈ 0.5 h → Task 6: Pages ≈ 0.5 h (push by orch)
+        ≈ 14:00  Task 9 Steps 1–3, 4.1–4.3 (no push)
+        evening  Task 7: smoke ≈ 35 min, then the live rehearsal ≈ 45 min (his Mac)
+                 (or Monday 2 morning, his choice)
+        evening  Task 9 Steps 4.4–6: the PR opens after the smoke (or Monday 2) (CI ≈ 35 min)
+Mon 2            the room dry run: Windows checklist (W), router (E14), phones, E13
+                 Task 9 Step 7: review → merge (the final run sheet before the demo)
+Tue 3            Demo (12 Aban 1405): the rc.4 kit, the rc.3 kit and both zips on the stick
 ```
 
 A gate failure in Task 4 or in the smoke sends the day to Task 8 (≈ 1 h; the rc.3 kit is already placed).
@@ -159,7 +173,7 @@ A gate failure in Task 4 or in the smoke sends the day to Task 8 (≈ 1 h; the r
 | Task | Who | Hours | CI / machine |
 |---|---|---|---|
 | 0 Scope, tooling, bump, prep, dry run | executor + orch | 2.5 + 0.5 | 4 runs ≈ 35 min; dry run ≈ 7 min |
-| 1–3 Verify, tag, release, kits | orch + executor | 0.5 + 1.0 | release ≈ 7 min (≈ 26 without #125); build ≈ 4 min |
+| 1–3 Verify, tag, release, kits | orch + executor | 0.5 + 1.0 | release ≈ 7 min (#125); build ≈ 4 min |
 | 4 Q1 ×2, macOS WebKit e2e, A4 ×4 | executor | 1.5 | machine ≈ 50 min (A4 ≈ 15 min, unverified: 2 and 5 min of wall per engine on 24 October, plus setup) |
 | 5–6 Persian, Pages; 7 smoke, rehearsal, room | executor + orch; owner | 1.0 + 0.5 | owner ≈ 35 + 45 min, room ≈ 1 h |
 | 8 Rollback (on a failure); 9 Docs PR + review | orch + executor; reviewer | 1.0; 2.0 + 0.5 | 2 runs ≈ 35 min |
@@ -169,12 +183,13 @@ A gate failure in Task 4 or in the smoke sends the day to Task 8 (≈ 1 h; the r
 
 ## Tasks
 
-### Task 0 (executor prepares, orch merges): before and at the freeze — Monday 26 to Thursday 29 October
+### Task 0 (executor prepares, orch merges): before and at the freeze — Monday 26 to Saturday 31 October
 
-- [ ] **Step 1 (orch). Scope.** Merge #125 (`merge-one-v2.sh 125`) once green. Settle #117 (R4-Q2). Every other rc.4
-  product PR (E121b, E118, the owner's card words and clinical rulings) merges by Thursday 18:00 or waits.
-- [ ] **Step 2 (orch). The freeze.** At 18:00 (or when the last product PR's main run is green, whichever is later):
-  `git -C $R/repo fetch -q && git -C $R/repo rev-parse origin/main` → `FREEZE_SHA`; its push run `completed`/`success`
+- [ ] **Step 1 (orch). Scope.** #125 and #124 (E121b) are merged (2ebd743d, green); #117 is closed (R4-Q2 (b)). Every
+  other rc.4 product PR (the owner's card words and clinical rulings) merges by Saturday 31 October 12:00 or waits;
+  E118 is post-demo, not in rc.4.
+- [ ] **Step 2 (orch). The freeze.** At Saturday 12:00 (or when the last product PR's main run is green, whichever is
+  later): `git -C $R/repo fetch -q && git -C $R/repo rev-parse origin/main` → `FREEZE_SHA`; its push run `completed`/`success`
   (`gh run list -R samhv-dev/patient-monitor-engine --workflow ci --commit <FREEZE_SHA> --event push --json
   status,conclusion`). One rulings line: the sha, the run id, the PRs since a4163165.
 - [ ] **Step 3 (executor, any day before the bump). The test-tooling PR** (Decision 3):
@@ -190,8 +205,13 @@ cd ../scratch/wt-kitround-rc4 && grep -n -E "M\.untilT\(M\.t0 \+ (240|390)\)|fil
   MH sequence (`:1744–1754`) on `M` — premedicate `+ 30`, preoxygenate `+ 60`, induce `+ 240`, intubate `+ 300`, surgery
   `+ 360`, `untilT(M.t0 + 450)` — and the row `'6:30 ×4: …'` → `'7:30 ×4: …'`; the later fixed times then fall before
   the early signs (≈ 08:38) and `untilT` returns at once, so span 1 follows the cooling and the E22 press comes in
-  Recovering, as in A4 (14:28) (unverified until the prep run); (2) `:1513` → `'Showcase 2, 4 November'`, `:1712` →
-  `'Live demo, 4 November'`; (3) `:1514` → `'Kit round Q2 rehearsal on the rc.4 release build.'`.
+  Recovering, as in A4 (14:28) (unverified until the prep run); (2) `:1513` → `'Showcase 2, 3 November'`, `:1712` →
+  `'Live demo, 3 November'`; (3) `:1514` → `'Kit round Q2 rehearsal on the rc.4 release build.'`. (#128 merged this
+  step on 24 October with "4 November", now `:1514` and `:1721` on main. The two-demos tooling PR
+  (`test-kitround-two-demos`, Decision 4) rewrites the Q1 talk to opening → MH (E119) → haemorrhage (E120) + Debrief →
+  close and sets both strings to `'Showcase 2, 3 November'` / `'Live demo, 3 November'`; only if it does not, a
+  one-line tooling PR sets them before the freeze. Its test titles, record names and `--list` count are per that PR's
+  body.)
 
 ```bash
 cd /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/wt-kitround-rc4
@@ -201,7 +221,7 @@ env -u CI SHOWCASE_KIT=/Users/samhv/Desktop/Claude/projects/patient-monitor-engi
 ```
 
   Expected: `2` (A4 and Q1); one file; "Total: 6 tests" (`--list` only parses). The talk is first run in Step 5.
-  Commit (`test(showcase): kit round Q2 on rc.4 — the Q1 talk's MH segment follows the E119 card; Run by 4 November`),
+  Commit (`test(showcase): kit round Q2 on rc.4 — the Q1 talk's MH segment follows the E119 card; Run by 3 November`),
   push, open the PR (not draft), same title. **Never merge**; (orch) merges it before the bump PR.
 - [ ] **Step 4 (executor). The version-bump PR** (the file set of rc.3's 695ca78c):
 
@@ -216,24 +236,24 @@ git diff --stat | tail -1
 
   Expected: only `CITATION.cff:version` left (`1`); 25 files (on a4163165: packages, constants, their tests,
   `debrief-fa.test.ts`, two e2e files, README's status line and asset name). Then with the editor:
-  1. `CITATION.cff`: `version: 1.0.0-rc.4`, `date-released: "2026-10-30"`.
-  2. `CHANGELOG.md`: under `## [Unreleased]` (left empty) insert `## [1.0.0-rc.4] - 2026-10-30`; the paragraph "Fourth
+  1. `CITATION.cff`: `version: 1.0.0-rc.4`, `date-released: "2026-11-01"` (tag day).
+  2. `CHANGELOG.md`: under `## [Unreleased]` (left empty) insert `## [1.0.0-rc.4] - 2026-11-01`; the paragraph "Fourth
      public **pre-release** (release candidate) of a teaching simulator. It is for education only: it is not a medical
      device and it is not clinically validated. It is not the final 1.0.0: the calibration pass and the blind realism
      review have not run. The known limitations listed under 1.0.0-rc.3, 1.0.0-rc.2 and 1.0.0-rc.1 still apply, except
      where this section says otherwise."; every subsection that was under Unreleased; then `### Known limitations`:
      (1) "Windows launchers (`.cmd`): untested on Windows at this release" (RELEASE.md item 10, word for word) unless the
      owner ticked all 10 lines; (2) pulsus paradoxus in severe tamponade not reproduced (3.4 mmHg against ≥ 10;
-     `docs/model/circulation.md`), if E118 did not land; (3) a hidden instructor tab pauses the session (E82), the fix
+     `docs/model/circulation.md`; E118 is post-demo); (3) a hidden instructor tab pauses the session (E82), the fix
      for a later release; (4) the WebKit quarantine: the `@known-flaky` WebKit tests run in a non-blocking CI job
-     (`docs/gates/stage-14.md`), a retry-only pass on the gating WebKit job warns until the demo of 4 November, Chromium
+     (`docs/gates/stage-14.md`), a retry-only pass on the gating WebKit job warns until the demo of 3 November, Chromium
      enforces (replaces rc.3's browser line); (5) the haemorrhage card's objectives are drafts with no take-home lines,
      if the owner's words did not land; (6) as rc.3: kit from a source checkout, items 8 and 9 not run, Persian terms
      unreviewed (unless reviewed), the owner's smoke in the gate notes. Links: `[Unreleased]: …compare/v1.0.0-rc.4...HEAD`,
      `[1.0.0-rc.4]: …compare/v1.0.0-rc.3...v1.0.0-rc.4`.
-  3. `docs/roadmap/v1.0-remaining.md:3`: "State on 2026-10-30 (release candidate `1.0.0-rc.4`)".
-  4. `.github/workflows/ci.yml:173` and `:189`: "until the demo of 28 October" → "4 November" (text only).
-  5. **RELEASE.md item 2:** E117 changed physiology (`l2/endo/{core,params}.ts`, `l2/thermal/{mh,params}.ts`; + E118's):
+  3. `docs/roadmap/v1.0-remaining.md:3`: "State on 2026-11-01 (release candidate `1.0.0-rc.4`)".
+  4. `.github/workflows/ci.yml:173` and `:189`: "until the demo of 28 October" → "3 November" (text only).
+  5. **RELEASE.md item 2:** E117 changed physiology (`l2/endo/{core,params}.ts`, `l2/thermal/{mh,params}.ts`):
      one sentence in `docs/guides/validation-summary.md` that `docs/validation/report.md` predates it, citing Monday's
      scheduled `validation` run if one ran, unless a regenerated report landed (R4-Q4).
 
@@ -248,7 +268,7 @@ awk '/^## \[Unreleased\]/{on=1;next} /^## \[/{on=0} on' CHANGELOG.md | grep -c '
 
   Expected: **4** and **7 passed**; any regenerated model page committed; typecheck clean; "Fourth public
   **pre-release** …"; `0`. Commit (`chore(release): version 1.0.0-rc.4 in every library package; CHANGELOG and CITATION
-  dated 2026-10-30`), push, PR (not draft) `release: 1.0.0-rc.4 version bump`; **never merge**. (orch) merges with
+  dated 2026-11-01`), push, PR (not draft) `release: 1.0.0-rc.4 version bump`; **never merge**. (orch) merges with
   `merge-one-v2.sh` after the tooling PR (exit 4: `gh run rerun <id> --failed`, at most twice).
 - [ ] **Step 5 (executor). The prep run on `FREEZE_SHA`** (Decision 6; machine exclusive; nothing placed, committed or
   pushed):
@@ -269,10 +289,10 @@ node scripts/showcase/debrief-fa.mjs $P/a4/debrief-a4-mh-*-chromium.json $P/a4/d
   (The cherry-pick runs only if the tooling PR is not in `FREEZE_SHA`; a Notes-line conflict: take the tooling side;
   `--version 1.0.0-rc.3`: the candidate still says rc.3.) Expected: kit ready; relay **4 of 4**; talk `1 passed` ≈ 10 min (the edited MH segment's first run); A4 `2 passed`; `0 strings
   without translation` ×2. The Task 4 Step 4 readers on `$P/q2/` and `$P/a4/` → `$P/expected.txt`: **tag day's expected
-  values**. Look at the three `q2-*-monitor-chromium.png`. A surprise goes to the orchestrator that evening (a script
+  values**. Look at the three `q2-*-monitor-chromium.png`. A surprise goes to the orchestrator that afternoon, before 17:30 (a script
   fix: tooling; a missing Persian string: the orchestrator via the skill, `reviewed: false`, a docs PR before the tag).
   Then remove the worktree (`git -C …/repo worktree remove --force …/scratch/wt-rc4-prep`).
-- [ ] **Step 6 (orch). The release dry run on main** (Decision 2; after the bump merge, main green; needs #125):
+- [ ] **Step 6 (orch). The release dry run on main** (Decision 2; after the bump merge, main green; #125 is merged):
 
 ```bash
 cd /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo && git fetch -q && git rev-parse origin/main
@@ -286,10 +306,9 @@ gh release list -R samhv-dev/patient-monitor-engine --limit 2
 
   Expected: `headSha` = main's (repeat the list until it shows); exit 0 in ≈ 7 min; 9 files (the 8 assets with
   `-v1.0.0-rc.4` in the two zip names, + `NOTES.md`); 7 × `: OK`; a blank line, "Fourth public **pre-release** …";
-  `/*! patient-monitor-engine 1.0.0-rc.4`; no rc.4 release. Record the run id. **Without #125**: skip, say so in the
-  gate note, budget ≈ 26 min for Task 2 Step 2.
+  `/*! patient-monitor-engine 1.0.0-rc.4`; no rc.4 release. Record the run id.
 
-### Task 1 (orch): verify the tag commit — Friday 12:00
+### Task 1 (orch): verify the tag commit — Sunday 1 November ≈ 10:00
 
 - [ ] **Step 1. Variables** (`printf`, no heredoc):
 
@@ -325,7 +344,7 @@ git ls-remote --tags origin "$V*"
 
   Expected: `has-freeze`; the bump (+ tooling/docs) merges; only version strings, the `ci.yml` comments and the
   kit-round script; `success`; `build`, `e2e (chromium)`, `e2e (webkit)` success, quarantine any (counts to the gate
-  note); tick bench `success`; the dry run `success` (absent without #125); no Chromium retry-only line (WebKit's to
+  note); tick bench `success`; the dry run `success`; no Chromium retry-only line (WebKit's to
   the gate note, new ones to Task 9); no remote tag.
 - [ ] **Step 3. The release files on the commit.**
 
@@ -342,8 +361,8 @@ git diff --stat "$RC3_SHA" "$TAG_SHA" -- packages/engine-core/src | tail -1
 git show "$TAG_SHA:docs/guides/validation-summary.md" | grep -n -E "E117|predates" | head -3
 ```
 
-  Expected: `## [Unreleased]`, `## [1.0.0-rc.4] - 2026-10-30`; `0`; rc.4 / `"2026-10-30"`; "Fourth public
-  **pre-release** …"; ≥ 2 (≥ 1 if Windows was ticked); `0`; ≥ 2; `0`; the E117 files (+ E118's, `version.ts`); the
+  Expected: `## [Unreleased]`, `## [1.0.0-rc.4] - 2026-11-01`; `0`; rc.4 / `"2026-11-01"`; "Fourth public
+  **pre-release** …"; ≥ 2 (≥ 1 if Windows was ticked); `0`; ≥ 2; `0`; the E117 files (+ `version.ts`); the
   item-2 sentence (a miss: gate note and Task 9, not a hold). A wrong notes body: `gh release edit $V -R $GHR
   --notes-file <file>` (body only). RELEASE.md 1, 3, 4 above; 5 re-run by `release.yml`; 8, 9 not run; 10 the Windows line.
 - [ ] **Step 4. A clean worktree of the commit** (the kit's build tree):
@@ -378,7 +397,7 @@ gh run list -R $GHR --workflow release --event push --commit "$TAG_SHA" --limit 
 gh run watch <databaseId> -R $GHR --exit-status --interval 30
 ```
 
-  Expected: `headBranch` `v1.0.0-rc.4`; exit 0 in ≈ 7 min (≈ 26 without #125: poll 30 min, not rc.3's 20). A failed
+  Expected: `headBranch` `v1.0.0-rc.4`; exit 0 in ≈ 7 min (#125's container). A failed
   browser-test step: `gh run rerun <id> -R $GHR --failed`, at most twice; anything else: no release, tag and `main`
   untouched, Tasks 3–7 go on with Task 3 Step 6's local build.
 - [ ] **Step 3. The release page.**
@@ -473,16 +492,16 @@ ls "$S/pme-kit-release-$RC3_8"; ls "$TD"
   `pme-classroom-dryrun-kit-fcf99b70/`, `pme-showcase-kit-fcf99b70/`, `pme-kit-release-b39b3d87/`, `pme-debrief-rc2/`,
   `pme-embed-rc2/`, `owner-notes-before-rc4/`. Then, with the editor, each modelled on its rc.3 text:
   - **`$S/pme-kit-release-$SHA8/README.txt`**: built from `<TAG_SHA>` (tag `v1.0.0-rc.4`) on `<date>`, clean checkout;
-    "THIS IS THE RELEASE BUILD for the demo on Wednesday 4 November … Version 1.0.0-rc.4 (pre-release) …"; rc.3
+    "THIS IS THE RELEASE BUILD for the demo on Tuesday 3 November … Version 1.0.0-rc.4 (pre-release) …"; rc.3
     bookmarks will not restore; the relay line; the Windows zip line; "Rehearsed on this kit (kit round Q2 on rc.4,
     <date>)" (after Task 4); "The rc.3 kit in pme-kit-release-fcf99b70 is the fallback (older MH and haemorrhage
     cards): take both on the stick."
-  - **First line of `$S/pme-kit-release-$RC3_8/README.txt`**: "FALLBACK for Wednesday 4 November: the rc.4 kit is
+  - **First line of `$S/pme-kit-release-$RC3_8/README.txt`**: "FALLBACK for Tuesday 3 November: the rc.4 kit is
     pme-kit-release-<SHA8>. Use this kit only if the rc.4 kit fails; its MH and haemorrhage cards are the older ones
     (run sheet: the '22 October' MH section, Reserve R4); Persian handouts in fa-handouts-rc3/, print set in
     ../pme-debrief-rc3/."
   - **`PRE-FLIGHT.md`, `OWN-PHONE-TEST.md`:** the kit sentence → rc.4 from `<SHA8>`, relay 4 of 4 on `<date>`, rc.3
-    bookmarks will not restore, the rc.3 fallback, the demo on 4 November; plus "the MH card starts awake: Premedicate,
+    bookmarks will not restore, the rc.3 fallback, the demo on 3 November; plus "the MH card starts awake: Premedicate,
     Preoxygenate, Induce, Intubate, Start surgery are buttons; oxygen only by a step".
   - **`HOW-TO-CHECK-THE-PRINT.txt`:** kit path; footer `1.0.0-rc.4` + `<SHA8>`; E50; the verdict words; MH 7 pages,
     haemorrhage 8 (the prep run's if different); handouts 1 page (MH three take-home lines, haemorrhage ruled lines);
@@ -524,11 +543,14 @@ grep -c -F "Preoxygenate: 100 % O₂ by face mask" scripts/showcase/kit-round-a.
 grep -n -E "fill\('(Showcase 2|Live demo), [0-9]+ (October|November)'\)|Kit round Q2 rehearsal on the rc" scripts/showcase/kit-round-a.kitround.ts
 ```
 
-  Expected: `2` (the tooling PR is in the tag); 4 November; rc.4.
-- [ ] **Step 2. Only if Step 1 printed `1`:** `git fetch -q origin test-kitround-rc4 && git cherry-pick -x
-  origin/test-kitround-rc4` (a date or Notes line still wrong: Task 0 Step 3's one-line edits); the prep run's script
-  fixes too, committed before Step 3; then Task 0 Step 3's `--list` → "Total: 6 tests".
-- [ ] **Step 3. The talk, Chromium then WebKit** (machine exclusive; ≈ 10 min each):
+  Expected: `2` (#128 is in the tag); 3 November (the two-demos PR's strings); rc.4. The Q1 talk in the tag is the
+  two-demos talk: opening → MH (E119) → haemorrhage (E120) + Debrief → close (Decision 4).
+- [ ] **Step 2. Only if Step 1 shows the two-demos talk missing or a date still 4 November:** `git fetch -q origin
+  test-kitround-two-demos && git cherry-pick -x` its commits (a date or Notes line still wrong: Task 0 Step 3's
+  one-line edits); the prep run's script fixes too, committed before Step 3; then `--list` → the count per the
+  tooling PR's body.
+- [ ] **Step 3. The two-demos talk, Chromium then WebKit** (machine exclusive; time per the prep run). The test
+  title in `-g` and the record names are per the tooling PR's body (below: the current title):
 
 ```bash
 . /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/rc4-release/env.sh
@@ -538,8 +560,9 @@ env -u CI SHOWCASE_KIT="$KIT" KITROUND_OUTDIR=$Q npx playwright test -c scripts/
 cp -n $W/relay-$SHA8.json $Q/; ls $Q | wc -l
 ```
 
-  Expected: "No such file or directory"; `1 passed` each (rc.3 9.7 min); "kit … served at http://127.0.0.1:8760/?relay
-  by Start Classroom.command"; ≈ 34 files. **No new file for 15 min** after the tamponade Debrief JSON: a hang; Task 8.1.
+  Expected: "No such file or directory"; `1 passed` each; "kit … served at http://127.0.0.1:8760/?relay by Start
+  Classroom.command"; the file count per the prep run (rc.3's six-segment talk: ≈ 34). **No new file for 15 min**
+  after the haemorrhage Debrief JSON: a hang; Task 8.1.
 - [ ] **Step 3b. The local macOS WebKit e2e set** (≈ 8 min):
 
 ```bash
@@ -580,12 +603,14 @@ for (const f of fs.readdirSync(d).filter(f=>/^q1-[0-4]-.*\.json$/.test(f))) {
 }'
 ```
 
-  | Segment | Expected, both engines (rc.3's Q2; the prep run's values win) |
+  The record names (and the reader's file filter) are per the tooling PR's body; the rows below name the segments.
+
+  | Segment | Expected, both engines (the prep run's values win) |
   |---|---|
-  | `q1-0-opening-and-qr` | kit = `$SHA8`; errors 0; about contains **"Version 1.0.0-rc.4 (pre-release). For education only. Not a medical device and not clinically validated"**; `3 phones following` |
-  | `q1-1-bronchospasm-ventilator-view-h21` | marks `["not-assessable","observed","not-assessable"]` (salbutamol ≈ 02:06); h21 `true` / `true`; errors 0 |
-  | `q1-2-tamponade-a3-path-and-3-debrief` | marks `["observed","observed","observed","observed","discuss"]`; footer `Version 1.0.0-rc.4 (pre-release), build <SHA8>`; Chromium pdf `a4: true`, 6 pages (more: a NOTE); errors 0 |
-  | `q1-4-malignant-hyperthermia-early-call-13-03` | marks `["observed","observed","observed","not-assessable","not-assessable","observed"]`; e22: early signs ≈ 08:38, call ≈ 08:40, press after span 1 in Recovering (the prep run's time; rc.3's 13:03 no longer applies); errors 0; fx12 `true` |
+  | opening and QR | kit = `$SHA8`; errors 0; about contains **"Version 1.0.0-rc.4 (pre-release). For education only. Not a medical device and not clinically validated"**; `3 phones following` |
+  | malignant hyperthermia (E119) | marks `["observed","observed","observed","not-assessable","not-assessable","observed"]`; e22: early signs ≈ 08:38, call ≈ 08:40, press after span 1 in Recovering (the prep run's time; rc.3's 13:03 no longer applies); errors 0; fx12 `true` |
+  | class IV haemorrhage (E120) + Debrief | the states and shock outcomes of the E120 row (the prep run's times); footer `Version 1.0.0-rc.4 (pre-release), build <SHA8>`; Chromium pdf `a4: true` (pages per the prep run); errors 0 |
+  | close | per the tooling PR's body; errors 0 |
 
   The two cards (this reader printed the 24 October records' values quoted in "What rc.4 adds"):
 
@@ -599,9 +624,9 @@ for (const f of fs.readdirSync(d).filter(f=>/^a4-.*-kit-round-(chromium|webkit)\
 }'
 ```
 
-  Expected: four lines, kit `$SHA8`, errors 0, the E119/E120 rows' values. Open the six `q2-*-monitor-*.png` against
-  the pass-3 row and rc.3's notes (a)–(c) (`scratch/rc3-release/gate-notes.md`): no overlapping tile text; capnogram
-  breath by breath; tamponade IBP2 = CVP; IBP2 empty in MH and bronchospasm (not F9); no older rc. One A4 PNG per card.
+  Expected: four lines, kit `$SHA8`, errors 0, the E119/E120 rows' values. Open the `q2-*-monitor-*.png` set (names per the
+  tooling PR's body) against the pass-3 row and rc.3's notes (a)–(c) (`scratch/rc3-release/gate-notes.md`): no
+  overlapping tile text; capnogram breath by breath; IBP2 empty in MH (not F9); no older rc. One A4 PNG per card.
 - [ ] **Step 5. The print PDFs for the owner** (`cp -n` only):
 
 ```bash
@@ -665,7 +690,7 @@ ls -la "$S/pme-debrief-fa" "$S/pme-kit-release-$RC3_8/fa-handouts-rc3"
   two live-demo cases from the rc.4 build, kit `<SHA8>`; key times per case; pages, "Strings left in English: 0 in
   each"; the take-home lines; the rc.3 set in `pme-kit-release-fcf99b70/fa-handouts-rc3/`; "do not save them from
   Preview") and a bracketed line for the Persian paragraph, which **(orch)** writes with the `persian-writing` skill
-  (formal; Persian digits for counts and dates, ۱۳ آبان ۱۴۰۵; Western digits for versions, times and values) into
+  (formal; Persian digits for counts and dates, ۱۲ آبان ۱۴۰۵; Western digits for versions, times and values) into
   `scratch/owner-review/readme-fa-rc4.md` (rc.3's was deferred to this one: rulings 2026-10-23 15:32).
 
 ### Task 6 (executor builds the tree, orch pushes): GitHub Pages from the tag
@@ -714,7 +739,7 @@ cd $R/scratch/wt-rc4-tag && node -e 'const {chromium}=require("@playwright/test"
   Expected: `(forced update)` (refused: someone pushed since Task 1; stop); `built <GP>` (every minute, ≤ 10); the rc.4
   line, `1`, the rc.4 label. Record `$GP`; keep `gh-pages-rc3` (rollback) and `gh-pages-rc4c`.
 
-### Task 7 (owner, guided by the orch): the smoke and the live rehearsal, Saturday 31 October ≈ 09:00; the room dry run
+### Task 7 (owner, guided by the orch): the smoke and the live rehearsal, Sunday 1 November evening (or Monday 2 November morning, his choice); the room dry run Monday 2 November
 
 One AskUserQuestion step per item, **≈ 35 min** (tell him); his Mac (Safari, Chrome), his phone, hotspot or router.
 
@@ -730,18 +755,19 @@ One AskUserQuestion step per item, **≈ 35 min** (tell him); his Mac (Safari, C
 | 8 | 4 | **Class IV haemorrhage**: Load · All alarms on · ×8; **Oxygen by face mask**, **Intubate and ventilate**; watch to the junctional rhythm and PEA (≈ 11:00 sim); Debrief → **Print the learner handout** | Junctional, then PEA; SpO₂ ≈ 96 on room air before the oxygen step; handout 1 page, ruled take-home lines (unless his lines landed) |
 | 9 | 1 | Open the two `_sandbox/pme-debrief-fa/debrief-fa-*-<date>.pdf` in Preview (read only) | Right-to-left Persian; footer نسخه‌ی 1.0.0-rc.4 (پیش‌انتشار) and the build; the page-1 notice (unless the term review landed) |
 | 10 | 1.5 | Close the black window (Terminate). Double-click `_sandbox/pme-embed-rc4/ventilator-monitor.html` (Safari), Develop → Show JavaScript Console | H22 on rc.4: breathes within 20 s; HR, SpO₂ > 90, EtCO₂, awRR 14; no console error |
-| 11 | 1 | Only if E121b landed: free play, **oxygen by mask** on the breathing patient; then with the ventilator on | SpO₂ rises; the control disabled with the ventilator (unverified: its words) |
+| 11 | 1 | E121b (#124, merged): free play, **oxygen by mask** on the breathing patient; then with the ventilator on | SpO₂ rises; the control disabled with the ventilator (unverified: its words) |
 | 12 | 0.5 | https://samhv-dev.github.io/patient-monitor-engine/ in Safari | "Version 1.0.0-rc.4 (pre-release) …"; no phone pairing from Pages (expected) |
 
 **Gate items** 1, 2, 7, 8 → Task 8. The rest are findings: 4 → "phones silent, the Mac is the alarm source"; 5, 6 →
 a presenter's rule; 3 → "attach the CO₂ line first"; 9 → the English Debrief is the reference; a wished-for Saadat-like
 change → a later release.
 
-**The live rehearsal (≈ 45 min):** his 4 November programme (R4-Q3) on the same kit, phone following; the orchestrator
+**The live rehearsal (≈ 45 min):** his 3 November programme (R4-Q3: two live demos, malignant hyperthermia then
+class IV haemorrhage) on the same kit, phone following; the orchestrator
 records times per card, late cues, what he says aloud (the VF is card-inserted) and changes. A missing state, crash or
 unprintable Debrief: Task 8; the rest: Task 9 Step 4.
 
-**The room dry run (Monday 2 or Tuesday 3 November; R4-Q5).** **W:** the 10 lines of `READ ME FIRST.txt` (WINDOWS)
+**The room dry run (Monday 2 November; R4-Q5).** **W:** the 10 lines of `READ ME FIRST.txt` (WINDOWS)
 on the room's PC or the Windows laptop, from `pme-kit-release-<SHA8>/pme-showcase-kit-<SHA8>.zip` (Node ≥ 22; Unblock,
 Extract All into a path with a space; Start Simulator 8642, no firewall question; closing stops it; Start Classroom
 8650/?relay; firewall Private and Public; the Wi-Fi IPv4; his phone follows; Ctrl+C, Y stops it; a second one takes
@@ -783,28 +809,30 @@ diff -rq "$S/pme-kit-release-$RC3_8/pme-showcase-kit-$RC3_8" "$S/pme-classroom-d
   Expected: `same-rc3`; the four notes are the pre-rc.4 versions (they say 28 October: the orchestrator adds one line
   with the new date); `pme-debrief-fa/` holds the rc.3 handouts. The `cp -p … README.txt` is the one deliberate
   overwrite (the pre-rc.4 text, saved first). Add at the top of `$S/pme-kit-release-$SHA8/README.txt`: "NOT FOR
-  WEDNESDAY: <F-number or smoke item> failed; present on pme-kit-release-fcf99b70."
+  TUESDAY 3 NOVEMBER: <F-number or smoke item> failed; present on pme-kit-release-fcf99b70."
 
 **What the rc.3 kit lacks, for the presenter:** the two demo cards as rehearsed — its MH card starts induced, its
 haemorrhage card is the old course (CPR at the no-pulse alarm, "Start CPR, 2 L and epinephrine", no junctional, VF or
 shocks); E117; E121; pass 3 (tiles collide); F29; the FAST line. Its script: the run sheet's "Case 3 as run on 22
 October" and "Reserve R4" (`git show v1.0.0-rc.3:docs/showcase/SHOWCASE-2-RUN-SHEET.md`), printed by the orchestrator.
 
-**8.3 Re-run** on the rc.3 kit before noon Saturday: the Q1 talk, Chromium (≈ 10 min), with the **rc.3 tag's** script
-(the rc.4 one presses buttons rc.3 lacks) from `git -C $R/repo worktree add --detach $R/scratch/wt-rc3-fallback
-$RC3_SHA`, into `KITROUND_OUTDIR=$R/scratch/rc4-release/fallback-$RC3_8`.
+**8.3 Re-run** on the rc.3 kit before the room dry run on Monday 2 November: the Q1 talk, Chromium (≈ 10 min), with
+the **rc.3 tag's** script (the rc.4 one presses buttons rc.3 lacks) from `git -C $R/repo worktree add --detach
+$R/scratch/wt-rc3-fallback $RC3_SHA`, into `KITROUND_OUTDIR=$R/scratch/rc4-release/fallback-$RC3_8`.
 
 ### Task 9 (executor; orch merges): the docs PR after the smoke
 
 Branch `docs-rc4-release` in `scratch/wt-rc4-docs` (rebase onto `origin/main` before the push on a conflict); docs,
-evidence, test tooling only. Steps 1–3 and 4.1–4.3 Friday ≈ 16:00, **no push** (rc.3 pushed a draft here at its
-brief's request: one extra CI run); the rest after the smoke; merge by **Sunday 1 November 18:00**.
+evidence, test tooling only. Steps 1–3 and 4.1–4.3 Sunday 1 November ≈ 14:00, **no push** (rc.3 pushed a draft here
+at its brief's request: one extra CI run); the rest after the smoke: the PR opens Sunday evening or Monday; review and
+merge **Monday 2 November**.
 
-- [ ] **Step 1. The plan as run:** this file gets a status block "RUN 2026-10-29/31" with the deviations
+- [ ] **Step 1. The plan as run:** this file gets a status block "RUN 2026-10-31/11-02" with the deviations
   (`docs(plans): the rc.4 release day as run`).
 - [ ] **Step 2. Evidence and gate notes:** (1) `q2-rc4/` (+ `relay-<SHA8>.json`), `q2-rc4-a4/` (+ the Persian
   `.fa.*` and `.verify.txt`), any `-rerun/`; a `docs/showcase/KIT-GATE.md` line: "<date>: kit round Q2 on the rc.4 kit
-  `<SHA8>` — the talk and the two live-demo cards; the six-card shots not re-taken (still the rc.3 kit)". (2)
+  `<SHA8>` — the talk and the two live-demo cards; the six-card shots not re-taken (still the rc.3 kit)"; #117's
+  branch `docs-rc3-release` (closed, R4-Q2 (b)): its gate note and Q2-rc3 evidence folded in. (2)
   `docs/gates/rc4-release.md` (new), from `$W/gate-notes.md`, in the order of Tasks 0–8: freeze, PRs, dry run, tag
   commit and its run, release and assets, kit and relay and zip, the owner's folders, the Q2 tables against the prep
   run, macOS WebKit, Persian, Pages, the smoke item by item, the live rehearsal, W/E13/E14, deviations, RELEASE.md item 2.
@@ -813,14 +841,15 @@ brief's request: one extra CI run); the rest after the smoke; merge by **Sunday 
   rc.3's, the A4 rows beside 24 October's, the handouts, the Persian, the screenshots against rc.3's notes (a)–(c),
   Findings, Not measured.
 - [ ] **Step 4. Run sheet, cue cards, presenter guide** (only where a fact changed): (1) the kit key →
-  `pme-kit-release-<SHA8>/README.txt`, the fallback → `pme-kit-release-fcf99b70`, "28 October" → "4 November" where it
-  names the demo; (2) §5 MH and the haemorrhage section: rows that moved > 2 s from A4's; (3) the screen after pass 3,
-  the screenshots' paths; (4) the programme from the owner's answer to R4-Q3, nothing invented; (5) smoke items 4, 7, 8
-  in his words, the checklist boxes, the W/E13/E14 rows ("Mon/Tue" until the room); (6) any NOTE that moves a cue.
+  `pme-kit-release-<SHA8>/README.txt`, the fallback → `pme-kit-release-fcf99b70`, "28 October" or "4 November" →
+  "3 November" where it names the demo; (2) §5 MH and the haemorrhage section: rows that moved > 2 s from A4's; (3) the
+  screen after pass 3, the screenshots' paths; (4) the programme from the owner's answer to R4-Q3 (two live demos, MH
+  then class IV haemorrhage; bronchospasm and tamponade out), nothing invented; (5) smoke items 4, 7, 8 in his words,
+  the checklist boxes, the W/E13/E14 rows ("Mon 2" until the room); (6) any NOTE that moves a cue.
 
 ```bash
 cd /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/wt-rc4-docs
-git grep -n -E "fcf99b70 release build|1\.0\.0-rc\.3 \(pre-release\)|28 October" -- 'docs/showcase/SHOWCASE-2-*.md'
+git grep -n -E "fcf99b70 release build|1\.0\.0-rc\.3 \(pre-release\)|28 October|4 November" -- 'docs/showcase/SHOWCASE-2-*.md'
 git grep -n -i "v1\.1" -- docs/showcase docs/gates/rc4-release.md
 ```
 
@@ -850,20 +879,24 @@ gh pr create -R samhv-dev/patient-monitor-engine --base main --head docs-rc4-rel
 
 ## For the owner (one paragraph)
 
-Thursday 29 October 18:00 the product is frozen; that evening it becomes 1.0.0-rc.4 and the release is rehearsed on
-GitHub without publishing. Friday 12:00 rc.4 is tagged as a **pre-release**; from that commit the kit is rebuilt and
-placed in your folders (with a Windows zip), the talk and your two live-demo cases are rehearsed automatically in both
-browsers with three emulated phones, their Persian handouts regenerated, Pages republished. The rc.3 kit stays beside
-it as the fallback; rc.2 is retired. Saturday ≈ 09:00 a guided check of ≈ 35 minutes (both demo cards' buttons and
-prints), then your own rehearsal; Monday or Tuesday the room (Windows, router, phones). If something essential fails,
-you present on the rc.3 kit, with its older two cards, and I tell you at once.
+Saturday 31 October 12:00 the product is frozen; that afternoon, before the 17:30 allowance reset, it becomes
+1.0.0-rc.4 and the release is rehearsed on GitHub without publishing. Sunday 1 November from ≈ 10:00 rc.4 is tagged as
+a **pre-release**; from that commit the kit is rebuilt and placed in your folders (with a Windows zip), the talk and
+your two live-demo cases are rehearsed automatically in both browsers with three emulated phones, their Persian
+handouts regenerated, Pages republished. The rc.3 kit stays beside it as the fallback; rc.2 is retired. Sunday evening
+(or Monday 2 November morning, your choice) a guided check of ≈ 35 minutes (both demo cards' buttons and prints), then
+your own rehearsal of the two live demos, malignant hyperthermia then class IV haemorrhage; Monday 2 November the room
+(Windows, router, phones). The demo is Tuesday 3 November (12 Aban). If something essential fails, you present on the
+rc.3 kit, with its older two cards, and I tell you at once.
 
 ---
 
 ## What remains for the owner
 
-- **By Thursday 18:00:** the haemorrhage objectives and take-home lines; the 13 clinical-review rulings; E118; the demo
-  date; the programme (R4-Q3). **Saturday:** smoke and rehearsal. **Mon/Tue:** the room (W, E14, E13). **Persian
+- **By Saturday 31 October 12:00 (the freeze):** the haemorrhage objectives and take-home lines; the 13
+  clinical-review rulings. (Ruled 24 October: the demo date, the programme R4-Q3, #117 R4-Q2, E118 post-demo.)
+  **Sunday 1 November evening or Monday 2 morning:** smoke and rehearsal. **Monday 2 November:** the room (W, E14,
+  E13); the docs PR's review and merge. **Persian
   reviews:** `scratch/owner-review/readme-fa-rc4.md` (and rc.2's), the terms file. **Deck pass 2** (rc.4 shots, video).
 
 ---
@@ -872,13 +905,13 @@ you present on the rc.3 kit, with its older two cards, and I tell you at once.
 
 | ID | Question | Default |
 |---|---|---|
-| **R4-Q1** | Main not green by Friday 14:00, or a gate fails for a product reason: (a) tag Saturday by 12:00 (smoke Saturday afternoon); (b) present on the rc.3 kit with its older cards; (c) a hotfix rc.5 Monday 2 November | **(a)** for a red main; **(b)** for a product failure after the tag |
-| **R4-Q2** | #117 (rc.3 docs, draft; whether the rc.3 smoke ran before the postponement is unverified): (a) ready with "the rc.4 smoke on 31 October supersedes it", review, merge before the freeze; (b) close it and fold its gate note and Q2-rc3 evidence into the rc.4 docs PR | **(a)** |
-| **R4-Q3** | The 4 November programme: the run sheet's table still has bronchospasm → tamponade + Debrief → MH; the rulings (2026-10-24 00:40) put haemorrhage in place of tamponade. Which segments, in which order? | Rehearse the Q1 script as it stands (with the MH fix) plus both A4 paths; Task 9 writes the table from his answer |
+| **R4-Q1** | Main not green by Sunday 1 November 12:00, or a gate fails for a product reason: (a) tag Monday 2 November by 12:00 (smoke Monday afternoon, beside the room dry run); (b) present on the rc.3 kit with its older cards; (c) a hotfix rc.5 Monday 2 November, the day before the demo | **(a)** for a red main; **(b)** for a product failure after the tag |
+| **R4-Q2** | #117 (rc.3 docs, draft; whether the rc.3 smoke ran before the postponement is unverified): (a) ready with "the rc.4 smoke supersedes it", review, merge before the freeze; (b) close it and fold its gate note and Q2-rc3 evidence into the rc.4 docs PR | **ANSWERED (b)** (owner, 2026-10-24): #117 is closed; its branch `docs-rc3-release` is the rc.4 docs PR's input (Task 9 Step 2) |
+| **R4-Q3** | The 3 November programme: the run sheet's table still has bronchospasm → tamponade + Debrief → MH; the rulings (2026-10-24 00:40) put haemorrhage in place of tamponade. Which segments, in which order? | **ANSWERED** (owner, 2026-10-24): two live demos only, malignant hyperthermia then class IV haemorrhage; bronchospasm and tamponade are out. Task 9 writes the table from this |
 | **R4-Q4** | RELEASE.md item 2 after E117: (a) one sentence that the validation report predates it; (b) a regenerated report (`validation` ≈ 3 h, or Monday's cron run) in a PR before the freeze | **(a)**, citing Monday's run if it ran |
-| **R4-Q5** | The room dry run: Monday 2 or Tuesday 3, and on which Windows machine? | The owner's choice; Windows stays an untested backup until all 10 lines are ticked |
+| **R4-Q5** | The room dry run is Monday 2 November (the dates ruling, 2026-10-24): on which Windows machine? | The owner's choice; Windows stays an untested backup until all 10 lines are ticked |
 | **R4-Q6** | A3 and the six-card shots are not run at rc.4. Re-take the six-card shots after the demo, with the script updated for the new cards? | **Yes, after the demo** (≈ 56 min + a script PR) |
-| **R4-Q7** | The usage reserve for the demo week (1–4 November): 20 % as for the old demo week, or 10 %? | **20 %** from Sunday 1 November |
+| **R4-Q7** | The usage reserve for the demo week (1–3 November; the weekly allowance resets Saturday 31 October 17:30, on freeze day, after the dry run): 20 % as for the old demo week, or 10 %? | **20 %** from Sunday 1 November |
 | **R4-Q8** | The Pages serve check exists only in `scratch/wt-rc2-prep/scratch/pages-serve-check.mjs`. Move it to `scratch/rc4-release/`? | **No change on tag day**; after the demo |
 
 Still open from before: E13, E14, E111.
