@@ -1510,8 +1510,8 @@ test('Q1 30-minute talk on the release build: opening, bronchospasm + H21, tampo
     await page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }).click();
     const view = page.locator('[data-view=debrief]');
     await view.getByRole('heading', { level: 1, name: 'Debrief' }).waitFor({ timeout: 15_000 });
-    await view.getByRole('textbox', { name: 'Run by' }).fill('Showcase 2, 28 October');
-    await view.getByRole('textbox', { name: 'Notes' }).fill('Kit round Q2 rehearsal on the rc.2 release build.').catch(() => undefined);
+    await view.getByRole('textbox', { name: 'Run by' }).fill('Showcase 2, 4 November');
+    await view.getByRole('textbox', { name: 'Notes' }).fill('Kit round Q2 rehearsal on the rc.4 release build.').catch(() => undefined);
     await page.emulateMedia({ media: 'print' });
     mkdirSync(OUTDIR, { recursive: true });
     await page.screenshot({ path: join(OUTDIR, `q1-tamponade-debrief-print-${Tm.r.browser}.png`), fullPage: true }).catch(() => undefined);
@@ -1535,11 +1535,19 @@ test('Q1 30-minute talk on the release build: opening, bronchospasm + H21, tampo
   try {
     seg('4 MH: Load');
     await M.start('Malignant hyperthermia', 8, 'after-alarms', { phones, cardOrder: true });
+    await M.untilT(M.t0 + 30);
+    await M.press('Premedicate: midazolam 2 mg, fentanyl 100 µg', 'premedicated');
+    await M.untilT(M.t0 + 60);
+    await M.press('Preoxygenate: 100 % O₂ by face mask', 'preoxygenated');
     await M.untilT(M.t0 + 240);
+    await M.press('Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg', 'induced');
+    await M.untilT(M.t0 + 300);
+    await M.press('Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %', 'intubated');
+    await M.untilT(M.t0 + 360);
     await M.press('Start surgery: rocuronium 0.6 mg/kg', 'surgery');
-    await M.untilT(M.t0 + 390);
+    await M.untilT(M.t0 + 450);
     await M.speed(4);
-    await M.row('6:30 ×4: watch the CO2 tile');
+    await M.row('7:30 ×4: watch the CO2 tile');
     const tEarly = await M.until('earlySigns', 600);
     await M.row('state Early signs');
     await M.tick(/^Name malignant hyperthermia/); // E52: with the early call, just before MH crisis
@@ -1709,7 +1717,7 @@ async function a4Debrief(R: Run, page: Page, key: string): Promise<void> {
   await page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }).click();
   const view = page.locator('[data-view=debrief]');
   await view.getByRole('heading', { level: 1, name: 'Debrief' }).waitFor({ timeout: 15_000 });
-  await view.getByRole('textbox', { name: 'Run by' }).fill('Live demo, 28 October');
+  await view.getByRole('textbox', { name: 'Run by' }).fill('Live demo, 4 November');
   await view.getByRole('textbox', { name: 'Notes' }).fill('Kit round A4 rehearsal of the live-demo path.').catch(() => undefined);
   await page.emulateMedia({ media: 'print' });
   mkdirSync(OUTDIR, { recursive: true });
