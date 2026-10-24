@@ -92,7 +92,7 @@ States: Arrival → Deteriorating → **PEA** → CPR → CPR: pericardium drain
 | Clock | Cue | Press |
 |---|---|---|
 | 0:00 | | **Load · All alarms on · ×8 · Bookmark** |
-| 1:00 | **When the cues appear: CVP rising on the IBP2 tile (17), narrow pulse pressure, tachycardia** | name it aloud; **tick *Name the tamponade*** (Scenario tab) |
+| 1:00 | **When the cues appear: CVP rising on the IBP2 tile (17), narrow pulse pressure, tachycardia** | **say: "Bedside FAST: pericardial fluid, right-ventricular collapse"** (the card's note on the Scenario tab; the monitor alone cannot diagnose it); name it aloud; **tick *Name the tamponade*** (Scenario tab) |
 | 7:00 | | **×1** |
 | 7:31 | IBP1 STATIC PRESSURE: trace going flat | hand on the Scenario tab |
 | **7:49** | card shows **PEA** | **Start CPR, intubate, FiO₂ 1.0 AT ONCE** (by 7:57) |
