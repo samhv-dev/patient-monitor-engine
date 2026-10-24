@@ -7,7 +7,7 @@ import { brainstemOutF, createBaro, K_PP, stepBaro, V0_RECRUIT_MAX_ML_KG, type B
 import { createOut, evaluate, S, stepCirc, type CircDrive, type CircOut, type CircParams } from './circuit.ts';
 import { bolusScale, drugEffect, pruneBoluses, type Bolus, type DrugEffect, type DrugId } from './drugs.ts';
 import { betaBlunt } from '../pk/pd.ts';
-import { ATRIAL_DELAY_S, ATRIAL_T_S, DYSSYNC, H_S, HIST_SVR, HIST_V0, K_PVR_CO2, P_PL0 } from './params.ts';
+import { ATRIAL_DELAY_S, ATRIAL_T_S, DYSSYNC, H_S, HIST_SVR, HIST_V0, K_PVR_CO2, P_PL0, SEPT_C_MAX, SEPT_P_HALF, SEPT_P_ON, SEPT_TAU_S } from './params.ts';
 import { DEFAULT_PROFILE, resolveProfile, type CircProfile, type ResolvedProfile } from './profile.ts';
 import { stabilise, type Stabilised } from './stabilise.ts';
 import { createCoronary, G_ISCH, type CoronaryState } from './coronary.ts';
@@ -18,6 +18,7 @@ import { betaDV0Ml } from './venous.ts';
 
 // hot-loop locals (imported bindings are getters under the vitest transform) [perf]
 const L_H = H_S;
+const L_SEPT_K = H_S / SEPT_TAU_S;
 const L_evaluate = evaluate;
 const L_stepCirc = stepCirc;
 export const CTL_DT = 0.1; // control layer at 10 Hz (tables §2.1 step 6)
@@ -164,6 +165,11 @@ export interface CircModelState {
   noFlowS: number; // Seconds the continuous MAP has been below arrest.ts MAP_NO_FLOW
   saF: number; // The sinus-node factor of the last control step (MODELED; 1 in MANUAL) — the escape foci follow it
   chemo: { sao2: number; paco2: number }; // chemoreflex inputs (written at 1 Hz by the pipeline from L1 truths)
+  /**
+   * The septal interaction's operating point (params.ts SEPT_*): diastole-weighted means of the LV and RV volumes (mL)
+   * and of the pericardial pressure (mmHg) over SEPT_TAU_S. Absent until the first step (older snapshots).
+   */
+  sept?: { lv: number; rv: number; peri: number };
   /**
    * Extra multipliers owned by other modules (coronary ischaemia, conditions, lungs): applied at the next control step.
    * pvrLung × both beds, pvrLungL/R × one bed (HPV, one-lung ventilation, unilateral disease); default 1.
@@ -350,6 +356,13 @@ function control(m: CircModelState, env: CircEnv): void {
   p.pvrR = base.pvrR * de.pvr * m.ext.pvr * pvrF * lung * (m.ext.pvrLungR ?? 1) * co2F;
   if (m.ext.vFluidRate) m.ext.vFluid = Math.min(TAMPONADE_MAX_ML, Math.max(0, m.ext.vFluid + m.ext.vFluidRate * CTL_DT));
   p.vFluid = base.vFluid + m.ext.vFluid;
+  const sp = m.sept;
+  if (sp) {
+    const pk = Math.max(0, sp.peri - SEPT_P_ON);
+    p.septC = (SEPT_C_MAX * pk) / (pk + SEPT_P_HALF);
+    p.septLvRef = sp.lv;
+    p.septRvRef = sp.rv;
+  }
   const kc = x.kChem ?? 1;
   // In MANUAL the tracker's LV Emax was set against the ischaemia present while it tracked (kIschRef): new ischaemia
   // below that level still acts on top of the held picture, but recovery above it does not raise the delivered
@@ -436,6 +449,11 @@ export function stepCircModel(m: CircModelState, tEnd: number, env: CircEnv, o: 
     m.t += L_H;
     L_evaluate(m.s, m.t, m.p, d, o);
     m.qFwd += (Math.max(0, o.qAv) + o.qVad - m.qFwd) * (L_H / CO_TAU_S);
+    const sp = (m.sept ??= { lv: m.s[S.VLV] as number, rv: m.s[S.VRV] as number, peri: o.pPeri });
+    const kw = (1 - o.aVent) * L_SEPT_K; // Diastole-weighted operating point of the septal interaction
+    sp.lv += ((m.s[S.VLV] as number) - sp.lv) * kw;
+    sp.rv += ((m.s[S.VRV] as number) - sp.rv) * kw;
+    sp.peri += (o.pPeri - sp.peri) * kw;
     if (env.cprCardiac(m.t) <= 0) {
       m.cppAcc.sum += o.pAo - o.pRa; // The coronary driving pressure outside compressions (Paradis 1990)
       m.cppAcc.n++;

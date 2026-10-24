@@ -31,6 +31,17 @@ export function writeCircPvr(hemo: unknown, pvrMult: readonly number[], global =
   return true;
 }
 
+/**
+ * The tamponade effort's input (circ/conditions.ts tamponadeSwingF): the circulation's diastolic pericardial pressure
+ * (its septal operating point), mmHg — 0 when the circulation is absent or has declared an arrest (the effort is the
+ * perfused patient's; agonal gasps keep their own pattern).
+ */
+export function circPericardial(hemo: unknown): number {
+  const c = (hemo as { circ?: { sept?: { peri?: unknown }; arrest?: unknown } } | null)?.circ;
+  const v = c?.sept?.peri;
+  return c?.arrest == null && typeof v === 'number' && Number.isFinite(v) ? v : 0;
+}
+
 /** The circulation model's own pleural pressure from its tension-pneumothorax condition (mmHg), 0 when absent. */
 export function circPtx(hemo: unknown): number {
   const v = (hemo as CircLike | null)?.circ?.ext?.pPtx;

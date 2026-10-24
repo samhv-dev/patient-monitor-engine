@@ -34,7 +34,8 @@ import { createTemp, setCoreTarget, stepTemp, type TempState } from '../temp/tem
 import { thermalMetabolic } from '../thermal/metabolic.ts';
 import { HIST_SPASM, resolveLung, SMOOTH_MUSCLE, spasmSeverity } from '../lung/conditions.ts'; // SMOOTH_MUSCLE; spasmSeverity; HIST_SPASM
 import { blockedSides, capnoTerms, createLung, lungGasStep, lungMechStep, shuntFraction, staticCompliance, type LungState, type Mainstem } from '../lung/lung.ts';
-import { circPtx, circSideFlows, writeCircPvr } from '../lung/circ-link.ts';
+import { circPericardial, circPtx, circSideFlows, writeCircPvr } from '../lung/circ-link.ts';
+import { tamponadeSwingF } from '../circ/conditions.ts'; // The tamponade effort factor (E118)
 import { mechParams } from '../lung/side.ts';
 import { chestWallPressure, unitPressure } from '../lung/mechanics.ts'; // The one-way valve's driving pressure
 import { PTX_DRAIN_TAU_S, PTX_VALVE_PER_CMH2O_S } from '../lung/params.ts';
@@ -131,6 +132,8 @@ export interface RespState {
   wakeMmHg?: number;
   mainstemCmd: Mainstem | null; // Explicit `mainstem` command or an endobronchial airway; null = from conditions
   recruit: { p: number; until: number } | null; // sustained-inflation manoeuvre in progress
+  /** The spontaneous pleural-swing multiplier of the tamponade effort (circ/conditions.ts tamponadeSwingF); absent = 1. */
+  pplF?: number;
   circPtx: number; // The circulation model's own ext.pPtx (mmHg), read at 10 Hz, for the max-combined pleural pressure
   /** The tension pneumothorax's ACCUMULATED hemithorax pressure (mmHg) — what `lp.pPtx` delivers. */
   ptxAcc: number;
@@ -392,7 +395,7 @@ export function respPleural(rs: RespState, t: number): number {
   const d = rs.driver;
   const lp = rs.lung.lp;
   const k = lp.tIt / HEALTHY.tIt;
-  const base = pleuralPressureMmHg(d, t, compliance(rs));
+  const base = pleuralPressureMmHg(d, t, compliance(rs), rs.pplF ?? 1);
   let p = P_PL0 + k * (base - P_PL0);
   if (d.source === 'ventilator') p += k * T_IT * Math.max(0, rs.lung.peepTot - d.vent.peep) * CMH2O_TO_MMHG;
   return p + Math.max(0, lp.pPtx - rs.circPtx) + (rs.lung.mech.pMus ?? 0) * CMH2O_TO_MMHG; // A cough raises the intrathoracic pressure
@@ -516,6 +519,10 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   }, GAS_DT_S);
   writeCircPvr(h, rs.lung.perf.pvrMult, rs.lung.lp.pvr); // Per-lung + global lung PVR (circulation seams, duck-typed)
   rs.circPtx = circPtx(h);
+  const awake = 1 - Math.max(ctx.neuro?.loc ?? 0, gaLevel(rs)); // The dyspnoeic effort is the conscious patient's
+  const swingF = l1.mode === 'modeled' ? tamponadeSwingF(circPericardial(h), ctx.cbfRel ?? 1, awake) : 1; // The breathing of severe tamponade (E118)
+  if (swingF > 1) rs.pplF = swingF;
+  else delete rs.pplF;
   // MANUAL etco2 target → physiological dead space that holds it at the current settings. Calibrate only in MANUAL; in
   // MODELED the resting PaCO2 is the PATIENT's set point, not one derived from L1's adult EtCO2 default plus a gradient
   const etT = l1Target(l1, 'etco2', t);

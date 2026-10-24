@@ -13,7 +13,8 @@
 //   8 VPV pulmonary venous stressed volume                P_pv = VPV/cPv + P_it   (≈ PCWP)
 // Chamber pressure (Smith 2004 form): ventricles P = a·Emax·(V − V0) + (1 − a)·A·(e^{β(V − V0)} − 1); atria
 // P = (Emin + a·(Emax − Emin))·(V − V0); every intrathoracic compartment adds P_it (pleural) and the
-// four chambers add P_peri = A_p·(e^{λ(V_LV + V_RV + vFluid − v0Peri)} − 1) floored at 0 (tables §2.2).
+// four chambers add P_peri = A_p·(e^{λ(V_LV + V_RV + vFluid − v0Peri)} − 1) floored at 0 (tables §2.2). The septum
+// shifts the ventricles' passive volumes by ±x = c·(ΔV_RV − ΔV_LV)/2 about their operating point (params.ts SEPT_*).
 import { compliance } from '../hemo/circulation.ts';
 import { RADIAL_FR_HZ, RADIAL_GAIN, RADIAL_ZETA, WK_C, WK_CK, WK_L, WK_P0 } from '../hemo/params.ts';
 import { activationAt, type Activation } from './activation.ts';
@@ -67,6 +68,11 @@ export interface CircParams {
   vCprRef: number;
   /** The volume below which a compartment's outflow is throttled, mL (absent = V_EMPTY_ML; profile ×W/70). */
   vEmpty?: number;
+  /**
+   * The septal interaction (params.ts SEPT_*): the septum's share c (0–1) of the ventricular volume difference it
+   * moves by, and the operating-point volumes, mL (model.ts tracks them). Absent/0 = no septal term.
+   */
+  septC?: number; septLvRef?: number; septRvRef?: number;
 }
 
 /** Time-dependent inputs for one integration interval (built per tick by the model; not stored). */
@@ -145,8 +151,11 @@ export function evaluate(s: readonly number[], t: number, p: CircParams, d: Circ
   const extV = ext + cr; // venous/right-heart side: + the retained release pressure
   const dl = vlv - p.v0Lv;
   const dr = vrv - p.v0Rv;
-  const pLv = a * p.eesLv * d.kLv * dl + (1 - a) * p.aLv * (Math.exp(p.betaLv * dl) - 1) + ext + cc;
-  const pRv = a * p.eesRv * d.kRv * dr + (1 - a) * p.aRv * (Math.exp(p.betaRv * dr) - 1) + ext + cc;
+  // The septum moves into the ventricle that filled less (params.ts SEPT_*): each passive EDPVR reads its wall volume
+  const sc = p.septC ?? 0;
+  const x = sc > 0 ? 0.5 * sc * (vrv - (p.septRvRef as number) - (vlv - (p.septLvRef as number))) : 0;
+  const pLv = a * p.eesLv * d.kLv * dl + (1 - a) * p.aLv * (Math.exp(p.betaLv * (dl + x)) - 1) + ext + cc;
+  const pRv = a * p.eesRv * d.kRv * dr + (1 - a) * p.aRv * (Math.exp(p.betaRv * (dr - x)) - 1) + ext + cc;
   // While the chest is being compressed the thin-walled right heart and great veins are a Starling resistor — they
   // collapse rather than hold a negative transmural pressure, so the MEASURED atrial pressure tracks the intrathoracic
   // pressure (which is what a catheter reads: Paradis 1990's RA relaxation pressure of 15–25, not the ≈ 4 an
