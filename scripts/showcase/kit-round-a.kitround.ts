@@ -9,12 +9,13 @@
 // time from Load, the session-bar clock, the speed and the 1-minute load average of this Mac.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { loadavg } from 'node:os';
-import { join } from 'node:path';
+import { isAbsolute, join } from 'node:path';
 import { devices, test, type Browser, type Page } from '@playwright/test';
 import { alarms, hist, latest, maxOf, minOf, r1, record, REPO, simNow, stateId, watchConsole, type Sample } from './showcase-support.ts';
 import { pdfInfo } from '../../apps/demo/e2e/pdf-text.ts';
 
-const OUTDIR = join(REPO, process.env.KITROUND_OUTDIR ?? 'docs/showcase/kit-round-a'); // Q1: KITROUND_OUTDIR=docs/showcase/kit-round-a/q1
+const OUTDIR_ENV = process.env.KITROUND_OUTDIR ?? 'docs/showcase/kit-round-a'; // Q1: KITROUND_OUTDIR=docs/showcase/kit-round-a/q1
+const OUTDIR = isAbsolute(OUTDIR_ENV) ? OUTDIR_ENV : join(REPO, OUTDIR_ENV); // an absolute path is used as is
 const N_PHONES = Number(process.env.KITROUND_PHONES ?? 3);
 const REACT_S = Number(process.env.KITROUND_REACT_S ?? 2);
 const KIT_SHA = (() => {
@@ -1286,7 +1287,7 @@ test('A3 bronchospasm: ×8 and a 2-min fast-forward from the Instructor view wit
 // Q1: the 30-minute talk end to end in ONE page, as the cue cards run it (SHOWCASE-2-CUE-CARDS.md, 30-minute slot):
 // opening with the Start view's release label and the QR moment (three phones join once), 1 bronchospasm with the
 // Ventilator view (×8 and the two 2-min spans from the Instructor view), H21 at its end, reload, 2 tamponade on the A3
-// path with the Debrief read and printed, 4 MH early call with the press at 13:03 and three 5-min spans, then the close:
+// path with the Debrief read and printed, 4 MH early call with the press at 14:41 and three 5-min spans, then the close:
 // S12-F2 (one style change with the phones following, the AGENTS tile) and FX-12 (Restart patient, then Return here:
 // what does the session bar read?). One record per segment; the talk clock T+ is wall time from the opening.
 //   KITROUND_OUTDIR=docs/showcase/kit-round-a/q1 SHOWCASE_KIT=… npx playwright test -c scripts/showcase/playwright.kit-round.config.ts -g Q1 --project chromium
@@ -1294,7 +1295,7 @@ test('A3 bronchospasm: ×8 and a 2-min fast-forward from the Instructor view wit
 const holds = (phones: Page[]) => Promise.all(phones.map((p) => p.evaluate(() => { const h = document.querySelector('.learner-hold') as HTMLElement | null; const s = (window as unknown as Hook).__pmeFollower?.sync; return { hold: !!h && !h.hidden, status: s?.status ?? 'none', resyncs: s?.resyncs ?? null }; }).catch(() => null)));
 const sessionBarScen = (page: Page) => page.locator('.sessionbar .scen').innerText().then((s) => s.trim()).catch(() => 'no session bar');
 
-test('Q1 30-minute talk on the release build: opening, bronchospasm + H21, tamponade + Debrief, MH 13:03, close: S12-F2, FX-12', async ({ page, browser }) => {
+test('Q1 30-minute talk on the release build: opening, bronchospasm + H21, tamponade + Debrief, MH 14:41, close: S12-F2, FX-12', async ({ page, browser }) => {
   test.setTimeout(75 * 60_000);
   const talk0 = Date.now();
   const T = () => mmss((Date.now() - talk0) / 1000);
@@ -1510,8 +1511,8 @@ test('Q1 30-minute talk on the release build: opening, bronchospasm + H21, tampo
     await page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }).click();
     const view = page.locator('[data-view=debrief]');
     await view.getByRole('heading', { level: 1, name: 'Debrief' }).waitFor({ timeout: 15_000 });
-    await view.getByRole('textbox', { name: 'Run by' }).fill('Showcase 2, 28 October');
-    await view.getByRole('textbox', { name: 'Notes' }).fill('Kit round Q2 rehearsal on the rc.2 release build.').catch(() => undefined);
+    await view.getByRole('textbox', { name: 'Run by' }).fill('Showcase 2, 4 November');
+    await view.getByRole('textbox', { name: 'Notes' }).fill('Kit round Q2 rehearsal on the rc.4 release build.').catch(() => undefined);
     await page.emulateMedia({ media: 'print' });
     mkdirSync(OUTDIR, { recursive: true });
     await page.screenshot({ path: join(OUTDIR, `q1-tamponade-debrief-print-${Tm.r.browser}.png`), fullPage: true }).catch(() => undefined);
@@ -1530,16 +1531,24 @@ test('Q1 30-minute talk on the release build: opening, bronchospasm + H21, tampo
     await Tm.finish({ keepPhones: true });
   }
 
-  // ---- 4 MH, early call, the press at 13:03, three 5-min spans (card 4); then the close
-  const M = new Run(page, browser, 'Q1 4 malignant hyperthermia early call 13-03');
+  // ---- 4 MH, early call, the press at 14:41, three 5-min spans (card 4); then the close
+  const M = new Run(page, browser, 'Q1 4 malignant hyperthermia early call 14-41');
   try {
     seg('4 MH: Load');
     await M.start('Malignant hyperthermia', 8, 'after-alarms', { phones, cardOrder: true });
+    await M.untilT(M.t0 + 30);
+    await M.press('Premedicate: midazolam 2 mg, fentanyl 100 µg', 'premedicated');
+    await M.untilT(M.t0 + 60);
+    await M.press('Preoxygenate: 100 % O₂ by face mask', 'preoxygenated');
     await M.untilT(M.t0 + 240);
+    await M.press('Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg', 'induced');
+    await M.untilT(M.t0 + 300);
+    await M.press('Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %', 'intubated');
+    await M.untilT(M.t0 + 360);
     await M.press('Start surgery: rocuronium 0.6 mg/kg', 'surgery');
-    await M.untilT(M.t0 + 390);
+    await M.untilT(M.t0 + 450);
     await M.speed(4);
-    await M.row('6:30 ×4: watch the CO2 tile');
+    await M.row('7:30 ×4: watch the CO2 tile');
     const tEarly = await M.until('earlySigns', 600);
     await M.row('state Early signs');
     await M.tick(/^Name malignant hyperthermia/); // E52: with the early call, just before MH crisis
@@ -1550,26 +1559,26 @@ test('Q1 30-minute talk on the release build: opening, bronchospasm + H21, tampo
     await M.press('Dantrolene 2.5 mg/kg', 'dantrolene');
     await M.untilT(tC + 30);
     await M.press('Cool: 2 L saline at room temperature', 'cooling');
-    await M.untilT(M.t0 + 462);
-    await M.ff(5); // span 1 at 7:42, hyperventilation kept
-    await M.untilT(M.t0 + 775);
+    await M.untilT(M.t0 + 560);
+    await M.ff(5); // span 1 at 9:20, hyperventilation kept
+    await M.untilT(M.t0 + 873);
     await M.pauseToggle();
-    await M.row('12:55 Pause, point (state Recovering?)', { normoOffered: (await page.locator('section[aria-label="Running scenario"]').getByRole('button', { name: NORMO, exact: true }).count()) > 0 });
+    await M.row('14:33 Pause, point (state Recovering?)', { normoOffered: (await page.locator('section[aria-label="Running scenario"]').getByRole('button', { name: NORMO, exact: true }).count()) > 0 });
     await page.waitForTimeout(3000);
     await M.pauseToggle();
-    await M.untilT(M.t0 + 783);
+    await M.untilT(M.t0 + 881);
     const tP = await M.press(NORMO, 'normoventilated');
     await M.untilT(tP + 4);
     await M.ff(5); // span 2
-    await M.untilT(M.t0 + 1100);
+    await M.untilT(M.t0 + 1198);
     await M.pauseToggle();
-    await M.row('18:20 Pause: the presenter line');
+    await M.row('19:58 Pause: the presenter line');
     await page.waitForTimeout(3000);
     await M.pauseToggle();
     await M.ff(5); // span 3
-    await M.untilT(M.t0 + 1414);
+    await M.untilT(M.t0 + 1512);
     await M.pauseToggle();
-    await M.row('23:34 end: Pause');
+    await M.row('25:12 end: Pause');
     M.r.measures.wallLoadToEndS = M.wall();
     seg('4 MH: end', { wallS: M.wall() });
     const after = (await hist(page, tP, Infinity)).filter((x) => typeof x.etco2 === 'number') as Array<{ t: number; etco2: number }>;
@@ -1709,7 +1718,7 @@ async function a4Debrief(R: Run, page: Page, key: string): Promise<void> {
   await page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }).click();
   const view = page.locator('[data-view=debrief]');
   await view.getByRole('heading', { level: 1, name: 'Debrief' }).waitFor({ timeout: 15_000 });
-  await view.getByRole('textbox', { name: 'Run by' }).fill('Live demo, 28 October');
+  await view.getByRole('textbox', { name: 'Run by' }).fill('Live demo, 4 November');
   await view.getByRole('textbox', { name: 'Notes' }).fill('Kit round A4 rehearsal of the live-demo path.').catch(() => undefined);
   await page.emulateMedia({ media: 'print' });
   mkdirSync(OUTDIR, { recursive: true });

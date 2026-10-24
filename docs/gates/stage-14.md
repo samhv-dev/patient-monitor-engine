@@ -283,7 +283,9 @@ In the same PR the e2e jobs moved into the official Playwright container (`mcr.m
 the version read from the lockfile in the `renderer` job), so no job runs `playwright install --with-deps`: its apt step
 took 20–60 s on most runs but stalled on the runner's Ubuntu mirror for 1941 s, 2004 s and 2411 s on the WebKit leg
 (runs 40032500569, 39868678618, 39836946343) and 606–831 s on the Chromium leg (39973898452, 39957752222) between
-2026-10-21 and 10-24. `pnpm install` in those jobs has a 5-min step timeout; the job timeout stays 60 min.
+2026-10-21 and 10-24. `pnpm install` in those jobs has a 5-min step timeout; the job timeout stays 60 min. A follow-up
+PR (`ci-release-container`) runs `release.yml`'s browser tests and `validation.yml`'s soak in the same image with
+`docker run` (same workspace path, the runner's user), so the tag's release does not depend on the apt mirror either.
 
 **End condition:** the quarantine ends with the known-flaky list itself. When the calibration pass's Task 0
 re-harvests the list (or a test's tag is removed after its fix), the test returns to the gating job on its own, since
