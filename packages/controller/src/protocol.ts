@@ -110,6 +110,8 @@ export type ExtraEvent =
       type: 'state'; t: SimSeconds; tick: Tick; mode: 'manual' | 'modeled';
       values: Partial<Record<StateVar, number>>; control: Partial<Record<StateVar, ControlFlag>>;
       rhythm?: { id: RhythmId; rateBpm: number }; // The engine's running rhythm (absent from a host-synthesised state)
+      /** Who breathes and through what (E121b; the engine's own state, absent from a host-synthesised one). */
+      breathing?: { source: 'spontaneous' | 'bvm' | 'ventilator' | 'none' | 'external'; device: 'none' | 'ett' | 'sga' };
     }
   | { type: 'scenario'; t: SimSeconds; stateId: string; transitionId?: string }
   | { type: 'commandApplied'; commandId: string; tick: Tick; resolved: unknown; ignored?: string[] }

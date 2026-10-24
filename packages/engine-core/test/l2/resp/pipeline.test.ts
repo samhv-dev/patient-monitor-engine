@@ -25,6 +25,10 @@ describe('respiratory pipeline', () => {
   it('validates and applies respiratory commands; leaves haemodynamic commands alone', () => {
     expect(validateRespCommand(c({ type: 'applyEvent', event: { kind: 'airway', state: 'kinked' } }))).toMatch(/airway state/);
     expect(validateRespCommand(c({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', fio2: 0.1 } }))).toMatch(/fio2/);
+    // E121b: the oxygen control's words (device, flow) are checked; the physiology reads fio2 only
+    expect(validateRespCommand(c({ type: 'applyEvent', event: { kind: 'ventilation', source: 'spontaneous', fio2: 0.6, o2Device: 'mask', o2FlowLpm: 10 } }))).toBeUndefined();
+    expect(validateRespCommand(c({ type: 'applyEvent', event: { kind: 'ventilation', source: 'spontaneous', o2Device: 'venturi' } }))).toMatch(/o2Device/);
+    expect(validateRespCommand(c({ type: 'applyEvent', event: { kind: 'ventilation', source: 'spontaneous', o2FlowLpm: 16 } }))).toMatch(/o2FlowLpm/);
     // Stage 7a: pe/tamponade/tensionPtx/rvInfarct are circulation conditions (null = not a Stage 3 command); others still wait
     expect(validateRespCommand(c({ type: 'applyEvent', event: { kind: 'condition', id: 'pe', severity: 1 } }))).toBeNull();
     expect(validateRespCommand(c({ type: 'applyEvent', event: { kind: 'condition', id: 'sepsis', severity: 1 } }))).toMatch(/Stage 7/);

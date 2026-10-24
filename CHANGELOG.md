@@ -7,6 +7,25 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ## [Unreleased]
 
+### Added
+
+- Instructor panel (E121b): an **Oxygen** control on the Airway & ventilation tab for the spontaneously breathing
+  patient, since oxygen is never assumed (E121). Off (room air, the default), nasal cannula 1–6 L/min or face mask 5, 6,
+  8 or 10 L/min, staged like every panel action (Stage, then Commit). It sends one `ventilation` event (source
+  spontaneous) whose `fio2` follows the classic approximation of about 4 % per L/min, FiO₂ = 0.20 + 0.04 × flow
+  (nasal cannula 24–44 %, face mask 40–60 %; Off = 0.21). The device and flow ride along as two new optional fields
+  that are words only, `o2Device` ('none' | 'nasal' | 'mask') and `o2FlowLpm` (0–15; the engine validates them and
+  the physiology reads `fio2` alone). The log and the Debrief's timeline print "Oxygen by face mask 10 L/min (FiO₂
+  60 %)" and "Oxygen off: room air (FiO₂ 21 %)". A card's spontaneous breathing with a FiO₂ now prints it too
+  ("Breathing spontaneously, FiO₂ 50 %" at the tamponade's arrival). The Vitals tab shows the patient's FiO₂ follow
+  it. On a hypoxaemic patient (severe pneumonia) the face mask at 10 L/min raises SpO₂ from 78 to 84 % in 5 min.
+  Persian Debrief entries added (reviewed: false). The control acts only while the patient breathes spontaneously with
+  no airway device: on the bag, a ventilator (or the Ventilator view) or with a tracheal tube or supraglottic airway it
+  is disabled ("FiO₂ is set on the ventilator / bag"), an oxygen already staged is taken back, and its spontaneous
+  event is never sent (it would have taken the patient off the tube or the bag). For this the engine's 1 Hz `state`
+  event carries a new optional `breathing: { source, device }` (source spontaneous / bvm / ventilator / none /
+  external; device none / ett / sga).
+
 ### Changed
 
 - Showcase tamponade card (card text only): the monitor alone does not identify a tamponade, so the card now

@@ -63,6 +63,14 @@ export class Staging {
     this.changed();
   }
 
+  /** Take one control's staged command back out (the others keep their order). */
+  drop(key: string): void {
+    if (!this.entries.delete(key)) return;
+    this.buf.discard();
+    for (const [k, e] of this.entries) this.buf.stage(e.c, k);
+    this.changed();
+  }
+
   withRamp(c: CommandInput): CommandInput {
     // Only the commands whose onset the engine honours carry one (measured on the merged base: a pin or a target ramps;
     // a release hands the value back at once and setFactor is refused) — an onset the engine would ignore is never

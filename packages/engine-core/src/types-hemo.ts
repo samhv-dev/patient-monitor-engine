@@ -57,4 +57,7 @@ export type HemoEvent =
       /** Every sensor's state as `attachSensor` names it (the `state` strings of brief §7.2), so a Remote can show
        * which sensors are attached. Assembled by the engine when the event is committed (four owners). */
       sensors?: Partial<Record<SensorId, string>>;
+      /** Who breathes and through what (E121b), so a panel can tell a spontaneously breathing patient without an airway
+       *  device from a bagged, ventilated (external = the Ventilator view) or intubated one. Assembled with `sensors`. */
+      breathing?: { source: 'spontaneous' | 'bvm' | 'ventilator' | 'none' | 'external'; device: 'none' | 'ett' | 'sga' };
     }; // The brief §7.3 `alarm` event (NIBP INOP) is the copy in types.ts

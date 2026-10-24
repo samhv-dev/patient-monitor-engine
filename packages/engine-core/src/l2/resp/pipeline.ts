@@ -835,7 +835,8 @@ export function validateRespCommand(cmd: Command): string | undefined | null {
     case 'ventilation': {
       const v = ev as Extract<RespClinicalEvent, { kind: 'ventilation' }>;
       if (!(SOURCES as readonly string[]).includes(v.source)) return `source must be one of ${SOURCES.join(', ')}`;
-      return num('rr', v.rr, 1, 80) ?? num('vtMl', v.vtMl, 10, 1500) ?? num('fio2', v.fio2, 0.21, 1) ?? num('peep', v.peep, 0, 30)
+      if (v.o2Device !== undefined && !['none', 'nasal', 'mask'].includes(v.o2Device)) return 'o2Device must be none, nasal or mask';
+      return num('o2FlowLpm', v.o2FlowLpm, 0, 15) ?? num('rr', v.rr, 1, 80) ?? num('vtMl', v.vtMl, 10, 1500) ?? num('fio2', v.fio2, 0.21, 1) ?? num('peep', v.peep, 0, 30)
         ?? num('ie', v.ie, 0.5, 4) ?? num('fico2', v.fico2, 0, 30) ?? num('effort', v.effort, 0, 1) ?? num('pmax', v.pmax, 10, 80);
     }
     case 'preoxygenate': {

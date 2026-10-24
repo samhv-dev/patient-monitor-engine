@@ -27,6 +27,11 @@ export type RespClinicalEvent =
       effort?: number;
       /** The ventilator's pressure limit in volume control, cmH2O (10–80; default VCV_PMAX_DEFAULT 40). */
       pmax?: number;
+      /** Extension (E121b), words only: how a spontaneously breathing patient's oxygen is given ('none' = room air),
+       *  for the log and the Debrief. The physiology reads `fio2` alone. */
+      o2Device?: 'none' | 'nasal' | 'mask';
+      /** Extension (E121b), words only: the oxygen flow in L/min (0–15) that goes with `o2Device`. */
+      o2FlowLpm?: number;
     }
   | { kind: 'preoxygenate'; fio2: number; durationS: number }
   | { kind: 'condition'; id: 'mh'; severity: number }
