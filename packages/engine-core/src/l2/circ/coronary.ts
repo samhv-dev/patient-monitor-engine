@@ -21,6 +21,8 @@ export const ST_LAG_S = 45; // 30–60 s (tables §3 stLag)
 export const ST_DEFICIT_MIN = 0.1;
 /** The MODELED coronary supply averages the beats that ended in this many seconds [ENG]. */
 export const COR_WIN_BEATS_S = 2;
+/** The RV balance averages the beats that ended in this many seconds — at least one breath (E118) [ENG]. */
+export const COR_RV_WIN_S = 6;
 export const IVR_S = 0.06; // isovolumic relaxation after aortic closure [ENG]
 /** The resting arterial saturation the O2-content ratio is taken against (the chemoreflex's resting 0.97). */
 export const SAO2_REF = 0.97;
@@ -210,15 +212,30 @@ export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: 
   // pressure work (massive PE, RV infarct, PH crisis: the RV ischaemia spiral) (MODELED). The stabilised reference has
   // no RV pressures: the first beat read is the resting reference [ENG].
   if (modeled && b && !noBeat && b.rvsp !== undefined && b.rvMean !== undefined && Number.isFinite(b.rvsp)) {
-    const perf = b.map - b.rvMean;
-    c.rv0 ??= { perf, rvsp: b.rvsp, ...(b.rvedv !== undefined && Number.isFinite(b.rvedv) ? { edv: b.rvedv } : {}) };
+    // The duration-weighted mean of the beats of the last COR_RV_WIN_S (one breath or more), not the last beat: the
+    // perfusion pressure (extrathoracic MAP − absolute RV pressure) and the RV pressure carry the pleural swing, so a
+    // 1 Hz read of the last beat sampled the breath and the deficit-only clip turned it into a net debt (E118: the
+    // tamponade's deep breaths made the RV ischaemic within 4 min and moved the A3 PEA 30 s earlier, measured)
+    const tEnd = b.t + b.dur;
+    let pw = 0, sw = 0, dw = 0, ew = 0, de = 0;
+    for (const x of beats) {
+      if (x.t + x.dur <= tEnd - COR_RV_WIN_S || x.rvMean === undefined || x.rvsp === undefined || !Number.isFinite(x.rvsp)) continue;
+      pw += (x.map - x.rvMean) * x.dur;
+      sw += x.rvsp * x.dur;
+      dw += x.dur;
+      if (x.rvedv !== undefined && Number.isFinite(x.rvedv)) { ew += x.rvedv * x.dur; de += x.dur; }
+    }
+    const perf = pw / dw;
+    const rvsp = sw / dw;
+    const rvedv = de > 0 ? ew / de : b.rvedv;
+    c.rv0 ??= { perf, rvsp, ...(rvedv !== undefined && Number.isFinite(rvedv) ? { edv: rvedv } : {}) };
     const hrR = hr / r.hr;
     const flowRv = cfr * Math.max(0, (perf - P_ZF) / Math.max(5, c.rv0.perf - P_ZF));
     // The RV's pressure work is WALL STRESS, RVSP × RVEDV^⅓ — the same Laplace term the LV demand carries (Suga 1990
     // [P]); with RVSP alone the dilating RV of a massive PE never became ischaemic in time (the spiral took 23 min,
     // measured). The factor is 1 when the beat carries no RV volume (unit rigs).
-    const dil = c.rv0.edv !== undefined && b.rvedv !== undefined && Number.isFinite(b.rvedv) ? Math.cbrt(Math.max(10, b.rvedv) / Math.max(10, c.rv0.edv)) : 1;
-    const demRv = D_BASAL + D_EC * hrR + (1 - D_BASAL - D_EC) * hrR * (Math.max(5, b.rvsp) / Math.max(5, c.rv0.rvsp)) * dil;
+    const dil = c.rv0.edv !== undefined && rvedv !== undefined && Number.isFinite(rvedv) ? Math.cbrt(Math.max(10, rvedv) / Math.max(10, c.rv0.edv)) : 1;
+    const demRv = D_BASAL + D_EC * hrR + (1 - D_BASAL - D_EC) * hrR * (Math.max(5, rvsp) / Math.max(5, c.rv0.rvsp)) * dil;
     const tRv = Math.max(K_ISCH_MIN, 1 - G_ISCH * Math.max(0, 1 - flowRv / Math.max(0.05, demRv)));
     c.kIschRv += (tRv - c.kIschRv) * (1 - Math.exp(-dt / (tRv < c.kIschRv ? TAU_ISCH_DOWN_S : TAU_ISCH_UP_S)));
     if (c.kIschRv > 0.9995) c.kIschRv = 1;

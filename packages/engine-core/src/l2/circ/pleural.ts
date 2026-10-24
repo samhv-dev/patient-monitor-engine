@@ -18,7 +18,10 @@ export function obstructedSwingMmHg(d: DriverState, t: number): number {
   return u < c.ti ? (c.pmus as number) * Math.sin((Math.PI * u) / Math.max(0.1, c.ti)) * CMH2O_TO_MMHG : 0;
 }
 
-/** `swingF` scales the spontaneous inspiratory swing (the inspiratory effort; 1 = the resting breath). */
+/**
+ * `swingF` scales the spontaneous breath's peak-to-trough pleural swing (the effort; 1 = the resting breath); the part
+ * above the resting swing is centred on the breath's mean (circ/conditions.ts TAMPONADE_SWING_CMH2O).
+ */
 export function pleuralPressureMmHg(d: DriverState, t: number, complianceMl: number, swingF = 1): number {
   if (d.source === 'external' && d.ext) return P_PL0 + T_IT * frameAt(d.ext, t, 1) * CMH2O_TO_MMHG;
   const c = cycleAt(d, t);
@@ -33,5 +36,9 @@ export function pleuralPressureMmHg(d: DriverState, t: number, complianceMl: num
     const peep = d.source === 'ventilator' ? d.vent.peep : 0;
     return P_PL0 + T_IT * (peep + dv / Math.max(1, complianceMl)) * CMH2O_TO_MMHG;
   }
-  return P_PL0 - SPONT_SWING_CMH2O * swingF * (dv / Math.max(1, c.vt)) * CMH2O_TO_MMHG - obs;
+  const f = dv / Math.max(1, c.vt);
+  // An extra effort is centred on the breath's mean volume (cycleVolume's shape: ti/2 + 0.3·te of the period): a deeper
+  // inspiration and an active expiration, so the mean intrathoracic pressure stays the resting breath's
+  const extra = swingF > 1 ? (swingF - 1) * (f - (c.ti / 2 + 0.3 * c.te) / Math.max(1e-3, c.ti + c.te)) : 0;
+  return P_PL0 - SPONT_SWING_CMH2O * (f + extra) * CMH2O_TO_MMHG - obs;
 }
