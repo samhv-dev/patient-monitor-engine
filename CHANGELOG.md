@@ -47,6 +47,13 @@ the public API is what the packages export (see the API reference), the `pme-sce
   second pulse check (card) and the second shock leaves an organised rhythm; the pulse returns 63 s after it. Without
   the ventilator step the patient compensates (systolic ≈ 76) and does not arrest. No take-home lines yet (the owner
   writes them).
+- CI: the e2e jobs run in the official Playwright container (`mcr.microsoft.com/playwright:v<version>-noble`, the
+  version read from the lockfile), which carries the browsers and their system libraries, so no job runs
+  `playwright install --with-deps` (its apt step stalled up to 40 min on the runner's Ubuntu mirror). The
+  `@known-flaky` tests run on WebKit in a separate non-blocking job, `e2e-quarantine (webkit)`, whose report is
+  uploaded and whose job summary gives their pass / retry-only / failed counts; the gating `e2e (webkit)` job runs
+  every other test with the existing retry rule, and `e2e (chromium)` still runs every test, enforced. No test
+  changed. See `docs/gates/stage-14.md`, "The known-flaky WebKit quarantine".
 
 ### Fixed
 

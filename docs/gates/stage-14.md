@@ -258,6 +258,37 @@ recorded, not tagged, in `stage-14/known-flaky.tsv` ("not tagged" section).
 **Revert condition:** make the webkit leg exit 1 again after the v1.0.0-rc.2 demo, when Task 0 of the calibration pass
 re-harvests the known-flaky list. The workflow comment above the step names this ruling and this condition.
 
+### The known-flaky WebKit quarantine (2026-10-24, PR `ci-stabilise`)
+
+Since 2026-10-24 the tests tagged `@known-flaky` (37 WebKit tests on this tree; `--grep @known-flaky --list`) no longer
+run in the gating `e2e (webkit)` job. They run on WebKit in their own job, **`e2e-quarantine (webkit)`**, which is
+non-blocking (`continue-on-error: true` on the job and on its test step). Its Playwright JSON report and `test-results/`
+are still uploaded (artifact `e2e-report-webkit-known-flaky`), and a step writes the tests' counts into the job
+summary: passed first time, passed only on a retry, failed all three attempts, skipped, with one line (and one
+`::warning`) for each test retried or failed. The gating `e2e (webkit)` job runs every other test
+(`--grep-invert @known-flaky`) with the rule above unchanged (warn-only for an untagged retry-only pass, until it is
+reverted). **`e2e (chromium)` still runs every test, tagged or not, and still fails on an untagged retry-only pass: a
+retry is not a pass.** No test was changed; the split is two `--grep` flags in `.github/workflows/ci.yml`, and
+`playwright.config.ts` is unchanged.
+
+Reason: under load the tagged WebKit tests failed all three attempts several times a day, and each retry costs a test's
+full duration again. Run 39980675959 (`saadat-pass-3`, 2026-10-23): `e2e (webkit)` was cancelled by the 60-min job
+timeout in its test step (59.5 min) after seven tagged tests had failed 3/3 (the learner controls, the showcase
+Debrief, both Explore-baseline tests, the relay restart, "Return here", the vent embed). Runs 39965767381
+(`fix-mh-tachy-pulsus`, 2026-10-23) and 40062046742 (`fix-f29-peep-undefined`, 2026-10-24) passed, but with tagged tests
+(`return-here-restore`, `vent-view-new-patient`, `showcase-clock`) passing only on a retry. Merges that touched none of
+them waited on them.
+
+In the same PR the e2e jobs moved into the official Playwright container (`mcr.microsoft.com/playwright:v<version>-noble`,
+the version read from the lockfile in the `renderer` job), so no job runs `playwright install --with-deps`: its apt step
+took 20–60 s on most runs but stalled on the runner's Ubuntu mirror for 1941 s, 2004 s and 2411 s on the WebKit leg
+(runs 40032500569, 39868678618, 39836946343) and 606–831 s on the Chromium leg (39973898452, 39957752222) between
+2026-10-21 and 10-24. `pnpm install` in those jobs has a 5-min step timeout; the job timeout stays 60 min.
+
+**End condition:** the quarantine ends with the known-flaky list itself. When the calibration pass's Task 0
+re-harvests the list (or a test's tag is removed after its fix), the test returns to the gating job on its own, since
+the split follows the tag. When the list is empty, delete the `known-flaky` matrix row.
+
 ## Open (for the orchestrator or the owner)
 
 1. Question 7 (the audit's publication) is confirmed by owner decision E18 = YES, per the orchestrator's launch
