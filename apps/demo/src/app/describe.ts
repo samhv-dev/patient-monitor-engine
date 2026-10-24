@@ -55,9 +55,13 @@ function event(e: Any): string {
       // F29: the PEEP the engine applies (l2/resp/pipeline.ts): none on the bag (always 0); a ventilator event without
       // one keeps the previous PEEP, which the event does not know, so the text leaves it out (it printed "undefined")
       const peep = e.source === 'bvm' ? ', PEEP 0 cmH₂O' : e.peep === undefined ? '' : `, PEEP ${e.peep} cmH₂O`;
-      return e.source === 'ventilator' || e.source === 'bvm'
-        ? `${e.source === 'bvm' ? 'Bag-mask' : 'Ventilator'}: RR ${e.rr} /min, VT ${e.vtMl} mL${peep}, FiO₂ ${Math.round(num(e.fio2) * 100)} %`
-        : e.source === 'spontaneous' ? 'Breathing spontaneously' : 'No ventilation';
+      const fio2 = `FiO₂ ${Math.round(num(e.fio2) * 100)} %`;
+      if (e.source === 'ventilator' || e.source === 'bvm') return `${e.source === 'bvm' ? 'Bag-mask' : 'Ventilator'}: RR ${e.rr} /min, VT ${e.vtMl} mL${peep}, ${fio2}`;
+      if (e.source !== 'spontaneous') return 'No ventilation';
+      // E121b: oxygen is never assumed, so the line names it whenever the event sets it
+      if (e.o2Device === 'none') return `Oxygen off: room air (${fio2})`;
+      if (e.o2Device === 'nasal' || e.o2Device === 'mask') return `Oxygen by ${e.o2Device === 'mask' ? 'face mask' : 'nasal cannula'} ${e.o2FlowLpm} L/min (${fio2})`;
+      return e.fio2 === undefined ? 'Breathing spontaneously' : `Breathing spontaneously, ${fio2}`;
     }
     case 'preoxygenate':
       return `Preoxygenation, FiO₂ ${Math.round(num(e.fio2) * 100)} %`;

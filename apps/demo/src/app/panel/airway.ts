@@ -1,9 +1,11 @@
 // Airway & ventilation (research/13 §4.3 item 4): airway state, who breathes (spontaneous, bag-mask, ventilator) with
-// the ventilator's settings in clinical units, lung conditions from the lung catalogue with their graded severities and
-// side, and the full ventilator one tap away (the cockpit beside this monitor).
+// the ventilator's settings in clinical units, oxygen for the spontaneously breathing patient (E121b: off, nasal
+// cannula or face mask with its flow), lung conditions from the lung catalogue with their graded severities and side,
+// and the full ventilator one tap away (the cockpit beside this monitor).
 import { LUNG_CONDITIONS } from '@pme/engine-core';
 import { lungCondition, ventilation } from '../../physiology-console/actions.ts';
 import { describeCommand } from '../describe.ts';
+import { O2_DEFAULT, O2_FLOWS, o2Fio2, oxygen, type O2Device } from '../oxygen.ts';
 import { hrefOf } from '../router.ts';
 import { button, h, seg, select, setText, stepper } from '../ui.ts';
 import { lungDetail, lungLabel } from '../glossary.ts';
@@ -33,6 +35,24 @@ export function airwayTab(c: PanelCtx): HTMLElement {
   });
   settings.hidden = true;
 
+  // E121b: oxygen for the spontaneously breathing patient, given like a drug; room air until it is given
+  let o2: O2Device = 'none';
+  const flow = select('Flow', [], '');
+  const o2Hint = h('p', { class: 'hint' });
+  const showO2 = () => {
+    const pct = Math.round(o2Fio2(o2, Number(flow.sel.value)) * 100);
+    setText(o2Hint, `${o2 === 'none' ? 'Room air: FiO₂' : 'FiO₂ about'} ${pct} %. For a spontaneously breathing patient: Stage also sets Breathing to Spontaneous.`);
+  };
+  const syncO2 = () => {
+    flow.sel.replaceChildren(...O2_FLOWS[o2].map((x) => h('option', { value: String(x) }, `${x} L/min`)));
+    flow.sel.value = String(O2_DEFAULT[o2]);
+    flow.el.hidden = o2 === 'none';
+    showO2();
+  };
+  const o2Seg = seg<O2Device>('Oxygen', [['none', 'Off (room air)'], ['nasal', 'Nasal cannula'], ['mask', 'Face mask']], o2, (v) => ((o2 = v), syncO2()));
+  flow.sel.addEventListener('change', showO2);
+  syncO2();
+
   const conds = LUNG_CONDITIONS.filter((x) => x.id !== 'pregnancy');
   // short names from the glossary (Task 26); the catalogue's full text is each option's tooltip and the hint below
   const cond = select('Condition', conds.map((x) => [x.id, lungLabel(x.id, x.label)]), conds[0]?.id ?? '');
@@ -58,6 +78,8 @@ export function airwayTab(c: PanelCtx): HTMLElement {
     h('div', { class: 'row' },
       button('Stage', () => stage(ventilation(source, rr.value, vt.value, peep.value, fio2.value / 100), 'ventilation')),
       h('a', { class: 'btn ghost', href: hrefOf('vent') }, 'Open the ventilator')),
+    h('h3', {}, 'Oxygen'), o2Seg, flow.el, o2Hint,
+    h('div', { class: 'row' }, button('Stage', () => stage(oxygen(o2, Number(flow.sel.value)), 'oxygen'))),
     h('h3', {}, 'Lung condition'), cond.el, condHint, sev, sideSeg,
     h('div', { class: 'row' },
       button('Stage', () => stage(lungCondition(cond.sel.value, severity, side), `lung-${cond.sel.value}`)),
