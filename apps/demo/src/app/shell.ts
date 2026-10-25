@@ -1,7 +1,8 @@
 // The app frame (research/13 brief §4, §7 "App shell / top bar"): top bar with the view switcher and the always-visible
 // state (alarm count in the skin's colours, sound, remote code), the session bar, the monitor region ("stage") that
 // never leaves the DOM, and one section per view. A route change only re-places regions by CSS grid areas and toggles
-// `hidden`; the engine is never touched by navigation.
+// `hidden`; the engine is never touched by navigation. The starting page (`start`) is a full page: the shell hides the
+// stage, the session bar and the top bar there (owner ruling 2026-10-25) and shows them again on every other route.
 import { resolveSkin } from '@pme/skins';
 import { hrefOf, onRoute, type Route, type RouteId } from './router.ts';
 import { contrast } from './color.ts';
@@ -32,8 +33,11 @@ export class Shell {
   private readonly views = new Map<RouteId, View>();
   private readonly nav: HTMLElement;
   private readonly routeFns = new Set<(r: Route) => void>();
+  /** A hostless Remote or a follower: the stage and the session bar keep what the constructor set. */
+  private readonly fixedFrame: boolean;
 
   constructor(parent: HTMLElement, o: { hostless: boolean; follower?: boolean }) {
+    this.fixedFrame = o.hostless || !!o.follower;
     // A second-screen learner monitor shows the monitor alone — no views to switch to
     const navIds = (id: RouteId) => (o.follower ? false : !o.hostless || id === 'settings');
     this.nav = h('nav', { class: 'nav', 'aria-label': 'Views' }, ...NAV.filter(([id]) => navIds(id)).map(([id, label]) => h('a', { href: hrefOf(id), 'data-route': id }, label)));
@@ -87,6 +91,11 @@ export class Shell {
     this.route = { id: v.id, sub: r.id === v.id ? r.sub : '' };
     this.main.dataset.route = v.id;
     this.root.dataset.route = v.id;
+    if (!this.fixedFrame) {
+      // The starting page has no monitor beside it; any other route shows the stage (placed by the route's CSS grid)
+      this.stage.hidden = v.id === 'start';
+      this.bar.hidden = v.id === 'start';
+    }
     v.el.hidden = false;
     v.enter?.(this.route.sub);
     for (const a of this.nav.querySelectorAll('a')) {

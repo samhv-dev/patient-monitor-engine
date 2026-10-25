@@ -10,8 +10,8 @@ wall-clock time); the session-bar clock shows the same time. Round 4 changed cas
 Ventilator view before loading a case** (it takes over ventilation; reload the page if it was opened).*
 
 ## Getting to a case (same for all five)
-1. The launcher opens the **Start** page (`127.0.0.1:8642/#/`, heading "Set up the session").
-2. Top bar, left to right: **Patient monitor simulator** · **Start** · **Monitor** · **Instructor** · **Explore physiology** · **Ventilator** · **Validate** · **Developer** · **Settings**; on the right: the alarm button, **Sound off**, **Remote** + 6-letter code.
+1. The launcher opens the **Start** page (`127.0.0.1:8642/#/`). Since 25 October 2026 it is a full starting page (heading "Patient monitor simulator", no monitor and no top bar): **Load** on a scenario card opens the Instructor view with the case loaded, which replaces steps 3–6; **Open the monitor** and **Open the instructor view** run the patient without a scenario.
+2. Every other view: top bar, left to right: **Patient monitor simulator** · **Start** · **Monitor** · **Instructor** · **Explore physiology** · **Ventilator** · **Validate** · **Developer** · **Settings**; on the right: the alarm button, **Sound off**, **Remote** + 6-letter code.
 3. Click **Instructor** (or, on the Start page, **Open the instructor view**).
 4. Instructor panel tabs (right side): **Scenario** · **Vitals & rhythm** · **Drugs & fluids** · **Airway & ventilation** · **Defib, pacing & CPR** · **Devices & alarms** · **Patient** · **Log**. Click **Scenario**.
 5. Category chips: **All** · **Showcase** · **Resuscitation** · **Haemodynamic crisis** · **Anaesthesia depth and drugs** · **Airway and breathing** · **Metabolic and thermal**. Click **Showcase**. Five cards, in this order: *Anaphylaxis under anaesthesia* · *Class IV haemorrhage, PEA and resuscitation* · *Healthy induction* · *Severe bronchospasm on the ventilator* · *Severe tamponade, then induction*.
