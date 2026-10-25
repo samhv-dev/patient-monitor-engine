@@ -32,6 +32,7 @@ describe('Debrief print: every key moment (#3) and recognition from the early si
     expect(nums(v.el, '.db-hmoments tbody tr[data-n]')).toEqual(want);
     expect(nums(v.el, '#db-handout .db-course .db-badge')).toEqual(want); // rows = the course strip's markers
     expect(v.el.textContent).not.toMatch(/\d+ more in the timeline/);
+    expect(v.el.querySelector('.db-handout-live')?.classList.contains('db-long')).toBe(true); // > 12 rows: the compact print layout
   });
 
   it('haemorrhage: the handout ends with both shocks and the return of circulation', () => {

@@ -146,6 +146,9 @@ const HANDOUT = {
   ],
   next: 'Next time, run the case again from its start and compare your key moments.',
 } as const;
+/** Above this many key moments the handout's table prints compact (debrief.css `.db-long`), so the haemorrhage course's
+ *  19 rows keep the handout on one A4 page; a longer table runs on to page 2 with its header repeated. */
+const HANDOUT_ROWS = 12;
 const kids = (...xs: Array<Node | null>): Node[] => xs.filter((x): x is Node => x !== null);
 const ruled = (n: number): HTMLElement[] => Array.from({ length: n }, () => h('div', { class: 'db-ruled', 'aria-hidden': 'true' }));
 /** The handout's take-home section: the card's `takeHome` lines as written (the owner's words), else blank lines to
@@ -290,6 +293,7 @@ export function debriefView(session: AppSession, link: Link): View {
     // the learner handout (E51): what happened and when, no verdict, no objective, no value
     const learnerCourse = h('div', { class: 'db-course' });
     learnerCourse.innerHTML = courseSvg(d, ms, { trends: TRENDS4, learner: true });
+    handout.classList.toggle('db-long', ms.length > HANDOUT_ROWS);
     handout.replaceChildren(...kids(
       h('header', { class: 'db-band' },
         h('div', { class: 'db-kicker' }, 'Learner handout · Your case · No marks'),
