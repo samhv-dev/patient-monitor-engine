@@ -58,4 +58,31 @@ describe('the cockpit event', () => {
     expect(events(socket.sent).some((x) => x.type === 'commandApplied' && (x.resolved as { mirror?: boolean }).mirror)).toBe(false);
     expect(events(panel).some((x) => x.type === 'cockpit')).toBe(false);
   });
+
+  it('UI-A #2: the Ventilator view off screen sends no notice, and its close tells a holding phone at once (`off`)', async () => {
+    const e = createEngine({ seed: 3 });
+    let wall = 0;
+    hs = new HostSession({ session: S, target: { dispatch: (c) => e.dispatch(c), snapshot: () => e.snapshot(), restore: (s) => e.restore(s), on: (f) => e.on(f), now: () => e.now(), time: () => undefined }, stateIntervalMs: 0, wallNow: () => wall });
+    const socket = new FakeSocket();
+    hs.addTransport(socket);
+    const notes = () => events(socket.sent).filter((x) => x.type === 'cockpit');
+    const frame = (id: string) => ({ id, issuedBy: 'vent-link', type: 'externalDrive', source: 'ventilator', frame: { pawCmH2O: 5, flowLps: 0, volumeMl: 0, fio2: 0.4, peepCmH2O: 5 } }) as never;
+    hs.cockpitOff(); // nothing said yet: nothing to take back
+    expect(notes()).toHaveLength(0);
+    hs.mirror(frame('a'), e.dispatch(frame('a'))); // on screen: the phone holds
+    expect(notes()).toEqual([expect.objectContaining({ type: 'cockpit', tick: expect.any(Number) })]);
+    expect(notes()[0]).not.toHaveProperty('off');
+    hs.cockpitOff(); // the view closes
+    expect(notes()).toHaveLength(2);
+    expect(notes()[1]).toMatchObject({ type: 'cockpit', off: true, tick: expect.any(Number) });
+    for (let i = 0; i < 100; i++) {
+      wall += 20; // the cockpit still ventilates, off screen, for 2 s
+      hs.mirror(frame(`h${i}`), e.dispatch(frame(`h${i}`)), false);
+    }
+    hs.cockpitOff(); // a second close says nothing more
+    expect(notes()).toHaveLength(2);
+    hs.mirror(frame('b'), e.dispatch(frame('b'))); // back on screen: at once, not a second later
+    expect(notes()).toHaveLength(3);
+    expect(notes()[2]).not.toHaveProperty('off');
+  });
 });

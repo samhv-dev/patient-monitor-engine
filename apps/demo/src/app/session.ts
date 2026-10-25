@@ -70,6 +70,8 @@ export class AppSession {
   fastForwarding = false;
   /** The Ventilator view's link (it sets it): a fast-forward steps the cockpit with the engine through it. */
   ventLink: { runTo(engTick: number): Promise<void> } | null = null;
+  /** The Ventilator view is on screen (it sets it): only then does its cockpit hold the phones (UI-A #2). */
+  ventShown = false;
   private ventFrameAt = -Infinity; // Wall ms of the Ventilator view's last frame
   private nibpStarts = 0; // O2 start commands sent: each gets a fresh id (a follower skips an id it has applied)
   private ffWaiters: Array<() => void> = []; // A cockpit opened during a fast-forward waits for its end
@@ -227,7 +229,7 @@ export class AppSession {
         // cockpit opened during a fast-forward waits for its end — refused, the cockpit's first frames would never
         // teach the link its clock and the cockpit would stall for good
         this.ventFrameAt = performance.now();
-        const go = () => m.dispatch(c).then((r) => (this.host.mirror(c, r), r));
+        const go = () => m.dispatch(c).then((r) => (this.host.mirror(c, r, this.ventShown), r));
         return this.fastForwarding && !this.ffCockpit ? new Promise<void>((res) => this.ffWaiters.push(res)).then(go) : go();
       },
       on: (fn) => m.on(fn),

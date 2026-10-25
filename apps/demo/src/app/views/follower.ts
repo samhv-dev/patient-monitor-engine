@@ -32,6 +32,7 @@
 //    upright (`phoneStyle`; a style with no phone layout: the default, said under the monitor). While the Ventilator
 //    view drives the patient the host sends a `cockpit` event once a second to the network instead of its frames: the
 //    phone HOLDS (its monitor still, "The ventilator is on the main screen") and takes a fresh snapshot when they stop.
+//    UI-A #2: only while the view is ON SCREEN — its close sends `cockpit {off: true}` and the phone follows at once.
 //    A page hidden for a while (a locked phone) also takes a fresh snapshot instead of computing the gap.
 import { createBroadcastChannelTransport, createWebSocketTransport, ViewerSync, type ManagedTransport, type RelayFrame } from '@pme/controller';
 import { engineKey as engineVersion } from '@pme/engine-core'; // The snapshot key, version + build
@@ -165,7 +166,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     heard = performance.now();
     if (m.kind !== 'event') return;
     for (const e of m.body) {
-      if (e.type === 'cockpit') cockpitAt = performance.now();
+      if (e.type === 'cockpit') cockpitAt = e.off ? -Infinity : performance.now(); // `off`: the view closed (UI-A #2)
       if (e.type === 'style' && net) wearPhone(e.skin, e.theme);
       const c = e.type === 'commandApplied' ? (e.resolved as { command?: { type?: string; action?: string } } | undefined)?.command : undefined;
       if (c?.type === 'time' && (c.action === 'pause' || c.action === 'resume')) paused = c.action === 'pause';

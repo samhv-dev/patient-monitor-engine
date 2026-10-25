@@ -274,8 +274,9 @@ volume 7.0**, banner gone, peak 34 → 32.
 **Explore line** (optional, 30 s, spoken, no press): *"A real monitor shows a handful of numbers; here the model carries
 the whole body behind them, and an instructor can open it while a case runs."*
 
-**Safe:** ×8 and the fast-forward pressed from the Instructor view, cockpit hidden: the cockpit keeps ventilating, the
-phones keep their hold.
+**Safe:** ×8 and the fast-forward pressed from the Instructor view, cockpit hidden: the cockpit keeps ventilating; the
+phones stop holding while the Ventilator view is off screen (approximate, a fresh start every few seconds) and hold
+again when you go back to it.
 
 **Trap:** load first, Ventilator view second. Phones say "The ventilator is on the main screen": expected. Reload
 before tamponade.

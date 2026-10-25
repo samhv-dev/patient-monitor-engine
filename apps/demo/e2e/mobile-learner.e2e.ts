@@ -169,7 +169,7 @@ test("the QR sheet, then a phone follows in the instructor's style through ×4, 
   await same(f, page);
 });
 
-test('while the Ventilator view drives the patient the phone holds; it follows again with the next patient', async ({ page, browser, browserName }) => {
+test('while the Ventilator view drives the patient the phone holds; it follows again once the view closes', async ({ page, browser, browserName }) => {
   test.skip(browserName === 'webkit' && !!process.env.CI, 'FALLBACK ruling 2026-10-12 (S12-F1, PR #57 run 38194080645): hidden cockpit iframe throttled on CI Linux WebKit — the cockpit stops sending frames on the Monitor view, so the hold ends; passes on macOS WebKit and CI Chromium. The owner checks it by hand (H21, docs/gates/stage-12-real-phone.md)');
   test.setTimeout(180_000);
   await classroom();
@@ -182,14 +182,23 @@ test('while the Ventilator view drives the patient the phone holds; it follows a
   const r0 = (await sync(f)).resyncs;
   await page.waitForTimeout(8000);
   expect((await sync(f)).resyncs - r0).toBeLessThanOrEqual(1); // held: no snapshot storm (it re-synced every ≈ 4 s before)
-  // the cockpit keeps the patient while the case runs (FU-11 H6: a new case unloads it), whichever view is on screen
-  await page.evaluate(() => (location.hash = '#/monitor'));
-  await page.waitForTimeout(4000);
-  await expect(f.locator('.learner-hold')).toBeVisible();
-  await page.evaluate(() => { const a = (window as unknown as { __pmeApp: { session: { restart(s: unknown): void; spec: unknown } } }).__pmeApp.session; a.restart({ spec: a.spec, mode: 'modeled' }); });
-  await expect(f.locator('.learner-hold')).toBeHidden({ timeout: 15_000 });
+  // UI-A #2 (demo review 24 Oct #2): the cockpit keeps the patient while the case runs (FU-11 H6: a new case unloads it),
+  // but the phone holds only while the Ventilator view is ON SCREEN — leaving it releases the phone at once (`cockpit
+  // off`), well inside the 2.5 s the quiet timeout alone would take
+  const left = Date.now();
+  await page.evaluate(() => (location.hash = '#/teach'));
+  await expect(f.locator('.learner-hold')).toBeHidden({ timeout: 2000 });
+  const releasedMs = Date.now() - left;
   await synced(f);
   await expect(status(f)).toHaveText(`Following session ${code}`, { timeout: 10_000 });
+  const r1 = (await sync(f)).resyncs;
+  await page.waitForTimeout(4000);
+  await expect(f.locator('.learner-hold')).toBeHidden(); // still following, 4 s later
+  console.log(`[UI-A #2] ${browserName}: released ${releasedMs} ms after leaving the view; ${(await sync(f)).resyncs - r1} resync(s) in the next 4 s (the cockpit ventilates off screen)`);
+  // back on the Ventilator view: it holds again
+  await page.evaluate(() => (location.hash = '#/vent'));
+  await expect(f.locator('.learner-hold')).toBeVisible({ timeout: 10_000 });
+  await expect(status(f)).toHaveText('The ventilator is on the main screen: this monitor waits until it closes');
 });
 
 test('a relay restart, a full session and a relay the phone cannot reach', { tag: '@known-flaky' }, async ({ page, browser, browserName }) => {

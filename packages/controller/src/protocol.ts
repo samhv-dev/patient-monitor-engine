@@ -125,9 +125,10 @@ export type ExtraEvent =
   | { type: 'fastForward'; t: SimSeconds; tick: Tick; phase: 'start' | 'end'; fromT: SimSeconds; toT: SimSeconds; wallMs?: number; stopped?: string; alarms?: FastForwardAlarm[] }
   /**
    * The host's Ventilator view drives the patient (its frames reach same-browser viewers only): sent at most once a
-   * second to every other transport while it does, so a phone on the relay knows it cannot follow.
+   * second to every other transport while it does, so a phone on the relay knows it cannot follow. `off`: the view
+   * closed (the cockpit may still ventilate off screen) — a phone stops holding at once instead of 2.5 s later.
    */
-  | { type: 'cockpit'; t: SimSeconds; tick: Tick }
+  | { type: 'cockpit'; t: SimSeconds; tick: Tick; off?: true }
   /**
    * The instructor's monitor style, for a phone on the relay (the second screen has its own same-browser style channel).
    * Sent with every answer to a hello (`replay: true`: the relay routes it as the welcome) and at every change.

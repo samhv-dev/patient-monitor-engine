@@ -15,6 +15,7 @@ export function ventView(session: AppSession): View {
   const view: View = {
     id: 'vent', el,
     enter: () => {
+      session.ventShown = true;
       if (started) return;
       started = true;
       const link = `v${session.code.toLowerCase()}`;
@@ -64,6 +65,12 @@ export function ventView(session: AppSession): View {
       // of the patient's pace (RR 3–7, SpO2 85–89) while its own screen looked normal (presenter rehearsal)
       const offScale = session.onTimeScale((k) => port.post({ v: 1, kind: 'time', action: 'scale', value: k }));
       frame.src = `./vent-hamilton.html?link=${link}&profile=normal&via=parent`;
+    },
+    // UI-A #2 (demo review 24 Oct #2): the cockpit keeps ventilating off screen (FU-11 H6), but the phones stop holding
+    // for it — one stray click on "Ventilator" held every phone until the next case. Back on this view, they hold again.
+    leave: () => {
+      session.ventShown = false;
+      session.host.cockpitOff();
     },
   };
   return view;
