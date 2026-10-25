@@ -4,7 +4,7 @@ export * from './types.ts';
 export { validateScenario, formatAjvError, SCENARIO_SCHEMA, type ValidationResult, type ValidateOptions } from './validate.ts';
 export { ScenarioRunner, compare, matches, hasManual, type RunnerInput, type RunnerEffect, type RunnerState, type RunLogEntry } from './runner.ts';
 export { replayRunLog, runLog, type ScenarioRunLog } from './replay.ts';
-export { ScenarioDriver, type ScenarioDriverOptions } from './driver.ts';
+export { ScenarioDriver, type ScenarioDriverOptions, type RunPosition } from './driver.ts';
 export { RHYTHM_STAND_INS, resolveRhythm, type StandIn } from './standins.ts';
 export { BUILTIN_SCENARIOS, BUILTIN_CATALOGUE } from './builtins.ts';
 export { engineOptionsOf } from './patient.ts';

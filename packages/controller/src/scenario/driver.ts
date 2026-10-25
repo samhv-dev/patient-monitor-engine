@@ -35,6 +35,13 @@ interface Mark {
   runner: RunnerState | null;
 }
 
+/** Where a run stands, as a bookmark holds it, minus the document (plain JSON: an app keeps it across a reload). */
+export interface RunPosition {
+  snapshot: PatientSnapshot;
+  seed: number;
+  runner: RunnerState;
+}
+
 const NOT_IMPLEMENTED = /not implemented/;
 
 export class ScenarioDriver {
@@ -48,6 +55,7 @@ export class ScenarioDriver {
   private pending: RunnerInput[] = [];
   private n = 0; // batch counter; never restored, so ids and stage groups stay unique across bookmark restores
   private k = 0;
+  private inFlight = 0; // runner commands sent and not yet answered by the monitor
   private readonly off: () => void;
 
   constructor(o: ScenarioDriverOptions) {
@@ -144,6 +152,31 @@ export class ScenarioDriver {
     return [...this.marks.keys()];
   }
 
+  /**
+   * Where the run stands now, as a bookmark would hold it — or null when no position is consistent at this moment: no
+   * scenario, a state's commands still on their way to the monitor, an event the runner has not yet read, or a new
+   * state (or a new run) entered while the snapshot was taken. A caller takes it again a little later.
+   */
+  async position(): Promise<RunPosition | null> {
+    const r = this.runner;
+    if (!r || this.inFlight > 0 || this.pending.some((p) => p.kind !== 'values')) return null;
+    const runner = r.getState();
+    const snapshot = await this.o.target.snapshot();
+    if (this.runner !== r || r.getState().batch !== runner.batch || r.stateId !== runner.stateId) return null;
+    return { snapshot, seed: r.seed, runner };
+  }
+
+  /**
+   * Hold `p` under `label` on the document now loaded, so `restoreBookmark` returns to it like to any bookmark (an app
+   * restores a run kept across a reload this way). False when no document is loaded or `p` is another document's.
+   */
+  hold(label: string, p: RunPosition): boolean {
+    const doc = this.runner?.doc;
+    if (!doc || p.runner.docId !== doc.id) return false;
+    this.marks.set(label, { snapshot: p.snapshot, doc, seed: p.seed, runner: p.runner });
+    return true;
+  }
+
   close(): void {
     this.off();
   }
@@ -166,8 +199,9 @@ export class ScenarioDriver {
     const rec = (res: DispatchResult) =>
       r?.log.push({ op: 'dispatch', t, commandId: cmd.id, type: cmd.type, accepted: res.accepted, tick: res.tick, ...(res.reason ? { reason: res.reason } : {}) });
     const res = (this.o.submit ?? ((c: Command) => this.host.dispatch(c)))(cmd);
-    if (res instanceof Promise) void res.then(rec, (err: unknown) => rec({ accepted: false, tick: -1, reason: String(err) }));
-    else rec(res);
+    if (!(res instanceof Promise)) return void rec(res);
+    this.inFlight++;
+    void res.then(rec, (err: unknown) => rec({ accepted: false, tick: -1, reason: String(err) })).finally(() => this.inFlight--);
   }
 
   private standIn(dc: DocCommand): DocCommand {

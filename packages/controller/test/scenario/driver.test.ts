@@ -140,6 +140,45 @@ describe('ScenarioDriver', () => {
     expect(samples(66, 199)).toEqual(first.ecg);
   }, SLOW);
 
+  it('a position kept across a reload (JSON, a new engine and driver) restores like a bookmark', async () => {
+    const a = rig();
+    a.driver.load('acls-vf-witnessed');
+    await a.run(50 * 65);
+    const kept = JSON.parse(JSON.stringify(await a.driver.position())) as NonNullable<Awaited<ReturnType<ScenarioDriver['position']>>>;
+    expect(kept.runner.stateId).toBe('vf');
+    a.events.length = 0;
+    const script = () => new Map([[50 * (70 - CHARGE_LEAD_S), [learner(CHARGE)]], [50 * 70, [learner(SHOCK)]]]) as Learner;
+    await a.run(50 * 200, script());
+    // the reloaded page: a fresh engine on the same options, the same document loaded, then the kept position
+    const b = rig();
+    b.driver.load('acls-vf-witnessed');
+    await b.run(10);
+    expect(b.driver.hold('Before the reload', { ...kept, runner: { ...kept.runner, docId: 'another-case' } })).toBe(false);
+    expect(b.driver.hold('Before the reload', kept)).toBe(true);
+    b.events.length = 0;
+    expect(await b.driver.hook({ type: 'scenario', action: 'restoreBookmark', target: 'Before the reload', id: 'r1', issuedBy: 't' })).toMatchObject({ accepted: true, tick: 50 * 65 });
+    expect(b.host.engine.now().tick).toBe(50 * 65);
+    expect(b.events.splice(0).map((e) => `${e.t}:${e.stateId}`)).toEqual(['60:vf']);
+    await b.run(50 * 200, script());
+    expect(b.events.map((e) => `${e.t}:${e.stateId}`)).toEqual(a.events.map((e) => `${e.t}:${e.stateId}`));
+    expect(b.samples(66, 199)).toEqual(a.samples(66, 199));
+  }, SLOW);
+
+  it('position(): none without a scenario, nor while a state\'s commands are on their way to the monitor', async () => {
+    const host = manualHost({ seed: 42 });
+    const answers: Array<() => void> = [];
+    const driver = new ScenarioDriver({ target: host, submit: (c) => new Promise((res) => void answers.push(() => res(host.dispatch(c) as never))) });
+    expect(await driver.position()).toBeNull();
+    driver.load('acls-vf-witnessed');
+    expect(await driver.position()).toBeNull(); // the start batch is unanswered
+    expect(answers.length).toBeGreaterThan(0);
+    for (const a of answers.splice(0)) a();
+    await new Promise<void>((res) => setImmediate(res));
+    const p = await driver.position();
+    expect(p?.runner.stateId).toBe(driver.runner?.stateId);
+    expect(p?.snapshot.tick).toBe(host.engine.now().tick);
+  });
+
   it('replay identity: same seed + same learner commands → identical samples, dispatches and decisions', async () => {
     const go = async () => {
       nL = 0;

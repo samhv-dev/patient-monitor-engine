@@ -13,6 +13,7 @@ import type { ManagedTransport } from '@pme/controller';
 import { mountMonitor, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
+import { clearPosition } from './position.ts';
 import { RunRecord } from './record.ts';
 import { applySkinAlarmColours } from './shell.ts';
 
@@ -54,6 +55,10 @@ export class AppSession {
   readonly panelTransport: ManagedTransport;
   /** True once the session has been used beyond the Start screen (a patient restart then asks first). */
   live = false;
+  /** A reload's position is being restored (position.ts): none is taken meanwhile. */
+  restoring = false;
+  /** The answer to the last scenario load (a restore after a reload waits for it before it returns to the position). */
+  lastLoad: Promise<{ accepted: boolean; reason?: string }> = Promise.resolve({ accepted: false });
   monitor: MonitorHandle | null = null;
   spec: PatientSpec;
   mode: Mode;
@@ -311,6 +316,7 @@ export class AppSession {
     this.spec = start.spec;
     this.mode = start.mode;
     this.driver.runner = null;
+    clearPosition(); // a reload now brings back the new patient, not the case
     this.setLearner(false); // a new patient starts without learner controls
     this.mount(start.seed ?? 7);
     this.panel.note(`Patient restarted: ${start.mode.toUpperCase()}`);
@@ -328,8 +334,9 @@ export class AppSession {
     this.spec = { ageY: p.ageY ?? 40, sex: p.sex ?? 'M', weightKg: p.weightKg ?? 70, heightCm: p.heightCm ?? 175, comorbid: [], attached: true };
     this.mode = v.doc.mode ?? 'modeled';
     this.driver.runner = null;
+    clearPosition(); // the old case's position is not this one's
     this.mountWith({ ...eo, mode: this.mode, truthHz: 1, patient: { ...eo.patient, ...(p.sensors ? { sensors: p.sensors } : {}) } });
-    void this.panel.send({ type: 'scenario', action: 'load', doc: v.doc });
+    this.lastLoad = this.panel.send({ type: 'scenario', action: 'load', doc: v.doc });
     this.live = true;
     return { ok: true, doc: v.doc };
   }

@@ -67,6 +67,17 @@ const RESYNC_S = 2;
 const SAMPLES_MAX = 4 * 3600;
 const EPS = 1e-6;
 
+/** The bookmark label of the return to a position kept across a reload (position.ts; never one the instructor sees). */
+export const RELOAD_MARK = 'pme.reload';
+
+/** What `RunRecord.keep()` returns. */
+export interface KeptRecord {
+  data: RunData;
+  active: string[];
+  lastVent: number | null;
+  pulse: boolean | null;
+}
+
 export const emptyRun = (patient = '', weightKg = 70, now = Date.now()): RunData => ({ startedAt: now, lastWall: now, patient, weightKg, doc: null, rows: [], samples: [], returns: 0 });
 
 export class RunRecord {
@@ -122,6 +133,7 @@ export class RunRecord {
         if (this.held) this.wire(this.held);
         return void (this.held = null);
       }
+      if (c.action === 'restoreBookmark' && c.target === RELOAD_MARK) return; // the reload's own return: resume() says it
       if (c.action === 'restoreBookmark') this.undo(String(c.target), t);
       if (c.action === 'bookmark') {
         this.marks.set(String(c.target), { lastVent: this.lastVent, pulse: this.pulse, active: [...this.active] });
@@ -186,6 +198,24 @@ export class RunRecord {
     else if (!last || s > last.t) this.data.samples.push(row);
     if (this.data.samples.length > SAMPLES_MAX) this.data.samples.splice(0, this.data.samples.length - SAMPLES_MAX);
     this.data.lastWall = this.now();
+  }
+
+  /** The record and its trackers as plain JSON (kept with the run's position across a reload of the page). */
+  keep(): KeptRecord {
+    return structuredClone({ data: this.data, active: [...this.active], lastVent: Number.isFinite(this.lastVent) ? this.lastVent : null, pulse: this.pulse });
+  }
+
+  /** The page reloaded and the engine came back at sim time `t`: the kept record goes on from there, with one row saying so. */
+  resume(k: KeptRecord, t: number): void {
+    this.data = structuredClone(k.data);
+    this.data.rows = this.data.rows.filter((r) => r.t <= t + EPS);
+    this.data.samples = this.data.samples.filter((s) => s.t <= t + EPS);
+    this.active = new Set(k.active);
+    this.lastVent = k.lastVent ?? -Infinity;
+    this.pulse = k.pulse;
+    this.held = null;
+    this.since = t;
+    this.add({ t, kind: 'restore', text: 'Restored after a reload of the page' });
   }
 
   /** An instructor note or an objective ticked in the Scenario tab (the Link's log). */
