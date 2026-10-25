@@ -23,7 +23,7 @@ export function learnerStrip(link: Link): HTMLElement {
         on = !on;
         b.textContent = on ? 'Stop CPR' : learnerLabel(a);
       }
-      toast(r.accepted ? describeCommand(cmd) : 'Not done (see the log)');
+      toast(r.accepted ? describeCommand(cmd) : 'Not done (see the log)', r.accepted ? 'monitor' : 'alert'); // pressed under the monitor
     }, 'small');
     el.append(b);
   }

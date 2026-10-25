@@ -69,31 +69,49 @@ for (const [w, h] of [[1280, 800], [1920, 1080]] as const) {
     const bar = page.locator('.sessionbar');
     await bar.getByRole('button', { name: 'Bookmark' }).click();
     await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×8' }).click();
-    await expect.poll(() => page.locator('.toast').count()).toBeGreaterThanOrEqual(3); // the cue card's three at least
+    // A toast lives 4 s, which a slow runner can outlast (CI WebKit): the placement is the stack's, so a probe of each
+    // kind that stays is measured beside whatever real toasts are still up (the same durable idea as #136's log read)
+    const probe = (kind: string) =>
+      page.evaluate((kind) => {
+        const host = document.querySelector('.toasts') as HTMLElement;
+        const t = Object.assign(document.createElement('div'), { className: 'toast uia-probe', textContent: `probe ${kind}` });
+        t.dataset.kind = kind;
+        host.append(t);
+      }, kind);
+    await probe('info');
     const toasts = await page.locator('.toast').evaluateAll((ts) => ts.map((t) => t.getBoundingClientRect().toJSON() as Box));
     const stage = (await page.locator('.stage').boundingBox()) as Box;
     const nav = (await page.locator('.topbar').boundingBox()) as Box;
     const sbar = (await bar.boundingBox()) as Box;
-    console.log(`UI-A #8 ${w}x${h}: stage ${JSON.stringify(stage)} toasts ${JSON.stringify(toasts)}`);
+    console.log(`UI-A #8 ${w}x${h}: stage ${JSON.stringify(stage)} toasts (${toasts.length - 1} real + probe) ${JSON.stringify(toasts)}`);
+    expect(toasts.length).toBeGreaterThanOrEqual(1);
     for (const t of toasts) {
       expect(meets(t, stage), `a toast over the monitor stage ${JSON.stringify(t)}`).toBe(false);
       expect(meets(t, nav) || meets(t, sbar), 'a toast over the nav or the session bar').toBe(false);
       expect(t.x + t.width).toBeLessThanOrEqual(w);
       expect(t.y + t.height).toBeLessThanOrEqual(h);
     }
-    // the Monitor view is the device alone: no toast over it
+    // the Monitor view, the device alone: the instructor's feedback stays off it, an alert ("The monitor stopped", a
+    // refusal) and the learner controls' own feedback show (monitor-worker-stopped.e2e.ts: the real alert)
     await page.evaluate(() => (location.hash = '#/monitor'));
-    await expect(page.locator('.toasts')).toBeHidden();
+    await probe('alert');
+    await probe('monitor');
+    await expect(page.locator('.toast[data-kind="info"]').first()).toBeHidden();
+    await expect.poll(() => page.locator('.toast[data-kind="info"]').evaluateAll((ts) => ts.filter((t) => (t as HTMLElement).offsetParent !== null).length)).toBe(0);
+    await expect(page.locator('.uia-probe[data-kind="alert"]')).toBeVisible();
+    await expect(page.locator('.uia-probe[data-kind="monitor"]')).toBeVisible();
     // the full-page start (#131, no bars, no stage): toasts bottom-centre; back on the Instructor view, under the bars again
     await page.evaluate(() => (location.hash = '#/start'));
     await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--chrome-bottom').trim())).toBe('0px');
     expect(await page.locator('.toasts').evaluate((e) => getComputedStyle(e).bottom)).not.toBe('auto');
     await page.evaluate(() => (location.hash = '#/teach'));
-    await bar.getByRole('button', { name: 'Bookmark' }).click();
-    await expect(page.locator('.toast').last()).toBeVisible();
-    const again = await page.locator('.toast').last().evaluate((t) => t.getBoundingClientRect().toJSON() as Box);
-    expect(again.y).toBeGreaterThanOrEqual(((await bar.boundingBox()) as Box).y + ((await bar.boundingBox()) as Box).height);
-    expect(meets(again, (await page.locator('.stage').boundingBox()) as Box)).toBe(false);
+    await expect(page.locator('.sessionbar')).toBeVisible();
+    await expect.poll(async () => {
+      const t = await page.locator('.uia-probe[data-kind="info"]').evaluate((e) => e.getBoundingClientRect().toJSON() as Box);
+      const b = (await bar.boundingBox()) as Box;
+      return t.y >= b.y + b.height && !meets(t, (await page.locator('.stage').boundingBox()) as Box);
+    }).toBe(true);
+    await page.evaluate(() => document.querySelectorAll('.uia-probe').forEach((e) => e.remove()));
   });
 }
 

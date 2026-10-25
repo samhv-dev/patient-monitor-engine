@@ -160,9 +160,16 @@ export function confirmDialog(title: string, body: string, action: string, dange
 }
 
 const toastHost = (): HTMLElement => document.querySelector('.toasts') ?? document.body.appendChild(h('div', { class: 'toasts', role: 'status', 'aria-live': 'polite' }));
+/**
+ * Where a toast may show (UI-A #8). 'info' — the instructor's own feedback ("Speed ×8", "Bookmark 1 … saved"): every view
+ * but the Monitor view, which is the device alone. 'alert' — a failure or a safety message ("The monitor stopped —
+ * Restart the patient", a refusal, a pause while the tab was hidden): every view, the Monitor view included, with a
+ * warning accent. 'monitor' — feedback to an action taken ON the Monitor view (the learner controls under it): every view.
+ */
+export type ToastKind = 'info' | 'alert' | 'monitor';
 /** "Noradrenaline 0.1 µg/kg/min started" — the same verb as the button; 4 s. */
-export function toast(text: string): void {
-  const t = h('div', { class: 'toast' }, text);
+export function toast(text: string, kind: ToastKind = 'info'): void {
+  const t = h('div', { class: 'toast', 'data-kind': kind }, text);
   toastHost().append(t);
   setTimeout(() => t.remove(), 4000);
 }
