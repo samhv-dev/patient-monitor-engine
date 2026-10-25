@@ -20,7 +20,7 @@ type W = {
   __pmeFollower: { sync: { status: string; resyncs: number } | null };
   __pmeApp: {
     session: { code: string; simNow(): number };
-    link: { simT: number; send(c: unknown): Promise<{ accepted: boolean; reason?: string }>; ctl: { timeScale: number; scenario: { stateId: string | null; doc: { id: string } | null } } };
+    link: { simT: number; log: Array<{ text: string }>; send(c: unknown): Promise<{ accepted: boolean; reason?: string }>; ctl: { timeScale: number; scenario: { stateId: string | null; doc: { id: string } | null } } };
   };
 };
 const app = <T>(p: Page, fn: (w: W) => T) => p.evaluate(`(${fn.toString()})(window)`) as Promise<Awaited<T>>;
@@ -55,11 +55,13 @@ test('a reload mid-card comes back in the same card, state and clock, and the ph
   await page.reload();
   await page.waitForFunction(() => '__pmeApp' in window);
   expect(new URL(page.url()).searchParams.get('session')).toBe(code);
-  const toast = page.locator('.toast', { hasText: 'Restored after reload' });
-  await expect(toast).toHaveText(/^Restored after reload: Malignant hyperthermia, \d\d:\d\d$/, { timeout: 15_000 });
+  // What the toast says is also the Log tab's line (main.ts link.note), which stays: the 4-s toast itself can be gone
+  // before a slow runner looks (CI Linux WebKit, run 40180609451)
+  const said = () => app(page, (w) => w.__pmeApp.link.log.find((e) => e.text.startsWith('Restored after reload'))?.text ?? null);
+  await expect.poll(said, { timeout: 30_000, message: 'the restore is reported' }).toMatch(/^Restored after reload: Malignant hyperthermia, \d\d:\d\d$/);
   const restoredAt = Date.now();
   const after = await app(page, (w) => w.__pmeApp.link.simT);
-  console.log('reload-keeps-case', JSON.stringify({ browserName, before: Math.round(before * 10) / 10, restored: Math.round(after * 10) / 10, deltaS: Math.round((before - after) * 10) / 10, toast: await toast.textContent() }));
+  console.log('reload-keeps-case', JSON.stringify({ browserName, before: Math.round(before * 10) / 10, restored: Math.round(after * 10) / 10, deltaS: Math.round((before - after) * 10) / 10, toast: await said() }));
   expect(Math.abs(before - after), 'the clock comes back within 10 s of where it was').toBeLessThan(10);
   expect(await app(page, (w) => w.__pmeApp.link.ctl.scenario.stateId)).toBe('intubated');
   await expect.poll(() => app(page, (w) => w.__pmeApp.link.ctl.timeScale), { message: 'the speed comes back' }).toBe(4);
@@ -69,12 +71,15 @@ test('a reload mid-card comes back in the same card, state and clock, and the ph
   await page.click('[role=tab][data-tab=scenario]');
   await expect(page.getByRole('button', { name: /^Start surgery: rocuronium/ })).toBeVisible();
 
-  // the phone re-follows the restored case: synced again, and the same numbers as the instructor's screen, within 5 s
+  // the phone re-follows the restored case: synced again, and the same numbers as the instructor's screen — within 5 s
+  // here, within 20 s on CI and on WebKit (the 2-vCPU Linux WebKit runner holds an instructor, a phone and the relay;
+  // run 40180609451 missed 5 s twice after a correct restore)
+  const phoneMs = process.env.CI || browserName === 'webkit' ? 20_000 : 5000;
   await expect.poll(async () => {
     const s = await app(phone, (w) => w.__pmeFollower.sync);
     return s?.status === 'synced' && s.resyncs > resyncs && (await tiles(phone)) === (await tiles(page));
-  }, { timeout: 5000, intervals: [100] }).toBe(true);
-  console.log('reload-keeps-case phone', JSON.stringify({ browserName, sameWithinMs: Date.now() - restoredAt }));
+  }, { timeout: phoneMs, intervals: [100] }).toBe(true);
+  console.log('reload-keeps-case phone', JSON.stringify({ browserName, sameWithinMs: Date.now() - restoredAt, boundMs: phoneMs }));
 
   // Restart patient forgets the position: a second reload brings back the new patient, not the case
   await app(page, (w) => (w.__pmeApp.session as unknown as { restart(s: unknown): void }).restart({ spec: (w.__pmeApp.session as unknown as { spec: unknown }).spec, mode: 'modeled' }));
