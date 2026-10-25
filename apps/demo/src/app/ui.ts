@@ -167,6 +167,26 @@ export function toast(text: string): void {
   setTimeout(() => t.remove(), 4000);
 }
 
+/**
+ * UI-A #8/#9: the bottom edge of the page's bars (the nav, and the session bar where it shows) as `--chrome-bottom` on
+ * the document, so the toasts and the fast-forward banner float just under them, never over the nav. Kept current as
+ * the bars change size (a route change shows or hides the session bar; a narrow window wraps it onto two lines).
+ */
+export function trackChromeBottom(root: HTMLElement): () => void {
+  const bars = [...root.querySelectorAll<HTMLElement>('.topbar, .sessionbar')];
+  const set = () => {
+    const bottom = bars.reduce((m, e) => {
+      const r = e.getBoundingClientRect();
+      return r.height > 0 ? Math.max(m, r.bottom) : m;
+    }, 0);
+    document.documentElement.style.setProperty('--chrome-bottom', `${Math.round(bottom)}px`);
+  };
+  const ro = new ResizeObserver(set);
+  for (const e of bars) ro.observe(e);
+  set();
+  return () => ro.disconnect();
+}
+
 export const clock = (t: number | null | undefined): string =>
   t === null || t === undefined || !Number.isFinite(t) ? '--:--' : `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
 

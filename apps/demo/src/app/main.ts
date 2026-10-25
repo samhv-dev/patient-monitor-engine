@@ -17,7 +17,7 @@ import { AppSession } from './session.ts';
 import { mountSessionBar } from './sessionbar.ts';
 import { applySkinAlarmColours, LEVEL_MARK, LEVEL_NAME, Shell, skinAlarmBar, skinAlwaysOn } from './shell.ts';
 import { loadSite } from './site.ts';
-import { button, clock, h, setText, throttle, toast } from './ui.ts';
+import { button, clock, h, setText, throttle, toast, trackChromeBottom } from './ui.ts';
 import { debriefView } from './views/debrief.ts';
 import { devView } from './views/dev.ts';
 import { exploreView } from './views/explore.ts';
@@ -125,6 +125,7 @@ if (follow) {
   shell.add(settingsView(site, session));
   shell.add(debriefView(session, link));
   mountSessionBar(shell.bar, link);
+  trackChromeBottom(shell.root); // UI-A #8/#9: the toasts and the fast-forward banner sit under the bars
   // FX-14/15: a hidden instructor tab pauses the session through the Pause button's own command, so the phones show
   // "(paused)" instead of "not answering", and resumes it on return (HIDDEN_TAB_POLICY, the owner's E82 switch). A
   // fast-forward refuses every command, the pause included: a hide then sends nothing and claims nothing.

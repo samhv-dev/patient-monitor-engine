@@ -323,6 +323,18 @@ dialog::backdrop { background: var(--scrim); }
 dialog h2 { margin: 0 0 var(--s-2); font-size: var(--t-18); color: var(--text-strong); }
 dialog .actions { display: flex; justify-content: flex-end; gap: var(--s-2); margin-top: var(--s-4); }
 .toasts { position: fixed; bottom: var(--s-4); left: 50%; transform: translateX(-50%); display: grid; gap: var(--s-2); z-index: 40; pointer-events: none; }
+/* UI-A #8 (demo review 24 Oct #8): after the cue card's Load · All alarms on · Bookmark · ×8 the toasts stacked over the
+   monitor's bottom row, the first thing the audience saw of each case. Wherever the monitor stage shows, they keep off
+   it: on the Instructor view at the top of the panel, under the session bar; on Start over the left-hand view; on the
+   Monitor view (the device alone, what the learners see) not at all. Moved rather than shortened: every toast, not
+   only these three, stays readable for its 4 s. */
+body:has(.app[data-route='teach']) .toasts { top: calc(var(--chrome-bottom, var(--bar-h)) + var(--s-2)); bottom: auto; left: auto; right: var(--s-3); transform: none; width: max-content; max-width: calc(var(--panel-w) - 2 * var(--s-3)); }
+body:has(.app[data-route='start']) .toasts { left: var(--s-4); transform: none; max-width: calc(440px - 2 * var(--s-4)); }
+body:has(.app[data-route='monitor']) .toasts { display: none; }
+@media (max-width: 900px) and (orientation: portrait) {
+  /* the panel is a sheet under the monitor: the toasts at the foot of the window are over it */
+  body:has(.app[data-route='teach']) .toasts { top: auto; bottom: var(--s-4); left: 50%; right: auto; transform: translateX(-50%); }
+}
 .toast { background: var(--bezel-3); color: var(--text-strong); border: 1px solid var(--line-strong); border-left: 3px solid var(--accent); border-radius: var(--r-control); padding: var(--s-2) var(--s-4); box-shadow: 0 6px 24px rgb(0 0 0 / 0.35); }
 
 /* monitor-view reveal strip (auto-hiding; the learner sees only the device) */

@@ -47,4 +47,42 @@ for (const [w, h] of [[1280, 800], [1920, 1080]] as const) {
     const bm = await run(page).getByRole('button', { name: 'Bookmark', exact: true }).evaluate((b) => getComputedStyle(b).whiteSpace);
     expect(bm).toBe('nowrap');
   });
+
+  test(`UI-A #8 scenario Load at ${w} × ${h}: the toasts stay off the monitor stage`, async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: w, height: h });
+    await openApp(page, base, '#/teach', { warmMs: 1500 });
+    const allOn = async () => {
+      await page.click('[role=tab][data-tab=devices]');
+      await page.getByRole('button', { name: 'All alarms on', exact: true }).click();
+    };
+    await allOn();
+    await page.click('[role=tab][data-tab=scenario]');
+    await page.locator('.chip-btn', { hasText: 'Showcase' }).click();
+    const card = page.locator('section[aria-label="Scenario library"] article.scard').filter({ has: page.locator('h3', { hasText: 'Malignant hyperthermia' }) });
+    await card.locator('button', { hasText: 'Load' }).first().click();
+    const confirm = page.getByRole('button', { name: 'Load scenario', exact: true });
+    if (await confirm.waitFor({ timeout: 1500 }).then(() => true, () => false)) await confirm.click();
+    await expect(page.locator('.toasts')).toContainText('Scenario loaded: Malignant hyperthermia', { timeout: 15_000 });
+    await allOn();
+    await page.click('[role=tab][data-tab=scenario]');
+    const bar = page.locator('.sessionbar');
+    await bar.getByRole('button', { name: 'Bookmark' }).click();
+    await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×8' }).click();
+    await expect.poll(() => page.locator('.toast').count()).toBeGreaterThanOrEqual(3); // the cue card's three at least
+    const toasts = await page.locator('.toast').evaluateAll((ts) => ts.map((t) => t.getBoundingClientRect().toJSON() as Box));
+    const stage = (await page.locator('.stage').boundingBox()) as Box;
+    const nav = (await page.locator('.topbar').boundingBox()) as Box;
+    const sbar = (await bar.boundingBox()) as Box;
+    console.log(`UI-A #8 ${w}x${h}: stage ${JSON.stringify(stage)} toasts ${JSON.stringify(toasts)}`);
+    for (const t of toasts) {
+      expect(meets(t, stage), `a toast over the monitor stage ${JSON.stringify(t)}`).toBe(false);
+      expect(meets(t, nav) || meets(t, sbar), 'a toast over the nav or the session bar').toBe(false);
+      expect(t.x + t.width).toBeLessThanOrEqual(w);
+      expect(t.y + t.height).toBeLessThanOrEqual(h);
+    }
+    // the Monitor view is the device alone: no toast over it
+    await page.evaluate(() => (location.hash = '#/monitor'));
+    await expect(page.locator('.toasts')).toBeHidden();
+  });
 }
