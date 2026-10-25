@@ -97,6 +97,11 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-portrait .pme-stile .v{font-size:min(9vw,36px);white-space:nowrap}',
     '.pme-portrait .pme-stile.large .v{font-size:min(11vw,44px)}',
     '.pme-portrait .pme-stile .s{font-size:12px;white-space:nowrap;overflow:hidden;min-height:14px}',
+    // UI-A #10: a four-part split row (BFA: BFI% BS% SQI% EMG%) in a third of a phone's width as two lines of two —
+    // in one line "EMG%" ran past the tile into EtAA; a part with no digits takes no digit line
+    '.pme-portrait .pme-stile.split-row .parts:has(>.part:nth-child(4)){flex-wrap:wrap;row-gap:2px}',
+    '.pme-portrait .pme-stile.split-row .parts:has(>.part:nth-child(4))>.part{flex:1 0 40%}',
+    '.pme-portrait .pme-stile.split-row .parts:has(>.part:nth-child(4)) .pv:empty{display:none}',
     // the rc.3 limit pairs stay off a phone, as the old limits do (review T-12)
     '.pme-portrait .pme-stile.rc3 .lim.a,.pme-portrait .pme-stile.rc3 .lim.b,.pme-portrait .pme-stile.rc3 .lim.c,.pme-portrait .pme-stile.rc3 .part .lim,.pme-portrait .pme-stile.rc3 .limrow{display:none}',
   ].join('\n');
@@ -268,6 +273,13 @@ function photoCss(g: LayoutGrid): string[] {
     '.pme-grid .pme-stile.stand-in .part{flex:0 0 calc((100% - (var(--pme-slots) - 1) * 4px) / var(--pme-slots))}',
     // the split row's bell at the bottom right, as the T column's was (it printed over the AWRR limit)
     `.pme-grid .pme-stile.split-row>.h{top:auto;bottom:${f(4)}}`,
+    // UI-A #10 (demo review 24 Oct #10): the module tiles sharing a cell with BFA (NMT, AGENTS) take their content's
+    // width, so the four BFA labels keep the rest (shared evenly they ran together, "BFI%BS%SQI%EMG%", and EMG% ran
+    // under EtAA); their digits at the IBP mean's 30 px and the sub-line at the limits' size, so "MAC 0.x" stays inside
+    // the 77 px row (40 px digits clipped it)
+    '.pme-grid>div>.pme-stile[data-param="NMT"],.pme-grid>div>.pme-stile[data-param="AGENTS"]{flex:0 0 auto}',
+    `.pme-grid .pme-stile.rc3[data-param="NMT"] .v,.pme-grid .pme-stile.rc3[data-param="AGENTS"] .v{font-size:${f(30)};line-height:1}`,
+    `.pme-grid .pme-stile.rc3[data-param="NMT"] .s,.pme-grid .pme-stile.rc3[data-param="AGENTS"] .s{font-size:${f(15)};min-height:0;white-space:nowrap}`,
     // NIBP while the cuff runs: "mmHg NBP inflating" on one line at the time size (it wrapped at the mean's 30 px)
     `.pme-grid .pme-stile.rc3[data-param="NIBP"] .srow .s.busy{font-size:${f(15)};white-space:nowrap}`,
     // G6: the %SPO2 value left of centre, after its limits; the limits keep their column and the digits their field

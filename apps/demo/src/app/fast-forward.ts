@@ -4,7 +4,8 @@
 // it the panel fades and a banner says for FF_DONE_SHOW_MS, on three lines, what was skipped and the alarms raised
 // during it, with their times; the alarms that came and went are latched on this window's monitor (`latch`). It reads a source (a
 // ControllerSession on the instructor's page and a Remote, a ViewerSync on the second screen) and sits above every
-// view, the monitor in full screen included.
+// view, the monitor in full screen included — under the nav and the session bar, never on the Debrief or in print
+// (UI-A #9, app.css).
 import type { FastForwardAlarm, FastForwardDone } from '@pme/controller';
 import { spanText } from './describe.ts';
 import { clock, h, setText } from './ui.ts';

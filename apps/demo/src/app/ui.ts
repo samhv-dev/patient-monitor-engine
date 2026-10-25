@@ -160,11 +160,38 @@ export function confirmDialog(title: string, body: string, action: string, dange
 }
 
 const toastHost = (): HTMLElement => document.querySelector('.toasts') ?? document.body.appendChild(h('div', { class: 'toasts', role: 'status', 'aria-live': 'polite' }));
+/**
+ * Where a toast may show (UI-A #8). 'info' — the instructor's own feedback ("Speed ×8", "Bookmark 1 … saved"): every view
+ * but the Monitor view, which is the device alone. 'alert' — a failure or a safety message ("The monitor stopped —
+ * Restart the patient", a refusal, a pause while the tab was hidden): every view, the Monitor view included, with a
+ * warning accent. 'monitor' — feedback to an action taken ON the Monitor view (the learner controls under it): every view.
+ */
+export type ToastKind = 'info' | 'alert' | 'monitor';
 /** "Noradrenaline 0.1 µg/kg/min started" — the same verb as the button; 4 s. */
-export function toast(text: string): void {
-  const t = h('div', { class: 'toast' }, text);
+export function toast(text: string, kind: ToastKind = 'info'): void {
+  const t = h('div', { class: 'toast', 'data-kind': kind }, text);
   toastHost().append(t);
   setTimeout(() => t.remove(), 4000);
+}
+
+/**
+ * UI-A #8/#9: the bottom edge of the page's bars (the nav, and the session bar where it shows) as `--chrome-bottom` on
+ * the document, so the toasts and the fast-forward banner float just under them, never over the nav. Kept current as
+ * the bars change size (a route change shows or hides the session bar; a narrow window wraps it onto two lines).
+ */
+export function trackChromeBottom(root: HTMLElement): () => void {
+  const bars = [...root.querySelectorAll<HTMLElement>('.topbar, .sessionbar')];
+  const set = () => {
+    const bottom = bars.reduce((m, e) => {
+      const r = e.getBoundingClientRect();
+      return r.height > 0 ? Math.max(m, r.bottom) : m;
+    }, 0);
+    document.documentElement.style.setProperty('--chrome-bottom', `${Math.round(bottom)}px`);
+  };
+  const ro = new ResizeObserver(set);
+  for (const e of bars) ro.observe(e);
+  set();
+  return () => ro.disconnect();
 }
 
 export const clock = (t: number | null | undefined): string =>

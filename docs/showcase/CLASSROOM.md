@@ -39,10 +39,12 @@ and **the presenting Mac's Node.js**. Until they are settled, tick every line:
   **Silence here** quiets that phone only.
 - Speed (×1–×8), Pause and the 2- and 5-minute **fast-forward** reach every phone (the fast-forward panel shows on the
   phones too, and the phones catch up at its end).
-- While the **Ventilator view** ventilates the patient, the phones cannot follow the patient (the cockpit's breaths do
-  not go over the network): they hold still and say "The ventilator is on the main screen". They follow again with the
-  next case or a patient restart. Plan any case where you open the Ventilator view (e.g. bronchospasm, in the
-  library) for the main screen.
+- While the **Ventilator view** is on the main screen, the phones cannot follow the patient (the cockpit's breaths do
+  not go over the network): they hold still and say "The ventilator is on the main screen". They follow again as soon
+  as you leave the Ventilator view (within a second), with the next case, or after a patient restart. Once the cockpit
+  has been opened it keeps ventilating this case off screen, and the phones then follow it only approximately (a fresh
+  start every few seconds). Plan any case where you open the Ventilator view (e.g. bronchospasm, in the library) for
+  the main screen.
 - A phone that is locked, switched to another app or loses the Wi-Fi for a moment catches up by itself when it comes
   back ("Connection lost: reconnecting…" while it is away).
 - One session takes up to **60 phones**; the 61st is told "This session is full: please watch the main screen".
@@ -101,7 +103,7 @@ laptop. Is it on the classroom Wi-Fi?" — nothing breaks.
 | The sheet says "This computer is on no network" | Join the Wi-Fi (or turn on the hotspot), click **Phones** again. |
 | Phones say "cannot reach the instructor's laptop" | They are on another network, or the Wi-Fi isolates devices: use (b), or (c). |
 | Phones say "The instructor's monitor is not answering" | The instructor's page was closed or reloaded: reopen it from the Classroom window's address; the phones find it again. |
-| A phone says "The ventilator is on the main screen" | Expected while the Ventilator view runs this case. |
+| A phone says "The ventilator is on the main screen" | Expected while the Ventilator view is on the main screen; it follows again when you leave that view. |
 | A phone says "This session is full" | 60 phones are following; ask a neighbour to share a screen. |
 
 Measured on the presenting Mac class of machine (Apple M3, Stage 12 plan "Capacity"): 30 phones cost the relay under

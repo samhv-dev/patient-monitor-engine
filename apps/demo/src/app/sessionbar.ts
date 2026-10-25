@@ -36,7 +36,7 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
   // The owner's fast-forward — 2 min (the CPR pulse-check interval) or 5 min of the case in ≈ 10 s, sound muted meanwhile
   // (a host action every controller sees, like speed and pause; no Cancel, by the owner's decision)
   const ffs = FF_SPANS.map((s) => {
-    const b = button(spanText(s), () => void link.send({ type: 'time', action: 'jump', value: s }).then((r) => r.accepted || toast(`Fast-forward refused: ${r.reason ?? 'refused'}`)), 'small');
+    const b = button(spanText(s), () => void link.send({ type: 'time', action: 'jump', value: s }).then((r) => r.accepted || toast(`Fast-forward refused: ${r.reason ?? 'refused'}`, 'alert')), 'small');
     b.setAttribute('aria-label', `Fast-forward ${spanText(s)}`);
     b.insertAdjacentHTML('afterbegin', '<svg viewBox="0 0 48 32" width="16" height="11" aria-hidden="true"><path d="M6 4l14 12-14 12M24 4l14 12-14 12" fill="none" stroke="currentColor" stroke-width="6"/></svg> ');
     return b;

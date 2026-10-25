@@ -323,6 +323,20 @@ dialog::backdrop { background: var(--scrim); }
 dialog h2 { margin: 0 0 var(--s-2); font-size: var(--t-18); color: var(--text-strong); }
 dialog .actions { display: flex; justify-content: flex-end; gap: var(--s-2); margin-top: var(--s-4); }
 .toasts { position: fixed; bottom: var(--s-4); left: 50%; transform: translateX(-50%); display: grid; gap: var(--s-2); z-index: 40; pointer-events: none; }
+/* UI-A #8 (demo review 24 Oct #8): after the cue card's Load · All alarms on · Bookmark · ×8 the toasts stacked over the
+   monitor's bottom row, the first thing the audience saw of each case. Wherever the monitor stage shows, they keep off
+   it: on the Instructor view at the top of the panel, under the session bar. The Monitor view (the device alone, what
+   the learners see) shows only the toasts that belong there (ui.ts ToastKind): alerts — "The monitor stopped", a
+   refusal, a pause while hidden, which must be seen on every view — and the learner controls' own feedback; the
+   instructor's feedback ("Speed ×8", "Bookmark … saved") stays off it. The starting page is a full page with no
+   monitor (#131): bottom-centre, as elsewhere. Moved rather than shortened: every toast, not only these three, stays readable for its 4 s. */
+body:has(.app[data-route='teach']) .toasts { top: calc(var(--chrome-bottom, var(--bar-h)) + var(--s-2)); bottom: auto; left: auto; right: var(--s-3); transform: none; width: max-content; max-width: calc(var(--panel-w) - 2 * var(--s-3)); }
+body:has(.app[data-route='monitor']) .toast[data-kind='info'] { display: none; }
+.toast[data-kind='alert'] { border-left-color: var(--danger); }
+@media (max-width: 900px) and (orientation: portrait) {
+  /* the panel is a sheet under the monitor: the toasts at the foot of the window are over it */
+  body:has(.app[data-route='teach']) .toasts { top: auto; bottom: var(--s-4); left: 50%; right: auto; transform: translateX(-50%); }
+}
 .toast { background: var(--bezel-3); color: var(--text-strong); border: 1px solid var(--line-strong); border-left: 3px solid var(--accent); border-radius: var(--r-control); padding: var(--s-2) var(--s-4); box-shadow: 0 6px 24px rgb(0 0 0 / 0.35); }
 
 /* monitor-view reveal strip (auto-hiding; the learner sees only the device) */
@@ -374,6 +388,10 @@ dialog .actions { display: flex; justify-content: flex-end; gap: var(--s-2); mar
 .linkish:hover { color: var(--text-strong); text-decoration: underline; }
 .next, .marks, .infusions, .plain { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-1); }
 .next li, .marks li, .infusions li { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; padding: var(--s-1) 0; border-bottom: 1px solid var(--line); }
+/* UI-A #5 (demo review 24 Oct #5): a card's manual step names a whole action ("Intubate: ventilator 12 × 500, PEEP 5,
+   FiO₂ 0.5; sevoflurane 2 %") and was cut at the panel's edge at 1280 wide; it wraps inside the panel, left-aligned,
+   one line keeping the small buttons' 32 px. Every other button stays on one line. */
+.next .btn { white-space: normal; text-align: left; justify-content: flex-start; max-width: 100%; padding-block: var(--s-1); line-height: 1.25; }
 .checks { border: 0; padding: 0; margin: var(--s-2) 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0 var(--s-3); }
 .checks legend { font-size: var(--t-13); color: var(--text-muted); padding: 0; margin-bottom: var(--s-1); }
 .toggles { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: var(--s-2); }
@@ -448,8 +466,18 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
 .ff-mute { display: flex; align-items: center; gap: var(--s-2); color: #aab3bf; }
 .ff-mute svg { width: 20px; height: 20px; }
 /* FX-23: 25 % larger than the body text and its padding (15 → 18.75 px; 8/16 → 10/20 px), three lines, same place */
-.ff-banner { position: fixed; top: var(--s-2); left: 50%; transform: translateX(-50%); z-index: 45; max-width: calc(100vw - 2 * var(--s-4)); padding: calc(1.25 * var(--s-2)) calc(1.25 * var(--s-4)); font-size: calc(1.25 * var(--t-15)); border: 2px solid #ffb000; border-radius: var(--r-control); background: #0b0d10; color: #f3f6f9; font-weight: 600; text-align: center; pointer-events: none; }
+.ff-banner { position: fixed; top: calc(var(--chrome-bottom, 0px) + var(--s-2)); left: 50%; transform: translateX(-50%); z-index: 45; max-width: calc(100vw - 2 * var(--s-4)); padding: calc(1.25 * var(--s-2)) calc(1.25 * var(--s-4)); font-size: calc(1.25 * var(--t-15)); border: 2px solid #ffb000; border-radius: var(--r-control); background: #0b0d10; color: #f3f6f9; font-weight: 600; text-align: center; pointer-events: none; }
 .ff-banner[hidden] { display: none; }
+/* UI-A #9 (demo review 24 Oct #9): the banner covered the nav and the session-bar title for 8 s, and on the Debrief the
+   "Print the learner handout" button; printed within its 8 s it sat over the title of every page. It now sits under the
+   bars (--chrome-bottom) — on the Instructor view over the top of the panel, off the monitor — is not shown on the
+   Debrief, and neither it nor a toast prints, from any view. */
+.app[data-route='teach'] .ff-banner { left: auto; right: var(--s-3); transform: none; max-width: calc(var(--panel-w) - 2 * var(--s-3)); }
+@media (max-width: 900px) and (orientation: portrait) {
+  .app[data-route='teach'] .ff-banner { left: 50%; right: auto; transform: translateX(-50%); max-width: calc(100vw - 2 * var(--s-4)); }
+}
+.app[data-route='debrief'] .ff-banner { display: none; }
+@media print { .ff-banner, .toasts { display: none !important; } }
 .ff-group { display: inline-flex; align-items: center; gap: var(--s-1); }
 
 /* FU-11 (owner ruling Q3): the learner monitor's status and its own Sound / Silence, under the monitor */

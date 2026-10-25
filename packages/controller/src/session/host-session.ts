@@ -116,7 +116,8 @@ export class HostSession {
   private readonly timer: ReturnType<typeof setInterval> | null;
   private bookmarkN = 0;
   private viewerSeenAt = -Infinity; // Wall ms of the last viewer hello
-  private cockpitSaidAt = -Infinity; // Wall ms of the last `cockpit` event
+  private cockpitSaidAt = -Infinity; // Wall ms of the last `cockpit` event (-Infinity: none since the view opened)
+  private cockpitTick: Tick = 0; // The tick of the last mirrored command (the `off` notice carries it)
   private ff: { fromTick: Tick; toTick: Tick; alarms: FastForwardAlarm[] } | null = null; // The fast-forward running
   private activeAlarms = new Set<string>(); // The alarm ids of the last alarmStatus (what is NEW during a span)
   private timelines = 0; // newTimeline() count — a fast-forward stops when its timeline ends
@@ -193,10 +194,12 @@ export class HostSession {
    * never to the relay, WebRTC or the in-process panel (and the relay refuses them, relay/server.ts). Mirroring the
    * cockpit's SETTINGS instead cannot be exact: a frame one tick off moves the beats 3.5 ms (five ticks: 18 ms; the
    * viewer resyncs above 1 ms), and a follower-side cockpit learns its own tick offset.
+   * `notice: false` — the Ventilator view is off screen: its cockpit may still ventilate, but a phone follows (UI-A #2).
    */
-  mirror(cmd: Command, result: DispatchResult): void {
+  mirror(cmd: Command, result: DispatchResult, notice = true): void {
     if (!result.accepted || this.ff) return; // A viewer waits out a fast-forward
-    this.cockpitNotice(result.tick); // Whether or not a viewer said hello lately (a phone that joined long ago)
+    this.cockpitTick = result.tick;
+    if (notice) this.cockpitNotice(result.tick); // Whether or not a viewer said hello lately (a phone that joined long ago)
     if (this.now() - this.viewerSeenAt > VIEWER_TTL_MS) return;
     const m = this.stamp({ kind: 'event', body: [{ type: 'commandApplied', commandId: cmd.id, tick: result.tick, resolved: { command: { ...cmd, atTick: result.tick }, mirror: true } satisfies AppliedResolution }] });
     for (const t of this.transports.keys()) if (t.kind === 'broadcastChannel') t.send(m);
@@ -210,6 +213,20 @@ export class HostSession {
     if (net.length === 0) return; // Nothing stamped for nobody
     this.cockpitSaidAt = now;
     const c = this.stamp({ kind: 'event', body: [{ type: 'cockpit', t: tick * TICK_S, tick }] });
+    for (const t of net) t.send(c);
+  }
+
+  /**
+   * The Ventilator view closed: a phone holding for it is told at once (`off`) and follows again (UI-A #2, demo review
+   * 24 Oct #2: one click on "Ventilator" held every phone for the rest of the case). Once per notice run; the next
+   * notice goes at once.
+   */
+  cockpitOff(): void {
+    if (this.cockpitSaidAt === -Infinity) return;
+    this.cockpitSaidAt = -Infinity;
+    const net = [...this.transports.keys()].filter((t) => t.kind === 'websocket' || t.kind === 'webrtc');
+    if (net.length === 0) return;
+    const c = this.stamp({ kind: 'event', body: [{ type: 'cockpit', t: this.cockpitTick * TICK_S, tick: this.cockpitTick, off: true }] });
     for (const t of net) t.send(c);
   }
 

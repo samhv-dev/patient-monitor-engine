@@ -7,7 +7,7 @@ let nBookmark = 0;
 export async function bookmark(link: Link): Promise<void> {
   const label = `Bookmark ${++nBookmark} at ${clockOf(link.simT)}`;
   const r = await link.send({ type: 'scenario', action: 'bookmark', target: label });
-  toast(r.accepted ? `${label} saved` : 'Bookmark not saved');
+  toast(r.accepted ? `${label} saved` : 'Bookmark not saved', r.accepted ? 'info' : 'alert');
 }
 
 const clockOf = (t: number) => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;

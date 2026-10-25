@@ -17,7 +17,7 @@ import { AppSession } from './session.ts';
 import { mountSessionBar } from './sessionbar.ts';
 import { applySkinAlarmColours, LEVEL_MARK, LEVEL_NAME, Shell, skinAlarmBar, skinAlwaysOn } from './shell.ts';
 import { loadSite } from './site.ts';
-import { button, clock, h, setText, throttle, toast } from './ui.ts';
+import { button, clock, h, setText, throttle, toast, trackChromeBottom } from './ui.ts';
 import { debriefView } from './views/debrief.ts';
 import { devView } from './views/dev.ts';
 import { exploreView } from './views/explore.ts';
@@ -90,13 +90,13 @@ if (follow) {
   // for the gate note's diagnostics
   shell.monitorHost.addEventListener('pme-monitor-failed', (e) => {
     console.error('monitor failed:', (e as CustomEvent<{ reason: string }>).detail.reason);
-    toast('The monitor stopped — Restart the patient');
+    toast('The monitor stopped — Restart the patient', 'alert');
   });
 
   const loadScenario = (c: ScenarioCard): boolean => {
     const r = session.loadScenario(c.doc);
     if (!r.ok) {
-      toast(`The scenario could not load: ${c.title}`);
+      toast(`The scenario could not load: ${c.title}`, 'alert');
       return false;
     }
     link.note(`Scenario loaded: ${c.title}`, 'scenario');
@@ -125,10 +125,11 @@ if (follow) {
   shell.add(settingsView(site, session));
   shell.add(debriefView(session, link));
   mountSessionBar(shell.bar, link);
+  trackChromeBottom(shell.root); // UI-A #8/#9: the toasts and the fast-forward banner sit under the bars
   // FX-14/15: a hidden instructor tab pauses the session through the Pause button's own command, so the phones show
   // "(paused)" instead of "not answering", and resumes it on return (HIDDEN_TAB_POLICY, the owner's E82 switch). A
   // fast-forward refuses every command, the pause included: a hide then sends nothing and claims nothing.
-  watchHiddenTab(document, { role: 'host', paused: () => session.paused || session.host.fastForwarding, send: (action) => void link.send({ type: 'time', action }), notify: toast });
+  watchHiddenTab(document, { role: 'host', paused: () => session.paused || session.host.fastForwarding, send: (action) => void link.send({ type: 'time', action }), notify: (text) => toast(text, 'alert') });
   mountFastForward(shell.root, link.ctl, { simT: () => link.simT, font: () => session.monitor?.skin?.render.fontStack, latch: (a) => session.monitor?.latchAlarms(a) }); // Above every view
 
   // top-right: alarm count in the skin's colours (steady), sound, remote code
@@ -180,7 +181,7 @@ if (follow) {
     session.live = true;
     void restorePosition(kept, session, loadScenario).then((ok) => {
       const text = ok ? `Restored after reload: ${kept.title}, ${clock(kept.simT)}` : `The case could not be restored after the reload: ${kept.title} starts again`;
-      toast(text);
+      toast(text, 'alert'); // after a reload, on whichever view it landed
       link.note(text, 'system');
     });
   } else if (card && loadScenario(card)) {
