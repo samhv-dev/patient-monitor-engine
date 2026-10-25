@@ -162,6 +162,7 @@ export function startView(d: StartDeps): View {
     if (card) {
       if (s.live && !(await confirmDialog('Load this scenario?', `The current patient is replaced by the scenario's patient. The log keeps running.`, 'Load scenario', false, 'Keep the current case'))) return;
       if (!d.loadScenario(card)) return;
+      toast(`Scenario loaded: ${card.title}`); // As the Instructor's library says it
     } else if (s.live && patientChanged()) {
       if (!(await confirmDialog('Restart the patient?', 'Drugs, fluids, ventilation and the scenario reset to the new patient. The session code, the remote and the log carry on.', 'Restart patient', true, 'Keep this patient'))) return;
       s.restart({ spec, mode });
