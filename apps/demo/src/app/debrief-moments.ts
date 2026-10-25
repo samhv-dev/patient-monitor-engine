@@ -89,6 +89,24 @@ export function keyMoments(d: RunData): KeyMoment[] {
   });
 }
 
+/** Where the recognition interval starts (UI review #18): the moment the sign became recognisable, not Load. That is the
+ *  first state the card's own timed rules count from (an `eventWithin` whose `after` is `state:…`: the MH card's "call
+ *  the crisis within 120 s of the early signs") which the patient enters (a transition into it that is not manual),
+ *  reached on the kept course at or before the tick. A card with no such state shows its signs from Load (tamponade
+ *  "within 180 s of arrival", bronchospasm), and so does a tick before the state: the start. Its label is the state's
+ *  label up to the first colon ("Early signs: EtCO₂ rising …" → "early signs"). */
+function recognitionFrom(d: RunData, tick: number | undefined): { t: number; label: string } {
+  const doc = d.doc;
+  const named = new Set((doc?.objectives ?? []).flatMap((o) => (typeof o !== 'string' && o.rule?.kind === 'eventWithin' ? [o.rule.after].flat() : []))
+    .filter((a) => a.startsWith('state:')).map((a) => a.slice('state:'.length)));
+  const byPatient = (id: string) => (doc?.states ?? []).some((s) => (s.transitions ?? []).some((x) => (x.to === id || x.else === id) && !('manual' in x.when)));
+  const idOf = (r: Row) => (r.ev?.startsWith('state:') ? r.ev.slice('state:'.length) : '');
+  const r = kept(d).find((x) => (tick === undefined || x.t <= tick) && named.has(idOf(x)) && byPatient(idOf(x)));
+  if (!r) return { t: 0, label: 'start' };
+  const head = (doc?.states.find((s) => s.id === idOf(r))?.label ?? idOf(r)).split(':')[0] as string;
+  return { t: r.t, label: /^.[a-z]/.test(head) ? head.charAt(0).toLowerCase() + head.slice(1) : head };
+}
+
 /** The key times, in order: recognition, the first team action, the objectives' measured intervals (document order),
  *  the pulse loss to CPR, the time pulseless; at most six that print a tile. A `noneAfter` interval prints none (the
  *  view drops it), so it does not count toward the six (R-B N1). A generic interval equal to an objective's is left
@@ -100,7 +118,8 @@ export function keyTimes(d: RunData, moments: KeyMoment[] = keyMoments(d)): KeyT
   const ri = docObjs.findIndex((o) => typeof o !== 'string' && o.debrief === 'recognition');
   if (ri >= 0) {
     const tk = objs[ri]?.verdict.tickedT;
-    out.push({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: 0, toT: tk ?? null, state: tk === undefined ? 'notTicked' : 'measured' });
+    const from = recognitionFrom(d, tk);
+    out.push({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: from.t, fromLabel: from.label, toT: tk ?? null, state: tk === undefined ? 'notTicked' : 'measured' });
   }
   const team = moments.find((m) => m.who === 'team');
   if (team) out.push({ id: 'firstTeam', label: 'Start → first team action', fromT: 0, toT: team.t, state: 'measured' });

@@ -134,8 +134,6 @@ const legend = (scen: '□' | '│', tail = ''): HTMLElement => h('p', { class: 
 const WHO: Readonly<Record<Who, string>> = { team: 'Team', patient: 'Patient', scenario: 'Scenario' };
 const whoCell = (w: Who): HTMLElement => h('td', { class: 'db-whocell' }, w === 'scenario' ? null : h('span', { class: `db-${w}` }, w === 'team' ? '■ ' : '● '), WHO[w]);
 const TRENDS4: TrendKey[] = ['hr', 'map', 'spo2', 'etco2']; // E56: the same four for every case
-/** At most this many key moments in the table; the rest are in the timeline. */
-const MOMENTS_MAX = 12;
 /** The fixed sentence under the key moments when a row is pulseless (E60; the owner's list, item 11). */
 const SPO2_DASH = 'SpO₂ –: no reliable saturation reading without a pulse; a pleth signal during CPR reflects compression flow, not oxygenation.';
 /** The learner handout's fixed text (E51; the owner's list, item 3: non-clinical, as drafted unless he changes it). */
@@ -166,6 +164,7 @@ function tile(k: KeyTime, moments: KeyMoment[]): HTMLElement | null {
   let sub = '';
   if (!ticked) sub = 'not ticked';
   else if (k.id === 'pulseless') sub = `first lost ${mmss(k.fromT ?? 0)}`;
+  else if (k.id === 'recognition' && k.fromT !== null && k.toT !== null) sub = `${mmss(k.fromT)} ${k.fromLabel ?? 'start'} → ${mmss(k.toT)} ticked`; // #18: from the early signs, not Load
   else if (k.fromT !== null && k.toT !== null) {
     const action = k.id === 'firstTeam' ? moments.find((m) => m.t === k.toT)?.text : undefined;
     sub = `${mmss(k.fromT)} → ${mmss(k.toT)}${k.askedS !== undefined ? ` · asked ≤ ${span(k.askedS)}` : ''}${action ? ` (${action})` : ''}`;
@@ -190,21 +189,19 @@ function bar(m: { fromT: number; toT: number; askedS: number }): HTMLElement {
   return h('span', { class: 'db-measure' }, svg, ` ${span(taken)} of ${span(m.askedS)}`);
 }
 
-/** The key moments with what the monitor showed at that second (values rounded; SpO₂ "–" while pulseless, E60), and the
- *  alarms raised since the row before. */
+/** Every key moment (UI review #3: no cap; on paper the table runs on with its header repeated) with what the monitor
+ *  showed at that second (values rounded; SpO₂ "–" while pulseless, E60), and the alarms raised since the row before. */
 function momentsTable(ms: KeyMoment[]): Node[] {
   const v = (x: number | null) => h('td', { class: 'num' }, x === null ? '–' : String(Math.round(x)));
-  const shown = ms.slice(0, MOMENTS_MAX);
   return kids(
     h('p', { class: 'db-subhead' }, 'values at that second'),
     h('table', { class: 'db-table db-moments' },
       h('thead', {}, h('tr', {}, ...['n', 'Time', 'Who', 'What happened', 'HR', 'MAP', 'SpO₂', 'EtCO₂'].map((c) => h('th', { scope: 'col' }, c)))),
-      h('tbody', {}, ...shown.flatMap((m) => [
+      h('tbody', {}, ...ms.flatMap((m) => [
         h('tr', { 'data-n': String(m.n), ...(m.pulseless ? { 'data-pulseless': 'true' } : {}) }, h('td', { class: 'num' }, String(m.n)), h('td', { class: 'num' }, mmss(m.t)), whoCell(m.who), h('td', {}, m.text),
           v(m.values.hr), v(m.values.map), v(m.values.spo2), v(m.values.etco2)),
         ...(m.alarms.length ? [h('tr', { class: 'db-alarms' }, h('td', {}), h('td', { colspan: '7' }, `Alarms since the last row: ${m.alarms.join(', ')}`))] : []),
       ]))),
-    ms.length > MOMENTS_MAX ? h('p', { class: 'muted' }, `${ms.length - MOMENTS_MAX} more in the timeline`) : null,
     ms.some((m) => m.pulseless) ? h('p', { class: 'db-note60' }, SPO2_DASH) : null,
   );
 }
@@ -302,7 +299,7 @@ export function debriefView(session: AppSession, link: Link): View {
       h('section', { class: 'db-hsec' }, h('h3', {}, 'Your run at a glance'), legend('□'), learnerCourse),
       ms.length ? h('section', { class: 'db-hsec' }, h('h3', {}, 'Key moments'), h('table', { class: 'db-table db-hmoments' },
         h('thead', {}, h('tr', {}, ...['n', 'Time', 'Who', 'What happened'].map((c) => h('th', { scope: 'col' }, c)))),
-        h('tbody', {}, ...ms.slice(0, MOMENTS_MAX).map((m) => h('tr', {}, h('td', { class: 'num' }, String(m.n)), h('td', { class: 'num' }, mmss(m.t)), whoCell(m.who), h('td', {}, m.text)))))) : null,
+        h('tbody', {}, ...ms.map((m) => h('tr', { 'data-n': String(m.n) }, h('td', { class: 'num' }, String(m.n)), h('td', { class: 'num' }, mmss(m.t)), whoCell(m.who), h('td', {}, m.text)))))) : null,
       h('section', { class: 'db-hsec' }, h('h3', {}, 'Questions to think about'), h('ol', { class: 'db-qs' }, ...HANDOUT.prompts.map((q) => h('li', {}, q, ...ruled(3))))),
       takeHomeSection(d.doc?.takeHome),
       h('p', { class: 'db-next' }, HANDOUT.next),
