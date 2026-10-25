@@ -464,8 +464,18 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
 .ff-mute { display: flex; align-items: center; gap: var(--s-2); color: #aab3bf; }
 .ff-mute svg { width: 20px; height: 20px; }
 /* FX-23: 25 % larger than the body text and its padding (15 → 18.75 px; 8/16 → 10/20 px), three lines, same place */
-.ff-banner { position: fixed; top: var(--s-2); left: 50%; transform: translateX(-50%); z-index: 45; max-width: calc(100vw - 2 * var(--s-4)); padding: calc(1.25 * var(--s-2)) calc(1.25 * var(--s-4)); font-size: calc(1.25 * var(--t-15)); border: 2px solid #ffb000; border-radius: var(--r-control); background: #0b0d10; color: #f3f6f9; font-weight: 600; text-align: center; pointer-events: none; }
+.ff-banner { position: fixed; top: calc(var(--chrome-bottom, 0px) + var(--s-2)); left: 50%; transform: translateX(-50%); z-index: 45; max-width: calc(100vw - 2 * var(--s-4)); padding: calc(1.25 * var(--s-2)) calc(1.25 * var(--s-4)); font-size: calc(1.25 * var(--t-15)); border: 2px solid #ffb000; border-radius: var(--r-control); background: #0b0d10; color: #f3f6f9; font-weight: 600; text-align: center; pointer-events: none; }
 .ff-banner[hidden] { display: none; }
+/* UI-A #9 (demo review 24 Oct #9): the banner covered the nav and the session-bar title for 8 s, and on the Debrief the
+   "Print the learner handout" button; printed within its 8 s it sat over the title of every page. It now sits under the
+   bars (--chrome-bottom) — on the Instructor view over the top of the panel, off the monitor — is not shown on the
+   Debrief, and neither it nor a toast prints, from any view. */
+.app[data-route='teach'] .ff-banner { left: auto; right: var(--s-3); transform: none; max-width: calc(var(--panel-w) - 2 * var(--s-3)); }
+@media (max-width: 900px) and (orientation: portrait) {
+  .app[data-route='teach'] .ff-banner { left: 50%; right: auto; transform: translateX(-50%); max-width: calc(100vw - 2 * var(--s-4)); }
+}
+.app[data-route='debrief'] .ff-banner { display: none; }
+@media print { .ff-banner, .toasts { display: none !important; } }
 .ff-group { display: inline-flex; align-items: center; gap: var(--s-1); }
 
 /* FU-11 (owner ruling Q3): the learner monitor's status and its own Sound / Silence, under the monitor */

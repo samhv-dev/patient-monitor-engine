@@ -86,3 +86,49 @@ for (const [w, h] of [[1280, 800], [1920, 1080]] as const) {
     await expect(page.locator('.toasts')).toBeHidden();
   });
 }
+
+test('UI-A #9 fast-forward: the banner sits under the nav and the session bar, not on the Debrief, never in print', async ({ page }) => {
+  test.setTimeout(150_000);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await openApp(page, base, '?scenario=showcase-mh', { warmMs: 1500 });
+  const bar = page.locator('.sessionbar');
+  await bar.getByRole('button', { name: 'Bookmark' }).click(); // a toast for the print check
+  await bar.getByRole('group', { name: 'Fast-forward' }).getByRole('button', { name: 'Fast-forward 2 min' }).click();
+  await expect(page.locator('.ff-veil.on')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('.ff-veil.on')).toHaveCount(0, { timeout: 60_000 });
+  const banner = page.locator('.ff-banner');
+  await expect(banner).toBeVisible();
+  const b = (await banner.boundingBox()) as Box;
+  const nav = (await page.locator('.topbar').boundingBox()) as Box;
+  const sbar = (await bar.boundingBox()) as Box;
+  const stage = (await page.locator('.stage').boundingBox()) as Box;
+  console.log(`UI-A #9 banner ${JSON.stringify(b)} nav ${JSON.stringify(nav)} sessionbar ${JSON.stringify(sbar)}`);
+  expect(meets(b, nav), 'the banner over the nav').toBe(false);
+  expect(meets(b, sbar), 'the banner over the session bar').toBe(false);
+  expect(meets(b, stage), 'the banner over the monitor stage').toBe(false);
+  // the nav stays clickable while the banner shows
+  await page.locator('.topbar nav').getByRole('link', { name: 'Explore physiology' }).click();
+  await expect(page).toHaveURL(/#\/explore/);
+  await expect(banner).toBeVisible();
+  expect(meets((await banner.boundingBox()) as Box, (await page.locator('.topbar').boundingBox()) as Box)).toBe(false);
+  // printed from any view within its 8 s: not on the page
+  await page.emulateMedia({ media: 'print' });
+  await expect(banner).toBeHidden();
+  await page.emulateMedia({ media: 'screen' });
+  await expect(banner).toBeVisible();
+  // the Debrief: no banner, on screen or in print
+  await page.evaluate(() => (location.hash = '#/teach'));
+  await bar.getByRole('link', { name: 'Debrief' }).click();
+  await expect(page.locator('[data-view=debrief]').getByRole('heading', { level: 1, name: 'Debrief' })).toBeVisible({ timeout: 15_000 });
+  await expect(banner).toBeHidden();
+  await page.emulateMedia({ media: 'print' });
+  await expect(banner).toBeHidden();
+  await expect(page.locator('.toasts')).toBeHidden();
+  await page.emulateMedia({ media: 'screen' });
+  // nor a toast printed from another view (print hides them everywhere)
+  await page.evaluate(() => (location.hash = '#/teach'));
+  await bar.getByRole('button', { name: 'Bookmark' }).click();
+  await expect(page.locator('.toasts')).toBeVisible();
+  await page.emulateMedia({ media: 'print' });
+  await expect(page.locator('.toasts')).toBeHidden();
+});
