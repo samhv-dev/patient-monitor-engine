@@ -374,6 +374,10 @@ dialog .actions { display: flex; justify-content: flex-end; gap: var(--s-2); mar
 .linkish:hover { color: var(--text-strong); text-decoration: underline; }
 .next, .marks, .infusions, .plain { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-1); }
 .next li, .marks li, .infusions li { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; padding: var(--s-1) 0; border-bottom: 1px solid var(--line); }
+/* UI-A #5 (demo review 24 Oct #5): a card's manual step names a whole action ("Intubate: ventilator 12 × 500, PEEP 5,
+   FiO₂ 0.5; sevoflurane 2 %") and was cut at the panel's edge at 1280 wide; it wraps inside the panel, left-aligned,
+   one line keeping the small buttons' 32 px. Every other button stays on one line. */
+.next .btn { white-space: normal; text-align: left; justify-content: flex-start; max-width: 100%; padding-block: var(--s-1); line-height: 1.25; }
 .checks { border: 0; padding: 0; margin: var(--s-2) 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0 var(--s-3); }
 .checks legend { font-size: var(--t-13); color: var(--text-muted); padding: 0; margin-bottom: var(--s-1); }
 .toggles { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: var(--s-2); }
