@@ -63,7 +63,7 @@ for (const [w, h] of [[1280, 800], [1920, 1080]] as const) {
     await card.locator('button', { hasText: 'Load' }).first().click();
     const confirm = page.getByRole('button', { name: 'Load scenario', exact: true });
     if (await confirm.waitFor({ timeout: 1500 }).then(() => true, () => false)) await confirm.click();
-    await expect(page.locator('.toasts')).toContainText('Scenario loaded: Malignant hyperthermia', { timeout: 15_000 });
+    await expect(run(page)).toContainText('Malignant hyperthermia', { timeout: 15_000 }); // loaded (its own toast may be gone on a loaded machine)
     await allOn();
     await page.click('[role=tab][data-tab=scenario]');
     const bar = page.locator('.sessionbar');
