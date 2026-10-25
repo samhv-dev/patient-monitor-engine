@@ -293,6 +293,8 @@ export interface DebriefExport {
   keyTimes: Array<{
     id: 'recognition' | 'firstTeam' | `objective:${number}` | 'pulseLostToCpr' | 'pulseless';
     label: string; fromT: number | null; toT: number | null; askedS?: number; totalS?: number;
+    /** Recognition only: what `fromT` is ("early signs", the state the card's rules count from; "start" without one). */
+    fromLabel?: string;
     state: 'measured' | 'notTicked' | 'noneAfter';
   }>;
   /** Values as recorded, unrounded, except SpO₂: null while pulseless (`pulseless` says why). */

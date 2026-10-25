@@ -8,6 +8,8 @@ import { keyMoments, keyTimes, pulselessAt, whoOf } from './debrief-moments.ts';
 import { drugWords } from './glossary.ts';
 import { emptyRun, type Row, type RunData, type Sample } from './record.ts';
 import { objectiveText } from './scenarios.ts';
+import a4mh from '../../../../docs/showcase/kit-round-a/debrief-a4-mh-e119-induction-sequence-and-early-call-kit-round-chromium.json';
+import anaphylaxis from './showcase/showcase-anaphylaxis.json';
 import mh from './showcase/showcase-mh.json';
 import tamponade from './showcase/showcase-tamponade.json';
 
@@ -107,7 +109,7 @@ describe('key times', () => {
   it('A3.1 with the tick: the recognition tile is the tick time as recorded', () => {
     const T = 130;
     const ks = keyTimes(a31Run([tickOf(card, T)]));
-    expect(ks.find((k) => k.id === 'recognition')).toMatchObject({ fromT: 0, toT: T, state: 'measured' });
+    expect(ks.find((k) => k.id === 'recognition')).toMatchObject({ fromT: 0, fromLabel: 'start', toT: T, state: 'measured' }); // tamponade: the signs are there from arrival
   });
 
   it('MH (E52): the new recognition objective gives a tile with the tick, and "not ticked" without it', () => {
@@ -118,6 +120,43 @@ describe('key times', () => {
     ticked.rows.push(tickOf(doc, T));
     expect(keyTimes(ticked).find((k) => k.id === 'recognition')).toMatchObject({ fromT: 0, toT: T, state: 'measured' });
     expect(keyTimes(base()).find((k) => k.id === 'recognition')).toMatchObject({ toT: null, state: 'notTicked' });
+  });
+
+  it('#18 MH: recognition runs from the early signs to the tick, not from Load (the A4 kit-round record)', () => {
+    const d = structuredClone(a4mh.record) as unknown as RunData;
+    const k = keyTimes(d).find((x) => x.id === 'recognition');
+    expect(k).toMatchObject({ fromLabel: 'early signs', state: 'measured' });
+    expect(k?.fromT).toBeCloseTo(518.29, 1); // state:earlySigns, 08:38
+    expect(k?.toT).toBeCloseTo(520.02, 1); // the tick, 08:40
+    expect(a4mh.keyTimes.find((x) => x.id === 'recognition')?.fromT).toBe(0); // the record as exported before this fix
+  });
+
+  it('#18 MH: a tick before the early signs counts from the start; the tick after them from the state', () => {
+    const doc = mh as unknown as ScenarioDoc;
+    const run = (tick: number): RunData => ({
+      ...emptyRun('MH', 70, 0), doc, samples: Array.from({ length: 700 }, (_, t) => sampleAt(t)),
+      rows: ([
+        { t: 0, kind: 'scenario', text: 'Scenario state: Awake', ev: 'state:awake' },
+        { t: 366, kind: 'scenario', text: 'Scenario state: Surgery', ev: 'state:surgery' },
+        { t: 527, kind: 'scenario', text: 'Scenario state: Early signs', ev: 'state:earlySigns' },
+        tickOf(doc, tick),
+      ] as Row[]).sort((a, b) => a.t - b.t),
+    });
+    expect(keyTimes(run(541)).find((k) => k.id === 'recognition')).toMatchObject({ fromT: 527, fromLabel: 'early signs', toT: 541 });
+    expect(keyTimes(run(500)).find((k) => k.id === 'recognition')).toMatchObject({ fromT: 0, fromLabel: 'start', toT: 500 });
+  });
+
+  it('#18 anaphylaxis: recognition counts from the reaction (the state its epinephrine rule counts from)', () => {
+    const doc = anaphylaxis as unknown as ScenarioDoc;
+    const d: RunData = {
+      ...emptyRun('A', 70, 0), doc, samples: Array.from({ length: 300 }, (_, t) => sampleAt(t)),
+      rows: [
+        { t: 0, kind: 'scenario', text: 'Scenario state: Ventilated, stable', ev: 'state:stable' },
+        { t: 120, kind: 'scenario', text: 'Scenario state: Anaphylaxis', ev: 'state:anaphylaxis' },
+        tickOf(doc, 150),
+      ],
+    };
+    expect(keyTimes(d).find((k) => k.id === 'recognition')).toMatchObject({ fromT: 120, fromLabel: 'anaphylaxis', toT: 150 });
   });
 
   it('the six-tile cap counts only tiles the view draws: a pulse loss with no CPR does not push "Pulseless in all" out (R-B N1)', () => {
