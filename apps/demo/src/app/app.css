@@ -325,11 +325,10 @@ dialog .actions { display: flex; justify-content: flex-end; gap: var(--s-2); mar
 .toasts { position: fixed; bottom: var(--s-4); left: 50%; transform: translateX(-50%); display: grid; gap: var(--s-2); z-index: 40; pointer-events: none; }
 /* UI-A #8 (demo review 24 Oct #8): after the cue card's Load · All alarms on · Bookmark · ×8 the toasts stacked over the
    monitor's bottom row, the first thing the audience saw of each case. Wherever the monitor stage shows, they keep off
-   it: on the Instructor view at the top of the panel, under the session bar; on Start over the left-hand view; on the
-   Monitor view (the device alone, what the learners see) not at all. Moved rather than shortened: every toast, not
-   only these three, stays readable for its 4 s. */
+   it: on the Instructor view at the top of the panel, under the session bar; on the Monitor view (the device alone, what
+   the learners see) not at all. The starting page is a full page with no monitor (#131): bottom-centre, as elsewhere.
+   Moved rather than shortened: every toast, not only these three, stays readable for its 4 s. */
 body:has(.app[data-route='teach']) .toasts { top: calc(var(--chrome-bottom, var(--bar-h)) + var(--s-2)); bottom: auto; left: auto; right: var(--s-3); transform: none; width: max-content; max-width: calc(var(--panel-w) - 2 * var(--s-3)); }
-body:has(.app[data-route='start']) .toasts { left: var(--s-4); transform: none; max-width: calc(440px - 2 * var(--s-4)); }
 body:has(.app[data-route='monitor']) .toasts { display: none; }
 @media (max-width: 900px) and (orientation: portrait) {
   /* the panel is a sheet under the monitor: the toasts at the foot of the window are over it */

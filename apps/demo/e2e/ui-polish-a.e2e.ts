@@ -84,6 +84,16 @@ for (const [w, h] of [[1280, 800], [1920, 1080]] as const) {
     // the Monitor view is the device alone: no toast over it
     await page.evaluate(() => (location.hash = '#/monitor'));
     await expect(page.locator('.toasts')).toBeHidden();
+    // the full-page start (#131, no bars, no stage): toasts bottom-centre; back on the Instructor view, under the bars again
+    await page.evaluate(() => (location.hash = '#/start'));
+    await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--chrome-bottom').trim())).toBe('0px');
+    expect(await page.locator('.toasts').evaluate((e) => getComputedStyle(e).bottom)).not.toBe('auto');
+    await page.evaluate(() => (location.hash = '#/teach'));
+    await bar.getByRole('button', { name: 'Bookmark' }).click();
+    await expect(page.locator('.toast').last()).toBeVisible();
+    const again = await page.locator('.toast').last().evaluate((t) => t.getBoundingClientRect().toJSON() as Box);
+    expect(again.y).toBeGreaterThanOrEqual(((await bar.boundingBox()) as Box).y + ((await bar.boundingBox()) as Box).height);
+    expect(meets(again, (await page.locator('.stage').boundingBox()) as Box)).toBe(false);
   });
 }
 
