@@ -86,6 +86,15 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Fixed
 
+- Instructor page (UI review 2026-10-24 #1): a reload in the middle of a card came back as "No scenario" with the
+  default patient, and the phones followed that. The page now comes back to the card, its state and its clock: every
+  second the tab keeps the run's position in its session storage (what a bookmark holds, the engine snapshot and the
+  scenario runner's state, plus the card, the speed, the pause, the learner controls and the Debrief's record), and on
+  load under the same session code, the same build and within 6 hours it loads the card again and returns to that
+  position like "Return here" (the phones re-follow the same way). A toast says so ("Restored after reload: Malignant
+  hyperthermia, 05:12"). A reload comes back at most one second of wall time behind (× the speed). Restart patient
+  and loading another card forget the position; another session code in the address restores nothing. Not kept: the
+  Log tab's lines and the bookmarks from before the reload. `ScenarioDriver` gains `position()` and `hold()`.
 - Debrief timeline and log (F29): a bag-mask ventilation event printed "PEEP undefined cmH₂O" (the healthy
   induction's "Bag-mask ventilate, FiO₂ 1.0"). The words now follow what the engine applies: bag-mask ventilation has
   no PEEP in the model, so it prints PEEP 0 whatever the event says; a ventilator event without a PEEP keeps the
