@@ -9,6 +9,7 @@ import { mountClassroomPanel } from './classroom-panel.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
 import { PATIENT_PRESETS } from './patients.ts';
+import { keepPositions, readPosition, restorePosition } from './position.ts';
 import { hrefOf, parseRoute } from './router.ts';
 import { SCENARIO_META } from './scenario-meta.ts';
 import { scenarioById, type ScenarioCard } from './scenarios.ts';
@@ -16,7 +17,7 @@ import { AppSession } from './session.ts';
 import { mountSessionBar } from './sessionbar.ts';
 import { applySkinAlarmColours, LEVEL_MARK, LEVEL_NAME, Shell, skinAlarmBar, skinAlwaysOn } from './shell.ts';
 import { loadSite } from './site.ts';
-import { button, h, setText, throttle, toast } from './ui.ts';
+import { button, clock, h, setText, throttle, toast } from './ui.ts';
 import { debriefView } from './views/debrief.ts';
 import { devView } from './views/dev.ts';
 import { exploreView } from './views/explore.ts';
@@ -172,10 +173,21 @@ if (follow) {
 
   const deep = q.get('scenario');
   const card = deep ? scenarioById(deep) : undefined;
-  if (card && loadScenario(card)) {
+  // A reload in the middle of a card comes back to it (position.ts): same session code, same build, a card of the
+  // library; a deep link to ANOTHER card wins
+  const kept = q.get('load') === 'perf8' ? null : readPosition({ code: session.code });
+  if (kept && (!deep || deep === kept.cardId)) {
+    session.live = true;
+    void restorePosition(kept, session, loadScenario).then((ok) => {
+      const text = ok ? `Restored after reload: ${kept.title}, ${clock(kept.simT)}` : `The case could not be restored after the reload: ${kept.title} starts again`;
+      toast(text);
+      link.note(text, 'system');
+    });
+  } else if (card && loadScenario(card)) {
     session.live = true;
     if (!location.hash) location.hash = hrefOf('teach');
   }
+  keepPositions(session);
   shell.start();
   // e2e hook: the engine ids the glossary test must never find in a clinical view
   const engineIds = [...RHYTHM_IDS, ...DRUG_IDS, ...LUNG_CONDITIONS.map((c) => c.id)];
