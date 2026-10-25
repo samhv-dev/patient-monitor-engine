@@ -104,8 +104,15 @@ if (follow) {
   };
   const weightKg = () => session.spec.weightKg;
 
-  shell.add(startView({ session, site, loadScenario, learnerUrl: followUrl(session.code) }));
   const phones = relay ? mountClassroomPanel(shell.right, session, relay) : null; // The QR moment (a classroom relay)
+  // The starting page carries the top bar's session controls (the bar is hidden there): the same QR sheet, sound and alarms
+  const toggleSound = async (): Promise<void> => {
+    if (session.soundOn) session.disableSound();
+    else await session.enableSound();
+    drawSound();
+  };
+  const openAlarms = (): void => ((location.hash = hrefOf('teach')), teach.panel.select('devices'));
+  shell.add(startView({ session, site, loadScenario, learnerUrl: followUrl(session.code), phones, sound: { on: () => session.soundOn, toggle: toggleSound }, alarms: { text: () => alarmText(), onChange: (f) => link.onChange(throttle(f, 500)), open: openAlarms } }));
   shell.add(monitorView(shell.stage, { session, link, learnerUrl: followUrl(session.code), phones }));
   const teach = teachView(link, { site, main: shell.main, stage: shell.stage, weightKg, loadScenario });
   shell.add(teach);
@@ -124,19 +131,23 @@ if (follow) {
   mountFastForward(shell.root, link.ctl, { simT: () => link.simT, font: () => session.monitor?.skin?.render.fontStack, latch: (a) => session.monitor?.latchAlarms(a) }); // Above every view
 
   // top-right: alarm count in the skin's colours (steady), sound, remote code
-  const alarm = h('button', { type: 'button', class: 'alarm-count', 'data-vendor-title': '', onclick: () => ((location.hash = hrefOf('teach')), teach.panel.select('devices')) });
+  const alarm = h('button', { type: 'button', class: 'alarm-count', 'data-vendor-title': '', onclick: openAlarms });
   // A toggle — it turns sound off again (it only ever turned it on); this window's sound only
   const drawSound = () => ((sound.textContent = session.soundOn ? 'Sound on' : 'Sound off'), sound.setAttribute('aria-pressed', String(session.soundOn)));
-  const sound = button('Sound off', () => (session.soundOn ? (session.disableSound(), drawSound()) : void session.enableSound().then(drawSound)), 'small sound');
+  const sound = button('Sound off', () => void toggleSound(), 'small sound');
   sound.setAttribute('aria-pressed', 'false');
   const code = h('a', { class: 'code-pill', href: hrefOf('remote'), 'aria-label': `Remote pairing code ${session.code.split('').join(' ')}` }, h('span', { class: 'muted' }, 'Remote '), session.code);
   shell.right.append(alarm, sound, code);
+  function alarmText(): string {
+    const s = link.alarmSummary;
+    return s.level && s.top ? `${LEVEL_MARK[s.level]} ${alarmLine(s.top).text}${s.n > 1 ? ` +${s.n - 1}` : ''}` : link.alarms?.allOff ? LIMITS_OFF_LABEL : 'No alarms';
+  }
   const drawAlarm = throttle(() => {
     const s = link.alarmSummary;
     alarm.dataset.level = s.level ? LEVEL_NAME[s.level] : 'none';
     // With the factory "all alarm groups off" (saadat-like) asystole, VF, VT and apnoea still alarm — "Alarms off" read
     // as if nothing would; the label says which alarms are off
-    setText(alarm, s.level && s.top ? `${LEVEL_MARK[s.level]} ${alarmLine(s.top).text}${s.n > 1 ? ` +${s.n - 1}` : ''}` : link.alarms?.allOff ? LIMITS_OFF_LABEL : 'No alarms');
+    setText(alarm, alarmText());
     if (s.top) alarm.title = `On the monitor: ${s.top.text}`; // The vendor's words, outside the glossary scan
     else if (link.alarms?.allOff) {
       // What still alarms comes from the skin's data, worded by the alarm table

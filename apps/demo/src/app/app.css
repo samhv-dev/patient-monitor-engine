@@ -85,6 +85,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .app { display: grid; grid-template-rows: var(--bar-h) minmax(0, 1fr); height: 100dvh; }
 .app[data-route='monitor'] { grid-template-rows: minmax(0, 1fr); }
 .app[data-route='monitor'] > .topbar { display: none; }
+/* The starting page is a full page: no top bar, no session bar, no monitor (the shell also sets `hidden` on both) */
+.app[data-route='start'] { grid-template-rows: minmax(0, 1fr); }
+.app[data-route='start'] > .topbar { display: none; }
 .topbar {
   display: flex; align-items: center; gap: var(--s-3); padding: 0 var(--s-3);
   background: var(--bezel-1); border-bottom: 1px solid var(--line); min-width: 0;
@@ -110,10 +113,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .sessionbar { grid-area: bar; display: none; }
 .view { grid-area: view; min-width: 0; min-height: 0; overflow: auto; background: var(--bezel-0); }
 .view[hidden] { display: none; }
-.main:not([data-route='start']):not([data-route='monitor']):not([data-route='teach']):not([data-route='vent']) > .stage { display: none; }
+.main:not([data-route='monitor']):not([data-route='teach']):not([data-route='vent']) > .stage { display: none; }
 .main[data-route='monitor'] > .view:not([data-view='monitor']) { display: none; }
 
-.main[data-route='start'] { grid-template: 'view stage' minmax(0, 1fr) / minmax(440px, 1fr) minmax(0, 1.25fr); }
 .main[data-route='monitor'] { grid-template: 'stage' minmax(0, 1fr) 'view' auto / minmax(0, 1fr); }
 .main[data-route='monitor'] > .view[data-view='monitor'] { overflow: visible; }
 .main[data-route='teach'] { grid-template: 'bar bar' auto 'stage view' minmax(0, 1fr) / minmax(0, 1fr) var(--panel-w); }
@@ -148,7 +150,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
   .main[data-route='teach'] { grid-template: 'bar' auto 'stage' 42% 'view' minmax(0, 1fr) / minmax(0, 1fr); }
   .main[data-route='teach'] > .view[data-view='teach'] { grid-area: view; width: auto; justify-self: stretch; transform: none; visibility: visible; border-left: 0; border-top: 1px solid var(--line-strong); }
   .main[data-route='teach'] .stage > .drawer-toggle { display: none; }
-  .main[data-route='start'] { grid-template: 'stage' 36% 'view' minmax(0, 1fr) / minmax(0, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) { .view, .toast, dialog { transition: none !important; } }
 
@@ -282,7 +283,6 @@ input[type='checkbox'], input[type='radio'] { flex: none; width: 24px; height: 2
 .page h1 { font-size: var(--t-26); font-weight: 600; color: var(--text-strong); margin: 0 0 var(--s-1); letter-spacing: -0.01em; }
 .page h2 { font-size: var(--t-18); font-weight: 600; color: var(--text-strong); margin: var(--s-6) 0 var(--s-3); }
 .page .lede { color: var(--text-muted); margin: 0 0 var(--s-5); max-width: 70ch; }
-.start-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: var(--s-5); align-items: start; }
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--s-3); }
 .tile { display: grid; gap: var(--s-1); padding: var(--s-4); border-radius: var(--r-card); border: 1px solid var(--line); background: var(--bezel-1); color: var(--text); text-decoration: none; min-height: 96px; }
 .tile:hover { border-color: var(--line-strong); background: var(--bezel-2); }
@@ -290,7 +290,7 @@ input[type='checkbox'], input[type='radio'] { flex: none; width: 24px; height: 2
 .tile span { color: var(--text-muted); font-size: var(--t-13); }
 .setup { display: grid; gap: var(--s-3); padding: var(--s-4); border-radius: var(--r-card); border: 1px solid var(--line); background: var(--bezel-1); }
 .setup .actions { display: flex; gap: var(--s-2); flex-wrap: wrap; margin-top: var(--s-2); }
-@media (max-width: 900px) { .start-grid { grid-template-columns: 1fr; } .page { padding: var(--s-4) var(--s-4) var(--s-6); } }
+@media (max-width: 900px) { .page { padding: var(--s-4) var(--s-4) var(--s-6); } }
 
 /* Explore / console table (bench theme) */
 .xgrid { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: var(--s-4); }
@@ -395,9 +395,6 @@ dialog .actions { display: flex; justify-content: flex-end; gap: var(--s-2); mar
 .remote-panel .panel { border-left: 0; }
 .page.narrow { max-width: 760px; }
 .page.wide { max-width: none; }
-.start { max-width: 760px; }
-.start .setup h2 { margin: var(--s-4) 0 var(--s-1); font-size: var(--t-15); }
-.start .setup .actions { margin-top: var(--s-4); }
 .framed iframe { height: calc(100dvh - 220px); min-height: 480px; border: 1px solid var(--line); border-radius: var(--r-card); }
 .iframe.vent { height: 100%; }
 .devlist { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; }
@@ -431,7 +428,6 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
   .btn.small, .seg.compact button, .linkish, .mode-badge, .code-pill, .alarm-count, .chip-btn { min-height: 44px; min-width: 44px; }
   .states li[aria-current='step'] { min-height: 44px; }
 }
-.start .setup .actions { position: sticky; bottom: 0; background: var(--bezel-1); padding: var(--s-3) 0; margin-bottom: calc(-1 * var(--s-4)); border-top: 1px solid var(--line); z-index: 2; }
 /* learner controls under the learner monitor (orchestrator ruling 4): hidden unless switched on for the scenario */
 .learner-strip { display: flex; flex-wrap: wrap; gap: var(--s-2); padding: var(--s-2) var(--s-3); background: var(--bezel-1); border-top: 1px solid var(--line); }
 .learner-strip[hidden] { display: none; }
@@ -476,3 +472,85 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
 .phones-url { font-size: var(--t-18); word-break: break-all; margin: var(--s-2) 0 0; }
 .phones-code { font-size: var(--t-32); font-weight: 700; letter-spacing: 0.2em; margin: var(--s-1) 0; }
 .phones-count { font-size: var(--t-18); }
+
+/* ---------- the starting page (owner ruling 2026-10-25) ----------
+   A full page in the bezel's own tokens, read from the back of a room: the title and the release label, the scenario
+   library (the two demonstration cards first and larger), the patient and the session side by side, the site last.
+   Type steps up one notch at 1600 px and wider (a 1920 × 1080 projector). */
+.landing { max-width: 1360px; margin: 0 auto; padding: var(--s-7) var(--s-6) var(--s-7); display: grid; gap: var(--s-6); }
+.landing h2 { font-size: var(--t-22); font-weight: 600; color: var(--text-strong); margin: 0; letter-spacing: -0.005em; }
+.landing h3 { font-size: var(--t-13); font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin: var(--s-4) 0 var(--s-1); }
+.landing .hint { margin: 0; }
+.land-hero { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s-4) var(--s-5); flex-wrap: wrap; padding-bottom: var(--s-5); border-bottom: 1px solid var(--line); }
+.land-title { min-width: 0; flex: 1 1 520px; }
+.land-title h1 { font-size: var(--t-44); line-height: 1.1; font-weight: 650; color: var(--text-strong); margin: 0 0 var(--s-3); letter-spacing: -0.02em; }
+.land-title .about-line { margin: 0; color: var(--text-muted); font-size: var(--t-15); max-width: 80ch; }
+.land-release { color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.land-actions { display: flex; gap: var(--s-2); flex-wrap: wrap; }
+.btn.big { min-height: 52px; padding: 0 var(--s-5); font-size: var(--t-18); border-radius: var(--r-card); }
+.land-live { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); flex-wrap: wrap; padding: var(--s-3) var(--s-3) var(--s-3) var(--s-5); border: 1px solid var(--accent); border-radius: var(--r-card); background: var(--bezel-2); font-size: var(--t-18); }
+.land-live b { color: var(--text-strong); font-weight: 600; }
+.land-sec { display: grid; gap: var(--s-4); }
+.land-sec-head { display: flex; align-items: baseline; gap: var(--s-2) var(--s-4); flex-wrap: wrap; }
+.land-demos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5); }
+.lcard .scard-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); }
+.landing .lcard { align-content: start; }
+.landing .land-eyebrow { font-size: var(--t-12); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+.landing .lcard .objectives { display: none; }
+.landing .lcard .meta { color: var(--text-muted); }
+.landing .lcard > p { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; align-self: start; }
+.scard-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); margin-top: var(--s-1); }
+.scard-foot .meta { margin: 0; }
+.lcard.land-demo { padding: var(--s-5) var(--s-5) var(--s-4); gap: var(--s-3); background: var(--bezel-2); border-color: var(--line-strong); box-shadow: inset 0 3px 0 var(--accent); grid-template-rows: auto auto 1fr auto; }
+.lcard.land-demo .land-eyebrow { color: var(--accent-strong); }
+.lcard.land-demo h3 { font-size: var(--t-26); line-height: 1.15; letter-spacing: -0.01em; margin: 0; text-transform: none; color: var(--text-strong); }
+.lcard.land-demo > p { font-size: var(--t-15); color: var(--text); -webkit-line-clamp: 3; line-height: 1.45; }
+.lcard.land-demo .meta { font-size: var(--t-15); color: var(--text-muted); }
+.lcard.land-demo .scard-foot .btn { min-width: 168px; }
+h3.land-subhead { margin: var(--s-2) 0 0; }
+.land-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--s-3); }
+.lcard.land-more { background: var(--bezel-1); grid-template-rows: auto auto 1fr auto; gap: var(--s-1); padding: var(--s-3) var(--s-4); }
+.lcard.land-more h3 { font-size: var(--t-15); margin: 0; text-transform: none; letter-spacing: 0; color: var(--text-strong); }
+.lcard.land-more > p { font-size: var(--t-13); color: var(--text-muted); -webkit-line-clamp: 2; }
+.lcard.land-more .meta { font-size: var(--t-12); }
+.lcard.land-more .scard-foot { margin-top: var(--s-2); }
+.lcard.land-more:hover { border-color: var(--line-strong); }
+.land-pair { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--s-5); align-items: stretch; }
+.land-panel { display: grid; gap: var(--s-2); align-content: start; padding: var(--s-5); border-radius: var(--r-card); border: 1px solid var(--line); background: var(--bezel-1); }
+.land-panel > h2 { margin-bottom: var(--s-1); }
+.land-panel .summary { font-size: var(--t-22); margin: 0; }
+.land-panel .chips { margin: 0; }
+.land-panel .seg { justify-self: start; }
+.land-row { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+.land-code { display: flex; align-items: baseline; gap: var(--s-3); flex-wrap: wrap; }
+.land-k { color: var(--text-muted); }
+.land-codev { font-family: var(--font-mono); font-size: var(--t-32); font-weight: 600; letter-spacing: 0.14em; color: var(--text-strong); }
+.land-count { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.land-alarms { white-space: normal; text-align: left; }
+.land-site { padding-top: var(--s-5); border-top: 1px solid var(--line); }
+.land-site-row { display: grid; grid-template-columns: minmax(0, 280px) minmax(0, 280px) minmax(0, 1fr); gap: var(--s-2) var(--s-4); align-items: end; }
+.land-site-row .hint { align-self: center; }
+@media (min-width: 1600px) {
+  .landing { max-width: 1640px; padding-top: 64px; gap: 40px; }
+  .land-title h1 { font-size: 56px; }
+  .land-title .about-line { font-size: var(--t-18); }
+  .landing h2 { font-size: var(--t-26); }
+  .lcard.land-demo h3 { font-size: var(--t-32); }
+  .lcard.land-demo > p { font-size: var(--t-18); }
+  .lcard.land-demo .meta { font-size: var(--t-18); }
+  .lcard.land-more h3 { font-size: var(--t-18); }
+  .lcard.land-more > p { font-size: var(--t-15); }
+  .lcard.land-more .meta { font-size: var(--t-13); }
+  .land-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+}
+@media (max-width: 1100px) {
+  .landing { padding: var(--s-6) var(--s-5) var(--s-7); gap: var(--s-5); }
+  .land-title h1 { font-size: var(--t-32); }
+  .land-pair { grid-template-columns: minmax(0, 1fr); }
+  .land-site-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .land-site-row .hint { grid-column: 1 / -1; }
+}
+@media (max-width: 760px) {
+  .landing { padding: var(--s-4) var(--s-4) var(--s-6); }
+  .land-demos, .land-site-row { grid-template-columns: minmax(0, 1fr); }
+}
