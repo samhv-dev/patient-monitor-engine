@@ -1,4 +1,7 @@
 > **Showcase 1 record; numbers superseded by [SHOWCASE-2-MEASUREMENTS.md](SHOWCASE-2-MEASUREMENTS.md).**
+> **The 3 November 2026 programme (two live demos: malignant hyperthermia, then class IV haemorrhage with its Debrief)
+> is in [SHOWCASE-2-CUE-CARDS.md](SHOWCASE-2-CUE-CARDS.md) and [SHOWCASE-2-RUN-SHEET.md](SHOWCASE-2-RUN-SHEET.md);
+> the five cases below are not in it.**
 
 # Showcase cases: exact on-screen labels, step by step (notes for the run sheet)
 
