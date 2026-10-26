@@ -121,6 +121,14 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Fixed
 
+- Validation harness: the MODELED sanity documents and the Pulse oracle's MODELED scenarios no longer send a baseline
+  heart rate. In MODELED a `setTarget hr` is the instructor's held rate, so the haemorrhage, sepsis, phenylephrine and
+  Cushing rows read exactly 75 bpm and the oracle's haemorrhage HR rise read 0: they tested nothing (Q-FU3-9a). With
+  the rate free, on main `458903cc`: s4 class III/IV, t16 and t17a heart rates 104 / 127 / 87 / 94 (yellow, were red);
+  t17b SBP 104 against 65–80 (red, was yellow); t10's phenylephrine rescue MAP 69 against > 85 (yellow, was green);
+  the oracle's haemorrhage HR rise +13.5 against Pulse's +47.7 and the propofol MAP fall 26.9 against 27.9 (green).
+  No band changed; engine code untouched. The committed validation report is not regenerated (it needs the dataset
+  cache).
 - A learner's phone (or a second-screen monitor) applies every mirrored command on the tick the instructor's monitor
   applied it. The follower also passed the command's stage group to its own engine, which then pulled a command the
   instructor's monitor had applied a tick or two after its group's first (a group its engine had already passed) back

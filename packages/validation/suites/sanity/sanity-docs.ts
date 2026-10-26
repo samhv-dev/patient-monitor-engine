@@ -25,7 +25,9 @@ function doc(o: {
     ...(o.requires ? { requires: o.requires } : {}),
     scenario: {
       schema: 'pme-scenario/1', id: `val-${o.id}`, title: o.title, ...(o.mode ? { mode: o.mode } : {}),
-      patient: { ...ADULT, sensors: SENSORS, baseline: { hr: 75, sbp: 120, dbp: 70, ...o.baseline }, ...o.patient },
+      // MODELED leaves the heart rate to the model: there `setTarget hr` is the instructor's held rate (FU-2 rate rule), so
+      // the default `hr: 75` froze the rate and the reflex rows read exactly 75.0 (Q-FU3-9a). MANUAL keeps it (targets ARE the patient).
+      patient: { ...ADULT, sensors: SENSORS, baseline: { ...(o.mode === 'modeled' ? {} : { hr: 75 }), sbp: 120, dbp: 70, ...o.baseline }, ...o.patient },
       initialState: 'run', states: [{ id: 'run', notes: o.source }],
     },
     actions: o.actions,

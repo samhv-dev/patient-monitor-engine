@@ -28,8 +28,9 @@ rows are "gating" and fail the run, yellow rows never do. Every yellow and red r
 
 ## The latest run
 
-From `docs/validation/report.md`, generated 2026-10-17 by `pnpm validate --seeds 11,12` on commit `e737de92` of the
-Stage 8b branch (engine 1.0.0-rc.1; 914 s wall; `PME_PULSE_DIR` set, so the oracle ran):
+From `docs/validation/report.md`, regenerated 2026-10-18 by `pnpm validate --seeds 11,12` on commit `3db25a3b`, the
+v1.0.0-rc.1 tag (engine 1.0.0-rc.1; 788 s wall; `PME_PULSE_DIR` set, so the oracle ran). An earlier run of the same
+day on `e737de92` (914 s) gave the same counts:
 
 > **Summary:** 🟢 96 · 🟡 33 · 🔴 27 graded rows; 1 documents not measurable on this build; calibration queue 60 rows.
 > Gating failures: 27.
@@ -40,14 +41,23 @@ Measured on the v1.0.0-rc.1 tree: no physiology file (`packages/engine-core/src`
 
 The 27 red rows by suite: morphology 10 (R → radial upstroke about 100 ms against 145–190 ms recorded; dicrotic notch
 270–284 ms against 428–518 ms; PPG ↔ ABP shape correlation 0.4 against 0.9), segments 9 (haemorrhage class III/IV, class III without β-blockade and warm septic shock read a heart rate of exactly
-75 bpm: the validation runner sends each document's baseline heart rate as a held target, so these rows do not test
-the heart-rate response at all — a harness defect, recorded and not yet fixed; RV infarct CVP and PAWP low; warm
+75 bpm: the validation documents sent a baseline heart rate that MODELED holds, so these rows did not test the
+heart-rate response at all — a harness defect, fixed after this report, see below; RV infarct CVP and PAWP low; warm
 septic shock MAP 87 against 55–60; EtCO2 below 5 mmHg only 83 s after witnessed VF against ≤ 30 s; the
-return of breathing after sugammadex reads 0 s against 60–240 s — that never-ventilated patient arrests first,
-`docs/gates/fu-3.md`), waveform regression 5 (pleth and CO2 shapes have moved from the Stage 8a baselines,
+return of breathing after sugammadex reads 0 s against 60–240 s — the first spontaneous breath comes the moment the
+ventilator stops, 29 min after rocuronium, and the evidence audit judged the band itself mis-specified, row 16),
+waveform regression 5 (pleth and CO2 shapes have moved from the Stage 8a baselines,
 which this release did not re-baseline), and the Pulse oracle 3 (haemorrhage HR rise 0 against Pulse's +48 bpm and
 MAP fall 5 against 16 mmHg; MAP fall after propofol 19 against 28 mmHg). The rows, with every number, are in
 [known-deviations.md](known-deviations.md) and the [calibration queue](../validation/calibration-queue.md).
+
+**The heart-rate harness defect, fixed 2026-10-27; this report is not yet regenerated.** MODELED documents (and the
+oracle's MODELED scenarios) no longer send a baseline heart rate. Re-measured on main `458903cc` with the fix, without
+the morphology and interval suites (they need the dataset cache): the four heart-rate rows above become yellow
+(class III 104 against 120–140, class IV 127 against 140–180, warm sepsis 87 against 115–130, class III without
+β-blockade 94 against 120–140); the β-blocked class III SBP becomes red (104 against 65–80); the oracle's haemorrhage
+HR rise reads +13.5 against Pulse's +47.7 (still red) and the propofol MAP fall 26.9 against 27.9 (green). Gating rows
+on those suites: 17 before the fix, 13 after. [known-deviations.md](known-deviations.md) has every moved row.
 
 **BUILD-PLAN Stage 8 acceptance 1 ("V1–V9 pass") is not met at this release:** 27 rows are outside their evidence
 band by 30 % or more.
