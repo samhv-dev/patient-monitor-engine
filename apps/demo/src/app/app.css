@@ -535,9 +535,9 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
 .app.has-rail:is([data-route='home'], [data-route='room'], [data-route='scenarios'], [data-route='patient']) { grid-template: 'rail main' minmax(0, 1fr) 'rail foot' auto / var(--rail-w) minmax(0, 1fr); }
 .app.has-rail[data-route='monitor'] { grid-template: 'main' minmax(0, 1fr) / minmax(0, 1fr); }
 .app.has-rail[data-route='vent'] { grid-template: 'rail top' var(--bar-h) 'rail main' minmax(0, 1fr) / var(--rail-w) minmax(0, 1fr); }
-.app-foot { padding: 6px var(--s-4); border-top: 1px solid var(--line); background: var(--bezel-0); color: var(--text-muted); font-size: var(--t-12); text-align: center; }
+.app-foot { padding: 3px var(--s-4); border-top: 1px solid var(--line); background: var(--bezel-0); color: var(--text-muted); font-size: var(--t-12); text-align: center; }
 .app:is([data-route='monitor'], [data-route='vent']) > .app-foot { display: none; }
-@media print { .app-foot { display: none !important; } }
+@media print { .app-foot, .rail { display: none !important; } }
 .app.has-rail[data-route='monitor'] > .rail { display: none; }
 .app.has-rail[data-route='teach'] { --rail-w: var(--rail-strip); }
 @media (max-width: 900px) { .app.has-rail { --rail-w: var(--rail-strip); } }
