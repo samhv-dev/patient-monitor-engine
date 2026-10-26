@@ -832,6 +832,12 @@ export class DeviceUI {
     this.paint(t);
   }
 
+  /** After a restore: the cuff's last result as the restored engine holds it (mount.ts reads it from the snapshot; the
+   *  engine emits it only when it measures). Its wall time stays blank (E102). */
+  seedNibp(last: { sys: number; dia: number; map: number; at: number }): void {
+    this.nibpLast = { ...last };
+  }
+
   /** Repaint for sim time t (called with every event batch, ≤ 4 Hz). */
   paint(t: number): void {
     this.paintHeader(t);
