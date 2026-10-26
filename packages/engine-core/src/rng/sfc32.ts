@@ -15,7 +15,8 @@ export type StreamName =
   | 'noise'
   | 'measurement'
   | 'scenario'
-  | 'outcome';
+  | 'outcome'
+  | 'ectopyHazard';
 
 export const STREAM_NAMES: readonly StreamName[] = [
   'hrv',
@@ -26,6 +27,9 @@ export const STREAM_NAMES: readonly StreamName[] = [
   'measurement',
   'scenario',
   'outcome',
+  // E133: the physiology's ventricular ectopy (circ/ectopy.ts) — its hazard draws and the coupling of the PVCs it places.
+  // Its own stream so they never shift the ECG's `ectopy` stream, which also times the agonal, junctional and VT foci.
+  'ectopyHazard',
 ];
 
 /** Four uint32 words. Plain data so engine snapshots stay JSON-serialisable. */

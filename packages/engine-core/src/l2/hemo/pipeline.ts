@@ -482,10 +482,11 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
     }
   }
   // Ventricular ectopy (E133) from the arrest model's risk inputs, the pH and kIsch: MODELED, a beating heart the arrest
-  // model has not declared arrested. The draws come from the `ectopy` stream (brief §3.3: one stream per subsystem, so
-  // a PVC never shifts a shock outcome or an arrest draw) and are taken only when the drive is above 0.
+  // model has not declared arrested. The draws come from their own `ectopyHazard` stream (brief §3.3: one stream per
+  // subsystem, so they never shift a shock outcome, an arrest draw or the ECG's `ectopy` stream, which times the agonal,
+  // junctional and VT foci) and are taken only when the drive is above 0.
   if (ctx.requestEctopy && ctx.l1.mode === 'modeled' && !pulseless && !c.arrest && !NO_BEAT_RHYTHMS.has(ctx.rhythm.id)) {
-    const n = ectopyStep({ ...riskOf(c), ph: ctx.ph ?? 7.4, kIsch: c.cor.kIsch }, () => uniform(ctx.rng.ectopy), 1);
+    const n = ectopyStep({ ...riskOf(c), ph: ctx.ph ?? 7.4, kIsch: c.cor.kIsch }, () => uniform(ctx.rng.ectopyHazard), 1);
     if (n > 0) ctx.requestEctopy(n);
   }
   const nxt = stPatchOf(c.cor)?.ischaemicDepressionMv ?? 0;

@@ -48,14 +48,16 @@ function pvcCount(st: RhythmState, ctx: RhythmCtx): number {
 export function afterSupraBeat(st: RhythmState, _p: PendingV, t: number, ctx: RhythmCtx, tPeakS = 0.3): void {
   let pvc = ctx.mods.pvc;
   let n = pvcCount(st, ctx);
+  let rs = ctx.rng.ectopy;
   if (n === 0 && st.physPvc) {
     n = st.physPvc;
     delete st.physPvc;
     pvc = { probability: 0, pattern: 'single' };
+    rs = ctx.rng.ectopyHazard; // the physiology's PVC draws its coupling from its own stream (circ/ectopy.ts)
   } else if (pvc && n > 0) st.ectopyCount = 0;
   if (pvc && n > 0) {
     const rr = prevailingRR(st, t, ctx);
-    const frac = PVC_COUPLING_MIN + PVC_COUPLING_SPAN * uniform(ctx.rng.ectopy);
+    const frac = PVC_COUPLING_MIN + PVC_COUPLING_SPAN * uniform(rs);
     // R-on-T: the PVC starts on the T peak of this beat (coupling < QT), so it bypasses refractoriness.
     const rOnT = pvc.rOnT === true;
     const tp = rOnT ? t + tPeakS : Math.max(t + frac * rr, st.refractoryUntil + 0.005);

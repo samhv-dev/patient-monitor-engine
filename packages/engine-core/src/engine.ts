@@ -17,7 +17,7 @@ import { createHrState, hrAveragingOf, hrMeasure, hrOnQrs, type HrAveraging, typ
 import { resolveSkin } from '@pme/skins'; // Data-only dependency
 import { createQrsState, PACE_LEAD_N, qrsPaceGate, qrsPacePulse, qrsStep, type QrsState } from './l3/qrs.ts';
 import { defaultModifiers, mergeModifiers, validateModifiers } from './modifiers.ts';
-import { createRngState, type Sfc32State, type StreamName } from './rng/sfc32.ts';
+import { createRngState, seedStream, type Sfc32State, type StreamName } from './rng/sfc32.ts';
 import {
   LEAD_IDS,
   type ChannelId,
@@ -432,6 +432,7 @@ class Engine implements MonitorEngine {
     }
     data.st.blood ??= createBloodState(undefined); // Absent in older snapshots
     data.st.neuro ??= createNeuroState(undefined, this.seed); // Absent in older snapshots
+    data.st.rng.ectopyHazard ??= seedStream(this.seed, 'ectopyHazard'); // E133's stream, absent in older snapshots
     if (data.mainsHz !== undefined && data.mainsHz !== this.mainsHz) {
       throw new Error(`snapshot was taken with ${data.mainsHz} Hz mains filtering, this engine uses ${this.mainsHz} Hz`);
     }

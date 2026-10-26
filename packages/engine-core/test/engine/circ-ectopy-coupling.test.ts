@@ -23,20 +23,25 @@ async function run(mode: 'modeled' | 'manual', holdTc: number | null, untilS: nu
 }
 
 describe('ectopy through the engine', { timeout: 120_000 }, () => {
-  it('a healthy resting patient: no PVC, no draw on the ectopy stream, no pending request', async () => {
+  it('a healthy resting patient: no PVC, no draw on the ectopy streams, no pending request', async () => {
     const { e, pvcs } = await run('modeled', null, 120);
     expect(pvcs).toEqual([]);
+    expect(st6(e).rng.ectopyHazard).toEqual(createRngState(7).ectopyHazard);
     expect(st6(e).rng.ectopy).toEqual(createRngState(7).ectopy);
     expect('physPvc' in st6(e).rhythm).toBe(false);
   });
-  it('core 41.9 °C held for 120 s: PVCs on the ECG, still no VF', async () => {
-    const { pvcs, rhythms } = await run('modeled', 41.9, 125);
+  it('core 41.9 °C held for 120 s: PVCs on the ECG, still no VF; the ECG\'s own ectopy stream is not drawn', async () => {
+    const { e, pvcs, rhythms } = await run('modeled', 41.9, 125);
     expect(pvcs.filter((t) => t >= 5).length).toBeGreaterThanOrEqual(3);
     expect([...rhythms].some((r) => r.startsWith('vf'))).toBe(false);
+    // the hazard and its PVCs' coupling draw from `ectopyHazard`; the `ectopy` stream (which also times the agonal,
+    // junctional and VT foci) stays as seeded, so the physiology's ectopy never re-times an escape rhythm
+    expect(st6(e).rng.ectopyHazard).not.toEqual(createRngState(7).ectopyHazard);
+    expect(st6(e).rng.ectopy).toEqual(createRngState(7).ectopy);
   });
   it('MANUAL: the same temperature draws no ectopy (the instructor owns the rhythm; the PVC control stays)', async () => {
     const { e, pvcs } = await run('manual', 41.9, 125);
     expect(pvcs).toEqual([]);
-    expect(st6(e).rng.ectopy).toEqual(createRngState(7).ectopy);
+    expect(st6(e).rng.ectopyHazard).toEqual(createRngState(7).ectopyHazard);
   });
 });
