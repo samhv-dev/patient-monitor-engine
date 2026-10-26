@@ -11,7 +11,10 @@
 //     f_glycogen   1 while the store is above GLYCOGEN_LOW_MMOL_PER_KG, falling linearly to 0 at an empty store
 //     injured      necrotic fibres make no lactate
 //   heat           = flux · GLYCOLYSIS_HEAT_J_PER_MMOL / 60   (W; heat.ts adds it to the core)
-//   CO2            = flux · LACTATE_CO2_ML_PER_MMOL           (mL/min; the bicarbonate buffering, pipeline.ts)
+//   CO2            = NET accumulation · LACTATE_CO2_ML_PER_MMOL  (mL/min; the bicarbonate buffering, pipeline.ts). Net,
+//                  not gross: the 22 mL/mmol is the non-metabolic CO2 of bicarbonate buffering an ACCUMULATING lactic
+//                  acid (Beaver 1986, incremental exercise). Clearing the lactate consumes the proton again and
+//                  re-fixes that CO2, so a lactate at a plateau — production matched by clearance — releases none.
 //   unpaid ATP     = deficit·(1 − f_pH·f_glycogen·(1 − injured))     (mL O2-equivalent/min the cell never gets)
 //   injury dose    = ∫ (unpaid ATP · muscle share / resting muscle VO2) dt + the thermal dose (CEM43)
 //   injured        = clamp((dose − INJ_TOL_DOSE_MIN)/(INJ_FULL_DOSE_MIN − INJ_TOL_DOSE_MIN))     (monotone)
@@ -150,6 +153,9 @@ export interface MuscleState {
   /** Published each step for the other modules: the braked anaerobic lactate production (mmol/min), its heat (W) and
    * the unpaid ATP (mL O2-equivalent/min). */
   lacMmolMin: number;
+  /** The NET rate the lactate pool is accumulating at (mmol/min, ≥ 0; production minus clearance, written by the blood
+   * core after its lactate step) — the only part that releases buffered CO2. */
+  lacNetMmolMin: number;
   anaerW: number;
   unpaidMlMin: number;
 }
@@ -159,7 +165,7 @@ export function createMuscle(weightKg: number, female: boolean): MuscleState {
   const g0 = GLYCOGEN_MMOL_PER_KG * massKg;
   return {
     massKg, glycogenMmol: g0, glycogen0Mmol: g0, injured: 0, cem43Min: 0, doseMin: 0,
-    release: { kMmol: 0, ckU: 0, mbMg: 0, piMmol: 0 }, kHandedMmol: 0, lacMmolMin: 0, anaerW: 0, unpaidMlMin: 0,
+    release: { kMmol: 0, ckU: 0, mbMg: 0, piMmol: 0 }, kHandedMmol: 0, lacMmolMin: 0, lacNetMmolMin: 0, anaerW: 0, unpaidMlMin: 0,
   };
 }
 

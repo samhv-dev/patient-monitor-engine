@@ -243,10 +243,11 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
     bs.cold = bs.cold.filter((u) => u.until > t);
     bs.view.odc = { ...c.odc };
     bs.view.coFactor = circ ? 1 : volumeCoFactor(bvRatio);
-    // E134 (E131 for the MH share alone): WHEREVER lactate is made, bicarbonate buffers the acid and releases 22 mL CO2
-    // per mmol (Beaver 1986) — the CO2 load the gas model adds to VCO2. The production is the muscle model's braked
-    // flux (muscle.ts), so shock and arrest carry it too, not only MH.
-    bs.view.co2LoadMlMin = bicarbCo2MlMin(c.doses, t) + LACTATE_CO2_ML_PER_MMOL * c.muscle.lacMmolMin;
+    // E134 (E131 for the MH share alone): WHEREVER lactate ACCUMULATES, bicarbonate buffers the acid and releases 22 mL
+    // CO2 per mmol (Beaver 1986) — the CO2 load the gas model adds to VCO2. Shock and arrest carry it too, not only MH.
+    // The NET accumulation, not the gross flux: the clearance consumes the proton again and re-fixes that CO2, so a
+    // lactate at a plateau releases none (E131 used the gross MH share, which over-counted the plateau).
+    bs.view.co2LoadMlMin = bicarbCo2MlMin(c.doses, t) + LACTATE_CO2_ML_PER_MMOL * c.muscle.lacNetMmolMin;
     // E134: the heat of that anaerobic ATP turnover (98 J/mmol lactate, muscle.ts) — the heat model adds it to the core
     // with the oxidative heat. Written only while it is non-zero (truth budget)
     if (c.muscle.anaerW > 0) rs.temp.anaerW = c.muscle.anaerW;

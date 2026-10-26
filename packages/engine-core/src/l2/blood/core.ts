@@ -208,7 +208,11 @@ export function stepBloodCore(bc: BloodCore, x: BloodInputs, dtS: number): void 
   // set point above does not move; the single cellular pool then takes part of it back — a conservative deviation,
   // dead fibres cannot).
   const fac = anaerobicFactor(bc.muscle, bc.ab.ph);
+  const lac0 = so.lac;
   so.lac = stepLactate(so.lac, pat.vLacL, d.deficit * fac, hbfRel, bc.liver, dtS);
+  // The buffered CO2 follows the NET accumulation (pipeline.ts): clearing the lactate consumes the H+ again, so a
+  // lactate at a plateau releases none. The HEAT and the glycogen follow the GROSS flux — that is the ATP turnover.
+  bc.muscle.lacNetMmolMin = Math.max(0, ((so.lac - lac0) * 60) / dtS);
   const kRelease = stepMuscle(bc.muscle, {
     ph: bc.ab.ph, tempC: x.tempC, deficitMlMin: d.deficit, factor: fac,
     activityMlMin: x.muscleActivityMlMin ?? 0, restVo2MlMin: pat.vo2Rest, demandMlMin: x.vo2Demand,

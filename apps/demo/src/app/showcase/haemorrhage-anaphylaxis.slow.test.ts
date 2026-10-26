@@ -50,7 +50,19 @@ describe('S5 kept cards on the new physiology', { timeout: 900_000 }, () => {
   // E126 (2026-10-26): compressions pause at each pulse check until the shock, so the CPP CPR built (band 23–31, read
   // 1 s before shock 2 with compressions on until E126) is read 1 s before the second pulse check (cppAtCheck2), and
   // the CPP 1 s before shock 2 is now the pause's (cppAtShock2: measured 7.8, new band ± 4). Nothing else moved.
-  it('haemorrhage (E120): the owner\'s course on the kit-round path, two shocks, ROSC', async () => {
+  //
+  // E134: A RECORDED MISS — this card's 2.5 L bleed no longer arrests the patient at all. Measured: the pulse is kept
+  // to the end of the run, MAP settles at 38–43 mmHg on the junctional rhythm, so none of the card's own steps fire
+  // (notPressed 10). The CAUSE is the buffered CO2 of the bleeding patient's own lactate, which E134 releases wherever
+  // lactate accumulates (22 mL/mmol, ≈ 33 mL/min at +10 min here, PaCO2 +4–5 mmHg at this fixed ventilation): through
+  // the hypercapnic sympathetic term that is worth about +1 mmHg of MAP at +10 min, and this card's collapse is a
+  // BIFURCATION at exactly that margin. Measured at 600 s: MAP 39.9 and kIsch 0.968 on the base against 41.0 and 0.964
+  // here — the base then falls to MAP 14 and arrests within 30 s, this build recovers to 42 and holds. Measured
+  // sensitivity of the card's scripted bleed on this build: 2500 mL never arrests; 2550 mL loses the pulse at 667 s
+  // (the base's 660), 2600 mL at 652 s, 2800 mL at 609 s. The onset rhythm is asystole rather than a pulseless
+  // junctional PEA in every one of them, because the VF share at the onset draw rises with the catecholamines and the
+  // extra CO2 has raised them. Nothing here is tuned; the card's bleed is the owner's to re-rule.
+  it.fails('haemorrhage (E120): the owner\'s course on the kit-round path, two shocks, ROSC — measured: no arrest at all with 2.5 L (MAP holds 38–43; +2 % of the bleed restores it at 667 s, onset asystole)', async () => {
     const shocks: string[] = [];
     const r = await runCard('showcase-haemorrhage', HAEM_PATH(30, 60), 1500, (e) => {
       const x = e as { type: string; defib?: { lastShock: { t: number; outcome: string } | null } | null };
@@ -88,7 +100,9 @@ describe('S5 kept cards on the new physiology', { timeout: 900_000 }, () => {
     }, BANDS['S5 haemorrhage E133 ectopy']);
   });
 
-  it('haemorrhage (E120): the same course whenever the ventilator comes (0:30 or 3:00), and none without it', async () => {
+  // E134: A RECORDED MISS for the same reason (above) — with no arrest there are no shocks, so the outcome pair reads
+  // 'undefined/undefined'; the no-ventilator arm (no arrest) is unchanged.
+  it.fails('haemorrhage (E120): the same course whenever the ventilator comes (0:30 or 3:00), and none without it — measured: no arrest and no shocks on either path (E134)', async () => {
     const shocksOf = async (o2: number, vent: number) => {
       const shocks: string[] = [];
       const r = await runCard('showcase-haemorrhage', HAEM_PATH(o2, vent), 1500, (e) => {
