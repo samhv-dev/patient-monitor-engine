@@ -45,8 +45,10 @@ const BANDS = {
   // +10.1 min (13.1 → 10.07); 339 events in the 51 min (256 → 339: the run is longer than the old 44.5 min to the VF
   // and the drive is up from +15 min), 40 runs of ≥ 3 (36 → 40), the longest 15 beats. There is no VF, so the old
   // eventsInLast120s (before the VF) and eventsAfterLoss have no counterpart and are dropped; 'S1 untreated E131'
-  // pulseLost 0 stands for the latter.
-  'S1 untreated ectopy (E133)': { firstPvcMin: [8.07, 12.07], events51Min: [263, 413], runs51Min: [24, 59] },
+  // pulseLost 0 stands for the latter. Re-centred again (same tolerances) when the hazard got its own RNG stream
+  // (`ectopyHazard`; it had shared the ECG's `ectopy` stream, which also times the escape foci): first PVC 10.07 →
+  // 10.95 min, 339 → 346 events, 40 → 35 runs.
+  'S1 untreated ectopy (E133)': { firstPvcMin: [8.95, 12.95], events51Min: [270, 420], runs51Min: [19, 54] },
   'S1 early': { refused: [0, 0], crisisMin: [5.65, 7.42], pulseLost: [0, 0], recoveringMin: [16.12, 19.52], established: [0, 0], tcMax: [36.6, 37.0], hrMax: [81, 91], kMax: [4.5, 5.1], etco2Plus5: [47, 53], hrPlus15: [63, 73] },
   'S1 preoxygenation (E121)': { withSpo2AtInduction: [98, 100], withSpo2Min: [97, 100], withoutSpo2AtInduction: [87, 93], withoutSpo2Min: [55, 71], withoutDesatAlarmAfterInductionS: [56, 96] },
   'S1 late': { refused: [0, 0], crisisMin: [17.79, 21.75], dantroleneMin: [18.69, 22.85], pulseLost: [0, 0], etco2AtCall: [72, 78], tcAtCall: [38.51, 38.91], kAtCall: [5.5, 6.1], phAtCall: [7.09, 7.15], etco2Plus2: [60, 66], tcMax: [39.3, 39.7], tcPeakMin: [28.05, 34.29], kMax: [5.6, 6.2], lactateMax: [6.9, 7.9], recoveringMin: [33.54, 39.7], normoMin: [35.04, 42.82], hrAt60: [73, 83], mapAt60: [96, 106], tcAt60: [38.5, 38.9], etco2At60: [35, 41], phAt60: [7.35, 7.41], kAt60: [3.5, 4.1], sysMaxAfterCall: [136, 146] },
