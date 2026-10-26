@@ -1323,7 +1323,7 @@ test('Q1 30-minute talk on the release build: opening, MH (E119) 14:41, haemorrh
     await page.waitForTimeout(1000);
     about.settings = await page.locator('[data-view=settings] [data-about]').first().innerText().catch(() => 'no [data-about] in Settings');
     about.preRelease = /1\.0\.0-rc\.\d+ · pre-release/.test(String(about.start)) && /1\.0\.0-rc\.\d+ \(pre-release\)/.test(String(about.settings));
-    about.notMedicalDevice = /For educational use only; Not to be used in patient care\./.test(String(about.footer)) && /Not a medical device and not clinically validated/.test(String(about.settings));
+    about.notMedicalDevice = /For educational use only; Not to be used in patient care\./.test(String(about.footer)) && /For educational use only; Not to be used in patient care\./.test(String(about.settings));
     O.r.measures.about = about;
     const code = await page.evaluate(() => (window as unknown as Hook).__pmeApp.session.code);
     O.r.setup.sessionCode = code;

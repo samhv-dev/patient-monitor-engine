@@ -22,7 +22,7 @@ import { button, download, h, toast } from '../ui.ts';
 /** The build this page was served from (vite.config.ts `define`: the git commit, "+" with uncommitted changes, the date). */
 declare const __PME_BUILD__: string;
 const BUILD = typeof __PME_BUILD__ === 'string' ? __PME_BUILD__ : 'development';
-const FOOT = `For education only. Not a medical device and not clinically validated: never use it for patient care. Version ${version}${version.includes('-') ? ' (pre-release)' : ''}, build ${BUILD}.`;
+const FOOT = `For educational use only; Not to be used in patient care. Version ${version}${version.includes('-') ? ' (pre-release)' : ''}, build ${BUILD}.`;
 
 /** The talking points (PEARLS phases, E46: fixed, non-clinical text the owner confirms; never interpolated). */
 const PEARLS: ReadonlyArray<readonly [string, string]> = [

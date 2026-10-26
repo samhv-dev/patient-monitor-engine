@@ -498,10 +498,18 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
    The rail and the four pages (Home, Room, Scenarios, Patient) use the bezel's tokens for surfaces and text, and their
    own accent: green, as the mockups (`--go`), and three state colours for the Room (`--ok`, `--warn`, `--bad`). In the
    light theme (the site's projector-light, `data-theme='bench'`) the page is the lighter bezel and its cards are white;
-   the light greens, amber and red are darkened from the mockup's until text on them reaches 4.5:1. System fonts (the
-   mockups' IBM Plex is not bundled for rc.4). The rail is 220 px; on the Instructor view and in a narrow window it is a
+   the light greens, amber and red are darkened from the mockup's until text on them reaches 4.5:1. IBM Plex, as the
+   mockups, bundled (OFL-1.1, NOTICES N-017; the kit runs offline): Plex Sans 400/500/600 for the rail, the four pages
+   and the footer line, Plex Mono 500 for the repository address, the session code and the clock; the system fonts stay
+   the fallback while they load (font-display: swap). The monitor skins keep their own fonts. The rail is 220 px; on the Instructor view and in a narrow window it is a
    56-px icon strip; on the Monitor view it is not shown. */
+@font-face { font-family: 'IBM Plex Sans'; src: url('./fonts/IBMPlexSans-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'IBM Plex Sans'; src: url('./fonts/IBMPlexSans-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'IBM Plex Sans'; src: url('./fonts/IBMPlexSans-SemiBold.woff2') format('woff2'); font-weight: 600 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'IBM Plex Mono'; src: url('./fonts/IBMPlexMono-Medium.woff2') format('woff2'); font-weight: 400 600; font-style: normal; font-display: swap; }
 :root {
+  --font-plex: 'IBM Plex Sans', var(--font-ui);
+  --font-plex-mono: 'IBM Plex Mono', var(--font-mono);
   --rail-w: 220px;
   --rail-strip: 56px;
   --rail-bg: #121720;
@@ -524,6 +532,8 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
   --lift: 0 1px 2px rgb(27 36 48 / 0.06);
 }
 .rail, .view.console { --accent: var(--go); --accent-strong: var(--go); --on-accent: var(--on-go); }
+.rail, .view.console, .app-foot { font-family: var(--font-plex); }
+.home-repo, .room-join .phones-code, .room-ways code, .console code, .rail-time { font-family: var(--font-plex-mono); font-weight: 500; }
 
 /* the frame: rail | top bar / main / footer line. The footer (the owner's disclaimer, 26 October) shows on every page
    but the monitor screens: not on the Monitor view nor beside the Ventilator cockpit, never in print. */
@@ -606,7 +616,6 @@ a.rail-item:hover { color: var(--text-strong); background: color-mix(in srgb, va
 .console-back:hover { color: var(--text-strong); text-decoration: underline; }
 .console .btn { border-color: transparent; border-radius: 10px; }
 .console .btn.primary { font-weight: 600; }
-.console code { font-family: var(--font-mono); }
 @media (max-width: 900px) { .console-page { padding: var(--s-5) var(--s-4) var(--s-6); } }
 
 /* Home */
@@ -646,7 +655,7 @@ a.rail-item:hover { color: var(--text-strong); background: color-mix(in srgb, va
 .room-qr-slot { display: grid; place-items: center; min-height: 40px; }
 .room-qr { width: max-content; padding: 8px; border-radius: 10px; background: #fff; outline: 1px solid var(--line); }
 .room-qr svg { display: block; width: 220px; height: 220px; }
-.room-join .phones-code { margin: 12px 0 0; font-family: var(--font-mono); font-size: 34px; font-weight: 600; letter-spacing: 0.12em; text-align: center; color: var(--text-strong); }
+.room-join .phones-code { margin: 12px 0 0; font-size: 34px; letter-spacing: 0.12em; text-align: center; color: var(--text-strong); }
 .room-join .error:not(:empty) { margin-top: var(--s-3); }
 .room-ways { display: flex; flex-direction: column; gap: 8px; margin: 14px 0 0; padding: 0; list-style: none; font-size: 14px; color: var(--text-muted); }
 .room-ways li { display: flex; gap: 10px; align-items: baseline; }
