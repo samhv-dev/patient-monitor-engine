@@ -704,6 +704,10 @@ class Engine implements MonitorEngine {
           holdRate(ps, id, false);
           applyRhythm(ps.rhythm, id, opts, end / ECG_RATE, true, rhythmCtx(ps));
         },
+        requestEctopy: (n) => {
+          ps.rhythm.physPvc ??= n; // One pending ectopic event; the planner places it after the next supraventricular beat
+        },
+        ph: ps.blood.core.ab.ph,
       },
       Math.floor(end / 4),
       (ch, m, v) => this.hemoWrite(ch, m, v),

@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { ConsoleModel } from '../../physiology-console/model.ts';
 import { labelOf } from '../glossary.ts';
-import { alarmAt, bands, entered, first, near, range, runCard, type Act, type Sample } from './harness.ts';
+import { alarmAt, bands, entered, first, near, pvcEvents, range, runCard, type Act, type Sample } from './harness.ts';
 
 /** Bands: the measured prototype ± a stated tolerance. Never widened. E117 (owner-confirmed 2026-10-23: MH tachycardia from
  *  the front-loaded sympathetic drive and hypercapnia; the MH muscle vasodilation) re-centred five bands on the new
@@ -32,6 +32,10 @@ import { alarmAt, bands, entered, first, near, range, runCard, type Act, type Sa
 const BANDS = {
   'S1 untreated': { refused: [0, 0], earlyMin: [3.84, 5.22], establishedMin: [16.89, 20.65], etco2AtEstablished: [72, 78], hrAtEstablished: [121, 131], phAtEstablished: [7.06, 7.12], kAtEstablished: [5.4, 6], lactateAtEstablished: [4.1, 5.1], mapAtEstablished: [80, 90], hrMax: [185, 195], kMax: [6.1, 6.7], lossMin: [39.91, 48.79], tcAtLoss: [42.14, 42.54], kAtLoss: [6.1, 6.7], vf: [1, 1], arrestStateMin: [40.23, 49.17] },
   'S1 untreated E131': { refused: [0, 0], earlyMin: [3.41, 4.79], etco2Max: [103, 109], etco2At20: [88, 94], hrAt20: [119, 129], phAt20: [7.01, 7.07], kAt20: [5.8, 6.4], lactateAt20: [4.7, 5.7], mapAt20: [79, 89], tcAt20: [36.38, 36.78], hrMax: [134, 144], kMax: [6.5, 7.1], tcAt51: [37.11, 37.51], pulseLost: [0, 0] },
+  // E133 (ventricular ectopy from K, catecholamines, temperature, acidaemia and ischaemia), measured on this build: the
+  // first PVC 13.1 min after the succinylcholine (pH 7.22 → 7.13 with the MH catecholamine surge), 256 ectopic events
+  // before the VF (36 runs of ≥ 3, the longest 13 beats), 33 in the last 120 s; the treated early course has none.
+  'S1 untreated ectopy (E133)': { firstPvcMin: [11.1, 15.1], eventsBeforeLoss: [180, 330], runsBeforeLoss: [20, 55], eventsInLast120s: [18, 48], eventsAfterLoss: [0, 0] },
   'S1 early': { refused: [0, 0], crisisMin: [5.65, 7.42], pulseLost: [0, 0], recoveringMin: [16.12, 19.52], established: [0, 0], tcMax: [36.6, 37.0], hrMax: [81, 91], kMax: [4.5, 5.1], etco2Plus5: [47, 53], hrPlus15: [63, 73] },
   'S1 preoxygenation (E121)': { withSpo2AtInduction: [98, 100], withSpo2Min: [97, 100], withoutSpo2AtInduction: [87, 93], withoutSpo2Min: [55, 71], withoutDesatAlarmAfterInductionS: [56, 96] },
   'S1 late': { refused: [0, 0], crisisMin: [17.79, 21.75], dantroleneMin: [18.69, 22.85], pulseLost: [0, 0], etco2AtCall: [72, 78], tcAtCall: [38.51, 38.91], kAtCall: [5.5, 6.1], phAtCall: [7.09, 7.15], etco2Plus2: [60, 66], tcMax: [39.3, 39.7], tcPeakMin: [28.05, 34.29], kMax: [5.6, 6.2], lactateMax: [6.9, 7.9], recoveringMin: [33.54, 39.7], normoMin: [35.04, 42.82], hrAt60: [73, 83], mapAt60: [96, 106], tcAt60: [38.5, 38.9], etco2At60: [35, 41], phAt60: [7.35, 7.41], kAt60: [3.5, 4.1], sysMaxAfterCall: [136, 146] },
@@ -118,6 +122,12 @@ describe('S1 malignant hyperthermia (showcase-mh)', { timeout: 1_800_000 }, () =
       vf: loss && /^vf/.test(near(r.rows, loss.t + 5).rhythm) ? 1 : 0,
       arrestStateMin: (entered(r, 'arrest') - SUX_S) / 60,
     }, BANDS['S1 untreated']);
+    const lossT = loss?.t ?? Number.NaN;
+    const before = pvcEvents(r, 0, lossT);
+    bands('S1 untreated ectopy (E133)', {
+      firstPvcMin: ((r.pvcs[0] ?? Number.NaN) - SUX_S) / 60, eventsBeforeLoss: before.length, runsBeforeLoss: before.filter((n) => n >= 3).length,
+      eventsInLast120s: pvcEvents(r, lossT - 120, lossT).length, eventsAfterLoss: pvcEvents(r, lossT + 2).length,
+    }, BANDS['S1 untreated ectopy (E133)']);
   });
 
   it('treated early: crisis 2 min into the early signs', async () => {
@@ -129,6 +139,7 @@ describe('S1 malignant hyperthermia (showcase-mh)', { timeout: 1_800_000 }, () =
       tcMax: range(r.rows, 'tc', 0, 2640).max, hrMax: range(r.rows, 'hr', SUX_S, 2640).max, kMax: range(r.rows, 'k', 0, 2640).max,
       etco2Plus5: near(r.rows, c + 300).etco2 ?? Number.NaN, hrPlus15: near(r.rows, c + 900).hr ?? Number.NaN,
     }, BANDS['S1 early']);
+    expect(r.pvcs, 'S1 early: no ectopy on the treated course (E133)').toEqual([]);
   });
 
   it('Explore "Changed only" at the call time of the run sheet (24:00), untreated until then', async () => {

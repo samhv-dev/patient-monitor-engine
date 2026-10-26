@@ -42,12 +42,18 @@ function pvcCount(st: RhythmState, ctx: RhythmCtx): number {
   }
 }
 
-/** Called after every activated supraventricular beat p (QRS onset t; T peak tPeakS after onset). */
+/** Called after every activated supraventricular beat p (QRS onset t; T peak tPeakS after onset). The instructor's PVC
+ *  setting draws first; on a beat it leaves free, a PVC event the physiology asked for (st.physPvc, circ/ectopy.ts) is
+ *  placed instead — unifocal, coupled like any PVC, a run at the run rate. */
 export function afterSupraBeat(st: RhythmState, _p: PendingV, t: number, ctx: RhythmCtx, tPeakS = 0.3): void {
-  const pvc = ctx.mods.pvc;
-  const n = pvcCount(st, ctx);
+  let pvc = ctx.mods.pvc;
+  let n = pvcCount(st, ctx);
+  if (n === 0 && st.physPvc) {
+    n = st.physPvc;
+    delete st.physPvc;
+    pvc = { probability: 0, pattern: 'single' };
+  } else if (pvc && n > 0) st.ectopyCount = 0;
   if (pvc && n > 0) {
-    st.ectopyCount = 0;
     const rr = prevailingRR(st, t, ctx);
     const frac = PVC_COUPLING_MIN + PVC_COUPLING_SPAN * uniform(ctx.rng.ectopy);
     // R-on-T: the PVC starts on the T peak of this beat (coupling < QT), so it bypasses refractoriness.

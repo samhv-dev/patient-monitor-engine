@@ -89,7 +89,8 @@ export interface ScenarioProfile {
  * 'alarm:<alarmId>' (the monitor raised it; 'alarm:apnoea' also matches 'alarm:apnoea-co2' — an id matches its own
  * prefix up to a hyphen); 'drug:<drugId>' (a bolus, infusion or TCI of it); 'fluid'; 'cpr' (started); 'shock';
  * 'condition:<id>' (started); 'airway:<state>'; 'ventilation' (mechanical or bag-mask breaths began after ≥ 15 s
- * without one); 'pulseLoss' and 'rosc' (the model's circulation stopped / returned); 'value:<trend><op><n>' (the first
+ * without one); 'pulseLoss' and 'rosc' (the model's circulation stopped / returned); 'vtRun' (a run of ≥ 3 consecutive
+ * PVCs on the ECG began); 'value:<trend><op><n>' (the first
  * second a trended value or lab was below or above n, e.g. 'value:spo2<90', 'value:map>65', 'value:k>5.5'; as
  * `TrendValue`).
  */

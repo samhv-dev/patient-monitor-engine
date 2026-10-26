@@ -38,6 +38,8 @@ export interface Run {
   refused: string[];
   /** Spontaneous breaths (`breath` events of kind `spont`): [t, vtMl]. */
   spont: [number, number][];
+  /** The drawn ECG's PVCs (`beat` events of template `pvc`): their times (E133). */
+  pvcs: number[];
 }
 
 const DOCS = import.meta.glob<{ default: ScenarioDoc }>('./*.json', { eager: true });
@@ -68,7 +70,7 @@ export async function runCard(id: string, acts: readonly Act[], untilS: number, 
   let labs: Record<string, number> = {};
   let tree: Tree | null = null;
   let rhythm = doc.patient?.rhythm?.id ?? 'sinus';
-  const run: Run = { rows: [], alarms: [], states: [], pressed: acts.map(() => Number.NaN), refused: [], spont: [] };
+  const run: Run = { rows: [], alarms: [], states: [], pressed: acts.map(() => Number.NaN), refused: [], spont: [], pvcs: [] };
   engine.on((e) => {
     if (e.type === 'measurement') for (const [k, m] of Object.entries(e.values)) mon[k] = m && m.flag !== 'invalid' ? m.value : null;
     else if (e.type === 'labs') labs = e.values as unknown as Record<string, number>;
@@ -76,6 +78,7 @@ export async function runCard(id: string, acts: readonly Act[], untilS: number, 
     else if (e.type === 'state' && e.rhythm) rhythm = e.rhythm.id;
     else if (e.type === 'alarm' && e.state === 'raised') run.alarms.push({ t: e.t, text: e.text });
     else if (e.type === 'breath' && e.kind === 'spont') run.spont.push([e.t, e.vtMl]);
+    else if (e.type === 'beat' && e.template === 'pvc') run.pvcs.push(e.t);
     listen?.(e);
   });
   const driver = new ScenarioDriver({
@@ -147,6 +150,18 @@ export const near = (rows: readonly Sample[], t: number): Sample => rows.reduce(
 export function range(rows: readonly Sample[], key: keyof Sample, t0: number, t1: number): { min: number; max: number } {
   const xs = rows.filter((s) => s.t >= t0 && s.t <= t1).map((s) => s[key]).filter((x): x is number => typeof x === 'number' && Number.isFinite(x));
   return { min: Math.min(...xs), max: Math.max(...xs) };
+}
+/** The PVC events in [t0, t1): beats < 0.5 s apart are one event (a couplet or a run); their sizes, in order. */
+export function pvcEvents(run: Run, t0 = 0, t1 = Number.POSITIVE_INFINITY): number[] {
+  const out: number[] = [];
+  let last = -Infinity;
+  for (const t of run.pvcs) {
+    if (t < t0 || t >= t1) continue;
+    if (t - last < 0.5) out[out.length - 1] = (out.at(-1) as number) + 1;
+    else out.push(1);
+    last = t;
+  }
+  return out;
 }
 /** Sim time the run entered state `id` (NaN: never). */
 export const entered = (run: Run, id: string): number => run.states.find(([, s]) => s === id)?.[0] ?? Number.NaN;
