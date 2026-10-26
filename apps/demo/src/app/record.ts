@@ -120,6 +120,7 @@ export class RunRecord {
     const r = e.resolved as AppliedResolution | undefined;
     if (!r?.command || r.replay || r.mirror) return; // a late-join replay or a cockpit frame is not an action
     const c = r.command as unknown as Record<string, unknown>;
+    if (c.issuedBy === 'ventilator') return; // E128: the Ventilator view's hand-over to the engine's ventilator, not an action
     const bySc = c.issuedBy === 'scenario';
     // the scenario's own set-up (mode, sensors, device settings) is not part of the case; a manual trigger is shown
     // by the state it leads to

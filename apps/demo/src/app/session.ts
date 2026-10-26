@@ -6,7 +6,7 @@
 import type { Command, EngineEvent, PatientSnapshot } from '@pme/engine-core';
 import {
   ControllerSession, createBroadcastChannelTransport, createInProcessHub, createWebSocketTransport, HostSession, newSessionCode, normalizeSessionCode,
-  type HostTarget, type ScenarioEvent,
+  type AppliedResolution, type HostTarget, type ScenarioEvent, type WireEvent,
 } from '@pme/controller';
 import { engineOptionsOf, ScenarioDriver, validateScenario, type ScenarioDoc } from '@pme/controller/scenario';
 import type { ManagedTransport } from '@pme/controller';
@@ -18,6 +18,8 @@ import { RunRecord } from './record.ts';
 import { applySkinAlarmColours } from './shell.ts';
 
 export type Mode = 'modeled' | 'manual';
+/** The engine's own ventilator settings, in its `ventilation` event's units (FiO₂ 0.21–1), as far as they are known. */
+export interface VentSettings { rr?: number; vtMl?: number; peep?: number; fio2?: number; ie?: number; pmax?: number }
 export interface SessionStart {
   spec: PatientSpec;
   mode: Mode;
@@ -72,6 +74,17 @@ export class AppSession {
   ventLink: { runTo(engTick: number): Promise<void> } | null = null;
   /** The Ventilator view is on screen (it sets it): only then does its cockpit hold the phones (UI-A #2). */
   ventShown = false;
+  /**
+   * The engine tick of the cockpit's last applied frame (−1: none since the view reset it). E128: when the Ventilator view
+   * closes, its hand-over to the engine's own ventilator lands after it — frames run up to 1.5 s ahead of the engine, and
+   * one applied after the hand-over would take the patient back for the cockpit, then the drive watchdog (5 s without a
+   * frame) would stop the breathing.
+   */
+  ventTick = -1;
+  /** The engine's own ventilator settings as this timeline's applied `ventilation` events left them (null: the patient is
+   *  not on it, or not known since a new timeline). E128: the Ventilator view restarts its cockpit from them. */
+  ventSettings: VentSettings | null = null;
+  private ventInflight: Promise<unknown> = Promise.resolve(); // The cockpit's last frame dispatch
   private ventFrameAt = -Infinity; // Wall ms of the Ventilator view's last frame
   private nibpStarts = 0; // O2 start commands sent: each gets a fresh id (a follower skips an id it has applied)
   private ffWaiters: Array<() => void> = []; // A cockpit opened during a fast-forward waits for its end
@@ -188,7 +201,7 @@ export class AppSession {
       this.onSkin((skin, theme) => hs?.publish({ type: 'style', skin, theme })); // Phones follow a change
     }
     this.panelTransport = hub.connect();
-    this.panelTransport.onMessage((m) => void (m.kind === 'event' && m.body.forEach((e) => this.record.wire(e)))); // every source's commands, in order
+    this.panelTransport.onMessage((m) => void (m.kind === 'event' && m.body.forEach((e) => (this.record.wire(e), this.trackVent(e))))); // every source's commands, in order
     this.panel = new ControllerSession({ session: this.code, transport: this.panelTransport, issuedBy: 'instructor' });
     this.mount(start.seed ?? 7);
     // the runner advances at the engine's sim time; 10 Hz is enough for triggers stated in seconds [ENG]
@@ -230,8 +243,14 @@ export class AppSession {
         // cockpit opened during a fast-forward waits for its end — refused, the cockpit's first frames would never
         // teach the link its clock and the cockpit would stall for good
         this.ventFrameAt = performance.now();
-        const go = () => m.dispatch(c).then((r) => (this.host.mirror(c, r, this.ventShown), r));
-        return this.fastForwarding && !this.ffCockpit ? new Promise<void>((res) => this.ffWaiters.push(res)).then(go) : go();
+        const go = () => m.dispatch(c).then((r) => {
+          this.host.mirror(c, r, this.ventShown);
+          if (r.accepted) this.ventTick = Math.max(this.ventTick, r.tick);
+          return r;
+        });
+        const sent = this.fastForwarding && !this.ffCockpit ? new Promise<void>((res) => this.ffWaiters.push(res)).then(go) : go();
+        this.ventInflight = sent.catch(() => undefined);
+        return sent;
       },
       on: (fn) => m.on(fn),
       // the cockpit's own time controls are SESSION commands (they acted on the monitor alone: the session bar, a Remote
@@ -240,6 +259,29 @@ export class AppSession {
       resume: () => void this.panel.send({ type: 'time', action: 'resume' }),
       setTimeScale: (k) => void this.panel.send({ type: 'time', action: 'scale', value: k }),
     };
+  }
+
+  /** The cockpit's frames dispatched so far are applied (or refused): resolves with the last one's engine tick (E128). */
+  async ventSettled(): Promise<number> {
+    let p: Promise<unknown>;
+    do await (p = this.ventInflight);
+    while (p !== this.ventInflight);
+    return this.ventTick;
+  }
+
+  /** E128: follow the engine's own ventilator settings through the commands applied on this session, whoever sent them. */
+  private trackVent(e: WireEvent): void {
+    if (e.type === 'timeline') return void (this.ventSettings = null); // A new patient or a restore: not known
+    if (e.type !== 'commandApplied') return;
+    const r = e.resolved as AppliedResolution | undefined;
+    const c = r?.command as { type?: string; event?: { kind?: string; source?: string } & VentSettings } | undefined;
+    if (r?.mirror || c?.type !== 'applyEvent' || c.event?.kind !== 'ventilation') return;
+    const v = c.event;
+    if (v.source !== 'ventilator') return void (this.ventSettings = null);
+    // As the engine applies it: a field the event leaves out keeps its last value
+    const next: VentSettings = { ...this.ventSettings };
+    for (const k of ['rr', 'vtMl', 'peep', 'fio2', 'ie', 'pmax'] as const) if (typeof v[k] === 'number') next[k] = v[k];
+    this.ventSettings = next;
   }
 
   /** Called after every (re)mount with the new monitor (the ventilator link re-attaches to it). */

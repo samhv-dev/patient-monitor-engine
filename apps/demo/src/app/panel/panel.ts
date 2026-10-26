@@ -109,6 +109,18 @@ export function mountPanel(link: Link, o: { site: SiteProfile; weightKg(): numbe
   drawFooter();
 
   const offLink = link.onChange(repaint);
+  // E128: a Load opens the Scenario tab, where the case's state, its next steps and their buttons are. The panel kept the
+  // last tab used ("Vitals & rhythm" by default), so after a Load from the Scenarios page the next-step buttons were out
+  // of sight. Watched here, on the panel's own link, so every Load does it: the Scenarios page, this panel's library, a
+  // deep link, a reload's restore, a Remote's. Only a load bumps the document version with a document (a new patient
+  // without one bumps it to none).
+  let loadedV = link.ctl.scenario.docVersion;
+  const offLoad = link.onChange(() => {
+    const sv = link.ctl.scenario;
+    if (sv.docVersion === loadedV) return;
+    loadedV = sv.docVersion;
+    if (sv.doc && t.current() !== 'scenario') t.select('scenario');
+  });
   const tick = setInterval(repaint, 1000); // onset progress bars and clocks move with sim time even without events
 
   // ---- keyboard shortcuts (brief §9); never while typing ----
@@ -139,6 +151,7 @@ export function mountPanel(link: Link, o: { site: SiteProfile; weightKg(): numbe
     el, ctx, staging, select: t.select,
     destroy: () => {
       offLink();
+      offLoad();
       clearInterval(tick);
       document.removeEventListener('keydown', onKey);
     },

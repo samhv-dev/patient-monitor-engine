@@ -196,7 +196,8 @@ test('while the Ventilator view drives the patient the phone holds; it follows a
   const r1 = (await sync(f)).resyncs;
   await page.waitForTimeout(4000);
   await expect(f.locator('.learner-hold')).toBeHidden(); // still following, 4 s later
-  console.log(`[UI-A #2] ${browserName}: released ${releasedMs} ms after leaving the view; ${(await sync(f)).resyncs - r1} resync(s) in the next 4 s (the cockpit ventilates off screen)`);
+  console.log(`[UI-A #2] ${browserName}: released ${releasedMs} ms after leaving the view; ${(await sync(f)).resyncs - r1} resync(s) in the next 4 s (E128: the engine's ventilator took the patient over)`);
+  expect((await sync(f)).resyncs - r1, 'E128: no resync after the one on release').toBe(0);
   // back on the Ventilator view: it holds again
   await page.evaluate(() => (location.hash = '#/vent'));
   await expect(f.locator('.learner-hold')).toBeVisible({ timeout: 10_000 });
