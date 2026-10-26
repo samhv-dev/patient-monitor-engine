@@ -329,7 +329,9 @@ dialog .actions { display: flex; justify-content: flex-end; gap: var(--s-2); mar
    refusal, a pause while hidden, which must be seen on every view — and the learner controls' own feedback; the
    instructor's feedback ("Speed ×8", "Bookmark … saved") stays off it. The starting page is a full page with no
    monitor (Home, Room, Scenarios, Patient): bottom-centre, as elsewhere. Moved rather than shortened: every toast, not only these three, stays readable for its 4 s. */
-body:has(.app[data-route='teach']) .toasts { top: calc(var(--chrome-bottom, var(--bar-h)) + var(--s-2)); bottom: auto; left: auto; right: var(--s-3); transform: none; width: max-content; max-width: calc(var(--panel-w) - 2 * var(--s-3)); }
+/* E128: and under the panel's tab strip (--panel-tabs-bottom, ui.ts trackChromeBottom), over the panel's body: on the
+   strip, "Scenario loaded" hid the Scenario tab and the case's next steps behind it. */
+body:has(.app[data-route='teach']) .toasts { top: calc(max(var(--chrome-bottom, var(--bar-h)), var(--panel-tabs-bottom, 0px)) + var(--s-2)); bottom: auto; left: auto; right: var(--s-3); transform: none; width: max-content; max-width: calc(var(--panel-w) - 2 * var(--s-3)); }
 body:has(.app[data-route='monitor']) .toast[data-kind='info'] { display: none; }
 .toast[data-kind='alert'] { border-left-color: var(--danger); }
 @media (max-width: 900px) and (orientation: portrait) {

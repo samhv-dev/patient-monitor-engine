@@ -181,15 +181,21 @@ export function toast(text: string, kind: ToastKind = 'info'): void {
  */
 export function trackChromeBottom(root: HTMLElement): () => void {
   const bars = [...root.querySelectorAll<HTMLElement>('.topbar, .sessionbar')];
+  // E128: the Instructor panel's tab strip too, as `--panel-tabs-bottom` (0 while the view is hidden): the toasts on the
+  // Instructor view sit under it, never over it (the "Scenario loaded" toast covered the strip, so the Scenario tab
+  // could not be seen or pressed). It wraps onto more lines in a narrow panel; the observer follows.
+  const strip = root.querySelector<HTMLElement>('.view[data-view="teach"] [role="tablist"]');
   const set = () => {
     const bottom = bars.reduce((m, e) => {
       const r = e.getBoundingClientRect();
       return r.height > 0 ? Math.max(m, r.bottom) : m;
     }, 0);
     document.documentElement.style.setProperty('--chrome-bottom', `${Math.round(bottom)}px`);
+    const s = strip?.getBoundingClientRect();
+    document.documentElement.style.setProperty('--panel-tabs-bottom', `${s && s.height > 0 ? Math.round(s.bottom) : 0}px`);
   };
   const ro = new ResizeObserver(set);
-  for (const e of bars) ro.observe(e);
+  for (const e of strip ? [...bars, strip] : bars) ro.observe(e);
   set();
   return () => ro.disconnect();
 }
