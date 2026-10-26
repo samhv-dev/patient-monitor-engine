@@ -461,15 +461,14 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
 .ff-icon svg { width: 72px; height: 48px; margin-left: 6px; }
 @keyframes ff-pulse { 50% { opacity: 0.35; transform: scale(0.92); } }
 @media (prefers-reduced-motion: reduce) { .ff-icon { animation: none; } }
-.ff-title { color: #ffb000; font-size: var(--t-22); font-weight: 700; letter-spacing: 0.06em; }
+.ff-title { margin-top: calc(1.2em - var(--s-2)); margin-top: calc(1lh - var(--s-2)); color: #ffb000; font-size: var(--t-22); font-weight: 700; letter-spacing: 0.06em; } /* owner's mockup m12: one blank line (the title's own line) under the icon, the panel's gap included */
 .ff-bar { width: 100%; height: 3px; margin: var(--s-2) 0; background: #2a3038; }
 .ff-fill { height: 100%; width: 0; background: #ffb000; }
 .ff-mute { display: flex; align-items: center; gap: var(--s-2); color: #aab3bf; }
 .ff-mute svg { width: 20px; height: 20px; }
-/* FX-23: 25 % larger than the body text and its padding (15 → 18.75 px; 8/16 → 10/20 px), three lines, same place */
+/* FX-23: 25 % larger than the body text and its padding (15 → 18.75 px; 8/16 → 10/20 px), two lines (owner's mockup m13), same place */
 .ff-banner { position: fixed; top: calc(var(--chrome-bottom, 0px) + var(--s-2)); left: 50%; transform: translateX(-50%); z-index: 45; max-width: calc(100vw - 2 * var(--s-4)); padding: calc(1.25 * var(--s-2)) calc(1.25 * var(--s-4)); font-size: calc(1.25 * var(--t-15)); border: 2px solid #ffb000; border-radius: var(--r-control); background: #0b0d10; color: #f3f6f9; font-weight: 600; text-align: center; pointer-events: none; }
 .ff-banner[hidden] { display: none; }
-.ff-banner > div:first-child { margin-bottom: 1em; margin-bottom: 1lh; } /* E128 (owner's mockup m11): a blank line under the title */
 /* UI-A #9 (demo review 24 Oct #9): the banner covered the nav and the session-bar title for 8 s, and on the Debrief the
    "Print the learner handout" button; printed within its 8 s it sat over the title of every page. It now sits under the
    bars (--chrome-bottom) — on the Instructor view over the top of the panel, off the monitor — is not shown on the

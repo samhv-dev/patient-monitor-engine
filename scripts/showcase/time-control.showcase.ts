@@ -111,7 +111,7 @@ async function fastForward(r: Result, page: Page, min: 2 | 5, during?: () => Pro
   check(r, `fast-forward ${min} min: the bar fills on the panel`, 'changes', `${c0} → ${c1}`, c0 !== c1);
   check(r, `fast-forward ${min} min: exact span`, `${min * 60} s`, ff ? r1(ff.endT - ff.fromT) : null, !!ff && Math.abs(ff.endT - ff.fromT - min * 60) < 1e-6);
   check(r, `fast-forward ${min} min: paced`, '9.5–20 s of wall time (click to panel gone)', r1(wallS), wallS >= 9.5 && wallS <= 20);
-  check(r, `fast-forward ${min} min: banner`, `three lines: "Fast-forwarded ${min} min" / "mm:ss → mm:ss" / the alarms or "No alarms"`, banner, new RegExp(`^Fast-forwarded ${min} min\\n\\d\\d:\\d\\d → \\d\\d:\\d\\d\\n.+$`).test(banner.trim()));
+  check(r, `fast-forward ${min} min: banner`, `two lines: "Fast-forwarded ${min} min" / the alarms or "No alarms"`, banner, new RegExp(`^Fast-forwarded ${min} min\\n.+$`).test(banner.trim()));
   return span;
 }
 

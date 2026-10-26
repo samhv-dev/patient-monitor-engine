@@ -178,14 +178,15 @@ test('UI-A #9 fast-forward: the banner sits under the nav and the session bar, n
   expect(meets(b, nav), 'the banner over the nav').toBe(false);
   expect(meets(b, sbar), 'the banner over the session bar').toBe(false);
   expect(meets(b, stage), 'the banner over the monitor stage').toBe(false);
-  // E128: under the panel's tab strip, and a blank line between its title and the two detail lines (owner's mockup m11)
+  // E128: under the panel's tab strip; owner's mockup m13: two lines, the alarm line straight under the title
   expect(meets(b, (await page.locator('[role=tablist][aria-label="Instructor controls"]').boundingBox()) as Box), 'the banner over the tab strip').toBe(false);
   const gap = await banner.evaluate((e) => {
     const [a, c] = [...e.children].map((d) => d.getBoundingClientRect());
     return { gap: c!.top - a!.bottom, line: a!.height };
   });
-  console.log(`E128 banner blank line ${JSON.stringify(gap)}`);
-  expect(gap.gap).toBeGreaterThanOrEqual(0.9 * gap.line);
+  console.log(`m13 banner lines ${JSON.stringify(gap)}`);
+  expect(await banner.locator('> div').count()).toBe(2);
+  expect(gap.gap).toBeLessThan(0.25 * gap.line);
   // the nav stays clickable while the banner shows
   await page.locator('nav.rail').getByRole('link', { name: 'Explore physiology' }).click(); // E125: the rail replaced the top bar's tabs
   await expect(page).toHaveURL(/#\/explore/);

@@ -2,7 +2,7 @@
 // and a fast-forward of 5 or 2 min from the instructor view, on both engines. The span is paced to ≈ 10 s behind one
 // panel (dimmed, blurred page; the ringed chevrons and a filling bar, no times; the muted-sound icon) on every window
 // (instructor, monitor, Explore, Ventilator, a second screen); no tone inside it, one two-tone cue at its end; the
-// three-line banner, the clinical log and the trends hold the span; a latched fast-forward alarm clears on the next
+// two-line banner, the clinical log and the trends hold the span; a latched fast-forward alarm clears on the next
 // acknowledge; the Ventilator view's cockpit ventilates the patient through a span.
 import { expect, test } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
@@ -69,6 +69,12 @@ test('×8 and a 5-minute fast-forward from the instructor view: paced panel ever
   expect(await veil.innerText()).not.toMatch(/\d\d:\d\d/); // no clock, no start or end time
   await expect(veil.locator('.ff-mute > :not(svg):not(.sr-only)')).toHaveCount(0); // no words beside the icon on screen
   await expect(second.locator('.ff-veil.on .ff-title')).toHaveText('FAST FORWARD · 5 MIN');
+  // owner's mockup m12: one blank line, the title's own line height, between the icon and the title (layout boxes: the icon's pulse is a transform)
+  const air = await veil.evaluate((v) => {
+    const [i, t] = ['.ff-icon', '.ff-title'].map((q) => v.querySelector(q) as HTMLElement);
+    return { gap: t!.offsetTop - (i!.offsetTop + i!.offsetHeight), line: t!.offsetHeight };
+  });
+  expect(Math.abs(air.gap - air.line), JSON.stringify(air)).toBeLessThanOrEqual(1);
   // the bar fills visibly
   const fillW = () => veil.locator('.ff-fill').evaluate((el) => (el as HTMLElement).style.width);
   const c0 = await fillW();
@@ -88,8 +94,8 @@ test('×8 and a 5-minute fast-forward from the instructor view: paced panel ever
   expect(ff).not.toBeNull();
   const { fromT, endT } = ff as { fromT: number; endT: number };
   expect(endT - fromT).toBeCloseTo(300, 6);
-  // FX-23: three lines — the span, from → to, the alarms during it (or "No alarms")
-  await expect(page.locator('.ff-banner > div')).toHaveText(['Fast-forwarded 5 min', /^\d\d:\d\d → \d\d:\d\d$/, /^(No alarms|.+ \d\d:\d\d)$/]);
+  // FX-23, owner's mockup m13: two lines — the span, the alarms during it (or "No alarms")
+  await expect(page.locator('.ff-banner > div')).toHaveText(['Fast-forwarded 5 min', /^(No alarms|.+ \d\d:\d\d)$/]);
   await expect(second.locator('.ff-banner > div').first()).toHaveText('Fast-forwarded 5 min');
 
   // the trends hold the span: HR in at least 290 of its 300 seconds
