@@ -2,7 +2,7 @@
 // 10 Hz grid (after the drug model's advancePk), OBSERVES the drug model's accepted doses (`ps.pk.bus.doses`), steps
 // core.ts, publishes the BloodView the gas step reads and the `out` block the other modules read, emits `labs` (1 Hz)
 // and delayed `labResult`, moves blood-volume changes into the circulation's circuit, writes the lung-water key for the
-// lungs, applies cold units to the heat model, and exposes the ECG deltas the engine pushes into Modifiers.
+// lungs, applies cold units and the delivered share of the VO2 demand to the heat model, and exposes the ECG deltas the engine pushes into Modifiers.
 import type { L1State } from '../../l1/state.ts';
 import type { BloodClinicalEvent, BloodDrugId } from '../../types-blood.ts';
 import type { Command, EngineEvent, PatientProfile } from '../../types.ts';
@@ -221,6 +221,11 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
       circ.ext.kEcg = c.out.kEcg; // The membrane-effective K for the sinus node and the arrest hazard (circ arrest.ts)
     } else applyL1Fallback(ctx.l1, t, bvRatio, kChem);
     rs.temp.iv = ivInflow(c.fl.flows, bs.cold.some((u) => t < u.until), t, rs.temp.ta); // IV fluids and unwarmed units as a physical heat term
+    // E129: the share of the VO2 demand the circulation delivers (oxygen.ts: 1 above DO2crit, DO2/DO2crit below it, 0 with
+    // no flow) limits the heat model's MH muscle heat. Absent = 1 (written only while supply-limited: truth budget)
+    const o2f = c.o2.demand > 0 ? c.o2.vo2 / c.o2.demand : 1;
+    if (o2f < 1) rs.temp.o2Frac = o2f;
+    else delete rs.temp.o2Frac;
     bs.cold = bs.cold.filter((u) => u.until > t);
     bs.view.odc = { ...c.odc };
     bs.view.coFactor = circ ? 1 : volumeCoFactor(bvRatio);
