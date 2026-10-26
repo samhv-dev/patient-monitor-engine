@@ -83,6 +83,8 @@ export interface Follower {
   /** The style this window shows (the instructor's). */
   style: { skin: string; theme: string };
   sync: ViewerSync | null;
+  /** Called once this window has put on a new style (the simulation line follows the header it lands in). */
+  onStyle?: (style: { skin: string; theme: string }) => void;
   destroy(): void;
 }
 
@@ -134,7 +136,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     if (m?.kind !== 'style' || (m.skin === f.style.skin && m.theme === f.style.theme)) return;
     f.style = { skin: m.skin, theme: m.theme };
     applySkinAlarmColours(m.skin, m.theme);
-    void monitor.setSkin(m.skin, m.theme ? { theme: m.theme } : {});
+    void monitor.setSkin(m.skin, m.theme ? { theme: m.theme } : {}).then(() => f.onStyle?.(f.style));
   };
   style?.postMessage({ kind: 'ask' } satisfies StyleMsg);
   void monitor.viewerClock().then((clock) => {
@@ -180,7 +182,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     if (w.skin === f.style.skin && w.theme === f.style.theme) return;
     f.style = { skin: w.skin, theme: w.theme };
     applySkinAlarmColours(w.skin, w.theme);
-    void monitor.setSkin(w.skin, w.theme ? { theme: w.theme } : {});
+    void monitor.setSkin(w.skin, w.theme ? { theme: w.theme } : {}).then(() => f.onStyle?.(f.style));
   }
   let opened = false; // The phone has reached the relay at least once
   const t0 = performance.now();
