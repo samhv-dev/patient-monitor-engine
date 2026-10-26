@@ -78,6 +78,7 @@ import { circCardiacOutput, circVagalStimulus, type CircModelState } from './l2/
 import { heldRate } from './l2/circ/rate-rule.ts';
 import { betaVenousUnits } from './l2/circ/venous.ts';
 import { BEEP_BASE_HZ, spo2PitchHz } from './l3/spo2/spo2.ts';
+import { VF_CONFIRM_S } from './l3/alarms/conditions.ts';
 import { advanceBlood, applyBloodCommand, bloodEcgTargets, createBloodState, validateBloodCommand, type BloodState } from './l2/blood/pipeline.ts';
 import { cycleBreathClock, fixedBreathClock, type BreathClock } from './l2/ecg/breath-clock.ts';
 import { lastCycleBefore } from './l2/resp/driver.ts';
@@ -618,7 +619,13 @@ class Engine implements MonitorEngine {
           // dropped, so the beats after reconnection start a fresh average (no `HR 0<50` on reconnect)
           const off = ps.mods.artefact.leadOff;
           if (off) ps.hrm = createHrState(ps.hrm.method);
-          const hr = off ? { value: null, flag: 'invalid' as const, at: t } : hrMeasure(ps.hrm, t, hra.avg, hra.method, this.dev.alarms.profile.arrhythmia.asystoleS);
+          // E126 (owner ruling 2026-10-26, the Saadat B9): in VF the monitor finds no QRS complexes, so once its VF analysis
+          // stands (the VFIB alarm's VF_CONFIRM_S) the HR field is empty — no 8 s average left over, no count of
+          // fibrillation waves (or compressions) — and the RR history restarts, keeping the last detection for asystole
+          const vfSince = this.dev.inputs.vfSince;
+          const vf = vfSince !== null && t - vfSince >= VF_CONFIRM_S;
+          if (vf) ps.hrm = { ...createHrState(ps.hrm.method), lastR: ps.hrm.lastR };
+          const hr = off || vf ? { value: null, flag: 'invalid' as const, at: t } : hrMeasure(ps.hrm, t, hra.avg, hra.method, this.dev.alarms.profile.arrhythmia.asystoleS);
           ps.out.push({ type: 'measurement', t, values: { hr } }); // The skin's averaging
         }
       },

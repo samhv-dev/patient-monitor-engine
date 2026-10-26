@@ -134,7 +134,7 @@
   "defib": null,
   "pacer": null,
   "trend": { "style": "line", "hours": 8 },
-  "glyphs": { "noValue": "---", "hrUnavailable": "---", "nibpFail": "---", "questionable": "?", "inop": "---" },
+  "glyphs": { "noValue": "---", "hrUnavailable": "---", "nibpFail": "---", "questionable": "", "inop": "---" },
   "provenance": {
     "co2.sidestreamDelayS": { "tag": "documented", "source": "brief §4.4; research/09 §5 (engine sidestream constants, Microstream-class; R39-5)" },
     "co2.riseTimeMs": { "tag": "documented", "source": "brief §4.4; research/09 §5 (engine sidestream constants, Microstream-class; R39-5)" },
@@ -228,6 +228,6 @@
     "pacer": { "tag": "documented", "source": "brief §6.5" },
     "trend": { "tag": "documented", "source": "brief §6.7 (8 h, line)" },
     "glyphs": { "tag": "documented", "source": "brief §6.2 (dashes)" },
-    "glyphs.questionable": { "tag": "documented", "source": "brief §4.3, §6.1 ('97?' questionable SpO2); research/06 §3.2" }
+    "glyphs.questionable": { "tag": "documented", "source": "brief §4.3 as amended by owner ruling E126 (research/00, 2026-10-26 13:20): no \"97?\" mark; a questionable value prints its number and the low-signal INOP carries the doubt (Masimo Radical-7 LAB-5476J p. 113 \"Low Signal IQ\")", "note": "was \"?\" (brief §4.3, §6.1 '97?')" }
   }
 }

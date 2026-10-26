@@ -1,7 +1,9 @@
 // The Debrief's course strip: the run on one time axis as an SVG string (no DOM state). It draws the trends HR, MAP,
 // SpO₂ and EtCO₂ as small multiples (E56), with the numbered key moments as badges (■ team in blue, ● patient in
 // vermillion, □ an open grey square for a scenario state; the numbers are those of the key-moments table), and a grey band over each
-// pulseless span, where the SpO₂ line is broken (E60). A trend never measured is left out. The legend is the view's.
+// pulseless span. Every line is what the monitor showed: the SpO₂ line breaks where the oximeter showed its dash and runs
+// through the compression-generated reading during CPR (E126; E60 broke it over the whole band). A trend never measured
+// is left out. The legend is the view's.
 import { axisRange, endOf, mmss, span, trendMeta } from '../debrief.ts';
 import { pulselessSpans, type KeyMoment } from '../debrief-moments.ts';
 import type { RunData, TrendKey } from '../record.ts';
@@ -35,7 +37,6 @@ export function courseSvg(d: RunData, moments: KeyMoment[], o: CourseOptions): s
   const H = BADGES + lanes.length * (LANE_H + GAP) + AXIS;
   const x = (t: number) => L + (t / end) * (COURSE_W - L - R);
   const top = BADGES, bottom = BADGES + lanes.length * (LANE_H + GAP);
-  const inBand = (t: number) => spans.some(([a, b]) => a <= t && t <= b);
 
   const bands = spans.map(([a, b]) => `<rect class="db-pulseless" x="${x(a).toFixed(1)}" y="${top}" width="${Math.max(1, x(b) - x(a)).toFixed(1)}" height="${bottom - top}" fill="#e9e9e9"/>`).join('');
   // each band's label over the lines, on a patch of the band's own grey
@@ -55,7 +56,7 @@ export function courseSvg(d: RunData, moments: KeyMoment[], o: CourseOptions): s
     let prev: number | null = null;
     for (const s of d.samples) {
       const v = s[k];
-      if (v === null || (k === 'spo2' && inBand(s.t))) {
+      if (v === null) {
         prev = null;
         continue;
       }

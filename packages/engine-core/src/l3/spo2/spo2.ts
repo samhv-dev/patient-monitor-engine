@@ -2,6 +2,13 @@
 // circulatory dead time, l2/gas/delay.ts) → first-order sensor lag τ 3 s → device bias → moving average →
 // display update → validity from the pleth (pulse search, low perfusion, probe off, motion, CPR, same-limb
 // cuff). Stepped at 10 Hz with the gas model. Plain data.
+//
+// E126 (owner ruling 2026-10-26, "mimic the real monitor"): with no pulsatile signal the oximeter cannot give a value
+// and shows dashes (Masimo Radical-7 Operator's Manual LAB-5476J, p. 113 "Pulse Search", p. 114 "- -" = "Unable to
+// provide a parameter value"); there is no held, marked number ("99?") any more. During chest compressions the pleth
+// carries the compression-generated pulses (hemo pipeline: the circuit's forward volume per compression), so the value
+// is the model's own saturation read through them, flagged questionable — the low signal confidence Masimo reports as
+// "Low Signal IQ" (p. 24, p. 113) — and the alarm layer shows that as a message, never as a valid desaturation.
 import type { Measured } from '../../types.ts';
 
 export const SPO2_LAG_TAU_S = 3; // brief §4.3 step 3 [ENG]
@@ -11,8 +18,12 @@ export const SPO2_LAG_TAU_S = 3; // brief §4.3 step 3 [ENG]
  */
 export const SPO2_PROFILE = { averagingS: 8, updateS: 1 } as const;
 export const SPO2_STEP_S = 0.1;
-export const PULSE_HOLD_S = 4; // no pleth foot for 4 s → value held, questionable [ENG]
-export const PULSE_LOST_S = 10; // … for 10 s → invalid, "no pulse" (brief §4.3 Arrest: 10–30 s)
+/**
+ * No completed pleth pulse for this long → no value (dashes, "pulse search"/"no pulse"). It was a 4 s hold with a
+ * questionable "99?" and invalid only at 10 s (brief §4.3 "10–30 s"); E126 removed the held number [ENG: two missed
+ * beats at 30/min].
+ */
+export const PULSE_LOST_S = 4;
 export const LOW_PERF_PI = 0.3; // "LOW PERF" below PI 0.3 % (brief §4.3)
 export const LOW_PERF_SLOWDOWN = 2; // low perfusion doubles the averaging window [ENG]
 
@@ -22,7 +33,7 @@ export interface Spo2Inputs {
   lastFootT: number; // End of the last COMPLETED pleth pulse (s), −Infinity if none (one lone foot is not a pulse)
   pi: number | null; // measured PI (%), null when invalid
   cuffOnLimb: boolean; // same-limb NIBP cuff inflated: hold the value (brief §4.3 artefacts)
-  cpr: boolean;
+  cpr: boolean; // chest compressions move the probe: the signal's confidence is low, as with motion (E126)
 }
 
 export interface Spo2State {
@@ -69,10 +80,6 @@ export function stepSpo2(st: Spo2State, x: Spo2Inputs, t: number): void {
     st.shown = null;
     st.flag = 'invalid';
     st.validSince = 1e12;
-    return;
-  }
-  if (noPulse > PULSE_HOLD_S) {
-    st.flag = st.shown === null ? 'invalid' : 'questionable';
     return;
   }
   if (st.validSince === 1e12) st.validSince = t;

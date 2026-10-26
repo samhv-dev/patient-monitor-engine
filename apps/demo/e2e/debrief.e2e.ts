@@ -294,12 +294,13 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   await expect(view.locator('#db-course .db-legend')).toHaveText('■ team action · ● patient event · □ scenario state · numbers match Key moments');
   await expect(view.locator('#db-objectives .db-measure')).toHaveText(['3 s of 10 s', '1 min 30 s of 2 min 00 s', '2 s of 30 s']);
 
-  // page 2: the key moments, SpO₂ "–" from the pulse loss to the return of circulation, and the sentence that says why
+  // page 2: the key moments with SpO₂ as the monitor showed it (E126: this rc.2 record kept the oximeter's reading through
+  // the pulseless span, CPR having begun 3 s after the loss), and the sentence that says what it means
   const moments = await view.locator('#db-moments tbody tr[data-n]').evaluateAll((tr) => tr.map((x) => [...x.querySelectorAll('td')].map((td) => td.textContent?.trim())));
-  expect(moments.map((m) => [m[0], m[1], m[6]])).toEqual([['1', '06:13', '99'], ['2', '07:48', '–'], ['3', '07:51', '–'], ['4', '09:21', '–'], ['5', '10:55', '–'], ['6', '10:57', '99'], ['7', '11:27', '99']]);
+  expect(moments.map((m) => [m[0], m[1], m[6]])).toEqual([['1', '06:13', '99'], ['2', '07:48', '99'], ['3', '07:51', '99'], ['4', '09:21', '99'], ['5', '10:55', '99'], ['6', '10:57', '99'], ['7', '11:27', '99']]);
   expect(moments.map((m) => m[5])).toEqual(['71', '21', '20', '28', '45', '63', '90']); // MAP rounded
   await expect(view.locator('#db-moments .db-note60')).toHaveCount(1);
-  await expect(view.locator('#db-moments .db-note60')).toHaveText('SpO₂ –: no reliable saturation reading without a pulse; a pleth signal during CPR reflects compression flow, not oxygenation.'); // the owner's ruling, 2026-10-19
+  await expect(view.locator('#db-moments .db-note60')).toHaveText('SpO₂ as the monitor showed it: – while pulseless without compressions (no pulsatile signal); a number during CPR reflects compression-generated flow and is unreliable.'); // the owner's ruling E126, 2026-10-26 (was E60, 2026-10-19)
   await expect(view.locator('#db-moments tr.db-alarms').first()).toHaveText(/Alarms since the last row: CVP high, SpO₂: low perfusion, ART S low/);
 
   // (g) typing in Run by and Notes across a 5 s refresh: the text and the caret stay

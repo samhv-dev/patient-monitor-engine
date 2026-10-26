@@ -134,8 +134,8 @@ const legend = (scen: '□' | '│', tail = ''): HTMLElement => h('p', { class: 
 const WHO: Readonly<Record<Who, string>> = { team: 'Team', patient: 'Patient', scenario: 'Scenario' };
 const whoCell = (w: Who): HTMLElement => h('td', { class: 'db-whocell' }, w === 'scenario' ? null : h('span', { class: `db-${w}` }, w === 'team' ? '■ ' : '● '), WHO[w]);
 const TRENDS4: TrendKey[] = ['hr', 'map', 'spo2', 'etco2']; // E56: the same four for every case
-/** The fixed sentence under the key moments when a row is pulseless (E60; the owner's list, item 11). */
-const SPO2_DASH = 'SpO₂ –: no reliable saturation reading without a pulse; a pleth signal during CPR reflects compression flow, not oxygenation.';
+/** The fixed sentence under the key moments when a row is pulseless (E60; the owner's list, item 11; reworded for E126). */
+const SPO2_DASH = 'SpO₂ as the monitor showed it: – while pulseless without compressions (no pulsatile signal); a number during CPR reflects compression-generated flow and is unreliable.';
 /** The learner handout's fixed text (E51; the owner's list, item 3: non-clinical, as drafted unless he changes it). */
 const HANDOUT = {
   intro: 'This sheet is yours to keep. It shows what happened and when; it does not mark you. The conversation, not this page, is the debrief.',
@@ -193,7 +193,7 @@ function bar(m: { fromT: number; toT: number; askedS: number }): HTMLElement {
 }
 
 /** Every key moment (UI review #3: no cap; on paper the table runs on with its header repeated) with what the monitor
- *  showed at that second (values rounded; SpO₂ "–" while pulseless, E60), and the alarms raised since the row before. */
+ *  showed at that second (values rounded; SpO₂ "–" where the oximeter showed its dash, E126), and the alarms raised since the row before. */
 function momentsTable(ms: KeyMoment[]): Node[] {
   const v = (x: number | null) => h('td', { class: 'num' }, x === null ? '–' : String(Math.round(x)));
   return kids(

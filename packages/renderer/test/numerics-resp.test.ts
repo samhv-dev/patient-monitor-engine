@@ -5,9 +5,10 @@ import { autoRange, WAVE_STYLE } from '../src/wave-lanes.ts';
 const v = (value: number | null, flag: 'valid' | 'questionable' | 'invalid' = 'valid') => ({ value, flag, at: 1 });
 
 describe('numerics-resp formatters (brief §6.1) and respiratory lanes', () => {
-  it('SpO2 with PI, questionable mark, LOW PERF and NO PULSE', () => {
+  it('SpO2 with PI; a questionable value prints its number (no "?" mark, E126) with LOW PERF or LOW SIGNAL; NO PULSE', () => {
     expect(formatSpo2(v(97), v(2.14))).toEqual({ main: '97', sub: 'PI 2.1', status: '' });
-    expect(formatSpo2(v(95, 'questionable'), v(0.21))).toEqual({ main: '95?', sub: 'PI 0.21', status: 'LOW PERF' });
+    expect(formatSpo2(v(95, 'questionable'), v(0.21))).toEqual({ main: '95', sub: 'PI 0.21', status: 'LOW PERF' });
+    expect(formatSpo2(v(98, 'questionable'), v(0.6))).toEqual({ main: '98', sub: 'PI 0.60', status: 'LOW SIGNAL' });
     expect(formatSpo2(v(null, 'invalid'), undefined)).toEqual({ main: '-?-', sub: 'PI ---', status: 'NO PULSE' });
   });
   it('EtCO2 / FiCO2 / awRR with APNEA; RR; temperature T1/T2', () => {

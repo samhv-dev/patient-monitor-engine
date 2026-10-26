@@ -20,17 +20,20 @@ function mount(id: string) {
 }
 
 describe('tile glyphs, sources and extras', () => {
-  it('a questionable SpO2 carries "?"; with the NON-PULSAT. INOP the numeric is "-?-" (philips-like) / "---" (saadat-like)', () => {
+  it('a questionable SpO2 prints its number with no "?" mark (E126) on either skin; with the NON-PULSAT. INOP the numeric is "-?-" (philips-like) / "---" (saadat-like)', () => {
     const { ui, q } = mount('philips-like');
     ui.onEvent(meas(30, { spo2: m(97, 30, 'questionable'), pr: m(76, 30), pi: m(0.2, 30) }));
     ui.paint(30);
-    expect(q('SpO2', 'v')).toBe('97?');
+    expect(q('SpO2', 'v')).toBe('97');
     expect(q('SpO2', 's')).toBe('PR 76  PI 0.2');
     ui.onEvent(meas(31, { spo2: m(null, 31), pr: m(null, 31), pi: m(null, 31) }));
     ui.onEvent(status(31, 'philips-like', [{ id: 'spo2NonPulsatile', numeric: 'spo2' }]));
     ui.paint(31);
     expect(q('SpO2', 'v')).toBe('-?-');
     const sa = mount('saadat-like');
+    sa.ui.onEvent(meas(30, { spo2: m(99, 30, 'questionable'), pr: m(110, 30), pi: m(0.15, 30) }));
+    sa.ui.paint(30);
+    expect(sa.q('SpO2', 'v')).toBe('99');
     sa.ui.onEvent(meas(31, { spo2: m(null, 31) }));
     sa.ui.onEvent(status(31, 'saadat-like', [{ id: 'spo2NonPulsatile', numeric: 'spo2' }]));
     sa.ui.paint(31);

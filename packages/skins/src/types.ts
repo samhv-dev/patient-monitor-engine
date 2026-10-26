@@ -418,8 +418,8 @@ export interface Skin {
   pacer: { rateDefault: number; rateRange: LimitPair; mADefault: number; mARange: LimitPair; mAStep: { up: number; down: number }; modeDefault: 'demand' | 'fixed'; pausePct: number | null } | null;
   trend: { style: 'line' | 'filled-area'; hours: number };
   /**
-   * `questionable` is appended to a questionable numeric ("97?"); `inop` replaces a numeric whose technical alarm is
-   * active ("-?-" on the research/05 §6 [S2] Philips IntelliVue IFU p. 55–62).
+   * `questionable` is appended to a questionable numeric (empty on every shipped skin since E126; was "97?"); `inop`
+   * replaces a numeric whose technical alarm is active ("-?-" on the research/05 §6 [S2] Philips IntelliVue IFU p. 55–62).
    */
   glyphs: { noValue: string; hrUnavailable: string; nibpFail: string; questionable: string; inop: string };
   provenance: Provenance;

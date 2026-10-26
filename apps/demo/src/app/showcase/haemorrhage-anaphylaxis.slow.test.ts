@@ -7,7 +7,7 @@ import { bands, entered, first, near, range, runCard, type Act } from './harness
 
 /** Bands: the measured prototype ± a stated tolerance. Never widened. */
 const BANDS = {
-  'S5 haemorrhage E120': { refused: [0, 0], notPressed: [0, 0], hrAt4: [91, 101], sysAt4: [102, 112], hrAt8: [138, 148], sysAt8: [71, 81], mapAt8: [61, 71], junctionalS: [502, 614], peaStateS: [563, 689], pulseLossS: [594, 726], peaOnJunctional: [1, 1], agonalS: [695, 849], asystoleS: [838, 1024], asystoleAfterLossS: [244, 298], cprS: [851, 1041], cppAt60: [15, 23], cppAtCheck1: [23.6, 31.6], myoAtCheck1: [0.5, 0.74], check1IntoCprS: [119, 122], shock1S: [970, 1186], shock1Outcome: [2, 2], myoAtShock2: [0.85, 1], cppAtShock2: [23, 31], shock2S: [1089, 1331], shock2Outcome: [3, 3], roscAfterShock2S: [60, 75], roscAfterLossS: [552, 674], sysStop60: [129.5, 139.5], mapStop60: [94, 104], hrStop60: [67, 77], etco2Stop60: [44, 52], spo2Stop60: [97, 100], pulseLostAfterStop: [0, 0] },
+  'S5 haemorrhage E120': { refused: [0, 0], notPressed: [0, 0], hrAt4: [91, 101], sysAt4: [102, 112], hrAt8: [138, 148], sysAt8: [71, 81], mapAt8: [61, 71], junctionalS: [502, 614], peaStateS: [563, 689], pulseLossS: [594, 726], peaOnJunctional: [1, 1], agonalS: [695, 849], asystoleS: [838, 1024], asystoleAfterLossS: [244, 298], cprS: [851, 1041], cppAt60: [15, 23], cppAtCheck1: [23.6, 31.6], myoAtCheck1: [0.5, 0.74], check1IntoCprS: [119, 122], shock1S: [970, 1186], shock1Outcome: [2, 2], myoAtShock2: [0.85, 1], cppAtCheck2: [23, 31], cppAtShock2: [3.8, 11.8], shock2S: [1089, 1331], shock2Outcome: [3, 3], roscAfterShock2S: [60, 75], roscAfterLossS: [552, 674], sysStop60: [129.5, 139.5], mapStop60: [94, 104], hrStop60: [67, 77], etco2Stop60: [44, 52], spo2Stop60: [97, 100], pulseLostAfterStop: [0, 0] },
   'S5 haemorrhage E120 timing': { lossEarlyVentS: [595, 727], lossLateVentS: [594, 726], asystoleEarlyVentS: [833, 1018], asystoleLateVentS: [842, 1029], noVentPulseLost: [0, 0], noVentSysAt10: [71.6, 81.6], noVentMinSys: [68, 78] },
   'S5 anaphylaxis': { refused: [0, 0], hrAt2: [134, 144], sysAt2: [91, 101], mapAt2: [73, 83], sysOver110S: [0, 26], hrPeak: [173, 183], sysPlus2: [113, 123], mapPlus2: [92, 102], hrPlus2: [105, 115] },
   'S5 anaphylaxis untreated': { refused: [0, 0], mapAt3: [48, 58], pulseLossS: [284, 346] },
@@ -39,6 +39,9 @@ describe('S5 kept cards on the new physiology', { timeout: 900_000 }, () => {
   // blood → VF at the first pulse check → shock → ROSC. Room air until the card's oxygen and ventilator steps (E121).
   // The card scripts the junctional rhythm and VF (twice: the engine seed's first shock ends VF in asystole, see the
   // card's notes); the arrest, the PEA decay to asystole, the CPP, each shock's outcome and the ROSC are the model's.
+  // E126 (2026-10-26): compressions pause at each pulse check until the shock, so the CPP CPR built (band 23–31, read
+  // 1 s before shock 2 with compressions on until E126) is read 1 s before the second pulse check (cppAtCheck2), and
+  // the CPP 1 s before shock 2 is now the pause's (cppAtShock2: measured 7.8, new band ± 4). Nothing else moved.
   it('haemorrhage (E120): the owner\'s course on the kit-round path, two shocks, ROSC', async () => {
     const shocks: string[] = [];
     const r = await runCard('showcase-haemorrhage', HAEM_PATH(30, 60), 1500, (e) => {
@@ -64,7 +67,7 @@ describe('S5 kept cards on the new physiology', { timeout: 900_000 }, () => {
       peaOnJunctional: onset?.rhythm === 'junctionalEscape' ? 1 : 0,
       agonalS: first(r.rows, (s) => s.rhythm === 'agonal')?.t ?? Number.NaN, asystoleS: asy, asystoleAfterLossS: asy - (loss?.t ?? Number.NaN),
       cprS: cpr, cppAt60: near(r.rows, cpr + 60).cpp, cppAtCheck1: near(r.rows, pc1 - 1).cpp, myoAtCheck1: near(r.rows, pc1 - 1).myo,
-      check1IntoCprS: pc1 - cpr, shock1S: sh1, shock1Outcome: out(0), myoAtShock2: near(r.rows, sh2 - 1).myo, cppAtShock2: near(r.rows, sh2 - 1).cpp,
+      check1IntoCprS: pc1 - cpr, shock1S: sh1, shock1Outcome: out(0), myoAtShock2: near(r.rows, sh2 - 1).myo, cppAtCheck2: near(r.rows, entered(r, 'vf2') - 1).cpp, cppAtShock2: near(r.rows, sh2 - 1).cpp,
       shock2S: sh2, shock2Outcome: out(1), roscAfterShock2S: (back?.t ?? Number.NaN) - sh2, roscAfterLossS: (back?.t ?? Number.NaN) - (loss?.t ?? Number.NaN),
       sysStop60: near(r.rows, stop + 60).sys ?? Number.NaN, mapStop60: near(r.rows, stop + 60).map ?? Number.NaN,
       hrStop60: near(r.rows, stop + 60).hr ?? Number.NaN, etco2Stop60: near(r.rows, stop + 60).etco2 ?? Number.NaN, spo2Stop60: near(r.rows, stop + 60).spo2 ?? Number.NaN,

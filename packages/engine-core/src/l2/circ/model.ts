@@ -142,6 +142,14 @@ export interface CircModelState {
   beats: CircBeat[]; // last 16
   /** Aortic-valve openings since the pipeline last looked: time, EDV and the stroke volume they will eject (estimate). */
   opens: { t: number; sv: number }[];
+  /** The chest compression in progress: its start and the forward aortic-valve volume so far, mL (E126; optional, so a
+   *  snapshot from before E126 restores). */
+  cprComp?: { t: number; sv: number } | null;
+  /** The last completed compression's forward aortic-valve volume, mL (E126). */
+  cprSv?: number;
+  /** Compression starts since the pipeline last looked, with the volume they will eject — the last compression's, as
+   *  `opens` estimates a beat's: the pleth's compression pulses (E126). */
+  cprEj?: { t: number; sv: number }[];
   lastEjT: number;
   qFwd: number; // LPF (τ CO_TAU_S) of the forward aortic-valve + LVAD flow, mL/s: CO for beats AND compressions
   mapSetPinned: boolean;
@@ -440,7 +448,20 @@ export function stepCircModel(m: CircModelState, tEnd: number, env: CircEnv, o: 
       m.cppAcc.sum += o.pAo - o.pRa; // The coronary driving pressure outside compressions (Paradis 1990)
       m.cppAcc.n++;
     }
-    if (o.qAv > 1 && env.cprCardiac(m.t) > 0) m.lastEjT = m.t; // a compression that ejects (beats set it below)
+    const compressing = env.cprCardiac(m.t) > 0;
+    if (o.qAv > 1 && compressing) m.lastEjT = m.t; // a compression that ejects (beats set it below)
+    if (compressing) {
+      if (!m.cprComp) {
+        m.cprComp = { t: m.t, sv: 0 };
+        // the pleth needs its pulse when the compression starts: the forward volume of the last compression (E126)
+        if ((m.cprSv ?? 0) > 0) (m.cprEj ??= []).push({ t: m.t, sv: m.cprSv as number });
+        if ((m.cprEj?.length ?? 0) > 8) m.cprEj?.shift();
+      }
+      m.cprComp.sv += Math.max(0, o.qAv) * L_H;
+    } else if (m.cprComp) {
+      m.cprSv = m.cprComp.sv;
+      m.cprComp = null;
+    }
     m.mapSum += o.pRad;
     m.raTmSum += o.pRa - o.pIt - o.pPeri; // atrial stretch: transmural across the wall (pericardial pressure compresses)
     m.mapN++;

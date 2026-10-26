@@ -18,6 +18,10 @@ const OUTDIR_ENV = process.env.KITROUND_OUTDIR ?? 'docs/showcase/kit-round-a'; /
 const OUTDIR = isAbsolute(OUTDIR_ENV) ? OUTDIR_ENV : join(REPO, OUTDIR_ENV); // an absolute path is used as is
 const N_PHONES = Number(process.env.KITROUND_PHONES ?? 3);
 const REACT_S = Number(process.env.KITROUND_REACT_S ?? 2);
+/** E126: a folder for the owner's review shots of the A4 haemorrhage monitor (1280×800, the session paused for each
+ *  shot so the sim clock does not move; the pulse-check shot waits 6 s of sim into the check). Unset = no shots, the
+ *  measured run as before. */
+const SHOTS = process.env.KITROUND_SHOTS ?? '';
 const KIT_SHA = (() => {
   try {
     return /Commit:\s+([0-9a-f]{8})/.exec(readFileSync(join(process.env.SHOWCASE_KIT ?? '', 'VERSION.txt'), 'utf8'))?.[1] ?? 'unknown';
@@ -1713,12 +1717,32 @@ const rhythmLog = (page: Page) => page.evaluate(() => (window as unknown as { __
 /** The model's defibrillator, as the Defib tab mirrors it. */
 const defibNow = (page: Page) => page.evaluate(() => (window as unknown as { __pmeApp: { link: { device?: { defib?: { state: string; shocks: number; lastShock: { t: number; outcome: string } | null } | null } } } }).__pmeApp.link.device?.defib ?? null);
 
-/** Defib tab: Charge (200 J, the default), Shock once ready; back to the Scenario tab. Returns the shock's sim time and outcome. */
-async function chargeAndShock(R: Run, page: Page): Promise<{ t: number; outcome: string | null }> {
+/** KITROUND_SHOTS only (E126): the page at 1280×800 with the session paused, then back to the run's size and speed. */
+async function shot(R: Run, page: Page, name: string): Promise<void> {
+  if (!SHOTS) return;
+  mkdirSync(SHOTS, { recursive: true });
+  const size = page.viewportSize();
+  await R.pauseToggle();
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: join(SHOTS, `${name}-${R.r.browser}.png`) });
+  if (size) await page.setViewportSize(size);
+  await page.waitForTimeout(600);
+  await R.pauseToggle();
+  R.r.notes.push(`shot ${name} at ${mmss(await R.sim())}`);
+}
+
+/** Defib tab: Charge (200 J, the default), Shock once ready; back to the Scenario tab. Returns the shock's sim time and
+ *  outcome. `checkT` (KITROUND_SHOTS): the pulse check's sim time — the shot of the check is taken 6 s into it. */
+async function chargeAndShock(R: Run, page: Page, checkT?: number, shotName?: string): Promise<{ t: number; outcome: string | null }> {
   await R.teachTab('defib');
   const shocks0 = (await defibNow(page))?.shocks ?? 0;
   await page.getByRole('button', { name: 'Charge', exact: true }).click();
   await R.waitSim(30, async () => (await defibNow(page))?.state === 'ready');
+  if (SHOTS && checkT !== undefined && shotName) {
+    await R.waitSim(10, (now) => now >= checkT + 6);
+    await shot(R, page, shotName);
+  }
   await page.getByRole('button', { name: 'Shock', exact: true }).click();
   await R.waitSim(10, async () => ((await defibNow(page))?.shocks ?? 0) > shocks0);
   const d = await defibNow(page);
@@ -1747,11 +1771,16 @@ test('A4 haemorrhage (E120): PEA on a junctional rhythm → asystole → CPR, vo
     await R.row('state PEA');
     const tLoss = await R.waitSim(120, async () => (await modelPulse(page)) === false);
     await R.row('the model\'s pulse loss');
+    if (SHOTS && tLoss !== null) {
+      await R.waitSim(30, (now) => now >= tLoss + 15);
+      await shot(R, page, 'e126-1-pea-pulseless');
+    }
     await R.speed(8);
     const tAsy = await R.until('asystole', 600);
     const tAgonal = (await rhythmLog(page)).find((x) => x.id === 'agonal')?.t ?? null;
     await R.speed(1);
     await R.row('state Asystole');
+    await shot(R, page, 'e126-2-asystole');
     await R.react();
     const tCpr = await R.press('Start CPR: compressions, bag via the tube 10/min, FiO₂ 1.0', 'cpr');
     await R.press('2 L warmed crystalloid and 2 units of red cells', 'cprVolume');
@@ -1760,13 +1789,15 @@ test('A4 haemorrhage (E120): PEA on a junctional rhythm → asystole → CPR, vo
     await R.speed(4);
     await R.untilT(tCpr + 60);
     await R.row('1 min into CPR');
+    await shot(R, page, 'e126-3-cpr-running');
     await R.untilT(tCpr + 118);
     await R.speed(1);
     const tPc1 = await R.press('Pulse check', 'vf');
-    const s1 = await chargeAndShock(R, page);
+    const s1 = await chargeAndShock(R, page, tPc1, 'e126-4-pulse-check-vf');
     await R.speed(4);
     await R.untilT(s1.t + 60);
     await R.row('1 min after the first shock');
+    await shot(R, page, 'e126-5-post-shock-cpr');
     await R.untilT(s1.t + 118);
     await R.speed(1);
     const tPc2 = await R.press('Pulse check', 'vf2');
@@ -1778,6 +1809,7 @@ test('A4 haemorrhage (E120): PEA on a junctional rhythm → asystole → CPR, vo
     await R.speed(4);
     await R.untilT(tStop + 60);
     await R.row('1 min after stopping CPR');
+    await shot(R, page, 'e126-6-rosc');
     const hc = await hist(page, tCpr, tPc1);
     R.r.measures.a4haemorrhage = {
       states: await stateLog(page), junctionalAt: tJ === null ? null : mmss(tJ), peaStateAt: tPea === null ? null : mmss(tPea), pulseLossAt: tLoss === null ? null : mmss(tLoss),
