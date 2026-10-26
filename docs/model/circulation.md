@@ -68,8 +68,8 @@ reads it for the per-beat truths the monitor and the other organ models consume.
   threshold for that input (K 8.5, 42 °C, 28 °C, pH 7.00, kIsch 0.1); catecholamine inotropy above 1 multiplies the
   substrate and acts alone only above +1 (exogenous overdose). PVC events arrive at 6·D per minute (≤ 30), as single
   PVCs, couplets or non-sustained runs (3–30 beats) whose share grows with D. MODELED only, never while the arrest
-  model holds an arrest; draws come from the `ectopy` stream and none is taken at D = 0, so a healthy patient is
-  unchanged. Runs are non-sustained: VF still comes only from the arrest hazards and the onset draw (Durfey 2017;
+  model holds an arrest; draws come from their own `ectopyHazard` stream (never the ECG's `ectopy` stream, which
+  times the escape foci) and none is taken at D = 0, so a healthy patient is unchanged. Runs are non-sustained: VF still comes only from the arrest hazards and the onset draw (Durfey 2017;
   Orchard & Cingolani 1994; Jung 2011; Katritsis 2012; Campbell 2015; weights and the rate [ENG];
   `l2/circ/ectopy.ts`).
 - What the heat model takes from the flow (E131): with cardiac output below the flow at which oxygen delivery becomes
