@@ -3,10 +3,12 @@
 import type { ScenarioDoc } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
 import a31 from '../../../../../docs/showcase/kit-round-a/fa/debrief-a3-tamponade-cue-card-path-kit-round-chromium.json';
+import a4haem from '../../../../../docs/showcase/kit-round-a/debrief-a4-haemorrhage-e120-course-kit-round-chromium.json';
+import a4mh from '../../../../../docs/showcase/kit-round-a/debrief-a4-mh-e119-induction-sequence-and-early-call-kit-round-chromium.json';
 import { keyMoments } from '../debrief-moments.ts';
 import { emptyRun, type RunData } from '../record.ts';
 import tamponade from '../showcase/showcase-tamponade.json';
-import { COURSE_W, courseSvg } from './debrief-course.ts';
+import { COURSE_W, courseSvg, placeBadges } from './debrief-course.ts';
 
 const TRENDS = ['hr', 'map', 'spo2', 'etco2'] as const;
 const run = (): RunData => {
@@ -61,5 +63,38 @@ describe('courseSvg on A3.1', () => {
     expect([...s.matchAll(/data-trend="(\w+)"/g)].map((m) => m[1])).toEqual(['hr', 'spo2']);
     expect(count(s, /class="db-badge/g)).toBe(0);
     expect(s).toContain('aria-label="Your run, 00:00 to 00:59"');
+  });
+});
+
+// UI review #19: on the A4 haemorrhage record badges 18 and 19 ran past the plot's right edge (19 clipped, 18 under it)
+// and the MH badges 9–12 touched. Badges keep apart, stay inside the plot, and sit as near their moment as they can.
+describe('the key-moment badges never collide (UI review #19)', () => {
+  const xs = (svg: string) => [...svg.matchAll(/<text x="([\d.]+)" y="15"/g)].map((m) => Number(m[1]));
+  for (const [name, rec, n] of [['A4 haemorrhage', a4haem, 19], ['A4 MH', a4mh, 13]] as const) {
+    it(`${name}: ${n} badges, 18 units apart or more, all inside the plot`, () => {
+      const d = structuredClone(rec.record) as unknown as RunData;
+      for (const learner of [false, true]) {
+        const b = xs(courseSvg(d, keyMoments(d), { trends: [...TRENDS], learner }));
+        expect(b).toHaveLength(n);
+        for (let i = 1; i < b.length; i++) expect((b[i] as number) - (b[i - 1] as number), `badges ${i} and ${i + 1}`).toBeGreaterThanOrEqual(17.9);
+        expect(Math.min(...b)).toBeGreaterThanOrEqual(108 + 7 - 0.05);
+        expect(Math.max(...b)).toBeLessThanOrEqual(COURSE_W - 10 - 7 + 0.05);
+      }
+    });
+  }
+
+  it('a lone badge sits on its moment; a crowded run is centred on its moments and held inside the plot', () => {
+    expect(placeBadges([200, 400], 115, 711, 18)).toEqual([200, 400]);
+    expect(placeBadges([300, 300, 300], 115, 711, 18)).toEqual([282, 300, 318]);
+    expect(placeBadges([705, 708, 711], 115, 711, 18)).toEqual([675, 693, 711]); // pushed left, not off the edge
+    expect(placeBadges([115, 115], 115, 711, 18)).toEqual([115, 133]);
+    // a later run that meets an earlier one merges with it
+    const m = placeBadges([300, 310, 330, 335], 115, 711, 18);
+    for (let i = 1; i < m.length; i++) expect((m[i] as number) - (m[i - 1] as number)).toBeCloseTo(18, 6);
+    expect(m.reduce((a, v) => a + v, 0) / 4).toBeCloseTo((300 + 310 + 330 + 335) / 4, 6);
+    // more badges than the plot holds at 18 share the width evenly
+    const many = placeBadges(Array.from({ length: 50 }, () => 400), 115, 711, 18);
+    expect(many[0]).toBeCloseTo(115, 6);
+    expect(many.at(-1)).toBeCloseTo(711, 6);
   });
 });
