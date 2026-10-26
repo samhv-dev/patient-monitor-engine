@@ -68,14 +68,14 @@ test('the scenario deep link loads the case into the instructor view', async ({ 
   await expect(page.locator('.sessionbar .scen')).toContainText('Witnessed VF in PACU', { timeout: 10_000 });
 });
 
-test('changing the monitor on Start updates the mirrored alarm colours', async ({ page }) => {
-  await openApp(page, base, '#/');
+test('changing the monitor in Settings updates the mirrored alarm colours', async ({ page }) => {
+  await openApp(page, base, '#/settings'); // E125: the start page's Monitor choice is Settings' (the pages split)
   const bg = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--alarm-high-bg').trim().toUpperCase());
   const skinBg = (id: string) => page.evaluate((s) => (window as unknown as { __pmeApp: { skinAlarmBar(id: string): { L1: { bg: string } } } }).__pmeApp.skinAlarmBar(s).L1.bg.toUpperCase(), id);
   const [saadat, mindray] = [await skinBg('saadat-like'), await skinBg('mindray-like')];
   expect(saadat).not.toBe(mindray); // the two skins' high-priority reds differ, so the check can fail
   expect(await bg()).toBe(saadat);
-  await page.locator('[data-view="start"]').getByRole('combobox', { name: 'Monitor', exact: true }).selectOption('mindray-like');
+  await page.locator('[data-view="settings"]').getByRole('combobox', { name: 'Monitor', exact: true }).selectOption('mindray-like');
   await expect.poll(bg).toBe(mindray);
 });
 

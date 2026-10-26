@@ -5,18 +5,20 @@ import { attachReveal, normalizeSessionCode, RevealGesture } from '@pme/controll
 import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 import { alarmLine, limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
 import { joinCode, relayOf } from './classroom.ts';
-import { mountClassroomPanel } from './classroom-panel.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
 import { PATIENT_PRESETS } from './patients.ts';
 import { keepPositions, readPosition, restorePosition } from './position.ts';
+import { RAIL_VERSION } from './about.ts';
+import { Rail } from './rail.ts';
+import { noteRecent } from './recent.ts';
 import { hrefOf, parseRoute } from './router.ts';
 import { SCENARIO_META } from './scenario-meta.ts';
-import { scenarioById, type ScenarioCard } from './scenarios.ts';
+import { LIBRARY, scenarioById, type ScenarioCard } from './scenarios.ts';
 import { AppSession } from './session.ts';
 import { mountSessionBar } from './sessionbar.ts';
 import { applySkinAlarmColours, LEVEL_MARK, LEVEL_NAME, Shell, skinAlarmBar, skinAlwaysOn } from './shell.ts';
-import { loadSite } from './site.ts';
+import { loadSite, setLightScreen } from './site.ts';
 import { button, clock, h, setText, throttle, toast, trackChromeBottom } from './ui.ts';
 import { debriefView } from './views/debrief.ts';
 import { devView } from './views/dev.ts';
@@ -27,7 +29,10 @@ import { followUrl, mountFollower, publishStyle } from './views/follower.ts';
 import { monitorView } from './views/monitor.ts';
 import { remoteView } from './views/remote.ts';
 import { settingsView } from './views/settings.ts';
-import { startView } from './views/start.ts';
+import { homeView } from './views/home.ts';
+import { patientView } from './views/patient.ts';
+import { roomView } from './views/room.ts';
+import { scenariosView } from './views/scenarios.ts';
 import { teachView } from './views/teach.ts';
 import { validateView } from './views/validate.ts';
 import { ventView } from './views/vent.ts';
@@ -101,20 +106,27 @@ if (follow) {
     }
     link.note(`Scenario loaded: ${c.title}`, 'scenario');
     session.setLearner(SCENARIO_META[c.id]?.learnerControls ?? false); // Off unless the case asks
+    noteRecent(c.id); // The Scenarios page's Recent
     return true;
   };
   const weightKg = () => session.spec.weightKg;
 
-  const phones = relay ? mountClassroomPanel(shell.right, session, relay) : null; // The QR moment (a classroom relay)
-  // The starting page carries the top bar's session controls (the bar is hidden there): the same QR sheet, sound and alarms
   const toggleSound = async (): Promise<void> => {
     if (session.soundOn) session.disableSound();
     else await session.enableSound();
     drawSound();
   };
   const openAlarms = (): void => ((location.hash = hrefOf('teach')), teach.panel.select('devices'));
-  shell.add(startView({ session, site, loadScenario, learnerUrl: followUrl(session.code), phones, sound: { on: () => session.soundOn, toggle: toggleSound }, alarms: { text: () => alarmText(), onChange: (f) => link.onChange(throttle(f, 500)), open: openAlarms } }));
-  shell.add(monitorView(shell.stage, { session, link, learnerUrl: followUrl(session.code), phones }));
+  // E125: the pages before a session — Home, Room (the QR code, who follows), Scenarios, Patient — and the rail
+  shell.add(homeView());
+  const room = roomView({
+    code: session.code, relay, relayLink: session.relay, local: session.bc, hostPeerId: session.host.peerId, learnerUrl: followUrl(session.code),
+    followers: () => session.followers, onFollowers: (f) => session.onFollowers(f),
+  });
+  shell.add(room);
+  shell.add(scenariosView({ session, loadScenario }));
+  shell.add(patientView({ session, site }));
+  shell.add(monitorView(shell.stage, { session, link, learnerUrl: followUrl(session.code), phones: !!relay }));
   const teach = teachView(link, { site, main: shell.main, stage: shell.stage, weightKg, loadScenario });
   shell.add(teach);
   shell.add(remoteView({ site, hostless: false, bar: shell.bar, code: session.code }));
@@ -125,6 +137,25 @@ if (follow) {
   shell.add(settingsView(site, session));
   shell.add(debriefView(session, link));
   mountSessionBar(shell.bar, link);
+  // The rail's switch is the site profile's Screen theme (Settings' "Screen"): dark ↔ projector-light, saved as Settings
+  // saves it, the monitor's look included
+  const setTheme = (light: boolean): void => {
+    setLightScreen(site, light);
+    void session.setSkin(site.skin, site.theme);
+  };
+  const rail = new Rail({
+    version: RAIL_VERSION,
+    badges: {
+      room: () => (room.devices() === 1 ? '1 device' : `${room.devices()} devices`),
+      scenarios: () => String(LIBRARY.length),
+      patient: () => (link.ctl.scenario.doc ? 'case running' : 'free run'),
+    },
+    theme: { light: () => site.theme === 'projector-light', set: setTheme },
+  });
+  shell.setRail(rail);
+  session.onFollowers(() => rail.refresh());
+  link.onChange(throttle(() => rail.refresh(), 1000));
+  shell.onRoute(() => rail.refresh());
   trackChromeBottom(shell.root); // UI-A #8/#9: the toasts and the fast-forward banner sit under the bars
   // FX-14/15: a hidden instructor tab pauses the session through the Pause button's own command, so the phones show
   // "(paused)" instead of "not answering", and resumes it on return (HIDDEN_TAB_POLICY, the owner's E82 switch). A
@@ -192,5 +223,5 @@ if (follow) {
   shell.start();
   // e2e hook: the engine ids the glossary test must never find in a clinical view
   const engineIds = [...RHYTHM_IDS, ...DRUG_IDS, ...LUNG_CONDITIONS.map((c) => c.id)];
-  Object.assign(window, { __pmeApp: { shell, session, link, frames, site, teach, engineIds, skinAlarmBar, phones } });
+  Object.assign(window, { __pmeApp: { shell, session, link, frames, site, teach, engineIds, skinAlarmBar, room, rail } });
 }

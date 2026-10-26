@@ -90,7 +90,7 @@ const same = (f: Page, p: Page) => expect.poll(async () => (await tiles(f)) === 
 const status = (p: Page) => p.locator('.follower-bar .status-pill');
 const styleOf = (p: Page) => p.evaluate(() => (window as unknown as W).__pmeFollower.style.skin);
 
-test("the QR sheet, then a phone follows in the instructor's style through ×4, ×8, a style change, a pause and a 2-minute fast-forward that another phone joins", async ({ page, browser, browserName }) => {
+test("the Room page's QR, then a phone follows in the instructor's style through ×4, ×8, a style change, a pause and a 2-minute fast-forward that another phone joins", async ({ page, browser, browserName }) => {
   // FX-2 (CI-only WebKit skip, orchestrator scope addition 2026-10-12): on the 2-vCPU CI WebKit runner the phone fell behind
   // at a different step on each attempt — main run 38205878761: 'waiting' 8 s after ×4/×8, tiles unequal 15 s, lag 2.04 s
   // of sim; PR #61 run 38211190394 (after the FX-2 fixes, which cleared the speed steps): '(paused)' not shown within
@@ -100,9 +100,10 @@ test("the QR sheet, then a phone follows in the instructor's style through ×4, 
   test.setTimeout(300_000);
   await classroom();
   const code = await instructor(page, 'showcase-anaphylaxis', { skin: 'philips-like' }); // not the phones' default style
-  // the QR moment: a sheet with the code, the learner address (this computer's network address) and the count
-  await page.getByRole('button', { name: 'Phones' }).click();
-  const sheet = page.getByRole('dialog', { name: /Learners' phones/ });
+  // the QR moment: the Room page (E125: the app's one QR code) with the code, the learner address (this computer's
+  // network address) and the count
+  await page.evaluate(() => (location.hash = '#/room'));
+  const sheet = page.locator('section.room-join');
   await expect(sheet.getByRole('img', { name: /^QR code of http:\/\/\d+\.\d+\.\d+\.\d+:\d+\/\?join=/ })).toBeVisible();
   await expect(sheet.locator('.phones-url')).toHaveText(new RegExp(`^http://\\d+\\.\\d+\\.\\d+\\.\\d+:${relay!.port}/\\?join=${code}$`));
   await expect(sheet.locator('.phones-count')).toHaveText('0 phones following');
@@ -110,7 +111,8 @@ test("the QR sheet, then a phone follows in the instructor's style through ×4, 
   const f = await phone(browser, browserName, code);
   await synced(f);
   await expect(sheet.locator('.phones-count')).toHaveText('1 phone following');
-  await sheet.getByRole('button', { name: 'Close' }).click();
+  await expect(page.locator('.room-status')).toContainText(/Stable connection|Weak connection/);
+  await page.evaluate(() => (location.hash = '#/teach'));
   await expect(status(f)).toHaveText(`Following session ${code}`);
   // one screen, portrait: the waveforms over the whole width, the tiles in a grid under them, nothing to scroll, no
   // instructor control, sound off until tapped

@@ -122,7 +122,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   expect(json).not.toContain('Dr Instructor');
   expect(json).not.toContain('closed-loop');
   const build = j.build;
-  const foot = `For education only. Not a medical device and not clinically validated: never use it for patient care. Version ${j.version}${j.version.includes('-') ? ' (pre-release)' : ''}, build ${build}.`;
+  const foot = `For educational use only; Not to be used in patient care. Version ${j.version}${j.version.includes('-') ? ' (pre-release)' : ''}, build ${build}.`;
   await expect(view.locator('.db-foot')).toHaveText(foot);
 
   // print layout, both engines: only the report; trends and the appendix on new pages (drugs, the timeline and

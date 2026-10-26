@@ -61,7 +61,8 @@ export function settingsView(site: SiteProfile, session: AppSession | null): Vie
       h('label', { class: 'btn', for: 'set-import' }, 'Import site profile'), file,
       button('Keyboard shortcuts', () => void shortcutsDialog(), 'ghost')),
   ));
-  return { id: 'settings', el, bench: true };
+  // The rail's light/dark switch changes the same Screen theme: the choice shown follows it
+  return { id: 'settings', el, bench: true, enter: () => void (theme.sel.value = site.theme) };
 }
 
 const field = (label: string, control: HTMLElement) => h('div', { class: 'field' }, h('span', {}, label), control);

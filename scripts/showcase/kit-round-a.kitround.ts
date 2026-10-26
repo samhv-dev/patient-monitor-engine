@@ -1081,9 +1081,9 @@ test('session mechanics: reload survival, Silence on the Saadat-style skin, the 
     }
     R.r.measures.silenceSaadat = silence;
     await R.teachTab('scenario');
-    // version label: every visible "version", "v1.", "rc" or "Build" on the Start, Instructor, Monitor and Settings views
+    // version label: every visible "version", "v1.", "rc" or "Build" on Home (E125) and the Instructor, Monitor and Settings views
     const labels: Record<string, string[]> = {};
-    for (const v of ['start', 'teach', 'monitor', 'settings']) {
+    for (const v of ['home', 'teach', 'monitor', 'settings']) {
       await page.evaluate((x) => (location.hash = `#/${x}`), v);
       await page.waitForTimeout(1200);
       labels[v] = ((await page.locator('body').innerText()).match(/[^\n]*(version|v\d+\.\d+|\brc\b|\bBuild\b|0\.0\.0)[^\n]*/gi) ?? []).slice(0, 6);
@@ -1285,7 +1285,7 @@ test('A3 bronchospasm: ×8 and a 2-min fast-forward from the Instructor view wit
 // ------------------------------------------------------------------------------------- kit round Q1 (18 Oct, release build)
 
 // Q1: the 30-minute talk end to end in ONE page, as the 3 November programme runs it (owner, 24 October: two live demos
-// only, MH then haemorrhage; bronchospasm and tamponade are out): opening with the Start view's release label and the
+// only, MH then haemorrhage; bronchospasm and tamponade are out): opening with Home's release label (E125) and the Room's
 // QR moment (three phones join once), 1 MH on the E119 card (induction sequence, early call, the press at 14:41, three
 // 5-min spans; Debrief read), 2 haemorrhage on the E120 card (junctional → PEA → asystole → CPR, volume → VF → shock →
 // asystole → VF → shock → ROSC, the A4 sequence at the card's cue times) with its Debrief read and printed, then the
@@ -1317,22 +1317,21 @@ test('Q1 30-minute talk on the release build: opening, MH (E119) 14:41, haemorrh
     await page.goto(`${process.env.SHOWCASE_BASE}/?relay#/`);
     await page.waitForFunction(() => '__pmeApp' in window, null, { timeout: 30_000 });
     await page.waitForTimeout(1500);
-    const about = { start: await page.locator('[data-about]').first().innerText().catch(() => 'no [data-about] on the Start view') } as Row;
+    // E125: the release label is Home's version line, the disclaimer the footer line every page but the monitor carries
+    const about = { start: await page.locator('[data-view=home] [data-about]').first().innerText().catch(() => 'no [data-about] on Home'), footer: await page.locator('.app-foot').innerText().catch(() => 'no footer line') } as Row;
     await page.evaluate(() => (location.hash = '#/settings'));
     await page.waitForTimeout(1000);
     about.settings = await page.locator('[data-view=settings] [data-about]').first().innerText().catch(() => 'no [data-about] in Settings');
-    about.preRelease = /1\.0\.0-rc\.1 \(pre-release\)/.test(String(about.start)) && /1\.0\.0-rc\.1 \(pre-release\)/.test(String(about.settings));
-    about.notMedicalDevice = /Not a medical device and not clinically validated/.test(String(about.start)) && /Not a medical device and not clinically validated/.test(String(about.settings));
+    about.preRelease = /1\.0\.0-rc\.\d+ · pre-release/.test(String(about.start)) && /1\.0\.0-rc\.\d+ \(pre-release\)/.test(String(about.settings));
+    about.notMedicalDevice = /For educational use only; Not to be used in patient care\./.test(String(about.footer)) && /For educational use only; Not to be used in patient care\./.test(String(about.settings));
     O.r.measures.about = about;
     const code = await page.evaluate(() => (window as unknown as Hook).__pmeApp.session.code);
     O.r.setup.sessionCode = code;
-    // Monitor view → Phones: the sheet with the QR, the address and the count
-    await page.evaluate(() => (location.hash = '#/monitor'));
-    await page.waitForTimeout(1200);
-    await page.locator('.phones-btn').first().evaluate((b) => (b as HTMLButtonElement).click());
-    const sheet = page.locator('dialog.phones-sheet');
+    // E125: the Room page holds the app's one QR code, the address and the count (the Phones sheet is gone)
+    await page.evaluate(() => (location.hash = '#/room'));
+    const sheet = page.locator('section.room-join');
     await sheet.waitFor({ timeout: 10_000 }).catch(() => undefined);
-    await page.locator('dialog.phones-sheet .phones-url').waitFor({ timeout: 15_000 }).catch(() => undefined);
+    await sheet.locator('.phones-url').waitFor({ timeout: 15_000 }).catch(() => undefined);
     const qr: Row = { url: await sheet.locator('.phones-url').innerText().catch(() => null), code: await sheet.locator('.phones-code').innerText().catch(() => null), countBefore: await sheet.locator('.phones-count').innerText().catch(() => null) };
     const wJoin = Date.now();
     await O.joinPhones(code);
@@ -1340,7 +1339,7 @@ test('Q1 30-minute talk on the release build: opening, MH (E119) 14:41, haemorrh
     await page.waitForTimeout(2000);
     qr.joinWallS = r1((Date.now() - wJoin) / 1000);
     qr.countAfter = await sheet.locator('.phones-count').innerText().catch(() => null);
-    await sheet.getByRole('button', { name: 'Close' }).click().catch(() => undefined);
+    qr.roomStatus = await page.locator('.room-status').innerText().catch(() => null);
     O.r.measures.qr = qr;
     O.r.measures.phonesAfterJoin = await holds(phones);
     seg('opening + QR done', { about, qr });

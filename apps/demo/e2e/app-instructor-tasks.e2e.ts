@@ -25,7 +25,7 @@ test('five instructor tasks, each under 30 s', async ({ page, browserName }) => 
   test.skip(browserName === 'webkit', 'evidence run: Chromium only');
   test.setTimeout(240_000);
   await page.setViewportSize({ width: 1280, height: 800 });
-  await openApp(page, base, '#/', { warmMs: 3000 });
+  await openApp(page, base, '#/patient', { warmMs: 3000 }); // E125: the free-run patient's page opens the Instructor view
 
   // Task 3 runs first: holding and returning a value needs MODELED physiology, and the ACLS case runs MANUAL.
   await timed('3. Hold SpO₂ at 85 %, then return it to the model', async () => {
@@ -68,7 +68,7 @@ test('five instructor tasks, each under 30 s', async ({ page, browserName }) => 
   });
 
   await timed("5. Find the patient's compliance and driving pressure", async () => {
-    await page.click('nav.nav >> text=Explore physiology');
+    await page.click('nav.rail a[data-route="explore"]'); // E125: the rail replaced the top bar's tabs
     await page.click('nav.xnav >> text=Respiratory mechanics and volumes');
     const labels = page.locator('table.values tbody th');
     await expect(labels.filter({ hasText: /^Cstat/ })).toHaveCount(1);
