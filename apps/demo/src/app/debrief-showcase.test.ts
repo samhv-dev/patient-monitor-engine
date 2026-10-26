@@ -146,13 +146,14 @@ const row = (t: number, ev: string, text = ev): Row => ({ t, kind: ev.startsWith
 
 describe('E132: the objectives of the two demo cards after the clinical review', () => {
   it('MH objective 4 marks the second dantrolene when the EtCO₂ climbs back at normal ventilation; the first dose does not count', () => {
-    const i = mh.objectives.findIndex((o) => typeof o !== 'string' && o.rule?.kind === 'eventWithin' && o.rule.from === 'state:normoventilated');
+    const i = mh.objectives.findIndex((o) => typeof o !== 'string' && o.rule?.kind === 'occurred' && o.rule.from === 'state:normoventilated');
     expect(i).toBe(3);
     const xs = [{ t: 860, etco2: 36 }, { t: 900, etco2: 44 }, { t: 960, etco2: 46 }, { t: 1100, etco2: 52 }, { t: 1500, etco2: 51 }];
     const base = [row(540, 'drug:dantrolene', 'Dantrolene 2.5 mg/kg IV'), row(880, 'state:normoventilated', 'Ventilation back')];
     const given = objectives(recorded(mh, [...base, row(1180, 'drug:dantrolene', 'Dantrolene 2.5 mg/kg IV')], xs))[i]?.verdict;
     expect(given?.status).toBe('met');
-    expect(given?.measure).toEqual({ fromT: 960, toT: 1180, askedS: 300 });
+    expect(given?.why).toBe('Dantrolene after the state "Ventilation back to 12 × 500, O₂ 100 %" at 19:40');
+    expect(given?.measure).toBeUndefined(); // no timed tile: the Debrief's page 1 keeps every objective (B6 f)
     expect(objectives(recorded(mh, base, xs))[i]?.verdict.status).toBe('not met');
     expect(objectives(recorded(mh, [row(540, 'drug:dantrolene')], xs))[i]?.verdict.status).toBe('not assessable'); // never normoventilated
   });
