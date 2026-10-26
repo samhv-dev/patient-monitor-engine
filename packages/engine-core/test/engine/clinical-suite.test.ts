@@ -250,7 +250,7 @@ describe('clinical scenario suite (MODELED, audit rig)', { timeout: 600_000 }, (
   });
   // E131: the MH heat is the achieved MH oxygen × its caloric equivalent (≈ 130 W at 70 kg; it was 8 × basal, 640 W), so
   // the core no longer reaches the hyperthermic VF threshold within the hour, and nothing else arrests the patient.
-  it.fails('S16 untreated MH under sevoflurane: arrest (VF/asystole) before 60 min, core ≤ 44 °C at the arrest (MHAUS; Miller, MH; Q6) — measured no arrest in 60 min, core 37.6 °C at 60 min (E131: heat from the O2 consumed)', async () => {
+  it.fails('S16 untreated MH under sevoflurane: arrest (VF/asystole) before 60 min, core ≤ 44 °C at the arrest (MHAUS; Miller, MH; Q6) — measured no arrest in 60 min, core 38.0 °C at 60 min (E134: the arrest comes at +119 min, by hyperkalaemia; 37.6 °C after E131)', async () => {
     const r = await scenario([[60, { kind: 'vaporiser', agent: 'sevoflurane', dialPct: 2, fgfLpm: 2, n2oFrac: 0 }], [120, { kind: 'condition', id: 'mh', severity: 1 }]], 3720);
     const a = r.find((x) => x.t > 120 && x.pulseless);
     console.log(`S16: arrest ${a ? `${((a.t - 120) / 60).toFixed(1)} min ${a.rhythm} (${a.cause}), core ${a.tempC.toFixed(1)} °C` : 'none'}; core ${(r.at(-1) as Row).tempC.toFixed(2)} °C at ${((((r.at(-1) as Row).t) - 120) / 60).toFixed(0)} min`);
