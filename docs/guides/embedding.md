@@ -71,7 +71,9 @@ it from a user gesture (browsers block audio until then); `setTimeScale(k)` with
 `eventLog` (CSV/JSON export); `renderPath`; `destroy()`. Also: `disableSound()` and `soundOn`; `audioLog` (the tones
 played); `role` and `skin` (the resolved skin); `advance(ticks, last)` (a fast-forward: run ticks without drawing them,
 sound off until `last`) and `latchAlarms(alarms)` (show alarms that came and went during it); `viewerClock()` (for
-a `'viewer'` mounted with `worker: 'off'`); `silenceAudio()` (with `audioSilence: 'window'`).
+a `'viewer'` mounted with `worker: 'off'`); `silenceAudio()` (with `audioSilence: 'window'`); `setHeaderNote(text)` (a
+short line in the free centre of a two-row header, e.g. "SIMULATION · not a clinical monitor"; returns whether the skin's
+header shows it).
 
 ## Commands
 

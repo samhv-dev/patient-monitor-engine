@@ -551,6 +551,10 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
 .app-foot { padding: 3px var(--s-4); border-top: 1px solid var(--line); background: var(--bezel-0); color: var(--text-muted); font-size: var(--t-12); text-align: center; }
 .app:is([data-route='monitor'], [data-route='vent']) > .app-foot { display: none; }
 @media print { .app-foot, .rail { display: none !important; } }
+/* The simulation line on a monitor surface whose skin header has no free area (sim-line.ts): a 16-px strip above the
+   monitor, in the skin's font and colours (set inline) */
+.sim-strip { position: absolute; top: 0; left: 0; right: 0; z-index: 1; height: 16px; line-height: 16px; font-size: 11px; letter-spacing: 0.04em; text-align: center; white-space: nowrap; overflow: hidden; background: #000; color: #d6dde6; }
+.stage.sim-strip-on > .monitor-host { top: 16px; }
 .app.has-rail[data-route='monitor'] > .rail { display: none; }
 .app.has-rail[data-route='teach'] { --rail-w: var(--rail-strip); }
 @media (max-width: 900px) { .app.has-rail { --rail-w: var(--rail-strip); } }

@@ -35,6 +35,33 @@ describe('two-row header (saadat-like)', () => {
     ui.destroy();
   });
 
+  it('a note sits in the free centre of row 1 in the header font and survives a skin switch; a one-row header has no room', () => {
+    const ui = new DeviceUI(document, document.createElement('div'), resolveSkin('saadat-like'));
+    expect(ui.setNote('SIMULATION · not a clinical monitor')).toBe(true);
+    const sp = ui.header.querySelector('.r1 > .sp') as HTMLElement;
+    expect(sp.textContent).toBe('SIMULATION · not a clinical monitor');
+    expect([...ui.header.querySelectorAll('.r1 > *')].indexOf(sp)).toBe(2); // after the page box and the bed
+    ui.setSkin(resolveSkin('philips-like'));
+    expect(ui.header.classList.contains('two')).toBe(false);
+    expect(ui.header.textContent).not.toContain('SIMULATION');
+    expect(ui.setNote('SIMULATION · not a clinical monitor')).toBe(false);
+    ui.setSkin(resolveSkin('saadat-like'));
+    expect(ui.header.querySelector('.r1 > .sp')?.textContent).toBe('SIMULATION · not a clinical monitor');
+    expect(ui.setNote('')).toBe(true);
+    expect(ui.header.querySelector('.r1 > .sp')?.textContent).toBe('');
+    // a phone held upright: the one-row header's idle message area carries it; a message replaces it
+    const portrait = new DeviceUI(document, document.createElement('div'), resolveSkin('saadat-like'), undefined, true);
+    expect(portrait.setNote('SIMULATION · not a clinical monitor')).toBe(true);
+    portrait.paint(1);
+    const note = portrait.header.querySelector('[data-pme="note"]') as HTMLElement;
+    expect([note.textContent, note.style.display, (portrait.header.querySelector('.pme-bar') as HTMLElement).style.display]).toEqual(['SIMULATION · not a clinical monitor', '', 'none']);
+    portrait.onEvent({ ...status(2, 'adult'), active: [{ id: 'HR_HIGH', level: 2, category: 'physiological', text: 'HR TOO HIGH', since: 1, latched: false, acked: false, sounding: true }] } as EngineEvent);
+    portrait.paint(2);
+    expect([note.style.display, (portrait.header.querySelector('.pme-bar') as HTMLElement).style.display]).toEqual(['none', '']);
+    ui.destroy();
+    portrait.destroy();
+  });
+
   it('the bed text comes from the mount option', () => {
     const ui = new DeviceUI(document, document.createElement('div'), resolveSkin('saadat-like'), undefined, false, 'BED 04');
     expect(ui.header.querySelector('[data-pme="bed"]')?.textContent).toBe('BED 04');

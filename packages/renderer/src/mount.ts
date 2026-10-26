@@ -126,6 +126,13 @@ export interface MonitorHandle {
    * later call replaces the list; a rewind drops entries after the restored time.
    */
   latchAlarms(alarms: readonly AlarmEntry[]): void;
+  /**
+   * A short line in the free centre of the skin's two-row header ("SIMULATION · not a clinical monitor" on a monitor
+   * surface), in the header's font and size; with `portrait`, in the message area while no message shows. '' removes
+   * it. Returns whether the header shows it (false: a one-row header on a wide screen, or no skin); kept across a skin
+   * switch.
+   */
+  setHeaderNote(text: string): boolean;
   /** With `audioSilence: 'window'`, this window's own alarm-sound Silence (pressed again: ends it). Returns
    *  whether this window is now silenced; false before sound is enabled. */
   silenceAudio(): boolean;
@@ -545,6 +552,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
           }
         }
       }),
+    setHeaderNote: (text) => ui?.setNote(text) ?? false,
     latchAlarms(alarms) {
       ffLatched = alarms.map(({ numeric: _n, ...x }) => ({ ...x, id: `ff:${x.id}`, text: `${x.text} · during fast-forward ${simClock(x.since)}`, latched: true, acked: false, sounding: false }));
       if (lastStatus) ui?.onEvent(withLatched(lastStatus));

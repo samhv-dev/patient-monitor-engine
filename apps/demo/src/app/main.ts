@@ -10,6 +10,7 @@ import { Link } from './link.ts';
 import { PATIENT_PRESETS } from './patients.ts';
 import { keepPositions, readPosition, restorePosition } from './position.ts';
 import { RAIL_VERSION } from './about.ts';
+import { simLine } from './sim-line.ts';
 import { Rail } from './rail.ts';
 import { noteRecent } from './recent.ts';
 import { hrefOf, parseRoute } from './router.ts';
@@ -67,6 +68,10 @@ if (follow) {
   const bar = h('div', { class: 'follower-bar', role: 'toolbar', 'aria-label': 'Learner monitor' });
   shell.add({ id: 'monitor', el: h('section', { 'aria-labelledby': 'fol-h' }, h('h1', { id: 'fol-h', class: 'sr-only' }, 'Learner monitor'), bar) });
   const follower = mountFollower(shell, site, follow, bar, join && relay ? { relay } : undefined);
+  // "SIMULATION · not a clinical monitor" at the top of this monitor (in a two-row header, else a strip above it)
+  const line = simLine(shell.stage, !!join);
+  line.set(follower.monitor, follower.style, true);
+  follower.onStyle = (s) => line.set(follower.monitor, s, true);
   // The second screen shows the same fast-forward panel and latches the alarms that came and went
   mountFastForward(shell.root, { get fastForward() { return follower.sync?.fastForward ?? null; }, get lastFastForward() { return follower.sync?.lastFastForward ?? null; } }, { simT: () => follower.sync?.fastForwardAt ?? null, font: () => follower.monitor.skin?.render.fontStack, latch: (a) => follower.monitor.latchAlarms(a) });
   shell.start();
@@ -202,6 +207,13 @@ if (follow) {
   shell.onRoute((r) => {
     if (r.id === 'teach' || r.id === 'monitor') session.live = true;
   });
+  // "SIMULATION · not a clinical monitor" on the Monitor view only (the instructor's pages show the same monitor
+  // without it): in a two-row header, else a strip above the monitor; again after a new monitor or a skin change
+  const line = simLine(shell.stage);
+  const drawLine = (m = session.monitor) => line.set(m, session, shell.route.id === 'monitor');
+  shell.onRoute(() => drawLine());
+  session.onMount((m) => drawLine(m));
+  session.onSkin(() => queueMicrotask(() => drawLine()));
 
   const deep = q.get('scenario');
   const card = deep ? scenarioById(deep) : undefined;

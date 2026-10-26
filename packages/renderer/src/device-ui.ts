@@ -39,6 +39,8 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-cd{min-width:4.5em;font-variant-numeric:tabular-nums}',
     '.pme-dev{font-weight:600;white-space:nowrap}',
     '.pme-badge{font-size:11px;border:1px solid currentColor;padding:1px 4px;opacity:.9}',
+    // setNote on a phone held upright (one-row header): the note in the idle message area, giving way to a message
+    '.pme-note{flex:1;min-width:0;height:22px;line-height:22px;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}',
     // Two-row header (skin layout.headerStyle, research/34 §3 row 7): rows of 5.8 % and 3.0 % of the monitor height
     // [MOCKUP] once the layout sets --pme-h, never below 40 / 22 px; the bar is 43 % of the wave-area width
     '.pme-hdr.two{height:auto;flex-direction:column;align-items:stretch;gap:0;padding:0}',
@@ -52,6 +54,9 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-hdr.two .pg{font-size:16px;padding:0 10px;margin-left:-8px;font-weight:400;align-self:stretch;display:flex;align-items:center}',
     '.pme-hdr.two .stk{display:flex;flex-direction:column;font-size:17px;line-height:19px;white-space:nowrap}',
     '.pme-hdr.two .sp{flex:1}',
+    // A note in the free centre of row 1 (setNote: "SIMULATION · not a clinical monitor"), the header's own font and
+    // size; it never widens the row (min-width 0, clipped), so nothing else in the header moves
+    '.pme-hdr.two .sp{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-align:center;font-size:17px;line-height:19px}',
     '.pme-hdr.two .dt{text-align:right;font-variant-numeric:tabular-nums}',
     '.pme-stile{padding:4px 10px;line-height:1.05;border-top:1px solid var(--pme-divider)}',
     '.pme-stile .h{display:flex;gap:6px;align-items:center;font-size:13px}',
@@ -374,6 +379,9 @@ export class DeviceUI {
 
   /** The tiles in a grid UNDER the waveforms (a phone held upright), not in columns beside them. */
   private readonly portrait: boolean;
+  /** The note in the two-row header's free centre, or a phone's idle message area (setNote), '' for none. */
+  private note = '';
+  private readonly noteEl: HTMLSpanElement;
 
   constructor(doc: Document, waveArea: HTMLElement, r: ResolvedSkin, page?: string, portrait = false, bed = 'BED 01') {
     this.r = r;
@@ -395,6 +403,8 @@ export class DeviceUI {
     this.devEl = mk('span', 'pme-dev', 'dev');
     this.allOff = mk('span', '', 'alloff');
     this.badge = mk('span', 'pme-badge', 'badge');
+    this.noteEl = mk('span', 'pme-note', 'note');
+    this.noteEl.style.display = 'none';
     this.date = mk('span', '', 'date');
     this.hx = {
       page: mk('span', 'pg', 'page'), bed: mk('span', '', 'bed'), cat: mk('span', '', 'cat'), time: mk('span', '', 'time'),
@@ -666,13 +676,14 @@ export class DeviceUI {
     show(this.cd, !this.two || items.has('silenceCountdown'));
     if (!this.two) {
       this.header.className = 'pme-hdr';
-      this.header.replaceChildren(this.lamp, this.bar, this.inop, this.cd, this.devEl, this.allOff, this.badge, this.date);
+      this.header.replaceChildren(this.lamp, this.bar, this.noteEl, this.inop, this.cd, this.devEl, this.allOff, this.badge, this.date);
       return;
     }
     this.header.className = 'pme-hdr two';
     h.who.replaceChildren(h.bed, h.cat);
     h.when.replaceChildren(this.date, h.time);
     h.r1.replaceChildren(h.page, h.who, h.sp, this.lamp, this.cd, this.devEl, this.allOff, this.badge, h.when);
+    h.sp.textContent = this.note;
     h.r2.replaceChildren(this.bar, this.inop);
     this.header.replaceChildren(h.r1, h.r2);
     h.page.style.background = r.skin.chrome.pageBox.bg;
@@ -686,6 +697,21 @@ export class DeviceUI {
     // battery, recorder and network are listed by the skin but not modelled: not drawn
     // E104: the clock is the wall clock and runs on its own, also while the simulation is paused or fast
     if (items.has('datetime')) this.clock = setInterval(() => this.paintClock(), 1000);
+  }
+
+  /**
+   * A short line in the free centre of the two-row header (where a real monitor prints the patient's name), in the
+   * header's font and size; on a phone held upright (the one-row header) in the message area while no message shows (a
+   * message replaces it), so no lane loses height. '' removes it. Returns whether this header shows it: a one-row
+   * header on a wide screen (other skins) has no free area, and the host then draws the line elsewhere. Kept across
+   * skin switches.
+   */
+  setNote(text: string): boolean {
+    this.note = text;
+    this.hx.sp.textContent = this.two ? text : '';
+    this.noteEl.textContent = this.portrait ? text : '';
+    if (!text) this.noteEl.style.display = 'none';
+    return this.two || this.portrait;
   }
 
   /** Two-row header: the local date over the local time (the one-row header keeps its own date call). */
@@ -982,6 +1008,9 @@ export class DeviceUI {
   private paintHeader(t: number): void {
     const b = barView(this.status, this.r, t, this.pump);
     this.bar.textContent = b.text;
+    const note = this.portrait && !this.two && !b.text && !!this.note; // a phone's idle message area carries the note
+    this.bar.style.display = note ? 'none' : '';
+    this.noteEl.style.display = note ? '' : 'none';
     // the bar is painted only with a message on a phone (F28) and in the two-row header (pass 2, C3: IMG_8113 has no idle
     // grey box); the two-row header shows the lamp only with an alarm (C2: the real lamp is an LED)
     this.bar.style.background = (this.portrait || this.two) && !b.text ? 'transparent' : b.bg;
