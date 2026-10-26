@@ -79,7 +79,10 @@ describe('arrest EtCO2 kinetics', { timeout: 300_000 }, () => {
   // the +2 min point reads 15.9 (18.0 before). It is INSIDE research/26 T3's sourced band for adequate CPR (10–20 mmHg:
   // Sanders 1989 n = 35 arrests, 15 ± 4 in the resuscitated; Falk 1988 ≈ 7.6; AHA 2020 "above 10"), so the bound itself is a
   // candidate for a re-rule — recorded here with the number, not widened (FU-7.1 Q9 to the owner).
-  it.fails('VF with CPR q 0.8 from +30 s: EtCO2 ≥ 17 already at +2 min of CPR — measured 15.9 with the alveolar washout', async () => {
+  // E134: FLIPPED BACK TO PASSING — the anaerobic lactate of the arrest now releases its buffered CO2 wherever it is made
+  // (22 mL/mmol, blood/muscle.ts + blood/pipeline.ts; before E134 only the MH muscle's share did), so the arrested,
+  // compressed patient washes out more CO2: +2 min of CPR reads 18.1 (15.9 before) and the minutes 1–10 mean 21.7 (18.3).
+  it('VF with CPR q 0.8 from +30 s: EtCO2 ≥ 17 already at +2 min of CPR — measured 18.1 (E134: the arrest’s lactate CO2; 15.9 before)', async () => {
     const c = await course(90, 210);
     expect(c.get(210)!).toBeGreaterThanOrEqual(17);
   });

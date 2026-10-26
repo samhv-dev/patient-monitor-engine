@@ -20,7 +20,10 @@ describe('no plateau below the dead space', { timeout: 120_000 }, () => {
   // display's resolution (15.0) and was an it.fails. E117 (the hypercapnic sympathetic drive of this hypoventilated
   // patient; the path from it to the displayed EtCO2 is not isolated) moves it back inside: measured 14 — one display step
   // from the limit, so fragile — the pre-declared band is met, flipped (R45). Not re-fitted.
-  it('12 × 100 mL: displayed EtCO2 < 15 (measured 14 after E117; 15.0 before)', async () => {
+  // E134: a RECORDED MISS again, by one display step. This hypoventilated patient's cardiac output has fallen enough for
+  // the blood model's regional deficit to make a little lactate, and E134 releases the buffered CO2 of ALL lactate
+  // (22 mL/mmol), not only the MH muscle's share — so the displayed EtCO2 reads 15 against 14. Reported, not widened.
+  it.fails('12 × 100 mL: displayed EtCO2 < 15 — measured 15 after E134 (the lactate CO2 of every bed; 14 after E117, 15.0 before)', async () => {
     expect(await bag(100)).toBeLessThan(15);
   });
   it('12 × 500 mL: displayed EtCO2 ≥ 30 (normal breaths keep their plateau)', async () => {

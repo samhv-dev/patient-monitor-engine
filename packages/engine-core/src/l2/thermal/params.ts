@@ -108,12 +108,12 @@ export const MH_RQ = 0.97;
 /**
  * E131: the caloric equivalent of oxygen, Weir JB de V, J Physiol 1949;109:1–9: energy (kcal) = 3.941·VO2 + 1.106·VCO2
  * (L), i.e. 4.184·(3.941 + 1.106·RQ) kJ per L O2 — 20.2 kJ/L at the resting RQ 0.8, 21.1 at MH_RQ. The MH muscle heat
- * is the ACHIEVED MH VO2 × this (heat.ts). Anaerobic glycolysis is not counted: per ATP it releases about as much heat
- * as oxidation (glycogenolysis 65 vs oxidation 72 kJ/mol ATP, Curtin & Woledge 1978 and Woledge & Reilly 1988 as cited
- * in muscle-energetics work), but it makes only 1.5 ATP per lactate, ≈ 98 kJ/mol lactate (di Prampero 1999's in-vivo
- * estimate 84 kJ/mol) — and the blood model's lactate production has no substrate or pH limit, so counting it would heat
- * a body with no flow without end. A known under-count (Hall GM et al., Br J Anaesth 1976;48:305–308: in porcine MH the
- * heat is largely aerobic early; terminally aerobic metabolism accounts for about half of the muscle's temperature rise).
+ * is the ACHIEVED MH VO2 × this (heat.ts). E134: the ANAEROBIC heat is counted as well, but not here — it belongs to the
+ * glycolytic flux, so it is the blood model's braked lactate production × GLYCOLYSIS_HEAT_J_PER_MMOL (98 J/mmol,
+ * blood/muscle.ts), which the heat model adds to the core beside this oxidative term. E131 had left it out because the
+ * lactate production then had no substrate or pH limit and would have heated a body with no flow without end; those
+ * limits are what E134 adds. Hall GM et al., Br J Anaesth 1976;48:305–308: in porcine MH the heat is largely aerobic
+ * early, and terminally aerobic metabolism accounts for about half of the muscle's temperature rise.
  */
 export const WEIR_KCAL_PER_L_O2 = 3.941;
 export const WEIR_KCAL_PER_L_CO2 = 1.106;

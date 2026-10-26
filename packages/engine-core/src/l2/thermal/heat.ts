@@ -4,6 +4,9 @@
 //   Cp·dTp = k_cp·(Tc − Tp) − Q_dry − Q_skinEvap − Q_sweat + Q_forcedAir
 //   M = [m0·(1 − (1 − GA_M)·min(1, d)) + m0·(extraX − 1) + shivering]·o2Frac + MH muscle heat   (extraX: thyroid/sepsis/…)
 //   MH muscle heat = M_mh·o2Frac·Weir(MH_RQ)   (W = mL/min × J/mL ÷ 60; M_mh the one MH rate, metabolic.ts)
+//   Anaerobic heat = the blood model's braked glycolytic flux × GLYCOLYSIS_HEAT_J_PER_MMOL ÷ 60 (E134, blood/muscle.ts:
+//   body-wide, not MH's alone; it needs no oxygen, so o2Frac does not scale it, and it stops as the pH/glycogen brake
+//   closes — which is what keeps a body with no flow from heating without end)
 //   o2Frac = the share of the VO2 demand the circulation delivers (the blood model's VO2/demand, blood/oxygen.ts; 1
 //   above DO2crit, DO2/DO2crit below it, 0 with no flow): heat is oxidative, so the basal heat and the MH heat both
 //   follow the oxygen actually consumed (E129 for the MH heat: 94 °C untreated before it; E131 for the rest).
@@ -59,6 +62,7 @@ export interface ThermalOut {
   metabolicW: number; // basal (GA-reduced) + extra (endocrine) heat
   shiverW: number;
   mhW: number;
+  anaerW: number; // E134: the heat of anaerobic ATP turnover (the blood model's braked glycolytic flux × 98 J/mmol)
   sweatW: number;
   dryW: number;
   respW: number;
@@ -105,6 +109,10 @@ export interface ThermalState {
    * oxygenated, normal-Hb patient's delivery becomes critical (blood pipeline; ≈ 40 % of resting CO). Written only while
    * below 1 (absent = 1). A flow fraction: hypoxaemia and anaemia do not shut the skin. */
   perfFrac?: number;
+  /** E134: the heat of anaerobic glycolysis, W — the blood model's braked lactate production × the enthalpy per mmol
+   * (blood/muscle.ts). Written only while it is non-zero (absent = 0). Oxygen does not limit it: it IS the metabolism
+   * that runs without oxygen, and its own limits are the pH (phosphofructokinase) brake and the glycogen store. */
+  anaerW?: number;
   out: ThermalOut;
   /** Test-only seam (like the blood model's `pinHbfRel`): when set, the core is held at this value (°C). */
   pinCoreTemp?: number;
@@ -118,7 +126,7 @@ export interface ThermalState {
  */
 export interface ThermalInputs { vo2Rest?: number; brainF?: number }
 
-const zeroOut = (): ThermalOut => ({ vasoF: 0, kcp: 0, metabolicW: 0, shiverW: 0, mhW: 0, sweatW: 0, dryW: 0, respW: 0, evapW: 0, warmW: 0, ivW: 0 });
+const zeroOut = (): ThermalOut => ({ vasoF: 0, kcp: 0, metabolicW: 0, shiverW: 0, mhW: 0, anaerW: 0, sweatW: 0, dryW: 0, respW: 0, evapW: 0, warmW: 0, ivW: 0 });
 
 export function createThermal(tCore: number, effKg: number, heightCm = 175, ageY = 40): ThermalState {
   const m0 = M_AWAKE_W_70 * (effKg / 70);
@@ -185,6 +193,7 @@ function balance(st: ThermalState, t: number, x: ThermalInputs = {}): ThermalOut
     metabolicW: (basalW(st) + st.m0 * (st.extraX - 1)) * o2,
     shiverW: shiverW(st.tc, thr, st.m0, st.effKg, st.nmb) * (1 - blocked(st)) * brain * o2, // No shivering below a block
     mhW: (mhO2Demand(st, t, x.vo2Rest ?? (st.m0 * 60) / oxyKjPerL(RQ)) * o2 * oxyKjPerL(MH_RQ)) / 60, // achieved MH VO2 × Weir
+    anaerW: Math.max(0, st.anaerW ?? 0), // E134: the anaerobic share's heat, already limited by its own brake
     sweatW: sweatW(st.tc, thr, st.effKg) * brain,
     dryW: dryW(env, st.tp, st.ta, st.airMs, ex.area * (1 - warmArea)) * neur,
     respW: respiratoryW(st.vent, st.ta),
@@ -208,7 +217,7 @@ export function stepThermal(st: ThermalState, t: number, dtS: number, x: Thermal
   const o = balance(st, t, x);
   st.out = o;
   const flux = o.kcp * (st.tc - st.tp);
-  st.tc += ((o.metabolicW + o.shiverW + o.mhW - flux - o.respW + o.ivW) / st.capCore) * dtS;
+  st.tc += ((o.metabolicW + o.shiverW + o.mhW + o.anaerW - flux - o.respW + o.ivW) / st.capCore) * dtS;
   if (st.pinCoreTemp !== undefined) st.tc = st.pinCoreTemp; // test seam (addendum 18)
   st.tp += ((flux - o.dryW - o.evapW - o.sweatW + o.warmW) / st.capPer) * dtS;
   for (const s of Object.keys(SITES) as TempSite[]) {
@@ -238,7 +247,7 @@ export function setCoreTarget(st: ThermalState, tCore: number): void {
   }
   st.tp = (lo + hi) / 2;
   const o = balance(st, 0);
-  const need = o.kcp * (tCore - st.tp) + o.respW - o.ivW - o.shiverW - o.mhW - st.m0 * (st.extraX - 1);
+  const need = o.kcp * (tCore - st.tp) + o.respW - o.ivW - o.shiverW - o.mhW - o.anaerW - st.m0 * (st.extraX - 1);
   st.m0 = need / (basalW({ ...st, m0: 1 }) || 1);
 }
 
