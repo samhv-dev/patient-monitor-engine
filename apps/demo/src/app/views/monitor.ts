@@ -1,7 +1,7 @@
 // Monitor (research/13 §4.2): the learner's full-screen monitor, with the learner controls strip under it only when the
 // instructor has switched it on for this scenario. Nothing of the instructor shows; `i`, five taps in the top-left
 // corner or a three-finger hold open the instructor view (the hidden panel's reveal gestures), and a quiet strip
-// appears at the top edge only on pointer hover or keyboard focus.
+// appears under the monitor's header only on pointer hover or keyboard focus.
 import { learnerStrip } from '../learner.ts';
 import type { Link } from '../link.ts';
 import { hrefOf } from '../router.ts';
@@ -20,6 +20,18 @@ export function monitorView(stage: HTMLElement, o: { session: AppSession; link: 
     o.phones ? h('a', { class: 'btn small', href: hrefOf('room') }, 'Phones') : null,
     h('a', { class: 'btn small ghost', href: hrefOf('home') }, 'Home'));
   stage.append(strip);
+  // UI review #25: the strip sits under the monitor's header, at the right of the wave area, so the date and time, the
+  // header line and the HR tile's label stay visible (at the top right it covered all three). Measured when it shows.
+  const place = (): void => {
+    const hdr = stage.querySelector<HTMLElement>('.pme-hdr');
+    if (!hdr) return void strip.style.removeProperty('top');
+    const s = stage.getBoundingClientRect();
+    const r = hdr.getBoundingClientRect();
+    strip.style.top = `${Math.ceil(r.bottom - s.top)}px`;
+    strip.style.right = `${Math.ceil(s.right - r.right)}px`;
+  };
+  stage.addEventListener('pointerenter', place);
+  strip.addEventListener('focusin', place);
   // The learner controls strip under the monitor: hidden unless the instructor switched it on
   const learner = learnerStrip(o.link);
   o.session.onLearner((on) => (learner.hidden = !on));
