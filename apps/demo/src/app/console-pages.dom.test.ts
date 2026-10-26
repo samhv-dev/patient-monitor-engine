@@ -106,11 +106,15 @@ describe('the rail foot', () => {
     rail.destroy();
   });
 
-  it('the clock: the time on one line, the date (with the Persian date where the browser has it) on the next', () => {
-    const [time, date] = railClock(new Date(2026, 9, 26, 21, 48));
-    expect(time).toBe('21:48');
-    expect(date).toMatch(/^Mon 26 Oct/);
-    if (persianDate(new Date(2026, 9, 26))) expect(date).toContain('4 Aban 1405');
+  it('the clock: the time on one line, the date (with the Persian date in Persian script where the browser has it) on the next', () => {
+    const c = railClock(new Date(2026, 9, 26, 21, 48));
+    expect([c.time, c.day]).toEqual(['21:48', 'Mon 26 Oct']);
+    if (persianDate(new Date(2026, 9, 26))) expect(c.fa).toBe('۴ آبان ۱۴۰۵');
+    const rail = new Rail({ version: 'x', theme: { light: () => false, set: () => undefined }, now: () => new Date(2026, 9, 26, 21, 48) });
+    const fa = rail.el.querySelector('.rail-fa') as HTMLElement;
+    expect([fa.lang, fa.dir]).toEqual(['fa', 'rtl']);
+    expect(rail.el.querySelector('.rail-date')?.textContent).toBe(c.fa ? `Mon 26 Oct · ${c.fa}` : 'Mon 26 Oct');
+    rail.destroy();
   });
 });
 

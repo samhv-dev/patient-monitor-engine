@@ -578,6 +578,7 @@ a.rail-item:hover { color: var(--text-strong); background: color-mix(in srgb, va
 .rail-clock { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--text-muted); }
 .rail-time, .rail-date { display: block; }
 .rail-time { font-variant-numeric: tabular-nums; color: var(--text); }
+.rail-fa { font-family: var(--font-ui); unicode-bidi: isolate; }
 @media (prefers-reduced-motion: reduce) { .rail-knob::after { transition: none; } }
 /* the 56-px strip: icons, the names read by screen readers and shown as tooltips */
 .app[data-route='teach'] .rail { padding: var(--s-3) var(--s-2); }

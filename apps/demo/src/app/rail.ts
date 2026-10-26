@@ -2,7 +2,8 @@
 // Home; before the session Room, Scenarios, Patient; during it Instructor, Monitor, Ventilator; after it Debrief; then
 // Explore physiology, Tools (Validate · Developer) and Settings, the groups parted by a thin line (no captions: the
 // owner's correction of 26 October). Its foot carries the light/dark switch (the site profile's "Screen" theme, saved
-// as Settings saves it) and a clock: the time on one line, the Gregorian and the Persian date on the next. It replaces
+// as Settings saves it) and a clock: the time on one line, the Gregorian and the Persian date on the next (the Persian
+// date in Persian script and digits, «۴ آبان ۱۴۰۵», owner's request of 26 October). It replaces
 // the top bar's tabs; on the Instructor view it collapses to a 56-px icon strip (app.css), on the Monitor view, a
 // learner's window and a phone it is not shown.
 import type { RouteId } from './router.ts';
@@ -57,17 +58,18 @@ export interface RailOptions {
   now?: () => Date;
 }
 
-/** ["21:48", "Mon 26 Oct · 4 Aban 1405"]: the Persian date from the browser's own calendar (Intl), or the
- *  Gregorian date alone where the browser has no Persian calendar. */
-export function railClock(d: Date): [string, string] {
+/** { time: "21:48", day: "Mon 26 Oct", fa: "۴ آبان ۱۴۰۵" }: the Persian date from the browser's own calendar (Intl,
+ *  fa-IR), '' where the browser has no Persian calendar (the Gregorian date alone is shown). */
+export function railClock(d: Date): { time: string; day: string; fa: string } {
   const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
   const day = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).format(d);
-  return [time, [day, persianDate(d)].filter(Boolean).join(' · ')];
+  return { time, day, fa: persianDate(d) };
 }
 
+/** «۴ آبان ۱۴۰۵»: Persian digits and month name, or '' without a Persian calendar. */
 export function persianDate(d: Date): string {
   try {
-    const f = new Intl.DateTimeFormat('en-GB-u-ca-persian', { day: 'numeric', month: 'long', year: 'numeric' });
+    const f = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { day: 'numeric', month: 'long', year: 'numeric' });
     if (f.resolvedOptions().calendar !== 'persian') return '';
     return f.formatToParts(d).filter((p) => p.type !== 'era').map((p) => p.value).join('').trim();
   } catch {
@@ -84,6 +86,7 @@ export class Rail {
   private readonly clockEl: HTMLElement;
   private readonly timeEl: HTMLElement;
   private readonly dateEl: HTMLElement;
+  private readonly faEl: HTMLElement;
   private readonly timer: ReturnType<typeof setInterval>;
   private readonly o: RailOptions;
 
@@ -101,8 +104,9 @@ export class Rail {
       this.drawTheme();
     } }, h('i', { class: 'rail-knob', 'aria-hidden': 'true' }), this.themeText);
     this.timeEl = h('span', { class: 'rail-time' });
-    this.dateEl = h('span', { class: 'rail-date' });
-    this.clockEl = h('p', { class: 'rail-clock rail-text' }, this.timeEl, this.dateEl);
+    this.dateEl = h('span', {});
+    this.faEl = h('bdi', { class: 'rail-fa', lang: 'fa', dir: 'rtl' });
+    this.clockEl = h('p', { class: 'rail-clock rail-text' }, this.timeEl, h('span', { class: 'rail-date' }, this.dateEl, this.faEl));
     this.el = h('nav', { class: 'rail', 'aria-label': 'Pages' },
       h('div', { class: 'rail-brand' }, h('span', { class: 'mark', 'aria-hidden': 'true' }),
         h('span', { class: 'rail-text' }, h('b', {}, 'Patient monitor simulator'), h('small', {}, o.version))),
@@ -123,9 +127,11 @@ export class Rail {
   refresh(): void {
     for (const [id, el] of this.badgeEls) setText(el, this.o.badges?.[id]?.() ?? '');
     this.drawTheme();
-    const [time, date] = railClock(this.o.now?.() ?? new Date());
-    setText(this.timeEl, time);
-    setText(this.dateEl, date);
+    const c = railClock(this.o.now?.() ?? new Date());
+    setText(this.timeEl, c.time);
+    setText(this.dateEl, c.fa ? `${c.day} · ` : c.day);
+    setText(this.faEl, c.fa);
+    this.faEl.hidden = !c.fa;
   }
 
   destroy(): void {
