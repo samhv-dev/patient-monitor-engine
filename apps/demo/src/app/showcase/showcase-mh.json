@@ -4,21 +4,22 @@
   "title": "Malignant hyperthermia",
   "category": "Showcase",
   "durationMin": 40,
-  "story": "A fit 35-year-old man on the table, breathing room air: premedicated with midazolam and fentanyl, preoxygenated, induced with propofol and succinylcholine, intubated and maintained on sevoflurane 2 %. The jaw is stiff after the succinylcholine. Minutes into surgery the EtCO₂ climbs at the same ventilation and the heart rate rises; untreated, the core temperature passes 38.5 °C about 19 minutes after induction and he arrests in VF at 42 °C about 45 minutes after induction. Run the MH crisis: trigger off, oxygen, hyperventilation, dantrolene, cooling and the potassium.",
+  "story": "A fit 35-year-old man on the table, breathing room air: premedicated with midazolam and fentanyl, preoxygenated, induced with propofol and succinylcholine, intubated and maintained on sevoflurane 2 %. The jaw is stiff after the succinylcholine. Minutes into surgery the EtCO₂ rises at unchanged ventilation when it should be falling (42 → 45; without MH it settles at 36–39), with a rising heart rate (64 → 80, blunted by fentanyl); untreated, the core temperature passes 38.5 °C about 19 minutes after induction and he arrests in VF at 42 °C about 45 minutes after induction. Run the MH crisis: trigger off with a propofol infusion in its place, oxygen, hyperventilation, dantrolene (again if the EtCO₂ climbs back), cooling above 38.5 °C and the potassium.",
   "objectives": [
-    { "text": "Name malignant hyperthermia from the monitor: EtCO₂ above 45 mmHg at the same ventilation, tachycardia (instructor-assessed)", "debrief": "recognition" },
-    { "text": "Call the MH crisis (stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ above 45 mmHg at the same ventilation)", "rule": { "kind": "eventWithin", "after": "state:earlySigns", "event": "state:triggerOff", "withinS": 120 } },
+    { "text": "Name malignant hyperthermia from the monitor: EtCO₂ rising at unchanged ventilation when it should be falling (42 → 45; without MH it settles 36–39) with a rising heart rate (64 → 80, blunted by fentanyl) (instructor-assessed)", "debrief": "recognition" },
+    { "text": "Call the MH crisis (stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ past 45 mmHg at unchanged ventilation)", "rule": { "kind": "eventWithin", "after": "state:earlySigns", "event": "state:triggerOff", "withinS": 120 } },
     { "text": "Give dantrolene 2.5 mg/kg within 300 s of calling the crisis", "rule": { "kind": "eventWithin", "after": "state:triggerOff", "event": "drug:dantrolene", "withinS": 300 } },
-    "Repeat dantrolene 2.5 mg/kg within 600 s of the first dose while EtCO₂ is still above 45 mmHg",
+    { "text": "The EtCO₂ is climbing back at normal ventilation: the MH is not controlled — second dose of dantrolene 2.5 mg/kg within 300 s of EtCO₂ passing 45 mmHg after ventilation back", "rule": { "kind": "eventWithin", "from": "state:normoventilated", "after": "value:etco2>45", "event": "drug:dantrolene", "withinS": 300 } },
     { "text": "Treat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L", "rule": { "kind": "eventWithin", "after": "value:k>5.5", "event": ["drug:calciumChloride", "drug:insulinDextrose"], "withinS": 300 } },
     { "text": "Hyperventilation kept until EtCO₂ has stayed below 40 mmHg for 2 min, then ventilation normalised (back to 12 × 500)", "rule": { "kind": "heldThen", "from": "state:triggerOff", "value": "etco2", "below": 40, "forS": 120, "event": "state:normoventilated" } }
   ],
   "takeHome": [
     "A rising EtCO₂ at the same ventilation with a rising heart rate: think of MH early.",
     "Trigger off, 100 % oxygen at high flow, hyperventilation, and dantrolene 2.5 mg/kg.",
-    "Keep hyperventilating until the EtCO₂ has stayed down, and treat the potassium."
+    "Keep hyperventilating until the EtCO₂ stays down; if it climbs again, repeat dantrolene.",
+    "After the crisis: ICU 24–48 h, dantrolene 1 mg/kg every 4–6 h for 24 h (recrudescence in up to 50 %), then referral for testing and family counselling."
   ],
-  "notes": "Showcase case (Stage 11; the induction sequence E119, 2026-10-24). MODELED: the physiology produces every change; the buttons only give what their label says. Oxygen is never implicit (E121): he breathes room air until Preoxygenate (face mask, 100 %), and the ventilator FiO₂ 0.5 comes with Intubate; induce without Preoxygenate and the apnoea before the tube desaturates. The MH condition starts at the succinylcholine (Induce); on this sequence the early signs come about 4.5 min after it (the premedication has left the CO₂ up). Measured course and bands: docs/plans/stage-11-scenarios.md; this sequence: the E119 rows of docs/showcase/SHOWCASE-2-RUN-SHEET.md.",
+  "notes": "Showcase case (Stage 11; the induction sequence E119, 2026-10-24). MODELED: the physiology produces every change; the buttons only give what their label says. Oxygen is never implicit (E121): he breathes room air until Preoxygenate (face mask, 100 %), and the ventilator FiO₂ 0.5 comes with Intubate; induce without Preoxygenate and the apnoea before the tube desaturates. The MH condition starts at the succinylcholine (Induce); on this sequence the early signs come about 4.5 min after it (the hypoventilation after the premedication and the apnoea at induction raised the CO₂ stores; on the ventilator the EtCO₂ should then fall, and it rises instead). The trigger-off step starts a propofol infusion 100 µg/kg/min in place of the sevoflurane; the charcoal filters it names are not modelled (the vaporiser at 0 % with 10 L/min fresh gas washes the agent out). The cooling step gives the saline at the theatre's 21 °C: the engine has no input for refrigerated fluid. The second dantrolene answers the EtCO₂ climbing back at normal ventilation. Measured course and bands: docs/plans/stage-11-scenarios.md; this sequence: the E119 rows of docs/showcase/SHOWCASE-2-RUN-SHEET.md.",
   "seed": 7,
   "mode": "modeled",
   "patient": {
@@ -134,7 +135,7 @@
     {
       "id": "induced",
       "label": "Induced: propofol 2 mg/kg, succinylcholine 1.5 mg/kg (masseter rigidity); airway not yet secured",
-      "notes": "Say it: the jaw is hard to open after the succinylcholine (masseter rigidity). The monitor cannot show it.",
+      "notes": "Say it: the jaw is hard to open after the succinylcholine (masseter rigidity). The monitor cannot show it. In practice a rigid jaw after succinylcholine means a non-triggering anaesthetic from now on and close watch of the EtCO₂; today the volatile stays to show the crisis. Masseter rigidity with a rising EtCO₂ makes two signs.",
       "onEnter": [
         {
           "type": "applyEvent",
@@ -178,11 +179,11 @@
         },
         {
           "id": "crisis",
-          "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate",
+          "label": "MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate",
           "to": "triggerOff",
           "when": {
             "manual": {
-              "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate"
+              "label": "MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate"
             }
           }
         }
@@ -242,11 +243,11 @@
         },
         {
           "id": "crisis-intubated",
-          "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate",
+          "label": "MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate",
           "to": "triggerOff",
           "when": {
             "manual": {
-              "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate"
+              "label": "MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate"
             }
           }
         }
@@ -270,11 +271,11 @@
       "transitions": [
         {
           "id": "crisis-surgery",
-          "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate",
+          "label": "MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate",
           "to": "triggerOff",
           "when": {
             "manual": {
-              "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate"
+              "label": "MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate"
             }
           }
         },
@@ -295,15 +296,15 @@
     },
     {
       "id": "earlySigns",
-      "label": "Early signs: EtCO₂ rising at the same ventilation, tachycardia",
+      "label": "Early signs: EtCO₂ rising at unchanged ventilation, heart rate rising",
       "transitions": [
         {
           "id": "crisis-earlySigns",
-          "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate",
+          "label": "MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate",
           "to": "triggerOff",
           "when": {
             "manual": {
-              "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate"
+              "label": "MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate"
             }
           }
         },
@@ -328,11 +329,11 @@
       "transitions": [
         {
           "id": "crisis-established",
-          "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate",
+          "label": "MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate",
           "to": "triggerOff",
           "when": {
             "manual": {
-              "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate"
+              "label": "MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate"
             }
           }
         },
@@ -353,7 +354,7 @@
     },
     {
       "id": "triggerOff",
-      "label": "Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600",
+      "label": "Trigger off: sevoflurane stopped, charcoal filters, propofol 100 µg/kg/min, O₂ 100 % at 10 L/min, ventilation 20 × 600",
       "onEnter": [
         {
           "type": "applyEvent",
@@ -362,6 +363,15 @@
             "agent": "sevoflurane",
             "dialPct": 0,
             "fgfLpm": 10
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "infusion",
+            "drugId": "propofol",
+            "rate": 100,
+            "unit": "mcg/kg/min"
           }
         },
         {
@@ -389,11 +399,11 @@
         },
         {
           "id": "cool",
-          "label": "Cool: 2 L saline at room temperature",
+          "label": "Cool: refrigerated saline 20 mL/kg (1.6 L)",
           "to": "cooling",
           "when": {
             "manual": {
-              "label": "Cool: 2 L saline at room temperature"
+              "label": "Cool: refrigerated saline 20 mL/kg (1.6 L)"
             }
           }
         },
@@ -448,11 +458,11 @@
         },
         {
           "id": "cool-treating",
-          "label": "Cool: 2 L saline at room temperature",
+          "label": "Cool: refrigerated saline 20 mL/kg (1.6 L)",
           "to": "cooling",
           "when": {
             "manual": {
-              "label": "Cool: 2 L saline at room temperature"
+              "label": "Cool: refrigerated saline 20 mL/kg (1.6 L)"
             }
           }
         },
@@ -532,14 +542,14 @@
     },
     {
       "id": "cooling",
-      "label": "Cooling: 2 L saline at room temperature running",
+      "label": "Cooling: refrigerated saline 20 mL/kg (1.6 L) running",
       "onEnter": [
         {
           "type": "applyEvent",
           "event": {
             "kind": "fluid",
             "fluid": "saline",
-            "volumeMl": 2000,
+            "volumeMl": 1600,
             "overS": 900
           }
         }
@@ -633,11 +643,11 @@
         },
         {
           "id": "cool-recovering",
-          "label": "Cool: 2 L saline at room temperature",
+          "label": "Cool: refrigerated saline 20 mL/kg (1.6 L)",
           "to": "cooling",
           "when": {
             "manual": {
-              "label": "Cool: 2 L saline at room temperature"
+              "label": "Cool: refrigerated saline 20 mL/kg (1.6 L)"
             }
           }
         },
@@ -715,11 +725,11 @@
         },
         {
           "id": "cool-normoventilated",
-          "label": "Cool: 2 L saline at room temperature",
+          "label": "Cool: refrigerated saline 20 mL/kg (1.6 L)",
           "to": "cooling",
           "when": {
             "manual": {
-              "label": "Cool: 2 L saline at room temperature"
+              "label": "Cool: refrigerated saline 20 mL/kg (1.6 L)"
             }
           }
         },

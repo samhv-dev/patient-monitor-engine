@@ -13,7 +13,7 @@ test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 
 type W = { __pmeApp: { link: { send(c: unknown): Promise<{ accepted: boolean }>; log: Array<{ kind: string; refused?: string }>; ctl: { scenario: { stateId: string | null } } } }; __stale: { crisis: HTMLButtonElement; surgery: HTMLButtonElement } };
-const CRISIS = 'MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate';
+const CRISIS = 'MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate';
 const SURGERY = 'Start surgery: rocuronium 0.6 mg/kg';
 
 test('a card button drawn for the previous state acts on the current one, or says why not', { tag: '@known-flaky' }, async ({ page }) => {

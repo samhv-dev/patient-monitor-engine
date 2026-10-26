@@ -173,7 +173,7 @@ test('Malignant hyperthermia at ×8 with three 5-minute fast-forwards', async ({
   test.setTimeout(20 * 60_000);
   const browserName = test.info().project.name;
   const r = begin('Malignant hyperthermia, x8 and fast-forward', browserName);
-  const CRISIS = 'MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate';
+  const CRISIS = 'MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate';
   r.errors = watchConsole(page);
   try {
     await openTeach(page);
@@ -202,7 +202,7 @@ test('Malignant hyperthermia at ×8 with three 5-minute fast-forwards', async ({
     await waitUntilSim(page, tC + 60);
     const tD = await pressCard(page, 'Dantrolene 2.5 mg/kg', 'treating');
     await waitUntilSim(page, tC + 90);
-    await pressCard(page, 'Cool: 2 L saline at room temperature');
+    await pressCard(page, 'Cool: refrigerated saline 20 mL/kg (1.6 L)');
     await waitUntilSim(page, tC + 120);
     await pressCard(page, 'Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose');
     await waitUntilSim(page, tC + 150);

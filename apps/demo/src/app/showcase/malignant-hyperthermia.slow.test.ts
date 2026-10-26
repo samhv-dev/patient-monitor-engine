@@ -33,7 +33,12 @@ import { alarmAt, bands, entered, first, near, pvcEvents, range, runCard, type A
  *  every sample within 10 s after a PVC — the monitor's HR numeric averages the beats of a non-sustained VT run (13–15
  *  PVCs at the planner's 160/min), which would otherwise read as the MH tachycardia; without them the maximum is 139,
  *  the E131 centre, unchanged. The displayed maximum during the runs (samples within 10 s after a PVC of a run of ≥ 3)
- *  is its own measure, hrMaxInRuns: 160 measured, the same ± 5. */
+ *  is its own measure, hrMaxInRuns: 160 measured, the same ± 5.
+ *  E132 rebase onto main 25771808 (2026-10-27, brief rule (c): main's E131/E133 bands and it.fails win; only the
+ *  card steps come from #144): the trigger-off step starts a propofol infusion 100 µg/kg/min in place of the
+ *  sevoflurane, and cooling is refrigerated saline 20 mL/kg (1.6 L, given at the theatre's 21 °C: no cold-fluid input)
+ *  pressed only above 38.5 °C, so not on the early path. #144's own re-centring (on the pre-E131 build) is dropped
+ *  and the S1 early bands are re-taken on this build. */
 const BANDS = {
   'S1 untreated': { refused: [0, 0], earlyMin: [3.84, 5.22], establishedMin: [16.89, 20.65], etco2AtEstablished: [72, 78], hrAtEstablished: [121, 131], phAtEstablished: [7.06, 7.12], kAtEstablished: [5.4, 6], lactateAtEstablished: [4.1, 5.1], mapAtEstablished: [80, 90], hrMax: [185, 195], kMax: [6.1, 6.7], lossMin: [39.91, 48.79], tcAtLoss: [42.14, 42.54], kAtLoss: [6.1, 6.7], vf: [1, 1], arrestStateMin: [40.23, 49.17] },
   'S1 untreated E131': { refused: [0, 0], earlyMin: [3.41, 4.79], etco2Max: [103, 109], etco2At20: [88, 94], hrAt20: [119, 129], phAt20: [7.01, 7.07], kAt20: [5.8, 6.4], lactateAt20: [4.7, 5.7], mapAt20: [79, 89], tcAt20: [36.38, 36.78], hrMax: [134, 144], hrMaxInRuns: [155, 165], kMax: [6.5, 7.1], tcAt51: [37.11, 37.51], pulseLost: [0, 0] },
@@ -55,7 +60,7 @@ const BANDS = {
 } as const;
 
 const ID = 'showcase-mh';
-const CRISIS = 'MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate';
+const CRISIS = 'MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate';
 /** Explore's "Changed only" is read where the presenter opens it: just before the crisis call (24:00 since E119). */
 const CALL_S = 1440;
 /** The rows the run sheet points at in Explore with "Changed only" on (group:label:direction, baseline at 1:00). Since E119
@@ -83,7 +88,8 @@ const inCrisis = (s: Sample) => ['triggerOff', 'treating', 'recovering'].include
 const checklist = (from: (s: Sample) => boolean, delayS: number): Act[] => [
   { press: CRISIS, when: from, delayS },
   { press: 'Dantrolene 2.5 mg/kg', when: (s) => s.state === 'triggerOff', delayS: 60 },
-  { press: 'Cool: 2 L saline at room temperature', when: inCrisis, delayS: 90 },
+  // E132: cool only above 38.5 °C (the cue card: not pressed on the early-call path)
+  { press: 'Cool: refrigerated saline 20 mL/kg (1.6 L)', when: (s) => inCrisis(s) && s.tc > 38.5, delayS: 90 },
   { press: 'Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose', when: inCrisis, delayS: 120 },
   { press: 'Sodium bicarbonate 1 mmol/kg', when: inCrisis, delayS: 150 },
   { press: 'Dantrolene 2.5 mg/kg', when: inCrisis, delayS: 600 },

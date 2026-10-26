@@ -4,13 +4,18 @@
   "title": "Class IV haemorrhage, PEA and resuscitation",
   "category": "Showcase",
   "durationMin": 25,
-  "story": "A 35-year-old man bleeding 2.5 L over 10 minutes, breathing room air: oxygen and the ventilator come only from your steps. Intubated and ventilated, he loses his pulse at about 10½ minutes on a junctional rhythm (PEA), which, left untreated, slows into asystole about 5 minutes later. Start CPR with ventilation and give 2 L of warmed crystalloid and 2 units of red cells: at the first pulse check he is in VF. Shock it; at the second pulse check VF is back; the second shock leaves an organised rhythm and the pulse returns about a minute later.",
+  "story": "A 35-year-old man bleeding 2.5 L over 10 minutes, breathing room air: oxygen and the ventilator come only from your steps. The bleed ends at 10 minutes: that is the surgeon's source control. Intubated and ventilated, positive pressure cuts the venous return of an empty patient and he loses his pulse at about 10½ minutes on a junctional rhythm (PEA). The demo withholds CPR on purpose so you can see the PEA decay into asystole about 5 minutes later. Then CPR with ventilation, massive transfusion (1 L warmed crystalloid, then red cells and plasma by rapid infuser), tranexamic acid and epinephrine every 3–5 minutes. The card inserts VF at the first two rhythm checks to show the defibrillator; the circulation comes back because the volume restores the coronary perfusion pressure, and you recognise it at the next rhythm check on the arterial line and the capnogram.",
   "objectives": [
-    "Recognise PEA from hypovolaemia",
-    { "text": "Start high-quality CPR without delay (debrief: within 30 s of the pulse loss — draft, owner to confirm)", "rule": { "kind": "eventWithin", "after": "pulseLoss", "event": "cpr", "withinS": 30 } },
-    { "text": "Give volume and epinephrine; recognise the return of circulation on the arterial line and capnogram (debrief: the pulse back within 6 min of its loss — draft, owner to confirm)", "rule": { "kind": "eventWithin", "after": "pulseLoss", "event": "rosc", "withinS": 360 } }
+    "Recognise PEA from hypovolaemia: a rhythm on the ECG with no palpable pulse (pseudo-PEA at ART 19/13: name it)",
+    { "text": "Start CPR and volume as soon as the pulse is lost (debrief: CPR within 30 s of the pulse loss); the demo withholds both on purpose so that the audience sees the decay", "rule": { "kind": "eventWithin", "after": "pulseLoss", "event": "cpr", "withinS": 30 } },
+    { "text": "Recognise the return of circulation on the arterial line and the capnogram at the rhythm check, and stop CPR (debrief: within 150 s of the return of circulation)", "rule": { "kind": "eventWithin", "after": "rosc", "event": "state:rosc", "withinS": 150 } }
   ],
-  "notes": "Showcase case (Stage 9 Task 26; the course E120, 2026-10-24). MODELED. Oxygen is never implicit (E121): room air until Oxygen by face mask or Intubate and ventilate; ventilation during CPR is the CPR step itself (bag via the tube). Without the ventilator step he compensates (systolic about 76 at 10 min) and does not arrest. THE CARD SETS THE RHYTHM three times: the junctional rhythm 50/min (when the systolic stays below 60 for 10 s, or its button) and VF at the first and at the second pulse check. Everything else is the physiology: the pulse loss, the PEA on the running junctional rhythm, its decay to an idioventricular rhythm and asystole (the seeded hazard), the rise of the coronary perfusion pressure with CPR and volume, each shock's outcome (the defibrillator's outcome table on the engine seed: the first shock ends VF in asystole, the second in an organised rhythm) and the pulse returning once the perfusion pressure (at least 15 mmHg) and the myocardium have held for 60 s. Measured course: the E120 rows of docs/showcase/SHOWCASE-2-RUN-SHEET.md.",
+  "takeHome": [
+    "Positive pressure and induction can tip a compensated bleeding patient into arrest.",
+    "In haemorrhagic arrest, stopping the bleeding and giving blood come first; compressions cannot fill an empty heart.",
+    "EtCO₂ and the arterial diastolic pressure show how good the CPR is, and they show the return of circulation."
+  ],
+  "notes": "Showcase case (Stage 9 Task 26; the course E120, 2026-10-24; the clinical review E132, 2026-10-26). MODELED. Oxygen is never implicit (E121): room air until Oxygen by face mask or Intubate and ventilate; ventilation during CPR is the CPR step itself (bag via the tube). Without the ventilator step he compensates (systolic about 76 at 10 min) and does not arrest. THE CARD SETS THE RHYTHM three times: the junctional rhythm 50/min (when the systolic stays below 60 for 10 s, or its button) and VF at the first and at the second rhythm check (to show the defibrillator). Everything else is the physiology: the pulse loss, the PEA on the running junctional rhythm (ART about 19/13 first: pseudo-PEA), its decay to an idioventricular rhythm and asystole (the seeded hazard), the rise of the coronary perfusion pressure with CPR and volume, each shock's outcome (the defibrillator's outcome table on the engine seed) and the pulse returning once the perfusion pressure (at least 15 mmHg) and the myocardium have held for 60 s. The resuscitation step tells the engine: the bleeding stopped (a bleed rate of 0; the 2.5 L bleed has already ended at 10:00, so it stops nothing more on this course), 1000 mL balanced crystalloid at the card's earlier rate and 1200 mL of blood (the engine's whole blood: red cells and plasma together) at a rapid infuser's 500 mL/min, and tranexamic acid 1 g (logged; no effect on the monitor until a coagulation model exists). The card cannot tell the engine to warm the crystalloid (no fluid-warmer event in the scenario schema): it enters at the theatre's 21 °C; the blood enters at 37 °C. Measured course: the E132 rows of docs/showcase/SHOWCASE-2-RUN-SHEET.md.",
   "seed": 7,
   "mode": "modeled",
   "patient": {
@@ -206,7 +211,7 @@
           }
         }
       ],
-      "notes": "The model's PEA on the running junctional rhythm. On the owner's course it is left untreated: it slows, becomes idioventricular and turns to asystole about 5 minutes after the pulse loss."
+      "notes": "The model's PEA on the running junctional rhythm: the arterial line first reads about 19/13 (pseudo-PEA: a pressure too low to feel), then goes flat. On the owner's course it is left untreated: it slows, becomes idioventricular and turns to asystole about 5 minutes after the pulse loss."
     },
     {
       "id": "asystole",
@@ -252,11 +257,11 @@
       "transitions": [
         {
           "id": "volume",
-          "label": "2 L warmed crystalloid and 2 units of red cells",
+          "label": "Surgeon controls the bleeding; massive transfusion: 1 L warmed crystalloid, then red cells and plasma by rapid infuser; TXA 1 g",
           "to": "cprVolume",
           "when": {
             "manual": {
-              "label": "2 L warmed crystalloid and 2 units of red cells"
+              "label": "Surgeon controls the bleeding; massive transfusion: 1 L warmed crystalloid, then red cells and plasma by rapid infuser; TXA 1 g"
             }
           }
         },
@@ -271,22 +276,22 @@
           }
         },
         {
-          "id": "pulseCheck1",
-          "label": "Pulse check",
+          "id": "rhythmCheck1",
+          "label": "Rhythm check",
           "to": "vf",
           "when": {
             "manual": {
-              "label": "Pulse check"
+              "label": "Rhythm check"
             }
           }
         },
         {
           "id": "stop-cpr",
-          "label": "Pulse back: stop CPR",
+          "label": "Rhythm check: pulse back, stop CPR",
           "to": "rosc",
           "when": {
             "manual": {
-              "label": "Pulse back: stop CPR"
+              "label": "Rhythm check: pulse back, stop CPR"
             }
           }
         }
@@ -294,15 +299,22 @@
     },
     {
       "id": "cprVolume",
-      "label": "CPR: 2 L warmed crystalloid and 2 units of red cells running",
+      "label": "CPR: bleeding controlled; 1 L warmed crystalloid, then red cells and plasma by rapid infuser; TXA 1 g",
       "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "bleed",
+            "rateMlPerMin": 0
+          }
+        },
         {
           "type": "applyEvent",
           "event": {
             "kind": "fluid",
             "fluid": "balanced",
-            "volumeMl": 2000,
-            "overS": 180
+            "volumeMl": 1000,
+            "overS": 90
           }
         },
         {
@@ -310,8 +322,18 @@
           "event": {
             "kind": "fluid",
             "fluid": "blood",
-            "volumeMl": 600,
-            "overS": 300
+            "volumeMl": 1200,
+            "overS": 144
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "tranexamicAcid",
+            "dose": 1000,
+            "unit": "mg",
+            "route": "iv"
           }
         }
       ],
@@ -358,11 +380,11 @@
       "transitions": [
         {
           "id": "volume-running",
-          "label": "2 L warmed crystalloid and 2 units of red cells",
+          "label": "Surgeon controls the bleeding; massive transfusion: 1 L warmed crystalloid, then red cells and plasma by rapid infuser; TXA 1 g",
           "to": "cprVolume",
           "when": {
             "manual": {
-              "label": "2 L warmed crystalloid and 2 units of red cells"
+              "label": "Surgeon controls the bleeding; massive transfusion: 1 L warmed crystalloid, then red cells and plasma by rapid infuser; TXA 1 g"
             }
           }
         },
@@ -377,22 +399,22 @@
           }
         },
         {
-          "id": "pulseCheck1-running",
-          "label": "Pulse check",
+          "id": "rhythmCheck1-running",
+          "label": "Rhythm check",
           "to": "vf",
           "when": {
             "manual": {
-              "label": "Pulse check"
+              "label": "Rhythm check"
             }
           }
         },
         {
           "id": "stop-running",
-          "label": "Pulse back: stop CPR",
+          "label": "Rhythm check: pulse back, stop CPR",
           "to": "rosc",
           "when": {
             "manual": {
-              "label": "Pulse back: stop CPR"
+              "label": "Rhythm check: pulse back, stop CPR"
             }
           }
         }
@@ -400,7 +422,7 @@
     },
     {
       "id": "vf",
-      "label": "Pulse check: VF",
+      "label": "Rhythm check: VF",
       "onEnter": [
         {
           "type": "applyEvent",
@@ -428,7 +450,7 @@
           }
         }
       ],
-      "notes": "The card sets the rhythm: VF at the first pulse check (an instructor rhythm event). Compressions pause for the check (the ALS rhythm check, ≈ 10 s to the shock), so the strip shows clean VF; shock from the Defib tab (Defib, pacing & CPR) and compressions resume with the shock (E126)."
+      "notes": "The card sets the rhythm: VF at the first rhythm check (an instructor rhythm event, to show the defibrillator). Compressions pause for the check (the ALS rhythm check, ≈ 10 s to the shock), so the strip shows clean VF; shock from the Defib tab (Defib, pacing & CPR) and compressions resume with the shock (E126)."
     },
     {
       "id": "postShock1",
@@ -446,31 +468,41 @@
       ],
       "transitions": [
         {
-          "id": "pulseCheck2",
-          "label": "Pulse check",
+          "id": "epi-shock1",
+          "label": "Epinephrine 1 mg",
+          "to": "postShock1Epi",
+          "when": {
+            "manual": {
+              "label": "Epinephrine 1 mg"
+            }
+          }
+        },
+        {
+          "id": "rhythmCheck2",
+          "label": "Rhythm check",
           "to": "vf2",
           "when": {
             "manual": {
-              "label": "Pulse check"
+              "label": "Rhythm check"
             }
           }
         },
         {
           "id": "stop-shock1",
-          "label": "Pulse back: stop CPR",
+          "label": "Rhythm check: pulse back, stop CPR",
           "to": "rosc",
           "when": {
             "manual": {
-              "label": "Pulse back: stop CPR"
+              "label": "Rhythm check: pulse back, stop CPR"
             }
           }
         }
       ],
-      "notes": "The shock's outcome is the defibrillator's outcome table on the engine seed: on this course the first shock ends VF in asystole. Keep CPR going for 2 min, then Pulse check."
+      "notes": "The shock's outcome is the defibrillator's outcome table on the engine seed: on this course the first shock ends VF (a successful defibrillation) in asystole. Keep CPR going for 2 min, epinephrine 3–5 min after the first dose, then Rhythm check."
     },
     {
       "id": "vf2",
-      "label": "Pulse check: VF again",
+      "label": "Rhythm check: VF again",
       "onEnter": [
         {
           "type": "applyEvent",
@@ -498,11 +530,11 @@
           }
         }
       ],
-      "notes": "The card sets the rhythm again: VF at the second pulse check, compressions paused for the check (E126). Shock from the Defib tab; compressions resume with the shock; the pulse returns about a minute after the shock."
+      "notes": "The card sets the rhythm again: VF at the second rhythm check, compressions paused for the check (E126). Shock from the Defib tab; compressions resume with the shock and stay on for 2 min to the next rhythm check."
     },
     {
       "id": "postShock2",
-      "label": "Shocked again: CPR on",
+      "label": "Shocked again: CPR on for 2 min",
       "onEnter": [
         {
           "type": "applyEvent",
@@ -516,12 +548,137 @@
       ],
       "transitions": [
         {
+          "id": "epi-shock2",
+          "label": "Epinephrine 1 mg",
+          "to": "postShock2Epi",
+          "when": {
+            "manual": {
+              "label": "Epinephrine 1 mg"
+            }
+          }
+        },
+        {
           "id": "stop",
-          "label": "Pulse back: stop CPR",
+          "label": "Rhythm check: pulse back, stop CPR",
           "to": "rosc",
           "when": {
             "manual": {
-              "label": "Pulse back: stop CPR"
+              "label": "Rhythm check: pulse back, stop CPR"
+            }
+          }
+        }
+      ],
+      "notes": "Keep CPR to the 2-min rhythm check. The pulse returns because the volume has restored the coronary perfusion pressure; at the rhythm check recognise it on the arterial line and the capnogram, then Rhythm check: pulse back, stop CPR."
+    },
+    {
+      "id": "postShock1Epi",
+      "label": "CPR after the first shock: epinephrine 1 mg given",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "epinephrine",
+            "dose": 1,
+            "unit": "mg",
+            "route": "iv"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "back-epi-shock1",
+          "label": "Back to CPR",
+          "to": "postShock1Running",
+          "when": {
+            "afterS": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "postShock1Running",
+      "label": "CPR continuing after the first shock",
+      "transitions": [
+        {
+          "id": "epi-shock1-running",
+          "label": "Epinephrine 1 mg",
+          "to": "postShock1Epi",
+          "when": {
+            "manual": {
+              "label": "Epinephrine 1 mg"
+            }
+          }
+        },
+        {
+          "id": "rhythmCheck2-running",
+          "label": "Rhythm check",
+          "to": "vf2",
+          "when": {
+            "manual": {
+              "label": "Rhythm check"
+            }
+          }
+        },
+        {
+          "id": "stop-shock1-running",
+          "label": "Rhythm check: pulse back, stop CPR",
+          "to": "rosc",
+          "when": {
+            "manual": {
+              "label": "Rhythm check: pulse back, stop CPR"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "postShock2Epi",
+      "label": "CPR after the second shock: epinephrine 1 mg given",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "epinephrine",
+            "dose": 1,
+            "unit": "mg",
+            "route": "iv"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "back-epi-shock2",
+          "label": "Back to CPR",
+          "to": "postShock2Running",
+          "when": {
+            "afterS": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "postShock2Running",
+      "label": "CPR continuing after the second shock",
+      "transitions": [
+        {
+          "id": "epi-shock2-running",
+          "label": "Epinephrine 1 mg",
+          "to": "postShock2Epi",
+          "when": {
+            "manual": {
+              "label": "Epinephrine 1 mg"
+            }
+          }
+        },
+        {
+          "id": "stop-running2",
+          "label": "Rhythm check: pulse back, stop CPR",
+          "to": "rosc",
+          "when": {
+            "manual": {
+              "label": "Rhythm check: pulse back, stop CPR"
             }
           }
         }

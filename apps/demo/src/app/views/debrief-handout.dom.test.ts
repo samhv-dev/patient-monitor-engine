@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
-// The learner handout's take-home section prints the three showcase-2 cards' takeHome lines exactly as the owner
-// confirmed them (2026-10-21), one list item each; a card without takeHome keeps the blank lines (Decision 6).
+// The learner handout's take-home section prints the showcase cards' takeHome lines exactly as the owner confirmed them
+// (2026-10-21; MH and haemorrhage after the clinical review, E132, 2026-10-26), one list item each; a card without
+// takeHome keeps the blank lines (Decision 6).
 import { describe, expect, it } from 'vitest';
 import { showcaseDoc } from '../showcase/harness.ts';
 import { takeHomeSection } from './debrief.ts';
@@ -14,7 +15,13 @@ const OWNER: Record<string, string[]> = {
   'showcase-mh': [
     'A rising EtCO₂ at the same ventilation with a rising heart rate: think of MH early.',
     'Trigger off, 100 % oxygen at high flow, hyperventilation, and dantrolene 2.5 mg/kg.',
-    'Keep hyperventilating until the EtCO₂ has stayed down, and treat the potassium.',
+    'Keep hyperventilating until the EtCO₂ stays down; if it climbs again, repeat dantrolene.',
+    'After the crisis: ICU 24–48 h, dantrolene 1 mg/kg every 4–6 h for 24 h (recrudescence in up to 50 %), then referral for testing and family counselling.',
+  ],
+  'showcase-haemorrhage': [
+    'Positive pressure and induction can tip a compensated bleeding patient into arrest.',
+    'In haemorrhagic arrest, stopping the bleeding and giving blood come first; compressions cannot fill an empty heart.',
+    'EtCO₂ and the arterial diastolic pressure show how good the CPR is, and they show the return of circulation.',
   ],
   'showcase-bronchospasm': [
     'High peak pressure, a shark-fin capnogram and auto-PEEP: think of bronchospasm.',

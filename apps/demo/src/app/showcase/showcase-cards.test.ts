@@ -9,7 +9,7 @@ import { LIBRARY, objectiveText, SHOWCASE_ORDER } from '../scenarios.ts';
 import { SHOWCASE_IDS, showcaseDoc } from './harness.ts';
 
 const SHOWCASE = ['showcase-induction', 'showcase-induction-premed', 'showcase-anaphylaxis', 'showcase-mh', 'showcase-tamponade', 'showcase-haemorrhage'];
-const NEW = ['showcase-induction', 'showcase-induction-premed', 'showcase-mh', 'showcase-tamponade'];
+const NEW = ['showcase-induction', 'showcase-induction-premed', 'showcase-mh', 'showcase-tamponade', 'showcase-haemorrhage'];
 
 describe('Showcase cards', () => {
   it('the Showcase group is the six cards, in the demonstration order, first in the library; bronchospasm stays in the library', () => {

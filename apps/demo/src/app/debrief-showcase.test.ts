@@ -8,9 +8,10 @@ import { describe, expect, it } from 'vitest';
 import { FIXED_ALARM_WORDS } from './alarms.ts';
 import { facts, objectives } from './debrief.ts';
 import { CONDITIONS } from './describe.ts';
-import { RunRecord } from './record.ts';
+import { emptyRun, RunRecord, type Row, type RunData, type Sample } from './record.ts';
 import { LIBRARY } from './scenarios.ts';
 import anaphylaxis from './showcase/showcase-anaphylaxis.json';
+import haemorrhage from './showcase/showcase-haemorrhage.json';
 import induction from './showcase/showcase-induction.json';
 import mh from './showcase/showcase-mh.json';
 
@@ -56,7 +57,8 @@ const once = (fn: (t: number, rec: RunRecord) => boolean, tr: string) => {
   return (t: number, rec: RunRecord) => (!done && fn(t, rec) ? ((done = true), tr) : null);
 };
 /** The MH early call as the cue card runs it after the E119 induction sequence (premedication 0:05, preoxygenation 0:10,
- *  induction 1:00, intubation 2:00, surgery 2:30; call 9 s into Early signs, dantrolene +20 s, cooling +30 s), then
+ *  induction 1:00, intubation 2:00, surgery 2:30; call 9 s into Early signs, dantrolene +20 s; no cooling below 38.5 °C,
+ *  E132), then
  *  "ventilation back" when `normo` says so. */
 const mhPresses = (normo: (t: number, rec: RunRecord, at: (id: string) => number | undefined) => boolean) => {
   const done = new Set<string>();
@@ -66,7 +68,7 @@ const mhPresses = (normo: (t: number, rec: RunRecord, at: (id: string) => number
     const early = at('earlySigns');
     const off = at('triggerOff');
     return go('premed', t >= 5) ?? go('preox', t >= 10) ?? go('induce', t >= 60) ?? go('intubate', t >= 120) ?? go('surgery', t >= 150) ?? go('crisis-earlySigns', early !== undefined && t >= early + 9) ?? go('dant', off !== undefined && t >= off + 20)
-      ?? go('cool-treating', off !== undefined && t >= off + 30 && at('treating') !== undefined) ?? go('normo', at('recovering') !== undefined && normo(t, rec, at));
+      ?? go('normo', at('recovering') !== undefined && normo(t, rec, at));
   };
 };
 const alarmAt = (rec: RunRecord) => rec.data.rows.find((r) => r.ev?.startsWith('alarm:apnoea'))?.t;
@@ -90,8 +92,10 @@ describe('the showcase objectives as rules', () => {
     expect(n).toBeGreaterThanOrEqual(7);
   });
 
-  it('the draft numbers of the anaphylaxis and haemorrhage cards are marked for the owner in the card text', () => {
-    for (const id of ['showcase-anaphylaxis', 'showcase-haemorrhage']) {
+  it('the draft numbers of the anaphylaxis card are marked for the owner in the card text; the haemorrhage card has none (E132)', () => {
+    const haem = (LIBRARY.find((c) => c.id === 'showcase-haemorrhage')?.doc.objectives ?? []).map((o) => (typeof o === 'string' ? o : o.text));
+    expect(haem.filter((t) => /draft/i.test(t))).toEqual([]);
+    for (const id of ['showcase-anaphylaxis']) {
       const timed = (LIBRARY.find((c) => c.id === id)?.doc.objectives ?? []).filter((o) => typeof o !== 'string' && o.rule?.kind === 'eventWithin');
       expect(timed.length, id).toBeGreaterThan(0);
       for (const o of timed) expect(typeof o === 'string' ? o : o.text).toMatch(/ \(debrief: .+ — draft, owner to confirm\)$/);
@@ -131,4 +135,43 @@ describe('the showcase objectives as rules', () => {
     expect(vent(kept)?.status).toBe('met');
     expect(vent(kept)?.why).toMatch(/^The state "Ventilation back to 12 × 500, O₂ 100 %" at \d\d:\d\d, after EtCO₂ had stayed below 40 mmHg for 2 min 00 s \(\d\d:\d\d → \d\d:\d\d\)\.$/);
   }, 300_000);
+});
+
+/** A recorded run of `doc` with these rows and samples (the rule is the card's own). */
+const recorded = (doc: unknown, rows: Row[], samples: Array<Partial<Sample> & { t: number }>): RunData => ({
+  ...emptyRun('M 35 y 80 kg', 80, 0), doc: doc as never, rows,
+  samples: samples.map((x) => ({ hr: 80, map: 80, spo2: 98, etco2: 38, rr: 12, temp: 36.8, k: null, lactate: null, ph: null, glucose: null, tcore: null, ...x })),
+});
+const row = (t: number, ev: string, text = ev): Row => ({ t, kind: ev.startsWith('state:') ? 'scenario' : 'action', text, ev });
+
+describe('E132: the objectives of the two demo cards after the clinical review', () => {
+  it('MH objective 4 marks the second dantrolene when the EtCO₂ climbs back at normal ventilation; the first dose does not count', () => {
+    const i = mh.objectives.findIndex((o) => typeof o !== 'string' && o.rule?.kind === 'eventWithin' && o.rule.from === 'state:normoventilated');
+    expect(i).toBe(3);
+    const xs = [{ t: 860, etco2: 36 }, { t: 900, etco2: 44 }, { t: 960, etco2: 46 }, { t: 1100, etco2: 52 }, { t: 1500, etco2: 51 }];
+    const base = [row(540, 'drug:dantrolene', 'Dantrolene 2.5 mg/kg IV'), row(880, 'state:normoventilated', 'Ventilation back')];
+    const given = objectives(recorded(mh, [...base, row(1180, 'drug:dantrolene', 'Dantrolene 2.5 mg/kg IV')], xs))[i]?.verdict;
+    expect(given?.status).toBe('met');
+    expect(given?.measure).toEqual({ fromT: 960, toT: 1180, askedS: 300 });
+    expect(objectives(recorded(mh, base, xs))[i]?.verdict.status).toBe('not met');
+    expect(objectives(recorded(mh, [row(540, 'drug:dantrolene')], xs))[i]?.verdict.status).toBe('not assessable'); // never normoventilated
+  });
+
+  it('haemorrhage: no draft words; CPR on the pulse loss is judged as before; the return of circulation is recognised at the rhythm check', () => {
+    expect(haemorrhage.objectives.map((o) => (typeof o === 'string' ? o : o.text)).join(' ')).not.toMatch(/draft|owner to confirm/i);
+    const rows = [row(660, 'pulseLoss'), row(939, 'cpr'), row(1258, 'rosc'), row(1314, 'state:rosc', 'Return of circulation')];
+    const v = objectives(recorded(haemorrhage, rows, [{ t: 0 }, { t: 1400 }])).map((o) => o.verdict);
+    expect(v.map((x) => x.status)).toEqual(['not assessable', 'not met', 'met']);
+    expect(v[2]?.measure).toEqual({ fromT: 1258, toT: 1314, askedS: 150 });
+  });
+
+  it('haemorrhage: "Rhythm check" everywhere, never "Pulse check"; epinephrine offered in every CPR state', () => {
+    const doc = haemorrhage as unknown as ScenarioDoc;
+    const text = JSON.stringify(doc);
+    expect(text).not.toMatch(/Pulse check|Pulse back: stop CPR/);
+    const labels = (id: string) => (doc.states.find((s) => s.id === id)?.transitions ?? []).map((t) => t.label);
+    for (const id of ['cpr', 'cprRunning', 'postShock1', 'postShock1Running', 'postShock2', 'postShock2Running']) expect(labels(id), id).toContain('Epinephrine 1 mg');
+    for (const id of ['cpr', 'cprRunning', 'postShock1', 'postShock1Running']) expect(labels(id), id).toContain('Rhythm check');
+    for (const id of ['postShock2', 'postShock2Running']) expect(labels(id), id).toContain('Rhythm check: pulse back, stop CPR');
+  });
 });
