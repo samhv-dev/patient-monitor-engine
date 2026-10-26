@@ -733,7 +733,6 @@ test('haemorrhage: Explore at 1:00 and 8:00, CPR at the no-pulse alarm, a 2-min 
     const tStop = await R.press('Pulse back: stop CPR', 'rosc');
     await R.untilT(tStop + 60);
     await R.row('1 min after stopping CPR');
-    await shot(R, page, 'e126-6-rosc');
     // the class transitions as read on the monitor (ATLS: HR > 100 class II, > 120 class III, > 140 class IV; systolic < 90)
     const h = await hist(page, R.t0, tNp ?? Infinity);
     const firstT = (f: (s: Sample) => boolean) => { const s = h.find(f); return s ? mmss(s.t) : null; };
@@ -1810,6 +1809,7 @@ test('A4 haemorrhage (E120): PEA on a junctional rhythm → asystole → CPR, vo
     await R.speed(4);
     await R.untilT(tStop + 60);
     await R.row('1 min after stopping CPR');
+    await shot(R, page, 'e126-6-rosc');
     const hc = await hist(page, tCpr, tPc1);
     R.r.measures.a4haemorrhage = {
       states: await stateLog(page), junctionalAt: tJ === null ? null : mmss(tJ), peaStateAt: tPea === null ? null : mmss(tPea), pulseLossAt: tLoss === null ? null : mmss(tLoss),
