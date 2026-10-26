@@ -22,6 +22,10 @@ export interface OracleScenario {
 }
 
 const STANDARD_MALE = { ageY: 44, sex: 'M' as const, weightKg: 77.1, heightCm: 180, baseline: { hr: 72, sbp: 114, dbp: 74 }, sensors: { ecg: 'on', spo2: 'on', abp: 'connected', co2: 'on' } };
+/** MODELED scenarios send no baseline HR: in MODELED `setTarget hr` holds the rate (FU-2 rate rule), which read O2's
+ *  haemorrhage HR rise as exactly 0 (Q-FU3-9a). */
+const { hr: _heldHr, ...MODELED_BASELINE } = STANDARD_MALE.baseline;
+const MODELED_MALE = { ...STANDARD_MALE, baseline: MODELED_BASELINE };
 const ev = (event: Record<string, unknown>): DocCommand => ({ type: 'applyEvent', event } as DocCommand);
 const agree: Expect = { kind: 'agree' };
 
@@ -92,7 +96,7 @@ export function judge(c: Compare, ours: number, pulse: number): { grade: Grade; 
 export function oursDoc(s: OracleScenario): ValidationDoc {
   return {
     schema: 'pme-validation/1', id: `oracle-${s.id}`, title: s.title, seed: 1, durationS: s.durationS, ...(s.ours.requires ? { requires: s.ours.requires } : {}),
-    scenario: { schema: 'pme-scenario/1', id: `oracle-${s.id}`, title: s.title, ...(s.ours.mode ? { mode: s.ours.mode } : {}), patient: STANDARD_MALE, initialState: 'run', states: [{ id: 'run' }] },
+    scenario: { schema: 'pme-scenario/1', id: `oracle-${s.id}`, title: s.title, ...(s.ours.mode ? { mode: s.ours.mode } : {}), patient: s.ours.mode === 'modeled' ? MODELED_MALE : STANDARD_MALE, initialState: 'run', states: [{ id: 'run' }] },
     actions: s.ours.actions, segments: [],
   };
 }

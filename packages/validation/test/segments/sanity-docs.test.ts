@@ -1,6 +1,7 @@
 import { validateScenario } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
 import { SANITY_DOCS } from '../../suites/sanity/sanity-docs.ts';
+import { ORACLE, oursDoc } from '../../src/oracle/oracle.ts';
 
 describe('sanity documents (brief §4.9 + tables §7)', () => {
   it('cover checks 1–4, 6–9 and 10–25 with unique ids', () => {
@@ -24,5 +25,14 @@ describe('sanity documents (brief §4.9 + tables §7)', () => {
     const withProfile = SANITY_DOCS.filter((d) => (d.scenario as { patient?: { profile?: unknown } }).patient?.profile).map((d) => d.id);
     expect(withProfile).toEqual(['t10-as-cad-propofol', 't11-chronic-mr-fluid', 't17b-class3-bb', 't18-htn-hypocapnia-cbf', 't19-tbi-haematoma', 't20-low-flow-oliguria', 't22-term-spinal', 't23-term-apnoea']);
     for (const d of SANITY_DOCS) expect(JSON.stringify(d), d.id).not.toMatch(/R22 profile|"profile":"/);
+  });
+  it('no MODELED document sends a baseline heart rate (MODELED holds a `setTarget hr`, Q-FU3-9a)', () => {
+    type Sc = { mode?: string; patient?: { baseline?: Record<string, number> } };
+    const docs = [...SANITY_DOCS, ...ORACLE.map(oursDoc)];
+    const modeled = docs.filter((d) => (d.scenario as Sc).mode === 'modeled');
+    expect(modeled.length).toBeGreaterThan(10);
+    for (const d of modeled) expect((d.scenario as Sc).patient?.baseline?.hr, d.id).toBeUndefined();
+    // MANUAL documents keep theirs: there the targets are the patient
+    expect((SANITY_DOCS.find((d) => d.id === 's9-witnessed-vf')?.scenario as Sc).patient?.baseline?.hr).toBe(75);
   });
 });

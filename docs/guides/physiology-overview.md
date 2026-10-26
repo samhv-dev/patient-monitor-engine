@@ -417,9 +417,10 @@ are **MODELED only** unless marked; the MANUAL rows of the suite are listed.
 - **Adults only:** no paediatric or obstetric physiology (`docs/roadmap/v1.0-remaining.md`, moved to v2.0). The age
   bands, the `pregnancy` and `neonatalRds` lung ids and the child baselines scale size, lungs, resting values and
   reflex gains; they are not validated as paediatric or obstetric teaching cases.
-- **Heart-rate response in the validation documents:** the documents that expect the heart rate to change read
-  75 bpm because the validation runner holds the baseline rate (a harness defect); 27 validation rows are outside
-  their band and the blind realism review has not been run ([validation summary](validation-summary.md)).
+- **Heart-rate response in the validation documents:** in the v1.0.0-rc.1 report the documents that expect the
+  heart rate to change read 75 bpm because the validation documents held the baseline rate (a harness defect, fixed
+  2026-10-27; the report is not yet regenerated); 27 validation rows are outside their band and the blind realism
+  review has not been run ([validation summary](validation-summary.md)).
 - **VA-ECMO and cardiopulmonary bypass:** typed in `l2/circ/devices.ts` but no event drives them.
 - **Lundberg A/B waves:** the ICP waveform has P1/P2/P3 and the respiratory component only
   (`docs/plans/stage-7d-organs.md`, decision 15).
