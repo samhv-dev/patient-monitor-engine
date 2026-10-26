@@ -48,7 +48,8 @@ test('oxygen by face mask on the breathing patient: FiO₂ 21 → 60 %, logged, 
   await page.locator('.stagebar button.primary').click(); // Commit
   const o2Stage = page.locator('h3:text-is("Oxygen") ~ .row').first().getByRole('button', { name: 'Stage' });
   await expect(o2Stage).toBeDisabled({ timeout: 10_000 });
-  await expect(page.getByText(/in use.*: FiO₂ 50 % from the ventilator\./)).toBeVisible();
+  // the FiO₂ the engine reports: it reaches the ventilator's 50 % within a few seconds of the commit
+  await expect(page.getByText(/in use.*: FiO₂ 50 % from the ventilator\./)).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole('group', { name: 'Oxygen' }).locator('[aria-pressed=true]')).toHaveCount(0);
   await expect(page.getByRole('group', { name: 'Oxygen' }).getByRole('button', { name: 'Face mask' })).toBeDisabled();
 
