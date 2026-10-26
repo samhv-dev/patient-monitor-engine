@@ -998,11 +998,14 @@ export class DeviceUI {
    * are measured only when the width or a text's length changes.
    */
   private fitSplits(): void {
+    // UI review #24: the grid's fonts scale with the monitor height (--pme-h on the mount's outer box), so a new height
+    // refits too (the width alone kept a fit measured at another height). An inline style: no layout read
+    const h = (this.tiles.parentElement?.parentElement as HTMLElement | null | undefined)?.style.getPropertyValue('--pme-h') ?? '';
     for (const tile of this.tileList) {
       const b = tile.rc3;
       if (!b || b.parts.length === 0 || tile.el.style.display === 'none') continue;
       const w = b.partW ?? 0;
-      const key = `${w}|${b.parts.map((p) => `${p.label.textContent}/${p.value.textContent?.length ?? 0}/${p.lim.textContent}`).join('|')}`;
+      const key = `${w}|${h}|${b.parts.map((p) => `${p.label.textContent}/${p.value.textContent?.length ?? 0}/${p.lim.textContent}`).join('|')}`;
       if (w <= 0 || b.fitKey === key) continue;
       b.fitKey = key;
       const el = tile.el;
@@ -1021,7 +1024,9 @@ export class DeviceUI {
         widths: { label: width(p.label), unit: width(p.label.nextElementSibling), lim: width(p.lim), value: text(p.value) },
         side: (row && k > 0 ? 'head' : 'value') as LimSide,
       }));
-      const fit = fitTile(w, parts, row ? 4 : 6); // the column-gap of the part grid
+      const lim0 = b.parts.find((p) => p.lim.firstChild)?.lim;
+      const limPx = lim0 ? parseFloat(el.ownerDocument.defaultView?.getComputedStyle(lim0).fontSize ?? '') || 0 : 0; // full size: the fit's style is off
+      const fit = fitTile(w, parts, row ? 4 : 6, limPx); // the column-gap of the part grid
       el.classList.toggle('unit-under', fit.unitUnder);
       if (fit.limScale < 1) el.style.setProperty('--pme-lim-k', fit.limScale.toFixed(3));
       if (fit.valScale < 1) el.style.setProperty('--pme-val-k', fit.valScale.toFixed(3));

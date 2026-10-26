@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import type { EngineEvent } from '@pme/engine-core';
 import { resolveSkin } from '@pme/skins';
 import { DeviceUI } from '../src/device-ui.ts';
-import { fitPart, fitTile, LIM_MIN_SCALE } from '../src/tile-fit.ts';
+import { fitPart, fitTile, LIM_MIN_PX, LIM_MIN_SCALE } from '../src/tile-fit.ts';
 
 const css = () => [...document.head.querySelectorAll('style')].at(-1)?.textContent ?? '';
 function mount(id: string, co2 = false, portrait = false) {
@@ -45,6 +45,20 @@ describe('pass 3: the fit rules of a split part (tile-fit.ts)', () => {
     expect(f.valScale).toBeCloseTo((90 - 4 - 14 * LIM_MIN_SCALE) / 85, 5);
     expect(fitPart(127, etco2, 'value', 4).valScale).toBe(1);
     expect(fitPart(40, { label: 30, unit: 20, lim: 0, value: 50 }, 'head', 4).valScale).toBeCloseTo(40 / 50, 5); // a centred value wider than its part
+  });
+  it('UI review #24: the limits never go below 9 px, whatever the monitor height; the digits give way instead', () => {
+    // the T column at the 1280 × 800 Instructor view: a 52 px part, limits 10.3 px (13 px × 634 / 800), "39.0" 21 px
+    // wide, the value 36 px. The fraction alone gave 0.6 × 10.3 ≈ 6.2 px limits
+    const t = { label: 18.5, unit: 0, lim: 21, value: 36 };
+    expect(fitPart(52, t, 'value', 6).limScale).toBe(LIM_MIN_SCALE);
+    const f = fitPart(52, t, 'value', 6, 10.3);
+    expect(LIM_MIN_PX).toBe(9);
+    expect(f.limScale * 10.3).toBeCloseTo(9, 5);
+    expect(f.valScale).toBeCloseTo((52 - 6 - 21 * f.limScale) / 36, 5);
+    // a part with room keeps everything at full size; small limits (≤ 9 px already) never shrink
+    expect(fitPart(127, { label: 62, unit: 33, lim: 17, value: 54 }, 'value', 4, 15)).toEqual({ unitUnder: false, limScale: 1, valScale: 1 });
+    expect(fitPart(40, t, 'value', 6, 8).limScale).toBe(1);
+    expect(fitTile(52, [{ widths: t, side: 'value' }], 6, 10.3).limScale * 10.3).toBeCloseTo(9, 5);
   });
   it('a tile takes the unit under if any part needs it, and one limit scale (the smallest) for all its pairs', () => {
     const f = fitTile(70, [{ widths: etco2, side: 'value' }, { widths: { label: 55, unit: 33, lim: 0, value: 20 }, side: 'head' }, { widths: { label: 55, unit: 33, lim: 17, value: 30 }, side: 'head' }], 4);
