@@ -46,6 +46,50 @@ the public API is what the packages export (see the API reference), the `pme-sce
   noise, unorganised and small (half the pulse detector's floor, so it is never counted as a pulse). With these, the
   low-flow guard "at MAP < 30 the SpO₂ is never shown valid" in Ali's case now passes (was SpO₂ 99 at 760–765 s).
   (Persian entries for the new footnote and alarm words added untranslated, `reviewed: false`.)
+- Engine (E134): anaerobic metabolism has the body's own limits and its heat, muscle injury releases the potassium, and
+  MH severity is a scenario input. Three couplings, all body-wide and none MH-specific (new module
+  `l2/blood/muscle.ts`, one state for the whole musculature):
+  - **The brake and the heat of glycolysis.** What the oxygen deficit's lactate production can actually be is limited
+    by the intracellular pH the rate-limiting enzyme sees (phosphofructokinase; a logistic in pHi = plasma pH − 0.32,
+    half at 6.6, shut by 6.3, from Trivedi & Danforth 1966 at the substrate concentration a maximally driven muscle
+    sits at, normalised to the resting pH) and by a muscle glycogen store (85 mmol glucosyl/kg wet weight, Hawley 1997;
+    no limit above 6.5, refilled at 1.5 mmol/kg/h without carbohydrate, Maehlum & Hermansen 1978). Its heat is counted:
+    98 J per mmol of lactate (65 kJ/mol ATP × 1.5 ATP per lactate; Curtin & Woledge 1978, Woledge & Reilly 1988, as
+    used by González-Alonso 2000), added to the core beside the oxidative heat. It needs no oxygen, so the delivered
+    share does not scale it, and its own brakes are what stop a body with no flow from heating without end (measured:
+    about 30 W in the first minute of an arrest, 0 within forty). The buffered CO2 of lactate (22 mL/mmol, Beaver 1986)
+    is released wherever lactate ACCUMULATES, not only in MH — and on the NET accumulation, since clearing the lactate
+    re-fixes that CO2 (E131 counted the gross MH share, which over-counted every plateau).
+  - **Muscle injury and its potassium.** `MH_K_EFFLUX` (2.35 mmol/L at activity 1), fitted to the 20-min K row, is
+    deleted. Active muscle leaks potassium with its metabolic activity (0.36 mmol/L of the set point per × of the
+    resting VO2 the activity adds, derived from Medbø & Sejersted 1990's femoral-catheter measurements; shivering
+    drives the same term), and injured muscle hands over its intracellular potassium (100 mmol/kg of necrotic muscle,
+    into the pool out of the cells). The injury is a dose of unpaid ATP — the demand glycolysis could not cover either,
+    measured against the resting muscle's own bill — summed with the thermal dose (CEM43, Sapareto & Dewey 1984, with
+    the human critical exposure 42 °C for 45 min as its threshold): no necrosis below 120 dose minutes, complete by
+    300, from the warm-ischaemia tolerance of skeletal muscle (about three hours, necrotic by six; Blaisdell 2002,
+    Labbe 1987). Ten minutes of no flow injures nothing; a fulminant MH crisis spends the tolerance in about twenty.
+    CK, myoglobin and phosphate are released as state only. Crush, ischaemia and status epilepticus would use the same
+    mechanism.
+  - **Severity as a scenario input.** The peak whole-body VO2 multiple is the gain of this patient's and this trigger's
+    calcium leak, so it is named on the scenario: phenotype `typical` × 2.5 (the centre of the sourced × 2–3) or
+    `fulminant` × 5 (Nelson 2001), on the `condition mh` event, as `vo2PeakX` 1–6, or in the susceptible patient's
+    profile (`patient.neuro.mhPhenotype`). Absent = typical, so every existing scenario keeps its course.
+  **Untreated MH arrests again, by the mechanism untreated MH kills by** (measured on the MH card, 80 kg, ×1, seed 7;
+  no number here was tuned): the typical phenotype reaches EtCO2 100 at +15 min, pH 7.02, lactate 16 at the brake's
+  ceiling, and arrests in VF by hyperkalaemia at +119.0 min with K⁺ 9.4 at 38.80 °C; the fulminant phenotype reaches
+  EtCO2 151 and pH 6.82 and arrests at +26.6 min with K⁺ 13.8 at 38.21 °C. The temperature is whatever the energy
+  balance gives — the 42 °C story is still out of reach, and still a recorded miss. The treated MH card is unchanged in
+  its states and about 1 min earlier in its course; its EtCO2 after dantrolene is a little higher (the buffered CO2 now
+  comes from every bed's accumulating lactate). **The S5 haemorrhage card no longer arrests at its scripted 2.5 L**:
+  its collapse is a bifurcation about 1 mmHg of MAP wide at +10 min, and the bleeding patient's own buffered lactate
+  CO2 (≈ 33 mL/min, PaCO2 +4–5 mmHg at this fixed ventilation) is worth about that much through the hypercapnic
+  sympathetic term. Measured: 2550 mL arrests at 667 s (the base's 660), 2600 at 652, 2800 at 609; the onset rhythm is
+  asystole rather than a pulseless junctional PEA, because the VF share at the onset draw rises with the
+  catecholamines. The card's bleed is the owner's to re-rule; nothing was tuned here. Five bands moved (the
+  known-deviations page carries each with its measured number); one flips back to passing (`arrest-etco2`, EtCO2 18.2
+  at +2 min of CPR against its ≥ 17).
+
 - Engine (E131): malignant hyperthermia runs on ONE skeletal-muscle metabolic rate, and the heat model follows the
   blood flow. The hypermetabolic muscle adds an oxygen demand of activity × 1.5 × the resting VO2 (whole-body VO2 × 2.5
   at full fulminant activity: tables §5.3 "×2–3"; swine ≈ × 2, Gronert 1976/1977/1986). The VO2 demand, the CO2 (the
