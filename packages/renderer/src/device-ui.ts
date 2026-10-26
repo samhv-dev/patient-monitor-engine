@@ -23,14 +23,50 @@ const PULSE_SOURCE: Readonly<Record<string, NumericId>> = { ART: 'prAbp', IBP1: 
 const BELL_OFF_SVG =
   '<svg viewBox="0 0 16 16" width="14" height="14" aria-label="alarm off"><path d="M8 2a4 4 0 0 0-4 4v3l-1.5 2h11L12 9V6a4 4 0 0 0-4-4zm-1.5 11a1.5 1.5 0 0 0 3 0" fill="none" stroke="#F00000" stroke-width="1.4"/><path d="M2 14L14 2" stroke="#F00000" stroke-width="1.6"/></svg>';
 
-/** CSS for the flash classes of this skin: 50 % duty (skin `alarms.lamp.duty`), 2.0 / 0.6 Hz (brief §6.4). */
+/** UI review #17: a flashing value's off phase keeps at least this contrast against the monitor's background (WCAG 2.2
+ *  SC 1.4.3, the large-text minimum: the numerics are ≥ 24 px). */
+export const FLASH_MIN_CONTRAST = 3;
+/** The off phase never dims less than this, so a colour already below 3:1 still visibly flashes. */
+const FLASH_FLOOR_MAX = 0.85;
+const rgbOf = (c: string): [number, number, number] => {
+  const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(c.trim())?.[1];
+  if (hex) {
+    const h = hex.length === 3 ? [...hex].map((x) => x + x).join('') : hex;
+    return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)) as [number, number, number];
+  }
+  const m = c.match(/[\d.]+/g)?.map(Number) ?? [];
+  return [m[0] ?? 0, m[1] ?? 0, m[2] ?? 0];
+};
+const luminance = ([r, g, b]: [number, number, number]): number => {
+  const lin = (v: number) => ((v /= 255) <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+};
+/** WCAG contrast ratio of two CSS colours (#rgb, #rrggbb or rgb()). */
+export function contrastRatio(a: string, b: string): number {
+  const [x, y] = [luminance(rgbOf(a)), luminance(rgbOf(b))].sort((p, q) => q - p) as [number, number];
+  return (x + 0.05) / (y + 0.05);
+}
+/** The lowest off-phase opacity (2 decimals, rounded up) at which `color` over `bg` keeps FLASH_MIN_CONTRAST, at most
+ *  FLASH_FLOOR_MAX. */
+export function flashFloor(color: string, bg: string): number {
+  const c = rgbOf(color);
+  const b = rgbOf(bg);
+  const mix = (a: number) => `rgb(${c.map((v, i) => a * v + (1 - a) * (b[i] as number)).join(',')})`;
+  for (let k = 0; k <= 100; k++) if (contrastRatio(mix(k / 100), bg) >= FLASH_MIN_CONTRAST) return Math.min(FLASH_FLOOR_MAX, k / 100);
+  return FLASH_FLOOR_MAX;
+}
+
+/** CSS for the flash classes of this skin: 50 % duty (skin `alarms.lamp.duty`), 2.0 / 0.6 Hz (brief §6.4). A value's
+ *  off phase stops at its colour's floor (`--pme-dim`, flashFloor; UI review #17); the lamp still blinks to 0.12. */
 export function flashCss(r: ResolvedSkin): string {
   const l = r.skin.alarms.lamp;
   const pct = Math.round(l.duty * 100);
   return [
     `@keyframes pme-blink{0%{opacity:1}${pct}%{opacity:0.12}}`,
+    `@keyframes pme-blink-v{0%{opacity:1}${pct}%{opacity:var(--pme-dim, 0.5)}}`,
     `.pme-f1{animation:pme-blink ${(1 / l.flashHz.L1).toFixed(5)}s step-end infinite}`,
     `.pme-f2{animation:pme-blink ${(1 / l.flashHz.L2).toFixed(5)}s step-end infinite}`,
+    '.v.pme-f1,.v.pme-f2,.pv.pme-f1,.pv.pme-f2{animation-name:pme-blink-v}',
     '.pme-hdr{display:flex;align-items:center;gap:10px;height:30px;padding:0 8px;font-size:15px;box-sizing:border-box}',
     '.pme-bar{flex:1;height:22px;line-height:22px;padding:0 8px;border-radius:2px;white-space:nowrap;overflow:hidden;font-weight:600}',
     '.pme-lamp{width:18px;height:18px;border-radius:50%;flex:none}',
@@ -363,6 +399,12 @@ export class DeviceUI {
   private nibpLast: { sys: number; dia: number; map: number; at: number } | null = null;
   private nibpEv: NibpEvent | undefined;
   private nibpPr: number | null = null; // The cuff's pulse rate (the NIBP tile's PR extra)
+  private readonly dims = new Map<string, number>(); // UI review #17: a colour's flash floor, computed once
+  private dimOf(color: string): number {
+    let d = this.dims.get(color);
+    if (d === undefined) this.dims.set(color, (d = flashFloor(color || this.r.render.foreground, this.r.render.background)));
+    return d;
+  }
   /** Wall time at which THIS window received the last NIBP result (rc.3 tile; blank after a restore or a late join, E102). */
   private nibpWallMs: number | null = null;
   private status: AlarmStatus | null = null;
@@ -943,6 +985,8 @@ export class DeviceUI {
       const bar = av.flash !== null ? this.r.skin.alarms.messageBar[`L${av.flash}`] : null;
       tile.value.style.background = box && bar ? bar.bg : '';
       tile.value.style.color = box && bar ? bar.fg : '';
+      // UI review #17: the off phase stops at this colour's floor (a flash box dims as a whole: its fill's floor)
+      if (av.flash !== null) tile.value.style.setProperty('--pme-dim', String(this.dimOf(box && bar ? bar.bg : tile.el.style.color)));
     }
     if (grid) this.fitSplits();
   }
