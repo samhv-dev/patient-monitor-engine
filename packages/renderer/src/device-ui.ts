@@ -711,10 +711,11 @@ export class DeviceUI {
   setNote(text: string): boolean {
     this.note = text;
     this.hx.sp.textContent = this.two ? text : '';
-    // a phone: one line per part ("SIMULATION" over "not a clinical monitor"); the text stays whole for a reader
-    this.noteEl.replaceChildren(...(this.portrait && text ? text.split(' · ').map((part, i, all) => {
+    // a phone: one line per part ("SIMULATION" over "not a clinical monitor", the line break in place of the middle
+    // dot); the text stays whole for a reader
+    this.noteEl.replaceChildren(...(this.portrait && text ? text.split(' · ').map((part) => {
       const s = this.noteEl.ownerDocument.createElement('span');
-      s.textContent = i < all.length - 1 ? `${part} ·` : part;
+      s.textContent = part;
       return s;
     }) : []));
     this.noteEl.setAttribute('aria-label', this.portrait ? text : '');

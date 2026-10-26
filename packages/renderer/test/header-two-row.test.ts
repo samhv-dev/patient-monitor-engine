@@ -54,7 +54,7 @@ describe('two-row header (saadat-like)', () => {
     expect(portrait.setNote('SIMULATION · not a clinical monitor')).toBe(true);
     portrait.paint(1);
     const note = portrait.header.querySelector('[data-pme="note"]') as HTMLElement;
-    expect([[...note.children].map((s) => s.textContent), note.getAttribute('aria-label'), note.style.display, (portrait.header.querySelector('.pme-bar') as HTMLElement).style.display]).toEqual([['SIMULATION ·', 'not a clinical monitor'], 'SIMULATION · not a clinical monitor', '', 'none']);
+    expect([[...note.children].map((s) => s.textContent), note.getAttribute('aria-label'), note.style.display, (portrait.header.querySelector('.pme-bar') as HTMLElement).style.display]).toEqual([['SIMULATION', 'not a clinical monitor'], 'SIMULATION · not a clinical monitor', '', 'none']);
     portrait.onEvent({ ...status(2, 'adult'), active: [{ id: 'HR_HIGH', level: 2, category: 'physiological', text: 'HR TOO HIGH', since: 1, latched: false, acked: false, sounding: true }] } as EngineEvent);
     portrait.paint(2);
     expect([note.style.display, (portrait.header.querySelector('.pme-bar') as HTMLElement).style.display]).toEqual(['none', '']);
