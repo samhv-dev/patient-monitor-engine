@@ -943,7 +943,8 @@ export class DeviceUI {
             mode.dataset.full = mode.textContent = label;
             if (this.portrait) this.fitHead(tile.el);
           }
-          if (time) time.textContent = this.nibpWallMs !== null ? formatWallTime(this.nibpWallMs) : '';
+          // #15: the last result's time goes with the result: not while the cuff runs ("NBP measuring" ran over it)
+          if (time) time.textContent = this.nibpWallMs !== null && !measuring ? formatWallTime(this.nibpWallMs) : '';
         }
       } else if (TILE_NUMERICS[p].numerics.length === 3) {
         const [s, d, m] = TILE_NUMERICS[p].numerics.map((k) => v[k]);

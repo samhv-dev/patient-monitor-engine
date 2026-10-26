@@ -195,11 +195,17 @@ describe('pass 3: grid rules for the T column, the IBP limits row, the NIBP meas
     ui.paint(4);
     expect(v().textContent).toBe('96');
     expect(tile('NIBP').querySelector('[data-pme="s"]')?.textContent).toBe('NBP measuring');
+    expect(tile('NIBP').querySelector('[data-pme="ntime"]')?.textContent).toBe(''); // no last-result time beside it
     expect(v().classList.contains('cuff')).toBe(true);
     ui.onEvent({ type: 'nibp', t: 30, phase: 'done', result: { sys: 118, dia: 76, map: 90, pr: 70 } } as unknown as EngineEvent);
     ui.onEvent({ type: 'measurement', t: 30, values: { nibpSys: { value: 118, flag: 'valid', at: 30 }, nibpDia: { value: 76, flag: 'valid', at: 30 }, nibpMean: { value: 90, flag: 'valid', at: 30 } } } as unknown as EngineEvent);
     ui.paint(30);
     expect(v().classList.contains('cuff')).toBe(false); // the result in the BP font again
+    const ntime = () => tile('NIBP').querySelector('[data-pme="ntime"]')?.textContent ?? '';
+    expect(ntime()).toMatch(/^\d\d:\d\d:\d\d$/);
+    ui.onEvent({ type: 'nibp', t: 330, phase: 'inflating', cuffMmHg: 60 } as unknown as EngineEvent);
+    ui.paint(330);
+    expect(ntime()).toBe(''); // the next cycle: the last result's time goes with the result
     ui.destroy();
   });
 });
