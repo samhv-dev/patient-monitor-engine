@@ -58,17 +58,18 @@ No exported numeric constants.
 | S9 the same: SaO2 < 90 % at 5 min (truth, not the display; the proposed band SpO2 ≤ 92 at FiO2 0.5 is Ali's, item 15 | 97.8 % | — | MIS-SPECIFIED ([audit row 71](../../docs/validation/target-audit/30-target-audit.md#row-71)) | Ventilated at FiO2 0.5 without a PFO: SaO2 stays ≥ 92 %, with a fall of 1–6 points by 5 min. Move "SpO2 ≤ 92" to the awake room-air arm (RS13). If on-O2 desaturation is wanted, add a PFO (right-to-left shunt) variant | [`clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) |
 | S9 the same: CVP ≥ 15 and MAP < 65 at 5 min (RV failure; Q15 | CVP 9.3, MAP 82.1 | — | TOO NARROW ([audit row 44](../../docs/validation/target-audit/30-target-audit.md#row-44)) | CVP >= 10 mmHg (or >= baseline + 5) and SBP < 90 (MAP < 65 optional) | [`clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) |
 | S13 VF + standard-quality CPR (q 0.8, no adrenaline): the continuous coronary perfusion pressure (CoPP) 15–25 mmHg (Paradis 1990 | 24.9–28.0 | Paradis 1990 | MIS-SPECIFIED ([audit row 25](../../docs/validation/target-audit/30-target-audit.md#row-25)) | 10-30 mmHg for a salvageable patient on CPR without a vasopressor (>= 15 kept as the ROSC threshold, not as a range edge) | [`clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) |
+| S16 untreated MH under sevoflurane: arrest (VF/asystole) before 60 min, core ≤ 44 °C at the arrest (MHAUS; Miller, MH; Q6) | no arrest in 60 min, core 37.6 °C at 60 min | Miller, MH | not audited | — | [`clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) |
 | CPR + 2 L + adrenaline 1 mg after full exsanguination: a pulse within 4 min of the first compression | none in 10 min | — | TOO NARROW ([audit row 26](../../docs/validation/target-audit/30-target-audit.md#row-26)) | a pulse within 10 min of starting volume (3-10 min); no pulse without volume (the passing CPR-alone row) | [`clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) |
 | 10 min of VF with standard-quality CPR alone: the myocardium stays ischaemic, flow share kIsch < 0.9 throughout (Weisfeldt & Becker 2002 | max 0.89 | Weisfeldt & Becker 2002 | RIGHT ([audit row 27](../../docs/validation/target-audit/30-target-audit.md#row-27)) | keep (< 0.9); a mean < 0.7 would also be supported | [`clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) |
 | MANUAL target 18/10 mmHg: the displayed arterial pressure reaches the target (≤ 25/15) — the tracker floors it (the monitor showed 65/30) | — | — | RIGHT ([audit row 45](../../docs/validation/target-audit/30-target-audit.md#row-45)) | keep | [`clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) |
 
 ## Tests
 
-29 tests in 1 files; 9 expected failures, 0 skipped.
+29 tests in 1 files; 10 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
-| [`engine/clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) | 29 | 9 | 0 |
+| [`engine/clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) | 29 | 10 | 0 |
 
 ## Related documents
 
