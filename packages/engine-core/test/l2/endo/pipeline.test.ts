@@ -69,7 +69,7 @@ describe('endocrine pipeline', () => {
       advanceEndo(es, ctx as never, s);
     }
     const o = es.core.out;
-    const vo2 = tempFactor(resp.temp.tc) * thermalMetabolic(resp.temp, 7200).vo2F * resp.temp.extraX; // = metabolic(rs, t, 'o2') awake
+    const vo2 = tempFactor(resp.temp.tc) * thermalMetabolic(resp.temp, 7200).shiverF * resp.temp.extraX; // = metabolic(rs, t, 'o2') awake
     expect(resp.temp.tc).toBeGreaterThanOrEqual(38.5);
     expect(resp.temp.tc).toBeLessThanOrEqual(41);
     expect(vo2).toBeGreaterThanOrEqual(1.3);

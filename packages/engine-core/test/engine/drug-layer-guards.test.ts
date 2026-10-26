@@ -67,18 +67,17 @@ describe('the flipped matrix cells', { timeout: 3_600_000 }, () => {
       expect(r.k20).toBeGreaterThanOrEqual(5.5);
       expect(r.k20).toBeLessThanOrEqual(6.5);
     });
-    // E117 (rc.4): the MH's larger, front-loaded sympathetic drive narrows the 10-min EtCO2 difference between the
-    // dantrolene and the untreated arm from −5.5 to −4.6 mmHg (it moves with the MH sympathetic gain: 2 → −4.8 to −5.6,
-    // 2.5 → −4.6; the MH vasodilation and the hypercapnic term do not move it). The cause is not isolated; the band is
-    // kept and the miss recorded (R45), as an owner item beside E117.
-    it.fails('… and dantrolene 2.5 mg/kg lowers EtCO2 by 5–40 within 10 min (DI-65) — measured −4.6 after E117 (−5.5 before)', async () => {
+    // E117 (rc.4) had narrowed the 10-min EtCO2 difference between the dantrolene and the untreated arm to −4.6 mmHg
+    // (a known miss). E131: the CO2 now derives from the one muscle rate (its achieved O2 at the muscle RQ + the
+    // buffered MH lactate's CO2), so dantrolene lowers all of it together — measured −7.5, in the band again.
+    it('… and dantrolene 2.5 mg/kg lowers EtCO2 by 5–40 within 10 min (DI-65) — measured −7.5 after E131 (−4.6 after E117, −5.5 before)', async () => {
       const r = await mhArms();
       expect(r.dEt).toBeGreaterThanOrEqual(-40);
       expect(r.dEt).toBeLessThanOrEqual(-5);
     });
     // R45: NOT a regression — identical on the pre-FU-7 baseline b004289 (audit DI-65 etco2At10min 42.2, TW): FU-4's one
     // physical dead space (endo-acceptance.test.ts carries the same it.fails for this rig family).
-    it.fails('… EtCO2 52–70 by 10 min at constant MV (DI-65; tables §7 check 21) — measured 42.2 (baseline b004289: 42.2)', async () => {
+    it.fails('… EtCO2 52–70 by 10 min at constant MV (DI-65; tables §7 check 21) — measured 48.3 after E131 (42.2 before; baseline b004289: 42.2)', async () => {
       const r = await mhArms();
       expect(r.et10).toBeGreaterThanOrEqual(52);
       expect(r.et10).toBeLessThanOrEqual(70);

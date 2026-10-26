@@ -46,6 +46,22 @@ the public API is what the packages export (see the API reference), the `pme-sce
   noise, unorganised and small (half the pulse detector's floor, so it is never counted as a pulse). With these, the
   low-flow guard "at MAP < 30 the SpO₂ is never shown valid" in Ali's case now passes (was SpO₂ 99 at 760–765 s).
   (Persian entries for the new footnote and alarm words added untranslated, `reviewed: false`.)
+- Engine (E131): malignant hyperthermia runs on ONE skeletal-muscle metabolic rate, and the heat model follows the
+  blood flow. The hypermetabolic muscle adds an oxygen demand of activity × 1.5 × the resting VO2 (whole-body VO2 × 2.5
+  at full fulminant activity: tables §5.3 "×2–3"; swine ≈ × 2, Gronert 1976/1977/1986). The VO2 demand, the CO2 (the
+  achieved part at the muscle RQ 0.97, Cooper 1992, plus 22 mL per mmol of the MH muscle's anaerobic lactate,
+  Beaver 1986), the heat (the achieved part × 21.1 kJ/L O2, Weir 1949), the lactate (the unmet demand) and the K efflux
+  all derive from it; dantrolene lowers them together. `MH_HEAT_X` (8), `MH_VO2_FACTOR` (2.5) and `MH_VCO2_FACTOR` (3)
+  are deleted: they made 640–705 W of heat from oxygen worth about 120–180 W. Heat is oxidative, so the basal,
+  endocrine, shivering and MH heat follow the blood model's delivered share of the oxygen demand; the core–skin
+  conductance above tissue conduction (5.28 W/m²/°C, Gagge 1971) follows a skin-perfusion flow fraction; sweating and
+  shivering need a perfused brain (the baroreflex's perfusion gate). The MH card moves (owner-accepted): EtCO2 95 at
+  +15 min (was 72), the MH heat is ≈ 140 W, the core rises ≈ 0.12 °C per 5 min and plateaus near 38.6 °C, so the
+  untreated card reaches neither its "established" state (+103 min) nor a hyperthermic VF; a body in arrest cools
+  ≈ 1 °C/h (was 3.8 °C/h). Ten bands are now recorded misses (it.fails; the known-deviations page), two
+  flip back to passing (dantrolene's 10-min EtCO2 effect −7.5; EtCO2 ≥ 60 by 10 min, 64). The healthy and premedicated
+  inductions are bit-identical; the haemorrhage card keeps every state time, its core is up to 0.18 °C lower after the
+  arrest.
 
 - Showcase tamponade card (card text only): the monitor alone does not identify a tamponade, so the card now
   narrates the bedside finding. Arrival (where the recognition cues appear, about 1:00, and the instructor ticks *Name
