@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import type { EngineEvent } from '@pme/engine-core';
 import { resolveSkin } from '@pme/skins';
 import { DeviceUI } from '../src/device-ui.ts';
-import { fitPart, fitTile, LIM_MIN_SCALE } from '../src/tile-fit.ts';
+import { fitPart, fitTile, LIM_MIN_PX, LIM_MIN_SCALE } from '../src/tile-fit.ts';
 
 const css = () => [...document.head.querySelectorAll('style')].at(-1)?.textContent ?? '';
 function mount(id: string, co2 = false, portrait = false) {
@@ -45,6 +45,20 @@ describe('pass 3: the fit rules of a split part (tile-fit.ts)', () => {
     expect(f.valScale).toBeCloseTo((90 - 4 - 14 * LIM_MIN_SCALE) / 85, 5);
     expect(fitPart(127, etco2, 'value', 4).valScale).toBe(1);
     expect(fitPart(40, { label: 30, unit: 20, lim: 0, value: 50 }, 'head', 4).valScale).toBeCloseTo(40 / 50, 5); // a centred value wider than its part
+  });
+  it('UI review #24: the limits never go below 9 px, whatever the monitor height; the digits give way instead', () => {
+    // the T column at the 1280 × 800 Instructor view: a 52 px part, limits 10.3 px (13 px × 634 / 800), "39.0" 21 px
+    // wide, the value 36 px. The fraction alone gave 0.6 × 10.3 ≈ 6.2 px limits
+    const t = { label: 18.5, unit: 0, lim: 21, value: 36 };
+    expect(fitPart(52, t, 'value', 6).limScale).toBe(LIM_MIN_SCALE);
+    const f = fitPart(52, t, 'value', 6, 10.3);
+    expect(LIM_MIN_PX).toBe(9);
+    expect(f.limScale * 10.3).toBeCloseTo(9, 5);
+    expect(f.valScale).toBeCloseTo((52 - 6 - 21 * f.limScale) / 36, 5);
+    // a part with room keeps everything at full size; small limits (≤ 9 px already) never shrink
+    expect(fitPart(127, { label: 62, unit: 33, lim: 17, value: 54 }, 'value', 4, 15)).toEqual({ unitUnder: false, limScale: 1, valScale: 1 });
+    expect(fitPart(40, t, 'value', 6, 8).limScale).toBe(1);
+    expect(fitTile(52, [{ widths: t, side: 'value' }], 6, 10.3).limScale * 10.3).toBeCloseTo(9, 5);
   });
   it('a tile takes the unit under if any part needs it, and one limit scale (the smallest) for all its pairs', () => {
     const f = fitTile(70, [{ widths: etco2, side: 'value' }, { widths: { label: 55, unit: 33, lim: 0, value: 20 }, side: 'head' }, { widths: { label: 55, unit: 33, lim: 17, value: 30 }, side: 'head' }], 4);
@@ -163,9 +177,35 @@ describe('pass 3: grid rules for the T column, the IBP limits row, the NIBP meas
     ui.onEvent({ type: 'nibp', t: 3, phase: 'inflating', cuffMmHg: 44 } as unknown as EngineEvent);
     ui.paint(3);
     const s = tile('NIBP').querySelector('[data-pme="s"]') as HTMLElement;
-    expect(s.textContent).toBe('mmHg NBP inflating');
+    expect(s.textContent).toBe('NBP inflating'); // UI review #15: the unit is the header's "(mmHg)"; "mmHg NBP infla…" was cut
     expect(s.classList.contains('busy')).toBe(true);
     expect(css()).toContain('[data-param="NIBP"] .srow .s.busy{');
+    ui.destroy();
+  });
+
+  it('UI review #15: the inflating cuff pressure is small in the value slot (the mean’s size), never in the BP font', () => {
+    const { ui, tile } = mount('saadat-like');
+    const v = () => tile('NIBP').querySelector('[data-pme="v"]') as HTMLElement;
+    ui.onEvent({ type: 'nibp', t: 3, phase: 'inflating', cuffMmHg: 132 } as unknown as EngineEvent);
+    ui.paint(3);
+    expect(v().textContent).toBe('132');
+    expect(v().classList.contains('cuff')).toBe(true);
+    expect(css()).toMatch(/\[data-param="NIBP"\] \.v\.cuff\{font-size:[^}]*!important/);
+    ui.onEvent({ type: 'nibp', t: 4, phase: 'deflating', cuffMmHg: 96 } as unknown as EngineEvent);
+    ui.paint(4);
+    expect(v().textContent).toBe('96');
+    expect(tile('NIBP').querySelector('[data-pme="s"]')?.textContent).toBe('NBP measuring');
+    expect(tile('NIBP').querySelector('[data-pme="ntime"]')?.textContent).toBe(''); // no last-result time beside it
+    expect(v().classList.contains('cuff')).toBe(true);
+    ui.onEvent({ type: 'nibp', t: 30, phase: 'done', result: { sys: 118, dia: 76, map: 90, pr: 70 } } as unknown as EngineEvent);
+    ui.onEvent({ type: 'measurement', t: 30, values: { nibpSys: { value: 118, flag: 'valid', at: 30 }, nibpDia: { value: 76, flag: 'valid', at: 30 }, nibpMean: { value: 90, flag: 'valid', at: 30 } } } as unknown as EngineEvent);
+    ui.paint(30);
+    expect(v().classList.contains('cuff')).toBe(false); // the result in the BP font again
+    const ntime = () => tile('NIBP').querySelector('[data-pme="ntime"]')?.textContent ?? '';
+    expect(ntime()).toMatch(/^\d\d:\d\d:\d\d$/);
+    ui.onEvent({ type: 'nibp', t: 330, phase: 'inflating', cuffMmHg: 60 } as unknown as EngineEvent);
+    ui.paint(330);
+    expect(ntime()).toBe(''); // the next cycle: the last result's time goes with the result
     ui.destroy();
   });
 });

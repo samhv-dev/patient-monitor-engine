@@ -16,12 +16,20 @@ export const o2Fio2 = (device: O2Device, flowLpm: number): number => (device ===
 /** Who breathes and through what, as the engine's 1 Hz state reports it. */
 export type Breathing = NonNullable<Extract<EngineEvent, { type: 'state' }>['breathing']>;
 
+const DEVICE_NAME = { ett: 'tracheal tube', sga: 'supraglottic airway' } as const;
+
 /** Why the oxygen control is off now, or null when it may act: only a patient breathing spontaneously with no airway
  *  device, the bag or a ventilator. Otherwise its `source: 'spontaneous'` event would take the patient off the bag or
- *  the ventilator (on an intubated patient, a silent extubation of the model), so it is never sent. */
-export function oxygenBlock(b: Breathing | undefined, breathingStaged = false): string | null {
+ *  the ventilator (on an intubated patient, a silent extubation of the model), so it is never sent. The reason says
+ *  what is true (UI review #13): the airway device or the bag in use, and the FiO₂ the engine reports (`fio2`, a
+ *  fraction, from the state's values), from the ventilator or the bag. */
+export function oxygenBlock(b: Breathing | undefined, breathingStaged = false, fio2?: number): string | null {
   if (!b) return 'Waiting for the monitor’s state.';
-  if (b.source === 'bvm' || b.source === 'ventilator' || b.source === 'external' || b.device !== 'none') return 'FiO₂ is set on the ventilator / bag.';
+  const from = b.source === 'bvm' ? ' from the bag' : b.source === 'ventilator' || b.source === 'external' ? ' from the ventilator' : '';
+  const fi = `FiO₂${typeof fio2 === 'number' ? ` ${Math.round(fio2 * 100)} %` : ''}${from}`;
+  if (b.device !== 'none') return `Airway device in use (${DEVICE_NAME[b.device]}): ${fi}.`;
+  if (b.source === 'bvm') return `Bag-mask in use: ${fi}.`;
+  if (b.source === 'ventilator' || b.source === 'external') return `Ventilator in use: ${fi}.`;
   if (b.source !== 'spontaneous') return 'No spontaneous breathing: oxygen by mask needs a patient who breathes.';
   if (breathingStaged) return 'A breathing change is staged: commit it first.';
   return null;

@@ -23,14 +23,50 @@ const PULSE_SOURCE: Readonly<Record<string, NumericId>> = { ART: 'prAbp', IBP1: 
 const BELL_OFF_SVG =
   '<svg viewBox="0 0 16 16" width="14" height="14" aria-label="alarm off"><path d="M8 2a4 4 0 0 0-4 4v3l-1.5 2h11L12 9V6a4 4 0 0 0-4-4zm-1.5 11a1.5 1.5 0 0 0 3 0" fill="none" stroke="#F00000" stroke-width="1.4"/><path d="M2 14L14 2" stroke="#F00000" stroke-width="1.6"/></svg>';
 
-/** CSS for the flash classes of this skin: 50 % duty (skin `alarms.lamp.duty`), 2.0 / 0.6 Hz (brief §6.4). */
+/** UI review #17: a flashing value's off phase keeps at least this contrast against the monitor's background (WCAG 2.2
+ *  SC 1.4.3, the large-text minimum: the numerics are ≥ 24 px). */
+export const FLASH_MIN_CONTRAST = 3;
+/** The off phase never dims less than this, so a colour already below 3:1 still visibly flashes. */
+const FLASH_FLOOR_MAX = 0.85;
+const rgbOf = (c: string): [number, number, number] => {
+  const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(c.trim())?.[1];
+  if (hex) {
+    const h = hex.length === 3 ? [...hex].map((x) => x + x).join('') : hex;
+    return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)) as [number, number, number];
+  }
+  const m = c.match(/[\d.]+/g)?.map(Number) ?? [];
+  return [m[0] ?? 0, m[1] ?? 0, m[2] ?? 0];
+};
+const luminance = ([r, g, b]: [number, number, number]): number => {
+  const lin = (v: number) => ((v /= 255) <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+};
+/** WCAG contrast ratio of two CSS colours (#rgb, #rrggbb or rgb()). */
+export function contrastRatio(a: string, b: string): number {
+  const [x, y] = [luminance(rgbOf(a)), luminance(rgbOf(b))].sort((p, q) => q - p) as [number, number];
+  return (x + 0.05) / (y + 0.05);
+}
+/** The lowest off-phase opacity (2 decimals, rounded up) at which `color` over `bg` keeps FLASH_MIN_CONTRAST, at most
+ *  FLASH_FLOOR_MAX. */
+export function flashFloor(color: string, bg: string): number {
+  const c = rgbOf(color);
+  const b = rgbOf(bg);
+  const mix = (a: number) => `rgb(${c.map((v, i) => a * v + (1 - a) * (b[i] as number)).join(',')})`;
+  for (let k = 0; k <= 100; k++) if (contrastRatio(mix(k / 100), bg) >= FLASH_MIN_CONTRAST) return Math.min(FLASH_FLOOR_MAX, k / 100);
+  return FLASH_FLOOR_MAX;
+}
+
+/** CSS for the flash classes of this skin: 50 % duty (skin `alarms.lamp.duty`), 2.0 / 0.6 Hz (brief §6.4). A value's
+ *  off phase stops at its colour's floor (`--pme-dim`, flashFloor; UI review #17); the lamp still blinks to 0.12. */
 export function flashCss(r: ResolvedSkin): string {
   const l = r.skin.alarms.lamp;
   const pct = Math.round(l.duty * 100);
   return [
     `@keyframes pme-blink{0%{opacity:1}${pct}%{opacity:0.12}}`,
+    `@keyframes pme-blink-v{0%{opacity:1}${pct}%{opacity:var(--pme-dim, 0.5)}}`,
     `.pme-f1{animation:pme-blink ${(1 / l.flashHz.L1).toFixed(5)}s step-end infinite}`,
     `.pme-f2{animation:pme-blink ${(1 / l.flashHz.L2).toFixed(5)}s step-end infinite}`,
+    '.v.pme-f1,.v.pme-f2,.pv.pme-f1,.pv.pme-f2{animation-name:pme-blink-v}',
     '.pme-hdr{display:flex;align-items:center;gap:10px;height:30px;padding:0 8px;font-size:15px;box-sizing:border-box}',
     '.pme-bar{flex:1;height:22px;line-height:22px;padding:0 8px;border-radius:2px;white-space:nowrap;overflow:hidden;font-weight:600}',
     '.pme-lamp{width:18px;height:18px;border-radius:50%;flex:none}',
@@ -104,6 +140,8 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-portrait .pme-stile .v{font-size:min(9vw,36px);white-space:nowrap}',
     '.pme-portrait .pme-stile.large .v{font-size:min(11vw,44px)}',
     '.pme-portrait .pme-stile .s{font-size:12px;white-space:nowrap;overflow:hidden;min-height:14px}',
+    // UI review #15: a phone shows the NIBP cuff pressure small too, never as a blood pressure
+    '.pme-portrait .pme-stile.rc3[data-param="NIBP"] .v.cuff{font-size:min(5vw,20px)}',
     // UI-A #10: a four-part split row (BFA: BFI% BS% SQI% EMG%) in a third of a phone's width as two lines of two —
     // in one line "EMG%" ran past the tile into EtAA; a part with no digits takes no digit line
     '.pme-portrait .pme-stile.split-row .parts:has(>.part:nth-child(4)){flex-wrap:wrap;row-gap:2px}',
@@ -287,8 +325,11 @@ function photoCss(g: LayoutGrid): string[] {
     '.pme-grid>div>.pme-stile[data-param="NMT"],.pme-grid>div>.pme-stile[data-param="AGENTS"]{flex:0 0 auto}',
     `.pme-grid .pme-stile.rc3[data-param="NMT"] .v,.pme-grid .pme-stile.rc3[data-param="AGENTS"] .v{font-size:${f(30)};line-height:1}`,
     `.pme-grid .pme-stile.rc3[data-param="NMT"] .s,.pme-grid .pme-stile.rc3[data-param="AGENTS"] .s{font-size:${f(15)};min-height:0;white-space:nowrap}`,
-    // NIBP while the cuff runs: "mmHg NBP inflating" on one line at the time size (it wrapped at the mean's 30 px)
+    // NIBP while the cuff runs: "NBP inflating" on one line at the time size (it wrapped at the mean's 30 px). UI review
+    // #15: the cuff pressure in the value slot at the mean's 30 px, not the result's BP font (the 57 px "150" read as a
+    // blood pressure); !important over the value's inline grid size (sizeValues)
     `.pme-grid .pme-stile.rc3[data-param="NIBP"] .srow .s.busy{font-size:${f(15)};white-space:nowrap}`,
+    `.pme-grid .pme-stile.rc3[data-param="NIBP"] .v.cuff{font-size:${f(30)} !important}`,
     // G6: the %SPO2 value left of centre, after its limits; the limits keep their column and the digits their field
     `.pme-strip .pme-stile .v{text-align:left;padding-left:${f(18)};white-space:nowrap}`,
     '.pme-strip .pme-stile.rc3 .vrow .lim.a{flex:none}',
@@ -358,6 +399,12 @@ export class DeviceUI {
   private nibpLast: { sys: number; dia: number; map: number; at: number } | null = null;
   private nibpEv: NibpEvent | undefined;
   private nibpPr: number | null = null; // The cuff's pulse rate (the NIBP tile's PR extra)
+  private readonly dims = new Map<string, number>(); // UI review #17: a colour's flash floor, computed once
+  private dimOf(color: string): number {
+    let d = this.dims.get(color);
+    if (d === undefined) this.dims.set(color, (d = flashFloor(color || this.r.render.foreground, this.r.render.background)));
+    return d;
+  }
   /** Wall time at which THIS window received the last NIBP result (rc.3 tile; blank after a restore or a late join, E102). */
   private nibpWallMs: number | null = null;
   private status: AlarmStatus | null = null;
@@ -868,6 +915,7 @@ export class DeviceUI {
       tile.el.style.display = modulePresent(p, v, t) || this.r.skin.layout.showAlways?.includes(p) ? '' : 'none';
       let source: string | null = null; // the HR tile's rate source (ECG, IBP1, SpO2)
       let parts3: string[] | null = null; // pass 3: an IBP value as its three spans
+      let cuff = false; // UI review #15: the rc.3 NIBP value is the live cuff pressure (small), not a result
       if (p === 'HR') ({ main, label, source } = this.hrTile());
       else if (p === 'NMT') ({ main, sub } = formatNmt(v, g.noValue));
       else if (p === 'BFA') ({ main, sub } = formatBfa(v, tile.spec.extras?.[0] ?? 'SR', g.noValue));
@@ -885,8 +933,9 @@ export class DeviceUI {
           // the result; the inflating and measuring states keep their text
           const measuring = this.nibpEv?.phase === 'inflating' || this.nibpEv?.phase === 'deflating';
           if (!measuring && this.nibpEv?.phase !== 'failed' && this.nibpLast) main = `${this.nibpLast.sys} / ${this.nibpLast.dia}`;
-          if (!measuring) sub = n.sub === '(---)' ? '' : n.sub;
+          sub = measuring ? n.status : n.sub === '(---)' ? '' : n.sub; // measuring: the unit is the header's "(mmHg)"
           tile.sub.classList.toggle('busy', measuring);
+          cuff = measuring;
           const mode = tile.el.querySelector<HTMLElement>('[data-pme="mode"]');
           const time = tile.el.querySelector('[data-pme="ntime"]');
           const label = nibpModeLabel(this.nibpEv);
@@ -894,7 +943,8 @@ export class DeviceUI {
             mode.dataset.full = mode.textContent = label;
             if (this.portrait) this.fitHead(tile.el);
           }
-          if (time) time.textContent = this.nibpWallMs !== null ? formatWallTime(this.nibpWallMs) : '';
+          // #15: the last result's time goes with the result: not while the cuff runs ("NBP measuring" ran over it)
+          if (time) time.textContent = this.nibpWallMs !== null && !measuring ? formatWallTime(this.nibpWallMs) : '';
         }
       } else if (TILE_NUMERICS[p].numerics.length === 3) {
         const [s, d, m] = TILE_NUMERICS[p].numerics.map((k) => v[k]);
@@ -932,9 +982,12 @@ export class DeviceUI {
       if (tile.rc3) this.paintPairs(tile, av.pairs);
       const base = split ? 'pv' : 'v';
       tile.value.className = av.flash === 1 ? `${base} pme-f1` : av.flash === 2 ? `${base} pme-f2` : base;
+      if (cuff) tile.value.classList.add('cuff');
       const bar = av.flash !== null ? this.r.skin.alarms.messageBar[`L${av.flash}`] : null;
       tile.value.style.background = box && bar ? bar.bg : '';
       tile.value.style.color = box && bar ? bar.fg : '';
+      // UI review #17: the off phase stops at this colour's floor (a flash box dims as a whole: its fill's floor)
+      if (av.flash !== null) tile.value.style.setProperty('--pme-dim', String(this.dimOf(box && bar ? bar.bg : tile.el.style.color)));
     }
     if (grid) this.fitSplits();
   }
@@ -946,11 +999,14 @@ export class DeviceUI {
    * are measured only when the width or a text's length changes.
    */
   private fitSplits(): void {
+    // UI review #24: the grid's fonts scale with the monitor height (--pme-h on the mount's outer box), so a new height
+    // refits too (the width alone kept a fit measured at another height). An inline style: no layout read
+    const h = (this.tiles.parentElement?.parentElement as HTMLElement | null | undefined)?.style.getPropertyValue('--pme-h') ?? '';
     for (const tile of this.tileList) {
       const b = tile.rc3;
       if (!b || b.parts.length === 0 || tile.el.style.display === 'none') continue;
       const w = b.partW ?? 0;
-      const key = `${w}|${b.parts.map((p) => `${p.label.textContent}/${p.value.textContent?.length ?? 0}/${p.lim.textContent}`).join('|')}`;
+      const key = `${w}|${h}|${b.parts.map((p) => `${p.label.textContent}/${p.value.textContent?.length ?? 0}/${p.lim.textContent}`).join('|')}`;
       if (w <= 0 || b.fitKey === key) continue;
       b.fitKey = key;
       const el = tile.el;
@@ -969,7 +1025,9 @@ export class DeviceUI {
         widths: { label: width(p.label), unit: width(p.label.nextElementSibling), lim: width(p.lim), value: text(p.value) },
         side: (row && k > 0 ? 'head' : 'value') as LimSide,
       }));
-      const fit = fitTile(w, parts, row ? 4 : 6); // the column-gap of the part grid
+      const lim0 = b.parts.find((p) => p.lim.firstChild)?.lim;
+      const limPx = lim0 ? parseFloat(el.ownerDocument.defaultView?.getComputedStyle(lim0).fontSize ?? '') || 0 : 0; // full size: the fit's style is off
+      const fit = fitTile(w, parts, row ? 4 : 6, limPx); // the column-gap of the part grid
       el.classList.toggle('unit-under', fit.unitUnder);
       if (fit.limScale < 1) el.style.setProperty('--pme-lim-k', fit.limScale.toFixed(3));
       if (fit.valScale < 1) el.style.setProperty('--pme-val-k', fit.valScale.toFixed(3));

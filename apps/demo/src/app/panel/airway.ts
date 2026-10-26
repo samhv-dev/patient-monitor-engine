@@ -41,11 +41,19 @@ export function airwayTab(c: PanelCtx): HTMLElement {
   let o2: O2Device = 'none';
   const flow = select('Flow', [], '');
   const o2Hint = h('p', { class: 'hint' });
-  const block = () => oxygenBlock(c.link.ctl.state?.breathing, staging.has('ventilation'));
+  const fio2Now = () => c.link.ctl.state?.values?.fio2;
+  const block = () => oxygenBlock(c.link.ctl.state?.breathing, staging.has('ventilation'), fio2Now());
+  // UI review #13: the hint says what is true. Blocked: what is in use and its FiO₂, with no option pressed (neither
+  // room air nor a mask is what the patient has). Free: what Stage would give, and the patient's FiO₂ now when it differs
+  // (a card's "Preoxygenate: 100 % O₂" is not what the control last staged).
   const showO2 = () => {
     const why = block();
     const pct = Math.round(o2Fio2(o2, Number(flow.sel.value)) * 100);
-    setText(o2Hint, why ?? `${o2 === 'none' ? 'Room air: FiO₂' : 'FiO₂ about'} ${pct} %.`);
+    const now = fio2Now();
+    const nowPct = typeof now === 'number' ? Math.round(now * 100) : pct;
+    if (why) for (const b of o2Seg.querySelectorAll('button')) b.setAttribute('aria-pressed', 'false');
+    else o2Seg.set(o2);
+    setText(o2Hint, why ?? `${o2 === 'none' ? 'Room air: FiO₂' : 'FiO₂ about'} ${pct} %.${nowPct === pct ? '' : ` Now FiO₂ ${nowPct} %.`}`);
   };
   const syncO2 = () => {
     flow.sel.replaceChildren(...O2_FLOWS[o2].map((x) => h('option', { value: String(x) }, `${x} L/min`)));

@@ -258,8 +258,12 @@ export function tabs(label: string, defs: readonly TabDef[], initial: string, on
     select(b.dataset.tab as string);
     b.focus();
   });
+  // UI review #26: the panels share one scroller, so a tab opened at the last tab's offset ("Find a drug" hidden). Each
+  // tab keeps its own: the top on first open, where it was left on return
+  const scrolled = new Map<string, number>();
   function select(id: string): void {
     if (!defs.some((d) => d.id === id)) return;
+    if (cur) scrolled.set(cur, panels.scrollTop);
     cur = id;
     for (const b of btns) {
       const on = b.dataset.tab === id;
@@ -275,6 +279,7 @@ export function tabs(label: string, defs: readonly TabDef[], initial: string, on
       }
       if (p) p.hidden = d.id !== id;
     }
+    panels.scrollTop = scrolled.get(id) ?? 0;
     onSelect?.(id);
   }
   select(initial);
@@ -314,4 +319,12 @@ export function infoDialog(title: string, body: string | HTMLElement): Promise<v
     document.body.append(d);
     d.showModal();
   });
+}
+
+/** UI review #32: the monitor's PAUSED mark — a frozen trace is otherwise all that says the simulation stopped. Over the
+ *  monitor of the Instructor and Monitor views and of a phone, never printed (app.css); a status, so it is said once. */
+export function pausedMark(parent: HTMLElement): { set(on: boolean): void } {
+  const el = h('div', { class: 'paused-mark', role: 'status', hidden: true }, 'PAUSED');
+  parent.append(el);
+  return { set: (on) => void (el.hidden !== !on && (el.hidden = !on)) };
 }

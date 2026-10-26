@@ -25,8 +25,38 @@ const L = 108, R = 10, BADGES = 24, GAP = 4, AXIS = 18;
 /** A trend's lane height. The learner's copy prints at the full 182 mm width so its 9-unit labels read at 6.4 pt
  *  (rc.3; at 90 mm they were ≈ 3.2 pt), with lanes about half as tall so the strip stays ≈ 40 mm high. */
 const LANE = 46, LANE_LEARNER = 26;
-/** Badges closer than this (drawing units) are moved right of the one before. */
-const BADGE_MIN = 15;
+/** Badge centres are at least this far apart (drawing units): a 14-unit badge, a two-digit bold number inside, and a
+ *  clear gap (UI review #19: at 15 the MH badges 9–12 touched). */
+const BADGE_MIN = 18;
+/** Half a badge: no badge centre nearer the plot's edges than this (the haemorrhage's 18 and 19 ran past the right). */
+const BADGE_HALF = 7;
+
+/**
+ * UI review #19: badge centres for moments at plot positions `at` (sorted), at least `gap` apart and inside [lo, hi],
+ * each as near its moment as the others allow. Badges that would collide form a run placed `gap` apart and centred on
+ * the mean of their moments (the least total shift), then held inside the plot; runs that then meet merge. A record
+ * with more badges than the plot holds at `gap` shares the width evenly. The dashed line stays at the moment; a short
+ * leader joins it to its badge.
+ */
+export function placeBadges(at: readonly number[], lo: number, hi: number, gap: number): number[] {
+  const g = Math.min(gap, at.length > 1 ? (hi - lo) / (at.length - 1) : gap);
+  // a run of n badges from moment `first`: badge k at x0 + k·g; the x0 with the least squared shift is the mean of
+  // (moment − k·g), held so the run stays inside [lo, hi]
+  type Run = { first: number; n: number; x0: number };
+  const start = (first: number, n: number): number => {
+    let sum = 0;
+    for (let k = 0; k < n; k++) sum += (at[first + k] as number) - k * g;
+    return Math.min(Math.max(sum / n, lo), hi - g * (n - 1));
+  };
+  const runs: Run[] = [];
+  at.forEach((_, i) => {
+    runs.push({ first: i, n: 1, x0: start(i, 1) });
+    for (let p = runs.at(-2), q = runs.at(-1); p && q && p.x0 + g * p.n > q.x0 + 1e-6; p = runs.at(-2), q = runs.at(-1)) {
+      runs.splice(-2, 2, { first: p.first, n: p.n + q.n, x0: start(p.first, p.n + q.n) });
+    }
+  });
+  return runs.flatMap((r) => Array.from({ length: r.n }, (_, k) => r.x0 + k * g));
+}
 
 /** The course strip of a run as an SVG string. */
 export function courseSvg(d: RunData, moments: KeyMoment[], o: CourseOptions): string {
@@ -74,11 +104,10 @@ export function courseSvg(d: RunData, moments: KeyMoment[], o: CourseOptions): s
   let ticks = '';
   for (let t = 0; t <= end; t += step) ticks += `<line x1="${x(t).toFixed(1)}" x2="${x(t).toFixed(1)}" y1="${bottom}" y2="${bottom + 4}"/><text x="${x(t).toFixed(1)}" y="${H - 2}" text-anchor="middle">${mmss(t)}</text>`;
 
-  let last = -Infinity;
-  const badges = moments.map((mo) => {
+  const placed = placeBadges(moments.map((mo) => x(mo.t)), L + BADGE_HALF, COURSE_W - R - BADGE_HALF, BADGE_MIN);
+  const badges = moments.map((mo, i) => {
     const at = x(mo.t);
-    const bx = Math.max(at, last + BADGE_MIN);
-    last = bx;
+    const bx = placed[i] as number;
     const c = mo.who === 'team' ? TEAM : mo.who === 'patient' ? PATIENT : SCENARIO;
     const shape = mo.who === 'team'
       ? `<rect x="${(bx - 6.5).toFixed(1)}" y="5" width="13" height="13" fill="${c}"/>`

@@ -724,3 +724,9 @@ a.rail-item:hover { color: var(--text-strong); background: color-mix(in srgb, va
 .land-panel .chips { margin: 0; }
 .land-panel .seg { justify-self: start; }
 .land-actions { display: flex; gap: var(--s-2); flex-wrap: wrap; margin-top: var(--s-5); }
+
+/* UI review #32: the PAUSED mark over a paused monitor (instructor, Monitor view, phones): unmissable, not a toast,
+   never printed. Under the reveal strip (z 6), over the traces. */
+.paused-mark { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); z-index: 5; pointer-events: none; padding: 0.25em 0.8em; font: 700 clamp(28px, 6vmin, 72px)/1 system-ui, sans-serif; letter-spacing: 0.14em; color: #fff; background: rgba(0, 0, 0, 0.75); border: 3px solid #ffb000; border-radius: 6px; }
+.paused-mark[hidden] { display: none; }
+@media print { .paused-mark { display: none !important; } }

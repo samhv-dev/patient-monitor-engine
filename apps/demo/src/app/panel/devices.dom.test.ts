@@ -130,3 +130,64 @@ describe('keyboard shortcut Shift+P', () => {
     p.destroy();
   });
 });
+
+// UI review #27: the sensor toggles read the sensors the engine reports (the state the monitor draws from), not the
+// free-play default: the MH and haemorrhage cards attach the CO₂ line and the arterial line, and the list said they
+// were not attached while the monitor showed a capnogram and ART.
+describe('Devices & alarms: the sensors as the monitor has them (UI review #27)', () => {
+  beforeEach(() => document.body.replaceChildren());
+  const pressed = (el: HTMLElement) => Object.fromEntries([...el.querySelectorAll('.toggles button')].map((b) => [b.textContent, b.getAttribute('aria-pressed')]));
+
+  it('a card with the CO₂ line and the arterial line: both shown attached, an unused line not', () => {
+    const { link } = fakeLink('saadat-like');
+    (link.ctl as unknown as { state: unknown }).state = { sensors: { ecg: 'on', spo2: 'on', nibp: 'on', abp: 'connected', cvp: 'none', pap: 'none', co2: 'on', temp: 'on' } };
+    let refresh = () => undefined as void;
+    const el = devicesTab({ link, staging: {}, site: {}, weightKg: () => 70, onRefresh: (fn: () => void) => (refresh = fn), goTab: () => undefined } as unknown as PanelCtx);
+    document.body.append(el);
+    refresh();
+    expect(pressed(el)).toMatchObject({ 'ECG leads': 'true', 'CO₂ sampling line': 'true', 'Arterial line': 'true', 'CVP line': 'false', 'PA catheter': 'false', 'NIBP cuff': 'true' });
+    // the engine detaches the line: the toggle follows at the next repaint
+    (link.ctl as unknown as { state: { sensors: Record<string, string> } }).state.sensors.co2 = 'off';
+    refresh();
+    expect(pressed(el)['CO₂ sampling line']).toBe('false');
+    // pressed: it stays pressed through a repaint before the engine's next state reports the line attached
+    ([...el.querySelectorAll('.toggles button')].find((b) => b.textContent === 'CO₂ sampling line') as HTMLButtonElement).click();
+    refresh();
+    expect(pressed(el)['CO₂ sampling line']).toBe('true');
+  });
+});
+
+// UI review #28: the list read "No active alarms" for the first ≈ 0.5 s after the tab opened while the bar showed
+// "!!! ART M low +4": the tab painted at the next throttled repaint, so it showed what it had when last open. It now
+// paints as it opens.
+describe('Devices & alarms: the list reads the bar’s alarms as the tab opens (UI review #28)', () => {
+  beforeEach(() => document.body.replaceChildren());
+  it('opened from another tab, the list shows the active alarms at once', () => {
+    const { link } = fakeLink('saadat-like');
+    const p = mountPanel(link, { site: {} as never, weightKg: () => 70, tab: 'devices' });
+    document.body.append(p.el);
+    p.select('airway');
+    const a = link.alarms as unknown as { active: unknown[] };
+    a.active = [
+      { id: 'ART_M_LOW', level: 1, text: 'ART M TOO LOW', since: 500, acked: false, latched: false },
+      { id: 'HR_HIGH', level: 1, text: 'HR TOO HIGH', since: 520, acked: false, latched: false },
+    ];
+    p.select('devices'); // no repaint has run since
+    const items = [...p.el.querySelectorAll('ul.alarms li')].map((li) => li.textContent ?? '');
+    expect(items).toHaveLength(2);
+    expect(items.join(' ')).not.toContain('No active alarms');
+    p.destroy();
+  });
+
+  it('the status says the monitor’s alarm sound is on but this window is muted, as the top bar’s "Sound off" says', () => {
+    const { link } = fakeLink('saadat-like');
+    (link as unknown as { host: unknown }).host = { spec: { attached: true }, soundOn: false };
+    let refresh = () => undefined as void;
+    const el = devicesTab({ link, staging: {}, site: {}, weightKg: () => 70, onRefresh: (fn: () => void) => (refresh = fn), goTab: () => undefined } as unknown as PanelCtx);
+    refresh();
+    expect(el.querySelector('[role=status]')?.textContent).toBe('Alarm sound on at the monitor; this window is muted (Sound off, top right)');
+    (link.host as unknown as { soundOn: boolean }).soundOn = true;
+    refresh();
+    expect(el.querySelector('[role=status]')?.textContent).toBe('Alarm sound on');
+  });
+});

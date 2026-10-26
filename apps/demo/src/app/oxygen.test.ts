@@ -70,11 +70,13 @@ describe('oxygen for the spontaneously breathing patient (E121b)', () => {
     expect(at(2)).toEqual({ source: 'spontaneous', device: 'none' });
     expect(oxygenBlock(b)).toBeNull();
     expect(at(4, { type: 'applyEvent', event: { kind: 'ventilation', source: 'bvm', rr: 12, vtMl: 500, fio2: 1 } })).toEqual({ source: 'bvm', device: 'none' });
-    expect(oxygenBlock(b)).toBe('FiO₂ is set on the ventilator / bag.');
+    expect(oxygenBlock(b, false, 1)).toBe('Bag-mask in use: FiO₂ 100 % from the bag.');
     expect(at(6, { type: 'applyEvent', event: { kind: 'airwayDevice', device: 'ett' } })).toEqual({ source: 'bvm', device: 'ett' });
     expect(at(8, { type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, peep: 5, fio2: 0.5 } })).toEqual({ source: 'ventilator', device: 'ett' });
-    expect(oxygenBlock(b)).toBe('FiO₂ is set on the ventilator / bag.');
-    expect(oxygenBlock({ source: 'spontaneous', device: 'ett' })).toBe('FiO₂ is set on the ventilator / bag.');
+    expect(oxygenBlock(b, false, 0.5)).toBe('Airway device in use (tracheal tube): FiO₂ 50 % from the ventilator.');
+    expect(oxygenBlock(b)).toBe('Airway device in use (tracheal tube): FiO₂ from the ventilator.');
+    expect(oxygenBlock({ source: 'spontaneous', device: 'ett' }, false, 0.4)).toBe('Airway device in use (tracheal tube): FiO₂ 40 %.');
+    expect(oxygenBlock({ source: 'external', device: 'sga' }, false, 0.6)).toBe('Airway device in use (supraglottic airway): FiO₂ 60 % from the ventilator.');
     expect(oxygenBlock(undefined)).toBe('Waiting for the monitor’s state.');
   });
 
