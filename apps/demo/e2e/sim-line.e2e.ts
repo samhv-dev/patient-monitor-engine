@@ -26,10 +26,11 @@ const where = (p: Page) =>
   p.evaluate((line) => {
     const vis = (e: Element | null) => !!e && (e as HTMLElement).offsetParent !== null && (e as HTMLElement).getBoundingClientRect().height > 0;
     const sp = document.querySelector('.stage .pme-hdr.two .r1 > .sp') ?? document.querySelector('.stage .pme-hdr [data-pme="note"]');
+    const text = sp?.getAttribute('aria-label') || sp?.textContent;
     const strip = document.querySelector('.stage .sim-strip');
     const foot = document.querySelector('.app-foot');
     return {
-      at: vis(sp) && sp?.textContent === line ? 'header' : vis(strip) && strip?.textContent === line ? 'strip' : 'none',
+      at: vis(sp) && text === line ? 'header' : vis(strip) && strip?.textContent === line ? 'strip' : 'none',
       footer: vis(foot),
     };
   }, LINE);
@@ -75,10 +76,12 @@ test('the line is on the Monitor view, the learner window and the phone, never o
   await expect.poll(() => where(win)).toEqual({ at: 'header', footer: false });
 
   // a learner's phone held upright: the one-row header's idle message area, no strip
-  const { defaultBrowserType: _b, ...dev } = devices['Pixel 7'];
+  const { defaultBrowserType: _b, ...dev } = devices['iPhone 13']; // 390 px wide, the narrowest phone measured
   const ph = await (await browser.newContext(dev)).newPage();
   await ph.goto(`${base}/?join=${code}&relay=${encodeURIComponent(ws)}`);
   await ph.waitForFunction(() => (window as unknown as W).__pmeFollower?.sync?.status === 'synced', null, { timeout: 30_000 });
   await expect.poll(() => where(ph)).toEqual({ at: 'header', footer: false });
+  // the whole line, not cut short with an ellipsis
+  expect(await ph.locator('.stage .pme-hdr [data-pme="note"] span').evaluateAll((ss) => ss.every((e) => e.scrollWidth <= e.clientWidth && e.getBoundingClientRect().bottom <= e.closest('.pme-hdr')!.getBoundingClientRect().bottom))).toBe(true);
   await ph.context().close();
 });

@@ -40,7 +40,9 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-dev{font-weight:600;white-space:nowrap}',
     '.pme-badge{font-size:11px;border:1px solid currentColor;padding:1px 4px;opacity:.9}',
     // setNote on a phone held upright (one-row header): the note in the idle message area, giving way to a message
-    '.pme-note{flex:1;min-width:0;height:22px;line-height:22px;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}',
+    // (two lines of 11 px, broken at " · ": the whole line fits beside the lamp, the countdown and the date on a 390-px phone)
+    '.pme-note{flex:1;min-width:0;padding:0 4px;font-size:11px;line-height:13px;white-space:nowrap;overflow:hidden;text-align:center}',
+    '.pme-note span{display:block;overflow:hidden;text-overflow:ellipsis}',
     // Two-row header (skin layout.headerStyle, research/34 §3 row 7): rows of 5.8 % and 3.0 % of the monitor height
     // [MOCKUP] once the layout sets --pme-h, never below 40 / 22 px; the bar is 43 % of the wave-area width
     '.pme-hdr.two{height:auto;flex-direction:column;align-items:stretch;gap:0;padding:0}',
@@ -709,7 +711,13 @@ export class DeviceUI {
   setNote(text: string): boolean {
     this.note = text;
     this.hx.sp.textContent = this.two ? text : '';
-    this.noteEl.textContent = this.portrait ? text : '';
+    // a phone: one line per part ("SIMULATION" over "not a clinical monitor"); the text stays whole for a reader
+    this.noteEl.replaceChildren(...(this.portrait && text ? text.split(' · ').map((part, i, all) => {
+      const s = this.noteEl.ownerDocument.createElement('span');
+      s.textContent = i < all.length - 1 ? `${part} ·` : part;
+      return s;
+    }) : []));
+    this.noteEl.setAttribute('aria-label', this.portrait ? text : '');
     if (!text) this.noteEl.style.display = 'none';
     return this.two || this.portrait;
   }
