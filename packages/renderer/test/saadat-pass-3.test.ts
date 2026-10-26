@@ -208,4 +208,15 @@ describe('pass 3: grid rules for the T column, the IBP limits row, the NIBP meas
     expect(ntime()).toBe(''); // the next cycle: the last result's time goes with the result
     ui.destroy();
   });
+
+  it('UI review #14 follow-up: an NIBP result stays on one line on a narrow pane (it wrapped as "120 /" over "80")', () => {
+    const { ui, tile } = mount('saadat-like');
+    ui.onEvent({ type: 'nibp', t: 30, phase: 'done', result: { sys: 118, dia: 76, map: 90, pr: 70 } } as unknown as EngineEvent);
+    ui.onEvent({ type: 'measurement', t: 30, values: { nibpSys: { value: 118, flag: 'valid', at: 30 }, nibpDia: { value: 76, flag: 'valid', at: 30 }, nibpMean: { value: 90, flag: 'valid', at: 30 } } } as unknown as EngineEvent);
+    ui.paint(30);
+    expect(tile('NIBP').querySelector('[data-pme="v"]')?.textContent).toBe('118 / 76');
+    expect(css()).toContain('[data-param="NIBP"] .vrow{container-type:inline-size}');
+    expect(css()).toMatch(/\[data-param="NIBP"\] \.v\{white-space:nowrap;font-size:min\(calc\(57 [^}]*\), 18cqw\) !important\}/);
+    ui.destroy();
+  });
 });
