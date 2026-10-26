@@ -4,7 +4,7 @@
 print [`SHOWCASE-2-CUE-CARDS.md`](SHOWCASE-2-CUE-CARDS.md) for the lectern. This page is what to remember. Source keys
 are those of the run sheet; Q1-2D = the two-demos talk run (kit 2ebd743d, 24 October), A4 = kit round A4 (24 October,
 both engines), UIR = the demo UI review (24 October), E132 = kit round A4 on the cards after the clinical review
-(26 October, Chromium, kit a09ae58a), REV = that review. **Two live demos (owner, 2026-10-24): MH, then haemorrhage with
+(26 October, Chromium, kit e0c73a47), REV = that review. **Two live demos (owner, 2026-10-24): MH, then haemorrhage with
 its Debrief.** Bronchospasm and tamponade are not in the programme.*
 
 ## The order (30:00)
@@ -33,18 +33,18 @@ own cue card.
      the MH is not controlled. Second dose."* (objective 4 marks a dantrolene dose after ventilation back; untimed, so
      the Debrief's page 1 keeps every objective) [REV #1; E132];
    - MH: **no cooling on the early path** (only above 38.5 °C) [REV #4];
-   - haemorrhage: **no CPR on the PEA**: wait for the asystole state (15:34–15:37), then ×1 and **Start CPR** with the
+   - haemorrhage: **no CPR on the PEA**: wait for the asystole state (15:36–15:37), then ×1 and **Start CPR** with the
      massive transfusion; CPR on the PEA stops the slide to asystole [Q1-2D; S5; E132];
    - haemorrhage: **shock only in VF**; the **second epinephrine** after the first shock (18:57); after the second
-     shock **keep CPR to the 2-min rhythm check** (21:53) even though the pulse returns at 20:57, then **Rhythm check:
+     shock **keep CPR to the 2-min rhythm check** (21:53) even though the pulse returns at 20:58, then **Rhythm check:
      pulse back, stop CPR** [REV #12; E132].
 6. **Safety lines** [UIR]: never click **Ventilator** during a card (it holds every phone); never reload mid-case
    (with #132 the case comes back, without it load again from 0:00; **Sound on again** either way: click it if it reads Sound off); show the QR only
    from the **first instructor tab** (a second tab is a new session); the instructor tab **stays in front** (hidden, it
    pauses the session); print the handout only **after the fast-forward banner has gone**.
 7. **"Not available now" → press again**: the button now belongs to the current state [G10 §8].
-8. **The haemorrhage Debrief**: open it before loading anything else. Key times 35 s · CPR 4 min 39 s · CPR stopped
-   58 s after the return of circulation · pulseless 9 min 57 s; – ✗ ✓: the ✗ is the course itself (the demo withholds
+8. **The haemorrhage Debrief**: open it before loading anything else. Key times 35 s · CPR 4 min 40 s · CPR stopped
+   58 s after the return of circulation · pulseless 9 min 58 s; – ✗ ✓: the ✗ is the course itself (the demo withholds
    CPR on purpose, and the objective now says so); **no "draft" any more** (E132). It prints **8 A4 pages**; the
    handout **2 pages** on the E132 card (was 1).
    **In the print dialog, untick Headers and footers (Chrome: More settings; Safari: Show Details → Print headers and
@@ -62,9 +62,9 @@ own cue card.
 
 | Case | The number |
 |---|---|
-| MH | Load 0:00 awake on room air; induce 4:00, intubate 5:00, surgery 6:00; EtCO₂ 42 → 44 → **46 at Early signs 8:32** (E132 8:40; HR 64 → 80; temperature hardly moved, ≤ 37.8 °C all case); call 2–10 s later (the crisis step adds charcoal filters and a propofol infusion); dantrolene 21 s after the call; EtCO₂ < 40 from 9:05; span 1 (Recovering 10:07–10:15); ventilation back 14:41 (met from 11:05; A4 14:21); EtCO₂ past 45 about a minute later; **second dantrolene at the 19:58 Pause** (EtCO₂ 53–54; A4 4 min 19 s after it passed 45); EtCO₂ then holds ≈ 55 to the end; Debrief ✓ ✓ ✓ ✓ – ✓; the report 9 A4 pages [Q1-2D; E132] |
-| Haemorrhage | 8:00 HR 139–141, ART 75/61; junctional 9:16 (card); PEA 10:28 (ART 19/13, pseudo-PEA); pulse lost 11:00; idioventricular 12:54; asystole 15:34; CPR + massive transfusion 15:39; epinephrine 15:59; rhythm check 17:37 → VF → shock → asystole; epinephrine 18:57; rhythm check 19:45 → VF → shock → organised, no pulse; **pulse back 20:57** (63 s after the shock); rhythm check 21:53 (ART 131/75, EtCO₂ 46) → **stop CPR 21:55**; 22:55 ART 141/93, HR 73, EtCO₂ 54 [E132] |
-| Debrief (haemorrhage) | 35 s · 4 min 39 s · 58 s · 9 min 57 s; – ✗ ✓; 21 key moments; 82 timeline rows; 8 A4 pages; handout 2 pages [E132] |
+| MH | Load 0:00 awake on room air; induce 4:00, intubate 5:00, surgery 6:00; EtCO₂ 42 → 44 → **46 at Early signs 8:32** (E132 8:38; HR 64 → 80; temperature hardly moved, ≤ 37.8 °C all case); call 2–10 s later (the crisis step adds charcoal filters and a propofol infusion); dantrolene 21 s after the call; EtCO₂ < 40 from 9:05; span 1 (Recovering 10:04–10:15); ventilation back 14:41 (met from 11:05; A4 14:18); EtCO₂ past 45 about a minute later; **second dantrolene at the 19:58 Pause** (EtCO₂ 53–54; A4 4 min 19 s after it passed 45); EtCO₂ then holds ≈ 55 to the end; Debrief ✓ ✓ ✓ ✓ – ✓; the report 8 A4 pages [Q1-2D; E132] |
+| Haemorrhage | 8:00 HR 139–141, ART 75/61; junctional 9:17 (card); PEA 10:27 (ART 19/13, pseudo-PEA); pulse lost 11:00; idioventricular 12:56; asystole 15:36; CPR + massive transfusion 15:39; epinephrine 15:59; rhythm check 17:38 → VF → shock → asystole; epinephrine 18:57; rhythm check 19:46 → VF → shock → organised, no pulse; **pulse back 20:58** (64 s after the shock); rhythm check 21:53 (ART 128/78, EtCO₂ 46) → **stop CPR 21:56**; 22:56 ART 141/93, HR 73, EtCO₂ 55 [E132] |
+| Debrief (haemorrhage) | 35 s · 4 min 40 s · 58 s · 9 min 58 s; – ✗ ✓; 21 key moments; 79 timeline rows; 8 A4 pages; handout 2 pages [E132] |
 
 ## Keys and buttons
 

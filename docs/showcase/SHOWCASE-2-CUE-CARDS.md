@@ -40,8 +40,8 @@ MH Debrief glance.
 
 Measured machine wall (no talk): MH Load → end **2:17** (136.9 s); haemorrhage Load → end **5:08** (307.7 s); the
 whole two-demos run, presses only, **8:25** from the opening to the close (two-demos talk run, before E132). On the
-cards after the clinical review (E132, kit round A4, Chromium): MH 2:03 (no talk Pauses), haemorrhage **4:34**
-(273.8 s; the stretch after the second shock runs at ×4).
+cards after the clinical review (E132, kit round A4, Chromium): MH 2:02 (no talk Pauses), haemorrhage **4:34**
+(273.6 s; the stretch after the second shock runs at ×4).
 
 ## Every case: Load → All alarms on → Bookmark → speed
 
@@ -76,7 +76,7 @@ cards after the clinical review (E132, kit round A4, Chromium): MH 2:03 (no talk
   while this tab was hidden (m:ss)"; the phones read "(paused)").
 - **Print the handout only after the fast-forward banner has gone** (≈ 8 s after a span): printed earlier it carries
   the banner on every page, and on screen the banner covers **Print the learner handout**.
-- **The MH report prints 9 A4 pages** on the E132 card (8 on kit 2ebd743d; A4 on kit 52b0390b printed 7). The
+- **The MH report prints 8 A4 pages** (kit 2ebd743d and the E132 card; A4 on kit 52b0390b printed 7). The
   haemorrhage report prints 8; its learner handout now 2 pages (E132).
 
 <div style="page-break-after: always;"></div>
@@ -120,7 +120,7 @@ States: **Awake (room air)** → Premedicated → **Preoxygenated** → **Induce
 12 × 500 → second dantrolene
 
 Clocks: the two-demos talk run (before E132) for the induction; after the call, kit round A4 on the E132 card (kit
-a09ae58a, Chromium), in brackets where it differs.
+e0c73a47, Chromium), in brackets where it differs.
 
 | Slot (T+) | Clock | Look at | Press | Say |
 |---|---|---|---|---|
@@ -132,14 +132,14 @@ a09ae58a, Chromium), in brackets where it differs.
 | 2:08 (5:08) | **5:00** | `CO2 APNEA` 4:56; **SpO₂ 99** | **Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %** | "SpO₂ 99 through the apnoea: he was preoxygenated." |
 | 2:15 (5:15) | **6:00** | EtCO₂ 42, HR 72 | **Start surgery: rocuronium 0.6 mg/kg** (state 6:03) | "The premedication and the apnoea raised his CO₂ stores; on the ventilator the EtCO₂ should now fall." |
 | 2:26 (5:26) | 7:30 | **EtCO₂ 44**, HR 76 | **×4** | "Same ventilation. Watch the CO₂ tile." |
-| 2:41 (5:41) | **8:32** (E132 8:40) | state **Early signs**: **EtCO₂ 46**, **HR 79–80**; temperature not moved | tick *Name malignant hyperthermia* (Scenario tab) · **MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate** | *"The EtCO₂ is rising at unchanged ventilation when it should be falling, with a rising heart rate: think of MH early."* Then: "Sevoflurane off, charcoal filters on, a propofol infusion so he stays asleep, 100 % oxygen at high flow, double the ventilation." |
+| 2:41 (5:41) | **8:32** (E132 8:38) | state **Early signs**: **EtCO₂ 46**, **HR 79–80**; temperature not moved | tick *Name malignant hyperthermia* (Scenario tab) · **MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate** | *"The EtCO₂ is rising at unchanged ventilation when it should be falling, with a rising heart rate: think of MH early."* Then: "Sevoflurane off, charcoal filters on, a propofol infusion so he stays asleep, 100 % oxygen at high flow, double the ventilation." |
 | 2:49 (5:49) | ≈ 9:03 | EtCO₂ below 40 from **9:05** | **Dantrolene 2.5 mg/kg** | "In real life dantrolene takes extra hands and minutes: 200 mg is ten vials to mix." **No cooling: only above 38.5 °C** (do not press Cool) |
-| 2:54 (5:54) | 9:22 (E132 9:07) | | **5 min** fast-forward (1), 10.5 s. **Hyperventilation stays on** | |
-| 3:05 (6:05) | ≈ 14:33 | state **Recovering** (from 10:07–10:15, inside the span) · **EtCO₂ 35**, HR 76–81 | **Pause** · 2:00 talk · **Resume** | the early call |
+| 2:54 (5:54) | 9:22 (E132 9:04) | | **5 min** fast-forward (1), 10.5 s. **Hyperventilation stays on** | |
+| 3:05 (6:05) | ≈ 14:33 | state **Recovering** (from 10:04–10:15, inside the span) · **EtCO₂ 35**, HR 76–80 | **Pause** · 2:00 talk · **Resume** | the early call |
 | 5:06 (8:06) | 14:41 | EtCO₂ 35–36 | **EtCO₂ normal: ventilation back to 12 × 500** · **5 min** (2) | "EtCO₂ has stayed below 40 for 2 minutes: ventilation back." |
-| 5:17 (8:17) | ≈ 19:58 | **EtCO₂ 53–54**; banner: `ETCO2 TOO HIGH` (E132 17:46) inside span 2; EtCO₂ past 45 about a minute after ventilation back | **Pause** · **Dantrolene 2.5 mg/kg** at once · 2:00 · **Resume** | *"The EtCO₂ is climbing back at normal ventilation: the MH is not controlled. Second dose."* |
+| 5:17 (8:17) | ≈ 19:58 | **EtCO₂ 53–54**; banner: `ETCO2 TOO HIGH` (E132 17:48) inside span 2; EtCO₂ past 45 about a minute after ventilation back | **Pause** · **Dantrolene 2.5 mg/kg** at once · 2:00 · **Resume** | *"The EtCO₂ is climbing back at normal ventilation: the MH is not controlled. Second dose."* |
 | 7:18 (10:18) | ≈ 20:03 | | **5 min** (3) (the first case item to cut) | |
-| 7:29 (10:29) | 25:12 | E132: EtCO₂ 55, HR 79, ART 96/62; Tcore 37.8 °C | end · **Pause** · take-home 1:00 | the four take-home lines (below) |
+| 7:29 (10:29) | 25:12 | E132 (24:53): EtCO₂ 55, HR 80, ART 96/62; Tcore 37.8 °C | end · **Pause** · take-home 1:00 | the four take-home lines (below) |
 | 8:30 (11:30) | | | session bar **Debrief**: glance ✓ ✓ ✓ ✓ – ✓ · 1:00 | read the marks, not the tiles |
 | 9:30 (12:30) | | | back to **Instructor** · **Resume** | |
 | 10:00 (13:00) | | | → the next card's "To Load" | |
@@ -162,7 +162,7 @@ card has no step for it after ventilation back: open for the owner.)
 **Debrief glance (marks, E132):** ✓ name MH (ticked at the call) · ✓ call (2 s) · ✓ dantrolene (21 s) · ✓ second dose
 (a dose after ventilation back; untimed) · – potassium (never above 5.5) · ✓ ventilation back (after
 EtCO₂ < 40 for 2 min, 09:05 → 11:05). Read the objectives: the Recognition tile counted from Load on kit 2ebd743d (UI
-review #18). The report prints 9 A4 pages on the E132 kit.
+review #18). The report prints 8 A4 pages on the E132 kit.
 
 **Traps:** do NOT press ventilation back before **11:05** (it is offered from Recovering, but EtCO₂ has not yet stayed
 below 40 for 2 min: "not met"); the talk presses it after the first Pause (14:41). No repeat dantrolene just before it
@@ -172,7 +172,7 @@ this path. Skip Preoxygenate and SpO₂ falls to ≈ 63 % before the tube: if yo
 are words only (not modelled); the cooling saline would be given at 21 °C (no cold-fluid input).
 
 *Two-demos talk run `q1-1-malignant-hyperthermia-early-call-14-41-chromium` (kit 2ebd743d, before E132); kit round A4
-on the E132 card (kit a09ae58a, Chromium, `scratch/kitround-e132/`); the timing draft. E131 (one MH metabolic rate)
+on the E132 card (kit e0c73a47, Chromium, `scratch/kitround-e132/`); the timing draft. E131 (one MH metabolic rate)
 will move the course after the call: the Thursday prep run re-measures it.*
 
 <div style="page-break-after: always;"></div>
@@ -192,7 +192,7 @@ States: Bleeding on room air → (Oxygen by mask) → **Intubated and ventilated
 → **Asystole** → CPR → source control, massive transfusion, TXA · epinephrine → **Rhythm check: VF** (card) → shock →
 epinephrine → **Rhythm check: VF again** (card) → shock → CPR to the 2-min rhythm check → **pulse back, stop CPR**
 
-Clocks: kit round A4 on the E132 card (kit a09ae58a, Chromium); the two-demos talk run (before E132) in brackets where
+Clocks: kit round A4 on the E132 card (kit e0c73a47, Chromium); the two-demos talk run (before E132) in brackets where
 it differs by more than 3 s.
 
 | Slot (T+) | Clock | Look at | Press | Say |
@@ -202,22 +202,22 @@ it differs by more than 3 s.
 | 0:33 (13:33) | 0:30 | room air | **Oxygen by face mask, FiO₂ 1.0** (state 0:34) | |
 | 0:37 (13:37) | 1:00 | | **Intubate and ventilate, FiO₂ 1.0** (state 1:06) | "Say we are in the OR or the ED, and we induce with a reduced-dose ketamine RSI; the button does not give the drug. Positive pressure cuts the venous return of an empty patient: that, not the bleed alone, tips him into arrest." |
 | 1:29 (14:29) | 8:00 | **HR 139–141**, **ART 75/61**, EtCO₂ 25 | — | "The pressure held and only the heart rate told you; now the pulse pressure narrows." |
-| 1:38 (14:38) | **9:16** | ECG: **junctional 50/min** (the card sets it); ART 57/46 | **×4** | "The card sets this rhythm; what follows is the model." |
+| 1:38 (14:38) | **9:17** | ECG: **junctional 50/min** (the card sets it); ART 57/46 | **×4** | "The card sets this rhythm; what follows is the model." |
 | 1:56 (14:56) | 10:28 | state **PEA**: **ART 19/13**, the ECG still running | — | "Electrical activity, a pressure too low to feel: pseudo-PEA. With a palpated pulse you would call it PEA." |
-| 2:04 (15:04) | **11:00** | pulse lost: the arterial number goes mean only; `SPO2 NO PULSE` 11:11 | **×8** · **no CPR** | "Now we do what nobody should: wait, so you can see a pulseless heart decay." |
-| — | 12:54 | ECG idioventricular | — | |
-| 2:39 (15:39) | **15:34** (15:37) | state **Asystole**: the ECG flat (from 15:27), `ECG ASYSTOLE` 15:36 | **×1** | |
+| 2:04 (15:04) | **11:00** | pulse lost: the arterial number goes mean only; `SPO2 NO PULSE` 11:10 | **×8** · **no CPR** | "Now we do what nobody should: wait, so you can see a pulseless heart decay." |
+| — | 12:56 | ECG idioventricular | — | |
+| 2:39 (15:39) | **15:36** | state **Asystole**: the ECG flat (from 15:29), `ECG ASYSTOLE` 15:38 | **×1** | |
 | 2:42 (15:42) | 15:39 | compressions on the ECG and the arterial trace | **Start CPR: compressions, bag via the tube 10/min, FiO₂ 1.0** · **Surgeon controls the bleeding; massive transfusion: 1 L warmed crystalloid, then red cells and plasma by rapid infuser; TXA 1 g** | "In haemorrhagic arrest the surgeon stops the bleeding and we give blood; compressions cannot fill an empty heart." |
-| 3:02 (16:02) | 15:59 | ART 35/12, EtCO₂ 6 | **Epinephrine 1 mg** · **×4** | |
+| 3:02 (16:02) | 15:59 | ART 35/12, EtCO₂ 5 | **Epinephrine 1 mg** · **×4** | |
 | — | 16:40 | ART 63/27, EtCO₂ 14 | — | "EtCO₂ and the diastolic pressure tell you how good the CPR is." |
-| 3:28 (16:28) | **17:37** | 2 min of CPR: **ART 74/37, EtCO₂ 20** | **×1** · **Rhythm check** → **VF** (`ECG VFIB` 17:40) | "The card inserts VF to show the defibrillator." |
-| 3:35 (16:35) | 17:46 | VF on the ECG | **Defib, pacing & CPR tab: Charge → Shock** (200 J) → **asystole** · **×4** | "Charge during compressions; the pause for the shock under 5 seconds. The shock did stop the VF; no organised rhythm followed." |
-| ≈ 3:45 (≈ 16:45) | **18:57** | ART 73/37, EtCO₂ 23 | **Epinephrine 1 mg** (the second dose, 3 min after the first) | "Epinephrine every 3 to 5 minutes." |
-| 4:06 (17:06) | **19:45** | ART 73/37, EtCO₂ 24 | **×1** · **Rhythm check** → **VF again** (`ECG VFIB` 19:48) | "Recurrent VF: consider a higher energy." |
-| 4:14 (17:14) | 19:53 | | **Charge → Shock** → organised rhythm, no pulse (sinus 19:58); **keep CPR** · **×4** | |
-| ≈ 4:30 (≈ 17:30) | **20:57** | **the pulse returns** (the model, 63 s after the shock): the arterial line rises between compressions, EtCO₂ climbs | **keep CPR** to the rhythm check | |
-| ≈ 4:50 (≈ 17:50) | **21:53** | the 2-min rhythm check: organised rhythm, **ART 131/75, EtCO₂ 46** | **×1** · **Rhythm check: pulse back, stop CPR** (21:55) · **×4** | "The pulse came back because the volume brought the perfusion pressure up, not because of the shock. We see it on the arterial line and the capnogram." |
-| ≈ 5:05 (≈ 18:05) | 22:55 | ART 141/93, HR 73, EtCO₂ 54 | end → straight to HAEM-D | "The model recovers faster than a patient would; expect a fragile, tachycardic, vasopressor-dependent patient." |
+| 3:28 (16:28) | **17:38** | 2 min of CPR: **ART 74/37, EtCO₂ 20** | **×1** · **Rhythm check** → **VF** (`ECG VFIB` 17:41) | "The card inserts VF to show the defibrillator." |
+| 3:35 (16:35) | 17:47 | VF on the ECG | **Defib, pacing & CPR tab: Charge → Shock** (200 J) → **asystole** · **×4** | "Charge during compressions; the pause for the shock under 5 seconds. The shock did stop the VF; no organised rhythm followed." |
+| ≈ 3:45 (≈ 16:45) | **18:57** | ART 74/37, EtCO₂ 23 | **Epinephrine 1 mg** (the second dose, 3 min after the first) | "Epinephrine every 3 to 5 minutes." |
+| 4:06 (17:06) | **19:46** | ART 73/37, EtCO₂ 24 | **×1** · **Rhythm check** → **VF again** (`ECG VFIB` 19:49) | "Recurrent VF: consider a higher energy." |
+| 4:14 (17:14) | 19:54 | | **Charge → Shock** → organised rhythm, no pulse (sinus 19:59); **keep CPR** · **×4** | |
+| ≈ 4:30 (≈ 17:30) | **20:58** | **the pulse returns** (the model, 64 s after the shock): the arterial line rises between compressions, EtCO₂ climbs | **keep CPR** to the rhythm check | |
+| ≈ 4:50 (≈ 17:50) | **21:53** | the 2-min rhythm check: organised rhythm, **ART 128/78, EtCO₂ 46** | **×1** · **Rhythm check: pulse back, stop CPR** (21:56) · **×4** | "The pulse came back because the volume brought the perfusion pressure up, not because of the shock. We see it on the arterial line and the capnogram." |
+| ≈ 5:05 (≈ 18:05) | 22:56 | ART 141/93, HR 73, EtCO₂ 55 | end → straight to HAEM-D | "The model recovers faster than a patient would; expect a fragile, tachycardic, vasopressor-dependent patient." |
 
 **Asystole is the model's** (a seeded slide after the pulse loss): the ECG went flat at 15:27–15:30 in every run and
 the state and `ECG ASYSTOLE` followed at 15:34–15:38. Press ×1 at the state, not by the clock.
@@ -233,7 +233,7 @@ epinephrine after the first shock, before the second rhythm check. After the sec
 rhythm check even when the arterial line shows the return. During CPR and VF the SpO₂ tile read 99 and the HR
 ≈ 100–136 (the compressions; UI review #6, #7): point at the ECG, the arterial line and the capnogram.
 
-*Kit round A4 on the E132 card (kit a09ae58a, Chromium, `scratch/kitround-e132/`); two-demos talk run
+*Kit round A4 on the E132 card (kit e0c73a47, Chromium, `scratch/kitround-e132/`); two-demos talk run
 `q1-2-haemorrhage-e120-debrief-and-close-chromium` (kit 2ebd743d, before E132); the timing draft.*
 
 <div style="page-break-after: always;"></div>
@@ -246,17 +246,17 @@ rhythm check even when the arterial line shows the return. During CPR and VF the
 |---|---|
 | 0:00 (18:40) | Session bar **Debrief** |
 | 0:15 (18:55) | **Run by**: "Showcase 2, 3 November"; one line in **Notes** |
-| 0:30 (19:10) | **Key times**: first team action **35 s** · CPR **4 min 39 s** after the pulse loss (asked ≤ 30 s) · CPR stopped **58 s** after the return of circulation (asked ≤ 2 min 30 s) · pulseless **9 min 57 s** |
+| 0:30 (19:10) | **Key times**: first team action **35 s** · CPR **4 min 40 s** after the pulse loss (asked ≤ 30 s) · CPR stopped **58 s** after the return of circulation (asked ≤ 2 min 30 s) · pulseless **9 min 58 s** |
 | 1:00 (19:40) | the objectives: – recognise PEA (name the pseudo-PEA at 19/13) · ✗ CPR within 30 s: withheld on purpose, as the objective says · ✓ the return of circulation recognised at the rhythm check |
-| 1:30 (20:10) | **Key moments** (21 in the report) · **Timeline** (82 rows) |
+| 1:30 (20:10) | **Key moments** (21 in the report) · **Timeline** (79 rows) |
 | 2:15 (20:55) | **Print or save as PDF**: **8 A4 pages**. **In the print dialog, untick Headers and footers** (Chrome: More settings; Safari: Show Details → Print headers and footers). Then **Print the learner handout** (optional): **2 pages** on the E132 card |
 | 3:00 (21:40) | *"The report is a debrief aid: it reads the run, it does not grade the person."* |
 
 **The objectives are final** (E132): no "draft" on the panel, the report or the print.
 
 **Expect** (kit round A4, E132): – Not assessable: Recognise PEA from hypovolaemia (the instructor judges it) · ✗ Not
-observed: CPR 4 min 39 s after the pulse loss (11:00 → 15:39) · ✓ Observed: CPR stopped 58 s after the return of
-circulation (20:57 → 21:55). Facts: lowest ART M 3 mmHg at 11:13 · pulseless 9 min 57 s · epinephrine 2 mg (2 doses) ·
+observed: CPR 4 min 40 s after the pulse loss (11:00 → 15:40) · ✓ Observed: CPR stopped 58 s after the return of
+circulation (20:58 → 21:56). Facts: lowest ART M 3 mmHg at 11:13 · pulseless 9 min 58 s · epinephrine 2 mg (2 doses) ·
 lactate 4.9, pH 7.18.
 
 **Take-home lines (owner-agreed 26 October, printed on the handout):** *"Positive pressure and induction can tip a
