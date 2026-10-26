@@ -58,6 +58,7 @@ export function mountPanel(link: Link, o: { site: SiteProfile; weightKg(): numbe
   const repaint = throttle(() => {
     for (const fn of refreshers.get(t.current()) ?? []) fn();
   }, 500);
+  let ready = false; // the first tab is painted by the first repaint, once the panel is built
   const t = tabs('Instructor controls', [
     { id: 'scenario', label: 'Scenario', render: make('scenario', scenarioTab) },
     { id: 'vitals', label: 'Vitals & rhythm', render: make('vitals', vitalsTab) },
@@ -69,8 +70,12 @@ export function mountPanel(link: Link, o: { site: SiteProfile; weightKg(): numbe
     { id: 'log', label: 'Log', render: make('log', logTab) },
   ], o.tab ?? 'vitals', (id) => {
     o.onTab?.(id);
+    // UI review #28: a tab paints as it opens. It repainted only at the next throttled repaint, so for ≈ 0.5 s it showed
+    // what it had when last open ("No active alarms" under a bar reading "!!! ART M low +4")
+    if (ready) for (const fn of refreshers.get(id) ?? []) fn();
     repaint();
   });
+  ready = true;
 
   // ---- staged-changes footer ----
   const count = h('span', { class: 'count', role: 'status' });

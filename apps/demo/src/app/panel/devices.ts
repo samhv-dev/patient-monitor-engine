@@ -111,7 +111,8 @@ export function devicesTab(c: PanelCtx): HTMLElement {
     if (a?.silencedUntil && a.silencedUntil > simT) parts.push(`Sound silenced, ${clock(a.silencedUntil - simT)} left`);
     if (a?.pausedUntil && a.pausedUntil > simT) parts.push(`Alarms paused, ${clock(a.pausedUntil - simT)} left`);
     if (a?.allOff) parts.push('Alarms off (the monitor was found this way)');
-    setText(status, parts.join('. ') || 'Alarm sound on');
+    // #28: the monitor's alarm sound is not this window's speaker; the top bar's "Sound off" is the latter
+    setText(status, parts.join('. ') || (host && !host.soundOn ? 'Alarm sound on at the monitor; this window is muted (Sound off, top right)' : 'Alarm sound on'));
     const highs = act.filter((x) => x.level === 1 && !announced.has(x.id));
     if (highs.length) setText(live, `High priority alarm: ${highs.map((x) => alarmLine(x).text).join(', ')}`);
     announced = new Set(act.map((x) => x.id));
