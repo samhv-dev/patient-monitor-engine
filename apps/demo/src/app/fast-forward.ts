@@ -1,11 +1,11 @@
 // While the host fast-forwards, the window dims and blurs behind one centred panel — a double chevron in a ring of its
 // colour, the two blinking together, "FAST FORWARD · 5 MIN" in amber in the monitor's typeface, a thin progress bar and
 // the muted-sound icon (the owner's fast-forward, 22 Oct demonstration; his decisions of 7 Oct; his review FX-23). After
-// it the panel fades and a banner says for FF_DONE_SHOW_MS, on three lines, what was skipped and the alarms raised
-// during it, with their times; the alarms that came and went are latched on this window's monitor (`latch`). It reads a source (a
-// ControllerSession on the instructor's page and a Remote, a ViewerSync on the second screen) and sits above every
-// view, the monitor in full screen included — under the nav and the session bar, never on the Debrief or in print
-// (UI-A #9, app.css).
+// it the panel fades and a banner says for FF_DONE_SHOW_MS, on two lines, how much was skipped and the alarms raised
+// during it, with their times (owner's mockup m13); the alarms that came and went are latched on this window's monitor
+// (`latch`). It reads a source (a ControllerSession on the instructor's page and a Remote, a ViewerSync on the second
+// screen) and sits above every view, the monitor in full screen included — under the nav and the session bar, never on
+// the Debrief or in print (UI-A #9, app.css).
 import type { FastForwardAlarm, FastForwardDone } from '@pme/controller';
 import { spanText } from './describe.ts';
 import { clock, h, setText } from './ui.ts';
@@ -23,12 +23,11 @@ export const FF_WALL_MS = 10_000;
 export const FF_DONE_SHOW_MS = 8000;
 
 const CHEVRONS = '<svg viewBox="0 0 48 32" aria-hidden="true"><path d="M6 4l14 12-14 12M24 4l14 12-14 12" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/></svg>';
-/** The three lines of the banner after a fast-forward, worded here only: the span, from → to, the alarms during it. */
-export function fastForwardDoneLines(done: FastForwardDone): [string, string, string] {
+/** The two lines of the banner after a fast-forward, worded here only: the span, the alarms during it. */
+export function fastForwardDoneLines(done: FastForwardDone): [string, string] {
   const al = done.alarms.map((a) => `${a.text} ${clock(a.since)}`);
   return [
     `Fast-forwarded ${spanText(done.endT - done.fromT)}${done.stopped ? ` (stopped early: ${done.stopped})` : ''}`,
-    `${clock(done.fromT)} → ${clock(done.endT)}`,
     al.length ? al.join(', ') : 'No alarms',
   ];
 }
@@ -49,7 +48,7 @@ export function mountFastForward(
   mute.append(h('span', { class: 'sr-only' }, 'sound muted')); // the icon alone on screen (FX-23); the words for a screen reader
   const panel = h('div', { class: 'ff-panel', role: 'status' }, icon, title, h('div', { class: 'ff-bar', 'aria-hidden': 'true' }, fill), mute);
   const veil = h('div', { class: 'ff-veil' }, panel);
-  const lines = [0, 1, 2].map(() => h('div'));
+  const lines = [0, 1].map(() => h('div'));
   const banner = h('div', { class: 'ff-banner', role: 'status' }, ...lines);
   banner.hidden = true;
   parent.append(veil, banner);

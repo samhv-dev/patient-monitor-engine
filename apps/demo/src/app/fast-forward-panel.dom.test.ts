@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 // The fast-forward panel — the page dimmed and blurred behind it, the ringed chevrons, "FAST FORWARD · 5 MIN", a progress
-// bar with no times on it, the muted-sound icon with no words beside it — then the banner for ≈ 8 s on three lines (the
-// span, from → to, the alarms and their times), and the alarms that came and went handed to the monitor to latch (FX-23).
+// bar with no times on it, the muted-sound icon with no words beside it — then the banner for ≈ 8 s on two lines (the
+// span, the alarms and their times; owner's mockup m13), and the alarms that came and went handed to the monitor to latch (FX-23).
 import type { FastForwardAlarm, FastForwardDone } from '@pme/controller';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fastForwardDoneLines, FF_DONE_SHOW_MS, FF_SPANS, FF_WALL_MS, mountFastForward, type FastForwardSource } from './fast-forward.ts';
@@ -41,7 +41,7 @@ describe('the fast-forward panel and banner', () => {
     vi.advanceTimersByTime(100);
     expect(veil.classList.contains('on')).toBe(false);
     expect(banner.hidden).toBe(false);
-    expect([...banner.children].map((l) => l.textContent)).toEqual(['Fast-forwarded 5 min', '10:00 → 15:00', '**HR 75>70 11:40, **SpO2 89<90 13:20']);
+    expect([...banner.children].map((l) => l.textContent)).toEqual(['Fast-forwarded 5 min', '**HR 75>70 11:40, **SpO2 89<90 13:20']);
     expect(latched.map((a) => a.map((x) => x.id))).toEqual([['HR_HIGH']]);
     vi.advanceTimersByTime(FF_DONE_SHOW_MS);
     expect(banner.hidden).toBe(true);
@@ -53,9 +53,9 @@ describe('the fast-forward panel and banner', () => {
     expect(document.querySelector('.ff-veil')).toBeNull();
   });
 
-  it('the banner: three lines from one function: the span, from → to, the alarms or "No alarms"', () => {
-    expect(fastForwardDoneLines({ fromT: 8, toT: 308, endT: 308, alarms: [] })).toEqual(['Fast-forwarded 5 min', '00:08 → 05:08', 'No alarms']);
-    expect(fastForwardDoneLines({ fromT: 600, toT: 720, endT: 720, alarms: [al('SPO2_LOW', '**SpO2 89<90', 650, true)] })).toEqual(['Fast-forwarded 2 min', '10:00 → 12:00', '**SpO2 89<90 10:50']);
+  it('the banner: two lines from one function: the span, the alarms or "No alarms"', () => {
+    expect(fastForwardDoneLines({ fromT: 8, toT: 308, endT: 308, alarms: [] })).toEqual(['Fast-forwarded 5 min', 'No alarms']);
+    expect(fastForwardDoneLines({ fromT: 600, toT: 720, endT: 720, alarms: [al('SPO2_LOW', '**SpO2 89<90', 650, true)] })).toEqual(['Fast-forwarded 2 min', '**SpO2 89<90 10:50']);
     expect(fastForwardDoneLines({ fromT: 600, toT: 900, endT: 660, stopped: 'a new patient or scenario started', alarms: [] })[0]).toBe('Fast-forwarded 1 min (stopped early: a new patient or scenario started)');
   });
 });
