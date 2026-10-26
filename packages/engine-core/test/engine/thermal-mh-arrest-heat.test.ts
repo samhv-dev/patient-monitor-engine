@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { T_HOT } from '../../src/l2/circ/arrest.ts';
 import { rig6, runTo, send, st6 } from '../helpers/resp-modeled-rig.ts';
 
+interface Arrest { t: number; cause: string; tc: number; rhythm: string }
 interface Row { t: number; tc: number; mhW: number; o2Frac: number | undefined; etco2: number; hr: number; rhythm: string; arrested: boolean }
 
 const MH_AT = 300;
@@ -31,7 +32,7 @@ describe('untreated MH: no muscle heat without oxygen delivery (E129)', { timeou
     await runTo(e, MH_AT);
     send(e, { kind: 'condition', id: 'mh', severity: 1 });
     const rows: Row[] = [];
-    let arrest: { t: number; cause: string; tc: number; rhythm: string } | null = null;
+    let arrest = null as Arrest | null; // assigned in the callback (`as`: no narrowing to null)
     let peak = row(e, MH_AT);
     let end = MH_AT + 120 * 60; // a cap: the hazard fires long before it; then one hour after the arrest
     for (let m = MH_AT; m < end; m += 60) {
@@ -50,7 +51,7 @@ describe('untreated MH: no muscle heat without oxygen delivery (E129)', { timeou
       for (const r of rows) console.log(`E129 +${((r.t - MH_AT) / 60).toFixed(1)} min | core ${r.tc.toFixed(2)} | MH heat ${r.mhW.toFixed(0)} W | O2 share ${(r.o2Frac ?? 1).toFixed(2)} | EtCO2 ${r.etco2.toFixed(0)} | HR ${r.hr.toFixed(0)} | ${r.rhythm}${r.arrested ? ' (arrest)' : ''}`);
     }
     expect(arrest, 'the hyperthermic hazard fired').not.toBeNull();
-    const a = arrest as NonNullable<typeof arrest>;
+    const a = arrest as Arrest;
     expect(a.cause).toBe('hyperthermia');
     expect(a.rhythm).toMatch(/^vf/);
     expect(a.tc).toBeGreaterThan(T_HOT);
