@@ -3,6 +3,9 @@
 //   Cc·dTc = M − k_cp·(Tc − Tp) − Q_resp + Q_iv
 //   Cp·dTp = k_cp·(Tc − Tp) − Q_dry − Q_skinEvap − Q_sweat + Q_forcedAir
 //   M = m0·(1 − (1 − GA_M)·min(1, d)) + shivering + MH muscle heat + m0·(extraX − 1)   (extraX: thyroid/sepsis/…)
+//   MH muscle heat = m0·MH_HEAT_X·activity·o2Frac: the excess is oxidative, so it is limited by the share of the VO2
+//   demand the circulation delivers (the blood model's VO2/demand, blood/oxygen.ts; 1 at normal perfusion, 0 with no
+//   flow). Without it the muscle went on heating a body in cardiac arrest without bound (E129: 94 °C untreated)
 // k_cp comes from the vasomotor tone around the depth-dependent vasoconstriction threshold (thresholds.ts); under
 // GA at depth 1 it is the temperature signal's heat-model formula exactly, so redistribution, the linear phase and the
 // plateau are unchanged. The awake patient at 21 °C is calibrated to that heat model's balance (m0, gradient 4.3 °C)
@@ -87,6 +90,9 @@ export interface ThermalState {
   fluidWarmer: boolean; // IV fluid warmed to 37 °C
   extraX: number; // endocrine/condition metabolic heat multiplier (1 = none), written by 7e's endo core
   dantE: number; // The drug model's dantrolene effect `bus.metabolic.dantroleneE` (0–1), set by the endocrine pipeline
+  /** E129: the blood model's achieved ÷ demanded VO2 (0–1), written by the blood pipeline only while it is below 1
+   * (absent = 1: delivery meets demand). It scales the MH muscle heat. */
+  o2Frac?: number;
   out: ThermalOut;
   /** Test-only seam (like the blood model's `pinHbfRel`): when set, the core is held at this value (°C). */
   pinCoreTemp?: number;
@@ -150,7 +156,7 @@ function balance(st: ThermalState, t: number): ThermalOut {
     vasoF: f, kcp: k,
     metabolicW: basalW(st) + st.m0 * (st.extraX - 1),
     shiverW: shiverW(st.tc, thr, st.m0, st.effKg, st.nmb) * (1 - blocked(st)), // No shivering below a block
-    mhW: st.m0 * MH_HEAT_X * mhActivity(st.mh, t),
+    mhW: st.m0 * MH_HEAT_X * mhActivity(st.mh, t) * (st.o2Frac ?? 1), // E129: oxidative, so limited by the O2 delivered
     sweatW: sweatW(st.tc, thr, st.effKg),
     dryW: dryW(env, st.tp, st.ta, st.airMs, ex.area * (1 - warmArea)) * neur,
     respW: respiratoryW(st.vent, st.ta),

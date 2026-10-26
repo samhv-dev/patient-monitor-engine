@@ -103,6 +103,7 @@ const SLOW = [
   'test/engine/drug-opioid-induction-synergy.test.ts',
   'test/engine/blood-potassium-chloride.test.ts',
   'test/engine/thermal-mh-haemodynamics.test.ts',
+  'test/engine/thermal-mh-arrest-heat.test.ts', // E129: untreated MH to one hour after the hyperthermic arrest (≈ 110 sim-min)
   'test/engine/hemo-nibp-arrest.test.ts',
   'test/engine/resp-rocuronium-apnoea.test.ts',
   'test/engine/circ-tamponade-drainage.test.ts',
@@ -233,6 +234,7 @@ const SLOW_H = [ // ≈ 1660 s at the CI max (27.7 min)
   'test/engine/drug-layer-guards-csht.test.ts', // 786 s (split from drug-layer-guards, slow-e)
   'test/engine/endo-insulin-omission.test.ts', // 712 s (from slow-b)
   'test/engine/blood-potassium-chloride.test.ts', // 162 s (from slow-b)
+  'test/engine/thermal-mh-arrest-heat.test.ts', // ≈ 60 s local (E129, new)
 ];
 const SLOW_I = [ // ≈ 1754 s at the CI max (29.2 min)
   'test/engine/drug-apnoea.test.ts', // 562 s (from slow-f)
