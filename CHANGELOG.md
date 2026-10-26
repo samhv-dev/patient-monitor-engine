@@ -105,6 +105,14 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Fixed
 
+- A learner's phone (or a second-screen monitor) applies every mirrored command on the tick the instructor's monitor
+  applied it. The follower also passed the command's stage group to its own engine, which then pulled a command the
+  instructor's monitor had applied a tick or two after its group's first (a group its engine had already passed) back
+  onto the group's first tick. Since E126 the haemorrhage rhythm check is such a group (compressions off, then VF): on a
+  phone VF could start a tick early, the first shock could then end that VF differently, and nothing noticed it (no
+  beats in arrest). Kit round, 3 phones: one phone kept VF and a blank HR for 33 s of post-shock CPR while the
+  instructor's monitor showed 155 then 110. The follower now dispatches the host-resolved command without its group.
+
 - Instructor page (UI review 2026-10-24 #1): a reload in the middle of a card came back as "No scenario" with the
   default patient, and the phones followed that. The page now comes back to the card, its state and its clock: every
   second the tab keeps the run's position in its session storage (what a bookmark holds, the engine snapshot and the

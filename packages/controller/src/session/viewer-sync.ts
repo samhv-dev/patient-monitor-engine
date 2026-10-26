@@ -261,7 +261,12 @@ export class ViewerSync {
       return;
     }
     if (c.type === 'scenario' || c.type === 'pin' || c.type === 'release' || c.type === 'setFactor' || c.type === 'setMode') return;
-    const m = c as Command; // applyEvent/attachSensor are mirrored too; the engine validates them
+    // applyEvent/attachSensor are mirrored too; the engine validates them. `atTick` is the tick the host APPLIED it on
+    // (commandApplied = its dispatch result), so the stage group is already resolved: dispatched with its `stageGroup`,
+    // the viewer's engine re-resolved it and pulled a command the host had applied after its group's tick (a group the
+    // host's engine had already passed) back onto that tick — a phone started VF a tick before the instructor's monitor,
+    // the shock then met a different VF and the two monitors parted with no beat to notice it (E126 follow-up)
+    const { stageGroup: _resolved, ...m } = c as Command;
     if (res?.replay) {
       if (this.awaiting) this.replays.push(m);
       return;
