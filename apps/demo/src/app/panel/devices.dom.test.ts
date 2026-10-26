@@ -130,3 +130,30 @@ describe('keyboard shortcut Shift+P', () => {
     p.destroy();
   });
 });
+
+// UI review #27: the sensor toggles read the sensors the engine reports (the state the monitor draws from), not the
+// free-play default: the MH and haemorrhage cards attach the CO₂ line and the arterial line, and the list said they
+// were not attached while the monitor showed a capnogram and ART.
+describe('Devices & alarms: the sensors as the monitor has them (UI review #27)', () => {
+  beforeEach(() => document.body.replaceChildren());
+  const pressed = (el: HTMLElement) => Object.fromEntries([...el.querySelectorAll('.toggles button')].map((b) => [b.textContent, b.getAttribute('aria-pressed')]));
+
+  it('a card with the CO₂ line and the arterial line: both shown attached, an unused line not', () => {
+    const { link } = fakeLink('saadat-like');
+    (link.ctl as unknown as { state: unknown }).state = { sensors: { ecg: 'on', spo2: 'on', nibp: 'on', abp: 'connected', cvp: 'none', pap: 'none', co2: 'on', temp: 'on' } };
+    let refresh = () => undefined as void;
+    const el = devicesTab({ link, staging: {}, site: {}, weightKg: () => 70, onRefresh: (fn: () => void) => (refresh = fn), goTab: () => undefined } as unknown as PanelCtx);
+    document.body.append(el);
+    refresh();
+    expect(pressed(el)).toMatchObject({ 'ECG leads': 'true', 'CO₂ sampling line': 'true', 'Arterial line': 'true', 'CVP line': 'false', 'PA catheter': 'false', 'NIBP cuff': 'true' });
+    // the engine detaches the line: the toggle follows at the next repaint
+    (link.ctl as unknown as { state: { sensors: Record<string, string> } }).state.sensors.co2 = 'off';
+    refresh();
+    expect(pressed(el)['CO₂ sampling line']).toBe('false');
+    // pressed: it stays pressed through a repaint before the engine's next state reports the line attached
+    ([...el.querySelectorAll('.toggles button')].find((b) => b.textContent === 'CO₂ sampling line') as HTMLButtonElement).click();
+    refresh();
+    expect(pressed(el)['CO₂ sampling line']).toBe('true');
+  });
+});
+

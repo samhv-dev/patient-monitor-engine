@@ -53,14 +53,36 @@ export function devicesTab(c: PanelCtx): HTMLElement {
   // ---- sensors ----
   const host = link.host;
   const attached = new Map<SensorId, boolean>(CHANNELS.map(([s]) => [s, host ? host.spec.attached && ['ecg', 'spo2', 'nibp', 'temp'].includes(s) : false]));
+  // a toggle just pressed waits up to 3 s for the engine to report it, so a repaint between the press and the next 1 Hz
+  // state does not flip it back (#27)
+  const pending = new Map<SensorId, { on: boolean; until: number }>();
   const toggles = CHANNELS.map(([s, onState]) => toggle(SENSORS[s] ?? 'Sensor', attached.get(s) ?? false, (on) => {
     attached.set(s, on);
+    pending.set(s, { on, until: performance.now() + 3000 });
     void now({ type: 'attachSensor', sensor: s, state: on ? onState : s === 'abp' || s === 'cvp' || s === 'pap' ? 'none' : 'off' });
   }));
   // A Remote does not know which sensors are attached (the engine does not report it yet): its toggles start with no
   // pressed state, and the first tap attaches the sensor.
   if (!host) for (const b of toggles) b.removeAttribute('aria-pressed');
   const sensors = h('div', { class: 'toggles' }, ...toggles);
+  const remoteHint = host ? null : h('p', { class: 'hint' }, 'On a remote the sensors show no state until you set them: the monitor does not report which are attached yet.');
+  // UI review #27: the toggles read the sensors the engine reports with its state (the monitor draws from the same), so a
+  // card's CO₂ line and arterial line show attached; before the first state the start-up guess above stands
+  const followSensors = () => {
+    const st = (link.ctl.state as { sensors?: Partial<Record<SensorId, string>> } | null | undefined)?.sensors;
+    if (!st) return;
+    CHANNELS.forEach(([s], i) => {
+      const v = st[s];
+      if (v === undefined) return;
+      const on = v !== 'off' && v !== 'none';
+      const p = pending.get(s);
+      if (p && p.on !== on && performance.now() < p.until) return;
+      pending.delete(s);
+      attached.set(s, on);
+      toggles[i]?.set(on);
+    });
+    if (remoteHint) remoteHint.hidden = true;
+  };
 
   // ---- NIBP ----
   // O2: the host shows the interval its skin started the cuff on (saadat-like 5 min); a Remote does not know it ('0')
@@ -72,6 +94,7 @@ export function devicesTab(c: PanelCtx): HTMLElement {
 
   c.onRefresh(() => {
     followSkin();
+    followSensors();
     const a = link.alarms;
     const act = a?.active ?? [];
     list.replaceChildren(...[...act].sort((x, y) => x.level - y.level).map((x) => {
@@ -95,5 +118,5 @@ export function devicesTab(c: PanelCtx): HTMLElement {
   });
 
   return h('div', {}, h('h3', {}, 'Alarms'), status, list, live, actions, pauseWhy, h('h3', {}, 'Sensors'), h('p', { class: 'hint' }, 'A trace appears on the monitor only while its sensor is attached.'),
-    host ? null : h('p', { class: 'hint' }, 'On a remote the sensors show no state until you set them: the monitor does not report which are attached yet.'), sensors, h('h3', {}, 'NIBP'), nibp);
+    remoteHint, sensors, h('h3', {}, 'NIBP'), nibp);
 }
