@@ -72,6 +72,7 @@ In order of how much each one blocks the vision:
 | 5 | Pathology as parameters; patient parameter layer | 1 |
 | 6 | Physiological drug kinetics | 1 |
 | 7 | Missing systems, one at a time | 1 |
+|   | &nbsp;&nbsp;including muscle energetics (calcium leak, ATP turnover, oxygen demand) — see [../v1.0-remaining.md](../v1.0-remaining.md), "Deferred during the rc.4 demo week" | |
 | 8 | Predictive validation and uncertainty | 5 |
 | 9 | Generated model documentation; intended-use statement | throughout |
 
