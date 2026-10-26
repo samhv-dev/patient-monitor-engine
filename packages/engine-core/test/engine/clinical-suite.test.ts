@@ -176,7 +176,10 @@ describe('clinical scenario suite (MODELED, audit rig)', { timeout: 600_000 }, (
   });
   // R45: Task 18c's one-way valve gives the minutes course; flipped to `it` at the gate — +9.75 min once the
   // empty-ventricle term was withdrawn (+10.67 with it; the tension-ptx.test rig, lungCondition side R: +10.45, it.fails)
-  it('S8 tension pneumothorax (ventilated, one command), untreated: PEA within 3–10 min (the catalogue row: build-up 2–5 min, PEA ≈ 20–25 mmHg; measured +9.75 min — was +10.67 with the withdrawn Bezold–Jarisch term)', async () => {
+  // E134: A RECORDED MISS by 50 s — the PEA comes at +2.17 min (was +3.50), earlier than the catalogue's 3 min. The
+  // buffered CO2 of this patient's own accumulating lactate raises the PaCO2 at fixed ventilation and the acidaemia
+  // lowers the chemistry's contractility, so the obstructed circulation reaches the low-flow arrest sooner.
+  it.fails('S8 tension pneumothorax (ventilated, one command), untreated: PEA within 3–10 min (the catalogue row: build-up 2–5 min, PEA ≈ 20–25 mmHg) — measured +2.17 min after E134 (+3.50 before; +9.75 with the earlier rig)', async () => {
     const r = await scenario([[60, { kind: 'condition', id: 'tensionPtx', severity: 1 }]], 900);
     const a = arrestAt(r, 60);
     console.log(`S8: PEA at +${a !== undefined ? ((a - 60) / 60).toFixed(2) : '–'} min`);

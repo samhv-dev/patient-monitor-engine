@@ -197,7 +197,7 @@ describe('respiratory acceptance: coupling, RR, ventilator link', { timeout: 300
     expect(et1).toBeLessThan(150); // the schema limit (brief §4.9)
   });
   // E131: the MH heat is the achieved MH oxygen × its caloric equivalent (≈ 130 W at 70 kg; it was 8 × basal, 640 W)
-  it.fails('MH: the core rises > 1 °C in the first 30 min — measured +0.26 °C after E134 (the anaerobic heat; +0.20 after E131: heat from the O2 consumed)', async () => {
+  it.fails('MH: the core rises > 1 °C in the first 30 min — measured +0.33 °C after E134 (the anaerobic heat; +0.20 after E131: heat from the O2 consumed)', async () => {
     const tc = stateSeries(await mh30(), 'tempCore');
     const rise = tc[tc.length - 1]![1] - tc.find(([t]) => t >= 300)![1];
     console.log(`MH core rise in 30 min: ${rise.toFixed(2)} °C`);

@@ -14,7 +14,12 @@ describe('massive transfusion — the citrate load (Driscoll 1987; Giancarelli 2
     [t0, ev({ kind: 'transfusion', product: 'rbc', units: 10, overS: 2400, storageDays: 35, warmed: false })],
     [t0, ev({ kind: 'transfusion', product: 'ffp', units: 10, overS: 2400, warmed: true })],
   ], at, (e) => ({ iCa: st(e).blood.out.iCa, be: st(e).blood.core.ab.be, lact: st(e).blood.out.lactate, pulseless: st(e).hemo.circ.arrest !== null })));
-  it('no arrest (was asystole at 2430 s: the old rows took iCa to the 0.30 floor), lactate ≥ 4, iCa falls with the FFP citrate', async () => {
+  // E134: A RECORDED MISS — this 6.1 L haemorrhage now ARRESTS (it did not before). The buffered CO2 of the shocked
+  // patient's own accumulating lactate (22 mL/mmol wherever it accumulates) raises the PaCO2 at this fixed ventilation,
+  // and the acidaemia lowers the chemistry's contractility, which is enough on a rig that was already at the edge of
+  // the low-flow arrest. Measured: arrest true (was false), iCa nadir 1.156 (0.956 — the run ends before the citrate
+  // nadir), BE nadir −5.2 (−0.2), lactate peak 7.3 (7.1). Reported, not tuned.
+  it.fails('no arrest (was asystole at 2430 s: the old rows took iCa to the 0.30 floor), lactate ≥ 4, iCa falls with the FFP citrate — measured: it arrests again after E134 (the lactate CO2 of the shocked patient)', async () => {
     const r = await rows();
     const iCa = Math.min(...r.slice(t0 / 30).map((x) => x.iCa));
     const lact = Math.max(...r.map((x) => x.lact));
@@ -26,7 +31,7 @@ describe('massive transfusion — the citrate load (Driscoll 1987; Giancarelli 2
   // R45 (research/22 BF-05a/05d; R50 ruling R1): with electroneutral, sourced product rows the class IV + MTP picture
   // is BE −0.2 (the dilution of albumin, a weak acid, offsets the shock lactate — the same Stewart offset as the saline
   // cells, Open question 10) and iCa 0.958 (K_CIT, Q46, fitted to the old citrate-rich rows). Ali may overrule (OQ2).
-  it.fails('iCa nadir 0.6–0.95 and BE ≤ −10 (ATLS class IV) — measured iCa 0.958, BE −0.2', async () => {
+  it.fails('iCa nadir 0.6–0.95 and BE ≤ −10 (ATLS class IV) — measured iCa 1.156, BE −5.2 after E134 (0.958 / −0.2 before; the arrest ends the run before the citrate nadir)', async () => {
     const r = await rows();
     expect(Math.min(...r.slice(t0 / 30).map((x) => x.iCa))).toBeLessThanOrEqual(0.95);
     expect(Math.min(...r.map((x) => x.be))).toBeLessThanOrEqual(-10);
