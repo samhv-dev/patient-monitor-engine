@@ -18,8 +18,16 @@ for (const [w, h] of [[1280, 800], [1920, 1080]] as const) {
     test.setTimeout(90_000);
     await page.setViewportSize({ width: w, height: h });
     await openApp(page, base, '?scenario=showcase-mh#/monitor', { warmMs: 2000 });
+    // CI run 40403985512: the strip was placed once, on pointerenter, while the header was still at its 62 px minimum
+    // (before the monitor height --pme-h applied), and stayed 63 px down over a 71/96 px header. Replayed here: the
+    // pointer arrives while the header is at that minimum, then the header grows to its size
+    const outer = '.stage [style*="--pme-h"]';
+    const h0 = await page.locator(outer).first().evaluate((e) => (e as HTMLElement).style.getPropertyValue('--pme-h'));
+    await page.locator(outer).first().evaluate((e) => (e as HTMLElement).style.setProperty('--pme-h', '0px'));
     const stage = page.locator('.stage');
     await stage.hover({ position: { x: w / 2, y: 40 } });
+    await page.locator(outer).first().evaluate((e, v) => (e as HTMLElement).style.setProperty('--pme-h', v), h0);
+    await page.waitForTimeout(300);
     const strip = page.getByRole('toolbar', { name: 'Monitor view' });
     await expect(strip).toHaveCSS('opacity', '1');
     const s = (await strip.boundingBox()) as Box;
