@@ -99,6 +99,18 @@ export const EMERGE_TAU_S = 600;
  */
 export const MH_VO2_PEAK_X = 2.5;
 /**
+ * E134: SEVERITY as a scenario input. The peak VO2 multiple is the gain of this patient's and this trigger's calcium
+ * leak, not a property of "malignant hyperthermia": the scenario names a PHENOTYPE and everything downstream (O2, CO2,
+ * heat, lactate, K, catecholamines, the arrest) follows from it through the mechanisms. `typical` is the centre 2.5 of
+ * the sourced × 2–3 (the rows above); `fulminant` is the upper extreme × 5 of the review (Nelson TE, Biosci Rep
+ * 2001;21:169–179) [P abstract]. The value was NOT chosen to make an arrest appear at a time or a temperature.
+ * `{ kind: 'condition', id: 'mh', severity, phenotype }`, or `patient.neuro.mhPhenotype` for the triggered course;
+ * absent = `typical`. A scenario may also give `vo2PeakX` directly (1–6) for a course between the two.
+ */
+export const MH_PHENOTYPE: Readonly<Record<string, number>> = { typical: MH_VO2_PEAK_X, fulminant: 5 };
+export type MhPhenotype = 'typical' | 'fulminant';
+export const MH_PHENOTYPES: readonly MhPhenotype[] = ['typical', 'fulminant'];
+/**
  * E131: respiratory quotient of the hypermetabolic muscle's oxidation. The muscle substrate RQ during exercise with
  * glycogen available is 0.95 (ramp V-slope below the threshold) to 0.99 (steady state) (Cooper CB, Beaver WL, Cooper DM,
  * Wasserman K, Exp Physiol 1992;77:51–64); centre 0.97. MH muscle is glycogenolytic (lactate rises first and is

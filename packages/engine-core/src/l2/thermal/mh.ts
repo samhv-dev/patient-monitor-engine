@@ -7,17 +7,32 @@
 // creeps back up as the drug curve wanes (recrudescence). Without dantrolene s stays undefined and a(t) is exactly the
 // temperature model's MH factor ramp.
 import {
-  DANT_GAIN, MH_ONSET_S, MH_PROFILE_SEVERITY, MH_RELAX_TAU_S, MH_SYMP_TAU_S, MH_SUX_LATENCY_S, MH_VOLATILE_LATENCY_DEFAULT_S, MH_VOLATILE_LATENCY_S,
+  DANT_GAIN, MH_ONSET_S, MH_PHENOTYPE, MH_PROFILE_SEVERITY, MH_RELAX_TAU_S, MH_SYMP_TAU_S, MH_SUX_LATENCY_S, MH_VO2_PEAK_X,
+  MH_VOLATILE_LATENCY_DEFAULT_S, MH_VOLATILE_LATENCY_S, type MhPhenotype,
 } from './params.ts';
 
 export interface MhState {
   severity: number; // 0–1
   t0: number; // trigger time, s
+  /** E134: this patient's/trigger's peak whole-body VO2 multiple at full activity (the calcium-leak gain). Absent =
+   * MH_VO2_PEAK_X, the `typical` phenotype's 2.5. */
+  vo2PeakX?: number;
+  /** E134: the phenotype the scenario named (words for the card, the log and the Debrief; the number above is what the
+   * physiology reads). Absent = `typical`. */
+  phenotype?: MhPhenotype;
   s?: number; // unsuppressed fraction (absent = 1)
   /** E117: the unsuppressed fraction as the SYMPATHETIC drive sees it — the same dantrolene target, followed with
    * MH_SYMP_TAU_S (absent = `s`, i.e. 1 untreated; older snapshots have neither). */
   sSymp?: number;
 }
+
+/** E134: the peak whole-body VO2 multiple of this MH state (the phenotype's gain; no MH = 1, no excess). */
+export function mhVo2PeakX(mh: MhState | null): number {
+  return mh ? (mh.vo2PeakX ?? MH_VO2_PEAK_X) : 1;
+}
+
+/** The peak VO2 multiple a phenotype name means (an unknown name takes the typical one). */
+export const mhPeakXOf = (phenotype: string | undefined): number => MH_PHENOTYPE[phenotype ?? 'typical'] ?? MH_VO2_PEAK_X;
 
 /** MH activity 0–1 at time t (the onset ramp × the dantrolene-unsuppressed fraction). */
 export function mhActivity(mh: MhState | null, t: number): number {
@@ -42,6 +57,8 @@ export interface MhExposure {
   sux?: number;
   volatile?: number;
   volatileAgent?: string; // the potent volatile that triggered (its latency is agent-specific)
+  /** E134: the susceptible patient's phenotype (`patient.neuro.mhPhenotype`); absent = `typical`. */
+  phenotype?: MhPhenotype;
 }
 
 /** Who made the current MH state — the triggers ('auto') or the instructor ('instructor'); absent = nobody yet. */
@@ -64,7 +81,12 @@ export function mhOnsetT(x: MhExposure | undefined): number | null {
 export function mhFromExposure(mh: MhState | null, x: MhExposure | undefined, owner: MhOwner | undefined, t: number): { mh: MhState | null; owner: MhOwner | undefined } {
   const t0 = mhOnsetT(x);
   if (t0 === null) return { mh, owner };
-  if (owner === undefined) return mh === null ? { mh: { severity: MH_PROFILE_SEVERITY, t0 }, owner: 'auto' } : { mh, owner: 'instructor' };
+  const pheno = x?.phenotype;
+  if (owner === undefined) {
+    return mh === null
+      ? { mh: { severity: MH_PROFILE_SEVERITY, t0, vo2PeakX: mhPeakXOf(pheno), ...(pheno ? { phenotype: pheno } : {}) }, owner: 'auto' }
+      : { mh, owner: 'instructor' };
+  }
   if (owner === 'auto' && mh !== null && t < mh.t0 && t0 < mh.t0) return { mh: { ...mh, t0 }, owner };
   return { mh, owner };
 }

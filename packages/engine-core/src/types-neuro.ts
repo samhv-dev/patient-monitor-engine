@@ -15,6 +15,9 @@ export interface NeuroProfile {
   /** Plasma cholinesterase phenotype; the engine hands it to the drug model's PK patient as `pche`. */
   cholinesterase?: 'normal' | 'heterozygous' | 'homozygous';
   mhSusceptible?: boolean;
+  /** E134: the susceptible patient's MH phenotype — the severity of the calcium leak a trigger will produce
+   * (`typical` × 2.5 of the resting VO2, `fulminant` × 5; thermal/params.ts MH_PHENOTYPE). Default `typical`. */
+  mhPhenotype?: 'typical' | 'fulminant';
   /** Plasma magnesium, mmol/L (default 0.9); the blood model supplies it when present. */
   mgMmolL?: number;
 }
