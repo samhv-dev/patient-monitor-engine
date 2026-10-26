@@ -77,7 +77,7 @@ cards after the clinical review (E132, kit round A4, Chromium): MH 2:02 (no talk
 - **Print the handout only after the fast-forward banner has gone** (≈ 8 s after a span): printed earlier it carries
   the banner on every page, and on screen the banner covers **Print the learner handout**.
 - **The MH report prints 8 A4 pages** (kit 2ebd743d and the E132 card; A4 on kit 52b0390b printed 7). The
-  haemorrhage report prints 8; its learner handout now 2 pages (E132).
+  haemorrhage report prints 8; its learner handout 1 page.
 
 <div style="page-break-after: always;"></div>
 
@@ -249,7 +249,7 @@ rhythm check even when the arterial line shows the return. During CPR and VF the
 | 0:30 (19:10) | **Key times**: first team action **35 s** · CPR **4 min 40 s** after the pulse loss (asked ≤ 30 s) · CPR stopped **58 s** after the return of circulation (asked ≤ 2 min 30 s) · pulseless **9 min 58 s** |
 | 1:00 (19:40) | the objectives: – recognise PEA (name the pseudo-PEA at 19/13) · ✗ CPR within 30 s: withheld on purpose, as the objective says · ✓ the return of circulation recognised at the rhythm check |
 | 1:30 (20:10) | **Key moments** (21 in the report) · **Timeline** (79 rows) |
-| 2:15 (20:55) | **Print or save as PDF**: **8 A4 pages**. **In the print dialog, untick Headers and footers** (Chrome: More settings; Safari: Show Details → Print headers and footers). Then **Print the learner handout** (optional): **2 pages** on the E132 card |
+| 2:15 (20:55) | **Print or save as PDF**: **8 A4 pages**. **In the print dialog, untick Headers and footers** (Chrome: More settings; Safari: Show Details → Print headers and footers). Then **Print the learner handout** (optional): 1 page |
 | 3:00 (21:40) | *"The report is a debrief aid: it reads the run, it does not grade the person."* |
 
 **The objectives are final** (E132): no "draft" on the panel, the report or the print.
@@ -264,10 +264,9 @@ compensated bleeding patient into arrest."* · *"In haemorrhagic arrest, stoppin
 first; compressions cannot fill an empty heart."* · *"EtCO₂ and the arterial diastolic pressure show how good the CPR
 is, and they show the return of circulation."*
 
-**Traps:** the learner handout now runs to **2 pages** (the third take-home line and the closing sentence spill over).
-Before giving it to the room, check it lists both shocks and the return of circulation.
+**Traps:** before giving the handout to the room, check it lists both shocks and the return of circulation.
 
-*Kit round A4 on the E132 card (Debrief read and printed: report 8 pages, handout 2 pages).*
+*Kit round A4 on the E132 card (Debrief read and printed: report 8 pages; the handout printed 2 pages on kit e0c73a47, 1 page after the compact-layout fix, Debrief e2e).*
 
 <div style="page-break-after: always;"></div>
 

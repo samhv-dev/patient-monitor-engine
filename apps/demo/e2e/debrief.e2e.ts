@@ -243,6 +243,9 @@ const TAMPONADE = resolve(import.meta.dirname, '../src/app/showcase/showcase-tam
 // R-B C2: the committed full MH run (kit round A, early call, ventilation back) with the card's six objectives (E52)
 const MH_RUN = resolve(import.meta.dirname, '../../../docs/showcase/kit-round-a/fa/debrief-malignant-hyperthermia-early-normo-call-kit-round-chromium.json');
 const MH = resolve(import.meta.dirname, '../src/app/showcase/showcase-mh.json');
+// E132: the kit-round A4 haemorrhage run on the card after the clinical review (21 key moments, three take-home lines)
+const HAEM_RUN = resolve(import.meta.dirname, '../../../docs/showcase/kit-round-a/e132/debrief-a4-haemorrhage-e132-chromium.json');
+const HAEM = resolve(import.meta.dirname, '../src/app/showcase/showcase-haemorrhage.json');
 const MM = 96 / 25.4;
 const VERDICT = /Observed|Not observed|Not assessable|Discuss|✓|✗|◆/;
 
@@ -415,5 +418,26 @@ test('Debrief B on the MH card: page 1 and the handout within one A4 page', asyn
     const report = await page.pdf({ preferCSSPageSize: true, printBackground: false });
     writeFileSync(`${out}/debrief-b-mh.pdf`, report);
     test.info().annotations.push({ type: 'MH pages', description: String(pdfInfo(report).boxes.length) });
+  }
+});
+
+// E132 on the haemorrhage card (its recorded A4 run: 21 key moments, the three take-home lines): the learner handout
+// within one A4 page, both engines; Chromium prints it on one page (#133's compact layout for a long Key moments table).
+test('Debrief B on the haemorrhage card: the learner handout within one A4 page', async ({ page, browserName }) => {
+  test.setTimeout(90_000);
+  await showRecorded(page, HAEM_RUN, HAEM);
+  const view = page.locator('[data-view=debrief]');
+  await expect(view.locator('.db-hmoments tbody tr[data-n]')).toHaveCount(21);
+  await page.emulateMedia({ media: 'print' });
+  await printFontLoaded(page);
+  await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
+  const { handout } = await printHeights(page);
+  test.info().annotations.push({ type: 'haemorrhage handout (mm)', description: handout.toFixed(1) });
+  expect(handout, 'handout (mm)').toBeLessThanOrEqual(267);
+  if (browserName === 'chromium') {
+    const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    mkdirSync(out, { recursive: true });
+    writeFileSync(`${out}/debrief-b-haemorrhage-handout.pdf`, pdf);
+    expect(pdfInfo(pdf).boxes).toHaveLength(1);
   }
 });

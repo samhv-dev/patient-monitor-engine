@@ -46,7 +46,7 @@ own cue card.
 8. **The haemorrhage Debrief**: open it before loading anything else. Key times 35 s · CPR 4 min 40 s · CPR stopped
    58 s after the return of circulation · pulseless 9 min 58 s; – ✗ ✓: the ✗ is the course itself (the demo withholds
    CPR on purpose, and the objective now says so); **no "draft" any more** (E132). It prints **8 A4 pages**; the
-   handout **2 pages** on the E132 card (was 1).
+   handout 1 page (the compact handout layout tightened for the E132 card's 21 moments and three take-home lines).
    **In the print dialog, untick Headers and footers (Chrome: More settings; Safari: Show Details → Print headers and
    footers).** [Q1-2D; A4]
 9. **Saadat-style monitor, and no style change during the talk** (E20): after a change the AGENTS tile reads "---"
@@ -64,7 +64,7 @@ own cue card.
 |---|---|
 | MH | Load 0:00 awake on room air; induce 4:00, intubate 5:00, surgery 6:00; EtCO₂ 42 → 44 → **46 at Early signs 8:32** (E132 8:38; HR 64 → 80; temperature hardly moved, ≤ 37.8 °C all case); call 2–10 s later (the crisis step adds charcoal filters and a propofol infusion); dantrolene 21 s after the call; EtCO₂ < 40 from 9:05; span 1 (Recovering 10:04–10:15); ventilation back 14:41 (met from 11:05; A4 14:18); EtCO₂ past 45 about a minute later; **second dantrolene at the 19:58 Pause** (EtCO₂ 53–54; A4 4 min 19 s after it passed 45); EtCO₂ then holds ≈ 55 to the end; Debrief ✓ ✓ ✓ ✓ – ✓; the report 8 A4 pages [Q1-2D; E132] |
 | Haemorrhage | 8:00 HR 139–141, ART 75/61; junctional 9:17 (card); PEA 10:27 (ART 19/13, pseudo-PEA); pulse lost 11:00; idioventricular 12:56; asystole 15:36; CPR + massive transfusion 15:39; epinephrine 15:59; rhythm check 17:38 → VF → shock → asystole; epinephrine 18:57; rhythm check 19:46 → VF → shock → organised, no pulse; **pulse back 20:58** (64 s after the shock); rhythm check 21:53 (ART 128/78, EtCO₂ 46) → **stop CPR 21:56**; 22:56 ART 141/93, HR 73, EtCO₂ 55 [E132] |
-| Debrief (haemorrhage) | 35 s · 4 min 40 s · 58 s · 9 min 58 s; – ✗ ✓; 21 key moments; 79 timeline rows; 8 A4 pages; handout 2 pages [E132] |
+| Debrief (haemorrhage) | 35 s · 4 min 40 s · 58 s · 9 min 58 s; – ✗ ✓; 21 key moments; 79 timeline rows; 8 A4 pages; handout 1 page [E132; Debrief e2e] |
 
 ## Keys and buttons
 
