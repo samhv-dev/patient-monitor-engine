@@ -181,10 +181,13 @@ export function toast(text: string, kind: ToastKind = 'info'): void {
  */
 export function trackChromeBottom(root: HTMLElement): () => void {
   const bars = [...root.querySelectorAll<HTMLElement>('.topbar, .sessionbar')];
-  // E128: the Instructor panel's tab strip too, as `--panel-tabs-bottom` (0 while the view is hidden): the toasts on the
-  // Instructor view sit under it, never over it (the "Scenario loaded" toast covered the strip, so the Scenario tab
-  // could not be seen or pressed). It wraps onto more lines in a narrow panel; the observer follows.
+  // E128: the Instructor panel's tab strip too, as `--panel-tabs-bottom` (0 while the view is hidden): the fast-forward
+  // banner sits under it, never over it. It wraps onto more lines in a narrow panel; the observer follows. And the
+  // panel's staging bar, as `--panel-foot` (the height from its top to the window's bottom): the toasts on the Instructor
+  // view stack upwards from just above it, over the panel body — at its top the "Scenario loaded" toast covered the tab
+  // strip, then the case title and "Choose another scenario" (owner, 26 October).
   const strip = root.querySelector<HTMLElement>('.view[data-view="teach"] [role="tablist"]');
+  const foot = root.querySelector<HTMLElement>('.view[data-view="teach"] .stagebar');
   const set = () => {
     const bottom = bars.reduce((m, e) => {
       const r = e.getBoundingClientRect();
@@ -193,11 +196,17 @@ export function trackChromeBottom(root: HTMLElement): () => void {
     document.documentElement.style.setProperty('--chrome-bottom', `${Math.round(bottom)}px`);
     const s = strip?.getBoundingClientRect();
     document.documentElement.style.setProperty('--panel-tabs-bottom', `${s && s.height > 0 ? Math.round(s.bottom) : 0}px`);
+    const f = foot?.getBoundingClientRect();
+    document.documentElement.style.setProperty('--panel-foot', `${f && f.height > 0 ? Math.max(0, Math.round(innerHeight - f.top)) : 0}px`);
   };
   const ro = new ResizeObserver(set);
-  for (const e of strip ? [...bars, strip] : bars) ro.observe(e);
+  for (const e of [...bars, strip, foot]) if (e) ro.observe(e);
+  addEventListener('resize', set);
   set();
-  return () => ro.disconnect();
+  return () => {
+    ro.disconnect();
+    removeEventListener('resize', set);
+  };
 }
 
 export const clock = (t: number | null | undefined): string =>

@@ -324,14 +324,14 @@ dialog .actions { display: flex; justify-content: flex-end; gap: var(--s-2); mar
 .toasts { position: fixed; bottom: var(--s-4); left: 50%; transform: translateX(-50%); display: grid; gap: var(--s-2); z-index: 40; pointer-events: none; }
 /* UI-A #8 (demo review 24 Oct #8): after the cue card's Load · All alarms on · Bookmark · ×8 the toasts stacked over the
    monitor's bottom row, the first thing the audience saw of each case. Wherever the monitor stage shows, they keep off
-   it: on the Instructor view at the top of the panel, under the session bar. The Monitor view (the device alone, what
+   it: on the Instructor view over the panel (E128: at its foot, above the staging bar). The Monitor view (the device alone, what
    the learners see) shows only the toasts that belong there (ui.ts ToastKind): alerts — "The monitor stopped", a
    refusal, a pause while hidden, which must be seen on every view — and the learner controls' own feedback; the
    instructor's feedback ("Speed ×8", "Bookmark … saved") stays off it. The starting page is a full page with no
    monitor (Home, Room, Scenarios, Patient): bottom-centre, as elsewhere. Moved rather than shortened: every toast, not only these three, stays readable for its 4 s. */
-/* E128: and under the panel's tab strip (--panel-tabs-bottom, ui.ts trackChromeBottom), over the panel's body: on the
-   strip, "Scenario loaded" hid the Scenario tab and the case's next steps behind it. */
-body:has(.app[data-route='teach']) .toasts { top: calc(max(var(--chrome-bottom, var(--bar-h)), var(--panel-tabs-bottom, 0px)) + var(--s-2)); bottom: auto; left: auto; right: var(--s-3); transform: none; width: max-content; max-width: calc(var(--panel-w) - 2 * var(--s-3)); }
+/* E128: at the foot of the panel, just above its staging bar (--panel-foot, ui.ts trackChromeBottom), over the panel's
+   body: at its top "Scenario loaded" hid the Scenario tab, then the case title and "Choose another scenario". */
+body:has(.app[data-route='teach']) .toasts { top: auto; bottom: calc(var(--panel-foot, 0px) + var(--s-2)); left: auto; right: var(--s-3); transform: none; width: max-content; max-width: calc(var(--panel-w) - 2 * var(--s-3)); }
 body:has(.app[data-route='monitor']) .toast[data-kind='info'] { display: none; }
 .toast[data-kind='alert'] { border-left-color: var(--danger); }
 @media (max-width: 900px) and (orientation: portrait) {
@@ -469,11 +469,12 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
 /* FX-23: 25 % larger than the body text and its padding (15 → 18.75 px; 8/16 → 10/20 px), three lines, same place */
 .ff-banner { position: fixed; top: calc(var(--chrome-bottom, 0px) + var(--s-2)); left: 50%; transform: translateX(-50%); z-index: 45; max-width: calc(100vw - 2 * var(--s-4)); padding: calc(1.25 * var(--s-2)) calc(1.25 * var(--s-4)); font-size: calc(1.25 * var(--t-15)); border: 2px solid #ffb000; border-radius: var(--r-control); background: #0b0d10; color: #f3f6f9; font-weight: 600; text-align: center; pointer-events: none; }
 .ff-banner[hidden] { display: none; }
+.ff-banner > div:first-child { margin-bottom: 1em; margin-bottom: 1lh; } /* E128 (owner's mockup m11): a blank line under the title */
 /* UI-A #9 (demo review 24 Oct #9): the banner covered the nav and the session-bar title for 8 s, and on the Debrief the
    "Print the learner handout" button; printed within its 8 s it sat over the title of every page. It now sits under the
    bars (--chrome-bottom) — on the Instructor view over the top of the panel, off the monitor — is not shown on the
    Debrief, and neither it nor a toast prints, from any view. */
-.app[data-route='teach'] .ff-banner { left: auto; right: var(--s-3); transform: none; max-width: calc(var(--panel-w) - 2 * var(--s-3)); }
+.app[data-route='teach'] .ff-banner { top: calc(max(var(--chrome-bottom, 0px), var(--panel-tabs-bottom, 0px)) + var(--s-2)); left: auto; /* E128: under the tab strip */ right: var(--s-3); transform: none; max-width: calc(var(--panel-w) - 2 * var(--s-3)); }
 @media (max-width: 900px) and (orientation: portrait) {
   .app[data-route='teach'] .ff-banner { left: 50%; right: auto; transform: translateX(-50%); max-width: calc(100vw - 2 * var(--s-4)); }
 }

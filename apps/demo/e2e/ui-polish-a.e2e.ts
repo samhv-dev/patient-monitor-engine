@@ -140,11 +140,19 @@ for (const [w, h] of [[1280, 800], [1920, 1080]] as const) {
     const toasts = await page.locator('.toast').evaluateAll((ts) => ts.map((t) => ({ text: t.textContent, ...(t.getBoundingClientRect().toJSON() as Box) })));
     console.log(`E128 ${w}x${h}: tab strip ${JSON.stringify(strip)} toasts ${JSON.stringify(toasts)}`);
     expect(toasts.some((t) => t.text?.startsWith('Scenario loaded: Malignant') || t.text?.startsWith('Scenario loaded: a long'))).toBe(true);
+    // …and not over the case's title, "Choose another scenario" or the staging bar: the stack sits just above that bar
+    const head = (await run(page).locator('.scard-head').boundingBox()) as Box;
+    const foot = (await page.locator('footer.stagebar').boundingBox()) as Box;
     for (const t of toasts) {
       expect(meets(t, strip), `a toast over the panel's tab strip ${JSON.stringify(t)}`).toBe(false);
       expect(t.y).toBeGreaterThanOrEqual(strip.y + strip.height);
+      expect(meets(t, head), `a toast over the case title and "Choose another scenario" ${JSON.stringify(head)}`).toBe(false);
+      expect(meets(t, foot), `a toast over the staging bar ${JSON.stringify(foot)}`).toBe(false);
+      expect(foot.y - (t.y + t.height)).toBeLessThanOrEqual(foot.height + 400); // at the panel's foot, not its top
       expect(meets(t, (await page.locator('.stage').boundingBox()) as Box), 'a toast over the monitor stage').toBe(false);
     }
+    const last = toasts.reduce((m, t) => Math.max(m, t.y + t.height), 0);
+    expect(foot.y - last, 'the stack ends just above the staging bar').toBeLessThanOrEqual(24);
     await page.locator('[role=tab][data-tab=log]').click({ timeout: 2000 }); // pressable with the toasts up (no trial click: a real one)
     await expect(page.locator('[role=tab][data-tab=log]')).toHaveAttribute('aria-selected', 'true');
     await page.evaluate(() => document.querySelectorAll('.uia-probe').forEach((e) => e.remove()));
@@ -170,6 +178,14 @@ test('UI-A #9 fast-forward: the banner sits under the nav and the session bar, n
   expect(meets(b, nav), 'the banner over the nav').toBe(false);
   expect(meets(b, sbar), 'the banner over the session bar').toBe(false);
   expect(meets(b, stage), 'the banner over the monitor stage').toBe(false);
+  // E128: under the panel's tab strip, and a blank line between its title and the two detail lines (owner's mockup m11)
+  expect(meets(b, (await page.locator('[role=tablist][aria-label="Instructor controls"]').boundingBox()) as Box), 'the banner over the tab strip').toBe(false);
+  const gap = await banner.evaluate((e) => {
+    const [a, c] = [...e.children].map((d) => d.getBoundingClientRect());
+    return { gap: c!.top - a!.bottom, line: a!.height };
+  });
+  console.log(`E128 banner blank line ${JSON.stringify(gap)}`);
+  expect(gap.gap).toBeGreaterThanOrEqual(0.9 * gap.line);
   // the nav stays clickable while the banner shows
   await page.locator('nav.rail').getByRole('link', { name: 'Explore physiology' }).click(); // E125: the rail replaced the top bar's tabs
   await expect(page).toHaveURL(/#\/explore/);
