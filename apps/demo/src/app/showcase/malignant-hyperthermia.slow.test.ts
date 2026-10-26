@@ -21,10 +21,18 @@ import { alarmAt, bands, entered, first, near, range, runCard, type Act, type Sa
  *  S1 early crisisMin 8.85 → 6.53 (follows the early signs), recoveringMin 16.97 → 10.07, tcMax 38.01 → 37.67, hrMax
  *  122 → 86, etco2Plus5 47 → 43, hrPlus15 85 → 68; S1 late etco2AtCall 60 → 75, phAtCall 7.19 → 7.12, etco2Plus2 54 →
  *  63, recoveringMin 30.8 → 36.6, hrAt60 91 → 78, mapAt60 107 → 101. The heart rates are lower because the fentanyl
- *  premedication gates the E117 sympathetic term (PR #118). Reported to the owner; not tuned. */
+ *  premedication gates the E117 sympathetic term (PR #118). Reported to the owner; not tuned.
+ *  E131 (owner, 2026-10-26: one muscle metabolic rate; heat from the oxygen consumed; the owner accepted that the MH
+ *  course moves): the MH heat is ≈ 140 W (was 705 W), so the core neither reaches the card's "established" 38.5 °C (it
+ *  does at ≈ +103 min) nor the hyperthermic VF within the run; the CO₂ is higher and earlier. The untreated arm's
+ *  established/arrest bands are an it.fails; its measurable numbers are a new row 'S1 untreated E131' (measured on this
+ *  build ± the old tolerances). S1 early re-centred, same tolerances (old centre → new): recoveringMin 10.07 → 17.82
+ *  (the higher EtCO₂ takes longer under 45), tcMax 37.67 → 36.8, etco2Plus5 43 → 50. S1 late cannot reach its call
+ *  (an it.fails). Reported to the owner; not tuned. */
 const BANDS = {
   'S1 untreated': { refused: [0, 0], earlyMin: [3.84, 5.22], establishedMin: [16.89, 20.65], etco2AtEstablished: [72, 78], hrAtEstablished: [121, 131], phAtEstablished: [7.06, 7.12], kAtEstablished: [5.4, 6], lactateAtEstablished: [4.1, 5.1], mapAtEstablished: [80, 90], hrMax: [185, 195], kMax: [6.1, 6.7], lossMin: [39.91, 48.79], tcAtLoss: [42.14, 42.54], kAtLoss: [6.1, 6.7], vf: [1, 1], arrestStateMin: [40.23, 49.17] },
-  'S1 early': { refused: [0, 0], crisisMin: [5.65, 7.42], pulseLost: [0, 0], recoveringMin: [8.37, 11.77], established: [0, 0], tcMax: [37.47, 37.87], hrMax: [81, 91], kMax: [4.5, 5.1], etco2Plus5: [40, 46], hrPlus15: [63, 73] },
+  'S1 untreated E131': { refused: [0, 0], earlyMin: [3.41, 4.79], etco2Max: [103, 109], etco2At20: [88, 94], hrAt20: [119, 129], phAt20: [7.01, 7.07], kAt20: [5.8, 6.4], lactateAt20: [4.7, 5.7], mapAt20: [79, 89], tcAt20: [36.38, 36.78], hrMax: [134, 144], kMax: [6.5, 7.1], tcAt51: [37.11, 37.51], pulseLost: [0, 0] },
+  'S1 early': { refused: [0, 0], crisisMin: [5.65, 7.42], pulseLost: [0, 0], recoveringMin: [16.12, 19.52], established: [0, 0], tcMax: [36.6, 37.0], hrMax: [81, 91], kMax: [4.5, 5.1], etco2Plus5: [47, 53], hrPlus15: [63, 73] },
   'S1 preoxygenation (E121)': { withSpo2AtInduction: [98, 100], withSpo2Min: [97, 100], withoutSpo2AtInduction: [87, 93], withoutSpo2Min: [55, 71], withoutDesatAlarmAfterInductionS: [56, 96] },
   'S1 late': { refused: [0, 0], crisisMin: [17.79, 21.75], dantroleneMin: [18.69, 22.85], pulseLost: [0, 0], etco2AtCall: [72, 78], tcAtCall: [38.51, 38.91], kAtCall: [5.5, 6.1], phAtCall: [7.09, 7.15], etco2Plus2: [60, 66], tcMax: [39.3, 39.7], tcPeakMin: [28.05, 34.29], kMax: [5.6, 6.2], lactateMax: [6.9, 7.9], recoveringMin: [33.54, 39.7], normoMin: [35.04, 42.82], hrAt60: [73, 83], mapAt60: [96, 106], tcAt60: [38.5, 38.9], etco2At60: [35, 41], phAt60: [7.35, 7.41], kAt60: [3.5, 4.1], sysMaxAfterCall: [136, 146] },
 } as const;
@@ -35,11 +43,13 @@ const CRISIS = 'MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventil
 const CALL_S = 1440;
 /** The rows the run sheet points at in Explore with "Changed only" on (group:label:direction, baseline at 1:00). Since E119
  *  the 1:00 baseline is the awake, premedicated patient, so three rows read the anaesthetic against it: ART M, SVR and
- *  CMRO₂ go DOWN (they went up against the old induced baseline); the other 19 are the MH rows as before. */
+ *  CMRO₂ go DOWN (they went up against the old induced baseline); the other 19 are the MH rows as before. E131: at
+ *  24:00 the core is below the awake baseline (the anaesthetic redistribution outweighs the ≈ 140 W of MH heat), so
+ *  Tcore reads DOWN and T1 is not among the changed rows. */
 const EXPLORE_AT_CALL = [
-  'monitor:HR:up', 'monitor:ART M:down', 'monitor:EtCO₂:up', 'monitor:T1:up', 'monitor:awRR:up',
+  'monitor:HR:up', 'monitor:ART M:down', 'monitor:EtCO₂:up', 'monitor:awRR:up',
   'circulation:CO:up', 'circulation:SV:down', 'circulation:SVR:down', 'circulation:LVEF:down', 'circulation:Myocardial O2 supply/demand:down',
-  'blood:pH:down', 'blood:PCO₂:up', 'blood:BE:down', 'blood:Lactate:up', 'blood:K⁺:up', 'blood:Tcore:up', 'blood:VO₂:up', 'blood:SvO₂:down',
+  'blood:pH:down', 'blood:PCO₂:up', 'blood:BE:down', 'blood:Lactate:up', 'blood:K⁺:up', 'blood:Tcore:down', 'blood:VO₂:up', 'blood:SvO₂:down',
   'endocrine:MH activity:up', 'endocrine:Epinephrine:up', 'endocrine:Norepinephrine:up', 'brain:CMRO₂:down',
 ];
 /** E119: the induction sequence on the kit-round path — premedication 0:30, preoxygenation 1:00, induction (propofol,
@@ -77,8 +87,24 @@ function explore(atS: number): { listen: (e: Parameters<ConsoleModel['ingest']>[
 }
 
 describe('S1 malignant hyperthermia (showcase-mh)', { timeout: 1_800_000 }, () => {
-  it('untreated: early signs, established crisis, VF from hyperthermia', async () => {
-    const r = await runCard(ID, INDUCTION, 3300);
+  let untreated: ReturnType<typeof runCard> | undefined;
+  const untreatedRun = () => (untreated ??= runCard(ID, INDUCTION, 3300));
+  it('untreated: early signs; EtCO₂, HR and K⁺ on the way (E131: no established crisis, no VF within 51 min of the sux)', async () => {
+    const r = await untreatedRun();
+    const at20 = near(r.rows, SUX_S + 20 * 60);
+    bands('S1 untreated E131', {
+      refused: r.refused.length, earlyMin: (entered(r, 'earlySigns') - SUX_S) / 60,
+      etco2Max: range(r.rows, 'etco2', SUX_S, 3300).max, etco2At20: at20.etco2 ?? Number.NaN, hrAt20: at20.hr ?? Number.NaN, phAt20: at20.ph,
+      kAt20: at20.k, lactateAt20: at20.lactate, mapAt20: at20.map ?? Number.NaN, tcAt20: at20.tc,
+      hrMax: range(r.rows, 'hr', SUX_S, 3300).max, kMax: range(r.rows, 'k', 0, 3300).max, tcAt51: near(r.rows, 3299).tc,
+      pulseLost: r.rows.some((x) => !x.pulse) ? 1 : 0,
+    }, BANDS['S1 untreated E131']);
+  });
+
+  // E131: the MH heat is the achieved MH oxygen × its caloric equivalent (≈ 140 W at 80 kg; it was 8 × basal, 705 W), so
+  // the core no longer reaches the card's "established" 38.5 °C (+103 min) or the hyperthermic VF within the run.
+  it.fails('untreated: early signs, established crisis, VF from hyperthermia — measured: no established crisis and no VF in 51 min (core 37.3 °C at +51 min; E131: heat from the O₂ consumed)', async () => {
+    const r = await untreatedRun();
     const loss = first(r.rows, (s) => !s.pulse);
     const est = entered(r, 'established');
     bands('S1 untreated', {
@@ -105,9 +131,17 @@ describe('S1 malignant hyperthermia (showcase-mh)', { timeout: 1_800_000 }, () =
     }, BANDS['S1 early']);
   });
 
-  it('treated late (the run-sheet path): crisis 1 min into the established crisis; Explore "Changed only" at the call', async () => {
+  it('Explore "Changed only" at the call time of the run sheet (24:00), untreated until then', async () => {
     const x = explore(CALL_S);
-    const r = await runCard(ID, [...INDUCTION, ...checklist((s) => s.state === 'established', 60)], 3840, x.listen);
+    await runCard(ID, INDUCTION, CALL_S + 1, x.listen);
+    if (process.env.PME_SHOWCASE_PRINT) console.log(`S1 explore at ${CALL_S} s: ${x.rows().join(' | ')}`);
+    for (const row of EXPLORE_AT_CALL) expect(x.rows(), row).toContain(row);
+  });
+
+  // E131: the card's "established" state needs core > 38.5 °C, which the oxygen-derived MH heat reaches only at
+  // ≈ +103 min (measured on this build, untreated), so the late call is never made within the arm's 60 min.
+  it.fails('treated late (the run-sheet path): crisis 1 min into the established crisis — measured: the established crisis is not entered in 60 min, the call is not made (E131)', async () => {
+    const r = await runCard(ID, [...INDUCTION, ...checklist((s) => s.state === 'established', 60)], 3840);
     const c = r.pressed[INDUCTION.length] as number;
     const d1 = r.pressed[INDUCTION.length + 1] as number;
     bands('S1 late', {
@@ -122,8 +156,6 @@ describe('S1 malignant hyperthermia (showcase-mh)', { timeout: 1_800_000 }, () =
       etco2At60: near(r.rows, 3839).etco2 ?? Number.NaN, phAt60: near(r.rows, 3839).ph, kAt60: near(r.rows, 3839).k,
       sysMaxAfterCall: range(r.rows, 'sys', c, 3840).max,
     }, BANDS['S1 late']);
-    if (process.env.PME_SHOWCASE_PRINT) console.log(`S1 explore at ${CALL_S} s: ${x.rows().join(' | ')}`);
-    for (const row of EXPLORE_AT_CALL) expect(x.rows(), row).toContain(row);
   });
 
   it("E121: oxygen only from the card's step — with Preoxygenate the induction apnoea keeps SpO₂ up; without it SpO₂ falls before the tube", async () => {

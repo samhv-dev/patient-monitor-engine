@@ -20,7 +20,9 @@ describe('endocrine acceptance (MANUAL)', { timeout: 600_000 }, () => {
   // fell 204 + fit → 127 + fit (an ETT replaces the upper airway it bypasses), so the same MH VCO2 raises EtCO2 more
   // slowly — measured 36/42/54/71/86 at 0/5/10/15/20 min (slope 3.4/min still in band). The "≥ 60 by 10 min" edge is
   // split out as a record; the rig is not re-tuned (its "fixed ventilation" premise has no PaCO2 target to re-derive to).
-  it.fails('MH severity 1 at fixed ventilation (tables §7 check 21): EtCO2 ≥ 60 by 10 min — measured 54 with the corrected dead space', async () => {
+  // E131: the CO2 now comes from the one muscle rate (the achieved MH O2 at the muscle RQ + the buffered MH lactate's
+  // CO2) — measured 36/43/64/94/115 at 0/5/10/15/20 min: the edge is met, flipped.
+  it('MH severity 1 at fixed ventilation (tables §7 check 21): EtCO2 ≥ 60 by 10 min — measured 64 after E131 (54 with the corrected dead space before)', async () => {
     const { e, ev } = rig3({ patient: ADULT });
     e.dispatch(ev3({ kind: 'thermal', anaesthesia: 'general' }));
     e.dispatch(vent(12));
@@ -29,7 +31,8 @@ describe('endocrine acceptance (MANUAL)', { timeout: 600_000 }, () => {
     await run(e, 300 + 10 * 60);
     expect(mean(numSeries(ev, 'etco2', 300 + 580, 300 + 600).map(([, v]) => v))).toBeGreaterThanOrEqual(60);
   });
-  it('MH severity 1 at fixed ventilation (tables §7 check 21): EtCO2 rising 3–5 mmHg/min (the ≥ 60 by 10 min edge: the it.fails above), core +1 °C by 15 min, HR +30 bpm, K 5.5–6.5 by 20 min', async () => {
+  let mhRun: Promise<{ ev: EngineEvent[]; hr0: number }> | undefined;
+  const mh20 = () => (mhRun ??= (async () => {
     const { e, ev } = rig3({ patient: ADULT });
     e.dispatch(ev3({ kind: 'thermal', anaesthesia: 'general' }));
     e.dispatch(vent(12));
@@ -40,14 +43,29 @@ describe('endocrine acceptance (MANUAL)', { timeout: 600_000 }, () => {
     const et = (a: number) => mean(numSeries(ev, 'etco2', a - 20, a).map(([, v]) => v));
     const tc = stateSeries(ev, 'tempCore');
     const T = (s: number) => tc.find(([t]) => t >= s)![1];
-    console.log(`MH: EtCO2 ${[0, 5, 10, 15, 20].map((m) => et(300 + m * 60).toFixed(0)).join('/')} at 0/5/10/15/20 min; core +${(T(300 + 900) - T(300)).toFixed(2)} °C at 15 min; HR ${hr0.toFixed(0)} → ${hrAt(ev, 300 + 1140, 300 + 1200).toFixed(0)}; K ${labsAt(ev, 300 + 1200).k}`);
-    const slope = (et(300 + 900) - et(300 + 600)) / 5;
-    expect(slope).toBeGreaterThanOrEqual(3);
-    expect(slope).toBeLessThanOrEqual(5);
-    expect(T(300 + 900) - T(300)).toBeGreaterThanOrEqual(1);
+    console.log(`MH: EtCO2 ${[0, 5, 10, 15, 20].map((m) => et(300 + m * 60).toFixed(0)).join('/')} at 0/5/10/15/20 min; slope 10–15 min ${((et(300 + 900) - et(300 + 600)) / 5).toFixed(2)}/min; core +${(T(300 + 900) - T(300)).toFixed(2)} °C at 15 min; HR ${hr0.toFixed(0)} → ${hrAt(ev, 300 + 1140, 300 + 1200).toFixed(0)}; K ${labsAt(ev, 300 + 1200).k}`);
+    return { ev, hr0 };
+  })());
+  const etAt = (ev: EngineEvent[], a: number) => mean(numSeries(ev, 'etco2', a - 20, a).map(([, v]) => v));
+  it('MH severity 1 at fixed ventilation (tables §7 check 21): HR +30 bpm, K 5.5–6.5 by 20 min', async () => {
+    const { ev, hr0 } = await mh20();
     expect(hrAt(ev, 300 + 1140, 300 + 1200) - hr0).toBeGreaterThanOrEqual(30);
     expect(labsAt(ev, 300 + 1200).k).toBeGreaterThanOrEqual(5.5);
     expect(labsAt(ev, 300 + 1200).k).toBeLessThanOrEqual(6.5);
+  });
+  // E131: the CO2 of the one muscle rate (with the buffered lactate's) rises faster than the band's ceiling
+  it.fails('MH severity 1 at fixed ventilation (tables §7 check 21): EtCO2 rising 3–5 mmHg/min in minutes 10–15 — measured 6.0 (E131; 3.4 before)', async () => {
+    const { ev } = await mh20();
+    const slope = (etAt(ev, 300 + 900) - etAt(ev, 300 + 600)) / 5;
+    expect(slope).toBeGreaterThanOrEqual(3);
+    expect(slope).toBeLessThanOrEqual(5);
+  });
+  // E131: the MH heat is the achieved MH oxygen × its caloric equivalent (≈ 130 W at 70 kg; it was 8 × basal, 640 W)
+  it.fails('MH severity 1 at fixed ventilation (tables §7 check 21): core +1 °C by 15 min — measured −0.14 °C (E131: heat from the O2 consumed)', async () => {
+    const { ev } = await mh20();
+    const tc = stateSeries(ev, 'tempCore');
+    const T = (s: number) => tc.find(([t]) => t >= s)![1];
+    expect(T(300 + 900) - T(300)).toBeGreaterThanOrEqual(1);
   });
 
   /** MH severity 1 under GA at RR 12; dantrolene 2.5 mg/kg (7g) at 20 min; `mv`: treatment also doubles MV (RR 24). */
@@ -68,7 +86,9 @@ describe('endocrine acceptance (MANUAL)', { timeout: 600_000 }, () => {
   // R45 (FU-4, the one physical dead space — as the MH row above): the lower alveolar dead-space load washes the CO2
   // out sooner after dantrolene — measured peak at +4.0 min (band 5–10, asserted from 4.5 min). FU-6: the peak is at
   // +5.0 min (EtCO2 91) on the FU-6 branch at Task 11 — the pre-declared it.fails is met, flipped (R45).
-  it('MH + dantrolene 2.5 mg/kg at 20 min, fixed MV: EtCO2 turns 5–10 min after the dose (tables §7 check 21)', async () => {
+  // E131: with the CO2 from the one muscle rate (its buffered lactate's CO2 falls with the activity too) the EtCO2
+  // turns sooner after dantrolene — measured peak 123 at +4.0 min.
+  it.fails('MH + dantrolene 2.5 mg/kg at 20 min, fixed MV: EtCO2 turns 5–10 min after the dose (tables §7 check 21) — measured +4.0 min (E131)', async () => {
     const ev = await mhDantrolene(false);
     const et = (a: number) => mean(numSeries(ev, 'etco2', a - 20, a).map(([, v]) => v));
     let peak = t0;

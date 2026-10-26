@@ -30,7 +30,6 @@ export const VASOCONSTRICT_KCP = 0.5; // k_cp × once constricted [ENG]
 export const NEURAXIAL_BLOCK_FRAC = 0.5;
 export const NEURAXIAL_THR_SHIFT_C = -0.5;
 export const MH_ONSET_S = 900; // MH reaches its full activity over 15 min (tables 5–30 min) [ENG]
-export const MH_VCO2_FACTOR = 3; // VCO2 × 3 at activity 1 (tables × 2–5; × 5 passes the 150 mmHg EtCO2 limit) [ENG]
 export const SENSOR_TAU_S = 5; // probe time constant < 10 s (research 03 §6.1)
 
 // --- vasomotor tone ----------------------------------------------------------------------------------------
@@ -86,8 +85,46 @@ export const SWEAT_MAX_W_70 = 150;
 export const EMERGE_TAU_S = 600;
 
 // --- MH and dantrolene (tables §5.3, §7 check 21) -----------------------------------------------------------
-export const MH_HEAT_X = 8; // muscle heat × m0 added at activity 1: core +1 °C by 15 min of the trigger (tables §7 check 21) [ENG]
-export const MH_VO2_FACTOR = 2.5; // VO2 × 2–3 (tables) [TXT]
+/**
+ * E131: THE one MH rate. The hypermetabolic skeletal muscle adds an O2 demand of a(t)·(MH_VO2_PEAK_X − 1)·VO2rest
+ * (metabolic.ts `mhO2Demand`); oxygen demand, CO2, heat and lactate all derive from it (the old three independent
+ * factors MH_HEAT_X 8, MH_VO2_FACTOR 2.5 and MH_VCO2_FACTOR 3 are gone: 640 W of heat came from oxygen worth ≈ 120 W).
+ * MH_VO2_PEAK_X is the whole-body VO2 at full fulminant activity ÷ the resting VO2. Range 2–3 (tables §5.3 "VO2 ×2–3"
+ * [TXT]); the centre 2.5 is taken. Measured in swine with constant ventilation and no treatment: whole-body VO2 "almost
+ * twofold", hind-limb muscle VO2 almost threefold (Gronert GA, Theye RA, Anesthesiology 1976;44:36–43); 6.5 → 11.6
+ * mL/kg/min, × 1.8 (Gronert GA et al., Anesthesiology 1986;64:24–28); the muscle's increase extrapolated to the whole
+ * musculature ≈ the whole-body increase, ≈ 6 mL/kg/min (Gronert GA, Heffron JJ, Milde JH, Theye RA, Can Anaesth Soc J
+ * 1977;24:103–109) — on a human 3.5 mL/kg/min resting VO2 that is × 2.7. A review gives "5-fold" as the upper extreme
+ * (Nelson TE, Biosci Rep 2001;21:169–179) [P abstracts; no human calorimetry found].
+ */
+export const MH_VO2_PEAK_X = 2.5;
+/**
+ * E131: respiratory quotient of the hypermetabolic muscle's oxidation. The muscle substrate RQ during exercise with
+ * glycogen available is 0.95 (ramp V-slope below the threshold) to 0.99 (steady state) (Cooper CB, Beaver WL, Cooper DM,
+ * Wasserman K, Exp Physiol 1992;77:51–64); centre 0.97. MH muscle is glycogenolytic (lactate rises first and is
+ * non-hypoxic in origin: Gronert & Theye 1976) [P abstracts].
+ */
+export const MH_RQ = 0.97;
+/**
+ * E131: the caloric equivalent of oxygen, Weir JB de V, J Physiol 1949;109:1–9: energy (kcal) = 3.941·VO2 + 1.106·VCO2
+ * (L), i.e. 4.184·(3.941 + 1.106·RQ) kJ per L O2 — 20.2 kJ/L at the resting RQ 0.8, 21.1 at MH_RQ. The MH muscle heat
+ * is the ACHIEVED MH VO2 × this (heat.ts). Anaerobic glycolysis is not counted: per ATP it releases about as much heat
+ * as oxidation (glycogenolysis 65 vs oxidation 72 kJ/mol ATP, Curtin & Woledge 1978 and Woledge & Reilly 1988 as cited
+ * in muscle-energetics work), but it makes only 1.5 ATP per lactate, ≈ 98 kJ/mol lactate (di Prampero 1999's in-vivo
+ * estimate 84 kJ/mol) — and the blood model's lactate production has no substrate or pH limit, so counting it would heat
+ * a body with no flow without end. A known under-count (Hall GM et al., Br J Anaesth 1976;48:305–308: in porcine MH the
+ * heat is largely aerobic early; terminally aerobic metabolism accounts for about half of the muscle's temperature rise).
+ */
+export const WEIR_KCAL_PER_L_O2 = 3.941;
+export const WEIR_KCAL_PER_L_CO2 = 1.106;
+export const KJ_PER_KCAL = 4.184;
+/**
+ * E131: core-to-skin conduction through tissue with no skin blood flow, W/m²/°C: the two-node model's K (Gagge AP,
+ * Stolwijk JAJ, Nishi Y, ASHRAE Trans 1971;77(1):247–262: core–skin heat flow = (5.28 + c_bl·SKBF)·(Tcr − Tsk)). The
+ * heat model's k_cp is the blood-borne part above this floor scaled by the perfusion fraction (heat.ts); at full
+ * perfusion it is unchanged.
+ */
+export const TISSUE_K_W_M2_C = 5.28;
 /**
  * E117: the SYMPATHETIC share of MH (its `extraSymp`, endo/core.ts) is front-loaded — it approaches severity × the
  * unsuppressed fraction with this τ from the trigger instead of following the 15-min metabolic ramp, so the heart rate
