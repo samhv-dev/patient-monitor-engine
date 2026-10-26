@@ -258,8 +258,12 @@ export function tabs(label: string, defs: readonly TabDef[], initial: string, on
     select(b.dataset.tab as string);
     b.focus();
   });
+  // UI review #26: the panels share one scroller, so a tab opened at the last tab's offset ("Find a drug" hidden). Each
+  // tab keeps its own: the top on first open, where it was left on return
+  const scrolled = new Map<string, number>();
   function select(id: string): void {
     if (!defs.some((d) => d.id === id)) return;
+    if (cur) scrolled.set(cur, panels.scrollTop);
     cur = id;
     for (const b of btns) {
       const on = b.dataset.tab === id;
@@ -275,6 +279,7 @@ export function tabs(label: string, defs: readonly TabDef[], initial: string, on
       }
       if (p) p.hidden = d.id !== id;
     }
+    panels.scrollTop = scrolled.get(id) ?? 0;
     onSelect?.(id);
   }
   select(initial);

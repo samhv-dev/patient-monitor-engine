@@ -38,6 +38,20 @@ describe('components', () => {
     expect(built).toBe(2);
     expect([...list.querySelectorAll('[role=tab]')].map((x) => x.getAttribute('aria-selected'))).toEqual(['false', 'false', 'true']);
   });
+  it('tabs: a tab opens at its own scroll position — the top on first open, where it was left on return (UI review #26)', () => {
+    const t = tabs('Instructor controls', ['scenario', 'drugs', 'patient'].map((id) => ({ id, label: id, render: () => document.createElement('div') })), 'scenario');
+    document.body.append(t.el);
+    t.panels.scrollTop = 600; // the Scenario tab scrolled down
+    t.select('drugs');
+    expect(t.panels.scrollTop).toBe(0); // "Find a drug" at the top, not 600 px down
+    t.panels.scrollTop = 120;
+    t.select('patient');
+    expect(t.panels.scrollTop).toBe(0);
+    t.select('scenario');
+    expect(t.panels.scrollTop).toBe(600);
+    t.select('drugs');
+    expect(t.panels.scrollTop).toBe(120);
+  });
   it('glossary label: short label plus a tooltip button named after it', () => {
     const l = glossLabel(15);
     expect(l.querySelector('b')?.textContent).toBe('EtCO₂');
