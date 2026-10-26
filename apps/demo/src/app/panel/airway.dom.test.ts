@@ -13,7 +13,7 @@ const SPONT: Breathing = { source: 'spontaneous', device: 'none' };
 
 function rig(start: Breathing | null = SPONT) {
   const staged: Array<{ c: unknown; key: string; text: string }> = [];
-  const state: { breathing: Breathing | undefined } = { breathing: start ?? undefined };
+  const state: { breathing: Breathing | undefined; values: { fio2?: number } } = { breathing: start ?? undefined, values: {} };
   let refresh = () => undefined as void;
   const staging = {
     submit: (c: unknown, key: string, text: string) => staged.push({ c, key, text }),
@@ -35,7 +35,7 @@ function rig(start: Breathing | null = SPONT) {
   };
   const stageOxygen = () => oxygenStage().click();
   /** The engine's next 1 Hz state reports this breathing; the panel repaints. */
-  const breathe = (b: Breathing | undefined) => ((state.breathing = b), refresh());
+  const breathe = (b: Breathing | undefined, fio2?: number) => ((state.breathing = b), (state.values.fio2 = fio2), refresh());
   /** The state changes and the panel has not repainted yet. */
   const breatheQuiet = (b: Breathing) => void (state.breathing = b);
   return { el, o2, choose, flow, hint, staged, stageOxygen, oxygenStage, breathe, breatheQuiet };
@@ -78,27 +78,31 @@ describe('Airway & ventilation: oxygen for the spontaneously breathing patient (
     expect(staged.map((s) => [s.key, s.text])).toEqual([['oxygen', 'Oxygen by nasal cannula 4 L/min (FiO₂ 36 %)'], ['oxygen', 'Oxygen off: room air (FiO₂ 21 %)']]);
   });
 
-  const HELD: Array<[string, Breathing]> = [
-    ['bag-mask', { source: 'bvm', device: 'none' }],
-    ['ventilator', { source: 'ventilator', device: 'ett' }],
-    ['Ventilator view', { source: 'external', device: 'ett' }],
-    ['tracheal tube, breathing spontaneously', { source: 'spontaneous', device: 'ett' }],
-    ['supraglottic airway, breathing spontaneously', { source: 'spontaneous', device: 'sga' }],
+  // UI review #13: the control says what is true. Nothing in it is pressed (neither room air nor a mask is in use), and
+  // the hint names what is: the airway device or the bag, and the FiO₂ the engine reports, from the ventilator or bag.
+  const HELD: Array<[string, Breathing, number, string]> = [
+    ['bag-mask', { source: 'bvm', device: 'none' }, 1, 'Bag-mask in use: FiO₂ 100 % from the bag.'],
+    ['ventilator', { source: 'ventilator', device: 'ett' }, 0.5, 'Airway device in use (tracheal tube): FiO₂ 50 % from the ventilator.'],
+    ['Ventilator view', { source: 'external', device: 'ett' }, 0.4, 'Airway device in use (tracheal tube): FiO₂ 40 % from the ventilator.'],
+    ['tracheal tube, breathing spontaneously', { source: 'spontaneous', device: 'ett' }, 0.3, 'Airway device in use (tracheal tube): FiO₂ 30 %.'],
+    ['supraglottic airway, breathing spontaneously', { source: 'spontaneous', device: 'sga' }, 0.21, 'Airway device in use (supraglottic airway): FiO₂ 21 %.'],
   ];
-  it.each(HELD)('%s: the control is disabled with "FiO₂ is set on the ventilator / bag" and Stage sends nothing', (_, b) => {
-    const { o2, flow, hint, staged, oxygenStage, choose } = rig(b);
+  it.each(HELD)('%s: the control is disabled, nothing pressed, the hint says what is in use, and Stage sends nothing', (_, b, fio2, text) => {
+    const { o2, flow, hint, staged, oxygenStage, choose, breathe } = rig(SPONT);
     choose('Face mask');
+    breathe(b, fio2);
     expect(oxygenStage().disabled).toBe(true);
     expect(flow.disabled).toBe(true);
     expect([...o2.querySelectorAll('button')].every((x) => x.disabled)).toBe(true);
-    expect(hint.textContent).toBe('FiO₂ is set on the ventilator / bag.');
+    expect(o2.querySelector('[aria-pressed=true]')).toBeNull();
+    expect(hint.textContent).toBe(text);
     oxygenStage().dispatchEvent(new MouseEvent('click')); // even a press that reaches the handler
     oxygenStage().click();
     expect(staged).toEqual([]);
   });
 
   it('a staged oxygen is taken back when the patient is intubated before Commit; spontaneous again re-enables it', () => {
-    const { staged, stageOxygen, oxygenStage, choose, breathe, hint } = rig();
+    const { staged, stageOxygen, oxygenStage, choose, breathe, hint, o2 } = rig();
     choose('Face mask');
     stageOxygen();
     expect(staged.map((s) => s.key)).toEqual(['oxygen']);
@@ -108,6 +112,15 @@ describe('Airway & ventilation: oxygen for the spontaneously breathing patient (
     breathe(SPONT);
     expect(oxygenStage().disabled).toBe(false);
     expect(hint.textContent).toMatch(/^FiO₂ about 60 %/);
+    expect(o2.querySelector('[aria-pressed=true]')?.textContent).toBe('Face mask'); // the choice comes back
+  });
+
+  it('when the patient’s FiO₂ is not what the control would give, the hint says what it is now (UI review #13)', () => {
+    const { hint, breathe } = rig();
+    breathe(SPONT, 1); // the card's "Preoxygenate: 100 % O₂ by face mask"
+    expect(hint.textContent).toBe('Room air: FiO₂ 21 %. Now FiO₂ 100 %.');
+    breathe(SPONT, 0.21);
+    expect(hint.textContent).toBe('Room air: FiO₂ 21 %.');
   });
 
   it('a press between the engine’s new state and the next repaint (button still enabled) sends nothing either', () => {
@@ -117,7 +130,7 @@ describe('Airway & ventilation: oxygen for the spontaneously breathing patient (
     r.breatheQuiet({ source: 'bvm', device: 'none' });
     r.stageOxygen();
     expect(r.staged).toEqual([]);
-    expect(r.hint.textContent).toBe('FiO₂ is set on the ventilator / bag.');
+    expect(r.hint.textContent).toBe('Bag-mask in use: FiO₂ from the bag.');
   });
 
   it('before the monitor’s first state, or with a breathing change staged, it waits', () => {
