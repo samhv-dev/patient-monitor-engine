@@ -575,11 +575,14 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 
 ## Known misses
 
-None recorded.
+| Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
+|---|---|---|---|---|---|
+| untreated: early signs, established crisis, VF from hyperthermia | no established crisis and no VF in 51 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
+| treated late (the run-sheet path): crisis 1 min into the established crisis | the established crisis is not entered in 60 min, the call is not made | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
 
 ## Tests
 
-782 tests in 212 files; 0 expected failures, 0 skipped.
+784 tests in 212 files; 2 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -696,7 +699,7 @@ None recorded.
 | [`apps/demo/src/app/showcase/haemorrhage-anaphylaxis.slow.test.ts`](../../apps/demo/src/app/showcase/haemorrhage-anaphylaxis.slow.test.ts) | 4 | 0 | 0 |
 | [`apps/demo/src/app/showcase/healthy-induction.slow.test.ts`](../../apps/demo/src/app/showcase/healthy-induction.slow.test.ts) | 6 | 0 | 0 |
 | [`apps/demo/src/app/showcase/induction-after-premedication.slow.test.ts`](../../apps/demo/src/app/showcase/induction-after-premedication.slow.test.ts) | 3 | 0 | 0 |
-| [`apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) | 4 | 0 | 0 |
+| [`apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) | 6 | 2 | 0 |
 | [`apps/demo/src/app/showcase/showcase-cards.test.ts`](../../apps/demo/src/app/showcase/showcase-cards.test.ts) | 5 | 0 | 0 |
 | [`apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts`](../../apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts) | 5 | 0 | 0 |
 | [`apps/demo/src/app/site.test.ts`](../../apps/demo/src/app/site.test.ts) | 2 | 0 | 0 |

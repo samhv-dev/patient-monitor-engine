@@ -28,10 +28,12 @@ import { createCo2State, etco2Mixed, lowFlowFactor, stepCo2, vaForPaco2, type Co
 import { createDelay, delayStep, siteDelay, type DelayLine } from '../gas/delay.ts';
 import { o2Steady, solveShunt, type O2Inputs, type O2State } from '../gas/o2.ts';
 import { pulseOxApparent, type OdcCtx } from '../blood/odc.ts';
-import { apparatusDeadSpaceMl, CI_LPM_PER_KG, coRefLpm, defaultHeightCm, FRC_AWAKE_ML_KG, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, PACO2_REST_MMHG, physicalDeadSpace, PREG_PACO2_SHIFT_MMHG, PREG_VO2_TERM, tempFactor, ventDefaults, type GasPatient } from '../gas/params.ts';
+import { apparatusDeadSpaceMl, CI_LPM_PER_KG, RQ, coRefLpm, defaultHeightCm, FRC_AWAKE_ML_KG, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, PACO2_REST_MMHG, physicalDeadSpace, PREG_PACO2_SHIFT_MMHG, PREG_VO2_TERM, tempFactor, ventDefaults, type GasPatient } from '../gas/params.ts';
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createTemp, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
 import { thermalMetabolic } from '../thermal/metabolic.ts';
+import { MH_RQ } from '../thermal/params.ts';
+import { brainstemOutF } from '../circ/baroreflex.ts'; // The vasomotor centre's perfusion gate: the thermoregulatory efferents (E131)
 import { HIST_SPASM, resolveLung, SMOOTH_MUSCLE, spasmSeverity } from '../lung/conditions.ts'; // SMOOTH_MUSCLE; spasmSeverity; HIST_SPASM
 import { blockedSides, capnoTerms, createLung, lungGasStep, lungMechStep, shuntFraction, staticCompliance, type LungState, type Mainstem } from '../lung/lung.ts';
 import { circPtx, circSideFlows, writeCircPvr } from '../lung/circ-link.ts';
@@ -399,13 +401,16 @@ export function respPleural(rs: RespState, t: number): number {
 }
 
 /**
- * Metabolic factor: temperature, general anaesthesia and shivering, MH (VO2 × 2.5 / VCO2 × 3 at activity 1) and the
- * endocrine rate (thyroid, sepsis, hypermetabolic: `temp.extraX`). Exported for the blood's VO2
- * demand; `gas` selects the O2 or CO2 factor (they differ in MH).
+ * Metabolic factor (× the resting VO2 or VCO2): temperature, general anaesthesia, shivering and the endocrine rate
+ * (thyroid, sepsis, hypermetabolic: `temp.extraX`), PLUS the MH muscle's own O2 demand (E131, thermal/metabolic.ts
+ * `mhO2Demand`: VO2 demand = basal + M_mh). Its CO2 is the ACHIEVED part (× the blood model's delivered share
+ * `temp.o2Frac`) at the muscle's RQ MH_RQ; the CO2 of the buffered MH lactate arrives as the blood's CO2 load. Exported
+ * for the blood's VO2 demand; `gas` selects the O2 or CO2 factor.
  */
 export function metabolic(rs: RespState, t: number, gas: 'o2' | 'co2' = 'co2'): number {
   const m = thermalMetabolic(rs.temp, t);
-  return tempFactor(rs.temp.tc) * (gas === 'o2' ? m.vo2F : m.vco2F) * rs.temp.extraX * (1 - (1 - GA_METABOLIC) * gaLevel(rs)) * (1 + PREG_VO2_TERM * pregnancy(rs));
+  const basal = tempFactor(rs.temp.tc) * m.shiverF * rs.temp.extraX * (1 - (1 - GA_METABOLIC) * gaLevel(rs)) * (1 + PREG_VO2_TERM * pregnancy(rs));
+  return basal + (gas === 'o2' ? m.mhX : m.mhX * (rs.temp.o2Frac ?? 1) * (MH_RQ / RQ));
 }
 
 /** Pregnancy severity (the `pregnancy` lung condition, 0–1). */
@@ -496,7 +501,9 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     const mech = d.source === 'ventilator' || d.source === 'bvm' || d.source === 'external';
     const nv = nominalRate(d, driverCtx(rs, l1, t));
     rs.temp.vent = { veLpm: d.airway === 'apnoea' || d.source === 'none' ? 0 : (nv.rr * nv.vt) / 1000, dryGas: mech, hme: mech ? rs.temp.vent.hme || !rs.temp.vent.dryGas : false };
-    stepTemp(rs.temp, t, 1);
+    // E131: the heat model's MH muscle heat derives from the same mL O2 as the demand above (the patient's resting VO2),
+    // and its sweating and shivering need the hypothalamic efferent, gated by brainstem perfusion as the baroreflex is
+    stepTemp(rs.temp, t, 1, { vo2Rest: rs.pat.vo2, brainF: brainstemOutF(ctx.cbfRel) });
     tempNumStep(rs.num.temp, rs.temp.sites, rs.tempSite, 1);
   }
   const vco2 = rs.pat.vco2 * metabolic(rs, t) + (ctx.blood?.co2LoadMlMin ?? 0); // Bicarbonate CO2

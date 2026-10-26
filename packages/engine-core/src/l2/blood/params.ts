@@ -60,6 +60,16 @@ export const OSM0 = 290;
 export const LACTATE_V_L_PER_KG = 0.6; // `vLac` [ENG]
 export const K_LAC_PER_H = 1.389; // `kLac` 1400 mmol/day ÷ (1.0 mmol/L · 0.6 L/kg · 70 kg) — t½ 30 min [ENG, Q41]
 export const K_ANAER = 0.05; // mmol lactate per mL O2 deficit `kAnaer` (range 0.015–0.06): untreated VF 30 min → 9–10 mmol/L (annex D1 8–12) [ENG, Q41]
+/**
+ * E131: CO2 released when bicarbonate buffers lactic acid, mL per mmol: "22 ml for each meq of lactic acid" (Beaver WL,
+ * Wasserman K, Whipp BJ, J Appl Physiol 1986;60:2020–2027); beyond the first ≈ 0.4 mmol/L the acid is buffered almost
+ * entirely by bicarbonate (Beaver, Wasserman & Whipp, J Appl Physiol 1986;60:472–478) [P abstracts]. Applied to the MH
+ * muscle's anaerobic share (pipeline.ts).
+ */
+export const LACTATE_CO2_ML_PER_MMOL = 22;
+/** Normal arterial saturation for the heat model's skin-perfusion reference flow (E131; tables §5b.3 SvO2 row's
+ * SaO2 ≈ 0.97 [TXT]). */
+export const SAO2_NORMAL = 0.97;
 export const DO2_CRIT_ML_KG_MIN = 6; // `do2Crit` (4.9–8.2) [TXT, Q42]
 export const ER_MAX = 0.7; // `erMax` [TXT]
 /**

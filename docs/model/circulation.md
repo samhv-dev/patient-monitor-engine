@@ -62,6 +62,12 @@ reads it for the per-beat truths the monitor and the other organ models consume.
   multiplicatively (tables §6.2–§6.3; `l2/circ/drugs.ts`).
 - An arrest is declared when the myocardium can no longer eject or the continuous MAP stays below 25 mmHg for 60 s;
   return of a pulse needs a CPR coronary perfusion pressure of at least 15 mmHg (Paradis 1990; `l2/circ/arrest.ts`).
+- What the heat model takes from the flow (E131): with cardiac output below the flow at which oxygen delivery becomes
+  critical (≈ 40 % of resting output), the heat model's skin-perfusion fraction falls (to 0 with no flow) and scales the
+  blood-borne core–skin transfer, and the blood model's delivered share of the oxygen demand scales the oxidative
+  heat; the vasomotor centre's brain-perfusion gate
+  (`brainstemOutF(cbfRel)`, `l2/circ/baroreflex.ts`) also gates sweating and shivering. After an arrest the body
+  therefore cools by conduction, about 1 °C/h (`l2/thermal/heat.ts`).
 - Blood volume follows Lemmens' indexed rule, 70/√(BMI/22) mL/kg, and the circuit is sized on the weight that rule
   implies (Lemmens 2006, tables §1.3; `l2/body-size.ts`).
 <!-- /hand:equations -->

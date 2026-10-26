@@ -1,22 +1,36 @@
 // Metabolic scaling and the hypothermia/hyperthermia cascade (tables §5c, §5.3 `q10`, `clearTemp`, `macFactor`;
 // ICAR 2016 stages [P]). Pure functions of the thermal state; consumers read them through EndoOut (core.ts):
 //   VO2/VCO2: the gas model's tempFactor (7.5 %/°C ≈ Q10 2, gas/params.ts) stays the temperature term; this module adds
-//   shivering (heat ∝ VO2: shiverW/m0) and MH (VO2 × 2.5, VCO2 × 3 at activity 1). Heat Q10 is NOT applied to the
-//   heat balance (it moved the heat model's plateau out of its band).
+//   shivering (heat ∝ VO2: shiverW/m0) and THE one MH rate (E131):
+//   M_mh = a(t)·(MH_VO2_PEAK_X − 1)·VO2rest   (mL O2/min; a = mh.ts activity, dantrolene suppresses it)
+//   VO2 demand = basal + M_mh; MH CO2 = M_mh achieved·MH_RQ (+ the buffered lactate's CO2, blood/pipeline.ts);
+//   MH heat = M_mh achieved·Weir(MH_RQ) (heat.ts); lactate from the unmet part (blood/oxygen.ts). "Achieved" = × the
+//   blood model's delivered share o2Frac. Heat Q10 is NOT applied to the basal heat balance (it moved the heat model's
+//   plateau out of its band).
 import { mhActivity } from './mh.ts';
-import { MH_VCO2_FACTOR, MH_VO2_FACTOR } from './params.ts';
+import { KJ_PER_KCAL, MH_VO2_PEAK_X, WEIR_KCAL_PER_L_CO2, WEIR_KCAL_PER_L_O2 } from './params.ts';
 import type { ThermalState } from './heat.ts';
 
 export interface ThermalMetabolic {
-  vo2F: number; // × on VO2 beyond the tempFactor and GA factor (shivering, MH)
-  vco2F: number;
+  shiverF: number; // × on VO2 beyond the tempFactor and GA factor (shivering)
+  mhX: number; // E131: the MH muscle's O2 demand in units of the resting VO2, a·(MH_VO2_PEAK_X − 1) — ADDED to the factor
   mhActivity: number;
 }
 
 export function thermalMetabolic(st: ThermalState, t: number): ThermalMetabolic {
   const a = mhActivity(st.mh, t);
   const shiver = st.m0 > 0 ? st.out.shiverW / st.m0 : 0;
-  return { vo2F: (1 + shiver) * (1 + (MH_VO2_FACTOR - 1) * a), vco2F: (1 + shiver) * (1 + (MH_VCO2_FACTOR - 1) * a), mhActivity: a };
+  return { shiverF: 1 + shiver, mhX: a * (MH_VO2_PEAK_X - 1), mhActivity: a };
+}
+
+/** E131 — THE one MH rate: the hypermetabolic skeletal muscle's O2 demand, mL/min, for a resting VO2 `vo2Rest` (mL/min). */
+export function mhO2Demand(st: ThermalState, t: number, vo2Rest: number): number {
+  return thermalMetabolic(st, t).mhX * vo2Rest;
+}
+
+/** The caloric equivalent of oxygen at respiratory quotient `rq`, kJ per L O2 (= J per mL; Weir 1949). */
+export function oxyKjPerL(rq: number): number {
+  return KJ_PER_KCAL * (WEIR_KCAL_PER_L_O2 + WEIR_KCAL_PER_L_CO2 * rq);
 }
 
 export interface Cascade {

@@ -2,13 +2,19 @@
 // a skin-flow factor, drug effects"). Two compartments (core 2/3, periphery 1/3 of the body, 3.5 kJ/kg/°C):
 //   Cc·dTc = M − k_cp·(Tc − Tp) − Q_resp + Q_iv
 //   Cp·dTp = k_cp·(Tc − Tp) − Q_dry − Q_skinEvap − Q_sweat + Q_forcedAir
-//   M = m0·(1 − (1 − GA_M)·min(1, d)) + shivering + MH muscle heat + m0·(extraX − 1)   (extraX: thyroid/sepsis/…)
-//   MH muscle heat = m0·MH_HEAT_X·activity·o2Frac: the excess is oxidative, so it is limited by the share of the VO2
-//   demand the circulation delivers (the blood model's VO2/demand, blood/oxygen.ts; 1 at normal perfusion, 0 with no
-//   flow). Without it the muscle went on heating a body in cardiac arrest without bound (E129: 94 °C untreated)
+//   M = [m0·(1 − (1 − GA_M)·min(1, d)) + m0·(extraX − 1) + shivering]·o2Frac + MH muscle heat   (extraX: thyroid/sepsis/…)
+//   MH muscle heat = M_mh·o2Frac·Weir(MH_RQ)   (W = mL/min × J/mL ÷ 60; M_mh the one MH rate, metabolic.ts)
+//   o2Frac = the share of the VO2 demand the circulation delivers (the blood model's VO2/demand, blood/oxygen.ts; 1
+//   above DO2crit, DO2/DO2crit below it, 0 with no flow): heat is oxidative, so the basal heat and the MH heat both
+//   follow the oxygen actually consumed (E129 for the MH heat: 94 °C untreated before it; E131 for the rest).
+//   Sweating and shivering × brainF (the vasomotor centre's perfusion gate, circ/baroreflex.ts `brainstemOutF`): the
+//   hypothalamic efferent needs a perfused brain (E131; no "dead" flag).
 // k_cp comes from the vasomotor tone around the depth-dependent vasoconstriction threshold (thresholds.ts); under
 // GA at depth 1 it is the temperature signal's heat-model formula exactly, so redistribution, the linear phase and the
-// plateau are unchanged. The awake patient at 21 °C is calibrated to that heat model's balance (m0, gradient 4.3 °C)
+// plateau are unchanged. E131: the part of k_cp above tissue conduction (TISSUE_K_W_M2_C·BSA, Gagge 1971) is carried by
+// skin blood flow, so it is × the perfusion fraction perfFrac (a FLOW fraction from the blood pipeline: CO relative to
+// the flow at which a normally oxygenated patient's delivery becomes critical): k = min(k_v, k_t) + max(0, k_v − k_t)·
+// perfFrac — unchanged at full perfusion, tissue conduction at no flow. The awake patient at 21 °C is calibrated to that heat model's balance (m0, gradient 4.3 °C)
 // with the respiratory loss on the core and the insulation solved from the environment terms (environment.ts).
 // Stepped at 1 Hz. Plain data.
 import type { TempSite } from '../../types-resp.ts';
@@ -16,11 +22,13 @@ import {
   bsaM2, calibrateInsulation, dryW, forcedAirW, infusionW, respiratoryW, AIR_SPEED_MS, FORCED_AIR_AREA, FORCED_AIR_TAU_S, PREP_EVAP_W_70,
   SKIN_EVAP_W_70, type Envelope, type Ventilation,
 } from './environment.ts';
-import { mhActivity, stepMh, type MhState } from './mh.ts';
+import { stepMh, type MhState } from './mh.ts';
 import {
-  AMBIENT_C, CORE_FRACTION, EMERGE_TAU_S, GA_KCP, GA_M, HEAT_CAP_J_KG_C, M_AWAKE_W_70, MH_HEAT_X, NEURAXIAL_BLOCK_FRAC, NEURAXIAL_H,
-  NEURAXIAL_THR_SHIFT_C, PERIPH_GRADIENT_C, T_NORMAL, VASOCONSTRICT_KCP,
+  AMBIENT_C, CORE_FRACTION, EMERGE_TAU_S, GA_KCP, GA_M, HEAT_CAP_J_KG_C, M_AWAKE_W_70, MH_RQ, NEURAXIAL_BLOCK_FRAC, NEURAXIAL_H,
+  NEURAXIAL_THR_SHIFT_C, PERIPH_GRADIENT_C, T_NORMAL, TISSUE_K_W_M2_C, VASOCONSTRICT_KCP,
 } from './params.ts';
+import { mhO2Demand, oxyKjPerL } from './metabolic.ts';
+import { RQ } from '../gas/params.ts';
 import { shiverW, sweatW, thresholds, vasoDilation, type Thresholds } from './thresholds.ts';
 
 /** Site lag τ (s) and offset (°C) behind core (brief §4.6 table). */
@@ -90,13 +98,25 @@ export interface ThermalState {
   fluidWarmer: boolean; // IV fluid warmed to 37 °C
   extraX: number; // endocrine/condition metabolic heat multiplier (1 = none), written by 7e's endo core
   dantE: number; // The drug model's dantrolene effect `bus.metabolic.dantroleneE` (0–1), set by the endocrine pipeline
-  /** E129: the blood model's achieved ÷ demanded VO2 (0–1), written by the blood pipeline only while it is below 1
-   * (absent = 1: delivery meets demand). It scales the MH muscle heat. */
+  /** E129/E131: the blood model's achieved ÷ demanded VO2 (0–1), written by the blood pipeline only while it is below 1
+   * (absent = 1: delivery meets demand). It scales the basal, shivering and MH heat (oxidative). */
   o2Frac?: number;
+  /** E131: skin perfusion 0–1 for the blood-borne part of k_cp — cardiac output ÷ the output at which a normally
+   * oxygenated, normal-Hb patient's delivery becomes critical (blood pipeline; ≈ 40 % of resting CO). Written only while
+   * below 1 (absent = 1). A flow fraction: hypoxaemia and anaemia do not shut the skin. */
+  perfFrac?: number;
   out: ThermalOut;
   /** Test-only seam (like the blood model's `pinHbfRel`): when set, the core is held at this value (°C). */
   pinCoreTemp?: number;
 }
+
+/**
+ * E131: what the heat model reads from the other modules each step (absent = the defaults). `vo2Rest`: the patient's
+ * resting VO2, mL/min (the gas model's `pat.vo2`; default: the VO2 the basal heat m0 implies at RQ 0.8, Weir) — the MH
+ * muscle heat is this × the MH rate. `brainF`: the vasomotor centre's perfusion gate 0–1 (`brainstemOutF(cbfRel)`;
+ * default 1) on the thermoregulatory efferents, sweating and shivering.
+ */
+export interface ThermalInputs { vo2Rest?: number; brainF?: number }
 
 const zeroOut = (): ThermalOut => ({ vasoF: 0, kcp: 0, metabolicW: 0, shiverW: 0, mhW: 0, sweatW: 0, dryW: 0, respW: 0, evapW: 0, warmW: 0, ivW: 0 });
 
@@ -136,7 +156,12 @@ function kcp(st: ThermalState, tc: number, thr: Thresholds): { k: number; f: num
   // Below a neuraxial block the vessels are fully dilated; above it they keep their thermoregulatory tone
   const b = blocked(st);
   const f = b + (1 - b) * vasoDilation(tc, thr);
-  return { k: st.k0 * (VASOCONSTRICT_KCP + (GA_KCP - VASOCONSTRICT_KCP) * f), f };
+  const kv = st.k0 * (VASOCONSTRICT_KCP + (GA_KCP - VASOCONSTRICT_KCP) * f);
+  const perf = st.perfFrac ?? 1;
+  if (perf >= 1) return { k: kv, f };
+  // E131: the blood-borne part above tissue conduction follows skin perfusion; tissue conduction stays at no flow
+  const kt = TISSUE_K_W_M2_C * st.env.bsa;
+  return { k: Math.min(kv, kt) + Math.max(0, kv - kt) * Math.max(0, perf), f };
 }
 
 function basalW(st: ThermalState): number {
@@ -145,19 +170,22 @@ function basalW(st: ThermalState): number {
 }
 
 /** All heat flows at the current state (W). */
-function balance(st: ThermalState, t: number): ThermalOut {
+function balance(st: ThermalState, t: number, x: ThermalInputs = {}): ThermalOut {
   const thr = currentThresholds(st);
   const { k, f } = kcp(st, st.tc, thr);
   const ex = EXPOSURE[st.exposure];
   const env = { bsa: st.env.bsa, rIns: st.env.rIns * ex.ins };
   const neur = st.anaesthesia === 'neuraxial' ? NEURAXIAL_H : 1;
   const warmArea = FORCED_AIR_AREA * st.warmLag;
+  const o2 = st.o2Frac ?? 1;
+  const brain = Math.min(1, Math.max(0, x.brainF ?? 1));
   return {
     vasoF: f, kcp: k,
-    metabolicW: basalW(st) + st.m0 * (st.extraX - 1),
-    shiverW: shiverW(st.tc, thr, st.m0, st.effKg, st.nmb) * (1 - blocked(st)), // No shivering below a block
-    mhW: st.m0 * MH_HEAT_X * mhActivity(st.mh, t) * (st.o2Frac ?? 1), // E129: oxidative, so limited by the O2 delivered
-    sweatW: sweatW(st.tc, thr, st.effKg),
+    // E131: heat is oxidative — × the delivered share of the VO2 demand; the efferents need a perfused brain
+    metabolicW: (basalW(st) + st.m0 * (st.extraX - 1)) * o2,
+    shiverW: shiverW(st.tc, thr, st.m0, st.effKg, st.nmb) * (1 - blocked(st)) * brain * o2, // No shivering below a block
+    mhW: (mhO2Demand(st, t, x.vo2Rest ?? (st.m0 * 60) / oxyKjPerL(RQ)) * o2 * oxyKjPerL(MH_RQ)) / 60, // achieved MH VO2 × Weir
+    sweatW: sweatW(st.tc, thr, st.effKg) * brain,
     dryW: dryW(env, st.tp, st.ta, st.airMs, ex.area * (1 - warmArea)) * neur,
     respW: respiratoryW(st.vent, st.ta),
     evapW: SKIN_EVAP_W_70 * (st.effKg / 70) * ex.evapX,
@@ -167,7 +195,7 @@ function balance(st: ThermalState, t: number): ThermalOut {
 }
 
 /** One step of dtS seconds (≤ 1 s). */
-export function stepThermal(st: ThermalState, t: number, dtS: number): void {
+export function stepThermal(st: ThermalState, t: number, dtS: number, x: ThermalInputs = {}): void {
   // depth = max(the neuro model's thermoDepth, the `thermal` flag's depth): a scenario that sets anaesthesia
   // 'general' without drugs keeps its course. Neuraxial: no central depth of its own — the block acts on the effectors
   // below it (kcp, shivering) and lowers the shivering threshold; sedation reaches the thresholds through the neuro
@@ -177,7 +205,7 @@ export function stepThermal(st: ThermalState, t: number, dtS: number): void {
   st.depth = target >= st.depth ? target : target + (st.depth - target) * Math.exp(-dtS / EMERGE_TAU_S);
   st.warmLag += ((st.warming ? 1 : 0) - st.warmLag) * (1 - Math.exp(-dtS / FORCED_AIR_TAU_S));
   stepMh(st.mh, st.dantE, dtS);
-  const o = balance(st, t);
+  const o = balance(st, t, x);
   st.out = o;
   const flux = o.kcp * (st.tc - st.tp);
   st.tc += ((o.metabolicW + o.shiverW + o.mhW - flux - o.respW + o.ivW) / st.capCore) * dtS;
