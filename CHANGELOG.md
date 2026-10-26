@@ -40,6 +40,11 @@ the public API is what the packages export (see the API reference), the `pme-sce
   print the SpO₂ the monitor showed (a number during CPR, "–" where it showed none) and the footnote under the key
   moments says so. The haemorrhage demonstration card pauses compressions at each pulse check until the shock (the ALS
   rhythm check), so the strip shows clean VF; its course is otherwise unchanged.
+  Owner rulings on the Saadat B9, same day: in VF the monitor finds no QRS, so once its VF analysis stands (3 s, the
+  VFIB alarm) the HR field is empty — no left-over 8 s average, no count of fibrillation waves or compressions — while
+  ECG VFIB stays; the SpO₂ field is blank when pulseless; and a pulseless pleth is not a flat line but the sensor's own
+  noise, unorganised and small (half the pulse detector's floor, so it is never counted as a pulse). With these, the
+  low-flow guard "at MAP < 30 the SpO₂ is never shown valid" in Ali's case now passes (was SpO₂ 99 at 760–765 s).
   (Persian entries for the new footnote and alarm words added untranslated, `reviewed: false`.)
 
 - Showcase tamponade card (card text only): the monitor alone does not identify a tamponade, so the card now

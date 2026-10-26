@@ -16,6 +16,7 @@ function rig() {
   const ui = new DeviceUI(document, document.createElement('div'), resolveSkin('saadat-like', { sensors: { co2: true } }));
   e.on((x: EngineEvent) => ui.onEvent(x));
   const tile = () => (ui.tiles.querySelector('.pme-stile[data-param="SpO2"] [data-pme="v"]') ?? ui.strip.querySelector('.pme-stile[data-param="SpO2"] [data-pme="v"]'))?.textContent;
+  const hrTile = () => ui.tiles.querySelector('[data-param="HR"] [data-pme="v"]')?.textContent ?? null;
   // the saadat-like bar rotates the INOPs in under a red top (alarm-view barView): every message seen over 8 s
   const bar = () => ui.header.querySelector('[data-pme="bar"]')?.textContent ?? '';
   const at = (t: number) => {
@@ -27,7 +28,7 @@ function rig() {
       msgs.add(bar());
       shown = tile() ?? '';
     }
-    return { tile: shown, spo2Msgs: [...msgs].filter((x) => x.startsWith('SPO2')).sort() };
+    return { tile: shown, hr: hrTile(), spo2Msgs: [...msgs].filter((x) => x.startsWith('SPO2')).sort() };
   };
   e.dispatch(cmd('ett', { type: 'applyEvent', event: { kind: 'airwayDevice', device: 'ett' } }));
   e.dispatch(cmd('vent', { type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 600, peep: 5, fio2: 0.5 } }));
@@ -39,14 +40,16 @@ describe('E126: the SpO2 tile and its message in arrest and CPR (saadat-like)', 
     const { e, ui, at } = rig();
     expect(at(30).tile).toMatch(/^\d+$/);
     e.dispatch(cmd('vf', { type: 'setRhythm', rhythm: 'vfCoarse', when: 'now' }));
-    expect(at(55)).toEqual({ tile: '', spo2Msgs: ['SPO2 NO PULSE'] });
+    // owner ruling 2026-10-26: VF has no QRS — the HR field is blank (no number, no dashes), the SpO2 field blank too
+    expect(at(55)).toEqual({ tile: '', hr: '', spo2Msgs: ['SPO2 NO PULSE'] });
     e.dispatch(cmd('cpr1', cpr(true)));
     const during = at(100);
     expect(during.tile).toMatch(/^\d+$/); // the number, never "99?"
+    expect(during.hr).toBe(''); // VF under compressions: still no QRS counted
     expect(during.spo2Msgs.length).toBe(1);
     expect(['SPO2 LOW PERFUSION', 'SPO2 LOW SIGNAL IQ']).toContain(during.spo2Msgs[0]);
     e.dispatch(cmd('check', cpr(false))); // at 100 s: the pulse check
-    expect(at(116)).toEqual({ tile: '', spo2Msgs: ['SPO2 NO PULSE'] });
+    expect(at(116)).toEqual({ tile: '', hr: '', spo2Msgs: ['SPO2 NO PULSE'] });
     ui.destroy();
   });
 
@@ -59,6 +62,7 @@ describe('E126: the SpO2 tile and its message in arrest and CPR (saadat-like)', 
     const after = at(80);
     expect(after.tile).toMatch(/^\d+$/);
     expect(after.spo2Msgs).toEqual([]);
+    expect(after.hr).toMatch(/^\d+$/);
     ui.destroy();
   });
 });

@@ -300,10 +300,12 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
     // at the end of the 3 L bleed
     const okFor = (since: number | null | undefined, s0: number) => since !== null && since !== undefined && t - since >= s0;
     const piV = pi && pi.value !== null && pi.flag !== 'invalid' ? pi.value : null;
-    // A raised LOW PERF stays the message while the oximeter still has fresh pulses (PI valid) though its value has gone
-    // (E126: the value goes at PULSE_LOST_S, PI at its own 6 s staleness): NON-PULSAT. takes over when PI goes too — not a
-    // 1 s LOW PERF superseded the next second (757 → 758 s in Ali's case once the "99?" hold was removed)
-    const fadingPerf = piV !== null && raisedLiveId(s, 'spo2LowPerf');
+    // A raised LOW PERF stays the message while the oximeter still finds pulses (PI or PR valid) though its value has gone
+    // (E126: the value goes at PULSE_LOST_S, PI and PR at their own 6 s staleness; PI blinks invalid between sparse
+    // beats): NON-PULSAT. takes over when both go — not a 1–2 s LOW PERF superseded at once (757 → 758 s in Ali's case
+    // once the "99?" hold was removed)
+    const prOk = inp.measured.pr !== undefined && inp.measured.pr.value !== null && inp.measured.pr.flag !== 'invalid';
+    const fadingPerf = (piV !== null || prOk) && raisedLiveId(s, 'spo2LowPerf');
     const nonPuls = (m !== undefined && m.flag === 'invalid' && !fadingPerf) || (holdingId(s, 'spo2NonPulsatile') && !okFor(inp.spo2OkSince, NONPULS_CLEAR_S));
     // The clear hysteresis holds a RAISED LOW PERF only — while the INOP is pending its LOW_PERF_DELAY_S the condition
     // is the plain PI < LOW_PERF_PI, as for the limit alarms (the vendor on-delay: a condition that resolves within the

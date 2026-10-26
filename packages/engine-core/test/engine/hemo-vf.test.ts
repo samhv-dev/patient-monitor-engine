@@ -2,6 +2,7 @@
 // the arterial pressure decays to the mean systemic filling pressure and stays flat, the pleth is flat, PR is
 // invalid and an NIBP cycle fails with the technical INOP.
 import { describe, expect, it } from 'vitest';
+import { PLETH_DET_FLOOR } from '../../src/l2/pleth/pleth.ts';
 import { pmsf } from '../../src/l2/hemo/params.ts';
 import type { EngineEvent } from '../../src/types.ts';
 import { cmd, read, rig } from '../helpers/hemo.ts';
@@ -10,7 +11,7 @@ type Nibp = Extract<EngineEvent, { type: 'nibp' }>;
 
 describe('haemodynamic acceptance 6: VF (rhythm-library rhythms)', () => {
   for (const rhythm of ['vfCoarse', 'vfFine'] as const) {
-    it(`${rhythm}: ABP flat at Pmsf within 20 s, pleth flat, PR invalid, NIBP fails with the INOP`, () => {
+    it(`${rhythm}: ABP flat at Pmsf within 20 s, pleth at its noise floor, PR invalid, NIBP fails with the INOP`, () => {
       const { e, ev } = rig({ seed: 7 });
       e.advanceTo(20);
       e.dispatch(cmd({ type: 'setRhythm', rhythm }));
@@ -18,7 +19,10 @@ describe('haemodynamic acceptance 6: VF (rhythm-library rhythms)', () => {
       const w = read(e, 'abp', 39, 40);
       expect(Math.max(...w) - Math.min(...w)).toBeLessThan(1);
       expect(Math.abs(Math.max(...w) - pmsf(1))).toBeLessThan(1.5); // Pmsf 12 mmHg at volumeStatus 1
-      expect(Math.max(...read(e, 'pleth', 36, 40))).toBeLessThan(0.01);
+      // E126: no pulse — only the sensor's noise floor (unorganised, never a flat line, never a counted pulse)
+      const pl = read(e, 'pleth', 36, 40);
+      expect(Math.max(...pl.map(Math.abs))).toBeLessThanOrEqual(PLETH_DET_FLOOR / 2 + 1e-9);
+      expect(Math.max(...pl) - Math.min(...pl)).toBeGreaterThan(PLETH_DET_FLOOR / 4);
       const m = ev.filter((x) => x.type === 'measurement' && x.t === 40 && 'pr' in x.values)[0] as Extract<EngineEvent, { type: 'measurement' }>;
       expect(m.values.pr!.flag).toBe('invalid');
       const st = ev.filter((x) => x.type === 'state').pop() as Extract<EngineEvent, { type: 'state' }>;

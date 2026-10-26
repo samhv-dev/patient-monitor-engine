@@ -9,6 +9,22 @@ import type { Spo2Site } from '../../types-hemo.ts';
 import { EAR_DELAY_S, FINGER_DELAY_S, WK_R0 } from '../hemo/params.ts';
 
 export const PLETH_KERNEL = { mu1: 0.259, s1: 0.1003, mu2: 0.63, s2: 0.1627 } as const;
+/** The pleth pulse detector's floor (minimum slope-sum threshold, PI units, l3/pulse/detector.ts) [ENG]: the oximeter's
+ *  noise floor — a signal below it is not a pulse. */
+export const PLETH_DET_FLOOR = 0.03;
+/**
+ * The sensor's own noise (E126, owner ruling 2026-10-26): with no pulse a real oximeter draws unorganised low-amplitude
+ * curves (sensor and movement noise, venous pulsation), not a flat line. An irregular sum of four incommensurate slow
+ * components, its peak at half the detector floor, so the auto-scaled trace shows it small and it is never counted as a
+ * pulse (its slope sum over 128 ms stays below 0.012, under half the floor). Under a normal pulse (PI ≈ 1.5) it is ≈ 1 %.
+ */
+const NOISE = [[0.23, 1, 0], [0.61, 0.8, 1.3], [1.37, 0.6, 2.1], [2.9, 0.4, 0.7]] as const; // [Hz, weight, phase]
+const NOISE_W = NOISE.reduce((a, [, w]) => a + w, 0);
+export function plethNoise(t: number): number {
+  let v = 0;
+  for (const [f, w, ph] of NOISE) v += w * Math.sin(2 * Math.PI * f * t + ph);
+  return (v / NOISE_W) * (PLETH_DET_FLOOR / 2);
+}
 const LVET_REF_S = 0.311; // Weissler LVET at 60 bpm
 const SUPPORT_S = 1.3; // μ2 + 4σ2 at scale 1
 const LEAD_S = 0.15; // μ1 − 4σ1 ≈ −0.14 s: the systolic kernel starts before its origin (no step at the foot)
@@ -65,6 +81,7 @@ export function plethAt(st: PlethState, t: number, occlusion: number, pi: number
     if (u > -LEAD_S * p.sc && u < SUPPORT_S * p.sc) v += p.amp * plethShape(p, u);
   }
   v *= occlusion;
+  v += plethNoise(t); // the sensor's noise floor: what a pulseless finger shows (E126)
   if (st.state === 'motion') {
     // motion artefact 0.5–5 Hz, larger than the pulse (research 03 §3.4) [ENG]
     const m = st.motion;

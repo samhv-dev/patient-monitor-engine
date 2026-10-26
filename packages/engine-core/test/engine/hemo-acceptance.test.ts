@@ -1,6 +1,7 @@
 // BUILD-PLAN Stage 2 acceptance tests 1–3 and 5–8, 10, 11 at engine level (4 is in circulation.test.ts,
 // 9 in hemo-nibp.test.ts), plus the extra checks the Stage 2 plan adds.
 import { describe, expect, it } from 'vitest';
+import { PLETH_DET_FLOOR } from '../../src/l2/pleth/pleth.ts';
 import { createHemoState, advanceHemo, type HemoCtx, type RhythmView } from '../../src/l2/hemo/pipeline.ts';
 import { createL1State } from '../../src/l1/state.ts';
 import { constantRamp } from '../../src/l1/ramp.ts';
@@ -158,7 +159,7 @@ describe('haemodynamic acceptance (engine level)', () => {
   ];
   if ('vfCoarse' in RHYTHMS) arrests.push(['VF', { rhythm: 'vfCoarse' }]); // Stage 5 adds VF
   for (const [name, body] of arrests) {
-    it(`6. ${name}: ABP flat at 10–15 mmHg within 20 s, pleth flat, PR invalid, sbp/dbp flagged override`, () => {
+    it(`6. ${name}: ABP flat at 10–15 mmHg within 20 s, pleth at its noise floor, PR invalid, sbp/dbp flagged override`, () => {
       const { e, ev } = rig({ seed: 7 });
       e.advanceTo(20);
       e.dispatch(cmd({ type: 'setRhythm', ...body }));
@@ -170,7 +171,10 @@ describe('haemodynamic acceptance (engine level)', () => {
       expect(Math.min(...w)).toBeGreaterThanOrEqual(8);
       expect(Math.max(...w)).toBeLessThanOrEqual(20);
       expect(Math.max(...w) - Math.min(...w)).toBeLessThan(name === 'VT 220' ? 3 : 1);
-      expect(Math.max(...read(e, 'pleth', 36, 40))).toBeLessThan(0.01);
+      // E126: no pulse — only the sensor's noise floor (unorganised, never a flat line, never a counted pulse)
+      const pl = read(e, 'pleth', 36, 40);
+      expect(Math.max(...pl.map(Math.abs))).toBeLessThanOrEqual(PLETH_DET_FLOOR / 2 + 1e-9);
+      expect(Math.max(...pl) - Math.min(...pl)).toBeGreaterThan(PLETH_DET_FLOOR / 4);
       const m = ev.filter((x) => x.type === 'measurement' && x.t === 40 && 'pr' in x.values)[0] as Extract<EngineEvent, { type: 'measurement' }>;
       expect(m.values.pr!.flag).toBe('invalid');
       const st = ev.filter((x) => x.type === 'state').pop() as Extract<EngineEvent, { type: 'state' }>;

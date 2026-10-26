@@ -13,7 +13,7 @@ import type { CircEvent } from '../../types-circ.ts';
 import type { DeviceAction } from '../../types.ts';
 import type { ChannelId, Command, EngineEvent, Measured, NumericId, PatientProfile, Ramp, RhythmId, RhythmOpts, StateVar } from '../../types.ts';
 import type { ModifiersPatch } from '../ecg/api-types.ts'; // The CPR artefact through the ST seam
-import { addPlethPulse, createPlethState, plethAt, plethDelayS, prunePleth, setPlethSensor, type PlethState } from '../pleth/pleth.ts';
+import { addPlethPulse, createPlethState, PLETH_DET_FLOOR, plethAt, plethDelayS, prunePleth, setPlethSensor, type PlethState } from '../pleth/pleth.ts';
 import { createCvpState, cvpOnBeat, cvpOnP, pruneCvp, type CvpState } from './cvp.ts';
 import { applyLineEvent, createLineState, displaySample, lineActive, lineInput, LINE_SENSOR_STATES, setLineSensor, stepTransducer, validateLineEvent, type LineState } from './line.ts';
 import { ARREST_AFTER_S, CPR_DUTY, CPR_QUALITY_DEFAULT, G_MAX, K_OPEN, gainCeiling, HEMO_RATE, H_S, PULSELESS_RHYTHMS, SUBSTEPS, SV_REF_ML } from './params.ts';
@@ -191,7 +191,7 @@ export function createHemoState(profile: PatientProfile | undefined, l1: L1State
     abpSite: 'leftRadial',
     cpr: { active: false, rate: 110, quality: CPR_QUALITY_DEFAULT, nextT: 0 },
     wedge: { on: false, w: 0 },
-    num: { abp: createWaveNumerics(3), pap: createWaveNumerics(1.5), pleth: createWaveNumerics(0.03), cvpAvg: cvp },
+    num: { abp: createWaveNumerics(3), pap: createWaveNumerics(1.5), pleth: createWaveNumerics(PLETH_DET_FLOOR), cvpAvg: cvp },
     nibp: createNibpState(sens.nibp === 'off' ? 'off' : 'on'),
     out: [],
   };
