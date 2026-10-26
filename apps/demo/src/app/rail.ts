@@ -57,11 +57,11 @@ export interface RailOptions {
   now?: () => Date;
 }
 
-/** ["21:48", "Mon 26 October · 4 Aban 1405"]: the Persian date from the browser's own calendar (Intl), or the
+/** ["21:48", "Mon 26 Oct · 4 Aban 1405"]: the Persian date from the browser's own calendar (Intl), or the
  *  Gregorian date alone where the browser has no Persian calendar. */
 export function railClock(d: Date): [string, string] {
   const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-  const day = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'long' }).format(d);
+  const day = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).format(d);
   return [time, [day, persianDate(d)].filter(Boolean).join(' · ')];
 }
 

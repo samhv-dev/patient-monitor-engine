@@ -109,7 +109,7 @@ describe('the rail foot', () => {
   it('the clock: the time on one line, the date (with the Persian date where the browser has it) on the next', () => {
     const [time, date] = railClock(new Date(2026, 9, 26, 21, 48));
     expect(time).toBe('21:48');
-    expect(date).toMatch(/^Mon 26 October/);
+    expect(date).toMatch(/^Mon 26 Oct/);
     if (persianDate(new Date(2026, 9, 26))) expect(date).toContain('4 Aban 1405');
   });
 });
