@@ -39,7 +39,7 @@ import { engineKey as engineVersion } from '@pme/engine-core'; // The snapshot k
 import { mountMonitor, type MonitorHandle } from '@pme/renderer';
 import { applySkinAlarmColours, type Shell } from '../shell.ts';
 import { DEFAULT_SITE, MONITORS, THEMES, type SiteProfile } from '../site.ts';
-import { button, h, setText } from '../ui.ts';
+import { button, h, pausedMark, setText } from '../ui.ts';
 import { followerStatus, phoneStyle } from './follower-status.ts';
 
 /**
@@ -187,8 +187,10 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   let opened = false; // The phone has reached the relay at least once
   const t0 = performance.now();
   const offOpen = transport.onStatus((st) => void (st === 'open' && (opened = true)));
+  const pausedEl = pausedMark(shell.stage); // UI review #32: the phone's monitor says PAUSED too
   const draw = setInterval(() => {
     const now = performance.now();
+    pausedEl.set(paused);
     const v = followerStatus({
       code, net: !!net, sync: f.sync?.status ?? 'waiting', transport: transport.status, opened, sinceStartMs: now - t0, refused, hostAway,
       heardAgoMs: now - heard, paused, cockpitAgoMs: now - cockpitAt,

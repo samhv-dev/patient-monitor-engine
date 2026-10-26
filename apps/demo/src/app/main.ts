@@ -20,7 +20,7 @@ import { AppSession } from './session.ts';
 import { mountSessionBar } from './sessionbar.ts';
 import { applySkinAlarmColours, LEVEL_MARK, LEVEL_NAME, Shell, skinAlarmBar, skinAlwaysOn } from './shell.ts';
 import { loadSite, setLightScreen } from './site.ts';
-import { button, clock, h, setText, throttle, toast, trackChromeBottom } from './ui.ts';
+import { button, clock, h, pausedMark, setText, throttle, toast, trackChromeBottom } from './ui.ts';
 import { debriefView } from './views/debrief.ts';
 import { devView } from './views/dev.ts';
 import { exploreView } from './views/explore.ts';
@@ -197,6 +197,9 @@ if (follow) {
   }, 500);
   link.onChange(drawAlarm);
   drawAlarm();
+  // UI review #32: PAUSED over the monitor while the session is paused (the Pause button, a hidden tab's pause)
+  const paused = pausedMark(shell.stage);
+  link.onChange(() => paused.set(link.ctl.hostPaused));
 
   // Learner monitor ↔ instructor view: the hidden panel's reveal gestures
   attachReveal(window, new RevealGesture(() => {

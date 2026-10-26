@@ -320,3 +320,11 @@ export function infoDialog(title: string, body: string | HTMLElement): Promise<v
     d.showModal();
   });
 }
+
+/** UI review #32: the monitor's PAUSED mark — a frozen trace is otherwise all that says the simulation stopped. Over the
+ *  monitor of the Instructor and Monitor views and of a phone, never printed (app.css); a status, so it is said once. */
+export function pausedMark(parent: HTMLElement): { set(on: boolean): void } {
+  const el = h('div', { class: 'paused-mark', role: 'status', hidden: true }, 'PAUSED');
+  parent.append(el);
+  return { set: (on) => void (el.hidden !== !on && (el.hidden = !on)) };
+}

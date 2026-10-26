@@ -2,7 +2,7 @@
 // The component set's behaviour contracts (research/13 brief §7): labels in the accessible name, units, clamping,
 // ARIA tabs with arrow keys, pressed state on toggles and segmented controls.
 import { describe, expect, it } from 'vitest';
-import { glossLabel, seg, stepper, tabs, toggle } from './ui.ts';
+import { glossLabel, pausedMark, seg, stepper, tabs, toggle } from './ui.ts';
 
 describe('components', () => {
   it('stepper: unit in the accessible name, clamps to its range, repeats the step', () => {
@@ -51,6 +51,18 @@ describe('components', () => {
     expect(t.panels.scrollTop).toBe(600);
     t.select('drugs');
     expect(t.panels.scrollTop).toBe(120);
+  });
+  it('paused mark (UI review #32): "PAUSED" over the monitor while paused, gone on resume, said once to a screen reader', () => {
+    const stage = document.createElement('div');
+    const m = pausedMark(stage);
+    const el = stage.querySelector('.paused-mark') as HTMLElement;
+    expect(el.hidden).toBe(true);
+    m.set(true);
+    expect(el.hidden).toBe(false);
+    expect(el.textContent).toBe('PAUSED');
+    expect(el.getAttribute('role')).toBe('status');
+    m.set(false);
+    expect(el.hidden).toBe(true);
   });
   it('glossary label: short label plus a tooltip button named after it', () => {
     const l = glossLabel(15);
