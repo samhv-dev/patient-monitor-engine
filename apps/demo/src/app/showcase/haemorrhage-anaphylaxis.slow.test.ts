@@ -11,6 +11,8 @@ const BANDS = {
   // E133 (ventricular ectopy from the physiology), measured on this build: ischaemic PVCs in the junctional minute
   // before the pulse loss (kIsch 0.94 → 0.55), none while pulseless, and PVCs after the return of circulation (pH
   // 7.13–7.15 with the epinephrine reaching the beating heart); the course above is unchanged second by second.
+  // Re-measured on the E126 course (rebase onto 5024f071, 2026-10-27): 5 / 0 / 4 events (was 5 / 0 / 3), inside the
+  // bands, not moved; the state, rhythm and pulse are again identical every second with and without the PVCs placed.
   'S5 haemorrhage E133 ectopy': { eventsBeforeLoss: [3, 12], eventsPulseless: [0, 0], eventsAfterRosc: [1, 8] },
   'S5 haemorrhage E120 timing': { lossEarlyVentS: [595, 727], lossLateVentS: [594, 726], asystoleEarlyVentS: [833, 1018], asystoleLateVentS: [842, 1029], noVentPulseLost: [0, 0], noVentSysAt10: [71.6, 81.6], noVentMinSys: [68, 78] },
   'S5 anaphylaxis': { refused: [0, 0], hrAt2: [134, 144], sysAt2: [91, 101], mapAt2: [73, 83], sysOver110S: [0, 26], hrPeak: [173, 183], sysPlus2: [113, 123], mapPlus2: [92, 102], hrPlus2: [105, 115] },

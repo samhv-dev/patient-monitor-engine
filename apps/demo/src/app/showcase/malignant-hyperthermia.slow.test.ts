@@ -28,14 +28,23 @@ import { alarmAt, bands, entered, first, near, pvcEvents, range, runCard, type A
  *  established/arrest bands are an it.fails; its measurable numbers are a new row 'S1 untreated E131' (measured on this
  *  build ± the old tolerances). S1 early re-centred, same tolerances (old centre → new): recoveringMin 10.07 → 17.82
  *  (the higher EtCO₂ takes longer under 45), tcMax 37.67 → 36.8, etco2Plus5 43 → 50. S1 late cannot reach its call
- *  (an it.fails). Reported to the owner; not tuned. */
+ *  (an it.fails). Reported to the owner; not tuned.
+ *  E133 rebase (2026-10-27): 'S1 untreated E131' hrMax re-centred 139 → 160, same tolerance. The new maximum is the
+ *  monitor's HR over a non-sustained run of VT (13–15 PVCs at the planner's 160/min, +32.8 and +47.3 min): the HR
+ *  numeric averages those beats. The sinus maximum (no PVC in the 10 s before the sample) is 139, the old centre. */
 const BANDS = {
   'S1 untreated': { refused: [0, 0], earlyMin: [3.84, 5.22], establishedMin: [16.89, 20.65], etco2AtEstablished: [72, 78], hrAtEstablished: [121, 131], phAtEstablished: [7.06, 7.12], kAtEstablished: [5.4, 6], lactateAtEstablished: [4.1, 5.1], mapAtEstablished: [80, 90], hrMax: [185, 195], kMax: [6.1, 6.7], lossMin: [39.91, 48.79], tcAtLoss: [42.14, 42.54], kAtLoss: [6.1, 6.7], vf: [1, 1], arrestStateMin: [40.23, 49.17] },
-  'S1 untreated E131': { refused: [0, 0], earlyMin: [3.41, 4.79], etco2Max: [103, 109], etco2At20: [88, 94], hrAt20: [119, 129], phAt20: [7.01, 7.07], kAt20: [5.8, 6.4], lactateAt20: [4.7, 5.7], mapAt20: [79, 89], tcAt20: [36.38, 36.78], hrMax: [134, 144], kMax: [6.5, 7.1], tcAt51: [37.11, 37.51], pulseLost: [0, 0] },
-  // E133 (ventricular ectopy from K, catecholamines, temperature, acidaemia and ischaemia), measured on this build: the
-  // first PVC 13.1 min after the succinylcholine (pH 7.22 → 7.13 with the MH catecholamine surge), 256 ectopic events
-  // before the VF (36 runs of ≥ 3, the longest 13 beats), 33 in the last 120 s; the treated early course has none.
-  'S1 untreated ectopy (E133)': { firstPvcMin: [11.1, 15.1], eventsBeforeLoss: [180, 330], runsBeforeLoss: [20, 55], eventsInLast120s: [18, 48], eventsAfterLoss: [0, 0] },
+  'S1 untreated E131': { refused: [0, 0], earlyMin: [3.41, 4.79], etco2Max: [103, 109], etco2At20: [88, 94], hrAt20: [119, 129], phAt20: [7.01, 7.07], kAt20: [5.8, 6.4], lactateAt20: [4.7, 5.7], mapAt20: [79, 89], tcAt20: [36.38, 36.78], hrMax: [155, 165], kMax: [6.5, 7.1], tcAt51: [37.11, 37.51], pulseLost: [0, 0] },
+  // E133 (ventricular ectopy from K, catecholamines, temperature, acidaemia and ischaemia). Measured first on the
+  // pre-E131 course (to the hyperthermic VF at +44.5 min): first PVC +13.1 min, 256 events before the VF (36 runs).
+  // Re-measured on the E131 course (rebase onto 5024f071, 2026-10-27; same tolerances, the reason: E131 moved the
+  // course): the acidaemia is deeper and earlier (pH 7.18 at +10 min, 7.04 at +15) while the core stays below 37.3 °C,
+  // so the drive is the pH term × the MH catecholamines (D ≈ 1.4–1.8; sT 0, sK ≤ 0.15) and the first PVC comes at
+  // +10.1 min (13.1 → 10.07); 339 events in the 51 min (256 → 339: the run is longer than the old 44.5 min to the VF
+  // and the drive is up from +15 min), 40 runs of ≥ 3 (36 → 40), the longest 15 beats. There is no VF, so the old
+  // eventsInLast120s (before the VF) and eventsAfterLoss have no counterpart and are dropped; 'S1 untreated E131'
+  // pulseLost 0 stands for the latter.
+  'S1 untreated ectopy (E133)': { firstPvcMin: [8.07, 12.07], events51Min: [263, 413], runs51Min: [24, 59] },
   'S1 early': { refused: [0, 0], crisisMin: [5.65, 7.42], pulseLost: [0, 0], recoveringMin: [16.12, 19.52], established: [0, 0], tcMax: [36.6, 37.0], hrMax: [81, 91], kMax: [4.5, 5.1], etco2Plus5: [47, 53], hrPlus15: [63, 73] },
   'S1 preoxygenation (E121)': { withSpo2AtInduction: [98, 100], withSpo2Min: [97, 100], withoutSpo2AtInduction: [87, 93], withoutSpo2Min: [55, 71], withoutDesatAlarmAfterInductionS: [56, 96] },
   'S1 late': { refused: [0, 0], crisisMin: [17.79, 21.75], dantroleneMin: [18.69, 22.85], pulseLost: [0, 0], etco2AtCall: [72, 78], tcAtCall: [38.51, 38.91], kAtCall: [5.5, 6.1], phAtCall: [7.09, 7.15], etco2Plus2: [60, 66], tcMax: [39.3, 39.7], tcPeakMin: [28.05, 34.29], kMax: [5.6, 6.2], lactateMax: [6.9, 7.9], recoveringMin: [33.54, 39.7], normoMin: [35.04, 42.82], hrAt60: [73, 83], mapAt60: [96, 106], tcAt60: [38.5, 38.9], etco2At60: [35, 41], phAt60: [7.35, 7.41], kAt60: [3.5, 4.1], sysMaxAfterCall: [136, 146] },
@@ -103,6 +112,10 @@ describe('S1 malignant hyperthermia (showcase-mh)', { timeout: 1_800_000 }, () =
       hrMax: range(r.rows, 'hr', SUX_S, 3300).max, kMax: range(r.rows, 'k', 0, 3300).max, tcAt51: near(r.rows, 3299).tc,
       pulseLost: r.rows.some((x) => !x.pulse) ? 1 : 0,
     }, BANDS['S1 untreated E131']);
+    const ev = pvcEvents(r, 0, 3300);
+    bands('S1 untreated ectopy (E133)', {
+      firstPvcMin: ((r.pvcs[0] ?? Number.NaN) - SUX_S) / 60, events51Min: ev.length, runs51Min: ev.filter((n) => n >= 3).length,
+    }, BANDS['S1 untreated ectopy (E133)']);
   });
 
   // E131: the MH heat is the achieved MH oxygen × its caloric equivalent (≈ 140 W at 80 kg; it was 8 × basal, 705 W), so
@@ -122,12 +135,6 @@ describe('S1 malignant hyperthermia (showcase-mh)', { timeout: 1_800_000 }, () =
       vf: loss && /^vf/.test(near(r.rows, loss.t + 5).rhythm) ? 1 : 0,
       arrestStateMin: (entered(r, 'arrest') - SUX_S) / 60,
     }, BANDS['S1 untreated']);
-    const lossT = loss?.t ?? Number.NaN;
-    const before = pvcEvents(r, 0, lossT);
-    bands('S1 untreated ectopy (E133)', {
-      firstPvcMin: ((r.pvcs[0] ?? Number.NaN) - SUX_S) / 60, eventsBeforeLoss: before.length, runsBeforeLoss: before.filter((n) => n >= 3).length,
-      eventsInLast120s: pvcEvents(r, lossT - 120, lossT).length, eventsAfterLoss: pvcEvents(r, lossT + 2).length,
-    }, BANDS['S1 untreated ectopy (E133)']);
   });
 
   it('treated early: crisis 2 min into the early signs', async () => {

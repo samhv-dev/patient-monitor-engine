@@ -1,8 +1,9 @@
 // E133: ventricular ectopy through the engine — a healthy resting patient takes no ectopy draw and shows no PVC; a core
-// temperature held just below the hyperthermic VF threshold (41.9 °C, the last minutes of untreated MH) shows PVCs on
-// the drawn ECG with no VF (the VF hazard starts above T_HOT 42); MANUAL keeps the instructor's rhythm.
-// The full untreated MH course (ectopy from the acidaemia, rising to the VF) and the haemorrhage course are measured
-// on the cards: apps/demo/src/app/showcase/{malignant-hyperthermia,haemorrhage-anaphylaxis}.slow.test.ts.
+// temperature held just below the hyperthermic VF threshold (41.9 °C) shows PVCs on the drawn ECG with no VF (the VF
+// hazard starts above T_HOT 42); MANUAL keeps the instructor's rhythm.
+// The untreated MH course (since E131 it plateaus near 38.65 °C with no VF: its ectopy is the acidaemia's × the MH
+// catecholamines) and the haemorrhage course are measured on the cards:
+// apps/demo/src/app/showcase/{malignant-hyperthermia,haemorrhage-anaphylaxis}.slow.test.ts.
 import { describe, expect, it } from 'vitest';
 import { createRngState } from '../../src/rng/sfc32.ts';
 import { rig6, runTo, st6 } from '../helpers/resp-modeled-rig.ts';
