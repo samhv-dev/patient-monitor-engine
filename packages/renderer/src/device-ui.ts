@@ -104,6 +104,8 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-portrait .pme-stile .v{font-size:min(9vw,36px);white-space:nowrap}',
     '.pme-portrait .pme-stile.large .v{font-size:min(11vw,44px)}',
     '.pme-portrait .pme-stile .s{font-size:12px;white-space:nowrap;overflow:hidden;min-height:14px}',
+    // UI review #15: a phone shows the NIBP cuff pressure small too, never as a blood pressure
+    '.pme-portrait .pme-stile.rc3[data-param="NIBP"] .v.cuff{font-size:min(5vw,20px)}',
     // UI-A #10: a four-part split row (BFA: BFI% BS% SQI% EMG%) in a third of a phone's width as two lines of two —
     // in one line "EMG%" ran past the tile into EtAA; a part with no digits takes no digit line
     '.pme-portrait .pme-stile.split-row .parts:has(>.part:nth-child(4)){flex-wrap:wrap;row-gap:2px}',
@@ -287,8 +289,11 @@ function photoCss(g: LayoutGrid): string[] {
     '.pme-grid>div>.pme-stile[data-param="NMT"],.pme-grid>div>.pme-stile[data-param="AGENTS"]{flex:0 0 auto}',
     `.pme-grid .pme-stile.rc3[data-param="NMT"] .v,.pme-grid .pme-stile.rc3[data-param="AGENTS"] .v{font-size:${f(30)};line-height:1}`,
     `.pme-grid .pme-stile.rc3[data-param="NMT"] .s,.pme-grid .pme-stile.rc3[data-param="AGENTS"] .s{font-size:${f(15)};min-height:0;white-space:nowrap}`,
-    // NIBP while the cuff runs: "mmHg NBP inflating" on one line at the time size (it wrapped at the mean's 30 px)
+    // NIBP while the cuff runs: "NBP inflating" on one line at the time size (it wrapped at the mean's 30 px). UI review
+    // #15: the cuff pressure in the value slot at the mean's 30 px, not the result's BP font (the 57 px "150" read as a
+    // blood pressure); !important over the value's inline grid size (sizeValues)
     `.pme-grid .pme-stile.rc3[data-param="NIBP"] .srow .s.busy{font-size:${f(15)};white-space:nowrap}`,
+    `.pme-grid .pme-stile.rc3[data-param="NIBP"] .v.cuff{font-size:${f(30)} !important}`,
     // G6: the %SPO2 value left of centre, after its limits; the limits keep their column and the digits their field
     `.pme-strip .pme-stile .v{text-align:left;padding-left:${f(18)};white-space:nowrap}`,
     '.pme-strip .pme-stile.rc3 .vrow .lim.a{flex:none}',
@@ -868,6 +873,7 @@ export class DeviceUI {
       tile.el.style.display = modulePresent(p, v, t) || this.r.skin.layout.showAlways?.includes(p) ? '' : 'none';
       let source: string | null = null; // the HR tile's rate source (ECG, IBP1, SpO2)
       let parts3: string[] | null = null; // pass 3: an IBP value as its three spans
+      let cuff = false; // UI review #15: the rc.3 NIBP value is the live cuff pressure (small), not a result
       if (p === 'HR') ({ main, label, source } = this.hrTile());
       else if (p === 'NMT') ({ main, sub } = formatNmt(v, g.noValue));
       else if (p === 'BFA') ({ main, sub } = formatBfa(v, tile.spec.extras?.[0] ?? 'SR', g.noValue));
@@ -885,8 +891,9 @@ export class DeviceUI {
           // the result; the inflating and measuring states keep their text
           const measuring = this.nibpEv?.phase === 'inflating' || this.nibpEv?.phase === 'deflating';
           if (!measuring && this.nibpEv?.phase !== 'failed' && this.nibpLast) main = `${this.nibpLast.sys} / ${this.nibpLast.dia}`;
-          if (!measuring) sub = n.sub === '(---)' ? '' : n.sub;
+          sub = measuring ? n.status : n.sub === '(---)' ? '' : n.sub; // measuring: the unit is the header's "(mmHg)"
           tile.sub.classList.toggle('busy', measuring);
+          cuff = measuring;
           const mode = tile.el.querySelector<HTMLElement>('[data-pme="mode"]');
           const time = tile.el.querySelector('[data-pme="ntime"]');
           const label = nibpModeLabel(this.nibpEv);
@@ -932,6 +939,7 @@ export class DeviceUI {
       if (tile.rc3) this.paintPairs(tile, av.pairs);
       const base = split ? 'pv' : 'v';
       tile.value.className = av.flash === 1 ? `${base} pme-f1` : av.flash === 2 ? `${base} pme-f2` : base;
+      if (cuff) tile.value.classList.add('cuff');
       const bar = av.flash !== null ? this.r.skin.alarms.messageBar[`L${av.flash}`] : null;
       tile.value.style.background = box && bar ? bar.bg : '';
       tile.value.style.color = box && bar ? bar.fg : '';

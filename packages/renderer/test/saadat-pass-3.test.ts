@@ -163,9 +163,29 @@ describe('pass 3: grid rules for the T column, the IBP limits row, the NIBP meas
     ui.onEvent({ type: 'nibp', t: 3, phase: 'inflating', cuffMmHg: 44 } as unknown as EngineEvent);
     ui.paint(3);
     const s = tile('NIBP').querySelector('[data-pme="s"]') as HTMLElement;
-    expect(s.textContent).toBe('mmHg NBP inflating');
+    expect(s.textContent).toBe('NBP inflating'); // UI review #15: the unit is the header's "(mmHg)"; "mmHg NBP infla…" was cut
     expect(s.classList.contains('busy')).toBe(true);
     expect(css()).toContain('[data-param="NIBP"] .srow .s.busy{');
+    ui.destroy();
+  });
+
+  it('UI review #15: the inflating cuff pressure is small in the value slot (the mean’s size), never in the BP font', () => {
+    const { ui, tile } = mount('saadat-like');
+    const v = () => tile('NIBP').querySelector('[data-pme="v"]') as HTMLElement;
+    ui.onEvent({ type: 'nibp', t: 3, phase: 'inflating', cuffMmHg: 132 } as unknown as EngineEvent);
+    ui.paint(3);
+    expect(v().textContent).toBe('132');
+    expect(v().classList.contains('cuff')).toBe(true);
+    expect(css()).toMatch(/\[data-param="NIBP"\] \.v\.cuff\{font-size:[^}]*!important/);
+    ui.onEvent({ type: 'nibp', t: 4, phase: 'deflating', cuffMmHg: 96 } as unknown as EngineEvent);
+    ui.paint(4);
+    expect(v().textContent).toBe('96');
+    expect(tile('NIBP').querySelector('[data-pme="s"]')?.textContent).toBe('NBP measuring');
+    expect(v().classList.contains('cuff')).toBe(true);
+    ui.onEvent({ type: 'nibp', t: 30, phase: 'done', result: { sys: 118, dia: 76, map: 90, pr: 70 } } as unknown as EngineEvent);
+    ui.onEvent({ type: 'measurement', t: 30, values: { nibpSys: { value: 118, flag: 'valid', at: 30 }, nibpDia: { value: 76, flag: 'valid', at: 30 }, nibpMean: { value: 90, flag: 'valid', at: 30 } } } as unknown as EngineEvent);
+    ui.paint(30);
+    expect(v().classList.contains('cuff')).toBe(false); // the result in the BP font again
     ui.destroy();
   });
 });
