@@ -94,7 +94,8 @@ export class AppSession {
   private lastT = 0;
   private lastWall = performance.now();
   private readonly pollTimer: ReturnType<typeof setInterval>;
-  private readonly bc: ReturnType<typeof createBroadcastChannelTransport>;
+  /** The same-browser channel (a learner monitor window, a Remote window); the Room page lists who said hello on it. */
+  readonly bc: ReturnType<typeof createBroadcastChannelTransport>;
   /** What the paired-remote channel has received, by message kind (the e2e prints it when a remote cannot join). */
   readonly diag = { received: {} as Record<string, number> };
   /** The session on the relay (learners' phones follow it there), or null without one. */

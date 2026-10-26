@@ -65,5 +65,13 @@ export function saveSite(s: SiteProfile): void {
   store.set('site', JSON.stringify(s));
 }
 
+/** The rail's light/dark switch (E125): the Screen theme dark ('') or projector-light, saved for this browser and
+ *  applied to the shell; the caller restyles the monitor (the session's setSkin). */
+export function setLightScreen(site: SiteProfile, light: boolean, root: HTMLElement = document.documentElement): void {
+  site.theme = light ? 'projector-light' : '';
+  saveSite(site);
+  root.dataset.theme = light ? 'bench' : '';
+}
+
 /** mmHg → the site's gas unit (1 kPa = 7.50062 mmHg). */
 export const gas = (mmHg: number, unit: SiteProfile['gasUnit']): number => (unit === 'kPa' ? mmHg / 7.50062 : mmHg);

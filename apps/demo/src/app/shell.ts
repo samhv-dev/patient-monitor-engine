@@ -1,10 +1,12 @@
-// The app frame (research/13 brief §4, §7 "App shell / top bar"): top bar with the view switcher and the always-visible
-// state (alarm count in the skin's colours, sound, remote code), the session bar, the monitor region ("stage") that
-// never leaves the DOM, and one section per view. A route change only re-places regions by CSS grid areas and toggles
-// `hidden`; the engine is never touched by navigation. The starting page (`start`) is a full page: the shell hides the
-// stage, the session bar and the top bar there (owner ruling 2026-10-25) and shows them again on every other route.
+// The app frame (research/13 brief §4, §7 "App shell / top bar"): the workflow rail (rail.ts, E125) or, on a hostless
+// Remote, the top bar's view switcher; the top bar's always-visible state (alarm count in the skin's colours, sound,
+// remote code), the session bar, the monitor region ("stage") that never leaves the DOM, and one section per view. A
+// route change only re-places regions by CSS grid areas and toggles `hidden`; the engine is never touched by navigation.
+// The pages before a session (Home, Room, Scenarios, Patient: CONSOLE_ROUTES) are full pages beside the rail: the shell
+// hides the stage, the session bar and the top bar there and shows them again on every other route.
 import { resolveSkin } from '@pme/skins';
-import { hrefOf, onRoute, type Route, type RouteId } from './router.ts';
+import { FOOTER_LINE } from './about.ts';
+import { CONSOLE_ROUTES, hrefOf, onRoute, type Route, type RouteId } from './router.ts';
 import { contrast } from './color.ts';
 import { h } from './ui.ts';
 
@@ -17,10 +19,17 @@ export interface View {
   leave?(): void;
 }
 
+/** Every view's name (the document title); a hostless Remote's top bar lists Settings beside it. */
 export const NAV: ReadonlyArray<[RouteId, string]> = [
-  ['start', 'Start'], ['monitor', 'Monitor'], ['teach', 'Instructor'], ['explore', 'Explore physiology'], ['vent', 'Ventilator'],
-  ['validate', 'Validate'], ['dev', 'Developer'], ['settings', 'Settings'],
+  ['home', 'Home'], ['room', 'Room'], ['scenarios', 'Scenarios'], ['patient', 'Patient'], ['teach', 'Instructor'], ['monitor', 'Monitor'],
+  ['vent', 'Ventilator'], ['debrief', 'Debrief'], ['explore', 'Explore physiology'], ['validate', 'Validate'], ['dev', 'Developer'], ['settings', 'Settings'],
 ];
+
+/** What the shell needs of the rail: its element and a way to mark the current page. */
+export interface ShellRail {
+  el: HTMLElement;
+  mark(id: RouteId): void;
+}
 
 export class Shell {
   readonly root: HTMLElement;
@@ -29,17 +38,19 @@ export class Shell {
   readonly monitorHost: HTMLElement;
   readonly bar: HTMLElement;
   readonly right: HTMLElement;
-  route: Route = { id: 'start', sub: '' };
+  route: Route = { id: 'home', sub: '' };
   private readonly views = new Map<RouteId, View>();
   private readonly nav: HTMLElement;
+  private rail: ShellRail | null = null;
   private readonly routeFns = new Set<(r: Route) => void>();
   /** A hostless Remote or a follower: the stage and the session bar keep what the constructor set. */
   private readonly fixedFrame: boolean;
 
   constructor(parent: HTMLElement, o: { hostless: boolean; follower?: boolean }) {
     this.fixedFrame = o.hostless || !!o.follower;
-    // A second-screen learner monitor shows the monitor alone — no views to switch to
-    const navIds = (id: RouteId) => (o.follower ? false : !o.hostless || id === 'settings');
+    // The top bar lists views on a hostless Remote only (Settings); the host's pages are on the rail, and a
+    // second-screen learner monitor shows the monitor alone
+    const navIds = (id: RouteId) => o.hostless && id === 'settings';
     this.nav = h('nav', { class: 'nav', 'aria-label': 'Views' }, ...NAV.filter(([id]) => navIds(id)).map(([id, label]) => h('a', { href: hrefOf(id), 'data-route': id }, label)));
     this.right = h('div', { class: 'topright' });
     // narrow screens (iPad portrait, phones): the view list moves into a menu dialog so no label is clipped
@@ -47,12 +58,15 @@ export class Shell {
       h('nav', { class: 'menu-list', 'aria-label': 'Views' }, ...NAV.filter(([id]) => navIds(id)).map(([id, label]) => h('a', { href: hrefOf(id), onclick: () => menuDlg.close() }, label))),
       h('button', { type: 'button', class: 'btn ghost', onclick: () => menuDlg.close() }, 'Close'));
     const menuBtn = h('button', { type: 'button', class: 'btn small menu-btn', 'aria-haspopup': 'dialog', onclick: () => menuDlg.showModal() }, 'Menu');
-    const top = h('header', { class: 'topbar' }, h('a', { class: 'brand', href: hrefOf(o.hostless ? 'remote' : 'start') }, 'Patient monitor simulator'), menuBtn, this.nav, h('div', { class: 'spacer' }), this.right, menuDlg);
+    const top = h('header', { class: 'topbar' }, o.hostless ? h('a', { class: 'brand', href: hrefOf('remote') }, 'Patient monitor simulator') : null, o.hostless ? menuBtn : null, this.nav, h('div', { class: 'spacer' }), this.right, o.hostless ? menuDlg : null);
     this.monitorHost = h('div', { class: 'monitor-host', role: 'img', 'aria-label': 'Patient monitor' });
     this.stage = h('div', { class: 'stage', id: 'monitor' }, this.monitorHost);
     this.bar = h('div', { class: 'sessionbar', role: 'region', 'aria-label': 'Session' });
     this.main = h('main', { class: 'main', id: 'main', tabindex: -1 }, this.bar, this.stage);
-    this.root = h('div', { class: 'app' }, h('a', { class: 'skip', href: '#main', onclick: (e: Event) => (e.preventDefault(), this.main.focus()) }, 'Skip to the main content'), top, this.main);
+    // The owner's disclaimer as a quiet footer line on every page but the monitor screens (the Monitor view and the
+    // Ventilator cockpit: app.css; a learner's window and a phone have no footer)
+    const foot = o.follower ? null : h('footer', { class: 'app-foot' }, FOOTER_LINE);
+    this.root = h('div', { class: 'app' }, h('a', { class: 'skip', href: '#main', onclick: (e: Event) => (e.preventDefault(), this.main.focus()) }, 'Skip to the main content'), top, this.main, foot);
     parent.append(this.root);
     if (o.follower) this.bar.hidden = true;
     if (o.hostless) {
@@ -60,6 +74,14 @@ export class Shell {
       this.bar.hidden = true;
       this.main.classList.add('hostless');
     }
+  }
+
+  /** The workflow rail (host only): placed before the top bar; the current page is marked on every route. */
+  setRail(rail: ShellRail): void {
+    this.rail = rail;
+    this.root.classList.add('has-rail');
+    this.root.insertBefore(rail.el, this.root.querySelector('.topbar'));
+    rail.mark(this.route.id);
   }
 
   add(v: View): void {
@@ -86,15 +108,16 @@ export class Shell {
       prev.leave?.();
       prev.el.hidden = true;
     }
-    const v = this.views.get(r.id) ?? this.views.get('start');
+    const v = this.views.get(r.id) ?? this.views.get('home');
     if (!v) return;
     this.route = { id: v.id, sub: r.id === v.id ? r.sub : '' };
     this.main.dataset.route = v.id;
     this.root.dataset.route = v.id;
     if (!this.fixedFrame) {
-      // The starting page has no monitor beside it; any other route shows the stage (placed by the route's CSS grid)
-      this.stage.hidden = v.id === 'start';
-      this.bar.hidden = v.id === 'start';
+      // The pages before a session have no monitor beside them; any other route shows the stage (placed by the route's
+      // CSS grid)
+      this.stage.hidden = CONSOLE_ROUTES.has(v.id);
+      this.bar.hidden = CONSOLE_ROUTES.has(v.id);
     }
     v.el.hidden = false;
     v.enter?.(this.route.sub);
@@ -102,6 +125,7 @@ export class Shell {
       if (a.dataset.route === v.id) a.setAttribute('aria-current', 'page');
       else a.removeAttribute('aria-current');
     }
+    this.rail?.mark(v.id);
     const title = NAV.find(([id]) => id === v.id)?.[1] ?? (v.id === 'remote' ? 'Remote' : '');
     document.title = title ? `${title}: patient monitor simulator` : 'Patient monitor simulator';
     for (const fn of this.routeFns) fn(this.route);

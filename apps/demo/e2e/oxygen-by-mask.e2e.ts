@@ -28,7 +28,7 @@ test('oxygen by face mask on the breathing patient: FiO₂ 21 → 60 %, logged, 
   test.skip(browserName === 'webkit', 'Chromium only');
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 1280, height: 800 });
-  await openApp(page, base, '#/', { warmMs: 2000 });
+  await openApp(page, base, '#/patient', { warmMs: 2000 }); // E125: the free-run patient's page
   await page.click('text=Open the instructor view');
 
   await expect.poll(() => fio2(page), { timeout: 10_000 }).toBe('21');

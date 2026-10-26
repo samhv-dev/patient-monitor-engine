@@ -135,7 +135,7 @@ test('UI-A #9 fast-forward: the banner sits under the nav and the session bar, n
   expect(meets(b, sbar), 'the banner over the session bar').toBe(false);
   expect(meets(b, stage), 'the banner over the monitor stage').toBe(false);
   // the nav stays clickable while the banner shows
-  await page.locator('.topbar nav').getByRole('link', { name: 'Explore physiology' }).click();
+  await page.locator('nav.rail').getByRole('link', { name: 'Explore physiology' }).click(); // E125: the rail replaced the top bar's tabs
   await expect(page).toHaveURL(/#\/explore/);
   await expect(banner).toBeVisible();
   expect(meets((await banner.boundingBox()) as Box, (await page.locator('.topbar').boundingBox()) as Box)).toBe(false);

@@ -5,3 +5,16 @@ import { version } from '@pme/renderer';
 export const RELEASE_LABEL = `Version ${version}${version.includes('-') ? ' (pre-release)' : ''}`;
 export const EDUCATION_LINE = 'For education only. Not a medical device and not clinically validated: never use it for patient care.';
 export const ABOUT_LINE = `${RELEASE_LABEL}. ${EDUCATION_LINE}`;
+
+declare const __PME_BUILD__: string;
+/** The build a page was served from ("<commit>[+] <date>", vite.config.ts), or 'development'. */
+export const BUILD_ID = typeof __PME_BUILD__ === 'string' ? __PME_BUILD__ : 'development';
+const PRE = version.includes('-');
+/** The rail's line under the name: "1.0.0-rc.4, pre-release". */
+export const RAIL_VERSION = `${version}${PRE ? ', pre-release' : ''}`;
+/** Home's line under the name: "Version 1.0.0-rc.4 · pre-release · build 2ebd743d". */
+export const HOME_VERSION = [`Version ${version}`, PRE ? 'pre-release' : '', `build ${BUILD_ID.split(' ')[0]}`].filter(Boolean).join(' · ');
+/** The owner's disclaimer (E125 correction, 26 October): the quiet footer line of every page but the monitor screens. */
+export const FOOTER_LINE = 'For educational use only; Not to be used in patient care.';
+/** Where the project lives (Home's code box and links). */
+export const REPO = 'github.com/samhv-dev/patient-monitor-engine';
