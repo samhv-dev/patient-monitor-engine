@@ -26,6 +26,7 @@ export const FIXED_ALARM_WORDS: Readonly<Record<string, string>> = {
   co2Line: 'CO₂ sampling line blocked',
   spo2NonPulsatile: 'SpO₂: no pulse detected',
   spo2LowPerf: 'SpO₂: low perfusion',
+  spo2LowSignal: 'SpO₂: low signal quality',
   abpNonPulsatile: 'ART: no pulsatile pressure',
   abpDisconnect: 'ART: line disconnected',
   abpZero: 'ART: zeroing',

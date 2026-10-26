@@ -98,15 +98,21 @@ describe('respiratory acceptance: O2 store (Benumof, Patel) and the SpO2 lag str
     expect(t90 - 15).toBeLessThanOrEqual(20);
   });
 
-  it('9a. pulseless (VF): SpO2 is invalid within 10–30 s; low PI flags it questionable', async () => {
+  // E126 (owner ruling 2026-10-26): pulseless without compressions the oximeter shows a dash once its pulse is gone
+  // (PULSE_LOST_S after the last pleth pulse) — no held, marked number. It was "invalid within 10–30 s" after a
+  // questionable hold (brief §4.3).
+  it('9a. pulseless (VF): SpO2 is invalid within 4–10 s and stays so, with no questionable hold before it; low PI flags it questionable', async () => {
     const { e, ev } = rig3({ patient: ADULT });
     await run(e, 30);
     e.dispatch(cmd({ type: 'setRhythm', rhythm: 'vfCoarse', when: 'now' }));
     await run(e, 70);
     const inv = numSeries(ev, 'spo2', 30, 70).find(([, v]) => Number.isNaN(v));
     expect(inv).toBeDefined();
-    expect(inv![0] - 30).toBeGreaterThanOrEqual(10);
-    expect(inv![0] - 30).toBeLessThanOrEqual(30);
+    expect(inv![0] - 30).toBeGreaterThanOrEqual(4);
+    expect(inv![0] - 30).toBeLessThanOrEqual(10);
+    expect(numSeries(ev, 'spo2', inv![0], 70).every(([, v]) => Number.isNaN(v))).toBe(true);
+    const flags = ev.flatMap((x) => (x.type === 'measurement' && x.t >= 30 && x.t < inv![0] && x.values.spo2 ? [x.values.spo2.flag] : []));
+    expect(flags.filter((f) => f === 'questionable')).toEqual([]);
     const r = rig3({ patient: ADULT });
     r.e.dispatch(cmd({ type: 'setTarget', variable: 'pi', value: 0.2 }));
     await run(r.e, 40);

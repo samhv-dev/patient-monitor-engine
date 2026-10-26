@@ -28,6 +28,20 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Changed
 
+- Monitor (E126, owner ruling 2026-10-26: mimic the real monitor): SpO₂ and the pleth in cardiac arrest and during
+  chest compressions. Pulseless with no compressions, the oximeter shows no value (blank on the Saadat-style skin,
+  dashes on the others) with its no-pulse message 4 s after the last pleth pulse; the held, marked "99?" is gone, and
+  the "?" mark is no longer printed on any tile (`glyphs.questionable` is empty on every shipped skin). During
+  compressions the pleth carries one pulse per compression from the circuit's own forward aortic-valve volume (the
+  beat rule, PI × SV/SV₀; it was a fixed 20 % of the resting PI × quality), the value is the model's saturation read
+  through that signal, flagged questionable, with a low-signal message — SPO2 LOW PERFUSION, or the new SPO2 LOW SIGNAL
+  IQ (Masimo "Low Signal IQ") when the perfusion index is not low — and never a desaturation alarm. When the pulse
+  returns, the reading comes back after the oximeter's 8 s average. The Debrief, its export and the Persian handout
+  print the SpO₂ the monitor showed (a number during CPR, "–" where it showed none) and the footnote under the key
+  moments says so. The haemorrhage demonstration card pauses compressions at each pulse check until the shock (the ALS
+  rhythm check), so the strip shows clean VF; its course is otherwise unchanged.
+  (Persian entries for the new footnote and alarm words added untranslated, `reviewed: false`.)
+
 - Showcase tamponade card (card text only): the monitor alone does not identify a tamponade, so the card now
   narrates the bedside finding. Arrival (where the recognition cues appear, about 1:00, and the instructor ticks *Name
   the tamponade*) and Deteriorating carry the note "Bedside FAST: pericardial fluid, right-ventricular collapse", shown

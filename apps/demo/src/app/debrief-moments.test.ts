@@ -30,20 +30,22 @@ describe('key moments on the A3.1 tamponade path', () => {
     expect(recorded).toEqual((card.objectives ?? []).map(objectiveText));
   });
 
-  it('seven moments: who, text, values at that second (SpO₂ – while pulseless), alarms since the last row', () => {
+  // E126: SpO₂ is what the monitor showed — this rc.2 record kept the oximeter's questionable "99?" all through the
+  // pulseless span (CPR began 3 s after the loss), so it prints 99 there; `pulseless` still marks the rows (footnote)
+  it('seven moments: who, text, values at that second (SpO₂ as the monitor showed it), alarms since the last row', () => {
     const ms = keyMoments(a31Run());
-    const want: Array<[string, string, string, number, number, number | null, number]> = [
-      ['06:13', 'patient', 'Deteriorating: systolic below 80', 136, 70.56, 99, 24],
-      ['07:48', 'patient', 'Pulse lost (the model) · PEA', 46, 20.83, null, 14],
-      ['07:51', 'team', 'CPR, ventilated with FiO₂ 1.0', 44, 20.12, null, 13],
-      ['09:21', 'team', 'CPR: pericardium drained, catheter left in', 107, 27.84, null, 9],
-      ['10:55', 'patient', 'Circulation returned (the model)', 135, 45.25, null, 19],
-      ['10:57', 'team', 'Return of circulation: ventilated, catheter in the pericardium', 119, 62.59, 99, 19],
-      ['11:27', 'team', 'Post-ROSC: 500 mL crystalloid running', 64, 90.49, 99, 28],
+    const want: Array<[string, string, string, number, number, number | null, number, boolean]> = [
+      ['06:13', 'patient', 'Deteriorating: systolic below 80', 136, 70.56, 99, 24, false],
+      ['07:48', 'patient', 'Pulse lost (the model) · PEA', 46, 20.83, 99, 14, true],
+      ['07:51', 'team', 'CPR, ventilated with FiO₂ 1.0', 44, 20.12, 99, 13, true],
+      ['09:21', 'team', 'CPR: pericardium drained, catheter left in', 107, 27.84, 99, 9, true],
+      ['10:55', 'patient', 'Circulation returned (the model)', 135, 45.25, 99, 19, true],
+      ['10:57', 'team', 'Return of circulation: ventilated, catheter in the pericardium', 119, 62.59, 99, 19, false],
+      ['11:27', 'team', 'Post-ROSC: 500 mL crystalloid running', 64, 90.49, 99, 28, false],
     ];
     expect(ms).toHaveLength(7);
     ms.forEach((m, i) => {
-      const [time, who, text, hr, map, spo2, etco2] = want[i] as (typeof want)[number];
+      const [time, who, text, hr, map, spo2, etco2, pulseless] = want[i] as (typeof want)[number];
       expect(m.n).toBe(i + 1);
       expect(`${String(Math.floor(m.t / 60)).padStart(2, '0')}:${String(Math.floor(m.t % 60)).padStart(2, '0')}`).toBe(time);
       expect([m.who, m.text]).toEqual([who, text]);
@@ -51,7 +53,7 @@ describe('key moments on the A3.1 tamponade path', () => {
       expect(m.values.map).toBeCloseTo(map, 2);
       expect(m.values.spo2).toBe(spo2);
       expect(m.values.etco2).toBe(etco2);
-      expect(m.pulseless).toBe(spo2 === null);
+      expect(m.pulseless).toBe(pulseless);
     });
     expect(ms.map((m) => m.alarms)).toEqual([
       ['CVP high', 'SpO₂: low perfusion', 'ART S low'],
@@ -195,11 +197,35 @@ describe('key times', () => {
       ],
     };
     const ms = keyMoments(d);
-    expect(ms.map((m) => [m.t, m.who, m.pulseless, m.values.spo2])).toEqual([[60, 'patient', true, null], [120, 'patient', true, null]]);
+    expect(ms.map((m) => [m.t, m.who, m.pulseless, m.values.spo2])).toEqual([[60, 'patient', true, 98], [120, 'patient', true, 98]]);
     expect(keyTimes(d)).toEqual([
       { id: 'pulseLostToCpr', label: 'Pulse lost → CPR', fromT: 60, toT: null, state: 'noneAfter' },
       { id: 'pulseless', label: 'Pulseless in all', fromT: 60, toT: null, totalS: 60, state: 'measured' },
     ]);
+  });
+});
+
+describe('E126: the SpO₂ column prints what the monitor showed', () => {
+  it('a dash while pulseless without compressions, the number during CPR, the number after the return', () => {
+    // the oximeter: valid to 64 s, its dash from the pulse loss + 4 s to CPR + 10 s, then the compression reading
+    const spo2 = (t: number) => (t >= 64 && t < 90 ? null : 99);
+    const d: RunData = {
+      ...emptyRun('free', 70, 0),
+      samples: Array.from({ length: 200 }, (_, t) => ({ ...sampleAt(t), spo2: spo2(t) })),
+      rows: [
+        { t: 60, kind: 'patient', text: 'Pulse lost (the model)', ev: 'pulseLoss' },
+        { t: 70, kind: 'patient', text: 'State: PEA', ev: 'state:pea' },
+        { t: 80, kind: 'action', text: 'CPR started, 110 /min', ev: 'cpr' },
+        { t: 100, kind: 'action', text: 'Epinephrine 1 mg', ev: 'drug:epinephrine' },
+        { t: 120, kind: 'patient', text: 'Circulation returned (the model)', ev: 'rosc' },
+      ],
+    };
+    const ms = keyMoments(d);
+    expect(ms.map((m) => [m.t, m.pulseless, m.values.spo2])).toEqual([[60, true, 99], [80, true, null], [100, true, 99], [120, true, 99]]);
+    // the export (`pme-debrief/2`) carries the same column: the key moments and the minute rows
+    const j = JSON.parse(debriefJson(d, 'b'));
+    expect(j.keyMoments.map((m: { values: { spo2: number | null } }) => m.values.spo2)).toEqual([99, null, 99, 99]);
+    expect(j.minutes.map((m: { values: { spo2: number | null } }) => m.values.spo2)).toEqual([99, 99, 99, 99]);
   });
 });
 

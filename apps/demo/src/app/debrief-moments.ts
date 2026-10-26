@@ -54,8 +54,10 @@ function valueAt(at: Map<number, Sample>, k: 'hr' | 'map' | 'spo2' | 'etco2', t:
   return null;
 }
 
-/** The key moments of the kept course in time order, numbered 1…n. Values as recorded (unrounded), except SpO₂: null
- *  while pulseless (`pulseless` says why). A state's own set-up rows are not moments. */
+/** The key moments of the kept course in time order, numbered 1…n. Values as recorded (unrounded) — what the monitor
+ *  showed: SpO₂ is null where the oximeter showed its dash (pulseless without compressions) and the number it showed
+ *  during CPR (E126; E60 blanked every pulseless row). `pulseless` marks the rows the footnote explains. A state's own
+ *  set-up rows are not moments. */
 export function keyMoments(d: RunData): KeyMoment[] {
   const raw: Array<{ t: number; who: Who; text: string }> = [];
   let prev: string | undefined;
@@ -82,7 +84,7 @@ export function keyMoments(d: RunData): KeyMoment[] {
     const pulseless = pulselessAt(d, m.t, spans);
     return {
       n: i + 1, t: m.t, who: m.who, text: m.text,
-      values: { hr: valueAt(at, 'hr', m.t), map: valueAt(at, 'map', m.t), spo2: pulseless ? null : valueAt(at, 'spo2', m.t), etco2: valueAt(at, 'etco2', m.t) },
+      values: { hr: valueAt(at, 'hr', m.t), map: valueAt(at, 'map', m.t), spo2: valueAt(at, 'spo2', m.t), etco2: valueAt(at, 'etco2', m.t) },
       pulseless,
       alarms: alarms.filter((a) => from < a.t && a.t <= m.t + ALARM_S).map((a) => a.text),
     };

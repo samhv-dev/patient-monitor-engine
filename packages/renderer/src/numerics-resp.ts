@@ -4,11 +4,14 @@ import type { Measured } from '@pme/engine-core';
 
 const ok = (m: Measured | undefined): m is Measured & { value: number } => !!m && m.value !== null && m.flag !== 'invalid';
 
-/** SpO2: "97", "97?" when questionable (low perfusion, motion, CPR); "-?-" when invalid (saadat-like, brief §6.1). */
+/**
+ * SpO2: "97"; "-?-" when invalid (saadat-like, brief §6.1). A questionable value (low perfusion, motion, CPR) prints its
+ * number with the low-signal status beside it, never a "97?" mark (E126).
+ */
 export function formatSpo2(spo2: Measured | undefined, pi: Measured | undefined): { main: string; sub: string; status: string } {
-  const main = ok(spo2) ? `${Math.round(spo2.value)}${spo2.flag === 'questionable' ? '?' : ''}` : '-?-';
+  const main = ok(spo2) ? String(Math.round(spo2.value)) : '-?-';
   const sub = ok(pi) ? `PI ${pi.value.toFixed(pi.value < 1 ? 2 : 1)}` : 'PI ---';
-  const status = !spo2 || spo2.value === null ? 'NO PULSE' : ok(pi) && pi.value < 0.3 ? 'LOW PERF' : '';
+  const status = !spo2 || spo2.value === null ? 'NO PULSE' : ok(pi) && pi.value < 0.3 ? 'LOW PERF' : spo2.flag === 'questionable' ? 'LOW SIGNAL' : '';
   return { main, sub, status };
 }
 

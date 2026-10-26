@@ -50,6 +50,13 @@ export const SPO2_SEARCH_S = 15;
  */
 export const LOW_PERF_DELAY_S = 5;
 export const LOW_PERF_CLEAR_PI = 0.4;
+/**
+ * A SpO2 shown with low signal confidence (questionable: compressions, motion) and not explained by LOW PERF raises the
+ * low-signal INOP after this long — Masimo "Low Signal IQ" (Radical-7 Operator's Manual LAB-5476J p. 113), Saadat
+ * "SPO2 LOW SIGNAL IQ" (research/06 §4.2). It replaces the "?" mark the tile no longer prints (E126) [ENG: the LOW PERF
+ * on-delay].
+ */
+export const LOW_SIGNAL_DELAY_S = LOW_PERF_DELAY_S;
 /** SpO2 NON-PULSAT. clears only after a valid SpO2 for this long [ENG]. */
 export const NONPULS_CLEAR_S = 2;
 /** An arterial pressure non-pulsatile with a mean below this is a disconnection ([S2] IFU p. 44: 10 mmHg). */
@@ -170,7 +177,7 @@ export function observeEvent(inp: AlarmInputs, e: EngineEvent): void {
   }
 }
 
-/** Only a VALID value alarms — a questionable one ("97?", motion, CPR, low perfusion) raises nothing. */
+/** Only a VALID value alarms — a questionable one (motion, CPR, low perfusion: LOW SIGNAL / LOW PERF) raises nothing. */
 function valid(inp: AlarmInputs, id: NumericId, t: number): number | null {
   const m = inp.measured[id];
   if (!m || m.value === null || m.flag !== 'valid') return null;
@@ -292,8 +299,12 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
     // pulse for a few seconds) while the SpO2 is still shown [ENG]: LOW PERF was raised/cleared 7 times in 1–2 s cycles
     // at the end of the 3 L bleed
     const okFor = (since: number | null | undefined, s0: number) => since !== null && since !== undefined && t - since >= s0;
-    const nonPuls = (m !== undefined && m.flag === 'invalid') || (holdingId(s, 'spo2NonPulsatile') && !okFor(inp.spo2OkSince, NONPULS_CLEAR_S));
     const piV = pi && pi.value !== null && pi.flag !== 'invalid' ? pi.value : null;
+    // A raised LOW PERF stays the message while the oximeter still has fresh pulses (PI valid) though its value has gone
+    // (E126: the value goes at PULSE_LOST_S, PI at its own 6 s staleness): NON-PULSAT. takes over when PI goes too — not a
+    // 1 s LOW PERF superseded the next second (757 → 758 s in Ali's case once the "99?" hold was removed)
+    const fadingPerf = piV !== null && raisedLiveId(s, 'spo2LowPerf');
+    const nonPuls = (m !== undefined && m.flag === 'invalid' && !fadingPerf) || (holdingId(s, 'spo2NonPulsatile') && !okFor(inp.spo2OkSince, NONPULS_CLEAR_S));
     // The clear hysteresis holds a RAISED LOW PERF only — while the INOP is pending its LOW_PERF_DELAY_S the condition
     // is the plain PI < LOW_PERF_PI, as for the limit alarms (the vendor on-delay: a condition that resolves within the
     // delay raises nothing). With the pending entry held by the band, a single PI dip to 0.30 at 596 s in the 3 L bleed
@@ -301,6 +312,7 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
     const lowPerf = piV !== null ? piV < LOW_PERF_PI || (raisedLiveId(s, 'spo2LowPerf') && piV < LOW_PERF_CLEAR_PI && !okFor(inp.piOkSince, LOW_PERF_DELAY_S)) : raisedLiveId(s, 'spo2LowPerf');
     if (nonPuls) out.push({ ...fixed('spo2NonPulsatile', 3, 'technical'), numeric: 'spo2' });
     else if (lowPerf) out.push({ ...fixed('spo2LowPerf', 3, 'technical', LOW_PERF_DELAY_S), numeric: 'spo2' });
+    else if (m !== undefined && m.value !== null && m.flag === 'questionable') out.push({ ...fixed('spo2LowSignal', 3, 'technical', LOW_SIGNAL_DELAY_S), numeric: 'spo2' });
   }
   if (inp.abp === 'zeroing') out.push({ ...fixed('abpZero', 3, 'technical'), numeric: 'abpMean' });
   else if (inp.abp !== 'none') {

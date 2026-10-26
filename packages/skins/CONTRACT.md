@@ -106,7 +106,7 @@ A `null` table or cell means "not published" and must never be filled with inven
 - `alarms.silence.mode`: `'mute'` mutes for `durationS` (ZOLL 90 s, Saadat 120 s with visuals); `'acknowledge'`
   acknowledges every active alarm, new alarms sound at once, `durationS` is `null` (Philips Silence, Mindray Alarm
   Reset). `r.audio.alarm.silence.durationS` is 0 for acknowledge skins.
-- `glyphs.questionable` (suffix of a questionable numeric) and `glyphs.inop` (a numeric whose INOP is active).
+- `glyphs.questionable` (suffix of a questionable numeric; empty on the shipped skins since E126 — the low-signal INOP carries the doubt) and `glyphs.inop` (a numeric whose INOP is active).
 - Limit tables may carry `HR_extremeBrady` / `HR_extremeTachy` (absolute thresholds, mindray-like); without them the
   extreme alarms are the HR limit ∓ 20 bpm clamped (Philips).
 - The engine reads `spo2.avgDefault`/`updateHz`, `hr.source`/`autoPriority`/`relabelNonEcgAs`, `nibp.initialInflation`,

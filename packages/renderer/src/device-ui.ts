@@ -788,8 +788,8 @@ export class DeviceUI {
   }
 
   /**
-   * A numeric as the tile prints it. A questionable value carries the skin's mark ("97?", brief §4.3, research/06
-   * §3.2); an invalid one whose technical alarm is active shows the skin's INOP glyph ("-?-", [S2] IFU p. 55–62);
+   * A numeric as the tile prints it. A questionable value carries the skin's mark (`glyphs.questionable`, empty on every
+   * shipped skin since E126: the low-signal INOP says it, not a "97?"); an invalid one whose technical alarm is active shows the skin's INOP glyph ("-?-", [S2] IFU p. 55–62);
    * otherwise the no-value dashes.
    */
   private text(m: Measured | undefined, digits = 0, id?: NumericId): string {

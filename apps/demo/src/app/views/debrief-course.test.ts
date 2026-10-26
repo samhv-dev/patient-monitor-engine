@@ -1,5 +1,5 @@
-// The course strip on the A3.1 tamponade record: four trends, the seven numbered moments, one pulseless band (where
-// the SpO₂ line is broken), within 80 mm at the 182 mm content width.
+// The course strip on the A3.1 tamponade record: four trends, the seven numbered moments, one pulseless band (the SpO₂
+// line broken where the oximeter showed its dash, E126), within 80 mm at the 182 mm content width.
 import type { ScenarioDoc } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
 import a31 from '../../../../../docs/showcase/kit-round-a/fa/debrief-a3-tamponade-cue-card-path-kit-round-chromium.json';
@@ -31,14 +31,20 @@ describe('courseSvg on A3.1', () => {
     expect(svg).toContain('pulseless 3 min 07 s');
   });
 
-  it('the SpO₂ line breaks inside the pulseless band; HR is drawn across it', () => {
-    const path = (k: string) => new RegExp(`data-trend="${k}"[^]*?<path d="([^"]*)"`).exec(svg)?.[1] ?? '';
+  // E126: every line is what the monitor showed — the SpO₂ line breaks only where the oximeter showed its dash (E60
+  // broke it over the whole band); here the dash is put on 468–500 s and the compression reading runs on after it
+  it('the SpO₂ line breaks where the oximeter showed its dash and runs through the CPR reading; HR is drawn across the band', () => {
+    const dd = run();
+    for (const s of dd.samples) if (s.t >= 468 && s.t <= 500) s.spo2 = null;
+    const svg2 = courseSvg(dd, keyMoments(dd), { trends: [...TRENDS] });
+    const path = (k: string) => new RegExp(`data-trend="${k}"[^]*?<path d="([^"]*)"`).exec(svg2)?.[1] ?? '';
     const xs = (p: string) => [...p.matchAll(/[ML]([\d.]+) /g)].map((m) => Number(m[1]));
-    const end = Math.max(...d.samples.map((s) => s.t));
+    const end = Math.max(...dd.samples.map((s) => s.t));
     const x = (t: number) => 108 + (t / end) * (COURSE_W - 108 - 10);
-    const inside = (p: string) => xs(p).filter((v) => v > x(468) + 0.5 && v < x(655) - 0.5).length;
-    expect(inside(path('spo2'))).toBe(0);
-    expect(inside(path('hr'))).toBeGreaterThan(100);
+    const within = (p: string, a: number, b: number) => xs(p).filter((v) => v > x(a) + 0.5 && v < x(b) - 0.5).length;
+    expect(within(path('spo2'), 468, 500)).toBe(0);
+    expect(within(path('spo2'), 500, 655)).toBeGreaterThan(100);
+    expect(within(path('hr'), 468, 655)).toBeGreaterThan(100);
   });
 
   it('at most 80 mm high at 182 mm wide; the label lists the moments', () => {

@@ -241,7 +241,7 @@
   "defib": null,
   "pacer": null,
   "trend": { "style": "filled-area", "hours": 96 },
-  "glyphs": { "noValue": "", "hrUnavailable": "-?-", "nibpFail": "?", "questionable": "?", "inop": "" },
+  "glyphs": { "noValue": "", "hrUnavailable": "-?-", "nibpFail": "?", "questionable": "", "inop": "" },
   "provenance": {
     "co2.sidestreamDelayS": { "tag": "documented", "source": "research/09 §5 (Masimo ISA sidestream module; R39-5)" },
     "co2.riseTimeMs": { "tag": "documented", "source": "research/09 §5 (Masimo ISA sidestream module; R39-5)" },
@@ -407,7 +407,7 @@
     "glyphs.noValue": { "tag": "documented", "source": "research/34 §8 O1; research/34 §3 row 1 (IMG_8113: IBP1 with no sensor reads a blank \"/\" and \"( )\")", "note": "rc.3: blank, not dashes (was \"---\", brief §6.2)" },
     "glyphs.hrUnavailable": { "tag": "documented", "source": "research/06 §3.2 (M p.62, 66-67)" },
     "glyphs.nibpFail": { "tag": "documented", "source": "research/06 §3.2 (M p.129)" },
-    "glyphs.questionable": { "tag": "documented", "source": "brief §4.3, §6.1 ('97?')" },
+    "glyphs.questionable": { "tag": "documented", "source": "brief §4.3 as amended by owner ruling E126 (research/00, 2026-10-26 13:20): no \"97?\" mark; a questionable value prints its number and the low-signal INOP carries the doubt (Masimo Radical-7 LAB-5476J p. 113 \"Low Signal IQ\")", "note": "was \"?\" (brief §4.3, §6.1 '97?')" },
     "glyphs.inop": { "tag": "documented", "source": "research/34 §8 O1", "note": "rc.3: blank, as an unconnected probe (owner E101); the manual gives no INOP glyph for SpO2/IBP/temperature (was \"---\", brief §6.2)" }
   }
 }

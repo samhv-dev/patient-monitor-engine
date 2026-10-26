@@ -285,7 +285,7 @@ export const skinSchema: JsonSchema = {
     ),
     trend: obj({ style: en(['line', 'filled-area']), hours: num(1, 168) }),
     // noValue and inop may be empty: a blank field (saadat-like, research/34 §8 O1)
-    glyphs: obj({ noValue: { type: 'string' }, hrUnavailable: str, nibpFail: str, questionable: str, inop: { type: 'string' } }),
+    glyphs: obj({ noValue: { type: 'string' }, hrUnavailable: str, nibpFail: str, questionable: { type: 'string' }, inop: { type: 'string' } }),
     provenance: provenanceSchema,
   }),
   allOf: [

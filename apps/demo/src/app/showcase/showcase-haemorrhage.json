@@ -403,6 +403,13 @@
       "label": "Pulse check: VF",
       "onEnter": [
         {
+          "type": "applyEvent",
+          "event": {
+            "kind": "cpr",
+            "active": false
+          }
+        },
+        {
           "type": "setRhythm",
           "rhythm": "vfCoarse",
           "when": "now"
@@ -421,11 +428,22 @@
           }
         }
       ],
-      "notes": "The card sets the rhythm: VF at the first pulse check (an instructor rhythm event). Shock from the Defib tab (Defib, pacing & CPR); CPR stays on."
+      "notes": "The card sets the rhythm: VF at the first pulse check (an instructor rhythm event). Compressions pause for the check (the ALS rhythm check, ≈ 10 s to the shock), so the strip shows clean VF; shock from the Defib tab (Defib, pacing & CPR) and compressions resume with the shock (E126)."
     },
     {
       "id": "postShock1",
       "label": "Shocked: CPR on for 2 min",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "cpr",
+            "active": true,
+            "rate": 110,
+            "quality": 0.8
+          }
+        }
+      ],
       "transitions": [
         {
           "id": "pulseCheck2",
@@ -455,6 +473,13 @@
       "label": "Pulse check: VF again",
       "onEnter": [
         {
+          "type": "applyEvent",
+          "event": {
+            "kind": "cpr",
+            "active": false
+          }
+        },
+        {
           "type": "setRhythm",
           "rhythm": "vfCoarse",
           "when": "now"
@@ -473,11 +498,22 @@
           }
         }
       ],
-      "notes": "The card sets the rhythm again: VF at the second pulse check. Shock from the Defib tab; CPR stays on; the pulse returns about a minute after the shock."
+      "notes": "The card sets the rhythm again: VF at the second pulse check, compressions paused for the check (E126). Shock from the Defib tab; compressions resume with the shock; the pulse returns about a minute after the shock."
     },
     {
       "id": "postShock2",
       "label": "Shocked again: CPR on",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "cpr",
+            "active": true,
+            "rate": 110,
+            "quality": 0.8
+          }
+        }
+      ],
       "transitions": [
         {
           "id": "stop",

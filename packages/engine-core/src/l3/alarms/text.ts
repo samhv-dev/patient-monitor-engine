@@ -9,7 +9,7 @@ export type FixedAlarmId =
   | 'ASYSTOLE' | 'VFIB' | 'VTAC' | 'EXTREME_BRADY' | 'EXTREME_TACHY' | 'BRADY' | 'TACHY' | 'PAUSE' | 'PVCS' | 'DESAT'
   | 'ecgLeadsOff' | 'spo2SensorOff' | 'nibp-failed' | 'apnoea-co2' | 'apnoea-resp' | 'co2Line'
   // Technical alarms raised by real conditions, and the arterial line's disconnect alarm
-  | 'spo2NonPulsatile' | 'spo2LowPerf' | 'abpNonPulsatile' | 'abpDisconnect' | 'abpZero' | 'tempProbeOff';
+  | 'spo2NonPulsatile' | 'spo2LowPerf' | 'spo2LowSignal' | 'abpNonPulsatile' | 'abpDisconnect' | 'abpZero' | 'tempProbeOff';
 
 const IEC_TEXT: Record<FixedAlarmId, string> = {
   ASYSTOLE: 'ASYSTOLE',
@@ -30,6 +30,7 @@ const IEC_TEXT: Record<FixedAlarmId, string> = {
   co2Line: 'CO2 OCCLUSION', // Brief §6.4 INOP "CO2 line"; the Philips text ([S2] IFU p. 53)
   spo2NonPulsatile: 'SpO2 NON-PULSAT.', // [S2] IFU p. 59
   spo2LowPerf: 'SpO2 LOW PERF', // [S2] IFU p. 58
+  spo2LowSignal: 'SpO2 LOW SIGNAL IQ', // [inferred] Masimo "Low Signal IQ" (Radical-7 LAB-5476J p. 113; E126)
   abpNonPulsatile: 'ABP NON-PULSATILE', // [S2] IFU p. 57
   abpDisconnect: 'ABP DISCONNECT', // [S2] IFU p. 44 (red: non-pulsatile, mean < 10 mmHg)
   abpZero: 'ABP ZEROING', // brief §6.4 INOP "ABP zeroing" [inferred text]
@@ -55,6 +56,7 @@ const SAADAT_TEXT: Record<FixedAlarmId, string> = {
   co2Line: 'CO2 CHECK LINE', // [inferred] from the "ECG CHECK LA/RA/LL" pattern
   spo2NonPulsatile: 'SPO2 NO PULSE', // [inferred] brief §4.3 "NO PULSE"
   spo2LowPerf: 'SPO2 LOW PERFUSION', // research/06 §4.2 (M p.109–116)
+  spo2LowSignal: 'SPO2 LOW SIGNAL IQ', // research/06 §4.2 (M p.109–116; E126)
   abpNonPulsatile: 'IBP1 STATIC PRESSURE', // research/06 §4.2, §4.1 (static pressure: SYS/DIA hidden, mean shown)
   abpDisconnect: 'IBP CATHETER DISCONNECT', // research/06 §4.2 (M p.161)
   abpZero: 'IBP1 ZEROING', // [inferred] from the "IBP1 …" pattern

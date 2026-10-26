@@ -27,12 +27,12 @@ describe('alarm latching, silence and limits per vendor', () => {
     expect(r.provenance.limits?.source).toMatch(/\[S4\] Mindray/);
   });
 
-  it('philips-like: SpO2 10 s / 2 s, NIBP 165 mmHg, HR (alarm) source AUTO with the HR tile kept (no relabel), -?- glyphs', () => {
+  it('philips-like: SpO2 10 s / 2 s, NIBP 165 mmHg, HR (alarm) source AUTO with the HR tile kept (no relabel), -?- glyphs, no "?" mark (E126)', () => {
     const s = resolveSkin('philips-like').skin;
     expect(s.spo2).toMatchObject({ avgDefault: 10, updateHz: 0.5 });
     expect(s.nibp.initialInflation).toEqual({ adult: 165, paed: 130, neo: 100 });
     expect(s.hr).toMatchObject({ source: 'AUTO', relabelNonEcgAs: null });
-    expect(s.glyphs).toMatchObject({ hrUnavailable: '-?-', nibpFail: '-?-', inop: '-?-', questionable: '?' });
+    expect(s.glyphs).toMatchObject({ hrUnavailable: '-?-', nibpFail: '-?-', inop: '-?-', questionable: '' });
   });
 
   it('the documented NIBP mode defaults are kept as data, recorded not modelled (documented data is never deleted)', () => {

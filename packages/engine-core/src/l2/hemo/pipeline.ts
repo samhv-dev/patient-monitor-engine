@@ -247,14 +247,13 @@ function intake(hs: HemoState, ctx: HemoCtx): void {
   }
 }
 
-/** Compressions are pressures on the circuit; this keeps the cycle clock for the pleth/EtCO2. */
-function planCompressions(hs: HemoState, ctx: HemoCtx, until: number): void {
+/**
+ * Compressions are pressures on the circuit; this keeps their cycle clock (the circuit's compression profile, EtCO2).
+ * Their pleth pulses come from the circuit's own forward flow per compression (`circ.cprEj`, E126), not from here.
+ */
+function planCompressions(hs: HemoState, until: number): void {
   const c = hs.cpr;
-  while (c.active && c.nextT <= until) {
-    const dur = (CPR_DUTY * 60) / c.rate;
-    addPlethPulse(hs.pleth, c.nextT + plethDelayS(hs.pleth.site), l1Value(ctx.l1, 'pi', c.nextT) * 0.2 * c.quality, dur, hs.circ.p.rSys);
-    c.nextT += 60 / c.rate;
-  }
+  while (c.active && c.nextT <= until) c.nextT += 60 / c.rate;
 }
 
 /** Unit half-sine compression profile at time t (0 outside the compression phase), × quality. */
@@ -562,7 +561,7 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
 export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (ch: HemoChannel | HemoTeachingChannel, m: number, v: number) => void): void {
   if (mEnd < hs.m) return;
   intake(hs, ctx);
-  planCompressions(hs, ctx, mEnd / HEMO_RATE + 0.3);
+  planCompressions(hs, mEnd / HEMO_RATE + 0.3);
   const ab = hs.lines.abp;
   const cv = hs.lines.cvp;
   const pa = hs.lines.pap;
@@ -610,18 +609,26 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
         if (pa.sensor !== 'none') stepTransducer(pa, lineInput(pa, wedged(pa0), ta), lineInput(pa, wedged(o.pPaRoot), tb), H_S);
         if (cv.sensor !== 'none') stepTransducer(cv, lineInput(cv, cv0, ta), lineInput(cv, o.pRa, tb), H_S);
       }
-      // A pleth pulse per aortic-valve opening, placed when it happens (a CircBeat completes one beat late)
+      // A pleth pulse per aortic-valve opening, placed when it happens (a CircBeat completes one beat late), and one per
+      // chest compression from the forward volume the circuit ejects through the aortic valve — the same PI × SV/SV_0
+      // rule (E126: the oximeter reads the compression-generated flow; it was PI × 0.2 × quality, a CPR constant).
       const c = hs.circ;
+      // SV_0 is the settled RESTING stroke volume (brief §4.3 "PI × (SV_i/SV_0)"), not a running mean of the last 16
+      // beats (which drew a 0.6 mL beat as a normal pulse: SpO2 98 / PI 2.5 at MAP 2).
+      // In MODELED the factor reads the circulation's CUTANEOUS tone (`circ.skinTone`: vasomotor factors only, no
+      // MANUAL tracker, no viscosity): vasoconstriction lowers PI and a dilated finger (an anaesthetic's
+      // sympatholysis) raises it [ENG exponent 0.5; bounded 0.25–2 ENG]. MANUAL keeps 1 (a factor there made PI rise
+      // as the MANUAL tracker lowered SVR, and fall after propofol).
+      const svRef = Math.max(1, c.ref.sv || 70);
+      const tone = ctx.l1.mode === 'modeled' ? Math.min(2, Math.max(0.25, 1 / Math.sqrt(c.skinTone ?? 1))) : 1;
+      if (c.cprEj?.length) {
+        if (hs.cpr.active) {
+          for (const e of c.cprEj) addPlethPulse(hs.pleth, e.t + plethDelayS(hs.pleth.site), (l1Value(ctx.l1, 'pi', t1) * tone * e.sv) / svRef, (CPR_DUTY * 60) / hs.cpr.rate, c.p.rSys);
+        }
+        c.cprEj.length = 0;
+      }
       if (c.opens.length > 0 && !hs.cpr.active) {
         const bs = c.beats;
-        // SV_0 is the settled RESTING stroke volume (brief §4.3 "PI × (SV_i/SV_0)"), not a running mean of the last 16
-        // beats (which drew a 0.6 mL beat as a normal pulse: SpO2 98 / PI 2.5 at MAP 2).
-        // In MODELED the factor reads the circulation's CUTANEOUS tone (`circ.skinTone`: vasomotor factors only, no
-        // MANUAL tracker, no viscosity): vasoconstriction lowers PI and a dilated finger (an anaesthetic's
-        // sympatholysis) raises it [ENG exponent 0.5; bounded 0.25–2 ENG]. MANUAL keeps 1 (a factor there made PI rise
-        // as the MANUAL tracker lowered SVR, and fall after propofol).
-        const svRef = Math.max(1, c.ref.sv || 70);
-        const tone = ctx.l1.mode === 'modeled' ? Math.min(2, Math.max(0.25, 1 / Math.sqrt(c.skinTone ?? 1))) : 1;
         const lb = bs[bs.length - 1];
         const lvet = lb && lb.avClose > lb.avOpen ? lb.avClose - lb.avOpen : 0.3;
         for (const op of c.opens) addPlethPulse(hs.pleth, op.t + plethDelayS(hs.pleth.site), (l1Value(ctx.l1, 'pi', t1) * tone * op.sv) / svRef, lvet, c.p.rSys);
