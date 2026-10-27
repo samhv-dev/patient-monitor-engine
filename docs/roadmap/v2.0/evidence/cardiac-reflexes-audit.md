@@ -288,13 +288,57 @@ course · modulation · where an anaesthetist meets it.
   hypercapnic pressor response rises roughly linearly above PaCO2 ≈ 50 **[T]**. In apnoeic asphyxia the sequence in
   every animal model is early tachycardia and hypertension, then bradycardia and hypotension, then loss of
   pulsations with the ECG still organised (DeBehnke 1995, dogs; Varvarousi 2011/2015, swine) **[A]**.
+- **Baroreflex–chemoreflex interaction: potentiation at low pressure, not occlusion.** Baroreflex LOADING inhibits the
+  chemoreflex vasoconstriction (carotid-chemoreflex pressor response in constant-flow dog muscle fell from +20 to
+  +4 mmHg when the aortic balloon raised MAP 102 → 132), while baroreflex UNLOADING by haemorrhage POTENTIATES it
+  several-fold and the more so the lower the pressure (vagotomised arm: +10 mmHg at MAP 118 → +39 mmHg at MAP 50 for
+  the same stimulus; four times the dose was needed at normal pressure for the response seen at MAP 73), with
+  cross-perfusion controls placing the interaction centrally (Heistad DD, Abboud FM, Mark AL, Schmid PG, *J Clin
+  Invest* 1974;53:1226–1236, PMID 4825222) **[A]**. In awake humans, baroreflex loading with phenylephrine ABOLISHED
+  the sympathetic response to isocapnic hypoxia but the hypercapnic MSNA response SURVIVED it (+91 % with
+  phenylephrine against +102 % without) (Somers VK, Mark AL, Abboud FM, *J Clin Invest* 1991;87:1953–1957,
+  PMID 2040688) **[H]**. So a model that occludes the chemoreflex efferent at a saturated baroreflex contradicts the
+  primary data; the sympathetic limbs share an efferent, not a ceiling that switches the chemoreflex off. No
+  microneurography study combining hypercapnia with baroreflex UNLOADING in humans was found **[UNCONFIRMED]**.
+- **Magnitude of the sympathetic limb.** Awake humans, peroneal MSNA: hyperoxic hypercapnia +53 ± 14 % breathing and
+  +91 ± 26 % apnoeic (Somers VK, Mark AL, Zavala DC, Abboud FM, *J Appl Physiol* 1989;67:2101–2106, PMID 2513316)
+  **[H]**; PETCO2 40 → 53 mmHg gave +102 % (Somers 1991, above), i.e. about **4–8 % of baseline MSNA per mmHg** over
+  that range, with the ventilation-related restraint worth ≈ 38 percentage points (the apnoeic response is the
+  unrestrained one). Chronic hypercapnic COPD sits at 81.7 ± 29.3 bursts per 100 heartbeats, so burst INCIDENCE is
+  bounded at 100/100 beats while total outflow is not demonstrably capped (Regmi B et al., *Clin Auton Res*
+  2024;34:297–301, PMID 38502257) **[H]**.
+- **The NET cardiovascular effect of hypercapnia, and its sign.** In 41 awake volunteers, PaCO2 39 → 50 raised cardiac
+  index, heart rate, stroke index, the contractility indices and forearm blood flow, and **lowered total peripheral
+  resistance** (Cullen DJ, Eger EI 2nd, *Anesthesiology* 1974;41:345–349, PMID 4412334) **[H]**; cyclopropane
+  abolished the tachycardia and halved the cardiac-output response (Cullen DJ, Eger EI, Gregory GA, *Anesthesiology*
+  1969;31:407–413, PMID 5345291) **[H]**. In fentanyl-anaesthetised dogs at PCO2 92 / pH 7.09, cardiac output rose
+  24 %, SVR fell 26 % and Emax fell 11.4 → 9.2 mmHg/ml; after propranolol the output rise was gone, Emax fell a
+  further 22 % and **SVR still fell 20 %** — i.e. ≈ 0.4 % SVR fall per mmHg PaCO2 is non-sympathetic, and the
+  unopposed inotropic cost is ≈ −4 % Emax per 10 mmHg PaCO2 (≈ −7 % per 0.1 pH unit) (Walley KR, Lewis TH, Wood LDH,
+  *Circ Res* 1990;67:628–635, PMID 2118837) **[A]**. Under ganglionic blockade a CO2 change moves human MAP by
+  13 ± 1.9 mmHg where the intact sympathetic efferent keeps pressure CO2-insensitive (Jordan J et al.,
+  *Hypertension* 2000;36:383–388, PMID 10988269) **[H]**: the efferent is what defends pressure against CO2's own
+  vascular action.
+- **In profound shock the net reverses.** Dogs exsanguinated to cardiac output 0.98 L/min with mixed-venous PCO2
+  56.7 mmHg: thirty minutes of hyperventilation **with no volume replacement** took PvCO2 to 40 and raised cardiac
+  output to 2.5 L/min, stroke index 0.35 → 1.13 mL/kg and LV stroke work index 0.19 → 0.78 g·m/kg (Karnad DR, Apte SJ,
+  Supe AN, *J Postgrad Med* 1993;39:68–71, PMID 8169865) **[A]**. Where the inotropic reserve is gone, the depression
+  and the vasodilation carry the net, not the sympathetic limb. No source states that the sympathoadrenal response is
+  already maximal in such a state **[UNCONFIRMED]**.
 - **In the engine (2026-10-27, found gating E134).** `chemoFactors` applies the hypercapnic pressor response as an
-  independent multiplier on HR and SVR (+1 %/mmHg above PaCO2 50, capped at +20 %, **[ENG]**) beside the baroreflex,
-  whose sympathetic output saturates at `SYMP_SAT`. The two do not share a ceiling or the sympatholysis factor, so
-  at MAP < 30 the baroreflex is saturated and hypercapnia still adds its full +20 %: in the class IV haemorrhage
-  case the arrest's own lactate CO2 held the peak perfusion index above the LOW PERF threshold through this term.
-  Workstream 2 routes the chemoreflex efferent through the one saturating sympathetic output with sourced gains
-  and the direct effects of CO2 (vasodilation, myocardial depression) **[A/T]**.
+  independent multiplier on HR and SVR (+1 %/mmHg above PaCO2 50, capped at +20 %, **[ENG]**) beside the baroreflex:
+  it carries no sympatholysis factor, no catecholamine-responsiveness scaling, and **the wrong sign** — on the sources
+  above hypercapnia LOWERS systemic resistance and depresses the myocardium, and what raises output in an intact
+  patient is the sympathetic limb working through the same efferent as the baroreflex. In the class IV haemorrhage
+  case that constrictor term is worth about 1 mmHg of MAP at +10 min and holds the patient on the compensated side of
+  his collapse. Workstream 2 replaces it with three sourced terms: (i) the chemoreflex sympathetic limb (hypercapnic
+  and hypoxic) as an afferent of the ONE sympathetic efferent the baroreflex drives, carrying the sympatholysis and
+  the responsiveness scaling and with NO occlusion at either end of the baroreflex range (Heistad 1974, Somers 1991),
+  sized from Somers 1989/1991; (ii) CO2's direct vascular action as a vasodilation of ≈ 0.4 % of SVR per mmHg
+  (Walley 1990 after propranolol); (iii) myocardial depression of ≈ 4 % of contractility per 10 mmHg PaCO2
+  (≈ 7 % per 0.1 pH) through the existing contractility path, so that it is unopposed exactly where the inotropic
+  reserve is gone (Karnad 1993). The earlier plan — a shared SATURATING ceiling that would make hypercapnia add
+  nothing at MAP < 30 — was withdrawn on 2026-10-27: the primary data show potentiation there, not occlusion.
 - **Modulation.** Volatile anaesthetics depress the acute hypoxic ventilatory response markedly even at
   subanaesthetic concentrations, and arousal or pain does not restore it (Sarton, Dahan, Teppema, et al. 1996,
   *Anesthesiology* 85:295–303, PMID 8712445) **[H]**; the hypercapnic response is depressed dose-dependently. The
