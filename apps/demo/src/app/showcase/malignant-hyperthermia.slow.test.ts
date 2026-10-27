@@ -38,7 +38,11 @@ import { alarmAt, bands, entered, first, near, pvcEvents, range, runCard, type A
  *  card steps come from #144): the trigger-off step starts a propofol infusion 100 µg/kg/min in place of the
  *  sevoflurane, and cooling is refrigerated saline 20 mL/kg (1.6 L, given at the theatre's 21 °C: no cold-fluid input)
  *  pressed only above 38.5 °C, so not on the early path. #144's own re-centring (on the pre-E131 build) is dropped
- *  and the S1 early bands are re-taken on this build. */
+ *  and the S1 early bands were re-taken on this build: tcMax 36.8, hrMax 91, kMax 4.8, etco2Plus5 52, hrPlus15 71 held;
+ *  recoveringMin left its band and is re-centred, same tolerance (old centre → new): 17.82 → 20.37. The mechanism: no
+ *  room-temperature fluid on the early path, so the core is not cooled and the MH CO₂ production takes longer to come
+ *  under the Recovering threshold; with the same course and the 1.6 L pressed regardless of the core (a probe, not the
+ *  card) Recovering comes at 18.27 min, inside the old band. Reported; not tuned. */
 const BANDS = {
   'S1 untreated': { refused: [0, 0], earlyMin: [3.84, 5.22], establishedMin: [16.89, 20.65], etco2AtEstablished: [72, 78], hrAtEstablished: [121, 131], phAtEstablished: [7.06, 7.12], kAtEstablished: [5.4, 6], lactateAtEstablished: [4.1, 5.1], mapAtEstablished: [80, 90], hrMax: [185, 195], kMax: [6.1, 6.7], lossMin: [39.91, 48.79], tcAtLoss: [42.14, 42.54], kAtLoss: [6.1, 6.7], vf: [1, 1], arrestStateMin: [40.23, 49.17] },
   'S1 untreated E131': { refused: [0, 0], earlyMin: [3.41, 4.79], etco2Max: [103, 109], etco2At20: [88, 94], hrAt20: [119, 129], phAt20: [7.01, 7.07], kAt20: [5.8, 6.4], lactateAt20: [4.7, 5.7], mapAt20: [79, 89], tcAt20: [36.38, 36.78], hrMax: [134, 144], hrMaxInRuns: [155, 165], kMax: [6.5, 7.1], tcAt51: [37.11, 37.51], pulseLost: [0, 0] },
@@ -54,7 +58,7 @@ const BANDS = {
   // (`ectopyHazard`; it had shared the ECG's `ectopy` stream, which also times the escape foci): first PVC 10.07 →
   // 10.95 min, 339 → 346 events, 40 → 35 runs.
   'S1 untreated ectopy (E133)': { firstPvcMin: [8.95, 12.95], events51Min: [270, 420], runs51Min: [19, 54] },
-  'S1 early': { refused: [0, 0], crisisMin: [5.65, 7.42], pulseLost: [0, 0], recoveringMin: [16.12, 19.52], established: [0, 0], tcMax: [36.6, 37.0], hrMax: [81, 91], kMax: [4.5, 5.1], etco2Plus5: [47, 53], hrPlus15: [63, 73] },
+  'S1 early': { refused: [0, 0], crisisMin: [5.65, 7.42], pulseLost: [0, 0], recoveringMin: [18.67, 22.07], established: [0, 0], tcMax: [36.6, 37.0], hrMax: [81, 91], kMax: [4.5, 5.1], etco2Plus5: [47, 53], hrPlus15: [63, 73] },
   'S1 preoxygenation (E121)': { withSpo2AtInduction: [98, 100], withSpo2Min: [97, 100], withoutSpo2AtInduction: [87, 93], withoutSpo2Min: [55, 71], withoutDesatAlarmAfterInductionS: [56, 96] },
   'S1 late': { refused: [0, 0], crisisMin: [17.79, 21.75], dantroleneMin: [18.69, 22.85], pulseLost: [0, 0], etco2AtCall: [72, 78], tcAtCall: [38.51, 38.91], kAtCall: [5.5, 6.1], phAtCall: [7.09, 7.15], etco2Plus2: [60, 66], tcMax: [39.3, 39.7], tcPeakMin: [28.05, 34.29], kMax: [5.6, 6.2], lactateMax: [6.9, 7.9], recoveringMin: [33.54, 39.7], normoMin: [35.04, 42.82], hrAt60: [73, 83], mapAt60: [96, 106], tcAt60: [38.5, 38.9], etco2At60: [35, 41], phAt60: [7.35, 7.41], kAt60: [3.5, 4.1], sysMaxAfterCall: [136, 146] },
 } as const;
