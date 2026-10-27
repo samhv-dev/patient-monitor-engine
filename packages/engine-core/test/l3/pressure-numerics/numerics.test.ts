@@ -104,4 +104,29 @@ describe('fresh beats, the non-pulsatile rule and the searching start', () => {
     expect(run(0)).toBe(false); // was static: needs ≥ 4 mmHg to leave
     expect(run(8)).toBe(true); // was pulsatile: ≥ 3 mmHg keeps it
   });
+
+  it('pleth (ownPulse): a pulse is measured over its own period when the detector missed the next foot (MISSED_LIMIT, Pan & Tompkins 1985); a pressure line keeps the foot-to-foot beat', () => {
+    // 1 Hz pulses of 0.2 (steep upstroke, run-off); the pulse at 10 s rises too slowly to be detected and peaks at 0.3,
+    // so the interval from the foot at 9 s to the next found foot (11 s) spans two pulses
+    const x = (t: number) => {
+      const k = Math.floor(t);
+      const u = t - k;
+      if (k === 10) return u < 0.9 ? 0.3 * (u / 0.9) ** 2 : (0.3 * (1 - u)) / 0.1;
+      return u < 0.1 ? 2 * u : 0.2 * Math.exp(-(u - 0.1) * 6);
+    };
+    const run = (own: boolean) => {
+      const wn = createWaveNumerics(0.03);
+      const amp: Record<string, number> = {};
+      for (let m = 0; m < 125 * 14; m++) {
+        const b = numericsStep(wn, m, x(m / 125), own);
+        if (b) amp[b.t.toFixed(0)] = b.sys - b.dia;
+      }
+      return amp;
+    };
+    const own = run(true);
+    const merged = run(false);
+    expect(merged['11']).toBeCloseTo(0.297, 2); // max − min over 9–11 s: the missed pulse's peak over the trough before it
+    expect(own['11']).toBeCloseTo(own['9'] as number, 3); // the pulse whose foot is 9 s, as any other
+    expect(own['12']).toBeCloseTo(merged['12'] as number, 6); // single-pulse intervals are unchanged
+  });
 });
