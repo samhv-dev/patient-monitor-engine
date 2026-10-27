@@ -254,9 +254,11 @@ phones [R31 §3]. Tick every line.
       [UIR "Hidden instructor tab"]).
 
 **Safety lines** (the UI review, 24 October [UIR]; true with or without this week's fixes)
-- **Never click "Ventilator" during a card**, neither the rail's **Ventilator** nor a Ventilator tab: one click holds
-  every phone on "The ventilator is on the main screen", still held 20 s after going back to the Instructor view; a reload or a pause freed it [UIR #2]. If it happens: **Instructor**, then **Pause** and
-  **Resume** if the phones still hold.
+- **Never click "Ventilator" during a card**, neither the rail's **Ventilator** nor a Ventilator tab: while the
+  Ventilator view is on screen its cockpit drives the patient and every phone waits on "The ventilator is on the main
+  screen" [UIR #2]. If it happens: back to **Instructor**. Leaving the view releases the phones at once and hands the
+  patient to the engine's ventilator at the cockpit's settings; no Pause or reload is needed [#135; E128]. (In the
+  review, on kit 2ebd743d, before those fixes, the phones were still held 20 s after leaving.)
 - **Never reload mid-case** (see "After a page reload" above): Sound must be switched on again either way.
 - **Open the Room (the QR) only from the first instructor tab** [UIR "Two hosts"].
 - **The instructor tab stays in front**: hidden, the session pauses at once ("Paused while this tab was hidden (m:ss)",
@@ -605,7 +607,7 @@ once the banner has gone (≈ 8 s) [UIR #9].
 | A card press shows **"Not available now: the case has moved to …"** | Press again: the button now belongs to the current state | [G10 §8 item 1] |
 | A scenario goes wrong (wrong press, missed window) | Session bar **Bookmark** list → **Return here** on the bookmark taken at Load (the **last** one in the list: MH's "Bookmark 1 at 00:06" stays in it while the haemorrhage runs, whose own is "Bookmark 2 at 00:11" [Q1-2D]); the patient and the screen are restored together. **The alarms come back as they were when the bookmark was taken** | [FU-11 E4; A3.2] |
 | Something went wrong: the toast "The monitor stopped — Restart the patient" | **Restart patient**, then **load the case again** (Load · All alarms on · Bookmark · speed) and run it from 0:00. After Restart patient the session bar reads **No scenario** and the Return-here list was not on screen (0 buttons in the two-demos run [Q1-2D `fx12`]; 3 of 6 tries before [Q1 FX-12]) | [Q1-2D; Q1 FX-12] |
-| You clicked **Ventilator** (the rail or a Ventilator tab) during a card | Back to **Instructor**. If the phones still say "The ventilator is on the main screen", **Pause** then **Resume** (a pause freed them in the review; a reload too, with the reload line below) | [UIR #2] |
+| You clicked **Ventilator** (the rail or a Ventilator tab) during a card | Back to **Instructor**: the phones follow again at once, and the patient stays on the engine's ventilator at the cockpit's settings | [UIR #2; #135; E128] |
 | The page was reloaded mid-case (Cmd-R, a crash) | With the reload fix (#132) the case comes back ("Restored after reload: ‹title›, mm:ss"); without it the bar reads **No scenario**: load the case again from 0:00. **Either way: Sound on again** (click it if it reads **Sound off**), and **All alarms on** if the alarm button does not read **No alarms**. The session code is kept and the phones follow | [UIR #1; #132; MEAS §7] |
 | The phones split, or the count drops after you opened another tab | A second instructor tab made a new session: close it and open the Room (the QR) from the first tab only | [UIR "Two hosts"] |
 | The toast "Paused while this tab was hidden (m:ss)" | The instructor tab was hidden: the session paused and resumed on return. Keep the tab in front; in real Safari a hidden tab once lost the phone's session (H19, FX-14, FX-15) | [UIR "Hidden instructor tab"; G12P] |

@@ -62,10 +62,10 @@ cards after the clinical review rebased onto main 25771808 (E131, E133; kit roun
 
 ## Safety lines (UI review, 24 October; true with or without this week's fixes)
 
-- **Never click "Ventilator" during a card**: not the rail's **Ventilator**, not a Ventilator tab. One click
-  holds every phone on "The ventilator is on the main screen", still held 20 s after going back to the Instructor
-  view. If it happens: back to **Instructor**; if the phones still hold, **Pause** then **Resume** (a pause freed them
-  in the review).
+- **Never click "Ventilator" during a card**: not the rail's **Ventilator**, not a Ventilator tab. While the
+  Ventilator view is on screen its cockpit drives the patient and every phone waits on "The ventilator is on the main
+  screen". If it happens: back to **Instructor**. Leaving the view releases the phones at once and hands the patient
+  to the engine's ventilator at the cockpit's settings (#135, E128); no Pause or reload is needed.
 - **Never reload mid-case.** If it happens: with the reload fix (#132) the case comes back with the toast
   "Restored after reload: ‹title›, mm:ss"; without it the bar reads **No scenario**: load the case again from 0:00.
   **Either way, switch Sound on again**: after a reload the browser wants a click before it plays sound; if the

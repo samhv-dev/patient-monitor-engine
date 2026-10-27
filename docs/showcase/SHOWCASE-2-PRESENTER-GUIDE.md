@@ -40,10 +40,11 @@ own cue card.
    - haemorrhage: **shock only in VF**; the **second epinephrine** after the first shock (18:57); after the second
      shock **keep CPR to the 2-min rhythm check** (21:52) even though the pulse returns at 20:57, then **Rhythm check:
      pulse back, stop CPR** [REV #12; E132 rc.4].
-6. **Safety lines** [UIR]: never click **Ventilator** during a card (it holds every phone); never reload mid-case
-   (with #132 the case comes back, without it load again from 0:00; **Sound on again** either way: click it if it reads Sound off); open the Room (the QR)
-   only from the **first instructor tab** (a second tab is a new session); the instructor tab **stays in front** (hidden, it
-   pauses the session); print the handout only **after the fast-forward banner has gone**.
+6. **Safety lines** [UIR]: never click **Ventilator** during a card (while it is on screen every phone waits; leaving
+   it releases them at once [#135; E128]); never reload mid-case (with #132 the case comes back, without it load again
+   from 0:00; **Sound on again** either way: click it if it reads Sound off); open the Room (the QR) only from the
+   **first instructor tab** (a second tab is a new session); the instructor tab **stays in front** (hidden, it pauses
+   the session); print the handout only **after the fast-forward banner has gone**.
 7. **"Not available now" → press again**: the button now belongs to the current state [G10 §8].
 8. **The haemorrhage Debrief**: open it before loading anything else. Key times 35 s · CPR 4 min 39 s · CPR stopped
    57 s after the return of circulation (asked ≤ 2 min 30 s <!-- owner ruling pending -->) · pulseless 9 min 57 s; – ✗ ✓: the ✗ is the course itself (the demo withholds
