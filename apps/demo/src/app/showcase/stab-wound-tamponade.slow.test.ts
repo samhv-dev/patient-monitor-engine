@@ -16,13 +16,18 @@ import { bands, entered, first, near, range, runCard, type Act } from './harness
  *  one beat summing with a compression in the 10 s of CPR left before "Pulse back"; drainage and ROSC are at the same
  *  second (602.1, 698 s). With the PVC placement made a no-op the course is byte-identical to main (196.5). Every other
  *  S2 number stayed in its band.
- *  E134 (2026-10-27, measured on the E133 tree: the buffered CO2 of every bed's accumulating lactate, and the anaerobic heat): three numbers of the
- *  happy path re-centred on this build with the same tolerances — sysPlus60 122 → 123.27 (± 5), etco2Plus60 35 → 46
- *  (± 3: the post-ROSC patient is clearing the arrest's lactate load, and its buffered CO2 reaches the gas) and
- *  sysMaxAtRosc 199 → 212.54 (± 5: the same single-beat transient, with the hypercapnic sympathetic term a little
- *  larger). Every timing stayed in its band; the early-drain arm's sysPlus60 123.66 is inside its own. Not tuned. */
+ *  E134 (2026-10-27: the buffered CO2 of every bed's accumulating lactate, and the anaerobic heat). Two numbers of the
+ *  happy path re-centred with the same tolerances, measured on the FINAL tree (the branch rebased onto main 2f0b0c77,
+ *  so with E133's ectopy and #153's oximeter detector): etco2Plus60 35 → 46 (± 3 — the post-ROSC patient is clearing
+ *  the arrest's lactate load, and its buffered CO2 reaches the gas) and sysMaxAtRosc 208.5 → 206.24 (± 5 — the same
+ *  single-beat transient as E133's, one beat summing with a compression, 2.3 mmHg lower). sysPlus60 reads 122.59,
+ *  inside its own band, and is left alone. An EARLIER measurement of this file on the pre-rebase tree had given
+ *  sysPlus60 123.27 and sysMaxAtRosc 212.54 and was re-centred on those; that tree was stale and the numbers are
+ *  withdrawn — the values here are the final tree's, and the local run agrees with CI run 40444226540 to 0.001 mmHg
+ *  (206.2394506038361), so the transient is reproducible and not a machine difference. Every timing stayed in its
+ *  band; the early-drain arm's sysPlus60 123.84 is inside its own. Not tuned. */
 const BANDS = {
-  'S2 happy': { refused: [0, 0], hrAt60: [94, 104], sysAt60: [101, 111], diaAt60: [82, 92], cvpAt60: [15, 19], etco2At60: [29, 35], pulsusMean: [0, 1.9], pulsusMax: [0, 2.6], deterioratingS: [336, 410], hrAtDeteriorating: [130, 140], cvpAtDeteriorating: [18, 22], pulseLossS: [424, 518], peaStateS: [425, 519], pea: [1, 1], drainS: [542, 662], roscAfterDrainS: [81, 111], sysPlus60: [118.3, 128.3], hrPlus60: [58, 68], cvpPlus60: [8, 12], etco2Plus60: [43, 49], sysMaxAtRosc: [207.5, 217.5], pulseHeld: [1, 1] },
+  'S2 happy': { refused: [0, 0], hrAt60: [94, 104], sysAt60: [101, 111], diaAt60: [82, 92], cvpAt60: [15, 19], etco2At60: [29, 35], pulsusMean: [0, 1.9], pulsusMax: [0, 2.6], deterioratingS: [336, 410], hrAtDeteriorating: [130, 140], cvpAtDeteriorating: [18, 22], pulseLossS: [424, 518], peaStateS: [425, 519], pea: [1, 1], drainS: [542, 662], roscAfterDrainS: [81, 111], sysPlus60: [118.3, 128.3], hrPlus60: [58, 68], cvpPlus60: [8, 12], etco2Plus60: [43, 49], sysMaxAtRosc: [201.24, 211.24], pulseHeld: [1, 1] },
   'S2 epinephrine': { refused: [0, 0], roscAfterDrainS: [79, 109] },
   'S2 undrained': { refused: [0, 0], pulseBack: [0, 0], cvpMax: [30, 34], etco2Plus3: [6, 12] },
   'S2 at ×8 poll': { refused: [0, 0], pulseLossS: [424, 518], peaStateS: [426, 520], roscAfterDrainS: [80, 110] },

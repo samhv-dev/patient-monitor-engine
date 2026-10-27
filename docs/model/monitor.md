@@ -371,14 +371,13 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | philips-like keeps S/D/M of the flat line: no pulsatile S/D (spread ≤ 5) after the fresh beats | 6 | — | MIS-SPECIFIED ([audit row 180](../../docs/validation/target-audit/30-target-audit.md#row-180)) | State the PEA kind. True PEA: spread ≤ 5 with no HR-synchronous component. Pseudo-PEA: PP 3-10 mmHg at the electrical rate, MAP 15-40, and NON-PULSATILE need not show | [`fidelity-arrest.test.ts`](../../packages/engine-core/test/engine/fidelity-arrest.test.ts) |
 | %s: the CPR window's EtCO2 floor is 10 mmHg | 7 in the first 15 s of compressions | research/10 §13 | TOO NARROW ([audit row 181](../../docs/validation/target-audit/30-target-audit.md#row-181)) | window mean 10-20 mmHg at quality 0.8 (R39-2: ≈ 20), min ≥ 5 from 30 s after compressions start; no floor on the first 30 s | [`fidelity-arrest.test.ts`](../../packages/engine-core/test/engine/fidelity-arrest.test.ts) |
 | saadat-like: 80 → 120 within 8 s (B9 manual M p. 65–66: 6 s at the 8 s averaging window, research/06 §4.1; ± 2 s as philips-like) | 9 s | research/06 §4.1 | MIS-SPECIFIED ([audit row 182](../../docs/validation/target-audit/30-target-audit.md#row-182)) | Either keep ≤ 8 s but use the manual's end point (first displayed HR ≥ 110, expected ~6 s) or keep the 5 % end point with ≤ 10 s (8 s window + detection + update); the IEC ≤ 11 s row already passes | [`fidelity-ecg.test.ts`](../../packages/engine-core/test/engine/fidelity-ecg.test.ts) |
-| MODELED Ali's case: at MAP < 30 the PI stays < 0.3 | 0.333 | — | not audited | — | [`fidelity-lowflow.test.ts`](../../packages/engine-core/test/engine/fidelity-lowflow.test.ts) |
 | ventilated normal patient (MODELED, PPV from 1 s): rest PI within ± 5 % of 1.80 | 1.49 | — | UNSUPPORTED ([audit row 184](../../docs/validation/target-audit/30-target-audit.md#row-184)) | PI 1.0-3.0 for a normal ventilated adult; PI(PPV) ≤ PI(spontaneous) and ≥ 0.75 × it (the SV ratio) | [`fidelity-lowflow.test.ts`](../../packages/engine-core/test/engine/fidelity-lowflow.test.ts) |
 | MANUAL pulse pressure 10 (77/67): the cuff shows the narrow pulse pressure — S/D within ± 8 of the instructor's 77/67 | 80/56 | — | MIS-SPECIFIED ([audit row 185](../../docs/validation/target-audit/30-target-audit.md#row-185)) | Reference = the arterial line at the reading (already passing, ± 8); add cuff PP ≤ line PP + 3 (no widening); the tracker's reach of 77/67 is a separate MANUAL-tracker test | [`fidelity-nibp.test.ts`](../../packages/engine-core/test/engine/fidelity-nibp.test.ts) |
 | MANUAL AF 150, 11 cycles: \|SBP bias\| ≤ 6 mmHg against the TRUE radial pressure (the audit's AF criterion) | +10.8 | — | MIS-SPECIFIED ([audit row 186](../../docs/validation/target-audit/30-target-audit.md#row-186)) | \|mean bias\| ≤ 5 mmHg vs the displayed arterial line (beat-detected), SD ≤ 8, with the first reading after AF onset excluded or 3-reading averages | [`fidelity-nibp.test.ts`](../../packages/engine-core/test/engine/fidelity-nibp.test.ts) |
 
 ## Tests
 
-144 tests in 30 files; 8 expected failures, 0 skipped.
+144 tests in 30 files; 7 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -386,7 +385,7 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | [`engine/fidelity-alarms.test.ts`](../../packages/engine-core/test/engine/fidelity-alarms.test.ts) | 6 | 1 | 0 |
 | [`engine/fidelity-arrest.test.ts`](../../packages/engine-core/test/engine/fidelity-arrest.test.ts) | 6 | 2 | 0 |
 | [`engine/fidelity-ecg.test.ts`](../../packages/engine-core/test/engine/fidelity-ecg.test.ts) | 7 | 1 | 0 |
-| [`engine/fidelity-lowflow.test.ts`](../../packages/engine-core/test/engine/fidelity-lowflow.test.ts) | 11 | 2 | 0 |
+| [`engine/fidelity-lowflow.test.ts`](../../packages/engine-core/test/engine/fidelity-lowflow.test.ts) | 11 | 1 | 0 |
 | [`engine/fidelity-nibp.test.ts`](../../packages/engine-core/test/engine/fidelity-nibp.test.ts) | 7 | 2 | 0 |
 | [`engine/fidelity-resp.test.ts`](../../packages/engine-core/test/engine/fidelity-resp.test.ts) | 6 | 0 | 0 |
 | [`engine/hr-af-numeric.test.ts`](../../packages/engine-core/test/engine/hr-af-numeric.test.ts) | 5 | 0 | 0 |
