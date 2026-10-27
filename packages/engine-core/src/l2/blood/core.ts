@@ -9,6 +9,7 @@ import { bloodPatient, CHRONIC_HCO3_PER_MMHG, HBF_EXP, NORMAL, type BloodPatient
 import { MANNITOL_KE_PER_MIN } from '../renal/params.ts'; // Renal mannitol clearance, the fallback without the organ model
 import { addFluid, calibrateXa, concOf, createSolutes, ionisedCa, K_TBK_MMOL, osmEcf, removePlasma, sidOf, stepSolutes, type Conc, type SoluteState } from './solutes.ts';
 import { caMembrane, insulinEffect, INSULIN_K_SHIFT, K_PUMP_GAIN, salbutamolEffect, SALBUTAMOL_K_SHIFT, suxDeltaK, type Dose } from './treatments.ts';
+import { anaerobicFactor, createMuscle, muscleActivityKShift, stepMuscle, type MuscleState } from './muscle.ts';
 
 export interface BloodInputs {
   t: number;
@@ -19,6 +20,12 @@ export interface BloodInputs {
   vo2Demand: number; // mL/min
   /** VO2 demand ÷ the awake resting VO2 (the metabolic factor); default vo2Demand ÷ the profile's 3.5 mL/kg/min. */
   demandRel?: number;
+  /**
+   * E134: the metabolic activity of SKELETAL MUSCLE above rest, mL O2/min (the MH muscle's rate + shivering; the
+   * pipeline reads both from the heat model). It drives the potassium of active muscle and the muscle's share of the
+   * unpaid ATP that injures it. Absent = 0 (a quiet musculature).
+   */
+  muscleActivityMlMin?: number;
   /**
    * The drug model's β2-agonist/insulin/epinephrine K shift (`bus.metabolic.kShift`, mmol/L). Given → it is the ONLY
    * β2/insulin-row shift (the blood model's own salbutamol AND insulin–dextrose curves are off); absent → the blood
@@ -60,6 +67,9 @@ export interface BloodCore {
   ab: AcidBase;
   phNonOrg: number;
   o2: O2Out;
+  /** E134: the whole musculature's energetics and injury (muscle.ts) — the glycogen store, the pH/substrate brake on
+   * anaerobic metabolism, the unpaid-ATP and thermal injury dose and what necrosis releases. */
+  muscle: MuscleState;
   odc: OdcCtx;
   doses: Dose[];
   burns: number;
@@ -113,7 +123,8 @@ export function createBloodCore(profile: PatientProfile | undefined, co0: number
   so.set.ph = albCal === alb ? ph0 : ab.ph; // the K reference is the patient's own resting pH
   return {
     pat, fl, so, ab, phNonOrg: so.set.ph,
-    o2: { cao2: 0, do2: 0, vo2: 0, demand: 0, deficit: 0, er: 0, svo2: 0.75 }, odc, doses: [], burns: b.burns ?? 0, liver: 1, renal: null,
+    o2: { cao2: 0, do2: 0, vo2: 0, demand: 0, deficit: 0, er: 0, svo2: 0.75 }, muscle: createMuscle(pat.weightKg, profile?.sex === 'F'),
+    odc, doses: [], burns: b.burns ?? 0, liver: 1, renal: null,
     co0, ecf0: e0, k1Hz: 0, bledMl: 0,
     out: { na: 0, k: 0, kEcg: 0, cl: 0, iCa: 0, mg: 0, lactate: 0, hb: 0, albGL: 0, albuminGL: 0, ag: 0, osm: 0, cop: 0, hbfRel: 1, bvRel: 1, dkaSeverity: 0 },
   };
@@ -175,7 +186,12 @@ export function stepBloodCore(bc: BloodCore, x: BloodInputs, dtS: number): void 
   so.keto = Math.max(0, so.keto + (Math.max(0, kx.endoKetoMmolMin ?? 0) - so.keto * Math.max(0, kx.endoKetoUtilPerMin ?? 0)) * (dtS / 60));
   // Q45; the set point follows the total-body K — an external K loss (or gain) is shared by the cells instead of being
   // refilled from an unlimited store: plasma K falls 1 mmol/L per K_TBK_MMOL of total-body deficit (Sterns 1981)
-  const kSet = so.set.k + (so.kIcf + so.k - (so.set.kIcf + so.set.k * (bc.ecf0 / 1000))) / K_TBK_MMOL - 4.0 * (bc.phNonOrg - so.set.ph) + drug;
+  // E134: ACTIVE muscle (MH, shivering) loses K in proportion to its metabolic activity (muscle.ts; Medbo & Sejersted
+  // 1990). It is added to the set point like the hormonal terms but NOT to `drug`, because it is a leak and not a
+  // stimulated pump — the pump's gain below follows the β2/insulin terms alone. Necrotic muscle's K is a mass transfer
+  // into the pool instead (step 3), not a set-point shift.
+  const muscleK = muscleActivityKShift(bc.muscle, x.muscleActivityMlMin ?? 0, pat.vo2Rest);
+  const kSet = so.set.k + (so.kIcf + so.k - (so.set.kIcf + so.set.k * (bc.ecf0 / 1000))) / K_TBK_MMOL - 4.0 * (bc.phNonOrg - so.set.ph) + drug + muscleK;
   // Citrate and acetate are metabolised by the liver AND by muscle/kidney (Kramer 2003 Crit Care Med 31:2450), so their
   // clearance follows whole-body flow (CO/CO0), not the splanchnic (CO/CO0)² that lactate's hepatic uptake uses
   const flowRel = Math.min(1.5, Math.max(0, x.coLpm / bc.co0));
@@ -186,7 +202,25 @@ export function stepBloodCore(bc: BloodCore, x: BloodInputs, dtS: number): void 
   bc.odc.ph = bc.ab.ph;
   const cao2 = contentDB(x.pao2, x.paco2, x.tempC, bc.odc);
   const d = o2Delivery(x.coLpm, bc.co0, cao2, x.vo2Demand, pat.weightKg, x.demandRel ?? x.vo2Demand / pat.vo2Rest);
-  so.lac = stepLactate(so.lac, pat.vLacL, d.deficit, hbfRel, bc.liver, dtS);
+  // E134: the deficit's lactate is what GLYCOLYSIS can actually make — the pH (phosphofructokinase) brake, the glycogen
+  // store and the surviving muscle mass (muscle.ts). What it cannot make is ATP the cell never gets: that dose is what
+  // injures the muscle, and the necrosis hands its potassium to the ECF pool out of the cells (mass-conserving, so the
+  // set point above does not move; the single cellular pool then takes part of it back — a conservative deviation,
+  // dead fibres cannot).
+  const fac = anaerobicFactor(bc.muscle, bc.ab.ph);
+  const lac0 = so.lac;
+  so.lac = stepLactate(so.lac, pat.vLacL, d.deficit * fac, hbfRel, bc.liver, dtS);
+  // The buffered CO2 follows the NET accumulation (pipeline.ts): clearing the lactate consumes the H+ again, so a
+  // lactate at a plateau releases none. The HEAT and the glycogen follow the GROSS flux — that is the ATP turnover.
+  bc.muscle.lacNetMmolMin = Math.max(0, ((so.lac - lac0) * 60) / dtS);
+  const kRelease = stepMuscle(bc.muscle, {
+    ph: bc.ab.ph, tempC: x.tempC, deficitMlMin: d.deficit, factor: fac,
+    activityMlMin: x.muscleActivityMlMin ?? 0, restVo2MlMin: pat.vo2Rest, demandMlMin: x.vo2Demand,
+  }, dtS);
+  if (kRelease > 0) {
+    so.k += kRelease;
+    so.kIcf = Math.max(0, so.kIcf - kRelease);
+  }
   const cv = Math.max(0, cao2 - d.vo2 / Math.max(0.05, x.coLpm));
   bc.o2 = { ...d, cao2, svo2: Math.min(1, cv / Math.max(1, 13.4 * bc.odc.hb * (1 - bc.odc.cohb - bc.odc.methb))) };
   // 4. acid–base (dynamic SID)

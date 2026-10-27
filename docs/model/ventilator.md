@@ -178,11 +178,12 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 | ARDS moderate PEEP 5 → 15 (FiO2 0.6): SpO2 rises ≥ 5 over 1–4 min (recruitment), falls again within 60 s of PEEP 5 | +2.0 / 0.0 | — | MIS-SPECIFIED ([audit row 111](../../docs/validation/target-audit/30-target-audit.md#row-111)) | re-specify on shunt/PaO2: venous admixture −15–30 % (or SpO2 +1.5–3 from 95 % at FiO2 0.6) by 5–15 min of PEEP 15; SpO2 falls back within 5 min of PEEP 5; keep CO falls | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
 | FiO2 0.4: SpO2 rises ≥ 2 | SpO2 98 → 98, SaO2 98.7 → 99.1 | — | MIS-SPECIFIED ([audit row 112](../../docs/validation/target-audit/30-target-audit.md#row-112)) | drop the SpO2 band at FiO2 0.4 (keep the passing shunt/PCWP check), or assert PaO2/FiO2 +30–50 % at ≥ 10 min in a profile with P/F < 200 | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
 | room air (FiO2 0.21): SpO2 rises ≥ 2 | SpO2 94.0 → 95.0, SaO2 94.9 → 95.5 | — | MIS-SPECIFIED ([audit row 113](../../docs/validation/target-audit/30-target-audit.md#row-113)) | for shunt 0.15 → 0.10 on air: SaO2 +1–2 points; or re-base on a sicker profile (shunt ≥ 0.20) and assert P/F +30–50 % at ≥ 10 min | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
+| PH crisis: PEEP 15 + RR 8 → EtCO2 rises ≥ 5 mmHg, CVP rises ≥ 1.5, MAP falls ≥ 8 (on the engine's `ph` lungs: +5.0 / +2.1 / −11.1; EtCO2 on the band edge, calibration row) | +4.74 | — | not audited | — | [`link-r36.test.ts`](../../packages/ventilator/test/link-r36.test.ts) |
 | reference run: Ppeak rises 10–20 cmH2O over the normal row | +21.6 | — | UNSUPPORTED ([audit row 114](../../docs/validation/target-audit/30-target-audit.md#row-114)) | assert a floor only (Ppeak +≥ 10 cmH2O) until a source is found, or +10–25 [ENG] | [`pleural.test.ts`](../../packages/ventilator/test/pleural.test.ts) |
 
 ## Tests
 
-62 tests in 22 files; 5 expected failures, 0 skipped.
+62 tests in 22 files; 6 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -195,7 +196,7 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 | [`link-core.test.ts`](../../packages/ventilator/test/link-core.test.ts) | 3 | 0 | 0 |
 | [`link-parity.test.ts`](../../packages/ventilator/test/link-parity.test.ts) | 2 | 1 | 0 |
 | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) | 9 | 3 | 0 |
-| [`link-r36.test.ts`](../../packages/ventilator/test/link-r36.test.ts) | 6 | 0 | 0 |
+| [`link-r36.test.ts`](../../packages/ventilator/test/link-r36.test.ts) | 6 | 1 | 0 |
 | [`link-refused-probe.test.ts`](../../packages/ventilator/test/link-refused-probe.test.ts) | 1 | 0 | 0 |
 | [`link-restore.test.ts`](../../packages/ventilator/test/link-restore.test.ts) | 2 | 0 | 0 |
 | [`lung-input.test.ts`](../../packages/ventilator/test/lung-input.test.ts) | 2 | 0 | 0 |

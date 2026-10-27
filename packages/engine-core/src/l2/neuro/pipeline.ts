@@ -59,7 +59,7 @@ export interface NeuroEnv {
 export interface NeuroState {
   k: number; // next step index (time k·0.1 s)
   ageY: number;
-  profile: { nm: NmProfile; mhSusceptible: boolean; mgMmolL: number };
+  profile: { nm: NmProfile; mhSusceptible: boolean; mgMmolL: number; mhPhenotype?: 'typical' | 'fulminant' };
   doseSeenT: number; // Latest bus.doses time already observed
   stim: { intensity: number; level: number }; // the endocrine model's intensity 0–2 (held) and the neuro 0–1 level
   airway: 'auto' | 'none' | 'ett' | 'sga';
@@ -80,7 +80,7 @@ export interface NeuroState {
   emgBase: number | null; // ECG EMG artefact before fasciculations (engine)
   /** When an MH-susceptible patient was first exposed to each trigger (s) — read by the endocrine model, which owns
    * MH and turns the exposure into the MH state with the trigger's onset latency. Absent = never exposed. */
-  mhExposure?: { sux?: number; volatile?: number; volatileAgent?: string };
+  mhExposure?: { sux?: number; volatile?: number; volatileAgent?: string; phenotype?: 'typical' | 'fulminant' };
   out: EngineEvent[];
 }
 
@@ -96,7 +96,7 @@ export function createNeuroState(profile: PatientProfile | undefined, seed: numb
   const d0 = depth({ ageY, ce: x0.brain, macPotent: 0, macN2o: 0, t1: 1, stimulus: 0, glyco: 0 });
   return {
     k: 0, ageY,
-    profile: { nm: np.nm ?? 'normal', mhSusceptible: np.mhSusceptible ?? false, mgMmolL: np.mgMmolL ?? 0.9 },
+    profile: { nm: np.nm ?? 'normal', mhSusceptible: np.mhSusceptible ?? false, mgMmolL: np.mgMmolL ?? 0.9, ...(np.mhPhenotype ? { mhPhenotype: np.mhPhenotype } : {}) },
     doseSeenT: -1, stim: { intensity: 0, level: 0 }, airway: 'auto', depthOn: false,
     diShown: d0.diRaw, tof: createTofDevice(seedStream(seed, 'neuro-tof')),
     last: { tof: tofFrom(0, 0, 0), thumb: 0, dia: 0, d: d0, x: x0 },
@@ -175,6 +175,7 @@ export function applyNeuroCommand(ns: NeuroState, cmd: Command, t: number): bool
       const p = ev as Extract<NeuroClinicalEvent, { kind: 'neuroProfile' }>;
       if (p.nm !== undefined) ns.profile.nm = p.nm;
       if (p.mhSusceptible !== undefined) ns.profile.mhSusceptible = p.mhSusceptible;
+      if (p.mhPhenotype !== undefined) ns.profile.mhPhenotype = p.mhPhenotype; // E134: the severity of this patient's leak
       if (p.mgMmolL !== undefined) ns.profile.mgMmolL = p.mgMmolL;
       return true;
     }
@@ -201,7 +202,7 @@ function observeDoses(ns: NeuroState, bus: DrugBus): void {
     if (d.agent !== 'succinylcholine') continue;
     ns.fasc = { from: d.t + FASC_FROM_S, to: d.t + FASC_TO_S };
     if (ns.profile.mhSusceptible) {
-      ns.mhExposure = { ...ns.mhExposure, sux: ns.mhExposure?.sux ?? d.t }; // The endocrine model reads it
+      ns.mhExposure = { ...ns.mhExposure, sux: ns.mhExposure?.sux ?? d.t, ...(ns.profile.mhPhenotype ? { phenotype: ns.profile.mhPhenotype } : {}) }; // The endocrine model reads it
       if (!ns.flags.mhMarked) {
         mark(ns, d.t, 'mhTrigger');
         ns.flags.mhMarked = true;
@@ -247,7 +248,7 @@ function stepOnce(ns: NeuroState, t: number, env: NeuroEnv, x: NeuroInputs): voi
       const f = id !== 'n2o' && v && v.macAge > 0 ? v.fet / v.macAge : -1;
       if (f > best) { best = f; agent = id; }
     }
-    ns.mhExposure = { ...ns.mhExposure, volatile: t, volatileAgent: agent };
+    ns.mhExposure = { ...ns.mhExposure, volatile: t, volatileAgent: agent, ...(ns.profile.mhPhenotype ? { phenotype: ns.profile.mhPhenotype } : {}) };
     if (!ns.flags.mhMarked) {
       mark(ns, t, 'mhTrigger');
       ns.flags.mhMarked = true;

@@ -377,7 +377,7 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 
 ## Tests
 
-143 tests in 30 files; 7 expected failures, 0 skipped.
+144 tests in 30 files; 7 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -385,7 +385,7 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | [`engine/fidelity-alarms.test.ts`](../../packages/engine-core/test/engine/fidelity-alarms.test.ts) | 6 | 1 | 0 |
 | [`engine/fidelity-arrest.test.ts`](../../packages/engine-core/test/engine/fidelity-arrest.test.ts) | 6 | 2 | 0 |
 | [`engine/fidelity-ecg.test.ts`](../../packages/engine-core/test/engine/fidelity-ecg.test.ts) | 7 | 1 | 0 |
-| [`engine/fidelity-lowflow.test.ts`](../../packages/engine-core/test/engine/fidelity-lowflow.test.ts) | 10 | 1 | 0 |
+| [`engine/fidelity-lowflow.test.ts`](../../packages/engine-core/test/engine/fidelity-lowflow.test.ts) | 11 | 1 | 0 |
 | [`engine/fidelity-nibp.test.ts`](../../packages/engine-core/test/engine/fidelity-nibp.test.ts) | 7 | 2 | 0 |
 | [`engine/fidelity-resp.test.ts`](../../packages/engine-core/test/engine/fidelity-resp.test.ts) | 6 | 0 | 0 |
 | [`engine/hr-af-numeric.test.ts`](../../packages/engine-core/test/engine/hr-af-numeric.test.ts) | 5 | 0 | 0 |

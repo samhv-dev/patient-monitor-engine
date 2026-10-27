@@ -62,7 +62,9 @@ describe('the flipped matrix cells', { timeout: 3_600_000 }, () => {
       console.log(`FU-7 T19 DI-65: EtCO2 ${r.et10.toFixed(1)} at 10 min, K ${r.k20.toFixed(2)} at 20 min, dantrolene ΔEtCO2 ${r.dEt.toFixed(1)}`);
       return r;
     })());
-    it('MH triggered by sevoflurane + succinylcholine (DI-65; tables §7 check 21): K 5.5–6.5 by 20 min', async () => {
+    // E134: A RECORDED MISS — the fitted MH_K_EFFLUX that met this row is gone; measured K 4.46 at 20 min (5.67 before).
+    // The same row on the `endo-acceptance` rig reads 4.7, and the FULMINANT phenotype reaches 5.5 on the MH card.
+    it.fails('MH triggered by sevoflurane + succinylcholine (DI-65; tables §7 check 21): K 5.5–6.5 by 20 min — measured 4.46 after E134 (5.67 with the fitted efflux)', async () => {
       const r = await mhArms();
       expect(r.k20).toBeGreaterThanOrEqual(5.5);
       expect(r.k20).toBeLessThanOrEqual(6.5);
@@ -77,7 +79,7 @@ describe('the flipped matrix cells', { timeout: 3_600_000 }, () => {
     });
     // R45: NOT a regression — identical on the pre-FU-7 baseline b004289 (audit DI-65 etco2At10min 42.2, TW): FU-4's one
     // physical dead space (endo-acceptance.test.ts carries the same it.fails for this rig family).
-    it.fails('… EtCO2 52–70 by 10 min at constant MV (DI-65; tables §7 check 21) — measured 48.3 after E131 (42.2 before; baseline b004289: 42.2)', async () => {
+    it.fails('… EtCO2 52–70 by 10 min at constant MV (DI-65; tables §7 check 21) — measured 50.4 after E134 (48.3 after E131; 42.2 before; baseline b004289: 42.2)', async () => {
       const r = await mhArms();
       expect(r.et10).toBeGreaterThanOrEqual(52);
       expect(r.et10).toBeLessThanOrEqual(70);

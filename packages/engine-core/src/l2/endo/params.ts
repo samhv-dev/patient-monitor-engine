@@ -197,7 +197,6 @@ export const KETO_K_EFFLUX = 1.4;
  * with insulin does not shift K out) [ENG; Kitabchi 2009]. */
 export const HYPEROSM_K_PER_MGDL = 0.002;
 export const HYPEROSM_FROM_MGDL = 200;
-export const MH_K_EFFLUX = 2.35; // MH muscle K efflux, kSet + MH_K_EFFLUX mmol/L at activity 1 — net of the endogenous-epinephrine β2 uptake and with the acidosis term: K 5.5–6.5 by 20 min (tables §7 21) [ENG; E117: 2.2 → 2.35, as its larger catecholamine surge takes more K into the cells (DI-65 K 5.57 → 5.45 → 5.58)]
 /**
  * The drug model's epinephrine concentration is a RATE EQUIVALENT (µg/kg/min, the infusion that would hold it). Its
  * plasma level is rate/clearance: 1 µg/kg/min ÷ Pulse's 68.66 mL/min/kg = 14 564 pg/mL (0.05 µg/kg/min → 728 pg/mL)

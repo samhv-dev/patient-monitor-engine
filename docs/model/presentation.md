@@ -589,12 +589,15 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
-| untreated: early signs, established crisis, VF from hyperthermia | no established crisis and no VF in 51 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
+| E22 MH: after 2 min of EtCO₂ below 40 the ventilation-back objective is met | the EtCO2 of this rig plateaus at 41–42 and the press never comes | — | not audited | — | [`debrief-showcase.test.ts`](../../apps/demo/src/app/debrief-showcase.test.ts) |
+| haemorrhage (E120): the owner's course on the kit-round path, two shocks, ROSC | no arrest at all with 2.5 L | — | not audited | — | [`haemorrhage-anaphylaxis.slow.test.ts`](../../apps/demo/src/app/showcase/haemorrhage-anaphylaxis.slow.test.ts) |
+| haemorrhage (E120): the same course whenever the ventilator comes (0:30 or 3:00), and none without it | no arrest and no shocks on either path | — | not audited | — | [`haemorrhage-anaphylaxis.slow.test.ts`](../../apps/demo/src/app/showcase/haemorrhage-anaphylaxis.slow.test.ts) |
+| untreated: established by +20 min and VF from hyperthermia at 42 °C by +45 min | established +82.6 min, VF | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
 | treated late (the run-sheet path): crisis 1 min into the established crisis | the established crisis is not entered in 60 min, the call is not made | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
 
 ## Tests
 
-801 tests in 214 files; 2 expected failures, 0 skipped.
+802 tests in 214 files; 5 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -682,7 +685,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 | [`apps/demo/src/app/console-pages.dom.test.ts`](../../apps/demo/src/app/console-pages.dom.test.ts) | 11 | 0 | 0 |
 | [`apps/demo/src/app/copy.test.ts`](../../apps/demo/src/app/copy.test.ts) | 4 | 0 | 0 |
 | [`apps/demo/src/app/debrief-moments.test.ts`](../../apps/demo/src/app/debrief-moments.test.ts) | 14 | 0 | 0 |
-| [`apps/demo/src/app/debrief-showcase.test.ts`](../../apps/demo/src/app/debrief-showcase.test.ts) | 5 | 0 | 0 |
+| [`apps/demo/src/app/debrief-showcase.test.ts`](../../apps/demo/src/app/debrief-showcase.test.ts) | 6 | 1 | 0 |
 | [`apps/demo/src/app/debrief.test.ts`](../../apps/demo/src/app/debrief.test.ts) | 21 | 0 | 0 |
 | [`apps/demo/src/app/describe-ventilation.test.ts`](../../apps/demo/src/app/describe-ventilation.test.ts) | 5 | 0 | 0 |
 | [`apps/demo/src/app/drugs.test.ts`](../../apps/demo/src/app/drugs.test.ts) | 2 | 0 | 0 |
@@ -709,7 +712,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 | [`apps/demo/src/app/router.test.ts`](../../apps/demo/src/app/router.test.ts) | 2 | 0 | 0 |
 | [`apps/demo/src/app/shell.dom.test.ts`](../../apps/demo/src/app/shell.dom.test.ts) | 2 | 0 | 0 |
 | [`apps/demo/src/app/showcase.test.ts`](../../apps/demo/src/app/showcase.test.ts) | 2 | 0 | 0 |
-| [`apps/demo/src/app/showcase/haemorrhage-anaphylaxis.slow.test.ts`](../../apps/demo/src/app/showcase/haemorrhage-anaphylaxis.slow.test.ts) | 4 | 0 | 0 |
+| [`apps/demo/src/app/showcase/haemorrhage-anaphylaxis.slow.test.ts`](../../apps/demo/src/app/showcase/haemorrhage-anaphylaxis.slow.test.ts) | 4 | 2 | 0 |
 | [`apps/demo/src/app/showcase/healthy-induction.slow.test.ts`](../../apps/demo/src/app/showcase/healthy-induction.slow.test.ts) | 6 | 0 | 0 |
 | [`apps/demo/src/app/showcase/induction-after-premedication.slow.test.ts`](../../apps/demo/src/app/showcase/induction-after-premedication.slow.test.ts) | 3 | 0 | 0 |
 | [`apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) | 6 | 2 | 0 |

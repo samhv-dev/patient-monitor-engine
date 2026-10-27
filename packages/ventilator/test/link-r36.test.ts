@@ -26,7 +26,10 @@ describe('lung-pathology demonstrations through the link', { timeout: 300_000 },
 
   // Orchestrator ruling (V.1 review) 7: the profile now carries 7b's `ph` lungs on 7a's right heart; EtCO2 +5.0 sits on
   // the band edge (+6.8 in the plan's prototype, +6.0 on main before V.1) — calibration row. If a merge takes it below +5 → it.fails with the numbers (R45).
-  it('PH crisis: PEEP 15 + RR 8 → EtCO2 rises ≥ 5 mmHg, CVP rises ≥ 1.5, MAP falls ≥ 8 (on the engine\'s `ph` lungs: +5.0 / +2.1 / −11.1; EtCO2 on the band edge, calibration row)', async () => {
+  // E134 (2026-10-27): the merge took it below +5, so this is the it.fails the row itself asked for — measured +4.74.
+  // E134 releases the buffered CO2 of every bed's accumulating lactate (22 mL/mmol), so the patient's EtCO2 before the
+  // crisis is already a little higher and the RISE is 0.26 mmHg smaller. The CVP and MAP halves still pass.
+  it.fails('PH crisis: PEEP 15 + RR 8 → EtCO2 rises ≥ 5 mmHg, CVP rises ≥ 1.5, MAP falls ≥ 8 (on the engine\'s `ph` lungs: +5.0 / +2.1 / −11.1; EtCO2 on the band edge, calibration row) — measured +4.74 after E134', async () => {
     const s = createLinkedSim({ profile: 'pulmonary-hypertension' });
     await run(s, 180);
     const a = snap(s, 150, 180);

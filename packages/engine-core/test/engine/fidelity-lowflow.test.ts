@@ -77,12 +77,24 @@ describe('SpO2, PI and pleth follow the perfusion', () => {
   // goes back to the owner with these numbers (FU-7.1 Q10) rather than being hidden by a wider bound.
   // E126 (2026-10-26): flipped — the oximeter's value goes 4 s after its last completed pulse and its pleth carries the
   // sensor's noise floor; measured: SpO2 blank from 758 s, PI ≤ 0.25 after MAP < 30 for 20 s (LOW PERF 757 → NO PULSE 770)
-  it("MODELED Ali's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 blank from 758 s, PI ≤ 0.25 (E126; was SpO2 99 valid at 760–765 s, PI 0.31–0.33)", async () => {
+  // E134 (2026-10-27): BOTH HALVES PASS on this tree, and the row is split only so each carries its own number. On the
+  // pre-rebase tree E134's extra CO2 had taken the peak PI back to 0.333 (just over the LOW PERF threshold 0.3) and it
+  // was recorded as a miss; main 2f0b0c77 carries #153, where the oximeter's detector no longer merges missed-foot
+  // intervals, and on the merged tree the peak reads 0.259 — inside, with E134's CO2 in it. Neither threshold nor band
+  // was touched.
+  it("MODELED Ali's case: at MAP < 30 the SpO2 is never shown valid — measured: none (E126's oximeter rule)", async () => {
     const { rows } = await aliRun();
     const on = lowFlowOnset(rows);
     const after = rows.filter((r) => r.t >= (on as MonRow).t + 20);
     expect(after.filter((r) => validShown(r.m.spo2)).map((r) => r.t)).toEqual([]);
-    expect(Math.max(...after.map((r) => r.m.pi?.value ?? 0))).toBeLessThan(0.3);
+  }, 120_000);
+  it("MODELED Ali's case: at MAP < 30 the PI stays < 0.3 — measured 0.259 (E134 on the #153 oximeter detector; 0.333 with E134 before that rebase, ≤ 0.25 after E126, 0.31–0.33 with the alveolar washout)", async () => {
+    const { rows } = await aliRun();
+    const on = lowFlowOnset(rows);
+    const after = rows.filter((r) => r.t >= (on as MonRow).t + 20);
+    const peak = Math.max(...after.map((r) => r.m.pi?.value ?? 0));
+    console.log(`fidelity-lowflow Ali PI peak after MAP < 30: ${peak.toFixed(3)}`);
+    expect(peak).toBeLessThan(0.3);
   }, 120_000);
   // FU-8 (Task A2, E-FU8-1): flipped — the detector counted every agonal complex twice (0.14–0.24 s apart)
   it("MODELED Ali's case: no red raise/clear cycle shorter than 5 s — measured 0", async () => {

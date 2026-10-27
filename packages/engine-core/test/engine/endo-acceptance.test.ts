@@ -22,7 +22,7 @@ describe('endocrine acceptance (MANUAL)', { timeout: 600_000 }, () => {
   // split out as a record; the rig is not re-tuned (its "fixed ventilation" premise has no PaCO2 target to re-derive to).
   // E131: the CO2 now comes from the one muscle rate (the achieved MH O2 at the muscle RQ + the buffered MH lactate's
   // CO2) — measured 36/43/64/94/115 at 0/5/10/15/20 min: the edge is met, flipped.
-  it('MH severity 1 at fixed ventilation (tables §7 check 21): EtCO2 ≥ 60 by 10 min — measured 64 after E131 (54 with the corrected dead space before)', async () => {
+  it('MH severity 1 at fixed ventilation (tables §7 check 21): EtCO2 ≥ 60 by 10 min — measured 72 after E134 (64 after E131; 54 with the corrected dead space before)', async () => {
     const { e, ev } = rig3({ patient: ADULT });
     e.dispatch(ev3({ kind: 'thermal', anaesthesia: 'general' }));
     e.dispatch(vent(12));
@@ -47,21 +47,26 @@ describe('endocrine acceptance (MANUAL)', { timeout: 600_000 }, () => {
     return { ev, hr0 };
   })());
   const etAt = (ev: EngineEvent[], a: number) => mean(numSeries(ev, 'etco2', a - 20, a).map(([, v]) => v));
-  it('MH severity 1 at fixed ventilation (tables §7 check 21): HR +30 bpm, K 5.5–6.5 by 20 min', async () => {
+  // E134: the fitted MH_K_EFFLUX (2.35 mmol/L at activity 1, which is what met this row) is gone — the potassium is the
+  // muscle model's now: the activity leak (0.36 mmol/L per × of resting VO2, Medbø & Sejersted 1990) and the acidaemia
+  // carry the first twenty minutes, and the big rise comes later with the muscle injury. A RECORDED MISS with the
+  // measured value; the clinical row is met by the FULMINANT phenotype (5.5 at +20 min on the MH card) and not by this
+  // typical one. The HR half of the row still passes.
+  it.fails('MH severity 1 at fixed ventilation (tables §7 check 21): HR +30 bpm, K 5.5–6.5 by 20 min — measured K 4.7 after E134 (6.1 with the fitted efflux)', async () => {
     const { ev, hr0 } = await mh20();
     expect(hrAt(ev, 300 + 1140, 300 + 1200) - hr0).toBeGreaterThanOrEqual(30);
     expect(labsAt(ev, 300 + 1200).k).toBeGreaterThanOrEqual(5.5);
     expect(labsAt(ev, 300 + 1200).k).toBeLessThanOrEqual(6.5);
   });
   // E131: the CO2 of the one muscle rate (with the buffered lactate's) rises faster than the band's ceiling
-  it.fails('MH severity 1 at fixed ventilation (tables §7 check 21): EtCO2 rising 3–5 mmHg/min in minutes 10–15 — measured 6.0 (E131; 3.4 before)', async () => {
+  it.fails('MH severity 1 at fixed ventilation (tables §7 check 21): EtCO2 rising 3–5 mmHg/min in minutes 10–15 — measured 5.6 after E134 (6.0 after E131; 3.4 before)', async () => {
     const { ev } = await mh20();
     const slope = (etAt(ev, 300 + 900) - etAt(ev, 300 + 600)) / 5;
     expect(slope).toBeGreaterThanOrEqual(3);
     expect(slope).toBeLessThanOrEqual(5);
   });
   // E131: the MH heat is the achieved MH oxygen × its caloric equivalent (≈ 130 W at 70 kg; it was 8 × basal, 640 W)
-  it.fails('MH severity 1 at fixed ventilation (tables §7 check 21): core +1 °C by 15 min — measured −0.14 °C (E131: heat from the O2 consumed)', async () => {
+  it.fails('MH severity 1 at fixed ventilation (tables §7 check 21): core +1 °C by 15 min — measured −0.08 °C after E134 (−0.14 after E131: heat from the O2 consumed)', async () => {
     const { ev } = await mh20();
     const tc = stateSeries(ev, 'tempCore');
     const T = (s: number) => tc.find(([t]) => t >= s)![1];
@@ -203,7 +208,11 @@ describe('MH tachycardia (E117, MODELED)', { timeout: 600_000 }, () => {
   };
   const meanOf = (ev: EngineEvent[], id: 'hr' | 'etco2', a: number, b: number) => mean(numSeries(ev, id, a, b).map(([, v]) => v).filter((v) => Number.isFinite(v)));
 
-  it('E117: the HR is rising before the EtCO2 leaves its baseline and is ≥ 120 by the time the EtCO2 passes 55 mmHg (constant ventilation)', async () => {
+  // E134: A RECORDED MISS by a third of a beat — the EtCO2 now passes 55 at 7.1 min instead of 8.2 (the buffered CO2 of
+  // the MH muscle's accumulating lactate comes earlier and larger), and at that earlier moment the front-loaded
+  // sympathetic drive has reached HR 119.67 against the band's 120. The physiological claim of E117 (the tachycardia
+  // is there before the CO2 moves) still holds and is still asserted in the same test.
+  it.fails('E117: the HR is rising before the EtCO2 leaves its baseline and is ≥ 120 by the time the EtCO2 passes 55 mmHg (constant ventilation) — measured HR 119.7 at 7.1 min after E134 (122 at 8.2 min before)', async () => {
     const ev = await induced(1200, { mh: true });
     const et = numSeries(ev, 'etco2', 0, 1200).filter(([, v]) => Number.isFinite(v));
     const base = Math.min(...et.filter(([t]) => t >= 60 && t <= 120).map(([, v]) => v));

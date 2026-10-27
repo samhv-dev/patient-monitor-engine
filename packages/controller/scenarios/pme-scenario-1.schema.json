@@ -119,6 +119,7 @@
             "nm": { "enum": ["normal", "myasthenia", "lambertEaton", "burn", "denervation"] },
             "cholinesterase": { "enum": ["normal", "heterozygous", "homozygous"] },
             "mhSusceptible": { "type": "boolean" },
+            "mhPhenotype": { "enum": ["typical", "fulminant"] },
             "mgMmolL": { "type": "number", "minimum": 0.3, "maximum": 6 }
           }
         },

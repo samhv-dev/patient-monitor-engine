@@ -2,13 +2,14 @@
 // ICAR 2016 stages [P]). Pure functions of the thermal state; consumers read them through EndoOut (core.ts):
 //   VO2/VCO2: the gas model's tempFactor (7.5 %/°C ≈ Q10 2, gas/params.ts) stays the temperature term; this module adds
 //   shivering (heat ∝ VO2: shiverW/m0) and THE one MH rate (E131):
-//   M_mh = a(t)·(MH_VO2_PEAK_X − 1)·VO2rest   (mL O2/min; a = mh.ts activity, dantrolene suppresses it)
+//   M_mh = a(t)·(peak VO2 multiple − 1)·VO2rest   (mL O2/min; a = mh.ts activity, dantrolene suppresses it; E134: the
+//   multiple is the MH state's own — the scenario's phenotype, MH_PHENOTYPE, default MH_VO2_PEAK_X 2.5)
 //   VO2 demand = basal + M_mh; MH CO2 = M_mh achieved·MH_RQ (+ the buffered lactate's CO2, blood/pipeline.ts);
 //   MH heat = M_mh achieved·Weir(MH_RQ) (heat.ts); lactate from the unmet part (blood/oxygen.ts). "Achieved" = × the
 //   blood model's delivered share o2Frac. Heat Q10 is NOT applied to the basal heat balance (it moved the heat model's
 //   plateau out of its band).
-import { mhActivity } from './mh.ts';
-import { KJ_PER_KCAL, MH_VO2_PEAK_X, WEIR_KCAL_PER_L_CO2, WEIR_KCAL_PER_L_O2 } from './params.ts';
+import { mhActivity, mhVo2PeakX } from './mh.ts';
+import { KJ_PER_KCAL, WEIR_KCAL_PER_L_CO2, WEIR_KCAL_PER_L_O2 } from './params.ts';
 import type { ThermalState } from './heat.ts';
 
 export interface ThermalMetabolic {
@@ -20,7 +21,7 @@ export interface ThermalMetabolic {
 export function thermalMetabolic(st: ThermalState, t: number): ThermalMetabolic {
   const a = mhActivity(st.mh, t);
   const shiver = st.m0 > 0 ? st.out.shiverW / st.m0 : 0;
-  return { shiverF: 1 + shiver, mhX: a * (MH_VO2_PEAK_X - 1), mhActivity: a };
+  return { shiverF: 1 + shiver, mhX: a * (mhVo2PeakX(st.mh) - 1), mhActivity: a }; // E134: the peak multiple is the state's (the phenotype)
 }
 
 /** E131 — THE one MH rate: the hypermetabolic skeletal muscle's O2 demand, mL/min, for a resting VO2 `vo2Rest` (mL/min). */

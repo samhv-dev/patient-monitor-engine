@@ -31,12 +31,15 @@ describe('endocrine core', { timeout: 60_000 }, () => {
     expect(c.out.svrF).toBeLessThanOrEqual(0.6);
   });
 
-  it('MH activity 1: HR +30–50 bpm from 75 (× 1.4–1.67) through the sympathoadrenal drive; K efflux +1 mmol/L', () => {
+  // E134: the MH muscle's K efflux has left this model — it was the fitted MH_K_EFFLUX 2.35 × activity, and the
+  // mechanism is now the muscle model's (blood/muscle.ts: active muscle's leak + the injury's release). What the
+  // endocrine model still owns is the β2 UPTAKE of its own catecholamine surge, which is negative.
+  it('MH activity 1: HR +30–50 bpm from 75 (× 1.4–1.67) through the sympathoadrenal drive; the K shift is the β2 uptake alone (negative)', () => {
     const c = createEndoCore();
     for (let s = 0; s < 1800; s++) stepEndoCore(c, { ...X, mhActivity: 1 }, 1);
     expect(c.out.hrF).toBeGreaterThanOrEqual(1.4);
     expect(c.out.hrF).toBeLessThanOrEqual(1.67);
-    expect(c.out.kShift).toBeGreaterThan(0.5); // efflux minus the endogenous-epinephrine β2 uptake
+    expect(c.out.kShift).toBeLessThan(0); // the endogenous-epinephrine β2 uptake, with no muscle efflux here any more
   });
 
   it('E117: the MH muscle vasodilation follows the METABOLIC activity, apart from the sympathetic drive (SVR × (1 − 0.2 × activity))', () => {

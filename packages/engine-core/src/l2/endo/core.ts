@@ -12,7 +12,7 @@ import { createHormones, stepHormones, type HormoneState } from './hormones.ts';
 import {
   AI_CORT_BASAL_F, ETOM_SUPPR_MAX, ETOM_SUPPR_T12_S, HYPEROSM_FROM_MGDL, HYPEROSM_K_PER_MGDL, KETO_K_EFFLUX, KETO_MMOL_MIN_MAX,
   KETO_TAU_S, KETO_UTIL_INS_MAX, KETO_UTIL_PER_MIN,
-  EPI_BASAL_PG_ML, HYPO_EPI_THRESHOLD_MGDL, IB_UU_ML, INS_K_PER_UU, INS_N_PER_MIN, MGDL_PER_MMOL, MH_K_EFFLUX, NEUROGLYCOPENIA_MGDL,
+  EPI_BASAL_PG_ML, HYPO_EPI_THRESHOLD_MGDL, IB_UU_ML, INS_K_PER_UU, INS_N_PER_MIN, MGDL_PER_MMOL, NEUROGLYCOPENIA_MGDL,
   MH_SVR_DILATION, MH_SYMP_GAIN, SYMP_HYPERCAPNIA_FROM_MMHG, SYMP_HYPERCAPNIA_MAX, SYMP_HYPERCAPNIA_PER_MMHG, SYMP_HYPOGLY_PER_MGDL, VI_ML_KG,
 } from './params.ts';
 import { thyroidEffects, type ThyroidState } from './thyroid.ts';
@@ -207,7 +207,11 @@ function compose(c: EndoCore): EndoOut {
     humSvrF: st.humSvrF,
     vo2F: th.vo2F * cd.vo2F,
     setShiftC,
-    kShift: st.kShift + INS_K_PER_UU * Math.max(0, g.i - g.iExo - IB_UU_ML) + MH_K_EFFLUX * x.mhActivity
+    // E134: the MH muscle's potassium is NO LONGER here. It was `MH_K_EFFLUX 2.35 × activity`, a set-point shift fitted
+    // to the 20-min K of the MH table; the mechanism now lives in the muscle model (blood/muscle.ts): active muscle
+    // loses K with its metabolic activity (Medbo & Sejersted 1990) and injured muscle hands over its intracellular K.
+    // What stays here is the hormonal arm — insulin, and the β2 uptake of the catecholamine surge in `st.kShift`.
+    kShift: st.kShift + INS_K_PER_UU * Math.max(0, g.i - g.iExo - IB_UU_ML)
       // Insulin deficiency and hyperosmolar hyperglycaemia drive K OUT of the cells (JBDS DKA 2023: K is often
       // high at presentation despite a total-body deficit) — two of the DKA causes of hyperkalaemia. The instructor's
       // `dka` condition (the blood model's severity) IS insulinopenia, so it carries the same efflux even though the

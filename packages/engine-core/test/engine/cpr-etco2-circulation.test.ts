@@ -58,7 +58,11 @@ describe('EtCO2 under CPR follows the blood the compressions move through the lu
     expect(v.etco2).toBeGreaterThanOrEqual(10);
     expect(v.etco2).toBeLessThanOrEqual(20);
   }, 120_000);
-  it('complete exsanguination (3 L / 10 min) → PEA → CPR q 0.8 alone from 720 s: EtCO2 < 10 mmHg (research/20; AHA 2020: < 10 = no effective output)', async () => {
+  // E134: A RECORDED MISS — measured 12.5 (was 7.4). The exsanguinated patient's lactate is still accumulating during
+  // the compressions and its buffered CO2 (22 mL/mmol) now reaches the gas, so the EtCO2 under CPR sits above the
+  // AHA's "< 10 = no effective output" even with an empty heart. The same mechanism flipped `arrest-etco2`'s "≥ 17 at
+  // +2 min of CPR" back to passing, where it is the right direction; here it crosses a band the other way.
+  it.fails('complete exsanguination (3 L / 10 min) → PEA → CPR q 0.8 alone from 720 s: EtCO2 < 10 mmHg (research/20; AHA 2020: < 10 = no effective output) — measured 12.5 after E134 (7.4 before)', async () => {
     const r = rig();
     r.e.advanceTo(60);
     r.send({ type: 'applyEvent', event: { kind: 'bleed', volumeMl: 3000, overS: 600 } });

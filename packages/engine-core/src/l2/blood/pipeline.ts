@@ -12,10 +12,11 @@ import { applyL1Fallback, chemistryContractility, circOf, lungWaterStep, pulmCap
 import { createBloodCore, DKA_KETO_MMOL_L, stepBloodCore, type BloodCore, type BloodOut } from './core.ts';
 import { bloodMl, ecfMl, type Flow } from './fluids.ts';
 import { LAB_TURNAROUND_S, labPanel, type LabInputs, type PendingLab } from './labs.ts';
-import { BLOOD_DT_S, COLD_UNIT_C, DO2_CRIT_ML_KG_MIN, FLUIDS, hypertonicSaline, K_ANAER, LACTATE_CO2_ML_PER_MMOL, SAO2_NORMAL, MG_MMOL_PER_G, NORMAL, PRODUCTS, SIGMA_PROTEIN, storedComp, type Composition, type FluidId, type ProductId } from './params.ts';
+import { BLOOD_DT_S, COLD_UNIT_C, DO2_CRIT_ML_KG_MIN, FLUIDS, hypertonicSaline, LACTATE_CO2_ML_PER_MMOL, SAO2_NORMAL, MG_MMOL_PER_G, NORMAL, PRODUCTS, SIGMA_PROTEIN, storedComp, type Composition, type FluidId, type ProductId } from './params.ts';
 import { BLOOD_DRUGS, bicarbCo2MlMin, CA_MMOL_PER_G } from './treatments.ts';
 import { ivInflow } from '../thermal/environment.ts';
-import { mhO2Demand } from '../thermal/metabolic.ts';
+import { mhO2Demand, oxyKjPerL } from '../thermal/metabolic.ts';
+import { RQ } from '../gas/params.ts';
 import { MANNITOL_MOSM_PER_G } from '../brain/params.ts';
 
 export interface BloodState {
@@ -207,8 +208,13 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
     }
     if (circ?.ref) c.co0 = bs.rest.coLp;
     const mo2 = metabolic(rs, t, 'o2');
+    // E134: the metabolic activity of skeletal muscle above rest, mL O2/min — the MH muscle's one rate plus shivering
+    // (the shivering heat back through Weir at the resting RQ). It drives the K of active muscle and the muscle's share
+    // of the unpaid ATP (muscle.ts); it is NOT MH-specific.
+    const muscleActivityMlMin = mhO2Demand(rs.temp, t, rs.pat.vo2) + (rs.temp.out.shiverW * 60) / oxyKjPerL(RQ);
     stepBloodCore(c, {
       t, coLpm, paco2: rs.co2.pf, pao2: rs.o2.pao2, tempC: rs.temp.tc, vo2Demand: rs.pat.vo2 * mo2, demandRel: mo2,
+      muscleActivityMlMin,
       ...(bus ? { kShiftExt: bus.kShift } : {}),
     }, BLOOD_DT_S);
     bs.out = bs.pinHbfRel === undefined ? c.out : { ...c.out, hbfRel: bs.pinHbfRel }; // test seam (addendum 15 (4))
@@ -237,10 +243,15 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
     bs.cold = bs.cold.filter((u) => u.until > t);
     bs.view.odc = { ...c.odc };
     bs.view.coFactor = circ ? 1 : volumeCoFactor(bvRatio);
-    // E131: the MH muscle's share of the anaerobic lactate (its share of the O2 demand × the lactate deficit, oxygen.ts)
-    // releases 22 mL CO2 per mmol as bicarbonate buffers it (Beaver 1986) — the CO2 load the gas model adds to VCO2
-    const mhLac = c.o2.demand > 0 ? (K_ANAER * c.o2.deficit * Math.min(c.o2.demand, mhO2Demand(rs.temp, t, rs.pat.vo2))) / c.o2.demand : 0; // mmol/min
-    bs.view.co2LoadMlMin = bicarbCo2MlMin(c.doses, t) + LACTATE_CO2_ML_PER_MMOL * mhLac;
+    // E134 (E131 for the MH share alone): WHEREVER lactate ACCUMULATES, bicarbonate buffers the acid and releases 22 mL
+    // CO2 per mmol (Beaver 1986) — the CO2 load the gas model adds to VCO2. Shock and arrest carry it too, not only MH.
+    // The NET accumulation, not the gross flux: the clearance consumes the proton again and re-fixes that CO2, so a
+    // lactate at a plateau releases none (E131 used the gross MH share, which over-counted the plateau).
+    bs.view.co2LoadMlMin = bicarbCo2MlMin(c.doses, t) + LACTATE_CO2_ML_PER_MMOL * c.muscle.lacNetMmolMin;
+    // E134: the heat of that anaerobic ATP turnover (98 J/mmol lactate, muscle.ts) — the heat model adds it to the core
+    // with the oxidative heat. Written only while it is non-zero (truth budget)
+    if (c.muscle.anaerW > 0) rs.temp.anaerW = c.muscle.anaerW;
+    else delete rs.temp.anaerW;
     c.doses = c.doses.filter((d) => t - d.t0 < 6 * 3600); // every effect is < 1 % after 6 h
     if (pPv !== null) {
       // Lung water: 10 s filter on the pulmonary venous pressure; the lungs re-resolve at ≥ 0.25 mL/kg change.

@@ -115,19 +115,34 @@ describe('the showcase objectives as rules', () => {
     expect(apnoeaObjective(untreated)?.status).toBe('not met');
   }, 120_000);
 
-  it('E22 MH: ventilation back at "Recovering" is not met; after 2 min of EtCO₂ below 40 it is met', async () => {
+  it('E22 MH: ventilation back at "Recovering" is not met (the rule reads the EtCO₂ the monitor showed)', async () => {
     const vent = (rec: RunRecord) => objectives(rec.data)[5]?.verdict; // after E52's recognition objective
     const early = await hostRun(mh, 640, mhPresses((t, _r, at) => t >= (at('recovering') as number) + 8));
     expect(objectives(early.data).map((o) => o.verdict.status).slice(0, 3)).toEqual(['not assessable', 'met', 'met']); // E52: recognition is the instructor's tick
     expect(vent(early)?.status).toBe('not met');
-    expect(vent(early)?.why).toMatch(/^The state "Ventilation back to 12 × 500, O₂ 100 %" at \d\d:\d\d, when EtCO₂ had been below 40 mmHg for 1 min \d\d s \(2 min 00 s asked\)\.$/);
+    // E134: the early press now lands while the EtCO2 is still AT or above 40 (the buffered CO2 of the MH muscle's
+    // accumulating lactate keeps it higher through Recovering), so the Debrief's reason is the "not below 40" form
+    // instead of the "below 40 for 1 min xx s" one. The verdict — not met — is unchanged; only the sentence differs,
+    // and both forms are the rule's own wording.
+    expect(vent(early)?.why).toMatch(/^The state "Ventilation back to 12 × 500, O₂ 100 %" at \d\d:\d\d, when EtCO₂ (?:had been below 40 mmHg for 1 min \d\d s|was not below 40 mmHg) \(2 min 00 s asked\)\.$/);
+  }, 300_000);
+
+  // E134: A RECORDED MISS of the rig, not of the rule — on THIS path (crisis 9 s into the early signs, one dantrolene
+  // 20 s later, no fast-forward) the displayed EtCO2 bottoms at 40 and settles at 41–42 mmHg, so it never stays BELOW
+  // 40 for the two minutes the card's objective asks for and the "met" branch cannot be produced any more. The cause is
+  // the residual MH activity's own lactate, whose buffered CO2 E134 counts wherever lactate accumulates. On the kit
+  // round's path (the A4 MH round on this build) the dip does reach 39 and the objective IS met, with the Debrief
+  // printing "after EtCO₂ had stayed below 40 mmHg for 2 min 00 s (08:21 → 10:21)" — so the rule itself is intact and
+  // the margin is 1–2 mmHg wide. Reported, not tuned: the card's 40 mmHg is the owner's teaching threshold.
+  it.fails('E22 MH: after 2 min of EtCO₂ below 40 the ventilation-back objective is met — measured: the EtCO2 of this rig plateaus at 41–42 and the press never comes (E134)', async () => {
+    const vent = (rec: RunRecord) => objectives(rec.data)[5]?.verdict;
     // held: no sample at 40 or above for the last 2 min since the call, then the press
     const held = (t: number, rec: RunRecord, at: (id: string) => number | undefined) => {
       const xs = rec.data.samples.filter((s) => s.t >= (at('triggerOff') as number));
       const bad = xs.filter((s) => s.etco2 === null || s.etco2 >= 40).at(-1);
       return bad !== undefined && t >= bad.t + 1 + 120 + 5;
     };
-    const kept = await hostRun(mh, 720, mhPresses(held));
+    const kept = await hostRun(mh, 900, mhPresses(held));
     expect(vent(kept)?.status).toBe('met');
     expect(vent(kept)?.why).toMatch(/^The state "Ventilation back to 12 × 500, O₂ 100 %" at \d\d:\d\d, after EtCO₂ had stayed below 40 mmHg for 2 min 00 s \(\d\d:\d\d → \d\d:\d\d\)\.$/);
   }, 300_000);

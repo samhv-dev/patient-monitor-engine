@@ -6,6 +6,10 @@
 // suxamethonium 1.5 mg/kg at 1 s, `condition mh 1` at 300 s, untreated, ×1. The oxygen-derived MH heat no longer
 // reaches the hyperthermic VF (E129's arrest at 42.3 °C), so the arrest is made: VF at +110 min (the sweating plateau),
 // then one hour. SLOW (≈ 2 min wall); one yield per sim-minute. PME_E131_PRINT=1 prints the 5-min curve (the PR table).
+// E134: the body with no flow still makes the ANAEROBIC heat of its glycolysis, and the test checks that this heat is
+// not indefinite — the pH and glycogen brakes close it over the hour while the core falls. This 70 kg rig does not
+// reach the muscle-injury hyperkalaemia within the 110 min before the commanded VF (dose 120 dose minutes is not
+// spent), so the arrest is still made by command, as E131 left it.
 import { describe, expect, it } from 'vitest';
 import { mhO2Demand, oxyKjPerL } from '../../src/l2/thermal/metabolic.ts';
 import { MH_RQ, TISSUE_K_W_M2_C } from '../../src/l2/thermal/params.ts';
@@ -13,7 +17,7 @@ import { cmd } from '../helpers/resp.ts';
 import { rig6, runTo, send, st6 } from '../helpers/resp-modeled-rig.ts';
 
 interface Row {
-  t: number; tc: number; mhW: number; basalW: number; sweatW: number; kcp: number; o2Frac: number; etco2: number; paco2: number;
+  t: number; tc: number; mhW: number; anaerW: number; basalW: number; sweatW: number; kcp: number; o2Frac: number; etco2: number; paco2: number;
   lactate: number; k: number; co2Load: number; vo2: number; demand: number; hr: number; rhythm: string; arrested: boolean;
 }
 
@@ -24,7 +28,7 @@ const row = (e: ReturnType<typeof rig6>, t: number): Row => {
   const s = st6(e);
   const o = s.resp.temp.out;
   return {
-    t, tc: s.resp.temp.tc, mhW: o.mhW, basalW: o.metabolicW, sweatW: o.sweatW, kcp: o.kcp, o2Frac: s.resp.temp.o2Frac ?? 1,
+    t, tc: s.resp.temp.tc, mhW: o.mhW, anaerW: o.anaerW, basalW: o.metabolicW, sweatW: o.sweatW, kcp: o.kcp, o2Frac: s.resp.temp.o2Frac ?? 1,
     etco2: s.resp.etco2, paco2: s.resp.co2.pf, lactate: s.blood.out.lactate, k: s.blood.out.k, co2Load: s.blood.view.co2LoadMlMin,
     vo2: s.blood.core.o2.vo2, demand: s.blood.core.o2.demand, hr: s.hemo.circ.hrModel, rhythm: s.rhythm.id, arrested: s.hemo.circ.arrest !== null,
   };
@@ -58,7 +62,7 @@ describe('untreated MH from one muscle rate; a body without flow cools (E131)', 
     }
     if (process.env.PME_E131_PRINT) {
       console.log(`E131 max (MH heat − achieved MH O2 × Weir) ${worstClosure.toFixed(3)} W; max buffered-lactate CO2 ${maxCo2Load.toFixed(0)} mL/min`);
-      for (const r of rows) console.log(`E131 +${((r.t - MH_AT) / 60).toFixed(0)} min | core ${r.tc.toFixed(2)} | EtCO2 ${r.etco2.toFixed(0)} PaCO2 ${r.paco2.toFixed(0)} | lac ${r.lactate.toFixed(1)} K ${r.k.toFixed(1)} | MH ${r.mhW.toFixed(0)} W basal ${r.basalW.toFixed(0)} W sweat ${r.sweatW.toFixed(0)} W kcp ${r.kcp.toFixed(1)} | VO2 ${r.vo2.toFixed(0)}/${r.demand.toFixed(0)} o2Frac ${r.o2Frac.toFixed(2)} | buffer CO2 ${r.co2Load.toFixed(0)} | HR ${r.hr.toFixed(0)} ${r.rhythm}${r.arrested ? ' (arrest)' : ''}`);
+      for (const r of rows) console.log(`E131 +${((r.t - MH_AT) / 60).toFixed(0)} min | core ${r.tc.toFixed(2)} | EtCO2 ${r.etco2.toFixed(0)} PaCO2 ${r.paco2.toFixed(0)} | lac ${r.lactate.toFixed(1)} K ${r.k.toFixed(1)} | MH ${r.mhW.toFixed(0)} W anaer ${r.anaerW.toFixed(0)} W basal ${r.basalW.toFixed(0)} W sweat ${r.sweatW.toFixed(0)} W kcp ${r.kcp.toFixed(1)} | VO2 ${r.vo2.toFixed(0)}/${r.demand.toFixed(0)} o2Frac ${r.o2Frac.toFixed(2)} | buffer CO2 ${r.co2Load.toFixed(0)} | HR ${r.hr.toFixed(0)} ${r.rhythm}${r.arrested ? ' (arrest)' : ''}`);
     }
     expect(worstClosure).toBeLessThan(0.5); // W: heat never exceeds the oxygen energy (the same step's activity)
     const before = rows.filter((r) => r.t < VF_AT);
@@ -76,6 +80,12 @@ describe('untreated MH from one muscle rate; a body without flow cools (E131)', 
       expect(r.sweatW).toBe(0);
       expect(r.kcp).toBeLessThanOrEqual(kt + 1e-9);
     }
+    // E134: the ANAEROBIC heat is the one heat a body with no flow still makes, and it is not indefinite — the pH
+    // (phosphofructokinase) and glycogen brakes close it, so it decays over the hour and the core falls throughout.
+    const anaerAfter = after.map((r) => r.anaerW);
+    expect(Math.max(...anaerAfter)).toBeGreaterThan(0); // there IS anaerobic heat in the first minutes of the arrest
+    expect(anaerAfter.at(-1) as number).toBeLessThan(0.5 * (anaerAfter[0] as number)); // and it fades
+    for (const r of after) expect(r.anaerW).toBeLessThan(100); // never more than the oxidative heat it replaced
     for (let i = 1; i < after.length; i++) expect((after[i] as Row).tc).toBeLessThan((after[i - 1] as Row).tc);
     // Cooling over the hour after the VF: the brief's 0.5–1.5 °C/h (Newtonian, the forensic rule of thumb). Henssge's
     // nomogram formula (Forensic Sci Int 1988;38:209) for 70 kg at 21 °C has a plateau first — 0.15 °C in hour 1 from

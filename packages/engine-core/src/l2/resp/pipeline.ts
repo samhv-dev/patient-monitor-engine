@@ -32,7 +32,8 @@ import { apparatusDeadSpaceMl, CI_LPM_PER_KG, RQ, coRefLpm, defaultHeightCm, FRC
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createTemp, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
 import { thermalMetabolic } from '../thermal/metabolic.ts';
-import { MH_RQ } from '../thermal/params.ts';
+import { MH_PHENOTYPES, MH_RQ, type MhPhenotype } from '../thermal/params.ts';
+import { mhPeakXOf } from '../thermal/mh.ts';
 import { brainstemOutF } from '../circ/baroreflex.ts'; // The vasomotor centre's perfusion gate: the thermoregulatory efferents (E131)
 import { HIST_SPASM, resolveLung, SMOOTH_MUSCLE, spasmSeverity } from '../lung/conditions.ts'; // SMOOTH_MUSCLE; spasmSeverity; HIST_SPASM
 import { blockedSides, capnoTerms, createLung, lungGasStep, lungMechStep, shuntFraction, staticCompliance, type LungState, type Mainstem } from '../lung/lung.ts';
@@ -853,7 +854,13 @@ export function validateRespCommand(cmd: Command): string | undefined | null {
     case 'condition': {
       const c = ev as { id: string; severity: number };
       if (['tamponade', 'pe', 'tensionPtx', 'rvInfarct'].includes(c.id)) return null; // Circulation conditions
-      return c.id === 'mh' ? num('severity', c.severity, 0, 1) ?? (c.severity === undefined ? 'severity is required' : undefined) : `condition ${c.id} arrives in Stage 7`;
+      if (c.id !== 'mh') return `condition ${c.id} arrives in Stage 7`;
+      {
+        // E134: the severity phenotype is a scenario input
+        const m = ev as { phenotype?: string; vo2PeakX?: number };
+        if (m.phenotype !== undefined && !(MH_PHENOTYPES as readonly string[]).includes(m.phenotype)) return `phenotype must be ${MH_PHENOTYPES.join(' or ')}`;
+        return num('severity', c.severity, 0, 1) ?? num('vo2PeakX', m.vo2PeakX, 1, 6) ?? (c.severity === undefined ? 'severity is required' : undefined);
+      }
     }
     case 'thermal': {
       const th = ev as Extract<RespClinicalEvent, { kind: 'thermal' }>;
@@ -957,8 +964,11 @@ export function applyRespCommand(rs: RespState, l1: L1State, cmd: Command, t: nu
     }
     case 'condition': {
       if ((ev as { id: string }).id !== 'mh') return false; // Circulation conditions
-      const c = ev as { severity: number };
-      rs.temp.mh = c.severity > 0 ? { severity: c.severity, t0: t } : null;
+      const c = ev as { severity: number; phenotype?: MhPhenotype; vo2PeakX?: number };
+      // E134: the peak VO2 multiple of this MH is the scenario's (the phenotype, or the multiple itself)
+      rs.temp.mh = c.severity > 0
+        ? { severity: c.severity, t0: t, vo2PeakX: c.vo2PeakX ?? mhPeakXOf(c.phenotype), ...(c.phenotype ? { phenotype: c.phenotype } : {}) }
+        : null;
       return true;
     }
     case 'thermal': {

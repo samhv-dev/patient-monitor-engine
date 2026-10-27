@@ -34,7 +34,9 @@ export type RespClinicalEvent =
       o2FlowLpm?: number;
     }
   | { kind: 'preoxygenate'; fio2: number; durationS: number }
-  | { kind: 'condition'; id: 'mh'; severity: number }
+  /** E134: `phenotype` names the severity the scenario wants (`typical` | `fulminant`, thermal/params.ts
+   *  MH_PHENOTYPE); `vo2PeakX` 1–6 gives the peak whole-body VO2 multiple directly. Neither = `typical`. */
+  | { kind: 'condition'; id: 'mh'; severity: number; phenotype?: 'typical' | 'fulminant'; vo2PeakX?: number }
   /** Anaesthetic thermal state, forced-air warming and ambient temperature. */
   | { kind: 'thermal'; anaesthesia?: 'none' | 'general' | 'neuraxial'; warming?: boolean; ambientC?: number; warmAirC?: 32 | 38 | 43 }; // Blanket air temperature
 

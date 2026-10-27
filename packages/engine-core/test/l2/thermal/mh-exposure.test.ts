@@ -1,7 +1,7 @@
 // FU-10 Task A1 (E1): the onset of MH from a susceptible patient's triggers (7e thermal/mh.ts), and who owns the state.
 import { describe, expect, it } from 'vitest';
 import { mhActivity, mhFromExposure, mhOnsetT } from '../../../src/l2/thermal/mh.ts';
-import { MH_PROFILE_SEVERITY, MH_SUX_LATENCY_S, MH_VOLATILE_LATENCY_DEFAULT_S, MH_VOLATILE_LATENCY_S } from '../../../src/l2/thermal/params.ts';
+import { MH_PROFILE_SEVERITY, MH_SUX_LATENCY_S, MH_VO2_PEAK_X, MH_VOLATILE_LATENCY_DEFAULT_S, MH_VOLATILE_LATENCY_S } from '../../../src/l2/thermal/params.ts';
 
 describe('MH onset from the trigger exposure (Visoiu 2014: sooner after succinylcholine)', () => {
   it('the onset is the earliest trigger plus its latency; the volatile latency is the agent\'s; no exposure, no onset', () => {
@@ -16,7 +16,8 @@ describe('MH onset from the trigger exposure (Visoiu 2014: sooner after succinyl
   it('starts the MH state once; a later succinylcholine brings a still-latent volatile onset forward', () => {
     const a = mhFromExposure(null, { volatile: 100, volatileAgent: 'sevoflurane' }, undefined, 120);
     expect(a.owner).toBe('auto');
-    expect(a.mh).toEqual({ severity: MH_PROFILE_SEVERITY, t0: 100 + MH_VOLATILE_LATENCY_S.sevoflurane! });
+    // E134: the state carries the phenotype's peak VO2 multiple (no phenotype on the exposure = the typical one)
+    expect(a.mh).toEqual({ severity: MH_PROFILE_SEVERITY, t0: 100 + MH_VOLATILE_LATENCY_S.sevoflurane!, vo2PeakX: MH_VO2_PEAK_X });
     expect(mhActivity(a.mh, 200)).toBe(0); // latent
     const b = mhFromExposure(a.mh, { volatile: 100, volatileAgent: 'sevoflurane', sux: 400 }, a.owner, 400);
     expect(b.mh?.t0).toBe(400 + MH_SUX_LATENCY_S);
