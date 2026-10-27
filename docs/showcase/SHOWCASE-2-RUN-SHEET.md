@@ -12,7 +12,8 @@ demos may still change: each case section is self-contained, so swapping them is
 > live-demo cards changed (E119 MH with the induction, E120 the owner's haemorrhage course, E121 no implicit oxygen;
 > kit round A4); the demo, then planned for Wednesday 28 October, was postponed a week (first assumed Wednesday
 > 4 November, 13 Aban; then the owner's "nov 3rd"), and the programme became two demos (R4-Q3). 24 October evening: the demo UI review [UIR]. 25 October:
-> the app opens on a full Start page (E123, #131). 26 October: the owner accepted the clinical review of the two demo
+> the app opens on a full Start page (E123, #131). 26 October: Home, Room and Scenarios replace it (E125; the QR is on
+> the Room), and the owner accepted the clinical review of the two demo
 > cards in full (`scratch/plans-backup/demo-cards-clinical-review.md`, 13 findings) and the cards, this sheet, the cue
 > cards and the presenter guide follow it (E132).
 
@@ -29,7 +30,7 @@ segment).
 | E119 | MH card | Starts awake on room air; every induction step is a button | Case 1 |
 | E120 | Haemorrhage card | The owner's course: PEA left untreated → asystole → CPR → VF → two shocks → ROSC | Case 2 |
 | E121 | Oxygen | Never implicit: the MH card preoxygenates by button, the haemorrhage card gives mask oxygen by button | both |
-| E123 | Start page (2026-10-25) | The simulator launches into a full Start page; the two demo cards come first | §2 |
+| E123 / E125 | Start page (2026-10-25), then Home, Room and Scenarios (2026-10-26) | The simulator launches into a starting page; since E125 that is Home, with the QR on the Room and the two demo cards first in the Scenarios library | §2 |
 | E19a | MH: when to call | **At Early signs** (8:32 on the E119 card [Q1-2D]; 8:14 on the E132 card after E131 [E132 rc.4]) | Case 1 |
 | E20 | Monitor skin | **Saadat-style**, no style change during the talk (after a change to Philips-style the AGENTS tile reads "---") [MEAS §8; Q1-2D] | §1 |
 | E21 | Limit alarms after a Load | **"All alarms on" after every Load stays a presenter step**; the **Bookmark is taken AFTER it** [A3.2] | every case |
@@ -43,11 +44,11 @@ segment).
 1. **Two demos.** MH (10:00 slot) then haemorrhage (5:40) and its Debrief (3:30); close 3:00, questions 4:20, buffer
    0:30 [DRAFT]. Every clock below is from the two-demos talk run on kit 2ebd743d [Q1-2D], with kit round A4 alongside
    [A4].
-2. **The opening is the Start page** (E123): the release label, the session code and **Show the QR code** are on it,
-   and the first case is one **Load** on its Demonstration 1 card.
+2. **The opening is Home and the Room** (E125): Home carries the release label, **Start here** opens the Room with the
+   session code and the QR, and the first case is **Scenarios** → **Open the library** → **Load** on Demonstration 1.
 3. **No reload between the cases**: MH → **Choose another scenario** → Load the haemorrhage [Q1-2D].
 4. **Operator safety lines** from the UI review [UIR] (§1 "Safety lines"): never click Ventilator; a reload and
-   Sound; one instructor tab for the QR; the tab stays in front; print after the fast-forward banner.
+   Sound; one instructor tab for the Room and its QR; the tab stays in front; print after the fast-forward banner.
 5. **The MH report prints 8 A4 pages** on kit 2ebd743d [UIR #31] (A4 on kit 52b0390b: 7; on the E132 card 8); the
    haemorrhage report 8 [Q1-2D; A4; E132], 9 with the E126 pulse-check pause (kits 4d0fca9b and 503caeab) [E132 on E126;
    E132 rc.4].
@@ -94,6 +95,7 @@ segment).
 | PRINT | `_sandbox/pme-debrief-dryrun/HOW-TO-CHECK-THE-PRINT.txt` |
 | CARD | `apps/demo/src/app/showcase/showcase-*.json` (objective text, Debrief rule, states, button labels, take-home lines) |
 | F11A / F11B / F11D | `docs/gates/fu-11-a.md` / `fu-11-b.md` / `fu-11-d.md` |
+| E125 | `apps/demo/src/app/views/{home,room,scenarios}.ts` and `apps/demo/src/app/about.ts` on main (the pages, their words and the footer line); the Q1 talk run on the E125 kit (Home's version line, the footer line, the Room's QR with 3 phones following) |
 | RUN4 / SC1 | `docs/showcase/RUN-STEPS.md` (showcase 1) / `_sandbox/pme-showcase-docs/run-sheet.pdf` (showcase 1's printed sheet) |
 | R00 / R24 / R25 / R31 | `research/00-orchestrator-rulings.md` / `24-showcase2-probes.md` / `25-owner-questions-2026-10-07.md` / `31-owner-decisions-2026-10-12.md` |
 | ADD2 | `research/15-review-pack/addendum-2/index.html` (owner boxes H17–H19, E13–E15) |
@@ -110,7 +112,7 @@ measured ("Still not measured").
 
 | # | Segment | Speeds used | Run (W, measured) | Slot | Clock (T+) |
 |---|---|---|---|---|---|
-| 0 | Opening on the Start page: release label, session code, QR; the phones join | — | phones joined 2.5 s after the QR [Q1-2D] | **3:00** | 0:00–3:00 |
+| 0 | Opening on Home and the Room: release label, session code, QR; the phones join | — | phones joined 2.5 s after the QR [Q1-2D] | **3:00** | 0:00–3:00 |
 | 1 | Malignant hyperthermia, early call (E119): induction, crisis, treatment, recovery | ×8, ×4, three 5-min FF | **2:17** Load → end (136.9 s), the three spans 10.5–10.6 s each [Q1-2D]; E132 A4 2:02 (121.7 s, no talk Pauses); E132 rc.4 1:56 (116.1 s) | **10:00** | 3:00–13:00 |
 | 2 | Class IV haemorrhage (E120): PEA → asystole → CPR → VF → two shocks → ROSC | ×8, ×4, ×1 | **5:08** Load → end (307.7 s) [Q1-2D]; E132 A4 **4:34** (273.5 s) [E132 rc.4] | **5:40** | 13:00–18:40 |
 | 3 | The Debrief (haemorrhage), read and printed | — | the print 4.4 s [Q1-2D] | **3:30** | 18:40–22:10 |
@@ -123,9 +125,9 @@ measured ("Still not measured").
 
 | T+ | What | Length |
 |---|---|---|
-| 0:00 | Start page on the projector; what the simulator is | ≈ 0:30 (est.) |
-| ≈ 0:30 (est.) | **Show the QR code**; the phones join; **Close** | ≈ 2:30 (est.) |
-| 3:00 | MH framing, the Start page still showing | 1:30 |
+| 0:00 | Home on the projector; what the simulator is | ≈ 0:30 (est.) |
+| ≈ 0:30 (est.) | **Start here**: the Room and its QR; the phones join | ≈ 2:30 (est.) |
+| 3:00 | MH framing, the Room still showing | 1:30 |
 | 4:30 | **Load** on Demonstration 1 · **All alarms on** · **Bookmark** · **×8**; the induction to the early signs and the call | 1:24 |
 | 5:54 | span 1; **Pause** at Recovering (13:56 [E132 rc.4]; 14:33 on the talk run): the early call | 0:11 + 2:00 |
 | 8:06 | **ventilation back** (13:56); span 2; **Pause** (19:13): the EtCO₂ climbing back, **second dantrolene** [E132 rc.4] | 0:11 + 2:00 |
@@ -172,7 +174,7 @@ phones [R31 §3]. Tick every line.
       presenting Mac was not yet in the owner's hands; this line and one Start Classroom run on it are done by the room
       dry run, Monday 2 November.**
 - [ ] Double-click **Start Classroom**; its window says **THE CLASSROOM IS RUNNING** and lists "learners' phones reach it
-      at: http://…"; click **Allow** if macOS asks about "node"; the browser opens `http://127.0.0.1:8650/?relay#/` on the **Start page** (E123).
+      at: http://…"; click **Allow** if macOS asks about "node"; the browser opens `http://127.0.0.1:8650/?relay#/` on **Home** (E125).
       Keep the black window open all session [PF §2].
 - [ ] Fallback launcher ready: **Start Simulator** (no phones) [CR12 "(c)"]. The fallback kit and this sheet on a USB
       stick [R00 2026-10-03 "three layers"].
@@ -243,21 +245,20 @@ phones [R31 §3]. Tick every line.
       the router or hotspot [PF §4].
 
 **Last minute (T−10 min)**
-- [ ] Open the page fresh: the **Start page** shows, with **Demonstration 1** *Malignant hyperthermia* and
-      **Demonstration 2** *Class IV haemorrhage, PEA and resuscitation* first [#131]. **Sound on** and the alarm button
-      are on its Session panel. The Start page on the projector; nothing loaded.
+- [ ] Open the page fresh: **Home** shows, with the footer line "For educational use only; Not to be used in patient
+      care."; **Scenarios** → **Open the library** lists *Malignant hyperthermia* and *Class IV haemorrhage, PEA and
+      resuscitation* first, under *Today's demonstrations* [E125]. Home on the projector; nothing loaded.
 - [ ] Both cards are also in the Instructor's **Showcase** chip (for the second Load, by **Choose another scenario**)
       [CARD].
 - [ ] This tab is the only instructor tab; it stays in front for the whole talk (a hidden tab pauses the session
       [UIR "Hidden instructor tab"]).
 
 **Safety lines** (the UI review, 24 October [UIR]; true with or without this week's fixes)
-- **Never click "Ventilator" during a card**, neither the top-bar tab nor the Start page's **Ventilator** tile under
-  Other tools: one click holds every phone on "The ventilator is on the main screen", still held 20 s after going back
-  to the Instructor view; a reload or a pause freed it [UIR #2]. If it happens: **Instructor**, then **Pause** and
+- **Never click "Ventilator" during a card**, neither the rail's **Ventilator** nor a Ventilator tab: one click holds
+  every phone on "The ventilator is on the main screen", still held 20 s after going back to the Instructor view; a reload or a pause freed it [UIR #2]. If it happens: **Instructor**, then **Pause** and
   **Resume** if the phones still hold.
 - **Never reload mid-case** (see "After a page reload" above): Sound must be switched on again either way.
-- **Show the QR only from the first instructor tab** [UIR "Two hosts"].
+- **Open the Room (the QR) only from the first instructor tab** [UIR "Two hosts"].
 - **The instructor tab stays in front**: hidden, the session pauses at once ("Paused while this tab was hidden (m:ss)",
   the phones read "(paused)") [UIR "Hidden instructor tab"]; in real Safari a hidden tab once lost the phone's session
   (H19, FX-14, FX-15) [G12P].
@@ -267,27 +268,28 @@ phones [R31 §3]. Tick every line.
 
 ---
 
-## 2. Opening on the Start page (T+0:00 → 3:00)
+## 2. Opening on Home and the Room (T+0:00 → 3:00)
 
-Since E123 (#131) the simulator opens on a **full Start page**: no monitor and no top bar; the title **Patient monitor
-simulator**, the release label line, **Demonstration 1** (*Malignant hyperthermia*) and **Demonstration 2** (*Class IV
-haemorrhage, PEA and resuscitation*) as the first, large cards, then the other scenarios, the **Patient** and
-**Session** panels (the large session code, **Show the QR code** with "n phones following", Sound, the alarm button),
-and Site and Other tools last [#131 PR body; screenshots `scratch/owner-review/start-page/`].
+Since E125 the simulator opens on **Home**: no monitor and no top bar; the title **Patient monitor simulator**, the line
+"Version ‹version› · pre-release · build ‹commit›", one paragraph and one **Start here** button, and the footer line
+"For educational use only; Not to be used in patient care." on every page but the monitor screens. **Start here** opens
+the **Room**: the app's only QR code, the large session code, the join address, "n phones following", the connection
+status and the devices connected now. The rail at the left leads on to **Scenarios** (the library: *Today's
+demonstrations*, MH and the haemorrhage, first), **Patient**, the **Instructor** and the other views [E125].
 
-**Three clicks to the first case:** **1 · Show the QR code** → **2 · Close** (the QR sheet) → **3 · Load** on the
-Demonstration 1 card, which opens the Instructor view with MH loaded ("Scenario loaded: Malignant hyperthermia"). Then
-Case 1's first row: All alarms on · Bookmark · ×8.
+**The path to the first case:** **1 · Start here** (the Room, its QR) → **2 · Scenarios** → **3 · Open the library** →
+**4 · Load** on *Malignant hyperthermia* (Demonstration 1), which opens the Instructor view on the case's Scenario tab
+("Scenario loaded: Malignant hyperthermia"). Then Case 1's first row: All alarms on · Bookmark · ×8.
 
 | T+ | Do | Say (draft) |
 |---|---|---|
-| 0:00 | The Start page on the projector, nothing loaded. The release label reads "Version 1.0.0-rc.… (pre-release). For education only. Not a medical device and not clinically validated: never use it for patient care." (kit 2ebd743d: "1.0.0-rc.3"; the rc.4 kit: its own) [Q1-2D `q1-0`] | *"This is an open-source anaesthesia teaching simulator: a patient monitor, an instructor's panel and a ventilator, driven by a physiological model. It is for education only. It is not a medical device and never for patient care."* |
-| ≈ 0:30 (est.) | **Show the QR code** (Session panel). The sheet shows the address, the 6-letter code and "0 phones following" [CR12 "The QR moment"] | *"Please join the Wi-Fi called ‹network› and scan this code with your camera. You will get the monitor on your phone: it follows what I do here. It is silent: tap Sound off if you want to hear it."* [CR12] |
-| 0:30–2:15 (est.) | Watch the count rise. In the run, 3 emulated phones were following **2.5 s** after the QR, all synced before Load [Q1-2D `q1-0`]. A phone that does not open: is it on that Wi-Fi? | One session takes up to **60 phones**; the 61st is told "This session is full: please watch the main screen" [CR12] |
-| ≈ 2:15 (est.) | **Close** | *"Your phone follows speed, pause and fast-forward."* [CR12] |
-| 3:00 | MH framing (1:30) with the Start page still showing; at T+4:30 **Load** on Demonstration 1 (Case 1) | *"Two cases. Every number you will see is produced by the model; the buttons only give what their label says."* [CARD notes] |
+| 0:00 | Home on the projector, nothing loaded. It reads "Version 1.0.0-rc.… · pre-release · build …" and, at the foot, "For educational use only; Not to be used in patient care." (the rc.4 kit: its own version and build) [E125] | *"This is an open-source anaesthesia teaching simulator: a patient monitor, an instructor's panel and a ventilator, driven by a physiological model. It is for education only. It is not a medical device and never for patient care."* |
+| ≈ 0:30 (est.) | **Start here**: the Room shows the QR code, the 6-letter code, the address and "0 phones following" [E125] | *"Please join the Wi-Fi called ‹network› and scan this code with your camera. You will get the monitor on your phone: it follows what I do here. It is silent: tap Sound off if you want to hear it."* [CR12] |
+| 0:30–2:15 (est.) | Watch the count rise. In the two-demos run, 3 emulated phones were following **2.5 s** after the QR, all synced before Load [Q1-2D `q1-0`]; on the E125 kit the talk run had 3 phones following on the Room [E125]. A phone that does not open: is it on that Wi-Fi? | One session takes up to **60 phones**; the 61st is told "This session is full: please watch the main screen" [CR12] |
+| ≈ 2:15 (est.) | Stay on the Room | *"Your phone follows speed, pause and fast-forward."* [CR12] |
+| 3:00 | MH framing (1:30) with the Room still showing; at T+4:30 **Scenarios** → **Open the library** → **Load** on *Malignant hyperthermia* (Case 1) | *"Two cases. Every number you will see is produced by the model; the buttons only give what their label says."* [CARD notes] |
 
-**Without the Start page** (a kit before #131): QR from the **Monitor** view → pointer to the top edge → **Phones**;
+**On a kit without Home** (the rc.3 fallback kit): QR from the **Monitor** view → pointer to the top edge → **Phones**;
 the case from **Open the instructor view** → **Scenario** → **Showcase** → the card → **Load** [RUN4].
 
 Measured capacity, if asked: 30 phones cost the relay under 2 % of one core; each phone receives about 1.3 KB/s at ×1 and
@@ -318,7 +320,7 @@ for **10.5–10.6 s** [Q1-2D]; at the end one two-tone cue, a seam with its time
 
 ### Case 1: Malignant hyperthermia, early call, with the induction (E119). Slot 10:00 (T+3:00 → 13:00)
 
-**To Load.** First case of the page: Start page → **Load** on *Demonstration 1 · Malignant hyperthermia*. After another
+**To Load.** First case of the page: **Scenarios** → **Open the library** → **Load** on *Malignant hyperthermia*. After another
 case: Instructor → Scenario → **Choose another scenario** → **Showcase** → *Malignant hyperthermia* → **Load** →
 **Load scenario**. No reload.
 
@@ -433,7 +435,7 @@ read as expected. For MH-only changes, set the baseline after Start surgery (6:0
 
 **To Load.** After another case: Instructor → Scenario → **Choose another scenario** → **Showcase** → *Class IV
 haemorrhage, PEA and resuscitation* → **Load** → **Load scenario** (no reload after MH [Q1-2D: "choseAnotherScenarioFirst"]).
-First case of the page: Start page → **Load** on *Demonstration 2*.
+First case of the page: **Scenarios** → **Open the library** → **Load** on *Class IV haemorrhage, PEA and resuscitation*.
 
 Card: *Class IV haemorrhage, PEA and resuscitation* (Showcase). States: Bleeding 2.5 L over 10 min, breathing room air
 → (**Oxygen by face mask, FiO₂ 1.0**) → **Intubate and ventilate, FiO₂ 1.0** → Pre-arrest: junctional rhythm 50/min →
@@ -603,9 +605,9 @@ once the banner has gone (≈ 8 s) [UIR #9].
 | A card press shows **"Not available now: the case has moved to …"** | Press again: the button now belongs to the current state | [G10 §8 item 1] |
 | A scenario goes wrong (wrong press, missed window) | Session bar **Bookmark** list → **Return here** on the bookmark taken at Load (the **last** one in the list: MH's "Bookmark 1 at 00:06" stays in it while the haemorrhage runs, whose own is "Bookmark 2 at 00:11" [Q1-2D]); the patient and the screen are restored together. **The alarms come back as they were when the bookmark was taken** | [FU-11 E4; A3.2] |
 | Something went wrong: the toast "The monitor stopped — Restart the patient" | **Restart patient**, then **load the case again** (Load · All alarms on · Bookmark · speed) and run it from 0:00. After Restart patient the session bar reads **No scenario** and the Return-here list was not on screen (0 buttons in the two-demos run [Q1-2D `fx12`]; 3 of 6 tries before [Q1 FX-12]) | [Q1-2D; Q1 FX-12] |
-| You clicked **Ventilator** (top bar or the Start page tile) during a card | Back to **Instructor**. If the phones still say "The ventilator is on the main screen", **Pause** then **Resume** (a pause freed them in the review; a reload too, with the reload line below) | [UIR #2] |
+| You clicked **Ventilator** (the rail or a Ventilator tab) during a card | Back to **Instructor**. If the phones still say "The ventilator is on the main screen", **Pause** then **Resume** (a pause freed them in the review; a reload too, with the reload line below) | [UIR #2] |
 | The page was reloaded mid-case (Cmd-R, a crash) | With the reload fix (#132) the case comes back ("Restored after reload: ‹title›, mm:ss"); without it the bar reads **No scenario**: load the case again from 0:00. **Either way: Sound on again** (click it if it reads **Sound off**), and **All alarms on** if the alarm button does not read **No alarms**. The session code is kept and the phones follow | [UIR #1; #132; MEAS §7] |
-| The phones split, or the count drops after you opened another tab | A second instructor tab made a new session: close it and show the QR from the first tab only | [UIR "Two hosts"] |
+| The phones split, or the count drops after you opened another tab | A second instructor tab made a new session: close it and open the Room (the QR) from the first tab only | [UIR "Two hosts"] |
 | The toast "Paused while this tab was hidden (m:ss)" | The instructor tab was hidden: the session paused and resumed on return. Keep the tab in front; in real Safari a hidden tab once lost the phone's session (H19, FX-14, FX-15) | [UIR "Hidden instructor tab"; G12P] |
 | A printed page carries the "Fast-forwarded …" banner | It was printed within ≈ 8 s of a span: print again once the banner has gone | [UIR #9] |
 | MH: "ventilation back" is not on the card at 13:56 | The card has left Recovering (a dantrolene dose): wait until EtCO₂ has been below 45 for a minute, and press it when it shows | [CARD transitions] |

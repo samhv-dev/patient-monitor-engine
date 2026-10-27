@@ -43,7 +43,10 @@ and not clinically validated.** What remains before 1.0.0 and the plan for v2.0 
 
 ## What it is not
 
-- **Not a medical device** and not for diagnosis, monitoring or treatment of real patients.
+- **Not a medical device** and not for diagnosis, monitoring or treatment of real patients. The app says so on
+  screen: every page but the monitor screens carries the footer line "For educational use only; Not to be used in
+  patient care.", and the monitor screens (the Monitor view, a learner's window, a learner's phone) read
+  "SIMULATION · not a clinical monitor" at the top.
 - **Not clinically validated.** The waveforms and the physiology have been *measured* against public recordings,
   published models and a reference physiology engine, and the misses found so far are listed in the
   [validation summary](docs/guides/validation-summary.md), the [known deviations](docs/guides/known-deviations.md)
