@@ -27,7 +27,8 @@ import { CO_TAU_S, circCardiacOutput, circOnAtrial, circOnBeat, circVolume, crea
 import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts';
 import { modeledHrRequest } from '../circ/rate-rule.ts';
 import { hypoxicArrestRequest } from '../circ/hypoxic-arrest.ts';
-import { arrestStep, peaDecayStep, roscStep } from '../circ/arrest.ts';
+import { arrestStep, peaDecayStep, riskOf, roscStep } from '../circ/arrest.ts';
+import { ectopyStep } from '../circ/ectopy.ts';
 import { effectiveRateBpm } from '../ecg/rhythms.ts';
 import { CPR_CARDIAC_MMHG, CPR_RELEASE_RESIDUAL, CPR_THORACIC_MMHG as CPR_THORACIC_7A, H_S as CIRC_H, P_PL0 } from '../circ/params.ts';
 
@@ -84,6 +85,10 @@ export interface HemoCtx {
   pItExternal?: (t: number) => number | undefined;
   requestHr?: (bpm: number) => void; // MODELED mode drives the rhythm engine's rate
   requestRhythm?: (id: RhythmId, opts: RhythmOpts) => void; // MODELED hypoxaemic arrest switches the rhythm
+  /** E133: place n consecutive PVCs after the next supraventricular beat (circ/ectopy.ts). */
+  requestEctopy?: (n: number) => void;
+  /** The blood model's arterial pH (absent: 7.4) — the ectopy hazard's acidaemia term. */
+  ph?: number;
 }
 
 export interface SiteBeatStat {
@@ -475,6 +480,14 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
         }
       }
     }
+  }
+  // Ventricular ectopy (E133) from the arrest model's risk inputs, the pH and kIsch: MODELED, a beating heart the arrest
+  // model has not declared arrested. The draws come from their own `ectopyHazard` stream (brief §3.3: one stream per
+  // subsystem, so they never shift a shock outcome, an arrest draw or the ECG's `ectopy` stream, which times the agonal,
+  // junctional and VT foci) and are taken only when the drive is above 0.
+  if (ctx.requestEctopy && ctx.l1.mode === 'modeled' && !pulseless && !c.arrest && !NO_BEAT_RHYTHMS.has(ctx.rhythm.id)) {
+    const n = ectopyStep({ ...riskOf(c), ph: ctx.ph ?? 7.4, kIsch: c.cor.kIsch }, () => uniform(ctx.rng.ectopyHazard), 1);
+    if (n > 0) ctx.requestEctopy(n);
   }
   const nxt = stPatchOf(c.cor)?.ischaemicDepressionMv ?? 0;
   if (Math.abs(nxt - hs.stApplied) >= 0.01) {

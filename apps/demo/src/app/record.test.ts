@@ -58,6 +58,19 @@ describe('the run record', () => {
     expect(r.data.doc?.id).toBe('showcase-induction');
   });
 
+  it('E133: a run of ≥ 3 PVCs is one row at its first PVC, counting its beats; single PVCs and couplets are not', () => {
+    const r = fresh();
+    const beat = (t: number, pvc: boolean) => r.engine({ type: 'beat', t, seq: 0, origin: pvc ? 'ventricular' : 'sinus', template: pvc ? 'pvc' : 'normal', qrsMs: 90, qtMs: 380, mech: { perfused: true, kSV: 1, svMl: 70, lvetMs: 280 } } as EngineEvent);
+    beat(10, false); beat(10.5, true); beat(11.3, false); // a single PVC
+    beat(12, true); beat(12.4, true); beat(13.2, false); // a couplet
+    beat(20, true); beat(20.375, true); beat(20.75, true);
+    r.engine(alarms(20.8, ['vt'])); // a row recorded while the run goes on
+    beat(21.125, true); beat(21.5, true); beat(22.3, false);
+    expect(r.data.rows.map((x) => [x.t, x.kind, x.text, x.ev ?? ''])).toEqual([
+      [20, 'patient', 'Run of ventricular tachycardia (5 beats)', 'vtRun'],
+      [20.8, 'alarm', 'vt', 'alarm:vt'],
+    ]);
+  });
   it('keeps one sample per simulated second, from the first valid numeric of each trend', () => {
     const r = fresh();
     r.engine(meas(0.2, 99));

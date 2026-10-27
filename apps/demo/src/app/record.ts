@@ -1,6 +1,7 @@
 // The debrief's record of one run — what happened, in order, at the simulated time the monitor showed: every command
 // applied (from the panel, a Remote or the scenario), the scenario's states, the alarms raised, bookmarks and returns
-// to them, the pulse lost and back (from the model), ventilated breaths beginning, the instructor's notes, and a 1 Hz
+// to them, the pulse lost and back (from the model), runs of ventricular tachycardia (≥ 3 consecutive PVCs on the drawn
+// ECG, the model's or the instructor's), ventilated breaths beginning, the instructor's notes, and a 1 Hz
 // trend of six numerics and five laboratory values of the model (K⁺, lactate, pH, glucose, core temperature). It lives
 // beside the engine, NOT in its snapshot: a return to a bookmark rewinds the engine, the trends and the clocks but not
 // this record — the discarded course stays, marked undone, so the debrief shows the run as it happened, and its rules
@@ -66,6 +67,8 @@ const RESYNC_S = 2;
 /** Samples kept: 4 h of a run [ENG]. ponytail: oldest dropped beyond it; a longer run needs a coarser trend. */
 const SAMPLES_MAX = 4 * 3600;
 const EPS = 1e-6;
+/** Consecutive PVCs that make a run of ventricular tachycardia (non-sustained VT: ≥ 3 beats; Katritsis 2012). */
+const VT_RUN = 3;
 
 /** The bookmark label of the return to a position kept across a reload (position.ts; never one the instructor sees). */
 export const RELOAD_MARK = 'pme.reload';
@@ -85,6 +88,8 @@ export class RunRecord {
   private active = new Set<string>();
   private lastVent = -Infinity;
   private pulse: boolean | null = null;
+  /** The PVCs in a row so far, the first one's time, and the run's row once it is one. */
+  private pvcRun: { n: number; t: number; row: Row | null } = { n: 0, t: 0, row: null };
   private held: WireEvent | null = null;
   /** The engine time of the last return to a bookmark (-∞: none this run). */
   private since = -Infinity;
@@ -159,6 +164,15 @@ export class RunRecord {
     if (e.type === 'alarmStatus') {
       for (const a of e.active) if (!this.active.has(a.id)) this.add({ t: e.t, kind: 'alarm', text: alarmLine(a).text, ev: `alarm:${a.id}` });
       this.active = new Set(e.active.map((a) => a.id));
+    } else if (e.type === 'beat') {
+      // a run of VT is recorded at its third PVC and its row counts the beats until a beat that is not a PVC
+      const r = this.pvcRun;
+      if (e.template !== 'pvc') return void (this.pvcRun = { n: 0, t: 0, row: null });
+      if (r.n++ === 0) r.t = e.t;
+      if (r.n < VT_RUN) return;
+      const text = `Run of ventricular tachycardia (${r.n} beats)`;
+      if (r.row) r.row.text = text;
+      else this.add((r.row = { t: r.t, kind: 'patient', text, ev: 'vtRun' }));
     } else if (e.type === 'breath') {
       const b = e as unknown as { t: number; kind: string };
       if (b.kind !== 'mech' && b.kind !== 'bvm') return;
@@ -235,6 +249,7 @@ export class RunRecord {
     this.active = new Set();
     this.lastVent = -Infinity;
     this.pulse = null;
+    this.pvcRun = { n: 0, t: 0, row: null };
     this.held = null;
     this.since = -Infinity;
     this.marks.clear();

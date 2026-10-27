@@ -72,6 +72,8 @@ export interface RhythmState {
   lastWasPvc: boolean;
   /** Supraventricular beats since the last PVC (ectopy pattern counter). */
   ectopyCount: number;
+  /** PVCs the physiology asked for (circ/ectopy.ts), placed after the next supraventricular beat; absent when none. */
+  physPvc?: number | undefined;
   /** Active and recently ended atrial waves (the generator may still need an ended one for unrendered samples). */
   fwaves: FWave[];
   events: EcgEvent[];

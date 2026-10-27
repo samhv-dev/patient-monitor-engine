@@ -3,11 +3,19 @@
 // anaphylaxis (unchanged: treated 2 min into the reaction, and untreated). A number that left its band is reported,
 // not tuned.
 import { describe, expect, it } from 'vitest';
-import { bands, entered, first, near, range, runCard, type Act } from './harness.ts';
+import { bands, entered, first, near, pvcEvents, range, runCard, type Act } from './harness.ts';
 
 /** Bands: the measured prototype ± a stated tolerance. Never widened. */
 const BANDS = {
   'S5 haemorrhage E120': { refused: [0, 0], notPressed: [0, 0], hrAt4: [91, 101], sysAt4: [102, 112], hrAt8: [138, 148], sysAt8: [71, 81], mapAt8: [61, 71], junctionalS: [502, 614], peaStateS: [563, 689], pulseLossS: [594, 726], peaOnJunctional: [1, 1], agonalS: [695, 849], asystoleS: [838, 1024], asystoleAfterLossS: [244, 298], cprS: [851, 1041], cppAt60: [15, 23], cppAtCheck1: [23.6, 31.6], myoAtCheck1: [0.5, 0.74], check1IntoCprS: [119, 122], shock1S: [970, 1186], shock1Outcome: [2, 2], myoAtShock2: [0.85, 1], cppAtCheck2: [23, 31], cppAtShock2: [3.8, 11.8], shock2S: [1089, 1331], shock2Outcome: [3, 3], roscAfterShock2S: [60, 75], roscAfterLossS: [552, 674], sysStop60: [129.5, 139.5], mapStop60: [94, 104], hrStop60: [67, 77], etco2Stop60: [44, 52], spo2Stop60: [97, 100], pulseLostAfterStop: [0, 0] },
+  // E133 (ventricular ectopy from the physiology), measured on this build: ischaemic PVCs in the junctional minute
+  // before the pulse loss (kIsch 0.94 → 0.55), none while pulseless, and PVCs after the return of circulation (pH
+  // 7.13–7.15 with the epinephrine reaching the beating heart); the course above is unchanged second by second.
+  // Re-measured on the E126 course (rebase onto 5024f071, 2026-10-27) with the hazard on its own RNG stream
+  // (`ectopyHazard`; it had shared the ECG's `ectopy` stream, which also times the junctional and agonal foci): 4 / 0 / 3
+  // events (was 5 / 0 / 3), eventsBeforeLoss re-centred 5 → 4 with the same tolerance; the state, rhythm and pulse are
+  // identical every second with and without the PVCs placed, and the course with the placement off is main's.
+  'S5 haemorrhage E133 ectopy': { eventsBeforeLoss: [2, 11], eventsPulseless: [0, 0], eventsAfterRosc: [1, 8] },
   'S5 haemorrhage E120 timing': { lossEarlyVentS: [595, 727], lossLateVentS: [594, 726], asystoleEarlyVentS: [833, 1018], asystoleLateVentS: [842, 1029], noVentPulseLost: [0, 0], noVentSysAt10: [71.6, 81.6], noVentMinSys: [68, 78] },
   'S5 anaphylaxis': { refused: [0, 0], hrAt2: [134, 144], sysAt2: [91, 101], mapAt2: [73, 83], sysOver110S: [0, 26], hrPeak: [173, 183], sysPlus2: [113, 123], mapPlus2: [92, 102], hrPlus2: [105, 115] },
   'S5 anaphylaxis untreated': { refused: [0, 0], mapAt3: [48, 58], pulseLossS: [284, 346] },
@@ -73,6 +81,11 @@ describe('S5 kept cards on the new physiology', { timeout: 900_000 }, () => {
       hrStop60: near(r.rows, stop + 60).hr ?? Number.NaN, etco2Stop60: near(r.rows, stop + 60).etco2 ?? Number.NaN, spo2Stop60: near(r.rows, stop + 60).spo2 ?? Number.NaN,
       pulseLostAfterStop: r.rows.some((s) => s.t > stop && !s.pulse) ? 1 : 0,
     }, BANDS['S5 haemorrhage E120']);
+    bands('S5 haemorrhage E133 ectopy', {
+      eventsBeforeLoss: pvcEvents(r, 0, loss?.t ?? Number.NaN).length,
+      eventsPulseless: pvcEvents(r, (loss?.t ?? Number.NaN) + 2, back?.t ?? Number.NaN).length,
+      eventsAfterRosc: pvcEvents(r, back?.t ?? Number.NaN).length,
+    }, BANDS['S5 haemorrhage E133 ectopy']);
   });
 
   it('haemorrhage (E120): the same course whenever the ventilator comes (0:30 or 3:00), and none without it', async () => {

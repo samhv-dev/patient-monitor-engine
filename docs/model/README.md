@@ -9,8 +9,8 @@ regenerations. The list of known misses across modules is [known-misses.md](../v
 | Module | Source files | Test files | Known misses |
 |---|---|---|---|
 | [Patient state and the two modes](patient-state.md) | 5 | 5 | 0 |
-| [Rhythms and the ECG](rhythms-ecg.md) | 38 | 45 | 3 |
-| [Circulation](circulation.md) | 20 | 64 | 19 |
+| [Rhythms and the ECG](rhythms-ecg.md) | 38 | 46 | 3 |
+| [Circulation](circulation.md) | 21 | 66 | 19 |
 | [Pressure waveforms and pleth](pressure-waveforms.md) | 9 | 16 | 1 |
 | [Lungs: mechanics, ventilation–perfusion, pathology](lungs.md) | 19 | 39 | 6 |
 | [Gas exchange and capnography](gas-exchange.md) | 6 | 9 | 2 |
