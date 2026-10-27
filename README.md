@@ -12,8 +12,8 @@ and not clinically validated.** What remains before 1.0.0 and the plan for v2.0 
 ## What it is
 
 - **A one-page clinical teaching app** (`apps/demo`, `index.html`): set up a patient, run the monitor, give drugs and
-  fluids, explore the physiology and drive the ventilator view, from one page (Start, Monitor, Instructor, Explore
-  physiology, Ventilator, Validate, Developer and Settings, plus Remote and the Debrief report). Time runs at up to ×8
+  fluids, explore the physiology and drive the ventilator view, from one page (Home, Room, Scenarios, Patient,
+  Instructor, Monitor, Ventilator, Debrief, Explore physiology, Validate, Developer and Settings, plus Remote). Time runs at up to ×8
   with a 2- or 5-minute fast-forward; a learner monitor can follow on a second screen in the same browser, or,
   read-only, on learners' phones over a classroom relay on the instructor's computer. The relay comes in the classroom kit, built from a source checkout
   with `node scripts/showcase/make-bundle.mjs` (Node.js ≥ 22; double-click launchers for macOS, and for Windows,

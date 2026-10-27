@@ -40,11 +40,11 @@ and **the presenting Mac's Node.js**. Until they are settled, tick every line:
 - Speed (×1–×8), Pause and the 2- and 5-minute **fast-forward** reach every phone (the fast-forward panel shows on the
   phones too, and the phones catch up at its end).
 - While the **Ventilator view** is on the main screen, the phones cannot follow the patient (the cockpit's breaths do
-  not go over the network): they hold still and say "The ventilator is on the main screen". They follow again as soon
-  as you leave the Ventilator view (within a second), with the next case, or after a patient restart. Once the cockpit
-  has been opened it keeps ventilating this case off screen, and the phones then follow it only approximately (a fresh
-  start every few seconds). Plan any case where you open the Ventilator view (e.g. bronchospasm, in the library) for
-  the main screen.
+  not go over the network): they hold still and say "The ventilator is on the main screen". When you leave the
+  Ventilator view the phones follow again at once (under a second), and the patient is handed to the engine's own
+  ventilator at the cockpit's settings, so the phones follow it with no repeated fresh starts. Going back to the
+  Ventilator view restarts the cockpit at the engine's current settings and holds the phones again until you leave
+  it.
 - A phone that is locked, switched to another app or loses the Wi-Fi for a moment catches up by itself when it comes
   back ("Connection lost: reconnecting…" while it is away).
 - One session takes up to **60 phones**; the 61st is told "This session is full: please watch the main screen".
