@@ -170,7 +170,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           sed -n 's/^\(flaky\|unexpected\)\t/\1: /p' "$RUNNER_TEMP/q.tsv" | while read -r l; do echo "::warning title=e2e quarantine::$l"; done
       # TEMPORARY (orchestrator ruling 2026-10-18): on the webkit leg an untagged retry-only pass is a warning, not a
-      # failure, until the demo of 28 October; chromium still fails. A missing or unreadable report fails both legs.
+      # failure, until the demo of 3 November; chromium still fails. A missing or unreadable report fails both legs.
       # Revert (make webkit exit 1 again) after the demo, when the calibration pass's Task 0 re-harvests the known-flaky
       # list (docs/gates/stage-14.md, "Temporary relaxation").
       - name: e2e tests that passed only on retry (fails unless the test is tagged @known-flaky; webkit warns, temporarily)
@@ -186,7 +186,7 @@ jobs:
           while IFS="$(printf '\t')" read -r k l; do echo "::warning title=e2e passed only on retry::$l"; done < "$RUNNER_TEMP/flaky.tsv"
           if grep -q '^new' "$RUNNER_TEMP/flaky.tsv"; then
             if [ "${{ matrix.browser }}" = "webkit" ]; then
-              echo "::warning title=e2e passed only on retry::WebKit retry-only passes are recorded, not enforced, until the demo of 28 October (orchestrator ruling 2026-10-18)"
+              echo "::warning title=e2e passed only on retry::WebKit retry-only passes are recorded, not enforced, until the demo of 3 November (orchestrator ruling 2026-10-18)"
             else
               echo "::error title=e2e passed only on retry::a test without the @known-flaky tag passed only on retry: a retry is not a pass"; exit 1
             fi
