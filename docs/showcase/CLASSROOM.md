@@ -19,8 +19,8 @@ and **the presenting Mac's Node.js**. Until they are settled, tick every line:
   when the kit is built, `KIT-GATE.md`; here, 10 s after the simulator opens the black window still says "THE
   CLASSROOM IS RUNNING": a kit built before the KR-A1 fix stopped at that moment).
 - [ ] **The hotspot path works** (the fallback network you carry): turn on the Mac's hotspot (System Settings >
-  General > Sharing > Internet Sharing, to Wi-Fi), join it with **your own phone**, open the Monitor view, click
-  **Phones**, scan: your phone shows the monitor within a few seconds and the count says "1 phone following". Note
+  General > Sharing > Internet Sharing, to Wi-Fi), join it with **your own phone**, open Home → **Start here**
+  (the **Room**), scan: your phone shows the monitor within a few seconds and the count says "1 phone following". Note
   how many phones you could test with.
 - [ ] **The venue network works**, if you can reach it: the same scan on the venue Wi-Fi. "This phone cannot reach the
   instructor's laptop" means the Wi-Fi keeps devices apart: plan on the hotspot or a travel router.
@@ -40,11 +40,11 @@ and **the presenting Mac's Node.js**. Until they are settled, tick every line:
 - Speed (×1–×8), Pause and the 2- and 5-minute **fast-forward** reach every phone (the fast-forward panel shows on the
   phones too, and the phones catch up at its end).
 - While the **Ventilator view** is on the main screen, the phones cannot follow the patient (the cockpit's breaths do
-  not go over the network): they hold still and say "The ventilator is on the main screen". They follow again as soon
-  as you leave the Ventilator view (within a second), with the next case, or after a patient restart. Once the cockpit
-  has been opened it keeps ventilating this case off screen, and the phones then follow it only approximately (a fresh
-  start every few seconds). Plan any case where you open the Ventilator view (e.g. bronchospasm, in the library) for
-  the main screen.
+  not go over the network): they hold still and say "The ventilator is on the main screen". When you leave the
+  Ventilator view the phones follow again at once (under a second), and the patient is handed to the engine's own
+  ventilator at the cockpit's settings, so the phones follow it with no repeated fresh starts. Going back to the
+  Ventilator view restarts the cockpit at the engine's current settings and holds the phones again until you leave
+  it.
 - A phone that is locked, switched to another app or loses the Wi-Fi for a moment catches up by itself when it comes
   back ("Connection lost: reconnecting…" while it is away).
 - One session takes up to **60 phones**; the 61st is told "This session is full: please watch the main screen".
@@ -54,10 +54,10 @@ and **the presenting Mac's Node.js**. Until they are settled, tick every line:
 1. Start the kit with **Start Classroom** on the presenting Mac. When macOS asks whether "node" may accept incoming
    network connections, click **Allow** (if it was refused once: System Settings > Network > Firewall > Options, set
    node to "Allow incoming connections").
-2. Join the network you will use (a or b below), open the **Monitor** view, move the pointer to the top edge, click
-   **Phones**. Scan the code with **your own phone** on the same network. If the phone shows the monitor within a few
-   seconds, the network works. If it shows "this phone cannot reach the instructor's laptop", the network keeps devices
-   apart (client isolation, common on guest and hotel Wi-Fi): use (b).
+2. Join the network you will use (a or b below), open Home → **Start here** (the **Room**). Scan the code with **your
+   own phone** on the same network. If the phone shows the monitor within a few seconds, the network works. If it
+   shows "this phone cannot reach the instructor's laptop", the network keeps devices apart (client isolation, common
+   on guest and hotel Wi-Fi): use (b).
 
 ## (a) Venue Wi-Fi
 
@@ -65,7 +65,7 @@ and **the presenting Mac's Node.js**. Until they are settled, tick every line:
    above).
 2. Double-click **Start Classroom**; leave its black window open.
 3. Load the case as usual (Instructor > Scenario > Showcase > Load).
-4. **The QR moment** (below). Close the sheet with **Close**; teach as usual.
+4. **The QR moment** (below), then back to the case (**Instructor** in the rail); teach as usual.
 
 ## (b) A local network you bring (the Mac's own hotspot or a travel router)
 
@@ -85,14 +85,14 @@ laptop. Is it on the classroom Wi-Fi?" — nothing breaks.
 
 ## The QR moment (what to say and do)
 
-1. Monitor view on the projector. Move the pointer to the top edge, click **Phones** (on the other views: **Phones**
-   at the top right). The QR code fills the screen, with the address and the 6-letter code under it and
-   "0 phones following".
+1. The **Room** on the projector: Home → **Start here**, or **Room** in the rail at the left (the Monitor view's
+   **Phones** button opens it too). It shows the QR code, the 6-letter code, the address and "0 phones following".
 2. Say: *"Please join the Wi-Fi called ‹network› and scan this code with your camera. You will get the monitor on your
    phone — it follows what I do here. It is silent: tap Sound off if you want to hear it."*
 3. Watch the count rise ("12 phones following"). If a phone does not open the page: is it on that Wi-Fi? (mobile data
-   cannot reach the laptop). If the code does not open, the sheet lists the laptop's other addresses to type in.
-4. Click **Close** and start the case. The QR can be shown again at any time (late arrivals).
+   cannot reach the laptop). If the code does not open, the Room lists the laptop's other addresses to type in.
+4. Go on to the case (**Scenarios** or **Instructor** in the rail). The Room shows the QR again at any time (late
+   arrivals).
 
 ## If something goes wrong
 

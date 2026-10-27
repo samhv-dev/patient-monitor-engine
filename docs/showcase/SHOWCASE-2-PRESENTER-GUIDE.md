@@ -5,12 +5,12 @@ print [`SHOWCASE-2-CUE-CARDS.md`](SHOWCASE-2-CUE-CARDS.md) for the lectern. This
 are those of the run sheet; Q1-2D = the two-demos talk run (kit 2ebd743d, 24 October), A4 = kit round A4 (24 October,
 both engines), UIR = the demo UI review (24 October), E132 = kit round A4 on the cards after the clinical review
 (26 October, Chromium, kit e0c73a47), E132 rc.4 = the same after the rebase onto main 25771808 with E131 and E133
-(27 October, Chromium, kit 503caeab), REV = that review. **Two live demos (owner, 2026-10-24): MH, then haemorrhage with
-its Debrief.** Bronchospasm and tamponade are not in the programme.*
+(27 October, Chromium, kit 503caeab), REV = that review, E125 = the app's Home, Room and Scenarios pages on main.
+**Two live demos (owner, 2026-10-24): MH, then haemorrhage with its Debrief.** Bronchospasm and tamponade are not in the programme.*
 
 ## The order (30:00)
 
-Opening on the Start page + QR (3:00) · **MH**, early call, E119 card (10:00) · **haemorrhage**, E120 card: PEA →
+Opening on Home and the Room + QR (3:00) · **MH**, early call, E119 card (10:00) · **haemorrhage**, E120 card: PEA →
 asystole → CPR → VF → two shocks → ROSC (5:40) · **its Debrief** (3:30) · close and the ask (3:00) · questions (4:20) ·
 buffer (0:30). T+: 0:00 · 3:00 · 13:00 · 18:40 · 22:10 · 25:10 · 29:30. Running over: cut questions first, then MH span
 3 (and its Pause line), then the MH Debrief glance [DRAFT]. The order of the two demos may still change: each has its
@@ -20,8 +20,9 @@ own cue card.
 
 1. **Load → All alarms on → Bookmark → speed, every case.** Press All alarms on after every Load (on kit 2ebd743d the
    alarms stayed on after Load [Q1-2D]; older kits turned them off [MEAS §7]); take the Bookmark AFTER it [A3.2].
-2. **The Start page opens the talk.** Three clicks to the first case: **Show the QR code** → **Close** → **Load** on
-   Demonstration 1 (MH). Phones joined 2.5 s after the QR in the run; up to 60 per session [Q1-2D; CR12].
+2. **Home opens the talk.** **Start here** opens the Room and its QR; the first case is **Scenarios** → **Open the
+   library** → **Load** on Demonstration 1 (MH). Phones joined 2.5 s after the QR in the run; up to 60 per session
+   [Q1-2D; CR12; E125].
 3. **The speed after a fast-forward is the speed before it** (×4 stays ×4). A 5-min span takes 10.5–10.6 s of wall;
    nothing can be pressed while the amber panel shows [Q1-2D].
 4. **No reload between the cases**: after MH, Instructor → Scenario → **Choose another scenario** → **Showcase** →
@@ -39,10 +40,11 @@ own cue card.
    - haemorrhage: **shock only in VF**; the **second epinephrine** after the first shock (18:57); after the second
      shock **keep CPR to the 2-min rhythm check** (21:52) even though the pulse returns at 20:57, then **Rhythm check:
      pulse back, stop CPR** [REV #12; E132 rc.4].
-6. **Safety lines** [UIR]: never click **Ventilator** during a card (it holds every phone); never reload mid-case
-   (with #132 the case comes back, without it load again from 0:00; **Sound on again** either way: click it if it reads Sound off); show the QR only
-   from the **first instructor tab** (a second tab is a new session); the instructor tab **stays in front** (hidden, it
-   pauses the session); print the handout only **after the fast-forward banner has gone**.
+6. **Safety lines** [UIR]: never click **Ventilator** during a card (while it is on screen every phone waits; leaving
+   it releases them at once [#135; E128]); never reload mid-case (with #132 the case comes back, without it load again
+   from 0:00; **Sound on again** either way: click it if it reads Sound off); open the Room (the QR) only from the
+   **first instructor tab** (a second tab is a new session); the instructor tab **stays in front** (hidden, it pauses
+   the session); print the handout only **after the fast-forward banner has gone**.
 7. **"Not available now" → press again**: the button now belongs to the current state [G10 §8].
 8. **The haemorrhage Debrief**: open it before loading anything else. Key times 35 s · CPR 4 min 39 s · CPR stopped
    57 s after the return of circulation (asked ≤ 2 min 30 s <!-- owner ruling pending -->) · pulseless 9 min 57 s; – ✗ ✓: the ✗ is the course itself (the demo withholds
@@ -73,8 +75,8 @@ own cue card.
 
 | Move | How |
 |---|---|
-| The first case | Start page → **Load** on the Demonstration card (opens the Instructor view with the case loaded) [#131] |
-| The QR | Start page → Session → **Show the QR code** → **Close**; on a kit without the Start page: Monitor view → pointer to the top edge → **Phones** |
+| The first case | **Scenarios** (the rail) → **Open the library** → **Load** on the Demonstration card (opens the Instructor view with the case loaded, on its Scenario tab) [E125; E128] |
+| The QR | Home → **Start here** → the **Room** (or **Room** in the rail; the Monitor view's **Phones** opens it too); on a kit without Home (rc.3): Monitor view → pointer to the top edge → **Phones** |
 | The next case | Instructor → Scenario → **Choose another scenario** → **Showcase** → **Load** → **Load scenario** |
 | Speed | session bar **×1 ×2 ×4 ×8** (Instructor view; no key) [`sessionbar.ts`] |
 | Fast-forward | session bar **2 min** / **5 min** (10.5–10.6 s each; one at a time; no Cancel; speed unchanged after it) [Q1-2D; G10] |
@@ -127,5 +129,5 @@ wrong; the model's five measured values fit the registry evidence [SYN (a) item 
 the monitor crossed HR 100, 120 and 140 at 4:30, 6:05 and 8:00 [MEAS §4]; on the E120 card HR read 141 at 8:00
 [Q1-2D].
 
-If asked "which version is this?": the pre-release of 1.0. The release label is on the Start page ("Version
-1.0.0-rc.… (pre-release)") and the build is printed at the foot of the Debrief report [Q1-2D `q1-0`; #131].
+If asked "which version is this?": the pre-release of 1.0. The release label is on Home ("Version
+1.0.0-rc.… · pre-release · build …") and the build is printed at the foot of the Debrief report [E125; Q1-2D `q1-0`].

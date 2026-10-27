@@ -27,7 +27,7 @@ recompute T+ from the Slot column.*
 
 | T+ | Segment | Slot | Card |
 |---|---|---|---|
-| 0:00 | Opening on the Start page: release label, session code, QR; the phones join | 3:00 | OPEN |
+| 0:00 | Opening on Home and the Room: release label, session code, QR; the phones join | 3:00 | OPEN |
 | 3:00 | **MH**, early call (E119): induction, crisis, treatment, recovery | 10:00 | MH |
 | 13:00 | **Class IV haemorrhage** (E120): PEA → asystole → CPR → VF → 2 shocks → ROSC | 5:40 | HAEM |
 | 18:40 | **The Debrief** (haemorrhage), read and printed | 3:30 | HAEM-D |
@@ -62,16 +62,16 @@ cards after the clinical review rebased onto main 25771808 (E131, E133; kit roun
 
 ## Safety lines (UI review, 24 October; true with or without this week's fixes)
 
-- **Never click "Ventilator" during a card**: not the top-bar tab, not the Start page's Other tools tile. One click
-  holds every phone on "The ventilator is on the main screen", still held 20 s after going back to the Instructor
-  view. If it happens: back to **Instructor**; if the phones still hold, **Pause** then **Resume** (a pause freed them
-  in the review).
+- **Never click "Ventilator" during a card**: not the rail's **Ventilator**, not a Ventilator tab. While the
+  Ventilator view is on screen its cockpit drives the patient and every phone waits on "The ventilator is on the main
+  screen". If it happens: back to **Instructor**. Leaving the view releases the phones at once and hands the patient
+  to the engine's ventilator at the cockpit's settings (#135, E128); no Pause or reload is needed.
 - **Never reload mid-case.** If it happens: with the reload fix (#132) the case comes back with the toast
   "Restored after reload: ‹title›, mm:ss"; without it the bar reads **No scenario**: load the case again from 0:00.
   **Either way, switch Sound on again**: after a reload the browser wants a click before it plays sound; if the
   button reads **Sound off**, click it. Check **All alarms on** too.
-- **Show the QR only from the first instructor tab.** A second tab, or a second browser, gets a NEW session code; a QR
-  shown from it splits the room.
+- **Open the Room (the QR) only from the first instructor tab.** A second tab, or a second browser, gets a NEW
+  session code; a QR shown from it splits the room.
 - **The instructor tab stays in front for the whole talk.** A hidden tab pauses the session at once (toast "Paused
   while this tab was hidden (m:ss)"; the phones read "(paused)").
 - **Print the handout only after the fast-forward banner has gone** (≈ 8 s after a span): printed earlier it carries
@@ -81,26 +81,24 @@ cards after the clinical review rebased onto main 25771808 (E131, E133; kit roun
 
 <div style="page-break-after: always;"></div>
 
-# OPEN · The opening on the Start page (T+0:00 → 3:00)
+# OPEN · The opening on Home and the Room (T+0:00 → 3:00)
 
-**Slot 3:00 · the simulator opens on the full Start page (E123, #131): the two demo cards are the first thing on
-screen**
+**Slot 3:00 · the simulator opens on Home (E125): Home → Start here → the Room's QR; the first case from Scenarios**
 
 | Slot (T+) | Look at | Click | Say |
 |---|---|---|---|
-| 0:00 (0:00) | Start page: title **Patient monitor simulator**, the release label line "Version 1.0.0-rc.… (pre-release). For education only. Not a medical device…", **Demonstration 1** (MH) and **Demonstration 2** (haemorrhage) | — | what the simulator is; education only, not a medical device |
-| ≈ 0:30 (est.) | Session panel: the large **session code** | **1 · Show the QR code** | "Join the Wi-Fi called ‹network› and scan this code. Your phone follows what I do here; it is silent." |
-| | "0 phones following" → "3 phones following" (the phones joined **2.5 s** after the QR, two-demos run, 3 emulated phones) | — | |
-| ≈ 2:15 (est.) | the count | **2 · Close** (the QR sheet) | |
-| at MH +1:30 (T+4:30) | Demonstration 1: *Malignant hyperthermia* | **3 · Load** on the card → the Instructor view opens with the case loaded (toast "Scenario loaded: Malignant hyperthermia") | then the MH card's first row: All alarms on · Bookmark · ×8 |
+| 0:00 (0:00) | Home: title **Patient monitor simulator**, the line "Version 1.0.0-rc.… · pre-release · build …", and at the foot the line "For educational use only; Not to be used in patient care." | — | what the simulator is; education only, not to be used in patient care |
+| ≈ 0:30 (est.) | the **Room**: the QR code, the large **session code**, the join address and "0 phones following" | **1 · Start here** | "Join the Wi-Fi called ‹network› and scan this code. Your phone follows what I do here; it is silent." |
+| | "0 phones following" → "3 phones following" (the phones joined **2.5 s** after the QR, two-demos run, 3 emulated phones; the E125 kit's talk run had 3 phones following on the Room) | — | |
+| at MH +1:30 (T+4:30) | **Scenarios** (the rail) → **Open the library** → *Today's demonstrations*: *Malignant hyperthermia* (Demonstration 1) | **2 · Scenarios** → **3 · Open the library** → **4 · Load** → the Instructor view opens on the case's Scenario tab (toast "Scenario loaded: Malignant hyperthermia") | then the MH card's first row: All alarms on · Bookmark · ×8 |
 
-The third click is the MH card's Load: the MH framing (1:30) is said with the Start page still on the screen.
+The MH framing (1:30) is said with the Room still on the screen; the Load comes at its end.
 
-**Without the Start page** (a kit before #131): the Start view sits beside the monitor. QR: **Monitor** view → pointer
-to the top edge → **Phones**; the case: **Open the instructor view** → **Scenario** → **Showcase** → *Malignant
-hyperthermia* → **Load**.
+**On a kit without Home** (the rc.3 fallback kit): QR from the **Monitor** view → pointer to the top edge → **Phones**
+→ **Close**; the case: **Open the instructor view** → **Scenario** → **Showcase** → *Malignant hyperthermia* →
+**Load**.
 
-**Traps:** do not click the **Ventilator** tile under Other tools. Show the QR from this tab only.
+**Traps:** do not click **Ventilator** in the rail. Open the Room from this tab only.
 
 <div style="page-break-after: always;"></div>
 
@@ -111,8 +109,8 @@ hyperthermia* → **Load**.
 Talk allowance in the slot: 1:30 framing before Load · 2:00 at each of the two Pauses · 1:00 take-home at the end ·
 1:00 Debrief glance.
 
-**To Load:** first case of the page → Start page, **Load** on *Demonstration 1 · Malignant hyperthermia*. After another
-case → Instructor → Scenario → **Choose another scenario** → **Showcase** → *Malignant hyperthermia* → **Load** →
+**To Load:** first case of the page → **Scenarios** → **Open the library** → **Load** on *Malignant hyperthermia*.
+After another case → Instructor → Scenario → **Choose another scenario** → **Showcase** → *Malignant hyperthermia* → **Load** →
 **Load scenario**. No reload.
 
 States: **Awake (room air)** → Premedicated → **Preoxygenated** → **Induced** (MH starts) → Intubated → Surgery →
@@ -125,7 +123,7 @@ rate) and E133 (kit 503caeab, Chromium, 27 October).
 
 | Slot (T+) | Clock | Look at | Press | Say |
 |---|---|---|---|---|
-| 0:00 (3:00) | — | the Start page | — | framing, 1:30 |
+| 0:00 (3:00) | — | the Room | — | framing, 1:30 |
 | 1:30 (4:30) | 0:00 | HR 69, ART 122/80; room air | **Load · All alarms on · Bookmark · ×8** | "Awake on the table, monitoring on, breathing room air." |
 | 1:34 (4:34) | 0:30 | | **Premedicate: midazolam 2 mg, fentanyl 100 µg** | |
 | 1:38 (4:38) | 1:00 | RR 13, SpO₂ 96 | **Preoxygenate: 100 % O₂ by face mask** | "Oxygen is never implicit: we give it." |
@@ -188,8 +186,8 @@ Talk allowance: 0:30 framing before Load; the rest is said over the running case
 the rhythm checks, the return of circulation).
 
 **To Load:** after another case → Instructor → Scenario → **Choose another scenario** → **Showcase** → *Class IV
-haemorrhage, PEA and resuscitation* → **Load** → **Load scenario**. First case of the page → Start page, **Load** on
-*Demonstration 2*. No reload after MH.
+haemorrhage, PEA and resuscitation* → **Load** → **Load scenario**. First case of the page → **Scenarios** → **Open the
+library** → **Load** on *Class IV haemorrhage, PEA and resuscitation*. No reload after MH.
 
 States: Bleeding on room air → (Oxygen by mask) → **Intubated and ventilated** → **Junctional 50/min** (card) → **PEA**
 → **Asystole** → CPR → source control, massive transfusion, TXA · epinephrine → **Rhythm check: VF** (card) → shock →

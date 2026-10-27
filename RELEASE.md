@@ -59,10 +59,10 @@ gh run watch "$(gh run list --workflow release --limit 1 --json databaseId --jq 
    acceptable"; it supersedes the Stage 8b plan's Q3 for this release). Once, after the tag, from the tagged commit:
    `node scripts/showcase/make-bundle.mjs <scratch>/kit` (the kit's relative-base build of the app, with its
    `VERSION.txt`); copy `<scratch>/kit/app/` into a clean gh-pages tree with an empty `.nojekyll`, the kit's
-   `VERSION.txt`, `LICENSE`, `NOTICES.md` and `LICENSES/`; check that the Start view shows "Version 1.0.0-rc.1
-   (pre-release). For education only. …"; commit and force-push the `gh-pages` branch ONLY (never `main`); record the
-   gh-pages commit in the gate note or the rulings file. The Pages site cannot pair learners' phones: they need the
-   classroom relay of the local kit (README).
+   `VERSION.txt`, `LICENSE`, `NOTICES.md` and `LICENSES/`; check that Home shows "Version 1.0.0-rc.‹n› ·
+   pre-release · build …" and the footer line "For educational use only; Not to be used in patient care."; commit and
+   force-push the `gh-pages` branch ONLY (never `main`); record the gh-pages commit in the gate note or the rulings
+   file. The Pages site cannot pair learners' phones: they need the classroom relay of the local kit (README).
 
 ## Later: 1.0.0 (not at the release candidate)
 

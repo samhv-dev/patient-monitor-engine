@@ -25,6 +25,60 @@ the public API is what the packages export (see the API reference), the `pme-sce
   event is never sent (it would have taken the patient off the tube or the bag). For this the engine's 1 Hz `state`
   event carries a new optional `breathing: { source, device }` (source spontaneous / bvm / ventilator / none /
   external; device none / ett / sga).
+- App pages (E123, owner ruling 2026-10-25: "the simulator should launch into a starting page"; E125, the owner's
+  mockups and rulings of 2026-10-26): the simulator opens on **Home**, not on the monitor, and the monitor appears once
+  a case is loaded or the Monitor view is opened. Home has the name, the line "Version ‹version› · pre-release · build
+  ‹commit›", one paragraph, one **Start here** button (to the Room), the repository address, links to the
+  documentation, the licence and the release notes, and three live tiles: CPU (this page's main-thread busy share over
+  the last 5 s, from long tasks and frame overruns; the monitor's engine worker is not in it), Memory (this page's
+  JavaScript heap, Chromium only, "—" elsewhere) and Engine (the median of one 20-ms tick of the same engine build,
+  timed in a background worker every 5 s while Home shows). **Room** holds the app's only QR code, the session code,
+  the join address, "n phones following", a Stable / Weak / Disconnected status (Weak: a phone joined or resynced in
+  the last 2 s; the relay gives no round-trip time) and the windows and phones connected now; the top bar's Phones
+  sheet is gone, and the Monitor view's **Phones** button opens the Room. **Scenarios** has the library (the two
+  demonstration cards first, then the others by category, one sentence each, the case details opening in place), a
+  builder page whose **Import a scenario file** validates a `pme-scenario/1` file and loads it, and the last three
+  cards loaded; **Load** opens the Instructor view with the case loaded. **Patient** has the patient controls (presets,
+  age, weight and conditions, MODELED or MANUAL, the sensors-off start). A workflow rail (Home | Room, Scenarios,
+  Patient | Instructor, Monitor, Ventilator | Debrief | Explore physiology, Tools, Settings) replaces the top bar's
+  tabs: an icon strip on the Instructor view and below 900 px, absent on the Monitor view, a learner's window, a phone
+  and a Remote. Its foot has a light/dark switch (the site's Screen theme, saved as Settings saves it) and a clock with
+  the Persian date where the browser has that calendar. The four pages and the rail are set in IBM Plex Sans and Plex
+  Mono (SIL OFL 1.1, NOTICES N-017); the monitor skins' fonts are unchanged. Every page but the monitor screens carries
+  the owner's disclaimer as its footer line, "For educational use only; Not to be used in patient care.", which
+  Settings → About and the Debrief's print footer also print. The views behind the rail are unchanged inside.
+- Monitor (the owner, 2026-10-26: every monitor surface says it is a simulator): "SIMULATION · not a clinical monitor"
+  at the top of the Monitor view, a learner's monitor window and a learner's phone, and on no other view (the same
+  monitor on the Instructor view has none). On a skin with a two-row header (Saadat-like) it sits in the header's free
+  centre, where a real monitor prints the patient's name, in the header's font; on a one-row header, a 16-px strip
+  above the monitor; on a phone held upright, two lines of 11 px in the header's message area while no message shows
+  (an alarm message replaces it), so the phone's lanes lose no height. The renderer gains
+  `MonitorHandle.setHeaderNote(text)` (see `docs/guides/embedding.md`).
+- Engine (E133, owner ruling 2026-10-26): ventricular ectopy from the physiology. A beating heart in MODELED now has a
+  hazard of PVCs, couplets and non-sustained runs of VT, stepped at 1 Hz after the arrest model and read from the same
+  inputs: drive D = (sK + sT + spH + sIsch) × (1 + cat) + sCat, each substrate term a ramp from 0 at its threshold to 1
+  at the arrest model's own threshold for that input: potassium 6.5 → `K_HAZARD` 8.5 mmol/L (Durfey 2017: 15 % of ED
+  patients with K ≥ 6.5 had an event within 6 h, mostly bradycardic, so K never weighs more than another input); core
+  temperature 40 → `T_HOT` 42 °C (MH grading scale, Larach 1994; heat stroke, Akhtar 1993) and 32 → `T_HAZARD` 28 °C
+  (Mattu 2002); arterial pH 7.20 → 7.00 (severe acidaemia, Jung 2011; afterdepolarisations, Orchard & Cingolani 1994);
+  the coronary ischaemia from where the monitor shows ST depression to the low-flow arrest (reperfusion arrhythmias,
+  Nakata 1990; Lown grading 1971). Catecholamines (`riskOf`'s inotropy above 1, the endogenous surge plus drugs)
+  multiply the substrate (Tang 1995; MH pigs, Jönsson 1989) and act alone only at overdose level, sCat = ramp(cat, 1,
+  2) (Campbell 2015). Events come at 6 × D per minute (at most 30); a run is 3 beats plus a geometric excess (mean 2),
+  at most 30 (NSVT, Katritsis 2012). The rate, the weights and the shares are [ENG]; the thresholds are sourced.
+  Sustained VT is never drawn by the physiology, and VF still comes only from the arrest model, whose timings are
+  unchanged (the ectopy does not feed it). MANUAL keeps the instructor's rhythm; the instructor's PVC setting draws
+  first. The draws come from their own seeded stream, `ectopyHazard`, so no escape rhythm or shock outcome moves when
+  a PVC is drawn, and a healthy resting patient takes no draw at all (no PVC, the streams as seeded). The Debrief
+  makes one timeline row of each run of ≥ 3 PVCs ("Run of ventricular tachycardia (n beats)", run event `vtRun`).
+  Measured on the cards (engine seed 7): untreated MH, first PVC 10.95 min after the succinylcholine, 346 ectopic
+  events and 35 runs in 51 min, the acidaemia term times the MH catecholamines (the core stays under 40 °C since E131);
+  the treated early path, none; the haemorrhage card, 4 events before the pulse loss, none while pulseless and 3 after
+  the ROSC, with its state, rhythm and pulse identical every second. The monitor's HR averages a run's beats: the
+  untreated MH's highest displayed HR is 160 within 10 s of a run and 138 on the sinus tachycardia. The tamponade
+  card's highest systolic after ROSC is 208.5 mmHg (was 196.5): a run of 4 PVCs as the tamponade takes the pulse moves
+  the pulse loss by 1 s and the phase of the later beats against the compressions; the drainage and the ROSC keep
+  their seconds.
 
 ### Changed
 
@@ -118,6 +172,42 @@ the public API is what the packages export (see the API reference), the `pme-sce
   on the files the release job built) and the validation workflow's Chromium soak run in the same Playwright
   container (`docker run`, the lockfile's version), so neither runs `playwright install --with-deps` or depends on the
   runner's apt mirror. What the release builds and publishes, and the job timeouts, are unchanged.
+- Fast-forward (owner rulings 2026-10-26, mockups m12 and m13): during the jump the panel leaves one blank line, the
+  title's own line height, between the ringed chevrons and "FAST FORWARD · N MIN"; after it the banner reads two lines
+  only, "Fast-forwarded N min" and the alarm line ("No alarms" or the alarms with their times). The "00:08 → 05:08"
+  line that FX-23 added at rc.3 is gone. The banner's 8-s life, its amber style and its place are unchanged.
+- Showcase MH and haemorrhage cards (E132; the clinical review of the two demo cards, 13 findings, accepted in full by
+  the owner on 2026-10-26; card text and steps only, no engine change). The cards script what the instructor presses
+  and what the engine is told; no volume or constant was tuned to a time.
+  - MH: the crisis step is "MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min,
+    hyperventilate" (vaporiser 0 % at 10 L/min, ventilator 20 × 600 at FiO₂ 1.0, propofol infusion 100 µg/kg/min;
+    charcoal filters are not modelled, and the run sheet says so). Objective 4 asks for a second dose of dantrolene
+    2.5 mg/kg when the EtCO₂ climbs back at normal ventilation; it is met by any dantrolene dose after ventilation
+    back, untimed (a timed rule added a key-times tile and pushed the report's page 1 past its 267-mm bound). Cooling
+    is "Cool: refrigerated saline 20 mL/kg (1.6 L)", pressed only above 38.5 °C, so not on the early-call path; the
+    engine has no cold-fluid input, so the saline enters at the room's 21 °C and "refrigerated" is a label. The early
+    signs are worded as EtCO₂ rising at unchanged ventilation when it should be falling, with a rising heart rate
+    blunted by fentanyl. Take-home line 3 is rewritten and a fourth (aftercare) added: `takeHome` in `pme-scenario/1`
+    now takes up to four lines (was three), and the schema lists the `infusion` event kind.
+  - Haemorrhage: the resuscitation step is "Surgeon controls the bleeding; massive transfusion: 1 L warmed
+    crystalloid, then red cells and plasma by rapid infuser; TXA 1 g" (the bleed set to 0, 1000 mL balanced
+    crystalloid over 90 s, 1200 mL of the engine's whole blood over 144 s, tranexamic acid 1 g, which is logged and
+    has no monitor effect: there is no coagulation model). It was 2 L crystalloid over 3 min and 600 mL of blood; the
+    crystalloid enters at 21 °C, since the schema has no fluid-warmer event. "Pulse check" is "Rhythm check" in every
+    button and state, so in the Debrief too; epinephrine is offered in every CPR state; after the second shock the card
+    keeps CPR to the 2-min rhythm check ("Rhythm check: pulse back, stop CPR"). The objectives are rewritten to the
+    course with every "draft, owner to confirm" removed (objective 3: the return of circulation recognised and CPR
+    stopped within 150 s), and the card has the owner's three take-home lines. This replaces the E120 entry's
+    resuscitation volumes and its "no take-home lines yet".
+  - Measured on kit round A4 (Chromium, kit 503caeab, three phones). MH: early signs 8:14, the call 8:16, dantrolene
+    8:37, ventilation back 13:56, the EtCO₂ above 45 again at 14:10, the second dantrolene 19:14 at EtCO₂ 65; at the
+    end (24:31) EtCO₂ 64, HR 85, ART 96/64, core 36.4 °C; Debrief report 8 A4 pages, learner handout 1 page.
+    Haemorrhage: pulse loss 11:00, asystole 15:34, CPR and transfusion 15:38, shock 1 at 17:46 (asystole), shock 2 at
+    19:53 (an organised rhythm), ROSC 20:57, 64 s after shock 2 as before; CPR stopped at the rhythm check, 21:54; a
+    minute later ART 141/93, HR 74, EtCO₂ 54. Its Debrief has 21 key moments and prints 9 A4 pages; the learner
+    handout stays on 1 page, its long key-moments table set smaller. The new card words are in
+    `docs/showcase/i18n/fa-debrief.json` as English keys awaiting the owner's Persian (`"fa": null`, `reviewed:
+    false`).
 
 ### Fixed
 
@@ -163,6 +253,67 @@ the public API is what the packages export (see the API reference), the `pme-sce
 - The T column: each label over its limits, the value right-aligned beside them, "°C" in the title row. IBP1: the value
   and the bracketed mean in one row; the systolic, the slash and the diastolic each over its own limit pair. NIBP: "mmHg
   NBP inflating" no longer wraps out of the tile while the cuff runs.
+- Debrief (UI review 2026-10-24 #3, #18). The report's and the learner handout's Key moments tables stopped at 12 rows
+  without saying so: the haemorrhage handout stopped before both shocks and the return of circulation. There is no cap now; the tables have one row per marker on the course strip. A handout with more than
+  12 moments prints its table compact, so the haemorrhage handout's 21 moments still fit one A4 page; a longer table
+  continues on page 2 under a repeated header. "Recognition (instructor's tick)" counted from 00:00; it now counts from
+  the state the card's own timed rules count from (MH: the early signs; anaphylaxis: the reaction), when the patient
+  reached it by the tick, and the tile names both ends ("‹time› · ‹mm:ss› early signs → ‹mm:ss› ticked"). Cards whose
+  signs are present from Load (tamponade, bronchospasm) count from the start. The export's key time carries the
+  start's name as an optional `fromLabel` (an addition to `pme-debrief/2`).
+- Instructor and phones (UI review 2026-10-24 #2, #5, #8, #9, #10). One visit to the Ventilator view held every phone
+  ("The ventilator is on the main screen") for the rest of the case: the host now sends its cockpit notices only while
+  the view is on screen, and leaving it releases the phones at once (187 ms in the browser test). The long "What
+  happens next" buttons, cut 27–38 px past the panel at 1280 px, wrap inside it. The toasts no longer cover the
+  monitor: on the Instructor view they sit at the top of the panel, under the bars and the panel's tab strip; on the
+  Monitor view only the alerts (a stopped monitor, a scenario that did not load, the hidden-tab pause, the reload
+  restore, a refused bookmark or fast-forward) and the learner controls' own feedback show. The fast-forward banner
+  and the toasts never print, the banner does not show on the Debrief, and it no longer covers the bars. Saadat-like:
+  the BFI / EtAA row no longer runs its labels together or clips "MAC 0.x" (NMT and AGENTS take their content's width,
+  their digits at the IBP mean's 30 px; on a phone a four-part row wraps into two lines of two): 8 layout faults at
+  1280, 2 at 1920 and 2 on a phone before, 0 on Chromium and WebKit after.
+- Instructor (E128, the owner's test of the E125 kit with his phone, 2026-10-26). **Load** opens the panel's
+  **Scenario** tab, with the case's next-step buttons, whatever tab was open and wherever the load came from (the
+  Scenarios library, the panel's own library, a deep link, a reload's restore, a Remote); a new patient with no case
+  leaves the tab alone. On the Instructor view the toasts sit under the panel's tab strip, so the Log tab stays
+  pressable. Leaving the Ventilator view hands the patient to the engine's ventilator: the cockpit's settings (rate,
+  VT, PEEP, FiO₂, I:E, Pmax; the last measured volume and rate in a pressure or spontaneous mode) go to the engine as
+  one `ventilation` event on the tick after the cockpit's last applied frame, and the hidden cockpit is paused and
+  unlinked. Before, it went on ventilating off screen with frames that never reach a phone, so every phone drifted
+  and resynced about every 4 s for the rest of the case (7 resyncs in 30 s on the owner's repro); now 0 in 30 s, and
+  60 s after the hand-over EtCO₂ 35, SpO₂ 99 and Ppeak 16.8 against 37, 98 and 16.8 with the cockpit still driving.
+  Going back to the view restarts the cockpit at the engine's current ventilator settings; a refused hand-over leaves
+  the cockpit ventilating as before; the hand-over adds no Debrief row.
+- Engine (E129): after a hyperthermic arrest the malignant-hyperthermia muscle no longer heats the body (the owner saw
+  94 °C on the untreated card). Its heat was a fixed source, about 8 × the basal heat, that ran on with no blood flow;
+  the excess muscle heat is oxidative, so it is limited by the share of its oxygen demand the circulation delivers,
+  none with no flow. E131 (under Changed) builds on this: every metabolic heat now follows the delivered oxygen.
+- Instructor and monitor (UI review 2026-10-24 #13, #15, #17, #19, #24–#28, #32). The Oxygen control, with a tube, a
+  bag or a ventilator in use, is disabled with nothing pressed, and says what is true ("Airway device in use
+  (tracheal tube): FiO₂ 50 % from the ventilator.", "Bag-mask in use: FiO₂ 100 % from the bag.") with the FiO₂ the
+  engine reports. Saadat-like NIBP: while the cuff runs, the cuff pressure shows small (the mean's 30 px; 20 px on a
+  phone) over "NBP inflating" / "NBP measuring", without the last result's time. A flashing value dims to no less than
+  3:1 against the background (WCAG 2.2 SC 1.4.3, large text; it went to ≈ 1.1–1.2:1). The course chart's key-moment badges
+  no longer collide or leave the plot. The Saadat-like T1/T2 limits never shrink below 9 px (6.71 px measured at
+  1280 × 800), and a new monitor height refits them. The Monitor view's hover strip sits under the monitor's header,
+  following the header's real box, never over the date, the time or the HR label. Each panel tab keeps its own scroll
+  position (the top on first open). Devices & alarms shows the sensors the monitor has (a card's CO₂ line and arterial
+  line attached) and its alarm list as the tab opens, and says "Alarm sound on at the monitor; this window is muted
+  (Sound off, top right)" when this window's sound is off. A paused session puts **PAUSED** over the monitor on the Instructor and Monitor
+  views and on every phone until Resume; it is never printed.
+- Monitor (oximeter): a detected pleth pulse's amplitude is its own beat's. The perfusion index is the mean amplitude
+  of the last six pulses, each taken between two feet the pulse detector found; when the detector missed a foot, that
+  interval held two pulses and its max − min was neither's. An interval longer than 166 % of the median of the recent
+  intervals now holds a missed pulse (the RR-missed limit of Pan & Tompkins, IEEE Trans Biomed Eng 1985), and the
+  pulse is measured over one median period from its own foot, PI as AC/DC per pulse (Lima et al., Crit Care Med 2002);
+  the median rather than Pan & Tompkins' range-limited mean is [ENG]. In Ali's low-flow case the highest PI after the
+  onset is 0.232 (the row asks < 0.3; it read 0.336, a merged pulse). Across the fidelity and SpO₂ runs, 17 of 56 runs
+  changed some 1-Hz PI rows (at most by 0.20), no PI or SpO₂ flag or pulse rate changed, and no band moved. The
+  pressure lines (ABP, PAP) keep their foot-to-foot beat.
+- CI: the reload browser test holds on the loaded CI WebKit runner, which failed it on all three attempts with no
+  product change (run 40180609451: the phone took longer than 5 s to match, and the 4-s toast had gone before the test
+  looked). It now reads the restore from the Log tab's line ("Restored after reload: Malignant hyperthermia, mm:ss")
+  and allows the phone 20 s on CI and on WebKit (5 s on local Chromium, as before); the 10-s clock bound is unchanged.
 
 ## [1.0.0-rc.3] - 2026-10-23
 
