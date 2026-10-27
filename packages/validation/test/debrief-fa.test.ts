@@ -27,9 +27,15 @@ const withCard = (k: keyof typeof EXPORTS, takeHome?: string[]): any => {
 const section = (html: string): string => /<section id="takehome">.*?<\/section>/s.exec(html)?.[0] ?? '';
 
 describe('scripts/showcase/debrief-fa: the take-home section', () => {
-  it('all nine take-home lines are owner-approved', () => {
-    expect(TABLE.groups.takeHome).toHaveLength(9);
-    expect(TABLE.groups.takeHome.every((e: Used) => e.reviewed === true)).toBe(true);
+  it('the nine translated take-home lines are owner-approved; the five E132 lines await the owner\'s Persian', () => {
+    const lines = TABLE.groups.takeHome as Array<{ en: string; fa: string | null; reviewed: boolean }>;
+    expect(lines).toHaveLength(14);
+    expect(lines.filter((e) => e.fa !== null)).toHaveLength(9);
+    expect(lines.filter((e) => e.fa !== null).every((e) => e.reviewed)).toBe(true);
+    // E132 (2026-10-26): English only, for the owner to write the Persian (never machine-written)
+    expect(lines.filter((e) => e.fa === null).every((e) => !e.reviewed)).toBe(true);
+    const cards = ['mh', 'haemorrhage'].flatMap((k) => read(`apps/demo/src/app/showcase/showcase-${k}.json`).takeHome as string[]);
+    for (const e of lines.filter((x) => x.fa === null)) expect(cards).toContain(e.en);
   });
 
   it('the tamponade record prints its three lines in Persian, the approved first line exactly', () => {
@@ -45,12 +51,14 @@ describe('scripts/showcase/debrief-fa: the take-home section', () => {
     expect(html.indexOf('id="takehome"')).toBeLessThan(html.indexOf('id="notes"'));
   });
 
-  it('the MH and bronchospasm records print their three lines in Persian', () => {
-    for (const k of ['mh', 'bronchospasm'] as const) {
-      const { html, D } = render(withCard(k), '', '1.0.0-rc.3');
-      expect(section(html).match(/<li>/g), k).toHaveLength(3);
-      expect(D.missing.size, k).toBe(0);
-    }
+  it('the bronchospasm record prints its three lines in Persian; MH prints its four, the two E132 lines in English until translated', () => {
+    const b = render(withCard('bronchospasm'), '', '1.0.0-rc.3');
+    expect(section(b.html).match(/<li>/g)).toHaveLength(3);
+    expect(b.D.missing.size).toBe(0);
+    const mh = read('apps/demo/src/app/showcase/showcase-mh.json').takeHome as string[];
+    const m = render(withCard('mh'), '', '1.0.0-rc.3');
+    expect(section(m.html).match(/<li>/g)).toHaveLength(4);
+    expect([...m.D.missing.keys()].filter((k) => mh.includes(k))).toEqual(mh.slice(2));
   });
 
   it('a line the table does not hold prints in English and is listed', () => {

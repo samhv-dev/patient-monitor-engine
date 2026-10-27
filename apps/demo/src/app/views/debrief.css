@@ -191,10 +191,13 @@
   .debrief .db-qs li { break-inside: avoid; margin-bottom: 0.5mm; }
   .debrief .db-ruled { height: 4.5mm; border-bottom: 0.5pt solid #000; }
   /* a long Key moments table (more than 12 rows, views/debrief.ts HANDOUT_ROWS): compact rows, the writing lines a little
-     closer, so the 19 rows of the haemorrhage course keep the handout on one page */
-  .debrief .db-long .db-hmoments { font-size: 8pt; }
+     closer, the section heads and the take-home lines a little tighter, so the haemorrhage course (19 rows on E120; 21
+     rows and three take-home lines since E132) keeps the handout on one page */
+  .debrief .db-long .db-hmoments { font-size: 7.5pt; }
   .debrief .db-long .db-hmoments td, .debrief .db-long .db-hmoments th { padding-top: 0; padding-bottom: 0; line-height: 1.1; }
   .debrief .db-long .db-ruled { height: 4mm; }
+  .debrief .db-long .db-hsec h3 { margin: 2mm 0 0.8mm; }
+  .debrief .db-long .db-take { font-size: 9.5pt; line-height: 1.25; margin: 0; }
   .debrief .db-intro, .debrief .db-next { margin: 1.5mm 0; font-size: 9.5pt; }
   .debrief[data-print='handout'] { font-size: 10pt; }
 }

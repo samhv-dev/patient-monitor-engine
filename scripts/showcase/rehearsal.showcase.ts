@@ -188,7 +188,7 @@ test('Malignant hyperthermia', async ({ page }) => {
   test.setTimeout(40 * 60_000); // 40 sim-min at ×4 = 10 min of wall time, with a margin for a loaded machine
   const browserName = test.info().project.name;
   const r = begin('Malignant hyperthermia', browserName);
-  const CRISIS = 'MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate';
+  const CRISIS = 'MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate';
   try {
     const t0 = await start(page, r, 'Malignant hyperthermia');
     await waitUntilSim(page, t0 + 240);
@@ -209,7 +209,7 @@ test('Malignant hyperthermia', async ({ page }) => {
     await waitUntilSim(page, tC + 60);
     const tD = await press(r, page, 'Dantrolene 2.5 mg/kg');
     await waitUntilSim(page, tC + 90);
-    await press(r, page, 'Cool: 2 L saline at room temperature');
+    await press(r, page, 'Cool: refrigerated saline 20 mL/kg (1.6 L)');
     await waitUntilSim(page, tC + 120);
     await press(r, page, 'Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose');
     await waitUntilSim(page, tC + 150);

@@ -5,9 +5,16 @@
 import { describe, expect, it } from 'vitest';
 import { bands, entered, first, near, pvcEvents, range, runCard, type Act } from './harness.ts';
 
-/** Bands: the measured prototype ± a stated tolerance. Never widened. */
+/** Bands: the measured prototype ± a stated tolerance. Never widened. E132 (the clinical review, owner 2026-10-26: 1 L
+ *  crystalloid + 1.2 L blood instead of 2 L + 0.6 L, source control and TXA, a second epinephrine after the first shock,
+ *  CPR kept to the 2-min rhythm check after the second shock): every timing, the CPP, both shock outcomes and the ROSC
+ *  (62.6 s after the second shock) stayed in their bands; the three numbers 60 s after the stop, which now comes about a
+ *  minute after the ROSC instead of 10 s, were re-centred on this build, same tolerances (old centre → new): sysStop60
+ *  134.5 → 140.2, mapStop60 99 → 109.2, etco2Stop60 48 → 54. Not tuned. Rebased onto main fea0688c (E126, compressions
+ *  paused at each pulse check until the shock): cppAtCheck2 27.75, cppAtShock2 8.92, ROSC 62.6 s after shock 2,
+ *  sysStop60 139.7, mapStop60 109.1, etco2Stop60 54; every band held, none moved. */
 const BANDS = {
-  'S5 haemorrhage E120': { refused: [0, 0], notPressed: [0, 0], hrAt4: [91, 101], sysAt4: [102, 112], hrAt8: [138, 148], sysAt8: [71, 81], mapAt8: [61, 71], junctionalS: [502, 614], peaStateS: [563, 689], pulseLossS: [594, 726], peaOnJunctional: [1, 1], agonalS: [695, 849], asystoleS: [838, 1024], asystoleAfterLossS: [244, 298], cprS: [851, 1041], cppAt60: [15, 23], cppAtCheck1: [23.6, 31.6], myoAtCheck1: [0.5, 0.74], check1IntoCprS: [119, 122], shock1S: [970, 1186], shock1Outcome: [2, 2], myoAtShock2: [0.85, 1], cppAtCheck2: [23, 31], cppAtShock2: [3.8, 11.8], shock2S: [1089, 1331], shock2Outcome: [3, 3], roscAfterShock2S: [60, 75], roscAfterLossS: [552, 674], sysStop60: [129.5, 139.5], mapStop60: [94, 104], hrStop60: [67, 77], etco2Stop60: [44, 52], spo2Stop60: [97, 100], pulseLostAfterStop: [0, 0] },
+  'S5 haemorrhage E120': { refused: [0, 0], notPressed: [0, 0], hrAt4: [91, 101], sysAt4: [102, 112], hrAt8: [138, 148], sysAt8: [71, 81], mapAt8: [61, 71], junctionalS: [502, 614], peaStateS: [563, 689], pulseLossS: [594, 726], peaOnJunctional: [1, 1], agonalS: [695, 849], asystoleS: [838, 1024], asystoleAfterLossS: [244, 298], cprS: [851, 1041], cppAt60: [15, 23], cppAtCheck1: [23.6, 31.6], myoAtCheck1: [0.5, 0.74], check1IntoCprS: [119, 122], shock1S: [970, 1186], shock1Outcome: [2, 2], myoAtShock2: [0.85, 1], cppAtCheck2: [23, 31], cppAtShock2: [3.8, 11.8], shock2S: [1089, 1331], shock2Outcome: [3, 3], roscAfterShock2S: [60, 75], roscAfterLossS: [552, 674], sysStop60: [135.2, 145.2], mapStop60: [104.2, 114.2], hrStop60: [67, 77], etco2Stop60: [50, 58], spo2Stop60: [97, 100], pulseLostAfterStop: [0, 0] },
   // E133 (ventricular ectopy from the physiology), measured on this build: ischaemic PVCs in the junctional minute
   // before the pulse loss (kIsch 0.94 → 0.55), none while pulseless, and PVCs after the return of circulation (pH
   // 7.13–7.15 with the epinephrine reaching the beating heart); the course above is unchanged second by second.
@@ -22,24 +29,27 @@ const BANDS = {
 } as const;
 
 const CPR = 'Start CPR: compressions, bag via the tube 10/min, FiO₂ 1.0';
-const PULSE_CHECK = 'Pulse check';
-/** The E120 kit-round path: oxygen at `o2`, the ventilator at `vent`; the PEA left to turn to asystole; CPR 15 s into
- *  asystole, volume +10 s, epinephrine +10 s, the first pulse check 2 min into CPR; Charge 200 J 3 s into VF and Shock
- *  at +12 s (the Defib tab's events); the second pulse check 2 min after the first shock; "Pulse back" 10 s after the
- *  model's pulse returns. */
+const RHYTHM_CHECK = 'Rhythm check';
+/** The E120 kit-round path after the clinical review (E132): oxygen at `o2`, the ventilator at `vent`; the PEA left to
+ *  turn to asystole; CPR 15 s into asystole, the massive transfusion (source control, 1 L crystalloid, 1.2 L blood, TXA)
+ *  +10 s, epinephrine +10 s, the first rhythm check 2 min into CPR; Charge 200 J 3 s into VF and Shock at +12 s (the
+ *  Defib tab's events); the second epinephrine 70 s after the first shock (3–5 min after the first dose); the second
+ *  rhythm check 2 min after the first shock; CPR kept to the third rhythm check, 2 min after the second shock, where
+ *  "Rhythm check: pulse back, stop CPR" is pressed if the model's pulse is back. */
 const HAEM_PATH = (o2: number, vent: number): Act[] => [
   { press: 'Oxygen by face mask, FiO₂ 1.0', t: o2 },
   { press: 'Intubate and ventilate, FiO₂ 1.0', t: vent },
   { press: CPR, when: (s) => s.state === 'asystole', delayS: 15 },
-  { press: '2 L warmed crystalloid and 2 units of red cells', when: (s) => s.state === 'cpr', delayS: 10 },
+  { press: 'Surgeon controls the bleeding; massive transfusion: 1 L warmed crystalloid, then red cells and plasma by rapid infuser; TXA 1 g', when: (s) => s.state === 'cpr', delayS: 10 },
   { press: 'Epinephrine 1 mg', when: (s) => s.state === 'cprRunning', delayS: 10 },
-  { press: PULSE_CHECK, when: (s) => s.state === 'cprRunning', delayS: 108 },
+  { press: RHYTHM_CHECK, when: (s) => s.state === 'cprRunning', delayS: 108 },
   { press: 'charge', send: { kind: 'defib', action: 'charge', energyJ: 200 }, when: (s) => s.state === 'vf', delayS: 3 },
   { press: 'shock', send: { kind: 'defib', action: 'shock', energyJ: 200 }, when: (s) => s.state === 'vf', delayS: 12 },
-  { press: PULSE_CHECK, when: (s) => s.state === 'postShock1', delayS: 120 },
+  { press: 'Epinephrine 1 mg', when: (s) => s.state === 'postShock1', delayS: 70 },
+  { press: RHYTHM_CHECK, when: (s) => s.state === 'postShock1Running', delayS: 48 },
   { press: 'charge', send: { kind: 'defib', action: 'charge', energyJ: 200 }, when: (s) => s.state === 'vf2', delayS: 3 },
   { press: 'shock', send: { kind: 'defib', action: 'shock', energyJ: 200 }, when: (s) => s.state === 'vf2', delayS: 12 },
-  { press: 'Pulse back: stop CPR', when: (s) => s.state === 'postShock2' && s.pulse, delayS: 10 },
+  { press: 'Rhythm check: pulse back, stop CPR', when: (s) => s.state === 'postShock2', delayS: 120 },
 ];
 
 describe('S5 kept cards on the new physiology', { timeout: 900_000 }, () => {

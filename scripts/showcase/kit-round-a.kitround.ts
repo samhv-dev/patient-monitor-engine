@@ -33,7 +33,10 @@ const load1 = () => Math.round(loadavg()[0]! * 100) / 100;
 const mmss = (s: number) => `${String(Math.floor(Math.max(0, s) / 60)).padStart(2, '0')}:${String(Math.floor(Math.max(0, s) % 60)).padStart(2, '0')}`;
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const n0 = (x: number | null | undefined) => (typeof x === 'number' ? Math.round(x) : '–');
-const CRISIS = 'MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate';
+const CRISIS = 'MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate';
+/** E132: the haemorrhage card after the clinical review. */
+const HAEM_VOLUME = 'Surgeon controls the bleeding; massive transfusion: 1 L warmed crystalloid, then red cells and plasma by rapid infuser; TXA 1 g';
+const HAEM_STOP = 'Rhythm check: pulse back, stop CPR';
 
 type Hook = {
   __pmeApp: {
@@ -864,7 +867,7 @@ for (const path of ['early', 'late', 'early-normo'] as const) {
         await R.untilT(tC + 20);
         await R.press('Dantrolene 2.5 mg/kg', 'dantrolene');
         await R.untilT(tC + 30);
-        await R.press('Cool: 2 L saline at room temperature', 'cooling');
+        await R.press('Cool: refrigerated saline 20 mL/kg (1.6 L)', 'cooling');
         await R.untilT(tC + 40);
         if (path === 'early-normo') {
           // E19 option: wait for "Recovering" (≈ 1.6 min after the call on this build), press ventilation back, THEN span 1
@@ -902,7 +905,7 @@ for (const path of ['early', 'late', 'early-normo'] as const) {
         await R.untilT(tC + 20);
         await R.press('Dantrolene 2.5 mg/kg', 'dantrolene');
         await R.untilT(tC + 30);
-        await R.press('Cool: 2 L saline at room temperature', 'cooling');
+        await R.press('Cool: refrigerated saline 20 mL/kg (1.6 L)', 'cooling');
         await R.untilT(tC + 40);
         await R.press('Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose', 'potassium');
         await R.untilT(tC + 50);
@@ -976,7 +979,7 @@ for (const variant of ['at-hold', 'span-1-at-7-42', 'span-1-at-8-45'] as const) 
       await R.untilT(tC + 20);
       await R.press('Dantrolene 2.5 mg/kg', 'dantrolene');
       await R.untilT(tC + 30);
-      await R.press('Cool: 2 L saline at room temperature', 'cooling');
+      await R.press('Cool: refrigerated saline 20 mL/kg (1.6 L)', 'cooling');
       let ffDone = 0;
       if (variant !== 'at-hold') {
         await R.untilT(variant === 'span-1-at-7-42' ? tC + 40 : 525);
@@ -1040,7 +1043,7 @@ test('MH E22 probe: "ventilation back" offered only in Recovering; gone after a 
     await R.untilT(tC + 20);
     await R.press('Dantrolene 2.5 mg/kg', 'dantrolene');
     await R.untilT(tC + 30);
-    await R.press('Cool: 2 L saline at room temperature', 'cooling');
+    await R.press('Cool: refrigerated saline 20 mL/kg (1.6 L)', 'cooling');
     seen.treating = await offered();
     const tRec = await R.until('recovering', 300);
     seen.recovering = await offered();
@@ -1377,8 +1380,7 @@ test('Q1 30-minute talk on the release build: opening, MH (E119) 14:41, haemorrh
     const tC = await M.press(CRISIS, 'triggerOff');
     await M.untilT(tC + 20);
     await M.press('Dantrolene 2.5 mg/kg', 'dantrolene');
-    await M.untilT(tC + 30);
-    await M.press('Cool: 2 L saline at room temperature', 'cooling');
+    // E132: no cooling on the early-call path (only above 38.5 °C)
     await M.untilT(M.t0 + 560);
     await M.ff(5); // span 1 at 9:20, hyperventilation kept
     await M.untilT(M.t0 + 873);
@@ -1395,6 +1397,7 @@ test('Q1 30-minute talk on the release build: opening, MH (E119) 14:41, haemorrh
     await M.row('19:58 Pause: the presenter line');
     await page.waitForTimeout(3000);
     await M.pauseToggle();
+    await M.press('Dantrolene 2.5 mg/kg', 'dantrolene'); // E132: the EtCO₂ climbing back at normal ventilation: second dose
     await M.ff(5); // span 3
     await M.untilT(M.t0 + 1512);
     await M.pauseToggle();
@@ -1444,7 +1447,7 @@ test('Q1 30-minute talk on the release build: opening, MH (E119) 14:41, haemorrh
     await H.row('state Asystole');
     await H.react();
     const tCpr = await H.press('Start CPR: compressions, bag via the tube 10/min, FiO₂ 1.0', 'cpr');
-    await H.press('2 L warmed crystalloid and 2 units of red cells', 'cprVolume');
+    await H.press(HAEM_VOLUME, 'cprVolume');
     await H.untilT(tCpr + 20);
     await H.press('Epinephrine 1 mg', 'cprEpi');
     await H.speed(4);
@@ -1452,19 +1455,24 @@ test('Q1 30-minute talk on the release build: opening, MH (E119) 14:41, haemorrh
     await H.row('1 min into CPR');
     await H.untilT(tCpr + 118);
     await H.speed(1);
-    const tPc1 = await H.press('Pulse check', 'vf');
+    const tPc1 = await H.press('Rhythm check', 'vf');
     const s1 = await chargeAndShock(H, page);
     await H.speed(4);
     await H.untilT(s1.t + 60);
     await H.row('1 min after the first shock');
+    await H.untilT(s1.t + 70);
+    await H.press('Epinephrine 1 mg', 'postShock1Epi'); // E132: the second dose, 3–5 min after the first
     await H.untilT(s1.t + 118);
     await H.speed(1);
-    const tPc2 = await H.press('Pulse check', 'vf2');
+    const tPc2 = await H.press('Rhythm check', 'vf2');
     const s2 = await chargeAndShock(H, page);
-    const tBack = await H.waitSim(240, async () => (await modelPulse(page)) === true);
+    await H.speed(4);
+    const tBack = await H.waitSim(112, async () => (await modelPulse(page)) === true);
     await H.row('return of circulation (the model)');
+    await H.untilT(s2.t + 118);
+    await H.speed(1);
     await H.react();
-    const tStop = await H.press('Pulse back: stop CPR', 'rosc');
+    const tStop = await H.press(HAEM_STOP, 'rosc'); // E132: recognised at the 2-min rhythm check
     await H.speed(4);
     await H.untilT(tStop + 60);
     await H.row('1 min after stopping CPR');
@@ -1472,7 +1480,7 @@ test('Q1 30-minute talk on the release build: opening, MH (E119) 14:41, haemorrh
     H.r.measures.e120 = {
       states: await stateLog(page), junctionalAt: tJ === null ? null : mmss(tJ), peaStateAt: tPea === null ? null : mmss(tPea), pulseLossAt: tLoss === null ? null : mmss(tLoss),
       idioventricularAt: tAgonal === null ? null : mmss(tAgonal), asystoleAt: tAsy === null ? null : mmss(tAsy), asystoleAfterLossS: tAsy === null || tLoss === null ? null : r1(tAsy - tLoss),
-      cprAt: mmss(tCpr), pulseCheck1At: mmss(tPc1), shock1At: mmss(s1.t), shock1: s1.outcome, pulseCheck2At: mmss(tPc2), shock2At: mmss(s2.t), shock2: s2.outcome,
+      cprAt: mmss(tCpr), rhythmCheck1At: mmss(tPc1), shock1At: mmss(s1.t), shock1: s1.outcome, rhythmCheck2At: mmss(tPc2), shock2At: mmss(s2.t), shock2: s2.outcome,
       roscAt: tBack === null ? null : mmss(tBack), roscAfterShock2S: tBack === null ? null : r1(tBack - s2.t), roscAfterLossS: tBack === null || tLoss === null ? null : r1(tBack - tLoss),
       rhythms: (await rhythmLog(page)).map((x) => `${mmss(x.t)} ${x.id}`), stopAt: mmss(tStop), artMeanMaxInCpr: r1(maxOf(hc, 'abpMean')), etco2MaxInCpr: r1(maxOf(hc, 'etco2')),
     };
@@ -1679,8 +1687,7 @@ test('A4 MH (E119): the induction sequence, early call, three 5-min fast-forward
     const tCall = await R.press(CRISIS, 'triggerOff');
     await R.untilT(tCall + 20);
     await R.press('Dantrolene 2.5 mg/kg', 'dantrolene');
-    await R.untilT(tCall + 30);
-    await R.press('Cool: 2 L saline at room temperature', 'cooling');
+    // E132: no cooling on the early-call path (the cue card: only above 38.5 °C)
     const below40 = await R.waitSim(120, (_n, v) => (v.etco2 ?? 99) < 40);
     await R.row('EtCO₂ below 40');
     await R.ff(5);
@@ -1688,14 +1695,23 @@ test('A4 MH (E119): the induction sequence, early call, three 5-min fast-forward
     const tNormo = (await stateId(page)) === 'recovering' ? await R.press('EtCO₂ normal: ventilation back to 12 × 500', 'normoventilated') : null;
     if (tNormo === null) R.r.notes.push(`after span 1 the state was ${await stateId(page)}: ventilation back NOT pressed`);
     await R.ff(5);
+    // E132 (clinical review finding 1): the EtCO₂ climbing back at normal ventilation is MH not controlled: second dose
+    await R.row('after span 2: the EtCO₂ climbing back at normal ventilation');
+    const tDose2 = await R.press('Dantrolene 2.5 mg/kg', 'dantrolene');
     await R.ff(5);
     await R.pauseToggle();
     await R.row('end: paused');
     const h = await hist(page, tInd, tInt + 60);
+    const afterNormo = tNormo === null ? [] : ((await hist(page, tNormo, Infinity)).filter((x) => typeof x.etco2 === 'number') as Array<{ t: number; etco2: number }>);
+    const above45 = afterNormo.find((x) => x.etco2 > 45) ?? null;
+    const peak = afterNormo.reduce<{ t: number; etco2: number } | null>((b, x) => (!b || x.etco2 > b.etco2 ? x : b), null);
+    const perMin = tNormo === null ? [] : Array.from({ length: Math.floor(((afterNormo.at(-1)?.t ?? tNormo) - tNormo) / 60) + 1 }, (_, m) => afterNormo.find((x) => x.t >= (tNormo as number) + m * 60)).map((x, m) => `+${m} ${x ? Math.round(x.etco2) : '–'}`);
     R.r.measures.a4mh = {
       states: await stateLog(page), inducedAt: mmss(tInd), intubatedAt: mmss(tInt), earlySignsAt: tEarly === null ? null : mmss(tEarly),
       earlyAfterSuxS: tEarly === null ? null : r1(tEarly - tInd), callAt: mmss(tCall), callAfterEarlyS: tEarly === null ? null : r1(tCall - tEarly),
       etco2Below40At: below40 === null ? null : mmss(below40), normoAt: tNormo === null ? null : mmss(tNormo), spo2MinInductionToTube: r1(minOf(h, 'spo2')),
+      etco2Above45AfterNormoAt: above45 === null ? null : mmss(above45.t), dose2At: mmss(tDose2), dose2AfterAbove45S: above45 === null ? null : r1(tDose2 - above45.t),
+      etco2AtDose2: r1(afterNormo.filter((x) => x.t <= tDose2).at(-1)?.etco2), etco2PeakAfterNormo: peak ? `${r1(peak.etco2)} at ${mmss(peak.t)}` : null, etco2PerMinuteAfterNormo: perMin.join(' · '),
     };
     await R.pauseToggle();
     await a4Debrief(R, page, 'mh');
@@ -1783,7 +1799,7 @@ test('A4 haemorrhage (E120): PEA on a junctional rhythm → asystole → CPR, vo
     await shot(R, page, 'e126-2-asystole');
     await R.react();
     const tCpr = await R.press('Start CPR: compressions, bag via the tube 10/min, FiO₂ 1.0', 'cpr');
-    await R.press('2 L warmed crystalloid and 2 units of red cells', 'cprVolume');
+    await R.press(HAEM_VOLUME, 'cprVolume');
     await R.untilT(tCpr + 20);
     await R.press('Epinephrine 1 mg', 'cprEpi');
     await R.speed(4);
@@ -1792,20 +1808,26 @@ test('A4 haemorrhage (E120): PEA on a junctional rhythm → asystole → CPR, vo
     await shot(R, page, 'e126-3-cpr-running');
     await R.untilT(tCpr + 118);
     await R.speed(1);
-    const tPc1 = await R.press('Pulse check', 'vf');
+    const tPc1 = await R.press('Rhythm check', 'vf');
     const s1 = await chargeAndShock(R, page, tPc1, 'e126-4-pulse-check-vf');
     await R.speed(4);
     await R.untilT(s1.t + 60);
     await R.row('1 min after the first shock');
     await shot(R, page, 'e126-5-post-shock-cpr');
+    await R.untilT(s1.t + 70);
+    const tEpi2 = await R.press('Epinephrine 1 mg', 'postShock1Epi'); // E132: the second dose, 3–5 min after the first
     await R.untilT(s1.t + 118);
     await R.speed(1);
-    const tPc2 = await R.press('Pulse check', 'vf2');
+    const tPc2 = await R.press('Rhythm check', 'vf2');
     const s2 = await chargeAndShock(R, page);
-    const tBack = await R.waitSim(240, async () => (await modelPulse(page)) === true);
+    await R.speed(4);
+    const tBack = await R.waitSim(112, async () => (await modelPulse(page)) === true);
     await R.row('return of circulation (the model)');
+    await R.untilT(s2.t + 118);
+    await R.speed(1);
+    await R.row('2 min after the second shock: rhythm check');
     await R.react();
-    const tStop = await R.press('Pulse back: stop CPR', 'rosc');
+    const tStop = await R.press(HAEM_STOP, 'rosc'); // E132: the return of circulation recognised at the 2-min rhythm check
     await R.speed(4);
     await R.untilT(tStop + 60);
     await R.row('1 min after stopping CPR');
@@ -1814,9 +1836,9 @@ test('A4 haemorrhage (E120): PEA on a junctional rhythm → asystole → CPR, vo
     R.r.measures.a4haemorrhage = {
       states: await stateLog(page), junctionalAt: tJ === null ? null : mmss(tJ), peaStateAt: tPea === null ? null : mmss(tPea), pulseLossAt: tLoss === null ? null : mmss(tLoss),
       idioventricularAt: tAgonal === null ? null : mmss(tAgonal), asystoleAt: tAsy === null ? null : mmss(tAsy), asystoleAfterLossS: tAsy === null || tLoss === null ? null : r1(tAsy - tLoss),
-      cprAt: mmss(tCpr), pulseCheck1At: mmss(tPc1), shock1At: mmss(s1.t), shock1: s1.outcome, pulseCheck2At: mmss(tPc2), shock2At: mmss(s2.t), shock2: s2.outcome,
+      cprAt: mmss(tCpr), rhythmCheck1At: mmss(tPc1), shock1At: mmss(s1.t), shock1: s1.outcome, epinephrine2At: mmss(tEpi2), rhythmCheck2At: mmss(tPc2), shock2At: mmss(s2.t), shock2: s2.outcome,
       roscAt: tBack === null ? null : mmss(tBack), roscAfterShock2S: tBack === null ? null : r1(tBack - s2.t), roscAfterLossS: tBack === null || tLoss === null ? null : r1(tBack - tLoss),
-      rhythms: (await rhythmLog(page)).map((x) => `${mmss(x.t)} ${x.id}`), stopAt: mmss(tStop), artMeanMaxInCpr: r1(maxOf(hc, 'abpMean')), etco2MaxInCpr: r1(maxOf(hc, 'etco2')),
+      rhythms: (await rhythmLog(page)).map((x) => `${mmss(x.t)} ${x.id}`), stopAt: mmss(tStop), stopAfterRoscS: tBack === null ? null : r1(tStop - tBack), artMeanMaxInCpr: r1(maxOf(hc, 'abpMean')), etco2MaxInCpr: r1(maxOf(hc, 'etco2')),
     };
     await a4Debrief(R, page, 'haemorrhage');
   } finally {
