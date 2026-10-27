@@ -23,7 +23,7 @@ regenerations. The list of known misses across modules is [known-misses.md](../v
 | [Monitor measurements (device layer)](monitor.md) | 15 | 30 | 7 |
 | [Alarms](alarms.md) | 4 | 15 | 0 |
 | [Defibrillator and pacer](defib-pacer.md) | 4 | 8 | 0 |
-| [Ventilator](ventilator.md) | 15 | 22 | 5 |
+| [Ventilator](ventilator.md) | 15 | 22 | 6 |
 | [Engine runtime: loop, clock, commands, snapshots](engine-runtime.md) | 10 | 15 | 0 |
 | [Control: commands, transports, scenarios](control.md) | 38 | 60 | 0 |
 | [Presentation: renderer, audio, skins, the app](presentation.md) | 165 | 214 | 2 |

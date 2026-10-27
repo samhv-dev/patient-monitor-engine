@@ -14,7 +14,7 @@ Regenerate the first two tables with `node --experimental-strip-types scripts/de
 fails when a literal-titled expected failure or skip is missing from this page. It cannot see conditional forms such
 as `(cond ? it.fails : it)(…)`, nor the lung-signature `KNOWN` list; those are listed by hand below.
 
-On this tree there are **172 expected-failure calls**, all read by the lister: 171 `it.fails` (the bronchospasm row of
+On this tree there are **173 expected-failure calls**, all read by the lister: 172 `it.fails` (the bronchospasm row of
 `packages/ventilator/test/link-parity.test.ts` is a literal `it.fails`) and 1 `it.fails.each` with three cases
 (`packages/engine-core/test/engine/fidelity-arrest.test.ts`), and **1 skipped test**. "Tracked in" names the gate note (and its section)
 that records the miss with its number; the open questions it cites (Q…, R-…, E-…) are listed in that note.
@@ -194,6 +194,7 @@ that records the miss with its number; the open questions it cites (Q…, R-…,
 | `packages/ventilator/test/link-r27.test.ts` | ARDS moderate PEEP 5 → 15 (FiO2 0.6): SpO2 rises ≥ 5 over 1–4 min (recruitment), falls again within 60 s of PEEP 5 (measured +2.0 / 0.0 on the lungs) | `docs/gates/stage-v1.md` §7 "`it.fails`" (Decision 18) |
 | `packages/ventilator/test/link-r27.test.ts` | FiO2 0.4: SpO2 rises ≥ 2 (measured SpO2 98 → 98, SaO2 98.7 → 99.1: the lung oedema shunt does not desaturate) | `docs/gates/stage-v1.md` §7 "`it.fails`" (Decision 18) |
 | `packages/ventilator/test/link-r27.test.ts` | room air (FiO2 0.21): SpO2 rises ≥ 2 (measured SpO2 94.0 → 95.0, SaO2 94.9 → 95.5: shunt 0.15 → 0.10 moves SpO2 by 1) | `docs/gates/stage-v1.md` §7 "`it.fails`" (Decision 18) |
+| `packages/ventilator/test/link-r36.test.ts` | PH crisis: PEEP 15 + RR 8 → EtCO2 rises ≥ 5 mmHg, CVP rises ≥ 1.5, MAP falls ≥ 8 (on the engine's `ph` lungs: +5.0 / +2.1 / −11.1; EtCO2 on the band edge, calibration row) — measured +4.74 after E134 | `CHANGELOG.md` [Unreleased] E134 (the PR "anaerobic metabolism with its limits and heat, muscle-injury potassium, MH severity as a scenario input (E134)") |
 | `packages/ventilator/test/pleural.test.ts` | reference run: Ppeak rises 10–20 cmH2O over the normal row (measured +21.6: 45.4 vs 23.8) | `docs/gates/stage-v1.md` §7 "`it.fails`" (Decision 16) |
 
 ## Tests not run (`it.skip`, `test.skip`, `.todo`)

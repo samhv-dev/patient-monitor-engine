@@ -8,7 +8,7 @@ and the test is marked as an expected failure with the measured value in its tit
 module that owns it, until the mechanism is fixed. The release-candidate view of the same list, with where each
 item is tracked, is [known deviations](../guides/known-deviations.md); each module is described in [docs/model](../model/README.md).
 
-**172 known misses.** Split from the test titles: a band recognised in the target of 162, a measured value in 161, a source in 63; "—" = not stated in a form the generator reads.
+**173 known misses.** Split from the test titles: a band recognised in the target of 163, a measured value in 162, a source in 63; "—" = not stated in a form the generator reads.
 
 **The bands themselves were audited** against the literature (target audit, 2026-10-11; the rows are in [target-audit.tsv](target-audit.tsv)): 147 of these misses carry an audit verdict — RIGHT 30, TOO NARROW 27, TOO WIDE 3, MIS-SPECIFIED 60, UNSUPPORTED 27 (a miss can carry several rows). RIGHT: the band matches its source; TOO NARROW / TOO WIDE: the source supports a wider / narrower band; MIS-SPECIFIED: the band measures something other than its source did; UNSUPPORTED: no source found for it. A proposed band is evidence for an owner ruling, not a change: until a ruling, the test keeps its band. The audit itself, row by row with its evidence, is [published here](target-audit/30-target-audit.md) with its CSV twin and synthesis; the numbered evidence notes it cites as "research/NN" live in the project's research folder outside the repository.
 
@@ -26,7 +26,7 @@ item is tracked, is [known deviations](../guides/known-deviations.md); each modu
 | [Anaesthetic depth, ventilatory drive and neuromuscular block](#neuro) | 6 |
 | [Pharmacology: PK, PD and the drug rows](#pharmacology) | 35 |
 | [Monitor measurements (device layer)](#monitor) | 8 |
-| [Ventilator](#ventilator) | 5 |
+| [Ventilator](#ventilator) | 6 |
 | [Presentation: renderer, audio, skins, the app](#presentation) | 5 |
 | [Whole-patient scenario suites](#integration) | 11 |
 
@@ -288,6 +288,7 @@ Module page: [docs/model/ventilator.md](../model/ventilator.md)
 | ARDS moderate PEEP 5 → 15 (FiO2 0.6): SpO2 rises ≥ 5 over 1–4 min (recruitment), falls again within 60 s of PEEP 5 | +2.0 / 0.0 | — | MIS-SPECIFIED ([audit row 111](../../docs/validation/target-audit/30-target-audit.md#row-111)) | re-specify on shunt/PaO2: venous admixture −15–30 % (or SpO2 +1.5–3 from 95 % at FiO2 0.6) by 5–15 min of PEEP 15; SpO2 falls back within 5 min of PEEP 5; keep CO falls | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
 | FiO2 0.4: SpO2 rises ≥ 2 | SpO2 98 → 98, SaO2 98.7 → 99.1 | — | MIS-SPECIFIED ([audit row 112](../../docs/validation/target-audit/30-target-audit.md#row-112)) | drop the SpO2 band at FiO2 0.4 (keep the passing shunt/PCWP check), or assert PaO2/FiO2 +30–50 % at ≥ 10 min in a profile with P/F < 200 | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
 | room air (FiO2 0.21): SpO2 rises ≥ 2 | SpO2 94.0 → 95.0, SaO2 94.9 → 95.5 | — | MIS-SPECIFIED ([audit row 113](../../docs/validation/target-audit/30-target-audit.md#row-113)) | for shunt 0.15 → 0.10 on air: SaO2 +1–2 points; or re-base on a sicker profile (shunt ≥ 0.20) and assert P/F +30–50 % at ≥ 10 min | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
+| PH crisis: PEEP 15 + RR 8 → EtCO2 rises ≥ 5 mmHg, CVP rises ≥ 1.5, MAP falls ≥ 8 (on the engine's `ph` lungs: +5.0 / +2.1 / −11.1; EtCO2 on the band edge, calibration row) | +4.74 | — | not audited | — | [`link-r36.test.ts`](../../packages/ventilator/test/link-r36.test.ts) |
 | reference run: Ppeak rises 10–20 cmH2O over the normal row | +21.6 | — | UNSUPPORTED ([audit row 114](../../docs/validation/target-audit/30-target-audit.md#row-114)) | assert a floor only (Ppeak +≥ 10 cmH2O) until a source is found, or +10–25 [ENG] | [`pleural.test.ts`](../../packages/ventilator/test/pleural.test.ts) |
 
 <a id="presentation"></a>
