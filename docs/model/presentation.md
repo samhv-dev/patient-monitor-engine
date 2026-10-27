@@ -594,7 +594,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 
 ## Tests
 
-801 tests in 214 files; 2 expected failures, 0 skipped.
+805 tests in 214 files; 2 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -623,7 +623,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 | [`apps/demo/e2e/controller-latency.e2e.ts`](../../apps/demo/e2e/controller-latency.e2e.ts) | 1 | 0 | 0 |
 | [`apps/demo/e2e/controller-pages.e2e.ts`](../../apps/demo/e2e/controller-pages.e2e.ts) | 3 | 0 | 0 |
 | [`apps/demo/e2e/controller-screens.e2e.ts`](../../apps/demo/e2e/controller-screens.e2e.ts) | 1 | 0 | 0 |
-| [`apps/demo/e2e/debrief.e2e.ts`](../../apps/demo/e2e/debrief.e2e.ts) | 5 | 0 | 0 |
+| [`apps/demo/e2e/debrief.e2e.ts`](../../apps/demo/e2e/debrief.e2e.ts) | 6 | 0 | 0 |
 | [`apps/demo/e2e/device-layer-page.e2e.ts`](../../apps/demo/e2e/device-layer-page.e2e.ts) | 9 | 0 | 0 |
 | [`apps/demo/e2e/drug-evidence-page.e2e.ts`](../../apps/demo/e2e/drug-evidence-page.e2e.ts) | 2 | 0 | 0 |
 | [`apps/demo/e2e/drug-pkpd-page.e2e.ts`](../../apps/demo/e2e/drug-pkpd-page.e2e.ts) | 2 | 0 | 0 |
@@ -682,7 +682,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 | [`apps/demo/src/app/console-pages.dom.test.ts`](../../apps/demo/src/app/console-pages.dom.test.ts) | 11 | 0 | 0 |
 | [`apps/demo/src/app/copy.test.ts`](../../apps/demo/src/app/copy.test.ts) | 4 | 0 | 0 |
 | [`apps/demo/src/app/debrief-moments.test.ts`](../../apps/demo/src/app/debrief-moments.test.ts) | 14 | 0 | 0 |
-| [`apps/demo/src/app/debrief-showcase.test.ts`](../../apps/demo/src/app/debrief-showcase.test.ts) | 5 | 0 | 0 |
+| [`apps/demo/src/app/debrief-showcase.test.ts`](../../apps/demo/src/app/debrief-showcase.test.ts) | 8 | 0 | 0 |
 | [`apps/demo/src/app/debrief.test.ts`](../../apps/demo/src/app/debrief.test.ts) | 21 | 0 | 0 |
 | [`apps/demo/src/app/describe-ventilation.test.ts`](../../apps/demo/src/app/describe-ventilation.test.ts) | 5 | 0 | 0 |
 | [`apps/demo/src/app/drugs.test.ts`](../../apps/demo/src/app/drugs.test.ts) | 2 | 0 | 0 |
