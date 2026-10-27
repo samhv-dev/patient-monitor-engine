@@ -455,13 +455,12 @@ Exported without a doc comment: `createBrain`, `giveOsmotherapy`, `beatShapeArea
 | check 20 (MODELED hfref): low-output premise, UOP 0.1–0.15; dobutamine → CO +20–40 %, UOP 0.2–0.3 in 30–60 min | — | — | UNSUPPORTED ([audit row 129](../../docs/validation/target-audit/30-target-audit.md#row-129)) | premise UOP < 0.3 (oliguric low-output state); dobutamine 5: CO +20-50 %, UOP rises >= +0.1 mL/kg/h (or >= +50 %) by 60 min, no 0.3 ceiling | [`organs-renal.test.ts`](../../packages/engine-core/test/engine/organs-renal.test.ts) |
 | check 20 (MANUAL contractility): premise UOP 0.1–0.15; dobutamine → CO +20–40 %, UOP 0.2–0.3 in 30–60 min | — | — | UNSUPPORTED ([audit row 130](../../docs/validation/target-audit/30-target-audit.md#row-130)) | as :39 (premise UOP < 0.3; UOP rise >= +0.1 by 60 min; no ceiling) | [`organs-renal.test.ts`](../../packages/engine-core/test/engine/organs-renal.test.ts) |
 | hyperventilation: ICP falls no more than 30 % by the time PaCO2 reaches 30 | 30.5 % | — | TOO NARROW ([audit row 10](../../docs/validation/target-audit/30-target-audit.md#row-10)) | ICP -20-45 % at PaCO2 30 from ~40 with ICP ~20 | [`organs-tbi-treatment.test.ts`](../../packages/engine-core/test/engine/organs-tbi-treatment.test.ts) |
-| Cushing through circ.ext.rSysF: HR −20–40 % from the baroreflex | ratio 0.803 | — | UNSUPPORTED ([audit row 9](../../docs/validation/target-audit/30-target-audit.md#row-9)) | direction only: HR at end <= baseline (ratio <= 0.9), with an initial tachycardia allowed; or keep 0.6-0.85 as an explicit [ENG] teaching choice | [`organs-tbi.test.ts`](../../packages/engine-core/test/engine/organs-tbi.test.ts) |
 | check 18: PaCO2 25 → CBF 35–40 % of the anaesthetised baseline (model at CVP 6) | — | — | TOO NARROW ([audit row 8](../../docs/validation/target-audit/30-target-audit.md#row-8)) | 0.35-0.55 of the anaesthetised baseline | [`model.test.ts`](../../packages/engine-core/test/l2/brain/model.test.ts) |
 | IAP 25: UOP < 0.1 mL/kg/h | 0.69 | WSACS | TOO NARROW ([audit row 131](../../docs/validation/target-audit/30-target-audit.md#row-131)) | kidney-only rig at MAP 93: UOP <= 0.3 mL/kg/h (<= 30 % of control) at IAP 25; keep < 0.1 (anuria) for IAP >= 30-40 or APP < 50 | [`filtration.test.ts`](../../packages/engine-core/test/l2/renal/filtration.test.ts) |
 
 ## Tests
 
-105 tests in 30 files; 13 expected failures, 0 skipped.
+105 tests in 30 files; 12 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -475,7 +474,7 @@ Exported without a doc comment: `createBrain`, `giveOsmotherapy`, `beatShapeArea
 | [`engine/organs-renal.test.ts`](../../packages/engine-core/test/engine/organs-renal.test.ts) | 3 | 2 | 0 |
 | [`engine/organs-soak.test.ts`](../../packages/engine-core/test/engine/organs-soak.test.ts) | 3 | 0 | 0 |
 | [`engine/organs-tbi-treatment.test.ts`](../../packages/engine-core/test/engine/organs-tbi-treatment.test.ts) | 6 | 1 | 0 |
-| [`engine/organs-tbi.test.ts`](../../packages/engine-core/test/engine/organs-tbi.test.ts) | 6 | 1 | 0 |
+| [`engine/organs-tbi.test.ts`](../../packages/engine-core/test/engine/organs-tbi.test.ts) | 6 | 0 | 0 |
 | [`engine/organs-wiring.test.ts`](../../packages/engine-core/test/engine/organs-wiring.test.ts) | 3 | 0 | 0 |
 | [`l2/brain/cushing.test.ts`](../../packages/engine-core/test/l2/brain/cushing.test.ts) | 3 | 0 | 0 |
 | [`l2/brain/flow.test.ts`](../../packages/engine-core/test/l2/brain/flow.test.ts) | 5 | 0 | 0 |

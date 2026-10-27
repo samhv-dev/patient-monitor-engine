@@ -541,9 +541,11 @@ Exported without a doc comment: `readEndoInputs`, `createConditions`, `createEnd
 
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
-| MH severity 1 at fixed ventilation: EtCO2 rising 3–5 mmHg/min in minutes 10–15 | 6.0 | tables §7 check 21 | not audited | — | [`endo-acceptance.test.ts`](../../packages/engine-core/test/engine/endo-acceptance.test.ts) |
-| MH severity 1 at fixed ventilation: core +1 °C by 15 min | −0.14 °C | tables §7 check 21 | not audited | — | [`endo-acceptance.test.ts`](../../packages/engine-core/test/engine/endo-acceptance.test.ts) |
+| MH severity 1 at fixed ventilation: HR +30 bpm, K 5.5–6.5 by 20 min | K 4.7 | tables §7 check 21 | not audited | — | [`endo-acceptance.test.ts`](../../packages/engine-core/test/engine/endo-acceptance.test.ts) |
+| MH severity 1 at fixed ventilation: EtCO2 rising 3–5 mmHg/min in minutes 10–15 | 5.6 | tables §7 check 21 | not audited | — | [`endo-acceptance.test.ts`](../../packages/engine-core/test/engine/endo-acceptance.test.ts) |
+| MH severity 1 at fixed ventilation: core +1 °C by 15 min | −0.08 °C | tables §7 check 21 | not audited | — | [`endo-acceptance.test.ts`](../../packages/engine-core/test/engine/endo-acceptance.test.ts) |
 | MH + dantrolene 2.5 mg/kg at 20 min, fixed MV: EtCO2 turns 5–10 min after the dose | +4.0 min | tables §7 check 21 | not audited | — | [`endo-acceptance.test.ts`](../../packages/engine-core/test/engine/endo-acceptance.test.ts) |
+| E117: the HR is rising before the EtCO2 leaves its baseline and is ≥ 120 by the time the EtCO2 passes 55 mmHg (constant ventilation) | HR 119.7 at 7.1 min | — | not audited | — | [`endo-acceptance.test.ts`](../../packages/engine-core/test/engine/endo-acceptance.test.ts) |
 | warm CO 7–9 L/min | 5.0 | — | MIS-SPECIFIED ([audit row 46](../../docs/validation/target-audit/30-target-audit.md#row-46)) | unresuscitated warm phase: CO 4-6.5 L/min; after 30 mL/kg crystalloid: CO 7-9 L/min | [`endo-circ-acceptance.test.ts`](../../packages/engine-core/test/engine/endo-circ-acceptance.test.ts) |
 | warm SVR 500–700 dyn·s/cm⁵ | 861 | — | MIS-SPECIFIED ([audit row 47](../../docs/validation/target-audit/30-target-audit.md#row-47)) | unresuscitated: SVR 700-1000; after 30 mL/kg: SVR 500-700 (pair with the CO row) | [`endo-circ-acceptance.test.ts`](../../packages/engine-core/test/engine/endo-circ-acceptance.test.ts) |
 | insulin 10 units IV, awake: nadir at 20–30 min (insulin-tolerance test) | 13.3 min | — | RIGHT ([audit row 136](../../docs/validation/target-audit/30-target-audit.md#row-136)) | keep 20-30 min (at most widen to 15-35 min for sampling resolution); retire research/12's 40-60 | [`endo-insulin-dextrose.test.ts`](../../packages/engine-core/test/engine/endo-insulin-dextrose.test.ts) |
@@ -564,12 +566,12 @@ Exported without a doc comment: `readEndoInputs`, `createConditions`, `createEnd
 
 ## Tests
 
-186 tests in 39 files; 20 expected failures, 0 skipped.
+186 tests in 39 files; 22 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
 | [`engine/cat-reserve-engine.test.ts`](../../packages/engine-core/test/engine/cat-reserve-engine.test.ts) | 1 | 0 | 0 |
-| [`engine/endo-acceptance.test.ts`](../../packages/engine-core/test/engine/endo-acceptance.test.ts) | 12 | 3 | 0 |
+| [`engine/endo-acceptance.test.ts`](../../packages/engine-core/test/engine/endo-acceptance.test.ts) | 12 | 5 | 0 |
 | [`engine/endo-adrenal.test.ts`](../../packages/engine-core/test/engine/endo-adrenal.test.ts) | 3 | 0 | 0 |
 | [`engine/endo-circ-acceptance.test.ts`](../../packages/engine-core/test/engine/endo-circ-acceptance.test.ts) | 7 | 2 | 0 |
 | [`engine/endo-insulin-dextrose.test.ts`](../../packages/engine-core/test/engine/endo-insulin-dextrose.test.ts) | 3 | 1 | 0 |

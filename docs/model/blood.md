@@ -409,9 +409,11 @@ Exported without a doc comment: `hco3Of`, `circOf`, `setCircViscosity`, `cohbWas
 | Hb 5 vs 15: CO ≥ +30 % (Weiskopf CI +66 %) | +25 % | — | TOO WIDE ([audit row 115](../../docs/validation/target-audit/30-target-audit.md#row-115)) | CO ratio 1.50-2.00 for Hb 15 -> 5 awake (two-sided); revisit the sibling HR ceiling (1.6) against Weiskopf 2003 (+71 % extrapolated) | [`blood-anaemia-co.test.ts`](../../packages/engine-core/test/engine/blood-anaemia-co.test.ts) |
 | class III, then RL 2 L: urine 30–60 min after the end ≥ 0.5 mL/kg/h | 0.33 | — | MIS-SPECIFIED ([audit row 124](../../docs/validation/target-audit/30-target-audit.md#row-124)) | UOP 30-60 min after the end 0.2-0.5 mL/kg/h and >= 0.1 above the unresuscitated control; keep >= 0.5 only if the arm is re-specified to full replacement (e.g. 3:1 crystalloid or blood) | [`blood-fluid-kinetics.test.ts`](../../packages/engine-core/test/engine/blood-fluid-kinetics.test.ts) |
 | 1 g/kg: osmolality +20–30 mOsm/kg at 15 min | +8.7 | RH-08c | MIS-SPECIFIED ([audit row 126](../../docs/validation/target-audit/30-target-audit.md#row-126)) | +8 to +20 mOsm/kg at 15 min after a 1 g/kg dose (or +12 to +25 as the end-of-infusion peak if read as a peak) | [`blood-mannitol.test.ts`](../../packages/engine-core/test/engine/blood-mannitol.test.ts) |
-| iCa nadir 0.6–0.95 and BE ≤ −10 | iCa 0.958, BE −0.2 | ATLS class IV | TOO NARROW ([audit row 119](../../docs/validation/target-audit/30-target-audit.md#row-119)) | iCa nadir 0.6-1.0 (keep 0.6-0.95 if the owner wants Ho & Leonard's 1-SD band) and BE nadir <= -6 (class III-IV boundary) | [`blood-massive-transfusion.test.ts`](../../packages/engine-core/test/engine/blood-massive-transfusion.test.ts) |
+| no arrest (was asystole at 2430 s: the old rows took iCa to the 0.30 floor), lactate ≥ 4, iCa falls with the FFP citrate | it arrests again | — | not audited | — | [`blood-massive-transfusion.test.ts`](../../packages/engine-core/test/engine/blood-massive-transfusion.test.ts) |
+| iCa nadir 0.6–0.95 and BE ≤ −10 | iCa 1.156, BE −5.2 | ATLS class IV | TOO NARROW ([audit row 119](../../docs/validation/target-audit/30-target-audit.md#row-119)) | iCa nadir 0.6-1.0 (keep 0.6-0.95 if the owner wants Ho & Leonard's 1-SD band) and BE nadir <= -6 (class III-IV boundary) | [`blood-massive-transfusion.test.ts`](../../packages/engine-core/test/engine/blood-massive-transfusion.test.ts) |
 | 20 mmol over 1 h raises plasma K by 0.15–0.35 mmol/L | +0.77 at the end of the infusion and +0.13 two hours later | Miller 10e ch. 46 [TXT, grade C] | MIS-SPECIFIED ([audit row 117](../../docs/validation/target-audit/30-target-audit.md#row-117)) | end-of-infusion rise 0.2-0.6 mmol/L (normokalaemic adult, 20 mmol/1 h); keep Kruse's 0.25 only as a hypokalaemic, post-infusion value | [`blood-potassium-chloride.test.ts`](../../packages/engine-core/test/engine/blood-potassium-chloride.test.ts) |
 | 2 L 0.9 % saline in 30 min under GA: Cl +6–8 and BE −3 to −5 at 60 min (annex D3) | — | — | TOO NARROW ([audit row 116](../../docs/validation/target-audit/30-target-audit.md#row-116)) | Cl +4 to +7 and BE -1.5 to -4 at 60 min (same for core.test.ts:86) | [`blood-sanity-acid.test.ts`](../../packages/engine-core/test/engine/blood-sanity-acid.test.ts) |
+| untreated VF 30 min (ventilator on): lactate 8–12, pH ≤ 7.10 and ≥ 6.8 (annex D1) | lactate 5.6 and pH 6.75 | — | not audited | — | [`blood-sanity-acid.test.ts`](../../packages/engine-core/test/engine/blood-sanity-acid.test.ts) |
 | warm septic shock + 30 mL/kg: extra EVLWI more than healthy and PaO2 falls | +0.90 vs +1.68 mL/kg, PaO2 +10 | — | MIS-SPECIFIED ([audit row 125](../../docs/validation/target-audit/30-target-audit.md#row-125)) | (a) state: septic EVLWI above healthy before the load; (b) load: Delta EVLWI septic within about +/-1 mL/kg of healthy (no ordering required); (c) PaO2/FiO2 falls only when Delta EVLWI >= 10 % | [`blood-septic-leak.test.ts`](../../packages/engine-core/test/engine/blood-septic-leak.test.ts) |
 | acute respiratory alkalosis reaches the tables’ 0.2 mmol/L per mmHg (40 → 30) | — | — | TOO NARROW ([audit row 120](../../docs/validation/target-audit/30-target-audit.md#row-120)) | 0.14-0.22 mmol/L per mmHg (40 -> 30) | [`acid-base.test.ts`](../../packages/engine-core/test/l2/blood/acid-base.test.ts) |
 | massive transfusion: iCa −0.1 per unit-per-5-min of rate (tables citrateUnit, Q46) | 1.137 vs 1.033 | — | MIS-SPECIFIED ([audit row 121](../../docs/validation/target-audit/30-target-audit.md#row-121)) | RBC-only (SAGM) 10 u in 30 min: iCa 1.05-1.20 (small fall); keep a rate rule only for whole blood or FFP, sized on Denlinger (-15 to -40 % transient at 50-150 ml/70 kg/min) | [`core.test.ts`](../../packages/engine-core/test/l2/blood/core.test.ts) |
@@ -419,7 +421,7 @@ Exported without a doc comment: `hco3Of`, `circOf`, `setCircViscosity`, `cohbWas
 
 ## Tests
 
-144 tests in 42 files; 10 expected failures, 0 skipped.
+144 tests in 42 files; 12 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -432,11 +434,11 @@ Exported without a doc comment: `hco3Of`, `circOf`, `setCircViscosity`, `cohbWas
 | [`engine/blood-hyperk.test.ts`](../../packages/engine-core/test/engine/blood-hyperk.test.ts) | 2 | 0 | 0 |
 | [`engine/blood-k-rhythm.test.ts`](../../packages/engine-core/test/engine/blood-k-rhythm.test.ts) | 3 | 0 | 0 |
 | [`engine/blood-mannitol.test.ts`](../../packages/engine-core/test/engine/blood-mannitol.test.ts) | 2 | 1 | 0 |
-| [`engine/blood-massive-transfusion.test.ts`](../../packages/engine-core/test/engine/blood-massive-transfusion.test.ts) | 2 | 1 | 0 |
+| [`engine/blood-massive-transfusion.test.ts`](../../packages/engine-core/test/engine/blood-massive-transfusion.test.ts) | 2 | 2 | 0 |
 | [`engine/blood-o2-extraction.test.ts`](../../packages/engine-core/test/engine/blood-o2-extraction.test.ts) | 1 | 0 | 0 |
 | [`engine/blood-oxygen.test.ts`](../../packages/engine-core/test/engine/blood-oxygen.test.ts) | 2 | 0 | 0 |
 | [`engine/blood-potassium-chloride.test.ts`](../../packages/engine-core/test/engine/blood-potassium-chloride.test.ts) | 4 | 1 | 0 |
-| [`engine/blood-sanity-acid.test.ts`](../../packages/engine-core/test/engine/blood-sanity-acid.test.ts) | 5 | 1 | 0 |
+| [`engine/blood-sanity-acid.test.ts`](../../packages/engine-core/test/engine/blood-sanity-acid.test.ts) | 5 | 2 | 0 |
 | [`engine/blood-sanity-haem.test.ts`](../../packages/engine-core/test/engine/blood-sanity-haem.test.ts) | 2 | 0 | 0 |
 | [`engine/blood-septic-leak.test.ts`](../../packages/engine-core/test/engine/blood-septic-leak.test.ts) | 2 | 1 | 0 |
 | [`l2/blood/acid-base.test.ts`](../../packages/engine-core/test/l2/blood/acid-base.test.ts) | 8 | 1 | 0 |
