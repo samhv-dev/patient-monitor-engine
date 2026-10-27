@@ -53,7 +53,8 @@ own cue card.
    footers).** [Q1-2D; A4]
 9. **Saadat-style monitor, and no style change during the talk** (E20): after a change the AGENTS tile reads "---"
    [MEAS §8; Q1-2D].
-10. **Say the known misses yourself**: MH death too fast (untreated); shock decompensation and reflex
+10. **Say the known misses yourself**: untreated MH is too slow to kill on this build (no arrest within 51 min of the
+    succinylcholine, core 37.3 °C) [`docs/validation/known-misses.md`, S1 untreated, E131]; shock decompensation and reflex
     bradycardia not modelled; during CPR the SpO₂ tile reads 99 and the HR counts the compressions (both blank at the
     paused rhythm checks, E126) [UIR #6, #7]; asystole never regains a pulse in this engine (why the card inserts VF); the post-ROSC patient is too well
     (*"the model recovers faster than a patient would"*); the premedication over-sedates (RR 6); the charcoal filters,
