@@ -7,7 +7,7 @@
 // p. 57); otherwise it is a STATIC pressure, shown per skin: S/D/M kept with the pulse "-?-" (Philips, [S2] p. 57) or
 // the mean only with S/D invalid (Saadat, research/06 §4.1: "static pressure hides SYS/DIA and shows a larger mean").
 import type { Measured } from '../../types.ts';
-import { createPulseDet, pulseRate, pulseStep, type PulseDetState } from '../pulse/detector.ts';
+import { createPulseDet, DET_RATE, pulseRate, pulseStep, type PulseDetState } from '../pulse/detector.ts';
 
 export const AVG_BEATS = 6; // 4–8 beats (brief §4.2) [ENG]
 const RING = 400; // 3.2 s at 125 Hz: the longest beat measured (HR ≥ 19)
@@ -26,6 +26,20 @@ export const REPULSE_S = 3;
  * 3–4 mmHg flipped pulsatile ↔ static ≈ 10 times in 11 min on the single 3 mmHg threshold) [ENG].
  */
 export const REPULSE_AMP_MMHG = 4;
+/**
+ * A pulse's own window (pleth). The perfusion index is the pulsatile (AC) over the non-pulsatile (DC) signal of ONE
+ * pulse (Lima AP, Beelen P, Bakker J, Crit Care Med 2002;30:1210–1213: PI = AC/DC × 100 per pulse; the Masimo SET
+ * definition). When the detector misses a foot, the interval to the next found foot spans two or more pulses and its
+ * max − min is not one pulse's amplitude (in a low-flow tamponade run the interval 755.78–758.34 s spanned two pulses
+ * and read 0.336 — a missed pulse's peak over the found one's trough — among pulses of 0.20–0.25; the found pulse's own
+ * amplitude is 0.168). The interval holds a missed beat when it exceeds the RR MISSED LIMIT, 166 % of the average of
+ * the recent intervals (Pan J & Tompkins WJ, IEEE Trans Biomed Eng 1985;32:230–236, the QRS detector's search-back
+ * rule); the pulse is then measured over one average period from its own foot — its upstroke, peak and run-off, as a
+ * pulse whose next foot had been found. The average is the median of the last ≤ 8 intervals before this one [ENG: the
+ * median rather than Pan–Tompkins' range-limited mean, so one merged interval does not lengthen it].
+ */
+export const MISSED_LIMIT = 1.66;
+const MISSED_AVG_N = 8;
 
 export interface BeatValues {
   t: number; // foot time of the beat's end (s)
@@ -59,8 +73,21 @@ export function createWaveNumerics(floor: number): WaveNumerics {
   return { det: createPulseDet(floor), ring: new Array<number>(RING).fill(0), n: 0, prevFoot: -1, beats: [], feet: [] };
 }
 
-/** Feed one displayed sample (absolute index m, 125 Hz). Returns the completed beat, if any. */
-export function numericsStep(wn: WaveNumerics, m: number, x: number): BeatValues | null {
+/** The end (absolute sample index) of the pulse whose foot is p: the next found foot f, or p + one average period when
+ *  [p, f) holds a missed beat (MISSED_LIMIT). `feet` (s) ends with f. */
+function ownPulseEnd(feet: readonly number[], p: number, f: number): number {
+  const iv: number[] = [];
+  for (let i = feet.length - 2; i > 0 && iv.length < MISSED_AVG_N; i--) iv.push((feet[i] as number) - (feet[i - 1] as number));
+  if (iv.length === 0) return f;
+  iv.sort((a, b) => a - b);
+  const mid = iv.length >> 1;
+  const period = (iv.length % 2 ? (iv[mid] as number) : ((iv[mid - 1] as number) + (iv[mid] as number)) / 2) * DET_RATE;
+  return f - p > MISSED_LIMIT * period ? Math.min(f, p + Math.round(period)) : f;
+}
+
+/** Feed one displayed sample (absolute index m, 125 Hz). Returns the completed beat, if any. `ownPulse` (the pleth):
+ *  a beat's amplitude is its own pulse's, never the max − min of an interval that spans missed beats (MISSED_LIMIT). */
+export function numericsStep(wn: WaveNumerics, m: number, x: number, ownPulse = false): BeatValues | null {
   if (wn.n !== m) {
     // a gap (sensor detached/re-attached): restart detection at m
     wn.det = createPulseDet(wn.det.floor, m);
@@ -79,16 +106,17 @@ export function numericsStep(wn: WaveNumerics, m: number, x: number): BeatValues
   // A beat whose foot precedes this sampling run (the restarted detector's zero-filled history places the first foot
   // before the restart) would average samples from before the gap — dropped
   if (p < 0 || p < (wn.first ?? 0) || f - p < 25 || f - p > RING - 16 || m - p >= RING) return null;
+  const end = ownPulse ? ownPulseEnd(wn.feet, p, f) : f;
   let mx = -Infinity;
   let mn = Infinity;
   let sum = 0;
-  for (let k = p; k < f; k++) {
+  for (let k = p; k < end; k++) {
     const v = wn.ring[k % RING] as number;
     if (v > mx) mx = v;
     if (v < mn) mn = v;
     sum += v;
   }
-  const b = { t: f / 125, sys: mx, dia: mn, mean: sum / (f - p), dur: (f - p) / 125 };
+  const b = { t: f / 125, sys: mx, dia: mn, mean: sum / (end - p), dur: (f - p) / 125 };
   wn.beats.push(b);
   if (wn.beats.length > AVG_BEATS) wn.beats.shift();
   return b;

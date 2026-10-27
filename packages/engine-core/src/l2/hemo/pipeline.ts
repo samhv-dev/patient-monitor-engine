@@ -720,7 +720,7 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
       write('rvp', m, o.pRv);
       write('pat', m, o.pPaRoot);
     }
-    if (hs.pleth.state !== 'off') numericsStep(hs.num.pleth, m, pl);
+    if (hs.pleth.state !== 'off') numericsStep(hs.num.pleth, m, pl, true); // PI per pulse (numerics.ts MISSED_LIMIT)
     // NIBP cuff
     nouts.length = 0;
     nibpStep(hs.nibp, t1, DT, ctx.rng.measurement, nouts);
