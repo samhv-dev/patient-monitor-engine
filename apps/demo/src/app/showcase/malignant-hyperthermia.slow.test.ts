@@ -40,12 +40,18 @@ import { alarmAt, bands, entered, first, near, pvcEvents, range, runCard, type A
  *  becomes 'S1 untreated E134', measured on this build ± the same tolerances (E131 → E134): earlyMin 4.10 → 3.80,
  *  etco2Max 106 → 108, etco2At20 91 → 93, phAt20 7.04 → 7.03, kAt20 6.1 → 4.8 (the fitted MH efflux is gone; the K now
  *  comes from the muscle, late and steeply), lactateAt20 5.2 → 4.4 (the pH brake), tcAt20 36.58 → 36.67, hrMax 139 →
- *  152, kMax 6.8 → 9.4, tcAt51 37.31 → 37.60, with lossMin/tcAtLoss/kAtLoss/vf/establishedMin/arrestStateMin back.
+ *  152, kMax 6.8 → 9.4, tcAt51 37.31 → 37.59, with lossMin/tcAtLoss/kAtLoss/vf/establishedMin/arrestStateMin back.
+ *  Re-measured on the E133 tree (the rebase onto 2f0b0c77, same tolerances): the course is the same within noise — the
+ *  arrest at +118.1 min (119.0), established +82.7 (82.6), etco2Max 107 (108), K⁺ 9.4 at the loss — and hrMax is E133's
+ *  measure (the sinus tachycardia, every sample within 10 s after a PVC left out): 138, with hrMaxInRuns 160 on E133's
+ *  own band. The ectopy row is unchanged and passes on E134's course too: first PVC +9.15 min (E133 measured 10.95 on
+ *  its own), 302 events and 27 runs in the first 51 min (346 / 35), all inside E133's bands — the ectopy drive is the
+ *  pH term × the MH catecholamines, and E134's pH is a shade higher early and its K⁺ lower until the injury starts.
  *  S1 early re-centred, same tolerances: recoveringMin 17.82 → 18.60 and etco2Plus5 50 → 54 (the buffered CO₂ of every
  *  bed's accumulating lactate, not only the MH muscle's share, keeps the EtCO₂ higher). Reported to the owner; not tuned. */
 const BANDS = {
   'S1 untreated': { refused: [0, 0], earlyMin: [3.84, 5.22], establishedMin: [16.89, 20.65], etco2AtEstablished: [72, 78], hrAtEstablished: [121, 131], phAtEstablished: [7.06, 7.12], kAtEstablished: [5.4, 6], lactateAtEstablished: [4.1, 5.1], mapAtEstablished: [80, 90], hrMax: [185, 195], kMax: [6.1, 6.7], lossMin: [39.91, 48.79], tcAtLoss: [42.14, 42.54], kAtLoss: [6.1, 6.7], vf: [1, 1], arrestStateMin: [40.23, 49.17] },
-  'S1 untreated E134': { refused: [0, 0], earlyMin: [3.11, 4.49], etco2Max: [105, 111], etco2At20: [90, 96], hrAt20: [119, 129], phAt20: [7.00, 7.06], kAt20: [4.5, 5.1], lactateAt20: [3.9, 4.9], mapAt20: [79, 89], tcAt20: [36.47, 36.87], hrMax: [147, 157], kMax: [9.1, 9.7], tcAt51: [37.40, 37.80], lossMin: [114.53, 123.53], tcAtLoss: [38.60, 39.00], kAtLoss: [9.1, 9.7], vf: [1, 1], establishedMin: [80.75, 84.51], arrestStateMin: [114.90, 123.84] },
+  'S1 untreated E134': { refused: [0, 0], earlyMin: [3.11, 4.49], etco2Max: [105, 111], etco2At20: [90, 96], hrAt20: [119, 129], phAt20: [7.00, 7.06], kAt20: [4.5, 5.1], lactateAt20: [3.9, 4.9], mapAt20: [79, 89], tcAt20: [36.47, 36.87], hrMax: [133, 143], hrMaxInRuns: [155, 165], kMax: [9.1, 9.7], tcAt51: [37.39, 37.79], lossMin: [114.53, 123.53], tcAtLoss: [38.60, 39.00], kAtLoss: [9.1, 9.7], vf: [1, 1], establishedMin: [80.75, 84.51], arrestStateMin: [114.90, 123.84] },
   // E133 (ventricular ectopy from K, catecholamines, temperature, acidaemia and ischaemia). Measured first on the
   // pre-E131 course (to the hyperthermic VF at +44.5 min): first PVC +13.1 min, 256 events before the VF (36 runs).
   // Re-measured on the E131 course (rebase onto 5024f071, 2026-10-27; same tolerances, the reason: E131 moved the
