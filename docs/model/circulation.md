@@ -587,7 +587,6 @@ Exported without a doc comment: `riskOf`, `vfShare`, `createBaro`, `createOut`, 
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
 | VF without CPR: EtCO2 < 5 mmHg already at +30 s | 9.3 | research 03 §4.4 | MIS-SPECIFIED ([audit row 17](../../docs/validation/target-audit/30-target-audit.md#row-17)) | drop the 30-s point or set it to 7-15 mmHg; keep <= 6 at +60 s and <= 5 at +120 s (the passing arrest-etco2:44) | [`arrest-etco2.test.ts`](../../packages/engine-core/test/engine/arrest-etco2.test.ts) |
-| VF with CPR q 0.8 from +30 s: EtCO2 ≥ 17 already at +2 min of CPR | 15.9 | — | MIS-SPECIFIED ([audit row 18](../../docs/validation/target-audit/30-target-audit.md#row-18)) | >= 10 mmHg (10-20) at +2 min; keep 17-23 (or research/09 16-24) only for the 1-10 min mean | [`arrest-etco2.test.ts`](../../packages/engine-core/test/engine/arrest-etco2.test.ts) |
 | term neonate 3.5 kg: cardiac output ≥ 150 mL/kg/min | 0.31 L/min = 89 mL/kg/min | PALS ≈ 200 | RIGHT ([audit row 48](../../docs/validation/target-audit/30-target-audit.md#row-48)) | keep >= 150 mL/kg/min (cite Popat & Kluckow 2012 instead of PALS) | [`circ-body-size.test.ts`](../../packages/engine-core/test/engine/circ-body-size.test.ts) |
 | healthy 40 y, AF 150/min: kIsch ≥ 0.9 throughout | 0.89 | research/19 quiet band | UNSUPPORTED ([audit row 30](../../docs/validation/target-audit/30-target-audit.md#row-30)) | mean kIsch >= 0.95 over the 20 min and min >= 0.85, no arrest [ENG] | [`circ-coronary-supply.test.ts`](../../packages/engine-core/test/engine/circ-coronary-supply.test.ts) |
 | a PEA onset still shows organised electrical activity 6–10 min after the arrest | 0 beats | — | RIGHT ([audit row 19](../../docs/validation/target-audit/30-target-audit.md#row-19)) | keep | [`circ-hypoxic-arrest.test.ts`](../../packages/engine-core/test/engine/circ-hypoxic-arrest.test.ts) |
@@ -601,18 +600,21 @@ Exported without a doc comment: `riskOf`, `vfShare`, `createBaro`, `createOut`, 
 | severe tamponade: pulsus paradoxus ≥ 10 mmHg | 3.1 | Spodick 2003 | RIGHT ([audit row 40](../../docs/validation/target-audit/30-target-audit.md#row-40)) | keep (>= 10 mmHg) | [`circ-pulsus.test.ts`](../../packages/engine-core/test/engine/circ-pulsus.test.ts) |
 | AS + CAD propofol → hypotension → ischaemia (kIsch falls, ST ↓) → phenylephrine reverses it | — | — | MIS-SPECIFIED ([audit row 23](../../docs/validation/target-audit/30-target-audit.md#row-23)) | condition the assertion on the insult: kIsch < 0.85 within 2 min WHEN CPP <= 30 (or DBP <= 45) in the CFR 1.4 profile, with the rig deepened to get there (propofol 2 mg/kg or a MAP target); keep the phenylephrine half | [`circ-sanity-2.test.ts`](../../packages/engine-core/test/engine/circ-sanity-2.test.ts) |
 | the same run rescued with ephedrine 10 mg keeps the deficit longer (kIsch still < 0.95 at +3 min) | — | — | UNSUPPORTED ([audit row 24](../../docs/validation/target-audit/30-target-audit.md#row-24)) | an ordering, not a level: after the same insult, phenylephrine restores S/D and kIsch faster than ephedrine, and ephedrine raises HR >= 10/min | [`circ-sanity-2.test.ts`](../../packages/engine-core/test/engine/circ-sanity-2.test.ts) |
-| VF + CPR q 1: CBF 0.30–0.40 of normal | 0.45 | Meaney 2013; research/20 band 0.2 | MIS-SPECIFIED ([audit row 31](../../docs/validation/target-audit/30-target-audit.md#row-31)) | 0.20-0.40 at q 1 (ceiling 0.40); cite Kern 2007, not Meaney 2013 | [`cpr-cerebral-flow.test.ts`](../../packages/engine-core/test/engine/cpr-cerebral-flow.test.ts) |
+| VF + CPR q 1, minutes 2–8: CBF below 0.5 of normal | 0.664 | — | not audited | — | [`cpr-cerebral-flow.test.ts`](../../packages/engine-core/test/engine/cpr-cerebral-flow.test.ts) |
+| VF + CPR q 1: CBF 0.30–0.40 of normal | 0.66 | Meaney 2013; research/20 band 0.2 | MIS-SPECIFIED ([audit row 31](../../docs/validation/target-audit/30-target-audit.md#row-31)) | 0.20-0.40 at q 1 (ceiling 0.40); cite Kern 2007, not Meaney 2013 | [`cpr-cerebral-flow.test.ts`](../../packages/engine-core/test/engine/cpr-cerebral-flow.test.ts) |
+| complete exsanguination (3 L / 10 min) → PEA → CPR q 0.8 alone from 720 s: EtCO2 < 10 mmHg | 12.5 | research/20; AHA 2020 | not audited | — | [`cpr-etco2-circulation.test.ts`](../../packages/engine-core/test/engine/cpr-etco2-circulation.test.ts) |
 | quality map at 10 breaths/min: 0.5 → 12 (8–15), default 0.8 → 20 (17–23), 1.0 → 25 (22–28), 1.2 mechanical-grade → 29 (26–32) | 20.5 / 25.2 / 26.6 / 26.6 at the circulation's CPR flow | — | UNSUPPORTED ([audit row 28](../../docs/validation/target-audit/30-target-audit.md#row-28)) | 0.8 -> 15-26; 1.0 -> 20-30; monotone, with q 1.0 at least 3 mmHg above q 0.5; q 0.5 -> 10-20; q 1.2 -> 22-35 (Berve 29 +/- 17, research/09) | [`cpr-etco2.test.ts`](../../packages/engine-core/test/engine/cpr-etco2.test.ts) |
 | ventilation: +10 breaths/min lowers EtCO2 by ≈ 3 mmHg (−2 to −4.5) at the learner default | −4.8 at the circulation's CPR flow | — | MIS-SPECIFIED ([audit row 29](../../docs/validation/target-audit/30-target-audit.md#row-29)) | relative: -10 % to -25 % per +10 breaths/min | [`cpr-etco2.test.ts`](../../packages/engine-core/test/engine/cpr-etco2.test.ts) |
+| PPV: the pleural pressure rises monotonically over minutes, and PEA arrives within the 12-min run (not before 3 min) | +2.18 min | — | not audited | — | [`tension-ptx.test.ts`](../../packages/engine-core/test/engine/tension-ptx.test.ts) |
 | decompression at +4 min on PPV: MAP ≥ 65 within 1 min, and the pleural pressure falls with PTX_DRAIN_TAU_S | no MAP at all, the patient is in PEA from +3.87 min | — | RIGHT ([audit row 33](../../docs/validation/target-audit/30-target-audit.md#row-33)) | keep; add the PEA case explicitly: decompression of a tension-PEA restores a pulse within 30-60 s (no CPR needed in the swine model). The rig conflict (PEA band 3-10 min vs decompression at +4 min) is a test-design problem, not a band problem | [`tension-ptx.test.ts`](../../packages/engine-core/test/engine/tension-ptx.test.ts) |
 
 ## Tests
 
-235 tests in 66 files; 19 expected failures, 1 skipped.
+235 tests in 66 files; 21 expected failures, 1 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
-| [`engine/arrest-etco2.test.ts`](../../packages/engine-core/test/engine/arrest-etco2.test.ts) | 4 | 2 | 0 |
+| [`engine/arrest-etco2.test.ts`](../../packages/engine-core/test/engine/arrest-etco2.test.ts) | 4 | 1 | 0 |
 | [`engine/circ-arrest-state.test.ts`](../../packages/engine-core/test/engine/circ-arrest-state.test.ts) | 2 | 0 | 0 |
 | [`engine/circ-arrest.test.ts`](../../packages/engine-core/test/engine/circ-arrest.test.ts) | 2 | 0 | 0 |
 | [`engine/circ-beats.test.ts`](../../packages/engine-core/test/engine/circ-beats.test.ts) | 2 | 0 | 0 |
@@ -644,12 +646,12 @@ Exported without a doc comment: `riskOf`, `vfShare`, `createBaro`, `createOut`, 
 | [`engine/circ-sympathetic-tone.test.ts`](../../packages/engine-core/test/engine/circ-sympathetic-tone.test.ts) | 2 | 0 | 0 |
 | [`engine/circ-tamponade-drainage.test.ts`](../../packages/engine-core/test/engine/circ-tamponade-drainage.test.ts) | 3 | 0 | 0 |
 | [`engine/circ-teaching.test.ts`](../../packages/engine-core/test/engine/circ-teaching.test.ts) | 1 | 0 | 0 |
-| [`engine/cpr-cerebral-flow.test.ts`](../../packages/engine-core/test/engine/cpr-cerebral-flow.test.ts) | 2 | 1 | 0 |
+| [`engine/cpr-cerebral-flow.test.ts`](../../packages/engine-core/test/engine/cpr-cerebral-flow.test.ts) | 2 | 2 | 0 |
 | [`engine/cpr-ecg-artefact.test.ts`](../../packages/engine-core/test/engine/cpr-ecg-artefact.test.ts) | 1 | 0 | 0 |
-| [`engine/cpr-etco2-circulation.test.ts`](../../packages/engine-core/test/engine/cpr-etco2-circulation.test.ts) | 3 | 0 | 0 |
+| [`engine/cpr-etco2-circulation.test.ts`](../../packages/engine-core/test/engine/cpr-etco2-circulation.test.ts) | 3 | 1 | 0 |
 | [`engine/cpr-etco2.test.ts`](../../packages/engine-core/test/engine/cpr-etco2.test.ts) | 3 | 2 | 0 |
 | [`engine/spo2-cpr-e126.test.ts`](../../packages/engine-core/test/engine/spo2-cpr-e126.test.ts) | 5 | 0 | 0 |
-| [`engine/tension-ptx.test.ts`](../../packages/engine-core/test/engine/tension-ptx.test.ts) | 4 | 1 | 0 |
+| [`engine/tension-ptx.test.ts`](../../packages/engine-core/test/engine/tension-ptx.test.ts) | 4 | 2 | 0 |
 | [`engine/vagal-events.test.ts`](../../packages/engine-core/test/engine/vagal-events.test.ts) | 9 | 0 | 0 |
 | [`l2/circ/activation.test.ts`](../../packages/engine-core/test/l2/circ/activation.test.ts) | 3 | 0 | 0 |
 | [`l2/circ/arrest.test.ts`](../../packages/engine-core/test/l2/circ/arrest.test.ts) | 13 | 0 | 0 |

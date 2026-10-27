@@ -10,22 +10,22 @@ regenerations. The list of known misses across modules is [known-misses.md](../v
 |---|---|---|---|
 | [Patient state and the two modes](patient-state.md) | 5 | 5 | 0 |
 | [Rhythms and the ECG](rhythms-ecg.md) | 38 | 46 | 3 |
-| [Circulation](circulation.md) | 21 | 66 | 19 |
+| [Circulation](circulation.md) | 21 | 66 | 21 |
 | [Pressure waveforms and pleth](pressure-waveforms.md) | 9 | 16 | 1 |
 | [Lungs: mechanics, ventilation–perfusion, pathology](lungs.md) | 19 | 39 | 6 |
 | [Gas exchange and capnography](gas-exchange.md) | 6 | 9 | 2 |
-| [Breathing, airway and the ventilator coupling](breathing.md) | 4 | 32 | 21 |
-| [Blood, acid–base, electrolytes and fluids](blood.md) | 12 | 41 | 10 |
-| [Brain, kidney and liver](organs.md) | 14 | 30 | 13 |
-| [Endocrine, metabolism and temperature](endocrine-thermal.md) | 17 | 39 | 19 |
+| [Breathing, airway and the ventilator coupling](breathing.md) | 4 | 32 | 23 |
+| [Blood, acid–base, electrolytes and fluids](blood.md) | 13 | 42 | 12 |
+| [Brain, kidney and liver](organs.md) | 14 | 30 | 12 |
+| [Endocrine, metabolism and temperature](endocrine-thermal.md) | 17 | 39 | 22 |
 | [Anaesthetic depth, ventilatory drive and neuromuscular block](neuro.md) | 11 | 23 | 6 |
-| [Pharmacology: PK, PD and the drug rows](pharmacology.md) | 20 | 44 | 34 |
-| [Monitor measurements (device layer)](monitor.md) | 15 | 30 | 7 |
+| [Pharmacology: PK, PD and the drug rows](pharmacology.md) | 20 | 44 | 35 |
+| [Monitor measurements (device layer)](monitor.md) | 15 | 30 | 8 |
 | [Alarms](alarms.md) | 4 | 15 | 0 |
 | [Defibrillator and pacer](defib-pacer.md) | 4 | 8 | 0 |
 | [Ventilator](ventilator.md) | 15 | 22 | 6 |
 | [Engine runtime: loop, clock, commands, snapshots](engine-runtime.md) | 10 | 15 | 0 |
 | [Control: commands, transports, scenarios](control.md) | 38 | 60 | 0 |
-| [Presentation: renderer, audio, skins, the app](presentation.md) | 165 | 214 | 2 |
+| [Presentation: renderer, audio, skins, the app](presentation.md) | 166 | 217 | 5 |
 | [Validation harness](validation-harness.md) | 59 | 45 | 0 |
-| [Whole-patient scenario suites](integration.md) | 0 | 1 | 10 |
+| [Whole-patient scenario suites](integration.md) | 0 | 1 | 11 |
