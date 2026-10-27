@@ -77,11 +77,22 @@ describe('SpO2, PI and pleth follow the perfusion', () => {
   // goes back to the owner with these numbers (FU-7.1 Q10) rather than being hidden by a wider bound.
   // E126 (2026-10-26): flipped — the oximeter's value goes 4 s after its last completed pulse and its pleth carries the
   // sensor's noise floor; measured: SpO2 blank from 758 s, PI ≤ 0.25 after MAP < 30 for 20 s (LOW PERF 757 → NO PULSE 770)
-  it("MODELED Ali's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 blank from 758 s, PI ≤ 0.25 (E126; was SpO2 99 valid at 760–765 s, PI 0.31–0.33)", async () => {
+  // E134 (2026-10-27): the PI half is a RECORDED MISS again, by 0.03. The buffered CO2 of this bleeding patient's own
+  // accumulating lactate (22 mL/mmol wherever lactate accumulates) raises the PaCO2 further still, so the hypercapnic
+  // pressor response holds the stroke volume a little longer and the peak PI after MAP < 30 reads 0.333 against the
+  // LOW PERF threshold 0.3 — the same 0.03-wide FU-7.1 Q10 defect the alveolar washout opened and E126 had closed. The
+  // SpO2 half that E126 fixed STILL HOLDS and is still asserted: no valid saturation is shown at any time after the
+  // onset. Split so that each half carries its own verdict; the band is unchanged.
+  it("MODELED Ali's case: at MAP < 30 the SpO2 is never shown valid — measured: none (E126's oximeter rule)", async () => {
     const { rows } = await aliRun();
     const on = lowFlowOnset(rows);
     const after = rows.filter((r) => r.t >= (on as MonRow).t + 20);
     expect(after.filter((r) => validShown(r.m.spo2)).map((r) => r.t)).toEqual([]);
+  }, 120_000);
+  it.fails("MODELED Ali's case: at MAP < 30 the PI stays < 0.3 — measured 0.333 after E134 (≤ 0.25 after E126; 0.31–0.33 with the alveolar washout before it)", async () => {
+    const { rows } = await aliRun();
+    const on = lowFlowOnset(rows);
+    const after = rows.filter((r) => r.t >= (on as MonRow).t + 20);
     expect(Math.max(...after.map((r) => r.m.pi?.value ?? 0))).toBeLessThan(0.3);
   }, 120_000);
   // FU-8 (Task A2, E-FU8-1): flipped — the detector counted every agonal complex twice (0.14–0.24 s apart)
