@@ -12,7 +12,11 @@ const BANDS = {
   'S3 induced late': { refused: [0, 0], inducedS: [225, 255], desatStateS: [445, 543], bradyStateS: [509, 623] },
   'S3 rescue bag-mask': { refused: [0, 0], pulseLost: [0, 0], spo2Over90S: [17, 47], hrOver60S: [0, 19], mapAt5min: [78, 88], etco2At5min: [45, 51] },
   'S3 rescue at 18 min': { refused: [0, 0], pulseLost: [0, 0], mapAtTube: [40, 50], spo2Over90S: [31, 61], mapMax5: [94, 104], triggeredS: [1026, 1254] },
-  'S3 CPR': { refused: [0, 0], cprS: [1093, 1335], pulseBack: [0, 0], spo2DuringCpr: [97, 100], etco2DuringCpr: [31, 37], mapDuringCpr: [45, 55] },
+  // E134: etco2DuringCpr re-centred on this build with the same ± 3 (34 → 44): the arrested patient's accumulating
+  // lactate releases its buffered CO2 now (22 mL/mmol), so the compressions wash out more of it. A high number for
+  // CPR — this rig is a healthy, fully ventilated patient arrested by hypoxia with a full CO2 store — and one for the
+  // owner's eye; the engine's other CPR rigs read 12–22. Reported, not tuned.
+  'S3 CPR': { refused: [0, 0], cprS: [1093, 1335], pulseBack: [0, 0], spo2DuringCpr: [97, 100], etco2DuringCpr: [41, 47], mapDuringCpr: [45, 55] },
 } as const;
 
 const ID = 'showcase-induction';

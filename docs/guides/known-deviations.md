@@ -14,7 +14,7 @@ Regenerate the first two tables with `node --experimental-strip-types scripts/de
 fails when a literal-titled expected failure or skip is missing from this page. It cannot see conditional forms such
 as `(cond ? it.fails : it)(…)`, nor the lung-signature `KNOWN` list; those are listed by hand below.
 
-On this tree there are **170 expected-failure calls**, all read by the lister: 169 `it.fails` (the bronchospasm row of
+On this tree there are **171 expected-failure calls**, all read by the lister: 170 `it.fails` (the bronchospasm row of
 `packages/ventilator/test/link-parity.test.ts` is a literal `it.fails`) and 1 `it.fails.each` with three cases
 (`packages/engine-core/test/engine/fidelity-arrest.test.ts`), and **1 skipped test**. "Tracked in" names the gate note (and its section)
 that records the miss with its number; the open questions it cites (Q…, R-…, E-…) are listed in that note.
@@ -23,6 +23,7 @@ that records the miss with its number; the open questions it cites (Q…, R-…,
 
 | Test file | Band and measured value (test title, verbatim) | Tracked in |
 |---|---|---|
+| `apps/demo/src/app/debrief-showcase.test.ts` | E22 MH: after 2 min of EtCO₂ below 40 the ventilation-back objective is met — measured: the EtCO2 of this rig plateaus at 41–42 and the press never comes (E134) | `CHANGELOG.md` [Unreleased] E134 (the PR "anaerobic metabolism with its limits and heat, muscle-injury potassium, MH severity as a scenario input (E134)") |
 | `apps/demo/src/app/showcase/haemorrhage-anaphylaxis.slow.test.ts` | haemorrhage (E120): the owner's course on the kit-round path, two shocks, ROSC — measured: no arrest at all with 2.5 L (MAP holds 38–43; +2 % of the bleed restores it at 667 s, onset asystole) | `CHANGELOG.md` [Unreleased] E134 (the PR "anaerobic metabolism with its limits and heat, muscle-injury potassium, MH severity as a scenario input (E134)") |
 | `apps/demo/src/app/showcase/haemorrhage-anaphylaxis.slow.test.ts` | haemorrhage (E120): the same course whenever the ventilator comes (0:30 or 3:00), and none without it — measured: no arrest and no shocks on either path (E134) | `CHANGELOG.md` [Unreleased] E134 (the PR "anaerobic metabolism with its limits and heat, muscle-injury potassium, MH severity as a scenario input (E134)") |
 | `apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts` | untreated: established by +20 min and VF from hyperthermia at 42 °C by +45 min — measured: established +82.6 min, VF (hyperkalaemia) +119.0 min at 38.80 °C with K⁺ 9.4 (E134) | `CHANGELOG.md` [Unreleased] E134 (the PR "anaerobic metabolism with its limits and heat, muscle-injury potassium, MH severity as a scenario input (E134)") |

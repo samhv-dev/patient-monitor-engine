@@ -8,7 +8,7 @@ and the test is marked as an expected failure with the measured value in its tit
 module that owns it, until the mechanism is fixed. The release-candidate view of the same list, with where each
 item is tracked, is [known deviations](../guides/known-deviations.md); each module is described in [docs/model](../model/README.md).
 
-**170 known misses.** Split from the test titles: a band recognised in the target of 160, a measured value in 159, a source in 63; "—" = not stated in a form the generator reads.
+**171 known misses.** Split from the test titles: a band recognised in the target of 161, a measured value in 160, a source in 63; "—" = not stated in a form the generator reads.
 
 **The bands themselves were audited** against the literature (target audit, 2026-10-11; the rows are in [target-audit.tsv](target-audit.tsv)): 147 of these misses carry an audit verdict — RIGHT 30, TOO NARROW 27, TOO WIDE 3, MIS-SPECIFIED 60, UNSUPPORTED 27 (a miss can carry several rows). RIGHT: the band matches its source; TOO NARROW / TOO WIDE: the source supports a wider / narrower band; MIS-SPECIFIED: the band measures something other than its source did; UNSUPPORTED: no source found for it. A proposed band is evidence for an owner ruling, not a change: until a ruling, the test keeps its band. The audit itself, row by row with its evidence, is [published here](target-audit/30-target-audit.md) with its CSV twin and synthesis; the numbered evidence notes it cites as "research/NN" live in the project's research folder outside the repository.
 
@@ -27,7 +27,7 @@ item is tracked, is [known deviations](../guides/known-deviations.md); each modu
 | [Pharmacology: PK, PD and the drug rows](#pharmacology) | 35 |
 | [Monitor measurements (device layer)](#monitor) | 7 |
 | [Ventilator](#ventilator) | 5 |
-| [Presentation: renderer, audio, skins, the app](#presentation) | 4 |
+| [Presentation: renderer, audio, skins, the app](#presentation) | 5 |
 | [Whole-patient scenario suites](#integration) | 11 |
 
 <a id="rhythms-ecg"></a>
@@ -296,6 +296,7 @@ Module page: [docs/model/presentation.md](../model/presentation.md)
 
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
+| E22 MH: after 2 min of EtCO₂ below 40 the ventilation-back objective is met | the EtCO2 of this rig plateaus at 41–42 and the press never comes | — | not audited | — | [`debrief-showcase.test.ts`](../../apps/demo/src/app/debrief-showcase.test.ts) |
 | haemorrhage (E120): the owner's course on the kit-round path, two shocks, ROSC | no arrest at all with 2.5 L | — | not audited | — | [`haemorrhage-anaphylaxis.slow.test.ts`](../../apps/demo/src/app/showcase/haemorrhage-anaphylaxis.slow.test.ts) |
 | haemorrhage (E120): the same course whenever the ventilator comes (0:30 or 3:00), and none without it | no arrest and no shocks on either path | — | not audited | — | [`haemorrhage-anaphylaxis.slow.test.ts`](../../apps/demo/src/app/showcase/haemorrhage-anaphylaxis.slow.test.ts) |
 | untreated: established by +20 min and VF from hyperthermia at 42 °C by +45 min | established +82.6 min, VF | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
