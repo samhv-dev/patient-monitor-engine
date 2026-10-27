@@ -288,6 +288,13 @@ course · modulation · where an anaesthetist meets it.
   hypercapnic pressor response rises roughly linearly above PaCO2 ≈ 50 **[T]**. In apnoeic asphyxia the sequence in
   every animal model is early tachycardia and hypertension, then bradycardia and hypotension, then loss of
   pulsations with the ECG still organised (DeBehnke 1995, dogs; Varvarousi 2011/2015, swine) **[A]**.
+- **In the engine (2026-10-27, found gating E134).** `chemoFactors` applies the hypercapnic pressor response as an
+  independent multiplier on HR and SVR (+1 %/mmHg above PaCO2 50, capped at +20 %, **[ENG]**) beside the baroreflex,
+  whose sympathetic output saturates at `SYMP_SAT`. The two do not share a ceiling or the sympatholysis factor, so
+  at MAP < 30 the baroreflex is saturated and hypercapnia still adds its full +20 %: in the class IV haemorrhage
+  case the arrest's own lactate CO2 held the peak perfusion index above the LOW PERF threshold through this term.
+  Workstream 2 routes the chemoreflex efferent through the one saturating sympathetic output with sourced gains
+  and the direct effects of CO2 (vasodilation, myocardial depression) **[A/T]**.
 - **Modulation.** Volatile anaesthetics depress the acute hypoxic ventilatory response markedly even at
   subanaesthetic concentrations, and arousal or pain does not restore it (Sarton, Dahan, Teppema, et al. 1996,
   *Anesthesiology* 85:295–303, PMID 8712445) **[H]**; the hypercapnic response is depressed dose-dependently. The
