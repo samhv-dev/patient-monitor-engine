@@ -1636,7 +1636,7 @@ async function a4Debrief(R: Run, page: Page, key: string): Promise<void> {
   await page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }).click();
   const view = page.locator('[data-view=debrief]');
   await view.getByRole('heading', { level: 1, name: 'Debrief' }).waitFor({ timeout: 15_000 });
-  await view.getByRole('textbox', { name: 'Run by' }).fill('Live demo, 4 November');
+  await view.getByRole('textbox', { name: 'Run by' }).fill('Live demo, 3 November');
   await view.getByRole('textbox', { name: 'Notes' }).fill('Kit round A4 rehearsal of the live-demo path.').catch(() => undefined);
   await page.emulateMedia({ media: 'print' });
   mkdirSync(OUTDIR, { recursive: true });
