@@ -47,7 +47,7 @@ own cue card.
    the session); print the handout only **after the fast-forward banner has gone**.
 7. **"Not available now" → press again**: the button now belongs to the current state [G10 §8].
 8. **The haemorrhage Debrief**: open it before loading anything else. Key times 35 s · CPR 4 min 39 s · CPR stopped
-   57 s after the return of circulation (asked ≤ 2 min 30 s <!-- owner ruling pending -->) · pulseless 9 min 57 s; – ✗ ✓: the ✗ is the course itself (the demo withholds
+   57 s after the return of circulation (asked ≤ 2 min 00 s: owner, 28 October; was 2 min 30 s) · pulseless 9 min 57 s; – ✗ ✓: the ✗ is the course itself (the demo withholds
    CPR on purpose, and the objective now says so); **no "draft" any more** (E132). It prints **9 A4 pages** (8 before
    the E126 pulse-check pause added its alarm rows); the handout 1 page (the compact handout layout tightened for the
    E132 card's 21 moments and three take-home lines).

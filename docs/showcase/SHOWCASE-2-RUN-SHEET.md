@@ -474,8 +474,8 @@ own breathing: systolic ≈ 76 at 10 min) [S5 E120 slow tests].
 - **PEA (10:24, ART 21/14):** *"This is pseudo-PEA: a pressure too low to feel. A palpated pulse would call it PEA."*
 - **Before the pulse loss (≈ 10:59):** *"Now we do what nobody should: wait, so you can see a pulseless heart decay."*
 - **At the resuscitation:** *"In haemorrhagic arrest the surgeon stops the bleeding and we give blood; compressions
-  cannot fill an empty heart."* Charge during compressions; the pause for the shock should be under 5 s.
-  <!-- owner ruling pending -->
+  cannot fill an empty heart."* Charge during compressions; the pause for the shock should be under 10 s (measured 8 s on the rc.4 round)
+  [owner, 28 October].
 - **First rhythm check (VF):** *"The card inserts VF to show the defibrillator. The first shock does stop the VF: no
   organised rhythm follows it."* For recurrent VF, consider escalating the energy.
 - **The return of circulation:** *"The pulse comes back because the volume brought the perfusion pressure up, not
@@ -504,7 +504,7 @@ pulse-check pause, rebased onto main 25771808 with E131, E133 and #153 (kit 503c
 | 16:02 | 2:34 | 15:59 | ×1 → **×4** | **Epinephrine 1 mg** | ART 33/11 (19), EtCO₂ 5 | 15:59; ART 35/12 (20), EtCO₂ 5 |
 | — | 2:44 | 16:39 | ×4 | — (1 min into CPR) | ART 53/22 (34), EtCO₂ 13 | 16:39; ART 63/27 (40), EtCO₂ 14 |
 | 16:28 | 3:00 | **17:38** | **×1** | **Rhythm check** → compressions pause (E126) and the card sets **VF** (`ECG VFIB` 17:41) | ART 70/33 (46), EtCO₂ 19 | 17:38; ART 74/37 (50), EtCO₂ 20; VFIB 17:41; `SPO2 NO PULSE` 17:45 |
-| 16:35 | 3:08 | 17:47 | ×1 → **×4** | **Defib, pacing & CPR tab: Charge (200 J) → Shock** (charge during compressions) <!-- owner ruling pending --> | outcome **asystole** | 17:46 (8 s after the check; ART mean 29 in the pause), asystole; compressions resume with the shock |
+| 16:35 | 3:08 | 17:47 | ×1 → **×4** | **Defib, pacing & CPR tab: Charge (200 J) → Shock** (charge during compressions; the pause for the shock under 10 s, measured 8 s on the rc.4 round [owner, 28 October]) | outcome **asystole** | 17:46 (8 s after the check; ART mean 29 in the pause), asystole; compressions resume with the shock |
 | — | 3:23 | 18:47 | ×4 | — (CPR on) | ART 74/38 (51), EtCO₂ 23 | 18:47; ART 74/37 (50), EtCO₂ 22 |
 | ≈ 16:50 | ≈ 3:26 | **≈ 18:57** | ×4 | **Epinephrine 1 mg** (the second dose, 3 min after the first) | (before E132: one dose only) | 18:57 |
 | 17:06 | 3:39 | **19:46** | **×1** | **Rhythm check** → **VF again** (card; `ECG VFIB` 19:49) | ART 74/38 (51), EtCO₂ 25 | 19:45 (compressions pause); ART 73/34 (50), EtCO₂ 24; VFIB 19:48 |
@@ -537,7 +537,7 @@ arterial line and the capnogram; if asked, say so.
 hypovolaemia (pseudo-PEA at ART 19/13; the instructor judges it) · **✗ Not observed: CPR within 30 s of the pulse
 loss (4 min 39 s: 11:00 → 15:38)**: the objective's own text says the demo withholds CPR on purpose · **✓ Observed: the
 return of circulation recognised at the rhythm check and CPR stopped, 57 s after it (20:57 → 21:54; asked within
-2 min 30 s)** <!-- owner ruling pending --> [E132 rc.4]. No "draft" anywhere. **Take-home lines (the card's, owner-agreed 26 October, verbatim):** *"Positive
+2 min 00 s)** [E132 rc.4; the window 150 → 120 s: owner, 28 October]. No "draft" anywhere. **Take-home lines (the card's, owner-agreed 26 October, verbatim):** *"Positive
 pressure and induction can tip a compensated bleeding patient into arrest."* · *"In haemorrhagic arrest, stopping the
 bleeding and giving blood come first; compressions cannot fill an empty heart."* · *"EtCO₂ and the arterial diastolic
 pressure show how good the CPR is, and they show the return of circulation."* Phones: 3 followed, no S12-F2 (largest
@@ -563,7 +563,7 @@ panel, the report or the print.
 |---|---|---|
 | 18:40 | Session bar → **Debrief** | the report of the run just finished: page 1 the header, **Key times**, **The course** and the objectives; page 2 the **Key moments** and the measured facts |
 | 18:55 | **Run by**: "Showcase 2, 3 November"; one line in **Notes** | — |
-| 19:10 | Read the **Key times** tiles | **Start → first team action 35 s** · **CPR 4 min 39 s** after the pulse loss (asked ≤ 30 s) · **CPR stopped 57 s** after the return of circulation (asked ≤ 2 min 30 s <!-- owner ruling pending -->) · **pulseless in all 9 min 57 s** [E132 rc.4 Debrief keyTimes] |
+| 19:10 | Read the **Key times** tiles | **Start → first team action 35 s** · **CPR 4 min 39 s** after the pulse loss (asked ≤ 30 s) · **CPR stopped 57 s** after the return of circulation (asked ≤ 2 min 00 s; 2 min 30 s before the owner's ruling of 28 October) · **pulseless in all 9 min 57 s** [E132 rc.4 Debrief keyTimes] |
 | 19:40 | The objectives aloud | – Recognise PEA from hypovolaemia (the instructor judges it; name the pseudo-PEA) · ✗ CPR within 30 s: the demo withheld it on purpose, as the objective says · ✓ the return of circulation recognised at the rhythm check |
 | 20:10 | **Key moments** (page 2) · **Timeline** | 21 key moments in the report; **100 timeline rows, 23 minute rows** (98 on E126 only, 79 before the E126 pause added its alarms); facts: lowest SpO₂ 96 % at 00:10 · lowest ART M / NIBP M 3 mmHg at 11:13 · highest EtCO₂ 54 at 22:48 · pulseless 9 min 57 s, first lost at 11:00 · return of circulation 9 min 57 s after the pulse loss (20:57) · epinephrine 2 mg (2 doses) · labs: K⁺ 4.5 · lactate 4.9 · pH 7.18 [E132 rc.4 Debrief] |
 | 20:55 | **Print or save as PDF** → save. **In the print dialog, untick Headers and footers (Chrome: More settings; Safari: Show Details → Print headers and footers).** Then **Print the learner handout** (optional) | the report: **9 A4 pages** (8 before E126), title "Debrief Class IV haemorrhage, PEA and resuscitation ‹date›" [E132 on E126; E132 rc.4]; the handout 1 page on kit 503caeab [E132 rc.4]; the handout: **1 A4 page** (on kit e0c73a47 it printed 2: the 21 key moments and the three take-home lines pushed the third line onto page 2; the compact handout layout for a long Key moments table was tightened for it, Debrief e2e 258.7 mm of 267) [E132]. Check the handout lists both shocks and the return of circulation before giving it out |

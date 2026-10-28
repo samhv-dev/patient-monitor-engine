@@ -213,7 +213,7 @@ than 3 s.
 | 3:02 (16:02) | 15:59 | ART 35/12, EtCO₂ 5 | **Epinephrine 1 mg** · **×4** | |
 | — | 16:39 | ART 63/27, EtCO₂ 14 | — | "EtCO₂ and the diastolic pressure tell you how good the CPR is." |
 | 3:28 (16:28) | **17:38** | 2 min of CPR: **ART 74/37, EtCO₂ 20** | **×1** · **Rhythm check** → compressions pause → **VF** (`ECG VFIB` 17:41; HR and SpO₂ blank) | "The card inserts VF to show the defibrillator." |
-| 3:35 (16:35) | 17:46 | VF on the ECG, compressions paused (E126) | **Defib, pacing & CPR tab: Charge → Shock** (200 J) → **asystole**; compressions resume with the shock · **×4** | "Charge during compressions; the pause for the shock under 5 seconds. The shock did stop the VF; no organised rhythm followed." <!-- owner ruling pending --> |
+| 3:35 (16:35) | 17:46 | VF on the ECG, compressions paused (E126) | **Defib, pacing & CPR tab: Charge → Shock** (200 J) → **asystole**; compressions resume with the shock · **×4** | "Charge during compressions; the pause for the shock under 10 seconds. The shock did stop the VF; no organised rhythm followed." (Pause under 10 s: measured 8 s on the rc.4 round; owner, 28 October.) |
 | ≈ 3:45 (≈ 16:45) | **18:57** | ART 74/38, EtCO₂ 23 | **Epinephrine 1 mg** (the second dose, 3 min after the first) | "Epinephrine every 3 to 5 minutes." |
 | 4:06 (17:06) | **19:45** | ART 73/34, EtCO₂ 24 | **×1** · **Rhythm check** → compressions pause → **VF again** (`ECG VFIB` 19:48) | "Recurrent VF: consider a higher energy." |
 | 4:14 (17:14) | 19:53 | | **Charge → Shock** → organised rhythm, no pulse (sinus 19:58); compressions resume; **keep CPR** · **×4** | |
@@ -251,7 +251,7 @@ line and the capnogram.
 |---|---|
 | 0:00 (18:40) | Session bar **Debrief** |
 | 0:15 (18:55) | **Run by**: "Showcase 2, 3 November"; one line in **Notes** |
-| 0:30 (19:10) | **Key times**: first team action **35 s** · CPR **4 min 39 s** after the pulse loss (asked ≤ 30 s) · CPR stopped **57 s** after the return of circulation (asked ≤ 2 min 30 s <!-- owner ruling pending -->) · pulseless **9 min 57 s** |
+| 0:30 (19:10) | **Key times**: first team action **35 s** · CPR **4 min 39 s** after the pulse loss (asked ≤ 30 s) · CPR stopped **57 s** after the return of circulation (asked ≤ 2 min 00 s: owner, 28 October) · pulseless **9 min 57 s** |
 | 1:00 (19:40) | the objectives: – recognise PEA (name the pseudo-PEA at 19/13) · ✗ CPR within 30 s: withheld on purpose, as the objective says · ✓ the return of circulation recognised at the rhythm check |
 | 1:30 (20:10) | **Key moments** (21 in the report) · **Timeline** (100 rows) |
 | 2:15 (20:55) | **Print or save as PDF**: **9 A4 pages**. **In the print dialog, untick Headers and footers** (Chrome: More settings; Safari: Show Details → Print headers and footers). Then **Print the learner handout** (optional): 1 page |
@@ -261,7 +261,7 @@ line and the capnogram.
 
 **Expect** (kit round A4, E132 rc.4, kit 503caeab): – Not assessable: Recognise PEA from hypovolaemia (the instructor judges it) · ✗ Not
 observed: CPR 4 min 39 s after the pulse loss (11:00 → 15:38) · ✓ Observed: CPR stopped 57 s after the return of
-circulation (20:57 → 21:54; within 2 min 30 s <!-- owner ruling pending -->). Facts: lowest ART M 3 mmHg at 11:13 · pulseless 9 min 57 s · epinephrine 2 mg (2 doses) ·
+circulation (20:57 → 21:54; within 2 min 00 s; owner, 28 October: was 2 min 30 s). Facts: lowest ART M 3 mmHg at 11:13 · pulseless 9 min 57 s · epinephrine 2 mg (2 doses) ·
 lactate 4.9, pH 7.18, K⁺ 4.5.
 
 **Take-home lines (owner-agreed 26 October, printed on the handout):** *"Positive pressure and induction can tip a
