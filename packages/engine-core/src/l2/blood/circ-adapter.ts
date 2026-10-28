@@ -105,7 +105,9 @@ export function chemistryContractility(ph: number, iCa: number, kEcg = 4.2, paco
  * repeated here because the blood model never imports from l2/circ (see the file header).
  */
 export const CO2_EES_PER_MMHG = 0.004;
+/** The PaCO2 the depression is taken from (normal arterial tension; Walley 1990's eucapnic arm). */
 export const CO2_REF_MMHG = 40;
+/** The highest PaCO2 the source measures it at (Walley 1990's PCO2 92); the term is held there. */
 export const CO2_SOURCE_MAX_MMHG = 92;
 /** Severe hyperkalaemia depresses contractility above K_CONTRACT (membrane-effective), −20 %/mmol/L [ENG, Q5]. */
 export const K_CONTRACT = 8;

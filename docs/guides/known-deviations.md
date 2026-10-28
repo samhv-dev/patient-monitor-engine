@@ -14,7 +14,7 @@ Regenerate the first two tables with `node --experimental-strip-types scripts/de
 fails when a literal-titled expected failure or skip is missing from this page. It cannot see conditional forms such
 as `(cond ? it.fails : it)(…)`, nor the lung-signature `KNOWN` list; those are listed by hand below.
 
-On this tree there are **160 expected-failure calls**, all read by the lister: 159 `it.fails` (the bronchospasm row of
+On this tree there are **161 expected-failure calls**, all read by the lister: 160 `it.fails` (the bronchospasm row of
 `packages/ventilator/test/link-parity.test.ts` is a literal `it.fails`) and 1 `it.fails.each` with three cases
 (`packages/engine-core/test/engine/fidelity-arrest.test.ts`), and **1 skipped test**. "Tracked in" names the gate note (and its section)
 that records the miss with its number; the open questions it cites (Q…, R-…, E-…) are listed in that note.
@@ -70,6 +70,7 @@ that records the miss with its number; the open questions it cites (Q…, R-…,
 | `packages/engine-core/test/engine/drug-layer.test.ts` | LAST is additive (DI-23; ASRA 2020): lidocaine 1.5 mg/kg on top of bupivacaine 100 mg raises the CNS effect by > 0.02 — measured +0.014 | `docs/gates/fu-7.md` §4 "`it.fails` list", #13 |
 | `packages/engine-core/test/engine/drug-layer.test.ts` | second gas (Epstein 1964, M10 ch. 19): 66 % N2O raises sevoflurane 2 %'s FA/FI at 5 min by ≥ +0.03 — measured +0.014 in the engine (+0.021 in the standalone drug rig) | `docs/gates/fu-7.md` §4 "`it.fails` list", #14 |
 | `packages/engine-core/test/engine/drug-layer.test.ts` | a magnesium sulfate load 60 mg/kg prolongs rocuronium T1 25 % by 20–90 % (M10 ch. 24 p. 698) — measured +11.4 % (+12.0 % before the blood/fluids merge; blood Mg peak 2.1, falling; the profile Mg 2.5 gives +39.7 %) | `docs/gates/fu-7.md` §4 "`it.fails` list", #15 |
+| `packages/engine-core/test/engine/endo-acceptance.test.ts` | E117: the HR is ≥ 120 by the time the EtCO2 passes 55 mmHg (tachycardia is among the earliest MH signs, Miller 10e; owner-confirmed 2026-10-23) — measured 114 since the hypercapnic pressor multiplier was removed (122 on origin/main dea151c4) | `CHANGELOG.md` [Unreleased] (the PR "hypercapnia dilates and depresses instead of pressing"); `docs/roadmap/v2.0/evidence/cardiac-reflexes-audit.md` §2.5, the note of 2026-10-28 |
 | `packages/engine-core/test/engine/endo-acceptance.test.ts` | MH severity 1 at fixed ventilation (tables §7 check 21): EtCO2 rising 3–5 mmHg/min in minutes 10–15 — measured 6.0 (E131; 3.4 before) | `CHANGELOG.md` [Unreleased] E131 (the PR "one muscle metabolic rate for MH … (E131)") |
 | `packages/engine-core/test/engine/endo-acceptance.test.ts` | MH severity 1 at fixed ventilation (tables §7 check 21): core +1 °C by 15 min — measured −0.14 °C (E131: heat from the O2 consumed) | `CHANGELOG.md` [Unreleased] E131 (the PR "one muscle metabolic rate for MH … (E131)") |
 | `packages/engine-core/test/engine/endo-acceptance.test.ts` | MH + dantrolene 2.5 mg/kg at 20 min, fixed MV: EtCO2 turns 5–10 min after the dose (tables §7 check 21) — measured +4.0 min (E131) | `CHANGELOG.md` [Unreleased] E131 (the PR "one muscle metabolic rate for MH … (E131)") |

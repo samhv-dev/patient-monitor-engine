@@ -12,9 +12,17 @@ import { bands, entered, first, near, pvcEvents, range, runCard, type Act } from
  *  minute after the ROSC instead of 10 s, were re-centred on this build, same tolerances (old centre → new): sysStop60
  *  134.5 → 140.2, mapStop60 99 → 109.2, etco2Stop60 48 → 54. Not tuned. Rebased onto main fea0688c (E126, compressions
  *  paused at each pulse check until the shock): cppAtCheck2 27.75, cppAtShock2 8.92, ROSC 62.6 s after shock 2,
- *  sysStop60 139.7, mapStop60 109.1, etco2Stop60 54; every band held, none moved. */
+ *  sysStop60 139.7, mapStop60 109.1, etco2Stop60 54; every band held, none moved.
+ *  2026-10-28 (hypercapnia dilates and depresses instead of pressing: audit §2.5): the whole course up to the pulse
+ *  loss is unchanged — junctional 558 s, PEA 626, pulse loss 660, agonal 773 (was 772), asystole 932 (931), CPR 947
+ *  (946), shock 1 1079.2 (1078.2), shock 2 1211.4 (1210.4), ROSC 62.6 s after shock 2 as before, and at 8 min the
+ *  removed pressor term is worth 0.4 mmHg (mapAt8 66.46 → 66.03, sysAt8 75.81 → 75.30, hrAt8 143 → 142), all inside
+ *  their bands. AFTER the return of circulation the patient is hypercapnic (EtCO₂ 54), so CO₂'s own vasodilation and
+ *  myocardial depression now act where the old term had been constricting: the two post-stop pressures were re-centred
+ *  on this build with the SAME tolerances (old centre → new), sysStop60 140.2 → 130.8 and mapStop60 109.2 → 100.4,
+ *  while hrStop60 73, etco2Stop60 54 and spo2Stop60 99 all held. Not tuned. */
 const BANDS = {
-  'S5 haemorrhage E120': { refused: [0, 0], notPressed: [0, 0], hrAt4: [91, 101], sysAt4: [102, 112], hrAt8: [138, 148], sysAt8: [71, 81], mapAt8: [61, 71], junctionalS: [502, 614], peaStateS: [563, 689], pulseLossS: [594, 726], peaOnJunctional: [1, 1], agonalS: [695, 849], asystoleS: [838, 1024], asystoleAfterLossS: [244, 298], cprS: [851, 1041], cppAt60: [15, 23], cppAtCheck1: [23.6, 31.6], myoAtCheck1: [0.5, 0.74], check1IntoCprS: [119, 122], shock1S: [970, 1186], shock1Outcome: [2, 2], myoAtShock2: [0.85, 1], cppAtCheck2: [23, 31], cppAtShock2: [3.8, 11.8], shock2S: [1089, 1331], shock2Outcome: [3, 3], roscAfterShock2S: [60, 75], roscAfterLossS: [552, 674], sysStop60: [135.2, 145.2], mapStop60: [104.2, 114.2], hrStop60: [67, 77], etco2Stop60: [50, 58], spo2Stop60: [97, 100], pulseLostAfterStop: [0, 0] },
+  'S5 haemorrhage E120': { refused: [0, 0], notPressed: [0, 0], hrAt4: [91, 101], sysAt4: [102, 112], hrAt8: [138, 148], sysAt8: [71, 81], mapAt8: [61, 71], junctionalS: [502, 614], peaStateS: [563, 689], pulseLossS: [594, 726], peaOnJunctional: [1, 1], agonalS: [695, 849], asystoleS: [838, 1024], asystoleAfterLossS: [244, 298], cprS: [851, 1041], cppAt60: [15, 23], cppAtCheck1: [23.6, 31.6], myoAtCheck1: [0.5, 0.74], check1IntoCprS: [119, 122], shock1S: [970, 1186], shock1Outcome: [2, 2], myoAtShock2: [0.85, 1], cppAtCheck2: [23, 31], cppAtShock2: [3.8, 11.8], shock2S: [1089, 1331], shock2Outcome: [3, 3], roscAfterShock2S: [60, 75], roscAfterLossS: [552, 674], sysStop60: [125.8, 135.8], mapStop60: [95.4, 105.4], hrStop60: [67, 77], etco2Stop60: [50, 58], spo2Stop60: [97, 100], pulseLostAfterStop: [0, 0] },
   // E133 (ventricular ectopy from the physiology), measured on this build: ischaemic PVCs in the junctional minute
   // before the pulse loss (kIsch 0.94 → 0.55), none while pulseless, and PVCs after the return of circulation (pH
   // 7.13–7.15 with the epinephrine reaching the beating heart); the course above is unchanged second by second.

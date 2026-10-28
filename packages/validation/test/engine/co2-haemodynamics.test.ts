@@ -12,8 +12,9 @@
 // vasodilation (l2/circ/model.ts `co2VascularF`, 0.4 %/mmHg, Walley 1990 after propranolol), its direct myocardial
 // depression (l2/blood/circ-adapter.ts `chemistryContractility`, 0.4 %/mmHg) and the hypercapnic sympathetic limb of
 // the endocrine stress bus (l2/endo/params.ts SYMP_HYPERCAPNIA_*, Somers 1989). Before 2026-10-28 the engine answered
-// hypercapnia with an independent pressor multiplier on HR and SVR and failed all three signs: on dea151c4 the same
-// rig at PaCO2 36.2 → 49.5 gave HR 73.1 → 73.2, CO 5.046 → 5.062 L/min and SVR ×1.0045 (it ROSE).
+// hypercapnia with an independent pressor multiplier on HR and SVR and failed two of the three signs: this rig run
+// against dea151c4's physiology gave PaCO2 38.1 → 50.8 with SVR ×1.0054 (it ROSE), HR +0.3 bpm, CO ×1.0042 and the
+// contractility factor 1.0078 → 1.0356 (it rose where Walley measured a fall).
 // Measured here on this head: PaCO2 38.1 → 50.7, CO ×1.0109, SVR ×0.9864, HR +5.3 bpm, MAP −0.5 mmHg, LV
 // contractility factor 1.0075 → 1.0053; the normocapnic arm drifts CO ×1.0020, SVR ×1.0001, HR −0.2.
 //

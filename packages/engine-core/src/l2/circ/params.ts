@@ -116,7 +116,9 @@ export const K_PVR_CO2 = 0.015;
  * pump flow (Buhre W et al., Acta Anaesthesiol Scand 1998;42:167–171, PMID 9509197) [P], and that arm is not built.
  */
 export const CO2_SVR_PER_MMHG = 0.004;
+/** The PaCO2 both direct CO2 actions are taken from (normal arterial tension; Walley 1990's eucapnic arm). */
 export const CO2_REF_MMHG = 40;
+/** The highest PaCO2 any source measures the direct CO2 actions at (Walley 1990's PCO2 92); both are held there. */
 export const CO2_SOURCE_MAX_MMHG = 92;
 
 // --- blood volume (tables §1.1; Lemmens 2006) ---

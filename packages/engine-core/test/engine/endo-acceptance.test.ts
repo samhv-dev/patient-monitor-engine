@@ -172,6 +172,7 @@ describe('endocrine acceptance (MANUAL)', { timeout: 600_000 }, () => {
 // changes. Tachycardia is among the earliest and most consistent signs of MH (Miller's Anesthesia 10e, MH chapter):
 // the HR must be rising before the EtCO2 leaves its baseline and be ≥ 120 by the time the EtCO2 passes 55 mmHg.
 // Measured before E117: HR 78 → 79 while the EtCO2 left its baseline, 99 at EtCO2 55 (the kit-round rehearsal: 93 at 58).
+// The second half of the target (≥ 120 at EtCO2 55) is a recorded miss since 2026-10-28, with its own row below.
 describe('MH tachycardia (E117, MODELED)', { timeout: 600_000 }, () => {
   const MH_PATIENT = { ageY: 35, sex: 'M', weightKg: 80, heightCm: 180, sensors: { ecg: 'on', spo2: 'on', abp: 'connected', co2: 'on', temp: 'on' } } as const;
   const drugIv = (drugId: string, dose: number, unit: string) => ev3({ kind: 'drug', drugId, dose, unit, route: 'iv' });
@@ -203,7 +204,7 @@ describe('MH tachycardia (E117, MODELED)', { timeout: 600_000 }, () => {
   };
   const meanOf = (ev: EngineEvent[], id: 'hr' | 'etco2', a: number, b: number) => mean(numSeries(ev, id, a, b).map(([, v]) => v).filter((v) => Number.isFinite(v)));
 
-  it('E117: the HR is rising before the EtCO2 leaves its baseline and is ≥ 120 by the time the EtCO2 passes 55 mmHg (constant ventilation)', async () => {
+  it('E117: the HR is rising before the EtCO2 leaves its baseline (constant ventilation)', async () => {
     const ev = await induced(1200, { mh: true });
     const et = numSeries(ev, 'etco2', 0, 1200).filter(([, v]) => Number.isFinite(v));
     const base = Math.min(...et.filter(([t]) => t >= 60 && t <= 120).map(([, v]) => v));
@@ -219,6 +220,28 @@ describe('MH tachycardia (E117, MODELED)', { timeout: 600_000 }, () => {
     console.log(`E117: EtCO2 baseline ${base}, leaves it (+3) at ${(tLeave / 60).toFixed(1)} min with HR ${hr0.toFixed(0)} → ${hrLeave.toFixed(0)} (no MH at that moment ${hrNoMh.toFixed(0)}); passes 55 at ${(t55 / 60).toFixed(1)} min with HR ${hr55.toFixed(0)}`);
     expect(hrLeave - hr0).toBeGreaterThanOrEqual(8);
     expect(hrLeave - hrNoMh).toBeGreaterThanOrEqual(8);
+    // The rate at the EtCO2 55 mark is printed above and has its own row below (the ≥ 120 band, a recorded miss).
+  });
+
+  // The ≥ 120 half of E117 is its own row because the band is no longer met. Until 2026-10-28 part of the MH
+  // tachycardia came from the circulation's hypercapnic PRESSOR multiplier (chemoFactors, +1 %/mmHg of PaCO2 above 50
+  // on HR and SVR, capped +20 %, an [ENG] size), which the primary sources show has the wrong sign: hypercapnia
+  // DILATES and DEPRESSES (audit §2.5; Walley 1990, Cullen & Eger 1974). With it removed the sourced mechanisms left —
+  // the MH sympathetic drive (MH_SYMP_GAIN), the hypercapnic arm of the stress bus (SYMP_HYPERCAPNIA_*, Somers 1989)
+  // and the baroreflex's own answer to the pressure the dilation costs — reach 114 at EtCO2 55, not 120. The band is
+  // kept and the miss recorded; it is NOT met by raising a constant to it. The named lever, for the owner: the stress
+  // bus's hypercapnic slope was deliberately kept small BECAUSE of the pressor term's overlap (its own comment says
+  // so), and its own control rows still allow a larger term (PaCO2 ≈ 51 now adds 2.6 bpm of a 10 bpm limit, PaCO2 ≈ 67
+  // adds 9.5 of 20). A second candidate, also sourced to Walley's propranolol arm: the hypercapnic tachycardia there
+  // was NOT β-mediated (HR 81 → 106 after propranolol, "did not alter the associated tachycardia"), so a direct
+  // chronotropic CO2 term of ≈ 0.6 % per mmHg would belong beside the two direct terms now built. Neither was taken
+  // without the owner's word, because either one closes a clinical target the model is being measured against.
+  it.fails('E117: the HR is ≥ 120 by the time the EtCO2 passes 55 mmHg (tachycardia is among the earliest MH signs, Miller 10e; owner-confirmed 2026-10-23) — measured 114 since the hypercapnic pressor multiplier was removed (122 on origin/main dea151c4)', async () => {
+    const ev = await induced(1200, { mh: true });
+    const et = numSeries(ev, 'etco2', 0, 1200).filter(([, v]) => Number.isFinite(v));
+    const t55 = et.find(([, v]) => v > 55)![0];
+    const hr55 = meanOf(ev, 'hr', t55 - 5, t55);
+    console.log(`E117 (recorded miss): EtCO2 passes 55 at ${(t55 / 60).toFixed(1)} min with HR ${hr55.toFixed(0)}`);
     expect(hr55).toBeGreaterThanOrEqual(120);
   });
 

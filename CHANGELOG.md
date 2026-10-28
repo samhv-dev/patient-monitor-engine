@@ -39,6 +39,19 @@ the public API is what the packages export (see the API reference), the `pme-sce
   ramp for delivered items. The Drug sheet's rule for a dose that differs from the card's step is interim, pending the
   owner's ruling.
 
+### Changed
+
+- Physiology: hypercapnia now DILATES the systemic bed and DEPRESSES the myocardium, each by 0.4 % per mmHg of PaCO₂
+  above 40 and each held at its source's measured end of PCO₂ 92 (Walley KR, Lewis TH, Wood LDH, *Circ Res*
+  1990;67:628–635, PMID 2118837, the after-propranolol arm), in place of the independent +1 %/mmHg pressor multiplier
+  on heart rate and systemic resistance above PaCO₂ 50 that the circulation's chemoreflex hook applied (an [ENG] size
+  with the wrong sign); the sympathetic answer is the one neural hypercapnic limb of the endocrine stress bus (Somers
+  VK et al., *J Appl Physiol* 1989;67:2101–2106, PMID 2513316) plus the baroreflex's own response to the pressure the
+  dilation costs, as ganglionic blockade shows it must be (Jordan J et al., *Hypertension* 2000;36:383–388,
+  PMID 10988269). In a resting adult PaCO₂ 38 → 51 now raises cardiac output and heart rate and lowers systemic
+  resistance, the three signs Cullen & Eger measured in awake volunteers (*Anesthesiology* 1974;41:345–349,
+  PMID 4412334), where before the resistance rose.
+
 ### Fixed
 - Explore prints its rows in the engine's own unit: Endocrine glucose is the engine's mmol/L value (it showed the
   mg/dL copy as mmol/L) and the lab panel's glucose says mg/dL; Stress response is on its 0–100 scale (was labelled
