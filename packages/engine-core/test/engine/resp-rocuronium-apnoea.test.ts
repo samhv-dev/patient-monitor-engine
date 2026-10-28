@@ -3,11 +3,21 @@
 // 40 y 70 kg man, preoxygenated FiO2 1 for 180 s, then both drugs at once; no airway device, no ventilation. On main
 // breathing returned at +946 s with a VT of 329 mL, EtCO2 36 and SaO2 75 % within 10 s, 6 s before the arrest the
 // probe recorded (P5c: a lung that ventilated while pulseless). SLOW (≈ 20 s wall); one yield per sim-minute.
+// 2026-10-28 (hypercapnia dilates and depresses instead of pressing, audit §2.5): the retained CO2 of an apnoea now
+// dilates the systemic bed and depresses the myocardium instead of raising the rate and the resistance, so this
+// asphyxial course reaches its arrest 20 s EARLIER — at +936 s against +956 s — and the diaphragm, whose first effort
+// this engine-level rig had caught at +946 s, never gets its chance: no spontaneous rate, no tidal volume, no EtCO2
+// and no awRR at any time from 10 min to the arrest. The owner's ruling therefore holds the more strongly, by a
+// different route, and what this rig asserts is what it can still see: that nothing moved air and that the hypoxic
+// course ran to the arrest. The first-effort TIMING band (12–24 min; Moerer 2005: 15.9) is not asserted here any more
+// — it has its own rig, which holds the drive at a hypercapnic PaCO2 so the diaphragm is always asked:
+// test/l2/neuro/diaphragm-recovery.test.ts. Nothing was widened: the VT ≤ 50 mL / no-EtCO2 / no-awRR bounds below are
+// unchanged and now hold over the whole window instead of only after a detected effort.
 import { describe, expect, it } from 'vitest';
 import { rig6, runTo, send, st6 } from '../helpers/resp-modeled-rig.ts';
 
 describe('the first diaphragmatic effort after rocuronium does not rescue the apnoeic patient', { timeout: 600_000 }, () => {
-  it('efforts return at 12–24 min with a VT ≤ 50 mL, no EtCO2 and no awRR, and the hypoxic course runs to the arrest (main: VT 329 mL, EtCO2 36 at +956 s)', async () => {
+  it('no effort moves air before the arrest: from 10 min to the arrest the VT stays ≤ 50 mL with no EtCO2 and no awRR, and the hypoxic course runs to the arrest at +936 s (main: the first effort at +946 s moved 329 mL with EtCO2 36, 10 s before the arrest at +956 s)', async () => {
     const e = rig6();
     let etco2 = 0;
     let awrr = 0;
@@ -30,13 +40,12 @@ describe('the first diaphragmatic effort after rocuronium does not rescue the ap
     await runTo(e, 180 + 1200, (u) => {
       const sp = st6(e).resp.spont as { rr: number; vt: number } | undefined;
       if (first < 0 && u > 600 && (sp?.rr ?? 0) > 0) first = u;
-      if (first > 0 && tArrest < 0) { vtMax = Math.max(vtMax, sp?.vt ?? 0); etMax = Math.max(etMax, etco2); awMax = Math.max(awMax, awrr); }
+      // From 10 min to the arrest, whether or not an effort is detected (it is not on this build: see the header)
+      if (u > 600 && tArrest < 0) { vtMax = Math.max(vtMax, sp?.vt ?? 0); etMax = Math.max(etMax, etco2); awMax = Math.max(awMax, awrr); }
       if (tArrest < 0 && st6(e).hemo.circ.arrest) tArrest = u;
     }, 2);
     // eslint-disable-next-line no-console -- the gate note's numbers
     console.log(`FU-7.1 A4 P5 rig: first effort +${first - 180} s, VT max ${vtMax.toFixed(0)} mL, EtCO2 max ${etMax}, awRR max ${awMax} until the arrest at +${tArrest - 180} s`);
-    expect(first - 180).toBeGreaterThanOrEqual(12 * 60);
-    expect(first - 180).toBeLessThanOrEqual(24 * 60);
     expect(vtMax).toBeLessThanOrEqual(50);
     expect(etMax).toBe(0);
     expect(awMax).toBe(0);
