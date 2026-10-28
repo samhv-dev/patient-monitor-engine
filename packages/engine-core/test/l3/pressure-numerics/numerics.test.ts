@@ -134,6 +134,37 @@ describe('fresh beats, the non-pulsatile rule and the searching start', () => {
     expect(beats.every((b) => b.dur < 0.7)).toBe(true); // no interval spans two beats
   });
 
+  it('a pressure line: a genuine long diastole (HR 120 → 40, post-ROSC slow beats) is one beat with its own diastolic, the search-back changing no beat', () => {
+    // The shadow run of 2026-10-27 measured #153's own-period rule on such beats: MAP 71 → 83 at an HR step 120 → 40.
+    // With the search-back the beats are exactly those of the line without it: nothing is found inside a long beat
+    const pulse = (u: number, dicrotic: number) => {
+      if (u <= 0) return 0;
+      if (u < 0.08) return 0.5 * (1 - Math.cos((Math.PI * u) / 0.08));
+      const v = u - 0.08;
+      return Math.exp(-((v / 0.15) ** 2)) + 0.25 * Math.exp(-v / 1.2) * (1 - Math.exp(-v / 0.05)) + dicrotic * Math.exp(-(((u - 0.36) / 0.045) ** 2));
+    };
+    const onsets: Array<[number, number, number]> = [];
+    for (let t = 0.5; t < 8; t += 0.5) onsets.push([t, 40, 0.45]); // HR 120
+    for (let t = 8; t < 16; t += 1.5) onsets.push([t, 45, 0.45]); // HR 40
+    for (let t = 36; t < 44; t += 1.4) onsets.push([t, 70, 0.3]); // 20 s of arrest, then the slow, large post-ROSC beats
+    const x = (t: number) => 60 + onsets.reduce((s, [o, a, d]) => s + a * pulse(t - o, d), 0);
+    const run = (searchBack: boolean) => {
+      const wn = createWaveNumerics(3);
+      const beats: Array<{ t: number; sys: number; dia: number; mean: number; dur: number }> = [];
+      for (let m = 0; m < 125 * 44; m++) {
+        const b = numericsStep(wn, m, x(m / 125), false, searchBack);
+        if (b) beats.push(b);
+      }
+      return beats;
+    };
+    const on = run(true);
+    expect(on).toEqual(run(false));
+    const slow = on.filter((b) => b.t > 9.6 && b.t < 16);
+    expect(slow.length).toBeGreaterThanOrEqual(4);
+    for (const b of slow) expect(b.dur).toBeCloseTo(1.5, 1); // each slow beat foot to foot, its diastole whole
+    for (const b of on.filter((b) => b.t > 37.5)) expect(b.dur).toBeCloseTo(1.4, 1);
+  });
+
   it('pleth (ownPulse): a pulse is measured over its own period when the detector missed the next foot (MISSED_LIMIT, Pan & Tompkins 1985); a pressure line keeps the foot-to-foot beat', () => {
     // 1 Hz pulses of 0.2 (steep upstroke, run-off); the pulse at 10 s rises too slowly to be detected and peaks at 0.3,
     // so the interval from the foot at 9 s to the next found foot (11 s) spans two pulses

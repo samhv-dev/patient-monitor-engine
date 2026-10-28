@@ -74,6 +74,19 @@ describe('search-back for a missed pulse (Pan & Tompkins 1985) with Li 2010\'s s
     for (const b of beats.slice(2)) expect(feet.some((f) => Math.abs(f - b.t) <= 0.04)).toBe(true);
   });
 
+  it('two missed upstrokes in a row are both recovered, the earlier one after the larger later one (the split interval is searched on both sides)', () => {
+    // 0.6 s beats of 40 mmHg; at 6.5 s and 7.1 s two small beats, the later one the larger: the search-back takes the
+    // candidates largest first, so it finds 7.1 s first and must still search 5.9–7.1 s for the beat at 6.5 s
+    const beats: B[] = [];
+    for (let t = 0.5; t < 12; t += 0.6) beats.push({ t, a: Math.abs(t - 6.5) < 0.01 ? 18 : Math.abs(t - 7.1) < 0.01 ? 22 : 40 });
+    const off = feetOf(art(beats), 12, false);
+    expect(off.feet.filter((f) => f > 6.2 && f < 7.4)).toEqual([]); // the detection path misses both
+    const { feet, sb } = feetOf(art(beats), 12);
+    expect(noInvented(feet, beats)).toEqual([]);
+    expect(sb.map((f) => Math.round(f * 10) / 10)).toEqual([6.5, 7.1]);
+    for (const b of beats.slice(2)) expect(feet.some((f) => Math.abs(f - b.t) <= 0.04)).toBe(true);
+  });
+
   it('a genuine long diastole stays one interval: HR 120 → 40 and a 2.4 s pause, dicrotic waves of 0.45', () => {
     const beats: B[] = [];
     for (let t = 0.5; t < 8; t += 0.5) beats.push({ t, a: 40 });
