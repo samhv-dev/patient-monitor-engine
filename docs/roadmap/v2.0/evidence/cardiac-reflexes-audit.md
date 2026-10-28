@@ -401,6 +401,15 @@ course · modulation · where an anaesthetist meets it.
     +946 s moving 329 mL with EtCO2 36, never comes before the arrest. The owner's ruling (that first effort does not
     rescue the patient) holds the more strongly; the rig's test was re-expressed around what it can still see, and the
     first-effort TIMING band (12–24 min; Moerer 2005) keeps its own rig in `test/l2/neuro/diaphragm-recovery.test.ts`.
+  - **The three other showcase cards** (found by CI, then measured here; same tolerances, re-centred): the unsecured
+    airway's MAP when the oximeter reads zero 77 → 60.5 mmHg; the tamponade card's single-beat systolic peak in the
+    30 s after its ROSC 208.5 → 134.0, where the PaCO2 is 55–56 and the pH 7.26 (the same number the two hypercapnic
+    pressor terms had raised from 155 to 199 when E117 added the first of them), with the pressure a minute later back
+    in its old band; the early-drain peak 155 → 161.8; and the premedicated induction's ephedrine 115 → 90 s, because
+    the CO2 that patient retains no longer props his pressure. One card document follows the physiology with them:
+    the "First diaphragmatic efforts" label is a timer out of the bradycardic state, moved 357 → 412 s so it still
+    lands on the engine's own first effort (measured lag 0.07 s against the ± 15 s row that exists to keep them
+    together).
   - **(i) NOT BUILT, with the measurement.** The afferent itself is easy: the chemo drive is added to the baroreflex's
     sympathetic error, each limb saturating on its own so the chemoreflex is never switched off at a saturated
     baroreflex (Heistad 1974, Somers 1991, Regmi 2024). The SIZE is the problem. Somers 1991 gives both ends in one
