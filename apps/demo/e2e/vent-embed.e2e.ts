@@ -40,7 +40,7 @@ test('vent embed: loads from file:// with no errors; the ventilator breathes and
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   await page.setViewportSize({ width: 1400, height: 800 });
   await page.goto(url);
-  expect(await page.evaluate(() => (window as Any).PatientMonitor.version)).toBe('1.0.0-rc.3');
+  expect(await page.evaluate(() => (window as Any).PatientMonitor.version)).toBe('1.0.0-rc.4');
   await page.waitForFunction(() => (window as Any).__embed?.vent.vs.p.breathCount >= 2, null, { timeout: 20_000 });
   await expect.poll(() => last(page, 'awrr'), { timeout: 30_000 }).toBe(14); // vent → engine: the ventilator's 14/min
   await expect.poll(() => last(page, 'spo2'), { timeout: 30_000 }).toBeGreaterThan(90);

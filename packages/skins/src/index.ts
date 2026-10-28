@@ -1,5 +1,5 @@
 // @pme/skins: skins as data (brief §3.8). Validation (ajv) lives in '@pme/skins/validate' so renderer bundles stay small.
-export const version = '1.0.0-rc.3';
+export const version = '1.0.0-rc.4';
 export * from './types.ts';
 export { contrastRatio, darkenToContrast, luminance, parseHex, toHex } from './color.ts';
 export { deepMerge } from './merge.ts';

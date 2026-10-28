@@ -7,6 +7,13 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ## [Unreleased]
 
+## [1.0.0-rc.4] - 2026-10-30
+
+Fourth public **pre-release** (release candidate) of a teaching simulator. It is for education only: it is not a
+medical device and it is not clinically validated. It is not the final 1.0.0: the calibration pass and the blind
+realism review have not run. The known limitations listed under 1.0.0-rc.3, 1.0.0-rc.2 and 1.0.0-rc.1 still apply,
+except where this section says otherwise.
+
 ### Added
 
 - Instructor panel (E121b): an **Oxygen** control on the Airway & ventilation tab for the spontaneously breathing
@@ -329,6 +336,30 @@ the public API is what the packages export (see the API reference), the `pme-sce
   product change (run 40180609451: the phone took longer than 5 s to match, and the 4-s toast had gone before the test
   looked). It now reads the restore from the Log tab's line ("Restored after reload: Malignant hyperthermia, mm:ss")
   and allows the phone 20 s on CI and on WebKit (5 s on local Chromium, as before); the 10-s clock bound is unchanged.
+
+### Known limitations
+
+- Windows launchers (`.cmd`): untested on Windows at this release.
+- Pulsus paradoxus in severe tamponade is not reproduced: the systolic swing is 3.4 mmHg against the target of at
+  least 10 mmHg (Spodick 2003; `docs/model/circulation.md`). The work on it (E118) follows the demo of 3 November.
+- A hidden instructor tab pauses the session and resumes it on return (owner ruling E82). The proper fix, a session
+  that keeps running while the tab is hidden, is for a later release.
+- Browser coverage (replaces the browser line of 1.0.0-rc.3): the WebKit tests tagged `@known-flaky` run in a separate
+  CI job that does not block (docs/gates/stage-14.md, "The known-flaky WebKit quarantine"); on the gating WebKit job a
+  test that passes only on a retry is still recorded as a warning, not a failure, until the demo of 3 November
+  (docs/gates/stage-14.md, "Temporary relaxation"). Chromium runs every test and still fails on a retry-only pass.
+- The Persian Debrief handout prints in English every line its Persian table does not hold, so some lines of the two
+  demo cards print in English: 26 entries of `docs/showcase/i18n/fa-debrief.json` have no Persian yet. Persian drafts
+  for 21 of them are in PR #161 and await the clinical owner's review; the other 5 have no draft (one is held there
+  for his wording ruling, and four changed their English in #163, after that PR was written).
+- The classroom kit (the app, the relay for learners' phones and the launchers) is still built from a source checkout
+  with `node scripts/showcase/make-bundle.mjs` (Node.js ≥ 22); it is not a release asset of this release candidate.
+- Not run at this release: the two release-checklist runs of `RELEASE.md` — the 600 s tick-cost gate on an idle
+  machine (item 8) and the 10-minute soak with a busy Ventilator view and a paired Remote (item 9).
+- The Persian Debrief handout's terms, other than the take-home lines the owner approved, are drafts marked unreviewed
+  until the owner's term review.
+- The owner's checks: this release candidate gets a smoke check after the tag, recorded in the repository's gate
+  notes.
 
 ## [1.0.0-rc.3] - 2026-10-23
 
@@ -675,7 +706,8 @@ realism review have not run, and the limits below are known.
   the documentation, and a few developer pages are leftovers; a clean-up follows this release candidate, then the
   calibration pass and the realism review.
 
-[Unreleased]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.3...HEAD
+[Unreleased]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.4...HEAD
+[1.0.0-rc.4]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.3...v1.0.0-rc.4
 [1.0.0-rc.3]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.2...v1.0.0-rc.3
 [1.0.0-rc.2]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.1...v1.0.0-rc.2
 [1.0.0-rc.1]: https://github.com/samhv-dev/patient-monitor-engine/releases/tag/v1.0.0-rc.1
