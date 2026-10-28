@@ -202,7 +202,7 @@ reads it for the per-beat truths the monitor and the other organ models consume.
 | `boluses` | `Bolus[]` | — |
 | `vol` | `VolumeEvent[]` | — |
 | `hrModel` | `number` | bpm the reflex/drugs ask the rhythm engine for (MODELED) |
-| `skinTone` | `number` | The cutaneous vasomotor tone (1 at rest, < 1 dilated, > 1 constricted) the finger pleth reads — the systemic vasomotor factors (baroreflex incl. its tonic share, the drugs' vascular PD, chemoreflex, endocrine and humoral, Cushing) WITHOUT the MANUAL tracker or blood viscosity, which are not tone. MODELED only (1 in MANUAL). [ENG: the skin is assumed to share the systemic vasomotor factor; a skin-specific (thermoregulatory) share is not modelled.] |
+| `skinTone` | `number` | The cutaneous vasomotor tone (1 at rest, < 1 dilated, > 1 constricted) the finger pleth reads — the systemic vasomotor factors (baroreflex incl. its tonic share, the drugs' vascular PD, CO2's own vascular action, endocrine and humoral, Cushing) WITHOUT the MANUAL tracker or blood viscosity, which are not tone. MODELED only (1 in MANUAL). [ENG: the skin is assumed to share the systemic vasomotor factor; a skin-specific (thermoregulatory) share is not modelled.] |
 | `vagalStim` | `{ t0: number; ms: number } \| null` | The stimulus-driven vagal event (engine observer → `circVagalStimulus`); absent until a site is seen. |
 | `hrSet` | `RampState \| null` | The rate the instructor or the rhythm set (rate-rule.ts); null = the reflex owns a sinus-family rate. |
 | `ctlNext` | `number` | — |

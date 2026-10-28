@@ -125,8 +125,8 @@ export interface CircModelState {
   hrModel: number; // bpm the reflex/drugs ask the rhythm engine for (MODELED)
   /**
    * The cutaneous vasomotor tone (1 at rest, < 1 dilated, > 1 constricted) the finger pleth reads — the systemic
-   * vasomotor factors (baroreflex incl. its tonic share, the drugs' vascular PD, chemoreflex, endocrine and humoral,
-   * Cushing) WITHOUT the MANUAL tracker or blood viscosity, which are not tone. MODELED only (1 in MANUAL). [ENG: the
+   * vasomotor factors (baroreflex incl. its tonic share, the drugs' vascular PD, CO2's own vascular action, endocrine
+   * and humoral, Cushing) WITHOUT the MANUAL tracker or blood viscosity, which are not tone. MODELED only (1 in MANUAL). [ENG: the
    * skin is assumed to share the systemic vasomotor factor; a skin-specific (thermoregulatory) share is not modelled.]
    */
   skinTone?: number;
