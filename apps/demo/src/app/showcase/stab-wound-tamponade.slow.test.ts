@@ -15,9 +15,14 @@ import { bands, entered, first, near, range, runCard, type Act } from './harness
  *  run moves the pulse loss 471 → 470 s and with it the phase of every later beat against the compressions. The peak is
  *  one beat summing with a compression in the 10 s of CPR left before "Pulse back"; drainage and ROSC are at the same
  *  second (602.1, 698 s). With the PVC placement made a no-op the course is byte-identical to main (196.5). Every other
- *  S2 number stayed in its band. */
+ *  S2 number stayed in its band.
+ *  The arterial search-back (2026-10-28, l3/pulse/detector.ts) re-centred sysMaxAtRosc 208.5 → 191, same ± 5. At
+ *  ROSC the detector had missed the beats at 703.5–706.5 s, so the interval 702.99–705.71 s read the 216 mmHg surge
+ *  beat's systolic over three beats; the search-back finds the feet at 704.38, 705.10 and 706.63 s, each within 80 ms
+ *  of an ejecting beat, and the 1-Hz systolic at 707 s reads 191.1 against 178–184 for the mean of the true beats of
+ *  the last 6 s (208.5 before). Every other S2 number stayed in its band. */
 const BANDS = {
-  'S2 happy': { refused: [0, 0], hrAt60: [94, 104], sysAt60: [101, 111], diaAt60: [82, 92], cvpAt60: [15, 19], etco2At60: [29, 35], pulsusMean: [0, 1.9], pulsusMax: [0, 2.6], deterioratingS: [336, 410], hrAtDeteriorating: [130, 140], cvpAtDeteriorating: [18, 22], pulseLossS: [424, 518], peaStateS: [425, 519], pea: [1, 1], drainS: [542, 662], roscAfterDrainS: [81, 111], sysPlus60: [113, 123], hrPlus60: [58, 68], cvpPlus60: [8, 12], etco2Plus60: [32, 38], sysMaxAtRosc: [203.5, 213.5], pulseHeld: [1, 1] },
+  'S2 happy': { refused: [0, 0], hrAt60: [94, 104], sysAt60: [101, 111], diaAt60: [82, 92], cvpAt60: [15, 19], etco2At60: [29, 35], pulsusMean: [0, 1.9], pulsusMax: [0, 2.6], deterioratingS: [336, 410], hrAtDeteriorating: [130, 140], cvpAtDeteriorating: [18, 22], pulseLossS: [424, 518], peaStateS: [425, 519], pea: [1, 1], drainS: [542, 662], roscAfterDrainS: [81, 111], sysPlus60: [113, 123], hrPlus60: [58, 68], cvpPlus60: [8, 12], etco2Plus60: [32, 38], sysMaxAtRosc: [186, 196], pulseHeld: [1, 1] },
   'S2 epinephrine': { refused: [0, 0], roscAfterDrainS: [79, 109] },
   'S2 undrained': { refused: [0, 0], pulseBack: [0, 0], cvpMax: [30, 34], etco2Plus3: [6, 12] },
   'S2 at ×8 poll': { refused: [0, 0], pulseLossS: [424, 518], peaStateS: [426, 520], roscAfterDrainS: [80, 110] },
