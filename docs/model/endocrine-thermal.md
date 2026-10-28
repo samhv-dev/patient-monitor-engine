@@ -535,7 +535,6 @@ Exported without a doc comment: `readEndoInputs`, `createConditions`, `createEnd
 | warm CO 7–9 L/min | 5.0 | — | MIS-SPECIFIED ([audit row 46](../../docs/validation/target-audit/30-target-audit.md#row-46)) | unresuscitated warm phase: CO 4-6.5 L/min; after 30 mL/kg crystalloid: CO 7-9 L/min | [`endo-circ-acceptance.test.ts`](../../packages/engine-core/test/engine/endo-circ-acceptance.test.ts) |
 | warm SVR 500–700 dyn·s/cm⁵ | 861 | — | MIS-SPECIFIED ([audit row 47](../../docs/validation/target-audit/30-target-audit.md#row-47)) | unresuscitated: SVR 700-1000; after 30 mL/kg: SVR 500-700 (pair with the CO row) | [`endo-circ-acceptance.test.ts`](../../packages/engine-core/test/engine/endo-circ-acceptance.test.ts) |
 | insulin 10 units IV, awake: nadir at 20–30 min (insulin-tolerance test) | 13.3 min | — | RIGHT ([audit row 136](../../docs/validation/target-audit/30-target-audit.md#row-136)) | keep 20-30 min (at most widen to 15-35 min for sampling resolution); retire research/12's 40-60 | [`endo-insulin-dextrose.test.ts`](../../packages/engine-core/test/engine/endo-insulin-dextrose.test.ts) |
-| awake laryngoscopy raises MAP 20–40 mmHg and HR 12–30 (M10; the sourced awake band) — ΔMAP | 40.3 | M10 | UNSUPPORTED ([audit row 11](../../docs/validation/target-audit/30-target-audit.md#row-11)) | dMAP >= 20 with ceiling ~50 (or >= the propofol arm), dHR 12-35; owner to choose a ceiling | [`stimulus-surge.test.ts`](../../packages/engine-core/test/engine/stimulus-surge.test.ts) |
 | 1b: the untreated hypertensive's pressor response is exaggerated: ΔMAP ratio HTN / healthy ≥ 1.3 | 1.19 | Prys-Roberts 1971 | UNSUPPORTED ([audit row 12](../../docs/validation/target-audit/30-target-audit.md#row-12)) | ratio >= 1.15 in absolute dMAP (direction plus more than proportional) until the Prys-Roberts table is read | [`stimulus-surge.test.ts`](../../packages/engine-core/test/engine/stimulus-surge.test.ts) |
 | no opioid: ΔMAP 20–30 mmHg | +19.1 | Shribman 1987 | MIS-SPECIFIED ([audit row 13](../../docs/validation/target-audit/30-target-audit.md#row-13)) | dMAP >= 15 % of pre-incision MAP (~12-15 mmHg), upper ~35 mmHg, at <= 1 MAC sevoflurane without opioid | [`stimulus-surge.test.ts`](../../packages/engine-core/test/engine/stimulus-surge.test.ts) |
 | 3: labetalol 10 mg blunts it — ΔMAP ratio 0.2–0.8 | 0.96 | Inada 1989; DI-08 | MIS-SPECIFIED ([audit row 14](../../docs/validation/target-audit/30-target-audit.md#row-14)) | labetalol 10 mg: dMAP ratio 0.8-1.1 (no meaningful pressor blunting) AND dHR ratio <= 0.7 | [`stimulus-surge.test.ts`](../../packages/engine-core/test/engine/stimulus-surge.test.ts) |
@@ -551,7 +550,7 @@ Exported without a doc comment: `readEndoInputs`, `createConditions`, `createEnd
 
 ## Tests
 
-181 tests in 39 files; 20 expected failures, 0 skipped.
+181 tests in 39 files; 19 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -564,7 +563,7 @@ Exported without a doc comment: `readEndoInputs`, `createConditions`, `createEnd
 | [`engine/endo-longrun.test.ts`](../../packages/engine-core/test/engine/endo-longrun.test.ts) | 3 | 0 | 0 |
 | [`engine/endo-seams.test.ts`](../../packages/engine-core/test/engine/endo-seams.test.ts) | 6 | 0 | 0 |
 | [`engine/endo-wiring.test.ts`](../../packages/engine-core/test/engine/endo-wiring.test.ts) | 4 | 0 | 0 |
-| [`engine/stimulus-surge.test.ts`](../../packages/engine-core/test/engine/stimulus-surge.test.ts) | 12 | 5 | 0 |
+| [`engine/stimulus-surge.test.ts`](../../packages/engine-core/test/engine/stimulus-surge.test.ts) | 12 | 4 | 0 |
 | [`engine/thermal-fever-ga.test.ts`](../../packages/engine-core/test/engine/thermal-fever-ga.test.ts) | 2 | 2 | 0 |
 | [`engine/thermal-mh-arrest-heat.test.ts`](../../packages/engine-core/test/engine/thermal-mh-arrest-heat.test.ts) | 1 | 0 | 0 |
 | [`engine/thermal-mh-haemodynamics.test.ts`](../../packages/engine-core/test/engine/thermal-mh-haemodynamics.test.ts) | 1 | 0 | 0 |

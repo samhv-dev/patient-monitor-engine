@@ -78,16 +78,18 @@ describe('the stimulus sympathetic surge', { timeout: 3_600_000 }, () => {
     expect(r.at90).toBeGreaterThanOrEqual(0.5 * r.dMap);
   });
 
-  // R45 (FU-7.1 B3, owner-ruled band change 2026-10-07): recorded with its number, NOT widened. With the alveolar
-  // washout the opioid-free arm's cardiac-output dip lowers the low-flow factor faster, so its PaCO2 rises further and
-  // the hypercapnic pressor response adds to the laryngoscopy surge: ΔMAP 38.4 → 40.3 against the sourced 20–40 band.
-  // The HR half (13.1) is inside its band and is asserted below; the ΔMAP ceiling is the record (FU-7.1 Q9's neighbour).
-  it.fails('awake laryngoscopy raises MAP 20–40 mmHg and HR 12–30 (M10; the sourced awake band) — ΔMAP measured 40.3 with the alveolar washout (38.4 without it)', async () => {
+  // R45 (FU-7.1 B3, owner-ruled band change 2026-10-07): this row was a recorded miss. With the alveolar washout the
+  // opioid-free arm's cardiac-output dip lowers the low-flow factor faster, so its PaCO2 rises further, and the
+  // circulation's hypercapnic PRESSOR multiplier added to the laryngoscopy surge: ΔMAP 38.4 → 40.3 against the sourced
+  // 20–40 band. 2026-10-28: that multiplier had the wrong sign and is gone (audit §2.5; CO2 now dilates and depresses),
+  // so the same surge measures ΔMAP 39.97 and ΔHR 13.7 and the row passes again. It is met at its ceiling, by 0.03 mmHg,
+  // and the band is the sourced one, unchanged; the exact value is printed so the margin stays visible.
+  it('awake laryngoscopy raises MAP 20–40 mmHg and HR 12–30 (M10; the sourced awake band) — measured ΔMAP 39.97, ΔHR 13.7 (40.3 while the hypercapnic pressor multiplier stood)', async () => {
     const i = await run('awake:stim', LARYNX, STIM_T + 600);
     const c = await run('awake:ctrl', [], STIM_T + 600);
     const dMap = dPeak(i, c, 'map', STIM_T);
     const dHr = dPeak(i, c, 'hr', STIM_T);
-    console.log(`FU-7 case 1 awake: ΔMAP ${f1(dMap)}, ΔHR ${f1(dHr)}`);
+    console.log(`FU-7 case 1 awake: ΔMAP ${f1(dMap)}, ΔHR ${f1(dHr)} (exact ΔMAP ${dMap.toFixed(3)})`);
     expect(dMap).toBeGreaterThanOrEqual(20);
     expect(dMap).toBeLessThanOrEqual(40);
     expect(dHr).toBeGreaterThanOrEqual(12);

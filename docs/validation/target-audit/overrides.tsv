@@ -4,3 +4,4 @@
 183	packages/engine-core/test/engine/fidelity-lowflow.test.ts	MODELED Ali's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 blank from 758 s, PI ≤ 0.25 (E126; was SpO2 99 valid at 760–765 s, PI 0.31–0.33)
 132	packages/engine-core/test/engine/endo-acceptance.test.ts	MH severity 1 at fixed ventilation (tables §7 check 21): EtCO2 ≥ 60 by 10 min — measured 64 after E131 (54 with the corrected dead space before)
 147	packages/engine-core/test/engine/drug-layer-guards.test.ts	… EtCO2 52–70 by 10 min at constant MV (DI-65; tables §7 check 21) — measured 48.3 after E131 (42.2 before; baseline b004289: 42.2)
+11	packages/engine-core/test/engine/stimulus-surge.test.ts	awake laryngoscopy raises MAP 20–40 mmHg and HR 12–30 (M10; the sourced awake band) — measured ΔMAP 39.97, ΔHR 13.7 (40.3 while the hypercapnic pressor multiplier stood)

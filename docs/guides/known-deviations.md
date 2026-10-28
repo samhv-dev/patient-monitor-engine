@@ -14,7 +14,7 @@ Regenerate the first two tables with `node --experimental-strip-types scripts/de
 fails when a literal-titled expected failure or skip is missing from this page. It cannot see conditional forms such
 as `(cond ? it.fails : it)(…)`, nor the lung-signature `KNOWN` list; those are listed by hand below.
 
-On this tree there are **161 expected-failure calls**, all read by the lister: 160 `it.fails` (the bronchospasm row of
+On this tree there are **160 expected-failure calls**, all read by the lister: 159 `it.fails` (the bronchospasm row of
 `packages/ventilator/test/link-parity.test.ts` is a literal `it.fails`) and 1 `it.fails.each` with three cases
 (`packages/engine-core/test/engine/fidelity-arrest.test.ts`), and **1 skipped test**. "Tracked in" names the gate note (and its section)
 that records the miss with its number; the open questions it cites (Q…, R-…, E-…) are listed in that note.
@@ -140,7 +140,6 @@ that records the miss with its number; the open questions it cites (Q…, R-…,
 | `packages/engine-core/test/engine/resp-suite.test.ts` | RS13 massive PE (one command), awake then ventilated: RR ≥ 25 and PaCO2 ≤ 35 awake; EtCO2 falls ≥ 10 with Pa–Et ≥ 15 ventilated; mPAP 30–45 — measured awake 28.2 / 33.1 (met); ventilated: arrest (CO 0, EtCO2 30.6 → 0, mPAP 11.2) (94040f7: 40.2 → 27.8, gap 33.6, mPAP 31.7) | `docs/gates/fu-6.md` §2 "The respiratory suite (RS1–RS15 …)", row RS13 |
 | `packages/engine-core/test/engine/resp-suite.test.ts` | RS14 rebreathing FiCO2 8 for 20 min at fixed VCV: PaCO2 and EtCO2 +6–10 — measured +6.7 / EtCO2 +5.99994 with the alveolar washout (+6.1 without it; +5.98 when propofol also does not remove the tonic sympathetic share) | `docs/gates/fu-7.1-b.md` §5 "Records this branch creates" (RS14, Q5); `docs/gates/stage-fu-8b.md` §6 "Exceptions", E-FU8B-7 |
 | `packages/engine-core/test/engine/resp-vcv-pmax.test.ts` | healthy breaths untouched: delivered VT within 5 mL of the set 500 — measured 494.3 (band ±5) | `docs/gates/fu-6.md` §5 "`it.fails` list with numbers (merged tree) and flips" |
-| `packages/engine-core/test/engine/stimulus-surge.test.ts` | awake laryngoscopy raises MAP 20–40 mmHg and HR 12–30 (M10; the sourced awake band) — ΔMAP measured 40.3 with the alveolar washout (38.4 without it) | `docs/gates/fu-7.1-b.md` §5 "Records this branch creates" (case 1 awake ΔMAP, Q9) |
 | `packages/engine-core/test/engine/stimulus-surge.test.ts` | 1b: the untreated hypertensive's pressor response is exaggerated: ΔMAP ratio HTN / healthy ≥ 1.3 (Prys-Roberts 1971) — measured 1.19 (HTN +29.8 vs healthy +25.0; earlier 1.19 at +10.8 / +9.1); the resting-tone half is the tonic sympathetic share's | `docs/gates/fu-7.md` §4 "`it.fails` list", #20 |
 | `packages/engine-core/test/engine/stimulus-surge.test.ts` | no opioid: ΔMAP 20–30 mmHg (Shribman 1987) — measured +19.1 (+19.3 before the blood/fluids merge) | `docs/gates/fu-7.md` §4 "`it.fails` list", #21 |
 | `packages/engine-core/test/engine/stimulus-surge.test.ts` | 3: labetalol 10 mg blunts it — ΔMAP ratio 0.2–0.8 (Inada 1989; DI-08) — measured 0.96 (HR 0.64): the circulating noradrenaline acts through α and the reset set point is reached through the α limb; labetalol 10 mg's α share is small | `docs/gates/fu-7.md` §4 "`it.fails` list", #22 |
