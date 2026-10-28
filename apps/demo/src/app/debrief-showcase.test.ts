@@ -161,12 +161,35 @@ describe('E132: the objectives of the two demo cards after the clinical review',
     expect(objectives(recorded(mh, [row(540, 'drug:dantrolene')], xs))[i]?.verdict.status).toBe('not assessable'); // never normoventilated
   });
 
+  it('owner rc.4 (2026-10-28): the second dose at normal ventilation re-applies the crisis ventilation; objective 6 still judges the first return', () => {
+    const doc = mh as unknown as ScenarioDoc;
+    const press = doc.states.find((s) => s.id === 'normoventilated')?.transitions?.find((t) => t.id === 'dant-normoventilated');
+    expect(press?.to).toBe('dantroleneAgain');
+    expect(press?.label).toBe('Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600, O₂ 100 %)'); // the button says what it gives
+    const again = doc.states.find((s) => s.id === 'dantroleneAgain');
+    const events = (again?.onEnter ?? []).map((c) => (c.type === 'applyEvent' ? c.event : null));
+    expect(events).toContainEqual({ kind: 'drug', drugId: 'dantrolene', dose: 2.5, unit: 'mg/kg', route: 'iv' });
+    expect(events).toContainEqual({ kind: 'ventilation', source: 'ventilator', rr: 20, vtMl: 600, peep: 5, fio2: 1 }); // the trigger-off ventilation
+    // back to the checklist: Recovering, then the same "ventilation back" button as the first time
+    expect(again?.transitions?.map((t) => t.to)).toEqual(['treating']);
+    expect(doc.states.find((s) => s.id === 'recovering')?.transitions?.find((t) => t.id === 'normo')?.to).toBe('normoventilated');
+    expect(doc.states.find((s) => s.id === 'dantrolene')?.onEnter?.some((c) => c.type === 'applyEvent' && c.event.kind === 'ventilation')).toBe(false); // the first dose leaves the ventilation as it is
+    // objective 6 (heldThen, the first ventilation back) is judged on the first return even when a second follows
+    const vent = mh.objectives.findIndex((o) => typeof o !== 'string' && o.rule?.kind === 'heldThen');
+    expect(vent).toBe(5);
+    const rows = [row(500, 'state:triggerOff'), row(540, 'drug:dantrolene'), row(836, 'state:normoventilated', 'Ventilation back'), row(1154, 'state:dantroleneAgain', 'Dantrolene again'), row(1632, 'state:normoventilated', 'Ventilation back')];
+    const xs = [{ t: 520, etco2: 39 }, ...Array.from({ length: 316 }, (_, k) => ({ t: 521 + k, etco2: 38 })), { t: 900, etco2: 53 }, { t: 1154, etco2: 64 }, { t: 1600, etco2: 38 }];
+    const v = objectives(recorded(mh, rows, xs))[vent]?.verdict;
+    expect(v?.status).toBe('met');
+    expect(v?.why).toMatch(/ at 13:56, after EtCO₂ had stayed below 40 mmHg for 2 min 00 s \(08:40 → 10:40\)\.$/);
+  });
+
   it('haemorrhage: no draft words; CPR on the pulse loss is judged as before; the return of circulation is recognised at the rhythm check', () => {
     expect(haemorrhage.objectives.map((o) => (typeof o === 'string' ? o : o.text)).join(' ')).not.toMatch(/draft|owner to confirm/i);
     const rows = [row(660, 'pulseLoss'), row(939, 'cpr'), row(1258, 'rosc'), row(1314, 'state:rosc', 'Return of circulation')];
     const v = objectives(recorded(haemorrhage, rows, [{ t: 0 }, { t: 1400 }])).map((o) => o.verdict);
     expect(v.map((x) => x.status)).toEqual(['not assessable', 'not met', 'met']);
-    expect(v[2]?.measure).toEqual({ fromT: 1258, toT: 1314, askedS: 150 });
+    expect(v[2]?.measure).toEqual({ fromT: 1258, toT: 1314, askedS: 120 }); // owner rc.4 (2026-10-28): 150 → 120 s
   });
 
   it('haemorrhage: "Rhythm check" everywhere, never "Pulse check"; epinephrine offered in every CPR state', () => {
