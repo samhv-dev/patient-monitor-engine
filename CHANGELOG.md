@@ -197,8 +197,8 @@ the public API is what the packages export (see the API reference), the `pme-sce
     button and state, so in the Debrief too; epinephrine is offered in every CPR state; after the second shock the card
     keeps CPR to the 2-min rhythm check ("Rhythm check: pulse back, stop CPR"). The objectives are rewritten to the
     course with every "draft, owner to confirm" removed (objective 3: the return of circulation recognised and CPR
-    stopped within 150 s), and the card has the owner's three take-home lines. This replaces the E120 entry's
-    resuscitation volumes and its "no take-home lines yet".
+    stopped within 150 s; 120 s since the owner's ruling of 28 October, below), and the card has the owner's three
+    take-home lines. This replaces the E120 entry's resuscitation volumes and its "no take-home lines yet".
   - Measured on kit round A4 (Chromium, kit 503caeab, three phones). MH: early signs 8:14, the call 8:16, dantrolene
     8:37, ventilation back 13:56, the EtCO₂ above 45 again at 14:10, the second dantrolene 19:14 at EtCO₂ 65; at the
     end (24:31) EtCO₂ 64, HR 85, ART 96/64, core 36.4 °C; Debrief report 8 A4 pages, learner handout 1 page.
@@ -208,6 +208,20 @@ the public API is what the packages export (see the API reference), the `pme-sce
     handout stays on 1 page, its long key-moments table set smaller. The new card words are in
     `docs/showcase/i18n/fa-debrief.json` as English keys awaiting the owner's Persian (`"fa": null`, `reviewed:
     false`).
+- Showcase cards, the owner's three rulings of 2026-10-28 (rc.4; card text and steps only, no engine change).
+  - MH: the second dantrolene at normal ventilation ("Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600, O₂
+    100 %)", offered in "Ventilation back to 12 × 500") enters a new state that gives the dose and the trigger-off
+    step's ventilator command (20 × 600, PEEP 5, FiO₂ 1.0), then returns to the crisis checklist. Ventilation goes back
+    to 12 × 500 only from Recovering, by the same button and on the same rule as the first time (EtCO₂ below 40 for
+    2 min), never on a timer. Objective 4 names the hyperventilation; the Debrief still judges the first return only
+    (objective 6). No new `pme-scenario/1` kind. On the talk path (second dose 19:14) the EtCO₂ held at 64–66 at
+    12 × 500 before and was below 40 for good only from 51:59; now it falls to 50 a minute after the dose and to 41 at
+    the talk's end (24:31, Recovering, HR 70, ART M 67, still 20 × 600), is below 40 from 25:15, ventilation goes back
+    again at 27:15, and it is below 40 for good from 42:38 (headless; kit round A4 on Chromium agrees to the talk's end).
+  - Haemorrhage: the return-of-circulation objective asks for CPR stopped within 120 s (was 150 s); the measured 57 s
+    stays met, and the course is unchanged.
+  - The pause for the shock is "under 10 s" in the cue cards and the run sheet (was "under 5 s"; 8 s measured on the
+    rc.4 round).
 
 ### Fixed
 

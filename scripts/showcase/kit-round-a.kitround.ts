@@ -1699,6 +1699,7 @@ test('A4 MH (E119): the induction sequence, early call, three 5-min fast-forward
     await R.ff(5);
     // E132 (clinical review finding 1): the EtCO₂ climbing back at normal ventilation is MH not controlled: second dose
     await R.row('after span 2: the EtCO₂ climbing back at normal ventilation');
+    if (SHOTS) await page.locator('section[aria-label="Running scenario"]').getByRole('button', { name: DOSE2, exact: true }).scrollIntoViewIfNeeded().catch(() => undefined); // the new button in the shot
     await shot(R, page, 'owr4-1-before-second-dose');
     // owner rc.4 (2026-10-28): the second dose re-applies the crisis ventilation, 20 × 600 at 100 % O₂
     const tDose2 = await R.press(DOSE2, 'dantroleneAgain');
