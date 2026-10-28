@@ -208,7 +208,7 @@ the public API is what the packages export (see the API reference), the `pme-sce
     handout stays on 1 page, its long key-moments table set smaller. The new card words are in
     `docs/showcase/i18n/fa-debrief.json` as English keys awaiting the owner's Persian (`"fa": null`, `reviewed:
     false`).
-- Showcase cards, the owner's three rulings of 2026-10-28 (rc.4; card text and steps only, no engine change).
+- Showcase cards, the owner's rulings of 2026-10-28 (rc.4; card text and steps only, no engine change).
   - MH: the second dantrolene at normal ventilation ("Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600, O₂
     100 %)", offered in "Ventilation back to 12 × 500") enters a new state that gives the dose and the trigger-off
     step's ventilator command (20 × 600, PEEP 5, FiO₂ 1.0), then returns to the crisis checklist. Ventilation goes back
@@ -219,7 +219,8 @@ the public API is what the packages export (see the API reference), the `pme-sce
     the talk's end (24:31, Recovering, HR 70, ART M 67, still 20 × 600), is below 40 from 25:15, ventilation goes back
     again at 27:15, and it is below 40 for good from 42:38 (headless; kit round A4 on Chromium agrees to the talk's end).
   - Haemorrhage: the return-of-circulation objective asks for CPR stopped within 120 s (was 150 s); the measured 57 s
-    stays met, and the course is unchanged.
+    stays met, and the course is unchanged. The pseudo-PEA objective and the card's notes name the measured "ART about
+    20/14" (was 19/13; 20/14 and 21/14 on two kit rounds, at the PEA-state row).
   - The pause for the shock is "under 10 s" in the cue cards and the run sheet (was "under 5 s"; 8 s measured on the
     rc.4 round).
 

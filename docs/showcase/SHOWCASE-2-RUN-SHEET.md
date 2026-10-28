@@ -38,7 +38,7 @@ segment).
 | E13 | Which Mac presents | **The kit on a Mac**; GitHub Pages is the fallback (§6). `node -v` and one Start Classroom run on the presenting Mac by the room dry run, Monday 2 November | §1, §6 |
 | E14 | The network for the phones | **A travel router** | §1 |
 | E132 | The clinical review of the two cards (2026-10-26) | **Accepted in full.** MH: the crisis step adds charcoal filters and a propofol infusion; a second dantrolene when the EtCO₂ climbs back at normal ventilation; cooling only above 38.5 °C; four take-home lines. Haemorrhage: source control, massive transfusion and TXA; "Rhythm check"; a second epinephrine; CPR to the 2-min rhythm check; objectives rewritten (no "draft"); three take-home lines | Case 1, Case 2, §4 |
-| OWR4 | The owner's rulings of 28 October | **MH:** the second dantrolene at normal ventilation also puts the crisis ventilation back (20 × 600, O₂ 100 %); ventilation returns to 12 × 500 only once EtCO₂ has stayed below 40 for 2 min, never on a timer. **Haemorrhage:** stop CPR within **120 s** of the return of circulation (was 150 s; measured 57 s). **The pause for the shock under 10 s** (was under 5 s; measured 8 s on the rc.4 round) | Case 1, Case 2, §4 |
+| OWR4 | The owner's rulings of 28 October | **MH:** the second dantrolene at normal ventilation also puts the crisis ventilation back (20 × 600, O₂ 100 %); ventilation returns to 12 × 500 only once EtCO₂ has stayed below 40 for 2 min, never on a timer. **Haemorrhage:** stop CPR within **120 s** of the return of circulation (was 150 s; measured 57 s). **The pause for the shock under 10 s** (was under 5 s; measured 8 s on the rc.4 round). **Pseudo-PEA:** the objective names the measured "ART about 20/14" (was 19/13; 20/14 on kit 2c341aa3, 21/14 on kit 503caeab, both at the PEA-state row) | Case 1, Case 2, §4 |
 
 ## What changed for 3 November
 
@@ -546,7 +546,7 @@ pulse amplitude per beat]. Point at the ECG, the
 arterial line and the capnogram; if asked, say so.
 
 **Debrief objectives and the verdict on the owner's course** [CARD; E132 Debrief]: – Not assessable: Recognise PEA from
-hypovolaemia (pseudo-PEA at ART 19/13; the instructor judges it) · **✗ Not observed: CPR within 30 s of the pulse
+hypovolaemia (pseudo-PEA at ART about 20/14 [OWR4; E132 rc.4]; the instructor judges it) · **✗ Not observed: CPR within 30 s of the pulse
 loss (4 min 39 s: 11:00 → 15:38)**: the objective's own text says the demo withholds CPR on purpose · **✓ Observed: the
 return of circulation recognised at the rhythm check and CPR stopped, 57 s after it (20:57 → 21:54; asked within
 2 min 00 s)** [E132 rc.4; the window 150 → 120 s: owner, 28 October]. No "draft" anywhere. **Take-home lines (the card's, owner-agreed 26 October, verbatim):** *"Positive

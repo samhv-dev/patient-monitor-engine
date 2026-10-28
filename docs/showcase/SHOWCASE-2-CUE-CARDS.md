@@ -258,7 +258,7 @@ line and the capnogram.
 | 0:00 (18:40) | Session bar **Debrief** |
 | 0:15 (18:55) | **Run by**: "Showcase 2, 3 November"; one line in **Notes** |
 | 0:30 (19:10) | **Key times**: first team action **35 s** · CPR **4 min 39 s** after the pulse loss (asked ≤ 30 s) · CPR stopped **57 s** after the return of circulation (asked ≤ 2 min 00 s: owner, 28 October) · pulseless **9 min 57 s** |
-| 1:00 (19:40) | the objectives: – recognise PEA (name the pseudo-PEA at 19/13) · ✗ CPR within 30 s: withheld on purpose, as the objective says · ✓ the return of circulation recognised at the rhythm check |
+| 1:00 (19:40) | the objectives: – recognise PEA (name the pseudo-PEA at about 20/14) · ✗ CPR within 30 s: withheld on purpose, as the objective says · ✓ the return of circulation recognised at the rhythm check |
 | 1:30 (20:10) | **Key moments** (21 in the report) · **Timeline** (100 rows) |
 | 2:15 (20:55) | **Print or save as PDF**: **9 A4 pages**. **In the print dialog, untick Headers and footers** (Chrome: More settings; Safari: Show Details → Print headers and footers). Then **Print the learner handout** (optional): 1 page |
 | 3:00 (21:40) | *"The report is a debrief aid: it reads the run, it does not grade the person."* |
