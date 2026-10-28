@@ -339,7 +339,7 @@ course · modulation · where an anaesthetist meets it.
   (≈ 7 % per 0.1 pH) through the existing contractility path, so that it is unopposed exactly where the inotropic
   reserve is gone (Karnad 1993). The earlier plan — a shared SATURATING ceiling that would make hypercapnia add
   nothing at MAP < 30 — was withdrawn on 2026-10-27: the primary data show potentiation there, not occlusion.
-- **Built 2026-10-28** (branch `fix-chemoreflex-efferent`; every number below measured by the executor on that branch
+- **Built 2026-10-28** (branch `fix-chemoreflex-efferent`, PR #162; every number below measured by the executor on that branch
   over origin/main `dea151c4`, and each "before" on `dea151c4`'s own physiology in the same rig). Terms (ii) and (iii)
   are in the engine and the wrong-signed pressor multiplier is gone. Term (i) — the sympathetic limb AS AN AFFERENT OF
   THE BAROREFLEX'S EFFERENT — is **not built**, and the measurement that stopped it is below.
