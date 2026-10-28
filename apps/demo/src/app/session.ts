@@ -381,6 +381,10 @@ export class AppSession {
     this.driver.runner = null;
     clearPosition(); // the old case's position is not this one's
     this.mountWith({ ...eo, mode: this.mode, truthHz: 1, patient: { ...eo.patient, ...(p.sensors ? { sensors: p.sensors } : {}) } });
+    // UI review #14: a scenario's cuff cycles from Load as a free-play patient's does (the skin's default, Saadat AUTO
+    // every 5 min); it showed "/" for the whole case. Not when the card's patient has no cuff on (nibp 'off').
+    const sensors = { ...eo.patient?.sensors, ...p.sensors } as Record<string, string | undefined>;
+    if (sensors.nibp !== 'off') this.startCuff(7);
     this.lastLoad = this.panel.send({ type: 'scenario', action: 'load', doc: v.doc });
     this.live = true;
     return { ok: true, doc: v.doc };
@@ -409,8 +413,13 @@ export class AppSession {
     }
     const patient = profileOf(this.spec);
     this.mountWith({ seed, mode: this.mode, patient, truthHz: 1, device: { ageBand: ageBandOf(this.spec) } });
-    // O2 (research/34 §8 O2): a skin with nibp.applyAtStart starts the cuff on AUTO at the free-play patient's start —
-    // once per start (not per skin switch, not for scenarios or ?load=perf8), mirrored to a learner monitor
+    this.startCuff(seed);
+  }
+
+  /** O2 (research/34 §8 O2): a skin with nibp.applyAtStart starts the cuff on AUTO at the patient's start — once per
+   *  start (not per skin switch, not for ?load=perf8; a scenario's Load too since UI review #14), mirrored to a learner
+   *  monitor. */
+  private startCuff(seed: number): void {
     const m = this.monitor;
     const action = this.spec.attached && m?.skin ? nibpStartCommand(m.skin.skin) : null;
     if (m && action) {

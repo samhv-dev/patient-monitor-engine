@@ -1,6 +1,7 @@
 // UI-B (the read-only demo UI review of 24 October, the remaining monitor and panel rows). #25 — the Monitor view's
 // hover strip sits under the monitor's header (it covered the date, the time and the HR tile's label). #32 — a paused
-// session puts PAUSED over the monitor, never in print.
+// session puts PAUSED over the monitor, never in print. #14 — a scenario's NIBP cuff cycles from Load (the Saadat
+// default, AUTO every 5 min); the tile showed "/" for the whole case.
 import { expect, test } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
@@ -61,4 +62,13 @@ test('UI-B #32: Pause puts PAUSED over the monitor, Resume takes it away; it nev
   await page.emulateMedia({ media: 'screen' });
   await bar.getByRole('button', { name: 'Resume', exact: true }).click();
   await expect(mark).toBeHidden({ timeout: 5_000 });
+});
+
+test('UI-B #14: a loaded scenario starts the cuff on AUTO every 5 min and the NIBP tile shows a result', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await openApp(page, base, '?scenario=showcase-mh', { warmMs: 1500 });
+  const nibp = page.locator('.stage .pme-stile[data-param="NIBP"]');
+  await expect(nibp.locator('[data-pme="mode"]')).toHaveText('AUTO(5Min)', { timeout: 20_000 });
+  await expect(nibp.locator('[data-pme="v"]')).toHaveText(/^\d+ \/ \d+$/, { timeout: 90_000 });
 });

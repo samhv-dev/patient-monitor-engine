@@ -330,6 +330,10 @@ function photoCss(g: LayoutGrid): string[] {
     // blood pressure); !important over the value's inline grid size (sizeValues)
     `.pme-grid .pme-stile.rc3[data-param="NIBP"] .srow .s.busy{font-size:${f(15)};white-space:nowrap}`,
     `.pme-grid .pme-stile.rc3[data-param="NIBP"] .v.cuff{font-size:${f(30)} !important}`,
+    // UI review #14 follow-up: a result never wraps ("120 /" over "80" on a pane under ≈ 1000 px, now that a scenario's
+    // cuff cycles): one line, at the skin's size or 18 % of the row's width if smaller (a container query on the row)
+    '.pme-grid .pme-stile.rc3[data-param="NIBP"] .vrow{container-type:inline-size}',
+    `.pme-grid .pme-stile.rc3[data-param="NIBP"] .v{white-space:nowrap;font-size:min(${f(g.fontPx.NIBP ?? 57)}, 18cqw) !important}`,
     // G6: the %SPO2 value left of centre, after its limits; the limits keep their column and the digits their field
     `.pme-strip .pme-stile .v{text-align:left;padding-left:${f(18)};white-space:nowrap}`,
     '.pme-strip .pme-stile.rc3 .vrow .lim.a{flex:none}',
@@ -826,6 +830,12 @@ export class DeviceUI {
     this.status = null;
     this.dev = null;
     this.paint(t);
+  }
+
+  /** After a restore: the cuff's last result as the restored engine holds it (mount.ts reads it from the snapshot; the
+   *  engine emits it only when it measures). Its wall time stays blank (E102). */
+  seedNibp(last: { sys: number; dia: number; map: number; at: number }): void {
+    this.nibpLast = { ...last };
   }
 
   /** Repaint for sim time t (called with every event batch, ≤ 4 Hz). */

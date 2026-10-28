@@ -398,6 +398,14 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     anchor = { simT: t, perfMs: performance.now(), timeScale: anchor.timeScale };
     const line = (s.state as { st?: { resp?: { co2Sensor?: string } } } | null)?.st?.resp?.co2Sensor;
     if (line !== undefined) setCo2(line !== 'off', h);
+    // UI review #14 follow-up: the cuff's last result is the restored engine's too (it is emitted only when measured,
+    // so a resynced phone or a restored bookmark showed "/" until the next cycle, up to 5 min, beside a host that showed
+    // it). Not after a failed cycle: the monitor had blanked it
+    const nb = (s.state as { st?: { hemo?: { nibp?: { phase?: string; last?: { sys: number; dia: number; map: number; at: number } | null } } } } | null)?.st?.hemo?.nibp;
+    if (nb?.last && nb.phase !== 'failed') {
+      nibpLast = { sys: nb.last.sys, dia: nb.last.dia, map: nb.last.map, at: nb.last.at };
+      ui?.seedNibp(nibpLast);
+    }
   };
   /** The plan for the current skin, with the ECG leads chosen on this skin kept. */
   const planNow = (sk: ResolvedSkin) => {
