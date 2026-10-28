@@ -78,13 +78,19 @@ export const MH_SVR_DILATION = 0.2;
  * outflow, in conscious subjects]. Here `symp` gains SYMP_HYPERCAPNIA_PER_MMHG per mmHg of PaCO2 above
  * SYMP_HYPERCAPNIA_FROM_MMHG, up to SYMP_HYPERCAPNIA_MAX (reached at PaCO2 55). `symp` also acts on HR, contractility
  * and venous tone: those arms, the size, and the size under anaesthesia (volatiles blunt the reflex) are [ENG].
- * The term is deliberately SMALL because it is not alone (KNOWN OVERLAP, owner note): the ADRENAL hypercapnia drive
- * (DRIVE_HYPERCAPNIA_PER_MMHG, above 50) and the circulation's chemoreflex pressor term (circ `chemoFactors`, +1 %/mmHg
- * HR and SVR above 50, capped 20 %) answer the same stimulus. Measured without MH: PaCO2 51 adds 2–3 bpm (limit 10);
+ * This is the engine's ONE neural hypercapnic sympathetic limb. Beside it only the ADRENAL hypercapnia drive
+ * (DRIVE_HYPERCAPNIA_PER_MMHG, above 50) answers the same stimulus, and that is the humoral arm, not the neural one.
+ * The circulation's own hypercapnic pressor multiplier (circ `chemoFactors`, +1 %/mmHg HR and SVR above 50, capped
+ * 20 %) was REMOVED on 2026-10-28: it had the wrong sign (CO2's direct vascular action is a VASODILATION and its
+ * direct myocardial action a depression — circ `co2VascularF`, blood `chemistryContractility`), and it carried neither
+ * sympatholysis nor the responsiveness scaling that this term carries (audit §2.5).
+ * Measured without MH: PaCO2 51 adds 2–3 bpm (limit 10);
  * PaCO2 ≈ 68 adds ≈ 16 bpm where the old engine added 13 (limit 20); an uncapped 0.06/mmHg term gave +30 bpm at 68.
  * (The tamponade showcase's post-ROSC systolic peak, 155 → 199, is NOT changed by the cap: 200 uncapped.)
- * Folding `chemoFactors`' hypercapnic arm into this term
- * is the clean form but re-tunes every hypercapnic MODELED band: not done for rc.4. The metabolic acidaemia is NOT a
+ * Moving this limb into the baroreflex's own sympathetic error, so that one efferent carries both afferents, was
+ * tried on 2026-10-28 and NOT shipped: the error is in mmHg of pressure and its gains were set for pressure defence,
+ * so the MSNA percent the chemoreflex is sized in (Somers 1989/1991) has no determinate exchange rate with it — see
+ * the audit §2.5 note of that date for the measured numbers. The metabolic acidaemia is NOT a
  * second input: the central chemoreceptors track PaCO2 (the blood–brain barrier delays a metabolic H+ signal); the
  * carotid bodies do sense metabolic H+, but such a term would move the sourced sepsis/DKA/haemorrhage HR bands the
  * circulation already meets. The term is a CENTRAL chemoreflex: the endocrine adapters scale it by the vasomotor

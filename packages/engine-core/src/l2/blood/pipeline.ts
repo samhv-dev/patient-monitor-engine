@@ -213,7 +213,7 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
     }, BLOOD_DT_S);
     bs.out = bs.pinHbfRel === undefined ? c.out : { ...c.out, hbfRel: bs.pinHbfRel }; // test seam (addendum 15 (4))
     const bvRatio = c.out.bvRel;
-    const kChem = chemistryContractility(c.ab.ph, c.out.iCa, c.out.kEcg);
+    const kChem = chemistryContractility(c.ab.ph, c.out.iCa, c.out.kEcg, rs.co2.pf);
     if (circ) {
       pushCircVolume(circ, bloodMl(c.fl) - bv0, BLOOD_DT_S);
       bs.circNetMl += bloodMl(c.fl) - bv0;

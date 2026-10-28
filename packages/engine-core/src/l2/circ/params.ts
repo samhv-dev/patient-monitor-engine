@@ -101,6 +101,23 @@ export const SPONT_SWING_CMH2O = 4;
  * J Physiol; k ≈ 0.01–0.02 per mmHg) [ENG inside the sourced range]; PaCO2 from the circulation's 1 Hz chemo input.
  */
 export const K_PVR_CO2 = 0.015;
+/**
+ * CO2's OWN vascular action on the SYSTEMIC bed, non-sympathetic: resistance falls CO2_SVR_PER_MMHG per mmHg of PaCO2
+ * above CO2_REF_MMHG. In fentanyl-anaesthetised dogs at PCO2 92 / pH 7.09 systemic vascular resistance fell 26 %, and
+ * still fell 20 % AFTER propranolol with the cardiac-output rise abolished — so ≈ 0.4 % per mmHg (20 % over 52 mmHg) is
+ * the direct vascular effect and not the sympathetic limb (Walley KR, Lewis TH, Wood LDH, Circ Res 1990;67:628–635,
+ * PMID 2118837) [P]. The sympathetic efferent OPPOSES it through the reflex's own answer to the pressure, which is why
+ * an intact patient's pressure is nearly CO2-insensitive while ganglionic blockade unmasks 13 ± 1.9 mmHg of it
+ * (Jordan J et al., Hypertension 2000;36:383–388, PMID 10988269) [P], and the intact NET is a higher cardiac index and
+ * heart rate with a LOWER total peripheral resistance (Cullen DJ, Eger EI 2nd, Anesthesiology 1974;41:345–349,
+ * PMID 4412334: PaCO2 39 → 50 in 41 awake volunteers) [P].
+ * Held at the source's measured end, CO2_SOURCE_MAX_MMHG (PCO2 92, a 21 % fall): above it no source gives a slope.
+ * The HYPOcapnic direction is NOT modelled here — human resistance is higher at a lower PaCO2 on bypass at constant
+ * pump flow (Buhre W et al., Acta Anaesthesiol Scand 1998;42:167–171, PMID 9509197) [P], and that arm is not built.
+ */
+export const CO2_SVR_PER_MMHG = 0.004;
+export const CO2_REF_MMHG = 40;
+export const CO2_SOURCE_MAX_MMHG = 92;
 
 // --- blood volume (tables §1.1; Lemmens 2006) ---
 export const BV_ML_KG_M = 70;

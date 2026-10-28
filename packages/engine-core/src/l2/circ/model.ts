@@ -7,7 +7,7 @@ import { brainstemOutF, createBaro, K_PP, stepBaro, V0_RECRUIT_MAX_ML_KG, type B
 import { createOut, evaluate, S, stepCirc, type CircDrive, type CircOut, type CircParams } from './circuit.ts';
 import { bolusScale, drugEffect, pruneBoluses, type Bolus, type DrugEffect, type DrugId } from './drugs.ts';
 import { betaBlunt } from '../pk/pd.ts';
-import { ATRIAL_DELAY_S, ATRIAL_T_S, DYSSYNC, H_S, HIST_SVR, HIST_V0, K_PVR_CO2, P_PL0 } from './params.ts';
+import { ATRIAL_DELAY_S, ATRIAL_T_S, CO2_REF_MMHG, CO2_SOURCE_MAX_MMHG, CO2_SVR_PER_MMHG, DYSSYNC, H_S, HIST_SVR, HIST_V0, K_PVR_CO2, P_PL0 } from './params.ts';
 import { DEFAULT_PROFILE, resolveProfile, type CircProfile, type ResolvedProfile } from './profile.ts';
 import { stabilise, type Stabilised } from './stabilise.ts';
 import { createCoronary, G_ISCH, type CoronaryState } from './coronary.ts';
@@ -260,16 +260,41 @@ const NEUTRAL_MAN = { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null, kIschRe
 const zero = () => 0;
 export const RESTING_ENV: CircEnv = { pIt: () => P_PL0, cprCardiac: zero, cprThoracic: zero, cprRelease: zero, qVad: () => 0, qAortaSrc: zero, modeled: true };
 
-/** Chemoreflex → circulation (B §4.9; tables §1.1). Hypoxic HR sign by age band; hypercapnic pressor response. */
-export function chemoFactors(c: { sao2: number; paco2: number }, band: string): { hrF: number; svrF: number } {
+/**
+ * Chemoreflex → the sinus node (B §4.9; tables §1.1): the HYPOXIC heart-rate sign by age band. Selective carotid-body
+ * stimulation at constant ventilation gives a primary BRADYCARDIA, which a rising ventilation converts into
+ * tachycardia through the lung-inflation reflex and the central respiratory–cardiac coupling (de Burgh Daly) [P];
+ * neonates and infants answer hypoxia with bradycardia [T], and below SaO2 60 % the direct depression dominates in the
+ * adult too. This term is the VAGAL/direct arm; the adult's hypoxic tachycardia above SaO2 60 % is the integrated
+ * (ventilation-restrained) response, slope [ENG].
+ * The hypercapnic SYMPATHETIC limb is NOT here: it is one arm of the endocrine stress bus (l2/endo/params.ts
+ * SYMP_HYPERCAPNIA_*, sourced to Somers 1989), which already carries the anaesthetic sympatholysis, the
+ * catecholamine-responsiveness scaling and the vasomotor centre's perfusion gate. Until 2026-10-28 this function also
+ * applied a hypercapnic PRESSOR multiplier of +1 %/mmHg above PaCO2 50 on HR and SVR (capped +20 %, [ENG]); it was the
+ * WRONG SIGN on the primary sources — hypercapnia LOWERS systemic resistance (`co2VascularF`) and depresses the
+ * myocardium (l2/blood/circ-adapter.ts `chemistryContractility`) — and it is removed. Evidence:
+ * docs/roadmap/v2.0/evidence/cardiac-reflexes-audit.md §2.5.
+ */
+export function chemoFactors(c: { sao2: number }, band: string): { hrF: number } {
   let hrF = 1;
   const hyp = Math.max(0, 0.85 - c.sao2); // below 85 %
   if (hyp > 0) {
     const brady = band === 'neonate' || band === 'infant' || c.sao2 < 0.6;
     hrF = brady ? Math.max(0.5, 1 - 2.5 * hyp) : Math.min(1.3, 1 + 1.2 * hyp); // plan slope 1.6 failed its own test (SaO2 75 % infant → HR ×0.84, wanted < 0.8) [ENG]
   }
-  const hcap = Math.min(0.2, Math.max(0, c.paco2 - 50) * 0.01); // +1 %/mmHg above 50, capped at +20 % [ENG]
-  return { hrF: hrF * (1 + hcap), svrF: 1 + hcap };
+  return { hrF };
+}
+
+/**
+ * CO2's direct, NON-SYMPATHETIC vascular action: SVR × (1 − CO2_SVR_PER_MMHG · (PaCO2 − 40)₊), held at the source's
+ * measured end (params.ts `CO2_SVR_PER_MMHG`, Walley 1990 after propranolol). It is not a reflex and carries no
+ * sympathetic scaling: the sympathetic efferent opposes it EMERGENTLY, through the baroreflex's own answer to the
+ * pressure the dilation costs (Jordan 2000) and through the hypercapnic arm of the stress bus. MODELED only — in
+ * MANUAL the instructor's tracker owns systemic resistance.
+ */
+export function co2VascularF(paco2: number): number {
+  const excess = Math.min(CO2_SOURCE_MAX_MMHG, Math.max(CO2_REF_MMHG, paco2)) - CO2_REF_MMHG;
+  return 1 - CO2_SVR_PER_MMHG * excess;
 }
 
 /** The engine's stimulus observer (the endocrine model consumes the event; the circulation model only sees the site).
@@ -314,7 +339,8 @@ function control(m: CircModelState, env: CircEnv): void {
   const b = env.modeled
     ? stepBaro(m.baro, sensed, { gVagal: m.prof.gVagal * de.gv * (1 - (de.muscBlock ?? 0)), gSymp: m.prof.gSymp * de.gv, betaBlock: Math.min(0.95, m.prof.betaBlock + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlock)), betaBlockC: Math.min(0.95, m.prof.betaBlockC + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlockC)), hrGain: de.gvHr, weightScale: w, pinnedSet: m.mapSetPinned, outF: de.symp, setF: de.setF * (m.ext.surgeF ?? 1), brainF: brainstemOutF(m.ext.cbfRel), tonic: m.prof.tonicSymp }, raTm) // The nociceptive surge rides the set-point path; `tonic` = the profile's tonic sympathetic share
     : { rrMs: 0, hrF: 1, svrF: 1, eesF: 1, dV0: 0, cSvF: 1 };
-  const ch = env.modeled ? chemoFactors(m.chemo, m.prof.band) : { hrF: 1, svrF: 1 }; // Task 19
+  const ch = env.modeled ? chemoFactors(m.chemo, m.prof.band) : { hrF: 1 };
+  const co2Vasc = env.modeled ? co2VascularF(m.chemo.paco2) : 1; // CO2's own vascular action (not a reflex)
   const p = m.p;
   const base = m.base;
   const man = env.modeled ? NEUTRAL_MAN : m.man; // The MANUAL tracker's solution
@@ -327,8 +353,8 @@ function control(m: CircModelState, env: CircEnv): void {
   const humF = env.modeled && m.arrest ? Math.max(0, 1 - (m.t - m.arrest.t) / NO_FLOW_S) : 1;
   const hsv = x.endoHumSvrF ?? 1;
   const endoSvr = humF === 1 || hsv === 1 ? (x.endoSvrF ?? 1) : ((x.endoSvrF ?? 1) / hsv) * (1 + (hsv - 1) * humF);
-  p.rSys = (man.rSys ?? base.rSys) * b.svrF * de.svr * ch.svrF * (x.rSysF ?? 1) * endoSvr * (x.viscF ?? 1); // Viscosity
-  m.skinTone = env.modeled ? b.svrF * de.svr * ch.svrF * (x.rSysF ?? 1) * endoSvr : 1; // The tone part of the line above
+  p.rSys = (man.rSys ?? base.rSys) * b.svrF * de.svr * co2Vasc * (x.rSysF ?? 1) * endoSvr * (x.viscF ?? 1); // Viscosity
+  m.skinTone = env.modeled ? b.svrF * de.svr * co2Vasc * (x.rSysF ?? 1) * endoSvr : 1; // The tone part of the line above (the skin dilates with CO2 as the systemic bed does)
   const betaOcc = 1 - (1 - (x.betaBlockAdd ?? 0)) * (1 - m.prof.betaBlockC); // As the drug model's competitive β shift
   const dv0Beta = betaDV0Ml(x.betaAgonistU ?? 0, betaOcc, m.weightKg);
   // The baroreflex, the β-agonists and the HUMORAL arm all recruit from ONE splanchnic reservoir. Because the humoral
