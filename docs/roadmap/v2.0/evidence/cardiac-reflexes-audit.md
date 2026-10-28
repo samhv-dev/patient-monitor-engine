@@ -395,6 +395,12 @@ course · modulation · where an anaesthetist meets it.
     audit's "≈ 1 mmHg at +10 min" holds in size but the sequence is set by preload, not by that mmHg. What DID move is
     after the return of circulation, where the patient is hypercapnic (EtCO2 54): the systolic 60 s after CPR stops
     140.2 → 130.8 and the MAP 109.2 → 100.4, both re-centred with the same tolerances.
+  - **Apnoea** (FU-7.1 A4's P5 rig: preoxygenated 40 y man, propofol 2 mg/kg + rocuronium 0.6 mg/kg, no airway): the
+    asphyxial course reaches its arrest **20 s earlier, +936 s against +956 s** — the retained CO2 now dilates and
+    depresses instead of raising the rate and the resistance — and the first diaphragmatic effort, which main caught at
+    +946 s moving 329 mL with EtCO2 36, never comes before the arrest. The owner's ruling (that first effort does not
+    rescue the patient) holds the more strongly; the rig's test was re-expressed around what it can still see, and the
+    first-effort TIMING band (12–24 min; Moerer 2005) keeps its own rig in `test/l2/neuro/diaphragm-recovery.test.ts`.
   - **(i) NOT BUILT, with the measurement.** The afferent itself is easy: the chemo drive is added to the baroreflex's
     sympathetic error, each limb saturating on its own so the chemoreflex is never switched off at a saturated
     baroreflex (Heistad 1974, Somers 1991, Regmi 2024). The SIZE is the problem. Somers 1991 gives both ends in one
