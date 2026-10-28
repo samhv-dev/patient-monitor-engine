@@ -105,6 +105,35 @@ describe('fresh beats, the non-pulsatile rule and the searching start', () => {
     expect(run(8)).toBe(true); // was pulsatile: ≥ 3 mmHg keeps it
   });
 
+  it('a pressure line: a small upstroke after large beats is its own beat (search-back), never merged into the interval before it', () => {
+    // 0.6 s beats rising 40 mmHg (80 ms upstroke, run-off, dicrotic notch and wave, diastolic tail); the one at 6.5 s
+    // rises 20 mmHg, under 60 % of the SSF peaks. Before the search-back the interval 5.9–7.1 s spanned two beats and
+    // read the large beat's systolic over the small beat's end-diastole.
+    const pulse = (u: number) => {
+      if (u <= 0) return 0;
+      if (u < 0.08) return 0.5 * (1 - Math.cos((Math.PI * u) / 0.08));
+      const v = u - 0.08;
+      return Math.exp(-((v / 0.15) ** 2)) + 0.25 * Math.exp(-v / 1.2) * (1 - Math.exp(-v / 0.05)) + 0.4 * Math.exp(-(((u - 0.36) / 0.045) ** 2));
+    };
+    const onsets: number[] = [];
+    for (let t = 0.5; t < 12; t += 0.6) onsets.push(t);
+    const rise = (t: number) => (Math.abs(t - 6.5) < 0.01 ? 20 : 40);
+    const x = (t: number) => 60 + onsets.reduce((s, o) => s + rise(o) * pulse(t - o), 0);
+    const wn = createWaveNumerics(3);
+    const beats: Array<{ t: number; sys: number; dur: number }> = [];
+    for (let m = 0; m < 125 * 12; m++) {
+      const b = numericsStep(wn, m, x(m / 125), false, true);
+      if (b) beats.push(b);
+    }
+    const end = (t: number) => beats.find((b) => Math.abs(b.t - t) < 0.04);
+    const before = end(6.5); // the large beat 5.9–6.5 s
+    const small = end(7.1); // the small beat 6.5–7.1 s
+    expect(before?.dur).toBeCloseTo(0.6, 1);
+    expect(small?.dur).toBeCloseTo(0.6, 1);
+    expect((small?.sys as number) - (before?.sys as number)).toBeLessThan(-15); // its own, smaller systolic
+    expect(beats.every((b) => b.dur < 0.7)).toBe(true); // no interval spans two beats
+  });
+
   it('pleth (ownPulse): a pulse is measured over its own period when the detector missed the next foot (MISSED_LIMIT, Pan & Tompkins 1985); a pressure line keeps the foot-to-foot beat', () => {
     // 1 Hz pulses of 0.2 (steep upstroke, run-off); the pulse at 10 s rises too slowly to be detected and peaks at 0.3,
     // so the interval from the foot at 9 s to the next found foot (11 s) spans two pulses
