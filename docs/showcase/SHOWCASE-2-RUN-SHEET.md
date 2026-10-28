@@ -766,7 +766,8 @@ Card: *Severe bronchospasm on the ventilator*, chip **Airway and breathing** (no
 bronchospasm → Salbutamol given: ventilation recovering [CARD].
 
 Rules: **load the case first, then open the Ventilator view** (it takes over ventilation) [RUN4 header]; the phones hold
-and say "The ventilator is on the main screen" until the next case [CR12; MEAS §6]. The session bar (speed, 2 min,
+and say "The ventilator is on the main screen" until you leave the Ventilator view, then follow again within a second
+[CR12; MEAS §6; CLASSROOM]. The session bar (speed, 2 min,
 Bookmark) is on the **Instructor** view only: go to **Instructor** to press it, then back to **Ventilator**. **Pressing
 ×8 and the 2-min fast-forward from the Instructor view, with the cockpit hidden, is measured safe**: the cockpit kept
 driving the patient through ×8 and the span (11 690 / 11 681 contiguous frames, C / W), the phones kept their hold and
