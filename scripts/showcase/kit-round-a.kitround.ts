@@ -37,6 +37,8 @@ const CRISIS = 'MH crisis: stop sevoflurane, charcoal filters, propofol infusion
 /** E132: the haemorrhage card after the clinical review. */
 const HAEM_VOLUME = 'Surgeon controls the bleeding; massive transfusion: 1 L warmed crystalloid, then red cells and plasma by rapid infuser; TXA 1 g';
 const HAEM_STOP = 'Rhythm check: pulse back, stop CPR';
+// Owner rc.4 (2026-10-28): the second dantrolene at normal ventilation re-applies the crisis ventilation (20 × 600, O₂ 100 %)
+const DOSE2 = 'Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600, O₂ 100 %)';
 
 type Hook = {
   __pmeApp: {
@@ -882,7 +884,7 @@ for (const path of ['early', 'late', 'early-normo'] as const) {
         const et1 = (await latest(page)).etco2;
         await R.row('after span 1, paused', { co2: et1 });
         await R.pauseToggle();
-        if (typeof et1 === 'number' && et1 > 45) await R.press('Dantrolene 2.5 mg/kg');
+        if (typeof et1 === 'number' && et1 > 45) await R.press((await stateId(page)) === 'normoventilated' ? DOSE2 : 'Dantrolene 2.5 mg/kg');
         await R.ff(5);
         ffDone++;
       } else {
@@ -999,7 +1001,7 @@ for (const variant of ['at-hold', 'span-1-at-7-42', 'span-1-at-8-45'] as const) 
         ffDone++;
         const et = (await latest(page)).etco2;
         await R.row(`after span ${ffDone}`, { co2: et });
-        if (repeat === null && typeof et === 'number' && et > 45) repeat = await R.press('Dantrolene 2.5 mg/kg', 'dantrolene');
+        if (repeat === null && typeof et === 'number' && et > 45) repeat = await R.press(DOSE2, 'dantroleneAgain');
       }
       await R.row('end of the path');
       // EtCO2 after the press: per minute (the first measurement of each minute), the maximum, the first time at 45 or above
@@ -1397,7 +1399,7 @@ test('Q1 30-minute talk on the release build: opening, MH (E119) 14:41, haemorrh
     await M.row('19:58 Pause: the presenter line');
     await page.waitForTimeout(3000);
     await M.pauseToggle();
-    await M.press('Dantrolene 2.5 mg/kg', 'dantrolene'); // E132: the EtCO₂ climbing back at normal ventilation: second dose
+    await M.press(DOSE2, 'dantroleneAgain'); // E132: the EtCO₂ climbing back at normal ventilation: second dose (owner rc.4: with the crisis ventilation)
     await M.ff(5); // span 3
     await M.untilT(M.t0 + 1512);
     await M.pauseToggle();
@@ -1697,8 +1699,22 @@ test('A4 MH (E119): the induction sequence, early call, three 5-min fast-forward
     await R.ff(5);
     // E132 (clinical review finding 1): the EtCO₂ climbing back at normal ventilation is MH not controlled: second dose
     await R.row('after span 2: the EtCO₂ climbing back at normal ventilation');
-    const tDose2 = await R.press('Dantrolene 2.5 mg/kg', 'dantrolene');
+    await shot(R, page, 'owr4-1-before-second-dose');
+    // owner rc.4 (2026-10-28): the second dose re-applies the crisis ventilation, 20 × 600 at 100 % O₂
+    const tDose2 = await R.press(DOSE2, 'dantroleneAgain');
+    await shot(R, page, 'owr4-2-second-dose-pressed');
     await R.ff(5);
+    // ventilation back again only once EtCO₂ has stayed below 40 for 2 min since the second dose, in Recovering
+    const sinceDose2 = (await hist(page, tDose2, Infinity)).filter((x) => typeof x.etco2 === 'number') as Array<{ t: number; etco2: number }>;
+    let run2: number | null = null;
+    let held2: number | null = null;
+    for (const x of sinceDose2) {
+      run2 = x.etco2 < 40 ? (run2 ?? x.t) : null;
+      if (held2 === null && run2 !== null && x.t - run2 >= 120) held2 = x.t;
+    }
+    const tNormo2 = held2 !== null && (await stateId(page)) === 'recovering' ? await R.press('EtCO₂ normal: ventilation back to 12 × 500', 'normoventilated') : null;
+    if (tNormo2 === null) R.r.notes.push(`after span 3 (${mmss(await R.sim())}) the state was ${await stateId(page)} and EtCO₂ had ${held2 === null ? 'not yet' : 'already'} stayed below 40 for 2 min since the second dose: ventilation back again ${held2 === null ? 'NOT pressed (its rule not met)' : 'not offered'}`);
+    await shot(R, page, 'owr4-3-end-of-case');
     await R.pauseToggle();
     await R.row('end: paused');
     const h = await hist(page, tInd, tInt + 60);
@@ -1712,6 +1728,11 @@ test('A4 MH (E119): the induction sequence, early call, three 5-min fast-forward
       etco2Below40At: below40 === null ? null : mmss(below40), normoAt: tNormo === null ? null : mmss(tNormo), spo2MinInductionToTube: r1(minOf(h, 'spo2')),
       etco2Above45AfterNormoAt: above45 === null ? null : mmss(above45.t), dose2At: mmss(tDose2), dose2AfterAbove45S: above45 === null ? null : r1(tDose2 - above45.t),
       etco2AtDose2: r1(afterNormo.filter((x) => x.t <= tDose2).at(-1)?.etco2), etco2PeakAfterNormo: peak ? `${r1(peak.etco2)} at ${mmss(peak.t)}` : null, etco2PerMinuteAfterNormo: perMin.join(' · '),
+      // owner rc.4: after the second dose (the crisis ventilation again)
+      etco2Below40AfterDose2At: ((b) => (b ? `${mmss(b.t)} (+${r1(b.t - tDose2)} s)` : null))(sinceDose2.find((x) => x.etco2 < 40)),
+      held2At: held2 === null ? null : mmss(held2), normo2At: tNormo2 === null ? null : mmss(tNormo2),
+      etco2PerMinuteAfterDose2: Array.from({ length: Math.floor(((sinceDose2.at(-1)?.t ?? tDose2) - tDose2) / 60) + 1 }, (_, m) => sinceDose2.find((x) => x.t >= tDose2 + m * 60)).map((x, m) => `+${m} ${x ? Math.round(x.etco2) : '–'}`).join(' · '),
+      awrrEnd: (await latest(page)).awrr ?? null,
     };
     await R.pauseToggle();
     await a4Debrief(R, page, 'mh');

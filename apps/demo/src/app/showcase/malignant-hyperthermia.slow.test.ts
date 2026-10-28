@@ -60,6 +60,20 @@ const BANDS = {
   'S1 untreated ectopy (E133)': { firstPvcMin: [8.95, 12.95], events51Min: [270, 420], runs51Min: [19, 54] },
   'S1 early': { refused: [0, 0], crisisMin: [5.65, 7.42], pulseLost: [0, 0], recoveringMin: [18.67, 22.07], established: [0, 0], tcMax: [36.6, 37.0], hrMax: [81, 91], kMax: [4.5, 5.1], etco2Plus5: [47, 53], hrPlus15: [63, 73] },
   'S1 preoxygenation (E121)': { withSpo2AtInduction: [98, 100], withSpo2Min: [97, 100], withoutSpo2AtInduction: [87, 93], withoutSpo2Min: [55, 71], withoutDesatAlarmAfterInductionS: [56, 96] },
+  // Owner rc.4 rulings (2026-10-28): the card does what a clinician does. The second dantrolene (the EtCO₂ climbing back at
+  // normal ventilation) re-applies the crisis ventilation, 20 × 600 at 100 % O₂, and ventilation returns to 12 × 500
+  // again only once the EtCO₂ has stayed below 40 for 2 min (the first return's rule: the same button in Recovering,
+  // pressed on it; the Debrief judges the first return only, objective 6), never on a timer.
+  // A new row: no band covered the MH course after the first ventilation back before (S1 late, the only arm that
+  // pressed it, is an it.fails since E131). The path is kit round A4's by its rc.4 clocks (call 2 s after the early
+  // signs, dantrolene 21 s after the call, ventilation back at 13:56, the second dose at 19:14), and the second
+  // ventilation back is pressed as soon as its rule is met. Measured on this build; tolerances: clock times ± 30 s,
+  // EtCO₂ ± 3, HR ± 5, MAP ± 5 (R45). Before the ruling, on the same path at normal ventilation, the EtCO₂ held at 64–66
+  // after the second dose and came below 40 for good only at 51:49 (headless, main dea151c4). Measured (centres): the
+  // EtCO₂ 64 at the second dose (19:14), 50 a minute later, below 40 358 s after it (25:12), Recovering 23:34, the rule
+  // met and ventilation back again at 27:12; at normal ventilation the EtCO₂ then rises to 44 (not past 45) and is below
+  // 40 for good from 43:10. At the talk's end, 24:31, he is still hyperventilated: EtCO₂ 41, HR 69, MAP 67.
+  'S1 demo path (owner rc.4)': { refused: [0, 0], pulseLost: [0, 0], normoS: [806, 866], above45AfterNormoS: [0, 30], dose2S: [1124, 1184], etco2AtDose2: [61, 67], etco2Dose2Plus60: [47, 53], below40AfterDose2S: [328, 388], recovering2S: [1384, 1444], normo2S: [1602, 1662], etco2At2431: [38, 44], hrAt2431: [64, 74], mapAt2431: [62, 72], etco2MaxAfterNormo2: [41, 47], belowForGoodS: [2560, 2620] },
   'S1 late': { refused: [0, 0], crisisMin: [17.79, 21.75], dantroleneMin: [18.69, 22.85], pulseLost: [0, 0], etco2AtCall: [72, 78], tcAtCall: [38.51, 38.91], kAtCall: [5.5, 6.1], phAtCall: [7.09, 7.15], etco2Plus2: [60, 66], tcMax: [39.3, 39.7], tcPeakMin: [28.05, 34.29], kMax: [5.6, 6.2], lactateMax: [6.9, 7.9], recoveringMin: [33.54, 39.7], normoMin: [35.04, 42.82], hrAt60: [73, 83], mapAt60: [96, 106], tcAt60: [38.5, 38.9], etco2At60: [35, 41], phAt60: [7.35, 7.41], kAt60: [3.5, 4.1], sysMaxAfterCall: [136, 146] },
 } as const;
 
@@ -199,6 +213,48 @@ describe('S1 malignant hyperthermia (showcase-mh)', { timeout: 1_800_000 }, () =
       etco2At60: near(r.rows, 3839).etco2 ?? Number.NaN, phAt60: near(r.rows, 3839).ph, kAt60: near(r.rows, 3839).k,
       sysMaxAfterCall: range(r.rows, 'sys', c, 3840).max,
     }, BANDS['S1 late']);
+  });
+
+  it('the demo path (owner rc.4): ventilation back at 13:56; the second dose with the crisis ventilation at 19:14; ventilation back again once EtCO₂ has stayed below 40 for 2 min', async () => {
+    const NORMO = 'EtCO₂ normal: ventilation back to 12 × 500';
+    const below40 = (s: Sample) => s.etco2 !== null && s.etco2 < 40;
+    let d2 = Number.NaN;
+    let run2: number | null = null;
+    let held2 = Number.NaN;
+    const r = await runCard(ID, [
+      ...INDUCTION,
+      { press: CRISIS, when: (s) => s.state === 'earlySigns', delayS: 2 },
+      { press: 'Dantrolene 2.5 mg/kg', when: (s) => s.state === 'triggerOff', delayS: 21 },
+      { press: NORMO, t: 836, when: (s) => s.state === 'recovering' },
+      { press: 'Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600, O₂ 100 %)', t: 1154, when: (s) => s.state === 'normoventilated' },
+      // the second ventilation back: once EtCO₂ has stayed below 40 for 2 min since the second dose, in Recovering
+      { press: NORMO, when: (s) => {
+        if (Number.isNaN(d2) && s.state === 'dantroleneAgain') d2 = s.t;
+        if (!Number.isNaN(d2)) {
+          run2 = below40(s) ? (run2 ?? s.t) : null;
+          if (Number.isNaN(held2) && run2 !== null && s.t - run2 >= 120) held2 = s.t;
+        }
+        return s.state === 'recovering' && !Number.isNaN(held2);
+      } },
+    ], 3600);
+    const n = INDUCTION.length;
+    const normo = r.pressed[n + 2] as number;
+    const dose2 = r.pressed[n + 3] as number;
+    const normo2 = r.pressed[n + 4] as number;
+    const after = (t0: number, f: (s: Sample) => boolean) => first(r.rows, f, t0)?.t ?? Number.NaN;
+    let forGood: number | null = null;
+    for (const s of r.rows) forGood = below40(s) ? (forGood ?? s.t) : null;
+    expect(r.states.some(([t, id]) => id === 'dantroleneAgain' && Math.abs(t - dose2) < 1), 'the second dose enters "Dantrolene 2.5 mg/kg again"').toBe(true);
+    expect(near(r.rows, dose2 + 30).awrr, 'the crisis ventilation is back 30 s after the second dose').toBe(20);
+    expect(held2, 'the second ventilation back waits for its rule').toBeLessThanOrEqual(normo2);
+    bands('S1 demo path (owner rc.4)', {
+      refused: r.refused.length, pulseLost: r.rows.some((s) => !s.pulse) ? 1 : 0,
+      normoS: normo, above45AfterNormoS: after(normo, (s) => (s.etco2 ?? 0) > 45) - normo,
+      dose2S: dose2, etco2AtDose2: near(r.rows, dose2 - 1).etco2 ?? Number.NaN, etco2Dose2Plus60: near(r.rows, dose2 + 60).etco2 ?? Number.NaN,
+      below40AfterDose2S: after(dose2, below40) - dose2, recovering2S: r.states.find(([t, id]) => t > dose2 && id === 'recovering')?.[0] ?? Number.NaN,
+      normo2S: normo2, etco2At2431: near(r.rows, 1471).etco2 ?? Number.NaN, hrAt2431: near(r.rows, 1471).hr ?? Number.NaN, mapAt2431: near(r.rows, 1471).map ?? Number.NaN,
+      etco2MaxAfterNormo2: range(r.rows, 'etco2', normo2, 3600).max, belowForGoodS: forGood ?? Number.NaN,
+    }, BANDS['S1 demo path (owner rc.4)']);
   });
 
   it("E121: oxygen only from the card's step — with Preoxygenate the induction apnoea keeps SpO₂ up; without it SpO₂ falls before the tube", async () => {

@@ -8,7 +8,7 @@
   "objectives": [
     "Recognise PEA from hypovolaemia: a rhythm on the ECG with no palpable pulse (pseudo-PEA at ART 19/13: name it)",
     { "text": "Start CPR and volume as soon as the pulse is lost (debrief: CPR within 30 s of the pulse loss); the demo withholds both on purpose so that the audience sees the decay", "rule": { "kind": "eventWithin", "after": "pulseLoss", "event": "cpr", "withinS": 30 } },
-    { "text": "Recognise the return of circulation on the arterial line and the capnogram at the rhythm check, and stop CPR (debrief: within 150 s of the return of circulation)", "rule": { "kind": "eventWithin", "after": "rosc", "event": "state:rosc", "withinS": 150 } }
+    { "text": "Recognise the return of circulation on the arterial line and the capnogram at the rhythm check, and stop CPR (debrief: within 120 s of the return of circulation)", "rule": { "kind": "eventWithin", "after": "rosc", "event": "state:rosc", "withinS": 120 } }
   ],
   "takeHome": [
     "Positive pressure and induction can tip a compensated bleeding patient into arrest.",
