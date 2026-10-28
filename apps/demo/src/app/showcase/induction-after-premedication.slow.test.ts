@@ -6,9 +6,14 @@ import { describe, it } from 'vitest';
 import { alarmAt, bands, entered, first, near, range, runCard } from './harness.ts';
 
 /** Bands: the measured prototype ± a stated tolerance. Never widened. */
+/** 2026-10-28 (hypercapnia dilates and depresses instead of pressing: audit §2.5): the premedicated patient
+ *  hypoventilates, and the CO₂ he retains no longer props his pressure — it now dilates. His mean therefore crosses
+ *  60 mmHg about 10 s sooner, so the card's ephedrine, which is pressed 20 s after that crossing, comes at 90 s.
+ *  Re-centred with the SAME tolerance (old centre → new): ephedrineS 115 → 90. The dose's own numbers held
+ *  (mapAtDose 53.7, hrAtDose 57, mapPlus60 58.7, mapPlus120 66.4, mapOver65S 109). Not tuned. */
 const BANDS = {
   'S4 no pressor': { refused: [0, 0], premedS: [0, 25], inducedS: [162, 198], mapAt10: [91, 101], hrAt10: [66, 76], mapBefore: [85, 95], hrBefore: [57, 67], awrrBefore: [3, 7], etco2Before: [45, 51], apnoeaAlarmS: [28, 58], mapNadir: [47, 57], mapNadirS: [101, 131], hrAtNadir: [51, 61], hrMin5: [50, 60], spo2Min: [97, 100], mapAt4min: [53, 63] },
-  'S4 ephedrine': { refused: [0, 0], ephedrineS: [100, 130], mapAtDose: [47, 57], hrAtDose: [51, 61], mapPlus60: [54, 64], mapPlus120: [62, 72], hrPlus120: [54, 64], mapOver65S: [81, 111], state: [1, 1] },
+  'S4 ephedrine': { refused: [0, 0], ephedrineS: [75, 105], mapAtDose: [47, 57], hrAtDose: [51, 61], mapPlus60: [54, 64], mapPlus120: [62, 72], hrPlus120: [54, 64], mapOver65S: [81, 111], state: [1, 1] },
   'S4 phenylephrine': { refused: [0, 0], mapPlus60: [68, 78], hrPlus60: [48, 58], hrMin: [47, 57] },
 } as const;
 

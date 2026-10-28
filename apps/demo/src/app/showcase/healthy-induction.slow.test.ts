@@ -5,10 +5,21 @@
 import { describe, it } from 'vitest';
 import { alarmAt, bands, entered, first, near, range, runCard } from './harness.ts';
 
-/** Bands: the measured prototype ± a stated tolerance. Never widened. */
+/** Bands: the measured prototype ± a stated tolerance. Never widened.
+ *  2026-10-28 (hypercapnia dilates and depresses instead of pressing: audit §2.5): on the untreated path the apnoeic
+ *  patient is profoundly hypercapnic by the time the oximeter reads zero, so CO₂'s own vasodilation and myocardial
+ *  depression now act where an independent pressor multiplier had been raising the rate and the resistance.
+ *  Re-centred on this build with the SAME tolerance (old centre → new): 'S3 untreated' mapAtSpo2Zero 77 → 60.5. Every
+ *  other number on every S3 path held, the timings among them (desaturation 493 s, bradycardia 566 s, oximeter zero
+ *  724 s, pulse loss 1180 s, the first ineffective efforts 978 s at 36 mL with no EtCO₂ and no awRR). Not tuned.
+ *  The card's "First diaphragmatic efforts" label is a TIMER (showcase-induction.json, the `effort` transition's
+ *  `afterS` out of the bradycardic state), set to land on the engine's own first effort; with the effort now 55 s
+ *  later in the course the label would have come a minute before anything happened, so the timer follows the
+ *  physiology: 357 → 412 s, measured (bradycardia at 746 s absolute, the first effort at 1158 s). `effortLabelLagS`
+ *  keeps its band of ± 15 s, which is the point of that row — the label and the effort stay together. */
 const BANDS = {
   'S3 prompt': { refused: [0, 0], mapBefore: [90, 100], hrBefore: [66, 76], apnoeaAlarmS: [41, 71], mapNadir: [60, 70], mapNadirS: [90, 120], hrMax5: [74, 84], hrMin5: [65, 75], capnoS: [0, 21], etco2At2min: [34, 40], spo2Min: [97, 100], mapAt4min: [67, 77] },
-  'S3 untreated': { refused: [0, 0], apnoeaAlarmS: [41, 71], lastBreathS: [33, 63], desatStateS: [445, 543], bradyStateS: [509, 623], hrAtBrady: [39, 49], spo2ZeroS: [652, 796], mapAtSpo2Zero: [72, 82], pulseLossS: [1080, 1320], sao260ToLossS: [571, 697], pulselessStateS: [1084, 1324], asystole: [1, 1], firstSpontS: [831, 1015], firstSpontMl: [31, 41], spontMaxMl: [36, 46], effortStateS: [831, 1015], effortLabelLagS: [-15, 15], etco2DuringEfforts: [0, 3], awrrDuringEfforts: [0, 2] },
+  'S3 untreated': { refused: [0, 0], apnoeaAlarmS: [41, 71], lastBreathS: [33, 63], desatStateS: [445, 543], bradyStateS: [509, 623], hrAtBrady: [39, 49], spo2ZeroS: [652, 796], mapAtSpo2Zero: [55.5, 65.5], pulseLossS: [1080, 1320], sao260ToLossS: [571, 697], pulselessStateS: [1084, 1324], asystole: [1, 1], firstSpontS: [831, 1015], firstSpontMl: [31, 41], spontMaxMl: [36, 46], effortStateS: [831, 1015], effortLabelLagS: [-15, 15], etco2DuringEfforts: [0, 3], awrrDuringEfforts: [0, 2] },
   'S3 induced late': { refused: [0, 0], inducedS: [225, 255], desatStateS: [445, 543], bradyStateS: [509, 623] },
   'S3 rescue bag-mask': { refused: [0, 0], pulseLost: [0, 0], spo2Over90S: [17, 47], hrOver60S: [0, 19], mapAt5min: [78, 88], etco2At5min: [45, 51] },
   'S3 rescue at 18 min': { refused: [0, 0], pulseLost: [0, 0], mapAtTube: [40, 50], spo2Over90S: [31, 61], mapMax5: [94, 104], triggeredS: [1026, 1254] },

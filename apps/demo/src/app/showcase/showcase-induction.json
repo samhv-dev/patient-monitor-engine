@@ -221,7 +221,7 @@
           "label": "First diaphragmatic efforts",
           "to": "firstEffort",
           "when": {
-            "afterS": 357
+            "afterS": 412
           }
         }
       ]
