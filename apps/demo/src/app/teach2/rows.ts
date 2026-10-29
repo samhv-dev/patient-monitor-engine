@@ -12,11 +12,10 @@
 import type { ScenarioDoc, Transition } from '@pme/controller';
 import type { RunEventId } from '@pme/controller/scenario';
 import { conditionNotMet, objectivesOf, reachable, rowsOf, stagesOf, type Row, type Stage } from '../card-read.ts';
-import { eventWords, isEvent, trendMeta } from '../debrief.ts';
+import { eventWords, isEvent, mmss, trendMeta } from '../debrief.ts';
 import { drugWords } from '../glossary.ts';
 import type { ClinicalLogEntry } from '../link.ts';
 import type { RunData, ValueKey } from '../record.ts';
-import { clock } from '../ui.ts';
 import { showVital, vitalOf } from '../vitals.ts';
 import type { StateVar } from '@pme/engine-core';
 
@@ -170,8 +169,8 @@ const show = (v: string, x: number): string => {
  *  hold fraction on the host. */
 function autoBar(src: Source, visit: Visit, tr: Transition): { progress: number | null; right: string } {
   const w = tr.when;
-  if ('afterS' in w) return { progress: Math.min(1, src.inState / Math.max(w.afterS, 1e-6)), right: src.paused ? 'frozen' : `in ${clock(Math.max(0, w.afterS - src.inState))}` };
-  if ('atScenarioS' in w) return { progress: Math.min(1, src.simT / Math.max(w.atScenarioS, 1e-6)), right: src.paused ? 'frozen' : `in ${clock(Math.max(0, w.atScenarioS - src.simT))}` };
+  if ('afterS' in w) return { progress: Math.min(1, src.inState / Math.max(w.afterS, 1e-6)), right: src.paused ? 'frozen' : `in ${mmss(Math.max(0, w.afterS - src.inState))}` };
+  if ('atScenarioS' in w) return { progress: Math.min(1, src.simT / Math.max(w.atScenarioS, 1e-6)), right: src.paused ? 'frozen' : `in ${mmss(Math.max(0, w.atScenarioS - src.simT))}` };
   if (!('vital' in w)) return { progress: 0, right: '' };
   const { var: name, op, value: thr } = w.vital;
   const v = src.values?.[name];
@@ -203,7 +202,8 @@ export function classify(src: Source): Board {
   const stage = stages.find((g) => g.id === visit.stage) ?? null;
   const rows = rowsOf(doc, visit.stage);
   const d = src.record ?? ({ doc } as RunData); // eventWords reads only the card's state labels
-  const isTrue = (e: RunEventId) => firstT(src, e) !== null;
+  // a follower cannot see the values a condition names: it never fades a step for one (the step stays "ready")
+  const isTrue = (e: RunEventId) => (!src.record && e.startsWith('value:')) || firstT(src, e) !== null;
   const lives: LiveRow[] = [];
   const finished: LiveRow[] = [];
   const base = (row: Row): LiveRow => ({ row, stage: visit.stage, look: 'ready', subtitle: row.subtitle, right: '', overdue: null, outOfOrder: false, at: null, progress: null });
@@ -214,24 +214,25 @@ export function classify(src: Source): Board {
     if (row.kind === 'judged') {
       const said = `Objective met: ${drugWords(row.text)}`;
       const met = src.log.find((x) => x.kind === 'marker' && x.text === said);
-      if (met) finished.push({ ...live, look: 'met', at: met.simT, right: clock(met.simT), subtitle: 'you judged it' });
+      if (met) finished.push({ ...live, look: 'met', at: met.simT, right: met.simT === null ? '' : mmss(met.simT), subtitle: 'you judged it' });
       else lives.push({ ...live, right: 'press when met', subtitle: 'you judge it · for the debrief only, the patient does not change' });
       continue;
     }
     if (row.kind === 'auto') {
       const t = firedAt(visit, row.tr.id);
-      if (t !== null) finished.push({ ...live, look: 'fired', at: t, right: clock(t), subtitle: `${row.subtitle} · fired, the case moved by itself` });
+      if (t !== null) finished.push({ ...live, look: 'fired', at: t, right: mmss(t), subtitle: `${row.subtitle} · fired, the case moved by itself` });
       else lives.push({ ...live, look: 'pending', ...autoBar(src, visit, row.tr) });
       continue;
     }
     const taken = firedAt(visit, row.tr.id);
     if (taken !== null) {
       const ooo = outOfOrder(visit, rows, row, taken);
-      lives.push({ ...live, look: 'taken', at: taken, outOfOrder: ooo, right: clock(taken), subtitle: `${row.subtitle} · taken${ooo ? ', out of order' : ''}` });
+      lives.push({ ...live, look: 'taken', at: taken, outOfOrder: ooo, right: mmss(taken), subtitle: `${row.subtitle} · taken${ooo ? ', out of order' : ''}` });
       continue;
     }
-    if (src.stateId !== visit.stage && !reachable(doc, src.stateId, row.tr.to)) {
-      finished.push({ ...live, look: 'failed', at: src.simT, right: `failed ${clock(src.simT)}` });
+    // in a hop of the stage: failed only under the same rule as the stages passed (a linked objective, out of reach)
+    if (src.stateId !== visit.stage && objectivesOf(doc, row.tr).length && !reachable(doc, src.stateId, row.tr.to)) {
+      finished.push({ ...live, look: 'failed', at: src.simT, right: `failed ${mmss(src.simT)}` });
       continue;
     }
     const linked = objectivesOf(doc, row.tr);
@@ -250,18 +251,21 @@ export function classify(src: Source): Board {
       const cond = linked.find((o) => o.condition !== null)?.condition ?? [];
       parts.push(`the card expects it after ${eventWords([...cond], d)}`, 'pressable now');
     }
-    if (due !== null && due >= 0) parts.push(`due in ${clock(due)}`);
+    if (due !== null && due >= 0) parts.push(`due in ${mmss(due)}`);
     const overdue = due !== null && due < 0 ? -due : null;
     if (overdue !== null) parts.push('still pressable');
     const look: Look = unmet ? 'unmet' : expected ? 'ready' : 'current';
     if (look === 'current') expected = true;
-    const right = overdue !== null ? `overdue ${clock(overdue)}` : due !== null ? `due in ${clock(due)}` : unmet ? conditionNow(src, linked.find((o) => o.condition)?.condition ?? []) : 'ready';
+    const right = overdue !== null ? `overdue ${mmss(overdue)}` : due !== null ? `due in ${mmss(due)}` : unmet ? conditionNow(src, linked.find((o) => o.condition)?.condition ?? []) : 'ready';
     lives.push({ ...live, look, overdue, subtitle: parts.join(' · '), right });
   }
 
-  // the stages passed: their taken, failed and fired rows
-  const failedSeen = new Set<string>();
-  for (const v of visits.slice(0, -1).reverse()) {
+  // the stages passed: their taken, failed and fired rows. "Failed" (answer 7 as refined by the orchestrator) is only a
+  // step a linked objective asked for (answer 6's link rule) whose target can no longer be reached; an alternative branch
+  // not chosen, with no objective on it, is dropped (not in Finished either). A step whose target the run reached anyway
+  // (the crisis called from a later stage) is not failed either: what it leads to happened.
+  const failed = new Map<string, LiveRow>(); // by transition: the last visit's
+  for (const v of visits.slice(0, -1)) {
     const vr = rowsOf(doc, v.stage);
     const name = stages.find((g) => g.id === v.stage)?.label ?? 'Stage';
     for (const row of vr) {
@@ -269,14 +273,17 @@ export function classify(src: Source): Board {
       const t = firedAt(v, row.tr.id);
       const live: LiveRow = { ...base(row), stage: v.stage };
       if (row.kind === 'auto') {
-        if (t !== null) finished.push({ ...live, look: 'fired', at: t, right: clock(t), subtitle: `${name} · fired, the case moved by itself` });
+        if (t !== null) finished.push({ ...live, look: 'fired', at: t, right: mmss(t), subtitle: `${name} · fired, the case moved by itself` });
       } else if (t !== null) {
         const ooo = outOfOrder(v, vr, row, t);
-        finished.push({ ...live, look: 'taken', at: t, outOfOrder: ooo, right: clock(t), subtitle: `${name} · taken${ooo ? ', out of order' : ''}` });
-      } else if (!failedSeen.has(row.tr.id) && !reachable(doc, src.stateId, row.tr.to)) {
-        failedSeen.add(row.tr.id);
+        finished.push({ ...live, look: 'taken', at: t, outOfOrder: ooo, right: mmss(t), subtitle: `${name} · taken${ooo ? ', out of order' : ''}` });
+      } else if (objectivesOf(doc, row.tr).length && !reachable(doc, src.stateId, row.tr.to) && !src.history.some((e) => e.t >= v.t0 && e.stateId === row.tr.to)) {
         const at = v.end ?? src.simT;
-        finished.push({ ...live, look: 'failed', at, right: `failed ${clock(at)}`, subtitle: `${name} · its stage has passed` });
+        const prev = failed.get(row.tr.id);
+        if (prev) finished.splice(finished.indexOf(prev), 1);
+        const f: LiveRow = { ...live, look: 'failed', at, right: `failed ${mmss(at)}`, subtitle: `${name} · its stage has passed` };
+        failed.set(row.tr.id, f);
+        finished.push(f);
       }
     }
   }
