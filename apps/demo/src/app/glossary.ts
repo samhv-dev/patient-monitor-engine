@@ -2,6 +2,8 @@
 // the app shows for a physiological quantity comes from here (research/11 §5.16 rule 1); engine keys never reach the
 // DOM of a clinical view. `#` in a key is a side index (0 = L, 1 = R), `*` and `<id>` stand for any one path segment.
 import { DRUGS, type StateVar } from '@pme/engine-core';
+
+type DrugRow = (typeof DRUGS)[string];
 import { DRUG_NAMES, GLOSSARY, GLOSSARY_S9, KEY_LABELS, LUNG_LABELS, SAME_AS, SHORT, type GlossaryEntry } from './glossary-data.ts';
 
 export type { GlossaryEntry } from './glossary-data.ts';
@@ -159,6 +161,56 @@ export const DISPLAY_SCALE: Readonly<Record<string, number>> = {
   'ev.organs.brain.cbf': 50, 'ev.organs.brain.cmro2': 3.3, 'ev.organs.liver.hbfRel': 1.5, 'ev.state.values.fio2': 100, 'l1.coupled.fio2': 100,
   'ev.lungState.atelectasisFrac': 100, 'ev.lungState.vqAdmixture': 100, 'mon.tofRatio': 1,
 };
+
+/** The unit and decimals a screen prints for a path whose glossary unit or default decimals do not fit its engine value:
+ *  the lab panel's glucose is in mg/dL (engine-core types-blood.ts; its entry lists both units and both normal ranges),
+ *  the endocrine glucose is the engine's mmol/L to 0.1, the stress index an integer 0–100. */
+export const DISPLAY_AS: Readonly<Record<string, { unit?: string; digits?: number }>> = {
+  'ev.labs.values.glucose': { unit: 'mg/dL', digits: 0 }, 'ev.labResult.values.glucose': { unit: 'mg/dL', digits: 0 },
+  'ev.endo.glucoseMmolL': { digits: 1 }, 'ev.endo.stressIndex': { digits: 0 },
+};
+
+/** An engine unit as a screen writes it ("mcg" → "µg"). */
+export const unitText = (u: string): string => u.replace(/\bmcg\b/g, 'µg');
+
+type DrugField = (field: string) => unknown;
+/** A drug the engine's TCI accepts (engine-core l2/pk/pipeline.ts `validatePkCommand`: a compartment-model row only). */
+const hasTci = (r: DrugRow): boolean => r.pk.kind === 'model';
+/** A drug the engine accepts as an infusion (the same validation: not a blood-chemistry row and not a curve row without
+ *  an infusion reference, unless the row names the consumer of its rate). */
+const hasRate = (r: DrugRow): boolean =>
+  !!r.rateActsVia || !(r.pk.kind === 'blood' || (r.pk.kind === 'gamma' && r.pk.refRate === undefined));
+/**
+ * Glossary keys whose unit is per drug in the engine. The glossary writes a placeholder for these ("drug unit", "per
+ * row", "mg, µg"); the screen prints the unit of that drug's row in the `drugs` event (engine-core types-pk.ts
+ * `DrugPanelRow`, or the bus agent for the site-specific Ce): Cp, Ce and the TCI target in the row's concentration unit `unit` (µg/mL for a mg drug, ng/mL for a mcg
+ * drug, × ref dose for a curve drug); the pump rate in `rateUnit`, which the engine defines as the amount unit per minute
+ * (`${amountUnit}/min`, written from `amountUnit` while no pump runs); the total in `amountUnit`. A drug without a TCI
+ * model or without an infusion model has no unit for that row: it keeps the glossary's. The CSHT row
+ * (`decrement50Min`) is deliberately absent: it is a time, always the glossary's min, never the drug's unit.
+ */
+const ENGINE_UNIT: Readonly<Record<string, (f: DrugField, r: DrugRow | undefined) => unknown>> = {
+  'ev.drugs.drugs.<id>.cp': (f) => f('unit'),
+  'ev.drugs.drugs.<id>.ce': (f) => f('unit'),
+  'ev.drugs.drugs.<id>.tci': (f, r) => (r && hasTci(r) ? f('unit') : undefined),
+  'ev.drugs.drugs.<id>.tci.target': (f, r) => (r && hasTci(r) ? f('unit') : undefined),
+  'ev.drugs.drugs.<id>.rate': (f, r) => (r && hasRate(r) ? (f('rateUnit') ?? (typeof f('amountUnit') === 'string' ? `${f('amountUnit') as string}/min` : undefined)) : undefined),
+  'ev.drugs.drugs.<id>.totalAmount': (f) => f('amountUnit'),
+  // the site-specific effect sites of the drug bus (engine-core types-pk.ts `BusAgent`: every field in its `unit`)
+  'pk.bus.agents.<id>.nmj': (f) => f('unit'), 'pk.bus.agents.<id>.dia': (f) => f('unit'), 'pk.bus.agents.<id>.vent': (f) => f('unit'),
+};
+
+/** The engine's unit for a per-drug path (see ENGINE_UNIT), read from that drug's row (the path up to its drug id)
+ *  through `get`; undefined when the path is not per drug or the drug defines no unit for it. */
+export function engineUnit(path: string, get: (p: string) => unknown): string | undefined {
+  const l = lookup(path);
+  const fn = l ? ENGINE_UNIT[l.key] : undefined;
+  if (!l || !fn) return undefined;
+  const id = l.caps[0] ?? '';
+  const row = `${l.key.slice(0, l.key.indexOf('<id>'))}${id}`;
+  const u = fn((field) => get(`${row}.${field}`), DRUGS[id] as DrugRow | undefined);
+  return typeof u === 'string' && u !== '' ? unitText(u) : undefined;
+}
 
 /** The short screen name of a lung condition (the catalogue's full text belongs in its tooltip). */
 export function lungLabel(id: string, catalogueLabel = ''): string {

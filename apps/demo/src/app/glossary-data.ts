@@ -272,12 +272,12 @@ export const GLOSSARY: readonly GlossaryEntry[] = [
   { n: 253, s: '5.11', keys: ["ev.organs.liver.hbfRel"], label: "HBF", name: "Hepatic blood flow (engine relative)", unit: "L/min (× baseline)", normal: "≈ 1.5 (25 % of CO)", convention: "textbooks" },
   { n: 254, s: '5.11', keys: ["ev.organs.liver.kLacPerH"], label: "Lactate clearance", name: "Hepatic lactate clearance constant", unit: "/h (show t½)", normal: "t½ ≈ 20–30 min", convention: "textbooks (clearance %)" },
   { n: 255, s: '5.11', keys: ["ev.organs.liver.liverFn"], label: "Liver function", name: "Liver synthetic/metabolic function index (model)", unit: "0–1", normal: "1", convention: "engine; label as MELD/Child–Pugh-like only when the labs exist" },
-  { n: 256, s: '5.11', keys: ["ev.endo.glucoseMmolL", "ev.endo.glucoseMgDl"], label: "Glucose", name: "Blood glucose (truth)", unit: "mmol/L (mg/dL)", normal: "3.9–7.8", convention: "all" },
+  { n: 256, s: '5.11', keys: ["ev.endo.glucoseMmolL"], label: "Glucose", name: "Blood glucose (truth)", unit: "mmol/L (mg/dL)", normal: "3.9–7.8", convention: "all" },
   { n: 257, s: '5.11', keys: ["ev.endo.insulinUuMl"], label: "Insulin", name: "Plasma insulin", unit: "µU/mL (mU/L)", normal: "fasting 2–20", other: "Preg ↑ (insulin resistance)", convention: "chemistry" },
   { n: 258, s: '5.11', keys: ["ev.endo.epinephrinePgMl"], label: "Adrenaline", name: "Plasma adrenaline", unit: "pg/mL", normal: "< 50–100 at rest", convention: "chemistry" },
   { n: 259, s: '5.11', keys: ["ev.endo.norepinephrinePgMl"], label: "Noradrenaline", name: "Plasma noradrenaline", unit: "pg/mL", normal: "100–400 at rest", convention: "chemistry" },
   { n: 260, s: '5.11', keys: ["ev.endo.cortisolNmolL"], label: "Cortisol", name: "Plasma cortisol", unit: "nmol/L", normal: "140–690 (morning)", other: "Preg ↑", convention: "chemistry" },
-  { n: 261, s: '5.11', keys: ["ev.endo.stressIndex"], label: "Stress response", name: "Surgical stress index (model; instructor)", unit: "0–1", normal: "0", convention: "engine" },
+  { n: 261, s: '5.11', keys: ["ev.endo.stressIndex"], label: "Stress response", name: "Surgical stress index (model; instructor)", unit: "0–100", normal: "0", convention: "engine" },
   { n: 262, s: '5.11', keys: ["ev.endo.mhActivity"], label: "MH activity", name: "Malignant hyperthermia crisis activity (instructor)", unit: "0–1", normal: "0", convention: "engine" },
   { n: 263, s: '5.12', keys: ["ev.anaesthesia.tof.t1"], label: "T1", name: "First-twitch height (% control)", unit: "%", normal: "100", convention: "NMT monitors" },
   { n: 264, s: '5.12', keys: ["ev.anaesthesia.block.thumb", "ev.anaesthesia.block.dia"], label: "Block (AP / diaphragm)", name: "Fractional receptor block at adductor pollicis and diaphragm", unit: "%", normal: "0", convention: "teaching" },
@@ -288,7 +288,7 @@ export const GLOSSARY: readonly GlossaryEntry[] = [
   { n: 269, s: '5.12', keys: ["ev.neuroMark.kind"], label: "Event", name: "Fasciculation, movement, awareness, emergence, loss of consciousness, apnoea, breathing, recurarisation, MH trigger", unit: "—", normal: "—", convention: "clinical words" },
   { n: 270, s: '5.13', keys: ["ev.drugs.drugs.<id>.cp"], label: "Cp", name: "Plasma concentration", unit: "drug unit (µg/mL propofol; ng/mL opioids, NMBs)", normal: "", convention: "TCI pumps \"Cp\"" },
   { n: 271, s: '5.13', keys: ["ev.drugs.drugs.<id>.ce"], label: "Ce", name: "Effect-site concentration", unit: "drug unit", normal: "", convention: "TCI pumps \"Ce\"" },
-  { n: 272, s: '5.13', keys: ["ev.drugs.drugs.<id>.rate", "ev.drugs.drugs.<id>.tci"], label: "Rate / Target", name: "Infusion rate; TCI target (plasma or effect, model name)", unit: "per row", normal: "", convention: "TCI pumps" },
+  { n: 272, s: '5.13', keys: ["ev.drugs.drugs.<id>.rate", "ev.drugs.drugs.<id>.tci", "ev.drugs.drugs.<id>.tci.target"], label: "Rate / Target", name: "Infusion rate; TCI target (plasma or effect, model name)", unit: "per row", normal: "", convention: "TCI pumps" },
   { n: 273, s: '5.13', keys: ["ev.drugs.drugs.<id>.totalAmount"], label: "Total", name: "Cumulative dose", unit: "mg, µg", normal: "", convention: "anaesthesia record" },
   { n: 274, s: '5.13', keys: ["ev.drugs.drugs.<id>.decrement50Min"], label: "CSHT (50 %)", name: "Context-sensitive half-time (time for Cp to fall 50 % if stopped now)", unit: "min", normal: "", convention: "Hughes 1992 \"CSHT\"" },
   { n: 275, s: '5.13', keys: ["ev.drugs.volatile.fi", "ev.drugs.volatile.fa"], label: "Fi / Fet (agent)", name: "Inspired and end-tidal (alveolar) agent fraction", unit: "%", normal: "", convention: "agent monitor \"Fi/Et\"" },
@@ -415,8 +415,13 @@ export const KEY_LABELS: Readonly<Record<string, string>> = {
   'hemo.circ.p.eesLv': 'Ees LV', 'hemo.circ.p.eesRv': 'Ees RV', 'hemo.circ.p.v0Sv': 'Vu', 'hemo.circ.p.cSv': 'Cv',
   'hemo.circOut.qLungL': 'Q̇ L lung', 'hemo.circOut.qLungR': 'Q̇ R lung', 'hemo.circ.baro.es': 'Sympathetic tone', 'hemo.circ.baro.ev': 'Vagal tone',
   'ev.state.values.contractility': 'Contractility (×)', 'ev.state.values.volumeStatus': 'Volume status (×)',
+  // Entry 98 names two VO₂: the blood model's actual whole-body consumption ("VO₂") and the gas model's awake resting
+  // reference that the metabolic multipliers scale (engine-core l2/gas/params.ts `GasPatient.vo2`)
+  'resp.pat.vo2': 'VO₂ at rest (awake)',
   // pattern keys (the key string as written in `keys`): one entry, several quantities per drug or site
   'ev.drugs.drugs.<id>.rate': 'Infusion rate', 'ev.drugs.drugs.<id>.tci': 'TCI target',
+  // a running TCI is an object in the drugs event ({ mode, target, model }): its target is the TCI target row (no TCI: null)
+  'ev.drugs.drugs.<id>.tci.target': 'TCI target',
   'pk.bus.agents.<id>.nmj': 'Ce NMJ', 'pk.bus.agents.<id>.dia': 'Ce diaphragm', 'pk.bus.agents.<id>.vent': 'Ce ventilatory',
   // a '*' key names several quantities under one label: only the paths named here get a clinical label
   'resp.temp.sites.oesophageal': 'Toes', 'resp.temp.sites.nasopharyngeal': 'Tnaso', 'resp.temp.sites.tympanic': 'Ttymp',
