@@ -13,7 +13,7 @@ import type { HostTarget, ScenarioHookResult } from '../session/host-session.ts'
 import { ScenarioRunner, type RunnerEffect, type RunnerInput, type RunnerState, type VitalHold } from './runner.ts';
 import { BUILTIN_SCENARIOS } from './builtins.ts';
 import { resolveRhythm } from './standins.ts';
-import type { DocCommand, ScenarioDoc } from './types.ts';
+import type { DocCommand, ScenarioDoc, ScenarioState } from './types.ts';
 import { validateScenario } from './validate.ts';
 
 export interface ScenarioDriverOptions {
@@ -43,6 +43,13 @@ export interface RunPosition {
 }
 
 const NOT_IMPLEMENTED = /not implemented/;
+/** A hop (answer 2): a state whose only exit is `afterS` ≤ HOP_MAX_S — it folds into the stage it leads to [ENG]. */
+export const HOP_MAX_S = 2;
+export function isHop(s: ScenarioState): boolean {
+  const t = s.transitions ?? [];
+  const w = t[0]?.when;
+  return t.length === 1 && w !== undefined && 'afterS' in w && w.afterS <= HOP_MAX_S;
+}
 
 export class ScenarioDriver {
   readonly host: HostTarget;
@@ -56,6 +63,12 @@ export class ScenarioDriver {
   private n = 0; // batch counter; never restored, so ids and stage groups stay unique across bookmark restores
   private k = 0;
   private inFlight = 0; // runner commands sent and not yet answered by the monitor
+  /** Stage marks placed (owner's ruling on answer 3), oldest first: the bookmark commands a late joiner is replayed. */
+  private stageMarkList: ScenarioCommand[] = [];
+  private stageN = 0; // never restored, so stage-mark labels stay unique across restores
+  /** A stage entered whose mark is not placed yet: the runner and its entry count (placed once position() is consistent). */
+  private stageWanted: { runner: ScenarioRunner; entry: number; stateId: string } | null = null;
+  private placing = false;
   private readonly off: () => void;
 
   constructor(o: ScenarioDriverOptions) {
@@ -70,8 +83,9 @@ export class ScenarioDriver {
     const inputs = this.pending;
     this.pending = [];
     if (!this.runner) return [];
-    const fx = this.runner.advance(this.o.target.now().simT, inputs);
-    this.exec(fx);
+    const r = this.runner;
+    const fx = this.step(r, () => r.advance(this.o.target.now().simT, inputs));
+    void this.placeStageMark();
     return fx;
   }
 
@@ -83,8 +97,10 @@ export class ScenarioDriver {
     if (!v.ok) return { ok: false, reason: `invalid scenario: ${v.errors.join('; ')}` };
     this.notes = [...v.warnings];
     this.pending = [];
-    this.runner = new ScenarioRunner(v.doc);
-    this.exec(this.runner.start(this.o.target.now().simT));
+    for (const c of this.stageMarkList) this.marks.delete(c.target as string); // a new run: the old run's stage marks go
+    this.stageMarkList = [];
+    const r = (this.runner = new ScenarioRunner(v.doc));
+    this.step(r, () => r.start(this.o.target.now().simT));
     return { ok: true, doc: v.doc };
   }
 
@@ -110,6 +126,7 @@ export class ScenarioDriver {
         if (!m) return no(`no bookmark ${String(cmd.target)}`);
         await this.o.target.restore(m.snapshot);
         this.pending = [];
+        this.stageWanted = null; // the stage left behind is not marked now
         if (m.doc && m.runner) {
           if (this.runner?.doc !== m.doc) this.runner = new ScenarioRunner(m.doc, { seed: m.seed });
           this.runner.setState(m.runner);
@@ -124,7 +141,7 @@ export class ScenarioDriver {
       case 'goto':
         if (!cmd.target || !r.doc.states.some((s) => s.id === cmd.target)) return no(`no state ${String(cmd.target)}`);
         this.poll();
-        this.exec(r.goto(simT, cmd.target));
+        this.step(r, () => r.goto(simT, cmd.target as string));
         return yes();
       case 'trigger': {
         const t = r.trigger(simT, cmd.target ?? '');
@@ -145,7 +162,19 @@ export class ScenarioDriver {
   /** HostSession `welcomeEvents` option: a late joiner learns the current state (the doc comes as a sticky load). */
   welcomeEvents(): WireEvent[] {
     const r = this.runner;
-    return r ? [{ type: 'scenario', t: r.enteredT, stateId: r.stateId }] : [];
+    // the stage marks as sticky bookmark replays (they are never announced live: today's panel and record list every
+    // live bookmark, and these are not the instructor's)
+    const marks: WireEvent[] = this.stageMarkList.map((c) => ({ type: 'commandApplied', commandId: c.id, tick: c.atTick ?? 0, resolved: { command: c, replay: true } }));
+    return [...(r ? [{ type: 'scenario' as const, t: r.enteredT, stateId: r.stateId }] : []), ...marks];
+  }
+
+  /**
+   * Host side, read-only: the stage marks of this run, oldest first — `bookmark` commands of kind `stage` whose note is
+   * the state id and whose target is the label `restoreBookmark` takes (the mark at the start of a stage is the last one
+   * with its note).
+   */
+  stageMarks(): ScenarioCommand[] {
+    return this.stageMarkList.map((c) => ({ ...c }));
   }
 
   bookmarks(): string[] {
@@ -191,6 +220,38 @@ export class ScenarioDriver {
   }
 
   // --- internals ---------------------------------------------------------------------------------------------
+  /** Run one runner call and dispatch its effects; a stage it entered (not a hop) wants its mark. */
+  private step(r: ScenarioRunner, call: () => RunnerEffect[]): RunnerEffect[] {
+    const before = r.entries;
+    const fx = call();
+    this.exec(fx);
+    if (r.entries > before && !isHop(r.state())) this.stageWanted = { runner: r, entry: r.entries, stateId: r.stateId };
+    return fx;
+  }
+
+  /**
+   * Place the wanted stage mark once the run's position is consistent (the stage's onEnter commands answered by the
+   * monitor: position()), a frame or so after the entry, so a restore gives the stage with its onEnter applied. A stage
+   * left before that gets no mark.
+   */
+  private async placeStageMark(): Promise<void> {
+    const w = this.stageWanted;
+    if (!w || this.placing) return;
+    if (this.runner !== w.runner || w.runner.entries !== w.entry) return void (this.stageWanted = null);
+    this.placing = true;
+    try {
+      const p = await this.position();
+      if (!p || this.stageWanted !== w || this.runner !== w.runner || w.runner.entries !== w.entry) return; // the next poll tries again
+      this.stageWanted = null;
+      const n = ++this.stageN;
+      const label = `stage:${w.stateId}:${n}`;
+      this.marks.set(label, { snapshot: p.snapshot, doc: w.runner.doc, seed: p.seed, runner: p.runner });
+      this.stageMarkList.push({ id: `stage-mark-${n}`, issuedBy: 'scenario', type: 'scenario', action: 'bookmark', target: label, kind: 'stage', note: w.stateId, atTick: p.snapshot.tick });
+    } finally {
+      this.placing = false;
+    }
+  }
+
   private exec(fx: RunnerEffect[]): void {
     for (const f of fx) {
       if (f.kind === 'event') {

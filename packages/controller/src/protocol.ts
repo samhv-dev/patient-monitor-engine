@@ -89,8 +89,11 @@ export type ExtraCommand = CommandBase &
         sampling?: 'sidestream' | 'mainstream';
       }
   );
-/** A mark's kind (Instructor v2): a good moment, a bad one, or one to discuss. */
-export type MarkKind = 'good' | 'bad' | 'discuss';
+/**
+ * A mark's kind (Instructor v2): a good moment, a bad one, or one to discuss — or `stage`, the mark the host's scenario
+ * driver places by itself at every stage entry (its note is the state id). Views keep `stage` marks out of the marks list.
+ */
+export type MarkKind = 'good' | 'bad' | 'discuss' | 'stage';
 /** Brief §7.2 `Command` as it travels on the wire (engine commands may carry the staged-delivery `batch` too). */
 export type WireCommand = (Command & BatchMeta) | ExtraCommand;
 export type TimeCommand = Extract<ExtraCommand, { type: 'time' }>;

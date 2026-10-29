@@ -99,6 +99,7 @@ export class ScenarioRunner {
   readonly log: RunLogEntry[] = [];
   private s: RunnerState;
   private readonly states = new Map<string, ScenarioState>();
+  private entered = 0; // state entries by this instance (not a stay; not in RunnerState, so a restore does not rewind it)
 
   constructor(doc: ScenarioDoc, opts: { seed?: number } = {}) {
     this.doc = doc;
@@ -130,6 +131,10 @@ export class ScenarioRunner {
   }
   get enteredT(): number {
     return this.s.enteredT;
+  }
+  /** How many states this runner has entered (start, transitions and gotos; not stays). Grows only. */
+  get entries(): number {
+    return this.entered;
   }
   get history(): ReadonlyArray<{ t: number; stateId: string; transitionId?: string }> {
     return this.s.history;
@@ -342,6 +347,7 @@ export class ScenarioRunner {
     this.s.stateId = to;
     this.s.stateT = 0;
     this.s.enteredT = t;
+    this.entered++;
     this.s.latched = [];
     this.s.pressed = [];
     this.s.trueFor = {};
