@@ -39,7 +39,7 @@ describe('scripts/showcase/debrief-fa: the take-home section', () => {
   });
 
   it('the tamponade record prints its three lines in Persian, the approved first line exactly', () => {
-    const { html, D } = render(withCard('tamponade'), '', '1.0.0-rc.3');
+    const { html, D } = render(withCard('tamponade'), '', '1.0.0-rc.4');
     const sec = section(html);
     expect(sec).toContain('<h2>نکته‌های کلیدی</h2>');
     expect(sec.match(/<li>/g)).toHaveLength(3);
@@ -52,23 +52,23 @@ describe('scripts/showcase/debrief-fa: the take-home section', () => {
   });
 
   it('the bronchospasm record prints its three lines in Persian; MH prints its four, the two E132 lines in English until translated', () => {
-    const b = render(withCard('bronchospasm'), '', '1.0.0-rc.3');
+    const b = render(withCard('bronchospasm'), '', '1.0.0-rc.4');
     expect(section(b.html).match(/<li>/g)).toHaveLength(3);
     expect(b.D.missing.size).toBe(0);
     const mh = read('apps/demo/src/app/showcase/showcase-mh.json').takeHome as string[];
-    const m = render(withCard('mh'), '', '1.0.0-rc.3');
+    const m = render(withCard('mh'), '', '1.0.0-rc.4');
     expect(section(m.html).match(/<li>/g)).toHaveLength(4);
     expect([...m.D.missing.keys()].filter((k) => mh.includes(k))).toEqual(mh.slice(2));
   });
 
   it('a line the table does not hold prints in English and is listed', () => {
-    const { html, D } = render(withCard('tamponade', ['A line nobody translated.']), '', '1.0.0-rc.3');
+    const { html, D } = render(withCard('tamponade', ['A line nobody translated.']), '', '1.0.0-rc.4');
     expect(section(html)).toContain('<bdi dir="ltr" class="en">A line nobody translated.</bdi>');
     expect(D.missing.get('A line nobody translated.')).toBe(1);
   });
 
   it('a card without lines prints the subhead and three ruled lines', () => {
-    const { html } = render(withCard('tamponade', []), '', '1.0.0-rc.3');
+    const { html } = render(withCard('tamponade', []), '', '1.0.0-rc.4');
     const sec = section(html);
     expect(sec).toContain('<p>نکته‌های کلیدی شما</p>');
     expect(sec.match(/class="ruled"/g)).toHaveLength(3);

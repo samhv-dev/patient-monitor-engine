@@ -16,7 +16,7 @@ test('the IIFE loads from file:// and exposes window.PatientMonitor.version', as
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto(smokeUrl);
   const version = await page.evaluate(() => (window as unknown as { PatientMonitor?: PM }).PatientMonitor?.version);
-  expect(version).toBe('1.0.0-rc.3');
+  expect(version).toBe('1.0.0-rc.4');
   expect(errors).toEqual([]);
 });
 

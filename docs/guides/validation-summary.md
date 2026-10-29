@@ -38,6 +38,10 @@ day on `e737de92` (914 s) gave the same counts:
 Measured on the v1.0.0-rc.1 tree: no physiology file (`packages/engine-core/src`, `packages/engine-core/data`,
 `packages/ventilator/src`) changed after that commit. The previous report (commit `7bcf992`, 2026-09-27: 🟢 96 · 🟡 27
 · 🔴 16) was measured before Stages 7c–7k, FU-3 to FU-11, FU-7.1 and V.1.
+This report is older than the 1.0.0-rc.4 pre-release tree: it predates the physiology changes merged since
+1.0.0-rc.1, among them E117 (the early MH tachycardia), E131 (MH on one muscle metabolic rate) and E133 (ventricular
+ectopy), and the demo cards' rc.4 changes (#163); it was not regenerated, and the weekly `validation` run of
+26 October (on `c2f4450d`, run 40283881352) stopped at the dataset download before `pnpm validate` ran.
 
 The 27 red rows by suite: morphology 10 (R → radial upstroke about 100 ms against 145–190 ms recorded; dicrotic notch
 270–284 ms against 428–518 ms; PPG ↔ ABP shape correlation 0.4 against 0.9), segments 9 (haemorrhage class III/IV, class III without β-blockade and warm septic shock read a heart rate of exactly

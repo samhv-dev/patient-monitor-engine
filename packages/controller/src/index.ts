@@ -1,5 +1,5 @@
 // @pme/controller public API (brief §7.5; R7). The relay (relay/) is Node-only and is not exported here.
-export const version = '1.0.0-rc.3';
+export const version = '1.0.0-rc.4';
 export * from './protocol.ts';
 export * from './guard.ts';
 export * from './vocabulary.ts';
