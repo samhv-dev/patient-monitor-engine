@@ -27,19 +27,18 @@ const withCard = (k: keyof typeof EXPORTS, takeHome?: string[]): any => {
 const section = (html: string): string => /<section id="takehome">.*?<\/section>/s.exec(html)?.[0] ?? '';
 
 describe('scripts/showcase/debrief-fa: the take-home section', () => {
-  it('the nine approved take-home lines are owner-approved; of the five E132 lines, four are drafts for his review and one is held', () => {
+  it('the nine approved take-home lines are owner-approved; the five E132 lines are drafts for his review', () => {
     const lines = TABLE.groups.takeHome as Array<{ en: string; fa: string | null; reviewed: boolean; note?: string }>;
     expect(lines).toHaveLength(14);
     expect(lines.filter((e) => e.reviewed)).toHaveLength(9);
     expect(lines.filter((e) => e.reviewed).every((e) => e.fa !== null)).toBe(true);
     // E132 (2026-10-26): the Persian is the owner's. 2026-10-28: four carry a draft for his review, marked as such and
-    // never reviewed until he approves them; one stays English until his wording ruling.
+    // never reviewed until he approves them; the fifth was held for his wording ruling, given in #163, and carries a
+    // draft since 2026-10-29.
     const drafts = lines.filter((e) => e.fa !== null && !e.reviewed);
-    expect(drafts).toHaveLength(4);
-    for (const e of drafts) expect(e.note).toContain("Draft by Claude 2026-10-28 for the owner's review.");
-    const held = lines.filter((e) => e.fa === null);
-    expect(held).toHaveLength(1);
-    expect(held.every((e) => !e.reviewed && (e.note ?? '').includes('Held 2026-10-28'))).toBe(true);
+    expect(drafts).toHaveLength(5);
+    for (const e of drafts) expect(e.note).toMatch(/Draft by Claude 2026-10-2[89] for the owner's review\.$/);
+    expect(lines.filter((e) => e.fa === null)).toHaveLength(0);
     const cards = ['mh', 'haemorrhage'].flatMap((k) => read(`apps/demo/src/app/showcase/showcase-${k}.json`).takeHome as string[]);
     for (const e of lines.filter((x) => !x.reviewed)) expect(cards).toContain(e.en);
   });
@@ -57,14 +56,14 @@ describe('scripts/showcase/debrief-fa: the take-home section', () => {
     expect(html.indexOf('id="takehome"')).toBeLessThan(html.indexOf('id="notes"'));
   });
 
-  it('the bronchospasm record prints its three lines in Persian; MH prints its four, the held E132 line in English', () => {
+  it('the bronchospasm record prints its three lines in Persian; MH prints its four in Persian', () => {
     const b = render(withCard('bronchospasm'), '', '1.0.0-rc.4');
     expect(section(b.html).match(/<li>/g)).toHaveLength(3);
     expect(b.D.missing.size).toBe(0);
     const mh = read('apps/demo/src/app/showcase/showcase-mh.json').takeHome as string[];
     const m = render(withCard('mh'), '', '1.0.0-rc.4');
     expect(section(m.html).match(/<li>/g)).toHaveLength(4);
-    expect([...m.D.missing.keys()].filter((k) => mh.includes(k))).toEqual(mh.slice(2, 3));
+    expect([...m.D.missing.keys()].filter((k) => mh.includes(k))).toEqual([]);
   });
 
   it('a line the table does not hold prints in English and is listed', () => {
