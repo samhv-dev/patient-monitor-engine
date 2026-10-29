@@ -63,7 +63,7 @@
 .ip2-ff-title { display: inline-flex; align-items: center; gap: 8px; color: var(--ip2-muted); font-size: 13px; white-space: nowrap; }
 .ip2-ff-div, .ip2-head-div { flex: none; width: 1px; height: 26px; margin: 0 4px; background: var(--ip2-control); }
 .ip2-head-div { height: 28px; margin: 0 8px; }
-.ip2-ffbtn { flex: none; min-width: 96px; height: 34px; padding: 0 18px; border: 1px solid var(--ip2-control); border-radius: 8px; background: transparent; color: var(--ip2-text); font-weight: 600; white-space: nowrap; cursor: pointer; }
+.ip2-ffbtn { flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 96px; height: 34px; padding: 0 18px; border: 1px solid var(--ip2-control); border-radius: 8px; background: transparent; color: var(--ip2-text); font-weight: 600; white-space: nowrap; cursor: pointer; }
 .ip2-ffbtn:hover:not(:disabled) { background: var(--ip2-card); }
 .ip2-ffbtn:disabled { opacity: 0.45; cursor: not-allowed; }
 .ip2-ff-note { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--ip2-muted); }

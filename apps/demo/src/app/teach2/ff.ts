@@ -9,6 +9,8 @@ import { h, toast } from '../ui.ts';
 /** The box's skips in seconds: +2 and +5 min, today's two buttons. */
 export const FF_SKIPS: readonly number[] = [120, 300];
 const FF_SVG = '<svg aria-hidden="true" width="16" height="12" viewBox="0 0 16 12"><path d="M1 1 8 6 1 11z M8 1l7 5-7 5z" fill="currentColor"/></svg>';
+/** The same double-triangle glyph, 14 × 10 px, before each button's text (the owner's follow-up to option G). */
+const FF_BTN_SVG = '<svg aria-hidden="true" width="14" height="10" viewBox="0 0 16 12"><path d="M1 1 8 6 1 11z M8 1l7 5-7 5z" fill="currentColor"/></svg>';
 
 export function mountFastForward(link: Link): { el: HTMLElement; refresh(): void } {
   const title = h('span', { class: 'ip2-ff-title' });
@@ -16,7 +18,9 @@ export function mountFastForward(link: Link): { el: HTMLElement; refresh(): void
   const buttons = FF_SKIPS.map((s) => h('button', {
     type: 'button', class: 'ip2-ffbtn', 'aria-label': `Fast forward by ${spanText(s)}`,
     onclick: () => void link.send({ type: 'time', action: 'jump', value: s }).then((r) => r.accepted || toast(`Fast-forward refused: ${r.reason ?? 'refused'}`, 'alert')),
-  }, `+${spanText(s)}`));
+  }));
+  // the glyph, then the text unchanged (the visible text, and so a test reading textContent, is "+2 min" alone)
+  buttons.forEach((b, i) => (b.innerHTML = `${FF_BTN_SVG}<span>+${spanText(FF_SKIPS[i] as number)}</span>`));
   const el = h('div', { class: 'ip2-ff', role: 'group', 'aria-label': 'Fast forward' },
     title, h('span', { class: 'ip2-ff-div', 'aria-hidden': 'true' }), ...buttons, h('span', { class: 'ip2-spacer' }),
     h('span', { class: 'ip2-ff-note', title: 'The phones catch up at the end of the skip; disabled while paused' }, 'the phones catch up at the end of the skip · disabled while paused'));
