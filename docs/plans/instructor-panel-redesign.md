@@ -224,7 +224,8 @@ Phone 9 board, at 390 × 844, which opens on ACTION:
   card: EtCO₂, ART, SpO₂), one ECG strip (lead II, HR and the rhythm name) in place of a tile grid, and a lab line
   that shows only critical values ("Gas 08:12 · nothing critical" otherwise). No monitor. The rest of STATE is one
   swipe up.
-- ACTION rows at thumb size, with Off the card and Finished folded.
+- ACTION rows at thumb size, with Off the card and Finished as collapsible rows (whether Finished is open by default
+  is still open, §9).
 - Above the tools, the marks on the left and the pause pill on the right; then the tools (with Stages) and Debrief.
 
 Open points on Phone 9 for the owner: the critical thresholds as a sourced table that a card may tighten; "no gas sent
@@ -283,8 +284,9 @@ extension). The mock-ups are not tracked (copies in `scratch/owner-review/instru
 - The Defib · CPR sheet replacing ACTION during CPR: confirm against the haemorrhage card's arrest sequence.
   **Ruled 18:30: no.** ACTION stays during CPR; the arrest-phase sheet is a later increment with the new card format
   (§4.3).
-- Whether "Finished steps" should be open by default on the phone. **Ruled in the phone walk-through: folded by
-  default**, as on the laptop. (The Phone 7 to 9 boards draw it open only to show a step just given.)
+- Whether "Finished steps" should be open by default on the phone. **Still open: the clinical owner has not ruled.**
+  The Phone 7 to 9 boards draw Finished open, to show the step just given. On the laptop, Instructor v2 has it folded
+  by default (§3.4).
 - Row count beyond 9 steps in one stage (no card has this today; a second key row or scrolling is acceptable).
   **Not ruled; still open.** Instructor v2 gives keys to rows 1–9 only; a tenth row would be pressable by click.
 
