@@ -6,7 +6,7 @@ import { createInProcessHub, HostSession, type HostTarget } from '@pme/controlle
 import { engineOptionsOf, ScenarioDriver, validateScenario, type ScenarioDoc } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
 import { FIXED_ALARM_WORDS } from './alarms.ts';
-import { facts, objectives } from './debrief.ts';
+import { facts, objectives, steps } from './debrief.ts';
 import { CONDITIONS } from './describe.ts';
 import { emptyRun, RunRecord, type Row, type RunData, type Sample } from './record.ts';
 import { LIBRARY } from './scenarios.ts';
@@ -137,6 +137,45 @@ describe('the showcase objectives as rules', () => {
     const kept = await hostRun(mh, 780, mhPresses(held));
     expect(vent(kept)?.status).toBe('met');
     expect(vent(kept)?.why).toMatch(/^The state "Ventilation back to 12 × 500, O₂ 100 %" at \d\d:\d\d, after EtCO₂ had stayed below 40 mmHg for 2 min 00 s \(\d\d:\d\d → \d\d:\d\d\)\.$/);
+  }, 300_000);
+});
+
+/** The record as the record kept it before IP8: without the fields IP8 adds to a row. */
+const before = (d: RunData): RunData => ({ ...d, rows: d.rows.map(({ tr: _a, by: _b, markKind: _c, note: _d, batch: _e, ...r }) => r) });
+/** The haemorrhage card pressed from its own states: oxygen, the tube, then CPR 10 s into PEA, the surgeon's volume and
+ *  epinephrine; the junctional rhythm and PEA are left to their rules. */
+const haemPresses = () => {
+  const done = new Set<string>();
+  return (t: number, rec: RunRecord): string | null => {
+    const at = (id: string) => rec.data.rows.find((r) => r.ev === `state:${id}`)?.t;
+    const go = (tr: string, ok: boolean) => (ok && !done.has(tr) ? (done.add(tr), tr) : null);
+    const pea = at('pea');
+    const cpr = at('cpr');
+    return go('oxygen', t >= 20) ?? go('intubate-o2', t >= 60) ?? go('cpr-pea', pea !== undefined && t >= pea + 10) ?? go('volume', cpr !== undefined && t >= cpr + 20)
+      ?? go('epi-running', at('cprRunning') !== undefined && t >= (at('cprRunning') as number) + 10);
+  };
+};
+
+describe('IP8: the new record fields change no verdict', () => {
+  it('MH and haemorrhage on the engine: objectives() equals its output on the record without the new fields; the presses are taken steps', async () => {
+    const mhRun = await hostRun(mh, 700, mhPresses((t, _r, at) => t >= (at('recovering') as number) + 8));
+    const haemRun = await hostRun(haemorrhage, 800, haemPresses());
+    for (const [name, rec] of [['MH', mhRun], ['haemorrhage', haemRun]] as const) {
+      const d = rec.data;
+      expect(d.rows.some((r) => r.tr !== undefined), name).toBe(true);
+      expect(objectives(d), name).toEqual(objectives(before(d)));
+      expect(steps(before(d)), `${name}: a record without the fields has no steps`).toEqual([]);
+      // every press that moved the card is a taken step at the time its state was entered, and only those are
+      const pressed = d.rows.filter((r) => r.by === 'press').map((r) => [r.tr, r.t]);
+      expect(steps(d).filter((x) => x.takenT !== null).map((x) => [x.id, x.takenT]).sort(), name).toEqual(pressed.sort());
+    }
+    expect(mhRun.data.rows.filter((r) => r.by === 'press').map((r) => r.tr)).toEqual(['premed', 'preox', 'induce', 'intubate', 'surgery', 'crisis-earlySigns', 'dant', 'normo']);
+    expect(steps(mhRun.data).filter((x) => x.stateId === 'triggerOff').map((x) => [x.id, x.status])).toEqual([['dant', 'taken'], ['cool', 'not done'], ['kTreat', 'not done'], ['bicarb', 'not done']]);
+    expect(haemRun.data.rows.filter((r) => r.by === 'press').map((r) => r.tr)).toEqual(['oxygen', 'intubate-o2', 'cpr-pea', 'volume', 'epi-running']);
+    // the junctional rhythm came by its own rule (a mixed step): not a press, so not taken; and not failed, its state was reached
+    const j = steps(haemRun.data).find((x) => x.id === 'junctional');
+    expect([j?.status, j?.takenT, typeof j?.ruleT]).toEqual(['not done', null, 'number']);
+    expect(steps(haemRun.data).find((x) => x.id === 'intubate')?.status).toBe('failed'); // the tube from Bleeding: that stage has passed
   }, 300_000);
 });
 

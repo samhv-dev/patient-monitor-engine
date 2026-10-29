@@ -5,7 +5,7 @@ import type { ObjectiveRule } from '@pme/controller/scenario';
 import { validateScenario } from '@pme/controller/scenario';
 import { version } from '@pme/renderer';
 import { describe, expect, it } from 'vitest';
-import { axisRange, drugTotals, facts, objectives, perMinute, span, verdict } from './debrief.ts';
+import { axisRange, drugTotals, facts, judged, marks, objectives, perMinute, span, steps, verdict } from './debrief.ts';
 import { debriefJson } from './debrief-export.ts';
 import { keyMoments, keyTimes } from './debrief-moments.ts';
 import { emptyRun, type Row, type RunData, type Sample } from './record.ts';
@@ -219,7 +219,9 @@ describe('facts and totals', () => {
     const d = run([apnoea(66), vent(106)], [sample(0, { hr: null, k: 4.2 }), sample(1, { hr: 71 }), sample(61, { hr: 90, k: 4.4 }), sample(185, { hr: 100 })]);
     expect(perMinute(d).map((m) => [m.t, m.values.hr, m.values.k])).toEqual([[0, 71, 4.2], [60, 90, 4.4], [120, null, null], [180, 100, null]]);
     const j = JSON.parse(debriefJson(d, 'abc1234 2026-10-11'));
-    expect(Object.keys(j)).toEqual(['schema', 'version', 'build', 'record', 'objectives', 'facts', 'keyTimes', 'keyMoments', 'minutes']);
+    // IP8 (answer 17): steps, judged and marks are added at the end; the schema stays /2
+    expect(Object.keys(j)).toEqual(['schema', 'version', 'build', 'record', 'objectives', 'facts', 'keyTimes', 'keyMoments', 'minutes', 'steps', 'judged', 'marks']);
+    expect([j.steps, j.judged, j.marks]).toEqual([steps(d), judged(d), marks(d)]);
     expect(j.schema).toBe('pme-debrief/2');
     expect(j.record).toEqual(JSON.parse(JSON.stringify(d)));
     expect(j.minutes).toHaveLength(4);
@@ -294,5 +296,87 @@ describe('FX-13: a span is rounded to whole seconds before it is split into minu
     expect(span(119.5)).toBe('2 min 00 s'); // an exact .5 tie
     expect(span(119.7)).toBe('2 min 00 s');
     expect(span(125)).toBe('2 min 05 s');
+  });
+});
+
+/** IP8: a card with two stages of steps, a hop back into one of them, a mixed step, a drug given on entering a state,
+ *  a timed objective on each of two states, and two objectives the instructor judges. */
+const CARD = {
+  schema: 'pme-scenario/1', id: 'steps', title: 'Steps', initialState: 'a',
+  objectives: [
+    'Name the problem',
+    { text: 'Reach B within 60 s', rule: { kind: 'eventWithin', after: 'state:a', event: 'state:b', withinS: 60 } },
+    { text: 'Epinephrine within 30 s', rule: { kind: 'eventWithin', after: 'state:a', event: 'drug:epinephrine', withinS: 30 } },
+    { text: 'Debrief the team' },
+  ],
+  states: [
+    { id: 'a', label: 'A', transitions: [
+      { id: 'toB', to: 'b', when: { manual: { label: 'Go to B' } } },
+      { id: 'toC', to: 'c', when: { manual: { label: 'Give epinephrine' } } },
+      { id: 'auto', to: 'c', when: { afterS: 600 } },
+    ] },
+    { id: 'b', label: 'B', transitions: [
+      { id: 'x1', to: 'h1', when: { manual: { label: 'First' } } },
+      { id: 'x2', to: 'h2', when: { manual: { label: 'Second' } } },
+      { id: 'mixed', to: 'd', when: { any: [{ manual: { label: 'Finish' } }, { vital: { var: 'spo2', op: '<', value: 80 } }] } },
+    ] },
+    { id: 'h1', label: 'Hop 1', transitions: [{ id: 'h1b', to: 'b', when: { afterS: 1 } }] },
+    { id: 'h2', label: 'Hop 2', transitions: [{ id: 'h2b', to: 'b', when: { afterS: 1 } }] },
+    { id: 'c', label: 'C', onEnter: [{ type: 'applyEvent', event: { kind: 'drug', drugId: 'epinephrine', dose: 1, unit: 'mg', route: 'iv' } }], transitions: [{ id: 'cd', to: 'd', when: { manual: { label: 'C to D' } } }] },
+    { id: 'd', label: 'D' },
+  ],
+} as const;
+const st = (t: number, id: string, tr?: string, by?: Row['by']): Row => ({ t, kind: 'scenario', text: `Scenario state: ${id}`, ev: `state:${id}`, ...(tr ? { tr } : {}), ...(by ? { by } : {}) });
+const onCard = (rows: Row[], end = 200): RunData => ({ ...emptyRun('M 40 y 70 kg', 70, 0), doc: CARD as never, rows, samples: [sample(0), sample(end)] });
+const brief = (d: RunData) => steps(d).map((x) => [x.stateId, x.n, x.id, x.takenT, x.order, x.status, x.ruleT ?? null]);
+
+describe('IP8: the steps, the judged objectives and the marks', () => {
+  it('steps: taken, out of order, failed, not done (a mixed step its rule fired), in the card order of each stage entered', () => {
+    const d = onCard([
+      st(0, 'a'), st(70, 'b', 'toB', 'press'), // late for its objective, but taken: a late press is a press
+      st(80, 'h2', 'x2', 'press'), st(81, 'b', 'h2b', 'rule'), st(90, 'h1', 'x1', 'press'), st(91, 'b', 'h1b', 'rule'),
+      st(100, 'd', 'mixed', 'rule'),
+    ]);
+    expect(brief(d)).toEqual([
+      ['a', 1, 'toB', 70, 1, 'taken', null],
+      ['a', 2, 'toC', null, null, 'failed', null], // its stage passed, and C can no longer be reached from D
+      ['b', 1, 'x1', 90, 2, 'out of order', null], // taken after the second step of its stage
+      ['b', 2, 'x2', 80, 1, 'taken', null],
+      ['b', 3, 'mixed', null, null, 'not done', 100], // its rule fired it, not a press
+    ]);
+    expect(steps(d).map((x) => [x.label, x.dueT])).toEqual([['Go to B', 0], ['Give epinephrine', 0], ['First', 70], ['Second', 70], ['Finish', 70]]);
+  });
+
+  it('steps: overdue when a linked objective’s window has passed (a state it enters, or a drug given on entering it); not done before', () => {
+    expect(brief(onCard([st(0, 'a')], 200)).map((x) => x[5])).toEqual(['overdue', 'overdue']); // state:b and drug:epinephrine (C's onEnter)
+    expect(brief(onCard([st(0, 'a')], 40)).map((x) => x[5])).toEqual(['not done', 'overdue']); // B's 60 s are not over yet
+    expect(brief(onCard([st(0, 'a')], 20)).map((x) => x[5])).toEqual(['not done', 'not done']);
+    // the stage left by a jump: a step that can still be reached is not failed
+    expect(brief(onCard([st(0, 'a'), st(10, 'c', undefined, 'goto')], 20))).toEqual([
+      ['a', 1, 'toB', null, null, 'failed', null], ['a', 2, 'toC', null, null, 'not done', null], ['c', 1, 'cd', null, null, 'not done', null],
+    ]);
+  });
+
+  it('steps: read on the kept course; none without a scenario, nor for a record made before the record kept how a state was entered', () => {
+    const d = onCard([st(0, 'a'), { ...st(70, 'b', 'toB', 'press'), undone: 1 }]);
+    expect(brief(d).map((x) => x[5])).toEqual(['overdue', 'overdue']); // the press was undone by a return
+    expect(steps(onCard([st(0, 'a'), st(70, 'b'), st(100, 'd')]))).toEqual([]); // the rc.3 records: no tr, no by
+    expect(steps({ ...onCard([st(0, 'a')]), doc: null })).toEqual([]);
+    expect(steps(onCard([st(0, 'a')], 20)).length).toBe(2); // only the first state: nothing to tell yet, and nothing lost
+  });
+
+  it('judged: the objectives with no rule, with the instructor’s tick; objectives() is unchanged by them', () => {
+    const d = onCard([st(0, 'a'), { t: 50, kind: 'note', text: 'Objective met: Name the problem' }]);
+    expect(judged(d)).toEqual([{ n: 1, text: 'Name the problem', tickedT: 50 }, { n: 4, text: 'Debrief the team', tickedT: null }]);
+    expect(objectives(d)[0]?.verdict).toMatchObject({ status: 'not assessable', tickedT: 50 });
+  });
+
+  it('marks: every bookmark in order, its kind and note when it has them, undone when a return discarded it', () => {
+    const d = onCard([
+      { t: 20, kind: 'bookmark', text: 'Bookmark: Mark 1 at 00:20', mark: 'Mark 1 at 00:20', markKind: 'good', note: 'called it' },
+      { t: 30, kind: 'bookmark', text: 'Bookmark: Bookmark 1 at 00:30', mark: 'Bookmark 1 at 00:30', undone: 1 },
+      { t: 25, kind: 'restore', text: 'Returned to bookmark Mark 1 at 00:20' },
+    ]);
+    expect(marks(d)).toEqual([{ t: 20, label: 'Mark 1 at 00:20', kind: 'good', note: 'called it' }, { t: 30, label: 'Bookmark 1 at 00:30', undone: 1 }]);
   });
 });
