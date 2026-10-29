@@ -29,7 +29,7 @@ test('no engine id reaches a clinical view', { tag: '@known-flaky' }, async ({ p
     await go(page, `#/explore/${s}`, 900);
     await scan(`#/explore/${s}`);
   }
-  for (const r of ['#/', '#/room', '#/scenarios', '#/scenarios/library', '#/scenarios/builder', '#/patient', '#/monitor', '#/remote', '#/settings', '#/validate', '#/vent']) {
+  for (const r of ['#/', '#/room', '#/scenarios', '#/scenarios/library', '#/scenarios/builder', '#/patient', '#/monitor', '#/teach2', '#/remote', '#/settings', '#/validate', '#/vent']) {
     await go(page, r);
     await scan(r);
   }

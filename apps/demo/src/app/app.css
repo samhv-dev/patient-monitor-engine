@@ -749,7 +749,8 @@ a.rail-item:hover { color: var(--text-strong); background: color-mix(in srgb, va
 .main[data-route='teach2'] > .view[data-view='teach2'] { grid-area: 1 / 1 / -1 / -1; display: grid; grid-template-rows: subgrid; grid-template-columns: subgrid; overflow: hidden; }
 /* the paused banner (cue.ts paints it) spans both columns under the strip, as on board "v9 paused" (IP9, ruling 3) */
 .main[data-route='teach2'] .ip2-paused-row { grid-area: paused; min-width: 0; }
-.main[data-route='teach2'] .ip2-paused-row > .ip2-paused:not([hidden]) { margin: 10px 20px 0; }
+/* one compact line: the fan-out's ACTION column still fits 1440 × 900 while paused */
+.main[data-route='teach2'] .ip2-paused-row > .ip2-paused:not([hidden]) { margin: 6px 20px 0; padding: 4px 12px; line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* the base rule hides the stage off Monitor, Instructor and Ventilator; the stage's id outranks it here */
 .main[data-route='teach2'] > #monitor { display: block; margin: 0 8px 14px 20px; border: 1px solid var(--ip2-line, var(--line)); border-radius: 8px; overflow: hidden; }
 .app.has-rail[data-route='teach2'] { --rail-w: var(--rail-strip); }

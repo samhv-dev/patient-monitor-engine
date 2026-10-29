@@ -1,0 +1,129 @@
+// Instructor v2 (E127; plan IP9 step 3; design §2 and §8): at the laptop's 1440 × 900 window, at the MH card's second-dose
+// moment (normoventilated), its treatment fan-out (treating) and the haemorrhage card's PEA, the view fits without a
+// scroll (the page, the view and the ACTION column), every open step of the stage is a row of ACTION, and no row is
+// disabled. The monitor pane in STATE is measured, and the Saadat-like tiles in it are checked for text that overlaps,
+// wraps or leaves its tile (plan R9: they have collided at smaller panes before, and no renderer change is allowed); the
+// pane's screenshot is written to TEACH2_SHOTS (default: this test's output folder) for the owner's look.
+import { mkdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { expect, test, type Page } from '@playwright/test';
+import type { ViteDevServer } from 'vite';
+import { openApp, startVite } from './app-support.ts';
+
+let vite: ViteDevServer;
+let base = '';
+test.beforeAll(async () => ({ vite, base } = await startVite()));
+test.afterAll(async () => vite?.close());
+
+type W = { __pmeApp: { link: { send(c: unknown): Promise<{ accepted: boolean }>; ctl: { scenario: { stateId: string | null; doc: { states: Array<{ id: string; transitions?: Array<{ when: Record<string, unknown> }> }> } | null }; hostPaused: boolean } } } };
+
+/** The tiles' text that overlaps another text of its tile, wraps, or lies outside its tile (the Saadat check, compact). */
+function tileFindings(page: Page): Promise<{ texts: number; bad: string[] }> {
+  return page.evaluate(() => {
+    const g = document.createElement('canvas').getContext('2d') as CanvasRenderingContext2D;
+    const bad: string[] = [];
+    let texts = 0;
+    for (const tile of document.querySelectorAll<HTMLElement>('.stage .pme-stile')) {
+      if (tile.offsetParent === null) continue;
+      const p = tile.dataset.param ?? '?';
+      const tb = tile.getBoundingClientRect();
+      const inks: Array<{ t: string; l: number; r: number; top: number; bot: number }> = [];
+      const walk = document.createTreeWalker(tile, NodeFilter.SHOW_TEXT);
+      for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+        const text = n.textContent ?? '';
+        const el = n.parentElement as HTMLElement;
+        if (!text.trim() || el.closest('svg')) continue;
+        const cs = getComputedStyle(el);
+        if (cs.visibility === 'hidden' || Number(cs.opacity) === 0) continue;
+        const range = document.createRange();
+        range.selectNodeContents(n);
+        const rects = [...range.getClientRects()].filter((r) => r.width > 0);
+        if (rects.length > 1) bad.push(`${p}: "${text.trim()}" wraps`);
+        if (rects.length !== 1) continue;
+        texts++;
+        const rc = rects[0] as DOMRect;
+        g.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+        const m = g.measureText(text);
+        const baseY = rc.top + (rc.height - (m.fontBoundingBoxAscent + m.fontBoundingBoxDescent)) / 2 + m.fontBoundingBoxAscent;
+        const ink = { t: text.trim(), l: rc.left - m.actualBoundingBoxLeft, r: rc.left + m.actualBoundingBoxRight, top: baseY - m.actualBoundingBoxAscent, bot: baseY + m.actualBoundingBoxDescent };
+        if (ink.l < tb.left - 0.5 || ink.r > tb.right + 0.5 || ink.top < tb.top - 0.5 || ink.bot > tb.bottom + 0.5) bad.push(`${p}: "${ink.t}" outside its tile`);
+        for (const o of inks) {
+          const dx = Math.min(o.r, ink.r) - Math.max(o.l, ink.l);
+          const dy = Math.min(o.bot, ink.bot) - Math.max(o.top, ink.top);
+          if (dx > 0.5 && dy > 0.5) bad.push(`${p}: "${o.t}" × "${ink.t}"`);
+        }
+        inks.push(ink);
+      }
+    }
+    return { texts, bad };
+  });
+}
+
+/** What the fit is: scroll sizes of the page, the view and ACTION; the open step rows against the card; disabled rows;
+ *  the monitor pane. */
+function measure(page: Page) {
+  return page.evaluate(() => {
+    const w = window as unknown as W;
+    const sv = w.__pmeApp.link.ctl.scenario;
+    const st = sv.doc?.states.find((s) => s.id === sv.stateId);
+    const manual = (x: Record<string, unknown>): boolean => 'manual' in x || (['any', 'all'] as const).some((k) => Array.isArray(x[k]) && (x[k] as Array<Record<string, unknown>>).some(manual));
+    const view = document.querySelector('.view[data-view="teach2"]') as HTMLElement;
+    const action = document.querySelector('.ip2-action') as HTMLElement;
+    const rows = [...document.querySelectorAll<HTMLElement>('.ip2-action .ip2-rows:not(.ip2-finished-list) .ip2-row')];
+    const stage = (document.querySelector('.stage > .monitor-host') as HTMLElement).getBoundingClientRect();
+    const se = document.scrollingElement as HTMLElement;
+    return {
+      state: sv.stateId,
+      page: [se.scrollHeight, se.clientHeight],
+      view: [view.scrollHeight, view.clientHeight],
+      action: [action.scrollHeight, action.clientHeight],
+      cardSteps: (st?.transitions ?? []).filter((t) => manual(t.when)).length,
+      stepRows: rows.filter((r) => r.dataset.kind === 'step').length,
+      rows: rows.map((r) => `${r.querySelector('.ip2-key')?.textContent}:${r.dataset.look}`),
+      disabled: [...document.querySelectorAll('.ip2-action .ip2-row')].filter((r) => r.matches('[disabled], [aria-disabled="true"]')).length,
+      pane: { w: Math.round(stage.width), h: Math.round(stage.height), x: Math.round(stage.x), y: Math.round(stage.y) },
+    };
+  });
+}
+
+const send = (page: Page, c: unknown) => page.evaluate((x) => (window as unknown as W).__pmeApp.link.send(x), c);
+
+for (const [card, target] of [['showcase-mh', 'normoventilated'], ['showcase-mh', 'treating'], ['showcase-haemorrhage', 'pea']] as const) {
+  test(`Instructor v2 fits 1440 × 900 at ${card.replace('showcase-', '')} ${target}: no scroll, every open step a row, no row disabled; the monitor pane measured`, async ({ page, browserName }, info) => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openApp(page, base, `?scenario=${card}#/teach2`, { warmMs: 2000 });
+    await page.waitForFunction(() => !!(window as unknown as W).__pmeApp.link.ctl.scenario.doc, null, { timeout: 30_000 });
+    expect((await send(page, { type: 'scenario', action: 'goto', target })).accepted).toBe(true);
+    await page.waitForFunction((id) => (window as unknown as W).__pmeApp.link.ctl.scenario.stateId === id, target, { timeout: 15_000 });
+    // the tiles fill (NIBP's first cycle) and the view repaints (≤ 2 Hz)
+    await page.waitForTimeout(8000);
+    const running = await measure(page);
+    const tiles = await tileFindings(page);
+    const dir = process.env.TEACH2_SHOTS ?? info.outputPath();
+    mkdirSync(dir, { recursive: true });
+    const name = `teach2-fit-${card.replace('showcase-', '')}-${target}-${browserName}`;
+    await page.screenshot({ path: join(dir, `${name}-page.png`) });
+    await page.locator('.stage > .monitor-host').screenshot({ path: join(dir, `${name}-monitor.png`) });
+    // paused: the banner takes its full-width row under the strip; the view still fits
+    await page.locator('.ip2-head button.ip2-pill').click();
+    await page.waitForFunction(() => (window as unknown as W).__pmeApp.link.ctl.hostPaused === true, null, { timeout: 10_000 });
+    await page.waitForTimeout(1200);
+    const paused = await measure(page);
+    await page.screenshot({ path: join(dir, `${name}-paused.png`) });
+    const report = { browser: browserName, card, target, running, paused, tiles };
+    console.log(`teach2-fit ${JSON.stringify(report)}`);
+    info.annotations.push({ type: 'teach2-fit', description: JSON.stringify(report) });
+
+    for (const [when, m] of [['running', running], ['paused', paused]] as const) {
+      expect(m.state, when).toBe(target);
+      expect(m.page[0], `${when}: the page scrolls`).toBeLessThanOrEqual(m.page[1] as number);
+      expect(m.view[0], `${when}: the view scrolls`).toBeLessThanOrEqual(m.view[1] as number);
+      expect(m.action[0], `${when}: ACTION scrolls`).toBeLessThanOrEqual(m.action[1] as number);
+      expect(m.stepRows, `${when}: every open step of the stage is a row`).toBe(m.cardSteps);
+      expect(m.disabled, `${when}: a row is disabled`).toBe(0);
+    }
+    expect(running.pane.w).toBeGreaterThan(400);
+    expect(tiles.texts).toBeGreaterThan(0);
+  });
+}

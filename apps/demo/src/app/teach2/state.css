@@ -7,7 +7,7 @@
 .ip2-strip { overflow-x: auto; scrollbar-width: none; }
 .ip2-strip::-webkit-scrollbar { display: none; }
 .ip2-chips { display: contents; } /* the chips are the strip's own flex items */
-.ip2-strip-hint { flex: 0 1 auto; min-width: 0; margin-left: auto; padding-left: 16px; overflow: hidden; text-overflow: ellipsis; color: var(--ip2-faint); }
+.ip2-strip-hint { flex: 0 1 auto; min-width: 0; margin-left: auto; padding-left: 16px; overflow: hidden; text-overflow: ellipsis; color: var(--ip2-muted); } /* IP9: muted, 4.5:1 (app-accessibility) */
 .ip2-strip-empty { color: var(--ip2-muted); }
 .ip2-chip { flex: none; display: block; padding: 6px 10px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--ip2-muted); font: inherit; line-height: 16px; white-space: nowrap; }
 button.ip2-chip { cursor: pointer; }
@@ -23,7 +23,7 @@ button.ip2-chip:hover { background: var(--ip2-card); }
 .ip2-future { border: 1px dashed var(--ip2-control); color: var(--ip2-soft); }
 .ip2-auto { color: var(--ip2-amber); }
 .ip2-fold { border: 1px solid var(--ip2-control); color: var(--ip2-soft); }
-.ip2-or { flex: none; padding: 0 6px; color: var(--ip2-faint); }
+.ip2-or { flex: none; padding: 0 6px; color: var(--ip2-muted); }
 .ip2-link { flex: none; width: 14px; height: 1px; background: #4b5563; }
 .ip2-strip[data-tight] .ip2-link { width: 8px; }
 .ip2-link-next { background: var(--ip2-blue); }

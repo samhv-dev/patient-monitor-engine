@@ -85,7 +85,7 @@
 .ip2-sheet-primary, .ip2-gives { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
 .ip2-foot-line { max-width: 22ch; text-align: right; line-height: 1.3; }
 .ip2-foot-line:empty { display: none; }
-.ip2-deliver, .ip2-give { height: 40px; padding: 0 12px; border: 0; border-radius: 6px; background: var(--ip2-blue); color: #fff; font-weight: 600; font-size: 13px; white-space: nowrap; cursor: pointer; }
+.ip2-deliver, .ip2-give { height: 40px; padding: 0 12px; border: 0; border-radius: 6px; background: #2563eb; color: #fff; font-weight: 600; font-size: 13px; white-space: nowrap; cursor: pointer; }
 .ip2-deliver:disabled, .ip2-give:disabled { background: var(--ip2-line); color: var(--ip2-faint); cursor: not-allowed; }
 .ip2-give[data-does='bolus'] { background: transparent; border: 1px solid #8ab4f8; color: var(--ip2-text); }
 

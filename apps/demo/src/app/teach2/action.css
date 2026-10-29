@@ -18,14 +18,14 @@ button.ip2-row:focus-visible { outline: 2px solid var(--ip2-blue-text); outline-
 
 /* current, expected next: blue */
 .ip2-row[data-look='current'] { border-color: var(--ip2-blue); background: var(--ip2-blue-soft); color: #fff; }
-.ip2-row[data-look='current'] .ip2-key { background: var(--ip2-blue); color: #fff; }
+.ip2-row[data-look='current'] .ip2-key { background: #2563eb; color: #fff; } /* IP9: white on the board's blue is 3.7:1; one shade darker is 5.2:1 */
 .ip2-row[data-look='current'] .ip2-row-sub { color: var(--ip2-blue-text); }
 .ip2-row[data-look='current'] .ip2-row-right { color: var(--ip2-pause); }
 /* condition not met: faded, still pressable */
-.ip2-row[data-look='unmet'] { border-color: #262c33; color: var(--ip2-muted); opacity: 0.75; }
-.ip2-row[data-look='unmet'] .ip2-key { background: #262c33; color: var(--ip2-muted); }
+.ip2-row[data-look='unmet'] { border-color: #262c33; color: var(--ip2-soft); opacity: 0.75; } /* IP9: soft, not muted, so the faded text keeps 4.5:1 (app-accessibility) */
+.ip2-row[data-look='unmet'] .ip2-key { background: #262c33; color: var(--ip2-soft); }
 .ip2-row[data-look='unmet'] .ip2-row-title { color: var(--ip2-soft); }
-.ip2-row[data-look='unmet'] .ip2-row-sub, .ip2-row[data-look='unmet'] .ip2-row-right { color: var(--ip2-faint); }
+.ip2-row[data-look='unmet'] .ip2-row-sub, .ip2-row[data-look='unmet'] .ip2-row-right { color: var(--ip2-soft); }
 /* overdue: a yellow 2 px ring on the normal fill, number kept */
 .ip2-row[data-overdue='true'] { padding: 6px 11px; border: 2px solid #ffe14d; opacity: 1; }
 .ip2-row[data-overdue='true'] .ip2-row-sub { color: #d9cf7a; }

@@ -12,10 +12,10 @@ test.afterAll(async () => vite?.close());
 
 type App = { __pmeApp: { session: { code: string; simNow(): number; monitor: unknown; spec: unknown; mode: string; restart(s: unknown): void }; link: { simT: number; log: Array<{ kind: string; text: string }>; ctl: { state: { values: Record<string, number>; control: Record<string, string> } | null } }; shell: { monitorHost: HTMLElement } } };
 
-const ROUTES = ['#/explore/haemodynamics', '#/settings', '#/dev', '#/monitor', '#/', '#/teach'];
+const ROUTES = ['#/explore/haemodynamics', '#/settings', '#/dev', '#/monitor', '#/', '#/teach', '#/teach2'];
 const engineT = (page: Page) => page.evaluate(() => (window as unknown as App).__pmeApp.link.simT);
 
-/** The six views, the engine clock read at each; `at` runs before a route is shown. Fails if the engine clock went back. */
+/** The seven views (Instructor v2 added, IP9), the engine clock read at each; `at` runs before a route is shown. Fails if the engine clock went back. */
 async function walk(page: Page, at: Partial<Record<string, () => Promise<void>>> = {}): Promise<void> {
   let prev = await engineT(page);
   for (const r of ROUTES) {
