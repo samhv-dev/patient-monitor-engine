@@ -95,6 +95,7 @@
 /* the card's steps (IP8): the stage's name on its first row, a rule above it */
 .debrief .db-steps td.num { width: auto; }
 .debrief .db-steps td:first-child { width: 30%; }
+.debrief .db-steps td:nth-child(n+4), .debrief .db-steps th:nth-child(n+4) { white-space: nowrap; }
 .debrief .db-steps tr.db-stage td { border-top: 1px solid var(--line-strong); }
 .debrief .db-moments tr.db-alarms td { color: var(--text-muted); font-size: var(--t-12, 12px); border-bottom-style: dotted; }
 .debrief .db-whocell { white-space: nowrap; }
