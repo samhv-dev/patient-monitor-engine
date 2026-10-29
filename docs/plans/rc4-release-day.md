@@ -529,7 +529,7 @@ ls "$S/pme-embed-rc4"; head -c 48 "$S/pme-embed-rc4/patient-monitor.iife.js"; ec
   Expected: the eight entries of `pme-embed-rc3`, the rc.4 banner. **No release:** `cd $R/scratch/wt-rc4-tag && npx -y
   pnpm@9.15.9 build < /dev/null > $W/build-embed.log 2>&1 && cp -R apps/demo/dist/embed/. "$S/pme-embed-rc4/"`.
 
-### Task 4 (executor): kit round Q2 on rc.4 — the talk and the two live-demo cards, both browsers
+### Task 4 (executor): kit round Q2 on rc.4 — the talk (the MH-only programme, P29) and the cards (MH; the haemorrhage as reserve R5), both browsers
 
 **One output folder per run, never in place (Decision 5).** `ls` the folder first: it must not exist.
 
@@ -543,26 +543,35 @@ grep -c -F "Preoxygenate: 100 % O₂ by face mask" scripts/showcase/kit-round-a.
 grep -n -E "fill\('(Showcase 2|Live demo), [0-9]+ (October|November)'\)|Kit round Q2 rehearsal on the rc" scripts/showcase/kit-round-a.kitround.ts
 ```
 
-  Expected: `2` (#128 is in the tag); 3 November (the two-demos PR's strings); rc.4. The Q1 talk in the tag is the
-  two-demos talk: opening → MH (E119) → haemorrhage (E120) + Debrief → close (Decision 4).
-- [ ] **Step 2. Only if Step 1 shows the two-demos talk missing or a date still 4 November:** `git fetch -q origin
+  Expected: `2` (#128 is in the tag); 3 November (A4's "Live demo, 3 November"; the MH-only talk fills no Run-by line
+  and prints no "Kit round Q2 rehearsal" note). The Q1 talk in the tag is the MH-only programme of 29 October (P29,
+  #172): opening → MH (E119) with three look-inside stops (Pause, Explore, the model-page tab) → the MH Debrief read on
+  screen. The haemorrhage (E120) is reserve R5: it is not in the talk; A4 haemorrhage (Step 3c) still runs, as a
+  reserve check.
+- [ ] **Step 2. Only if Step 1 shows the MH-only talk missing or a date still 4 November:** `git fetch -q origin
   test-kitround-two-demos && git cherry-pick -x` its commits (a date or Notes line still wrong: Task 0 Step 3's
   one-line edits); the prep run's script fixes too, committed before Step 3; then `--list` → the count per the
   tooling PR's body.
-- [ ] **Step 3. The two-demos talk, Chromium then WebKit** (machine exclusive; time per the prep run). The test
-  title in `-g` and the record names are per the tooling PR's body (below: the current title):
+- [ ] **Step 3. The talk (the MH-only programme, P29), Chromium then WebKit** (machine exclusive; ≈ 5 min each on
+  Chromium [#172]). The test title in `-g` and the record names are per #172 (below: the current title).
+  `KITROUND_SHOTS=$Q/shots` keeps the stop screenshots (Explore and the model pages) out of the records' folder:
 
 ```bash
 . /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/rc4-release/env.sh
 cd $R/scratch/wt-rc4-docs && Q=docs/showcase/kit-round-a/q2-rc4; ls $Q 2>&1 | head -1
-env -u CI SHOWCASE_KIT="$KIT" KITROUND_OUTDIR=$Q npx playwright test -c scripts/showcase/playwright.kit-round.config.ts -g "Q1 30-minute talk" --project=chromium --reporter=list < /dev/null > $W/q2-chromium.log 2>&1; tail -4 $W/q2-chromium.log
-env -u CI SHOWCASE_KIT="$KIT" KITROUND_OUTDIR=$Q npx playwright test -c scripts/showcase/playwright.kit-round.config.ts -g "Q1 30-minute talk" --project=webkit --reporter=list < /dev/null > $W/q2-webkit.log 2>&1; tail -4 $W/q2-webkit.log
+env -u CI SHOWCASE_KIT="$KIT" KITROUND_OUTDIR=$Q KITROUND_SHOTS=$Q/shots npx playwright test -c scripts/showcase/playwright.kit-round.config.ts -g "Q1 30-minute talk" --project=chromium --reporter=list < /dev/null > $W/q2-chromium.log 2>&1; tail -4 $W/q2-chromium.log
+env -u CI SHOWCASE_KIT="$KIT" KITROUND_OUTDIR=$Q KITROUND_SHOTS=$Q/shots npx playwright test -c scripts/showcase/playwright.kit-round.config.ts -g "Q1 30-minute talk" --project=webkit --reporter=list < /dev/null > $W/q2-webkit.log 2>&1; tail -4 $W/q2-webkit.log
 cp -n $W/relay-$SHA8.json $Q/; ls $Q | wc -l
 ```
 
   Expected: "No such file or directory"; `1 passed` each; "kit … served at http://127.0.0.1:8760/?relay by Start
-  Classroom.command"; the file count per the prep run (rc.3's six-segment talk: ≈ 34). **No new file for 15 min**
-  after the haemorrhage Debrief JSON: a hang; Task 8.1.
+  Classroom.command"; **≈ 7 records per browser** (`q1-0-opening-and-qr-<b>.{json,md}`,
+  `q1-1-malignant-hyperthermia-with-three-look-inside-stops-<b>.{json,md}`, `debrief-q1-1-…-<b>.json`,
+  `q1-talk-<b>.json` and the one shot `q2-mh-monitor-early-signs-<b>.png`), so `ls $Q | wc -l` ≈ 16 with the relay
+  JSON and `shots/` (19 PNGs per browser in `shots/`: the stops, the model pages, the end, the Debrief on screen).
+  No haemorrhage record, no Debrief PDF and no close in the talk (rc.3's six-segment talk wrote ≈ 34). The model-page
+  tab loads GitHub pages: the run needs the internet. **No new file for 10 min** after the `q1-0` records: a hang;
+  Task 8.1.
 - [ ] **Step 3b. The local macOS WebKit e2e set** (≈ 8 min):
 
 ```bash
@@ -575,7 +584,7 @@ git status --porcelain --untracked-files=no | wc -l
 
   Expected: FX-16 `3 passed`, three ratio lines (rc.3 99/99/100 %); the rest passed, none skipped (`saadat-instructor-
   tiles` new, unverified here); `0`. A failure is a **NOTE** for the matching smoke item, never a gate failure.
-- [ ] **Step 3c. The two live-demo cards, both engines** (≈ 15 min, unverified):
+- [ ] **Step 3c. The MH card and the haemorrhage reserve (R5), both engines** (≈ 15 min, unverified):
 
 ```bash
 . /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/rc4-release/env.sh
@@ -599,18 +608,17 @@ for (const f of fs.readdirSync(d).filter(f=>/^q1-[0-4]-.*\.json$/.test(f))) {
   console.log(f,"| kit",r.kit,"| errors",r.errors.length,"| marks",JSON.stringify((r.debrief?.objectives||[]).map(o=>o.mark)),
     "| rows",r.debrief?.timelineRows??"-", m.about?"| about "+JSON.stringify(m.about.start):"", m.qr?"| phones "+m.qr.countAfter:"",
     m.pdf?"| pdf "+JSON.stringify(m.pdf):"", m.debriefFooter?"| footer "+JSON.stringify(m.debriefFooter):"",
-    m.h21?"| h21 hold "+m.h21.holdKeptEverySample+" cockpit "+m.h21.cockpitKeptDriving:"", m.e22?"| e22 "+m.e22.earlySignsAt+" call "+m.e22.callAt+" press "+m.e22.pressAt+" <40 "+m.e22.etco2FirstBelow40:"", m.fx12?"| fx12 "+JSON.stringify(m.fx12.returnClicked??null):"");
+    m.h21?"| h21 hold "+m.h21.holdKeptEverySample+" cockpit "+m.h21.cockpitKeptDriving:"", m.mhStops?"| mh early "+m.mhStops.earlySignsAt+" call "+m.mhStops.callAt+" normo "+m.mhStops.normoAt+" dose2 "+m.mhStops.dose2At+" stops "+m.mhStops.stopClocks.join(" "):"");
 }'
 ```
 
-  The record names (and the reader's file filter) are per the tooling PR's body; the rows below name the segments.
+  The record names (and the reader's file filter) are per #172; the rows below name the segments.
 
   | Segment | Expected, both engines (the prep run's values win) |
   |---|---|
-  | opening and QR | kit = `$SHA8`; errors 0; about contains **"Version 1.0.0-rc.4 (pre-release). For education only. Not a medical device and not clinically validated"**; `3 phones following` |
-  | malignant hyperthermia (E119) | marks `["observed","observed","observed","not-assessable","not-assessable","observed"]`; e22: early signs ≈ 08:38, call ≈ 08:40, press after span 1 in Recovering (the prep run's time; rc.3's 13:03 no longer applies); errors 0; fx12 `true` |
-  | class IV haemorrhage (E120) + Debrief | the states and shock outcomes of the E120 row (the prep run's times); footer `Version 1.0.0-rc.4 (pre-release), build <SHA8>`; Chromium pdf `a4: true` (pages per the prep run); errors 0 |
-  | close | per the tooling PR's body; errors 0 |
+  | opening and QR | kit = `$SHA8`; errors 0; about (Home's line) **"Version 1.0.0-rc.4 · pre-release · build <SHA8>"**; `3 phones following` |
+  | malignant hyperthermia (E119) with three stops + the MH Debrief | marks `["observed","observed","observed","observed","not-assessable","observed"]`; rows ≈ 59–62; mh: early ≈ 08:09, call ≈ 08:12, normo ≈ 13:52, dose2 ≈ 19:13, stops ≈ 08:10 13:50 19:11 (kit a88f95a7 on 29 October, #172; the prep run's values win); errors 0. No PDF in the talk (the MH Debrief is read on screen; the PDFs come from Step 3c) |
+  | the stops (`q1-talk-<b>.json`) | `stops[].simMovedS` 0 and `pausedAtEnd` true at all three; every phone "(paused)" at each stop's end; Explore numbers at 8:10 / 13:50 / 19:11 within a few units of #172's (MH activity 0.27 / 0.51 / 0.55) |
 
   The two cards (this reader printed the 24 October records' values quoted in "What rc.4 adds"):
 
@@ -624,8 +632,8 @@ for (const f of fs.readdirSync(d).filter(f=>/^a4-.*-kit-round-(chromium|webkit)\
 }'
 ```
 
-  Expected: four lines, kit `$SHA8`, errors 0, the E119/E120 rows' values. Open the `q2-*-monitor-*.png` set (names per the
-  tooling PR's body) against the pass-3 row and rc.3's notes (a)–(c) (`scratch/rc3-release/gate-notes.md`): no
+  Expected: four lines, kit `$SHA8`, errors 0, the E119/E120 rows' values (E120 as the reserve check). Open
+  `q2-mh-monitor-early-signs-<b>.png` (one per browser) and `$Q/shots/` against the pass-3 row and rc.3's notes (a)–(c) (`scratch/rc3-release/gate-notes.md`): no
   overlapping tile text; capnogram breath by breath; IBP2 empty in MH (not F9); no older rc. One A4 PNG per card.
 - [ ] **Step 5. The print PDFs for the owner** (`cp -n` only):
 
@@ -653,7 +661,7 @@ ls -la "$S/pme-debrief-rc4"
   **Notes** (recorded, never "fixed"): times beyond ±10 s of the prep run; alarm changes that keep the story; rows ±3;
   resyncs; load; S12-F2, FX-12; `about.preRelease: false` (regex names rc.1); the haemorrhage drafts' ✗; Step 3b.
 
-### Task 5 (executor; the Persian paragraph by orch): the Persian handouts of the demo's two cases
+### Task 5 (executor; the Persian paragraph by orch): the Persian handouts: MH (printed for the day) and the haemorrhage reserve (R5, kept in the kit)
 
 Inputs: the two Chromium Debrief JSONs of the set the Task 4 verdict names (`q2-rc4-a4/`, or `q2-rc4-rerun/`).
 
@@ -687,7 +695,8 @@ ls -la "$S/pme-debrief-fa" "$S/pme-kit-release-$RC3_8/fa-handouts-rc3"
 
   Expected: two rc.4 PDFs; the rc.3 set in `fa-handouts-rc3/` (zsh "no matches found": find them, record, go on).
 - [ ] **Step 3. `READ-ME-FIRST.txt`** in `$S/pme-debrief-fa/`: the executor writes the **English** part as rc.3's (the
-  two live-demo cases from the rc.4 build, kit `<SHA8>`; key times per case; pages, "Strings left in English: 0 in
+  MH case of the 3 November programme and the haemorrhage reserve (R5) from the rc.4 build, kit `<SHA8>`; only the
+  MH handout is printed for the day, the haemorrhage one stays in the kit; key times per case; pages, "Strings left in English: 0 in
   each"; the take-home lines; the rc.3 set in `pme-kit-release-fcf99b70/fa-handouts-rc3/`; "do not save them from
   Preview") and a bracketed line for the Persian paragraph, which **(orch)** writes with the `persian-writing` skill
   (formal; Persian digits for counts and dates, ۱۲ آبان ۱۴۰۵; Western digits for versions, times and values) into
@@ -775,7 +784,11 @@ Extract All into a path with a space; Start Simulator 8642, no firewall question
 body only); a line failing (photo): Windows is no backup, never a rollback. **E14:** the M32 "simulation" open network
 (DHCP on, client isolation off, VPN off): QR → as many borrowed phones as possible; count, time to "Following", one
 lock/unlock, ×4 for 2 min. **E13:** `node -v` ≥ 22 on the presenting Mac; both kits and zips on the stick; Start
-Classroom once (Gatekeeper, firewall). Results to the rulings file that day; a cue change is a small docs PR.
+Classroom once (Gatekeeper, firewall). **The model-page tabs (P29; run sheet §1 "The model pages and the Explore
+view"):** on the presenting Mac, while it is online, three GitHub tabs in the instructor's window, right of the
+instructor tab, left loaded and never reloaded (the kit does not carry `docs/model/`): `…/blob/main/docs/model/endocrine-thermal.md#equations-in-words`,
+`…/pharmacology.md` (Cmd-F "dantrolene") and `…/blood.md#equations-in-words`. Results to the rulings file that day; a
+cue change is a small docs PR.
 
 ### Task 8 (orch + executor): rollback, if the rehearsal or the smoke fails on the new kit
 
