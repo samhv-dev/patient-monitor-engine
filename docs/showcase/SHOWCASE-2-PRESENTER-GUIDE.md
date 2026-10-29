@@ -4,7 +4,10 @@
 print [`SHOWCASE-2-CUE-CARDS.md`](SHOWCASE-2-CUE-CARDS.md) for the lectern. This page is what to remember. Source keys
 are those of the run sheet; Q1-MH = the new programme's talk run (kit a88f95a7, 29 October, Chromium, 3 phones), SPK =
 the speaker's reference (`scratch/owner-review/mh-mechanisms-on-the-demo-build.md`), E132 rc.4 / OWR4 = kit round A4 on
-the MH card with the owner's rulings, REV = the clinical review, E125 = the app's Home, Room and Scenarios pages.*
+the MH card with the owner's rulings, REV = the clinical review, E125 = the app's Home, Room and Scenarios pages,
+Q2-rc4 = the same talk on the rc.4 kit (29 October, both engines, `docs/showcase/kit-round-a/q2-rc4/`). **The kit:
+rc.4 (pre-release), tagged 29 October, `_sandbox/pme-kit-release-0c4b396f/`; the fallback: the rc.3 kit
+`_sandbox/pme-kit-release-fcf99b70/`.***
 
 ## The programme changed (owner, 29 October)
 
@@ -66,8 +69,9 @@ asked.
    **Load** on Demonstration 1 (MH). Phones joined 2.6 s after the QR [Q1-MH]; up to 60 per session [CR12].
 3. **The speed after a fast-forward is the speed before it** (×4 stays ×4). A 5-min span takes 10.1–10.6 s of wall;
    nothing can be pressed while the amber panel shows [Q1-MH].
-4. **Pause at the early signs (8:09), not the call.** Stop 1 comes first; the call goes in after Resume (8:12, 3 s after
-   Early signs on the clock), with *Name malignant hyperthermia* ticked during the stop [Q1-MH].
+4. **Pause at the early signs (8:09; 8:11–8:12 on the rc.4 kit [Q2-rc4]), not the call.** Stop 1 comes first; the call
+   goes in after Resume (8:12, 3 s after Early signs on the clock), with *Name malignant hyperthermia* ticked during the
+   stop [Q1-MH].
 5. **The tight moments:**
    - **keep the hyperventilation through fast-forward 1**; ventilation back is "not met" before **10:34**; press it right
      after stop 2 (13:52) (E22) [Q1-MH];
@@ -78,7 +82,9 @@ asked.
    - **no cooling on the early path** (only above 38.5 °C) [REV #4].
 6. **Safety lines** [UIR]: never click **Ventilator** during the case; never reload mid-case (**Sound on again** if it
    happens); open the Room only from the **instructor tab**; the instructor tab **stays in front**, except for a short
-   look at a model-page tab with the session **Paused**.
+   look at a model-page tab with the session **Paused**. **The one reload you do:** if the laptop's presses stop being
+   acknowledged, reload the instructor page; the phones reconnect on their own (run sheet §6). **At stop 1** a red
+   NIBP SYS TOO LOW (or the alarm button reading it) is the cuff's last reading, not the patient: ignore it.
 7. **"Not available now" → press again**: the button now belongs to the current state [G10 §8].
 8. **The MH Debrief, on screen**: Key times 1 s · 3 s · 21 s; objectives **✓ ✓ ✓ ✓ – ✓**; highest EtCO₂ 64; K⁺ 4.2–5.0;
    no print [Q1-MH].
@@ -101,6 +107,7 @@ asked.
 | Second dose | 19:13 (5 min 07 s after EtCO₂ passed 45), with 20 × 600 again; EtCO₂ 50, 48, 46, 44, 42; Recovering 23:35 |
 | The end | 24:31: EtCO₂ 41, HR 69, ART 94/57 (67), RR 20, still hyperventilated |
 | Debrief | ✓ ✓ ✓ ✓ – ✓; K⁺ 5.0 (4.2–5.0), lactate 3.6, pH 7.33 (7.18–7.41), Tcore 36.4–36.8; 14 key moments; 59 timeline rows |
+| On the rc.4 kit [Q2-rc4] | early signs 8:12 / 8:11 (Chromium / WebKit), EtCO₂ < 40 from 8:38 / 8:37, Recovering 9:37 / 9:38, ventilation back met from 10:37 / 10:36; stops held at 8:12 / 8:11, 13:52 / 13:51, 19:12 / 19:11; EtCO₂ 65 at stop 3; everything else within 2 s; the same marks; 63 / 60 timeline rows |
 
 ## Keys and buttons
 

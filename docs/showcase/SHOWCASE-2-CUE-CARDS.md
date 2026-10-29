@@ -4,8 +4,9 @@
 follows each card). **The programme (owner, 29 October, P29): one case, malignant hyperthermia on the E119 card, with
 three look-inside stops: the engine Paused, the Explore view opened from the Instructor side, the model page behind it
 in a second browser tab.** The class IV haemorrhage case (E120) and its Debrief left the programme and stay in the
-build: their cards are under "Reserve" at the end, with the cards not in the programme. Freeze: Saturday 31 October
-12:00.*
+build: their cards are under "Reserve" at the end, with the cards not in the programme. **The kit: rc.4 (pre-release),
+tagged 29 October, `_sandbox/pme-kit-release-0c4b396f/`; the fallback: the rc.3 kit `_sandbox/pme-kit-release-fcf99b70/`
+(no Home, older cards).***
 
 *Where the numbers come from. **Clock** = the session-bar clock (Load = 0:00). Every clock time, monitor number and
 Explore number is measured on the new programme's talk run (`kit-round-a.kitround.ts`, "Q1 30-minute talk"; kit
@@ -13,7 +14,11 @@ a88f95a7, 29 October, Chromium, 3 emulated phones, 2 s reaction, 3 s per Explore
 screenshots in `scratch/owner-review/mh-only-programme/`). **Slot** = time from the start of the segment's slot; **T+** =
 time from the opening. The machine wall is measured; the talk is not: a time I had to estimate is marked "(est.)". The
 talk points come from the speaker's reference (`scratch/owner-review/mh-mechanisms-on-the-demo-build.md`); [ENG] = an
-engineering size, not a sourced one.*
+engineering size, not a sourced one. **On the rc.4 kit** the same talk ran on both engines (29 October,
+`docs/showcase/kit-round-a/q2-rc4/`, stop screenshots in its `shots/`). Rows that moved by more than 2 s: early signs
+8:12 / 8:11 (Chromium / WebKit), EtCO₂ below 40 from 8:38 / 8:37, Recovering 9:37 / 9:38, ventilation back met from
+10:37 / 10:36, the first `RR TOO LOW` 2:40 (3:09 below), Recovering after the second dose 23:39 (Chromium); the rest
+within 2 s, the marks the same (run sheet §3, "On the rc.4 kit").*
 
 <div style="page-break-after: always;"></div>
 
@@ -64,7 +69,8 @@ engineering size, not a sourced one.*
 - **Never click "Ventilator" during the case**: not the rail's **Ventilator**, not a Ventilator tab. If it happens: back
   to **Instructor**; leaving the view releases the phones at once.
 - **Never reload mid-case.** If it happens: the case comes back ("Restored after reload: ‹title›, mm:ss"); **switch
-  Sound on again** and check **All alarms on**.
+  Sound on again** and check **All alarms on**. **The one exception:** if the laptop's presses stop being
+  acknowledged, reload the instructor page; the phones reconnect on their own (run sheet §6).
 - **Open the Room (the QR) only from the instructor tab.** The model-page tabs are GitHub pages, not instructor tabs.
 - **The instructor tab stays in front**, except for a short look at a model page during a stop, with the session
   **Paused** (a paused session stays paused while the tab is hidden; keep each look under a minute).
@@ -95,7 +101,7 @@ Before the talk: the three model-page tabs loaded, to the right of the instructo
 
 # MH-1 · MH to the early signs (×8 then ×4) (T+3:00 → 5:00)
 
-**Slot 2:00 · machine 1:14 · ends Paused at the early signs (8:09–8:10)**
+**Slot 2:00 · machine 1:14 · ends Paused at the early signs (8:09–8:10; on the rc.4 kit 8:11–8:12)**
 
 | Slot (T+) | Clock | Look at | Press | Say |
 |---|---|---|---|---|
@@ -134,6 +140,9 @@ after stop 1 still lands 3 s after Early signs on the clock.
 
 **Close the stop:** *"The EtCO₂ is rising at unchanged ventilation when it should be falling, with a rising heart
 rate: think of MH early."* → MH-2.
+
+**A red NIBP SYS TOO LOW at this pause** (or the alarm button reading it): the cuff's last reading (87/48, 85/60 on the
+rc.4 runs), not the patient; the arterial line reads 107/67. Cuff timing, not a fault: ignore it (run sheet, stop 1).
 
 **Do not point at:** Gas exchange's VCO₂ 216 / VO₂ 270 (they do not move with MH). **Not in this build:** muscle lactate
 with its own limits, injury potassium, MH severity as an input (open branches).
@@ -353,7 +362,7 @@ is, and they show the return of circulation."*
 
 **Traps:** before giving the handout to the room, check it lists both shocks and the return of circulation.
 
-*Kit round A4 on the E132 card (Debrief read and printed: report 8 pages, 9 with the E126 pause (kit 4d0fca9b: 98 timeline rows; kit 503caeab, the rc.4 rebase: 9 pages, 100 rows, the handout 1 page), the handout 1 page; the handout printed 2 pages on kit e0c73a47, 1 page after the compact-layout fix, Debrief e2e).*
+*Kit round A4 on the E132 card (Debrief read and printed: report 8 pages, 9 with the E126 pause (kit 4d0fca9b: 98 timeline rows; kit 503caeab, the rc.4 rebase: 9 pages, 100 rows, the handout 1 page; the rc.4 kit, 29 October: 8 pages, 95 / 101 rows, the handout 1 page), the handout 1 page; the handout printed 2 pages on kit e0c73a47, 1 page after the compact-layout fix, Debrief e2e).*
 
 <div style="page-break-after: always;"></div>
 
