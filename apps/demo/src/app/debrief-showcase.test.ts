@@ -170,12 +170,17 @@ describe('IP8: the new record fields change no verdict', () => {
       expect(steps(d).filter((x) => x.takenT !== null).map((x) => [x.id, x.takenT]).sort(), name).toEqual(pressed.sort());
     }
     expect(mhRun.data.rows.filter((r) => r.by === 'press').map((r) => r.tr)).toEqual(['premed', 'preox', 'induce', 'intubate', 'surgery', 'crisis-earlySigns', 'dant', 'normo']);
-    expect(steps(mhRun.data).filter((x) => x.stateId === 'triggerOff').map((x) => [x.id, x.status])).toEqual([['dant', 'taken'], ['cool', 'not done'], ['kTreat', 'not done'], ['bicarb', 'not done']]);
+    // the table: every press, and the one step an objective still asks for (objective 4: dantrolene again after the
+    // ventilation is back); the alternatives not chosen (induction without pre-oxygenation, the crisis buttons of the
+    // stages it was not called from, the other treatments) are left out
+    expect(steps(mhRun.data).map((x) => [x.id, x.status])).toEqual([
+      ['premed', 'taken'], ['preox', 'taken'], ['induce', 'taken'], ['intubate', 'taken'], ['surgery', 'taken'], ['crisis-earlySigns', 'taken'],
+      ['dant', 'taken'], ['normo', 'taken'], ['dant-normoventilated', 'not done'],
+    ]);
     expect(haemRun.data.rows.filter((r) => r.by === 'press').map((r) => r.tr)).toEqual(['oxygen', 'intubate-o2', 'cpr-pea', 'volume', 'epi-running']);
-    // the junctional rhythm came by its own rule (a mixed step): not a press, so not taken; and not failed, its state was reached
-    const j = steps(haemRun.data).find((x) => x.id === 'junctional');
-    expect([j?.status, j?.takenT, typeof j?.ruleT]).toEqual(['not done', null, 'number']);
-    expect(steps(haemRun.data).find((x) => x.id === 'intubate')?.status).toBe('failed'); // the tube from Bleeding: that stage has passed
+    // the presses only: the junctional rhythm came by its own rule, and no objective asks for an untaken step here (the
+    // tube from Bleeding was the alternative to the one taken; ROSC never came, so "stop CPR" is not yet asked for)
+    expect(steps(haemRun.data).map((x) => [x.id, x.status])).toEqual([['oxygen', 'taken'], ['intubate-o2', 'taken'], ['cpr-pea', 'taken'], ['volume', 'taken'], ['epi-running', 'taken']]);
   }, 300_000);
 });
 

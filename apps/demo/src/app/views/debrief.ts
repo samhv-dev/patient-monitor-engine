@@ -52,7 +52,8 @@ const setup = (r: Row): boolean => (r.kind === 'action' || r.kind === 'remote' |
 /** The steps table's status words (`StepStatus`), each with a glyph so no colour is needed to read it. */
 const STEP_WORDS: Readonly<Record<StepStatus, string>> = { taken: '✓ taken', 'out of order': '✓ out of order', failed: '✗ failed', overdue: '! overdue', 'not done': '– not done' };
 const MARK_WORDS: Readonly<Record<MarkKind, string>> = { good: 'good', bad: 'bad', discuss: 'discuss' };
-/** The card's steps, one row each, in the card's order within each stage entered: the stage and its first entry on
+/** The card's steps taken, and those not taken that an objective asks for (debrief.ts `steps`; an alternative not
+ *  chosen is not listed), one row each, in the card's order within each stage entered: the stage and its first entry on
  *  the stage's first row, the order due, the button's words, when it was taken (and its place among the stage's taken
  *  steps), and its status. */
 function stepsTable(ss: Step[], d: RunData): HTMLElement {

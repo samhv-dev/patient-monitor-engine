@@ -331,7 +331,7 @@ const onCard = (rows: Row[], end = 200): RunData => ({ ...emptyRun('M 40 y 70 kg
 const brief = (d: RunData) => steps(d).map((x) => [x.stateId, x.n, x.id, x.takenT, x.order, x.status, x.ruleT ?? null]);
 
 describe('IP8: the steps, the judged objectives and the marks', () => {
-  it('steps: taken, out of order, failed, not done (a mixed step its rule fired), in the card order of each stage entered', () => {
+  it('steps: every taken step (in order or not), and an untaken one an objective asks for (failed); an alternative no objective asks for is left out', () => {
     const d = onCard([
       st(0, 'a'), st(70, 'b', 'toB', 'press'), // late for its objective, but taken: a late press is a press
       st(80, 'h2', 'x2', 'press'), st(81, 'b', 'h2b', 'rule'), st(90, 'h1', 'x1', 'press'), st(91, 'b', 'h1b', 'rule'),
@@ -342,9 +342,9 @@ describe('IP8: the steps, the judged objectives and the marks', () => {
       ['a', 2, 'toC', null, null, 'failed', null], // its stage passed, and C can no longer be reached from D
       ['b', 1, 'x1', 90, 2, 'out of order', null], // taken after the second step of its stage
       ['b', 2, 'x2', 80, 1, 'taken', null],
-      ['b', 3, 'mixed', null, null, 'not done', 100], // its rule fired it, not a press
+      // 'mixed' (its rule fired it, to D) is left out: no objective asks for D
     ]);
-    expect(steps(d).map((x) => [x.label, x.dueT])).toEqual([['Go to B', 0], ['Give epinephrine', 0], ['First', 70], ['Second', 70], ['Finish', 70]]);
+    expect(steps(d).map((x) => [x.label, x.dueT])).toEqual([['Go to B', 0], ['Give epinephrine', 0], ['First', 70], ['Second', 70]]);
   });
 
   it('steps: overdue when a linked objective’s window has passed (a state it enters, or a drug given on entering it); not done before', () => {
@@ -352,9 +352,23 @@ describe('IP8: the steps, the judged objectives and the marks', () => {
     expect(brief(onCard([st(0, 'a')], 40)).map((x) => x[5])).toEqual(['not done', 'overdue']); // B's 60 s are not over yet
     expect(brief(onCard([st(0, 'a')], 20)).map((x) => x[5])).toEqual(['not done', 'not done']);
     // the stage left by a jump: a step that can still be reached is not failed
+    // C's "C to D" is asked for by no objective: not listed
     expect(brief(onCard([st(0, 'a'), st(10, 'c', undefined, 'goto')], 20))).toEqual([
-      ['a', 1, 'toB', null, null, 'failed', null], ['a', 2, 'toC', null, null, 'not done', null], ['c', 1, 'cd', null, null, 'not done', null],
+      ['a', 1, 'toB', null, null, 'failed', null], ['a', 2, 'toC', null, null, 'not done', null],
     ]);
+  });
+
+  it('steps: an objective met, or its event given another way, asks for no step; nor before its anchor, nor from a stage left before it', () => {
+    // B reached by a jump within the 60 s: "Reach B" is met, so "Go to B" is not asked for (an alternative was used)
+    expect(brief(onCard([st(0, 'a'), st(20, 'b', undefined, 'goto')], 200)).map((x) => x[2])).toEqual(['toC']);
+    // epinephrine given from the drug sheet after A was entered: "Give epinephrine" is not asked for, even though late
+    const epi: Row = { t: 50, kind: 'action', text: 'Epinephrine 1 mg IV', ev: 'drug:epinephrine' };
+    expect(brief(onCard([st(0, 'a'), epi], 200)).map((x) => [x[2], x[5]])).toEqual([['toB', 'overdue']]);
+    // an objective whose anchor comes after the stage was left does not reach back to it
+    const anchored = { ...CARD, objectives: [{ text: 'D within 30 s of B', rule: { kind: 'eventWithin', after: 'state:b', event: 'state:d', withinS: 30 } }] };
+    const d = { ...onCard([st(0, 'a'), st(10, 'c', 'toC', 'press'), st(20, 'b', undefined, 'goto')], 200), doc: anchored as never };
+    expect(brief(d).map((x) => [x[0], x[2], x[5]])).toEqual([['a', 'toC', 'taken'], ['b', 'mixed', 'overdue']]); // C's "C to D": C was left before B
+
   });
 
   it('steps: read on the kept course; none without a scenario, nor for a record made before the record kept how a state was entered', () => {

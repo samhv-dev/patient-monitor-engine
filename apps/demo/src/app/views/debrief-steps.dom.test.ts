@@ -29,7 +29,9 @@ describe('Debrief: steps, marks and staged deliveries (IP8)', () => {
 
   it('draws the steps of each stage entered, a mark with its kind and note, and one line per staged delivery', () => {
     const record = new RunRecord(() => ({ patient: 'M 40 y 70 kg', weightKg: 70 }), () => 1_000);
-    record.wire(applied(0, { type: 'scenario', action: 'load', doc: induction }));
+    // one objective that asks for a step: the tube within a minute of induction
+    const doc = { ...induction, objectives: [{ text: 'Intubate within 60 s of induction', rule: { kind: 'eventWithin', after: 'state:induced', event: 'state:ventilated', withinS: 60 } }] };
+    record.wire(applied(0, { type: 'scenario', action: 'load', doc }));
     record.wire(state(0, 'awake'));
     record.wire(state(10, 'induced', 'induce'));
     record.wire(applied(500, { type: 'scenario', action: 'trigger', target: 'induce' })); // 00:10, pressed
@@ -42,14 +44,12 @@ describe('Debrief: steps, marks and staged deliveries (IP8)', () => {
     const el = show(record);
     const stepRows = cells(el, '#db-steps');
     const label = (id: string) => induction.states.find((x) => x.id === id)?.label;
+    // the taken step, and the untaken one the objective asks for; the alternatives no objective asks for are left out
     expect(stepRows).toEqual([
       [`${label('awake')} · 00:00`, '1', 'Induce now', '00:10 (1)', '✓ taken'],
       [`${label('induced')} · 00:10`, '1', 'Intubate and ventilate', '–', '✗ failed'], // Desaturating cannot go back to Induced's "Ventilated"
-      ['', '2', 'Bag-mask ventilate, FiO₂ 1.0', '–', '– not done'], // Rescued (bag-mask) is still reachable
-      [`${label('desaturating')} · 00:40`, '1', 'Intubate and ventilate, FiO₂ 1.0', '–', '– not done'],
-      ['', '2', 'Bag-mask ventilate, FiO₂ 1.0', '–', '– not done'],
     ]);
-    expect([...el.querySelectorAll('#db-steps tbody tr')].map((tr) => tr.getAttribute('data-status'))).toEqual(['taken', 'failed', 'not done', 'not done', 'not done']);
+    expect([...el.querySelectorAll('#db-steps tbody tr')].map((tr) => tr.getAttribute('data-status'))).toEqual(['taken', 'failed']);
     expect([...el.querySelectorAll('#db-bookmarks li')].map((li) => li.textContent)).toEqual(['00:20 Bookmark: Mark 1 at 00:20 · good: “calm induction”', '00:22 Bookmark: Bookmark 1 at 00:22']);
     const timeline = cells(el, '#db-timeline');
     expect(timeline.filter((r) => r[2]?.startsWith('Delivered together'))).toEqual([['00:30', 'Action', 'Delivered together: Epinephrine 1 mg IV; Crystalloid 500 mL over 5 min']]);
