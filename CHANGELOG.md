@@ -40,6 +40,23 @@ the public API is what the packages export (see the API reference), the `pme-sce
   owner's ruling.
 
 ### Fixed
+- **A finite cerebral vasodilatory reserve shared by the dilator limbs** (post-demo; found by the review of PR #154).
+  The brain model multiplied the pressure autoregulation, the CO₂ reactivity, the hypoxic term and the drugs with no
+  shared ceiling, so at MAP 43 (CPP ≈ 35, far below the autoregulatory lower limit, where the vessels are already
+  maximally dilated) +12 mmHg of PaCO₂ still bought ×1.30 of cerebral flow and PaO₂ 40 ×1.53, and an asphyxiated
+  brain reached 3.7 × normal flow at CPP 54. Now the limbs spend one reserve: maximal dilation is the pressure-passive
+  line the autoregulation curve already follows below its lower limit, (CPP − 10)/(LL − 10), the reserve is that line
+  over the autoregulated flow (1.40 at CPP 80, 1.20 at CPP 70, 1 at and below LL; no new constant), and the limbs'
+  combined dilation is delivered up to the reserve and no further, constriction always. Inside the reserve each limb's
+  sourced gain is unchanged (3 %/mmHg of CO₂ to PaCO₂ ≈ 53 at CPP 80). Sources: Harper & Glass 1965 (via Gersten's fit
+  to their data: the hypercapnic ceiling ×0.997 ± 0.010 at MAP 50), Okuda 1976, Gregory 1981, Paulson 1990. What moved:
+  CBF under CPR 0.496 → 0.405 (the 0.30–0.40 row stays a recorded miss); the haemorrhage card arrests 10–15 s sooner
+  with the same course (pulse loss 660 → 650 s, ROSC 62.6 s after the second shock, every band held), and its
+  brainstem-perfusion gate (cerebral flow 0.6) is crossed at 580 s and MAP 46, 20 s before the bleed ends, instead of
+  at 591 s and MAP 43 (main read 0.605 against 0.600 at 590 s); the MH card is unchanged to the digit.
+  Two showcase measures left their bands and are recorded as misses, bands unchanged: the untreated healthy-induction
+  apnoea loses its pulse 48 s sooner (SaO₂ < 60 % to pulse loss 615 → 567 s, band 571–697), and the tamponade card's
+  single-beat systolic peak at ROSC is 165 instead of 208.5 (band 203.5–213.5).
 - Explore prints its rows in the engine's own unit: Endocrine glucose is the engine's mmol/L value (it showed the
   mg/dL copy as mmol/L) and the lab panel's glucose says mg/dL; Stress response is on its 0–100 scale (was labelled
   0–1); the gas model's awake resting VO₂ is labelled "VO₂ at rest (awake)" beside the actual VO₂, so Gas and Blood no

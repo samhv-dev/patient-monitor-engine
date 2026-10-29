@@ -25,9 +25,25 @@ an embedding developer reads it for the organ inputs it collects and the effects
 - ICP rises exponentially with the change in intracranial volume, ICP = ICP0·10^(ΔV/PVI), the volume summing mass,
   oedema, cerebral blood volume, displaced CSF, osmotic water loss and head-up drainage, with Marmarou CSF dynamics
   (tables §5.1; `l2/brain/mechanics.ts`).
-- Cerebral blood flow is CBF0 × autoregulation of CPP × CO2 reactivity × an O2 term × flow–metabolism coupling, with
-  pressure-passive flow when autoregulation is lost; CO2 reactivity is linear in PaCO2 over 20–80 mmHg (tables §5.1;
-  `l2/brain/flow.ts`).
+- Cerebral blood flow is CBF0 × autoregulation of CPP × the dilator limbs (CO2 reactivity × an O2 term × flow–metabolism
+  coupling and the drugs' direct effect), with pressure-passive flow when autoregulation is lost; CO2 reactivity is
+  linear in PaCO2 over 20–80 mmHg (tables §5.1; `l2/brain/flow.ts`). The dilator limbs share one finite vasodilatory
+  reserve: maximal dilation is the pressure-passive line autoregulation follows below its lower limit,
+  (CPP − 10)/(LL − 10), the reserve is that line over the autoregulated flow (1.40 at CPP 80, 1.20 at CPP 70, 1 at and
+  below LL), and the limbs' combined dilation is delivered up to the reserve and no further; constriction is never
+  limited (`dilatorReserve`, `spendReserve`).
+- Audit note (2026-10-29, fix-cerebral-dilator-reserve; found by the review of PR #154): the limbs used to multiply with
+  no shared ceiling, so at MAP 43 (CPP ≈ 35, far below the lower limit) +12 mmHg of PaCO2 still bought ×1.30 of flow and
+  PaO2 40 ×1.53. Sources for the reserve: Harper & Glass 1965 (J Neurol Neurosurg Psychiatry 28:449, dogs; read through
+  Gersten's sigmoid fit to their data, arXiv physics/9911029: hypercapnic ceiling ×2.11 at MAP 150, ×1.52 at 100,
+  ×0.997 ± 0.010 at 50), Okuda 1976 (J Neurol Neurosurg Psychiatry 39:221, baboons: CO2 response abolished at systolic
+  60), Gregory 1981 (J Cereb Blood Flow Metab 1:195, cats at MAP 36–37: none or less than half), Paulson, Strandgaard &
+  Edvinsson 1990 (Cerebrovasc Brain Metab Rev 2:161: the limits move with anything that changes CBF, notably CO2). What
+  the sources do not settle: with the human LL of 60 the reserve at CPP 80 is 1.40, so at normal pressure CO2 alone
+  is delivered unchanged only up to PaCO2 ≈ 53 and hypoxia down to PaO2 ≈ 48; the dog data show a larger ceiling within
+  their plateau (×1.52 at MAP 100 where this form, with Harper's 90 mmHg lower limit, gives ×1.13), and human
+  hypercapnia studies report about double the flow near PaCO2 80, though with a pressor rise. Hypocapnic constriction is
+  unchanged although Harper & Glass also found it attenuated at MAP 50 (floor ×0.82 against ×0.22 at 150).
 - Cerebral blood volume follows Grubb's relation, CBV ∝ CBF^0.38 (tables §5.1; `l2/brain/params.ts`); the head
   sees MAP − 0.74·h when raised (tables §5.1; `l2/brain/params.ts`).
 - Brain tissue O2 rises with the delivery-to-demand ratio to the power 0.75, and jugular saturation is SaO2 × (1 − OER)
