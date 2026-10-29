@@ -16,7 +16,9 @@ import { Link } from './link.ts';
 import { scenarioTab } from './panel/scenario.ts';
 import type { PanelCtx } from './panel/ctx.ts';
 import { AppSession } from './session.ts';
+import { mountSessionBar } from './sessionbar.ts';
 import { mount as mountAction } from './teach2/action.ts';
+import { pinnedSteps } from './teach2/drug-sheet.ts';
 import { mount as mountCue } from './teach2/cue.ts';
 import { mount as mountStrip } from './teach2/strip.ts';
 import type { Teach2Ctx } from './teach2/ctx.ts';
@@ -163,6 +165,32 @@ describe('the instructor views and a pme-scenario/2 card', () => {
     expect(() => v.enter?.('')).not.toThrow();
     expect(v.el.querySelectorAll('.db-steps tbody tr').length).toBe(0);
     v.leave?.();
+  });
+});
+
+// Three readers the type checker cannot see (a cast, and two "has the scenario ended" tests that read a missing state as
+// the end): each gives a /2 card the empty answer too. F2's ended() answers for both formats; F6 points them at it.
+describe('the readers behind a cast or an "ended" test, and a pme-scenario/2 card', () => {
+  it('teach2 drug-sheet.ts pinnedSteps: no pinned steps (no throw in classify)', () => {
+    expect(pinnedSteps(fakeLink(view()))).toEqual([]);
+  });
+  it('sessionbar.ts: the title and the phase id, and Debrief is not "ready" (no end is known)', async () => {
+    const link = { ...fakeLink(view()), onChange: () => () => undefined, conditions: new Map(), ctl: { ...fakeLink(view()).ctl, timeScale: 1, fastForward: null } } as unknown as Link;
+    const bar = document.createElement('header');
+    document.body.append(bar);
+    const off = mountSessionBar(bar, link);
+    await new Promise((r) => setTimeout(r, 100)); // its draw is throttled to a timer and a frame
+    expect(bar.querySelector('.scen')?.textContent).toMatch(/^MH \(format 2\): early /);
+    expect((bar.querySelector('.sb-debrief') as HTMLElement).dataset.ready).toBe('false');
+    off();
+  });
+  it('views/debrief.ts: no "the scenario has ended" toast for a /2 card', () => {
+    let changed = () => undefined as void;
+    const sv = view();
+    const link = { onChange: (fn: () => void) => ((changed = fn), () => undefined), ctl: { scenario: sv } } as unknown as Link;
+    debriefView({ record: new RunRecord(() => ({ patient: '', weightKg: 80 }), () => 0) } as unknown as AppSession, link);
+    changed();
+    expect([...document.querySelectorAll('.toast')].map((t) => t.textContent).filter((t) => t?.includes('has ended'))).toEqual([]);
   });
 });
 
