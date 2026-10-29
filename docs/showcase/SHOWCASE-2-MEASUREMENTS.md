@@ -732,7 +732,7 @@ of the app's scripts, rc.1/rc.2 in none. Served as built by its own Start Classr
 Script: `kit-round-a.kitround.ts` as on the tag (the close's bounded "Return here" click came with the bump PR,
 88fe8b75) with the talk's Notes line naming rc.3. Folders: `docs/showcase/kit-round-a/q2-rc3/` (the talk, both
 engines; the set this section and the Persian handouts read) and `q2-rc3-a3/` (the A3 test). The rc.2 numbers beside
-these are the rc.2 tag run's (§"Q2" on the rc.2 docs PR #97, folder `q2-rerun/`; that PR is still a draft).*
+these are the rc.2 tag run's (§"Q2" on the rc.2 docs PR #97, folder `q2-rerun/`; that PR is still a draft [closed 2026-10-23]).*
 
 **The kit.** `check-relay.mjs`: both `.cmd` files "CRLF, ASCII, runs server\launch.mjs"; **PASS, 4 of 4 runs**, node
 v26.12.1 (`q2-rc3/relay-fcf99b70.json`; rc.2 2 of 2). The Start view and Settings → About read **"Version 1.0.0-rc.3
@@ -754,7 +754,7 @@ files with the relay JSON. A3: **2 passed (7.7 min)** (rc.2 7.6 min).
 | 4 MH early call, 13:03 | ✓✓✓––✓ · Early signs 06:52 · call 07:02 / 07:03 · press 13:03 / 13:04 · < 40 07:28 / 07:29 | **✓✓✓––✓** · 06:52 · call 07:02 (10 s) · dantrolene 07:23 (21 s) · press 13:03 · < 40 07:28 | **✓✓✓––✓** · 06:51 · 07:02 (11 s) · 07:23 · 13:03 · < 40 07:27 |
 
 **States as the cards** (both engines): tamponade deteriorating 06:14, pulse lost 07:48 / PEA 07:49, CPR 07:51,
-drained 09:21, ROSC 10:57 — **the cue cards' 7:48 / 9:21 / 10:57 hold exactly**; MH surgery 04:01 / 04:02, Early signs
+drained 09:21, ROSC 10:57 [the record: ROSC 10:55, CPR stopped 10:57] — **the cue cards' 7:48 / 9:21 / 10:57 hold exactly**; MH surgery 04:01 / 04:02, Early signs
 06:52 / 06:51, trigger off 07:02, dantrolene 07:23, recovering 08:36, normoventilated 13:04 / 13:03. MH EtCO₂ after
 the press, per minute: 38 · 49 · 52 / 51 · 53 · 54 · 49 / 47 · 44 · 44 · 43 · 43 · 43, peak **55 at 17:27** (rc.2 peak 55
 at 17:17 / 17:32). Key moments: bronchospasm 1, **tamponade 7**, MH 9. Timeline rows: bronchospasm 18 / 17,
@@ -825,7 +825,7 @@ dialog, the NIBP AUTO 5 min and IBP-off free-play defaults (no capture in free p
 
 ## Q2 on rc.4 — the rehearsal on the rc.4 tag kit (0c4b396f, v1.0.0-rc.4, pre-release)
 
-*Measured 2026-10-29, 11:40–12:08 UTC (15:10–15:38 +0330), on kit `pme-showcase-kit-0c4b396f`, built by
+*Measured 2026-10-29, 11:40–12:10 UTC (15:10–15:40 +0330), on kit `pme-showcase-kit-0c4b396f`, built by
 `make-bundle.mjs` from a clean worktree of the tag `v1.0.0-rc.4` = main **0c4b396f** (#172). `VERSION.txt`:
 `Commit: 0c4b396f…`, `Branch: HEAD`; the app's build id **`0c4b396f 2026-10-29`** (no `+`); `1.0.0-rc.4` in 4 of the
 app's scripts, an older rc in none. Served as built by its own Start Classroom launcher; three emulated phones joined
@@ -834,7 +834,7 @@ once at the QR moment; reaction 2 s, 3 s per Explore screen. One run at a time; 
 Folders: `docs/showcase/kit-round-a/q2-rc4/` (the talk, both engines, the stop shots in `shots/`, the relay JSON) and
 `q2-rc4-a4/` (A4 MH and A4 haemorrhage, both engines; their Debrief JSONs, PDFs, print PNGs and the Persian renders).
 Bases: the talk against #172's talk run (kit a88f95a7, 29 October, Chromium only; the run sheet's [Q1-MH]); A4 against
-the 24 October records in `docs/showcase/kit-round-a/a4-*` (kits 52b0390b and 33a6c92b). rc.3's Q2 was a six-segment
+the 24 October (+0330; 23 October UTC) records in `docs/showcase/kit-round-a/a4-*` (kits 52b0390b and 33a6c92b). rc.3's Q2 was a six-segment
 talk on the older cards and is not compared row by row. The plan's prep run (Task 0 Step 5) was not run, so there are
 no prep-run values. Gate note: `docs/gates/rc4-release.md`.*
 
@@ -849,29 +849,41 @@ A4 **4 passed (13.8 min)**. Errors (page and console): **0** in every record.
 
 ### The talk (the MH-only programme, P29)
 
+**On the record's clock** (the measures and the state list of each `q1-1-…json` and `q1-talk-…json`, floored to the
+second; every cell of this table is from the records, #172's from `scratch/kitround-mh-only/`):
+
 | Row | #172 run (a88f95a7, C) | rc.4 Chromium | rc.4 WebKit |
 |---|---|---|---|
-| Opening: Home line · phones | rc.3 label (main) · 3 following, 2.6 s after the QR | rc.4 label · **3 following**, 2.4 s | rc.4 label · **3 following**, 3.0 s |
-| Segment 1 wall · Early signs → Pause | 73.6 s · 8:09 → 8:10 | 74.0 s · **8:12 → 8:12** | 73.6 s · **8:11 → 8:11** |
+| Opening: Home line · phones | rc.3 label (main) · 3 following, 2.9 s after the QR | rc.4 label · **3 following**, 2.4 s | rc.4 label · **3 following**, 3.0 s |
+| Segment 1 wall · Early signs → Pause | 73.6 s · 8:09 → 8:10 | 74.0 s · **8:12 → 8:12** | 73.6 s · 8:11 → 8:11 |
 | Stop 1 (machine part) | 48.5 s | 47.5 s | 47.6 s |
-| Call (trigger off) · dantrolene | 8:12 (3 s) · 8:32 | 8:14 (2 s) · 8:34 | 8:13 (3 s) · 8:33 |
-| EtCO₂ below 40 · Recovering | 8:34 · 9:34 | **8:38** · **9:37** | **8:37** · **9:38** |
+| Call (trigger off) · dantrolene | 8:12 · 8:32 | 8:14 · 8:34 | 8:13 · 8:33 |
+| EtCO₂ below 40 · Recovering | 8:36 · 9:35 | 8:38 · 9:37 | 8:37 · **9:38** |
 | Span 1 wall · fast-forward · Pause (stop 2) | 20.2 s · 10.3 s · 13:50 | 20.0 s · 10.5 s · 13:52 | 19.9 s · 10.5 s · 13:51 |
 | Stop 2 (machine part) | 66.0 s | 62.1 s | 62.0 s |
-| Ventilation back · E22 window | 13:52 · 08:34 → 10:34 | 13:53 · **08:37 → 10:37** | 13:53 · **08:36 → 10:36** |
+| Ventilation back | 13:52 | 13:53 | 13:53 |
 | EtCO₂ past 45 · span 2 wall · fast-forward | 14:06 · 15.2 s · 10.6 s | 14:07 · 15.0 s · 10.4 s | 14:06 · 15.0 s · 10.5 s |
 | Pause (stop 3): clock, EtCO₂ | 19:11, 64 | 19:12, **65** | 19:11, **65** |
 | Stop 3 (machine part) | 51.5 s | 51.0 s | 51.1 s |
-| Second dose · Recovering again | 19:13 · 23:35 | 19:13 · 23:39 | 19:13 · 23:37 |
+| Second dose · Recovering again | 19:13 · 23:37 | 19:13 · 23:39 | 19:13 · 23:37 |
 | End (Pause): EtCO₂, HR, ART | 24:31: 41, 69, 94/57 (67) | 24:31: 41, 70, 94/57 (67) | 24:30: 41, 69, 93/57 (67) |
 | Segment 4 wall · total machine wall | 20.3 s · 5:03 | 20.3 s · **5:03** | 20.0 s · **4:57** |
+| First `RR TOO LOW` | 3:09 | **2:40** | **2:40** |
 | EtCO₂ per minute after ventilation back | 40, 53, 56, 59, 61, 64 | 40, 53, 56, 59, 62, 64 | 40, 53, 56, 59, 61, 64 |
-| EtCO₂ per minute after the second dose | 64, 50, 48, 46, 44, 42 (sheet) | 65, 50, 48, 46, 44, 42 | 65, 50, 48, 46, 44, 42 |
-| Debrief marks · timeline rows · key moments | ✓ ✓ ✓ ✓ – ✓ · 59 · 14 | **✓ ✓ ✓ ✓ – ✓** · 63 · 14 | **✓ ✓ ✓ ✓ – ✓** · 60 · 14 |
-| Debrief facts | highest EtCO₂ 64 at 18:46 | highest EtCO₂ 65 at 19:07; K⁺ 5.0 (4.2–5.0); Tcore 36.4–36.8 | 65 at 19:11; the same labs |
+| EtCO₂ per minute after the second dose | 64, 50, 48, 46, 44, 42 | 65, 50, 48, 46, 44, 42 | 65, 50, 48, 46, 44, 42 |
 
-(The clock times are the record's measures; the Debrief's own clock floors them, so WebKit's Debrief shows the early
-signs at 08:10.)
+**On the Debrief's clock** (its key times, objectives and facts, which floor fractional times and differ from the
+record's by up to 2 s):
+
+| Row | #172 run (a88f95a7, C) | rc.4 Chromium | rc.4 WebKit |
+|---|---|---|---|
+| Recognition (the tick) · the call · dantrolene | 1 s (08:09 → 08:10) · 3 s · 21 s | **0 s** (08:12 → 08:12) · 2 s · 21 s | 1 s (08:10 → 08:11) · 3 s · 21 s |
+| E22: below 40 for 2 min | 08:34 → 10:34 | **08:37 → 10:37** | 08:36 → 10:36 |
+| Highest EtCO₂ | 64 at 18:46 | **65 at 19:07** | **65 at 19:11** |
+| Marks · timeline rows · key moments | ✓ ✓ ✓ ✓ – ✓ · 59 · 14 | **✓ ✓ ✓ ✓ – ✓** · 63 · 14 | **✓ ✓ ✓ ✓ – ✓** · 60 · 14 |
+| Labs (last, lowest–highest) | K⁺ 5.0 (4.2–5.0); Tcore 36.4 (36.4–36.8) | the same | the same |
+
+Bold: more than 2 s from #172's on the same clock, or a different value.
 
 **The stops** (`q1-talk-<engine>.json`): at all three stops, on both engines, the sim clock moved **0 s** while away,
 the session was still Paused at the stop's end, and all three phones were `synced` and read "Following session ‹code›
@@ -904,8 +916,8 @@ stale number held. (#172's run: a 2-s AGENTS blank.)
 | Haemorrhage marks | – ✗ ✗ | – ✗ **✓** | – ✗ **✓** |
 | Junctional · PEA · pulse loss | 09:19 / 09:17 · 10:27 / 10:26 · 10:59 / 11:00 | 09:15 · 10:26 · 10:59 | 09:17 · 10:28 · 11:00 |
 | Idioventricular · asystole · CPR | 12:57 / 12:54 · 15:38 / 15:36 · 15:41 / 15:38 | 12:55 · 15:35 · 15:38 | 12:56 · 15:35 · 15:38 |
-| Rhythm check 1 · shock 1 → | (not recorded) · 17:48 / 17:46 → asystole | 17:37 · 17:45 → **asystole** | 17:38 · 17:46 → **asystole** |
-| Second epinephrine · rhythm check 2 · shock 2 → | (one dose) · 19:55 / 19:53 → `pea` | 18:56 · 19:44 · 19:52 → **`pea`** (organised, no pulse) | 18:57 · 19:45 · 19:54 → **`pea`** |
+| Rhythm check 1 · shock 1 → | pulse check 17:39 / 17:37 (named so before E126) · 17:48 / 17:46 → asystole | 17:37 · 17:45 → **asystole** | 17:38 · 17:46 → **asystole** |
+| Second epinephrine · rhythm check 2 · shock 2 → | (one dose) · pulse check 19:46 / 19:45 · 19:55 / 19:53 → `pea` | 18:56 · 19:44 · 19:52 → **`pea`** (organised, no pulse) | 18:57 · 19:45 · 19:54 → **`pea`** |
 | Return of circulation · CPR stopped | 20:57 · (CPR stopped at 21:00 / 20:59) | **20:56** · 21:53 (57 s after) | **20:57** · 21:55 (58 s after) |
 | During CPR: ART mean max · EtCO₂ max | 46.1 / 46.4 · 19 | 50.3 · 20 | 50.2 · 20 |
 | Haemorrhage timeline rows · key moments | 74 | 95 · 21 | 101 · 21 |
@@ -914,7 +926,9 @@ stale number held. (#172's run: a 2-s AGENTS blank.)
 
 The 24 October cards are not the rc.4 cards: since then the clinical review (E132), E131 (one MH metabolic rate),
 E126 (the pulse-check pause) and the owner's rulings of 28 October (#163) changed both. The 28 October run on #163's
-commit (kit 2c341aa3, `scratch/kitround-owr4/`) has the same mark kinds and the MH times to the second.
+commit (kit 2c341aa3, `scratch/kitround-owr4/`; Chromium only, it had no WebKit leg) has the same mark kinds and the MH
+early signs, call, below-40 and ventilation-back times to the second; its second dose came at 19:11 (rc.4 19:08) and its
+haemorrhage report printed 9 pages (rc.4 8).
 
 **Key times** (the haemorrhage Debrief, Chromium / WebKit): first team action 35 s · CPR 4 min 39 s after the pulse loss
 (asked ≤ 30 s; withheld by the course) · CPR stopped 57 s / 58 s after the return of circulation (asked ≤ 2 min 00 s) ·
@@ -949,7 +963,9 @@ pulseless in all 9 min 57 s.
    reading and its timing differ from run to run. A presenter's note in the run sheet (stop 1).
 2. **Explore display defects** at the stops (also in #172's runs): Glucose "102 mmol/L" (the Debrief's facts 6.6
    mmol/L), "Stress response 88.0" on a 0–1 scale, VO₂ 270 under Gas exchange against 428 mL/min under Blood at the
-   same moment, rocuronium "Total 48000 mg, µg". Display only; fixed on main after the tag (#178), for a later release. The run sheet's Explore cautions cover them.
+   same moment, rocuronium "Total 48000 mg, µg". Display only; fixed on main after the tag (#178), for a later release.
+   The run sheet's Explore cautions covered three of them (VO₂ 270, Glucose under Blood, the dantrolene Total); this PR
+   adds the other two (Stress response 88.0; Glucose "102 mmol/L" on the Endocrine screen).
 3. **The model pages load GitHub `main`**, not the tag; `docs/model` regenerates with no change on the tag, so the text
    is the tag's today.
 4. **The rc.4 kit grew**: 76 app files, 3.2 MB, Windows zip 1,545,928 B (rc.3 71, 2.3 MB, 1,004,390 B): the

@@ -1,5 +1,9 @@
 # Gate note: the v1.0.0-rc.3 release day (2026-10-23)
 
+*History: as written on 23 October; fcf99b70 was then the demo kit and b39b3d87 the fallback; #97 closed 23 October;
+superseded by rc.4 ([`rc4-release.md`](rc4-release.md)). Folded in on 2026-10-29 from the closed #117; nothing below is
+rewritten.*
+
 *From the workspace gate note `scratch/rc3-release/gate-notes.md` and the executor's run. Plan:
 [`docs/plans/rc3-release-day.md`](../plans/rc3-release-day.md). The owner's smoke check, his live rehearsal, the Windows
 checklist (W), E13 and E14 follow on Saturday 24 October and later: their sections are marked PENDING until then.
@@ -76,7 +80,7 @@ talk's Notes line names rc.3 (+1/−1). One run at a time on the Mac; load avera
 | 3c A3, both engines | **2 passed (7.7 min)**; handout **1 page**, 0 verdict words, the three take-home lines ("Drainage is the treatment: …" ×1), Inter embedded; keyTimes present, moments 7, errors 0 (`q2-rc3-a3/`) | PASS (F10 no) |
 | 4 opening | kit fcf99b70; "Version 1.0.0-rc.3 (pre-release). For education only. Not a medical device and not clinically validated: never use it for patient care." (Start and About); `3 phones following`; errors 0 | PASS |
 | 4 bronchospasm + H21 | – ✓ – (salbutamol 02:07 / 02:06); H21 hold and cockpit `true`; errors 0 | PASS |
-| 4 tamponade + Debrief | ✓ ✓ ✓ ✓ ◆; footer "… Version 1.0.0-rc.3 (pre-release), build fcf99b70 2026-10-23."; Chromium PDF **A4, 6 pages**; PEA 07:49 (pulse lost 07:48), CPR 07:51, drained 09:21, ROSC 10:57 on both; errors 0 | PASS |
+| 4 tamponade + Debrief | ✓ ✓ ✓ ✓ ◆; footer "… Version 1.0.0-rc.3 (pre-release), build fcf99b70 2026-10-23."; Chromium PDF **A4, 6 pages**; PEA 07:49 (pulse lost 07:48), CPR 07:51, drained 09:21, ROSC 10:57 on both [the record: ROSC 10:55, CPR stopped 10:57]; errors 0 | PASS |
 | 4 MH early call 13:03 | ✓ ✓ ✓ – – ✓; Early signs 06:52 / 06:51, call 07:02, press 13:03, < 40 at 07:28 / 07:27; FX-12 click `true`; errors 0 | PASS |
 | 4 the six monitor PNGs | the Saadat-like grid on all six; CO₂ filled breath by breath (FX-25); tamponade IBP2 = CVP; IBP2 empty by scenario in bronchospasm and MH; no rc.1/rc.2 | PASS (F9 no) |
 | 6 six-card shots | **16 passed (55.7 min)**, 64/64 soft checks, 0 errors; 48 files (16 modified, 32 new); 49 older files kept | PASS |
