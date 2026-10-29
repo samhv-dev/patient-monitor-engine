@@ -27,23 +27,25 @@ const MH = showcaseDoc('showcase-mh') as ScenarioDoc;
 const HAEM = showcaseDoc('showcase-haemorrhage') as ScenarioDoc;
 
 /**
- * §2's table, as the plan writes it. `applyEvent`: "every ClinicalEvent kind the Drug, Airway, Defib · CPR, Vitals and
- * Devices bodies send", read from those bodies (panel/drugs.ts and teach2/drug-sheet.ts: drug, infusion, fluid, bleed,
- * vaporiser; panel/airway.ts: airway, ventilation (oxygen is a ventilation event), lungCondition; panel/defib.ts:
- * defib, pacer, cpr; the Vitals and Devices bodies send no applyEvent). The `note` row is new (§6): no view sends it
- * today.
+ * §2's table (amended 2026-10-30 after this census, the orchestrator's rulings): the UNION of what the two laptop views
+ * send. `scenario pause` / `resume` are today's Scenario tab's "Hold the timer" (Instructor v2 has no such button).
+ * `applyEvent`: every ClinicalEvent kind the Drug, Airway, Defib · CPR, Vitals, Devices and Patient bodies send
+ * (panel/drugs.ts and teach2/drug-sheet.ts: drug, infusion, fluid, bleed, vaporiser; panel/airway.ts: airway,
+ * ventilation (oxygen is a ventilation event), lungCondition; panel/defib.ts: defib, pacer, cpr; panel/patient.ts:
+ * condition, the acute events; the Vitals and Devices bodies send no applyEvent). The `note` row is new (§6): no view
+ * sends it today.
  */
 const PLAN_S2: readonly string[] = [
   'time pause', 'time resume', 'time scale', 'time jump',
-  'scenario trigger', 'scenario goto', 'scenario bookmark', 'scenario restoreBookmark',
+  'scenario trigger', 'scenario goto', 'scenario bookmark', 'scenario restoreBookmark', 'scenario pause', 'scenario resume',
   'applyEvent drug', 'applyEvent infusion', 'applyEvent fluid', 'applyEvent bleed', 'applyEvent vaporiser',
   'applyEvent airway', 'applyEvent ventilation', 'applyEvent lungCondition',
-  'applyEvent defib', 'applyEvent pacer', 'applyEvent cpr',
+  'applyEvent defib', 'applyEvent pacer', 'applyEvent cpr', 'applyEvent condition',
   'device', 'setTarget', 'pin', 'release', 'setRhythm', 'setMode', 'attachSensor',
 ].sort();
 
 /** §2's refusals that are command shapes: no Instructor view may send them. */
-const PLAN_S2_REFUSED: readonly string[] = ['scenario load', 'scenario pause', 'scenario resume', 'setFactor', 'setModifiers', 'externalDrive', 'time step'];
+const PLAN_S2_REFUSED: readonly string[] = ['scenario load', 'setFactor', 'setModifiers', 'externalDrive', 'time step'];
 
 const shapeOf = (c: CommandInput): string => {
   const x = c as { type: string; action?: unknown; event?: { kind?: unknown } };
