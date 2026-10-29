@@ -253,6 +253,8 @@ export function validatePkCommand(cmd: Command, _pk: PkState): string | undefine
     if (c.model !== undefined && !['eleveld', 'schnider', 'marsh', 'minto', 'shafer', 'gepts'].includes(c.model)) return `unknown TCI model ${c.model}`;
     return c.target >= 0 && c.target <= 100 && (c.mode === 'plasma' || c.mode === 'effect') ? undefined : 'target must be 0–100 with mode plasma or effect';
   }
+  // A volatile row has no compartment model: an IV bolus was accepted and then threw in pkSystem on the next tick
+  if (row.pk.kind === 'volatile') return `${row.id}: a volatile agent is given through the vaporiser, not as an IV drug`;
   const bloodBolusOnly = `${row.id} is given as a bolus in v1; 7c owns its kinetics`;
   if (ev.kind === 'infusion') {
     if (row.pk.kind === 'blood' && !row.rateActsVia) return bloodBolusOnly; // KCl declares its rate consumer
