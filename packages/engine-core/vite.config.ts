@@ -66,6 +66,7 @@ const SLOW = [
   'test/engine/drug-hypokalaemia-rocuronium.test.ts',
   'test/engine/blood-massive-transfusion.test.ts',
   'test/engine/circ-pulsus.test.ts', // Two 10 sim-min spontaneous-breathing runs
+  'test/engine/circ-pulsus-links.test.ts', // E118 P0: four 10 sim-min spontaneous runs and two 10 sim-min apnoea benches
   'test/engine/vagal-events.test.ts', // Vagal-event runs of 5–10 sim-min
   'test/engine/thermal-warmer.test.ts', // Four 60 sim-min warming runs
   'test/engine/tension-ptx.test.ts', // Three 7–16 sim-min tension-pneumothorax runs
@@ -235,6 +236,7 @@ const SLOW_H = [ // ≈ 1660 s at the CI max (27.7 min)
   'test/engine/endo-insulin-omission.test.ts', // 712 s (from slow-b)
   'test/engine/blood-potassium-chloride.test.ts', // 162 s (from slow-b)
   'test/engine/thermal-mh-arrest-heat.test.ts', // ≈ 60 s local (E129, new)
+  'test/engine/circ-pulsus-links.test.ts', // ≈ 20 s local (E118 P0, new)
 ];
 const SLOW_I = [ // ≈ 1754 s at the CI max (29.2 min)
   'test/engine/drug-apnoea.test.ts', // 562 s (from slow-f)
