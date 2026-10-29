@@ -11,7 +11,7 @@ import { scenarioCard } from '../cards.ts';
 import { bookmark } from '../commands.ts';
 import type { PanelCtx } from './ctx.ts';
 import { describeCommand } from '../describe.ts';
-import { manualLabel as manualOf, type CommandInput } from '@pme/controller';
+import { asV1, manualLabel as manualOf, type CommandInput } from '@pme/controller';
 
 export function scenarioTab(c: PanelCtx): HTMLElement {
   const { link } = c;
@@ -113,7 +113,7 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
         return h('li', {}, h('label', { class: 'check', for: id }, box, words));
       }));
     }
-    strip.replaceChildren(...doc.states.map((s) => {
+    strip.replaceChildren(...(asV1(doc)?.states ?? []).map((s) => { // a pme-scenario/2 card: no states (F6, Q23)
       const label = s.label ?? 'State';
       const cur = s.id === sv.stateId;
       return h('li', cur ? { 'aria-current': 'step' } : {}, cur ? label : h('button', { type: 'button', class: 'linkish', onclick: () => void jump(s.id, label), 'aria-label': `Jump to ${label}` }, label));

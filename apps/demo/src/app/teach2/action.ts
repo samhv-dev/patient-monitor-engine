@@ -7,6 +7,7 @@
 // steps · n" (closed by default), then the foot line. Rows are kept by key across the ≤ 2 Hz repaint, so a press or the
 // keyboard focus is never lost to a redraw.
 import './action.css';
+import { asV1 } from '@pme/controller';
 import type { Link } from '../link.ts';
 import { clock, h, setText } from '../ui.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
@@ -118,7 +119,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
 
   const refresh = () => {
     const sv = link.ctl.scenario;
-    const doc = sv.doc;
+    const doc = asV1(sv.doc); // a pme-scenario/2 card: no rows until F6
     const stateId = sv.stateId;
     if (docV !== sv.docVersion) {
       docV = sv.docVersion;

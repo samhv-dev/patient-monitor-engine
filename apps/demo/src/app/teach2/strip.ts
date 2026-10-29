@@ -12,7 +12,7 @@
 // (the stages it leads to first; two of one step read "<a> or <b>"). Names are never cut: when the chips do not fit,
 // the padding tightens, then the hint goes, then the strip scrolls sideways.
 import './state.css';
-import type { ScenarioDoc } from '@pme/controller';
+import { asV1, isV2, type AnyScenarioDoc, type ScenarioDoc } from '@pme/controller';
 import { rowsOf, stagesOf, type Stage } from '../card-read.ts';
 import type { Link } from '../link.ts';
 import { clock, confirmDialog, h, toast } from '../ui.ts';
@@ -59,7 +59,7 @@ export interface StageEntry {
  * (an entry earlier than the one before it rewound the clock), and nothing later than `simT`. Without a history (a
  * late joiner) the current state's entry stands alone.
  */
-export function stageEntries(doc: ScenarioDoc, history: ReadonlyArray<{ t: number; stateId: string; transitionId?: string }>, current: { stateId: string | null; enteredT: number }, simT: number): StageEntry[] {
+export function stageEntries(doc: AnyScenarioDoc, history: ReadonlyArray<{ t: number; stateId: string; transitionId?: string }>, current: { stateId: string | null; enteredT: number }, simT: number): StageEntry[] {
   const home = new Map(stagesOf(doc).flatMap((g) => g.states.map((s) => [s, g.id] as const)));
   const kept: Array<{ t: number; stateId: string; transitionId?: string }> = [];
   for (const e of history) {
@@ -110,7 +110,8 @@ function edgesOf(doc: ScenarioDoc, stages: readonly Stage[]): Map<string, Set<st
  * future stage no path from the current one reaches comes last. The window starts KEEP_PAST before the current stage
  * (slid to keep WINDOW stages at either end of the line), moved by `offset` stages (the arrows; 0 = now).
  */
-export function stripModel(doc: ScenarioDoc, stateId: string | null, entries: readonly StageEntry[], offset = 0): StripItem[] {
+export function stripModel(doc: AnyScenarioDoc, stateId: string | null, entries: readonly StageEntry[], offset = 0): StripItem[] {
+  if (isV2(doc)) return []; // no stages until F6 reads the phases
   const stages = stagesOf(doc);
   const at = stages.findIndex((g) => stateId !== null && g.states.includes(stateId));
   const last = (id: string) => entries.filter((e) => e.stage === id).at(-1) ?? null;
@@ -275,7 +276,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       else
         x.stages.forEach((g, j) => {
           if (j > 0) kids.push(h('span', { class: 'ip2-or' }, 'or'));
-          const label = doc.states.find((s) => s.id === g.id)?.label ?? 'State';
+          const label = asV1(doc)?.states.find((s) => s.id === g.id)?.label ?? 'State';
           kids.push(chip(g, 'ip2-future', [g.byRule ? h('span', { class: 'ip2-auto' }, 'auto') : null],
             { 'aria-label': `Stage ${(names.get(g.id) ?? '')}${g.byRule ? ', entered by a rule' : ''}: jumps to it (asks once)` },
             () => void jump(link, g.id, label)));

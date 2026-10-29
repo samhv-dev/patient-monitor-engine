@@ -2,7 +2,7 @@
 // on the engine (driver, host and run record wired as AppSession wires them) the anaphylaxis and induction cards are
 // judged as the presenter would judge them: treated in time = met, never = not met.
 import { createEngine, DRUGS } from '@pme/engine-core';
-import { createInProcessHub, HostSession, ScenarioView, type HostTarget } from '@pme/controller';
+import { asV1, createInProcessHub, HostSession, ScenarioView, type HostTarget } from '@pme/controller';
 import { engineOptionsOf, ScenarioDriver, validateScenario, type ScenarioDoc } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
 import { FIXED_ALARM_WORDS } from './alarms.ts';
@@ -80,7 +80,7 @@ const mhPresses = (normo: (t: number, rec: RunRecord, at: (id: string) => number
 const alarmAt = (rec: RunRecord) => rec.data.rows.find((r) => r.ev?.startsWith('alarm:apnoea'))?.t;
 /** The verdict of the objective whose rule starts at the apnoea alarm (its place in the list is the card's business). */
 const apnoeaObjective = (rec: RunRecord) => {
-  const i = (rec.data.doc?.objectives ?? []).findIndex((o) => typeof o !== 'string' && o.rule?.kind === 'eventWithin' && o.rule.after === 'alarm:apnoea');
+  const i = (asV1(rec.data.doc)?.objectives ?? []).findIndex((o) => typeof o !== 'string' && o.rule?.kind === 'eventWithin' && o.rule.after === 'alarm:apnoea');
   return objectives(rec.data)[i]?.verdict;
 };
 

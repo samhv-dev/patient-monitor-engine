@@ -1,6 +1,7 @@
 // `@pme/controller/scenario`: the scenario runner and everything that needs ajv. A separate entry so the root
 // entry (and the renderer's IIFE, which imports it) never bundles ajv or the built-in JSON.
 export * from './types.ts';
+export type * from './types-v2.ts';
 export { validateScenario, formatAjvError, SCENARIO_SCHEMA, type ValidationResult, type ValidateOptions } from './validate.ts';
 export { ScenarioRunner, compare, matches, hasManual, type RunnerInput, type RunnerEffect, type RunnerState, type RunLogEntry, type VitalHold } from './runner.ts';
 export { replayRunLog, runLog, type ScenarioRunLog } from './replay.ts';
