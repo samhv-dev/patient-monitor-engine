@@ -197,7 +197,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     const b: HTMLButtonElement = h('button', { type: 'button', class: `ip2-chip ${cls}`, title: g.label, ...attrs, onclick: () => onclick(b) }, ...kids);
     return b;
   };
-  /** The widest name cap at which the chips fit at their own width (state.css); the flex shrink takes what is left. */
+  /** The widest name cap at which the chips fit (state.css `--ip2-cap`); past the last one the strip scrolls sideways. */
   const fit = () => {
     if (expanded) return void (el.style.setProperty('--ip2-cap', 'none'), el.removeAttribute('data-tight'), (hint.hidden = true));
     el.classList.add('ip2-strip-measure');
@@ -229,6 +229,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     const key = JSON.stringify([docV, expanded, items.map((x) => (x.kind === 'fold' ? x.n : x.kind === 'future' ? x.stages.map((g) => g.id) : [x.stage.id, x.entry?.t, x.kind === 'current' ? x.open : 0]))]);
     if (key === drawn) return; // the strip changes with the state, not with the clock: no redraw at 1 Hz
     drawn = key;
+    closePop(); // a past stage's card is redrawn from the new course on the next press
     const kids: Node[] = [];
     items.forEach((x, i) => {
       if (i > 0) kids.push(line(x.kind === 'future' ? 'dashed' : x.kind === 'current' ? 'next' : 'solid'));

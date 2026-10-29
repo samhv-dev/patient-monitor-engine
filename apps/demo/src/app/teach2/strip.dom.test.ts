@@ -159,6 +159,11 @@ describe('stage strip: clicks', () => {
     // Esc closes it (the view's Esc chain), and a second press on the same chip closes it too
     expect(r.escapes.some((f) => f())).toBe(true);
     expect(r.el.querySelector('.ip2-pop')).toBeNull();
+    const chip = r.el.querySelector('button.ip2-past[aria-label^="Stage Trigger off"]') as HTMLButtonElement;
+    chip.click();
+    expect(r.el.querySelector('.ip2-pop')).not.toBeNull();
+    chip.click();
+    expect(r.el.querySelector('.ip2-pop')).toBeNull();
   });
 
   it('with a stage mark: one confirm, then today\'s bookmark restore of that mark', async () => {
