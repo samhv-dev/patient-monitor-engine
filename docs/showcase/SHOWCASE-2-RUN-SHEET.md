@@ -1,12 +1,13 @@
 # Showcase 2: run sheet (30 minutes, the owner's slot)
 
-*Tuesday 3 November 2026 (12 Aban 1405), university deans and clinical staff. Presenter: the owner. **Two live demos
-(owner, 2026-10-24, R4-Q3 FINAL): malignant hyperthermia on the E119 card, then class IV haemorrhage on the E120 card
-with its Debrief.** Bronchospasm and tamponade are not in the programme; their sections, the round-C notes and the
-four reserve cases are kept, unchanged, in the appendices. Freeze Saturday 31 October 12:00; tag Sunday 1 November;
-the owner's smoke and live rehearsal Sunday evening; the room dry run Monday 2 November [RC4]. The order of the two
-demos may still change: each case section is self-contained, so swapping them is a cut-and-paste of §3 Case 1 with
-§3 Case 2 + §4, then recomputing T+.*
+*Tuesday 3 November 2026 (12 Aban 1405), university deans and clinical staff. Presenter: the owner. **One case
+(owner, 29 October): malignant hyperthermia on the E119 card, with three pauses ("look-inside stops") in which the
+owner explains the physiology the engine is computing, on the Explore view, with the matching model page open behind it
+in a second browser tab.** The class IV haemorrhage case (E120) leaves the programme and stays in the build as a reserve
+(Appendix B, Reserve R5). Bronchospasm and tamponade are not in the programme; their sections, the round-C notes and the
+other reserve cases are kept, unchanged, in the appendices. Freeze Saturday 31 October 12:00; tag Sunday 1 November;
+the owner's smoke and live rehearsal Sunday evening; the room dry run Monday 2 November [RC4]. Every stop says only
+what the speaker's reference [SPK] says the build computes.*
 
 > **History.** 22 October slot (17 October answers): bronchospasm → tamponade → Debrief → MH. 24 October: the two
 > live-demo cards changed (E119 MH with the induction, E120 the owner's haemorrhage course, E121 no implicit oxygen;
@@ -15,64 +16,72 @@ demos may still change: each case section is self-contained, so swapping them is
 > the app opens on a full Start page (E123, #131). 26 October: Home, Room and Scenarios replace it (E125; the QR is on
 > the Room), and the owner accepted the clinical review of the two demo
 > cards in full (`scratch/plans-backup/demo-cards-clinical-review.md`, 13 findings) and the cards, this sheet, the cue
-> cards and the presenter guide follow it (E132).
+> cards and the presenter guide follow it (E132). 28 October: the owner's rulings on the MH second dose (OWR4).
+> **29 October: the programme becomes one case, MH, with three look-inside stops (P29); the haemorrhage goes to the
+> reserve.** The talk run behind this sheet is [Q1-MH].
 
-Companions: [`SHOWCASE-2-PRESENTER-GUIDE.md`](SHOWCASE-2-PRESENTER-GUIDE.md) (one page: what to remember, keys, the
-alarm rule, the validation answer) and [`SHOWCASE-2-CUE-CARDS.md`](SHOWCASE-2-CUE-CARDS.md) (one printed page per
-segment).
+Companions: [`SHOWCASE-2-PRESENTER-GUIDE.md`](SHOWCASE-2-PRESENTER-GUIDE.md) (one page: what to remember, the stop
+method, the stage rule, keys, the validation answer) and [`SHOWCASE-2-CUE-CARDS.md`](SHOWCASE-2-CUE-CARDS.md) (one
+printed page per segment; each stop has its own card).
 
 ## The owner's answers built into this sheet
 
 | # | Question | The owner's answer | Where |
 |---|---|---|---|
-| R4-Q3 | The programme (2026-10-24) | **Two live demos only, MH and haemorrhage**; bronchospasm and tamponade are out. Order as he listed them, MH then haemorrhage (may still change) [R00 2026-10-24 15:35] | Programme |
+| P29 | The programme (2026-10-29) | **One case, malignant hyperthermia, with three pauses in which he explains the physiology the engine is computing**, on the Explore view with the matching model page behind it. Haemorrhage out of the talk, kept in the build as a reserve. Supersedes R4-Q3 | Programme, §3 |
+| R4-Q3 | The programme (2026-10-24) | *Superseded by P29.* Two live demos only, MH and haemorrhage; bronchospasm and tamponade out [R00 2026-10-24 15:35] | Appendix B (R5) |
 | — | The date | **Tuesday 3 November 2026 (12 Aban 1405)** [RC4] | everywhere |
-| E119 | MH card | Starts awake on room air; every induction step is a button | Case 1 |
-| E120 | Haemorrhage card | The owner's course: PEA left untreated → asystole → CPR → VF → two shocks → ROSC | Case 2 |
+| E119 | MH card | Starts awake on room air; every induction step is a button | §3 |
+| E120 | Haemorrhage card | The owner's course: PEA left untreated → asystole → CPR → VF → two shocks → ROSC (in the reserve since P29) | Reserve R5 |
 | E121 | Oxygen | Never implicit: the MH card preoxygenates by button, the haemorrhage card gives mask oxygen by button | both |
 | E123 / E125 | Start page (2026-10-25), then Home, Room and Scenarios (2026-10-26) | The simulator launches into a starting page; since E125 that is Home, with the QR on the Room and the two demo cards first in the Scenarios library | §2 |
-| E19a | MH: when to call | **At Early signs** (8:32 on the E119 card [Q1-2D]; 8:14 on the E132 card after E131 [E132 rc.4]) | Case 1 |
+| E19a | MH: when to call | **At Early signs** (8:32 on the E119 card [Q1-2D]; 8:14 on the E132 card after E131 [E132 rc.4]; 8:09 on the talk run of the new programme, the call at 8:12 after stop 1 [Q1-MH]) | §3 |
 | E20 | Monitor skin | **Saadat-style**, no style change during the talk (after a change to Philips-style the AGENTS tile reads "---") [MEAS §8; Q1-2D] | §1 |
 | E21 | Limit alarms after a Load | **"All alarms on" after every Load stays a presenter step**; the **Bookmark is taken AFTER it** [A3.2] | every case |
-| E22 | MH "ventilation back" | "Hyperventilation kept until EtCO₂ < 40 for 2 min, then normalised"; early is "not met". On the E132 card after E131 EtCO₂ is below 40 from 08:42, so the press is met from 10:42; pressed after the first Pause, **13:56** [E132 rc.4] (on the E119 talk run: 09:05, 11:05, 14:41 [Q1-2D]) | Case 1 |
+| E22 | MH "ventilation back" | "Hyperventilation kept until EtCO₂ < 40 for 2 min, then normalised"; early is "not met". On the E132 card after E131 EtCO₂ is below 40 from 08:42, so the press is met from 10:42; pressed after the first Pause, **13:56** [E132 rc.4]; on the new programme's talk run below 40 from 08:34, met from 10:34, pressed after stop 2, **13:52** [Q1-MH] (on the E119 talk run: 09:05, 11:05, 14:41 [Q1-2D]) | §3 |
 | E13 | Which Mac presents | **The kit on a Mac**; GitHub Pages is the fallback (§6). `node -v` and one Start Classroom run on the presenting Mac by the room dry run, Monday 2 November | §1, §6 |
 | E14 | The network for the phones | **A travel router** | §1 |
-| E132 | The clinical review of the two cards (2026-10-26) | **Accepted in full.** MH: the crisis step adds charcoal filters and a propofol infusion; a second dantrolene when the EtCO₂ climbs back at normal ventilation; cooling only above 38.5 °C; four take-home lines. Haemorrhage: source control, massive transfusion and TXA; "Rhythm check"; a second epinephrine; CPR to the 2-min rhythm check; objectives rewritten (no "draft"); three take-home lines | Case 1, Case 2, §4 |
-| OWR4 | The owner's rulings of 28 October | **MH:** the second dantrolene at normal ventilation also puts the crisis ventilation back (20 × 600, O₂ 100 %); ventilation returns to 12 × 500 only once EtCO₂ has stayed below 40 for 2 min, never on a timer. **Haemorrhage:** stop CPR within **120 s** of the return of circulation (was 150 s; measured 57 s). **The pause for the shock under 10 s** (was under 5 s; measured 8 s on the rc.4 round). **Pseudo-PEA:** the objective names the measured "ART about 20/14" (was 19/13; 20/14 on kit 2c341aa3, 21/14 on kit 503caeab, both at the PEA-state row) | Case 1, Case 2, §4 |
+| E132 | The clinical review of the two cards (2026-10-26) | **Accepted in full.** MH: the crisis step adds charcoal filters and a propofol infusion; a second dantrolene when the EtCO₂ climbs back at normal ventilation; cooling only above 38.5 °C; four take-home lines. Haemorrhage: source control, massive transfusion and TXA; "Rhythm check"; a second epinephrine; CPR to the 2-min rhythm check; objectives rewritten (no "draft"); three take-home lines | §3 (MH); Reserve R5 (haemorrhage) |
+| OWR4 | The owner's rulings of 28 October | **MH:** the second dantrolene at normal ventilation also puts the crisis ventilation back (20 × 600, O₂ 100 %); ventilation returns to 12 × 500 only once EtCO₂ has stayed below 40 for 2 min, never on a timer. **Haemorrhage:** stop CPR within **120 s** of the return of circulation (was 150 s; measured 57 s). **The pause for the shock under 10 s** (was under 5 s; measured 8 s on the rc.4 round). **Pseudo-PEA:** the objective names the measured "ART about 20/14" (was 19/13; 20/14 on kit 2c341aa3, 21/14 on kit 503caeab, both at the PEA-state row) | §3 (MH); Reserve R5 (haemorrhage) |
 
 ## What changed for 3 November
 
-1. **Two demos.** MH (10:00 slot) then haemorrhage (5:40) and its Debrief (3:30); close 3:00, questions 4:20, buffer
-   0:30 [DRAFT]. Every clock below is from the two-demos talk run on kit 2ebd743d [Q1-2D], with kit round A4 alongside
-   [A4].
-2. **The opening is Home and the Room** (E125): Home carries the release label, **Start here** opens the Room with the
-   session code and the QR, and the first case is **Scenarios** → **Open the library** → **Load** on Demonstration 1.
-3. **No reload between the cases**: MH → **Choose another scenario** → Load the haemorrhage [Q1-2D].
+1. **One case, three look-inside stops (P29, 29 October).** MH on the E119 card, run to the early signs, then three
+   Paused stops: at the early signs (why the EtCO₂ rises), as fast-forward 1 ends (what dantrolene does, why we
+   hyperventilate, where the potassium comes from) and as fast-forward 2 ends (why the EtCO₂ climbs back, the second
+   dose, what comes next). At each stop the engine is **Paused**, the **Explore view** is opened from the Instructor
+   side and the **model page** is shown from a second browser tab prepared in the pre-flight. The talk points come from
+   the speaker's reference [SPK] and name the number on screen. Every clock is from the new programme's talk run
+   [Q1-MH]; the course matches kit round A4 with the owner's rulings [E132 rc.4; OWR4] within a few seconds.
+2. **The haemorrhage leaves the talk** and stays in the build (Appendix B, Reserve R5, with its Debrief). The
+   **Debrief of the day is the MH Debrief, read on screen**, not printed. **Only the MH Persian handout is printed for
+   the day**; the haemorrhage one stays in the kit (§1 "Handouts").
+3. **The opening is Home and the Room** (E125): Home carries the release label, **Start here** opens the Room with the
+   session code and the QR, and the case is **Scenarios** → **Open the library** → **Load** on Demonstration 1.
 4. **Operator safety lines** from the UI review [UIR] (§1 "Safety lines"): never click Ventilator; a reload and
-   Sound; one instructor tab for the Room and its QR; the tab stays in front; print after the fast-forward banner.
-5. **The MH report prints 8 A4 pages** on kit 2ebd743d [UIR #31] (A4 on kit 52b0390b: 7; on the E132 card 8); the
-   haemorrhage report 8 [Q1-2D; A4; E132], 9 with the E126 pulse-check pause (kits 4d0fca9b and 503caeab) [E132 on E126;
-   E132 rc.4].
-6. **The clinical review of the two cards (E132, 26 October)** [REV]: new MH and haemorrhage buttons, presenter lines,
-   objectives and take-home lines (Case 1, Case 2, §4). Measured on kit round A4 only (Chromium) [E132], last on the
-   rebase onto main 25771808 with E131, E133 and #153 [E132 rc.4]; the talk run predates it, so each case table carries
-   an E132 column.
+   Sound; one instructor tab for the Room and its QR; the instructor tab stays in front **except while the model-page
+   tab is shown during a stop, with the session Paused**; print after the fast-forward banner.
+5. **The clinical review of the two cards (E132, 26 October)** [REV] and the owner's rulings of 28 October [OWR4]
+   stand: the MH buttons, presenter lines, objectives and take-home lines are those of the card as it is.
 
 ## How to read this sheet
 
 - **Sim** is the session-bar clock (scenario clock, Load = 0:00). **W** is the wall-clock time from pressing **Load**,
-  as **measured** in the two-demos talk run (Chromium, 3 emulated phones, a scripted reaction of 2 s; the script does
-  not talk, so W has no talk in it). **T+** is the time into the 30-minute slot: W plus the talk allowances of the
-  timing draft (planning figures, not measurements) [DRAFT]. A time estimated here is marked "(est.)".
-- A 5-min fast-forward takes **10.5–10.6 s** of wall and **leaves the speed as it was** [Q1-2D; UIR: 10.5–10.9 s].
+  as **measured** in the new programme's talk run [Q1-MH] (Chromium, 3 emulated phones, a scripted reaction of 2 s and
+  a 3-s look at each Explore screen; the script does not talk, so W has no talk in it). **T+** is the time into the
+  30-minute slot: the programme's slots (P29) with the measured machine wall inside them; the talk itself is planned,
+  not measured. A time estimated here is marked "(est.)".
+- A 5-min fast-forward takes **10.1–10.6 s** of wall and **leaves the speed as it was** [Q1-MH; Q1-2D; UIR: 10.5–10.9 s].
 - **Boxed words** are the exact on-screen labels, from the card files and the run rows. "C / W" = Chromium / WebKit.
-- Monitor numbers are what the run read on the instructor's monitor. Real presses land a few seconds differently, so
-  expect ± a few units [R45 tolerances HR ± 5, pressures ± 5, SpO₂ ± 2, EtCO₂ ± 3].
+- Monitor and Explore numbers are what the run read on the instructor's page. Real presses land a few seconds
+  differently, so expect ± a few units [R45 tolerances HR ± 5, pressures ± 5, SpO₂ ± 2, EtCO₂ ± 3].
 - Each bracket names its source. Source keys:
 
 | Key | File |
 |---|---|
-| Q1-2D | `scratch/kitround-2demos-q1/q1-{0,1,2}-*-chromium.{json,md}` and `debrief-q1-*.json`: the two-demos talk run of #130 (kit 2ebd743d, 2026-10-24, Chromium, 3 phones, reaction 2 s; WebKit not run) |
+| Q1-MH | `scratch/kitround-mh-only/q1-{0,1}-*-chromium.{json,md}`, `q1-talk-chromium.json` (segment walls and every Explore row read at each stop) and `debrief-q1-1-*.json`: the talk test of the new programme (`kit-round-a.kitround.ts`, "Q1 30-minute talk"), kit a88f95a7 (main, Home reads 1.0.0-rc.3), 2026-10-29, Chromium, 3 phones, reaction 2 s, 3 s per Explore screen; WebKit not run. Screenshots of each stop, the model pages and the Debrief: `scratch/owner-review/mh-only-programme/` (its README) |
+| SPK | `scratch/owner-review/mh-mechanisms-on-the-demo-build.md` (the speaker's reference: the nine mechanisms as this build computes them, "Not in this build", the two sentences for the stage) |
+| Q1-2D | `scratch/kitround-2demos-q1/q1-{0,1,2}-*-chromium.{json,md}` and `debrief-q1-*.json`: the two-demos talk run of #130 (the 24 October programme) (kit 2ebd743d, 2026-10-24, Chromium, 3 phones, reaction 2 s; WebKit not run) |
 | DRAFT | `scratch/plans-backup/cue-cards-two-demos-draft.md` (the timing draft written from Q1-2D) |
 | A4 | `docs/showcase/kit-round-a/a4-mh-e119-induction-sequence-and-early-call-kit-round-{chromium,webkit}.*` (kit 52b0390b) and `a4-haemorrhage-e120-course-kit-round-{chromium,webkit}.*` (kit 33a6c92b), 2026-10-24, both engines; their Debrief JSON and PDFs beside them |
 | E132 | `scratch/kitround-e132/a4-*-chromium.*` (kit e0c73a47, branch `exec-e132-cards`, 2026-10-26, Chromium only): kit round A4 on the cards after the clinical review; their Debrief JSON, PDFs and Persian handouts beside them. Sanity measurements: E131 (one MH metabolic rate) will move the MH course again, and the Thursday prep run re-measures both. The haemorrhage re-measured after the rebase onto E126 (the pulse check pauses compressions until the shock): `scratch/kitround-e132-rebase/a4-haemorrhage-*-chromium.*` (kit 4d0fca9b, Chromium) [E132 on E126] |
@@ -108,49 +117,59 @@ segment).
 
 ## The programme at a glance (30:00)
 
-The machine runs are measured; the talk allowances are the draft's planning figures [DRAFT]. The whole two-demos run,
-presses only (no talk), took **8:25** of wall from the opening to the close [Q1-2D `q1-talk`]. The talk itself was not
-measured ("Still not measured").
+The owner's programme of 29 October (P29). The machine runs are **measured** [Q1-MH]: the presses, the fast-forwards,
+the Explore openings and the model-page tab, with a 2-s reaction and a 3-s look at each Explore screen. The talk is not
+measured: the slot is the owner's, and the talk fills what the machine leaves. The whole run, presses only, took
+**5:03** of wall from the opening to the Debrief [Q1-MH `q1-talk`].
 
-| # | Segment | Speeds used | Run (W, measured) | Slot | Clock (T+) |
-|---|---|---|---|---|---|
-| 0 | Opening on Home and the Room: release label, session code, QR; the phones join | — | phones joined 2.5 s after the QR [Q1-2D] | **3:00** | 0:00–3:00 |
-| 1 | Malignant hyperthermia, early call (E119): induction, crisis, treatment, recovery | ×8, ×4, three 5-min FF | **2:17** Load → end (136.9 s), the three spans 10.5–10.6 s each [Q1-2D]; E132 A4 2:02 (121.7 s, no talk Pauses); E132 rc.4 1:56 (116.1 s) | **10:00** | 3:00–13:00 |
-| 2 | Class IV haemorrhage (E120): PEA → asystole → CPR → VF → two shocks → ROSC | ×8, ×4, ×1 | **5:08** Load → end (307.7 s) [Q1-2D]; E132 A4 **4:34** (273.5 s) [E132 rc.4] | **5:40** | 13:00–18:40 |
-| 3 | The Debrief (haemorrhage), read and printed | — | the print 4.4 s [Q1-2D] | **3:30** | 18:40–22:10 |
-| 4 | Close: roadmap and the ask to the deans | — | — | **3:00** | 22:10–25:10 |
-| 5 | Questions | — | — | **4:20** | 25:10–29:30 |
-| | Buffer (a re-press, a "Not available now", a slow Load) | | | **0:30** | 29:30–30:00 |
-| | **Total** | | | **30:00** (25:10 before questions) | |
+| # | Segment | Machine wall (measured) [Q1-MH] | Slot | Clock (T+) |
+|---|---|---|---|---|
+| 0 | Opening on Home and the Room, the phones join | **Start here** → "3 phones following" in 3.1 s (the phones 2.6 s after the QR) | **3:00** | 0:00–3:00 |
+| 1 | MH to the early signs (×8 then ×4) | **1:14** (73.6 s): Load, the five induction presses, ×4 at 7:30, Early signs **8:09**, **Pause** (8:10) | **2:00** | 3:00–5:00 |
+| S1 | **Stop 1**: why the EtCO₂ rises when it should fall: the MH trigger, hypermetabolism, CO₂ production and stores. Explore; behind it the thermal/metabolic page | **0:49** (48.5 s): Explore (Endocrine, Blood + one scroll), the model tab and back, the tick, Resume. Clock held at 8:10 | **3:00** | 5:00–8:00 |
+| 2 | The call, hyperventilation, dantrolene; EtCO₂ falls | **0:20** (20.2 s): call **8:12**, dantrolene **8:32**, EtCO₂ below 40 from **8:34**, fast-forward 1 (10.3 s), **Pause** at **13:50** (Recovering) | **2:00** | 8:00–10:00 |
+| S2 | **Stop 2**: what dantrolene does in the model and why we hyperventilate; the potassium's source in this build. Explore; behind it the drug page and the blood/electrolyte page | **1:06** (66.0 s): Explore (Drugs, Endocrine, Gas exchange + scroll, Blood + scroll), two model pages and back, Resume. Clock held at 13:50 | **3:00** | 10:00–13:00 |
+| 3 | Ventilation back, the climb | **0:15** (15.2 s): ventilation back **13:52**, EtCO₂ past 45 from **14:06**, fast-forward 2 (10.6 s), **Pause** at **19:11** (EtCO₂ 64) | **2:00** | 13:00–15:00 |
+| S3 | **Stop 3**: recrudescence and the second dose with hyperventilation again; the two sentences on what comes next (E134) and why it waited. Explore; behind it the thermal/metabolic page | **0:52** (51.5 s): Explore (Endocrine, Drugs, Gas exchange + scroll), the model tab and back, Resume. Clock held at 19:11 | **3:00** | 15:00–18:00 |
+| 4 | The end of the case and the MH Debrief, read on screen | **0:20** (20.3 s): second dose with hyperventilation again **19:13**, fast-forward 3 (10.1 s), end **Pause** at **24:31**, the Debrief opened (5.2 s for the script to read it) | **4:00** | 18:00–22:00 |
+| 5 | Close and the ask to the deans | — | **3:00** | 22:00–25:00 |
+| 6 | Questions | — | **5:00** | 25:00–30:00 |
+| | **Total** | **5:03** of machine wall | **30:00** (25:00 before questions) | |
 
-**Minute by minute inside the case slots** (the measured W around the draft's talk allowances):
+There is no separate buffer: each case segment leaves 1:40 or more beyond its machine wall, and stop 1's tick and the
+model tab are inside its 3:00.
+
+**Minute by minute** (the measured machine wall inside the slots; the talk lengths are planning figures):
 
 | T+ | What | Length |
 |---|---|---|
 | 0:00 | Home on the projector; what the simulator is | ≈ 0:30 (est.) |
 | ≈ 0:30 (est.) | **Start here**: the Room and its QR; the phones join | ≈ 2:30 (est.) |
-| 3:00 | MH framing, the Room still showing | 1:30 |
-| 4:30 | **Load** on Demonstration 1 · **All alarms on** · **Bookmark** · **×8**; the induction to the early signs and the call | 1:24 |
-| 5:54 | span 1; **Pause** at Recovering (13:56 [E132 rc.4]; 14:33 on the talk run): the early call | 0:11 + 2:00 |
-| 8:06 | **ventilation back** (13:56); span 2; **Pause** (19:13): the EtCO₂ climbing back, **second dantrolene with hyperventilation again** [E132 rc.4; OWR4] | 0:11 + 2:00 |
-| 10:18 | span 3 (the first case item to cut); end, **Pause**: the take-home lines | 0:11 + 1:00 |
-| 11:30 | MH Debrief glance | 1:00 |
-| 12:30 | **Instructor** · **Resume**; slack | 0:30 |
-| 13:00 | haemorrhage framing; **Choose another scenario** → **Showcase** → Load → **Load scenario** | 0:30 |
-| 13:30 | **Load · All alarms on · Bookmark · ×8**; the run, narrated over the ×1 stretches | 5:05 |
-| 18:35 | slack | 0:05 |
-| 18:40 | **Debrief** (§4): open, Run by, key times, objectives, moments, print | 3:30 |
-| 22:10 | Close and the ask | 3:00 |
-| 25:10 | Questions | 4:20 |
-| 29:30 | buffer | 0:30 |
+| 3:00 | MH framing, the Room still showing | ≈ 0:30 (est.) |
+| ≈ 3:30 (est.) | **Scenarios** → **Open the library** → **Load** · **All alarms on** · **Bookmark** · **×8**; the five induction presses; **×4** at 7:30; Early signs (8:09) → **Pause** | 1:14 |
+| ≈ 4:44 (est.) | the paused monitor: EtCO₂ 46, HR 78 | ≈ 0:16 |
+| 5:00 | **Stop 1** (§3, "Stop 1") | 3:00 |
+| 8:00 | Instructor, still paused: tick *Name malignant hyperthermia*; say the call | ≈ 1:35 (est.) |
+| ≈ 9:35 (est.) | **Resume** · **MH crisis** at once · **Dantrolene 2.5 mg/kg** (≈ 5 s later) · **5 min** · **Pause** as the banner shows (13:50) | 0:20 |
+| 10:00 | **Stop 2** | 3:00 |
+| 13:00 | **Resume** · **ventilation back** at once · **5 min** (the EtCO₂ passes 45 inside it, 14:06) · **Pause** (19:11) | 0:15 |
+| ≈ 13:15 (est.) | the climb, on the paused monitor (EtCO₂ 64) | ≈ 1:45 |
+| 15:00 | **Stop 3**, ending with the two sentences on E134 | 3:00 |
+| 18:00 | **Resume** · **Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600, O₂ 100 %)** at once · **5 min** · **Pause** (24:31) | ≈ 0:15 |
+| ≈ 18:15 (est.) | the take-home lines | 1:00 |
+| ≈ 19:15 (est.) | session bar **Debrief**: the MH Debrief read on screen (§4) | ≈ 2:00 |
+| ≈ 21:15 (est.) | back to **Instructor**; slack | ≈ 0:45 |
+| 22:00 | Close and the ask | 3:00 |
+| 25:00 | Questions | 5:00 |
 
-> **If running over, cut in this order** [DRAFT]
+> **If running over, cut in this order** (P29)
 >
-> 1. **Questions** (4:20 → 2:00, then out).
-> 2. **The MH third fast-forward** (span 3) [DRAFT]: end MH at the 19:13 Pause after span 2 (EtCO₂ 65 [E132
->    rc.4]), **after the second dantrolene with hyperventilation again** (objective 4) and with the take-home lines, provided **ventilation back has
->    already been pressed**; saves 10.5 s of wall (est.).
-> 3. **The MH Debrief glance** (1:00).
+> 1. **Questions** (5:00 → 2:00, then out).
+> 2. **Stop 3's paragraph** on what comes next (the two sentences on E134, ≈ 0:40): end stop 3 at the second dose.
+> 3. **The Debrief read** (≈ 2:00): end the case at the take-home lines; the Debrief stays unopened.
+>
+> Do not cut a stop's Pause or fast-forward 3: the second dose is objective 4, and ventilation back is "not met"
+> before 10:34.
 
 ---
 
@@ -246,14 +265,43 @@ phones [R31 §3]. Tick every line.
 - [ ] Venue Wi-Fi: if the phone says "this phone cannot reach the instructor's laptop", the Wi-Fi isolates devices: use
       the router or hotspot [PF §4].
 
+**The model pages and the Explore view** (P29: each stop shows Explore, with a model page behind it)
+- [ ] **The model-page tabs, prepared while the Mac is online** (the kit does not carry the model pages: Home's
+      **Documentation** link opens `https://github.com/samhv-dev/patient-monitor-engine/tree/main/docs`, which needs the
+      internet; the travel router may have none). In the **same browser window** as the instructor tab, to its right,
+      open three tabs and leave them loaded (do not reload them later) [Q1-MH: each page answered 200 and rendered in
+      2.4–6.8 s on this Mac's line]:
+      1. `…/blob/main/docs/model/endocrine-thermal.md#equations-in-words` (stops 1 and 3: the MH bullets of
+         "Equations in words"; for stop 3, Cmd-F `DANT_GAIN` in the Parameters table);
+      2. `…/blob/main/docs/model/pharmacology.md`, Cmd-F `dantrolene` (the drug row: gamma, tables §7 21; M10, TXT);
+      3. `…/blob/main/docs/model/blood.md#equations-in-words` (the potassium and treatments bullets).
+      Screenshots of the three as they render: `scratch/owner-review/mh-only-programme/stop{1,2,3}-model-*.png`.
+- [ ] **These tabs are not instructor tabs**: they are GitHub pages, they make no session and show no QR. The rule
+      "one instructor tab only" still holds.
+- [ ] **The Explore view check** (on the loaded case or any case, then load MH fresh): the rail's **Explore physiology**
+      (on the Instructor view the rail is the 56-px icon strip: the chart icon) opens the view; its **Body systems**
+      list on the left reaches **Endocrine**, **Blood, acid–base and temperature**, **Gas exchange and oxygen
+      delivery** and **Drugs**; the stamp reads "Changes are from the baseline at 01:00". **Leave "Changed only" off**
+      (it would hide the dantrolene rows, which have no 1:00 baseline). The session bar (Pause, speeds, 5 min) is
+      **not** shown on Explore: pause on the Instructor view first, and come back to it to resume [Q1-MH: the bar was not
+      visible on Explore at any stop].
+- [ ] Rehearse once: Pause → Explore → a section → the model tab → back to the instructor tab → **Instructor** in the
+      rail → Resume. The clock must not move while you are away (it held to the second at all three stops [Q1-MH]).
+
+**Handouts**
+- [ ] **Only the MH Persian handout is printed for the day**: from the MH Debrief JSON of the owner's Sunday rehearsal,
+      `node scripts/showcase/debrief-fa.mjs <debrief-showcase-mh-….json> --fonts <Vazirmatn folder>`
+      (`docs/showcase/i18n/README.md`). The haemorrhage handout stays in the kit (Reserve R5), not printed. The English
+      report is not printed on the day either (the Debrief is read on screen, §4).
+
 **Last minute (T−10 min)**
 - [ ] Open the page fresh: **Home** shows, with the footer line "For educational use only; Not to be used in patient
       care."; **Scenarios** → **Open the library** lists *Malignant hyperthermia* and *Class IV haemorrhage, PEA and
-      resuscitation* first, under *Today's demonstrations* [E125]. Home on the projector; nothing loaded.
-- [ ] Both cards are also in the Instructor's **Showcase** chip (for the second Load, by **Choose another scenario**)
-      [CARD].
-- [ ] This tab is the only instructor tab; it stays in front for the whole talk (a hidden tab pauses the session
-      [UIR "Hidden instructor tab"]).
+      resuscitation* first, under *Today's demonstrations* [E125]; the talk loads only the first. Home on the projector;
+      nothing loaded.
+- [ ] The three model-page tabs are loaded, to the right of the instructor tab, each at its place (above).
+- [ ] This tab is the only instructor tab; it stays in front for the whole talk, except while a model-page tab is
+      shown during a stop with the session Paused (a hidden tab pauses a running session [UIR "Hidden instructor tab"]).
 
 **Safety lines** (the UI review, 24 October [UIR]; true with or without this week's fixes)
 - **Never click "Ventilator" during a card**, neither the rail's **Ventilator** nor a Ventilator tab: while the
@@ -263,12 +311,15 @@ phones [R31 §3]. Tick every line.
   review, on kit 2ebd743d, before those fixes, the phones were still held 20 s after leaving.)
 - **Never reload mid-case** (see "After a page reload" above): Sound must be switched on again either way.
 - **Open the Room (the QR) only from the first instructor tab** [UIR "Two hosts"].
-- **The instructor tab stays in front**: hidden, the session pauses at once ("Paused while this tab was hidden (m:ss)",
-  the phones read "(paused)") [UIR "Hidden instructor tab"]; in real Safari a hidden tab once lost the phone's session
-  (H19, FX-14, FX-15) [G12P].
+- **The instructor tab stays in front**: hidden, a running session pauses at once ("Paused while this tab was hidden
+  (m:ss)", the phones read "(paused)") [UIR "Hidden instructor tab"]; in real Safari a hidden tab once lost the phone's
+  session (H19, FX-14, FX-15) [G12P]. **The one exception is a stop**: the session is already Paused, and a session the
+  instructor paused stays paused while the tab is hidden and is not resumed on return (`apps/demo/src/app/hidden-tab.ts`;
+  not measured: the headless run could not hide the tab [Q1-MH]). Keep each look at a model page short (under a minute)
+  and come back: Safari suspends a hidden tab after about 4 min (FX-14).
 - **Print the learner handout only after the fast-forward banner has gone** (≈ 8 s after a span): printed earlier, the
   banner prints on every page, and on screen it covers **Print the learner handout** [UIR #9].
-- **The MH report prints 8 A4 pages**, not 7 [UIR #31].
+- **The MH report prints 8 A4 pages**, not 7 [UIR #31], if it is ever printed: on the day it is read on screen (§4).
 
 ---
 
@@ -283,7 +334,7 @@ demonstrations*, MH and the haemorrhage, first), **Patient**, the **Instructor**
 
 **The path to the first case:** **1 · Start here** (the Room, its QR) → **2 · Scenarios** → **3 · Open the library** →
 **4 · Load** on *Malignant hyperthermia* (Demonstration 1), which opens the Instructor view on the case's Scenario tab
-("Scenario loaded: Malignant hyperthermia"). Then Case 1's first row: All alarms on · Bookmark · ×8.
+("Scenario loaded: Malignant hyperthermia"). Then §3, segment 1's first row: All alarms on · Bookmark · ×8.
 
 | T+ | Do | Say (draft) |
 |---|---|---|
@@ -291,7 +342,7 @@ demonstrations*, MH and the haemorrhage, first), **Patient**, the **Instructor**
 | ≈ 0:30 (est.) | **Start here**: the Room shows the QR code, the 6-letter code, the address and "0 phones following" [E125] | *"Please join the Wi-Fi called ‹network› and scan this code with your camera. You will get the monitor on your phone: it follows what I do here. It is silent: tap Sound off if you want to hear it."* [CR12] |
 | 0:30–2:15 (est.) | Watch the count rise. In the two-demos run, 3 emulated phones were following **2.5 s** after the QR, all synced before Load [Q1-2D `q1-0`]; on the E125 kit the talk run had 3 phones following on the Room [E125]. A phone that does not open: is it on that Wi-Fi? | One session takes up to **60 phones**; the 61st is told "This session is full: please watch the main screen" [CR12] |
 | ≈ 2:15 (est.) | Stay on the Room | *"Your phone follows speed, pause and fast-forward."* [CR12] |
-| 3:00 | MH framing (1:30) with the Room still showing; at T+4:30 **Scenarios** → **Open the library** → **Load** on *Malignant hyperthermia* (Case 1) | *"Two cases. Every number you will see is produced by the model; the buttons only give what their label says."* [CARD notes] |
+| 3:00 | MH framing (≈ 0:30) with the Room still showing; at ≈ T+3:30 **Scenarios** → **Open the library** → **Load** on *Malignant hyperthermia* (§3) | *"One case, and three times I will stop the clock and open the model behind the monitor. Every number you will see is produced by the model; the buttons only give what their label says."* [CARD notes; P29] |
 
 **On a kit without Home** (the rc.3 fallback kit): QR from the **Monitor** view → pointer to the top edge → **Phones**;
 the case from **Open the instructor view** → **Scenario** → **Showcase** → the card → **Load** [RUN4].
@@ -299,113 +350,238 @@ the case from **Open the instructor view** → **Scenario** → **Showcase** →
 Measured capacity, if asked: 30 phones cost the relay under 2 % of one core; each phone receives about 1.3 KB/s at ×1 and
 10.5–11.7 KB/s at ×8; at 120 simulated phones relay CPU ≤ 2 %, lag p95 ≤ 2.8 ms [G12 §5]. In the two-demos run three
 emulated phones followed both cases with no stale reading on the haemorrhage and one 2.5-s AGENTS blank on MH
-[Q1-2D].
+[Q1-2D]; on the new programme's run they followed the whole MH case, read "(paused)" within a second of each stop's
+Pause and kept it until Resume; the largest mismatch was a 2-s AGENTS blank (S12-F2 by the 2-s rule; no stale number)
+[Q1-MH].
 
 ---
 
-## 3. The cases
+## 3. The case: malignant hyperthermia, early call, with three look-inside stops (E119; P29). T+3:00 → 22:00
 
-**Every case starts the same way: Load → All alarms on → Bookmark → speed.** Press All alarms on after every Load
-(older kits turned the limit alarms off on Load [MEAS §7]; on kit 2ebd743d they stayed on after both Loads [Q1-2D
-setup], so the press is harmless); the Bookmark, taken after it, is the "Return here" fallback and brings the alarms
-back on with it [A3.2] (§6).
+**Load → All alarms on → Bookmark → speed.** Press All alarms on after the Load (older kits turned the limit alarms
+off on Load [MEAS §7]; on kits 2ebd743d and a88f95a7 they stayed on [Q1-2D setup; Q1-MH setup], so the press is
+harmless); the Bookmark, taken after it, is the "Return here" fallback and brings the alarms back on with it [A3.2] (§6).
 
 While the amber fast-forward panel shows, the page refuses commands: do not press card buttons during it
-[G10, Stage 10 plan D-6]. **The speed after a fast-forward is the speed before it** (×4 stays ×4): set the next speed
-yourself [Q1-2D spans; MEAS §7].
+[G10, Stage 10 plan D-6]. **The speed after a fast-forward is the speed before it** (×4 stays ×4) [Q1-MH spans; MEAS §7].
 
 **What the audience sees during a fast-forward** (the same on the projector, the second screen and the phones): the page
 dimmed and blurred, an amber panel "FAST FORWARD · 5 MIN" with a running clock over a progress bar and "sound muted",
-for **10.5–10.6 s** [Q1-2D]; at the end one two-tone cue, a seam with its time on every waveform lane, and a banner
-"Fast-forwarded 5 min, mm:ss → mm:ss" listing the alarms raised during it [G10 §6; Q1-2D]. The banner stays about
-8 s and covers the nav and the session-bar title [UIR #9].
+for **10.1–10.6 s** [Q1-MH]; at the end one two-tone cue, a seam with its time on every waveform lane, and a banner
+"Fast-forwarded 5 min" listing the alarms raised during it [G10 §6; Q1-MH]. The banner stays about 8 s and covers the
+nav and the session-bar title [UIR #9].
 
-**Monitor style:** Saadat-style, no change during a case (E20).
+**Monitor style:** Saadat-style, no change during the case (E20).
 
-### Case 1: Malignant hyperthermia, early call, with the induction (E119). Slot 10:00 (T+3:00 → 13:00)
+### The stop method (every stop, the same five moves)
 
-**To Load.** First case of the page: **Scenarios** → **Open the library** → **Load** on *Malignant hyperthermia*. After another
-case: Instructor → Scenario → **Choose another scenario** → **Showcase** → *Malignant hyperthermia* → **Load** →
-**Load scenario**. No reload.
+1. **Pause** on the Instructor view (session bar). The clock pill stops; every phone reads "Following session ‹code›
+   (paused)" within a second and holds the paused monitor [Q1-MH: all three phones at every stop].
+2. **Explore physiology** in the rail (on the Instructor view the rail is the icon strip: the chart icon, the tooltip
+   reads "Explore physiology"). Explore opens on *At the bedside*; pick the stop's sections in the **Body systems** list.
+   "Changed only" stays **off**. The **Change** column is against the patient at 01:00 (awake, premedicated), so the
+   anaesthetic's own effects show there too (ART M down); read the **Now** column. There is no session bar on Explore.
+3. Point at the stop's numbers (below; each talk point names the number on screen).
+4. The **model page**: click its tab (right of the instructor tab), point, click the instructor tab again. The session
+   stays Paused [`hidden-tab.ts`; the clock held to the second at every stop, Q1-MH].
+5. **Instructor** in the rail, then **Resume**, then the next press **at once** (you have had the whole stop to react).
 
-Card: *Malignant hyperthermia* (Showcase). **Since E119 the card starts awake on room air** and every step of the
-induction is a button [CARD]: Awake on the table, monitoring on, breathing room air → **Premedicate: midazolam 2 mg,
-fentanyl 100 µg** → **Preoxygenate: 100 % O₂ by face mask** → **Induce: propofol 2 mg/kg, then succinylcholine
-1.5 mg/kg** (the MH condition starts here; say the masseter line) → **Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5;
-sevoflurane 2 %** → **Start surgery: rocuronium 0.6 mg/kg** → Early signs → **MH crisis: stop sevoflurane, charcoal
-filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate** (Trigger off: 20 × 600, propofol 100 µg/kg/min) →
-**Dantrolene 2.5 mg/kg** → Recovering → Ventilation back to 12 × 500 → **Dantrolene 2.5 mg/kg; hyperventilate again
-(20 × 600, O₂ 100 %)** when the EtCO₂ climbs back (the dose and the trigger-off step's ventilator command together) →
-the checklist → Recovering → ventilation back again only once EtCO₂ has stayed below 40 for 2 min, the first return's
-rule, never on a timer [CARD; REV #1, #2; OWR4]. **What the trigger-off step tells the engine** (E132): the vaporiser to 0 % at
-10 L/min, the ventilator 20 × 600 at FiO₂ 1.0 and a propofol infusion of 100 µg/kg/min. The **charcoal filters are not
-modelled** (the label names them; the fresh gas washes the agent out). **Cool: refrigerated saline 20 mL/kg (1.6 L)**
-is pressed only above 38.5 °C, so **not on this path**; the engine has no cold-fluid input and gives that saline at the
-theatre's 21 °C [REV #4]. **Oxygen is never implicit (E121):** skip Preoxygenate and SpO₂ reads 90 %
-at the induction and 63 % when the tube goes in 60 s later (99 % throughout with it) [S1 E121 slow test]. The **MH
-crisis** button is offered in Induced, Intubated, Surgery, Early signs and Established; **ventilation back** only in
-Recovering [CARD].
+**The stage rule** [SPK]: never say the simulator does something the kit in the room does not do. Every talk point
+below is from the speaker's reference; a size marked [ENG] is an engineering size, not a sourced one: say so if asked.
+**Explore cautions** (the build as it is; no app change before the talk):
+- Under **Gas exchange and oxygen delivery**, the rows **VCO₂ 216** and **VO₂ 270** do not move all case (the same at
+  all three stops): they are not the MH figures. **Do not point at them.** The MH oxygen consumption is **VO₂** under
+  **Blood, acid–base and temperature** (332 → 427 mL/min) [Q1-MH].
+- Under **Drugs**, dantrolene is **Ce (Dantrolene)** in "drug unit" (reference doses, 1 = 2.5 mg/kg), and the Total
+  column reads "200 mg, µg"; under **Blood**, Glucose reads "102 mmol/L and mg/dL" (it is mg/dL). Read the number and
+  say the unit yourself [Q1-MH screenshots].
+- The **VA** row (alveolar ventilation, L/min) sits two rows below VCO₂ and VO₂: point at VA alone.
 
-Talk allowance in the slot [DRAFT]: 1:30 framing before Load · 2:00 at each of the two Pauses · 1:00 take-home ·
-1:00 Debrief glance. Rows: the two-demos run [Q1-2D `q1-1`, Chromium, kit 2ebd743d, on the card BEFORE E132]; the last
-column is kit round A4 on the card after the clinical review, rebased onto main 25771808 with E131 (one MH metabolic
-rate) and E133 (kit 503caeab, Chromium, 27 October) [E132 rc.4]. Where the two differ, the E132 column is the card as
-it now is; the Q1-2D clock times of the induction still hold within a few seconds.
+### The card and how to Load
 
-| T+ | W | Sim | Speed | Press / do | Point at (measured, Q1-2D) | E132 C |
-|---|---|---|---|---|---|---|
-| 4:30 | 0:00 | 0:00 | **×8** | **Load · All alarms on · Bookmark** (bookmark at 00:06) | HR 69, ART 122/80 (93); room air | same; bookmark 00:04 |
-| 4:34 | 0:07 | 0:30 | ×8 | **Premedicate: midazolam 2 mg, fentanyl 100 µg** | state 0:33; HR 70, ART 123/80 (94), SpO₂ 96, EtCO₂ 37 | state 0:34; HR 69, ART 123/80 (94) |
-| 4:38 | 0:11 | 1:00 | ×8 | **Preoxygenate: 100 % O₂ by face mask** | state 1:03; then `RR TOO LOW` 3:09 (RR 6 after the premedication) | 1:06; RR TOO LOW 4:04 |
-| 5:00 | 0:33 | **4:00** | ×8 | **Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg**; say the masseter line (below) | state 4:01; SpO₂ 99, EtCO₂ 46, RR 6; `CO2 APNEA` 4:56 | 4:05; CO2 APNEA 4:47 |
-| 5:08 | 0:41 | **5:00** | ×8 | **Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %** | state 5:04; ART 97/60 (70), SpO₂ 99; apnoea alarm to ventilated breaths 8 s | 5:05; 18 s (Debrief) |
-| 5:15 | 0:48 | **6:00** | ×8 | **Start surgery: rocuronium 0.6 mg/kg** | state 6:03; HR 72, ART 96/59 (69), EtCO₂ 42 | 6:04; HR 72, EtCO₂ 42 |
-| 5:26 | 0:59 | 7:30 | **×4** | watch the CO₂ tile climb at the same ventilation | EtCO₂ 44, HR 76, ART 105/65 (75) | 7:37: EtCO₂ 45, HR 74 |
-| 5:41 | 1:13 | **8:32** | ×4 | state **Early signs** → **tick *Name malignant hyperthermia*** as you call it, then **MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate** at once | EtCO₂ 46, HR 79, ART 108/67 (78); the call lands 8:42 (Trigger off, 20 × 600), 10 s after Early signs | **8:14** (249.9 s after the sux), EtCO₂ 46, HR 78–79, ART 107/66 (77); call 2 s (8:16) |
-| 5:49 | 1:22 | 9:03 | ×4 | **Dantrolene 2.5 mg/kg** (21 s after the call); say: in real life it takes extra hands and minutes | EtCO₂ 39 at 9:06; **below 40 from 9:05** (so ventilation back is met from 11:05) | 8:37 (21 s); **below 40 from 8:42** (met from 10:42) |
-| — | — | — | ×4 | **No cooling on this path**: say "cool only above 38.5 °C" (do not press **Cool: refrigerated saline 20 mL/kg (1.6 L)**) | (Q1-2D pressed the old 2 L room-temperature saline at 9:13) | not pressed; Tcore 36.4–36.8 °C over the case |
-| 5:54 | ≈ 1:26 | 9:22 | — | **5 min** fast-forward (1 of 3), 10.5 s. **Hyperventilation stays on** | banner "Fast-forwarded 5 min 09:22 → 14:22 No alarms"; Recovering 10:15 (inside the span) | 08:42 → 13:42, no alarms, 10.6 s; Recovering 9:40 |
-| 6:05 | 1:40 | ≈ 14:33 | ×4 | **Pause**, 2:00 of talk (the early call), **Resume** | state **Recovering**; **EtCO₂ 35**, HR 76, ART 124/74 (88) | 13:56: EtCO₂ 40, HR 80, ART 104/65 (75) |
-| 8:06 | 1:45 | **14:41** | ×4 | **EtCO₂ normal: ventilation back to 12 × 500** | state 14:43; Debrief ✓ "after EtCO₂ had stayed below 40 mmHg for 2 min 00 s (09:05 → 11:05)"; EtCO₂ 36 | pressed as span 1 ended, 13:56 (state 13:57); EtCO₂ 40–41; Debrief ✓ (08:42 → 10:42) |
-| 8:06 | ≈ 1:47 | 14:47 | — | **5 min** fast-forward (2 of 3), 10.6 s | banner "14:47 → 19:47 ETCO2 TOO HIGH 18:38" | 14:00 → 19:00, `ETCO2 TOO HIGH` 14:31; **EtCO₂ above 45 from 14:10** |
-| 8:17 | 1:59 | ≈ 19:58 | ×4 | **Pause**: *"The EtCO₂ is climbing back at normal ventilation: the MH is not controlled. Second dose, and back to hyperventilation."* **Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600, O₂ 100 %)**. 2:00. **Resume** | **EtCO₂ 53**, ART 126/76 (90), HR 75 (before E132: no second dose) | 19:13: **EtCO₂ 65**, HR 89, ART 98/66 (75); the second dose 19:14, 5 min 04 s after EtCO₂ passed 45 (objective 4 ✓) [E132 rc.4]; with the owner's ruling the ventilator is 20 × 600 again (OWR4: dose 19:11, EtCO₂ 65) |
-| 10:18 | ≈ 2:00 | 20:03 | — | **5 min** fast-forward (3 of 3; the first case item to cut), 10.5 s | no alarms | 19:16 → 24:16, no alarms; EtCO₂ 50 a minute after the dose, then 48, 46, 44, 42; Recovering 23:36 [OWR4] |
-| 10:29 | 2:17 | 25:12 | ×4 | end: **Pause**; the take-home lines (1:00). **Do not press ventilation back** (Recovering offers it; its rule is not met) | EtCO₂ 51, ART 130/76 (93), HR 72; T1 37.2 °C | 24:31: **EtCO₂ 41**, ART 94/57 (67), HR 70, RR 20 (still hyperventilated); Tcore 36.4 °C [OWR4] (before the ruling: EtCO₂ 64, ART 96/64 (73), HR 85 at 12 × 500 [E132 rc.4]) |
-| 11:30 | — | — | — | session bar **Debrief**: the glance (1:00) | ✓ ✓ ✓ – – ✓ | **✓ ✓ ✓ ✓ – ✓** |
-| 12:30 | — | — | — | back to **Instructor** · **Resume** | | |
+**To Load.** **Scenarios** → **Open the library** → **Load** on *Malignant hyperthermia* (Demonstration 1). (From a
+running case: Instructor → Scenario → **Choose another scenario** → **Showcase** → *Malignant hyperthermia* → **Load** →
+**Load scenario**. The talk run loaded it from the Instructor's Scenario tab, Showcase chip [Q1-MH].)
 
-The W column is the script's wall (no talk): its Pauses were a few seconds, not 2:00, so the clock at each Pause is
-the clock the talk will see. Each span took 10.5–10.6 s; ×4 stayed ×4 after each [Q1-2D spans; E132]. EtCO₂ per minute
-after ventilation back: 40 → 53 → 56 → 59 → 61 → 64, then after the second dose with hyperventilation again 52 → 49 →
-47 → 45 → 42 [OWR4] (without the ruling, at 12 × 500: 65 → 66 → 66 → 65 → 64, peak 66 at 20:15 [E132 rc.4]; before the
-rebase onto E131 it was 35 → 46 → … → 55). **On the talk's clock** the EtCO₂ passes 45 within
-15 s of ventilation back (14:10 after 13:56), so the dose at the 19:13 Pause comes ≈ 5 min after it. Objective 4 marks a dantrolene dose after ventilation back without a time limit: a timed
-rule adds a fifth Key-times tile, and the MH report's page 1 then no longer holds every objective (the Debrief e2e's
-B6 (f) bound, 291 mm against 267). Press it as soon as the Pause starts.
+Card: *Malignant hyperthermia* (Showcase). **The card starts awake on room air** and every step of the induction is a
+button [CARD]: Awake on the table, monitoring on, breathing room air → **Premedicate: midazolam 2 mg, fentanyl 100 µg** →
+**Preoxygenate: 100 % O₂ by face mask** → **Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg** (the MH condition
+starts here; say the masseter line) → **Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %** → **Start
+surgery: rocuronium 0.6 mg/kg** → Early signs → **MH crisis: stop sevoflurane, charcoal filters, propofol infusion,
+O₂ 100 % at 10 L/min, hyperventilate** (Trigger off: 20 × 600, propofol 100 µg/kg/min) → **Dantrolene 2.5 mg/kg** →
+Recovering → **EtCO₂ normal: ventilation back to 12 × 500** → **Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600,
+O₂ 100 %)** when the EtCO₂ climbs back → Recovering → ventilation back again only once EtCO₂ has stayed below 40 for
+2 min, never on a timer [CARD; REV #1, #2; OWR4]. **What the trigger-off step tells the engine** (E132): the vaporiser
+to 0 % at 10 L/min, the ventilator 20 × 600 at FiO₂ 1.0 and a propofol infusion of 100 µg/kg/min. The **charcoal
+filters are not modelled** (the label names them; the fresh gas washes the agent out). **Cool: refrigerated saline
+20 mL/kg (1.6 L)** is pressed only above 38.5 °C, so **not on this path**; the engine has no cold-fluid input and gives
+that saline at the theatre's 21 °C [REV #4]. **Oxygen is never implicit (E121):** skip Preoxygenate and SpO₂ reads 90 %
+at the induction and 63 % when the tube goes in 60 s later [S1 E121 slow test]. The **MH crisis** button is offered in
+Induced, Intubated, Surgery, Early signs and Established; **ventilation back** only in Recovering [CARD].
 
-**The second dose comes with the crisis ventilation again** (owner, 28 October) [OWR4]: the button gives dantrolene
-2.5 mg/kg and the trigger-off step's ventilator command (20 × 600, PEEP 5, FiO₂ 1.0). The EtCO₂ falls from 65 to 50 in
-the first minute and then ≈ 2 a minute; at the talk's end (24:31) it is 41, the card is in Recovering (from 23:36) and
-the ventilator still 20 × 600. **Ventilation back again comes only once EtCO₂ has stayed below 40 for 2 min**, by the
-same button in Recovering, never on a timer: measured past the talk (headless, the same path), EtCO₂ below 40 from
-25:15, the rule met and ventilation back at 27:15; at 12 × 500 it then rises to 44 (not past 45) and is below 40 for
-good from 42:38. Without the ruling, at 12 × 500, it held at 64–66 and was below 40 for good only from 51:59 [OWR4;
-E132 rc.4]. The Debrief judges the first return only (objective 6). If asked: *"he stays hyperventilated until the
-EtCO₂ has stayed below 40 for 2 minutes, then back to 12 × 500, as the first time."*
+### Segment 1: MH to the early signs (×8 then ×4). Slot 2:00 (T+3:00 → 5:00)
+
+| T+ | W | Sim | Speed | Press / do | Point at (measured, Q1-MH) |
+|---|---|---|---|---|---|
+| ≈ 3:30 (est.) | 0:00 | 0:00 | **×8** | **Load · All alarms on · Bookmark** (bookmark at 00:06) | HR 69, ART 122/80 (93); room air |
+| | 0:07 | 0:30 | ×8 | **Premedicate: midazolam 2 mg, fentanyl 100 µg** | state 0:32; HR 70, SpO₂ 96, EtCO₂ 37 |
+| | 0:11 | 1:00 | ×8 | **Preoxygenate: 100 % O₂ by face mask** | state 1:02; then `RR TOO LOW` 3:09 (RR 6 after the premedication) |
+| | 0:33 | **4:00** | ×8 | **Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg**; the masseter line (below) | state 4:03; SpO₂ 99, EtCO₂ 46, RR 6; `CO2 APNEA` 4:49 |
+| | 0:41 | **5:00** | ×8 | **Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %** | state 5:02; ART 95/59 (69); apnoea alarm to ventilated breaths 13 s |
+| | 0:48 | **6:00** | ×8 | **Start surgery: rocuronium 0.6 mg/kg** | state 6:04; HR 71, ART 96/59 (69), EtCO₂ 42 |
+| | 0:59 | 7:30 | **×4** | watch the CO₂ tile climb at the same ventilation | 7:34: EtCO₂ 45, HR 75, ART 105/64 (75) |
+| ≈ 4:44 (est.) | 1:08 | **8:09** | ×4 | state **Early signs** → **Pause** at once (8:10). Do not call yet: the call is said and pressed after stop 1 | **EtCO₂ 46, HR 78, ART 107/67 (77)**, RR 12; T1 36.5 |
+
+**What the audience should look at:** the **CO₂ tile** rising at unchanged ventilation when it should be falling (42 at
+6:00, 45 at 7:34, 46 at the early signs; without MH the same sequence settles at 36–39) [REV #5; SPK §1]; the **heart
+rate** rising with it (64 → 78, blunted by the fentanyl [S1]); the **temperature** not moving (T1 36.5).
 
 **Masseter line (at Induce)** [REV #3]: *"The jaw is hard to open after the succinylcholine: masseter rigidity. In
 practice a rigid jaw after succinylcholine means a non-triggering anaesthetic from now on and close watch of the EtCO₂;
 today we keep the volatile running to show the crisis. Masseter rigidity with a rising EtCO₂ makes two signs."*
 
+### Stop 1: why the EtCO₂ rises when it should fall. Slot 3:00 (T+5:00 → 8:00); clock held at 8:10
+
+**Press, open:** (Paused at 8:10) → rail **Explore physiology** → **Endocrine** → **Blood, acid–base and
+temperature** (first screen, then scroll to **BE**: K⁺ to pH on screen) → the **endocrine-thermal** tab ("Equations in
+words", the MH bullets) → the instructor tab → **Instructor** → tick *Name malignant hyperthermia* (Scenario tab) → stay
+Paused for segment 2's words.
+
+**What Explore shows at 8:10** [Q1-MH; screenshots `stop1-endocrine`, `stop1-blood`, `stop1-blood-scrolled`]:
+Endocrine: **MH activity 0.270** (0–1), Epinephrine 155 pg/mL (+121), Norepinephrine 689 pg/mL (+414). Blood: **Tcore
+36.52 °C** (−0.28), **VO₂ 332 mL/min** (+66), K⁺ 4.77 mmol/L, Lactate 1.04, **PCO₂ 50.0 mmHg** (+10.0), pH 7.32. The
+vitals strip: HR 78, ART M 77, SpO₂ 99, EtCO₂ 46, RR 12, T1 36.5.
+
+**Talk points** [SPK §1–§3, §6]:
+- **The trigger.** **Induce** gave propofol, succinylcholine and the instructor event "condition mh, severity 1". That
+  event started MH at 4:03; the drugs did not (the card has no MH-susceptible profile). → *MH activity 0.270 on screen.*
+- **The onset ramp.** Activity = severity × a ramp rising linearly to 1 over 15 min [ENG; the tables give 5–30 min] ×
+  the share dantrolene has not suppressed (all of it, so far). Four minutes in: about 0.27. → *0.270.* After t0 nothing
+  but dantrolene changes it: stopping the sevoflurane will not.
+- **One MH rate (E131).** The muscle adds an oxygen demand of activity × 1.5 × the resting VO₂ (whole-body VO₂ × 2.5 at
+  full activity, the centre of the tables' "× 2–3" [TXT], swine data of Gronert & Theye). Oxygen, CO₂, heat and lactate
+  all come from that one number. → *VO₂ 332 mL/min, +66 on the 1:00 patient, under an anaesthetic that itself lowers it.*
+- **CO₂ production and why EtCO₂ rises.** The MH CO₂ is the achieved MH oxygen × RQ 0.97, plus 22 mL CO₂ per mmol of the
+  MH muscle's lactate as bicarbonate buffers it. The ventilator holds alveolar ventilation fixed, and PaCO₂ = 0.863 ×
+  VCO₂ / V̇A: more CO₂ at the same V̇A means a higher PaCO₂. → *PCO₂ 50.0, EtCO₂ 46.*
+- **The stores.** The premedication's RR 6 and the induction apnoea left the CO₂ stores full, so the ventilated EtCO₂
+  started at 42 and should then fall (36–39 without MH). It rises over minutes because a two-compartment CO₂ store
+  fills first (sizes fitted to apnoea data [ENG]).
+- **Heat, and why the thermometer does not help.** About 140 W at full activity on 80 kg (21.1 kJ per litre of O₂); on
+  this path the anaesthetic's redistribution and the 20 % fall in basal heat outweigh a half-active MH. → *Tcore 36.52,
+  0.28 below 1:00.* The call must not wait for the temperature.
+- **The heart rate.** MH's own sympathetic drive rises with τ 2 min [ENG], ahead of the EtCO₂. → *Epinephrine 155,
+  norepinephrine 689; HR 78.*
+
+**Say** (the stop's last line, before you return): *"The EtCO₂ is rising at unchanged ventilation when it should be
+falling, with a rising heart rate: think of MH early."*
+
+### Segment 2: the call, hyperventilation, dantrolene; EtCO₂ falls. Slot 2:00 (T+8:00 → 10:00)
+
+| T+ | W | Sim | Speed | Press / do | Point at (measured, Q1-MH) |
+|---|---|---|---|---|---|
+| 8:00 | — | 8:10 | (Paused) | On the Instructor view, still Paused: say the call line (below) | the paused monitor, EtCO₂ 46 |
+| ≈ 9:35 (est.) | 1:57 | 8:10 | ×4 | **Resume**, then at once **MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate** | state Trigger off **8:12**, 3 s after Early signs (Debrief ✓ "3 s of 2 min 00 s") |
+| | 2:03 | **8:32** | ×4 | **Dantrolene 2.5 mg/kg** when the button shows (≈ 5 s of wall); say: in real life it takes extra hands and minutes | Debrief ✓ 21 s after the call; **EtCO₂ below 40 from 08:34** (Debrief) |
+| — | — | — | ×4 | **No cooling on this path**: say "cool only above 38.5 °C" (do not press **Cool**) | Tcore 36.4–36.8 °C over the case |
+| | 2:03 | 8:37 | — | **5 min** at once, 10.3 s. **Hyperventilation stays on** | banner "Fast-forwarded 5 min, No alarms"; Recovering 9:34 (inside the span) |
+| ≈ 9:55 (est.) | 2:17 | 13:50 | ×4 | **Pause** as the banner shows | state **Recovering**; **EtCO₂ 40**, HR 81, ART 104/66 (76), RR 20 |
+
 **At the call** [REV #2]: *"Trigger off: sevoflurane off, charcoal filters on the circuit, a propofol infusion so he
 stays asleep, 100 % oxygen at 10 L/min, double the ventilation."* The charcoal filters are words only (not modelled).
 
-**What the audience should look at:** the **CO₂ tile** rising at unchanged ventilation when it should be falling (42 at
-6:00, 44 at 7:30, 46 at the early signs; without MH the same sequence settles at 36–39) [REV #5]; the **heart rate**
-rising with it (64 → 80, blunted by the fentanyl [S1]); the **temperature** not moving much on the early path (Tcore
-36.4–36.8 °C over the whole case [E132 rc.4 Debrief facts]), so the call does not wait for it; **EtCO₂ below 40**
-within half a minute of the call; after ventilation back the CO₂ climbing past 45 within 15 s: the MH is not
-controlled.
+### Stop 2: what dantrolene does in the model, and why we hyperventilate; the potassium's source. Slot 3:00 (T+10:00 → 13:00); clock held at 13:50
+
+**Press, open:** (Paused at 13:50) → **Explore physiology** → **Drugs** → **Endocrine** → **Gas exchange and oxygen
+delivery** (scroll to **VA**) → **Blood, acid–base and temperature** (scroll to **BE**) → the **pharmacology** tab
+(Cmd-F "dantrolene") → the **blood** tab ("Equations in words") → the instructor tab → **Instructor** → **Resume** → at
+once **EtCO₂ normal: ventilation back to 12 × 500**.
+
+**What Explore shows at 13:50** [Q1-MH; `stop2-drugs`, `stop2-endocrine`, `stop2-gas-scrolled`, `stop2-blood-scrolled`]:
+Drugs: **Ce (Dantrolene) 0.892** (reference doses), Total 200 (mg). Endocrine: **MH activity 0.510**, Epinephrine 226,
+Norepinephrine 1019. Gas exchange: **VA 9.11 L/min** (+5.44), f set 20, VT set 600, FiO₂ 100 %, PaCO₂ 44.2. Blood: VO₂ 427
+(+161), **K⁺ 4.62 mmol/L** (+0.42), Lactate 1.80, PCO₂ 44.0, pH 7.36. Vitals: HR 81, ART M 76, EtCO₂ 40, RR 20, T1 36.4.
+
+**Talk points** [SPK §4, §7, §8]:
+- **Dantrolene's curve.** A gamma-curve drug, 2.5 mg/kg the reference dose, peak at 10 min, 10 % of the peak at 6 h
+  (`docs/model/pharmacology.md`, the dantrolene row, TXT). → *Ce 0.892: one reference dose, 5 min after it.*
+- **Its effect.** E = C/(C + 1): 0.892/1.892 ≈ 0.47 (worked from the number on screen). The unsuppressed share of the
+  MH relaxes toward max(0, 1 − 1.6 × E) with τ 10 min (1.6 and τ [ENG]); so one 2.5 mg/kg dose can suppress at most
+  80 % (a floor of 0.2) and 5 mg/kg all of it. **Dantrolene has no other effect in the engine.**
+- **Why the activity is higher than at the call.** The onset ramp is still rising (full 15 min after the
+  succinylcholine, about 19:00), while dantrolene pulls the share down slowly (τ 10 min). → *MH activity 0.510 now,
+  0.270 at stop 1.*
+- **Why we hyperventilate.** The EtCO₂ was below 40 from 08:34, two seconds after the dose and before it could act: that
+  fall is the hyperventilation. Doubling the minute ventilation (6 → 12 L/min) clears the CO₂ the muscle is still
+  making. → *VA 9.11 L/min against 3.7 at 1:00; PaCO₂ 44; VO₂ 427 and still rising.* It also removes the hypercapnic
+  sympathetic and pressor terms and the respiratory share of the potassium shift. **It does nothing to MH itself;
+  neither did the trigger-off step.**
+- **The potassium's source in this build: one fitted term.** The endocrine model adds 2.35 mmol/L × MH activity to the
+  plasma K set point [ENG: fitted to the tables' "K 5.5–6.5 by 20 min" untreated] (that term and its parameter are on
+  `endocrine-thermal.md`, `MH_K_EFFLUX`); the blood model lets plasma K follow the set point. On top, three general
+  terms: the non-lactate acidaemia (−4.0 × (pH − 7.4), so the hypercapnia raises K and the lactic acid does not),
+  adrenaline's β2 uptake (−0.8 at full effect [TXT]), and the ordinary succinylcholine pulse (+0.5, gone in about
+  15 min). **There is no muscle injury, no rhabdomyolysis, no K from necrotic fibres.** → *K⁺ 4.62; on this path it
+  never passes 5.5, so the potassium objective stays "–".*
+
+### Segment 3: ventilation back, the climb. Slot 2:00 (T+13:00 → 15:00)
+
+| T+ | W | Sim | Speed | Press / do | Point at (measured, Q1-MH) |
+|---|---|---|---|---|---|
+| 13:00 | 3:24 | **13:52** | ×4 | **Resume**, then at once **EtCO₂ normal: ventilation back to 12 × 500** (met from 10:34) | Debrief ✓ "after EtCO₂ had stayed below 40 mmHg for 2 min 00 s (08:34 → 10:34)"; EtCO₂ 41 |
+| | ≈ 3:25 | 13:56 | — | **5 min** about a second after the press, 10.6 s | EtCO₂ passes **45 at 14:06**, inside the span (14 s after the press); banner "Fast-forwarded 5 min, ETCO2 TOO HIGH 14:27" |
+| ≈ 13:15 (est.) | 3:38 | **19:11** | ×4 | **Pause** as the banner shows; the climb on the paused monitor (below) | **EtCO₂ 64**, HR 89, ART 99/66 (75), RR 12 |
+
+**The climb, per minute after ventilation back:** 40 → 53 → 56 → 59 → 61 → 64 [Q1-MH] (A4 rc.4: the same) [E132 rc.4].
+*"The EtCO₂ is climbing back at normal ventilation: the MH is not controlled."*
+
+### Stop 3: recrudescence and the second dose with hyperventilation again; what comes next. Slot 3:00 (T+15:00 → 18:00); clock held at 19:11
+
+**Press, open:** (Paused at 19:11) → **Explore physiology** → **Endocrine** → **Drugs** → **Gas exchange and oxygen
+delivery** (scroll to **VA**) → the **endocrine-thermal** tab (Cmd-F `DANT_GAIN`: the rows MH_RELAX_TAU_S and DANT_GAIN;
+`MH_ONSET_S` a few rows above) → the instructor tab → **Instructor** → **Resume** → at once **Dantrolene 2.5 mg/kg;
+hyperventilate again (20 × 600, O₂ 100 %)**.
+
+**What Explore shows at 19:11** [Q1-MH; `stop3-endocrine`, `stop3-drugs`, `stop3-gas-scrolled`]: Endocrine: **MH
+activity 0.550**, Epinephrine 221, Norepinephrine 797. Drugs: **Ce (Dantrolene) 0.999**. Gas exchange: **PaCO₂ 70.1
+mmHg**, **VA 4.41 L/min**, f set 12, VT set 500. Vitals: HR 89, ART M 75, EtCO₂ 64, RR 12, T1 36.4.
+
+**Talk points** [SPK §7, §9; "Not in this build"]:
+- **It looks like recrudescence; in this build it is not the drug wearing off.** → *Ce (Dantrolene) 0.999: the first
+  dose is at its peak now* (10 min after it). **The MH was still building:** the onset ramp reached full activity 15 min
+  after the succinylcholine (about 19:00), while one dose pulls the unsuppressed share down only slowly (τ 10 min) and
+  only to 0.2. → *MH activity 0.550 (0.270 at the call, 0.510 at stop 2).*
+- **Why the EtCO₂ climbed.** At that activity the CO₂ production exceeds what 12 × 500 clears. → *VA 4.41 L/min, PaCO₂
+  70.1, EtCO₂ 64.*
+- **What the second dose answers.** It brings the total to 5 mg/kg: E about 0.66, above 1/1.6, so the target becomes 0
+  and the activity falls toward zero over the next 20–30 min (worked from the formulas, not measured). The button also
+  puts the crisis ventilation back, 20 × 600 at 100 % O₂ (owner, 28 October). Measured after it: EtCO₂ 50 a minute
+  later, then 48, 46, 44, 42; Recovering from 23:35; at the end (24:31) EtCO₂ 41, still at 20 × 600 [Q1-MH]. Ventilation
+  back again only once the EtCO₂ has stayed below 40 for 2 min (headless, the same path: at 27:12, after the talk's end
+  [S1 demo path (owner rc.4)]).
+- **True recrudescence** (the card's take-home line: up to 50 %) is why the patient goes to ICU on dantrolene 1 mg/kg
+  every 4–6 h. In the engine, as the drug wanes the floor rises again; this talk does not run that long.
+- **What comes next, and why it waited** (the stage paragraph, verbatim [SPK]): *"The next layer of the muscle model is
+  already built on a branch, with its sources named and its numbers measured: muscle lactate with its own limits (the
+  glycolytic brake at low intracellular pH, a finite glycogen store, the heat of lactate production), potassium
+  released by working and injured muscle sized from Medbø and Sejersted 1990, and MH severity as a scenario input. We
+  held it out of this release because with it in, about fourteen clinical numbers left their acceptance bands and the
+  haemorrhage case no longer arrested as rehearsed. It ships when it passes those bands, not before."* (The second
+  thing to cut if running over.)
+
+**Not in this build** (do not describe as present; open branches only) [SPK]: muscle lactate with a pH brake and a
+glycogen store, lactate heat, muscle-injury potassium (PR #154, E134); MH severity as an input (#154); CO₂
+vasodilation and hypercapnic myocardial depression (PR #162, post-demo).
+
+### Segment 4: the end of the case and the MH Debrief. Slot 4:00 (T+18:00 → 22:00)
+
+| T+ | W | Sim | Speed | Press / do | Point at (measured, Q1-MH) |
+|---|---|---|---|---|---|
+| 18:00 | 4:30 | **19:13** | ×4 | **Resume**, then at once **Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600, O₂ 100 %)** | state 19:13, 5 min 07 s after EtCO₂ passed 45 (objective 4 ✓, untimed); EtCO₂ 64; RR 20 again |
+| | ≈ 4:31 | 19:16 | — | **5 min**, 10.1 s | banner "Fast-forwarded 5 min, No alarms"; EtCO₂ 50 a minute after the dose, then 48, 46, 44, 42 |
+| ≈ 18:15 (est.) | 4:44 | **24:31** | ×4 | end: **Pause**; the take-home lines (1:00). **Do not press ventilation back** (Recovering offers it from 23:35; its rule is not met) | **EtCO₂ 41**, HR 69, ART 94/57 (67), RR 20 (still hyperventilated); T1 36.4 |
+| ≈ 19:15 (est.) | — | — | — | session bar **Debrief**: read it on screen (§4) | ✓ ✓ ✓ ✓ – ✓ |
+| ≈ 21:15 (est.) | — | — | — | back to **Instructor** (the case stays Paused) | |
 
 **Take-home lines (the card's, owner-agreed 26 October, verbatim)** [CARD]: *"A rising EtCO₂ at the same ventilation
 with a rising heart rate: think of MH early."* · *"Trigger off, 100 % oxygen at high flow, hyperventilation, and
@@ -413,39 +589,50 @@ dantrolene 2.5 mg/kg."* · *"Keep hyperventilating until the EtCO₂ stays down;
 *"After the crisis: ICU 24–48 h, dantrolene 1 mg/kg every 4–6 h for 24 h (recrudescence in up to 50 %), then referral
 for testing and family counselling."*
 
-**What changed against the 22 October path (the card's own E119 change, not tuned):** the early signs come about
-4 min 10 s after the succinylcholine on the rc.4 rebase (4½ min on the talk run; was 6:52 after it): the hypoventilation after the premedication and the apnoea at
-induction raised the CO₂ stores (RR 6, EtCO₂ 46 at the induction), so the ventilated EtCO₂ starts at 42–44 and should
-then fall; without MH the same sequence settles at 36–39, so the climb is the MH [S1 slow-test bands; A4]. The heart
-rate rises less than on the old card (79–80 at the early signs; the fentanyl gates the E117 sympathetic term).
+If asked about the end: *"He stays hyperventilated until the EtCO₂ has stayed below 40 for 2 minutes, then back to
+12 × 500, as the first time."* Measured past the talk (headless): ventilation back again at 27:12, then up to 44 (never
+past 45), below 40 for good from 43:10 [SPK §9; S1 demo path (owner rc.4)].
 
-**Debrief (the glance; the report is not printed for MH):** ✓ Observed name MH (ticked at the call) · ✓ call 2 s · ✓
-dantrolene 21 s · **✓ second dose after ventilation back (19:14; OWR4 19:11), its text now naming the
-hyperventilation** · – potassium (K⁺ above
-5.5 did not happen) · ✓ ventilation back (08:42 → 10:42). 49 timeline rows; facts: highest EtCO₂ 66 at 20:15, highest
-T1 36.8 °C at 00:01, K⁺ 5.1 (4.2–5.1), lactate 3.6, pH 7.17, Tcore 36.4 °C (36.4–36.8) [E132 rc.4 Debrief]. Read the objectives, not the **Recognition** tile: on
-kit 2ebd743d it counted from Load (8 min 34 s), not from the early signs [UIR #18]. If printed: the report **8 A4
-pages** on kits e0c73a47 and 503caeab (7 on kit 52b0390b), the learner handout 1 page [E132; E132 rc.4].
+**Traps:** do **not** call at the early signs before stop 1: pause first, call after it (the call lands 3 s after Early
+signs either way). Do NOT press ventilation back before **10:34** (it is offered from Recovering, 9:34). No repeat
+dantrolene before ventilation back (a dose moves the card out of Recovering; the button comes back only after EtCO₂
+has been below 45 for a minute [CARD transitions]). The second dose right after stop 3, no later; its button is offered
+only in "Ventilation back to 12 × 500". **At the end do not press ventilation back** (EtCO₂ 41, the rule not met). No
+cooling and no potassium on this path (Tcore ≤ 36.8 °C; K⁺ ≤ 5.0 [Q1-MH Debrief]). On Explore there is no Pause button:
+pause on the Instructor view before opening it, and resume only after coming back.
 
-**Traps:** do NOT press ventilation back before **10:42** (offered from Recovering, 9:40, but EtCO₂ has not yet
-stayed below 40 for 2 min: "not met"). No repeat dantrolene just before it (a dose moves the card out of Recovering;
-ventilation back comes back only after EtCO₂ has been below 45 for a minute [CARD transitions]). The second dose comes
-AFTER ventilation back, at the 19:13 Pause, no later (the EtCO₂ has been above 45 for about 5 minutes by then); its
-button is **Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600, O₂ 100 %)**. **At the end do not press ventilation
-back**: Recovering offers it from 23:36, but EtCO₂ (41) has not yet stayed below 40 for 2 min [OWR4]. No
-cooling and no potassium on this path (Tcore ≤ 36.8 °C; K⁺ ≤ 5.1).
+**Ruled (owner, 26 October, E132):** the clinical review is accepted in full; the climb after ventilation back is MH not
+controlled, and the answer is a second dose [REV #1]. **Ruled (owner, 28 October):** the second dose also puts the
+crisis ventilation back (20 × 600, O₂ 100 %), and ventilation returns to 12 × 500 only by the first return's rule,
+never on a timer [OWR4]. **Ruled (owner, 29 October):** one case, three look-inside stops (P29).
 
-**Ruled (owner, 26 October, E132):** the clinical review is accepted in full. The settling-production line is gone:
-the climb after ventilation back is MH not controlled, and the answer is a second dose [REV #1]. **Ruled (owner,
-28 October):** the second dose also puts the crisis ventilation back (20 × 600, O₂ 100 %), and ventilation returns to
-12 × 500 only by the first return's rule (EtCO₂ below 40 for 2 min), never on a timer [OWR4]. Before it, the EtCO₂
-held at 64–66 at normal ventilation after the second dose (kit round A4 rc.4, kit 503caeab).
+**Against kit round A4** (the same presses without the stops, kit 503caeab / 2c341aa3) [E132 rc.4; OWR4]: early signs
+8:14 (talk run 8:09), call 8:16 (8:12), dantrolene 8:37 (8:32), below 40 from 8:42 (8:34), ventilation back 13:56
+(13:52), the second dose 19:14 (19:13), Recovering 23:36 (23:35), at 24:31 EtCO₂ 41, HR 70 (69), MAP 67 (67). The stops
+hold the clock, so the course in sim time is A4's within 5 s.
 
-**Explore (if used):** the baseline at 1:00 is the awake, premedicated patient. Against it, at the call ART M, SVR
-and CMRO₂ read **down** (the anaesthetic); the MH rows (EtCO₂, HR, T1, K⁺, lactate, pH, MH activity, catecholamines)
-read as expected. For MH-only changes, set the baseline after Start surgery (6:03) [S1 late slow test].
+---
 
-## 5. Close (T+22:10 → 25:10) and questions (T+25:10 → 29:30)
+## 4. The MH Debrief, read on screen (inside segment 4, ≈ T+19:15 → 21:15)
+
+Open it with the case Paused at its end (it reports the current run). **Not printed on the day**; **Run by** and
+**Notes** may stay empty. The objectives are final (E132): no "draft".
+
+| Do | The audience sees (measured, Q1-MH; screenshot `debrief-mh-on-screen`) |
+|---|---|
+| Session bar → **Debrief** | page 1: the header, **Key times**, **The course** and the objectives |
+| Read the **Key times** tiles | Recognition (instructor's tick) **1 s** (08:09 early signs → 08:10 ticked) · Start → first team action 33 s · the call **3 s** (asked ≤ 2 min 00 s) · dantrolene **21 s** (asked ≤ 5 min 00 s) |
+| The objectives aloud | ✓ name MH (observed by the instructor at 08:10) · ✓ the call 3 s · ✓ dantrolene 21 s · ✓ second dose with hyperventilation again (19:13) · – potassium (K⁺ above 5.5 did not happen) · ✓ ventilation back (13:52, after EtCO₂ < 40 for 2 min, 08:34 → 10:34) |
+| **Key moments** and the facts | 14 key moments; facts: lowest SpO₂ 96 % at 00:10 · lowest ART M / NIBP M 62 mmHg at 05:24 · highest EtCO₂ 64 at 18:46 · highest T1 36.8 °C at 00:01 · apnoea alarm to ventilated breaths 13 s · labs: K⁺ 5.0 (4.2–5.0), lactate 3.6 (1.0–3.6), pH 7.33 (7.18–7.41), Tcore 36.4 °C (36.4–36.8); 59 timeline rows, 25 minute rows |
+| Say | *"The report is a debrief aid: it reads the run, it does not grade the person."* |
+
+The Recognition tile now counts from the early signs to the tick (kit a88f95a7); on kit 2ebd743d it counted from Load
+[UIR #18]. If the report were printed: 8 A4 pages on kits e0c73a47 and 503caeab, the learner handout 1 page [E132;
+E132 rc.4]. **The Persian handout printed for the day is the MH one only** (§1 "Handouts").
+
+---
+
+## 5. Close (T+22:00 → 25:00) and questions (T+25:00 → 30:00)
 
 **Roadmap, one slide's worth** [RM]:
 - **v1.0** (now: the release candidate). Feature work is merged; hardening, calibration and the release remain. The
@@ -463,7 +650,8 @@ read as expected. For MH-only changes, set the baseline after Start surgery (6:0
   "Not yet done"]›.
 - Adoption: ‹residency use: instructor-led, one laptop and a projector, phones as learner monitors›.
 
-**Questions** (4:20; the first thing to cut if running over): see the presenter guide for the validation answer.
+**Questions** (5:00; the first thing to cut if running over): see the presenter guide for the validation answer and
+for "what is not in this build".
 
 ---
 
@@ -472,54 +660,56 @@ read as expected. For MH-only changes, set the baseline after Start surgery (6:0
 | What happens | What to do | Source |
 |---|---|---|
 | The kit cannot start on the day | Open the GitHub Pages site in Safari; everything runs except the phones — skip the QR (T+0:30–2:15) and use that time for the second-screen window; needs internet | [E13, E14: owner 2026-10-18] |
+| A model-page tab is blank or asks to reload (no internet on the router) | Skip the page: say what it says from the talk points (they name the page's lines) and stay on Explore. Never reload the instructor tab for it | [P29; §1 "The model pages"] |
+| You opened Explore without pausing (the clock still runs; Explore has no Pause button) | Back to **Instructor** at once, **Pause**, then Explore again. If the case moved on, read the numbers it shows now: the stop's points hold within a few units | [Q1-MH: no session bar on Explore] |
 | The QR relay fails, "Start Classroom" needs Node, or phones say "cannot reach the instructor's laptop" | Carry on with **Start Simulator** and **Open on a second screen** (the same browser) for the projector; phones are not needed for either case | [CR12 "(c)" and "If something goes wrong"] |
 | The sheet says "The relay does not answer", or the black window stops | Close the Classroom window, double-click **Start Classroom** again, reload the page, **Sound on**. A kit before 62e521c3 stops at the first phone (KR-A1): use the 62e521c3 kit or later | [CR12; MEAS §9 item 1] |
 | Sound fails | Say so (*"the sound has failed; the alarms still show on screen"*) and continue; alarms stay visual | [G10 §7] |
 | A card press shows **"Not available now: the case has moved to …"** | Press again: the button now belongs to the current state | [G10 §8 item 1] |
-| A scenario goes wrong (wrong press, missed window) | Session bar **Bookmark** list → **Return here** on the bookmark taken at Load (the **last** one in the list: MH's "Bookmark 1 at 00:06" stays in it while the haemorrhage runs, whose own is "Bookmark 2 at 00:11" [Q1-2D]); the patient and the screen are restored together. **The alarms come back as they were when the bookmark was taken** | [FU-11 E4; A3.2] |
+| A scenario goes wrong (wrong press, missed window) | Session bar **Bookmark** list → **Return here** on the bookmark taken at Load (the **last** one in the list: MH's "Bookmark 1 at 00:06" [Q1-MH]); the patient and the screen are restored together. **The alarms come back as they were when the bookmark was taken** | [FU-11 E4; A3.2] |
 | Something went wrong: the toast "The monitor stopped — Restart the patient" | **Restart patient**, then **load the case again** (Load · All alarms on · Bookmark · speed) and run it from 0:00. After Restart patient the session bar reads **No scenario** and the Return-here list was not on screen (0 buttons in the two-demos run [Q1-2D `fx12`]; 3 of 6 tries before [Q1 FX-12]) | [Q1-2D; Q1 FX-12] |
 | You clicked **Ventilator** (the rail or a Ventilator tab) during a card | Back to **Instructor**: the phones follow again at once, and the patient stays on the engine's ventilator at the cockpit's settings | [UIR #2; #135; E128] |
 | The page was reloaded mid-case (Cmd-R, a crash) | With the reload fix (#132) the case comes back ("Restored after reload: ‹title›, mm:ss"); without it the bar reads **No scenario**: load the case again from 0:00. **Either way: Sound on again** (click it if it reads **Sound off**), and **All alarms on** if the alarm button does not read **No alarms**. The session code is kept and the phones follow | [UIR #1; #132; MEAS §7] |
 | The phones split, or the count drops after you opened another tab | A second instructor tab made a new session: close it and open the Room (the QR) from the first tab only | [UIR "Two hosts"] |
 | The toast "Paused while this tab was hidden (m:ss)" | The instructor tab was hidden: the session paused and resumed on return. Keep the tab in front; in real Safari a hidden tab once lost the phone's session (H19, FX-14, FX-15) | [UIR "Hidden instructor tab"; G12P] |
 | A printed page carries the "Fast-forwarded …" banner | It was printed within ≈ 8 s of a span: print again once the banner has gone | [UIR #9] |
-| MH: "ventilation back" is not on the card at 13:56 | The card has left Recovering (a dantrolene dose): wait until EtCO₂ has been below 45 for a minute, and press it when it shows | [CARD transitions] |
-| Haemorrhage: CPR was started on the PEA | The slide to asystole stops and the card's course does not follow: **Return here** (the last bookmark) and run it again (≈ 5 min of wall), or say it | [S5 E120 slow tests] |
+| MH: "ventilation back" is not on the card after stop 2 (13:50) | The card has left Recovering (a dantrolene dose): wait until EtCO₂ has been below 45 for a minute, and press it when it shows | [CARD transitions] |
 | A phone says "This session is full" | 60 phones are following: ask a neighbour to share | [CR12] |
 | The phones show "---" where the screen shows a number after a style change | You changed the monitor style mid-session (FX-9). Change it back, or re-load the case | [MEAS §8; Q1-2D `s12f2`] |
-| Running long | Cut questions, then the MH third span and its Pause line, then the MH Debrief glance (§ "The programme at a glance") | [DRAFT] |
+| Running long | Cut questions, then stop 3's paragraph on what comes next, then the Debrief read (§ "The programme at a glance") | [P29] |
 
 ---
 
 ## Still not measured (on the 3 November path)
 
-1. **The talk.** The two-demos run is presses only (8:25 of wall from the opening to the close); the T+ times add the
-   draft's talk allowances, which are planning figures [Q1-2D; DRAFT].
-2. **WebKit on the two-demos run.** Not run; the WebKit column is kit round A4 (kits 52b0390b and 33a6c92b), which
-   agreed with Chromium within a few seconds (the A4 cards: 1 s for MH, 3 s for the haemorrhage) [A4].
-3. **The rc.4 kit.** Every row here is from kit 2ebd743d (still labelled 1.0.0-rc.3) or the A4 kits; the rc.4 kit is
-   rehearsed on release day [RC4].
-4. **The Start page on the two-demos run.** The run opened `#/teach` directly; the Start page was checked by
-   screenshots and its e2e on #131, and one A4 MH run on a kit built from #131 (every press first time) [#131].
-5. **The reload fix (#132)** on the two-demos path: its A4 MH run restored within ±3.2 s of the 24 October record
-   [R00 2026-10-25 12:10]; not run on the haemorrhage.
-6. **Real devices**: measured by the owner on 18 October (one phone over the Mac's hotspot) [G12P; G13 §0]: H17,
+1. **The talk.** The talk run [Q1-MH] is presses, Explore openings and a 3-s look per screen (5:03 of wall from the
+   opening to the Debrief); the stops' 3:00 and the segments' talk are the owner's planning, not measurements.
+2. **WebKit (Safari) on the new programme.** Not run: Chromium only. Kit round A4 on the MH card agreed within a few
+   seconds between the engines [A4]; the Explore view and the rail on Safari were not run here.
+3. **The model-page tab in a real browser.** The headless run brought the tab to the front and back, but the
+   instructor page stayed "visible" to the page (headless Chromium does not hide a background tab), so the hidden-tab
+   rule was not exercised. By the code a Paused session stays paused and is not resumed on return
+   (`apps/demo/src/app/hidden-tab.ts`). Rehearse it on the presenting Mac in its browser on Sunday; in real Safari a
+   hidden tab is suspended after about 4 min (FX-14).
+4. **The model pages offline.** The kit does not carry `docs/model/`; the pages are GitHub's and need the internet when
+   opened. Whether the travel router has internet is not known.
+5. **The rc.4 kit.** The run is on kit a88f95a7 (main, Home reads 1.0.0-rc.3); the rc.4 kit is rehearsed on release
+   day [RC4].
+6. **The Scenarios library path on the talk run.** The script loaded MH from the Instructor's Scenario tab (Showcase
+   chip); Home → **Start here** → Room was run, Scenarios → **Open the library** → **Load** was not [Q1-MH].
+7. **Real devices**: measured by the owner on 18 October (one phone over the Mac's hotspot) [G12P; G13 §0]: H17,
    H18 and H20 pass in real Safari; H19 failed (FX-14, FX-15: keep the tab visible); the print passes in Chrome and in
    Safari. Still not measured: router capacity with a room of phones, sound by ear, real Safari tab suspension
    [MEAS §10; UIR "What I could not exercise"].
-7. **E13 / E14**: the kit on a Mac with a travel router; the presenting Mac's `node -v` and one Start Classroom run on
+8. **E13 / E14**: the kit on a Mac with a travel router; the presenting Mac's `node -v` and one Start Classroom run on
    it by the room dry run, Monday 2 November [RC4].
-8. **A human's reaction time**: the runs used a fixed 2 s of wall [MEAS §10]. The tightest window is MH's: ventilation
-   back is "not met" before 10:42; the talk presses at 13:56, after the first Pause [E132 rc.4].
-9. **The figures for the ask** (funding amount, research line, adoption terms).
-10. **The E132 cards on the talk path, on WebKit, and after E131.** The cards after the clinical review were measured on
-    kit round A4 only (Chromium, kit e0c73a47 [E132], and after the rebase onto E131 and E133, kit 503caeab
-    [E132 rc.4]); not on the two-demos talk run, not on WebKit.
-    The Persian of the E132 strings (card states, objectives, take-home lines, tranexamic acid) is the owner's to
-    write: until then the Persian handouts print them in English. The MH second dose with hyperventilation again
-    (owner, 28 October) was measured on kit round A4 only (Chromium, kit 2c341aa3 [OWR4]); its course past the talk's end
-    (ventilation back again at 27:15) only headless.
-11. **ID collisions**: the review pack's addendum 2 uses H20 and E17–E19 for other items; this sheet uses the rulings'
+9. **A human's reaction time**: the run used a fixed 2 s of wall, and pressed at once after each Resume. The tightest
+   window is ventilation back: "not met" before 10:34; the talk presses it after stop 2, at 13:52 [Q1-MH].
+10. **The figures for the ask** (funding amount, research line, adoption terms).
+11. **The Persian strings.** The Persian of the E132 strings (card states, objectives, take-home lines) is the owner's
+    to write: until then the MH Persian handout prints them in English. The MH course past the talk's end
+    (ventilation back again at 27:12) only headless [SPK §9].
+12. **ID collisions**: the review pack's addendum 2 uses H20 and E17–E19 for other items; this sheet uses the rulings'
     meaning [R31 note 1].
 
 ---
@@ -528,7 +718,7 @@ read as expected. For MH-only changes, set the baseline after Start surgery (6:0
 
 *The 22 October slot (owner's answers of 17 October): bronchospasm with the Ventilator view → tamponade → CPR →
 drainage → the tamponade Debrief → MH on the pre-E119 card. Kept unchanged for the record; none of it is part of the 3
-November programme (R4-Q3 FINAL, 2026-10-24). If a case here is ever used: Load → All alarms on → speed → Bookmark as
+November programme (R4-Q3, 2026-10-24; P29, 2026-10-29). If a case here is ever used: Load → All alarms on → speed → Bookmark as
 always, and start on a freshly reloaded page after the Ventilator view.*
 
 The 17 October answers that concern only these cases: **E17** (meet every timed objective; the tamponade's one line to
@@ -819,7 +1009,8 @@ rule: the instructor judges it) · – potassium (**not assessable**: K⁺ never
 
 # Appendix B: Cases held in reserve
 
-*Dropped from the 30-minute slot by the owner's answer E19c (2026-10-17) and kept here unchanged from kit round B
+*R5 (the E120 haemorrhage card) left the programme on 29 October (P29) and is kept as it was that day. R1–R4 were
+dropped from the 30-minute slot by the owner's answer E19c (2026-10-17) and are kept here unchanged from kit round B
 (PR #65), so they can come back if the slot grows or a question asks for them. Their slots are the round-B 60-minute
 planning figures. All four are measured [MEAS §2, §3, §4]. If one is used: Load → All alarms on → speed → Bookmark as
 always; haemorrhage starts on a freshly reloaded page if the Ventilator view was opened before.*
@@ -888,7 +1079,7 @@ on the card BEFORE E132]; the last column is kit round A4 on the card after the 
 pulse-check pause, rebased onto main 25771808 with E131, E133 and #153 (kit 503caeab, Chromium, 27 October)
 [E132 rc.4]. After the second shock the E132 column is the course as it now is.
 
-| T+ | W | Sim | Speed | Press / do | Point at (measured, Q1-2D) | E132 C |
+| T+ (24 Oct programme) | W | Sim | Speed | Press / do | Point at (measured, Q1-2D) | E132 C |
 |---|---|---|---|---|---|---|
 | 13:30 | 0:00 | 0:00 | **×8** | **Load · All alarms on · Bookmark** (bookmark at 00:11) | HR 71, ART 123/81 (95), SpO₂ 96 on room air, EtCO₂ 36 | same; bookmark 00:04 |
 | 13:33 | 0:06 | 0:30 | ×8 | **Oxygen by face mask, FiO₂ 1.0** | state 0:32 | 0:35 |
@@ -910,7 +1101,7 @@ pulse-check pause, rebased onto main 25771808 with E131, E133 and #153 (kit 503c
 | 17:14 | 3:47 | 19:54 | ×1 → **×4** | **Charge → Shock** → organised rhythm, no pulse (sinus ≈ 19:58); **keep CPR** to the 2-min rhythm check | | 19:53 (ART mean 29 in the pause); sinus 19:58; compressions resume |
 | — | — | **20:58** | ×4 | the pulse returns (the model), 64 s after the shock: point at the arterial line between compressions | ART 76/40 (53) → 113/54 (81) at 21:01; `ART SYS TOO HIGH` 21:02 | **20:57** (64 s); `ART SYS TOO HIGH` 21:02; `SPO2 LOW SIGNAL IQ` / `SPO2 NO PULSE` 21:05–21:43 under compressions |
 | ≈ 17:50 | ≈ 4:20 | **≈ 21:50** | ×4 → **×1** | the 2-min rhythm check: organised rhythm, **ART 148/76, EtCO₂ 45** → **Rhythm check: pulse back, stop CPR** | (before E132: stopped at 21:00, 3 s after the return) | 21:52: ART 136/73 (95), EtCO₂ 45; **21:54**, 57 s after the return |
-| ≈ 18:05 | ≈ 4:35 | 22:55 | ×4 | end → straight to §4 | (before E132, 22:00: ART 135/83 (100), HR 72, EtCO₂ 46, SpO₂ 99) | 22:54: ART 141/93 (109), HR 74, EtCO₂ 54; `ETCO2 TOO HIGH` 22:24 |
+| ≈ 18:05 | ≈ 4:35 | 22:55 | ×4 | end → straight to its Debrief (below) | (before E132, 22:00: ART 135/83 (100), HR 72, EtCO₂ 46, SpO₂ 99) | 22:54: ART 141/93 (109), HR 74, EtCO₂ 54; `ETCO2 TOO HIGH` 22:24 |
 
 Machine wall, Load → end: **4:34** (273.5 s) on the rc.4 rebase [E132 rc.4] (4:33 on E126 only, 4:34 before it) against 5:05 on 24 October [E132; A4]: the stretch after
 the second shock now runs at ×4. The T+ times after 16:35 are estimated from the E132 wall (no talk run on this card).
@@ -956,7 +1147,7 @@ rhythm check.
 Open it before loading anything else: it reports the current run. The objectives are final (E132): no "draft" on the
 panel, the report or the print.
 
-| T+ | Do | The audience sees |
+| T+ (24 Oct programme) | Do | The audience sees |
 |---|---|---|
 | 18:40 | Session bar → **Debrief** | the report of the run just finished: page 1 the header, **Key times**, **The course** and the objectives; page 2 the **Key moments** and the measured facts |
 | 18:55 | **Run by**: "Showcase 2, 3 November"; one line in **Notes** | — |
