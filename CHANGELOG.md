@@ -53,6 +53,10 @@ the public API is what the packages export (see the API reference), the `pme-sce
   longer show two different "VO₂"; a drug's Total is in that drug's amount unit (µg, mg, mL), not "mg, µg", and its
   Cp, Ce (also NMJ, diaphragm, ventilatory), infusion rate and TCI target rows print the drug's own concentration or
   rate unit (ng/mL, µg/mL, × ref dose; µg/min, mg/min) in place of "drug unit" and "per row", CSHT staying in min.
+- Explore's Drugs page keeps its rows once more than 16 drugs have been given. Past 16, every per-drug row (Cp, Ce,
+  rate, TCI target, CSHT, Total) left the page at once: the console dropped any engine list longer than 16, taking it
+  for a history, and so dropped the list of drugs given. A list whose every item names its drug or agent is now kept
+  at any length; a long list without names is still dropped.
 
 ## [1.0.0-rc.4] - 2026-10-30
 
