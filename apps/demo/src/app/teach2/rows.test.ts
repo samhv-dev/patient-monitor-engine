@@ -186,19 +186,26 @@ describe('rows.ts: automatic rows (answers 5, 8)', () => {
     classify(src(MH, 'surgery', { history: surgery, values: { etco2: 40 }, base }));
     const b = classify(src(MH, 'surgery', { history: surgery, values: { etco2: 42.5 }, base }));
     const a = b.list.find((r) => r.row.kind === 'auto') as LiveRow;
-    expect([a.look, a.progress, a.right]).toEqual(['pending', 0.5, '43 → 45']);
+    expect([a.look, a.progress, a.right]).toEqual(['pending', 0.35, '43 → 45']); // half-way to the threshold: half of the value's 70 %
     expect(classify(src(MH, 'surgery', { history: surgery, values: { etco2: 42.5 }, base, paused: true })).list.find((r) => r.row.kind === 'auto')?.right).toBe('frozen');
   });
 
-  it('the hold factor (IP1\'s accessor, PR pending): without it the bar is the value part only; with it, a met rule\'s bar is its hold fraction', () => {
+  it('one bar that only grows (answer 8): the value fills 70 % until the threshold is met, then the hold (IP1\'s accessor, PR pending) fills the last 30 %', () => {
     const base = new Map([[`40|early`, 40]]);
-    const bar = (holds: HoldLike[] | null) => (classify(src(MH, 'surgery', { history: surgery, values: { etco2: 46 }, base, holds })).list.find((r) => r.row.kind === 'auto') as LiveRow).progress;
-    expect(bar(null)).toBe(1); // a follower, or the host before IP1 merges: value against threshold only
-    expect(bar([{ transitionId: 'early', key: 'early', met: true, fraction: 0.25 }])).toBe(0.25);
-    // short of the threshold the hold has not begun: the value part alone, either way
-    const short = (holds: HoldLike[] | null) => (classify(src(MH, 'surgery', { history: surgery, values: { etco2: 42.5 }, base, holds })).list.find((r) => r.row.kind === 'auto') as LiveRow).progress;
-    expect(short(null)).toBe(0.5);
-    expect(short([{ transitionId: 'early', key: 'early', met: false, fraction: 0 }])).toBe(0.5);
+    const bar = (etco2: number, holds: HoldLike[] | null) => (classify(src(MH, 'surgery', { history: surgery, values: { etco2 }, base, holds })).list.find((r) => r.row.kind === 'auto') as LiveRow).progress as number;
+    // short of the threshold: the value part only, with or without the accessor
+    expect(bar(42.5, null)).toBeCloseTo(0.35);
+    expect(bar(42.5, [{ transitionId: 'early', key: 'early', met: false, fraction: 0 }])).toBeCloseTo(0.35);
+    // met: 70 % plus the hold's share of the last 30 %
+    expect(bar(46, [{ transitionId: 'early', key: 'early', met: true, fraction: 0 }])).toBeCloseTo(0.7);
+    expect(bar(46, [{ transitionId: 'early', key: 'early', met: true, fraction: 0.5 }])).toBeCloseTo(0.85);
+    expect(bar(46, [{ transitionId: 'early', key: 'early', met: true, fraction: 1 }])).toBeCloseTo(1);
+    // without the accessor (a follower, or the host before IP1 merges) a met rule's bar is full
+    expect(bar(46, null)).toBe(1);
+    // it only grows: value 0 → threshold → hold 0 → hold 1
+    const seq = [bar(40, [{ transitionId: 'early', key: 'early', met: false, fraction: 0 }]), bar(44, [{ transitionId: 'early', key: 'early', met: false, fraction: 0 }]),
+      bar(45.1, [{ transitionId: 'early', key: 'early', met: true, fraction: 0 }]), bar(45.1, [{ transitionId: 'early', key: 'early', met: true, fraction: 0.6 }]), bar(46, [{ transitionId: 'early', key: 'early', met: true, fraction: 1 }])];
+    expect(seq.every((x, i) => i === 0 || x >= (seq[i - 1] as number))).toBe(true);
   });
 
   it('fired: the A row that moved the case moves to Finished, faint amber, with its time', () => {

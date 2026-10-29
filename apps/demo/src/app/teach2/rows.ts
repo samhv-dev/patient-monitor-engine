@@ -165,6 +165,8 @@ const show = (v: string, x: number): string => {
   const s = vitalOf(v as StateVar);
   return s ? showVital(s, x) : String(Math.round(x * 10) / 10);
 };
+/** The share of an A row's bar the value fills before its rule is met; the hold fills the rest (answer 8). */
+export const VALUE_PART = 0.7;
 /** How near an A row is (answer 8): its value against the threshold, from where the stage began, times the runner's
  *  hold fraction on the host. */
 function autoBar(src: Source, visit: Visit, tr: Transition): { progress: number | null; right: string } {
@@ -180,12 +182,13 @@ function autoBar(src: Source, visit: Visit, tr: Transition): { progress: number 
   const v0 = src.base.get(key) as number;
   const met = (OP_MET[op] ?? (() => false))(v, thr);
   const valueFrac = met ? 1 : thr === v0 ? 0 : Math.max(0, Math.min(1, (v - v0) / (thr - v0)));
-  // TODO(IP1, PR pending): `src.holds` comes from IP1's `ScenarioDriver.vitalHolds()` once it merges; until then it is
-  // null and the bar is the value against the threshold only, as a follower's always is. While the value is short of
-  // the threshold the hold has not begun (the accessor's fraction is 0), so the hold factor counts only once it is met.
+  // One bar that only grows (the orchestrator's reading of answer 8): the value fills the first VALUE_PART of the width
+  // until the threshold is met, then the rule's hold fills the rest. TODO(IP1, PR pending): `src.holds` comes from IP1's
+  // `ScenarioDriver.vitalHolds()` once it merges; until then it is null and a met rule's bar is full (value against
+  // threshold only), as a follower's always is.
   const hold = src.holds?.find((x) => x.transitionId === tr.id && x.key === tr.id) ?? null;
-  const holdFrac = hold && hold.met ? hold.fraction : 1;
-  return { progress: valueFrac * holdFrac, right: src.paused ? 'frozen' : `${show(name, v)} → ${show(name, thr)}` };
+  const holdFrac = !met ? 0 : hold ? (hold.met ? hold.fraction : 0) : 1;
+  return { progress: met ? VALUE_PART + (1 - VALUE_PART) * holdFrac : VALUE_PART * valueFrac, right: src.paused ? 'frozen' : `${show(name, v)} → ${show(name, thr)}` };
 }
 
 // ---- the off-card actions ----
