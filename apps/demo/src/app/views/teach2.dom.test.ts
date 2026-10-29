@@ -37,22 +37,24 @@ afterEach(() => {
 });
 
 describe('Instructor v2 frame', () => {
-  it('lays out header, strip, STATE, ACTION, the sheets layer and the dock, and mounts the four stub slots', () => {
+  it('lays out header, strip, STATE, ACTION, the sheets layer and the dock, and mounts the four slots', () => {
     const { v } = rig();
     open = v;
     expect(v.id).toBe('teach2');
     expect([...v.el.children].map((c) => c.className)).toEqual(['sr-only', 'ip2-head', 'ip2-strip', 'ip2-state', 'ip2-action', 'ip2-sheets', 'ip2-dock']);
     expect(v.el.querySelector('.ip2-strip')?.getAttribute('data-stub')).toBe('IP5');
     expect(v.el.querySelector('.ip2-cue')?.getAttribute('data-stub')).toBe('IP5');
-    expect(v.el.querySelector('.ip2-action-body')?.getAttribute('data-stub')).toBe('IP6');
+    expect(v.el.querySelector('.ip2-action-body .ip2-list')).not.toBeNull(); // IP6 built the ACTION slot
     expect(v.el.querySelector('.ip2-sheets')?.getAttribute('data-stub')).toBe('IP7');
     expect(() => v.openSheet('devices')).not.toThrow(); // a no-op until IP7
     v.enter?.('');
   });
 
-  it('every stub has the fixed slot signature: mount(el, ctx) => { refresh, destroy }', () => {
+  it('every slot has the fixed slot signature: mount(el, ctx) => { refresh, destroy }', () => {
+    // the least ctx a slot reads: a Link with no scenario, and keyboard registries that do nothing
+    const ctx = { link: { ctl: { scenario: new ScenarioView(), state: null, hostPaused: false }, host: null, simT: 0, log: [] }, keys: { digit: () => undefined, letter: () => undefined, escape: () => () => undefined } } as unknown as Teach2Ctx;
     for (const m of [strip, cue, action, sheets] satisfies MountSlot[]) {
-      const s = m(document.createElement('div'), {} as Teach2Ctx);
+      const s = m(document.createElement('div'), ctx);
       expect(Object.keys(s).sort()).toEqual(['destroy', 'refresh']);
       expect(() => (s.refresh(), s.destroy())).not.toThrow();
     }
