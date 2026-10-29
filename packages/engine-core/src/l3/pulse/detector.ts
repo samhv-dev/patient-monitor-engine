@@ -12,14 +12,24 @@
 //    interval), the interval is searched for SSF peaks above the second threshold, half the first (PT's THRESHOLD I2 =
 //    0.5 × THRESHOLD I1); they are the candidate pulses, largest first. A pulse found splits the interval, and each part
 //    still over the limit is searched again, so two or more missed pulses in a row are recovered.
+//    A retrospective variant [ENG]: Pan & Tompkins search in real time, when the missed limit expires; here the search
+//    runs when the next foot is found, over the closed interval (lastFoot, f), so both feet are known and a candidate is
+//    judged by its whole shape, its run-off included. The cost is latency: the beat that ends at a recovered foot
+//    reaches the numerics at f, not at its own end. With one missed pulse f comes about 2 intervals after the last foot
+//    and Pan & Tompkins' trigger at 1.66, so it is about a third of a beat later than theirs, and at most one beat late
+//    in all (one 1-Hz update of a 6-beat average). Taking the candidates largest first and trying the next when one
+//    fails mixes the two sources: Pan & Tompkins take the largest peak; Li's delineator tests every candidate, in time
+//    order.
 // 3. Acceptance of a candidate by its shape (Li BN, Dong MC, Vai MI, "On an automatic delineator for arterial blood
 //    pressure waveforms", Biomed Signal Process Control 2010;5:76–81, and its published code delineator.m, rev. 2.0.5):
-//    a beat is an onset (where the upstroke starts: a zero crossing of the smoothed derivative, or the inflection when
-//    the upstroke rises out of the previous beat's run-off) paired with the systolic peak it rises to, after which the
-//    signal runs off; it is accepted only if its rise is more than 0.4 × and less than 2 × the amplitude of the beats
-//    around it, and an onset less than 3 × closeWin (288 ms) after the previous beat's systolic peak is not a pulse (the
-//    delineator's eye-closing: the dicrotic notch and wave of the previous beat lie there). The onset must also lie
-//    outside the eye-closing period of both feet, so each beat it makes is at least 250 ms long. Pan & Tompkins judge
+//    a beat is an onset (where the upstroke starts) paired with the systolic peak it rises to, after which the signal
+//    runs off; it is accepted only if its rise is more than 0.4 × and less than 2 × the amplitude of the beats around
+//    it (l.147–148), and an onset less than 3 × closeWin (288 ms) after the previous beat's systolic peak is not a pulse
+//    (l.164, the delineator's eye-closing: the dicrotic notch and wave of the previous beat lie there). Li's onset is a
+//    zero crossing of the smoothed derivative from − to +, refined to the signal's minimum before the peak; Li's
+//    systolic peak is a zero crossing from + to − (l.105, 129–158), so a rise still rising at the next foot has no peak
+//    and is not a pulse (the run-off rule). The onset must also lie outside the eye-closing period of both feet, so
+//    each beat it makes is at least 250 ms long. Pan & Tompkins judge
 //    a candidate close to the previous complex by its slope instead (their T-wave rule: kept if its maximal slope is at
 //    least half the previous complex's); applied inside Li's eye-closing it added 5 feet that are not beats on the
 //    diagnosis run set (research/ibp-missed-foot-diag, 2026-10-28), so Li's rule is kept.
@@ -29,15 +39,30 @@ export const DET_RATE = 125;
 const W = 16; // 128 ms at 125 Hz (Zong 2003: w = 128 ms)
 /** History kept for the foot search and the search-back: 3.2 s, the longest beat the numerics measure (HR ≥ 19). */
 const HIST = 400;
-const FOOT_N = 16; // the foot is the minimum of the signal in the 128 ms before the crossing
+/**
+ * The foot is the minimum of the signal in the 128 ms before the crossing [ENG: the SSF window w, which holds the
+ * upstroke that made the crossing; wabp.c searches EyeClosing/2 = 125 ms back, for the sample where the SSF stops
+ * rising rather than for the minimum].
+ */
+const FOOT_N = 16;
 /**
  * 250 ms eye-closing after a foot: no second pulse starts inside it. wabp.c (Zong's published code of the 2003 paper,
  * PhysioNet WFDB) uses EYE_CLS 0.25 s; the paper's text gives 300 ms. The code's value is kept: a 300 ms lock-out would
  * hide every pulse of a rhythm above 200/min [ENG: of the two published values, the one that keeps HR ≤ 240].
  */
 const REFRACTORY_N = 31;
-const PEAK_TRACK_N = 20; // SSF peak searched for 160 ms after the crossing
-/** The actual threshold is 60 % of the threshold base, the running SSF-peak average (Zong 2003, §2.1 decision rule). */
+/**
+ * A pulse's SSF peak is taken over the 160 ms after its crossing [ENG: longer than the 128 ms SSF window, so the whole
+ * upstroke is in it; wabp.c takes it over EyeClosing/2 = 125 ms].
+ */
+const PEAK_TRACK_N = 20;
+/**
+ * The actual threshold is 60 % of the threshold base, the running average of the SSF peaks (Zong 2003, §2.1 decision
+ * rule, as cited since this detector was written; the paper's text was not re-read for #164). Zong's published code
+ * differs: wabp.c sets T1 = Ta / 3, a third of its running SSF-peak average (Ta += (max − Ta) / 10). The paper's 60 %
+ * is kept because it is the detection path, which the search-back leaves as it is: changing it would move every
+ * arterial, PAP and pleth foot, a separate change that needs its own measurement.
+ */
 const THR_FRACTION = 0.6;
 /**
  * Re-arm: after a pulse the SSF must fall below half the threshold before the next crossing counts [ENG]. Neither
@@ -55,12 +80,18 @@ const DECAY = Math.exp(-1 / (2 * DET_RATE));
  * mean of 8, so that one merged interval does not lengthen it].
  */
 export const MISSED_LIMIT = 1.66;
+/**
+ * The recent interval is taken over the last 8 intervals (Pan & Tompkins 1985: RR AVERAGE1 and RR AVERAGE2 average the
+ * eight most recent beats); the recent amplitude of Li's test over the same 8 pulses [ENG].
+ */
 export const MISSED_AVG_N = 8;
 /**
  * The search-back threshold is half the detection threshold (Pan & Tompkins 1985: THRESHOLD I2 = 0.5 × THRESHOLD I1).
  * Two further Pan–Tompkins rules are not used. Halving the thresholds in an irregular rhythm (their eqs. 22–23),
  * applied to the search-back, recovered 2 more pulses than the 606 without it on the diagnosis run set
- * (research/ibp-missed-foot-diag, replay of the displayed ABP, 2026-10-28): the candidates it adds fail the shape test
+ * (research/ibp-missed-foot-diag, replay of the displayed ABP, 2026-10-28; measured on the first version of this
+ * search-back, 59b02974, before it searched both sides of a recovered pulse; this version recovers 613 without it):
+ * the candidates it adds fail the shape test
  * below. Feeding a recovered pulse's SSF peak into the threshold base (their eq. 16) would change the detection path,
  * which the search-back leaves as it is: it only adds feet.
  */
@@ -101,10 +132,6 @@ export interface PulseDetState {
   lastPeak?: number;
   /** Feet found and not yet returned (a search-back returns the recovered feet before the foot that triggered it). */
   pending?: number[];
-  /** Recovered feet among `pending`, in order. */
-  recovered?: number[];
-  /** The last foot returned that the search-back recovered (−1: none). */
-  sbFoot?: number;
 }
 
 /** `floor`: minimum SSF threshold in signal units (ABP 3 mmHg, PAP 1.5 mmHg, pleth 0.03 %) [ENG]. */
@@ -126,8 +153,6 @@ export function createPulseDet(floor: number, startIndex = 0): PulseDetState {
     amps: [],
     lastPeak: -1,
     pending: [],
-    recovered: [],
-    sbFoot: -1,
   };
 }
 
@@ -188,9 +213,7 @@ export function pulseStep(st: PulseDetState, x: number, searchBack = false): num
   } else if (st.above && st.ssf < REARM_FRACTION * thr) {
     st.above = false;
   }
-  const out = (st.pending as number[]).shift() ?? -1;
-  if (out >= 0 && st.recovered?.[0] === out) st.sbFoot = st.recovered.shift() as number;
-  return out;
+  return (st.pending as number[]).shift() ?? -1;
 }
 
 function pushRecent(a: number[], v: number): void {
@@ -234,8 +257,13 @@ function searchBackInterval(st: PulseDetState, f: number, n: number, thr: number
     for (const k of cands) {
       // The upstroke that makes this SSF peak lies in the SSF window (k − W, k]: its steepest point; Li's systolic
       // peak, where the signal stops rising after it; Li's onset, back from the steepest point to where the upstroke
-      // starts — the zero crossing of the derivative (a local minimum of the signal) or, when the upstroke rises out
-      // of the previous beat's run-off without one, the inflection point (the smallest slope) between them
+      // starts: the zero crossing of the derivative (a local minimum of the signal), refined to the minimum within
+      // ±2 samples (Li l.131–132). When the derivative has no zero crossing there, the onset is the inflection point,
+      // the smallest slope between the previous foot and the steepest point [ENG: not in Li's delineator.m, whose
+      // onsets are zero crossings only. A missed pulse can start while the signal is still rising (on the previous
+      // beat's dicrotic wave, or before its run-off has turned), so there is no zero crossing and Li's code would find no onset; the new upstroke starts
+      // where the slope stops falling and rises again. On the diagnosis run set's replay, 57 of the 620 recovered
+      // feet have this onset; without it 49 fewer pulses are found (8 others take their place)]
       let s0 = k;
       for (let j = k - W + 1; j <= k; j++) if (j > p && D(j) > D(s0)) s0 = j;
       let pk = s0;
@@ -244,9 +272,9 @@ function searchBackInterval(st: PulseDetState, f: number, n: number, thr: number
       while (a - 1 > p && D(a) > 0 && D(a - 1) < D(a)) a--;
       if (D(a) <= 0) for (let j = a - 2; j <= a + 2; j++) if (j > p && X(j) < X(a)) a = j;
       const rise = X(pk) - X(a);
-      // Accepted: the onset in its window, a systolic peak the signal runs off from before the next foot (within the
-      // SSF peak's 160 ms tracking window of the steepest point), a rise consistent with the beats around it
-      if (a < lo || a > hi || pk + 1 >= e || pk - s0 > PEAK_TRACK_N) continue;
+      // Accepted: the onset in its window, a systolic peak the signal runs off from before the next foot (Li's peak),
+      // a rise consistent with the beats around it (Li's 0.4–2 ×)
+      if (a < lo || a > hi || pk + 1 >= e) continue;
       if (!(rise > AMP_FRACTION * ampRef && rise < AMP_MAX_FRACTION * ampRef)) continue;
       search(p, pPeak, a);
       found.push({ a, rise });
@@ -257,14 +285,17 @@ function searchBackInterval(st: PulseDetState, f: number, n: number, thr: number
   search(p0, st.lastPeak as number, f);
   for (const r of found) {
     (st.pending as number[]).push(r.a);
-    (st.recovered ??= []).push(r.a);
     pushRecent(rr, r.a - st.lastFoot);
     pushRecent(amps, r.rise);
     st.lastFoot = r.a;
   }
 }
 
-/** A detector restored from an older snapshot (32-sample history, no search-back state) is brought up to this one. */
+/**
+ * A detector restored from an older snapshot (32-sample history, no search-back state) is brought up to this one. It is
+ * reachable: the snapshot key is version + build, and every unreleased build is `<version>+dev`, so a dev snapshot of
+ * main restores into this build.
+ */
 function upgrade(st: PulseDetState): void {
   const old = st.hist;
   st.hist = new Array<number>(HIST).fill(0);
@@ -274,8 +305,6 @@ function upgrade(st: PulseDetState): void {
   st.amps ??= [];
   st.lastPeak ??= -1;
   st.pending ??= [];
-  st.recovered ??= [];
-  st.sbFoot ??= -1;
 }
 
 /** Pulse rate from foot times (s): 60 / mean of the last ≤ 8 intervals that are 0.2–3 s long. */

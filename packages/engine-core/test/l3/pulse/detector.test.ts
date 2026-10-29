@@ -46,17 +46,21 @@ function pulse(u: number, dicrotic: number): number {
 }
 type B = { t: number; a: number };
 const art = (beats: readonly B[], dicrotic = 0.4) => (t: number) => 60 + beats.reduce((s, b) => s + b.a * pulse(t - b.t, dicrotic), 0);
-function feetOf(x: (t: number) => number, seconds: number, searchBack = true): { feet: number[]; sb: number[] } {
+function feetRun(x: (t: number) => number, seconds: number, searchBack: boolean): number[] {
   const st = createPulseDet(3);
   const feet: number[] = [];
-  const sb: number[] = [];
   for (let n = 0; n < 125 * seconds; n++) {
     const f = pulseStep(st, x(n / 125), searchBack);
-    if (f < 0) continue;
-    feet.push(f / 125);
-    if (st.sbFoot === f) sb.push(f / 125);
+    if (f >= 0) feet.push(f / 125);
   }
-  return { feet, sb };
+  return feet;
+}
+/** The feet with or without the search-back; `sb`: the feet the search-back adds to the detection path's. */
+function feetOf(x: (t: number) => number, seconds: number, searchBack = true): { feet: number[]; sb: number[] } {
+  const feet = feetRun(x, seconds, searchBack);
+  if (!searchBack) return { feet, sb: [] };
+  const off = feetRun(x, seconds, false);
+  return { feet, sb: feet.filter((f) => !off.includes(f)) };
 }
 /** Every foot lies at a beat's onset (± 40 ms): the detector invents no pulse. */
 const noInvented = (feet: readonly number[], beats: readonly B[]) => feet.filter((f) => !beats.some((b) => Math.abs(b.t - f) <= 0.04));
@@ -116,6 +120,34 @@ describe('search-back for a missed pulse (Pan & Tompkins 1985) with Li 2010\'s s
     expect(sb.length).toBeGreaterThan(0);
   });
 
+  it('Li\'s amplitude test: a wiggle of 0.35 × the pulses in a long diastole is not a pulse', () => {
+    // 0.6 s beats of 40 mmHg, then a 1.6 s pause (over 166 % of 0.6 s) with a 14 mmHg wiggle 0.8 s into it: outside
+    // both eye-closings, its SSF peak between the search threshold and the detection threshold, its rise under
+    // 0.4 × the recent rises. Only the 0.4 × bound rejects it.
+    const beats: B[] = [];
+    for (let t = 0.5; t < 6.6; t += 0.6) beats.push({ t, a: 40 });
+    for (let t = 8.1; t < 12; t += 0.6) beats.push({ t, a: 40 });
+    const x = art([...beats, { t: 7.3, a: 14 }]);
+    expect(feetOf(x, 12, false).feet.filter((f) => f > 6.6 && f < 8)).toEqual([]); // the detection path skips it
+    const { feet, sb } = feetOf(x, 12);
+    expect(sb).toEqual([]);
+    expect(noInvented(feet, beats)).toEqual([]);
+  });
+
+  it('Li\'s systolic peak: a rise still rising at the next foot, with no run-off, is not a pulse', () => {
+    // The same pause; 0.8 s into it the line steps up 18 mmHg (time constant 30 ms) and keeps rising, 10 mmHg/s, until
+    // the next beat, as a slow flush or a baseline shift would: its derivative never turns from + to − before the next
+    // foot. Its onset, SSF peak and rise pass every other test; only the run-off rule rejects it.
+    const beats: B[] = [];
+    for (let t = 0.5; t < 6.6; t += 0.6) beats.push({ t, a: 40 });
+    for (let t = 8.1; t < 12; t += 0.6) beats.push({ t, a: 40 });
+    const step = (t: number) => (t <= 7.3 ? 0 : 18 * (1 - Math.exp(-(Math.min(t, 8.1) - 7.3) / 0.03)) + 10 * (Math.min(t, 8.1) - 7.3));
+    const a = art(beats);
+    const x = (t: number) => a(t) + step(t);
+    expect(feetOf(x, 12, false).feet.filter((f) => f > 6.6 && f < 7.9)).toEqual([]); // the detection path skips it
+    expect(feetOf(x, 12).sb).toEqual([]);
+  });
+
   it('post-ROSC: after 20 s of arrest the first slow beats with large dicrotic waves are not split', () => {
     const beats: B[] = [];
     for (let t = 0.5; t < 10; t += 0.5) beats.push({ t, a: 35 });
@@ -127,6 +159,7 @@ describe('search-back for a missed pulse (Pan & Tompkins 1985) with Li 2010\'s s
   });
 
   it('the pleth path is unchanged: without the search-back (pleth, PAP) a signal gives the same feet, less the recovered ones', () => {
+    // The search-back only adds feet: every foot found without it is found with it, at the same sample
     const rr = [0.62, 0.31, 0.85, 0.44, 0.29, 0.72, 0.38, 0.95, 0.33, 0.52];
     const af: B[] = [];
     let t = 0.5;
@@ -138,11 +171,10 @@ describe('search-back for a missed pulse (Pan & Tompkins 1985) with Li 2010\'s s
     const small: B[] = [];
     for (let u = 0.5; u < 12; u += 0.6) small.push({ t: u, a: Math.abs(u - 6.5) < 0.01 ? 20 : 40 });
     for (const [x, seconds] of [[art(af), t], [art(small), 12]] as const) {
-      const on = feetOf(x, seconds);
-      const off = feetOf(x, seconds, false);
-      expect(off.sb).toEqual([]);
-      expect(off.feet).toEqual(on.feet.filter((f) => !on.sb.includes(f)));
-      expect(on.sb.length).toBeGreaterThan(0);
+      const on = feetRun(x, seconds, true);
+      const off = feetRun(x, seconds, false);
+      expect(off.filter((f) => !on.includes(f))).toEqual([]);
+      expect(on.length).toBeGreaterThan(off.length);
     }
   });
 });
@@ -176,5 +208,45 @@ describe('the diagnosis\'s genuine long diastoles stay one interval with the sea
       if (!kept || inside.length) split.push(`${c.src} (${c.p}-${c.f}): ${inside.join(',')}`);
     }
     expect(split).toEqual([]);
+  });
+});
+
+/**
+ * The IABP rig (circ-iabp.test.ts, MANUAL cardiogenic-shock, IABP 1:1; displayed ABP of two windows, with the times the
+ * aortic valve opened and the balloon inflated). The detection path counts each inflation's augmentation wave as a
+ * pulse, so a cycle carries two feet, the ejection's and the augmentation's, and at 464.04 and 564.14 s it skipped the
+ * ejection between two augmentation feet. The two feet the search-back adds there were first scored "not a beat":
+ * the engine's beat records of that rig open the valve at the record's start (its ejection starts ≈ 400 ms after R and
+ * spills into the next record), so the expected foot was misplaced. Against the valve itself they are the ejections:
+ * 72 and 64 ms after the valve opened, as the detection path's ejection feet are (0–72 ms in this run). Without the
+ * search-back neither is found.
+ */
+describe('the IABP rig: the search-back recovers an ejection the detection path skipped, never a balloon wave', () => {
+  const fx = JSON.parse(readFileSync(resolve(import.meta.dirname, 'fixtures/iabp-rig.json'), 'utf8')) as {
+    windows: Array<{ t0: number; d: number[]; valveOpen: number[]; inflate: number[] }>;
+  };
+  const feet = (w: (typeof fx.windows)[number], searchBack: boolean): number[] => {
+    const wn = createWaveNumerics(3);
+    const out: number[] = [];
+    let x = 0;
+    for (let k = 0; k < w.d.length; k++) {
+      x += w.d[k] as number;
+      if (numericsStep(wn, k, x / 1000, false, searchBack)) out.push(Math.round((w.t0 + wn.prevFoot / 125) * 1000) / 1000);
+    }
+    return out;
+  };
+  it('each recovered foot lies 0–80 ms after a valve opening; the ejections at 464.04 and 564.14 s are found', () => {
+    const recovered: number[] = [];
+    for (const w of fx.windows) {
+      const on = feet(w, true);
+      const off = feet(w, false);
+      expect(off.filter((f) => !on.includes(f))).toEqual([]);
+      for (const f of on.filter((g) => !off.includes(g))) {
+        recovered.push(f);
+        expect(w.valveOpen.some((o) => f - o >= 0 && f - o <= 0.08)).toBe(true);
+        expect(w.inflate.some((i) => f - i >= 0 && f - i <= 0.15)).toBe(false);
+      }
+    }
+    expect(recovered).toEqual([464.04, 564.136]);
   });
 });
