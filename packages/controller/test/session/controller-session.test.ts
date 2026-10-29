@@ -1,8 +1,11 @@
 // ControllerSession against a hand-driven fake host on the in-process hub.
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ControllerSession, describe as describeCmd } from '../../src/session/controller-session.ts';
 import { createInProcessHub } from '../../src/transport/in-process.ts';
 import { createStamper, type WireMessage } from '../../src/protocol.ts';
+import { RELAY_CLOSE, RELAY_RETRY_CLOSE } from '../../src/transport/relay-frames.ts';
+import { createWebSocketTransport } from '../../src/transport/websocket.ts';
+import { FakeWebSocket } from '../fakes/fake-websocket.ts';
 import { TransportBase } from '../../src/transport/base.ts';
 import { StageBuffer } from '../../src/panel/staging.ts';
 import { collect, sleep, waitFor } from '../helpers.ts';
@@ -164,5 +167,201 @@ describe('ControllerSession', () => {
   it('describes commands in one line for the log', () => {
     expect(describeCmd({ id: 'x', issuedBy: 'y', type: 'setTarget', variable: 'hr', value: 120, ramp: { durationS: 30, curve: 'sigmoid' } })).toBe('hr → 120 over 30 s (sigmoid)');
     expect(describeCmd({ id: 'x', issuedBy: 'y', type: 'time', action: 'scale', value: 2 })).toBe('time scale 2');
+  });
+});
+
+// Plan instructor-peer-role.md P5: the instructor's session on the phone side.
+type Cmd = Extract<WireMessage, { kind: 'command' }>;
+type Hello = Extract<WireMessage, { kind: 'hello' }>;
+const commands = (t: ManualTransport) => t.sent.filter((m): m is Cmd => m.kind === 'command');
+const hellos = (t: ManualTransport) => t.sent.filter((m): m is Hello => m.kind === 'hello');
+const PIN = '4729';
+const RESTARTED = "Not given: the instructor's computer restarted. Press again if it is still needed.";
+const NOT_CONFIRMED = "Not confirmed: no answer from the instructor's computer. Check the Finished list before pressing again.";
+
+describe('ControllerSession as the instructor (plan P5)', () => {
+  it("with role 'instructor' and a pin, every open says the instructor hello with the PIN", () => {
+    const t = new ManualTransport();
+    const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-a', role: 'instructor', pin: () => PIN });
+    t.set('open');
+    t.set('connecting');
+    t.set('open');
+    expect(hellos(t)).toHaveLength(2);
+    for (const h of hellos(t)) expect(h).toMatchObject({ kind: 'hello', role: 'instructor', pin: PIN });
+    s.close();
+  });
+
+  it('access goes pending → granted → revoked, or pending → denied, with its reason, and onChange fires', () => {
+    const t = new ManualTransport();
+    const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-b', role: 'instructor', pin: () => PIN });
+    t.set('open');
+    expect(s.access).toEqual({ state: 'pending' });
+    let changes = 0;
+    s.onChange(() => changes++);
+    t.inject(host({ kind: 'grant', to: 'someone-else.1', granted: true })); // another socket's grant
+    expect(s.access).toEqual({ state: 'pending' });
+    t.inject(host({ kind: 'grant', to: 'ins-b.1', granted: true }));
+    expect(s.access).toEqual({ state: 'granted' });
+    expect(changes).toBeGreaterThan(0);
+    const before = changes;
+    t.inject(host({ kind: 'grant', to: 'ins-b.1', granted: false, reason: 'the PIN was changed' }));
+    expect(s.access).toEqual({ state: 'revoked', reason: 'the PIN was changed' });
+    expect(changes).toBeGreaterThan(before);
+    s.close();
+
+    const t2 = new ManualTransport();
+    const d = new ControllerSession({ session: S, transport: t2, peerId: 'ins-c', role: 'instructor', pin: () => '1111' });
+    t2.set('open');
+    let dChanges = 0;
+    d.onChange(() => dChanges++);
+    t2.inject(host({ kind: 'grant', to: 'ins-c.1', granted: false, reason: 'wrong PIN' }));
+    expect(d.access).toEqual({ state: 'denied', reason: 'wrong PIN' });
+    expect(dChanges).toBeGreaterThan(0);
+    d.close();
+  });
+
+  it('commands are held, not sent, until granted, then go in order', async () => {
+    const t = new ManualTransport();
+    const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-d', role: 'instructor', pin: () => PIN, resendMs: 10, answerTimeoutMs: 30 });
+    t.set('open');
+    const p1 = s.send({ type: 'setTarget', variable: 'hr', value: 90 });
+    const p2 = s.send({ type: 'setRhythm', rhythm: 'afib' });
+    await sleep(60); // past the resend and the answer timeout: a held command is neither sent nor timed out
+    expect(commands(t)).toEqual([]);
+    expect(s.pendingCount).toBe(2);
+    t.inject(host({ kind: 'grant', to: 'ins-d.1', granted: true }));
+    expect(commands(t).map((c) => c.body.id)).toEqual(['ins-d-1', 'ins-d-2']);
+    t.inject(host({ kind: 'ack', commandId: 'ins-d-1', accepted: true, tick: 5 }));
+    t.inject(host({ kind: 'ack', commandId: 'ins-d-2', accepted: true, tick: 5 }));
+    expect((await p1).accepted).toBe(true);
+    expect((await p2).accepted).toBe(true);
+    s.close();
+  });
+
+  it('`from` is <peerId>.<n> and changes on every open, while command ids keep <peerId>-<n>', () => {
+    const t = new ManualTransport();
+    const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-e', role: 'instructor', pin: () => PIN });
+    t.set('open');
+    expect(hellos(t)[0]?.from).toBe('ins-e.1');
+    expect(s.from).toBe('ins-e.1');
+    s.send({ type: 'setTarget', variable: 'hr', value: 90 }).catch(() => undefined);
+    t.inject(host({ kind: 'grant', to: 'ins-e.1', granted: true }));
+    expect(commands(t).map((c) => [c.from, c.body.id])).toEqual([['ins-e.1', 'ins-e-1']]);
+    t.set('connecting');
+    t.set('open');
+    expect(hellos(t)[1]?.from).toBe('ins-e.2');
+    expect(hellos(t)[1]?.seq).toBe(1); // a fresh sender: its sequence starts again
+    expect(s.access).toEqual({ state: 'pending' }); // a grant never passes from one socket to another
+    expect(commands(t)).toHaveLength(1); // held again until the new socket is granted
+    t.inject(host({ kind: 'grant', to: 'ins-e.1', granted: true })); // the old socket's grant: not ours any more
+    expect(s.access).toEqual({ state: 'pending' });
+    t.inject(host({ kind: 'grant', to: 'ins-e.2', granted: true }));
+    s.send({ type: 'setRhythm', rhythm: 'afib' }).catch(() => undefined);
+    expect(commands(t).map((c) => [c.from, c.body.id])).toEqual([['ins-e.1', 'ins-e-1'], ['ins-e.2', 'ins-e-1'], ['ins-e.2', 'ins-e-2']]);
+    s.close();
+  });
+
+  it('a host hello from a NEW host id answers every pending command locally; the same host id re-saying hello still re-sends', async () => {
+    const t = new ManualTransport();
+    const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-f', role: 'instructor', pin: () => PIN });
+    t.set('open');
+    t.inject(host({ kind: 'hello', role: 'host' }));
+    t.inject(host({ kind: 'grant', to: 'ins-f.1', granted: true }));
+    const p = s.send({ type: 'applyEvent', event: { kind: 'drug', drugId: 'dantrolene', dose: 200, unit: 'mg', route: 'iv' } });
+    expect(commands(t)).toHaveLength(1);
+    t.inject(host({ kind: 'hello', role: 'host' })); // a restore: the same host says hello again
+    expect(commands(t)).toHaveLength(2);
+    expect(s.pendingCount).toBe(1);
+    const reloaded = createStamper(S, 'host-2');
+    t.inject(reloaded({ kind: 'hello', role: 'host' })); // the laptop reloaded: a new host id
+    expect(await p).toMatchObject({ commandId: 'ins-f-1', accepted: false, reason: RESTARTED });
+    expect(s.pendingCount).toBe(0);
+    expect(commands(t)).toHaveLength(2); // never given to the reloaded case
+    expect(s.access).toEqual({ state: 'pending' }); // …and it signs in again by itself, PIN and all
+    expect(hellos(t).at(-1)).toMatchObject({ role: 'instructor', pin: PIN, from: 'ins-f.1' });
+    s.close();
+  });
+
+  it("the timeout's reason reads 'not confirmed' for the instructor only; a controller's is unchanged", async () => {
+    const t = new ManualTransport();
+    const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-g', role: 'instructor', pin: () => PIN, resendMs: 10, answerTimeoutMs: 40 });
+    t.set('open');
+    t.inject(host({ kind: 'grant', to: 'ins-g.1', granted: true }));
+    expect(await s.send({ type: 'time', action: 'pause' })).toMatchObject({ accepted: false, reason: NOT_CONFIRMED });
+    s.close();
+    const t2 = new ManualTransport();
+    const c = new ControllerSession({ session: S, transport: t2, peerId: 'ctl-g', resendMs: 10, answerTimeoutMs: 40 });
+    t2.set('open');
+    expect(await c.send({ type: 'time', action: 'pause' })).toMatchObject({ accepted: false, reason: 'no answer from the host in 0 s' });
+    c.close();
+  });
+
+  describe('over the relay socket', () => {
+    const opts = { url: 'ws://relay.test/', WebSocketImpl: FakeWebSocket, backoff: { baseMs: 100, maxMs: 1000, jitter: 0 }, livenessMs: 60_000 };
+    const sent = (ws: FakeWebSocket) => ws.sent.map((d) => JSON.parse(d) as WireMessage);
+    beforeEach(() => {
+      vi.useFakeTimers();
+      FakeWebSocket.all = [];
+    });
+    afterEach(() => vi.useRealTimers());
+
+    it('a close with 4010 (id taken) is retried on the next connection with the next `from`', () => {
+      const t = createWebSocketTransport(opts);
+      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-w', role: 'instructor', pin: () => PIN });
+      FakeWebSocket.last.open();
+      expect(sent(FakeWebSocket.last)[0]).toMatchObject({ kind: 'hello', role: 'instructor', pin: PIN, from: 'ins-w.1' });
+      FakeWebSocket.last.close(RELAY_RETRY_CLOSE.idTaken, 'peer id ins-w.1 is taken');
+      vi.advanceTimersByTime(100);
+      expect(FakeWebSocket.all).toHaveLength(2);
+      FakeWebSocket.last.open();
+      expect(sent(FakeWebSocket.last)[0]).toMatchObject({ kind: 'hello', role: 'instructor', pin: PIN, from: 'ins-w.2' });
+      expect(s.access).toEqual({ state: 'pending' });
+      s.close();
+      t.close();
+    });
+
+    it('a close with denied (4013) sets access denied with the reason and stops reconnecting', () => {
+      const t = createWebSocketTransport(opts);
+      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-x', role: 'instructor', pin: () => '1111' });
+      let changes = 0;
+      s.onChange(() => changes++);
+      FakeWebSocket.last.open();
+      const before = changes;
+      FakeWebSocket.last.receive({ relay: 'error', code: 'denied', message: 'the PIN is wrong' });
+      FakeWebSocket.last.close(RELAY_CLOSE.denied, 'the PIN is wrong');
+      expect(s.access).toEqual({ state: 'denied', reason: 'the PIN is wrong', code: 'denied' });
+      expect(changes).toBeGreaterThan(before);
+      vi.advanceTimersByTime(10_000);
+      expect(FakeWebSocket.all).toHaveLength(1);
+      expect(t.status).toBe('error');
+      s.close();
+      t.close();
+    });
+
+    it("a revoked instructor stays revoked when the relay's denied close follows the host's grant", () => {
+      const t = createWebSocketTransport(opts);
+      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-y', role: 'instructor', pin: () => PIN });
+      FakeWebSocket.last.open();
+      FakeWebSocket.last.receive(host({ kind: 'grant', to: 'ins-y.1', granted: true }));
+      FakeWebSocket.last.receive(host({ kind: 'grant', to: 'ins-y.1', granted: false, reason: 'taken over by another phone' }));
+      FakeWebSocket.last.receive({ relay: 'error', code: 'denied', message: 'taken over by another phone' });
+      FakeWebSocket.last.close(RELAY_CLOSE.denied, 'taken over by another phone');
+      expect(s.access).toEqual({ state: 'revoked', reason: 'taken over by another phone' });
+      s.close();
+      t.close();
+    });
+
+    it('a close with tooManyTries (4028) sets a reason and stops', () => {
+      const t = createWebSocketTransport(opts);
+      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-z', role: 'instructor', pin: () => '1111' });
+      FakeWebSocket.last.open();
+      FakeWebSocket.last.receive({ relay: 'error', code: 'too-many-tries', message: 'too many wrong PINs: wait a minute' });
+      FakeWebSocket.last.close(RELAY_CLOSE.tooManyTries, 'too many wrong PINs: wait a minute');
+      expect(s.access).toEqual({ state: 'denied', reason: 'too many wrong PINs: wait a minute', code: 'too-many-tries' });
+      vi.advanceTimersByTime(10_000);
+      expect(FakeWebSocket.all).toHaveLength(1);
+      s.close();
+      t.close();
+    });
   });
 });
