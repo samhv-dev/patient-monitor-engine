@@ -265,6 +265,10 @@ retries filled the hour: run 39980675959 hit the 60-min timeout with seven of th
 | `vent-view-restore.e2e.ts:42` | after "Return here" on the Ventilator view the replayed minute matches the first one | Chromium | 2 |  |  | capacity | 38377803966 / 39065636299 | **tagged known-flaky** (orchestrator ruling 2026-10-18): 2 retry-passes after FX-1, main 38377803966 and 39065636299; replayed minute differed (SpO2 |Δ| 5 > 3). Skipped on CI WebKit (above) |
 | `vent-view-speed.e2e.ts:14` | the Ventilator view takes a speed change made after it opened | WebKit | 6 |  |  | unknown | 38114676150 / 38227924181 | none since FX-1 merged (run 38240122427) |
 
+## The rc.4 tag's release date
+
+The tag commit `0c4b396f` (`v1.0.0-rc.4`, pre-release) carries **2026-10-30** in `CHANGELOG.md` and `CITATION.cff`: the bump PR (#166) was written for a planned 30 October tag, and the tag was cut a day early, on 2026-10-29 (11:36 UTC). Main's copies are corrected to 2026-10-29 by the rc.4 docs PR; the tag's text is not rewritten.
+
 ## Retry-only passes on the rc.4 tag commit (2026-10-29)
 
 Main **0c4b396f**, the `v1.0.0-rc.4` (pre-release) tag commit, push run **40860980902**: every job passed. These tests

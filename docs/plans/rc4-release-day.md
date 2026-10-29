@@ -19,7 +19,8 @@ report (`scratch/plans-backup/rc3-release-day-run-2026-10-23.md`), `scratch/rc3-
 >   success). After it, as ruled: #165 (docs), #167 (the MH card's story text and its CHANGELOG line), #166 (the bump),
 >   #172 (the MH-only talk: run sheet and the kit-round talk test). Step 3: #128 (24 October) and #172 carried the
 >   tooling; no separate `test-kitround-rc4` PR. Step 4: the bump PR **#166** merged 2026-10-29 08:17 (CHANGELOG and
->   `CITATION.cff` dated **2026-10-30**, the tag day the ruling then named, not "2026-11-01"). **Step 5, the prep run on
+>   `CITATION.cff` dated **2026-10-30**, the tag day the ruling then named, not "2026-11-01"; main's copies corrected to
+>   2026-10-29 by Task 9, the tag's text unchanged). **Step 5, the prep run on
 >   `FREEZE_SHA`: not run.** The expected values were instead #172's talk run (kit a88f95a7) and the 28 October run on
 >   the owner's card rulings (kit 2c341aa3). Step 6: dry run **40865772794** on 0c4b396f, 11:29–11:33, success (9 files,
 >   7 × OK, the rc.4 notes and banner, no rc.4 release yet).

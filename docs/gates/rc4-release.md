@@ -40,7 +40,7 @@ validated.*
   `1.0.0-rc.4` / `"2026-10-30"`; the notes (`scratch/rc4-release/NOTES-preview.md`) open with the pre-release paragraph
   and carry both required phrases (`not clinically validated`, `untested on Windows at this release`: 2 lines), no
   named future version; README names 1.0.0-rc.4. **The dates say 30 October; the tag is 29 October** (below,
-  "Deviations").
+  "Deviations": corrected on main in this PR).
 - **RELEASE.md item 2** (physiology since rc.3: E117, E131, E133): the sentence is in
   `docs/guides/validation-summary.md` ("This report is older than the 1.0.0-rc.4 pre-release tree: it predates the
   physiology changes merged since 1.0.0-rc.1, among them E117 …"). No regenerated report.
@@ -179,8 +179,9 @@ model pages load GitHub `main`, not the tag.
 2. **The prep run (Task 0 Step 5) was not run**; Task 4's expected values were #172's talk run and the 28 October A4
    run.
 3. **`TAG_SHA` is main after #172**, two merges after the bump (#166, then #172), not main right after the bump.
-4. **CHANGELOG and `CITATION.cff` say 2026-10-30; the tag is 2026-10-29.** Not changed by this note: the orchestrator
-   decides (Task 9 Step 5 changes both together, `release-versions` stays 4/4).
+4. **CHANGELOG and `CITATION.cff` on the tag say 2026-10-30; the tag is 2026-10-29.** By the orchestrator's ruling
+   main's copies are corrected to 2026-10-29 in this PR, both together (`release-versions` 4/4); the tag's text is not
+   rewritten (`docs/guides/known-deviations.md`, "The rc.4 tag's release date").
 5. **The Persian handouts** were rendered with PR #161's unreviewed table, uncommitted; the tag's table left 11 / 15
    strings in English.
 6. **The Pages serve check** ran from `wt-rc4-tag` (`wt-rc2-prep` gone; R4-Q8).
