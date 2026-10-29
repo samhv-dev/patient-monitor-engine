@@ -16,7 +16,9 @@ the public API is what the packages export (see the API reference), the `pme-sce
   its plan `docs/plans/instructor-panel-v2-plan.md`: its own session bar (the clock pill pauses and resumes, the speed
   box, the Fast forward fan, disabled while paused); the stage strip (hop states folded in; a past stage returns to
   its start through a hidden mark the host places at every stage entry, behind one confirm; a future stage jumps
-  behind today's confirm; the next two steps from the current stage shown, branches as "or", the rest folded);
+  behind today's confirm; exactly five chips with full names, the two stages before the current one, the current one
+  and the next two ordered from it, branches as "or", the rest behind "‹ n earlier" and "n later ›" arrows that page
+  the window, "back to now" recentring it);
   STATE (the cue box: the stage, the time in it, how it was entered, the card's `notes` as the Say line, the values
   held; the learners' monitor at a reduced size, Swap to full size); ACTION (one list: the card's steps numbered 1–9
   in the card's order, the judged objectives, the automatic rows with how near their rule is; a step whose condition

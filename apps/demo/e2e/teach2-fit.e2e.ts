@@ -1,7 +1,7 @@
 // Instructor v2 (E127; plan IP9 step 3; design §2 and §8): at the laptop's 1440 × 900 window, at the MH card's second-dose
 // moment (normoventilated), its treatment fan-out (treating) and the haemorrhage card's PEA, the view fits without a
 // scroll (the page, the view and the ACTION column), every open step of the stage is a row of ACTION, and no row is
-// disabled. The monitor pane in STATE is measured, and the Saadat-like tiles in it are checked for text that overlaps,
+// disabled; the stage strip fits with its folds and cuts no name (IP9 ruling 2). The monitor pane in STATE is measured, and the Saadat-like tiles in it are checked for text that overlaps,
 // wraps or leaves its tile (plan R9: they have collided at smaller panes before, and no renderer change is allowed); the
 // pane's screenshot is written to TEACH2_SHOTS (default: this test's output folder) for the owner's look.
 import { mkdirSync } from 'node:fs';
@@ -72,7 +72,11 @@ function measure(page: Page) {
     const rows = [...document.querySelectorAll<HTMLElement>('.ip2-action .ip2-rows:not(.ip2-finished-list) .ip2-row')];
     const stage = (document.querySelector('.stage > .monitor-host') as HTMLElement).getBoundingClientRect();
     const se = document.scrollingElement as HTMLElement;
+    const strip = document.querySelector('.ip2-strip') as HTMLElement;
     return {
+      strip: [strip.scrollWidth, strip.clientWidth],
+      chips: [...strip.querySelectorAll('.ip2-chips > .ip2-chip, .ip2-chips > .ip2-or')].map((c) => c.textContent),
+      cut: [...strip.querySelectorAll<HTMLElement>('.ip2-chip-name')].filter((n) => n.scrollWidth > n.clientWidth + 0.5).length,
       state: sv.stateId,
       page: [se.scrollHeight, se.clientHeight],
       view: [view.scrollHeight, view.clientHeight],
@@ -122,8 +126,28 @@ for (const [card, target] of [['showcase-mh', 'normoventilated'], ['showcase-mh'
       expect(m.action[0], `${when}: ACTION scrolls`).toBeLessThanOrEqual(m.action[1] as number);
       expect(m.stepRows, `${when}: every open step of the stage is a row`).toBe(m.cardSteps);
       expect(m.disabled, `${when}: a row is disabled`).toBe(0);
+      // IP9 ruling 2: the strip fits with its folds, and no stage name is cut
+      expect(m.strip[0], `${when}: the strip scrolls sideways`).toBeLessThanOrEqual(m.strip[1] as number);
+      expect(m.cut, `${when}: a stage name is cut`).toBe(0);
     }
     expect(running.pane.w).toBeGreaterThan(400);
     expect(tiles.texts).toBeGreaterThan(0);
+  });
+}
+
+// The owner's ruling for IP9: five chips with full names, arrows at each end. The widest windows of the two cards (their
+// starts, where the names are longest) fit the strip at 1440 × 900 without a cut or a sideways scroll.
+for (const [card, target] of [['showcase-mh', 'awake'], ['showcase-haemorrhage', 'bleeding']] as const) {
+  test(`the stage strip at ${card.replace('showcase-', '')} ${target}: five chips with full names fit 1440 × 900`, async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openApp(page, base, `?scenario=${card}#/teach2`, { warmMs: 1500 });
+    await page.waitForFunction((id) => (window as unknown as W).__pmeApp.link.ctl.scenario.stateId === id, target, { timeout: 30_000 });
+    await page.waitForTimeout(1200);
+    const m = await measure(page);
+    console.log(`teach2-strip ${card} ${target} ${JSON.stringify({ strip: m.strip, cut: m.cut, chips: m.chips })}`);
+    expect(m.chips.filter((c) => c !== 'or' && !/earlier$|later ›$/.test(c ?? ''))).toHaveLength(5);
+    expect(m.strip[0]).toBeLessThanOrEqual(m.strip[1] as number);
+    expect(m.cut).toBe(0);
   });
 }
