@@ -16,6 +16,7 @@ import { clock, h, setText } from '../ui.ts';
 import { showVital, vitalLabel, vitalOf } from '../vitals.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { stageEntries, stageNames, type StageEntry } from './strip.ts';
+import { historyOf } from './course.ts';
 
 /** The host's tick (s): a state row of the record and the scenario event it came from lie within one. */
 const TICK_S = 0.02;
@@ -85,7 +86,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       say.hidden = true;
       return;
     }
-    const entry = stageEntries(doc, sv.history, sv, link.simT).filter((e) => e.stage === stage.id).at(-1) ?? null;
+    const entry = stageEntries(doc, historyOf(link), sv, link.simT).filter((e) => e.stage === stage.id).at(-1) ?? null;
     setText(name, stageNames(stagesOf(doc)).get(stage.id) ?? stage.label);
     // time in the stage: the state's own clock (pauses excluded), plus the hops and returns before it since the stage began
     const t = sv.timeInState(link.simT) + (entry ? Math.max(0, sv.enteredT - entry.t) : 0);

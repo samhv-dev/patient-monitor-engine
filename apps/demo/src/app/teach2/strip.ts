@@ -4,21 +4,27 @@
 // stages dashed with "auto" where a rule enters them, and side branches as "<a> or <b>".
 // Clicks: a future stage sends today's `goto` behind today's jump confirm (panel/scenario.ts `jump`, copied); a past stage
 // shows its entry time and "Return to the start of <stage>", which restores the hidden stage mark the driver places at
-// every stage entry, behind one confirm. Fit (14 stages on the MH card, 15 on the haemorrhage card): the passed stages
-// beyond the KEEP_PAST before the current one fold into one chip "… n earlier", which expands on a press; the current
-// stage and every future stage stay; when they still do not fit, the names are capped with an ellipsis (the full name
-// in the tooltip), the hint going first.
+// every stage entry (ScenarioDriver.stageMarks()), behind one confirm. Fit (14 stages on the MH card, 15 on the
+// haemorrhage card): the passed stages beyond the KEEP_PAST before the current one fold into one chip "… n earlier",
+// and the future stages beyond the next KEEP_NEXT into "… n later" (IP9, ruling 2), each expanding on a press; the
+// future stages are ordered from the current one (the stages it leads to first, branches as "or"). Names are never cut
+// below their full word: when the chips still do not fit, the padding tightens, then the hint goes, then the strip
+// scrolls sideways.
 import './state.css';
 import type { ScenarioDoc } from '@pme/controller';
-import { rowsOf, stagesOf, type Stage } from '../card-read.ts';
+import { HOP_S, rowsOf, stagesOf, type Stage } from '../card-read.ts';
 import type { Link } from '../link.ts';
 import { clock, confirmDialog, h, toast } from '../ui.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
+import { historyOf } from './course.ts';
 
 /** The passed stages kept in view before the current one; earlier ones fold into "… n earlier". */
 export const KEEP_PAST = 2;
-/** The name caps `fit` tries, widest first (state.css `--ip2-cap`). */
-const CAPS = ['none', '12em', '9em', '7em', '6em', '5em', '4.5em', '4em', '3.5em', '3em'];
+/** The future items kept in view after the current stage (a branch "a or b" is one item); later ones fold into
+ *  "… n later" (IP9, ruling 2: the mirror of the past fold, so no name is cut below its full word). */
+export const KEEP_NEXT = 2;
+/** The host's tick (s): a stage mark's `atTick` in sim seconds. */
+const TICK_S = 0.02;
 
 /** The stages' short names: each label up to its first ':', ';', ',' or ' (' ("Trigger off: sevoflurane stopped, …" →
  *  "Trigger off"), taken one part further while two stages would read the same ("Rhythm check: VF" and "Rhythm check:
@@ -78,7 +84,9 @@ export type StripItem =
   | { kind: 'past'; stage: Stage; entry: StageEntry | null }
   | { kind: 'current'; stage: Stage; entry: StageEntry | null; open: number }
   /** One future stage, or side branches read "<a> or <b>". */
-  | { kind: 'future'; stages: Stage[] };
+  | { kind: 'future'; stages: Stage[] }
+  /** The future stages beyond the next KEEP_NEXT items, folded. */
+  | { kind: 'later'; n: number };
 
 /** The stage-to-stage edges of the card: a transition (`to` or `else`) of any state of a stage into another stage. */
 function edgesOf(doc: ScenarioDoc, stages: readonly Stage[]): Map<string, Set<string>> {
@@ -97,10 +105,12 @@ function edgesOf(doc: ScenarioDoc, stages: readonly Stage[]): Map<string, Set<st
 /**
  * The strip for the stage `stateId` is in. Past = before it in the card's order (with its latest entry, or null when
  * the run never entered it); the passed stages beyond KEEP_PAST before the current one fold into one item unless
- * `expanded`. Future stages in the card's order; a future stage joins the one before it as "or" when no stage of that
- * group leads into it and an earlier stage does (it is a side branch, not the next step).
+ * `expanded`. Future = after it in the card's order, ordered from the current stage (IP9, ruling 2): first the stages it
+ * leads to, then the stages those lead to, and so on, a step with more than one stage reading "<a> or <b>" (in the
+ * card's order); a future stage no path from the current one reaches comes last, on its own. The future items beyond
+ * KEEP_NEXT fold into one item unless `later`.
  */
-export function stripModel(doc: ScenarioDoc, stateId: string | null, entries: readonly StageEntry[], expanded = false): StripItem[] {
+export function stripModel(doc: ScenarioDoc, stateId: string | null, entries: readonly StageEntry[], expanded = false, later = false): StripItem[] {
   const stages = stagesOf(doc);
   const at = stages.findIndex((g) => stateId !== null && g.states.includes(stateId));
   if (at < 0) return stages.map((g) => ({ kind: 'future', stages: [g] }));
@@ -113,27 +123,35 @@ export function stripModel(doc: ScenarioDoc, stateId: string | null, entries: re
   // the open steps of the stage's own state (during a 2-s hop too: a hop has no steps of its own)
   out.push({ kind: 'current', stage: cur, entry: last(cur.id), open: rowsOf(doc, cur.id).filter((r) => r.kind === 'step').length });
   const edges = edgesOf(doc, stages);
-  let group: Stage[] = [];
-  for (let i = at + 1; i < stages.length; i++) {
-    const g = stages[i] as Stage;
-    const side = group.length > 0 && group.every((m) => !edges.get(m.id)?.has(g.id)) && stages.slice(0, i - group.length).some((p) => edges.get(p.id)?.has(g.id));
-    if (side) group.push(g);
-    else {
-      if (group.length) out.push({ kind: 'future', stages: group });
-      group = [g];
-    }
+  const future = stages.slice(at + 1);
+  const layers: Stage[][] = [];
+  const seen = new Set([cur.id]);
+  for (let front = [cur.id]; front.length;) {
+    const next = future.filter((g) => !seen.has(g.id) && front.some((f) => edges.get(f)?.has(g.id)));
+    for (const g of next) seen.add(g.id);
+    if (next.length) layers.push(next);
+    front = next.map((g) => g.id);
   }
-  if (group.length) out.push({ kind: 'future', stages: group });
+  for (const g of future) if (!seen.has(g.id)) layers.push([g]);
+  const shown = later ? layers : layers.slice(0, KEEP_NEXT);
+  for (const l of shown) out.push({ kind: 'future', stages: l });
+  const n = layers.slice(shown.length).reduce((k, l) => k + l.length, 0);
+  if (n) out.push({ kind: 'later', n });
   return out;
 }
 
 /**
- * Where a past stage's hidden stage mark is found: its label, to restore, or null.
- * TODO(IP2): the driver's stage marks (a hidden bookmark of kind `stage` at every stage entry, the owner's ruling of 29
- * October; IP2's PR pending). Until they land there is none, and "Return to the start of <stage>" stays disabled. When
- * they land, this reads the mark recorded at `entry` (stage and time) and the restore below needs no other change.
+ * Where a past stage's hidden stage mark is found: its label, to restore, or null. The host-side driver places one at
+ * every stage entry once the stage's onEnter is applied (ScenarioDriver.stageMarks(): kind `stage`, note = the stage's
+ * state id, `atTick` = when it was taken); the mark of `entry` is the last one of its stage taken from the entry on,
+ * within a hop and a second (a stage entered by a 2-s hop is marked when its own state begins). A follower has no
+ * driver: null, and the return stays disabled.
  */
-export const stageMarks: { of(link: Link, entry: StageEntry): string | null } = { of: () => null };
+export const stageMarks: { of(link: Link, entry: StageEntry): string | null } = {
+  of: (link, entry) => (link.host?.driver.stageMarks() ?? [])
+    .filter((c) => c.note === entry.stage && c.atTick !== undefined && c.atTick * TICK_S >= entry.t - TICK_S && c.atTick * TICK_S <= entry.t + HOP_S + 1)
+    .at(-1)?.target ?? null,
+};
 
 /** Today's jump, copied from panel/scenario.ts `jump`: the same confirm, the same command, the same toast. */
 async function jump(link: Link, id: string, label: string): Promise<void> {
@@ -156,6 +174,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const hint = h('span', { class: 'ip2-strip-hint' }, 'past: return to its start · future: jumps to it (asks once)');
   el.replaceChildren(chips, hint);
   let expanded = false;
+  let later = false;
   let docV = -1;
   let pop: HTMLElement | null = null;
   let drawn = '';
@@ -197,15 +216,13 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     const b: HTMLButtonElement = h('button', { type: 'button', class: `ip2-chip ${cls}`, title: g.label, ...attrs, onclick: () => onclick(b) }, ...kids);
     return b;
   };
-  /** The widest name cap at which the chips fit (state.css `--ip2-cap`); past the last one the strip scrolls sideways. */
+  /** Fit without cutting a name (IP9, ruling 2): the chips' own width, then tighter padding; then the hint goes; past
+   *  that (an expanded fold) the strip scrolls sideways. */
   const fit = () => {
-    if (expanded) return void (el.style.setProperty('--ip2-cap', 'none'), el.removeAttribute('data-tight'), (hint.hidden = true));
+    if (expanded || later) return void (el.removeAttribute('data-tight'), (hint.hidden = true));
     el.classList.add('ip2-strip-measure');
-    for (const [i, cap] of CAPS.entries()) {
-      el.style.setProperty('--ip2-cap', cap);
-      el.toggleAttribute('data-tight', i > 0);
-      if (el.scrollWidth <= el.clientWidth) break;
-    }
+    el.removeAttribute('data-tight');
+    if (el.scrollWidth > el.clientWidth) el.setAttribute('data-tight', '');
     el.classList.remove('ip2-strip-measure');
     // the hint shows whole or not at all
     hint.hidden = !sv.doc;
@@ -223,18 +240,20 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       closePop();
       return;
     }
-    if (docV !== sv.docVersion) (docV = sv.docVersion), (expanded = false), (names = stageNames(stagesOf(doc))), closePop();
-    const entries = stageEntries(doc, sv.history, sv, link.simT);
-    const items = stripModel(doc, sv.stateId, entries, expanded);
-    const key = JSON.stringify([docV, expanded, items.map((x) => (x.kind === 'fold' ? x.n : x.kind === 'future' ? x.stages.map((g) => g.id) : [x.stage.id, x.entry?.t, x.kind === 'current' ? x.open : 0]))]);
+    if (docV !== sv.docVersion) (docV = sv.docVersion), (expanded = later = false), (names = stageNames(stagesOf(doc))), closePop();
+    const entries = stageEntries(doc, historyOf(link), sv, link.simT);
+    const items = stripModel(doc, sv.stateId, entries, expanded, later);
+    const key = JSON.stringify([docV, expanded, later, items.map((x) => (x.kind === 'fold' || x.kind === 'later' ? [x.kind, x.n] : x.kind === 'future' ? x.stages.map((g) => g.id) : [x.stage.id, x.entry?.t, x.kind === 'current' ? x.open : 0]))]);
     if (key === drawn) return; // the strip changes with the state, not with the clock: no redraw at 1 Hz
     drawn = key;
     closePop(); // a past stage's card is redrawn from the new course on the next press
     const kids: Node[] = [];
     items.forEach((x, i) => {
-      if (i > 0) kids.push(line(x.kind === 'future' ? 'dashed' : x.kind === 'current' ? 'next' : 'solid'));
+      if (i > 0) kids.push(line(x.kind === 'future' || x.kind === 'later' ? 'dashed' : x.kind === 'current' ? 'next' : 'solid'));
       if (x.kind === 'fold')
         kids.push(h('button', { type: 'button', class: 'ip2-chip ip2-fold', 'aria-expanded': 'false', 'aria-label': `Show the ${x.n} earlier stages`, onclick: () => ((expanded = true), draw()) }, `… ${x.n} earlier`));
+      else if (x.kind === 'later')
+        kids.push(h('button', { type: 'button', class: 'ip2-chip ip2-fold ip2-later', 'aria-expanded': 'false', 'aria-label': `Show the ${x.n} later stages`, onclick: () => ((later = true), draw()) }, `… ${x.n} later`));
       else if (x.kind === 'past')
         kids.push(chip(x.stage, x.entry ? 'ip2-past' : 'ip2-past ip2-skipped', [x.entry ? h('span', { class: 'ip2-chip-t' }, clock(x.entry.t)) : null],
           { 'aria-label': `Stage ${(names.get(x.stage.id) ?? '')}, ${x.entry ? `entered at ${clock(x.entry.t)}` : 'not entered'}: show its return`, 'aria-haspopup': 'true' },
@@ -253,6 +272,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     });
     if (expanded && stripModel(doc, sv.stateId, entries, false)[0]?.kind === 'fold')
       kids.unshift(h('button', { type: 'button', class: 'ip2-chip ip2-fold', 'aria-expanded': 'true', 'aria-label': 'Fold the earlier stages', onclick: () => ((expanded = false), draw()) }, '‹ fold'), line('solid'));
+    if (later && stripModel(doc, sv.stateId, entries, expanded, false).at(-1)?.kind === 'later')
+      kids.push(line('dashed'), h('button', { type: 'button', class: 'ip2-chip ip2-fold ip2-later', 'aria-expanded': 'true', 'aria-label': 'Fold the later stages', onclick: () => ((later = false), draw()) }, 'fold ›'));
     chips.replaceChildren(...kids);
     fit();
   };

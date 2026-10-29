@@ -7,9 +7,10 @@ executors. Items marked OWNER are my calls that the owner may overturn in the mo
 2. A hop is a state whose only exit is `afterS` ≤ 2 s; it folds into the state that exit leads to (the four treatment
    hops fold into `treating`). `triggerOff` and `treating` are two stages (both have manual exits). Stages = the
    card's states that are not hops, in document order.
-3. OWNER. A future-stage click = `goto` behind the same confirm as today's jump; the strip's hint reads "jumps to it
-   (asks once)", not "rewinds". A past-stage click does nothing but show its entry time; "return to a mark" lives in
-   the Log sheet (Q13). The design's wording is corrected by this answer.
+3. OWNER RULED 2026-10-29 11:00. The host-side driver places a hidden bookmark of kind `stage` at every stage entry
+   (IP2). A past-stage click restores that stage's mark behind a one-time confirm ("Return to the start of <stage>?");
+   a future-stage click = `goto` behind the same confirm as today's jump, hint "jumps to it (asks once)", no rewind.
+   Stage marks are hidden from the marks list; "return to a mark" for the owner's own marks lives in the Log sheet.
 4. A mixed `any`/`all` with a manual inside shows as a step with the subtitle "or by itself when <rule>". The cue
    box says "by your button" when IP8's `by` is `press`, "by its rule" when `rule`, "by a jump" when `goto`; without
    IP8's field (follower), it says "entered" with the time only.
@@ -17,7 +18,9 @@ executors. Items marked OWNER are my calls that the owner may overturn in the mo
 6. A step is "condition not met" only when an objective is linked to it and that objective's `after` is a `value:`
    rule not yet true. Link rule: the objective's `event` equals `state:<to>` of the step, or equals `drug:<id>` for a
    drug in `<to>`'s `onEnter`. No linked objective: the step is "ready".
-7. Taken = its transition fired by a press. Overdue = the linked objective's `eventWithin` window has passed and the
+7. (REFINED 2026-10-29 13:00: an untaken step with no linked objective is never 'failed' and is omitted from the
+   steps table and the ACTION list once its stage has passed; 'failed' and 'not done' apply only to objective-linked
+   steps.) Taken = its transition fired by a press. Overdue = the linked objective's `eventWithin` window has passed and the
    step is not taken. Failed = the step's source state is no longer current and `<to>` is not reachable from the
    current state in the card graph. Not done = never taken by the end. Out of order = taken after a step with a
    higher array index in the same stage was taken. "The order it was due" = the transitions' array order.

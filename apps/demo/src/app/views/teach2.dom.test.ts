@@ -41,7 +41,10 @@ describe('Instructor v2 frame', () => {
     const { v } = rig();
     open = v;
     expect(v.id).toBe('teach2');
-    expect([...v.el.children].map((c) => c.className)).toEqual(['sr-only', 'ip2-head', 'ip2-strip', 'ip2-state', 'ip2-action', 'ip2-sheets', 'ip2-dock']);
+    expect([...v.el.children].map((c) => c.className)).toEqual(['sr-only', 'ip2-head', 'ip2-strip', 'ip2-paused-row', 'ip2-state', 'ip2-action', 'ip2-sheets', 'ip2-dock']);
+    // IP9 (ruling 3): the paused banner sits in its own full-width row under the strip, not inside the cue box
+    expect(v.el.querySelector('.ip2-paused-row > .ip2-paused')).not.toBeNull();
+    expect(v.el.querySelector('.ip2-cue .ip2-paused')).toBeNull();
     // IP5 built the strip and the cue box; IP6 built the ACTION slot; IP7 built the sheets slot and the dock's tools
     expect(v.el.querySelector('.ip2-strip')?.hasAttribute('data-stub')).toBe(false);
     expect(v.el.querySelector('.ip2-cue')?.hasAttribute('data-stub')).toBe(false);

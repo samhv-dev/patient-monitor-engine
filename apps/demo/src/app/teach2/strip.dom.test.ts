@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 // Instructor v2's stage strip (plan IP5; answers 2 and 3, the owner's ruling of 29 October): the stages of both demo
-// cards with hops folded in, the fold rule (passed stages beyond the two before the current one become "… n earlier";
-// the current stage and every future stage stay), entry times from the history, "auto" and "or"; a future stage sends
+// cards with hops folded in, the fold rules (passed stages beyond the two before the current one become "… n earlier";
+// IP9, ruling 2: future items beyond the next two become "… n later", the future ordered from the current stage, a
+// step with two stages reading "or"), entry times from the history, "auto"; a future stage sends
 // what today's jump sends behind the same confirm (both mounted on one fake Link, compared deep-equal); a past stage
 // shows its entry time and a disabled return until IP2's stage marks exist, then restores the mark behind one confirm.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -12,7 +13,7 @@ import type { PanelCtx } from '../panel/ctx.ts';
 import { scenarioTab } from '../panel/scenario.ts';
 import { showcaseDoc } from '../showcase/harness.ts';
 import type { Teach2Ctx } from './ctx.ts';
-import { KEEP_PAST, mount, stageMarks, stageNames, stripModel } from './strip.ts';
+import { KEEP_NEXT, KEEP_PAST, mount, stageMarks, stageNames, stripModel } from './strip.ts';
 
 const MH = showcaseDoc('showcase-mh');
 const HAEM = showcaseDoc('showcase-haemorrhage');
@@ -73,20 +74,32 @@ describe('stage strip: the stages and the fold rule', () => {
     for (const d of [MH, HAEM]) expect(new Set(stageNames(stagesOf(d)).values()).size).toBe(stagesOf(d).length);
   });
 
-  it('MH at the start: the current stage and all 13 future stages, nothing folded', () => {
+  it('MH at the start (IP9, ruling 2): the current stage, the next two steps of the card ("or" where it branches), the other 10 stages folded "… 10 later"', () => {
     const r = rig(MH, 'awake', [{ t: 0, stateId: 'awake' }], 10);
     expect(r.el.querySelectorAll('.ip2-current')).toHaveLength(1);
+    expect(chipTexts(r.el)).toEqual(['Awake on the table00:00 · 1 open', 'Midazolam 2 mg and fentanyl 100 µg given', 'Preoxygenating', 'Induced', '… 10 later']);
+    expect(r.el.querySelector('.ip2-or')?.previousElementSibling?.textContent).toBe('Preoxygenating');
+    expect(r.el.querySelector('.ip2-fold:not(.ip2-later)')).toBeNull();
+    // the later fold expands on a press (every future stage, the strip scrolls) and folds back
+    (r.el.querySelector('.ip2-later') as HTMLButtonElement).click();
     expect(r.el.querySelectorAll('.ip2-future')).toHaveLength(13);
-    expect(r.el.querySelector('.ip2-fold')).toBeNull();
-    expect(r.el.querySelector('.ip2-current')?.textContent).toBe('Awake on the table00:00 · 1 open');
+    expect(r.el.querySelector('.ip2-later')?.textContent).toBe('fold ›');
+    (r.el.querySelector('.ip2-later') as HTMLButtonElement).click();
+    expect(r.el.querySelectorAll('.ip2-future')).toHaveLength(3);
+    // no name is cut: no cap is set on any chip
+    expect(r.el.style.getPropertyValue('--ip2-cap')).toBe('');
   });
 
   it('MH at treating: 7 earlier folded, the 2 before it with their entry times, the current with its 4 open steps, auto on rule-entered stages', () => {
     const r = rig(MH, 'treating', MH_TO_TREATING);
     expect(chipTexts(r.el)).toEqual([
       '… 7 earlier', 'Established MH07:50', 'Trigger off08:16', 'MH treatment under way08:40 · 4 open',
-      'Recoveringauto', 'Ventilation back to 12 × 500', 'Cardiac arrestauto', 'CPR',
+      'Recoveringauto', 'Cardiac arrestauto', 'Ventilation back to 12 × 500', 'CPR',
     ]);
+    // the next stages from the current one: "Recovering or Cardiac arrest" (ruling 2), then what each leads to
+    const or = r.el.querySelector('.ip2-or') as HTMLElement;
+    expect([or.previousElementSibling?.textContent, or.nextElementSibling?.textContent]).toEqual(['Recoveringauto', 'Cardiac arrestauto']);
+    expect(r.el.querySelector('.ip2-later')).toBeNull(); // two future items: nothing later to fold
     // the stage's entry is the hop that began it (dantrolene at 08:40), not the return from it
     expect(r.el.querySelector('.ip2-current')?.getAttribute('aria-current')).toBe('step');
     // the fold expands on a press, and folds back
@@ -106,15 +119,18 @@ describe('stage strip: the stages and the fold rule', () => {
     expect(r.el.querySelectorAll('.ip2-skipped')).toHaveLength(2);
   });
 
-  it('haemorrhage at PEA: 2 earlier folded, every future stage visible, side branches read "or"', () => {
+  it('haemorrhage at PEA: 2 earlier folded; the next two steps from PEA ("Asystole or CPR", then what CPR leads to), 5 later folded', () => {
     const hist = [{ t: 0, stateId: 'bleeding' }, { t: 30, stateId: 'ventilated', transitionId: 'intubate' }, { t: 200, stateId: 'junctional', transitionId: 'junctional' }, { t: 290, stateId: 'pea', transitionId: 'pea' }];
     const r = rig(HAEM, 'pea', hist, 320);
     const items = stripModel(HAEM, 'pea', []);
     expect(items[0]).toEqual({ kind: 'fold', n: 2 });
-    expect(r.el.querySelectorAll('.ip2-future')).toHaveLength(15 - 5);
+    expect(items.filter((x) => x.kind === 'future')).toHaveLength(KEEP_NEXT);
+    expect(items.at(-1)).toEqual({ kind: 'later', n: 5 });
+    expect(r.el.querySelectorAll('.ip2-future')).toHaveLength(5);
     expect(r.el.querySelector('.ip2-current')?.textContent).toBe('PEA04:50 · 1 open');
     const or = r.el.querySelector('.ip2-or') as HTMLElement;
-    expect([or.previousElementSibling?.textContent, or.nextElementSibling?.textContent]).toEqual(['Shocked againauto', 'CPR continuing after the first shock']);
+    expect([or.previousElementSibling?.textContent, or.nextElementSibling?.textContent]).toEqual(['Asystoleauto', 'CPR']);
+    expect(r.el.querySelector('.ip2-later')?.textContent).toBe('… 5 later');
   });
 });
 

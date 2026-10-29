@@ -1,9 +1,9 @@
 /* Instructor v2: the stage strip and the cue box (design §3.2, §3.3, §5; boards "Proposal v6" and "v9 paused"; plan IP5).
    The tokens are teach2.css's. Every class is `ip2-*` (plan's selector rule). */
 
-/* the stage strip. The chips keep their own width; when they do not fit, `fit` (strip.ts) caps the names of all but the
-   current stage at the widest em step that fits, with an ellipsis (the full name in the tooltip), and tightens the
-   padding. Only the hint shrinks (to nothing). The strip scrolls sideways when the fold is opened, or as a last resort. */
+/* the stage strip. The chips keep their own width, and no name is cut (IP9, ruling 2: the far-future stages fold into
+   "… n later" instead); when they do not fit, `fit` (strip.ts) tightens the padding. Only the hint shrinks (to
+   nothing). The strip scrolls sideways when a fold is opened, or as a last resort. */
 .ip2-strip { overflow-x: auto; scrollbar-width: none; }
 .ip2-strip::-webkit-scrollbar { display: none; }
 .ip2-chips { display: contents; } /* the chips are the strip's own flex items */
@@ -12,10 +12,10 @@
 .ip2-chip { flex: none; display: block; padding: 6px 10px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--ip2-muted); font: inherit; line-height: 16px; white-space: nowrap; }
 button.ip2-chip { cursor: pointer; }
 button.ip2-chip:hover { background: var(--ip2-card); }
-.ip2-chip-name { display: inline-block; max-width: var(--ip2-cap, none); overflow: hidden; text-overflow: ellipsis; vertical-align: top; }
+.ip2-chip-name { display: inline-block; vertical-align: top; }
 .ip2-chip-t, .ip2-auto { margin-left: 6px; }
 .ip2-chip-t { font-family: var(--font-plex-mono); font-variant-numeric: tabular-nums; }
-.ip2-current { --ip2-cap: none; padding: 6px 12px; border-color: var(--ip2-blue); background: var(--ip2-blue-soft); color: #fff; font-weight: 600; }
+.ip2-current { padding: 6px 12px; border-color: var(--ip2-blue); background: var(--ip2-blue-soft); color: #fff; font-weight: 600; }
 .ip2-strip[data-tight] .ip2-chip:not(.ip2-current) { padding-inline: 7px; }
 .ip2-strip-measure .ip2-strip-hint { flex: none; width: 0; } /* its padding stays: fit counts it */
 .ip2-current .ip2-chip-t { font-weight: 400; color: var(--ip2-blue-text); }

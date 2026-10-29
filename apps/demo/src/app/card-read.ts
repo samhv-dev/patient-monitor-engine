@@ -189,3 +189,86 @@ export function reachable(doc: ScenarioDoc, from: string, to: string): boolean {
   }
   return false;
 }
+
+// ---- a step's standing: the one reading for the ACTION list (teach2/rows.ts) and the Debrief's steps (debrief.ts) ----
+
+/** What a step's standing is read from: when the run's events happened, and whether a rule is already met. The
+ *  Debrief reads both from its record; the panel from the host's live record, or a follower's history (states only). */
+export interface Evidence {
+  /** The first time `want` (or any of a list) happened at or after `from`; null: not (yet), or not seen here. */
+  first(want: RunEventId | readonly RunEventId[], from?: number): number | null;
+  /** Whether `rule` is met on the run so far (false where this reader cannot judge it: a follower has no record). */
+  met(rule: ObjectiveRule): boolean;
+}
+
+/** The rule kinds that ask for their `event` (answer 7 as the coordinator refined it); `never` and `stayed` ask for none. */
+const ASKING = new Set<ObjectiveRule['kind']>(['eventWithin', 'occurred', 'heldThen']);
+/** Seconds within which two run times are the same instant. */
+const SAME_T = 1e-6;
+
+/** Where a step stands (answers 6 and 7 as refined): `asked`, an objective linked to it asks for it; `dueS`, the
+ *  seconds left of the earliest window of an asking `eventWithin` (negative: overdue by that much; null: no window). */
+export interface Standing {
+  asked: boolean;
+  dueS: number | null;
+}
+
+/**
+ * Whether an objective asks for untaken step `tr` of a stage current from `dueT` until it was left at `leftT` (null:
+ * still current), at run time `now`. An objective linked to the step (answer 6: its event is `state:<to>`, or
+ * `drug:<id>` for a drug in `<to>`'s onEnter) asks for it when:
+ *  - its rule asks for an event (`eventWithin`, `occurred`, `heldThen`) and is not met;
+ *  - its anchor (the first `from`, then for `eventWithin` the first `after`) happened before the stage was left;
+ *  - and the linked event did not happen anyway from the step's due time and the anchor on (another button, or the
+ *    card's own rule, gave it).
+ * An alternative branch not chosen is therefore never asked for. `dueS` is the earliest asking `eventWithin`'s window:
+ * from its anchor, `withinS` long (overdue once `now - anchor ≥ withinS`, as the Debrief's verdict reads it).
+ */
+export function standingOf(doc: ScenarioDoc, tr: Transition, at: { dueT: number; leftT: number | null; now: number }, ev: Evidence): Standing {
+  const links = new Set([`state:${tr.to}`, ...drugsOnEnter(stateOf(doc, tr.to)).map((d) => `drug:${d}`)]);
+  const out: Standing = { asked: false, dueS: null };
+  for (const o of objectivesOf(doc, tr)) {
+    const rule = o.rule;
+    if (!ASKING.has(rule.kind) || !('event' in rule) || ev.met(rule)) continue;
+    const linked = [rule.event].flat().filter((e) => links.has(e));
+    const fromEv = 'from' in rule ? rule.from : undefined;
+    const from = fromEv ? ev.first(fromEv) : null;
+    if (fromEv && from === null) continue; // it never began to ask
+    const anchor = rule.kind === 'eventWithin' ? ev.first(rule.after, from ?? -Infinity) : from;
+    // an anchor at the instant the stage was left is the next stage's, not this one's
+    if ((rule.kind === 'eventWithin' && anchor === null) || (anchor !== null && at.leftT !== null && anchor >= at.leftT - SAME_T)) continue;
+    if (ev.first(linked, Math.max(at.dueT, anchor ?? -Infinity)) !== null) continue; // given another way
+    out.asked = true;
+    if (rule.kind === 'eventWithin' && anchor !== null) {
+      const left = anchor + rule.withinS - at.now;
+      out.dueS = out.dueS === null ? left : Math.min(out.dueS, left);
+    }
+  }
+  return out;
+}
+
+/** An untaken step's status (answer 7 as refined): null, not listed (no objective asks for it: an alternative not
+ *  chosen); `failed`, its stage is not the current state and the card can no longer reach the state it leads to;
+ *  `overdue`, an asking window has passed; else `not done`. `current` is the current state (a hop counts as its own). */
+export function untakenStatus(doc: ScenarioDoc, tr: Transition, at: { stateId: string; current: string; dueT: number; leftT: number | null; now: number }, ev: Evidence): { status: 'failed' | 'overdue' | 'not done'; dueS: number | null } | null {
+  const s = standingOf(doc, tr, at, ev);
+  if (!s.asked) return null;
+  if (at.stateId !== at.current && !reachable(doc, at.current, tr.to)) return { status: 'failed', dueS: s.dueS };
+  return { status: s.dueS !== null && s.dueS <= 0 ? 'overdue' : 'not done', dueS: s.dueS };
+}
+
+/** A scenario history as ScenarioView keeps it: `{ t, stateId, transitionId? }`, oldest first. */
+export type History = ReadonlyArray<{ t: number; stateId: string; transitionId?: string }>;
+
+/**
+ * The history with the card's start in front. A load publishes its first state before its own commandApplied, and
+ * ScenarioView's history restarts on that commandApplied, so the history begins at the first transition and the
+ * initial state's entry is missing (record.ts keeps it the same way: `held`). This puts it back at `startT` (the run
+ * record's entry of the initial state on the host), so the strip gives the first stage its time and ACTION's Finished
+ * its taken step. Unchanged when the history is empty or already begins at the start.
+ */
+export function withStart(doc: ScenarioDoc, history: History, startT: number): History {
+  const h0 = history[0];
+  if (!h0 || (h0.stateId === doc.initialState && h0.transitionId === undefined) || h0.t < startT) return history;
+  return [{ t: startT, stateId: doc.initialState }, ...history];
+}

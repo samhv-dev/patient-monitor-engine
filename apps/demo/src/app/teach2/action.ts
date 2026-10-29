@@ -12,6 +12,7 @@ import { clock, h, setText } from '../ui.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { judge, pressStep } from './press.ts';
 import { classify, type HoldLike, type LiveRow } from './rows.ts';
+import { historyOf } from './course.ts';
 
 export const FOOT = 'No penalty comes from the panel. Consequences come from the physiology, and the debrief records overdue, out of order, failed and not done, each with the time and the order it was due.';
 
@@ -28,9 +29,9 @@ interface Pill {
   live: LiveRow;
 }
 
-/** The host's hold progress from IP1's `ScenarioDriver.vitalHolds()` (branch feat-ip2-controller, PR pending), when the
- *  driver has it; null until then. TODO(IP1): drop the cast once that accessor is on main. */
-const holdsOf = (link: Link): readonly HoldLike[] | null => (link.host?.driver as { vitalHolds?: () => HoldLike[] } | undefined)?.vitalHolds?.() ?? null;
+/** The host's hold progress (`ScenarioDriver.vitalHolds()`, answer 8): every `vital` rule of the current state with
+ *  the runner's own hold fraction. A follower has no driver: null, and its bars show value against threshold only. */
+const holdsOf = (link: Link): readonly HoldLike[] | null => link.host?.driver.vitalHolds() ?? null;
 
 /** Mount this slot into `el` (the fixed slot signature, teach2/ctx.ts). */
 export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
@@ -132,7 +133,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       return;
     }
     const board = classify({
-      doc, stateId, history: sv.history, enteredT: sv.enteredT, simT: link.simT, inState: sv.timeInState(link.simT),
+      doc, stateId, history: historyOf(link), enteredT: sv.enteredT, simT: link.simT, inState: sv.timeInState(link.simT),
       paused: link.ctl.hostPaused, log: link.log, record: link.host?.record.data ?? null,
       values: link.ctl.state?.values as Partial<Record<string, number>> | undefined, holds: holdsOf(link), base,
     });

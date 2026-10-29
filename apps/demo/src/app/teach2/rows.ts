@@ -4,6 +4,9 @@
 // has no record: its rows know what the history says (states entered) and nothing more, so they never read overdue or
 // "condition not met" from events they cannot see.
 //
+// Which untaken step an objective asks for, its window and "failed" are card-read.ts `standingOf` / `untakenStatus`, the
+// one reading the Debrief's steps table (debrief.ts `steps`) also uses, so the two agree by construction.
+//
 // The rows of the list are the CURRENT stage's (its own state's rows; a hop shows the stage it folds into). Every step
 // of the stage stays in the list whatever its look, so nothing the card offers is hidden: a step taken that the card
 // still offers (the treatment fan-out loops back into its stage) stays a pressable green row. Rows the case has left
@@ -11,8 +14,8 @@
 // Nothing here ever disables a row: the look is all a status changes.
 import type { ScenarioDoc, Transition } from '@pme/controller';
 import type { RunEventId } from '@pme/controller/scenario';
-import { conditionNotMet, objectivesOf, reachable, rowsOf, stagesOf, type Row, type Stage } from '../card-read.ts';
-import { eventWords, isEvent, mmss, trendMeta } from '../debrief.ts';
+import { conditionNotMet, objectivesOf, rowsOf, stagesOf, standingOf, untakenStatus, type Evidence, type Row, type Stage } from '../card-read.ts';
+import { eventWords, isEvent, mmss, trendMeta, verdict } from '../debrief.ts';
 import { drugWords } from '../glossary.ts';
 import type { ClinicalLogEntry } from '../link.ts';
 import type { RunData, ValueKey } from '../record.ts';
@@ -51,7 +54,7 @@ export interface Board {
   offCard: ClinicalLogEntry[];
 }
 
-/** One `vital` rule as the host-side runner reads it (IP1's `ScenarioDriver.vitalHolds()`, PR pending). */
+/** One `vital` rule as the host-side runner reads it (`ScenarioDriver.vitalHolds()`, @pme/controller `VitalHold`). */
 export interface HoldLike {
   transitionId: string;
   key: string;
@@ -75,7 +78,7 @@ export interface Source {
   record: RunData | null;
   /** The engine's state values (the 1 Hz `state` event): what a `vital` rule reads. */
   values: Partial<Record<string, number>> | undefined;
-  /** The runner's hold progress, host only, once IP1's accessor lands; null without it. */
+  /** The runner's hold progress (`ScenarioDriver.vitalHolds()`), host only; null on a follower. */
   holds: readonly HoldLike[] | null;
   /** The value each A row's bar starts from, kept by the caller across refreshes (key: stage entry time and row). */
   base: Map<string, number>;
@@ -154,6 +157,11 @@ function visitsOf(src: Source, home: Map<string, string>): Visit[] {
 }
 
 const firedAt = (v: Visit, id: string): number | null => v.fired.find((f) => f.id === id)?.t ?? null;
+/** Whether the host's record says transition `id`, fired at `t`, was fired by its own rule, not by a press (IP8's `by`;
+ *  a follower has no record and cannot tell, so its mixed steps read taken). The Debrief's steps table reads the same
+ *  field: such a step is not taken there either. */
+const byItsRule = (src: Source, id: string, t: number): boolean =>
+  !!src.record?.rows.some((r) => r.kind === 'scenario' && r.undone === undefined && r.tr === id && r.by === 'rule' && Math.abs(r.t - t) <= 0.05);
 /** Taken after a step with a higher index of the same stage visit was taken. */
 function outOfOrder(v: Visit, rows: readonly Row[], r: Extract<Row, { kind: 'step' }>, t: number): boolean {
   return rows.some((o) => o.kind === 'step' && o.index > r.index && (firedAt(v, o.tr.id) ?? Infinity) < t);
@@ -183,9 +191,8 @@ function autoBar(src: Source, visit: Visit, tr: Transition): { progress: number 
   const met = (OP_MET[op] ?? (() => false))(v, thr);
   const valueFrac = met ? 1 : thr === v0 ? 0 : Math.max(0, Math.min(1, (v - v0) / (thr - v0)));
   // One bar that only grows (the orchestrator's reading of answer 8): the value fills the first VALUE_PART of the width
-  // until the threshold is met, then the rule's hold fills the rest. TODO(IP1, PR pending): `src.holds` comes from IP1's
-  // `ScenarioDriver.vitalHolds()` once it merges; until then it is null and a met rule's bar is full (value against
-  // threshold only), as a follower's always is.
+  // until the threshold is met, then the rule's hold (the host's `vitalHolds()`) fills the rest. Without it (a
+  // follower) a met rule's bar is full: value against threshold only.
   const hold = src.holds?.find((x) => x.transitionId === tr.id && x.key === tr.id) ?? null;
   const holdFrac = !met ? 0 : hold ? (hold.met ? hold.fraction : 0) : 1;
   return { progress: met ? VALUE_PART + (1 - VALUE_PART) * holdFrac : VALUE_PART * valueFrac, right: src.paused ? 'frozen' : `${show(name, v)} → ${show(name, thr)}` };
@@ -207,6 +214,9 @@ export function classify(src: Source): Board {
   const d = src.record ?? ({ doc } as RunData); // eventWords reads only the card's state labels
   // a follower cannot see the values a condition names: it never fades a step for one (the step stays "ready")
   const isTrue = (e: RunEventId) => (!src.record && e.startsWith('value:')) || firstT(src, e) !== null;
+  // the shared reading's evidence: the host's record (a rule met as the Debrief judges it), else the follower's history
+  const rec = src.record;
+  const ev: Evidence = { first: (w, from) => firstT(src, w, from), met: (rule) => rec !== null && verdict(rule, rec).status === 'met' };
   const lives: LiveRow[] = [];
   const finished: LiveRow[] = [];
   const base = (row: Row): LiveRow => ({ row, stage: visit.stage, look: 'ready', subtitle: row.subtitle, right: '', overdue: null, outOfOrder: false, at: null, progress: null });
@@ -228,34 +238,32 @@ export function classify(src: Source): Board {
       continue;
     }
     const taken = firedAt(visit, row.tr.id);
+    if (taken !== null && byItsRule(src, row.tr.id, taken)) {
+      // a mixed step its own rule fired (answer 4's "or by itself"): the case moved by itself, as an A row's would
+      lives.push({ ...live, look: 'fired', at: taken, right: mmss(taken), subtitle: `${row.subtitle} · fired by its own rule` });
+      continue;
+    }
     if (taken !== null) {
       const ooo = outOfOrder(visit, rows, row, taken);
       lives.push({ ...live, look: 'taken', at: taken, outOfOrder: ooo, right: mmss(taken), subtitle: `${row.subtitle} · taken${ooo ? ', out of order' : ''}` });
       continue;
     }
-    // in a hop of the stage: failed only under the same rule as the stages passed (a linked objective, out of reach)
-    if (src.stateId !== visit.stage && objectivesOf(doc, row.tr).length && !reachable(doc, src.stateId, row.tr.to)) {
+    // in a hop of the stage: failed only under the shared rule (an asking objective, its target out of reach)
+    if (untakenStatus(doc, row.tr, { stateId: visit.stage, current: src.stateId, dueT: visit.t0, leftT: null, now: src.simT }, ev)?.status === 'failed') {
       finished.push({ ...live, look: 'failed', at: src.simT, right: `failed ${mmss(src.simT)}` });
       continue;
     }
     const linked = objectivesOf(doc, row.tr);
     const unmet = conditionNotMet(linked, isTrue);
-    // the linked objective's eventWithin window (answer 7): from its `after`, unless its `event` has come since
-    let due: number | null = null;
-    for (const o of linked) {
-      if (o.rule.kind !== 'eventWithin') continue;
-      const a = firstT(src, o.rule.after);
-      if (a === null || firstT(src, o.rule.event, a) !== null) continue;
-      const left = a + o.rule.withinS - src.simT;
-      due = due === null ? left : Math.min(due, left);
-    }
+    // the window of an objective asking for the step (answer 7; the shared reading, card-read.ts `standingOf`)
+    const due = standingOf(doc, row.tr, { dueT: visit.t0, leftT: null, now: src.simT }, ev).dueS;
     const parts = [row.subtitle];
     if (unmet) {
       const cond = linked.find((o) => o.condition !== null)?.condition ?? [];
       parts.push(`the card expects it after ${eventWords([...cond], d)}`, 'pressable now');
     }
-    if (due !== null && due >= 0) parts.push(`due in ${mmss(due)}`);
-    const overdue = due !== null && due < 0 ? -due : null;
+    if (due !== null && due > 0) parts.push(`due in ${mmss(due)}`);
+    const overdue = due !== null && due <= 0 ? -due : null;
     if (overdue !== null) parts.push('still pressable');
     const look: Look = unmet ? 'unmet' : expected ? 'ready' : 'current';
     if (look === 'current') expected = true;
@@ -263,10 +271,10 @@ export function classify(src: Source): Board {
     lives.push({ ...live, look, overdue, subtitle: parts.join(' · '), right });
   }
 
-  // the stages passed: their taken, failed and fired rows. "Failed" (answer 7 as refined by the orchestrator) is only a
-  // step a linked objective asked for (answer 6's link rule) whose target can no longer be reached; an alternative branch
-  // not chosen, with no objective on it, is dropped (not in Finished either). A step whose target the run reached anyway
-  // (the crisis called from a later stage) is not failed either: what it leads to happened.
+  // the stages passed: their taken, failed and fired rows. "Failed" (answer 7 as refined) is the shared reading's
+  // (card-read.ts `untakenStatus`): a step an objective still asks for (linked by answer 6's rule, its anchor before the
+  // stage was left, its event not given another way since) whose target the card can no longer reach. An alternative
+  // branch not chosen, with no objective asking for it, is dropped (not in Finished either).
   const failed = new Map<string, LiveRow>(); // by transition: the last visit's
   for (const v of visits.slice(0, -1)) {
     const vr = rowsOf(doc, v.stage);
@@ -277,10 +285,12 @@ export function classify(src: Source): Board {
       const live: LiveRow = { ...base(row), stage: v.stage };
       if (row.kind === 'auto') {
         if (t !== null) finished.push({ ...live, look: 'fired', at: t, right: mmss(t), subtitle: `${name} · fired, the case moved by itself` });
+      } else if (t !== null && byItsRule(src, row.tr.id, t)) {
+        finished.push({ ...live, look: 'fired', at: t, right: mmss(t), subtitle: `${name} · fired by its own rule` });
       } else if (t !== null) {
         const ooo = outOfOrder(v, vr, row, t);
         finished.push({ ...live, look: 'taken', at: t, outOfOrder: ooo, right: mmss(t), subtitle: `${name} · taken${ooo ? ', out of order' : ''}` });
-      } else if (objectivesOf(doc, row.tr).length && !reachable(doc, src.stateId, row.tr.to) && !src.history.some((e) => e.t >= v.t0 && e.stateId === row.tr.to)) {
+      } else if (untakenStatus(doc, row.tr, { stateId: v.stage, current: src.stateId, dueT: v.t0, leftT: v.end, now: src.simT }, ev)?.status === 'failed') {
         const at = v.end ?? src.simT;
         const prev = failed.get(row.tr.id);
         if (prev) finished.splice(finished.indexOf(prev), 1);

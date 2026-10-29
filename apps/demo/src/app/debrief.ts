@@ -5,8 +5,9 @@
 // instructor's judged objectives and the marks (Instructor v2, IP8), and the export's shape (written by
 // `debrief-export.ts`). No DOM.
 import { manualLabel } from '@pme/controller';
-import type { ObjectiveRule, RunEventId, ScenarioDoc } from '@pme/controller/scenario';
+import type { ObjectiveRule, RunEventId } from '@pme/controller/scenario';
 import { FIXED_ALARM_WORDS } from './alarms.ts';
+import { untakenStatus, type Evidence } from './card-read.ts';
 import { CONDITIONS } from './describe.ts';
 import { drugName, drugWords, labelOf, lookup, unitOf } from './glossary.ts';
 import { LAB_KEYS, LABS, TREND, TREND_KEYS, type LabKey, type MarkKind, type Row, type RunData, type Sample, type TrendKey, type ValueKey } from './record.ts';
@@ -218,17 +219,6 @@ export interface Step {
   status: StepStatus;
 }
 
-/** Every state the card can reach from `from` (itself included), over every transition and probability `else`. */
-function reachable(doc: ScenarioDoc, from: string): Set<string> {
-  const seen = new Set([from]);
-  for (const id of seen) {
-    for (const tr of doc.states.find((s) => s.id === id)?.transitions ?? []) for (const to of [tr.to, tr.else]) if (to) seen.add(to);
-  }
-  return seen;
-}
-
-/** Seconds within which two record times are the same instant. */
-const EPS_T = 1e-6;
 /** The kept state rows: one per state entered, with how (record.ts `tr`, `by`). */
 const stateRows = (d: RunData): Row[] => kept(d).filter((r) => r.kind === 'scenario' && r.ev?.startsWith('state:'));
 
@@ -237,13 +227,8 @@ const stateRows = (d: RunData): Row[] => kept(d).filter((r) => r.kind === 'scena
  * kept course, in the card's order, each with the time it was due, the time and order it was taken, and its status
  * (`StepStatus`). Listed: every step taken, and every untaken step an objective asks for. An alternative branch not
  * chosen is not a failure, so an untaken step no objective asks for is left out (the coordinator's rule for IP8).
- * An objective is linked to a step (answer 6) when the event its rule asks for (`eventWithin`, `occurred`,
- * `heldThen`) is `state:<to>`, or `drug:<id>` for a drug given in `<to>`'s onEnter. It asks for the step when:
- *  - it is not met;
- *  - its anchor (the first `from`, then for `eventWithin` the first `after`) happened while the step's stage was still
- *    current or before;
- *  - and the linked event did not happen anyway from the step's due time and the anchor on (another button, or the
- *    card's own rule, gave it).
+ * Whether an objective asks for an untaken step, and its status then, is card-read.ts `untakenStatus`: the one
+ * reading the ACTION list (teach2/rows.ts) shares, so the list and this table agree by construction.
  * Empty without a scenario, and for a record made before the record kept how each state was entered (nothing to
  * tell a press from a rule by).
  */
@@ -252,30 +237,9 @@ export function steps(d: RunData): Step[] {
   const rows = stateRows(d);
   if (!doc || (rows.length > 1 && !rows.some((r) => r.tr !== undefined || r.by !== undefined))) return [];
   const cur = rows.at(-1)?.ev?.slice('state:'.length) ?? doc.initialState;
-  const reach = reachable(doc, cur);
-  /** The objectives asking for a step into `to` whose stage was current from `dueT` until it was left at `leftT`
-   *  (null: still current); and whether one of them is an `eventWithin` whose window has passed. */
-  const asking = (to: string, dueT: number, leftT: number | null): { asked: boolean; overdue: boolean } => {
-    const given = (doc.states.find((s) => s.id === to)?.onEnter ?? []).flatMap((c) => (c.type === 'applyEvent' && 'drugId' in c.event ? [`drug:${String(c.event.drugId)}`] : []));
-    const links = [`state:${to}`, ...given];
-    const out = { asked: false, overdue: false };
-    for (const o of doc.objectives ?? []) {
-      const rule = typeof o === 'string' ? undefined : o.rule;
-      if (!rule || (rule.kind !== 'eventWithin' && rule.kind !== 'occurred' && rule.kind !== 'heldThen')) continue;
-      const linked = [rule.event].flat().filter((e) => links.includes(e));
-      const v = verdict(rule, d);
-      if (!linked.length || v.status === 'met') continue;
-      const from = rule.from ? first(d, rule.from) : null;
-      if (rule.from && !from) continue; // it never began to ask
-      const anchor = rule.kind === 'eventWithin' ? first(d, rule.after, from?.t ?? -Infinity) : from;
-      // an anchor at the instant the stage was left is the next stage's, not this one's
-      if ((rule.kind === 'eventWithin' && !anchor) || (anchor && leftT !== null && anchor.t >= leftT - EPS_T)) continue;
-      if (linked.some((e) => first(d, e, Math.max(dueT, anchor?.t ?? -Infinity)))) continue; // given another way
-      out.asked = true;
-      if (rule.kind === 'eventWithin' && v.status === 'not met') out.overdue = true;
-    }
-    return out;
-  };
+  // the one reading of an untaken step that the ACTION list shares (card-read.ts `untakenStatus`), on this record
+  const ev: Evidence = { first: (w, from) => first(d, [w].flat(), from)?.t ?? null, met: (rule) => verdict(rule, d).status === 'met' };
+  const now = endOf(d);
   return doc.states.flatMap((s) => {
     const entered = rows.find((r) => r.ev === `state:${s.id}`);
     if (!entered) return [];
@@ -296,9 +260,9 @@ export function steps(d: RunData): Step[] {
       let status: StepStatus;
       if (takenT !== null) status = taken.some((y) => y.i > i && (y.takenT as number) < takenT) ? 'out of order' : 'taken';
       else {
-        const a = asking(tr.to, entered.t, leftT);
-        if (!a.asked) return []; // an alternative not chosen, or a step no objective asks for
-        status = s.id !== cur && !reach.has(tr.to) ? 'failed' : a.overdue ? 'overdue' : 'not done';
+        const u = untakenStatus(doc, tr, { stateId: s.id, current: cur, dueT: entered.t, leftT, now }, ev);
+        if (!u) return []; // an alternative not chosen, or a step no objective asks for
+        status = u.status;
       }
       return [{ id: tr.id, stateId: s.id, n: k + 1, label, dueT: entered.t, takenT, order, ...(x.ruleT !== undefined ? { ruleT: x.ruleT } : {}), status }];
     });

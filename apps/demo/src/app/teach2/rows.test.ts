@@ -142,11 +142,14 @@ describe('rows.ts: taken, failed, fired, met and the folds', () => {
     const h: H[] = [...TO_TREATING.slice(0, 6), { t: 120, stateId: 'established', transitionId: 'established' }, { t: 200, stateId: 'arrest', transitionId: 'arrest' }];
     const b = classify(src(MH, 'arrest', { history: h, simT: 210 }));
     const failed = b.finished.filter((r) => r.look === 'failed');
-    // every "MH crisis" step (the objective "call the MH crisis within 120 s" rides on it) of the stages passed
+    // the "MH crisis" step (the objective "call the MH crisis within 120 s of early signs" rides on it) of the stages
+    // passed once that objective asked for it: from early signs on. IP9 (ruling 1) folded this onto the Debrief's
+    // reading (card-read.ts `untakenStatus`): before early signs the objective asked for nothing, so the crisis buttons
+    // of induced, intubated and surgery are not failed (IP6 had listed them; the Debrief's steps table never did)
     expect(failed.map((r) => [r.stage, r.row.kind === 'step' && r.row.tr.id, r.at])).toEqual([
-      ['induced', 'crisis', 30], ['intubated', 'crisis-intubated', 40], ['surgery', 'crisis-surgery', 80], ['earlySigns', 'crisis-earlySigns', 120], ['established', 'crisis-established', 200],
+      ['earlySigns', 'crisis-earlySigns', 120], ['established', 'crisis-established', 200],
     ]);
-    expect(failed[0]?.right).toBe('failed 00:30');
+    expect(failed[0]?.right).toBe('failed 02:00');
     expect(failed[0]?.subtitle).toContain('its stage has passed');
     // Preoxygenate, a branch not chosen with no objective on it: not failed, not shown
     expect(b.finished.some((r) => r.row.title.startsWith('Preoxygenate'))).toBe(false);

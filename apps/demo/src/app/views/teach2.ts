@@ -28,18 +28,23 @@ export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): numbe
   const header = mountHeader(link);
   const dock = mountDock(link);
   const strip = h('nav', { class: 'ip2-strip', 'aria-label': 'Stages' });
+  // the paused banner's row, full width under the strip (board "v9 paused"; IP9, ruling 3): cue.ts makes and paints the
+  // banner, and the view moves it here once the cue box is mounted
+  const paused = h('div', { class: 'ip2-paused-row' });
   const cue = h('div', { class: 'ip2-cue' });
   const state = h('section', { class: 'ip2-state', 'aria-labelledby': 'ip2-state-h' }, h('h2', { id: 'ip2-state-h', class: 'ip2-colhead' }, 'STATE'), cue);
   const actionBody = h('div', { class: 'ip2-action-body' });
   const action = h('section', { class: 'ip2-action', 'aria-labelledby': 'ip2-action-h' }, h('h2', { id: 'ip2-action-h', class: 'ip2-colhead' }, 'ACTION'), actionBody);
   const sheets = h('div', { class: 'ip2-sheets' });
   const el = h('section', { class: 'ip2', 'aria-labelledby': 'ip2-h' },
-    h('h1', { id: 'ip2-h', class: 'sr-only' }, 'Instructor v2'), header.el, strip, state, action, sheets, dock.el);
+    h('h1', { id: 'ip2-h', class: 'sr-only' }, 'Instructor v2'), header.el, strip, paused, state, action, sheets, dock.el);
 
   const keys = mountKeys(el, { link, togglePause: header.togglePause });
   const ctx: Teach2Ctx = { link, site: o.site, weightKg: o.weightKg, keys, dock: { tools: dock.tools, note: dock.note }, openSheet: () => undefined };
   // The sheets mount first: IP7 may replace ctx.openSheet
   const slots: Slot[] = [mountSheets(sheets, ctx), mountStrip(strip, ctx), mountCue(cue, ctx), mountAction(actionBody, ctx)];
+  const banner = cue.querySelector('.ip2-paused');
+  if (banner) paused.append(banner);
 
   const repaint = throttle(() => {
     if (el.hidden) return;
