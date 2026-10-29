@@ -42,8 +42,11 @@ the public API is what the packages export (see the API reference), the `pme-sce
 ### Fixed
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's
   sequence and viewer role per transport, and counts a hello only after its sequence check, so a phone on the relay
-  that says hello with the laptop panel's id leaves the panel's commands applied; the relay refuses a hello whose id is
-  already bound to an open socket in the session, for every role (it did so only for a second host).
+  that says hello with the laptop panel's id leaves the panel's commands applied. The relay gives each peer id one live
+  socket per session, for every role (it checked only a second host): it pings the socket holding the id and refuses
+  the newcomer with a close code the client retries if it answers within 3 s, or closes it and admits the newcomer if
+  it does not, so a phone whose network dropped or a reloaded instructor laptop gets back in; a live host can no
+  longer be replaced by a socket that claims its id.
 - Explore prints its rows in the engine's own unit: Endocrine glucose is the engine's mmol/L value (it showed the
   mg/dL copy as mmol/L) and the lab panel's glucose says mg/dL; Stress response is on its 0–100 scale (was labelled
   0–1); the gas model's awake resting VO₂ is labelled "VO₂ at rest (awake)" beside the actual VO₂, so Gas and Blood no

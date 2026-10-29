@@ -7,7 +7,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createStamper, type ManagedTransport, type Role, type WireMessage } from '../../src/protocol.ts';
 import { createInProcessHub } from '../../src/transport/in-process.ts';
 import { createWebSocketTransport } from '../../src/transport/websocket.ts';
-import { RELAY_CLOSE } from '../../src/transport/relay-frames.ts';
+import { RELAY_CLOSE, RELAY_RETRY_CLOSE } from '../../src/transport/relay-frames.ts';
+import { WebSocket as WsClient } from 'ws';
 import { HostSession } from '../../src/session/host-session.ts';
 import { ControllerSession } from '../../src/session/controller-session.ts';
 import { startRelay, type RelayHandle } from '../../relay/server.ts';
@@ -101,7 +102,7 @@ for (const via of ['direct', 'relay'] as const) {
         evil.hello(seq);
         await sleep(150);
         expect(await step(110)).toMatchObject(OK);
-        if (via === 'relay') expect(evil.closeCode).toBe(RELAY_CLOSE.hostExists); // the id is bound to the panel's open socket
+        if (via === 'relay') expect(evil.closeCode).toBe(RELAY_RETRY_CLOSE.idTaken); // the id is bound to the panel's live socket
         evil.ws.close();
         await sleep(100);
         expect(await step(130)).toMatchObject(OK);
@@ -142,7 +143,7 @@ describe('one transport: the viewer set changes only after the sequence check ac
 });
 
 describe('relay: one open socket per peer id in a room', () => {
-  it('(d) refuses a second socket claiming an open id, for a viewer and for a controller, and logs it', async () => {
+  it('(d) refuses a second socket claiming a live id, for a viewer and for a controller (retryable), and logs it', async () => {
     await startClassroomRelay();
     const host = await socket('host-h1', { phone: false, role: 'host' });
     host.hello(1);
@@ -158,9 +159,10 @@ describe('relay: one open socket per peer id in a room', () => {
     const asViewerOfHost = await socket('host-h1'); // a phone takes the host's id
     asViewerOfHost.hello(5);
     await waitFor(() => asViewer.closeCode !== null && asController.closeCode !== null && asViewerOfHost.closeCode !== null, 2000, 'refusals');
-    expect([asViewer.closeCode, asController.closeCode, asViewerOfHost.closeCode]).toEqual([RELAY_CLOSE.hostExists, RELAY_CLOSE.hostExists, RELAY_CLOSE.hostExists]);
-    expect(asViewer.got.some((f) => f.relay === 'error' && f.code === 'host-exists')).toBe(true);
-    expect(relayLog.filter((l) => /refused: peer id .* is taken/.test(l))).toHaveLength(3);
+    expect([asViewer.closeCode, asController.closeCode, asViewerOfHost.closeCode]).toEqual([RELAY_RETRY_CLOSE.idTaken, RELAY_RETRY_CLOSE.idTaken, RELAY_RETRY_CLOSE.idTaken]);
+    // No error frame: a follower would show it as a refusal for good, and this one is retried
+    expect(asViewer.got.some((f) => f.relay === 'error')).toBe(false);
+    expect(relayLog.filter((l) => /refused: peer id .* is taken by a live socket/.test(l))).toHaveLength(3);
     // The owners keep their sockets, and the host heard none of the claims
     expect([host.closeCode, ctl.closeCode, view.closeCode]).toEqual([null, null, null]);
     expect(relay!.room(SESSION)).toMatchObject({ hostOnline: true, peers: 2 });
@@ -196,4 +198,96 @@ describe('relay: one open socket per peer id in a room', () => {
     await waitStatus(panelT, 'open', 5000);
     expect(await step(120)).toMatchObject(OK);
   }, 20_000);
+
+  it('(d) a live host cannot be replaced: the same id is refused (retryable), another id as a second host (fatal)', async () => {
+    await startClassroomRelay();
+    const host = await socket('host-h1', { phone: false, role: 'host' });
+    host.hello(1);
+    await waitFor(() => relay!.room(SESSION)?.hostOnline === true, 2000, 'host');
+    const sameId = await socket('host-h1', { phone: false, role: 'host' });
+    sameId.hello(9);
+    const otherId = await socket('host-h2', { phone: false, role: 'host' });
+    otherId.hello(1);
+    await waitFor(() => sameId.closeCode !== null && otherId.closeCode !== null, 2000, 'refusals');
+    expect([sameId.closeCode, otherId.closeCode]).toEqual([RELAY_RETRY_CLOSE.idTaken, RELAY_CLOSE.hostExists]);
+    expect(host.closeCode).toBeNull();
+  });
+
+  it("(d) the follower's transport keeps retrying a taken id and gets in once the holder leaves", async () => {
+    await startClassroomRelay();
+    const host = await socket('host-h1', { phone: false, role: 'host' });
+    host.hello(1);
+    const holder = await socket('view-v9');
+    holder.hello(1);
+    await waitFor(() => relay!.room(SESSION)?.peers === 1, 2000, 'holder joined');
+    const t = createWebSocketTransport({ url: `ws://[::1]:${relay!.port}/`, backoff: { baseMs: 50, maxMs: 100, jitter: 0 } });
+    closers.push(() => t.close());
+    const stamp = createStamper(SESSION, 'view-v9');
+    const statuses: string[] = [];
+    t.onStatus((st) => {
+      statuses.push(st);
+      if (st === 'open') t.send(stamp({ kind: 'hello', role: 'viewer' }));
+    });
+    await waitFor(() => relayLog.filter((l) => l.includes('view-v9 refused')).length >= 2, 3000, 'two refusals');
+    expect(t.status).not.toBe('error');
+    holder.ws.close();
+    await waitFor(() => host.got.filter((m) => m.kind === 'hello' && m.from === 'view-v9').length === 2, 3000, "the newcomer's hello at the host");
+    await sleep(150);
+    expect(t.status).toBe('open');
+    expect(statuses).not.toContain('error');
+    expect(relay!.room(SESSION)?.peers).toBe(1);
+  });
+});
+
+/** A socket that stops answering pings (half-open: its network dropped, nothing told the relay). */
+async function silent(from: string, role: Role, phone: boolean) {
+  const ws = new WsClient(phone ? `ws://[::1]:${relay!.port}/` : `ws://127.0.0.1:${relay!.port}/`, { autoPong: false });
+  const s = { ws, closed: false };
+  ws.on('close', () => (s.closed = true));
+  ws.on('error', () => undefined);
+  await new Promise((ok) => ws.once('open', ok));
+  ws.send(JSON.stringify({ v: 1, session: SESSION, from, seq: 1, sentAt: Date.now(), kind: 'hello', role }));
+  closers.push(() => ws.terminate());
+  return s;
+}
+
+describe('relay: a half-open socket gives its id up within about 3 s', () => {
+  it('(f) a phone whose old socket is silent reconnects with its id', async () => {
+    await startClassroomRelay();
+    const host = await socket('host-h1', { phone: false, role: 'host' });
+    host.hello(1);
+    const old = await silent('view-v1', 'viewer', true);
+    await waitFor(() => relay!.room(SESSION)?.peers === 1, 2000, 'old joined');
+    const t0 = Date.now();
+    const again = await socket('view-v1');
+    again.hello(2);
+    await waitFor(() => host.got.some((m) => m.kind === 'hello' && m.from === 'view-v1' && m.seq === 2), 5000, 'the reconnect reached the host');
+    const took = Date.now() - t0;
+    expect(took).toBeGreaterThanOrEqual(2900);
+    expect(took).toBeLessThan(4000);
+    await waitFor(() => old.closed, 2000, 'the silent socket closed');
+    expect(again.closeCode).toBeNull();
+    expect(relay!.room(SESSION)?.peers).toBe(1);
+    expect(relayLog.some((l) => /viewer view-v1 did not answer within 3000 ms/.test(l))).toBe(true);
+  }, 10_000);
+
+  it('(f) a host whose old socket is silent: the same id and a reloaded page (a new id) both get in', async () => {
+    await startClassroomRelay();
+    const view = await socket('view-v1');
+    view.hello(1);
+    for (const id of ['host-h1', 'host-h2']) {
+      const old = await silent('host-h1', 'host', false);
+      await waitFor(() => relay!.room(SESSION)?.hostOnline === true, 2000, 'old host');
+      const t0 = Date.now();
+      const fresh = await socket(id, { phone: false, role: 'host' });
+      fresh.hello(2);
+      await waitFor(() => view.got.some((m) => m.kind === 'hello' && m.from === id && m.seq === 2), 5000, `${id}: the new host's hello reached the viewer`);
+      expect(Date.now() - t0).toBeLessThan(4000);
+      await waitFor(() => old.closed, 2000, 'the silent host closed');
+      expect(fresh.closeCode).toBeNull();
+      expect(relay!.room(SESSION)?.hostOnline).toBe(true);
+      fresh.ws.close();
+      await waitFor(() => relay!.room(SESSION)?.hostOnline === false, 2000, 'host left');
+    }
+  }, 15_000);
 });

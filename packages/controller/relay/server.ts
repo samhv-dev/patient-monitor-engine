@@ -9,7 +9,7 @@ import { WebSocketServer, type WebSocket } from 'ws';
 import { httpHandler, isLocalAddress, lanAddresses } from './http.ts';
 import { WIRE_LIMITS, parseWireMessage } from '../src/guard.ts';
 import { SESSION_CODE_RE, VIEWER_EVENTS, type Role, type WireMessage } from '../src/protocol.ts';
-import { RELAY_CLOSE, type RelayFrame } from '../src/transport/relay-frames.ts';
+import { RELAY_CLOSE, RELAY_RETRY_CLOSE, type RelayFrame } from '../src/transport/relay-frames.ts';
 
 export interface RelayOptions {
   port?: number; // 0 = random (tests)
@@ -34,6 +34,12 @@ export interface RelayOptions {
   remoteRoles?: 'viewer' | 'all';
   /** Stage 12 (tests): whether a socket's address is this machine (default: loopback or one of its own addresses). */
   isLocal?: (address: string | undefined) => boolean;
+  /**
+   * How long the socket holding a peer id (or the room's host) has to answer a ping when another socket says hello
+   * with that id (or as a second host), ms (default 3 s) [ENG]. It answers: the newcomer is refused. It does not (a
+   * half-open socket): it is closed and the newcomer joins.
+   */
+  takenCheckMs?: number;
 }
 
 interface Peer {
@@ -70,6 +76,8 @@ export interface RelayHandle {
 }
 
 const ACK_ROUTES_MAX = 1000;
+/** Frames a socket may send while its hello waits on a liveness check; more are dropped [ENG]. */
+const HELD_MAX = 64;
 
 export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> {
   const roomTtlMs = opts.roomTtlMs ?? 600_000;
@@ -82,6 +90,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
   let dropped = 0;
 
   const maxPeers = opts.maxPeersPerRoom ?? 60;
+  const takenCheckMs = opts.takenCheckMs ?? 3000;
   // Stage 12: one http server carries the WebSockets, `/pme-relay.json` and (with staticDir) the app itself
   const http = createServer(httpHandler({ ...(opts.staticDir ? { staticDir: opts.staticDir } : {}), info: () => ({ relay: 'pme', port, addresses: lanAddresses(), serves: !!opts.staticDir }) }));
   await new Promise<void>((resolve, reject) => {
@@ -189,12 +198,83 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
   const tellHost = (room: Room) => {
     if (room.host) frame(room.host.ws, peersFrame(room));
   };
+  /**
+   * Whether a socket is still there: it answers a ping within `ms`. A half-open one (a phone whose Wi-Fi dropped, a
+   * laptop reloaded while its old socket hangs) does not, and resolves false as soon as it closes.
+   */
+  const answers = (ws: WebSocket, ms: number) =>
+    new Promise<boolean>((ok) => {
+      if (ws.readyState !== ws.OPEN) return ok(false);
+      const done = (v: boolean) => {
+        clearTimeout(t);
+        ws.off('pong', yes);
+        ws.off('close', no);
+        ok(v);
+      };
+      const yes = () => done(true);
+      const no = () => done(false);
+      const t = setTimeout(no, ms);
+      ws.once('pong', yes);
+      ws.once('close', no);
+      try {
+        ws.ping();
+      } catch {
+        no();
+      }
+    });
   const onWire = (ws: WebSocket, local: boolean) => {
     let peer: Peer | null = null;
     let room: Room | null = null;
-    ws.on('message', (buf, isBinary) => contain(() => {
-      if (isBinary) return void dropped++;
-      const data = buf.toString();
+    let held: string[] | null = null; // This socket's frames while its hello waits on a liveness check
+    const admit = (r: Room, m: Extract<WireMessage, { kind: 'hello' }>, data: string) => {
+      const p: Peer = (peer = { ws, id: m.from, role: m.role, alive: true });
+      if (m.role === 'host') {
+        const old = r.host;
+        if (old && old.ws !== ws) old.ws.close(1000, 'replaced by reconnect');
+        r.host = p;
+        for (const q of r.peers) frame(q.ws, peersFrame(r));
+        tellHost(r);
+        route(r, p, m, data); // fan the host hello out: peers re-hello and resend pending commands
+        // Peers that said hello while the host was away still wait for a snapshot.
+      } else {
+        r.peers.add(p);
+        frame(ws, peersFrame(r));
+        tellHost(r);
+        if (!r.host && r.snapshot) raw(ws, r.snapshot); // host offline: serve the cache
+        route(r, p, m, data);
+      }
+      log(`room ${r.code}: ${m.role} ${m.from} joined`);
+    };
+    /**
+     * One open socket per peer id, whatever the role, and one host per room: a second socket claiming an id in use (a
+     * hand-written hello with the panel's id, read off the wire) would share that peer's state on the host. The socket
+     * holding the id is pinged first: if it answers within `takenCheckMs` the newcomer is refused — a taken id with a
+     * RETRYABLE close (the follower's backoff keeps trying), a second host with another id as before (fatal); if it
+     * does not, it is closed and the newcomer joins (verification 2026-10-29; coordinator's ruling the same day).
+     */
+    const join = (r: Room, m: Extract<WireMessage, { kind: 'hello' }>, data: string) => {
+      const holder = [r.host, ...r.peers].find((p) => p !== null && p.ws.readyState === p.ws.OPEN && (p.id === m.from || (m.role === 'host' && p === r.host)));
+      if (!holder) return admit(r, m, data);
+      held = [];
+      void answers(holder.ws, takenCheckMs).then((live) => contain(() => {
+        const queued = held ?? [];
+        held = null;
+        if (ws.readyState !== ws.OPEN) return;
+        if (live && holder.ws.readyState === holder.ws.OPEN) {
+          if (holder.id !== m.from) return refuse(ws, RELAY_CLOSE.hostExists, 'host-exists', `session ${m.session} already has a host`);
+          log(`room ${r.code}: ${m.role} ${m.from} refused: peer id ${m.from} is taken by a live socket`);
+          return ws.close(RELAY_RETRY_CLOSE.idTaken, `peer id ${m.from} is taken`);
+        }
+        log(`room ${r.code}: ${holder.role} ${holder.id} did not answer within ${takenCheckMs} ms: closed for the newcomer ${m.role} ${m.from}`);
+        holder.ws.terminate();
+        if (r.host === holder) r.host = null;
+        r.peers.delete(holder);
+        r.awaiting.delete(holder);
+        join(r, m, data);
+        for (const d of queued) take(d); // in order; held again if this hello waits on another check
+      }));
+    };
+    const onFrame = (data: string) => {
       const m = parseWireMessage(data);
       if (!m) return void dropped++;
       if (!peer) {
@@ -205,38 +285,19 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
         // Stage 12: another device follows; only this machine hosts or commands (the room has seen the code)
         if (!local && opts.remoteRoles === 'viewer' && m.role !== 'viewer') return refuse(ws, RELAY_CLOSE.forbiddenRole, 'forbidden', `${m.role} only from the instructor's computer`);
         if (m.role !== 'host' && room.peers.size >= maxPeers) return refuse(ws, RELAY_CLOSE.full, 'full', `session ${m.session} is full (${maxPeers})`);
-        // One open socket per peer id, whatever the role: a second socket claiming an id in use (a hand-written hello
-        // with the panel's id, read off the wire) would share that peer's state on the host. A peer whose socket closed
-        // reconnects with its id as before (verification 2026-10-29)
-        if ([room.host, ...room.peers].some((p) => p !== null && p.id === m.from && p.ws.readyState === p.ws.OPEN)) {
-          log(`room ${room.code}: ${m.role} ${m.from} refused: peer id ${m.from} is taken`);
-          return refuse(ws, RELAY_CLOSE.hostExists, 'host-exists', `peer id ${m.from} is taken in session ${m.session}`);
-        }
-        peer = { ws, id: m.from, role: m.role, alive: true };
-        if (m.role === 'host') {
-          const old = room.host;
-          if (old && old.id !== m.from && old.ws.readyState === old.ws.OPEN) {
-            peer = null;
-            return refuse(ws, RELAY_CLOSE.hostExists, 'host-exists', `session ${m.session} already has a host`);
-          }
-          if (old && old.ws !== ws) old.ws.close(1000, 'replaced by reconnect');
-          room.host = peer;
-          for (const p of room.peers) frame(p.ws, peersFrame(room));
-          tellHost(room);
-          route(room, peer, m, data); // fan the host hello out: peers re-hello and resend pending commands
-          // Peers that said hello while the host was away still wait for a snapshot.
-        } else {
-          room.peers.add(peer);
-          frame(ws, peersFrame(room));
-          tellHost(room);
-          if (!room.host && room.snapshot) raw(ws, room.snapshot); // host offline: serve the cache
-          route(room, peer, m, data);
-        }
-        log(`room ${room.code}: ${m.role} ${m.from} joined`);
-        return;
+        return join(room, m, data);
       }
       if (!room || m.session !== room.code || m.from !== peer.id) return void dropped++; // no spoofing
       route(room, peer, m, data);
+    };
+    const take = (data: string) => {
+      if (!held) return onFrame(data);
+      if (held.length < HELD_MAX) held.push(data);
+      else dropped++;
+    };
+    ws.on('message', (buf, isBinary) => contain(() => {
+      if (isBinary) return void dropped++;
+      take(buf.toString());
     }));
     ws.on('close', () => {
       if (!peer || !room) return;
