@@ -87,6 +87,7 @@ class Run {
     this.loads.push(l);
     const row = { wall: this.wall(), clock: mmss(s), simS: r1(s), speed: await this.speedNow(), state: await stateId(this.page), load1: l, what, hr: r1(v.hr), art: `${n0(v.abpSys)}/${n0(v.abpDia)} (${n0(v.abpMean)})`, spo2: r1(v.spo2), etco2: r1(v.etco2), rr: r1(v.rr), ...extra };
     this.r.rows.push(row);
+    if (process.env.KITROUND_VERBOSE === '1') console.log(`[${this.r.case}] W ${row.wall} ${row.clock} ×${row.speed} ${row.state} EtCO2 ${n0(v.etco2)} load ${l}: ${what}`);
     return row;
   }
   /** Wait until ok() holds (polled every 250 ms of wall time) or maxSimS of sim time passed; the sim time it held, or null. */
@@ -1291,55 +1292,172 @@ test('A3 bronchospasm: ×8 and a 2-min fast-forward from the Instructor view wit
   }
 });
 
-// ------------------------------------------------------------------------------------- kit round Q1 (18 Oct, release build)
+// ------------------------------------------------------------------------------------- kit round Q1 (the 30-minute talk)
 
-// Q1: the 30-minute talk end to end in ONE page, as the 3 November programme runs it (owner, 24 October: two live demos
-// only, MH then haemorrhage; bronchospasm and tamponade are out): opening with Home's release label (E125) and the Room's
-// QR moment (three phones join once), 1 MH on the E119 card (induction sequence, early call, the press at 14:41, three
-// 5-min spans; Debrief read), 2 haemorrhage on the E120 card (junctional → PEA → asystole → CPR, volume → VF → shock →
-// asystole → VF → shock → ROSC, the A4 sequence at the card's cue times) with its Debrief read and printed, then the
-// close: S12-F2 (one style change with the phones following, the AGENTS tile) and FX-12 (Restart patient, then Return
-// here: what does the session bar read?). No reload between the cases (the reload was the bronchospasm card's last step)
-// and no H21 (neither card opens the Ventilator view; the H5/H21 bronchospasm test above keeps it scripted). One record
-// per segment; the close is in the haemorrhage record (it needs that run's phone probe); the talk clock T+ is wall time
-// from the opening.
-//   KITROUND_OUTDIR=docs/showcase/kit-round-a/q1 SHOWCASE_KIT=… npx playwright test -c scripts/showcase/playwright.kit-round.config.ts -g "Q1 30-minute talk" --project chromium
+// Q1: the 30-minute talk end to end in ONE page, as the 3 November programme runs it. The owner's programme of
+// 29 October: ONE case, malignant hyperthermia on the E119 card, with three pauses in which he explains the physiology
+// the engine is computing on the Explore view, the matching model page open behind it in a second browser tab prepared
+// before the talk; the class IV haemorrhage case leaves the programme (it stays in the build as a reserve, and its A4
+// test below still measures it). Segments: 0 the opening on Home and the Room (three phones join once; the model-page
+// tab is opened here, "before the talk"), 1 MH to the early signs (×8 then ×4), STOP 1 at the early signs (Pause,
+// Explore from the Instructor's rail, the presenter's sections, the model-page tab in front and back, Resume), 2 the
+// call, hyperventilation and dantrolene, the EtCO₂ falling, span 1, STOP 2 as span 1 ends (Recovering), 3 ventilation
+// back and the climb (span 2), STOP 3 as span 2 ends (before the second dose), 4 the second dose with hyperventilation
+// again, span 3, the end Paused and the MH Debrief read on screen (not printed). The talk itself is not measured: every
+// wall time here is the machine's (the presses, the spans, the Explore openings) with the presenter's reaction
+// (KITROUND_REACT_S) and a short look (KITROUND_STOP_LOOK_S) where the talk will be. The engine's path in sim time is the
+// A4 / OWR4 path's (the stops pause the clock where A4 pressed on), so the speaker's reference numbers apply.
+// Screenshots of each stop (the projector's view, 1440 × 900) go to KITROUND_SHOTS if set, else to the OUTDIR.
+//   KITROUND_OUTDIR=… KITROUND_SHOTS=… SHOWCASE_KIT=… npx playwright test -c scripts/showcase/playwright.kit-round.config.ts -g "Q1 30-minute talk" --project chromium
+//   KITROUND_EXPLORE_ALL=1: also read every Explore section at each stop (after the presenter's path, timed apart)
+//   KITROUND_VERBOSE=1: print every row as it is taken (progress on a loaded machine)
 const holds = (phones: Page[]) => Promise.all(phones.map((p) => p.evaluate(() => { const h = document.querySelector('.learner-hold') as HTMLElement | null; const s = (window as unknown as Hook).__pmeFollower?.sync; return { hold: !!h && !h.hidden, status: s?.status ?? 'none', resyncs: s?.resyncs ?? null }; }).catch(() => null)));
 const sessionBarScen = (page: Page) => page.locator('.sessionbar .scen').innerText().then((s) => s.trim()).catch(() => 'no session bar');
+const STOP_LOOK_S = Number(process.env.KITROUND_STOP_LOOK_S ?? 3);
+const MODEL_PAGE = (page: string) => `https://${'github.com/samhv-dev/patient-monitor-engine'}/blob/main/docs/model/${page}.md`;
+/** The presenter's path at each stop (run sheet §3): the Explore sections he opens, in order, with "Changed only" OFF
+ *  (it would hide the dantrolene rows, which have no 1:00 baseline); `scrollTo` = the row he scrolls to (centred) after
+ *  the section's first screen; and the model page(s) behind. */
+const STOPS: Record<1 | 2 | 3, { sections: Array<{ id: string; scrollTo?: string }>; modelPages: string[] }> = {
+  1: { sections: [{ id: 'endocrine' }, { id: 'blood', scrollTo: 'BE' }], modelPages: ['endocrine-thermal'] },
+  2: { sections: [{ id: 'drugs' }, { id: 'endocrine' }, { id: 'gas', scrollTo: 'V̇A' }, { id: 'blood', scrollTo: 'BE' }], modelPages: ['pharmacology', 'blood'] },
+  3: { sections: [{ id: 'endocrine' }, { id: 'drugs' }, { id: 'gas', scrollTo: 'V̇A' }], modelPages: ['endocrine-thermal'] },
+};
+const EXPLORE_IDS = ['overview', 'haemodynamics', 'respiratory', 'gas', 'blood', 'brain', 'kidney', 'liver', 'endocrine', 'neuro', 'drugs', 'labs'];
+const hostPaused = (page: Page) => page.evaluate(() => (window as unknown as Hook).__pmeApp.link.ctl.hostPaused);
+const phoneLines = (phones: Page[]) => Promise.all(phones.map((p) => p.evaluate(() => (/Following session[^\n]*|The instructor[^\n]*/.exec(document.body.innerText) ?? [''])[0]).catch(() => null)));
 
-test('Q1 30-minute talk on the release build: opening, MH (E119) 14:41, haemorrhage (E120) + Debrief, close: S12-F2, FX-12', async ({ page, browser }) => {
-  test.setTimeout(75 * 60_000);
+/** The Explore section on screen: its title, the time stamp, the vitals strip and every row of the table as shown. */
+async function exploreNow(page: Page): Promise<Row> {
+  const v = page.locator('[data-view=explore]');
+  return {
+    title: await v.locator('#x-h').innerText().catch(() => ''),
+    stamp: await v.locator('p.hint.num').first().innerText().catch(() => ''),
+    vitals: (await v.locator('.vitals').innerText().catch(() => '')).replace(/\s+/g, ' ').trim(),
+    rows: await v.locator('table.values:not(.dense) > tbody > tr').evaluateAll((trs) => trs.map((tr) => {
+      const t = (s: string) => (tr.querySelector(s)?.textContent ?? '').trim();
+      return { label: t('th .lbl b'), now: t('td.v'), unit: t('td.u'), normal: t('td.n'), change: t('td.d'), dir: tr.getAttribute('data-dir') };
+    })),
+  };
+}
+
+/** One look-inside stop: the session is Paused; Explore opened from the Instructor's rail; the presenter's sections; the
+ *  model-page tab brought to the front and back; (optionally every section, timed apart); back to the Instructor. The
+ *  session must still be paused at the same sim second, and the phones still following. Resume is the caller's. */
+async function lookInside(R: Run, page: Page, phones: Page[], modelTab: Page | null, n: 1 | 2 | 3, dir: string): Promise<Row> {
+  const plan = STOPS[n];
+  const w = Date.now();
+  const sim0 = await R.sim();
+  const out: Row = { stop: n, clock: mmss(sim0), pausedAtStart: await hostPaused(page), phonesAtStart: await phoneLines(phones) };
+  await page.locator('nav.rail a[href="#/explore"]').click();
+  await page.locator('[data-view=explore]').waitFor({ state: 'visible', timeout: 10_000 });
+  out.sessionBarOnExplore = await page.locator('.sessionbar').isVisible().catch(() => false);
+  out.pauseButtonOnExplore = await page.locator('.sessionbar').getByRole('button', { name: /^(Pause|Resume)$/ }).first().innerText().catch(() => null);
+  const seen: Row[] = [];
+  for (const { id, scrollTo } of plan.sections) {
+    await page.locator(`[data-view=explore] nav.xnav a[data-id="${id}"]`).click();
+    await page.waitForTimeout(900); // the table redraws at most every 500 ms
+    mkdirSync(dir, { recursive: true });
+    const file = `stop${n}-${id}-${R.r.browser}.png`;
+    await page.screenshot({ path: join(dir, file) });
+    const x: Row = { id, shot: file, ...(await exploreNow(page)) };
+    await page.waitForTimeout(STOP_LOOK_S * 1000); // the presenter points (the talk is not measured)
+    if (scrollTo) {
+      const row = page.locator('[data-view=explore] table.values:not(.dense) > tbody > tr').filter({ has: page.locator('th .lbl b', { hasText: new RegExp(`^${scrollTo}$`) }) }).first();
+      await row.evaluate((e) => e.scrollIntoView({ block: 'center' }));
+      await page.waitForTimeout(500);
+      const f2 = `stop${n}-${id}-scrolled-${R.r.browser}.png`;
+      await page.screenshot({ path: join(dir, f2) });
+      x.scrolledTo = scrollTo;
+      x.scrolledShot = f2;
+      await page.waitForTimeout(STOP_LOOK_S * 1000);
+    }
+    seen.push(x);
+  }
+  out.sections = seen;
+  out.presenterExploreWallS = r1((Date.now() - w) / 1000);
+  // the model page behind: the second tab (prepared before the talk) brought to the front, then the instructor's tab
+  if (modelTab) {
+    const tabs: Row[] = [];
+    for (const mp of plan.modelPages) {
+      const wt = Date.now();
+      const nav = await modelTab.goto(MODEL_PAGE(mp), { timeout: 20_000, waitUntil: 'domcontentloaded' }).then((r) => r?.status() ?? 'no response', (e: Error) => `not loaded: ${e.message.split('\n')[0]}`);
+      await modelTab.bringToFront();
+      await modelTab.waitForTimeout(1500);
+      const file = `stop${n}-model-${mp}-${R.r.browser}.png`;
+      await modelTab.screenshot({ path: join(dir, file) }).catch(() => undefined);
+      tabs.push({ page: mp, url: MODEL_PAGE(mp), status: nav, shot: file, instructorVisibility: await page.evaluate(() => document.visibilityState), instructorPaused: await hostPaused(page), phones: await phoneLines(phones), wallS: r1((Date.now() - wt) / 1000) });
+      await page.bringToFront();
+      await page.waitForTimeout(800);
+    }
+    out.modelTab = tabs;
+    out.afterModelTab = { visibility: await page.evaluate(() => document.visibilityState), paused: await hostPaused(page), toasts: (await page.locator('.toasts').innerText().catch(() => '')).replace(/\s+/g, ' ').slice(-200) };
+  }
+  if (process.env.KITROUND_EXPLORE_ALL === '1') {
+    const wa = Date.now();
+    const all: Row[] = [];
+    for (const id of EXPLORE_IDS) {
+      await page.locator(`[data-view=explore] nav.xnav a[data-id="${id}"]`).click();
+      await page.waitForTimeout(900);
+      all.push({ id, ...(await exploreNow(page)) });
+    }
+    out.allSections = all;
+    out.allSectionsWallS = r1((Date.now() - wa) / 1000);
+  }
+  await page.locator('nav.rail a[href="#/teach"]').click();
+  await page.waitForTimeout(800);
+  await R.teachTab('scenario');
+  const sim1 = await R.sim();
+  out.simMovedS = r1(sim1 - sim0);
+  out.pausedAtEnd = await hostPaused(page);
+  out.phonesAtEnd = await holds(phones);
+  out.phoneLinesAtEnd = await phoneLines(phones);
+  out.stopWallS = r1((Date.now() - w) / 1000);
+  await R.row(`stop ${n}: back on the Instructor, still paused`, { stopWallS: out.stopWallS });
+  return out;
+}
+
+test('Q1 30-minute talk, the 3 November programme: opening, MH (E119) with three look-inside stops on the Explore view, the MH Debrief read', async ({ page, browser }) => {
+  test.setTimeout(60 * 60_000);
+  page.setDefaultTimeout(30_000); // a press that cannot land fails the run at once instead of waiting out the test
   const talk0 = Date.now();
   const T = () => mmss((Date.now() - talk0) / 1000);
   const talk: Row[] = [];
-  const seg = (what: string, extra: Row = {}) => talk.push({ tPlus: T(), what, ...extra });
+  const segW: Record<string, number | null> = {};
+  let segStart = Date.now();
+  const seg = (what: string, extra: Row = {}) => {
+    const wallS = r1((Date.now() - segStart) / 1000);
+    talk.push({ tPlus: T(), segment: what, segmentWallS: wallS, ...extra });
+    segW[what] = wallS;
+    segStart = Date.now();
+  };
+  const dir = SHOTS || OUTDIR;
   let phones: Page[] = [];
+  let modelTab: Page | null = null;
+  const stops: Row[] = [];
   const saveTalk = () => {
     mkdirSync(OUTDIR, { recursive: true });
-    writeFileSync(join(OUTDIR, `q1-talk-${test.info().project.name}.json`), JSON.stringify({ kit: KIT_SHA, browser: test.info().project.name, startedAt: new Date(talk0).toISOString(), segments: talk }, null, 2));
+    writeFileSync(join(OUTDIR, `q1-talk-${test.info().project.name}.json`), JSON.stringify({ kit: KIT_SHA, browser: test.info().project.name, startedAt: new Date(talk0).toISOString(), reactS: REACT_S, stopLookS: STOP_LOOK_S, segments: talk, segmentWallS: segW, stops }, null, 2));
   };
 
-  // ---- 0 opening: the release label (Start view, Settings → About), then the QR moment
+  // ---- 0 opening on Home and the Room; the model-page tab prepared before the talk
   const O = new Run(page, browser, 'Q1 0 opening and QR');
   try {
     O.w0 = Date.now();
     await page.goto(`${process.env.SHOWCASE_BASE}/?relay#/`);
     await page.waitForFunction(() => '__pmeApp' in window, null, { timeout: 30_000 });
     await page.waitForTimeout(1500);
-    // E125: the release label is Home's version line, the disclaimer the footer line every page but the monitor carries
-    const about = { start: await page.locator('[data-view=home] [data-about]').first().innerText().catch(() => 'no [data-about] on Home'), footer: await page.locator('.app-foot').innerText().catch(() => 'no footer line') } as Row;
-    await page.evaluate(() => (location.hash = '#/settings'));
-    await page.waitForTimeout(1000);
-    about.settings = await page.locator('[data-view=settings] [data-about]').first().innerText().catch(() => 'no [data-about] in Settings');
-    about.preRelease = /1\.0\.0-rc\.\d+ · pre-release/.test(String(about.start)) && /1\.0\.0-rc\.\d+ \(pre-release\)/.test(String(about.settings));
-    about.notMedicalDevice = /For educational use only; Not to be used in patient care\./.test(String(about.footer)) && /For educational use only; Not to be used in patient care\./.test(String(about.settings));
+    const about = { start: await page.locator('[data-view=home] [data-about]').first().innerText().catch(() => 'no [data-about] on Home'), footer: await page.locator('.app-foot').innerText().catch(() => 'no footer line'), documentationLink: await page.locator('[data-view=home] .home-links a', { hasText: 'Documentation' }).getAttribute('href').catch(() => null) } as Row;
     O.r.measures.about = about;
+    // the pre-flight item: a second tab with the first stop's model page, opened before the talk
+    modelTab = await page.context().newPage();
+    O.r.measures.modelTabPrepared = await modelTab.goto(MODEL_PAGE(STOPS[1].modelPages[0] ?? 'endocrine-thermal'), { timeout: 20_000, waitUntil: 'domcontentloaded' }).then((r) => r?.status() ?? 'no response', (e: Error) => `not loaded: ${e.message.split('\n')[0]}`);
+    await page.bringToFront();
     const code = await page.evaluate(() => (window as unknown as Hook).__pmeApp.session.code);
     O.r.setup.sessionCode = code;
-    // E125: the Room page holds the app's one QR code, the address and the count (the Phones sheet is gone)
-    await page.evaluate(() => (location.hash = '#/room'));
+    segStart = Date.now();
+    await page.locator('[data-view=home]').getByRole('link', { name: 'Start here' }).click().catch(async () => page.evaluate(() => (location.hash = '#/room')));
     const sheet = page.locator('section.room-join');
-    await sheet.waitFor({ timeout: 10_000 }).catch(() => undefined);
     await sheet.locator('.phones-url').waitFor({ timeout: 15_000 }).catch(() => undefined);
     const qr: Row = { url: await sheet.locator('.phones-url').innerText().catch(() => null), code: await sheet.locator('.phones-code').innerText().catch(() => null), countBefore: await sheet.locator('.phones-count').innerText().catch(() => null) };
     const wJoin = Date.now();
@@ -1348,221 +1466,108 @@ test('Q1 30-minute talk on the release build: opening, MH (E119) 14:41, haemorrh
     await page.waitForTimeout(2000);
     qr.joinWallS = r1((Date.now() - wJoin) / 1000);
     qr.countAfter = await sheet.locator('.phones-count').innerText().catch(() => null);
-    qr.roomStatus = await page.locator('.room-status').innerText().catch(() => null);
     O.r.measures.qr = qr;
     O.r.measures.phonesAfterJoin = await holds(phones);
-    seg('opening + QR done', { about, qr });
+    seg('0 opening on Home and the Room, the phones join', { about, qr });
   } finally {
     await O.finish({ keepPhones: true });
   }
 
-  // ---- 1 MH on the E119 card: the induction sequence, early call, the press at 14:41, three 5-min spans; Debrief read
-  const M = new Run(page, browser, 'Q1 1 malignant hyperthermia early call 14-41');
+  const M = new Run(page, browser, 'Q1 1 malignant hyperthermia with three look-inside stops');
   try {
-    seg('1 MH: Load');
+    // ---- 1 MH to the early signs
     await M.start('Malignant hyperthermia', 8, 'after-alarms', { phones, cardOrder: true });
     await M.untilT(M.t0 + 30);
     await M.press('Premedicate: midazolam 2 mg, fentanyl 100 µg', 'premedicated');
     await M.untilT(M.t0 + 60);
     await M.press('Preoxygenate: 100 % O₂ by face mask', 'preoxygenated');
     await M.untilT(M.t0 + 240);
-    await M.press('Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg', 'induced');
+    const tInd = await M.press('Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg', 'induced');
     await M.untilT(M.t0 + 300);
     await M.press('Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %', 'intubated');
     await M.untilT(M.t0 + 360);
     const tSurg = await M.press('Start surgery: rocuronium 0.6 mg/kg', 'surgery');
     await M.untilT(M.t0 + 450);
     await M.speed(4);
-    await M.row('7:30 ×4: watch the CO2 tile');
+    await M.row('7:30 ×4: watch the CO₂ tile');
     const tEarly = await M.until('earlySigns', 600);
-    await M.row('state Early signs');
-    await M.tick(/^Name malignant hyperthermia/); // E52: with the early call, just before MH crisis
-    await page.locator('.stage').screenshot({ path: join(OUTDIR, `q2-mh-monitor-early-signs-${M.r.browser}.png`) }).catch(() => undefined);
-    await M.react();
+    await M.pauseToggle();
+    await M.row('state Early signs: Pause (stop 1)');
+    seg('1 MH to the early signs (×8 then ×4)', { earlySignsAt: tEarly === null ? null : mmss(tEarly) });
+
+    // ---- STOP 1: why the EtCO₂ rises when it should fall
+    stops.push(await lookInside(M, page, phones, modelTab, 1, dir));
+    await M.tick(/^Name malignant hyperthermia/); // ticked while still paused: the call is named at the early signs
+    await M.pauseToggle();
+    seg('stop 1 (machine part: Pause, Explore, model tab, back, tick, Resume)');
+
+    // ---- 2 the call, hyperventilation, dantrolene; the EtCO₂ falls; span 1 (the call pressed at once on Resume: the
+    // presenter has had the whole stop to react)
     const tC = await M.press(CRISIS, 'triggerOff');
     await M.untilT(tC + 20);
-    await M.press('Dantrolene 2.5 mg/kg', 'dantrolene');
-    // E132: no cooling on the early-call path (only above 38.5 °C)
-    await M.untilT(M.t0 + 560);
-    await M.ff(5); // span 1 at 9:20, hyperventilation kept
-    await M.untilT(M.t0 + 873);
+    const tD1 = await M.press('Dantrolene 2.5 mg/kg', 'dantrolene');
+    const below40 = await M.waitSim(120, (_n, v) => (v.etco2 ?? 99) < 40);
+    await M.row('EtCO₂ below 40');
+    await M.ff(5); // span 1, hyperventilation kept
     await M.pauseToggle();
-    await M.row('14:33 Pause, point (state Recovering?)', { normoOffered: (await page.locator('section[aria-label="Running scenario"]').getByRole('button', { name: NORMO, exact: true }).count()) > 0 });
-    await page.waitForTimeout(3000);
+    await M.row('span 1 ended: Pause (stop 2)');
+    seg('2 the call, hyperventilation, dantrolene; EtCO₂ falls (span 1)');
+
+    // ---- STOP 2: dantrolene in the model, why we hyperventilate, the potassium's source
+    stops.push(await lookInside(M, page, phones, modelTab, 2, dir));
     await M.pauseToggle();
-    await M.untilT(M.t0 + 881);
+    seg('stop 2 (machine part)');
+
+    // ---- 3 ventilation back, the climb (span 2): pressed at once on Resume
+    const stateAtNormo = await stateId(page);
     const tP = await M.press(NORMO, 'normoventilated');
     await M.untilT(tP + 4);
     await M.ff(5); // span 2
-    await M.untilT(M.t0 + 1198);
     await M.pauseToggle();
-    await M.row('19:58 Pause: the presenter line');
-    await page.waitForTimeout(3000);
-    await M.pauseToggle();
-    await M.press(DOSE2, 'dantroleneAgain'); // E132: the EtCO₂ climbing back at normal ventilation: second dose (owner rc.4: with the crisis ventilation)
-    await M.ff(5); // span 3
-    await M.untilT(M.t0 + 1512);
-    await M.pauseToggle();
-    await M.row('25:12 end: Pause');
-    M.r.measures.wallLoadToEndS = M.wall();
-    seg('1 MH: end', { wallS: M.wall() });
-    const after = (await hist(page, tP, Infinity)).filter((x) => typeof x.etco2 === 'number') as Array<{ t: number; etco2: number }>;
-    const perMin = Array.from({ length: Math.floor(((after.at(-1)?.t ?? tP) - tP) / 60) + 1 }, (_, m) => after.find((x) => x.t >= tP + m * 60)).map((x, m) => `+${m} min ${x ? Math.round(x.etco2) : '–'}`);
-    const max = after.reduce<{ t: number; etco2: number } | null>((b, x) => (!b || x.etco2 > b.etco2 ? x : b), null);
-    const beforeP = (await hist(page, tC, tP)).filter((x) => typeof x.etco2 === 'number') as Array<{ t: number; etco2: number }>;
-    M.r.measures.e22 = {
-      surgeryAt: mmss(tSurg), earlySignsAt: tEarly === null ? null : mmss(tEarly), callAt: mmss(tC), etco2FirstBelow40: (() => { const x = beforeP.find((y) => y.etco2 < 40); return x ? mmss(x.t) : null; })(), etco2RangeCallToPress: { min: r1(minOf(beforeP as Sample[], 'etco2')), max: r1(maxOf(beforeP as Sample[], 'etco2')) },
-      pressAt: mmss(tP), etco2AtPress: r1(beforeP.at(-1)?.etco2), etco2MaxAfterPress: max ? `${r1(max.etco2)} at ${mmss(max.t)}` : null, etco2PerMinuteAfterPress: perMin.join(' · '),
-    };
-    await M.debrief({ json: true });
-    // the presenter resumes before choosing the next case (the old close did the same after this Debrief)
-    await M.pauseToggle();
-    seg('1 MH: Debrief read, resumed');
-  } finally {
-    await M.finish({ keepPhones: true });
-  }
+    await M.row('span 2 ended: Pause (stop 3), before the second dose');
+    seg('3 ventilation back, the climb (span 2)', { stateAtNormo });
 
-  // ---- 2 haemorrhage on the E120 card (the A4 sequence at the card's cue times), its Debrief read and printed; the close
-  const H = new Run(page, browser, 'Q1 2 haemorrhage E120 Debrief and close');
-  try {
-    seg('2 haemorrhage: Load');
-    await H.start('Class IV haemorrhage, PEA and resuscitation', 8, 'after-alarms', { phones, cardOrder: true });
-    await logRhythms(page);
-    await H.untilT(H.t0 + 30);
-    await H.press('Oxygen by face mask, FiO₂ 1.0', 'bleedingO2');
-    await H.untilT(H.t0 + 60);
-    await H.press('Intubate and ventilate, FiO₂ 1.0', 'ventilated');
-    await H.untilT(H.t0 + 480);
-    await H.row('8:00');
-    const tJ = await H.until('junctional', 300);
-    await H.row('the card sets the junctional rhythm');
-    await H.speed(4);
-    const tPea = await H.until('pea', 240);
-    await H.row('state PEA');
-    await page.locator('.stage').screenshot({ path: join(OUTDIR, `q2-haemorrhage-monitor-pea-${H.r.browser}.png`) }).catch(() => undefined);
-    const tLoss = await H.waitSim(120, async () => (await modelPulse(page)) === false);
-    await H.row('the model\'s pulse loss');
-    await H.speed(8);
-    const tAsy = await H.until('asystole', 600);
-    const tAgonal = (await rhythmLog(page)).find((x) => x.id === 'agonal')?.t ?? null;
-    await H.speed(1);
-    await H.row('state Asystole');
-    await H.react();
-    const tCpr = await H.press('Start CPR: compressions, bag via the tube 10/min, FiO₂ 1.0', 'cpr');
-    await H.press(HAEM_VOLUME, 'cprVolume');
-    await H.untilT(tCpr + 20);
-    await H.press('Epinephrine 1 mg', 'cprEpi');
-    await H.speed(4);
-    await H.untilT(tCpr + 60);
-    await H.row('1 min into CPR');
-    await H.untilT(tCpr + 118);
-    await H.speed(1);
-    const tPc1 = await H.press('Rhythm check', 'vf');
-    const s1 = await chargeAndShock(H, page);
-    await H.speed(4);
-    await H.untilT(s1.t + 60);
-    await H.row('1 min after the first shock');
-    await H.untilT(s1.t + 70);
-    await H.press('Epinephrine 1 mg', 'postShock1Epi'); // E132: the second dose, 3–5 min after the first
-    await H.untilT(s1.t + 118);
-    await H.speed(1);
-    const tPc2 = await H.press('Rhythm check', 'vf2');
-    const s2 = await chargeAndShock(H, page);
-    await H.speed(4);
-    const tBack = await H.waitSim(112, async () => (await modelPulse(page)) === true);
-    await H.row('return of circulation (the model)');
-    await H.untilT(s2.t + 118);
-    await H.speed(1);
-    await H.react();
-    const tStop = await H.press(HAEM_STOP, 'rosc'); // E132: recognised at the 2-min rhythm check
-    await H.speed(4);
-    await H.untilT(tStop + 60);
-    await H.row('1 min after stopping CPR');
-    const hc = await hist(page, tCpr, tPc1);
-    H.r.measures.e120 = {
-      states: await stateLog(page), junctionalAt: tJ === null ? null : mmss(tJ), peaStateAt: tPea === null ? null : mmss(tPea), pulseLossAt: tLoss === null ? null : mmss(tLoss),
-      idioventricularAt: tAgonal === null ? null : mmss(tAgonal), asystoleAt: tAsy === null ? null : mmss(tAsy), asystoleAfterLossS: tAsy === null || tLoss === null ? null : r1(tAsy - tLoss),
-      cprAt: mmss(tCpr), rhythmCheck1At: mmss(tPc1), shock1At: mmss(s1.t), shock1: s1.outcome, rhythmCheck2At: mmss(tPc2), shock2At: mmss(s2.t), shock2: s2.outcome,
-      roscAt: tBack === null ? null : mmss(tBack), roscAfterShock2S: tBack === null ? null : r1(tBack - s2.t), roscAfterLossS: tBack === null || tLoss === null ? null : r1(tBack - tLoss),
-      rhythms: (await rhythmLog(page)).map((x) => `${mmss(x.t)} ${x.id}`), stopAt: mmss(tStop), artMeanMaxInCpr: r1(maxOf(hc, 'abpMean')), etco2MaxInCpr: r1(maxOf(hc, 'etco2')),
-    };
-    H.r.measures.wallLoadToEndS = H.wall();
-    seg('2 haemorrhage: end; its Debrief', { wallS: H.wall() });
-    // the Debrief moment: read it (JSON saved), then Run by + Notes, printed
-    const wD = Date.now();
-    await H.debrief({ json: true });
+    // ---- STOP 3: recrudescence and what the second dose answers; the two sentences on E134
+    stops.push(await lookInside(M, page, phones, modelTab, 3, dir));
+    await M.pauseToggle();
+    seg('stop 3 (machine part)');
+
+    // ---- 4 the second dose with hyperventilation again, span 3, the end; the MH Debrief read on screen
+    const tDose2 = await M.press(DOSE2, 'dantroleneAgain');
+    await M.ff(5); // span 3
+    await M.untilT(tDose2 + 317); // 24:31 on the A4 / OWR4 path (the dose at 19:14)
+    await M.pauseToggle();
+    await M.row('end of the case: Pause (do not press ventilation back)', { normoOffered: (await page.locator('section[aria-label="Running scenario"]').getByRole('button', { name: NORMO, exact: true }).count()) > 0 });
+    await page.screenshot({ path: join(dir, `end-instructor-${M.r.browser}.png`) }).catch(() => undefined);
+    M.r.measures.wallLoadToEndS = M.wall();
+    const wDb = Date.now();
+    await M.debrief({ json: true });
     await page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }).click();
-    const view = page.locator('[data-view=debrief]');
-    await view.getByRole('heading', { level: 1, name: 'Debrief' }).waitFor({ timeout: 15_000 });
-    await view.getByRole('textbox', { name: 'Run by' }).fill('Showcase 2, 3 November');
-    await view.getByRole('textbox', { name: 'Notes' }).fill('Kit round Q2 rehearsal on the rc.4 release build.').catch(() => undefined);
-    await page.emulateMedia({ media: 'print' });
-    mkdirSync(OUTDIR, { recursive: true });
-    await page.screenshot({ path: join(OUTDIR, `q1-haemorrhage-debrief-print-${H.r.browser}.png`), fullPage: true }).catch(() => undefined);
-    if (H.r.browser === 'chromium') {
-      const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
-      writeFileSync(join(OUTDIR, 'q1-haemorrhage-debrief-chromium.pdf'), pdf);
-      const info = pdfInfo(pdf);
-      H.r.measures.pdf = { pages: info.boxes.length, a4: info.boxes.every((b) => Math.round(b[2] ?? 0) === 595 && Math.round(b[3] ?? 0) === 842), title: info.title };
-    } else H.r.measures.pdf = 'WebKit: Playwright has no page.pdf(); print-media screenshot only';
-    await page.emulateMedia({ media: 'screen' });
-    H.r.measures.debriefFooter = ((await view.innerText()).match(/[^\n]*(Build|build|Version)[^\n]*/g) ?? []).slice(0, 3);
+    await page.locator('[data-view=debrief]').getByRole('heading', { level: 1, name: 'Debrief' }).waitFor({ timeout: 15_000 });
+    await page.waitForTimeout(1200);
+    await page.screenshot({ path: join(dir, `debrief-mh-on-screen-${M.r.browser}.png`) }).catch(() => undefined);
     await page.evaluate(() => (location.hash = '#/teach'));
     await page.waitForTimeout(800);
-    H.r.measures.debriefMomentWallS = r1((Date.now() - wD) / 1000);
-    seg('2 haemorrhage: Debrief printed', { wallS: H.r.measures.debriefMomentWallS });
-    // ---- the close: S12-F2 (one style change, phones following, the AGENTS tile), at ×1 running
-    await H.speed(1);
-    const agents = async () => ({ instructor: await page.locator('.stage .pme-stile[data-param=AGENTS] [data-pme=v]').first().innerText().catch(() => null), phones: await Promise.all(phones.map((p) => p.locator('.pme-stile[data-param=AGENTS] [data-pme=v]').first().innerText().catch(() => null))) });
-    const agentsBefore = await agents();
-    await H.styleChange();
-    H.r.measures.s12f2 = { agentsBefore, agentsAfter30s: await agents(), phoneStatus: await holds(phones) };
-    await page.evaluate(() => (location.hash = '#/settings'));
-    await page.waitForTimeout(800);
-    await page.locator('[data-view=settings]').getByLabel('Monitor', { exact: true }).selectOption('saadat-like');
-    await page.evaluate(() => (location.hash = '#/teach'));
-    await page.waitForTimeout(1500);
-    H.r.measures.alarmsBeforeClose = (await alarms(page)).map((a) => `${mmss(a.t)} ${a.text}`);
-    H.r.measures.statesBeforeClose = ((await page.evaluate(() => (window as unknown as Hook).__st ?? [])) as Array<{ t: number; id: string | null }>).map((x) => `${mmss(x.t)} ${x.id}`);
-    // ---- FX-12: Restart patient, then Return here (the new "something went wrong" line)
-    const allOff = () => page.evaluate(() => (window as unknown as Hook).__pmeApp.link.alarms?.allOff ?? null);
-    const fx: Row = { before: { bar: await sessionBarScen(page), state: await stateId(page), clock: mmss(await H.sim()), bookmarks: await page.evaluate(() => (window as unknown as { __pmeApp: { link: { ctl: { bookmarks: string[] } } } }).__pmeApp.link.ctl.bookmarks) } };
-    await H.teachTab('scenario').catch(() => undefined);
-    await page.click('[role=tab][data-tab=patient]');
-    await page.waitForTimeout(400);
-    await page.getByRole('button', { name: 'Restart patient', exact: true }).first().click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Restart patient', exact: true }).click();
-    await page.waitForTimeout(3000);
-    fx.afterRestart = { bar: await sessionBarScen(page), state: await stateId(page), clock: mmss(await H.sim()), allOff: await allOff(), bookmarks: await page.evaluate(() => (window as unknown as { __pmeApp: { link: { ctl: { bookmarks: string[] } } } }).__pmeApp.link.ctl.bookmarks), phones: await holds(phones) };
-    await H.teachTab('scenario');
-    const ret = page.locator('section[aria-label="Running scenario"] li').filter({ has: page.getByRole('button', { name: 'Return here' }) });
-    fx.returnHereButtons = await ret.count();
-    fx.returnHereAnywhere = await page.getByRole('button', { name: 'Return here' }).count();
-    const list = (await ret.allInnerTexts()).map((x) => x.replace(/\s*Return here\s*$/, '').trim());
-    fx.bookmarkList = list;
-    if ((await page.getByRole('button', { name: 'Return here' }).count()) > 0) {
-      // the bookmarks of earlier cases in this page stay in the list (Q1 finding): the haemorrhage bookmark is the LAST one
-      fx.returnedTo = list.at(-1) ?? null;
-      // Q2 (tag kit): the page-wide last "Return here" was a hidden one and the click waited for ever (both engines): click
-      // the Running-scenario list's last one, bounded, and record whether it was clicked
-      fx.returnClicked = await ret.last().getByRole('button', { name: 'Return here' }).click({ timeout: 5000 }).then(() => true, () => 'not clickable within 5 s');
-      if (fx.returnClicked === true) await page.getByRole('dialog').getByRole('button', { name: 'Return' }).click({ timeout: 5000 }).catch(() => (fx.returnDialog = 'no Return dialog within 5 s'));
-      await page.waitForTimeout(3000);
-      await record(page); // the restart made a new engine: the recorder is re-attached to read the restored patient
-      await page.waitForTimeout(4000);
-      fx.afterReturn = {
-        bar: await sessionBarScen(page), state: await stateId(page), clock: mmss(await H.sim()), allOff: await allOff(), alarmButton: await H.alarmButton(), runningSection: (await page.locator('section[aria-label="Running scenario"]').innerText().catch(() => '')).replace(/\s+/g, ' ').slice(0, 400),
-        vitals: await latest(page), phones: await holds(phones), toasts: (await page.locator('.toasts').innerText().catch(() => '')).replace(/\s+/g, ' ').slice(-300),
-      };
-      await page.waitForTimeout(10_000);
-      fx.after10s = { bar: await sessionBarScen(page), state: await stateId(page), clock: mmss(await H.sim()) };
-    }
-    fx.noScenario = /No scenario/.test(String((fx.afterReturn as Row | undefined)?.bar ?? (fx.afterRestart as Row).bar));
-    H.r.measures.fx12 = fx;
-    seg('close: S12-F2 and FX-12 done');
-  } finally {
-    await H.finish();
+    M.r.measures.debriefReadWallS = r1((Date.now() - wDb) / 1000);
+    seg('4 the end of the case and the MH Debrief, read on screen');
+
+    // the course, for the run sheet (the same keys as A4's a4mh)
+    const all = (await hist(page, 0, Infinity)).filter((x) => typeof x.etco2 === 'number') as Array<{ t: number; etco2: number }>;
+    const afterNormo = all.filter((x) => x.t >= tP);
+    const above45 = afterNormo.find((x) => x.etco2 > 45) ?? null;
+    const sinceDose2 = all.filter((x) => x.t >= tDose2);
+    const perMin = (from: number, xs: Array<{ t: number; etco2: number }>) => Array.from({ length: Math.floor(((xs.at(-1)?.t ?? from) - from) / 60) + 1 }, (_, m) => xs.find((x) => x.t >= from + m * 60)).map((x, m) => `+${m} ${x ? Math.round(x.etco2) : '–'}`).join(' · ');
+    M.r.measures.mhStops = {
+      states: await stateLog(page), inducedAt: mmss(tInd), surgeryAt: mmss(tSurg), earlySignsAt: tEarly === null ? null : mmss(tEarly), earlyAfterSuxS: tEarly === null ? null : r1(tEarly - tInd),
+      callAt: mmss(tC), callAfterEarlyS: tEarly === null ? null : r1(tC - tEarly), dantroleneAt: mmss(tD1), etco2Below40At: below40 === null ? null : mmss(below40),
+      normoAt: mmss(tP), etco2Above45AfterNormoAt: above45 ? mmss(above45.t) : null, dose2At: mmss(tDose2), dose2AfterAbove45S: above45 ? r1(tDose2 - above45.t) : null,
+      etco2AtDose2: r1(afterNormo.filter((x) => x.t <= tDose2).at(-1)?.etco2), etco2PerMinuteAfterNormo: perMin(tP, afterNormo.filter((x) => x.t < tDose2)), etco2PerMinuteAfterDose2: perMin(tDose2, sinceDose2),
+      stopClocks: stops.map((s) => s.clock),
+    };
     seg('end');
+  } finally {
+    await M.finish();
+    if (modelTab) await modelTab.close().catch(() => undefined);
     saveTalk();
   }
 });
