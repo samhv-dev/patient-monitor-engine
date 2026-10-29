@@ -1,0 +1,71 @@
+/* Instructor v2: the header, the column heads, the slots' cells and the dock (design §3.1, §3.6). The tokens are the
+   boards' own ("Proposal v6", "Header controls v2", "v9 paused"): dark, IBM Plex (bundled, app.css), the pill shapes.
+   The frame's grid is in app.css. Every class is `ip2-*` (plan's selector rule): nothing here matches today's view. */
+:root {
+  --ip2-page: #15191e;
+  --ip2-bar: #1a1f25;
+  --ip2-card: #1c2127;
+  --ip2-line: #2b323a;
+  --ip2-control: #3a434d;
+  --ip2-text: #e8ecef;
+  --ip2-soft: #c6ced6;
+  --ip2-muted: #9aa4ad;
+  --ip2-faint: #6b7682;
+  --ip2-blue: #3b82f6;
+  --ip2-blue-soft: #1f2d44;
+  --ip2-blue-text: #b7d0ff;
+  --ip2-run-line: #1f6b3a;
+  --ip2-run-bg: #11271a;
+  --ip2-run-glyph: #19e36b;
+  --ip2-run-word: #8fcfa6;
+  --ip2-pause-line: #7a5a0e;
+  --ip2-pause-bg: #3b2f12;
+  --ip2-pause: #ffd166;
+  --ip2-amber: #d9a21b;
+}
+.ip2 { color-scheme: dark; background: var(--ip2-page); color: var(--ip2-text); font: 400 14px/1.4 var(--font-plex); }
+.ip2 button { font-family: inherit; }
+
+/* the session bar */
+.ip2-head { grid-area: head; display: flex; align-items: center; gap: 12px; min-width: 0; padding: 0 16px; border-bottom: 1px solid var(--ip2-line); background: var(--ip2-bar); font-size: 13px; }
+.ip2-who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ip2-muted); }
+.ip2-mode { flex: none; padding: 5px 8px; border: 1px solid var(--ip2-control); border-radius: 4px; font: 500 11px/1 var(--font-plex-mono); letter-spacing: 0.04em; white-space: nowrap; }
+.ip2-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.ip2-spacer { flex: 1 1 auto; }
+.ip2-pill { flex: none; display: inline-flex; align-items: center; gap: 10px; height: 34px; padding: 0 14px 0 12px; border: 1px solid var(--ip2-run-line); border-radius: 8px; background: var(--ip2-run-bg); color: var(--ip2-text); cursor: pointer; }
+.ip2-pill-icon { display: inline-flex; color: var(--ip2-run-glyph); }
+.ip2-pill-word { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--ip2-run-word); }
+.ip2-pill-time { font: 500 20px/1 var(--font-plex-mono); font-variant-numeric: tabular-nums; }
+.ip2-pill[data-state='paused'] { border-color: var(--ip2-pause-line); background: var(--ip2-pause-bg); color: var(--ip2-pause); }
+.ip2-pill[data-state='paused'] :is(.ip2-pill-icon, .ip2-pill-word) { color: var(--ip2-pause); }
+.ip2-fanwrap { flex: none; display: inline-flex; align-items: center; gap: 6px; }
+.ip2-fanbox { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; border: 1px solid var(--ip2-control); border-radius: 8px; background: transparent; color: var(--ip2-text); white-space: nowrap; cursor: pointer; }
+.ip2-fanbox.ip2-speed { background: var(--ip2-blue-soft); color: var(--ip2-blue-text); font-weight: 600; }
+.ip2-fanbox:disabled, .ip2-fanopt:disabled { opacity: 0.45; cursor: not-allowed; }
+.ip2-fan { display: inline-flex; overflow: hidden; border: 1px solid var(--ip2-control); border-radius: 8px; background: var(--ip2-bar); animation: ip2-fan-in 150ms ease-out; transform-origin: right center; }
+.ip2-fanopt { min-width: 48px; height: 34px; padding: 0 10px; border: 0; background: transparent; color: var(--ip2-soft); white-space: nowrap; cursor: pointer; }
+.ip2-fanopt[aria-pressed='true'] { background: var(--ip2-blue-soft); color: #fff; font-weight: 600; }
+:is(.ip2-fanopt, .ip2-fanbox:not(.ip2-speed), .ip2-dock-btn):hover:not(:disabled) { background: var(--ip2-card); }
+@keyframes ip2-fan-in { from { opacity: 0; transform: scaleX(0.6); } }
+@media (prefers-reduced-motion: reduce) { .ip2-fan { animation: none; } }
+
+/* the stage strip, STATE and ACTION (IP5, IP6 fill them) */
+.ip2-strip { grid-area: strip; display: flex; align-items: center; min-width: 0; padding: 0 20px; overflow: hidden; border-bottom: 1px solid var(--ip2-line); background: var(--ip2-page); font-size: 12px; white-space: nowrap; }
+.ip2-colhead { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: var(--ip2-muted); }
+.ip2-state { grid-area: cue; display: flex; flex-direction: column; gap: 12px; min-width: 0; padding: 14px 8px 12px 20px; }
+.ip2-action { grid-area: action; display: flex; flex-direction: column; gap: 12px; min-width: 0; min-height: 0; padding: 14px 20px 14px 8px; overflow: auto; }
+.ip2-action-body { display: flex; flex-direction: column; gap: 8px; min-height: 0; flex: 1 1 auto; }
+/* the sheets slide over ACTION only (IP7); the empty layer lets every press through */
+.ip2-sheets { grid-area: action; position: relative; z-index: 2; min-height: 0; pointer-events: none; }
+.ip2-sheets > * { pointer-events: auto; }
+
+/* the dock */
+.ip2-dock { grid-area: dock; display: flex; align-items: center; gap: 6px; min-width: 0; padding: 0 16px; border-top: 1px solid var(--ip2-line); background: var(--ip2-bar); font-size: 13px; }
+.ip2-dock-label { padding-right: 6px; color: var(--ip2-muted); }
+.ip2-dock-tools, .ip2-dock-marks, .ip2-dock-note { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.ip2-dock-div { flex: none; width: 1px; height: 36px; margin: 0 10px; background: var(--ip2-control); }
+.ip2-dock-div:last-of-type { margin: 0 18px; }
+.ip2-dock-mid { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; }
+.ip2-dock-btn { display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 12px; border: 1px solid var(--ip2-control); border-radius: 6px; background: transparent; color: var(--ip2-text); font-size: 13px; text-decoration: none; white-space: nowrap; cursor: pointer; }
+.ip2-debrief { flex: none; margin-right: 6px; padding: 0 22px; font-weight: 600; }
+.ip2-debrief[data-ready='true'] { border-color: var(--ip2-blue); box-shadow: inset 0 0 0 1px var(--ip2-blue); }

@@ -17,6 +17,7 @@ const ICONS: Record<string, string> = {
   scenarios: 'M4 5h16v14H4zM8 9h8M8 13h5',
   patient: 'M12 4.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7zM5 20c.9-3.9 3.6-6 7-6s6.1 2.1 7 6',
   teach: 'M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11M19 17h1M15 5v4M9 10v4M17 15v4',
+  teach2: 'M3 5h18v14H3zM10 5v14M13 9h5M13 12.5h5M13 16h3', // Instructor v2: STATE beside ACTION
   monitor: 'M3 5h18v14H3zM5 13h3l1.5-4 3 7 1.5-3H19',
   vent: 'M3 9h10a3 3 0 1 0-3-3M3 13h14a3 3 0 1 1-3 3M3 17h6',
   debrief: 'M9 4h6v3H9zM7 5.5H5V21h14V5.5h-2M9 14l2 2 4-4',
@@ -42,7 +43,7 @@ type Entry = ['hr'] | [RouteId, string] | ['tools'];
 export const RAIL: readonly Entry[] = [
   ['home', 'Home'],
   ['hr'], ['room', 'Room'], ['scenarios', 'Scenarios'], ['patient', 'Patient'],
-  ['hr'], ['teach', 'Instructor'], ['monitor', 'Monitor'], ['vent', 'Ventilator'],
+  ['hr'], ['teach', 'Instructor'], ['teach2', 'Instructor v2'], ['monitor', 'Monitor'], ['vent', 'Ventilator'],
   ['hr'], ['debrief', 'Debrief'],
   ['hr'], ['explore', 'Explore physiology'], ['tools'], ['settings', 'Settings'],
 ];

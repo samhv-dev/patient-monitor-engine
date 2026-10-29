@@ -35,6 +35,7 @@ import { patientView } from './views/patient.ts';
 import { roomView } from './views/room.ts';
 import { scenariosView } from './views/scenarios.ts';
 import { teachView } from './views/teach.ts';
+import { teach2View } from './views/teach2.ts';
 import { validateView } from './views/validate.ts';
 import { ventView } from './views/vent.ts';
 
@@ -121,7 +122,14 @@ if (follow) {
     else await session.enableSound();
     drawSound();
   };
-  const openAlarms = (): void => ((location.hash = hrefOf('teach')), teach.panel.select('devices'));
+  // E127 (answer 19): the alarm count and the reveal gesture go to the Instructor view used last, today's or v2
+  let instructor: 'teach' | 'teach2' = 'teach';
+  shell.onRoute((r) => void ((r.id === 'teach' || r.id === 'teach2') && (instructor = r.id)));
+  const openAlarms = (): void => {
+    location.hash = hrefOf(instructor);
+    if (instructor === 'teach') teach.panel.select('devices');
+    else teach2.openSheet('devices');
+  };
   // E125: the pages before a session — Home, Room (the QR code, who follows), Scenarios, Patient — and the rail
   shell.add(homeView());
   const room = roomView({
@@ -134,6 +142,8 @@ if (follow) {
   shell.add(monitorView(shell.stage, { session, link, learnerUrl: followUrl(session.code), phones: !!relay }));
   const teach = teachView(link, { site, main: shell.main, stage: shell.stage, weightKg, loadScenario });
   shell.add(teach);
+  const teach2 = teach2View(link, { site, weightKg });
+  shell.add(teach2);
   shell.add(remoteView({ site, hostless: false, bar: shell.bar, code: session.code }));
   shell.add(exploreView(session, site));
   shell.add(ventView(session));
@@ -204,11 +214,11 @@ if (follow) {
   // Learner monitor ↔ instructor view: the hidden panel's reveal gestures
   attachReveal(window, new RevealGesture(() => {
     const r = shell.route.id;
-    if (r === 'monitor') location.hash = hrefOf('teach');
-    else if (r === 'teach') location.hash = hrefOf('monitor');
+    if (r === 'monitor') location.hash = hrefOf(instructor);
+    else if (r === 'teach' || r === 'teach2') location.hash = hrefOf('monitor');
   }));
   shell.onRoute((r) => {
-    if (r.id === 'teach' || r.id === 'monitor') session.live = true;
+    if (r.id === 'teach' || r.id === 'teach2' || r.id === 'monitor') session.live = true;
   });
   // "SIMULATION · not a clinical monitor" on the Monitor view only (the instructor's pages show the same monitor
   // without it): in a two-row header, else a strip above the monitor; again after a new monitor or a skin change
@@ -238,5 +248,5 @@ if (follow) {
   shell.start();
   // e2e hook: the engine ids the glossary test must never find in a clinical view
   const engineIds = [...RHYTHM_IDS, ...DRUG_IDS, ...LUNG_CONDITIONS.map((c) => c.id)];
-  Object.assign(window, { __pmeApp: { shell, session, link, frames, site, teach, engineIds, skinAlarmBar, room, rail } });
+  Object.assign(window, { __pmeApp: { shell, session, link, frames, site, teach, teach2, engineIds, skinAlarmBar, room, rail } });
 }
