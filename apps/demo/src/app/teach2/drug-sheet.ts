@@ -172,9 +172,26 @@ export function drugSheet(frame: SheetFrame, o: { link: Link; weightKg(): number
   const recentLine = h('p', { class: 'ip2-sheet-note ip2-recent' });
   frame.left.replaceChildren(h('label', { class: 'ip2-search' }, search), pinNote, pinList, list, runList, recentLine);
 
-  const pickBtn = (it: Item, tag: string, cls = '') =>
-    h('button', { type: 'button', role: 'listitem', class: `ip2-pick ${cls}`.trim(), 'data-key': it.key, 'aria-pressed': String(chosen?.key === it.key), onclick: () => choose(it) },
-      h('span', { class: 'ip2-pick-name' }, nameOf(it)), tag ? h('span', { class: 'ip2-pick-tag' }, tag) : null);
+  /** A list's buttons kept by item key across redraws (the pinned steps' timers tick every second: a focused button,
+   *  or one under the pointer, is never replaced by a redraw); the tag and the lit state are updated in place. */
+  const fill = (into: HTMLElement, rows: ReadonlyArray<[Item, string, string]>) => {
+    const old = new Map([...into.querySelectorAll<HTMLButtonElement>('.ip2-pick')].map((b) => [b.dataset.key as string, b]));
+    const want = rows.map(([it, tag, cls]) => {
+      let b = old.get(it.key);
+      if (!b) {
+        b = h('button', { type: 'button', role: 'listitem', class: `ip2-pick ${cls}`.trim(), 'data-key': it.key }, h('span', { class: 'ip2-pick-name' }, nameOf(it)), h('span', { class: 'ip2-pick-tag' }));
+        b.addEventListener('click', () => choose(items.get(b?.dataset.key ?? '') ?? it));
+      }
+      items.set(it.key, it);
+      setText(b.lastElementChild as HTMLElement, tag);
+      b.setAttribute('aria-pressed', String(chosen?.key === it.key));
+      return b;
+    });
+    const kids = [...into.children];
+    if (kids.length !== want.length || kids.some((k, i) => k !== want[i])) into.replaceChildren(...want);
+  };
+  /** The latest item behind each key (a pinned step's timer changes; its button stays). */
+  const items = new Map<string, Item>();
 
   const stepKey = (p: PinnedStep) => `step:${p.n}:${p.drugId}`;
   const matches = (q: string): Item[] => {
@@ -182,20 +199,18 @@ export function drugSheet(frame: SheetFrame, o: { link: Link; weightKg(): number
     const s = q.trim().toLowerCase();
     return itemsOf('all').filter((it) => (it.kind === 'drug' ? ids.has(it.drug.id) : nameOf(it).toLowerCase().includes(s)));
   };
-  let listSig = '';
+  const noMatch = h('p', { class: 'ip2-sheet-note' }, 'Nothing matches.');
   const drawList = () => {
     const q = search.value;
-    const items = q.trim() ? matches(q) : itemsOf(group);
-    const sig = [q, group, chosen?.key, pinned.map((p) => `${stepKey(p)}${p.due}`).join(','), [...running.keys()].join(','), recent.join(',')].join('|');
-    if (sig === listSig) return;
-    listSig = sig;
+    const shown = q.trim() ? matches(q) : itemsOf(group);
     setText(pinNote, pinned.length ? 'The card\'s open steps are pinned at the top while they are open; keys 1–9 stay on the ACTION list behind.' : '');
-    pinList.replaceChildren(...pinned.map((p) => pickBtn({ kind: 'step', key: stepKey(p), step: p }, `card step ${p.n}${p.due ? ` · ${p.due}` : ''}`, 'ip2-pick-step')));
-    list.replaceChildren(...(items.length ? items.map((it) => pickBtn(it, '')) : [h('p', { class: 'ip2-sheet-note' }, 'No drug matches.')]));
-    runList.replaceChildren(...[...running.entries()].map(([id, r]) => {
+    fill(pinList, pinned.map((p): [Item, string, string] => [{ kind: 'step', key: stepKey(p), step: p }, `card step ${p.n}${p.due ? ` · ${p.due}` : ''}`, 'ip2-pick-step']));
+    fill(list, shown.map((it): [Item, string, string] => [it, '', '']));
+    if (!shown.length) list.replaceChildren(noMatch);
+    fill(runList, [...running.entries()].flatMap(([id, r]): Array<[Item, string, string]> => {
       const d = DRUG_LIST.find((x) => x.id === id);
-      return d ? pickBtn(drugItem(d), `running ${r.rate} ${unitText(r.unit)}`) : null;
-    }).filter((x): x is HTMLButtonElement => x !== null));
+      return d ? [[drugItem(d), `running ${r.rate} ${unitText(r.unit)}`, '']] : [];
+    }));
     setText(recentLine, recent.length ? `Recent: ${recent.join(' · ')}` : '');
   };
 
@@ -301,10 +316,11 @@ export function drugSheet(frame: SheetFrame, o: { link: Link; weightKg(): number
     rule = null;
     if (it?.kind === 'step') {
       rule = pinnedGiveRule(it.step, { dose: dose.value, unit: unitSel.value });
-      setText(footLine, rule.line);
+      setText(cardLine, rule.line); // beside the chosen step's name (board v11), so the footer keeps room for two buttons
+      setText(footLine, '');
       for (const b of rule.buttons) kids.push(h('button', { type: 'button', class: 'ip2-give', 'data-does': b.does, onclick: () => void (b.does === 'step' ? giveStep(it.step) : giveNow()) }, b.label));
     } else if (it) {
-      setText(footLine, 'Enter gives now · S adds to the cache · Esc closes');
+      setText(footLine, 'Enter gives now · S adds to the cache');
       const n = nameOf(it);
       const label = it.kind === 'fluid' ? `Give ${n.toLowerCase()} ${vol.value} mL over ${overMin.value} min`
         : it.kind === 'bleed' ? `Start the blood loss: ${vol.value} mL over ${overMin.value} min`
@@ -381,7 +397,7 @@ export function drugSheet(frame: SheetFrame, o: { link: Link; weightKg(): number
     setText(title, nameOf(it));
     const where = DRUG_GROUPS.find(([g]) => g === group)?.[1] ?? '';
     setText(sub, it.kind === 'step' ? `IV bolus · card step ${it.step.n}` : it.kind === 'drug' ? `${route === 'bolus' ? 'IV bolus' : 'Infusion'} · ${where}` : it.kind === 'vaporiser' ? 'Vaporiser' : 'Fluids');
-    setText(cardLine, it.kind === 'step' ? `“${it.step.label}”` : '');
+    setText(cardLine, ''); // a card step's line: drawFooter (the rule's)
     const drugId = it.kind === 'drug' ? it.drug.id : it.kind === 'step' ? it.step.drugId : '';
     const line = MODEL_LINE[drugId];
     model.hidden = !line;

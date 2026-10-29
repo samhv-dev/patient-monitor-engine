@@ -142,7 +142,7 @@ describe('Drug sheet: the card\'s open steps, pinned', () => {
     const viaPress = await after(r, () => pressStep(r.link, 'Dantrolene 2.5 mg/kg'));
     r.pick('step:1:dantrolene').click();
     expect(r.gives().map((b) => b.textContent)).toEqual(['Give Dantrolene 2.5 mg/kg now']);
-    expect(r.frame.primary.textContent).toContain('card step 1: Give also moves the card to “Dantrolene 2.5 mg/kg given”');
+    expect(r.frame.right.textContent).toContain('card step 1: Give also moves the card to “Dantrolene 2.5 mg/kg given”');
     const ours = await after(r, () => r.gives()[0]?.click());
     expect(ours).toEqual(viaPress);
     expect(ours.sent).toEqual([{ type: 'scenario', action: 'trigger', target: 'dant-treating' }]);
@@ -155,7 +155,7 @@ describe('Drug sheet: the card\'s open steps, pinned', () => {
     r.pick('step:1:dantrolene').click();
     r.typeDose('1');
     expect(r.gives().map((b) => b.textContent)).toEqual(['Give the card\'s step (2.5 mg/kg)', 'Give 1 mg/kg off the card']);
-    expect(r.frame.primary.textContent).toContain('the card\'s dose is 2.5 mg/kg');
+    expect(r.frame.right.querySelector('.ip2-drug-card')?.textContent).toBe('the card\'s dose is 2.5 mg/kg');
     const viaPress = await after(r, () => pressStep(r.link, 'Dantrolene 2.5 mg/kg'));
     expect(await after(r, () => r.gives()[0]?.click())).toEqual(viaPress);
     // today's tab: dantrolene found, its dose typed as 1 mg/kg, Give now
