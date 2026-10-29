@@ -8,19 +8,20 @@ import { objectivesOf, reachable, rowsOf, stageOf, stagesOf, standingOf, untaken
 import { eventWords, judged, objectives, steps } from './debrief.ts';
 import { keyMoments, keyTimes, whoOf } from './debrief-moments.ts';
 import { emptyRun, RunRecord, type RunData } from './record.ts';
-import { cardOf } from './scenarios.ts';
+import { cardOf, type ScenarioCard } from './scenarios.ts';
 import { transitionText } from './triggers.ts';
 import { historyOf } from './teach2/course.ts';
 import { stageEntries, stripModel } from './teach2/strip.ts';
 import { Link } from './link.ts';
 import { scenarioTab } from './panel/scenario.ts';
 import type { PanelCtx } from './panel/ctx.ts';
+import { AppSession } from './session.ts';
 import { mount as mountAction } from './teach2/action.ts';
 import { mount as mountCue } from './teach2/cue.ts';
 import { mount as mountStrip } from './teach2/strip.ts';
 import type { Teach2Ctx } from './teach2/ctx.ts';
 import { debriefView } from './views/debrief.ts';
-import type { AppSession } from './session.ts';
+import { scenariosView } from './views/scenarios.ts';
 
 /** A pme-scenario/2 card, as packages/controller/test/scenario/fixtures-v2.ts has it (two phases, one judged row). */
 const V2 = {
@@ -165,3 +166,22 @@ describe('the instructor views and a pme-scenario/2 card', () => {
   });
 });
 
+describe('loading a pme-scenario/2 card in the app (refused until F2)', () => {
+  it('session.ts loadScenario refuses it before the patient restarts, with the driver\'s reason', () => {
+    const fake = { fastForwarding: false } as unknown as AppSession;
+    expect(AppSession.prototype.loadScenario.call(fake, V2)).toEqual({ ok: false, reason: 'pme-scenario/2 cards run from F2 on' });
+  });
+  it('views/scenarios.ts: an imported /2 file is not loaded and says why', async () => {
+    const loaded: string[] = [];
+    const v = scenariosView({ session: { live: false }, loadScenario: (c: ScenarioCard) => (loaded.push(c.id), true) } as never);
+    document.body.append(v.el);
+    v.enter?.('builder');
+    const input = v.el.querySelector('#scen-import') as HTMLInputElement;
+    Object.defineProperty(input, 'files', { value: [new File([JSON.stringify(V2)], 'mh2.json', { type: 'application/json' })], configurable: true });
+    input.dispatchEvent(new Event('change'));
+    await settle();
+    await settle();
+    expect(loaded).toEqual([]);
+    expect(v.el.querySelector('p.error')?.textContent).toBe('Error: mh2.json is a pme-scenario/2 card; pme-scenario/2 cards run from F2 on.');
+  });
+});
