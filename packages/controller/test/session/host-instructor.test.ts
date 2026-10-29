@@ -200,18 +200,20 @@ describe('who holds the role', () => {
 
   it('a grant is per (transport, from): the same id on another transport is not granted', async () => {
     const { link, relay, got } = setup();
-    phone(relay, 'ph.1').hello(PIN);
+    const ph = phone(relay, 'ph.1');
+    ph.hello(PIN);
     await waitFor(() => grants(got, 'ph.1').length === 1);
     const { relay: other, got: got2 } = link();
-    const id = phone(other, 'ph.1').command(hr, 'forged-1');
+    const imp = phone(other, 'ph.1');
+    const id = imp.command(hr, 'forged-1');
     await waitFor(() => ackOf(got2, id) !== undefined);
     expect(ackOf(got2, id)).toMatchObject({ accepted: true }); // a peer that never said hello is treated as today
-    const imp = phone(other, 'ph.1');
-    imp.hello('0000');
+    imp.hello(); // says instructor on its own transport, without a PIN
     const id2 = imp.command(hr, 'forged-2');
     await waitFor(() => ackOf(got2, id2) !== undefined);
     expect(ackOf(got2, id2)).toMatchObject({ accepted: false, reason: 'the instructor phone is not signed in' });
-    const real = phone(relay, 'ph.1').command(hr, 'real-1');
+    expect(grants(got2, 'ph.1')).toMatchObject([{ granted: false, reason: 'wrong PIN' }]);
+    const real = ph.command(hr, 'real-1');
     await waitFor(() => ackOf(got, real) !== undefined);
     expect(ackOf(got, real)).toMatchObject({ accepted: true }); // the impostor's denial did not touch the real grant
   });
@@ -272,9 +274,10 @@ describe('who holds the role', () => {
   it('onInstructors(n) reports grants and revocations', async () => {
     const seen: number[] = [];
     const { link, relay, got, host } = setup({ onInstructors: (n) => seen.push(n) });
-    phone(relay, 'ph.1').hello(PIN);
+    const ph = phone(relay, 'ph.1');
+    ph.hello(PIN);
     await waitFor(() => seen.length === 1);
-    phone(relay, 'ph.1').hello(PIN); // the holder says hello again (a restore): no change
+    ph.hello(PIN); // the holder says hello again (a restore): no change
     phone(relay, 'ph.2').hello(PIN); // takes over: still one
     await waitFor(() => grants(got, 'ph.2').length === 1);
     host.instructorPinChanged();
