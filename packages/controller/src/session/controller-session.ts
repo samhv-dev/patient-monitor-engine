@@ -87,6 +87,8 @@ export class ControllerSession {
   private readonly stamp: (b: WireBody) => WireMessage;
   private readonly now: () => number;
   private readonly pending = new Map<string, Pending>();
+  /** Staged deliveries being answered, by batch id: each item's line, in send order, and the answers so far. */
+  private readonly batches = new Map<string, { n: number; items: Map<string, string>; answered: number }>();
   private readonly seqs = new SeqFilter();
   private readonly fns = new Set<() => void>();
   private readonly offs: Array<() => void>;
@@ -124,7 +126,8 @@ export class ControllerSession {
     const cmd = { ...input, id: input.id ?? `${this.peerId}-${++this.n}`, issuedBy: this.o.issuedBy ?? `controller:${this.peerId}` } as WireCommand;
     return new Promise<AckResult>((resolve, reject) => {
       this.pending.set(cmd.id, { cmd, sentAt: this.now(), resolve, reject, waitedMs: 0 });
-      this.addLog('command', describe(cmd), cmd.id);
+      if (cmd.batch) this.batchItem(cmd.batch, cmd);
+      else this.addLog('command', describe(cmd), cmd.id);
       this.transmit(cmd);
       this.retryTimer ??= setInterval(() => this.retry(), this.o.resendMs ?? COMMAND_RESEND_MS);
     });
@@ -148,6 +151,7 @@ export class ControllerSession {
     for (const off of this.offs) off();
     for (const p of this.pending.values()) p.reject(new Error('session closed'));
     this.pending.clear();
+    this.batches.clear();
   }
 
   // --- internals ---------------------------------------------------------------------------------------------
@@ -180,8 +184,26 @@ export class ControllerSession {
   private answer(id: string, p: Pending, a: { accepted: boolean; tick: number; reason?: string }): void {
     this.pending.delete(id);
     const r: AckResult = { commandId: id, accepted: a.accepted, tick: a.tick, rttMs: this.now() - p.sentAt, ...(a.reason !== undefined ? { reason: a.reason } : {}) };
-    this.addLog('ack', a.accepted ? `ok (${Math.round(r.rttMs)} ms)` : `rejected: ${a.reason ?? ''}`, id);
+    if (p.cmd.batch) this.batchAnswered(p.cmd.batch.id, id, a);
+    else this.addLog('ack', a.accepted ? `ok (${Math.round(r.rttMs)} ms)` : `rejected: ${a.reason ?? ''}`, id);
     p.resolve(r);
+  }
+
+  /** An item of a staged delivery is sent: no line of its own (the batch gets one). */
+  private batchItem(b: { id: string; n: number }, cmd: WireCommand): void {
+    const g = this.batches.get(b.id) ?? { n: b.n, items: new Map<string, string>(), answered: 0 };
+    g.items.set(cmd.id, describe(cmd));
+    this.batches.set(b.id, g);
+  }
+
+  /** …and answered: once all n are, ONE `command` line names every item and each refusal. */
+  private batchAnswered(batchId: string, id: string, a: { accepted: boolean; reason?: string }): void {
+    const g = this.batches.get(batchId);
+    if (!g) return;
+    if (!a.accepted) g.items.set(id, `${g.items.get(id) ?? id} (refused: ${a.reason ?? 'no reason given'})`);
+    if (++g.answered < g.n) return;
+    this.batches.delete(batchId);
+    this.addLog('command', `staged ×${g.n}: ${[...g.items.values()].join(' · ')}`, batchId);
   }
 
   private onStatus(s: TransportStatus): void {

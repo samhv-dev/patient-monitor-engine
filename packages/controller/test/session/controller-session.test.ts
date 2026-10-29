@@ -4,6 +4,7 @@ import { ControllerSession, describe as describeCmd } from '../../src/session/co
 import { createInProcessHub } from '../../src/transport/in-process.ts';
 import { createStamper, type WireMessage } from '../../src/protocol.ts';
 import { TransportBase } from '../../src/transport/base.ts';
+import { StageBuffer } from '../../src/panel/staging.ts';
 import { collect, sleep, waitFor } from '../helpers.ts';
 
 /** A transport whose status the test controls, looping writes back through `sent`. */
@@ -108,6 +109,39 @@ describe('ControllerSession', () => {
     await expect(p).rejects.toThrow('session closed');
     await expect(s.send({ type: 'setTarget', variable: 'hr', value: 50 })).rejects.toThrow('session closed');
     await sleep(0);
+  });
+
+  it('a staged delivery is ONE command log entry, written at the last ack, naming each item and the refusal', async () => {
+    const t = new ManualTransport();
+    const s = new ControllerSession({ session: S, transport: t, peerId: 'ctl-z' });
+    t.set('open');
+    const b = new StageBuffer('ctl-z');
+    b.stage({ type: 'applyEvent', event: { kind: 'drug', drugId: 'epinephrine', dose: 0.01, unit: 'mg', route: 'iv' } }, 'drug');
+    b.stage({ type: 'applyEvent', event: { kind: 'fluid', fluid: 'crystalloid', volumeMl: 250, overS: 60 } }, 'fluid');
+    b.stage({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 14, vtMl: 450 } }, 'vent');
+    const before = s.log.length;
+    const done = b.commit((c) => s.send(c), { batch: true });
+    const ids = (t.sent.filter((m) => m.kind === 'command') as Array<Extract<WireMessage, { kind: 'command' }>>).map((m) => m.body.id);
+    expect(ids).toEqual(['ctl-z-1', 'ctl-z-2', 'ctl-z-3']);
+    expect(s.log.length).toBe(before); // nothing logged per item on send
+    t.inject(host({ kind: 'ack', commandId: 'ctl-z-1', accepted: true, tick: 9 }));
+    t.inject(host({ kind: 'ack', commandId: 'ctl-z-3', accepted: true, tick: 9 }));
+    expect(s.log.length).toBe(before); // …nor per ack, until the last one
+    t.inject(host({ kind: 'ack', commandId: 'ctl-z-2', accepted: false, tick: 9, reason: 'no IV access' }));
+    const acks = await done;
+    expect(acks.map((a) => a.accepted)).toEqual([true, false, true]);
+    const added = s.log.slice(before);
+    expect(added).toHaveLength(1);
+    expect(added[0]).toMatchObject({
+      kind: 'command', commandId: 'ctl-z-sg1',
+      text: 'staged ×3: event drug epinephrine 0.01 mg iv · event fluid crystalloid 250 60 (refused: no IV access) · event ventilation ventilator 14 450',
+    });
+    // A command outside a batch still logs its command and its ack lines
+    const p = s.send({ type: 'setTarget', variable: 'hr', value: 90 });
+    t.inject(host({ kind: 'ack', commandId: 'ctl-z-4', accepted: true, tick: 10 }));
+    await p;
+    expect(s.log.slice(before + 1).map((l) => l.kind)).toEqual(['command', 'ack']);
+    s.close();
   });
 
   it('describes commands in one line for the log', () => {

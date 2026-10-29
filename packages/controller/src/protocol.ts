@@ -21,7 +21,13 @@ export type TransportStatus = 'connecting' | 'open' | 'closed' | 'error';
 export type ModelInput = 'hrFactor' | 'svrFactor' | 'contractilityFactor' | 'vo2Factor' | 'vco2Factor';
 export type ControlFlag = 'modeled' | 'pinned' | 'ramping' | 'override';
 
-type CommandBase = { id: string; issuedBy: string; atTick?: Tick; stageGroup?: string };
+/**
+ * Staged-delivery metadata (Instructor v2, IP1): every item of one delivered cache carries the same `id` (its
+ * stageGroup) and `n`, the number of items, so a controller writes ONE log line for the batch once all n are answered.
+ * The host and the engine ignore it; it travels in `commandApplied` so a record can tell which items went together.
+ */
+export type BatchMeta = { batch?: { id: string; n: number } };
+type CommandBase = { id: string; issuedBy: string; atTick?: Tick; stageGroup?: string } & BatchMeta;
 
 /** Brief §7.2 `ClinicalEvent`, verbatim (drug ids stay strings). */
 export type ClinicalEvent =
@@ -79,8 +85,8 @@ export type ExtraCommand = CommandBase &
         sampling?: 'sidestream' | 'mainstream';
       }
   );
-/** Brief §7.2 `Command` as it travels on the wire. */
-export type WireCommand = Command | ExtraCommand;
+/** Brief §7.2 `Command` as it travels on the wire (engine commands may carry the staged-delivery `batch` too). */
+export type WireCommand = (Command & BatchMeta) | ExtraCommand;
 export type TimeCommand = Extract<ExtraCommand, { type: 'time' }>;
 export type ScenarioCommand = Extract<ExtraCommand, { type: 'scenario' }>;
 /** applyEvent / attachSensor: the host passes them to the engine, which validates them (Stages 3, 4 and 7 model them). */

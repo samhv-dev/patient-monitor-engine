@@ -2,9 +2,10 @@
 // as commandApplied, late joiners get the doc and the current state, bookmarks carry the runner state.
 import { afterEach, describe, expect, it } from 'vitest';
 import { createInProcessHub } from '../../src/transport/in-process.ts';
-import { HostSession } from '../../src/session/host-session.ts';
+import { HostSession, STAGE_LEAD_TICKS } from '../../src/session/host-session.ts';
 import { ControllerSession } from '../../src/session/controller-session.ts';
 import { ScenarioDriver } from '../../src/scenario/driver.ts';
+import { StageBuffer } from '../../src/panel/staging.ts';
 import type { AppliedResolution, ScenarioEvent, WireEvent } from '../../src/protocol.ts';
 import { manualHost } from '../fakes/manual-host.ts';
 import { collect, waitFor } from '../helpers.ts';
@@ -73,6 +74,44 @@ describe('scenario over a HostSession', () => {
     expect((await ctl.send({ type: 'scenario', action: 'trigger', target: 'nope' })).reason).toBe('no transition nope in state stable');
     expect((await ctl.send({ type: 'scenario', action: 'trigger', target: 'arrest' })).accepted).toBe(true);
     await waitFor(() => ctl.scenario.stateId === 'vf');
+  });
+
+  // For the record (plan IP1, answer 11 keeps card steps out of the cache, so nothing depends on this). What a scenario
+  // `trigger` staged in one batch with a bolus does today:
+  // - the bolus lands on the batch's tick (arrival + STAGE_LEAD_TICKS); the trigger is applied AT ONCE, on the arrival
+  //   tick (scenario commands go to the hook, which has no stage groups), and the state changes on that tick;
+  // - the new state's onEnter goes out in its OWN stage group (`scenario-n`, no batch stamp), STAGE_LEAD_TICKS after the
+  //   press. Here that is the batch's tick too, only because both groups opened on the same host tick (nothing ran
+  //   between the two arrivals); it is a separate group, so nothing ties it there (plan R4);
+  // - the controller's log names the trigger as an item of the batch's one line; its commandApplied keeps the stamp.
+  it('RECORD (IP1, Q11): a scenario trigger inside a staged batch is applied at once, outside the batch tick', async () => {
+    const { ctl, hub, run, host } = setup();
+    const watcher = hub.connect();
+    const got = collect(watcher);
+    const applied = () => got.flatMap((m) => (m.kind === 'event' ? m.body : [])).filter((e): e is Extract<WireEvent, { type: 'commandApplied' }> => e.type === 'commandApplied').map((e) => ({ tick: e.tick, c: (e.resolved as AppliedResolution).command }));
+    await waitFor(() => ctl.hostOnline);
+    await ctl.send({ type: 'scenario', action: 'load', target: 'acls-vf-witnessed' });
+    await waitFor(() => applied().some((a) => a.c.stageGroup === 'scenario-1')); // the setup batch is in
+    await run(2);
+    const t1 = host.engine.now().tick;
+    const b = new StageBuffer(ctl.peerId);
+    b.stage({ type: 'applyEvent', event: { kind: 'drug', drugId: 'epinephrine', dose: 0.01, unit: 'mg', route: 'iv' } }, 'drug');
+    b.stage({ type: 'scenario', action: 'trigger', target: 'arrest' }, 'step');
+    const acks = await b.commit((c) => ctl.send(c), { batch: true });
+    await waitFor(() => applied().some((a) => (a.c as { rhythm?: string }).rhythm === 'vfCoarse'));
+    const batchId = `${ctl.peerId}-sg1`;
+    expect(acks.map((a) => [a.accepted, a.tick])).toEqual([[true, t1 + STAGE_LEAD_TICKS], [true, t1]]);
+    const bolus = applied().find((a) => a.c.type === 'applyEvent')!;
+    const trigger = applied().find((a) => a.c.type === 'scenario' && a.c.action === 'trigger')!;
+    const onEnter = applied().find((a) => (a.c as { rhythm?: string }).rhythm === 'vfCoarse')!;
+    expect(bolus).toMatchObject({ tick: t1 + STAGE_LEAD_TICKS, c: { stageGroup: batchId, batch: { id: batchId, n: 2 } } });
+    expect(trigger).toMatchObject({ tick: t1, c: { stageGroup: batchId, batch: { id: batchId, n: 2 } } });
+    expect(trigger.c.atTick).toBeUndefined(); // the hook does not resolve the stage group
+    expect(ctl.scenario.enteredT).toBeCloseTo(t1 * 0.02, 6); // the state changed on the press tick
+    expect(onEnter.c.stageGroup).toMatch(/^scenario-\d+$/);
+    expect(onEnter.c.batch).toBeUndefined();
+    expect(onEnter.tick).toBe(t1 + STAGE_LEAD_TICKS);
+    expect(ctl.log.filter((l) => l.commandId === batchId).map((l) => l.text)).toEqual(['staged ×2: event drug epinephrine 0.01 mg iv · scenario trigger arrest']);
   });
 
   it('an invalid document is refused with the path-level reason', async () => {

@@ -2,7 +2,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { createInProcessHub } from '../../src/transport/in-process.ts';
 import { HostSession, STAGE_LEAD_TICKS } from '../../src/session/host-session.ts';
-import { createStamper, type AppliedResolution, type ManagedTransport, type WireMessage } from '../../src/protocol.ts';
+import { createStamper, type AppliedResolution, type CommandInput, type ManagedTransport, type WireMessage } from '../../src/protocol.ts';
+import { StageBuffer } from '../../src/panel/staging.ts';
 import { manualHost } from '../fakes/manual-host.ts';
 import { collect, sleep, waitFor } from '../helpers.ts';
 
@@ -159,6 +160,23 @@ describe('HostSession', () => {
     command({ type: 'setRhythm', rhythm: 'sinus', stageGroup: 'g' });
     await waitFor(() => of('ack').length === 2);
     expect(of('ack').map((a) => a.tick)).toEqual([t0 + STAGE_LEAD_TICKS, t0 + STAGE_LEAD_TICKS]);
+  });
+
+  it('a staged-delivery batch (a bolus, a fluid, a ventilation event) lands on one atTick and keeps its batch stamp', async () => {
+    const { command, of, events, host } = setup();
+    const t0 = host.engine.now().tick;
+    const b = new StageBuffer('p1');
+    b.stage({ type: 'applyEvent', event: { kind: 'drug', drugId: 'epinephrine', dose: 0.01, unit: 'mg', route: 'iv' } }, 'drug');
+    b.stage({ type: 'applyEvent', event: { kind: 'fluid', fluid: 'crystalloid', volumeMl: 250, overS: 60 } }, 'fluid');
+    b.stage({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 14, vtMl: 450 } }, 'vent');
+    const sent: CommandInput[] = [];
+    void b.commit(async (c) => (sent.push(c), command(c as Record<string, unknown>), { accepted: true, tick: 0, commandId: '', rttMs: 0 }), { batch: true });
+    await waitFor(() => of('ack').length === 3 && events().filter((e) => e.type === 'commandApplied').length === 3);
+    expect(of('ack').map((a) => a.accepted)).toEqual([true, true, true]);
+    expect(of('ack').map((a) => a.tick)).toEqual([t0 + STAGE_LEAD_TICKS, t0 + STAGE_LEAD_TICKS, t0 + STAGE_LEAD_TICKS]);
+    const applied = events().filter((e) => e.type === 'commandApplied').map((e) => (e.resolved as AppliedResolution).command);
+    expect(new Set(applied.map((c) => c.atTick))).toEqual(new Set([t0 + STAGE_LEAD_TICKS])); // one atTick for the three
+    expect(applied.map((c) => c.batch)).toEqual(sent.map(() => ({ id: 'p1-sg1', n: 3 }))); // the record can group them
   });
 
   it('bookmarks and restores, then re-announces itself so viewers resync', async () => {
