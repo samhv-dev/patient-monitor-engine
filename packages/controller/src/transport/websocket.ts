@@ -77,6 +77,7 @@ class WsTransport extends TransportBase {
         return;
       }
       if (isRelayFrame(o)) {
+        this.relayFrame(o); // before the status: a session knows why the link failed when it hears 'error'
         if (o.relay === 'error') this.setStatus('error');
         if (o.relay === 'peers') this.presence({ hostOnline: o.hostOnline }); // The session hears it too
         this.o.onRelayFrame?.(o);

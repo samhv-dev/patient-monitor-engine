@@ -4,6 +4,10 @@
 // While the link is open an unanswered command is also re-sent every COMMAND_RESEND_MS (a message lost on the way:
 // Playwright Linux WebKit's BroadcastChannel), and refused after COMMAND_ANSWER_TIMEOUT_MS with no answer (a host
 // that stopped answering) — a sender always hears back; it never waits forever.
+// With `role: 'instructor'` (plan instructor-peer-role.md P5) it is the instructor's phone: it says its hello with the
+// PIN on every open socket, under a fresh `from` per connection, holds its commands until the host grants it, and
+// answers its own pending commands locally when a new host appears (the laptop reloaded), never giving them to the
+// reloaded case. A `controller` behaves as before.
 import type { RhythmId, SimSeconds } from '@pme/engine-core';
 import {
   createStamper,
@@ -23,6 +27,7 @@ import {
   type WireEvent,
   type WireMessage,
 } from '../protocol.ts';
+import type { RelayFrame } from '../transport/relay-frames.ts';
 import { ScenarioView } from '../scenario/view.ts';
 
 export interface LogEntry {
@@ -47,7 +52,28 @@ export interface ControllerSessionOptions {
   resendMs?: number;
   /** FX-2: refuse a command after this long open with no answer (default COMMAND_ANSWER_TIMEOUT_MS). */
   answerTimeoutMs?: number;
+  /** 'instructor': a phone that proves the PIN and commands once the host grants it (default 'controller'). */
+  role?: 'controller' | 'instructor';
+  /** The instructor's PIN, read at every hello (held in the page's memory only, plan Q3). Required for 'instructor'. */
+  pin?: () => string;
 }
+
+/**
+ * Whether the host lets this session command. A `controller` is always `granted` (its transport is trusted). An
+ * instructor is `pending` on every new socket until the host's grant; `revoked` when a grant is withdrawn (the PIN was
+ * changed, another phone took over); `denied` when its hello is refused, by the host (a wrong PIN) or the relay
+ * (`code`: the relay's refusal, 'too-many-tries' among them). `reason` is the host's or the relay's words.
+ */
+export interface InstructorAccess {
+  state: 'pending' | 'granted' | 'revoked' | 'denied';
+  reason?: string;
+  code?: 'denied' | 'too-many-tries';
+}
+
+/** Plan §5: a pending command when a new host appears is answered here, never given to the reloaded case. */
+export const HOST_RESTARTED_REASON = "Not given: the instructor's computer restarted. Press again if it is still needed.";
+/** Plan §4: the instructor's timeout. The host may have applied the command and lost the ack, so never "not given". */
+export const NOT_CONFIRMED_REASON = "Not confirmed: no answer from the instructor's computer. Check the Finished list before pressing again.";
 
 /** FX-2: an unanswered command goes again this often while the link is open; the host de-duplicates by id [ENG]. */
 export const COMMAND_RESEND_MS = 2000;
@@ -83,8 +109,16 @@ export class ControllerSession {
   /** The host's fast-forward while it runs (null otherwise), and the last one that ended. */
   fastForward: { fromT: SimSeconds; toT: SimSeconds } | null = null;
   lastFastForward: FastForwardDone | null = null;
+  /** Whether the host lets this session command (always granted for a controller). */
+  access: InstructorAccess;
   private readonly o: ControllerSessionOptions;
-  private readonly stamp: (b: WireBody) => WireMessage;
+  private readonly instructor: boolean;
+  private stamp: (b: WireBody) => WireMessage;
+  /** The envelope's `from`: the peer id, or for an instructor `<peerId>.<n>`, n counting the connections. */
+  private sender: string;
+  private connections = 0;
+  /** The host's peer id once heard: a hello from another id is a new host (a reloaded laptop). */
+  private hostId: string | null = null;
   private readonly now: () => number;
   private readonly pending = new Map<string, Pending>();
   /** Staged deliveries being answered, by batch id: each item's line, in send order, and the answers so far. */
@@ -98,10 +132,17 @@ export class ControllerSession {
 
   constructor(o: ControllerSessionOptions) {
     this.o = o;
+    this.instructor = o.role === 'instructor';
+    if (this.instructor && !o.pin) throw new Error('an instructor session needs a pin');
+    // Plan §7: every window of the browser hears a BroadcastChannel, so the PIN never goes on one
+    if (this.instructor && o.transport.kind === 'broadcastChannel') throw new Error('an instructor session goes through the relay, never a BroadcastChannel');
+    this.access = { state: this.instructor ? 'pending' : 'granted' };
     this.peerId = o.peerId ?? newPeerId('ctl');
     this.now = o.wallNow ?? (() => performance.timeOrigin + performance.now());
-    this.stamp = createStamper(o.session, this.peerId, this.now);
+    this.sender = this.peerId;
+    this.stamp = createStamper(o.session, this.sender, this.now);
     this.offs = [
+      o.transport.onRelayFrame?.((f) => this.onRelayFrame(f)) ?? (() => undefined),
       o.transport.onStatus((s) => this.onStatus(s)),
       o.transport.onMessage((m) => this.onMessage(m)),
       // The relay says the host left — the panel stops showing it as connected
@@ -118,6 +159,10 @@ export class ControllerSession {
   }
   get pendingCount(): number {
     return this.pending.size;
+  }
+  /** The `from` this session's messages carry now (an instructor's changes with every connection). */
+  get from(): string {
+    return this.sender;
   }
 
   /** Send a command; resolves on the host's ack (accepted or not). Survives reconnects. */
@@ -157,8 +202,13 @@ export class ControllerSession {
   }
 
   // --- internals ---------------------------------------------------------------------------------------------
+  /** Open, and allowed to command: an instructor's commands are held until the host grants it. */
+  private get sendable(): boolean {
+    return this.o.transport.status === 'open' && this.access.state === 'granted';
+  }
+
   private transmit(cmd: WireCommand): void {
-    if (this.o.transport.status === 'open') this.o.transport.send(this.stamp({ kind: 'command', body: cmd }));
+    if (this.sendable) this.o.transport.send(this.stamp({ kind: 'command', body: cmd }));
   }
 
   private resendPending(): void {
@@ -168,13 +218,13 @@ export class ControllerSession {
   /** FX-2: every unanswered command again, or its refusal once it has waited out the timeout on an open link. */
   private retry(): void {
     if (this.pending.size === 0) return this.stopRetry();
-    if (this.o.transport.status !== 'open') return; // a reconnect sends them again; time without a link does not count
+    if (!this.sendable) return; // a reconnect (or the grant) sends them again; time without a link does not count
     const every = this.o.resendMs ?? COMMAND_RESEND_MS;
     const limit = this.o.answerTimeoutMs ?? COMMAND_ANSWER_TIMEOUT_MS;
     for (const [id, p] of [...this.pending]) {
       p.waitedMs += every;
       if (p.waitedMs < limit) this.transmit(p.cmd);
-      else this.answer(id, p, { accepted: false, tick: -1, reason: `no answer from the host in ${Math.round(limit / 1000)} s` });
+      else this.answer(id, p, { accepted: false, tick: -1, reason: this.instructor ? NOT_CONFIRMED_REASON : `no answer from the host in ${Math.round(limit / 1000)} s` });
     }
   }
 
@@ -216,21 +266,74 @@ export class ControllerSession {
 
   private onStatus(s: TransportStatus): void {
     if (s === 'open') {
-      this.o.transport.send(this.stamp({ kind: 'hello', role: 'controller' }));
+      if (this.instructor) {
+        // A fresh sender per socket: a reconnect never claims its own dead socket's id, and the host's sequence filter
+        // starts fresh. A grant never passes from one socket to another.
+        this.sender = `${this.peerId}.${++this.connections}`;
+        this.stamp = createStamper(this.o.session, this.sender, this.now);
+        this.sayInstructorHello();
+      } else this.o.transport.send(this.stamp({ kind: 'hello', role: 'controller' }));
       this.resendPending();
     } else this.hostOnline = false;
     this.addLog('status', `link ${s}`);
+  }
+
+  /** The instructor's hello, with the PIN (never logged): its access is pending until the host answers. */
+  private sayInstructorHello(): void {
+    this.setAccess({ state: 'pending' });
+    this.o.transport.send(this.stamp({ kind: 'hello', role: 'instructor', pin: (this.o.pin as () => string)() }));
+  }
+
+  private setAccess(a: InstructorAccess): void {
+    this.access = a;
+    this.changed();
+  }
+
+  /** The relay refused the instructor's hello (its socket then closes with a fatal code: no reconnect). */
+  private onRelayFrame(f: RelayFrame): void {
+    if (!this.instructor || f.relay !== 'error' || (f.code !== 'denied' && f.code !== 'too-many-tries')) return;
+    // The host's own words already came with its grant (revoked or denied): the relay's close does not overwrite them
+    if (f.code === 'denied' && (this.access.state === 'revoked' || this.access.state === 'denied')) return;
+    this.setAccess({ state: 'denied', reason: f.message, code: f.code });
+  }
+
+  /** A host hello: the same host (a restore) gets the pending commands again; a new host (the laptop reloaded) never. */
+  private onHostHello(from: string): void {
+    const fresh = this.hostId !== null && from !== this.hostId;
+    this.hostId = from;
+    this.hostOnline = true;
+    if (!this.instructor) this.resendPending();
+    else {
+      if (fresh) for (const [id, p] of [...this.pending]) this.answer(id, p, { accepted: false, tick: -1, reason: HOST_RESTARTED_REASON });
+      // A new host has no grant for us, and a host that came after our hello never heard it (the relay forwards a hello
+      // to the host only while one is there): say it again. A revoked or denied phone does not sign itself in again.
+      if (this.access.state === 'pending' || (fresh && this.access.state === 'granted')) this.sayInstructorHello();
+      else this.resendPending();
+    }
+    this.changed();
+  }
+
+  /** The host's answer to our instructor hello, for this socket's `from` only. */
+  private onGrant(m: Extract<WireMessage, { kind: 'grant' }>): void {
+    if (!this.instructor || m.to !== this.sender) return;
+    if (m.granted) {
+      this.setAccess({ state: 'granted' });
+      this.resendPending(); // the held commands, in the order they were pressed
+      return;
+    }
+    const reason = m.reason !== undefined ? { reason: m.reason } : {};
+    this.setAccess({ state: this.access.state === 'granted' ? 'revoked' : 'denied', ...reason });
   }
 
   private onMessage(m: WireMessage): void {
     if (this.seqs.check(m) === 'duplicate') return;
     switch (m.kind) {
       case 'hello':
-        if (m.role === 'host') {
-          this.hostOnline = true;
-          this.resendPending();
-          this.changed();
-        }
+        if (m.role === 'host') this.onHostHello(m.from);
+        return;
+      case 'grant':
+        this.hostId ??= m.from;
+        this.onGrant(m);
         return;
       case 'ack': {
         const p = this.pending.get(m.commandId);
@@ -238,10 +341,12 @@ export class ControllerSession {
         return;
       }
       case 'event':
+        this.hostId ??= m.from; // a phone that joins a running host hears no host hello: only the host sends events
         for (const e of m.body) this.onEvent(e);
         this.changed();
         return;
       case 'snapshot':
+        this.hostId ??= m.from;
         this.hostEngineVersion = m.body.engineVersion;
         this.hostOnline = true;
         this.changed();

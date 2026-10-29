@@ -296,6 +296,14 @@ describe('ControllerSession as the instructor (plan P5)', () => {
     c.close();
   });
 
+  it('plan §7: the PIN never goes on a BroadcastChannel (every window of the browser hears it)', () => {
+    class Bc extends ManualTransport {
+      override readonly kind = 'broadcastChannel' as never;
+    }
+    expect(() => new ControllerSession({ session: S, transport: new Bc(), role: 'instructor', pin: () => PIN })).toThrow(/never a BroadcastChannel/);
+    expect(() => new ControllerSession({ session: S, transport: new ManualTransport(), role: 'instructor' })).toThrow(/needs a pin/);
+  });
+
   describe('over the relay socket', () => {
     const opts = { url: 'ws://relay.test/', WebSocketImpl: FakeWebSocket, backoff: { baseMs: 100, maxMs: 1000, jitter: 0 }, livenessMs: 60_000 };
     const sent = (ws: FakeWebSocket) => ws.sent.map((d) => JSON.parse(d) as WireMessage);
