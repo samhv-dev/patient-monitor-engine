@@ -40,6 +40,24 @@ the public API is what the packages export (see the API reference), the `pme-sce
   owner's ruling.
 
 ### Fixed
+- Monitor (arterial line, after the 3 November demo): the pulse detector no longer reads a smaller beat after a larger
+  one into the larger beat's interval. When it missed the smaller upstroke, the numerics measured two beats as one,
+  with the larger beat's systolic, so the displayed systolic read high (+8.4 mmHg in MANUAL AF 150, +2.4 in untreated
+  MH, against the mean of the true beats). On the systemic arterial line an interval longer than 166 % of the median
+  of the last 8 is now searched back for a missed upstroke (Pan & Tompkins, IEEE Trans Biomed Eng 1985: the RR-missed
+  limit, a second threshold at half the first), and a candidate is a pulse only if it has a pulse's shape (Li, Dong &
+  Vai, Biomed Signal Process Control 2010): an onset and a systolic peak with a run-off, a rise between 0.4 and 2 times
+  the recent pulses', the onset at least 288 ms after the previous systolic peak and 250 ms from either foot. A pulse
+  found splits the interval and each part is searched again. On the diagnosis run set it found 613 missed pulses, no
+  foot that is not a beat (4 more feet are CPR compressions, which the detector counts as pulses anyway), and kept every
+  genuinely long interval (293 of 293: abrupt slowing, AV block, AF pauses, after ROSC) one beat (293 counts the
+  `long-beat` records of the before logs at dea151c4, every run and skin; the 2026-10-27 investigation's logs at 25771808 hold 288,
+  of which the unit fixture keeps 283 as 147 windows). Intervals over the limit holding a missed pulse fell
+  1208 → 771; the systolic bias fell to +7.3 (AF 150), +2.1 (MH) and +0.4–0.5 (haemorrhage). What stays is mostly beats whose rise is under 0.4 of their neighbours' (in AF, pulse-deficit beats
+  of 3–20 mL), which Li's rule does not count as pulses. The detection path, the pleth (its PI, PR and #153's
+  own-period rule) and the PAP are unchanged. The tamponade card's `sysMaxAtRosc` band is re-centred 208.5 → 191 (± 5),
+  pending a ruling: the 208.5 averaged a merged interval at ROSC, but the engine's own 6-beat systolic peaks at 202.0
+  in that window, between the two readings.
 - Explore prints its rows in the engine's own unit: Endocrine glucose is the engine's mmol/L value (it showed the
   mg/dL copy as mmol/L) and the lab panel's glucose says mg/dL; Stress response is on its 0–100 scale (was labelled
   0–1); the gas model's awake resting VO₂ is labelled "VO₂ at rest (awake)" beside the actual VO₂, so Gas and Blood no
@@ -273,23 +291,6 @@ except where this section says otherwise.
 
 ### Fixed
 - The MH card's story text said the untreated patient passes 38.5 °C at about 19 min and arrests in VF at 42 °C at about 45 min; on this build (E131) the untreated core is about 37.3 °C at 51 min, the established state comes after about 100 min and no hyperthermic VF occurs. The text now says so (found 2026-10-29 while writing the speaker's reference).
-
-- Monitor (arterial line, after the 3 November demo): the pulse detector no longer reads a smaller beat after a larger
-  one into the larger beat's interval. When it missed the smaller upstroke, the numerics measured two beats as one,
-  with the larger beat's systolic, so the displayed systolic read high (+8.4 mmHg in MANUAL AF 150, +2.4 in untreated
-  MH, against the mean of the true beats). On the systemic arterial line an interval longer than 166 % of the median
-  of the last 8 is now searched back for a missed upstroke (Pan & Tompkins, IEEE Trans Biomed Eng 1985: the RR-missed
-  limit, a second threshold at half the first), and a candidate is a pulse only if it has a pulse's shape (Li, Dong &
-  Vai, Biomed Signal Process Control 2010): an onset and a systolic peak with a run-off, a rise between 0.4 and 2 times
-  the recent pulses', the onset at least 288 ms after the previous systolic peak and 250 ms from either foot. A pulse
-  found splits the interval and each part is searched again. On the diagnosis run set it found 613 missed pulses, no
-  foot that is not a beat (4 more feet are CPR compressions, which the detector counts as pulses anyway), and kept every
-  genuinely long interval (293 of 293: abrupt slowing, AV block, AF pauses, after ROSC) one beat. Intervals over the
-  limit holding a missed pulse fell 1208 → 771; the systolic bias fell to +7.3 (AF 150), +2.1 (MH) and +0.4–0.5
-  (haemorrhage). What stays is mostly beats whose rise is under 0.4 of their neighbours' (in AF, pulse-deficit beats
-  of 3–20 mL), which Li's rule does not count as pulses. The detection path, the pleth (its PI, PR and #153's
-  own-period rule) and the PAP are unchanged. The tamponade card's `sysMaxAtRosc` band is re-centred 208.5 → 191 (± 5):
-  the 208.5 was a merged interval at ROSC.
 
 - Validation harness: the MODELED sanity documents and the Pulse oracle's MODELED scenarios no longer send a baseline
   heart rate. In MODELED a `setTarget hr` is the instructor's held rate, so the haemorrhage, sepsis, phenylephrine and
