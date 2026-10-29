@@ -1,13 +1,15 @@
 // What the debrief states from a run record — each objective met / not met / not assessable from its rule (types.ts
 // `ObjectiveRule`), with the reason and the simulated times in one line, and the facts the engine can measure. Both
 // read the KEPT course (a return to a bookmark undoes what came after it: the retry is what is judged). Labels come
-// from the glossary and the alarm table. Also the one-row-per-minute table and the export's shape (written by
+// from the glossary and the alarm table. Also the one-row-per-minute table, the card's steps with their status, the
+// instructor's judged objectives and the marks (Instructor v2, IP8), and the export's shape (written by
 // `debrief-export.ts`). No DOM.
-import type { ObjectiveRule, RunEventId } from '@pme/controller/scenario';
+import { manualLabel } from '@pme/controller';
+import type { ObjectiveRule, RunEventId, ScenarioDoc } from '@pme/controller/scenario';
 import { FIXED_ALARM_WORDS } from './alarms.ts';
 import { CONDITIONS } from './describe.ts';
 import { drugName, drugWords, labelOf, lookup, unitOf } from './glossary.ts';
-import { LAB_KEYS, LABS, TREND, TREND_KEYS, type LabKey, type Row, type RunData, type Sample, type TrendKey, type ValueKey } from './record.ts';
+import { LAB_KEYS, LABS, TREND, TREND_KEYS, type LabKey, type MarkKind, type Row, type RunData, type Sample, type TrendKey, type ValueKey } from './record.ts';
 import { objectiveText } from './scenarios.ts';
 
 export type Status = 'met' | 'not met' | 'not assessable';
@@ -192,6 +194,134 @@ export function objectives(d: RunData): Array<{ text: string; discuss?: true; ve
   });
 }
 
+/** A step's status at the end of the record (answer 7 as the coordinator revised it for IP8): `taken` = its
+ *  transition fired by a press; `out of order` = taken after a step later in the card's order of the same stage was
+ *  taken. An untaken step is listed only when an objective asks for it (`steps`), and then reads `failed` (its stage
+ *  has passed and the card can no longer reach the state it leads to), else `overdue` (the window of a linked
+ *  `eventWithin` objective has passed), else `not done` (never taken by the end, still reachable). */
+export type StepStatus = 'taken' | 'out of order' | 'failed' | 'overdue' | 'not done';
+export interface Step {
+  /** The transition and its stage (the state it leaves). */
+  id: string;
+  stateId: string;
+  /** The order it was due: its place among the stage's steps in the card's order (the panel's key, from 1). */
+  n: number;
+  /** Its button's words. */
+  label: string;
+  /** When it was first due: the stage's first entry on the kept course. */
+  dueT: number;
+  /** Its first press that fired it, and that press's place among the stage's taken steps (from 1). */
+  takenT: number | null;
+  order: number | null;
+  /** A mixed step (`any` with a manual) its own rule fired, with no press. */
+  ruleT?: number;
+  status: StepStatus;
+}
+
+/** Every state the card can reach from `from` (itself included), over every transition and probability `else`. */
+function reachable(doc: ScenarioDoc, from: string): Set<string> {
+  const seen = new Set([from]);
+  for (const id of seen) {
+    for (const tr of doc.states.find((s) => s.id === id)?.transitions ?? []) for (const to of [tr.to, tr.else]) if (to) seen.add(to);
+  }
+  return seen;
+}
+
+/** Seconds within which two record times are the same instant. */
+const EPS_T = 1e-6;
+/** The kept state rows: one per state entered, with how (record.ts `tr`, `by`). */
+const stateRows = (d: RunData): Row[] => kept(d).filter((r) => r.kind === 'scenario' && r.ev?.startsWith('state:'));
+
+/**
+ * The card's steps (manual transitions, and `any`/`all` with a manual inside: answer 4) of the stages entered on the
+ * kept course, in the card's order, each with the time it was due, the time and order it was taken, and its status
+ * (`StepStatus`). Listed: every step taken, and every untaken step an objective asks for. An alternative branch not
+ * chosen is not a failure, so an untaken step no objective asks for is left out (the coordinator's rule for IP8).
+ * An objective is linked to a step (answer 6) when the event its rule asks for (`eventWithin`, `occurred`,
+ * `heldThen`) is `state:<to>`, or `drug:<id>` for a drug given in `<to>`'s onEnter. It asks for the step when:
+ *  - it is not met;
+ *  - its anchor (the first `from`, then for `eventWithin` the first `after`) happened while the step's stage was still
+ *    current or before;
+ *  - and the linked event did not happen anyway from the step's due time and the anchor on (another button, or the
+ *    card's own rule, gave it).
+ * Empty without a scenario, and for a record made before the record kept how each state was entered (nothing to
+ * tell a press from a rule by).
+ */
+export function steps(d: RunData): Step[] {
+  const doc = d.doc;
+  const rows = stateRows(d);
+  if (!doc || (rows.length > 1 && !rows.some((r) => r.tr !== undefined || r.by !== undefined))) return [];
+  const cur = rows.at(-1)?.ev?.slice('state:'.length) ?? doc.initialState;
+  const reach = reachable(doc, cur);
+  /** The objectives asking for a step into `to` whose stage was current from `dueT` until it was left at `leftT`
+   *  (null: still current); and whether one of them is an `eventWithin` whose window has passed. */
+  const asking = (to: string, dueT: number, leftT: number | null): { asked: boolean; overdue: boolean } => {
+    const given = (doc.states.find((s) => s.id === to)?.onEnter ?? []).flatMap((c) => (c.type === 'applyEvent' && 'drugId' in c.event ? [`drug:${String(c.event.drugId)}`] : []));
+    const links = [`state:${to}`, ...given];
+    const out = { asked: false, overdue: false };
+    for (const o of doc.objectives ?? []) {
+      const rule = typeof o === 'string' ? undefined : o.rule;
+      if (!rule || (rule.kind !== 'eventWithin' && rule.kind !== 'occurred' && rule.kind !== 'heldThen')) continue;
+      const linked = [rule.event].flat().filter((e) => links.includes(e));
+      const v = verdict(rule, d);
+      if (!linked.length || v.status === 'met') continue;
+      const from = rule.from ? first(d, rule.from) : null;
+      if (rule.from && !from) continue; // it never began to ask
+      const anchor = rule.kind === 'eventWithin' ? first(d, rule.after, from?.t ?? -Infinity) : from;
+      // an anchor at the instant the stage was left is the next stage's, not this one's
+      if ((rule.kind === 'eventWithin' && !anchor) || (anchor && leftT !== null && anchor.t >= leftT - EPS_T)) continue;
+      if (linked.some((e) => first(d, e, Math.max(dueT, anchor?.t ?? -Infinity)))) continue; // given another way
+      out.asked = true;
+      if (rule.kind === 'eventWithin' && v.status === 'not met') out.overdue = true;
+    }
+    return out;
+  };
+  return doc.states.flatMap((s) => {
+    const entered = rows.find((r) => r.ev === `state:${s.id}`);
+    if (!entered) return [];
+    // when the stage was last left: the state row after its last entry (none: it is current)
+    const lastIn = rows.map((r) => r.ev).lastIndexOf(`state:${s.id}`);
+    const leftT = rows[lastIn + 1]?.t ?? null;
+    const own = (s.transitions ?? []).flatMap((tr, i) => {
+      const label = manualLabel(tr.when);
+      if (label === null) return [];
+      const fired = rows.filter((r) => r.tr === tr.id || r.tr === `${tr.id}:else`);
+      const ruleT = fired.find((r) => r.by === 'rule')?.t;
+      return [{ tr, i, label, takenT: fired.find((r) => r.by === 'press')?.t ?? null, ...(ruleT !== undefined ? { ruleT } : {}) }];
+    });
+    const taken = own.filter((x) => x.takenT !== null).sort((a, b) => (a.takenT as number) - (b.takenT as number) || a.i - b.i);
+    return own.flatMap((x, k): Step[] => {
+      const { tr, i, label, takenT } = x;
+      const order = takenT === null ? null : taken.indexOf(x) + 1;
+      let status: StepStatus;
+      if (takenT !== null) status = taken.some((y) => y.i > i && (y.takenT as number) < takenT) ? 'out of order' : 'taken';
+      else {
+        const a = asking(tr.to, entered.t, leftT);
+        if (!a.asked) return []; // an alternative not chosen, or a step no objective asks for
+        status = s.id !== cur && !reach.has(tr.to) ? 'failed' : a.overdue ? 'overdue' : 'not done';
+      }
+      return [{ id: tr.id, stateId: s.id, n: k + 1, label, dueT: entered.t, takenT, order, ...(x.ruleT !== undefined ? { ruleT: x.ruleT } : {}), status }];
+    });
+  });
+}
+
+/** The objectives the instructor judges (no rule: answer 6's "judged objective"), in the card's order: `n` is the
+ *  objective's place in the card's list (from 1), `tickedT` the instructor's tick ("Objective met: …"), else null. */
+export function judged(d: RunData): Array<{ n: number; text: string; tickedT: number | null }> {
+  return (d.doc?.objectives ?? []).flatMap((o, i) => {
+    if (typeof o !== 'string' && o.rule) return [];
+    const text = drugWords(objectiveText(o));
+    return [{ n: i + 1, text, tickedT: kept(d).find((r) => r.kind === 'note' && r.text === `Objective met: ${text}`)?.t ?? null }];
+  });
+}
+
+/** Every mark (bookmark) of the run in order, with its kind and note when it has them; an undone one says so. */
+export function marks(d: RunData): Array<{ t: number; label: string; kind?: MarkKind; note?: string; undone?: number }> {
+  return d.rows.filter((r) => r.kind === 'bookmark').map((r) => ({
+    t: r.t, label: r.mark ?? r.text, ...(r.markKind ? { kind: r.markKind } : {}), ...(r.note ? { note: r.note } : {}), ...(r.undone ? { undone: r.undone } : {}),
+  }));
+}
+
 export interface Fact {
   label: string;
   value: string;
@@ -282,7 +412,9 @@ export function perMinute(d: RunData): Array<{ t: number; values: Record<ValueKe
 }
 
 /** The report as exported (`pme-debrief/2`). Over `/1` it adds the renderer's `version`, `discuss` and the verdicts'
- *  `tickedT` and `measure`, and the key times and key moments of the course (`debrief-moments.ts`). */
+ *  `tickedT` and `measure`, and the key times and key moments of the course (`debrief-moments.ts`). Instructor v2
+ *  (IP8) adds `steps`, `judged` and `marks` at the end, and the record's rows their `tr`, `by`, `markKind`, `note` and
+ *  `batch`: all additive, so the schema stays `/2` (answer 17). */
 export interface DebriefExport {
   schema: 'pme-debrief/2';
   version: string;
@@ -304,4 +436,7 @@ export interface DebriefExport {
     pulseless: boolean; alarms: string[];
   }>;
   minutes: ReturnType<typeof perMinute>;
+  steps: Step[];
+  judged: ReturnType<typeof judged>;
+  marks: ReturnType<typeof marks>;
 }
