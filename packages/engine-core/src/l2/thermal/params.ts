@@ -138,7 +138,7 @@ export const MH_SYMP_TAU_S = 120;
 export const MH_RELAX_TAU_S = 600; // the unsuppressed fraction follows dantrolene with τ 10 min (tables "VCO2 excess decays τ 10–20 min") [ENG]
 /**
  * Dantrolene's PK and effect curve are the drug model's: `bus.metabolic.dantroleneE` = C/(C + 1) with C in 2.5 mg/kg
- * reference doses (a gamma curve, 90 % of its peak within 1 min, t10 6 h). The endocrine model maps that effect onto
+ * reference doses (a gamma curve peaking at 10 min, t10 6 h: `gammaPk(2.5, true, 600, 21600)`). The endocrine model maps that effect onto
  * the MH activity: the unsuppressed fraction relaxes toward max(0, 1 − DANT_GAIN·E). 2.5 mg/kg (E ≈ 0.5) → floor 0.2, 5
  * mg/kg (E 0.67) → 0 (tables "repeat to response: average 5 mg/kg") [ENG, fitted in the prototype].
  */
