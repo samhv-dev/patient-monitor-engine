@@ -229,13 +229,24 @@ describe('MH tachycardia (E117, MODELED)', { timeout: 600_000 }, () => {
   // DILATES and DEPRESSES (audit §2.5; Walley 1990, Cullen & Eger 1974). With it removed the sourced mechanisms left —
   // the MH sympathetic drive (MH_SYMP_GAIN), the hypercapnic arm of the stress bus (SYMP_HYPERCAPNIA_*, Somers 1989)
   // and the baroreflex's own answer to the pressure the dilation costs — reach 114 at EtCO2 55, not 120. The band is
-  // kept and the miss recorded; it is NOT met by raising a constant to it. The named lever, for the owner: the stress
-  // bus's hypercapnic slope was deliberately kept small BECAUSE of the pressor term's overlap (its own comment says
-  // so), and its own control rows still allow a larger term (PaCO2 ≈ 51 now adds 2.6 bpm of a 10 bpm limit, PaCO2 ≈ 67
-  // adds 9.5 of 20). A second candidate, also sourced to Walley's propranolol arm: the hypercapnic tachycardia there
-  // was NOT β-mediated (HR 81 → 106 after propranolol, "did not alter the associated tachycardia"), so a direct
-  // chronotropic CO2 term of ≈ 0.6 % per mmHg would belong beside the two direct terms now built. Neither was taken
-  // without the owner's word, because either one closes a clinical target the model is being measured against.
+  // kept and the miss recorded; it is NOT met by raising a constant to it. The named levers, for the owner (both
+  // corrected 2026-10-29 after the independent review). LEVER 1, the stress bus's hypercapnic term, was deliberately
+  // kept small BECAUSE of the pressor term's overlap (its own comment says so) — but the binding parameter is its CAP,
+  // not its slope: the term is min(SYMP_HYPERCAPNIA_MAX 0.3, SYMP_HYPERCAPNIA_PER_MMHG 0.03 · (PaCO2 − 45)), so it
+  // SATURATES at PaCO2 55, and at this moment the EtCO2 is 55 with the PaCO2 above it, i.e. the term is already at its
+  // cap and a larger slope adds nothing here. What the control rows allow is a larger CAP (PaCO2 ≈ 51 now adds 2.6 bpm
+  // of a 10 bpm limit, PaCO2 ≈ 67 adds 9.5 of 20). Note that `symp` acts on rate, resistance and contractility
+  // together, so this lever re-adds sympathetic constriction on top of a net-measured dilation (audit §2.5, the v2.0
+  // specification, point 3). LEVER 2, better sourced, also from Walley's propranolol arm: the hypercapnic tachycardia
+  // there was NOT β-mediated (HR 81 → 106 after propranolol, "did not alter the associated tachycardia"), i.e. +31 %
+  // over 52 mmHg ≈ 0.6 % per mmHg, and it touches rate only, so it adds no resistance double count. Its caveats: it is
+  // a DOG number like the two terms built; "direct" is a lump, because the residual tachycardia after propranolol may
+  // be vagal withdrawal or α-mediated rather than a measured direct chronotropic action; and at PaCO2 ≈ 60 it is worth
+  // ≈ +12 % of rate, so it would close this row (114 → ≈ 128) but would move EVERY hypercapnic HR band in the engine
+  // (the rebreathing rows, lung-r14, the resp rigs, all five showcase cards) and would probably re-break the
+  // awake-laryngoscopy row that now passes by 0.031 mmHg — its own PR with its own measurement round, not an
+  // amendment here. Neither was taken without the owner's word, because either one closes a clinical target the model
+  // is being measured against.
   it.fails('E117: the HR is ≥ 120 by the time the EtCO2 passes 55 mmHg (tachycardia is among the earliest MH signs, Miller 10e; owner-confirmed 2026-10-23) — measured 114 since the hypercapnic pressor multiplier was removed (122 on origin/main dea151c4)', async () => {
     const ev = await induced(1200, { mh: true });
     const et = numSeries(ev, 'etco2', 0, 1200).filter(([, v]) => Number.isFinite(v));

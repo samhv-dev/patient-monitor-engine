@@ -83,13 +83,18 @@ describe('the stimulus sympathetic surge', { timeout: 3_600_000 }, () => {
   // circulation's hypercapnic PRESSOR multiplier added to the laryngoscopy surge: ΔMAP 38.4 → 40.3 against the sourced
   // 20–40 band. 2026-10-28: that multiplier had the wrong sign and is gone (audit §2.5; CO2 now dilates and depresses),
   // so the same surge measures ΔMAP 39.97 and ΔHR 13.7 and the row passes again. It is met at its ceiling, by 0.03 mmHg,
-  // and the band is the sourced one, unchanged; the exact value is printed so the margin stays visible.
+  // and the band is the sourced one, unchanged; the exact value and the margin to the ceiling are printed so it stays
+  // visible. 2026-10-29 (independent review): the pass is deterministic (39.969 reproduced on a second worktree) but
+  // it is luck, not a mechanism — nothing puts the awake surge just under 40. The CEILING itself is graded UNSUPPORTED
+  // in the target audit (row 11: ΔMAP ≥ 20 with a ceiling of ≈ 50, or ≥ the propofol arm; owner to choose), so this
+  // row reads as a met sourced band while the upper half of that band has no source. The owner's ruling on the ceiling
+  // is open, and taking E117's lever 2 (a direct chronotropic CO2 term) would very likely re-break this margin.
   it('awake laryngoscopy raises MAP 20–40 mmHg and HR 12–30 (M10; the sourced awake band) — measured ΔMAP 39.97, ΔHR 13.7 (40.3 while the hypercapnic pressor multiplier stood)', async () => {
     const i = await run('awake:stim', LARYNX, STIM_T + 600);
     const c = await run('awake:ctrl', [], STIM_T + 600);
     const dMap = dPeak(i, c, 'map', STIM_T);
     const dHr = dPeak(i, c, 'hr', STIM_T);
-    console.log(`FU-7 case 1 awake: ΔMAP ${f1(dMap)}, ΔHR ${f1(dHr)} (exact ΔMAP ${dMap.toFixed(3)})`);
+    console.log(`FU-7 case 1 awake: ΔMAP ${f1(dMap)}, ΔHR ${f1(dHr)} (exact ΔMAP ${dMap.toFixed(3)}, ${(40 - dMap).toFixed(3)} mmHg under the 40 ceiling)`);
     expect(dMap).toBeGreaterThanOrEqual(20);
     expect(dMap).toBeLessThanOrEqual(40);
     expect(dHr).toBeGreaterThanOrEqual(12);

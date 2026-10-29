@@ -7,8 +7,12 @@ import { alarmAt, bands, entered, first, near, range, runCard } from './harness.
 
 /** Bands: the measured prototype ± a stated tolerance. Never widened.
  *  2026-10-28 (hypercapnia dilates and depresses instead of pressing: audit §2.5): on the untreated path the apnoeic
- *  patient is profoundly hypercapnic by the time the oximeter reads zero, so CO₂'s own vasodilation and myocardial
- *  depression now act where an independent pressor multiplier had been raising the rate and the resistance.
+ *  patient is profoundly hypercapnic by the time the oximeter reads zero, so CO₂'s own vasodilation now acts where an
+ *  independent pressor multiplier had been raising the rate and the resistance. (Corrected 2026-10-29 after the
+ *  independent review: it is the vasodilation plus the REMOVAL of that multiplier, not the new myocardial depression.
+ *  `chemistryContractility` takes the LARGER of the pH and CO₂ depressions, and the two cross at PaCO₂ ≈ 78 for a pure
+ *  respiratory acidosis; this patient's PaCO₂ is 86 mmHg when the oximeter reads zero, measured on this head, so the
+ *  pH arm binds and the CO₂ depression contributes nothing here.)
  *  Re-centred on this build with the SAME tolerance (old centre → new): 'S3 untreated' mapAtSpo2Zero 77 → 60.5. Every
  *  other number on every S3 path held, the timings among them (desaturation 493 s, bradycardia 566 s, oximeter zero
  *  724 s, pulse loss 1180 s, the first ineffective efforts 978 s at 36 mL with no EtCO₂ and no awRR). Not tuned.
@@ -16,7 +20,18 @@ import { alarmAt, bands, entered, first, near, range, runCard } from './harness.
  *  `afterS` out of the bradycardic state), set to land on the engine's own first effort; with the effort now 55 s
  *  later in the course the label would have come a minute before anything happened, so the timer follows the
  *  physiology: 357 → 412 s, measured (bradycardia at 746 s absolute, the first effort at 1158 s). `effortLabelLagS`
- *  keeps its band of ± 15 s, which is the point of that row — the label and the effort stay together. */
+ *  keeps its band of ± 15 s, which is the point of that row — the label and the effort stay together.
+ *  2026-10-29, the mechanism for that later effort, asked for by the independent review and measured on this head
+ *  against main 839dee7d in the same card (absolute times, induction at 180 s): the first effort moves 1112.1 →
+ *  1157.9 s, +45.8 s. It is NOT the respiratory drive — the PaCO₂ is the same second by second on both heads (60, 71,
+ *  81, 86, 90, 92, 94 mmHg at 400, 600, 800, 900, 1000, 1050, 1100 s). It is the ROCURONIUM. Its elimination is
+ *  hepatic 0.7 / renal 0.3 and not high-extraction, so its k10 rides the organ model's hepatic and renal function,
+ *  which fall with perfusion; CO₂'s dilation lowers this apnoeic patient's pressure at every mark (MAP 80.8 → 69.9 at
+ *  400 s, 76.4 → 60.5 at 900 s, 60.9 → 48.8 at 1100 s), so the elimination factor on `pk.drugs.rocuronium` is lower
+ *  throughout (0.98 → 0.87 at 400 s, 0.92 → 0.78 at 900 s, 0.75 → 0.64 at 1100 s). The diaphragm therefore sits in a
+ *  higher effect-site concentration (2392.5 → 2525.6 ng/mL at 1100 s), its block is deeper (0.9532 → 0.9635) and the
+ *  NMB's tidal-volume ceiling recovers later: `nmbVtMult` is 0.156 at 1100 s on main and reaches 0.156 at ≈ 1145 s
+ *  here, the same ≈ 45 s. Nothing was tuned; the probe is scratch/fix162-probe-effort.test.ts.txt. */
 const BANDS = {
   'S3 prompt': { refused: [0, 0], mapBefore: [90, 100], hrBefore: [66, 76], apnoeaAlarmS: [41, 71], mapNadir: [60, 70], mapNadirS: [90, 120], hrMax5: [74, 84], hrMin5: [65, 75], capnoS: [0, 21], etco2At2min: [34, 40], spo2Min: [97, 100], mapAt4min: [67, 77] },
   'S3 untreated': { refused: [0, 0], apnoeaAlarmS: [41, 71], lastBreathS: [33, 63], desatStateS: [445, 543], bradyStateS: [509, 623], hrAtBrady: [39, 49], spo2ZeroS: [652, 796], mapAtSpo2Zero: [55.5, 65.5], pulseLossS: [1080, 1320], sao260ToLossS: [571, 697], pulselessStateS: [1084, 1324], asystole: [1, 1], firstSpontS: [831, 1015], firstSpontMl: [31, 41], spontMaxMl: [36, 46], effortStateS: [831, 1015], effortLabelLagS: [-15, 15], etco2DuringEfforts: [0, 3], awrrDuringEfforts: [0, 2] },

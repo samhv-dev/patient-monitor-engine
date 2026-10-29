@@ -20,7 +20,13 @@ import { bands, entered, first, near, pvcEvents, range, runCard, type Act } from
  *  their bands. AFTER the return of circulation the patient is hypercapnic (EtCO₂ 54), so CO₂'s own vasodilation and
  *  myocardial depression now act where the old term had been constricting: the two post-stop pressures were re-centred
  *  on this build with the SAME tolerances (old centre → new), sysStop60 140.2 → 130.8 and mapStop60 109.2 → 100.4,
- *  while hrStop60 73, etco2Stop60 54 and spo2Stop60 99 all held. Not tuned. */
+ *  while hrStop60 73, etco2Stop60 54 and spo2Stop60 99 all held. Not tuned.
+ *  2026-10-29, correction after the independent review: what moved those two pressures is CO₂'s VASCULAR term plus the
+ *  REMOVAL of the old multiplier, not the new myocardial depression. `chemistryContractility` takes the LARGER of the
+ *  pH and CO₂ depressions, never the product, and in this post-arrest patient the metabolic arm is the larger one —
+ *  the E133 note below records pH 7.13–7.15 after the return of circulation, worth ≈ 9 % of contractility, against the
+ *  CO₂ arm's ≈ 6–8 % at the PaCO₂ behind an EtCO₂ of 54 — so the CO₂ depression is discarded here and contributes
+ *  nothing to the numbers above. */
 const BANDS = {
   'S5 haemorrhage E120': { refused: [0, 0], notPressed: [0, 0], hrAt4: [91, 101], sysAt4: [102, 112], hrAt8: [138, 148], sysAt8: [71, 81], mapAt8: [61, 71], junctionalS: [502, 614], peaStateS: [563, 689], pulseLossS: [594, 726], peaOnJunctional: [1, 1], agonalS: [695, 849], asystoleS: [838, 1024], asystoleAfterLossS: [244, 298], cprS: [851, 1041], cppAt60: [15, 23], cppAtCheck1: [23.6, 31.6], myoAtCheck1: [0.5, 0.74], check1IntoCprS: [119, 122], shock1S: [970, 1186], shock1Outcome: [2, 2], myoAtShock2: [0.85, 1], cppAtCheck2: [23, 31], cppAtShock2: [3.8, 11.8], shock2S: [1089, 1331], shock2Outcome: [3, 3], roscAfterShock2S: [60, 75], roscAfterLossS: [552, 674], sysStop60: [125.8, 135.8], mapStop60: [95.4, 105.4], hrStop60: [67, 77], etco2Stop60: [50, 58], spo2Stop60: [97, 100], pulseLostAfterStop: [0, 0] },
   // E133 (ventricular ectopy from the physiology), measured on this build: ischaemic PVCs in the junctional minute
