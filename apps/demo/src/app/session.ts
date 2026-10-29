@@ -418,14 +418,15 @@ export class AppSession {
 
   /** O2 (research/34 §8 O2): a skin with nibp.applyAtStart starts the cuff on AUTO at the patient's start — once per
    *  start (not per skin switch, not for ?load=perf8; a scenario's Load too since UI review #14), mirrored to a learner
-   *  monitor. */
+   *  monitor — with no `cockpit` notice: the cuff is not the Ventilator view, and the notice held every phone ≈ 2.5 s
+   *  at each start and card load (fix-cuff-start-cockpit-notice). */
   private startCuff(seed: number): void {
     const m = this.monitor;
     const action = this.spec.attached && m?.skin ? nibpStartCommand(m.skin.skin) : null;
     if (m && action) {
       const c = { id: `nibp-default-${seed}-${Date.now()}-${++this.nibpStarts}`, // unique across host reloads too (R-T m4)
         issuedBy: 'device', type: 'device', action } as Command;
-      void m.dispatch(c).then((r) => this.host.mirror(c, r));
+      void m.dispatch(c).then((r) => this.host.mirror(c, r, false));
     }
   }
 
