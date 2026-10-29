@@ -75,9 +75,9 @@ printed page per segment; each stop has its own card).
   a 3-s look at each Explore screen; the script does not talk, so W has no talk in it). **T+** is the time into the
   30-minute slot: the programme's slots (P29) with the measured machine wall inside them; the talk itself is planned,
   not measured. A time estimated here is marked "(est.)".
-- **On the rc.4 kit** the same talk ran on both engines [Q2-rc4]: every clock below holds within 2 s except the rows in
-  §3 "On the rc.4 kit" (the early signs, the EtCO₂'s fall below 40 and the Recovering states come 2–4 s later, the first `RR TOO LOW` 29 s
-  earlier; read them there).
+- **On the rc.4 kit** the same talk ran on both engines [Q2-rc4]. The rows that moved more than 2 s (the early signs on
+  Chromium, Recovering on WebKit, the first `RR TOO LOW`, the E22 window on Chromium, the Debrief's highest EtCO₂) and
+  the measured values beside them are in §3 "On the rc.4 kit".
 - A 5-min fast-forward takes **10.1–10.6 s** of wall and **leaves the speed as it was** [Q1-MH; Q1-2D; UIR: 10.5–10.9 s; Q2-rc4: 10.4–10.5 s].
 - **Boxed words** are the exact on-screen labels, from the card files and the run rows. "C / W" = Chromium / WebKit.
 - Monitor and Explore numbers are what the run read on the instructor's page. Real presses land a few seconds
@@ -367,7 +367,8 @@ demonstrations*, MH and the haemorrhage, first), **Patient**, the **Instructor**
 the case from **Open the instructor view** → **Scenario** → **Showcase** → the card → **Load** [RUN4].
 
 > **Two disclaimer wordings (read before the talk).** The screen, on the rc.4 kit, says E125's line: "For educational
-> use only; Not to be used in patient care." (Home's foot, every page's foot, the Debrief's footer) [Q2-rc4 `q1-0`].
+> use only; Not to be used in patient care." (Home's foot, every page but the monitor screens, the Debrief's footer)
+> [Q2-rc4 `q1-0`].
 > The printed Persian MH handout of 29 October carries the older sentence in Persian at its foot (for education only;
 > not a medical device; not clinically validated; never for patient care) [Q2-rc4 `.fa.txt`]. PR #161 drafts the E125
 > wording in Persian for the handout's footer; it reaches the print only when the owner has read #161 and the
@@ -403,24 +404,34 @@ nav and the session-bar title [UIR #9].
 
 ### On the rc.4 kit: rows that moved more than 2 s [Q2-rc4]
 
-The tables below are from the talk run on kit a88f95a7 [Q1-MH]. The same test on the **rc.4 kit** (29 October, both
-engines) moved these rows by more than 2 s; every other clock in §3 and §4 held within 2 s, and every mark is the same.
+The tables of §3 and §4 are from the talk run on kit a88f95a7 [Q1-MH]. The same test on the **rc.4 kit** (29 October,
+both engines) moved the rows below by more than 2 s. Each table keeps one clock: the run's record (its measures and
+state list, floored to the second; the Q1-MH column from the same kind of record), or the Debrief's own clock (its key
+times, objectives and facts). Bold: more than 2 s from Q1-MH on the same clock.
 
-| Row (§3) | Q1-MH (a88f95a7, C) | rc.4 Chromium | rc.4 WebKit |
+**On the record's clock**
+
+| Row | Q1-MH (a88f95a7, C) | rc.4 Chromium | rc.4 WebKit |
 |---|---|---|---|
-| Early signs (segment 1's last row; Pause at once) | 8:09 (Pause 8:10) | **8:12** (Pause 8:12) | **8:11** (Pause 8:11) |
-| EtCO₂ below 40 (segment 2; the Debrief) | 08:34 | **08:38** | **08:37** |
-| Recovering (inside fast-forward 1) | 9:34 | **9:37** | **9:38** |
-| Ventilation back is "met" from (E22; the Debrief's window) | 10:34 (08:34 → 10:34) | **10:37** (08:37 → 10:37) | **10:36** (08:36 → 10:36) |
+| Early signs (segment 1's last row; Pause at once) | 8:09 (Pause 8:10) | **8:12** (Pause 8:12) | 8:11, 2 s (Pause 8:11) |
+| Recovering (inside fast-forward 1) | 9:35 | 9:37 | **9:38** |
 | The first `RR TOO LOW` (segment 1, after Preoxygenate) | 3:09 | **2:40** | **2:40** |
-| Recovering after the second dose (segment 4) | 23:35 | **23:39** | 23:37 |
 
-Within 2 s, for the record: the call 8:14 / 8:13 (2 s / 3 s after the early signs), dantrolene 8:34 / 8:33, the stops
-held at **8:12 / 8:11, 13:52 / 13:51, 19:12 / 19:11**, ventilation back 13:53, EtCO₂ past 45 at 14:07 / 14:06, the
-second dose 19:13, the end 24:31 / 24:30 (EtCO₂ 41). EtCO₂ at stop 3 reads **65** (64 on Q1-MH). Explore at the stops:
-MH activity **0.280** / 0.510–0.520 / 0.550, VO₂ (Blood) 333 at stop 1, PaCO₂ 44.3 and 70.2. The machine wall: 5:03
-(Chromium), 4:57 (WebKit). The Debrief: ✓ ✓ ✓ ✓ – ✓, 63 / 60 timeline rows, highest EtCO₂ 65 [Q2-rc4]. The tightest
-window is unchanged in practice: ventilation back is pressed after stop 2 (13:53), long after 10:37.
+**On the Debrief's clock** (what §4 reads aloud)
+
+| Row | Q1-MH (a88f95a7, C) | rc.4 Chromium | rc.4 WebKit |
+|---|---|---|---|
+| Ventilation back is "met" from (E22: below 40 for 2 min) | 10:34 (08:34 → 10:34) | **10:37** (08:37 → 10:37) | 10:36, 2 s (08:36 → 10:36) |
+| Highest EtCO₂ (the facts) | 64 at 18:46 | **65 at 19:07** | **65 at 19:11** |
+
+**Measured beside them** [Q2-rc4]. The Key times tiles: Recognition **0 s** on Chromium (08:12 early signs → 08:12
+ticked; 1 s on WebKit, 08:10 → 08:11; 1 s on Q1-MH), the call 2 s / 3 s, dantrolene 21 s on both. On the record's
+clock: the call 8:14 / 8:13, dantrolene 8:34 / 8:33, EtCO₂ below 40 from 8:38 / 8:37 (Q1-MH 8:36), the stops held at
+**8:12 / 8:11, 13:52 / 13:51, 19:12 / 19:11**, ventilation back 13:53, EtCO₂ past 45 at 14:07 / 14:06, the second dose
+19:13, Recovering again 23:39 / 23:37 (Q1-MH 23:37), the end 24:31 / 24:30 (EtCO₂ 41). EtCO₂ at stop 3 reads **65**
+(64 on Q1-MH). Explore at the stops: MH activity **0.280** / 0.510–0.520 / 0.550, VO₂ (Blood) 333 at stop 1, PaCO₂
+44.3 and 70.2. The machine wall: 5:03 (Chromium), 4:57 (WebKit). The Debrief: ✓ ✓ ✓ ✓ – ✓, 63 / 60 timeline rows.
+The tightest window is unchanged in practice: ventilation back is pressed after stop 2 (13:53), long after 10:37.
 
 ### The stop method (every stop, the same five moves)
 
@@ -444,6 +455,9 @@ below is from the speaker's reference; a size marked [ENG] is an engineering siz
 - Under **Drugs**, dantrolene is **Ce (Dantrolene)** in "drug unit" (reference doses, 1 = 2.5 mg/kg), and the Total
   column reads "200 mg, µg"; under **Blood**, Glucose reads "102 mmol/L and mg/dL" (it is mg/dL). Read the number and
   say the unit yourself [Q1-MH screenshots].
+- Under **Endocrine** (the first screen of stop 1), **Glucose reads "102 mmol/L"** (it is mg/dL; the Debrief's facts
+  give 6.6 mmol/L) and **Stress response reads 88.0** on a "0–1" scale (it is 0–100). Do not point at either
+  [Q2-rc4 `shots/stop1-endocrine-*.png`; fixed on main after the tag, #178].
 - The **VA** row (alveolar ventilation, L/min) sits two rows below VCO₂ and VO₂: point at VA alone.
 
 ### The card and how to Load
@@ -491,13 +505,14 @@ today we keep the volatile running to show the crisis. Masseter rigidity with a 
 
 ### Stop 1: why the EtCO₂ rises when it should fall. Slot 3:00 (T+5:00 → 8:00); clock held at 8:10
 
-> **The NIBP alarm at this pause: ignore it.** At the early signs the alarm bar can show a red **NIBP SYS TOO LOW**,
-> and the alarm button (on Instructor v2 too) can read that NIBP alarm rather than **No alarms**. It is the cuff, not
-> the patient: the NIBP tile holds its last reading (87/48 on one rc.4 run, 85/60 on the other, AUTO 5 min) while the
-> arterial line reads **107/67 (77)** [Q2-rc4 `q2-mh-monitor-early-signs-*.png`]. Whether it shows depends on when the
-> cuff cycle fell in that run (on the rc.5 candidate's Instructor v2 run the alarm button differed from today's view
-> at the case's end for the same reason [R00 2026-10-29]). Cuff timing, not a fault: do not acknowledge it on stage,
-> do not explain it; point at the arterial line.
+> **The NIBP alarm at this pause: point at the arterial line.** At the early signs the alarm bar can show a red
+> **NIBP SYS TOO LOW**, and the alarm button can read that alarm rather than **No alarms**. The reading is stale, not
+> spurious: the alarm was raised during the dip after induction (05:34 on Chromium, 05:36 on WebKit; the lowest mean,
+> 62 mmHg, at 05:24–05:25), and at the pause the NIBP tile still shows that last cuff reading (87/48 (63) on one rc.4
+> run, 85/60 (63) on the other, AUTO 5 min) while the arterial line reads **107/67 (77)** [Q2-rc4
+> `q2-mh-monitor-early-signs-*.png`; the records' alarm lists]. It is the cuff's old number, not the patient now; the
+> next cuff cycle replaces it. Whether it still shows at the pause depends on when the cycle fell in that run (Q1-MH
+> raised no NIBP alarm). Do not acknowledge it on stage; point at the arterial line.
 
 **Press, open:** (Paused at 8:10) → rail **Explore physiology** → **Endocrine** → **Blood, acid–base and
 temperature** (first screen, then scroll to **BE**: K⁺ to pH on screen) → the **endocrine-thermal** tab ("Equations in
@@ -723,7 +738,7 @@ for "what is not in this build".
 | You opened Explore without pausing (the clock still runs; Explore has no Pause button) | Back to **Instructor** at once, **Pause**, then Explore again. If the case moved on, read the numbers it shows now: the stop's points hold within a few units | [Q1-MH: no session bar on Explore] |
 | The QR relay fails, "Start Classroom" needs Node, or phones say "cannot reach the instructor's laptop" | Carry on with **Start Simulator** and **Open on a second screen** (the same browser) for the projector; phones are not needed for either case | [CR12 "(c)" and "If something goes wrong"] |
 | The sheet says "The relay does not answer", or the black window stops | Close the Classroom window, double-click **Start Classroom** again, reload the page, **Sound on**. A kit before 62e521c3 stops at the first phone (KR-A1): use the 62e521c3 kit or later | [CR12; MEAS §9 item 1] |
-| The laptop's presses stop being acknowledged (a card button, Pause or a speed does nothing on the laptop; the phones keep the last picture) | **Reload the instructor page** (Cmd-R): the case comes back ("Restored after reload: ‹title›, mm:ss"); then **Sound on** and **All alarms on**, as in the reload row below. **The phones reconnect on their own**: do not ask the room to scan again. Main has the relay fix (#183: a second socket can no longer take the laptop's place); the rc.4 kit does not, so on the rc.4 kit the reload is the remedy. Not reachable by accident on the rc.4 kit (it needs a hand-written frame) | [R00 2026-10-29; #183; `scratch/reviews/verify-relay-peer-identity.md`] |
+| The laptop's presses are refused while the case keeps running (a card button, Pause or a speed gets no answer, or is refused as "a viewer cannot command") | **Reload the instructor page** (Cmd-R): the case comes back ("Restored after reload: ‹title›, mm:ss"); then **Sound on** and **All alarms on**, as in the reload row below. **The phones reconnect on their own** (the session code is kept and the phones follow the reloaded page): do not ask the room to scan again. After the reload the phones' status pills may read "Waiting for the instructor's monitor" for up to 15 s although they are already following (measured on the rc.5 candidate kit C, 30 October; not measured on rc.4). Main has the relay fix (#183: a second socket can no longer take the laptop's place); the rc.4 kit does not. The defect was verified on main 5808d0b6, whose relay and host files are the tag's; it needs a hand-written frame, so it is not reachable by accident | [MEAS §7; UIR #1; R00 2026-10-29 and 2026-10-30; #183; `scratch/reviews/verify-relay-peer-identity.md`; `scratch/rc5-candidate-2/browser-reconnect-*.log`] |
 | Sound fails | Say so (*"the sound has failed; the alarms still show on screen"*) and continue; alarms stay visual | [G10 §7] |
 | A card press shows **"Not available now: the case has moved to …"** | Press again: the button now belongs to the current state | [G10 §8 item 1] |
 | A scenario goes wrong (wrong press, missed window) | Session bar **Bookmark** list → **Return here** on the bookmark taken at Load (the **last** one in the list: MH's "Bookmark 1 at 00:06" [Q1-MH]); the patient and the screen are restored together. **The alarms come back as they were when the bookmark was taken** | [FU-11 E4; A3.2] |

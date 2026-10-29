@@ -1,7 +1,8 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
 *Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-10-29 (the rc.4 release day;
-main 0c4b396f at the tag). The sections below the newest state are history.*
+the tag 0c4b396f; main has moved on to the rc.5 line: 1b274d5d on 30 October, with #177 Instructor v2, #178, #183 the
+relay fix, #186 and others). The sections below the newest state are history.*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).

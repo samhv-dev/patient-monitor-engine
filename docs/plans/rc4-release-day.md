@@ -14,7 +14,7 @@ report (`scratch/plans-backup/rc3-release-day-run-2026-10-23.md`), `scratch/rc3-
 > - **The day moved forward.** By the owner's ruling of 29 October (early morning +0330) the freeze came at once and
 >   rc.4 was tagged as the **fallback build**, not on Sunday 1 November: an rc.5 from main (Instructor v2, #177, merged
 >   after the tag) only if green and liked in the Sunday smoke; the room dry run on Monday 2 November decides which kit
->   is in the room. Saturday's freeze, the 17:30 allowance reset and Sunday's tag slot did not apply.
+>   is in the room. Saturday's freeze, the allowance reset (14:00 UTC [17:30]) and Sunday's tag slot did not apply.
 > - **Task 0.** Steps 1–2: `FREEZE_SHA` **8e4e8471** (#163's merge, 2026-10-28 18:32 [22:02]; main run 40746088523
 >   success). After it, as ruled: #165 (docs), #167 (the MH card's story text and its CHANGELOG line), #166 (the bump),
 >   #172 (the MH-only talk: run sheet and the kit-round talk test). Step 3: #128 (24 October) and #172 carried the
@@ -32,16 +32,18 @@ report (`scratch/plans-backup/rc3-release-day-run-2026-10-23.md`), `scratch/rc3-
 > - **Task 3.** As written (kit build id `"0c4b396f 2026-10-29"`; relay 4 of 4; three `same:`; the Windows zip; the
 >   embed). The kit has 76 app files and a 1,545,928-B zip (rc.3 71 and 1,004,390 B): notes, ruled.
 > - **Task 4.** As written, on both engines, first time through. The A4 marks changed kind against 24 October (two
->   objectives rewritten by the owner, #163) and the MH times came 25–36 s earlier: both ruled not a gate failure, the
->   28 October run on 2c341aa3 agreeing to the second. No F1–F10.
+>   objectives rewritten by the owner, #163) and the MH times came 25–38 s earlier: both ruled not a gate failure, the
+>   28 October run on 2c341aa3 (Chromium only) agreeing to the second. No F1–F10.
 > - **Task 5.** The tag's Persian table left 11 (MH) and 15 (haemorrhage) strings in English; by ruling the handouts
 >   were rendered with PR #161's 26 unreviewed drafts placed **uncommitted** in `wt-rc4-docs` (0 strings without
 >   translation each; Vazirmatn only). That table is not in this branch: it stays in #161 for the owner's read.
 > - **Task 6.** Tree `gh-pages-rc4` e1fbdc67 (91 files); the serve check ran from `wt-rc4-tag` (`wt-rc2-prep` no longer
->   exists); pushed with the lease 12:20:40, built 12:21. **Tasks 0–6 complete ≈ 12:25 on 29 October.**
+>   exists); pushed with the lease 12:20:40, built 12:21. **Tasks 0–6 complete after 12:21 on 29 October** (the live
+>   check ≈ 12:25 (est.)).
 > - **Task 7** (the smoke, the live rehearsal, W/E13/E14): not yet run. **Task 8:** not needed. **Task 9:** Steps 1–3,
 >   4.1–4.3 and 5 drafted on 29 October on `docs-rc4-release`, no push; #117's rc.3 gate note, Q2-rc3 evidence and
->   six-card shots folded in (Step 2); the CHANGELOG and CITATION dates corrected on main to 2026-10-29.
+>   six-card shots folded in (Step 2); the CHANGELOG and CITATION dates corrected to 2026-10-29 on this branch (they
+>   reach main when the PR merges).
 
 **Base and preconditions.**
 - rc.3 is tagged on **fcf99b70** (annotated, 2026-10-23 13:55; release run 39938963544; its Pages build is the local

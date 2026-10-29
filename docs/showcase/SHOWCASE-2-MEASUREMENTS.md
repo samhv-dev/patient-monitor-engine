@@ -959,8 +959,10 @@ pulseless in all 9 min 57 s.
 
 1. **A stale NIBP alarm at stop 1.** Both early-signs screenshots show a red **NIBP SYS TOO LOW** in the alarm bar: the
    NIBP tile holds the last cuff reading, 87/48 (63) on Chromium and 85/60 (63) on WebKit (AUTO 5 min), while the
-   arterial line reads 107/67 (77); the alarm list has NIBP SYS TOO LOW raised at 05:34 (C) / 05:36 (W). The cuff's
-   reading and its timing differ from run to run. A presenter's note in the run sheet (stop 1).
+   arterial line reads 107/67 (77); the alarm list has NIBP SYS TOO LOW raised at 05:34 (C) / 05:36 (W), in the dip
+   after induction (the Debrief's lowest ART M / NIBP M 62 mmHg at 05:25 / 05:24). The reading is stale, not spurious:
+   the cuff's old number, held until its next cycle; when the cycle falls differs from run to run (#172's run raised
+   no NIBP alarm). A presenter's note in the run sheet (stop 1).
 2. **Explore display defects** at the stops (also in #172's runs): Glucose "102 mmol/L" (the Debrief's facts 6.6
    mmol/L), "Stress response 88.0" on a 0–1 scale, VO₂ 270 under Gas exchange against 428 mL/min under Blood at the
    same moment, rocuronium "Total 48000 mg, µg". Display only; fixed on main after the tag (#178), for a later release.

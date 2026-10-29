@@ -5,7 +5,7 @@
 [`docs/plans/rc4-release-day.md`](../plans/rc4-release-day.md) (its "RUN 2026-10-28/29" block lists the deviations).
 Times are UTC unless marked +0330. The owner's smoke check, his live rehearsal, the Windows checklist (W), E13 and
 E14 follow from Sunday 1 November: their sections are headed below and left empty until then. Nothing in this note
-changed a product file. The version is a **pre-release**: for education only, not a medical device and not clinically
+changed a product file. The version is a **pre-release**. For education only. Not a medical device and not clinically
 validated.*
 
 ## Freeze, bump, dry run (Task 0)
@@ -18,7 +18,7 @@ validated.*
   story text and its CHANGELOG line; 2026-10-29 07:12), **#166** (the version bump, `release-rc4`; 08:17), **#172**
   (the MH-only talk: run sheet, cue cards, presenter guide and the kit-round talk test; 10:52). Under `apps packages
   scripts .github` between the freeze and the tag: 26 files, +244/−237 (version strings, the kit-round script, the MH
-  card's story text, the e2e version strings).
+  card's story text, the e2e version strings, `packages/validation/test/debrief-fa.test.ts`).
 - **The kit-round tooling** came through #128 (24 October) and #172; no separate `test-kitround-rc4` PR.
 - **The prep run (Task 0 Step 5) was not run.** The expected values of Task 4 were #172's talk run on kit a88f95a7
   (29 October) and the 28 October A4 run on the owner's card rulings (kit 2c341aa3, `scratch/kitround-owr4/`).
@@ -100,7 +100,7 @@ Worktree `scratch/wt-rc4-docs` (branch `docs-rc4-release` at the tag); install O
 | Step | Result | Verdict |
 |---|---|---|
 | 3 Talk, Chromium | **1 passed (5.1 min)** (`q2-rc4/`) | PASS |
-| 3 Talk, WebKit | **1 passed (5.0 min)**; 16 entries with the relay JSON; 19 stop shots per engine | PASS |
+| 3 Talk, WebKit | **1 passed (5.0 min)**; 16 entries with the relay JSON; 19 shots per engine (17 at the stops, the Debrief on screen, the end) | PASS |
 | 3 opening | kit 0c4b396f; Home "Version 1.0.0-rc.4 · pre-release · build 0c4b396f"; `3 phones following`; errors 0 (both) | PASS |
 | 3 MH marks | ✓ ✓ ✓ ✓ – ✓ (both) | PASS |
 | 3 MH rows (≈ 59–62) | 63 (C) / 60 (W) | NOTE (rows ±3) |
@@ -111,7 +111,7 @@ Worktree `scratch/wt-rc4-docs` (branch `docs-rc4-release` at the tag); install O
 | 3b macOS WebKit e2e (tag worktree) | FX-16 **3 passed** (99 / 100 / 99 %); fx24, fx25, fx14, saadat-instructor-tiles **6 passed**, 0 skipped; worktree clean | PASS |
 | 3c A4, both engines | **4 passed (13.8 min)** (`q2-rc4-a4/`); kit 0c4b396f, errors 0 | PASS |
 | 3c A4 marks | MH ✓ ✓ ✓ **✓** – ✓; haemorrhage – ✗ **✓** (both engines) | NOTE, ruled (below) |
-| 3c A4 MH times | early 08:13 / 08:12, call 08:14 / 08:13, < 40 08:38 / 08:37, normo 13:52 / 13:50, SpO₂ min 99 | NOTE, ruled: 25–36 s earlier than 24 October; equal to the 28 October run on 2c341aa3 |
+| 3c A4 MH times | early 08:13 / 08:12, call 08:14 / 08:13, < 40 08:38 / 08:37, normo 13:52 / 13:50, SpO₂ min 99 | NOTE, ruled: 25–38 s earlier than 24 October (Chromium 25–36, WebKit 27–38); equal to the 28 October run (Chromium) on 2c341aa3 |
 | 3c A4 haemorrhage | junctional 09:15 / 09:17, PEA 10:26 / 10:28, loss 10:59 / 11:00, asystole 15:35 / 15:35, CPR 15:38 / 15:38, shock 1 → asystole, shock 2 → organised (`pea`), ROSC 20:56 / 20:57 | PASS (≤ 4 s of 24 October; shock outcomes as before) |
 | 3c Debrief PDFs (Chromium) | MH **8** A4 pages (7 on 24 October, 8 on 28 October), haemorrhage 8; footer "Version 1.0.0-rc.4 (pre-release), build 0c4b396f 2026-10-29" on 8 of 8 pages each; `PEEP undefined` 0 | PASS (MH pages a NOTE) |
 | 3c learner handouts | 1 A4 page each, 0 verdict words, Inter embedded; MH the four take-home lines, haemorrhage three | PASS (F10 no) |
@@ -123,15 +123,17 @@ F9 no · F10 no. **No gate failure.**
 
 **The orchestrator's rulings on the notes:** the A4 marks that changed kind (MH objective 4 not-assessable → observed;
 haemorrhage objective 3 not-observed → observed) follow the owner's rewritten objectives (#163, 28 October), and the
-28 October run on that commit (kit 2c341aa3) has the same mark kinds and MH times to the second: **not F4**. The
+28 October run on that commit (kit 2c341aa3; Chromium only, it had no WebKit leg) has the same mark kinds and the MH
+early signs, call, below-40 and ventilation-back times to the second (its second dose 19:11, rc.4 19:08): **not F4**. The
 earlier MH times: accepted (the same card change). MH rows 63, the app's growth, the zip's size and the disclaimer's
 wording: notes only.
 
 **Surprises** (findings, not fixed here; all already in #172's runs): on Explore, Glucose read "102 mmol/L" (the
 Debrief's facts 6.6 mmol/L), "Stress response 88.0" on a 0–1 scale, VO₂ 270 (gas page) against 428 mL/min (blood page)
 at the same stop, rocuronium "Total 48000 mg, µg" (all four display defects, fixed on main after the tag by #178, for a
-later release). At the early-signs stop the monitor shows a red **NIBP SYS TOO LOW** from a cuff reading taken earlier
-(87/48 on Chromium, 85/60 on WebKit) while the arterial line reads 107/67: a presenter's note in the run sheet. The
+later release). At the early-signs stop the monitor shows a red **NIBP SYS TOO LOW** from the cuff's last reading,
+taken in the dip after induction (alarm 05:34 / 05:36; 87/48 on Chromium, 85/60 on WebKit), while the arterial line
+reads 107/67: a stale reading, not a spurious one; a presenter's note in the run sheet. The
 model pages load GitHub `main`, not the tag.
 
 ## Persian handouts (Task 5)
@@ -139,7 +141,8 @@ model pages load GitHub `main`, not the tag.
 - **On the tag's table** (render and check only): MH 8 A4 pages, haemorrhage 8; **11 and 15 strings without
   translation**; unexpected fonts 3 / 2 (Helvetica-Oblique, LucidaGrande: the italic English fallback of the
   untranslated strings). Fails the handouts only.
-- **By ruling, with PR #161's table** (26 unreviewed drafts, `origin/docs-fa-handout-strings` fd52a9c1, placed in the
+- **By the orchestrator's later ruling, with PR #161's table** (the owner's ruling of 29 October, early morning
+  +0330, had said the #161 edits go to rc.5 and rc.4 prints English; 26 unreviewed drafts, `origin/docs-fa-handout-strings` fd52a9c1, placed in the
   worktree **uncommitted**; it is not in this branch): MH **8** A4 pages (126 entries used, 124 unreviewed),
   haemorrhage **8** (137, 137); **0 strings without translation** each; `verify_pdf.py --expect-font Vazirmatn` exit 0,
   0 unexpected fonts, 0 errors (haemorrhage: WARN, 3 en/em dashes); `1.0.0-rc.4` and the build on each; `pdffonts`
@@ -164,7 +167,7 @@ model pages load GitHub `main`, not the tag.
   `VERSION.txt` the rc.4 PRE-RELEASE line, README "cannot pair" 1, Home "Version 1.0.0-rc.4 · pre-release · build
   0c4b396f". `gh-pages-rc3` (ceac7b47) stays as the rollback.
 
-**Tasks 0–6 complete ≈ 12:25 on 29 October.**
+**Tasks 0–6 complete after 12:21 on 29 October** (Pages built e1fbdc67; the live check ≈ 12:25 (est.), its time not logged).
 
 ## The owner's smoke check (Task 7), item by item — after the owner's smoke
 
