@@ -1023,7 +1023,7 @@ at 1:30 into the reaction, not 2:00 (the owner's answer E19b, 2026-10-17) [MEAS 
 
 ### Reserve R5: Class IV haemorrhage, PEA, asystole, VF, two shocks and ROSC (the E120 card after the clinical review, E132). In the build; out of the 3 November programme (owner, 29 October)
 
-*The second live demo of the 24 October programme (R4-Q3). The owner's programme of 29 October is one case (MH) with three look-inside stops, so this case left the talk; **the card stays in the build, first in the Showcase chip with MH, and its kit-round test (A4 haemorrhage) still measures it**. Kept as it was on the day it left, for a longer slot or a question. Its old slot was 5:40 plus its Debrief 3:30. If it is used: Load → All alarms on → Bookmark → speed, as always; no reload is needed after MH (Instructor → Scenario → **Choose another scenario**).*
+*The second live demo of the 24 October programme (R4-Q3). The owner's programme of 29 October is one case (MH) with three look-inside stops, so this case left the talk; **the card stays in the build, first in the Showcase chip with MH, and its kit-round test (A4 haemorrhage) still measures it**. Kept as it was on the day it left, for a longer slot or a question. Its old slot was 5:40 plus its Debrief 3:30. If it is used: Load → All alarms on → Bookmark → speed, as always; no reload is needed after MH (Instructor → Scenario → **Choose another scenario**). Its Persian handout stays in the kit; it is not printed for the day.*
 
 **To Load.** After another case: Instructor → Scenario → **Choose another scenario** → **Showcase** → *Class IV
 haemorrhage, PEA and resuscitation* → **Load** → **Load scenario** (no reload after MH [Q1-2D: "choseAnotherScenarioFirst"]).

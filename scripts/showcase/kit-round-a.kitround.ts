@@ -1493,6 +1493,8 @@ test('Q1 30-minute talk, the 3 November programme: opening, MH (E119) with three
     const tEarly = await M.until('earlySigns', 600);
     await M.pauseToggle();
     await M.row('state Early signs: Pause (stop 1)');
+    mkdirSync(OUTDIR, { recursive: true });
+    await page.locator('.stage').screenshot({ path: join(OUTDIR, `q2-mh-monitor-early-signs-${M.r.browser}.png`) }).catch(() => undefined); // the monitor the release-day runbook looks at
     seg('1 MH to the early signs (×8 then ×4)', { earlySignsAt: tEarly === null ? null : mmss(tEarly) });
 
     // ---- STOP 1: why the EtCO₂ rises when it should fall
