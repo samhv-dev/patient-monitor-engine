@@ -16,7 +16,7 @@ export interface PeerSeen {
   id: string;
   /** 'relay': another device (a phone); 'local': a window of this browser (BroadcastChannel). */
   via: 'relay' | 'local';
-  role: 'viewer' | 'controller';
+  role: 'viewer' | 'controller' | 'instructor'; // an instructor phone reads 'Remote' (P7 gives it its own row)
   firstAt: number;
   /** Wall ms of its last hello (or command). */
   lastAt: number;
