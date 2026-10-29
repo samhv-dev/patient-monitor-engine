@@ -42,19 +42,20 @@ describe('Instructor v2 frame', () => {
     open = v;
     expect(v.id).toBe('teach2');
     expect([...v.el.children].map((c) => c.className)).toEqual(['sr-only', 'ip2-head', 'ip2-strip', 'ip2-state', 'ip2-action', 'ip2-sheets', 'ip2-dock']);
-    // IP5 built the strip and the cue box
+    // IP5 built the strip and the cue box; IP6 built the ACTION slot
     expect(v.el.querySelector('.ip2-strip')?.hasAttribute('data-stub')).toBe(false);
     expect(v.el.querySelector('.ip2-cue')?.hasAttribute('data-stub')).toBe(false);
-    expect(v.el.querySelector('.ip2-action-body')?.getAttribute('data-stub')).toBe('IP6');
+    expect(v.el.querySelector('.ip2-action-body .ip2-list')).not.toBeNull();
     expect(v.el.querySelector('.ip2-sheets')?.getAttribute('data-stub')).toBe('IP7');
     expect(() => v.openSheet('devices')).not.toThrow(); // a no-op until IP7
     v.enter?.('');
   });
 
   it('every slot has the fixed slot signature: mount(el, ctx) => { refresh, destroy }', () => {
+    // IP5's strip and cue read a real rig Link; IP6's list also reads its log
     const { v, link } = rig();
     open = v;
-    const ctx = { link, keys: { digit: () => undefined, letter: () => undefined, escape: () => () => undefined } } as unknown as Teach2Ctx;
+    const ctx = { link: Object.assign(link, { log: [] }), keys: { digit: () => undefined, letter: () => undefined, escape: () => () => undefined } } as unknown as Teach2Ctx;
     for (const m of [strip, cue, action, sheets] satisfies MountSlot[]) {
       const s = m(document.createElement('div'), ctx);
       expect(Object.keys(s).sort()).toEqual(['destroy', 'refresh']);
