@@ -60,6 +60,11 @@ the public API is what the packages export (see the API reference), the `pme-sce
 - An IV drug or infusion command for a volatile agent (sevoflurane, isoflurane, desflurane, N₂O) is refused with the
   reason, the agent being given through the vaporiser. The engine used to accept the bolus and then stop with an error
   on the next tick, and to accept the infusion and do nothing with it.
+- Explore's Drugs page no longer prints "per row" on five rows (rc.5 candidate round): a drug the engine gives no
+  TCI model (dantrolene, midazolam, rocuronium, succinylcholine: only compartment-model drugs take a TCI) has no TCI
+  target row, and a drug it refuses as an infusion (dantrolene, a curve row without an infusion reference) has no
+  infusion rate row; they printed "—" with the glossary's placeholder unit. The glossary's tooltip for the rate and
+  target rows names the units in place of "per row".
 
 ## [1.0.0-rc.4] - 2026-10-30
 

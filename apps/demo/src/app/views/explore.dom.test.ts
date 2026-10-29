@@ -1,10 +1,13 @@
 // @vitest-environment happy-dom
 // The Explore rows the talk's look-inside stops read (kit round A, rc.4): each prints the engine's value in the engine's
 // unit. The states are the MH demo path's at stop 2 (13:52), headless on this build.
-import type { EngineEvent } from '@pme/engine-core';
-import { describe, expect, it } from 'vitest';
+import { createEngine, type Command, type EngineEvent } from '@pme/engine-core';
+import { describe, expect, it, vi } from 'vitest';
 import { ConsoleModel } from '../../physiology-console/model.ts';
-import { sectionRows } from './explore.ts';
+import { DRUG_LIST } from '../drugs.ts';
+import type { AppSession } from '../session.ts';
+import type { SiteProfile } from '../site.ts';
+import { exploreView, sectionRows } from './explore.ts';
 
 const model = (...events: Array<Record<string, unknown>>): ConsoleModel => {
   const m = new ConsoleModel();
@@ -49,6 +52,8 @@ describe('Explore rows print the engine value in its own unit', () => {
   const ROC = { id: 'rocuronium', unit: 'ng/mL', amountUnit: 'mcg' } as const; // nmb row, amount in mcg
   const DAN = { id: 'dantrolene', unit: '× ref dose', amountUnit: 'mg' } as const; // curve (gamma) row without an infusion reference
   const PRO = { id: 'propofol', unit: 'µg/mL', amountUnit: 'mg' } as const; // Eleveld model row: TCI and infusion
+  const MID = { id: 'midazolam', unit: '× ref dose', amountUnit: 'mg' } as const; // curve row with an infusion reference: infusion, no TCI
+  const SUX = { id: 'succinylcholine', unit: 'ng/mL', amountUnit: 'mcg' } as const; // nmb row: infusion, no TCI
 
   it("Cp and Ce: in the drug's concentration unit", () => {
     const m = drugs({ ...ROC, cp: 1234, ce: 987 }, { ...DAN, cp: 0.892, ce: 0.892 });
@@ -62,22 +67,68 @@ describe('Explore rows print the engine value in its own unit', () => {
     expect(rows(m, 'drugs', /^Ce (NMJ|diaphragm)/)).toEqual(['Ce diaphragm (Rocuronium) | 4368 | ng/mL', 'Ce NMJ (Rocuronium) | 3841 | ng/mL']); // was "drug unit"
   });
 
-  it('infusion rate: the amount unit per minute as the engine defines it; a drug without an infusion model keeps the placeholder', () => {
-    const m = drugs({ ...PRO, rate: 8 }, ROC, DAN);
+  it('infusion rate: the amount unit per minute as the engine defines it; a drug without an infusion model has no rate row', () => {
+    const m = drugs({ ...PRO, rate: 8 }, ROC, DAN, MID, SUX);
     expect(rows(m, 'drugs', /^Infusion rate/)).toEqual([
-      'Infusion rate (Dantrolene) | — | per row', // dantrolene has no infusion model: no rate unit
-      'Infusion rate (Propofol) | 8.00 | mg/min', 'Infusion rate (Rocuronium) | — | µg/min',
-    ]); // was "per row" on each
+      'Infusion rate (Midazolam) | — | mg/min', 'Infusion rate (Propofol) | 8.00 | mg/min', 'Infusion rate (Rocuronium) | — | µg/min',
+      'Infusion rate (Succinylcholine) | — | µg/min',
+    ]); // dantrolene (a curve row without an infusion reference: the engine refuses its infusion) printed "— | per row"
   });
 
-  it("TCI target: the drug's concentration unit while a TCI runs or not; a drug without a TCI model keeps the placeholder", () => {
-    const on = drugs({ ...PRO, tci: { mode: 'effect', target: 3, model: 'eleveld' } }, ROC);
-    expect(rows(on, 'drugs', /^TCI target/)).toEqual(['TCI target (Propofol) | 3.00 | µg/mL', 'TCI target (Rocuronium) | — | per row']);
-    expect(rows(drugs(PRO), 'drugs', /^TCI target/)).toEqual(['TCI target (Propofol) | — | µg/mL']);
+  it("TCI target: the drug's concentration unit while a TCI runs or not; a drug without a compartment model has no TCI row", () => {
+    const on = drugs({ ...PRO, tci: { mode: 'effect', target: 3, model: 'eleveld' } }, ROC, DAN, MID, SUX);
+    expect(rows(on, 'drugs', /^TCI target/)).toEqual(['TCI target (Propofol) | 3.00 | µg/mL']); // the other four printed "— | per row"
+    expect(rows(drugs(PRO, ROC, DAN, MID, SUX), 'drugs', /^TCI target/)).toEqual(['TCI target (Propofol) | — | µg/mL']);
+    expect(sectionRows(on, 'drugs').rest.map((r) => r.path).filter((p) => /\.(tci|rate)$/.test(p) && !p.includes('.propofol.'))).toEqual([]); // nor as a model internal
   });
 
   it("CSHT: a time in min, never the drug's unit", () => {
     const m = drugs({ ...PRO, rate: 8, dec: 12.4 }, { ...ROC, dec: null });
     expect(rows(m, 'drugs', /^CSHT/)).toEqual(['CSHT (Propofol) | 12.4 | min', 'CSHT (Rocuronium) | — | min']);
+  });
+
+  // The rendered page, from the engine itself: every library drug the engine accepts from the dose picker's first preset
+  // (a bolus, else an infusion; the volatiles through the vaporiser, as the dose sheet leaves them out) and a propofol
+  // TCI, then the Drugs page's table and every row's tooltip scanned for the glossary's placeholder. The drugs go in
+  // groups of 12: the console drops an event array longer than 16 (physiology-console/flatten.ts MAX_EVENT_ARRAY).
+  const drugsPage = async (ids: readonly string[]) => {
+    const e = createEngine({ seed: 7, mode: 'modeled', patient: { ageY: 40, weightKg: 70, heightCm: 175, sex: 'M', sensors: { spo2: 'on', co2: 'on' } } });
+    let feed: (x: EngineEvent) => void = () => {};
+    const view = exploreView({ onEvent: (f: typeof feed) => (feed = f), onMount: () => {} } as unknown as AppSession, { gasUnit: 'mmHg' } as SiteProfile);
+    e.on((x: EngineEvent) => feed(x));
+    e.advanceTo(60);
+    const send = (event: Record<string, unknown>) => e.dispatch({ id: `c${event.drugId as string}`, issuedBy: 'test', type: 'applyEvent', event } as unknown as Command).accepted;
+    const given = ids.filter((id) => {
+      const d = DRUG_LIST.find((x) => x.id === id)!;
+      const [dose, unit] = d.preset.bolus?.[0] ?? d.preset.infusion?.[0] ?? [1, d.amountUnit];
+      return send({ kind: 'drug', drugId: id, dose, unit, route: 'iv', ...(!d.preset.bolus && d.preset.infusion ? { infusion: true } : {}) });
+    });
+    expect(send({ kind: 'tci', drugId: 'propofol', model: 'eleveld', mode: 'effect', target: 3 })).toBe(true);
+    expect(send({ kind: 'vaporiser', agent: 'sevoflurane', dialPct: 2, fgfLpm: 2 })).toBe(true);
+    e.advanceTo(90);
+    view.enter?.('drugs');
+    const table = view.el.querySelector('table.values') as HTMLTableElement;
+    await vi.waitFor(() => expect(table.textContent).toContain('TCI target (Propofol)'), { timeout: 5_000 });
+    const tips = [...table.querySelectorAll<HTMLButtonElement>('button.tip')].map((b) => (b.click(), document.getElementById('tipbubble')?.textContent ?? ''));
+    const units = [...table.querySelectorAll('td.u')].map((td) => td.textContent ?? '');
+    view.leave?.();
+    return { given, text: table.textContent ?? '', tips, units };
+  };
+
+  it('the rendered Drugs page, every library drug given, never prints "per row", in a row or a tooltip', { timeout: 120_000 }, async () => {
+    const ids = DRUG_LIST.filter((d) => d.cls !== 'volatile' && d.id !== 'propofol').map((d) => d.id);
+    const given: string[] = [];
+    for (let i = 0; i < ids.length; i += 12) {
+      const page = await drugsPage(ids.slice(i, i + 12));
+      given.push(...page.given);
+      for (const id of page.given) expect(page.text, id).toContain(`Total (${DRUG_LIST.find((d) => d.id === id)!.name})`); // each given drug is on the page
+      expect(page.tips.length).toBeGreaterThan(page.given.length * 4); // every row carries its tooltip
+      expect(page.units.filter((u) => u === '')).toEqual([]); // every row prints a unit
+      expect(`${page.text}\n${page.tips.join('\n')}`).not.toContain('per row');
+      for (const id of ['Dantrolene', 'Midazolam', 'Rocuronium', 'Succinylcholine']) expect(page.text).not.toContain(`TCI target (${id})`);
+      expect(page.text).not.toContain('Infusion rate (Dantrolene)');
+    }
+    expect(given).toEqual(expect.arrayContaining(['dantrolene', 'midazolam', 'rocuronium', 'succinylcholine']));
+    expect(given.length).toBeGreaterThan(50);
   });
 });
