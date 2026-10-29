@@ -232,6 +232,7 @@ except where this section says otherwise.
     rc.4 round).
 
 ### Fixed
+- The MH card's story text said the untreated patient passes 38.5 °C at about 19 min and arrests in VF at 42 °C at about 45 min; on this build (E131) the untreated core is about 37.3 °C at 51 min, the established state comes after about 100 min and no hyperthermic VF occurs. The text now says so (found 2026-10-29 while writing the speaker's reference).
 
 - Validation harness: the MODELED sanity documents and the Pulse oracle's MODELED scenarios no longer send a baseline
   heart rate. In MODELED a `setTarget hr` is the instructor's held rate, so the haemorrhage, sepsis, phenylephrine and
