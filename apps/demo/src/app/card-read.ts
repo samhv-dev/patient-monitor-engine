@@ -4,14 +4,14 @@
 // panel and the debrief, so both read the card the same way. Pure: no DOM, no session; it reads `pme-scenario/1` as the
 // cards already carry it.
 import { manualLabel, type CommandInput, type ScenarioDoc, type ScenarioState, type Transition, type When } from '@pme/controller';
-import type { ObjectiveRule, RunEventId } from '@pme/controller/scenario';
+import { HOP_MAX_S, isHop, type ObjectiveRule, type RunEventId } from '@pme/controller/scenario';
 import { drugWords } from './glossary.ts';
 import { SCENARIO_META } from './scenario-meta.ts';
 import { objectiveText } from './scenarios.ts';
 import { whenText } from './triggers.ts';
 
-/** A hop lasts at most this long: a state whose only exit is `afterS` ≤ HOP_S (the 2-second treatment states). */
-export const HOP_S = 2;
+/** A hop lasts at most this long: the controller's rule (one hop rule for the driver's stage marks and this module). */
+export const HOP_S = HOP_MAX_S;
 
 /** A stage of the strip: a state that is not a hop, with the hops that lead back into it. */
 export interface Stage {
@@ -42,11 +42,8 @@ export interface LinkedObjective {
 const stateOf = (doc: ScenarioDoc, id: string): ScenarioState | undefined => doc.states.find((s) => s.id === id);
 const nameOf = (doc: ScenarioDoc, id: string): string => stateOf(doc, id)?.label ?? 'next state';
 
-/** Whether `s` is a hop: its only exit is `afterS` ≤ HOP_S (answer 2). */
-export function isHop(s: ScenarioState): boolean {
-  const t = s.transitions ?? [];
-  return t.length === 1 && 'afterS' in (t[0] as Transition).when && ((t[0] as Transition).when as { afterS: number }).afterS <= HOP_S;
-}
+/** Whether `s` is a hop: its only exit is `afterS` ≤ HOP_S (answer 2); the controller's `isHop` (IP9 review L3). */
+export { isHop };
 
 /** Whether `w` can hold without a press: false for a manual, and for an `all` with a manual inside. */
 function byItself(w: When): boolean {

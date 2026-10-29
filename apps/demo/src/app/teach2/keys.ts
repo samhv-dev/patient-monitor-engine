@@ -1,6 +1,7 @@
-// The Instructor v2 keyboard (design §3.1, §3.4, §4; answer 16): Space pauses and resumes through the clock pill; Esc
+// The Instructor v2 keyboard (design §3.1, §3.4, §4; answer 16): Space pauses and resumes through the clock pill (from
+// the page, an ACTION row or a header or dock button; elsewhere it is the focused control's own key); Esc
 // asks the open sheet to close (the handlers registered last are asked first); the digits 1–9 press the ACTION rows
-// (IP6 registers them) and the lower-case letters open sheets (IP7: D for the Drug sheet). Shift+S, Shift+P and Shift+N
+// (ACTION registers them) and the lower-case letters open sheets (D for the Drug sheet). Shift+S, Shift+P and Shift+N
 // send what today's panel sends for them (`panel.ts`), toasts included. No key acts while the user types in a field,
 // while a dialog is open, with Ctrl, Cmd or Alt held, on a held-down repeat, or while the view is hidden (today's
 // panel is gated the same way, so the two views never both answer one key). `i` stays the reveal gesture's
@@ -38,6 +39,10 @@ export function mountKeys(el: HTMLElement, o: { link: Link; togglePause(): void;
     const k = e.key;
     let act: (() => void) | undefined;
     if (k === ' ' && !e.shiftKey) {
+      // Space pauses only from the page itself, a row of ACTION or a button of the header or the dock (IP9 review L2);
+      // on a checkbox, a radio, a select, a summary or any other control it does that control's own thing
+      const t = e.target as Element | null;
+      if (t && t !== doc.body && t !== doc.documentElement && !t.closest?.('.ip2-row, .ip2-head button, .ip2-dock button')) return;
       act = e.repeat ? () => undefined : o.togglePause;
       spaceDown = true;
     } else if (k === 'Escape') {

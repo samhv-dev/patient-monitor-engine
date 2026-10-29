@@ -30,7 +30,7 @@ export function enteredWords(by: string | undefined, t: number, rule: string | n
   return `entered ${at}`;
 }
 
-/** The record's `by` for the state row of `entry` (host only; IP8's field, absent before IP8 and on a follower). */
+/** The record's `by` for the state row of `entry` (host only; absent on a follower and on a record made before the field existed). */
 function byOf(link: Link, entry: StageEntry): string | undefined {
   const rows = link.host?.record.data.rows ?? [];
   const row = rows.filter((r) => r.kind === 'scenario' && r.undone === undefined && r.ev === `state:${entry.stateId}` && Math.abs(r.t - entry.t) <= TICK_S + 1e-6).at(-1);

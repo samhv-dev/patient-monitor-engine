@@ -32,8 +32,9 @@ the public API is what the packages export (see the API reference), the `pme-sce
   staged delivery; the export stays `pme-debrief/2` with the additive keys `steps`, `judged` and `marks` and the rows'
   `tr`, `by`, `markKind`, `note` and `batch`. `@pme/controller`: `CommandBase.batch` and `StageBuffer.commit(send,
   { batch: true })`, `kind` and `note` on the scenario bookmark, `ScenarioDriver.vitalHolds()` and
-  `ScenarioDriver.stageMarks()`. Not built: the phone layout (design §6), the Gas sheet and the CPR takeover. The Drug
-  sheet's rule for a dose that differs from the card's step is interim, pending the owner's ruling.
+  `ScenarioDriver.stageMarks()` (opt-in: the `stageMarks` option or `markStages(true)`, which Instructor v2 calls on
+  the host when it is shown). Not built: the phone layout (design §6), the Gas sheet, the CPR takeover and an onset
+  ramp for delivered items. The Drug sheet's rule for a dose that differs from the card's step is interim, pending the owner's ruling.
 
 ## [1.0.0-rc.4] - 2026-10-30
 

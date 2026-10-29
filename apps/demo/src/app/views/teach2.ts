@@ -2,7 +2,7 @@
 // view beside today's, on the route `teach2`. Its own session bar (header.ts) replaces the shell's, which the shell hides
 // here; under it the stage strip, then STATE (the cue box over the shell's one monitor stage, placed by CSS grid so the
 // renderer is untouched) and ACTION, then the dock. The strip, the cue box, ACTION and the sheets are slots with a fixed
-// signature (teach2/ctx.ts) that IP5–IP7 fill; the view repaints them ≤ 2 Hz while it is shown.
+// signature (teach2/ctx.ts); the view repaints them ≤ 2 Hz while it is shown.
 import '../teach2/teach2.css';
 import type { Link } from '../link.ts';
 import type { SiteProfile } from '../site.ts';
@@ -18,7 +18,7 @@ import { mount as mountSheets } from '../teach2/sheets.ts';
 import { mount as mountStrip } from '../teach2/strip.ts';
 
 export interface Teach2View extends View {
-  /** Open a sheet by id (the alarm count opens 'devices'); nothing until IP7 builds the sheets. */
+  /** Open a sheet by id (the alarm count opens 'devices'). */
   openSheet(id: string): void;
   destroy(): void;
 }
@@ -41,7 +41,7 @@ export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): numbe
 
   const keys = mountKeys(el, { link, togglePause: header.togglePause });
   const ctx: Teach2Ctx = { link, site: o.site, weightKg: o.weightKg, keys, dock: { tools: dock.tools, note: dock.note }, openSheet: () => undefined };
-  // The sheets mount first: IP7 may replace ctx.openSheet
+  // The sheets mount first: they set ctx.openSheet
   const slots: Slot[] = [mountSheets(sheets, ctx), mountStrip(strip, ctx), mountCue(cue, ctx), mountAction(actionBody, ctx)];
   const banner = cue.querySelector('.ip2-paused');
   if (banner) paused.append(banner);
@@ -58,6 +58,9 @@ export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): numbe
   return {
     id: 'teach2', el,
     enter: () => {
+      // the strip's past-stage returns need the driver's stage marks: on, on the host, once this view is shown (IP9
+      // review M1: off by default, so a session that never opens Instructor v2 takes no extra snapshots)
+      link.host?.driver.markStages(true);
       header.refresh();
       dock.refresh();
       for (const s of slots) s.refresh();

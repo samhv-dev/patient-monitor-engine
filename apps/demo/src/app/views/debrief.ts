@@ -6,13 +6,14 @@
 // monitor showed (Debrief redesign B), and a learner handout without verdicts prints on its own (E51). The browser PRINTS it to PDF (debrief.css: A4 portrait, the app's chrome hidden, no colour needed to read
 // it; the footer and the build on every page); no PDF library. "Download the record (JSON)" saves the same data. Opened
 // from the session bar; when a scenario reaches a state with no way out, a toast says the debrief is ready.
+import type { MarkKind } from '@pme/controller';
 import './debrief.css';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
 import { axisRange, drugTotals, endOf, facts, mmss, objectives, perMinute, span, steps, trendMeta, type Step, type StepStatus } from '../debrief.ts';
 import { debriefJson } from '../debrief-export.ts';
 import { keyMoments, keyTimes, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
-import { LAB_KEYS, TREND_KEYS, type MarkKind, type Row, type RunData, type TrendKey } from '../record.ts';
+import { LAB_KEYS, TREND_KEYS, type Row, type RunData, type TrendKey } from '../record.ts';
 import { courseSvg } from './debrief-course.ts';
 import { cardOf } from '../scenarios.ts';
 import type { AppSession } from '../session.ts';
@@ -51,7 +52,7 @@ const setup = (r: Row): boolean => (r.kind === 'action' || r.kind === 'remote' |
 
 /** The steps table's status words (`StepStatus`), each with a glyph so no colour is needed to read it. */
 const STEP_WORDS: Readonly<Record<StepStatus, string>> = { taken: '✓ taken', 'out of order': '✓ out of order', failed: '✗ failed', overdue: '! overdue', 'not done': '– not done' };
-const MARK_WORDS: Readonly<Record<MarkKind, string>> = { good: 'good', bad: 'bad', discuss: 'discuss' };
+const MARK_WORDS: Readonly<Record<Exclude<MarkKind, 'stage'>, string>> = { good: 'good', bad: 'bad', discuss: 'discuss' };
 /** The card's steps taken, and those not taken that an objective asks for (debrief.ts `steps`; an alternative not
  *  chosen is not listed), one row each, in the card's order within each stage entered: the stage and its first entry on
  *  the stage's first row, the order due, the button's words, when it was taken (and its place among the stage's taken

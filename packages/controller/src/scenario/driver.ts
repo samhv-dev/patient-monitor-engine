@@ -26,6 +26,9 @@ export interface ScenarioDriverOptions {
   builtins?: Record<string, unknown>;
   /** Rhythm ids of the host engine (default: this build's RHYTHM_IDS). */
   rhythms?: readonly string[];
+  /** Place the automatic stage marks (Instructor v2, the owner's ruling on answer 3): a snapshot at every stage entry.
+   *  Default off, so a run that no view reads them for takes no extra snapshots; `markStages(true)` turns them on. */
+  stageMarks?: boolean;
 }
 
 interface Mark {
@@ -69,11 +72,16 @@ export class ScenarioDriver {
   /** A stage entered whose mark is not placed yet: the runner and its entry count (placed once position() is consistent). */
   private stageWanted: { runner: ScenarioRunner; entry: number; stateId: string } | null = null;
   private placing = false;
+  /** Whether stage marks are placed (option `stageMarks`, or `markStages`). */
+  private marking: boolean;
+  /** The stage last entered on the current course: a return into it from one of its hops is not a new stage entry. */
+  private lastStage: string | null = null;
   private readonly off: () => void;
 
   constructor(o: ScenarioDriverOptions) {
     this.o = o;
     this.known = new Set(o.rhythms ?? RHYTHM_IDS);
+    this.marking = o.stageMarks ?? false;
     this.host = this.wrap(o.target);
     this.off = o.target.on((e) => this.onEngine(e));
   }
@@ -85,8 +93,15 @@ export class ScenarioDriver {
     if (!this.runner) return [];
     const r = this.runner;
     const fx = this.step(r, () => r.advance(this.o.target.now().simT, inputs));
-    void this.placeStageMark();
+    this.placeStageMark().catch((e: unknown) => console.warn('[pme] stage mark not placed:', e));
     return fx;
+  }
+
+  /** Turn the automatic stage marks on (the Instructor v2 view, when it is shown on the host) or off. Turned on, the
+   *  next stage entry is marked; the stage already running is not (a mark taken now would not be its start). */
+  markStages(on: boolean): void {
+    this.marking = on;
+    if (!on) this.stageWanted = null;
   }
 
   /** Validate and start a document (or a built-in id). */
@@ -99,6 +114,7 @@ export class ScenarioDriver {
     this.pending = [];
     for (const c of this.stageMarkList) this.marks.delete(c.target as string); // a new run: the old run's stage marks go
     this.stageMarkList = [];
+    this.lastStage = null;
     const r = (this.runner = new ScenarioRunner(v.doc));
     this.step(r, () => r.start(this.o.target.now().simT));
     return { ok: true, doc: v.doc };
@@ -127,9 +143,13 @@ export class ScenarioDriver {
         await this.o.target.restore(m.snapshot);
         this.pending = [];
         this.stageWanted = null; // the stage left behind is not marked now
+        // the course after this mark is discarded: so are its stage marks (the ones taken later than the mark)
+        for (const c of this.stageMarkList.filter((x) => (x.atTick ?? 0) > m.snapshot.tick)) this.marks.delete(c.target as string);
+        this.stageMarkList = this.stageMarkList.filter((x) => (x.atTick ?? 0) <= m.snapshot.tick);
         if (m.doc && m.runner) {
           if (this.runner?.doc !== m.doc) this.runner = new ScenarioRunner(m.doc, { seed: m.seed });
           this.runner.setState(m.runner);
+          this.lastStage = this.stageOf(this.runner);
           this.o.publish?.({ type: 'scenario', t: this.runner.enteredT, stateId: this.runner.stateId });
         } else this.runner = null;
         return yes(undefined, m.snapshot.tick);
@@ -225,8 +245,18 @@ export class ScenarioDriver {
     const before = r.entries;
     const fx = call();
     this.exec(fx);
-    if (r.entries > before && !isHop(r.state())) this.stageWanted = { runner: r, entry: r.entries, stateId: r.stateId };
+    if (r.entries > before && !isHop(r.state())) {
+      // one mark per stage entry: the return from one of the stage's own hops (treating → potassium → treating) is not one
+      if (this.marking && r.stateId !== this.lastStage) this.stageWanted = { runner: r, entry: r.entries, stateId: r.stateId };
+      this.lastStage = r.stateId;
+    }
     return fx;
+  }
+
+  /** The stage `r` is in: its state, or for a hop the state its exit leads to (answer 2's fold, one step). */
+  private stageOf(r: ScenarioRunner): string {
+    const s = r.state();
+    return isHop(s) ? ((s.transitions?.[0] as { to: string }).to) : s.id;
   }
 
   /**

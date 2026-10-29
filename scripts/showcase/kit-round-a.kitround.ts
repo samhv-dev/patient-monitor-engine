@@ -208,6 +208,8 @@ class Run {
     await this.page.waitForTimeout(300);
   }
   alarmButton = () => this.page.locator('.alarm-count').innerText().then((s) => s.trim());
+  /** The instructor panel in use (IP9 review M2: both views live in the DOM): today's, or the open Instructor v2 sheet. */
+  panel = () => (this.v2 ? this.page.locator('.ip2-sheets .ip2-sheet:not([hidden])') : this.page.locator('#teach-panel'));
   /** The Debrief link: today's session bar, or the Instructor v2 dock. */
   debriefLink = () => (this.v2 ? this.page.locator('.ip2-dock a.ip2-debrief') : this.page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }));
 
@@ -1118,7 +1120,7 @@ test('session mechanics: reload survival, Silence on the Saadat-style skin, the 
     const tAl = await R.waitSim(240, async () => ((await page.evaluate(() => (window as unknown as Hook).__pmeApp.link.alarms?.active?.length ?? 0)) > 0));
     await R.row('an alarm is active', { alarmButton: await R.alarmButton() });
     await R.teachTab('devices');
-    R.r.measures.pauseButton = { disabled: await page.getByRole('button', { name: 'Pause alarms', exact: true }).isDisabled(), why: await page.locator('#alarm-pause-why').innerText().catch(() => '') };
+    R.r.measures.pauseButton = { disabled: await page.getByRole('button', { name: 'Pause alarms', exact: true }).isDisabled(), why: await R.panel().locator('[id$="alarm-pause-why"]').innerText().catch(() => '') };
     await page.getByRole('button', { name: 'Silence', exact: true }).click();
     const tSil = await R.sim();
     const silence: Row[] = [];

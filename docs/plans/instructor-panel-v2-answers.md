@@ -28,7 +28,12 @@ executors. Items marked OWNER are my calls that the owner may overturn in the mo
    the bar shows value against threshold times hold fraction. Followers show value against threshold only.
 9. The clock pill sends exactly what today's session-bar Pause and Resume send (copy them). No queued skip: Fast
    forward is disabled while paused. Speed chosen while paused behaves as today's scale command does.
-10. OWNER. When the sheet's dose equals the card's, Give sends the trigger only (the card gives the dose). When it
+10. OWNER, CONTESTED (the owner's ruling is pending). The text below was the orchestrator's first answer. Until the
+    owner rules, the interim two-button rule applies (`pinnedGiveRule` in `apps/demo/src/app/teach2/drug-sheet.ts`, the
+    one function the final rule replaces): at the card's dose one Give presses the card's step; at a different dose two
+    buttons replace it, "Give the card's step (<card dose>)" (presses the step) and "Give <dose> off the card" (today's
+    bolus; the card does not move), and Enter gives nothing.
+    First answer: when the sheet's dose equals the card's, Give sends the trigger only (the card gives the dose). When it
     differs, Give sends the bolus and NOT the trigger, and the sheet says "this dose is off the card".
 11. OWNER. Card steps stay out of the cache: "Add to the cache" is disabled for a pinned card step, with the note
     "card steps are given from ACTION".

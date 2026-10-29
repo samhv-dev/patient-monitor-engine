@@ -144,6 +144,23 @@ describe('ControllerSession', () => {
     s.close();
   });
 
+  it('IP9 review L7: a staged delivery still being answered when the session closes gets its one line with the answers so far', async () => {
+    const t = new ManualTransport();
+    const s = new ControllerSession({ session: S, transport: t, peerId: 'ctl-c' });
+    t.set('open');
+    const b = new StageBuffer('ctl-c');
+    b.stage({ type: 'applyEvent', event: { kind: 'drug', drugId: 'epinephrine', dose: 0.01, unit: 'mg', route: 'iv' } }, 'drug');
+    b.stage({ type: 'applyEvent', event: { kind: 'fluid', fluid: 'crystalloid', volumeMl: 250, overS: 60 } }, 'fluid');
+    const before = s.log.length;
+    const done = b.commit((c) => s.send(c), { batch: true });
+    t.inject(host({ kind: 'ack', commandId: 'ctl-c-1', accepted: true, tick: 9 }));
+    s.close();
+    await done.catch(() => undefined);
+    const added = s.log.slice(before);
+    expect(added).toHaveLength(1);
+    expect(added[0]).toMatchObject({ kind: 'command', commandId: 'ctl-c-sg1', text: 'staged ×2: event drug epinephrine 0.01 mg iv · event fluid crystalloid 250 60 (no answer: the session closed)' });
+  });
+
   it('describes commands in one line for the log', () => {
     expect(describeCmd({ id: 'x', issuedBy: 'y', type: 'setTarget', variable: 'hr', value: 120, ramp: { durationS: 30, curve: 'sigmoid' } })).toBe('hr → 120 over 30 s (sigmoid)');
     expect(describeCmd({ id: 'x', issuedBy: 'y', type: 'time', action: 'scale', value: 2 })).toBe('time scale 2');

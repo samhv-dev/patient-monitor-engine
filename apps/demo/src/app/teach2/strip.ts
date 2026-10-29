@@ -13,7 +13,7 @@
 // the padding tightens, then the hint goes, then the strip scrolls sideways.
 import './state.css';
 import type { ScenarioDoc } from '@pme/controller';
-import { HOP_S, rowsOf, stagesOf, type Stage } from '../card-read.ts';
+import { rowsOf, stagesOf, type Stage } from '../card-read.ts';
 import type { Link } from '../link.ts';
 import { clock, confirmDialog, h, toast } from '../ui.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
@@ -24,8 +24,6 @@ import { historyOf } from './course.ts';
 export const WINDOW = 5;
 export const KEEP_PAST = 2;
 export const KEEP_NEXT = 2;
-/** The host's tick (s): a stage mark's `atTick` in sim seconds. */
-const TICK_S = 0.02;
 
 /** The stages' short names: each label up to its first ':', ';', ',' or ' (' ("Trigger off: sevoflurane stopped, …" →
  *  "Trigger off"), taken one part further while two stages would read the same ("Rhythm check: VF" and "Rhythm check:
@@ -157,15 +155,13 @@ export function stripModel(doc: ScenarioDoc, stateId: string | null, entries: re
 
 /**
  * Where a past stage's hidden stage mark is found: its label, to restore, or null. The host-side driver places one at
- * every stage entry once the stage's onEnter is applied (ScenarioDriver.stageMarks(): kind `stage`, note = the stage's
- * state id, `atTick` = when it was taken); the mark of `entry` is the last one of its stage taken from the entry on,
- * within a hop and a second (a stage entered by a 2-s hop is marked when its own state begins). A follower has no
- * driver: null, and the return stays disabled.
+ * each stage entry once the stage's onEnter is applied (ScenarioDriver.stageMarks(): kind `stage`, note = the stage's
+ * state id), keeps only the marks of the current course (a restore drops the discarded course's) and one per entry, so
+ * the stage's mark is the latest one with its note, however late it was placed (a fast-forward, a busy monitor). A
+ * follower has no driver: null.
  */
 export const stageMarks: { of(link: Link, entry: StageEntry): string | null } = {
-  of: (link, entry) => (link.host?.driver.stageMarks() ?? [])
-    .filter((c) => c.note === entry.stage && c.atTick !== undefined && c.atTick * TICK_S >= entry.t - TICK_S && c.atTick * TICK_S <= entry.t + HOP_S + 1)
-    .at(-1)?.target ?? null,
+  of: (link, entry) => (link.host?.driver.stageMarks() ?? []).filter((c) => c.note === entry.stage).at(-1)?.target ?? null,
 };
 
 /** Today's jump, copied from panel/scenario.ts `jump`: the same confirm, the same command, the same toast. */
@@ -217,7 +213,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       h('div', { class: 'ip2-pop-head' }, name),
       h('div', { class: 'ip2-pop-time' }, entry ? `Entered at ${clock(entry.t)}` : 'Not entered in this run'),
       entry ? back : null,
-      entry && !mark ? h('div', { class: 'ip2-pop-note' }, 'Available once the run records a mark at each stage entry.') : null);
+      // a follower has no driver; on the host a missing mark is being placed (a frame or so): nothing to say then
+      entry && !mark && !link.host ? h('div', { class: 'ip2-pop-note' }, "Return is available on the instructor's screen once this stage has a mark") : null);
     const r = chip.getBoundingClientRect();
     pop.style.left = `${Math.max(8, r.left)}px`;
     pop.style.top = `${r.bottom + 6}px`;

@@ -59,8 +59,9 @@ function rig() {
   return { link, got, root, layer, tools, ctx, slot, open, sheet, lit };
 }
 
-/** A tab body's markup with the generated ids taken out (ui.ts `input`/`select` make random ones). */
-const shape = (el: Element) => el.outerHTML.replace(/ (id|for)="f[a-z0-9]+"/g, '');
+/** A tab body's markup with the generated ids taken out (ui.ts `input`/`select` make random ones), and the sheet's
+ *  `ip2-<sheet>-` prefix on the ids and their references taken off (IP9 review M2). */
+const shape = (el: Element) => el.outerHTML.replace(/ (id|for|aria-describedby|aria-labelledby|aria-controls)="ip2-[a-z]+-/g, ' $1="').replace(/ (id|for)="f[a-z0-9]+"/g, '');
 
 describe('the sheets', () => {
   it('the dock\'s tools in order, no Gas; a press opens its sheet over ACTION, lit, and the same press closes it', () => {
@@ -159,6 +160,15 @@ describe('the sheets', () => {
       expect(r.open()).toEqual([id]);
       const body = r.sheet().querySelector('.ip2-sheet-left')?.firstElementChild as Element;
       expect(shape(body)).toBe(shape(today(build)));
+    }
+    // IP9 review M2: with today's bodies in the document too, no id is used twice, and every reference points inside
+    for (const build of Object.values(want)) r.root.append(today(build));
+    for (const id of Object.keys(want)) {
+      r.ctx.openSheet(id);
+      const ids = [...document.querySelectorAll('[id]')].map((e) => e.id);
+      expect(ids.filter((x, i) => ids.indexOf(x) !== i), `${id}: duplicate ids`).toEqual([]);
+      for (const e of r.sheet().querySelectorAll('[for], [aria-describedby]'))
+        for (const ref of `${e.getAttribute('for') ?? ''} ${e.getAttribute('aria-describedby') ?? ''}`.trim().split(/\s+/)) expect(r.sheet().querySelector(`#${ref}`), `${id}: ${ref}`).not.toBeNull();
     }
     // the Log sheet adds the marks list beside today's Log body; Gas is not built
     r.ctx.openSheet('log');

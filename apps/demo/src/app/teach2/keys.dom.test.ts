@@ -46,7 +46,11 @@ function rig(reply?: AckResult) {
   const pressed = vi.fn();
   btn.addEventListener('click', pressed);
   const input = document.createElement('input');
-  view.append(btn, input);
+  // a header button (IP9 review L2: Space pauses from the page, an ACTION row, or a header or dock button)
+  const head = document.createElement('header');
+  head.className = 'ip2-head';
+  head.append(btn);
+  view.append(head, input);
   document.body.append(view);
   const togglePause = vi.fn();
   const keys = mountKeys(view, { link: f.link, togglePause });
@@ -66,6 +70,26 @@ describe('Instructor v2 keys', () => {
     expect(r.pressed).not.toHaveBeenCalled();
     key(r.btn, ' ', { repeat: true }); // held down: no flapping
     expect(r.togglePause).toHaveBeenCalledTimes(1);
+  });
+
+  it('IP9 review L2: Space pauses from the page, an ACTION row or a dock button; on a checkbox, radio, select, summary or another control it is that control\'s', () => {
+    const r = rig();
+    const make = (html: string) => {
+      const box = document.createElement('div');
+      box.innerHTML = html;
+      r.view.append(box);
+      return box.firstElementChild as HTMLElement;
+    };
+    const own = [make('<input type="checkbox">'), make('<input type="radio">'), make('<select><option>a</option></select>'), make('<details><summary>Finished</summary></details>').querySelector('summary') as HTMLElement, make('<button type="button" class="btn">Stage</button>')];
+    for (const t of own) expect(key(t, ' ').defaultPrevented, t.outerHTML).toBe(false);
+    expect(r.togglePause).not.toHaveBeenCalled();
+    const row = make('<ol><li><button type="button" class="ip2-row">1</button></li></ol>').querySelector('.ip2-row') as HTMLElement;
+    const dock = make('<footer class="ip2-dock"><button type="button">Debrief</button></footer>').querySelector('button') as HTMLElement;
+    for (const t of [document.body, row, dock]) {
+      expect(key(t, ' ').defaultPrevented).toBe(true);
+      key(t, ' ', {}, 'keyup');
+    }
+    expect(r.togglePause).toHaveBeenCalledTimes(3);
   });
 
   it('nothing acts while typing, in an open dialog, with Ctrl/Cmd/Alt, or while the view is hidden', () => {

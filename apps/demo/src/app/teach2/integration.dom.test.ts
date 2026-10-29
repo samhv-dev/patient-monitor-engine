@@ -16,15 +16,16 @@ const MH = showcaseDoc('showcase-mh') as ScenarioDoc;
 const TICK_S = 0.02;
 const mark = (n: number, stateId: string, t: number) => ({ id: `stage-mark-${n}`, issuedBy: 'scenario', type: 'scenario', action: 'bookmark', target: `stage:${stateId}:${n}`, kind: 'stage', note: stateId, atTick: Math.round(t / TICK_S) });
 
-describe('the strip reads the driver\'s stage marks (ruling 2)', () => {
-  it('a past stage\'s mark is the last one of its stage taken from its entry on, within a hop and a second; none on a follower', () => {
-    // triggerOff entered at 496 (marked 3 ticks later), treating by the 2-s dantrolene hop at 520 (marked when treating
-    // began, 522.04); a discarded course had marked triggerOff again at 700
-    const marks = [mark(9, 'triggerOff', 496.06), mark(10, 'treating', 522.04), mark(11, 'triggerOff', 700)];
+describe('the strip reads the driver\'s stage marks (ruling 2; review L4)', () => {
+  it('a past stage\'s mark is the latest one with its note (the driver keeps the current course\'s), however late it was placed; none on a follower', () => {
+    // triggerOff marked 3 ticks after its entry; treating (entered by the 2-s dantrolene hop at 520) when treating began
+    const marks = [mark(9, 'triggerOff', 496.06), mark(10, 'treating', 522.04)];
     const host = { host: { driver: { stageMarks: () => marks.map((m) => ({ ...m })) } } } as unknown as Link;
     expect(stageMarks.of(host, { stage: 'triggerOff', stateId: 'triggerOff', t: 496 })).toBe('stage:triggerOff:9');
     expect(stageMarks.of(host, { stage: 'treating', stateId: 'dantrolene', t: 520 })).toBe('stage:treating:10');
-    expect(stageMarks.of(host, { stage: 'triggerOff', stateId: 'triggerOff', t: 700 })).toBe('stage:triggerOff:11');
+    // a fast-forward: the monitor answered the stage's onEnter only at the end of the skip, 120 s after the entry
+    marks.push(mark(11, 'recovering', 700 + 120));
+    expect(stageMarks.of(host, { stage: 'recovering', stateId: 'recovering', t: 700 })).toBe('stage:recovering:11');
     expect(stageMarks.of(host, { stage: 'surgery', stateId: 'surgery', t: 360 })).toBeNull(); // left before its mark
     expect(stageMarks.of({ host: null } as unknown as Link, { stage: 'triggerOff', stateId: 'triggerOff', t: 496 })).toBeNull();
   });

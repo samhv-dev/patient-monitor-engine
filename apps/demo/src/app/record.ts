@@ -10,7 +10,7 @@
 // and charts read the course that was kept. A new patient or scenario (a 'restart' timeline) starts a new record. Plain
 // JSON data; no DOM.
 import type { EngineEvent } from '@pme/engine-core';
-import type { AppliedResolution, WireEvent } from '@pme/controller';
+import type { AppliedResolution, MarkKind, WireEvent } from '@pme/controller';
 import type { ScenarioDoc } from '@pme/controller/scenario';
 import { alarmLine } from './alarms.ts';
 import { describeCommand } from './describe.ts';
@@ -36,15 +36,15 @@ export interface Row {
    *  transition's own rule, or a jump (`goto`). Absent for the first state. */
   by?: 'press' | 'rule' | 'goto';
   /** A bookmark row (Instructor v2 marks): the mark's kind, and the note the instructor wrote with it. */
-  markKind?: MarkKind;
+  markKind?: Exclude<MarkKind, 'stage'>;
   note?: string;
   /** An action row given in a staged delivery: the delivery's id and its number of items. Each item keeps its own row
    *  (a rule still sees its `drug:<id>`); the Debrief's timeline prints one line per delivery. */
   batch?: { id: string; n: number };
 }
 /** A mark's kind (Instructor v2): a good moment, a bad one, or one to discuss. */
-export type MarkKind = 'good' | 'bad' | 'discuss';
-const MARK_KINDS: readonly string[] = ['good', 'bad', 'discuss'] satisfies MarkKind[];
+/** The instructor's mark kinds (the controller's `MarkKind` without the driver's own `stage`). */
+const MARK_KINDS: readonly string[] = ['good', 'bad', 'discuss'] satisfies Array<Exclude<MarkKind, 'stage'>>;
 
 /** The six trended numerics; each reads the first valid of its monitor numerics (glossary keys `mon.<id>`). */
 export const TREND = { hr: ['hr'], map: ['abpMean', 'nibpMean'], spo2: ['spo2'], etco2: ['etco2'], rr: ['awrr', 'rr'], temp: ['tempCore', 'tempSite'] } as const;
@@ -177,7 +177,7 @@ export class RunRecord {
         this.marks.set(String(c.target), { lastVent: this.lastVent, pulse: this.pulse, active: [...this.active] });
         return this.add({
           t, kind: 'bookmark', text, mark: String(c.target),
-          ...(MARK_KINDS.includes(String(c.kind)) ? { markKind: c.kind as MarkKind } : {}),
+          ...(MARK_KINDS.includes(String(c.kind)) ? { markKind: c.kind as Exclude<MarkKind, 'stage'> } : {}),
           ...(typeof c.note === 'string' && c.note.trim() ? { note: c.note.trim() } : {}),
         });
       }

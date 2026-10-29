@@ -1,8 +1,10 @@
-// The driver's automatic stage marks (owner's ruling on answer 3, Instructor v2): a bookmark of kind `stage` at every
-// entry of a state that is a stage (not a hop: answer 2's fold rule), restorable like any bookmark, replayed to late
-// joiners, and kept out of the instructor's bookmark list. On the MH showcase card, through a HostSession.
+// The driver's automatic stage marks (owner's ruling on answer 3, Instructor v2): opt-in (IP9 review M1: off unless the
+// v2 view turns them on), a bookmark of kind `stage` at every entry of a state that is a stage (not a hop: answer 2's
+// fold rule; a return from the stage's own hop is no new entry), restorable like any bookmark, pruned to the kept
+// course on a restore, replayed to late joiners, and kept out of the instructor's bookmark list. On the MH showcase
+// card, through a HostSession.
 import { readFileSync } from 'node:fs';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createInProcessHub } from '../../src/transport/in-process.ts';
 import { HostSession } from '../../src/session/host-session.ts';
 import { ControllerSession } from '../../src/session/controller-session.ts';
@@ -19,10 +21,10 @@ afterEach(() => {
   for (const f of cleanup.splice(0)) f();
 });
 
-function setup() {
+function setup(stageMarks = true) {
   const host = manualHost({ seed: 42 });
   let hs: HostSession | null = null;
-  const driver = new ScenarioDriver({ target: host, submit: (c) => (hs as HostSession).submit(c), publish: (e: ScenarioEvent) => hs?.publish(e) });
+  const driver = new ScenarioDriver({ target: host, submit: (c) => (hs as HostSession).submit(c), publish: (e: ScenarioEvent) => hs?.publish(e), stageMarks });
   hs = new HostSession({ session: S, target: driver.host, stateIntervalMs: 0, scenario: driver.hook, welcomeEvents: () => driver.welcomeEvents() });
   const hub = createInProcessHub();
   hs.addTransport(hub.connect());
@@ -70,15 +72,31 @@ describe('stage marks (driver, host side)', () => {
     expect(MH.states.filter(isHop).map((s) => s.id)).toEqual(['dantrolene', 'dantroleneAgain', 'cooling', 'potassium', 'bicarbonate']);
   });
 
-  it('(a) every stage entry on the MH card gives exactly one stage mark with its state id; hops give none', async () => {
+  it('opt-in (IP9 review M1): without the option, or after markStages(false), the driver takes no stage mark', async () => {
+    const r = setup(false);
+    await course(r);
+    expect(r.driver.stageMarks()).toEqual([]);
+    expect(r.driver.bookmarks()).toEqual([]);
+    // turned on later: the next stage entry is marked, the stage already running is not
+    r.driver.markStages(true);
+    expect((await r.ctl.send({ type: 'scenario', action: 'goto', target: 'arrest' })).accepted).toBe(true);
+    await r.run(2);
+    expect(r.driver.stageMarks().map((m) => m.note)).toEqual(['arrest']);
+    r.driver.markStages(false);
+    await r.press('cpr');
+    expect(r.driver.stageMarks().map((m) => m.note)).toEqual(['arrest']);
+  }, 120_000);
+
+  it('(a) every stage entry on the MH card gives exactly one stage mark with its state id; hops and the returns from them give none', async () => {
     const r = setup();
     await course(r);
     const all = entries(r.driver);
     expect(all).toEqual(expect.arrayContaining(['dantrolene', 'cooling', 'dantroleneAgain'])); // the hops were entered
     const hops = new Set(MH.states.filter(isHop).map((s) => s.id));
     const marks = r.driver.stageMarks();
-    expect(marks.map((m) => m.note)).toEqual(all.filter((id) => !hops.has(id))); // one per stage entry, in order
-    expect(marks.map((m) => m.note)).toEqual(['awake', 'premedicated', 'preoxygenated', 'induced', 'intubated', 'surgery', 'triggerOff', 'treating', 'treating', 'recovering', 'normoventilated', 'treating']);
+    // one per stage entry, in order: a state entered right after itself through its own hop is the same stage entry
+    expect(marks.map((m) => m.note)).toEqual(all.filter((id) => !hops.has(id)).filter((id, i, xs) => xs[i - 1] !== id));
+    expect(marks.map((m) => m.note)).toEqual(['awake', 'premedicated', 'preoxygenated', 'induced', 'intubated', 'surgery', 'triggerOff', 'treating', 'recovering', 'normoventilated', 'treating']);
     expect(marks.every((m) => m.kind === 'stage' && m.action === 'bookmark' && m.target === `stage:${m.note}:${marks.indexOf(m) + 1}`)).toBe(true);
     expect(r.driver.bookmarks()).toEqual(expect.arrayContaining(marks.map((m) => m.target as string)));
     expect(r.ctl.bookmarks).toEqual([]); // not the instructor's bookmarks
@@ -98,8 +116,25 @@ describe('stage marks (driver, host side)', () => {
     // …and the run goes on from there like after any return: a press works, the next stage gets its mark
     await r.press('dant');
     expect(r.driver.runner?.stateId).toBe('treating');
-    expect(r.driver.stageMarks().at(-1)?.note).toBe('treating');
+    // the discarded course's marks went with it (IP9 review M1): the kept course's, then the new treating
+    expect(r.driver.stageMarks().map((m) => m.note)).toEqual(['awake', 'premedicated', 'preoxygenated', 'induced', 'intubated', 'surgery', 'triggerOff', 'treating']);
+    expect(r.driver.bookmarks().filter((b) => b.startsWith('stage:'))).toEqual(r.driver.stageMarks().map((m) => m.target));
   }, 120_000);
+
+  it('a snapshot that fails while a mark is placed is logged, never an unhandled rejection; the run goes on', async () => {
+    const r = setup();
+    await waitFor(() => r.ctl.hostOnline);
+    expect((await r.ctl.send({ type: 'scenario', action: 'load', doc: MH })).accepted).toBe(true);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const snap = r.host.snapshot;
+    r.host.snapshot = () => Promise.reject(new Error('snapshot failed'));
+    await r.run(1);
+    r.host.snapshot = snap;
+    expect(warn.mock.calls.some((c) => String(c[0]).includes('stage mark not placed'))).toBe(true);
+    warn.mockRestore();
+    await r.run(1);
+    expect(r.driver.stageMarks().map((m) => m.note)).toEqual(['awake']);
+  }, 60_000);
 
   it('(c) a late joiner is replayed the stage marks (kind and note), and its bookmark list leaves them out', async () => {
     const r = setup();

@@ -92,6 +92,25 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   drawCache();
 
   // ---- building a sheet ----
+  /** Today's tab bodies carry fixed ids ("vt-rhythm", "alarm-pause-why"), and today's view keeps its own copy in the
+   *  document: inside a sheet every id is prefixed `ip2-<sheet>-`, and the references to it inside the sheet (`for`,
+   *  `aria-describedby`, `aria-labelledby`, `aria-controls`, `list`, `headers`) follow (IP9 review M2). Run after the
+   *  build and after every refresh, which may draw new rows. */
+  const reid = (root: HTMLElement, sheet: string) => {
+    const pre = `ip2-${sheet}-`;
+    const renamed = new Map<string, string>();
+    for (const e of root.querySelectorAll<HTMLElement>('[id]')) {
+      if (e.id.startsWith(pre) || e.id.startsWith('ip2-sheet-')) continue;
+      renamed.set(e.id, pre + e.id);
+      e.id = pre + e.id;
+    }
+    if (!renamed.size) return;
+    for (const attr of ['for', 'aria-describedby', 'aria-labelledby', 'aria-controls', 'list', 'headers'])
+      for (const e of root.querySelectorAll<HTMLElement>(`[${attr}]`)) {
+        const v = (e.getAttribute(attr) as string).split(/\s+/).map((x) => renamed.get(x) ?? x).join(' ');
+        e.setAttribute(attr, v);
+      }
+  };
   const build = (id: string): Built => {
     const def = SHEETS.find((s) => s.id === id) as (typeof SHEETS)[number];
     const hint = def.letter ? `${def.letter.toUpperCase()} opens and closes · Esc closes` : 'Esc closes';
@@ -117,10 +136,11 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     };
     frame.groups([[id, def.group]], id, () => undefined);
     frame.left.append((def.body as (c: PanelCtx) => HTMLElement)(pctx));
+    reid(frame.left, id);
     setText(frame.primary, 'Stage buttons add to the cache; Deliver gives it at one instant');
     frame.primary.classList.add('ip2-sheet-hint');
     const extra = id === 'log' ? marksList(frame.right) : null;
-    return { frame, refresh: () => (extra?.(), refreshers.forEach((fn) => fn())) };
+    return { frame, refresh: () => (extra?.(), refreshers.forEach((fn) => fn()), reid(frame.left, id)) };
   };
 
   /** The Log sheet's marks (answer 13): every saved mark and bookmark (the driver's stage marks are never in the

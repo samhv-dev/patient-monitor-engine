@@ -88,7 +88,7 @@ export class ControllerSession {
   private readonly now: () => number;
   private readonly pending = new Map<string, Pending>();
   /** Staged deliveries being answered, by batch id: each item's line, in send order, and the answers so far. */
-  private readonly batches = new Map<string, { n: number; items: Map<string, string>; answered: number }>();
+  private readonly batches = new Map<string, { n: number; items: Map<string, string>; answered: Set<string> }>();
   private readonly seqs = new SeqFilter();
   private readonly fns = new Set<() => void>();
   private readonly offs: Array<() => void>;
@@ -151,6 +151,8 @@ export class ControllerSession {
     for (const off of this.offs) off();
     for (const p of this.pending.values()) p.reject(new Error('session closed'));
     this.pending.clear();
+    // a staged delivery still being answered gets its one line with the answers received so far (IP9 review L7)
+    for (const [id, g] of this.batches) this.batchLine(id, g, ' (no answer: the session closed)');
     this.batches.clear();
   }
 
@@ -191,7 +193,7 @@ export class ControllerSession {
 
   /** An item of a staged delivery is sent: no line of its own (the batch gets one). */
   private batchItem(b: { id: string; n: number }, cmd: WireCommand): void {
-    const g = this.batches.get(b.id) ?? { n: b.n, items: new Map<string, string>(), answered: 0 };
+    const g = this.batches.get(b.id) ?? { n: b.n, items: new Map<string, string>(), answered: new Set<string>() };
     g.items.set(cmd.id, describe(cmd));
     this.batches.set(b.id, g);
   }
@@ -201,9 +203,15 @@ export class ControllerSession {
     const g = this.batches.get(batchId);
     if (!g) return;
     if (!a.accepted) g.items.set(id, `${g.items.get(id) ?? id} (refused: ${a.reason ?? 'no reason given'})`);
-    if (++g.answered < g.n) return;
+    g.answered.add(id);
+    if (g.answered.size < g.n) return;
     this.batches.delete(batchId);
-    this.addLog('command', `staged ×${g.n}: ${[...g.items.values()].join(' · ')}`, batchId);
+    this.batchLine(batchId, g, '');
+  }
+
+  /** The batch's one `command` line: every item, a refusal named; an item not answered gets `unanswered`. */
+  private batchLine(batchId: string, g: { n: number; items: Map<string, string>; answered: Set<string> }, unanswered: string): void {
+    this.addLog('command', `staged ×${g.n}: ${[...g.items].map(([id, t]) => (g.answered.has(id) ? t : `${t}${unanswered}`)).join(' · ')}`, batchId);
   }
 
   private onStatus(s: TransportStatus): void {

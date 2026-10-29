@@ -4,13 +4,13 @@
 // from the glossary and the alarm table. Also the one-row-per-minute table, the card's steps with their status, the
 // instructor's judged objectives and the marks (Instructor v2, IP8), and the export's shape (written by
 // `debrief-export.ts`). No DOM.
-import { manualLabel } from '@pme/controller';
+import { manualLabel, type MarkKind } from '@pme/controller';
 import type { ObjectiveRule, RunEventId } from '@pme/controller/scenario';
 import { FIXED_ALARM_WORDS } from './alarms.ts';
 import { untakenStatus, type Evidence } from './card-read.ts';
 import { CONDITIONS } from './describe.ts';
 import { drugName, drugWords, labelOf, lookup, unitOf } from './glossary.ts';
-import { LAB_KEYS, LABS, TREND, TREND_KEYS, type LabKey, type MarkKind, type Row, type RunData, type Sample, type TrendKey, type ValueKey } from './record.ts';
+import { LAB_KEYS, LABS, TREND, TREND_KEYS, type LabKey, type Row, type RunData, type Sample, type TrendKey, type ValueKey } from './record.ts';
 import { objectiveText } from './scenarios.ts';
 
 export type Status = 'met' | 'not met' | 'not assessable';
@@ -280,7 +280,7 @@ export function judged(d: RunData): Array<{ n: number; text: string; tickedT: nu
 }
 
 /** Every mark (bookmark) of the run in order, with its kind and note when it has them; an undone one says so. */
-export function marks(d: RunData): Array<{ t: number; label: string; kind?: MarkKind; note?: string; undone?: number }> {
+export function marks(d: RunData): Array<{ t: number; label: string; kind?: Exclude<MarkKind, 'stage'>; note?: string; undone?: number }> {
   return d.rows.filter((r) => r.kind === 'bookmark').map((r) => ({
     t: r.t, label: r.mark ?? r.text, ...(r.markKind ? { kind: r.markKind } : {}), ...(r.note ? { note: r.note } : {}), ...(r.undone ? { undone: r.undone } : {}),
   }));

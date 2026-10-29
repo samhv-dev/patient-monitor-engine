@@ -1,14 +1,16 @@
-// The Instructor v2 dock (design §3.6, board "Proposal v6"): Tools on the left (the sheets' buttons, IP7), a divider, the
-// three marks (good, bad, discuss) and the note field (IP7) in the centre, a divider, and Debrief at the far right.
+// The Instructor v2 dock (design §3.6, board "Proposal v6"): Tools on the left (the sheets' buttons), a divider, the
+// three marks (good, bad, discuss) and the note field in the centre, a divider, and Debrief at the far right.
 // A mark saves the moment with today's bookmark command (`commands.ts` `bookmark`: the 6b driver can restore it), under
 // its own label and counter ("Mark 2 at 08:20", plan R10), so the Log tab's bookmarks and the marks never share a name.
-// It carries its kind (IP2's `kind`) and, when the note field (filled by the sheets slot, IP7) holds text, that text as
+// It carries its kind (IP2's `kind`) and, when the note field (filled by the sheets slot) holds text, that text as
 // its note (IP2's `note`); the field is then cleared (answer 13).
+import type { MarkKind as ControllerMarkKind } from '@pme/controller';
 import type { Link } from '../link.ts';
 import { hrefOf } from '../router.ts';
 import { clock, h, toast } from '../ui.ts';
 
-export type MarkKind = 'good' | 'bad' | 'discuss';
+/** The kinds of the instructor's marks: the controller's `MarkKind` without the driver's own `stage`. */
+type MarkKind = Exclude<ControllerMarkKind, 'stage'>;
 
 const MARKS: ReadonlyArray<[MarkKind, string, string]> = [
   ['good', 'Mark: good', 'M7 11v10H3V11zM7 11l4-8c2 0 3 1 3 3v3h5a2 2 0 0 1 2 2l-1.5 8a2 2 0 0 1-2 2H7'],
@@ -39,13 +41,13 @@ function takeNote(area: HTMLElement): string {
 
 export interface Dock {
   el: HTMLElement;
-  /** Where the sheets slot (IP7) puts the tool buttons and the note field. */
+  /** Where the sheets slot puts the tool buttons and the note field. */
   tools: HTMLElement;
   note: HTMLElement;
   refresh(): void;
 }
 
-/** The dock: tool and note areas for IP7, the three marks, Debrief. */
+/** The dock: the tool and note areas the sheets slot fills, the three marks, Debrief. */
 export function mountDock(link: Link): Dock {
   const tools = h('div', { class: 'ip2-dock-tools', role: 'group', 'aria-label': 'Tools' });
   const note = h('div', { class: 'ip2-dock-note' });
