@@ -21,9 +21,12 @@ export interface View {
 
 /** Every view's name (the document title); a hostless Remote's top bar lists Settings beside it. */
 export const NAV: ReadonlyArray<[RouteId, string]> = [
-  ['home', 'Home'], ['room', 'Room'], ['scenarios', 'Scenarios'], ['patient', 'Patient'], ['teach', 'Instructor'], ['monitor', 'Monitor'],
+  ['home', 'Home'], ['room', 'Room'], ['scenarios', 'Scenarios'], ['patient', 'Patient'], ['teach', 'Instructor'], ['teach2', 'Instructor v2'], ['monitor', 'Monitor'],
   ['vent', 'Ventilator'], ['debrief', 'Debrief'], ['explore', 'Explore physiology'], ['validate', 'Validate'], ['dev', 'Developer'], ['settings', 'Settings'],
 ];
+
+/** Views with their own session bar (Instructor v2's header): the shell's session bar is hidden there. */
+export const OWN_BAR_ROUTES: ReadonlySet<RouteId> = new Set(['teach2']);
 
 /** What the shell needs of the rail: its element and a way to mark the current page. */
 export interface ShellRail {
@@ -117,7 +120,7 @@ export class Shell {
       // The pages before a session have no monitor beside them; any other route shows the stage (placed by the route's
       // CSS grid)
       this.stage.hidden = CONSOLE_ROUTES.has(v.id);
-      this.bar.hidden = CONSOLE_ROUTES.has(v.id);
+      this.bar.hidden = CONSOLE_ROUTES.has(v.id) || OWN_BAR_ROUTES.has(v.id);
     }
     v.el.hidden = false;
     v.enter?.(this.route.sub);

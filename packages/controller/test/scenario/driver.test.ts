@@ -9,6 +9,7 @@ import { BUILTIN_SCENARIOS } from '../../src/scenario/builtins.ts';
 import type { ScenarioEvent } from '../../src/protocol.ts';
 import type { ScenarioDoc } from '../../src/scenario/types.ts';
 import { manualHost } from '../fakes/manual-host.ts';
+import { doc } from './fixtures.ts';
 
 // Each test steps the engine tick by tick for 1–10 sim-minutes (≈ 0.2–2.5 s each on a laptop). CI rule: tests that run
 // the engine past ~1 sim-minute take a 300 s timeout (the 2-vCPU runner needs > 30 s for the 4 × 320 sim-s seed test).
@@ -139,6 +140,60 @@ describe('ScenarioDriver', () => {
     expect(events.map((e) => `${e.t}:${e.stateId}`)).toEqual(first.events);
     expect(samples(66, 199)).toEqual(first.ecg);
   }, SLOW);
+
+  it('IP2 marks: the bookmark hook returns kind and note on its applied command; restoreBookmark needs only the label', async () => {
+    const { driver, run, host } = rig();
+    expect(driver.load('acls-vf-witnessed').ok).toBe(true);
+    await run(250);
+    const a = await driver.hook({ id: 'm1', issuedBy: 'panel', type: 'scenario', action: 'bookmark', kind: 'good', note: 'clear closed-loop call' });
+    expect(a).toMatchObject({ accepted: true, applied: { action: 'bookmark', target: 'Bookmark 1', kind: 'good', note: 'clear closed-loop call' } });
+    const b = await driver.hook({ id: 'm2', issuedBy: 'panel', type: 'scenario', action: 'bookmark', target: 'plain' });
+    expect(b.applied).toEqual({ id: 'm2', issuedBy: 'panel', type: 'scenario', action: 'bookmark', target: 'plain' }); // no kind: as before
+    await run(3500);
+    expect(driver.runner?.stateId).toBe('vf');
+    const r = await driver.hook({ id: 'm3', issuedBy: 'panel', type: 'scenario', action: 'restoreBookmark', target: 'Bookmark 1' });
+    expect(r).toEqual({ accepted: true, tick: 250 });
+    expect(host.engine.now().tick).toBe(250);
+    expect(driver.runner?.stateId).toBe('stable');
+  });
+
+  it('vitalHolds(): value, threshold and hold fraction of each vital rule of the current state, read-only, as the rule decides', async () => {
+    const { driver, run, host } = rig();
+    expect(driver.vitalHolds()).toEqual([]); // no scenario
+    const d = doc([
+      { id: 'tachy', to: 'b', when: { any: [{ vital: { var: 'hr', op: '>', value: 100, forS: 10 } }, { manual: { label: 'Call it' } }] } },
+      { id: 'desat', to: 'c', when: { vital: { var: 'spo2', op: '<', value: 50 } } },
+    ]);
+    expect(driver.load(d).ok).toBe(true);
+    await run(100);
+    expect(driver.vitalHolds()).toMatchObject([
+      { transitionId: 'tachy', key: 'tachy.0', variable: 'hr', op: '>', threshold: 100, value: 80, met: false, heldS: 0, forS: 10, fraction: 0 },
+      { transitionId: 'desat', key: 'desat', variable: 'spo2', op: '<', threshold: 50, met: false, heldS: 0, forS: 0, fraction: 0 },
+    ]);
+    driver.host.dispatch({ id: 'x1', issuedBy: 'test', type: 'setTarget', variable: 'hr', value: 130 } as Command);
+    await run(400);
+    const h = driver.vitalHolds()[0]!;
+    expect(h).toMatchObject({ value: 130, met: true });
+    expect(h.value).toBe(driver.runner?.value('hr'));
+    expect(h.heldS).toBeGreaterThan(3);
+    expect(h.fraction).toBeCloseTo(h.heldS / 10, 9);
+    // Read-only: reading changes nothing, and a caller's edits do not reach the runner
+    const before = driver.runner?.getState();
+    h.heldS = 99;
+    driver.vitalHolds().length = 0;
+    expect(driver.runner?.getState()).toEqual(before);
+    expect(driver.vitalHolds()[0]?.heldS).toBe(before?.trueFor['tachy.0']);
+    // The bar agrees with the rule: the state stays while fraction < 1 and leaves on the tick the hold completes
+    let last = driver.vitalHolds()[0]!;
+    while (driver.runner?.stateId === 'a') {
+      last = driver.vitalHolds()[0]!;
+      expect(last.fraction).toBeLessThan(1);
+      await run(host.engine.now().tick + 1);
+    }
+    expect(driver.runner?.stateId).toBe('b');
+    expect(last.heldS + 0.02).toBeGreaterThanOrEqual(10 - 1e-6);
+    expect(driver.vitalHolds()).toEqual([]); // b has no vital rule
+  });
 
   it('a position kept across a reload (JSON, a new engine and driver) restores like a bookmark', async () => {
     const a = rig();

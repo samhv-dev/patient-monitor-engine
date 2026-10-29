@@ -2,14 +2,16 @@
 // on the engine (driver, host and run record wired as AppSession wires them) the anaphylaxis and induction cards are
 // judged as the presenter would judge them: treated in time = met, never = not met.
 import { createEngine, DRUGS } from '@pme/engine-core';
-import { createInProcessHub, HostSession, type HostTarget } from '@pme/controller';
+import { createInProcessHub, HostSession, ScenarioView, type HostTarget } from '@pme/controller';
 import { engineOptionsOf, ScenarioDriver, validateScenario, type ScenarioDoc } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
 import { FIXED_ALARM_WORDS } from './alarms.ts';
-import { facts, objectives } from './debrief.ts';
+import { endOf, facts, objectives, steps } from './debrief.ts';
 import { CONDITIONS } from './describe.ts';
 import { emptyRun, RunRecord, type Row, type RunData, type Sample } from './record.ts';
 import { LIBRARY } from './scenarios.ts';
+import { classify } from './teach2/rows.ts';
+import { withStart } from './card-read.ts';
 import anaphylaxis from './showcase/showcase-anaphylaxis.json';
 import haemorrhage from './showcase/showcase-haemorrhage.json';
 import induction from './showcase/showcase-induction.json';
@@ -24,8 +26,9 @@ const known = (ev: string, doc: ScenarioDoc): boolean => {
   return true; // the schema's pattern already limits the rest
 };
 
-/** Run a card on the engine with presses at sim times (or when `at` says so); the record sees what AppSession's does. */
-async function hostRun(raw: unknown, untilS: number, press: (t: number, rec: RunRecord) => string | null): Promise<RunRecord> {
+/** Run a card on the engine with presses at sim times (or when `at` says so); the record sees what AppSession's does
+ *  (and `view`, when given, what a ControllerSession's ScenarioView does). */
+async function hostRun(raw: unknown, untilS: number, press: (t: number, rec: RunRecord) => string | null, view?: ScenarioView): Promise<RunRecord> {
   const v = validateScenario(raw);
   if (!v.ok) throw new Error(v.errors.join('; '));
   const eo = engineOptionsOf(v.doc, 7);
@@ -38,7 +41,7 @@ async function hostRun(raw: unknown, untilS: number, press: (t: number, rec: Run
   hs.addTransport(hub.connect());
   const tap = hub.connect();
   const rec = new RunRecord(() => ({ patient: 'test', weightKg: v.doc.patient?.weightKg ?? 70 }));
-  tap.onMessage((m) => m.kind === 'event' && m.body.forEach((e) => rec.wire(e)));
+  tap.onMessage((m) => m.kind === 'event' && m.body.forEach((e) => (rec.wire(e), view?.onEvent(e))));
   engine.on((e) => rec.engine(e));
   const settle = () => new Promise((r) => setTimeout(r, 0));
   await hs.submit({ id: 'load', issuedBy: 'instructor', type: 'scenario', action: 'load', doc: v.doc } as never);
@@ -140,6 +143,50 @@ describe('the showcase objectives as rules', () => {
   }, 300_000);
 });
 
+/** The record as the record kept it before IP8: without the fields IP8 adds to a row. */
+const before = (d: RunData): RunData => ({ ...d, rows: d.rows.map(({ tr: _a, by: _b, markKind: _c, note: _d, batch: _e, ...r }) => r) });
+/** The haemorrhage card pressed from its own states: oxygen, the tube, then CPR 10 s into PEA, the surgeon's volume and
+ *  epinephrine; the junctional rhythm and PEA are left to their rules. */
+const haemPresses = () => {
+  const done = new Set<string>();
+  return (t: number, rec: RunRecord): string | null => {
+    const at = (id: string) => rec.data.rows.find((r) => r.ev === `state:${id}`)?.t;
+    const go = (tr: string, ok: boolean) => (ok && !done.has(tr) ? (done.add(tr), tr) : null);
+    const pea = at('pea');
+    const cpr = at('cpr');
+    return go('oxygen', t >= 20) ?? go('intubate-o2', t >= 60) ?? go('cpr-pea', pea !== undefined && t >= pea + 10) ?? go('volume', cpr !== undefined && t >= cpr + 20)
+      ?? go('epi-running', at('cprRunning') !== undefined && t >= (at('cprRunning') as number) + 10);
+  };
+};
+
+describe('IP8: the new record fields change no verdict', () => {
+  it('MH and haemorrhage on the engine: objectives() equals its output on the record without the new fields; the presses are taken steps', async () => {
+    const mhRun = await hostRun(mh, 700, mhPresses((t, _r, at) => t >= (at('recovering') as number) + 8));
+    const haemRun = await hostRun(haemorrhage, 800, haemPresses());
+    for (const [name, rec] of [['MH', mhRun], ['haemorrhage', haemRun]] as const) {
+      const d = rec.data;
+      expect(d.rows.some((r) => r.tr !== undefined), name).toBe(true);
+      expect(objectives(d), name).toEqual(objectives(before(d)));
+      expect(steps(before(d)), `${name}: a record without the fields has no steps`).toEqual([]);
+      // every press that moved the card is a taken step at the time its state was entered, and only those are
+      const pressed = d.rows.filter((r) => r.by === 'press').map((r) => [r.tr, r.t]);
+      expect(steps(d).filter((x) => x.takenT !== null).map((x) => [x.id, x.takenT]).sort(), name).toEqual(pressed.sort());
+    }
+    expect(mhRun.data.rows.filter((r) => r.by === 'press').map((r) => r.tr)).toEqual(['premed', 'preox', 'induce', 'intubate', 'surgery', 'crisis-earlySigns', 'dant', 'normo']);
+    // the table: every press, and the one step an objective still asks for (objective 4: dantrolene again after the
+    // ventilation is back); the alternatives not chosen (induction without pre-oxygenation, the crisis buttons of the
+    // stages it was not called from, the other treatments) are left out
+    expect(steps(mhRun.data).map((x) => [x.id, x.status])).toEqual([
+      ['premed', 'taken'], ['preox', 'taken'], ['induce', 'taken'], ['intubate', 'taken'], ['surgery', 'taken'], ['crisis-earlySigns', 'taken'],
+      ['dant', 'taken'], ['normo', 'taken'], ['dant-normoventilated', 'not done'],
+    ]);
+    expect(haemRun.data.rows.filter((r) => r.by === 'press').map((r) => r.tr)).toEqual(['oxygen', 'intubate-o2', 'cpr-pea', 'volume', 'epi-running']);
+    // the presses only: the junctional rhythm came by its own rule, and no objective asks for an untaken step here (the
+    // tube from Bleeding was the alternative to the one taken; ROSC never came, so "stop CPR" is not yet asked for)
+    expect(steps(haemRun.data).map((x) => [x.id, x.status])).toEqual([['oxygen', 'taken'], ['intubate-o2', 'taken'], ['cpr-pea', 'taken'], ['volume', 'taken'], ['epi-running', 'taken']]);
+  }, 300_000);
+});
+
 /** A recorded run of `doc` with these rows and samples (the rule is the card's own). */
 const recorded = (doc: unknown, rows: Row[], samples: Array<Partial<Sample> & { t: number }>): RunData => ({
   ...emptyRun('M 35 y 80 kg', 80, 0), doc: doc as never, rows,
@@ -201,4 +248,32 @@ describe('E132: the objectives of the two demo cards after the clinical review',
     for (const id of ['cpr', 'cprRunning', 'postShock1', 'postShock1Running']) expect(labels(id), id).toContain('Rhythm check');
     for (const id of ['postShock2', 'postShock2Running']) expect(labels(id), id).toContain('Rhythm check: pulse back, stop CPR');
   });
+});
+
+describe('IP9 (ruling 1): the ACTION list and the Debrief steps table read a step the same way', () => {
+  /** A step row of the ACTION list as a Debrief status: taken (or out of order), failed, overdue, fired by its rule, else open. */
+  const asStatus = (r: ReturnType<typeof classify>['list'][number]): string =>
+    r.look === 'taken' ? (r.outOfOrder ? 'out of order' : 'taken') : r.look === 'failed' || r.look === 'fired' ? r.look : r.overdue !== null ? 'overdue' : 'open';
+  it('MH and haemorrhage on the engine: every step the Debrief lists has that status in the ACTION list (not done = an open row), and every taken, failed or overdue row is in the Debrief with it', async () => {
+    const runs = [['MH', mh, 700, mhPresses((t, _r, at) => t >= (at('recovering') as number) + 8)], ['haemorrhage', haemorrhage, 800, haemPresses()]] as const;
+    for (const [name, raw, until, press] of runs) {
+      const sv = new ScenarioView();
+      const d = (await hostRun(raw, until, press, sv)).data;
+      const simT = endOf(d);
+      // as the view reads it (teach2/course.ts): the history with the initial state's entry from the record
+      const start = d.rows.find((r) => r.ev === `state:${(sv.doc as ScenarioDoc).initialState}`)?.t ?? 0;
+      const board = classify({
+        doc: sv.doc as ScenarioDoc, stateId: sv.stateId as string, history: withStart(sv.doc as ScenarioDoc, sv.history, start), enteredT: sv.enteredT, simT, inState: sv.timeInState(simT),
+        paused: false, log: [], record: d, values: undefined, holds: null, base: new Map(),
+      });
+      const panel = new Map<string, string>();
+      for (const r of [...board.finished, ...board.list]) if (r.row.kind === 'step') panel.set(r.row.tr.id, asStatus(r));
+      const report = steps(d);
+      expect(report.length, name).toBeGreaterThan(0);
+      for (const x of report) expect([name, x.id, panel.get(x.id)]).toEqual([name, x.id, x.status === 'not done' ? 'open' : x.status]);
+      const listed = new Map(report.map((x) => [x.id, x.status]));
+      // a step its own rule fired (haemorrhage junctional) is no taken step in either: amber "fired" on the panel, unlisted here
+      for (const [id, st] of panel) if (st !== 'open') expect([name, id, listed.get(id)]).toEqual([name, id, st === 'fired' ? undefined : st]);
+    }
+  }, 300_000);
 });

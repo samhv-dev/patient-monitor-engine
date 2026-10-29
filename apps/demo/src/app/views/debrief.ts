@@ -1,14 +1,16 @@
 // Debrief: the report of the run, read from the session's run record — the case, the objectives judged by their rules,
 // the measured facts, trend charts drawn as inline SVG, drugs and fluids, the timeline (the discarded course of a
-// return to a bookmark included, struck through as undone), bookmarks, the instructor's notes and a one-row-per-minute
+// return to a bookmark included, struck through as undone; a staged delivery on one line), the card's steps with
+// their status (Instructor v2, IP8), bookmarks with a mark's kind and note, the instructor's notes and a one-row-per-minute
 // appendix; page 1 reads the key times, the course strip and the objectives, page 2 the key moments with what the
 // monitor showed (Debrief redesign B), and a learner handout without verdicts prints on its own (E51). The browser PRINTS it to PDF (debrief.css: A4 portrait, the app's chrome hidden, no colour needed to read
 // it; the footer and the build on every page); no PDF library. "Download the record (JSON)" saves the same data. Opened
 // from the session bar; when a scenario reaches a state with no way out, a toast says the debrief is ready.
+import type { MarkKind } from '@pme/controller';
 import './debrief.css';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
-import { axisRange, drugTotals, endOf, facts, mmss, objectives, perMinute, span, trendMeta } from '../debrief.ts';
+import { axisRange, drugTotals, endOf, facts, mmss, objectives, perMinute, span, steps, trendMeta, type Step, type StepStatus } from '../debrief.ts';
 import { debriefJson } from '../debrief-export.ts';
 import { keyMoments, keyTimes, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
 import { LAB_KEYS, TREND_KEYS, type Row, type RunData, type TrendKey } from '../record.ts';
@@ -47,6 +49,40 @@ const undoneText = (r: Row): string => (r.undone ? ` — undone by return ${r.un
  *  event, and not the scenario's load. Printed grey, its words unchanged (class `db-setup`: the app's own `.setup` is
  *  the Start screen's card). */
 const setup = (r: Row): boolean => (r.kind === 'action' || r.kind === 'remote' || r.kind === 'scenario') && !r.ev && !r.text.startsWith('Scenario loaded: ');
+
+/** The steps table's status words (`StepStatus`), each with a glyph so no colour is needed to read it. */
+const STEP_WORDS: Readonly<Record<StepStatus, string>> = { taken: '✓ taken', 'out of order': '✓ out of order', failed: '✗ failed', overdue: '! overdue', 'not done': '– not done' };
+const MARK_WORDS: Readonly<Record<Exclude<MarkKind, 'stage'>, string>> = { good: 'good', bad: 'bad', discuss: 'discuss' };
+/** The card's steps taken, and those not taken that an objective asks for (debrief.ts `steps`; an alternative not
+ *  chosen is not listed), one row each, in the card's order within each stage entered: the stage and its first entry on
+ *  the stage's first row, the order due, the button's words, when it was taken (and its place among the stage's taken
+ *  steps), and its status. */
+function stepsTable(ss: Step[], d: RunData): HTMLElement {
+  const label = (id: string) => d.doc?.states.find((s) => s.id === id)?.label ?? id;
+  return h('table', { class: 'db-table db-steps' },
+    h('thead', {}, h('tr', {}, ...['Stage', 'n', 'Step', 'Taken (order)', 'Status'].map((c) => h('th', { scope: 'col' }, c)))),
+    h('tbody', {}, ...ss.map((x, i) => h('tr', { 'data-status': x.status, ...(ss[i - 1]?.stateId !== x.stateId ? { class: 'db-stage' } : {}) },
+      h('td', {}, ss[i - 1]?.stateId === x.stateId ? '' : `${label(x.stateId)} · ${mmss(x.dueT)}`),
+      h('td', { class: 'num' }, String(x.n)), h('td', {}, x.label),
+      h('td', { class: 'num' }, x.takenT === null ? '–' : `${mmss(x.takenT)} (${x.order})`),
+      h('td', {}, STEP_WORDS[x.status], x.ruleT !== undefined ? ` (its rule, ${mmss(x.ruleT)})` : '')))));
+}
+/** The timeline's rows, a staged delivery's items on one line (each item keeps its own row in the record). */
+function timelineRows(d: RunData): HTMLElement[] {
+  const line = (r: Row, text: string, isSetup: boolean) => h('tr', { 'data-kind': r.kind, ...(r.undone ? { class: 'undone' } : isSetup ? { class: 'db-setup' } : {}) },
+    h('td', { class: 'num' }, mmss(r.t)), h('td', {}, KIND[r.kind]), h('td', {}, text + undoneText(r)));
+  const done = new Set<string>();
+  return d.rows.flatMap((r) => {
+    const b = r.batch?.id;
+    if (b === undefined) return [line(r, r.text, setup(r))];
+    if (done.has(b)) return [];
+    done.add(b);
+    const items = d.rows.filter((x) => x.batch?.id === b);
+    return [line(r, `Delivered together: ${items.map((x) => x.text).join('; ')}`, items.every(setup))];
+  });
+}
+/** A bookmark's line: its time and words, a mark's kind and note, and its undoing. */
+const markLine = (r: Row): string => `${mmss(r.t)} ${r.text}${r.markKind ? ` · ${MARK_WORDS[r.markKind]}` : ''}${r.note ? `: “${r.note}”` : ''}${undoneText(r)}`;
 
 /** A mark on a chart, one per key moment: a thin dashed line with a shape on top, ■ team (blue), ● patient (vermillion),
  *  │ scenario (grey), and the moment's number (the numbers of Key moments and the course strip). */
@@ -249,6 +285,7 @@ export function debriefView(session: AppSession, link: Link): View {
     const meds = d.rows.filter((r) => r.ev?.startsWith('drug:') || r.ev === 'fluid');
     const totals = drugTotals(d);
     const marks = d.rows.filter((r) => r.kind === 'bookmark' || r.kind === 'restore');
+    const ss = steps(d);
     const ms = keyMoments(d);
     const kt = keyTimes(d, ms);
     const tiles = kt.map((k) => tile(k, ms)).filter((x): x is HTMLElement => x !== null);
@@ -280,12 +317,12 @@ export function debriefView(session: AppSession, link: Link): View {
           h('tbody', {}, ...meds.map((r) => h('tr', r.undone ? { class: 'undone' } : {}, h('td', { class: 'num' }, mmss(r.t)), h('td', {}, r.text + undoneText(r))))))
         : h('p', { class: 'muted' }, 'No drugs or fluids were given.'),
         totals.length ? h('ul', { class: 'db-totals' }, ...totals.map((x) => h('li', {}, `${drugName(x.drugId)}: ${x.total} in ${x.n} ${x.n === 1 ? 'bolus' : 'boluses'}`))) : null),
+      ...(ss.length ? [section('steps', 'Steps on the card', h('p', { class: 'db-subhead' }, 'What the record shows: each step in the card’s order and when it was taken; it does not grade the person'), stepsTable(ss, d))] : []),
       section('timeline', 'Timeline', h('table', { class: 'db-table db-timeline' },
         h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Time'), h('th', { scope: 'col' }, 'Kind'), h('th', { scope: 'col' }, 'Event'))),
-        h('tbody', {}, ...d.rows.map((r) => h('tr', { 'data-kind': r.kind, ...(r.undone ? { class: 'undone' } : setup(r) ? { class: 'db-setup' } : {}) },
-          h('td', { class: 'num' }, mmss(r.t)), h('td', {}, KIND[r.kind]), h('td', {}, r.text + undoneText(r))))))),
+        h('tbody', {}, ...timelineRows(d)))),
       section('bookmarks', 'Bookmarks', marks.length
-        ? h('ul', {}, ...marks.map((r) => h('li', r.undone ? { class: 'undone' } : {}, `${mmss(r.t)} ${r.text}${undoneText(r)}`)))
+        ? h('ul', {}, ...marks.map((r) => h('li', r.undone ? { class: 'undone' } : {}, markLine(r))))
         : h('p', { class: 'muted' }, 'No bookmarks.')),
       runFoot(),
       section('minutes', 'Appendix: one row per minute', minutes(d)),

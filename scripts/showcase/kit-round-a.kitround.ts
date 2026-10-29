@@ -22,6 +22,12 @@ const REACT_S = Number(process.env.KITROUND_REACT_S ?? 2);
  *  shot so the sim clock does not move; the pulse-check shot waits 6 s of sim into the check). Unset = no shots, the
  *  measured run as before. */
 const SHOTS = process.env.KITROUND_SHOTS ?? '';
+/** IP9 (Instructor v2): PME_PANEL=teach2 runs the case through the Instructor v2 view (#/teach2) from the Load on: the card's
+ *  buttons are its ACTION rows, the objective's tick its judged row, the bookmark its "discuss" mark, the speed, pause and
+ *  fast-forward its header, the Devices and Defib tabs its sheets (today's tab bodies), Debrief its dock link. The Load
+ *  itself (and the "All alarms on" before it) stays on today's Scenario tab: Instructor v2 has no library. Unset = today's
+ *  view, as before. */
+const PANEL: 'teach' | 'teach2' = process.env.PME_PANEL === 'teach2' ? 'teach2' : 'teach';
 const KIT_SHA = (() => {
   try {
     return /Commit:\s+([0-9a-f]{8})/.exec(readFileSync(join(process.env.SHOWCASE_KIT ?? '', 'VERSION.txt'), 'utf8'))?.[1] ?? 'unknown';
@@ -70,6 +76,8 @@ class Run {
   phones: Page[] = [];
   probe: PhoneProbe | null = null;
   loads: number[] = [];
+  /** PME_PANEL=teach2: true once the case is loaded and the run has moved to the Instructor v2 view. */
+  v2 = false;
   constructor(readonly page: Page, readonly browser: Browser, name: string) {
     this.r = {
       case: name, browser: test.info().project.name, kit: KIT_SHA, server: process.env.SHOWCASE_SERVER ?? '', base: process.env.SHOWCASE_BASE ?? '', reactS: REACT_S, phonesN: N_PHONES,
@@ -105,18 +113,30 @@ class Run {
   until = (id: string, maxSimS: number) => this.waitSim(maxSimS, async () => (await stateId(this.page)) === id);
   untilAlarm = (re: RegExp, after: number, maxSimS: number) => this.waitSim(maxSimS, async () => (await alarms(this.page)).some((a) => a.t >= after && re.test(a.text)));
   react = () => this.page.waitForTimeout(REACT_S * 1000);
+  /** The instructor view the run goes back to (#/teach, or #/teach2 under PME_PANEL=teach2 once loaded). */
+  home = () => (this.v2 ? '#/teach2' : '#/teach');
   async speed(k: 1 | 2 | 4 | 8): Promise<void> {
-    await this.page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: `×${k}` }).click();
+    if (this.v2) {
+      const head = this.page.locator('.ip2-head');
+      await head.locator('button.ip2-speed').click();
+      await head.getByRole('button', { name: `Speed ×${k}`, exact: true }).click();
+    } else await this.page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: `×${k}` }).click();
     await this.page.waitForTimeout(300);
   }
   async pauseToggle(): Promise<void> {
-    await this.page.locator('.sessionbar').getByRole('button', { name: /^(Pause|Resume)$/ }).click();
+    if (this.v2) await this.page.locator('.ip2-head button.ip2-pill').click();
+    else await this.page.locator('.sessionbar').getByRole('button', { name: /^(Pause|Resume)$/ }).click();
     await this.page.waitForTimeout(400);
   }
+  /** The card's button `label`: today's Running-scenario button, or Instructor v2's open ACTION row of that title. */
+  cardButton = (label: string) => this.v2
+    ? this.page.locator('.ip2-action .ip2-rows:not(.ip2-finished-list) button.ip2-row', { has: this.page.locator('.ip2-row-title').getByText(label, { exact: true }) })
+    : this.page.locator('section[aria-label="Running scenario"]').getByRole('button', { name: label, exact: true });
   /** Press a card button by its exact label; a press that left the state unchanged while the button is still there is
    *  recorded as NOT TAKEN and pressed once more (the Stage 10 dry run's lost presses). */
   async press(label: string, expectState?: string): Promise<number> {
-    const btn = this.page.locator('section[aria-label="Running scenario"]').getByRole('button', { name: label, exact: true });
+    if (this.v2 && (await this.page.evaluate(() => location.hash)) !== '#/teach2') await this.teachTab('scenario');
+    const btn = this.cardButton(label);
     const before = await stateId(this.page);
     await btn.click();
     const t = await this.sim();
@@ -144,7 +164,10 @@ class Run {
     const w = Date.now();
     const s0 = await this.sim();
     const k0 = await this.speedNow();
-    if (via === 'button') await p.locator('.sessionbar').getByRole('group', { name: 'Fast-forward' }).getByRole('button', { name: `Fast-forward ${min} min` }).click();
+    if (via === 'button' && this.v2) {
+      // the Fast forward box in STATE (the owner's option G)
+      await p.locator('.ip2-ff').getByRole('button', { name: `Fast forward by ${min} min`, exact: true }).click();
+    } else if (via === 'button') await p.locator('.sessionbar').getByRole('group', { name: 'Fast-forward' }).getByRole('button', { name: `Fast-forward ${min} min` }).click();
     else await p.evaluate((v) => (window as unknown as Hook).__pmeApp.link.send({ type: 'time', action: 'jump', value: v }), min * 60);
     await p.locator('.ff-veil.on').waitFor({ timeout: 10_000 }).catch(() => undefined);
     await p.locator('.ff-veil.on').waitFor({ state: 'detached', timeout: 120_000 }).catch(async () => p.locator('.ff-veil.on').waitFor({ state: 'hidden', timeout: 60_000 }));
@@ -161,6 +184,23 @@ class Run {
     return span;
   }
   async teachTab(tab: 'scenario' | 'devices' | 'drugs' | 'defib'): Promise<void> {
+    if (this.v2) {
+      // Instructor v2: the Scenario tab is ACTION itself (any sheet closed); Devices and Defib are its sheets
+      const p = this.page;
+      if ((await p.evaluate(() => location.hash)) !== '#/teach2') {
+        await p.evaluate(() => (location.hash = '#/teach2'));
+        await p.waitForTimeout(800);
+      }
+      if (tab === 'scenario') {
+        const close = p.locator('.ip2-sheets .ip2-sheet-close');
+        for (const b of await close.all()) if (await b.isVisible()) await b.click();
+      } else {
+        const tool = p.locator(`.ip2-dock-tools button.ip2-tool[data-sheet=${tab === 'drugs' ? 'drug' : tab}]`);
+        if ((await tool.getAttribute('aria-pressed')) !== 'true') await tool.click();
+      }
+      await p.waitForTimeout(300);
+      return;
+    }
     if (!(await this.page.evaluate(() => location.hash)).startsWith('#/teach')) {
       await this.page.evaluate(() => (location.hash = '#/teach'));
       await this.page.waitForTimeout(800);
@@ -169,6 +209,10 @@ class Run {
     await this.page.waitForTimeout(300);
   }
   alarmButton = () => this.page.locator('.alarm-count').innerText().then((s) => s.trim());
+  /** The instructor panel in use (IP9 review M2: both views live in the DOM): today's, or the open Instructor v2 sheet. */
+  panel = () => (this.v2 ? this.page.locator('.ip2-sheets .ip2-sheet:not([hidden])') : this.page.locator('#teach-panel'));
+  /** The Debrief link: today's session bar, or the Instructor v2 dock. */
+  debriefLink = () => (this.v2 ? this.page.locator('.ip2-dock a.ip2-debrief') : this.page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }));
 
   /** The QR moment: N_PHONES emulated phones join the session `code` (before any case is loaded). */
   async joinPhones(code: string): Promise<void> {
@@ -228,6 +272,11 @@ class Run {
     if (await confirm.waitFor({ timeout: 1500 }).then(() => true, () => false)) await confirm.click();
     await p.locator('.toasts').getByText(`Scenario loaded: ${title}`).waitFor({ timeout: 15_000 });
     this.w0 = Date.now();
+    this.r.setup.panel = PANEL;
+    if (PANEL === 'teach2') {
+      this.v2 = true;
+      await this.teachTab('scenario');
+    }
     await record(p);
     await p.evaluate(() => {
       const w = window as unknown as Hook & { __stIv?: number };
@@ -243,7 +292,8 @@ class Run {
       }, 100);
     });
     if (speed !== 1 && !o.cardOrder) await this.speed(speed);
-    const mark = () => p.locator('.sessionbar').getByRole('button', { name: 'Bookmark' }).click();
+    // Instructor v2 has no plain bookmark: its marks are; the neutral one ("discuss") saves the same restore point
+    const mark = () => (this.v2 ? p.locator('.ip2-dock').getByRole('button', { name: 'Mark: discuss', exact: true }).click() : p.locator('.sessionbar').getByRole('button', { name: 'Bookmark' }).click());
     // A1/A2 bookmarked right after Load; the cue cards (kit round B) say Load · All alarms on · Bookmark ('after-alarms')
     if (bookmark === 'before-alarms') await mark();
     this.t0 = await this.sim();
@@ -277,7 +327,8 @@ class Run {
   /** Scenario tab: tick the running card's objective whose words match (the instructor's judgement, E54/E52). */
   async tick(re: RegExp): Promise<void> {
     await this.teachTab('scenario');
-    await this.page.locator('section[aria-label="Running scenario"] ul[aria-label="Objectives"] li').filter({ hasText: re }).locator('input[type=checkbox]').check();
+    if (this.v2) await this.page.locator('.ip2-action .ip2-rows:not(.ip2-finished-list) button.ip2-row[data-kind=judged]', { has: this.page.locator('.ip2-row-title', { hasText: re }) }).click();
+    else await this.page.locator('section[aria-label="Running scenario"] ul[aria-label="Objectives"] li').filter({ hasText: re }).locator('input[type=checkbox]').check();
     await this.row(`objective ticked: ${re.source}`);
   }
 
@@ -286,7 +337,7 @@ class Run {
   async debrief(o: { json?: boolean } = {}): Promise<Row> {
     const p = this.page;
     const at = await this.sim();
-    await p.locator('.sessionbar').getByRole('link', { name: 'Debrief' }).click();
+    await this.debriefLink().click();
     const view = p.locator('[data-view=debrief]');
     await view.getByRole('heading', { level: 1, name: 'Debrief' }).waitFor({ timeout: 15_000 });
     await p.waitForTimeout(1500);
@@ -306,7 +357,7 @@ class Run {
       await dl.saveAs(join(OUTDIR, `debrief-${slug(this.r.case)}-${this.r.browser}.json`));
       d.json = `debrief-${slug(this.r.case)}-${this.r.browser}.json (${dl.suggestedFilename()})`;
     }
-    await p.evaluate(() => (location.hash = '#/teach'));
+    await p.evaluate((h) => (location.hash = h), this.home());
     await p.waitForTimeout(1000);
     await this.teachTab('scenario');
     return d;
@@ -1070,7 +1121,7 @@ test('session mechanics: reload survival, Silence on the Saadat-style skin, the 
     const tAl = await R.waitSim(240, async () => ((await page.evaluate(() => (window as unknown as Hook).__pmeApp.link.alarms?.active?.length ?? 0)) > 0));
     await R.row('an alarm is active', { alarmButton: await R.alarmButton() });
     await R.teachTab('devices');
-    R.r.measures.pauseButton = { disabled: await page.getByRole('button', { name: 'Pause alarms', exact: true }).isDisabled(), why: await page.locator('#alarm-pause-why').innerText().catch(() => '') };
+    R.r.measures.pauseButton = { disabled: await page.getByRole('button', { name: 'Pause alarms', exact: true }).isDisabled(), why: await R.panel().locator('[id$="alarm-pause-why"]').innerText().catch(() => '') };
     await page.getByRole('button', { name: 'Silence', exact: true }).click();
     const tSil = await R.sim();
     const silence: Row[] = [];
@@ -1642,7 +1693,7 @@ test('Q1 FX-12 probe: Restart patient, then Return here; does the restored case 
  *  report printed (Chromium: PDF and its page count; WebKit: print-media screenshot) and the learner handout (E51). */
 async function a4Debrief(R: Run, page: Page, key: string): Promise<void> {
   await R.debrief({ json: true });
-  await page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }).click();
+  await R.debriefLink().click();
   const view = page.locator('[data-view=debrief]');
   await view.getByRole('heading', { level: 1, name: 'Debrief' }).waitFor({ timeout: 15_000 });
   await view.getByRole('textbox', { name: 'Run by' }).fill('Live demo, 3 November');
@@ -1665,7 +1716,7 @@ async function a4Debrief(R: Run, page: Page, key: string): Promise<void> {
   }
   await page.evaluate(() => document.querySelector('.debrief')?.removeAttribute('data-print'));
   await page.emulateMedia({ media: 'screen' });
-  await page.evaluate(() => (location.hash = '#/teach'));
+  await page.evaluate((h) => (location.hash = h), R.home());
   await page.waitForTimeout(800);
 }
 
@@ -1706,7 +1757,7 @@ test('A4 MH (E119): the induction sequence, early call, three 5-min fast-forward
     await R.ff(5);
     // E132 (clinical review finding 1): the EtCO₂ climbing back at normal ventilation is MH not controlled: second dose
     await R.row('after span 2: the EtCO₂ climbing back at normal ventilation');
-    if (SHOTS) await page.locator('section[aria-label="Running scenario"]').getByRole('button', { name: DOSE2, exact: true }).scrollIntoViewIfNeeded().catch(() => undefined); // the new button in the shot
+    if (SHOTS) await R.cardButton(DOSE2).scrollIntoViewIfNeeded().catch(() => undefined); // the new button in the shot
     await shot(R, page, 'owr4-1-before-second-dose');
     // owner rc.4 (2026-10-28): the second dose re-applies the crisis ventilation, 20 × 600 at 100 % O₂
     const tDose2 = await R.press(DOSE2, 'dantroleneAgain');

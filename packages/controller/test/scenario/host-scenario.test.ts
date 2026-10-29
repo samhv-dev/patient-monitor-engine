@@ -2,10 +2,11 @@
 // as commandApplied, late joiners get the doc and the current state, bookmarks carry the runner state.
 import { afterEach, describe, expect, it } from 'vitest';
 import { createInProcessHub } from '../../src/transport/in-process.ts';
-import { HostSession } from '../../src/session/host-session.ts';
+import { HostSession, STAGE_LEAD_TICKS } from '../../src/session/host-session.ts';
 import { ControllerSession } from '../../src/session/controller-session.ts';
 import { ScenarioDriver } from '../../src/scenario/driver.ts';
-import type { AppliedResolution, ScenarioEvent, WireEvent } from '../../src/protocol.ts';
+import { StageBuffer } from '../../src/panel/staging.ts';
+import { createStamper, type AppliedResolution, type ScenarioEvent, type WireEvent } from '../../src/protocol.ts';
 import { manualHost } from '../fakes/manual-host.ts';
 import { collect, waitFor } from '../helpers.ts';
 
@@ -75,6 +76,44 @@ describe('scenario over a HostSession', () => {
     await waitFor(() => ctl.scenario.stateId === 'vf');
   });
 
+  // For the record (plan IP1, answer 11 keeps card steps out of the cache, so nothing depends on this). What a scenario
+  // `trigger` staged in one batch with a bolus does today:
+  // - the bolus lands on the batch's tick (arrival + STAGE_LEAD_TICKS); the trigger is applied AT ONCE, on the arrival
+  //   tick (scenario commands go to the hook, which has no stage groups), and the state changes on that tick;
+  // - the new state's onEnter goes out in its OWN stage group (`scenario-n`, no batch stamp), STAGE_LEAD_TICKS after the
+  //   press. Here that is the batch's tick too, only because both groups opened on the same host tick (nothing ran
+  //   between the two arrivals); it is a separate group, so nothing ties it there (plan R4);
+  // - the controller's log names the trigger as an item of the batch's one line; its commandApplied keeps the stamp.
+  it('RECORD (IP1, Q11): a scenario trigger inside a staged batch is applied at once, outside the batch tick', async () => {
+    const { ctl, hub, run, host } = setup();
+    const watcher = hub.connect();
+    const got = collect(watcher);
+    const applied = () => got.flatMap((m) => (m.kind === 'event' ? m.body : [])).filter((e): e is Extract<WireEvent, { type: 'commandApplied' }> => e.type === 'commandApplied').map((e) => ({ tick: e.tick, c: (e.resolved as AppliedResolution).command }));
+    await waitFor(() => ctl.hostOnline);
+    await ctl.send({ type: 'scenario', action: 'load', target: 'acls-vf-witnessed' });
+    await waitFor(() => applied().some((a) => a.c.stageGroup === 'scenario-1')); // the setup batch is in
+    await run(2);
+    const t1 = host.engine.now().tick;
+    const b = new StageBuffer(ctl.peerId);
+    b.stage({ type: 'applyEvent', event: { kind: 'drug', drugId: 'epinephrine', dose: 0.01, unit: 'mg', route: 'iv' } }, 'drug');
+    b.stage({ type: 'scenario', action: 'trigger', target: 'arrest' }, 'step');
+    const acks = await b.commit((c) => ctl.send(c), { batch: true });
+    await waitFor(() => applied().some((a) => (a.c as { rhythm?: string }).rhythm === 'vfCoarse'));
+    const batchId = `${ctl.peerId}-sg1`;
+    expect(acks.map((a) => [a.accepted, a.tick])).toEqual([[true, t1 + STAGE_LEAD_TICKS], [true, t1]]);
+    const bolus = applied().find((a) => a.c.type === 'applyEvent')!;
+    const trigger = applied().find((a) => a.c.type === 'scenario' && a.c.action === 'trigger')!;
+    const onEnter = applied().find((a) => (a.c as { rhythm?: string }).rhythm === 'vfCoarse')!;
+    expect(bolus).toMatchObject({ tick: t1 + STAGE_LEAD_TICKS, c: { stageGroup: batchId, batch: { id: batchId, n: 2 } } });
+    expect(trigger).toMatchObject({ tick: t1, c: { stageGroup: batchId, batch: { id: batchId, n: 2 } } });
+    expect(trigger.c.atTick).toBeUndefined(); // the hook does not resolve the stage group
+    expect(ctl.scenario.enteredT).toBeCloseTo(t1 * 0.02, 6); // the state changed on the press tick
+    expect(onEnter.c.stageGroup).toMatch(/^scenario-\d+$/);
+    expect(onEnter.c.batch).toBeUndefined();
+    expect(onEnter.tick).toBe(t1 + STAGE_LEAD_TICKS);
+    expect(ctl.log.filter((l) => l.commandId === batchId).map((l) => l.text)).toEqual(['staged ×2: event drug epinephrine 0.01 mg iv · scenario trigger arrest']);
+  });
+
   it('an invalid document is refused with the path-level reason', async () => {
     const { ctl } = setup();
     await waitFor(() => ctl.hostOnline);
@@ -95,6 +134,37 @@ describe('scenario over a HostSession', () => {
     expect(late.scenario.doc?.id).toBe('acls-vf-witnessed');
     expect(late.scenario.enteredT).toBe(60);
     expect(late.scenario.paused).toBe(true);
+  });
+
+  it('IP2 marks: kind and note survive commandApplied and the late-join replay; restoreBookmark is unchanged', async () => {
+    const { ctl, hub, run, host, driver } = setup();
+    const watcher = hub.connect();
+    const got = collect(watcher);
+    const marks = (replay: boolean) => got.flatMap((m) => (m.kind === 'event' ? m.body : [])).filter((e): e is Extract<WireEvent, { type: 'commandApplied' }> => e.type === 'commandApplied' && (e.resolved as AppliedResolution).command.type === 'scenario' && ((e.resolved as AppliedResolution).command as { action: string }).action === 'bookmark' && !!(e.resolved as AppliedResolution).replay === replay).map((e) => (e.resolved as AppliedResolution).command);
+    await waitFor(() => ctl.hostOnline);
+    await ctl.send({ type: 'scenario', action: 'load', target: 'acls-vf-witnessed' });
+    await run(10);
+    expect((await ctl.send({ type: 'scenario', action: 'bookmark', kind: 'bad', note: 'late call for help' })).accepted).toBe(true);
+    expect((await ctl.send({ type: 'scenario', action: 'bookmark', target: 'Mark 2', kind: 'good' })).accepted).toBe(true);
+    await waitFor(() => marks(false).length === 2);
+    expect(marks(false)).toMatchObject([
+      { action: 'bookmark', target: 'Bookmark 1', kind: 'bad', note: 'late call for help' }, // the driver's label, the mark's metadata
+      { action: 'bookmark', target: 'Mark 2', kind: 'good' },
+    ]);
+    expect(marks(false)[1]).not.toHaveProperty('note');
+    expect(ctl.bookmarks).toEqual(['Bookmark 1', 'Mark 2']);
+    watcher.send(createStamper(S, 'late-1')({ kind: 'hello', role: 'controller' })); // a late joiner
+    await waitFor(() => marks(true).length === 2);
+    expect(marks(true)).toMatchObject([
+      { target: 'Bookmark 1', kind: 'bad', note: 'late call for help' },
+      { target: 'Mark 2', kind: 'good' },
+    ]);
+    await run(70);
+    expect(driver.runner?.stateId).toBe('vf');
+    const r = await ctl.send({ type: 'scenario', action: 'restoreBookmark', target: 'Bookmark 1' }); // by its label alone
+    expect(r).toMatchObject({ accepted: true, tick: 500 });
+    expect(host.engine.now().tick).toBe(500);
+    expect(driver.runner?.stateId).toBe('stable');
   });
 
   it('bookmarks through the host restore the runner state too', async () => {

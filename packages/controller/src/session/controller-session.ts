@@ -87,6 +87,8 @@ export class ControllerSession {
   private readonly stamp: (b: WireBody) => WireMessage;
   private readonly now: () => number;
   private readonly pending = new Map<string, Pending>();
+  /** Staged deliveries being answered, by batch id: each item's line, in send order, and the answers so far. */
+  private readonly batches = new Map<string, { n: number; items: Map<string, string>; answered: Set<string> }>();
   private readonly seqs = new SeqFilter();
   private readonly fns = new Set<() => void>();
   private readonly offs: Array<() => void>;
@@ -124,7 +126,8 @@ export class ControllerSession {
     const cmd = { ...input, id: input.id ?? `${this.peerId}-${++this.n}`, issuedBy: this.o.issuedBy ?? `controller:${this.peerId}` } as WireCommand;
     return new Promise<AckResult>((resolve, reject) => {
       this.pending.set(cmd.id, { cmd, sentAt: this.now(), resolve, reject, waitedMs: 0 });
-      this.addLog('command', describe(cmd), cmd.id);
+      if (cmd.batch) this.batchItem(cmd.batch, cmd);
+      else this.addLog('command', describe(cmd), cmd.id);
       this.transmit(cmd);
       this.retryTimer ??= setInterval(() => this.retry(), this.o.resendMs ?? COMMAND_RESEND_MS);
     });
@@ -148,6 +151,9 @@ export class ControllerSession {
     for (const off of this.offs) off();
     for (const p of this.pending.values()) p.reject(new Error('session closed'));
     this.pending.clear();
+    // a staged delivery still being answered gets its one line with the answers received so far (IP9 review L7)
+    for (const [id, g] of this.batches) this.batchLine(id, g, ' (no answer: the session closed)');
+    this.batches.clear();
   }
 
   // --- internals ---------------------------------------------------------------------------------------------
@@ -180,8 +186,32 @@ export class ControllerSession {
   private answer(id: string, p: Pending, a: { accepted: boolean; tick: number; reason?: string }): void {
     this.pending.delete(id);
     const r: AckResult = { commandId: id, accepted: a.accepted, tick: a.tick, rttMs: this.now() - p.sentAt, ...(a.reason !== undefined ? { reason: a.reason } : {}) };
-    this.addLog('ack', a.accepted ? `ok (${Math.round(r.rttMs)} ms)` : `rejected: ${a.reason ?? ''}`, id);
+    if (p.cmd.batch) this.batchAnswered(p.cmd.batch.id, id, a);
+    else this.addLog('ack', a.accepted ? `ok (${Math.round(r.rttMs)} ms)` : `rejected: ${a.reason ?? ''}`, id);
     p.resolve(r);
+  }
+
+  /** An item of a staged delivery is sent: no line of its own (the batch gets one). */
+  private batchItem(b: { id: string; n: number }, cmd: WireCommand): void {
+    const g = this.batches.get(b.id) ?? { n: b.n, items: new Map<string, string>(), answered: new Set<string>() };
+    g.items.set(cmd.id, describe(cmd));
+    this.batches.set(b.id, g);
+  }
+
+  /** …and answered: once all n are, ONE `command` line names every item and each refusal. */
+  private batchAnswered(batchId: string, id: string, a: { accepted: boolean; reason?: string }): void {
+    const g = this.batches.get(batchId);
+    if (!g) return;
+    if (!a.accepted) g.items.set(id, `${g.items.get(id) ?? id} (refused: ${a.reason ?? 'no reason given'})`);
+    g.answered.add(id);
+    if (g.answered.size < g.n) return;
+    this.batches.delete(batchId);
+    this.batchLine(batchId, g, '');
+  }
+
+  /** The batch's one `command` line: every item, a refusal named; an item not answered gets `unanswered`. */
+  private batchLine(batchId: string, g: { n: number; items: Map<string, string>; answered: Set<string> }, unanswered: string): void {
+    this.addLog('command', `staged ×${g.n}: ${[...g.items].map(([id, t]) => (g.answered.has(id) ? t : `${t}${unanswered}`)).join(' · ')}`, batchId);
   }
 
   private onStatus(s: TransportStatus): void {
@@ -256,7 +286,8 @@ export class ControllerSession {
       if (c?.type === 'time' && (c.action === 'pause' || c.action === 'resume')) this.hostPaused = c.action === 'pause';
       // A late joiner learns a running fast-forward from the sticky jump (its atTick = where it began)
       if (c?.type === 'time' && c.action === 'jump' && res?.replay && typeof c.value === 'number') this.fastForward = { fromT: (c.atTick ?? e.tick) * 0.02, toT: (c.atTick ?? e.tick) * 0.02 + c.value };
-      if (c?.type === 'scenario' && c.action === 'bookmark' && c.target && !this.bookmarks.includes(c.target)) this.bookmarks = [...this.bookmarks, c.target];
+      // The driver's own stage marks are not the instructor's bookmarks (the marks list shows the instructor's only)
+      if (c?.type === 'scenario' && c.action === 'bookmark' && c.kind !== 'stage' && c.target && !this.bookmarks.includes(c.target)) this.bookmarks = [...this.bookmarks, c.target];
       if (c?.type === 'setRhythm') this.rhythm = c.rhythm;
       const mine = e.commandId.startsWith(`${this.peerId}-`); // our own commands are already logged with their ack
       if (c && !res?.replay && !res?.mirror && !mine) this.addLog('applied', describe(c), e.commandId); // Link traffic is not a log line

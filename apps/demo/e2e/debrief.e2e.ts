@@ -96,6 +96,8 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   expect(objectives).toEqual([['not assessable', '– Not assessable'], ['met', '✓ Observed'], ['not met', '✗ Not observed']]); // E42–E44
   await expect(view.locator('#db-objectives li').nth(1)).toContainText(/Epinephrine \d+ s after the state "Anaphylaxis" \(01:0\d → 01:\d\d; within 2 min 00 s asked\)/);
   await expect(view.locator('.db-chart svg')).toHaveCount(6);
+  // IP8: the card's steps — the button pressed on the kept course is a taken step (the undone first course is not read)
+  await expect(view.locator('#db-steps tbody tr[data-status=taken]')).toHaveText([/^Anaphylaxis · 01:0\d\s*1\s*Give epinephrine 100 µg\s*01:\d\d \(1\)\s*✓ taken$/]);
   // redesign B (B6 b): key times and key moments on this run
   expect(await view.locator('#db-keytimes .db-tile').count()).toBeGreaterThanOrEqual(1);
   expect(await view.locator('#db-moments tbody tr').count()).toBeGreaterThanOrEqual(1);
@@ -114,8 +116,9 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   const [dl] = await Promise.all([page.waitForEvent('download'), view.getByRole('button', { name: 'Download the record (JSON)' }).click()]);
   expect(dl.suggestedFilename()).toMatch(/^debrief-showcase-anaphylaxis-\d{4}-\d\d-\d\d\.json$/);
   const json = readFileSync(await dl.path(), 'utf8');
-  const j = JSON.parse(json) as { schema: string; version: string; build: string; record: { rows: unknown[] }; objectives: Array<{ verdict: { status: string } }> };
+  const j = JSON.parse(json) as { schema: string; version: string; build: string; record: { rows: unknown[] }; objectives: Array<{ verdict: { status: string } }>; steps: Array<{ id: string; status: string }> };
   expect(j.schema).toBe('pme-debrief/2');
+  expect(j.steps.filter((x) => x.status === 'taken').map((x) => x.id)).toEqual(['giveEpi']); // IP8: additive, still /2
   expect(j.version).toMatch(/^\d+\.\d+\.\d+/); // the renderer's version: the footer below is built from it, never written here
   expect(j.objectives.map((o) => o.verdict.status)).toEqual(['not assessable', 'met', 'not met']);
   expect(j.record.rows.length).toBeGreaterThanOrEqual(rows.length); // the run goes on while the view is open (paused on CI WebKit)
@@ -217,6 +220,7 @@ test('a free run prints in at most four pages; its export is pme-debrief/2', asy
   await expect(view.locator('.db-title')).toHaveText('No scenario (free run)');
   await expect(view.locator('#db-pearls .db-pearl')).toHaveCount(4);
   await expect(view.locator('#db-moments')).toHaveCount(0); // B6 (d): no key moment, no page break for them
+  await expect(view.locator('#db-steps')).toHaveCount(0); // IP8: no card, no steps section
   const [dl] = await Promise.all([page.waitForEvent('download'), view.getByRole('button', { name: 'Download the record (JSON)' }).click()]);
   const json = readFileSync(await dl.path(), 'utf8');
   const j = JSON.parse(json) as { schema: string; keyTimes: unknown[]; keyMoments: unknown[] };
@@ -249,11 +253,27 @@ const HAEM = resolve(import.meta.dirname, '../src/app/showcase/showcase-haemorrh
 const MM = 96 / 25.4;
 const VERDICT = /Observed|Not observed|Not assessable|Discuss|✓|✗|◆/;
 
+type StateRow = { kind: string; ev?: string; undone?: number; tr?: string; by?: string };
+type Card = { states: Array<{ id: string; transitions?: Array<{ id: string; to: string; when: unknown }> }> };
+/** IP8: a record made before the record kept how each state was entered, as the record would keep it now — each kept
+ *  state entered by the card's first transition to it from the state before (pressed when it has a button, else by
+ *  its rule), a jump when none leads there — so that the page bounds below are measured with the steps section in. */
+function withSteps(rows: StateRow[], card: Card): void {
+  let prev: string | undefined;
+  for (const r of rows) {
+    if (r.kind !== 'scenario' || !r.ev?.startsWith('state:') || r.undone !== undefined) continue;
+    const id = r.ev.slice('state:'.length);
+    const tr = prev === undefined ? undefined : card.states.find((s) => s.id === prev)?.transitions?.find((t) => t.to === id);
+    if (prev !== undefined) Object.assign(r, tr ? { tr: tr.id, by: JSON.stringify(tr.when).includes('"manual"') ? 'press' : 'rule' } : { by: 'goto' });
+    prev = id;
+  }
+}
 /** The view with a recorded run in place of the live one (its scenario's objectives as the card holds them now): the
  *  simulation paused first, so nothing is added to it; the Debrief opened by its route, not the session-bar link. */
 async function showRecorded(page: Page, run = A31, card = TAMPONADE): Promise<void> {
   const rec = JSON.parse(readFileSync(run, 'utf8')).record;
   const doc = JSON.parse(readFileSync(card, 'utf8'));
+  withSteps(rec.rows, doc);
   rec.doc.objectives = doc.objectives;
   rec.doc.takeHome = doc.takeHome; // rc.3: the owner's take-home lines (the recordings predate them)
   await page.setViewportSize({ width: Math.round(182 * MM), height: 1000 }); // the A4 content width (182 mm)
@@ -296,6 +316,7 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   await expect(view.locator('#db-course rect.db-pulseless')).toHaveCount(1);
   await expect(view.locator('#db-course .db-legend')).toHaveText('■ team action · ● patient event · □ scenario state · numbers match Key moments');
   await expect(view.locator('#db-objectives .db-measure')).toHaveText(['3 s of 10 s', '1 min 30 s of 2 min 00 s', '2 s of 30 s']);
+  expect(await view.locator('#db-steps tbody tr').count(), 'IP8: the steps section is in the report measured below').toBeGreaterThan(0);
 
   // page 2: the key moments with SpO₂ as the monitor showed it (E126: this rc.2 record kept the oximeter's reading through
   // the pulseless span, CPR having begun 3 s after the loss), and the sentence that says what it means
@@ -399,6 +420,7 @@ test('Debrief B on the MH card: page 1 and the handout within one A4 page', asyn
   const view = page.locator('[data-view=debrief]');
   await expect(view.locator('#db-objectives li')).toHaveCount(6);
   await expect(view.locator('#db-keytimes [data-key=recognition]')).toBeVisible(); // the MH recognition objective (E52)
+  expect(await view.locator('#db-steps tbody tr').count(), 'IP8: the steps section is in the report').toBeGreaterThan(0);
   await page.emulateMedia({ media: 'print' });
   await printFontLoaded(page);
   const { page1, printFont } = await printHeights(page);

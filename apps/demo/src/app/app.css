@@ -730,3 +730,43 @@ a.rail-item:hover { color: var(--text-strong); background: color-mix(in srgb, va
 .paused-mark { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); z-index: 5; pointer-events: none; padding: 0.25em 0.8em; font: 700 clamp(28px, 6vmin, 72px)/1 system-ui, sans-serif; letter-spacing: 0.14em; color: #fff; background: rgba(0, 0, 0, 0.75); border: 3px solid #ffb000; border-radius: 6px; }
 .paused-mark[hidden] { display: none; }
 @media print { .paused-mark { display: none !important; } }
+
+/* ---------- Instructor v2 (E127; design docs/plans/instructor-panel-redesign.md §3; the owner's final layout, board "Option G") ----------
+   The frame only; the view's own parts are styled in teach2/teach2.css. The app's top bar is not shown on this route
+   (the view's header carries its Sound switch and Room code; the alarm line under the monitor its count). The view's
+   header 48 px, the stage strip 52 px, then STATE (6 parts) beside ACTION (7 parts), the dock 64 px. STATE's rows: the
+   label and cue box, the Fast forward box, the learners' monitor, the alarm line. The view is a subgrid of the main
+   grid, so the shell's one monitor stage (a sibling of the view, never moved) takes STATE's monitor cell; STATE's lifted
+   background is one panel behind its four rows (.ip2-state-panel). The shell's session bar is hidden on this route
+   (shell.ts OWN_BAR_ROUTES); the rail is the 56-px strip. */
+.app[data-route='teach2'] { grid-template-rows: minmax(0, 1fr) auto; }
+.app.has-rail[data-route='teach2'] { grid-template: 'rail main' minmax(0, 1fr) 'rail foot' auto / var(--rail-w) minmax(0, 1fr); }
+.app[data-route='teach2'] > .topbar { display: none; }
+.main[data-route='teach2'] {
+  grid-template:
+    'head head' 48px
+    'strip strip' 52px
+    'cue action' auto
+    'ff action' auto
+    'stage action' minmax(0, 1fr)
+    'alarm action' auto
+    'dock dock' 64px / minmax(0, 6fr) minmax(0, 7fr);
+}
+.main[data-route='teach2'] > .view[data-view='teach2'] { grid-area: 1 / 1 / -1 / -1; display: grid; grid-template-rows: subgrid; grid-template-columns: subgrid; overflow: hidden; }
+/* the base rule hides the stage off Monitor, Instructor and Ventilator; the stage's id outranks it here. Inside STATE's
+   panel (20 px outer gutter + 14 px padding on the left, 8 + 14 on the right), over the panel's background */
+.main[data-route='teach2'] > #monitor { display: block; position: relative; z-index: 1; margin: 12px 22px 0 34px; border: 1px solid var(--ip2-line, var(--line)); border-radius: 8px; overflow: hidden; }
+.app.has-rail[data-route='teach2'] { --rail-w: var(--rail-strip); }
+.app[data-route='teach2'] .rail { padding: var(--s-3) var(--s-2); }
+.app[data-route='teach2'] .rail :is(.rail-text, .rail-badge) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.app[data-route='teach2'] .rail :is(.rail-brand, .rail-item, .rail-subitem) { justify-content: center; padding: 0; }
+.app[data-route='teach2'] .rail :is(.rail-item, .rail-subitem) { min-height: 40px; min-width: 40px; }
+.app[data-route='teach2'] .rail-ico { display: block; }
+.app[data-route='teach2'] .rail-tools { flex-direction: column; gap: 2px; background: none; box-shadow: none; }
+.app[data-route='teach2'] .rail-sub { flex-direction: column; }
+.app[data-route='teach2'] .rail-subitem { color: var(--text); }
+.app[data-route='teach2'] .rail-subitem[aria-current='page'] { background: var(--surface); }
+.app[data-route='teach2'] .rail-foot { padding: var(--s-3) 0 0; align-items: center; }
+.app[data-route='teach2'] .rail-theme { align-self: center; }
+/* toasts sit above the dock, not over its marks */
+body:has(.app[data-route='teach2']) .toasts { bottom: calc(64px + 40px); }

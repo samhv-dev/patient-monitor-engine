@@ -1,0 +1,58 @@
+/* Instructor v2: the stage strip and the cue box (design §3.2, §3.3, §5; boards "Proposal v6" and "v9 paused"; plan IP5).
+   The tokens are teach2.css's. Every class is `ip2-*` (plan's selector rule). */
+
+/* the stage strip. The chips keep their own width, and no name is cut (IP9, ruling 2: the far-future stages fold into
+   "… n later" instead); when they do not fit, `fit` (strip.ts) tightens the padding. Only the hint shrinks (to
+   nothing). The strip scrolls sideways when a fold is opened, or as a last resort. */
+.ip2-strip { overflow-x: auto; scrollbar-width: none; }
+.ip2-strip::-webkit-scrollbar { display: none; }
+.ip2-chips { display: contents; } /* the chips are the strip's own flex items */
+.ip2-strip-hint { flex: 0 1 auto; min-width: 0; margin-left: auto; padding-left: 16px; overflow: hidden; text-overflow: ellipsis; color: var(--ip2-muted); } /* IP9: muted, 4.5:1 (app-accessibility) */
+.ip2-strip-empty { color: var(--ip2-muted); }
+.ip2-chip { flex: none; display: block; padding: 6px 10px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--ip2-muted); font: inherit; line-height: 16px; white-space: nowrap; }
+button.ip2-chip { cursor: pointer; }
+button.ip2-chip:hover { background: var(--ip2-card); }
+.ip2-chip-name { display: inline-block; vertical-align: top; }
+.ip2-chip-t, .ip2-auto { margin-left: 6px; }
+.ip2-chip-t { font-family: var(--font-plex-mono); font-variant-numeric: tabular-nums; }
+.ip2-current { padding: 6px 12px; border-color: var(--ip2-blue); background: var(--ip2-blue-soft); color: #fff; font-weight: 600; }
+.ip2-strip[data-tight] .ip2-chip:not(.ip2-current) { padding-inline: 7px; }
+.ip2-strip-measure .ip2-strip-hint { flex: none; width: 0; } /* its padding stays: fit counts it */
+.ip2-current .ip2-chip-t { font-weight: 400; color: var(--ip2-blue-text); }
+.ip2-skipped { color: var(--ip2-faint); }
+.ip2-future { border: 1px dashed var(--ip2-control); color: var(--ip2-soft); }
+.ip2-auto { color: var(--ip2-amber); }
+.ip2-fold { border: 1px solid var(--ip2-control); color: var(--ip2-soft); }
+.ip2-now { margin-left: 10px; border: 1px solid var(--ip2-blue); color: var(--ip2-blue-text); } /* the window was moved: back to the current stage */
+.ip2-or { flex: none; padding: 0 6px; color: var(--ip2-muted); }
+.ip2-link { flex: none; width: 14px; height: 1px; background: #4b5563; }
+.ip2-strip[data-tight] .ip2-link { width: 8px; }
+.ip2-link-next { background: var(--ip2-blue); }
+.ip2-link-dashed { height: 0; border-top: 1px dashed #4b5563; background: none; }
+
+/* a past stage's card: its entry time and the return to its start */
+.ip2-pop { position: fixed; z-index: 20; display: flex; flex-direction: column; gap: 6px; max-width: 320px; padding: 10px 12px; border: 1px solid var(--ip2-control); border-radius: 8px; background: var(--ip2-bar); color: var(--ip2-text); box-shadow: 0 8px 24px rgb(0 0 0 / 0.45); white-space: normal; }
+.ip2-pop-head { font-weight: 600; }
+.ip2-pop-time { color: var(--ip2-muted); font-family: var(--font-plex-mono); }
+.ip2-pop-btn { height: 32px; padding: 0 12px; border: 1px solid var(--ip2-blue); border-radius: 6px; background: var(--ip2-blue-soft); color: var(--ip2-blue-text); cursor: pointer; }
+.ip2-pop-btn:disabled { border-color: var(--ip2-control); background: transparent; color: var(--ip2-faint); cursor: not-allowed; }
+.ip2-pop-note { color: var(--ip2-faint); font-size: 11px; }
+
+/* the paused banner (board "v9 paused") */
+
+/* the cue box */
+.ip2-cue { display: flex; flex-direction: column; gap: 8px; }
+.ip2-cue-box { padding: 12px 16px; border: 1px solid var(--ip2-line); border-radius: 8px; background: var(--ip2-card); }
+.ip2-cue-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.ip2-cue-name { font-size: 22px; font-weight: 600; }
+.ip2-cue-none .ip2-cue-name { font-size: 15px; color: var(--ip2-muted); }
+.ip2-cue-clock { font-family: var(--font-plex-mono); font-variant-numeric: tabular-nums; color: var(--ip2-muted); }
+.ip2-cue-clock.ip2-frozen { color: var(--ip2-pause); }
+.ip2-cue-how { font-size: 13px; color: var(--ip2-muted); }
+.ip2-swap { align-self: center; display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border: 1px solid var(--ip2-control); border-radius: 6px; color: var(--ip2-text); font-size: 12px; text-decoration: none; }
+.ip2-swap:hover { background: var(--ip2-bar); }
+.ip2-cue-line { margin-top: 6px; font-size: 13px; color: var(--ip2-soft); }
+.ip2-say { margin: 8px 0 0; padding-left: 12px; border-left: 3px solid var(--ip2-control); font-size: 15px; font-style: italic; color: var(--ip2-soft); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; cursor: pointer; }
+.ip2-say.ip2-say-open { display: block; }
+.ip2-say[hidden], .ip2-held[hidden] { display: none; }
+.ip2-held { margin-top: 6px; font-size: 12px; color: var(--ip2-pause); }

@@ -121,6 +121,25 @@ In the clinical app, the Instructor view's scenario library loads the built-in s
 `ScenarioRunner` from `@pme/controller/scenario` run a validated document against a monitor handle or a headless
 engine; the run log (`runLog`, `replayRunLog`) replays a session exactly.
 
+### How Instructor v2 reads a card
+
+Instructor v2 (`#/teach2`, E127) reads the same `pme-scenario/1` document; nothing new is needed in a card, but these
+parts of it show:
+
+- **Stages.** Every state is a stage of the strip, except a *hop*: a state whose only exit is `afterS` of 2 s or less
+  (the MH card's treatment states). A hop folds into the stage its exit leads to. A stage a rule can enter shows
+  "auto".
+- **Steps.** The current state's `manual` transitions, and `any`/`all` transitions with a `manual` inside, are its
+  numbered steps, in the array order of `transitions` (keys 1–9). The button's label is the step's title, so keep it
+  short and say what it gives.
+- **Automatic rows.** `vital`, `afterS` and `event` transitions show as "A" rows with how near their rule is.
+- **Objectives.** An objective is tied to a step when its rule's `event` is `state:<to>` of the step, or `drug:<id>`
+  for a drug in `<to>`'s `onEnter`; its `eventWithin` window gives the step a timer ("due", then "overdue"), and an
+  `after` that is a `value:` event fades the step until it is true (it stays pressable). An objective without a rule
+  is a "you judge it" row. An untaken step shows as failed only when such an objective still asks for it and the card
+  can no longer reach it; an alternative branch not chosen is never a failure.
+- **`notes`** of a state are the cue box's Say line, so write them as what the instructor says or watches for.
+
 ## Checklist
 
 - `validateScenario(doc).ok` is true and `warnings` is empty.

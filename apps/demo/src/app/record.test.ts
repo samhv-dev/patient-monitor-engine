@@ -58,6 +58,49 @@ describe('the run record', () => {
     expect(r.data.doc?.id).toBe('showcase-induction');
   });
 
+  it('IP8: a state row names its transition and whether a press, its rule or a jump entered it, in either order of arrival', () => {
+    const r = fresh();
+    r.wire(applied(0, { type: 'scenario', action: 'load', doc: induction }));
+    r.wire({ type: 'scenario', t: 0, stateId: 'awake' } as WireEvent); // the first state: no transition, no "by"
+    // the host publishes the state before it acknowledges the press that caused it (the driver evaluates on the press's tick)
+    r.wire({ type: 'scenario', t: 10, stateId: 'induced', transitionId: 'induce' } as WireEvent);
+    r.wire(applied(500, { type: 'scenario', action: 'trigger', target: 'induce' }));
+    r.wire({ type: 'scenario', t: 30, stateId: 'desaturating', transitionId: 'desat' } as WireEvent); // its rule
+    r.wire(applied(2000, { type: 'scenario', action: 'trigger', target: 'rescueBvm-desaturating' })); // waits for its condition
+    r.wire({ type: 'scenario', t: 41, stateId: 'rescuedBvm', transitionId: 'rescueBvm-desaturating' } as WireEvent);
+    r.wire({ type: 'scenario', t: 50, stateId: 'cpr' } as WireEvent); // a jump, acknowledged after its state
+    r.wire(applied(2500, { type: 'scenario', action: 'goto', target: 'cpr' }));
+    r.wire(applied(3000, { type: 'scenario', action: 'goto', target: 'rosc' })); // a jump acknowledged first
+    r.wire({ type: 'scenario', t: 60, stateId: 'rosc' } as WireEvent);
+    r.wire(applied(3500, { type: 'scenario', action: 'trigger', target: 'nothing' })); // a press with no state after it
+    r.wire({ type: 'scenario', t: 80, stateId: 'ventilated', transitionId: 'intubate' } as WireEvent); // the press was of another state
+    const states = r.data.rows.filter((x) => x.ev?.startsWith('state:')).map((x) => [x.t, x.ev, x.tr ?? '', x.by ?? '']);
+    expect(states).toEqual([
+      [0, 'state:awake', '', ''], [10, 'state:induced', 'induce', 'press'], [30, 'state:desaturating', 'desat', 'rule'],
+      [41, 'state:rescuedBvm', 'rescueBvm-desaturating', 'press'], [50, 'state:cpr', '', 'goto'], [60, 'state:rosc', '', 'goto'], [80, 'state:ventilated', 'intubate', 'rule'],
+    ]);
+    // the jumps still print as before, the presses still do not
+    expect(r.data.rows.filter((x) => x.kind === 'scenario' && !x.ev).map((x) => x.text)).toEqual([`Scenario loaded: ${induction.title}`, 'Scenario: jumped to a state', 'Scenario: jumped to a state']);
+  });
+
+  it('IP8: a mark keeps its kind and note; an item of a staged delivery keeps its own row with the delivery; other rows are unchanged', () => {
+    const r = fresh();
+    r.wire(applied(1000, { type: 'scenario', action: 'bookmark', target: 'Mark 1 at 00:20', kind: 'good', note: '  called it early ' }));
+    r.wire(applied(1500, { type: 'scenario', action: 'bookmark', target: 'Mark 2 at 00:30', kind: 'loud', note: '' })); // no such kind
+    r.wire(applied(1600, { type: 'scenario', action: 'bookmark', target: 'Bookmark 1 at 00:32' }));
+    const batch = { id: 'sg-7', n: 2 };
+    r.wire(applied(2000, { type: 'applyEvent', event: { kind: 'drug', drugId: 'epinephrine', dose: 1, unit: 'mg', route: 'iv' }, batch }));
+    r.wire(applied(2000, { type: 'applyEvent', event: { kind: 'fluid', fluid: 'crystalloid', volumeMl: 500, overS: 300 }, batch }));
+    r.wire(applied(2100, { type: 'applyEvent', event: { kind: 'fluid', fluid: 'crystalloid', volumeMl: 500, overS: 300 }, issuedBy: 'scenario', batch: { id: 'x', n: 1 } })); // the card's own: no batch
+    r.wire(applied(2200, { type: 'applyEvent', event: { kind: 'drug', drugId: 'propofol', dose: 2, unit: 'mg/kg', route: 'iv' } }));
+    const [m1, m2, m3, a, b, sc, c] = r.data.rows;
+    expect([m1?.markKind, m1?.note, m1?.mark]).toEqual(['good', 'called it early', 'Mark 1 at 00:20']);
+    expect([m2, m3].map((x) => [x && 'markKind' in x, x && 'note' in x])).toEqual([[false, false], [false, false]]);
+    expect([a?.ev, a?.batch, b?.ev, b?.batch]).toEqual(['drug:epinephrine', batch, 'fluid', batch]); // rules still see each item
+    expect([sc?.kind, sc && 'batch' in sc, c && 'batch' in c]).toEqual(['scenario', false, false]);
+    expect(Object.keys(c as object).sort()).toEqual(['dose', 'ev', 'kind', 't', 'text']); // a row with nothing new is as before
+  });
+
   it('E133: a run of ≥ 3 PVCs is one row at its first PVC, counting its beats; single PVCs and couplets are not', () => {
     const r = fresh();
     const beat = (t: number, pvc: boolean) => r.engine({ type: 'beat', t, seq: 0, origin: pvc ? 'ventricular' : 'sinus', template: pvc ? 'pvc' : 'normal', qrsMs: 90, qtMs: 380, mech: { perfused: true, kSV: 1, svMl: 70, lvetMs: 280 } } as EngineEvent);
@@ -171,6 +214,47 @@ describe('the run record', () => {
     expect(r.data.rows.filter((x) => x.undone === undefined).map((x) => x.kind)).toEqual(expect.arrayContaining(['bookmark', 'restore']));
     expect(r.data.samples.at(-1)?.t).toBeLessThanOrEqual(25);
     expect(r.data.samples.every((s, i, a) => i === 0 || s.t > (a[i - 1] as { t: number }).t)).toBe(true);
+    hs.close();
+  }, 60_000);
+
+  it('IP8 on a real host: a press, a jump, a mark with its kind and note, and a staged delivery reach the record as the host applies them', async () => {
+    const v = validateScenario(induction);
+    if (!v.ok) throw new Error(v.errors.join('; '));
+    const eo = engineOptionsOf(v.doc, 7);
+    const engine = createEngine({ ...eo, mode: 'modeled', truthHz: 1, patient: { ...eo.patient, ...(v.doc.patient?.sensors ? { sensors: v.doc.patient.sensors } : {}) } } as never);
+    const target: HostTarget = { dispatch: (c) => engine.dispatch(c), snapshot: () => engine.snapshot(), restore: (s) => engine.restore(s), on: (f) => engine.on(f), now: () => engine.now(), time: () => {} };
+    let hs: HostSession | null = null;
+    const driver = new ScenarioDriver({ target, submit: (c) => (hs as HostSession).submit(c), publish: (e) => hs?.publish(e) });
+    hs = new HostSession({ session: 'REC456', target: driver.host, scenario: driver.hook, stateIntervalMs: 0 });
+    const hub = createInProcessHub();
+    hs.addTransport(hub.connect());
+    const r = fresh();
+    hub.connect().onMessage((m) => m.kind === 'event' && m.body.forEach((e) => r.wire(e)));
+    engine.on((e) => r.engine(e));
+    const settle = () => new Promise((res) => setTimeout(res, 0));
+    const run = async (to: number) => {
+      for (let t = engine.now().simT; t < to; t += 0.1) (engine.advanceTo(t + 0.1), driver.poll(), await settle());
+    };
+    const cmd = async (c: Record<string, unknown>) => {
+      const a = await hs.submit({ id: `i${Math.random()}`, issuedBy: 'instructor', ...c } as never);
+      await settle();
+      return a.accepted;
+    };
+    expect(await cmd({ type: 'scenario', action: 'load', doc: v.doc })).toBe(true);
+    await run(5);
+    expect(await cmd({ type: 'scenario', action: 'trigger', target: 'induce' })).toBe(true);
+    await run(10);
+    expect(await cmd({ type: 'scenario', action: 'bookmark', target: 'Mark 1 at 00:10', kind: 'discuss', note: 'slow induction' })).toBe(true);
+    const batch = { id: 'sg-ip8', n: 2 };
+    expect(await cmd({ type: 'applyEvent', event: { kind: 'drug', drugId: 'epinephrine', dose: 0.01, unit: 'mg', route: 'iv' }, stageGroup: 'sg-ip8', batch })).toBe(true);
+    expect(await cmd({ type: 'applyEvent', event: { kind: 'fluid', fluid: 'crystalloid', volumeMl: 250, overS: 300 }, stageGroup: 'sg-ip8', batch })).toBe(true);
+    await run(15);
+    expect(await cmd({ type: 'scenario', action: 'goto', target: 'cpr' })).toBe(true);
+    await run(20);
+    const states = r.data.rows.filter((x) => x.ev?.startsWith('state:')).map((x) => [x.ev, x.tr ?? '', x.by ?? '']);
+    expect(states).toEqual([['state:awake', '', ''], ['state:induced', 'induce', 'press'], ['state:cpr', '', 'goto']]);
+    expect(r.data.rows.find((x) => x.kind === 'bookmark')).toMatchObject({ mark: 'Mark 1 at 00:10', markKind: 'discuss', note: 'slow induction' });
+    expect(r.data.rows.filter((x) => x.batch).map((x) => [x.ev, x.batch])).toEqual([['drug:epinephrine', batch], ['fluid', batch]]);
     hs.close();
   }, 60_000);
 
