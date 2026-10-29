@@ -6,8 +6,8 @@
 // shows its entry time and "Return to the start of <stage>", which restores the hidden stage mark the driver places at
 // every stage entry, behind one confirm. Fit (14 stages on the MH card, 15 on the haemorrhage card): the passed stages
 // beyond the KEEP_PAST before the current one fold into one chip "… n earlier", which expands on a press; the current
-// stage and every future stage stay; chips shrink with an ellipsis (their full name in the tooltip) before the strip
-// would overflow, the hint first.
+// stage and every future stage stay; when they still do not fit, the names are capped with an ellipsis (the full name
+// in the tooltip), the hint going first.
 import './state.css';
 import type { ScenarioDoc } from '@pme/controller';
 import { rowsOf, stagesOf, type Stage } from '../card-read.ts';
@@ -17,6 +17,8 @@ import type { Slot, Teach2Ctx } from './ctx.ts';
 
 /** The passed stages kept in view before the current one; earlier ones fold into "… n earlier". */
 export const KEEP_PAST = 2;
+/** The name caps `fit` tries, widest first (state.css `--ip2-cap`). */
+const CAPS = ['none', '12em', '9em', '7em', '6em', '5em', '4.5em', '4em', '3.5em', '3em'];
 
 /** The stages' short names: each label up to its first ':', ';', ',' or ' (' ("Trigger off: sevoflurane stopped, …" →
  *  "Trigger off"), taken one part further while two stages would read the same ("Rhythm check: VF" and "Rhythm check:
@@ -195,6 +197,22 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     const b: HTMLButtonElement = h('button', { type: 'button', class: `ip2-chip ${cls}`, title: g.label, ...attrs, onclick: () => onclick(b) }, ...kids);
     return b;
   };
+  /** The widest name cap at which the chips fit at their own width (state.css); the flex shrink takes what is left. */
+  const fit = () => {
+    if (expanded) return void (el.style.setProperty('--ip2-cap', 'none'), el.removeAttribute('data-tight'), (hint.hidden = true));
+    el.classList.add('ip2-strip-measure');
+    for (const [i, cap] of CAPS.entries()) {
+      el.style.setProperty('--ip2-cap', cap);
+      el.toggleAttribute('data-tight', i > 0);
+      if (el.scrollWidth <= el.clientWidth) break;
+    }
+    el.classList.remove('ip2-strip-measure');
+    // the hint shows whole or not at all
+    hint.hidden = !sv.doc;
+    if (!hint.hidden && hint.scrollWidth > hint.clientWidth) hint.hidden = true;
+  };
+  const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(() => fit()) : null;
+  ro?.observe(el);
   const line = (kind: 'solid' | 'next' | 'dashed') => h('span', { class: `ip2-link ip2-link-${kind}`, 'aria-hidden': 'true' });
 
   const draw = () => {
@@ -206,7 +224,6 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       return;
     }
     if (docV !== sv.docVersion) (docV = sv.docVersion), (expanded = false), (names = stageNames(stagesOf(doc))), closePop();
-    hint.hidden = false;
     const entries = stageEntries(doc, sv.history, sv, link.simT);
     const items = stripModel(doc, sv.stateId, entries, expanded);
     const key = JSON.stringify([docV, expanded, items.map((x) => (x.kind === 'fold' ? x.n : x.kind === 'future' ? x.stages.map((g) => g.id) : [x.stage.id, x.entry?.t, x.kind === 'current' ? x.open : 0]))]);
@@ -236,7 +253,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     if (expanded && stripModel(doc, sv.stateId, entries, false)[0]?.kind === 'fold')
       kids.unshift(h('button', { type: 'button', class: 'ip2-chip ip2-fold', 'aria-expanded': 'true', 'aria-label': 'Fold the earlier stages', onclick: () => ((expanded = false), draw()) }, '‹ fold'), line('solid'));
     chips.replaceChildren(...kids);
-    el.classList.toggle('ip2-strip-open', expanded);
+    fit();
   };
 
   draw();
@@ -244,6 +261,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     refresh: draw,
     destroy: () => {
       offEsc();
+      ro?.disconnect();
       document.removeEventListener('pointerdown', outside);
       closePop();
     },
