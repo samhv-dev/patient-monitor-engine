@@ -201,7 +201,7 @@ None recorded.
 
 ## Tests
 
-259 tests in 63 files; 0 expected failures, 0 skipped.
+262 tests in 63 files; 0 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -244,7 +244,7 @@ None recorded.
 | [`session/cockpit-event.test.ts`](../../packages/controller/test/session/cockpit-event.test.ts) | 2 | 0 | 0 |
 | [`session/controller-session.test.ts`](../../packages/controller/test/session/controller-session.test.ts) | 8 | 0 | 0 |
 | [`session/fx2-no-silent-hang.test.ts`](../../packages/controller/test/session/fx2-no-silent-hang.test.ts) | 7 | 0 | 0 |
-| [`session/host-boundary.test.ts`](../../packages/controller/test/session/host-boundary.test.ts) | 4 | 0 | 0 |
+| [`session/host-boundary.test.ts`](../../packages/controller/test/session/host-boundary.test.ts) | 7 | 0 | 0 |
 | [`session/host-failed-target.test.ts`](../../packages/controller/test/session/host-failed-target.test.ts) | 1 | 0 | 0 |
 | [`session/host-fast-forward.test.ts`](../../packages/controller/test/session/host-fast-forward.test.ts) | 9 | 0 | 0 |
 | [`session/host-presence.test.ts`](../../packages/controller/test/session/host-presence.test.ts) | 1 | 0 | 0 |
