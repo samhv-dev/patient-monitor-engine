@@ -270,11 +270,16 @@ phones [R31 §3]. Tick every line.
       **Documentation** link opens `https://github.com/samhv-dev/patient-monitor-engine/tree/main/docs`, which needs the
       internet; the travel router may have none). In the **same browser window** as the instructor tab, to its right,
       open three tabs and leave them loaded (do not reload them later) [Q1-MH: each page answered 200 and rendered in
-      2.4–6.8 s on this Mac's line]:
-      1. `…/blob/main/docs/model/endocrine-thermal.md#equations-in-words` (stops 1 and 3: the MH bullets of
+      2.4–6.8 s on this Mac's line], **each at the fixed commit `6d19b8b3`, not at `main`**. A `main` tab shows whatever
+      was merged last, so its text could change under you with any merge before Tuesday (a post-demo engine PR
+      regenerates `docs/model/`). 6d19b8b3 is the candidate kit's own commit; its three mechanism pages are the same
+      bytes as at 1b274d5d (#184 changed only `presentation.md`) and describe the same engine as the v1.0.0-rc.4 tag
+      (pre-release), with the DANT_GAIN row as corrected by #189, so the same three links serve either kit
+      [`scratch/reviews/review-rc5-line-for-the-talk.md` §0.3, §6]:
+      1. `…/blob/6d19b8b3/docs/model/endocrine-thermal.md#equations-in-words` (stops 1 and 3: the MH bullets of
          "Equations in words"; for stop 3, Cmd-F `DANT_GAIN` in the Parameters table);
-      2. `…/blob/main/docs/model/pharmacology.md`, Cmd-F `dantrolene` (the drug row: gamma, tables §7 21; M10, TXT);
-      3. `…/blob/main/docs/model/blood.md#equations-in-words` (the potassium and treatments bullets).
+      2. `…/blob/6d19b8b3/docs/model/pharmacology.md`, Cmd-F `dantrolene` (the drug row: gamma, tables §7 21; M10, TXT);
+      3. `…/blob/6d19b8b3/docs/model/blood.md#equations-in-words` (the potassium and treatments bullets).
       Screenshots of the three as they render: `scratch/owner-review/mh-only-programme/stop{1,2,3}-model-*.png`.
 - [ ] **These tabs are not instructor tabs**: they are GitHub pages, they make no session and show no QR. The rule
       "one instructor tab only" still holds.
@@ -395,7 +400,10 @@ below is from the speaker's reference; a size marked [ENG] is an engineering siz
 - Under **Drugs**, dantrolene is **Ce (Dantrolene)** in "drug unit" (reference doses, 1 = 2.5 mg/kg), and the Total
   column reads "200 mg, µg"; under **Blood**, Glucose reads "102 mmol/L and mg/dL" (it is mg/dL). Read the number and
   say the unit yourself [Q1-MH screenshots].
-- The **VA** row (alveolar ventilation, L/min) sits two rows below VCO₂ and VO₂: point at VA alone.
+- The **VA** row (alveolar ventilation, L/min, printed V̇A) sits five rows below the static VO₂ 270 and six below
+  VCO₂ 216 (Respiratory muscle fatigue, PaCO₂ set point, RR (spont) and V̇E between), on both kits: point at VA alone
+  [kit A 0c4b396f and kit D 6d19b8b3 stop records: `scratch/wt-rc4-docs/docs/showcase/kit-round-a/q2-rc4/` and
+  `scratch/rc5-candidate-3/rounds/q2-rc5c3/`, `q1-talk-{chromium,webkit}.json`, Gas exchange rows at stops 2 and 3].
 
 ### The card and how to Load
 

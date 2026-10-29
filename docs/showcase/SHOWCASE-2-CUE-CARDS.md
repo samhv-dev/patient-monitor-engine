@@ -75,7 +75,8 @@ engineering size, not a sourced one.*
 # OPEN · The opening on Home and the Room (T+0:00 → 3:00)
 
 **Slot 3:00 · the simulator opens on Home (E125): Home → Start here → the Room's QR; the case from Scenarios.
-Before the talk: the three model-page tabs loaded, to the right of the instructor tab (run sheet §1).**
+Before the talk: the three model-page tabs loaded at the fixed commit 6d19b8b3 (not `main`), to the right of the
+instructor tab (run sheet §1).**
 
 | Slot (T+) | Look at | Click | Say |
 |---|---|---|---|
@@ -174,7 +175,7 @@ are words only.
 | Blood: **VO₂ 427** (still rising) | "The muscle is still working harder." |
 | Blood (scrolled): **K⁺ 4.62**, pH 7.36, lactate 1.80 | "The MH potassium in this build is one fitted term: 2.35 mmol/L × the activity on the potassium set point [ENG]. On top, three general terms: the acidaemia without the lactate, adrenaline's β2 uptake, the succinylcholine pulse. There is no muscle injury and no rhabdomyolysis in this build. On this path K never passes 5.5." |
 
-**Do not point at:** VCO₂ 216 / VO₂ 270 in the Gas exchange list (two rows above VA). The Drugs "Total" unit reads
+**Do not point at:** VCO₂ 216 / VO₂ 270 in the Gas exchange list (six and five rows above VA). The Drugs "Total" unit reads
 "mg, µg": dantrolene's 200 is mg. **Note:** the MH potassium term and dantrolene's gain are on the
 **endocrine-thermal** page's Parameters (MH_K_EFFLUX, DANT_GAIN), not on the blood page.
 
@@ -218,9 +219,9 @@ injured muscle sized from Medbø and Sejersted 1990, and MH severity as a scenar
 because with it in, about fourteen clinical numbers left their acceptance bands and the haemorrhage case no longer
 arrested as rehearsed. It ships when it passes those bands, not before."*
 
-**Stage rule:** never say the simulator does something the kit in the room does not do. **Model page caution:** the
-DANT_GAIN row's text says "90 % of its peak within 1 min"; the build's curve peaks at 10 min (the dantrolene row,
-600 s). Do not read that phrase aloud.
+**Stage rule:** never say the simulator does something the kit in the room does not do. **Model page:** on the pinned
+page (6d19b8b3) the DANT_GAIN row reads "a gamma curve peaking at 10 min, t10 6 h: `gammaPk(2.5, true, 600, 21600)`"
+(corrected by #189), which is what you say: peak at 10 minutes, a tenth of the peak at 6 hours. On either kit.
 
 <div style="page-break-after: always;"></div>
 

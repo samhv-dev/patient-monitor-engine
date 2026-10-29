@@ -28,9 +28,9 @@ first, then stop 3's paragraph (the two sentences on E134), then the Debrief rea
 2. **Explore physiology** from the rail (the chart icon on the Instructor's strip), then the stop's sections in **Body
    systems**. **"Changed only" off** (it hides dantrolene). Read **Now**; the **Change** column is against the awake
    patient at 01:00, so the anaesthetic shows there too.
-3. **The model page behind**: its tab, prepared before the talk (GitHub, loaded while online: the kit does not carry the
-   model pages). A short look, then back to the instructor tab. A session you paused stays paused while its tab is
-   hidden (`hidden-tab.ts`; not exercised headless).
+3. **The model page behind**: its tab, prepared before the talk (GitHub at the fixed commit 6d19b8b3, not `main`, loaded
+   while online: the kit does not carry the model pages). A short look, then back to the instructor tab. A session you
+   paused stays paused while its tab is hidden (`hidden-tab.ts`; not exercised headless).
 4. **Instructor → Resume → the next press at once.**
 
 | Stop | Clock | Explore: sections and the numbers on screen [Q1-MH] | Model page |
@@ -41,8 +41,9 @@ first, then stop 3's paragraph (the two sentences on E134), then the Debrief rea
 
 **Explore cautions:** under Gas exchange, **VCO₂ 216 and VO₂ 270 never move** (not the MH figures): do not point at
 them; the MH VO₂ is under Blood. Dantrolene's "drug unit" is reference doses (1 = 2.5 mg/kg); its Total reads "200 mg,
-µg" (mg). Blood's Glucose reads "102 mmol/L and mg/dL" (mg/dL). On the endocrine-thermal page, the DANT_GAIN row says
-"90 % of its peak within 1 min": stale; the build's dantrolene peaks at 10 min.
+µg" (mg). Blood's Glucose reads "102 mmol/L and mg/dL" (mg/dL). On the endocrine-thermal page (pinned to 6d19b8b3), the
+DANT_GAIN row reads "a gamma curve peaking at 10 min, t10 6 h: `gammaPk(2.5, true, 600, 21600)`" (#189): it agrees
+with what you say, on either kit.
 
 ## The stage rule: what is and is not in the build
 
