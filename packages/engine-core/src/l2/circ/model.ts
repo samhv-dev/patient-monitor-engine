@@ -290,7 +290,14 @@ export function chemoFactors(c: { sao2: number }, band: string): { hrF: number }
  * measured end (params.ts `CO2_SVR_PER_MMHG`, Walley 1990 after propranolol). It is not a reflex and carries no
  * sympathetic scaling: the sympathetic efferent opposes it EMERGENTLY, through the baroreflex's own answer to the
  * pressure the dilation costs (Jordan 2000) and through the hypercapnic arm of the stress bus. MODELED only — in
- * MANUAL the instructor's tracker owns systemic resistance.
+ * MANUAL the instructor's tracker owns systemic resistance (the pulmonary CO2 term is likewise skipped when the
+ * instructor pins PVR).
+ * MODE ASYMMETRY, inherited, not introduced with this term: the matching CONTRACTILITY depression
+ * (`l2/blood/circ-adapter.ts chemistryContractility`) is NOT gated this way — it rides the existing pH/K+/Ca2+
+ * chemistry factor, which has always reached LV, RV and both atria in MANUAL as well. A MANUAL hypercapnic patient
+ * therefore loses contractility without the matching dilation. That is the engine's standing convention for the
+ * chemistry factor, the MANUAL rows of `endo-acceptance` pass with it, and the behaviour is deliberately left
+ * unchanged here; making the pair symmetric belongs to the v2.0 autonomic hub (audit §2.5).
  */
 export function co2VascularF(paco2: number): number {
   const excess = Math.min(CO2_SOURCE_MAX_MMHG, Math.max(CO2_REF_MMHG, paco2)) - CO2_REF_MMHG;

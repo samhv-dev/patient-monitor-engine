@@ -47,10 +47,19 @@ the public API is what the packages export (see the API reference), the `pme-sce
   on heart rate and systemic resistance above PaCO₂ 50 that the circulation's chemoreflex hook applied (an [ENG] size
   with the wrong sign); the sympathetic answer is the one neural hypercapnic limb of the endocrine stress bus (Somers
   VK et al., *J Appl Physiol* 1989;67:2101–2106, PMID 2513316) plus the baroreflex's own response to the pressure the
-  dilation costs, as ganglionic blockade shows it must be (Jordan J et al., *Hypertension* 2000;36:383–388,
-  PMID 10988269). In a resting adult PaCO₂ 38 → 51 now raises cardiac output and heart rate and lowers systemic
-  resistance, the three signs Cullen & Eger measured in awake volunteers (*Anesthesiology* 1974;41:345–349,
-  PMID 4412334), where before the resistance rose.
+  dilation costs — which is why human pressure is CO₂-insensitive while the autonomic buffer is intact and becomes
+  CO₂-dependent without it (Jordan J et al., *Hypertension* 2000;36:383–388, PMID 10988269, where MAP was unaffected
+  by PaCO₂ supine and head-up and fell by 13 ± 1.9 mmHg during ganglionic blockade with hyperventilation, the
+  hypocapnic arm; the paper reports no pressure figure for its CO₂-breathing condition). In a resting adult PaCO₂
+  38 → 51 now raises cardiac output and heart rate and lowers systemic resistance, the three signs Cullen & Eger
+  measured in awake volunteers (*Anesthesiology* 1974;41:345–349, PMID 4412334), where before the resistance rose.
+  Declared where the two constants live: the slope is an EXTRAPOLATION — Walley gives two measured points (PCO₂ 40 and
+  92) in a dog preparation, the straight line between them is this engine's assumption, the 20 % after propranolol is
+  net of the intact α limb rather than the direct vascular action alone, and the human evidence over PaCO₂ 40–55 gives
+  the sign only. The depression is combined with the engine's existing acidaemia term as the LARGER of the two, never
+  the product, so wherever the acidaemia is already deep (untreated MH, the post-arrest patient) it is the pH arm that
+  binds and the new CO₂ depression changes nothing there: in those courses the movement is the vasodilation plus the
+  removal of the old multiplier.
 
 ### Fixed
 - Explore prints its rows in the engine's own unit: Endocrine glucose is the engine's mmol/L value (it showed the

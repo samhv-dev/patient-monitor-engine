@@ -101,8 +101,18 @@ export function chemistryContractility(ph: number, iCa: number, kEcg = 4.2, paco
  * the EXISTING contractility path, so it is opposed where there is inotropic reserve and unopposed where there is not
  * — which is why relieving venous hypercarbia raised cardiac output in exsanguinated dogs with no volume given
  * (Karnad DR, Apte SJ, Supe AN, J Postgrad Med 1993;39:68–71, PMID 8169865) [P].
+ * EXTRAPOLATION, declared: Walley gives TWO measured points — PCO2 40 and 92 — in a DOG preparation. The straight line
+ * between them is this engine's assumption, not a measurement, and every clinically interesting PaCO2 here (45–70)
+ * sits on that interpolation. The human evidence over 40–55 is SIGN-ONLY (Cullen & Eger 1974, PMID 4412334, give the
+ * direction; their table was not reachable), so the human MAGNITUDE in this range is unverified. The 4.6 → 3.6
+ * after-propranolol fall is also net of whatever the intact α limb contributed, β alone being blocked.
  * The same CO2 excess the circulation's `co2VascularF` uses (l2/circ/params.ts `CO2_SVR_PER_MMHG`); the constants are
  * repeated here because the blood model never imports from l2/circ (see the file header).
+ * MODE ASYMMETRY, inherited, not introduced here: `co2VascularF` is MODELED-only (in MANUAL the instructor's tracker
+ * owns systemic resistance), while this term reaches the chambers in MANUAL too, because it rides the existing
+ * pH/K+/Ca2+ chemistry factor, which has always done so. A MANUAL hypercapnic patient therefore loses contractility
+ * without the matching dilation. That is the engine's standing convention for the chemistry factor and the behaviour
+ * is deliberately left as it is; the v2.0 autonomic hub is where the pair should be made symmetric.
  */
 export const CO2_EES_PER_MMHG = 0.004;
 /** The PaCO2 the depression is taken from (normal arterial tension; Walley 1990's eucapnic arm). */

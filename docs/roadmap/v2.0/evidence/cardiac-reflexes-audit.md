@@ -315,10 +315,17 @@ course · modulation · where an anaesthetist meets it.
   24 %, SVR fell 26 % and Emax fell 11.4 → 9.2 mmHg/ml; after propranolol the output rise was gone, Emax fell a
   further 22 % and **SVR still fell 20 %** — i.e. ≈ 0.4 % SVR fall per mmHg PaCO2 is non-sympathetic, and the
   unopposed inotropic cost is ≈ −4 % Emax per 10 mmHg PaCO2 (≈ −7 % per 0.1 pH unit) (Walley KR, Lewis TH, Wood LDH,
-  *Circ Res* 1990;67:628–635, PMID 2118837) **[A]**. Under ganglionic blockade a CO2 change moves human MAP by
-  13 ± 1.9 mmHg where the intact sympathetic efferent keeps pressure CO2-insensitive (Jordan J et al.,
-  *Hypertension* 2000;36:383–388, PMID 10988269) **[H]**: the efferent is what defends pressure against CO2's own
-  vascular action.
+  *Circ Res* 1990;67:628–635, PMID 2118837) **[A]**. Note what the 20 % after propranolol is and is not: propranolol
+  blocks β while the sympathetic nerves and the α limb stay intact, so that fall is the NET of CO2's direct dilation
+  and whatever α-constriction the intact chemoreflex produced, not the direct vascular action in isolation — which is
+  why a chemoreflex constrictor limb cannot be added on top of a constant derived from it. Walley also gives only TWO
+  points, PCO2 40 and 92, in a dog preparation: any slope between them is an assumption, and the human evidence over
+  40–55 (Cullen & Eger 1974) is sign-only. In humans, pressure is CO2-insensitive while the autonomic buffer is
+  intact: MAP was unaffected by PaCO2 both supine and head-up, and during ganglionic blockade MAP fell by
+  13 ± 1.9 mmHg with HYPERVENTILATION — the hypocapnic arm; no pressure figure is reported for the CO2-breathing
+  condition (Jordan J et al., *Hypertension* 2000;36:383–388, PMID 10988269) **[H]**. The architectural point is the
+  one that carries: the efferent is what keeps pressure CO2-insensitive, and without it pressure becomes
+  CO2-dependent.
 - **In profound shock the net reverses.** Dogs exsanguinated to cardiac output 0.98 L/min with mixed-venous PCO2
   56.7 mmHg: thirty minutes of hyperventilation **with no volume replacement** took PvCO2 to 40 and raised cardiac
   output to 2.5 L/min, stroke index 0.35 → 1.13 mL/kg and LV stroke work index 0.19 → 0.78 g·m/kg (Karnad DR, Apte SJ,
@@ -333,14 +340,20 @@ course · modulation · where an anaesthetist meets it.
   case that constrictor term is worth about 1 mmHg of MAP at +10 min and holds the patient on the compensated side of
   his collapse. Workstream 2 replaces it with three sourced terms: (i) the chemoreflex sympathetic limb (hypercapnic
   and hypoxic) as an afferent of the ONE sympathetic efferent the baroreflex drives, carrying the sympatholysis and
-  the responsiveness scaling and with NO occlusion at either end of the baroreflex range (Heistad 1974, Somers 1991),
-  sized from Somers 1989/1991; (ii) CO2's direct vascular action as a vasodilation of ≈ 0.4 % of SVR per mmHg
+  the responsiveness scaling, and with the interaction the sources actually describe: POTENTIATED at the low-pressure
+  end (baroreflex unloading, Heistad 1974: +10 mmHg at MAP 118 → +39 mmHg at MAP 50) and INHIBITED but never switched
+  off at the high-pressure end (baroreflex loading, same paper: +20 → +4 mmHg at MAP 102 → 132; Somers 1991's
+  hypercapnic MSNA rise is preserved as a percentage, +91 % against +102 %, but is +29 U/min under phenylephrine
+  against +118 U/min unloaded), sized from Somers 1989/1991; (ii) CO2's direct vascular action as a vasodilation of
+  ≈ 0.4 % of SVR per mmHg
   (Walley 1990 after propranolol); (iii) myocardial depression of ≈ 4 % of contractility per 10 mmHg PaCO2
   (≈ 7 % per 0.1 pH) through the existing contractility path, so that it is unopposed exactly where the inotropic
   reserve is gone (Karnad 1993). The earlier plan — a shared SATURATING ceiling that would make hypercapnia add
   nothing at MAP < 30 — was withdrawn on 2026-10-27: the primary data show potentiation there, not occlusion.
 - **Built 2026-10-28** (branch `fix-chemoreflex-efferent`, PR #162; every number below measured by the executor on that branch
-  over origin/main `dea151c4`, and each "before" on `dea151c4`'s own physiology in the same rig). Terms (ii) and (iii)
+  over origin/main `dea151c4`, and each "before" on `dea151c4`'s own physiology in the same rig — except the three
+  bullets dated 2026-10-29, which were measured after the rebase onto main `839dee7d` with their "before" on that
+  head). Terms (ii) and (iii)
   are in the engine and the wrong-signed pressor multiplier is gone. Term (i) — the sympathetic limb AS AN AFFERENT OF
   THE BAROREFLEX'S EFFERENT — is **not built**, and the measurement that stopped it is below.
   - **(ii) CO2's direct vasodilation.** `l2/circ/model.ts co2VascularF`: SVR × (1 − 0.004 · (PaCO2 − 40)₊), held at the
@@ -349,13 +362,33 @@ course · modulation · where an anaesthetist meets it.
     in the cutaneous tone the pleth reads, MODELED only (in MANUAL the instructor's tracker owns resistance), with no
     sympathetic scaling of its own: the efferent opposes it emergently, through the baroreflex's answer to the pressure
     it costs. The HYPOcapnic arm is NOT built (Buhre 1998, PMID 9509197, is the direction for it).
+    **EXTRAPOLATION, declared in the code where the constant lives (2026-10-29, after the review).** Walley gives TWO
+    measured points — PCO2 40 and 92 — in a DOG preparation; the straight line between them is this engine's
+    assumption, not a measurement, and every clinically interesting PaCO2 the engine runs at (45–70: the MH crisis,
+    the apnoea, the post-ROSC patient) sits on that interpolation. The human evidence over 40–55 (Cullen & Eger 1974)
+    is SIGN-ONLY — that paper's table was not reachable — so the human MAGNITUDE in this range is unverified. And the
+    20 % after propranolol is NET of the intact α limb (β alone was blocked), not the direct vascular action in
+    isolation; the code comment no longer claims otherwise.
   - **(iii) Hypercapnic myocardial depression.** The same 0.4 % per mmHg (Walley 1990: Emax 11.4 → 9.2 intact, 4.6 →
     3.6 after propranolol at PCO2 92), through the EXISTING contractility factor
     (`l2/blood/circ-adapter.ts chemistryContractility`). The engine's acidaemia term (below pH 7.2, 15 % per 0.1 pH,
     any cause) already carried part of this: the two are now combined as the LARGER depression, never the product, so
     nothing is counted twice. For a pure acute respiratory acidosis they cross at PaCO2 ≈ 78 (pH ≈ 7.10) — below it the
     CO2 slope is the larger and is new, above it the pH term already exceeded Walley's slope and nothing changes, and a
-    metabolic acidaemia at a normal PaCO2 is untouched.
+    metabolic acidaemia at a normal PaCO2 is untouched. Walley's 0.4 %/mmHg carries the same two declared limits as
+    (ii): two measured points (PCO2 40 and 92) in a dog, a straight line between them that is this engine's
+    assumption, and human evidence over 40–55 that gives the sign only.
+    **Where this term does and does not act (corrected 2026-10-29 after the review).** Because `min` takes the larger
+    depression, the CO2 arm only governs where the pH arm is smaller — i.e. mild to moderate hypercapnia above
+    pH 7.2 (the Cullen & Eger rig; the tamponade's post-ROSC peak at PaCO2 55–56 / pH 7.26). In every DEEP-acidaemia
+    course the engine runs the metabolic arm is already the larger, so the new depression contributes NOTHING there:
+    untreated MH at +20 min is pH 7.01–7.07 → `acid` ≈ 0.78 against PaCO2 ≈ 95 → `co2` = 0.792 at its hold, and at
+    pH 7.05 / PaCO2 64 the unit test shows the CO2 arm's 9.6 % being discarded for the pH arm's 22.5 %. All of the MH
+    and haemorrhage movement recorded below is therefore the VASCULAR term plus the REMOVAL of the old pressor
+    multiplier, not the depression. A refinement for later, not a defect: the engine's pH slope (15 % per 0.1 pH) is
+    roughly double Walley's (≈ 7 % per 0.1 pH), so wherever the acidaemia is deep the `min` leans on the steeper and
+    less-sourced of the two; the engine already has what it needs to split respiratory from metabolic acidaemia if
+    Walley's slope should govern the respiratory component.
   - **The sympathetic answer** is left where the engine already had one NEURAL hypercapnic limb: the endocrine stress
     bus (`SYMP_HYPERCAPNIA_*`, 0.03 of stress activity per mmHg above PaCO2 45, capped 0.3 at 55, Somers 1989), which
     already carries the anaesthetic sympatholysis (`ext.drug.symp`), the β-blockade blunting and the vasomotor centre's
@@ -382,12 +415,24 @@ course · modulation · where an anaesthetist meets it.
     **Consequence to rule on:** the MH muscle's own vasodilation (`MH_SVR_DILATION`, an [ENG] 0.2 with no MH-specific
     source) was sized while the engine answered the crisis CO2 with a CONSTRICTION, so part of it now stands beside
     CO2's own dilation; and the ≥ 120 half of E117 (HR at EtCO2 55) is **no longer met — 114 against 122 measured on `dea151c4`**, kept
-    as a recorded miss (`it.fails`) with the band intact. Two named levers, neither taken: the stress bus's hypercapnic
-    slope was deliberately kept small BECAUSE of the pressor term's overlap (its own comment says so) and its control
-    rows still allow a larger term (PaCO2 ≈ 51 adds 2.6 bpm of a 10 bpm limit, PaCO2 ≈ 67 adds 9.5 of 20); and
-    Walley's propranolol arm records a hypercapnic tachycardia that is NOT β-mediated (HR 81 → 106 after propranolol,
-    "did not alter the associated tachycardia"), which would justify a direct chronotropic CO2 term of ≈ 0.6 % per mmHg
-    beside the two built here. Either would close E117, which is exactly why neither was taken without the owner.
+    as a recorded miss (`it.fails`) with the band intact. Two named levers, neither taken (both corrected 2026-10-29
+    after the review): **lever 1** is the stress bus's hypercapnic term, which was deliberately kept small BECAUSE of
+    the pressor term's overlap (its own comment says so) — but the binding parameter is its CAP, not its slope. The
+    term is `min(SYMP_HYPERCAPNIA_MAX 0.3, SYMP_HYPERCAPNIA_PER_MMHG 0.03 · (PaCO2 − 45))`, so it SATURATES at
+    PaCO2 55; at the E117 moment the EtCO2 is 55 and the PaCO2 is above it, so the term is already at its cap and
+    raising the slope adds nothing there. The constraint on raising the cap is the control row at PaCO2 ≈ 67 (Δ 9.5 bpm
+    of a 20 bpm limit on this branch, against Δ 15.9 on `dea151c4`, so the branch itself freed ≈ 6 bpm of headroom;
+    PaCO2 ≈ 51 adds 2.6 bpm of 10). Note also that `symp` acts on rate, resistance and contractility together, so this
+    lever re-adds sympathetic constriction on top of a net-measured dilation — see specification point 3 below.
+    **Lever 2** is the better-sourced of the two: Walley's propranolol arm records a hypercapnic tachycardia that is
+    NOT β-mediated (HR 81 → 106 after propranolol, "did not alter the associated tachycardia"), i.e. +31 % over
+    52 mmHg = ≈ 0.6 % per mmHg, which touches rate only and so creates no resistance double count. Its caveats: it is
+    a DOG number like the other two; "direct" is a lump, since the residual tachycardia after propranolol may be vagal
+    withdrawal or α-mediated rather than a measured direct chronotropic action, and any comment must say so; and at
+    PaCO2 ≈ 60 it is worth ≈ +12 % of rate, which would close E117 (114 → ≈ 128) but would move EVERY hypercapnic HR
+    band in the engine (the rebreathing rows, `lung-r14`, the resp rigs, all five showcase cards) and would probably
+    re-break the awake-laryngoscopy row that now passes by 0.031 mmHg. If taken, it is its own PR with its own
+    measurement round. Either lever would close E117, which is exactly why neither was taken without the owner.
   - **Class IV haemorrhage course** (`apps/demo/.../haemorrhage-anaphylaxis.slow.test.ts`): the collapse is **not**
     earlier — junctional 558 s, PEA 626 s, pulse loss 660 s, agonal 773 s (was 772), asystole 932 s (931), CPR 947 s
     (946), shock 1 1079.2 s (1078.2), shock 2 1211.4 s (1210.4), ROSC 62.6 s after shock 2 both times. At +8 min the
@@ -410,9 +455,37 @@ course · modulation · where an anaesthetist meets it.
     the "First diaphragmatic efforts" label is a timer out of the bradycardic state, moved 357 → 412 s so it still
     lands on the engine's own first effort (measured lag 0.07 s against the ± 15 s row that exists to keep them
     together).
-  - **(i) NOT BUILT, with the measurement.** The afferent itself is easy: the chemo drive is added to the baroreflex's
-    sympathetic error, each limb saturating on its own so the chemoreflex is never switched off at a saturated
-    baroreflex (Heistad 1974, Somers 1991, Regmi 2024). The SIZE is the problem. Somers 1991 gives both ends in one
+  - **Rebase and re-measurement (2026-10-29, after the independent review; head `fix-chemoreflex-efferent` over main
+    `839dee7d`).** Main had since cut rc.4 and added a new MH showcase row, `'S1 demo path (owner rc.4)'`, measured on
+    main's physiology with the pressor multiplier in place; it was re-measured on the merged tree. 14 of its 15 bands
+    hold, including the two circulation numbers at risk — hrAt2431 68 of [64, 74] (main 69) and mapAt2431 67.23 of
+    [62, 72] (main 67.03). ONE fails and is REPORTED, NOT MOVED, because that row is the owner's demo-card record:
+    belowForGoodS 2552 s against [2560, 2620] (main 2590), 8 s under the floor. The chain is the card's own EtCO2
+    rules — a more dilated circulation carries CO2 to the lung slightly faster, so after the second dantrolene the
+    EtCO2 falls below 40 at +350 s instead of +358 s, Recovering comes at 1406 instead of 1414 and the second return to
+    12 × 500 at 1623.1 instead of 1632 (all three inside their own bands), and the final "below 40 for good" compounds
+    those shifts. Awaiting the owner.
+  - **The later first diaphragmatic effort, explained (2026-10-29; the review asked for a mechanism or a plain
+    statement).** On the unsecured-airway induction card the first effort moves 1112.1 → 1157.9 s absolute (+45.8 s
+    against main `839dee7d`; +55 s against the PR's original base, which is what the card timer was moved for). It is
+    not the drive: the PaCO2 course is identical second by second on both heads (60, 71, 81, 86, 90, 92, 94 mmHg at
+    400–1100 s). It is the ROCURONIUM. Rocuronium's elimination is hepatic 0.7 / renal 0.3 and not high-extraction, so
+    its k10 rides the organ model's hepatic and renal function, which fall with perfusion; CO2's dilation lowers this
+    apnoeic patient's pressure at every mark (MAP 80.8 → 69.9 at 400 s, 76.4 → 60.5 at 900 s, 60.9 → 48.8 at 1100 s),
+    so the elimination factor is lower throughout (0.98 → 0.87, 0.92 → 0.78, 0.75 → 0.64 at the same marks). The
+    diaphragm therefore sits in a higher effect-site concentration (2392.5 → 2525.6 ng/mL at 1100 s), its block is
+    deeper (0.9532 → 0.9635) and the NMB's tidal-volume ceiling recovers later: `nmbVtMult` reads 0.156 at 1100 s on
+    main and reaches 0.156 at ≈ 1145 s here — the same ≈ 45 s. Nothing was tuned to produce this.
+  - **One mode asymmetry, documented and deliberately left (2026-10-29).** `co2VascularF` is MODELED-only (in MANUAL
+    the instructor's tracker owns resistance, as the pulmonary CO2 term is skipped when the instructor pins PVR), but
+    the contractility depression is not gated that way: it rides the existing pH/K+/Ca2+ chemistry factor, which has
+    always reached the chambers in MANUAL too. A MANUAL hypercapnic patient therefore loses contractility without the
+    matching dilation. The CO2 arm inherits this convention rather than introducing it, the MANUAL rows of
+    `endo-acceptance` pass, and the behaviour is unchanged; the pair should be made symmetric in the v2.0 hub.
+  - **(i) NOT BUILT, with the measurement.** The afferent itself looks easy: a chemo drive added to the baroreflex's
+    sympathetic error, each limb saturating on its own so the chemoreflex is POTENTIATED at the low-pressure end and
+    INHIBITED, not abolished, at the high-pressure end (Heistad 1974, Somers 1991, Regmi 2024). The SIZE is the
+    problem, and so, as the 2026-10-29 review found, is that shape of term (see the specification below). Somers 1991 gives both ends in one
     cohort and one measure (peroneal MSNA, U/min): hypercapnia 116 → 234 U/min (+102 %) for PETCO2 40 → 53, i.e.
     +7.8 % of baseline per mmHg; and phenylephrine raising mean pressure by > 10 mmHg took 255 → 87 U/min (−66 %) and
     116 → 32 (−72 %), i.e. ≈ 6 % of baseline per mmHg of pressure. So 1 mmHg of PaCO2 ≈ 1.3 mmHg of baroreflex error
@@ -430,6 +503,33 @@ course · modulation · where an anaesthetist meets it.
     be fitting a constant to a target. Nothing was invented; the term is left open. **[UNCONFIRMED]** no human study
     was found that pairs a hypercapnic MSNA rise with the resulting pressure in the same subjects at a KNOWN
     baroreflex gain, which is what would settle the mapping.
+  - **SPECIFICATION for the v2.0 autonomic hub (2026-10-29, from the independent review of PR #162).** The
+    indeterminate exchange rate above is the weaker of the two reasons to leave term (i) open. The stronger one is
+    that the probe's SHAPE cannot reproduce the physiology at ANY size, so the measurement above did not test the
+    hypothesis, and three things must change before the term is built again.
+    1. **Not an additive drive on the pressure error.** Adding an offset to the error of a negative-feedback loop is a
+       SET-POINT SHIFT: in steady state the loop raises MAP until the baroreflex component cancels the offset, so MAP
+       rises by very nearly the offset itself. At 1.3 mmHg/mmHg over the rig's 12.4 mmHg PaCO2 step the offset is
+       ≈ 16 mmHg and the probe measured MAP +14.6 — it measured its own implementation, and the "wrong net sign,
+       larger than before" would appear at any size, which is exactly what the 0.67 and 0.2 rows (+6.0 and +0.9 mmHg,
+       tracking the offset) show. The honest form of term (i) is a FRACTIONAL INCREASE IN EFFERENT OUTFLOW, and the
+       engine already represents resting outflow as the profile's tonic sympathetic share (`tonicSymp`,
+       `TONIC_EES_SHARE` — the share an anaesthetic removes). A percent-of-baseline-MSNA number maps onto a percent
+       change of THAT with no new units: a determinate anchor the probe did not use.
+    2. **The MSNA gain belongs to the VASCULAR limb alone.** Somers' signal is peroneal MUSCLE sympathetic nerve
+       activity — one bed's vasoconstrictor outflow, not the whole efferent. The probe put it on `es`, which in this
+       engine simultaneously raises HR (`G_HS`, twice `G_R`), contractility, venous recruitment and SVR, which is why
+       it produced HR +29.1 bpm — a figure no human hypercapnia study reports (Somers 1989: MSNA +53 % with only a
+       small pressure rise and no reported heart-rate change; Somers 1991: MSNA doubles with no pressure rise worth
+       naming). The cardiac and venous limbs must be sized from their own sources.
+    3. **`CO2_SVR_PER_MMHG` must be re-derived first.** Walley's −20 % (after propranolol, nerves and α intact) and
+       Cullen & Eger's intact human net are ALREADY net of the chemoreflex's own α-vasoconstriction. A constrictor
+       limb on top of a net-measured dilation counts the sympathetic opposition twice, in the pressor direction — so a
+       constriction appearing where Cullen & Eger measured dilation is the PREDICTED outcome of the probe, not a
+       surprise. Term (i) needs a dilation constant from an α-blocked or denervated preparation, and no such human
+       number is in this source set. (The same argument applies, at ≈ one twentieth the size, to the stress bus's
+       existing hypercapnic SVR share of ≈ +3.4 % at PaCO2 50: a small double count beside a net-measured dilation,
+       not worth acting on alone, but to be known before E117's lever 1.)
 - **Modulation.** Volatile anaesthetics depress the acute hypoxic ventilatory response markedly even at
   subanaesthetic concentrations, and arousal or pain does not restore it (Sarton, Dahan, Teppema, et al. 1996,
   *Anesthesiology* 85:295–303, PMID 8712445) **[H]**; the hypercapnic response is depressed dose-dependently. The
