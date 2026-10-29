@@ -35,10 +35,14 @@ export class StageBuffer {
     this.keys = [];
   }
 
-  /** Send every staged command with one new stageGroup, in staging order. */
-  commit(send: (c: CommandInput) => Promise<AckResult>): Promise<AckResult[]> {
+  /**
+   * Send every staged command with one new stageGroup, in staging order. `batch: true` (a staged delivery, Instructor
+   * v2) also stamps each item with `batch: {id: <the stageGroup>, n}`, so the controller logs the delivery as one line.
+   */
+  commit(send: (c: CommandInput) => Promise<AckResult>, opts: { batch?: true } = {}): Promise<AckResult[]> {
     const group = `${this.prefix}-sg${++this.n}`;
-    const batch = this.items.map((c) => ({ ...c, stageGroup: group }) as CommandInput);
+    const n = this.items.length;
+    const batch = this.items.map((c) => ({ ...c, stageGroup: group, ...(opts.batch ? { batch: { id: group, n } } : {}) }) as CommandInput);
     this.discard();
     return Promise.all(batch.map(send));
   }

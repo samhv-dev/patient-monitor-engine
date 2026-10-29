@@ -21,7 +21,13 @@ export type TransportStatus = 'connecting' | 'open' | 'closed' | 'error';
 export type ModelInput = 'hrFactor' | 'svrFactor' | 'contractilityFactor' | 'vo2Factor' | 'vco2Factor';
 export type ControlFlag = 'modeled' | 'pinned' | 'ramping' | 'override';
 
-type CommandBase = { id: string; issuedBy: string; atTick?: Tick; stageGroup?: string };
+/**
+ * Staged-delivery metadata (Instructor v2, IP1): every item of one delivered cache carries the same `id` (its
+ * stageGroup) and `n`, the number of items, so a controller writes ONE log line for the batch once all n are answered.
+ * The host and the engine ignore it; it travels in `commandApplied` so a record can tell which items went together.
+ */
+export type BatchMeta = { batch?: { id: string; n: number } };
+type CommandBase = { id: string; issuedBy: string; atTick?: Tick; stageGroup?: string } & BatchMeta;
 
 /** Brief §7.2 `ClinicalEvent`, verbatim (drug ids stay strings). */
 export type ClinicalEvent =
@@ -70,6 +76,10 @@ export type ExtraCommand = CommandBase &
         action: 'load' | 'goto' | 'trigger' | 'pause' | 'resume' | 'bookmark' | 'restoreBookmark';
         target?: string;
         doc?: unknown;
+        /** With `bookmark` (Instructor v2 marks): the mark's kind and the instructor's note. Metadata only: carried on the
+         *  applied command, its `commandApplied` and the late-join replay; `restoreBookmark` reads the label alone. */
+        kind?: MarkKind;
+        note?: string;
       }
     // `jump` = fast-forward `value` sim seconds (> 0, ≤ 600) as fast as the host's monitor runs; `step` is refused
     | { type: 'time'; action: 'pause' | 'resume' | 'scale' | 'step' | 'jump'; value?: number }
@@ -79,8 +89,13 @@ export type ExtraCommand = CommandBase &
         sampling?: 'sidestream' | 'mainstream';
       }
   );
-/** Brief §7.2 `Command` as it travels on the wire. */
-export type WireCommand = Command | ExtraCommand;
+/**
+ * A mark's kind (Instructor v2): a good moment, a bad one, or one to discuss — or `stage`, the mark the host's scenario
+ * driver places by itself at every stage entry (its note is the state id). Views keep `stage` marks out of the marks list.
+ */
+export type MarkKind = 'good' | 'bad' | 'discuss' | 'stage';
+/** Brief §7.2 `Command` as it travels on the wire (engine commands may carry the staged-delivery `batch` too). */
+export type WireCommand = (Command & BatchMeta) | ExtraCommand;
 export type TimeCommand = Extract<ExtraCommand, { type: 'time' }>;
 export type ScenarioCommand = Extract<ExtraCommand, { type: 'scenario' }>;
 /** applyEvent / attachSensor: the host passes them to the engine, which validates them (Stages 3, 4 and 7 model them). */

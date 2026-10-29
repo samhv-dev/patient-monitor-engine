@@ -2,9 +2,9 @@
 // entry (and the renderer's IIFE, which imports it) never bundles ajv or the built-in JSON.
 export * from './types.ts';
 export { validateScenario, formatAjvError, SCENARIO_SCHEMA, type ValidationResult, type ValidateOptions } from './validate.ts';
-export { ScenarioRunner, compare, matches, hasManual, type RunnerInput, type RunnerEffect, type RunnerState, type RunLogEntry } from './runner.ts';
+export { ScenarioRunner, compare, matches, hasManual, type RunnerInput, type RunnerEffect, type RunnerState, type RunLogEntry, type VitalHold } from './runner.ts';
 export { replayRunLog, runLog, type ScenarioRunLog } from './replay.ts';
-export { ScenarioDriver, type ScenarioDriverOptions, type RunPosition } from './driver.ts';
+export { ScenarioDriver, isHop, HOP_MAX_S, type ScenarioDriverOptions, type RunPosition } from './driver.ts';
 export { RHYTHM_STAND_INS, resolveRhythm, type StandIn } from './standins.ts';
 export { BUILTIN_SCENARIOS, BUILTIN_CATALOGUE } from './builtins.ts';
 export { engineOptionsOf } from './patient.ts';
