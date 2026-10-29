@@ -7,6 +7,41 @@ on `origin/main` **a4163165** (#123), from the rc.3 runbook (`docs/plans/rc3-rel
 report (`scratch/plans-backup/rc3-release-day-run-2026-10-23.md`), `scratch/rc3-release/gate-notes.md`, the rulings,
 `release.yml` on #125's branch and the A4 records. Documentation only; what was not checked is **(unverified)**.
 
+> **RUN 2026-10-28/29 (the plan as run; Tasks 0–6 complete, Task 7 and the rest of Task 9 after the owner's smoke).**
+> Times are UTC from GitHub and the run logs (+0330 in brackets where the owner's day matters). The record is the
+> orchestrator's rulings log (`research/00-orchestrator-rulings.md`, from 2026-10-28) and the gate notes
+> (`scratch/rc4-release/gate-notes.md`); the repo's copy is [`docs/gates/rc4-release.md`](../gates/rc4-release.md).
+> - **The day moved forward.** By the owner's ruling of 29 October (early morning +0330) the freeze came at once and
+>   rc.4 was tagged as the **fallback build**, not on Sunday 1 November: an rc.5 from main (Instructor v2, #177, merged
+>   after the tag) only if green and liked in the Sunday smoke; the room dry run on Monday 2 November decides which kit
+>   is in the room. Saturday's freeze, the 17:30 allowance reset and Sunday's tag slot did not apply.
+> - **Task 0.** Steps 1–2: `FREEZE_SHA` **8e4e8471** (#163's merge, 2026-10-28 18:32 [22:02]; main run 40746088523
+>   success). After it, as ruled: #165 (docs), #167 (the MH card's story text and its CHANGELOG line), #166 (the bump),
+>   #172 (the MH-only talk: run sheet and the kit-round talk test). Step 3: #128 (24 October) and #172 carried the
+>   tooling; no separate `test-kitround-rc4` PR. Step 4: the bump PR **#166** merged 2026-10-29 08:17 (CHANGELOG and
+>   `CITATION.cff` dated **2026-10-30**, the tag day the ruling then named, not "2026-11-01"). **Step 5, the prep run on
+>   `FREEZE_SHA`: not run.** The expected values were instead #172's talk run (kit a88f95a7) and the 28 October run on
+>   the owner's card rulings (kit 2c341aa3). Step 6: dry run **40865772794** on 0c4b396f, 11:29–11:33, success (9 files,
+>   7 × OK, the rc.4 notes and banner, no rc.4 release yet).
+> - **Task 1.** `TAG_SHA` = **0c4b396f** = main after #172 (the orchestrator tagged after #172 so that the MH-only talk
+>   test and run sheet are in the tag), not main right after the bump. Main run 40860980902 success (10:52–11:27);
+>   retry-only passes in the gate note. Release files on the commit as Step 3 expects, with the dates above.
+> - **Task 2.** Annotated tag `v1.0.0-rc.4` pushed **2026-10-29 11:36:12 (15:06 +0330)**; release run 40866665261
+>   success (11:36–11:41); the release published 11:41:18, Pre-release, 8 assets. Step 4 run by the executor (7 × OK).
+> - **Task 3.** As written (kit build id `"0c4b396f 2026-10-29"`; relay 4 of 4; three `same:`; the Windows zip; the
+>   embed). The kit has 76 app files and a 1,545,928-B zip (rc.3 71 and 1,004,390 B): notes, ruled.
+> - **Task 4.** As written, on both engines, first time through. The A4 marks changed kind against 24 October (two
+>   objectives rewritten by the owner, #163) and the MH times came 25–36 s earlier: both ruled not a gate failure, the
+>   28 October run on 2c341aa3 agreeing to the second. No F1–F10.
+> - **Task 5.** The tag's Persian table left 11 (MH) and 15 (haemorrhage) strings in English; by ruling the handouts
+>   were rendered with PR #161's 26 unreviewed drafts placed **uncommitted** in `wt-rc4-docs` (0 strings without
+>   translation each; Vazirmatn only). That table is not in this branch: it stays in #161 for the owner's read.
+> - **Task 6.** Tree `gh-pages-rc4` e1fbdc67 (91 files); the serve check ran from `wt-rc4-tag` (`wt-rc2-prep` no longer
+>   exists); pushed with the lease 12:20:40, built 12:21. **Tasks 0–6 complete ≈ 12:25 on 29 October.**
+> - **Task 7** (the smoke, the live rehearsal, W/E13/E14): not yet run. **Task 8:** not needed. **Task 9:** Steps 1–3,
+>   4.1–4.3 and 5 drafted on 29 October on `docs-rc4-release`, no push; #117's rc.3 evidence (Step 2) not folded in
+>   yet.
+
 **Base and preconditions.**
 - rc.3 is tagged on **fcf99b70** (annotated, 2026-10-23 13:55; release run 39938963544; its Pages build is the local
   branch `gh-pages-rc3`, **ceac7b47**). The rc.3 kit `_sandbox/pme-kit-release-fcf99b70/` (with its zip) **becomes the
