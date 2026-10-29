@@ -59,6 +59,28 @@ export interface RunnerState {
   history: Array<{ t: number; stateId: string; transitionId?: string }>;
 }
 
+/**
+ * One `vital` leaf of the current state's transitions as the rule reads it now (Instructor v2 auto rows, answer 8):
+ * the value, the threshold, and how far its hold (`forS`) has run. A copy; reading it changes nothing.
+ */
+export interface VitalHold {
+  transitionId: string;
+  /** The leaf's key: `<transitionId>`, then `.i` per all/any level (the key of the runner's hold counter). */
+  key: string;
+  variable: string;
+  op: Op;
+  threshold: number;
+  /** The value the rule reads (undefined until one arrives). */
+  value: number | undefined;
+  /** Whether `value op threshold` holds now. */
+  met: boolean;
+  /** Sim seconds it has held continuously, and the hold the rule needs (0: none). */
+  heldS: number;
+  forS: number;
+  /** heldS / forS in 0–1; with no hold, 1 while met and 0 while not. */
+  fraction: number;
+}
+
 const EPS = 1e-6;
 /** A lower-rank source takes over a variable once the higher one has been silent this long [ENG]. */
 const STALE_S = 5;
@@ -182,6 +204,22 @@ export class ScenarioRunner {
     if (st.schema !== 'pme-scenario-runner/1' || st.docId !== this.doc.id) throw new Error(`runner state is for ${st.docId}, not ${this.doc.id}`);
     this.s = structuredClone(st);
     this.log.push({ op: 'restore', t: st.lastT, state: structuredClone(st) });
+  }
+
+  /** Every `vital` leaf of the current state, in document order, with its hold progress (read-only; as of the last call). */
+  vitalHolds(): VitalHold[] {
+    const out: VitalHold[] = [];
+    for (const tr of this.state().transitions ?? []) {
+      walk(tr.when, tr.id, (w, key) => {
+        if (!('vital' in w)) return;
+        const { var: variable, op, value: threshold, forS = 0 } = w.vital;
+        const value = this.s.values[variable]?.v;
+        const met = value !== undefined && compare(value, op, threshold);
+        const heldS = met ? (this.s.trueFor[key] ?? 0) : 0;
+        out.push({ transitionId: tr.id, key, variable, op, threshold, value, met, heldS, forS, fraction: forS > 0 ? Math.min(1, heldS / forS) : met ? 1 : 0 });
+      });
+    }
+    return out;
   }
 
   /** The value a vital trigger would read now (for the panel and tests). */

@@ -10,7 +10,7 @@
 import { RHYTHM_IDS, type Command, type DispatchResult, type EngineEvent, type PatientSnapshot } from '@pme/engine-core';
 import type { ClinicalEvent, ScenarioCommand, ScenarioEvent, WireCommand, WireEvent } from '../protocol.ts';
 import type { HostTarget, ScenarioHookResult } from '../session/host-session.ts';
-import { ScenarioRunner, type RunnerEffect, type RunnerInput, type RunnerState } from './runner.ts';
+import { ScenarioRunner, type RunnerEffect, type RunnerInput, type RunnerState, type VitalHold } from './runner.ts';
 import { BUILTIN_SCENARIOS } from './builtins.ts';
 import { resolveRhythm } from './standins.ts';
 import type { DocCommand, ScenarioDoc } from './types.ts';
@@ -150,6 +150,15 @@ export class ScenarioDriver {
 
   bookmarks(): string[] {
     return [...this.marks.keys()];
+  }
+
+  /**
+   * Host side, read-only (Instructor v2 auto rows, answer 8): how far each `vital` rule of the current state has got —
+   * the value it reads, its threshold and its hold fraction, from the runner's own hold counters, as of the last poll.
+   * [] without a scenario. A follower has no runner; its view shows value against threshold only.
+   */
+  vitalHolds(): VitalHold[] {
+    return this.runner?.vitalHolds() ?? [];
   }
 
   /**
