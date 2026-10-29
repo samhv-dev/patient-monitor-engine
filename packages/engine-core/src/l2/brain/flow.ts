@@ -1,6 +1,7 @@
-// Cerebral blood flow, metabolism and brain oxygen (tables §5.1): CBF = CBF0·A(CPP)·C(PaCO2)·O(PaO2)·M, with M the
-// flow–metabolism coupling plus the direct vasodilation of volatiles/ketamine (tables "Anaesthetic and treatment
-// effects"); CBV follows Grubb; PbtO2 and SjvO2 from the delivery/demand ratio.
+// Cerebral blood flow, metabolism and brain oxygen (tables §5.1): CBF = CBF0·A(CPP)·min(C(PaCO2)·O(PaO2)·M, reserve),
+// with M the flow–metabolism coupling plus the direct vasodilation of volatiles/ketamine (tables "Anaesthetic and
+// treatment effects") and the reserve the dilation left between autoregulation's state and maximal dilation; CBV
+// follows Grubb; PbtO2 and SjvO2 from the delivery/demand ratio.
 import {
   BREAKTHROUGH_PER_MMHG, CPP_REF, CPP_ZERO_FLOW, GRUBB, K_CO2, OER0, OER_MAX, PACO2_MAX, PACO2_MIN, PAO2_CBF_DOUBLE,
   PAO2_CBF_ONSET, PBTO2_0, PBTO2_EXP, PBTO2_HYPEROXIA, Q10_BRAIN,
@@ -37,6 +38,38 @@ export function autoregIntact(cpp: number, ll: number, ul: number): number {
 export function autoreg(cpp: number, ll: number, ul: number, ar: number): number {
   const passive = Math.max(0, cpp) / CPP_REF;
   return ar * autoregIntact(cpp, ll, ul) + (1 - ar) * passive;
+}
+
+/**
+ * The cerebral vasodilatory reserve: how much more the resistance vessels can still dilate, from the state pressure
+ * autoregulation holds them in at this CPP, before they are maximally dilated — as a flow multiple ≥ 1.
+ * Maximal dilation is the pressure-passive line A() already follows below the lower limit, where autoregulation has
+ * run out of dilation and flow falls with pressure: F_max = (CPP − CPP_ZERO_FLOW)/(LL − CPP_ZERO_FLOW), and
+ * reserve = F_max / A(CPP) [D: no new constant]. At CPP 80 (LL 60) it is 70/50 = 1.40; autoregulation spends it as
+ * CPP falls through the plateau (1.20 at CPP 70); at and below LL it is 1 and the CO2 response is lost — [P] Harper &
+ * Glass 1965 (J Neurol Neurosurg Psychiatry 28:449, dogs, read through Gersten's sigmoid fit to their data, arXiv
+ * physics/9911029 [S]: the hypercapnic ceiling relative to PaCO2 40 is 2.11 at MAP 150, 1.52 at 100, 0.997 ± 0.010
+ * at 50); [P abstract] Okuda 1976 (J Neurol Neurosurg Psychiatry 39:221, baboons: abolished at systolic 60, kept at
+ * higher pressures); [P abstract] Gregory 1981 (J Cereb Blood Flow Metab 1:195, cats at MAP 36–37: none with
+ * trimetaphan, < half with nitroprusside). The same sharing moves the limits with anything that raises or lowers CBF,
+ * notably CO2 ([P abstract] Paulson, Strandgaard & Edvinsson 1990, Cerebrovasc Brain Metab Rev 2:161): hypercapnia
+ * spends the reserve autoregulation needs, so its plateau is lost. Chronic HTN (LL 75) leaves 70/65 at CPP 80.
+ */
+export function dilatorReserve(cpp: number, ll: number, ul: number, ar: number): number {
+  const a = autoreg(cpp, ll, ul, ar);
+  if (a <= 0) return 1;
+  return Math.max(1, Math.max(0, cpp - CPP_ZERO_FLOW) / (ll - CPP_ZERO_FLOW) / a);
+}
+
+/**
+ * The dilator limbs (CO2, hypoxia, the drugs' direct and coupled effects) act on one vessel tone, so they spend one
+ * reserve: the combined request (their product) is delivered while it fits inside the reserve and no further, so at
+ * maximal dilation no limb adds flow and what one limb spends another cannot. A constricting request (< 1) is not
+ * dilation and always passes. Inside the reserve each limb's sourced gain is delivered unchanged: the 3 %/mmHg of
+ * CO2 up to PaCO2 53 at CPP 80, the hypoxic ×(60 − PaO2)/30 down to PaO2 48 [D].
+ */
+export function spendReserve(request: number, reserve: number): number {
+  return Math.min(request, reserve);
 }
 
 /** CO2 reactivity C(PaCO2) = 1 + k·(PaCO2 − ref), PaCO2 clamped to 20–80 (tables C()). ref adapts over hours. */
