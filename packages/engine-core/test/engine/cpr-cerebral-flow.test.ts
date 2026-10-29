@@ -60,7 +60,11 @@ describe('cerebral blood flow under CPR (research/20, gap V8)', () => {
   }, 120_000);
   // Title left for Stage 14 (fix-citations): its "Meaney 2013 consensus [VERIFY]" is resolved — the 30–40 % is Kern,
   // Niemann & Steen 2007's best case (see the header), which Meaney 2013 only repeats. The band is unchanged.
-  it.fails('VF + CPR q 1: CBF 0.30–0.40 of normal (Meaney 2013 consensus [VERIFY]; research/20 band 0.2–0.45) — measured 0.45 (a model limitation for the calibration pass)', async () => {
+  // fix-cerebral-dilator-reserve (2026-10-29): measured 0.405 (main 839dee7d: 0.496). Under CPR the CPP is far below
+  // the autoregulatory lower limit, the dilator reserve is spent, and the arrest's CO2 and hypoxia no longer multiply
+  // the pressure limb (they had lifted it by ×1.2); what is left is A(CPP) under these compressions alone, 0.005 above
+  // the band. Not tuned: it stays the recorded miss.
+  it.fails('VF + CPR q 1: CBF 0.30–0.40 of normal (Meaney 2013 consensus [VERIFY]; research/20 band 0.2–0.45) — measured 0.405 (a model limitation for the calibration pass)', async () => {
     const v = await vfCpr();
     expect(v.cbf).toBeGreaterThanOrEqual(0.3);
     expect(v.cbf).toBeLessThanOrEqual(0.4);
