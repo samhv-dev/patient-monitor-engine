@@ -730,3 +730,34 @@ a.rail-item:hover { color: var(--text-strong); background: color-mix(in srgb, va
 .paused-mark { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); z-index: 5; pointer-events: none; padding: 0.25em 0.8em; font: 700 clamp(28px, 6vmin, 72px)/1 system-ui, sans-serif; letter-spacing: 0.14em; color: #fff; background: rgba(0, 0, 0, 0.75); border: 3px solid #ffb000; border-radius: 6px; }
 .paused-mark[hidden] { display: none; }
 @media print { .paused-mark { display: none !important; } }
+
+/* ---------- Instructor v2 (E127; design docs/plans/instructor-panel-redesign.md §3, board "Proposal v6"; plan IP4) ----------
+   The frame only; the view's own parts are styled in teach2/teach2.css. Under the top bar: the view's header 48 px, the
+   stage strip 52 px, STATE (6 parts: the cue box over the monitor) beside ACTION (7 parts), the dock 64 px. The view is a
+   subgrid of the main grid, so the shell's one monitor stage (a sibling of the view, never moved) takes STATE's lower
+   cell. The shell's session bar is hidden on this route (shell.ts OWN_BAR_ROUTES); the rail is the 56-px strip. */
+.main[data-route='teach2'] {
+  grid-template:
+    'head head' 48px
+    'strip strip' 52px
+    'cue action' auto
+    'stage action' minmax(0, 1fr)
+    'dock dock' 64px / minmax(0, 6fr) minmax(0, 7fr);
+}
+.main[data-route='teach2'] > .view[data-view='teach2'] { grid-area: 1 / 1 / -1 / -1; display: grid; grid-template-rows: subgrid; grid-template-columns: subgrid; overflow: hidden; }
+/* the base rule hides the stage off Monitor, Instructor and Ventilator; the stage's id outranks it here */
+.main[data-route='teach2'] > #monitor { display: block; margin: 0 8px 14px 20px; border: 1px solid var(--ip2-line, var(--line)); border-radius: 8px; overflow: hidden; }
+.app.has-rail[data-route='teach2'] { --rail-w: var(--rail-strip); }
+.app[data-route='teach2'] .rail { padding: var(--s-3) var(--s-2); }
+.app[data-route='teach2'] .rail :is(.rail-text, .rail-badge) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.app[data-route='teach2'] .rail :is(.rail-brand, .rail-item, .rail-subitem) { justify-content: center; padding: 0; }
+.app[data-route='teach2'] .rail :is(.rail-item, .rail-subitem) { min-height: 40px; min-width: 40px; }
+.app[data-route='teach2'] .rail-ico { display: block; }
+.app[data-route='teach2'] .rail-tools { flex-direction: column; gap: 2px; background: none; box-shadow: none; }
+.app[data-route='teach2'] .rail-sub { flex-direction: column; }
+.app[data-route='teach2'] .rail-subitem { color: var(--text); }
+.app[data-route='teach2'] .rail-subitem[aria-current='page'] { background: var(--surface); }
+.app[data-route='teach2'] .rail-foot { padding: var(--s-3) 0 0; align-items: center; }
+.app[data-route='teach2'] .rail-theme { align-self: center; }
+/* toasts sit above the dock, not over its marks */
+body:has(.app[data-route='teach2']) .toasts { bottom: calc(64px + 40px); }
