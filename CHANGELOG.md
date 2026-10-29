@@ -7,6 +7,32 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ## [Unreleased]
 
+### Added
+
+- **Instructor v2 (E127) as a second view** beside today's Instructor view, at `#/teach2` ("Instructor v2" on the rail,
+  right after Instructor). Today's view is unchanged and stays the default: the scenario deep link, the Scenarios
+  view's Load and the other "Instructor view" links still open it; the alarm count and the reveal gesture go to the
+  Instructor view used last. Built from the design `docs/plans/instructor-panel-redesign.md` (agreed 29 October) and
+  its plan `docs/plans/instructor-panel-v2-plan.md`: its own session bar (the clock pill pauses and resumes, the speed
+  box, the Fast forward fan, disabled while paused); the stage strip (hop states folded in; a past stage returns to
+  its start through a hidden mark the host places at every stage entry, behind one confirm; a future stage jumps
+  behind today's confirm; the next two steps from the current stage shown, branches as "or", the rest folded);
+  STATE (the cue box: the stage, the time in it, how it was entered, the card's `notes` as the Say line, the values
+  held; the learners' monitor at a reduced size, Swap to full size); ACTION (one list: the card's steps numbered 1–9
+  in the card's order, the judged objectives, the automatic rows with how near their rule is; a step whose condition
+  is not met stays pressable, faded; overdue, taken, out of order and failed are looks, never locks); sheets over
+  ACTION (Drug, Airway, Defib · CPR, Vitals, Devices, Patient, Log; today's tab bodies inside the frame) with a cache
+  of staged items delivered at one engine instant as one log line; marks with kinds (good, bad, discuss) and a note
+  field. Keys: 1–9, D, A, F, V, Enter and S inside a sheet, Space, Esc, Shift+S/P/N. Every row sends exactly what
+  today's button sends, and the MH and haemorrhage cards give the same course and the same Debrief verdicts through
+  either view (kit round A4, Chromium and WebKit). The Debrief gains a "Steps on the card" section (each step's due
+  order, time taken, order taken and status, read the way ACTION reads it), the marks' kinds and one timeline line per
+  staged delivery; the export stays `pme-debrief/2` with the additive keys `steps`, `judged` and `marks` and the rows'
+  `tr`, `by`, `markKind`, `note` and `batch`. `@pme/controller`: `CommandBase.batch` and `StageBuffer.commit(send,
+  { batch: true })`, `kind` and `note` on the scenario bookmark, `ScenarioDriver.vitalHolds()` and
+  `ScenarioDriver.stageMarks()`. Not built: the phone layout (design §6), the Gas sheet and the CPR takeover. The Drug
+  sheet's rule for a dose that differs from the card's step is interim, pending the owner's ruling.
+
 ## [1.0.0-rc.4] - 2026-10-30
 
 Fourth public **pre-release** (release candidate) of a teaching simulator. It is for education only: it is not a
