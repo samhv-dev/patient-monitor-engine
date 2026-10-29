@@ -760,7 +760,8 @@ for "what is not in this build".
 1. **The talk.** The talk run [Q1-MH] is presses, Explore openings and a 3-s look per screen (5:03 of wall from the
    opening to the Debrief); the stops' 3:00 and the segments' talk are the owner's planning, not measurements.
 2. **WebKit (Safari) on the new programme.** Run on the rc.4 kit, 29 October [Q2-rc4]: the same stops, marks and
-   Explore numbers, every clock within 2 s of Chromium. Headless WebKit, not the owner's Safari.
+   Explore numbers within 0.01; every state and press time within 2 s of Chromium on the record's clock (the Debrief's
+   highest EtCO₂ at 19:11 against 19:07). Headless WebKit, not the owner's Safari.
 3. **The model-page tab in a real browser.** The headless run brought the tab to the front and back, but the
    instructor page stayed "visible" to the page (headless Chromium does not hide a background tab), so the hidden-tab
    rule was not exercised. By the code a Paused session stays paused and is not resumed on return
