@@ -20,7 +20,7 @@ function rig() {
   const reply: AckResult = { accepted: true, tick: 0, commandId: 'c1', rttMs: 0 };
   const link = {
     ctl: { scenario: new ScenarioView(), state: null, timeScale: 1, hostPaused: false, fastForward: null, simT: 0 },
-    host: null, simT: 0, conditions: new Map(),
+    host: null, simT: 0, conditions: new Map(), alarms: null, alarmSummary: { level: null, n: 0, top: null }, // the alarm line (option G)
     send: async (c: CommandInput) => (sent.push(structuredClone(c)), reply),
     onChange: (fn: () => void) => (fns.add(fn), () => void fns.delete(fn)),
   } as unknown as Link;
@@ -41,10 +41,11 @@ describe('Instructor v2 frame', () => {
     const { v } = rig();
     open = v;
     expect(v.id).toBe('teach2');
-    expect([...v.el.children].map((c) => c.className)).toEqual(['sr-only', 'ip2-head', 'ip2-strip', 'ip2-paused-row', 'ip2-state', 'ip2-action', 'ip2-sheets', 'ip2-dock']);
-    // IP9 (ruling 3): the paused banner sits in its own full-width row under the strip, not inside the cue box
-    expect(v.el.querySelector('.ip2-paused-row > .ip2-paused')).not.toBeNull();
-    expect(v.el.querySelector('.ip2-cue .ip2-paused')).toBeNull();
+    // the owner's option G: STATE's panel behind the label and cue box, the Fast forward box, the monitor (the shell's,
+    // placed by the grid) and the alarm line; no paused banner
+    expect([...v.el.children].map((c) => c.className)).toEqual(['sr-only', 'ip2-head', 'ip2-strip', 'ip2-state-panel', 'ip2-state', 'ip2-ff ip2-ff-row', 'ip2-alarmline', 'ip2-action', 'ip2-sheets', 'ip2-dock']);
+    expect(v.el.querySelector('.ip2-paused')).toBeNull();
+    expect([...v.el.querySelectorAll('.ip2-ffbtn')].map((b) => b.textContent)).toEqual(['+2 min', '+5 min']);
     // IP5 built the strip and the cue box; IP6 built the ACTION slot; IP7 built the sheets slot and the dock's tools
     expect(v.el.querySelector('.ip2-strip')?.hasAttribute('data-stub')).toBe(false);
     expect(v.el.querySelector('.ip2-cue')?.hasAttribute('data-stub')).toBe(false);

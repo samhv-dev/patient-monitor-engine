@@ -1,11 +1,13 @@
 // @vitest-environment happy-dom
-// Instructor v2's session bar sends exactly what today's session bar sends (plan IP4, answer 9): both bars are mounted
-// on one fake Link and pressed control by control; the commands sent are compared deep-equal, and the toasts too.
+// Instructor v2's session bar and its Fast forward box (in STATE since the owner's option G) send exactly what today's
+// session bar sends (plan IP4, answer 9): both are mounted on one fake Link and pressed control by control; the commands
+// sent are compared deep-equal, and the toasts too. The header's Sound switch and Room code are the top bar's.
 import { ScenarioView, type AckResult, type CommandInput } from '@pme/controller';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Link } from '../link.ts';
 import { mountSessionBar } from '../sessionbar.ts';
-import { FF_SKIPS, mountHeader } from './header.ts';
+import { FF_SKIPS, mountFastForward } from './ff.ts';
+import { mountHeader } from './header.ts';
 
 function fakeLink(reply: AckResult = { accepted: true, tick: 0, commandId: 'c1', rttMs: 0 }) {
   const sent: CommandInput[] = [];
@@ -41,10 +43,11 @@ function both(reply?: AckResult) {
   document.body.append(today);
   offs.push(mountSessionBar(today, f.link));
   const v2 = mountHeader(f.link);
-  document.body.append(v2.el);
+  const ff = mountFastForward(f.link);
+  document.body.append(v2.el, ff.el);
   offs.push(v2.destroy);
   const q = <T extends Element>(root: Element, s: string) => root.querySelector(s) as unknown as T;
-  return { ...f, today, v2, q };
+  return { ...f, today, v2, ff, q };
 }
 
 /** Press a control, let the ack land, return what was sent and the toasts said. */
@@ -96,50 +99,65 @@ describe('Instructor v2 header: the same commands as the session bar', () => {
     expect(fanEl.hidden).toBe(true);
   });
 
-  it('the Fast forward fan: +2 and +5 min send the fast-forward buttons\' commands; +1 and +10 min the same command', async () => {
-    expect(FF_SKIPS).toEqual([60, 120, 300, 600]);
+  it('the Fast forward box (STATE, option G): +2 and +5 min send the fast-forward buttons\' commands, with the same toasts', async () => {
+    expect(FF_SKIPS).toEqual([120, 300]);
     const r = both();
-    const box = r.q<HTMLButtonElement>(r.v2.el, '.ip2-ff');
     for (const s of [120, 300]) {
-      box.click();
       const a = await press(r, r.q(r.today, `button[aria-label="Fast-forward ${s / 60} min"]`));
-      const b = await press(r, r.q(r.v2.el, `.ip2-fanopt[data-v="${s}"]`));
+      const b = await press(r, r.q(r.ff.el, `button[aria-label="Fast forward by ${s / 60} min"]`));
       expect(b).toEqual(a);
       expect(b.sent).toEqual([{ type: 'time', action: 'jump', value: s }]);
     }
-    for (const s of [60, 600]) {
-      box.click();
-      expect((await press(r, r.q(r.v2.el, `.ip2-fanopt[data-v="${s}"]`))).sent).toEqual([{ type: 'time', action: 'jump', value: s }]);
-    }
+    expect([...r.ff.el.querySelectorAll('button')].map((b) => b.textContent)).toEqual(['+2 min', '+5 min']);
   });
 
   it('a refused fast-forward: the same alert toast as today', async () => {
     const r = both({ accepted: false, reason: 'not now', tick: 0, commandId: 'c1', rttMs: 0 });
     const a = await press(r, r.q(r.today, 'button[aria-label="Fast-forward 2 min"]'));
-    r.q<HTMLButtonElement>(r.v2.el, '.ip2-ff').click();
-    const b = await press(r, r.q(r.v2.el, '.ip2-fanopt[data-v="120"]'));
+    const b = await press(r, r.q(r.ff.el, 'button[aria-label="Fast forward by 2 min"]'));
     expect(b).toEqual(a);
     expect(b.toasts).toEqual(['Fast-forward refused: not now']);
   });
 
-  it('Fast forward is disabled while paused (nothing is queued) and during a skip; open fans fold', async () => {
+  it('Fast forward is disabled while paused (nothing is queued) and during a skip', async () => {
     const r = both();
-    const box = r.q<HTMLButtonElement>(r.v2.el, '.ip2-ff');
-    box.click();
+    const btns = () => [...r.ff.el.querySelectorAll<HTMLButtonElement>('button')];
     r.q<HTMLButtonElement>(r.v2.el, '.ip2-pill').click();
     await settle();
     r.take();
-    expect(box.disabled).toBe(true);
-    expect((box.previousElementSibling as HTMLElement).hidden).toBe(true);
-    expect([...(box.previousElementSibling as HTMLElement).querySelectorAll('button')].every((b) => b.disabled)).toBe(true);
+    r.ff.refresh();
+    expect(btns().every((b) => b.disabled)).toBe(true);
+    // the pill's tooltip says when a step pressed now is given (v9's banner text, option G)
+    expect(r.q<HTMLElement>(r.v2.el, '.ip2-pill').title).toMatch(/^Paused\. Timers are frozen\. A step pressed now is given at \d\d:\d\d and acts when you resume\.$/);
     // the host resumes (another controller pressed it): enabled again
     r.ctl.hostPaused = false;
-    r.v2.refresh();
-    expect(box.disabled).toBe(false);
+    r.ff.refresh();
+    expect(btns().every((b) => !b.disabled)).toBe(true);
     // a skip running anywhere: disabled, as today's buttons
     r.ctl.fastForward = { fromT: 0, toT: 120 };
-    r.v2.refresh();
-    expect(box.disabled).toBe(true);
+    r.ff.refresh();
+    expect(btns().every((b) => b.disabled)).toBe(true);
+  });
+
+  it('the Sound switch and the Room code are the top bar\'s: the same toggle, the code and the phone count, the Remote link', async () => {
+    const f = fakeLink();
+    let on = false;
+    const toggled: boolean[] = [];
+    const v2 = mountHeader(f.link, { soundOn: () => on, toggleSound: () => void toggled.push((on = !on)), code: 'QFBAWA', phones: () => 3 });
+    document.body.append(v2.el);
+    offs.push(v2.destroy);
+    const sound = v2.el.querySelector('.ip2-sound') as HTMLButtonElement;
+    expect([sound.getAttribute('aria-pressed'), sound.textContent]).toEqual(['false', 'Sound off']);
+    sound.click();
+    await settle();
+    expect(toggled).toEqual([true]);
+    expect([sound.getAttribute('aria-pressed'), sound.textContent]).toEqual(['true', 'Sound on']);
+    const room = v2.el.querySelector('.ip2-room') as HTMLAnchorElement;
+    expect(room.textContent).toBe('Room QFBAWA · 3 phones');
+    expect(room.getAttribute('href')).toBe('#/remote');
+    expect(f.sent).toEqual([]);
+    // the order of option G: patient line, MODELED, title, gap, pill, speed, divider, Sound, Room
+    expect([...v2.el.children].map((c) => c.className.split(' ')[0])).toEqual(['ip2-who', 'ip2-mode', 'ip2-title', 'ip2-spacer', 'ip2-pill', 'ip2-fanwrap', 'ip2-head-div', 'ip2-topctl', 'ip2-topctl']);
   });
 
   it('the pill and the speed box follow the host (a pause or speed set elsewhere)', () => {

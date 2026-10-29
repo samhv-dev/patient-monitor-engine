@@ -164,8 +164,8 @@ class Run {
     const s0 = await this.sim();
     const k0 = await this.speedNow();
     if (via === 'button' && this.v2) {
-      await p.locator('.ip2-head button.ip2-ff').click();
-      await p.locator('.ip2-head').getByRole('button', { name: `Fast forward by ${min} min`, exact: true }).click();
+      // the Fast forward box in STATE (the owner's option G)
+      await p.locator('.ip2-ff').getByRole('button', { name: `Fast forward by ${min} min`, exact: true }).click();
     } else if (via === 'button') await p.locator('.sessionbar').getByRole('group', { name: 'Fast-forward' }).getByRole('button', { name: `Fast-forward ${min} min` }).click();
     else await p.evaluate((v) => (window as unknown as Hook).__pmeApp.link.send({ type: 'time', action: 'jump', value: v }), min * 60);
     await p.locator('.ff-veil.on').waitFor({ timeout: 10_000 }).catch(() => undefined);

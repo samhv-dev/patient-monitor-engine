@@ -4,7 +4,8 @@
 // time); the stage line, the state's label as the card writes it (answer 21); the Say line, the state's `notes` in
 // italics, which today's panel never shows; the values the instructor holds ("Held: SpO₂ 88 (2 min)", read as today's
 // held-values dialog reads them, answer 14); and Swap, which opens the full-size Monitor view (answer 18). While the
-// host is paused a banner over the box says what a pause does (board "v9 paused").
+// host is paused the in-stage clock reads "frozen" (the owner's option G dropped v9's banner: the pill turns amber, the
+// monitor carries PAUSED, and the pill's tooltip says when a step pressed now is given).
 import './state.css';
 import type { StateVar } from '@pme/engine-core';
 import { stageOf, stagesOf } from '../card-read.ts';
@@ -45,7 +46,6 @@ const heldFor = (s: number): string => (s < 60 ? `${Math.max(0, Math.floor(s))} 
 export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const { link } = ctx;
   const sv = link.ctl.scenario;
-  const banner = h('div', { class: 'ip2-paused', role: 'status' });
   const name = h('span', { class: 'ip2-cue-name' });
   const inStage = h('span', { class: 'ip2-cue-clock' });
   const how = h('span', { class: 'ip2-cue-how' });
@@ -55,15 +55,13 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   say.addEventListener('click', () => say.classList.toggle('ip2-say-open'));
   const held = h('div', { class: 'ip2-held' });
   const box = h('div', { class: 'ip2-cue-box', role: 'group', 'aria-label': 'Cue' }, h('div', { class: 'ip2-cue-head' }, name, inStage, how, h('span', { class: 'ip2-spacer' }), swap), line, say, held);
-  el.replaceChildren(banner, box);
+  el.replaceChildren(box);
 
   /** When each held value was first seen held (sim s), for "(2 min)"; a value let go leaves it. */
   const since = new Map<StateVar, number>();
 
   const draw = () => {
     const paused = link.ctl.hostPaused;
-    banner.hidden = !paused;
-    if (paused) setText(banner, `Paused. Timers are frozen. A step pressed now is given at ${clock(link.simT)} and acts when you resume. The room's monitor shows the same mark.`);
 
     // HELD (answer 14): the values held in MODELED mode, as the session bar's held-values dialog lists them
     const st = link.ctl.state;

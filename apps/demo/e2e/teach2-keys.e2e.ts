@@ -59,23 +59,27 @@ test('keys: 1–9 press the rows, letters open and close sheets, Esc closes firs
 
   // Space: the clock pill pauses; Fast forward is disabled while paused (answer 9); Space again resumes
   const pill = page.locator('.ip2-head button.ip2-pill');
-  const ff = page.locator('.ip2-head button.ip2-ff');
+  const ff = page.locator('.ip2-ff button.ip2-ffbtn').first(); // the Fast forward box in STATE (option G)
   await expect(ff).toBeEnabled();
   await page.keyboard.press('Space');
   await expect.poll(() => page.evaluate(() => (window as unknown as W).__pmeApp.link.ctl.hostPaused)).toBe(true);
   await expect(pill).toHaveAttribute('data-state', 'paused');
   await expect(ff).toBeDisabled();
-  await expect(page.locator('.ip2-paused-row > .ip2-paused')).toBeVisible();
+  await expect(pill).toHaveAttribute('title', /A step pressed now is given at \d\d:\d\d/); // option G: no banner, the pill says it
   await page.keyboard.press('Space');
   await expect.poll(() => page.evaluate(() => (window as unknown as W).__pmeApp.link.ctl.hostPaused)).toBe(false);
   await expect(pill).toHaveAttribute('data-state', 'running');
   await expect(ff).toBeEnabled();
-  await expect(page.locator('.ip2-paused-row > .ip2-paused')).toBeHidden();
 });
 
 test('the alarm count goes to the Instructor view used last (answer 19): v2 opens its Devices sheet, today\'s its Devices tab', async ({ page }) => {
   test.setTimeout(60_000);
   await openMh(page, 'awake');
+  // option G: no top bar on #/teach2; its alarm line under the monitor opens the same list (the Devices sheet)
+  await expect(page.locator('.topbar')).toBeHidden();
+  await page.locator('.ip2-alarmline').click();
+  await expect(sheet(page, 'Devices')).toBeVisible();
+  await page.keyboard.press('Escape');
   await go(page, '#/settings'); // a page with the top bar's alarm count, away from both Instructor views
   await page.locator('.alarm-count').click();
   await expect(page).toHaveURL(/#\/teach2$/);

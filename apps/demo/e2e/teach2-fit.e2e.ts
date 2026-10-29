@@ -100,8 +100,9 @@ for (const [card, target] of [['showcase-mh', 'normoventilated'], ['showcase-mh'
     await page.waitForFunction(() => !!(window as unknown as W).__pmeApp.link.ctl.scenario.doc, null, { timeout: 30_000 });
     expect((await send(page, { type: 'scenario', action: 'goto', target })).accepted).toBe(true);
     await page.waitForFunction((id) => (window as unknown as W).__pmeApp.link.ctl.scenario.stateId === id, target, { timeout: 15_000 });
-    // the tiles fill (NIBP's first cycle) and the view repaints (≤ 2 Hz)
+    // the tiles fill (NIBP's first cycle, SpO2 once the pleth has settled after the jump) and the view repaints (≤ 2 Hz)
     await page.waitForTimeout(8000);
+    await expect.poll(() => page.evaluate(() => /\d/.test(document.querySelector('.stage .pme-stile[data-param="SpO2"] [data-pme="v"]')?.textContent ?? '')), { timeout: 30_000, intervals: [500] }).toBe(true);
     const running = await measure(page);
     const tiles = await tileFindings(page);
     const dir = process.env.TEACH2_SHOTS ?? info.outputPath();
@@ -109,7 +110,7 @@ for (const [card, target] of [['showcase-mh', 'normoventilated'], ['showcase-mh'
     const name = `teach2-fit-${card.replace('showcase-', '')}-${target}-${browserName}`;
     await page.screenshot({ path: join(dir, `${name}-page.png`) });
     await page.locator('.stage > .monitor-host').screenshot({ path: join(dir, `${name}-monitor.png`) });
-    // paused: the banner takes its full-width row under the strip; the view still fits
+    // paused: the pill turns amber and the monitor carries PAUSED (option G: no banner); the view still fits
     await page.locator('.ip2-head button.ip2-pill').click();
     await page.waitForFunction(() => (window as unknown as W).__pmeApp.link.ctl.hostPaused === true, null, { timeout: 10_000 });
     await page.waitForTimeout(1200);

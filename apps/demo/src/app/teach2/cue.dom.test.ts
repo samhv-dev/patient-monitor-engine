@@ -78,21 +78,15 @@ describe('cue box', () => {
     expect(rig(MH, 'earlySigns', hist, 430, { host: false }).text('.ip2-cue-how')).toBe('entered at 07:00');
   });
 
-  it('paused: the banner under the strip, "frozen" on the in-stage clock; resumed: both gone', () => {
+  it('paused: "frozen" on the in-stage clock and no banner (the owner\'s option G: the pill and the monitor say it); resumed: gone', () => {
     const r = rig(MH, 'induced', [{ t: 240, stateId: 'induced', transitionId: 'induce' }], 500);
-    expect(r.shown('.ip2-paused')).toBe(false);
     r.ctl.hostPaused = true;
     r.slot.refresh();
-    expect(r.shown('.ip2-paused')).toBe(true);
-    expect(r.el.querySelector('.ip2-paused')?.getAttribute('role')).toBe('status');
-    expect(r.text('.ip2-paused')).toBe('Paused. Timers are frozen. A step pressed now is given at 08:20 and acts when you resume. The room\'s monitor shows the same mark.');
+    expect(r.el.querySelector('.ip2-paused')).toBeNull();
     expect(r.text('.ip2-cue-clock')).toBe('04:20 in stage · frozen');
     expect(r.el.querySelector('.ip2-cue-clock')?.classList.contains('ip2-frozen')).toBe(true);
-    // the banner sits above the cue box, under the strip
-    expect(r.el.firstElementChild?.className).toBe('ip2-paused');
     r.ctl.hostPaused = false;
     r.slot.refresh();
-    expect(r.shown('.ip2-paused')).toBe(false);
     expect(r.text('.ip2-cue-clock')).toBe('04:20 in stage');
   });
 

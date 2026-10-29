@@ -142,7 +142,8 @@ if (follow) {
   shell.add(monitorView(shell.stage, { session, link, learnerUrl: followUrl(session.code), phones: !!relay }));
   const teach = teachView(link, { site, main: shell.main, stage: shell.stage, weightKg, loadScenario });
   shell.add(teach);
-  const teach2 = teach2View(link, { site, weightKg });
+  // option G: the app's top bar is not shown on #/teach2; its header carries the top bar's Sound switch and Room code
+  const teach2 = teach2View(link, { site, weightKg, top: { soundOn: () => session.soundOn, toggleSound, code: session.code, phones: () => session.followers } });
   shell.add(teach2);
   shell.add(remoteView({ site, hostless: false, bar: shell.bar, code: session.code }));
   shell.add(exploreView(session, site));

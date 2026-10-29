@@ -39,8 +39,6 @@ button.ip2-chip:hover { background: var(--ip2-card); }
 .ip2-pop-note { color: var(--ip2-faint); font-size: 11px; }
 
 /* the paused banner (board "v9 paused") */
-.ip2-paused { padding: 8px 12px; border: 1px solid var(--ip2-pause-line); border-radius: 8px; background: #241f10; color: var(--ip2-pause); font-size: 13px; }
-.ip2-paused[hidden] { display: none; }
 
 /* the cue box */
 .ip2-cue { display: flex; flex-direction: column; gap: 8px; }

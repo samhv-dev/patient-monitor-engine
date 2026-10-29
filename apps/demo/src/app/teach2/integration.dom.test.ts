@@ -9,6 +9,7 @@ import type { Link } from '../link.ts';
 import { emptyRun } from '../record.ts';
 import { showcaseDoc } from '../showcase/harness.ts';
 import { mount } from './action.ts';
+import { mountAlarmLine } from './alarm-line.ts';
 import type { Teach2Ctx } from './ctx.ts';
 import { stageMarks } from './strip.ts';
 
@@ -57,5 +58,26 @@ describe('the automatic-row bar reads the driver\'s holds (ruling 4)', () => {
     expect(rig([hold(0.5)])).toBe('85%');
     expect(rig([hold(1)])).toBe('100%');
     expect(rig(null)).toBe('100%');
+  });
+});
+
+describe('the alarm line under the monitor (the owner\'s option G)', () => {
+  it('the count and the sounding alarms in the alarm table\'s words, amber while one sounds; a press opens the alarm list', () => {
+    const active = [
+      { id: 'SPO2_LOW', text: 'SpO2 LOW', level: 2, acked: false, latched: false },
+      { id: 'HR_HIGH', text: 'HR HIGH', level: 3, acked: false, latched: false },
+      { id: 'X', text: 'acked', level: 1, acked: true, latched: false },
+    ];
+    const link = { alarms: { active, allOff: false }, get alarmSummary() { return { level: 2, n: 2, top: active[0] }; } } as unknown as Link;
+    let opened = 0;
+    const a = mountAlarmLine(link, () => void opened++);
+    expect(a.el.dataset.level).toBe('2');
+    expect(a.el.querySelector('.ip2-alarm-count')?.textContent).toBe('2 alarms');
+    expect(a.el.querySelectorAll('.ip2-alarm-texts > span')).toHaveLength(2);
+    expect(a.el.getAttribute('aria-label')).toMatch(/^Alarms: 2 sounding \(.+\); opens the alarm list$/);
+    a.el.click();
+    expect(opened).toBe(1);
+    const quiet = mountAlarmLine({ alarms: { active: [], allOff: false }, alarmSummary: { level: null, n: 0, top: null } } as unknown as Link, () => undefined);
+    expect([quiet.el.dataset.level, quiet.el.querySelector('.ip2-alarm-count')?.textContent]).toEqual(['none', 'No alarms']);
   });
 });
