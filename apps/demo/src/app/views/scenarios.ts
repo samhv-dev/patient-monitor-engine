@@ -13,7 +13,7 @@ import type { AppSession } from '../session.ts';
 import type { View } from '../shell.ts';
 import { REPO } from '../about.ts';
 import { button, confirmDialog, h, toast } from '../ui.ts';
-import { validateScenario } from '@pme/controller/scenario';
+import { isV2, validateScenario } from '@pme/controller/scenario';
 
 /** The 3 November demonstration's two cases, pinned first (owner, 24 October). */
 export const DEMO_CARDS: readonly string[] = ['showcase-mh', 'showcase-haemorrhage'];
@@ -114,6 +114,10 @@ export function scenariosView(d: ScenariosDeps): View {
     const v = validateScenario(raw);
     if (!v.ok) {
       err.textContent = `Error: ${f.name} is not a scenario card: ${v.errors.slice(0, 3).join('; ')}`;
+      return;
+    }
+    if (isV2(v.doc)) {
+      err.textContent = `Error: ${f.name} is a pme-scenario/2 card; pme-scenario/2 cards run from F2 on.`;
       return;
     }
     void load(cardOf(v.doc));
