@@ -26,7 +26,7 @@ function rig() {
   } as unknown as Link;
   const v = teach2View(link, { site: DEFAULT_SITE, weightKg: () => 70 });
   document.body.append(v.el);
-  return { v, sent };
+  return { v, sent, link };
 }
 
 let open: Teach2View | null = null;
@@ -37,22 +37,26 @@ afterEach(() => {
 });
 
 describe('Instructor v2 frame', () => {
-  it('lays out header, strip, STATE, ACTION, the sheets layer and the dock, and mounts the four stub slots', () => {
+  it('lays out header, strip, STATE, ACTION, the sheets layer and the dock, and mounts the four slots', () => {
     const { v } = rig();
     open = v;
     expect(v.id).toBe('teach2');
     expect([...v.el.children].map((c) => c.className)).toEqual(['sr-only', 'ip2-head', 'ip2-strip', 'ip2-state', 'ip2-action', 'ip2-sheets', 'ip2-dock']);
-    expect(v.el.querySelector('.ip2-strip')?.getAttribute('data-stub')).toBe('IP5');
-    expect(v.el.querySelector('.ip2-cue')?.getAttribute('data-stub')).toBe('IP5');
+    // IP5 built the strip and the cue box
+    expect(v.el.querySelector('.ip2-strip')?.hasAttribute('data-stub')).toBe(false);
+    expect(v.el.querySelector('.ip2-cue')?.hasAttribute('data-stub')).toBe(false);
     expect(v.el.querySelector('.ip2-action-body')?.getAttribute('data-stub')).toBe('IP6');
     expect(v.el.querySelector('.ip2-sheets')?.getAttribute('data-stub')).toBe('IP7');
     expect(() => v.openSheet('devices')).not.toThrow(); // a no-op until IP7
     v.enter?.('');
   });
 
-  it('every stub has the fixed slot signature: mount(el, ctx) => { refresh, destroy }', () => {
+  it('every slot has the fixed slot signature: mount(el, ctx) => { refresh, destroy }', () => {
+    const { v, link } = rig();
+    open = v;
+    const ctx = { link, keys: { digit: () => undefined, letter: () => undefined, escape: () => () => undefined } } as unknown as Teach2Ctx;
     for (const m of [strip, cue, action, sheets] satisfies MountSlot[]) {
-      const s = m(document.createElement('div'), {} as Teach2Ctx);
+      const s = m(document.createElement('div'), ctx);
       expect(Object.keys(s).sort()).toEqual(['destroy', 'refresh']);
       expect(() => (s.refresh(), s.destroy())).not.toThrow();
     }
