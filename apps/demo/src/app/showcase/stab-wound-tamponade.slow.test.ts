@@ -16,18 +16,16 @@ import { bands, entered, first, near, range, runCard, type Act } from './harness
  *  one beat summing with a compression in the 10 s of CPR left before "Pulse back"; drainage and ROSC are at the same
  *  second (602.1, 698 s). With the PVC placement made a no-op the course is byte-identical to main (196.5). Every other
  *  S2 number stayed in its band.
- *  The arterial search-back (#164, l3/pulse/detector.ts) re-centred sysMaxAtRosc 208.5 → 191, same ± 5, PENDING the
- *  orchestrator's ruling 1. Measured on one run (ROSC 698 s, window 698–728 s), the old detector's numeric beside the
- *  new one and the engine's own systolic (the radial truth of each ejecting beat, `circ.beats` sbp):
- *  - old detector 208.5 (at 707 s), new 191.1 (at 706–707 s);
- *  - truth, read the way the numeric reads (the mean of the last ≤ 6 ejecting beats that ended in the last 6 s), max
- *    202.0 (at 705 s); the diagnosis's ideal reading (the mean of every ejecting beat that ended in the last 6 s), max
- *    185.7 (at 707 s); the largest single beat 215.3 (702.34 s).
- *  Second by second the new numeric is the nearer one (mean error 6.3 against 10.9 mmHg on the 6-beat truth; nearer in
- *  8 of the 10 seconds that differ): at 707 s the 6-beat truth is 175.9 and the old 208.5 averages the merged
- *  interval 702.99–705.71 s (its 206.4 is the 205 mmHg beat's, read over that beat and the two missed ones of 176 and
- *  151). But the window's maximum of the truth comes at 705 s, before either detector has the beats that end there,
- *  and it lies between the two (old +6.5, new −10.9 on the 6-beat truth; old +22.8, new +5.4 on the ideal reading).
+ *  The arterial search-back (#164, l3/pulse/detector.ts) re-centred sysMaxAtRosc 208.5 → 191, same ± 5 (ruling of
+ *  2026-10-29). Measured on one run (ROSC 698 s, window 698–728 s), the old detector's numeric beside the new one and
+ *  the engine's own systolic (the radial truth of each ejecting beat, `circ.beats` sbp): old numeric 208.5 (707 s), new
+ *  numeric 191.1 (706–707 s); the truth's maximum 202.0 (705 s) read as the numeric reads it (the mean of the last ≤ 6
+ *  ejecting beats that ended in the last 6 s), 185.7 (707 s) on the diagnosis's ideal reading (every ejecting beat
+ *  that ended in the last 6 s). The old 208.5 was a merged-interval artefact across a missed foot: at 707 s it
+ *  averages the interval 702.99–705.71 s, the 205 mmHg beat's peak read over it and the two missed beats of 176 and
+ *  151 mmHg. Second by second the new numeric is nearer the truth (mean error 6.3 against 10.9 mmHg on the 6-beat
+ *  truth; nearer in 8 of the 10 seconds that differ). The fence follows the numeric, and the numeric now tracks the
+ *  truth more closely.
  *  Every other S2 number stayed in its band. */
 const BANDS = {
   'S2 happy': { refused: [0, 0], hrAt60: [94, 104], sysAt60: [101, 111], diaAt60: [82, 92], cvpAt60: [15, 19], etco2At60: [29, 35], pulsusMean: [0, 1.9], pulsusMax: [0, 2.6], deterioratingS: [336, 410], hrAtDeteriorating: [130, 140], cvpAtDeteriorating: [18, 22], pulseLossS: [424, 518], peaStateS: [425, 519], pea: [1, 1], drainS: [542, 662], roscAfterDrainS: [81, 111], sysPlus60: [113, 123], hrPlus60: [58, 68], cvpPlus60: [8, 12], etco2Plus60: [32, 38], sysMaxAtRosc: [186, 196], pulseHeld: [1, 1] },

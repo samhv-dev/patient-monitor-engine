@@ -55,9 +55,9 @@ the public API is what the packages export (see the API reference), the `pme-sce
   of which the unit fixture keeps 283 as 147 windows). Intervals over the limit holding a missed pulse fell
   1208 → 771; the systolic bias fell to +7.3 (AF 150), +2.1 (MH) and +0.4–0.5 (haemorrhage). What stays is mostly beats whose rise is under 0.4 of their neighbours' (in AF, pulse-deficit beats
   of 3–20 mL), which Li's rule does not count as pulses. The detection path, the pleth (its PI, PR and #153's
-  own-period rule) and the PAP are unchanged. The tamponade card's `sysMaxAtRosc` band is re-centred 208.5 → 191 (± 5),
-  pending a ruling: the 208.5 averaged a merged interval at ROSC, but the engine's own 6-beat systolic peaks at 202.0
-  in that window, between the two readings.
+  own-period rule) and the PAP are unchanged. The tamponade card's `sysMaxAtRosc` band is re-centred 208.5 → 191 (± 5):
+  the 208.5 was a merged-interval artefact across a missed foot at ROSC, and second by second the new reading is
+  nearer the engine's own systolic (mean error 6.3 against 10.9 mmHg).
 - Explore prints its rows in the engine's own unit: Endocrine glucose is the engine's mmol/L value (it showed the
   mg/dL copy as mmol/L) and the lab panel's glucose says mg/dL; Stress response is on its 0–100 scale (was labelled
   0–1); the gas model's awake resting VO₂ is labelled "VO₂ at rest (awake)" beside the actual VO₂, so Gas and Blood no
