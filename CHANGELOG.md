@@ -57,6 +57,9 @@ the public API is what the packages export (see the API reference), the `pme-sce
   rate, TCI target, CSHT, Total) left the page at once: the console dropped any engine list longer than 16, taking it
   for a history, and so dropped the list of drugs given. A list whose every item names its drug or agent is now kept
   at any length; a long list without names is still dropped.
+- An IV drug or infusion command for a volatile agent (sevoflurane, isoflurane, desflurane, N₂O) is refused with the
+  reason, the agent being given through the vaporiser. The engine used to accept the bolus and then stop with an error
+  on the next tick, and to accept the infusion and do nothing with it.
 
 ## [1.0.0-rc.4] - 2026-10-30
 
