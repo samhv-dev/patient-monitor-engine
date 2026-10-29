@@ -42,10 +42,35 @@ import { alarmAt, bands, entered, first, near, pvcEvents, range, runCard, type A
  *  recoveringMin left its band and is re-centred, same tolerance (old centre → new): 17.82 → 20.37. The mechanism: no
  *  room-temperature fluid on the early path, so the core is not cooled and the MH CO₂ production takes longer to come
  *  under the Recovering threshold; with the same course and the 1.6 L pressed regardless of the core (a probe, not the
- *  card) Recovering comes at 18.27 min, inside the old band. Reported; not tuned. */
+ *  card) Recovering comes at 18.27 min, inside the old band. Reported; not tuned.
+ *  2026-10-28 (hypercapnia dilates and depresses instead of pressing: audit §2.5): the removed pressor multiplier had
+ *  been worth about +15 % of HR and SVR at the crisis PaCO₂ of ≈ 65, and CO₂'s own vasodilation (0.4 %/mmHg) now acts
+ *  in its place, so the untreated MH patient is warmer-vasodilated and less tachycardic. Re-centred on this build with
+ *  the SAME tolerances (old centre → new): 'S1 untreated E131' hrAt20 124 → 114, mapAt20 81.6 → 67.3 and hrMax 139 →
+ *  121; earlyMin 4.1, etco2Max 104, etco2At20 91, phAt20 7.04, kAt20 6.1, lactateAt20 5.1, tcAt20 36.58,
+ *  hrMaxInRuns 160, kMax 6.8, tcAt51 37.31 and pulseLost 0 all held, and S1 early held everywhere
+ *  (recoveringMin 20.22, hrMax 88, etco2Plus5 51). Not tuned, and reported: the MH muscle's own vasodilation
+ *  (MH_SVR_DILATION, an [ENG] 0.2 with no MH-specific source) was sized when the engine answered the crisis CO₂ with a
+ *  CONSTRICTION, so part of it now stands beside CO₂'s own dilation — whether it should be re-derived is the owner's
+ *  call, and nothing here was changed to hold a pressure. The ≥ 120 half of E117 (HR at EtCO₂ 55) is a recorded miss
+ *  from the same cause: packages/engine-core/test/engine/endo-acceptance.test.ts.
+ *  2026-10-29, correction after the independent review: the movement above is CO₂'s VASCULAR term plus the REMOVAL of
+ *  the old multiplier, not the new myocardial depression. In this course the metabolic acidaemia term is already the
+ *  larger of the two (pH 7.01–7.07 → 0.78 against PaCO₂ ≈ 95 → 0.792 at its hold), and `chemistryContractility` takes
+ *  the larger depression, never the product — so the CO₂ depression contributes nothing here.
+ *  2026-10-29, rebase onto main 839dee7d: main's 'S1 demo path (owner rc.4)' row was measured with the pressor
+ *  multiplier in place, so it was re-measured on the merged tree. 14 of its 15 bands hold, the two circulation numbers
+ *  at risk among them: hrAt2431 68 of [64, 74] (main 69) and mapAt2431 67.23 of [62, 72] (main 67.03); refused 0,
+ *  pulseLost 0, normoS 836, above45AfterNormoS 14, dose2S 1154, etco2AtDose2 64, etco2Dose2Plus60 50, recovering2S
+ *  1406, normo2S 1623.1, etco2At2431 41, etco2MaxAfterNormo2 44. ONE band fails and is REPORTED, NOT MOVED, because
+ *  this row is the owner's rc.4 demo-card record: belowForGoodS 2552 s against [2560, 2620] (main 2590), 8 s below the
+ *  floor. The chain is the card's own EtCO₂ rules: a more dilated circulation carries CO₂ to the lung a little faster,
+ *  so after the second dantrolene the EtCO₂ falls below 40 at +350 s instead of +358 s (both inside that band),
+ *  Recovering comes at 1406 instead of 1414, the second return to 12 × 500 at 1623.1 instead of 1632 (both inside
+ *  their bands), and the final "below 40 for good" compounds those shifts to 2552. Awaiting the owner's ruling. */
 const BANDS = {
   'S1 untreated': { refused: [0, 0], earlyMin: [3.84, 5.22], establishedMin: [16.89, 20.65], etco2AtEstablished: [72, 78], hrAtEstablished: [121, 131], phAtEstablished: [7.06, 7.12], kAtEstablished: [5.4, 6], lactateAtEstablished: [4.1, 5.1], mapAtEstablished: [80, 90], hrMax: [185, 195], kMax: [6.1, 6.7], lossMin: [39.91, 48.79], tcAtLoss: [42.14, 42.54], kAtLoss: [6.1, 6.7], vf: [1, 1], arrestStateMin: [40.23, 49.17] },
-  'S1 untreated E131': { refused: [0, 0], earlyMin: [3.41, 4.79], etco2Max: [103, 109], etco2At20: [88, 94], hrAt20: [119, 129], phAt20: [7.01, 7.07], kAt20: [5.8, 6.4], lactateAt20: [4.7, 5.7], mapAt20: [79, 89], tcAt20: [36.38, 36.78], hrMax: [134, 144], hrMaxInRuns: [155, 165], kMax: [6.5, 7.1], tcAt51: [37.11, 37.51], pulseLost: [0, 0] },
+  'S1 untreated E131': { refused: [0, 0], earlyMin: [3.41, 4.79], etco2Max: [103, 109], etco2At20: [88, 94], hrAt20: [109, 119], phAt20: [7.01, 7.07], kAt20: [5.8, 6.4], lactateAt20: [4.7, 5.7], mapAt20: [62.3, 72.3], tcAt20: [36.38, 36.78], hrMax: [116, 126], hrMaxInRuns: [155, 165], kMax: [6.5, 7.1], tcAt51: [37.11, 37.51], pulseLost: [0, 0] },
   // E133 (ventricular ectopy from K, catecholamines, temperature, acidaemia and ischaemia). Measured first on the
   // pre-E131 course (to the hyperthermic VF at +44.5 min): first PVC +13.1 min, 256 events before the VF (36 runs).
   // Re-measured on the E131 course (rebase onto 5024f071, 2026-10-27; same tolerances, the reason: E131 moved the
@@ -85,10 +110,18 @@ const CALL_S = 1440;
  *  the 1:00 baseline is the awake, premedicated patient, so three rows read the anaesthetic against it: ART M, SVR and
  *  CMRO₂ go DOWN (they went up against the old induced baseline); the other 19 are the MH rows as before. E131: at
  *  24:00 the core is below the awake baseline (the anaesthetic redistribution outweighs the ≈ 140 W of MH heat), so
- *  Tcore reads DOWN and T1 is not among the changed rows. */
+ *  Tcore reads DOWN and T1 is not among the changed rows.
+ *  2026-10-28: LVEF leaves the list. CO₂'s own vasodilation now lowers the afterload the ventricle ejects against
+ *  while CO₂'s myocardial depression lowers Emax, and at 24:00 the two cancel inside Explore's "changed" threshold
+ *  (measured: LVEF is absent from the changed rows, where it read DOWN before). Everything else the run sheet points
+ *  at still reads as listed; the presenter's words about LVEF, if any, go to the owner. 2026-10-29 (independent
+ *  review: dropping a required row reduced coverage by one and asserted nothing in its place): the two rows the same
+ *  run now shows instead are REQUIRED here, so the list is one row longer than before rather than one shorter —
+ *  `circulation:Sympathetic tone` UP where it read DOWN (the lower pressure is a larger baroreflex error) and
+ *  `monitor:PI` UP (the dilated finger). Both measured on this head in the same run as the rows above. */
 const EXPLORE_AT_CALL = [
-  'monitor:HR:up', 'monitor:ART M:down', 'monitor:EtCO₂:up', 'monitor:awRR:up',
-  'circulation:CO:up', 'circulation:SV:down', 'circulation:SVR:down', 'circulation:LVEF:down', 'circulation:Myocardial O2 supply/demand:down',
+  'monitor:HR:up', 'monitor:ART M:down', 'monitor:EtCO₂:up', 'monitor:awRR:up', 'monitor:PI:up',
+  'circulation:CO:up', 'circulation:SV:down', 'circulation:SVR:down', 'circulation:Sympathetic tone:up', 'circulation:Myocardial O2 supply/demand:down',
   'blood:pH:down', 'blood:PCO₂:up', 'blood:BE:down', 'blood:Lactate:up', 'blood:K⁺:up', 'blood:Tcore:down', 'blood:VO₂:up', 'blood:SvO₂:down',
   'endocrine:MH activity:up', 'endocrine:Epinephrine:up', 'endocrine:Norepinephrine:up', 'brain:CMRO₂:down',
 ];

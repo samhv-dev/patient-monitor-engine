@@ -101,6 +101,36 @@ export const SPONT_SWING_CMH2O = 4;
  * J Physiol; k ≈ 0.01–0.02 per mmHg) [ENG inside the sourced range]; PaCO2 from the circulation's 1 Hz chemo input.
  */
 export const K_PVR_CO2 = 0.015;
+/**
+ * CO2's OWN vascular action on the SYSTEMIC bed, non-sympathetic: resistance falls CO2_SVR_PER_MMHG per mmHg of PaCO2
+ * above CO2_REF_MMHG. In fentanyl-anaesthetised dogs at PCO2 92 / pH 7.09 systemic vascular resistance fell 26 %, and
+ * still fell 20 % AFTER propranolol with the cardiac-output rise abolished — so ≈ 0.4 % per mmHg (20 % over 52 mmHg) is
+ * the fall that survives β blockade: propranolol blocks β, while the sympathetic nerves and the α limb stay intact, so
+ * the 20 % is the NET of CO2's direct dilation and whatever α-constriction the intact chemoreflex produced, not the
+ * direct vascular effect in isolation (Walley KR, Lewis TH, Wood LDH, Circ Res 1990;67:628–635, PMID 2118837) [P].
+ * Being net of the α limb is also why a chemoreflex vasoconstrictor limb must never be added on top of this constant
+ * without re-deriving it from a sympathetically blocked preparation (audit §2.5).
+ * EXTRAPOLATION, declared: Walley gives TWO measured points — PaCO2 40 and 92 — in a DOG preparation. The straight
+ * line between them is this engine's assumption, not a measurement, and every clinically interesting PaCO2 here
+ * (45–70: the MH crisis, the apnoea, the post-ROSC patient) sits on that interpolation. The human evidence over
+ * 40–55 is SIGN-ONLY: the intact human NET is a higher cardiac index and heart rate with a LOWER total peripheral
+ * resistance (Cullen DJ, Eger EI 2nd, Anesthesiology 1974;41:345–349, PMID 4412334: PaCO2 39 → 50 in 41 awake
+ * volunteers) [P], but that paper's table was not reachable, so the human MAGNITUDE in this range is unverified.
+ * The sympathetic efferent OPPOSES the dilation through the reflex's own answer to the pressure, which is why an
+ * intact patient's pressure is nearly CO2-insensitive: Jordan 2000 found MAP unaffected by PaCO2 both supine and
+ * head-up, and during ganglionic blockade MAP fell by 13 ± 1.9 mmHg with HYPERVENTILATION — the hypocapnic arm; the
+ * paper reports no pressure figure for its CO2-breathing condition (Jordan J et al., Hypertension 2000;36:383–388,
+ * PMID 10988269) [P]. The architectural point is what carries: without the autonomic buffer, pressure becomes
+ * CO2-dependent.
+ * Held at the source's measured end, CO2_SOURCE_MAX_MMHG (PCO2 92, a 21 % fall): above it no source gives a slope.
+ * The HYPOcapnic direction is NOT modelled here — human resistance is higher at a lower PaCO2 on bypass at constant
+ * pump flow (Buhre W et al., Acta Anaesthesiol Scand 1998;42:167–171, PMID 9509197) [P], and that arm is not built.
+ */
+export const CO2_SVR_PER_MMHG = 0.004;
+/** The PaCO2 both direct CO2 actions are taken from (normal arterial tension; Walley 1990's eucapnic arm). */
+export const CO2_REF_MMHG = 40;
+/** The highest PaCO2 any source measures the direct CO2 actions at (Walley 1990's PCO2 92); both are held there. */
+export const CO2_SOURCE_MAX_MMHG = 92;
 
 // --- blood volume (tables §1.1; Lemmens 2006) ---
 export const BV_ML_KG_M = 70;

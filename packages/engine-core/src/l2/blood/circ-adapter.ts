@@ -81,11 +81,44 @@ export function applyL1Fallback(l1: L1State, t: number, bvRatio: number, kChem: 
  * Chemistry → contractility (tables §5b.1 Q44, §5b.2 Q46): ×(1 − 1.5·(7.2 − pH)) below pH 7.2 (floor 0.3) and
  * ×min(1, (iCa/1.1)^1.5).
  */
-export function chemistryContractility(ph: number, iCa: number, kEcg = 4.2): number {
+export function chemistryContractility(ph: number, iCa: number, kEcg = 4.2, paco2 = CO2_REF_MMHG): number {
   const acid = ph < 7.2 ? Math.max(0.3, 1 - 1.5 * (7.2 - ph)) : 1;
   const kF = kEcg > K_CONTRACT ? Math.max(0.3, 1 - K_CONTRACT_SLOPE * (kEcg - K_CONTRACT)) : 1;
-  return acid * Math.min(1, (iCa / 1.1) ** 1.5) * kF;
+  const co2 = 1 - CO2_EES_PER_MMHG * (Math.min(CO2_SOURCE_MAX_MMHG, Math.max(CO2_REF_MMHG, paco2)) - CO2_REF_MMHG);
+  // NOT multiplied together: the acidaemia term (any cause, below pH 7.2) and the CO2 term (Walley's respiratory
+  // acidosis, where the arterial pH fell with the PCO2) are the same depression measured two ways, so the LARGER of
+  // the two carries it and neither is counted twice. For a pure acute respiratory acidosis they cross at PaCO2 ≈ 78
+  // (pH ≈ 7.10): below it the CO2 slope is the larger, above it the pH term is, and nothing below pH 7.2 from a
+  // METABOLIC cause changes at all.
+  return Math.min(acid, co2) * Math.min(1, (iCa / 1.1) ** 1.5) * kF;
 }
+/**
+ * Hypercapnic MYOCARDIAL DEPRESSION, direct and non-sympathetic: CO2_EES_PER_MMHG of contractility per mmHg of PaCO2
+ * above CO2_REF_MMHG, held at the source's measured end CO2_SOURCE_MAX_MMHG. In fentanyl-anaesthetised dogs,
+ * respiratory acidosis at PCO2 92 / pH 7.09 took Emax 11.4 → 9.2 mmHg/mL (−19 %) with the β-adrenergic response
+ * intact, and 4.6 → 3.6 (−22 %) AFTER propranolol — ≈ 0.4 % per mmHg over PCO2 40 → 92, i.e. ≈ 4 % per 10 mmHg or
+ * ≈ 7 % per 0.1 pH unit (Walley KR, Lewis TH, Wood LDH, Circ Res 1990;67:628–635, PMID 2118837) [P]. It runs through
+ * the EXISTING contractility path, so it is opposed where there is inotropic reserve and unopposed where there is not
+ * — which is why relieving venous hypercarbia raised cardiac output in exsanguinated dogs with no volume given
+ * (Karnad DR, Apte SJ, Supe AN, J Postgrad Med 1993;39:68–71, PMID 8169865) [P].
+ * EXTRAPOLATION, declared: Walley gives TWO measured points — PCO2 40 and 92 — in a DOG preparation. The straight line
+ * between them is this engine's assumption, not a measurement, and every clinically interesting PaCO2 here (45–70)
+ * sits on that interpolation. The human evidence over 40–55 is SIGN-ONLY (Cullen & Eger 1974, PMID 4412334, give the
+ * direction; their table was not reachable), so the human MAGNITUDE in this range is unverified. The 4.6 → 3.6
+ * after-propranolol fall is also net of whatever the intact α limb contributed, β alone being blocked.
+ * The same CO2 excess the circulation's `co2VascularF` uses (l2/circ/params.ts `CO2_SVR_PER_MMHG`); the constants are
+ * repeated here because the blood model never imports from l2/circ (see the file header).
+ * MODE ASYMMETRY, inherited, not introduced here: `co2VascularF` is MODELED-only (in MANUAL the instructor's tracker
+ * owns systemic resistance), while this term reaches the chambers in MANUAL too, because it rides the existing
+ * pH/K+/Ca2+ chemistry factor, which has always done so. A MANUAL hypercapnic patient therefore loses contractility
+ * without the matching dilation. That is the engine's standing convention for the chemistry factor and the behaviour
+ * is deliberately left as it is; the v2.0 autonomic hub is where the pair should be made symmetric.
+ */
+export const CO2_EES_PER_MMHG = 0.004;
+/** The PaCO2 the depression is taken from (normal arterial tension; Walley 1990's eucapnic arm). */
+export const CO2_REF_MMHG = 40;
+/** The highest PaCO2 the source measures it at (Walley 1990's PCO2 92); the term is held there. */
+export const CO2_SOURCE_MAX_MMHG = 92;
 /** Severe hyperkalaemia depresses contractility above K_CONTRACT (membrane-effective), −20 %/mmol/L [ENG, Q5]. */
 export const K_CONTRACT = 8;
 export const K_CONTRACT_SLOPE = 0.2;
