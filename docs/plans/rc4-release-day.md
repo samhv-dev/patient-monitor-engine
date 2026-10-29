@@ -144,8 +144,9 @@ kit (fcf99b70) is the demo build and Pages returns to rc.3** (ceac7b47). Task 8.
 
 ```
 Sat 24           merged on main 2ebd743d: #125, #128 (tooling), #124 (E121b); #117 closed (R4-Q2 (b));
-                 evening: the two-demos tooling PR (`test-kitround-two-demos`, Decision 4)
-Mon 26–Sat 31   the two-demos PR merged (orch); the "Run by" follow-up if still needed (Task 0 Step 3);
+                 evening: the two-demos tooling PR (`test-kitround-two-demos`; history since P29)
+Mon 26–Sat 31   the MH-only talk (P29, #172) merged on main (orch; Decision 4); the A4 "Run by" follow-up if still
+                 needed (Task 0 Step 3);
                  Mon 26 02:00 UTC: the weekly `validation` cron run on main (unverified what it writes)
 Sat 31  ≤ 12:00  freeze: every rc.4 product PR merged, main green → FREEZE_SHA (orch)
         12:00    Task 0 Step 4: the bump PR (executor ≈ 1 h); its CI ≈ 35 min
@@ -210,10 +211,10 @@ cd ../scratch/wt-kitround-rc4 && grep -n -E "M\.untilT\(M\.t0 \+ (240|390)\)|fil
   Recovering, as in A4 (14:28) (unverified until the prep run); (2) `:1513` → `'Showcase 2, 3 November'`, `:1712` →
   `'Live demo, 3 November'`; (3) `:1514` → `'Kit round Q2 rehearsal on the rc.4 release build.'`. (#128 merged this
   step on 24 October with "4 November", now `:1514` and `:1721` on main. The two-demos tooling PR
-  (`test-kitround-two-demos`, Decision 4) rewrites the Q1 talk to opening → MH (E119) → haemorrhage (E120) + Debrief →
-  close and sets both strings to `'Showcase 2, 3 November'` / `'Live demo, 3 November'`; only if it does not, a
-  one-line tooling PR sets them before the freeze. Its test titles, record names and `--list` count are per that PR's
-  body.)
+  (`test-kitround-two-demos`) is history: since P29 the Q1 talk on main is the MH-only talk (#172, Decision 4):
+  opening → MH (E119) with three look-inside stops → the MH Debrief read on screen; it fills no Run-by line, and A4's
+  stays `'Live demo, 3 November'` (only if it does not, a one-line tooling PR sets it before the freeze). Its test
+  title, record names and `--list` count are per #172's body; the haemorrhage card is reserve R5, run by A4 only.)
 
 ```bash
 cd /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/wt-kitround-rc4
