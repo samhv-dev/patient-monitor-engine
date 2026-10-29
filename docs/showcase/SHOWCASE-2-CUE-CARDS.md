@@ -72,7 +72,7 @@ highest EtCO₂ 65 at 19:07 / 19:11 (64 at 18:46 below). Recognition read 0 s on
 - **Never reload mid-case.** If it happens: the case comes back ("Restored after reload: ‹title›, mm:ss"); **switch
   Sound on again** and check **All alarms on**. **The one exception:** if the laptop's presses stop being
   refused while the case keeps running, reload the instructor page; the phones reconnect on their own, their pills
-  may take up to 15 s to read "Following" (run sheet §6).
+  may read a stale line for a moment, up to 2–3 s with the cuff on (run sheet §6).
 - **Open the Room (the QR) only from the instructor tab.** The model-page tabs are GitHub pages, not instructor tabs.
 - **The instructor tab stays in front**, except for a short look at a model page during a stop, with the session
   **Paused** (a paused session stays paused while the tab is hidden; keep each look under a minute).

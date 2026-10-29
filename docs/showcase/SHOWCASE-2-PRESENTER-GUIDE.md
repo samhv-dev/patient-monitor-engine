@@ -84,7 +84,7 @@ asked.
    happens); open the Room only from the **instructor tab**; the instructor tab **stays in front**, except for a short
    look at a model-page tab with the session **Paused**. **The one reload you do:** if the laptop's presses are
    refused while the case keeps running, reload the instructor page; the phones reconnect on their own (their pills
-   may take up to 15 s to read "Following") (run sheet §6). **At stop 1** a red NIBP SYS TOO LOW (or the alarm button
+   may read a stale line for a moment, up to 2–3 s with the cuff on) (run sheet §6). **At stop 1** a red NIBP SYS TOO LOW (or the alarm button
    reading it) is the cuff's stale reading from the dip after induction; the patient now is the arterial line (107/67).
    Do not acknowledge it on stage.
 7. **"Not available now" → press again**: the button now belongs to the current state [G10 §8].
