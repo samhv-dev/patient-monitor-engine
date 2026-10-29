@@ -658,12 +658,14 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
+| S3 untreated: SaO2 below 60 % to the pulse loss 571–697 s | 567 s | — | not audited | — | [`healthy-induction.slow.test.ts`](../../apps/demo/src/app/showcase/healthy-induction.slow.test.ts) |
 | untreated: early signs, established crisis, VF from hyperthermia | no established crisis and no VF in 51 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
 | treated late (the run-sheet path): crisis 1 min into the established crisis | the established crisis is not entered in 60 min, the call is not made | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
+| S2 happy: the highest systolic in the 30 s after the ROSC 203.5–213.5 | 165.0 | — | not audited | — | [`stab-wound-tamponade.slow.test.ts`](../../apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts) |
 
 ## Tests
 
-949 tests in 234 files; 2 expected failures, 0 skipped.
+951 tests in 234 files; 4 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -782,11 +784,11 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 | [`apps/demo/src/app/shell.dom.test.ts`](../../apps/demo/src/app/shell.dom.test.ts) | 4 | 0 | 0 |
 | [`apps/demo/src/app/showcase.test.ts`](../../apps/demo/src/app/showcase.test.ts) | 2 | 0 | 0 |
 | [`apps/demo/src/app/showcase/haemorrhage-anaphylaxis.slow.test.ts`](../../apps/demo/src/app/showcase/haemorrhage-anaphylaxis.slow.test.ts) | 4 | 0 | 0 |
-| [`apps/demo/src/app/showcase/healthy-induction.slow.test.ts`](../../apps/demo/src/app/showcase/healthy-induction.slow.test.ts) | 6 | 0 | 0 |
+| [`apps/demo/src/app/showcase/healthy-induction.slow.test.ts`](../../apps/demo/src/app/showcase/healthy-induction.slow.test.ts) | 7 | 1 | 0 |
 | [`apps/demo/src/app/showcase/induction-after-premedication.slow.test.ts`](../../apps/demo/src/app/showcase/induction-after-premedication.slow.test.ts) | 3 | 0 | 0 |
 | [`apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) | 7 | 2 | 0 |
 | [`apps/demo/src/app/showcase/showcase-cards.test.ts`](../../apps/demo/src/app/showcase/showcase-cards.test.ts) | 5 | 0 | 0 |
-| [`apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts`](../../apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts) | 5 | 0 | 0 |
+| [`apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts`](../../apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts) | 6 | 1 | 0 |
 | [`apps/demo/src/app/site.test.ts`](../../apps/demo/src/app/site.test.ts) | 2 | 0 | 0 |
 | [`apps/demo/src/app/staging.test.ts`](../../apps/demo/src/app/staging.test.ts) | 2 | 0 | 0 |
 | [`apps/demo/src/app/teach2/action-parity.dom.test.ts`](../../apps/demo/src/app/teach2/action-parity.dom.test.ts) | 7 | 0 | 0 |
