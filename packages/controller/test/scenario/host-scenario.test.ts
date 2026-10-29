@@ -6,7 +6,7 @@ import { HostSession, STAGE_LEAD_TICKS } from '../../src/session/host-session.ts
 import { ControllerSession } from '../../src/session/controller-session.ts';
 import { ScenarioDriver } from '../../src/scenario/driver.ts';
 import { StageBuffer } from '../../src/panel/staging.ts';
-import type { AppliedResolution, ScenarioEvent, WireEvent } from '../../src/protocol.ts';
+import { createStamper, type AppliedResolution, type ScenarioEvent, type WireEvent } from '../../src/protocol.ts';
 import { manualHost } from '../fakes/manual-host.ts';
 import { collect, waitFor } from '../helpers.ts';
 
@@ -134,6 +134,37 @@ describe('scenario over a HostSession', () => {
     expect(late.scenario.doc?.id).toBe('acls-vf-witnessed');
     expect(late.scenario.enteredT).toBe(60);
     expect(late.scenario.paused).toBe(true);
+  });
+
+  it('IP2 marks: kind and note survive commandApplied and the late-join replay; restoreBookmark is unchanged', async () => {
+    const { ctl, hub, run, host, driver } = setup();
+    const watcher = hub.connect();
+    const got = collect(watcher);
+    const marks = (replay: boolean) => got.flatMap((m) => (m.kind === 'event' ? m.body : [])).filter((e): e is Extract<WireEvent, { type: 'commandApplied' }> => e.type === 'commandApplied' && (e.resolved as AppliedResolution).command.type === 'scenario' && ((e.resolved as AppliedResolution).command as { action: string }).action === 'bookmark' && !!(e.resolved as AppliedResolution).replay === replay).map((e) => (e.resolved as AppliedResolution).command);
+    await waitFor(() => ctl.hostOnline);
+    await ctl.send({ type: 'scenario', action: 'load', target: 'acls-vf-witnessed' });
+    await run(10);
+    expect((await ctl.send({ type: 'scenario', action: 'bookmark', kind: 'bad', note: 'late call for help' })).accepted).toBe(true);
+    expect((await ctl.send({ type: 'scenario', action: 'bookmark', target: 'Mark 2', kind: 'good' })).accepted).toBe(true);
+    await waitFor(() => marks(false).length === 2);
+    expect(marks(false)).toMatchObject([
+      { action: 'bookmark', target: 'Bookmark 1', kind: 'bad', note: 'late call for help' }, // the driver's label, the mark's metadata
+      { action: 'bookmark', target: 'Mark 2', kind: 'good' },
+    ]);
+    expect(marks(false)[1]).not.toHaveProperty('note');
+    expect(ctl.bookmarks).toEqual(['Bookmark 1', 'Mark 2']);
+    watcher.send(createStamper(S, 'late-1')({ kind: 'hello', role: 'controller' })); // a late joiner
+    await waitFor(() => marks(true).length === 2);
+    expect(marks(true)).toMatchObject([
+      { target: 'Bookmark 1', kind: 'bad', note: 'late call for help' },
+      { target: 'Mark 2', kind: 'good' },
+    ]);
+    await run(70);
+    expect(driver.runner?.stateId).toBe('vf');
+    const r = await ctl.send({ type: 'scenario', action: 'restoreBookmark', target: 'Bookmark 1' }); // by its label alone
+    expect(r).toMatchObject({ accepted: true, tick: 500 });
+    expect(host.engine.now().tick).toBe(500);
+    expect(driver.runner?.stateId).toBe('stable');
   });
 
   it('bookmarks through the host restore the runner state too', async () => {

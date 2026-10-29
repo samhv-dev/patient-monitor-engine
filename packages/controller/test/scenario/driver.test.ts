@@ -140,6 +140,22 @@ describe('ScenarioDriver', () => {
     expect(samples(66, 199)).toEqual(first.ecg);
   }, SLOW);
 
+  it('IP2 marks: the bookmark hook returns kind and note on its applied command; restoreBookmark needs only the label', async () => {
+    const { driver, run, host } = rig();
+    expect(driver.load('acls-vf-witnessed').ok).toBe(true);
+    await run(250);
+    const a = await driver.hook({ id: 'm1', issuedBy: 'panel', type: 'scenario', action: 'bookmark', kind: 'good', note: 'clear closed-loop call' });
+    expect(a).toMatchObject({ accepted: true, applied: { action: 'bookmark', target: 'Bookmark 1', kind: 'good', note: 'clear closed-loop call' } });
+    const b = await driver.hook({ id: 'm2', issuedBy: 'panel', type: 'scenario', action: 'bookmark', target: 'plain' });
+    expect(b.applied).toEqual({ id: 'm2', issuedBy: 'panel', type: 'scenario', action: 'bookmark', target: 'plain' }); // no kind: as before
+    await run(3500);
+    expect(driver.runner?.stateId).toBe('vf');
+    const r = await driver.hook({ id: 'm3', issuedBy: 'panel', type: 'scenario', action: 'restoreBookmark', target: 'Bookmark 1' });
+    expect(r).toEqual({ accepted: true, tick: 250 });
+    expect(host.engine.now().tick).toBe(250);
+    expect(driver.runner?.stateId).toBe('stable');
+  });
+
   it('a position kept across a reload (JSON, a new engine and driver) restores like a bookmark', async () => {
     const a = rig();
     a.driver.load('acls-vf-witnessed');

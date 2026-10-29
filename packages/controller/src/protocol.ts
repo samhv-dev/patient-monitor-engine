@@ -76,6 +76,10 @@ export type ExtraCommand = CommandBase &
         action: 'load' | 'goto' | 'trigger' | 'pause' | 'resume' | 'bookmark' | 'restoreBookmark';
         target?: string;
         doc?: unknown;
+        /** With `bookmark` (Instructor v2 marks): the mark's kind and the instructor's note. Metadata only: carried on the
+         *  applied command, its `commandApplied` and the late-join replay; `restoreBookmark` reads the label alone. */
+        kind?: MarkKind;
+        note?: string;
       }
     // `jump` = fast-forward `value` sim seconds (> 0, ≤ 600) as fast as the host's monitor runs; `step` is refused
     | { type: 'time'; action: 'pause' | 'resume' | 'scale' | 'step' | 'jump'; value?: number }
@@ -85,6 +89,8 @@ export type ExtraCommand = CommandBase &
         sampling?: 'sidestream' | 'mainstream';
       }
   );
+/** A mark's kind (Instructor v2): a good moment, a bad one, or one to discuss. */
+export type MarkKind = 'good' | 'bad' | 'discuss';
 /** Brief §7.2 `Command` as it travels on the wire (engine commands may carry the staged-delivery `batch` too). */
 export type WireCommand = (Command & BatchMeta) | ExtraCommand;
 export type TimeCommand = Extract<ExtraCommand, { type: 'time' }>;

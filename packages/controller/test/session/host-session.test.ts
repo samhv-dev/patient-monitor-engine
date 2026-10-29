@@ -179,6 +179,24 @@ describe('HostSession', () => {
     expect(applied.map((c) => c.batch)).toEqual(sent.map(() => ({ id: 'p1-sg1', n: 3 }))); // the record can group them
   });
 
+  it('IP2 marks without a scenario hook: kind and note survive applied, commandApplied and the late-join replay', async () => {
+    const { host, peer, stamp, command, of, events } = setup();
+    host.advance(2000);
+    command({ type: 'scenario', action: 'bookmark', kind: 'discuss', note: 'why no fluid?' });
+    await waitFor(() => of('ack').length === 1 && events().some((e) => e.type === 'commandApplied'));
+    const applied = (events().find((e) => e.type === 'commandApplied') as { resolved: AppliedResolution }).resolved;
+    expect(applied.command).toMatchObject({ type: 'scenario', action: 'bookmark', target: 'Bookmark 1', kind: 'discuss', note: 'why no fluid?' });
+    hello(peer, stamp, 'controller');
+    await waitFor(() => of('snapshot').length === 1);
+    const replay = of('event').flatMap((m) => m.body).filter((e) => e.type === 'commandApplied' && (e.resolved as AppliedResolution).replay).map((e) => (e as { resolved: AppliedResolution }).resolved.command);
+    expect(replay).toMatchObject([{ action: 'bookmark', target: 'Bookmark 1', kind: 'discuss', note: 'why no fluid?' }]);
+    host.advance(3000);
+    command({ type: 'scenario', action: 'restoreBookmark', target: 'Bookmark 1' }); // unchanged: by its label alone
+    await waitFor(() => of('ack').length === 2);
+    expect(of('ack')[1]).toMatchObject({ accepted: true, tick: 100 });
+    expect(host.engine.now().tick).toBe(100);
+  });
+
   it('bookmarks and restores, then re-announces itself so viewers resync', async () => {
     const { host, command, of, hs: h } = setup();
     host.advance(2000);
