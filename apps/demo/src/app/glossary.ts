@@ -160,6 +160,20 @@ export const DISPLAY_SCALE: Readonly<Record<string, number>> = {
   'ev.lungState.atelectasisFrac': 100, 'ev.lungState.vqAdmixture': 100, 'mon.tofRatio': 1,
 };
 
+/** The unit and decimals a screen prints for a path whose glossary unit or default decimals do not fit its engine value:
+ *  the lab panel's glucose is in mg/dL (engine-core types-blood.ts; its entry lists both units and both normal ranges),
+ *  the endocrine glucose is the engine's mmol/L to 0.1, the stress index an integer 0–100. */
+export const DISPLAY_AS: Readonly<Record<string, { unit?: string; digits?: number }>> = {
+  'ev.labs.values.glucose': { unit: 'mg/dL', digits: 0 }, 'ev.labResult.values.glucose': { unit: 'mg/dL', digits: 0 },
+  'ev.endo.glucoseMmolL': { digits: 1 }, 'ev.endo.stressIndex': { digits: 0 },
+};
+
+/** Glossary keys whose unit is per row in the engine: a drug's total is in that drug's amount unit (mg, mcg, mL, …), so
+ *  the screen prints the engine's `amountUnit`, not the glossary's list of possible units. */
+export const ENGINE_UNIT_KEYS: ReadonlySet<string> = new Set(['ev.drugs.drugs.<id>.totalAmount']);
+/** An engine unit as a screen writes it ("mcg" → "µg"). */
+export const unitText = (u: string): string => u.replace(/\bmcg\b/g, 'µg');
+
 /** The short screen name of a lung condition (the catalogue's full text belongs in its tooltip). */
 export function lungLabel(id: string, catalogueLabel = ''): string {
   return LUNG_LABELS[id] ?? (catalogueLabel.split(/ \(| \//)[0] || 'Lung condition');

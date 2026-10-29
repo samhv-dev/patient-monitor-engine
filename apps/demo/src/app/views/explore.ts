@@ -8,7 +8,7 @@ import type { EngineEvent } from '@pme/engine-core';
 import { ConsoleModel, type Row } from '../../physiology-console/model.ts';
 import { fmtDelta, fmtValue } from '../../physiology-console/format.ts';
 import type { GroupId } from '../../physiology-console/organs.ts';
-import { DISPLAY_SCALE, entry, labelOf, lookup, rowKey, shortLabel, unitOf } from '../glossary.ts';
+import { DISPLAY_AS, DISPLAY_SCALE, ENGINE_UNIT_KEYS, entry, labelOf, lookup, rowKey, shortLabel, unitOf, unitText } from '../glossary.ts';
 import { hrefOf } from '../router.ts';
 import type { AppSession } from '../session.ts';
 import type { SiteProfile } from '../site.ts';
@@ -47,11 +47,45 @@ export const SECTIONS: readonly Section[] = [
 
 const displayOf = (r: Row): { value: string; unit: string; delta: string } => {
   const l = lookup(r.path);
+  const as = DISPLAY_AS[r.path];
   const scale = DISPLAY_SCALE[r.path] ?? r.meta.scale;
-  const m = { digits: r.meta.digits, scale } as { digits?: number; scale: number };
+  const m = { digits: as?.digits ?? r.meta.digits, scale } as { digits?: number; scale: number };
   const ref = typeof r.base === 'number' ? r.base : typeof r.value === 'number' ? r.value : 0;
-  return { value: fmtValue(r.value, m), unit: (l ? unitOf(l.e) : '') || r.meta.unit, delta: r.delta === null ? '' : fmtDelta(r.delta, m, ref) };
+  const unit = as?.unit ?? (l && ENGINE_UNIT_KEYS.has(l.key) && r.meta.unit ? unitText(r.meta.unit) : (l ? unitOf(l.e) : '') || r.meta.unit);
+  return { value: fmtValue(r.value, m), unit, delta: r.delta === null ? '' : fmtDelta(r.delta, m, ref) };
 };
+
+/** One clinical row of an Explore section as printed: label, value, unit, adult normal, change (when it counts). */
+export interface ExploreCell { path: string; label: string; value: string; unit: string; normal: string; delta: string; dir: Row['dir'] }
+
+/**
+ * The rows of one Explore section for the model's current state: the clinical rows as the table prints them (one per
+ * quantity) and the rest, the model internals. No DOM, so a test can read a section for a known engine state.
+ */
+export function sectionRows(model: ConsoleModel, id: string, changedOnly = false): { cells: ExploreCell[]; rest: Row[] } {
+  const s = SECTIONS.find((x) => x.id === id) ?? (SECTIONS[0] as Section);
+  const rows = model.rows().filter((r) => {
+    const l = lookup(r.path);
+    if (s.withGroup && r.group === s.withGroup) return true;
+    if (s.gloss) return !!l && s.gloss.includes(l.e.s);
+    return s.groups.includes(r.group);
+  });
+  if (s.withGroup) rows.sort((a, b) => Number(b.group === s.withGroup) - Number(a.group === s.withGroup)); // stable: console order kept
+  const clinical = rows.filter((r) => labelOf(r.path) !== null && !r.internal && (r.value === null || typeof r.value !== 'object')); // null = not measured yet (—)
+  // One row per quantity: the monitor and the truth copy of one value share a row key; two different quantities never
+  // do, even when research/11 gives them similar labels
+  const seen = new Set<string>();
+  const once = (r: Row) => {
+    const k = rowKey(r.path) ?? r.path;
+    return !seen.has(k) && !!seen.add(k);
+  };
+  const cells = clinical.filter((r) => (!changedOnly || r.dir) && once(r)).map((r): ExploreCell => {
+    const e = lookup(r.path)?.e;
+    const d = displayOf(r);
+    return { path: r.path, label: labelOf(r.path) ?? '', value: d.value, unit: d.unit, normal: e?.normal && e.normal !== '—' ? e.normal : '', delta: r.dir ? d.delta : '', dir: r.dir };
+  });
+  return { cells, rest: rows.filter((r) => !clinical.includes(r)) };
+}
 
 export function exploreView(session: AppSession, site: SiteProfile): View {
   const model = new ConsoleModel();
@@ -98,33 +132,15 @@ export function exploreView(session: AppSession, site: SiteProfile): View {
     setText(place, s.placeholder ?? '');
     for (const a of nav.querySelectorAll('a')) a.setAttribute('aria-current', String(a.dataset.id === s.id));
     setText(stamp, model.baseT === null ? `Sim time ${clock(model.t)}. The baseline is set at 1 minute.` : `Sim time ${clock(model.t)}. Changes are from the baseline at ${clock(model.baseT)}.`);
-    const rows = model.rows().filter((r) => {
-      const l = lookup(r.path);
-      if (s.withGroup && r.group === s.withGroup) return true;
-      if (s.gloss) return !!l && s.gloss.includes(l.e.s);
-      return s.groups.includes(r.group);
-    });
-    if (s.withGroup) rows.sort((a, b) => Number(b.group === s.withGroup) - Number(a.group === s.withGroup)); // stable: console order kept
-    const clinical = rows.filter((r) => labelOf(r.path) !== null && !r.internal && (r.value === null || typeof r.value !== 'object')); // null = not measured yet (—)
-    // One row per quantity: the monitor and the truth copy of one value share a row key; two different quantities never
-    // do, even when research/11 gives them similar labels
-    const seen = new Set<string>();
-    const once = (r: Row) => {
-      const k = rowKey(r.path) ?? r.path;
-      return !seen.has(k) && !!seen.add(k);
-    };
-    body.replaceChildren(...clinical.filter((r) => (!changedOnly || r.dir) && once(r)).map((r) => {
-      const l = lookup(r.path);
-      const d = displayOf(r);
-      const e = l?.e;
-      const label = labelOf(r.path) ?? '';
-      return h('tr', r.dir ? { 'data-dir': r.dir } : {},
-        h('th', { scope: 'row', class: 'l' }, h('span', { class: 'lbl' }, h('b', {}, label), e ? tip(e, label) : null)),
-        h('td', { class: 'v num' }, d.value), h('td', { class: 'u' }, d.unit), h('td', { class: 'n' }, e?.normal && e.normal !== '—' ? e.normal : ''),
-        h('td', { class: 'd num' }, r.dir ? d.delta : ''));
+    const { cells, rest } = sectionRows(model, s.id, changedOnly);
+    body.replaceChildren(...cells.map((c) => {
+      const e = lookup(c.path)?.e;
+      return h('tr', c.dir ? { 'data-dir': c.dir } : {},
+        h('th', { scope: 'row', class: 'l' }, h('span', { class: 'lbl' }, h('b', {}, c.label), e ? tip(e, c.label) : null)),
+        h('td', { class: 'v num' }, c.value), h('td', { class: 'u' }, c.unit), h('td', { class: 'n' }, c.normal),
+        h('td', { class: 'd num' }, c.delta));
     }));
     if (!body.children.length) body.append(h('tr', {}, h('td', { colspan: 5, class: 'muted' }, model.t ? 'No values in this section yet.' : 'Waiting for the first values…')));
-    const rest = rows.filter((r) => !clinical.includes(r));
     const ib = internals.querySelector('.internals-body') as HTMLElement;
     (internals.querySelector('summary') as HTMLElement).textContent = `Model internals (${rest.length} values without a clinical name)`;
     if (internals.open) ib.replaceChildren(h('table', { class: 'values dense' }, h('tbody', {}, ...rest.slice(0, 400).map((r) => h('tr', {}, h('td', { class: 'mono key' }, r.path), h('td', { class: 'v num' }, fmtValue(r.value, r.meta)), h('td', {}, r.meta.unit))))));

@@ -39,6 +39,12 @@ the public API is what the packages export (see the API reference), the `pme-sce
   ramp for delivered items. The Drug sheet's rule for a dose that differs from the card's step is interim, pending the
   owner's ruling.
 
+### Fixed
+- Explore prints four rows in the engine's own unit: Endocrine glucose is the engine's mmol/L value (it showed the
+  mg/dL copy as mmol/L) and the lab panel's glucose says mg/dL; Stress response is on its 0–100 scale (was labelled
+  0–1); the gas model's awake resting VO₂ is labelled "VO₂ at rest (awake)" beside the actual VO₂, so Gas and Blood no
+  longer show two different "VO₂"; a drug's Total is in that drug's amount unit (µg, mg, mL), not "mg, µg".
+
 ## [1.0.0-rc.4] - 2026-10-30
 
 Fourth public **pre-release** (release candidate) of a teaching simulator. It is for education only: it is not a
