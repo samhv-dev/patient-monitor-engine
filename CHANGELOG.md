@@ -40,10 +40,12 @@ the public API is what the packages export (see the API reference), the `pme-sce
   owner's ruling.
 
 ### Fixed
-- Explore prints four rows in the engine's own unit: Endocrine glucose is the engine's mmol/L value (it showed the
+- Explore prints its rows in the engine's own unit: Endocrine glucose is the engine's mmol/L value (it showed the
   mg/dL copy as mmol/L) and the lab panel's glucose says mg/dL; Stress response is on its 0–100 scale (was labelled
   0–1); the gas model's awake resting VO₂ is labelled "VO₂ at rest (awake)" beside the actual VO₂, so Gas and Blood no
-  longer show two different "VO₂"; a drug's Total is in that drug's amount unit (µg, mg, mL), not "mg, µg".
+  longer show two different "VO₂"; a drug's Total is in that drug's amount unit (µg, mg, mL), not "mg, µg", and its
+  Cp, Ce (also NMJ, diaphragm, ventilatory), infusion rate and TCI target rows print the drug's own concentration or
+  rate unit (ng/mL, µg/mL, × ref dose; µg/min, mg/min) in place of "drug unit" and "per row", CSHT staying in min.
 
 ## [1.0.0-rc.4] - 2026-10-30
 

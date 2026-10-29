@@ -8,7 +8,7 @@ import type { EngineEvent } from '@pme/engine-core';
 import { ConsoleModel, type Row } from '../../physiology-console/model.ts';
 import { fmtDelta, fmtValue } from '../../physiology-console/format.ts';
 import type { GroupId } from '../../physiology-console/organs.ts';
-import { DISPLAY_AS, DISPLAY_SCALE, ENGINE_UNIT_KEYS, entry, labelOf, lookup, rowKey, shortLabel, unitOf, unitText } from '../glossary.ts';
+import { DISPLAY_AS, DISPLAY_SCALE, engineUnit, entry, labelOf, lookup, rowKey, shortLabel, unitOf } from '../glossary.ts';
 import { hrefOf } from '../router.ts';
 import type { AppSession } from '../session.ts';
 import type { SiteProfile } from '../site.ts';
@@ -45,13 +45,13 @@ export const SECTIONS: readonly Section[] = [
     placeholder: 'Full blood count, chemistry, coagulation and TEG/ROTEM panels are not part of this release.' },
 ];
 
-const displayOf = (r: Row): { value: string; unit: string; delta: string } => {
+const displayOf = (r: Row, get: (p: string) => unknown): { value: string; unit: string; delta: string } => {
   const l = lookup(r.path);
   const as = DISPLAY_AS[r.path];
   const scale = DISPLAY_SCALE[r.path] ?? r.meta.scale;
   const m = { digits: as?.digits ?? r.meta.digits, scale } as { digits?: number; scale: number };
   const ref = typeof r.base === 'number' ? r.base : typeof r.value === 'number' ? r.value : 0;
-  const unit = as?.unit ?? (l && ENGINE_UNIT_KEYS.has(l.key) && r.meta.unit ? unitText(r.meta.unit) : (l ? unitOf(l.e) : '') || r.meta.unit);
+  const unit = as?.unit ?? engineUnit(r.path, get) ?? ((l ? unitOf(l.e) : '') || r.meta.unit);
   return { value: fmtValue(r.value, m), unit, delta: r.delta === null ? '' : fmtDelta(r.delta, m, ref) };
 };
 
@@ -81,7 +81,7 @@ export function sectionRows(model: ConsoleModel, id: string, changedOnly = false
   };
   const cells = clinical.filter((r) => (!changedOnly || r.dir) && once(r)).map((r): ExploreCell => {
     const e = lookup(r.path)?.e;
-    const d = displayOf(r);
+    const d = displayOf(r, (p) => model.cur.get(p));
     return { path: r.path, label: labelOf(r.path) ?? '', value: d.value, unit: d.unit, normal: e?.normal && e.normal !== '—' ? e.normal : '', delta: r.dir ? d.delta : '', dir: r.dir };
   });
   return { cells, rest: rows.filter((r) => !clinical.includes(r)) };

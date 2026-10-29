@@ -38,4 +38,46 @@ describe('Explore rows print the engine value in its own unit', () => {
     const m = model({ type: 'drugs', drugs: [row('rocuronium', 48000, 'mcg'), row('dantrolene', 200, 'mg'), row('sevoflurane', 12.5, 'mL')], volatile: null, macTotal: 0 });
     expect(rows(m, 'drugs', /^Total/)).toEqual(['Total (Dantrolene) | 200 | mg', 'Total (Rocuronium) | 48000 | µg', 'Total (Sevoflurane) | 12.5 | mL']); // was "mg, µg" on each
   });
+
+  // The drugs event's rows as the engine writes them (engine-core l2/pk/pipeline.ts): `unit` is the row's concentration
+  // unit (concUnit), `rateUnit` `${amountUnit}/min` while a pump runs, `tci` an object while a TCI runs.
+  type Panel = { id: string; unit: string; amountUnit: string; cp?: number; ce?: number; rate?: number | null; tci?: { mode: string; target: number; model: string } | null; dec?: number | null };
+  const drugs = (...rows: Panel[]) => model({ type: 'drugs', volatile: null, macTotal: 0, drugs: rows.map((r) => ({
+    id: r.id, name: r.id, unit: r.unit, cp: r.cp ?? 0, ce: r.ce ?? 0, rate: r.rate ?? null, rateUnit: r.rate ? `${r.amountUnit}/min` : null,
+    tci: r.tci ?? null, totalAmount: 0, amountUnit: r.amountUnit, decrement50Min: r.dec ?? null,
+  })) });
+  const ROC = { id: 'rocuronium', unit: 'ng/mL', amountUnit: 'mcg' } as const; // nmb row, amount in mcg
+  const DAN = { id: 'dantrolene', unit: '× ref dose', amountUnit: 'mg' } as const; // curve (gamma) row without an infusion reference
+  const PRO = { id: 'propofol', unit: 'µg/mL', amountUnit: 'mg' } as const; // Eleveld model row: TCI and infusion
+
+  it("Cp and Ce: in the drug's concentration unit", () => {
+    const m = drugs({ ...ROC, cp: 1234, ce: 987 }, { ...DAN, cp: 0.892, ce: 0.892 });
+    expect(rows(m, 'drugs', /^C[pe] \((Rocuronium|Dantrolene)/)).toEqual([
+      'Ce (Dantrolene) | 0.892 | × ref dose', 'Cp (Dantrolene) | 0.892 | × ref dose', 'Ce (Rocuronium) | 987 | ng/mL', 'Cp (Rocuronium) | 1234 | ng/mL',
+    ]); // was "drug unit" on each
+  });
+
+  it("site-specific Ce (NMJ, diaphragm, ventilatory): in the bus agent's concentration unit", () => {
+    const m = model({ type: 'truth', leaves: 3, dropped: 0, truncated: false, tree: { pk: { bus: { agents: { rocuronium: { unit: 'ng/mL', nmj: 3841, dia: 4368 } } } } } });
+    expect(rows(m, 'drugs', /^Ce (NMJ|diaphragm)/)).toEqual(['Ce diaphragm (Rocuronium) | 4368 | ng/mL', 'Ce NMJ (Rocuronium) | 3841 | ng/mL']); // was "drug unit"
+  });
+
+  it('infusion rate: the amount unit per minute as the engine defines it; a drug without an infusion model keeps the placeholder', () => {
+    const m = drugs({ ...PRO, rate: 8 }, ROC, DAN);
+    expect(rows(m, 'drugs', /^Infusion rate/)).toEqual([
+      'Infusion rate (Dantrolene) | — | per row', // dantrolene has no infusion model: no rate unit
+      'Infusion rate (Propofol) | 8.00 | mg/min', 'Infusion rate (Rocuronium) | — | µg/min',
+    ]); // was "per row" on each
+  });
+
+  it("TCI target: the drug's concentration unit while a TCI runs or not; a drug without a TCI model keeps the placeholder", () => {
+    const on = drugs({ ...PRO, tci: { mode: 'effect', target: 3, model: 'eleveld' } }, ROC);
+    expect(rows(on, 'drugs', /^TCI target/)).toEqual(['TCI target (Propofol) | 3.00 | µg/mL', 'TCI target (Rocuronium) | — | per row']);
+    expect(rows(drugs(PRO), 'drugs', /^TCI target/)).toEqual(['TCI target (Propofol) | — | µg/mL']);
+  });
+
+  it("CSHT: a time in min, never the drug's unit", () => {
+    const m = drugs({ ...PRO, rate: 8, dec: 12.4 }, { ...ROC, dec: null });
+    expect(rows(m, 'drugs', /^CSHT/)).toEqual(['CSHT (Propofol) | 12.4 | min', 'CSHT (Rocuronium) | — | min']);
+  });
 });

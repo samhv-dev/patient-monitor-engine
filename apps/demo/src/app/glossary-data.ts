@@ -288,7 +288,7 @@ export const GLOSSARY: readonly GlossaryEntry[] = [
   { n: 269, s: '5.12', keys: ["ev.neuroMark.kind"], label: "Event", name: "Fasciculation, movement, awareness, emergence, loss of consciousness, apnoea, breathing, recurarisation, MH trigger", unit: "—", normal: "—", convention: "clinical words" },
   { n: 270, s: '5.13', keys: ["ev.drugs.drugs.<id>.cp"], label: "Cp", name: "Plasma concentration", unit: "drug unit (µg/mL propofol; ng/mL opioids, NMBs)", normal: "", convention: "TCI pumps \"Cp\"" },
   { n: 271, s: '5.13', keys: ["ev.drugs.drugs.<id>.ce"], label: "Ce", name: "Effect-site concentration", unit: "drug unit", normal: "", convention: "TCI pumps \"Ce\"" },
-  { n: 272, s: '5.13', keys: ["ev.drugs.drugs.<id>.rate", "ev.drugs.drugs.<id>.tci"], label: "Rate / Target", name: "Infusion rate; TCI target (plasma or effect, model name)", unit: "per row", normal: "", convention: "TCI pumps" },
+  { n: 272, s: '5.13', keys: ["ev.drugs.drugs.<id>.rate", "ev.drugs.drugs.<id>.tci", "ev.drugs.drugs.<id>.tci.target"], label: "Rate / Target", name: "Infusion rate; TCI target (plasma or effect, model name)", unit: "per row", normal: "", convention: "TCI pumps" },
   { n: 273, s: '5.13', keys: ["ev.drugs.drugs.<id>.totalAmount"], label: "Total", name: "Cumulative dose", unit: "mg, µg", normal: "", convention: "anaesthesia record" },
   { n: 274, s: '5.13', keys: ["ev.drugs.drugs.<id>.decrement50Min"], label: "CSHT (50 %)", name: "Context-sensitive half-time (time for Cp to fall 50 % if stopped now)", unit: "min", normal: "", convention: "Hughes 1992 \"CSHT\"" },
   { n: 275, s: '5.13', keys: ["ev.drugs.volatile.fi", "ev.drugs.volatile.fa"], label: "Fi / Fet (agent)", name: "Inspired and end-tidal (alveolar) agent fraction", unit: "%", normal: "", convention: "agent monitor \"Fi/Et\"" },
@@ -420,6 +420,8 @@ export const KEY_LABELS: Readonly<Record<string, string>> = {
   'resp.pat.vo2': 'VO₂ at rest (awake)',
   // pattern keys (the key string as written in `keys`): one entry, several quantities per drug or site
   'ev.drugs.drugs.<id>.rate': 'Infusion rate', 'ev.drugs.drugs.<id>.tci': 'TCI target',
+  // a running TCI is an object in the drugs event ({ mode, target, model }): its target is the TCI target row (no TCI: null)
+  'ev.drugs.drugs.<id>.tci.target': 'TCI target',
   'pk.bus.agents.<id>.nmj': 'Ce NMJ', 'pk.bus.agents.<id>.dia': 'Ce diaphragm', 'pk.bus.agents.<id>.vent': 'Ce ventilatory',
   // a '*' key names several quantities under one label: only the paths named here get a clinical label
   'resp.temp.sites.oesophageal': 'Toes', 'resp.temp.sites.nasopharyngeal': 'Tnaso', 'resp.temp.sites.tympanic': 'Ttymp',
