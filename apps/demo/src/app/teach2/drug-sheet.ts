@@ -10,7 +10,7 @@
 // sends exactly the command today's Drugs & fluids tab (panel/drugs.ts `drugsTab`) sends for it, with its toast; a
 // pinned card step presses the step (teach2/press.ts `pressStep`, the card's own dose and route: answer 10's
 // uncontested half). A typed dose that differs from the pinned step's is ruled by `pinnedGiveRule` below (INTERIM).
-import type { ClinicalEvent, CommandInput, ScenarioDoc } from '@pme/controller';
+import { asV1, type ClinicalEvent, type CommandInput } from '@pme/controller';
 import { bleed, fluid, infusion, vaporiser } from '../../physiology-console/actions.ts';
 import { describeCommand } from '../describe.ts';
 import { DRUG_LIST, doseUnits, findDrugs, perKg, rateUnits, unitText, type DrugItem } from '../drugs.ts';
@@ -90,7 +90,7 @@ const nameOf = (it: Item): string =>
 /** The card's open steps that give a drug, in the ACTION list's numbering (one entry per drug the step gives). */
 export function pinnedSteps(link: Link): PinnedStep[] {
   const sv = link.ctl.scenario;
-  const doc = sv.doc as ScenarioDoc | null;
+  const doc = asV1(sv.doc); // a pme-scenario/2 card: no steps to pin until F6
   if (!doc || !sv.stateId) return [];
   const board = classify({
     doc, stateId: sv.stateId, history: historyOf(link), enteredT: sv.enteredT, simT: link.simT, inState: sv.timeInState(link.simT),

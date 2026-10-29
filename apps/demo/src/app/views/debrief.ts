@@ -382,7 +382,7 @@ export function debriefView(session: AppSession, link: Link): View {
   link.onChange(() => {
     const sv = link.ctl.scenario;
     const key = `${sv.docVersion}:${sv.stateId}`;
-    if (!sv.doc || key === ended || sv.current()?.transitions?.length) return;
+    if (!asV1(sv.doc) || key === ended || sv.current()?.transitions?.length) return; // /2: no end known until F2's ended()
     ended = key;
     toast('The scenario has ended: the debrief is ready (Debrief, in the session bar)');
   });
