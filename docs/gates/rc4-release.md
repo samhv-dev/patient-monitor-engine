@@ -185,4 +185,7 @@ model pages load GitHub `main`, not the tag.
 5. **The Persian handouts** were rendered with PR #161's unreviewed table, uncommitted; the tag's table left 11 / 15
    strings in English.
 6. **The Pages serve check** ran from `wt-rc4-tag` (`wt-rc2-prep` gone; R4-Q8).
-7. **#117's rc.3 evidence** (Task 9 Step 2) is not folded into this branch yet.
+7. **#117's rc.3 record** (Task 9 Step 2) is folded into this PR: `docs/gates/rc3-release.md`, `q2-rc3/`, `q2-rc3-a3/`,
+   the six-card shots re-taken on the rc.3 kit (`rehearsal/`, `results/`), KIT-GATE's rc.3 section and MEASUREMENTS
+   §"Q2 on rc.3". Its run-sheet, cue-card, guide, RESUME and script edits are not: main's papers have been rewritten
+   since (P29).

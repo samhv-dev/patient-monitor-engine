@@ -40,8 +40,8 @@ report (`scratch/plans-backup/rc3-release-day-run-2026-10-23.md`), `scratch/rc3-
 > - **Task 6.** Tree `gh-pages-rc4` e1fbdc67 (91 files); the serve check ran from `wt-rc4-tag` (`wt-rc2-prep` no longer
 >   exists); pushed with the lease 12:20:40, built 12:21. **Tasks 0–6 complete ≈ 12:25 on 29 October.**
 > - **Task 7** (the smoke, the live rehearsal, W/E13/E14): not yet run. **Task 8:** not needed. **Task 9:** Steps 1–3,
->   4.1–4.3 and 5 drafted on 29 October on `docs-rc4-release`, no push; #117's rc.3 evidence (Step 2) not folded in
->   yet.
+>   4.1–4.3 and 5 drafted on 29 October on `docs-rc4-release`, no push; #117's rc.3 gate note, Q2-rc3 evidence and
+>   six-card shots folded in (Step 2); the CHANGELOG and CITATION dates corrected on main to 2026-10-29.
 
 **Base and preconditions.**
 - rc.3 is tagged on **fcf99b70** (annotated, 2026-10-23 13:55; release run 39938963544; its Pages build is the local
