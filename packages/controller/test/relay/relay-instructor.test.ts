@@ -41,6 +41,8 @@ interface Sock {
   raw: string[];
   got: Array<Record<string, unknown>>;
   closeCode: number | null;
+  /** The code of the relay's error frame heard BEFORE the close (P5 reads why it was refused from it). */
+  errorBeforeClose: string | null;
   hello: (extra?: { seq?: number }) => void;
   send: (body: Record<string, unknown>) => string;
 }
@@ -54,6 +56,7 @@ async function sock(from: string, role: Role, o: { phone?: boolean; v6?: boolean
     raw: [],
     got: [],
     closeCode: null,
+    errorBeforeClose: null,
     hello: () => void s.send({ kind: 'hello', role, ...(o.pin !== undefined ? { pin: o.pin } : role === 'instructor' ? { pin: PIN } : {}) }),
     send: (body) => {
       const data = JSON.stringify(stamp(body as never));
@@ -65,7 +68,10 @@ async function sock(from: string, role: Role, o: { phone?: boolean; v6?: boolean
     s.raw.push(String(e.data));
     s.got.push(JSON.parse(String(e.data)) as Record<string, unknown>);
   };
-  ws.onclose = (e) => (s.closeCode = e.code);
+  ws.onclose = (e) => {
+    s.closeCode = e.code;
+    s.errorBeforeClose = (s.got.find((f) => f.relay === 'error')?.code as string | undefined) ?? null;
+  };
   await new Promise((ok) => (ws.onopen = ok));
   closers.push(() => ws.close());
   return s;
@@ -165,6 +171,7 @@ describe("the host's grant", () => {
     answer(host, 'ins-a.1', false, 'wrong PIN');
     await waitFor(() => ins.closeCode !== null, 2000, 'closed');
     expect(ins.closeCode).toBe(RELAY_CLOSE.denied);
+    expect(ins.errorBeforeClose).toBe('denied'); // the frame first, then the close (P5's contract)
     expect(errorOf(ins)).toEqual({ relay: 'error', code: 'denied', message: 'wrong PIN' });
     expect(relay!.room(SESSION)?.peers).toBe(1);
   });
@@ -226,6 +233,7 @@ describe('PIN guessing is limited per address', () => {
     for (let i = 1; i <= 5; i++) expect((await deny(host, `ins-x.${i}`)).closeCode).toBe(RELAY_CLOSE.denied);
     const sixth = await join('ins-x.6', 'instructor');
     expect(sixth.closeCode).toBe(RELAY_CLOSE.tooManyTries);
+    expect(sixth.errorBeforeClose).toBe('too-many-tries');
     expect(errorOf(sixth)).toMatchObject({ code: 'too-many-tries' });
     expect(host.got.some((m) => m.kind === 'hello' && m.from === 'ins-x.6')).toBe(false); // the PIN never reached the host
     const other = await join('ins-y.1', 'instructor', { v6: true }); // another phone
@@ -253,6 +261,7 @@ describe('PIN guessing is limited per address', () => {
     host.send({ kind: 'grant', to: 'ins-x.9', granted: false, reason: 'taken over' });
     await waitFor(() => held.closeCode !== null, 2000, 'revoked');
     expect(held.closeCode).toBe(RELAY_CLOSE.denied);
+    expect(held.errorBeforeClose).toBe('denied');
     expect(errorOf(held)).toMatchObject({ code: 'denied', message: 'taken over' });
     expect((await join('ins-x.10', 'instructor')).closeCode).toBeNull();
   });
