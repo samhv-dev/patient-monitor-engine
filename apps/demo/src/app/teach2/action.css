@@ -1,17 +1,18 @@
 /* Instructor v2, the ACTION list (design §3.4, §3.5; board "Proposal v6"): one pill shape, five looks. Every class is
    `ip2-*` (plan's selector rule). The tokens are the board's own, on top of teach2.css's. */
-.ip2-list { display: flex; flex-direction: column; gap: 8px; min-height: 100%; }
-.ip2-rows { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.ip2-row { display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid var(--ip2-line); border-radius: 8px; background: var(--ip2-card); color: var(--ip2-text); font: inherit; font-size: 15px; text-align: left; }
+.ip2-list { display: flex; flex-direction: column; gap: 6px; min-height: 100%; }
+.ip2-rows { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.ip2-row { display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; padding: 7px 12px; border: 1px solid var(--ip2-line); border-radius: 8px; background: var(--ip2-card); color: var(--ip2-text); font: inherit; font-size: 15px; text-align: left; }
 button.ip2-row { cursor: pointer; }
 button.ip2-row:hover { border-color: var(--ip2-control); }
 button.ip2-row:focus-visible { outline: 2px solid var(--ip2-blue-text); outline-offset: 2px; }
-.ip2-key { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 6px; background: var(--ip2-line); color: var(--ip2-text); font: 600 13px/1 var(--font-plex-mono); }
+.ip2-key { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 6px; background: var(--ip2-line); color: var(--ip2-text); font: 600 13px/1 var(--font-plex-mono); }
 .ip2-row-text { flex: 1 1 auto; display: block; min-width: 0; }
+.ip2-row-title, .ip2-row-sub { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ip2-row-title { font-weight: 600; }
-.ip2-row-sub { display: block; margin-top: 2px; font-size: 12px; color: var(--ip2-muted); }
+.ip2-row-sub { margin-top: 2px; font-size: 12px; color: var(--ip2-muted); }
 .ip2-row-right { flex: none; font-size: 13px; color: var(--ip2-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.ip2-bar { display: block; height: 6px; margin-top: 8px; overflow: hidden; border-radius: 3px; background: var(--ip2-line); }
+.ip2-bar { display: block; height: 6px; margin-top: 6px; overflow: hidden; border-radius: 3px; background: var(--ip2-line); }
 .ip2-bar-fill { display: block; width: 0; height: 100%; background: var(--ip2-amber); transition: width 400ms linear; }
 @media (prefers-reduced-motion: reduce) { .ip2-bar-fill { transition: none; } }
 
@@ -26,7 +27,7 @@ button.ip2-row:focus-visible { outline: 2px solid var(--ip2-blue-text); outline-
 .ip2-row[data-look='unmet'] .ip2-row-title { color: var(--ip2-soft); }
 .ip2-row[data-look='unmet'] .ip2-row-sub, .ip2-row[data-look='unmet'] .ip2-row-right { color: var(--ip2-faint); }
 /* overdue: a yellow 2 px ring on the normal fill, number kept */
-.ip2-row[data-overdue='true'] { padding: 9px 13px; border: 2px solid #ffe14d; opacity: 1; }
+.ip2-row[data-overdue='true'] { padding: 6px 11px; border: 2px solid #ffe14d; opacity: 1; }
 .ip2-row[data-overdue='true'] .ip2-row-sub { color: #d9cf7a; }
 .ip2-row[data-overdue='true'] .ip2-row-right { color: #ffe14d; }
 /* taken or met: faint green */
@@ -52,13 +53,13 @@ button.ip2-row:focus-visible { outline: 2px solid var(--ip2-blue-text); outline-
 
 /* the folds and the foot line */
 .ip2-fold { border: 1px solid var(--ip2-line); border-radius: 8px; background: var(--ip2-card); color: var(--ip2-muted); font-size: 13px; }
-.ip2-fold > summary { padding: 8px 14px; cursor: pointer; }
+.ip2-fold > summary { padding: 6px 12px; cursor: pointer; }
 .ip2-fold > summary:focus-visible { outline: 2px solid var(--ip2-blue-text); outline-offset: 2px; }
 .ip2-finished { background: #171c22; }
 .ip2-finished-list { gap: 6px; padding: 0 10px 10px; }
-.ip2-finished-list .ip2-row { padding: 8px 12px; font-size: 14px; }
+.ip2-finished-list .ip2-row { padding: 6px 12px; font-size: 14px; }
 .ip2-offcard-list { margin: 0; padding: 0 14px 10px 30px; }
 .ip2-offcard-list li { padding: 2px 0; }
 .ip2-muted { list-style: none; margin-left: -16px; color: var(--ip2-faint); }
 .ip2-empty { margin: 0; padding: 12px 14px; border: 1px dashed var(--ip2-line); border-radius: 8px; color: var(--ip2-muted); }
-.ip2-foot { margin: auto 0 0; padding: 8px 12px; border: 1px solid var(--ip2-line); border-radius: 8px; background: var(--ip2-page); color: var(--ip2-muted); font-size: 12px; }
+.ip2-foot { margin: auto 0 0; padding: 6px 12px; border: 1px solid var(--ip2-line); border-radius: 8px; background: var(--ip2-page); color: var(--ip2-muted); font-size: 12px; }

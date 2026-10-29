@@ -64,6 +64,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     setText(p.key, n);
     setText(p.title, r.title);
     setText(p.sub, live.subtitle);
+    // one line each on screen (the page fits 1440 × 900 at the fan-out): the whole text on hover and in the aria-label
+    p.el.title = `${r.title}\n${live.subtitle}`;
     setText(p.right, live.right);
     if (p.fill) p.fill.style.width = `${Math.round((live.progress ?? 0) * 100)}%`;
     if (p.el instanceof HTMLButtonElement) {
