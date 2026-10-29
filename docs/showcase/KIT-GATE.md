@@ -43,6 +43,14 @@ at 2 min and systolic > 110 within 60 s of epinephrine; bronchospasm VTE rises �
 
 ---
 
+## rc.4 release kit (2026-10-29)
+
+2026-10-29: kit round Q2 on the rc.4 kit `0c4b396f` (pre-release `v1.0.0-rc.4`) — the MH-only talk and the two cards
+(MH; the haemorrhage reserve R5), both engines; the six-card shots not re-taken (`rehearsal/` and `results/` on main are from an earlier kit; their
+rc.3 re-take is on the closed #117's branch `docs-rc3-release`; re-taking them waits until after the demo, R4-Q6). Evidence: `kit-round-a/q2-rc4/` (the talk, with `relay-0c4b396f.json`, relay 4 of 4) and
+`kit-round-a/q2-rc4-a4/` (A4); write-up `SHOWCASE-2-MEASUREMENTS.md` section "Q2 on rc.4"; gate note
+`docs/gates/rc4-release.md`.
+
 ## Round 4 — FINAL showcase build, main 41678d0b (FU-9 Part B, FU-10 Part A, FU-8 Part B since round 3)
 *2026-10-05. The kit was built into `_sandbox/pme-showcase-next` first, and all proofs ran against that folder. The
 4a1cc3f7 kit stayed in place as the fallback until everything had passed. `VERSION.txt`: `Commit: 41678d0b… (with

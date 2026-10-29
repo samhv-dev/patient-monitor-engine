@@ -1,0 +1,65 @@
+{
+  "case": "Q1 0 opening and QR",
+  "browser": "webkit",
+  "kit": "0c4b396f",
+  "server": "Start Classroom.command (relay + static app, node, as built)",
+  "base": "http://127.0.0.1:8760",
+  "reactS": 2,
+  "phonesN": 3,
+  "startedAt": "2026-10-29T11:46:20.406Z",
+  "loadAvg": {
+    "start": 3.43,
+    "end": 3.36,
+    "min": 3.43,
+    "max": 3.43
+  },
+  "setup": {
+    "sessionCode": "JJBBFH",
+    "alarmButtonAtEnd": "No alarms"
+  },
+  "rows": [],
+  "presses": [],
+  "spans": [],
+  "states": [],
+  "alarms": [],
+  "measures": {
+    "about": {
+      "start": "Version 1.0.0-rc.4 · pre-release · build 0c4b396f",
+      "footer": "For educational use only; Not to be used in patient care.",
+      "documentationLink": "https://github.com/samhv-dev/patient-monitor-engine/tree/main/docs"
+    },
+    "modelTabPrepared": 200,
+    "qr": {
+      "url": "http://192.168.1.100:8760/?join=JJBBFH",
+      "code": "JJBBFH",
+      "countBefore": "0 phones following",
+      "joinWallS": 3,
+      "countAfter": "3 phones following"
+    },
+    "phonesAfterJoin": [
+      {
+        "hold": false,
+        "status": "synced",
+        "resyncs": 0
+      },
+      {
+        "hold": false,
+        "status": "synced",
+        "resyncs": 0
+      },
+      {
+        "hold": false,
+        "status": "synced",
+        "resyncs": 0
+      }
+    ]
+  },
+  "debrief": null,
+  "phones": null,
+  "notes": [
+    "phone 0 (iPhone 13 emulation) synced before Load",
+    "phone 1 (iPhone 13 emulation) synced before Load",
+    "phone 2 (iPhone 13 emulation) synced before Load"
+  ],
+  "errors": []
+}
