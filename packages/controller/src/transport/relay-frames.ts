@@ -7,6 +7,12 @@ export type RelayFrame =
 /** WebSocket close codes the relay uses for fatal refusals (no reconnect) [ENG]. */
 export const RELAY_CLOSE = { badHello: 4001, badSession: 4002, forbiddenRole: 4003, hostExists: 4009, full: 4029 } as const; // 4003
 export const FATAL_CLOSE_CODES: ReadonlySet<number> = new Set(Object.values(RELAY_CLOSE));
+/**
+ * Close codes for refusals the client retries with its backoff (not in FATAL_CLOSE_CODES): `idTaken`, the peer id is
+ * held by another socket that answered the relay's ping. A half-open one does not answer and is closed, so a phone
+ * whose network dropped, or a reloaded laptop, gets in on its next try [ENG].
+ */
+export const RELAY_RETRY_CLOSE = { idTaken: 4010 } as const;
 
 export function isRelayFrame(o: unknown): o is RelayFrame {
   return o !== null && typeof o === 'object' && typeof (o as { relay?: unknown }).relay === 'string';
