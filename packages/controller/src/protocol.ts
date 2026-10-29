@@ -248,16 +248,17 @@ export type MeasuredMap = Partial<Record<NumericId, import('@pme/engine-core').M
 
 // --- what an instructor may send (plan instructor-peer-role.md §2) -------------------------------------------------
 /**
- * The shapes a granted instructor may send: exactly what the laptop's Instructor views send, measured by the command
- * census of 2026-10-30 on 1b274d5d (P0, `apps/demo/src/app/teach2/census.dom.test.ts`), never listed by hand. The new
- * `note` command is not here: no view sends it yet; instructorMay allows it by name (plan §6).
+ * The shapes a granted instructor may send (plan §2): what the laptop's Instructor views send, measured by the command
+ * census of 2026-10-30 on 1b274d5d (P0), never listed by hand, plus `note` (§6), which the laptop writes locally and
+ * only the phone sends. The census test (P0/P6) compares the measured laptop set against INSTRUCTOR_COMMANDS minus
+ * `note`, which only the phone sends.
  */
 export const INSTRUCTOR_COMMANDS: ReadonlySet<string> = new Set([
   'applyEvent airway', 'applyEvent bleed', 'applyEvent condition', 'applyEvent cpr', 'applyEvent defib', 'applyEvent drug',
   'applyEvent fluid', 'applyEvent infusion', 'applyEvent lungCondition', 'applyEvent pacer', 'applyEvent vaporiser',
   'applyEvent ventilation', 'attachSensor', 'device', 'pin', 'release', 'scenario bookmark', 'scenario goto',
   'scenario pause', 'scenario restoreBookmark', 'scenario resume', 'scenario trigger', 'setMode', 'setRhythm', 'setTarget',
-  'time jump', 'time pause', 'time resume', 'time scale',
+  'time jump', 'time pause', 'time resume', 'time scale', 'note',
 ]);
 
 /** The census key of a command (its `type`, plus its `action` when that is a word, plus `event.kind` for applyEvent). */
@@ -273,7 +274,7 @@ export function instructorMay(c: WireCommand | CommandInput): string | null {
   // A remote load would start the runner on the old body: the laptop remounts the engine first (AppSession.loadScenario).
   if (shape === 'scenario load') return "Load the case on the instructor's computer.";
   if (shape === 'scenario bookmark' && (c as { kind?: unknown }).kind === 'stage') return "A stage mark is the scenario driver's own.";
-  if (c.type === 'note' || INSTRUCTOR_COMMANDS.has(shape)) return null;
+  if (INSTRUCTOR_COMMANDS.has(shape)) return null;
   return 'No Instructor view sends this command.'; // setFactor, setModifiers, externalDrive, time step and the rest
 }
 
