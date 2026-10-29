@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-// The Instructor v2 frame (plan IP4): header, strip, STATE, ACTION, the sheets layer and the dock, the four stub slots
+// The Instructor v2 frame (plan IP4): header, strip, STATE, ACTION, the sheets layer and the dock, the four slots
 // mounted with the fixed signature, Space wired to the pill, and none of today's locators (plan's selector rule).
 import { ScenarioView, type AckResult, type CommandInput } from '@pme/controller';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -45,14 +45,15 @@ describe('Instructor v2 frame', () => {
     expect(v.el.querySelector('.ip2-strip')?.getAttribute('data-stub')).toBe('IP5');
     expect(v.el.querySelector('.ip2-cue')?.getAttribute('data-stub')).toBe('IP5');
     expect(v.el.querySelector('.ip2-action-body .ip2-list')).not.toBeNull(); // IP6 built the ACTION slot
-    expect(v.el.querySelector('.ip2-sheets')?.getAttribute('data-stub')).toBe('IP7');
-    expect(() => v.openSheet('devices')).not.toThrow(); // a no-op until IP7
+    expect(v.el.querySelector('.ip2-sheets')?.hasAttribute('data-stub')).toBe(false); // IP7 built the sheets slot
+    expect(v.el.querySelectorAll('.ip2-dock-tools .ip2-tool')).toHaveLength(7); // …and filled the dock's tools
+    expect(() => v.openSheet('no-such-sheet')).not.toThrow();
     v.enter?.('');
   });
 
   it('every slot has the fixed slot signature: mount(el, ctx) => { refresh, destroy }', () => {
     // the least ctx a slot reads: a Link with no scenario, and keyboard registries that do nothing
-    const ctx = { link: { ctl: { scenario: new ScenarioView(), state: null, hostPaused: false }, host: null, simT: 0, log: [] }, keys: { digit: () => undefined, letter: () => undefined, escape: () => () => undefined } } as unknown as Teach2Ctx;
+    const ctx = { link: { ctl: { scenario: new ScenarioView(), state: null, hostPaused: false }, host: null, simT: 0, log: [] }, keys: { digit: () => undefined, letter: () => undefined, escape: () => () => undefined }, dock: { tools: document.createElement('div'), note: document.createElement('div') }, weightKg: () => 70 } as unknown as Teach2Ctx;
     for (const m of [strip, cue, action, sheets] satisfies MountSlot[]) {
       const s = m(document.createElement('div'), ctx);
       expect(Object.keys(s).sort()).toEqual(['destroy', 'refresh']);

@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
-// The Instructor v2 dock (plan IP4): the three marks send today's bookmark command (until IP2 adds `kind`) under their
-// own label and counter (plan R10); Debrief sits at the far right and is lit once the case has ended.
+// The Instructor v2 dock (plan IP4, IP7): the three marks send today's bookmark command plus IP2's `kind` (and the note
+// field's text as IP2's `note`, marks-note.dom.test.ts) under their own label and counter (plan R10); Debrief sits at the
+// far right and is lit once the case has ended.
 import { ScenarioView, type AckResult, type CommandInput, type ScenarioDoc } from '@pme/controller';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { bookmark } from '../commands.ts';
@@ -22,19 +23,22 @@ function rig(reply: AckResult = { accepted: true, tick: 0, commandId: 'c1', rttM
 beforeEach(() => document.body.replaceChildren());
 
 describe('Instructor v2 dock', () => {
-  it('each mark sends today\'s bookmark command, labelled "Mark n at mm:ss" on its own counter', async () => {
+  it('each mark sends today\'s bookmark command with its kind, labelled "Mark n at mm:ss" on its own counter', async () => {
     const r = rig();
     const marks = [...r.dock.el.querySelectorAll<HTMLButtonElement>('.ip2-mark')];
     expect(marks.map((b) => b.getAttribute('aria-label'))).toEqual(['Mark: good', 'Mark: bad', 'Mark: discuss']);
     for (const b of marks) b.click();
     await settle();
-    expect(r.sent).toEqual([1, 2, 3].map((n) => ({ type: 'scenario', action: 'bookmark', target: `Mark ${n} at 08:20` })));
+    const kinds = ['good', 'bad', 'discuss'];
+    expect(r.sent).toEqual([1, 2, 3].map((n) => ({ type: 'scenario', action: 'bookmark', target: `Mark ${n} at 08:20`, kind: kinds[n - 1] })));
     expect(toasts()).toEqual(['Mark 1 at 08:20 saved', 'Mark 2 at 08:20 saved', 'Mark 3 at 08:20 saved']);
-    // the same command as today's Bookmark: only the label differs
+    // the same command as today's Bookmark plus the kind: only the label differs
     const today: CommandInput[] = [];
     await bookmark({ simT: 500, send: async (c: CommandInput) => (today.push(c), { accepted: true }) } as unknown as Link);
-    expect(Object.keys(today[0] ?? {}).sort()).toEqual(Object.keys(r.sent[0] ?? {}).sort());
-    expect({ ...today[0], target: '' }).toEqual({ ...r.sent[0], target: '' });
+    const { kind, ...rest } = r.sent[0] as CommandInput & { kind?: string };
+    expect(kind).toBe('good');
+    expect(Object.keys(today[0] ?? {}).sort()).toEqual(Object.keys(rest).sort());
+    expect({ ...today[0], target: '' }).toEqual({ ...rest, target: '' });
     expect((today[0] as { target: string }).target).toMatch(/^Bookmark \d+ at 08:20$/);
   });
 

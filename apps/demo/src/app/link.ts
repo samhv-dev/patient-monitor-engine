@@ -3,7 +3,7 @@
 // for the engine events the session does not keep (alarmStatus, deviceStatus), plus the clinical log. On the host
 // document `host` is the AppSession (patient restart, skin, sound); a Remote has none of those.
 import type { AlarmEntry, EngineEvent } from '@pme/engine-core';
-import type { AckResult, CommandInput, ControllerSession, ManagedTransport, WireEvent, WireMessage } from '@pme/controller';
+import { StageBuffer, type AckResult, type CommandInput, type ControllerSession, type ManagedTransport, type WireEvent, type WireMessage } from '@pme/controller';
 import { describeCommand, spanText, timeText } from './describe.ts';
 import type { AppSession } from './session.ts';
 
@@ -31,6 +31,8 @@ export class Link {
   private readonly fns = new Set<() => void>();
   private readonly offs: Array<() => void>;
   private lastRaised = new Set<string>();
+  /** The staged deliveries' stage groups (sendBatch): one buffer per Link, so each delivery has its own group id. */
+  private batchBuf: StageBuffer | null = null;
 
   constructor(ctl: ControllerSession, transport: ManagedTransport, host: AppSession | null = null) {
     this.ctl = ctl;
@@ -57,6 +59,30 @@ export class Link {
   async send(c: CommandInput, kind: ClinicalLogEntry['kind'] = 'instructor'): Promise<AckResult> {
     const text = describeCommand(c as Record<string, unknown>);
     const r = await this.ctl.send(c);
+    this.track(c, r);
+    this.add({ simT: this.simT, kind, text, ...(r.accepted ? {} : { refused: r.reason ?? 'refused' }) });
+    return r;
+  }
+
+  /**
+   * A staged delivery (Instructor v2's cache, design §4.2): every command in ONE stageGroup with one batch id
+   * (`StageBuffer.commit` with `batch`), so the host applies them on one tick and the controller logs one line; here too
+   * one clinical-log line names each item, a refused item with its reason. Resolves with the acks in `cmds` order.
+   */
+  async sendBatch(cmds: readonly CommandInput[], kind: ClinicalLogEntry['kind'] = 'instructor'): Promise<AckResult[]> {
+    if (!cmds.length) return [];
+    this.batchBuf ??= new StageBuffer(`${this.ctl.peerId}-cache`);
+    cmds.forEach((c, i) => this.batchBuf?.stage(c, String(i)));
+    const rs = await this.batchBuf.commit((c) => this.ctl.send(c), { batch: true });
+    cmds.forEach((c, i) => this.track(c, rs[i] as AckResult));
+    const items = cmds.map((c, i) => `${describeCommand(c as Record<string, unknown>)}${rs[i]?.accepted ? '' : ` (not applied: ${rs[i]?.reason ?? 'refused'})`}`);
+    const none = rs.every((r) => !r.accepted);
+    this.add({ simT: this.simT, kind, text: `Staged delivery, ${cmds.length} at one instant: ${items.join(' · ')}`, ...(none ? { refused: rs[0]?.reason ?? 'refused' } : {}) });
+    return rs;
+  }
+
+  /** What the panel keeps of an answered command: the onsets in progress and the acute events started. */
+  private track(c: CommandInput, r: AckResult): void {
     const ramp = (c as { ramp?: { durationS?: number } }).ramp?.durationS;
     if (r.accepted && (c.type === 'setTarget' || c.type === 'pin') && ramp) this.ramps.set(c.variable, { t0: this.simT, dur: ramp, to: c.value ?? 0 });
     if (r.accepted && (c.type === 'setTarget' || c.type === 'pin' || c.type === 'release') && !ramp) this.ramps.delete(c.variable);
@@ -65,8 +91,6 @@ export class Link {
       if ((ev.severity ?? 0) > 0) this.conditions.set(ev.id, ev.severity ?? 0);
       else this.conditions.delete(ev.id);
     }
-    this.add({ simT: this.simT, kind, text, ...(r.accepted ? {} : { refused: r.reason ?? 'refused' }) });
-    return r;
   }
 
   note(text: string, kind: ClinicalLogEntry['kind'] = 'note'): void {
