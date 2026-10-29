@@ -63,6 +63,8 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
 
 The session code is the only secret — and in a classroom it is on the projector, so there `--remote-roles viewer`
 (the default with `--static`) lets other devices only follow: commands come from the instructor's laptop alone, and
-the host refuses a viewer's command as well. Run the relay on a trusted LAN, or behind a TLS reverse proxy
+the host refuses a viewer's command as well. A peer id belongs to one open socket per session: a second socket that
+says hello with an id already in use is refused (close 4009, `host-exists`), and the same peer reconnects with its id
+once its old socket has closed. Run the relay on a trusted LAN, or behind a TLS reverse proxy
 (`wss://`) with access control if it must be reachable from the internet. Messages larger than 256 KB, or
 carrying typed arrays or long numeric arrays, are refused.

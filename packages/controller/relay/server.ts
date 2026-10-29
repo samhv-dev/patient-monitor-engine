@@ -205,6 +205,13 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
         // Stage 12: another device follows; only this machine hosts or commands (the room has seen the code)
         if (!local && opts.remoteRoles === 'viewer' && m.role !== 'viewer') return refuse(ws, RELAY_CLOSE.forbiddenRole, 'forbidden', `${m.role} only from the instructor's computer`);
         if (m.role !== 'host' && room.peers.size >= maxPeers) return refuse(ws, RELAY_CLOSE.full, 'full', `session ${m.session} is full (${maxPeers})`);
+        // One open socket per peer id, whatever the role: a second socket claiming an id in use (a hand-written hello
+        // with the panel's id, read off the wire) would share that peer's state on the host. A peer whose socket closed
+        // reconnects with its id as before (verification 2026-10-29)
+        if ([room.host, ...room.peers].some((p) => p !== null && p.id === m.from && p.ws.readyState === p.ws.OPEN)) {
+          log(`room ${room.code}: ${m.role} ${m.from} refused: peer id ${m.from} is taken`);
+          return refuse(ws, RELAY_CLOSE.hostExists, 'host-exists', `peer id ${m.from} is taken in session ${m.session}`);
+        }
         peer = { ws, id: m.from, role: m.role, alive: true };
         if (m.role === 'host') {
           const old = room.host;
