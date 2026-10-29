@@ -2,6 +2,8 @@
 // three marks (good, bad, discuss) and the note field (IP7) in the centre, a divider, and Debrief at the far right.
 // A mark saves the moment with today's bookmark command (`commands.ts` `bookmark`: the 6b driver can restore it), under
 // its own label and counter ("Mark 2 at 08:20", plan R10), so the Log tab's bookmarks and the marks never share a name.
+// It carries its kind (IP2's `kind`) and, when the note field (filled by the sheets slot, IP7) holds text, that text as
+// its note (IP2's `note`); the field is then cleared (answer 13).
 import type { Link } from '../link.ts';
 import { hrefOf } from '../router.ts';
 import { clock, h, toast } from '../ui.ts';
@@ -15,14 +17,24 @@ const MARKS: ReadonlyArray<[MarkKind, string, string]> = [
 ];
 
 let nMark = 0;
-/** Save this moment as a mark of `kind`; resolves once the host answered (a toast either way). */
-export async function mark(link: Link, kind: MarkKind): Promise<void> {
+/** The kind of every mark this document saved, by label (the controller keeps the labels only): the Log sheet's list. */
+export const MARK_KINDS = new Map<string, MarkKind>();
+
+/** Save this moment as a mark of `kind`, with `note` when one is given; resolves once the host answered (a toast either
+ *  way). Today's bookmark command plus IP2's `kind` and `note`. */
+export async function mark(link: Link, kind: MarkKind, note = ''): Promise<void> {
   const label = `Mark ${++nMark} at ${clock(link.simT)}`;
-  // TODO(IP2): send `kind` with the bookmark (`{ ..., kind }`) once IP2 adds it to the scenario command; until then the
-  // command is today's bookmark exactly, and `kind` only names the button
-  void kind;
-  const r = await link.send({ type: 'scenario', action: 'bookmark', target: label });
+  const r = await link.send({ type: 'scenario', action: 'bookmark', target: label, kind, ...(note ? { note } : {}) });
+  if (r.accepted) MARK_KINDS.set(label, kind);
   toast(r.accepted ? `${label} saved` : 'Mark not saved', r.accepted ? 'info' : 'alert');
+}
+
+/** The note field's text, trimmed, and the field cleared ('' when there is no field or it is empty). */
+function takeNote(area: HTMLElement): string {
+  const f = area.querySelector<HTMLInputElement>('input.ip2-note-field');
+  const text = f?.value.trim() ?? '';
+  if (f) f.value = '';
+  return text;
 }
 
 export interface Dock {
@@ -38,7 +50,7 @@ export function mountDock(link: Link): Dock {
   const tools = h('div', { class: 'ip2-dock-tools', role: 'group', 'aria-label': 'Tools' });
   const note = h('div', { class: 'ip2-dock-note' });
   const marks = MARKS.map(([kind, label, d]) => {
-    const b = h('button', { type: 'button', class: 'ip2-dock-btn ip2-mark', 'data-kind': kind, 'aria-label': label, title: `${label.slice(6)}: saves the moment, returnable, on the debrief timeline`, onclick: () => void mark(link, kind) });
+    const b = h('button', { type: 'button', class: 'ip2-dock-btn ip2-mark', 'data-kind': kind, 'aria-label': label, title: `${label.slice(6)}: saves the moment, returnable, on the debrief timeline`, onclick: () => void mark(link, kind, takeNote(note)) });
     b.innerHTML = `<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="${d}"/></svg>`;
     return b;
   });
