@@ -289,9 +289,15 @@ export class ControllerSession {
     this.changed();
   }
 
-  /** The relay refused the instructor's hello (its socket then closes with a fatal code: no reconnect). */
+  /**
+   * The relay refused the instructor's hello (its socket then closes with a fatal code: no reconnect), or refused a
+   * command as not signed in (`forbidden`, review F1: the relay ungranted the socket, e.g. on the host's readmit): the
+   * phone signs in again, and its commands wait for the grant.
+   */
   private onRelayFrame(f: RelayFrame): void {
-    if (!this.instructor || f.relay !== 'error' || (f.code !== 'denied' && f.code !== 'too-many-tries')) return;
+    if (!this.instructor || f.relay !== 'error') return;
+    if (f.code === 'forbidden') return void (this.access.state === 'granted' && this.sayInstructorHello());
+    if (f.code !== 'denied' && f.code !== 'too-many-tries') return;
     // The host's own words already came with its grant (revoked or denied): the relay's close does not overwrite them
     if (f.code === 'denied' && (this.access.state === 'revoked' || this.access.state === 'denied')) return;
     this.setAccess({ state: 'denied', reason: f.message, code: f.code });
@@ -305,9 +311,11 @@ export class ControllerSession {
     if (!this.instructor) this.resendPending();
     else {
       if (fresh) for (const [id, p] of [...this.pending]) this.answer(id, p, { accepted: false, tick: -1, reason: HOST_RESTARTED_REASON });
-      // A new host has no grant for us, and a host that came after our hello never heard it (the relay forwards a hello
-      // to the host only while one is there): say it again. A revoked or denied phone does not sign itself in again.
-      if (this.access.state === 'pending' || (fresh && this.access.state === 'granted')) this.sayInstructorHello();
+      // Not granted on this socket now (pending, or revoked by the host's readmit, review F1), or a new host with no grant
+      // for us, or a host that came after our hello and never heard it: sign in again before any command goes. Granted
+      // by the same host (a restore): re-send. A denied phone does not ask again with the same PIN (the page asks).
+      if (this.access.state === 'denied') return this.changed();
+      if (fresh || this.access.state !== 'granted') this.sayInstructorHello();
       else this.resendPending();
     }
     this.changed();

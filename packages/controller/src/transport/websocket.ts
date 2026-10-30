@@ -78,7 +78,9 @@ class WsTransport extends TransportBase {
       }
       if (isRelayFrame(o)) {
         this.relayFrame(o); // before the status: a session knows why the link failed when it hears 'error'
-        if (o.relay === 'error') this.setStatus('error');
+        // Review F2: only a refusal that ends the socket ends the link (the others come with a fatal close). `forbidden`
+        // for a command is the relay's per-command answer: the socket stays open and follows.
+        if (o.relay === 'error' && (o.code === 'denied' || o.code === 'too-many-tries')) this.setStatus('error');
         if (o.relay === 'peers') this.presence({ hostOnline: o.hostOnline }); // The session hears it too
         this.o.onRelayFrame?.(o);
         return;
