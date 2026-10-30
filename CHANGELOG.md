@@ -38,6 +38,7 @@ the public API is what the packages export (see the API reference), the `pme-sce
   the host when it is shown). Not built: the phone layout (design §6), the Gas sheet, the CPR takeover and an onset
   ramp for delivered items. The Drug sheet's rule for a dose that differs from the card's step is interim, pending the
   owner's ruling.
+
 - **The Case briefing** (the owner's board Orientation 7b, its phone twin and the Persian twins, 30 October). A card
   may carry a learner-facing `briefing` (`pme-scenario/1`, additive: `{ text, estimatedMinutes?, durationS? (60, at most
   600), lang? ("en" | "fa") }`; schema, types, `validateScenario`, `briefingOf` in `@pme/controller/scenario` and the
@@ -90,6 +91,12 @@ the public API is what the packages export (see the API reference), the `pme-sce
   the order the stages were entered, each row keeping its number within its stage. Several stages on, the fold read as
   a run of steps all numbered 1 (the clinical owner's report of 30 October). A stage entered twice gets two titles.
   The count and the record are unchanged.
+- An escape or accelerated focus no longer fires almost at once on a rhythm switch: on a switch to junctional escape,
+  accelerated junctional, idioventricular or AIVR the first focus beat comes one of the focus's own cycles (60/rate)
+  after the last ventricular beat (junctional escape 1.28 s, idioventricular 1.72 s after the last sinus beat at 75;
+  it came 0.48 / 0.41 s after it and read as a premature beat, then a pause). A row flag in the rhythm table,
+  `focusWaitsForInterval`, marks those four foci, and `applyRhythm` starts them at the last ventricular beat + 60/rate;
+  VT, polymorphic VT, torsades, AVNRT, AVRT, junctional tachycardia and the AV-block escapes keep their onset.
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's
   sequence and viewer role per transport, and counts a hello only after its sequence check, so a phone on the relay
   that says hello with the laptop panel's id leaves the panel's commands applied. The relay gives each peer id one live
