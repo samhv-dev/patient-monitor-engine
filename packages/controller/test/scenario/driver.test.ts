@@ -337,7 +337,7 @@ describe('ScenarioDriver: engine truth for a /2 runner only (F4)', () => {
     expect(endo.length).toBeGreaterThanOrEqual(29);
     // exactly the engine's own values, in the engine's order, after today's inputs for the same event
     const want: RunnerInputV2[] = seen.flatMap((e): RunnerInputV2[] => {
-      if (e.type === 'state') return [...today(e), { kind: 'signals', signals: e.signals }];
+      if (e.type === 'state') return [...today(e), { kind: 'signals', signals: e.signals! }];
       if (e.type === 'labs') return [{ kind: 'values', rank: 3, values: { ph: e.values.ph, lactate: e.values.lactate, k: e.values.k } }];
       if (e.type === 'endo') return [{ kind: 'values', rank: 3, values: { mhActivity: (e as unknown as { mhActivity: number }).mhActivity } }];
       return today(e);

@@ -5,9 +5,10 @@
 // sbp/dbp). Exposure only: every value is one the engine already computes. Each check reads the committed state inside
 // the listener, so the signal is compared with the engine's own value on the same tick.
 import { describe, expect, it } from 'vitest';
-import { createEngine, type EngineEvent } from '../../src/index.ts';
+import { createEngine, type EngineEvent, type StateSignals } from '../../src/index.ts';
 
-type StateEvent = Extract<EngineEvent, { type: 'state' }>;
+/** A state event as the engine emits it: `signals` set (optional only in the type; the first test checks it is there). */
+type StateEvent = Extract<EngineEvent, { type: 'state' }> & { signals: StateSignals };
 type St = {
   hemo: { circ: { arrest: unknown; mapNow: number; lastEjT: number }; lastSite: { map: number }; lastRR: number };
   pk: { bus: { metabolic: { dantroleneE: number } } };
@@ -34,7 +35,7 @@ function rig(o: { truthHz?: number } = {}) {
     }
     if (x.type !== 'state') return;
     const s = st();
-    rows.push({ e: x, arrest: s.hemo.circ.arrest !== null && s.hemo.circ.arrest !== undefined, dantE: s.pk.bus.metabolic.dantroleneE, source: s.resp.driver.source, vent: { ...s.resp.driver.vent }, lastSiteMap: s.hemo.lastSite.map, mapNow: s.hemo.circ.mapNow, abpMean });
+    rows.push({ e: x as StateEvent, arrest: s.hemo.circ.arrest !== null && s.hemo.circ.arrest !== undefined, dantE: s.pk.bus.metabolic.dantroleneE, source: s.resp.driver.source, vent: { ...s.resp.driver.vent }, lastSiteMap: s.hemo.lastSite.map, mapNow: s.hemo.circ.mapNow, abpMean });
   });
   const ventilate = () => {
     ev({ kind: 'airwayDevice', device: 'ett' });
@@ -66,16 +67,27 @@ describe('the state event carries the /2 signals (F4)', { timeout: 300_000 }, ()
     }
   });
 
-  it('pulse is the absence of hemo.circ.arrest: true while beating, false through a VF arrest, on every state event', async () => {
+  it('pulse is the absence of hemo.circ.arrest: true while beating, false from a PEA\'s onset, on every state event', async () => {
     const r = rig();
     await r.runTo(1);
     r.ventilate();
     await r.runTo(60);
-    r.send({ type: 'setRhythm', rhythm: 'vfCoarse' });
+    r.send({ type: 'setRhythm', rhythm: 'sinus', opts: { pulseless: true } }); // a PEA carries the arrest state from its onset
     await r.runTo(120);
     for (const row of r.rows) expect(row.e.signals.pulse, `t ${row.e.t}`).toBe(!row.arrest);
     expect(r.rows.filter((x) => x.e.t < 60).every((x) => x.e.signals.pulse)).toBe(true);
-    expect(r.rows.some((x) => !x.e.signals.pulse)).toBe(true); // it flips
+    expect(r.rows.filter((x) => x.e.t > 62).every((x) => !x.e.signals.pulse)).toBe(true); // it flips
+  });
+
+  it('an instructor-selected VF carries no arrest state in v1.0 (l2/hemo/pipeline.ts), so pulse stays true, as the debrief\'s pulse loss does', async () => {
+    const r = rig();
+    await r.runTo(1);
+    r.ventilate();
+    await r.runTo(30);
+    r.send({ type: 'setRhythm', rhythm: 'vfCoarse' });
+    await r.runTo(60);
+    for (const row of r.rows) expect(row.e.signals.pulse, `t ${row.e.t}`).toBe(!row.arrest);
+    expect(r.rows.every((x) => x.e.signals.pulse)).toBe(true);
   });
 
   it('pulse matches the truth tree\'s hemo.circ.arrest where both are emitted (truthHz 1)', async () => {
@@ -89,7 +101,7 @@ describe('the state event carries the /2 signals (F4)', { timeout: 300_000 }, ()
     await r.runTo(1);
     r.ventilate();
     await r.runTo(40);
-    r.send({ type: 'setRhythm', rhythm: 'vfCoarse' });
+    r.send({ type: 'setRhythm', rhythm: 'sinus', opts: { pulseless: true } });
     await r.runTo(90);
     let both = 0;
     for (const { e } of r.rows) {
