@@ -16,7 +16,11 @@ button.ip2-chip:hover { background: var(--ip2-card); }
 .ip2-chip-t, .ip2-auto { margin-left: 6px; }
 .ip2-chip-t { font-family: var(--font-plex-mono); font-variant-numeric: tabular-nums; }
 .ip2-current { padding: 6px 12px; border-color: var(--ip2-blue); background: var(--ip2-blue-soft); color: #fff; font-weight: 600; }
-.ip2-strip[data-tight] .ip2-chip:not(.ip2-current) { padding-inline: 7px; }
+/* the strip's chips, scoped: the 75-px row (30 October, the footer line's height moved here) grows them from 13 px text,
+   a 16-px line and 6 × 10 px padding (30 px high) to 15 px, 20 px and 9 × 12 px (40 px high); sheets.css has a chip of
+   the same class name */
+.ip2-strip .ip2-chip { padding: 9px 12px; font-size: 15px; line-height: 20px; }
+.ip2-strip[data-tight] .ip2-chip:not(.ip2-current) { padding-inline: 8px; }
 .ip2-strip-measure .ip2-strip-hint { flex: none; width: 0; } /* its padding stays: fit counts it */
 .ip2-current .ip2-chip-t { font-weight: 400; color: var(--ip2-blue-text); }
 .ip2-skipped { color: var(--ip2-faint); }

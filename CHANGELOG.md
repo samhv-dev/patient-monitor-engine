@@ -39,6 +39,15 @@ the public API is what the packages export (see the API reference), the `pme-sce
   ramp for delivered items. The Drug sheet's rule for a dose that differs from the card's step is interim, pending the
   owner's ruling.
 
+### Changed
+
+- **The education line leaves the bottom of the working views** (the owner, 30 October). The shell's footer line
+  ("For educational use only; Not to be used in patient care.") is gone from the Instructor views, Scenarios, Room,
+  Patient, Explore, Debrief on screen, Settings and the tools pages; those views gain its 23 px. Home keeps the
+  sentence as part of its own page, at the same place and size; Settings → About and the Debrief's printed footer line
+  are unchanged. In Instructor v2 the dock now ends at the window's bottom edge, and the stage strip takes the height:
+  52 → 75 px, its chips 30 → 40 px high (15 px text on a 20 px line, 9 × 12 px padding; were 13 px, 16 px, 6 × 10 px).
+
 ### Fixed
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's
   sequence and viewer role per transport, and counts a hello only after its sequence check, so a phone on the relay

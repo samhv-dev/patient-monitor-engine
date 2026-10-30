@@ -82,7 +82,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .skip:focus { top: var(--s-2); }
 
 /* ---------- app frame ---------- */
-.app { display: grid; grid-template-rows: var(--bar-h) minmax(0, 1fr) auto; height: 100dvh; }
+.app { display: grid; grid-template-rows: var(--bar-h) minmax(0, 1fr); height: 100dvh; }
 .app[data-route='monitor'] { grid-template-rows: minmax(0, 1fr); }
 .app[data-route='monitor'] > .topbar { display: none; }
 /* The pages before a session are full pages: no top bar, no session bar, no monitor (the shell also sets `hidden`) */
@@ -534,22 +534,19 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
   --lift: 0 1px 2px rgb(27 36 48 / 0.06);
 }
 .rail, .view.console { --accent: var(--go); --accent-strong: var(--go); --on-accent: var(--on-go); }
-.rail, .view.console, .app-foot { font-family: var(--font-plex); }
+.rail, .view.console { font-family: var(--font-plex); }
 .home-repo, .room-join .phones-code, .room-ways code, .console code, .rail-time { font-family: var(--font-plex-mono); font-weight: 500; }
 
-/* the frame: rail | top bar / main / footer line. The footer (the owner's disclaimer, 26 October) shows on every page
-   but the monitor screens: not on the Monitor view nor beside the Ventilator cockpit, never in print. */
-.app.has-rail { grid-template: 'rail top' var(--bar-h) 'rail main' minmax(0, 1fr) 'rail foot' auto / var(--rail-w) minmax(0, 1fr); }
+/* the frame: rail | top bar / main. No footer line under the views (the owner, 30 October: the tools row, Instructor
+   v2's dock, sits flush with the bottom); the education line is Home's own (.home-foot) and the Debrief's printed one. */
+.app.has-rail { grid-template: 'rail top' var(--bar-h) 'rail main' minmax(0, 1fr) / var(--rail-w) minmax(0, 1fr); }
 .app.has-rail > .topbar { grid-area: top; }
 .app.has-rail > .main { grid-area: main; }
 .app.has-rail > .rail { grid-area: rail; }
-.app.has-rail > .app-foot { grid-area: foot; }
-.app.has-rail:is([data-route='home'], [data-route='room'], [data-route='scenarios'], [data-route='patient']) { grid-template: 'rail main' minmax(0, 1fr) 'rail foot' auto / var(--rail-w) minmax(0, 1fr); }
+.app.has-rail:is([data-route='home'], [data-route='room'], [data-route='scenarios'], [data-route='patient']) { grid-template: 'rail main' minmax(0, 1fr) / var(--rail-w) minmax(0, 1fr); }
 .app.has-rail[data-route='monitor'] { grid-template: 'main' minmax(0, 1fr) / minmax(0, 1fr); }
 .app.has-rail[data-route='vent'] { grid-template: 'rail top' var(--bar-h) 'rail main' minmax(0, 1fr) / var(--rail-w) minmax(0, 1fr); }
-.app-foot { padding: 3px var(--s-4); border-top: 1px solid var(--line); background: var(--bezel-0); color: var(--text-muted); font-size: var(--t-12); text-align: center; }
-.app:is([data-route='monitor'], [data-route='vent']) > .app-foot { display: none; }
-@media print { .app-foot, .rail { display: none !important; } }
+@media print { .home-foot, .rail { display: none !important; } }
 /* The simulation line on a monitor surface whose skin header has no free area (sim-line.ts): a 16-px strip above the
    monitor, in the skin's font and colours (set inline) */
 .sim-strip { position: absolute; top: 0; left: 0; right: 0; z-index: 1; height: 16px; line-height: 16px; font-size: 11px; letter-spacing: 0.04em; text-align: center; white-space: nowrap; overflow: hidden; background: #000; color: #d6dde6; }
@@ -626,7 +623,10 @@ a.rail-item:hover { color: var(--text-strong); background: color-mix(in srgb, va
 @media (max-width: 900px) { .console-page { padding: var(--s-5) var(--s-4) var(--s-6); } }
 
 /* Home */
-.view.home { display: flex; }
+.view.home { display: flex; flex-direction: column; }
+/* the education line at the foot of the page, where the shell's footer line was (same padding, rule and size); it stays
+   in view when a short window scrolls the page */
+.home-foot { position: sticky; bottom: 0; flex: none; padding: 3px var(--s-4); border-top: 1px solid var(--line); background: var(--bezel-0); color: var(--text-muted); font-size: var(--t-12); text-align: center; }
 .home-intro { margin: auto; width: 100%; max-width: 640px; padding: var(--s-7) var(--s-5); display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; }
 .home-logo { position: relative; width: 84px; height: 84px; border-radius: 22px; background: var(--go); box-shadow: 0 10px 30px color-mix(in srgb, var(--go) 25%, transparent); }
 .home-logo::after { content: ''; position: absolute; left: 18px; right: 18px; top: 40px; height: 4px; border-radius: 2px; background: var(--on-go); box-shadow: 12px -14px 0 0 var(--on-go), 24px 0 0 0 var(--on-go); }
@@ -734,18 +734,19 @@ a.rail-item:hover { color: var(--text-strong); background: color-mix(in srgb, va
 /* ---------- Instructor v2 (E127; design docs/plans/instructor-panel-redesign.md §3; the owner's final layout, board "Option G") ----------
    The frame only; the view's own parts are styled in teach2/teach2.css. The app's top bar is not shown on this route
    (the view's header carries its Sound switch and Room code; the alarm line under the monitor its count). The view's
-   header 48 px, the stage strip 52 px, then STATE (6 parts) beside ACTION (7 parts), the dock 64 px. STATE's rows: the
+   header 48 px, the stage strip 75 px (52 px, and the 23 px of the footer line that left on 30 October: the dock ends at
+   the window's bottom edge), then STATE (6 parts) beside ACTION (7 parts), the dock 64 px. STATE's rows: the
    label and cue box, the Fast forward box, the learners' monitor, the alarm line. The view is a subgrid of the main
    grid, so the shell's one monitor stage (a sibling of the view, never moved) takes STATE's monitor cell; STATE's lifted
    background is one panel behind its four rows (.ip2-state-panel). The shell's session bar is hidden on this route
    (shell.ts OWN_BAR_ROUTES); the rail is the 56-px strip. */
-.app[data-route='teach2'] { grid-template-rows: minmax(0, 1fr) auto; }
-.app.has-rail[data-route='teach2'] { grid-template: 'rail main' minmax(0, 1fr) 'rail foot' auto / var(--rail-w) minmax(0, 1fr); }
+.app[data-route='teach2'] { grid-template-rows: minmax(0, 1fr); }
+.app.has-rail[data-route='teach2'] { grid-template: 'rail main' minmax(0, 1fr) / var(--rail-w) minmax(0, 1fr); }
 .app[data-route='teach2'] > .topbar { display: none; }
 .main[data-route='teach2'] {
   grid-template:
     'head head' 48px
-    'strip strip' 52px
+    'strip strip' 75px
     'cue action' auto
     'ff action' auto
     'stage action' minmax(0, 1fr)
