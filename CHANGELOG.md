@@ -40,6 +40,10 @@ the public API is what the packages export (see the API reference), the `pme-sce
   owner's ruling.
 
 ### Fixed
+- Instructor v2's stage strip asks once, not twice: the inline box a stage opens is the confirmation. A past stage's
+  "Return to the start of <stage>" restores its mark at once, and a future stage now opens the same kind of box,
+  "Jump to <stage>", whose click sends today's `goto` with today's toast; neither opens a dialog any more (the clinical
+  owner's report of 30 October). The hint reads "past: return to its start · future: jump to it".
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's
   sequence and viewer role per transport, and counts a hello only after its sequence check, so a phone on the relay
   that says hello with the laptop panel's id leaves the panel's commands applied. The relay gives each peer id one live
