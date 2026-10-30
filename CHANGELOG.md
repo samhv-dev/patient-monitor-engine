@@ -38,6 +38,19 @@ the public API is what the packages export (see the API reference), the `pme-sce
   the host when it is shown). Not built: the phone layout (design §6), the Gas sheet, the CPR takeover and an onset
   ramp for delivered items. The Drug sheet's rule for a dose that differs from the card's step is interim, pending the
   owner's ruling.
+- **The Case briefing** (the owner's board Orientation 7b, its phone twin and the Persian twins, 30 October). A card
+  may carry a learner-facing `briefing` (`pme-scenario/1`, additive: `{ text, estimatedMinutes?, durationS? (60, at most
+  600), lang? ("en" | "fa") }`; schema, types, `validateScenario`, `briefingOf` in `@pme/controller/scenario` and the
+  authoring guide). When such a card loads, the host's Monitor view, a second-screen learner monitor and every phone
+  show it over the running monitor (the monitor at 40 % under a frost): "Case briefing", the estimated scenario time,
+  the paragraphs, a footer counting down to the monitor and a line filling along the bottom edge; after `durationS` it
+  fades into the monitor. A tap or click ends it on that screen; "End briefing" in today's Instructor view and in v2's
+  stage strip, shown only while one runs, ends it everywhere. The host sends it as a new `briefing` wire event with its
+  start time (a viewer event; the relay passes it to the phones) and again in every answer to a hello while it runs, so
+  a phone that joins or reloads shows the remainder; not again for the load that restores a case after the
+  instructor's page reloads, nor in free roam. Persian: right to left, the reviewed chrome strings, Persian digits, the
+  Vazirmatn font stack (no font file added). The malignant hyperthermia card has one (25 minutes, 60 s, English); no
+  other card does.
 
 ### Fixed
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's

@@ -13,6 +13,7 @@
 // the padding tightens, then the hint goes, then the strip scrolls sideways.
 import './state.css';
 import type { ScenarioDoc } from '@pme/controller';
+import { briefingEnd } from '../briefing.ts';
 import { rowsOf, stagesOf, type Stage } from '../card-read.ts';
 import type { Link } from '../link.ts';
 import { clock, confirmDialog, h, toast } from '../ui.ts';
@@ -183,7 +184,9 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const sv = link.ctl.scenario;
   const chips = h('div', { class: 'ip2-chips' });
   const hint = h('span', { class: 'ip2-strip-hint' }, 'past: return to its start · future: jumps to it (asks once)');
-  el.replaceChildren(chips, hint);
+  // While a card's Case briefing runs on the learners' screens: "End briefing" at the strip's end, in the hint's place
+  const brief = link.host ? briefingEnd(link.host) : null;
+  el.replaceChildren(chips, hint, ...(brief ? [brief] : []));
   /** How far the arrows have moved the window from now (stages; 0 = the current stage's window). */
   let offset = 0;
   let docV = -1;
@@ -236,11 +239,12 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     if (el.scrollWidth > el.clientWidth) el.setAttribute('data-tight', '');
     el.classList.remove('ip2-strip-measure');
     // the hint shows whole or not at all
-    hint.hidden = !sv.doc;
+    hint.hidden = !sv.doc || (brief !== null && !brief.hidden);
     if (!hint.hidden && hint.scrollWidth > hint.clientWidth) hint.hidden = true;
   };
   const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(() => fit()) : null;
   ro?.observe(el);
+  const offBrief = link.host?.onBriefing(() => queueMicrotask(fit)); // the hint gives way to "End briefing", and back
   const line = (kind: 'solid' | 'next' | 'dashed') => h('span', { class: `ip2-link ip2-link-${kind}`, 'aria-hidden': 'true' });
 
   const draw = () => {
@@ -292,6 +296,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     refresh: draw,
     destroy: () => {
       offEsc();
+      offBrief?.();
       ro?.disconnect();
       document.removeEventListener('pointerdown', outside);
       closePop();

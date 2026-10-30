@@ -1,0 +1,119 @@
+// The Case briefing on real screens (the owner's board Orientation 7b, its phone twin and the Persian twins without the
+// ring): the MH card loaded with a relay, the briefing over the host's Monitor view at 1280 × 800 with the monitor
+// running under it, a phone (emulated, Pixel 7 on Chromium, iPhone 13 on WebKit) joining mid-briefing and showing the
+// remainder, a tap ending it on that phone only, the instructor's "End briefing" ending it on the host and every phone;
+// then a Persian briefing (the board's Persian text: a rendering fixture, on no card) on the host and a phone.
+// Screenshots go to PME_BRIEFING_SHOTS (default: this test's output folder) for the owner's look.
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { devices, expect, test, type Page } from '@playwright/test';
+import type { ViteDevServer } from 'vite';
+import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
+import { openApp, startVite } from './app-support.ts';
+
+let vite: ViteDevServer;
+let base = '';
+let relay: RelayHandle | null = null;
+test.beforeAll(async () => ({ vite, base } = await startVite()));
+test.afterAll(async () => vite?.close());
+test.afterEach(async () => relay?.close());
+
+type W = {
+  __pmeFollower: { sync: { status: string } | null };
+  __pmeApp: { session: { code: string; loadScenario(doc: unknown): { ok: boolean } }; link: { simT: number } };
+};
+const MH = JSON.parse(readFileSync(resolve(import.meta.dirname, '../src/app/showcase/showcase-mh.json'), 'utf8')) as Record<string, unknown>;
+/** The board's Persian text (OrientationFa7, as checked with the project's Persian tooling): a rendering fixture only. */
+const FA_TEXT = "شما رزیدنت بیهوشی در اتاق عمل هستید. مردی ۳۵‌ساله و سالم با وزن ۸۰ کیلوگرم برای جراحی الکتیو روی تخت است. پیش‌دارو با میدازولام و فنتانیل گرفته، پره‌اکسیژنه شده، با پروپوفول و ساکسینیل‌کولین القا شده و بدون مشکل اینتوبه شده است. بیهوشی با سووفلوران ۲٪ ادامه دارد و ونتیلاتور روی ۱۲ × ۵۰۰ تنظیم شده است. جراحی تازه شروع شده است.\n\nبه مانیتور نگاه کنید. هر تغییری را که می‌بینید بلند بگویید، و بگویید در برابرش چه می‌کنید.";
+const layer = (p: Page) => p.locator('.stage > .case-briefing:not(.cb-out)');
+/** The footer's countdown, s (Persian digits read too). */
+const count = async (p: Page) => {
+  const t = (await layer(p).locator('.cb-count').textContent()) ?? '';
+  const m = /^(\d+):(\d\d)$/.exec(t.replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))));
+  return m ? Number(m[1]) * 60 + Number(m[2]) : NaN;
+};
+
+test('the Case briefing: over the running monitor on the host and the phones, a tap ends it here, End briefing everywhere; Persian', async ({ page, browser, browserName }, info) => {
+  test.setTimeout(180_000);
+  const out = process.env.PME_BRIEFING_SHOTS ?? info.outputPath();
+  mkdirSync(out, { recursive: true });
+  const shot = (p: Page, name: string) => p.screenshot({ path: join(out, `${name}-${browserName}.png`) });
+  const dir = mkdtempSync(join(tmpdir(), 'briefing-'));
+  writeFileSync(join(dir, 'index.html'), '<!doctype html>');
+  relay = await startRelay({ port: 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer' });
+  const ws = `ws://127.0.0.1:${relay.port}/`;
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await openApp(page, base, `?relay=${encodeURIComponent(ws)}&scenario=showcase-mh#/monitor`);
+  await expect(layer(page)).toBeVisible({ timeout: 15_000 });
+  await expect(layer(page).locator('.cb-title')).toHaveText('Case briefing');
+  await expect(layer(page).locator('.cb-est')).toHaveText('Estimated scenario time about 25 minutes');
+  await expect(layer(page).locator('.cb-p')).toHaveCount(2);
+  await expect(layer(page).locator('.cb-foot > span').nth(1)).toHaveText('Tap or click anywhere to continue now');
+  // the monitor runs under it, dimmed to 40 per cent
+  await expect(page.locator('.stage > .monitor-host')).toHaveCSS('opacity', '0.4');
+  const t0 = await page.evaluate(() => (window as unknown as W).__pmeApp.link.simT);
+  const c0 = await count(page);
+  await page.waitForTimeout(4000);
+  const t1 = await page.evaluate(() => (window as unknown as W).__pmeApp.link.simT);
+  const c1 = await count(page);
+  console.log(`briefing host: count ${c0} → ${c1}, simT ${t0.toFixed(1)} → ${t1.toFixed(1)}`);
+  expect(t1 - t0, 'the monitor keeps running').toBeGreaterThan(2.5);
+  expect(c1).toBeLessThan(c0);
+  await shot(page, 'briefing-host-1280x800-en');
+
+  // a phone that joins now shows the remainder
+  const code = await page.evaluate(() => (window as unknown as W).__pmeApp.session.code);
+  const { defaultBrowserType: _b, ...dev } = browserName === 'webkit' ? devices['iPhone 13'] : devices['Pixel 7'];
+  const phoneAt = async () => {
+    const p = await (await browser.newContext(dev)).newPage();
+    await p.goto(`${base}/?join=${code}&relay=${encodeURIComponent(ws)}`);
+    await p.waitForFunction(() => (window as unknown as W).__pmeFollower?.sync?.status === 'synced', null, { timeout: 30_000 });
+    return p;
+  };
+  const f = await phoneAt();
+  await expect(layer(f)).toBeVisible({ timeout: 10_000 });
+  await expect(layer(f).locator('.cb-foot > span').nth(1)).toHaveText('Tap anywhere to continue now');
+  const left = await count(f);
+  const hostLeft = await count(page);
+  console.log(`briefing phone joined with ${left} s left (host ${hostLeft} s)`);
+  expect(left).toBeLessThan(57);
+  expect(Math.abs(left - hostLeft)).toBeLessThanOrEqual(1);
+  expect(await f.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await f.waitForTimeout(1500);
+  await shot(f, 'briefing-phone-en');
+  const g = await phoneAt();
+  await expect(layer(g)).toBeVisible({ timeout: 10_000 });
+  // a tap ends it on that phone only
+  await layer(f).tap();
+  await expect(f.locator('.stage > .case-briefing')).toHaveCount(0, { timeout: 3_000 });
+  await expect(layer(page)).toBeVisible();
+  await expect(layer(g)).toBeVisible();
+  // the instructor's End briefing (today's Instructor view) ends it on the host and every phone
+  await page.evaluate(() => (location.hash = '#/teach'));
+  await expect(layer(page)).toBeHidden();
+  const end = page.locator('.view[data-view="teach"] > .cb-end');
+  await expect(page.locator('.ip2-strip > .cb-end')).toHaveCount(1); // v2's strip carries one too
+  await expect(end).toBeVisible();
+  await end.getByRole('button', { name: 'End briefing' }).click();
+  await expect(end).toBeHidden();
+  await expect(g.locator('.stage > .case-briefing')).toHaveCount(0, { timeout: 5_000 });
+  await page.evaluate(() => (location.hash = '#/monitor'));
+  await expect(page.locator('.stage > .case-briefing')).toHaveCount(0, { timeout: 3_000 });
+  await expect(page.locator('.stage > .monitor-host')).toHaveCSS('opacity', '1');
+
+  // Persian: the same card with the board's Persian briefing, on the host and a phone
+  const fa = { ...MH, id: 'showcase-mh-fa-shot', briefing: { text: FA_TEXT, estimatedMinutes: 25, durationS: 60, lang: 'fa' } };
+  expect(await page.evaluate((d) => (window as unknown as W).__pmeApp.session.loadScenario(d).ok, fa)).toBe(true);
+  await expect(layer(page)).toBeVisible({ timeout: 10_000 });
+  await expect(layer(page)).toHaveAttribute('dir', 'rtl');
+  await expect(layer(page).locator('.cb-title')).toHaveText('معرفی سناریو');
+  await expect(layer(page).locator('.cb-est')).toHaveText('زمان تقریبی سناریو: حدود ۲۵ دقیقه');
+  expect(await page.evaluate(() => document.querySelector('.stage .monitor-host')?.closest('[dir="rtl"]') ?? null)).toBeNull();
+  await page.waitForTimeout(3000);
+  await shot(page, 'briefing-host-1280x800-fa');
+  await expect(layer(f)).toBeVisible({ timeout: 10_000 }); // the phone that tapped the English one away
+  await expect(layer(f).locator('.cb-foot > span').nth(1)).toHaveText('برای ادامه، هر جای صفحه را لمس کنید');
+  await f.waitForTimeout(1000);
+  await shot(f, 'briefing-phone-fa');
+});

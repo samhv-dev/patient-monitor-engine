@@ -126,6 +126,7 @@ describe('the Case briefing', () => {
   });
   afterEach(() => {
     for (const f of followers.splice(0)) f.destroy();
+    s.lastLoad.catch(() => undefined); // a load still unanswered when the page closes
     s.destroy();
     vi.useRealTimers();
   });
