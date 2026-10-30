@@ -8,3 +8,4 @@ export { ScenarioDriver, isHop, HOP_MAX_S, type ScenarioDriverOptions, type RunP
 export { RHYTHM_STAND_INS, resolveRhythm, type StandIn } from './standins.ts';
 export { BUILTIN_SCENARIOS, BUILTIN_CATALOGUE } from './builtins.ts';
 export { engineOptionsOf } from './patient.ts';
+export { briefingOf, BRIEFING_DEFAULT_S } from './briefing.ts';

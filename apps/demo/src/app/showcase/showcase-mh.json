@@ -4,6 +4,12 @@
   "title": "Malignant hyperthermia",
   "category": "Showcase",
   "durationMin": 40,
+  "briefing": {
+    "text": "You are the anaesthesia resident in theatre. A fit 35-year-old man, 80 kg, is on the table for elective surgery: awake, monitored, breathing room air. He will be premedicated with midazolam and fentanyl, preoxygenated, induced with propofol and succinylcholine, intubated, and maintained on sevoflurane 2 % with the ventilator at 12 × 500; then surgery begins.\n\nWatch the monitor. Say what you see as it changes, and what you would do about it.",
+    "estimatedMinutes": 25,
+    "durationS": 60,
+    "lang": "en"
+  },
   "story": "A fit 35-year-old man on the table, breathing room air: premedicated with midazolam and fentanyl, preoxygenated, induced with propofol and succinylcholine, intubated and maintained on sevoflurane 2 %. The jaw is stiff after the succinylcholine. Minutes into surgery the EtCO₂ rises at unchanged ventilation when it should be falling (42 → 45; without MH it settles at 36–39), with a rising heart rate (64 → 80, blunted by fentanyl); untreated on this build, the core temperature rises slowly (about 37.3 °C at 51 minutes) and the established state comes only after about 100 minutes; the arrest branch is not reached on the demo path. Run the MH crisis: trigger off with a propofol infusion in its place, oxygen, hyperventilation, dantrolene (again if the EtCO₂ climbs back), cooling above 38.5 °C and the potassium.",
   "objectives": [
     { "text": "Name malignant hyperthermia from the monitor: EtCO₂ rising at unchanged ventilation when it should be falling (42 → 45; without MH it settles 36–39) with a rising heart rate (64 → 80, blunted by fentanyl) (instructor-assessed)", "debrief": "recognition" },
