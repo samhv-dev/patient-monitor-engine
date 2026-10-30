@@ -39,6 +39,15 @@ the public API is what the packages export (see the API reference), the `pme-sce
   ramp for delivered items. The Drug sheet's rule for a dose that differs from the card's step is interim, pending the
   owner's ruling.
 
+- **Instructor v2 with no case loaded** (the owner's board "Empty 5", 30 October): the header reads the default
+  patient ("Adult · 70 kg") and "No case loaded"; the stage strip holds one dashed chip with a status line under it
+  ("Ready. The phones can join now…"); STATE's cue box is the default patient's; ACTION offers three ways to begin,
+  1–3 on the keyboard: **Free roam** (ACTION's no-card form, "Off the card" open, the sheets in reach), **Scenario
+  library** (the library's cards as rows, its two demonstrations first, 1–9 loading through the app's one load, Esc
+  back; "The whole library" opens the Scenarios view) and **Debrief archive** (opens the Debrief view until the archive
+  comes with the Debrief redesign); under them Room setup (opens Settings for now) and the Scenario builder (disabled,
+  "after the demo"). With a card loaded none of it shows.
+
 ### Fixed
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's
   sequence and viewer role per transport, and counts a hello only after its sequence check, so a phone on the relay

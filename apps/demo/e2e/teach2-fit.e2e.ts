@@ -152,3 +152,49 @@ for (const [card, target] of [['showcase-mh', 'awake'], ['showcase-haemorrhage',
     expect(m.cut).toBe(0);
   });
 }
+
+// The owner's board "Empty 5" (approved 30 October): with no case loaded the view fits 1440 × 900 without a scroll,
+// with the strip's dashed chip and the status line, the default patient's cue box and ACTION's three cards; 2 opens the
+// case list and 1 loads its first row (the MH card, a demonstration), after which ACTION is the card's steps. The
+// page's screenshot is written to TEACH2_SHOTS for the owner's look.
+test('Instructor v2 with no case fits 1440 × 900: the three cards, the strip chip, the status line; 2 then 1 loads the MH card', async ({ page, browserName }, info) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openApp(page, base, '#/teach2', { warmMs: 2000 });
+  const cards = page.locator('.ip2-action .ip2-begin-card');
+  await expect(cards).toHaveCount(3);
+  await expect(cards.locator('.ip2-begin-title')).toHaveText(['Free roam', 'Scenario library', 'Debrief archive']);
+  await expect(page.locator('.ip2-strip .ip2-chip-none')).toHaveText('No case loaded · the stages appear here when one is');
+  await expect(page.locator('.ip2-strip [role="status"]')).toBeVisible();
+  await expect(page.locator('.ip2-cue-name')).toHaveText('Default patient');
+  await expect(page.locator('.ip2-title')).toHaveText('No case loaded');
+  await expect.poll(() => page.evaluate(() => /\d/.test(document.querySelector('.stage .pme-stile[data-param="SpO2"] [data-pme="v"]')?.textContent ?? '')), { timeout: 30_000, intervals: [500] }).toBe(true);
+  await page.waitForTimeout(1200);
+  const m = await measure(page);
+  const box = (s: string) => page.locator(s).first().evaluate((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)]; });
+  const layout = { strip: await box('.ip2-strip'), status: await box('.ip2-status'), cue: await box('.ip2-cue-box'), action: await box('.ip2-action'), cards: await box('.ip2-begin-cards'), two: await box('.ip2-begin-two'), foot: await box('.ip2-action .ip2-foot') };
+  const tiles = await tileFindings(page);
+  const dir = process.env.TEACH2_SHOTS ?? info.outputPath();
+  mkdirSync(dir, { recursive: true });
+  await page.screenshot({ path: join(dir, `teach2-fit-empty-${browserName}-page.png`) });
+  console.log(`teach2-fit-empty ${JSON.stringify({ browser: browserName, page: m.page, view: m.view, action: m.action, pane: m.pane, layout, tiles })}`);
+  expect(m.page[0], 'the page scrolls').toBeLessThanOrEqual(m.page[1] as number);
+  expect(m.view[0], 'the view scrolls').toBeLessThanOrEqual(m.view[1] as number);
+  expect(m.action[0], 'ACTION scrolls').toBeLessThanOrEqual(m.action[1] as number);
+  expect(m.pane.w).toBeGreaterThan(400);
+  // the cards sit at 80 % of the pane; the two buttons directly under the third card; the foot line under them
+  const [, , aw] = layout.action as number[];
+  expect(Math.abs((layout.cards[2] as number) - 0.8 * ((aw as number) - 28))).toBeLessThanOrEqual(2);
+  expect((layout.two[1] as number)).toBeGreaterThan((layout.cards[1] as number) + (layout.cards[3] as number));
+  expect((layout.foot[1] as number)).toBeGreaterThan((layout.two[1] as number) + (layout.two[3] as number));
+
+  await page.locator('body').click({ position: { x: 700, y: 5 } }); // no field has the focus
+  await page.keyboard.press('2');
+  await expect(page.locator('.ip2-case-list')).toBeVisible();
+  await expect(page.locator('.ip2-case-list .ip2-row-title').first()).toHaveText(/^Load /);
+  await page.keyboard.press('1');
+  await page.waitForFunction(() => (window as unknown as W).__pmeApp.link.ctl.scenario.doc !== null, null, { timeout: 30_000 });
+  await expect(page.locator('.ip2-action .ip2-rows:not(.ip2-finished-list) .ip2-row[data-kind="step"]').first()).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('.ip2-begin')).toHaveCount(0);
+  await expect(page.locator('.ip2-strip [role="status"]')).toBeHidden();
+});

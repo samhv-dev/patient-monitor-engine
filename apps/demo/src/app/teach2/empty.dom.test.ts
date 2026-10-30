@@ -131,7 +131,7 @@ describe('Instructor v2 with no case loaded (board "Empty 5")', () => {
       expect(r.shown('.ip2-offcard')).toBe(true);
       expect(r.q<HTMLDetailsElement>('.ip2-offcard')?.open).toBe(true);
       expect(r.shown('.ip2-action .ip2-rows')).toBe(false);
-      expect(r.all('.ip2-action button.ip2-row')).toHaveLength(0);
+      expect(r.all('.ip2-action button.ip2-row').filter((b) => !b.closest('[hidden]'))).toHaveLength(0);
       expect(r.all('.ip2-strip .ip2-chips > *').map((c) => c.textContent)).toEqual(['Free roam']);
       // the sheets are reachable: the dock's tools open them over ACTION
       (r.q('.ip2-dock-tools .ip2-tool') as HTMLButtonElement).click();
