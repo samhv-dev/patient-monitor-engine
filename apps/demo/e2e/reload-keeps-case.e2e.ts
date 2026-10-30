@@ -20,7 +20,7 @@ type W = {
   __pmeFollower: { sync: { status: string; resyncs: number } | null };
   __pmeApp: {
     session: { code: string; simNow(): number };
-    link: { simT: number; log: Array<{ text: string }>; send(c: unknown): Promise<{ accepted: boolean; reason?: string }>; ctl: { timeScale: number; scenario: { stateId: string | null; doc: { id: string } | null } } };
+    link: { simT: number; log: Array<{ text: string }>; send(c: unknown): Promise<{ accepted: boolean; reason?: string }>; ctl: { timeScale: number; hostPaused: boolean; scenario: { stateId: string | null; doc: { id: string } | null } } };
   };
 };
 const app = <T>(p: Page, fn: (w: W) => T) => p.evaluate(`(${fn.toString()})(window)`) as Promise<Awaited<T>>;
@@ -89,4 +89,72 @@ test('a reload mid-card comes back in the same card, state and clock, and the ph
   await page.waitForTimeout(3000);
   expect(await app(page, (w) => w.__pmeApp.link.ctl.scenario.doc)).toBeNull();
   await expect(bar).toHaveText('No scenario');
+});
+
+// The owner's board "Finish 2" (approved 30 October): "Save and restart the case" saves the debrief to the browser's
+// archive and loads the same card again from 0:00 with a fresh engine, keeping the room (the probes, the session code);
+// a reload then restores the NEW run. "Save and close" saves it and ends the case; a reload then shows the empty window
+// (#210's three cards), not the finished case, even on the deep link the case was opened from. The archive survives
+// both reloads.
+type F = W & { __pmeApp: { archive: { list(): Array<{ resident: string; title: string }> }; session: { last: { state?: { sensors?: Record<string, string> } } } } };
+const fin = <T>(p: Page, fn: (w: F) => T) => p.evaluate(`(${fn.toString()})(window)`) as Promise<Awaited<T>>;
+
+test('Finish the case: a reload after "Save and restart" restores the new run; after "Save and close" the empty window', async ({ page, browserName }) => {
+  test.setTimeout(150_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openApp(page, base, '?scenario=showcase-mh#/teach2', { warmMs: 1500 });
+  const code = await app(page, (w) => w.__pmeApp.session.code);
+  for (const t of ['premed', 'induce-premed', 'intubate']) {
+    const r = await page.evaluate((target) => (window as unknown as W).__pmeApp.link.send({ type: 'scenario', action: 'trigger', target }), t);
+    expect(r.accepted, `${t}: ${r.reason ?? ''}`).toBe(true);
+  }
+  await expect.poll(() => app(page, (w) => w.__pmeApp.link.ctl.scenario.stateId)).toBe('intubated');
+  // the room: a CVP line the card does not start with
+  expect((await page.evaluate(() => (window as unknown as W).__pmeApp.link.send({ type: 'attachSensor', sensor: 'cvp', state: 'connected' }))).accepted).toBe(true);
+  await expect.poll(() => fin(page, (w) => w.__pmeApp.session.last.state?.sensors?.cvp)).toBe('connected');
+  expect((await page.evaluate(() => (window as unknown as W).__pmeApp.link.send({ type: 'time', action: 'scale', value: 8 }))).accepted).toBe(true);
+  await page.waitForTimeout(5000);
+  const ranTo = await app(page, (w) => w.__pmeApp.session.simNow());
+
+  // Save and restart
+  await page.locator('.ip2-dock .ip2-finish-btn').click();
+  await expect(page.locator('.ip2-finish')).toBeVisible();
+  await page.locator('.ip2-finish-resident').fill('Dr First');
+  await page.locator('.ip2-finish-restart').click();
+  await expect(page.locator('.ip2-finish')).toBeHidden();
+  await expect.poll(() => app(page, (w) => w.__pmeApp.link.ctl.scenario.stateId)).toBe('awake');
+  expect((await page.evaluate(() => (window as unknown as W).__pmeApp.link.send({ type: 'time', action: 'scale', value: 1 }))).accepted).toBe(true);
+  expect(await fin(page, (w) => w.__pmeApp.archive.list().map((x) => `${x.resident} · ${x.title}`))).toEqual(['Dr First · Malignant hyperthermia']);
+  await expect.poll(() => app(page, (w) => w.__pmeApp.link.ctl.hostPaused)).toBe(false);
+  const restartedAt = await app(page, (w) => w.__pmeApp.session.simNow());
+  expect(ranTo, 'the first run ran a while').toBeGreaterThan(25);
+  expect(restartedAt, 'the card starts again from 0:00').toBeLessThan(15);
+  await expect.poll(() => fin(page, (w) => w.__pmeApp.session.last.state?.sensors?.cvp), { message: 'the probes stay as they were' }).toBe('connected');
+  await page.waitForTimeout(3000); // a position of the new run is taken (every second)
+  await page.reload();
+  await page.waitForFunction(() => '__pmeApp' in window);
+  expect(new URL(page.url()).searchParams.get('session')).toBe(code);
+  const said = () => app(page, (w) => w.__pmeApp.link.log.find((e) => e.text.startsWith('Restored after reload'))?.text ?? null);
+  await expect.poll(said, { timeout: 30_000, message: 'the new run is restored' }).toMatch(/^Restored after reload: Malignant hyperthermia, \d\d:\d\d$/);
+  expect(await app(page, (w) => w.__pmeApp.link.ctl.scenario.stateId)).toBe('awake');
+  expect(await app(page, (w) => w.__pmeApp.link.simT), 'the new run, not the finished one').toBeLessThan(ranTo);
+
+  // Save and close
+  await page.locator('.ip2-dock .ip2-finish-btn').click();
+  await expect(page.locator('.ip2-finish')).toBeVisible();
+  await page.locator('.ip2-finish-resident').fill('Dr Second');
+  await page.locator('.ip2-finish-close').click();
+  await expect.poll(() => app(page, (w) => w.__pmeApp.link.ctl.scenario.doc)).toBeNull();
+  await expect(page.locator('.ip2-action .ip2-begin-card')).toHaveCount(3);
+  await expect(page.locator('.ip2-title')).toHaveText('No case loaded');
+  expect(new URL(page.url()).searchParams.get('scenario'), 'the deep link is spent').toBeNull();
+  await page.waitForTimeout(2500);
+  await page.reload();
+  await page.waitForFunction(() => '__pmeApp' in window);
+  await page.waitForTimeout(3000);
+  expect(await app(page, (w) => w.__pmeApp.link.ctl.scenario.doc)).toBeNull();
+  await expect(page.locator('.ip2-action .ip2-begin-card')).toHaveCount(3);
+  await expect(page.locator('.ip2-begin-card[data-way="archive"] .ip2-begin-btn')).toHaveText('Open · 2');
+  expect(await fin(page, (w) => w.__pmeApp.archive.list().map((x) => x.resident))).toEqual(['Dr First', 'Dr Second']);
+  console.log('finish-reload', JSON.stringify({ browserName, ranTo: Math.round(ranTo), restartedAt: Math.round(restartedAt * 10) / 10 }));
 });
