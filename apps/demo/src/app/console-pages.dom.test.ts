@@ -2,9 +2,11 @@
 // E125: the app opens on Home; the workflow rail marks the current page and its switch saves the light/dark screen;
 // the pages before a session (Home, Room, Scenarios, Patient) have no stage and no session bar, the Instructor and
 // Monitor views do; the Room's status box says Stable / Weak / Disconnected; a Load shows in the Scenarios' Recent.
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import type { ManagedTransport, TransportStatus, WireMessage } from '@pme/controller';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { FOOTER_LINE } from './about.ts';
+import { EDUCATION_LINE } from './about.ts';
 import { persianDate, Rail, railClock } from './rail.ts';
 import { noteRecent } from './recent.ts';
 import { roomStatus, PeerLog } from './room-status.ts';
@@ -72,13 +74,37 @@ describe('the frame', () => {
     }
   });
 
-  it('carries the disclaimer as a footer line; a learner window has none', () => {
-    shellWithRail();
-    expect(document.querySelector('.app-foot')?.textContent).toBe(FOOTER_LINE);
-    expect(FOOTER_LINE).toBe('For educational use only; Not to be used in patient care.');
-    document.body.replaceChildren();
-    new Shell(document.body, { hostless: false, follower: true });
-    expect(document.querySelector('.app-foot')).toBeNull();
+  it('carries no footer line on the working views; Home shows the education line once, as part of its own page', () => {
+    // the owner, 30 October: the line leaves the bottom of the working pages so Instructor v2's dock sits flush
+    const shell = new Shell(document.body, { hostless: false });
+    shell.add({ ...homeView({ meters: new Meters() }), enter: undefined });
+    for (const id of ['teach', 'teach2', 'scenarios', 'settings', 'debrief'] as const) shell.add(view(id));
+    shell.setRail(new Rail({ version: 'x', theme: { light: () => false, set: () => undefined } }));
+    /** The page's text as shown: hidden views left out. */
+    const shown = () => {
+      const c = shell.root.cloneNode(true) as HTMLElement;
+      for (const e of c.querySelectorAll('[hidden]')) e.remove();
+      return c.textContent ?? '';
+    };
+    const times = (t: string) => t.split(EDUCATION_LINE).length - 1;
+    for (const id of ['teach', 'teach2', 'scenarios', 'settings', 'debrief'] as const) {
+      shell.show({ id, sub: '' });
+      expect(document.querySelectorAll('.app-foot'), id).toHaveLength(0);
+      expect(times(shown()), id).toBe(0);
+    }
+    shell.show({ id: 'home', sub: '' });
+    expect(document.querySelectorAll('.app-foot')).toHaveLength(0);
+    expect(times(shown())).toBe(1);
+    expect(shell.root.querySelector('.view.home .home-foot')?.textContent).toBe(EDUCATION_LINE);
+    expect(EDUCATION_LINE).toBe('For educational use only; Not to be used in patient care.');
+  });
+
+  it('print still hides the rail (and the Home line); the Debrief keeps its own footer line word for word', () => {
+    const css = readFileSync(resolve(import.meta.dirname, 'app.css'), 'utf8');
+    const print = [...css.matchAll(/@media print \{([^{}]*)\{([^}]*)\}/g)].filter((m) => /display: none !important/.test(m[2] as string)).map((m) => m[1] as string).join(',');
+    expect(print.split(',').map((s) => s.trim())).toEqual(expect.arrayContaining(['.rail', '.home-foot']));
+    const debrief = readFileSync(resolve(import.meta.dirname, 'views/debrief.ts'), 'utf8');
+    expect(debrief).toContain("const FOOT = `For educational use only; Not to be used in patient care. Version ${version}${version.includes('-') ? ' (pre-release)' : ''}, build ${BUILD}.`;");
   });
 
   it('a hostless Remote keeps its stage and session bar hidden and has no rail', () => {

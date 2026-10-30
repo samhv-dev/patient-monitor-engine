@@ -2,7 +2,8 @@
 // October): the Monitor view and the learner monitor window (saadat-like: in the header's free centre, the monitor's
 // size unchanged; another skin: a 16-px strip above it), and a learner's phone (the upright one-row header's idle
 // message area, so the lanes keep their height).
-// No monitor surface carries the page footer's disclaimer.
+// No page carries a footer line under it any more (the owner, 30 October: Home keeps the education line in its own
+// page, the Debrief its printed one); the check stays so no monitor surface gains one back.
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -52,15 +53,15 @@ test('the line is on the Monitor view and the learner window, never on the instr
   test.setTimeout(150_000);
   const ws = await classroom();
   await openApp(page, base, `?relay=${encodeURIComponent(ws)}#/teach`, { warmMs: 1500, site: { skin: 'saadat-like' } });
-  // the Instructor view: the same monitor, no line
-  expect(await where(page)).toEqual({ at: 'none', footer: true });
+  // the Instructor view: the same monitor, no line, no footer line under it
+  expect(await where(page)).toEqual({ at: 'none', footer: false });
   const teachHeader = await page.locator('.stage .pme-hdr').boundingBox();
   // the Monitor view: in the saadat-like header, the monitor not moved
   const before = await hostBox(page);
   await go(page, '#/monitor');
   await expect.poll(() => where(page), { timeout: 15_000 }).toEqual({ at: 'header', footer: false });
   await go(page, '#/teach');
-  await expect.poll(() => where(page), { timeout: 15_000 }).toEqual({ at: 'none', footer: true });
+  await expect.poll(() => where(page), { timeout: 15_000 }).toEqual({ at: 'none', footer: false });
   expect(await page.locator('.stage .pme-hdr').boundingBox()).toEqual(teachHeader);
   expect(await hostBox(page)).toEqual(before);
   for (const r of ['#/', '#/room', '#/scenarios', '#/patient', '#/debrief', '#/explore', '#/settings']) {

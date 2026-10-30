@@ -152,3 +152,25 @@ for (const [card, target] of [['showcase-mh', 'awake'], ['showcase-haemorrhage',
     expect(m.cut).toBe(0);
   });
 }
+
+// The owner, 30 October: no education line under the working views, so the dock ends at the window's bottom edge; the
+// line's height (23 px: 3 + 3 px padding, a 16-px line, the 1-px rule; 23.19 measured on main at 1440 × 900) goes to the
+// stage strip, 52 → 75 px, and its chips grow with it (not a taller empty bar).
+const FOOTER_H = 23;
+test('Instructor v2 at 1440 × 900: no footer line, the dock flush with the bottom, the stage strip taller by the line', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openApp(page, base, '?scenario=showcase-mh#/teach2', { warmMs: 1500 });
+  await page.waitForFunction(() => !!document.querySelector('.ip2-strip .ip2-current'), null, { timeout: 30_000 });
+  const m = await page.evaluate(() => {
+    const box = (s: string) => (document.querySelector(s) as HTMLElement).getBoundingClientRect();
+    return { vh: innerHeight, foot: document.querySelectorAll('.app-foot').length, dock: box('.ip2-dock'), strip: box('.ip2-strip'), head: box('.ip2-head'), chip: box('.ip2-strip .ip2-current') };
+  });
+  console.log(`teach2-flush ${JSON.stringify({ vh: m.vh, dock: [m.dock.top, m.dock.bottom], strip: [m.strip.top, m.strip.height], chip: m.chip.height })}`);
+  expect(m.foot).toBe(0);
+  expect(m.dock.bottom).toBe(m.vh);
+  expect(m.dock.height).toBe(64);
+  expect(m.head.height).toBe(48);
+  expect(m.strip.height).toBe(52 + FOOTER_H);
+  expect(m.chip.height, 'the chips grow with the row').toBeGreaterThan(30);
+});
