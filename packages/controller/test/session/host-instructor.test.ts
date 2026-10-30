@@ -260,6 +260,17 @@ describe('who holds the role', () => {
     expect(ackOf(got, id)).toMatchObject({ accepted: true });
   });
 
+  it('1 000 wrong PINs leave the denial record at its cap, and the next right PIN still grants', async () => {
+    const { relay, got, host } = setup();
+    for (let i = 0; i < 1000; i++) phone(relay, `flood.${i}`).hello(String(1000 + i));
+    const p = phone(relay, 'ph.1');
+    p.hello(PIN);
+    await waitFor(() => grants(got, 'ph.1').length === 1, 5000);
+    expect(grants(got).filter((g) => !g.granted)).toHaveLength(1000);
+    expect(host.instructorDenials()).toBe(100);
+    expect(grants(got, 'ph.1')[0]).toMatchObject({ granted: true });
+  });
+
   it('the denial count covers the last minute only', async () => {
     let wall = 1_000_000;
     const { relay, got, host } = setup({ wallNow: () => wall });
