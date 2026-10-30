@@ -61,13 +61,8 @@ export interface StageEntry {
  */
 export function stageEntries(doc: ScenarioDoc, history: ReadonlyArray<{ t: number; stateId: string; transitionId?: string }>, current: { stateId: string | null; enteredT: number }, simT: number): StageEntry[] {
   const home = new Map(stagesOf(doc).flatMap((g) => g.states.map((s) => [s, g.id] as const)));
-  const kept: Array<{ t: number; stateId: string; transitionId?: string }> = [];
-  for (const e of history) {
-    while (kept.length && (kept.at(-1) as { t: number }).t > e.t) kept.pop();
-    kept.push(e);
-  }
   const out: StageEntry[] = [];
-  for (const e of kept) {
+  for (const e of keptCourse(history)) {
     if (e.t > simT + 0.05) break;
     const stage = home.get(e.stateId);
     if (!stage || out.at(-1)?.stage === stage) continue;
@@ -76,6 +71,25 @@ export function stageEntries(doc: ScenarioDoc, history: ReadonlyArray<{ t: numbe
   const cur = current.stateId ? home.get(current.stateId) : undefined;
   if (cur && out.at(-1)?.stage !== cur) out.push({ stage: cur, stateId: current.stateId as string, t: current.enteredT });
   return out;
+}
+
+type HistoryEntry = { t: number; stateId: string; transitionId?: string };
+/** The history of the course kept: the entries of a course a restore discarded dropped (an entry earlier than the one
+ *  before it rewound the clock). */
+function keptCourse(history: readonly HistoryEntry[]): HistoryEntry[] {
+  const kept: HistoryEntry[] = [];
+  for (const e of history) {
+    while (kept.length && (kept.at(-1) as HistoryEntry).t > e.t) kept.pop();
+    kept.push(e);
+  }
+  return kept;
+}
+
+/** The transitions fired since the current stage was entered (its spokes' presses: the hub stays current, so the
+ *  steps they took are no longer open), on the course kept and up to `simT`. Empty without an entry. */
+export function firedInStage(history: readonly HistoryEntry[], entry: StageEntry | undefined, simT: number): Set<string> {
+  if (!entry) return new Set();
+  return new Set(keptCourse(history).flatMap((e) => (e.t > entry.t + 1e-6 && e.t <= simT + 0.05 && e.transitionId ? [e.transitionId.replace(/:else$/, '')] : [])));
 }
 
 export type StripItem =
@@ -110,7 +124,7 @@ function edgesOf(doc: ScenarioDoc, stages: readonly Stage[]): Map<string, Set<st
  * future stage no path from the current one reaches comes last. The window starts KEEP_PAST before the current stage
  * (slid to keep WINDOW stages at either end of the line), moved by `offset` stages (the arrows; 0 = now).
  */
-export function stripModel(doc: ScenarioDoc, stateId: string | null, entries: readonly StageEntry[], offset = 0): StripItem[] {
+export function stripModel(doc: ScenarioDoc, stateId: string | null, entries: readonly StageEntry[], offset = 0, fired: ReadonlySet<string> = new Set()): StripItem[] {
   const stages = stagesOf(doc);
   const at = stages.findIndex((g) => stateId !== null && g.states.includes(stateId));
   const last = (id: string) => entries.filter((e) => e.stage === id).at(-1) ?? null;
@@ -141,8 +155,9 @@ export function stripModel(doc: ScenarioDoc, stateId: string | null, entries: re
   for (let i = start; i < end; i++) {
     const x = line[i] as Slot;
     if (x.kind === 'past') out.push({ kind: 'past', stage: x.stage, entry: last(x.stage.id) });
-    // the open steps of the stage's own state (during a 2-s hop too: a hop has no steps of its own)
-    else if (x.kind === 'current') out.push({ kind: 'current', stage: x.stage, entry: last(x.stage.id), open: rowsOf(doc, x.stage.id).filter((r) => r.kind === 'step').length });
+    // the open steps of the stage's own state (during a 2-s hop too: a hop has no steps of its own), less the ones its
+    // spokes' presses took in this visit (`fired`: they are in ACTION's Finished)
+    else if (x.kind === 'current') out.push({ kind: 'current', stage: x.stage, entry: last(x.stage.id), open: rowsOf(doc, x.stage.id).filter((r) => r.kind === 'step' && !fired.has(r.tr.id)).length });
     else {
       const prev = out.at(-1);
       if (prev?.kind === 'future' && i > start && (line[i - 1] as Slot).layer === x.layer) prev.stages.push(x.stage);
@@ -252,8 +267,9 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       return;
     }
     if (docV !== sv.docVersion) (docV = sv.docVersion), (offset = 0), (names = stageNames(stagesOf(doc))), closePop();
-    const entries = stageEntries(doc, historyOf(link), sv, link.simT);
-    const items = stripModel(doc, sv.stateId, entries, offset);
+    const history = historyOf(link);
+    const entries = stageEntries(doc, history, sv, link.simT);
+    const items = stripModel(doc, sv.stateId, entries, offset, firedInStage(history, entries.at(-1), link.simT));
     const key = JSON.stringify([docV, offset, items.map((x) => (x.kind === 'fold' || x.kind === 'later' ? [x.kind, x.n] : x.kind === 'future' ? x.stages.map((g) => g.id) : [x.stage.id, x.entry?.t, x.kind === 'current' ? x.open : 0]))]);
     if (key === drawn) return; // the strip changes with the state, not with the clock: no redraw at 1 Hz
     drawn = key;

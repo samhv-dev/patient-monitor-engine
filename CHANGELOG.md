@@ -40,6 +40,15 @@ the public API is what the packages export (see the API reference), the `pme-sce
   owner's ruling.
 
 ### Fixed
+- Instructor v2 reads a `pme-scenario/1` card's spoke states (a state whose only exit is a short `afterS` back to its
+  hub: the MH card's dantrolene, cooling, potassium and bicarbonate, the haemorrhage card's epinephrine and volume) as
+  actions of their hub stage, and a finished row moves to "Finished steps · n" at once, in every stage: a step pressed
+  in the treatment stage goes green into the fold with its number and time, the stage stays current with its entry
+  time, the strip's "n open" counts the steps still open, and the stage's other rows keep their state. A step with no
+  rule of its own is a press whenever it fires: it is never marked "fired by its own rule", and a stage it enters reads
+  "entered by your button", whatever order the host saw the state and the press's acknowledgement in (the Cool press
+  read as an automatic task). The clinical owner's three reports of 30 October; the card, the driver and the Debrief
+  are unchanged.
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's
   sequence and viewer role per transport, and counts a hello only after its sequence check, so a phone on the relay
   that says hello with the laptop panel's id leaves the panel's commands applied. The relay gives each peer id one live
