@@ -119,10 +119,11 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     }
   };
 
-  const drawOffs = (entries: ReadonlyArray<{ simT: number | null; text: string; kind: string }>, none: string) => {
+  /** The fold's lines; `noneFirst` draws the "nothing yet" line from the first paint (Free roam, where the fold is open). */
+  const drawOffs = (entries: ReadonlyArray<{ simT: number | null; text: string; kind: string }>, none: string, noneFirst = false) => {
     setText(offSummary, `Off the card · ${entries.length}`);
     const offs = entries.map((x) => `${x.simT === null ? '' : clock(x.simT)} ${x.text}${x.kind === 'learner' ? ' (learner)' : ''}`.trim());
-    const want = offs.length ? offs : [none];
+    const want = offs.length || !noneFirst ? offs : [none];
     if (offList.children.length !== want.length || want.some((t, i) => offList.children[i]?.textContent !== t)) {
       offList.replaceChildren(...(offs.length ? offs.map((t) => h('li', {}, t)) : [h('li', { class: 'ip2-muted' }, none)]));
     }
@@ -160,7 +161,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       if (free && was !== 'free') (freeT = link.simT), (offCard.open = true);
       if (!free) return;
       const none = 'Nothing given yet. Whatever a sheet gives is logged here, in the Log and in the Debrief.';
-      drawOffs(link.log.filter((x) => (x.kind === 'instructor' || x.kind === 'learner') && !x.refused && (x.simT ?? -Infinity) >= freeT - 1e-6 && !NOT_AN_ACTION.test(x.text)), none);
+      drawOffs(link.log.filter((x) => (x.kind === 'instructor' || x.kind === 'learner') && !x.refused && (x.simT ?? -Infinity) >= freeT - 1e-6 && !NOT_AN_ACTION.test(x.text)), none, true);
       return;
     }
     const board = classify({

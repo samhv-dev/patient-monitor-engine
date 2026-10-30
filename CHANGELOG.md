@@ -46,7 +46,8 @@ the public API is what the packages export (see the API reference), the `pme-sce
   library** (the library's cards as rows, its two demonstrations first, 1–9 loading through the app's one load, Esc
   back; "The whole library" opens the Scenarios view) and **Debrief archive** (opens the Debrief view until the archive
   comes with the Debrief redesign); under them Room setup (opens Settings for now) and the Scenario builder (disabled,
-  "after the demo"). With a card loaded none of it shows.
+  "after the demo"). While the cards or the case list show, the Fast forward row is hidden (nothing to skip to) and
+  the learners' monitor takes its height; Free roam or a card brings it back. With a card loaded none of it shows.
 
 ### Fixed
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's

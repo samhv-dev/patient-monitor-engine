@@ -56,6 +56,9 @@ export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): numbe
   openAlarms = () => ctx.openSheet('devices');
   const lines = [ff, alarms];
   const paintNow = () => {
+    // with no case and Free roam not chosen there is nothing to skip to: the Fast forward row goes, and the monitor gets
+    // its height back (the owner's ruling on board "Empty 5"); it returns with a card or with Free roam
+    ff.el.hidden = !link.ctl.scenario.doc && begin.way !== 'free';
     header.refresh();
     dock.refresh();
     for (const x of lines) x.refresh();
