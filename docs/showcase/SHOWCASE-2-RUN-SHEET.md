@@ -114,6 +114,7 @@ printed page per segment; each stop has its own card).
 | RM | `docs/roadmap/README.md`, `docs/roadmap/v1.0-remaining.md`, `docs/roadmap/v2.0/README.md` |
 | SKIN | `packages/skins/src/data/skins/saadat-like.json`, `philips-like.json` |
 | S1 / S5 | the E119 / E120 slow tests (`apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts`, `haemorrhage-anaphylaxis.slow.test.ts`) |
+| KD | **[candidate kit]** kit D, main 6d19b8b3 (after #184), `_sandbox/pme-kit-candidate-6d19b8b3/`, 30 October, both engines; outputs in `scratch/rc5-candidate-3/`: `rounds/q2-rc5c3/q1-talk-{chromium,webkit}.json` (every Explore row read at each stop; the stops held at 08:08 / 13:48 / 19:08 on Chromium, 08:07 / 13:47 / 19:07 on WebKit) and `shots/`; `compare-d.txt` (rc.4 / kit C / kit D); `rounds/drugs-stops/` (the Drugs page at the three stops); the phone rejoin in `reconnect.log` and `browser-reconnect-{chromium,webkit}.log`; R00 2026-10-30 "KIT D DONE" |
 
 ## The programme at a glance (30:00)
 
@@ -262,6 +263,8 @@ phones [R31 §3]. Tick every line.
 - [ ] Scan with your own phone: within a few seconds it shows the monitor upright and the sheet says **1 phone
       following** [PF §3]. Tap **Sound off** on the phone: alarms heard; tap again: silent.
 - [ ] Lock the phone 60 s, unlock, note how long until "Following" again: ___ s (over 15 s becomes a follow-up) [OPT].
+      **[candidate kit]** If the phone's old connection was left hanging, the relay checks it first (about 3 s) before
+      letting the phone back in: expect up to about 3 s more than on kit A (kit D 6d19b8b3, measured 30 October) [KD].
 - [ ] Venue Wi-Fi: if the phone says "this phone cannot reach the instructor's laptop", the Wi-Fi isolates devices: use
       the router or hotspot [PF §4].
 
@@ -292,6 +295,11 @@ phones [R31 §3]. Tick every line.
       visible on Explore at any stop].
 - [ ] Rehearse once: Pause → Explore → a section → the model tab → back to the instructor tab → **Instructor** in the
       rail → Resume. The clock must not move while you are away (it held to the second at all three stops [Q1-MH]).
+- [ ] **[candidate kit] "Instructor", not "Instructor v2".** The rail carries a new entry **Instructor v2** one row
+      under **Instructor**, on every page from Home on (#177; `apps/demo/src/app/rail.ts`). The talk uses
+      **Instructor**. If you click v2 by mistake (its own header replaces the session bar; the clock pill is its
+      pause/resume), click **Instructor**: today's view comes back and nothing is lost (the same states, presses and
+      verdicts through either view in the kit rounds) [`scratch/reviews/review-rc5-line-for-the-talk.md` §4; KD].
 
 **Handouts**
 - [ ] **Only the MH Persian handout is printed for the day**: from the MH Debrief JSON of the owner's Sunday rehearsal,
@@ -393,17 +401,20 @@ nav and the session-bar title [UIR #9].
 
 **The stage rule** [SPK]: never say the simulator does something the kit in the room does not do. Every talk point
 below is from the speaker's reference; a size marked [ENG] is an engineering size, not a sourced one: say so if asked.
-**Explore cautions** (the build as it is; no app change before the talk):
-- Under **Gas exchange and oxygen delivery**, the rows **VCO₂ 216** and **VO₂ 270** do not move all case (the same at
-  all three stops): they are not the MH figures. **Do not point at them.** The MH oxygen consumption is **VO₂** under
-  **Blood, acid–base and temperature** (332 → 427 mL/min) [Q1-MH].
-- Under **Drugs**, dantrolene is **Ce (Dantrolene)** in "drug unit" (reference doses, 1 = 2.5 mg/kg), and the Total
-  column reads "200 mg, µg"; under **Blood**, Glucose reads "102 mmol/L and mg/dL" (it is mg/dL). Read the number and
-  say the unit yourself [Q1-MH screenshots].
-- The **VA** row (alveolar ventilation, L/min, printed V̇A) sits five rows below the static VO₂ 270 and six below
-  VCO₂ 216 (Respiratory muscle fatigue, PaCO₂ set point, RR (spont) and V̇E between), on both kits: point at VA alone
-  [kit A 0c4b396f and kit D 6d19b8b3 stop records: `scratch/wt-rc4-docs/docs/showcase/kit-round-a/q2-rc4/` and
-  `scratch/rc5-candidate-3/rounds/q2-rc5c3/`, `q1-talk-{chromium,webkit}.json`, Gas exchange rows at stops 2 and 3].
+**Explore cautions** (the build as it is; no app change before the talk). **[candidate kit]** Explore's units and
+labels changed after the v1.0.0-rc.4 tag (pre-release) (#178); the lines below are read on kit D (main 6d19b8b3, both
+engines, measured 30 October) [KD]:
+- Under **Gas exchange and oxygen delivery**, the rows **VCO₂ 216** and **VO₂ at rest (awake) 270** do not move all
+  case (the same at all three stops): they are not the MH figures. **Do not point at them.** The MH oxygen consumption
+  is **VO₂** under **Blood, acid–base and temperature** (331 → 427 mL/min), and the Gas exchange list now carries the
+  same **VO₂** as a row of its own (427 at stop 2, 441 at stop 3), after SvO₂: that one you may point at [KD].
+- Under **Drugs**, dantrolene is **Ce (Dantrolene)** in "× ref dose" (reference doses, 1 = 2.5 mg/kg), and its Total
+  reads "200 mg"; under **Blood**, Glucose reads "102 mg/dL"; under **Endocrine**, Glucose reads "5.7 mmol/L" and
+  Stress response "88" on a "0–100" scale (stop 1) [KD]. "per row" appears nowhere on the Drugs page at any stop
+  (#184 removed the five placeholder rows) [KD `rounds/drugs-stops/`].
+- The **VA** row (alveolar ventilation, L/min, printed V̇A) sits five rows below VO₂ at rest (awake) and six below VCO₂
+  (Respiratory muscle fatigue, PaCO₂ set point, RR (spont) and V̇E between), and the moving VO₂ six rows below it:
+  point at VA alone when you talk about ventilation [KD `rounds/q2-rc5c3/shots/stop2-gas-scrolled-*.png`].
 
 ### The card and how to Load
 
@@ -683,6 +694,7 @@ for "what is not in this build".
 | A printed page carries the "Fast-forwarded …" banner | It was printed within ≈ 8 s of a span: print again once the banner has gone | [UIR #9] |
 | MH: "ventilation back" is not on the card after stop 2 (13:50) | The card has left Recovering (a dantrolene dose): wait until EtCO₂ has been below 45 for a minute, and press it when it shows | [CARD transitions] |
 | A phone says "This session is full" | 60 phones are following: ask a neighbour to share | [CR12] |
+| **[candidate kit]** A phone that lost the Wi-Fi does not read "Following" for a few seconds after its network is back | Wait, do not reload it: the relay first checks the phone's old connection (about 3 s), then lets it back in, and the Room's count stays right. Measured on kit D (6d19b8b3, 30 October): synced again **3.6 s** after the drop on Chromium, **4.0 s** on WebKit | [KD `reconnect.log` A, `browser-reconnect-{chromium,webkit}.log`; R00 2026-10-30 "KIT D DONE"; #183] |
 | The phones show "---" where the screen shows a number after a style change | You changed the monitor style mid-session (FX-9). Change it back, or re-load the case | [MEAS §8; Q1-2D `s12f2`] |
 | Running long | Cut questions, then stop 3's paragraph on what comes next, then the Debrief read (§ "The programme at a glance") | [P29] |
 

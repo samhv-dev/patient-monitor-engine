@@ -39,11 +39,12 @@ first, then stop 3's paragraph (the two sentences on E134), then the Debrief rea
 | 2 | 13:50 (after fast-forward 1, Recovering) | Drugs: Ce (Dantrolene) **0.892** · Endocrine: MH activity **0.510** · Gas exchange: VA **9.11** L/min (3.7 at 1:00), PaCO₂ 44.2 · Blood: VO₂ 427, K⁺ **4.62**, lactate 1.80, pH 7.36 | `pharmacology.md` (dantrolene row), `blood.md` |
 | 3 | 19:11 (after fast-forward 2) | Endocrine: MH activity **0.550** · Drugs: Ce (Dantrolene) **0.999** (at its peak) · Gas exchange: VA **4.41**, PaCO₂ **70.1**; EtCO₂ 64 | `endocrine-thermal.md`, Parameters (DANT_GAIN) |
 
-**Explore cautions:** under Gas exchange, **VCO₂ 216 and VO₂ 270 never move** (not the MH figures): do not point at
-them; the MH VO₂ is under Blood. Dantrolene's "drug unit" is reference doses (1 = 2.5 mg/kg); its Total reads "200 mg,
-µg" (mg). Blood's Glucose reads "102 mmol/L and mg/dL" (mg/dL). On the endocrine-thermal page (pinned to 6d19b8b3), the
-DANT_GAIN row reads "a gamma curve peaking at 10 min, t10 6 h: `gammaPk(2.5, true, 600, 21600)`" (#189): it agrees
-with what you say, on either kit.
+**Explore cautions [candidate kit]** (kit D 6d19b8b3, measured 30 October; run sheet §3): under Gas exchange,
+**VCO₂ 216 and VO₂ at rest (awake) 270 never move** (not the MH figures): do not point at them; the MH VO₂ is under
+Blood, and under Gas exchange as **VO₂** (after SvO₂, the same number). Dantrolene reads in "× ref dose" (1 = 2.5 mg/kg); its Total
+reads "200 mg". Blood's Glucose reads "mg/dL", Endocrine's "mmol/L" (5.7 at stop 1). On the endocrine-thermal page
+(pinned to 6d19b8b3), the DANT_GAIN row reads "a gamma curve peaking at 10 min, t10 6 h:
+`gammaPk(2.5, true, 600, 21600)`" (#189): it agrees with what you say, on either kit.
 
 ## The stage rule: what is and is not in the build
 
