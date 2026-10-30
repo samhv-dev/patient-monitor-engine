@@ -40,7 +40,7 @@ describe('saadat-like lane text, the rc.3 chrome (a phone in portrait)', () => {
   it('with the CO2 line: the top scale reads "50mmHg" at the top-left, the label CO2 and "6 mm/s" at the right', () => {
     const { ctx } = make({ co2: 'on' });
     expect(ctx.texts).toEqual([
-      'II  X1  NORMAL', '25 mm/s', '50mmHg', '0', 'CO2', '6 mm/s', '200', '120', '40', 'IBP', '25 mm/s', '30', '10', '-10', 'IBP', '25 mm/s', 'NORMAL', 'X1', '25 mm/s',
+      'II  X1  NORMAL', '25 mm/s', '50mmHg', '0', 'CO2', '6 mm/s', '200', '100', '0', 'IBP', '25 mm/s', '30', '10', '-10', 'IBP', '25 mm/s', 'NORMAL', 'X1', '25 mm/s',
     ]);
     expect(fillTexts(ctx, '50mmHg')[0]).toMatchObject({ style: 'start:50mmHg', args: [6, CO2_TOP + 6] });
     for (const t of ['CO2', '6 mm/s']) expect(fillTexts(ctx, t)[0]!.style).toBe(`right:${t}`);
@@ -115,11 +115,11 @@ describe('saadat-like lane text, the rc.3 chrome (a phone in portrait)', () => {
 
   it('F28: on a short lane the middle IBP scale value is left out instead of overprinting the top value', () => {
     const { ctx } = make({}, 390, 215);
-    for (const t of ['200', '40', '30', '-10']) expect(ctx.texts).toContain(t);
-    expect(ctx.texts).not.toContain('120');
+    for (const t of ['200', '0', '30', '-10']) expect(ctx.texts).toContain(t);
+    expect(ctx.texts).not.toContain('100');
     expect(ctx.texts).not.toContain('10');
     // the bottom value starts below the top value's ink (≈ 11 px of a 14 px digit): IBP2 is ≈ 34 px, where y0 + h − 18 is 10 px down
-    for (const [top, bottom] of [['200', '40'], ['30', '-10']]) expect(fillTexts(ctx, bottom!)[0]!.args[1]! - fillTexts(ctx, top!)[0]!.args[1]!).toBeGreaterThanOrEqual(11);
+    for (const [top, bottom] of [['200', '0'], ['30', '-10']]) expect(fillTexts(ctx, bottom!)[0]!.args[1]! - fillTexts(ctx, top!)[0]!.args[1]!).toBeGreaterThanOrEqual(11);
   });
 
   it("F28: on a short lane the speed text's cleared box never covers the lane label (NORMAL, IBP, RESP stay whole)", () => {
@@ -131,14 +131,14 @@ describe('saadat-like lane text, the rc.3 chrome (a phone in portrait)', () => {
   });
 
   it('F28: a phone at 390 × 844 (394 px: IBP ≈ 63–66 px, PLETH ≈ 55 px) still draws every lane text, as before the guards', () => {
-    expect(make({}, 390, 394).ctx.texts).toEqual(['II  X1  NORMAL', '25 mm/s', 'RESP', '6 mm/s', '200', '120', '40', 'IBP', '25 mm/s', '30', '10', '-10', 'IBP', '25 mm/s', 'NORMAL', 'X1', '25 mm/s']);
+    expect(make({}, 390, 394).ctx.texts).toEqual(['II  X1  NORMAL', '25 mm/s', 'RESP', '6 mm/s', '200', '100', '0', 'IBP', '25 mm/s', '30', '10', '-10', 'IBP', '25 mm/s', 'NORMAL', 'X1', '25 mm/s']);
   });
 
   it('F28: the smallest landscape canvas (548 px, 1366 × 768: PLETH ≈ 77 px) draws every lane text, the guards do not fire', () => {
     const at = (h: number) => make({}, 1056, h).ctx.texts;
     const small = at(548);
     expect(small).toEqual(at(600));
-    expect(small).toEqual(['II  X1  NORMAL', '25 mm/s', 'RESP', '6 mm/s', '200', '120', '40', 'IBP', '25 mm/s', '30', '10', '-10', 'IBP', '25 mm/s', 'NORMAL', 'X1', '25 mm/s']);
+    expect(small).toEqual(['II  X1  NORMAL', '25 mm/s', 'RESP', '6 mm/s', '200', '100', '0', 'IBP', '25 mm/s', '30', '10', '-10', 'IBP', '25 mm/s', 'NORMAL', 'X1', '25 mm/s']);
   });
 
 
@@ -166,14 +166,14 @@ describe('saadat-like lane text, pass 2 (landscape: IMG_8113 rows T1, T2, G1, G2
   it('T1/T2/G2/W11: 18 px text; the ECG label in three parts at x 10, 65, 183; scale values at x 30 (the middle one at 85, across its line); right texts 45 px in', () => {
     const { ctx } = make({ co2: 'on' }, 1056, 600, 'pass2');
     expect(ctx.texts).toEqual([
-      'II', 'X1', 'NORMAL', '25 mm/s', '50mmHg', '0', 'CO2', '6 mm/s', '200', '120', '40', 'IBP', '25 mm/s', '30', '10', '-10', 'IBP', '25 mm/s', 'NORMAL', 'X1', '25 mm/s',
+      'II', 'X1', 'NORMAL', '25 mm/s', '50mmHg', '0', 'CO2', '6 mm/s', '200', '100', '0', 'IBP', '25 mm/s', '30', '10', '-10', 'IBP', '25 mm/s', 'NORMAL', 'X1', '25 mm/s',
     ]);
     expect(['II', 'X1', 'NORMAL'].map((t) => fillTexts(ctx, t)[0]!.args[0])).toEqual([10, 65, 183]);
     expect(fillTexts(ctx, '50mmHg')[0]!.args[0]).toBe(30);
-    // the IBP1 lane (y 600 × 328 / 614 … 600 × 430 / 614): "120" at x 85, its middle on the 120 line
+    // the IBP1 lane (y 600 × 328 / 614 … 600 × 430 / 614): "100" at x 85, its middle on the 100 line (E130: 0–200)
     const [top, h] = [(600 * 328) / 614, (600 * 102) / 614];
-    const line = top + ((200 - 120) / 160) * h;
-    expect(fillTexts(ctx, '120')[0]!.args).toEqual([85, line - 9]);
+    const line = top + ((200 - 100) / 200) * h;
+    expect(fillTexts(ctx, '100')[0]!.args).toEqual([85, line - 9]);
     expect(fillTexts(ctx, '6 mm/s')[0]!.args).toEqual([1056 - 45, CO2_BOTTOM - 22]);
   });
 
@@ -215,7 +215,7 @@ describe('saadat-like lane text, pass 2 (landscape: IMG_8113 rows T1, T2, G1, G2
     ctx.texts = [];
     core.command({ id: 'd1', issuedBy: 't', type: 'attachSensor', sensor: 'abp', state: 'none' } as never);
     run(0.1);
-    expect(ctx.texts).toEqual(expect.arrayContaining(['200', '120', '40', 'IBP', '25 mm/s']));
+    expect(ctx.texts).toEqual(expect.arrayContaining(['200', '100', '0', 'IBP', '25 mm/s']));
     const top = (600 * 328) / 614;
     expect(ctx.calls.some((c) => c.op === 'fillRect' && c.args[0] === 0 && c.args[1] === top && c.args[2] === 18)).toBe(true);
   });
@@ -257,8 +257,8 @@ describe('saadat-like lane text, pass 2 (landscape: IMG_8113 rows T1, T2, G1, G2
       const ys = rows(ctx);
       for (let k = 1; k < ys.length; k++) expect(ys[k]! - ys[k - 1]!).toBeGreaterThanOrEqual(22); // one 22 px row each (18 px text)
     }
-    expect(short.texts).toEqual(expect.arrayContaining(['120', '10'])); // the middle IBP values still fit at 485 px
-    expect(make({}, 1056, 300, 'pass2').ctx.texts).not.toContain('120'); // … and are left out when they would not
+    expect(short.texts).toEqual(expect.arrayContaining(['100', '10'])); // the middle IBP values still fit at 485 px
+    expect(make({}, 1056, 300, 'pass2').ctx.texts).not.toContain('100'); // … and are left out when they would not
   });
 
   it('G2 (pleth): "NORMAL" over "X1" left-aligned 218 px left of the right edge, "X1" on the speed\'s row (labels.PLETH.leftInsetPx)', () => {

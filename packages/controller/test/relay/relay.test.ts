@@ -103,6 +103,15 @@ describe('relay', () => {
     expect(c1.wire('event')).toEqual([]);
   });
 
+  it('E130: a style event carries the IBP1/IBP2 scales to a viewer whole (the phones draw the instructor\'s range)', async () => {
+    const host = await client('h', 'host');
+    const v = await client('v', 'viewer');
+    const ibp = { IBP1: { mode: 'custom' as const, lower: 20, upper: 180 }, IBP2: { mode: 'auto' as const } };
+    host.send({ kind: 'event', body: [{ type: 'style', skin: 'saadat-like', theme: '', ibp }] });
+    await waitFor(() => v.wire('event').length === 1);
+    expect((v.wire('event')[0] as Extract<WireMessage, { kind: 'event' }>).body).toEqual([{ type: 'style', skin: 'saadat-like', theme: '', ibp }]);
+  });
+
   it('routes controller commands only to the host, and the ack only to the issuer', async () => {
     const host = await client('h', 'host');
     const c1 = await client('c1', 'controller');

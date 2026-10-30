@@ -20,8 +20,9 @@
 //    monitor over the relay must mirror the cockpit's SETTINGS instead, or show the Ventilator view's patient as
 //    unsupported.
 //  - Liveness: any host message within HOST_SILENT_MS (5 s) while running, else "not answering".
-//  - Style: a separate channel `pme-style:<CODE>` — `{kind:'ask'}` → `{kind:'style', skin, theme}`, and every change
-//    (`publishStyle` on the instructor's page). Presentation only, not the session wire.
+//  - Style: a separate channel `pme-style:<CODE>` — `{kind:'ask'}` → `{kind:'style', skin, theme, ibp}`, and every change
+//    (`publishStyle` on the instructor's page). Presentation only, not the session wire. `ibp` (E130): the IBP1/IBP2
+//    lane scales; the follower's monitor draws them (AUTO judges the same range from the same samples).
 //  - Sound: per window (mount option `audioSilence: 'window'`): the follower's own Sound and
 //    "Silence here"; nothing about sound crosses either channel.
 //  - A PHONE over the relay (`?join=<CODE>`): the same contract on a
@@ -36,7 +37,7 @@
 //    A page hidden for a while (a locked phone) also takes a fresh snapshot instead of computing the gap.
 import { createBroadcastChannelTransport, createWebSocketTransport, ViewerSync, type ManagedTransport, type RelayFrame } from '@pme/controller';
 import { engineKey as engineVersion } from '@pme/engine-core'; // The snapshot key, version + build
-import { mountMonitor, type MonitorHandle } from '@pme/renderer';
+import { mountMonitor, type IbpScales, type MonitorHandle } from '@pme/renderer';
 import { briefingLayer, followBriefing } from '../briefing.ts';
 import { applySkinAlarmColours, type Shell } from '../shell.ts';
 import { DEFAULT_SITE, MONITORS, THEMES, type SiteProfile } from '../site.ts';
@@ -59,15 +60,18 @@ const PHONE_THEMES: ReadonlySet<string> = new Set(THEMES.map(([t]) => t));
  * the session's: the instructor's page answers `ask` and announces every change. Style is presentation, not the
  * patient, so it stays off the session wire (no protocol change).
  */
-type StyleMsg = { kind: 'ask' } | { kind: 'style'; skin: string; theme: string };
+type StyleMsg = { kind: 'ask' } | { kind: 'style'; skin: string; theme: string; ibp?: IbpScales };
 const styleChannel = (code: string) => new BroadcastChannel(`pme-style:${code}`);
 
 /** The instructor's side: answer the learner monitor's `ask`, and announce every change. Returns a closer. */
-export function publishStyle(code: string, now: () => { skin: string; theme: string }, onChange: (f: (skin: string, theme: string) => void) => () => void): () => void {
+export function publishStyle(code: string, now: () => { skin: string; theme: string; ibp?: IbpScales }, onChange: (f: () => void) => () => void): () => void {
   const ch = styleChannel(code);
-  const send = (skin: string, theme: string) => ch.postMessage({ kind: 'style', skin, theme } satisfies StyleMsg);
+  const send = () => {
+    const s = now();
+    ch.postMessage({ kind: 'style', skin: s.skin, theme: s.theme, ...(s.ibp ? { ibp: s.ibp } : {}) } satisfies StyleMsg);
+  };
   ch.onmessage = (ev: MessageEvent<StyleMsg>) => {
-    if (ev.data?.kind === 'ask') send(now().skin, now().theme);
+    if (ev.data?.kind === 'ask') send();
   };
   const off = onChange(send);
   return () => (off(), ch.close());
@@ -133,9 +137,18 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   let hold = false;
   let raf = 0;
   const f: Follower = { monitor, transport, sync: null, destroy, style: { skin: site.skin, theme: site.theme } };
+  /** E130: the instructor's IBP lane scales on this monitor. */
+  let ibpWorn = '{}';
+  const wearIbp = (ibp: IbpScales | undefined) => {
+    const next = JSON.stringify(ibp ?? {});
+    if (next === ibpWorn) return;
+    ibpWorn = next;
+    monitor.setIbpScales(ibp ?? {});
+  };
   const style = net ? null : styleChannel(code); // Same-browser only
   if (style) style.onmessage = (ev: MessageEvent<StyleMsg>) => {
     const m = ev.data;
+    if (m?.kind === 'style') wearIbp(m.ibp);
     if (m?.kind !== 'style' || (m.skin === f.style.skin && m.theme === f.style.theme)) return;
     f.style = { skin: m.skin, theme: m.theme };
     applySkinAlarmColours(m.skin, m.theme);
@@ -173,7 +186,10 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     followBriefing(briefing, m);
     for (const e of m.body) {
       if (e.type === 'cockpit') cockpitAt = e.off ? -Infinity : performance.now(); // `off`: the view closed (UI-A #2)
-      if (e.type === 'style' && net) wearPhone(e.skin, e.theme);
+      if (e.type === 'style' && net) {
+        wearPhone(e.skin, e.theme);
+        wearIbp(e.ibp);
+      }
       const c = e.type === 'commandApplied' ? (e.resolved as { command?: { type?: string; action?: string } } | undefined)?.command : undefined;
       if (c?.type === 'time' && (c.action === 'pause' || c.action === 'resume')) paused = c.action === 'pause';
     }

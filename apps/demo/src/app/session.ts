@@ -10,7 +10,7 @@ import {
 } from '@pme/controller';
 import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type ScenarioDoc } from '@pme/controller/scenario';
 import type { ManagedTransport } from '@pme/controller';
-import { mountMonitor, type MonitorHandle } from '@pme/renderer';
+import { mountMonitor, normalIbpScales, type IbpChannel, type IbpScales, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
 import { clearPosition } from './position.ts';
@@ -183,7 +183,7 @@ export class AppSession {
       // With a relay, every answer to a hello also carries the monitor style (a phone wears it)
       // and a running Case briefing, with its start time: a phone that joins or reloads shows the remainder
       welcomeEvents: () => [
-        ...this.driver.welcomeEvents(), ...(this.relay ? [{ type: 'style' as const, skin: this.skin, theme: this.theme, replay: true as const }] : []),
+        ...this.driver.welcomeEvents(), ...(this.relay ? [{ ...this.styleEvent(), replay: true as const }] : []),
         ...(this.briefing ? [{ type: 'briefing' as const, ...this.briefing, replay: true as const }] : []),
       ],
       fastForwardWallMs: FF_WALL_MS, // Paced so the room sees the clock run
@@ -206,7 +206,8 @@ export class AppSession {
         },
       });
       hs.addTransport(this.relay);
-      this.onSkin((skin, theme) => hs?.publish({ type: 'style', skin, theme })); // Phones follow a change
+      this.onSkin(() => hs?.publish(this.styleEvent())); // Phones follow a change
+      this.onIbpScales(() => hs?.publish(this.styleEvent())); // … and every IBP scale change (E130)
     }
     this.panelTransport = hub.connect();
     this.panelTransport.onMessage((m) => void (m.kind === 'event' && m.body.forEach((e) => (this.record.wire(e), this.trackVent(e))))); // every source's commands, in order
@@ -369,6 +370,33 @@ export class AppSession {
     else this.monitor?.resume();
   }
 
+  /** The monitor style a phone wears: the skin, the theme and the IBP scales (E130). */
+  private styleEvent(): { type: 'style'; skin: string; theme: string; ibp: IbpScales } {
+    return { type: 'style', skin: this.skin, theme: this.theme, ibp: this.ibp };
+  }
+
+  private ibp: IbpScales = {};
+  private readonly ibpFns = new Set<(s: IbpScales) => void>();
+  /** E130: the IBP1/IBP2 lane scales the instructor set (a channel left out: the skin's fixed scale). */
+  get ibpScales(): IbpScales {
+    return this.ibp;
+  }
+  /** Set the IBP lane scales on this monitor; the learner monitors (second screen, phones) follow. */
+  setIbpScales(s: IbpScales): void {
+    this.ibp = normalIbpScales(s);
+    this.monitor?.setIbpScales(this.ibp);
+    for (const f of this.ibpFns) f(this.ibp);
+  }
+  /** Every IBP scale change. */
+  onIbpScales(fn: (s: IbpScales) => void): () => void {
+    this.ibpFns.add(fn);
+    return () => void this.ibpFns.delete(fn);
+  }
+  /** The skin's fixed range of an IBP channel, or null when this monitor draws no such lane. */
+  ibpFixedRange(ch: IbpChannel): [number, number] | null {
+    return this.monitor?.ibpFixed[ch] ?? null;
+  }
+
   private readonly skinFns = new Set<(skin: string, theme: string) => void>();
   /** Every skin or theme change, wherever it came from. */
   onSkin(fn: (skin: string, theme: string) => void): () => void {
@@ -485,7 +513,7 @@ export class AppSession {
     this.ffTick = null;
     this.releaseFrames();
     const look = this.perf8 ? { ...PERF8.view, lanes: [...PERF8.view.lanes], waves: [...PERF8.view.waves] } : { skin: this.skin, ...(this.theme ? { theme: this.theme } : {}) };
-    const m = mountMonitor(this.el, { ...look, engine } as Parameters<typeof mountMonitor>[1]);
+    const m = mountMonitor(this.el, { ...look, engine, ibpScales: this.ibp } as Parameters<typeof mountMonitor>[1]);
     this.monitor = m;
     this.offMon = m.on((e) => {
       const t = (e as { t?: unknown }).t;

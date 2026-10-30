@@ -21,7 +21,7 @@ describe('MonitorCore with a skin plan', () => {
   it('saadat-like lanes and chrome (research/34 T3, IMG_8113): lane text in white, labels and speeds at the right (research/34 row 9); the second ECG lane unlabelled', () => {
     const { ctx } = make('saadat-like');
     // pass 2 (T2): the ECG label's parts at their own anchors
-    expect(ctx.texts).toEqual(['II', 'X1', 'NORMAL', '25 mm/s', 'RESP', '6 mm/s', '200', '120', '40', 'IBP', '25 mm/s', '30', '10', '-10', 'IBP', '25 mm/s', 'NORMAL', 'X1', '25 mm/s']);
+    expect(ctx.texts).toEqual(['II', 'X1', 'NORMAL', '25 mm/s', 'RESP', '6 mm/s', '200', '100', '0', 'IBP', '25 mm/s', '30', '10', '-10', 'IBP', '25 mm/s', 'NORMAL', 'X1', '25 mm/s']);
     expect(ctx.calls.some((c) => c.op === 'fillRect' && c.style === '#8A8C92')).toBe(true); // the dotted scale lines
     expect(ctx.calls.some((c) => c.op === 'fillRect' && c.style === '#000000')).toBe(true);
   });

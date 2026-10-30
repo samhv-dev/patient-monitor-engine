@@ -12,6 +12,7 @@ import { nibpStartCommand } from '../patients.ts';
 import { LEVEL_MARK, LEVEL_NAME } from '../shell.ts';
 import { button, clock, h, select, setText, toast, toggle } from '../ui.ts';
 import type { PanelCtx } from './ctx.ts';
+import { ibpScalesControl } from './ibp-scales.ts';
 
 const CHANNELS: ReadonlyArray<[SensorId, 'on' | 'connected']> = [['ecg', 'on'], ['spo2', 'on'], ['nibp', 'on'], ['co2', 'on'], ['temp', 'on'], ['abp', 'connected'], ['cvp', 'connected'], ['pap', 'connected']];
 
@@ -92,7 +93,11 @@ export function devicesTab(c: PanelCtx): HTMLElement {
     void dev(Number(v) > 0 ? { device: 'nibp', action: 'auto', intervalMin: Number(v) } : { device: 'nibp', action: 'manual' }));
   const nibp = h('div', { class: 'row' }, button('Start NIBP now', () => void dev({ device: 'nibp', action: 'start' })), interval.el);
 
+  // ---- IBP lane scales (E130) ----
+  const scales = ibpScalesControl(host);
+
   c.onRefresh(() => {
+    scales.refresh();
     followSkin();
     followSensors();
     const a = link.alarms;
@@ -119,5 +124,5 @@ export function devicesTab(c: PanelCtx): HTMLElement {
   });
 
   return h('div', {}, h('h3', {}, 'Alarms'), status, list, live, actions, pauseWhy, h('h3', {}, 'Sensors'), h('p', { class: 'hint' }, 'A trace appears on the monitor only while its sensor is attached.'),
-    remoteHint, sensors, h('h3', {}, 'NIBP'), nibp);
+    remoteHint, sensors, h('h3', {}, 'NIBP'), nibp, h('h3', {}, 'Pressure scales'), scales.el);
 }

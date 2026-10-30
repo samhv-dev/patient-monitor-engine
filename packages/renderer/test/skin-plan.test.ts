@@ -4,15 +4,15 @@ import { resolveSkin } from '@pme/skins';
 import { ecgLabel, filterModeFor, legacyPlan, renderPlan } from '../src/skin-plan.ts';
 
 describe('renderPlan', () => {
-  it('saadat-like (research/34 T3, IMG_8113): two ECG II auto-gain, resp at 6 mm/s, IBP1 → abp (ART scale 40–200), IBP2 → cvp, pleth last; 4 px gap; NORMAL filter', () => {
+  it('saadat-like (research/34 T3, IMG_8113): two ECG II auto-gain, resp at 6 mm/s, IBP1 → abp (ART scale 0–200, E130), IBP2 → cvp, pleth last; 4 px gap; NORMAL filter', () => {
     const p = renderPlan(resolveSkin('saadat-like'));
     expect(p.lanes.map((l) => [l.id, l.channel])).toEqual([['ECG1', 'ecgII'], ['ECG2', 'ecgII'], ['RESP', 'resp'], ['IBP1', 'abp'], ['IBP2', 'cvp'], ['PLETH', 'pleth']]);
     expect(p.lanes[0]).toMatchObject({ autoGain: true, color: '#22F046', mmPerS: 25 });
     expect(p.lanes[1]).toMatchObject({ kind: 'ecg', autoGain: true, color: '#22F046', mmPerS: 25 });
-    expect(p.lanes[3]).toMatchObject({ range: [40, 200], mmPerS: 25 }); // IMG_8113: "25 mm/s" on both IBP lanes (D6)
+    expect(p.lanes[3]).toMatchObject({ range: [0, 200], mmPerS: 25 }); // E130: the ruled fixed 0–200 (was 40–200); IMG_8113: "25 mm/s" on both IBP lanes (D6)
     expect(p.lanes[4]).toMatchObject({ color: '#5C9CFF', range: [-10, 30] }); // T4 mid blue
     // research/34 row 11: dotted lines at the upper, middle and lower scale values, the middle value printed
-    expect(p.lanes[3]).toMatchObject({ scaleLines: [200, 120, 40], scaleMid: 120 });
+    expect(p.lanes[3]).toMatchObject({ scaleLines: [200, 100, 0], scaleMid: 100 });
     expect(p.lanes[4]).toMatchObject({ scaleLines: [30, 10, -10], scaleMid: 10 });
     expect(p.lanes[0]!.scaleLines).toBeNull();
     expect(p.lanes[5]!.scaleLines).toBeNull();
