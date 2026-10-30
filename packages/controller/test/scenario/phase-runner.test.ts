@@ -132,7 +132,9 @@ describe('PhaseRunner: the leaves on truth, each at its edge', () => {
   it('signal: VF is told from VT and asystole from PEA by the rhythm id, not by its group; rosc follows a pulse loss', () => {
     const arrest = () => new PhaseRunner(card([
       { id: 'pulse', next: ['vf', 'pvt', 'asystole', 'pea'] },
-      { id: 'vf', enter: { all: [{ signal: 'pulseLoss' }, { any: [{ signal: 'rhythm:vfCoarse' }, { signal: 'rhythm:vfFine' }] }] }, next: ['rosc'] },
+      // VF by the rhythm id alone: an instructor-selected VF does not set the engine's arrest state (F4), so the
+      // pulse may still read present through it
+      { id: 'vf', enter: { any: [{ signal: 'rhythm:vfCoarse' }, { signal: 'rhythm:vfFine' }] }, next: ['rosc'] },
       { id: 'pvt', enter: { all: [{ signal: 'pulseLoss' }, { signal: 'rhythm:vtMono' }] }, next: ['rosc'] },
       { id: 'asystole', enter: { all: [{ signal: 'pulseLoss' }, { signal: 'rhythm:asystole' }] }, next: ['rosc'] },
       { id: 'pea', enter: { signal: 'pulseLoss' }, next: ['rosc'] },
@@ -147,6 +149,12 @@ describe('PhaseRunner: the leaves on truth, each at its edge', () => {
       return r;
     };
     expect(at('vfCoarse').stateId).toBe('vf');
+    const vfWithPulse = arrest();
+    vfWithPulse.start(0);
+    vfWithPulse.advance(1, [rhythm('vfCoarse'), signals({ pulse: true })]);
+    expect(vfWithPulse.stateId).toBe('vf'); // no pulseLoss needed
+    vfWithPulse.advance(2, [rhythm('sinus'), signals({ pulse: true })]);
+    expect(vfWithPulse.stateId).toBe('vf'); // and no rosc without a pulse loss
     expect(at('vtMono').stateId).toBe('pvt'); // the same 'ventricular' group as VF
     expect(at('asystole').stateId).toBe('asystole');
     expect(at('junctionalEscape').stateId).toBe('pea'); // an organised rhythm without a pulse

@@ -18,8 +18,9 @@ describe('the controller readers and a pme-scenario/2 document', () => {
     expect(asV1(null)).toBeNull();
   });
 
-  // F2 gave the view a /2 branch (the current phase and its label: view-v2.test.ts); the /1 readers keep the empty answer.
-  it('ScenarioView: the doc is kept; no state, no current state, no transitions; the label is the phase\'s (F2)', () => {
+  // F2 gave the view a /2 branch (the initial phase current on load; phase(), label(), ended(): view-v2.test.ts); the
+  // /1 readers keep the empty answer.
+  it('ScenarioView: the doc is kept; no state, no current state, no transitions; a state label is its id', () => {
     const sv = new ScenarioView();
     expect(sv.onEvent(loaded(V2))).toBe(true);
     expect(sv.doc).toBe(V2);
@@ -27,10 +28,10 @@ describe('the controller readers and a pme-scenario/2 document', () => {
     expect(sv.stateId).toBe('baseline');
     expect(sv.current()).toBeNull();
     expect(sv.next()).toEqual([]);
-    expect(sv.stateLabel()).toBe('Baseline');
+    expect(sv.stateLabel()).toBe('baseline');
     expect(sv.onEvent({ type: 'scenario', t: 12, stateId: 'early', transitionId: 'enter:early' } as WireEvent)).toBe(true);
     expect(sv.current()).toBeNull();
-    expect(sv.stateLabel()).toBe('Early signs');
+    expect(sv.stateLabel()).toBe('early');
   });
 
   it('engineOptionsOf reads the /1 header that /2 keeps whole', () => {

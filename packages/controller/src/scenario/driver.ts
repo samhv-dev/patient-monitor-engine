@@ -279,7 +279,7 @@ export class ScenarioDriver {
    */
   hold(label: string, p: RunPosition): boolean {
     const doc = this.cur?.doc;
-    if (!doc || p.runner.docId !== doc.id || p.runner.schema !== this.cur?.getState().schema) return false;
+    if (!doc || p.runner.docId !== doc.id || (p.runner.schema === 'pme-scenario-runner/2') !== isV2(doc)) return false;
     this.marks.set(label, { snapshot: p.snapshot, doc, seed: p.seed, runner: p.runner });
     return true;
   }

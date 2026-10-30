@@ -112,7 +112,7 @@ export function mountRemote(parent: HTMLElement, o: RemoteOptions): RemoteHandle
       scn.hidden = !v.doc;
       if (!v.doc) return;
       const tin = s.simT === null ? 0 : v.timeInState(s.simT);
-      q<HTMLElement>('.pme-scn-remote .pme-scn-state').textContent = `${v.stateLabel()} · ${Math.floor(tin)} s${v.paused ? ' · paused' : ''}`;
+      q<HTMLElement>('.pme-scn-remote .pme-scn-state').textContent = `${v.label()} · ${Math.floor(tin)} s${v.paused ? ' · paused' : ''}`;
       if (shownState === `${v.docVersion}:${v.stateId}`) return;
       shownState = `${v.docVersion}:${v.stateId}`;
       q<HTMLElement>('.pme-scn-buttons').replaceChildren(

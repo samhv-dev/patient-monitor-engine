@@ -20,8 +20,8 @@ export interface NextTransition {
 const TICK_S = 0.02;
 
 export class ScenarioView {
-  /** Either format. A `pme-scenario/2` doc has no states, so `current()` and `next()` give it the empty answer; its
-   *  phase is `phase()`, and `stateLabel()` prints the phase's label. */
+  /** Either format. A `pme-scenario/2` doc has no states, so `current()`, `next()` and `stateLabel()` give it the /1
+   *  readers' empty answer (F1); its phase is `phase()`, and `label()` prints a stage's label in either format. */
   doc: AnyScenarioDoc | null = null;
   /** Bumped when the doc changes (the panel rebuilds its lists only then). */
   docVersion = 0;
@@ -122,8 +122,15 @@ export class ScenarioView {
   }
 
   stateLabel(id: string | null = this.stateId): string {
-    const s = this.states().find((x) => x.id === id) ?? this.phases().find((x) => x.id === id);
+    const s = this.states().find((x) => x.id === id);
     return s?.label ?? id ?? '—';
+  }
+
+  /** The label of a stage in either format: a /1 state's (as `stateLabel`) or a /2 phase's; its id when unknown. The
+   *  controller's Remote and Scenario tab print it; the app's readers move to it with F6. */
+  label(id: string | null = this.stateId): string {
+    const p = this.phases().find((x) => x.id === id);
+    return p ? p.label : this.stateLabel(id);
   }
 
   private states(): ScenarioState[] {

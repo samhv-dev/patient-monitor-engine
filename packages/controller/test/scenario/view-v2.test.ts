@@ -11,16 +11,17 @@ const loaded = (d: unknown): WireEvent =>
 const phase = (t: number, stateId: string): WireEvent => ({ type: 'scenario', t, stateId, transitionId: `enter:${stateId}` });
 
 describe('ScenarioView and a pme-scenario/2 card', () => {
-  it('the current phase is the initial one on load and the published one after; its label is the phase\'s', () => {
+  it('the current phase is the initial one on load and the published one after; label() is the phase\'s', () => {
     const sv = new ScenarioView();
     sv.onEvent(loaded(minimalV2()));
     expect(sv.stateId).toBe('baseline');
-    expect(sv.stateLabel()).toBe('Baseline');
+    expect(sv.label()).toBe('Baseline');
     expect(sv.phase()?.id).toBe('baseline');
     sv.onEvent(phase(30, 'early'));
-    expect(sv.stateLabel()).toBe('Early signs');
-    expect(sv.stateLabel('treated')).toBe('Treated');
-    expect(sv.stateLabel('nowhere')).toBe('nowhere');
+    expect(sv.label()).toBe('Early signs');
+    expect(sv.label('treated')).toBe('Treated');
+    expect(sv.label('nowhere')).toBe('nowhere');
+    expect(sv.stateLabel()).toBe('early'); // the /1 readers' answer (F1), which the app's session bar prints until F6
     expect(sv.phase()?.notes).toBe('EtCO₂ is climbing.');
     expect(sv.timeInState(42)).toBe(12);
     // a /2 card has no states and no transitions: the /1 readers keep their empty answer
@@ -49,6 +50,7 @@ describe('ScenarioView.ended() on a /1 card (today\'s rule)', () => {
     expect(sv.ended()).toBe(false);
     sv.onEvent({ type: 'scenario', t: 5, stateId: 'b', transitionId: 'go' });
     expect(sv.current()?.id).toBe('b');
+    expect(sv.label()).toBe(sv.stateLabel()); // label() is stateLabel() for a /1 card
     expect(sv.ended()).toBe(true);
     sv.onEvent({ type: 'scenario', t: 6, stateId: 'gone' });
     expect(sv.ended()).toBe(false); // no such state: not an end
