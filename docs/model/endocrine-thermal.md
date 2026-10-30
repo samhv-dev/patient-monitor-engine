@@ -39,6 +39,18 @@ embedding developer can see which commands (`stimulus`, `meal`, the thermal and 
   is multiplied by a skin-perfusion FLOW fraction: cardiac output ÷ the output at which a normally oxygenated patient's
   delivery becomes critical (about 40 % of resting output; hypoxaemia and anaemia do not shut the skin). With no flow
   only conduction through tissue remains.
+- The MH sympathetic surge constricts the skin (2026-10-30, post-demo). Under GA the hypothalamic vasoconstriction
+  threshold is about 34.5 °C, so the thermoregulatory tone stays dilated and k_cp is 3 × k0 (48.9 W/°C at 70 kg). In
+  an MH crisis the circulating catecholamines reach about 20 × normal (porcine, Gronert 1978) and act on the
+  α-adrenergic skin vessels directly: Sessler (Anesthesiology 2008) names the "intense peripheral vasoconstriction"
+  they cause as what impairs heat loss in MH, and the European MH Group lists mottled skin among the early signs
+  (v2024). k_cp now falls from the thermoregulatory value toward the two-node model's maximally constricted core–skin
+  conductance, (5.28 + 1.163 × 0.5) W/m²/°C × body surface area (10.8 W/°C at 70 kg; Gagge 1986: skin blood flow
+  0.5–90 L/h/m², neutral 6.3), in proportion to the MH sympathetic drive `mhSympDrive` (the same drive that makes the
+  MH tachycardia; linear between the two sourced ends, no fitted value). It never raises a conductance already below
+  that floor, and dantrolene's suppression of the surge re-dilates the skin. The periphery therefore stops taking up
+  most of the MH heat (at a 2.6 °C gradient ≈ 127 W → 28 W). The thermoregulatory "Vasoconstricted" flag still reads
+  the thermoregulatory tone only (`l2/thermal/heat.ts` `kcp`, `l2/thermal/params.ts` `SKBF_MIN_L_H_M2`).
 - Sweating and shivering need the hypothalamic efferent (E131): both are multiplied by the vasomotor centre's
   brain-perfusion gate — the baroreflex's own `brainstemOutF(cbfRel)`, 1 at ≥ 0.6 of normal cerebral flow and 0 at
   0.2 (Astrup 1981 thresholds) — so they stop when the brain is unperfused; there is no "dead" flag. Measured
@@ -69,10 +81,15 @@ embedding developer can see which commands (`stimulus`, `meal`, the thermal and 
   from oxygen worth about 120 W (`l2/thermal/metabolic.ts`, `l2/thermal/heat.ts`, `l2/resp/pipeline.ts`,
   `l2/blood/pipeline.ts`).
 - What that means for the course (measured on the MH card, 80 kg, untreated, constant ventilation): EtCO2 95 mmHg at
-  +15 min (E129: 72), pH 7.04, lactate rising to 20+; the MH heat is about 140 W, so the core rises about 0.12 °C per
-  5 min and plateaus near 38.6 °C once sweating starts — there is no hyperthermic VF (E129's arrest at 42.3 °C came from
-  the 640 W). The "+1 °C per 5–15 min" of tables §7 check 21 needs 270–550 W of net heat into 70–80 kg, 2–4 × what the
-  sourced VO2 multiple can make: it is kept as a known miss, not tuned.
+  +15 min (E129: 72), pH 7.04, lactate rising to 20+; the MH heat is about 140 W. Before the MH skin constriction the
+  GA-dilated periphery took up most of it: the core dipped to 36.4 °C and rose about 0.12 °C per 5 min, to 37.3 °C at
+  +51 min. With it (the bullet above) the core rises from the first minutes, about 0.25 °C per 5 min: 37.0 °C at
+  +15 min, 38.0 at +35, 38.7 at +51 after the sux (`malignant-hyperthermia.slow.test.ts`, printed), so the card's
+  "established" 38.5 °C comes at about +46 min instead of +103; with sweating at its cap the ventilated rig is at 40.3 °C
+  at +110 min and still rising (`thermal-mh-arrest-heat.test.ts`). There is no hyperthermic VF in either (E129's
+  arrest at 42.3 °C came from the 640 W). The "+1 °C per 5–15 min" of tables §7 check 21 needs 270–550 W of net heat
+  into 70–80 kg, 2–4 × what the sourced VO2 multiple can make: it is kept as a known miss (now +0.45 °C in minutes
+  20 → 30), not tuned.
 - MH tachycardia (E117, rc.4). The MH's sympathetic drive is front-loaded: it approaches 2.5 × severity (in units of
   stress activity) with τ 2 min from the trigger, instead of following the 15-min metabolic ramp (the old coupling was
   2 × the metabolic activity), and it falls with dantrolene's suppression on the same 2-min τ while the metabolic
