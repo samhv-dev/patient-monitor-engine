@@ -13,7 +13,8 @@ import type { HostTarget, ScenarioHookResult } from '../session/host-session.ts'
 import { ScenarioRunner, type RunnerEffect, type RunnerInput, type RunnerState, type VitalHold } from './runner.ts';
 import { BUILTIN_SCENARIOS } from './builtins.ts';
 import { resolveRhythm } from './standins.ts';
-import { isV2, type DocCommand, type ScenarioDoc, type ScenarioState } from './types.ts';
+import { isV2, type AnyScenarioDoc, type DocCommand, type ScenarioDoc, type ScenarioState } from './types.ts';
+import type { RunnerInputV2 } from './types-v2.ts';
 import { validateScenario } from './validate.ts';
 
 export interface ScenarioDriverOptions {
@@ -64,7 +65,9 @@ export class ScenarioDriver {
   private readonly o: ScenarioDriverOptions;
   private readonly known: ReadonlySet<string>;
   private readonly marks = new Map<string, Mark>();
-  private pending: RunnerInput[] = [];
+  /** Inputs since the last poll. Only a /2 runner is ever given a `signals` input or the labs/endo truths (truthInputs):
+   *  they are queued only while one runs, and `load`/`restoreBookmark` empty the queue when the runner changes. */
+  private pending: RunnerInputV2[] = [];
   private n = 0; // batch counter; never restored, so ids and stage groups stay unique across bookmark restores
   private k = 0;
   private inFlight = 0; // runner commands sent and not yet answered by the monitor
@@ -94,7 +97,7 @@ export class ScenarioDriver {
     this.pending = [];
     if (!this.runner) return [];
     const r = this.runner;
-    const fx = this.step(r, () => r.advance(this.o.target.now().simT, inputs));
+    const fx = this.step(r, () => r.advance(this.o.target.now().simT, inputs as RunnerInput[])); // a /1 runner: no /2 input queued
     this.placeStageMark().catch((e: unknown) => console.warn('[pme] stage mark not placed:', e));
     return fx;
   }
@@ -364,5 +367,18 @@ export class ScenarioDriver {
       for (const [k, v] of Object.entries(w.values)) if (typeof v === 'number') values[k] = v;
       this.pending.push({ kind: 'values', rank: 3, values });
     }
+    if (this.runner && isV2(this.runner.doc as AnyScenarioDoc)) this.pending.push(...truthInputs(w));
   }
+}
+
+/**
+ * The engine truths a `pme-scenario/2` runner reads beyond the state's values (plan F4, Q21): the state event's
+ * `signals`, the labs pH, lactate and K⁺, the endocrine MH activity, as rank 3. Never given to a /1 runner: its take()
+ * would throw on a `signals` input, and a rank-3 `k` or `map` would shadow a /1 card's vital vars.
+ */
+function truthInputs(w: WireEvent): RunnerInputV2[] {
+  if (w.type === 'state') return 'signals' in w && w.signals ? [{ kind: 'signals', signals: w.signals }] : []; // not a host-synthesised state
+  if (w.type === 'labs') return [{ kind: 'values', rank: 3, values: { ph: w.values.ph, lactate: w.values.lactate, k: w.values.k } }];
+  if (w.type === 'endo') return [{ kind: 'values', rank: 3, values: { mhActivity: w.mhActivity } }];
+  return [];
 }
