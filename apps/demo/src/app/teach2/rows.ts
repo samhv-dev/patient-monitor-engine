@@ -29,6 +29,9 @@ export interface LiveRow {
   row: Row;
   /** The stage the row belongs to. */
   stage: string;
+  /** When the visit of that stage began (sim seconds): Finished groups its rows under it (the owner's report of 30
+   *  October). */
+  entered: number;
   look: Look;
   /** The subtitle with the live part (a timer, a condition) appended. */
   subtitle: string;
@@ -219,7 +222,7 @@ export function classify(src: Source): Board {
   const ev: Evidence = { first: (w, from) => firstT(src, w, from), met: (rule) => rec !== null && verdict(rule, rec).status === 'met' };
   const lives: LiveRow[] = [];
   const finished: LiveRow[] = [];
-  const base = (row: Row): LiveRow => ({ row, stage: visit.stage, look: 'ready', subtitle: row.subtitle, right: '', overdue: null, outOfOrder: false, at: null, progress: null });
+  const base = (row: Row): LiveRow => ({ row, stage: visit.stage, entered: visit.t0, look: 'ready', subtitle: row.subtitle, right: '', overdue: null, outOfOrder: false, at: null, progress: null });
 
   let expected = false;
   for (const row of rows) {
@@ -282,7 +285,7 @@ export function classify(src: Source): Board {
     for (const row of vr) {
       if (row.kind === 'judged') continue;
       const t = firedAt(v, row.tr.id);
-      const live: LiveRow = { ...base(row), stage: v.stage };
+      const live: LiveRow = { ...base(row), stage: v.stage, entered: v.t0 };
       if (row.kind === 'auto') {
         if (t !== null) finished.push({ ...live, look: 'fired', at: t, right: mmss(t), subtitle: `${name} · fired, the case moved by itself` });
       } else if (t !== null && byItsRule(src, row.tr.id, t)) {
