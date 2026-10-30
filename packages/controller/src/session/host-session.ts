@@ -89,6 +89,12 @@ export const INSTRUCTOR_REASONS = {
 } as const;
 /** The span `instructorDenials()` counts over, ms (the Room page: "3 wrong PINs in the last minute"). */
 export const DENIAL_WINDOW_MS = 60_000;
+/**
+ * The most wrong PINs the host remembers; the oldest go first. A second wall behind the relay's limit (20 hello
+ * attempts per address per 60 s): a hello flood cannot grow host memory, and the Room page needs a count, not
+ * every try — above 100 in a minute it says the same thing (review G1) [ENG].
+ */
+export const DENIAL_RECORD_MAX = 100;
 
 /**
  * The PIN comparison: equal length, then the XOR of every char code folded into one value, so every candidate of the
@@ -147,7 +153,7 @@ export class HostSession {
    * PIN takes over). The laptop's own panels are controllers: they need no grant and are never revoked.
    */
   private holder: { t: ManagedTransport; from: string; pin: string } | null = null;
-  private denials: number[] = []; // Wall ms of each wrong PIN within DENIAL_WINDOW_MS (no lockout: the relay limits per address)
+  private denials: number[] = []; // Wall ms of the last DENIAL_RECORD_MAX wrong PINs within DENIAL_WINDOW_MS (no lockout)
   private readonly seen = new Map<string, AckBody>();
   private readonly groups = new Map<string, { tick: Tick; at: number }>();
   private readonly sticky = new Map<string, WireCommand>();
@@ -206,7 +212,7 @@ export class HostSession {
     return [...this.marks.keys()];
   }
 
-  /** Wrong PINs in the last DENIAL_WINDOW_MS (the Room page's count; the host never locks anyone out). */
+  /** Wrong PINs in the last DENIAL_WINDOW_MS, at most DENIAL_RECORD_MAX (the Room page's count; no host lockout). */
   instructorDenials(): number {
     const since = this.now() - DENIAL_WINDOW_MS;
     this.denials = this.denials.filter((at) => at > since);
@@ -387,7 +393,8 @@ export class HostSession {
     const isHolder = this.holder?.t === t && this.holder.from === from;
     if (want === null || pin === undefined || !samePin(pin, want)) {
       if (want !== null) this.denials.push(this.now());
-      this.instructorDenials(); // prunes
+      if (this.denials.length > DENIAL_RECORD_MAX) this.denials.splice(0, this.denials.length - DENIAL_RECORD_MAX);
+      this.instructorDenials(); // prunes the window
       if (isHolder) this.setHolder(null); // its own hello no longer proves the PIN
       this.grant(t, from, false, want === null ? INSTRUCTOR_REASONS.noPhone : INSTRUCTOR_REASONS.wrongPin);
       return;
