@@ -136,8 +136,10 @@ export function applyRhythm(st: RhythmState, id: RhythmId, opts: RhythmOpts, at:
   } else endFWaves(st, 'flutter', t0);
 
   // Ventricular / junctional focus. The first focus beat fires 50 ms after the switch, or 10 ms after the ventricle
-  // recovers [ENG].
-  st.focusNextT = d.focus === 'none' ? NEVER : Math.max(t0 + 0.05, st.refractoryUntil + 0.01);
+  // recovers [ENG]; an escape or accelerated focus (focusWaitsForInterval) not before one of its own cycles after the
+  // last ventricular beat, which discharged it (Guyton & Hall ch. 10, "The Sinus Node as the Pacemaker of the Heart").
+  const tFocus = Math.max(t0 + 0.05, st.refractoryUntil + 0.01);
+  st.focusNextT = d.focus === 'none' ? NEVER : d.focusWaitsForInterval ? Math.max(tFocus, st.lastVT + 60 / rhythmRate(st, t0, ctx)) : tFocus;
   st.focusN = 0;
   st.startT = t0;
 
