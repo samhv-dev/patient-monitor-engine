@@ -154,7 +154,7 @@ describe('stage marks across a reload (the owner\'s report of 30 October)', () =
     expect(b.sv.history.slice(0, a.driver.runner?.history.length)).toEqual(a.driver.runner?.history);
 
     // the strip on the reloaded page: Trigger off has its time and an enabled return to its kept mark
-    const link = { ctl: { scenario: b.sv, bookmarks: [], simT: b.engine.now().simT, hostPaused: false, send: b.send }, host: { driver: b.driver, record: { data: { rows: [] } } }, simT: b.engine.now().simT, send: b.send, note: () => undefined } as unknown as Link;
+    const link = { ctl: { scenario: b.sv, bookmarks: [], simT: b.engine.now().simT, hostPaused: false, send: b.send }, host: { driver: b.driver, record: { data: { rows: [] } }, onBriefing: () => () => undefined, endBriefing: () => undefined }, simT: b.engine.now().simT, send: b.send, note: () => undefined } as unknown as Link;
     const el = document.createElement('nav');
     document.body.append(el);
     mountStrip(el, { link, keys: { digit: () => undefined, letter: () => undefined, escape: () => () => undefined } } as unknown as Teach2Ctx);
