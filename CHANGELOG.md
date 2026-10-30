@@ -65,6 +65,10 @@ the public API is what the packages export (see the API reference), the `pme-sce
   target row, and a drug it refuses as an infusion (dantrolene, a curve row without an infusion reference) has no
   infusion rate row; they printed "—" with the glossary's placeholder unit. The glossary's tooltip for the rate and
   target rows names the units in place of "per row".
+- The Monitor view's return controls (Instructor view, Full screen, Open on a second screen, Home) no longer cover the
+  ECG: shown on hover, they sit in a strip of their own under the monitor, at the window's foot. Placed under the
+  monitor's header at the right of the wave area (UI review #25, 26 October), they covered the right half of the first
+  ECG lane on the Saadat-like skin, whose traces run the wave column's full width.
 
 ## [1.0.0-rc.4] - 2026-10-30
 
