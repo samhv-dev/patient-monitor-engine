@@ -204,7 +204,7 @@ function autoBar(src: Source, visit: Visit, tr: Transition): { progress: number 
 // ---- the off-card actions ----
 /** The log lines that are not a clinical action: the clock, the scenario's own commands (a step's press is
  *  "Scenario event"), marks and returns (describe.ts `describeCommand`). */
-const NOT_AN_ACTION = /^(Simulation (paused|resumed)|Speed ×|Fast-forward|Time changed|Scenario|Bookmark|Returned to bookmark)/;
+export const NOT_AN_ACTION = /^(Simulation (paused|resumed)|Speed ×|Fast-forward|Time changed|Scenario|Bookmark|Returned to bookmark)/;
 
 /** The board of the current stage. */
 export function classify(src: Source): Board {

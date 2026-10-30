@@ -3,7 +3,9 @@
 // its own element and answers `refresh()` (the view's ≤ 2 Hz repaint, while the view is shown) and `destroy()`.
 // The strip, the cue box, ACTION and the sheets are slots with this fixed contract.
 import type { Link } from '../link.ts';
+import type { ScenarioCard } from '../scenarios.ts';
 import type { SiteProfile } from '../site.ts';
+import type { Begin } from './begin.ts';
 import type { Keys } from './keys.ts';
 
 export interface Teach2Ctx {
@@ -16,6 +18,10 @@ export interface Teach2Ctx {
   dock: { tools: HTMLElement; note: HTMLElement };
   /** Opens a sheet by id ('devices' for the alarm count); the sheets slot sets it when it mounts. */
   openSheet(id: string): void;
+  /** With no case loaded (board "Empty 5"): which way to begin ACTION shows; the strip reads it too. */
+  begin?: Begin;
+  /** The app's one load (main.ts), as the library's Load; without it a case row sends today's `scenario load`. */
+  loadScenario?(card: ScenarioCard): boolean;
 }
 
 export interface Slot {

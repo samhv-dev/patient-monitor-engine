@@ -15,6 +15,7 @@ import { hrefOf } from '../router.ts';
 import { whenText } from '../triggers.ts';
 import { clock, h, setText } from '../ui.ts';
 import { showVital, vitalLabel, vitalOf } from '../vitals.ts';
+import { defaultPatient } from './begin.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { stageEntries, stageNames, type StageEntry } from './strip.ts';
 import { historyOf } from './course.ts';
@@ -77,8 +78,21 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     const doc = sv.doc;
     const state = sv.current();
     const stage = doc && sv.stateId ? stageOf(doc, sv.stateId) : null;
-    box.classList.toggle('ip2-cue-none', !doc || !stage);
-    if (!doc || !stage || !state) {
+    box.classList.toggle('ip2-cue-default', !doc);
+    box.classList.toggle('ip2-cue-none', !!doc && !stage);
+    inStage.classList.toggle('ip2-frozen', false);
+    if (!doc) {
+      // no case loaded (board "Empty 5"): the default patient, running since the page opened
+      const p = defaultPatient(link, ctx.weightKg);
+      setText(name, 'Default patient');
+      setText(inStage, `${clock(link.simT)} since the page opened`);
+      setText(how, 'awake, breathing room air, no case');
+      setText(line, `${p.band}, ${p.kg} kg · every tool below works on this patient, so the room can be set up before the case starts`);
+      say.hidden = false;
+      setText(say, 'Pick a case on the right, or run the patient freehand with the tools. The phones follow either way.');
+      return;
+    }
+    if (!stage || !state) {
       setText(name, 'No scenario running');
       for (const x of [inStage, how, line, say]) setText(x, '');
       say.hidden = true;
