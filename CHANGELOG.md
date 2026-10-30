@@ -46,6 +46,14 @@ the public API is what the packages export (see the API reference), the `pme-sce
   it came 0.48 / 0.41 s after it and read as a premature beat, then a pause). A row flag in the rhythm table,
   `focusWaitsForInterval`, marks those four foci, and `applyRhythm` starts them at the last ventricular beat + 60/rate;
   VT, polymorphic VT, torsades, AVNRT, AVRT, junctional tachycardia and the AV-block escapes keep their onset.
+  The onset moved the haemorrhage showcase's junctional beats 0.34 s against the CPR compressions, and that alone
+  turned its IP8 debrief run from "no arrest" into an engine arrest at 661 s and a return of circulation at 781 s: CPR
+  over a heart that still beats read its coronary supply from each beat's onset LV pressure, an instant of the
+  compression cycle (1.8–13.7 mmHg on consecutive beats, while the relaxation-phase CPP held 17–20), and 5 escape beats
+  to 11 compressions locked the pattern (on main, 6 of 9 CPR presses 0.1–0.9 s apart arrested at 661–663 s). Under
+  compressions the beating heart's supply is now the relaxation-phase CPP the arrested heart is read by (Paradis 1990),
+  with the beats' own demand (`stepCoronary` `compressions`): the myocardium 24 s into CPR is 0.470–0.487 for four
+  starts 0.15 s apart (was 0.123–0.250), and the showcase run never arrests (kIsch minimum 0.255–0.286 over eight).
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's
   sequence and viewer role per transport, and counts a hello only after its sequence check, so a phone on the relay
   that says hello with the laptop panel's id leaves the panel's commands applied. The relay gives each peer id one live
