@@ -182,7 +182,12 @@ describe('IP8: the new record fields change no verdict', () => {
     ]);
     expect(haemRun.data.rows.filter((r) => r.by === 'press').map((r) => r.tr)).toEqual(['oxygen', 'intubate-o2', 'cpr-pea', 'volume', 'epi-running']);
     // the presses only: the junctional rhythm came by its own rule, and no objective asks for an untaken step here (the
-    // tube from Bleeding was the alternative to the one taken; ROSC never came, so "stop CPR" is not yet asked for)
+    // tube from Bleeding was the alternative to the one taken; ROSC never came, so "stop CPR" is not yet asked for).
+    // #208 (escape onset) moved the junctional beats 0.34 s against the clock and this run gained an engine arrest at
+    // 661 s, a ROSC at 781 s and a "stop-running: not done" row: the coronary supply under CPR read each escape beat's
+    // onset LV pressure, an instant of the compression cycle, so the press's sub-second phase decided the course. Read
+    // from the relaxation-phase CPP (coronary.ts `compressions`), the run never arrests whatever the phase (kIsch
+    // minimum 0.255–0.286 over eight presses 0.1 s apart), and this record is the physiology's, not a lucky phase.
     expect(steps(haemRun.data).map((x) => [x.id, x.status])).toEqual([['oxygen', 'taken'], ['intubate-o2', 'taken'], ['cpr-pea', 'taken'], ['volume', 'taken'], ['epi-running', 'taken']]);
   }, 300_000);
 });
