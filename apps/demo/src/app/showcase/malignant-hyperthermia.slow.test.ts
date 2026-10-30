@@ -151,6 +151,12 @@ describe('S1 malignant hyperthermia (showcase-mh)', { timeout: 1_800_000 }, () =
       kMax: range(r.rows, 'k', 0, 3300).max, tcAt51: near(r.rows, 3299).tc,
       pulseLost: r.rows.some((x) => !x.pulse) ? 1 : 0,
     }, BANDS['S1 untreated E131']);
+    // The core-temperature course, untreated: a PRINTED number (the owner's report of 30 Oct: 36.5 at 15 min and 36.9 at
+    // 35 min on his path), not a band — every minute from the sux to 51 min
+    if (process.env.PME_SHOWCASE_PRINT) {
+      const course = [0, 5, 10, 12, 15, 20, 25, 30, 35, 40, 45, 51].map((m) => `${m}:${near(r.rows, Math.min(3299, SUX_S + m * 60)).tc.toFixed(3)}`);
+      console.log(`S1 untreated core course (min after the sux: °C) ${course.join(' ')}`);
+    }
     const ev = pvcEvents(r, 0, 3300);
     bands('S1 untreated ectopy (E133)', {
       firstPvcMin: ((r.pvcs[0] ?? Number.NaN) - SUX_S) / 60, events51Min: ev.length, runs51Min: ev.filter((n) => n >= 3).length,
