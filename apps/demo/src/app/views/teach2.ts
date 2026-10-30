@@ -3,7 +3,9 @@
 // here; under it the stage strip, then STATE (the cue box over the shell's one monitor stage, placed by CSS grid so the
 // renderer is untouched) and ACTION, then the dock. The strip, the cue box, ACTION and the sheets are slots with a fixed
 // signature (teach2/ctx.ts); the view repaints them ≤ 2 Hz while it is shown. With no case loaded (board "Empty 5")
-// ACTION offers three ways to begin (teach2/begin.ts); a choice repaints the view at once.
+// ACTION offers three ways to begin (teach2/begin.ts); a choice repaints the view at once. "Finish the case" in the dock
+// (board "Finish 2", teach2/finish.ts) stops the clock and puts the Finish pane in ACTION's place; it is offered only
+// with the app's end-of-case hooks (`finish`: main.ts) on the host.
 import '../teach2/teach2.css';
 import type { Link } from '../link.ts';
 import type { ScenarioCard } from '../scenarios.ts';
@@ -17,6 +19,7 @@ import { mount as mountCue } from '../teach2/cue.ts';
 import { mountDock } from '../teach2/dock.ts';
 import { mountAlarmLine } from '../teach2/alarm-line.ts';
 import { mountFastForward } from '../teach2/ff.ts';
+import { mountFinish, type FinishHooks } from '../teach2/finish.ts';
 import { mountHeader, type TopControls } from '../teach2/header.ts';
 import { mountKeys } from '../teach2/keys.ts';
 import { mount as mountSheets } from '../teach2/sheets.ts';
@@ -29,9 +32,9 @@ export interface Teach2View extends View {
 }
 
 /** The Instructor v2 view on `link`, for `shell.add`. */
-export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): number; top?: TopControls; loadScenario?(card: ScenarioCard): boolean }): Teach2View {
+export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): number; top?: TopControls; loadScenario?(card: ScenarioCard): boolean; finish?: FinishHooks }): Teach2View {
   const header = mountHeader(link, o.top);
-  const dock = mountDock(link);
+  const dock = mountDock(link, { finish: () => ctx.finish?.start(), canFinish: () => !!ctx.finish?.can(), finishing: () => !!ctx.finish?.open });
   const strip = h('nav', { class: 'ip2-strip', 'aria-label': 'Stages' });
   const cue = h('div', { class: 'ip2-cue' });
   const state = h('section', { class: 'ip2-state', 'aria-labelledby': 'ip2-state-h' }, h('h2', { id: 'ip2-state-h', class: 'ip2-colhead' }, 'STATE'), cue);
@@ -43,7 +46,9 @@ export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): numbe
   const alarms = mountAlarmLine(link, () => openAlarms());
   const statePanel = h('div', { class: 'ip2-state-panel', 'aria-hidden': 'true' });
   const actionBody = h('div', { class: 'ip2-action-body' });
-  const action = h('section', { class: 'ip2-action', 'aria-labelledby': 'ip2-action-h' }, h('h2', { id: 'ip2-action-h', class: 'ip2-colhead' }, 'ACTION'), actionBody);
+  const finishEl = h('div', { class: 'ip2-finish-slot' });
+  const actionHead = h('h2', { id: 'ip2-action-h', class: 'ip2-colhead' }, 'ACTION');
+  const action = h('section', { class: 'ip2-action', 'aria-labelledby': 'ip2-action-h' }, actionHead, actionBody, finishEl);
   const sheets = h('div', { class: 'ip2-sheets' });
   const el = h('section', { class: 'ip2', 'aria-labelledby': 'ip2-h' },
     h('h1', { id: 'ip2-h', class: 'sr-only' }, 'Instructor v2'), header.el, strip, statePanel, state, ff.el, alarms.el, action, sheets, dock.el);
@@ -54,8 +59,12 @@ export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): numbe
   // The sheets mount first: they set ctx.openSheet
   const slots: Slot[] = [mountSheets(sheets, ctx), mountStrip(strip, ctx), mountCue(cue, ctx), mountAction(actionBody, ctx)];
   openAlarms = () => ctx.openSheet('devices');
+  const finish = (ctx.finish = mountFinish(finishEl, ctx, () => paintNow(), o.finish));
   const lines = [ff, alarms];
   const paintNow = () => {
+    finish.watch(); // first: every part below reads whether the pane is open
+    action.toggleAttribute('data-finishing', finish.open);
+    actionBody.hidden = actionHead.hidden = finish.open;
     // with no case and Free roam not chosen there is nothing to skip to: the Fast forward row goes, and the monitor gets
     // its height back (the owner's ruling on board "Empty 5"); it returns with a card or with Free roam
     ff.el.hidden = !link.ctl.scenario.doc && begin.way !== 'free';
@@ -63,6 +72,7 @@ export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): numbe
     dock.refresh();
     for (const x of lines) x.refresh();
     for (const s of slots) s.refresh();
+    finish.refresh();
   };
   const repaint = throttle(() => {
     if (el.hidden) return;
@@ -86,6 +96,7 @@ export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): numbe
       keys.destroy();
       header.destroy();
       for (const s of slots) s.destroy();
+      finish.destroy();
     },
   };
 }

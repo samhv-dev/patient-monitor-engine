@@ -15,7 +15,7 @@ import './state.css';
 import type { ScenarioDoc } from '@pme/controller';
 import { rowsOf, stagesOf, type Stage } from '../card-read.ts';
 import type { Link } from '../link.ts';
-import { clock, confirmDialog, h, toast } from '../ui.ts';
+import { clock, confirmDialog, h, setText, toast } from '../ui.ts';
 import { KEYS_OF, NO_CASE } from './begin.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { historyOf } from './course.ts';
@@ -186,10 +186,12 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const hint = h('span', { class: 'ip2-strip-hint' }, 'past: return to its start · future: jumps to it (asks once)');
   // with no case loaded (board "Empty 5"): the note at the strip's right and the status line under it
   const note = h('span', { class: 'ip2-strip-note', hidden: true }, 'the default patient is on the monitor and running');
+  // the same line, amber, while "Finish the case" holds the clock (board "Finish 2"): one status line, two wordings
+  const READY = 'The phones can join now (Room code in the header); whatever you load or give next, they follow.';
+  const statusWord = h('b', {}, 'Ready.');
+  const statusText = h('span', { class: 'ip2-status-text' }, READY);
   const statusKeys = h('span', { class: 'ip2-status-keys' });
-  const status = h('div', { class: 'ip2-status', role: 'status', hidden: true },
-    h('b', {}, 'Ready.'), h('span', { class: 'ip2-status-text' }, 'The phones can join now (Room code in the header); whatever you load or give next, they follow.'),
-    h('span', { class: 'ip2-spacer' }), statusKeys);
+  const status = h('div', { class: 'ip2-status', role: 'status', hidden: true }, statusWord, statusText, h('span', { class: 'ip2-spacer' }), statusKeys);
   el.replaceChildren(chips, hint, note, status);
   /** How far the arrows have moved the window from now (stages; 0 = the current stage's window). */
   let offset = 0;
@@ -252,13 +254,20 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
 
   const draw = () => {
     const doc = sv.doc;
-    note.hidden = status.hidden = !!doc;
+    const fin = !!doc && !!ctx.finish?.open;
+    note.hidden = !!doc;
+    status.hidden = !!doc && !fin;
     el.toggleAttribute('data-empty', !doc);
+    el.toggleAttribute('data-finishing', fin);
+    status.classList.toggle('ip2-finishing', fin);
+    setText(statusWord, fin ? 'Finishing.' : 'Ready.');
+    setText(statusText, fin ? `The clock is stopped at ${clock(link.simT)} while you decide. Nothing is written until you press a button on the right.` : READY);
+    if (fin) setText(statusKeys, 'Esc keeps the case running');
     if (!doc) {
       const way = ctx.begin?.way ?? 'menu';
+      setText(statusKeys, KEYS_OF[way]);
       if (drawn !== `none:${way}`) {
         chips.replaceChildren(h('span', { class: 'ip2-strip-empty ip2-chip-none' }, way === 'free' ? 'Free roam' : `${NO_CASE} · the stages appear here when one is`));
-        statusKeys.textContent = KEYS_OF[way];
         drawn = `none:${way}`;
       }
       hint.hidden = true;

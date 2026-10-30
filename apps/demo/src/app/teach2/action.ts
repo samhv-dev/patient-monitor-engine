@@ -134,6 +134,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   let freeT = 0;
 
   const refresh = () => {
+    // "Finish the case" (board "Finish 2") holds ACTION: its rows are not in view, and the digits press none of them
+    if (ctx.finish?.open) return setDigits([]);
     const sv = link.ctl.scenario;
     const doc = sv.doc;
     const stateId = sv.stateId;

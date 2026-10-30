@@ -7,6 +7,7 @@ import { drugWords } from '../glossary.ts';
 import type { Link } from '../link.ts';
 import { ageBandOf } from '../patients.ts';
 import { hrefOf } from '../router.ts';
+import { archive } from '../archive.ts';
 import { LIBRARY, type ScenarioCard } from '../scenarios.ts';
 import { h, setText, toast } from '../ui.ts';
 import { DEMO_CARDS } from '../views/scenarios.ts';
@@ -41,7 +42,7 @@ export function beginState(repaint: () => void): Begin {
   };
 }
 
-/** The pane's foot line with no case (the "Finish the case" button itself is a later piece). */
+/** The pane's foot line with no case ("Finish the case": teach2/finish.ts). */
 export const FOOT_NONE = 'A reload keeps whatever is running. A case ends only with “Finish the case” in the dock.';
 
 export const NO_CASE = 'No case loaded';
@@ -86,7 +87,7 @@ export function mountBeginPane(ctx: Teach2Ctx, host: HTMLElement): { el: HTMLEle
     } else void link.send({ type: 'scenario', action: 'load', doc: c.doc }).then((r) => toast(r.accepted ? `Scenario loaded: ${c.title}` : 'The monitor refused the scenario (see the log)'));
     ctx.begin?.repaint();
   };
-  const archive = () => void (location.hash = hrefOf('debrief'));
+  const openArchive = () => void (location.hash = hrefOf('debrief', 'archive'));
 
   const card = (id: keyof typeof ICONS, n: number, title: string, line: string, btn: string, act: () => void, primary = false) => {
     const ico = h('span', { class: 'ip2-begin-ico', 'aria-hidden': 'true' });
@@ -94,11 +95,11 @@ export function mountBeginPane(ctx: Teach2Ctx, host: HTMLElement): { el: HTMLEle
     return h('button', { type: 'button', class: `ip2-begin-card${primary ? ' ip2-begin-primary' : ''}`, 'data-way': id, 'aria-keyshortcuts': String(n), onclick: act },
       ico, h('span', { class: 'ip2-begin-text' }, h('span', { class: 'ip2-begin-title' }, title), h('span', { class: 'ip2-begin-line' }, line)), h('span', { class: 'ip2-begin-btn' }, btn));
   };
-  // the archive comes with the Debrief redesign: until then the card opens the Debrief view and its button has no count
+  // the archive (board "Finish 2"): the card opens the Debrief view's Archive section; its button reads the count
   const ways: Array<[() => void, HTMLElement]> = [
     [() => go('free'), card('free', 1, 'Free roam', 'The default patient with every tool, nothing scripted, nothing graded; the Log and the Debrief still record it all.', 'Start', () => go('free'))],
     [() => go('cases'), card('library', 2, 'Scenario library', `${LIBRARY.length} cards. Pick one and this pane becomes its stages and steps.`, 'Browse', () => go('cases'), true)],
-    [archive, card('archive', 3, 'Debrief archive', 'Every saved run: resident, card, time, objectives and score. Open one, print it, or compare residents on the same card.', 'Open', archive)],
+    [openArchive, card('archive', 3, 'Debrief archive', 'Every saved run: resident, card, time, objectives and score. Open one, print it, or compare residents on the same card.', 'Open · 0', openArchive)],
   ];
   // Room setup opens Settings until its own window exists; the builder comes with the pme-scenario/2 authoring guide
   const two = h('div', { class: 'ip2-begin-two' },
@@ -132,8 +133,10 @@ export function mountBeginPane(ctx: Teach2Ctx, host: HTMLElement): { el: HTMLEle
     return true;
   });
 
+  const archiveBtn = ways[2]?.[1].querySelector('.ip2-begin-btn');
   const draw = () => {
     const w = way();
+    if (archiveBtn) setText(archiveBtn, `Open · ${archive.list().length}`);
     menu.hidden = w !== 'menu';
     list.hidden = w !== 'cases';
     setText(hint, w === 'cases' ? `the library: ${LIBRARY.length} cards · 1–9 on the keyboard · Esc back` : 'no case: three ways to begin · 1–3 on the keyboard · two shortcuts');
