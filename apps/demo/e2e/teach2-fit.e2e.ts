@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
+import { laneTextOverlaps, recordLaneTexts } from './teach2-lane-texts.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -156,11 +157,17 @@ for (const [card, target] of [['showcase-mh', 'awake'], ['showcase-haemorrhage',
 // The owner's board "Empty 5" (approved 30 October): with no case loaded the view fits 1440 × 900 without a scroll,
 // with the strip's dashed chip and the status line, the default patient's cue box and ACTION's three cards; 2 opens the
 // case list and 1 loads its first row (the MH card, a demonstration), after which ACTION is the card's steps. The
-// page's screenshot is written to TEACH2_SHOTS for the owner's look.
+// page's screenshot is written to TEACH2_SHOTS for the owner's look. The owner's ruling on the monitor's height: while
+// the cards show there is nothing to skip to, so the Fast forward row is hidden and the learners' monitor gets its
+// height back; Free roam brings the row back. The monitor's canvas texts (wave labels, scale values, sweep speeds) are
+// recorded where they are drawn (teach2-lane-texts.ts: the renderer on the main thread) and the pairs whose ink touches
+// are reported.
 test('Instructor v2 with no case fits 1440 × 900: the three cards, the strip chip, the status line; 2 then 1 loads the MH card', async ({ page, browserName }, info) => {
   test.setTimeout(90_000);
   await page.setViewportSize({ width: 1440, height: 900 });
+  await recordLaneTexts(page);
   await openApp(page, base, '#/teach2', { warmMs: 2000 });
+  await expect(page.locator('.ip2-ff')).toBeHidden();
   const cards = page.locator('.ip2-action .ip2-begin-card');
   await expect(cards).toHaveCount(3);
   await expect(cards.locator('.ip2-begin-title')).toHaveText(['Free roam', 'Scenario library', 'Debrief archive']);
@@ -174,10 +181,25 @@ test('Instructor v2 with no case fits 1440 × 900: the three cards, the strip ch
   const box = (s: string) => page.locator(s).first().evaluate((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)]; });
   const layout = { strip: await box('.ip2-strip'), status: await box('.ip2-status'), cue: await box('.ip2-cue-box'), action: await box('.ip2-action'), cards: await box('.ip2-begin-cards'), two: await box('.ip2-begin-two'), foot: await box('.ip2-action .ip2-foot') };
   const tiles = await tileFindings(page);
+  const labels = await laneTextOverlaps(page);
   const dir = process.env.TEACH2_SHOTS ?? info.outputPath();
   mkdirSync(dir, { recursive: true });
   await page.screenshot({ path: join(dir, `teach2-fit-empty-${browserName}-page.png`) });
-  console.log(`teach2-fit-empty ${JSON.stringify({ browser: browserName, page: m.page, view: m.view, action: m.action, pane: m.pane, layout, tiles })}`);
+  // Free roam brings the Fast forward row back, and the monitor gives up that height again
+  await page.locator('body').click({ position: { x: 700, y: 5 } }); // no field has the focus
+  await page.keyboard.press('1');
+  await expect(page.locator('.ip2-ff')).toBeVisible();
+  await page.waitForTimeout(2500);
+  const free = await measure(page);
+  const freeLabels = await laneTextOverlaps(page);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.ip2-ff')).toBeHidden();
+  const report = { browser: browserName, page: m.page, view: m.view, action: m.action, pane: m.pane, layout, tiles, labels: labels.touching, freePane: free.pane, freeLabels: freeLabels.touching };
+  console.log(`teach2-fit-empty ${JSON.stringify(report)}`);
+  info.annotations.push({ type: 'teach2-fit-empty', description: JSON.stringify(report) });
+  expect(labels.texts.length, 'the monitor\'s lane texts were recorded').toBeGreaterThan(5);
+  expect(tiles.bad, 'a tile\'s text overlaps, wraps or leaves its tile').toEqual([]);
+  expect(m.pane.h - free.pane.h, 'hiding Fast forward gives the monitor its height back').toBeGreaterThanOrEqual(50);
   expect(m.page[0], 'the page scrolls').toBeLessThanOrEqual(m.page[1] as number);
   expect(m.view[0], 'the view scrolls').toBeLessThanOrEqual(m.view[1] as number);
   expect(m.action[0], 'ACTION scrolls').toBeLessThanOrEqual(m.action[1] as number);
@@ -188,7 +210,6 @@ test('Instructor v2 with no case fits 1440 × 900: the three cards, the strip ch
   expect((layout.two[1] as number)).toBeGreaterThan((layout.cards[1] as number) + (layout.cards[3] as number));
   expect((layout.foot[1] as number)).toBeGreaterThan((layout.two[1] as number) + (layout.two[3] as number));
 
-  await page.locator('body').click({ position: { x: 700, y: 5 } }); // no field has the focus
   await page.keyboard.press('2');
   await expect(page.locator('.ip2-case-list')).toBeVisible();
   await expect(page.locator('.ip2-case-list .ip2-row-title').first()).toHaveText(/^Load /);
@@ -197,4 +218,5 @@ test('Instructor v2 with no case fits 1440 × 900: the three cards, the strip ch
   await expect(page.locator('.ip2-action .ip2-rows:not(.ip2-finished-list) .ip2-row[data-kind="step"]').first()).toBeVisible({ timeout: 10_000 });
   await expect(page.locator('.ip2-begin')).toHaveCount(0);
   await expect(page.locator('.ip2-strip [role="status"]')).toBeHidden();
+  await expect(page.locator('.ip2-ff')).toBeVisible();
 });

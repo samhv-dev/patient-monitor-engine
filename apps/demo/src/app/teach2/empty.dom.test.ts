@@ -96,6 +96,25 @@ describe('Instructor v2 with no case loaded (board "Empty 5")', () => {
     expect(r.q('.ip2-cue-box')?.classList.contains('ip2-cue-default')).toBe(true);
   });
 
+  it('the Fast forward row is hidden while the cards or the case list show, and back with Free roam or a card', () => {
+    const r = use(rig());
+    expect(r.shown('.ip2-ff')).toBe(false);
+    r.key('2');
+    expect(r.shown('.ip2-ff')).toBe(false);
+    r.key('Escape');
+    r.key('1');
+    expect(r.shown('.ip2-ff')).toBe(true);
+    r.key('Escape');
+    expect(r.shown('.ip2-ff')).toBe(false);
+    r.key('2');
+    r.key('1');
+    expect(r.shown('.ip2-ff')).toBe(true);
+    r.v.destroy();
+    document.body.replaceChildren();
+    const c = use(rig({ loaded: MH }));
+    expect(c.shown('.ip2-ff')).toBe(true);
+  });
+
   it('ACTION: the hint, three cards in order with their texts and buttons, the two buttons under the third, the foot line', () => {
     const r = use(rig());
     expect(r.text('.ip2-begin-hint')).toBe('no case: three ways to begin · 1–3 on the keyboard · two shortcuts');
@@ -130,6 +149,7 @@ describe('Instructor v2 with no case loaded (board "Empty 5")', () => {
       expect(cardsShown(r)).toHaveLength(0);
       expect(r.shown('.ip2-offcard')).toBe(true);
       expect(r.q<HTMLDetailsElement>('.ip2-offcard')?.open).toBe(true);
+      expect(r.text('.ip2-offcard-list')).toBe('Nothing given yet. Whatever a sheet gives is logged here, in the Log and in the Debrief.');
       expect(r.shown('.ip2-action .ip2-rows')).toBe(false);
       expect(r.all('.ip2-action button.ip2-row').filter((b) => !b.closest('[hidden]'))).toHaveLength(0);
       expect(r.all('.ip2-strip .ip2-chips > *').map((c) => c.textContent)).toEqual(['Free roam']);
@@ -215,6 +235,9 @@ describe('Instructor v2 with no case loaded (board "Empty 5")', () => {
     expect(r.q('.ip2-cue-box')?.classList.contains('ip2-cue-default')).toBe(false);
     expect(r.text('.ip2-cue-name')).not.toBe('Default patient');
     expect(r.text('.ip2-action .ip2-foot')).toMatch(/^No penalty comes from the panel/);
+    // the closed "Off the card" fold has no "nothing yet" line from the first paint, as before
+    expect(r.q<HTMLDetailsElement>('.ip2-offcard')?.open).toBe(false);
+    expect(r.all('.ip2-offcard-list > li')).toHaveLength(0);
     // the digits are the card's rows, not the three cards
     r.key('3');
     expect(location.hash).not.toBe('#/debrief');
