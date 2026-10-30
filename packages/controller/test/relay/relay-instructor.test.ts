@@ -246,11 +246,19 @@ describe('the host socket readmitted (review F1)', () => {
     await waitFor(() => host2.got.some((m) => m.kind === 'command'), 2000, 'routed again');
     expect(errorOf(ins)).toBeUndefined();
     // the reconnect is not a wrong PIN
+    let h = host2;
     for (let i = 1; i <= 5; i++) {
-      host2.ws.close();
+      h.ws.close();
       await waitFor(() => relay!.room(SESSION)?.hostOnline === false, 2000, 'host left');
-      await join('host-h1', 'host');
+      h = await join('host-h1', 'host');
+      ins.hello();
+      await waitFor(() => h.got.some((m) => m.kind === 'hello' && m.from === 'ins-a.1'), 2000, 're-hello');
+      h.send({ kind: 'grant', to: 'ins-a.1', granted: true });
+      await waitFor(() => ins.got.filter((m) => m.kind === 'grant').length === 3 + 2 * i, 2000, `told and re-granted ${i}`);
     }
+    expect(ins.closeCode).toBeNull();
+    pending.ws.close(); // free its instructor place
+    await waitFor(() => relay!.room(SESSION)?.peers === 2, 2000, 'pending left');
     expect((await join('ins-a.2', 'instructor')).closeCode).toBeNull();
   });
 });

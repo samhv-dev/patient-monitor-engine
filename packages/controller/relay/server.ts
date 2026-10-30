@@ -93,6 +93,16 @@ const HELD_MAX = 64;
 const PIN_TRIES = 5;
 const PIN_WINDOW_MS = 60_000;
 /**
+ * Instructor hellos one address may send within PIN_WINDOW_MS, whatever the host answers (review G1): the wrong-PIN
+ * limit counts the host's answers, so without this a pending socket could make the host check thousands of PINs before
+ * its first denials came back. A real phone says one hello per socket, plus one per host reconnect; 20 is four times
+ * the wrong-PIN limit and leaves a phone on bad Wi-Fi room for a reconnect every few seconds [ENG].
+ */
+const HELLO_TRIES = 20;
+/** The `from` of the relay's own WireMessages (the grant false of a host readmit); its seq is the wall clock. */
+const RELAY_FROM = 'pme-relay';
+const REJOINED = "the instructor's computer reconnected; signing in again";
+/**
  * Instructor sockets a room takes besides its learners (plan §1, "one reserved place"): they never count against
  * maxPeersPerRoom, so a full room of learners never shuts the instructor out; two, so a phone taking over (§3, option B)
  * gets in while the holder is still connected [ENG].
@@ -116,12 +126,24 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
   const maxPeers = opts.maxPeersPerRoom ?? 60;
   const takenCheckMs = opts.takenCheckMs ?? 3000;
   const clock = opts.now ?? Date.now;
-  /** Per address: the times of its recent wrong PINs, and until when it may not say `instructor`. */
-  const denials = new Map<string, { at: number[]; until: number }>();
+  /** Per address: the times of its recent wrong PINs and instructor hellos, and until when it may not say `instructor`. */
+  const denials = new Map<string, { at: number[]; hellos: number[]; until: number }>();
   const blocked = (address: string) => (denials.get(address)?.until ?? 0) > clock();
+  /** Counts one instructor hello from `address`; false (not counted) past HELLO_TRIES in the window. */
+  const mayHello = (address: string) => {
+    const t = clock();
+    const d = denials.get(address) ?? { at: [], hellos: [], until: 0 };
+    d.hellos = d.hellos.filter((x) => t - x < PIN_WINDOW_MS);
+    denials.set(address, d);
+    if (d.hellos.length >= HELLO_TRIES) return false;
+    d.hellos.push(t);
+    return true;
+  };
+  const tooMany = (ws: WebSocket) => refuse(ws, RELAY_CLOSE.tooManyTries, 'too-many-tries', 'too many instructor sign-ins from this device: wait a minute');
+  let relaySeq = 0;
   const wrongPin = (address: string) => {
     const t = clock();
-    const d = denials.get(address) ?? { at: [], until: 0 };
+    const d = denials.get(address) ?? { at: [], hellos: [], until: 0 };
     d.at = [...d.at.filter((x) => t - x < PIN_WINDOW_MS), t];
     if (d.at.length >= PIN_TRIES) {
       d.at = [];
@@ -181,6 +203,8 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
       case 'hello':
         if (isHost) for (const p of room.peers) raw(p.ws, data);
         else {
+          // A re-said instructor hello counts too: one open socket must not flood the host with PIN checks (G1)
+          if (peer.role === 'instructor' && (blocked(peer.address) || !mayHello(peer.address))) return tooMany(peer.ws);
           room.awaiting.add(peer);
           if (room.host) raw(room.host.ws, data);
         }
@@ -292,8 +316,16 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
         const old = r.host;
         if (old && old.ws !== ws) old.ws.close(1000, 'replaced by reconnect');
         r.host = p;
-        // A grant is the granting host's: a new host socket (a reloaded laptop) verifies every instructor again
-        for (const q of r.peers) if (q.role === 'instructor') q.granted = false;
+        // A grant is the granting host's: a new host socket (a reloaded laptop, or the same one after a Wi-Fi blip)
+        // verifies every instructor again. A granted phone is told so first, in the relay's own grant false, so that it
+        // says its hello again on the host's hello below (review F1); it is not a denial: its socket stays open.
+        for (const q of r.peers) {
+          if (q.role !== 'instructor' || !q.granted) continue;
+          q.granted = false;
+          relaySeq = Math.max(relaySeq + 1, Date.now()); // rises across a relay restart too (the phone's sequence filter)
+          raw(q.ws, JSON.stringify({ v: 1, session: r.code, from: RELAY_FROM, seq: relaySeq, sentAt: Date.now(), kind: 'grant', to: q.id, granted: false, reason: REJOINED } satisfies WireMessage));
+          log(`room ${r.code}: instructor ${q.id} signs in again (a new host socket)`);
+        }
         for (const q of r.peers) frame(q.ws, peersFrame(r));
         tellHost(r);
         route(r, p, m, data); // fan the host hello out: peers re-hello and resend pending commands
@@ -350,6 +382,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
         if (m.role === 'instructor') {
           if (blocked(address)) return refuse(ws, RELAY_CLOSE.tooManyTries, 'too-many-tries', 'too many wrong PINs from this device: wait a minute');
           if (count(room, (p) => p.role === 'instructor') >= INSTRUCTOR_PLACES) return refuse(ws, RELAY_CLOSE.full, 'full', `session ${m.session} has no instructor place free`);
+          if (!mayHello(address)) return tooMany(ws);
         } else if (m.role !== 'host' && count(room, (p) => p.role !== 'instructor') >= maxPeers) return refuse(ws, RELAY_CLOSE.full, 'full', `session ${m.session} is full (${maxPeers})`);
         return join(room, m, data);
       }
@@ -438,7 +471,8 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
       ws.ping();
       frame(ws, { relay: 'hb', t: now });
     }
-    for (const [a, d] of denials) if (d.until <= now && d.at.every((x) => now - x >= PIN_WINDOW_MS)) denials.delete(a); // forgotten after 60 s
+    const old = (x: number) => now - x >= PIN_WINDOW_MS;
+    for (const [a, d] of denials) if (d.until <= now && d.at.every(old) && d.hellos.every(old)) denials.delete(a); // forgotten after 60 s
     for (const [code, room] of rooms) {
       if (room.emptySince !== null && now - room.emptySince >= roomTtlMs) {
         rooms.delete(code);

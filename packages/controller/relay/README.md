@@ -56,10 +56,17 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
   answers its hello with `grant {to, granted, reason?}` before its welcome. Granted: the socket commands and gets the
   host's frames byte for byte. Denied: `{relay:'error', code:'denied', message: reason}` and close 4013, which the
   phone does not retry (its page asks for the PIN again); a later `granted:false` revokes a granted socket the same way.
-  A grant is never carried over: a new socket under the same id, or a new host socket, starts pending again.
+  A grant is never carried over: a new socket under the same id, or a new host socket, starts pending again. When a
+  host socket is admitted (a reloaded laptop, or the same one after a Wi-Fi blip), each granted instructor is first
+  sent the relay's own `grant {granted:false, reason:"the instructor's computer reconnected; signing in again"}`
+  (`from: 'pme-relay'`), so the phone says its hello again on the host's hello; its socket stays open, and it is not a
+  wrong PIN.
 - **Wrong PINs:** 5 denials of pending sockets from one address within 60 s, and that address may not say
   `instructor` for 60 s (`too-many-tries`, close 4028); it may still follow. A revoked grant is not a wrong PIN.
-  Each phone has its own address, so learners cannot lock the real instructor out.
+  Whatever the host answers, one address may send 20 instructor hellos (first or re-said) in 60 s; the next gets
+  `too-many-tries` and close 4028, and never reaches the host, so one socket cannot flood the host with PIN checks.
+  Each phone has its own address, so learners cannot lock the real instructor out. The limits key on the socket's
+  address: run the relay directly on the LAN, not behind a proxy, which would give every phone one address.
 
 - The first frame on a socket must be a `hello`; it binds the socket to `(session, from, role)`. Later frames
   with another `session` or `from` are dropped.
