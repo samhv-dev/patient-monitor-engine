@@ -122,7 +122,7 @@ export function mountScenarioTab(el: HTMLElement, o: ScenarioTabOptions): Scenar
   };
   const rebuildState = () => {
     const cur = view.current();
-    q<HTMLElement>('.pme-scn-state').textContent = view.stateLabel();
+    q<HTMLElement>('.pme-scn-state').textContent = view.label();
     q<HTMLElement>('.pme-scn-notes').textContent = cur?.notes ?? '';
     q<HTMLUListElement>('.pme-scn-next').replaceChildren(
       ...view.next().map((n) => {

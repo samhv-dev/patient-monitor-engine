@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Command } from '@pme/engine-core';
 import { ScenarioDriver } from '../../src/scenario/driver.ts';
+import { PhaseRunner } from '../../src/scenario/phase-runner.ts';
 import { replayRunLog, runLog } from '../../src/scenario/replay.ts';
 import { resolveRhythm } from '../../src/scenario/standins.ts';
 import { BUILTIN_SCENARIOS } from '../../src/scenario/builtins.ts';
@@ -266,20 +267,20 @@ describe('ScenarioDriver', () => {
 
 // Plan F1: a valid pme-scenario/2 document is refused by load until F2's phase runner; a /1 load is unchanged.
 describe('ScenarioDriver and a pme-scenario/2 document (F1)', () => {
-  it('load refuses a valid /2 document with the plan\'s message, and the run already loaded goes on', () => {
+  // F2 removed F1's refusal ("pme-scenario/2 cards run from F2 on"): a valid /2 document now runs (F2's block below).
+  it('load runs a valid /2 document in place of the /1 run loaded before', () => {
     const { driver } = rig();
     expect(driver.load('acls-vf-witnessed').ok).toBe(true);
-    const before = driver.runner;
-    expect(driver.load(minimalV2())).toEqual({ ok: false, reason: 'pme-scenario/2 cards run from F2 on' });
-    expect(driver.runner).toBe(before);
-    expect(driver.runner?.doc.id).toBe('acls-vf-witnessed');
+    expect(driver.load(minimalV2())).toMatchObject({ ok: true });
+    expect(driver.runner).toBeNull();
+    expect(driver.phaseRunner?.doc.id).toBe('mh2');
   });
 
-  it('a scenario load command with a /2 document is refused with the same reason', async () => {
+  it('a scenario load command with a /2 document is accepted', async () => {
     const { driver } = rig();
     const r = await driver.hook({ id: 'c1', issuedBy: 'instructor', type: 'scenario', action: 'load', doc: minimalV2() });
-    expect(r).toMatchObject({ accepted: false, reason: 'pme-scenario/2 cards run from F2 on' });
-    expect(driver.runner).toBeNull();
+    expect(r).toMatchObject({ accepted: true });
+    expect(driver.phaseRunner?.stateId).toBe('baseline');
   });
 
   it('an invalid /2 document is refused with its validation errors, as a /1 one is', () => {
@@ -287,5 +288,133 @@ describe('ScenarioDriver and a pme-scenario/2 document (F1)', () => {
     const bad = minimalV2();
     bad.phases[0].next = ['nowhere'];
     expect(driver.load(bad)).toEqual({ ok: false, reason: 'invalid scenario: /phases/0/next/0: no phase "nowhere"' });
+  });
+});
+
+// Plan F2: the driver chooses a PhaseRunner for a /2 document; phases go out as today's `scenario` event (stateId = the
+// phase id, transitionId = `enter:<phaseId>`, Q20); one stage mark per phase entry; a restore rewinds the timeline; a
+// script entry anchored on a press goes out in the press's own stage group, on its tick.
+describe('ScenarioDriver and a pme-scenario/2 document (F2)', () => {
+  const CARD = {
+    schema: 'pme-scenario/2', id: 'beat2', title: 'Beat (format 2)',
+    phases: [
+      { id: 'calm', label: 'Calm', initial: true, next: ['beating'] },
+      { id: 'beating', label: 'Beating', enter: { value: { var: 'hr', op: '>', value: 0 } }, next: ['settled'] },
+      { id: 'settled', label: 'Settled', enter: { value: { var: 'hr', op: '>', value: 0, forS: 10 } } },
+    ],
+    actions: [{
+      id: 'induce', label: 'Induce', kind: 'procedure', phases: ['calm', 'beating', 'settled'],
+      give: [{ type: 'applyEvent', event: { kind: 'drug', drugId: 'propofol', dose: 2, unit: 'mg/kg', route: 'iv' } }],
+    }],
+    script: [{ id: 'tachy', on: 'action:induce#1', commands: [{ type: 'setRhythm', rhythm: 'sinusTachy' }] }],
+  };
+  /** The rig with stage marks on and every dispatch the engine answered (command, accepted, applied tick). */
+  function rig2() {
+    const host = manualHost({ seed: 42 });
+    const sent: Array<{ cmd: Command; accepted: boolean; tick: number }> = [];
+    const target = { ...host, dispatch: (c: Command) => { const r = host.dispatch(c) as { accepted: boolean; tick: number }; sent.push({ cmd: c, accepted: r.accepted, tick: r.tick }); return r; } };
+    const events: ScenarioEvent[] = [];
+    const driver = new ScenarioDriver({ target, publish: (e) => events.push(e), stageMarks: true });
+    const run = (s: number) => {
+      const end = host.engine.now().tick + Math.round(s * 50);
+      for (let tick = host.engine.now().tick + 1; tick <= end; tick++) {
+        host.engine.advanceTo(tick * 0.02);
+        driver.poll();
+      }
+    };
+    const settle = () => new Promise<void>((r) => setImmediate(r)); // the stage mark's snapshot is awaited
+    return { host, driver, events, sent, run, settle };
+  }
+  const press = (id: string, group: string, drugId: string) =>
+    ({ id, issuedBy: 'instructor', type: 'applyEvent', event: { kind: 'drug', drugId, dose: 1, unit: 'mg/kg', route: 'iv' }, stageGroup: group, actionId: 'induce' }) as unknown as Command;
+
+  it('a /2 card loads into a PhaseRunner and publishes its phases as scenario events', () => {
+    const { driver, events, run } = rig2();
+    const r = driver.load(CARD);
+    expect(r.ok).toBe(true);
+    expect(driver.phaseRunner).toBeInstanceOf(PhaseRunner);
+    expect(driver.runner).toBeNull();
+    run(15);
+    expect(events.map((e) => [e.stateId, e.transitionId])).toEqual([['calm', undefined], ['beating', 'enter:beating'], ['settled', 'enter:settled']]);
+    const [, beating, settled] = events as [ScenarioEvent, ScenarioEvent, ScenarioEvent];
+    expect(settled.t - beating.t).toBeGreaterThanOrEqual(10 - 0.02); // hr > 0 held 10 s (from its first truth value)
+    expect(driver.phaseRunner?.phases.map((p) => p.id)).toEqual(['calm', 'beating', 'settled']);
+    expect(driver.welcomeEvents()[0]).toEqual({ type: 'scenario', t: settled.t, stateId: 'settled' });
+  });
+
+  it('one stage mark per phase entry; a restore to one rewinds the phase, the timeline and the edges, and the run goes on', async () => {
+    const { driver, events, run, settle } = rig2();
+    expect(driver.load(CARD).ok).toBe(true);
+    driver.poll(); // the initial phase's mark is placed before the run moves on
+    await settle();
+    for (let i = 0; i < 16; i++) {
+      run(1);
+      await settle();
+    }
+    const marks = driver.stageMarks();
+    expect(marks.map((m) => m.note)).toEqual(['calm', 'beating', 'settled']);
+    expect(marks.every((m) => m.kind === 'stage')).toBe(true);
+    const pr = driver.phaseRunner as PhaseRunner;
+    const beatingT = pr.phases[1]!.t;
+    const r = await driver.hook({ id: 'r1', issuedBy: 'instructor', type: 'scenario', action: 'restoreBookmark', target: marks[1]!.target });
+    expect(r.accepted).toBe(true);
+    expect(driver.phaseRunner?.stateId).toBe('beating');
+    expect(driver.phaseRunner?.phases).toEqual([{ id: 'calm', t: 0, exitT: beatingT, rule: 'initial' }, { id: 'beating', t: beatingT, rule: 'enter:beating' }]);
+    expect(driver.phaseRunner?.edges.every((e) => e.t <= (marks[1]!.atTick as number) * 0.02 + 1e-9)).toBe(true);
+    expect(events.at(-1)).toEqual({ type: 'scenario', t: beatingT, stateId: 'beating' });
+    expect(driver.stageMarks().map((m) => m.note)).toEqual(['calm', 'beating']);
+    for (let i = 0; i < 12; i++) {
+      run(1);
+      await settle();
+    }
+    expect(driver.phaseRunner?.stateId).toBe('settled');
+    expect(driver.stageMarks().map((m) => m.note)).toEqual(['calm', 'beating', 'settled']);
+    // a run position holds the /2 runner state, and hold() takes it back on the same card
+    const p = await driver.position();
+    expect(p?.runner.schema).toBe('pme-scenario-runner/2');
+    expect(driver.hold('kept', p!)).toBe(true);
+  });
+
+  it('a script entry on an action\'s first taking goes out in the press\'s stage group, on the press\'s tick, card-set', () => {
+    const { driver, sent, run } = rig2();
+    expect(driver.load(CARD).ok).toBe(true);
+    run(2);
+    const from = sent.length;
+    driver.host.dispatch(press('p1', 'press-1', 'propofol'));
+    driver.host.dispatch(press('p2', 'press-1', 'succinylcholine'));
+    run(1);
+    driver.host.dispatch(press('p3', 'press-2', 'propofol')); // the second taking: no entry
+    run(1);
+    const got = sent.slice(from).map((s) => ({ id: s.cmd.id, issuedBy: s.cmd.issuedBy, group: s.cmd.stageGroup, type: s.cmd.type, accepted: s.accepted, tick: s.tick }));
+    const t0 = got[0]!.tick;
+    expect(got).toEqual([
+      { id: 'p1', issuedBy: 'instructor', group: 'press-1', type: 'applyEvent', accepted: true, tick: t0 },
+      { id: expect.stringMatching(/^card-set-\d+-0$/), issuedBy: 'scenario', group: 'press-1', type: 'setRhythm', accepted: true, tick: t0 },
+      { id: 'p2', issuedBy: 'instructor', group: 'press-1', type: 'applyEvent', accepted: true, tick: t0 },
+      { id: 'p3', issuedBy: 'instructor', group: 'press-2', type: 'applyEvent', accepted: true, tick: t0 + 50 },
+    ]);
+    const log = driver.phaseRunner!.log;
+    expect(log.filter((l) => l.op === 'take').map((l) => (l as { actionId: string }).actionId)).toEqual(['induce', 'induce']);
+    expect(log.filter((l) => l.op === 'script')).toEqual([{ op: 'script', t: expect.any(Number), scriptId: 'tachy', anchor: 'action:induce#1' }]);
+    expect(log.filter((l) => l.op === 'dispatch' && (l as { cardSet?: true }).cardSet)).toHaveLength(1);
+  });
+
+  it('goto and trigger are refused on a /2 card (a phase is entered by its own rule); pause and resume work', async () => {
+    const { driver } = rig2();
+    expect(driver.load(CARD).ok).toBe(true);
+    expect(await driver.hook({ id: 'g', issuedBy: 'instructor', type: 'scenario', action: 'goto', target: 'settled' })).toMatchObject({ accepted: false, reason: 'a pme-scenario/2 phase is entered by its own rule, never by goto' });
+    expect(await driver.hook({ id: 't', issuedBy: 'instructor', type: 'scenario', action: 'trigger', target: 'x' })).toMatchObject({ accepted: false });
+    expect((await driver.hook({ id: 'p', issuedBy: 'instructor', type: 'scenario', action: 'pause' })).accepted).toBe(true);
+    expect(driver.phaseRunner?.paused).toBe(true);
+    expect((await driver.hook({ id: 'r', issuedBy: 'instructor', type: 'scenario', action: 'resume' })).accepted).toBe(true);
+  });
+
+  it('a /1 card\'s runner still receives only today\'s input kinds (the rhythm feed is for a PhaseRunner only)', async () => {
+    const { driver, run } = rig();
+    expect(driver.load('acls-vf-witnessed').ok).toBe(true);
+    await run(150);
+    const kinds = new Set(driver.runner!.log.flatMap((l) => (l.op === 'advance' ? l.inputs.map((i) => i.kind) : [])));
+    expect([...kinds].every((k) => k === 'values' || k === 'clinical' || k === 'sensor')).toBe(true);
+    expect(kinds.has('values')).toBe(true);
   });
 });
