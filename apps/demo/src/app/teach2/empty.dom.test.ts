@@ -123,7 +123,7 @@ describe('Instructor v2 with no case loaded (board "Empty 5")', () => {
     expect(cards.map((c) => [c.querySelector('.ip2-begin-title')?.textContent, c.querySelector('.ip2-begin-line')?.textContent, c.querySelector('.ip2-begin-btn')?.textContent])).toEqual([
       ['Free roam', 'The default patient with every tool, nothing scripted, nothing graded; the Log and the Debrief still record it all.', 'Start'],
       ['Scenario library', `${LIBRARY.length} cards. Pick one and this pane becomes its stages and steps.`, 'Browse'],
-      ['Debrief archive', 'Every saved run: resident, card, time, objectives and score. Open one, print it, or compare residents on the same card.', 'Open'],
+      ['Debrief archive', 'Every saved run: resident, card, time, objectives and score. Open one, print it, or compare residents on the same card.', 'Open · 0'],
     ]);
     expect(cards.map((c) => c.getAttribute('aria-keyshortcuts'))).toEqual(['1', '2', '3']);
     expect(cards[1]?.classList.contains('ip2-begin-primary')).toBe(true);
@@ -201,13 +201,13 @@ describe('Instructor v2 with no case loaded (board "Empty 5")', () => {
     expect(r.all('.ip2-action .ip2-row[data-kind="step"]').length).toBeGreaterThan(0);
   });
 
-  it('Debrief archive (Open or 3) opens the Debrief view; Room setup opens Settings', () => {
+  it("Debrief archive (Open or 3) opens the Debrief view's archive; Room setup opens Settings", () => {
     const r = use(rig());
     (cardsShown(r)[2] as HTMLButtonElement).click();
-    expect(location.hash).toBe('#/debrief');
+    expect(location.hash).toBe('#/debrief/archive');
     location.hash = '';
     r.key('3');
-    expect(location.hash).toBe('#/debrief');
+    expect(location.hash).toBe('#/debrief/archive');
     location.hash = '';
     (r.all('.ip2-begin-two > button')[0] as HTMLButtonElement).click();
     expect(location.hash).toBe('#/settings');
@@ -240,6 +240,6 @@ describe('Instructor v2 with no case loaded (board "Empty 5")', () => {
     expect(r.all('.ip2-offcard-list > li')).toHaveLength(0);
     // the digits are the card's rows, not the three cards
     r.key('3');
-    expect(location.hash).not.toBe('#/debrief');
+    expect(location.hash).not.toBe('#/debrief/archive');
   });
 });

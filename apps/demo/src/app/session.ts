@@ -25,6 +25,14 @@ export interface SessionStart {
   mode: Mode;
   seed?: number;
 }
+/** The room a "Save and restart the case" keeps (Instructor v2's Finish, board "Finish 2"): the probes as attached at
+ *  the end of the case, and the cuff's cycling (null: no cycling; absent: the skin's default, as any load). */
+export interface RoomKeep {
+  sensors?: Record<string, string>;
+  nibp?: { device: 'nibp'; action: 'auto'; intervalMin: number } | null;
+}
+/** A probe's passing state, as it starts on a fresh engine: a line being zeroed or damped is connected, a moving probe on. */
+const SETTLED: Readonly<Record<string, string>> = { zeroing: 'connected', damped: 'connected', motion: 'on' };
 
 const TICK_S = 0.02;
 
@@ -123,12 +131,15 @@ export class AppSession {
 
   /** `?load=perf8`: mount the validation harness's performance layout instead of the site's skin (the frame gate). */
   private readonly perf8: boolean;
+  /** The page's first patient (the default patient): "Save and close" ends a case on it (endCase). */
+  private readonly first: SessionStart;
 
   constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null }) {
     this.el = el;
     this.perf8 = o.load === 'perf8';
     this.spec = start.spec;
     this.mode = start.mode;
+    this.first = { ...start, spec: { ...start.spec, comorbid: [...start.spec.comorbid] } };
     this.skin = o.skin;
     this.theme = o.theme;
     this.code = normalizeSessionCode(o.code ?? '') ?? newSessionCode();
@@ -436,9 +447,26 @@ export class AppSession {
     this.panel.note(`Patient restarted: ${start.mode.toUpperCase()}`);
   }
 
+  /** "Save and close" (Instructor v2's Finish): the case ends; the page's default patient runs, no card (a reload then
+   *  brings back no case: restart forgets the position). */
+  endCase(): void {
+    this.restart({ ...this.first, spec: { ...this.first.spec, comorbid: [...this.first.spec.comorbid] } });
+  }
+
+  /** The room as it stands, for "Save and restart the case": the probes the engine reports attached, and the cuff's
+   *  cycling (auto at its interval, or none). */
+  roomKeep(): RoomKeep {
+    const st = this.last.state as { sensors?: Record<string, string> } | undefined;
+    const sensors = st?.sensors ? Object.fromEntries(Object.entries(st.sensors).map(([k, v]) => [k, SETTLED[v] ?? v])) : undefined;
+    const n = this.last.nibp as { mode?: string; intervalMin?: number } | undefined;
+    const nibp = n?.mode === undefined ? undefined : n.mode === 'auto' && typeof n.intervalMin === 'number' ? { device: 'nibp' as const, action: 'auto' as const, intervalMin: n.intervalMin } : null;
+    return { ...(sensors ? { sensors } : {}), ...(nibp !== undefined ? { nibp } : {}) };
+  }
+
   /** Load a scenario: its patient body restarts the engine, then the runner starts (never silently over a live run —
-   *  the caller confirms first). */
-  loadScenario(raw: unknown): { ok: true; doc: ScenarioDoc } | { ok: false; reason: string } {
+   *  the caller confirms first). `room` (a "Save and restart the case"): the probes and the cuff as they were, over the
+   *  card's own. */
+  loadScenario(raw: unknown, room?: RoomKeep): { ok: true; doc: ScenarioDoc } | { ok: false; reason: string } {
     // The host refuses the scenario command during a fast-forward — the new body would run without its scenario
     if (this.fastForwarding) return { ok: false, reason: 'the simulation is fast-forwarding; try again when it ends' };
     const v = validateScenario(raw);
@@ -449,11 +477,13 @@ export class AppSession {
     this.mode = v.doc.mode ?? 'modeled';
     this.driver.runner = null;
     clearPosition(); // the old case's position is not this one's
-    this.mountWith({ ...eo, mode: this.mode, truthHz: 1, patient: { ...eo.patient, ...(p.sensors ? { sensors: p.sensors } : {}) } });
+    const kept = room?.sensors ? { ...eo.patient?.sensors, ...p.sensors, ...room.sensors } : p.sensors; // the room's probes over the card's
+    this.mountWith({ ...eo, mode: this.mode, truthHz: 1, patient: { ...eo.patient, ...(kept ? { sensors: kept as typeof p.sensors } : {}) } });
+    const sensors = { ...eo.patient?.sensors, ...kept } as Record<string, string | undefined>;
     // UI review #14: a scenario's cuff cycles from Load as a free-play patient's does (the skin's default, Saadat AUTO
-    // every 5 min); it showed "/" for the whole case. Not when the card's patient has no cuff on (nibp 'off').
-    const sensors = { ...eo.patient?.sensors, ...p.sensors } as Record<string, string | undefined>;
-    if (sensors.nibp !== 'off') this.startCuff(7);
+    // every 5 min); it showed "/" for the whole case. Not when the card's patient has no cuff on (nibp 'off'). A restart
+    // keeps the cuff's cycling as the room had it.
+    if (sensors.nibp !== 'off' && room?.nibp !== null) this.startCuff(7, room?.nibp);
     this.lastLoad = this.panel.send({ type: 'scenario', action: 'load', doc: v.doc });
     // The card's Case briefing on every learner screen (owner's board Orientation 7b) — not again for the load that
     // brings a case back after the instructor's page reloaded (position.ts): that case is already under way
@@ -492,9 +522,9 @@ export class AppSession {
   /** O2 (research/34 §8 O2): a skin with nibp.applyAtStart starts the cuff on AUTO at the patient's start — once per
    *  start (not per skin switch, not for ?load=perf8; a scenario's Load too since UI review #14), mirrored to a learner
    *  monitor. */
-  private startCuff(seed: number): void {
+  private startCuff(seed: number, kept?: { device: 'nibp'; action: 'auto'; intervalMin: number }): void {
     const m = this.monitor;
-    const action = this.spec.attached && m?.skin ? nibpStartCommand(m.skin.skin) : null;
+    const action = this.spec.attached && m?.skin ? (kept ?? nibpStartCommand(m.skin.skin)) : null;
     if (m && action) {
       const c = { id: `nibp-default-${seed}-${Date.now()}-${++this.nibpStarts}`, // unique across host reloads too (R-T m4)
         issuedBy: 'device', type: 'device', action } as Command;

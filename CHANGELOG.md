@@ -76,6 +76,22 @@ the public API is what the packages export (see the API reference), the `pme-sce
   "after the demo"). While the cards or the case list show, the Fast forward row is hidden (nothing to skip to) and
   the learners' monitor takes its height; Free roam or a card brings it back. With a card loaded none of it shows.
 
+- **Instructor v2: "Finish the case"** (the owner's board "Finish 2", 30 October). The dock gains "Finish the case"
+  beside Debrief while a card runs. It pauses the clock; the strip's amber status line says nothing is written yet,
+  and ACTION becomes the Finish pane: the card and the time, a **Resident** field (the name goes into the debrief's
+  header band, its PDF and the learner handout), the run's objective and mark counts, and three buttons, each of which
+  first saves the debrief to the browser's archive: **Save and restart the case** (the same card again from 0:00 on a
+  fresh engine; the skin, the attached probes, the cuff's cycling and the session code, so the phones, stay; the field
+  is cleared for the next name), **Debrief now** (the Debrief view on the saved debrief; the case stays paused) and
+  **Save and close** (the case ends on the page's default patient and the no-case window's three cards show; the `?scenario=` deep
+  link is dropped from the address). A reload after "Save and restart" restores the new run; after "Save and close"
+  it shows the empty window. Esc, the pill or Space give the case back with nothing written. The **archive** is kept in
+  localStorage until it is cleared (`pme.archive`: an index, and one key per debrief holding its `pme-debrief/2`
+  JSON): it is listed under the buttons and in a new Archive section of the Debrief view (open · PDF · JSON per row,
+  "Export all" as one `pme-archive/1` JSON file, as no zip library is in the dependencies, and "Clear the archive"
+  behind a confirm); a saved debrief opens at `#/debrief/archive/<id>`. The no-case window's Debrief archive card
+  reads "Open · n" and opens that section.
+
 ### Changed
 
 - **One Instructor entry; the view is chosen in Settings** (the clinical owner, 30 October). The rail lists

@@ -16,8 +16,9 @@ import { Rail } from './rail.ts';
 import { noteRecent } from './recent.ts';
 import { hrefOf, parseRoute, revealTarget } from './router.ts';
 import { SCENARIO_META } from './scenario-meta.ts';
-import { LIBRARY, scenarioById, type ScenarioCard } from './scenarios.ts';
-import { AppSession } from './session.ts';
+import { archive } from './archive.ts';
+import { cardOf, LIBRARY, scenarioById, type ScenarioCard } from './scenarios.ts';
+import { AppSession, type RoomKeep } from './session.ts';
 import { mountSessionBar } from './sessionbar.ts';
 import { applySkinAlarmColours, LEVEL_MARK, LEVEL_NAME, Shell, skinAlarmBar, skinAlwaysOn } from './shell.ts';
 import { loadSite, setLightScreen } from './site.ts';
@@ -109,8 +110,8 @@ if (follow) {
     toast('The monitor stopped — Restart the patient', 'alert');
   });
 
-  const loadScenario = (c: ScenarioCard): boolean => {
-    const r = session.loadScenario(c.doc);
+  const loadScenario = (c: ScenarioCard, room?: RoomKeep): boolean => {
+    const r = session.loadScenario(c.doc, room);
     if (!r.ok) {
       toast(`The scenario could not load: ${c.title}`, 'alert');
       return false;
@@ -148,7 +149,21 @@ if (follow) {
   const teach = teachView(link, { site, main: shell.main, stage: shell.stage, weightKg, loadScenario });
   shell.add(teach);
   // option G: the app's top bar is not shown on #/teach2; its header carries the top bar's Sound switch and Room code
-  const teach2 = teach2View(link, { site, weightKg, loadScenario, top: { soundOn: () => session.soundOn, toggleSound, code: session.code, phones: () => session.followers } });
+  // "Finish the case" (board "Finish 2"): the same card again with the room kept (the probes, the cuff, the session code
+  // and so the phones), or the case ended on the page's default patient, the deep link it was opened from spent so that
+  // a reload shows no case either
+  const finish = {
+    restart: (): boolean => {
+      const doc = session.driver.runner?.doc;
+      return !!doc && loadScenario(scenarioById(doc.id) ?? cardOf(doc), session.roomKeep());
+    },
+    close: (): void => {
+      session.endCase();
+      const u = new URL(location.href);
+      if (u.searchParams.has('scenario')) (u.searchParams.delete('scenario'), history.replaceState(null, '', u));
+    },
+  };
+  const teach2 = teach2View(link, { site, weightKg, loadScenario, finish, top: { soundOn: () => session.soundOn, toggleSound, code: session.code, phones: () => session.followers } });
   shell.add(teach2);
   shell.add(remoteView({ site, hostless: false, bar: shell.bar, code: session.code }));
   shell.add(exploreView(session, site));
@@ -256,5 +271,5 @@ if (follow) {
   shell.start();
   // e2e hook: the engine ids the glossary test must never find in a clinical view
   const engineIds = [...RHYTHM_IDS, ...DRUG_IDS, ...LUNG_CONDITIONS.map((c) => c.id)];
-  Object.assign(window, { __pmeApp: { shell, session, link, frames, site, teach, teach2, engineIds, skinAlarmBar, room, rail } });
+  Object.assign(window, { __pmeApp: { shell, session, link, frames, site, teach, teach2, engineIds, skinAlarmBar, room, rail, archive } });
 }
