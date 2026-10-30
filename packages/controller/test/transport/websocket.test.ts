@@ -72,6 +72,22 @@ describe('WebSocket transport', () => {
     expect(FakeWebSocket.all).toHaveLength(1);
   });
 
+  it('review F2: a non-fatal relay error frame (forbidden) reaches onRelayFrame and leaves the status alone; denied ends the link', () => {
+    const frames: unknown[] = [];
+    const t = createWebSocketTransport(opts);
+    t.onRelayFrame?.((f) => frames.push(f));
+    FakeWebSocket.last.open();
+    FakeWebSocket.last.receive({ relay: 'error', code: 'forbidden', message: 'viewer may not send commands' });
+    expect(frames).toEqual([{ relay: 'error', code: 'forbidden', message: 'viewer may not send commands' }]);
+    expect(t.status).toBe('open');
+    FakeWebSocket.last.receive({ relay: 'error', code: 'denied', message: 'wrong PIN' });
+    expect(t.status).toBe('error');
+    const u = createWebSocketTransport(opts);
+    FakeWebSocket.last.open();
+    FakeWebSocket.last.receive({ relay: 'error', code: 'too-many-tries', message: 'wait a minute' });
+    expect(u.status).toBe('error');
+  });
+
   it('closes and reconnects when nothing arrives for livenessMs', () => {
     const t = createWebSocketTransport(opts);
     FakeWebSocket.last.open();

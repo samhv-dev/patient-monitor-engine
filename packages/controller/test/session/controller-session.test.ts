@@ -359,6 +359,90 @@ describe('ControllerSession as the instructor (plan P5)', () => {
       t.close();
     });
 
+    // Review F1 (stack review 2026-10-30): the relay ungrants every instructor when a host socket is admitted, the SAME
+    // laptop after a Wi-Fi blip included (same host id). The phone signs in again before its commands go again.
+    it('F1: a same-host-id hello after a relay-side ungrant ends granted with the command delivered', async () => {
+      const t = createWebSocketTransport(opts);
+      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-h', role: 'instructor', pin: () => PIN });
+      const ws = FakeWebSocket.last;
+      ws.open();
+      ws.receive(host({ kind: 'hello', role: 'host' }));
+      ws.receive(host({ kind: 'grant', to: 'ins-h.1', granted: true }));
+      const p = s.send({ type: 'applyEvent', event: { kind: 'drug', drugId: 'dantrolene', dose: 200, unit: 'mg', route: 'iv' } });
+      const cmds = () => sent(ws).filter((m): m is Cmd => m.kind === 'command');
+      const insHellos = () => sent(ws).filter((m) => m.kind === 'hello' && m.role === 'instructor');
+      expect(cmds()).toHaveLength(1);
+      const signIns = insHellos().length; // the open's, and again on the host's first hello while pending
+      // The laptop's relay socket reconnects (same host id): the relay ungranted this socket silently and fans the hello
+      ws.receive(host({ kind: 'hello', role: 'host' }));
+      expect(cmds()).toHaveLength(2); // the restore path re-sends while it believes it is granted…
+      ws.receive({ relay: 'error', code: 'forbidden', message: 'the instructor phone is not signed in' }); // …which the relay refuses
+      expect(t.status).toBe('open'); // a per-command refusal: the socket stays and follows
+      expect(insHellos()).toHaveLength(signIns + 1); // signs in again, with the PIN
+      expect(insHellos().at(-1)).toMatchObject({ pin: PIN, from: 'ins-h.1' });
+      expect(s.access).toEqual({ state: 'pending' });
+      vi.advanceTimersByTime(5000); // held while pending: not re-sent into the refusal
+      expect(cmds()).toHaveLength(2);
+      ws.receive(host({ kind: 'grant', to: 'ins-h.1', granted: true }));
+      expect(s.access).toEqual({ state: 'granted' });
+      expect(cmds()).toHaveLength(3);
+      expect(cmds().at(-1)?.body.id).toBe('ins-h-1');
+      ws.receive(host({ kind: 'ack', commandId: 'ins-h-1', accepted: true, tick: 42 }));
+      expect(await p).toMatchObject({ commandId: 'ins-h-1', accepted: true, tick: 42 });
+      s.close();
+      t.close();
+    });
+
+    it("F1: the relay's explicit grant false on a host readmit (revoked) still leads to a re-hello on the host's hello", async () => {
+      const t = createWebSocketTransport(opts);
+      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-i', role: 'instructor', pin: () => PIN });
+      const ws = FakeWebSocket.last;
+      ws.open();
+      ws.receive(host({ kind: 'hello', role: 'host' }));
+      ws.receive(host({ kind: 'grant', to: 'ins-i.1', granted: true }));
+      ws.receive(host({ kind: 'grant', to: 'ins-i.1', granted: false, reason: "the instructor's computer reconnected; signing in again" }));
+      expect(s.access).toEqual({ state: 'revoked', reason: "the instructor's computer reconnected; signing in again" });
+      const p = s.send({ type: 'time', action: 'pause' });
+      const cmds = () => sent(ws).filter((m): m is Cmd => m.kind === 'command');
+      expect(cmds()).toHaveLength(0); // held: not signed in
+      const signIns = sent(ws).filter((m) => m.kind === 'hello').length;
+      ws.receive(host({ kind: 'hello', role: 'host' })); // the same laptop, back
+      expect(sent(ws).filter((m) => m.kind === 'hello')).toHaveLength(signIns + 1);
+      expect(s.access).toEqual({ state: 'pending' });
+      expect(cmds()).toHaveLength(0); // the hello goes before the commands
+      ws.receive(host({ kind: 'grant', to: 'ins-i.1', granted: true }));
+      expect(cmds().map((c) => c.body.id)).toEqual(['ins-i-1']);
+      ws.receive(host({ kind: 'ack', commandId: 'ins-i-1', accepted: true, tick: 7 }));
+      expect((await p).accepted).toBe(true);
+      s.close();
+      t.close();
+    });
+
+    // Review F2: `forbidden` is a per-command refusal (the relay keeps the socket open and following); only a fatal close,
+    // or the `denied` / `too-many-tries` frames, end the link.
+    it('F2: a forbidden frame on a real WsTransport leaves the link open, and a later grant works', async () => {
+      const t = createWebSocketTransport(opts);
+      const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-j', role: 'instructor', pin: () => PIN });
+      const ws = FakeWebSocket.last;
+      ws.open();
+      ws.receive(host({ kind: 'grant', to: 'ins-j.1', granted: true }));
+      const p = s.send({ type: 'setTarget', variable: 'hr', value: 70 });
+      ws.receive({ relay: 'error', code: 'forbidden', message: 'the instructor phone is not signed in' });
+      expect(t.status).toBe('open');
+      vi.advanceTimersByTime(10_000);
+      expect(FakeWebSocket.all).toHaveLength(1); // no reconnect: the same socket
+      ws.receive(host({ kind: 'event', body: [{ type: 'measurement', t: 3, values: { hr: { value: 71, flag: 'valid', at: 3 } } }] }));
+      expect(s.measurements.hr?.value).toBe(71); // …and it still follows
+      ws.receive(host({ kind: 'grant', to: 'ins-j.1', granted: true }));
+      expect(s.access).toEqual({ state: 'granted' });
+      const cmds = sent(ws).filter((m): m is Cmd => m.kind === 'command');
+      expect(cmds.at(-1)?.body.id).toBe('ins-j-1');
+      ws.receive(host({ kind: 'ack', commandId: 'ins-j-1', accepted: true, tick: 3 }));
+      expect((await p).accepted).toBe(true);
+      s.close();
+      t.close();
+    });
+
     it('a close with tooManyTries (4028) sets a reason and stops', () => {
       const t = createWebSocketTransport(opts);
       const s = new ControllerSession({ session: S, transport: t, peerId: 'ins-z', role: 'instructor', pin: () => '1111' });
