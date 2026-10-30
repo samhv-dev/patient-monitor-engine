@@ -3,6 +3,7 @@
 // reproduces the old hard-coded look exactly, so pages without a skin keep it.
 import { engineFilterFor, type LaneId, type LaneText, type LaneTextLabel, type ResolvedSkin, type Skin } from '@pme/skins';
 import type { ChannelId, EcgFilterMode, LeadId } from '@pme/engine-core';
+import { NOMINAL_ECG_LANE_MM } from './ecg-gain.ts';
 import { ibpChannelOf, ibpScaleError, type IbpChannel, type IbpScale, type IbpScales } from './ibp-scale.ts';
 import { WAVE_STYLE, type WaveLaneId } from './wave-lanes.ts';
 
@@ -17,6 +18,9 @@ export interface PlanLane {
   autoGain: boolean;
   /** ECG gain multipliers (of 10 mm/mV) auto-gain may choose from. */
   gainOptions: number[];
+  /** The lane's height on the skin's real screen (mm), which the auto-gain judges against: the same in every window that
+   *  draws the plan, whatever its pixel height (ecg-gain.ts). Wave lanes: 0. */
+  gainLaneMm: number;
   /** Wave scale [lo, hi] (mmHg; CO2 mmHg); null = auto-scale (pleth, impedance resp). */
   range: [number, number] | null;
   /** Static label (waves) or the template for ECG lanes: '{lead}  X{gain}  {FILTER}'. */
@@ -175,20 +179,24 @@ export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride, 
   let ecgIndex = 0;
   const dotted = s.ibp.scaleLines === 'dotted-upper-mid-lower';
   const lt = only ? undefined : s.layout.laneText;
-  const lanes = laneIds.map((id): PlanLane => {
+  // the photo's lane heights only for the skin's own lanes (not a page or a demo that names its lanes) and only when
+  // the counts match (the iran-icu-as-found preset's four lanes are equal)
+  const laneWeights = !only && !pg?.lanes && s.layout.grid?.laneWeights.length === laneIds.length ? [...s.layout.grid.laneWeights] : null;
+  const gainLaneMm = nominalLanesMm(s, laneIds.length, laneWeights);
+  const lanes = laneIds.map((id, i): PlanLane => {
     const rl = r.render.lanes.find((l) => l.lane === id);
     const color = rl?.color ?? s.foreground;
     const mmPerS = rl?.mmPerS ?? s.sweep.ibp.default;
     if (id.startsWith('ECG')) {
       const lead = leadAt(ecgIndex++);
-      return { id, kind: 'ecg', channel: lead, color, mmPerS, gainMmPerMv: rl?.gainMmPerMv ?? 10, autoGain: rl?.autoGain ?? false, gainOptions, range: null, label: s.ecg.laneLabel, fill: false, smoothMs: 0, scaleLines: null, scaleMid: null, rightLabel: null, scaleSuffix: '', ibp: null };
+      return { id, kind: 'ecg', channel: lead, color, mmPerS, gainMmPerMv: rl?.gainMmPerMv ?? 10, autoGain: rl?.autoGain ?? false, gainOptions, gainLaneMm: gainLaneMm[i] as number, range: null, label: s.ecg.laneLabel, fill: false, smoothMs: 0, scaleLines: null, scaleMid: null, rightLabel: null, scaleSuffix: '', ibp: null };
     }
     const scaleKey = IBP_SCALE_KEY[id];
     const sc = scaleKey ? s.ibp.scales[scaleKey] : undefined;
     const range: [number, number] | null =
       id === 'PLETH' || id === 'RESP' ? null : id === 'CO2' ? [0, s.co2.scaleUnit === '%' ? (s.co2.scale * 760) / 100 : s.co2.scale] : sc ? [sc[0], sc[2]] : id === 'ICP' ? [0, 40] : [0, 150]; // A skin without an ICP scale row (philips-like) draws ICP 0–40 (WAVE_STYLE.icp), not the IBP 0–150
     const ibpCh = sc ? ibpChannelOf(WAVE_CHANNEL[id] ?? null) : null;
-    const lane: PlanLane = { id, kind: 'wave', channel: WAVE_CHANNEL[id] ?? null, color, mmPerS, gainMmPerMv: 10, autoGain: false, gainOptions: [], range, label: id === 'PLETH' ? 'PLETH' : id, fill: id === 'CO2' && s.co2.fill === true,
+    const lane: PlanLane = { id, kind: 'wave', channel: WAVE_CHANNEL[id] ?? null, color, mmPerS, gainMmPerMv: 10, autoGain: false, gainOptions: [], gainLaneMm: 0, range, label: id === 'PLETH' ? 'PLETH' : id, fill: id === 'CO2' && s.co2.fill === true,
       smoothMs: id === 'CO2' ? (s.co2.displaySmoothMs ?? 0) : 0,
       scaleLines: dotted && sc ? [sc[2], sc[1], sc[0]] : id === 'CO2' && s.co2.scaleLineTop && range ? [range[1]] : null, scaleMid: dotted && sc ? sc[1] : null,
       rightLabel: lt ? rightLabel(lt.labels?.[id], id === 'PLETH' ? 'PLETH' : id, r.render.foreground, !portrait) : null,
@@ -217,11 +225,24 @@ export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride, 
     laneText: lt ? laneTextPlan(lt, r.render.foreground, portrait) : null,
     calBar: !(lt?.gutterPx && !portrait) || s.ecg.calPulse.defaultOn,
     pxPerMm: s.sweep.pxPerMm ?? null,
-    // the photo's lane heights only for the skin's own lanes (not a page or a demo that names its lanes) and only when
-    // the counts match (the iran-icu-as-found preset's four lanes are equal)
-    laneWeights: !only && !pg?.lanes && s.layout.grid?.laneWeights.length === laneIds.length ? [...s.layout.grid.laneWeights] : null,
+    laneWeights,
     lanes,
   };
+}
+
+/**
+ * Each lane's height on the skin's real screen (mm), for the ECG auto-gain. A measured screen (saadat-like: `layout.grid`
+ * lane weights are the photo's pixel extents, `sweep.pxPerMm` the same photo's px per mm) gives its wave area,
+ * sum(weights) / pxPerMm (614 px / 3.10 ≈ 198 mm), shared as the plan's lanes are: by the weights, or equally. Any
+ * other skin: NOMINAL_ECG_LANE_MM.
+ */
+function nominalLanesMm(s: Skin, n: number, weights: readonly number[] | null): number[] {
+  const grid = s.layout.grid?.laneWeights;
+  const px = s.sweep.pxPerMm;
+  if (!grid || !px) return Array.from({ length: n }, () => NOMINAL_ECG_LANE_MM);
+  const areaMm = grid.reduce((a, b) => a + b, 0) / px;
+  const sum = weights ? weights.reduce((a, b) => a + b, 0) : n;
+  return Array.from({ length: n }, (_, i) => (areaMm * (weights ? (weights[i] as number) : 1)) / sum);
 }
 
 function laneTextPlan(lt: LaneText, color: string, portrait: boolean): LaneTextPlan {
@@ -243,11 +264,11 @@ function rightLabel(l: LaneTextLabel | undefined, text: string, fg: string, land
 /** The legacy look (monitor-core THEME, WAVE_STYLE) for pages that pass `lanes`/`waves` and no skin. */
 export function legacyPlan(leads: readonly LeadId[], waves: readonly WaveLaneId[]): RenderPlan {
   const ecg = leads.map((lead): PlanLane => ({
-    id: 'ECG', kind: 'ecg', channel: lead, color: '#00ff66', mmPerS: 25, gainMmPerMv: 10, autoGain: false, gainOptions: [], range: null, label: '{lead}  {FILTER}', fill: false, smoothMs: 0, scaleLines: null, scaleMid: null, rightLabel: null, scaleSuffix: '', ibp: null,
+    id: 'ECG', kind: 'ecg', channel: lead, color: '#00ff66', mmPerS: 25, gainMmPerMv: 10, autoGain: false, gainOptions: [], gainLaneMm: NOMINAL_ECG_LANE_MM, range: null, label: '{lead}  {FILTER}', fill: false, smoothMs: 0, scaleLines: null, scaleMid: null, rightLabel: null, scaleSuffix: '', ibp: null,
   }));
   const wv = waves.map((w): PlanLane => ({
     id: w, kind: 'wave', channel: w, color: WAVE_STYLE[w].color, mmPerS: WAVE_STYLE[w].mmPerS ?? 25, gainMmPerMv: 10, // co2/resp 6.25 mm/s
-    autoGain: false, gainOptions: [],
+    autoGain: false, gainOptions: [], gainLaneMm: 0,
     range: WAVE_STYLE[w].range ? [WAVE_STYLE[w].range[0], WAVE_STYLE[w].range[1]] : null, label: WAVE_STYLE[w].label, fill: false, smoothMs: 0, scaleLines: null, scaleMid: null, rightLabel: null, scaleSuffix: '', ibp: null,
   }));
   return {
