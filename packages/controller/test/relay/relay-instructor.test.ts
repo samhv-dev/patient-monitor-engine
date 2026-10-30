@@ -218,6 +218,70 @@ describe("the host's grant", () => {
   });
 });
 
+describe('the host socket readmitted (review F1)', () => {
+  it("a granted instructor is told by the relay, before the host's hello, that it signs in again; re-granted, it is routed again", async () => {
+    const { host } = await room();
+    const ins = await join('ins-a.1', 'instructor');
+    host.send({ kind: 'grant', to: 'ins-a.1', granted: true });
+    await waitFor(() => ins.got.some((m) => m.kind === 'grant'), 2000, 'granted');
+    const pending = await join('ins-b.1', 'instructor', { v6: true }); // never granted: it is told nothing
+    host.ws.close();
+    await waitFor(() => relay!.room(SESSION)?.hostOnline === false, 2000, 'host left');
+    const host2 = await join('host-h1', 'host'); // the same laptop, the same id, a new socket
+    await waitFor(() => ins.got.filter((m) => m.kind === 'grant').length === 2, 2000, "the relay's grant false");
+    const after = ins.got.slice(ins.got.findIndex((m) => m.kind === 'grant') + 1).filter((m) => m.kind !== undefined);
+    expect(after[0]).toMatchObject({ kind: 'grant', to: 'ins-a.1', granted: false, reason: "the instructor's computer reconnected; signing in again" });
+    expect(after[0]!.from).not.toBe('host-h1'); // the relay's own frame, not the host's
+    await waitFor(() => ins.got.some((m) => m.kind === 'hello' && m.from === 'host-h1'), 2000, "the host's hello");
+    const told = ins.got.findIndex((m) => m.kind === 'grant' && m.granted === false);
+    expect(told).toBeLessThan(ins.got.findIndex((m) => m.kind === 'hello' && m.from === 'host-h1')); // told first
+    expect(ins.closeCode).toBeNull(); // not a denial: the socket stays
+    expect(pending.got.some((m) => m.kind === 'grant')).toBe(false);
+    // the phone says its hello again; the host grants it; it commands
+    ins.hello();
+    await waitFor(() => host2.got.some((m) => m.kind === 'hello' && m.from === 'ins-a.1'), 2000, 're-hello at the host');
+    host2.send({ kind: 'grant', to: 'ins-a.1', granted: true });
+    await waitFor(() => ins.got.filter((m) => m.kind === 'grant').length === 3, 2000, 're-granted');
+    ins.send(command('k3'));
+    await waitFor(() => host2.got.some((m) => m.kind === 'command'), 2000, 'routed again');
+    expect(errorOf(ins)).toBeUndefined();
+    // the reconnect is not a wrong PIN
+    for (let i = 1; i <= 5; i++) {
+      host2.ws.close();
+      await waitFor(() => relay!.room(SESSION)?.hostOnline === false, 2000, 'host left');
+      await join('host-h1', 'host');
+    }
+    expect((await join('ins-a.2', 'instructor')).closeCode).toBeNull();
+  });
+});
+
+describe('instructor hellos are capped per address (review G1)', () => {
+  it('25 instructor hellos from one address in a minute: at most 20 reach the host, then too-many-tries (4028); another address is unaffected', async () => {
+    const { host } = await room();
+    const flood = await sock('ins-f.1', 'instructor', { pin: '0001' });
+    for (let i = 0; i < 25; i++) flood.hello();
+    await waitFor(() => flood.closeCode !== null, 2000, 'flood closed');
+    expect(flood.closeCode).toBe(RELAY_CLOSE.tooManyTries);
+    expect(flood.errorBeforeClose).toBe('too-many-tries');
+    await sleep(50);
+    const reached = () => host.got.filter((m) => m.kind === 'hello' && m.role === 'instructor').length;
+    expect(reached()).toBeLessThanOrEqual(20);
+    expect(reached()).toBeGreaterThan(0);
+    // a new socket from that address within the minute: refused, its hello never at the host
+    const again = await join('ins-f.2', 'instructor');
+    expect(again.closeCode).toBe(RELAY_CLOSE.tooManyTries);
+    expect(host.got.some((m) => m.kind === 'hello' && m.from === 'ins-f.2')).toBe(false);
+    // another phone signs in
+    const other = await join('ins-o.1', 'instructor', { v6: true });
+    expect(other.closeCode).toBeNull();
+    await waitFor(() => host.got.some((m) => m.kind === 'hello' && m.from === 'ins-o.1'), 2000, "the other phone's hello");
+    // a minute later the address may try again
+    clock += 61_000;
+    relay!.sweep(clock);
+    expect((await join('ins-f.3', 'instructor')).closeCode).toBeNull();
+  });
+});
+
 describe('PIN guessing is limited per address', () => {
   const deny = async (host: Sock, id: string, v6 = false) => {
     const s = await join(id, 'instructor', { pin: '1111', v6 });
