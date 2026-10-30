@@ -1,0 +1,11 @@
+Patient monitor simulator - offline showcase kit
+Commit:   b6183d349188a3410660d1acad52740e1fa69dd6
+Branch:   preview-oct30c
+Subject:  docs(model): regenerate after merging #213, #214 onto preview-oct30c (Stage 14 guard)
+Built:    2026-10-30T20:22:36.683Z
+Built by: node scripts/showcase/make-bundle.mjs "/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/preview-oct30c/kit" (node v26.12.1, vite build --base ./ in apps/demo)
+App size: 3.4 MB
+Runtime:  runtime/ left EMPTY: /opt/homebrew/Cellar/node/26.12.1/bin/node (v26.12.1) is not an official signed Node.js build (ad-hoc signature (not an official Node.js build)). The launcher uses ruby, then perl.
+Servers tried in order: bundled node, /usr/bin/ruby (WEBrick), /usr/bin/perl (core modules), python3 (only a real one).
+Classroom: server/relay.mjs (pme-relay + ws 8.21.3, MIT) on runtime/node-* or an installed Node.js >= 22.
+Windows: Start Simulator.cmd / Start Classroom.cmd run server/launch.mjs on an installed Node.js >= 22 (untested on Windows at this release).

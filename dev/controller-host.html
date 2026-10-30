@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Host monitor + hidden instructor panel</title>
+    <style>
+      body { background: #000; color: #ccc; font: 14px system-ui, sans-serif; margin: 0; }
+      #monitor { height: min(70vh, 480px); }
+      .bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; padding: 10px 12px; border-top: 1px solid #222; }
+      .code { font: 700 28px ui-monospace, monospace; letter-spacing: .12em; color: #fff; }
+      button { font: inherit; min-height: 36px; }
+      #diag { font: 12px ui-monospace, monospace; color: #8f8; white-space: pre; padding: 0 12px; }
+      .hint { color: #777; }
+    </style>
+    <script type="module" crossorigin src="../assets/controller-host-CqzAccsB.js"></script>
+    <link rel="modulepreload" crossorigin href="../assets/modulepreload-polyfill-B5Qt9EMX.js">
+    <link rel="modulepreload" crossorigin href="../assets/broadcast-channel-Dai8mNZ0.js">
+    <link rel="modulepreload" crossorigin href="../assets/conditions-Cxtosf_B.js">
+    <link rel="modulepreload" crossorigin href="../assets/engine-RfEPbnUf.js">
+    <link rel="modulepreload" crossorigin href="../assets/staging-2i1pHpii.js">
+    <link rel="modulepreload" crossorigin href="../assets/reveal-BdGx2hn7.js">
+    <link rel="modulepreload" crossorigin href="../assets/relay-frames-AzrJIDJz.js">
+    <link rel="modulepreload" crossorigin href="../assets/websocket-hKApIj92.js">
+    <link rel="modulepreload" crossorigin href="../assets/links-Dca8FkBt.js">
+    <link rel="modulepreload" crossorigin href="../assets/styles-BEDNKHZX.js">
+    <link rel="modulepreload" crossorigin href="../assets/panel-D_KybYXa.js">
+    <link rel="modulepreload" crossorigin href="../assets/context-C68p7EUL.js">
+    <link rel="modulepreload" crossorigin href="../assets/engine.worker-DW5-G7AD.js">
+    <link rel="modulepreload" crossorigin href="../assets/wave-lanes-DQlLuakQ.js">
+    <link rel="modulepreload" crossorigin href="../assets/numerics-dom-B__3lMS4.js">
+    <link rel="modulepreload" crossorigin href="../assets/sim-monitor-Djp-_QAw.js">
+  </head>
+  <body>
+    <div id="monitor"></div>
+    <div class="bar">
+      <span>Session <span class="code" id="code">------</span></span>
+      <button id="openRemote">Open remote</button>
+      <button id="openViewer">Open viewer</button>
+      <button id="sound">Enable sound</button>
+      <span id="links"></span>
+      <span class="hint">Press <kbd>i</kbd> (or tap the top-left corner 5×, or hold three fingers) for the instructor panel.</span>
+    </div>
+    <div id="diag"></div>
+  </body>
+</html>
