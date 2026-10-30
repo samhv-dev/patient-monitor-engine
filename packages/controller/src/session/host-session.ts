@@ -3,12 +3,14 @@
 import { MAX_TIME_SCALE, MIN_TIME_SCALE, type Command, type DispatchResult, type EngineEvent, type PatientSnapshot, type SimSeconds, type StateVar, type Tick } from '@pme/engine-core';
 import {
   createStamper,
+  instructorMay,
   newPeerId,
   SeqFilter,
   type AppliedResolution,
   type ControlFlag,
   type FastForwardAlarm,
   type ManagedTransport,
+  type Role,
   type ScenarioCommand,
   type StateEvent,
   type TimeCommand,
@@ -65,6 +67,44 @@ export interface HostSessionOptions {
    * `setTimeout`.
    */
   sleep?: (ms: number) => Promise<void>;
+  /**
+   * The instructor's PIN (plan instructor-peer-role.md §1), read at every instructor hello, so a change applies at once.
+   * Absent or null (no PIN set, or an older app): every instructor is denied. Never logged, never sent.
+   */
+  instructorPin?: () => string | null;
+  /** A `note` command (plan §6): the remote's judged objective or note, at the host's sim time `t`. Absent: refused. */
+  onNote?: (t: SimSeconds, text: string, kind: 'note' | 'marker') => void;
+  /** How many instructor phones are granted (0 or 1: the newest takes over), called at every grant and revocation. */
+  onInstructors?: (n: number) => void;
+}
+
+/** What the host answers an instructor (the grant's reason, or the refused command's ack). */
+export const INSTRUCTOR_REASONS = {
+  noPhone: 'this computer does not take an instructor phone',
+  wrongPin: 'wrong PIN',
+  takenOver: 'taken over',
+  pinChanged: 'the PIN was changed',
+  notSignedIn: 'the instructor phone is not signed in',
+  noNotes: 'this computer does not take notes from a remote',
+} as const;
+/** The span `instructorDenials()` counts over, ms (the Room page: "3 wrong PINs in the last minute"). */
+export const DENIAL_WINDOW_MS = 60_000;
+/**
+ * The most wrong PINs the host remembers; the oldest go first. A second wall behind the relay's limit (20 hello
+ * attempts per address per 60 s): a hello flood cannot grow host memory, and the Room page needs a count, not
+ * every try — above 100 in a minute it says the same thing (review G1) [ENG].
+ */
+export const DENIAL_RECORD_MAX = 100;
+
+/**
+ * The PIN comparison: equal length, then the XOR of every char code folded into one value, so every candidate of the
+ * PIN's length is read in full whichever digit differs first (constant time by construction, no early exit).
+ */
+export function samePin(candidate: string, pin: string): boolean {
+  if (candidate.length !== pin.length || pin.length === 0) return false;
+  let diff = 0;
+  for (let i = 0; i < pin.length; i++) diff |= candidate.charCodeAt(i) ^ pin.charCodeAt(i);
+  return diff === 0;
 }
 
 /** Commands that share a stageGroup land on one tick this many ticks after the first arrives (60 ms) [ENG]. */
@@ -103,11 +143,17 @@ export class HostSession {
   private readonly now: () => number;
   private readonly transports = new Map<ManagedTransport, () => void>();
   /**
-   * Per transport, each peer's sequence filter and whether its last hello said `viewer` — keyed by (transport, from),
-   * so a frame on one transport (a phone on the relay claiming the panel's id) never touches a peer on another (the
+   * Per transport, each peer's sequence filter and the role its last hello said — keyed by (transport, from), so a
+   * frame on one transport (a phone on the relay claiming the panel's id) never touches a peer on another (the
    * in-process panel). A detached transport's peers are forgotten with it (verification 2026-10-29).
    */
-  private readonly peers = new WeakMap<ManagedTransport, { seqs: SeqFilter; viewers: Set<string> }>();
+  private readonly peers = new WeakMap<ManagedTransport, { seqs: SeqFilter; roles: Map<string, Role> }>();
+  /**
+   * The one granted instructor phone, by (transport, from), and the PIN it proved (plan §3 option B: the newest right
+   * PIN takes over). The laptop's own panels are controllers: they need no grant and are never revoked.
+   */
+  private holder: { t: ManagedTransport; from: string; pin: string } | null = null;
+  private denials: number[] = []; // Wall ms of the last DENIAL_RECORD_MAX wrong PINs within DENIAL_WINDOW_MS (no lockout)
   private readonly seen = new Map<string, AckBody>();
   private readonly groups = new Map<string, { tick: Tick; at: number }>();
   private readonly sticky = new Map<string, WireCommand>();
@@ -164,6 +210,18 @@ export class HostSession {
 
   bookmarks(): string[] {
     return [...this.marks.keys()];
+  }
+
+  /** Wrong PINs in the last DENIAL_WINDOW_MS, at most DENIAL_RECORD_MAX (the Room page's count; no host lockout). */
+  instructorDenials(): number {
+    const since = this.now() - DENIAL_WINDOW_MS;
+    this.denials = this.denials.filter((at) => at > since);
+    return this.denials.length;
+  }
+
+  /** The instructor's PIN changed: every grant is revoked at once (the phone signs in again with the new PIN). */
+  instructorPinChanged(): void {
+    this.revoke(INSTRUCTOR_REASONS.pinChanged);
   }
 
   /** A fast-forward is running (controllers' commands are refused until it ends). */
@@ -308,6 +366,54 @@ export class HostSession {
     this.transports.get(t)?.();
     this.transports.delete(t);
     this.peers.delete(t);
+    if (this.holder?.t === t) this.setHolder(null);
+  }
+
+  private setHolder(h: HostSession['holder']): void {
+    const was = this.holder;
+    this.holder = h;
+    if (was?.t !== h?.t || was?.from !== h?.from) this.o.onInstructors?.(h ? 1 : 0);
+  }
+
+  private grant(t: ManagedTransport, to: string, granted: boolean, reason?: string): void {
+    t.send(this.stamp({ kind: 'grant', to, granted, ...(reason !== undefined ? { reason } : {}) }));
+  }
+
+  /** Tell the holder it is no longer granted, and forget it. */
+  private revoke(reason: string): void {
+    const h = this.holder;
+    if (!h) return;
+    this.grant(h.t, h.from, false, reason);
+    this.setHolder(null);
+  }
+
+  /** An instructor hello: verify its PIN and answer with a grant, before the welcome (the relay routes by it). */
+  private verify(t: ManagedTransport, from: string, pin: string | undefined): void {
+    const want = this.o.instructorPin?.() ?? null;
+    const isHolder = this.holder?.t === t && this.holder.from === from;
+    if (want === null || pin === undefined || !samePin(pin, want)) {
+      if (want !== null) this.denials.push(this.now());
+      if (this.denials.length > DENIAL_RECORD_MAX) this.denials.splice(0, this.denials.length - DENIAL_RECORD_MAX);
+      this.instructorDenials(); // prunes the window
+      if (isHolder) this.setHolder(null); // its own hello no longer proves the PIN
+      this.grant(t, from, false, want === null ? INSTRUCTOR_REASONS.noPhone : INSTRUCTOR_REASONS.wrongPin);
+      return;
+    }
+    if (!isHolder && this.holder) this.grant(this.holder.t, this.holder.from, false, INSTRUCTOR_REASONS.takenOver); // option B
+    this.grant(t, from, true);
+    this.setHolder({ t, from, pin: want });
+  }
+
+  /** Null when (t, from) is the granted phone and may send `cmd` (plan §2), else the reason its ack carries. */
+  private instructorRefusal(t: ManagedTransport, from: string, cmd: WireCommand): string | null {
+    const h = this.holder;
+    if (h?.t !== t || h.from !== from) return INSTRUCTOR_REASONS.notSignedIn;
+    const pin = this.o.instructorPin?.() ?? null;
+    if (pin === null || !samePin(pin, h.pin)) {
+      this.revoke(INSTRUCTOR_REASONS.pinChanged); // changed without instructorPinChanged(): caught at the next command
+      return INSTRUCTOR_REASONS.notSignedIn;
+    }
+    return instructorMay(cmd);
   }
 
   private queue(e: WireEvent): void {
@@ -327,19 +433,24 @@ export class HostSession {
     if (m.session !== this.o.session) return; // A message for another session is not ours, whatever channel it came on
     if (m.from === this.peerId) return;
     let p = this.peers.get(t);
-    if (!p) this.peers.set(t, (p = { seqs: new SeqFilter(), viewers: new Set() }));
+    if (!p) this.peers.set(t, (p = { seqs: new SeqFilter(), roles: new Map() }));
     if (p.seqs.check(m) === 'duplicate') return;
     // A peer that said hello as a viewer sends no commands — the relay already refuses them on a WebSocket; a
     // BroadcastChannel peer is held to the same rule (one trust model per role, whatever the transport). Only a hello
     // the sequence check accepted counts: a stale frame carrying a peer's id changes nothing
-    if (m.kind === 'hello') (m.role === 'viewer' ? p.viewers.add(m.from) : p.viewers.delete(m.from));
+    if (m.kind === 'hello') p.roles.set(m.from, m.role);
     if (m.kind === 'hello' && m.role === 'viewer') this.viewerSeenAt = this.now();
+    if (m.kind === 'hello' && m.role === 'instructor') this.verify(t, m.from, m.pin);
     if (m.kind === 'hello' && m.role !== 'host') return this.welcome(t);
-    if (m.kind === 'command' && p.viewers.has(m.from)) {
-      t.send(this.stamp({ kind: 'ack', commandId: m.body.id, accepted: false, tick: this.o.target.now().tick, reason: 'a viewer cannot command' }));
-      return;
-    }
-    if (m.kind === 'command') return this.command(t, m.body, m.from);
+    if (m.kind !== 'command') return;
+    const role = p.roles.get(m.from);
+    const refuse = (reason: string) => t.send(this.stamp({ kind: 'ack', commandId: m.body.id, accepted: false, tick: this.o.target.now().tick, reason }));
+    if (role === 'viewer') return refuse('a viewer cannot command');
+    if (role !== 'instructor') return this.command(t, m.body, m.from);
+    // An instructor phone: granted, on the allow-list, and filed as the Remote's rows whatever it wrote (record.ts)
+    const why = this.instructorRefusal(t, m.from, m.body);
+    if (why !== null) return refuse(why);
+    return this.command(t, { ...m.body, issuedBy: 'remote' }, m.from);
   }
 
   /** A peer said hello: replay sticky commands, then a fresh snapshot (brief §3.7 late join). */
@@ -404,6 +515,12 @@ export class HostSession {
     const reject = (reason: string) => ({ result: { accepted: false, tick, reason }, applied: cmd });
     if (cmd.type === 'time') return this.time(cmd);
     if (cmd.type === 'scenario') return this.scenario(cmd);
+    if (cmd.type === 'note') {
+      // A remote's judged objective or note (plan §6), recorded by the host app at the host's sim time
+      if (!this.o.onNote) return reject(INSTRUCTOR_REASONS.noNotes);
+      this.o.onNote(simT, cmd.text, cmd.kind);
+      return { result: { accepted: true, tick }, applied: cmd };
+    }
     // Pin, release and setMode go to the engine, which validates them. setFactor reaches the engine too and is refused
     // there with its own reason until the engine models factors.
     // applyEvent/attachSensor are not in engine-core's Command union yet; the engine validates them at run time.
