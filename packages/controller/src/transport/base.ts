@@ -2,12 +2,14 @@
 // receive-side validation. Subclasses implement write() and teardown() and call deliver()/setStatus().
 import { assertWireSafe, parseWireMessage } from '../guard.ts';
 import type { ManagedTransport, TransportKind, TransportStatus, WireMessage } from '../protocol.ts';
+import type { RelayFrame } from './relay-frames.ts';
 
 export abstract class TransportBase implements ManagedTransport {
   abstract readonly kind: TransportKind;
   private readonly msgFns = new Set<(m: WireMessage) => void>();
   private readonly statusFns = new Set<(s: TransportStatus) => void>();
   private readonly presenceFns = new Set<(p: { hostOnline: boolean }) => void>();
+  private readonly relayFns = new Set<(f: RelayFrame) => void>();
   private current: TransportStatus = 'connecting';
   protected closed = false;
   /** Messages refused by parseWireMessage (malformed, oversized or carrying samples). */
@@ -48,6 +50,14 @@ export abstract class TransportBase implements ManagedTransport {
     };
   }
 
+  /** The relay's control frames (only a link to a relay calls relayFrame()). */
+  onRelayFrame(fn: (f: RelayFrame) => void): () => void {
+    this.relayFns.add(fn);
+    return () => {
+      this.relayFns.delete(fn);
+    };
+  }
+
   close(): void {
     if (this.closed) return;
     this.closed = true;
@@ -68,6 +78,11 @@ export abstract class TransportBase implements ManagedTransport {
   protected presence(p: { hostOnline: boolean }): void {
     if (this.closed) return;
     for (const fn of [...this.presenceFns]) fn(p);
+  }
+
+  protected relayFrame(f: RelayFrame): void {
+    if (this.closed) return;
+    for (const fn of [...this.relayFns]) fn(f);
   }
 
   /** Validate untrusted input, then hand it to the listeners. */

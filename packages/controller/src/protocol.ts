@@ -14,6 +14,7 @@ import type {
   StateVar,
   Tick,
 } from '@pme/engine-core';
+import type { RelayFrame } from './transport/relay-frames.ts';
 
 /**
  * `instructor` (plan instructor-peer-role.md §1): a peer from anywhere that proves the instructor's PIN in its hello;
@@ -241,6 +242,11 @@ export interface ManagedTransport extends Transport {
    * (BroadcastChannel, in-process): a session then learns presence from the host's hello and its 1 Hz state.
    */
   onPresence?(fn: (p: { hostOnline: boolean }) => void): () => void;
+  /**
+   * The relay's control frames (its refusals among them), when the link has a relay. An instructor's session reads the
+   * refusal's code and words from it (plan instructor-peer-role.md P5): `denied`, `too-many-tries`.
+   */
+  onRelayFrame?(fn: (f: RelayFrame) => void): () => void;
 }
 
 export type AckResult = DispatchResult & { commandId: string; rttMs: number };
