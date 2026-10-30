@@ -1,5 +1,6 @@
 // Messages between the main thread and the engine+renderer worker (brief §3.4). Raw samples never cross.
 import type { Capture12, Command, DispatchResult, EngineEvent, EngineOptions, LeadId, PatientSnapshot } from '@pme/engine-core';
+import type { IbpScales } from './ibp-scale.ts';
 import type { RenderPlan } from './skin-plan.ts';
 import type { WaveLaneId } from './wave-lanes.ts';
 
@@ -45,6 +46,8 @@ export type ToWorker =
   | { type: 'restore'; reqId: number; snapshot: PatientSnapshot }
   // Skin switch without restart, and the 12-lead capture
   | { type: 'plan'; plan: RenderPlan }
+  // E130: the IBP1/IBP2 lane scales
+  | { type: 'ibpScales'; scales: IbpScales }
   | { type: 'capture12'; reqId: number }
   // One fast-forward step (MonitorCore.advance)
   | { type: 'advance'; reqId: number; ticks: number; last: boolean };

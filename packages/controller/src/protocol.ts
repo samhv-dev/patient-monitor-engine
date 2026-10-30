@@ -147,9 +147,13 @@ export type ExtraEvent =
   /**
    * The instructor's monitor style, for a phone on the relay (the second screen has its own same-browser style channel).
    * Sent with every answer to a hello (`replay: true`: the relay routes it as the welcome) and at every change.
-   * Presentation only.
+   * Presentation only. `ibp` (E130): the IBP1/IBP2 lane scales (a channel left out is the skin's fixed scale), so a
+   * phone draws the instructor's range.
    */
-  | { type: 'style'; skin: string; theme: string; replay?: true };
+  | { type: 'style'; skin: string; theme: string; ibp?: StyleIbpScales; replay?: true };
+
+/** E130: the IBP1/IBP2 lane scales as the renderer takes them (`@pme/renderer` IbpScales). */
+export type StyleIbpScales = Partial<Record<'IBP1' | 'IBP2', { mode: 'fixed' } | { mode: 'custom'; lower: number; upper: number } | { mode: 'auto' }>>;
 
 /** An alarm raised during a fast-forward (it did not sound); `ended`: it came and went inside the span. */
 export type FastForwardAlarm = AlarmEntry & { ended: boolean };

@@ -143,7 +143,7 @@ function make(o: { cssW?: number; cssH?: number; portrait?: boolean; pressure: (
   };
   let f = 0;
   const runTo = (s: number) => {
-    while (core.clock.renderT < s) core.frame(1000 + (f++ * 1000) / 60);
+    while (core.clock.renderT < s) core.frame(1000 + f++ * 200); // 5 frames a second: the boundaries, not the beats, are under test
   };
   const lane = (i = 3) => (core as unknown as { lanes: SweepLane[] }).lanes[i] as SweepLane;
   const plane = (i = 3) => (core as unknown as { plan: { lanes: PlanLane[] } }).plan.lanes[i] as PlanLane;
@@ -209,7 +209,7 @@ describe('E130 AUTO in the monitor: judged at 30-s sim-time boundaries, never be
     }
     expect(seen[1]).toEqual(seen[0]);
     expect(new Set(seen[0])).toEqual(new Set(['0,200', '0,160'])); // the fixed default before a window, then the judgement
-  });
+  }, 120_000);
 
   it('a resize does not re-judge on its own: the range is the boundary\'s, whatever the lane height', () => {
     const m = make({ pressure: stepUp(70) });

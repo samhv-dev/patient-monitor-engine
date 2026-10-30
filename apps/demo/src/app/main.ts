@@ -88,7 +88,11 @@ if (follow) {
   const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: q.get('session'), load: q.get('load') === 'perf8' ? 'perf8' : null, relay });
   // The session code survives a reload of this window, so a learner monitor and a Remote that follow it find it again
   // (a reload made a new code and left them on a frozen screen)
-  publishStyle(session.code, () => ({ skin: session.skin, theme: session.theme }), (f) => session.onSkin(f));
+  publishStyle(session.code, () => ({ skin: session.skin, theme: session.theme, ibp: session.ibpScales }), (f) => {
+    const offSkin = session.onSkin(f);
+    const offIbp = session.onIbpScales(f); // E130: the IBP lane scales travel with the style
+    return () => (offSkin(), offIbp());
+  });
   if (q.get('session') !== session.code) {
     const u = new URL(location.href);
     u.searchParams.set('session', session.code);
