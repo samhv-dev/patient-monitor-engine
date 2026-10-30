@@ -13,7 +13,7 @@ describe('the Monitor view', () => {
     document.body.replaceChildren();
     const shell = new Shell(document.body, { hostless: false });
     const session = { onLearner: () => undefined } as unknown as AppSession;
-    shell.add(monitorView({ session, link: {} as Link, learnerUrl: 'about:blank' }));
+    shell.add(monitorView({ session, link: {} as Link, learnerUrl: 'about:blank', instructor: () => 'teach' }));
     shell.show({ id: 'monitor', sub: '' });
     const strip = document.querySelector('[role="toolbar"][aria-label="Monitor view"]') as HTMLElement;
     expect([...strip.querySelectorAll('a, button')].map((b) => b.textContent)).toEqual(['Instructor view', 'Full screen', 'Open on a second screen', 'Home']);
