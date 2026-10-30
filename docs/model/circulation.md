@@ -46,7 +46,8 @@ reads it for the per-beat truths the monitor and the other organ models consume.
   an abdominal pump of gain 1: 11.5 mmHg) needs a distressed breathing pattern the MODELED respiratory drive does not
   produce in tamponade (it breathes about 16 × 530 mL). A published model of the same class needs the same two things
   — a large effusion and deep breaths — and attributes the swing to both series and septal (parallel) interaction
-  (Ramachandran et al., Theor Biol Med Model 2009;6:15); this circuit has no septum. Owner decision pending.
+  (Ramachandran et al., Theor Biol Med Model 2009;6:15); this circuit has no septum. Owner decision pending. The
+  link-by-link measurement (E118 P0) is the table at the end of this section.
 - Pleural pressure rises with alveolar pressure in a positive-pressure breath and falls with the tidal volume in a
   spontaneous one (`l2/circ/pleural.ts`).
 - The baroreflex senses the 1 s low-passed MAP (plus a pulse-pressure term, Chapleau & Abboud 1987) against its set
@@ -80,6 +81,53 @@ reads it for the per-beat truths the monitor and the other organ models consume.
   therefore cools by conduction, about 1 °C/h (`l2/thermal/heat.ts`).
 - Blood volume follows Lemmens' indexed rule, 70/√(BMI/22) mL/kg, and the circuit is sized on the weight that rule
   implies (Lemmens 2006, tables §1.3; `l2/body-size.ts`).
+### Pulsus paradoxus: the links measured (E118 P0)
+
+Measured by `circ-pulsus-links.test.ts` on main at 6d19b8b3 (no physiology change): spontaneous breathing at the
+respiratory controller's own breath, seed 7, 70 kg, MODELED, the last 2 of 10 sim-min. Cells and bands are the E118
+plan's (§3.6). Inspiration and expiration are read from the pleural pressure (fallen by ≥ 50 % of the breath's swing,
+or within 10 % of its top); a change is the mean of the inspiratory beats over the mean of the expiratory beats.
+"Ptp" is the transpericardial pressure (P_peri − P_pl, the circuit's `peri` term).
+
+| Link | Cell, band (source) | Healthy | Tamponade 100 mL | Tamponade 250 mL | Bronchospasm 1.0 | Verdict |
+|---|---|---|---|---|---|---|
+| breath, RR × VT (mL) | — | 13.6 × 465 | 13.7 × 468 | 15.2 × 505 | 15.3 × 507 | — |
+| effort, ΔPpl peak-to-trough (cmH2O) | C1 healthy 2–4 (Mase 2018; West) | 4.0 | 4.0 | 4.0 | 4.0 | C1 met, at its edge: the fixed swing |
+| effort scales with VT and resistance | C2 2 × VT ratio 1.8–2.2; bronchospasm above healthy (equation of motion) | ratio 1.00 | — | — | 4.0 vs 4.0 | C2 missed (both) |
+| RV EDV, insp / exp (mL) | — | 140.8 / 129.2 | 129.7 / 119.4 | 75.2 / 72.7 | 141.3 / 129.0 | — |
+| LV EDV, insp / exp (mL) | — | 133.5 / 133.5 | 121.8 / 123.9 | 74.0 / 76.3 | 134.2 / 133.3 | — |
+| venous surge, tricuspid inflow per beat | C3 tamponade +47 to +115 % (Leeman 1988); C3b healthy smaller | +15.0 % | +13.8 % | +21.1 % | +16.7 % | C3 missed; C3b met |
+| LV filling, mitral inflow per beat | C4 tamponade −27 to −43 % (Leeman 1988) | −1.2 % | −3.6 % | −10.3 % | −0.6 % | C4 missed |
+| RV stroke volume | — | +11.9 % | +12.9 % | +12.6 % | +12.6 % | — |
+| LV output, LV stroke volume | C5 tamponade −20 to −46 % (Leeman 1988); C5b healthy < 10 % (Hamzaoui 2013) | +0.2 % | −2.4 % | −6.5 % | +1.3 % | C5 missed; C5b met |
+| Ptp, insp − exp (mmHg) | C7 tamponade > 0 (Shabetai 1965 group C, +4.5); C7b healthy ≈ 0 | +0.04 | +0.55 | +0.56 | +0.05 | C7 met (sign; 1/8 of the dogs); C7b met |
+| PV − LA gradient, insp / exp (mmHg) | C8 tamponade insp ≤ +0.5 and below exp (Golinko 1963, −0.2 / +2.9); C8b healthy > 0 in both | +0.92 / +0.95 | +0.85 / +0.90 | +0.09 / +0.29 | +0.91 / +0.95 | C8 met; C8b met |
+| SBP swing (mmHg, the C9/C10 metric) | C11 bronchospasm above healthy with ΔPpl (Jardin 1982; Hamzaoui 2013) | 2.38 | 3.67 | 3.41 | 2.38 | C11 missed (ΔPpl does not rise) |
+| interdependence bench, apnoea, RA bolus 20 mL/beat × 4 (× W/70) | C6 SBP and LV SV fall tamponade/control ≥ 5, control SBP fall ≤ 2 (Shabetai 1965 group D) | SBP 0.01, SV −0.02 mL, Ptp +0.13 | — | SBP 2.07, SV 1.04 mL, Ptp +1.84 | — | C6 met (ratio 228: the control barely moves) |
+
+The weakest links, against the cells:
+
+- **The effort (C2).** The pleural swing is the fixed 4 cmH2O constant: it moves with neither the tidal volume nor the
+  airway resistance, so bronchospasm gains no pulsus (C11). This is P1's link.
+- **The inspiratory venous surge (C3), the first circulatory link off.** Tricuspid inflow rises +21 % in severe
+  tamponade (band from +47 %) and +15 % in the healthy heart. The dogs' caval flow rose +53–61 % in controls and
+  +47–62 % in tamponade (Shabetai 1965 group A), at quiet pleural swings of 5.5–6.5 cmH2O (group B; Golinko 1963).
+  Scaled linearly from 4 to 6.5 cmH2O the engine's tamponade surge would be about +34 % (est.), still under the band:
+  the surge itself is small in both hearts, before any amplification by the pericardium.
+- **Downstream links in proportion, then attenuated.** The mitral fall per tricuspid rise is −0.49 (−10.3 / +21.1),
+  close to Leeman's −0.43 (−35 / +81): the interdependence passes the surge on in proportion, and the bench (C6) and
+  the pressures (C7, C8) are right in sign. The LV stroke volume then falls only 0.63 × the mitral fall (−6.5 / −10.3),
+  against ≈ 0.94 in Leeman's patients: the filling-to-output link loses a third.
+- Beside the cells, for the reader: the bench's absolute SBP fall (2.07 mmHg at a bolus scaled 4× for size) is below
+  the dogs' 4–11 (mean 6.66), and the inspiratory Ptp rise (+0.56) is 1/8 of theirs (+4.5); the cells compare ratios
+  and signs (plan §3.6), so neither is a verdict. The mild tamponade's SBP swing (3.67) exceeds the severe one's (3.41)
+  in this window.
+
+**Go / no-go from these numbers (plan §5.2).** P3 (atria inside the pericardial volume) proceeds only if C6, C7 or C8
+is off: all three are met, so P3 is **no-go** by the letter. P4 (septum) is tied to C6 by P0's rule, which is met, so
+**no-go** by that rule; P4's own entry reads "only if P0–P3 leave C6 or C5 off", and C5 is off (−6.5 % against −20 to
+−46 %), so it is **go** by that wording. The two rules disagree and the choice is the owner's. The numbers point at the
+effort (P1) and the venous surge (C3) before the septum.
 <!-- /hand:equations -->
 
 ### Relations written in the code comments

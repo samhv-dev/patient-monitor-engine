@@ -38,6 +38,15 @@ the public API is what the packages export (see the API reference), the `pme-sce
   the host when it is shown). Not built: the phone layout (design §6), the Gas sheet, the CPR takeover and an onset
   ramp for delivered items. The Drug sheet's rule for a dose that differs from the card's step is interim, pending the
   owner's ruling.
+- **The pulsus paradoxus link-measurement harness (E118 P0)**, tests and documentation only, no physiology change: the
+  slow file `packages/engine-core/test/engine/circ-pulsus-links.test.ts` reads each link of the chain (pleural swing,
+  tricuspid and mitral inflow per beat, RV and LV stroke volume and EDV, the transpericardial pressure and the
+  pulmonary-vein-to-LA gradient in inspiration and expiration, the SBP swing) in healthy, 100 and 250 mL tamponade and
+  severe bronchospasm, plus an RA-bolus bench of ventricular interdependence in apnoea (Shabetai 1965 group D), against
+  the E118 plan's sourced cells. Met: C1, C3b, C5b, C6, C7, C7b, C8, C8b. Six new `it.fails` with the measured
+  number: C2 (twice: the pleural swing is fixed), C3 (tricuspid +21.1 %, band +47 to +115 %), C4 (mitral −10.3 %,
+  band −27 to −43 %), C5 (LV SV −6.5 %, band −20 to −46 %), C11 (bronchospasm adds no swing). The table and the
+  go/no-go for the atria and septum pieces are in `docs/model/circulation.md`.
 
 ### Fixed
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's
