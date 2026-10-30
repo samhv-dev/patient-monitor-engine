@@ -58,7 +58,7 @@ function rig(o: { loaded?: boolean; paused?: boolean; hooks?: boolean } = {}) {
   const sv = new ScenarioView();
   const ctl = { scenario: sv, state: { mode: 'modeled', values: {}, control: {} }, timeScale: 1, hostPaused: !!o.paused, fastForward: null, simT: 100, bookmarks: [] };
   let runs = 0;
-  const host = { spec: SPEC, mode: 'modeled', record: record(Date.UTC(2026, 9, 30, 9, 0)), driver: { markStages: () => undefined, stageMarks: () => [], vitalHolds: () => [] } };
+  const host = { spec: SPEC, mode: 'modeled', record: record(Date.UTC(2026, 9, 30, 9, 0)), driver: { markStages: () => undefined, stageMarks: () => [], vitalHolds: () => [] }, onBriefing: () => () => undefined, endBriefing: () => undefined };
   const link = {
     ctl, simT: 100, conditions: new Map(), alarms: null, alarmSummary: { level: null, n: 0, top: null }, log: [], ramps: new Map(), host,
     // the host's pause as the controller sees it, once it answered
