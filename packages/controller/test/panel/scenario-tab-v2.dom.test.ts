@@ -35,7 +35,7 @@ describe('panel Scenario tab and a pme-scenario/2 document (F1)', () => {
     await waitFor(() => (panel.el.querySelector('.pme-scn-title') as HTMLElement).textContent === 'MH (format 2)');
     const q = (sel: string) => panel.el.querySelector(sel) as HTMLElement;
     expect(q('.pme-scn-live').hidden).toBe(false);
-    expect(q('.pme-scn-state').textContent).toBe('early');
+    expect(q('.pme-scn-state').textContent).toBe('Early signs'); // F2: ScenarioView prints the phase's label
     expect(q('.pme-scn-notes').textContent).toBe('');
     expect(panel.el.querySelectorAll('.pme-scn-next li').length).toBe(0);
     expect(panel.el.querySelectorAll('.pme-scn-states li').length).toBe(0);

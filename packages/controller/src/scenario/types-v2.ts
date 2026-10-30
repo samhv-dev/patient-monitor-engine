@@ -1,7 +1,7 @@
 // `pme-scenario/2` document types (docs/plans/scenario-format-v2.md §3). The JSON Schema in
 // scenarios/pme-scenario-2.schema.json is the contract; these types mirror it. The header is /1's, whole; `give` and
-// `script` commands are /1's DocCommand. Nothing runs a /2 document yet: the phase runner is F2's, the administration
-// record and grade() are F3's. The shared types at the end are fixed here so F2 and F3 can be built in parallel.
+// `script` commands are /1's DocCommand. The phase runner (phase-runner.ts) is F2's; the administration record and
+// grade() are F3's. The shared types at the end are fixed here so F2 and F3 can be built in parallel.
 import type { PkRoute } from '@pme/engine-core';
 import type { RunnerInput } from './runner.ts';
 import type { DocCommand, Op, ScenarioDoc, VitalVar } from './types.ts';
@@ -163,6 +163,64 @@ export interface Administration {
 
 /** F4's engine signals (the `state` event's additive `signals` field), rank 3. The /1 runner never receives them. */
 export type SignalsInput = { kind: 'signals'; signals: { pulse: boolean; dantroleneE: number; setMinuteVentilationLMin: number | null; map: number } };
-/** What the phase runner takes: the /1 runner's inputs plus the signals. (The plan names it `RunnerInput`; that name is
- *  the /1 runner's, in runner.ts, which no piece edits.) */
-export type RunnerInputV2 = RunnerInput | SignalsInput;
+/** The rhythm id the engine draws (the `state` event's `rhythm.id`), rank 3: what a `rhythm:<id>` signal leaf reads
+ *  (F2). The /1 runner never receives it. */
+export type RhythmInput = { kind: 'rhythm'; id: string };
+/** What the phase runner takes: the /1 runner's inputs plus the signals and the rhythm. (The plan names it
+ *  `RunnerInput`; that name is the /1 runner's, in runner.ts, which no piece edits.) */
+export type RunnerInputV2 = RunnerInput | SignalsInput | RhythmInput;
+
+/**
+ * The phase runner's state (plan F2): plain JSON, so a bookmark holds it next to the engine snapshot and a restore
+ * rewinds the phase timeline, the administration record and the rule edges with the course.
+ */
+export interface PhaseRunnerState {
+  /** The state's format. */
+  schema: 'pme-scenario-runner/2';
+  /** The card's id: a state restores only into a runner of the same card. */
+  docId: string;
+  /** start() has run. */
+  started: boolean;
+  /** The current phase's id. */
+  stateId: string;
+  /** The sim time of the last call. */
+  lastT: number;
+  /** Sim seconds in the current phase, pauses excluded. */
+  stateT: number;
+  /** Sim seconds on the scenario clock (a script entry's `atScenarioS`), pauses excluded. */
+  scenarioT: number;
+  /** The scenario is paused: no time is credited and no rule is evaluated. */
+  paused: boolean;
+  /** Command batches sent (the start's setup and the script's entries); `driver.position()` reads it. */
+  batch: number;
+  /** The sim time the current phase was entered. */
+  enteredT: number;
+  /** Engine truth (rank 3) by name, which every phase, outcome and anchor rule reads (Q22). */
+  truth: Record<string, { v: number; t: number }>;
+  /** The displayed numerics (rank 2) by name, which only a judged row's clock reads (§7). */
+  display: Record<string, { v: number; t: number }>;
+  /** The rhythm id the engine draws; null until one arrives. */
+  rhythm: string | null;
+  /** The pulse (F4's `signals.pulse`); null until one arrives. */
+  pulse: boolean | null;
+  /** The pulse has been lost at some point of the course (`rosc` is a pulse after a loss). */
+  pulseLost: boolean;
+  /** Sim seconds each value leaf with `forS` has held, by leaf key (`<rule name>`, then `.i` per level). */
+  trueFor: Record<string, number>;
+  /** The slope rings: 1 Hz samples `[t, v]` of each variable a slope or unchanged leaf reads, as long as its window. */
+  rings: Record<string, Array<[number, number]>>;
+  /** Each named rule's value at the last evaluation: the state its next edge is read against. */
+  ruleNow: Record<string, boolean>;
+  /** The /1 shape of the phase entries, for the readers of `history` (at most 200, as /1's). */
+  history: Array<{ t: number; stateId: string; transitionId?: string }>;
+  /** The phase timeline (at most 500 entries, the oldest dropped). */
+  phases: PhaseEntry[];
+  /** The administration record: F3 fills it. */
+  admin: Administration[];
+  /** The true/false edges of every named rule (at most PhaseRunner.EDGES_PER_RULE per rule; its first edge is kept). */
+  edges: RuleEdge[];
+  /** The script entries fired (ids): each fires once. */
+  fired: string[];
+  /** How many times each action has been taken (an `action:<id>#<n>` script anchor). */
+  takings: Record<string, number>;
+}
