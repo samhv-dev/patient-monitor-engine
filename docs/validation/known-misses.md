@@ -8,7 +8,7 @@ and the test is marked as an expected failure with the measured value in its tit
 module that owns it, until the mechanism is fixed. The release-candidate view of the same list, with where each
 item is tracked, is [known deviations](../guides/known-deviations.md); each module is described in [docs/model](../model/README.md).
 
-**158 known misses.** Split from the test titles: a band recognised in the target of 149, a measured value in 147, a source in 60; "—" = not stated in a form the generator reads.
+**157 known misses.** Split from the test titles: a band recognised in the target of 148, a measured value in 146, a source in 60; "—" = not stated in a form the generator reads.
 
 **The bands themselves were audited** against the literature (target audit, 2026-10-11; the rows are in [target-audit.tsv](target-audit.tsv)): 148 of these misses carry an audit verdict — RIGHT 30, TOO NARROW 27, TOO WIDE 3, MIS-SPECIFIED 61, UNSUPPORTED 27 (a miss can carry several rows). RIGHT: the band matches its source; TOO NARROW / TOO WIDE: the source supports a wider / narrower band; MIS-SPECIFIED: the band measures something other than its source did; UNSUPPORTED: no source found for it. A proposed band is evidence for an owner ruling, not a change: until a ruling, the test keeps its band. The audit itself, row by row with its evidence, is [published here](target-audit/30-target-audit.md) with its CSV twin and synthesis; the numbered evidence notes it cites as "research/NN" live in the project's research folder outside the repository.
 
@@ -19,7 +19,7 @@ item is tracked, is [known deviations](../guides/known-deviations.md); each modu
 | [Pressure waveforms and pleth](#pressure-waveforms) | 1 |
 | [Lungs: mechanics, ventilation–perfusion, pathology](#lungs) | 6 |
 | [Gas exchange and capnography](#gas-exchange) | 2 |
-| [Breathing, airway and the ventilator coupling](#breathing) | 21 |
+| [Breathing, airway and the ventilator coupling](#breathing) | 20 |
 | [Blood, acid–base, electrolytes and fluids](#blood) | 10 |
 | [Brain, kidney and liver](#organs) | 13 |
 | [Endocrine, metabolism and temperature](#endocrine-thermal) | 19 |
@@ -111,7 +111,6 @@ Module page: [docs/model/breathing.md](../model/breathing.md)
 | awake: PaCO2 35–45, VT 4.2–10.4 mL/kg, lactate rise < 0.5 over 15 min | VT 15.4 mL/kg | — | RIGHT ([audit row 75](../../docs/validation/target-audit/30-target-audit.md#row-75)) | keep; add RR 17–30 /min for a 3–5-year-old | [`resp-child-baseline.test.ts`](../../packages/engine-core/test/engine/resp-child-baseline.test.ts) |
 | preoxygenated apnoea: displayed SpO2 < 90 no more than 20 s after SaO2 < 90 | 22 s | — | TOO NARROW ([audit row 189](../../docs/validation/target-audit/30-target-audit.md#row-189)) | ≤ 30 s from arterial SaO2 < 90 to displayed SpO2 < 90 (child, finger, normal CO); or keep ≤ 20 s but start the clock at the site (after the dead time) | [`resp-child-baseline.test.ts`](../../packages/engine-core/test/engine/resp-child-baseline.test.ts) |
 | CPR (quality 1, 110/min): the adult’s coRatio in the same 0.25–0.33 | 0.363 | — | RIGHT ([audit row 32](../../docs/validation/target-audit/30-target-audit.md#row-32)) | keep 0.25-0.33 at q 1 (a lower quality should scale below 0.25) | [`resp-child-rest.test.ts`](../../packages/engine-core/test/engine/resp-child-rest.test.ts) |
-| MH: the core rises > 1 °C in the first 30 min | +0.20 °C | — | not audited | — | [`resp-coupling.test.ts`](../../packages/engine-core/test/engine/resp-coupling.test.ts) |
 | noxious stimulus 1.5 under remifentanil 0.1 + propofol 50 (SGA, FiO2 0.5): VE ≥ +20 % | +3.3 % | — | UNSUPPORTED ([audit row 76](../../docs/validation/target-audit/30-target-audit.md#row-76)) | VE rises (≥ +5 %) and rises less than the same stimulus under propofol alone [ENG; owner ruling] | [`resp-drive-nonchemical.test.ts`](../../packages/engine-core/test/engine/resp-drive-nonchemical.test.ts) |
 | child 4 y 16 kg: 2–3.2 min (Patel 160 ± 31 s) | 3.38 | — | RIGHT ([audit row 77](../../docs/validation/target-audit/30-target-audit.md#row-77)) | keep (±1 SD); if the owner wants population width, ±1.5 SD gives 1.9–3.4 min | [`resp-ga-state.test.ts`](../../packages/engine-core/test/engine/resp-ga-state.test.ts) |
 | RS14: FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10 over control | PaCO2 +6.7 / EtCO2 +5.99994 | — | MIS-SPECIFIED ([audit row 78](../../docs/validation/target-audit/30-target-audit.md#row-78)) | ΔPaCO2 and ΔEtCO2 +3–8 mmHg at 20 min; +8 ± 1 only at steady state (≥ 60 min) | [`resp-inspired-co2.test.ts`](../../packages/engine-core/test/engine/resp-inspired-co2.test.ts) |
@@ -189,12 +188,12 @@ Module page: [docs/model/endocrine-thermal.md](../model/endocrine-thermal.md)
 | the bounds: ΔHR ratio ≤ 0.5 and ΔMAP ratio ≤ 0.9 | HR 0.56, MAP 1.00 | — | TOO NARROW ([audit row 15](../../docs/validation/target-audit/30-target-audit.md#row-15)) | esmolol 1 mg/kg, no opioid: dHR ratio <= 0.65; dMAP ratio 0.5-1.0 (HR blunted more than MAP, already asserted) | [`stimulus-surge.test.ts`](../../packages/engine-core/test/engine/stimulus-surge.test.ts) |
 | sepsis (phase sepsis) under GA: core 38.5–41 °C at 90 min | 36.60 | tables §5e | MIS-SPECIFIED ([audit row 134](../../docs/validation/target-audit/30-target-audit.md#row-134)) | Under ~1 MAC GA there is no febrile threshold: the sepsis arm's core at 90 min should be >= the GA control + 0.3 °C and <= 37.5 °C (fever largely abolished). Keep 38.5-39.5 °C (§5e) only for an awake or lightly sedated patient, at 4-8 h | [`thermal-fever-ga.test.ts`](../../packages/engine-core/test/engine/thermal-fever-ga.test.ts) |
 | thyroid storm under GA: core 38.5–41 °C at 1 h (thyroid.ts header; tables §5c) | 36.34 | tables §5c | MIS-SPECIFIED ([audit row 135](../../docs/validation/target-audit/30-target-audit.md#row-135)) | Under GA at 1 h: core above the GA control by +0.3 to +1.0 °C (metabolic heat only). Keep 38.5-41 °C as the awake/postoperative presentation, over hours | [`thermal-fever-ga.test.ts`](../../packages/engine-core/test/engine/thermal-fever-ga.test.ts) |
+| after the VF the core falls 0.5–1.5 °C in the hour (forensic rule of thumb) | 2.30 °C from 40.30 °C | — | not audited | — | [`thermal-mh-arrest-heat.test.ts`](../../packages/engine-core/test/engine/thermal-mh-arrest-heat.test.ts) |
 | open wound: vasoconstriction begins at 3–4 h | 2.27 h | Sessler 2000 | TOO NARROW ([audit row 137](../../docs/validation/target-audit/30-target-audit.md#row-137)) | onset 1.5-4 h (or assert the event itself: onset at the model's threshold 34.5 ± 0.2 °C, which already passes, and drop the clock) | [`thermal-periop-course.test.ts`](../../packages/engine-core/test/engine/thermal-periop-course.test.ts) |
 | 30 min of sustained sympathetic drive (symp 2.5) lowers it below 0.45 | 0.485 | — | UNSUPPORTED ([audit row 138](../../docs/validation/target-audit/30-target-audit.md#row-138)) | Owner choice. Either a direction-only test (falls monotonically; < 0.6 by 60 min), or a band set from the plan's own arithmetic, 0.46-0.52 at 30 min, tagged [ENG]. Put the sourced behaviour at scenario level: ketamine in prolonged shock does not raise MAP/CO (Waxman 1980) | [`cat-reserve.test.ts`](../../packages/engine-core/test/l2/endo/cat-reserve.test.ts) |
 | GA: the hour-8 plateau stays at or above 34.5 °C | 34.37 | — | MIS-SPECIFIED ([audit row 140](../../docs/validation/target-audit/30-target-audit.md#row-140)) | hour-8 plateau between threshold - 0.5 and threshold + 0.1 °C (34.0-34.6 for the 34.5 threshold) and flat (< 0.1 °C/h, the sibling test); population range 34.0-35.2 °C for a 40-y adult | [`temp.test.ts`](../../packages/engine-core/test/l2/temp/temp.test.ts) |
-| MH: once established the core rises ≥ 1 °C per 15 min | +0.35 °C in minutes 30 → 45 | tables §7 check 21 | not audited | — | [`temp.test.ts`](../../packages/engine-core/test/l2/temp/temp.test.ts) |
-| MH (severity 1): +1 °C per 5–15 min once established | +0.18 °C in minutes 20 → 30 | tables §7 check 21 | not audited | — | [`heat.test.ts`](../../packages/engine-core/test/l2/thermal/heat.test.ts) |
-| MH (severity 1): after dantrolene at 20 min the core is ≥ 0.3 °C below its peak 60 min later | 0.13 °C | — | not audited | — | [`heat.test.ts`](../../packages/engine-core/test/l2/thermal/heat.test.ts) |
+| MH: once established the core rises ≥ 1 °C per 15 min | +0.71 °C in minutes 30 → 45 | tables §7 check 21 | not audited | — | [`temp.test.ts`](../../packages/engine-core/test/l2/temp/temp.test.ts) |
+| MH (severity 1): +1 °C per 5–15 min once established | +0.45 °C in minutes 20 → 30 | tables §7 check 21 | not audited | — | [`heat.test.ts`](../../packages/engine-core/test/l2/thermal/heat.test.ts) |
 
 <a id="neuro"></a>
 ## Anaesthetic depth, ventilatory drive and neuromuscular block
@@ -287,8 +286,8 @@ Module page: [docs/model/presentation.md](../model/presentation.md)
 
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
-| untreated: early signs, established crisis, VF from hyperthermia | no established crisis and no VF in 51 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
-| treated late (the run-sheet path): crisis 1 min into the established crisis | the established crisis is not entered in 60 min, the call is not made | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
+| untreated: early signs, established crisis, VF from hyperthermia | established at +45.6 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
+| treated late (the run-sheet path): crisis 1 min into the established crisis | the call comes at +46.6 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
 
 <a id="integration"></a>
 ## Whole-patient scenario suites
