@@ -283,6 +283,12 @@ export function validatePkCommand(cmd: Command, _pk: PkState): string | undefine
 /** The routes whose kinetics the engine's intravenous models honour (IO and a central line are IV). */
 export const IV_ROUTES: readonly PkRoute[] = ['iv', 'io', 'central'];
 
+/** True when the engine models a dose of this drug by this route (validatePkCommand's route rule; a volatile row takes no drug dose). */
+export function routeHonoured(drugId: string, route: PkRoute): boolean {
+  const row = DRUGS[drugId];
+  return !!row && row.pk.kind !== 'volatile' && (row.routes ?? IV_ROUTES).includes(route);
+}
+
 /** Apply a validated command. True for every drug/infusion/tci/vaporiser command (the drug model consumes them all). */
 export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {
   if (cmd.type !== 'applyEvent') return false;
