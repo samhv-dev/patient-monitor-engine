@@ -66,7 +66,7 @@ the public API is what the packages export (see the API reference), the `pme-sce
   infusion rate row; they printed "—" with the glossary's placeholder unit. The glossary's tooltip for the rate and
   target rows names the units in place of "per row".
 
-## [1.0.0-rc.4] - 2026-10-30
+## [1.0.0-rc.4] - 2026-10-29
 
 Fourth public **pre-release** (release candidate) of a teaching simulator. It is for education only: it is not a
 medical device and it is not clinically validated. It is not the final 1.0.0: the calibration pass and the blind

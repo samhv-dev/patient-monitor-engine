@@ -718,3 +718,272 @@ F7 no (0 errors) · F8 no (A4, 6 pages) · F9 no (note 2) · F10 no. **No F-fail
 
 **Page counts:** facilitator report (tamponade, Chromium) **6 A4 pages** in the talk and in the A3 test; learner handout
 **1 A4 page**; Persian handouts 6 / 6 / 7.
+
+## Q2 on rc.3 — the rehearsal on the rc.3 tag kit (fcf99b70, v1.0.0-rc.3)
+
+*Folded in on 2026-10-29 from the closed #117 (branch `docs-rc3-release`, R4-Q2 (b)), as written on 2026-10-23;
+the evidence is in `kit-round-a/q2-rc3/` and `q2-rc3-a3/`.*
+
+*Measured 2026-10-23 (13:58–15:30 +0330) on kit `pme-showcase-kit-fcf99b70`, built by `make-bundle.mjs` from a
+clean worktree of the tag `v1.0.0-rc.3` = main **fcf99b70** (#116). `VERSION.txt`: `Commit: fcf99b706e2c…`, no
+"(with uncommitted changes)", `Branch: HEAD`; the app's build id **`fcf99b70 2026-10-23`** (no `+`); `1.0.0-rc.3` in 3
+of the app's scripts, rc.1/rc.2 in none. Served as built by its own Start Classroom launcher; three emulated phones
+(Pixel 7 on Chromium, iPhone 13 on WebKit) joined once at the QR moment. One run at a time; load average ≈ 2–3.7.
+Script: `kit-round-a.kitround.ts` as on the tag (the close's bounded "Return here" click came with the bump PR,
+88fe8b75) with the talk's Notes line naming rc.3. Folders: `docs/showcase/kit-round-a/q2-rc3/` (the talk, both
+engines; the set this section and the Persian handouts read) and `q2-rc3-a3/` (the A3 test). The rc.2 numbers beside
+these are the rc.2 tag run's (§"Q2" on the rc.2 docs PR #97, folder `q2-rerun/`; that PR is still a draft [closed 2026-10-23]).*
+
+**The kit.** `check-relay.mjs`: both `.cmd` files "CRLF, ASCII, runs server\launch.mjs"; **PASS, 4 of 4 runs**, node
+v26.12.1 (`q2-rc3/relay-fcf99b70.json`; rc.2 2 of 2). The Start view and Settings → About read **"Version 1.0.0-rc.3
+(pre-release). For education only. Not a medical device and not clinically validated: never use it for patient
+care."** (both engines). The Debrief footer reads "… Version 1.0.0-rc.3 (pre-release), build fcf99b70 2026-10-23."
+(both engines; all 6 pages of the Chromium PDF). `about.preRelease` reads `false`: the script's regex still names rc.1.
+
+**How it ran.** First time through, no re-run: **Chromium 1 passed (9.7 min), WebKit 1 passed (9.7 min)**; 9 min 38 s
+of wall from the opening to the end of the close on both (rc.2 9 min 24 s / 9 min 39 s). No hang in the close. 34
+files with the relay JSON. A3: **2 passed (7.7 min)** (rc.2 7.6 min).
+
+**Verdict marks** — every mark the same KIND as the table, both engines:
+
+| Segment | rc.2 Q2 (C / W) | rc.3 Chromium | rc.3 WebKit |
+|---|---|---|---|
+| 0 Opening + QR | rc.2 label · 3 phones · joins 2.4 / 2.8 s | rc.3 label · `3 phones following` · join 2.5 s | same · 2.9 s |
+| 1 Bronchospasm + H21 | – ✓ – (02:06) · hold/cockpit `true` · 1 506 frames | **– ✓ –** (salbutamol 02:07) · `true`/`true` · 1 507 contiguous frames, EtCO₂ 34, awRR 14 throughout | **– ✓ –** (02:06) · `true`/`true` · 1 505 |
+| 2 Tamponade + Debrief | ✓✓✓✓◆ · recognition 01:05 / 01:06 · CPR 3 s · drainage 1:30 · stop 2 s · PDF A4 6 pp | **✓✓✓✓◆** · 01:06 · 3 s · 1 min 30 s · 2 s · pulseless 3 min 07 s · **PDF A4, 6 pages** · load → crystalloid 222.4 s | **✓✓✓✓◆** · 01:04 · 3 s · 1 min 30 s · 2 s · 3 min 07 s · print-media PNG · 221.6 s |
+| 4 MH early call, 13:03 | ✓✓✓––✓ · Early signs 06:52 · call 07:02 / 07:03 · press 13:03 / 13:04 · < 40 07:28 / 07:29 | **✓✓✓––✓** · 06:52 · call 07:02 (10 s) · dantrolene 07:23 (21 s) · press 13:03 · < 40 07:28 | **✓✓✓––✓** · 06:51 · 07:02 (11 s) · 07:23 · 13:03 · < 40 07:27 |
+
+**States as the cards** (both engines): tamponade deteriorating 06:14, pulse lost 07:48 / PEA 07:49, CPR 07:51,
+drained 09:21, ROSC 10:57 [the record: ROSC 10:55, CPR stopped 10:57] — **the cue cards' 7:48 / 9:21 / 10:57 hold exactly**; MH surgery 04:01 / 04:02, Early signs
+06:52 / 06:51, trigger off 07:02, dantrolene 07:23, recovering 08:36, normoventilated 13:04 / 13:03. MH EtCO₂ after
+the press, per minute: 38 · 49 · 52 / 51 · 53 · 54 · 49 / 47 · 44 · 44 · 43 · 43 · 43, peak **55 at 17:27** (rc.2 peak 55
+at 17:17 / 17:32). Key moments: bronchospasm 1, **tamponade 7**, MH 9. Timeline rows: bronchospasm 18 / 17,
+tamponade 44 / 42, MH 42 / 41 (rc.2 17 / 17, 42 / 44, 42 / 43). Errors (page and console): **0** everywhere.
+
+**A3 on the tag kit** (`q2-rc3-a3/`, F10): marks ✓✓✓✓◆ on both; **learner handout 1 A4 page, 0 verdict words**, its
+"Take-home points" the card's three owner lines (the second: "Drainage is the treatment: plan it before the pressure
+falls."); `pdffonts`: Inter-Regular and Inter-Regular_Bold embedded (plus `.SFNS` and one Helvetica-Bold face, the
+system fallback for a few glyphs); facilitator PDF 6 A4 pages. keyTimes on both: recognition 1 min 08 s · first team
+action 7 min 51 s · CPR 3 s (C) / 4 s (W) · drainage 1 min 30 s · stop CPR 2 s (C 10:55 → 10:57, W 10:56 → 10:58) ·
+pulseless 3 min 07 s (C) / 3 min 08 s (W) (rc.2: 1 min 07 s, 7 min 51 s, 3 s, 1 min 30 s, 2 s, 3 min 07 / 08 s);
+**moments 7**; errors 0. F10 does not fire.
+
+**The six monitor captures** (`q2-rc3/q2-*-monitor-{chromium,webkit}.png`, 1000 × 800, the Saadat-like photo layout):
+on all six, a two-row header (P1, BED 01 / ADULT, the date and time) over six lanes — ECG labelled "II X1 NORMAL", a
+second ECG unlabelled, CO₂ filled yellow breath by breath (never a solid block: FX-25 holds), IBP1 (ART) with dotted
+200/120/40 scale lines, IBP2 (30/10/−10), pleth "NORMAL X1" — each with its speed at the right; at the right the HR
+tile, NIBP with the T1/T2/DT column, the EtCo2 | FiCo2 | AWRR row, IBP1, IBP2, the BFI row; a full-width bottom strip
+(%SPO2, PI, PVI, SpOC, %SpCo, %SpMet, SpHb); red limits beside the values. Tamponade at 1:00: IBP2 the CVP wave (blue),
+tile 17 (C) / 18 (W), "CVP MEAN TOO HIGH" in the alarm bar. Bronchospasm and MH: IBP2 lane empty and its tile blank
+(neither card connects a CVP line: not a missing lane). MH at Early signs: EtCO₂ 46, the EtAA tile 0.8 (MAC 0.4).
+
+**The six showcase-card shots, re-taken** (`rehearsal.showcase.ts`, one worker): **16 passed (55.7 min**; 27.7 min Chromium, 28.0 min WebKit; rc.2 55.5 min); **64 of 64 soft checks** pass and no page or console error, although another job held the Mac at a load average of up to ≈ 134 during it. 48 files: 16 modified (the four tests whose shots main already had: healthy induction, anaphylaxis, class IV haemorrhage, the second-scenario clock; JPG + JSON per engine), 32 new (the other four tests' JPG + JSON per engine, first committed here, and 16 `results/run-sheet-*.md`); 49 older files the run no longer writes are kept (e.g. `severe-tamponade-then-induction-*`, `…-vent-first-OLD-4a1cc3f7`, `multiwindow-*`). Tamponade (Chromium), MH (WebKit) and anaphylaxis (Chromium) opened: the Saadat-like grid and six lanes as in the Q2 captures.
+
+**macOS WebKit e2e** (tag worktree, `env -u CI`): FX-16 `--repeat-each 3` **3 passed**, none skipped: phone / host
+beeps 93 / 94 (**99 %**), 93 / 94 (**99 %**), 93 / 93 (**100 %**), 0 dropped on either side (rc.2 99 / 100 / 100 %);
+FX-14 (hidden tab pauses, "(paused)", the toast on return), FX-24 (the follower after a fast-forward and on join),
+FX-25 (the CO₂ lane after attach) **3 passed**, none skipped.
+
+**Persian, the three exports** (`q2-rc3/` Chromium JSONs, `debrief-fa.mjs --version 1.0.0-rc.3 --fonts <Vazirmatn>
+--text`): bronchospasm **6 A4 pages** (82 entries, 79 unreviewed), tamponade **7** (110, 107), MH **8** (112, 109); **0
+strings without translation** each; `verify_pdf.py --expect-font Vazirmatn` exit 0, 0 unexpected fonts, 0 errors, 0
+WARN. Each names 1.0.0-rc.3 and fcf99b70. The three owner-approved take-home lines (#112) print on each, the only
+reviewed entries each report uses. The owner's copies: `_sandbox/pme-debrief-fa/debrief-fa-*-2026-10-23.pdf`.
+
+**Phones and relay.** `3 phones following` at the QR moment; every phone `synced` at every segment's end; H21's hold
+kept every 2-s sample. Resyncs per phone: 5 / 6–7 by bronchospasm's end, 10 / 10–11 by the tamponade's end, 18–19 by
+the close. Largest phone-vs-instructor difference: bronchospasm 0 s; tamponade HR 1.5 s (C) and **4 s (W)**; at the
+close the AGENTS tile, 29.6 s: instructor "0.0", every phone "---", after the style change (S12-F2 as before).
+
+**The close (FX-12).** After Restart patient the session bar reads "No scenario" on both engines (as before); the bounded
+"Return here" click returned (`returnClicked: true`) on both.
+
+**Gate reading (Task 4 Step 7):** F1 no · F2 no (4/4) · F3 no (rc.3 label and footer; no rc.1/rc.2 anywhere) · F4 no
+· F5 no · F6 no (PEA, ROSC, Early signs, Recovering all came) · F7 no (0 errors) · F8 no (A4, 6 pages) · F9 no (IBP2
+empty by scenario) · F10 no. **No F-failure.**
+
+**Findings** (recorded, not fixed):
+1. **Tile text collides at 1000 × 800** on all six captures: the EtCo2 tile's "mmHg" runs under "FiCo2"; "AWRR"
+   overprints its red limits (30 / 5); "SQI%EMG%" has no gap; in MH the EtAA tile covers "SQI%EMG%" ("SQI%EI"); MH's
+   capnogram plateau inks over the lane's "CO2" and "50mmHg" labels. The gate reference
+   (`docs/gates/saadat-pr-g/after-co2-ventilated-1280x800.png`) is 1280 × 800: for the renderer's pass 3.
+2. **The NIBP tile on the three cards reads "/"** with no value and no "AUTO(5Min)" label at the capture moments (O2's
+   AUTO 5 min is the free-play default; the smoke check's item 2 looks at it).
+3. **WebKit, tamponade at 1:00:** the IBP2 value "18" drawn almost black (the alarm blink's dark phase at the capture
+   instant).
+4. **WebKit, tamponade:** one phone-vs-instructor HR difference of 4 s (instructor 54 → 112, phone 49 → 117, at 104.8 s
+   of wall, while HR changed fast); rc.2 1.5 s. Over the script's 2-s S12-F2 rule; the phones were `synced`.
+5. Persian pages 7 and 8 for tamponade and MH (rc.2 6 and 7): +1 each, within the plan's ±1.
+6. The A3 handout embeds `.SFNS` and Helvetica-Bold faces beside Inter (system fallback for a few glyphs); the smoke
+   check's item 7 compares the print in Safari and Chrome by eye.
+7. Times within ±2 s sim of rc.2's Q2 on every card (recognition 01:04–01:08 is the script's tick, not the model).
+8. The release workflow's `playwright install --with-deps` took ≈ 20 min (the whole rc.2 run ≈ 5 min); the release
+   succeeded.
+
+**Not measured** (the smoke check and W cover these in part): real Safari, real phones, sound by ear, a real print
+dialog, the NIBP AUTO 5 min and IBP-off free-play defaults (no capture in free play), Windows.
+
+## Q2 on rc.4 — the rehearsal on the rc.4 tag kit (0c4b396f, v1.0.0-rc.4, pre-release)
+
+*Measured 2026-10-29, 11:40–12:10 UTC (15:10–15:40 +0330), on kit `pme-showcase-kit-0c4b396f`, built by
+`make-bundle.mjs` from a clean worktree of the tag `v1.0.0-rc.4` = main **0c4b396f** (#172). `VERSION.txt`:
+`Commit: 0c4b396f…`, `Branch: HEAD`; the app's build id **`0c4b396f 2026-10-29`** (no `+`); `1.0.0-rc.4` in 4 of the
+app's scripts, an older rc in none. Served as built by its own Start Classroom launcher; three emulated phones joined
+once at the QR moment; reaction 2 s, 3 s per Explore screen. One run at a time; load average 2.2–5.2 in the talk, up to
+11.5 in A4. Script: `kit-round-a.kitround.ts` as on the tag (#172's MH-only talk; A4's Run by "Live demo, 3 November").
+Folders: `docs/showcase/kit-round-a/q2-rc4/` (the talk, both engines, the stop shots in `shots/`, the relay JSON) and
+`q2-rc4-a4/` (A4 MH and A4 haemorrhage, both engines; their Debrief JSONs, PDFs, print PNGs and the Persian renders).
+Bases: the talk against #172's talk run (kit a88f95a7, 29 October, Chromium only; the run sheet's [Q1-MH]); A4 against
+the 24 October (+0330; 23 October UTC) records in `docs/showcase/kit-round-a/a4-*` (kits 52b0390b and 33a6c92b). rc.3's Q2 was a six-segment
+talk on the older cards and is not compared row by row. The plan's prep run (Task 0 Step 5) was not run, so there are
+no prep-run values. Gate note: `docs/gates/rc4-release.md`.*
+
+**The kit.** `check-relay.mjs`: both `.cmd` files "CRLF, ASCII, runs server\launch.mjs"; **PASS, 4 of 4 runs**, node
+v26.12.1 (`q2-rc4/relay-0c4b396f.json`). Home reads **"Version 1.0.0-rc.4 · pre-release · build 0c4b396f"** with the
+footer "For educational use only; Not to be used in patient care." (both engines). Every Debrief footer reads
+"… Version 1.0.0-rc.4 (pre-release), build 0c4b396f 2026-10-29." (8 of 8 pages in each Chromium PDF). 76 app files,
+3.2 MB (rc.3 71, 2.3 MB).
+
+**How it ran.** First time through, no re-run: the talk **Chromium 1 passed (5.1 min), WebKit 1 passed (5.0 min)**;
+A4 **4 passed (13.8 min)**. Errors (page and console): **0** in every record.
+
+### The talk (the MH-only programme, P29)
+
+**On the record's clock** (the measures and the state list of each `q1-1-…json` and `q1-talk-…json`, floored to the
+second; every cell of this table is from the records, #172's from `scratch/kitround-mh-only/`):
+
+| Row | #172 run (a88f95a7, C) | rc.4 Chromium | rc.4 WebKit |
+|---|---|---|---|
+| Opening: Home line · phones | rc.3 label (main) · 3 following, 2.9 s after the QR | rc.4 label · **3 following**, 2.4 s | rc.4 label · **3 following**, 3.0 s |
+| Segment 1 wall · Early signs → Pause | 73.6 s · 8:09 → 8:10 | 74.0 s · **8:12 → 8:12** | 73.6 s · 8:11 → 8:11 |
+| Stop 1 (machine part) | 48.5 s | 47.5 s | 47.6 s |
+| Call (trigger off) · dantrolene | 8:12 · 8:32 | 8:14 · 8:34 | 8:13 · 8:33 |
+| EtCO₂ below 40 · Recovering | 8:36 · 9:35 | 8:38 · 9:37 | 8:37 · **9:38** |
+| Span 1 wall · fast-forward · Pause (stop 2) | 20.2 s · 10.3 s · 13:50 | 20.0 s · 10.5 s · 13:52 | 19.9 s · 10.5 s · 13:51 |
+| Stop 2 (machine part) | 66.0 s | 62.1 s | 62.0 s |
+| Ventilation back | 13:52 | 13:53 | 13:53 |
+| EtCO₂ past 45 · span 2 wall · fast-forward | 14:06 · 15.2 s · 10.6 s | 14:07 · 15.0 s · 10.4 s | 14:06 · 15.0 s · 10.5 s |
+| Pause (stop 3): clock, EtCO₂ | 19:11, 64 | 19:12, **65** | 19:11, **65** |
+| Stop 3 (machine part) | 51.5 s | 51.0 s | 51.1 s |
+| Second dose · Recovering again | 19:13 · 23:37 | 19:13 · 23:39 | 19:13 · 23:37 |
+| End (Pause): EtCO₂, HR, ART | 24:31: 41, 69, 94/57 (67) | 24:31: 41, 70, 94/57 (67) | 24:30: 41, 69, 93/57 (67) |
+| Segment 4 wall · total machine wall | 20.3 s · 5:03 | 20.3 s · **5:03** | 20.0 s · **4:57** |
+| First `RR TOO LOW` | 3:09 | **2:40** | **2:40** |
+| EtCO₂ per minute after ventilation back | 40, 53, 56, 59, 61, 64 | 40, 53, 56, 59, 62, 64 | 40, 53, 56, 59, 61, 64 |
+| EtCO₂ per minute after the second dose | 64, 50, 48, 46, 44, 42 | 65, 50, 48, 46, 44, 42 | 65, 50, 48, 46, 44, 42 |
+
+**On the Debrief's clock** (its key times, objectives and facts, which floor fractional times and differ from the
+record's by up to 2 s):
+
+| Row | #172 run (a88f95a7, C) | rc.4 Chromium | rc.4 WebKit |
+|---|---|---|---|
+| Recognition (the tick) · the call · dantrolene | 1 s (08:09 → 08:10) · 3 s · 21 s | **0 s** (08:12 → 08:12) · 2 s · 21 s | 1 s (08:10 → 08:11) · 3 s · 21 s |
+| E22: below 40 for 2 min | 08:34 → 10:34 | **08:37 → 10:37** | 08:36 → 10:36 |
+| Highest EtCO₂ | 64 at 18:46 | **65 at 19:07** | **65 at 19:11** |
+| Marks · timeline rows · key moments | ✓ ✓ ✓ ✓ – ✓ · 59 · 14 | **✓ ✓ ✓ ✓ – ✓** · 63 · 14 | **✓ ✓ ✓ ✓ – ✓** · 60 · 14 |
+| Labs (last, lowest–highest) | K⁺ 5.0 (4.2–5.0); Tcore 36.4 (36.4–36.8) | the same | the same |
+
+Bold: more than 2 s from #172's on the same clock, or a different value.
+
+**The stops** (`q1-talk-<engine>.json`): at all three stops, on both engines, the sim clock moved **0 s** while away,
+the session was still Paused at the stop's end, and all three phones were `synced` and read "Following session ‹code›
+(paused)" on leaving; the session bar is not on Explore. The model tab: 4 GitHub pages (endocrine-thermal at stops 1
+and 3, pharmacology and blood at stop 2), each **HTTP 200**, the instructor page "visible" and Paused throughout
+(headless: the tab is never hidden). Explore at the stops:
+
+| Stop | #172 (C) | rc.4 Chromium | rc.4 WebKit |
+|---|---|---|---|
+| 1 | MH activity 0.270 · VO₂ (Blood) 332 · K⁺ 4.77 | **0.280** · 333 · 4.77 | **0.280** · 333 · 4.77 |
+| 2 | 0.510 · K⁺ 4.62 · PaCO₂ 44.2 | 0.510 · 4.62 · 44.3 | **0.520** · 4.62 · 44.3 |
+| 3 | 0.550 · PaCO₂ 70.1 | 0.550 · 70.2 | 0.550 · 70.2 |
+
+**Phones.** Three followed the whole case on both engines; 5 resyncs each. The largest phone-vs-instructor difference
+was NIBP for 3 s (Chromium, all three phones, at 40 s of wall: instructor 56 → 62, phones 24–28 → 70) and on
+WebKit AGENTS for 2.5 s (two phones) and NIBP for 4 s (one): S12-F2 by the 2-s rule, a lag at a new cuff reading, no
+stale number held. (#172's run: a 2-s AGENTS blank.)
+
+### A4: the MH card and the haemorrhage reserve (R5), both engines
+
+| Row | 24 October (52b0390b / 33a6c92b), C / W | rc.4 Chromium | rc.4 WebKit |
+|---|---|---|---|
+| MH marks | ✓ ✓ ✓ – – ✓ | ✓ ✓ ✓ **✓** – ✓ | ✓ ✓ ✓ **✓** – ✓ |
+| MH induced · intubated | 04:05 · 05:04 / 05:05 | 04:05 · 05:04 | 04:04 · 05:06 |
+| MH early signs · call | 08:38 / 08:39 · 08:40 | **08:13 · 08:14** | **08:12 · 08:13** |
+| MH EtCO₂ < 40 · ventilation back | 09:14 / 09:15 · 14:28 | **08:38 · 13:52** | **08:37 · 13:50** |
+| MH SpO₂ minimum, induction to tube | 99 | 99 | 99 |
+| MH after ventilation back | (not measured) | past 45 at 14:06; second dose 19:08, EtCO₂ 65 | past 45 at 14:04; second dose 19:07, EtCO₂ 65 |
+| MH timeline rows · key moments | 48 | 54 · 14 | 52 · 14 |
+| Haemorrhage marks | – ✗ ✗ | – ✗ **✓** | – ✗ **✓** |
+| Junctional · PEA · pulse loss | 09:19 / 09:17 · 10:27 / 10:26 · 10:59 / 11:00 | 09:15 · 10:26 · 10:59 | 09:17 · 10:28 · 11:00 |
+| Idioventricular · asystole · CPR | 12:57 / 12:54 · 15:38 / 15:36 · 15:41 / 15:38 | 12:55 · 15:35 · 15:38 | 12:56 · 15:35 · 15:38 |
+| Rhythm check 1 · shock 1 → | pulse check 17:39 / 17:37 (named so before E126) · 17:48 / 17:46 → asystole | 17:37 · 17:45 → **asystole** | 17:38 · 17:46 → **asystole** |
+| Second epinephrine · rhythm check 2 · shock 2 → | (one dose) · pulse check 19:46 / 19:45 · 19:55 / 19:53 → `pea` | 18:56 · 19:44 · 19:52 → **`pea`** (organised, no pulse) | 18:57 · 19:45 · 19:54 → **`pea`** |
+| Return of circulation · CPR stopped | 20:57 · (CPR stopped at 21:00 / 20:59) | **20:56** · 21:53 (57 s after) | **20:57** · 21:55 (58 s after) |
+| During CPR: ART mean max · EtCO₂ max | 46.1 / 46.4 · 19 | 50.3 · 20 | 50.2 · 20 |
+| Haemorrhage timeline rows · key moments | 74 | 95 · 21 | 101 · 21 |
+| Debrief PDF (Chromium) | MH **7**, haemorrhage 8 A4 pages | MH **8**, haemorrhage **8** A4 pages | (WebKit: a print-media PNG only) |
+| Learner handout (Chromium) | 1 page each | **1 page each**; 0 verdict words; Inter embedded; MH the four take-home lines, haemorrhage three; `PEEP undefined` 0 in both Debriefs | — |
+
+The 24 October cards are not the rc.4 cards: since then the clinical review (E132), E131 (one MH metabolic rate),
+E126 (the pulse-check pause) and the owner's rulings of 28 October (#163) changed both. The 28 October run on #163's
+commit (kit 2c341aa3, `scratch/kitround-owr4/`; Chromium only, it had no WebKit leg) has the same mark kinds and the MH
+early signs, call, below-40 and ventilation-back times to the second; its second dose came at 19:11 (rc.4 19:08) and its
+haemorrhage report printed 9 pages (rc.4 8).
+
+**Key times** (the haemorrhage Debrief, Chromium / WebKit): first team action 35 s · CPR 4 min 39 s after the pulse loss
+(asked ≤ 30 s; withheld by the course) · CPR stopped 57 s / 58 s after the return of circulation (asked ≤ 2 min 00 s) ·
+pulseless in all 9 min 57 s.
+
+### Handouts, Persian, screenshots
+
+- **English handouts** (`q2-rc4-a4/a4-{mh,haemorrhage}-handout-chromium.pdf`): 1 A4 page each; MH prints the card's four
+  take-home lines, the haemorrhage its three; footer "For educational use only; Not to be used in patient care. Version
+  1.0.0-rc.4 (pre-release), build 0c4b396f 2026-10-29."
+- **Persian handouts.** On the tag's own table: MH 8 A4 pages, haemorrhage 8, with **11 and 15 strings left in
+  English** (their italic English fallback brought Helvetica-Oblique and LucidaGrande in as unexpected fonts). By the
+  orchestrator's ruling they were rendered with PR #161's table (26 unreviewed drafts, placed uncommitted in the
+  worktree, not in this branch): MH **8** pages (126 entries, 124 unreviewed), haemorrhage **8** (137, 137 unreviewed);
+  **0 strings without translation** each; `verify_pdf.py --expect-font Vazirmatn` exit 0, 0 unexpected fonts, 0 errors
+  (haemorrhage: WARN, 3 en/em dashes); each names 1.0.0-rc.4 and 0c4b396f. The renders in `q2-rc4-a4/` are those
+  (`debrief-a4-*-chromium.fa.{pdf,txt}` and `.verify.txt`); the owner's copies are
+  `_sandbox/pme-debrief-fa/debrief-fa-*-2026-10-29.pdf`, MH printed for the day. Their footer carries the older
+  disclaimer in Persian (education only, not a medical device, not clinically validated): the E125 line has no Persian
+  entry on the tag.
+- **Screenshots against rc.3's notes (a)–(c)** (`q2-rc4/q2-mh-monitor-early-signs-{chromium,webkit}.png`,
+  `q2-rc4/shots/`): no tile text over another; EtCo2 / FiCo2 / AWRR apart, SQI% and EMG% apart, the EtAA tile clear of
+  them (rc.3 note 1, the pass-3 row); the capnogram filled breath by breath; IBP2 empty in MH (no CVP line in the card,
+  not F9); "°C" in the T column's title row; rc.4 only. At the early signs: EtCO₂ 46, HR 79, ART 107/67 (77), EtAA 0.5
+  (MAC 0.3).
+
+### Findings (recorded, not fixed)
+
+1. **A stale NIBP alarm at stop 1.** Both early-signs screenshots show a red **NIBP SYS TOO LOW** in the alarm bar: the
+   NIBP tile holds the last cuff reading, 87/48 (63) on Chromium and 85/60 (63) on WebKit (AUTO 5 min), while the
+   arterial line reads 107/67 (77); the alarm list has NIBP SYS TOO LOW raised at 05:34 (C) / 05:36 (W), in the dip
+   after induction (the Debrief's lowest ART M / NIBP M 62 mmHg at 05:25 / 05:24). The reading is stale, not spurious:
+   the cuff's old number, held until its next cycle; when the cycle falls differs from run to run (#172's run raised
+   no NIBP alarm). A presenter's note in the run sheet (stop 1).
+2. **Explore display defects** at the stops (also in #172's runs): Glucose "102 mmol/L" (the Debrief's facts 6.6
+   mmol/L), "Stress response 88.0" on a 0–1 scale, VO₂ 270 under Gas exchange against 428 mL/min under Blood at the
+   same moment, rocuronium "Total 48000 mg, µg". Display only; fixed on main after the tag (#178), for a later release.
+   The run sheet's Explore cautions covered three of them (VO₂ 270, Glucose under Blood, the dantrolene Total); this PR
+   adds the other two (Stress response 88.0; Glucose "102 mmol/L" on the Endocrine screen).
+3. **The model pages load GitHub `main`**, not the tag; `docs/model` regenerates with no change on the tag, so the text
+   is the tag's today.
+4. **The rc.4 kit grew**: 76 app files, 3.2 MB, Windows zip 1,545,928 B (rc.3 71, 2.3 MB, 1,004,390 B): the
+   `engine-bench.worker` (621 KB) and the IBM Plex fonts (E125).
+5. **MH Debrief 8 pages** in A4 (7 on 24 October; 8 since the E132 card). The day's Debrief is read on screen.
+6. **The screen's disclaimer** is E125's "For educational use only; Not to be used in patient care."; the Persian
+   handout's footer carries the older sentence (above).
+7. Rows: MH timeline 63 (C) / 60 (W) against ≈ 59–62 (a NOTE, ±3); haemorrhage 95 / 101.
+
+### Not measured
+
+- **The owner's smoke, the live rehearsal, W, E13, E14**: after the smoke (gate note).
+- **The talk itself**: the run is presses, Explore openings and a 3-s look per screen; the talk is the owner's.
+- **A hidden model-page tab**: headless, the instructor page stays "visible" while the model tab is in front, so the
+  hidden-tab rule was not exercised (by the code a Paused session stays paused).
+- **The Scenarios library path**: the script loads MH from the Instructor's Scenario tab.
+- **The six showcase-card shots**: not re-taken on rc.4 (R4-Q6: after the demo). **A3**: not run.
+- **Real devices, sound by ear, router capacity**: not in a headless round.
+- **WebKit PDFs**: Playwright has no `page.pdf()` on WebKit; print-media PNGs only.

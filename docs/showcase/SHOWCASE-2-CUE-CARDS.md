@@ -4,8 +4,9 @@
 follows each card). **The programme (owner, 29 October, P29): one case, malignant hyperthermia on the E119 card, with
 three look-inside stops: the engine Paused, the Explore view opened from the Instructor side, the model page behind it
 in a second browser tab.** The class IV haemorrhage case (E120) and its Debrief left the programme and stay in the
-build: their cards are under "Reserve" at the end, with the cards not in the programme. Freeze: Saturday 31 October
-12:00.*
+build: their cards are under "Reserve" at the end, with the cards not in the programme. **The kit: rc.4 (pre-release),
+tagged 29 October, `_sandbox/pme-kit-release-0c4b396f/`; the fallback: the rc.3 kit `_sandbox/pme-kit-release-fcf99b70/`
+(no Home, older cards).***
 
 *Where the numbers come from. **Clock** = the session-bar clock (Load = 0:00). Every clock time, monitor number and
 Explore number is measured on the new programme's talk run (`kit-round-a.kitround.ts`, "Q1 30-minute talk"; kit
@@ -13,7 +14,12 @@ a88f95a7, 29 October, Chromium, 3 emulated phones, 2 s reaction, 3 s per Explore
 screenshots in `scratch/owner-review/mh-only-programme/`). **Slot** = time from the start of the segment's slot; **T+** =
 time from the opening. The machine wall is measured; the talk is not: a time I had to estimate is marked "(est.)". The
 talk points come from the speaker's reference (`scratch/owner-review/mh-mechanisms-on-the-demo-build.md`); [ENG] = an
-engineering size, not a sourced one.*
+engineering size, not a sourced one. **On the rc.4 kit** the same talk ran on both engines (29 October,
+`docs/showcase/kit-round-a/q2-rc4/`, stop screenshots in its `shots/`). Rows that moved by more than 2 s, Chromium /
+WebKit: early signs 8:12 / 8:11 (8:09 below), Recovering 9:37 / 9:38 (9:35 on the same record clock), the first
+`RR TOO LOW` 2:40 (3:09 below); on the Debrief's clock ventilation back met from 10:37 / 10:36 (10:34 below) and the
+highest EtCO₂ 65 at 19:07 / 19:11 (64 at 18:46 below). Recognition read 0 s on Chromium. The marks are the same
+(run sheet §3, "On the rc.4 kit").*
 
 <div style="page-break-after: always;"></div>
 
@@ -64,7 +70,9 @@ engineering size, not a sourced one.*
 - **Never click "Ventilator" during the case**: not the rail's **Ventilator**, not a Ventilator tab. If it happens: back
   to **Instructor**; leaving the view releases the phones at once.
 - **Never reload mid-case.** If it happens: the case comes back ("Restored after reload: ‹title›, mm:ss"); **switch
-  Sound on again** and check **All alarms on**.
+  Sound on again** and check **All alarms on**. **The one exception:** if the laptop's presses stop being
+  refused while the case keeps running, reload the instructor page; the phones reconnect on their own, their pills
+  may read a stale line for a moment, up to 2–3 s with the cuff on (run sheet §6).
 - **Open the Room (the QR) only from the instructor tab.** The model-page tabs are GitHub pages, not instructor tabs.
 - **The instructor tab stays in front**, except for a short look at a model page during a stop, with the session
   **Paused** (a paused session stays paused while the tab is hidden; keep each look under a minute).
@@ -95,7 +103,7 @@ Before the talk: the three model-page tabs loaded, to the right of the instructo
 
 # MH-1 · MH to the early signs (×8 then ×4) (T+3:00 → 5:00)
 
-**Slot 2:00 · machine 1:14 · ends Paused at the early signs (8:09–8:10)**
+**Slot 2:00 · machine 1:14 · ends Paused at the early signs (8:09–8:10; on the rc.4 kit 8:11–8:12)**
 
 | Slot (T+) | Clock | Look at | Press | Say |
 |---|---|---|---|---|
@@ -134,6 +142,11 @@ after stop 1 still lands 3 s after Early signs on the clock.
 
 **Close the stop:** *"The EtCO₂ is rising at unchanged ventilation when it should be falling, with a rising heart
 rate: think of MH early."* → MH-2.
+
+**A red NIBP SYS TOO LOW at this pause** (or the alarm button reading it): a stale reading. The cuff's last number
+(87/48, 85/60 on the rc.4 runs) is from the dip after induction (alarm 05:34 / 05:36); the patient now is the arterial
+line, 107/67. The next cuff cycle replaces it. Do not acknowledge it on stage; point at the arterial line (run sheet,
+stop 1).
 
 **Do not point at:** Gas exchange's VCO₂ 216 / VO₂ 270 (they do not move with MH). **Not in this build:** muscle lactate
 with its own limits, injury potassium, MH severity as an input (open branches).
@@ -188,7 +201,7 @@ are words only.
 |---|---|---|---|---|
 | 0:00 (13:00) | 13:50 → **13:52** | EtCO₂ 40–41 (below 40 for 2 min from 8:34 to 10:34: met) | **Resume** · at once **EtCO₂ normal: ventilation back to 12 × 500** | "EtCO₂ has stayed below 40 for 2 minutes: ventilation back." |
 | | 13:56 | | **5 min** at once (10.6 s). EtCO₂ passes 45 at 14:06, inside it | |
-| ≈ 0:15 (≈ 13:15) | **19:11** | **EtCO₂ 64**, HR 89, ART 99/66; banner `ETCO2 TOO HIGH` 14:27 | **Pause** as the banner shows | *"The EtCO₂ is climbing back at normal ventilation: the MH is not controlled."* Per minute after ventilation back: 40, 53, 56, 59, 61, 64. (≈ 1:45) → STOP 3 |
+| ≈ 0:15 (≈ 13:15) | **19:11** | **EtCO₂ 64** (65 on the rc.4 kit), HR 89, ART 99/66; banner `ETCO2 TOO HIGH` 14:27 | **Pause** as the banner shows | *"The EtCO₂ is climbing back at normal ventilation: the MH is not controlled."* Per minute after ventilation back: 40, 53, 56, 59, 61, 64. (≈ 1:45) → STOP 3 |
 
 **Traps:** no dantrolene before ventilation back (a dose takes the button away for at least a minute). Do not press
 the second dose yet: it comes after stop 3.
@@ -230,7 +243,7 @@ DANT_GAIN row's text says "90 % of its peak within 1 min"; the build's curve pea
 
 | Slot (T+) | Clock | Look at | Press | Say |
 |---|---|---|---|---|
-| 0:00 (18:00) | 19:11 → **19:13** | EtCO₂ 64 | **Resume** · at once **Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600, O₂ 100 %)** | |
+| 0:00 (18:00) | 19:11 → **19:13** | EtCO₂ 64 (rc.4: 65) | **Resume** · at once **Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600, O₂ 100 %)** | |
 | | 19:16 | RR 20 again | **5 min** (10.1 s) | |
 | ≈ 0:15 (≈ 18:15) | **24:31** | **EtCO₂ 41**, HR 69, ART 94/57 (67), RR 20; state Recovering (from 23:35); T1 36.4 | **Pause** · take-home 1:00. **Do NOT press ventilation back** (offered; rule not met) | "Still hyperventilated: back to 12 × 500 only once the EtCO₂ has stayed below 40 for 2 minutes." Then the four take-home lines |
 | ≈ 1:15 (≈ 19:15) | | | session bar **Debrief** | read it (below), ≈ 2:00 |
@@ -245,7 +258,8 @@ counselling."*
 **The Debrief on screen:** Key times: recognition **1 s** (8:09 → 8:10 ticked) · call **3 s** (≤ 2 min) · dantrolene
 **21 s** (≤ 5 min). Objectives: **✓ ✓ ✓ ✓ – ✓** (name MH · call · dantrolene · second dose with hyperventilation again
 · – potassium, K⁺ never above 5.5 · ventilation back after < 40 for 2 min, 08:34 → 10:34). Facts: highest EtCO₂ 64 at
-18:46 · K⁺ 5.0 (4.2–5.0) · lactate 3.6 · pH 7.33 (7.18–7.41) · Tcore 36.4 (36.4–36.8). *"The report is a debrief aid: it
+18:46 · **on the rc.4 kit** (Chromium / WebKit): recognition **0 s** (8:12 → 8:12) / 1 s, call 2 s / 3 s, dantrolene
+21 s; ventilation back after 08:37 → 10:37 / 08:36 → 10:36; highest EtCO₂ **65 at 19:07 / 19:11** · K⁺ 5.0 (4.2–5.0) · lactate 3.6 · pH 7.33 (7.18–7.41) · Tcore 36.4 (36.4–36.8). *"The report is a debrief aid: it
 reads the run, it does not grade the person."*
 
 **If asked about the end:** ventilation back again at 27:12 (headless), then up to 44, below 40 for good from 43:10.
@@ -353,7 +367,7 @@ is, and they show the return of circulation."*
 
 **Traps:** before giving the handout to the room, check it lists both shocks and the return of circulation.
 
-*Kit round A4 on the E132 card (Debrief read and printed: report 8 pages, 9 with the E126 pause (kit 4d0fca9b: 98 timeline rows; kit 503caeab, the rc.4 rebase: 9 pages, 100 rows, the handout 1 page), the handout 1 page; the handout printed 2 pages on kit e0c73a47, 1 page after the compact-layout fix, Debrief e2e).*
+*Kit round A4 on the E132 card (Debrief read and printed: report 8 pages, 9 with the E126 pause (kit 4d0fca9b: 98 timeline rows; kit 503caeab, the rc.4 rebase: 9 pages, 100 rows, the handout 1 page; the rc.4 kit, 29 October: 8 pages, 95 / 101 rows, the handout 1 page), the handout 1 page; the handout printed 2 pages on kit e0c73a47, 1 page after the compact-layout fix, Debrief e2e).*
 
 <div style="page-break-after: always;"></div>
 
