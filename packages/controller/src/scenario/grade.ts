@@ -247,7 +247,9 @@ export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: 
       given = pick(settled && at !== undefined ? sat.filter((m) => m.a.t >= at - EPS) : sat);
       if (at === undefined) {
         row = na(`anchor never happened: ${anchorWords(anchor)}`);
-        if (given) row.lines.push(`given ${clock(given.a.t)} without its anchor`);
+        // a dose given anyway is worth the line; a device or a decision set for another reason is not (D3: it is never
+        // this action's without its window)
+        if (given && !settled) row.lines.push(`given ${clock(given.a.t)} without its anchor`);
         given = undefined;
       } else {
         const deadline = at + withinS;
