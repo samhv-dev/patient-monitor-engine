@@ -74,6 +74,8 @@ export class ScenarioDriver {
   private readonly o: ScenarioDriverOptions;
   private readonly known: ReadonlySet<string>;
   private readonly marks = new Map<string, Mark>();
+  /** Inputs since the last poll. Only a /2 runner is ever given a `signals` input or the labs/endo truths (truthInputs):
+   *  they are queued only while one runs, and `load`/`restoreBookmark` empty the queue when the runner changes. */
   private pending: RunnerInputV2[] = [];
   private n = 0; // batch counter; never restored, so ids and stage groups stay unique across bookmark restores
   private k = 0;
@@ -433,10 +435,10 @@ export class ScenarioDriver {
       const values: Record<string, number> = {};
       for (const [k, v] of Object.entries(w.values)) if (typeof v === 'number') values[k] = v;
       this.pending.push({ kind: 'values', rank: 3, values });
-      // F2's stub of the /2 feed: the rhythm id the state event already carries, for a PhaseRunner only. F4 adds the
-      // labs, the endocrine MH activity and the engine signals (pulse, dantrolene effect, set ventilation, beat MAP).
+      // the rhythm id the state event already carries, for a PhaseRunner only (truthInputs adds F4's truths below)
       if (this.cur instanceof PhaseRunner && w.rhythm?.id) this.pending.push({ kind: 'rhythm', id: w.rhythm.id });
     }
+    if (this.cur instanceof PhaseRunner) this.pending.push(...truthInputs(w)); // F4: a /2 runner only
   }
 }
 
@@ -449,4 +451,16 @@ function v1Input(i: RunnerInputV2): i is RunnerInput {
 function runnerFor(doc: AnyScenarioDoc, seed?: number): AnyRunner {
   const o = seed === undefined ? {} : { seed };
   return isV2(doc) ? new PhaseRunner(doc, o) : new ScenarioRunner(doc, o);
+}
+
+/**
+ * The engine truths a `pme-scenario/2` runner reads beyond the state's values (plan F4, Q21): the state event's
+ * `signals` (the MH activity among them, unrounded: the `endo` event's is rounded to 0.01 and is not fed), the labs pH,
+ * lactate and K⁺, as rank 3. Never given to a /1 runner: its take()
+ * would throw on a `signals` input, and a rank-3 `k` or `map` would shadow a /1 card's vital vars.
+ */
+function truthInputs(w: WireEvent): RunnerInputV2[] {
+  if (w.type === 'state') return 'signals' in w && w.signals ? [{ kind: 'signals', signals: w.signals }] : []; // not a host-synthesised state
+  if (w.type === 'labs') return [{ kind: 'values', rank: 3, values: { ph: w.values.ph, lactate: w.values.lactate, k: w.values.k } }];
+  return [];
 }

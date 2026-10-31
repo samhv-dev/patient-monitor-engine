@@ -1,7 +1,8 @@
 // ScenarioDriver against a real engine (headless, per-tick): the wrapped target, stand-ins, the ACLS scenario
 // end to end, bookmarks (engine snapshot + runner state) and replay identity (brief §3.3).
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import type { Command } from '@pme/engine-core';
+import type { Command, EngineEvent } from '@pme/engine-core';
 import { ScenarioDriver } from '../../src/scenario/driver.ts';
 import { PhaseRunner } from '../../src/scenario/phase-runner.ts';
 import { replayRunLog, runLog } from '../../src/scenario/replay.ts';
@@ -9,6 +10,9 @@ import { resolveRhythm } from '../../src/scenario/standins.ts';
 import { BUILTIN_SCENARIOS } from '../../src/scenario/builtins.ts';
 import type { ScenarioEvent } from '../../src/protocol.ts';
 import type { ScenarioDoc } from '../../src/scenario/types.ts';
+import type { RunnerInput, ScenarioRunner } from '../../src/scenario/runner.ts';
+import type { RunnerInputV2 } from '../../src/scenario/types-v2.ts';
+import { engineOptionsOf } from '../../src/scenario/patient.ts';
 import { manualHost } from '../fakes/manual-host.ts';
 import { doc } from './fixtures.ts';
 import { minimalV2 } from './fixtures-v2.ts';
@@ -417,4 +421,117 @@ describe('ScenarioDriver and a pme-scenario/2 document (F2)', () => {
     expect([...kinds].every((k) => k === 'values' || k === 'clinical' || k === 'sensor')).toBe(true);
     expect(kinds.has('values')).toBe(true);
   });
+});
+
+// F4 (plan F4, Q21/Q22): the engine's `state.signals`, the labs pH/lactate/K⁺ and the endocrine MH activity reach a /2
+// runner as rank-3 inputs, and ONLY a /2 runner: the /1 runner's take() would throw on a `signals` input, and a rank-3
+// `k` from the labs (or a `map`) would shadow a /1 card's vital vars. (On the integration branch the /2 runner is F2's
+// PhaseRunner; F4's stand-in is gone.)
+describe('ScenarioDriver: engine truth for a /2 runner only (F4)', () => {
+  const SHOWCASE = (f: string) => JSON.parse(readFileSync(new URL(`../../../../apps/demo/src/app/showcase/${f}`, import.meta.url), 'utf8')) as ScenarioDoc;
+
+  /** The inputs today's onEngine adds for an engine event: rank 2 from a measurement, rank 3 from the state's values. */
+  const today = (e: EngineEvent): RunnerInput[] => {
+    if (e.type === 'measurement') {
+      const values: Record<string, number> = {};
+      for (const [k, m] of Object.entries(e.values)) if (m && m.value !== null) values[k] = m.value;
+      return Object.keys(values).length ? [{ kind: 'values', rank: 2, values }] : [];
+    }
+    if (e.type === 'state') {
+      const values: Record<string, number> = {};
+      for (const [k, v] of Object.entries(e.values)) if (typeof v === 'number') values[k] = v;
+      return [{ kind: 'values', rank: 3, values }];
+    }
+    return [];
+  };
+
+  it('a /2 runner is fed rank-3 signals (mhActivity among them, not the endo event\'s rounded copy) and labs ph/lactate/k, with truthHz 0', async () => {
+    const host = manualHost({ seed: 7 }); // truthHz 0: the truth tree is off, as for an embedder (R4)
+    const driver = new ScenarioDriver({ target: host });
+    const fed: RunnerInputV2[] = [];
+    expect(driver.load(minimalV2()).ok).toBe(true);
+    const pr = driver.phaseRunner!;
+    const advance = pr.advance.bind(pr);
+    pr.advance = (t: number, inputs: RunnerInputV2[] = []) => (fed.push(...inputs), advance(t, inputs));
+    const seen: EngineEvent[] = [];
+    host.on((e) => seen.push(e));
+    for (let tick = 1; tick <= 30 * 50; tick++) {
+      host.engine.advanceTo(tick * 0.02);
+      driver.poll();
+    }
+    expect(seen.some((e) => e.type === 'truth')).toBe(false);
+    const states = seen.filter((e): e is Extract<EngineEvent, { type: 'state' }> => e.type === 'state');
+    const labs = seen.filter((e): e is Extract<EngineEvent, { type: 'labs' }> => e.type === 'labs');
+    const endo = seen.filter((e) => e.type === 'endo') as unknown as { mhActivity: number }[];
+    expect(states.length).toBeGreaterThanOrEqual(29);
+    expect(labs.length).toBeGreaterThanOrEqual(2);
+    expect(endo.length).toBeGreaterThanOrEqual(29);
+    // exactly the engine's own values, in the engine's order, after today's inputs for the same event
+    const want: RunnerInputV2[] = seen.flatMap((e): RunnerInputV2[] => {
+      if (e.type === 'state') return [...today(e), ...(e.rhythm?.id ? [{ kind: 'rhythm', id: e.rhythm.id } as const] : []), { kind: 'signals', signals: e.signals! }];
+      if (e.type === 'labs') return [{ kind: 'values', rank: 3, values: { ph: e.values.ph, lactate: e.values.lactate, k: e.values.k } }];
+      return today(e);
+    });
+    expect(fed).toEqual(want);
+    const sig = fed.filter((i) => i.kind === 'signals');
+    expect(sig).toHaveLength(states.length);
+    expect(Object.keys(sig[0]!.signals).sort()).toEqual(['dantroleneE', 'map', 'mhActivity', 'pulse', 'setMinuteVentilationLMin']);
+    expect(pr.value('mhActivity')).toBe(sig.at(-1)!.signals.mhActivity); // the rule's truth is the unrounded signal
+  });
+
+  /** A /1 demo card through the driver, its own manual transitions pressed as they come up: what its runner is fed. */
+  async function oneCard(file: string, presses: string[], untilS: number) {
+    const doc = SHOWCASE(file);
+    const eo = engineOptionsOf(doc, 7);
+    const sensors = (doc.patient as { sensors?: Record<string, string> } | undefined)?.sensors;
+    const host = manualHost({ ...eo, mode: doc.mode ?? 'modeled', patient: { ...eo.patient, ...(sensors ? { sensors } : {}) } } as never);
+    const driver = new ScenarioDriver({ target: host });
+    expect(driver.load(doc).ok).toBe(true);
+    const r = driver.runner as ScenarioRunner;
+    const fed: RunnerInput[] = [];
+    const advance = r.advance.bind(r);
+    r.advance = (t, inputs = []) => (fed.push(...inputs), advance(t, inputs));
+    const want: RunnerInput[] = [];
+    host.on((e) => want.push(...today(e)));
+    const left = [...presses];
+    let pressed = 0;
+    for (let tick = host.engine.now().tick + 1; tick <= untilS * 50; tick++) {
+      host.engine.advanceTo(tick * 0.02);
+      driver.poll();
+      if (tick % 500 === 0) {
+        const ids = new Set((r.state().transitions ?? []).filter((x) => 'manual' in x.when).map((x) => x.id));
+        const i = left.findIndex((p) => ids.has(p));
+        if (i >= 0) {
+          const target = left.splice(0, i + 1).at(-1) as string;
+          expect((await driver.hook({ id: `p${++pressed}`, issuedBy: 'instructor', type: 'scenario', action: 'trigger', target })).accepted, target).toBe(true);
+        }
+      }
+      if (tick % 3000 === 0) await new Promise<void>((res) => setImmediate(res));
+    }
+    return { fed, want, pressed, states: r.log.filter((l) => l.op === 'enter').map((l) => l.stateId) };
+  }
+
+  const checkToday = (o: Awaited<ReturnType<typeof oneCard>>) => {
+    // today's kinds only; no signals; the engine-derived inputs (rank 2 and 3) exactly today's rule, so no rank-3 k
+    // from the labs, no mhActivity from the endocrine event, no map
+    expect(new Set(o.fed.map((i) => i.kind))).toEqual(new Set(['clinical', 'sensor', 'values']));
+    expect(o.fed.some((i) => (i as { kind: string }).kind === 'signals')).toBe(false);
+    expect(o.fed.filter((i) => i.kind === 'values' && i.rank >= 2)).toEqual(o.want);
+    for (const i of o.fed) if (i.kind === 'values' && i.rank === 3) for (const k of ['map', 'ph', 'lactate', 'mhActivity', 'dantroleneE', 'setMinuteVentilationLMin']) expect(k in i.values, k).toBe(false);
+    expect(o.fed.filter((i) => i.kind === 'clinical').length).toBeGreaterThan(5); // the card's commands did reach it
+  };
+
+  it('a /1 card\'s runner receives exactly today\'s input kinds and values: the MH demo card\'s command stream', async () => {
+    const o = await oneCard('showcase-mh.json', ['premed', 'preox', 'induce', 'intubate', 'surgery', 'crisis-earlySigns', 'crisis-established', 'dant', 'cool-treating', 'normo'], 1200);
+    expect(o.pressed).toBeGreaterThanOrEqual(7);
+    expect(o.states).toContain('triggerOff');
+    checkToday(o);
+  }, SLOW);
+
+  it('a /1 card\'s runner receives exactly today\'s input kinds and values: the haemorrhage demo card\'s command stream', async () => {
+    const o = await oneCard('showcase-haemorrhage.json', ['oxygen', 'intubate-o2', 'cpr-pea', 'cpr', 'volume', 'epi-running', 'rhythmCheck1-running'], 1200);
+    expect(o.pressed).toBeGreaterThanOrEqual(3);
+    expect(o.states).toContain('pea');
+    checkToday(o);
+  }, SLOW);
 });

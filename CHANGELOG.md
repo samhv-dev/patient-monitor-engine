@@ -9,6 +9,13 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Added
 
+- **`pme-scenario/2` integration branch (post-demo, draft): F2's phase runner with F4's engine signals, and
+  `signals.mhActivity`.** `fv2-mh` is `feat-fv2-f2` (#201) with `feat-fv2-f4` (#200) merged; the driver feeds F4's
+  truths to a `PhaseRunner` only. The `state` event's `signals` gain `mhActivity`, the thermal model's MH activity
+  (`l2/thermal/mh.ts`) unrounded and read from the committed state (exposure, no physiology): the `endo` event rounds
+  it to 0.01, and a `/2` slope over a quantised activity flips sign second to second (F2's replay of the MH trace). A
+  `/2` runner reads the signal; the `endo` event's rounded copy is no longer fed to it.
+
 - **Instructor v2 (E127) as a second view** beside today's Instructor view, at `#/teach2` ("Instructor v2" on the
   rail, right after Instructor). Today's view is unchanged and stays the default: the scenario deep link, the
   Scenarios view's Load and the other "Instructor view" links still open it; the alarm count and the reveal gesture go

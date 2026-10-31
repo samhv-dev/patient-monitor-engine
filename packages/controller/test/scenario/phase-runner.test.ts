@@ -9,8 +9,8 @@ import type { Phase, PhaseRule, RunnerInputV2, ScenarioDocV2, ScriptEntry } from
 
 const truth = (values: Record<string, number>): RunnerInputV2 => ({ kind: 'values', rank: 3, values });
 const display = (values: Record<string, number>): RunnerInputV2 => ({ kind: 'values', rank: 2, values });
-const signals = (s: Partial<{ pulse: boolean; dantroleneE: number; setMinuteVentilationLMin: number | null; map: number }>): RunnerInputV2 =>
-  ({ kind: 'signals', signals: { pulse: true, dantroleneE: 0, setMinuteVentilationLMin: 6, map: 80, ...s } });
+const signals = (s: Partial<{ pulse: boolean; dantroleneE: number; setMinuteVentilationLMin: number | null; map: number; mhActivity: number }>): RunnerInputV2 =>
+  ({ kind: 'signals', signals: { pulse: true, dantroleneE: 0, setMinuteVentilationLMin: 6, map: 80, mhActivity: 0, ...s } });
 const rhythm = (id: string): RunnerInputV2 => ({ kind: 'rhythm', id });
 
 /** A /2 document from phases (the first is initial) and an optional script. */

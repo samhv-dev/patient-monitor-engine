@@ -11,7 +11,7 @@ const given: Administration = {
 };
 const refused: Administration = { seq: 2, t: 600, source: 'sheet', kind: 'drug', drugId: 'dantrolene', route: 'im', result: { accepted: false, reason: 'route im not modelled', routeNotModelled: true } };
 const inputs: RunnerInputV2[] = [
-  { kind: 'signals', signals: { pulse: true, dantroleneE: 0.4, setMinuteVentilationLMin: 6, map: 72 } },
+  { kind: 'signals', signals: { pulse: true, dantroleneE: 0.4, setMinuteVentilationLMin: 6, map: 72, mhActivity: 0.3 } },
   { kind: 'values', rank: 3, values: { etco2: 50 } },
 ];
 // @ts-expect-error — an administration's result says why it was refused
