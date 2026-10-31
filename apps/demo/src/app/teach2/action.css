@@ -58,6 +58,11 @@ button.ip2-row:focus-visible { outline: 2px solid var(--ip2-blue-text); outline-
 .ip2-finished { background: #171c22; }
 .ip2-finished-list { gap: 6px; padding: 0 10px 10px; }
 .ip2-finished-list .ip2-row { padding: 6px 12px; font-size: 14px; }
+/* Finished grouped by stage visit (the owner's report of 30 October): a small title, the stage's name and entry time */
+.ip2-fin-group { display: flex; flex-direction: column; gap: 6px; }
+.ip2-fin-group + .ip2-fin-group { margin-top: 4px; }
+.ip2-fin-head { padding: 2px 2px 0; color: var(--ip2-muted); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; }
+.ip2-fin-rows { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .ip2-offcard-list { margin: 0; padding: 0 14px 10px 30px; }
 .ip2-offcard-list li { padding: 2px 0; }
 .ip2-muted { list-style: none; margin-left: -16px; color: var(--ip2-faint); }

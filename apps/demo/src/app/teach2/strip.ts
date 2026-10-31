@@ -2,9 +2,11 @@
 // 29 October on clicks). The card's stages in order, hop states folded in (card-read.ts `stagesOf`): a past stage with
 // its entry time (from the scenario's history), the current one highlighted with its number of open steps, future
 // stages dashed with "auto" where a rule enters them, and side branches as "<a> or <b>".
-// Clicks: a future stage sends today's `goto` behind today's jump confirm (panel/scenario.ts `jump`, copied); a past stage
-// shows its entry time and "Return to the start of <stage>", which restores the hidden stage mark the driver places at
-// every stage entry (ScenarioDriver.stageMarks()), behind one confirm. Fit (14 stages on the MH card, 15 on the
+// Clicks: a stage pressed opens its inline box under the chip, and the box's button is the confirmation (the owner's
+// report of 30 October: no dialog). A future stage's box reads "Jump to <stage>" and sends today's `goto` with today's
+// toast (panel/scenario.ts `jump`, copied without its confirm); a past stage's box shows its entry time and "Return to
+// the start of <stage>", which restores the hidden stage mark the driver places at every stage entry
+// (ScenarioDriver.stageMarks()). Fit (14 stages on the MH card, 15 on the
 // haemorrhage card), the owner's ruling for IP9: exactly five chips with full names, the two stages before the current
 // one, the current one and the next two (at either end of the card the window slides to keep five); everything beyond
 // folds behind an arrow at each end ("‹ 3 earlier", "4 later ›"); an arrow pages the window that way, and "back to now"
@@ -15,7 +17,7 @@ import './state.css';
 import type { ScenarioDoc } from '@pme/controller';
 import { rowsOf, stagesOf, type Stage } from '../card-read.ts';
 import type { Link } from '../link.ts';
-import { clock, confirmDialog, h, toast } from '../ui.ts';
+import { clock, h, toast } from '../ui.ts';
 import { KEYS_OF, NO_CASE } from './begin.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { historyOf } from './course.ts';
@@ -165,17 +167,11 @@ export const stageMarks: { of(link: Link, entry: StageEntry): string | null } = 
   of: (link, entry) => (link.host?.driver.stageMarks() ?? []).filter((c) => c.note === entry.stage).at(-1)?.target ?? null,
 };
 
-/** Today's jump, copied from panel/scenario.ts `jump`: the same confirm, the same command, the same toast. */
+/** Today's jump, copied from panel/scenario.ts `jump` without its confirm (the strip's box is the confirmation): the
+ *  same command, the same toast. */
 async function jump(link: Link, id: string, label: string): Promise<void> {
-  if (!(await confirmDialog('Jump to this state?', `The scenario moves to "${label}" now and runs its changes.`, 'Jump', false, 'Stay in this state'))) return;
   const r = await link.send({ type: 'scenario', action: 'goto', target: id });
   if (r.accepted) toast(`Scenario: ${label}`);
-}
-
-/** Return to the start of a past stage: its stage mark restored (today's bookmark restore), behind one confirm. */
-async function returnTo(link: Link, name: string, mark: string): Promise<void> {
-  if (!(await confirmDialog(`Return to the start of ${name}?`, `The patient goes back to the moment "${name}" began. The clock goes back with it.`, 'Return', false, 'Stay here'))) return;
-  void link.send({ type: 'scenario', action: 'restoreBookmark', target: mark });
 }
 
 /** Mount this slot into `el` (the fixed slot signature, teach2/ctx.ts). */
@@ -183,7 +179,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const { link } = ctx;
   const sv = link.ctl.scenario;
   const chips = h('div', { class: 'ip2-chips' });
-  const hint = h('span', { class: 'ip2-strip-hint' }, 'past: return to its start · future: jumps to it (asks once)');
+  const hint = h('span', { class: 'ip2-strip-hint' }, 'past: return to its start · future: jump to it');
   // with no case loaded (board "Empty 5"): the note at the strip's right and the status line under it
   const note = h('span', { class: 'ip2-strip-note', hidden: true }, 'the default patient is on the monitor and running');
   const statusKeys = h('span', { class: 'ip2-status-keys' });
@@ -205,27 +201,37 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     return true;
   };
   const offEsc = ctx.keys.escape(closePop);
-  const outside = (e: Event) => pop && !pop.contains(e.target as Node) && !(e.target as Element | null)?.closest?.('.ip2-past') && closePop();
+  const outside = (e: Event) => pop && !pop.contains(e.target as Node) && !(e.target as Element | null)?.closest?.('.ip2-past, .ip2-future') && closePop();
   document.addEventListener('pointerdown', outside);
 
-  /** A past stage pressed: its entry time and the return to its start (disabled while it has no stage mark). */
-  const showPast = (chip: HTMLElement, g: Stage, entry: StageEntry | null) => {
+  /** Open stage `g`'s box under its chip (a second press on the same chip closes it): the box's button is the
+   *  confirmation. */
+  const openPop = (chip: HTMLElement, g: Stage, ...kids: Array<Node | null>): void => {
     const again = pop?.dataset.stage === g.id;
     closePop();
     if (again) return;
     const name = names.get(g.id) ?? g.label;
-    const mark = entry ? stageMarks.of(link, entry) : null;
-    const back = h('button', { type: 'button', class: 'ip2-pop-btn', disabled: !mark, onclick: () => mark && (closePop(), void returnTo(link, name, mark)) }, `Return to the start of ${name}`);
-    pop = h('div', { class: 'ip2-pop', role: 'group', 'aria-label': `Stage ${name}`, 'data-stage': g.id },
-      h('div', { class: 'ip2-pop-head' }, name),
-      h('div', { class: 'ip2-pop-time' }, entry ? `Entered at ${clock(entry.t)}` : 'Not entered in this run'),
-      entry ? back : null,
-      // a follower has no driver; on the host a missing mark is being placed (a frame or so): nothing to say then
-      entry && !mark && !link.host ? h('div', { class: 'ip2-pop-note' }, "Return is available on the instructor's screen once this stage has a mark") : null);
+    pop = h('div', { class: 'ip2-pop', role: 'group', 'aria-label': `Stage ${name}`, 'data-stage': g.id }, h('div', { class: 'ip2-pop-head' }, name), ...kids);
     const r = chip.getBoundingClientRect();
     pop.style.left = `${Math.max(8, r.left)}px`;
     pop.style.top = `${r.bottom + 6}px`;
     el.append(pop);
+  };
+  /** A past stage pressed: its entry time and the return to its start (disabled while it has no stage mark). */
+  const showPast = (chip: HTMLElement, g: Stage, entry: StageEntry | null) => {
+    const name = names.get(g.id) ?? g.label;
+    const mark = entry ? stageMarks.of(link, entry) : null;
+    const back = h('button', { type: 'button', class: 'ip2-pop-btn', disabled: !mark, onclick: () => mark && (closePop(), void link.send({ type: 'scenario', action: 'restoreBookmark', target: mark })) }, `Return to the start of ${name}`);
+    openPop(chip, g,
+      h('div', { class: 'ip2-pop-time' }, entry ? `Entered at ${clock(entry.t)}` : 'Not entered in this run'),
+      entry ? back : null,
+      // a follower has no driver; on the host a missing mark is being placed (a frame or so): nothing to say then
+      entry && !mark && !link.host ? h('div', { class: 'ip2-pop-note' }, "Return is available on the instructor's screen once this stage has a mark") : null);
+  };
+  /** A future stage pressed: the jump to it (today's `goto`; the case moves there now and runs its changes). */
+  const showFuture = (chip: HTMLElement, g: Stage, label: string) => {
+    const name = names.get(g.id) ?? g.label;
+    openPop(chip, g, h('button', { type: 'button', class: 'ip2-pop-btn', onclick: () => (closePop(), void jump(link, g.id, label)) }, `Jump to ${name}`));
   };
 
   const chip = (g: Stage, cls: string, extra: Array<Node | string | null>, attrs: Record<string, string>, onclick?: (b: HTMLElement) => void) => {
@@ -291,8 +297,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
           if (j > 0) kids.push(h('span', { class: 'ip2-or' }, 'or'));
           const label = doc.states.find((s) => s.id === g.id)?.label ?? 'State';
           kids.push(chip(g, 'ip2-future', [g.byRule ? h('span', { class: 'ip2-auto' }, 'auto') : null],
-            { 'aria-label': `Stage ${(names.get(g.id) ?? '')}${g.byRule ? ', entered by a rule' : ''}: jumps to it (asks once)` },
-            () => void jump(link, g.id, label)));
+            { 'aria-label': `Stage ${(names.get(g.id) ?? '')}${g.byRule ? ', entered by a rule' : ''}: show its jump`, 'aria-haspopup': 'true' },
+            (b) => showFuture(b, g, label)));
         });
     });
     // the window has been moved: "back to now" recentres it on the current stage
