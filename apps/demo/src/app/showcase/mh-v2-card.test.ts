@@ -2,7 +2,7 @@
 // pulseless at once), and the CPR row is open in every phase, its window running from the model's pulse loss, so a
 // press from its row can be in time. Pure: the phase runner and grade() on the card, no engine.
 import { describe, expect, it } from 'vitest';
-import { grade, PhaseRunner, type RunnerInputV2, type ScenarioDocV2 } from '@pme/controller/scenario';
+import { grade, PhaseRunner, type Administration, type PhaseEntry, type RuleEdge, type RunnerInputV2, type ScenarioDocV2 } from '@pme/controller/scenario';
 import { phaseRowsOf } from '../card-read.ts';
 import { anyShowcaseDoc } from './harness.ts';
 
@@ -24,9 +24,9 @@ describe('showcase-mh-v2: Arrest at once, CPR from the pulse loss in every phase
 
   it('the CPR row is a row of every phase; a press 20 s after a pulse loss in Latent is met', () => {
     for (const p of doc.phases) expect(phaseRowsOf(doc, p.id).some((row) => row.kind === 'step' && row.actionId === 'cpr'), p.id).toBe(true);
-    const phases = [{ id: 'baseline', t: 0, exitT: 400, rule: 'initial' }, { id: 'latent', t: 400, rule: 'enter:latent' }];
-    const edges = [{ rule: 'pulseLoss', t: 600, value: true }];
-    const admin = [{ seq: 1, t: 620, source: 'action' as const, actionId: 'cpr', kind: 'cpr' as const, settings: { active: 1, rate: 110 }, result: { accepted: true } }];
+    const phases: PhaseEntry[] = [{ id: 'baseline', t: 0, exitT: 400, rule: 'initial' }, { id: 'latent', t: 400, rule: 'enter:latent' }];
+    const edges: RuleEdge[] = [{ rule: 'pulseLoss', t: 600, value: true }];
+    const admin: Administration[] = [{ seq: 1, t: 620, source: 'action', actionId: 'cpr', kind: 'cpr', settings: { active: 1, rate: 110 }, result: { accepted: true } }];
     const cpr = grade(doc, phases, admin, edges, 700, { final: true }).actions.find((a) => a.id === 'cpr');
     expect(cpr).toMatchObject({ grade: 'met', dueT: 600, givenT: 620 });
     expect(grade(doc, phases, [], [], 700, { final: true }).actions.find((a) => a.id === 'cpr')?.grade).toBe('not applicable');
