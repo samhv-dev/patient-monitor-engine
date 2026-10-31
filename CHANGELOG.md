@@ -39,6 +39,16 @@ the public API is what the packages export (see the API reference), the `pme-sce
   ramp for delivered items. The Drug sheet's rule for a dose that differs from the card's step is interim, pending the
   owner's ruling.
 
+### Changed
+
+- **One Instructor entry; the view is chosen in Settings** (the clinical owner, 30 October). The rail lists
+  "Instructor" once (no "Instructor v2" entry); Settings → Display → "Instructor view" chooses today's view (`#/teach`,
+  the default, the 3 November demo's) or Instructor v2 (`#/teach2`), saved in the site profile (`instructor`) like the
+  monitor and kept after a reload. The rail's entry, a Load from the Scenarios library, a `?scenario=` deep link, the
+  Patient page's "Open the instructor view" and "Back to the Instructor", the monitor's "Instructor view", the `i` key
+  and the reveal gestures, and the alarm count all open the chosen view (the alarm count and the reveal gesture
+  followed the view used last). Both addresses stay as deep links. Neither view changed in what it does or sends.
+
 ### Fixed
 - Malignant hyperthermia now warms the core: the MH sympathetic surge constricts the skin. Untreated on the MH card the
   core showed 36.5 °C at 15 min and 36.9 °C at 35 min (the owner's run of 30 October): the 140 W of MH heat was real,
