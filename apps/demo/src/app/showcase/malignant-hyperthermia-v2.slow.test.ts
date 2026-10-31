@@ -95,8 +95,9 @@ describe('showcase-mh-v2: the MH card in pme-scenario/2 on the demo path', () =>
     //   at 08:06. The window is anchored on the FIRST true edge, so the call at 08:12 is 4:30 after it (120 s asked).
     //   hyperventilate and propofolInfusion share the anchor and read overdue too.
     // - ventilationBack 'met': it reads DEVIATION, "given before: etco2 < 40 for 120 s". Its precondition held from
-    //   10:26 to 12:57 and the press came at 13:52; also, none of its phases had been entered by 13:52 (Early signs at
-    //   15:23), so the record graded is the next ventilator setting from its opening, 19:13's 20 × 600.
+    //   10:26 to 12:57 and the press came at 13:52 (graded on that press since F6 opened the action in Latent).
+    // - dantroleneAgain: since F6 opened it in Latent it reads MET 08:12: a device action graded on the ventilator's
+    //   settings, it takes the call's 20 × 600 (admin 8), not its own press at 19:13.
     expect(row('dantrolene').firstGrade).toBe('met'); // the first dose; its repeat row is printed, not asserted
     expect(row('calcium').grade).toBe('not applicable');
     expect(row('insulin').grade).toBe('not applicable');
