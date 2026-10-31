@@ -46,7 +46,9 @@ engineering size, not a sourced one.*
 5. Rail → **Instructor** → **Resume** → the next press **at once**.
 
 **Explore has no Pause button** (no session bar): always pause first, resume only after coming back.
-**Never point at VCO₂ 216 or VO₂ 270 under Gas exchange**: they do not move with MH. The MH VO₂ is under Blood.
+**[candidate kit] Never point at VCO₂ 216 or VO₂ at rest (awake) 270 under Gas exchange**: they do not move with MH.
+The MH VO₂ is under Blood, and also under Gas exchange as **VO₂** (after SvO₂, the same number)
+(kit D 6d19b8b3, measured 30 October).
 
 ## Every press
 
@@ -75,7 +77,8 @@ engineering size, not a sourced one.*
 # OPEN · The opening on Home and the Room (T+0:00 → 3:00)
 
 **Slot 3:00 · the simulator opens on Home (E125): Home → Start here → the Room's QR; the case from Scenarios.
-Before the talk: the three model-page tabs loaded, to the right of the instructor tab (run sheet §1).**
+Before the talk: the three model-page tabs loaded at the fixed commit 6d19b8b3 (not `main`), to the right of the
+instructor tab (run sheet §1).**
 
 | Slot (T+) | Look at | Click | Say |
 |---|---|---|---|
@@ -123,6 +126,8 @@ after stop 1 still lands 3 s after Early signs on the clock.
 
 **Open:** Explore physiology → **Endocrine** → **Blood, acid–base and temperature** (then scroll to **BE**) → the
 **endocrine-thermal** tab → back → **Instructor** → tick *Name malignant hyperthermia* (Scenario tab). Stay Paused.
+**[candidate kit]** **Instructor**, not **Instructor v2** (the row below it in the rail); clicked by mistake: click
+**Instructor**, nothing is lost.
 
 | Explore shows (8:10) | Say (the number on screen) |
 |---|---|
@@ -135,8 +140,8 @@ after stop 1 still lands 3 s after Early signs on the clock.
 **Close the stop:** *"The EtCO₂ is rising at unchanged ventilation when it should be falling, with a rising heart
 rate: think of MH early."* → MH-2.
 
-**Do not point at:** Gas exchange's VCO₂ 216 / VO₂ 270 (they do not move with MH). **Not in this build:** muscle lactate
-with its own limits, injury potassium, MH severity as an input (open branches).
+**Do not point at:** Gas exchange's VCO₂ 216 / VO₂ at rest (awake) 270 [candidate kit] (they do not move with MH).
+**Not in this build:** muscle lactate with its own limits, injury potassium, MH severity as an input (open branches).
 
 <div style="page-break-after: always;"></div>
 
@@ -168,15 +173,16 @@ are words only.
 
 | Explore shows (13:50) | Say (the number on screen) |
 |---|---|
-| Drugs: **Ce (Dantrolene) 0.892** (drug unit = 2.5 mg/kg doses) | "Dantrolene here is a gamma curve: peak at 10 minutes, a tenth of the peak at 6 hours. Its effect is C over C + 1: about 0.47 now." |
+| Drugs: **Ce (Dantrolene) 0.892** (× ref dose = 2.5 mg/kg doses; 0.893 / 0.892 on kit D, C / W) [candidate kit] | "Dantrolene here is a gamma curve: peak at 10 minutes, a tenth of the peak at 6 hours. Its effect is C over C + 1: about 0.47 now." |
 | Endocrine: **MH activity 0.510** (0.270 at stop 1) | "Its only action: the unsuppressed share of the MH relaxes toward 1 − 1.6 × that effect, with a 10-minute time constant [ENG]. One dose can suppress 80 % at most; 5 mg/kg all of it. And the activity is still rising: the 15-minute onset ramp is not finished." |
 | Gas exchange: **VA 9.11 L/min** (3.7 at 1:00), f 20, VT 600; PaCO₂ 44.2 | "The EtCO₂ was below 40 two seconds after the dose, before it could act. That fall is the doubled ventilation, 6 to 12 litres a minute, clearing the CO₂ the muscle is still making. It also takes away the hypercapnic sympathetic and pressor drive. It does nothing to MH itself; nor did turning off the sevoflurane." |
 | Blood: **VO₂ 427** (still rising) | "The muscle is still working harder." |
 | Blood (scrolled): **K⁺ 4.62**, pH 7.36, lactate 1.80 | "The MH potassium in this build is one fitted term: 2.35 mmol/L × the activity on the potassium set point [ENG]. On top, three general terms: the acidaemia without the lactate, adrenaline's β2 uptake, the succinylcholine pulse. There is no muscle injury and no rhabdomyolysis in this build. On this path K never passes 5.5." |
 
-**Do not point at:** VCO₂ 216 / VO₂ 270 in the Gas exchange list (two rows above VA). The Drugs "Total" unit reads
-"mg, µg": dantrolene's 200 is mg. **Note:** the MH potassium term and dantrolene's gain are on the
-**endocrine-thermal** page's Parameters (MH_K_EFFLUX, DANT_GAIN), not on the blood page.
+**[candidate kit] Do not point at:** VCO₂ 216 / VO₂ at rest (awake) 270 in the Gas exchange list (six and five rows
+above VA). The moving **VO₂ 427** six rows below VA is the MH figure, the same as Blood's: you may point at it. The
+Drugs "Total" reads "200 mg" (kit D 6d19b8b3, measured 30 October). **Note:** the MH potassium term and
+dantrolene's gain are on the **endocrine-thermal** page's Parameters (MH_K_EFFLUX, DANT_GAIN), not on the blood page.
 
 <div style="page-break-after: always;"></div>
 
@@ -218,9 +224,9 @@ injured muscle sized from Medbø and Sejersted 1990, and MH severity as a scenar
 because with it in, about fourteen clinical numbers left their acceptance bands and the haemorrhage case no longer
 arrested as rehearsed. It ships when it passes those bands, not before."*
 
-**Stage rule:** never say the simulator does something the kit in the room does not do. **Model page caution:** the
-DANT_GAIN row's text says "90 % of its peak within 1 min"; the build's curve peaks at 10 min (the dantrolene row,
-600 s). Do not read that phrase aloud.
+**Stage rule:** never say the simulator does something the kit in the room does not do. **Model page:** on the pinned
+page (6d19b8b3) the DANT_GAIN row reads "a gamma curve peaking at 10 min, t10 6 h: `gammaPk(2.5, true, 600, 21600)`"
+(corrected by #189), which is what you say: peak at 10 minutes, a tenth of the peak at 6 hours. On either kit.
 
 <div style="page-break-after: always;"></div>
 
