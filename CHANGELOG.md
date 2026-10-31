@@ -152,6 +152,21 @@ the public API is what the packages export (see the API reference), the `pme-sce
   past the current size's threshold and two consecutive windows asking for it (Philips "Auto Size" and Mindray "Auto"
   choose from discrete sizes; neither manual gives a cadence or a band, so those are [ENG]). Philips-like stays at
   10 mm/mV. No gain control yet (a later piece).
+- Instructor v2's stage-strip chips keep their state looks (a finished stage's no frame, the current one's blue, a
+  future one's dashed) with the sheets loaded: the tray's `.ip2-chip` rule in `sheets.css` is scoped to the tray.
+- Instructor v2 reads a `pme-scenario/1` card's spoke states (a state whose only exit is a short `afterS` back to its
+  hub: the MH card's dantrolene, cooling, potassium and bicarbonate, the haemorrhage card's epinephrine and volume) as
+  actions of their hub stage, and a finished row moves to "Finished steps · n" at once, in every stage: a step pressed
+  in the treatment stage goes green into the fold with its number and time, the stage stays current with its entry
+  time, the strip's "n open" counts the steps still open, and the stage's other rows keep their state. A step with no
+  rule of its own is a press whenever it fires: it is never marked "fired by its own rule", and a stage it enters reads
+  "entered by your button", whatever order the host saw the state and the press's acknowledgement in (the Cool press
+  read as an automatic task). The clinical owner's three reports of 30 October; the card, the driver and the Debrief
+  are unchanged.
+- Instructor v2 shows a press the runner would refuse now as waiting. A manual step guarded by a vital in its `all` is
+  faded and offers no press, neither the row nor its digit key, and its right-hand label shows the value against the
+  rule ("36.7 → 38.5"); it becomes ready when the rule holds. Example: the MH card's Cool below 38.5 °C core (#216). It
+  read as a ready step at 36.7 °C, and the runner refused the press.
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's
   sequence and viewer role per transport, and counts a hello only after its sequence check, so a phone on the relay
   that says hello with the laptop panel's id leaves the panel's commands applied. The relay gives each peer id one live

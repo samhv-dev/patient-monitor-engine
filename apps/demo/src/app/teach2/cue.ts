@@ -8,7 +8,7 @@
 // monitor carries PAUSED, and the pill's tooltip says when a step pressed now is given).
 import './state.css';
 import type { StateVar } from '@pme/engine-core';
-import { stageOf, stagesOf } from '../card-read.ts';
+import { byItself, stageOf, stagesOf } from '../card-read.ts';
 import { drugWords } from '../glossary.ts';
 import type { Link } from '../link.ts';
 import { hrefOf } from '../router.ts';
@@ -107,7 +107,11 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     inStage.classList.toggle('ip2-frozen', frozen);
     const trId = entry?.transitionId?.replace(/:else$/, '');
     const tr = trId ? doc.states.flatMap((s) => s.transitions ?? []).find((x) => x.id === trId) : undefined;
-    setText(how, entry ? enteredWords(byOf(link, entry), entry.t, tr ? whenText(tr.when) : null) : '');
+    // a transition with no rule of its own entered the stage by your button, whatever the record's `by` reads (the
+    // owner's report of 30 October: a dose pressed in Recovering, the treatment stage "entered by its rule")
+    const rec = entry ? byOf(link, entry) : undefined;
+    const by = tr && rec === 'rule' && !byItself(tr.when) ? 'press' : rec;
+    setText(how, entry ? enteredWords(by, entry.t, tr ? whenText(tr.when) : null) : '');
     setText(line, drugWords(state.label ?? stage.label));
     const notes = state.notes ?? doc.states.find((s) => s.id === stage.id)?.notes;
     say.hidden = !notes;

@@ -1,7 +1,7 @@
 // Instructor v2 (E127; plan IP9 step 3; design §2 and §8): at the laptop's 1440 × 900 window, at the MH card's second-dose
 // moment (normoventilated), its treatment fan-out (treating) and the haemorrhage card's PEA, the view fits without a
 // scroll (the page, the view and the ACTION column), every open step of the stage is a row of ACTION, and no row is
-// disabled; the stage strip fits with its folds and cuts no name (IP9 ruling 2). The monitor pane in STATE is measured, and the Saadat-like tiles in it are checked for text that overlaps,
+// disabled but a waiting one (rows.ts: a press the runner would refuse now, the MH card's Cool below 38.5 °C); the stage strip fits with its folds and cuts no name (IP9 ruling 2). The monitor pane in STATE is measured, and the Saadat-like tiles in it are checked for text that overlaps,
 // wraps or leaves its tile (plan R9: they have collided at smaller panes before, and no renderer change is allowed); the
 // pane's screenshot is written to TEACH2_SHOTS (default: this test's output folder) for the owner's look.
 import { mkdirSync } from 'node:fs';
@@ -85,7 +85,7 @@ function measure(page: Page) {
       cardSteps: (st?.transitions ?? []).filter((t) => manual(t.when)).length,
       stepRows: rows.filter((r) => r.dataset.kind === 'step').length,
       rows: rows.map((r) => `${r.querySelector('.ip2-key')?.textContent}:${r.dataset.look}`),
-      disabled: [...document.querySelectorAll('.ip2-action .ip2-row')].filter((r) => r.matches('[disabled], [aria-disabled="true"]')).length,
+      disabled: [...document.querySelectorAll('.ip2-action .ip2-row')].filter((r) => r.matches('[disabled], [aria-disabled="true"]') && (r as HTMLElement).dataset.look !== 'waiting').length,
       pane: { w: Math.round(stage.width), h: Math.round(stage.height), x: Math.round(stage.x), y: Math.round(stage.y) },
     };
   });

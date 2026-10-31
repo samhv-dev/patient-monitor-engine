@@ -82,6 +82,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     setText(p.right, live.right);
     if (p.fill) p.fill.style.width = `${Math.round((live.progress ?? 0) * 100)}%`;
     if (p.el instanceof HTMLButtonElement) {
+      p.el.disabled = live.look === 'waiting'; // the one exception to "a look never stops a press": rows.ts
       if (r.kind !== 'auto' && r.n <= 9) p.el.setAttribute('aria-keyshortcuts', n);
       p.el.setAttribute('aria-label', `${n}. ${r.title}. ${live.subtitle}. ${live.right}`);
     }
@@ -152,7 +153,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
 
   const setDigits = (rows: readonly LiveRow[]) => {
     for (let n = 1; n <= 9; n++) {
-      const live = rows.find((r) => r.row.kind !== 'auto' && r.row.n === n);
+      const live = rows.find((r) => r.row.kind !== 'auto' && r.row.n === n && r.look !== 'waiting');
       const p = live ? pills.get(keyOf(live)) : undefined;
       keys.digit(n, p ? () => press(p) : null);
     }
