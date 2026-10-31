@@ -13,7 +13,7 @@
 //   goto always re-enters.
 // - trigger(id) presses the transition's manual button; a transition without a manual leaf is forced instead.
 import { seedStream, uniform, type Sfc32State } from '@pme/engine-core';
-import type { ClinicalEvent, ScenarioEvent, SensorId } from '../protocol.ts';
+import type { ClinicalEvent, ScenarioEntry, ScenarioEvent, SensorId } from '../protocol.ts';
 import type { DocCommand, EventFilter, Op, ScenarioDoc, ScenarioState, Transition, When } from './types.ts';
 
 export type RunnerInput =
@@ -178,7 +178,7 @@ export class ScenarioRunner {
     if (!this.states.has(stateId)) throw new Error(`no state ${stateId}`);
     this.sync(t);
     this.log.push({ op: 'goto', t, stateId });
-    return this.enter(t, stateId, undefined, [], 'goto');
+    return this.enter(t, stateId, undefined, [], 'goto', 'goto');
   }
 
   /** Press a transition's manual button (or force a transition that has none). It is evaluated on the next advance. */
@@ -288,8 +288,10 @@ export class ScenarioRunner {
           tid = `${tr.id}:else`;
         }
       }
-      if (to === this.s.stateId) return [this.stay(t, tid)];
-      return this.enter(t, to, tid, [], 'transition');
+      // how it was taken: the instructor's press of it was held when it fired, or its condition fired it alone
+      const by: ScenarioEntry = pressed ? 'press' : 'rule';
+      if (to === this.s.stateId) return [this.stay(t, tid, by)];
+      return this.enter(t, to, tid, [], 'transition', by);
     }
     return [];
   }
@@ -334,13 +336,13 @@ export class ScenarioRunner {
     return no;
   }
 
-  private stay(t: number, transitionId: string): RunnerEffect {
+  private stay(t: number, transitionId: string, by: ScenarioEntry): RunnerEffect {
     this.log.push({ op: 'enter', t, stateId: this.s.stateId, transitionId });
     this.pushHistory({ t, stateId: this.s.stateId, transitionId });
-    return { kind: 'event', event: { type: 'scenario', t, stateId: this.s.stateId, transitionId } };
+    return { kind: 'event', event: { type: 'scenario', t, stateId: this.s.stateId, transitionId, by } };
   }
 
-  private enter(t: number, to: string, transitionId: string | undefined, pre: DocCommand[], reason: 'start' | 'transition' | 'goto'): RunnerEffect[] {
+  private enter(t: number, to: string, transitionId: string | undefined, pre: DocCommand[], reason: 'start' | 'transition' | 'goto', by?: ScenarioEntry): RunnerEffect[] {
     const from = this.states.get(this.s.stateId) as ScenarioState;
     const next = this.states.get(to) as ScenarioState;
     const commands = [...pre, ...(reason === 'start' ? [] : (from.onExit ?? [])), ...(next.onEnter ?? [])].map(strip);
@@ -356,7 +358,7 @@ export class ScenarioRunner {
     this.pushHistory({ t, stateId: to, ...(transitionId ? { transitionId } : {}) });
     const out: RunnerEffect[] = [];
     if (commands.length) out.push({ kind: 'commands', batch: ++this.s.batch, reason, commands });
-    out.push({ kind: 'event', event: { type: 'scenario', t, stateId: to, ...(transitionId ? { transitionId } : {}) } });
+    out.push({ kind: 'event', event: { type: 'scenario', t, stateId: to, ...(transitionId ? { transitionId } : {}), ...(by ? { by } : {}) } });
     return out;
   }
 

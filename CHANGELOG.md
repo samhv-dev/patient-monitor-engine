@@ -40,6 +40,12 @@ the public API is what the packages export (see the API reference), the `pme-sce
   owner's ruling.
 
 ### Fixed
+- The host's record attributes a stage entry by the transition the scenario runner took, never by matching a press to
+  a state within a tick: the `scenario` event carries `by` (`press` when the instructor's press of that transition was
+  held when it fired, `rule` when its condition fired it alone, `goto` for a jump; additive, brief §7.3), and the record
+  copies it. The record had matched the press's acknowledgement (the tick of the host's first clock read) to the state
+  (the time of a second read, eight times the wall between them later at ×8) within 0.02 s, so a manual press could be
+  recorded as its rule — the amber "Cool" of 30 October — and the Debrief then left that step out as not taken.
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's
   sequence and viewer role per transport, and counts a hello only after its sequence check, so a phone on the relay
   that says hello with the laptop panel's id leaves the panel's commands applied. The relay gives each peer id one live
