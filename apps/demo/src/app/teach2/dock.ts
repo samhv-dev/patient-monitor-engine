@@ -47,7 +47,33 @@ export interface Dock {
   refresh(): void;
 }
 
-/** The dock: the tool and note areas the sheets slot fills, the three marks, Debrief. */
+/** The instructor's end of a /2 case (Finish the case): its note in the record (the Debrief's timeline) and the Log. */
+export const FINISHED = 'Case finished';
+
+/** Has the instructor finished the running case on this host: a "Case finished" note, not undone by a return, since
+ *  the last load? (A follower keeps no record: false.) */
+export function caseFinished(link: Link): boolean {
+  const rows = link.host?.record.data.rows ?? [];
+  let from = 0;
+  rows.forEach((r, i) => {
+    if (r.kind === 'scenario' && r.text.startsWith('Scenario loaded')) from = i + 1;
+  });
+  return rows.slice(from).some((r) => r.kind === 'note' && r.text === FINISHED && r.undone === undefined);
+}
+
+/** The Debrief "ready" flag of a /2 card (design §6, Q11: failed at the phase's end or the run's end): the case is in
+ *  one of its end phases (a phase with no next: F2's ended()), or the instructor finished it. */
+export const readyV2 = (link: Link): boolean => link.ctl.scenario.ended() || caseFinished(link);
+
+/** Finish the case: the end of the run, noted in the record and the Log, and the simulation paused (the Debrief grades
+ *  the run as it stands; Resume carries on, the note stays). */
+export async function finishCase(link: Link): Promise<void> {
+  link.note(FINISHED, 'marker');
+  if (!link.ctl.hostPaused) await link.send({ type: 'time', action: 'pause' });
+  toast('The case is finished: the Debrief is ready');
+}
+
+/** The dock: the tool and note areas the sheets slot fills, the three marks, Finish the case (a /2 card), Debrief. */
 export function mountDock(link: Link): Dock {
   const tools = h('div', { class: 'ip2-dock-tools', role: 'group', 'aria-label': 'Tools' });
   const note = h('div', { class: 'ip2-dock-note' });
@@ -56,6 +82,8 @@ export function mountDock(link: Link): Dock {
     b.innerHTML = `<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="${d}"/></svg>`;
     return b;
   });
+  const finish = h('button', { type: 'button', class: 'ip2-dock-btn ip2-finish', title: 'Ends the run here: noted on the debrief timeline, the simulation paused, the Debrief ready', onclick: () => void finishCase(link) }, 'Finish the case');
+  finish.hidden = true; // a /2 card only (a /1 card ends at a state with no way out, as today)
   const debrief = h('a', { class: 'ip2-dock-btn ip2-debrief', href: hrefOf('debrief') }, 'Debrief');
   const el = h('footer', { class: 'ip2-dock', 'aria-label': 'Dock' },
     h('span', { class: 'ip2-dock-label', 'aria-hidden': 'true' }, 'Tools'),
@@ -63,13 +91,16 @@ export function mountDock(link: Link): Dock {
     h('span', { class: 'ip2-dock-div', 'aria-hidden': 'true' }),
     h('span', { class: 'ip2-dock-mid' }, h('span', { class: 'ip2-dock-marks', role: 'group', 'aria-label': 'Marks' }, ...marks), note),
     h('span', { class: 'ip2-dock-div', 'aria-hidden': 'true' }),
+    finish,
     debrief);
   return {
     el, tools, note,
-    // Debrief is lit once the case has ended (as today's session-bar link)
+    // Debrief is lit once the case has ended (as today's session-bar link); a /2 card: an end phase or Finish the case
     refresh: () => {
       const sv = link.ctl.scenario;
-      debrief.dataset.ready = String(sv.doc && isV2(sv.doc) ? sv.ended() : !!sv.doc && !sv.current()?.transitions?.length); // /2: F2's ended() (F6)
+      const v2 = !!sv.doc && isV2(sv.doc);
+      finish.hidden = !v2;
+      debrief.dataset.ready = String(v2 ? readyV2(link) : !!sv.doc && !sv.current()?.transitions?.length);
     },
   };
 }

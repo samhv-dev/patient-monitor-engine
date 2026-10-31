@@ -61,12 +61,12 @@ describe('card-read.ts and a pme-scenario/2 card', () => {
 });
 
 describe('the run record, the Debrief and its key moments, and a pme-scenario/2 card', () => {
-  it('record.ts: the load keeps the doc; a phase entry is a state row named "next state" (no throw on doc.states)', () => {
+  it('record.ts: the load keeps the doc; a phase entry is a state row named by the phase\'s label (F11: "next state")', () => {
     const rec = new RunRecord(() => ({ patient: 'M 30 y 80 kg', weightKg: 80 }), () => 0);
     rec.wire({ type: 'commandApplied', commandId: 'c1', tick: 0, resolved: { command: { id: 'c1', issuedBy: 'host', type: 'scenario', action: 'load', doc: V2 } } } as WireEvent);
     rec.wire({ type: 'scenario', t: 30, stateId: 'early', transitionId: 'enter:early' } as WireEvent);
     expect(rec.data.doc).toBe(V2);
-    expect(rec.data.rows.at(-1)).toMatchObject({ t: 30, kind: 'scenario', text: 'Scenario state: next state', ev: 'state:early' });
+    expect(rec.data.rows.at(-1)).toMatchObject({ t: 30, kind: 'scenario', text: 'Scenario state: Early signs', ev: 'state:early' });
   });
   it('debrief.ts: no objectives, no steps, no judged rows; a state event in words is "named in the rule"', () => {
     const d = run();
@@ -143,7 +143,7 @@ describe('the instructor views and a pme-scenario/2 card', () => {
     expect(cue.querySelector('.ip2-cue-name')?.textContent).toBe('Early signs');
     expect([...action.querySelectorAll('.ip2-row .ip2-row-title')].map((x) => x.textContent)).toEqual(['Call for help', 'Names MH from the monitor']);
   });
-  it('link.ts: a phase entry in the clinical log is a scenario state named "next state"', async () => {
+  it('link.ts: a phase entry in the clinical log is a scenario state named by the phase\'s label (F11: "next state")', async () => {
     const hub = createInProcessHub();
     const host = hub.connect();
     const t = hub.connect();
@@ -155,7 +155,7 @@ describe('the instructor views and a pme-scenario/2 card', () => {
     ] } as never));
     await settle();
     expect(link.ctl.scenario.doc).toEqual(V2);
-    expect(link.log.at(-1)).toMatchObject({ simT: 30, kind: 'scenario', text: 'Scenario state: next state' });
+    expect(link.log.at(-1)).toMatchObject({ simT: 30, kind: 'scenario', text: 'Scenario state: Early signs' });
     link.close();
   });
   it('the Debrief view (views/debrief.ts) draws a /2 run with no steps table rows', () => {
@@ -177,15 +177,36 @@ describe('the readers behind a cast or an "ended" test, and a pme-scenario/2 car
   it('teach2 drug-sheet.ts pinnedSteps: no pinned steps (no throw in classify)', () => {
     expect(pinnedSteps(fakeLink(view()))).toEqual([]);
   });
-  it('sessionbar.ts: the title and the phase id, and Debrief is "ready" at a terminal phase (no next: F2\'s ended(), F6)', async () => {
+  it('sessionbar.ts: the title and the phase\'s label (F11: it printed the id), and Debrief is "ready" at a terminal phase (no next: F2\'s ended(), F6)', async () => {
     const link = { ...fakeLink(view()), onChange: () => () => undefined, conditions: new Map(), ctl: { ...fakeLink(view()).ctl, timeScale: 1, fastForward: null } } as unknown as Link;
     const bar = document.createElement('header');
     document.body.append(bar);
     const off = mountSessionBar(bar, link);
     await new Promise((r) => setTimeout(r, 100)); // its draw is throttled to a timer and a frame
-    expect(bar.querySelector('.scen')?.textContent).toMatch(/^MH \(format 2\): early /);
+    expect(bar.querySelector('.scen')?.textContent).toMatch(/^MH \(format 2\): Early signs \d\d:\d\d$/);
     expect((bar.querySelector('.sb-debrief') as HTMLElement).dataset.ready).toBe('true'); // 'early' has no next
     off();
+  });
+  it('sessionbar.ts: a /2 phase with a next is not the end; Finish the case in the host\'s record makes Debrief "ready" (F11)', async () => {
+    const sv = view();
+    sv.stateId = 'baseline';
+    const rows = [{ t: 0, kind: 'scenario', text: 'Scenario loaded: MH (format 2)' }];
+    const base = fakeLink(sv);
+    const link = { ...base, onChange: () => () => undefined, conditions: new Map(), host: { spec: { sex: 'M', ageY: 30, weightKg: 80, comorbid: [] }, mode: 'modeled', record: { data: { rows } } }, ctl: { ...base.ctl, timeScale: 1, fastForward: null } } as unknown as Link;
+    const bar = document.createElement('header');
+    document.body.append(bar);
+    const off = mountSessionBar(bar, link);
+    await new Promise((r) => setTimeout(r, 100));
+    expect((bar.querySelector('.sb-debrief') as HTMLElement).dataset.ready).toBe('false');
+    off();
+    bar.remove();
+    rows.push({ t: 60, kind: 'note', text: 'Case finished' });
+    const bar2 = document.createElement('header');
+    document.body.append(bar2);
+    const off2 = mountSessionBar(bar2, link);
+    await new Promise((r) => setTimeout(r, 100));
+    expect((bar2.querySelector('.sb-debrief') as HTMLElement).dataset.ready).toBe('true');
+    off2();
   });
   it('views/debrief.ts: no "the scenario has ended" toast for a /2 card', () => {
     let changed = () => undefined as void;

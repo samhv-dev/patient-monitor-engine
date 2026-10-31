@@ -12,7 +12,7 @@ import type { Link } from '../link.ts';
 import { clock, h, setText } from '../ui.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { judge, pressAction, pressStep } from './press.ts';
-import { classify, classifyV2, type HoldLike, type LiveRow } from './rows.ts';
+import { classify, classifyV2, liveGrades, type HoldLike, type LiveRow } from './rows.ts';
 import { historyOf } from './course.ts';
 
 export const FOOT = 'No penalty comes from the panel. Consequences come from the physiology, and the debrief records overdue, out of order, failed and not done, each with the time and the order it was due.';
@@ -67,6 +67,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     p.el.dataset.kind = r.kind;
     if (live.overdue !== null) p.el.dataset.overdue = 'true';
     else delete p.el.dataset.overdue;
+    if (live.grade !== undefined) p.el.dataset.grade = live.grade; // a /2 action's live grade (deviation: its label amber)
+    else delete p.el.dataset.grade;
     setText(p.key, n);
     setText(p.title, r.title);
     setText(p.sub, live.subtitle);
@@ -87,11 +89,18 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const finSummary = h('summary', {});
   const finList = h('ol', { class: 'ip2-rows ip2-finished-list', 'aria-label': 'Finished steps' });
   const finished = h('details', { class: 'ip2-fold ip2-finished' }, finSummary, finList);
+  // a /2 card's rows not due now (rows.ts classifyV2 `later`): rows of ACTION in a fold, closed by default
+  const laterSummary = h('summary', { title: 'Actions not applicable yet (their trigger has not happened) and setup given in an earlier phase: still pressable here, and by their numbers' });
+  const laterList = h('ol', { class: 'ip2-rows ip2-later-list', 'aria-label': 'Not due now' });
+  const later = h('details', { class: 'ip2-fold ip2-later' }, laterSummary, laterList);
+  later.hidden = true;
   const empty = h('p', { class: 'ip2-empty' }, 'No scenario is running. Load a case from the Scenarios view; its steps appear here.');
   const foot = h('p', { class: 'ip2-foot' }, FOOT);
-  el.replaceChildren(h('div', { class: 'ip2-list' }, empty, list, offCard, finished, foot));
+  const listEl = h('div', { class: 'ip2-list' }, empty, list, later, offCard, finished, foot);
+  el.replaceChildren(listEl);
 
   const pills = new Map<string, Pill>();
+  const laterPills = new Map<string, Pill>();
   const finPills = new Map<string, Pill>();
   const base = new Map<string, number>();
   let docV = -1;
@@ -116,7 +125,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const setDigits = (rows: readonly LiveRow[]) => {
     for (let n = 1; n <= 9; n++) {
       const live = rows.find((r) => r.row.kind !== 'auto' && r.row.n === n);
-      const p = live ? pills.get(keyOf(live)) : undefined;
+      const p = live ? (pills.get(keyOf(live)) ?? laterPills.get(keyOf(live))) : undefined;
       keys.digit(n, p ? () => press(p) : null);
     }
   };
@@ -132,16 +141,27 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     }
     empty.hidden = !!sv.doc;
     list.hidden = offCard.hidden = finished.hidden = !sv.doc;
+    later.hidden = true;
     if (v2 && stateId) { // a pme-scenario/2 card (F6): the phase's actions, the judged rows, the rules out of the phase
+      listEl.dataset.format = '2'; // the denser /2 rows (action.css): the MH card's Latent opens 11 actions
       const pr = link.host?.driver.phaseRunner ?? null;
-      const board = classifyV2({ doc: v2, phaseId: stateId, log: link.log, takings: pr?.takings ?? null, holds: pr?.vitalHolds() ?? null, paused: link.ctl.hostPaused });
+      const board = classifyV2({
+        doc: v2, phaseId: stateId, log: link.log, takings: pr?.takings ?? null, holds: pr?.vitalHolds() ?? null, paused: link.ctl.hostPaused,
+        grades: pr ? liveGrades(v2, pr, link.simT) : null, admin: pr?.admin ?? null, enteredT: sv.enteredT,
+      });
+      const rest = board.later ?? [];
       sync(list, pills, board.list, false, keyOf);
+      sync(laterList, laterPills, rest, false, keyOf);
       sync(finList, finPills, board.finished, true, keyOf);
-      setDigits(board.list);
+      setDigits([...board.list, ...rest]);
+      later.hidden = !rest.length;
+      setText(laterSummary, `Not due now · ${rest.length}`);
       setText(finSummary, `Finished steps · ${board.finished.length}`);
+      finished.hidden = !board.finished.length; // a /2 Finished holds the judged rows met: shown once one is
       offCard.hidden = true;
       return;
     }
+    delete listEl.dataset.format;
     if (!doc || !stateId) {
       sync(list, pills, [], false, keyOf);
       sync(finList, finPills, [], true, keyOf);

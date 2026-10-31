@@ -413,7 +413,7 @@ export function render(j, fontsCss, version) {
     ? `<ol class="obj">${j.judged.map((x) => `<li><span class="mark">${x.pressedT === null ? ICON['not assessable'] + D.t('Not ticked') : ICON.met + D.t('Observed')}</span> ${D.t(x.text)}<div class="why">${x.pressedT === null ? D.t('The instructor did not tick it.') : D.t(`Observed by the instructor at ${mmss(x.pressedT)}.`)}</div></li>`).join('')}</ol>`
     : `<p class="muted">${D.t('This run has no rows for the instructor to judge.')}</p>`);
   const actions = v3 && `<table class="actions"><thead><tr><th>${D.t('Action')}</th><th>${D.t('Due')}</th><th>${D.t('Given')}</th><th>${D.t('Grade')}</th></tr></thead><tbody>${j.actions.map((a) =>
-    `<tr><td>${D.t(a.label)}${lines(a.lines)}</td><td class="num">${a.dueT === null ? '–' : `${mmss(a.dueT)}${a.windowS !== null ? ` + ${spanFa(span(a.windowS))}` : ''}`}</td><td class="num">${at(a.givenT)}</td><td>${D.t(GRADE[a.grade])}</td></tr>`
+    `<tr><td>${D.t(a.label)}${lines(a.lines)}</td><td class="num">${a.dueT === null ? '–' : `${mmss(a.dueT)}${a.windowS !== null ? ` + ${spanFa(span(a.windowS))}` : ''}`}</td><td class="num">${at(a.givenT)}</td><td>${D.t(GRADE[a.firstGrade ?? a.grade])}</td></tr>`
     + a.repeats.map((r) => `<tr><td>${D.t(`repeat ${r.n}`)}${lines(r.lines)}</td><td></td><td class="num">${at(r.t)}</td><td>${D.t(GRADE[r.grade])}</td></tr>`).join('')).join('')}</tbody></table>`;
   const outcomes = v3 && j.outcomes.length ? `<ul>${j.outcomes.map((o) => `<li>${D.t(o.status)} ${D.t(o.text)}<div class="why">${D.t(o.why)}</div></li>`).join('')}</ul>` : '';
   const violations = v3 && (j.violations.length
