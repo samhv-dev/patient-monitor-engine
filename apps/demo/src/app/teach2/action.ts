@@ -7,12 +7,12 @@
 // steps · n" (closed by default), then the foot line. Rows are kept by key across the ≤ 2 Hz repaint, so a press or the
 // keyboard focus is never lost to a redraw.
 import './action.css';
-import { asV1 } from '@pme/controller';
+import { asV1, isV2 } from '@pme/controller';
 import type { Link } from '../link.ts';
 import { clock, h, setText } from '../ui.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
-import { judge, pressStep } from './press.ts';
-import { classify, type HoldLike, type LiveRow } from './rows.ts';
+import { judge, pressAction, pressStep } from './press.ts';
+import { classify, classifyV2, type HoldLike, type LiveRow } from './rows.ts';
 import { historyOf } from './course.ts';
 
 export const FOOT = 'No penalty comes from the panel. Consequences come from the physiology, and the debrief records overdue, out of order, failed and not done, each with the time and the order it was due.';
@@ -39,7 +39,11 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const { link, keys } = ctx;
   const press = (p: Pill) => {
     const r = p.live.row;
-    if (r.kind === 'step') void pressStep(link, r.label);
+    if (r.kind === 'step' && r.actionId !== undefined) {
+      const doc = link.ctl.scenario.doc;
+      const a = doc && isV2(doc) ? doc.actions.find((x) => x.id === r.actionId) : undefined;
+      if (a) void pressAction(link, a);
+    } else if (r.kind === 'step') void pressStep(link, r.label);
     else if (r.kind === 'judged') judge(link, r.text);
   };
 
@@ -119,14 +123,25 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
 
   const refresh = () => {
     const sv = link.ctl.scenario;
-    const doc = asV1(sv.doc); // a pme-scenario/2 card: no rows until F6
+    const v2 = sv.doc && isV2(sv.doc) ? sv.doc : null;
+    const doc = asV1(sv.doc);
     const stateId = sv.stateId;
     if (docV !== sv.docVersion) {
       docV = sv.docVersion;
       base.clear();
     }
-    empty.hidden = !!doc;
-    list.hidden = offCard.hidden = finished.hidden = !doc;
+    empty.hidden = !!sv.doc;
+    list.hidden = offCard.hidden = finished.hidden = !sv.doc;
+    if (v2 && stateId) { // a pme-scenario/2 card (F6): the phase's actions, the judged rows, the rules out of the phase
+      const pr = link.host?.driver.phaseRunner ?? null;
+      const board = classifyV2({ doc: v2, phaseId: stateId, log: link.log, takings: pr?.takings ?? null, holds: pr?.vitalHolds() ?? null, paused: link.ctl.hostPaused });
+      sync(list, pills, board.list, false, keyOf);
+      sync(finList, finPills, board.finished, true, keyOf);
+      setDigits(board.list);
+      setText(finSummary, `Finished steps · ${board.finished.length}`);
+      offCard.hidden = true;
+      return;
+    }
     if (!doc || !stateId) {
       sync(list, pills, [], false, keyOf);
       sync(finList, finPills, [], true, keyOf);

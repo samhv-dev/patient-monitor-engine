@@ -117,7 +117,7 @@ export function scenariosView(d: ScenariosDeps): View {
       return;
     }
     if (isV2(v.doc)) {
-      err.textContent = `Error: ${f.name} is a pme-scenario/2 card; pme-scenario/2 cards run from F2 on.`;
+      err.textContent = `Error: ${f.name} is a pme-scenario/2 card; importing a pme-scenario/2 card is not built yet; the library's /2 card loads from Scenarios.`;
       return;
     }
     void load(cardOf(v.doc));

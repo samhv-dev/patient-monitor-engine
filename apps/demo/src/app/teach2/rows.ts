@@ -14,7 +14,8 @@
 // Nothing here ever disables a row: the look is all a status changes.
 import type { ScenarioDoc, Transition } from '@pme/controller';
 import type { RunEventId } from '@pme/controller/scenario';
-import { conditionNotMet, objectivesOf, rowsOf, stagesOf, standingOf, untakenStatus, type Evidence, type Row, type Stage } from '../card-read.ts';
+import { conditionNotMet, objectivesOf, phaseRowsOf, rowsOf, stagesOf, standingOf, untakenStatus, type Evidence, type Row, type Stage } from '../card-read.ts';
+import type { PhaseHold, ScenarioDocV2 } from '@pme/controller/scenario';
 import { eventWords, isEvent, mmss, trendMeta, verdict } from '../debrief.ts';
 import { drugWords } from '../glossary.ts';
 import type { ClinicalLogEntry } from '../link.ts';
@@ -315,4 +316,44 @@ function conditionNow(src: Source, cond: readonly RunEventId[]): string {
   const x = last[k];
   const m = trendMeta(k);
   return x === null ? 'not yet' : `${m.label} ${x.toFixed(m.digits)}`;
+}
+
+// ---- a pme-scenario/2 card (plan F6) ----
+
+/** What a /2 board is read from: the card, the current phase, the log (the judged rows' ticks) and, on the host, the
+ *  phase runner's takings and its holds (a follower has neither: its action rows stay "ready", its A rows empty). */
+export interface SourceV2 {
+  doc: ScenarioDocV2;
+  phaseId: string;
+  log: readonly ClinicalLogEntry[];
+  takings: Readonly<Record<string, number>> | null;
+  holds: readonly PhaseHold[] | null;
+  paused: boolean;
+}
+
+const mmssS = (s: number): string => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+/** The board of a /2 phase: its open actions (a taken one stays pressable, green, "given ×n"), the judged rows (met ones
+ *  move to Finished as on /1), and the rules out of the phase with the 60-s hold's bar. */
+export function classifyV2(src: SourceV2): Board {
+  const list: LiveRow[] = [];
+  const finished: LiveRow[] = [];
+  const base = (row: Row): LiveRow => ({ row, stage: src.phaseId, look: 'ready', subtitle: row.subtitle, right: '', overdue: null, outOfOrder: false, at: null, progress: null });
+  for (const row of phaseRowsOf(src.doc, src.phaseId)) {
+    const live = base(row);
+    if (row.kind === 'step') {
+      const n = (row.actionId !== undefined ? src.takings?.[row.actionId] : 0) ?? 0;
+      list.push(n > 0 ? { ...live, look: 'taken', right: `given${n > 1 ? ` ×${n}` : ''}` } : { ...live, right: src.takings ? 'press to give' : 'graded on the host' });
+    } else if (row.kind === 'judged') {
+      const met = src.log.find((x) => x.kind === 'marker' && x.text === `Objective met: ${drugWords(row.text)}`);
+      if (met) finished.push({ ...live, look: 'met', at: met.simT, right: met.simT === null ? '' : mmss(met.simT), subtitle: 'you judged it' });
+      else list.push({ ...live, right: 'press when met', subtitle: 'you judge it · for the debrief only, the patient does not change' });
+    } else {
+      const hold = src.holds?.find((x) => x.transitionId === row.tr.id && x.leaf === 'hold') ?? null;
+      const progress = hold ? hold.fraction : 0;
+      const right = src.paused ? 'frozen' : hold ? (hold.met ? `held ${mmssS(hold.heldS)} of ${mmssS(hold.forS)}` : 'not met') : '';
+      list.push({ ...live, look: 'pending', progress, right });
+    }
+  }
+  return { stage: stagesOf(src.doc).find((g) => g.id === src.phaseId) ?? null, list, finished, offCard: [] };
 }

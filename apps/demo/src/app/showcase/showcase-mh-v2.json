@@ -18,7 +18,7 @@
     "Keep hyperventilating until the EtCO₂ stays down; if it climbs again, repeat dantrolene.",
     "After the crisis: ICU 24–48 h, dantrolene 1 mg/kg every 4–6 h for 24 h (recrudescence in up to 50 %), then referral for testing and family counselling."
   ],
-  "notes": "pme-scenario/2 translation of showcase-mh (F8; the owner's phase table of 31 October). PHASES are regions of the MH course, each entered by its own rule on engine truth and held 60 s before it changes (owner, Q1); no button moves a phase. ACTIONS are the team's: the induction sequence (offered in Baseline, recorded, not graded: the orchestrator's call), the call of the crisis, the treatments and the return to normal ventilation, each with its acceptance criteria. The MH starts at the Induce press as on the /1 card: a card-set script entry (condition mh, severity 1) on the Induce action's first taking, in the press's stage group, so the engine receives the /1 card's commands at the /1 card's ticks (F8 step a; the susceptibility model, step b, is not in this card). Thresholds marked [ENG] in the $comments are the orchestrator's engineering readings of the owner's words: activity above zero > 0.01, high > 0.8, low < 0.2; dantrolene effect present: dantroleneE > 0.2; rising/falling: the least-squares slope over the plan's windows (EtCO₂ > 0.2 mmHg/min over 120 s; activity over 60 s falling, 120 s rising; HR and the EtCO₂ fall over 120 s, any sign); unchanged set ventilation: within 5 % of its value at the phase's start. Cool is offered only above 38.5 °C core; the saline is the /1 card's (21 °C, the whole 1.6 L): #216's refrigerated fluid and its stop at 38 °C need engine fields not on this base. Charcoal filters are not modelled (words only), as on the /1 card.",
+  "notes": "pme-scenario/2 translation of showcase-mh (F8; the owner's phase table of 31 October). PHASES are regions of the MH course, each entered by its own rule on engine truth and held 60 s before it changes (owner, Q1); no button moves a phase. ACTIONS are the team's: the induction sequence (offered in Baseline, recorded, not graded: the orchestrator's call), the call of the crisis, the treatments and the return to normal ventilation, each with its acceptance criteria. The MH starts at the Induce press as on the /1 card: a card-set script entry (condition mh, severity 1) on the Induce action's first taking, in the press's stage group, so the engine receives the /1 card's commands at the /1 card's ticks (F8 step a; the susceptibility model, step b, is not in this card). Thresholds marked [ENG] in the $comments are the orchestrator's engineering readings of the owner's words: activity above zero > 0.01, high > 0.8, low < 0.2; dantrolene effect present: dantroleneE > 0.2; rising/falling: the least-squares slope over the plan's windows (EtCO₂ > 0.2 mmHg/min over 120 s; activity over 60 s falling, 120 s rising; HR and the EtCO₂ fall over 120 s, any sign); unchanged set ventilation: within 5 % of its value at the phase's start. Cool is offered only above 38.5 °C core; the saline is the /1 card's (21 °C, the whole 1.6 L): #216's refrigerated fluid and its stop at 38 °C need engine fields not on this base. Charcoal filters are not modelled (words only), as on the /1 card. The treatments are open from Latent: on the demo path the call (6 s after the /1 card's early signs) doubles the set ventilation inside Early signs' 60-s hold, so the phase stays Latent until the EtCO₂ climbs back at the restored ventilation, and the dantrolene and the return to normal ventilation are pressed in Latent.",
   "seed": 7,
   "mode": "modeled",
   "patient": {
@@ -518,6 +518,7 @@
       "kind": "device",
       "$comment": "Part of the call's press; graded on the ventilator's settings whatever sent them.",
       "phases": [
+        "latent",
         "earlySigns",
         "established",
         "recrudescence"
@@ -568,6 +569,7 @@
       "label": "Propofol infusion 100–150 µg/kg/min in place of the sevoflurane",
       "kind": "drug",
       "phases": [
+        "latent",
         "earlySigns",
         "established",
         "recrudescence"
@@ -620,6 +622,7 @@
       "kind": "drug",
       "$comment": "The /1 card's objectives 3 and 4: within 300 s of the call; again when the EtCO₂ climbs back at normal ventilation ([ENG] EtCO₂ above 45 and rising > 0.2 mmHg/min over 120 s with the set minute ventilation ≤ 6.3 L/min, 12 × 500 + 5 %), due from the later of the previous dose + 5 min and the condition first true, within 5 min (the plan's Q13 recommendation; Q13 is the owner's, open). IM is contraindicated (no effect, tissue injury: owner, 29 October).",
       "phases": [
+        "latent",
         "earlySigns",
         "established",
         "treated",
@@ -713,6 +716,8 @@
       "kind": "device",
       "$comment": "The /1 card's second-dose button (owner, 28 October: the second dose comes with the crisis ventilation again). Its dose is graded as dantrolene's repeat; this row grades the ventilation it puts back.",
       "phases": [
+        "latent",
+        "earlySigns",
         "recovering",
         "recrudescence",
         "treated"
@@ -780,6 +785,7 @@
       "kind": "device",
       "$comment": "The /1 card's objective 6: only after the EtCO₂ has stayed below 40 for 2 min (never on a timer).",
       "phases": [
+        "latent",
         "treated",
         "recovering",
         "recrudescence",
