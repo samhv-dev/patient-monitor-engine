@@ -6,6 +6,8 @@
 //   until the ring spans the whole window.
 // - unchanged: every sample of the last `overS` seconds within ± `withinPct` % of the newest; false until the ring
 //   spans the window. A missing value (F4's set minute ventilation is null without a ventilator) empties the ring.
+//   With `since: 'phaseStart'` (the owner's "unchanged set ventilation", 31 October): the value within ± `withinPct` % of
+//   its value at the current phase's entry.
 // - visited: the phase is in the timeline. signal: `pulseLoss` (no pulse), `rosc` (a pulse after a loss), `rhythm:<id>`
 //   (the rhythm id the engine draws: VF is told from VT and asystole from PEA by the id, never by RHYTHMS[id].group).
 import { compare } from './runner.ts';
@@ -65,6 +67,8 @@ export interface RuleCtx {
   /** The variable's 1 Hz samples, oldest first. */
   ring(name: string): ReadonlyArray<readonly [number, number]>;
   visited(phaseId: string): boolean;
+  /** A `since: 'phaseStart'` variable's value at the current phase's entry. */
+  phaseRef(name: string): number | undefined;
   rhythm: string | null;
   pulse: boolean | null;
   pulseLost: boolean;
@@ -120,6 +124,11 @@ export function holds(r: PhaseRule, key: string, rank: 2 | 3, c: RuleCtx): boole
     return s !== undefined && compare(s, r.slope.op, r.slope.perMin);
   }
   if ('unchanged' in r) {
+    if (r.unchanged.since === 'phaseStart') {
+      const v = c.value(r.unchanged.var, rank);
+      const ref = c.phaseRef(r.unchanged.var);
+      return v !== undefined && ref !== undefined && (spreadPct([[0, v], [1, ref]]) ?? Infinity) <= r.unchanged.withinPct + EPS;
+    }
     const w = windowOf(c.ring(r.unchanged.var), r.unchanged.overS);
     const p = w.full ? spreadPct(w.samples) : undefined;
     return p !== undefined && p <= r.unchanged.withinPct + EPS;

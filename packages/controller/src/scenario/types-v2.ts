@@ -22,7 +22,7 @@ export type PhaseSignal = 'pulseLoss' | 'rosc' | `rhythm:${string}`;
 export type PhaseRule =
   | { value: { var: TruthVar; op: Op; value: number; forS?: number } }
   | { slope: { var: TruthVar; op: '<' | '<=' | '>' | '>='; perMin: number; overS: number } }
-  | { unchanged: { var: TruthVar; withinPct: number; overS: number } }
+  | { unchanged: { var: TruthVar; withinPct: number; overS: number; since?: never } | { var: TruthVar; withinPct: number; since: 'phaseStart'; overS?: never } }
   | { visited: string }
   | { signal: PhaseSignal }
   | { all: PhaseRule[] }
@@ -78,6 +78,8 @@ export interface Action extends C {
   phases: string[];
   /** The commands an A press sends. */
   give?: DocCommand[];
+  /** false: offered and recorded, never graded (a setup action). Absent: graded. */
+  graded?: false;
   drug?: DrugCriteria;
   device?: { kind: DeviceKind; settings: Settings };
   fluid?: { type?: string[]; volumeMl?: Amount; rateMlMin?: Amount };
@@ -101,6 +103,10 @@ export interface Phase extends C {
   initial?: true;
   /** Absent only on the initial phase. */
   enter?: PhaseRule;
+  /** The entry rule must hold without a break for this many seconds before the phase changes (owner, 31 October). */
+  holdS?: number;
+  /** What the learners see at this phase, shown beside its rule. */
+  cue?: string;
   next?: string[];
 }
 
@@ -123,6 +129,8 @@ export interface ScenarioDocV2 extends Header {
   outcomes?: Outcome[];
   judged?: Judged[];
   script?: ScriptEntry[];
+  /** #211's learner-facing Case briefing (the same shape as on /1 there); shown nowhere until #211 lands. */
+  briefing?: { text: string; estimatedMinutes?: number; durationS?: number; lang?: 'en' | 'fa' };
 }
 
 // --- shared by F2 (the phase runner) and F3 (the record and grade()) ---------------------------------------------
@@ -221,6 +229,10 @@ export interface PhaseRunnerState {
   edges: RuleEdge[];
   /** The script entries fired (ids): each fires once. */
   fired: string[];
+  /** Seconds each phase's entry rule has held without a break (its `holdS`), by phase id. */
+  holdFor?: Record<string, number>;
+  /** The value of each `since: 'phaseStart'` variable at the current phase's entry (the first value after it). */
+  phaseRef?: Record<string, number>;
   /** How many times each action has been taken (an `action:<id>#<n>` script anchor). */
   takings: Record<string, number>;
 }

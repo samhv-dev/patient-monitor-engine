@@ -4,7 +4,7 @@
 // WALL time, i.e. every 0.1 s of sim at ×1, 0.4 s at ×4 and 0.8 s at ×8. Every loop yields once per sim-minute.
 // Test-only: nothing in the app imports this file.
 import { createEngine, type EngineEvent } from '@pme/engine-core';
-import { engineOptionsOf, ScenarioDriver, validateScenario, type ScenarioDoc } from '@pme/controller/scenario';
+import { engineOptionsOf, isV2, ScenarioDriver, validateScenario, type AnyScenarioDoc, type ScenarioDoc } from '@pme/controller/scenario';
 import { expect } from 'vitest';
 
 /** One sample per second of sim time: the monitor's numerics (null = not shown or invalid), the 1 Hz arterial panel
@@ -23,8 +23,10 @@ export interface Sample {
 /** Press the button labelled `press` in the current state at sim time `t`, or `delayS` after `when` first holds (and not
  *  before `t`, if given). An act fires once; one that never finds its button stays NaN in `Run.pressed`. `send` instead
  *  of a press: a clinical event sent as an instructor panel control sends it (e.g. the Defib tab's Charge and Shock), through
- *  the driver so the card's `event` transitions see it; `press` is then only the act's name. */
-export interface Act { press: string; send?: Record<string, unknown>; t?: number; when?: (s: Sample) => boolean; delayS?: number }
+ *  the driver so the card's `event` transitions see it; `press` is then only the act's name. `action` (a pme-scenario/2
+ *  card, plan F8): the action's `give` commands, stamped with its `actionId` and one stage group, through `driver.host`
+ *  as Instructor v2's A press sends them; `press` is then only the act's name. */
+export interface Act { press: string; send?: Record<string, unknown>; action?: string; t?: number; when?: (s: Sample) => boolean; delayS?: number }
 
 export interface Run {
   rows: Sample[];
@@ -43,7 +45,10 @@ export interface Run {
 }
 
 const DOCS = import.meta.glob<{ default: ScenarioDoc }>('./*.json', { eager: true });
-export const showcaseDoc = (id: string): ScenarioDoc => {
+/** A showcase card as /1 (every caller but the /2 card's own tests). */
+export const showcaseDoc = (id: string): ScenarioDoc => anyShowcaseDoc(id) as ScenarioDoc;
+/** A showcase card in either format. */
+export const anyShowcaseDoc = (id: string): AnyScenarioDoc => {
   const m = DOCS[`./${id}.json`];
   if (!m) throw new Error(`no showcase document ${id}`);
   return m.default;
@@ -61,7 +66,7 @@ const num = (x: unknown): number => (typeof x === 'number' ? x : Number.NaN);
 /** Run card `id` to `untilS` of sim time, pressing `acts`; `listen` sees every engine event; the driver is polled every
  *  `pollS` of sim time (0.1 = the app at ×1; 0.8 = the app at ×8). */
 export async function runCard(id: string, acts: readonly Act[], untilS: number, listen?: (e: EngineEvent) => void, pollS = 0.1): Promise<Run> {
-  const v = validateScenario(showcaseDoc(id));
+  const v = validateScenario(anyShowcaseDoc(id));
   if (!v.ok) throw new Error(`${id}: ${v.errors.join('; ')}`);
   const doc = v.doc;
   const eo = engineOptionsOf(doc, 7);
@@ -96,7 +101,7 @@ export async function runCard(id: string, acts: readonly Act[], untilS: number, 
   if (!ok.ok) throw new Error(ok.reason);
   const armed = new Map<number, number>();
   const sample = (t: number): Sample => ({
-    t, state: driver.runner?.stateId ?? '',
+    t, state: driver.runner?.stateId ?? driver.phaseRunner?.stateId ?? '',
     hr: mon.hr ?? null, spo2: mon.spo2 ?? null, etco2: mon.etco2 ?? null, awrr: mon.awrr ?? null,
     sys: mon.abpSys ?? null, dia: mon.abpDia ?? null, map: mon.abpMean ?? null, cvp: mon.cvpMean ?? null, temp: mon.tempCore ?? null,
     rhythm, pulse: tree === null || at(tree, 'hemo.circ.arrest') === null, cpr: at(tree, 'hemo.cpr.active') === true, // no truth yet: alive
@@ -121,6 +126,17 @@ export async function runCard(id: string, acts: readonly Act[], untilS: number, 
       if (a.send) {
         const r = driver.host.dispatch({ type: 'applyEvent', event: a.send, id: `act-${i}`, issuedBy: 'instructor' } as never) as { accepted: boolean };
         if (!r.accepted) continue;
+        driver.poll();
+        run.pressed[i] = t;
+        continue;
+      }
+      if (a.action !== undefined) {
+        const action = isV2(doc) ? doc.actions.find((x) => x.id === a.action) : undefined;
+        if (!action?.give?.length) throw new Error(`${id}: no action ${a.action} with a give list`);
+        action.give.forEach((c, k) => {
+          const { $comment: _drop, ...cmd } = c as typeof c & { $comment?: string };
+          driver.host.dispatch({ ...cmd, id: `act-${i}-${k}`, issuedBy: 'instructor', stageGroup: `act-${i}`, actionId: a.action } as never);
+        });
         driver.poll();
         run.pressed[i] = t;
         continue;

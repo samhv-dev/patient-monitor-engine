@@ -106,7 +106,9 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
       const card = cardOf(doc);
       setText(title, drugWords(card.title));
       setText(story, drugWords(card.story));
-      objectives.replaceChildren(...card.objectives.map((o, i) => {
+      // a pme-scenario/2 card (F6, Q23): its rows are Instructor v2's; this view says so and ticks nothing
+      if (!asV1(doc)) objectives.replaceChildren(h('li', {}, 'This card is pme-scenario/2: run it from Instructor v2.'));
+      else objectives.replaceChildren(...card.objectives.map((o, i) => {
         const id = `obj-${i}`;
         const words = drugWords(o);
         const box = h('input', { type: 'checkbox', id, onchange: () => box.checked && link.note(`Objective met: ${words}`, 'marker') });

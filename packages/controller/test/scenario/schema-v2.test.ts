@@ -164,3 +164,37 @@ describe('pme-scenario/2: the cross-checks (§8.4), each with its path', () => {
     ]);
   });
 });
+
+// The owner's rulings of 31 October and the MH card's needs (F8): a phase's 60-s boundary hold (`holdS`) and the
+// learner's cue shown beside its rule (`cue`); "unchanged set ventilation" against the value at the phase's start
+// (`since: 'phaseStart'`); setup actions that are offered and recorded but not graded (`graded: false`: the induction
+// sequence, the orchestrator's call); and #211's learner-facing `briefing` block, the same shape as /1's there.
+describe('pme-scenario/2: holdS, cue, unchanged since the phase start, graded: false, briefing', () => {
+  const withAll = () => {
+    const d: any = minimalV2();
+    d.phases[1].holdS = 60;
+    d.phases[1].cue = 'EtCO₂ climbing, HR up';
+    d.phases[2].enter = { all: [d.phases[2].enter, { unchanged: { var: 'setMinuteVentilationLMin', withinPct: 5, since: 'phaseStart' } }] };
+    d.actions.push({ id: 'premed', label: 'Premedicate', kind: 'procedure', phases: ['baseline'], graded: false });
+    d.briefing = { text: 'You are the resident.', estimatedMinutes: 25, durationS: 60, lang: 'en' };
+    return d;
+  };
+  it('accepts them', () => {
+    const r = validateScenario(withAll());
+    expect(r.ok ? [] : r.errors).toEqual([]);
+  });
+  it.each([
+    ['a negative hold', (d: any) => (d.phases[1].holdS = -1), '/phases/1/holdS: must be >= 0'],
+    ['an empty cue', (d: any) => (d.phases[1].cue = ''), '/phases/1/cue: must NOT have fewer than 1 characters'],
+    ['an unchanged leaf with neither window nor since', (d: any) => delete d.phases[2].enter.all[1].unchanged.since, '/phases/2/enter/all/1/unchanged'],
+    ['an unknown since', (d: any) => (d.phases[2].enter.all[1].unchanged.since = 'start'), '/phases/2/enter/all/1/unchanged'],
+    ['graded: true written out', (d: any) => (d.actions[1].graded = true), '/actions/1/graded: must be false'],
+    ['a briefing without text', (d: any) => delete d.briefing.text, '/briefing: missing required property "text"'],
+  ])('refuses %s', (_name, mutate, want) => {
+    const d = withAll();
+    mutate(d);
+    const r = validateScenario(d);
+    expect(r.ok).toBe(false);
+    expect(r.ok ? '' : r.errors.join('\n')).toContain(want);
+  });
+});

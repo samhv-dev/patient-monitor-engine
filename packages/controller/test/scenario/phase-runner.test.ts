@@ -382,3 +382,57 @@ describe('PhaseRunner: vitalHolds() on a /2 card (the A rows of Instructor v2)',
     expect(r.vitalHolds()).toEqual([]); // early has no next
   });
 });
+
+// The owner's rulings of 31 October: every phase boundary holds for 60 s before the phase changes (Q1: without a hold
+// the MH replay flapped about ninety times), and "unchanged set ventilation" is the set minute ventilation within 5 % of
+// its value at the current phase's start.
+describe('PhaseRunner: a phase\'s holdS and unchanged since the phase\'s start (owner, 31 October)', () => {
+  it('holdS: the entry rule must hold without a break for holdS before the phase changes; a break starts it again', () => {
+    const r = new PhaseRunner(card([{ id: 'a', next: ['b'] }, { id: 'b', enter: { value: { var: 'etco2', op: '>', value: 45 } }, holdS: 60 }]));
+    r.start(0);
+    // true from 0.1 s, false at 30 s, true again from 30.1 s: enters 60 s after 30.1 s
+    run(r, 0, 120, (t) => [truth({ etco2: Math.abs(t - 30) < 1e-9 ? 40 : 50 })]);
+    expect(entered(r)).toEqual([['a', 0], ['b', 90.1]]);
+  });
+
+  it('holdS: paused time does not count, and vitalHolds() shows the hold\'s fill', () => {
+    const r = new PhaseRunner(card([{ id: 'a', next: ['b'] }, { id: 'b', enter: { value: { var: 'etco2', op: '>', value: 45 } }, holdS: 60 }]));
+    r.start(0);
+    run(r, 0, 30, () => [truth({ etco2: 50 })]);
+    const h = r.vitalHolds().find((x) => x.leaf === 'hold');
+    expect(h).toMatchObject({ transitionId: 'enter:b', leaf: 'hold', met: true, forS: 60 });
+    expect(h!.heldS).toBeCloseTo(29.9, 6);
+    r.pause(30);
+    run(r, 30, 100, () => [truth({ etco2: 50 })]);
+    expect(r.stateId).toBe('a');
+    r.resume(100);
+    run(r, 100, 140, () => [truth({ etco2: 50 })]);
+    expect(entered(r)).toEqual([['a', 0], ['b', 130.1]]);
+  });
+
+  it('unchanged since: "phaseStart": within ± withinPct of the value at the current phase\'s entry, not of the newest', () => {
+    const rule: PhaseRule = { unchanged: { var: 'setMinuteVentilationLMin', withinPct: 5, since: 'phaseStart' } };
+    const r = new PhaseRunner(card([{ id: 'a', next: ['b'] }, { id: 'b', enter: { all: [{ value: { var: 'etco2', op: '>', value: 45 } }, rule] } }]));
+    r.start(0);
+    r.advance(1, [signals({ setMinuteVentilationLMin: 6 })]); // the first value after the entry is the reference
+    r.advance(2, [signals({ setMinuteVentilationLMin: 12 }), truth({ etco2: 50 })]);
+    expect(r.stateId).toBe('a'); // doubled: changed
+    r.advance(3, [signals({ setMinuteVentilationLMin: 6.29 })]);
+    expect(r.stateId).toBe('b'); // within 5 % of 6
+  });
+
+  it('unchanged since "phaseStart": the reference is taken again at each phase entry', () => {
+    const rule: PhaseRule = { unchanged: { var: 'setMinuteVentilationLMin', withinPct: 5, since: 'phaseStart' } };
+    const r = new PhaseRunner(card([
+      { id: 'a', next: ['b'] },
+      { id: 'b', enter: { value: { var: 'etco2', op: '>', value: 45 } }, next: ['c'] },
+      { id: 'c', enter: { all: [{ value: { var: 'etco2', op: '>', value: 50 } }, rule] } },
+    ]));
+    r.start(0);
+    r.advance(1, [signals({ setMinuteVentilationLMin: 6 })]);
+    r.advance(2, [signals({ setMinuteVentilationLMin: 12 }), truth({ etco2: 48 })]);
+    expect(r.stateId).toBe('b'); // entered at 12 L/min: the reference is 12
+    r.advance(3, [truth({ etco2: 55 })]);
+    expect(r.stateId).toBe('c');
+  });
+});

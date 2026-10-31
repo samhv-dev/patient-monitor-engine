@@ -25,7 +25,19 @@
     "actions": { "type": "array", "items": { "$ref": "#/definitions/action" }, "description": "What the team should do: the prescription and its grading; the kind decides which criteria block applies (§5)." },
     "outcomes": { "type": "array", "items": { "$ref": "#/definitions/outcome" }, "description": "What the physiology should reach: reached / not reached, never an action's grade (§7)." },
     "judged": { "type": "array", "items": { "$ref": "#/definitions/judged" }, "description": "Recognition and communication the instructor judges; the clock starts on a displayed (rank 2) rule (§7)." },
-    "script": { "type": "array", "items": { "$ref": "#/definitions/scriptEntry" }, "description": "Events the card imposes, each card-set and never graded (§3)." }
+    "script": { "type": "array", "items": { "$ref": "#/definitions/scriptEntry" }, "description": "Events the card imposes, each card-set and never graded (§3)." },
+    "briefing": {
+      "type": "object",
+      "required": ["text"],
+      "additionalProperties": false,
+      "description": "Optional: the learner-facing Case briefing (#211's block, the same shape as on /1 there). Never names the diagnosis.",
+      "properties": {
+        "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "estimatedMinutes": { "type": "number", "exclusiveMinimum": 0 },
+        "durationS": { "type": "number", "exclusiveMinimum": 0, "maximum": 600 },
+        "lang": { "enum": ["en", "fa"] }
+      }
+    }
   },
   "definitions": {
     "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$" },
@@ -69,8 +81,10 @@
           "properties": { "var": { "$ref": "#/definitions/truthVar" }, "op": { "enum": ["<", "<=", ">", ">="] }, "perMin": { "type": "number" }, "overS": { "type": "number", "exclusiveMinimum": 0 } }
         },
         "unchanged": {
-          "type": "object", "required": ["var", "withinPct", "overS"], "additionalProperties": false,
-          "properties": { "var": { "$ref": "#/definitions/truthVar" }, "withinPct": { "type": "number", "exclusiveMinimum": 0 }, "overS": { "type": "number", "exclusiveMinimum": 0 } }
+          "description": "Every sample of the last `overS` seconds within ± `withinPct` % of the newest; or, with `since: \"phaseStart\"`, the value within ± `withinPct` % of its value at the current phase's entry (the owner's \"unchanged set ventilation\", 31 October).",
+          "type": "object", "required": ["var", "withinPct"], "additionalProperties": false,
+          "properties": { "var": { "$ref": "#/definitions/truthVar" }, "withinPct": { "type": "number", "exclusiveMinimum": 0 }, "overS": { "type": "number", "exclusiveMinimum": 0 }, "since": { "const": "phaseStart" } },
+          "oneOf": [{ "properties": { "overS": { "type": "number" } }, "required": ["overS"] }, { "properties": { "since": { "const": "phaseStart" } }, "required": ["since"] }]
         },
         "visited": { "$ref": "#/definitions/id" },
         "signal": {
@@ -116,6 +130,8 @@
         "$comment": { "type": "string" },
         "initial": { "const": true },
         "enter": { "$ref": "#/definitions/phaseRule" },
+        "holdS": { "type": "number", "minimum": 0, "description": "The entry rule must hold without a break for this many seconds before the phase changes (the owner's 60-s boundary hold, 31 October)." },
+        "cue": { "type": "string", "minLength": 1, "description": "What the learners see at this phase, shown beside its rule." },
         "next": { "$ref": "#/definitions/ids" }
       },
       "if": { "properties": { "initial": { "const": true } }, "required": ["initial"] },
@@ -203,6 +219,7 @@
         "$comment": { "type": "string" },
         "kind": { "enum": ["drug", "device", "procedure", "fluid", "physical", "sample", "communication", "decision"] },
         "phases": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/definitions/id" }, "description": "The action opens when one of them is entered." },
+        "graded": { "const": false, "description": "Offered and recorded, never graded (a setup action such as the induction sequence). Absent: graded." },
         "give": { "type": "array", "items": { "$ref": "pme-scenario-1.schema.json#/definitions/command" }, "description": "The commands an A press sends (/1 command definitions)." },
         "drug": { "$ref": "#/definitions/drugCriteria" },
         "device": {
