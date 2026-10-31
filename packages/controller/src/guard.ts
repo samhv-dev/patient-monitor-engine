@@ -13,7 +13,12 @@ export const WIRE_LIMITS = {
   maxDepth: 32,
   /** Most values in one message (a real snapshot holds ≈ 5 000) [ENG]. */
   maxNodes: 50_000,
+  /** Longest `note` command text, in characters (plan instructor-peer-role.md §2). */
+  noteChars: 500,
 } as const;
+
+/** An instructor's PIN on the wire: 4 to 8 ASCII digits (plan §1). */
+export const PIN_RE = /^[0-9]{4,8}$/;
 
 /** Keys that only a waveform leak would use. */
 export const FORBIDDEN_KEYS: ReadonlySet<string> = new Set(['samples', 'sampleData', 'waveform', 'buffer']);
@@ -91,8 +96,8 @@ export function assertWireSafe(m: WireMessage): void {
   if (leak) throw new WireSafetyError(`refusing to send sample data: ${leak}`);
 }
 
-const KINDS = new Set(['hello', 'command', 'ack', 'event', 'snapshot']);
-const ROLES = new Set(['host', 'controller', 'viewer']);
+const KINDS = new Set(['hello', 'command', 'ack', 'event', 'snapshot', 'grant']);
+const ROLES = new Set(['host', 'controller', 'viewer', 'instructor']);
 
 /**
  * Parses and validates untrusted input (a JSON string or a structured-clone object). Returns null for anything
@@ -116,14 +121,19 @@ export function parseWireMessage(data: unknown): WireMessage | null {
   switch (m.kind) {
     case 'hello':
       if (!ROLES.has(m.role as string)) return null;
+      if (m.pin !== undefined && (m.role !== 'instructor' || typeof m.pin !== 'string' || !PIN_RE.test(m.pin))) return null;
       break;
     case 'command': {
       const b = m.body as Record<string, unknown> | null;
       if (!b || typeof b !== 'object' || typeof b.id !== 'string' || typeof b.type !== 'string' || typeof b.issuedBy !== 'string') return null;
+      if (b.type === 'note' && ((b.kind !== 'note' && b.kind !== 'marker') || typeof b.text !== 'string' || b.text.length > WIRE_LIMITS.noteChars)) return null;
       break;
     }
     case 'ack':
       if (typeof m.commandId !== 'string' || typeof m.accepted !== 'boolean' || typeof m.tick !== 'number') return null;
+      break;
+    case 'grant':
+      if (typeof m.to !== 'string' || typeof m.granted !== 'boolean' || (m.reason !== undefined && typeof m.reason !== 'string')) return null;
       break;
     case 'event':
       if (!Array.isArray(m.body) || !m.body.every((e) => e !== null && typeof e === 'object' && typeof (e as { type?: unknown }).type === 'string')) return null;

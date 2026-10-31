@@ -15,7 +15,11 @@ import type {
   Tick,
 } from '@pme/engine-core';
 
-export type Role = 'host' | 'controller' | 'viewer';
+/**
+ * `instructor` (plan instructor-peer-role.md §1): a peer from anywhere that proves the instructor's PIN in its hello;
+ * the host grants it before it may command. A `controller` stays a peer its transport already trusts.
+ */
+export type Role = 'host' | 'controller' | 'viewer' | 'instructor';
 export type TransportKind = 'in-process' | 'postMessage' | 'broadcastChannel' | 'websocket' | 'webrtc';
 export type TransportStatus = 'connecting' | 'open' | 'closed' | 'error';
 export type ModelInput = 'hrFactor' | 'svrFactor' | 'contractilityFactor' | 'vo2Factor' | 'vco2Factor';
@@ -84,6 +88,8 @@ export type ExtraCommand = CommandBase &
     // `jump` = fast-forward `value` sim seconds (> 0, ≤ 600) as fast as the host's monitor runs; `step` is refused
     | { type: 'time'; action: 'pause' | 'resume' | 'scale' | 'step' | 'jump'; value?: number }
     | { type: 'applyEvent'; event: ClinicalEvent }
+    /** A judged objective (`marker`) or a note for the debrief, sent by a remote (plan §6); text ≤ WIRE_LIMITS.noteChars. */
+    | { type: 'note'; kind: 'note' | 'marker'; text: string }
     | {
         type: 'attachSensor'; sensor: SensorId; state: string; site?: string; leadSet?: 3 | 5 | 12;
         sampling?: 'sidestream' | 'mainstream';
@@ -149,7 +155,12 @@ export type ExtraEvent =
    * Sent with every answer to a hello (`replay: true`: the relay routes it as the welcome) and at every change.
    * Presentation only.
    */
-  | { type: 'style'; skin: string; theme: string; replay?: true };
+  | { type: 'style'; skin: string; theme: string; replay?: true }
+  /**
+   * The host's view feed for a granted instructor (plan §6): what Instructor v2 shows (rows, cue, strip), computed by
+   * the host app. Opaque here, and never in VIEWER_EVENTS: learners never receive it.
+   */
+  | { type: 'instructorView'; t: SimSeconds; body: unknown };
 
 /** An alarm raised during a fast-forward (it did not sound); `ended`: it came and went inside the span. */
 export type FastForwardAlarm = AlarmEntry & { ended: boolean };
@@ -199,8 +210,10 @@ export interface AppliedResolution {
 
 /** Brief §7.5, exactly. */
 export type WireMessage = { v: 1; session: string; from: string; seq: number; sentAt: number } & (
-  | { kind: 'hello'; role: Role }
+  | { kind: 'hello'; role: Role; pin?: string } // `pin`: only with role 'instructor', 4 to 8 digits (guard.ts)
   | { kind: 'command'; body: WireCommand }
+  /** The host's answer to an instructor hello, sent before its welcome (plan §1); `granted: false` also revokes. */
+  | { kind: 'grant'; to: string; granted: boolean; reason?: string }
   | { kind: 'ack'; commandId: string; accepted: boolean; tick: Tick; reason?: string }
   | { kind: 'event'; body: WireEvent[] } // batched per frame, never samples
   | { kind: 'snapshot'; body: PatientSnapshot }
@@ -232,6 +245,38 @@ export interface ManagedTransport extends Transport {
 
 export type AckResult = DispatchResult & { commandId: string; rttMs: number };
 export type MeasuredMap = Partial<Record<NumericId, import('@pme/engine-core').Measured>>;
+
+// --- what an instructor may send (plan instructor-peer-role.md §2) -------------------------------------------------
+/**
+ * The shapes a granted instructor may send (plan §2): what the laptop's Instructor views send, measured by the command
+ * census of 2026-10-30 on 1b274d5d (P0), never listed by hand, plus `note` (§6), which the laptop writes locally and
+ * only the phone sends. The census test (P0/P6) compares the measured laptop set against INSTRUCTOR_COMMANDS minus
+ * `note`, which only the phone sends.
+ */
+export const INSTRUCTOR_COMMANDS: ReadonlySet<string> = new Set([
+  'applyEvent airway', 'applyEvent bleed', 'applyEvent condition', 'applyEvent cpr', 'applyEvent defib', 'applyEvent drug',
+  'applyEvent fluid', 'applyEvent infusion', 'applyEvent lungCondition', 'applyEvent pacer', 'applyEvent vaporiser',
+  'applyEvent ventilation', 'attachSensor', 'device', 'pin', 'release', 'scenario bookmark', 'scenario goto',
+  'scenario pause', 'scenario restoreBookmark', 'scenario resume', 'scenario trigger', 'setMode', 'setRhythm', 'setTarget',
+  'time jump', 'time pause', 'time resume', 'time scale', 'note',
+]);
+
+/** The census key of a command (its `type`, plus its `action` when that is a word, plus `event.kind` for applyEvent). */
+export function commandShape(c: WireCommand | CommandInput): string {
+  const x = c as { type: string; action?: unknown; event?: { kind?: unknown } };
+  if (x.type === 'applyEvent') return `applyEvent ${String(x.event?.kind)}`;
+  return typeof x.action === 'string' ? `${x.type} ${x.action}` : x.type;
+}
+
+/** Null when a granted instructor may send `c`, else the reason its ack carries (plan §2). */
+export function instructorMay(c: WireCommand | CommandInput): string | null {
+  const shape = commandShape(c);
+  // A remote load would start the runner on the old body: the laptop remounts the engine first (AppSession.loadScenario).
+  if (shape === 'scenario load') return "Load the case on the instructor's computer.";
+  if (shape === 'scenario bookmark' && (c as { kind?: unknown }).kind === 'stage') return "A stage mark is the scenario driver's own.";
+  if (INSTRUCTOR_COMMANDS.has(shape)) return null;
+  return 'No Instructor view sends this command.'; // setFactor, setModifiers, externalDrive, time step and the rest
+}
 
 // --- session codes ------------------------------------------------------------------------------------------
 /** 31 symbols: no 0/O, 1/I/L — unambiguous when read off a projector or typed on a phone [ENG]. */
