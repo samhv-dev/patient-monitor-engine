@@ -14,6 +14,12 @@
 //   12 × 500 is not the hyperventilation).
 // - An action without a window counts the records from its opening (the first entry of one of its phases, §5) and is
 //   "not applicable" if none of its phases occurred.
+// - Decision D3 (review B2): a rule anchor, `pulseLoss` and `rosc` open the window at their first true edge AFTER the
+//   action's opening (or at the opening when the rule holds across it): a rule that held before any of the action's
+//   phases (the EtCO₂ of a premedicated patient on room air, before the induction) opens nothing. A device or a decision
+//   is credited only with a record made once its own window opened (the call's 20 × 600 is not the second dose's). A
+//   precondition ("given before X") is met when X held at any time from the opening to the press, so the line's words
+//   are true.
 // - Precedence failed > overdue > due > deviation > met; a late, wrongly sized dose is overdue with the deviation line
 //   under it; repeats are graded each and the action takes the worst. `graded: false` actions are left out.
 // - Repeats: `repeatWhile` only (Q13: due from the later of the previous dose + intervalS.min and the condition's first
@@ -189,10 +195,11 @@ export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: 
   const busy = new Set<string>();
   const team = admin.filter((a) => !a.cardSet);
 
-  const anchorT = (an: Anchor, rule: string): number | undefined => {
+  /** When the anchor opens the window; a rule (and pulseLoss, rosc) from `from` on (D3: the action's opening). */
+  const anchorT = (an: Anchor, rule: string, from = -Infinity): number | undefined => {
     if (an === 'start') return 0;
-    if (an === 'pulseLoss' || an === 'rosc') return firstTrue(edges, an);
-    if (typeof an !== 'string') return firstTrue(edges, rule);
+    if (an === 'pulseLoss' || an === 'rosc') return trueFrom(edges, an, from);
+    if (typeof an !== 'string') return trueFrom(edges, rule, from);
     if (an.startsWith('phase:')) return phases.find((p) => p.id === an.slice(6))?.t;
     return gradeOf(an.slice(7))?.given?.t;
   };
@@ -223,16 +230,21 @@ export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: 
     const blocked = [...new Set(matched.flatMap((m) => blockers(act, m.a)))];
     const opening = phases.find((p) => act.phases.includes(p.id))?.t;
     const pre = act.precondition ? `action:${act.id}:precondition` : undefined;
+    /** D3: the precondition held at some time from the opening up to `at` (a press). */
+    const preBy = (at: number) => !pre || (trueFrom(edges, pre, opening ?? -Infinity) ?? Infinity) <= at + EPS;
     const open = (deadline?: number): Grade => (final ? 'failed' : deadline === undefined || t <= deadline + EPS ? 'due' : 'overdue');
     const na = (line: string): Row => ({ grade: 'not applicable', lines: [line], devs: [] });
     let row: Row;
     let given: (typeof sat)[number] | undefined;
 
-    if (pre && firstTrue(edges, pre) === undefined) row = na(`precondition never held: ${ruleWords(act.precondition as PhaseRule)}`);
+    if (pre && trueFrom(edges, pre, opening ?? -Infinity) === undefined) row = na(`precondition never held: ${ruleWords(act.precondition as PhaseRule)}`);
     else if (act.window) {
       const { anchor, withinS, notBeforeS } = act.window;
-      const at = anchorT(anchor, `action:${act.id}:anchor`);
-      given = pick(sat);
+      // a rule-like anchor of an action none of whose phases occurred never opens its window (D3)
+      const ruleLike = typeof anchor !== 'string' || anchor === 'pulseLoss' || anchor === 'rosc';
+      const at = ruleLike && opening === undefined ? undefined : anchorT(anchor, `action:${act.id}:anchor`, opening);
+      // D3: a device or a decision takes only the records made once its window opened
+      given = pick(settled && at !== undefined ? sat.filter((m) => m.a.t >= at - EPS) : sat);
       if (at === undefined) {
         row = na(`anchor never happened: ${anchorWords(anchor)}`);
         if (given) row.lines.push(`given ${clock(given.a.t)} without its anchor`);
@@ -252,13 +264,13 @@ export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: 
     } else if (opening === undefined) row = na('none of its phases occurred');
     else {
       const from = sat.filter((m) => m.a.t >= opening - EPS);
-      given = pre ? (pick(from.filter((m) => heldAt(edges, pre, m.a.t))) ?? pick(from)) : pick(from);
+      given = pre ? (pick(from.filter((m) => preBy(m.a.t))) ?? pick(from)) : pick(from);
       row = { grade: open(), lines: [], devs: [] };
       if (given) {
         row.givenT = given.a.t;
         row.grade = 'met';
         row.devs = deviations(act, given.a, given.id, w);
-        if (pre && !heldAt(edges, pre, given.a.t)) row.devs.unshift(`given before: ${ruleWords(act.precondition as PhaseRule)}`);
+        if (!preBy(given.a.t)) row.devs.unshift(`given before: ${ruleWords(act.precondition as PhaseRule)}`);
       }
     }
 
