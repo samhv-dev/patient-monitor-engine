@@ -777,8 +777,19 @@ a.rail-item:hover { color: var(--text-strong); background: color-mix(in srgb, va
 .app[data-route='teach2'] .rail-sub { flex-direction: column; }
 .app[data-route='teach2'] .rail-subitem { color: var(--text); }
 .app[data-route='teach2'] .rail-subitem[aria-current='page'] { background: var(--surface); }
-.app[data-route='teach2'] .rail-foot { padding: var(--s-3) 0 0; align-items: center; }
 .app[data-route='teach2'] .rail-theme { align-self: center; }
+/* The rail's two lines on the page's (owner, 31 October): its upper divider at the line under the stage strip, its foot's
+   border at the line on top of the dock, from the page's own lines as measured (rail.ts trackPageLines: --rail-rule-y,
+   --rail-foot-h; before the first measure the fallbacks are the grid's rows above: the strip's line at 48 + 75 − 1 px, its
+   1-px border's top, and the 64-px dock). The brand fills the rail down to
+   the strip's line, the list starts on it with its first divider, and Home stands just above that divider, in the brand's
+   space; the foot is the dock's height, the switch centred in it as the dock's buttons are. */
+.app[data-route='teach2'] .rail { padding-block: 0; }
+.app[data-route='teach2'] .rail > .rail-brand { flex: none; height: var(--rail-rule-y, 122px); padding: var(--s-3) 0 0; align-items: flex-start; }
+.app[data-route='teach2'] .rail-list { position: relative; }
+.app[data-route='teach2'] .rail-list > .rail-item:first-child { position: absolute; left: 0; right: 0; bottom: calc(100% + var(--s-2)); }
+.app[data-route='teach2'] .rail-list > .rail-hr:first-of-type { margin-top: 0; }
+.app[data-route='teach2'] .rail-foot { flex: none; height: var(--rail-foot-h, 64px); padding: 0; align-items: center; justify-content: center; }
 /* toasts rest on the dock, not over its marks: its top edge as measured (--dock-foot, ui.ts trackChromeBottom); a fixed
    64 + 40 px left them about 40 px above it once nothing sat under the dock */
 body:has(.app[data-route='teach2']) .toasts { bottom: calc(var(--dock-foot, 64px) + var(--s-2)); }
