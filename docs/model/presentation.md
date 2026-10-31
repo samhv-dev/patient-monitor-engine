@@ -703,7 +703,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mou
 
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
-| untreated: early signs, established crisis, VF from hyperthermia | established at +45.6 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
+| untreated: VF from hyperthermia | no VF in 51 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
 | treated late (the run-sheet path): crisis 1 min into the established crisis | the call comes at +46.6 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
 
 ## Tests

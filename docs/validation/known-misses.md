@@ -8,7 +8,7 @@ and the test is marked as an expected failure with the measured value in its tit
 module that owns it, until the mechanism is fixed. The release-candidate view of the same list, with where each
 item is tracked, is [known deviations](../guides/known-deviations.md); each module is described in [docs/model](../model/README.md).
 
-**157 known misses.** Split from the test titles: a band recognised in the target of 148, a measured value in 146, a source in 60; "—" = not stated in a form the generator reads.
+**155 known misses.** Split from the test titles: a band recognised in the target of 146, a measured value in 144, a source in 58; "—" = not stated in a form the generator reads.
 
 **The bands themselves were audited** against the literature (target audit, 2026-10-11; the rows are in [target-audit.tsv](target-audit.tsv)): 148 of these misses carry an audit verdict — RIGHT 30, TOO NARROW 27, TOO WIDE 3, MIS-SPECIFIED 61, UNSUPPORTED 27 (a miss can carry several rows). RIGHT: the band matches its source; TOO NARROW / TOO WIDE: the source supports a wider / narrower band; MIS-SPECIFIED: the band measures something other than its source did; UNSUPPORTED: no source found for it. A proposed band is evidence for an owner ruling, not a change: until a ruling, the test keeps its band. The audit itself, row by row with its evidence, is [published here](target-audit/30-target-audit.md) with its CSV twin and synthesis; the numbered evidence notes it cites as "research/NN" live in the project's research folder outside the repository.
 
@@ -22,7 +22,7 @@ item is tracked, is [known deviations](../guides/known-deviations.md); each modu
 | [Breathing, airway and the ventilator coupling](#breathing) | 20 |
 | [Blood, acid–base, electrolytes and fluids](#blood) | 10 |
 | [Brain, kidney and liver](#organs) | 13 |
-| [Endocrine, metabolism and temperature](#endocrine-thermal) | 19 |
+| [Endocrine, metabolism and temperature](#endocrine-thermal) | 17 |
 | [Anaesthetic depth, ventilatory drive and neuromuscular block](#neuro) | 6 |
 | [Pharmacology: PK, PD and the drug rows](#pharmacology) | 34 |
 | [Monitor measurements (device layer)](#monitor) | 7 |
@@ -192,8 +192,6 @@ Module page: [docs/model/endocrine-thermal.md](../model/endocrine-thermal.md)
 | open wound: vasoconstriction begins at 3–4 h | 2.27 h | Sessler 2000 | TOO NARROW ([audit row 137](../../docs/validation/target-audit/30-target-audit.md#row-137)) | onset 1.5-4 h (or assert the event itself: onset at the model's threshold 34.5 ± 0.2 °C, which already passes, and drop the clock) | [`thermal-periop-course.test.ts`](../../packages/engine-core/test/engine/thermal-periop-course.test.ts) |
 | 30 min of sustained sympathetic drive (symp 2.5) lowers it below 0.45 | 0.485 | — | UNSUPPORTED ([audit row 138](../../docs/validation/target-audit/30-target-audit.md#row-138)) | Owner choice. Either a direction-only test (falls monotonically; < 0.6 by 60 min), or a band set from the plan's own arithmetic, 0.46-0.52 at 30 min, tagged [ENG]. Put the sourced behaviour at scenario level: ketamine in prolonged shock does not raise MAP/CO (Waxman 1980) | [`cat-reserve.test.ts`](../../packages/engine-core/test/l2/endo/cat-reserve.test.ts) |
 | GA: the hour-8 plateau stays at or above 34.5 °C | 34.37 | — | MIS-SPECIFIED ([audit row 140](../../docs/validation/target-audit/30-target-audit.md#row-140)) | hour-8 plateau between threshold - 0.5 and threshold + 0.1 °C (34.0-34.6 for the 34.5 threshold) and flat (< 0.1 °C/h, the sibling test); population range 34.0-35.2 °C for a 40-y adult | [`temp.test.ts`](../../packages/engine-core/test/l2/temp/temp.test.ts) |
-| MH: once established the core rises ≥ 1 °C per 15 min | +0.71 °C in minutes 30 → 45 | tables §7 check 21 | not audited | — | [`temp.test.ts`](../../packages/engine-core/test/l2/temp/temp.test.ts) |
-| MH (severity 1): +1 °C per 5–15 min once established | +0.45 °C in minutes 20 → 30 | tables §7 check 21 | not audited | — | [`heat.test.ts`](../../packages/engine-core/test/l2/thermal/heat.test.ts) |
 
 <a id="neuro"></a>
 ## Anaesthetic depth, ventilatory drive and neuromuscular block
@@ -286,7 +284,7 @@ Module page: [docs/model/presentation.md](../model/presentation.md)
 
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
-| untreated: early signs, established crisis, VF from hyperthermia | established at +45.6 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
+| untreated: VF from hyperthermia | no VF in 51 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
 | treated late (the run-sheet path): crisis 1 min into the established crisis | the call comes at +46.6 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
 
 <a id="integration"></a>
