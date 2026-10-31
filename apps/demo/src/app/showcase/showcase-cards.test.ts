@@ -70,4 +70,15 @@ describe('Showcase cards', () => {
     expect((doc.objectives ?? []).map(objectiveText)).not.toContainEqual(expect.stringMatching(/within 300 s of EtCO₂ falling below 40/));
     expect(doc.objectives).toHaveLength(6); // the other four unchanged, after E52's recognition objective
   });
+
+  it('the MH Cool is offered only above 38.5 °C; its saline is refrigerated (4 °C) and the team stops it at 38 °C (MHAUS)', () => {
+    const doc: ScenarioDoc = showcaseDoc('showcase-mh');
+    const COOL = 'Cool: refrigerated saline 20 mL/kg (1.6 L)';
+    const cools = doc.states.flatMap((s) => (s.transitions ?? []).filter((t) => t.to === 'cooling').map((t) => [s.id, t.when] as const));
+    expect(cools.map(([s]) => s)).toEqual(['triggerOff', 'treating', 'recovering', 'normoventilated']);
+    for (const [s, when] of cools) expect(when, s).toEqual({ all: [{ vital: { var: 'tempCore', op: '>', value: 38.5 } }, { manual: { label: COOL } }] });
+    const fluid = doc.states.find((s) => s.id === 'cooling')?.onEnter?.find((c) => c.type === 'applyEvent');
+    expect(fluid).toMatchObject({ type: 'applyEvent', event: { kind: 'fluid', fluid: 'saline', volumeMl: 1600, overS: 900, tempC: 4, stopAtCoreC: 38 } });
+    expect(doc.notes).not.toMatch(/no input for refrigerated fluid/);
+  });
 });

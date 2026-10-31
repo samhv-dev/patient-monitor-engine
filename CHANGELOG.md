@@ -55,6 +55,18 @@ the public API is what the packages export (see the API reference), the `pme-sce
   one new one is recorded (the hour after a VF imposed at 40.3 °C cools 2.3 °C against 0.5–1.5); the MH card's story
   text, the run sheet's temperature talk points and the cue cards still describe the old course.
 
+- **MH card: Cool is offered only above 38.5 °C, the saline is refrigerated and the team stops it at 38 °C; the Log
+  names the step pressed** (the owner's 120-minute over-treated run on the preview: core 34.4 °C after the Cool button
+  had been pressed at any temperature). The card's four Cool steps are a press guarded by `tempCore > 38.5` (an `all`
+  of a vital and the manual); the scenario runner now refuses a press whose guarding vital does not hold ("not offered
+  now: needs tempCore > 38.5") instead of keeping it to fire later (events in an `all` still latch as before). The
+  `fluid` event takes the fluid's own temperature `tempC` (0–42 °C; absent: the theatre's 21 °C, as before) and
+  `stopAtCoreC` (30–42 °C), at which the blood model ends the infusion: the card gives 20 mL/kg at 4 °C (EMHG 2024
+  "chilled (4-8 °C) crystalloids"; Rosenberg 2015 "normal saline at 4 °C") stopped once the core has fallen to 38 °C
+  (MHAUS "Stop cooling when the temperature has decreased to <38°C"). From an established crisis on this build the 4 °C
+  line removes 104 kJ in 727 mL and stops at 38.0 °C (the 21 °C line: 115 kJ over the whole 1.6 L, to 37.88 °C). The
+  clinical Log's line for a step pressed reads "Scenario event: <the step's label>" (it said "Scenario event" only).
+  The demo path never presses Cool: no band or printed number of the MH slow test moved.
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's
   sequence and viewer role per transport, and counts a hello only after its sequence check, so a phone on the relay
   that says hello with the laptop panel's id leaves the panel's commands applied. The relay gives each peer id one live
