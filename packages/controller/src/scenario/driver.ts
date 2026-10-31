@@ -45,6 +45,13 @@ export interface RunPosition {
   runner: RunnerState;
 }
 
+/** A stage mark with the position it holds (plain JSON: an app keeps the marks across a reload, beside the run's own
+ *  position, and places them again with `holdStageMarks`). */
+export interface StageMarkPosition {
+  mark: ScenarioCommand;
+  run: RunPosition;
+}
+
 const NOT_IMPLEMENTED = /not implemented/;
 /** A hop (answer 2): a state whose only exit is `afterS` ≤ HOP_MAX_S — it folds into the stage it leads to [ENG]. */
 export const HOP_MAX_S = 2;
@@ -195,6 +202,42 @@ export class ScenarioDriver {
    */
   stageMarks(): ScenarioCommand[] {
     return this.stageMarkList.map((c) => ({ ...c }));
+  }
+
+  /**
+   * Host side, read-only: the stage marks of this run with the position each one holds (the engine snapshot and the
+   * runner state taken at the stage's start), oldest first — what an app keeps across a reload.
+   */
+  stageMarkPositions(): StageMarkPosition[] {
+    return this.stageMarkList.flatMap((c) => {
+      const m = this.marks.get(c.target as string);
+      return m?.runner ? [{ mark: { ...c }, run: { snapshot: m.snapshot, seed: m.seed, runner: m.runner } }] : [];
+    });
+  }
+
+  /**
+   * Place again the stage marks a reloaded page kept (stageMarkPositions), once the run has returned to its kept
+   * position (`hold` + `restoreBookmark`): they replace the stage marks of the run now loaded (a fresh load's own start
+   * is not the course's), so `stageMarks()` and `restoreBookmark` see them as the driver that placed them did. Kept are
+   * the marks of the document now loaded, of kind `stage`, no later than the engine's tick (the course kept); labels
+   * placed later stay unique. Returns how many were placed.
+   */
+  holdStageMarks(kept: readonly StageMarkPosition[]): number {
+    const doc = this.runner?.doc;
+    if (!doc) return 0;
+    const now = this.o.target.now().tick;
+    const ok = kept.filter((k) => k.mark.kind === 'stage' && typeof k.mark.target === 'string' && k.run.runner.docId === doc.id && (k.mark.atTick ?? 0) <= now)
+      .sort((x, y) => (x.mark.atTick ?? 0) - (y.mark.atTick ?? 0));
+    if (!ok.length) return 0;
+    for (const c of this.stageMarkList) this.marks.delete(c.target as string);
+    this.stageMarkList = [];
+    for (const k of ok) {
+      const label = k.mark.target as string;
+      this.marks.set(label, { snapshot: k.run.snapshot, doc, seed: k.run.seed, runner: k.run.runner });
+      this.stageMarkList.push({ ...k.mark });
+      this.stageN = Math.max(this.stageN, Number(/:(\d+)$/.exec(label)?.[1] ?? 0));
+    }
+    return ok.length;
   }
 
   bookmarks(): string[] {

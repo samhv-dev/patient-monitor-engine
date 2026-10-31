@@ -188,6 +188,9 @@ export function trackChromeBottom(root: HTMLElement): () => void {
   // strip, then the case title and "Choose another scenario" (owner, 26 October).
   const strip = root.querySelector<HTMLElement>('.view[data-view="teach"] [role="tablist"]');
   const foot = root.querySelector<HTMLElement>('.view[data-view="teach"] .stagebar');
+  // Instructor v2's dock likewise, as `--dock-foot`: its toasts rest on the dock whatever is under it (the education line
+  // or nothing) and whatever the strip above carries
+  const dock = root.querySelector<HTMLElement>('.ip2-dock');
   const set = () => {
     const bottom = bars.reduce((m, e) => {
       const r = e.getBoundingClientRect();
@@ -198,9 +201,11 @@ export function trackChromeBottom(root: HTMLElement): () => void {
     document.documentElement.style.setProperty('--panel-tabs-bottom', `${s && s.height > 0 ? Math.round(s.bottom) : 0}px`);
     const f = foot?.getBoundingClientRect();
     document.documentElement.style.setProperty('--panel-foot', `${f && f.height > 0 ? Math.max(0, Math.round(innerHeight - f.top)) : 0}px`);
+    const d = dock?.getBoundingClientRect();
+    document.documentElement.style.setProperty('--dock-foot', `${d && d.height > 0 ? Math.max(0, Math.round(innerHeight - d.top)) : 0}px`);
   };
   const ro = new ResizeObserver(set);
-  for (const e of [...bars, strip, foot]) if (e) ro.observe(e);
+  for (const e of [...bars, strip, foot, dock]) if (e) ro.observe(e);
   addEventListener('resize', set);
   set();
   return () => {

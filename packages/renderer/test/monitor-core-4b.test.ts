@@ -5,9 +5,11 @@ import { MonitorCore } from '../src/monitor-core.ts';
 import { renderPlan } from '../src/skin-plan.ts';
 import { FakeCtx } from './fake-ctx.ts';
 
-function make(skin: string, engine: Record<string, unknown> = {}, cssH = 500) {
+function make(skin: string, engine: Record<string, unknown> = {}, cssH = 500, gainLaneMm?: number) {
   const ctx = new FakeCtx();
-  const core = new MonitorCore({ width: 0, height: 0 }, ctx, { cssW: 1056, cssH, dpr: 1 }, { engine: { seed: 1, device: { skin }, ...engine }, plan: renderPlan(resolveSkin(skin)) }, () => {});
+  const plan = renderPlan(resolveSkin(skin));
+  if (gainLaneMm !== undefined) for (const l of plan.lanes) if (l.kind === 'ecg') l.gainLaneMm = gainLaneMm;
+  const core = new MonitorCore({ width: 0, height: 0 }, ctx, { cssW: 1056, cssH, dpr: 1 }, { engine: { seed: 1, device: { skin }, ...engine }, plan }, () => {});
   let f = 0;
   const run = (s: number) => {
     const n = Math.round(s * 60);
@@ -37,11 +39,11 @@ describe('MonitorCore with a skin plan', () => {
     expect(core.engine.now().tick).toBeGreaterThanOrEqual(tick + 49);
   });
 
-  it('auto gain (RR-2): lead II (~1.4 mV p-p) in a 60 px lane settles on ×0.5 and relabels', () => {
-    const { ctx, run } = make('saadat-like', {}, 320); // six saadat-like lanes (research/34 T3) at the photo's weights: ECG1 115/614 × 320 ≈ 60 px
+  it('auto gain (RR-2): lead II (~1.3 mV a beat) on an 18-mm nominal lane settles on ×0.5 and relabels', () => {
+    const { ctx, run } = make('saadat-like', {}, 320, 18); // the judgement is in mV against the plan's nominal lane, not the 60 px drawn
     ctx.texts = [];
     run(6.5);
-    expect(ctx.texts).toContain('X0.5'); // the gain part of the label (pass 2, T2); 3.10 px/mm (W1) still halves it
+    expect(ctx.texts).toContain('X0.5'); // the gain part of the label (pass 2, T2): 18 mm × 0.6 holds 1.08 mV at X1, 2.16 mV at X0.5
   });
 
   it('zoll-like: TCP pace marks and sync markers in the foreground colour, a shock mark with its energy', () => {

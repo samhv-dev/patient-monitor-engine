@@ -51,7 +51,7 @@
 @media (prefers-reduced-motion: reduce) { .ip2-fan { animation: none; } }
 
 /* the stage strip, STATE and ACTION (IP5, IP6 fill them) */
-.ip2-strip { grid-area: strip; display: flex; align-items: center; min-width: 0; padding: 0 20px; overflow: hidden; border-bottom: 1px solid var(--ip2-line); background: var(--ip2-page); font-size: 12px; white-space: nowrap; }
+.ip2-strip { grid-area: strip; display: flex; align-items: center; min-width: 0; padding: 0 20px; overflow: hidden; border-bottom: 1px solid var(--ip2-line); background: var(--ip2-page); font-size: 14px; white-space: nowrap; }
 .ip2-colhead { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: var(--ip2-muted); }
 /* STATE and ACTION are told apart by a lifted background only (option G): a rounded panel, 12 px × 14 px padding, no border.
    STATE's panel lies behind its four rows (cue, Fast forward, the monitor, the alarm line); its content sits over it. */

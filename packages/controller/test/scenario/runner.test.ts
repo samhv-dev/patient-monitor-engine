@@ -134,7 +134,7 @@ describe('ScenarioRunner', () => {
     ]));
     r.start(0);
     const fx = r.advance(10, [shock()]);
-    expect(fx).toEqual([{ kind: 'event', event: { type: 'scenario', t: 10, stateId: 'a', transitionId: 'shock:else' } }]);
+    expect(fx).toEqual([{ kind: 'event', event: { type: 'scenario', t: 10, stateId: 'a', transitionId: 'shock:else', by: 'rule' } }]);
     expect(r.advance(11)).toEqual([]); // the shock was consumed
     expect(runUntilChange(r, 11.02, 30)).toBe(20); // afterS still counts from 0
   });
@@ -174,6 +174,30 @@ describe('ScenarioRunner', () => {
     expect(r.trigger(1, 'nope')).toEqual({ ok: false, reason: 'no transition nope in state a' });
     r.trigger(1, 'slow');
     expect(states(r.advance(1))).toEqual(['b']);
+  });
+
+  it('the scenario event says how the transition was taken: a press held when it fired, its rule alone, or a jump', () => {
+    const by = (fx: RunnerEffect[]) => fx.flatMap((f) => (f.kind === 'event' ? [[f.event.stateId, f.event.transitionId ?? '', f.event.by ?? '']] : []));
+    const r = new ScenarioRunner(doc([
+      { id: 'm', when: { manual: { label: 'Go' } } },
+      { id: 'mixed', to: 'c', when: { any: [{ manual: { label: 'Now' } }, { afterS: 5 }] } },
+      { id: 'wait', to: 'c', when: { all: [{ manual: { label: 'When ready' } }, { event: { kind: 'drug', drugId: 'epinephrine' } }] } },
+      { id: 'slow', to: 'c', when: { afterS: 600 } },
+    ]));
+    expect(by(r.start(0))).toEqual([['a', '', '']]); // the first state: no transition, no "by"
+    r.trigger(1, 'm');
+    expect(by(r.advance(1))).toEqual([['b', 'm', 'press']]);
+    expect(by(r.goto(2, 'a'))).toEqual([['a', '', 'goto']]);
+    expect(by(r.advance(7))).toEqual([['c', 'mixed', 'rule']]); // the mixed step's own rule, no press
+    r.goto(8, 'a');
+    r.trigger(9, 'mixed');
+    expect(by(r.advance(9))).toEqual([['c', 'mixed', 'press']]);
+    r.goto(10, 'a');
+    r.trigger(10.5, 'wait'); // the press waits for the rest of its condition: still the press when it fires
+    expect(by(r.advance(11, [drug('epinephrine')]))).toEqual([['c', 'wait', 'press']]);
+    r.goto(12, 'a');
+    r.trigger(12.5, 'slow'); // a forced transition (no manual leaf): the press fired it
+    expect(by(r.advance(12.5))).toEqual([['c', 'slow', 'press']]);
   });
 
   it('pause stops the scenario clock and the evaluation; inputs still latch', () => {
