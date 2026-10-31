@@ -188,7 +188,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   // with no case loaded (board "Empty 5"): the note at the strip's right and the status line under it
   const note = h('span', { class: 'ip2-strip-note', hidden: true }, 'the default patient is on the monitor and running');
   // The status line. ONE message at a time, by precedence (the first that applies takes the line):
-  //   1. "Finishing." while Finish the case holds the clock (#214, not on this branch);
+  //   1. "Finishing." while Finish the case holds the clock (#214; board "Finish 2"), amber;
   //   2. a paused message, should one ever be written here (none today: option G shows paused on the pill and the monitor);
   //   3. the Case briefing while it runs: its sentence and End briefing (ends it on every screen, session.endBriefing);
   //   4. the ordinary line: "Ready." with no case loaded (#210).
@@ -204,11 +204,18 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   let brief: BriefingNotice | null = null;
   let briefTick: ReturnType<typeof setInterval> | null = null;
   const sayStatus = () => {
-    const msg = brief ? briefingStatusText(briefingLeftS(brief)) : !sv.doc ? READY : null; // 3, then 4
+    const fin = !!sv.doc && !!ctx.finish?.open;
+    const msg = fin ? `The clock is stopped at ${clock(link.simT)} while you decide. Nothing is written until you press a button on the right.`
+      : brief ? briefingStatusText(briefingLeftS(brief)) : !sv.doc ? READY : null; // 1, then 3, then 4
     status.hidden = msg === null;
-    endBrief.hidden = !brief;
-    statusWord.hidden = statusKeys.hidden = !!brief;
+    status.classList.toggle('ip2-finishing', fin);
+    el.toggleAttribute('data-finishing', fin);
+    const briefing = !fin && brief !== null;
+    endBrief.hidden = !briefing;
+    statusWord.hidden = statusKeys.hidden = briefing;
     el.toggleAttribute('data-briefing', brief !== null);
+    setText(statusWord, fin ? 'Finishing.' : 'Ready.');
+    if (fin) setText(statusKeys, 'Esc keeps the case running');
     if (msg !== null) setText(statusText, msg);
   };
   const offBrief = link.host?.onBriefing?.((b) => {
@@ -289,13 +296,13 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const draw = () => {
     const doc = sv.doc;
     note.hidden = !!doc;
-    sayStatus();
     el.toggleAttribute('data-empty', !doc);
+    if (!doc) setText(statusKeys, KEYS_OF[ctx.begin?.way ?? 'menu']);
+    sayStatus();
     if (!doc) {
       const way = ctx.begin?.way ?? 'menu';
       if (drawn !== `none:${way}`) {
         chips.replaceChildren(h('span', { class: 'ip2-strip-empty ip2-chip-none' }, way === 'free' ? 'Free roam' : `${NO_CASE} · the stages appear here when one is`));
-        statusKeys.textContent = KEYS_OF[way];
         drawn = `none:${way}`;
       }
       hint.hidden = true;

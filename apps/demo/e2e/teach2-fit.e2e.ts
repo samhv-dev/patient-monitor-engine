@@ -226,3 +226,53 @@ test('Instructor v2 with no case fits 1440 × 900: the three cards, the strip ch
   await expect(status).toBeHidden();
   await expect(page.locator('.ip2-ff')).toBeVisible();
 });
+
+// The owner's board "Finish 2" (approved 30 October): "Finish the case" in the dock pauses the clock, the strip's status
+// line says so, and ACTION becomes the Finish pane (the Resident field, the objective and mark counts, three buttons,
+// the archive under them). At 1440 × 900 the view still fits without a scroll; the pane's screenshot is written to
+// TEACH2_SHOTS for the owner's look. Esc gives the case back, running, with nothing written.
+test('Finish the case at the MH card\'s Recovering: the clock stops, the Finish pane fits 1440 × 900; Esc gives it back', async ({ page, browserName }, info) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openApp(page, base, '?scenario=showcase-mh#/teach2', { warmMs: 2000 });
+  await page.waitForFunction(() => !!(window as unknown as W).__pmeApp.link.ctl.scenario.doc, null, { timeout: 30_000 });
+  expect((await send(page, { type: 'scenario', action: 'goto', target: 'recovering' })).accepted).toBe(true);
+  await page.waitForFunction(() => (window as unknown as W).__pmeApp.link.ctl.scenario.stateId === 'recovering', null, { timeout: 15_000 });
+  // two earlier runs in the archive (the board's rows), and marks on this one
+  await page.evaluate(() => {
+    const a = (window as unknown as { __pmeApp: { archive: { save(d: unknown, who: string, b: string, at?: number): unknown }; session: { record: { data: { startedAt: number } } } } }).__pmeApp;
+    const d = a.session.record.data;
+    a.archive.save({ ...d, startedAt: d.startedAt - 7_200_000 }, 'Dr Saberi', 'e2e', Date.now() - 7_000_000);
+    a.archive.save({ ...d, startedAt: d.startedAt - 3_600_000 }, 'Dr Karimi', 'e2e', Date.now() - 3_500_000);
+  });
+  for (const kind of ['good', 'good', 'bad', 'discuss']) await page.locator(`.ip2-dock .ip2-mark[data-kind="${kind}"]`).click();
+  await page.waitForTimeout(4500); // the marks' toasts are gone before the screenshot
+  await page.locator('.ip2-dock .ip2-finish-btn').click();
+  await page.waitForFunction(() => (window as unknown as W).__pmeApp.link.ctl.hostPaused === true, null, { timeout: 10_000 });
+  await expect(page.locator('.ip2-finish')).toBeVisible();
+  await expect(page.locator('.ip2-pill-word')).toHaveText('PAUSED');
+  await expect(page.locator('.ip2-finishing .ip2-status-text')).toHaveText(/^The clock is stopped at \d\d:\d\d while you decide\. Nothing is written until you press a button on the right\.$/);
+  await expect(page.locator('.ip2-finish-marks')).toHaveText(/2 good · 1 bad · 1 discuss/);
+  await page.locator('.ip2-finish-resident').fill('Dr Rahimi');
+  await page.waitForTimeout(1200);
+  const m = await measure(page);
+  const box = (s: string) => page.locator(s).first().evaluate((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)]; });
+  const layout = { strip: await box('.ip2-strip'), status: await box('.ip2-finishing'), action: await box('.ip2-action'), pane: await box('.ip2-finish'), archive: await box('.ip2-finish-archive'), dock: await box('.ip2-dock') };
+  const dir = process.env.TEACH2_SHOTS ?? info.outputPath();
+  mkdirSync(dir, { recursive: true });
+  await page.screenshot({ path: join(dir, `teach2-finish-${browserName}-page.png`) });
+  const report = { browser: browserName, page: m.page, view: m.view, action: m.action, pane: m.pane, layout };
+  console.log(`teach2-finish ${JSON.stringify(report)}`);
+  info.annotations.push({ type: 'teach2-finish', description: JSON.stringify(report) });
+  expect(m.page[0], 'the page scrolls').toBeLessThanOrEqual(m.page[1] as number);
+  expect(m.view[0], 'the view scrolls').toBeLessThanOrEqual(m.view[1] as number);
+  expect(m.action[0], 'ACTION scrolls').toBeLessThanOrEqual(m.action[1] as number);
+  await expect(page.locator('.ip2-finish-archive .ip2-arc-row')).toHaveCount(2);
+  // Esc: running again, the rows back, nothing written
+  await page.locator('body').click({ position: { x: 700, y: 5 } });
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(() => (window as unknown as W).__pmeApp.link.ctl.hostPaused === false, null, { timeout: 10_000 });
+  await expect(page.locator('.ip2-finish')).toBeHidden();
+  await expect(page.locator('.ip2-action .ip2-rows:not(.ip2-finished-list) .ip2-row').first()).toBeVisible();
+  expect(await page.evaluate(() => (window as unknown as { __pmeApp: { archive: { list(): unknown[] } } }).__pmeApp.archive.list().length)).toBe(2);
+});
