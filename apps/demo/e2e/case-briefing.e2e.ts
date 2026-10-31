@@ -80,20 +80,23 @@ test('the Case briefing: over the running monitor on the host and the phones, a 
   // a phone that joins now shows the remainder
   const code = await page.evaluate(() => (window as unknown as W).__pmeApp.session.code);
   const { defaultBrowserType: _b, ...dev } = browserName === 'webkit' ? devices['iPhone 13'] : devices['Pixel 7'];
-  // Both phones load at once: on the 2-vCPU CI WebKit runner a second phone that starts loading only after the first
-  // is following never synced within 30 s (every run of #211, 31 October; macOS WebKit 10 of 10). The wait polls on a
-  // timer, not on animation frames, which Linux WebKit may hold back for a page it treats as hidden.
+  // Both phones join at once, as a classroom's do (the relay once gave the second a snapshot without the briefing). CI's
+  // Linux WebKit stops painting, and throttles the timers of, a page whose window is not in front: the host is brought
+  // back to the front while the phones sync (it answers their hellos), and each page before it is driven. The wait
+  // polls on a timer, not on animation frames.
   const phoneAt = async () => {
     const p = await (await browser.newContext(dev)).newPage();
     await p.goto(`${base}/?join=${code}&relay=${encodeURIComponent(ws)}`);
+    await page.bringToFront();
     await p.waitForFunction(() => (window as unknown as W).__pmeFollower?.sync?.status === 'synced', null, { timeout: 30_000, polling: 250 });
     return p;
   };
   const [f, g] = await Promise.all([phoneAt(), phoneAt()]);
   await expect(layer(f)).toBeVisible({ timeout: 10_000 });
   await expect(layer(f).locator('.cb-foot > span').nth(1)).toHaveText('Press and hold anywhere to continue now');
+  const hostLeft = await count(page); // the host is in front here
+  await f.bringToFront();
   const left = await count(f);
-  const hostLeft = await count(page);
   console.log(`briefing phone joined with ${left} s left (host ${hostLeft} s)`);
   expect(left).toBeLessThan(57);
   expect(Math.abs(left - hostLeft)).toBeLessThanOrEqual(1);
@@ -114,8 +117,7 @@ test('the Case briefing: over the running monitor on the host and the phones, a 
   await expect(layer(g)).toBeVisible();
   // Instructor v2 at the laptop's 1440 × 900 (the owner's choice of 31 October): the status line under the stage strip
   // reads the briefing and its time left beside End briefing; the chips' row carries no briefing element
-  // the phones' windows opened over the host: CI's Linux WebKit stopped painting it there (the route change to #/teach2
-  // never drew, its countdown froze; run 41196207539), so each page is brought to the front before it is driven again
+  // (run 41196207539: without this the host's route change to #/teach2 never drew and its countdown froze)
   await page.bringToFront();
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.evaluate(() => (location.hash = '#/teach2'));
