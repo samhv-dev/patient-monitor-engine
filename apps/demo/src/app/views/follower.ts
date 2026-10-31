@@ -37,6 +37,7 @@
 import { createBroadcastChannelTransport, createWebSocketTransport, ViewerSync, type ManagedTransport, type RelayFrame } from '@pme/controller';
 import { engineKey as engineVersion } from '@pme/engine-core'; // The snapshot key, version + build
 import { mountMonitor, type MonitorHandle } from '@pme/renderer';
+import { briefingLayer, followBriefing } from '../briefing.ts';
 import { applySkinAlarmColours, type Shell } from '../shell.ts';
 import { DEFAULT_SITE, MONITORS, THEMES, type SiteProfile } from '../site.ts';
 import { button, h, pausedMark, setText } from '../ui.ts';
@@ -127,6 +128,8 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   // While the Ventilator view drives the patient, a phone's monitor is held still behind this line
   const holdNote = h('div', { class: 'learner-hold', hidden: true }, h('p', {}, 'The ventilator is on the main screen'), h('p', { class: 'muted' }, 'This monitor continues when the ventilator view closes.'));
   shell.stage.append(holdNote);
+  // The card's Case briefing over this monitor, from its start time: a phone that joins late shows the remainder
+  const briefing = briefingLayer(shell.stage, { phone: !!net });
   let hold = false;
   let raf = 0;
   const f: Follower = { monitor, transport, sync: null, destroy, style: { skin: site.skin, theme: site.theme } };
@@ -167,6 +170,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     if (m.kind === 'command') return;
     heard = performance.now();
     if (m.kind !== 'event') return;
+    followBriefing(briefing, m);
     for (const e of m.body) {
       if (e.type === 'cockpit') cockpitAt = e.off ? -Infinity : performance.now(); // `off`: the view closed (UI-A #2)
       if (e.type === 'style' && net) wearPhone(e.skin, e.theme);
@@ -206,6 +210,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     offOpen();
     document.removeEventListener('visibilitychange', onVisible);
     holdNote.remove();
+    briefing.end();
     style?.close();
     cancelAnimationFrame(raf);
     clearInterval(draw);

@@ -158,7 +158,23 @@ export type ExtraEvent =
    * Sent with every answer to a hello (`replay: true`: the relay routes it as the welcome) and at every change.
    * Presentation only.
    */
-  | { type: 'style'; skin: string; theme: string; replay?: true };
+  | { type: 'style'; skin: string; theme: string; replay?: true }
+  /**
+   * The card's Case briefing, for every learner screen (owner's board Orientation 7b): sent when a card with one loads,
+   * with every answer to a hello while it runs (`replay: true`, so a phone that joins or reloads shows the remainder:
+   * `startedAt` and the message's `sentAt` are both the host's clock), and `ended` when the instructor ends it
+   * everywhere or a new load replaces it. Presentation only.
+   */
+  | ({ type: 'briefing'; replay?: true; ended?: true } & BriefingNotice);
+
+/** A running Case briefing: the card's `briefing` with its defaults, and when the host started it (epoch ms, its clock). */
+export interface BriefingNotice {
+  startedAt: number;
+  durationS: number;
+  text: string;
+  estimatedMinutes?: number;
+  lang: 'en' | 'fa';
+}
 
 /** An alarm raised during a fast-forward (it did not sound); `ended`: it came and went inside the span. */
 export type FastForwardAlarm = AlarmEntry & { ended: boolean };
@@ -187,10 +203,10 @@ export type WireEvent = EngineEvent | ExtraEvent;
  * The events a VIEWER uses — it runs its own engine from the host's snapshot, so it needs the clock anchor (`state`),
  * the beats it checks its own against, the commands it mirrors, the host's timeline and fast-forward (ViewerSync; the
  * follower page's liveness and pause read the same), the scenario's state (small, 1 Hz at most), the Ventilator view's
- * `cockpit` notice and the instructor's monitor `style`. The relay sends a viewer on the network only these (at ×8 the
+ * `cockpit` notice, the instructor's monitor `style` and the card's Case `briefing`. The relay sends a viewer on the network only these (at ×8 the
  * rest — measurements, alarm and organ status its own engine computes — was 4/5 of a phone's traffic).
  */
-export const VIEWER_EVENTS: ReadonlySet<WireEvent['type']> = new Set<WireEvent['type']>(['state', 'beat', 'commandApplied', 'timeline', 'fastForward', 'scenario', 'cockpit', 'style']);
+export const VIEWER_EVENTS: ReadonlySet<WireEvent['type']> = new Set<WireEvent['type']>(['state', 'beat', 'commandApplied', 'timeline', 'fastForward', 'scenario', 'cockpit', 'style', 'briefing']);
 export type StateEvent = Extract<ExtraEvent, { type: 'state' }>;
 export type CommandAppliedEvent = Extract<ExtraEvent, { type: 'commandApplied' }>;
 

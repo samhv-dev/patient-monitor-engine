@@ -155,6 +155,19 @@ describe('ScenarioRunner', () => {
     expect(r.stateId).toBe('b');
   });
 
+  it('a manual guarded by a vital in all() is offered only while the vital holds: a press outside it is refused, not kept for later', () => {
+    // the MH card's Cool: offered only while the core is above 38.5 °C (MHAUS/EMHG: cool the hyperthermic patient)
+    const r = new ScenarioRunner(doc([{ id: 'cool', when: { all: [{ vital: { var: 'tempCore', op: '>', value: 38.5 } }, { manual: { label: 'Cool' } }] } }]));
+    r.start(0);
+    r.advance(1, [vals({ tempCore: 37.9 })]);
+    expect(r.trigger(2, 'cool')).toEqual({ ok: false, reason: 'not offered now: needs tempCore > 38.5' });
+    r.advance(3, [vals({ tempCore: 38.9 })]);
+    expect(r.stateId).toBe('a'); // the refused press was not kept: the core passing 38.5 does not fire it
+    expect(r.trigger(4, 'cool')).toEqual({ ok: true });
+    r.advance(4);
+    expect(r.stateId).toBe('b');
+  });
+
   it('trigger on a transition without a manual leaf forces it; an unknown id is refused', () => {
     const r = new ScenarioRunner(doc([{ id: 'slow', when: { afterS: 600 } }]));
     r.start(0);
