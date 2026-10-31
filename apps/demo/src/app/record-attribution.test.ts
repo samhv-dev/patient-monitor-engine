@@ -23,6 +23,7 @@ async function host(o: { perRead?: () => number; grainMs?: number } = {}) {
   let real = 0; // ms
   let lastT = 0;
   let lastWall = 0;
+  const engine: Array<(e: never) => void> = [];
   const wall = () => Math.floor(real / (o.grainMs ?? 1e-9)) * (o.grainMs ?? 1e-9);
   const simNow = () => lastT + (Math.max(0, wall() - lastWall) / 1000) * SCALE;
   const tickNow = () => Math.floor(simNow() / TICK_S + 1e-6);
@@ -30,7 +31,7 @@ async function host(o: { perRead?: () => number; grainMs?: number } = {}) {
     dispatch: (c) => ({ accepted: true, tick: Math.max(c.atTick ?? 0, tickNow()) }),
     snapshot: () => Promise.reject(new Error('no snapshot here')),
     restore: () => Promise.resolve(),
-    on: () => () => {},
+    on: (fn) => (engine.push(fn), () => {}),
     now: () => {
       real += o.perRead?.() ?? 0;
       const simT = simNow();
@@ -75,8 +76,14 @@ async function host(o: { perRead?: () => number; grainMs?: number } = {}) {
     lastWall = wall();
     real = lastWall + phaseMs;
   };
+  /** The engine's state reports a core temperature, and the driver reads it (Cool is offered only above 38.5 °C, #216). */
+  const core = async (tempCore: number) => {
+    for (const fn of engine) fn({ type: 'state', values: { tempCore } } as never);
+    driver.poll();
+    await settle();
+  };
   await send({ type: 'scenario', action: 'load', doc: v.doc });
-  return { rec, driver, send, frame, run, at, batches, close: () => (hs as HostSession).close() };
+  return { rec, driver, send, frame, run, at, core, batches, close: () => (hs as HostSession).close() };
 }
 
 /** The state rows of the kept course: [state, transition, by]. */
@@ -86,6 +93,7 @@ describe('a stage entry is attributed by the transition the driver took', () => 
   it('a stalled frame, a throttled timer, and the press and its state in different batches leave a press a press', async () => {
     const h = await host();
     await h.send({ type: 'scenario', action: 'goto', target: 'treating' });
+    await h.core(39); // hyperthermic: Cool is offered
     h.at(1000.011);
     await h.send({ type: 'scenario', action: 'trigger', target: 'cool-treating' });
     // the state and the acknowledgement came in different batches (the host publishes the state first)
@@ -114,6 +122,7 @@ describe('a stage entry is attributed by the transition the driver took', () => 
     let perRead = 0;
     const h = await host({ perRead: () => perRead, grainMs: 1 });
     await h.send({ type: 'scenario', action: 'goto', target: 'treating' });
+    await h.core(39); // hyperthermic: Cool is offered
     h.at(1000.015, 0.1); // 15 ms into the tick of 1000.00 s
     perRead = 0.25;
     await h.send({ type: 'scenario', action: 'trigger', target: 'cool-treating' });
@@ -134,6 +143,7 @@ describe('a stage entry is attributed by the transition the driver took', () => 
     for (let w = 0; w < 20; w++) {
       for (let k = 0; k < 20; k++) {
         await h.send({ type: 'scenario', action: 'goto', target: 'treating' });
+        if (n === 0) await h.core(39); // hyperthermic: Cool is offered (the core stays where it was)
         const t0 = 1000 + 10 * n++;
         h.at(t0 + k * 0.001, w * 0.05);
         perRead = 0.25;
@@ -151,6 +161,7 @@ describe('a stage entry is attributed by the transition the driver took', () => 
   it('the spoke\'s hop back published before the press is acknowledged (forced: the host cannot interleave a poll there today) leaves the press a press', async () => {
     const h = await host();
     await h.send({ type: 'scenario', action: 'goto', target: 'treating' });
+    await h.core(39); // hyperthermic: Cool is offered
     h.at(1000.011);
     // a frame of 300 ms (2.4 s of sim) and its poll run after the hook's own poll and before the host queues the
     // press's acknowledgement (a microtask the hook's answer resolves first)
