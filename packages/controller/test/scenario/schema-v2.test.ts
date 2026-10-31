@@ -198,3 +198,23 @@ describe('pme-scenario/2: holdS, cue, unchanged since the phase start, graded: f
     expect(r.ok ? '' : r.errors.join('\n')).toContain(want);
   });
 });
+
+describe('pme-scenario/2: a judged route the engine does not model is a warning (F5.1b)', () => {
+  it('a card that judges IM dantrolene validates, with the warning at the route', () => {
+    const d = minimalV2() as any;
+    d.actions[0].drug.route = { set: ['iv', 'im'], preferred: 'iv' };
+    const r = validateScenario(d);
+    expect(r.ok).toBe(true);
+    expect(r.warnings).toEqual(['/actions/0/drug/route/set/1: dantrolene: route im is judged; the engine does not model it']);
+  });
+  it('a judged route the engine models is no warning', () => {
+    expect(validateScenario(minimalV2()).warnings).toEqual([]);
+  });
+  it('a /1 card validates exactly as before: an IM dose in it is no judged route', () => {
+    for (const raw of Object.values(BUILTIN_SCENARIOS)) expect(validateScenario(raw).warnings.filter((w) => w.includes('judged'))).toEqual([]);
+    const one = structuredClone(Object.values(BUILTIN_SCENARIOS)[0]) as any;
+    const before = validateScenario(one);
+    one.states[0].onEnter = [...(one.states[0].onEnter ?? []), { type: 'applyEvent', event: { kind: 'drug', drugId: 'dantrolene', dose: 2.5, unit: 'mg/kg', route: 'im' } }];
+    expect(validateScenario(one)).toEqual({ ...before, doc: one });
+  });
+});
