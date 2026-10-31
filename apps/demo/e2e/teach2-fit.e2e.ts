@@ -338,3 +338,22 @@ for (const [w, hgt] of [[1440, 900], [1920, 1080]] as const)
       expect(m.cut).toBe(0);
     });
   }
+
+// A toast rests on the dock (8 px above its top edge), not 40 px over it, at the laptop's and the projector's window,
+// whatever sits under the dock; one raised by a jump, the way the strip raises it.
+for (const [w, hgt] of [[1440, 900], [1920, 1080]] as const) {
+  test(`a toast rests on the dock at ${w} × ${hgt}`, async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: w, height: hgt });
+    await openApp(page, base, '?scenario=showcase-mh#/teach2', { warmMs: 1500 });
+    await page.waitForFunction(() => !!(window as unknown as W).__pmeApp.link.ctl.scenario.doc, null, { timeout: 30_000 });
+    await page.evaluate(() => document.body.appendChild(Object.assign(document.createElement('div'), { className: 'toasts' })).append(Object.assign(document.createElement('div'), { className: 'toast', textContent: 'Speed ×4' })));
+    const m = await page.evaluate(() => {
+      const t = (document.querySelector('.toasts > .toast') as HTMLElement).getBoundingClientRect();
+      const d = (document.querySelector('.ip2-dock') as HTMLElement).getBoundingClientRect();
+      return { gap: Math.round(d.top - t.bottom), dockTop: Math.round(d.top), toastBottom: Math.round(t.bottom) };
+    });
+    console.log(`teach2-toast ${w}x${hgt} ${JSON.stringify(m)}`);
+    expect(m.gap, 'the toast floats over the dock or overlaps it').toBe(8);
+  });
+}
