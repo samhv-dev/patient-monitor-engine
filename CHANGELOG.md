@@ -163,6 +163,14 @@ the public API is what the packages export (see the API reference), the `pme-sce
   past the current size's threshold and two consecutive windows asking for it (Philips "Auto Size" and Mindray "Auto"
   choose from discrete sizes; neither manual gives a cadence or a band, so those are [ENG]). Philips-like stays at
   10 mm/mV. No gain control yet (a later piece).
+- **The ECG trace no longer runs off its lane in Instructor v2's STATE pane** (the clinical owner's run of 31 October:
+  the MH card at Early signs, HR ≈ 130, lead II cut flat at the top and the bottom while the lane read X1). The pane's
+  monitor at a 1440 × 900 window is 372 × 267 px, so ECG1 is 50 px, 16 mm at the skin's 3.10 px/mm, while the
+  auto-gain chooses the size for the unit's 37 mm lane; at 10 mm/mV the lane held +0.97 / −0.65 mV, and the card's
+  PVCs reach +1.9 / −1.65 mV (the sinus beats, +0.9 / −0.4 mV, rightly X1). An auto-gain ECG lane drawn shorter than
+  the unit's lane now draws the unit's lane in miniature (each mV takes the share of the lane it takes on the unit;
+  the 1 mV bar follows), so the size that fits the unit fits every window and the label stays the same everywhere. A
+  lane as tall as the unit's or taller keeps 10 mm/mV × size; fixed-size lanes (Philips-like) are unchanged.
 - Instructor v2's stage-strip chips keep their state looks (a finished stage's no frame, the current one's blue, a
   future one's dashed) with the sheets loaded: the tray's `.ip2-chip` rule in `sheets.css` is scoped to the tray.
 - Instructor v2 reads a `pme-scenario/1` card's spoke states (a state whose only exit is a short `afterS` back to its
