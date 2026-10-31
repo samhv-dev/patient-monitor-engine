@@ -291,7 +291,9 @@ export function gradesOf(d: RunData): Grades | null {
 /** A /2 run's sections of the report and of `pme-debrief/3` (absent times are null). */
 export interface Report3 {
   actions: Array<{
-    id: string; label: string; kind: string; grade: Grade; lines: string[]; dueT: number | null; givenT: number | null; windowS: number | null;
+    /** `grade`: the worst of the first administration and its repeats (F3); `firstGrade`: the first administration's own,
+     *  which the action's row prints (each repeat prints its own on its row). */
+    id: string; label: string; kind: string; grade: Grade; firstGrade: Grade; lines: string[]; dueT: number | null; givenT: number | null; windowS: number | null;
     repeats: Array<{ n: number; grade: Grade; t: number | null; lines: string[] }>;
     /** The seqs of every administration matching the action. */
     admin: number[];
@@ -319,7 +321,7 @@ export function report3(d: RunData): Report3 | null {
   const ticks = kept(d).filter((r) => r.kind === 'note');
   return {
     actions: g.actions.map((a) => ({
-      id: a.id, label: a.label, kind: doc.actions.find((x) => x.id === a.id)?.kind ?? '', grade: a.grade, lines: a.lines,
+      id: a.id, label: a.label, kind: doc.actions.find((x) => x.id === a.id)?.kind ?? '', grade: a.grade, firstGrade: a.firstGrade, lines: a.lines,
       dueT: a.dueT ?? null, givenT: a.givenT ?? null, windowS: a.windowS ?? null,
       repeats: a.repeats.map((r) => ({ n: r.n, grade: r.grade, t: r.t ?? null, lines: r.lines })), admin: a.admin,
     })),

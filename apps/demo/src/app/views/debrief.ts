@@ -72,16 +72,18 @@ function stepsTable(ss: Step[], d: RunData): HTMLElement {
 /** A /2 action's grade words (grade.ts `Grade`), each with a glyph so no colour is needed to read it. */
 const GRADE_WORDS: Readonly<Record<Grade, string>> = { met: '✓ met', deviation: '◆ deviation', overdue: '! overdue', failed: '✗ failed', due: '… due', 'not applicable': '– not applicable' };
 const at = (t: number | null): string => (t === null ? '–' : mmss(t));
-/** A /2 run's action table (plan F7): each graded action in the card's order with its grade, when it was due (the
- *  window's opening and length) and given, the criteria it was off on lines under it, then its repeats. */
+/** A /2 run's action table (plan F7): each graded action in the card's order with its first administration's grade,
+ *  when it was due (the window's opening and length) and given, the criteria it was off on lines under it, then its
+ *  repeats, each with its own grade. */
 function actionsTable(r: Report3): HTMLElement {
   return h('table', { class: 'db-table db-actions' },
     h('thead', {}, h('tr', {}, ...['Action', 'Due', 'Given', 'Grade'].map((c) => h('th', { scope: 'col' }, c)))),
     h('tbody', {}, ...r.actions.flatMap((a) => [
-      h('tr', { 'data-grade': a.grade, class: 'db-act' },
+      // the row: the first administration's own grade; each repeat's grade on its own row (F11: the worst read "overdue")
+      h('tr', { 'data-grade': a.firstGrade, class: 'db-act' },
         h('td', {}, a.label, ...a.lines.map((l) => h('div', { class: 'db-why' }, l))),
         h('td', { class: 'num' }, a.dueT === null ? '–' : `${mmss(a.dueT)}${a.windowS !== null ? ` + ${span(a.windowS)}` : ''}`),
-        h('td', { class: 'num' }, at(a.givenT)), h('td', {}, GRADE_WORDS[a.grade])),
+        h('td', { class: 'num' }, at(a.givenT)), h('td', {}, GRADE_WORDS[a.firstGrade])),
       ...a.repeats.map((x) => h('tr', { 'data-grade': x.grade, class: 'db-repeat' },
         h('td', {}, `repeat ${x.n}`, ...x.lines.map((l) => h('div', { class: 'db-why' }, l))), h('td', {}), h('td', { class: 'num' }, at(x.t)), h('td', {}, GRADE_WORDS[x.grade]))),
     ])));
