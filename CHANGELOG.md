@@ -29,6 +29,14 @@ the public API is what the packages export (see the API reference), the `pme-sce
   `pme-debrief/2`, unchanged. `debrief-fa.mjs` reads `/3`; its new words are in `fa-debrief.json` as English keys
   awaiting the Persian (`"fa": null`, F7.6).
 
+- **`pme-scenario/2` F5.1: "route not modelled" asked of the engine.** `@pme/engine-core` exports
+  `routeHonoured(drugId, route)` (the route rule `validatePkCommand` applies; false for an unknown drug or a volatile
+  row) and `IV_ROUTES`. The administration record's `routeNotModelled` now comes from `routeHonoured` instead of
+  matching the refusal's sentence, so an IM dose refused first for its dose still carries it. `validateScenario` warns
+  for a `/2` drug action whose judged route set holds a route the engine does not model ("dantrolene: route im is
+  judged; the engine does not model it"); the card stays valid, and a `/1` card validates exactly as before. No
+  kinetics change: the route models are F5.2.
+
 - **Instructor v2 reads a `pme-scenario/2` card (F6, post-demo, draft).** The strip lists the phases with their entry
   times; a future phase reads "auto" and is not a button (a phase is never entered by a press). The cue box names the
   phase, "entered by its own rule" with the rule in words and its hold, the learners' cue and the Say line. ACTION lists

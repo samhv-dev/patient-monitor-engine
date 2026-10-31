@@ -15,7 +15,7 @@
 // The administration record (plan F3, §8.2): every clinical act a /2 card's run sees through `driver.host`, ACCEPTED OR
 // REFUSED, goes into the PhaseRunner's state (administrationOf), so grade() can grade a refused dose and a restore rewinds
 // the record with the course. The driver is the one place that sees them all: a Remote's refusal reaches only its ack.
-import { DRUGS, RHYTHM_IDS, type Command, type DispatchResult, type EngineEvent, type PatientSnapshot, type PkRoute } from '@pme/engine-core';
+import { DRUGS, RHYTHM_IDS, routeHonoured, type Command, type DispatchResult, type EngineEvent, type PatientSnapshot, type PkRoute } from '@pme/engine-core';
 import type { ClinicalEvent, ScenarioCommand, ScenarioEvent, WireCommand, WireEvent } from '../protocol.ts';
 import type { HostTarget, ScenarioHookResult } from '../session/host-session.ts';
 import { PhaseRunner, type PhaseRunnerEffect } from './phase-runner.ts';
@@ -461,7 +461,6 @@ type FlatEvent = {
   mode: string; target: number; agent: string; dialPct: number; fgfLpm?: number; fluid: string; volumeMl: number; source: string;
   rr?: number; vtMl?: number; fio2: number; peep?: number; active: boolean; action: string; energyJ?: number; device: string; durationS: number;
 };
-const NOT_MODELLED = /route .* not modelled/i;
 
 /**
  * One applyEvent as an administration (plan F3), or null for an event that is not a clinical act (a condition, a bleed,
@@ -475,7 +474,7 @@ function administrationOf(c: { issuedBy: string; actionId?: string; event: unkno
   const e = c.event as FlatEvent;
   const by = c.issuedBy;
   const source: Administration['source'] = typeof c.actionId === 'string' ? 'action' : by === 'scenario' ? 'script' : by === 'remote' || by.startsWith('controller:') ? 'remote' : 'panel';
-  const result: Administration['result'] = res.accepted ? { accepted: true } : { accepted: false, reason: res.reason ?? '', routeNotModelled: NOT_MODELLED.test(res.reason ?? '') };
+  const result: Administration['result'] = res.accepted ? { accepted: true } : { accepted: false, reason: res.reason ?? '', routeNotModelled: e.kind === 'drug' && e.route !== undefined && e.drugId in DRUGS && !routeHonoured(e.drugId, e.route) };
   const base = { t, source, ...(source === 'action' ? { actionId: c.actionId as string } : {}) };
   const tail = { result, ...(source === 'script' ? { cardSet: true as const } : {}) };
   const cls = (id: string) => (DRUGS[id]?.cls !== undefined ? { cls: DRUGS[id]?.cls as string } : {});

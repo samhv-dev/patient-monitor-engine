@@ -5,7 +5,7 @@
 // so the IIFE and the root entry never bundle it. `pme-scenario/2` (plan F1) has its own schema, which reuses /1's
 // patient, device and command definitions by reference, and its own cross-checks (validateV2 below).
 import Ajv, { type ErrorObject } from 'ajv';
-import { DRUGS } from '@pme/engine-core';
+import { DRUGS, routeHonoured } from '@pme/engine-core';
 import schema from '../../scenarios/pme-scenario-1.schema.json';
 import schemaV2 from '../../scenarios/pme-scenario-2.schema.json';
 import type { AnyScenarioDoc, DocCommand, ScenarioDoc, When } from './types.ts';
@@ -212,6 +212,9 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
       drug(a.drug.id, `${at}/drug/id`);
       cls(a.drug.cls, `${at}/drug/cls`);
       a.drug.alternatives?.forEach((x, k) => drug(x.id, `${at}/drug/alternatives/${k}/id`));
+      // a judged route the engine does not model: the run records "route not modelled" (F5.1b); a warning, the card stays valid
+      const ids = [a.drug.id, ...(a.drug.alternatives ?? []).map((x) => x.id)].filter((id): id is string => id !== undefined && id in DRUGS);
+      a.drug.route?.set.forEach((r, k) => ids.forEach((id) => routeHonoured(id, r) || warnings.push(`${at}/drug/route/set/${k}: ${id}: route ${r} is judged; the engine does not model it`)));
     }
     if (a.window) anchor(a.window.anchor, `${at}/window/anchor`);
     a.order?.after?.forEach((x, k) => action(x, `${at}/order/after/${k}`));

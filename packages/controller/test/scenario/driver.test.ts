@@ -598,3 +598,39 @@ describe('ScenarioDriver: the administration record of a /2 card (F3)', () => {
     expect(driver.phaseRunner!.admin.map((a) => a.seq)).toEqual([1]);
   });
 });
+
+describe('ScenarioDriver: "route not modelled" in the record comes from routeHonoured (F5.1b)', () => {
+  const GIVE = { kind: 'drug', drugId: 'dantrolene', dose: 2.5, unit: 'mg/kg', route: 'iv' };
+  const CARD = {
+    schema: 'pme-scenario/2', id: 'rnm2', title: 'Route not modelled (format 2)', patient: { weightKg: 80 },
+    phases: [{ id: 'calm', label: 'Calm', initial: true }],
+    actions: [{ id: 'dantrolene', label: 'Dantrolene', kind: 'drug', phases: ['calm'], give: [{ type: 'applyEvent', event: GIVE }], drug: { id: 'dantrolene', route: { set: ['iv', 'im'] } } }],
+  };
+  const cmd = (id: string, event: object) => ({ id, issuedBy: 'instructor', type: 'applyEvent', event }) as unknown as Command;
+  function rig() {
+    const host = manualHost({ seed: 42 });
+    const driver = new ScenarioDriver({ target: host });
+    expect(driver.load(CARD).ok).toBe(true);
+    host.engine.advanceTo(0.02);
+    driver.poll();
+    return driver;
+  }
+
+  it('the IM dantrolene administration carries the flag', () => {
+    const driver = rig();
+    driver.host.dispatch(cmd('im1', { ...GIVE, route: 'im' }));
+    expect(driver.phaseRunner!.admin.at(-1)).toMatchObject({ drugId: 'dantrolene', route: 'im', result: { accepted: false, routeNotModelled: true } });
+  });
+  it('an IM dose refused for another reason first still carries the flag: the route is asked of the engine, not read from the sentence', () => {
+    const driver = rig();
+    driver.host.dispatch(cmd('im2', { ...GIVE, dose: -1, route: 'im' }));
+    const a = driver.phaseRunner!.admin.at(-1)!;
+    expect(a.result).toMatchObject({ accepted: false, routeNotModelled: true });
+    expect(a.result.accepted ? '' : a.result.reason).not.toMatch(/route/);
+  });
+  it('an IV dose refused for its dose does not carry the flag', () => {
+    const driver = rig();
+    driver.host.dispatch(cmd('iv1', { ...GIVE, dose: -1 }));
+    expect(driver.phaseRunner!.admin.at(-1)!.result).toMatchObject({ accepted: false, routeNotModelled: false });
+  });
+});
