@@ -162,7 +162,8 @@ describe('stage marks across a reload (the owner\'s report of 30 October)', () =
     expect(chip.classList.contains('ip2-skipped')).toBe(false);
     chip.click();
     const back = el.querySelector('.ip2-pop button') as HTMLButtonElement;
-    expect(back?.textContent).toBe('Return to the start of Trigger off');
+    expect(back?.textContent).toBe('Return to its start');
+    expect(back?.getAttribute('aria-label')).toBe('Return to the start of Trigger off');
     expect(back.disabled).toBe(false);
     const entry = { stage: 'triggerOff', stateId: 'triggerOff', t: 0 };
     expect(stageMarks.of(link, entry)).toBe(before.filter((m) => m.note === 'triggerOff').at(-1)?.target);

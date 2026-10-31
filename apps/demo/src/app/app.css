@@ -756,14 +756,13 @@ a.rail-item:hover { color: var(--text-strong); background: color-mix(in srgb, va
     'alarm action' auto
     'dock dock' 64px / minmax(0, 6fr) minmax(0, 7fr);
 }
-/* The strip with a status line under its chips (#210's no case, #211's Case briefing, #214's finishing: begin.css,
-   briefing.css and finish.css each lay the strip out as a 52-px row of chips with the hint or note beside them, then
-   the 40-px line): the strip keeps its own 75 px, laid out as without the line (the chips, then the hint or note under
-   them, centred together), and the line adds its 40: 115 px. One more class than those rules, so this wins whatever
-   order the sheets load in. */
-.app .main[data-route='teach2']:has(.ip2-strip:is([data-empty], [data-briefing], [data-finishing])) { grid-template-rows: 48px 115px auto auto minmax(0, 1fr) auto 64px; }
-.main[data-route='teach2'] .ip2-strip:is([data-empty], [data-briefing], [data-finishing]) { grid-template: '.' minmax(0, 1fr) 'chips' 40px 'hint' 18px '.' minmax(0, 1fr) 'status' 40px / minmax(0, 1fr); }
-.main[data-route='teach2'] .ip2-strip > .ip2-strip-note { grid-area: hint; }
+/* The strip with a status line under its chips (#211's Case briefing, #214's finishing: briefing.css and finish.css
+   each lay the strip out as a 52-px row of chips, then the 40-px line): the strip keeps its own 75 px, laid out as
+   without the line (the chips' one row centred in it), and the line adds its 40: 115 px. With no case loaded the
+   strip has no line (the owner, 1 November): its one chip is centred in the 75 px, as the chips of a loaded case are.
+   One more class than those rules, so this wins whatever order the sheets load in. */
+.app .main[data-route='teach2']:has(.ip2-strip:is([data-briefing], [data-finishing])) { grid-template-rows: 48px 115px auto auto minmax(0, 1fr) auto 64px; }
+.main[data-route='teach2'] .ip2-strip:is([data-briefing], [data-finishing]) { grid-template: '.' minmax(0, 1fr) 'chips' 40px '.' minmax(0, 1fr) 'status' 40px / minmax(0, 1fr); }
 .main[data-route='teach2'] > .view[data-view='teach2'] { grid-area: 1 / 1 / -1 / -1; display: grid; grid-template-rows: subgrid; grid-template-columns: subgrid; overflow: hidden; }
 /* the base rule hides the stage off Monitor, Instructor and Ventilator; the stage's id outranks it here. Inside STATE's
    panel (20 px outer gutter + 14 px padding on the left, 8 + 14 on the right), over the panel's background */

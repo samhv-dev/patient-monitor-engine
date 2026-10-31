@@ -6,11 +6,10 @@
 .ip2-finish-btn { flex: none; padding: 0 16px; border-color: var(--ip2-blue); color: var(--ip2-blue-text); font-weight: 600; }
 .ip2-finish-btn[aria-pressed='true'] { background: var(--ip2-blue-soft); }
 
-/* the strip grows by the status line's 40 px while finishing, as it does with no case (begin.css) */
+/* the strip grows by the status line's 40 px while finishing, as it does during a Case briefing (briefing.css) */
 .main[data-route='teach2']:has(.ip2-strip[data-finishing]) { grid-template-rows: 48px 92px auto auto minmax(0, 1fr) auto 64px; }
-.ip2-strip[data-finishing] { display: grid; grid-template: 'chips hint' 52px 'status status' 40px / minmax(0, 1fr) auto; align-items: center; padding: 0; }
+.ip2-strip[data-finishing] { display: grid; grid-template: 'chips' 52px 'status' 40px / minmax(0, 1fr); align-items: center; padding: 0; }
 .ip2-strip[data-finishing] > .ip2-chips { grid-area: chips; display: flex; align-items: center; min-width: 0; padding: 0 20px; }
-.ip2-strip[data-finishing] > .ip2-strip-hint { grid-area: hint; margin: 0; padding: 0 20px; }
 .ip2-status.ip2-finishing { border-top-color: var(--ip2-pause-bg); background: #241f10; color: var(--ip2-pause); }
 .ip2-finishing > b { color: var(--ip2-pause); }
 .ip2-finishing .ip2-status-keys { color: var(--ip2-soft); }
