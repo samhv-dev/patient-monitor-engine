@@ -10,7 +10,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { loadavg } from 'node:os';
 import { isAbsolute, join } from 'node:path';
-import { devices, test, type Browser, type Page } from '@playwright/test';
+import { devices, expect, test, type Browser, type Page } from '@playwright/test';
 import { alarms, hist, latest, maxOf, minOf, r1, record, REPO, simNow, stateId, watchConsole, type Sample } from './showcase-support.ts';
 import { pdfInfo } from '../../apps/demo/e2e/pdf-text.ts';
 
@@ -213,6 +213,20 @@ class Run {
   panel = () => (this.v2 ? this.page.locator('.ip2-sheets .ip2-sheet:not([hidden])') : this.page.locator('#teach-panel'));
   /** The Debrief link: today's session bar, or the Instructor v2 dock. */
   debriefLink = () => (this.v2 ? this.page.locator('.ip2-dock a.ip2-debrief') : this.page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }));
+  /** To the Debrief by the panel's own path: today's session-bar link; under PME_PANEL=teach2 (#/teach2 has no session
+   *  bar) the dock's Finish the case — shown for a pme-scenario/2 card only: it ends the run, pauses, and lights
+   *  Debrief — then the dock's Debrief. A /1 card in Instructor v2 goes straight to the dock's Debrief. */
+  async toDebrief(): Promise<void> {
+    if (this.v2) {
+      const finish = this.page.locator('.ip2-dock').getByRole('button', { name: 'Finish the case', exact: true });
+      if (await finish.isVisible()) {
+        await finish.click();
+        await expect(this.debriefLink()).toHaveAttribute('data-ready', 'true', { timeout: 5_000 });
+        await this.row('Finish the case (dock)');
+      }
+    }
+    await this.debriefLink().click();
+  }
 
   /** The QR moment: N_PHONES emulated phones join the session `code` (before any case is loaded). */
   async joinPhones(code: string): Promise<void> {
@@ -337,7 +351,7 @@ class Run {
   async debrief(o: { json?: boolean } = {}): Promise<Row> {
     const p = this.page;
     const at = await this.sim();
-    await this.debriefLink().click();
+    await this.toDebrief();
     const view = p.locator('[data-view=debrief]');
     await view.getByRole('heading', { level: 1, name: 'Debrief' }).waitFor({ timeout: 15_000 });
     await p.waitForTimeout(1500);
@@ -1595,11 +1609,11 @@ test('Q1 30-minute talk, the 3 November programme: opening, MH (E119) with three
     M.r.measures.wallLoadToEndS = M.wall();
     const wDb = Date.now();
     await M.debrief({ json: true });
-    await page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }).click();
+    await M.toDebrief(); // F11: #/teach2 has no session bar; the v2 path is the dock (Finish the case → Debrief)
     await page.locator('[data-view=debrief]').getByRole('heading', { level: 1, name: 'Debrief' }).waitFor({ timeout: 15_000 });
     await page.waitForTimeout(1200);
     await page.screenshot({ path: join(dir, `debrief-mh-on-screen-${M.r.browser}.png`) }).catch(() => undefined);
-    await page.evaluate(() => (location.hash = '#/teach'));
+    await page.evaluate((h) => (location.hash = h), M.home());
     await page.waitForTimeout(800);
     M.r.measures.debriefReadWallS = r1((Date.now() - wDb) / 1000);
     seg('4 the end of the case and the MH Debrief, read on screen');
