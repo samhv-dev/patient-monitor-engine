@@ -12,7 +12,7 @@ import type { Link } from '../link.ts';
 import { clock, h, setText } from '../ui.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { judge, pressAction, pressStep } from './press.ts';
-import { classify, classifyV2, type HoldLike, type LiveRow } from './rows.ts';
+import { classify, classifyV2, liveGrades, type HoldLike, type LiveRow } from './rows.ts';
 import { historyOf } from './course.ts';
 
 export const FOOT = 'No penalty comes from the panel. Consequences come from the physiology, and the debrief records overdue, out of order, failed and not done, each with the time and the order it was due.';
@@ -67,6 +67,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     p.el.dataset.kind = r.kind;
     if (live.overdue !== null) p.el.dataset.overdue = 'true';
     else delete p.el.dataset.overdue;
+    if (live.grade !== undefined) p.el.dataset.grade = live.grade; // a /2 action's live grade (deviation: its label amber)
+    else delete p.el.dataset.grade;
     setText(p.key, n);
     setText(p.title, r.title);
     setText(p.sub, live.subtitle);
@@ -134,7 +136,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     list.hidden = offCard.hidden = finished.hidden = !sv.doc;
     if (v2 && stateId) { // a pme-scenario/2 card (F6): the phase's actions, the judged rows, the rules out of the phase
       const pr = link.host?.driver.phaseRunner ?? null;
-      const board = classifyV2({ doc: v2, phaseId: stateId, log: link.log, takings: pr?.takings ?? null, holds: pr?.vitalHolds() ?? null, paused: link.ctl.hostPaused });
+      const board = classifyV2({ doc: v2, phaseId: stateId, log: link.log, takings: pr?.takings ?? null, holds: pr?.vitalHolds() ?? null, paused: link.ctl.hostPaused, grades: pr ? liveGrades(v2, pr, link.simT) : null });
       sync(list, pills, board.list, false, keyOf);
       sync(finList, finPills, board.finished, true, keyOf);
       setDigits(board.list);

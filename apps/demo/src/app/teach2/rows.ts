@@ -15,7 +15,7 @@
 import type { ScenarioDoc, Transition } from '@pme/controller';
 import type { RunEventId } from '@pme/controller/scenario';
 import { conditionNotMet, objectivesOf, phaseRowsOf, rowsOf, stagesOf, standingOf, untakenStatus, type Evidence, type Row, type Stage } from '../card-read.ts';
-import type { PhaseHold, ScenarioDocV2 } from '@pme/controller/scenario';
+import { grade, type Administration, type Grade, type Grades, type PhaseEntry, type PhaseHold, type RuleEdge, type ScenarioDocV2 } from '@pme/controller/scenario';
 import { eventWords, isEvent, mmss, trendMeta, verdict } from '../debrief.ts';
 import { drugWords } from '../glossary.ts';
 import type { ClinicalLogEntry } from '../link.ts';
@@ -43,6 +43,8 @@ export interface LiveRow {
   at: number | null;
   /** An A row's bar, 0–1 (answer 8), else null. */
   progress: number | null;
+  /** A /2 action's live grade (grade.ts, final: false); absent for a /1 row and for an action the card does not grade. */
+  grade?: Grade;
 }
 
 export interface Board {
@@ -321,7 +323,8 @@ function conditionNow(src: Source, cond: readonly RunEventId[]): string {
 // ---- a pme-scenario/2 card (plan F6) ----
 
 /** What a /2 board is read from: the card, the current phase, the log (the judged rows' ticks) and, on the host, the
- *  phase runner's takings and its holds (a follower has neither: its action rows stay "ready", its A rows empty). */
+ *  phase runner's takings, its holds and the live grades (a follower has none: its action rows stay "ready", "graded on
+ *  the host", its A rows empty). */
 export interface SourceV2 {
   doc: ScenarioDocV2;
   phaseId: string;
@@ -329,12 +332,40 @@ export interface SourceV2 {
   takings: Readonly<Record<string, number>> | null;
   holds: readonly PhaseHold[] | null;
   paused: boolean;
+  /** grade() on the phase runner's inputs now, final: false (`liveGrades`); null on a follower (Q16). */
+  grades: Grades | null;
+}
+
+/** The grade inputs a /2 host's phase runner keeps (PhaseRunner `phases`, `admin`, `edges`). */
+export interface GradeInputs {
+  readonly phases: readonly PhaseEntry[];
+  readonly admin: readonly Administration[];
+  readonly edges: readonly RuleEdge[];
+}
+let lastGrades: { doc: ScenarioDocV2; second: number; n: string; grades: Grades } | null = null;
+/** The live grades of a /2 run (design §8.3: the panel calls grade() every second, final: false): recomputed when the
+ *  sim second, the timeline, the record or the edges change, else the last answer. */
+export function liveGrades(doc: ScenarioDocV2, run: GradeInputs, t: number): Grades {
+  const second = Math.floor(t);
+  const n = `${run.phases.length}|${run.admin.length}|${run.edges.length}`;
+  const c = lastGrades;
+  if (c && c.doc === doc && c.second === second && c.n === n) return c.grades;
+  const grades = grade(doc, run.phases, run.admin, run.edges, second);
+  lastGrades = { doc, second, n, grades };
+  return grades;
 }
 
 const mmssS = (s: number): string => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+/** "overdue 1:48" → 108 (the ring's seconds past the window). */
+const overdueS = (live: string): number => {
+  const m = /^overdue (\d+):(\d\d)$/.exec(live);
+  return m ? Number(m[1]) * 60 + Number(m[2]) : 0;
+};
 
-/** The board of a /2 phase: its open actions (a taken one stays pressable, green, "given ×n"), the judged rows (met ones
- *  move to Finished as on /1), and the rules out of the phase with the 60-s hold's bar. */
+/** The board of a /2 phase: its open actions, each with its live grade at the right and the grade's lines under the
+ *  prescription (design §10: "due 3:12", "overdue 0:40", "met 08:16", "deviation: route", "not applicable"; an action
+ *  the card does not grade keeps "press to give" / "given ×n"); a taken one stays pressable, green; the judged rows (met
+ *  ones move to Finished as on /1), and the rules out of the phase with the 60-s hold's bar. */
 export function classifyV2(src: SourceV2): Board {
   const list: LiveRow[] = [];
   const finished: LiveRow[] = [];
@@ -343,7 +374,13 @@ export function classifyV2(src: SourceV2): Board {
     const live = base(row);
     if (row.kind === 'step') {
       const n = (row.actionId !== undefined ? src.takings?.[row.actionId] : 0) ?? 0;
-      list.push(n > 0 ? { ...live, look: 'taken', right: `given${n > 1 ? ` ×${n}` : ''}` } : { ...live, right: src.takings ? 'press to give' : 'graded on the host' });
+      const g = src.grades?.actions.find((a) => a.id === row.actionId);
+      if (g) {
+        // the grade's look: given by its own press, green (deviation: the met look, its label amber); due or overdue,
+        // the expected blue (overdue with the ring); not applicable, faded; still pressable whatever the look
+        const look: Look = n > 0 ? 'taken' : g.grade === 'due' || g.grade === 'overdue' ? 'current' : g.grade === 'not applicable' ? 'unmet' : g.grade === 'failed' ? 'failed' : 'ready';
+        list.push({ ...live, look, grade: g.grade, right: g.live, subtitle: [row.subtitle, ...g.lines].join(' · '), overdue: g.grade === 'overdue' ? overdueS(g.live) : null, at: g.givenT ?? null });
+      } else list.push(n > 0 ? { ...live, look: 'taken', right: `given${n > 1 ? ` ×${n}` : ''}` } : { ...live, right: src.takings ? 'press to give' : 'graded on the host' });
     } else if (row.kind === 'judged') {
       const met = src.log.find((x) => x.kind === 'marker' && x.text === `Objective met: ${drugWords(row.text)}`);
       if (met) finished.push({ ...live, look: 'met', at: met.simT, right: met.simT === null ? '' : mmss(met.simT), subtitle: 'you judged it' });

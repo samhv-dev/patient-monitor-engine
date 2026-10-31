@@ -34,6 +34,8 @@ button.ip2-row:focus-visible { outline: 2px solid var(--ip2-blue-text); outline-
 .ip2-row:is([data-look='taken'], [data-look='met']) { border-color: var(--ip2-run-line); background: var(--ip2-run-bg); }
 .ip2-row:is([data-look='taken'], [data-look='met']) .ip2-key { background: var(--ip2-run-line); color: #bfffd4; }
 .ip2-row:is([data-look='taken'], [data-look='met']) :is(.ip2-row-sub, .ip2-row-right) { color: var(--ip2-run-word); }
+/* a /2 action's deviation (design §10): the met look, its label amber, naming the criterion */
+.ip2-row[data-grade='deviation'] .ip2-row-right { color: var(--ip2-amber); }
 /* failed: faint red */
 .ip2-row[data-look='failed'] { border-color: #5a1f1f; background: #261315; color: #b08a8a; }
 .ip2-row[data-look='failed'] .ip2-key { background: #5a1f1f; color: #ffb3b3; }
