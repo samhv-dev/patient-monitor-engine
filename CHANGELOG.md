@@ -69,6 +69,11 @@ the public API is what the packages export (see the API reference), the `pme-sce
   the learners' monitor takes its height; Free roam or a card brings it back. With a card loaded none of it shows.
 
 ### Fixed
+- Phones joining the classroom relay together all get the host's welcome. A phone that said hello between the host's
+  welcome to another phone (its sticky replays, the monitor style, a running Case briefing) and the snapshot after it
+  used to receive that snapshot and show as following, without the welcome: no briefing, the wrong monitor style. The
+  relay now sends a welcome's snapshot only to the peers the welcome went to, and the newcomer gets the host's answer
+  to its own hello.
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's
   sequence and viewer role per transport, and counts a hello only after its sequence check, so a phone on the relay
   that says hello with the laptop panel's id leaves the panel's commands applied. The relay gives each peer id one live
