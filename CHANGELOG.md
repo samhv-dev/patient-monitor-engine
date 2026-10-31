@@ -173,6 +173,11 @@ the public API is what the packages export (see the API reference), the `pme-sce
   copies it. The record had matched the press's acknowledgement (the tick of the host's first clock read) to the state
   (the time of a second read, eight times the wall between them later at ×8) within 0.02 s, so a manual press could be
   recorded as its rule — the amber "Cool" of 30 October — and the Debrief then left that step out as not taken.
+- The Debrief no longer lists a step of the MH treating hub as overdue for a later hub state when it was pressed in an
+  earlier one: each hub state (Trigger off, treating, recovering, ventilation back) has its own Potassium button into
+  the same hop, and the Debrief read each as a separate step, crediting a giving only from that state's first entry
+  and the objective's anchor on. A press that entered the step's state, from any state, now makes the step done; a step
+  the card repeats has its own state (the second dantrolene) and is still asked for. The instructor panel is unchanged.
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's
   sequence and viewer role per transport, and counts a hello only after its sequence check, so a phone on the relay
   that says hello with the laptop panel's id leaves the panel's commands applied. The relay gives each peer id one live
