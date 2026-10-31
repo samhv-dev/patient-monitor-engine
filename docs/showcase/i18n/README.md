@@ -42,21 +42,22 @@ duration) and the "Run by" line; the objectives with their verdict words and the
 the labs row (one lab per line); the six trend charts (captions; the time axis runs left to right as on the monitor);
 drugs and fluids with the bolus totals; the timeline with the undone course struck through and marked «لغوشده با
 بازگشت n»; bookmarks; the take-home points of the learner handout (the card's lines, else three ruled lines under
-«نکته‌های کلیدی شما»); an empty notes box; the one-row-per-minute appendix; the footer (the release wording of the
-English footer, "Not a medical device and not clinically validated", then the version, «(پیش‌انتشار)» for a
+«نکته‌های کلیدی شما»); an empty notes box; the one-row-per-minute appendix; the footer (the E125 wording of the
+English footer, "For educational use only; Not to be used in patient care.", then the version, «(پیش‌انتشار)» for a
 pre-release, and the build) and «صفحه‌ی n از N» on every page.
 
 | English | Persian | Status |
 |---|---|---|
-| For education only. Not a medical device and not clinically validated: never use it for patient care. Version {code} (pre-release), build {code}. | فقط برای آموزش. این نرم‌افزار وسیله‌ی پزشکی نیست و از نظر بالینی اعتبارسنجی نشده است؛ نباید هرگز در مراقبت از بیمار به کار رود. نسخه‌ی {code} (پیش‌انتشار)، ساخت {code}. | added 2026-10-18 (footer) |
-| … Version {code}, build {code}. (a release without a suffix) | … نسخه‌ی {code}، ساخت {code}. | added 2026-10-18 (footer) |
-| not clinically validated | از نظر بالینی اعتبارسنجی نشده است | added 2026-10-18 (footer) |
+| For educational use only; Not to be used in patient care. Version {code} (pre-release), build {code}. | فقط برای استفاده‌ی آموزشی؛ نباید در مراقبت از بیمار به کار رود. نسخه‌ی {code} (پیش‌انتشار)، ساخت {code}. | added 2026-10-30 (footer, E125; draft for the owner's review) |
+| … Version {code}, build {code}. (a release without a suffix) | … نسخه‌ی {code}، ساخت {code}. | added 2026-10-30 (footer, E125; draft for the owner's review) |
 | pre-release | پیش‌انتشار | added 2026-10-18 (footer) |
 | Version / build | نسخه / ساخت | added 2026-10-18 (footer) |
 
-The two footer templates replace the pre-release one ("Not a medical device: never use it for patient care. Build
-{code}.", «… نسخه‌ی ساخت {code}.»), which the app no longer prints. The reused wording («فقط برای آموزش»، «وسیله‌ی
-پزشکی نیست»، «نباید هرگز در مراقبت از بیمار به کار رود») is the earlier entry's. The version and the build id are each
+The two E125 footer templates (2026-10-30) replace the release wording of 2026-10-18 ("For education only. Not a
+medical device and not clinically validated: never use it for patient care. Version {code} …"), which the app no
+longer prints since rc.4; that wording had itself replaced the pre-release one ("Not a medical device: never use it for
+patient care. Build {code}."). The reused wording («نباید … در مراقبت از بیمار به کار رود») is the earlier entry's,
+without «هرگز», which the E125 English does not say. The version and the build id are each
 one left-to-right run (LRI…PDI) held to the word before them by a no-break space, so a wrapped footer never splits
 «ساخت» from its id.
 
