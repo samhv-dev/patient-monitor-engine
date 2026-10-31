@@ -93,6 +93,17 @@ the public API is what the packages export (see the API reference), the `pme-sce
   behind a confirm); a saved debrief opens at `#/debrief/archive/<id>`. The no-case window's Debrief archive card
   reads "Open · n" and opens that section.
 
+- **The education line leaves the bottom of the working views** (the owner, 30 October). The shell's footer line
+  ("For educational use only; Not to be used in patient care.") is gone from the Instructor views, Scenarios, Room,
+  Patient, Explore, Debrief on screen, Settings and the tools pages; those views gain its 23 px. Home keeps the
+  sentence as part of its own page, at the same place and size; Settings → About and the Debrief's printed footer line
+  are unchanged. In Instructor v2 the dock now ends at the window's bottom edge, and the stage strip takes the height:
+  52 → 75 px, its chips 30 → 40 px high (15 px text on a 20 px line, 9 × 12 px padding; were 13 px, 16 px, 6 × 10 px).
+  The strip's hint ("past: return to its start · …") is a line of its own under the chips, so it shows at 1440 × 900
+  too (beside five chips it had no room and showed only at 1920 × 1080). While a status line shows under the chips (no
+  case, the Case briefing, finishing a case), the strip keeps its 75 px, with the hint or note under the chips, and the
+  line adds 40: 115 px (it was 92, and the line took 17 px from the chips).
+
 ### Fixed
 - Malignant hyperthermia now warms the core: the MH sympathetic surge constricts the skin. Untreated on the MH card the
   core showed 36.5 °C at 15 min and 36.9 °C at 35 min (the owner's run of 30 October): the 140 W of MH heat was real,

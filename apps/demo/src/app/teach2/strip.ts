@@ -12,9 +12,9 @@
 // folds behind an arrow at each end ("‹ 3 earlier", "4 later ›"); an arrow pages the window that way, and "back to now"
 // recentres it on the current stage whenever it has been moved. The future stages are ordered from the current one
 // (the stages it leads to first; two of one step read "<a> or <b>"). Names are never cut: when the chips do not fit,
-// the padding tightens, then the hint goes, then the strip scrolls sideways.
+// the padding tightens, then the strip scrolls sideways; the hint is a line of its own under them.
 // The status line: the 40-px row under the chips where the panel talks, shown only while it has something to say (the
-// strip's area grows from 52 to 92 px then; briefing.css). While a card's Case briefing runs on the learners' screens it
+// strip's area grows from 75 to 115 px then; app.css). While a card's Case briefing runs on the learners' screens it
 // reads "Case briefing on every screen · 0:48 left" with End briefing at its right (the owner's choice of 31 October:
 // the control left the chips' row, which it pushed past the window on the MH card in the first minute).
 import './state.css';
@@ -293,13 +293,11 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     const b: HTMLButtonElement = h('button', { type: 'button', class: `ip2-chip ${cls}`, title: g.label, ...attrs, onclick: () => onclick(b) }, ...kids);
     return b;
   };
-  /** Fit without cutting a name (IP9, ruling 2): the chips' own width, then tighter padding; then the hint goes; past
-   *  that the strip scrolls sideways. */
+  /** Fit without cutting a name (IP9, ruling 2): the chips' own width, then tighter padding; past that the strip
+   *  scrolls sideways. */
   const fit = () => {
-    el.classList.add('ip2-strip-measure');
     el.removeAttribute('data-tight');
     if (el.scrollWidth > el.clientWidth) el.setAttribute('data-tight', '');
-    el.classList.remove('ip2-strip-measure');
     // the hint shows whole or not at all
     hint.hidden = !sv.doc;
     if (!hint.hidden && hint.scrollWidth > hint.clientWidth) hint.hidden = true;
