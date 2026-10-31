@@ -114,6 +114,9 @@ test('the Case briefing: over the running monitor on the host and the phones, a 
   await expect(layer(g)).toBeVisible();
   // Instructor v2 at the laptop's 1440 × 900 (the owner's choice of 31 October): the status line under the stage strip
   // reads the briefing and its time left beside End briefing; the chips' row carries no briefing element
+  // the phones' windows opened over the host: CI's Linux WebKit stopped painting it there (the route change to #/teach2
+  // never drew, its countdown froze; run 41196207539), so each page is brought to the front before it is driven again
+  await page.bringToFront();
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.evaluate(() => (location.hash = '#/teach2'));
   const status = page.locator('.ip2-strip > .ip2-status');
@@ -156,6 +159,7 @@ test('the Case briefing: over the running monitor on the host and the phones, a 
   expect(await page.evaluate(() => document.querySelector('.stage .monitor-host')?.closest('[dir="rtl"]') ?? null)).toBeNull();
   await page.waitForTimeout(3000);
   await shot(page, 'briefing-host-1280x800-fa');
+  await f.bringToFront();
   await expect(layer(f)).toBeVisible({ timeout: 10_000 }); // the phone that held the English one away
   await expect(layer(f).locator('.cb-foot > span').nth(1)).toHaveText('برای ادامه، هر جای صفحه را لمس کنید و نگه دارید');
   await f.waitForTimeout(1000);
@@ -168,6 +172,7 @@ test('the Case briefing: over the running monitor on the host and the phones, a 
   await expect(f.locator('.stage > .case-briefing')).toHaveCount(0, { timeout: 3_000 });
   await expect(layer(g)).toBeVisible();
   // v2's End briefing in the status line ends it on the host and every phone, and the status line goes
+  await page.bringToFront();
   await page.evaluate(() => (location.hash = '#/teach2'));
   await expect(status).toBeVisible({ timeout: 5_000 });
   await status.getByRole('button', { name: 'End briefing' }).click();
