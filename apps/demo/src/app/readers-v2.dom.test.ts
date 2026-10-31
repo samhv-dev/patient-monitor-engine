@@ -83,8 +83,8 @@ describe('the run record, the Debrief and its key moments, and a pme-scenario/2 
 });
 
 describe('the library, the trigger words and Instructor v2\'s course and strip, and a pme-scenario/2 card', () => {
-  it('scenarios.ts cardOf: the header (title, story, minutes, patient), no objectives', () => {
-    expect(cardOf(V2)).toMatchObject({ id: 'showcase-mh', title: 'MH (format 2)', story: 'A 30-year-old for a knee arthroscopy.', minutes: 40, patient: 'M 30 y 80 kg', objectives: [], doc: V2 });
+  it('scenarios.ts cardOf: the header (title, story, minutes, patient); the case details are the judged rows and the graded actions (F6)', () => {
+    expect(cardOf(V2)).toMatchObject({ id: 'showcase-mh', title: 'MH (format 2)', story: 'A 30-year-old for a knee arthroscopy.', minutes: 40, patient: 'M 30 y 80 kg', objectives: ['Names MH from the monitor', 'Call for help'], doc: V2 });
   });
   it('triggers.ts transitionText: the target has no state label ("next state")', () => {
     expect(transitionText(TR, V2)).toBe('You press "Go": next state');
@@ -125,6 +125,7 @@ describe('the instructor views and a pme-scenario/2 card', () => {
     expect(el.textContent).toContain('MH (format 2)');
     expect(el.textContent).toContain('A 30-year-old for a knee arthroscopy.');
     expect(el.querySelectorAll('input[type=checkbox][id^=obj-]').length).toBe(0);
+    expect(el.textContent).toContain('This card is pme-scenario/2: run it from Instructor v2.');
     expect(el.querySelectorAll('ul.next li').length).toBe(0);
   });
   it('Instructor v2: the strip has no chips, the cue box no stage, ACTION no rows', () => {
