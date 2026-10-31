@@ -9,6 +9,15 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Added
 
+- **`pme-scenario/2` F3: the administration record and a pure `grade()`.** The scenario driver records every
+  clinical act of a `/2` card (drugs, infusions, TCI, vaporiser, fluids, ventilation, CPR, defibrillation, airway
+  devices, preoxygenation) in the phase runner's state, accepted or refused, with its source (`action` for an A press
+  stamped `actionId`, `script` card-set, `panel`, `remote`), sim time, dose per kg, settings and the engine's answer
+  (`routeNotModelled`); a bookmark restore rewinds it. `grade(doc, phases, admin, edges, t, { final })`
+  (`@pme/controller/scenario`) grades each action (met, deviation, overdue, failed, due, not applicable; lines, Q13's
+  conditional repeats, live strings), the outcomes, the contraindication violations and the judged rows' clocks.
+  `CommandBase` gains the metadata field `actionId`. The MH `/2` card's demo path prints its grade table at 24:31.
+
 - **Instructor v2 reads a `pme-scenario/2` card (F6, post-demo, draft).** The strip lists the phases with their entry
   times; a future phase reads "auto" and is not a button (a phase is never entered by a press). The cue box names the
   phase, "entered by its own rule" with the rule in words and its hold, the learners' cue and the Say line. ACTION lists

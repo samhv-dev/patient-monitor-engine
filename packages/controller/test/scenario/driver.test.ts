@@ -535,3 +535,66 @@ describe('ScenarioDriver: engine truth for a /2 runner only (F4)', () => {
     checkToday(o);
   }, SLOW);
 });
+
+// F3 (plan F3, §8.2): the driver records every clinical act of a /2 card in the runner's state, ACCEPTED OR REFUSED: an
+// A press (commands stamped `actionId`), an instructor's panel command, a refused dose with the engine's reason; and the
+// record rewinds with a bookmark restore (Q18).
+describe('ScenarioDriver: the administration record of a /2 card (F3)', () => {
+  const GIVE = { kind: 'drug', drugId: 'dantrolene', dose: 2.5, unit: 'mg/kg', route: 'iv' };
+  const CARD = {
+    schema: 'pme-scenario/2', id: 'rec2', title: 'Record (format 2)', patient: { weightKg: 80 },
+    phases: [{ id: 'calm', label: 'Calm', initial: true }],
+    actions: [{ id: 'dantrolene', label: 'Dantrolene', kind: 'drug', phases: ['calm'], give: [{ type: 'applyEvent', event: GIVE }], drug: { id: 'dantrolene' } }],
+  };
+  function rig3() {
+    const host = manualHost({ seed: 42 });
+    const driver = new ScenarioDriver({ target: host });
+    const run = (s: number) => {
+      const end = host.engine.now().tick + Math.round(s * 50);
+      for (let tick = host.engine.now().tick + 1; tick <= end; tick++) {
+        host.engine.advanceTo(tick * 0.02);
+        driver.poll();
+      }
+    };
+    expect(driver.load(CARD).ok).toBe(true);
+    return { host, driver, run };
+  }
+  const cmd = (id: string, event: object, extra: object = {}) => ({ id, issuedBy: 'instructor', type: 'applyEvent', event, ...extra }) as unknown as Command;
+
+  it('an A press is recorded with source "action", the sim time, the dose per kg and the result; a panel command as "panel"', () => {
+    const { host, driver, run } = rig3();
+    run(2);
+    const t = host.engine.now().simT;
+    driver.host.dispatch(cmd('a1', GIVE, { actionId: 'dantrolene', stageGroup: 'press-1' }));
+    driver.host.dispatch(cmd('p1', { kind: 'drug', drugId: 'dantrolene', dose: 200, unit: 'mg', route: 'iv' }));
+    driver.host.dispatch(cmd('p2', { kind: 'ventilation', source: 'ventilator', rr: 20, vtMl: 600, fio2: 1, peep: 5 }));
+    driver.host.dispatch(cmd('p3', { kind: 'surgical', action: 'diathermy', on: true })); // not a clinical act: not recorded
+    const admin = driver.phaseRunner!.admin;
+    expect(admin).toEqual([
+      { seq: 1, t, source: 'action', actionId: 'dantrolene', kind: 'drug', drugId: 'dantrolene', cls: 'dantrolene', dose: 2.5, unit: 'mg/kg', perKg: 2.5, route: 'iv', result: { accepted: true } },
+      { seq: 2, t, source: 'panel', kind: 'drug', drugId: 'dantrolene', cls: 'dantrolene', dose: 200, unit: 'mg', perKg: 2.5, route: 'iv', result: { accepted: true } },
+      { seq: 3, t, source: 'panel', kind: 'ventilation', settings: { source: 'ventilator', rr: 20, vtMl: 600, fio2: 1, peep: 5 }, result: { accepted: true } },
+    ]);
+  });
+
+  it('an IM dantrolene through driver.host is refused by the engine and still recorded, with its reason and routeNotModelled', () => {
+    const { driver, run } = rig3();
+    run(1);
+    const r = driver.host.dispatch(cmd('im1', { ...GIVE, route: 'im' })) as { accepted: boolean; reason?: string };
+    expect(r.accepted).toBe(false);
+    const a = driver.phaseRunner!.admin.at(-1);
+    expect(a).toMatchObject({ kind: 'drug', drugId: 'dantrolene', route: 'im', result: { accepted: false, reason: r.reason, routeNotModelled: true } });
+  });
+
+  it('the record rewinds with a bookmark restore', async () => {
+    const { driver, run } = rig3();
+    run(1);
+    driver.host.dispatch(cmd('a1', GIVE, { actionId: 'dantrolene', stageGroup: 'press-1' }));
+    expect((await driver.hook({ id: 'b', issuedBy: 'instructor', type: 'scenario', action: 'bookmark', target: 'one' })).accepted).toBe(true);
+    run(1);
+    driver.host.dispatch(cmd('a2', GIVE, { actionId: 'dantrolene', stageGroup: 'press-2' }));
+    expect(driver.phaseRunner!.admin.map((a) => a.seq)).toEqual([1, 2]);
+    expect((await driver.hook({ id: 'r', issuedBy: 'instructor', type: 'scenario', action: 'restoreBookmark', target: 'one' })).accepted).toBe(true);
+    expect(driver.phaseRunner!.admin.map((a) => a.seq)).toEqual([1]);
+  });
+});

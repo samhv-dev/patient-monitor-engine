@@ -6,6 +6,7 @@ export { validateScenario, formatAjvError, SCENARIO_SCHEMA, SCENARIO_SCHEMA_V2, 
 export { ScenarioRunner, compare, matches, hasManual, type RunnerInput, type RunnerEffect, type RunnerState, type RunLogEntry, type VitalHold } from './runner.ts';
 export { PhaseRunner, type PhaseRunnerEffect, type PhaseRunLogEntry, type PhaseHold } from './phase-runner.ts';
 export { namedRules, holds, walkLeaves, windowOf, slopePerMin, spreadPct, type NamedRule, type RuleCtx } from './rules.ts';
+export { grade, ruleWords, type Grade, type Grades, type ActionGrade, type RepeatGrade, type OutcomeGrade, type Violation, type JudgedRow } from './grade.ts';
 export { replayRunLog, runLog, type ScenarioRunLog, type ScenarioRunLogV2 } from './replay.ts';
 export { ScenarioDriver, isHop, HOP_MAX_S, type ScenarioDriverOptions, type RunPosition } from './driver.ts';
 export { RHYTHM_STAND_INS, resolveRhythm, type StandIn } from './standins.ts';

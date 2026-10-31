@@ -223,7 +223,7 @@ export interface PhaseRunnerState {
   history: Array<{ t: number; stateId: string; transitionId?: string }>;
   /** The phase timeline (at most 500 entries, the oldest dropped). */
   phases: PhaseEntry[];
-  /** The administration record: F3 fills it. */
+  /** The administration record: every clinical act, accepted or refused (the driver fills it through record(), F3). */
   admin: Administration[];
   /** The true/false edges of every named rule (at most PhaseRunner.EDGES_PER_RULE per rule; its first edge is kept). */
   edges: RuleEdge[];

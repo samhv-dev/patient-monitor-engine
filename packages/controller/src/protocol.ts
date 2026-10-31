@@ -31,7 +31,9 @@ export type ControlFlag = 'modeled' | 'pinned' | 'ramping' | 'override';
  * The host and the engine ignore it; it travels in `commandApplied` so a record can tell which items went together.
  */
 export type BatchMeta = { batch?: { id: string; n: number } };
-type CommandBase = { id: string; issuedBy: string; atTick?: Tick; stageGroup?: string } & BatchMeta;
+/** `actionId` (plan F3): the /2 card's action an A press sends the command for. Metadata, as `batch`: the host and the
+ *  engine ignore it; the scenario driver reads it (a taking, and the administration record's source). */
+type CommandBase = { id: string; issuedBy: string; atTick?: Tick; stageGroup?: string; actionId?: string } & BatchMeta;
 
 /**
  * Brief §7.2 `ClinicalEvent` (drug ids stay strings), widened to the engine's shapes (plan F1; the schema checks `kind`

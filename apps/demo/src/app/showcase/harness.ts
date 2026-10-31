@@ -4,7 +4,7 @@
 // WALL time, i.e. every 0.1 s of sim at ×1, 0.4 s at ×4 and 0.8 s at ×8. Every loop yields once per sim-minute.
 // Test-only: nothing in the app imports this file.
 import { createEngine, type EngineEvent } from '@pme/engine-core';
-import { engineOptionsOf, isV2, ScenarioDriver, validateScenario, type AnyScenarioDoc, type ScenarioDoc } from '@pme/controller/scenario';
+import { engineOptionsOf, isV2, ScenarioDriver, validateScenario, type Administration, type AnyScenarioDoc, type PhaseEntry, type RuleEdge, type ScenarioDoc } from '@pme/controller/scenario';
 import { expect } from 'vitest';
 
 /** One sample per second of sim time: the monitor's numerics (null = not shown or invalid), the 1 Hz arterial panel
@@ -42,6 +42,8 @@ export interface Run {
   spont: [number, number][];
   /** The drawn ECG's PVCs (`beat` events of template `pvc`): their times (E133). */
   pvcs: number[];
+  /** A pme-scenario/2 card (plan F3): the phase runner's timeline, administration record and rule edges at the end. */
+  v2?: { phases: PhaseEntry[]; admin: Administration[]; edges: RuleEdge[] };
 }
 
 const DOCS = import.meta.glob<{ default: ScenarioDoc }>('./*.json', { eager: true });
@@ -155,6 +157,8 @@ export async function runCard(id: string, acts: readonly Act[], untilS: number, 
       await new Promise<void>((r) => setImmediate(r));
     }
   }
+  const pr = driver.phaseRunner;
+  if (pr) run.v2 = { phases: [...pr.phases], admin: [...pr.admin], edges: [...pr.edges] };
   return run;
 }
 

@@ -5,8 +5,11 @@
 // send the /1 states' onEnter commands, and the condition goes with Induce in its stage group), so any difference in the
 // phase times below is the owner's phase rules and their 60-s holds, never a different patient; the phases do not
 // flap. PRINTED, not asserted: every phase entry against the /1 state entries (PME_SHOWCASE_PRINT=1 or always below).
+// F3: the same path stopped at the talk's end (24:31) and graded by grade() as the debrief would (final): the table is
+// printed; asserted: dantrolene's first dose met, calcium, insulin and CPR not applicable, no violation (the call and the
+// ventilation back read otherwise on the engine: see the test's comment).
 import { describe, expect, it } from 'vitest';
-import { validateScenario } from '@pme/controller/scenario';
+import { grade, validateScenario, type ScenarioDocV2 } from '@pme/controller/scenario';
 import { anyShowcaseDoc, runCard, type Act, type Run } from './harness.ts';
 
 /** The run sheet's demo path, §3 (the talk run's sim times; the stops hold the clock, so they are not in sim time). */
@@ -61,5 +64,44 @@ describe('showcase-mh-v2: the MH card in pme-scenario/2 on the demo path', () =>
     // the 60-s hold: no phase lasts less than 60 s except by a later rule's own 60-s hold (no flapping)
     for (let i = 1; i < b.states.length; i++) expect(b.states[i]![0] - b.states[i - 1]![0], `${ids[i - 1]} → ${ids[i]}`).toBeGreaterThanOrEqual(60 - 1e-6);
     expect(b.states.length).toBeLessThan(20);
+  }, SLOW);
+
+  it('graded at the talk\'s end (24:31, final): dantrolene\'s first dose met; K⁺ and CPR rows not applicable; no violation; the table printed', async () => {
+    const TALK_END_S = 1471;
+    const b: Run = await runCard('showcase-mh-v2', PATH.map((p) => ({ press: p.v2, action: p.v2, t: p.t })), TALK_END_S, undefined, POLL_S);
+    expect(b.refused).toEqual([]);
+    const v2 = b.v2!;
+    const g = grade(anyShowcaseDoc('showcase-mh-v2') as ScenarioDocV2, v2.phases, v2.admin, v2.edges, TALK_END_S, { final: true });
+    const at = (t?: number) => (t === undefined ? '-' : mmss(t));
+    const lines = [`grade() at ${mmss(TALK_END_S)} (final) on the demo path:`];
+    for (const a of g.actions) {
+      lines.push(`  ${a.id.padEnd(17)} ${a.grade.padEnd(15)} first ${a.firstGrade.padEnd(15)} due ${at(a.dueT)}${a.windowS !== undefined ? `+${a.windowS}s` : ''}  given ${at(a.givenT)}  live "${a.live}"  admin [${a.admin.join(',')}]`);
+      for (const l of a.lines) lines.push(`      | ${l}`);
+      for (const r of a.repeats) lines.push(`      repeat #${r.n}: ${r.grade}  due ${at(r.dueT)}  given ${at(r.t)}${r.lines.length ? `  (${r.lines.join('; ')})` : ''}`);
+    }
+    lines.push(`  violations: ${g.violations.length ? g.violations.map((v) => `${mmss(v.t)} ${v.text} (${v.harm})`).join('; ') : 'none'}`);
+    for (const o of g.outcomes) lines.push(`  outcome ${o.id}: ${o.grade}${o.t !== undefined ? ` ${mmss(o.t)}` : ''}`);
+    for (const j of g.judged) lines.push(`  judged ${j.id}: from ${at(j.fromT)}`);
+    const named = ['action:callCrisis:anchor', 'action:ventilationBack:precondition', 'action:dantrolene:repeatWhile', 'action:dantroleneAgain:precondition'];
+    for (const n of named) lines.push(`  edges ${n}: ${v2.edges.filter((e) => e.rule === n).map((e) => `${e.value ? '↑' : '↓'}${mmss(e.t)}`).join(' ')}`);
+    lines.push(`  phases: ${v2.phases.map((p) => `${p.id} ${mmss(p.t)}`).join(', ')}`);
+    console.log(lines.join('\n'));
+
+    const row = (id: string) => g.actions.find((a) => a.id === id)!;
+    // NOT asserted, measured on this commit (the semantics give another answer on the engine; the card and the semantics
+    // are left as they are, for the owner):
+    // - callCrisis 'met': it reads OVERDUE 2:30. Its anchor (truth EtCO₂ > 45 held 20 s) first holds at 03:42, after
+    //   the premedication (midazolam + fentanyl, room air) and before the induction, and falls at 05:17; it holds again
+    //   at 08:06. The window is anchored on the FIRST true edge, so the call at 08:12 is 4:30 after it (120 s asked).
+    //   hyperventilate and propofolInfusion share the anchor and read overdue too.
+    // - ventilationBack 'met': it reads DEVIATION, "given before: etco2 < 40 for 120 s". Its precondition held from
+    //   10:26 to 12:57 and the press came at 13:52 (graded on that press since F6 opened the action in Latent).
+    // - dantroleneAgain: since F6 opened it in Latent it reads MET 08:12: a device action graded on the ventilator's
+    //   settings, it takes the call's 20 × 600 (admin 8), not its own press at 19:13.
+    expect(row('dantrolene').firstGrade).toBe('met'); // the first dose; its repeat row is printed, not asserted
+    expect(row('calcium').grade).toBe('not applicable');
+    expect(row('insulin').grade).toBe('not applicable');
+    expect(row('cpr').grade).toBe('not applicable');
+    expect(g.violations).toEqual([]);
   }, SLOW);
 });
