@@ -61,7 +61,7 @@ async function course(r: ReturnType<typeof setup>) {
   await waitFor(() => r.ctl.hostOnline);
   expect((await r.ctl.send({ type: 'scenario', action: 'load', doc: MH })).accepted).toBe(true);
   await r.run(2);
-  for (const t of ['premed', 'preox', 'induce', 'intubate', 'surgery', 'crisis-surgery', 'dant', 'cool-treating']) await r.press(t);
+  for (const t of ['premed', 'preox', 'induce', 'intubate', 'surgery', 'crisis-surgery', 'dant', 'kTreat-treating']) await r.press(t); // Cool is offered only above 38.5 °C: the potassium hop
   expect((await r.ctl.send({ type: 'scenario', action: 'goto', target: 'recovering' })).accepted).toBe(true);
   await r.run(2);
   for (const t of ['normo', 'dant-normoventilated']) await r.press(t);
@@ -91,7 +91,7 @@ describe('stage marks (driver, host side)', () => {
     const r = setup();
     await course(r);
     const all = entries(r.driver);
-    expect(all).toEqual(expect.arrayContaining(['dantrolene', 'cooling', 'dantroleneAgain'])); // the hops were entered
+    expect(all).toEqual(expect.arrayContaining(['dantrolene', 'potassium', 'dantroleneAgain'])); // the hops were entered
     const hops = new Set(MH.states.filter(isHop).map((s) => s.id));
     const marks = r.driver.stageMarks();
     // one per stage entry, in order: a state entered right after itself through its own hop is the same stage entry

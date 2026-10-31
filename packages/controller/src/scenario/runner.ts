@@ -14,6 +14,7 @@
 // - trigger(id) presses the transition's manual button; a transition without a manual leaf is forced instead.
 import { seedStream, uniform, type Sfc32State } from '@pme/engine-core';
 import type { ClinicalEvent, ScenarioEvent, SensorId } from '../protocol.ts';
+import { describeWhen } from './describe.ts';
 import type { DocCommand, EventFilter, Op, ScenarioDoc, ScenarioState, Transition, When } from './types.ts';
 
 export type RunnerInput =
@@ -185,6 +186,10 @@ export class ScenarioRunner {
   trigger(t: number, transitionId: string): { ok: boolean; reason?: string } {
     const tr = this.state().transitions?.find((x) => x.id === transitionId);
     if (!tr) return { ok: false, reason: `no transition ${transitionId} in state ${this.s.stateId}` };
+    // A manual guarded by a vital in its all() is offered only while that vital holds (the MH card's Cool: core above
+    // 38.5 °C): a press outside it is refused, not kept to fire later. Events in an all() still latch as before.
+    const unmet = 'all' in tr.when ? tr.when.all.findIndex((c, i) => 'vital' in c && !this.holds(c, `${tr.id}.${i}`, true, new Set()).ok) : -1;
+    if (unmet >= 0 && hasManual(tr.when)) return { ok: false, reason: `not offered now: needs ${describeWhen((tr.when as { all: When[] }).all[unmet] as When)}` };
     this.sync(t);
     this.log.push({ op: 'trigger', t, transitionId });
     if (!this.s.pressed.includes(transitionId)) this.s.pressed.push(transitionId);
