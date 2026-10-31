@@ -81,6 +81,14 @@ the public API is what the packages export (see the API reference), the `pme-sce
   "Return to the start of <stage>" restores its mark at once, and a future stage now opens the same kind of box,
   "Jump to <stage>", whose click sends today's `goto` with today's toast; neither opens a dialog any more (the clinical
   owner's report of 30 October). The hint reads "past: return to its start · future: jump to it".
+- After a reload of the instructor's page, Instructor v2's past stages can be returned to again. The restored case
+  came back without its stage marks (the new page's driver had none of the course's, so every past stage's Return was
+  off) and with the panel's scenario history beginning at the reload (so the past stages showed no entry time). The
+  page now keeps the latest stage mark of each stage, with the snapshot it holds, beside the reload position in
+  `sessionStorage` (written only when the marks change; a storage too full for both keeps the position and drops the
+  marks), places them again after the return, and gives the panel the restored runner's history (the clinical owner's
+  report of 30 October). `@pme/controller`: `ScenarioDriver.stageMarkPositions()` and `holdStageMarks()`, and the type
+  `StageMarkPosition`.
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's
   sequence and viewer role per transport, and counts a hello only after its sequence check, so a phone on the relay
   that says hello with the laptop panel's id leaves the panel's commands applied. The relay gives each peer id one live
