@@ -12,6 +12,8 @@
 // - The script (§3, Q4): an entry fires once, on the first time its anchor happens (its phase's first entry, the nth
 //   taking of an action, the scenario clock), as one command batch labelled card-set, never graded. An entry anchored on
 //   an action's taking carries the press's stage group, so the driver sends it with the press, on the press's tick.
+// - A phase with `holdS` (the owner's 60-s boundary hold, 31 October) is entered only once its rule has held without a
+//   break for that long (unpaused sim seconds, counted from the rule's true edge).
 // - The phase timeline, the administration record (F3 fills it), the edges, the rings and the script entries fired are
 //   all in the plain-JSON state (`pme-scenario-runner/2`): a bookmark restores them and the run log replays them.
 import type { ScenarioEvent, SensorId } from '../protocol.ts';
@@ -48,7 +50,7 @@ export type PhaseRunLogEntry =
 /** A leaf of a rule out of the current phase as it reads now (Instructor v2's A-row bar): a value leaf's hold, or a slope
  *  or unchanged leaf's window fill (`heldS` of `forS` = the seconds the ring spans of the window). */
 export interface PhaseHold extends VitalHold {
-  leaf: 'value' | 'slope' | 'unchanged';
+  leaf: 'value' | 'slope' | 'unchanged' | 'hold';
 }
 
 const HISTORY_MAX = 200;
@@ -71,6 +73,8 @@ export class PhaseRunner {
   private readonly actions: Set<string>;
   /** The longest slope/unchanged window per variable: how long its ring is kept. */
   private readonly ringSpan = new Map<string, number>();
+  /** The variables an `unchanged` leaf reads against the phase's start. */
+  private readonly sinceVars = new Set<string>();
   private entered = 0; // phase entries by this instance (not in the state, so a restore does not rewind it)
   private readonly ctx: RuleCtx;
 
@@ -82,8 +86,9 @@ export class PhaseRunner {
     this.actions = new Set(doc.actions.map((a) => a.id));
     for (const nr of this.rules) {
       walkLeaves(nr.rule, nr.name, (leaf) => {
+        if ('unchanged' in leaf && leaf.unchanged.since) return void this.sinceVars.add(leaf.unchanged.var);
         const w = 'slope' in leaf ? leaf.slope : 'unchanged' in leaf ? leaf.unchanged : null;
-        if (w) this.ringSpan.set(w.var, Math.max(this.ringSpan.get(w.var) ?? 0, w.overS));
+        if (w?.overS) this.ringSpan.set(w.var, Math.max(this.ringSpan.get(w.var) ?? 0, w.overS));
       });
     }
     const initial = (doc.phases.find((p) => p.initial) ?? doc.phases[0]) as Phase;
@@ -98,6 +103,7 @@ export class PhaseRunner {
       held: (key) => self.s.trueFor[key] ?? 0,
       ring: (name) => self.s.rings[name] ?? [],
       visited: (id) => self.s.phases.some((p) => p.id === id),
+      phaseRef: (name) => self.s.phaseRef?.[name],
       get rhythm() {
         return self.s.rhythm;
       },
@@ -181,23 +187,30 @@ export class PhaseRunner {
   advance(t: number, inputs: RunnerInputV2[] = []): PhaseRunnerEffect[] {
     if (!this.s.started) return [];
     const at = this.log.length;
-    this.sync(t);
+    const dt = this.sync(t);
     for (const i of inputs) this.take1(t, i);
     this.track(0);
+    this.refs();
     let out: PhaseRunnerEffect[] = [];
     let edged = false;
     if (!this.s.paused) {
       const now = new Map<string, boolean>();
       for (const nr of this.rules) {
         const v = holds(nr.rule, nr.name, nr.rank, this.ctx);
-        if (v !== (this.s.ruleNow[nr.name] ?? false)) {
+        const was = this.s.ruleNow[nr.name] ?? false;
+        if (v !== was) {
           this.edge({ rule: nr.name, t, value: v });
           edged = true;
         }
         this.s.ruleNow[nr.name] = v;
         now.set(nr.name, v);
+        if (nr.name.startsWith('phase:')) {
+          const hf = (this.s.holdFor ??= {});
+          hf[nr.name.slice(6)] = v && was ? (hf[nr.name.slice(6)] ?? 0) + dt : 0;
+        }
       }
-      const to = (this.state().next ?? []).find((id) => id !== this.s.stateId && now.get(`phase:${id}`));
+      const held = (id: string) => (this.s.holdFor?.[id] ?? 0) >= (this.byId.get(id)?.holdS ?? 0) - EPS;
+      const to = (this.state().next ?? []).find((id) => id !== this.s.stateId && now.get(`phase:${id}`) && held(id));
       if (to !== undefined) out = this.enter(t, to, `enter:${to}`);
       out.push(...this.clockScript(t));
     }
@@ -246,6 +259,12 @@ export class PhaseRunner {
       const enter = id === this.s.stateId ? undefined : this.byId.get(id)?.enter;
       if (!enter) continue;
       const transitionId = `enter:${id}`;
+      const holdS = this.byId.get(id)?.holdS ?? 0;
+      if (holdS > 0) {
+        const met = this.s.ruleNow[`phase:${id}`] ?? false;
+        const heldS = met ? (this.s.holdFor?.[id] ?? 0) : 0;
+        out.push({ transitionId, key: `phase:${id}:hold`, leaf: 'hold', variable: id, op: '>=', threshold: holdS, value: heldS, met, heldS, forS: holdS, fraction: Math.min(1, heldS / holdS) });
+      }
       walkLeaves(enter, `phase:${id}`, (leaf, key) => {
         if ('value' in leaf && (leaf.value.forS ?? 0) > 0) {
           const { var: variable, op, value: threshold, forS = 0 } = leaf.value;
@@ -253,8 +272,15 @@ export class PhaseRunner {
           const met = value !== undefined && compare(value, op, threshold);
           const heldS = met ? (this.s.trueFor[key] ?? 0) : 0;
           out.push({ transitionId, key, leaf: 'value', variable, op, threshold, value, met, heldS, forS, fraction: Math.min(1, heldS / forS) });
-        } else if ('slope' in leaf || 'unchanged' in leaf) {
-          const w = 'slope' in leaf ? leaf.slope : leaf.unchanged;
+        } else if ('unchanged' in leaf && leaf.unchanged.since) {
+          const { var: variable, withinPct } = leaf.unchanged;
+          const v = this.s.truth[variable]?.v;
+          const ref = this.s.phaseRef?.[variable];
+          const p = v !== undefined && ref !== undefined ? spreadPct([[0, v], [1, ref]]) : undefined;
+          const met = p !== undefined && p <= withinPct + EPS;
+          out.push({ transitionId, key, leaf: 'unchanged', variable, op: '<=', threshold: withinPct, value: p, met, heldS: 0, forS: 0, fraction: met ? 1 : 0 });
+        } else if ('slope' in leaf || ('unchanged' in leaf && leaf.unchanged.overS)) {
+          const w = 'slope' in leaf ? leaf.slope : (leaf as { unchanged: { var: string; overS: number } }).unchanged;
           const win = windowOf(this.s.rings[w.var] ?? [], w.overS);
           const fraction = Math.min(1, win.coveredS / w.overS);
           if ('slope' in leaf) {
@@ -263,8 +289,9 @@ export class PhaseRunner {
             out.push({ transitionId, key, leaf: 'slope', variable: w.var, op: leaf.slope.op, threshold: leaf.slope.perMin, value: s, met, heldS: win.coveredS, forS: w.overS, fraction });
           } else {
             const p = spreadPct(win.samples);
-            const met = win.full && p !== undefined && p <= leaf.unchanged.withinPct + EPS;
-            out.push({ transitionId, key, leaf: 'unchanged', variable: w.var, op: '<=', threshold: leaf.unchanged.withinPct, value: p, met, heldS: win.coveredS, forS: w.overS, fraction });
+            const within = (leaf as { unchanged: { withinPct: number } }).unchanged.withinPct;
+            const met = win.full && p !== undefined && p <= within + EPS;
+            out.push({ transitionId, key, leaf: 'unchanged', variable: w.var, op: '<=', threshold: within, value: p, met, heldS: win.coveredS, forS: w.overS, fraction });
           }
         }
       });
@@ -275,17 +302,17 @@ export class PhaseRunner {
   // --- internals ---------------------------------------------------------------------------------------------
   /** Credit the time since the last call (not while paused): the clocks, the holds and the 1 Hz ring samples, all with
    *  the values held so far. */
-  private sync(t: number): void {
+  private sync(t: number): number {
     const from = this.s.lastT;
     const dt = Math.max(0, t - from);
     this.s.lastT = t;
-    if (this.s.paused || dt === 0) return;
+    if (this.s.paused || dt === 0) return 0;
     this.s.stateT += dt;
     this.s.scenarioT += dt;
     this.track(dt);
     const first = Math.floor(from + EPS) + 1; // the whole seconds crossed: (from, t]
     const last = Math.floor(t + EPS);
-    if (last < first) return;
+    if (last < first) return dt;
     for (const [name, span] of this.ringSpan) {
       const ring = (this.s.rings[name] ??= []);
       const v = this.s.truth[name]?.v;
@@ -296,6 +323,17 @@ export class PhaseRunner {
       for (let k = Math.max(first, last - Math.ceil(span) - 1); k <= last; k++) ring.push([k, v]);
       const keep = ring.findIndex(([s]) => s >= last - span - EPS);
       if (keep > 0) ring.splice(0, keep);
+    }
+    return dt;
+  }
+
+  /** The `since: 'phaseStart'` references still missing: the first value after the phase's entry. */
+  private refs(): void {
+    if (!this.sinceVars.size) return;
+    const ref = (this.s.phaseRef ??= {});
+    for (const name of this.sinceVars) {
+      const v = this.s.truth[name]?.v;
+      if (ref[name] === undefined && v !== undefined) ref[name] = v;
     }
   }
 
@@ -354,6 +392,8 @@ export class PhaseRunner {
     this.s.stateId = id;
     this.s.stateT = 0;
     this.s.enteredT = t;
+    this.s.phaseRef = {};
+    this.refs();
     this.entered++;
     const transitionId = rule === 'initial' ? undefined : rule;
     this.s.phases.push({ id, t, rule });

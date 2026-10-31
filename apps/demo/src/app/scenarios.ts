@@ -1,6 +1,8 @@
 // The scenario library: every `pme-scenario/1` document in packages/controller/scenarios (the five the scenario runner
 // bundles and the depth and neuromuscular cases the neuro model added), so a case a later stage adds appears without a
-// code change. A `pme-scenario/2` document (plan F1) is read for its header; it lists no objectives here (F6).
+// code change. A `pme-scenario/2` document (plan F1) is read for its header; its case details are its judged rows and
+// graded actions (F6). The library holds one /2 card (showcase-mh-v2, F8): `ScenarioCard`'s default type parameter
+// still says /1, so every reader of `doc` checks `isV2` first (F1's narrowing).
 import { isV2, type AnyScenarioDoc, type ScenarioDoc } from '@pme/controller';
 import type { Objective } from '@pme/controller/scenario';
 import { CATEGORIES as CATS, draft, SCENARIO_META, storyOf, type Category } from './scenario-meta.ts';
@@ -37,13 +39,18 @@ export function cardOf<D extends AnyScenarioDoc>(doc: D): ScenarioCard<D> {
   const cat = (CATS as readonly string[]).includes(doc.category ?? '') ? (doc.category as Category) : undefined;
   return {
     id: doc.id, title: d.title, draft: d.draft, story: doc.story ?? storyOf(doc.id, doc.notes), category: cat ?? m?.category ?? 'Other',
-    minutes: doc.durationMin ?? m?.minutes ?? null, objectives: (isV2(doc) ? [] : (doc.objectives ?? m?.objectives ?? [])).map(objectiveText), doc,
+    minutes: doc.durationMin ?? m?.minutes ?? null, objectives: isV2(doc) ? v2Objectives(doc) : (doc.objectives ?? m?.objectives ?? []).map(objectiveText), doc,
     patient: [p.sex ?? '', p.ageY !== undefined ? `${p.ageY} y` : '', p.weightKg !== undefined ? `${p.weightKg} kg` : ''].filter(Boolean).join(' '),
   };
 }
 
+/** A /2 card's case details (plan F6): its judged rows, then its graded actions' labels. */
+function v2Objectives(doc: Extract<AnyScenarioDoc, { schema: 'pme-scenario/2' }>): string[] {
+  return [...(doc.judged ?? []).map((j) => j.text), ...doc.actions.filter((a) => a.graded !== false).map((a) => a.label)];
+}
+
 /** The Showcase cards in the order of the demonstration's run sheet; every other group sorts by title. */
-export const SHOWCASE_ORDER: readonly string[] = ['showcase-induction', 'showcase-induction-premed', 'showcase-anaphylaxis', 'showcase-mh', 'showcase-tamponade', 'showcase-haemorrhage'];
+export const SHOWCASE_ORDER: readonly string[] = ['showcase-induction', 'showcase-induction-premed', 'showcase-anaphylaxis', 'showcase-mh', 'showcase-mh-v2', 'showcase-tamponade', 'showcase-haemorrhage'];
 
 export const LIBRARY: readonly ScenarioCard[] = Object.entries(FILES)
   .filter(([path]) => !path.endsWith('.schema.json'))
