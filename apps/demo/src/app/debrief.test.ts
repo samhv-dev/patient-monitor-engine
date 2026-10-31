@@ -430,10 +430,11 @@ describe('F7: a pme-scenario/2 run — the action table, outcomes, violations, j
     expect(j.phases).toEqual(phases);
     const g = grade(DOC2, phases, admin, edges, 900, { final: true });
     expect(j.actions).toHaveLength(g.actions.length);
-    for (const a of j.actions) expect(Object.keys(a)).toEqual(['id', 'label', 'kind', 'grade', 'lines', 'dueT', 'givenT', 'windowS', 'repeats', 'admin']);
+    // firstGrade (F11's finding): the first administration's own grade, which the action's row prints; grade stays the worst
+    for (const a of j.actions) expect(Object.keys(a)).toEqual(['id', 'label', 'kind', 'grade', 'firstGrade', 'lines', 'dueT', 'givenT', 'windowS', 'repeats', 'admin']);
     const dant = j.actions.find((a: { id: string }) => a.id === 'dantrolene');
     const gd = g.actions.find((a) => a.id === 'dantrolene') as ActionGrade;
-    expect(dant).toEqual({ id: 'dantrolene', label: 'Dantrolene 2.5 mg/kg', kind: 'drug', grade: gd.grade, lines: gd.lines, dueT: 470, givenT: 500, windowS: 300, repeats: [], admin: [2, 3] });
+    expect(dant).toEqual({ id: 'dantrolene', label: 'Dantrolene 2.5 mg/kg', kind: 'drug', grade: gd.grade, firstGrade: gd.firstGrade, lines: gd.lines, dueT: 470, givenT: 500, windowS: 300, repeats: [], admin: [2, 3] });
     expect(dant.lines).toContain('route im not allowed');
     expect(j.actions.find((a: { id: string }) => a.id === 'cpr')).toMatchObject({ grade: 'not applicable', dueT: null, givenT: null, windowS: null });
     expect(j.outcomes).toEqual([{ id: 'etco2Down', text: DOC2.outcomes?.[0]?.text, status: 'reached', t: 800, why: 'Reached at 13:20, 5 min 00 s after Dantrolene 2.5 mg/kg (within 10 min 00 s asked).' }]);
