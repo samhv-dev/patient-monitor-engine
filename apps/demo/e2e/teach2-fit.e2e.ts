@@ -159,10 +159,10 @@ for (const [card, target] of [['showcase-mh', 'awake'], ['showcase-haemorrhage',
 
 // Plan F11 (F6's acceptance on the /2 card): the MH card in pme-scenario/2 (showcase-mh-v2) at 1440 × 900. A /2 phase is
 // entered by its own rule, never by goto, so each phase is reached on the demo path's presses (mh-v2-path.ts) and
-// fast-forward (on that path: Latent 06:18, Early signs 15:14, Treated 20:12). At the phases with the most open actions
-// (Latent: 11; Early signs: 9) and at Treated: no scroll (the page, the view, ACTION, the strip), every open action of the
-// phase a row of ACTION, no row disabled, no phase name cut.
-for (const [target, presses] of [['latent', 5], ['earlySigns', 8], ['treated', 9]] as const) {
+// fast-forward (on that path since the demo-day fixes D1–D4: Latent 06:17, Early signs 08:43 after the call, Treated
+// 10:58 after the dantrolene). At Latent, Early signs and Treated: no scroll (the page, the view, ACTION, the strip),
+// every open action of the phase a row of ACTION, no row disabled, no phase name cut.
+for (const [target, presses] of [['latent', 5], ['earlySigns', 6], ['treated', 7]] as const) {
   test(`Instructor v2 fits 1440 × 900 on the /2 MH card at ${target}: no scroll, every open action a row, no row disabled`, async ({ page, browserName }, info) => {
     test.setTimeout(360_000);
     await openMhV2(page, (h) => openApp(page, base, h, { warmMs: 2000 }));

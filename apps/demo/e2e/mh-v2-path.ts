@@ -47,6 +47,9 @@ export async function pressPath(page: Page, go: (i: number) => boolean | Promise
     const [t, title] = PATH[i] as [number, string];
     await to(page, t);
     const row = page.locator('.ip2-action .ip2-rows:not(.ip2-finished-list) button.ip2-row').filter({ has: page.locator('.ip2-row-title', { hasText: title }) }).first();
+    // a row not due now is in ACTION's "Not due now" fold (rows.ts classifyV2 `later`): pressable there once it is open
+    const fold = page.locator('.ip2-action details.ip2-later');
+    if (!(await row.isVisible()) && (await fold.count()) && !(await fold.evaluate((d) => (d as HTMLDetailsElement).open))) await fold.locator('summary').click();
     await expect(row, `${title} in ACTION at ${t} s (phase ${(await app(page)).stateId})`).toBeVisible();
     const at = (await app(page)).simT;
     await row.click();
