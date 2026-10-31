@@ -2,10 +2,10 @@
 // for the current stage, in the card's order (steps, judged objectives numbered on, automatic rows), each with a key
 // box, a title and subtitle and a right-hand label, in the five looks of the row-state table (rows.ts classifies them).
 // A step's press is IP3's `pressStep` (exactly what today's state button sends), a judged objective's is `judge` (what
-// ticking today's checkbox writes); digits 1–9 press the numbered rows. No row is ever disabled: a look never stops a
-// press. Under the list, two folds: "Off the card" (the off-card actions of this stage, from the log) and "Finished
-// steps · n" (closed by default), then the foot line. Rows are kept by key across the ≤ 2 Hz repaint, so a press or the
-// keyboard focus is never lost to a redraw.
+// ticking today's checkbox writes); digits 1–9 press the numbered rows. A look never stops a press, but for "waiting"
+// (rows.ts: a press the runner would refuse now), which offers none. Under the list, two folds: "Off the card" (the
+// off-card actions of this stage, from the log) and "Finished steps · n" (closed by default), then the foot line. Rows
+// are kept by key across the ≤ 2 Hz repaint, so a press or the keyboard focus is never lost to a redraw.
 import './action.css';
 import type { Link } from '../link.ts';
 import { clock, h, setText } from '../ui.ts';
@@ -70,6 +70,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     setText(p.right, live.right);
     if (p.fill) p.fill.style.width = `${Math.round((live.progress ?? 0) * 100)}%`;
     if (p.el instanceof HTMLButtonElement) {
+      p.el.disabled = live.look === 'waiting';
       if (r.kind !== 'auto' && r.n <= 9) p.el.setAttribute('aria-keyshortcuts', n);
       p.el.setAttribute('aria-label', `${n}. ${r.title}. ${live.subtitle}. ${live.right}`);
     }
@@ -110,7 +111,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
 
   const setDigits = (rows: readonly LiveRow[]) => {
     for (let n = 1; n <= 9; n++) {
-      const live = rows.find((r) => r.row.kind !== 'auto' && r.row.n === n);
+      const live = rows.find((r) => r.row.kind !== 'auto' && r.row.n === n && r.look !== 'waiting');
       const p = live ? pills.get(keyOf(live)) : undefined;
       keys.digit(n, p ? () => press(p) : null);
     }

@@ -52,7 +52,8 @@ function rig(doc: ScenarioDoc, history: H[], rows: Array<Partial<RecRow> & { t: 
   const ctl = { scenario: sv, bookmarks: [], simT, hostPaused: false, state: null, send: async () => ({ accepted: true, tick: 0, commandId: 'c', rttMs: 0 }) };
   const host = { record: { data: record }, driver: { stageMarks: () => [], vitalHolds: () => [] }, onBriefing: () => () => undefined };
   const link = { ctl, host, log: [], ramps: new Map(), get simT() { return ctl.simT; }, send: ctl.send, note: () => undefined } as unknown as Link;
-  const ctx = { link, keys: { digit: () => undefined, letter: () => undefined, escape: () => () => undefined }, dock: {}, openSheet: () => undefined } as unknown as Teach2Ctx;
+  const digits = new Map<number, (() => void) | null>();
+  const ctx = { link, keys: { digit: (n: number, f: (() => void) | null) => digits.set(n, f), letter: () => undefined, escape: () => () => undefined }, dock: {}, openSheet: () => undefined } as unknown as Teach2Ctx;
   const strip = document.createElement('nav');
   const cue = document.createElement('div');
   const action = document.createElement('div');
@@ -74,7 +75,7 @@ function rig(doc: ScenarioDoc, history: H[], rows: Array<Partial<RecRow> & { t: 
   const open = () => [...action.querySelectorAll('.ip2-rows:not(.ip2-finished-list) .ip2-row')].map((p) => `${(p as HTMLElement).dataset.look} ${text(p, '.ip2-key')} ${text(p, '.ip2-row-title')}`);
   const fin = () => [...action.querySelectorAll('.ip2-finished-list .ip2-row')].map((p) => `${(p as HTMLElement).dataset.look} ${text(p, '.ip2-key')} ${text(p, '.ip2-row-title')} ${text(p, '.ip2-row-right')}`);
   const chips = () => [...strip.querySelectorAll('.ip2-chips > .ip2-chip')].map((c) => c.textContent);
-  return { at, strip, cue, action, open, fin, chips, count: () => text(action, '.ip2-finished summary'), how: () => text(cue, '.ip2-cue-how'), current: () => text(strip, '.ip2-current') };
+  return { at, ctl, digits, strip, cue, action, open, fin, chips, count: () => text(action, '.ip2-finished summary'), how: () => text(cue, '.ip2-cue-how'), current: () => text(strip, '.ip2-current') };
 }
 
 beforeEach(() => document.body.replaceChildren());
@@ -135,6 +136,30 @@ describe('the MH card: a spoke press is an action of the treatment stage (the ow
     expect(r.action.querySelectorAll('.ip2-rows:not(.ip2-finished-list) .ip2-bar')).toHaveLength(2);
     // the fold stays folded
     expect((r.action.querySelector('details.ip2-finished') as HTMLDetailsElement).open).toBe(false);
+  });
+
+  // #216 guards the card's Cool presses with the core temperature, {all: [tempCore > 38.5, manual]}, and the runner
+  // refuses the press below it (runner.ts `trigger`): the row waits, the rule in words, no press; above it, ready
+  it('Cool below 38.5 °C core waits, with its rule and no press; at 38.6 °C it is ready to press', () => {
+    const doc = structuredClone(MH);
+    for (const s of doc.states) for (const t of s.transitions ?? []) if (t.label?.startsWith('Cool:')) t.when = { all: [{ vital: { var: 'tempCore', op: '>', value: 38.5 } }, { manual: { label: t.label } }] };
+    const r = rig(doc, MH_TO_TREATING, MH_ROWS, 530);
+    const cool = () => r.action.querySelector('.ip2-rows:not(.ip2-finished-list) .ip2-row[aria-keyshortcuts="2"]') as HTMLButtonElement;
+    r.ctl.state = { mode: 'modeled', values: { tempCore: 36.7 } } as unknown as typeof r.ctl.state;
+    r.at(MH_TO_TREATING, MH_ROWS, 531);
+    expect(r.open()[1]).toBe('waiting 2 Cool: refrigerated saline 20 mL/kg (1.6 L)');
+    expect(cool().querySelector('.ip2-row-sub')?.textContent).toMatch(/only when T1 > 38\.5 °C · not offered yet$/);
+    expect(cool().querySelector('.ip2-row-right')?.textContent).toBe('36.7 → 38.5');
+    expect(cool().disabled).toBe(true);
+    expect(r.digits.get(2)).toBeNull();
+    expect(r.open()[0]).toBe('current 1 Dantrolene 2.5 mg/kg');
+
+    r.ctl.state = { mode: 'modeled', values: { tempCore: 38.6 } } as unknown as typeof r.ctl.state;
+    r.at(MH_TO_TREATING, MH_ROWS, 532);
+    expect(r.open()[1]).toBe('ready 2 Cool: refrigerated saline 20 mL/kg (1.6 L)');
+    expect(cool().querySelector('.ip2-row-sub')?.textContent).not.toMatch(/not offered/);
+    expect(cool().disabled).toBe(false);
+    expect(r.digits.get(2)).toBeTypeOf('function');
   });
 
   it('a dose from Recovering: the treatment stage is current again by that press, one chip, "entered by your button"; the Recovering rule shows its bar', () => {

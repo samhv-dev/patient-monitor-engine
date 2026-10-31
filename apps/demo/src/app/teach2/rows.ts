@@ -14,8 +14,10 @@
 // report of 30 October): a step taken (green), a rule that fired (amber), a step failed (red), a judged objective met.
 // The mark names the transition taken: a step with no rule of its own is a press whenever it fired (card-read.ts
 // `byItself`), never "fired by its own rule", whatever the record's attribution; a spoke's return is not a row.
-// Nothing here ever disables a row: the look is all a status changes.
-import type { ScenarioDoc, Transition } from '@pme/controller';
+// The look is all a status changes, with one exception: a step the runner would refuse now (a press guarded by a vital in
+// its `all`, the MH card's Cool below 38.5 °C core: runner.ts `trigger`) is "waiting" (its subtitle already names the rule, card-read.ts),
+// shows the value against it and offers no press until the rule holds.
+import type { ScenarioDoc, Transition, When } from '@pme/controller';
 import type { RunEventId } from '@pme/controller/scenario';
 import { byItself, conditionNotMet, objectivesOf, rowsOf, stagesOf, standingOf, untakenStatus, type Evidence, type Row, type Stage } from '../card-read.ts';
 import { eventWords, isEvent, mmss, trendMeta, verdict } from '../debrief.ts';
@@ -26,7 +28,7 @@ import { showVital, vitalOf } from '../vitals.ts';
 import type { StateVar } from '@pme/engine-core';
 
 /** The five looks of the design's row-state table (§3.5), with the A rows' two and the judged objective's "met". */
-export type Look = 'current' | 'ready' | 'unmet' | 'taken' | 'met' | 'failed' | 'pending' | 'fired';
+export type Look = 'current' | 'ready' | 'unmet' | 'waiting' | 'taken' | 'met' | 'failed' | 'pending' | 'fired';
 
 export interface LiveRow {
   row: Row;
@@ -179,6 +181,16 @@ const show = (v: string, x: number): string => {
 };
 /** The share of an A row's bar the value fills before its rule is met; the hold fills the rest (answer 8). */
 export const VALUE_PART = 0.7;
+/** The vital in a press's `all` that does not hold now, as the runner refuses the press for it (runner.ts `trigger`),
+ *  else null. A value not yet seen (no state event) never holds a press back. */
+function guardUnmet(w: When, values: Source['values']): Extract<When, { vital: unknown }> | null {
+  if (!('all' in w)) return null;
+  return (w.all.find((c) => {
+    if (!('vital' in c)) return false;
+    const v = values?.[c.vital.var];
+    return v !== undefined && Number.isFinite(v) && !(OP_MET[c.vital.op] ?? (() => false))(v, c.vital.value);
+  }) ?? null) as Extract<When, { vital: unknown }> | null;
+}
 /** How near an A row is (answer 8): its value against the threshold, from where the stage began, times the runner's
  *  hold fraction on the host. */
 function autoBar(src: Source, visit: Visit, tr: Transition): { progress: number | null; right: string } {
@@ -257,6 +269,11 @@ export function classify(src: Source): Board {
     // in a hop of the stage: failed only under the shared rule (an asking objective, its target out of reach)
     if (untakenStatus(doc, row.tr, { stateId: visit.stage, current: src.stateId, dueT: visit.t0, leftT: null, now: src.simT }, ev)?.status === 'failed') {
       finished.push({ ...live, look: 'failed', at: src.simT, right: `failed ${mmss(src.simT)}` });
+      continue;
+    }
+    const guard = guardUnmet(row.tr.when, src.values);
+    if (guard) {
+      lives.push({ ...live, look: 'waiting', subtitle: `${row.subtitle} · not offered yet`, right: `${show(guard.vital.var, src.values?.[guard.vital.var] as number)} → ${show(guard.vital.var, guard.vital.value)}` });
       continue;
     }
     const linked = objectivesOf(doc, row.tr);
