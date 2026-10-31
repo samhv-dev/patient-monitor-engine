@@ -811,6 +811,26 @@ One AskUserQuestion step per item, **≈ 35 min** (tell him); his Mac (Safari, C
 a presenter's rule; 3 → "attach the CO₂ line first"; 9 → the English Debrief is the reference; a wished-for Saadat-like
 change → a later release.
 
+**Kit E (second dry merge, build a0fb41d5), Instructor v2.** The same twelve checks on kit E, with v2's control names.
+Expected values from `scratch/kit-e-dry-2/TALK-MEASUREMENTS.md` and its rounds (Q1 MH, A4 MH, A4 MH under v2); where a
+row says "not measured on kit E", the rc.4 expectation above stands unverified. First, once: Settings → **Instructor
+view** → "Instructor v2" (the kit's default is "Today's view"); the rail's one **"Instructor"** entry then opens v2.
+
+| # | Do (kit E, Instructor v2) | Expected on kit E |
+|---|---|---|
+| 1 | Double-click kit E's `Start Classroom.command`; Allow "node" if asked | **THE CLASSROOM IS RUNNING**; Safari opens `127.0.0.1:8650/?relay#/`; Home still reads "Version 1.0.0-rc.4 · pre-release · build a0fb41d5" (kit E carries no version bump) |
+| 2 | Monitor view → pointer over the monitor → **"Phones"** in the row **under** the monitor (#203; no longer at the top edge) → scan → **Close**; then rail → **"Instructor"** | **1 phone following**; v2's header "Room ‹code› · 1 phone". Pass 3 items as above (not re-measured on kit E) |
+| 3 | v2 dock **"Devices"** → Sensors → **CO₂ sampling line** on; 15 s | as above (not measured on kit E) |
+| 4 | Header **"Sound off"** → **"Sound on"**. **Healthy induction**: Scenarios → **Load** · dock "Devices" → **"All alarms on"** · header speed box → **"×4"**; phone Sound off; 30 s; tap again | as above (not measured on kit E) |
+| 5 | Header speed → "×1"; STATE's **"Fast forward"** row → **"+5 min"** (disabled while paused) | as above (not measured on kit E); banner "Fast-forwarded 5 min" |
+| 6 | Another Safari tab ≈ 10 s, then back | as above (not measured on kit E) |
+| 7 | **Malignant hyperthermia**: Scenarios → **Load** (or v2 with no case: ACTION "Scenario library" → "Load Malignant hyperthermia", keys 2 then 1) · dock "Devices" → "All alarms on" · "×8"; ACTION row 1 (key 1) for **Premedicate**, **Preoxygenate**, **Induce**, **Intubate**, **Start surgery**; "×4"; at the CO₂ rise ACTION row 1 **"MH crisis: …"**; dock **"Debrief"** (bottom right; **not** "Finish the case" beside it) → **Print or save as PDF**, **Print the learner handout**; the same in **Chrome** | Status line **"Case briefing on every screen · 0:59 left"** with **"End briefing"**; the phone and the Monitor view show the briefing for 60 real s, the instructor tab does not. Each pressed row leaves ACTION into "Finished steps · n". SpO₂ ≈ 99 with Preoxygenate; CO2 APNEA ≈ 4:47 (Chromium); Early signs ≈ 8:03–8:12 with EtCO₂ 46, HR 77–78, **T1 36.6**. ACTION in the crisis lists "Cool: …" as **"ready"** at T1 ≈ 36.7 although its subtitle says "only when T1 > 38.5 °C" and a press is refused (a finding, not a gate). Report A4, **8** pages (Chromium A4 round), footer "… Version 1.0.0-rc.4 (pre-release), build a0fb41d5 …"; handout 1 page with the three MH take-home lines |
+| 8 | **Class IV haemorrhage**: Load · "All alarms on" · "×8"; ACTION rows **"Oxygen by face mask, FiO₂ 1.0"**, **"Intubate and ventilate, FiO₂ 1.0"**; watch to junctional and PEA; dock "Debrief" → **Print the learner handout** | as above (not measured on kit E: no haemorrhage round in kit E's rounds) |
+| 9 | Persian PDFs | not built for kit E; the rc.4 PDFs carry rc.4's build. Skip or read the rc.4 ones |
+| 10 | H22 embed | not built for kit E; skip |
+| 11 | E121b: free play (v2 with no case: ACTION "Free roam"), dock **"Airway"** → Oxygen **"Face mask"**; then with the ventilator on | as above (not measured on kit E) |
+| 12 | GitHub Pages in Safari | still the rc.4 build 0c4b396f: kit E is not on Pages (expected) |
+
 **The live rehearsal (≈ 45 min):** his 3 November programme (P29: malignant hyperthermia with three look-inside
 stops, the model-page tabs behind Explore; the haemorrhage card is reserve R5, not rehearsed) on the same kit, phone
 following; the orchestrator
