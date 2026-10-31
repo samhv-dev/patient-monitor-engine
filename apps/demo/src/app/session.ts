@@ -5,10 +5,10 @@
 // HostTarget so the HostSession, the driver and every listener survive the restart.
 import type { Command, EngineEvent, PatientSnapshot } from '@pme/engine-core';
 import {
-  ControllerSession, createBroadcastChannelTransport, createInProcessHub, createWebSocketTransport, HostSession, newSessionCode, normalizeSessionCode,
-  type AppliedResolution, type HostTarget, type ScenarioEvent, type WireEvent,
+  ControllerSession, createBroadcastChannelTransport, createInProcessHub, createWebSocketTransport, epochNow, HostSession, newSessionCode, normalizeSessionCode,
+  type AppliedResolution, type BriefingNotice, type HostTarget, type ScenarioEvent, type WireEvent,
 } from '@pme/controller';
-import { engineOptionsOf, ScenarioDriver, validateScenario, type ScenarioDoc } from '@pme/controller/scenario';
+import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type ScenarioDoc } from '@pme/controller/scenario';
 import type { ManagedTransport } from '@pme/controller';
 import { mountMonitor, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
@@ -100,6 +100,10 @@ export class AppSession {
   private ffCockpit = false; // The cockpit was ventilating when the fast-forward began: it steps with it
   /** Learner controls under the learner monitor: off by default, on per scenario. */
   learner = false;
+  /** The card's Case briefing while it runs on the learners' screens (null: none), with the host's start time. */
+  briefing: BriefingNotice | null = null;
+  private readonly briefingFns = new Set<(b: BriefingNotice | null) => void>();
+  private briefingTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly learnerFns = new Set<(on: boolean) => void>();
   /** The debrief's record of the run — beside the engine, not in its snapshot, so a restore keeps it. */
   readonly record: RunRecord;
@@ -188,7 +192,11 @@ export class AppSession {
     hs = new HostSession({
       session: this.code, target: this.driver.host, scenario: this.driver.hook,
       // With a relay, every answer to a hello also carries the monitor style (a phone wears it)
-      welcomeEvents: () => [...this.driver.welcomeEvents(), ...(this.relay ? [{ type: 'style' as const, skin: this.skin, theme: this.theme, replay: true as const }] : [])],
+      // and a running Case briefing, with its start time: a phone that joins or reloads shows the remainder
+      welcomeEvents: () => [
+        ...this.driver.welcomeEvents(), ...(this.relay ? [{ type: 'style' as const, skin: this.skin, theme: this.theme, replay: true as const }] : []),
+        ...(this.briefing ? [{ type: 'briefing' as const, ...this.briefing, replay: true as const }] : []),
+      ],
       fastForwardWallMs: FF_WALL_MS, // Paced so the room sees the clock run
     });
     this.host = hs;
@@ -241,6 +249,38 @@ export class AppSession {
     this.learnerFns.add(fn);
     fn(this.learner);
     return () => void this.learnerFns.delete(fn);
+  }
+
+  /** The Case briefing as it starts and ends (null), on this page; called at once with the running one. */
+  onBriefing(fn: (b: BriefingNotice | null) => void): () => void {
+    this.briefingFns.add(fn);
+    fn(this.briefing);
+    return () => void this.briefingFns.delete(fn);
+  }
+
+  /** The instructor's "End briefing": the Case briefing ends on every learner screen now. */
+  endBriefing(): void {
+    this.setBriefing(null);
+  }
+
+  /** Start a card's briefing (its defaults applied) or end the running one; every learner screen follows. A briefing
+   *  ends by itself after `durationS` on every screen (each one times it from the start time), so only an early end is
+   *  sent. */
+  private setBriefing(b: Omit<BriefingNotice, 'startedAt'> | null): void {
+    if (this.briefingTimer !== null) clearTimeout(this.briefingTimer);
+    this.briefingTimer = null;
+    const was = this.briefing;
+    if (was) this.host.publish({ type: 'briefing', ...was, ended: true });
+    this.briefing = b ? { startedAt: epochNow(), ...b } : null;
+    if (this.briefing) {
+      this.host.publish({ type: 'briefing', ...this.briefing });
+      this.briefingTimer = setTimeout(() => ((this.briefing = null), (this.briefingTimer = null), this.tellBriefing()), this.briefing.durationS * 1000);
+    }
+    if (was || this.briefing) this.tellBriefing();
+  }
+
+  private tellBriefing(): void {
+    for (const fn of this.briefingFns) fn(this.briefing);
   }
 
   /**
@@ -374,6 +414,7 @@ export class AppSession {
     this.driver.runner = null;
     clearPosition(); // a reload now brings back the new patient, not the case
     this.setLearner(false); // a new patient starts without learner controls
+    this.setBriefing(null); // free roam: no card, no briefing
     this.mount(start.seed ?? 7);
     this.panel.note(`Patient restarted: ${start.mode.toUpperCase()}`);
   }
@@ -416,12 +457,16 @@ export class AppSession {
     // keeps the cuff's cycling as the room had it.
     if (sensors.nibp !== 'off' && room?.nibp !== null) this.startCuff(7, room?.nibp);
     this.lastLoad = this.panel.send({ type: 'scenario', action: 'load', doc: v.doc });
+    // The card's Case briefing on every learner screen (owner's board Orientation 7b) — not again for the load that
+    // brings a case back after the instructor's page reloaded (position.ts): that case is already under way
+    this.setBriefing(this.restoring ? null : briefingOf(v.doc));
     this.live = true;
     return { ok: true, doc: v.doc };
   }
 
   destroy(): void {
     clearInterval(this.pollTimer);
+    if (this.briefingTimer !== null) clearTimeout(this.briefingTimer);
     this.offMon?.();
     this.monitor?.destroy();
     this.panel.close();

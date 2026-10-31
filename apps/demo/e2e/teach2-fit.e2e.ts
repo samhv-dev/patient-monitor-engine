@@ -217,7 +217,13 @@ test('Instructor v2 with no case fits 1440 × 900: the three cards, the strip ch
   await page.waitForFunction(() => (window as unknown as W).__pmeApp.link.ctl.scenario.doc !== null, null, { timeout: 30_000 });
   await expect(page.locator('.ip2-action .ip2-rows:not(.ip2-finished-list) .ip2-row[data-kind="step"]').first()).toBeVisible({ timeout: 10_000 });
   await expect(page.locator('.ip2-begin')).toHaveCount(0);
-  await expect(page.locator('.ip2-strip [role="status"]')).toBeHidden();
+  // the MH card has a Case briefing (#211), which holds the status line for its first minute; once it ends, a loaded
+  // case has no status line
+  const status = page.locator('.ip2-strip [role="status"]');
+  await expect(page.locator('.ip2-strip[data-briefing]')).toHaveCount(1);
+  await status.getByRole('button', { name: 'End briefing' }).click();
+  await expect(page.locator('.ip2-strip[data-briefing]')).toHaveCount(0);
+  await expect(status).toBeHidden();
   await expect(page.locator('.ip2-ff')).toBeVisible();
 });
 
