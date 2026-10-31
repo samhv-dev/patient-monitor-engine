@@ -2,7 +2,8 @@
 // page — a digit presses its ACTION row (what today's state button sends), the letters open and close their sheets, Esc
 // closes a sheet first, Space pauses and resumes through the clock pill, and Fast forward is disabled while paused; the
 // alarm count and the `i` key go to the Instructor view chosen in Settings (owner, 30 October); and once, end to end, a
-// past stage of the strip returns to its start (press, confirm, the driver's stage mark restored, the stage back).
+// past stage of the strip returns to its start (press, the inline box's Return, the driver's stage mark restored, the
+// stage back; no dialog).
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { go, openApp, startVite } from './app-support.ts';
@@ -99,7 +100,7 @@ test('the alarm count and the `i` key go to the Instructor view chosen in Settin
   await expect(page).toHaveURL(/#\/teach2$/);
 });
 
-test('a past stage returns to its start (the owner\'s ruling on answer 3): press, confirm, the stage mark restored, the stage back', async ({ page }) => {
+test('a past stage returns to its start (the owner\'s ruling on answer 3, his report of 30 October): press, the box\'s Return, the stage mark restored, the stage back, no dialog', async ({ page }) => {
   test.setTimeout(90_000);
   await openMh(page, 'triggerOff');
   // the driver marks the stage once its onEnter is applied
@@ -112,10 +113,8 @@ test('a past stage returns to its start (the owner\'s ruling on answer 3): press
   await past.click();
   const back = page.getByRole('button', { name: 'Return to the start of Trigger off' });
   await expect(back).toBeEnabled();
-  await back.click();
-  const dialog = page.getByRole('dialog', { name: 'Return to the start of Trigger off?' });
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', { name: 'Return', exact: true }).click();
+  await back.click(); // the box is the confirmation (the owner's report of 30 October): no dialog
   await expect.poll(() => stateOf(page), { timeout: 15_000 }).toBe('triggerOff');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.locator('.ip2-strip .ip2-current')).toContainText('Trigger off');
 });
