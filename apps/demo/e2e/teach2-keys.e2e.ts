@@ -1,8 +1,9 @@
 // Instructor v2 (E127; plan IP9 step 4; answers 9, 16, 19; the owner's ruling on answer 3): the keyboard on the real
 // page — a digit presses its ACTION row (what today's state button sends), the letters open and close their sheets, Esc
 // closes a sheet first, Space pauses and resumes through the clock pill, and Fast forward is disabled while paused; the
-// alarm count goes to the Instructor view used last; and once, end to end, a past stage of the strip returns to its
-// start (press, confirm, the driver's stage mark restored, the stage back).
+// alarm count and the `i` key go to the Instructor view chosen in Settings (owner, 30 October); and once, end to end, a
+// past stage of the strip returns to its start (press, the inline box's Return, the driver's stage mark restored, the
+// stage back; no dialog).
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { go, openApp, startVite } from './app-support.ts';
@@ -72,7 +73,7 @@ test('keys: 1–9 press the rows, letters open and close sheets, Esc closes firs
   await expect(ff).toBeEnabled();
 });
 
-test('the alarm count goes to the Instructor view used last (answer 19): v2 opens its Devices sheet, today\'s its Devices tab', async ({ page }) => {
+test('the alarm count and the `i` key go to the Instructor view chosen in Settings (owner, 30 October): today\'s its Devices tab, v2 its Devices sheet', async ({ page }) => {
   test.setTimeout(60_000);
   await openMh(page, 'awake');
   // option G: no top bar on #/teach2; its alarm line under the monitor opens the same list (the Devices sheet)
@@ -80,18 +81,26 @@ test('the alarm count goes to the Instructor view used last (answer 19): v2 open
   await page.locator('.ip2-alarmline').click();
   await expect(sheet(page, 'Devices')).toBeVisible();
   await page.keyboard.press('Escape');
-  await go(page, '#/settings'); // a page with the top bar's alarm count, away from both Instructor views
-  await page.locator('.alarm-count').click();
-  await expect(page).toHaveURL(/#\/teach2$/);
-  await expect(sheet(page, 'Devices')).toBeVisible();
-  await go(page, '#/teach');
+  // nothing chosen: today's view (the deep link to #/teach2 above did not change the choice)
   await go(page, '#/settings'); // a page with the top bar's alarm count, away from both Instructor views
   await page.locator('.alarm-count').click();
   await expect(page).toHaveURL(/#\/teach$/);
   await expect(page.locator('[role=tab][data-tab=devices]')).toHaveAttribute('aria-selected', 'true');
+  // Settings: Instructor v2; the rail's one Instructor entry follows at once
+  await go(page, '#/settings');
+  await page.getByRole('group', { name: 'Instructor view' }).getByRole('button', { name: 'Instructor v2' }).click();
+  await expect(page.locator('nav.rail a[title="Instructor"]')).toHaveAttribute('href', '#/teach2');
+  await page.locator('.alarm-count').click();
+  await expect(page).toHaveURL(/#\/teach2$/);
+  await expect(sheet(page, 'Devices')).toBeVisible();
+  await page.keyboard.press('Escape');
+  // the learners' monitor and back: `i` opens the chosen view
+  await go(page, '#/monitor');
+  await page.keyboard.press('i');
+  await expect(page).toHaveURL(/#\/teach2$/);
 });
 
-test('a past stage returns to its start (the owner\'s ruling on answer 3): press, confirm, the stage mark restored, the stage back', async ({ page }) => {
+test('a past stage returns to its start (the owner\'s ruling on answer 3, his report of 30 October): press, the box\'s Return, the stage mark restored, the stage back, no dialog', async ({ page }) => {
   test.setTimeout(90_000);
   await openMh(page, 'triggerOff');
   // the driver marks the stage once its onEnter is applied
@@ -104,10 +113,8 @@ test('a past stage returns to its start (the owner\'s ruling on answer 3): press
   await past.click();
   const back = page.getByRole('button', { name: 'Return to the start of Trigger off' });
   await expect(back).toBeEnabled();
-  await back.click();
-  const dialog = page.getByRole('dialog', { name: 'Return to the start of Trigger off?' });
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', { name: 'Return', exact: true }).click();
+  await back.click(); // the box is the confirmation (the owner's report of 30 October): no dialog
   await expect.poll(() => stateOf(page), { timeout: 15_000 }).toBe('triggerOff');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.locator('.ip2-strip .ip2-current')).toContainText('Trigger off');
 });

@@ -85,7 +85,7 @@ describe('two-compartment heat model', () => {
   // E131: the MH heat is now the achieved MH VO2 × the caloric equivalent of O2 (≈ 140 W at 70 kg), not 8 × m0 (640 W),
   // so the core cannot rise 1 °C in 15 min — energetically that needs ≈ 270 W net into a 70 kg body. A known miss of
   // the tables' §7 check 21 band, kept, not tuned.
-  it.fails('MH: once established the core rises ≥ 1 °C per 15 min (tables §7 check 21) — measured +0.35 °C in minutes 30 → 45 (E131: heat from the O2 consumed)', () => {
+  it.fails('MH: once established the core rises ≥ 1 °C per 15 min (tables §7 check 21) — measured +0.71 °C in minutes 30 → 45 (E131: heat from the O2 consumed; the skin constricted by the MH surge)', () => {
     const st = createTemp(36.8, 70);
     st.anaesthesia = 'general';
     st.mh = { severity: 1, t0: 600 };

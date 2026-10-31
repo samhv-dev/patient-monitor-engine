@@ -58,6 +58,15 @@ the public API is what the packages export (see the API reference), the `pme-sce
   phone, the hairline over the footer filling while held; the footer reads "Press and hold anywhere to continue now"
   (Persian: «برای ادامه، هر جای صفحه را لمس کنید و نگه دارید»). The host's screen keeps its tap or click.
 
+### Changed
+
+- **One Instructor entry; the view is chosen in Settings** (the clinical owner, 30 October). The rail lists
+  "Instructor" once (no "Instructor v2" entry); Settings → Display → "Instructor view" chooses today's view (`#/teach`,
+  the default, the 3 November demo's) or Instructor v2 (`#/teach2`), saved in the site profile (`instructor`) like the
+  monitor and kept after a reload. The rail's entry, a Load from the Scenarios library, a `?scenario=` deep link, the
+  Patient page's "Open the instructor view" and "Back to the Instructor", the monitor's "Instructor view", the `i` key
+  and the reveal gestures, and the alarm count all open the chosen view (the alarm count and the reveal gesture
+  followed the view used last). Both addresses stay as deep links. Neither view changed in what it does or sends.
 - **Instructor v2 with no case loaded** (the owner's board "Empty 5", 30 October): the header reads the default
   patient ("Adult · 70 kg") and "No case loaded"; the stage strip holds one dashed chip with a status line under it
   ("Ready. The phones can join now…"); STATE's cue box is the default patient's; ACTION offers three ways to begin,
@@ -69,6 +78,50 @@ the public API is what the packages export (see the API reference), the `pme-sce
   the learners' monitor takes its height; Free roam or a card brings it back. With a card loaded none of it shows.
 
 ### Fixed
+- Malignant hyperthermia now warms the core: the MH sympathetic surge constricts the skin. Untreated on the MH card the
+  core showed 36.5 °C at 15 min and 36.9 °C at 35 min (the owner's run of 30 October): the 140 W of MH heat was real,
+  but under anaesthesia the core-to-skin conductance stayed fully dilated and the periphery took up about as much heat
+  as the crisis made. In an MH crisis the circulating catecholamines reach about 20 times normal and constrict the
+  skin directly, whatever the anaesthetic has done to the hypothalamic threshold (Sessler, Anesthesiology 2008; Gronert
+  et al., Anesthesiology 1978); the skin is mottled (European MH Group, 2024). The conductance now falls with the MH
+  sympathetic drive from its anaesthetised value (48.9 W/°C at 70 kg) toward the two-node model's maximally
+  constricted value (10.8 W/°C; Gagge et al. 1986), and dantrolene's suppression of the surge re-dilates it. On the
+  same path the core is now 37.1 °C at 15 min and 38.0 °C at 35 min; "established" (38.5 °C) comes about 46 min after
+  the succinylcholine instead of about 103. Without MH nothing changes (the anaesthetised redistribution, the awake
+  patient, the haemorrhage and anaphylaxis cards print the same numbers). Four MH test bands were re-centred for the
+  owner's ruling, two expected failures are now met (resp-coupling's > 1 °C in 30 min, heat.test's dantrolene arm) and
+  one new one is recorded (the hour after a VF imposed at 40.3 °C cools 2.3 °C against 0.5–1.5); the MH card's story
+  text, the run sheet's temperature talk points and the cue cards still describe the old course.
+
+- **MH card: Cool is offered only above 38.5 °C, the saline is refrigerated and the team stops it at 38 °C; the Log
+  names the step pressed** (the owner's 120-minute over-treated run on the preview: core 34.4 °C after the Cool button
+  had been pressed at any temperature). The card's four Cool steps are a press guarded by `tempCore > 38.5` (an `all`
+  of a vital and the manual); the scenario runner now refuses a press whose guarding vital does not hold ("not offered
+  now: needs tempCore > 38.5") instead of keeping it to fire later (events in an `all` still latch as before). The
+  `fluid` event takes the fluid's own temperature `tempC` (0–42 °C; absent: the theatre's 21 °C, as before) and
+  `stopAtCoreC` (30–42 °C), at which the blood model ends the infusion: the card gives 20 mL/kg at 4 °C (EMHG 2024
+  "chilled (4-8 °C) crystalloids"; Rosenberg 2015 "normal saline at 4 °C") stopped once the core has fallen to 38 °C
+  (MHAUS "Stop cooling when the temperature has decreased to <38°C"). From an established crisis on this build the 4 °C
+  line removes 104 kJ in 727 mL and stops at 38.0 °C (the 21 °C line: 115 kJ over the whole 1.6 L, to 37.88 °C). The
+  clinical Log's line for a step pressed reads "Scenario event: <the step's label>" (it said "Scenario event" only).
+  The demo path never presses Cool: no band or printed number of the MH slow test moved.
+- Instructor v2's stage strip asks once, not twice: the inline box a stage opens is the confirmation. A past stage's
+  "Return to the start of <stage>" restores its mark at once, and a future stage now opens the same kind of box,
+  "Jump to <stage>", whose click sends today's `goto` with today's toast; neither opens a dialog any more (the clinical
+  owner's report of 30 October). The hint reads "past: return to its start · future: jump to it".
+- After a reload of the instructor's page, Instructor v2's past stages can be returned to again. The restored case
+  came back without its stage marks (the new page's driver had none of the course's, so every past stage's Return was
+  off) and with the panel's scenario history beginning at the reload (so the past stages showed no entry time). The
+  page now keeps the latest stage mark of each stage, with the snapshot it holds, beside the reload position in
+  `sessionStorage` (written only when the marks change; a storage too full for both keeps the position and drops the
+  marks), places them again after the return, and gives the panel the restored runner's history (the clinical owner's
+  report of 30 October). `@pme/controller`: `ScenarioDriver.stageMarkPositions()` and `holdStageMarks()`, and the type
+  `StageMarkPosition`.
+- Instructor v2's "Finished steps · n" says which stage each step belonged to: its rows are grouped under a small
+  title per stage visit, the stage's name (as on the strip; the full label on hover) and the time it was entered, in
+  the order the stages were entered, each row keeping its number within its stage. Several stages on, the fold read as
+  a run of steps all numbered 1 (the clinical owner's report of 30 October). A stage entered twice gets two titles.
+  The count and the record are unchanged.
 - Phones joining the classroom relay together all get the host's welcome. A phone that said hello between the host's
   welcome to another phone (its sticky replays, the monitor style, a running Case briefing) and the snapshot after it
   used to receive that snapshot and show as following, without the welcome: no briefing, the wrong monitor style. The
@@ -99,6 +152,10 @@ the public API is what the packages export (see the API reference), the `pme-sce
   target row, and a drug it refuses as an infusion (dantrolene, a curve row without an infusion reference) has no
   infusion rate row; they printed "—" with the glossary's placeholder unit. The glossary's tooltip for the rate and
   target rows names the units in place of "per row".
+- The Monitor view's return controls (Instructor view, Full screen, Open on a second screen, Home) no longer cover the
+  ECG: shown on hover, they sit in a strip of their own under the monitor, at the window's foot. Placed under the
+  monitor's header at the right of the wave area (UI review #25, 26 October), they covered the right half of the first
+  ECG lane on the Saadat-like skin, whose traces run the wave column's full width.
 
 ## [1.0.0-rc.4] - 2026-10-30
 

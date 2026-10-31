@@ -4,16 +4,20 @@
 // A step's press is IP3's `pressStep` (exactly what today's state button sends), a judged objective's is `judge` (what
 // ticking today's checkbox writes); digits 1–9 press the numbered rows. No row is ever disabled: a look never stops a
 // press. Under the list, two folds: "Off the card" (the off-card actions of this stage, from the log) and "Finished
-// steps · n" (closed by default), then the foot line. Rows are kept by key across the ≤ 2 Hz repaint, so a press or the
+// steps · n" (closed by default; its rows grouped under a small title per stage visit, the stage's name and the time it
+// was entered, in the order entered, each row keeping its number within its stage: the owner's report of 30 October),
+// then the foot line. Rows are kept by key across the ≤ 2 Hz repaint, so a press or the
 // keyboard focus is never lost to a redraw.
 import './action.css';
 import type { Link } from '../link.ts';
+import { stagesOf } from '../card-read.ts';
 import { clock, h, setText } from '../ui.ts';
 import { FOOT_NONE, mountBeginPane, type Way } from './begin.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { judge, pressStep } from './press.ts';
 import { classify, NOT_AN_ACTION, type HoldLike, type LiveRow } from './rows.ts';
 import { historyOf } from './course.ts';
+import { stageNames } from './strip.ts';
 
 export const FOOT = 'No penalty comes from the panel. Consequences come from the physiology, and the debrief records overdue, out of order, failed and not done, each with the time and the order it was due.';
 
@@ -28,6 +32,13 @@ interface Pill {
   right: HTMLElement;
   fill: HTMLElement | null;
   live: LiveRow;
+}
+
+/** One stage visit's group in Finished: its title and its rows. */
+interface Group {
+  li: HTMLElement;
+  rows: HTMLElement;
+  pills: Map<string, Pill>;
 }
 
 /** The host's hold progress (`ScenarioDriver.vitalHolds()`, answer 8): every `vital` rule of the current state with
@@ -90,9 +101,12 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   el.replaceChildren(wrap);
 
   const pills = new Map<string, Pill>();
-  const finPills = new Map<string, Pill>();
+  const groups = new Map<string, Group>();
   const base = new Map<string, number>();
   let docV = -1;
+  /** The stages' short names (the strip's chips) and full labels, for Finished's titles. */
+  let names = new Map<string, string>();
+  let labels = new Map<string, string>();
 
   /** Keep each row's element across repaints; put them in order without moving a node that is already in place. */
   const sync = (into: HTMLElement, cache: Map<string, Pill>, rows: readonly LiveRow[], inFinished: boolean, keyFn: (r: LiveRow) => string) => {
@@ -109,6 +123,31 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     for (const k of [...cache.keys()]) if (!seen.has(k)) cache.delete(k);
     const items = [...into.children].map((li) => li.firstElementChild);
     if (items.length !== want.length || items.some((x, i) => x !== want[i])) into.replaceChildren(...want.map((p) => h('li', {}, p)));
+  };
+
+  /** Finished, grouped (the owner's report of 30 October): one group per stage visit, titled with the stage's name and
+   *  its entry time, in the order the visits began; within a group the rows keep classify's time order. */
+  const syncFinished = (rows: readonly LiveRow[]) => {
+    const by = new Map<string, LiveRow[]>();
+    for (const r of [...rows].sort((a, b) => a.entered - b.entered)) {
+      const k = `${r.stage}@${r.entered}`;
+      by.set(k, [...(by.get(k) ?? []), r]);
+    }
+    const want: HTMLElement[] = [];
+    for (const [k, rs] of by) {
+      let g = groups.get(k);
+      if (!g) {
+        const r0 = rs[0] as LiveRow;
+        const name = names.get(r0.stage) ?? r0.stage;
+        const list = h('ol', { class: 'ip2-fin-rows', 'aria-label': `Finished in ${name}` });
+        g = { li: h('li', { class: 'ip2-fin-group' }, h('div', { class: 'ip2-fin-head', title: labels.get(r0.stage) ?? name }, `${name} · ${clock(r0.entered)}`), list), rows: list, pills: new Map() };
+        groups.set(k, g);
+      }
+      sync(g.rows, g.pills, rs, true, (r) => `${keyOf(r)}|${r.look}|${r.at}`);
+      want.push(g.li);
+    }
+    for (const k of [...groups.keys()]) if (!by.has(k)) groups.delete(k);
+    if (finList.children.length !== want.length || want.some((li, i) => finList.children[i] !== li)) finList.replaceChildren(...want);
   };
 
   const setDigits = (rows: readonly LiveRow[]) => {
@@ -140,6 +179,10 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     if (docV !== sv.docVersion) {
       docV = sv.docVersion;
       base.clear();
+      groups.clear();
+      const stages = doc ? stagesOf(doc) : [];
+      names = stageNames(stages);
+      labels = new Map(stages.map((g) => [g.id, g.label]));
     }
     const was = way;
     way = doc ? 'menu' : (ctx.begin?.way ?? 'menu');
@@ -154,7 +197,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     setText(foot, doc ? FOOT : FOOT_NONE);
     if (!doc || !stateId) {
       sync(list, pills, [], false, keyOf);
-      sync(finList, finPills, [], true, keyOf);
+      syncFinished([]);
       setDigits([]);
       if (doc) return;
       begin.draw();
@@ -170,7 +213,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       values: link.ctl.state?.values as Partial<Record<string, number>> | undefined, holds: holdsOf(link), base,
     });
     sync(list, pills, board.list, false, keyOf);
-    sync(finList, finPills, board.finished, true, (r) => `${keyOf(r)}|${r.look}|${r.at}`);
+    syncFinished(board.finished);
     setDigits(board.list);
     setText(finSummary, `Finished steps · ${board.finished.length}`);
     drawOffs(board.offCard, 'Nothing off the card in this stage. Anything a sheet gives that is not a card step is logged here; the card does not move.');

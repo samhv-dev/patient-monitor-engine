@@ -14,7 +14,7 @@ import { RAIL_VERSION } from './about.ts';
 import { simLine } from './sim-line.ts';
 import { Rail } from './rail.ts';
 import { noteRecent } from './recent.ts';
-import { hrefOf, parseRoute } from './router.ts';
+import { hrefOf, parseRoute, revealTarget } from './router.ts';
 import { SCENARIO_META } from './scenario-meta.ts';
 import { LIBRARY, scenarioById, type ScenarioCard } from './scenarios.ts';
 import { AppSession } from './session.ts';
@@ -123,12 +123,12 @@ if (follow) {
     else await session.enableSound();
     drawSound();
   };
-  // E127 (answer 19): the alarm count and the reveal gesture go to the Instructor view used last, today's or v2
-  let instructor: 'teach' | 'teach2' = 'teach';
-  shell.onRoute((r) => void ((r.id === 'teach' || r.id === 'teach2') && (instructor = r.id)));
+  // The alarm count, the reveal gestures, a Load and every other way to the instructor open the Instructor view chosen in
+  // Settings, today's or v2 (owner, 30 October; it replaced answer 19's "the view used last")
+  const instructor = () => site.instructor;
   const openAlarms = (): void => {
-    location.hash = hrefOf(instructor);
-    if (instructor === 'teach') teach.panel.select('devices');
+    location.hash = hrefOf(instructor());
+    if (instructor() === 'teach') teach.panel.select('devices');
     else teach2.openSheet('devices');
   };
   // E125: the pages before a session — Home, Room (the QR code, who follows), Scenarios, Patient — and the rail
@@ -138,9 +138,9 @@ if (follow) {
     followers: () => session.followers, onFollowers: (f) => session.onFollowers(f),
   });
   shell.add(room);
-  shell.add(scenariosView({ session, loadScenario }));
+  shell.add(scenariosView({ session, loadScenario, instructor }));
   shell.add(patientView({ session, site }));
-  shell.add(monitorView(shell.stage, { session, link, learnerUrl: followUrl(session.code), phones: !!relay }));
+  shell.add(monitorView({ session, link, learnerUrl: followUrl(session.code), phones: !!relay, instructor }));
   const teach = teachView(link, { site, main: shell.main, stage: shell.stage, weightKg, loadScenario });
   shell.add(teach);
   // option G: the app's top bar is not shown on #/teach2; its header carries the top bar's Sound switch and Room code
@@ -151,7 +151,7 @@ if (follow) {
   shell.add(ventView(session));
   shell.add(validateView());
   shell.add(devView());
-  shell.add(settingsView(site, session));
+  shell.add(settingsView(site, session, { onInstructor: () => rail.refresh() }));
   shell.add(debriefView(session, link));
   mountSessionBar(shell.bar, link);
   // The rail's switch is the site profile's Screen theme (Settings' "Screen"): dark ↔ projector-light, saved as Settings
@@ -168,6 +168,7 @@ if (follow) {
       patient: () => (link.ctl.scenario.doc ? 'case running' : 'free run'),
     },
     theme: { light: () => site.theme === 'projector-light', set: setTheme },
+    instructor,
   });
   shell.setRail(rail);
   session.onFollowers(() => rail.refresh());
@@ -217,9 +218,8 @@ if (follow) {
 
   // Learner monitor ↔ instructor view: the hidden panel's reveal gestures
   attachReveal(window, new RevealGesture(() => {
-    const r = shell.route.id;
-    if (r === 'monitor') location.hash = hrefOf(instructor);
-    else if (r === 'teach' || r === 'teach2') location.hash = hrefOf('monitor');
+    const to = revealTarget(shell.route.id, instructor());
+    if (to) location.hash = hrefOf(to);
   }));
   shell.onRoute((r) => {
     if (r.id === 'teach' || r.id === 'teach2' || r.id === 'monitor') session.live = true;
@@ -246,7 +246,7 @@ if (follow) {
     });
   } else if (card && loadScenario(card)) {
     session.live = true;
-    if (!location.hash) location.hash = hrefOf('teach');
+    if (!location.hash) location.hash = hrefOf(instructor()); // a deep link to a card opens the chosen Instructor view
   }
   keepPositions(session);
   shell.start();

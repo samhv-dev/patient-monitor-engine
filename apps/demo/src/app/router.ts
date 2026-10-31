@@ -25,6 +25,11 @@ export function parseRoute(hash: string): Route {
   return { id, sub: id === head ? rest.join('/') : '' };
 }
 
+/** The `i` key and the reveal gestures: the monitor opens the chosen Instructor view, either Instructor view goes back
+ *  to the monitor; any other page, nothing. */
+export const revealTarget = (from: RouteId, instructor: RouteId): RouteId | null =>
+  from === 'monitor' ? instructor : from === 'teach' || from === 'teach2' ? 'monitor' : null;
+
 export const hrefOf = (id: RouteId, sub = ''): string => `#/${id === 'home' ? '' : id}${sub ? `/${sub}` : ''}`;
 
 /** Calls `fn` now and on every hash change; returns the unsubscribe. */
