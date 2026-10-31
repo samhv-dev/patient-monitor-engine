@@ -455,12 +455,12 @@ function runnerFor(doc: AnyScenarioDoc, seed?: number): AnyRunner {
 
 /**
  * The engine truths a `pme-scenario/2` runner reads beyond the state's values (plan F4, Q21): the state event's
- * `signals`, the labs pH, lactate and K⁺, the endocrine MH activity, as rank 3. Never given to a /1 runner: its take()
+ * `signals` (the MH activity among them, unrounded: the `endo` event's is rounded to 0.01 and is not fed), the labs pH,
+ * lactate and K⁺, as rank 3. Never given to a /1 runner: its take()
  * would throw on a `signals` input, and a rank-3 `k` or `map` would shadow a /1 card's vital vars.
  */
 function truthInputs(w: WireEvent): RunnerInputV2[] {
   if (w.type === 'state') return 'signals' in w && w.signals ? [{ kind: 'signals', signals: w.signals }] : []; // not a host-synthesised state
   if (w.type === 'labs') return [{ kind: 'values', rank: 3, values: { ph: w.values.ph, lactate: w.values.lactate, k: w.values.k } }];
-  if (w.type === 'endo') return [{ kind: 'values', rank: 3, values: { mhActivity: w.mhActivity } }];
   return [];
 }

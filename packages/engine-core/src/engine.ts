@@ -67,6 +67,7 @@ import {
 import { advanceEndo, applyEndoCommand, createEndoState, validateEndoCommand, type EndoState } from './l2/endo/pipeline.ts';
 import { ecgDeltas, writeBlood, writeCirc, writeCond, writeLung } from './l2/endo/adapters.ts';
 import { upgradeThermal } from './l2/thermal/heat.ts';
+import { mhActivity } from './l2/thermal/mh.ts';
 import { gasPatient } from './l2/gas/params.ts';
 import { SINUS_FAMILY } from './l2/circ/rate-rule.ts'; // The rate rule: only the sinus node takes the endocrine HR factor
 import { advancePk, applyPkCommand, createPkState, NEUTRAL_PK_CTX, pkPatientOf, validatePkCommand, type PkCtx, type PkState } from './l2/pk/pipeline.ts';
@@ -162,6 +163,7 @@ function stateSignals(ps: PipelineState, t: number): StateSignals {
     dantroleneE: ps.pk.bus.metabolic.dantroleneE,
     setMinuteVentilationLMin: d.source === 'ventilator' ? (d.vent.rr * d.vent.vt) / 1000 : null,
     map: flat ? h.circ.mapNow : h.lastSite.map,
+    mhActivity: mhActivity(ps.resp.temp.mh, t),
   };
 }
 

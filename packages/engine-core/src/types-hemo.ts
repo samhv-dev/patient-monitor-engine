@@ -54,6 +54,9 @@ export interface StateSignals {
   /** The beat MAP (mmHg): the site beat statistic of the last beat (`hemo.lastSite.map`, the beat behind `abpMean`),
    *  or the circuit's `mapNow` while no beat ejects — the same beat and the same flat rule as the state's sbp/dbp. */
   map: number;
+  /** MH activity 0–1 (`l2/thermal/mh.ts` `mhActivity` on the committed thermal state), unrounded: the `endo` event
+   *  rounds it to 0.01, and a /2 slope over a minute of a quantised value flips sign second to second (F2's trace). */
+  mhActivity: number;
 }
 
 /** Haemodynamic event variants (brief §7.3). */

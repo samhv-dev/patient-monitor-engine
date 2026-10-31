@@ -61,8 +61,9 @@ it.skipIf(!TRACE)('the F0 A4 MH trace through the §4.1 phases: the phase sequen
     const values = Object.fromEntries(Object.entries(s).filter(([, x]) => typeof x === 'number')) as Record<string, number>;
     const inputs: RunnerInputV2[] = [
       { kind: 'values', rank: 3, values },
-      { kind: 'values', rank: 3, values: { ...num(row.labs, ['ph', 'lactate', 'k']), ...num(row.endo, ['mhActivity']) } },
-      { kind: 'signals', signals: { pulse: !row.arrest, dantroleneE: row.dantroleneE ?? 0, setMinuteVentilationLMin: typeof s.rr === 'number' && typeof s.vt === 'number' ? (s.rr * s.vt) / 1000 : null, map: Number.NaN } },
+      { kind: 'values', rank: 3, values: num(row.labs, ['ph', 'lactate', 'k']) },
+      // the trace holds the endo event's MH activity (rounded to 0.01); the engine's signal is unrounded
+      { kind: 'signals', signals: { pulse: !row.arrest, dantroleneE: row.dantroleneE ?? 0, setMinuteVentilationLMin: typeof s.rr === 'number' && typeof s.vt === 'number' ? (s.rr * s.vt) / 1000 : null, map: Number.NaN, mhActivity: num(row.endo, ['mhActivity']).mhActivity ?? Number.NaN } },
     ];
     if (typeof s.rhythm === 'string') inputs.push({ kind: 'rhythm', id: s.rhythm });
     r.advance(row.t, inputs);

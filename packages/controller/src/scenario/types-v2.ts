@@ -162,7 +162,7 @@ export interface Administration {
 }
 
 /** F4's engine signals (the `state` event's additive `signals` field), rank 3. The /1 runner never receives them. */
-export type SignalsInput = { kind: 'signals'; signals: { pulse: boolean; dantroleneE: number; setMinuteVentilationLMin: number | null; map: number } };
+export type SignalsInput = { kind: 'signals'; signals: { pulse: boolean; dantroleneE: number; setMinuteVentilationLMin: number | null; map: number; mhActivity: number } };
 /** The rhythm id the engine draws (the `state` event's `rhythm.id`), rank 3: what a `rhythm:<id>` signal leaf reads
  *  (F2). The /1 runner never receives it. */
 export type RhythmInput = { kind: 'rhythm'; id: string };
