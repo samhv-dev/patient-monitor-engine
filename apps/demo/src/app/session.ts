@@ -8,8 +8,8 @@ import {
   ControllerSession, createBroadcastChannelTransport, createInProcessHub, createWebSocketTransport, HostSession, newSessionCode, normalizeSessionCode,
   type AppliedResolution, type HostTarget, type ScenarioEvent, type WireEvent,
 } from '@pme/controller';
-import { engineOptionsOf, ScenarioDriver, validateScenario, type ScenarioDoc } from '@pme/controller/scenario';
-import { isV2, type ManagedTransport } from '@pme/controller';
+import { engineOptionsOf, ScenarioDriver, validateScenario, type AnyScenarioDoc } from '@pme/controller/scenario';
+import type { ManagedTransport } from '@pme/controller';
 import { mountMonitor, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
@@ -369,12 +369,11 @@ export class AppSession {
 
   /** Load a scenario: its patient body restarts the engine, then the runner starts (never silently over a live run —
    *  the caller confirms first). */
-  loadScenario(raw: unknown): { ok: true; doc: ScenarioDoc } | { ok: false; reason: string } {
+  loadScenario(raw: unknown): { ok: true; doc: AnyScenarioDoc } | { ok: false; reason: string } {
     // The host refuses the scenario command during a fast-forward — the new body would run without its scenario
     if (this.fastForwarding) return { ok: false, reason: 'the simulation is fast-forwarding; try again when it ends' };
     const v = validateScenario(raw);
     if (!v.ok) return { ok: false, reason: v.errors.join('; ') };
-    if (isV2(v.doc)) return { ok: false, reason: 'pme-scenario/2 cards run from F2 on' }; // the driver's own refusal, before the patient restarts
     const eo = engineOptionsOf(v.doc, 7);
     const p = v.doc.patient ?? {};
     this.spec = { ageY: p.ageY ?? 40, sex: p.sex ?? 'M', weightKg: p.weightKg ?? 70, heightCm: p.heightCm ?? 175, comorbid: [], attached: true };

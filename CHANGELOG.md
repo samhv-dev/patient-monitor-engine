@@ -9,6 +9,15 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Added
 
+- **Instructor v2 reads a `pme-scenario/2` card (F6, post-demo, draft).** The strip lists the phases with their entry
+  times; a future phase reads "auto" and is not a button (a phase is never entered by a press). The cue box names the
+  phase, "entered by its own rule" with the rule in words and its hold, the learners' cue and the Say line. ACTION lists
+  the phase's actions (prescription words as the subtitle), the judged rows and the rules out of the phase with their
+  60-s hold as the bar; an A press sends the action's `give` as one staged batch stamped with its `actionId` and moves
+  nothing; a taken action stays pressable ("given ×n"). The app loads a `/2` card from the library; the Debrief-ready
+  flag reads the phase runner's end; today's Scenario tab says to run it from Instructor v2. The MH `/2` card's demo
+  path is driven from v2 end to end (e2e `teach2-mh-v2`). Grades on the rows come with F3.
+
 - **The malignant-hyperthermia card in `pme-scenario/2` (F8, post-demo, draft): `showcase-mh-v2`, the owner's phase
   table of 31 October.** Nine phases (Baseline, Latent, Early signs, Established, Treated, Recovering, Recrudescence,
   Arrest, ROSC), each entered by its own rule on engine truth and held 60 s before it changes, with the learners' cue

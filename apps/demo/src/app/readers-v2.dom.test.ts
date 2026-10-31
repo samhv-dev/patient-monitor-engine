@@ -47,10 +47,11 @@ const run = (): RunData => {
 };
 
 describe('card-read.ts and a pme-scenario/2 card', () => {
-  it('no stages, no rows, no linked objectives, nothing reachable, no standing, the history as it is', () => {
-    expect(stagesOf(V2)).toEqual([]);
-    expect(stageOf(V2, 'early')).toBeNull();
-    expect(rowsOf(V2, 'early')).toEqual([]);
+  it('F6: the stages are the phases and the rows the open actions, the judged row and the rules out; no linked objectives, nothing reachable, no standing, the history as it is', () => {
+    expect(stagesOf(V2).map((g) => [g.id, g.byRule])).toEqual([['baseline', false], ['early', true]]);
+    expect(stageOf(V2, 'early')?.label).toBe('Early signs');
+    expect(rowsOf(V2, 'early').map((r) => [r.kind, r.title])).toEqual([['step', 'Call for help'], ['judged', 'Names MH from the monitor']]);
+    expect(rowsOf(V2, 'baseline').map((r) => [r.kind, r.title])).toEqual([['judged', 'Names MH from the monitor'], ['auto', 'Early signs']]);
     expect(objectivesOf(V2, TR)).toEqual([]);
     expect(reachable(V2, 'baseline', 'early')).toBe(false);
     expect(standingOf(V2, TR, { dueT: 0, leftT: null, now: 60 }, EV)).toEqual({ asked: false, dueS: null });
@@ -92,8 +93,9 @@ describe('the library, the trigger words and Instructor v2\'s course and strip, 
   it('teach2 course.ts historyOf: the history as it is; strip.ts: no stage entries, no strip items', () => {
     const link = { ctl: { scenario: { doc: V2, history: HISTORY } }, host: { record: { data: run() } } } as unknown as Link;
     expect(historyOf(link)).toBe(HISTORY);
-    expect(stageEntries(V2, HISTORY, { stateId: 'early', enteredT: 30 }, 60)).toEqual([]);
-    expect(stripModel(V2, 'early', [], 0)).toEqual([]);
+    // F6: the phases are the stages
+    expect(stageEntries(V2, HISTORY, { stateId: 'early', enteredT: 30 }, 60).map((e) => [e.stage, e.t])).toEqual([['baseline', 0], ['early', 30]]);
+    expect(stripModel(V2, 'early', [], 0).map((x) => x.kind)).toEqual(['past', 'current']);
   });
 });
 
@@ -128,7 +130,7 @@ describe('the instructor views and a pme-scenario/2 card', () => {
     expect(el.textContent).toContain('This card is pme-scenario/2: run it from Instructor v2.');
     expect(el.querySelectorAll('ul.next li').length).toBe(0);
   });
-  it('Instructor v2: the strip has no chips, the cue box no stage, ACTION no rows', () => {
+  it('Instructor v2 (F6): the strip shows the phases, the cue box the phase, ACTION its action and judged row', () => {
     const link = fakeLink(view());
     const keys = { digit: () => undefined, letter: () => undefined, escape: () => () => undefined };
     const ctx = { link, keys, site: {}, weightKg: () => 70, dock: {}, openSheet: () => undefined } as unknown as Teach2Ctx;
@@ -137,9 +139,9 @@ describe('the instructor views and a pme-scenario/2 card', () => {
     const action = document.createElement('div');
     document.body.append(strip, cue, action);
     expect(() => [mountStrip(strip, ctx), mountCue(cue, ctx), mountAction(action, ctx)].forEach((s) => s.refresh())).not.toThrow();
-    expect(strip.querySelectorAll('.ip2-chips > .ip2-chip').length).toBe(0);
-    expect(cue.querySelector('.ip2-cue-name')?.textContent).toBe('No scenario running');
-    expect(action.querySelectorAll('.ip2-row').length).toBe(0);
+    expect([...strip.querySelectorAll('.ip2-chips > .ip2-chip .ip2-chip-name')].map((x) => x.textContent)).toEqual(['Baseline', 'Early signs']);
+    expect(cue.querySelector('.ip2-cue-name')?.textContent).toBe('Early signs');
+    expect([...action.querySelectorAll('.ip2-row .ip2-row-title')].map((x) => x.textContent)).toEqual(['Call for help', 'Names MH from the monitor']);
   });
   it('link.ts: a phase entry in the clinical log is a scenario state named "next state"', async () => {
     const hub = createInProcessHub();
@@ -175,14 +177,14 @@ describe('the readers behind a cast or an "ended" test, and a pme-scenario/2 car
   it('teach2 drug-sheet.ts pinnedSteps: no pinned steps (no throw in classify)', () => {
     expect(pinnedSteps(fakeLink(view()))).toEqual([]);
   });
-  it('sessionbar.ts: the title and the phase id, and Debrief is not "ready" (no end is known)', async () => {
+  it('sessionbar.ts: the title and the phase id, and Debrief is "ready" at a terminal phase (no next: F2\'s ended(), F6)', async () => {
     const link = { ...fakeLink(view()), onChange: () => () => undefined, conditions: new Map(), ctl: { ...fakeLink(view()).ctl, timeScale: 1, fastForward: null } } as unknown as Link;
     const bar = document.createElement('header');
     document.body.append(bar);
     const off = mountSessionBar(bar, link);
     await new Promise((r) => setTimeout(r, 100)); // its draw is throttled to a timer and a frame
     expect(bar.querySelector('.scen')?.textContent).toMatch(/^MH \(format 2\): early /);
-    expect((bar.querySelector('.sb-debrief') as HTMLElement).dataset.ready).toBe('false');
+    expect((bar.querySelector('.sb-debrief') as HTMLElement).dataset.ready).toBe('true'); // 'early' has no next
     off();
   });
   it('views/debrief.ts: no "the scenario has ended" toast for a /2 card', () => {
@@ -195,11 +197,8 @@ describe('the readers behind a cast or an "ended" test, and a pme-scenario/2 car
   });
 });
 
-describe('loading a pme-scenario/2 card in the app (refused until F2)', () => {
-  it('session.ts loadScenario refuses it before the patient restarts, with the driver\'s reason', () => {
-    const fake = { fastForwarding: false } as unknown as AppSession;
-    expect(AppSession.prototype.loadScenario.call(fake, V2)).toEqual({ ok: false, reason: 'pme-scenario/2 cards run from F2 on' });
-  });
+// F6: session.ts loads a /2 card (the library's showcase-mh-v2; e2e teach2-mh-v2 drives it); importing one is not built.
+describe('loading a pme-scenario/2 card in the app (F6)', () => {
   it('views/scenarios.ts: an imported /2 file is not loaded and says why', async () => {
     const loaded: string[] = [];
     const v = scenariosView({ session: { live: false }, loadScenario: (c: ScenarioCard) => (loaded.push(c.id), true) } as never);
@@ -211,6 +210,6 @@ describe('loading a pme-scenario/2 card in the app (refused until F2)', () => {
     await settle();
     await settle();
     expect(loaded).toEqual([]);
-    expect(v.el.querySelector('p.error')?.textContent).toBe('Error: mh2.json is a pme-scenario/2 card; pme-scenario/2 cards run from F2 on.');
+    expect(v.el.querySelector('p.error')?.textContent).toBe("Error: mh2.json is a pme-scenario/2 card; importing a pme-scenario/2 card is not built yet; the library's /2 card loads from Scenarios.");
   });
 });
