@@ -9,6 +9,16 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Added
 
+- **The malignant-hyperthermia card in `pme-scenario/2` (F8, post-demo, draft): `showcase-mh-v2`, the owner's phase
+  table of 31 October.** Nine phases (Baseline, Latent, Early signs, Established, Treated, Recovering, Recrudescence,
+  Arrest, ROSC), each entered by its own rule on engine truth and held 60 s before it changes, with the learners' cue
+  beside it; the call, the treatments and the return to normal ventilation as actions with the `/1` objectives' windows;
+  the induction sequence offered in Baseline and not graded; the `/1` take-home lines verbatim; #211's briefing block.
+  The MH starts at Induce as on the `/1` card (a card-set script entry in the press's stage group), so on the run
+  sheet's demo path the engine's course is the `/1` card's to the second (a slow test). The format gains a phase's
+  `holdS` and `cue`, an `unchanged` leaf `since: 'phaseStart'`, an action's `graded: false` and the `briefing` block;
+  `vitalHolds()` shows each hold. The showcase harness presses a `/2` action. The `/1` card is unchanged.
+
 - **`pme-scenario/2` integration branch (post-demo, draft): F2's phase runner with F4's engine signals, and
   `signals.mhActivity`.** `fv2-mh` is `feat-fv2-f2` (#201) with `feat-fv2-f4` (#200) merged; the driver feeds F4's
   truths to a `PhaseRunner` only. The `state` event's `signals` gain `mhActivity`, the thermal model's MH activity
