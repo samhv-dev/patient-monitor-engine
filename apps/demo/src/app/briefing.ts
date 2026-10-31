@@ -3,7 +3,9 @@
 // shows it over the running monitor for `durationS` seconds, then fades (600 ms) into the monitor. The monitor keeps
 // running underneath at 40 % behind one frost; the text is start-aligned at a 62-character measure: "Case briefing",
 // the estimated scenario time, the paragraphs, then a footer over a hairline counting down to the monitor; a 3-px line
-// along the bottom edge fills as the time passes. No ring, no chips, no eyebrow. A tap or click ends it on that screen;
+// along the bottom edge fills as the time passes. No ring, no chips, no eyebrow. A tap or click ends it on the host's
+// screen; on a phone a press-and-hold ends it there and a tap does nothing (the owner's ruling of 31 October: residents
+// brush the screen; `holdToEnd`, the hairline over the footer filling while held);
 // the instructor's "End briefing" ends it everywhere: in today's Instructor view over the panel, in Instructor v2's
 // status line under the stage strip (the owner's choice of 31 October; teach2/strip.ts, `briefingStatusText`).
 // ONE render function (`renderBriefing`) and one layer (`briefingLayer`) serve the host and the followers; the host
@@ -13,7 +15,7 @@
 // without it falls back to Segoe UI or Tahoma), Persian digits in the chrome's numbers, and the chrome strings as
 // written and checked with the project's Persian tooling (owner-review/instructor-ux/empty-finish/briefing-fa.md).
 import './briefing.css';
-import { epochNow, type BriefingNotice, type WireMessage } from '@pme/controller';
+import { DEFAULT_REVEAL, epochNow, type BriefingNotice, type WireMessage } from '@pme/controller';
 import { EDUCATION_LINE } from './about.ts';
 import type { AppSession } from './session.ts';
 import { button, h, setText } from './ui.ts';
@@ -21,6 +23,8 @@ import { button, h, setText } from './ui.ts';
 /** The fade into the monitor, ms (the board: about 600 ms). */
 export const BRIEFING_FADE_MS = 600;
 const TICK_MS = 250;
+/** A phone's press-and-hold, ms: the app's one long-press time (the panel reveal's, @pme/controller). */
+export const BRIEFING_HOLD_MS = DEFAULT_REVEAL.longPressMs;
 const ZWNJ = '‌';
 
 const FA_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
@@ -34,7 +38,7 @@ const CHROME = {
     title: 'Case briefing',
     est: (n: number): [string, string] => ['Estimated scenario time ', `about ${n} minute${n === 1 ? '' : 's'}`],
     count: (t: string): [string, string, string] => ['The monitor appears in ', t, ''],
-    skip: (phone: boolean) => (phone ? 'Tap anywhere to continue now' : 'Tap or click anywhere to continue now'),
+    skip: (phone: boolean) => (phone ? 'Press and hold anywhere to continue now' : 'Tap or click anywhere to continue now'),
     num: (s: string) => s,
     edu: EDUCATION_LINE,
   },
@@ -42,7 +46,7 @@ const CHROME = {
     title: 'معرفی سناریو',
     est: (n: number): [string, string] => ['زمان تقریبی سناریو: ', `حدود ${faDigits(String(n))} دقیقه`],
     count: (t: string): [string, string, string] => ['مانیتور تا ', t, ` دیگر نمایش داده می${ZWNJ}شود`],
-    skip: (phone: boolean) => (phone ? 'برای ادامه، هر جای صفحه را لمس کنید' : 'برای ادامه، هر جای صفحه را لمس یا کلیک کنید'),
+    skip: (phone: boolean) => (phone ? 'برای ادامه، هر جای صفحه را لمس کنید و نگه دارید' : 'برای ادامه، هر جای صفحه را لمس یا کلیک کنید'),
     num: faDigits,
     edu: 'فقط برای آموزش؛ برای مراقبت از بیمار استفاده نشود.',
   },
@@ -121,7 +125,8 @@ export function briefingLayer(stage: HTMLElement, o: { phone: boolean; now?: () 
         if (left <= 0) return drop(true);
         view.set(Math.ceil(left / 1000 - 1e-9), 1 - left / (b.durationS * 1000));
       };
-      view.el.addEventListener('click', () => drop(true)); // this screen only
+      if (o.phone) holdToEnd(view.el, () => cur?.el === view.el && drop(true)); // this screen only
+      else view.el.addEventListener('click', () => drop(true));
       cur = { b, start, el: view.el, timer: setInterval(tick, TICK_MS) };
       tick();
       stage.dataset.briefing = 'on';
@@ -132,6 +137,24 @@ export function briefingLayer(stage: HTMLElement, o: { phone: boolean; now?: () 
     },
   };
   return layer;
+}
+
+/** A press-and-hold on `el` calls `end` after BRIEFING_HOLD_MS; lifting, leaving or scrolling first cancels it. */
+function holdToEnd(el: HTMLElement, end: () => void): void {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const stop = () => {
+    if (timer) clearTimeout(timer);
+    timer = null;
+    delete el.dataset.holding;
+  };
+  el.style.setProperty('--cb-hold-ms', `${BRIEFING_HOLD_MS}ms`);
+  el.addEventListener('pointerdown', () => {
+    stop();
+    el.dataset.holding = '';
+    timer = setTimeout(() => (stop(), end()), BRIEFING_HOLD_MS);
+  });
+  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) el.addEventListener(ev, stop);
+  el.addEventListener('contextmenu', (e) => e.preventDefault()); // a long press opens no menu
 }
 
 /** A follower's side: the host's `briefing` events in one message, on its layer (the remainder of a running one). */

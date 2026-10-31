@@ -1,7 +1,7 @@
 // The Case briefing on real screens (the owner's board Orientation 7b, its phone twin and the Persian twins without the
 // ring): the MH card loaded with a relay, the briefing over the host's Monitor view at 1280 × 800 with the monitor
 // running under it, a phone (emulated, Pixel 7 on Chromium, iPhone 13 on WebKit) joining mid-briefing and showing the
-// remainder, a tap ending it on that phone only, the instructor's "End briefing" ending it on the host and every phone
+// remainder, a tap doing nothing there and a press-and-hold ending it on that phone only (the owner's ruling of 31 October), the instructor's "End briefing" ending it on the host and every phone
 // (today's Instructor view; Instructor v2's status line under the stage strip, at 1440 × 900, the owner's choice of 31 October);
 // then a Persian briefing (the board's Persian text: a rendering fixture, on no card) on the host and a phone.
 // Screenshots go to PME_BRIEFING_SHOTS (default: this test's output folder) for the owner's look.
@@ -11,6 +11,7 @@ import { join, resolve } from 'node:path';
 import { devices, expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
+import { DEFAULT_REVEAL } from '../../../packages/controller/src/panel/reveal.ts';
 import { openApp, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
@@ -29,13 +30,26 @@ const MH = JSON.parse(readFileSync(resolve(import.meta.dirname, '../src/app/show
 const FA_TEXT = "شما رزیدنت بیهوشی در اتاق عمل هستید. مردی ۳۵‌ساله و سالم با وزن ۸۰ کیلوگرم برای جراحی الکتیو روی تخت است. پیش‌دارو با میدازولام و فنتانیل گرفته، پره‌اکسیژنه شده، با پروپوفول و ساکسینیل‌کولین القا شده و بدون مشکل اینتوبه شده است. بیهوشی با سووفلوران ۲٪ ادامه دارد و ونتیلاتور روی ۱۲ × ۵۰۰ تنظیم شده است. جراحی تازه شروع شده است.\n\nبه مانیتور نگاه کنید. هر تغییری را که می‌بینید بلند بگویید، و بگویید در برابرش چه می‌کنید.";
 const layer = (p: Page) => p.locator('.stage > .case-briefing:not(.cb-out)');
 /** The footer's countdown, s (Persian digits read too). */
+/** A phone's press-and-hold, ms (briefing.ts, BRIEFING_HOLD_MS). */
+const BRIEFING_HOLD_MS = DEFAULT_REVEAL.longPressMs;
+/** A press on the phone's briefing held for `ms`: the hairline over the footer fills while it is held. */
+const hold = async (p: Page, ms: number, shotName?: string) => {
+  const box = (await layer(p).boundingBox()) as { x: number; y: number; width: number; height: number };
+  await p.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await p.mouse.down();
+  await p.waitForTimeout(Math.min(ms, BRIEFING_HOLD_MS / 2));
+  await expect(layer(p)).toHaveAttribute('data-holding', '');
+  if (shotName) await p.screenshot({ path: shotName });
+  await p.waitForTimeout(Math.max(0, ms - BRIEFING_HOLD_MS / 2));
+  await p.mouse.up();
+};
 const count = async (p: Page) => {
   const t = (await layer(p).locator('.cb-count').textContent()) ?? '';
   const m = /^(\d+):(\d\d)$/.exec(t.replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))));
   return m ? Number(m[1]) * 60 + Number(m[2]) : NaN;
 };
 
-test('the Case briefing: over the running monitor on the host and the phones, a tap ends it here, End briefing everywhere; Persian', async ({ page, browser, browserName }, info) => {
+test('the Case briefing: over the running monitor on the host and the phones, a press-and-hold ends it on a phone, End briefing everywhere; Persian', async ({ page, browser, browserName }, info) => {
   test.setTimeout(180_000);
   const out = process.env.PME_BRIEFING_SHOTS ?? info.outputPath();
   mkdirSync(out, { recursive: true });
@@ -74,7 +88,7 @@ test('the Case briefing: over the running monitor on the host and the phones, a 
   };
   const f = await phoneAt();
   await expect(layer(f)).toBeVisible({ timeout: 10_000 });
-  await expect(layer(f).locator('.cb-foot > span').nth(1)).toHaveText('Tap anywhere to continue now');
+  await expect(layer(f).locator('.cb-foot > span').nth(1)).toHaveText('Press and hold anywhere to continue now');
   const left = await count(f);
   const hostLeft = await count(page);
   console.log(`briefing phone joined with ${left} s left (host ${hostLeft} s)`);
@@ -85,8 +99,14 @@ test('the Case briefing: over the running monitor on the host and the phones, a 
   await shot(f, 'briefing-phone-en');
   const g = await phoneAt();
   await expect(layer(g)).toBeVisible({ timeout: 10_000 });
-  // a tap ends it on that phone only
+  // a tap does nothing on a phone (residents brush the screen), nor does a press let go early; a press-and-hold ends
+  // it on that phone only
   await layer(f).tap();
+  await hold(f, BRIEFING_HOLD_MS / 2);
+  await f.waitForTimeout(BRIEFING_HOLD_MS);
+  await expect(layer(f)).toBeVisible();
+  await expect(layer(f)).not.toHaveAttribute('data-holding');
+  await hold(f, BRIEFING_HOLD_MS + 300, join(out, `briefing-phone-holding-${browserName}.png`));
   await expect(f.locator('.stage > .case-briefing')).toHaveCount(0, { timeout: 3_000 });
   await expect(layer(page)).toBeVisible();
   await expect(layer(g)).toBeVisible();
@@ -134,10 +154,17 @@ test('the Case briefing: over the running monitor on the host and the phones, a 
   expect(await page.evaluate(() => document.querySelector('.stage .monitor-host')?.closest('[dir="rtl"]') ?? null)).toBeNull();
   await page.waitForTimeout(3000);
   await shot(page, 'briefing-host-1280x800-fa');
-  await expect(layer(f)).toBeVisible({ timeout: 10_000 }); // the phone that tapped the English one away
-  await expect(layer(f).locator('.cb-foot > span').nth(1)).toHaveText('برای ادامه، هر جای صفحه را لمس کنید');
+  await expect(layer(f)).toBeVisible({ timeout: 10_000 }); // the phone that held the English one away
+  await expect(layer(f).locator('.cb-foot > span').nth(1)).toHaveText('برای ادامه، هر جای صفحه را لمس کنید و نگه دارید');
   await f.waitForTimeout(1000);
   await shot(f, 'briefing-phone-fa');
+  // the same gesture in Persian: a tap does nothing, a press-and-hold ends it on that phone
+  await layer(f).tap();
+  await f.waitForTimeout(BRIEFING_HOLD_MS);
+  await expect(layer(f)).toBeVisible();
+  await hold(f, BRIEFING_HOLD_MS + 300, join(out, `briefing-phone-holding-fa-${browserName}.png`));
+  await expect(f.locator('.stage > .case-briefing')).toHaveCount(0, { timeout: 3_000 });
+  await expect(layer(g)).toBeVisible();
   // v2's End briefing in the status line ends it on the host and every phone, and the status line goes
   await page.evaluate(() => (location.hash = '#/teach2'));
   await expect(status).toBeVisible({ timeout: 5_000 });

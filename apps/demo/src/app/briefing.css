@@ -44,6 +44,15 @@
 .case-briefing[data-phone] .cb-p { margin-top: 16px; font-size: 17px; }
 .case-briefing[data-phone] .cb-p + .cb-p { margin-top: 16px; }
 .case-briefing[data-phone] .cb-foot { margin-top: 22px; padding-top: 12px; flex-direction: column; align-items: flex-start; gap: 4px; font-size: 12px; }
+/* A phone's press-and-hold (briefing.ts, holdToEnd): the hairline over the footer fills from the start side while held */
+.case-briefing[data-phone] { -webkit-touch-callout: none; }
+.case-briefing[data-phone] .cb-foot { position: relative; }
+.case-briefing[data-phone] .cb-foot::before {
+  content: ''; position: absolute; inset-inline: 0; top: -1px; height: 2px; background: #8ab4f8;
+  transform: scaleX(0); transform-origin: left; transition: transform 120ms ease-out;
+}
+.case-briefing[data-phone][dir='rtl'] .cb-foot::before { transform-origin: right; }
+.case-briefing[data-phone][data-holding] .cb-foot::before { transform: scaleX(1); transition: transform var(--cb-hold-ms, 800ms) linear; }
 
 /* Persian: right to left, start-aligned, leading 1.8, no letter-spacing; Vazirmatn when the machine has it (no font
    file in the kit), then Segoe UI or Tahoma; the board's 60-character measure */

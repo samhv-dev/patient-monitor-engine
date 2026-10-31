@@ -53,6 +53,10 @@ the public API is what the packages export (see the API reference), the `pme-sce
   instructor's page reloads, nor in free roam. Persian: right to left, the reviewed chrome strings, Persian digits, the
   Vazirmatn font stack (no font file added). The malignant hyperthermia card has one (25 minutes, 60 s, English); no
   other card does.
+- **The Case briefing on a phone ends by a press-and-hold** (the owner's ruling of 31 October): a tap does nothing
+  there, as residents brush the screen; a press held 800 ms (the panel reveal's long-press time) ends it on that
+  phone, the hairline over the footer filling while held; the footer reads "Press and hold anywhere to continue now"
+  (Persian: «برای ادامه، هر جای صفحه را لمس کنید و نگه دارید»). The host's screen keeps its tap or click.
 
 ### Fixed
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's

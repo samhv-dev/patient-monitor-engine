@@ -2,7 +2,7 @@
 // The Case briefing (owner's board Orientation 7b, 30 October): when a card with a `briefing` loads, the learners'
 // monitor — the host's Monitor view and every phone following it — shows the briefing over the running monitor for
 // `durationS` seconds (the title, the estimated time, the paragraphs, a footer counting down), then fades into the
-// monitor; a tap or click ends it on that screen only; the instructor's "End briefing" (today's Instructor view; v2's
+// monitor; a click ends it on the host's screen, a press-and-hold (not a tap) on a phone's; the instructor's "End briefing" (today's Instructor view; v2's
 // status line under the stage strip, the owner's choice of 31 October) ends it everywhere; a phone that
 // joins while it runs shows the remainder. A card without a briefing shows nothing. Persian (`lang: 'fa'`): rtl, the
 // reviewed chrome strings, Persian digits.
@@ -74,7 +74,7 @@ vi.mock('@pme/renderer', async () => {
 vi.mock('./panel/panel.ts', () => ({ mountPanel: () => ({ el: document.createElement('div'), select: () => {} }) }));
 
 const { AppSession } = await import('./session.ts');
-const { mountHostBriefing } = await import('./briefing.ts');
+const { BRIEFING_HOLD_MS, mountHostBriefing } = await import('./briefing.ts');
 const { mountFollower } = await import('./views/follower.ts');
 const { DEFAULT_SITE } = await import('./site.ts');
 const { teachView } = await import('./views/teach.ts');
@@ -180,12 +180,25 @@ describe('the Case briefing', () => {
     expect(s.briefing).toBeNull();
   });
 
-  it('a click ends it on that screen only', async () => {
+  it('a press-and-hold ends it on a phone, a tap does nothing there; a click ends it on the host; each on that screen only', async () => {
     s.loadScenario(mh);
     await settle();
     const p = await phone();
-    expect(p.layer(), 'the phone shows it').toBeTruthy();
-    p.layer()?.click();
+    const el = p.layer() as HTMLElement;
+    expect(el, 'the phone shows it').toBeTruthy();
+    const press = (type: string) => el.dispatchEvent(new Event(type, { bubbles: true }));
+    // a tap (or a brush) does nothing
+    el.click();
+    press('pointerdown');
+    await vi.advanceTimersByTimeAsync(BRIEFING_HOLD_MS - 100);
+    expect(el.dataset.holding, 'the hold shows while pressed').toBe('');
+    press('pointerup');
+    expect(el.dataset.holding).toBeUndefined();
+    await vi.advanceTimersByTimeAsync(BRIEFING_HOLD_MS);
+    expect(p.layer(), 'a short press leaves it').toBe(el);
+    // a hold ends it
+    press('pointerdown');
+    await vi.advanceTimersByTimeAsync(BRIEFING_HOLD_MS);
     expect(p.layer()).toBeNull();
     expect(host.layer(), 'the host still shows it').toBeTruthy();
     expect(s.briefing).not.toBeNull();
@@ -221,7 +234,7 @@ describe('the Case briefing', () => {
     // the monitor's own labels stay as they are
     expect(host.monitorHost.closest('[dir="rtl"]')).toBeNull();
     const p = await phone();
-    expect(text(p.layer()?.querySelectorAll('.cb-foot > span')[1] ?? null)).toBe('برای ادامه، هر جای صفحه را لمس کنید');
+    expect(text(p.layer()?.querySelectorAll('.cb-foot > span')[1] ?? null)).toBe('برای ادامه، هر جای صفحه را لمس کنید و نگه دارید');
   });
 
   it('reaches the phones with its start time: a phone that joins mid-briefing shows the remainder', async () => {
@@ -235,7 +248,7 @@ describe('the Case briefing', () => {
     const el = p.layer();
     expect(el, 'the late phone shows it').toBeTruthy();
     expect(text(el?.querySelector('.cb-count'))).toBe('0:40');
-    expect([...(el?.querySelectorAll('.cb-foot > span') ?? [])].map(text)).toEqual(['The monitor appears in 0:40', 'Tap anywhere to continue now']);
+    expect([...(el?.querySelectorAll('.cb-foot > span') ?? [])].map(text)).toEqual(['The monitor appears in 0:40', 'Press and hold anywhere to continue now']);
     expect(el?.dataset.phone).toBe('');
     await vi.advanceTimersByTimeAsync(40_000);
     expect(p.layer(), 'it ends with the host').toBeNull();
