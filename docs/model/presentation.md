@@ -671,7 +671,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 
 ## Tests
 
-983 tests in 239 files; 2 expected failures, 0 skipped.
+984 tests in 239 files; 2 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -700,7 +700,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 | [`apps/demo/e2e/controller-latency.e2e.ts`](../../apps/demo/e2e/controller-latency.e2e.ts) | 1 | 0 | 0 |
 | [`apps/demo/e2e/controller-pages.e2e.ts`](../../apps/demo/e2e/controller-pages.e2e.ts) | 3 | 0 | 0 |
 | [`apps/demo/e2e/controller-screens.e2e.ts`](../../apps/demo/e2e/controller-screens.e2e.ts) | 1 | 0 | 0 |
-| [`apps/demo/e2e/debrief.e2e.ts`](../../apps/demo/e2e/debrief.e2e.ts) | 6 | 0 | 0 |
+| [`apps/demo/e2e/debrief.e2e.ts`](../../apps/demo/e2e/debrief.e2e.ts) | 7 | 0 | 0 |
 | [`apps/demo/e2e/device-layer-page.e2e.ts`](../../apps/demo/e2e/device-layer-page.e2e.ts) | 9 | 0 | 0 |
 | [`apps/demo/e2e/drug-evidence-page.e2e.ts`](../../apps/demo/e2e/drug-evidence-page.e2e.ts) | 2 | 0 | 0 |
 | [`apps/demo/e2e/drug-pkpd-page.e2e.ts`](../../apps/demo/e2e/drug-pkpd-page.e2e.ts) | 2 | 0 | 0 |
