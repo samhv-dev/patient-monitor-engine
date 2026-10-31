@@ -226,11 +226,11 @@ describe('stage strip: clicks', () => {
     expect(r.sent).toHaveLength(1);
   });
 
-  it('no scenario: says so, and a load redraws from the start', () => {
+  it('no scenario: says so (board "Empty 5"), and a load redraws from the start', () => {
     const r = rig(MH, 'treating', MH_TO_TREATING);
     r.sv.doc = null;
     r.slot.refresh();
-    expect(r.el.textContent).toContain('No scenario running');
+    expect(r.el.textContent).toContain('No case loaded · the stages appear here when one is');
     r.sv.doc = HAEM;
     r.sv.docVersion = 2;
     r.sv.stateId = 'bleeding';

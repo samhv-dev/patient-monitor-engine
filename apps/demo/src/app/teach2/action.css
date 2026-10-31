@@ -61,5 +61,4 @@ button.ip2-row:focus-visible { outline: 2px solid var(--ip2-blue-text); outline-
 .ip2-offcard-list { margin: 0; padding: 0 14px 10px 30px; }
 .ip2-offcard-list li { padding: 2px 0; }
 .ip2-muted { list-style: none; margin-left: -16px; color: var(--ip2-faint); }
-.ip2-empty { margin: 0; padding: 12px 14px; border: 1px dashed var(--ip2-line); border-radius: 8px; color: var(--ip2-muted); }
 .ip2-foot { margin: auto 0 0; padding: 6px 12px; border: 1px solid var(--ip2-line); border-radius: 8px; background: var(--ip2-page); color: var(--ip2-muted); font-size: 12px; }
