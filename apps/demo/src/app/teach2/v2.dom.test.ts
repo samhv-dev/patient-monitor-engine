@@ -182,3 +182,38 @@ describe('Instructor v2: a /2 row\'s given look follows the graded administratio
     expect(row('Dantrolene 2.5')).toMatchObject({ grade: 'due', right: 'due 4:10', look: 'current' });
   });
 });
+
+// F11's fit (teach2-fit.e2e.ts): at Latent the MH card opens 11 actions and ACTION scrolled at 1440 × 900. The rows not
+// due now — a graded action not applicable and not given, an action the card does not grade given in an earlier phase —
+// sit in a "Not due now" fold of ACTION: still rows, numbered, pressable and on their digits; never a due, overdue or
+// given graded action, never the judged row.
+describe('Instructor v2: a /2 phase\'s rows not due now are folded, still rows of ACTION', () => {
+  it('Latent after the induction: intubate and start surgery (setup, given in Baseline) and the K⁺ rows (not applicable) fold; the call, the judged row and the A rows stay', () => {
+    const setup: Administration[] = [
+      { seq: 1, t: 300, source: 'action', actionId: 'intubate', kind: 'airway', result: { accepted: true } },
+      { seq: 2, t: 360, source: 'action', actionId: 'startSurgery', kind: 'drug', drugId: 'rocuronium', dose: 0.6, unit: 'mg/kg', perKg: 0.6, route: 'iv', result: { accepted: true } },
+    ];
+    const { ctx, digits } = rig({ simT: 400, takings: { intubate: 1, startSurgery: 1 }, run: { admin: setup, edges: ANCHOR } });
+    const el = document.createElement('div');
+    mountAction(el, ctx).refresh();
+    const title = (r: Element) => r.querySelector('.ip2-row-title')?.textContent ?? '';
+    const folded = [...el.querySelectorAll('.ip2-later-list .ip2-row')].map(title);
+    const shown = [...el.querySelectorAll('.ip2-rows:not(.ip2-later-list):not(.ip2-finished-list) .ip2-row')].map(title);
+    expect(folded.some((t) => t.startsWith('Intubate'))).toBe(true);
+    expect(folded.some((t) => t.startsWith('Start surgery'))).toBe(true);
+    expect(folded.some((t) => t.startsWith('Potassium: calcium'))).toBe(true);
+    expect(shown.some((t) => t.startsWith('MH crisis'))).toBe(true); // due: never folded
+    expect(shown.some((t) => /^Name malignant hyperthermia/.test(t))).toBe(true); // the judged row
+    expect(shown.filter((t) => ['Early signs', 'Treated', 'Arrest'].includes(t))).toHaveLength(3);
+    const fold = el.querySelector('details.ip2-later') as HTMLDetailsElement;
+    expect(fold.hidden).toBe(false);
+    expect(fold.open).toBe(false);
+    expect(fold.querySelector('summary')?.textContent).toBe(`Not due now · ${folded.length}`);
+    // every action of the phase is a row, none disabled; a folded row keeps its digit
+    const steps = [...el.querySelectorAll('.ip2-rows:not(.ip2-finished-list) .ip2-row[data-kind="step"]')];
+    expect(steps).toHaveLength((MH2 as unknown as { actions: Array<{ phases: string[] }> }).actions.filter((a) => a.phases.includes('latent')).length);
+    expect(el.querySelectorAll('.ip2-row[disabled]').length).toBe(0);
+    const n1 = [...el.querySelectorAll('.ip2-later-list button.ip2-row')].find((r) => title(r).startsWith('Intubate'))?.querySelector('.ip2-key')?.textContent;
+    expect(digits.get(Number(n1))).toBeTypeOf('function');
+  });
+});

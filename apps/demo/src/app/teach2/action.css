@@ -65,3 +65,19 @@ button.ip2-row:focus-visible { outline: 2px solid var(--ip2-blue-text); outline-
 .ip2-muted { list-style: none; margin-left: -16px; color: var(--ip2-faint); }
 .ip2-empty { margin: 0; padding: 12px 14px; border: 1px dashed var(--ip2-line); border-radius: 8px; color: var(--ip2-muted); }
 .ip2-foot { margin: auto 0 0; padding: 6px 12px; border: 1px solid var(--ip2-line); border-radius: 8px; background: var(--ip2-page); color: var(--ip2-muted); font-size: 12px; }
+
+/* a pme-scenario/2 card (F11: the MH card's Latent opens 11 actions, and ACTION scrolled at 1440 × 900): denser rows,
+   two lines each; a rule out of the phase keeps its two lines with the hold's bar beside its name; the rows not due now
+   in their fold ("Not due now · n", closed by default). /1 rows are untouched. */
+.ip2-list[data-format='2'] { gap: 4px; }
+.ip2-list[data-format='2'] .ip2-rows { gap: 4px; }
+.ip2-list[data-format='2'] .ip2-row { gap: 10px; padding: 4px 10px; font-size: 14px; line-height: 17px; }
+.ip2-list[data-format='2'] .ip2-row[data-overdue='true'] { padding: 3px 9px; }
+.ip2-list[data-format='2'] .ip2-key { width: 24px; height: 24px; font-size: 12px; }
+.ip2-list[data-format='2'] .ip2-row-sub { margin-top: 1px; font-size: 12px; line-height: 14px; }
+.ip2-list[data-format='2'] .ip2-row-right { font-size: 12.5px; }
+.ip2-list[data-format='2'] .ip2-row[data-kind='auto'] .ip2-row-text { display: grid; grid-template-columns: auto minmax(60px, 1fr); align-items: center; column-gap: 10px; }
+.ip2-list[data-format='2'] .ip2-row[data-kind='auto'] .ip2-row-title { grid-area: 1 / 1; }
+.ip2-list[data-format='2'] .ip2-row[data-kind='auto'] .ip2-bar { grid-area: 1 / 2; margin-top: 0; }
+.ip2-list[data-format='2'] .ip2-row[data-kind='auto'] .ip2-row-sub { grid-area: 2 / 1 / 3 / 3; }
+.ip2-later-list { gap: 4px; padding: 0 10px 10px; }

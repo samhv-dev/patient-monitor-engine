@@ -55,6 +55,9 @@ export interface Board {
   finished: LiveRow[];
   /** The off-card actions taken in this stage, from the log (answer 20). */
   offCard: ClinicalLogEntry[];
+  /** A /2 phase's rows not due now (its "Not due now" fold, still rows of ACTION, pressable): a graded action not
+   *  applicable and not given, an ungraded one given in an earlier phase. Absent for /1. */
+  later?: LiveRow[];
 }
 
 /** One `vital` rule as the host-side runner reads it (`ScenarioDriver.vitalHolds()`, @pme/controller `VitalHold`). */
@@ -334,6 +337,10 @@ export interface SourceV2 {
   paused: boolean;
   /** grade() on the phase runner's inputs now, final: false (`liveGrades`); null on a follower (Q16). */
   grades: Grades | null;
+  /** The host's administration record (when an action's own press was given) and the current phase's entry time; a
+   *  follower has neither (null): it folds nothing. */
+  admin?: readonly Administration[] | null;
+  enteredT?: number;
 }
 
 /** The grade inputs a /2 host's phase runner keeps (PhaseRunner `phases`, `admin`, `edges`). */
@@ -365,10 +372,18 @@ const overdueS = (live: string): number => {
 /** The board of a /2 phase: its open actions, each with its live grade at the right and the grade's lines under the
  *  prescription (design §10: "due 3:12", "overdue 0:40", "met 08:16", "deviation: route", "not applicable"; an action
  *  the card does not grade keeps "press to give" / "given ×n"); a taken one stays pressable, green; the judged rows (met
- *  ones move to Finished as on /1), and the rules out of the phase with the 60-s hold's bar. */
+ *  ones move to Finished as on /1), and the rules out of the phase with the 60-s hold's bar.
+ *  `later` (F11: the MH card's Latent opens 11 actions and ACTION scrolled at 1440 × 900): the rows not due now — a
+ *  graded action not applicable and not given (its anchor or precondition has not happened: design §10 puts "not
+ *  applicable" out of the open list), and an action the card does not grade, given in an earlier phase (the induction's
+ *  setup carried into Latent). They stay rows of ACTION, numbered and pressable, in a fold; a due, overdue or given graded
+ *  action and the judged rows are never folded. */
 export function classifyV2(src: SourceV2): Board {
   const list: LiveRow[] = [];
+  const later: LiveRow[] = [];
   const finished: LiveRow[] = [];
+  /** When the action's own press was last given (the record's actionId stamp), else null. */
+  const pressedAt = (id: string): number | null => src.admin?.filter((a) => a.actionId === id && !a.cardSet).at(-1)?.t ?? null;
   const base = (row: Row): LiveRow => ({ row, stage: src.phaseId, look: 'ready', subtitle: row.subtitle, right: '', overdue: null, outOfOrder: false, at: null, progress: null });
   for (const row of phaseRowsOf(src.doc, src.phaseId)) {
     const live = base(row);
@@ -384,8 +399,12 @@ export function classifyV2(src: SourceV2): Board {
         const open = (g.grade === 'due' || g.grade === 'overdue') && !worstGiven;
         const given = n > 0 || g.givenT !== undefined;
         const look: Look = open ? 'current' : given ? 'taken' : g.grade === 'not applicable' ? 'unmet' : g.grade === 'failed' ? 'failed' : 'ready';
-        list.push({ ...live, look, grade: g.grade, right: g.live, subtitle: [row.subtitle, ...g.lines].join(' · '), overdue: g.grade === 'overdue' ? overdueS(g.live) : null, at: g.givenT ?? null });
-      } else list.push(n > 0 ? { ...live, look: 'taken', right: `given${n > 1 ? ` ×${n}` : ''}` } : { ...live, right: src.takings ? 'press to give' : 'graded on the host' });
+        (g.grade === 'not applicable' && !given ? later : list).push({ ...live, look, grade: g.grade, right: g.live, subtitle: [row.subtitle, ...g.lines].join(' · '), overdue: g.grade === 'overdue' ? overdueS(g.live) : null, at: g.givenT ?? null });
+      } else if (n > 0) {
+        const t = row.actionId !== undefined ? pressedAt(row.actionId) : null;
+        const earlier = t !== null && src.enteredT !== undefined && t < src.enteredT - 1e-6;
+        (earlier ? later : list).push({ ...live, look: 'taken', right: `given${n > 1 ? ` ×${n}` : ''}`, at: t });
+      } else list.push({ ...live, right: src.takings ? 'press to give' : 'graded on the host' });
     } else if (row.kind === 'judged') {
       const met = src.log.find((x) => x.kind === 'marker' && x.text === `Objective met: ${drugWords(row.text)}`);
       if (met) finished.push({ ...live, look: 'met', at: met.simT, right: met.simT === null ? '' : mmss(met.simT), subtitle: 'you judged it' });
@@ -397,5 +416,5 @@ export function classifyV2(src: SourceV2): Board {
       list.push({ ...live, look: 'pending', progress, right });
     }
   }
-  return { stage: stagesOf(src.doc).find((g) => g.id === src.phaseId) ?? null, list, finished, offCard: [] };
+  return { stage: stagesOf(src.doc).find((g) => g.id === src.phaseId) ?? null, list, finished, offCard: [], later };
 }
