@@ -3,9 +3,11 @@
 // read the KEPT course (a return to a bookmark undoes what came after it: the retry is what is judged). Labels come
 // from the glossary and the alarm table. Also the one-row-per-minute table, the card's steps with their status, the
 // instructor's judged objectives and the marks (Instructor v2, IP8), and the export's shape (written by
-// `debrief-export.ts`). No DOM.
-import { asV1, manualLabel, type MarkKind } from '@pme/controller';
-import type { ObjectiveRule, RunEventId } from '@pme/controller/scenario';
+// `debrief-export.ts`). A pme-scenario/2 run (plan F7) has no objectives and no steps: its report is the grade()
+// of the controller on the inputs the record copied (the panel's function), as actions, outcomes, violations and judged
+// rows (`pme-debrief/3`). No DOM.
+import { asV1, isV2, manualLabel, type MarkKind } from '@pme/controller';
+import { grade, ruleWords, type Anchor, type Grade, type Grades, type ObjectiveRule, type PhaseEntry, type PhaseRule, type RunEventId, type ScenarioDocV2 } from '@pme/controller/scenario';
 import { FIXED_ALARM_WORDS } from './alarms.ts';
 import { untakenStatus, type Evidence } from './card-read.ts';
 import { CONDITIONS } from './describe.ts';
@@ -279,6 +281,72 @@ export function judged(d: RunData): Array<{ n: number; text: string; tickedT: nu
   });
 }
 
+/** A /2 run's grades: grade() on the copied inputs, final, at the run's end — the panel's function on the panel's
+ *  inputs. Null for a /1 run, and for a /2 record made before the record copied them. */
+export function gradesOf(d: RunData): Grades | null {
+  if (!d.doc || !isV2(d.doc) || d.format !== 2) return null;
+  return grade(d.doc, d.phases ?? [], d.admin ?? [], d.edges ?? [], endOf(d), { final: true });
+}
+
+/** A /2 run's sections of the report and of `pme-debrief/3` (absent times are null). */
+export interface Report3 {
+  actions: Array<{
+    id: string; label: string; kind: string; grade: Grade; lines: string[]; dueT: number | null; givenT: number | null; windowS: number | null;
+    repeats: Array<{ n: number; grade: Grade; t: number | null; lines: string[] }>;
+    /** The seqs of every administration matching the action. */
+    admin: number[];
+  }>;
+  outcomes: Array<{ id: string; text: string; status: 'reached' | 'not reached'; t: number | null; why: string }>;
+  violations: Array<{ t: number; seq: number; text: string; harm: 'modelled' | 'not modelled' }>;
+  /** The instructor's rows: `fromT` the display clock's start (the monitor showed it), `pressedT` the instructor's press. */
+  judged: Array<{ id: string; text: string; kind: 'recognition' | 'communication'; fromT: number | null; pressedT: number | null }>;
+}
+
+/** The report of a /2 run (null: a /1 run, or no copied inputs). */
+export function report3(d: RunData): Report3 | null {
+  const g = gradesOf(d);
+  if (!g) return null;
+  const doc = d.doc as ScenarioDocV2;
+  const firstEdge = (rule: string) => (d.edges ?? []).find((e) => e.rule === rule && e.value)?.t;
+  const label = (id: string) => doc.actions.find((a) => a.id === id)?.label ?? id;
+  const words = (an: Anchor): string =>
+    typeof an !== 'string' ? ruleWords(an.rule) : an.startsWith('phase:') ? `the phase "${doc.phases.find((p) => p.id === an.slice(6))?.label ?? an.slice(6)}"`
+    : an.startsWith('action:') ? label(an.slice(7)) : ({ start: 'the start', pulseLoss: 'the pulse loss', rosc: 'the return of circulation' } as Record<string, string>)[an] ?? an;
+  // when the outcome's anchor happened (grade()'s reading: the first entry, the action's graded dose, the first true edge)
+  const anchorAt = (id: string, an: Anchor): number | undefined =>
+    an === 'start' ? 0 : typeof an !== 'string' ? firstEdge(`outcome:${id}:anchor`) : an.startsWith('phase:') ? (d.phases ?? []).find((p: PhaseEntry) => p.id === an.slice(6))?.t
+    : an.startsWith('action:') ? g.actions.find((a) => a.id === an.slice(7))?.givenT : firstEdge(an);
+  const ticks = kept(d).filter((r) => r.kind === 'note');
+  return {
+    actions: g.actions.map((a) => ({
+      id: a.id, label: a.label, kind: doc.actions.find((x) => x.id === a.id)?.kind ?? '', grade: a.grade, lines: a.lines,
+      dueT: a.dueT ?? null, givenT: a.givenT ?? null, windowS: a.windowS ?? null,
+      repeats: a.repeats.map((r) => ({ n: r.n, grade: r.grade, t: r.t ?? null, lines: r.lines })), admin: a.admin,
+    })),
+    outcomes: g.outcomes.map((o) => {
+      const oc = doc.outcomes?.find((x) => x.id === o.id);
+      const w = oc ? words(oc.anchor) : 'its anchor';
+      const at = oc ? anchorAt(o.id, oc.anchor) : undefined;
+      const within = span(oc?.withinS ?? 0);
+      const why = o.grade === 'reached' && o.t !== undefined
+        ? `Reached at ${mmss(o.t)}${at !== undefined ? `, ${span(o.t - at)} after ${w}` : ''} (within ${within} asked).`
+        : at === undefined ? `Not reached: ${w} ${oc && typeof oc.anchor === 'string' && oc.anchor.startsWith('action:') ? 'was never given' : 'did not happen'}.`
+        : `Not reached within ${within} of ${w} (from ${mmss(at)}).`;
+      return { id: o.id, text: o.text, status: o.grade === 'reached' ? 'reached' as const : 'not reached' as const, t: o.t ?? null, why };
+    }),
+    violations: g.violations.map((v) => ({ t: v.t, seq: v.seq, text: v.text, harm: v.harm })),
+    judged: g.judged.map((j) => ({
+      id: j.id, text: j.text, kind: j.kind, fromT: j.fromT ?? null,
+      pressedT: ticks.find((r) => r.text === `Objective met: ${drugWords(j.text)}`)?.t ?? null, // teach2/press.ts judge()
+    })),
+  };
+}
+/** A judged row's display rule in words ("etco2 > 45"): what its clock starts on. */
+export const displayWords = (d: RunData, id: string): string | null => {
+  const r = d.doc && isV2(d.doc) ? d.doc.judged?.find((j) => j.id === id)?.display : undefined;
+  return r ? ruleWords(r as PhaseRule) : null;
+};
+
 /** Every mark (bookmark) of the run in order, with its kind and note when it has them; an undone one says so. */
 export function marks(d: RunData): Array<{ t: number; label: string; kind?: Exclude<MarkKind, 'stage'>; note?: string; undone?: number }> {
   return d.rows.filter((r) => r.kind === 'bookmark').map((r) => ({
@@ -404,3 +472,7 @@ export interface DebriefExport {
   judged: ReturnType<typeof judged>;
   marks: ReturnType<typeof marks>;
 }
+/** A pme-scenario/2 run's export (plan F7, Q10): no objectives and no steps; the phases, then the graded sections of
+ *  `Report3`, then the rest as `/2`. A reader of `/2` never receives a `/2` run (R8). */
+export type DebriefExport3 = { schema: 'pme-debrief/3'; version: string; build: string; record: RunData; phases: PhaseEntry[] } & Report3
+  & Pick<DebriefExport, 'facts' | 'keyTimes' | 'keyMoments' | 'minutes' | 'marks'>;

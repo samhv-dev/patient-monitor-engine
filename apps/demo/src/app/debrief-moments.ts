@@ -5,7 +5,7 @@
 // measured interval, the pulse loss to CPR and the time without a pulse. Every number traces to a row or a sample; an
 // absent one is null, never a guess. Read on the KEPT course, as the debrief's rules are. No DOM.
 import { asV1 } from '@pme/controller';
-import { endOf, isEvent, objectives, type DebriefExport } from './debrief.ts';
+import { displayWords, endOf, isEvent, objectives, report3, type DebriefExport } from './debrief.ts';
 import type { Row, RunData, Sample } from './record.ts';
 
 export type Who = 'team' | 'patient' | 'scenario';
@@ -123,6 +123,11 @@ export function keyTimes(d: RunData, moments: KeyMoment[] = keyMoments(d)): KeyT
     const tk = objs[ri]?.verdict.tickedT;
     const from = recognitionFrom(d, tk);
     out.push({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: from.t, fromLabel: from.label, toT: tk ?? null, state: tk === undefined ? 'notTicked' : 'measured' });
+  }
+  // a /2 run (plan F7): the judged row of kind recognition, from its display clock (what the monitor showed) to the press
+  const rec = report3(d)?.judged.find((j) => j.kind === 'recognition');
+  if (rec) {
+    out.push({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: rec.fromT ?? 0, fromLabel: rec.fromT === null ? 'start' : (displayWords(d, rec.id) ?? 'start'), toT: rec.pressedT, state: rec.pressedT === null ? 'notTicked' : 'measured' });
   }
   const team = moments.find((m) => m.who === 'team');
   if (team) out.push({ id: 'firstTeam', label: 'Start → first team action', fromT: 0, toT: team.t, state: 'measured' });

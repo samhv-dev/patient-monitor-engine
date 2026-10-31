@@ -1,15 +1,17 @@
 // The debrief's judgements — every rule kind met, not met and not assessable, read on the kept course (an event before
 // the anchor, a second anchor, a value never measured); the measured facts, the labs and the drug totals; objectives
 // without a rule listed as not assessable (with the instructor's tick); the minute table and the JSON.
-import type { ObjectiveRule, ScenarioDoc } from '@pme/controller/scenario';
-import { validateScenario } from '@pme/controller/scenario';
+import type { ActionGrade, Administration, ObjectiveRule, PhaseEntry, RuleEdge, ScenarioDoc, ScenarioDocV2 } from '@pme/controller/scenario';
+import { grade, validateScenario } from '@pme/controller/scenario';
 import { version } from '@pme/renderer';
 import { describe, expect, it } from 'vitest';
-import { axisRange, drugTotals, facts, judged, marks, objectives, perMinute, span, steps, verdict } from './debrief.ts';
+import { axisRange, drugTotals, facts, gradesOf, judged, marks, objectives, perMinute, report3, span, steps, verdict } from './debrief.ts';
 import { debriefJson } from './debrief-export.ts';
 import { keyMoments, keyTimes } from './debrief-moments.ts';
 import { emptyRun, type Row, type RunData, type Sample } from './record.ts';
 import { cardOf } from './scenarios.ts';
+import { drugWords } from './glossary.ts';
+import mhV2 from './showcase/showcase-mh-v2.json';
 
 /** A two-state case (the showcase cards' words may change). */
 const DOC = { schema: 'pme-scenario/1', id: 'case', title: 'Case', initialState: 'awake', states: [{ id: 'awake', label: 'Awake' }, { id: 'induced', label: 'Induced' }] } as const;
@@ -392,5 +394,74 @@ describe('IP8: the steps, the judged objectives and the marks', () => {
       { t: 25, kind: 'restore', text: 'Returned to bookmark Mark 1 at 00:20' },
     ]);
     expect(marks(d)).toEqual([{ t: 20, label: 'Mark 1 at 00:20', kind: 'good', note: 'called it' }, { t: 30, label: 'Bookmark 1 at 00:30', undone: 1 }]);
+  });
+});
+
+describe('F7: a pme-scenario/2 run — the action table, outcomes, violations, judged rows and pme-debrief/3', () => {
+  const MH2 = mhV2 as unknown as ScenarioDocV2;
+  /** The MH /2 card with one outcome (the card has none yet), for the outcome rows. */
+  const DOC2: ScenarioDocV2 = { ...MH2, outcomes: [{ id: 'etco2Down', text: 'EtCO₂ below 40 within 10 min of the first dantrolene', rule: { value: { var: 'etco2', op: '<', value: 40 } }, anchor: 'action:dantrolene', withinS: 600 }] };
+  const phases: PhaseEntry[] = [{ id: 'baseline', t: 0, exitT: 400, rule: 'start' }, { id: 'latent', t: 400, rule: 'enter:latent' }];
+  const admin: Administration[] = [
+    { seq: 1, t: 470, source: 'action', actionId: 'callCrisis', kind: 'vaporiser', settings: { dialPct: 0, fgfLpm: 10 }, result: { accepted: true } },
+    { seq: 2, t: 480, source: 'sheet', kind: 'drug', drugId: 'dantrolene', dose: 200, unit: 'mg', route: 'im', result: { accepted: true } },
+    { seq: 3, t: 500, source: 'action', actionId: 'dantrolene', kind: 'drug', drugId: 'dantrolene', dose: 2.5, unit: 'mg/kg', perKg: 2.5, route: 'iv', result: { accepted: true } },
+  ];
+  const edges: RuleEdge[] = [{ rule: 'action:callCrisis:anchor', t: 420, value: true }, { rule: 'outcome:etco2Down', t: 800, value: true }, { rule: 'judged:nameMh', t: 410, value: true }];
+  const nameMh = drugWords(MH2.judged?.[0]?.text ?? '');
+  const d2: RunData = {
+    ...emptyRun('M 35 y 80 kg', 80, 0), doc: DOC2, format: 2, phases, admin, edges,
+    rows: [{ t: 0, kind: 'scenario', text: 'Scenario loaded: MH' }, { t: 450, kind: 'note', text: `Objective met: ${nameMh}` }],
+    samples: [sample(0), sample(900)],
+  };
+
+  it('the grades are grade() on the copied inputs, final, at the run’s end (the panel’s function)', () => {
+    expect(gradesOf(d2)).toEqual(grade(DOC2, phases, admin, edges, 900, { final: true }));
+    expect(gradesOf(run([]))).toBeNull(); // a /1 run
+    expect(gradesOf({ ...d2, format: undefined })).toBeNull(); // a /2 card without copied inputs (a record from before F7)
+  });
+
+  it('pme-debrief/3: its keys in order; actions, outcomes, violations and judged rows in the plan’s shape', () => {
+    const j = JSON.parse(debriefJson(d2, 'abc1234 2026-10-31'));
+    expect(j.schema).toBe('pme-debrief/3');
+    expect(Object.keys(j)).toEqual(['schema', 'version', 'build', 'record', 'phases', 'actions', 'outcomes', 'violations', 'judged', 'facts', 'keyTimes', 'keyMoments', 'minutes', 'marks']);
+    expect(j.version).toBe(version);
+    expect(j.record).toEqual(JSON.parse(JSON.stringify(d2)));
+    expect(j.phases).toEqual(phases);
+    const g = grade(DOC2, phases, admin, edges, 900, { final: true });
+    expect(j.actions).toHaveLength(g.actions.length);
+    for (const a of j.actions) expect(Object.keys(a)).toEqual(['id', 'label', 'kind', 'grade', 'lines', 'dueT', 'givenT', 'windowS', 'repeats', 'admin']);
+    const dant = j.actions.find((a: { id: string }) => a.id === 'dantrolene');
+    const gd = g.actions.find((a) => a.id === 'dantrolene') as ActionGrade;
+    expect(dant).toEqual({ id: 'dantrolene', label: 'Dantrolene 2.5 mg/kg', kind: 'drug', grade: gd.grade, lines: gd.lines, dueT: 470, givenT: 500, windowS: 300, repeats: [], admin: [2, 3] });
+    expect(dant.lines).toContain('route im not allowed');
+    expect(j.actions.find((a: { id: string }) => a.id === 'cpr')).toMatchObject({ grade: 'not applicable', dueT: null, givenT: null, windowS: null });
+    expect(j.outcomes).toEqual([{ id: 'etco2Down', text: DOC2.outcomes?.[0]?.text, status: 'reached', t: 800, why: 'Reached at 13:20, 5 min 00 s after Dantrolene 2.5 mg/kg (within 10 min 00 s asked).' }]);
+    expect(j.violations).toEqual([{ t: 480, seq: 2, text: 'Dantrolene IM: no effect on the MH, and the solution (pH about 9.5) injures the tissue', harm: 'not modelled' }]);
+    expect(j.judged).toEqual([{ id: 'nameMh', text: MH2.judged?.[0]?.text, kind: 'recognition', fromT: 410, pressedT: 450 }]);
+    expect(j.marks).toEqual([]);
+  });
+
+  it('an outcome not reached says why; a judged row never pressed has pressedT null', () => {
+    const late: RunData = { ...d2, edges: edges.filter((e) => !e.rule.startsWith('outcome:')), rows: d2.rows.slice(0, 1) };
+    const r = report3(late);
+    expect(r?.outcomes).toEqual([{ id: 'etco2Down', text: DOC2.outcomes?.[0]?.text, status: 'not reached', t: null, why: 'Not reached within 10 min 00 s of Dantrolene 2.5 mg/kg (from 08:20).' }]);
+    expect(r?.judged[0]).toMatchObject({ fromT: 410, pressedT: null });
+    const never: RunData = { ...late, admin: admin.slice(0, 1) };
+    expect(report3(never)?.outcomes[0]?.why).toBe('Not reached: Dantrolene 2.5 mg/kg was never given.');
+  });
+
+  it('objectives(), steps() and judged() are the /1 readers: empty for a /2 run; a /1 run’s export is pme-debrief/2 with its keys', () => {
+    expect([objectives(d2), steps(d2), judged(d2)]).toEqual([[], [], []]);
+    const j = JSON.parse(debriefJson(run([apnoea(66)]), 'b'));
+    expect(j.schema).toBe('pme-debrief/2');
+    expect(Object.keys(j)).toEqual(['schema', 'version', 'build', 'record', 'objectives', 'facts', 'keyTimes', 'keyMoments', 'minutes', 'steps', 'judged', 'marks']);
+    expect(report3(run([]))).toBeNull();
+  });
+
+  it('keyTimes: "recognition" reads the judged row of kind recognition — from its display clock to the instructor’s press', () => {
+    expect(keyTimes(d2)[0]).toEqual({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: 410, fromLabel: 'etco2 > 45', toT: 450, state: 'measured' });
+    const unticked = keyTimes({ ...d2, rows: d2.rows.slice(0, 1), edges: [] })[0];
+    expect(unticked).toEqual({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: 0, fromLabel: 'start', toT: null, state: 'notTicked' });
   });
 });

@@ -5,7 +5,9 @@ import { createEngine, type EngineEvent } from '@pme/engine-core';
 import { createInProcessHub, HostSession, type HostTarget, type WireEvent } from '@pme/controller';
 import { BUILTIN_SCENARIOS, engineOptionsOf, ScenarioDriver, validateScenario } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
+import type { Administration, PhaseEntry, RuleEdge } from '@pme/controller/scenario';
 import induction from './showcase/showcase-induction.json';
+import mhV2 from './showcase/showcase-mh-v2.json';
 import { RunRecord } from './record.ts';
 
 const applied = (tick: number, command: Record<string, unknown>, extra: Record<string, unknown> = {}): WireEvent =>
@@ -296,4 +298,41 @@ describe('the run record', () => {
     expect(r.data.samples.filter((s) => s.t >= end.fromT && s.t <= end.toT).length).toBeGreaterThanOrEqual(290);
     hs.close();
   }, 60_000);
+
+  it('F7: a /2 run copies the runner\'s phases, administrations and edges (each second and on a phase); they survive keep()/resume() and a restore', () => {
+    const pr: { phases: PhaseEntry[]; admin: Administration[]; edges: RuleEdge[] } = { phases: [{ id: 'baseline', t: 0, rule: 'start' }], admin: [], edges: [] };
+    const r = new RunRecord(() => ({ patient: 'M 35 y 80 kg', weightKg: 80 }), () => 1_000, () => pr);
+    r.wire(applied(0, { type: 'scenario', action: 'load', doc: mhV2 }));
+    r.wire({ type: 'scenario', t: 0, stateId: 'baseline' } as WireEvent);
+    expect(r.data).toMatchObject({ format: 2, phases: [{ id: 'baseline', t: 0, rule: 'start' }], admin: [], edges: [] });
+    pr.admin.push({ seq: 1, t: 30.5, source: 'action', actionId: 'premedicate', kind: 'drug', drugId: 'midazolam', dose: 2, unit: 'mg', route: 'iv', result: { accepted: true } });
+    r.engine(meas(30.5, 99)); // the second's sample: the copy goes with it
+    expect(r.data.admin).toHaveLength(1);
+    pr.edges.push({ rule: 'judged:nameMh', t: 40, value: true });
+    r.engine(meas(40.2, 99));
+    pr.phases[0]!.exitT = 60; // the runner closes the entry in place: the copy is not a reference to it
+    pr.phases.push({ id: 'latent', t: 60, rule: 'enter:latent' });
+    r.wire({ type: 'scenario', t: 60, stateId: 'latent' } as WireEvent); // a phase: copied at once
+    expect(r.data.phases).toEqual([{ id: 'baseline', t: 0, exitT: 60, rule: 'start' }, { id: 'latent', t: 60, rule: 'enter:latent' }]);
+    pr.phases[1]!.exitT = 999;
+    expect(r.data.phases?.[1]).toEqual({ id: 'latent', t: 60, rule: 'enter:latent' });
+    delete pr.phases[1]!.exitT;
+    // the page reloads: the kept record goes on without the driver
+    const kept = JSON.parse(JSON.stringify(r.keep())) as ReturnType<RunRecord['keep']>;
+    const b = new RunRecord(() => ({ patient: 'M 35 y 80 kg', weightKg: 80 }), () => 1_000);
+    b.resume(kept, 61);
+    expect(b.data).toMatchObject({ format: 2, phases: r.data.phases, admin: r.data.admin, edges: r.data.edges });
+    // a return to a bookmark at 35 s: the runner's state goes back, and so does the copy (the kept course)
+    pr.phases.splice(1);
+    delete pr.phases[0]!.exitT;
+    pr.edges.splice(0);
+    r.wire({ type: 'timeline', t: 35, tick: 1750, cause: 'restore' } as WireEvent);
+    expect(r.data).toMatchObject({ phases: [{ id: 'baseline', t: 0, rule: 'start' }], admin: [{ seq: 1 }], edges: [] });
+    // a /1 run carries none of it
+    const one = new RunRecord(() => ({ patient: 'M 35 y 80 kg', weightKg: 80 }), () => 1_000, () => pr);
+    one.wire(applied(0, { type: 'scenario', action: 'load', doc: induction }));
+    one.wire({ type: 'scenario', t: 0, stateId: 'awake' } as WireEvent);
+    one.engine(meas(1, 99));
+    expect(Object.keys(one.data)).toEqual(['startedAt', 'lastWall', 'patient', 'weightKg', 'doc', 'rows', 'samples', 'returns']);
+  });
 });

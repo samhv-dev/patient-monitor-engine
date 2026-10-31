@@ -531,7 +531,26 @@
   {"en": "What did you notice first on the monitor, and when?", "fa": "نخستین چیزی که روی مانیتور دیدید چه بود و چه زمانی؟", "note": "Owner list item 3 (prompt 1).", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign B)", "reviewed": false},
   {"en": "Take one key moment: what were you thinking then, and what did you do?", "fa": "یکی از لحظه‌های کلیدی را در نظر بگیرید: در آن لحظه به چه فکر می‌کردید و چه کردید؟", "note": "Owner list item 3 (prompt 2).", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign B)", "reviewed": false},
   {"en": "One thing you will keep doing, and one thing you will do differently.", "fa": "یک کار که ادامه می‌دهید، و یک کار که دفعه‌ی بعد به شیوه‌ای دیگر انجام می‌دهید.", "note": "Owner list item 3 (prompt 3).", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign B)", "reviewed": false},
-  {"en": "Next time, run the case again from its start and compare your key moments.", "fa": "دفعه‌ی بعد، این مورد را از ابتدا دوباره اجرا کنید و لحظه‌های کلیدی دو اجرا را با هم مقایسه کنید.", "note": "Owner list item 3 (next step).", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign B)", "reviewed": false}
+  {"en": "Next time, run the case again from its start and compare your key moments.", "fa": "دفعه‌ی بعد، این مورد را از ابتدا دوباره اجرا کنید و لحظه‌های کلیدی دو اجرا را با هم مقایسه کنید.", "note": "Owner list item 3 (next step).", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign B)", "reviewed": false},
+  {"en": "Judged by the instructor", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
+  {"en": "Not ticked", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
+  {"en": "The instructor did not tick it.", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
+  {"en": "This run has no rows for the instructor to judge.", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
+  {"en": "Due", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
+  {"en": "Grade", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
+  {"en": "met", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
+  {"en": "deviation", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
+  {"en": "overdue", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
+  {"en": "failed", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
+  {"en": "due", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
+  {"en": "not applicable", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
+  {"en": "reached", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
+  {"en": "not reached", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
+  {"en": "harm not modelled", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
+  {"en": "No contraindicated administration.", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
+  {"en": "Actions on the card", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
+  {"en": "Outcomes", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
+  {"en": "Violations", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false}
  ],
  "templates": [
   {"en": "{t} simulated · {span} on the clock", "fa": "{t} زمان شبیه‌سازی‌شده · {span} زمان واقعی", "source": "apps/demo/src/app/views/debrief.ts", "reviewed": false},
@@ -643,6 +662,7 @@
   {"en": "asked ≤ {span}", "fa": "مهلت تعیین‌شده: حداکثر {span}", "note": "Same wording as the existing «مهلت تعیین‌شده: {span}».", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign B)", "reviewed": false},
   {"en": "{span} of {span}", "fa": "{span} از {span}", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign B)", "reviewed": false},
   {"en": "first lost {t}", "fa": "نخستین قطع نبض: {t}", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign B)", "reviewed": false},
-  {"en": "{c} more in the timeline", "fa": "{c} مورد دیگر در خط زمانی", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign B)", "reviewed": false}
+  {"en": "{c} more in the timeline", "fa": "{c} مورد دیگر در خط زمانی", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign B)", "reviewed": false},
+  {"en": "repeat {c}", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false}
  ]
 }

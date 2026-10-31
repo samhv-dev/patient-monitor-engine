@@ -18,6 +18,17 @@ the public API is what the packages export (see the API reference), the `pme-sce
   conditional repeats, live strings), the outcomes, the contraindication violations and the judged rows' clocks.
   `CommandBase` gains the metadata field `actionId`. The MH `/2` card's demo path prints its grade table at 24:31.
 
+- **The Debrief and its export for a `pme-scenario/2` run (F7, post-demo, draft).** The run record copies the host
+  phase runner's phases, administrations and rule edges each second and on every phase, so the Debrief, its export and
+  a page reload never need the driver; a `/1` run's record is unchanged. For a `/2` run the Debrief grades with F3's
+  `grade()` (final, at the run's end: the panel's function on the panel's inputs) and prints the judged rows on page 1
+  (in place of the objectives) and the action table (grade, due and given times, the criteria lines, repeats), the
+  outcomes and the violations in place of the steps; the recognition key time runs from the judged row's display clock
+  to the instructor's press. The export of a `/2` run is `pme-debrief/3` (`phases`, `actions`, `outcomes`,
+  `violations`, `judged` in place of `objectives`, `steps` and `/2`'s `judged`); a `/1` run still exports
+  `pme-debrief/2`, unchanged. `debrief-fa.mjs` reads `/3`; its new words are in `fa-debrief.json` as English keys
+  awaiting the Persian (`"fa": null`, F7.6).
+
 - **Instructor v2 reads a `pme-scenario/2` card (F6, post-demo, draft).** The strip lists the phases with their entry
   times; a future phase reads "auto" and is not a button (a phase is never entered by a press). The cue box names the
   phase, "entered by its own rule" with the rule in words and its hold, the learners' cue and the Say line. ACTION lists
