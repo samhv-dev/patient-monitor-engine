@@ -4,7 +4,7 @@
 // its own label and counter ("Mark 2 at 08:20", plan R10), so the Log tab's bookmarks and the marks never share a name.
 // It carries its kind (IP2's `kind`) and, when the note field (filled by the sheets slot) holds text, that text as
 // its note (IP2's `note`); the field is then cleared (answer 13).
-import type { MarkKind as ControllerMarkKind } from '@pme/controller';
+import { isV2, type MarkKind as ControllerMarkKind } from '@pme/controller';
 import type { Link } from '../link.ts';
 import { hrefOf } from '../router.ts';
 import { clock, h, toast } from '../ui.ts';
@@ -69,7 +69,7 @@ export function mountDock(link: Link): Dock {
     // Debrief is lit once the case has ended (as today's session-bar link)
     refresh: () => {
       const sv = link.ctl.scenario;
-      debrief.dataset.ready = String(!!sv.doc && !sv.current()?.transitions?.length);
+      debrief.dataset.ready = String(sv.doc && isV2(sv.doc) ? sv.ended() : !!sv.doc && !sv.current()?.transitions?.length); // /2: F2's ended() (F6)
     },
   };
 }

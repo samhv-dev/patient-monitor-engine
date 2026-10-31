@@ -148,6 +148,10 @@ export class PhaseRunner {
   get edges(): ReadonlyArray<RuleEdge> {
     return this.s.edges;
   }
+  /** How many times each action has been taken (Instructor v2's "given ×n", F6). */
+  get takings(): Readonly<Record<string, number>> {
+    return this.s.takings;
+  }
   get admin(): ReadonlyArray<Administration> {
     return this.s.admin;
   }

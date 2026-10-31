@@ -12,7 +12,7 @@
 // (the stages it leads to first; two of one step read "<a> or <b>"). Names are never cut: when the chips do not fit,
 // the padding tightens, then the hint goes, then the strip scrolls sideways.
 import './state.css';
-import { asV1, isV2, type AnyScenarioDoc, type ScenarioDoc } from '@pme/controller';
+import { asV1, isV2, type AnyScenarioDoc } from '@pme/controller';
 import { rowsOf, stagesOf, type Stage } from '../card-read.ts';
 import type { Link } from '../link.ts';
 import { clock, confirmDialog, h, toast } from '../ui.ts';
@@ -89,9 +89,13 @@ export type StripItem =
   | { kind: 'later'; n: number };
 
 /** The stage-to-stage edges of the card: a transition (`to` or `else`) of any state of a stage into another stage. */
-function edgesOf(doc: ScenarioDoc, stages: readonly Stage[]): Map<string, Set<string>> {
+function edgesOf(doc: AnyScenarioDoc, stages: readonly Stage[]): Map<string, Set<string>> {
   const home = new Map(stages.flatMap((g) => g.states.map((s) => [s, g.id] as const)));
   const out = new Map(stages.map((g) => [g.id, new Set<string>()]));
+  if (isV2(doc)) { // a /2 card (F6): a phase leads to its `next`
+    for (const p of doc.phases) for (const to of p.next ?? []) if (to !== p.id) out.get(p.id)?.add(to);
+    return out;
+  }
   for (const s of doc.states)
     for (const t of s.transitions ?? [])
       for (const to of [t.to, t.else]) {
@@ -111,8 +115,7 @@ function edgesOf(doc: ScenarioDoc, stages: readonly Stage[]): Map<string, Set<st
  * (slid to keep WINDOW stages at either end of the line), moved by `offset` stages (the arrows; 0 = now).
  */
 export function stripModel(doc: AnyScenarioDoc, stateId: string | null, entries: readonly StageEntry[], offset = 0): StripItem[] {
-  if (isV2(doc)) return []; // no stages until F6 reads the phases
-  const stages = stagesOf(doc);
+  const stages = stagesOf(doc); // a /2 card's stages are its phases (F6)
   const at = stages.findIndex((g) => stateId !== null && g.states.includes(stateId));
   const last = (id: string) => entries.filter((e) => e.stage === id).at(-1) ?? null;
   type Slot = { stage: Stage; kind: 'past' | 'current' | 'future'; layer: number };
@@ -184,6 +187,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const sv = link.ctl.scenario;
   const chips = h('div', { class: 'ip2-chips' });
   const hint = h('span', { class: 'ip2-strip-hint' }, 'past: return to its start · future: jumps to it (asks once)');
+  const HINT_V1 = hint.textContent as string;
+  const HINT_V2 = 'past: return to its start · future: entered by its own rule';
   el.replaceChildren(chips, hint);
   /** How far the arrows have moved the window from now (stages; 0 = the current stage's window). */
   let offset = 0;
@@ -252,7 +257,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       closePop();
       return;
     }
-    if (docV !== sv.docVersion) (docV = sv.docVersion), (offset = 0), (names = stageNames(stagesOf(doc))), closePop();
+    if (docV !== sv.docVersion) (docV = sv.docVersion), (offset = 0), (names = stageNames(stagesOf(doc))), closePop(), (hint.textContent = isV2(doc) ? HINT_V2 : HINT_V1);
     const entries = stageEntries(doc, historyOf(link), sv, link.simT);
     const items = stripModel(doc, sv.stateId, entries, offset);
     const key = JSON.stringify([docV, offset, items.map((x) => (x.kind === 'fold' || x.kind === 'later' ? [x.kind, x.n] : x.kind === 'future' ? x.stages.map((g) => g.id) : [x.stage.id, x.entry?.t, x.kind === 'current' ? x.open : 0]))]);
@@ -276,8 +281,11 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       else
         x.stages.forEach((g, j) => {
           if (j > 0) kids.push(h('span', { class: 'ip2-or' }, 'or'));
-          const label = asV1(doc)?.states.find((s) => s.id === g.id)?.label ?? 'State';
-          kids.push(chip(g, 'ip2-future', [g.byRule ? h('span', { class: 'ip2-auto' }, 'auto') : null],
+          const v1 = asV1(doc);
+          const label = v1?.states.find((s) => s.id === g.id)?.label ?? 'State';
+          // a /2 phase is entered by its own rule only (Q5): its chip is not a button, and the panel never moves the case
+          if (!v1) kids.push(chip(g, 'ip2-future', [h('span', { class: 'ip2-auto' }, 'auto')], { 'aria-label': `Phase ${(names.get(g.id) ?? '')}: entered by its own rule` }));
+          else kids.push(chip(g, 'ip2-future', [g.byRule ? h('span', { class: 'ip2-auto' }, 'auto') : null],
             { 'aria-label': `Stage ${(names.get(g.id) ?? '')}${g.byRule ? ', entered by a rule' : ''}: jumps to it (asks once)` },
             () => void jump(link, g.id, label)));
         });

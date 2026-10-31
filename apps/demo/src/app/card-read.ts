@@ -2,9 +2,10 @@
 // the strip (hop states folded in), the rows of the ACTION list for a state (steps, automatic rows, judged objectives),
 // the command a step sends, the objectives that ride on a step, and reachability on the card graph. One module for the
 // panel and the debrief, so both read the card the same way. Pure: no DOM, no session; it reads `pme-scenario/1` as the
-// cards already carry it. A `pme-scenario/2` card has no states: every reader here gives it the empty answer (plan F1;
-// F6 reads its phases and actions).
+// cards already carry it. A `pme-scenario/2` card has no states (plan F1): its stages are its PHASES and its rows its
+// open actions, its judged rows and the rules out of the phase (F6); every /1-only reader gives it the empty answer.
 import { isV2, manualLabel, type AnyScenarioDoc, type CommandInput, type ScenarioDoc, type ScenarioState, type Transition, type When } from '@pme/controller';
+import type { Action, PhaseRule, ScenarioDocV2 } from '@pme/controller/scenario';
 import { HOP_MAX_S, isHop, type ObjectiveRule, type RunEventId } from '@pme/controller/scenario';
 import { drugWords } from './glossary.ts';
 import { SCENARIO_META } from './scenario-meta.ts';
@@ -25,8 +26,9 @@ export interface Stage {
 }
 
 export type Row =
-  /** A manual transition of the state (or a mixed `any`/`all` with a manual inside), numbered in the card's order. */
-  | { kind: 'step'; n: number; index: number; tr: Transition; label: string; title: string; subtitle: string }
+  /** A manual transition of the state (or a mixed `any`/`all` with a manual inside), numbered in the card's order. A /2
+   *  card's action (F6) is a step with its `actionId`; its `tr` only names it (`action:<id>`): a /2 press moves nothing. */
+  | { kind: 'step'; n: number; index: number; tr: Transition; label: string; title: string; subtitle: string; actionId?: string }
   /** A transition no press makes: `vital`, `afterS`, `event` and every other rule-only trigger. Not pressable. */
   | { kind: 'auto'; index: number; tr: Transition; trigger: 'vital' | 'afterS' | 'event' | 'other'; title: string; subtitle: string }
   /** An objective with no rule: the instructor judges it; `objective` is its index in the card's objectives list. */
@@ -69,7 +71,7 @@ function foldOf(doc: ScenarioDoc, s: ScenarioState): string {
 
 /** The stages of the card: its states that are not hops, in document order, each with its hops (answer 2). */
 export function stagesOf(doc: AnyScenarioDoc): Stage[] {
-  if (isV2(doc)) return [];
+  if (isV2(doc)) return doc.phases.map((p) => ({ id: p.id, label: p.label, states: [p.id], byRule: !p.initial }));
   const home = new Map(doc.states.map((s) => [s.id, foldOf(doc, s)]));
   return doc.states.filter((s) => !isHop(s)).map((s) => {
     const states = [s.id, ...doc.states.filter((x) => x.id !== s.id && home.get(x.id) === s.id).map((x) => x.id)];
@@ -113,7 +115,7 @@ function ruleOfMixed(w: When): string | null {
  * whatever its condition (design §2 anti-goals); classifying a row live is the panel's (IP6).
  */
 export function rowsOf(doc: AnyScenarioDoc, stateId: string): Row[] {
-  if (isV2(doc)) return [];
+  if (isV2(doc)) return phaseRowsOf(doc, stateId);
   const trs = stateOf(doc, stateId)?.transitions ?? [];
   const steps: Row[] = [];
   const autos: Row[] = [];
@@ -275,4 +277,64 @@ export function withStart(doc: AnyScenarioDoc, history: History, startT: number)
   const h0 = history[0];
   if (!h0 || (h0.stateId === doc.initialState && h0.transitionId === undefined) || h0.t < startT) return history;
   return [{ t: startT, stateId: doc.initialState }, ...history];
+}
+
+// ---- a pme-scenario/2 card (plan F6) ----
+
+/** The open actions of phase `phaseId` (in the card's order), then its judged rows, then the rules out of the phase: the
+ *  /2 rows of the ACTION list. An action is open in the phases it names (design §5); the panel never refuses anything
+ *  else, which the sheets give. */
+export function phaseRowsOf(doc: ScenarioDocV2, phaseId: string): Row[] {
+  const steps: Row[] = doc.actions.filter((a) => a.phases.includes(phaseId)).map((a, i) => ({
+    kind: 'step', n: i + 1, index: doc.actions.indexOf(a), tr: { id: `action:${a.id}`, to: phaseId, when: { manual: { label: a.label } } },
+    label: a.label, title: a.label, subtitle: actionWords(a), actionId: a.id,
+  }));
+  const judged: Row[] = (doc.judged ?? []).map((j, i) => ({ kind: 'judged', n: steps.length + i + 1, objective: i, text: j.text, title: drugWords(j.text), subtitle: 'you judge it' }));
+  const phase = doc.phases.find((p) => p.id === phaseId);
+  const autos: Row[] = (phase?.next ?? []).flatMap((id, index) => {
+    const p = doc.phases.find((x) => x.id === id);
+    if (!p?.enter) return [];
+    return [{ kind: 'auto', index, tr: { id: `enter:${id}`, to: id, when: { manual: { label: p.label } } }, trigger: 'other', title: p.label, subtitle: `${p.cue ? `${p.cue} · ` : ''}when ${phaseRuleWords(p.enter, doc)}${p.holdS ? `, held ${p.holdS} s` : ''}` } as Row];
+  });
+  return [...steps, ...judged, ...autos];
+}
+
+/** A /2 action's prescription in words, for its row's subtitle ("not graded" for a setup action). */
+export function actionWords(a: Action): string {
+  const parts: string[] = [];
+  const d = a.drug?.dose;
+  if (d?.min !== undefined && d.max !== undefined) parts.push(`${d.min}–${d.max} ${d.unit}`);
+  if (a.drug?.route) parts.push(a.drug.route.set.map((r) => r.toUpperCase()).join('/'));
+  if (a.window) parts.push(`within ${Math.round(a.window.withinS / 60 * 10) / 10} min of ${anchorWords(a.window.anchor)}`);
+  if (a.precondition) parts.push(`when ${phaseRuleWords(a.precondition)}`);
+  if (a.repeatWhile) parts.push(`again every ${Math.round((a.repeatWhile.intervalS.min ?? 0) / 60)}–${Math.round((a.repeatWhile.intervalS.max ?? 0) / 60)} min while ${phaseRuleWords(a.repeatWhile.rule)}`);
+  if (a.graded === false) parts.push('not graded');
+  return parts.join(' · ') || 'press to give';
+}
+
+function anchorWords(x: Action['window'] extends infer W ? (W extends { anchor: infer A } ? A : never) : never): string {
+  if (typeof x !== 'string') return phaseRuleWords(x.rule);
+  if (x === 'start') return 'the start';
+  if (x === 'pulseLoss') return 'the pulse loss';
+  if (x === 'rosc') return 'ROSC';
+  const [kind, id] = x.split(':');
+  return kind === 'phase' ? `"${id}"` : `the "${id}" action`;
+}
+
+const VAR_WORDS: Record<string, string> = {
+  etco2: 'EtCO₂', hr: 'HR', tempCore: 'core temperature', mhActivity: 'MH activity', ph: 'pH', dantroleneE: 'dantrolene effect',
+  setMinuteVentilationLMin: 'set minute ventilation', k: 'K⁺', sbp: 'SBP', map: 'MAP', spo2: 'SpO₂', lactate: 'lactate',
+};
+const varWords = (v: string): string => VAR_WORDS[v] ?? v;
+
+/** A /2 phase rule in words: "EtCO₂ > 45 and EtCO₂ rising and set minute ventilation unchanged since the phase began". */
+export function phaseRuleWords(r: PhaseRule, doc?: ScenarioDocV2): string {
+  if ('value' in r) return `${varWords(r.value.var)} ${r.value.op} ${r.value.value}${r.value.forS ? ` for ${r.value.forS} s` : ''}`;
+  if ('slope' in r) return `${varWords(r.slope.var)} ${r.slope.op === '>' || r.slope.op === '>=' ? 'rising' : 'falling'}`;
+  if ('unchanged' in r) return `${varWords(r.unchanged.var)} unchanged${r.unchanged.since ? ' since the phase began' : ''}`;
+  if ('visited' in r) return `after ${doc?.phases.find((p) => p.id === r.visited)?.label ?? r.visited}`;
+  if ('signal' in r) return r.signal === 'pulseLoss' ? 'no pulse' : r.signal === 'rosc' ? 'a pulse again' : `rhythm ${r.signal.slice(7)}`;
+  if ('all' in r) return r.all.map((x) => phaseRuleWords(x, doc)).join(' and ');
+  if ('any' in r) return r.any.map((x) => (('all' in x) ? `(${phaseRuleWords(x, doc)})` : phaseRuleWords(x, doc))).join(' or ');
+  return `not (${phaseRuleWords(r.not, doc)})`;
 }
