@@ -1,0 +1,61 @@
+/* "Finish the case" (the owner's board "Finish 2", approved 30 October): the dock's button, the strip's amber status
+   line while the clock is stopped, and the Finish pane that takes ACTION's place (a blue frame), with the archive's
+   rows under its buttons (views/archive-list.ts, prefix `ip2-arc`). Every class is `ip2-*`. Tokens: teach2.css. */
+
+/* the dock: Finish beside Debrief, blue */
+.ip2-finish-btn { flex: none; padding: 0 16px; border-color: var(--ip2-blue); color: var(--ip2-blue-text); font-weight: 600; }
+.ip2-finish-btn[aria-pressed='true'] { background: var(--ip2-blue-soft); }
+
+/* the strip grows by the status line's 40 px while finishing, as it does with no case (begin.css) */
+.main[data-route='teach2']:has(.ip2-strip[data-finishing]) { grid-template-rows: 48px 92px auto auto minmax(0, 1fr) auto 64px; }
+.ip2-strip[data-finishing] { display: grid; grid-template: 'chips hint' 52px 'status status' 40px / minmax(0, 1fr) auto; align-items: center; padding: 0; }
+.ip2-strip[data-finishing] > .ip2-chips { grid-area: chips; display: flex; align-items: center; min-width: 0; padding: 0 20px; }
+.ip2-strip[data-finishing] > .ip2-strip-hint { grid-area: hint; margin: 0; padding: 0 20px; }
+.ip2-status.ip2-finishing { border-top-color: var(--ip2-pause-bg); background: #241f10; color: var(--ip2-pause); }
+.ip2-finishing > b { color: var(--ip2-pause); }
+.ip2-finishing .ip2-status-keys { color: var(--ip2-soft); }
+
+/* ACTION becomes the pane (the column head and the rows are hidden then: views/teach2.ts); a blue frame */
+.ip2-action[data-finishing] { padding: 16px 18px; border: 1px solid var(--ip2-blue); background: #171c22; }
+.ip2-finish { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ip2-finish[hidden] { display: none; }
+.ip2-finish-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.ip2-finish-title { margin: 0; font-size: 18px; font-weight: 600; }
+.ip2-finish-hint { font-size: 12px; color: var(--ip2-muted); white-space: nowrap; }
+.ip2-finish-lead { margin: 0; font-size: 14px; color: var(--ip2-soft); }
+.ip2-finish-who { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ip2-muted); }
+.ip2-finish-resident { flex: 1 1 auto; min-width: 0; height: 36px; padding: 0 10px; border: 1px solid var(--ip2-control); border-radius: 6px; background: var(--ip2-page); color: var(--ip2-text); font: inherit; font-size: 15px; }
+.ip2-finish-resident:focus-visible { outline: 2px solid var(--ip2-blue-text); outline-offset: 1px; }
+.ip2-finish-sum { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; color: var(--ip2-soft); }
+.ip2-finish-sum > div { padding: 10px 12px; border: 1px solid var(--ip2-line); border-radius: 8px; background: var(--ip2-card); }
+.ip2-finish-sum b { display: block; color: var(--ip2-text); }
+.ip2-finish-v { display: block; }
+.ip2-finish-saved { margin: 0; font-size: 13px; color: var(--ip2-run-word); }
+.ip2-finish-acts { display: flex; gap: 8px; margin-top: 4px; }
+.ip2-finish-acts > button { flex: none; height: 44px; padding: 0 16px; border: 1px solid var(--ip2-control); border-radius: 8px; background: transparent; color: var(--ip2-text); font-size: 15px; white-space: nowrap; cursor: pointer; }
+.ip2-finish-acts > button:hover { background: var(--ip2-card); }
+.ip2-finish-acts > button:focus-visible { outline: 2px solid var(--ip2-blue-text); outline-offset: 2px; }
+/* white on the board's blue is 3.7:1; one shade darker 5.2:1 (as the rows' keys, IP9) */
+.ip2-finish-acts > .ip2-finish-primary { flex: 1 1 auto; border-color: var(--ip2-blue); background: #2563eb; color: #fff; font-weight: 600; }
+.ip2-finish-acts > .ip2-finish-primary:hover { background: #1d4ed8; }
+.ip2-finish-note { margin: 0; font-size: 12px; color: var(--ip2-muted); } /* the board's #6b7682 is 3.8:1 here: muted keeps 4.5:1 */
+
+/* the archive under the buttons */
+.ip2-finish-archive { margin-top: 6px; border: 1px solid var(--ip2-line); border-radius: 8px; background: var(--ip2-page); font-size: 13px; color: var(--ip2-muted); }
+.ip2-finish-archive > summary { padding: 8px 14px; cursor: pointer; }
+.ip2-arc-more { color: var(--ip2-muted); }
+.ip2-arc-export { padding: 0; border: 0; background: none; color: #8ab4f8; font: inherit; cursor: pointer; }
+.ip2-arc-list { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0 10px 10px; list-style: none; }
+.ip2-arc-row { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border: 1px solid var(--ip2-line); border-radius: 8px; background: var(--ip2-card); color: var(--ip2-text); font-size: 15px; }
+.ip2-arc-row[data-current] { border-color: var(--ip2-run-line); }
+.ip2-arc-n { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 6px; background: var(--ip2-line); font: 600 13px/1 var(--font-plex-mono); }
+.ip2-arc-text { flex: 1 1 auto; min-width: 0; }
+.ip2-arc-title, .ip2-arc-sub { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ip2-arc-sub { margin-top: 2px; font-size: 12px; color: var(--ip2-muted); font-variant-numeric: tabular-nums; }
+.ip2-arc-saved { flex: none; padding: 2px 6px; border: 1px solid var(--ip2-run-line); border-radius: 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--ip2-run-word); }
+.ip2-arc-acts { flex: none; display: inline-flex; align-items: center; font-size: 13px; white-space: nowrap; }
+.ip2-arc-acts > button { padding: 2px 0; border: 0; background: none; color: #8ab4f8; font: inherit; cursor: pointer; }
+.ip2-arc-acts > button + button::before { content: '·'; display: inline-block; margin: 0 6px; color: var(--ip2-muted); }
+.ip2-arc-acts > button:hover, .ip2-arc-export:hover { text-decoration: underline; }
+.ip2-arc-empty { padding: 4px 4px 0; font-size: 13px; color: var(--ip2-muted); }
+.ip2-finish-slot { display: contents; } /* the pane is ACTION's own flex item; hidden, it adds no gap */

@@ -228,7 +228,8 @@ const stateRows = (d: RunData): Row[] => kept(d).filter((r) => r.kind === 'scena
  * (`StepStatus`). Listed: every step taken, and every untaken step an objective asks for. An alternative branch not
  * chosen is not a failure, so an untaken step no objective asks for is left out (the coordinator's rule for IP8).
  * Whether an objective asks for an untaken step, and its status then, is card-read.ts `untakenStatus`: the one
- * reading the ACTION list (teach2/rows.ts) shares, so the list and this table agree by construction.
+ * reading the ACTION list (teach2/rows.ts) shares, so the list and this table agree by construction — except that
+ * an untaken step whose state a press entered on the kept course (from another state of a hub) is done, not listed.
  * Empty without a scenario, and for a record made before the record kept how each state was entered (nothing to
  * tell a press from a rule by).
  */
@@ -260,6 +261,9 @@ export function steps(d: RunData): Step[] {
       let status: StepStatus;
       if (takenT !== null) status = taken.some((y) => y.i > i && (y.takenT as number) < takenT) ? 'out of order' : 'taken';
       else {
+        // done in another visit: a hub's states each have their own button into the same state (the MH card's
+        // Potassium); a press of any of them is the step. A step the card repeats has its own state (dantroleneAgain)
+        if (rows.some((r) => r.ev === `state:${tr.to}` && r.by === 'press')) return [];
         const u = untakenStatus(doc, tr, { stateId: s.id, current: cur, dueT: entered.t, leftT, now }, ev);
         if (!u) return []; // an alternative not chosen, or a step no objective asks for
         status = u.status;

@@ -55,6 +55,8 @@ interface Room {
   peers: Set<Peer>; // non-host
   snapshot: string | null; // raw JSON of the host's latest snapshot message
   awaiting: Set<Peer>;
+  /** The peers the host's last welcome went to, until its snapshot: that snapshot is theirs (null: no welcome since). */
+  welcomed: Set<Peer> | null;
   ackRoutes: Map<string, Peer>; // commandId → issuer
   emptySince: number | null;
 }
@@ -125,7 +127,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
     let room = rooms.get(code);
     if (!room) {
       if (rooms.size >= maxRooms) return null;
-      room = { code, host: null, peers: new Set(), snapshot: null, awaiting: new Set(), ackRoutes: new Map(), emptySince: null };
+      room = { code, host: null, peers: new Set(), snapshot: null, awaiting: new Set(), welcomed: null, ackRoutes: new Map(), emptySince: null };
       rooms.set(code, room);
       log(`room ${code} created`);
     }
@@ -172,7 +174,8 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
           // (a welcome event of the host's own — its style — carries `replay: true` itself)
           const welcome = m.body.some((e) => (e as { replay?: unknown }).replay === true || (e.type === 'commandApplied' && (e.resolved as { replay?: unknown } | undefined)?.replay === true));
           let lean: string | null | undefined; // the viewers' copy (VIEWER_EVENTS only), made once per message
-          for (const p of welcome ? room.awaiting : room.peers) {
+          if (welcome) room.welcomed = new Set(room.awaiting);
+          for (const p of welcome ? (room.welcomed as Set<Peer>) : room.peers) {
             if (p.role !== 'viewer') {
               raw(p.ws, data);
               continue;
@@ -188,8 +191,16 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
       case 'snapshot':
         if (!isHost) return void dropped++;
         room.snapshot = data;
-        for (const p of room.awaiting) raw(p.ws, data);
-        room.awaiting.clear();
+        {
+          // the snapshot after a welcome is for the peers that welcome went to: a peer that said hello in between keeps
+          // waiting for the host's answer to its own hello (a snapshot without the welcome lost the Case briefing)
+          const to = room.welcomed ?? room.awaiting;
+          for (const p of [...to]) {
+            raw(p.ws, data);
+            room.awaiting.delete(p);
+          }
+          room.welcomed = null;
+        }
         return;
     }
   };
@@ -270,6 +281,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
         if (r.host === holder) r.host = null;
         r.peers.delete(holder);
         r.awaiting.delete(holder);
+        r.welcomed?.delete(holder);
         join(r, m, data);
         for (const d of queued) take(d); // in order; held again if this hello waits on another check
       }));
@@ -307,6 +319,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
       } else {
         room.peers.delete(peer);
         room.awaiting.delete(peer);
+        room.welcomed?.delete(peer);
         tellHost(room);
       }
       if (!room.host && room.peers.size === 0) room.emptySince = Date.now();
