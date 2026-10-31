@@ -7,14 +7,19 @@
 // Which untaken step an objective asks for, its window and "failed" are card-read.ts `standingOf` / `untakenStatus`, the
 // one reading the Debrief's steps table (debrief.ts `steps`) also uses, so the two agree by construction.
 //
-// The rows of the list are the CURRENT stage's (its own state's rows; a hop shows the stage it folds into). Every step
-// of the stage stays in the list whatever its look, so nothing the card offers is hidden: a step taken that the card
-// still offers (the treatment fan-out loops back into its stage) stays a pressable green row. Rows the case has left
-// move to "Finished": the taken, failed and fired rows of the stages passed, and the judged objectives met.
-// Nothing here ever disables a row: the look is all a status changes.
-import type { ScenarioDoc, Transition } from '@pme/controller';
+// The rows of the list are the CURRENT stage's (its own state's rows; a hop shows the stage it folds into). A /1 card's
+// spoke (a hop: a state whose only exit is a short `afterS` back to its hub, card-read.ts `isHop`) is an action of its
+// hub stage, not a stage: the treatment fan-out's press keeps the hub's visit, its entry time and its other rows' looks.
+// A row is open until it is finished; a finished row moves to "Finished" at once, in every stage (the clinical owner's
+// report of 30 October): a step taken (green), a rule that fired (amber), a step failed (red), a judged objective met.
+// The mark names the transition taken: a step with no rule of its own is a press whenever it fired (card-read.ts
+// `byItself`), never "fired by its own rule", whatever the record's attribution; a spoke's return is not a row.
+// The look is all a status changes, with one exception: a step the runner would refuse now (a press guarded by a vital in
+// its `all`, the MH card's Cool below 38.5 °C core: runner.ts `trigger`) is "waiting" (its subtitle already names the rule, card-read.ts),
+// shows the value against it and offers no press until the rule holds.
+import type { ScenarioDoc, Transition, When } from '@pme/controller';
 import type { RunEventId } from '@pme/controller/scenario';
-import { conditionNotMet, objectivesOf, rowsOf, stagesOf, standingOf, untakenStatus, type Evidence, type Row, type Stage } from '../card-read.ts';
+import { byItself, conditionNotMet, objectivesOf, rowsOf, stagesOf, standingOf, untakenStatus, type Evidence, type Row, type Stage } from '../card-read.ts';
 import { eventWords, isEvent, mmss, trendMeta, verdict } from '../debrief.ts';
 import { drugWords } from '../glossary.ts';
 import type { ClinicalLogEntry } from '../link.ts';
@@ -23,12 +28,15 @@ import { showVital, vitalOf } from '../vitals.ts';
 import type { StateVar } from '@pme/engine-core';
 
 /** The five looks of the design's row-state table (§3.5), with the A rows' two and the judged objective's "met". */
-export type Look = 'current' | 'ready' | 'unmet' | 'taken' | 'met' | 'failed' | 'pending' | 'fired';
+export type Look = 'current' | 'ready' | 'unmet' | 'waiting' | 'taken' | 'met' | 'failed' | 'pending' | 'fired';
 
 export interface LiveRow {
   row: Row;
   /** The stage the row belongs to. */
   stage: string;
+  /** When the visit of that stage began (sim seconds): Finished groups its rows under it (the owner's report of 30
+   *  October). */
+  entered: number;
   look: Look;
   /** The subtitle with the live part (a timer, a condition) appended. */
   subtitle: string;
@@ -46,9 +54,9 @@ export interface LiveRow {
 
 export interface Board {
   stage: Stage | null;
-  /** The current stage's rows in IP3's order (steps, judged objectives numbered on, automatic rows). */
+  /** The current stage's open rows in IP3's order (steps, judged objectives numbered on, automatic rows). */
   list: LiveRow[];
-  /** Every taken, failed, fired or met row the case has left, in time order. */
+  /** Every taken, failed, fired or met row, of the stages passed and of the current one, in time order. */
   finished: LiveRow[];
   /** The off-card actions taken in this stage, from the log (answer 20). */
   offCard: ClinicalLogEntry[];
@@ -157,11 +165,12 @@ function visitsOf(src: Source, home: Map<string, string>): Visit[] {
 }
 
 const firedAt = (v: Visit, id: string): number | null => v.fired.find((f) => f.id === id)?.t ?? null;
-/** Whether the host's record says transition `id`, fired at `t`, was fired by its own rule, not by a press (IP8's `by`;
- *  a follower has no record and cannot tell, so its mixed steps read taken). The Debrief's steps table reads the same
- *  field: such a step is not taken there either. */
-const byItsRule = (src: Source, id: string, t: number): boolean =>
-  !!src.record?.rows.some((r) => r.kind === 'scenario' && r.undone === undefined && r.tr === id && r.by === 'rule' && Math.abs(r.t - t) <= 0.05);
+/** Whether step `tr`, fired at `t`, was fired by its own rule, not by a press: only a step with a rule of its own can
+ *  be (card-read.ts `byItself`: a mixed `any`, answer 4's "or by itself"), and then the host's record says which (IP8's
+ *  `by`; a follower has no record and cannot tell, so its mixed steps read taken). A step that is a press only is taken
+ *  whatever the record's `by` reads (the owner's report of 30 October: the Cool press read "fired by its own rule"). */
+const byItsRule = (src: Source, tr: Transition, t: number): boolean =>
+  byItself(tr.when) && !!src.record?.rows.some((r) => r.kind === 'scenario' && r.undone === undefined && r.tr === tr.id && r.by === 'rule' && Math.abs(r.t - t) <= 0.05);
 /** Taken after a step with a higher index of the same stage visit was taken. */
 function outOfOrder(v: Visit, rows: readonly Row[], r: Extract<Row, { kind: 'step' }>, t: number): boolean {
   return rows.some((o) => o.kind === 'step' && o.index > r.index && (firedAt(v, o.tr.id) ?? Infinity) < t);
@@ -175,6 +184,16 @@ const show = (v: string, x: number): string => {
 };
 /** The share of an A row's bar the value fills before its rule is met; the hold fills the rest (answer 8). */
 export const VALUE_PART = 0.7;
+/** The vital in a press's `all` that does not hold now, as the runner refuses the press for it (runner.ts `trigger`),
+ *  else null. A value not yet seen (no state event) never holds a press back. */
+function guardUnmet(w: When, values: Source['values']): Extract<When, { vital: unknown }> | null {
+  if (!('all' in w)) return null;
+  return (w.all.find((c) => {
+    if (!('vital' in c)) return false;
+    const v = values?.[c.vital.var];
+    return v !== undefined && Number.isFinite(v) && !(OP_MET[c.vital.op] ?? (() => false))(v, c.vital.value);
+  }) ?? null) as Extract<When, { vital: unknown }> | null;
+}
 /** How near an A row is (answer 8): its value against the threshold, from where the stage began, times the runner's
  *  hold fraction on the host. */
 function autoBar(src: Source, visit: Visit, tr: Transition): { progress: number | null; right: string } {
@@ -201,7 +220,7 @@ function autoBar(src: Source, visit: Visit, tr: Transition): { progress: number 
 // ---- the off-card actions ----
 /** The log lines that are not a clinical action: the clock, the scenario's own commands (a step's press is
  *  "Scenario event"), marks and returns (describe.ts `describeCommand`). */
-const NOT_AN_ACTION = /^(Simulation (paused|resumed)|Speed ×|Fast-forward|Time changed|Scenario|Bookmark|Returned to bookmark)/;
+export const NOT_AN_ACTION = /^(Simulation (paused|resumed)|Speed ×|Fast-forward|Time changed|Scenario|Bookmark|Returned to bookmark)/;
 
 /** The board of the current stage. */
 export function classify(src: Source): Board {
@@ -210,6 +229,7 @@ export function classify(src: Source): Board {
   const visits = visitsOf(src, home);
   const visit = visits.at(-1) as Visit;
   const stage = stages.find((g) => g.id === visit.stage) ?? null;
+  const here = stage?.label ?? 'Stage';
   const rows = rowsOf(doc, visit.stage);
   const d = src.record ?? ({ doc } as RunData); // eventWords reads only the card's state labels
   // a follower cannot see the values a condition names: it never fades a step for one (the step stays "ready")
@@ -219,7 +239,7 @@ export function classify(src: Source): Board {
   const ev: Evidence = { first: (w, from) => firstT(src, w, from), met: (rule) => rec !== null && verdict(rule, rec).status === 'met' };
   const lives: LiveRow[] = [];
   const finished: LiveRow[] = [];
-  const base = (row: Row): LiveRow => ({ row, stage: visit.stage, look: 'ready', subtitle: row.subtitle, right: '', overdue: null, outOfOrder: false, at: null, progress: null });
+  const base = (row: Row): LiveRow => ({ row, stage: visit.stage, entered: visit.t0, look: 'ready', subtitle: row.subtitle, right: '', overdue: null, outOfOrder: false, at: null, progress: null });
 
   let expected = false;
   for (const row of rows) {
@@ -237,20 +257,26 @@ export function classify(src: Source): Board {
       else lives.push({ ...live, look: 'pending', ...autoBar(src, visit, row.tr) });
       continue;
     }
+    // a step fired in this visit (a spoke's press, the hub still current): finished, into the fold at once
     const taken = firedAt(visit, row.tr.id);
-    if (taken !== null && byItsRule(src, row.tr.id, taken)) {
+    if (taken !== null && byItsRule(src, row.tr, taken)) {
       // a mixed step its own rule fired (answer 4's "or by itself"): the case moved by itself, as an A row's would
-      lives.push({ ...live, look: 'fired', at: taken, right: mmss(taken), subtitle: `${row.subtitle} · fired by its own rule` });
+      finished.push({ ...live, look: 'fired', at: taken, right: mmss(taken), subtitle: `${here} · fired by its own rule` });
       continue;
     }
     if (taken !== null) {
       const ooo = outOfOrder(visit, rows, row, taken);
-      lives.push({ ...live, look: 'taken', at: taken, outOfOrder: ooo, right: mmss(taken), subtitle: `${row.subtitle} · taken${ooo ? ', out of order' : ''}` });
+      finished.push({ ...live, look: 'taken', at: taken, outOfOrder: ooo, right: mmss(taken), subtitle: `${here} · taken${ooo ? ', out of order' : ''}` });
       continue;
     }
     // in a hop of the stage: failed only under the shared rule (an asking objective, its target out of reach)
     if (untakenStatus(doc, row.tr, { stateId: visit.stage, current: src.stateId, dueT: visit.t0, leftT: null, now: src.simT }, ev)?.status === 'failed') {
       finished.push({ ...live, look: 'failed', at: src.simT, right: `failed ${mmss(src.simT)}` });
+      continue;
+    }
+    const guard = guardUnmet(row.tr.when, src.values);
+    if (guard) {
+      lives.push({ ...live, look: 'waiting', subtitle: `${row.subtitle} · not offered yet`, right: `${show(guard.vital.var, src.values?.[guard.vital.var] as number)} → ${show(guard.vital.var, guard.vital.value)}` });
       continue;
     }
     const linked = objectivesOf(doc, row.tr);
@@ -282,10 +308,10 @@ export function classify(src: Source): Board {
     for (const row of vr) {
       if (row.kind === 'judged') continue;
       const t = firedAt(v, row.tr.id);
-      const live: LiveRow = { ...base(row), stage: v.stage };
+      const live: LiveRow = { ...base(row), stage: v.stage, entered: v.t0 };
       if (row.kind === 'auto') {
         if (t !== null) finished.push({ ...live, look: 'fired', at: t, right: mmss(t), subtitle: `${name} · fired, the case moved by itself` });
-      } else if (t !== null && byItsRule(src, row.tr.id, t)) {
+      } else if (t !== null && byItsRule(src, row.tr, t)) {
         finished.push({ ...live, look: 'fired', at: t, right: mmss(t), subtitle: `${name} · fired by its own rule` });
       } else if (t !== null) {
         const ooo = outOfOrder(v, vr, row, t);

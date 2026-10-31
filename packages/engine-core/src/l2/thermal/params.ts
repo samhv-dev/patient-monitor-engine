@@ -17,7 +17,11 @@ export const NEURAXIAL_H = 1.5; // vasodilated skin below the block loses more h
 // heat-model plateau had been fitted with — the depth extrapolation (removed by THR_DEPTH_MAX) had hidden the
 // difference by reading 34.55 at sevoflurane's depth 1.06
 export const VASOCONSTRICT_C = 34.5; // GA vasoconstriction logistic centre [TXT: tables §5c]
-export const VASOCONSTRICT_KCP = 0.5; // k_cp × once constricted [ENG]
+/** k_cp × once constricted (thermoregulatory) [ENG]. For comparison (value unchanged): the two-node model's maximally
+ * constricted ÷ neutral core–skin conductance is (5.28 + 1.163·0.5)/(5.28 + 1.163·6.3) = 0.465 (Gagge 1986, below), but
+ * in absolute terms 0.5·k0 (4.4 W/m²/°C at 70 kg) lies below that model's tissue conduction alone (5.28) — the MH
+ * sympathetic constriction below uses the sourced absolute floor, not this. */
+export const VASOCONSTRICT_KCP = 0.5;
 /**
  * Neuraxial thermoregulation (Sessler DI, Anesthesiology 2000;92:578 and 2008;109:318; Kurz A, Sessler DI, Schroeder M,
  * Kurz M, Anesth Analg 1993;77:721–726): the block abolishes vasoconstriction AND shivering below its level only;
@@ -125,6 +129,32 @@ export const KJ_PER_KCAL = 4.184;
  * perfusion it is unchanged.
  */
 export const TISSUE_K_W_M2_C = 5.28;
+/**
+ * The MH sympathetic surge constricts the skin, so the heat the crisis makes stays in the core (heat.ts `kcp`). In
+ * porcine MH the circulating catecholamines reach ≈ 20 × normal (Gronert GA, Theye RA, Milde JH, Tinker JH,
+ * Anesthesiology 1978;49:330–337), and Sessler (Anesthesiology 2008;109:318–338, "Hyperthermia") names the "intense
+ * peripheral vasoconstriction resulting from circulating catecholamine concentrations 20 times normal" as what impairs
+ * heat loss in an MH crisis; the skin is mottled (European MH Group, Glahn K, Girard T, Hellblom A, Hopkins P et al.,
+ * "Recognising and managing a malignant hyperthermia crisis" v2024, Box 1: "profuse sweating and mottling of skin"
+ * among the early metabolic signs). The surge acts on the α-adrenergic cutaneous vessel (Sessler 2008: the
+ * thermoregulatory vessels "are under alpha adrenergic control and are constricted by norepinephrine"), not through the
+ * hypothalamus whose vasoconstriction threshold the anaesthetic has lowered to ≈ 34.5 °C — so it constricts a skin the
+ * GA keeps dilated. Its floor is the two-node model's maximally constricted core–skin conductance:
+ *   k_min = (TISSUE_K_W_M2_C + BLOOD_HEAT_WH_L_C·SKBF_MIN_L_H_M2)·BSA = 5.86 W/m²/°C·BSA (10.8 W/°C at 70 kg, 175 cm)
+ * against today's GA-dilated 3·k0 (48.9 W/°C, ≈ 18 L/h/m² of skin blood, ≈ 0.56 L/min) — Gagge AP, Fobelets AP,
+ * Berglund LG, ASHRAE Trans 1986;92(2B):709–731: skin blood flow neutral 6.3, bounded 0.5–90 L/h/m², core–skin heat
+ * flow (5.28 + 1.163·SKBF)·(Tcr − Tsk) [P as implemented in pythermalcomfort `two_nodes_gagge` (Tartarini F, Schiavon
+ * S, SoftwareX 2020;12:100578); the 1986 original not reached — VERIFY]. Magnitudes the other sources give: resting
+ * normothermic skin blood flow ≈ 250 mL/min (Charkoudian N, J Appl Physiol 2010;109:1221–1228), 6–8 L/min in
+ * hyperthermia (Charkoudian N, Mayo Clin Proc 2003;78:603–612); ≈ 10 % of cardiac output crosses the acral
+ * arteriovenous shunts, which tonic sympathetic activity keeps nearly closed at room temperature (Sessler 2008).
+ * The constriction is linear in the MH sympathetic drive `mhSympDrive` (mh.ts, 0–1; 1 = the fulminant surge, the
+ * ≈ 20 × catecholamines): k = k_v − drive·max(0, k_v − k_min) [ENG shape: linear between the two sourced ends; no
+ * fitted value]. It never raises a conductance already below the floor.
+ */
+export const SKBF_MIN_L_H_M2 = 0.5;
+/** Blood's heat capacity per litre, W·h/L/°C (4.187 kJ/kg/°C ÷ 3600 at ≈ 1 kg/L): Gagge 1986's c_bl 1.163 [P, as above]. */
+export const BLOOD_HEAT_WH_L_C = 1.163;
 /**
  * E117: the SYMPATHETIC share of MH (its `extraSymp`, endo/core.ts) is front-loaded — it approaches severity × the
  * unsuppressed fraction with this τ from the trigger instead of following the 15-min metabolic ramp, so the heart rate

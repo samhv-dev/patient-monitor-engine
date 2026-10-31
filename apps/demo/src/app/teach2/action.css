@@ -21,11 +21,11 @@ button.ip2-row:focus-visible { outline: 2px solid var(--ip2-blue-text); outline-
 .ip2-row[data-look='current'] .ip2-key { background: #2563eb; color: #fff; } /* IP9: white on the board's blue is 3.7:1; one shade darker is 5.2:1 */
 .ip2-row[data-look='current'] .ip2-row-sub { color: var(--ip2-blue-text); }
 .ip2-row[data-look='current'] .ip2-row-right { color: var(--ip2-pause); }
-/* condition not met: faded, still pressable */
-.ip2-row[data-look='unmet'] { border-color: #262c33; color: var(--ip2-soft); opacity: 0.75; } /* IP9: soft, not muted, so the faded text keeps 4.5:1 (app-accessibility) */
-.ip2-row[data-look='unmet'] .ip2-key { background: #262c33; color: var(--ip2-soft); }
-.ip2-row[data-look='unmet'] .ip2-row-title { color: var(--ip2-soft); }
-.ip2-row[data-look='unmet'] .ip2-row-sub, .ip2-row[data-look='unmet'] .ip2-row-right { color: var(--ip2-soft); }
+/* condition not met: faded, still pressable; waiting (a press the runner would refuse now): the same, no press */
+.ip2-row:is([data-look='unmet'], [data-look='waiting']) { border-color: #262c33; color: var(--ip2-soft); opacity: 0.75; } /* IP9: soft, not muted, so the faded text keeps 4.5:1 (app-accessibility) */
+.ip2-row:is([data-look='unmet'], [data-look='waiting']) .ip2-key { background: #262c33; color: var(--ip2-soft); }
+.ip2-row:is([data-look='unmet'], [data-look='waiting']) .ip2-row-title { color: var(--ip2-soft); }
+.ip2-row:is([data-look='unmet'], [data-look='waiting']) .ip2-row-sub, .ip2-row:is([data-look='unmet'], [data-look='waiting']) .ip2-row-right { color: var(--ip2-soft); }
 /* overdue: a yellow 2 px ring on the normal fill, number kept */
 .ip2-row[data-overdue='true'] { padding: 6px 11px; border: 2px solid #ffe14d; opacity: 1; }
 .ip2-row[data-overdue='true'] .ip2-row-sub { color: #d9cf7a; }
@@ -58,8 +58,12 @@ button.ip2-row:focus-visible { outline: 2px solid var(--ip2-blue-text); outline-
 .ip2-finished { background: #171c22; }
 .ip2-finished-list { gap: 6px; padding: 0 10px 10px; }
 .ip2-finished-list .ip2-row { padding: 6px 12px; font-size: 14px; }
+/* Finished grouped by stage visit (the owner's report of 30 October): a small title, the stage's name and entry time */
+.ip2-fin-group { display: flex; flex-direction: column; gap: 6px; }
+.ip2-fin-group + .ip2-fin-group { margin-top: 4px; }
+.ip2-fin-head { padding: 2px 2px 0; color: var(--ip2-muted); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; }
+.ip2-fin-rows { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .ip2-offcard-list { margin: 0; padding: 0 14px 10px 30px; }
 .ip2-offcard-list li { padding: 2px 0; }
 .ip2-muted { list-style: none; margin-left: -16px; color: var(--ip2-faint); }
-.ip2-empty { margin: 0; padding: 12px 14px; border: 1px dashed var(--ip2-line); border-radius: 8px; color: var(--ip2-muted); }
 .ip2-foot { margin: auto 0 0; padding: 6px 12px; border: 1px solid var(--ip2-line); border-radius: 8px; background: var(--ip2-page); color: var(--ip2-muted); font-size: 12px; }

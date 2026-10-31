@@ -86,8 +86,9 @@ describe('heat balance', { timeout: 60_000 }, () => {
   });
 
   // E131: the MH heat is the achieved MH VO2 × the caloric equivalent of O2 (≈ 130 W at 70 kg), no longer 8 × m0
-  // (640 W): +1 °C in 15 min needs ≈ 270 W net into 70 kg. A known miss, kept, not tuned.
-  it.fails('MH (severity 1): +1 °C per 5–15 min once established (tables §7 check 21) — measured +0.18 °C in minutes 20 → 30 (E131: heat from the O2 consumed)', () => {
+  // (640 W): +1 °C in 15 min needs ≈ 270 W net into 70 kg. A known miss, kept, not tuned. With the skin constricted by
+  // the MH sympathetic surge the periphery no longer takes most of it up: +0.18 → +0.45 °C in minutes 20 → 30.
+  it.fails('MH (severity 1): +1 °C per 5–15 min once established (tables §7 check 21) — measured +0.45 °C in minutes 20 → 30 (E131: heat from the O2 consumed; the skin constricted by the MH surge)', () => {
     const st = ga();
     st.mh = { severity: 1, t0: 0 };
     const tc = run(st, 0, 30 * 60);
@@ -119,8 +120,10 @@ describe('heat balance', { timeout: 60_000 }, () => {
     expect(after.indexOf(Math.max(...after))).toBeLessThan(30);
   });
 
-  // E131: with the smaller, oxygen-derived MH heat the core peaks lower, so there is less to lose after dantrolene
-  it.fails('MH (severity 1): after dantrolene at 20 min the core is ≥ 0.3 °C below its peak 60 min later — measured 0.13 °C (peak 36.63 at +7 min; E131)', () => {
+  // E131: with the smaller, oxygen-derived MH heat the core peaked lower (an expected failure: 0.13 °C, peak 36.63 at
+  // +7 min). Since the MH sympathetic surge constricts the skin (heat.ts `kcp`) the MH heat stays in the core (peak
+  // 37.35 at +2 min) and dantrolene's suppression of the surge re-dilates it, so the core falls 0.60 °C in the hour: met
+  it('MH (severity 1): after dantrolene at 20 min the core is ≥ 0.3 °C below its peak 60 min later', () => {
     const after = dantroleneAt20();
     if (process.env.PME_E131_PRINT) console.log(`E131 heat dantrolene: peak at +${after.indexOf(Math.max(...after))} min ${Math.max(...after).toFixed(3)}, +60 ${after[59]!.toFixed(3)}`);
     expect(after[59]!).toBeLessThan(Math.max(...after) - 0.3);

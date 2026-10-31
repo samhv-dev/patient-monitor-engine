@@ -92,17 +92,19 @@ describe('rows.ts: the open looks', () => {
 });
 
 describe('rows.ts: taken, failed, fired, met and the folds', () => {
-  it('taken (answer 7): a step of the treatment fan-out stays a pressable green row with its time; "out of order" when a later step came first', () => {
+  it('taken (answer 7): a step of the treatment fan-out (a spoke) goes green into Finished at once with its time; "out of order" when a later step came first', () => {
     const h: H[] = [...TO_TREATING,
       { t: 200, stateId: 'potassium', transitionId: 'kTreat-treating' }, { t: 202, stateId: 'treating', transitionId: 'back-potassium' },
       { t: 250, stateId: 'dantrolene', transitionId: 'dant-treating' }, { t: 252, stateId: 'treating', transitionId: 'back' }];
     const b = classify(src(MH, 'treating', { history: h, simT: 260 }));
-    const k = titled(b.list, 'Potassium') as LiveRow;
-    const d = titled(b.list, 'Dantrolene') as LiveRow;
+    const k = titled(b.finished.filter((r) => r.stage === 'treating'), 'Potassium') as LiveRow;
+    const d = titled(b.finished.filter((r) => r.stage === 'treating'), 'Dantrolene') as LiveRow;
     expect([k.look, k.at, k.right, k.outOfOrder]).toEqual(['taken', 200, '03:20', false]);
     expect([d.look, d.at, d.outOfOrder]).toEqual(['taken', 250, true]);
     expect(d.subtitle).toContain('taken, out of order');
-    expect(looks(b.list).slice(0, 4)).toEqual([[1, 'taken'], [2, 'current'], [3, 'taken'], [4, 'ready']]);
+    // the open list keeps the steps not yet taken, the first of them current
+    expect(looks(b.list).slice(0, 2)).toEqual([[2, 'current'], [4, 'ready']]);
+    expect(b.list.some((r) => r.look === 'taken')).toBe(false);
   });
 
   it('Finished: the stages passed give their taken steps (green) and their fired A rows (amber); a branch not chosen is dropped', () => {

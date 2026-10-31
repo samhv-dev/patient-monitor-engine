@@ -1,0 +1,85 @@
+/* The Case briefing over a learners' monitor (briefing.ts; the owner's board Orientation 7b at 1280 × 800, its phone
+   twin at 390 × 844, the Persian twins without the ring). The board's sizes are those at 1280 px wide; a wider screen
+   (the projector at 1920) scales them with the width, a phone keeps the phone board's. */
+.stage > .case-briefing {
+  position: absolute; inset: 0; z-index: 8; overflow: hidden; cursor: pointer;
+  color: #e8ecef; font-family: var(--font-plex, 'IBM Plex Sans', system-ui, sans-serif); letter-spacing: normal;
+  opacity: 1; transition: opacity 600ms ease;
+  -webkit-user-select: none; user-select: none;
+}
+.stage > .case-briefing.cb-out { opacity: 0; pointer-events: none; }
+/* The monitor keeps running underneath at 40 % (back to full with the same fade) */
+.stage > .monitor-host { transition: opacity 600ms ease; }
+.stage[data-briefing] > .monitor-host { opacity: 0.4; }
+/* The host shows it on its Monitor view only: the Instructor views keep the monitor as it is */
+.main:not([data-route='monitor']) > .stage > .case-briefing { display: none; }
+.main:not([data-route='monitor']) > .stage[data-briefing] > .monitor-host { opacity: 1; }
+
+.case-briefing .cb-frost { position: absolute; inset: 0; background: rgba(10, 14, 18, 0.30); -webkit-backdrop-filter: blur(10px) saturate(120%); backdrop-filter: blur(10px) saturate(120%); }
+.case-briefing .cb-pool { position: absolute; inset: 0; background: radial-gradient(ellipse at 42% 50%, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.25) 55%, rgba(0, 0, 0, 0) 85%); }
+.case-briefing[dir='rtl'] .cb-pool { background: radial-gradient(ellipse at 58% 50%, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.25) 55%, rgba(0, 0, 0, 0) 85%); }
+.case-briefing .cb-body {
+  position: relative; height: 100%; box-sizing: border-box; overflow: auto;
+  padding: 0 clamp(24px, 10.9375vw, 210px); display: flex; flex-direction: column; justify-content: center; text-align: start;
+}
+.case-briefing .cb-title { max-width: 900px; font-size: clamp(30px, 3.4375vw, 66px); font-weight: 600; line-height: 1.1; letter-spacing: -0.01em; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.9); }
+.case-briefing .cb-est { margin-top: 10px; font-size: clamp(14px, 1.25vw, 24px); color: #b4bec7; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7); }
+.case-briefing b { color: #e8ecef; font-weight: 600; }
+.case-briefing .cb-p { margin: 26px 0 0; max-width: 62ch; font-size: clamp(17px, 1.640625vw, 32px); line-height: 1.55; color: #eef2f5; text-shadow: 0 1px 10px rgba(0, 0, 0, 0.85), 0 0 2px rgba(0, 0, 0, 0.9); }
+.case-briefing .cb-p + .cb-p { margin-top: 24px; }
+.case-briefing .cb-last { line-height: 1.5; color: #cdd5dc; font-style: italic; }
+.case-briefing .cb-foot {
+  margin-top: 34px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.12); max-width: 900px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #a7b1ba; font-size: clamp(12px, 1.09375vw, 21px);
+}
+.case-briefing .cb-count { font-family: var(--font-plex-mono, 'IBM Plex Mono', monospace); font-variant-numeric: tabular-nums; }
+.case-briefing .cb-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(255, 255, 255, 0.08); }
+.case-briefing .cb-fill { width: 0; height: 100%; background: #8ab4f8; }
+.case-briefing .cb-edu { position: absolute; inset-inline-end: 16px; bottom: 10px; font-size: 11px; color: #8b95a0; }
+
+/* The phone (390 × 844 board) */
+.case-briefing[data-phone] .cb-body { padding: 36px 24px 56px; }
+.case-briefing[data-phone] .cb-title { font-size: 30px; }
+.case-briefing[data-phone] .cb-est { margin-top: 8px; font-size: 14px; }
+.case-briefing[data-phone] .cb-p { margin-top: 16px; font-size: 17px; }
+.case-briefing[data-phone] .cb-p + .cb-p { margin-top: 16px; }
+.case-briefing[data-phone] .cb-foot { margin-top: 22px; padding-top: 12px; flex-direction: column; align-items: flex-start; gap: 4px; font-size: 12px; }
+/* A phone's press-and-hold (briefing.ts, holdToEnd): the hairline over the footer fills from the start side while held */
+.case-briefing[data-phone] { -webkit-touch-callout: none; }
+.case-briefing[data-phone] .cb-foot { position: relative; }
+.case-briefing[data-phone] .cb-foot::before {
+  content: ''; position: absolute; inset-inline: 0; top: -1px; height: 2px; background: #8ab4f8;
+  transform: scaleX(0); transform-origin: left; transition: transform 120ms ease-out;
+}
+.case-briefing[data-phone][dir='rtl'] .cb-foot::before { transform-origin: right; }
+.case-briefing[data-phone][data-holding] .cb-foot::before { transform: scaleX(1); transition: transform var(--cb-hold-ms, 800ms) linear; }
+
+/* Persian: right to left, start-aligned, leading 1.8, no letter-spacing; Vazirmatn when the machine has it (no font
+   file in the kit), then Segoe UI or Tahoma; the board's 60-character measure */
+.case-briefing[lang='fa'] { font-family: Vazirmatn, 'Segoe UI', Tahoma, system-ui, sans-serif; }
+.case-briefing[lang='fa'] .cb-title { letter-spacing: 0; }
+.case-briefing[lang='fa'] .cb-p { max-width: 60ch; line-height: 1.8; letter-spacing: 0; }
+.case-briefing[lang='fa'] .cb-count { font-family: inherit; }
+
+/* The instructor's "End briefing" in today's Instructor view, over the panel */
+.cb-end { display: flex; align-items: center; gap: var(--s-2, 8px); flex-wrap: wrap; }
+.cb-end[hidden] { display: none; }
+.cb-end-t { font-variant-numeric: tabular-nums; }
+.view[data-view='teach'] > .cb-end { padding: var(--s-2, 8px) var(--s-3, 12px); border-bottom: 1px solid var(--line, #333); }
+
+/* Instructor v2: the status line under the stage strip carries it (the owner's choice of 31 October; teach2/strip.ts).
+   While the briefing runs the strip grows by the line's 40 px, as with no case (#210) and while finishing (#214); the
+   chips' row keeps its 52 px and its full width, the frame's areas are unchanged (app.css). */
+.main[data-route='teach2']:has(.ip2-strip[data-briefing]) { grid-template-rows: 48px 92px auto auto minmax(0, 1fr) auto 64px; }
+.ip2-strip[data-briefing] { display: grid; grid-template: 'chips hint' 52px 'status status' 40px / minmax(0, 1fr) auto; align-items: center; padding: 0; }
+.ip2-strip[data-briefing] > .ip2-chips { grid-area: chips; display: flex; align-items: center; min-width: 0; padding: 0 20px; }
+.ip2-strip[data-briefing] > .ip2-strip-hint { grid-area: hint; margin: 0; padding: 0 20px; }
+.ip2-strip > .ip2-status { grid-area: status; display: flex; align-items: center; gap: 16px; height: 100%; min-width: 0; padding: 0 20px; border-top: 1px solid var(--ip2-line); color: var(--ip2-muted); font-size: 13px; }
+.ip2-strip > .ip2-status[hidden] { display: none; }
+.ip2-status-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.ip2-status-btn { flex: none; height: 28px; padding: 0 12px; border: 1px solid var(--ip2-control); border-radius: 6px; background: transparent; color: var(--ip2-text); font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.ip2-status-btn:hover { background: var(--ip2-card); }
+.ip2-status-btn:focus-visible { outline: 2px solid var(--ip2-blue-text); outline-offset: 2px; }
+.ip2-status-btn[hidden] { display: none; }
+
+@media print { .case-briefing { display: none !important; } }
