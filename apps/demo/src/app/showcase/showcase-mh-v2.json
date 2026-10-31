@@ -18,7 +18,7 @@
     "Keep hyperventilating until the EtCO₂ stays down; if it climbs again, repeat dantrolene.",
     "After the crisis: ICU 24–48 h, dantrolene 1 mg/kg every 4–6 h for 24 h (recrudescence in up to 50 %), then referral for testing and family counselling."
   ],
-  "notes": "pme-scenario/2 translation of showcase-mh (F8; the owner's phase table of 31 October). PHASES are regions of the MH course, each entered by its own rule on engine truth and held 60 s before it changes (owner, Q1); no button moves a phase. ACTIONS are the team's: the induction sequence (offered in Baseline, recorded, not graded: the orchestrator's call), the call of the crisis, the treatments and the return to normal ventilation, each with its acceptance criteria. The MH starts at the Induce press as on the /1 card: a card-set script entry (condition mh, severity 1) on the Induce action's first taking, in the press's stage group, so the engine receives the /1 card's commands at the /1 card's ticks (F8 step a; the susceptibility model, step b, is not in this card). Thresholds marked [ENG] in the $comments are the orchestrator's engineering readings of the owner's words: activity above zero > 0.01, high > 0.8, low < 0.2; dantrolene effect present: dantroleneE > 0.2; rising/falling: the least-squares slope over the plan's windows (EtCO₂ > 0.2 mmHg/min over 120 s; activity over 60 s falling, 120 s rising; HR and the EtCO₂ fall over 120 s, any sign); unchanged set ventilation: within 5 % of its value at the phase's start. Cool is offered only above 38.5 °C core; the saline is the /1 card's (21 °C, the whole 1.6 L): #216's refrigerated fluid and its stop at 38 °C need engine fields not on this base. Charcoal filters are not modelled (words only), as on the /1 card. The treatments are open from Latent: on the demo path the call (6 s after the /1 card's early signs) doubles the set ventilation inside Early signs' 60-s hold, so the phase stays Latent until the EtCO₂ climbs back at the restored ventilation, and the dantrolene and the return to normal ventilation are pressed in Latent.",
+  "notes": "pme-scenario/2 translation of showcase-mh (F8; the owner's phase table of 31 October). PHASES are regions of the MH course, each entered by its own rule on engine truth and held 60 s before it changes (owner, Q1); no button moves a phase. ACTIONS are the team's: the induction sequence (offered in Baseline, recorded, not graded: the orchestrator's call), the call of the crisis, the treatments and the return to normal ventilation, each with its acceptance criteria. The MH starts at the Induce press as on the /1 card: a card-set script entry (condition mh, severity 1) on the Induce action's first taking, in the press's stage group, so the engine receives the /1 card's commands at the /1 card's ticks (F8 step a; the susceptibility model, step b, is not in this card). Thresholds marked [ENG] in the $comments are the orchestrator's engineering readings of the owner's words: activity above zero > 0.01, high > 0.8, low < 0.2; dantrolene effect present: dantroleneE > 0.2; rising/falling: the least-squares slope over the plan's windows (EtCO₂ > 0.2 mmHg/min over 120 s; activity over 60 s falling, 120 s rising; HR and the EtCO₂ fall over 120 s, any sign); unchanged set ventilation: within 5 % of its value at the phase's start. Cool is offered only above 38.5 °C core; the saline is the /1 card's (21 °C, the whole 1.6 L): #216's refrigerated fluid and its stop at 38 °C need engine fields not on this base. Charcoal filters are not modelled (words only), as on the /1 card. The treatments are open from Latent: on the demo path the call (9 s after the /1 card's early signs) comes inside Early signs' 60-s hold; the hold is latched by the ventilation change (D1), so Early signs is entered a minute after the rise began.",
   "seed": 7,
   "mode": "modeled",
   "patient": {
@@ -83,7 +83,7 @@
       "id": "earlySigns",
       "label": "Early signs",
       "cue": "EtCO₂ climbing, HR up",
-      "$comment": "[ENG] rising = least-squares slope over 120 s: EtCO₂ > 0.2 mmHg/min (design §4's example), HR > 0/min; unchanged set ventilation = within 5 % of its value at the phase's start.",
+      "$comment": "[ENG] rising = least-squares slope over 120 s: EtCO₂ > 0.2 mmHg/min (design §4's example), HR > 0/min; unchanged set ventilation = within 5 % over the same 120 s (design §4's leaf, decision D1: the ventilation in place when the rise began; it re-arms 120 s after a change). The call inside the 60-s hold changes the ventilation: the runner latches the hold (D1), so a prompt call no longer keeps the case out of the phase.",
       "notes": "The EtCO₂ is rising at unchanged ventilation when it should be falling, with a rising heart rate: think of MH early.",
       "enter": {
         "all": [
@@ -106,7 +106,7 @@
             "unchanged": {
               "var": "setMinuteVentilationLMin",
               "withinPct": 5,
-              "since": "phaseStart"
+              "overS": 120
             }
           },
           {
@@ -170,7 +170,7 @@
       "id": "treated",
       "label": "Treated",
       "cue": "EtCO₂ falling with the ventilation held",
-      "$comment": "[ENG] dantrolene effect present = dantroleneE > 0.2 (the unsuppressed share below 0.8); activity falling = slope < 0/min over 60 s.",
+      "$comment": "[ENG] dantrolene effect present = dantroleneE > 0.2 (the unsuppressed share below 0.8); falling = slope < 0/min over 60 s of mhExcess, the MH's dantrolene-sensitive excess (decision D2: mhActivity = severity × onset ramp × mhExcess, and the 15-min ramp outgrows the fall of the excess after an early dose, so the activity cannot fall before the ramp ends).",
       "enter": {
         "all": [
           {
@@ -182,7 +182,7 @@
           },
           {
             "slope": {
-              "var": "mhActivity",
+              "var": "mhExcess",
               "op": "<",
               "perMin": 0,
               "overS": 60
@@ -238,7 +238,7 @@
       "id": "recrudescence",
       "label": "Recrudescence",
       "cue": "EtCO₂ climbing back",
-      "$comment": "[ENG] activity rising = slope > 0/min over 120 s, after a Treated phase.",
+      "$comment": "[ENG] rising = slope > 0/min over 120 s of mhExcess, after a Treated phase: the excess creeping back up as the drug wanes (the engine's recrudescence, l2/thermal/mh.ts). It reads mhExcess as Treated does since D2: on the product the onset ramp keeps the activity rising for 15 min, so Treated and Recrudescence held together and the two phases alternated at every poll (measured).",
       "enter": {
         "all": [
           {
@@ -246,7 +246,7 @@
           },
           {
             "slope": {
-              "var": "mhActivity",
+              "var": "mhExcess",
               "op": ">",
               "perMin": 0,
               "overS": 120
