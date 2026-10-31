@@ -65,6 +65,8 @@ const CASES: Case[] = [
   // infusion rate
   { name: 'infusion: rate in range', actions: [{ drug: { id: 'propofol', rate: { infusion: { min: 100, max: 150, unit: 'mcg/kg/min' } } }, window: { anchor: 'phase:early', withinS: 120 } }], admin: [adm(150, { kind: 'infusion', drugId: 'propofol', rate: 120, rateUnit: 'mcg/kg/min' })], want: { grade: 'met' } },
   { name: 'infusion: rate out of range', actions: [{ drug: { id: 'propofol', rate: { infusion: { min: 100, max: 150, unit: 'mcg/kg/min' } } }, window: { anchor: 'phase:early', withinS: 120 } }], admin: [adm(150, { kind: 'infusion', drugId: 'propofol', rate: 50, rateUnit: 'mcg/kg/min' })], want: { grade: 'deviation', lines: ['rate 50 mcg/kg/min, 100–150 asked'] } },
+  { name: 'infusion: a bolus of the drug is not the infusion prescribed', actions: [{ drug: { id: 'propofol', rate: { infusion: { min: 100, max: 150, unit: 'mcg/kg/min' } } }, window: { anchor: 'phase:early', withinS: 120 } }],
+    admin: [adm(110, { drugId: 'propofol', dose: 2, unit: 'mg/kg', perKg: 2, route: 'iv' }), adm(150, { kind: 'infusion', drugId: 'propofol', rate: 120, rateUnit: 'mcg/kg/min' })], want: { grade: 'met', givenT: 150 } },
   // anchors
   { name: 'anchor start', actions: [{ ...DAN, window: { anchor: 'start', withinS: 60 } }], admin: [dan(90)], want: { grade: 'overdue', dueT: 0, live: 'overdue 0:30' } },
   { name: 'anchor phase:<id>: in the window', actions: [DAN], admin: [dan(399)], want: { grade: 'met', dueT: 100 } },

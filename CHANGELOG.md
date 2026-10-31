@@ -9,6 +9,15 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Added
 
+- **`pme-scenario/2` F3: the administration record and a pure `grade()`.** The scenario driver records every
+  clinical act of a `/2` card (drugs, infusions, TCI, vaporiser, fluids, ventilation, CPR, defibrillation, airway
+  devices, preoxygenation) in the phase runner's state, accepted or refused, with its source (`action` for an A press
+  stamped `actionId`, `script` card-set, `panel`, `remote`), sim time, dose per kg, settings and the engine's answer
+  (`routeNotModelled`); a bookmark restore rewinds it. `grade(doc, phases, admin, edges, t, { final })`
+  (`@pme/controller/scenario`) grades each action (met, deviation, overdue, failed, due, not applicable; lines, Q13's
+  conditional repeats, live strings), the outcomes, the contraindication violations and the judged rows' clocks.
+  `CommandBase` gains the metadata field `actionId`. The MH `/2` card's demo path prints its grade table at 24:31.
+
 - **`pme-scenario/2` integration branch (post-demo, draft): F2's phase runner with F4's engine signals, and
   `signals.mhActivity`.** `fv2-mh` is `feat-fv2-f2` (#201) with `feat-fv2-f4` (#200) merged; the driver feeds F4's
   truths to a `PhaseRunner` only. The `state` event's `signals` gain `mhActivity`, the thermal model's MH activity

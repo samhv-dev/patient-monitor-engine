@@ -2,7 +2,8 @@
 // the phase timeline, the administration record and the rule edges the runner logs (Q17) in, the grades out; no DOM, no
 // session, no engine. The panel calls it every second (live), the debrief once (`final`).
 // - Matching by identity, never a card-set act: a drug action takes a `drug`/`infusion` record of its id, its class or
-//   one of its alternatives (with the alternative's own dose); a device action the record of its device kind (CPR only
+//   one of its alternatives (with the alternative's own dose), in the prescribed form (`rate.infusion`: an infusion
+//   record only; `rate.bolus`: a bolus only); a device action the record of its device kind (CPR only
 //   while active, a defibrillator only its shock); a decision the record of one of its effects' kinds (graded on that
 //   effect's settings); a physical measure a `fluid` record (cooling is the cold fluid); a fluid action a `fluid` record
 //   of its types; a procedure, sample or communication the record stamped with its own action id (the scenario `record`
@@ -27,7 +28,10 @@ export interface RepeatGrade { n: number; grade: Grade; dueT?: number; t?: numbe
 export interface ActionGrade {
   id: string;
   label: string;
+  /** The worst of the first administration's row and its repeats. */
   grade: Grade;
+  /** The first administration's own grade (before the repeats). */
+  firstGrade: Grade;
   lines: string[];
   /** When the window opened (the anchor), and its length; `dueT + windowS` is the deadline. */
   dueT?: number;
@@ -105,6 +109,8 @@ function identity(act: Action, a: Administration): Ident | null {
     case 'drug': {
       const d = act.drug;
       if (!d || (a.kind !== 'drug' && a.kind !== 'infusion')) return null;
+      // the form is part of the identity: a propofol bolus (the induction's) is not the propofol infusion prescribed
+      if (d.rate && ('infusion' in d.rate ? a.kind !== 'infusion' : 'bolus' in d.rate && a.kind !== 'drug')) return null;
       if ((d.id && a.drugId === d.id) || (d.cls && a.cls === d.cls)) return d.dose ? { dose: d.dose } : {};
       const alt = d.alternatives?.find((x) => x.id === a.drugId);
       const dose = alt?.dose ?? d.dose;
@@ -146,14 +152,12 @@ function deviations(act: Action, a: Administration, id: Ident, w?: number): stri
   if (act.kind === 'drug' && d?.route?.preferred && route !== d.route.preferred) out.push(`route ${route}, ${d.route.preferred} preferred`);
   const rate = d?.rate;
   if (rate && 'infusion' in rate) {
-    if (a.kind !== 'infusion') out.push('bolus, infusion asked');
-    else if (a.rateUnit !== rate.infusion.unit) out.push(`rate in ${a.rateUnit ?? 'no unit'}, ${rate.infusion.unit} asked`);
+    if (a.rateUnit !== rate.infusion.unit) out.push(`rate in ${a.rateUnit ?? 'no unit'}, ${rate.infusion.unit} asked`);
     else if (!inAmount(a.rate ?? NaN, rate.infusion)) out.push(`rate ${n2(a.rate ?? NaN)} ${a.rateUnit}, ${asked(rate.infusion)} asked`);
   } else if (rate && 'overS' in rate) {
     if (!inAmount(a.overS ?? 0, rate.overS)) out.push(`over ${n2(a.overS ?? 0)} s, ${asked(rate.overS)} s asked`);
   } else if (rate && 'bolus' in rate) {
-    if (a.kind === 'infusion') out.push('infusion, bolus asked');
-    else if ((a.overS ?? 0) > 0) out.push(`over ${n2(a.overS ?? 0)} s, bolus asked`);
+    if ((a.overS ?? 0) > 0) out.push(`over ${n2(a.overS ?? 0)} s, bolus asked`);
   }
   for (const [k, amt] of Object.entries(id.settings ?? {})) {
     let v = a.settings?.[k];
@@ -299,7 +303,7 @@ export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: 
     const opt = (r: Row) => ({ ...(r.dueT !== undefined ? { dueT: r.dueT } : {}), ...(r.windowS !== undefined ? { windowS: r.windowS } : {}), ...(r.givenT !== undefined ? { givenT: r.givenT } : {}) });
     return {
       row: {
-        id: act.id, label: act.label, grade: worst.grade, lines: [...row.lines, ...row.devs, ...blocked], ...opt(row),
+        id: act.id, label: act.label, grade: worst.grade, firstGrade: row.grade, lines: [...row.lines, ...row.devs, ...blocked], ...opt(row),
         repeats: repeats.map((r) => ({ n: r.n, grade: r.grade, ...(r.dueT !== undefined ? { dueT: r.dueT } : {}), ...(r.givenT !== undefined ? { t: r.givenT } : {}), lines: [...r.lines, ...r.devs] })),
         live, admin: matched.map((m) => m.a.seq),
       },
