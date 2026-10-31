@@ -37,6 +37,18 @@ the public API is what the packages export (see the API reference), the `pme-sce
   judged; the engine does not model it"); the card stays valid, and a `/1` card validates exactly as before. No
   kinetics change: the route models are F5.2.
 
+- **Instructor v2 on a `pme-scenario/2` card: the panel gaps F11 found (post-demo, draft).** ACTION's rows carry the
+  live grade (`grade()` once a sim second, `final: false`): "due m:ss", "overdue m:ss" with the ring, "met mm:ss",
+  "deviation: <criterion>" (the met look, its label amber) or "not applicable", and the grade's lines after the
+  prescription; a row reads given when `grade()` graded an administration for it, whoever pressed (the call's press gives
+  hyperventilation and the propofol infusion). The rows not due now (a graded action not applicable and not given; an
+  ungraded one given in an earlier phase) sit in a "Not due now" fold, still pressable rows, and the `/2` rows are
+  denser, so the MH card's ACTION fits 1440 × 900 at Latent, Early signs and Treated. The dock gains Finish the case
+  (a `/2` card): it notes "Case finished" and pauses, and the Debrief is ready at an end phase or once finished. The
+  session bar, the record's timeline and the Log name the phase by its label. The Debrief's action row prints the first
+  administration's grade (`firstGrade`, also in `pme-debrief/3` and the Persian handout), each repeat its own. The kit
+  round's Q1 reaches the Debrief by the dock under `PME_PANEL=teach2`. `/1` cards are unchanged.
+
 - **`pme-scenario/2` F11: integration tests for the `/2` MH chain (post-demo, draft).** `debrief.e2e.ts` runs the
   `/2` MH card on the run sheet's demo path from Instructor v2 to 24:31 and checks the Debrief on both browsers: the
   export is `pme-debrief/3`, and page 1 and the learner handout each fit one A4 page (≤ 267 mm). The demo path is
