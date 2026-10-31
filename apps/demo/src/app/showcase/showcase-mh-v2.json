@@ -620,7 +620,7 @@
       "id": "dantrolene",
       "label": "Dantrolene 2.5 mg/kg",
       "kind": "drug",
-      "$comment": "The /1 card's objectives 3 and 4: within 300 s of the call; again when the EtCO₂ climbs back at normal ventilation ([ENG] EtCO₂ above 45 and rising > 0.2 mmHg/min over 120 s with the set minute ventilation ≤ 6.3 L/min, 12 × 500 + 5 %), due from the later of the previous dose + 5 min and the condition first true, within 5 min (the plan's Q13 recommendation; Q13 is the owner's, open). IM is contraindicated (no effect, tissue injury: owner, 29 October).",
+      "$comment": "The /1 card's objectives 3 and 4: within 300 s of the call; again once the case is in Recrudescence (decision D3: the repeat's window opens at Recrudescence's entry, the condition's rise, and spans 300 s = intervalS max − min, the /1 card's own dantrolene window, objective 3, the one dantrolene window the owner approved; /1's objective 4 sets no deadline), and never sooner than 5 min after the previous dose (intervalS.min). IM is contraindicated (no effect, tissue injury: owner, 29 October).",
       "phases": [
         "latent",
         "earlySigns",
@@ -667,30 +667,7 @@
       },
       "repeatWhile": {
         "rule": {
-          "all": [
-            {
-              "value": {
-                "var": "etco2",
-                "op": ">",
-                "value": 45
-              }
-            },
-            {
-              "slope": {
-                "var": "etco2",
-                "op": ">",
-                "perMin": 0.2,
-                "overS": 120
-              }
-            },
-            {
-              "value": {
-                "var": "setMinuteVentilationLMin",
-                "op": "<=",
-                "value": 6.3
-              }
-            }
-          ]
+          "visited": "recrudescence"
         },
         "intervalS": {
           "min": 300,
@@ -714,7 +691,7 @@
       "id": "dantroleneAgain",
       "label": "Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600, O₂ 100 %)",
       "kind": "device",
-      "$comment": "The /1 card's second-dose button (owner, 28 October: the second dose comes with the crisis ventilation again). Its dose is graded as dantrolene's repeat; this row grades the ventilation it puts back.",
+      "$comment": "The /1 card's second-dose button (owner, 28 October: the second dose comes with the crisis ventilation again). Its dose is graded as dantrolene's repeat; this row grades the ventilation it puts back, in the repeat's window (D3: from Recrudescence's entry, 300 s), so the call's 20 × 600 is not it.",
       "phases": [
         "latent",
         "earlySigns",
@@ -777,6 +754,10 @@
             }
           }
         ]
+      },
+      "window": {
+        "anchor": "phase:recrudescence",
+        "withinS": 300
       }
     },
     {
