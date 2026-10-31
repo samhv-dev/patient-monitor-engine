@@ -187,6 +187,27 @@ describe('the readers behind a cast or an "ended" test, and a pme-scenario/2 car
     expect((bar.querySelector('.sb-debrief') as HTMLElement).dataset.ready).toBe('true'); // 'early' has no next
     off();
   });
+  it('sessionbar.ts: a /2 phase with a next is not the end; Finish the case in the host\'s record makes Debrief "ready" (F11)', async () => {
+    const sv = view();
+    sv.stateId = 'baseline';
+    const rows = [{ t: 0, kind: 'scenario', text: 'Scenario loaded: MH (format 2)' }];
+    const base = fakeLink(sv);
+    const link = { ...base, onChange: () => () => undefined, conditions: new Map(), host: { spec: { sex: 'M', ageY: 30, weightKg: 80, comorbid: [] }, mode: 'modeled', record: { data: { rows } } }, ctl: { ...base.ctl, timeScale: 1, fastForward: null } } as unknown as Link;
+    const bar = document.createElement('header');
+    document.body.append(bar);
+    const off = mountSessionBar(bar, link);
+    await new Promise((r) => setTimeout(r, 100));
+    expect((bar.querySelector('.sb-debrief') as HTMLElement).dataset.ready).toBe('false');
+    off();
+    bar.remove();
+    rows.push({ t: 60, kind: 'note', text: 'Case finished' });
+    const bar2 = document.createElement('header');
+    document.body.append(bar2);
+    const off2 = mountSessionBar(bar2, link);
+    await new Promise((r) => setTimeout(r, 100));
+    expect((bar2.querySelector('.sb-debrief') as HTMLElement).dataset.ready).toBe('true');
+    off2();
+  });
   it('views/debrief.ts: no "the scenario has ended" toast for a /2 card', () => {
     let changed = () => undefined as void;
     const sv = view();
