@@ -4,6 +4,7 @@
 // WALL time, i.e. every 0.1 s of sim at ×1, 0.4 s at ×4 and 0.8 s at ×8. Every loop yields once per sim-minute.
 // Test-only: nothing in the app imports this file.
 import { createEngine, type EngineEvent } from '@pme/engine-core';
+import { manualLabel } from '@pme/controller';
 import { engineOptionsOf, isV2, ScenarioDriver, validateScenario, type Administration, type AnyScenarioDoc, type PhaseEntry, type RuleEdge, type ScenarioDoc } from '@pme/controller/scenario';
 import { expect } from 'vitest';
 
@@ -143,7 +144,7 @@ export async function runCard(id: string, acts: readonly Act[], untilS: number, 
         run.pressed[i] = t;
         continue;
       }
-      const tr = driver.runner?.state().transitions?.find((x) => 'manual' in x.when && x.when.manual.label === a.press);
+      const tr = driver.runner?.state().transitions?.find((x) => manualLabel(x.when) === a.press); // a guarded step too (the MH Cool)
       if (!tr || !driver.runner?.trigger(t, tr.id).ok) continue;
       driver.poll(); // as the host does on a button press: it acts on this tick
       run.pressed[i] = t;

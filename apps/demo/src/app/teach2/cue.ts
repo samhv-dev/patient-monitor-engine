@@ -9,13 +9,14 @@
 import './state.css';
 import type { StateVar } from '@pme/engine-core';
 import { asV1, isV2 } from '@pme/controller';
-import { phaseRuleWords, stageOf, stagesOf } from '../card-read.ts';
+import { byItself, phaseRuleWords, stageOf, stagesOf } from '../card-read.ts';
 import { drugWords } from '../glossary.ts';
 import type { Link } from '../link.ts';
 import { hrefOf } from '../router.ts';
 import { whenText } from '../triggers.ts';
 import { clock, h, setText } from '../ui.ts';
 import { showVital, vitalLabel, vitalOf } from '../vitals.ts';
+import { defaultPatient } from './begin.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { stageEntries, stageNames, type StageEntry } from './strip.ts';
 import { historyOf } from './course.ts';
@@ -94,8 +95,21 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     const doc = asV1(sv.doc);
     const state = sv.current();
     const stage = doc && sv.stateId ? stageOf(doc, sv.stateId) : null;
-    box.classList.toggle('ip2-cue-none', !doc || !stage);
-    if (!doc || !stage || !state) {
+    box.classList.toggle('ip2-cue-default', !doc);
+    box.classList.toggle('ip2-cue-none', !!doc && !stage);
+    inStage.classList.toggle('ip2-frozen', false);
+    if (!doc) {
+      // no case loaded (board "Empty 5"): the default patient, running since the page opened
+      const p = defaultPatient(link, ctx.weightKg);
+      setText(name, 'Default patient');
+      setText(inStage, `${clock(link.simT)} since the page opened`);
+      setText(how, 'awake, breathing room air, no case');
+      setText(line, `${p.band}, ${p.kg} kg · every tool below works on this patient, so the room can be set up before the case starts`);
+      say.hidden = false;
+      setText(say, 'Pick a case on the right, or run the patient freehand with the tools. The phones follow either way.');
+      return;
+    }
+    if (!stage || !state) {
       setText(name, 'No scenario running');
       for (const x of [inStage, how, line, say]) setText(x, '');
       say.hidden = true;
@@ -110,7 +124,11 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     inStage.classList.toggle('ip2-frozen', frozen);
     const trId = entry?.transitionId?.replace(/:else$/, '');
     const tr = trId ? doc.states.flatMap((s) => s.transitions ?? []).find((x) => x.id === trId) : undefined;
-    setText(how, entry ? enteredWords(byOf(link, entry), entry.t, tr ? whenText(tr.when) : null) : '');
+    // a transition with no rule of its own entered the stage by your button, whatever the record's `by` reads (the
+    // owner's report of 30 October: a dose pressed in Recovering, the treatment stage "entered by its rule")
+    const rec = entry ? byOf(link, entry) : undefined;
+    const by = tr && rec === 'rule' && !byItself(tr.when) ? 'press' : rec;
+    setText(how, entry ? enteredWords(by, entry.t, tr ? whenText(tr.when) : null) : '');
     setText(line, drugWords(state.label ?? stage.label));
     const notes = state.notes ?? doc.states.find((s) => s.id === stage.id)?.notes;
     say.hidden = !notes;

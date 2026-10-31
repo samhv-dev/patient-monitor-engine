@@ -121,6 +121,7 @@
   .app[data-route='debrief'] { display: block; height: auto; }
   .app[data-route='debrief'] > .topbar, .app[data-route='debrief'] .sessionbar, .app[data-route='debrief'] .stage,
   .app[data-route='debrief'] .skip, body:has(.app[data-route='debrief']) .toasts, .debrief .db-tools { display: none !important; }
+  .debrief :is(.db-viewing, #db-archive) { display: none !important; } /* the archive and the way back: screen only */
   .app[data-route='debrief'] .main, .app[data-route='debrief'] .view[data-view='debrief'] { display: block; overflow: visible; height: auto; }
   /* black on white, except what carries an accent or a fill (E45): the discuss chip, the team and patient words and
      marks; only those print their colour exactly */
@@ -214,3 +215,21 @@
   .debrief .db-intro, .debrief .db-next { margin: 1.5mm 0; font-size: 9.5pt; }
   .debrief[data-print='handout'] { font-size: 10pt; }
 }
+
+/* the archive (board "Finish 2"): a saved debrief on screen says which, with the way back; the Archive section lists
+   every saved debrief (archive-list.ts) with its actions; the clear is quiet. Screen only (the print rule above). */
+.debrief .db-viewing { margin: var(--s-2) 0; padding: var(--s-2) var(--s-3); border: 1px solid var(--line-strong); border-radius: var(--r-control); background: var(--surface); }
+.debrief .db-resident { font-weight: 600; color: var(--text-strong); }
+.debrief .db-arc-count { margin: var(--s-2) 0; color: var(--text-muted); }
+.debrief .db-arc-list { margin: 0; padding: 0; list-style: none; }
+.debrief .db-arc-row { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2) 0; border-bottom: 1px solid var(--line); }
+.debrief .db-arc-row[data-current] { font-weight: 600; }
+.debrief .db-arc-n { flex: none; min-width: 2em; text-align: right; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.debrief .db-arc-text { flex: 1 1 auto; min-width: 0; }
+.debrief .db-arc-title { display: block; }
+.debrief .db-arc-sub { display: block; font-size: var(--t-13); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.debrief .db-arc-saved { flex: none; font-size: var(--t-13); color: var(--text-muted); }
+.debrief .db-arc-acts { flex: none; display: inline-flex; gap: var(--s-1); }
+.debrief .db-arc-acts > button { padding: 2px 8px; border: 1px solid var(--line-strong); border-radius: var(--r-control); background: transparent; color: var(--text); font: inherit; font-size: var(--t-13); cursor: pointer; }
+.debrief .db-arc-tools { display: flex; align-items: center; gap: var(--s-3); margin-top: var(--s-3); }
+.debrief .db-arc-clear { margin-left: auto; color: var(--text-muted); }

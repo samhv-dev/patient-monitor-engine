@@ -7,21 +7,27 @@
 // monitor showed (Debrief redesign B), and a learner handout without verdicts prints on its own (E51). The browser PRINTS it to PDF (debrief.css: A4 portrait, the app's chrome hidden, no colour needed to read
 // it; the footer and the build on every page); no PDF library. "Download the record (JSON)" saves the same data. Opened
 // from the session bar; when a scenario reaches a state with no way out, a toast says the debrief is ready.
+// The archive (board "Finish 2", archive.ts): a debrief "Finish the case" saved opens here (#/debrief/archive/<id>, and
+// …/print prints it), with the resident's name in the header band and the handout's; the view lists the archive in its
+// own section (screen only), exports it all as one JSON file and clears it behind a confirm.
 import { asV1, type MarkKind } from '@pme/controller';
+import { archive, hhmm, type ArchiveMeta } from '../archive.ts';
 import './debrief.css';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
-import { axisRange, drugTotals, endOf, facts, mmss, objectives, perMinute, report3, span, steps, trendMeta, type Report3, type Step, type StepStatus } from '../debrief.ts';
+import { axisRange, drugTotals, endOf, facts, mmss, objectives, perMinute, report3, span, steps, trendMeta, type DebriefExport, type Report3, type Step, type StepStatus } from '../debrief.ts';
 import type { Grade } from '@pme/controller/scenario';
 import { debriefJson } from '../debrief-export.ts';
 import { keyMoments, keyTimes, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
 import { LAB_KEYS, TREND_KEYS, type Row, type RunData, type TrendKey } from '../record.ts';
 import { courseSvg } from './debrief-course.ts';
+import { hrefOf } from '../router.ts';
 import { cardOf } from '../scenarios.ts';
 import type { AppSession } from '../session.ts';
 import { version } from '@pme/renderer';
 import type { View } from '../shell.ts';
-import { button, download, h, toast } from '../ui.ts';
+import { button, confirmDialog, download, h, toast } from '../ui.ts';
+import { archiveHref, archiveList, downloadEntry, entryTitle, exportAll } from './archive-list.ts';
 
 /** The build this page was served from (vite.config.ts `define`: the git commit, "+" with uncommitted changes, the date). */
 declare const __PME_BUILD__: string;
@@ -284,15 +290,26 @@ export function debriefView(session: AppSession, link: Link): View {
   who.addEventListener('input', runBy);
   let started = -1;
   let lastSeen = 0; // the rows and samples of the run this view last drew
+  /** A saved debrief of the archive on screen (#/debrief/archive/<id>), or null: the live run. */
+  let viewing: { meta: ArchiveMeta; n: number; data: RunData } | null = null;
+  const shown = (): RunData => viewing?.data ?? session.record.data;
+  /** The resident of the debrief on screen: the saved one's, or the live run's once "Finish the case" saved it. */
+  const residentOf = (d: RunData): string => (viewing ? viewing.meta.resident : (archive.forRun(d.startedAt)?.resident ?? ''));
+  const residentLine = (d: RunData): HTMLElement | null => {
+    const who = residentOf(d);
+    return who ? h('p', { class: 'db-sub db-resident' }, `Resident: ${who}`) : null;
+  };
   const render = () => {
-    const d = session.record.data;
-    if (d.startedAt !== started) {
+    const d = shown();
+    if (!viewing && d.startedAt !== started) {
       // a new run: its notes start empty (the record of the last run is gone with it) — unless the run the view last
       // drew was still empty: the record's own restart at load (FX-20) is not a new run for the notes typed meanwhile
       started = d.startedAt;
       if (lastSeen > 0) notes.replaceChildren();
     }
-    lastSeen = d.rows.length + d.samples.length;
+    if (!viewing) lastSeen = d.rows.length + d.samples.length;
+    drawViewing();
+    drawArchive();
     const end = endOf(d);
     const card = d.doc ? cardOf(d.doc) : null;
     const wall = Math.max(0, (d.lastWall - d.startedAt) / 1000);
@@ -300,6 +317,7 @@ export function debriefView(session: AppSession, link: Link): View {
     const band = h('header', { class: 'db-band' },
       h('h1', { id: 'db-h' }, 'Debrief', h('span', { 'aria-hidden': 'true' }, ' · Simulated case')),
       h('div', { class: 'db-title' }, card ? card.title : 'No scenario (free run)'),
+      ...kids(residentLine(d)),
       h('p', { class: 'db-sub' }, `${d.patient} · ${mmss(end)} simulated (${span(wall)} on the clock) · ${new Date(d.startedAt).toLocaleString()} · Run by: `,
         h('span', { class: 'db-runby' }, who.value)));
     const obj = objectives(d);
@@ -370,6 +388,7 @@ export function debriefView(session: AppSession, link: Link): View {
       h('header', { class: 'db-band' },
         h('div', { class: 'db-kicker' }, 'Learner handout · Your case · No marks'),
         h('div', { class: 'db-htitle' }, card ? card.title : 'No scenario (free run)'),
+        ...kids(residentLine(d)),
         h('p', { class: 'db-sub' }, `${d.patient} · ${mmss(end)} simulated`)),
       h('p', { class: 'db-intro' }, HANDOUT.intro),
       h('section', { class: 'db-hsec' }, h('h3', {}, 'Your run at a glance'), legend('□'), learnerCourse),
@@ -382,15 +401,41 @@ export function debriefView(session: AppSession, link: Link): View {
     ));
   };
 
+  // a saved debrief on screen: which one, and the way back to the live run (screen only)
+  const viewingText = h('span', {});
+  const viewingBar = h('p', { class: 'db-viewing', hidden: true }, viewingText, h('a', { href: hrefOf('debrief') }, 'Back to the current run'));
+  const drawViewing = () => {
+    viewingBar.hidden = !viewing;
+    if (viewing) viewingText.textContent = `Saved debrief ${viewing.n}: ${entryTitle(viewing.meta)}, saved at ${hhmm(viewing.meta.savedAt)}. `;
+  };
+  // the archive (board "Finish 2"): every saved debrief, export all, and a quiet clear behind a confirm (screen only)
+  const arcCount = h('p', { class: 'db-arc-count' });
+  const arcList = archiveList({ p: 'db-arc', current: () => viewing?.meta.id ?? null });
+  const drawArchive = () => {
+    const all = archive.list().length;
+    const today = archive.savedToday();
+    arcCount.textContent = all ? `${today} saved today${all > today ? `, ${all} in all` : ''} · kept in this browser until you clear it` : 'Nothing saved in this browser. “Finish the case” in Instructor v2 saves each run here.';
+    arcList.draw();
+  };
+  const clearArchive = async () => {
+    if (!(await confirmDialog('Clear the archive?', 'Every saved debrief in this browser is deleted, for good. Export them first to keep them.', 'Clear', true, 'Keep them'))) return;
+    archive.clear();
+    if (viewing) location.hash = hrefOf('debrief');
+    render();
+  };
+  const archiveSec = section('archive', 'Archive', arcCount, arcList.el,
+    h('div', { class: 'db-arc-tools' }, button('Export all (one JSON file)', exportAll, 'ghost small'), button('Clear the archive', () => void clearArchive(), 'ghost small db-arc-clear')));
+
   const el = h('section', { class: 'debrief', 'aria-labelledby': 'db-h' },
     h('div', { class: 'page wide' },
       h('div', { class: 'db-tools' }, button('Print or save as PDF', printWithFont, 'primary'),
         button('Download the record (JSON)', () => {
+          if (viewing) return downloadEntry(viewing.meta); // the saved debrief, with its resident
           const d = session.record.data;
           download(`debrief-${d.doc?.id ?? 'free-run'}-${new Date(d.startedAt).toISOString().slice(0, 10)}.json`, debriefJson(d, BUILD), 'application/json');
         }, 'ghost'),
         button('Print the learner handout', () => {
-          const d = session.record.data;
+          const d = shown();
           const title = document.title;
           el.dataset.print = 'handout';
           document.title = `Learner handout ${d.doc ? cardOf(d.doc).title : 'free run'} ${new Date(d.startedAt).toISOString().slice(0, 10)}`;
@@ -401,12 +446,14 @@ export function debriefView(session: AppSession, link: Link): View {
           printWithFont();
         }, 'ghost'),
         h('span', { class: 'hint' }, 'Choose "Save as PDF" as the printer. The report reads the run so far; it refreshes while open. The JSON holds the record, not the "Run by" line or the notes.')),
+      viewingBar,
       live1,
       h('div', { class: 'field db-who' }, h('label', { for: 'db-who' }, 'Run by'), who),
       pearls,
       section('notes', 'Notes', notes),
       live2,
       h('section', { class: 'db-sec', id: 'db-handout', 'aria-labelledby': 'db-handout-h' }, h('h2', { id: 'db-handout-h' }, 'Learner handout (printed separately)'), handout),
+      archiveSec,
       h('footer', { class: 'db-foot db-runfoot' }, FOOT)));
   // WebKit (Safari) prints no @page margin boxes: there the footer lines before each page break stand in
   el.classList.toggle('db-nomargin', typeof (window as { CSSMarginRule?: unknown }).CSSMarginRule !== 'function');
@@ -425,13 +472,31 @@ export function debriefView(session: AppSession, link: Link): View {
   let iv: ReturnType<typeof setInterval> | null = null;
   return {
     id: 'debrief', el, bench: true,
-    enter: () => {
+    enter: (sub = '') => {
       document.head.append(pageStyle);
       void loadPrintFont();
+      // #/debrief/archive: the Archive section; #/debrief/archive/<id>: that saved debrief; …/print: printed on arrival
+      const m = /^archive(?:\/([^/]+)(\/print)?)?$/.exec(sub);
+      viewing = null;
+      if (m?.[1]) {
+        const list = archive.list();
+        const i = list.findIndex((x) => x.id === m[1]);
+        const body = i >= 0 ? archive.debrief(m[1]) : null;
+        if (body) viewing = { meta: list[i] as ArchiveMeta, n: i + 1, data: (JSON.parse(body) as DebriefExport).record };
+        else toast('That saved debrief is not in this browser’s archive', 'alert');
+      }
       render();
-      iv ??= setInterval(render, 5000);
+      iv ??= setInterval(() => viewing || render(), 5000); // a saved debrief does not change
+      if (m && !m[1]) archiveSec.scrollIntoView?.({ block: 'start' });
+      const d = shown();
+      const who = residentOf(d);
       // the print file's name (Save as PDF): the shell sets the title after enter()
-      queueMicrotask(() => (document.title = `Debrief ${session.record.data.doc ? cardOf(session.record.data.doc).title : 'free run'} ${new Date(session.record.data.startedAt).toISOString().slice(0, 10)}`));
+      const title = `Debrief ${d.doc ? cardOf(d.doc).title : 'free run'}${who ? ` ${who}` : ''} ${new Date(d.startedAt).toISOString().slice(0, 10)}`;
+      queueMicrotask(() => (document.title = title));
+      if (m?.[2] && viewing) {
+        history.replaceState(null, '', `${location.pathname}${location.search}${archiveHref(viewing.meta.id)}`); // a reload does not print again
+        printWithFont();
+      }
     },
     leave: () => {
       pageStyle.remove();

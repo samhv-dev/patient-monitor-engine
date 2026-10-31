@@ -1,5 +1,6 @@
 // The Instructor v2 dock (design §3.6, board "Proposal v6"): Tools on the left (the sheets' buttons), a divider, the
-// three marks (good, bad, discuss) and the note field in the centre, a divider, and Debrief at the far right.
+// three marks (good, bad, discuss) and the note field in the centre, a divider, and Debrief at the far right, with
+// "Finish the case" just before it (board "Finish 2", teach2/finish.ts) while a card runs on the host.
 // A mark saves the moment with today's bookmark command (`commands.ts` `bookmark`: the 6b driver can restore it), under
 // its own label and counter ("Mark 2 at 08:20", plan R10), so the Log tab's bookmarks and the marks never share a name.
 // It carries its kind (IP2's `kind`) and, when the note field (filled by the sheets slot) holds text, that text as
@@ -47,7 +48,8 @@ export interface Dock {
   refresh(): void;
 }
 
-/** The instructor's end of a /2 case (Finish the case): its note in the record (the Debrief's timeline) and the Log. */
+/** The instructor's end of a /2 case: the note "Finish the case" (teach2/finish.ts) writes into the record (the
+ *  Debrief's timeline and the Log) when one of its buttons saves the debrief of a /2 card. */
 export const FINISHED = 'Case finished';
 
 /** Has the instructor finished the running case on this host: a "Case finished" note, not undone by a return, since
@@ -65,16 +67,9 @@ export function caseFinished(link: Link): boolean {
  *  one of its end phases (a phase with no next: F2's ended()), or the instructor finished it. */
 export const readyV2 = (link: Link): boolean => link.ctl.scenario.ended() || caseFinished(link);
 
-/** Finish the case: the end of the run, noted in the record and the Log, and the simulation paused (the Debrief grades
- *  the run as it stands; Resume carries on, the note stays). */
-export async function finishCase(link: Link): Promise<void> {
-  link.note(FINISHED, 'marker');
-  if (!link.ctl.hostPaused) await link.send({ type: 'time', action: 'pause' });
-  toast('The case is finished: the Debrief is ready');
-}
-
-/** The dock: the tool and note areas the sheets slot fills, the three marks, Finish the case (a /2 card), Debrief. */
-export function mountDock(link: Link): Dock {
+/** The dock: the tool and note areas the sheets slot fills, the three marks, Finish (`o.finish`, while `o.canFinish()`),
+ *  Debrief. */
+export function mountDock(link: Link, o: { finish?(): void; canFinish?(): boolean; finishing?(): boolean } = {}): Dock {
   const tools = h('div', { class: 'ip2-dock-tools', role: 'group', 'aria-label': 'Tools' });
   const note = h('div', { class: 'ip2-dock-note' });
   const marks = MARKS.map(([kind, label, d]) => {
@@ -82,9 +77,8 @@ export function mountDock(link: Link): Dock {
     b.innerHTML = `<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="${d}"/></svg>`;
     return b;
   });
-  const finish = h('button', { type: 'button', class: 'ip2-dock-btn ip2-finish', title: 'Ends the run here: noted on the debrief timeline, the simulation paused, the Debrief ready', onclick: () => void finishCase(link) }, 'Finish the case');
-  finish.hidden = true; // a /2 card only (a /1 card ends at a state with no way out, as today)
   const debrief = h('a', { class: 'ip2-dock-btn ip2-debrief', href: hrefOf('debrief') }, 'Debrief');
+  const finish = h('button', { type: 'button', class: 'ip2-dock-btn ip2-finish-btn', 'aria-pressed': 'false', hidden: true, title: 'Stops the clock; the debrief is saved when you choose how the case ends', onclick: () => o.finish?.() }, 'Finish the case');
   const el = h('footer', { class: 'ip2-dock', 'aria-label': 'Dock' },
     h('span', { class: 'ip2-dock-label', 'aria-hidden': 'true' }, 'Tools'),
     tools,
@@ -99,8 +93,9 @@ export function mountDock(link: Link): Dock {
     refresh: () => {
       const sv = link.ctl.scenario;
       const v2 = !!sv.doc && isV2(sv.doc);
-      finish.hidden = !v2;
       debrief.dataset.ready = String(v2 ? readyV2(link) : !!sv.doc && !sv.current()?.transitions?.length);
+      finish.hidden = !o.canFinish?.();
+      finish.setAttribute('aria-pressed', String(!!o.finishing?.()));
     },
   };
 }

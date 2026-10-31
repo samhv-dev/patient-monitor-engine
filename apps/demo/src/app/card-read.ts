@@ -48,8 +48,11 @@ const nameOf = (doc: ScenarioDoc, id: string): string => stateOf(doc, id)?.label
 /** Whether `s` is a hop: its only exit is `afterS` ≤ HOP_S (answer 2); the controller's `isHop` (IP9 review L3). */
 export { isHop };
 
-/** Whether `w` can hold without a press: false for a manual, and for an `all` with a manual inside. */
-function byItself(w: When): boolean {
+/** Whether `w` can hold without a press: false for a manual, and for an `all` with a manual inside. A transition whose
+ *  `when` cannot is a press whenever it fires (its target entered by your button), whatever order the host's record
+ *  saw the state and the press's acknowledgement in: only a step with a rule of its own (answer 4's "or by itself")
+ *  can be "fired by its own rule". */
+export function byItself(w: When): boolean {
   if ('manual' in w) return false;
   if ('all' in w) return w.all.every(byItself);
   if ('any' in w) return w.any.some(byItself);

@@ -3,7 +3,8 @@
 // to them (a mark's kind and note with it), the pulse lost and back (from the model), runs of ventricular tachycardia (≥ 3 consecutive PVCs on the drawn
 // ECG, the model's or the instructor's), ventilated breaths beginning, the instructor's notes, and a 1 Hz
 // trend of six numerics and five laboratory values of the model (K⁺, lactate, pH, glucose, core temperature). A state
-// row names the transition that entered it and whether a press, its rule or a jump did; an item of a staged delivery
+// row names the transition that entered it and whether a press, its rule or a jump did, as the scenario's event says
+// the runner took it (never a match of a press to a state's time); an item of a staged delivery
 // keeps its own row with the delivery's id (Instructor v2, IP8; all additive). A pme-scenario/2 run also keeps a copy
 // of the phase runner's grade inputs (phases, administrations, rule edges; plan F7), taken each second and on every
 // phase, so the debrief, its export and a reload never need the driver. It lives
@@ -35,7 +36,8 @@ export interface Row {
    *  a failed probability roll); absent for the first state and a jump. */
   tr?: string;
   /** A state row: how the state was entered — the instructor's button (the transition's trigger was pressed), the
-   *  transition's own rule, or a jump (`goto`). Absent for the first state. */
+   *  transition's own rule, or a jump (`goto`), copied from the scenario event's `by` (the runner's own account of the
+   *  transition it took). Absent for the first state. */
   by?: 'press' | 'rule' | 'goto';
   /** A bookmark row (Instructor v2 marks): the mark's kind, and the note the instructor wrote with it. */
   markKind?: Exclude<MarkKind, 'stage'>;
@@ -100,7 +102,7 @@ const SAMPLES_MAX = 4 * 3600;
 const EPS = 1e-6;
 /** Consecutive PVCs that make a run of ventricular tachycardia (non-sustained VT: ≥ 3 beats; Katritsis 2012). */
 const VT_RUN = 3;
-/** The host's tick (s): a press and the state it leads to are applied in one tick. */
+/** The host's tick (s). */
 const TICK_S = 0.02;
 
 /** The bookmark label of the return to a position kept across a reload (position.ts; never one the instructor sees). */
@@ -128,10 +130,6 @@ export class RunRecord {
   private since = -Infinity;
   /** The trackers as they stood at each bookmark of this run. */
   private readonly marks = new Map<string, { lastVent: number; pulse: boolean | null; active: string[] }>();
-  /** Triggers pressed whose transition has not fired yet (the runner keeps a press until the state is left). */
-  private pressed = new Set<string>();
-  /** A jump acknowledged before the state it entered was published (null: none pending). */
-  private jump: string | null = null;
   private readonly cur: Record<string, number | null> = {};
   private readonly lab: Partial<Record<LabKey, number | null>> = {};
 
@@ -161,15 +159,16 @@ export class RunRecord {
       if (kept?.ev === `state:${e.stateId}`) return; // a resync's repeat of the state we are in
       const doc = this.data.doc;
       // a /1 state's label, or a /2 phase's (F11: a phase read "next state")
-      const label = (isV2(doc) ? doc.phases.find((p) => p.id === e.stateId)?.label : asV1(doc)?.states.find((s) => s.id === e.stateId)?.label) ?? 'next state';
-      const row: Row = { t: e.t, kind: 'scenario', text: `Scenario state: ${label}`, ev: `state:${e.stateId}` };
-      // how it was entered: the host publishes the state before it acknowledges the press or the jump that caused it
-      // (driver.hook evaluates on the press's own tick), so trigger() and goto() below may still turn 'rule' into
-      // 'press' and set 'goto'; a press whose transition waits for the rest of its condition is pending here
-      if (e.transitionId) Object.assign(row, { tr: e.transitionId, by: this.pressed.has(e.transitionId.replace(/:else$/, '')) ? 'press' : 'rule' });
-      else if (this.jump === e.stateId) row.by = 'goto';
-      this.pressed.clear(); // a new state: the runner forgets the presses of the last one
-      this.jump = null;
+      const label = (doc && isV2(doc) ? doc.phases.find((p) => p.id === e.stateId)?.label : asV1(doc)?.states.find((s) => s.id === e.stateId)?.label) ?? 'next state';
+      // how it was entered, as the runner took it (the event's `by`: the press of this transition held when it fired,
+      // its rule alone, or a jump). Not matched from the press's acknowledgement: the host reads its clock once for the
+      // acknowledgement's tick and again for the state's time, and at ×8 the two can be more than a tick apart. A /2
+      // phase is always entered by its own rule (Q5), so its entry (`enter:<id>`) reads 'rule'
+      const by = e.by ?? (doc && isV2(doc) && e.transitionId ? 'rule' : undefined);
+      const row: Row = {
+        t: e.t, kind: 'scenario', text: `Scenario state: ${label}`, ev: `state:${e.stateId}`,
+        ...(e.transitionId ? { tr: e.transitionId } : {}), ...(by ? { by } : {}),
+      };
       return this.add(row);
     }
     if (e.type !== 'commandApplied') return;
@@ -182,7 +181,7 @@ export class RunRecord {
     // by the state it leads to
     if (bySc && (c.type === 'setMode' || c.type === 'attachSensor' || c.type === 'device')) return;
     const t = e.tick * TICK_S;
-    if (c.type === 'scenario' && c.action === 'trigger') return this.trigger(String(c.target), t);
+    if (c.type === 'scenario' && c.action === 'trigger') return; // shown by the state it leads to, entered 'press'
     const text = describeCommand(c);
     if (c.type === 'scenario') {
       if (c.action === 'load' && c.doc) {
@@ -201,7 +200,6 @@ export class RunRecord {
           ...(typeof c.note === 'string' && c.note.trim() ? { note: c.note.trim() } : {}),
         });
       }
-      if (c.action === 'goto') this.jumped(String(c.target), t);
       return this.add({ t, kind: c.action === 'restoreBookmark' ? 'restore' : 'scenario', text });
     }
     const ev = c.type === 'applyEvent' ? (c.event as Record<string, unknown>) : null;
@@ -216,27 +214,6 @@ export class RunRecord {
     if (ev?.kind === 'condition' && Number(ev.severity) > 0) row.ev = `condition:${String(ev.id)}`;
     if (ev?.kind === 'airway') row.ev = `airway:${String(ev.state)}`;
     this.add(row);
-  }
-
-  /** The last kept state row, when it was entered within one tick of `t` (the tick a press or a jump is applied in). */
-  private enteredAt(t: number): Row | undefined {
-    const r = this.data.rows.filter((x) => x.kind === 'scenario' && x.ev?.startsWith('state:') && x.undone === undefined).at(-1);
-    return r && Math.abs(r.t - t) <= TICK_S + EPS ? r : undefined;
-  }
-
-  /** A trigger pressed (not printed: the state it leads to is): the state its transition entered on this tick, else
-   *  pending until it fires. */
-  private trigger(id: string, t: number): void {
-    const r = this.enteredAt(t);
-    if (r?.by === 'rule' && (r.tr === id || r.tr === `${id}:else`)) r.by = 'press';
-    else this.pressed.add(id);
-  }
-
-  /** A jump: the state it entered on this tick, else the next state published, if it is the jump's. */
-  private jumped(stateId: string, t: number): void {
-    const r = this.enteredAt(t);
-    if (r && r.ev === `state:${stateId}` && r.tr === undefined && r.by === undefined) r.by = 'goto';
-    else this.jump = stateId;
   }
 
   /** The host's engine events (truth included: it stays on this page). */
@@ -342,8 +319,6 @@ export class RunRecord {
     this.pvcRun = { n: 0, t: 0, row: null };
     this.held = null;
     this.since = -Infinity;
-    this.pressed.clear();
-    this.jump = null;
     this.marks.clear();
     for (const k of Object.keys(this.cur)) delete this.cur[k];
     for (const k of LAB_KEYS) delete this.lab[k];
@@ -374,7 +349,6 @@ export class RunRecord {
       if (r.undone === undefined && k > i && r.t > t - EPS && (i >= 0 || r.t > t + EPS)) r.undone = n;
     });
     const m = this.marks.get(label);
-    this.pressed.clear();
     this.lastVent = m ? m.lastVent : -Infinity;
     this.active = new Set(m?.active ?? []);
     this.pulse = m ? m.pulse : rows.filter((r) => r.undone === undefined && (r.ev === 'pulseLoss' || r.ev === 'rosc')).at(-1)?.ev !== 'pulseLoss';

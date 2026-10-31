@@ -60,26 +60,27 @@ describe('the run record', () => {
     expect(r.data.doc?.id).toBe('showcase-induction');
   });
 
-  it('IP8: a state row names its transition and whether a press, its rule or a jump entered it, in either order of arrival', () => {
+  it('IP8: a state row names its transition and how the runner took it (the event\'s `by`), whatever the acknowledgements say', () => {
     const r = fresh();
     r.wire(applied(0, { type: 'scenario', action: 'load', doc: induction }));
     r.wire({ type: 'scenario', t: 0, stateId: 'awake' } as WireEvent); // the first state: no transition, no "by"
-    // the host publishes the state before it acknowledges the press that caused it (the driver evaluates on the press's tick)
-    r.wire({ type: 'scenario', t: 10, stateId: 'induced', transitionId: 'induce' } as WireEvent);
+    r.wire({ type: 'scenario', t: 10.023, stateId: 'induced', transitionId: 'induce', by: 'press' } as WireEvent);
+    // the press acknowledged at the tick of the host's first clock read, more than a tick before the state's time: the
+    // record used to match the two within one tick and left this press 'rule'
     r.wire(applied(500, { type: 'scenario', action: 'trigger', target: 'induce' }));
-    r.wire({ type: 'scenario', t: 30, stateId: 'desaturating', transitionId: 'desat' } as WireEvent); // its rule
+    r.wire({ type: 'scenario', t: 30, stateId: 'desaturating', transitionId: 'desat', by: 'rule' } as WireEvent);
     r.wire(applied(2000, { type: 'scenario', action: 'trigger', target: 'rescueBvm-desaturating' })); // waits for its condition
-    r.wire({ type: 'scenario', t: 41, stateId: 'rescuedBvm', transitionId: 'rescueBvm-desaturating' } as WireEvent);
-    r.wire({ type: 'scenario', t: 50, stateId: 'cpr' } as WireEvent); // a jump, acknowledged after its state
+    r.wire({ type: 'scenario', t: 41, stateId: 'rescuedBvm', transitionId: 'rescueBvm-desaturating', by: 'press' } as WireEvent);
+    r.wire({ type: 'scenario', t: 50, stateId: 'cpr', by: 'goto' } as WireEvent);
     r.wire(applied(2500, { type: 'scenario', action: 'goto', target: 'cpr' }));
     r.wire(applied(3000, { type: 'scenario', action: 'goto', target: 'rosc' })); // a jump acknowledged first
-    r.wire({ type: 'scenario', t: 60, stateId: 'rosc' } as WireEvent);
-    r.wire(applied(3500, { type: 'scenario', action: 'trigger', target: 'nothing' })); // a press with no state after it
-    r.wire({ type: 'scenario', t: 80, stateId: 'ventilated', transitionId: 'intubate' } as WireEvent); // the press was of another state
+    r.wire({ type: 'scenario', t: 60, stateId: 'rosc', by: 'goto' } as WireEvent);
+    r.wire(applied(3500, { type: 'scenario', action: 'trigger', target: 'intubate' })); // a press whose state came by its rule
+    r.wire({ type: 'scenario', t: 70, stateId: 'ventilated', transitionId: 'intubate', by: 'rule' } as WireEvent);
     const states = r.data.rows.filter((x) => x.ev?.startsWith('state:')).map((x) => [x.t, x.ev, x.tr ?? '', x.by ?? '']);
     expect(states).toEqual([
-      [0, 'state:awake', '', ''], [10, 'state:induced', 'induce', 'press'], [30, 'state:desaturating', 'desat', 'rule'],
-      [41, 'state:rescuedBvm', 'rescueBvm-desaturating', 'press'], [50, 'state:cpr', '', 'goto'], [60, 'state:rosc', '', 'goto'], [80, 'state:ventilated', 'intubate', 'rule'],
+      [0, 'state:awake', '', ''], [10.023, 'state:induced', 'induce', 'press'], [30, 'state:desaturating', 'desat', 'rule'],
+      [41, 'state:rescuedBvm', 'rescueBvm-desaturating', 'press'], [50, 'state:cpr', '', 'goto'], [60, 'state:rosc', '', 'goto'], [70, 'state:ventilated', 'intubate', 'rule'],
     ]);
     // the jumps still print as before, the presses still do not
     expect(r.data.rows.filter((x) => x.kind === 'scenario' && !x.ev).map((x) => x.text)).toEqual([`Scenario loaded: ${induction.title}`, 'Scenario: jumped to a state', 'Scenario: jumped to a state']);

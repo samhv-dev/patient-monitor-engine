@@ -2,12 +2,17 @@
 // The Instructor v2 dock (plan IP4, IP7): the three marks send today's bookmark command plus IP2's `kind` (and the note
 // field's text as IP2's `note`, marks-note.dom.test.ts) under their own label and counter (plan R10); Debrief sits at the
 // far right and is lit once the case has ended.
-import { ScenarioView, type AckResult, type AnyScenarioDoc, type CommandInput, type ScenarioDoc } from '@pme/controller';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { ScenarioView, type AckResult, type AnyScenarioDoc, type CommandInput, type ScenarioDoc, type WireEvent } from '@pme/controller';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { bookmark } from '../commands.ts';
 import type { Link } from '../link.ts';
 import { anyShowcaseDoc } from '../showcase/harness.ts';
-import { mountDock } from './dock.ts';
+import { archive } from '../archive.ts';
+import { MemoryStorage } from '../memory-storage.ts';
+import { RunRecord } from '../record.ts';
+import { caseFinished, FINISHED, mountDock } from './dock.ts';
+import type { Teach2Ctx } from './ctx.ts';
+import { mountFinish } from './finish.ts';
 
 const settle = () => new Promise((r) => setTimeout(r, 0));
 const toasts = () => [...document.querySelectorAll('.toast')].map((t) => t.textContent);
@@ -69,48 +74,60 @@ describe('Instructor v2 dock', () => {
 
 // F11 found the Debrief "ready" flag never true on the MH /2 card: every phase has a next, and ready was "no next" alone.
 // Ready for a /2 card (design §6, Q11: the run's end): the case is in one of its end phases (no next), or the instructor
-// pressed Finish the case, which marks the end in the record and pauses the simulation. A /1 card is as today.
-describe('Instructor v2 dock: Finish the case (a /2 card)', () => {
+// finished the case: "Finish the case" (#214's pane, teach2/finish.ts) writes "Case finished" into the record of a /2
+// card when one of its buttons saves the debrief. A /1 card is lit as today.
+describe('Instructor v2 dock: the Debrief ready flag of a /2 card', () => {
   function rig2(doc: AnyScenarioDoc, stateId: string) {
-    const sent: CommandInput[] = [];
-    const notes: Array<[string, string]> = [];
     const sv = new ScenarioView();
     sv.doc = doc;
     sv.docVersion = 1;
     sv.stateId = stateId;
-    const rows: Array<{ t: number; kind: string; text: string }> = [{ t: 0, kind: 'scenario', text: `Scenario loaded: ${doc.title}` }];
+    const record = new RunRecord(() => ({ patient: 'M 35 y 80 kg', weightKg: 80 }), () => Date.UTC(2026, 10, 1, 9, 0));
+    record.wire({ type: 'commandApplied', commandId: 'c0', tick: 0, resolved: { command: { id: 'c0', issuedBy: 'instructor', type: 'scenario', action: 'load', doc } } } as unknown as WireEvent);
     const link = {
-      ctl: { scenario: sv, hostPaused: false }, simT: 1471, host: { record: { data: { rows } } },
-      send: async (c: CommandInput) => (sent.push(structuredClone(c)), { accepted: true, tick: 0, commandId: 'c1', rttMs: 0 }),
-      note: (text: string, kind = 'note') => (notes.push([text, kind]), rows.push({ t: 1471, kind: 'note', text })),
+      ctl: { scenario: sv, hostPaused: false }, simT: 1471, host: { record, driver: { markStages: () => undefined, stageMarks: () => [], vitalHolds: () => [] } },
+      send: async (c: CommandInput) => ({ accepted: true, tick: 0, commandId: String(c.type), rttMs: 0 }),
+      note: (text: string) => record.note(1471, text),
     } as unknown as Link;
-    const dock = mountDock(link);
+    let finishing = false;
+    const dock = mountDock(link, { finish: () => void (finishing = true), canFinish: () => true, finishing: () => finishing });
     document.body.append(dock.el);
     const debrief = dock.el.querySelector('.ip2-debrief') as HTMLAnchorElement;
-    const finish = [...dock.el.querySelectorAll('button')].find((b) => b.textContent === 'Finish the case') as HTMLButtonElement | undefined;
-    return { sent, notes, dock, debrief, finish };
+    const finish = dock.el.querySelector('.ip2-finish-btn') as HTMLButtonElement;
+    return { link, record, dock, debrief, finish };
   }
 
-  it('the MH /2 card in Treated (it has a next): not ready until Finish the case, which marks the end and pauses; then ready', async () => {
+  it('the MH /2 card in Treated (it has a next): not ready until the record holds "Case finished"; then ready', () => {
     const r = rig2(anyShowcaseDoc('showcase-mh-v2') as AnyScenarioDoc, 'treated');
     r.dock.refresh();
-    expect(r.finish, 'a Finish the case button').toBeDefined();
-    expect(r.finish?.hidden).toBe(false);
+    expect(r.finish.hidden).toBe(false);
     expect(r.debrief.dataset.ready).toBe('false');
-    r.finish?.click();
-    await settle();
-    expect(r.notes).toEqual([['Case finished', 'marker']]);
-    expect(r.sent).toContainEqual({ type: 'time', action: 'pause' });
+    expect(caseFinished(r.link)).toBe(false);
+    r.link.note(FINISHED, 'marker');
     r.dock.refresh();
+    expect(caseFinished(r.link)).toBe(true);
     expect(r.debrief.dataset.ready).toBe('true');
-    // Debrief stays the dock's last item
-    expect([...r.dock.el.children].at(-1)).toBe(r.debrief);
+    expect([...r.dock.el.children].at(-1)).toBe(r.debrief); // Debrief stays the dock's last item
   });
 
-  it('a /1 card shows no Finish the case; its Debrief is lit as today', () => {
+  it('Finish the case on a /2 card: "Debrief now" writes "Case finished" into the record before the archive saves it', async () => {
+    vi.stubGlobal('localStorage', new MemoryStorage());
+    const r = rig2(anyShowcaseDoc('showcase-mh-v2') as AnyScenarioDoc, 'treated');
+    const el = document.createElement('div');
+    const ctx = { link: r.link, keys: { escape: () => () => undefined } } as unknown as Teach2Ctx;
+    const f = mountFinish(el, ctx, () => undefined, { restart: () => true, close: () => undefined });
+    f.start();
+    await settle();
+    (el.querySelector('.ip2-finish-now') as HTMLButtonElement).click();
+    expect(r.record.data.rows.filter((x) => x.kind === 'note').map((x) => x.text)).toEqual([FINISHED]);
+    const saved = archive.list().at(0);
+    expect(saved && archive.debrief(saved.id)?.includes(FINISHED)).toBe(true);
+    f.destroy();
+  });
+
+  it('a /1 card: its Debrief is lit as today (no next), whatever the record holds', () => {
     const r = rig2({ schema: 'pme-scenario/1', id: 't', title: 'T', initialState: 'a', states: [{ id: 'a', label: 'A', transitions: [{ id: 'go', to: 'a', when: { manual: { label: 'Go' } } }] }] } as unknown as AnyScenarioDoc, 'a');
     r.dock.refresh();
-    expect(r.finish === undefined || r.finish.hidden).toBe(true);
     expect(r.debrief.dataset.ready).toBe('false');
   });
 });

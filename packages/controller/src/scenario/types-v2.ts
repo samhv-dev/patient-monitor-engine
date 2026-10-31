@@ -129,7 +129,7 @@ export interface ScenarioDocV2 extends Header {
   outcomes?: Outcome[];
   judged?: Judged[];
   script?: ScriptEntry[];
-  /** #211's learner-facing Case briefing (the same shape as on /1 there); shown nowhere until #211 lands. */
+  /** #211's learner-facing Case briefing (the same shape as on /1; `briefingOf` reads either). */
   briefing?: { text: string; estimatedMinutes?: number; durationS?: number; lang?: 'en' | 'fa' };
 }
 

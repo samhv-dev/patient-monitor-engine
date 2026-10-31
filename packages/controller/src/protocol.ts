@@ -113,6 +113,8 @@ export type ScenarioCommand = Extract<ExtraCommand, { type: 'scenario' }>;
 /** applyEvent / attachSensor: the host passes them to the engine, which validates them (Stages 3, 4 and 7 model them). */
 export type ClinicalCommand = Extract<ExtraCommand, { type: 'applyEvent' | 'attachSensor' }>;
 export type ScenarioEvent = Extract<ExtraEvent, { type: 'scenario' }>;
+/** How a scenario state was entered (the `scenario` event's `by`). */
+export type ScenarioEntry = 'press' | 'rule' | 'goto';
 
 /** Brief §7.3 EngineEvent variants not yet in engine-core's union (verbatim shapes). */
 export type ExtraEvent =
@@ -140,7 +142,14 @@ export type ExtraEvent =
       /** Who breathes and through what (E121b; the engine's own state, absent from a host-synthesised one). */
       breathing?: { source: 'spontaneous' | 'bvm' | 'ventilator' | 'none' | 'external'; device: 'none' | 'ett' | 'sga' };
     }
-  | { type: 'scenario'; t: SimSeconds; stateId: string; transitionId?: string }
+  /**
+   * The scenario entered `stateId` at `t`, by `transitionId` (`<id>:else` for a failed probability roll). `by` (additive,
+   * Instructor v2): how the runner took it — `press` when the instructor's press of that transition was held when it
+   * fired, `rule` when its condition fired it alone, `goto` for a jump. Absent for the first state and for a
+   * re-publish of the current state (a return to a bookmark, a late joiner's welcome). The host's record reads it, so
+   * a stage entry is a fact of the runner, not a match of the press's acknowledgement to the state's time.
+   */
+  | { type: 'scenario'; t: SimSeconds; stateId: string; transitionId?: string; by?: ScenarioEntry }
   | { type: 'commandApplied'; commandId: string; tick: Tick; resolved: unknown; ignored?: string[] }
   /** The host replaced its engine (patient restart, scenario load): sim time starts again at `t` on a new timeline.
    *  Within one timeline a peer's clock only moves forward; across this boundary it restarts (showcase hotfix). */
@@ -161,7 +170,23 @@ export type ExtraEvent =
    * Sent with every answer to a hello (`replay: true`: the relay routes it as the welcome) and at every change.
    * Presentation only.
    */
-  | { type: 'style'; skin: string; theme: string; replay?: true };
+  | { type: 'style'; skin: string; theme: string; replay?: true }
+  /**
+   * The card's Case briefing, for every learner screen (owner's board Orientation 7b): sent when a card with one loads,
+   * with every answer to a hello while it runs (`replay: true`, so a phone that joins or reloads shows the remainder:
+   * `startedAt` and the message's `sentAt` are both the host's clock), and `ended` when the instructor ends it
+   * everywhere or a new load replaces it. Presentation only.
+   */
+  | ({ type: 'briefing'; replay?: true; ended?: true } & BriefingNotice);
+
+/** A running Case briefing: the card's `briefing` with its defaults, and when the host started it (epoch ms, its clock). */
+export interface BriefingNotice {
+  startedAt: number;
+  durationS: number;
+  text: string;
+  estimatedMinutes?: number;
+  lang: 'en' | 'fa';
+}
 
 /** An alarm raised during a fast-forward (it did not sound); `ended`: it came and went inside the span. */
 export type FastForwardAlarm = AlarmEntry & { ended: boolean };
@@ -190,10 +215,10 @@ export type WireEvent = EngineEvent | ExtraEvent;
  * The events a VIEWER uses — it runs its own engine from the host's snapshot, so it needs the clock anchor (`state`),
  * the beats it checks its own against, the commands it mirrors, the host's timeline and fast-forward (ViewerSync; the
  * follower page's liveness and pause read the same), the scenario's state (small, 1 Hz at most), the Ventilator view's
- * `cockpit` notice and the instructor's monitor `style`. The relay sends a viewer on the network only these (at ×8 the
+ * `cockpit` notice, the instructor's monitor `style` and the card's Case `briefing`. The relay sends a viewer on the network only these (at ×8 the
  * rest — measurements, alarm and organ status its own engine computes — was 4/5 of a phone's traffic).
  */
-export const VIEWER_EVENTS: ReadonlySet<WireEvent['type']> = new Set<WireEvent['type']>(['state', 'beat', 'commandApplied', 'timeline', 'fastForward', 'scenario', 'cockpit', 'style']);
+export const VIEWER_EVENTS: ReadonlySet<WireEvent['type']> = new Set<WireEvent['type']>(['state', 'beat', 'commandApplied', 'timeline', 'fastForward', 'scenario', 'cockpit', 'style', 'briefing']);
 export type StateEvent = Extract<ExtraEvent, { type: 'state' }>;
 export type CommandAppliedEvent = Extract<ExtraEvent, { type: 'commandApplied' }>;
 
