@@ -2,20 +2,28 @@
 // 29 October on clicks). The card's stages in order, hop states folded in (card-read.ts `stagesOf`): a past stage with
 // its entry time (from the scenario's history), the current one highlighted with its number of open steps, future
 // stages dashed with "auto" where a rule enters them, and side branches as "<a> or <b>".
-// Clicks: a future stage sends today's `goto` behind today's jump confirm (panel/scenario.ts `jump`, copied); a past stage
-// shows its entry time and "Return to the start of <stage>", which restores the hidden stage mark the driver places at
-// every stage entry (ScenarioDriver.stageMarks()), behind one confirm. Fit (14 stages on the MH card, 15 on the
+// Clicks: a stage pressed opens its inline box under the chip, and the box's button is the confirmation (the owner's
+// report of 30 October: no dialog). A future stage's box reads "Jump to <stage>" and sends today's `goto` with today's
+// toast (panel/scenario.ts `jump`, copied without its confirm); a past stage's box shows its entry time and "Return to
+// the start of <stage>", which restores the hidden stage mark the driver places at every stage entry
+// (ScenarioDriver.stageMarks()). Fit (14 stages on the MH card, 15 on the
 // haemorrhage card), the owner's ruling for IP9: exactly five chips with full names, the two stages before the current
 // one, the current one and the next two (at either end of the card the window slides to keep five); everything beyond
 // folds behind an arrow at each end ("‹ 3 earlier", "4 later ›"); an arrow pages the window that way, and "back to now"
 // recentres it on the current stage whenever it has been moved. The future stages are ordered from the current one
 // (the stages it leads to first; two of one step read "<a> or <b>"). Names are never cut: when the chips do not fit,
-// the padding tightens, then the hint goes, then the strip scrolls sideways.
+// the padding tightens, then the strip scrolls sideways; the hint is a line of its own under them.
+// The status line: the 40-px row under the chips where the panel talks, shown only while it has something to say (the
+// strip's area grows from 75 to 115 px then; app.css). While a card's Case briefing runs on the learners' screens it
+// reads "Case briefing on every screen · 0:48 left" with End briefing at its right (the owner's choice of 31 October:
+// the control left the chips' row, which it pushed past the window on the MH card in the first minute).
 import './state.css';
-import type { ScenarioDoc } from '@pme/controller';
+import type { BriefingNotice, ScenarioDoc } from '@pme/controller';
+import { briefingLeftS, briefingStatusText } from '../briefing.ts';
 import { rowsOf, stagesOf, type Stage } from '../card-read.ts';
 import type { Link } from '../link.ts';
-import { clock, confirmDialog, h, toast } from '../ui.ts';
+import { clock, h, setText, toast } from '../ui.ts';
+import { KEYS_OF, NO_CASE } from './begin.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { historyOf } from './course.ts';
 
@@ -61,13 +69,8 @@ export interface StageEntry {
  */
 export function stageEntries(doc: ScenarioDoc, history: ReadonlyArray<{ t: number; stateId: string; transitionId?: string }>, current: { stateId: string | null; enteredT: number }, simT: number): StageEntry[] {
   const home = new Map(stagesOf(doc).flatMap((g) => g.states.map((s) => [s, g.id] as const)));
-  const kept: Array<{ t: number; stateId: string; transitionId?: string }> = [];
-  for (const e of history) {
-    while (kept.length && (kept.at(-1) as { t: number }).t > e.t) kept.pop();
-    kept.push(e);
-  }
   const out: StageEntry[] = [];
-  for (const e of kept) {
+  for (const e of keptCourse(history)) {
     if (e.t > simT + 0.05) break;
     const stage = home.get(e.stateId);
     if (!stage || out.at(-1)?.stage === stage) continue;
@@ -76,6 +79,25 @@ export function stageEntries(doc: ScenarioDoc, history: ReadonlyArray<{ t: numbe
   const cur = current.stateId ? home.get(current.stateId) : undefined;
   if (cur && out.at(-1)?.stage !== cur) out.push({ stage: cur, stateId: current.stateId as string, t: current.enteredT });
   return out;
+}
+
+type HistoryEntry = { t: number; stateId: string; transitionId?: string };
+/** The history of the course kept: the entries of a course a restore discarded dropped (an entry earlier than the one
+ *  before it rewound the clock). */
+function keptCourse(history: readonly HistoryEntry[]): HistoryEntry[] {
+  const kept: HistoryEntry[] = [];
+  for (const e of history) {
+    while (kept.length && (kept.at(-1) as HistoryEntry).t > e.t) kept.pop();
+    kept.push(e);
+  }
+  return kept;
+}
+
+/** The transitions fired since the current stage was entered (its spokes' presses: the hub stays current, so the
+ *  steps they took are no longer open), on the course kept and up to `simT`. Empty without an entry. */
+export function firedInStage(history: readonly HistoryEntry[], entry: StageEntry | undefined, simT: number): Set<string> {
+  if (!entry) return new Set();
+  return new Set(keptCourse(history).flatMap((e) => (e.t > entry.t + 1e-6 && e.t <= simT + 0.05 && e.transitionId ? [e.transitionId.replace(/:else$/, '')] : [])));
 }
 
 export type StripItem =
@@ -110,7 +132,7 @@ function edgesOf(doc: ScenarioDoc, stages: readonly Stage[]): Map<string, Set<st
  * future stage no path from the current one reaches comes last. The window starts KEEP_PAST before the current stage
  * (slid to keep WINDOW stages at either end of the line), moved by `offset` stages (the arrows; 0 = now).
  */
-export function stripModel(doc: ScenarioDoc, stateId: string | null, entries: readonly StageEntry[], offset = 0): StripItem[] {
+export function stripModel(doc: ScenarioDoc, stateId: string | null, entries: readonly StageEntry[], offset = 0, fired: ReadonlySet<string> = new Set()): StripItem[] {
   const stages = stagesOf(doc);
   const at = stages.findIndex((g) => stateId !== null && g.states.includes(stateId));
   const last = (id: string) => entries.filter((e) => e.stage === id).at(-1) ?? null;
@@ -141,8 +163,9 @@ export function stripModel(doc: ScenarioDoc, stateId: string | null, entries: re
   for (let i = start; i < end; i++) {
     const x = line[i] as Slot;
     if (x.kind === 'past') out.push({ kind: 'past', stage: x.stage, entry: last(x.stage.id) });
-    // the open steps of the stage's own state (during a 2-s hop too: a hop has no steps of its own)
-    else if (x.kind === 'current') out.push({ kind: 'current', stage: x.stage, entry: last(x.stage.id), open: rowsOf(doc, x.stage.id).filter((r) => r.kind === 'step').length });
+    // the open steps of the stage's own state (during a 2-s hop too: a hop has no steps of its own), less the ones its
+    // spokes' presses took in this visit (`fired`: they are in ACTION's Finished)
+    else if (x.kind === 'current') out.push({ kind: 'current', stage: x.stage, entry: last(x.stage.id), open: rowsOf(doc, x.stage.id).filter((r) => r.kind === 'step' && !fired.has(r.tr.id)).length });
     else {
       const prev = out.at(-1);
       if (prev?.kind === 'future' && i > start && (line[i - 1] as Slot).layer === x.layer) prev.stages.push(x.stage);
@@ -164,17 +187,11 @@ export const stageMarks: { of(link: Link, entry: StageEntry): string | null } = 
   of: (link, entry) => (link.host?.driver.stageMarks() ?? []).filter((c) => c.note === entry.stage).at(-1)?.target ?? null,
 };
 
-/** Today's jump, copied from panel/scenario.ts `jump`: the same confirm, the same command, the same toast. */
+/** Today's jump, copied from panel/scenario.ts `jump` without its confirm (the strip's box is the confirmation): the
+ *  same command, the same toast. */
 async function jump(link: Link, id: string, label: string): Promise<void> {
-  if (!(await confirmDialog('Jump to this state?', `The scenario moves to "${label}" now and runs its changes.`, 'Jump', false, 'Stay in this state'))) return;
   const r = await link.send({ type: 'scenario', action: 'goto', target: id });
   if (r.accepted) toast(`Scenario: ${label}`);
-}
-
-/** Return to the start of a past stage: its stage mark restored (today's bookmark restore), behind one confirm. */
-async function returnTo(link: Link, name: string, mark: string): Promise<void> {
-  if (!(await confirmDialog(`Return to the start of ${name}?`, `The patient goes back to the moment "${name}" began. The clock goes back with it.`, 'Return', false, 'Stay here'))) return;
-  void link.send({ type: 'scenario', action: 'restoreBookmark', target: mark });
 }
 
 /** Mount this slot into `el` (the fixed slot signature, teach2/ctx.ts). */
@@ -182,8 +199,46 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const { link } = ctx;
   const sv = link.ctl.scenario;
   const chips = h('div', { class: 'ip2-chips' });
-  const hint = h('span', { class: 'ip2-strip-hint' }, 'past: return to its start · future: jumps to it (asks once)');
-  el.replaceChildren(chips, hint);
+  const hint = h('span', { class: 'ip2-strip-hint' }, 'past: return to its start · future: jump to it');
+  // with no case loaded (board "Empty 5"): the note at the strip's right and the status line under it
+  const note = h('span', { class: 'ip2-strip-note', hidden: true }, 'the default patient is on the monitor and running');
+  // The status line. ONE message at a time, by precedence (the first that applies takes the line):
+  //   1. "Finishing." while Finish the case holds the clock (#214; board "Finish 2"), amber;
+  //   2. a paused message, should one ever be written here (none today: option G shows paused on the pill and the monitor);
+  //   3. the Case briefing while it runs: its sentence and End briefing (ends it on every screen, session.endBriefing);
+  //   4. the ordinary line: "Ready." with no case loaded (#210).
+  // With none of them the line is hidden and the strip keeps its 52 px. The briefing yields to 1 and 2 and comes back
+  // with its remaining time when they go; it takes the line from 4 only while it runs.
+  const READY = 'The phones can join now (Room code in the header); whatever you load or give next, they follow.';
+  const statusWord = h('b', {}, 'Ready.');
+  const statusText = h('span', { class: 'ip2-status-text' }, READY);
+  const statusKeys = h('span', { class: 'ip2-status-keys' });
+  const endBrief = h('button', { type: 'button', class: 'ip2-status-btn', onclick: () => link.host?.endBriefing() }, 'End briefing');
+  const status = h('div', { class: 'ip2-status', role: 'status', hidden: true }, statusWord, statusText, h('span', { class: 'ip2-spacer' }), statusKeys, endBrief);
+  el.replaceChildren(chips, hint, note, status);
+  let brief: BriefingNotice | null = null;
+  let briefTick: ReturnType<typeof setInterval> | null = null;
+  const sayStatus = () => {
+    const fin = !!sv.doc && !!ctx.finish?.open;
+    const msg = fin ? `The clock is stopped at ${clock(link.simT)} while you decide. Nothing is written until you press a button on the right.`
+      : brief ? briefingStatusText(briefingLeftS(brief)) : !sv.doc ? READY : null; // 1, then 3, then 4
+    status.hidden = msg === null;
+    status.classList.toggle('ip2-finishing', fin);
+    el.toggleAttribute('data-finishing', fin);
+    const briefing = !fin && brief !== null;
+    endBrief.hidden = !briefing;
+    statusWord.hidden = statusKeys.hidden = briefing;
+    el.toggleAttribute('data-briefing', brief !== null);
+    setText(statusWord, fin ? 'Finishing.' : 'Ready.');
+    if (fin) setText(statusKeys, 'Esc keeps the case running');
+    if (msg !== null) setText(statusText, msg);
+  };
+  const offBrief = link.host?.onBriefing?.((b) => {
+    if (briefTick !== null) clearInterval(briefTick);
+    brief = b;
+    briefTick = b ? setInterval(sayStatus, 500) : null;
+    sayStatus();
+  });
   /** How far the arrows have moved the window from now (stages; 0 = the current stage's window). */
   let offset = 0;
   let docV = -1;
@@ -198,27 +253,37 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     return true;
   };
   const offEsc = ctx.keys.escape(closePop);
-  const outside = (e: Event) => pop && !pop.contains(e.target as Node) && !(e.target as Element | null)?.closest?.('.ip2-past') && closePop();
+  const outside = (e: Event) => pop && !pop.contains(e.target as Node) && !(e.target as Element | null)?.closest?.('.ip2-past, .ip2-future') && closePop();
   document.addEventListener('pointerdown', outside);
 
-  /** A past stage pressed: its entry time and the return to its start (disabled while it has no stage mark). */
-  const showPast = (chip: HTMLElement, g: Stage, entry: StageEntry | null) => {
+  /** Open stage `g`'s box under its chip (a second press on the same chip closes it): the box's button is the
+   *  confirmation. */
+  const openPop = (chip: HTMLElement, g: Stage, ...kids: Array<Node | null>): void => {
     const again = pop?.dataset.stage === g.id;
     closePop();
     if (again) return;
     const name = names.get(g.id) ?? g.label;
-    const mark = entry ? stageMarks.of(link, entry) : null;
-    const back = h('button', { type: 'button', class: 'ip2-pop-btn', disabled: !mark, onclick: () => mark && (closePop(), void returnTo(link, name, mark)) }, `Return to the start of ${name}`);
-    pop = h('div', { class: 'ip2-pop', role: 'group', 'aria-label': `Stage ${name}`, 'data-stage': g.id },
-      h('div', { class: 'ip2-pop-head' }, name),
-      h('div', { class: 'ip2-pop-time' }, entry ? `Entered at ${clock(entry.t)}` : 'Not entered in this run'),
-      entry ? back : null,
-      // a follower has no driver; on the host a missing mark is being placed (a frame or so): nothing to say then
-      entry && !mark && !link.host ? h('div', { class: 'ip2-pop-note' }, "Return is available on the instructor's screen once this stage has a mark") : null);
+    pop = h('div', { class: 'ip2-pop', role: 'group', 'aria-label': `Stage ${name}`, 'data-stage': g.id }, h('div', { class: 'ip2-pop-head' }, name), ...kids);
     const r = chip.getBoundingClientRect();
     pop.style.left = `${Math.max(8, r.left)}px`;
     pop.style.top = `${r.bottom + 6}px`;
     el.append(pop);
+  };
+  /** A past stage pressed: its entry time and the return to its start (disabled while it has no stage mark). */
+  const showPast = (chip: HTMLElement, g: Stage, entry: StageEntry | null) => {
+    const name = names.get(g.id) ?? g.label;
+    const mark = entry ? stageMarks.of(link, entry) : null;
+    const back = h('button', { type: 'button', class: 'ip2-pop-btn', disabled: !mark, onclick: () => mark && (closePop(), void link.send({ type: 'scenario', action: 'restoreBookmark', target: mark })) }, `Return to the start of ${name}`);
+    openPop(chip, g,
+      h('div', { class: 'ip2-pop-time' }, entry ? `Entered at ${clock(entry.t)}` : 'Not entered in this run'),
+      entry ? back : null,
+      // a follower has no driver; on the host a missing mark is being placed (a frame or so): nothing to say then
+      entry && !mark && !link.host ? h('div', { class: 'ip2-pop-note' }, "Return is available on the instructor's screen once this stage has a mark") : null);
+  };
+  /** A future stage pressed: the jump to it (today's `goto`; the case moves there now and runs its changes). */
+  const showFuture = (chip: HTMLElement, g: Stage, label: string) => {
+    const name = names.get(g.id) ?? g.label;
+    openPop(chip, g, h('button', { type: 'button', class: 'ip2-pop-btn', onclick: () => (closePop(), void jump(link, g.id, label)) }, `Jump to ${name}`));
   };
 
   const chip = (g: Stage, cls: string, extra: Array<Node | string | null>, attrs: Record<string, string>, onclick?: (b: HTMLElement) => void) => {
@@ -228,13 +293,11 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     const b: HTMLButtonElement = h('button', { type: 'button', class: `ip2-chip ${cls}`, title: g.label, ...attrs, onclick: () => onclick(b) }, ...kids);
     return b;
   };
-  /** Fit without cutting a name (IP9, ruling 2): the chips' own width, then tighter padding; then the hint goes; past
-   *  that the strip scrolls sideways. */
+  /** Fit without cutting a name (IP9, ruling 2): the chips' own width, then tighter padding; past that the strip
+   *  scrolls sideways. */
   const fit = () => {
-    el.classList.add('ip2-strip-measure');
     el.removeAttribute('data-tight');
     if (el.scrollWidth > el.clientWidth) el.setAttribute('data-tight', '');
-    el.classList.remove('ip2-strip-measure');
     // the hint shows whole or not at all
     hint.hidden = !sv.doc;
     if (!hint.hidden && hint.scrollWidth > hint.clientWidth) hint.hidden = true;
@@ -245,15 +308,24 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
 
   const draw = () => {
     const doc = sv.doc;
+    note.hidden = !!doc;
+    el.toggleAttribute('data-empty', !doc);
+    if (!doc) setText(statusKeys, KEYS_OF[ctx.begin?.way ?? 'menu']);
+    sayStatus();
     if (!doc) {
-      if (drawn !== 'none') chips.replaceChildren(h('span', { class: 'ip2-strip-empty' }, 'No scenario running')), (drawn = 'none');
+      const way = ctx.begin?.way ?? 'menu';
+      if (drawn !== `none:${way}`) {
+        chips.replaceChildren(h('span', { class: 'ip2-strip-empty ip2-chip-none' }, way === 'free' ? 'Free roam' : `${NO_CASE} · the stages appear here when one is`));
+        drawn = `none:${way}`;
+      }
       hint.hidden = true;
       closePop();
       return;
     }
     if (docV !== sv.docVersion) (docV = sv.docVersion), (offset = 0), (names = stageNames(stagesOf(doc))), closePop();
-    const entries = stageEntries(doc, historyOf(link), sv, link.simT);
-    const items = stripModel(doc, sv.stateId, entries, offset);
+    const history = historyOf(link);
+    const entries = stageEntries(doc, history, sv, link.simT);
+    const items = stripModel(doc, sv.stateId, entries, offset, firedInStage(history, entries.at(-1), link.simT));
     const key = JSON.stringify([docV, offset, items.map((x) => (x.kind === 'fold' || x.kind === 'later' ? [x.kind, x.n] : x.kind === 'future' ? x.stages.map((g) => g.id) : [x.stage.id, x.entry?.t, x.kind === 'current' ? x.open : 0]))]);
     if (key === drawn) return; // the strip changes with the state, not with the clock: no redraw at 1 Hz
     drawn = key;
@@ -277,8 +349,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
           if (j > 0) kids.push(h('span', { class: 'ip2-or' }, 'or'));
           const label = doc.states.find((s) => s.id === g.id)?.label ?? 'State';
           kids.push(chip(g, 'ip2-future', [g.byRule ? h('span', { class: 'ip2-auto' }, 'auto') : null],
-            { 'aria-label': `Stage ${(names.get(g.id) ?? '')}${g.byRule ? ', entered by a rule' : ''}: jumps to it (asks once)` },
-            () => void jump(link, g.id, label)));
+            { 'aria-label': `Stage ${(names.get(g.id) ?? '')}${g.byRule ? ', entered by a rule' : ''}: show its jump`, 'aria-haspopup': 'true' },
+            (b) => showFuture(b, g, label)));
         });
     });
     // the window has been moved: "back to now" recentres it on the current stage
@@ -292,6 +364,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     refresh: draw,
     destroy: () => {
       offEsc();
+      offBrief?.();
+      if (briefTick !== null) clearInterval(briefTick);
       ro?.disconnect();
       document.removeEventListener('pointerdown', outside);
       closePop();

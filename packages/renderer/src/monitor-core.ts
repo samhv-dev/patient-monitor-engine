@@ -6,6 +6,7 @@
 import { capture12, Clock, createEngine, type Capture12, type ChannelId, type Command, type DispatchResult, type EngineEvent, type LeadId, type MonitorEngine, type PatientSnapshot } from '@pme/engine-core';
 import { DEFAULT_PX_PER_MM } from './calibration.ts';
 import type { Ctx2D } from './ctx.ts';
+import { AUTO_GAIN_WINDOW_S, beatAmplitude, judgeGain, newJudge, type GainJudge } from './ecg-gain.ts';
 import { drawLeadOffDashes, drawMark, Overlays, shows } from './overlays.ts';
 import type { ClockAnchor, CoreOptions, Size } from './protocol.ts';
 import { ecgLabel, formatSpeed, legacyPlan, type LaneTextPlan, type PlanLane, type RenderPlan } from './skin-plan.ts';
@@ -53,10 +54,8 @@ const EVENT_POST_MS = 250; // post the clock anchor at least this often even wit
  *  ≤ 250 ms. It is credited in full like a hidden stretch (catchUp) instead of being clamped to 250 ms, so the hidden
  *  minutes are not lost when the worker's rAF wakes before the page's visibility catch-up. [ENG] */
 export const STALL_MS = 1000;
-/** Auto gain (RR-2) [ENG]: every 2 s the last 4 s of the lead should fill ≤ 60 % of the lane height. */
-export const AUTO_GAIN_EVERY_S = 2;
-export const AUTO_GAIN_WINDOW_S = 4;
-export const AUTO_GAIN_FILL = 0.6;
+/** The R times the auto-gain keeps for its per-beat amplitude: a 4-s window's beats at any rate, with room [ENG]. */
+const GAIN_BEATS_KEPT = 64;
 /** FX-25: how far back heldFrom looks — past the lanes' 100-s backfill, inside the engine's 120-s buffer [ENG]. */
 const HELD_PROBE_S = 110;
 
@@ -75,7 +74,12 @@ export class MonitorCore {
   private readonly plethScratch = new Float32Array(1250); // 10 s at 125 Hz
   private readonly gainScratch = new Float32Array(AUTO_GAIN_WINDOW_S * 500);
   private heldScratch = new Float32Array(0); // heldFrom's read, sized on first use
-  private autoGainT = -Infinity;
+  /** The last auto-gain window judged (its index on the clock's AUTO_GAIN_WINDOW_S grid). */
+  private gainK = -Infinity;
+  /** Per lane, the auto-gain's state (ecg-gain.ts): the size shown and the size asked for. */
+  private gainJudge: GainJudge[] = [];
+  /** The engine's recent R times (beat events), for the auto-gain's per-beat amplitude. */
+  private beatTs: number[] = [];
   /** FX-24: sim time of the oldest sample the engine holds — 0 for a new engine, the snapshot's time after a restore (it
    *  clears the buffers). The lanes' backfill and the auto-gain never read before it. */
   private historyT = 0;
@@ -123,6 +127,7 @@ export class MonitorCore {
     this.engine.on((e) => {
       this.batch.push(e);
       this.overlays.push(e);
+      if (e.type === 'beat' && this.beatTs.push(e.t) > GAIN_BEATS_KEPT) this.beatTs.shift();
     });
     this.layout();
   }
@@ -164,7 +169,12 @@ export class MonitorCore {
     this.historyT = this.clock.simT;
     this.lastEpoch = null; // the clock restarts at the bookmark on the next frame: the restore's own wall time is not sim time
     this.overlays.clear();
-    this.layout(); // FX-24: the lanes keep their ECG gain (the auto-gain waits for a full window of the new signal)
+    // FX-24: the lanes keep their ECG gain (the auto-gain waits for a full window of the new signal); what the old
+    // timeline's windows asked for is forgotten
+    this.beatTs = [];
+    this.gainK = -Infinity;
+    for (const j of this.gainJudge) j.pending = null;
+    this.layout();
   }
 
   /** Apply a command (lane/filter changes also update the chrome). */
@@ -179,6 +189,7 @@ export class MonitorCore {
       } else if (cmd.action.action === 'lead' && typeof cmd.action.lane === 'number' && cmd.action.lane < ecgLanes.length) {
         const i = ecgLanes[cmd.action.lane] as number;
         (this.plan.lanes[i] as PlanLane).channel = cmd.action.value as LeadId;
+        this.gainJudge[i] = newJudge(this.gainMult[i] ?? 1); // a new lead is sized afresh
         this.lanes[i]?.reset(this.ctx);
         this.drawChrome(this.plan.laneText ? ecgLanes : [i]); // with lane text a repeated lead is unlabelled: all may change
       } else this.layout();
@@ -261,7 +272,7 @@ export class MonitorCore {
     if (ticks > 0) this.engine.advanceTo(this.clock.simT);
     const t = this.clock.renderT;
     if (this.visible) {
-      if (t - this.autoGainT >= AUTO_GAIN_EVERY_S) this.autoGain(t);
+      this.autoGain(t);
       this.plan.lanes.forEach((pl, i) => {
         const lane = this.lanes[i] as SweepLane;
         if (pl.kind === 'wave') {
@@ -296,27 +307,30 @@ export class MonitorCore {
     return out;
   }
 
-  /** RR-2: pick the largest skin gain whose last-4-s peak-to-peak fits AUTO_GAIN_FILL of the lane. */
+  /**
+   * RR-2, owner review 2026-10-30: the ECG auto-gain (ecg-gain.ts). Windows sit on the sim clock's grid
+   * [kW − W, kW] (W = AUTO_GAIN_WINDOW_S), so every window drawing the same timeline judges the same samples; a lane not
+   * yet judged (a new monitor, a new plan or lead) takes the last W s as soon as it has them. The judgement is in mV
+   * against the plan's nominal lane (gainLaneMm), never the drawn height, so a pane and a full screen agree.
+   */
   private autoGain(t: number): void {
-    this.autoGainT = t;
+    const k = Math.floor(t / AUTO_GAIN_WINDOW_S + 1e-9);
+    const due = k > this.gainK;
+    if (due) this.gainK = k;
     const changed: number[] = [];
     this.plan.lanes.forEach((pl, i) => {
-      if (!pl.autoGain || pl.gainOptions.length === 0 || t - AUTO_GAIN_WINDOW_S < this.historyT) return; // FX-24: a full window
-      const n = this.engine.readSamples(pl.channel as LeadId, Math.floor((t - AUTO_GAIN_WINDOW_S) * 500), this.gainScratch);
-      let lo = Infinity;
-      let hi = -Infinity;
-      for (let k = 0; k < n; k++) {
-        const v = this.gainScratch[k] as number;
-        if (v < lo) lo = v;
-        if (v > hi) hi = v;
-      }
-      if (!(hi > lo)) return;
-      const lane = this.lanes[i] as SweepLane;
-      const fits = pl.gainOptions.filter((g) => (hi - lo) * g * 10 * this.pxPerMm <= AUTO_GAIN_FILL * lane.cfg.height).sort((a, b) => b - a);
-      const g = fits[0] ?? Math.min(...pl.gainOptions);
+      if (!pl.autoGain || pl.gainOptions.length === 0) return;
+      const j = this.gainJudge[i] as GainJudge;
+      const end = j.judged ? k * AUTO_GAIN_WINDOW_S : t;
+      if ((j.judged && !due) || end - AUTO_GAIN_WINDOW_S < this.historyT) return; // FX-24: a full window
+      const from = Math.floor((end - AUTO_GAIN_WINDOW_S) * 500);
+      const n = this.engine.readSamples(pl.channel as LeadId, from, this.gainScratch);
+      const amp = beatAmplitude(this.gainScratch, n, from / 500, 500, this.beatTs);
+      if (!(amp > 0)) return;
+      const g = judgeGain(j, amp, k, pl.gainOptions, pl.gainLaneMm);
       if (g !== this.gainMult[i]) {
         this.gainMult[i] = g;
-        lane.cfg.gainMmPerMv = g * 10;
+        (this.lanes[i] as SweepLane).cfg.gainMmPerMv = g * 10;
         changed.push(i);
       }
     });
@@ -368,8 +382,11 @@ export class MonitorCore {
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.ctx.fillStyle = p.background;
     this.ctx.fillRect(0, 0, cssW, cssH);
-    // FX-24: the ECG gain survives a resize or a restore (the auto-gain re-judges it); a new plan starts from its own
-    if (this.gainMult.length !== p.lanes.length) this.gainMult = p.lanes.map((l) => l.gainMmPerMv / 10);
+    // FX-24: the ECG gain survives a resize or a restore; a new plan starts from its own, judged afresh
+    if (this.gainMult.length !== p.lanes.length) {
+      this.gainMult = p.lanes.map((l) => l.gainMmPerMv / 10);
+      this.gainJudge = this.gainMult.map((g) => newJudge(g));
+    }
     this.labelTail = [];
     this.over = [];
     this.overGen = [];
@@ -392,7 +409,6 @@ export class MonitorCore {
     });
     this.waveLive = p.lanes.map(() => false);
     this.autoRangeT = p.lanes.map(() => -1);
-    this.autoGainT = -Infinity;
     this.drawChrome(p.lanes.map((_, i) => i));
     this.rightGen = this.lanes.map((l) => l.generation);
   }

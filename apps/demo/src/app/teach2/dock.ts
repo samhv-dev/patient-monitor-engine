@@ -1,5 +1,6 @@
 // The Instructor v2 dock (design §3.6, board "Proposal v6"): Tools on the left (the sheets' buttons), a divider, the
-// three marks (good, bad, discuss) and the note field in the centre, a divider, and Debrief at the far right.
+// three marks (good, bad, discuss) and the note field in the centre, a divider, and Debrief at the far right, with
+// "Finish the case" just before it (board "Finish 2", teach2/finish.ts) while a card runs on the host.
 // A mark saves the moment with today's bookmark command (`commands.ts` `bookmark`: the 6b driver can restore it), under
 // its own label and counter ("Mark 2 at 08:20", plan R10), so the Log tab's bookmarks and the marks never share a name.
 // It carries its kind (IP2's `kind`) and, when the note field (filled by the sheets slot) holds text, that text as
@@ -47,8 +48,9 @@ export interface Dock {
   refresh(): void;
 }
 
-/** The dock: the tool and note areas the sheets slot fills, the three marks, Debrief. */
-export function mountDock(link: Link): Dock {
+/** The dock: the tool and note areas the sheets slot fills, the three marks, Finish (`o.finish`, while `o.canFinish()`),
+ *  Debrief. */
+export function mountDock(link: Link, o: { finish?(): void; canFinish?(): boolean; finishing?(): boolean } = {}): Dock {
   const tools = h('div', { class: 'ip2-dock-tools', role: 'group', 'aria-label': 'Tools' });
   const note = h('div', { class: 'ip2-dock-note' });
   const marks = MARKS.map(([kind, label, d]) => {
@@ -57,12 +59,14 @@ export function mountDock(link: Link): Dock {
     return b;
   });
   const debrief = h('a', { class: 'ip2-dock-btn ip2-debrief', href: hrefOf('debrief') }, 'Debrief');
+  const finish = h('button', { type: 'button', class: 'ip2-dock-btn ip2-finish-btn', 'aria-pressed': 'false', hidden: true, title: 'Stops the clock; the debrief is saved when you choose how the case ends', onclick: () => o.finish?.() }, 'Finish the case');
   const el = h('footer', { class: 'ip2-dock', 'aria-label': 'Dock' },
     h('span', { class: 'ip2-dock-label', 'aria-hidden': 'true' }, 'Tools'),
     tools,
     h('span', { class: 'ip2-dock-div', 'aria-hidden': 'true' }),
     h('span', { class: 'ip2-dock-mid' }, h('span', { class: 'ip2-dock-marks', role: 'group', 'aria-label': 'Marks' }, ...marks), note),
     h('span', { class: 'ip2-dock-div', 'aria-hidden': 'true' }),
+    finish,
     debrief);
   return {
     el, tools, note,
@@ -70,6 +74,8 @@ export function mountDock(link: Link): Dock {
     refresh: () => {
       const sv = link.ctl.scenario;
       debrief.dataset.ready = String(!!sv.doc && !sv.current()?.transitions?.length);
+      finish.hidden = !o.canFinish?.();
+      finish.setAttribute('aria-pressed', String(!!o.finishing?.()));
     },
   };
 }

@@ -131,6 +131,15 @@ export interface DocBookmark {
   state: string;
 }
 
+/** A card's Case briefing: `text` (paragraphs separated by blank lines), the estimated scenario time, how long it shows
+ *  (default 60 s) and its language (default 'en'; 'fa' is right-to-left with Persian digits in the chrome). */
+export interface ScenarioBriefing {
+  text: string;
+  estimatedMinutes?: number;
+  durationS?: number;
+  lang?: 'en' | 'fa';
+}
+
 export interface ScenarioDoc extends C {
   $schema?: string;
   schema: 'pme-scenario/1';
@@ -142,6 +151,9 @@ export interface ScenarioDoc extends C {
   story?: string;
   objectives?: Array<string | Objective>;
   durationMin?: number;
+  /** Optional: the learner-facing Case briefing every learner screen shows over the running monitor when the card loads
+   *  (owner's board Orientation 7b). Not the instructor's story: it never names the diagnosis. */
+  briefing?: ScenarioBriefing;
   /** Optional: up to four take-home lines the learner handout prints, as written (the author's reviewed words). */
   takeHome?: string[];
   /** Seeds the runner's `scenario` PRNG stream (the engine keeps the host's own seed). */

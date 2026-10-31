@@ -1,14 +1,15 @@
 // The driver's automatic stage marks (owner's ruling on answer 3, Instructor v2): opt-in (IP9 review M1: off unless the
 // v2 view turns them on), a bookmark of kind `stage` at every entry of a state that is a stage (not a hop: answer 2's
 // fold rule; a return from the stage's own hop is no new entry), restorable like any bookmark, pruned to the kept
-// course on a restore, replayed to late joiners, and kept out of the instructor's bookmark list. On the MH showcase
-// card, through a HostSession.
+// course on a restore, replayed to late joiners, kept out of the instructor's bookmark list, and kept across a reload of
+// the page with the snapshots they hold (the owner's report of 30 October). On the MH showcase card, through a
+// HostSession.
 import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createInProcessHub } from '../../src/transport/in-process.ts';
 import { HostSession } from '../../src/session/host-session.ts';
 import { ControllerSession } from '../../src/session/controller-session.ts';
-import { isHop, ScenarioDriver } from '../../src/scenario/driver.ts';
+import { isHop, ScenarioDriver, type RunPosition, type StageMarkPosition } from '../../src/scenario/driver.ts';
 import { createStamper, type AppliedResolution, type ScenarioCommand, type ScenarioEvent, type WireEvent } from '../../src/protocol.ts';
 import type { ScenarioDoc } from '../../src/scenario/types.ts';
 import { manualHost } from '../fakes/manual-host.ts';
@@ -61,7 +62,7 @@ async function course(r: ReturnType<typeof setup>) {
   await waitFor(() => r.ctl.hostOnline);
   expect((await r.ctl.send({ type: 'scenario', action: 'load', doc: MH })).accepted).toBe(true);
   await r.run(2);
-  for (const t of ['premed', 'preox', 'induce', 'intubate', 'surgery', 'crisis-surgery', 'dant', 'cool-treating']) await r.press(t);
+  for (const t of ['premed', 'preox', 'induce', 'intubate', 'surgery', 'crisis-surgery', 'dant', 'kTreat-treating']) await r.press(t); // Cool is offered only above 38.5 °C: the potassium hop
   expect((await r.ctl.send({ type: 'scenario', action: 'goto', target: 'recovering' })).accepted).toBe(true);
   await r.run(2);
   for (const t of ['normo', 'dant-normoventilated']) await r.press(t);
@@ -91,7 +92,7 @@ describe('stage marks (driver, host side)', () => {
     const r = setup();
     await course(r);
     const all = entries(r.driver);
-    expect(all).toEqual(expect.arrayContaining(['dantrolene', 'cooling', 'dantroleneAgain'])); // the hops were entered
+    expect(all).toEqual(expect.arrayContaining(['dantrolene', 'potassium', 'dantroleneAgain'])); // the hops were entered
     const hops = new Set(MH.states.filter(isHop).map((s) => s.id));
     const marks = r.driver.stageMarks();
     // one per stage entry, in order: a state entered right after itself through its own hop is the same stage entry
@@ -152,4 +153,40 @@ describe('stage marks (driver, host side)', () => {
     await waitFor(() => late.bookmarks.includes('mine'));
     expect(late.bookmarks).toEqual(['mine']);
   }, 120_000);
+  it('(d) kept across a reload (plain JSON, a new engine and driver): placed again, listed as before, and each restores the physiology it held', async () => {
+    const a = setup();
+    await course(a);
+    const keptRun = JSON.parse(JSON.stringify(await a.driver.position())) as RunPosition;
+    const kept = JSON.parse(JSON.stringify(a.driver.stageMarkPositions())) as StageMarkPosition[];
+    expect(kept.map((k) => k.mark)).toEqual(a.driver.stageMarks());
+    expect(kept.every((k) => k.run.snapshot.tick === k.mark.atTick && k.run.runner.stateId === k.mark.note)).toBe(true);
+    // the reloaded page (position.ts restorePosition): the card loaded again, the kept position held and returned to
+    const b = setup();
+    await waitFor(() => b.ctl.hostOnline);
+    expect((await b.ctl.send({ type: 'scenario', action: 'load', doc: MH })).accepted).toBe(true);
+    await b.run(2);
+    expect(b.driver.hold('Before the reload', keptRun)).toBe(true);
+    expect((await b.ctl.send({ type: 'scenario', action: 'restoreBookmark', target: 'Before the reload' })).accepted).toBe(true);
+    // the cause: the course's marks were not on the new driver, only the fresh load's own start
+    expect(b.driver.stageMarks().map((m) => m.note)).toEqual(['awake']);
+    // placed again: the new driver lists exactly the kept course's marks (another card's are refused)
+    expect(b.driver.holdStageMarks([{ ...(kept[0] as StageMarkPosition), run: { ...keptRun, runner: { ...keptRun.runner, docId: 'another-case' } } }])).toBe(0);
+    expect(b.driver.holdStageMarks(kept)).toBe(kept.length);
+    expect(b.driver.stageMarks()).toEqual(a.driver.stageMarks());
+    expect(b.ctl.bookmarks).toEqual([]); // still not the instructor's bookmarks
+    // a mark without its snapshot is not a mark: each one restores the stage's start, the same physiology on both pages
+    const mark = b.driver.stageMarks().find((m) => m.note === 'triggerOff') as ScenarioCommand;
+    for (const r of [a, b]) {
+      expect(await r.ctl.send({ type: 'scenario', action: 'restoreBookmark', target: mark.target })).toMatchObject({ accepted: true, tick: mark.atTick });
+      expect(r.driver.runner?.stateId).toBe('triggerOff');
+      await r.run(5);
+    }
+    expect(await b.host.snapshot()).toEqual(await a.host.snapshot());
+    expect(b.driver.runner?.getState()).toEqual(a.driver.runner?.getState());
+    // the run goes on: the next stage gets a mark whose label no kept mark had
+    await b.press('dant');
+    const labels = b.driver.stageMarks().map((m) => m.target);
+    expect(b.driver.stageMarks().map((m) => m.note)).toEqual(['awake', 'premedicated', 'preoxygenated', 'induced', 'intubated', 'surgery', 'triggerOff', 'treating']);
+    expect(new Set(labels).size).toBe(labels.length);
+  }, 240_000);
 });
