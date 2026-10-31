@@ -202,7 +202,6 @@ Exported without a doc comment: `createDriver`, `preoxActive`, `frameAt`, `creat
 | awake: PaCO2 35–45, VT 4.2–10.4 mL/kg, lactate rise < 0.5 over 15 min | VT 15.4 mL/kg | — | RIGHT ([audit row 75](../../docs/validation/target-audit/30-target-audit.md#row-75)) | keep; add RR 17–30 /min for a 3–5-year-old | [`resp-child-baseline.test.ts`](../../packages/engine-core/test/engine/resp-child-baseline.test.ts) |
 | preoxygenated apnoea: displayed SpO2 < 90 no more than 20 s after SaO2 < 90 | 22 s | — | TOO NARROW ([audit row 189](../../docs/validation/target-audit/30-target-audit.md#row-189)) | ≤ 30 s from arterial SaO2 < 90 to displayed SpO2 < 90 (child, finger, normal CO); or keep ≤ 20 s but start the clock at the site (after the dead time) | [`resp-child-baseline.test.ts`](../../packages/engine-core/test/engine/resp-child-baseline.test.ts) |
 | CPR (quality 1, 110/min): the adult’s coRatio in the same 0.25–0.33 | 0.363 | — | RIGHT ([audit row 32](../../docs/validation/target-audit/30-target-audit.md#row-32)) | keep 0.25-0.33 at q 1 (a lower quality should scale below 0.25) | [`resp-child-rest.test.ts`](../../packages/engine-core/test/engine/resp-child-rest.test.ts) |
-| MH: the core rises > 1 °C in the first 30 min | +0.20 °C | — | not audited | — | [`resp-coupling.test.ts`](../../packages/engine-core/test/engine/resp-coupling.test.ts) |
 | noxious stimulus 1.5 under remifentanil 0.1 + propofol 50 (SGA, FiO2 0.5): VE ≥ +20 % | +3.3 % | — | UNSUPPORTED ([audit row 76](../../docs/validation/target-audit/30-target-audit.md#row-76)) | VE rises (≥ +5 %) and rises less than the same stimulus under propofol alone [ENG; owner ruling] | [`resp-drive-nonchemical.test.ts`](../../packages/engine-core/test/engine/resp-drive-nonchemical.test.ts) |
 | child 4 y 16 kg: 2–3.2 min (Patel 160 ± 31 s) | 3.38 | — | RIGHT ([audit row 77](../../docs/validation/target-audit/30-target-audit.md#row-77)) | keep (±1 SD); if the owner wants population width, ±1.5 SD gives 1.9–3.4 min | [`resp-ga-state.test.ts`](../../packages/engine-core/test/engine/resp-ga-state.test.ts) |
 | RS14: FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10 over control | PaCO2 +6.7 / EtCO2 +5.99994 | — | MIS-SPECIFIED ([audit row 78](../../docs/validation/target-audit/30-target-audit.md#row-78)) | ΔPaCO2 and ΔEtCO2 +3–8 mmHg at 20 min; +8 ± 1 only at steady state (≥ 60 min) | [`resp-inspired-co2.test.ts`](../../packages/engine-core/test/engine/resp-inspired-co2.test.ts) |
@@ -223,7 +222,7 @@ Exported without a doc comment: `createDriver`, `preoxActive`, `frameAt`, `creat
 
 ## Tests
 
-126 tests in 32 files; 21 expected failures, 0 skipped.
+126 tests in 32 files; 20 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -236,7 +235,7 @@ Exported without a doc comment: `createDriver`, `preoxActive`, `frameAt`, `creat
 | [`engine/resp-capnogram.test.ts`](../../packages/engine-core/test/engine/resp-capnogram.test.ts) | 6 | 0 | 0 |
 | [`engine/resp-child-baseline.test.ts`](../../packages/engine-core/test/engine/resp-child-baseline.test.ts) | 2 | 2 | 0 |
 | [`engine/resp-child-rest.test.ts`](../../packages/engine-core/test/engine/resp-child-rest.test.ts) | 4 | 1 | 0 |
-| [`engine/resp-coupling.test.ts`](../../packages/engine-core/test/engine/resp-coupling.test.ts) | 9 | 1 | 0 |
+| [`engine/resp-coupling.test.ts`](../../packages/engine-core/test/engine/resp-coupling.test.ts) | 9 | 0 | 0 |
 | [`engine/resp-drive-nonchemical.test.ts`](../../packages/engine-core/test/engine/resp-drive-nonchemical.test.ts) | 5 | 1 | 0 |
 | [`engine/resp-engine.test.ts`](../../packages/engine-core/test/engine/resp-engine.test.ts) | 3 | 0 | 0 |
 | [`engine/resp-ga-state.test.ts`](../../packages/engine-core/test/engine/resp-ga-state.test.ts) | 4 | 1 | 0 |

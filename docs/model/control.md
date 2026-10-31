@@ -177,7 +177,7 @@ Exported without a doc comment: `httpHandler`, `startRelay`, `clamp`, `targetCom
 | [`scenario/index.ts`](../../packages/controller/src/scenario/index.ts) | 11 | `@pme/controller/scenario`: the scenario runner and everything that needs ajv. |
 | [`scenario/patient.ts`](../../packages/controller/src/scenario/patient.ts) | 26 | The scenario's patient body → the engine's creation options (brief §7.4). |
 | [`scenario/replay.ts`](../../packages/controller/src/scenario/replay.ts) | 62 | Scenario replay (brief §3.3: seed + command log reproduce the run). |
-| [`scenario/runner.ts`](../../packages/controller/src/scenario/runner.ts) | 420 | The scenario runner (DESIGN-BRIEF §7.4; research 01 §2.3: CAE states + transitions, Laerdal handlers, REALITi steps). |
+| [`scenario/runner.ts`](../../packages/controller/src/scenario/runner.ts) | 425 | The scenario runner (DESIGN-BRIEF §7.4; research 01 §2.3: CAE states + transitions, Laerdal handlers, REALITi steps). |
 | [`scenario/standins.ts`](../../packages/controller/src/scenario/standins.ts) | 29 | Rhythm stand-ins: scenarios name the brief §5 rhythm ids (vfCoarse, vfFine, pacedVVI, pWaveAsystole …) of the rhythm library. |
 | [`scenario/types.ts`](../../packages/controller/src/scenario/types.ts) | 156 | `pme-scenario/1` document types (DESIGN-BRIEF §7.4). |
 | [`scenario/validate.ts`](../../packages/controller/src/scenario/validate.ts) | 106 | Scenario validation: the JSON Schema (ajv, MIT — NOTICES N-011) for shape, then the cross-references a schema cannot express (unique ids, `to`/`else`/bookmark targets exist). |
@@ -235,7 +235,7 @@ None recorded.
 | [`scenario/profile.test.ts`](../../packages/controller/test/scenario/profile.test.ts) | 6 | 0 | 0 |
 | [`scenario/replay.test.ts`](../../packages/controller/test/scenario/replay.test.ts) | 4 | 0 | 0 |
 | [`scenario/runner-alternatives.test.ts`](../../packages/controller/test/scenario/runner-alternatives.test.ts) | 4 | 0 | 0 |
-| [`scenario/runner.test.ts`](../../packages/controller/test/scenario/runner.test.ts) | 18 | 0 | 0 |
+| [`scenario/runner.test.ts`](../../packages/controller/test/scenario/runner.test.ts) | 19 | 0 | 0 |
 | [`scenario/schema-basal-insulin.test.ts`](../../packages/controller/test/scenario/schema-basal-insulin.test.ts) | 1 | 0 | 0 |
 | [`scenario/schema.test.ts`](../../packages/controller/test/scenario/schema.test.ts) | 7 | 0 | 0 |
 | [`scenario/stage-marks.test.ts`](../../packages/controller/test/scenario/stage-marks.test.ts) | 7 | 0 | 0 |
