@@ -89,6 +89,11 @@ the public API is what the packages export (see the API reference), the `pme-sce
   marks), places them again after the return, and gives the panel the restored runner's history (the clinical owner's
   report of 30 October). `@pme/controller`: `ScenarioDriver.stageMarkPositions()` and `holdStageMarks()`, and the type
   `StageMarkPosition`.
+- Instructor v2's "Finished steps · n" says which stage each step belonged to: its rows are grouped under a small
+  title per stage visit, the stage's name (as on the strip; the full label on hover) and the time it was entered, in
+  the order the stages were entered, each row keeping its number within its stage. Several stages on, the fold read as
+  a run of steps all numbered 1 (the clinical owner's report of 30 October). A stage entered twice gets two titles.
+  The count and the record are unchanged.
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's
   sequence and viewer role per transport, and counts a hello only after its sequence check, so a phone on the relay
   that says hello with the laptop panel's id leaves the panel's commands applied. The relay gives each peer id one live
