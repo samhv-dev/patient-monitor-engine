@@ -12,9 +12,10 @@ import './action.css';
 import type { Link } from '../link.ts';
 import { stagesOf } from '../card-read.ts';
 import { clock, h, setText } from '../ui.ts';
+import { FOOT_NONE, mountBeginPane, type Way } from './begin.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { judge, pressStep } from './press.ts';
-import { classify, type HoldLike, type LiveRow } from './rows.ts';
+import { classify, NOT_AN_ACTION, type HoldLike, type LiveRow } from './rows.ts';
 import { historyOf } from './course.ts';
 import { stageNames } from './strip.ts';
 
@@ -93,9 +94,11 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const finSummary = h('summary', {});
   const finList = h('ol', { class: 'ip2-rows ip2-finished-list', 'aria-label': 'Finished steps' });
   const finished = h('details', { class: 'ip2-fold ip2-finished' }, finSummary, finList);
-  const empty = h('p', { class: 'ip2-empty' }, 'No scenario is running. Load a case from the Scenarios view; its steps appear here.');
+  // with no case loaded (board "Empty 5"): the three ways to begin, or the case list; Free roam is this slot's no-card form
+  const begin = mountBeginPane(ctx, el);
   const foot = h('p', { class: 'ip2-foot' }, FOOT);
-  el.replaceChildren(h('div', { class: 'ip2-list' }, empty, list, offCard, finished, foot));
+  const wrap = h('div', { class: 'ip2-list' }, list, offCard, finished, foot);
+  el.replaceChildren(wrap);
 
   const pills = new Map<string, Pill>();
   const groups = new Map<string, Group>();
@@ -155,6 +158,20 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     }
   };
 
+  /** The fold's lines; `noneFirst` draws the "nothing yet" line from the first paint (Free roam, where the fold is open). */
+  const drawOffs = (entries: ReadonlyArray<{ simT: number | null; text: string; kind: string }>, none: string, noneFirst = false) => {
+    setText(offSummary, `Off the card · ${entries.length}`);
+    const offs = entries.map((x) => `${x.simT === null ? '' : clock(x.simT)} ${x.text}${x.kind === 'learner' ? ' (learner)' : ''}`.trim());
+    const want = offs.length || !noneFirst ? offs : [none];
+    if (offList.children.length !== want.length || want.some((t, i) => offList.children[i]?.textContent !== t)) {
+      offList.replaceChildren(...(offs.length ? offs.map((t) => h('li', {}, t)) : [h('li', { class: 'ip2-muted' }, none)]));
+    }
+  };
+
+  /** Free roam (board "Empty 5"): when it began (sim s), so its fold lists what was given since. */
+  let way: Way = 'menu';
+  let freeT = 0;
+
   const refresh = () => {
     const sv = link.ctl.scenario;
     const doc = sv.doc;
@@ -167,12 +184,27 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       names = stageNames(stages);
       labels = new Map(stages.map((g) => [g.id, g.label]));
     }
-    empty.hidden = !!doc;
-    list.hidden = offCard.hidden = finished.hidden = !doc;
+    const was = way;
+    way = doc ? 'menu' : (ctx.begin?.way ?? 'menu');
+    if (doc) ctx.begin?.reset();
+    const free = way === 'free';
+    // with a card loaded the pane is not in the page at all (its builder button is disabled; no ACTION row ever is)
+    if (doc) begin.el.remove();
+    else if (begin.el.parentElement !== wrap) wrap.prepend(begin.el);
+    begin.el.hidden = free;
+    list.hidden = finished.hidden = !doc;
+    offCard.hidden = !doc && !free;
+    setText(foot, doc ? FOOT : FOOT_NONE);
     if (!doc || !stateId) {
       sync(list, pills, [], false, keyOf);
       syncFinished([]);
       setDigits([]);
+      if (doc) return;
+      begin.draw();
+      if (free && was !== 'free') (freeT = link.simT), (offCard.open = true);
+      if (!free) return;
+      const none = 'Nothing given yet. Whatever a sheet gives is logged here, in the Log and in the Debrief.';
+      drawOffs(link.log.filter((x) => (x.kind === 'instructor' || x.kind === 'learner') && !x.refused && (x.simT ?? -Infinity) >= freeT - 1e-6 && !NOT_AN_ACTION.test(x.text)), none, true);
       return;
     }
     const board = classify({
@@ -184,16 +216,13 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     syncFinished(board.finished);
     setDigits(board.list);
     setText(finSummary, `Finished steps · ${board.finished.length}`);
-    setText(offSummary, `Off the card · ${board.offCard.length}`);
-    const offs = board.offCard.map((x) => `${x.simT === null ? '' : clock(x.simT)} ${x.text}${x.kind === 'learner' ? ' (learner)' : ''}`.trim());
-    if (offList.children.length !== offs.length || offs.some((t, i) => offList.children[i]?.textContent !== t)) {
-      offList.replaceChildren(...(offs.length ? offs.map((t) => h('li', {}, t)) : [h('li', { class: 'ip2-muted' }, 'Nothing off the card in this stage. Anything a sheet gives that is not a card step is logged here; the card does not move.')]));
-    }
+    drawOffs(board.offCard, 'Nothing off the card in this stage. Anything a sheet gives that is not a card step is logged here; the card does not move.');
   };
 
   return {
     refresh,
     destroy: () => {
+      begin.destroy();
       for (let n = 1; n <= 9; n++) keys.digit(n, null);
     },
   };
