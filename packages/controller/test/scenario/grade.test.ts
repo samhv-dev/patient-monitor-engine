@@ -147,9 +147,13 @@ describe('grade(): repeats, violations, outcomes, judged rows', () => {
     expect(a.grade).toBe('met');
     expect(a.repeats).toMatchObject([{ n: 2, grade: 'met', dueT: 800, t: 1000 }]);
   });
-  it('repeatWhile: condition already true at the first dose → due at first + min', () => {
-    const a = gradeOf([dan(150), dan(500)], rw(140), 1200, true);
-    expect(a.repeats).toMatchObject([{ n: 2, grade: 'met', dueT: 450, t: 500 }]);
+  it('repeatWhile: a rise inside the interval → due at first + min; a condition already true at the dose, no row', () => {
+    expect(gradeOf([dan(150), dan(500)], rw(200), 1200, true).repeats).toMatchObject([{ n: 2, grade: 'met', dueT: 450, t: 500 }]);
+    expect(gradeOf([dan(150), dan(500)], rw(140), 1200, true).repeats).toEqual([]);
+  });
+  it('repeatWhile: one row per later dose while the condition rises again after each', () => {
+    const a = gradeOf([dan(150), dan(1000), dan(1400)], [...rw(800, 900), ...rw(1100)], 1500, true);
+    expect(a.repeats).toMatchObject([{ n: 2, grade: 'met', dueT: 800, t: 1000 }, { n: 3, grade: 'met', dueT: 1300, t: 1400 }]);
   });
   it('repeatWhile: later than due + (max − min) → overdue, and the action takes the worst', () => {
     const a = gradeOf([dan(150), dan(1150)], rw(800), 1200, true);

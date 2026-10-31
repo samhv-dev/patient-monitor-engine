@@ -14,7 +14,7 @@
 //   an action's taking carries the press's stage group, so the driver sends it with the press, on the press's tick.
 // - A phase with `holdS` (the owner's 60-s boundary hold, 31 October) is entered only once its rule has held without a
 //   break for that long (unpaused sim seconds, counted from the rule's true edge).
-// - The phase timeline, the administration record (F3 fills it), the edges, the rings and the script entries fired are
+// - The phase timeline, the administration record (record(); the driver fills it, F3), the edges, the rings and the script entries fired are
 //   all in the plain-JSON state (`pme-scenario-runner/2`): a bookmark restores them and the run log replays them.
 import type { ScenarioEvent, SensorId } from '../protocol.ts';
 import type { VitalHold } from './runner.ts';
@@ -226,6 +226,15 @@ export class PhaseRunner {
     const n = (this.s.takings[actionId] ?? 0) + 1;
     this.s.takings[actionId] = n;
     return this.fire(t, `action:${actionId}#${n}`, group);
+  }
+
+  /** Append one clinical act to the administration record (F3; the driver calls it for every act, accepted or refused).
+   *  `seq` grows along the course: after a restore it goes on from the restored record's last. Not a decision: the run
+   *  log does not carry it, so a replay of the decisions is unchanged. */
+  record(a: Omit<Administration, 'seq'>): Administration {
+    const out = { seq: (this.s.admin.at(-1)?.seq ?? 0) + 1, ...a } as Administration;
+    this.s.admin.push(out);
+    return out;
   }
 
   pause(t: number): void {

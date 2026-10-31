@@ -12,7 +12,10 @@
 // entry (no hops in /2), its script entries as card-set groups (ids `card-set-<n>-<i>`), and an entry anchored on an
 // action's taking (a command stamped with `actionId`) in that press's own stage group, on its tick. A /2 phase is never
 // entered by a goto or a trigger (Q5). The /1 runner never receives a /2-only input.
-import { RHYTHM_IDS, type Command, type DispatchResult, type EngineEvent, type PatientSnapshot } from '@pme/engine-core';
+// The administration record (plan F3, §8.2): every clinical act a /2 card's run sees through `driver.host`, ACCEPTED OR
+// REFUSED, goes into the PhaseRunner's state (administrationOf), so grade() can grade a refused dose and a restore rewinds
+// the record with the course. The driver is the one place that sees them all: a Remote's refusal reaches only its ack.
+import { DRUGS, RHYTHM_IDS, type Command, type DispatchResult, type EngineEvent, type PatientSnapshot, type PkRoute } from '@pme/engine-core';
 import type { ClinicalEvent, ScenarioCommand, ScenarioEvent, WireCommand, WireEvent } from '../protocol.ts';
 import type { HostTarget, ScenarioHookResult } from '../session/host-session.ts';
 import { PhaseRunner, type PhaseRunnerEffect } from './phase-runner.ts';
@@ -20,7 +23,7 @@ import { ScenarioRunner, type RunnerEffect, type RunnerInput, type RunnerState, 
 import { BUILTIN_SCENARIOS } from './builtins.ts';
 import { resolveRhythm } from './standins.ts';
 import { isV2, type AnyScenarioDoc, type DocCommand, type ScenarioState } from './types.ts';
-import type { PhaseRunnerState, RunnerInputV2 } from './types-v2.ts';
+import type { Administration, PhaseRunnerState, RunnerInputV2 } from './types-v2.ts';
 import { validateScenario } from './validate.ts';
 
 export interface ScenarioDriverOptions {
@@ -379,6 +382,10 @@ export class ScenarioDriver {
       if ((w.type === 'applyEvent' || w.type === 'attachSensor') && !r.accepted && NOT_IMPLEMENTED.test(r.reason ?? '')) {
         res = { accepted: true, tick: Math.max(c.atTick ?? 0, r.tick + 1), reason: `scenario only: the engine does not model ${w.type} yet` };
       }
+      if (w.type === 'applyEvent' && this.cur instanceof PhaseRunner) {
+        const a = administrationOf(w, res, this.o.target.now().simT, this.cur.doc.patient?.weightKg);
+        if (a) this.cur.record(a);
+      }
       if (!res.accepted) return res;
       // Engine-core's event union adds `thermal` and ventilation fico2/effort, outside the brief's verbatim
       // ClinicalEvent.
@@ -445,6 +452,60 @@ export class ScenarioDriver {
 /** The input kinds a /1 runner takes. */
 function v1Input(i: RunnerInputV2): i is RunnerInput {
   return i.kind === 'clinical' || i.kind === 'values' || i.kind === 'sensor';
+}
+
+const MASS = /^(mcg|mg|g)$/;
+/** The fields administrationOf reads, of every clinical event kind at once (the union, flattened). */
+type FlatEvent = {
+  kind: string; drugId: string; dose: number; unit: string; route: PkRoute; infusion?: boolean; overS?: number; rate: number;
+  mode: string; target: number; agent: string; dialPct: number; fgfLpm?: number; fluid: string; volumeMl: number; source: string;
+  rr?: number; vtMl?: number; fio2: number; peep?: number; active: boolean; action: string; energyJ?: number; device: string; durationS: number;
+};
+const NOT_MODELLED = /route .* not modelled/i;
+
+/**
+ * One applyEvent as an administration (plan F3), or null for an event that is not a clinical act (a condition, a bleed,
+ * an airway state, a line, a surgical stimulus, the pacer). Source: 'action' when the command carries an `actionId` (an A
+ * press), 'script' (card-set, never graded) when the driver sent it (issuedBy 'scenario'), 'remote' for a Remote
+ * (issuedBy 'remote' or a ControllerSession's 'controller:<peer>'), else 'panel'. `perKg` is the dose over the card's
+ * weight for a mass unit, the dose itself for a `/kg` unit. A face-mask preoxygenation is a 'procedure' (it is the act of
+ * preoxygenating, not a ventilator setting); a `drug` event with `infusion: true` is an 'infusion' at that rate.
+ */
+function administrationOf(c: { issuedBy: string; actionId?: string; event: unknown }, res: DispatchResult, t: number, weightKg?: number): Omit<Administration, 'seq'> | null {
+  const e = c.event as FlatEvent;
+  const by = c.issuedBy;
+  const source: Administration['source'] = typeof c.actionId === 'string' ? 'action' : by === 'scenario' ? 'script' : by === 'remote' || by.startsWith('controller:') ? 'remote' : 'panel';
+  const result: Administration['result'] = res.accepted ? { accepted: true } : { accepted: false, reason: res.reason ?? '', routeNotModelled: NOT_MODELLED.test(res.reason ?? '') };
+  const base = { t, source, ...(source === 'action' ? { actionId: c.actionId as string } : {}) };
+  const tail = { result, ...(source === 'script' ? { cardSet: true as const } : {}) };
+  const cls = (id: string) => (DRUGS[id]?.cls !== undefined ? { cls: DRUGS[id]?.cls as string } : {});
+  const set = (o: Record<string, unknown>) => ({ settings: Object.fromEntries(Object.entries(o).filter(([, v]) => typeof v === 'number' || typeof v === 'string')) as Record<string, number | string> });
+  switch (e.kind) {
+    case 'drug': {
+      if (e.infusion) return { ...base, kind: 'infusion', drugId: e.drugId, ...cls(e.drugId), rate: e.dose, rateUnit: e.unit, route: e.route, ...tail };
+      const perKg = e.unit.endsWith('/kg') ? e.dose : MASS.test(e.unit) && weightKg ? e.dose / weightKg : undefined;
+      return { ...base, kind: 'drug', drugId: e.drugId, ...cls(e.drugId), dose: e.dose, unit: e.unit, ...(perKg !== undefined ? { perKg } : {}), route: e.route, ...(e.overS !== undefined ? { overS: e.overS } : {}), ...tail };
+    }
+    case 'infusion':
+      return { ...base, kind: 'infusion', drugId: e.drugId, ...cls(e.drugId), rate: e.rate, rateUnit: e.unit, ...tail };
+    case 'tci':
+      return { ...base, kind: 'tci', drugId: e.drugId, ...cls(e.drugId), ...set({ mode: e.mode, target: e.target }), ...tail };
+    case 'vaporiser':
+      return { ...base, kind: 'vaporiser', ...set({ agent: e.agent, dialPct: e.dialPct, fgfLpm: e.fgfLpm }), ...tail };
+    case 'fluid':
+      return { ...base, kind: 'fluid', fluid: { type: e.fluid, volumeMl: e.volumeMl, rateMlMin: e.overS ? e.volumeMl / (e.overS / 60) : e.volumeMl }, ...tail };
+    case 'ventilation':
+      return { ...base, kind: 'ventilation', ...set({ source: e.source, rr: e.rr, vtMl: e.vtMl, fio2: e.fio2, peep: e.peep }), ...tail };
+    case 'cpr':
+      return { ...base, kind: 'cpr', ...set({ active: e.active ? 1 : 0, rate: e.rate }), ...tail };
+    case 'defib':
+      return { ...base, kind: 'defib', ...set({ action: e.action, energyJ: e.energyJ }), ...tail };
+    case 'airwayDevice':
+      return { ...base, kind: 'airway', ...set({ device: e.device }), ...tail };
+    case 'preoxygenate':
+      return { ...base, kind: 'procedure', ...set({ fio2: e.fio2, durationS: e.durationS }), ...tail };
+  }
+  return null;
 }
 
 /** The runner a document runs on. */
