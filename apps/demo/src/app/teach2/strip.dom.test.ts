@@ -3,9 +3,10 @@
 // cards with hops folded in, the owner's ruling for IP9 (exactly five chips with full names: two before the current
 // stage, the current one, the next two; "‹ n earlier" and "n later ›" arrows page the window; "back to now" recentres;
 // the future ordered from the current stage, two stages of one step reading "or"), entry times from the history,
-// "auto"; a future stage sends
-// what today's jump sends behind the same confirm (both mounted on one fake Link, compared deep-equal); a past stage
-// shows its entry time and a disabled return until IP2's stage marks exist, then restores the mark behind one confirm.
+// "auto"; a press on a stage opens its inline box, and the box's button is the confirmation (the owner's report of 30
+// October: no dialog): a future stage's "Jump to <stage>" sends what today's jump sends (both mounted on one fake Link,
+// compared deep-equal); a past stage's box shows its entry time and a disabled return until IP2's stage marks exist,
+// then "Return to the start of <stage>" restores the mark.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ScenarioView, type AckResult, type CommandInput, type ScenarioDoc } from '@pme/controller';
 import { stagesOf } from '../card-read.ts';
@@ -159,29 +160,54 @@ describe('stage strip: the stages and the fold rule', () => {
 });
 
 describe('stage strip: clicks', () => {
-  it('a future stage sends what today\'s jump sends, behind the same confirm, with the same toast', async () => {
+  it('a future stage (the owner\'s report of 30 October): its inline box "Jump to <stage>" is the confirmation; its click sends what today\'s jump sends, with the same toast, and no dialog', async () => {
     const r = rig(MH, 'treating', MH_TO_TREATING);
-    // today's Scenario tab on the same Link
+    // today's Scenario tab on the same Link: its jump, behind its own confirm
     let refresh = () => undefined as void;
     const today = scenarioTab({ link: r.link, staging: {}, site: {}, weightKg: () => 70, onRefresh: (fn: () => void) => (refresh = fn), goTab: () => undefined } as unknown as PanelCtx);
     document.body.append(today);
     refresh();
     const toasts = () => [...document.querySelectorAll('.toast')].map((t) => t.textContent);
-    const run = async (press: () => void) => {
-      r.sent.splice(0);
-      document.querySelectorAll('.toast').forEach((t) => t.remove());
-      press();
-      const title = await answer('Jump');
-      return { title, sent: [...r.sent], toasts: toasts() };
-    };
-    const v1 = await run(() => (today.querySelector('button[aria-label="Jump to Cardiac arrest"]') as HTMLButtonElement).click());
-    const v2 = await run(() => (r.el.querySelector('button.ip2-future[aria-label^="Stage Cardiac arrest"]') as HTMLButtonElement).click());
-    expect(v2).toEqual(v1);
-    expect(v2).toEqual({ title: 'Jump to this state?', sent: [{ type: 'scenario', action: 'goto', target: 'arrest' }], toasts: ['Scenario: Cardiac arrest'] });
-    // "Stay in this state" sends nothing
-    (r.el.querySelector('button.ip2-future') as HTMLButtonElement).click();
-    await answer('Stay in this state');
+    (today.querySelector('button[aria-label="Jump to Cardiac arrest"]') as HTMLButtonElement).click();
+    expect(await answer('Jump')).toBe('Jump to this state?');
+    const v1 = { sent: [...r.sent], toasts: toasts() };
+    r.sent.splice(0);
+    document.querySelectorAll('.toast').forEach((t) => t.remove());
+    today.remove();
+    // the strip: the chip opens its box, nothing sent yet
+    const chip = r.el.querySelector('button.ip2-future[aria-label^="Stage Cardiac arrest"]') as HTMLButtonElement;
+    expect(chip.getAttribute('aria-label')).toBe('Stage Cardiac arrest, entered by a rule: show its jump');
+    chip.click();
+    await settle();
+    expect(r.sent).toEqual([]);
+    expect(document.querySelector('dialog[open]')).toBeNull();
+    const pop = r.el.querySelector('.ip2-pop') as HTMLElement;
+    expect(pop.getAttribute('aria-label')).toBe('Stage Cardiac arrest');
+    const go = pop.querySelector('button') as HTMLButtonElement;
+    expect(go.textContent).toBe('Jump to Cardiac arrest');
+    go.click();
+    await settle();
+    await settle();
+    expect(document.querySelector('dialog[open]')).toBeNull();
+    expect(r.el.querySelector('.ip2-pop')).toBeNull();
+    expect({ sent: [...r.sent], toasts: toasts() }).toEqual(v1);
+    expect(v1).toEqual({ sent: [{ type: 'scenario', action: 'goto', target: 'arrest' }], toasts: ['Scenario: Cardiac arrest'] });
+    // a second press on the chip closes its box; Esc closes it too; neither sends
+    chip.click();
+    expect(r.el.querySelector('.ip2-pop')).not.toBeNull();
+    chip.click();
+    expect(r.el.querySelector('.ip2-pop')).toBeNull();
+    chip.click();
+    expect(r.escapes.some((f) => f())).toBe(true);
+    expect(r.el.querySelector('.ip2-pop')).toBeNull();
     expect(r.sent).toHaveLength(1);
+  });
+
+  it('the hint names both boxes and no longer says "asks once"', () => {
+    const r = rig(MH, 'treating', MH_TO_TREATING);
+    const hint = r.el.querySelector('.ip2-strip-hint')?.textContent ?? '';
+    expect(hint).toBe('past: return to its start · future: jump to it');
+    expect(r.el.innerHTML).not.toContain('asks once');
   });
 
   it('a past stage shows its entry time and a disabled "Return to the start of …" until IP2\'s stage marks exist', async () => {
@@ -206,21 +232,27 @@ describe('stage strip: clicks', () => {
     expect(r.el.querySelector('.ip2-pop')).toBeNull();
   });
 
-  it('with a stage mark: one confirm, then today\'s bookmark restore of that mark', async () => {
+  it('with a stage mark (the owner\'s report of 30 October): the box\'s "Return to the start of …" is the confirmation; its click restores that mark, no dialog', async () => {
     const seen: unknown[] = [];
     stageMarks.of = (_l, e) => (seen.push(e), `stage:${e.stage}@${e.t}`);
     const r = rig(MH, 'treating', MH_TO_TREATING);
     (r.el.querySelector('button.ip2-past[aria-label^="Stage Trigger off"]') as HTMLButtonElement).click();
     expect(seen).toEqual([{ stage: 'triggerOff', stateId: 'triggerOff', t: 496, transitionId: 'crisis-established' }]);
+    expect(r.sent).toEqual([]);
     const back = r.el.querySelector('.ip2-pop button') as HTMLButtonElement;
     expect(back.disabled).toBe(false);
     back.click();
-    expect(await answer('Return')).toBe('Return to the start of Trigger off?');
+    await settle();
+    await settle();
+    expect(document.querySelector('dialog[open]')).toBeNull();
+    expect(r.el.querySelector('.ip2-pop')).toBeNull();
     expect(r.sent).toEqual([{ type: 'scenario', action: 'restoreBookmark', target: 'stage:triggerOff@496' }]);
-    // Stay here sends nothing
-    (r.el.querySelector('button.ip2-past[aria-label^="Stage Trigger off"]') as HTMLButtonElement).click();
-    (r.el.querySelector('.ip2-pop button') as HTMLButtonElement).click();
-    await answer('Stay here');
+    // the box closed without its button (a second press, Esc) sends nothing
+    const chip = r.el.querySelector('button.ip2-past[aria-label^="Stage Trigger off"]') as HTMLButtonElement;
+    chip.click();
+    chip.click();
+    chip.click();
+    expect(r.escapes.some((f) => f())).toBe(true);
     expect(r.sent).toHaveLength(1);
   });
 

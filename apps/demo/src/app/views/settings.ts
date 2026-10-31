@@ -1,15 +1,17 @@
-// Settings (research/13 §4.8, P11): the room's site profile — monitor, screen, frame rate, where the instructor works,
-// gas units, sensors-off start — exportable as one file for the next room, plus the shortcut sheet.
+// Settings (research/13 §4.8, P11): the room's site profile — monitor, screen, frame rate, which Instructor view the
+// rail and every route open (owner, 30 October), where the instructor works, gas units, sensors-off start —
+// exportable as one file for the next room, plus the shortcut sheet.
 import { ABOUT_LINE } from '../about.ts';
 import { shortcutsDialog } from '../commands.ts';
 import type { AppSession } from '../session.ts';
 import { applySkinAlarmColours } from '../shell.ts';
 import { setDrugNames } from '../glossary.ts';
-import { DRUG_NAME_SETS, MONITORS, parseSite, saveSite, THEMES, type SiteProfile } from '../site.ts';
+import { DRUG_NAME_SETS, INSTRUCTOR_VIEWS, MONITORS, parseSite, saveSite, THEMES, type SiteProfile } from '../site.ts';
 import { button, download, h, seg, select, toast } from '../ui.ts';
 import type { View } from '../shell.ts';
 
-export function settingsView(site: SiteProfile, session: AppSession | null): View {
+/** The Settings view on the site profile; `onInstructor` runs when the Instructor view is chosen (the rail redraws). */
+export function settingsView(site: SiteProfile, session: AppSession | null, o: { onInstructor?: () => void } = {}): View {
   const save = (msg = 'Saved for this browser') => {
     saveSite(site);
     toast(msg);
@@ -26,6 +28,7 @@ export function settingsView(site: SiteProfile, session: AppSession | null): Vie
     session?.monitor?.setFps(site.fps);
     save();
   });
+  const instructor = seg<SiteProfile['instructor']>('Instructor view', [...INSTRUCTOR_VIEWS], site.instructor, (v) => ((site.instructor = v), save(), o.onInstructor?.()));
   const panel = seg<SiteProfile['panel']>('Instructor panel on wide screens', [['split', 'Beside the monitor'], ['drawer', 'Over the monitor (drawer)']], site.panel, (v) => ((site.panel = v), save()));
   const gas = seg<SiteProfile['gasUnit']>('Gas pressures in tables', [['mmHg', 'mmHg'], ['kPa', 'kPa']], site.gasUnit, (v) => ((site.gasUnit = v), save()));
   const names = seg<SiteProfile['drugNames']>('Drug names', [...DRUG_NAME_SETS], site.drugNames, (v) => {
@@ -41,6 +44,8 @@ export function settingsView(site: SiteProfile, session: AppSession | null): Vie
     try {
       Object.assign(site, parseSite(JSON.parse(await f.text())));
       setDrugNames(site.drugNames);
+      instructor.set(site.instructor);
+      o.onInstructor?.();
       save('Site profile imported');
       skin();
     } catch {
@@ -51,7 +56,7 @@ export function settingsView(site: SiteProfile, session: AppSession | null): Vie
     h('h1', { id: 'set-h' }, 'Settings'),
     h('p', { class: 'lede' }, 'These settings belong to this room and this browser. A scenario never changes them.'),
     h('h2', {}, 'Monitor'), h('div', { class: 'grid2' }, mon.el, theme.el),
-    h('h2', {}, 'Display'), field('Frame rate', fps), field('Instructor panel on wide screens', panel), field('Gas pressures in tables', gas), field('Drug names', names),
+    h('h2', {}, 'Display'), field('Frame rate', fps), field('Instructor view', instructor), field('Instructor panel on wide screens', panel), field('Gas pressures in tables', gas), field('Drug names', names),
     h('h2', {}, 'New patients'), h('label', { class: 'check', for: 'set-sensors' }, sensors, 'Start with the sensors off (traces appear when they are attached)'),
     h('h2', {}, 'About'), h('p', { 'data-about': '' }, ABOUT_LINE),
     h('h2', {}, 'Language'), h('p', {}, 'English. The monitor labels follow the clinical glossary; other languages can be added later.'),

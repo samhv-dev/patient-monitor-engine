@@ -193,7 +193,7 @@ describe('Scenarios', () => {
   it('two cards with full-width buttons; the library pins the two demonstrations; Recent shows a Load', async () => {
     const loaded: string[] = [];
     const session = { live: false };
-    const v = scenariosView({ session, loadScenario: (c: ScenarioCard) => (loaded.push(c.id), noteRecent(c.id), true) });
+    const v = scenariosView({ session, loadScenario: (c: ScenarioCard) => (loaded.push(c.id), noteRecent(c.id), true), instructor: () => 'teach' });
     document.body.append(v.el);
     v.enter?.('');
     expect([...v.el.querySelectorAll('.scen-card > a.scen-open')].map((a) => a.textContent)).toEqual(['Open the library', 'Open the builder']);

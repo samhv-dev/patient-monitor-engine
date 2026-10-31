@@ -280,6 +280,7 @@ No exported `…State` type in this module.
 | `drugTotals` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Bolus totals per drug (mass doses in mg; |
 | `facts` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The measured facts of the kept course, in a fixed order; |
 | `perMinute` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Q1: one row per simulated minute of the kept course — each value's first measurement in that minute (none: |
+| `describeCommand` | [`apps/demo/src/app/describe.ts`](../../apps/demo/src/app/describe.ts) | `step`: for a scenario trigger, the label of the step pressed (link.ts `scenarioStep`); |
 | `spanText` | [`apps/demo/src/app/describe.ts`](../../apps/demo/src/app/describe.ts) | A fast-forward's span in words ("5 min", "90 s"). |
 | `doseUnits` | [`apps/demo/src/app/drugs.ts`](../../apps/demo/src/app/drugs.ts) | Dose units offered for a drug: |
 | `findDrugs` | [`apps/demo/src/app/drugs.ts`](../../apps/demo/src/app/drugs.ts) | Search by name, id or another name ("noradr" finds norepinephrine). |
@@ -299,6 +300,7 @@ No exported `…State` type in this module.
 | `engineUnit` | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | The engine's unit for a per-drug path (see ENGINE_UNIT), read from that drug's row (the path up to its drug id) through `get`; |
 | `lungLabel` | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | The short screen name of a lung condition (the catalogue's full text belongs in its tooltip). |
 | `hiddenTabAction` | [`apps/demo/src/app/hidden-tab.ts`](../../apps/demo/src/app/hidden-tab.ts) | What to do on a visibility change. |
+| `scenarioStep` | [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | The step a scenario trigger presses: |
 | `logCsv` | [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | CSV of the clinical log (the debrief export). |
 | `busyFraction` | [`apps/demo/src/app/meters.ts`](../../apps/demo/src/app/meters.ts) | The busy fraction (0–1) of the main thread over [now − windowMs, now] (method above). |
 | `memoryMb` | [`apps/demo/src/app/meters.ts`](../../apps/demo/src/app/meters.ts) | This page's JS heap in MB, or null where the browser does not say (only Chromium has `performance.memory`). |
@@ -306,6 +308,8 @@ No exported `…State` type in this module.
 | `nibpStartCommand` | [`apps/demo/src/app/patients.ts`](../../apps/demo/src/app/patients.ts) | O2 (research/34 §8 O2): |
 | `oneLiner` | [`apps/demo/src/app/patients.ts`](../../apps/demo/src/app/patients.ts) | The session bar's one-liner: |
 | `savePosition` | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | Keep `p` (false when the storage refuses it: |
+| `saveStageMarks` | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | Keep the stage marks `marks` beside the position of `p` (none: |
+| `readStageMarks` | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | The stage marks kept beside position `p` ([] when none, or when they are another session's, build's, engine's or card's). |
 | `readPosition` | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | The position to restore on this page, or null — and a position that is not this page's is dropped: |
 | `keepPositions` | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | Take the running case's position every `every` ms while a library card runs (not while a fast-forward runs, a restore is under way or the tab is hidden — a hidden tab pauses itself, and that pause is |
 | `restorePosition` | [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | After a reload: |
@@ -374,6 +378,7 @@ No exported `…State` type in this module.
 | `phoneStyle` | [`apps/demo/src/app/views/follower-status.ts`](../../apps/demo/src/app/views/follower-status.ts) | The style a PHONE wears — the instructor's (it comes in the follow stream), upright. |
 | `publishStyle` | [`apps/demo/src/app/views/follower.ts`](../../apps/demo/src/app/views/follower.ts) | The instructor's side: |
 | `followUrl` | [`apps/demo/src/app/views/follower.ts`](../../apps/demo/src/app/views/follower.ts) | The address of the learner monitor that follows session `code` (this page, same browser). |
+| `settingsView` | [`apps/demo/src/app/views/settings.ts`](../../apps/demo/src/app/views/settings.ts) | The Settings view on the site profile; |
 | `teach2View` | [`apps/demo/src/app/views/teach2.ts`](../../apps/demo/src/app/views/teach2.ts) | The Instructor v2 view on `link`, for `shell.add`. |
 | `engineVentilation` | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | The cockpit's settings as the engine's `ventilation` event takes them (its own ventilator is volume control). |
 | `cockpitPatch` | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | The engine's ventilator settings as a cockpit settings patch (volume control; |
@@ -465,7 +470,7 @@ No exported `…State` type in this module.
 | `resolveSkin` | [`resolve.ts`](../../packages/skins/src/resolve.ts) | Resolve a skin or preset id (optionally with a theme) into the complete skin plus the renderer/audio contract. |
 | `partialOf` | [`schema.ts`](../../packages/skins/src/schema.ts) | The same schema with every `required` removed (recursively): |
 
-Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `parseRoute`, `cardOf`, `mountSessionBar`, `parseSite`, `loadSite`, `saveSite`, `mountAlarmLine`, `historyOf`, `mountFastForward`, `whenText`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `mountFollower`, `homeView`, `monitorView`, `patientView`, `remoteView`, `roomView`, `scenariosView`, `settingsView`, `teachView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `createDrugPanel`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
+Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `parseRoute`, `cardOf`, `mountSessionBar`, `parseSite`, `loadSite`, `saveSite`, `mountAlarmLine`, `historyOf`, `mountFastForward`, `whenText`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `mountFollower`, `homeView`, `monitorView`, `patientView`, `remoteView`, `roomView`, `scenariosView`, `teachView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `createDrugPanel`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
 
 ## Source files
 
@@ -482,7 +487,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 | [`apps/demo/src/app/debrief-export.ts`](../../apps/demo/src/app/debrief-export.ts) | 16 | The Debrief's export (`pme-debrief/2`). |
 | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | 147 | The key moments and the key times of a run, computed from the run record alone (`record.ts` `RunData`): the scenario's states after the first, the pulse lost and back (the model), and the team's drugs, fluids, shocks and |
 | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | 407 | What the debrief states from a run record — each objective met / not met / not assessable from its rule (types.ts `ObjectiveRule`), with the reason and the simulated times in one line, and the facts the engine can measur |
-| [`apps/demo/src/app/describe.ts`](../../apps/demo/src/app/describe.ts) | 147 | One clinical line per command, for the instructor log, toasts and the Remote (research/13 brief §7 "Toast": the same verb as the button). |
+| [`apps/demo/src/app/describe.ts`](../../apps/demo/src/app/describe.ts) | 149 | One clinical line per command, for the instructor log, toasts and the Remote (research/13 brief §7 "Toast": the same verb as the button). |
 | [`apps/demo/src/app/drugs.ts`](../../apps/demo/src/app/drugs.ts) | 111 | The dose picker's data (research/13 brief §7 "Dose picker"). |
 | [`apps/demo/src/app/engine-bench.worker.ts`](../../apps/demo/src/app/engine-bench.worker.ts) | 29 | Home's "Engine · ms per tick" tile (E125). |
 | [`apps/demo/src/app/events.ts`](../../apps/demo/src/app/events.ts) | 55 | Acute events (showcase additions): the engine's systemic conditions an instructor starts and stops during a case — tamponade, tension pneumothorax, massive PE, anaphylaxis, septic shock, malignant hyperthermia and the re |
@@ -492,7 +497,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 | [`apps/demo/src/app/hidden-tab.ts`](../../apps/demo/src/app/hidden-tab.ts) | 57 | FX-14 / FX-15: Safari suspends a hidden tab (≈ 4 min, the whole page and its engine worker), so the instructor's page sends nothing — the phones say "The instructor's monitor is not answering" — and on return the worker' |
 | [`apps/demo/src/app/learner-actions.ts`](../../apps/demo/src/app/learner-actions.ts) | 29 | The learner action bar: what the team at the bedside does. |
 | [`apps/demo/src/app/learner.ts`](../../apps/demo/src/app/learner.ts) | 32 | Learner controls: the scenario runner's "Learner:" bar as a strip under the learner's monitor. |
-| [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | 163 | What the instructor panel talks to (research/13 brief §4.4: the same panel same-screen and as a Remote). |
+| [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | 172 | What the instructor panel talks to (research/13 brief §4.4: the same panel same-screen and as a Remote). |
 | [`apps/demo/src/app/main.ts`](../../apps/demo/src/app/main.ts) | 254 | The app (research/13 brief §4–§5): one document, one engine session for every view. |
 | [`apps/demo/src/app/meters.ts`](../../apps/demo/src/app/meters.ts) | 143 | Home's three live tiles (E125): Engine (ms per tick), Memory (MB used) and "CPU, this app" (% of one core). |
 | [`apps/demo/src/app/oxygen.ts`](../../apps/demo/src/app/oxygen.ts) | 44 | E121b: oxygen is never assumed; it is given like a drug. |
@@ -508,22 +513,22 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 | [`apps/demo/src/app/panel/scenario.ts`](../../apps/demo/src/app/panel/scenario.ts) | 143 | Scenario (research/13 §4.3 item 1; the simulator sweep's top patterns 4 and 5): before a run, the library as cards (story, patient, duration, objectives) filtered by category; during a run, the state strip with the curre |
 | [`apps/demo/src/app/panel/vitals.ts`](../../apps/demo/src/app/panel/vitals.ts) | 120 | Vitals & rhythm (research/13 §4.3 item 2): one row per target — glossary label with its tooltip, the live value, a stepper in clinical units, and the model state as a chip (CAE Maestro's flags): MODELED (wave), held by t |
 | [`apps/demo/src/app/patients.ts`](../../apps/demo/src/app/patients.ts) | 89 | Patient profiles for the Start screen and the Patient tab (brief §4.9 "one Patient card"). |
-| [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | 146 | A reload must not lose the running case (UI review 2026-10-24 #1: a reload mid-card came back as "No scenario", the default patient, 00:05). |
+| [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts) | 223 | A reload must not lose the running case (UI review 2026-10-24 #1: a reload mid-card came back as "No scenario", the default patient, 00:05). |
 | [`apps/demo/src/app/qr.ts`](../../apps/demo/src/app/qr.ts) | 252 | — |
-| [`apps/demo/src/app/rail.ts`](../../apps/demo/src/app/rail.ts) | 168 | The workflow rail (E125, owner's mockups of 26 October): the app's navigation in the order of a teaching session — Home; before the session Room, Scenarios, Patient; during it Instructor, Monitor, Ventilator; after it De |
+| [`apps/demo/src/app/rail.ts`](../../apps/demo/src/app/rail.ts) | 173 | The workflow rail (E125, owner's mockups of 26 October): the app's navigation in the order of a teaching session — Home; before the session Room, Scenarios, Patient; during it Instructor (today's view or v2, chosen in Se |
 | [`apps/demo/src/app/recent.ts`](../../apps/demo/src/app/recent.ts) | 34 | The Scenarios page's "Recent" (E125): the last three library cards loaded in this browser, newest first. |
 | [`apps/demo/src/app/record.ts`](../../apps/demo/src/app/record.ts) | 352 | The debrief's record of one run — what happened, in order, at the simulated time the monitor showed: every command applied (from the panel, a Remote or the scenario), the scenario's states, the alarms raised, bookmarks a |
 | [`apps/demo/src/app/rhythms.ts`](../../apps/demo/src/app/rhythms.ts) | 29 | The rhythm picker's groups (research/13 brief §7 "Rhythm picker"): the 36 library rhythms in the order a clinician looks for them. |
 | [`apps/demo/src/app/room-status.ts`](../../apps/demo/src/app/room-status.ts) | 75 | What the Room page knows about who follows the session (E125), without a DOM. |
-| [`apps/demo/src/app/router.ts`](../../apps/demo/src/app/router.ts) | 37 | Hash routing without a router dependency (research/13 brief §5): `#/teach`, `#/explore/respiratory`, `#/validate/review`. |
+| [`apps/demo/src/app/router.ts`](../../apps/demo/src/app/router.ts) | 42 | Hash routing without a router dependency (research/13 brief §5): `#/teach`, `#/explore/respiratory`, `#/validate/review`. |
 | [`apps/demo/src/app/scenario-meta.ts`](../../apps/demo/src/app/scenario-meta.ts) | 90 | What a scenario card shows before a case is loaded (research/13 §4.3; TrainingMonitor's categorised catalogue; CAE and REALITi objectives checklists). |
 | [`apps/demo/src/app/scenarios.ts`](../../apps/demo/src/app/scenarios.ts) | 57 | The scenario library: every `pme-scenario/1` document in packages/controller/scenarios (the five the scenario runner bundles and the depth and neuromuscular cases the neuro model added), so a case a later stage adds appe |
 | [`apps/demo/src/app/session.ts`](../../apps/demo/src/app/session.ts) | 465 | ONE engine session per app document (research/13 brief §5). |
 | [`apps/demo/src/app/sessionbar.ts`](../../apps/demo/src/app/sessionbar.ts) | 96 | The session bar (research/13 brief §5, §7): patient one-liner, the MODELED / MANUAL / "n held" badge (a popover dialog lists held values with "Return to model"), the scenario's state and time, sim speed and pause, and a |
 | [`apps/demo/src/app/shell.ts`](../../apps/demo/src/app/shell.ts) | 181 | The app frame (research/13 brief §4, §7 "App shell / top bar"): the workflow rail (rail.ts, E125) or, on a hostless Remote, the top bar's view switcher; the top bar's always-visible state (alarm count in the skin's colou |
-| [`apps/demo/src/app/showcase/harness.ts`](../../apps/demo/src/app/showcase/harness.ts) | 185 | Runs a showcase card on a bare engine the way the app does (engine seed 7, the document's mode, truth at 1 Hz, the patient's sensors; apps/demo/src/app/session.ts loadScenario) and presses the card's OWN buttons on a scr |
+| [`apps/demo/src/app/showcase/harness.ts`](../../apps/demo/src/app/showcase/harness.ts) | 186 | Runs a showcase card on a bare engine the way the app does (engine seed 7, the document's mode, truth at 1 Hz, the patient's sensors; apps/demo/src/app/session.ts loadScenario) and presses the card's OWN buttons on a scr |
 | [`apps/demo/src/app/sim-line.ts`](../../apps/demo/src/app/sim-line.ts) | 46 | "SIMULATION · not a clinical monitor" on every monitor surface (the owner, 26 October: the Monitor view, the learner monitor window, a learner's phone), never on the instructor's pages. |
-| [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | 78 | The site profile (research/13 P11, Laerdal's profile vs scenario split): which monitor the room shows, its theme and alarm defaults, and the shell's units and speed. |
+| [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | 87 | The site profile (research/13 P11, Laerdal's profile vs scenario split): which monitor the room shows, its theme and alarm defaults, and the shell's units and speed. |
 | [`apps/demo/src/app/staging.ts`](../../apps/demo/src/app/staging.ts) | 86 | Stage, then commit with one chosen transition (research/13-ui-simulator-benchmarks "Top 8" #1: Gaumard UNI's Apply panel, SimPad PLUS "Set transition time", Infirmary Integrated's Apply/Reset + auto-apply opt-out). |
 | [`apps/demo/src/app/store.ts`](../../apps/demo/src/app/store.ts) | 19 | Per-viewer conveniences in localStorage (research/13 brief §5), wrapped: private windows and previews can throw. |
 | [`apps/demo/src/app/teach2/action.ts`](../../apps/demo/src/app/teach2/action.ts) | 202 | Instructor v2, the ACTION slot (design §3.4, §3.5, board "Proposal v6"; plan IP6; answers 4–8, 20): one list of pills for the current stage, in the card's order (steps, judged objectives numbered on, automatic rows), eac |
@@ -541,7 +546,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 | [`apps/demo/src/app/teach2/rows.ts`](../../apps/demo/src/app/teach2/rows.ts) | 322 | Instructor v2, the ACTION rows classified live (design §3.4, §3.5; answers 4–8, 20). |
 | [`apps/demo/src/app/teach2/sheet.ts`](../../apps/demo/src/app/teach2/sheet.ts) | 69 | Instructor v2, the sheet frame (design §4, board "Proposal v11"; plan IP7): every sheet has the same shape. |
 | [`apps/demo/src/app/teach2/sheets.ts`](../../apps/demo/src/app/teach2/sheets.ts) | 231 | Instructor v2, the sheets slot (design §3.6, §4; board "Proposal v11"; plan IP7; answers 11, 13–16). |
-| [`apps/demo/src/app/teach2/strip.ts`](../../apps/demo/src/app/teach2/strip.ts) | 301 | Instructor v2, the stage strip (design §3.2, board "Proposal v6"; plan IP5; answers 2 and 3, the owner's ruling of 29 October on clicks). |
+| [`apps/demo/src/app/teach2/strip.ts`](../../apps/demo/src/app/teach2/strip.ts) | 307 | Instructor v2, the stage strip (design §3.2, board "Proposal v6"; plan IP5; answers 2 and 3, the owner's ruling of 29 October on clicks). |
 | [`apps/demo/src/app/triggers.ts`](../../apps/demo/src/app/triggers.ts) | 59 | A scenario transition's trigger in clinical words ("EtCO₂ ≥ 20 mmHg for 30 s", "Shock of at least 150 J", "Adrenaline given"), for the run strip's "next" list. |
 | [`apps/demo/src/app/ui.ts`](../../apps/demo/src/app/ui.ts) | 331 | The app's small component set (research/13 brief §7), plain DOM, no library: element builder, buttons, segmented control, numeric stepper with unit, glossary tooltip, confirm dialog (native <dialog>), toasts. |
 | [`apps/demo/src/app/views/debrief-course.ts`](../../apps/demo/src/app/views/debrief-course.ts) | 126 | The Debrief's course strip: the run on one time axis as an SVG string (no DOM state). |
@@ -551,12 +556,12 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 | [`apps/demo/src/app/views/follower-status.ts`](../../apps/demo/src/app/views/follower-status.ts) | 68 | What a learner monitor says and does, from what it knows — one pure function, so every state a phone can be in (a relay it cannot reach, a full session, a lost socket, a silent instructor, the Ventilator view driving the |
 | [`apps/demo/src/app/views/follower.ts`](../../apps/demo/src/app/views/follower.ts) | 218 | The learner monitor on a SECOND screen. |
 | [`apps/demo/src/app/views/home.ts`](../../apps/demo/src/app/views/home.ts) | 57 | Home (E125, owner's mockup f1-home): the page the app opens on (`#/`, `#/home`). |
-| [`apps/demo/src/app/views/monitor.ts`](../../apps/demo/src/app/views/monitor.ts) | 59 | Monitor (research/13 §4.2): the learner's full-screen monitor, with the learner controls strip under it only when the instructor has switched it on for this scenario. |
-| [`apps/demo/src/app/views/patient.ts`](../../apps/demo/src/app/views/patient.ts) | 145 | Patient (E125): the free-run patient, the E123 start page's controls on their own page, unchanged in function — the presets, age, sex, weight, height and conditions, MODELED or MANUAL, and "start with the sensors off". |
+| [`apps/demo/src/app/views/monitor.ts`](../../apps/demo/src/app/views/monitor.ts) | 32 | Monitor (research/13 §4.2): the learner's full-screen monitor, with the learner controls strip under it only when the instructor has switched it on for this scenario. |
+| [`apps/demo/src/app/views/patient.ts`](../../apps/demo/src/app/views/patient.ts) | 146 | Patient (E125): the free-run patient, the E123 start page's controls on their own page, unchanged in function — the presets, age, sex, weight, height and conditions, MODELED or MANUAL, and "start with the sensors off". |
 | [`apps/demo/src/app/views/remote.ts`](../../apps/demo/src/app/views/remote.ts) | 90 | Remote (research/13 §4.4): on the host screen, how to pair (the code, "open here", and a QR code only where another device can use it); in a window opened at #/remote, the instructor panel alone, joined by the 6-letter c |
 | [`apps/demo/src/app/views/room.ts`](../../apps/demo/src/app/views/room.ts) | 180 | Room (E125, owner's mockup f2-room): who follows this session and how to join it. |
-| [`apps/demo/src/app/views/scenarios.ts`](../../apps/demo/src/app/views/scenarios.ts) | 157 | Scenarios (E125, owner's mockup f3-scenarios): two cards — the Scenario library and the Scenario builder — and the three cases loaded last. |
-| [`apps/demo/src/app/views/settings.ts`](../../apps/demo/src/app/views/settings.ts) | 69 | Settings (research/13 §4.8, P11): the room's site profile — monitor, screen, frame rate, where the instructor works, gas units, sensors-off start — exportable as one file for the next room, plus the shortcut sheet. |
+| [`apps/demo/src/app/views/scenarios.ts`](../../apps/demo/src/app/views/scenarios.ts) | 161 | Scenarios (E125, owner's mockup f3-scenarios): two cards — the Scenario library and the Scenario builder — and the three cases loaded last. |
+| [`apps/demo/src/app/views/settings.ts`](../../apps/demo/src/app/views/settings.ts) | 74 | Settings (research/13 §4.8, P11): the room's site profile — monitor, screen, frame rate, which Instructor view the rail and every route open (owner, 30 October), where the instructor works, gas units, sensors-off start — |
 | [`apps/demo/src/app/views/teach.ts`](../../apps/demo/src/app/views/teach.ts) | 25 | Instructor (research/13 §4.3, brief §8): the same monitor (not a copy) beside the panel on wide screens; on an iPad in landscape the panel is a drawer over the monitor (the 6a pattern), in portrait a sheet under it. |
 | [`apps/demo/src/app/views/teach2.ts`](../../apps/demo/src/app/views/teach2.ts) | 85 | Instructor v2 (design `docs/plans/instructor-panel-redesign.md` §3, board "Proposal v6"; plan IP4): a second Instructor view beside today's, on the route `teach2`. |
 | [`apps/demo/src/app/views/validate.ts`](../../apps/demo/src/app/views/validate.ts) | 39 | Validate (research/13 §4.7): the three validation-harness tools as tabs in the bench theme. |
@@ -659,8 +664,8 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
-| untreated: early signs, established crisis, VF from hyperthermia | no established crisis and no VF in 51 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
-| treated late (the run-sheet path): crisis 1 min into the established crisis | the established crisis is not entered in 60 min, the call is not made | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
+| untreated: early signs, established crisis, VF from hyperthermia | established at +45.6 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
+| treated late (the run-sheet path): crisis 1 min into the established crisis | the call comes at +46.6 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
 
 ## Tests
 
@@ -712,6 +717,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 | [`apps/demo/e2e/mobile-learner.e2e.ts`](../../apps/demo/e2e/mobile-learner.e2e.ts) | 5 | 0 | 0 |
 | [`apps/demo/e2e/monitor-destroy-refuses.e2e.ts`](../../apps/demo/e2e/monitor-destroy-refuses.e2e.ts) | 2 | 0 | 0 |
 | [`apps/demo/e2e/monitor-fidelity.e2e.ts`](../../apps/demo/e2e/monitor-fidelity.e2e.ts) | 4 | 0 | 0 |
+| [`apps/demo/e2e/monitor-return-controls.e2e.ts`](../../apps/demo/e2e/monitor-return-controls.e2e.ts) | 1 | 0 | 0 |
 | [`apps/demo/e2e/monitor-worker-stopped.e2e.ts`](../../apps/demo/e2e/monitor-worker-stopped.e2e.ts) | 2 | 0 | 0 |
 | [`apps/demo/e2e/organs-page.e2e.ts`](../../apps/demo/e2e/organs-page.e2e.ts) | 4 | 0 | 0 |
 | [`apps/demo/e2e/oxygen-by-mask.e2e.ts`](../../apps/demo/e2e/oxygen-by-mask.e2e.ts) | 2 | 0 | 0 |
@@ -738,7 +744,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 | [`apps/demo/e2e/teach2-keys.e2e.ts`](../../apps/demo/e2e/teach2-keys.e2e.ts) | 3 | 0 | 0 |
 | [`apps/demo/e2e/time-control.e2e.ts`](../../apps/demo/e2e/time-control.e2e.ts) | 4 | 0 | 0 |
 | [`apps/demo/e2e/ui-polish-a.e2e.ts`](../../apps/demo/e2e/ui-polish-a.e2e.ts) | 4 | 0 | 0 |
-| [`apps/demo/e2e/ui-polish-b.e2e.ts`](../../apps/demo/e2e/ui-polish-b.e2e.ts) | 3 | 0 | 0 |
+| [`apps/demo/e2e/ui-polish-b.e2e.ts`](../../apps/demo/e2e/ui-polish-b.e2e.ts) | 2 | 0 | 0 |
 | [`apps/demo/e2e/validation-bedside.e2e.ts`](../../apps/demo/e2e/validation-bedside.e2e.ts) | 1 | 0 | 0 |
 | [`apps/demo/e2e/validation-review.e2e.ts`](../../apps/demo/e2e/validation-review.e2e.ts) | 1 | 0 | 0 |
 | [`apps/demo/e2e/vent-embed.e2e.ts`](../../apps/demo/e2e/vent-embed.e2e.ts) | 3 | 0 | 0 |
@@ -767,6 +773,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 | [`apps/demo/src/app/fx1-vent-port.dom.test.ts`](../../apps/demo/src/app/fx1-vent-port.dom.test.ts) | 1 | 0 | 0 |
 | [`apps/demo/src/app/glossary.test.ts`](../../apps/demo/src/app/glossary.test.ts) | 6 | 0 | 0 |
 | [`apps/demo/src/app/hidden-tab.test.ts`](../../apps/demo/src/app/hidden-tab.test.ts) | 9 | 0 | 0 |
+| [`apps/demo/src/app/instructor-choice.dom.test.ts`](../../apps/demo/src/app/instructor-choice.dom.test.ts) | 7 | 0 | 0 |
 | [`apps/demo/src/app/link-timeline.test.ts`](../../apps/demo/src/app/link-timeline.test.ts) | 1 | 0 | 0 |
 | [`apps/demo/src/app/meters.test.ts`](../../apps/demo/src/app/meters.test.ts) | 4 | 0 | 0 |
 | [`apps/demo/src/app/oxygen.test.ts`](../../apps/demo/src/app/oxygen.test.ts) | 6 | 0 | 0 |
@@ -776,17 +783,18 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 | [`apps/demo/src/app/panel/panel-load-tab.dom.test.ts`](../../apps/demo/src/app/panel/panel-load-tab.dom.test.ts) | 3 | 0 | 0 |
 | [`apps/demo/src/app/panel/scenario.dom.test.ts`](../../apps/demo/src/app/panel/scenario.dom.test.ts) | 4 | 0 | 0 |
 | [`apps/demo/src/app/patients.test.ts`](../../apps/demo/src/app/patients.test.ts) | 6 | 0 | 0 |
-| [`apps/demo/src/app/position.dom.test.ts`](../../apps/demo/src/app/position.dom.test.ts) | 4 | 0 | 0 |
+| [`apps/demo/src/app/position.dom.test.ts`](../../apps/demo/src/app/position.dom.test.ts) | 7 | 0 | 0 |
 | [`apps/demo/src/app/qr.test.ts`](../../apps/demo/src/app/qr.test.ts) | 3 | 0 | 0 |
 | [`apps/demo/src/app/record.test.ts`](../../apps/demo/src/app/record.test.ts) | 11 | 0 | 0 |
 | [`apps/demo/src/app/router.test.ts`](../../apps/demo/src/app/router.test.ts) | 3 | 0 | 0 |
+| [`apps/demo/src/app/scenario-step-log.test.ts`](../../apps/demo/src/app/scenario-step-log.test.ts) | 2 | 0 | 0 |
 | [`apps/demo/src/app/shell.dom.test.ts`](../../apps/demo/src/app/shell.dom.test.ts) | 4 | 0 | 0 |
 | [`apps/demo/src/app/showcase.test.ts`](../../apps/demo/src/app/showcase.test.ts) | 2 | 0 | 0 |
 | [`apps/demo/src/app/showcase/haemorrhage-anaphylaxis.slow.test.ts`](../../apps/demo/src/app/showcase/haemorrhage-anaphylaxis.slow.test.ts) | 4 | 0 | 0 |
 | [`apps/demo/src/app/showcase/healthy-induction.slow.test.ts`](../../apps/demo/src/app/showcase/healthy-induction.slow.test.ts) | 6 | 0 | 0 |
 | [`apps/demo/src/app/showcase/induction-after-premedication.slow.test.ts`](../../apps/demo/src/app/showcase/induction-after-premedication.slow.test.ts) | 3 | 0 | 0 |
 | [`apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) | 7 | 2 | 0 |
-| [`apps/demo/src/app/showcase/showcase-cards.test.ts`](../../apps/demo/src/app/showcase/showcase-cards.test.ts) | 5 | 0 | 0 |
+| [`apps/demo/src/app/showcase/showcase-cards.test.ts`](../../apps/demo/src/app/showcase/showcase-cards.test.ts) | 6 | 0 | 0 |
 | [`apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts`](../../apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts) | 5 | 0 | 0 |
 | [`apps/demo/src/app/site.test.ts`](../../apps/demo/src/app/site.test.ts) | 2 | 0 | 0 |
 | [`apps/demo/src/app/staging.test.ts`](../../apps/demo/src/app/staging.test.ts) | 2 | 0 | 0 |
@@ -803,7 +811,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 | [`apps/demo/src/app/teach2/press.dom.test.ts`](../../apps/demo/src/app/teach2/press.dom.test.ts) | 4 | 0 | 0 |
 | [`apps/demo/src/app/teach2/rows.test.ts`](../../apps/demo/src/app/teach2/rows.test.ts) | 16 | 0 | 0 |
 | [`apps/demo/src/app/teach2/sheets.dom.test.ts`](../../apps/demo/src/app/teach2/sheets.dom.test.ts) | 6 | 0 | 0 |
-| [`apps/demo/src/app/teach2/strip.dom.test.ts`](../../apps/demo/src/app/teach2/strip.dom.test.ts) | 10 | 0 | 0 |
+| [`apps/demo/src/app/teach2/strip.dom.test.ts`](../../apps/demo/src/app/teach2/strip.dom.test.ts) | 11 | 0 | 0 |
 | [`apps/demo/src/app/tokens.test.ts`](../../apps/demo/src/app/tokens.test.ts) | 2 | 0 | 0 |
 | [`apps/demo/src/app/ui.dom.test.ts`](../../apps/demo/src/app/ui.dom.test.ts) | 6 | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-course.test.ts`](../../apps/demo/src/app/views/debrief-course.test.ts) | 6 | 0 | 0 |
@@ -814,6 +822,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `describeCommand`
 | [`apps/demo/src/app/views/explore-drugs.dom.test.ts`](../../apps/demo/src/app/views/explore-drugs.dom.test.ts) | 1 | 0 | 0 |
 | [`apps/demo/src/app/views/explore.dom.test.ts`](../../apps/demo/src/app/views/explore.dom.test.ts) | 10 | 0 | 0 |
 | [`apps/demo/src/app/views/follower-status.test.ts`](../../apps/demo/src/app/views/follower-status.test.ts) | 7 | 0 | 0 |
+| [`apps/demo/src/app/views/monitor.dom.test.ts`](../../apps/demo/src/app/views/monitor.dom.test.ts) | 1 | 0 | 0 |
 | [`apps/demo/src/app/views/teach2.dom.test.ts`](../../apps/demo/src/app/views/teach2.dom.test.ts) | 4 | 0 | 0 |
 | [`apps/demo/src/app/views/vent-handover.dom.test.ts`](../../apps/demo/src/app/views/vent-handover.dom.test.ts) | 5 | 0 | 0 |
 | [`apps/demo/src/physiology-console/actions.test.ts`](../../apps/demo/src/physiology-console/actions.test.ts) | 5 | 0 | 0 |

@@ -196,9 +196,13 @@ describe('respiratory acceptance: coupling, RR, ventilator link', { timeout: 300
     expect(et1 - et0).toBeGreaterThan(20);
     expect(et1).toBeLessThan(150); // the schema limit (brief §4.9)
   });
-  // E131: the MH heat is the achieved MH oxygen × its caloric equivalent (≈ 130 W at 70 kg; it was 8 × basal, 640 W)
-  it.fails('MH: the core rises > 1 °C in the first 30 min — measured +0.20 °C (E131: heat from the O2 consumed)', async () => {
+  // E131: the MH heat is the achieved MH oxygen × its caloric equivalent (≈ 130 W at 70 kg; it was 8 × basal, 640 W) —
+  // an expected failure at +0.20 °C while the GA-dilated periphery took up most of it. Since the MH sympathetic surge
+  // constricts the skin (thermal heat.ts `kcp`) that heat stays in the core: met
+  it('MH: the core rises > 1 °C in the first 30 min', async () => {
     const tc = stateSeries(await mh30(), 'tempCore');
-    expect(tc[tc.length - 1]![1] - tc.find(([t]) => t >= 300)![1]).toBeGreaterThan(1.0); // the rate: l2/temp test
+    const rise = tc[tc.length - 1]![1] - tc.find(([t]) => t >= 300)![1];
+    if (process.env.PME_E131_PRINT) console.log(`resp-coupling MH core rise: ${rise.toFixed(3)} °C`);
+    expect(rise).toBeGreaterThan(1.0); // the rate: l2/temp test
   });
 });
