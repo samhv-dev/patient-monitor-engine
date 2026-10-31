@@ -37,6 +37,11 @@ the public API is what the packages export (see the API reference), the `pme-sce
   judged; the engine does not model it"); the card stays valid, and a `/1` card validates exactly as before. No
   kinetics change: the route models are F5.2.
 
+- **`pme-scenario/2` F11: integration tests for the `/2` MH chain (post-demo, draft).** `debrief.e2e.ts` runs the
+  `/2` MH card on the run sheet's demo path from Instructor v2 to 24:31 and checks the Debrief on both browsers: the
+  export is `pme-debrief/3`, and page 1 and the learner handout each fit one A4 page (≤ 267 mm). The demo path is
+  shared with `teach2-mh-v2.e2e.ts` through `e2e/mh-v2-path.ts`. No app, engine or card change.
+
 - **Instructor v2 reads a `pme-scenario/2` card (F6, post-demo, draft).** The strip lists the phases with their entry
   times; a future phase reads "auto" and is not a button (a phase is never entered by a press). The cue box names the
   phase, "entered by its own rule" with the rule in words and its hold, the learners' cue and the Say line. ACTION lists
