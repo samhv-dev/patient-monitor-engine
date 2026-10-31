@@ -768,5 +768,6 @@ a.rail-item:hover { color: var(--text-strong); background: color-mix(in srgb, va
 .app[data-route='teach2'] .rail-subitem[aria-current='page'] { background: var(--surface); }
 .app[data-route='teach2'] .rail-foot { padding: var(--s-3) 0 0; align-items: center; }
 .app[data-route='teach2'] .rail-theme { align-self: center; }
-/* toasts sit above the dock, not over its marks */
-body:has(.app[data-route='teach2']) .toasts { bottom: calc(64px + 40px); }
+/* toasts rest on the dock, not over its marks: its top edge as measured (--dock-foot, ui.ts trackChromeBottom); a fixed
+   64 + 40 px left them about 40 px above it once nothing sat under the dock */
+body:has(.app[data-route='teach2']) .toasts { bottom: calc(var(--dock-foot, 64px) + var(--s-2)); }
