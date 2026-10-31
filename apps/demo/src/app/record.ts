@@ -10,8 +10,7 @@
 // and charts read the course that was kept. A new patient or scenario (a 'restart' timeline) starts a new record. Plain
 // JSON data; no DOM.
 import type { EngineEvent } from '@pme/engine-core';
-import type { AppliedResolution, MarkKind, WireEvent } from '@pme/controller';
-import type { ScenarioDoc } from '@pme/controller/scenario';
+import { asV1, type AnyScenarioDoc, type AppliedResolution, type MarkKind, type WireEvent } from '@pme/controller';
 import { alarmLine } from './alarms.ts';
 import { describeCommand } from './describe.ts';
 
@@ -68,7 +67,8 @@ export interface RunData {
   lastWall: number;
   patient: string;
   weightKg: number;
-  doc: ScenarioDoc | null;
+  /** Either format; a `pme-scenario/2` card has no states, so its state rows read "next state" until F6. */
+  doc: AnyScenarioDoc | null;
   rows: Row[];
   /** One per simulated second of the kept course. */
   samples: Sample[];
@@ -141,7 +141,7 @@ export class RunRecord {
       if (e.t < (this.data.rows.at(-1)?.t ?? 0) - RESYNC_S) return;
       const kept = this.data.rows.filter((r) => r.kind === 'scenario' && r.undone === undefined).at(-1);
       if (kept?.ev === `state:${e.stateId}`) return; // a resync's repeat of the state we are in
-      const label = this.data.doc?.states.find((s) => s.id === e.stateId)?.label ?? 'next state';
+      const label = asV1(this.data.doc)?.states.find((s) => s.id === e.stateId)?.label ?? 'next state'; // /2: no states
       const row: Row = { t: e.t, kind: 'scenario', text: `Scenario state: ${label}`, ev: `state:${e.stateId}` };
       // how it was entered: the host publishes the state before it acknowledges the press or the jump that caused it
       // (driver.hook evaluates on the press's own tick), so trigger() and goto() below may still turn 'rule' into
@@ -166,7 +166,7 @@ export class RunRecord {
     const text = describeCommand(c);
     if (c.type === 'scenario') {
       if (c.action === 'load' && c.doc) {
-        this.data.doc = c.doc as ScenarioDoc;
+        this.data.doc = c.doc as AnyScenarioDoc;
         this.add({ t, kind: 'scenario', text });
         if (this.held) this.wire(this.held);
         return void (this.held = null);

@@ -4,7 +4,7 @@
 // from the glossary and the alarm table. Also the one-row-per-minute table, the card's steps with their status, the
 // instructor's judged objectives and the marks (Instructor v2, IP8), and the export's shape (written by
 // `debrief-export.ts`). No DOM.
-import { manualLabel, type MarkKind } from '@pme/controller';
+import { asV1, manualLabel, type MarkKind } from '@pme/controller';
 import type { ObjectiveRule, RunEventId } from '@pme/controller/scenario';
 import { FIXED_ALARM_WORDS } from './alarms.ts';
 import { untakenStatus, type Evidence } from './card-read.ts';
@@ -68,7 +68,7 @@ export function eventWords(want: RunEventId | RunEventId[], d: RunData): string 
   const v = VALUE.exec(want);
   if (v) return `${trendMeta(v[1] as ValueKey).label} ${v[2] === '<' ? 'below' : 'above'} ${fmt(v[1] as ValueKey, Number(v[3]))}`;
   const [k = '', id = ''] = want.split(':');
-  if (k === 'state') return `the state "${d.doc?.states.find((s) => s.id === id)?.label ?? 'named in the rule'}"`;
+  if (k === 'state') return `the state "${asV1(d.doc)?.states.find((s) => s.id === id)?.label ?? 'named in the rule'}"`;
   if (k === 'alarm') {
     const w = FIXED_ALARM_WORDS[id] ?? Object.entries(FIXED_ALARM_WORDS).find(([a]) => a.startsWith(`${id}-`))?.[1];
     return `the alarm ${w ?? 'named in the rule'}`;
@@ -185,7 +185,7 @@ const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
  *  the Scenario tab says so (the tick is the instructor's judgement, not a rule's). A rule-less objective's tick is
  *  also kept as `tickedT`; a `debrief: 'discuss'` objective carries `discuss: true` (its status is unchanged). */
 export function objectives(d: RunData): Array<{ text: string; discuss?: true; verdict: ObjectiveVerdict }> {
-  return (d.doc?.objectives ?? []).map((o) => {
+  return (asV1(d.doc)?.objectives ?? []).map((o) => {
     const text = drugWords(objectiveText(o));
     const ruleLess = typeof o === 'string' || !o.rule;
     const v = verdict(typeof o === 'string' ? undefined : o.rule, d);
@@ -233,7 +233,7 @@ const stateRows = (d: RunData): Row[] => kept(d).filter((r) => r.kind === 'scena
  * tell a press from a rule by).
  */
 export function steps(d: RunData): Step[] {
-  const doc = d.doc;
+  const doc = asV1(d.doc); // a pme-scenario/2 card has no steps here (F7)
   const rows = stateRows(d);
   if (!doc || (rows.length > 1 && !rows.some((r) => r.tr !== undefined || r.by !== undefined))) return [];
   const cur = rows.at(-1)?.ev?.slice('state:'.length) ?? doc.initialState;
@@ -272,7 +272,7 @@ export function steps(d: RunData): Step[] {
 /** The objectives the instructor judges (no rule: answer 6's "judged objective"), in the card's order: `n` is the
  *  objective's place in the card's list (from 1), `tickedT` the instructor's tick ("Objective met: …"), else null. */
 export function judged(d: RunData): Array<{ n: number; text: string; tickedT: number | null }> {
-  return (d.doc?.objectives ?? []).flatMap((o, i) => {
+  return (asV1(d.doc)?.objectives ?? []).flatMap((o, i) => {
     if (typeof o !== 'string' && o.rule) return [];
     const text = drugWords(objectiveText(o));
     return [{ n: i + 1, text, tickedT: kept(d).find((r) => r.kind === 'note' && r.text === `Objective met: ${text}`)?.t ?? null }];

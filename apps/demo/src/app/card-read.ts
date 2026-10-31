@@ -2,8 +2,9 @@
 // the strip (hop states folded in), the rows of the ACTION list for a state (steps, automatic rows, judged objectives),
 // the command a step sends, the objectives that ride on a step, and reachability on the card graph. One module for the
 // panel and the debrief, so both read the card the same way. Pure: no DOM, no session; it reads `pme-scenario/1` as the
-// cards already carry it.
-import { manualLabel, type CommandInput, type ScenarioDoc, type ScenarioState, type Transition, type When } from '@pme/controller';
+// cards already carry it. A `pme-scenario/2` card has no states: every reader here gives it the empty answer (plan F1;
+// F6 reads its phases and actions).
+import { isV2, manualLabel, type AnyScenarioDoc, type CommandInput, type ScenarioDoc, type ScenarioState, type Transition, type When } from '@pme/controller';
 import { HOP_MAX_S, isHop, type ObjectiveRule, type RunEventId } from '@pme/controller/scenario';
 import { drugWords } from './glossary.ts';
 import { SCENARIO_META } from './scenario-meta.ts';
@@ -67,7 +68,8 @@ function foldOf(doc: ScenarioDoc, s: ScenarioState): string {
 }
 
 /** The stages of the card: its states that are not hops, in document order, each with its hops (answer 2). */
-export function stagesOf(doc: ScenarioDoc): Stage[] {
+export function stagesOf(doc: AnyScenarioDoc): Stage[] {
+  if (isV2(doc)) return [];
   const home = new Map(doc.states.map((s) => [s.id, foldOf(doc, s)]));
   return doc.states.filter((s) => !isHop(s)).map((s) => {
     const states = [s.id, ...doc.states.filter((x) => x.id !== s.id && home.get(x.id) === s.id).map((x) => x.id)];
@@ -77,7 +79,7 @@ export function stagesOf(doc: ScenarioDoc): Stage[] {
 }
 
 /** The stage `stateId` belongs to (a hop: the stage it folds into), or null. */
-export function stageOf(doc: ScenarioDoc, stateId: string): Stage | null {
+export function stageOf(doc: AnyScenarioDoc, stateId: string): Stage | null {
   return stagesOf(doc).find((g) => g.states.includes(stateId)) ?? null;
 }
 
@@ -110,7 +112,8 @@ function ruleOfMixed(w: When): string | null {
  * card's judged objectives numbered on from the steps, then its automatic rows, in array order. Every step stays a row
  * whatever its condition (design §2 anti-goals); classifying a row live is the panel's (IP6).
  */
-export function rowsOf(doc: ScenarioDoc, stateId: string): Row[] {
+export function rowsOf(doc: AnyScenarioDoc, stateId: string): Row[] {
+  if (isV2(doc)) return [];
   const trs = stateOf(doc, stateId)?.transitions ?? [];
   const steps: Row[] = [];
   const autos: Row[] = [];
@@ -150,7 +153,8 @@ const drugsOnEnter = (state: ScenarioState | undefined): string[] =>
  * The objectives that ride on step `tr` (answer 6): an objective whose `event` (or one of its events) is `state:<to>`
  * of the step, or `drug:<id>` for a drug in `<to>`'s onEnter. In the card's order; empty: the step is "ready".
  */
-export function objectivesOf(doc: ScenarioDoc, tr: Transition): LinkedObjective[] {
+export function objectivesOf(doc: AnyScenarioDoc, tr: Transition): LinkedObjective[] {
+  if (isV2(doc)) return [];
   const want = new Set([`state:${tr.to}`, ...drugsOnEnter(stateOf(doc, tr.to)).map((d) => `drug:${d}`)]);
   const out: LinkedObjective[] = [];
   objectivesOfCard(doc).forEach((o, index) => {
@@ -171,7 +175,8 @@ export function conditionNotMet(linked: readonly LinkedObjective[], isTrue: (eve
 
 /** Whether `to` can still be reached from `from` on the card graph (`to` and `else` of every transition; a state reaches
  *  itself), for "failed" (answer 7). */
-export function reachable(doc: ScenarioDoc, from: string, to: string): boolean {
+export function reachable(doc: AnyScenarioDoc, from: string, to: string): boolean {
+  if (isV2(doc)) return false;
   const seen = new Set([from]);
   const todo = [from];
   while (todo.length) {
@@ -221,7 +226,8 @@ export interface Standing {
  * An alternative branch not chosen is therefore never asked for. `dueS` is the earliest asking `eventWithin`'s window:
  * from its anchor, `withinS` long (overdue once `now - anchor ≥ withinS`, as the Debrief's verdict reads it).
  */
-export function standingOf(doc: ScenarioDoc, tr: Transition, at: { dueT: number; leftT: number | null; now: number }, ev: Evidence): Standing {
+export function standingOf(doc: AnyScenarioDoc, tr: Transition, at: { dueT: number; leftT: number | null; now: number }, ev: Evidence): Standing {
+  if (isV2(doc)) return { asked: false, dueS: null };
   const links = new Set([`state:${tr.to}`, ...drugsOnEnter(stateOf(doc, tr.to)).map((d) => `drug:${d}`)]);
   const out: Standing = { asked: false, dueS: null };
   for (const o of objectivesOf(doc, tr)) {
@@ -247,7 +253,7 @@ export function standingOf(doc: ScenarioDoc, tr: Transition, at: { dueT: number;
 /** An untaken step's status (answer 7 as refined): null, not listed (no objective asks for it: an alternative not
  *  chosen); `failed`, its stage is not the current state and the card can no longer reach the state it leads to;
  *  `overdue`, an asking window has passed; else `not done`. `current` is the current state (a hop counts as its own). */
-export function untakenStatus(doc: ScenarioDoc, tr: Transition, at: { stateId: string; current: string; dueT: number; leftT: number | null; now: number }, ev: Evidence): { status: 'failed' | 'overdue' | 'not done'; dueS: number | null } | null {
+export function untakenStatus(doc: AnyScenarioDoc, tr: Transition, at: { stateId: string; current: string; dueT: number; leftT: number | null; now: number }, ev: Evidence): { status: 'failed' | 'overdue' | 'not done'; dueS: number | null } | null {
   const s = standingOf(doc, tr, at, ev);
   if (!s.asked) return null;
   if (at.stateId !== at.current && !reachable(doc, at.current, tr.to)) return { status: 'failed', dueS: s.dueS };
@@ -264,7 +270,8 @@ export type History = ReadonlyArray<{ t: number; stateId: string; transitionId?:
  * record's entry of the initial state on the host), so the strip gives the first stage its time and ACTION's Finished
  * its taken step. Unchanged when the history is empty or already begins at the start.
  */
-export function withStart(doc: ScenarioDoc, history: History, startT: number): History {
+export function withStart(doc: AnyScenarioDoc, history: History, startT: number): History {
+  if (isV2(doc)) return history;
   const h0 = history[0];
   if (!h0 || (h0.stateId === doc.initialState && h0.transitionId === undefined) || h0.t < startT) return history;
   return [{ t: startT, stateId: doc.initialState }, ...history];

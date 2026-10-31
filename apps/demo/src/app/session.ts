@@ -9,7 +9,7 @@ import {
   type AppliedResolution, type HostTarget, type ScenarioEvent, type WireEvent,
 } from '@pme/controller';
 import { engineOptionsOf, ScenarioDriver, validateScenario, type ScenarioDoc } from '@pme/controller/scenario';
-import type { ManagedTransport } from '@pme/controller';
+import { isV2, type ManagedTransport } from '@pme/controller';
 import { mountMonitor, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
@@ -374,6 +374,7 @@ export class AppSession {
     if (this.fastForwarding) return { ok: false, reason: 'the simulation is fast-forwarding; try again when it ends' };
     const v = validateScenario(raw);
     if (!v.ok) return { ok: false, reason: v.errors.join('; ') };
+    if (isV2(v.doc)) return { ok: false, reason: 'pme-scenario/2 cards run from F2 on' }; // the driver's own refusal, before the patient restarts
     const eo = engineOptionsOf(v.doc, 7);
     const p = v.doc.patient ?? {};
     this.spec = { ageY: p.ageY ?? 40, sex: p.sex ?? 'M', weightKg: p.weightKg ?? 70, heightCm: p.heightCm ?? 175, comorbid: [], attached: true };

@@ -3,7 +3,7 @@
 // pause state from `scenario pause/resume`. ControllerSession owns one, so the panel and the remote share it.
 import type { AppliedResolution, WireEvent } from '../protocol.ts';
 import { describeTransition, manualLabel, type Labeller } from './describe.ts';
-import type { ScenarioDoc, ScenarioState } from './types.ts';
+import { asV1, isV2, type AnyScenarioDoc, type ScenarioState } from './types.ts';
 
 export interface NextTransition {
   id: string;
@@ -17,7 +17,9 @@ export interface NextTransition {
 const TICK_S = 0.02;
 
 export class ScenarioView {
-  doc: ScenarioDoc | null = null;
+  /** Either format; a `pme-scenario/2` doc has no states, so `current()`, `next()` and the state labels give it the empty
+   *  answer until F2 reads its phases. */
+  doc: AnyScenarioDoc | null = null;
   /** Bumped when the doc changes (the panel rebuilds its lists only then). */
   docVersion = 0;
   stateId: string | null = null;
@@ -44,9 +46,9 @@ export class ScenarioView {
     if (c?.type !== 'scenario') return false;
     const t = e.tick * TICK_S;
     if (c.action === 'load' && c.doc && typeof c.doc === 'object') {
-      this.doc = c.doc as ScenarioDoc;
+      this.doc = c.doc as AnyScenarioDoc;
       this.docVersion++;
-      this.stateId = this.doc.initialState;
+      this.stateId = isV2(this.doc) ? null : this.doc.initialState;
       this.enteredT = t;
       this.paused = false;
       this.pausedAt = null;
@@ -81,7 +83,7 @@ export class ScenarioView {
   }
 
   current(): ScenarioState | null {
-    return this.doc?.states.find((s) => s.id === this.stateId) ?? null;
+    return this.states().find((s) => s.id === this.stateId) ?? null;
   }
 
   /** Scenario time spent in the current state (sim seconds, pauses excluded). */
@@ -99,7 +101,11 @@ export class ScenarioView {
   }
 
   stateLabel(id: string | null = this.stateId): string {
-    const s = this.doc?.states.find((x) => x.id === id);
+    const s = this.states().find((x) => x.id === id);
     return s?.label ?? id ?? '—';
+  }
+
+  private states(): ScenarioState[] {
+    return asV1(this.doc)?.states ?? [];
   }
 }

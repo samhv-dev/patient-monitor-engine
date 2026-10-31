@@ -4,6 +4,7 @@
 // the host, which validates and runs it.
 import type { ControllerSession } from '../session/controller-session.ts';
 import type { CommandInput } from '../protocol.ts';
+import { asV1 } from '../scenario/types.ts';
 
 export interface ScenarioTabOptions {
   session: ControllerSession;
@@ -117,7 +118,7 @@ export function mountScenarioTab(el: HTMLElement, o: ScenarioTabOptions): Scenar
     if (!d) return;
     q<HTMLElement>('.pme-scn-title').textContent = d.title;
     const gotoSel = q<HTMLSelectElement>('select[name=scenario-goto]');
-    gotoSel.replaceChildren(...d.states.map((st) => option(st.label ?? st.id, st.id)));
+    gotoSel.replaceChildren(...(asV1(d)?.states ?? []).map((st) => option(st.label ?? st.id, st.id)));
   };
   const rebuildState = () => {
     const cur = view.current();
@@ -145,13 +146,13 @@ export function mountScenarioTab(el: HTMLElement, o: ScenarioTabOptions): Scenar
     const visits = new Map<string, number>();
     for (const h of view.history) if (!h.transitionId?.endsWith(':else')) visits.set(h.stateId, h.t);
     q<HTMLOListElement>('.pme-scn-states').replaceChildren(
-      ...d.states.map((st) => {
+      ...(asV1(d)?.states ?? []).map((st) => {
         const li = doc.createElement('li');
         li.dataset.state = st.id;
         if (st.id === view.stateId) li.setAttribute('aria-current', 'step');
         const at = visits.get(st.id);
         li.textContent = `${st.label ?? st.id}${at !== undefined ? ` · ${fmt(at)}` : ''}`;
-        for (const bm of (d.bookmarks ?? []).filter((x) => x.state === st.id)) {
+        for (const bm of (asV1(d)?.bookmarks ?? []).filter((x) => x.state === st.id)) {
           const b = doc.createElement('button');
           b.type = 'button';
           b.dataset.action = 'scenario-jump';

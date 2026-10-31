@@ -6,7 +6,7 @@
 // monitor showed (Debrief redesign B), and a learner handout without verdicts prints on its own (E51). The browser PRINTS it to PDF (debrief.css: A4 portrait, the app's chrome hidden, no colour needed to read
 // it; the footer and the build on every page); no PDF library. "Download the record (JSON)" saves the same data. Opened
 // from the session bar; when a scenario reaches a state with no way out, a toast says the debrief is ready.
-import type { MarkKind } from '@pme/controller';
+import { asV1, type MarkKind } from '@pme/controller';
 import './debrief.css';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
@@ -58,7 +58,7 @@ const MARK_WORDS: Readonly<Record<Exclude<MarkKind, 'stage'>, string>> = { good:
  *  the stage's first row, the order due, the button's words, when it was taken (and its place among the stage's taken
  *  steps), and its status. */
 function stepsTable(ss: Step[], d: RunData): HTMLElement {
-  const label = (id: string) => d.doc?.states.find((s) => s.id === id)?.label ?? id;
+  const label = (id: string) => asV1(d.doc)?.states.find((s) => s.id === id)?.label ?? id;
   return h('table', { class: 'db-table db-steps' },
     h('thead', {}, h('tr', {}, ...['Stage', 'n', 'Step', 'Taken (order)', 'Status'].map((c) => h('th', { scope: 'col' }, c)))),
     h('tbody', {}, ...ss.map((x, i) => h('tr', { 'data-status': x.status, ...(ss[i - 1]?.stateId !== x.stateId ? { class: 'db-stage' } : {}) },
@@ -382,7 +382,7 @@ export function debriefView(session: AppSession, link: Link): View {
   link.onChange(() => {
     const sv = link.ctl.scenario;
     const key = `${sv.docVersion}:${sv.stateId}`;
-    if (!sv.doc || key === ended || sv.current()?.transitions?.length) return;
+    if (!asV1(sv.doc) || key === ended || sv.current()?.transitions?.length) return; // /2: no end known until F2's ended()
     ended = key;
     toast('The scenario has ended: the debrief is ready (Debrief, in the session bar)');
   });

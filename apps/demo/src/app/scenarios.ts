@@ -1,7 +1,7 @@
 // The scenario library: every `pme-scenario/1` document in packages/controller/scenarios (the five the scenario runner
 // bundles and the depth and neuromuscular cases the neuro model added), so a case a later stage adds appears without a
-// code change.
-import type { ScenarioDoc } from '@pme/controller';
+// code change. A `pme-scenario/2` document (plan F1) is read for its header; it lists no objectives here (F6).
+import { isV2, type AnyScenarioDoc, type ScenarioDoc } from '@pme/controller';
 import type { Objective } from '@pme/controller/scenario';
 import { CATEGORIES as CATS, draft, SCENARIO_META, storyOf, type Category } from './scenario-meta.ts';
 
@@ -14,7 +14,9 @@ const FILES = {
 /** An objective's words, with or without its debrief rule. */
 export const objectiveText = (o: string | Objective): string => (typeof o === 'string' ? o : o.text);
 
-export interface ScenarioCard {
+/** A library card: the library's documents are `pme-scenario/1` today (`D` = ScenarioDoc); a loaded document of either
+ *  format gives `ScenarioCard<AnyScenarioDoc>`. */
+export interface ScenarioCard<D extends AnyScenarioDoc = ScenarioDoc> {
   id: string;
   title: string;
   draft: boolean;
@@ -24,10 +26,10 @@ export interface ScenarioCard {
   objectives: string[];
   /** "F 72 y 70 kg" from the document's patient. */
   patient: string;
-  doc: ScenarioDoc;
+  doc: D;
 }
 
-export function cardOf(doc: ScenarioDoc): ScenarioCard {
+export function cardOf<D extends AnyScenarioDoc>(doc: D): ScenarioCard<D> {
   const m = SCENARIO_META[doc.id];
   const p = doc.patient ?? {};
   const d = draft(doc.title);
@@ -35,7 +37,7 @@ export function cardOf(doc: ScenarioDoc): ScenarioCard {
   const cat = (CATS as readonly string[]).includes(doc.category ?? '') ? (doc.category as Category) : undefined;
   return {
     id: doc.id, title: d.title, draft: d.draft, story: doc.story ?? storyOf(doc.id, doc.notes), category: cat ?? m?.category ?? 'Other',
-    minutes: doc.durationMin ?? m?.minutes ?? null, objectives: (doc.objectives ?? m?.objectives ?? []).map(objectiveText), doc,
+    minutes: doc.durationMin ?? m?.minutes ?? null, objectives: (isV2(doc) ? [] : (doc.objectives ?? m?.objectives ?? [])).map(objectiveText), doc,
     patient: [p.sex ?? '', p.ageY !== undefined ? `${p.ageY} y` : '', p.weightKg !== undefined ? `${p.weightKg} kg` : ''].filter(Boolean).join(' '),
   };
 }

@@ -13,7 +13,7 @@ import type { HostTarget, ScenarioHookResult } from '../session/host-session.ts'
 import { ScenarioRunner, type RunnerEffect, type RunnerInput, type RunnerState, type VitalHold } from './runner.ts';
 import { BUILTIN_SCENARIOS } from './builtins.ts';
 import { resolveRhythm } from './standins.ts';
-import type { DocCommand, ScenarioDoc, ScenarioState } from './types.ts';
+import { isV2, type DocCommand, type ScenarioDoc, type ScenarioState } from './types.ts';
 import { validateScenario } from './validate.ts';
 
 export interface ScenarioDriverOptions {
@@ -46,6 +46,8 @@ export interface RunPosition {
 }
 
 const NOT_IMPLEMENTED = /not implemented/;
+/** A valid `pme-scenario/2` document is refused by `load` until the phase runner exists (plan F2). */
+const V2_NOT_YET = 'pme-scenario/2 cards run from F2 on';
 /** A hop (answer 2): a state whose only exit is `afterS` ≤ HOP_MAX_S — it folds into the stage it leads to [ENG]. */
 export const HOP_MAX_S = 2;
 export function isHop(s: ScenarioState): boolean {
@@ -110,6 +112,7 @@ export class ScenarioDriver {
     if (raw === undefined) return { ok: false, reason: `no built-in scenario ${String(input)}` };
     const v = validateScenario(raw, { rhythms: [...this.known] });
     if (!v.ok) return { ok: false, reason: `invalid scenario: ${v.errors.join('; ')}` };
+    if (isV2(v.doc)) return { ok: false, reason: V2_NOT_YET }; // until F2's phase runner; the run loaded goes on
     this.notes = [...v.warnings];
     this.pending = [];
     for (const c of this.stageMarkList) this.marks.delete(c.target as string); // a new run: the old run's stage marks go

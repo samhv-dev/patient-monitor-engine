@@ -3,6 +3,7 @@
 // stamps them, and every onExit+onEnter list runs as ONE stage group (one tick, "stage then commit", brief §4.9).
 import type { BloodProfile, EndoProfileInput, LungConditionSpec, NeuroProfile, ProfileCondition, Ramp, StateVar } from '@pme/engine-core';
 import type { ClinicalEvent, ModelInput, SensorId } from '../protocol.ts';
+import type { ScenarioDocV2 } from './types-v2.ts';
 
 export type Op = '<' | '<=' | '>' | '>=' | '==' | '!=';
 /** A StateVar, a NumericId, or `map` (brief §7.1 names; measured ids such as nibpSys are allowed too). */
@@ -153,3 +154,11 @@ export interface ScenarioDoc extends C {
   states: ScenarioState[];
   bookmarks?: DocBookmark[];
 }
+
+/** A document of either format: `pme-scenario/1` (states) or `pme-scenario/2` (phases; types-v2.ts). */
+export type AnyScenarioDoc = ScenarioDoc | ScenarioDocV2;
+/** True for a `pme-scenario/2` document: it has phases and no states. */
+export const isV2 = (doc: AnyScenarioDoc): doc is ScenarioDocV2 => doc.schema === 'pme-scenario/2';
+/** The `pme-scenario/1` document, or null (none, or a `pme-scenario/2` one): a /1 reader's way to give /2 the empty
+ *  answer (no states, no objectives, no bookmarks). */
+export const asV1 = (doc: AnyScenarioDoc | null | undefined): ScenarioDoc | null => (doc && !isV2(doc) ? doc : null);

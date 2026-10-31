@@ -8,6 +8,7 @@
 // monitor carries PAUSED, and the pill's tooltip says when a step pressed now is given).
 import './state.css';
 import type { StateVar } from '@pme/engine-core';
+import { asV1 } from '@pme/controller';
 import { stageOf, stagesOf } from '../card-read.ts';
 import { drugWords } from '../glossary.ts';
 import type { Link } from '../link.ts';
@@ -74,7 +75,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       return `${vitalLabel(v)}${spec ? ` ${showVital(spec, st?.values[v])}` : ''} (${heldFor(link.simT - (since.get(v) as number))})`;
     }).join(' · ')}` : '');
 
-    const doc = sv.doc;
+    const doc = asV1(sv.doc); // a pme-scenario/2 card: no stage to cue until F6
     const state = sv.current();
     const stage = doc && sv.stateId ? stageOf(doc, sv.stateId) : null;
     box.classList.toggle('ip2-cue-none', !doc || !stage);

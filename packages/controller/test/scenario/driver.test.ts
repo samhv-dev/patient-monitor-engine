@@ -10,6 +10,7 @@ import type { ScenarioEvent } from '../../src/protocol.ts';
 import type { ScenarioDoc } from '../../src/scenario/types.ts';
 import { manualHost } from '../fakes/manual-host.ts';
 import { doc } from './fixtures.ts';
+import { minimalV2 } from './fixtures-v2.ts';
 
 // Each test steps the engine tick by tick for 1–10 sim-minutes (≈ 0.2–2.5 s each on a laptop). CI rule: tests that run
 // the engine past ~1 sim-minute take a 300 s timeout (the 2-vCPU runner needs > 30 s for the 4 × 320 sim-s seed test).
@@ -261,4 +262,30 @@ describe('ScenarioDriver', () => {
     for (const seed of [1, 2, 3, 4, 5]) if (!replayRunLog(doc, { ...log, seed }).ok) diverged = true;
     expect(diverged).toBe(true);
   }, SLOW);
+});
+
+// Plan F1: a valid pme-scenario/2 document is refused by load until F2's phase runner; a /1 load is unchanged.
+describe('ScenarioDriver and a pme-scenario/2 document (F1)', () => {
+  it('load refuses a valid /2 document with the plan\'s message, and the run already loaded goes on', () => {
+    const { driver } = rig();
+    expect(driver.load('acls-vf-witnessed').ok).toBe(true);
+    const before = driver.runner;
+    expect(driver.load(minimalV2())).toEqual({ ok: false, reason: 'pme-scenario/2 cards run from F2 on' });
+    expect(driver.runner).toBe(before);
+    expect(driver.runner?.doc.id).toBe('acls-vf-witnessed');
+  });
+
+  it('a scenario load command with a /2 document is refused with the same reason', async () => {
+    const { driver } = rig();
+    const r = await driver.hook({ id: 'c1', issuedBy: 'instructor', type: 'scenario', action: 'load', doc: minimalV2() });
+    expect(r).toMatchObject({ accepted: false, reason: 'pme-scenario/2 cards run from F2 on' });
+    expect(driver.runner).toBeNull();
+  });
+
+  it('an invalid /2 document is refused with its validation errors, as a /1 one is', () => {
+    const { driver } = rig();
+    const bad = minimalV2();
+    bad.phases[0].next = ['nowhere'];
+    expect(driver.load(bad)).toEqual({ ok: false, reason: 'invalid scenario: /phases/0/next/0: no phase "nowhere"' });
+  });
 });

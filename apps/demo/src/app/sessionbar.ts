@@ -3,6 +3,7 @@
 // It reads the same Link as the panel, so it is identical same-screen and on a Remote.
 import type { Link } from './link.ts';
 import { hrefOf } from './router.ts';
+import { asV1 } from '@pme/controller';
 import { cardOf } from './scenarios.ts';
 import { oneLiner } from './patients.ts';
 import { activeText } from './events.ts';
@@ -73,7 +74,7 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
     badge.setAttribute('aria-label', `Physiology mode ${m === 'modeled' ? 'MODELED' : 'MANUAL'}${n ? `, ${n} values held by you` : ''}: show details`);
     const sv = link.ctl.scenario;
     setText(scen, sv.doc ? `${cardOf(sv.doc).title}: ${sv.stateLabel()} ${clock(sv.timeInState(link.simT))}` : 'No scenario');
-    debrief.dataset.ready = String(!!sv.doc && !sv.current()?.transitions?.length); // the scenario has ended
+    debrief.dataset.ready = String(!!asV1(sv.doc) && !sv.current()?.transitions?.length); // the scenario has ended (/2: F2's ended(), F6)
     setText(t, clock(link.simT));
     for (const b of ffs) b.disabled = link.ctl.fastForward !== null; // One at a time
     // The speed and pause the HOST runs at, wherever they were set (a Remote showed ×1 under a ×4 host)

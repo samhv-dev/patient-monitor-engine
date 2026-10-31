@@ -1,7 +1,7 @@
 // The debrief's judgements — every rule kind met, not met and not assessable, read on the kept course (an event before
 // the anchor, a second anchor, a value never measured); the measured facts, the labs and the drug totals; objectives
 // without a rule listed as not assessable (with the instructor's tick); the minute table and the JSON.
-import type { ObjectiveRule } from '@pme/controller/scenario';
+import type { ObjectiveRule, ScenarioDoc } from '@pme/controller/scenario';
 import { validateScenario } from '@pme/controller/scenario';
 import { version } from '@pme/renderer';
 import { describe, expect, it } from 'vitest';
@@ -143,7 +143,7 @@ describe('objective rules', () => {
 
   it('objectives: strings and rule-less objects are not assessable; a tick in the Scenario tab is reported', () => {
     const d = run([apnoea(66), vent(100), { t: 140, kind: 'note', text: 'Objective met: Confirm ventilation with the capnogram' }], [sample(200)]);
-    d.doc = { ...(DOC as never as NonNullable<RunData['doc']>), objectives: ['Anticipate the fall in arterial pressure after propofol', { text: 'Ventilate within 90 s of the apnoea alarm', rule: within }, { text: 'Confirm ventilation with the capnogram' }] };
+    d.doc = { ...(DOC as never as ScenarioDoc), objectives: ['Anticipate the fall in arterial pressure after propofol', { text: 'Ventilate within 90 s of the apnoea alarm', rule: within }, { text: 'Confirm ventilation with the capnogram' }] };
     expect(objectives(d)).toEqual([
       { text: 'Anticipate the fall in arterial pressure after propofol', verdict: { status: 'not assessable', why: 'This objective has no rule: the instructor judges it.' } },
       { text: 'Ventilate within 90 s of the apnoea alarm', verdict: { status: 'met', why: expect.stringContaining('34 s after'), measure: { fromT: 66, toT: 100, askedS: 90 } } },
@@ -155,7 +155,7 @@ describe('objective rules', () => {
     const note = (t: number, text: string): Row => ({ t, kind: 'note', text: `Objective met: ${text}` });
     const late: ObjectiveRule = { kind: 'eventWithin', after: 'alarm:apnoea', event: 'ventilation', withinS: 600 }; // the run ends before 600 s
     const d = run([apnoea(66), vent(200), note(130, 'Name the problem'), note(150, 'Ventilate late'), note(160, 'Ventilate within 90 s')], [sample(210)]);
-    d.doc = { ...(DOC as never as NonNullable<RunData['doc']>), objectives: [
+    d.doc = { ...(DOC as never as ScenarioDoc), objectives: [
       { text: 'Name the problem', debrief: 'recognition' },
       { text: 'Ventilate within 90 s', rule: within, debrief: 'discuss' },
       { text: 'Ventilate late', rule: { ...late, after: 'alarm:apnoea', event: 'shock' } },
