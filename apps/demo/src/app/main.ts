@@ -139,7 +139,7 @@ if (follow) {
   shell.add(room);
   shell.add(scenariosView({ session, loadScenario }));
   shell.add(patientView({ session, site }));
-  shell.add(monitorView(shell.stage, { session, link, learnerUrl: followUrl(session.code), phones: !!relay }));
+  shell.add(monitorView({ session, link, learnerUrl: followUrl(session.code), phones: !!relay }));
   const teach = teachView(link, { site, main: shell.main, stage: shell.stage, weightKg, loadScenario });
   shell.add(teach);
   // option G: the app's top bar is not shown on #/teach2; its header carries the top bar's Sound switch and Room code
