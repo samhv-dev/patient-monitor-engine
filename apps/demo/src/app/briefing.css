@@ -68,12 +68,11 @@
 .view[data-view='teach'] > .cb-end { padding: var(--s-2, 8px) var(--s-3, 12px); border-bottom: 1px solid var(--line, #333); }
 
 /* Instructor v2: the status line under the stage strip carries it (the owner's choice of 31 October; teach2/strip.ts).
-   While the briefing runs the strip grows by the line's 40 px, as with no case (#210) and while finishing (#214); the
-   chips' row keeps its 52 px and its full width, the frame's areas are unchanged (app.css). */
+   While the briefing runs the strip grows by the line's 40 px, as while finishing (#214); the chips' row keeps its
+   full width, centred in the strip's own 75 px; the frame's areas are unchanged (app.css). */
 .main[data-route='teach2']:has(.ip2-strip[data-briefing]) { grid-template-rows: 48px 92px auto auto minmax(0, 1fr) auto 64px; }
-.ip2-strip[data-briefing] { display: grid; grid-template: 'chips hint' 52px 'status status' 40px / minmax(0, 1fr) auto; align-items: center; padding: 0; }
+.ip2-strip[data-briefing] { display: grid; grid-template: 'chips' 52px 'status' 40px / minmax(0, 1fr); align-items: center; padding: 0; }
 .ip2-strip[data-briefing] > .ip2-chips { grid-area: chips; display: flex; align-items: center; min-width: 0; padding: 0 20px; }
-.ip2-strip[data-briefing] > .ip2-strip-hint { grid-area: hint; margin: 0; padding: 0 20px; }
 .ip2-strip > .ip2-status { grid-area: status; display: flex; align-items: center; gap: 16px; height: 100%; min-width: 0; padding: 0 20px; border-top: 1px solid var(--ip2-line); color: var(--ip2-muted); font-size: 13px; }
 .ip2-strip > .ip2-status[hidden] { display: none; }
 .ip2-status-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }

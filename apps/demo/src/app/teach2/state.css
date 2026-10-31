@@ -3,12 +3,11 @@
 
 /* the stage strip. The chips keep their own width, and no name is cut (IP9, ruling 2: the far-future stages fold into
    "… n later" instead); when they do not fit, `fit` (strip.ts) tightens the padding. The strip scrolls sideways when a
-   fold is opened, or as a last resort. The 75-px strip holds two lines: the chips, then the hint under them (beside
-   five chips at 1440 × 900 it had no room and showed only at 1920 × 1080). */
-.ip2-strip { flex-direction: column; align-items: stretch; justify-content: center; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+   fold is opened, or as a last resort. The 75-px strip holds one row, the chips, centred in it (the owner, 1 November:
+   the hint line that was under them is gone; the stage's box says what a press does). */
+.ip2-strip { flex-direction: column; align-items: stretch; justify-content: center; overflow-x: auto; scrollbar-width: none; }
 .ip2-strip::-webkit-scrollbar { display: none; }
 .ip2-chips { display: flex; align-items: center; }
-.ip2-strip-hint { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 12px; line-height: 16px; color: var(--ip2-muted); } /* IP9: muted, 4.5:1 (app-accessibility) */
 .ip2-strip-empty { color: var(--ip2-muted); }
 .ip2-chip { flex: none; display: block; padding: 6px 10px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--ip2-muted); font: inherit; line-height: 16px; white-space: nowrap; }
 button.ip2-chip { cursor: pointer; }
@@ -34,11 +33,14 @@ button.ip2-chip:hover { background: var(--ip2-card); }
 .ip2-link-next { background: var(--ip2-blue); }
 .ip2-link-dashed { height: 0; border-top: 1px dashed #4b5563; background: none; }
 
-/* a past stage's card: its entry time and the return to its start */
-.ip2-pop { position: fixed; z-index: 20; display: flex; flex-direction: column; gap: 6px; max-width: 320px; padding: 10px 12px; border: 1px solid var(--ip2-control); border-radius: 8px; background: var(--ip2-bar); color: var(--ip2-text); box-shadow: 0 8px 24px rgb(0 0 0 / 0.45); white-space: normal; }
-.ip2-pop-head { font-weight: 600; }
+/* a stage's box: its name as the title, a past stage's entry time, and the button ("Jump to it", "Return to its
+   start"). The box is as wide as its content up to 320 px (and the window); a long title wraps inside it, and the
+   button grows in height rather than spill its text (the owner, 1 November: "Jump to <a long name>" wrapped out of a
+   fixed 32-px button and out of the box) */
+.ip2-pop { position: fixed; z-index: 20; display: flex; flex-direction: column; gap: 6px; box-sizing: border-box; width: max-content; max-width: min(320px, calc(100vw - 16px)); padding: 10px 12px; border: 1px solid var(--ip2-control); border-radius: 8px; background: var(--ip2-bar); color: var(--ip2-text); box-shadow: 0 8px 24px rgb(0 0 0 / 0.45); white-space: normal; }
+.ip2-pop-head { font-weight: 600; overflow-wrap: anywhere; }
 .ip2-pop-time { color: var(--ip2-muted); font-family: var(--font-plex-mono); }
-.ip2-pop-btn { height: 32px; padding: 0 12px; border: 1px solid var(--ip2-blue); border-radius: 6px; background: var(--ip2-blue-soft); color: var(--ip2-blue-text); cursor: pointer; }
+.ip2-pop-btn { min-height: 32px; padding: 6px 12px; border: 1px solid var(--ip2-blue); border-radius: 6px; background: var(--ip2-blue-soft); color: var(--ip2-blue-text); cursor: pointer; }
 .ip2-pop-btn:disabled { border-color: var(--ip2-control); background: transparent; color: var(--ip2-faint); cursor: not-allowed; }
 .ip2-pop-note { color: var(--ip2-faint); font-size: 11px; }
 

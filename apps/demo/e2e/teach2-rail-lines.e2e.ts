@@ -1,8 +1,8 @@
 // Instructor v2 (owner, 31 October): the left rail's two lines sit at the height of the two page lines they mirror —
 // the rail's upper divider at the line under the stage strip, the rail foot's border at the line on top of the dock —
-// at the laptop's 1440 × 900 and a 1920 × 1080 window, with no case and with a case loaded: first during its Case
-// briefing, then once the briefing is ended in the strip's status line, live (the strip's 40-px status line comes and goes:
-// 115 px, then 75). Both are measured, so they follow the strip whatever height it takes. And the coupling stays on
+// at the laptop's 1440 × 900 and a 1920 × 1080 window, with no case (the 75-px strip, no status line since the owner's
+// ruling of 1 November) and with a case loaded: first during its Case briefing, then once the briefing is ended in the
+// strip's status line, live (the strip's 40-px status line goes: 115 px, then 75). Both are measured, so they follow the strip whatever height it takes. And the coupling stays on
 // teach2: today's Instructor view keeps its rail after a visit to v2.
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
@@ -47,7 +47,7 @@ for (const [w, h] of [[1440, 900], [1920, 1080]] as const) {
       };
       if (state === 'empty') {
         await expect.poll(async () => (await lines(page)).empty, { timeout: 15_000 }).toBe(true);
-        await check('no case', 115);
+        await check('no case', 75);
         return;
       }
       await expect.poll(async () => (await lines(page)).briefing, { timeout: 15_000 }).toBe(true);

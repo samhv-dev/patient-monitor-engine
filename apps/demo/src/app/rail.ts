@@ -174,8 +174,8 @@ export class Rail {
 /**
  * Instructor v2 (owner, 31 October): the rail's upper divider and its foot's border sit at the height of the page lines
  * they mirror — the line under the stage strip and the line on top of the dock. Measured, not copied from the page's grid
- * rows, so they follow the strip whatever height it takes (its status line under no case, the Case briefing and the
- * finishing state adds 40 px): on the rail, `--rail-rule-y` (the rail's top to the top of the strip's bottom border) and
+ * rows, so they follow the strip whatever height it takes (the Case briefing and the finishing state add their
+ * 40-px status line under it): on the rail, `--rail-rule-y` (the rail's top to the top of the strip's bottom border) and
  * `--rail-foot-h` (the dock's top edge, its border, to the rail's bottom); app.css lays the teach2 rail out from them.
  * Removed while the view is hidden, so no other route reads them.
  */
