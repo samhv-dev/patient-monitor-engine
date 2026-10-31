@@ -79,7 +79,8 @@
 .ip2-sheet-tray { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 14px; border-top: 1px solid var(--ip2-line); background: var(--ip2-page); font-size: 13px; overflow-x: auto; }
 .ip2-tray-count { flex: none; color: var(--ip2-muted); font-weight: 600; }
 .ip2-tray-items { display: flex; gap: 8px; min-width: 0; }
-.ip2-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--ip2-control); border-radius: 6px; font-size: 13px; white-space: nowrap; }
+/* the tray's chip, scoped: the strip's chips share the class name and their state looks are state.css's */
+.ip2-tray-items > .ip2-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--ip2-control); border-radius: 6px; font-size: 13px; white-space: nowrap; }
 .ip2-chip-x { border: 0; background: transparent; color: var(--ip2-muted); cursor: pointer; }
 .ip2-sheet-foot { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 0 14px; border-top: 1px solid var(--ip2-line); background: var(--ip2-bar); }
 .ip2-sheet-primary, .ip2-gives { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }

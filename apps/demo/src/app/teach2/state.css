@@ -2,12 +2,13 @@
    The tokens are teach2.css's. Every class is `ip2-*` (plan's selector rule). */
 
 /* the stage strip. The chips keep their own width, and no name is cut (IP9, ruling 2: the far-future stages fold into
-   "… n later" instead); when they do not fit, `fit` (strip.ts) tightens the padding. Only the hint shrinks (to
-   nothing). The strip scrolls sideways when a fold is opened, or as a last resort. */
-.ip2-strip { overflow-x: auto; scrollbar-width: none; }
+   "… n later" instead); when they do not fit, `fit` (strip.ts) tightens the padding. The strip scrolls sideways when a
+   fold is opened, or as a last resort. The 75-px strip holds two lines: the chips, then the hint under them (beside
+   five chips at 1440 × 900 it had no room and showed only at 1920 × 1080). */
+.ip2-strip { flex-direction: column; align-items: stretch; justify-content: center; gap: 2px; overflow-x: auto; scrollbar-width: none; }
 .ip2-strip::-webkit-scrollbar { display: none; }
-.ip2-chips { display: contents; } /* the chips are the strip's own flex items */
-.ip2-strip-hint { flex: 0 1 auto; min-width: 0; margin-left: auto; padding-left: 16px; overflow: hidden; text-overflow: ellipsis; color: var(--ip2-muted); } /* IP9: muted, 4.5:1 (app-accessibility) */
+.ip2-chips { display: flex; align-items: center; }
+.ip2-strip-hint { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 12px; line-height: 16px; color: var(--ip2-muted); } /* IP9: muted, 4.5:1 (app-accessibility) */
 .ip2-strip-empty { color: var(--ip2-muted); }
 .ip2-chip { flex: none; display: block; padding: 6px 10px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--ip2-muted); font: inherit; line-height: 16px; white-space: nowrap; }
 button.ip2-chip { cursor: pointer; }
@@ -16,8 +17,11 @@ button.ip2-chip:hover { background: var(--ip2-card); }
 .ip2-chip-t, .ip2-auto { margin-left: 6px; }
 .ip2-chip-t { font-family: var(--font-plex-mono); font-variant-numeric: tabular-nums; }
 .ip2-current { padding: 6px 12px; border-color: var(--ip2-blue); background: var(--ip2-blue-soft); color: #fff; font-weight: 600; }
-.ip2-strip[data-tight] .ip2-chip:not(.ip2-current) { padding-inline: 7px; }
-.ip2-strip-measure .ip2-strip-hint { flex: none; width: 0; } /* its padding stays: fit counts it */
+/* the strip's chips, scoped: the 75-px row (30 October, the footer line's height moved here) grows them from 13 px text,
+   a 16-px line and 6 × 10 px padding (30 px high) to 15 px, 20 px and 9 × 12 px (40 px high); sheets.css has a chip of
+   the same class name */
+.ip2-strip .ip2-chip { padding: 9px 12px; font-size: 15px; line-height: 20px; }
+.ip2-strip[data-tight] .ip2-chip:not(.ip2-current) { padding-inline: 8px; }
 .ip2-current .ip2-chip-t { font-weight: 400; color: var(--ip2-blue-text); }
 .ip2-skipped { color: var(--ip2-faint); }
 .ip2-future { border: 1px dashed var(--ip2-control); color: var(--ip2-soft); }

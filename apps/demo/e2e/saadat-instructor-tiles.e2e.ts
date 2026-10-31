@@ -130,10 +130,11 @@ async function shot(page: Page, name: string, browserName: string): Promise<void
 // The owner's window: 1990 × 1080 outside, Safari's toolbars, tab and bookmarks bars take ≈ 160 px, so the page is
 // 1990 × 920 and the monitor pane 1430 × 820 (the photo's). The full 1080 high viewport is checked too, and a 1000 × 800
 // pane (1420 × 900: the 420 px panel), where the release-day rehearsal on the rc.3 kit found the same overlaps.
-// E125: the rail's 56-px icon strip beside the Instructor view and the 23-px footer line take their share: the owner's
-// window now gives a 1374 × 797 pane (1374 × 957 at 1080 high), and the 1000 × 800 pane needs a 1496 × 923 window (the
-// 440 px panel). A 1420 × 900 window now gives 944 × 777, where the Saadat-like NIBP tile wraps (PR #137, reported).
-for (const [w, h, paneW, pane] of [[1990, 920, 1374, 797], [1990, 1080, 1374, 957], [1496, 923, 1000, 800]] as const) {
+// E125: the rail's 56-px icon strip beside the Instructor view takes its share (the 23-px footer line under it left on
+// 30 October): the owner's window now gives a 1374 × 820 pane (1374 × 980 at 1080 high), and the 1000 × 800 pane needs a
+// 1496 × 900 window (the 440 px panel). A 1420 × 900 window gave 944 × 777 with the footer line, where the Saadat-like
+// NIBP tile wrapped (PR #137, reported).
+for (const [w, h, paneW, pane] of [[1990, 920, 1374, 820], [1990, 1080, 1374, 980], [1496, 900, 1000, 800]] as const) {
   test(`Saadat-like on the Instructor view at ${w} × ${h}: no tile text overlaps; the RR tile is set as the EtCO2 tile`, async ({ page, browserName }) => {
     test.setTimeout(150_000);
     await page.setViewportSize({ width: w, height: h });

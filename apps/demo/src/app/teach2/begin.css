@@ -1,0 +1,48 @@
+/* Instructor v2 with no case loaded (board "Empty 5", approved 30 October): the strip's dashed chip, its note and the
+   status line under it; ACTION's three cards, the two buttons under them and the case list. Every class is `ip2-*`;
+   every rule here is for the no-case view only (the strip's `data-empty`, the pane `.ip2-begin`). Tokens: teach2.css. */
+
+/* the strip grows by the status line's 40 px while no case is loaded; the frame's areas are unchanged (app.css) */
+.main[data-route='teach2']:has(.ip2-strip[data-empty]) { grid-template-rows: 48px 92px auto auto minmax(0, 1fr) auto 64px; }
+.ip2-strip[data-empty] { display: grid; grid-template: 'chips note' 52px 'status status' 40px / minmax(0, 1fr) auto; align-items: center; padding: 0; }
+.ip2-strip[data-empty] > .ip2-chips { grid-area: chips; display: flex; align-items: center; min-width: 0; padding: 0 20px; }
+.ip2-strip-note { grid-area: note; padding: 0 20px; color: var(--ip2-faint); }
+.ip2-chip-none { display: inline-block; padding: 6px 10px; border: 1px dashed var(--ip2-control); border-radius: 6px; color: var(--ip2-muted); }
+.ip2-status { grid-area: status; display: flex; align-items: center; gap: 16px; height: 100%; min-width: 0; padding: 0 20px; border-top: 1px solid var(--ip2-line); color: var(--ip2-muted); font-size: 13px; }
+.ip2-status > b { font-weight: 600; color: var(--ip2-soft); }
+.ip2-status-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ip2-status-keys { flex: none; color: var(--ip2-faint); }
+
+/* the header's "No case loaded" is muted */
+.ip2-title[data-none] { color: var(--ip2-muted); }
+
+/* ACTION: the hint beside the column head, the cards centred at 80 % of the pane */
+.ip2-action:has(.ip2-begin:not([hidden])) { position: relative; }
+.ip2-begin { flex: 1 0 auto; display: flex; flex-direction: column; } /* never shrinks: a long case list scrolls ACTION, under the foot line */
+.ip2-begin-hint { position: absolute; top: 12px; right: 14px; font-size: 12px; line-height: 1.4; color: var(--ip2-faint); }
+.ip2-begin-menu { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; }
+.ip2-begin-cards { width: 80%; display: flex; flex-direction: column; gap: 14px; }
+.ip2-begin-card { display: flex; align-items: center; gap: 18px; width: 100%; padding: 20px 22px; border: 1px solid var(--ip2-line); border-radius: 12px; background: var(--ip2-card); color: var(--ip2-text); font: inherit; text-align: left; cursor: pointer; }
+.ip2-begin-card:hover { border-color: var(--ip2-control); }
+.ip2-begin-card:focus-visible, .ip2-begin-small:focus-visible, .ip2-case-all:focus-visible { outline: 2px solid var(--ip2-blue-text); outline-offset: 2px; }
+.ip2-begin-ico { flex: none; display: inline-flex; color: var(--ip2-muted); }
+.ip2-begin-text { flex: 1 1 auto; min-width: 0; }
+.ip2-begin-title { display: block; font-size: 20px; font-weight: 600; }
+.ip2-begin-line { display: block; margin-top: 4px; font-size: 13px; line-height: 1.45; color: var(--ip2-soft); }
+.ip2-begin-btn { flex: none; display: inline-flex; align-items: center; height: 36px; padding: 0 16px; border: 1px solid var(--ip2-control); border-radius: 8px; font-size: 14px; font-weight: 600; }
+/* the Scenario library is the primary: blue */
+.ip2-begin-primary { border-color: var(--ip2-blue); background: var(--ip2-blue-soft); }
+.ip2-begin-primary:hover { border-color: var(--ip2-blue-text); }
+.ip2-begin-primary .ip2-begin-btn { border-color: #2563eb; background: #2563eb; color: #fff; } /* white on the board's blue is 3.7:1; one shade darker 5.2:1 (as rows' keys, IP9) */
+/* the two half-width buttons directly under the third card */
+.ip2-begin-two { width: 80%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ip2-begin-small { height: 40px; border: 1px solid var(--ip2-control); border-radius: 8px; background: var(--ip2-page); color: var(--ip2-text); font: inherit; font-size: 14px; cursor: pointer; }
+.ip2-begin-small:hover:not(:disabled) { background: var(--ip2-card); }
+.ip2-begin-small:disabled { cursor: not-allowed; color: var(--ip2-soft); }
+.ip2-begin-tag { margin-left: 8px; padding: 2px 6px; border: 1px solid #5a4714; border-radius: 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--ip2-pause); }
+
+/* the case list: ACTION's own rows; the mode tag at the right; the last row a link to the Scenarios view */
+.ip2-case-list { margin-top: 24px; }
+.ip2-case-mode { padding: 4px 7px; border: 1px solid var(--ip2-control); border-radius: 4px; font: 500 11px/1 var(--font-plex-mono); letter-spacing: 0.04em; color: var(--ip2-soft); }
+a.ip2-case-all { text-decoration: none; }
+a.ip2-case-all:hover { border-color: var(--ip2-control); }
