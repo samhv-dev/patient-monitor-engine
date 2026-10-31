@@ -170,3 +170,34 @@ export class Rail {
       h('span', { class: 'rail-sub' }, validate, h('span', { class: 'rail-text', 'aria-hidden': 'true' }, '·'), dev));
   }
 }
+
+/**
+ * Instructor v2 (owner, 31 October): the rail's upper divider and its foot's border sit at the height of the page lines
+ * they mirror — the line under the stage strip and the line on top of the dock. Measured, not copied from the page's grid
+ * rows, so they follow the strip whatever height it takes (its status line under no case, the Case briefing and the
+ * finishing state adds 40 px): on the rail, `--rail-rule-y` (the rail's top to the top of the strip's bottom border) and
+ * `--rail-foot-h` (the dock's top edge, its border, to the rail's bottom); app.css lays the teach2 rail out from them.
+ * Removed while the view is hidden, so no other route reads them.
+ */
+export function trackPageLines(rail: HTMLElement, strip: HTMLElement | null, dock: HTMLElement | null): () => void {
+  const set = () => {
+    const s = strip?.getBoundingClientRect();
+    const d = dock?.getBoundingClientRect();
+    if (!strip || !s || !d || s.height === 0 || d.height === 0) {
+      rail.style.removeProperty('--rail-rule-y');
+      rail.style.removeProperty('--rail-foot-h');
+      return;
+    }
+    const r = rail.getBoundingClientRect();
+    rail.style.setProperty('--rail-rule-y', `${s.bottom - parseFloat(getComputedStyle(strip).borderBottomWidth) - r.top}px`);
+    rail.style.setProperty('--rail-foot-h', `${r.bottom - d.top}px`);
+  };
+  const ro = new ResizeObserver(set);
+  for (const e of [rail, strip, dock]) if (e) ro.observe(e);
+  addEventListener('resize', set);
+  set();
+  return () => {
+    ro.disconnect();
+    removeEventListener('resize', set);
+  };
+}
