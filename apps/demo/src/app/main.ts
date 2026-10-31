@@ -12,7 +12,7 @@ import { PATIENT_PRESETS } from './patients.ts';
 import { keepPositions, readPosition, restorePosition } from './position.ts';
 import { RAIL_VERSION } from './about.ts';
 import { simLine } from './sim-line.ts';
-import { Rail } from './rail.ts';
+import { Rail, trackPageLines } from './rail.ts';
 import { noteRecent } from './recent.ts';
 import { hrefOf, parseRoute, revealTarget } from './router.ts';
 import { SCENARIO_META } from './scenario-meta.ts';
@@ -190,6 +190,7 @@ if (follow) {
   link.onChange(throttle(() => rail.refresh(), 1000));
   shell.onRoute(() => rail.refresh());
   trackChromeBottom(shell.root); // UI-A #8/#9: the toasts and the fast-forward banner sit under the bars
+  trackPageLines(rail.el, shell.root.querySelector('.ip2-strip'), shell.root.querySelector('.ip2-dock')); // Instructor v2: the rail's lines on the page's
   // FX-14/15: a hidden instructor tab pauses the session through the Pause button's own command, so the phones show
   // "(paused)" instead of "not answering", and resumes it on return (HIDDEN_TAB_POLICY, the owner's E82 switch). A
   // fast-forward refuses every command, the pause included: a hide then sends nothing and claims nothing.
