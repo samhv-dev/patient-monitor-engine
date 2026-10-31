@@ -80,13 +80,16 @@ test('the Case briefing: over the running monitor on the host and the phones, a 
   // a phone that joins now shows the remainder
   const code = await page.evaluate(() => (window as unknown as W).__pmeApp.session.code);
   const { defaultBrowserType: _b, ...dev } = browserName === 'webkit' ? devices['iPhone 13'] : devices['Pixel 7'];
+  // Both phones load at once: on the 2-vCPU CI WebKit runner a second phone that starts loading only after the first
+  // is following never synced within 30 s (every run of #211, 31 October; macOS WebKit 10 of 10). The wait polls on a
+  // timer, not on animation frames, which Linux WebKit may hold back for a page it treats as hidden.
   const phoneAt = async () => {
     const p = await (await browser.newContext(dev)).newPage();
     await p.goto(`${base}/?join=${code}&relay=${encodeURIComponent(ws)}`);
-    await p.waitForFunction(() => (window as unknown as W).__pmeFollower?.sync?.status === 'synced', null, { timeout: 30_000 });
+    await p.waitForFunction(() => (window as unknown as W).__pmeFollower?.sync?.status === 'synced', null, { timeout: 30_000, polling: 250 });
     return p;
   };
-  const f = await phoneAt();
+  const [f, g] = await Promise.all([phoneAt(), phoneAt()]);
   await expect(layer(f)).toBeVisible({ timeout: 10_000 });
   await expect(layer(f).locator('.cb-foot > span').nth(1)).toHaveText('Press and hold anywhere to continue now');
   const left = await count(f);
@@ -97,7 +100,6 @@ test('the Case briefing: over the running monitor on the host and the phones, a 
   expect(await f.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await f.waitForTimeout(1500);
   await shot(f, 'briefing-phone-en');
-  const g = await phoneAt();
   await expect(layer(g)).toBeVisible({ timeout: 10_000 });
   // a tap does nothing on a phone (residents brush the screen), nor does a press let go early; a press-and-hold ends
   // it on that phone only
