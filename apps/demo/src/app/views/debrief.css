@@ -97,6 +97,11 @@
 .debrief .db-steps td:first-child { width: 30%; }
 .debrief .db-steps td:nth-child(n+4), .debrief .db-steps th:nth-child(n+4) { white-space: nowrap; }
 .debrief .db-steps tr.db-stage td { border-top: 1px solid var(--line-strong); }
+/* a pme-scenario/2 run's action table (F7): the criteria lines under the action, a repeat indented under its action */
+.debrief .db-actions td.num, .debrief .db-actions td:last-child { width: auto; white-space: nowrap; }
+.debrief .db-actions tr.db-act td { border-top: 1px solid var(--line-strong); }
+.debrief .db-actions tr.db-repeat td:first-child { padding-left: 1.4em; }
+.debrief .db-outcomes, .debrief .db-violations { padding-left: 1.4em; }
 .debrief .db-moments tr.db-alarms td { color: var(--text-muted); font-size: var(--t-12, 12px); border-bottom-style: dotted; }
 .debrief .db-whocell { white-space: nowrap; }
 .debrief .db-note60 { font-size: var(--t-13); color: var(--text-muted); }
@@ -183,8 +188,9 @@
   .debrief .db-obj li { margin-bottom: 1.2mm; line-height: 1.3; }
   .debrief .db-why { font-size: 8.5pt; line-height: 1.25; }
   .debrief .db-moments { font-size: 9pt; }
-  .debrief .db-steps { font-size: 8.5pt; }
-  .debrief .db-steps td, .debrief .db-steps th { padding-top: 0.3mm; padding-bottom: 0.3mm; line-height: 1.25; }
+  .debrief .db-steps, .debrief .db-actions { font-size: 8.5pt; }
+  .debrief .db-steps td, .debrief .db-steps th, .debrief .db-actions td, .debrief .db-actions th { padding-top: 0.3mm; padding-bottom: 0.3mm; line-height: 1.25; }
+  .debrief .db-actions tr { break-inside: avoid; }
   .debrief .db-moments tr.db-alarms td { font-size: 8pt; color: #333 !important; }
   .debrief:not([data-print='handout']) #db-handout { display: none; }
   .debrief[data-print='handout'] .page > :not(#db-handout):not(.db-foot) { display: none !important; }

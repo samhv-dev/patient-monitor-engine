@@ -281,10 +281,10 @@ describe('IP9 (ruling 1): the ACTION list and the Debrief steps table read a ste
 });
 
 describe('F7: the /2 MH card on the engine — the debrief grades what the panel grades', () => {
-  /** The run sheet's A presses (docs/showcase/SHOWCASE-2-RUN-SHEET.md §3; malignant-hyperthermia-v2.slow.test.ts PATH)
-   *  to the ventilation back (13:52). */
-  const PATH: Array<[number, string]> = [[30, 'premedicate'], [60, 'preoxygenate'], [240, 'induce'], [300, 'intubate'], [360, 'startSurgery'], [492, 'callCrisis'], [512, 'dantrolene'], [832, 'ventilationBack']];
-  const END_S = 900;
+  /** The run sheet's A presses (docs/showcase/SHOWCASE-2-RUN-SHEET.md §3; malignant-hyperthermia-v2.slow.test.ts PATH),
+   *  to the talk's end (24:31). */
+  const PATH: Array<[number, string]> = [[30, 'premedicate'], [60, 'preoxygenate'], [240, 'induce'], [300, 'intubate'], [360, 'startSurgery'], [492, 'callCrisis'], [512, 'dantrolene'], [832, 'ventilationBack'], [1153, 'dantroleneAgain']];
+  const END_S = 1471.2;
 
   it('the record copies the runner’s inputs; grade() on them (final, at the end) equals grade() on the runner’s own; the export is pme-debrief/3', async () => {
     const doc = mhV2 as unknown as ScenarioDocV2;
@@ -306,7 +306,7 @@ describe('F7: the /2 MH card on the engine — the debrief grades what the panel
     const settle = () => new Promise((r) => setTimeout(r, 0));
     await hs.submit({ id: 'load', issuedBy: 'instructor', type: 'scenario', action: 'load', doc: v.doc } as never);
     let k = 0;
-    for (let n = 1; n <= END_S / 0.4; n++) {
+    for (let n = 1; n <= Math.round(END_S / 0.4); n++) {
       const t = Math.round(n * 0.4 * 1000) / 1000;
       engine.advanceTo(t);
       driver.poll();

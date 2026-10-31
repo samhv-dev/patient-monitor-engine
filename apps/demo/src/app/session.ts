@@ -128,7 +128,8 @@ export class AppSession {
     this.skin = o.skin;
     this.theme = o.theme;
     this.code = normalizeSessionCode(o.code ?? '') ?? newSessionCode();
-    this.record = new RunRecord(() => ({ patient: oneLiner(this.spec), weightKg: this.spec.weightKg }));
+    // the host's phase runner (a pme-scenario/2 card): the record copies its grade inputs (plan F7)
+    this.record = new RunRecord(() => ({ patient: oneLiner(this.spec), weightKg: this.spec.weightKg }), Date.now, () => this.driver?.phaseRunner ?? null);
     const target: HostTarget = {
       dispatch: (c) => this.need().dispatch(c),
       snapshot: () => this.need().snapshot(),
