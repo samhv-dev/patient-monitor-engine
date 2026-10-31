@@ -4,6 +4,7 @@ import './app.css';
 import { attachReveal, normalizeSessionCode, RevealGesture } from '@pme/controller';
 import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 import { alarmLine, limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
+import { mountHostBriefing } from './briefing.ts';
 import { joinCode, relayOf } from './classroom.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
@@ -212,6 +213,8 @@ if (follow) {
   // UI review #32: PAUSED over the monitor while the session is paused (the Pause button, a hidden tab's pause)
   const paused = pausedMark(shell.stage);
   link.onChange(() => paused.set(link.ctl.hostPaused));
+  // A card's Case briefing over the Monitor view, as on every learner screen that follows (briefing.ts)
+  mountHostBriefing(shell.stage, session);
 
   // Learner monitor ↔ instructor view: the hidden panel's reveal gestures
   attachReveal(window, new RevealGesture(() => {

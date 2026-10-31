@@ -13,11 +13,16 @@
 // recentres it on the current stage whenever it has been moved. The future stages are ordered from the current one
 // (the stages it leads to first; two of one step read "<a> or <b>"). Names are never cut: when the chips do not fit,
 // the padding tightens, then the hint goes, then the strip scrolls sideways.
+// The status line: the 40-px row under the chips where the panel talks, shown only while it has something to say (the
+// strip's area grows from 52 to 92 px then; briefing.css). While a card's Case briefing runs on the learners' screens it
+// reads "Case briefing on every screen · 0:48 left" with End briefing at its right (the owner's choice of 31 October:
+// the control left the chips' row, which it pushed past the window on the MH card in the first minute).
 import './state.css';
-import type { ScenarioDoc } from '@pme/controller';
+import type { BriefingNotice, ScenarioDoc } from '@pme/controller';
+import { briefingLeftS, briefingStatusText } from '../briefing.ts';
 import { rowsOf, stagesOf, type Stage } from '../card-read.ts';
 import type { Link } from '../link.ts';
-import { clock, h, toast } from '../ui.ts';
+import { clock, h, setText, toast } from '../ui.ts';
 import { KEYS_OF, NO_CASE } from './begin.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { historyOf } from './course.ts';
@@ -182,11 +187,36 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const hint = h('span', { class: 'ip2-strip-hint' }, 'past: return to its start · future: jump to it');
   // with no case loaded (board "Empty 5"): the note at the strip's right and the status line under it
   const note = h('span', { class: 'ip2-strip-note', hidden: true }, 'the default patient is on the monitor and running');
+  // The status line. ONE message at a time, by precedence (the first that applies takes the line):
+  //   1. "Finishing." while Finish the case holds the clock (#214, not on this branch);
+  //   2. a paused message, should one ever be written here (none today: option G shows paused on the pill and the monitor);
+  //   3. the Case briefing while it runs: its sentence and End briefing (ends it on every screen, session.endBriefing);
+  //   4. the ordinary line: "Ready." with no case loaded (#210).
+  // With none of them the line is hidden and the strip keeps its 52 px. The briefing yields to 1 and 2 and comes back
+  // with its remaining time when they go; it takes the line from 4 only while it runs.
+  const READY = 'The phones can join now (Room code in the header); whatever you load or give next, they follow.';
+  const statusWord = h('b', {}, 'Ready.');
+  const statusText = h('span', { class: 'ip2-status-text' }, READY);
   const statusKeys = h('span', { class: 'ip2-status-keys' });
-  const status = h('div', { class: 'ip2-status', role: 'status', hidden: true },
-    h('b', {}, 'Ready.'), h('span', { class: 'ip2-status-text' }, 'The phones can join now (Room code in the header); whatever you load or give next, they follow.'),
-    h('span', { class: 'ip2-spacer' }), statusKeys);
+  const endBrief = h('button', { type: 'button', class: 'ip2-status-btn', onclick: () => link.host?.endBriefing() }, 'End briefing');
+  const status = h('div', { class: 'ip2-status', role: 'status', hidden: true }, statusWord, statusText, h('span', { class: 'ip2-spacer' }), statusKeys, endBrief);
   el.replaceChildren(chips, hint, note, status);
+  let brief: BriefingNotice | null = null;
+  let briefTick: ReturnType<typeof setInterval> | null = null;
+  const sayStatus = () => {
+    const msg = brief ? briefingStatusText(briefingLeftS(brief)) : !sv.doc ? READY : null; // 3, then 4
+    status.hidden = msg === null;
+    endBrief.hidden = !brief;
+    statusWord.hidden = statusKeys.hidden = !!brief;
+    el.toggleAttribute('data-briefing', brief !== null);
+    if (msg !== null) setText(statusText, msg);
+  };
+  const offBrief = link.host?.onBriefing?.((b) => {
+    if (briefTick !== null) clearInterval(briefTick);
+    brief = b;
+    briefTick = b ? setInterval(sayStatus, 500) : null;
+    sayStatus();
+  });
   /** How far the arrows have moved the window from now (stages; 0 = the current stage's window). */
   let offset = 0;
   let docV = -1;
@@ -258,7 +288,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
 
   const draw = () => {
     const doc = sv.doc;
-    note.hidden = status.hidden = !!doc;
+    note.hidden = !!doc;
+    sayStatus();
     el.toggleAttribute('data-empty', !doc);
     if (!doc) {
       const way = ctx.begin?.way ?? 'menu';
@@ -312,6 +343,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     refresh: draw,
     destroy: () => {
       offEsc();
+      offBrief?.();
+      if (briefTick !== null) clearInterval(briefTick);
       ro?.disconnect();
       document.removeEventListener('pointerdown', outside);
       closePop();
