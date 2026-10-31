@@ -73,7 +73,8 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
     badge.append(m === 'modeled' ? (n ? `MODELED, ${n} held` : 'MODELED') : 'MANUAL');
     badge.setAttribute('aria-label', `Physiology mode ${m === 'modeled' ? 'MODELED' : 'MANUAL'}${n ? `, ${n} values held by you` : ''}: show details`);
     const sv = link.ctl.scenario;
-    setText(scen, sv.doc ? `${cardOf(sv.doc).title}: ${sv.stateLabel()} ${clock(sv.timeInState(link.simT))}` : 'No scenario');
+    // label(): a /1 state's label (as stateLabel()) or a /2 phase's
+    setText(scen, sv.doc ? `${cardOf(sv.doc).title}: ${sv.label()} ${clock(sv.timeInState(link.simT))}` : 'No scenario');
     debrief.dataset.ready = String(sv.doc && isV2(sv.doc) ? sv.ended() : !!asV1(sv.doc) && !sv.current()?.transitions?.length); // the scenario has ended (/2: F2's ended(), F6)
     setText(t, clock(link.simT));
     for (const b of ffs) b.disabled = link.ctl.fastForward !== null; // One at a time
