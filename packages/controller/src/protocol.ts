@@ -101,6 +101,8 @@ export type ScenarioCommand = Extract<ExtraCommand, { type: 'scenario' }>;
 /** applyEvent / attachSensor: the host passes them to the engine, which validates them (Stages 3, 4 and 7 model them). */
 export type ClinicalCommand = Extract<ExtraCommand, { type: 'applyEvent' | 'attachSensor' }>;
 export type ScenarioEvent = Extract<ExtraEvent, { type: 'scenario' }>;
+/** How a scenario state was entered (the `scenario` event's `by`). */
+export type ScenarioEntry = 'press' | 'rule' | 'goto';
 
 /** Brief §7.3 EngineEvent variants not yet in engine-core's union (verbatim shapes). */
 export type ExtraEvent =
@@ -128,7 +130,14 @@ export type ExtraEvent =
       /** Who breathes and through what (E121b; the engine's own state, absent from a host-synthesised one). */
       breathing?: { source: 'spontaneous' | 'bvm' | 'ventilator' | 'none' | 'external'; device: 'none' | 'ett' | 'sga' };
     }
-  | { type: 'scenario'; t: SimSeconds; stateId: string; transitionId?: string }
+  /**
+   * The scenario entered `stateId` at `t`, by `transitionId` (`<id>:else` for a failed probability roll). `by` (additive,
+   * Instructor v2): how the runner took it — `press` when the instructor's press of that transition was held when it
+   * fired, `rule` when its condition fired it alone, `goto` for a jump. Absent for the first state and for a
+   * re-publish of the current state (a return to a bookmark, a late joiner's welcome). The host's record reads it, so
+   * a stage entry is a fact of the runner, not a match of the press's acknowledgement to the state's time.
+   */
+  | { type: 'scenario'; t: SimSeconds; stateId: string; transitionId?: string; by?: ScenarioEntry }
   | { type: 'commandApplied'; commandId: string; tick: Tick; resolved: unknown; ignored?: string[] }
   /** The host replaced its engine (patient restart, scenario load): sim time starts again at `t` on a new timeline.
    *  Within one timeline a peer's clock only moves forward; across this boundary it restarts (showcase hotfix). */

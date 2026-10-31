@@ -12,7 +12,8 @@ import { debriefView } from './debrief.ts';
 
 const applied = (tick: number, command: Record<string, unknown>): WireEvent =>
   ({ type: 'commandApplied', commandId: `c${tick}`, tick, resolved: { command: { id: `c${tick}`, issuedBy: 'instructor', ...command } } }) as WireEvent;
-const state = (t: number, stateId: string, transitionId?: string): WireEvent => ({ type: 'scenario', t, stateId, ...(transitionId ? { transitionId } : {}) }) as WireEvent;
+/** A scenario event as the host's runner publishes it: the transition and how it was taken. */
+const state = (t: number, stateId: string, transitionId?: string, by?: 'press' | 'rule'): WireEvent => ({ type: 'scenario', t, stateId, ...(transitionId ? { transitionId } : {}), ...(by ? { by } : {}) }) as WireEvent;
 const cells = (el: HTMLElement, sel: string) => [...el.querySelectorAll(`${sel} tbody tr`)].map((tr) => [...tr.querySelectorAll('td')].map((td) => td.textContent));
 
 describe('Debrief: steps, marks and staged deliveries (IP8)', () => {
@@ -33,14 +34,14 @@ describe('Debrief: steps, marks and staged deliveries (IP8)', () => {
     const doc = { ...induction, objectives: [{ text: 'Intubate within 60 s of induction', rule: { kind: 'eventWithin', after: 'state:induced', event: 'state:ventilated', withinS: 60 } }] };
     record.wire(applied(0, { type: 'scenario', action: 'load', doc }));
     record.wire(state(0, 'awake'));
-    record.wire(state(10, 'induced', 'induce'));
-    record.wire(applied(500, { type: 'scenario', action: 'trigger', target: 'induce' })); // 00:10, pressed
+    record.wire(state(10, 'induced', 'induce', 'press')); // 00:10, pressed
+    record.wire(applied(500, { type: 'scenario', action: 'trigger', target: 'induce' }));
     record.wire(applied(1000, { type: 'scenario', action: 'bookmark', target: 'Mark 1 at 00:20', kind: 'good', note: 'calm induction' }));
     record.wire(applied(1100, { type: 'scenario', action: 'bookmark', target: 'Bookmark 1 at 00:22' }));
     const batch = { id: 'sg-1', n: 2 };
     record.wire(applied(1500, { type: 'applyEvent', event: { kind: 'drug', drugId: 'epinephrine', dose: 1, unit: 'mg', route: 'iv' }, batch }));
     record.wire(applied(1500, { type: 'applyEvent', event: { kind: 'fluid', fluid: 'crystalloid', volumeMl: 500, overS: 300 }, batch }));
-    record.wire(state(40, 'desaturating', 'desat')); // its rule
+    record.wire(state(40, 'desaturating', 'desat', 'rule')); // its rule
     const el = show(record);
     const stepRows = cells(el, '#db-steps');
     const label = (id: string) => induction.states.find((x) => x.id === id)?.label;
@@ -71,7 +72,7 @@ describe('Debrief: steps, marks and staged deliveries (IP8)', () => {
     const old = new RunRecord(() => ({ patient: 'M 40 y 70 kg', weightKg: 70 }), () => 1_000);
     old.wire(applied(0, { type: 'scenario', action: 'load', doc: induction }));
     old.wire(state(0, 'awake'));
-    old.wire(state(10, 'induced', 'induce'));
+    old.wire(state(10, 'induced', 'induce', 'press'));
     for (const r of old.data.rows) (delete r.tr, delete r.by); // as an rc.3 record holds it
     el = show(old);
     expect(el.querySelector('#db-steps')).toBeNull();
