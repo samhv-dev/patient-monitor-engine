@@ -325,7 +325,7 @@ function anchorWords(x: Action['window'] extends infer W ? (W extends { anchor: 
 }
 
 const VAR_WORDS: Record<string, string> = {
-  etco2: 'EtCO₂', hr: 'HR', tempCore: 'core temperature', mhActivity: 'MH activity', ph: 'pH', dantroleneE: 'dantrolene effect',
+  etco2: 'EtCO₂', hr: 'HR', tempCore: 'core temperature', mhActivity: 'MH activity', mhExcess: 'MH metabolic excess', ph: 'pH', dantroleneE: 'dantrolene effect',
   setMinuteVentilationLMin: 'set minute ventilation', k: 'K⁺', sbp: 'SBP', map: 'MAP', spo2: 'SpO₂', lactate: 'lactate',
 };
 const varWords = (v: string): string => VAR_WORDS[v] ?? v;

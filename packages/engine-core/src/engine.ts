@@ -164,6 +164,7 @@ function stateSignals(ps: PipelineState, t: number): StateSignals {
     setMinuteVentilationLMin: d.source === 'ventilator' ? (d.vent.rr * d.vent.vt) / 1000 : null,
     map: flat ? h.circ.mapNow : h.lastSite.map,
     mhActivity: mhActivity(ps.resp.temp.mh, t),
+    mhExcess: ps.resp.temp.mh ? (ps.resp.temp.mh.s ?? 1) : null,
   };
 }
 

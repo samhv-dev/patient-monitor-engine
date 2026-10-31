@@ -475,7 +475,7 @@ describe('ScenarioDriver: engine truth for a /2 runner only (F4)', () => {
     expect(fed).toEqual(want);
     const sig = fed.filter((i) => i.kind === 'signals');
     expect(sig).toHaveLength(states.length);
-    expect(Object.keys(sig[0]!.signals).sort()).toEqual(['dantroleneE', 'map', 'mhActivity', 'pulse', 'setMinuteVentilationLMin']);
+    expect(Object.keys(sig[0]!.signals).sort()).toEqual(['dantroleneE', 'map', 'mhActivity', 'mhExcess', 'pulse', 'setMinuteVentilationLMin']);
     expect(pr.value('mhActivity')).toBe(sig.at(-1)!.signals.mhActivity); // the rule's truth is the unrounded signal
   });
 

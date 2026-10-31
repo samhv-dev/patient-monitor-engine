@@ -13,7 +13,7 @@ type C = { $comment?: string };
 export type TruthVar =
   | 'hr' | 'sbp' | 'dbp' | 'cvp' | 'papSys' | 'papDia' | 'pawp' | 'spo2' | 'pi' | 'rr' | 'vt' | 'etco2' | 'fio2'
   | 'shunt' | 'tempCore' | 'contractility' | 'svr' | 'k' | 'qtc' | 'volumeStatus' | 'paceThresholdMa'
-  | 'map' | 'ph' | 'lactate' | 'mhActivity' | 'dantroleneE' | 'setMinuteVentilationLMin';
+  | 'map' | 'ph' | 'lactate' | 'mhActivity' | 'mhExcess' | 'dantroleneE' | 'setMinuteVentilationLMin';
 
 /** `pulseLoss`, `rosc`, or `rhythm:<id>` (the rhythm id the engine draws). */
 export type PhaseSignal = 'pulseLoss' | 'rosc' | `rhythm:${string}`;
@@ -170,7 +170,7 @@ export interface Administration {
 }
 
 /** F4's engine signals (the `state` event's additive `signals` field), rank 3. The /1 runner never receives them. */
-export type SignalsInput = { kind: 'signals'; signals: { pulse: boolean; dantroleneE: number; setMinuteVentilationLMin: number | null; map: number; mhActivity: number } };
+export type SignalsInput = { kind: 'signals'; signals: { pulse: boolean; dantroleneE: number; setMinuteVentilationLMin: number | null; map: number; mhActivity: number; mhExcess?: number | null } };
 /** The rhythm id the engine draws (the `state` event's `rhythm.id`), rank 3: what a `rhythm:<id>` signal leaf reads
  *  (F2). The /1 runner never receives it. */
 export type RhythmInput = { kind: 'rhythm'; id: string };

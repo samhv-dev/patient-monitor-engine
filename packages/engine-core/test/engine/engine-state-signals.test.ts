@@ -59,11 +59,12 @@ describe('the state event carries the /2 signals (F4)', { timeout: 300_000 }, ()
     expect(truth).toHaveLength(0);
     expect(r.rows.length).toBeGreaterThanOrEqual(19);
     for (const { e } of r.rows) {
-      expect(Object.keys(e.signals).sort()).toEqual(['dantroleneE', 'map', 'mhActivity', 'pulse', 'setMinuteVentilationLMin']);
+      expect(Object.keys(e.signals).sort()).toEqual(['dantroleneE', 'map', 'mhActivity', 'mhExcess', 'pulse', 'setMinuteVentilationLMin']);
       expect(typeof e.signals.pulse).toBe('boolean');
       expect(Number.isFinite(e.signals.dantroleneE)).toBe(true);
       expect(Number.isFinite(e.signals.map)).toBe(true);
       expect(e.signals.mhActivity).toBe(0); // no MH condition
+      expect(e.signals.mhExcess).toBeNull();
       expect(e.signals.setMinuteVentilationLMin === null || Number.isFinite(e.signals.setMinuteVentilationLMin)).toBe(true);
     }
   });
@@ -195,5 +196,31 @@ describe('the state event carries the /2 signals (F4)', { timeout: 300_000 }, ()
     }
     expect(compared).toBeGreaterThan(100);
     expect(late.some((x) => Math.round(x.e.signals.mhActivity * 100) / 100 !== x.e.signals.mhActivity)).toBe(true); // not quantised
+  });
+
+  // Review B1 (cause 2), decision D2: mhActivity = severity × onset ramp × s, and after an early dose the ramp outgrows
+  // the fall of s, so "activity falling" cannot hold before the ramp ends. s (MhState.s, the dantrolene-sensitive
+  // metabolic excess) is the signal dantrolene changes: exposed as mhExcess, read from the committed thermal state.
+  it('mhExcess is the MH\'s dantrolene-sensitive fraction s: null without an MH, 1 untreated, falling after dantrolene while mhActivity still rises', async () => {
+    const r = rig();
+    const mhOf = () => (r.st() as unknown as { resp: { temp: { mh: { s?: number; severity: number } | null } } }).resp.temp.mh;
+    const own: Array<{ t: number; s: number | null }> = [];
+    r.e.on((x) => {
+      if (x.type !== 'state') return;
+      const mh = mhOf();
+      own.push({ t: x.t, s: mh ? (mh.s ?? 1) : null });
+    });
+    await r.runTo(10);
+    r.ev({ kind: 'condition', id: 'mh', severity: 1 });
+    await r.runTo(120);
+    r.ev({ kind: 'drug', drugId: 'dantrolene', dose: 2.5, unit: 'mg/kg', route: 'iv' });
+    await r.runTo(400);
+    const at = new Map(own.map((o) => [o.t, o.s]));
+    for (const { e } of r.rows) expect(e.signals.mhExcess, `t ${e.t}`).toBe(at.get(e.t));
+    expect(r.rows.filter((x) => x.e.t < 10).every((x) => x.e.signals.mhExcess === null)).toBe(true);
+    expect(r.rows.filter((x) => x.e.t > 11 && x.e.t < 120).every((x) => x.e.signals.mhExcess === 1)).toBe(true);
+    const after = r.rows.filter((x) => x.e.t > 180);
+    expect(after.at(-1)!.e.signals.mhExcess!).toBeLessThan(after[0]!.e.signals.mhExcess!); // dantrolene suppresses s
+    expect(after.at(-1)!.e.signals.mhActivity).toBeGreaterThan(after[0]!.e.signals.mhActivity); // the ramp still wins
   });
 });

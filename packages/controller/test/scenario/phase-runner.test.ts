@@ -9,7 +9,7 @@ import type { Phase, PhaseRule, RunnerInputV2, ScenarioDocV2, ScriptEntry } from
 
 const truth = (values: Record<string, number>): RunnerInputV2 => ({ kind: 'values', rank: 3, values });
 const display = (values: Record<string, number>): RunnerInputV2 => ({ kind: 'values', rank: 2, values });
-const signals = (s: Partial<{ pulse: boolean; dantroleneE: number; setMinuteVentilationLMin: number | null; map: number; mhActivity: number }>): RunnerInputV2 =>
+const signals = (s: Partial<{ pulse: boolean; dantroleneE: number; setMinuteVentilationLMin: number | null; map: number; mhActivity: number; mhExcess: number | null }>): RunnerInputV2 =>
   ({ kind: 'signals', signals: { pulse: true, dantroleneE: 0, setMinuteVentilationLMin: 6, map: 80, mhActivity: 0, ...s } });
 const rhythm = (id: string): RunnerInputV2 => ({ kind: 'rhythm', id });
 
@@ -434,5 +434,20 @@ describe('PhaseRunner: a phase\'s holdS and unchanged since the phase\'s start (
     expect(r.stateId).toBe('b'); // entered at 12 L/min: the reference is 12
     r.advance(3, [truth({ etco2: 55 })]);
     expect(r.stateId).toBe('c');
+  });
+});
+
+// Decision D2 (review B1, cause 2): the engine's mhExcess (the MH's dantrolene-sensitive fraction s) is a truth a rule
+// reads, as the other signals; null (no MH) is no value, and its window starts again.
+describe('PhaseRunner: mhExcess is read from the signals (D2)', () => {
+  it('a slope on mhExcess holds while it falls; a null empties its ring', () => {
+    const r = new PhaseRunner(ab({ slope: { var: 'mhExcess', op: '<', perMin: 0, overS: 60 } }));
+    r.start(0);
+    run(r, 0, 30, (t) => [signals({ mhExcess: t < 20 ? null : 1 })]);
+    expect(r.value('mhExcess')).toBe(1);
+    run(r, 30, 79, (t) => [signals({ mhExcess: 1 - (t - 30) / 600 })]);
+    expect(r.stateId).toBe('a'); // the window (60 s of samples) is not full yet
+    run(r, 79, 100, (t) => [signals({ mhExcess: 1 - (t - 30) / 600 })]);
+    expect(r.stateId).toBe('b');
   });
 });

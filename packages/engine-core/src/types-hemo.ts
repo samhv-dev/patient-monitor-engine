@@ -57,6 +57,11 @@ export interface StateSignals {
   /** MH activity 0–1 (`l2/thermal/mh.ts` `mhActivity` on the committed thermal state), unrounded: the `endo` event
    *  rounds it to 0.01, and a /2 slope over a minute of a quantised value flips sign second to second (F2's trace). */
   mhActivity: number;
+  /** The MH's dantrolene-sensitive metabolic excess `s` (`l2/thermal/mh.ts` MhState.s: 1 untreated, relaxing toward
+   *  1 − DANT_GAIN·E with dantrolene), read from the committed thermal state; null without an MH. `mhActivity` is
+   *  severity × onset ramp × s, and its 15-min ramp outgrows the fall of s after an early dose (review B1): s is the
+   *  signal dantrolene changes. Exposure only. */
+  mhExcess: number | null;
 }
 
 /** Haemodynamic event variants (brief §7.3). */

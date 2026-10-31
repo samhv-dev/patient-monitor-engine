@@ -47,7 +47,7 @@
       "description": "A value a phase rule reads on engine truth (rank 3): the StateVars, the beat MAP, the labs pH and lactate, the endocrine MH activity and the engine signals of F4 (dantrolene effect, set minute ventilation).",
       "enum": ["hr", "sbp", "dbp", "cvp", "papSys", "papDia", "pawp", "spo2", "pi", "rr", "vt", "etco2", "fio2",
                "shunt", "tempCore", "contractility", "svr", "k", "qtc", "volumeStatus", "paceThresholdMa",
-               "map", "ph", "lactate", "mhActivity", "dantroleneE", "setMinuteVentilationLMin"]
+               "map", "ph", "lactate", "mhActivity", "mhExcess", "dantroleneE", "setMinuteVentilationLMin"]
     },
     "route": { "enum": ["iv", "io", "im", "inh", "neb", "sc", "perineural", "central"] },
     "amount": {

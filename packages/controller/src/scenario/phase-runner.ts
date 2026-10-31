@@ -59,7 +59,7 @@ const PHASES_MAX = 500;
 const ALIAS: Record<string, string> = {
   abpSys: 'sbp', abpDia: 'dbp', abpMean: 'map', nibpSys: 'sbp', nibpDia: 'dbp', nibpMean: 'map', cvpMean: 'cvp', awrr: 'rr',
 };
-const SIGNAL_VALUES = ['dantroleneE', 'setMinuteVentilationLMin', 'map', 'mhActivity'] as const;
+const SIGNAL_VALUES = ['dantroleneE', 'setMinuteVentilationLMin', 'map', 'mhActivity', 'mhExcess'] as const;
 
 export class PhaseRunner {
   /** Edges kept per rule; past it the oldest are dropped, except the rule's first edge (its first true). */
