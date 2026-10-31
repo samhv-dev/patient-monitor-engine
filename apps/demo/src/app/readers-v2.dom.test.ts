@@ -61,12 +61,12 @@ describe('card-read.ts and a pme-scenario/2 card', () => {
 });
 
 describe('the run record, the Debrief and its key moments, and a pme-scenario/2 card', () => {
-  it('record.ts: the load keeps the doc; a phase entry is a state row named "next state" (no throw on doc.states)', () => {
+  it('record.ts: the load keeps the doc; a phase entry is a state row named by the phase\'s label (F11: "next state")', () => {
     const rec = new RunRecord(() => ({ patient: 'M 30 y 80 kg', weightKg: 80 }), () => 0);
     rec.wire({ type: 'commandApplied', commandId: 'c1', tick: 0, resolved: { command: { id: 'c1', issuedBy: 'host', type: 'scenario', action: 'load', doc: V2 } } } as WireEvent);
     rec.wire({ type: 'scenario', t: 30, stateId: 'early', transitionId: 'enter:early' } as WireEvent);
     expect(rec.data.doc).toBe(V2);
-    expect(rec.data.rows.at(-1)).toMatchObject({ t: 30, kind: 'scenario', text: 'Scenario state: next state', ev: 'state:early' });
+    expect(rec.data.rows.at(-1)).toMatchObject({ t: 30, kind: 'scenario', text: 'Scenario state: Early signs', ev: 'state:early' });
   });
   it('debrief.ts: no objectives, no steps, no judged rows; a state event in words is "named in the rule"', () => {
     const d = run();
@@ -143,7 +143,7 @@ describe('the instructor views and a pme-scenario/2 card', () => {
     expect(cue.querySelector('.ip2-cue-name')?.textContent).toBe('Early signs');
     expect([...action.querySelectorAll('.ip2-row .ip2-row-title')].map((x) => x.textContent)).toEqual(['Call for help', 'Names MH from the monitor']);
   });
-  it('link.ts: a phase entry in the clinical log is a scenario state named "next state"', async () => {
+  it('link.ts: a phase entry in the clinical log is a scenario state named by the phase\'s label (F11: "next state")', async () => {
     const hub = createInProcessHub();
     const host = hub.connect();
     const t = hub.connect();
@@ -155,7 +155,7 @@ describe('the instructor views and a pme-scenario/2 card', () => {
     ] } as never));
     await settle();
     expect(link.ctl.scenario.doc).toEqual(V2);
-    expect(link.log.at(-1)).toMatchObject({ simT: 30, kind: 'scenario', text: 'Scenario state: next state' });
+    expect(link.log.at(-1)).toMatchObject({ simT: 30, kind: 'scenario', text: 'Scenario state: Early signs' });
     link.close();
   });
   it('the Debrief view (views/debrief.ts) draws a /2 run with no steps table rows', () => {
