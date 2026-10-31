@@ -326,7 +326,8 @@ describe('F7: the /2 MH card on the engine — the debrief grades what the panel
     expect(k).toBe(PATH.length);
     const pr = driver.phaseRunner;
     if (!pr) throw new Error('no phase runner');
-    const panel = grade(doc, pr.phases, pr.admin, pr.edges, engine.now().simT, { final: true });
+    // the talk's end at a Pause, mid-case (no end phase, not finished): the Debrief grades as the panel does, live (D5)
+    const panel = grade(doc, pr.phases, pr.admin, pr.edges, engine.now().simT, { final: false });
     expect(rec.data.format).toBe(2);
     expect(rec.data.admin?.length).toBeGreaterThan(0);
     expect(gradesOf(rec.data)).toEqual(panel);

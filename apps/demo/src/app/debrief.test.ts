@@ -5,7 +5,7 @@ import type { ActionGrade, Administration, ObjectiveRule, PhaseEntry, RuleEdge, 
 import { grade, validateScenario } from '@pme/controller/scenario';
 import { version } from '@pme/renderer';
 import { describe, expect, it } from 'vitest';
-import { axisRange, drugTotals, facts, gradesOf, judged, marks, objectives, perMinute, report3, span, steps, verdict } from './debrief.ts';
+import { axisRange, CASE_FINISHED, drugTotals, facts, gradesOf, judged, marks, objectives, perMinute, report3, runEnded, span, steps, verdict } from './debrief.ts';
 import { debriefJson } from './debrief-export.ts';
 import { keyMoments, keyTimes } from './debrief-moments.ts';
 import { emptyRun, type Row, type RunData, type Sample } from './record.ts';
@@ -415,8 +415,19 @@ describe('F7: a pme-scenario/2 run — the action table, outcomes, violations, j
     samples: [sample(0), sample(900)],
   };
 
-  it('the grades are grade() on the copied inputs, final, at the run’s end (the panel’s function)', () => {
-    expect(gradesOf(d2)).toEqual(grade(DOC2, phases, admin, edges, 900, { final: true }));
+  // D5 (review S4): a Debrief opened mid-case (the talk opens it at a Pause) grades an open window as open; final (open
+  // = failed, an outcome not reached) only once the run has ended: an end phase, or "Finish the case"'s note
+  const finished = (d: RunData): RunData => ({ ...d, rows: [...d.rows, { t: 900, kind: 'note', text: CASE_FINISHED }] });
+  it('the grades are grade() on the copied inputs at the record’s end (the panel’s function); final once the run has ended (D5)', () => {
+    expect(runEnded(d2)).toBe(false); // in latent, which has a next, and not finished
+    expect(gradesOf(d2)).toEqual(grade(DOC2, phases, admin, edges, 900, { final: false }));
+    expect(runEnded(finished(d2))).toBe(true);
+    expect(gradesOf(finished(d2))).toEqual(grade(DOC2, phases, admin, edges, 900, { final: true }));
+    // a return to an earlier mark undoes the note: the run is open again
+    expect(runEnded({ ...d2, rows: [...d2.rows, { t: 900, kind: 'note', text: CASE_FINISHED, undone: 1 }] })).toBe(false);
+    // an end phase (no next) ends it
+    const end: ScenarioDocV2 = { ...DOC2, phases: DOC2.phases.map((p) => (p.id === 'latent' ? { ...p, next: [] } : p)) };
+    expect(runEnded({ ...d2, doc: end })).toBe(true);
     expect(gradesOf(run([]))).toBeNull(); // a /1 run
     expect(gradesOf({ ...d2, format: undefined })).toBeNull(); // a /2 card without copied inputs (a record from before F7)
   });
@@ -428,7 +439,7 @@ describe('F7: a pme-scenario/2 run — the action table, outcomes, violations, j
     expect(j.version).toBe(version);
     expect(j.record).toEqual(JSON.parse(JSON.stringify(d2)));
     expect(j.phases).toEqual(phases);
-    const g = grade(DOC2, phases, admin, edges, 900, { final: true });
+    const g = grade(DOC2, phases, admin, edges, 900, { final: false });
     expect(j.actions).toHaveLength(g.actions.length);
     // firstGrade (F11's finding): the first administration's own grade, which the action's row prints; grade stays the worst
     for (const a of j.actions) expect(Object.keys(a)).toEqual(['id', 'label', 'kind', 'grade', 'firstGrade', 'lines', 'dueT', 'givenT', 'windowS', 'repeats', 'admin']);
@@ -444,7 +455,11 @@ describe('F7: a pme-scenario/2 run — the action table, outcomes, violations, j
   });
 
   it('an outcome not reached says why; a judged row never pressed has pressedT null', () => {
-    const late: RunData = { ...d2, edges: edges.filter((e) => !e.rule.startsWith('outcome:')), rows: d2.rows.slice(0, 1) };
+    const open: RunData = { ...d2, edges: edges.filter((e) => !e.rule.startsWith('outcome:')), rows: d2.rows.slice(0, 1) };
+    // mid-case (D5): the window (10 min from the dose at 08:20) is still open at 15:00
+    expect(report3(open)?.outcomes[0]).toMatchObject({ status: 'pending', t: null, why: 'Pending: the run has not ended; the window runs 10 min 00 s from 08:20.' });
+    expect(report3(open)?.actions.find((a) => a.id === 'ventilationBack')?.grade).not.toBe('failed');
+    const late = finished(open);
     const r = report3(late);
     expect(r?.outcomes).toEqual([{ id: 'etco2Down', text: DOC2.outcomes?.[0]?.text, status: 'not reached', t: null, why: 'Not reached within 10 min 00 s of Dantrolene 2.5 mg/kg (from 08:20).' }]);
     expect(r?.judged[0]).toMatchObject({ fromT: 410, pressedT: null });

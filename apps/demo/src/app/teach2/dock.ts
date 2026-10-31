@@ -6,6 +6,7 @@
 // It carries its kind (IP2's `kind`) and, when the note field (filled by the sheets slot) holds text, that text as
 // its note (IP2's `note`); the field is then cleared (answer 13).
 import { isV2, type MarkKind as ControllerMarkKind } from '@pme/controller';
+import { CASE_FINISHED } from '../debrief.ts';
 import type { Link } from '../link.ts';
 import { hrefOf } from '../router.ts';
 import { clock, h, toast } from '../ui.ts';
@@ -49,8 +50,9 @@ export interface Dock {
 }
 
 /** The instructor's end of a /2 case: the note "Finish the case" (teach2/finish.ts) writes into the record (the
- *  Debrief's timeline and the Log) when one of its buttons saves the debrief of a /2 card. */
-export const FINISHED = 'Case finished';
+ *  Debrief's timeline and the Log) when one of its buttons saves the debrief of a /2 card; the Debrief grades final
+ *  once it stands (debrief.ts runEnded). */
+export const FINISHED = CASE_FINISHED;
 
 /** Has the instructor finished the running case on this host: a "Case finished" note, not undone by a return, since
  *  the last load? (A follower keeps no record: false.) */

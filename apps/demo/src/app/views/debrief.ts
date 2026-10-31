@@ -365,7 +365,7 @@ export function debriefView(session: AppSession, link: Link): View {
         totals.length ? h('ul', { class: 'db-totals' }, ...totals.map((x) => h('li', {}, `${drugName(x.drugId)}: ${x.total} in ${x.n} ${x.n === 1 ? 'bolus' : 'boluses'}`))) : null),
       ...(r3 ? [
         section('actions', 'Actions on the card', h('p', { class: 'db-subhead' }, 'What the record shows: each action against its prescription and window; it does not grade the person'), actionsTable(r3)),
-        ...(r3.outcomes.length ? [section('outcomes', 'Outcomes', h('ul', { class: 'db-outcomes' }, ...r3.outcomes.map((o) => h('li', { 'data-status': o.status }, h('b', {}, o.status === 'reached' ? '✓ reached' : '✗ not reached'), ` ${o.text}`, h('div', { class: 'db-why' }, o.why)))))] : []),
+        ...(r3.outcomes.length ? [section('outcomes', 'Outcomes', h('ul', { class: 'db-outcomes' }, ...r3.outcomes.map((o) => h('li', { 'data-status': o.status }, h('b', {}, o.status === 'reached' ? '✓ reached' : o.status === 'pending' ? '… pending' : '✗ not reached'), ` ${o.text}`, h('div', { class: 'db-why' }, o.why)))))] : []),
         section('violations', 'Violations', r3.violations.length
           ? h('ul', { class: 'db-violations' }, ...r3.violations.map((v) => h('li', {}, `${mmss(v.t)} ${v.text}${v.harm === 'not modelled' ? ' (harm not modelled)' : ''}`)))
           : h('p', { class: 'muted' }, 'No contraindicated administration.')),

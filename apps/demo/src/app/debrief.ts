@@ -285,11 +285,30 @@ export function judged(d: RunData): Array<{ n: number; text: string; tickedT: nu
   });
 }
 
-/** A /2 run's grades: grade() on the copied inputs, final, at the run's end — the panel's function on the panel's
- *  inputs. Null for a /1 run, and for a /2 record made before the record copied them. */
+/** The note "Finish the case" writes into a /2 record (teach2/finish.ts): the instructor's end of the run. */
+export const CASE_FINISHED = 'Case finished';
+
+/** Has the /2 run of the record ended (decision D5; design §6, Q11): it is in one of its end phases (a phase with no
+ *  next), or "Case finished" stands in the record (not undone by a return) since the card's last load. */
+export function runEnded(d: RunData): boolean {
+  const doc = d.doc;
+  if (!doc || !isV2(doc)) return false;
+  const last = d.phases?.at(-1)?.id;
+  if (last !== undefined && !doc.phases.find((p) => p.id === last)?.next?.length) return true;
+  const rows = kept(d);
+  let from = 0;
+  rows.forEach((r, i) => {
+    if (r.kind === 'scenario' && r.text.startsWith('Scenario loaded')) from = i + 1;
+  });
+  return rows.slice(from).some((r) => r.kind === 'note' && r.text === CASE_FINISHED);
+}
+
+/** A /2 run's grades: grade() on the copied inputs at the record's end — the panel's function on the panel's inputs —
+ *  final (an open window failed) only once the run has ended (D5: a Debrief opened at a Pause mid-case grades an open
+ *  window as open, "due" or "overdue"). Null for a /1 run, and for a /2 record made before the record copied them. */
 export function gradesOf(d: RunData): Grades | null {
   if (!d.doc || !isV2(d.doc) || d.format !== 2) return null;
-  return grade(d.doc, d.phases ?? [], d.admin ?? [], d.edges ?? [], endOf(d), { final: true });
+  return grade(d.doc, d.phases ?? [], d.admin ?? [], d.edges ?? [], endOf(d), { final: runEnded(d) });
 }
 
 /** A /2 run's sections of the report and of `pme-debrief/3` (absent times are null). */
@@ -302,7 +321,8 @@ export interface Report3 {
     /** The seqs of every administration matching the action. */
     admin: number[];
   }>;
-  outcomes: Array<{ id: string; text: string; status: 'reached' | 'not reached'; t: number | null; why: string }>;
+  /** `pending`: the run has not ended (D5) and the outcome's window is still open. */
+  outcomes: Array<{ id: string; text: string; status: 'reached' | 'not reached' | 'pending'; t: number | null; why: string }>;
   violations: Array<{ t: number; seq: number; text: string; harm: 'modelled' | 'not modelled' }>;
   /** The instructor's rows: `fromT` the display clock's start (the monitor showed it), `pressedT` the instructor's press. */
   judged: Array<{ id: string; text: string; kind: 'recognition' | 'communication'; fromT: number | null; pressedT: number | null }>;
@@ -334,11 +354,12 @@ export function report3(d: RunData): Report3 | null {
       const w = oc ? words(oc.anchor) : 'its anchor';
       const at = oc ? anchorAt(o.id, oc.anchor) : undefined;
       const within = span(oc?.withinS ?? 0);
-      const why = o.grade === 'reached' && o.t !== undefined
+      const why = o.grade === 'pending' ? `Pending: the run has not ended${at !== undefined ? `; the window runs ${within} from ${mmss(at)}` : ''}.`
+        : o.grade === 'reached' && o.t !== undefined
         ? `Reached at ${mmss(o.t)}${at !== undefined ? `, ${span(o.t - at)} after ${w}` : ''} (within ${within} asked).`
         : at === undefined ? `Not reached: ${w} ${oc && typeof oc.anchor === 'string' && oc.anchor.startsWith('action:') ? 'was never given' : 'did not happen'}.`
         : `Not reached within ${within} of ${w} (from ${mmss(at)}).`;
-      return { id: o.id, text: o.text, status: o.grade === 'reached' ? 'reached' as const : 'not reached' as const, t: o.t ?? null, why };
+      return { id: o.id, text: o.text, status: o.grade, t: o.t ?? null, why };
     }),
     violations: g.violations.map((v) => ({ t: v.t, seq: v.seq, text: v.text, harm: v.harm })),
     judged: g.judged.map((j) => ({
