@@ -161,3 +161,24 @@ describe('Instructor v2 grades the /2 rows live (grade(), final: false; design Â
     expect(row('Intubate').grade).toBeUndefined();
   });
 });
+
+// F11 found hyperventilate and the propofol infusion reading "press to give" after the call's press, although grade()
+// counts that press's ventilator and infusion records for them: the given look came from the row's own press count.
+describe('Instructor v2: a /2 row\'s given look follows the graded administration, not the press count', () => {
+  it('the call\'s press gives hyperventilate and the propofol infusion: both rows read given (green), with their grade', () => {
+    // the three share the call's anchor rule; the runner logs it under each action's name
+    const edges: RuleEdge[] = ['callCrisis', 'hyperventilate', 'propofolInfusion'].map((id) => ({ rule: `action:${id}:anchor`, t: 470, value: true }));
+    const row = graded({ simT: 600, takings: { callCrisis: 1 }, run: { admin: CALL, edges } });
+    for (const t of ['Hyperventilate', 'Propofol infusion']) {
+      expect(row(t).look, t).toBe('taken');
+      expect(row(t).right, t).toBe('met 08:12');
+    }
+  });
+
+  it('dantrolene pressed once, its repeat now due: the row reads due again (blue), not given', () => {
+    const DANT: Administration = { ...DANT_1, dose: 2.5, perKg: 2.5, t: 500 };
+    const edges: RuleEdge[] = [...ANCHOR, { rule: 'action:dantrolene:repeatWhile', t: 600, value: true }];
+    const row = graded({ simT: 850, takings: { callCrisis: 1, dantrolene: 1 }, run: { admin: [...CALL, DANT], edges } });
+    expect(row('Dantrolene 2.5')).toMatchObject({ grade: 'due', right: 'due 4:10', look: 'current' });
+  });
+});
