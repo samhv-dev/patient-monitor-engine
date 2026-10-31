@@ -162,6 +162,17 @@ test('Instructor v2 at 1440 × 900: no footer line, the dock flush with the bott
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page, base, '?scenario=showcase-mh#/teach2', { warmMs: 1500 });
   await page.waitForFunction(() => !!document.querySelector('.ip2-strip .ip2-current'), null, { timeout: 30_000 });
+  // a status line under the chips (#210's no case, #211's Case briefing, #214's finishing) adds its 40 px to the strip's
+  // 75: the MH card opens with its briefing where #211 is in the tree; ended, the strip is its own height again
+  const status = page.locator('.ip2-strip [role="status"]');
+  if (await status.isVisible()) {
+    const withLine = await page.evaluate(() => ({ vh: innerHeight, strip: (document.querySelector('.ip2-strip') as HTMLElement).getBoundingClientRect().height, dock: (document.querySelector('.ip2-dock') as HTMLElement).getBoundingClientRect().bottom }));
+    console.log(`teach2-flush with the status line ${JSON.stringify(withLine)}`);
+    expect(withLine.strip).toBe(52 + FOOTER_H + 40);
+    expect(withLine.dock).toBe(withLine.vh);
+    await status.getByRole('button', { name: 'End briefing' }).click();
+    await expect(status).toBeHidden();
+  }
   const m = await page.evaluate(() => {
     const box = (s: string) => (document.querySelector(s) as HTMLElement).getBoundingClientRect();
     return { vh: innerHeight, foot: document.querySelectorAll('.app-foot').length, dock: box('.ip2-dock'), strip: box('.ip2-strip'), head: box('.ip2-head'), chip: box('.ip2-strip .ip2-current') };
