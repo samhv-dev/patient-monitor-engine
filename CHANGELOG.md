@@ -40,6 +40,21 @@ the public API is what the packages export (see the API reference), the `pme-sce
   owner's ruling.
 
 ### Fixed
+- Malignant hyperthermia now warms the core: the MH sympathetic surge constricts the skin. Untreated on the MH card the
+  core showed 36.5 °C at 15 min and 36.9 °C at 35 min (the owner's run of 30 October): the 140 W of MH heat was real,
+  but under anaesthesia the core-to-skin conductance stayed fully dilated and the periphery took up about as much heat
+  as the crisis made. In an MH crisis the circulating catecholamines reach about 20 times normal and constrict the
+  skin directly, whatever the anaesthetic has done to the hypothalamic threshold (Sessler, Anesthesiology 2008; Gronert
+  et al., Anesthesiology 1978); the skin is mottled (European MH Group, 2024). The conductance now falls with the MH
+  sympathetic drive from its anaesthetised value (48.9 W/°C at 70 kg) toward the two-node model's maximally
+  constricted value (10.8 W/°C; Gagge et al. 1986), and dantrolene's suppression of the surge re-dilates it. On the
+  same path the core is now 37.1 °C at 15 min and 38.0 °C at 35 min; "established" (38.5 °C) comes about 46 min after
+  the succinylcholine instead of about 103. Without MH nothing changes (the anaesthetised redistribution, the awake
+  patient, the haemorrhage and anaphylaxis cards print the same numbers). Four MH test bands were re-centred for the
+  owner's ruling, two expected failures are now met (resp-coupling's > 1 °C in 30 min, heat.test's dantrolene arm) and
+  one new one is recorded (the hour after a VF imposed at 40.3 °C cools 2.3 °C against 0.5–1.5); the MH card's story
+  text, the run sheet's temperature talk points and the cue cards still describe the old course.
+
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's
   sequence and viewer role per transport, and counts a hello only after its sequence check, so a phone on the relay
   that says hello with the laptop panel's id leaves the panel's commands applied. The relay gives each peer id one live
