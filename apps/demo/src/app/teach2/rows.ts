@@ -376,9 +376,14 @@ export function classifyV2(src: SourceV2): Board {
       const n = (row.actionId !== undefined ? src.takings?.[row.actionId] : 0) ?? 0;
       const g = src.grades?.actions.find((a) => a.id === row.actionId);
       if (g) {
-        // the grade's look: given by its own press, green (deviation: the met look, its label amber); due or overdue,
-        // the expected blue (overdue with the ring); not applicable, faded; still pressable whatever the look
-        const look: Look = n > 0 ? 'taken' : g.grade === 'due' || g.grade === 'overdue' ? 'current' : g.grade === 'not applicable' ? 'unmet' : g.grade === 'failed' ? 'failed' : 'ready';
+        // the grade's look: due, or overdue and still not given (the first dose or a repeat), the expected blue (overdue
+        // with the ring); given, green — by the record grade() graded (another action's press may give it: the call's
+        // ventilator and infusion) or the row's own press (deviation: the met look, its label amber; given late: the
+        // ring); not applicable, faded. Still pressable whatever the look.
+        const worstGiven = g.grade === g.firstGrade ? g.givenT !== undefined : g.repeats.find((r) => r.grade === g.grade)?.t !== undefined;
+        const open = (g.grade === 'due' || g.grade === 'overdue') && !worstGiven;
+        const given = n > 0 || g.givenT !== undefined;
+        const look: Look = open ? 'current' : given ? 'taken' : g.grade === 'not applicable' ? 'unmet' : g.grade === 'failed' ? 'failed' : 'ready';
         list.push({ ...live, look, grade: g.grade, right: g.live, subtitle: [row.subtitle, ...g.lines].join(' · '), overdue: g.grade === 'overdue' ? overdueS(g.live) : null, at: g.givenT ?? null });
       } else list.push(n > 0 ? { ...live, look: 'taken', right: `given${n > 1 ? ` ×${n}` : ''}` } : { ...live, right: src.takings ? 'press to give' : 'graded on the host' });
     } else if (row.kind === 'judged') {
