@@ -37,14 +37,28 @@ the public API is what the packages export (see the API reference), the `pme-sce
   judged; the engine does not model it"); the card stays valid, and a `/1` card validates exactly as before. No
   kinetics change: the route models are F5.2.
 
+- **`pme-scenario/2`: the MH card's demo-day fixes, D1–D6 (post-demo, draft).** Merged with main at kit E
+  (649ab03c): one Finish the case (#214's pane); its save writes "Case finished" into a `/2` record. The phase runner
+  latches a running hold when the rule falls because an `unchanged` guard changed, the team's response (D1); the MH
+  card's Early signs reads that guard over the same 120 s as the rise. The state event carries `mhExcess`, the MH's
+  dantrolene-sensitive excess (exposure only, D2), and the card's Treated and Recrudescence read it. `grade()` opens a
+  rule anchor's window only after the action's first phase entry, credits a device or a decision only inside its
+  window, and reads a precondition as held before the press (D3); the repeat dantrolene and its ventilation are due
+  for 300 s from Recrudescence's entry. Arrest and ROSC carry no hold, and CPR is open in every phase (D4). A Debrief
+  opened mid-case grades open windows as open (D5). On the run sheet's path: Early signs 08:43 (`/1` 08:03), Treated
+  10:58, and the call, its ventilation and infusion, dantrolene and ventilation back met. Recovering, Recrudescence and
+  the second Treated are not reached before the talk's end, so the second dose reads not applicable (see the PR).
+  `/1` cards and their readers are unchanged.
+
 - **Instructor v2 on a `pme-scenario/2` card: the panel gaps F11 found (post-demo, draft).** ACTION's rows carry the
   live grade (`grade()` once a sim second, `final: false`): "due m:ss", "overdue m:ss" with the ring, "met mm:ss",
   "deviation: <criterion>" (the met look, its label amber) or "not applicable", and the grade's lines after the
   prescription; a row reads given when `grade()` graded an administration for it, whoever pressed (the call's press gives
   hyperventilation and the propofol infusion). The rows not due now (a graded action not applicable and not given; an
   ungraded one given in an earlier phase) sit in a "Not due now" fold, still pressable rows, and the `/2` rows are
-  denser, so the MH card's ACTION fits 1440 × 900 at Latent, Early signs and Treated. The dock gains Finish the case
-  (a `/2` card): it notes "Case finished" and pauses, and the Debrief is ready at an end phase or once finished. The
+  denser, so the MH card's ACTION fits 1440 × 900 at Latent, Early signs and Treated. Finish the case (since the
+  merge with main, #214's pane) writes "Case finished" into a `/2` record, and the Debrief is ready at an end phase or
+  once finished. The
   session bar, the record's timeline and the Log name the phase by its label. The Debrief's action row prints the first
   administration's grade (`firstGrade`, also in `pme-debrief/3` and the Persian handout), each repeat its own. The kit
   round's Q1 reaches the Debrief by the dock under `PME_PANEL=teach2`. `/1` cards are unchanged.
