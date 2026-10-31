@@ -174,3 +174,33 @@ test('Instructor v2 at 1440 × 900: no footer line, the dock flush with the bott
   expect(m.strip.height).toBe(52 + FOOTER_H);
   expect(m.chip.height, 'the chips grow with the row').toBeGreaterThan(30);
 });
+
+// The strip's hint at the owner's 1440 × 900 (it showed only at 1920 × 1080: beside five chips it had no room and `fit`
+// hid it): on its own line under the chips, inside the 75-px strip, whole, at both cards' widest windows; the chips
+// still fit without a cut or a sideways scroll.
+for (const [w, hgt] of [[1440, 900], [1920, 1080]] as const)
+  for (const [card, target] of [['showcase-mh', 'awake'], ['showcase-haemorrhage', 'bleeding']] as const) {
+    test(`the strip's hint shows at ${w} × ${hgt}, ${card.replace('showcase-', '')} ${target}`, async ({ page }) => {
+      test.setTimeout(60_000);
+      await page.setViewportSize({ width: w, height: hgt });
+      await openApp(page, base, `?scenario=${card}#/teach2`, { warmMs: 1500 });
+      await page.waitForFunction((id) => (window as unknown as W).__pmeApp.link.ctl.scenario.stateId === id, target, { timeout: 30_000 });
+      await page.waitForTimeout(1200);
+      const m = await measure(page);
+      const h = await page.evaluate(() => {
+        const box = (e: Element) => e.getBoundingClientRect();
+        const hint = document.querySelector('.ip2-strip-hint') as HTMLElement;
+        const strip = box(document.querySelector('.ip2-strip') as HTMLElement);
+        const chipsBottom = Math.max(...[...document.querySelectorAll('.ip2-strip .ip2-chip')].map((c) => box(c).bottom));
+        const b = box(hint);
+        return { shown: !hint.hidden && b.height > 0, whole: hint.scrollWidth <= hint.clientWidth, text: hint.textContent, top: b.top, bottom: b.bottom, chipsBottom, strip: [strip.top, strip.bottom] };
+      });
+      console.log(`teach2-hint ${w}x${hgt} ${card} ${JSON.stringify(h)}`);
+      expect(h.shown, 'the hint is hidden').toBe(true);
+      expect(h.whole, 'the hint is cut').toBe(true);
+      expect(h.top, 'the hint overlaps the chips').toBeGreaterThanOrEqual(h.chipsBottom);
+      expect(h.bottom, 'the hint leaves the strip').toBeLessThanOrEqual(h.strip[1] as number);
+      expect(m.strip[0], 'the strip scrolls sideways').toBeLessThanOrEqual(m.strip[1] as number);
+      expect(m.cut).toBe(0);
+    });
+  }

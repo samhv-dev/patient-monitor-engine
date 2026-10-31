@@ -47,6 +47,8 @@ the public API is what the packages export (see the API reference), the `pme-sce
   sentence as part of its own page, at the same place and size; Settings → About and the Debrief's printed footer line
   are unchanged. In Instructor v2 the dock now ends at the window's bottom edge, and the stage strip takes the height:
   52 → 75 px, its chips 30 → 40 px high (15 px text on a 20 px line, 9 × 12 px padding; were 13 px, 16 px, 6 × 10 px).
+  The strip's hint ("past: return to its start · …") is a line of its own under the chips, so it shows at 1440 × 900
+  too (beside five chips it had no room and showed only at 1920 × 1080).
 
 ### Fixed
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's
