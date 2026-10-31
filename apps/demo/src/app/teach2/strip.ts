@@ -208,7 +208,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     el.toggleAttribute('data-briefing', brief !== null);
     if (msg !== null) setText(statusText, msg);
   };
-  const offBrief = link.host?.onBriefing((b) => {
+  const offBrief = link.host?.onBriefing?.((b) => {
     if (briefTick !== null) clearInterval(briefTick);
     brief = b;
     briefTick = b ? setInterval(sayStatus, 500) : null;

@@ -245,9 +245,13 @@ describe('the Case briefing', () => {
   });
 
   it("the instructor's End briefing (today's view and v2's status line) ends it on the host and every phone", async () => {
+    // a card without a briefing is loaded first: v2's status line is then measured against a live case, not against
+    // "no case" (which shows #210's "Ready." line)
+    s.loadScenario(card('plain'));
+    await settle();
     const teach = teachView({ host: s } as never, { site: DEFAULT_SITE, main: document.createElement('main'), stage: document.createElement('div'), weightKg: () => 70, loadScenario: () => true });
     const nav = document.createElement('nav');
-    const strip = mountStrip(nav, { link: { ctl: { scenario: { doc: null } }, host: s }, keys: { escape: () => () => undefined } } as never);
+    const strip = mountStrip(nav, { link: { ctl: { scenario: s.panel.scenario }, host: s }, keys: { escape: () => () => undefined } } as never);
     const todays = () => teach.el.querySelector<HTMLElement>('.cb-end');
     const status = () => nav.querySelector<HTMLElement>('.ip2-status');
     const v2End = () => [...(status()?.querySelectorAll('button') ?? [])].find((b) => b.textContent === 'End briefing') as HTMLButtonElement | undefined;
@@ -284,11 +288,12 @@ describe('the Case briefing', () => {
   });
 
   it("v2's status line: the briefing's line goes when it ends by itself; a card without one never shows it", async () => {
-    const nav = document.createElement('nav');
-    const strip = mountStrip(nav, { link: { ctl: { scenario: { doc: null } }, host: s }, keys: { escape: () => () => undefined } } as never);
-    const status = () => nav.querySelector<HTMLElement>('.ip2-status');
+    // the strip mounts on a live case without a briefing (with no case it shows #210's "Ready." line)
     s.loadScenario(card('plain'));
     await settle();
+    const nav = document.createElement('nav');
+    const strip = mountStrip(nav, { link: { ctl: { scenario: s.panel.scenario }, host: s }, keys: { escape: () => () => undefined } } as never);
+    const status = () => nav.querySelector<HTMLElement>('.ip2-status');
     await vi.advanceTimersByTimeAsync(1_000);
     expect(status()?.hidden).toBe(true);
     expect(nav.hasAttribute('data-briefing')).toBe(false);
