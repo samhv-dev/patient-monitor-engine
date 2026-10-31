@@ -70,7 +70,7 @@ export interface RunData {
   lastWall: number;
   patient: string;
   weightKg: number;
-  /** Either format; a `pme-scenario/2` card has no states, so its state rows read "next state" until F6. */
+  /** Either format; a `pme-scenario/2` card's phase rows read the phase's label. */
   doc: AnyScenarioDoc | null;
   rows: Row[];
   /** One per simulated second of the kept course. */
@@ -159,7 +159,9 @@ export class RunRecord {
       if (e.t < (this.data.rows.at(-1)?.t ?? 0) - RESYNC_S) return;
       const kept = this.data.rows.filter((r) => r.kind === 'scenario' && r.undone === undefined).at(-1);
       if (kept?.ev === `state:${e.stateId}`) return; // a resync's repeat of the state we are in
-      const label = asV1(this.data.doc)?.states.find((s) => s.id === e.stateId)?.label ?? 'next state'; // /2: no states
+      const doc = this.data.doc;
+      // a /1 state's label, or a /2 phase's (F11: a phase read "next state")
+      const label = (isV2(doc) ? doc.phases.find((p) => p.id === e.stateId)?.label : asV1(doc)?.states.find((s) => s.id === e.stateId)?.label) ?? 'next state';
       const row: Row = { t: e.t, kind: 'scenario', text: `Scenario state: ${label}`, ev: `state:${e.stateId}` };
       // how it was entered: the host publishes the state before it acknowledges the press or the jump that caused it
       // (driver.hook evaluates on the press's own tick), so trigger() and goto() below may still turn 'rule' into
