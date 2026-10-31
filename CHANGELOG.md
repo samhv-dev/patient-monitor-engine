@@ -40,6 +40,8 @@ the public API is what the packages export (see the API reference), the `pme-sce
   owner's ruling.
 
 ### Fixed
+- Instructor v2's stage-strip chips keep their state looks (a finished stage's no frame, the current one's blue, a
+  future one's dashed) with the sheets loaded: the tray's `.ip2-chip` rule in `sheets.css` is scoped to the tray.
 - Instructor v2 reads a `pme-scenario/1` card's spoke states (a state whose only exit is a short `afterS` back to its
   hub: the MH card's dantrolene, cooling, potassium and bicarbonate, the haemorrhage card's epinephrine and volume) as
   actions of their hub stage, and a finished row moves to "Finished steps · n" at once, in every stage: a step pressed
