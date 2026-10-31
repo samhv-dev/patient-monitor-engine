@@ -1,7 +1,8 @@
 // The Case briefing on real screens (the owner's board Orientation 7b, its phone twin and the Persian twins without the
 // ring): the MH card loaded with a relay, the briefing over the host's Monitor view at 1280 × 800 with the monitor
 // running under it, a phone (emulated, Pixel 7 on Chromium, iPhone 13 on WebKit) joining mid-briefing and showing the
-// remainder, a tap ending it on that phone only, the instructor's "End briefing" ending it on the host and every phone;
+// remainder, a tap ending it on that phone only, the instructor's "End briefing" ending it on the host and every phone
+// (today's Instructor view; Instructor v2's status line under the stage strip, at 1440 × 900, the owner's choice of 31 October);
 // then a Persian briefing (the board's Persian text: a rendering fixture, on no card) on the host and a phone.
 // Screenshots go to PME_BRIEFING_SHOTS (default: this test's output folder) for the owner's look.
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
@@ -89,11 +90,32 @@ test('the Case briefing: over the running monitor on the host and the phones, a 
   await expect(f.locator('.stage > .case-briefing')).toHaveCount(0, { timeout: 3_000 });
   await expect(layer(page)).toBeVisible();
   await expect(layer(g)).toBeVisible();
+  // Instructor v2 at the laptop's 1440 × 900 (the owner's choice of 31 October): the status line under the stage strip
+  // reads the briefing and its time left beside End briefing; the chips' row carries no briefing element
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.evaluate(() => (location.hash = '#/teach2'));
+  const status = page.locator('.ip2-strip > .ip2-status');
+  await expect(status).toBeVisible({ timeout: 5_000 });
+  await expect(status.locator('.ip2-status-text')).toHaveText(/^Case briefing on every screen · 0:\d\d left$/);
+  await expect(status.getByRole('button', { name: 'End briefing' })).toBeVisible();
+  await expect(page.locator('.ip2-strip .cb-end')).toHaveCount(0);
+  const fits = await page.evaluate(() => {
+    const strip = document.querySelector('.ip2-strip') as HTMLElement;
+    const st = (strip.querySelector('.ip2-status') as HTMLElement).getBoundingClientRect();
+    return { strip: [strip.scrollWidth, strip.clientWidth], statusH: Math.round(st.height), page: [document.documentElement.scrollHeight, innerHeight] };
+  });
+  console.log(`briefing teach2 1440x900 ${JSON.stringify(fits)}`);
+  expect(fits.strip[0], 'the strip scrolls sideways during the briefing').toBeLessThanOrEqual(fits.strip[1] as number);
+  expect(fits.statusH).toBe(40);
+  expect(fits.page[0]).toBeLessThanOrEqual(fits.page[1] as number);
+  await page.waitForTimeout(1000);
+  await shot(page, 'briefing-teach2-1440x900');
+  await page.locator('.ip2-strip').screenshot({ path: join(out, `briefing-teach2-strip-status-1440x900-${browserName}.png`) });
+  await page.setViewportSize({ width: 1280, height: 800 });
   // the instructor's End briefing (today's Instructor view) ends it on the host and every phone
   await page.evaluate(() => (location.hash = '#/teach'));
   await expect(layer(page)).toBeHidden();
   const end = page.locator('.view[data-view="teach"] > .cb-end');
-  await expect(page.locator('.ip2-strip > .cb-end')).toHaveCount(1); // v2's strip carries one too
   await expect(end).toBeVisible();
   await end.getByRole('button', { name: 'End briefing' }).click();
   await expect(end).toBeHidden();
@@ -116,4 +138,11 @@ test('the Case briefing: over the running monitor on the host and the phones, a 
   await expect(layer(f).locator('.cb-foot > span').nth(1)).toHaveText('برای ادامه، هر جای صفحه را لمس کنید');
   await f.waitForTimeout(1000);
   await shot(f, 'briefing-phone-fa');
+  // v2's End briefing in the status line ends it on the host and every phone, and the status line goes
+  await page.evaluate(() => (location.hash = '#/teach2'));
+  await expect(status).toBeVisible({ timeout: 5_000 });
+  await status.getByRole('button', { name: 'End briefing' }).click();
+  await expect(status).toBeHidden();
+  await expect(f.locator('.stage > .case-briefing')).toHaveCount(0, { timeout: 5_000 });
+  await expect(g.locator('.stage > .case-briefing')).toHaveCount(0, { timeout: 5_000 });
 });

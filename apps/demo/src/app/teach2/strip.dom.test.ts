@@ -6,8 +6,10 @@
 // "auto"; a future stage sends
 // what today's jump sends behind the same confirm (both mounted on one fake Link, compared deep-equal); a past stage
 // shows its entry time and a disabled return until IP2's stage marks exist, then restores the mark behind one confirm.
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ScenarioView, type AckResult, type CommandInput, type ScenarioDoc } from '@pme/controller';
+// The status line under the chips (the owner's choice of 31 October): while a card's Case briefing runs it reads
+// "Case briefing on every screen · 0:48 left" with End briefing; the chips' row carries no briefing element.
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { epochNow, ScenarioView, type AckResult, type CommandInput, type ScenarioDoc } from '@pme/controller';
 import { stagesOf } from '../card-read.ts';
 import type { Link } from '../link.ts';
 import type { PanelCtx } from '../panel/ctx.ts';
@@ -20,7 +22,7 @@ const MH = showcaseDoc('showcase-mh');
 const HAEM = showcaseDoc('showcase-haemorrhage');
 const OK: AckResult = { accepted: true, tick: 0, commandId: 'c1', rttMs: 0 };
 
-function rig(doc: ScenarioDoc, stateId: string, history: Array<{ t: number; stateId: string; transitionId?: string }> = [], simT = 600) {
+function rig(doc: ScenarioDoc, stateId: string, history: Array<{ t: number; stateId: string; transitionId?: string }> = [], simT = 600, host: unknown = null) {
   const sv = new ScenarioView();
   sv.doc = doc;
   sv.docVersion = 1;
@@ -29,7 +31,7 @@ function rig(doc: ScenarioDoc, stateId: string, history: Array<{ t: number; stat
   sv.history = history;
   const sent: CommandInput[] = [];
   const send = async (c: CommandInput) => (sent.push(structuredClone(c)), OK);
-  const link = { ctl: { scenario: sv, bookmarks: [], simT, hostPaused: false, send }, host: null, simT, send, note: () => undefined } as unknown as Link;
+  const link = { ctl: { scenario: sv, bookmarks: [], simT, hostPaused: false, send }, host, simT, send, note: () => undefined } as unknown as Link;
   const escapes: Array<() => boolean> = [];
   const ctx = { link, keys: { digit: () => undefined, letter: () => undefined, escape: (fn: () => boolean) => (escapes.push(fn), () => undefined) } } as unknown as Teach2Ctx;
   const el = document.createElement('nav');
@@ -235,5 +237,78 @@ describe('stage strip: clicks', () => {
     r.sv.history = [{ t: 0, stateId: 'bleeding' }];
     r.slot.refresh();
     expect(r.el.querySelector('.ip2-current')?.textContent).toBe('Bleeding 2.5 L over 10 min00:00 · 2 open');
+  });
+});
+
+describe('stage strip: the status line while a Case briefing runs', () => {
+  /** The host's briefing as the session gives it (session.ts onBriefing / endBriefing), on a clock we move. */
+  function fakeHost() {
+    type B = { text: string; durationS: number; startedAt: number; lang: 'en' } | null;
+    const fns = new Set<(b: unknown) => void>();
+    const h: { cur: B; ended: number; record: unknown; onBriefing(fn: (b: unknown) => void): () => void; endBriefing(): void; set(b: B): void; start(): void; fns: typeof fns } = {
+      cur: null,
+      ended: 0,
+      record: { data: { rows: [] } }, // the run record course.ts reads: its initial state at 0
+      onBriefing: (fn: (b: unknown) => void) => (fns.add(fn), fn(h.cur), () => void fns.delete(fn)),
+      endBriefing: () => (h.ended++, h.set(null)),
+      set: (b) => ((h.cur = b), fns.forEach((fn) => fn(b))),
+      start: () => h.set({ text: 'x', durationS: 60, startedAt: epochNow(), lang: 'en' }),
+      fns,
+    };
+    return h;
+  }
+  beforeEach(() => void vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date', 'performance'] }));
+  afterEach(() => void vi.useRealTimers());
+  const status = (el: Element) => el.querySelector<HTMLElement>('.ip2-status');
+  const line = (el: Element) => el.querySelector('.ip2-status-text')?.textContent ?? '';
+  const end = (el: Element) => [...(status(el)?.querySelectorAll('button') ?? [])].find((b) => b.textContent === 'End briefing');
+
+  it('no briefing: no status line shown, nothing in the strip changes', () => {
+    const host = fakeHost();
+    const r = rig(MH, 'treating', MH_TO_TREATING, 600, host);
+    const plain = rig(MH, 'treating', MH_TO_TREATING); // a follower: no host, no briefing
+    for (const x of [r, plain]) {
+      expect(status(x.el)?.hidden ?? true).toBe(true);
+      expect(x.el.hasAttribute('data-briefing')).toBe(false);
+      expect(x.el.querySelector('.cb-end')).toBeNull();
+      expect((x.el.querySelector('.ip2-strip-hint') as HTMLElement).hidden).toBe(false);
+    }
+    expect(chipTexts(r.el)).toEqual(chipTexts(plain.el));
+  });
+
+  it('while it runs: the sentence with the time left and End briefing; the chips and the hint as without it', async () => {
+    const host = fakeHost();
+    const r = rig(MH, 'treating', MH_TO_TREATING, 600, host);
+    const before = chipTexts(r.el);
+    host.start();
+    expect(r.el.hasAttribute('data-briefing')).toBe(true);
+    expect(status(r.el)?.hidden).toBe(false);
+    expect(line(r.el)).toBe('Case briefing on every screen · 1:00 left');
+    expect(end(r.el)).toBeTruthy();
+    expect(r.el.querySelector('.cb-end'), 'no briefing element in the chips\' row').toBeNull();
+    expect([...r.el.querySelectorAll('.ip2-chips *')].some((n) => /briefing/i.test(n.textContent ?? ''))).toBe(false);
+    r.slot.refresh();
+    expect(chipTexts(r.el)).toEqual(before);
+    expect((r.el.querySelector('.ip2-strip-hint') as HTMLElement).hidden, 'the hint stays').toBe(false);
+    await vi.advanceTimersByTimeAsync(12_000);
+    expect(line(r.el)).toBe('Case briefing on every screen · 0:48 left');
+    // End briefing: the session's end (every screen), and the line goes
+    end(r.el)?.click();
+    expect(host.ended).toBe(1);
+    expect(status(r.el)?.hidden).toBe(true);
+    expect(r.el.hasAttribute('data-briefing')).toBe(false);
+  });
+
+  it('ends by itself: the line goes; destroy lets go of the session', async () => {
+    const host = fakeHost();
+    const r = rig(MH, 'treating', MH_TO_TREATING, 600, host);
+    host.start();
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(line(r.el)).toBe('Case briefing on every screen · 0:30 left');
+    host.set(null);
+    expect(status(r.el)?.hidden).toBe(true);
+    expect(r.el.hasAttribute('data-briefing')).toBe(false);
+    r.slot.destroy();
+    expect(host.fns.size).toBe(0);
   });
 });

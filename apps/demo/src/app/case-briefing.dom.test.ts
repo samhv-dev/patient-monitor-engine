@@ -2,7 +2,8 @@
 // The Case briefing (owner's board Orientation 7b, 30 October): when a card with a `briefing` loads, the learners'
 // monitor — the host's Monitor view and every phone following it — shows the briefing over the running monitor for
 // `durationS` seconds (the title, the estimated time, the paragraphs, a footer counting down), then fades into the
-// monitor; a tap or click ends it on that screen only; the instructor's "End briefing" ends it everywhere; a phone that
+// monitor; a tap or click ends it on that screen only; the instructor's "End briefing" (today's Instructor view; v2's
+// status line under the stage strip, the owner's choice of 31 October) ends it everywhere; a phone that
 // joins while it runs shows the remainder. A card without a briefing shows nothing. Persian (`lang: 'fa'`): rtl, the
 // reviewed chrome strings, Persian digits.
 // The real AppSession and HostSession, and the real follower, on a fake relay that passes every message between them;
@@ -243,31 +244,62 @@ describe('the Case briefing', () => {
     expect(late.stage.querySelector('.case-briefing')).toBeNull();
   });
 
-  it("the instructor's End briefing (today's view and v2's strip) ends it on the host and every phone", async () => {
+  it("the instructor's End briefing (today's view and v2's status line) ends it on the host and every phone", async () => {
     const teach = teachView({ host: s } as never, { site: DEFAULT_SITE, main: document.createElement('main'), stage: document.createElement('div'), weightKg: () => 70, loadScenario: () => true });
     const nav = document.createElement('nav');
     const strip = mountStrip(nav, { link: { ctl: { scenario: { doc: null } }, host: s }, keys: { escape: () => () => undefined } } as never);
-    const ends = () => [teach.el, nav].map((root) => root.querySelector<HTMLElement>('.cb-end'));
-    for (const e of ends()) expect(e?.hidden, 'no control without a briefing').toBe(true);
+    const todays = () => teach.el.querySelector<HTMLElement>('.cb-end');
+    const status = () => nav.querySelector<HTMLElement>('.ip2-status');
+    const v2End = () => [...(status()?.querySelectorAll('button') ?? [])].find((b) => b.textContent === 'End briefing') as HTMLButtonElement | undefined;
+    expect(todays()?.hidden, 'no control without a briefing').toBe(true);
+    expect(status()?.hidden, 'v2: no status line without a briefing').toBe(true);
+    expect(nav.hasAttribute('data-briefing')).toBe(false);
     s.loadScenario(mh);
     await settle();
     const p = await phone();
     expect(p.layer()).toBeTruthy();
     await vi.advanceTimersByTimeAsync(1_000);
-    for (const e of ends()) {
-      expect(e?.hidden).toBe(false);
-      expect(text(e)).toContain('0:59');
-    }
-    const button = [...(ends()[1]?.querySelectorAll('button') ?? [])].find((b) => b.textContent === 'End briefing') as HTMLButtonElement;
-    button.click();
+    expect(todays()?.hidden).toBe(false);
+    expect(text(todays())).toContain('0:59');
+    // v2 (the owner's choice of 31 October): the status line under the strip carries it; the chips' row carries nothing
+    expect(nav.querySelector('.cb-end'), 'no briefing element in the strip').toBeNull();
+    expect(nav.hasAttribute('data-briefing')).toBe(true);
+    expect(status()?.hidden).toBe(false);
+    expect(text(status()?.querySelector('.ip2-status-text'))).toBe('Case briefing on every screen · 0:59 left');
+    expect(v2End()).toBeTruthy();
+    await vi.advanceTimersByTimeAsync(11_000);
+    expect(text(status()?.querySelector('.ip2-status-text'))).toBe('Case briefing on every screen · 0:48 left');
+    v2End()?.click();
     await settle();
     expect(host.layer()).toBeNull();
     expect(p.layer()).toBeNull();
     expect(briefings().at(-1)).toMatchObject({ ended: true });
-    for (const e of ends()) expect(e?.hidden).toBe(true);
+    expect(todays()?.hidden).toBe(true);
+    expect(status()?.hidden, 'the status line returns to its ordinary state').toBe(true);
+    expect(nav.hasAttribute('data-briefing')).toBe(false);
     // a phone that joins now shows nothing
     const late = await phone();
     expect(late.stage.querySelector('.case-briefing')).toBeNull();
+    strip.destroy();
+  });
+
+  it("v2's status line: the briefing's line goes when it ends by itself; a card without one never shows it", async () => {
+    const nav = document.createElement('nav');
+    const strip = mountStrip(nav, { link: { ctl: { scenario: { doc: null } }, host: s }, keys: { escape: () => () => undefined } } as never);
+    const status = () => nav.querySelector<HTMLElement>('.ip2-status');
+    s.loadScenario(card('plain'));
+    await settle();
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(status()?.hidden).toBe(true);
+    expect(nav.hasAttribute('data-briefing')).toBe(false);
+    s.loadScenario(mh);
+    await settle();
+    expect(status()?.hidden).toBe(false);
+    expect(text(status()?.querySelector('.ip2-status-text'))).toBe('Case briefing on every screen · 1:00 left');
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(s.briefing).toBeNull();
+    expect(status()?.hidden).toBe(true);
+    expect(nav.hasAttribute('data-briefing')).toBe(false);
     strip.destroy();
   });
 
