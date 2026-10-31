@@ -177,13 +177,13 @@ describe('the readers behind a cast or an "ended" test, and a pme-scenario/2 car
   it('teach2 drug-sheet.ts pinnedSteps: no pinned steps (no throw in classify)', () => {
     expect(pinnedSteps(fakeLink(view()))).toEqual([]);
   });
-  it('sessionbar.ts: the title and the phase id, and Debrief is "ready" at a terminal phase (no next: F2\'s ended(), F6)', async () => {
+  it('sessionbar.ts: the title and the phase\'s label (F11: it printed the id), and Debrief is "ready" at a terminal phase (no next: F2\'s ended(), F6)', async () => {
     const link = { ...fakeLink(view()), onChange: () => () => undefined, conditions: new Map(), ctl: { ...fakeLink(view()).ctl, timeScale: 1, fastForward: null } } as unknown as Link;
     const bar = document.createElement('header');
     document.body.append(bar);
     const off = mountSessionBar(bar, link);
     await new Promise((r) => setTimeout(r, 100)); // its draw is throttled to a timer and a frame
-    expect(bar.querySelector('.scen')?.textContent).toMatch(/^MH \(format 2\): early /);
+    expect(bar.querySelector('.scen')?.textContent).toMatch(/^MH \(format 2\): Early signs \d\d:\d\d$/);
     expect((bar.querySelector('.sb-debrief') as HTMLElement).dataset.ready).toBe('true'); // 'early' has no next
     off();
   });
