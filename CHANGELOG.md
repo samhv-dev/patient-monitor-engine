@@ -44,8 +44,10 @@ the public API is what the packages export (see the API reference), the `pme-sce
   authoring guide). When such a card loads, the host's Monitor view, a second-screen learner monitor and every phone
   show it over the running monitor (the monitor at 40 % under a frost): "Case briefing", the estimated scenario time,
   the paragraphs, a footer counting down to the monitor and a line filling along the bottom edge; after `durationS` it
-  fades into the monitor. A tap or click ends it on that screen; "End briefing" in today's Instructor view and in v2's
-  stage strip, shown only while one runs, ends it everywhere. The host sends it as a new `briefing` wire event with its
+  fades into the monitor. A tap or click ends it on that screen; "End briefing", shown only while one runs, ends it
+  everywhere: in today's Instructor view over the panel, and in Instructor v2's status line, the 40-px row under the
+  stage strip ("Case briefing on every screen · 0:48 left" beside the button; the owner's choice of 31 October, as in
+  the strip's own row it pushed the MH card's chips past the window). The host sends it as a new `briefing` wire event with its
   start time (a viewer event; the relay passes it to the phones) and again in every answer to a hello while it runs, so
   a phone that joins or reloads shows the remainder; not again for the load that restores a case after the
   instructor's page reloads, nor in free roam. Persian: right to left, the reviewed chrome strings, Persian digits, the

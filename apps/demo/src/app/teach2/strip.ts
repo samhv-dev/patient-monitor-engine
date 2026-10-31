@@ -11,12 +11,16 @@
 // recentres it on the current stage whenever it has been moved. The future stages are ordered from the current one
 // (the stages it leads to first; two of one step read "<a> or <b>"). Names are never cut: when the chips do not fit,
 // the padding tightens, then the hint goes, then the strip scrolls sideways.
+// The status line: the 40-px row under the chips where the panel talks, shown only while it has something to say (the
+// strip's area grows from 52 to 92 px then; briefing.css). While a card's Case briefing runs on the learners' screens it
+// reads "Case briefing on every screen · 0:48 left" with End briefing at its right (the owner's choice of 31 October:
+// the control left the chips' row, which it pushed past the window on the MH card in the first minute).
 import './state.css';
-import type { ScenarioDoc } from '@pme/controller';
-import { briefingEnd } from '../briefing.ts';
+import type { BriefingNotice, ScenarioDoc } from '@pme/controller';
+import { briefingLeftS, briefingStatusText } from '../briefing.ts';
 import { rowsOf, stagesOf, type Stage } from '../card-read.ts';
 import type { Link } from '../link.ts';
-import { clock, confirmDialog, h, toast } from '../ui.ts';
+import { clock, confirmDialog, h, setText, toast } from '../ui.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { historyOf } from './course.ts';
 
@@ -184,9 +188,32 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const sv = link.ctl.scenario;
   const chips = h('div', { class: 'ip2-chips' });
   const hint = h('span', { class: 'ip2-strip-hint' }, 'past: return to its start · future: jumps to it (asks once)');
-  // While a card's Case briefing runs on the learners' screens: "End briefing" at the strip's end, in the hint's place
-  const brief = link.host ? briefingEnd(link.host) : null;
-  el.replaceChildren(chips, hint, ...(brief ? [brief] : []));
+  // The status line. ONE message at a time, by precedence (the first that applies takes the line):
+  //   1. "Finishing." while Finish the case holds the clock (#214, not on this branch);
+  //   2. a paused message, should one ever be written here (none today: option G shows paused on the pill and the monitor);
+  //   3. the Case briefing while it runs: its sentence and End briefing (ends it on every screen, session.endBriefing);
+  //   4. the ordinary line ("Ready." and the no-case line of #210, not on this branch).
+  // With none of them the line is hidden and the strip keeps its 52 px. The briefing yields to 1 and 2 and comes back
+  // with its remaining time when they go; it takes the line from 4 only while it runs.
+  const statusText = h('span', { class: 'ip2-status-text' });
+  const endBrief = h('button', { type: 'button', class: 'ip2-status-btn', onclick: () => link.host?.endBriefing() }, 'End briefing');
+  const status = h('div', { class: 'ip2-status', role: 'group', 'aria-label': 'Status', hidden: true }, statusText, h('span', { class: 'ip2-spacer' }), endBrief);
+  el.replaceChildren(chips, hint, status);
+  let brief: BriefingNotice | null = null;
+  let briefTick: ReturnType<typeof setInterval> | null = null;
+  const sayStatus = () => {
+    const msg = brief ? briefingStatusText(briefingLeftS(brief)) : null; // 3 (1, 2 and 4 go before and after it when they land)
+    status.hidden = msg === null;
+    endBrief.hidden = !brief;
+    el.toggleAttribute('data-briefing', brief !== null);
+    if (msg !== null) setText(statusText, msg);
+  };
+  const offBrief = link.host?.onBriefing((b) => {
+    if (briefTick !== null) clearInterval(briefTick);
+    brief = b;
+    briefTick = b ? setInterval(sayStatus, 500) : null;
+    sayStatus();
+  });
   /** How far the arrows have moved the window from now (stages; 0 = the current stage's window). */
   let offset = 0;
   let docV = -1;
@@ -239,12 +266,11 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     if (el.scrollWidth > el.clientWidth) el.setAttribute('data-tight', '');
     el.classList.remove('ip2-strip-measure');
     // the hint shows whole or not at all
-    hint.hidden = !sv.doc || (brief !== null && !brief.hidden);
+    hint.hidden = !sv.doc;
     if (!hint.hidden && hint.scrollWidth > hint.clientWidth) hint.hidden = true;
   };
   const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(() => fit()) : null;
   ro?.observe(el);
-  const offBrief = link.host?.onBriefing(() => queueMicrotask(fit)); // the hint gives way to "End briefing", and back
   const line = (kind: 'solid' | 'next' | 'dashed') => h('span', { class: `ip2-link ip2-link-${kind}`, 'aria-hidden': 'true' });
 
   const draw = () => {
@@ -297,6 +323,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     destroy: () => {
       offEsc();
       offBrief?.();
+      if (briefTick !== null) clearInterval(briefTick);
       ro?.disconnect();
       document.removeEventListener('pointerdown', outside);
       closePop();

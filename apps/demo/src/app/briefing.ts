@@ -4,7 +4,8 @@
 // running underneath at 40 % behind one frost; the text is start-aligned at a 62-character measure: "Case briefing",
 // the estimated scenario time, the paragraphs, then a footer over a hairline counting down to the monitor; a 3-px line
 // along the bottom edge fills as the time passes. No ring, no chips, no eyebrow. A tap or click ends it on that screen;
-// the instructor's "End briefing" (today's Instructor view, v2's strip) ends it everywhere.
+// the instructor's "End briefing" ends it everywhere: in today's Instructor view over the panel, in Instructor v2's
+// status line under the stage strip (the owner's choice of 31 October; teach2/strip.ts, `briefingStatusText`).
 // ONE render function (`renderBriefing`) and one layer (`briefingLayer`) serve the host and the followers; the host
 // feeds it from its session, a follower from the wire (`followBriefing`: the start time and the message's `sentAt`
 // are both the host's clock, so a phone that joins late shows the remainder whatever its own clock says).
@@ -150,7 +151,13 @@ export function mountHostBriefing(stage: HTMLElement, session: Pick<AppSession, 
   return layer;
 }
 
-/** The instructor's "End briefing", with the time left; shown only while a briefing runs. */
+/** A running briefing's whole seconds left, on the host's clock. */
+export const briefingLeftS = (b: Pick<BriefingNotice, 'durationS' | 'startedAt'>): number => Math.max(0, Math.ceil(b.durationS - (epochNow() - b.startedAt) / 1000 - 1e-9));
+
+/** Instructor v2's status line while a briefing runs (beside its End briefing): "Case briefing on every screen · 0:48 left". */
+export const briefingStatusText = (leftS: number): string => `Case briefing on every screen · ${mmss(leftS)} left`;
+
+/** Today's Instructor view's "End briefing", with the time left; shown only while a briefing runs. */
 export function briefingEnd(session: Pick<AppSession, 'onBriefing' | 'endBriefing'>): HTMLElement {
   const left = h('span', { class: 'cb-end-t' });
   const el = h('div', { class: 'cb-end', role: 'group', 'aria-label': "The learners' case briefing", hidden: true },
@@ -161,7 +168,7 @@ export function briefingEnd(session: Pick<AppSession, 'onBriefing' | 'endBriefin
     timer = null;
     el.hidden = !b;
     if (!b) return;
-    const draw = () => setText(left, mmss(Math.max(0, Math.ceil(b.durationS - (epochNow() - b.startedAt) / 1000 - 1e-9))));
+    const draw = () => setText(left, mmss(briefingLeftS(b)));
     draw();
     timer = setInterval(draw, 500);
   });
