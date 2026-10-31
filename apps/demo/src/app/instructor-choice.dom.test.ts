@@ -100,10 +100,11 @@ describe('every route to the instructor opens the chosen view', () => {
 
   it('the monitor\'s strip: "Instructor view" follows the choice each time the monitor opens', () => {
     const site = { ...DEFAULT_SITE };
-    const stage = document.createElement('div');
-    document.body.append(stage);
-    const v = monitorView(stage, { session: { onLearner: () => () => undefined } as never, link: {} as never, learnerUrl: 'about:blank', instructor: () => site.instructor });
-    const link = () => [...stage.querySelectorAll('a')].find((a) => a.textContent === 'Instructor view')?.getAttribute('href');
+    const v = monitorView({ session: { onLearner: () => () => undefined } as never, link: {} as never, learnerUrl: 'about:blank', instructor: () => site.instructor });
+    document.body.append(v.el);
+    // the strip lives in the Monitor view's own row under the stage (#203), not inside the stage
+    const strip = v.el.querySelector('[role="toolbar"][aria-label="Monitor view"]') as HTMLElement;
+    const link = () => [...strip.querySelectorAll('a')].find((a) => a.textContent === 'Instructor view')?.getAttribute('href');
     v.enter?.('');
     expect(link()).toBe('#/teach');
     site.instructor = 'teach2';
