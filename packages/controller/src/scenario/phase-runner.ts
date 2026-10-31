@@ -13,7 +13,11 @@
 //   taking of an action, the scenario clock), as one command batch labelled card-set, never graded. An entry anchored on
 //   an action's taking carries the press's stage group, so the driver sends it with the press, on the press's tick.
 // - A phase with `holdS` (the owner's 60-s boundary hold, 31 October) is entered only once its rule has held without a
-//   break for that long (unpaused sim seconds, counted from the rule's true edge).
+//   break for that long (unpaused sim seconds, counted from the rule's true edge). An `unchanged` leaf is the rule's
+//   guard that the team has not changed what it reads (the set ventilation: "rising at unchanged ventilation"); a hold
+//   once started is NOT broken by that guard's change, which is the team's response to what the rule saw, nor by what
+//   follows from it (decision D1, review B1): when the rule falls with one of its guards false, the hold is latched and
+//   runs on to its end. A rule that falls with every guard still true (the course itself turned) starts the hold again.
 // - The phase timeline, the administration record (record(); the driver fills it, F3), the edges, the rings and the script entries fired are
 //   all in the plain-JSON state (`pme-scenario-runner/2`): a bookmark restores them and the run log replays them.
 import type { ScenarioEvent, SensorId } from '../protocol.ts';
@@ -21,7 +25,7 @@ import type { VitalHold } from './runner.ts';
 import { compare } from './runner.ts';
 import { EPS, holds, namedRules, slopePerMin, spreadPct, walkLeaves, windowOf, type NamedRule, type RuleCtx } from './rules.ts';
 import type { DocCommand } from './types.ts';
-import type { Administration, Phase, PhaseEntry, PhaseRunnerState, RuleEdge, RunnerInputV2, ScenarioDocV2, ScriptEntry } from './types-v2.ts';
+import type { Administration, Phase, PhaseEntry, PhaseRule, PhaseRunnerState, RuleEdge, RunnerInputV2, ScenarioDocV2, ScriptEntry } from './types-v2.ts';
 
 export type PhaseRunnerEffect =
   | {
@@ -199,6 +203,7 @@ export class PhaseRunner {
     let edged = false;
     if (!this.s.paused) {
       const now = new Map<string, boolean>();
+      const candidates = new Set(this.state().next ?? []);
       for (const nr of this.rules) {
         const v = holds(nr.rule, nr.name, nr.rank, this.ctx);
         const was = this.s.ruleNow[nr.name] ?? false;
@@ -209,8 +214,14 @@ export class PhaseRunner {
         this.s.ruleNow[nr.name] = v;
         now.set(nr.name, v);
         if (nr.name.startsWith('phase:')) {
+          const id = nr.name.slice(6);
           const hf = (this.s.holdFor ??= {});
-          hf[nr.name.slice(6)] = v && was ? (hf[nr.name.slice(6)] ?? 0) + dt : 0;
+          // D1: the guard's change during a running hold of a phase that may follow this one latches the hold (it started
+          // on a true rule: `was`)
+          if (!v && was && candidates.has(id) && (this.byId.get(id)?.holdS ?? 0) > 0 && this.guardBroken(nr)) (this.s.latched ??= {})[id] = true;
+          const latched = this.s.latched?.[id] === true;
+          hf[id] = (v && was) || latched ? (hf[id] ?? 0) + dt : 0;
+          if (latched) now.set(nr.name, true);
         }
       }
       const held = (id: string) => (this.s.holdFor?.[id] ?? 0) >= (this.byId.get(id)?.holdS ?? 0) - EPS;
@@ -274,7 +285,7 @@ export class PhaseRunner {
       const transitionId = `enter:${id}`;
       const holdS = this.byId.get(id)?.holdS ?? 0;
       if (holdS > 0) {
-        const met = this.s.ruleNow[`phase:${id}`] ?? false;
+        const met = (this.s.ruleNow[`phase:${id}`] ?? false) || this.s.latched?.[id] === true;
         const heldS = met ? (this.s.holdFor?.[id] ?? 0) : 0;
         out.push({ transitionId, key: `phase:${id}:hold`, leaf: 'hold', variable: id, op: '>=', threshold: holdS, value: heldS, met, heldS, forS: holdS, fraction: Math.min(1, heldS / holdS) });
       }
@@ -338,6 +349,16 @@ export class PhaseRunner {
       if (keep > 0) ring.splice(0, keep);
     }
     return dt;
+  }
+
+  /** Is one of the rule's guards (an `unchanged` leaf outside a `not`) false now? */
+  private guardBroken(nr: NamedRule): boolean {
+    const broken = (r: PhaseRule, key: string): boolean =>
+      'unchanged' in r ? !holds(r, key, nr.rank, this.ctx)
+      : 'all' in r ? r.all.some((x, i) => broken(x, `${key}.${i}`))
+      : 'any' in r ? r.any.some((x, i) => broken(x, `${key}.${i}`))
+      : false;
+    return broken(nr.rule, nr.name);
   }
 
   /** The `since: 'phaseStart'` references still missing: the first value after the phase's entry. */
@@ -406,6 +427,7 @@ export class PhaseRunner {
     this.s.stateT = 0;
     this.s.enteredT = t;
     this.s.phaseRef = {};
+    delete this.s.latched; // a latch is the hold of a phase not entered yet: none survives an entry
     this.refs();
     this.entered++;
     const transitionId = rule === 'initial' ? undefined : rule;

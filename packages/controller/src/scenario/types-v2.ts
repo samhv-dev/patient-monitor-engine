@@ -231,6 +231,9 @@ export interface PhaseRunnerState {
   fired: string[];
   /** Seconds each phase's entry rule has held without a break (its `holdS`), by phase id. */
   holdFor?: Record<string, number>;
+  /** A phase whose running hold an `unchanged` leaf's break latched (the team's change answered the rise: the hold runs
+   *  on to its end whatever the rule reads), by phase id; cleared at every phase entry. */
+  latched?: Record<string, true>;
   /** The value of each `since: 'phaseStart'` variable at the current phase's entry (the first value after it). */
   phaseRef?: Record<string, number>;
   /** How many times each action has been taken (an `action:<id>#<n>` script anchor). */

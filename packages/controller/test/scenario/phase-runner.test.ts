@@ -437,6 +437,56 @@ describe('PhaseRunner: a phase\'s holdS and unchanged since the phase\'s start (
   });
 });
 
+// Decision D1 (review B1, cause 1): "rising at unchanged ventilation" is the design's own leaf (§4: within ± 5 % over
+// 120 s, re-armed after a change), and the 60-s hold, once started by a true rule, is not reset by a change of what an
+// `unchanged` leaf guards (the team's response to the rise), nor by what follows from it: the hold is latched and runs
+// to its end. A rule that falls while its guards still hold (the course turned by itself) starts the hold again.
+describe('PhaseRunner: a running hold is latched by its guard\'s change (D1)', () => {
+  const RISE: PhaseRule = { all: [
+    { value: { var: 'etco2', op: '>', value: 45 } },
+    { unchanged: { var: 'setMinuteVentilationLMin', withinPct: 5, overS: 120 } },
+  ] };
+  const doc = () => card([{ id: 'a', next: ['b'] }, { id: 'b', enter: RISE, holdS: 60 }]);
+  /** EtCO₂ 50 from 200 s; the set MV 6 L/min, doubled at `change` (s); EtCO₂ falls to 40 `fallS` after the change. */
+  const feed = (change: number, fallS = 5) => (t: number) => [
+    signals({ setMinuteVentilationLMin: t >= change ? 12 : 6 }),
+    truth({ etco2: t < 200 ? 40 : t >= change + fallS ? 40 : 50 }),
+  ];
+
+  it('the call inside the hold (MV doubled at 220 s, EtCO₂ then falling): the phase is entered 60 s after the rise, not lost', () => {
+    const r = new PhaseRunner(doc());
+    r.start(0);
+    run(r, 0, 400, feed(220));
+    expect(entered(r)).toEqual([['a', 0], ['b', 260]]);
+    // the rule's own edges are still the truth: true from 200 s, false with the change
+    expect(r.edges.filter((e) => e.rule === 'phase:b').map((e) => [e.value, e.t])).toEqual([[true, 200], [false, 221]]); // the window's sample of the new MV at the next whole second
+  });
+
+  it('no latch when the course turns by itself (EtCO₂ back below 45 with the ventilation unchanged): the hold starts again', () => {
+    const r = new PhaseRunner(doc());
+    r.start(0);
+    run(r, 0, 400, (t) => [signals({ setMinuteVentilationLMin: 6 }), truth({ etco2: t >= 200 && (t < 230 || t >= 300) ? 50 : 40 })]);
+    expect(entered(r)).toEqual([['a', 0], ['b', 360]]);
+  });
+
+  it('the unchanged leaf re-arms 120 s after a change: a rise at the new ventilation is a rise again', () => {
+    const r = new PhaseRunner(doc());
+    r.start(0);
+    // MV doubled at 100 s, before any rise: the rule cannot hold until 220 s (the window spans the change until then)
+    run(r, 0, 400, (t) => [signals({ setMinuteVentilationLMin: t >= 100 ? 12 : 6 }), truth({ etco2: t >= 150 ? 50 : 40 })]);
+    expect(r.edges.filter((e) => e.rule === 'phase:b' && e.value).map((e) => e.t)[0]).toBeGreaterThanOrEqual(220);
+    expect(r.stateId).toBe('b');
+  });
+
+  it('a latch belongs to the phase\'s hold: a phase that is not a candidate of the current one is never latched, and an entry clears it', () => {
+    const r = new PhaseRunner(card([{ id: 'a', next: ['c'] }, { id: 'b', enter: RISE, holdS: 60 }, { id: 'c', enter: { value: { var: 'hr', op: '>', value: 100 } } }]));
+    r.start(0);
+    run(r, 0, 400, (t) => [...feed(220)(t), truth({ hr: 80 })]);
+    expect(r.getState().latched).toBeUndefined();
+    expect(r.stateId).toBe('a');
+  });
+});
+
 // Decision D2 (review B1, cause 2): the engine's mhExcess (the MH's dantrolene-sensitive fraction s) is a truth a rule
 // reads, as the other signals; null (no MH) is no value, and its window starts again.
 describe('PhaseRunner: mhExcess is read from the signals (D2)', () => {
