@@ -445,7 +445,7 @@ describe('ScenarioDriver: engine truth for a /2 runner only (F4)', () => {
     return [];
   };
 
-  it('a /2 runner is fed rank-3 signals, labs ph/lactate/k and endo mhActivity, with truthHz 0', async () => {
+  it('a /2 runner is fed rank-3 signals (mhActivity among them, not the endo event\'s rounded copy) and labs ph/lactate/k, with truthHz 0', async () => {
     const host = manualHost({ seed: 7 }); // truthHz 0: the truth tree is off, as for an embedder (R4)
     const driver = new ScenarioDriver({ target: host });
     const fed: RunnerInputV2[] = [];
@@ -470,13 +470,13 @@ describe('ScenarioDriver: engine truth for a /2 runner only (F4)', () => {
     const want: RunnerInputV2[] = seen.flatMap((e): RunnerInputV2[] => {
       if (e.type === 'state') return [...today(e), ...(e.rhythm?.id ? [{ kind: 'rhythm', id: e.rhythm.id } as const] : []), { kind: 'signals', signals: e.signals! }];
       if (e.type === 'labs') return [{ kind: 'values', rank: 3, values: { ph: e.values.ph, lactate: e.values.lactate, k: e.values.k } }];
-      if (e.type === 'endo') return [{ kind: 'values', rank: 3, values: { mhActivity: (e as unknown as { mhActivity: number }).mhActivity } }];
       return today(e);
     });
     expect(fed).toEqual(want);
     const sig = fed.filter((i) => i.kind === 'signals');
     expect(sig).toHaveLength(states.length);
-    expect(Object.keys(sig[0]!.signals).sort()).toEqual(['dantroleneE', 'map', 'pulse', 'setMinuteVentilationLMin']);
+    expect(Object.keys(sig[0]!.signals).sort()).toEqual(['dantroleneE', 'map', 'mhActivity', 'pulse', 'setMinuteVentilationLMin']);
+    expect(pr.value('mhActivity')).toBe(sig.at(-1)!.signals.mhActivity); // the rule's truth is the unrounded signal
   });
 
   /** A /1 demo card through the driver, its own manual transitions pressed as they come up: what its runner is fed. */
