@@ -4,10 +4,14 @@
 // Asserted: the card validates; no command refused; the engine's course is the /1 card's to the second (the /2 presses
 // send the /1 states' onEnter commands, and the condition goes with Induce in its stage group), so any difference in the
 // phase times below is the owner's phase rules and their 60-s holds, never a different patient; the phases do not
-// flap. PRINTED, not asserted: every phase entry against the /1 state entries (PME_SHOWCASE_PRINT=1 or always below).
+// flap. PRINTED: every phase entry against the /1 state entries (PME_SHOWCASE_PRINT=1 or always below). Asserted since
+// the demo-day fixes (brief fix-fv2-mh-demo-ready, decisions D1 and D2), each from the rules, not from a measurement:
+// Early signs is entered, its hold latched by the call (D1), 60 s after its rule first held, which is the same EtCO₂
+// crossing as /1's earlySigns less /1's 20-s forS, so 40 s after /1's earlySigns; Treated 60 s after its rule
+// (dantroleneE > 0.2 and mhExcess falling, D2) first held, before the second dose.
 // F3: the same path stopped at the talk's end (24:31) and graded by grade() as the debrief would (final): the table is
-// printed; asserted: dantrolene's first dose met, calcium, insulin and CPR not applicable, no violation (the call and the
-// ventilation back read otherwise on the engine: see the test's comment).
+// printed; asserted: the call, the hyperventilation, the propofol infusion, dantrolene's first dose and the ventilation
+// back met (D3's anchors and precondition), calcium, insulin and CPR not applicable, no violation.
 import { describe, expect, it } from 'vitest';
 import { grade, validateScenario, type ScenarioDocV2 } from '@pme/controller/scenario';
 import { anyShowcaseDoc, runCard, type Act, type Run } from './harness.ts';
@@ -64,9 +68,21 @@ describe('showcase-mh-v2: the MH card in pme-scenario/2 on the demo path', () =>
     // the 60-s hold: no phase lasts less than 60 s except by a later rule's own 60-s hold (no flapping)
     for (let i = 1; i < b.states.length; i++) expect(b.states[i]![0] - b.states[i - 1]![0], `${ids[i - 1]} → ${ids[i]}`).toBeGreaterThanOrEqual(60 - 1e-6);
     expect(b.states.length).toBeLessThan(20);
+
+    // D1, D2 (the derivations are in the header); one poll of slack either way
+    const at = (r: Run, id: string) => r.states.find(([, s]) => s === id)?.[0];
+    const rose = (rule: string, from = 0) => b.v2!.edges.find((e) => e.rule === rule && e.value && e.t >= from)?.t;
+    const early1 = at(a, 'earlySigns')!;
+    const early2 = at(b, 'earlySigns')!;
+    const earlyRule = rose('phase:earlySigns', at(b, 'latent'))!;
+    expect(early2 - earlyRule, 'Early signs: the hold, latched by the call at 08:12').toBeCloseTo(60, 0);
+    expect(Math.abs(early2 - early1 - (60 - 20)), `Early signs ${mmss(early2)} against /1's ${mmss(early1)}`).toBeLessThanOrEqual(2 * POLL_S + 1e-6);
+    const treated2 = at(b, 'treated')!;
+    expect(treated2 - rose('phase:treated', early2)!, 'Treated: its hold from the rule (D2)').toBeCloseTo(60, 0);
+    expect(treated2).toBeLessThan(PATH.find((p) => p.v2 === 'dantroleneAgain')!.t);
   }, SLOW);
 
-  it('graded at the talk\'s end (24:31, final): dantrolene\'s first dose met; K⁺ and CPR rows not applicable; no violation; the table printed', async () => {
+  it('graded at the talk\'s end (24:31, final): the call, its ventilation and infusion, dantrolene\'s first dose and ventilation back met; K⁺ and CPR not applicable; no violation', async () => {
     const TALK_END_S = 1471;
     const b: Run = await runCard('showcase-mh-v2', PATH.map((p) => ({ press: p.v2, action: p.v2, t: p.t })), TALK_END_S, undefined, POLL_S);
     expect(b.refused).toEqual([]);
@@ -88,17 +104,16 @@ describe('showcase-mh-v2: the MH card in pme-scenario/2 on the demo path', () =>
     console.log(lines.join('\n'));
 
     const row = (id: string) => g.actions.find((a) => a.id === id)!;
-    // NOT asserted, measured on this commit (the semantics give another answer on the engine; the card and the semantics
-    // are left as they are, for the owner):
-    // - callCrisis 'met': it reads OVERDUE 2:30. Its anchor (truth EtCO₂ > 45 held 20 s) first holds at 03:42, after
-    //   the premedication (midazolam + fentanyl, room air) and before the induction, and falls at 05:17; it holds again
-    //   at 08:06. The window is anchored on the FIRST true edge, so the call at 08:12 is 4:30 after it (120 s asked).
-    //   hyperventilate and propofolInfusion share the anchor and read overdue too.
-    // - ventilationBack 'met': it reads DEVIATION, "given before: etco2 < 40 for 120 s". Its precondition held from
-    //   10:26 to 12:57 and the press came at 13:52 (graded on that press since F6 opened the action in Latent).
-    // - dantroleneAgain: since F6 opened it in Latent it reads MET 08:12: a device action graded on the ventilator's
-    //   settings, it takes the call's 20 × 600 (admin 8), not its own press at 19:13.
-    expect(row('dantrolene').firstGrade).toBe('met'); // the first dose; its repeat row is printed, not asserted
+    // D3: the anchor EtCO₂ > 45 for 20 s held at 03:42 (premedicated, room air, before the induction), before any of the
+    // call's phases; the window now opens at its first rise after Latent's entry (08:03), so the call at 08:12 is met.
+    for (const id of ['callCrisis', 'hyperventilate', 'propofolInfusion']) expect(row(id).grade, id).toBe('met');
+    expect(row('callCrisis').dueT).toBeGreaterThan(v2.phases.find((p) => p.id === 'latent')!.t);
+    // D3: ventilation back's precondition (EtCO₂ < 40 for 120 s) held 10:26–12:32, before the press at 13:52: met
+    expect(row('ventilationBack').grade).toBe('met');
+    expect(row('dantrolene').firstGrade).toBe('met'); // the first dose
+    // NOT asserted, printed: the second dose. Its window (D3) opens at Recrudescence's entry, and on this path the card
+    // never enters Recrudescence (mhExcess keeps falling through 19:13: the first dose at its peak), so dantrolene has
+    // no repeat row and dantroleneAgain reads not applicable — /1's objective 4 reads met. For the owner (see the PR).
     expect(row('calcium').grade).toBe('not applicable');
     expect(row('insulin').grade).toBe('not applicable');
     expect(row('cpr').grade).toBe('not applicable');
