@@ -16,7 +16,7 @@ const OWNER: Record<string, string[]> = {
     'A rising EtCO₂ at the same ventilation with a rising heart rate: think of MH early.',
     'Trigger off, 100 % oxygen at high flow, hyperventilation, and dantrolene 2.5 mg/kg.',
     'Keep hyperventilating until the EtCO₂ stays down; if it climbs again, repeat dantrolene.',
-    'After the crisis: ICU 24–48 h, dantrolene 1 mg/kg every 4–6 h for 24 h (recrudescence in up to 50 %), then referral for testing and family counselling.',
+    'After the crisis: ICU 24–48 h, dantrolene 1 mg/kg every 4–6 h for 24 h (recrudescence in about 20 %, mostly within the first day), then referral for testing and family counselling.',
   ],
   'showcase-haemorrhage': [
     'Positive pressure and induction can tip a compensated bleeding patient into arrest.',
