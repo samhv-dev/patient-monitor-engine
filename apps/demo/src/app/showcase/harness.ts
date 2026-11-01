@@ -67,9 +67,9 @@ const at = (tree: Tree | null, path: string): unknown => {
 const num = (x: unknown): number => (typeof x === 'number' ? x : Number.NaN);
 
 /** Run card `id` to `untilS` of sim time, pressing `acts`; `listen` sees every engine event; the driver is polled every
- *  `pollS` of sim time (0.1 = the app at ×1; 0.8 = the app at ×8). */
-export async function runCard(id: string, acts: readonly Act[], untilS: number, listen?: (e: EngineEvent) => void, pollS = 0.1): Promise<Run> {
-  const v = validateScenario(anyShowcaseDoc(id));
+ *  `pollS` of sim time (0.1 = the app at ×1; 0.8 = the app at ×8). `doc`: a variant of the card measured in its place. */
+export async function runCard(id: string, acts: readonly Act[], untilS: number, listen?: (e: EngineEvent) => void, pollS = 0.1, doc0?: AnyScenarioDoc): Promise<Run> {
+  const v = validateScenario(doc0 ?? anyShowcaseDoc(id));
   if (!v.ok) throw new Error(`${id}: ${v.errors.join('; ')}`);
   const doc = v.doc;
   const eo = engineOptionsOf(doc, 7);
