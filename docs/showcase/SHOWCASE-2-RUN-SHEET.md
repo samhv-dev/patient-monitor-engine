@@ -984,7 +984,8 @@ ventilation-back button comes back only after EtCO₂ has been below 45 for a mi
 **Say (the contrast, measured):** had we waited for the established crisis (Stages 10, 11 and 13 did), the call comes
 at 18:57, 12 min 05 s after the early signs: EtCO₂ 81, HR 146, core temperature 39.3 °C, lactate 6.8, pH 7.09, K⁺ 5.8,
 and EtCO₂ never back below 40 by 35:00 [MEAS §1, late call]. Untreated, this build (E131) does not arrest within
-51 min of the succinylcholine: no VF, core 37.3 °C, K⁺ at most 6.8 [S1 untreated E131; `docs/validation/known-misses.md`,
+51 min of the succinylcholine: no VF, core 38.7 °C (38.5 °C at +45.6 min: 0.76 °C per 15 min, the registries' median
+rate, E131-2), K⁺ at most 6.8 [S1 untreated E131; `docs/validation/known-misses.md`,
 S1 untreated]. Honesty: that is too slow (before E131 it was VF at 42.3 °C at 44.7 min, which the literature review
 found too fast for a volatile trigger), and no human EtCO₂ time course stands behind the "40 → 60 by 10 min" band
 [R00 2026-10-11 "LITERATURE 29"; SYN (a) item 11].

@@ -99,7 +99,10 @@ export const EMERGE_TAU_S = 600;
  * mL/kg/min, × 1.8 (Gronert GA et al., Anesthesiology 1986;64:24–28); the muscle's increase extrapolated to the whole
  * musculature ≈ the whole-body increase, ≈ 6 mL/kg/min (Gronert GA, Heffron JJ, Milde JH, Theye RA, Can Anaesth Soc J
  * 1977;24:103–109) — on a human 3.5 mL/kg/min resting VO2 that is × 2.7. A review gives "5-fold" as the upper extreme
- * (Nelson TE, Biosci Rep 2001;21:169–179) [P abstracts; no human calorimetry found].
+ * (Nelson TE, Biosci Rep 2001;21:169–179) [P abstracts; no human calorimetry found]. E131-2 check against man: with
+ * the heat kept in the core (#209) the untreated core rises 0.76 °C per 15 min at full activity; the human registry's
+ * MAXIMAL rate of core rise in grade 5–6 MH is 0.80 (IQR 0.50–1.00) °C per 15 min (Toyota Y et al., Biomed Res Int
+ * 2023;2023:8340209, full text; research/e131-2-mh-heat-evidence.md) — the median case. Not changed.
  */
 export const MH_VO2_PEAK_X = 2.5;
 /**
