@@ -8,8 +8,9 @@
 // the demo-day fixes (brief fix-fv2-mh-demo-ready, decisions D1 and D2), each from the rules, not from a measurement:
 // Early signs is entered 20 s after its rule first held (its hold since the owner's ruling of 1 November, brief
 // fv2-mh-early-hold-20-nov1: the /1 card's own 20-s settle; it was 60 s, latched by the call, D1), and that rule is the
-// same EtCO₂ crossing as /1's earlySigns less /1's 20-s forS, so Early signs comes at /1's earlySigns (08:03), before the
-// call at 08:12: on this path the latch (D1) is not reached.
+// same EtCO₂ crossing as /1's earlySigns less /1's 20-s forS, so Early signs comes at /1's earlySigns (08:10 since the
+// preoxygenation-first order of 1 November; 08:03 before it), before the call at 08:12: on this path the latch (D1) is
+// not reached.
 // Since the owner's rules of 1 November (brief fv2-mh-phase-rules-nov1; Recovering = after Treated, EtCO₂ < 45 and not
 // rising over 120 s; Recrudescence = after Recovering, EtCO₂ > 45 and rising over 120 s; rising = slope ≥ 1 mmHg/min,
 // both at whatever ventilation is set) and the two changes proposed for the owner's ruling the same day (brief
@@ -143,8 +144,9 @@ describe('showcase-mh-v2: the MH card in pme-scenario/2 on the demo path', () =>
     console.log(lines.join('\n'));
 
     const row = (id: string) => g.actions.find((a) => a.id === id)!;
-    // D3: the anchor EtCO₂ > 45 for 20 s held at 03:42 (premedicated, room air, before the induction), before any of the
-    // call's phases; the window now opens at its first rise after Latent's entry (08:03), so the call at 08:12 is met.
+    // D3: the anchor EtCO₂ > 45 for 20 s held at 04:16 (premedicated on the mask, 03:42 on room air before the order of
+    // 1 November), before any of the call's phases; the window now opens at its first rise after Latent's entry (08:10;
+    // 08:03 before), so the call at 08:12 is met.
     for (const id of ['callCrisis', 'hyperventilate', 'propofolInfusion']) expect(row(id).grade, id).toBe('met');
     expect(row('callCrisis').dueT).toBeGreaterThan(v2.phases.find((p) => p.id === 'latent')!.t);
     // D3: ventilation back's precondition (EtCO₂ < 40 for 120 s) held 10:26–12:32, before the press at 13:52: met

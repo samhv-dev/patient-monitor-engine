@@ -100,10 +100,10 @@ Before the talk: the three model-page tabs loaded, to the right of the instructo
 | Slot (T+) | Clock | Look at | Press | Say |
 |---|---|---|---|---|
 | ≈ 0:30 (≈ 3:30) | 0:00 | HR 69, ART 122/80; room air | **Load · All alarms on · Bookmark · ×8** | "Awake on the table, monitoring on, breathing room air." |
-| | 0:30 | | **Premedicate: midazolam 2 mg, fentanyl 100 µg** | |
-| | 1:00 | RR 13, SpO₂ 96 | **Preoxygenate: 100 % O₂ by face mask** | "Oxygen is never implicit: we give it." |
-| | **4:00** | RR 6 after the premedication (`RR TOO LOW` 3:09) | **Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg** | the masseter line (below) |
-| | **5:00** | `CO2 APNEA` 4:49; **SpO₂ 99** | **Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %** | "SpO₂ 99 through the apnoea: he was preoxygenated." |
+| | 0:30 | RR 14, SpO₂ 96 on room air | **Preoxygenate: 100 % O₂ by face mask** | "Oxygen is never implicit: we give it, and we give it first: the opioid blunts the breathing, so preoxygenating after it would work less well." |
+| | 1:00 | SpO₂ 99 on the mask, RR 13 | **Premedicate: midazolam 2 mg, fentanyl 100 µg** | "Premedicated on the mask: it stays on until the tube." |
+| | **4:00** | RR 6 after the premedication (`RR TOO LOW` 3:59) | **Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg** | the masseter line (below) |
+| | **5:00** | `CO2 APNEA` 4:54; **SpO₂ 99** | **Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %** | "SpO₂ 99 through the apnoea: he was preoxygenated." |
 | | **6:00** | EtCO₂ 42, HR 71 | **Start surgery: rocuronium 0.6 mg/kg** | "The premedication and the apnoea raised his CO₂ stores; on the ventilator the EtCO₂ should now fall." |
 | | 7:30 | EtCO₂ 45, HR 75 | **×4** | "Same ventilation. Watch the CO₂ tile." |
 | ≈ 1:44 (≈ 4:44) | **8:09** | state **Early signs**: **EtCO₂ 46, HR 78**, ART 107/67; T1 36.5 | **Pause** at once (8:10). **Do not call yet** | "The EtCO₂ is rising when it should be falling. Let us look inside." → STOP 1 |
@@ -112,7 +112,7 @@ Before the talk: the three model-page tabs loaded, to the right of the instructo
 anaesthetic from now on and close watch of the EtCO₂; today the volatile stays to show the crisis. Rigidity plus a
 rising EtCO₂ makes two signs."
 
-**Traps:** skip Preoxygenate and SpO₂ falls to ≈ 62 % before the tube. Pause at the early signs, not later: the call
+**Traps:** skip Preoxygenate (Premedicate first, on room air) and SpO₂ falls to ≈ 65 % before the tube. Pause at the early signs, not later: the call
 after stop 1 still lands 3 s after Early signs on the clock.
 
 <div style="page-break-after: always;"></div>

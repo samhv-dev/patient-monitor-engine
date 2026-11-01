@@ -37,7 +37,8 @@ const PATH: Array<{ t: number; v1: string; v2: string }> = [
 ];
 /** The run of show's four pauses (after the first fast-forward, after span 1, after span 2, the end) and 08:45, the
  *  pause the owner would use on /2 for Early signs while it was held 60 s (08:43); with the 20-s hold of 1 November
- *  Early signs comes at 08:03 and reads at the run sheet's own 08:05 pause. */
+ *  Early signs came at 08:03 and read at the run sheet's own 08:05 pause; since the preoxygenation-first order of
+ *  1 November it comes at 08:10 (harness), after that pause and 2 s before the call at 08:12. */
 const PAUSES = [485, 525, 825, 1145, 1464];
 const END_S = 1464;
 /** Run on to the hour, past the talk, so a late phase is still printed and the entries per hour are counted. */
