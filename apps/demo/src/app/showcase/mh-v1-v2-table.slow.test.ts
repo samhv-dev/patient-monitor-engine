@@ -4,7 +4,12 @@
 // table can be regenerated after an engine change (both cards' times would shift) without redoing the work:
 //   PME_TEST_SET=showcase npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/app/showcase/mh-v1-v2-table.slow.test.ts
 // MH_TABLE_V2=<showcase card id> measures another /2 card file of this folder in place of showcase-mh-v2 (a variant
-// under study). PRINT ONLY: the times are pinned in malignant-hyperthermia(-v2).slow.test.ts; this file asserts only that
+// under study). MH_TABLE_CALL=earlySigns presses the call at the /2 card's first Early signs reading (as a team that
+// waits for the strip does: the kit round) and dantrolene 20 s after it (the run sheet's gap), instead of at the run
+// sheet's 08:12 and 08:32; the other presses stay at their run-sheet times, and the /1 card is pressed at the same
+// times. MH_TABLE_EARLY_HOLD=<s> measures the /2 card with Early signs' hold at <s> seconds instead of the card's 20 (a
+// variant held in memory; the card file is unchanged; 60 is the hold before the owner's ruling of 1 November). Section 4 is the hyperventilation's EtCO₂ and the ventilation-back
+// precondition (EtCO₂ < 40 for 120 s, truth). PRINT ONLY: the times are pinned in malignant-hyperthermia(-v2).slow.test.ts; this file asserts only that
 // every press was taken, nothing was refused, and both cards drove the same patient.
 // /1's Debrief rows are objectives() on the run record wired as AppSession wires it (the Debrief's own reader); /2's are
 // grade() on the phase runner's timeline, record and edges, final, as the Debrief grades after "Finish the case". The
@@ -16,7 +21,7 @@ import { engineOptionsOf, grade, ScenarioDriver, validateScenario, type Scenario
 import { expect, it } from 'vitest';
 import { objectives } from '../debrief.ts';
 import { RunRecord } from '../record.ts';
-import { anyShowcaseDoc, runCard } from './harness.ts';
+import { anyShowcaseDoc, runCard, type Act } from './harness.ts';
 
 /** The run sheet's demo path (the presses of malignant-hyperthermia-v2.slow.test.ts): /1 button label, /2 action id. */
 const PATH: Array<{ t: number; v1: string; v2: string }> = [
@@ -30,18 +35,28 @@ const PATH: Array<{ t: number; v1: string; v2: string }> = [
   { t: 832, v1: 'EtCO₂ normal: ventilation back to 12 × 500', v2: 'ventilationBack' }, // 13:52
   { t: 1153, v1: 'Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600, O₂ 100 %)', v2: 'dantroleneAgain' }, // 19:13
 ];
-/** The run of show's four pauses: after the first fast-forward, after span 1, after span 2, the end. */
-const PAUSES = [485, 825, 1145, 1464];
+/** The run of show's four pauses (after the first fast-forward, after span 1, after span 2, the end) and 08:45, the
+ *  pause the owner would use on /2 for Early signs while it was held 60 s (08:43); with the 20-s hold of 1 November
+ *  Early signs comes at 08:03 and reads at the run sheet's own 08:05 pause. */
+const PAUSES = [485, 525, 825, 1145, 1464];
 const END_S = 1464;
-/** Run on past the talk so a late phase is still printed. */
-const RUN_S = 1800;
+/** Run on to the hour, past the talk, so a late phase is still printed and the entries per hour are counted. */
+const RUN_S = 3600;
 const POLL_S = 0.4; // the app's poll at ×4
 const V2 = process.env.MH_TABLE_V2 ?? 'showcase-mh-v2';
+const CALL_AT_EARLY = process.env.MH_TABLE_CALL === 'earlySigns';
+const EARLY_HOLD = process.env.MH_TABLE_EARLY_HOLD ? Number(process.env.MH_TABLE_EARLY_HOLD) : undefined;
+/** The /2 card measured: the file, or its variant with Early signs' hold changed (in memory). */
+function v2Doc(): ScenarioDocV2 {
+  const d = structuredClone(anyShowcaseDoc(V2)) as ScenarioDocV2;
+  if (EARLY_HOLD !== undefined) for (const p of d.phases) if (p.id === 'earlySigns') p.holdS = EARLY_HOLD;
+  return d;
+}
 
 const mmss = (t: number | undefined) => (t === undefined ? 'never' : `${String(Math.floor(t / 60)).padStart(2, '0')}:${(t % 60).toFixed(1).padStart(4, '0')}`);
 
 /** The /1 card on the engine with its presses, its record wired as the app's (HostSession → hub → RunRecord). */
-async function v1Run(untilS: number): Promise<{ rec: RunRecord; states: Array<[number, string]>; pressed: number[] }> {
+async function v1Run(untilS: number, times: readonly number[]): Promise<{ rec: RunRecord; states: Array<[number, string]>; pressed: number[] }> {
   const v = validateScenario(anyShowcaseDoc('showcase-mh'));
   if (!v.ok) throw new Error(v.errors.join('; '));
   const doc = v.doc as ScenarioDoc;
@@ -65,7 +80,7 @@ async function v1Run(untilS: number): Promise<{ rec: RunRecord; states: Array<[n
     const t = Math.round(n * POLL_S * 1000) / 1000;
     engine.advanceTo(t);
     driver.poll();
-    const i = pressed.findIndex((x, k) => Number.isNaN(x) && t >= (PATH[k] as { t: number }).t - 1e-9);
+    const i = pressed.findIndex((x, k) => Number.isNaN(x) && t >= (times[k] as number) - 1e-9);
     if (i >= 0 && (i === 0 || !Number.isNaN(pressed[i - 1] as number))) {
       const tr = driver.runner?.state().transitions?.find((x) => manualLabel(x.when) === (PATH[i] as { v1: string }).v1);
       if (tr) {
@@ -81,24 +96,35 @@ async function v1Run(untilS: number): Promise<{ rec: RunRecord; states: Array<[n
 }
 
 it(`the MH table: /1 (showcase-mh) against /2 (${V2}) on the demo path, printed`, async () => {
-  const a = await v1Run(RUN_S);
-  const b = await runCard(V2, PATH.map((p) => ({ press: p.v2, action: p.v2, t: p.t })), RUN_S, undefined, POLL_S);
+  // the /2 run first: with MH_TABLE_CALL=earlySigns its call is pressed at the first Early signs reading, and the /1
+  // card is then pressed at the /2 run's press times, so both cards drive the same patient
+  const early = (s: { state: string }) => s.state === 'earlySigns';
+  const acts2: Act[] = PATH.map((p) => (CALL_AT_EARLY && p.v2 === 'callCrisis' ? { press: p.v2, action: p.v2, when: early }
+    : CALL_AT_EARLY && p.v2 === 'dantrolene' ? { press: p.v2, action: p.v2, when: early, delayS: 20 }
+    : { press: p.v2, action: p.v2, t: p.t }));
+  const etco2T: Array<[number, number]> = []; // the truth the precondition reads (the state event's values)
+  const v2doc = v2Doc();
+  const b = await runCard(V2, acts2, RUN_S, (e) => {
+    const v = (e as { type: string; values?: Record<string, unknown> }).values?.etco2;
+    if (e.type === 'state' && typeof v === 'number') etco2T.push([e.t, v]);
+  }, POLL_S, v2doc);
+  expect(b.pressed.every((x) => !Number.isNaN(x)), `/2 presses ${b.pressed.join(' ')}`).toBe(true);
+  const a = await v1Run(RUN_S, b.pressed);
   expect(a.pressed.every((x) => !Number.isNaN(x)), `/1 presses ${a.pressed.join(' ')}`).toBe(true);
   expect(b.pressed).toEqual(a.pressed);
   expect(b.refused).toEqual([]);
   // the same patient (the harness's /1 run against the /2 run, every second; malignant-hyperthermia-v2 asserts it too)
-  const a1 = await runCard('showcase-mh', PATH.map((p) => ({ press: p.v1, t: p.t })), RUN_S, undefined, POLL_S);
+  const a1 = await runCard('showcase-mh', PATH.map((p, i) => ({ press: p.v1, t: b.pressed[i] as number })), RUN_S, undefined, POLL_S);
   expect(b.rows.map(({ state: _s, ...x }) => x)).toEqual(a1.rows.map(({ state: _s, ...x }) => x));
 
   const v1doc = anyShowcaseDoc('showcase-mh') as ScenarioDoc;
-  const v2doc = anyShowcaseDoc(V2) as ScenarioDocV2;
   const label1 = (id: string) => v1doc.states.find((s) => s.id === id)?.label ?? id;
   const label2 = (id: string) => v2doc.phases.find((p) => p.id === id)?.label ?? id;
   const nth = (xs: Array<[number, string]>, id: string, n = 1) => xs.filter(([, s]) => s === id)[n - 1]?.[0];
   const at = (xs: Array<[number, string]>, t: number) => xs.filter(([s]) => s <= t + 1e-9).at(-1)?.[1] ?? '';
   const S1 = a1.states; // the harness's /1 run: the same driver loop as the /2 run (the host-wired run is for the Debrief)
   const S2 = b.states;
-  const L: string[] = [`MH table: /1 showcase-mh vs /2 ${V2}; presses ${PATH.map((p) => mmss(p.t).slice(0, 5)).join(', ')}; poll ${POLL_S} s`];
+  const L: string[] = [`MH table: /1 showcase-mh vs /2 ${V2}${EARLY_HOLD !== undefined ? ` (VARIANT: Early signs hold ${EARLY_HOLD} s)` : ''}; presses ${b.pressed.map((t) => mmss(t)).join(', ')}${CALL_AT_EARLY ? ' (the call at the first Early signs reading, dantrolene 20 s later)' : ' (the run sheet)'}; poll ${POLL_S} s`];
   L.push('', '1. Phase entries (/1 state | /2 phase)');
   const rows: Array<[string, number | undefined, string, number | undefined]> = [
     ['Latent', nth(S1, 'surgery'), '(/1: surgery, by its press)', nth(S2, 'latent')],
@@ -114,8 +140,8 @@ it(`the MH table: /1 (showcase-mh) against /2 (${V2}) on the demo path, printed`
   L.push(`  /1 host-wired run (its Debrief below): ${a.states.map(([t, s]) => `${s} ${mmss(t)}`).join(', ')}`);
   L.push(`  /2 all: ${S2.map(([t, s]) => `${s} ${mmss(t)}`).join(', ')}`);
   const short = S2.slice(1).map(([t, s], i) => [s, t - (S2[i] as [number, string])[0], S2[i]?.[1]] as const).filter(([, d]) => d < 60 - 1e-6);
-  L.push(`  /2 phases held < 60 s: ${short.length ? short.map(([s, d, prev]) => `${prev} for ${d.toFixed(1)} s before ${s}`).join('; ') : 'none'}; entries ${S2.length}`);
-  L.push('', '2. The strip at the four pauses (/1 | /2)');
+  L.push(`  /2 phases held < 60 s: ${short.length ? short.map(([s, d, prev]) => `${prev} for ${d.toFixed(1)} s before ${s}`).join('; ') : 'none'}; entries ${S2.length} in ${RUN_S / 60} min`);
+  L.push('', '2. The strip at the four pauses and 08:45 (/1 | /2)');
   for (const t of PAUSES) L.push(`  ${mmss(t).slice(0, 5)}  /1 ${label1(at(S1, t))}  |  /2 ${label2(at(S2, t))}`);
   L.push('', `3. Debrief at ${mmss(END_S).slice(0, 5)} (/1 objectives(); /2 grade(), final)`);
   const end1 = a.rec.data;
@@ -129,5 +155,24 @@ it(`the MH table: /1 (showcase-mh) against /2 (${V2}) on the demo path, printed`
     L.push(`  /2 ${x.id.padEnd(17)} ${x.grade.padEnd(15)} due ${mmss(x.dueT)}${x.windowS !== undefined ? ` +${x.windowS} s` : ''}, given ${mmss(x.givenT)}${reps}${x.lines.length ? ` | ${x.lines.join('; ')}` : ''}`);
   }
   L.push(`  /2 violations: ${g.violations.length}`);
+  // 4. the hyperventilation: from the call to ventilation back, the EtCO₂ minimum and the longest run under 40 (truth,
+  // which the precondition reads; and the monitor's number), and the precondition's edges
+  const [callT, backT] = [b.pressed[PATH.findIndex((p) => p.v2 === 'callCrisis')] as number, b.pressed[PATH.findIndex((p) => p.v2 === 'ventilationBack')] as number];
+  const under = (xs: Array<[number, number]>) => {
+    let best = 0, from = Number.NaN, bestFrom = Number.NaN, min = Infinity, minT = Number.NaN;
+    for (const [t, v] of xs) {
+      if (t < callT || t > backT) continue;
+      if (v < min) [min, minT] = [v, t];
+      if (v < 40) {
+        if (Number.isNaN(from)) from = t;
+        if (t - from + 1 > best) [best, bestFrom] = [t - from + 1, from];
+      } else from = Number.NaN;
+    }
+    return `min ${min.toFixed(1)} at ${mmss(minT)}; longest under 40: ${best.toFixed(0)} s${best ? ` from ${mmss(bestFrom)}` : ''}`;
+  };
+  L.push('', `4. The hyperventilation, call ${mmss(callT)} to ventilation back ${mmss(backT)}`);
+  L.push(`  EtCO₂ truth (the precondition's): ${under(etco2T)}`);
+  L.push(`  EtCO₂ monitor (1 Hz number):      ${under(b.rows.filter((r) => r.etco2 !== null).map((r) => [r.t, r.etco2 as number]))}`);
+  L.push(`  ventilationBack precondition (EtCO₂ < 40 for 120 s) edges: ${v2.edges.filter((e) => e.rule === 'action:ventilationBack:precondition' && e.t <= END_S + 1e-9).map((e) => `${e.value ? 'true' : 'false'} ${mmss(e.t)}`).join(', ') || 'none'}`);
   console.log(L.join('\n'));
 }, 900_000);

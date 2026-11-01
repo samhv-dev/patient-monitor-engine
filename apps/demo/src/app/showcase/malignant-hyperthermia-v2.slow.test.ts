@@ -3,20 +3,25 @@
 // driven on the same path on the same commit (the F0 goldens are local-only, so the reference is re-derived here).
 // Asserted: the card validates; no command refused; the engine's course is the /1 card's to the second (the /2 presses
 // send the /1 states' onEnter commands, and the condition goes with Induce in its stage group), so any difference in the
-// phase times below is the owner's phase rules and their 60-s holds, never a different patient; the phases do not
+// phase times below is the owner's phase rules and their holds, never a different patient; the phases do not
 // flap. PRINTED: every phase entry against the /1 state entries (PME_SHOWCASE_PRINT=1 or always below). Asserted since
 // the demo-day fixes (brief fix-fv2-mh-demo-ready, decisions D1 and D2), each from the rules, not from a measurement:
-// Early signs is entered, its hold latched by the call (D1), 60 s after its rule first held, which is the same EtCO₂
-// crossing as /1's earlySigns less /1's 20-s forS, so 40 s after /1's earlySigns; Treated 60 s after its rule
-// (dantroleneE > 0.2 and mhExcess falling, D2) first held, before the second dose.
+// Early signs is entered 20 s after its rule first held (its hold since the owner's ruling of 1 November, brief
+// fv2-mh-early-hold-20-nov1: the /1 card's own 20-s settle; it was 60 s, latched by the call, D1), and that rule is the
+// same EtCO₂ crossing as /1's earlySigns less /1's 20-s forS, so Early signs comes at /1's earlySigns (08:03), before the
+// call at 08:12: on this path the latch (D1) is not reached.
 // Since the owner's rules of 1 November (brief fv2-mh-phase-rules-nov1; Recovering = after Treated, EtCO₂ < 45 and not
 // rising over 120 s; Recrudescence = after Recovering, EtCO₂ > 45 and rising over 120 s; rising = slope ≥ 1 mmHg/min,
-// both at whatever ventilation is set), also from the rules: Recovering one poll after Treated (its rule has held since
-// the call's hyperventilation brought the EtCO₂ down, 08:25, so its 60-s hold ran out before Treated was entered);
+// both at whatever ventilation is set) and the two changes proposed for the owner's ruling the same day (brief
+// fv2-mh-treated-rule-hold-nov1: Treated = the dantrolene effect rising, slope over 60 s above 0.02/min; a phase's
+// hold counts from when the phase is reachable from the current one), also from the rules: Treated 60 s after its rule
+// first held, after Early signs (the first dose's rise passes 0.02/min at 08:57); Recovering 60 s after Treated (its
+// rule has held since the call's hyperventilation brought the EtCO₂ down, 08:25: the hold counts from reachability);
 // Recrudescence 60 s after its rule first held in Recovering (the climb after the ventilation back, 13:52); the second
-// Treated one poll after it (Treated's rule has held since 09:58); the second Recovering 60 s after its rule held again
-// (the EtCO₂ under 45 after the second dose), before the talk's end. The two one-poll phases are the measured defect
-// the PR reports, pinned by name: any other phase shorter than its 60-s hold still fails.
+// Treated 60 s after its rule held again, after the second dose (19:13; the first dose's effect only decays before it);
+// the second Recovering 60 s after its rule held again (the EtCO₂ under 45 after the second dose), before the talk's
+// end. Every phase after Early signs holds 60 s, and no phase lasts less than 60 s (unchanged by the 20-s hold: Latent,
+// the phase before Early signs, lasts 106 s).
 // F3: the same path stopped at the talk's end (24:31) and graded by grade() as the debrief would (final): the table is
 // printed; asserted: the call, the hyperventilation, the propofol infusion, dantrolene's first dose and the ventilation
 // back met (D3's anchors and precondition), the second dose met in the window Recrudescence opens, calcium, insulin and
@@ -74,41 +79,37 @@ describe('showcase-mh-v2: the MH card in pme-scenario/2 on the demo path', () =>
     const ids = b.states.map(([, id]) => id);
     expect(ids[0]).toBe('baseline');
     expect(ids).toContain('latent');
-    // the 60-s hold: no phase lasts less than 60 s (no flapping), except the two one-poll phases of the owner's rules of
-    // 1 November on this path, named (header): Treated → Recovering and Recrudescence → Treated
-    const ONE_POLL = ['treated → recovering', 'recrudescence → treated'];
+    // the holds: no phase lasts less than 60 s (no flapping; Early signs' 20-s hold ends Latent, which lasts 106 s)
     const short: string[] = [];
-    for (let i = 1; i < b.states.length; i++) {
-      const d = b.states[i]![0] - b.states[i - 1]![0];
-      if (d >= 60 - 1e-6) continue;
-      short.push(`${ids[i - 1]} → ${ids[i]}`);
-      expect(d, `${ids[i - 1]} → ${ids[i]}: one poll`).toBeCloseTo(POLL_S, 6);
-    }
-    expect(short).toEqual(ONE_POLL);
+    for (let i = 1; i < b.states.length; i++) if (b.states[i]![0] - b.states[i - 1]![0] < 60 - 1e-6) short.push(`${ids[i - 1]} → ${ids[i]}`);
+    expect(short).toEqual([]);
     expect(b.states.length).toBeLessThan(20);
 
-    // D1, D2 (the derivations are in the header); one poll of slack either way
+    // D1 and the rules (the derivations are in the header); one poll of slack either way
     const at = (r: Run, id: string) => r.states.find(([, s]) => s === id)?.[0];
     const rose = (rule: string, from = 0) => b.v2!.edges.find((e) => e.rule === rule && e.value && e.t >= from)?.t;
     const early1 = at(a, 'earlySigns')!;
     const early2 = at(b, 'earlySigns')!;
     const earlyRule = rose('phase:earlySigns', at(b, 'latent'))!;
-    expect(early2 - earlyRule, 'Early signs: the hold, latched by the call at 08:12').toBeCloseTo(60, 0);
-    expect(Math.abs(early2 - early1 - (60 - 20)), `Early signs ${mmss(early2)} against /1's ${mmss(early1)}`).toBeLessThanOrEqual(2 * POLL_S + 1e-6);
+    expect(early2 - earlyRule, 'Early signs: its 20-s hold from its rule, before the call at 08:12').toBeCloseTo(20, 0);
+    expect(Math.abs(early2 - early1 - (20 - 20)), `Early signs ${mmss(early2)} against /1's ${mmss(early1)}`).toBeLessThanOrEqual(2 * POLL_S + 1e-6);
     const treated2 = at(b, 'treated')!;
-    expect(treated2 - rose('phase:treated', early2)!, 'Treated: its hold from the rule (D2)').toBeCloseTo(60, 0);
+    expect(treated2 - rose('phase:treated', early2)!, 'Treated: its hold from the rule, which rose after Early signs').toBeCloseTo(60, 0);
     expect(treated2).toBeLessThan(PATH.find((p) => p.v2 === 'dantroleneAgain')!.t);
     // the owner's rules of 1 November (header); nth entry of a phase
     const nth = (id: string, n: number) => b.states.filter(([, s]) => s === id)[n - 1]?.[0];
     const t = (id: string) => PATH.find((p) => p.v2 === id)!.t;
     expect(ids.slice(ids.indexOf('treated'))).toEqual(['treated', 'recovering', 'recrudescence', 'treated', 'recovering']);
-    expect(nth('recovering', 1)! - treated2, 'Recovering: one poll after Treated').toBeCloseTo(POLL_S, 6);
+    expect(nth('recovering', 1)! - treated2, 'Recovering: its hold from Treated\'s entry, when it became reachable').toBeCloseTo(60, 0);
     expect(rose('phase:recovering', t('callCrisis'))!, 'Recovering\'s rule held from the call\'s hyperventilation').toBeLessThan(t('dantrolene'));
     const recrud = nth('recrudescence', 1)!;
     expect(recrud - rose('phase:recrudescence', t('ventilationBack'))!, 'Recrudescence: its hold from the climb after ventilation back').toBeCloseTo(60, 0);
-    expect(nth('treated', 2)! - recrud, 'the second Treated: one poll after Recrudescence').toBeCloseTo(POLL_S, 6);
+    const treatedRule2 = rose('phase:treated', recrud)!;
+    expect(treatedRule2, 'Treated\'s rule rises again only with the second dose').toBeGreaterThan(t('dantroleneAgain'));
+    expect(nth('treated', 2)! - treatedRule2, 'the second Treated: its hold from that rise').toBeCloseTo(60, 0);
     const rec2 = nth('recovering', 2)!;
-    expect(rec2 - rose('phase:recovering', t('dantroleneAgain'))!, 'the second Recovering: its hold').toBeCloseTo(60, 0);
+    const lastRise = (rule: string, before: number) => b.v2!.edges.filter((e) => e.rule === rule && e.value && e.t <= before).at(-1)?.t as number;
+    expect(rec2 - Math.max(lastRise('phase:recovering', rec2), nth('treated', 2)!), 'the second Recovering: its hold, from its rule or Treated\'s entry, the later').toBeCloseTo(60, 0);
     expect(rec2, 'the second Recovering before the end pause, 24:24').toBeLessThan(1464);
   }, SLOW);
 

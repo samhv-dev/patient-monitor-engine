@@ -487,6 +487,50 @@ describe('PhaseRunner: a running hold is latched by its guard\'s change (D1)', (
   });
 });
 
+// The hold counts from reachability (proposal of 1 November, brief fv2-mh-treated-rule-hold): a phase's holdS starts
+// when its rule holds AND the phase is in the current phase's `next`, not at the rule's own true edge. On the MH /2 card
+// a rule that had held long before its phase could follow (Recovering's since 08:25) otherwise entered the phase one
+// poll after the previous one, so that phase showed for 0.4 s.
+describe('PhaseRunner: a phase\'s hold counts from when it becomes reachable', () => {
+  // a → b (EtCO₂ > 45 from 100 s) → c (HR > 100 from the start: its rule holds long before c is reachable)
+  const doc = () => card([
+    { id: 'a', next: ['b'] },
+    { id: 'b', enter: { value: { var: 'etco2', op: '>', value: 45 } }, holdS: 60, next: ['c'] },
+    { id: 'c', enter: { value: { var: 'hr', op: '>', value: 100 } }, holdS: 60 },
+  ]);
+
+  it('a rule that held before its phase was reachable: the phase is entered holdS after it became reachable, not at once', () => {
+    const r = new PhaseRunner(doc());
+    r.start(0);
+    run(r, 0, 160, (t) => [truth({ etco2: t >= 100 ? 50 : 40, hr: 120 })]);
+    expect(entered(r)).toEqual([['a', 0], ['b', 160]]);
+    // c's rule has held for 160 s, but c became reachable only now: its hold bar is empty
+    expect(r.vitalHolds().find((x) => x.leaf === 'hold')).toMatchObject({ transitionId: 'enter:c', met: true, heldS: 0, forS: 60 });
+    run(r, 160, 300, () => [truth({ etco2: 50, hr: 120 })]);
+    expect(entered(r)).toEqual([['a', 0], ['b', 160], ['c', 220]]);
+  });
+
+  it('the rule falling during that hold starts it again', () => {
+    const r = new PhaseRunner(doc());
+    r.start(0);
+    run(r, 0, 300, (t) => [truth({ etco2: t >= 100 ? 50 : 40, hr: Math.abs(t - 190) < 1e-9 ? 90 : 120 })]);
+    expect(entered(r)).toEqual([['a', 0], ['b', 160], ['c', 250.1]]);
+  });
+
+  it('a phase that stops being reachable loses its hold: it counts again when it is reachable again', () => {
+    // a → b or c; b → d; d → c. c's rule holds throughout: it runs 30 s from a, is reset in b, and counts from d's entry
+    const r = new PhaseRunner(card([
+      { id: 'a', next: ['b', 'c'] },
+      { id: 'b', enter: { value: { var: 'etco2', op: '>', value: 45 } }, next: ['d'] },
+      { id: 'c', enter: { value: { var: 'hr', op: '>', value: 100 } }, holdS: 60 },
+      { id: 'd', enter: { value: { var: 'etco2', op: '>', value: 55 } }, next: ['c'] },
+    ]));
+    r.start(0);
+    run(r, 0, 300, (t) => [truth({ etco2: t >= 100 ? 60 : t >= 30 ? 50 : 40, hr: t >= 0.1 ? 120 : 90 })]);
+    expect(entered(r)).toEqual([['a', 0], ['b', 30], ['d', 100], ['c', 160]]);
+  });
+});
+
 // Decision D2 (review B1, cause 2): the engine's mhExcess (the MH's dantrolene-sensitive fraction s) is a truth a rule
 // reads, as the other signals; null (no MH) is no value, and its window starts again.
 describe('PhaseRunner: mhExcess is read from the signals (D2)', () => {
