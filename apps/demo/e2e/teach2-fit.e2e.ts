@@ -162,9 +162,10 @@ for (const [card, target] of [['showcase-mh', 'awake'], ['showcase-haemorrhage',
 // Plan F11 (F6's acceptance on the /2 card): the MH card in pme-scenario/2 (showcase-mh-v2) at 1440 × 900. A /2 phase is
 // entered by its own rule, never by goto, so each phase is reached on the demo path's presses (mh-v2-path.ts) and
 // fast-forward. On that path since the owner's phase rules of 1 November, with the Treated rule (the dantrolene effect
-// rising) and the hold from reachability proposed the same day (harness times): Latent 06:17, Early signs 08:43 after
-// the call, Treated 09:57 after the first dose, Recovering 10:57, Recrudescence 14:59 after ventilation back, the second
-// Treated 20:58 after the second dose, the second Recovering 23:53. Every phase lasts at least its 60-s hold, so the fit
+// rising) and the hold from reachability proposed the same day, and Early signs held 20 s (the owner's ruling of the
+// same afternoon; harness times): Latent 06:17, Early signs 08:03 before the call (so it is measured just after the
+// call at 08:12), Treated 09:57 after the first dose, Recovering 10:57, Recrudescence 14:59 after ventilation back, the
+// second Treated 20:58 after the second dose, the second Recovering 23:53. Every phase lasts at least 60 s, so the fit
 // is measured at each: Latent, Early signs, Treated and Recovering (after the dantrolene), Recrudescence (after
 // ventilation back), the second Treated and the second Recovering (after the second dose). At each: no scroll (the page,
 // the view, ACTION, the strip), every open action of the phase a row of ACTION, no row disabled, no phase name cut.

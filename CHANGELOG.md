@@ -62,6 +62,16 @@ the public API is what the packages export (see the API reference), the `pme-sce
   already held 60 s); see the PR. `mh-v1-v2-table.slow.test.ts` prints the `/1`-versus-`/2` table. `/1` cards and their
   readers are unchanged.
 
+- **`pme-scenario/2`: the MH card's Early signs held 20 s (post-demo, draft; the owner's ruling of 1 November).** Every
+  other phase still holds 60 s, and Arrest and ROSC none. 20 s is the `/1` card's own settle for its early signs (EtCO₂
+  above 45 for 20 s), not a number fitted to the run. On the run sheet's path Early signs is now entered at 08:03, the
+  `/1` card's second, instead of 08:43, and the strip reads Early signs at the 08:05 and 08:45 pauses in the harness;
+  the later phases are unchanged (Treated 09:57, Recovering 10:57, Recrudescence 14:59, the second Treated 20:58, the
+  second Recovering 23:53). A team that calls the crisis when the strip shows Early signs now calls at 08:03, as on
+  `/1`; EtCO₂ then stays under 40 for 278 s, so the ventilation-back precondition holds 10:16–12:54 and every graded
+  row is met. In the app Early signs comes 1–4 s later than in the harness, so the 08:05 pause reads Latent or
+  Early signs. The card's notes now describe Treated's rule of #242. `/1` cards are unchanged.
+
 - **Instructor v2 on a `pme-scenario/2` card: the panel gaps F11 found (post-demo, draft).** ACTION's rows carry the
   live grade (`grade()` once a sim second, `final: false`): "due m:ss", "overdue m:ss" with the ring, "met mm:ss",
   "deviation: <criterion>" (the met look, its label amber) or "not applicable", and the grade's lines after the
