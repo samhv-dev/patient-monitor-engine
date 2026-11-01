@@ -53,7 +53,7 @@ describe('Debrief: steps, marks and staged deliveries (IP8)', () => {
       [`${label('induced')} · 00:10`, '1', 'Intubate and ventilate', '–', '✗ failed'], // Desaturating cannot go back to Induced's "Ventilated"
     ]);
     expect([...el.querySelectorAll('#db-steps tbody tr')].map((tr) => tr.getAttribute('data-status'))).toEqual(['taken', 'failed']);
-    expect([...el.querySelectorAll('#db-bookmarks li')].map((li) => li.textContent)).toEqual(['00:20 Bookmark: Mark 1 at 00:20 · good: “calm induction”', '00:22 Bookmark: Bookmark 1 at 00:22']);
+    expect([...el.querySelectorAll('#db-bookmarks li')].map((li) => li.textContent)).toEqual(['1 · 00:20 Bookmark: Mark 1 at 00:20 · good: “calm induction”', '2 · 00:22 Bookmark: Bookmark 1 at 00:22']); // numbered as on the course strip
     const timeline = cells(el, '#db-timeline');
     expect(timeline.filter((r) => r[2]?.startsWith('Delivered together'))).toEqual([['00:30', 'Action', 'Delivered together: Epinephrine 1 mg IV; Crystalloid 500 mL over 5 min']]);
     expect(timeline.filter((r) => r[2] === 'Epinephrine 1 mg IV')).toEqual([]); // folded into the delivery's line
@@ -63,12 +63,12 @@ describe('Debrief: steps, marks and staged deliveries (IP8)', () => {
     expect([...el.querySelectorAll('#db-live-2 > section')].map((s) => s.id)).toEqual(['db-trends', 'db-drugs', 'db-steps', 'db-timeline', 'db-bookmarks', 'db-minutes']);
   });
 
-  it('a free run and a record made before IP8 have no steps section; their bookmarks read as before', () => {
+  it('a free run and a record made before IP8 have no steps section; their bookmarks read as before, numbered', () => {
     const free = new RunRecord(() => ({ patient: 'M 40 y 70 kg', weightKg: 70 }), () => 1_000);
     free.wire(applied(1000, { type: 'scenario', action: 'bookmark', target: 'Bookmark 1 at 00:20' }));
     let el = show(free);
     expect(el.querySelector('#db-steps')).toBeNull();
-    expect([...el.querySelectorAll('#db-bookmarks li')].map((li) => li.textContent)).toEqual(['00:20 Bookmark: Bookmark 1 at 00:20']);
+    expect([...el.querySelectorAll('#db-bookmarks li')].map((li) => li.textContent)).toEqual(['1 · 00:20 Bookmark: Bookmark 1 at 00:20']);
     leave?.();
     document.body.replaceChildren();
     const old = new RunRecord(() => ({ patient: 'M 40 y 70 kg', weightKg: 70 }), () => 1_000);
