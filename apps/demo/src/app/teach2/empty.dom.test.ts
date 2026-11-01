@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 // Instructor v2 with no case loaded (the owner's board "Empty 5", approved 30 October): the header reads the default
-// patient and "No case loaded"; the strip holds one dashed chip, with the status line under it; STATE's cue box is the
+// patient and "No case loaded"; the strip is one row, its one dashed chip (the owner, 1 November: no note, no status
+// line; ACTION says how to begin); STATE's cue box is the
 // default patient's; ACTION holds three cards (Free roam, Scenario library, Debrief archive) with Room setup and the
 // Scenario builder under them, and the foot line. 1–3 choose a card; Browse lists the library's cards (the two
 // demonstrations first), a row loads its card through the app's one load and ACTION becomes its steps; Esc returns.
@@ -72,17 +73,16 @@ describe('Instructor v2 with no case loaded (board "Empty 5")', () => {
     expect(r.text('.ip2-pill-time')).toBe('03:12');
   });
 
-  it('the strip holds the one dashed chip and the note at its right, the status line under it', () => {
+  it('the strip is one row (the owner, 1 November): the one dashed chip, no note, no status line', () => {
     const r = use(rig());
     expect(r.all('.ip2-strip .ip2-chips > *').map((c) => c.textContent)).toEqual(['No case loaded · the stages appear here when one is']);
     expect(r.q('.ip2-strip .ip2-chip-none')).not.toBeNull();
-    expect(r.text('.ip2-strip-note')).toBe('the default patient is on the monitor and running');
-    expect(r.shown('.ip2-strip-note')).toBe(true);
-    const status = r.q('.ip2-strip [role="status"]');
-    expect(status?.querySelector('b')?.textContent).toBe('Ready.');
-    expect(r.text('.ip2-status-text')).toBe('The phones can join now (Room code in the header); whatever you load or give next, they follow.');
-    expect(r.text('.ip2-status-keys')).toBe('1–3 loads a case · Space pauses');
+    expect(r.q('.ip2-strip-note')).toBeNull();
+    expect(r.q('.ip2-strip-hint')).toBeNull();
+    expect(r.shown('.ip2-strip [role="status"]')).toBe(false);
     expect(r.q('.ip2-strip')?.hasAttribute('data-empty')).toBe(true);
+    // ACTION says how to begin
+    expect(r.text('.ip2-begin-hint')).toBe('no case: three ways to begin · 1–3 on the keyboard · two shortcuts');
   });
 
   it("STATE's cue box is the default patient's: four lines, the Say line in italics", () => {
@@ -166,7 +166,8 @@ describe('Instructor v2 with no case loaded (board "Empty 5")', () => {
     const r = use(rig());
     (cardsShown(r)[1] as HTMLButtonElement).click();
     expect(cardsShown(r)).toHaveLength(0);
-    expect(r.text('.ip2-status-keys')).toMatch(/Esc/);
+    expect(r.text('.ip2-begin-hint')).toMatch(/Esc back$/);
+    expect(r.shown('.ip2-strip [role="status"]')).toBe(false);
     const rows = r.all('.ip2-case-list > li > .ip2-row');
     const rest = LIBRARY.filter((c) => !DEMO_CARDS.includes(c.id));
     const order = [...DEMO_CARDS.map((id) => LIBRARY.find((c) => c.id === id) as ScenarioCard), ...rest];
@@ -230,7 +231,6 @@ describe('Instructor v2 with no case loaded (board "Empty 5")', () => {
     expect(r.text('.ip2-title')).toBe(MH.title);
     expect(r.text('.ip2-who')).toBe('M 40 y 70 kg');
     expect(r.q('.ip2-strip')?.hasAttribute('data-empty')).toBe(false);
-    expect(r.shown('.ip2-strip-note')).toBe(false);
     expect(r.shown('.ip2-strip [role="status"]')).toBe(false);
     expect(r.q('.ip2-cue-box')?.classList.contains('ip2-cue-default')).toBe(false);
     expect(r.text('.ip2-cue-name')).not.toBe('Default patient');

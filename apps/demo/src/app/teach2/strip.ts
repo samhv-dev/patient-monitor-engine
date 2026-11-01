@@ -3,16 +3,20 @@
 // its entry time (from the scenario's history), the current one highlighted with its number of open steps, future
 // stages dashed with "auto" where a rule enters them, and side branches as "<a> or <b>".
 // Clicks: a stage pressed opens its inline box under the chip, and the box's button is the confirmation (the owner's
-// report of 30 October: no dialog). A future stage's box reads "Jump to <stage>" and sends today's `goto` with today's
-// toast (panel/scenario.ts `jump`, copied without its confirm); a past stage's box shows its entry time and "Return to
-// the start of <stage>", which restores the hidden stage mark the driver places at every stage entry
+// report of 30 October: no dialog). The box's title is the stage; its button does not repeat it (the owner, 1 November:
+// a long name wrapped the button out of its box): a future stage's reads "Jump to it" (accessible name "Jump to
+// <stage>") and sends today's `goto` with today's toast (panel/scenario.ts `jump`, copied without its confirm); a past
+// stage's box shows its entry time and "Return to its start" (accessible name "Return to the start of <stage>"), which
+// restores the hidden stage mark the driver places at every stage entry
 // (ScenarioDriver.stageMarks()). Fit (14 stages on the MH card, 15 on the
 // haemorrhage card), the owner's ruling for IP9: exactly five chips with full names, the two stages before the current
 // one, the current one and the next two (at either end of the card the window slides to keep five); everything beyond
 // folds behind an arrow at each end ("‹ 3 earlier", "4 later ›"); an arrow pages the window that way, and "back to now"
 // recentres it on the current stage whenever it has been moved. The future stages are ordered from the current one
 // (the stages it leads to first; two of one step read "<a> or <b>"). Names are never cut: when the chips do not fit,
-// the padding tightens, then the strip scrolls sideways; the hint is a line of its own under them.
+// the padding tightens, then the strip scrolls sideways. The chips are the strip's one row, centred in it in every state
+// (the owner, 1 November: no hint line under them; the box says what a press does). With no case loaded the row is the
+// one chip "No case loaded · the stages appear here when one is" (ACTION says how to begin).
 // The status line: the 40-px row under the chips where the panel talks, shown only while it has something to say (the
 // strip's area grows from 75 to 115 px then; app.css). While a card's Case briefing runs on the learners' screens it
 // reads "Case briefing on every screen · 0:48 left" with End briefing at its right (the owner's choice of 31 October:
@@ -23,7 +27,7 @@ import { briefingLeftS, briefingStatusText } from '../briefing.ts';
 import { rowsOf, stagesOf, type Stage } from '../card-read.ts';
 import type { Link } from '../link.ts';
 import { clock, h, setText, toast } from '../ui.ts';
-import { KEYS_OF, NO_CASE } from './begin.ts';
+import { NO_CASE } from './begin.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { historyOf } from './course.ts';
 
@@ -199,29 +203,25 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const { link } = ctx;
   const sv = link.ctl.scenario;
   const chips = h('div', { class: 'ip2-chips' });
-  const hint = h('span', { class: 'ip2-strip-hint' }, 'past: return to its start · future: jump to it');
-  // with no case loaded (board "Empty 5"): the note at the strip's right and the status line under it
-  const note = h('span', { class: 'ip2-strip-note', hidden: true }, 'the default patient is on the monitor and running');
   // The status line. ONE message at a time, by precedence (the first that applies takes the line):
   //   1. "Finishing." while Finish the case holds the clock (#214; board "Finish 2"), amber;
   //   2. a paused message, should one ever be written here (none today: option G shows paused on the pill and the monitor);
-  //   3. the Case briefing while it runs: its sentence and End briefing (ends it on every screen, session.endBriefing);
-  //   4. the ordinary line: "Ready." with no case loaded (#210).
-  // With none of them the line is hidden and the strip keeps its 52 px. The briefing yields to 1 and 2 and comes back
-  // with its remaining time when they go; it takes the line from 4 only while it runs.
-  const READY = 'The phones can join now (Room code in the header); whatever you load or give next, they follow.';
-  const statusWord = h('b', {}, 'Ready.');
-  const statusText = h('span', { class: 'ip2-status-text' }, READY);
+  //   3. the Case briefing while it runs: its sentence and End briefing (ends it on every screen, session.endBriefing).
+  // With none of them the line is hidden and the strip keeps its 75 px: with no case loaded too (the owner, 1 November:
+  // one row, the chip; the "Ready." line #210 had there is gone). The briefing yields to 1 and 2 and comes back with
+  // its remaining time when they go.
+  const statusWord = h('b', {}, 'Finishing.');
+  const statusText = h('span', { class: 'ip2-status-text' });
   const statusKeys = h('span', { class: 'ip2-status-keys' });
   const endBrief = h('button', { type: 'button', class: 'ip2-status-btn', onclick: () => link.host?.endBriefing() }, 'End briefing');
   const status = h('div', { class: 'ip2-status', role: 'status', hidden: true }, statusWord, statusText, h('span', { class: 'ip2-spacer' }), statusKeys, endBrief);
-  el.replaceChildren(chips, hint, note, status);
+  el.replaceChildren(chips, status);
   let brief: BriefingNotice | null = null;
   let briefTick: ReturnType<typeof setInterval> | null = null;
   const sayStatus = () => {
     const fin = !!sv.doc && !!ctx.finish?.open;
     const msg = fin ? `The clock is stopped at ${clock(link.simT)} while you decide. Nothing is written until you press a button on the right.`
-      : brief ? briefingStatusText(briefingLeftS(brief)) : !sv.doc ? READY : null; // 1, then 3, then 4
+      : brief ? briefingStatusText(briefingLeftS(brief)) : null; // 1, then 3
     status.hidden = msg === null;
     status.classList.toggle('ip2-finishing', fin);
     el.toggleAttribute('data-finishing', fin);
@@ -229,7 +229,6 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     endBrief.hidden = !briefing;
     statusWord.hidden = statusKeys.hidden = briefing;
     el.toggleAttribute('data-briefing', brief !== null);
-    setText(statusWord, fin ? 'Finishing.' : 'Ready.');
     if (fin) setText(statusKeys, 'Esc keeps the case running');
     if (msg !== null) setText(statusText, msg);
   };
@@ -265,15 +264,17 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     const name = names.get(g.id) ?? g.label;
     pop = h('div', { class: 'ip2-pop', role: 'group', 'aria-label': `Stage ${name}`, 'data-stage': g.id }, h('div', { class: 'ip2-pop-head' }, name), ...kids);
     const r = chip.getBoundingClientRect();
-    pop.style.left = `${Math.max(8, r.left)}px`;
     pop.style.top = `${r.bottom + 6}px`;
     el.append(pop);
+    // under the chip, kept inside the window (the box is as wide as its content, up to its max-width: state.css)
+    pop.style.left = `${Math.max(8, Math.min(r.left, innerWidth - pop.getBoundingClientRect().width - 8))}px`;
   };
-  /** A past stage pressed: its entry time and the return to its start (disabled while it has no stage mark). */
+  /** A past stage pressed: its entry time and the return to its start (disabled while it has no stage mark). The
+   *  button's text does not repeat the box's title; its accessible name carries the stage. */
   const showPast = (chip: HTMLElement, g: Stage, entry: StageEntry | null) => {
     const name = names.get(g.id) ?? g.label;
     const mark = entry ? stageMarks.of(link, entry) : null;
-    const back = h('button', { type: 'button', class: 'ip2-pop-btn', disabled: !mark, onclick: () => mark && (closePop(), void link.send({ type: 'scenario', action: 'restoreBookmark', target: mark })) }, `Return to the start of ${name}`);
+    const back = h('button', { type: 'button', class: 'ip2-pop-btn', 'aria-label': `Return to the start of ${name}`, disabled: !mark, onclick: () => mark && (closePop(), void link.send({ type: 'scenario', action: 'restoreBookmark', target: mark })) }, 'Return to its start');
     openPop(chip, g,
       h('div', { class: 'ip2-pop-time' }, entry ? `Entered at ${clock(entry.t)}` : 'Not entered in this run'),
       entry ? back : null,
@@ -283,7 +284,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   /** A future stage pressed: the jump to it (today's `goto`; the case moves there now and runs its changes). */
   const showFuture = (chip: HTMLElement, g: Stage, label: string) => {
     const name = names.get(g.id) ?? g.label;
-    openPop(chip, g, h('button', { type: 'button', class: 'ip2-pop-btn', onclick: () => (closePop(), void jump(link, g.id, label)) }, `Jump to ${name}`));
+    openPop(chip, g, h('button', { type: 'button', class: 'ip2-pop-btn', 'aria-label': `Jump to ${name}`, onclick: () => (closePop(), void jump(link, g.id, label)) }, 'Jump to it'));
   };
 
   const chip = (g: Stage, cls: string, extra: Array<Node | string | null>, attrs: Record<string, string>, onclick?: (b: HTMLElement) => void) => {
@@ -298,9 +299,6 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const fit = () => {
     el.removeAttribute('data-tight');
     if (el.scrollWidth > el.clientWidth) el.setAttribute('data-tight', '');
-    // the hint shows whole or not at all
-    hint.hidden = !sv.doc;
-    if (!hint.hidden && hint.scrollWidth > hint.clientWidth) hint.hidden = true;
   };
   const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(() => fit()) : null;
   ro?.observe(el);
@@ -308,9 +306,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
 
   const draw = () => {
     const doc = sv.doc;
-    note.hidden = !!doc;
     el.toggleAttribute('data-empty', !doc);
-    if (!doc) setText(statusKeys, KEYS_OF[ctx.begin?.way ?? 'menu']);
     sayStatus();
     if (!doc) {
       const way = ctx.begin?.way ?? 'menu';
@@ -318,7 +314,6 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
         chips.replaceChildren(h('span', { class: 'ip2-strip-empty ip2-chip-none' }, way === 'free' ? 'Free roam' : `${NO_CASE} · the stages appear here when one is`));
         drawn = `none:${way}`;
       }
-      hint.hidden = true;
       closePop();
       return;
     }

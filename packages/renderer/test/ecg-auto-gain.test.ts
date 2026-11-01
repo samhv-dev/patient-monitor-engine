@@ -128,3 +128,64 @@ describe('MonitorCore: the auto-gain on the real engine', () => {
     }
   });
 });
+
+// Owner's run of 31 October (MH card, Early signs, HR ≈ 130, Instructor v2 at a 1440-wide window): the lead II trace was
+// cut flat at the top and the bottom of its lane in the STATE pane while the lane read X1. Measured on main 649ab03c at
+// 1440 × 900: the pane's monitor is 372 × 267 CSS px, so ECG1 is 50 px = 16.1 mm at the skin's 3.10 px/mm, against the
+// unit's 37.1 mm that the auto-gain judges for; at X1 the trace had room for +0.97 / −0.65 mV, and the card's PVCs reach
+// +1.9 / −1.7 mV (sinus beats +0.9 / −0.45: the gain is right, X1). The full Monitor view's ECG1 is 124 px = 40 mm and
+// held them. An auto-gain lane drawn shorter than the unit's lane is now drawn as the unit's lane in miniature: the size
+// is judged for the unit's lane, so mV take the share of the lane they take there, and the label stays the same in
+// every window (#213).
+describe('an auto-gain ECG lane shorter than the unit\'s lane is drawn as the unit\'s lane in miniature', () => {
+  /** ECG1's trace points (CSS y) and its box: the strokes clipped inside lane 0. */
+  const ecg1 = (m: ReturnType<typeof make>) => {
+    const lane = lanesOf(m.core)[0]!.cfg;
+    const top = lane.y;
+    const bot = lane.y + lane.height;
+    const ys: number[] = [];
+    let pts: number[] = [];
+    for (const c of m.ctx.calls) {
+      if (c.op === 'beginPath') pts = [];
+      else if (c.op === 'moveTo' || c.op === 'lineTo') pts.push(c.args[1] as number);
+      else if (c.op === 'stroke' && c.style === lane.color && c.clip?.length && c.clip.every((r) => (r[1] as number) >= top - 1e-6 && (r[1] as number) + (r[3] as number) <= bot + 1e-6)) ys.push(...pts);
+    }
+    return { ys, top, bot, base: top + 0.6 * lane.height, h: lane.height };
+  };
+  const withPvcs = (cssH: number) => {
+    const m = make(cssH);
+    m.run(12);
+    m.core.command(pvc('single', 0.35));
+    m.ctx.clear();
+    m.run(12);
+    return m;
+  };
+
+  it('the STATE pane\'s lane (267 px canvas, ECG1 50 px = 16 mm) keeps sinus beats and PVCs inside it, at X1', () => {
+    const m = withPvcs(267);
+    const { ys, top, bot } = ecg1(m);
+    expect(m.pvcs.length).toBeGreaterThan(2);
+    expect(m.gain()).toBe('II  X1  NORMAL');
+    expect(ys.length).toBeGreaterThan(1000);
+    // yOf clamps to the lane: a point on an edge is a clipped sample
+    expect(ys.filter((y) => y <= top + 1e-6).length, 'samples cut at the top').toBe(0);
+    expect(ys.filter((y) => y >= bot - 1e-6).length, 'samples cut at the bottom').toBe(0);
+  });
+
+  it('the pane draws the same beat at the same share of its lane as the full monitor; a lane as tall as the unit\'s keeps 10 mm/mV', () => {
+    const pane = withPvcs(267);
+    const full = withPvcs(662); // the Monitor view at 1440 × 900: ECG1 124 px = 40 mm, taller than the unit's 37.1 mm
+    expect(pane.gain()).toBe(full.gain());
+    const unit = renderPlan(resolveSkin('saadat-like')).lanes[0]!.gainLaneMm;
+    expect(lanesOf(full.core)[0]!.cfg.gainMmPerMv).toBe(10); // calibrated: 10 mm/mV on the screen
+    const p = lanesOf(pane.core)[0]!.cfg;
+    expect(p.gainMmPerMv).toBeCloseTo((10 * p.height) / (3.1 * unit), 9); // the unit's 37.1 mm drawn in 50 px
+    // the highest point (a PVC's or a sinus R): its mV from the full monitor (10 mm/mV, 3.10 px/mm), and in the pane the
+    // share of the lane it takes on the unit's 37.1-mm lane (same engine seed, same beats)
+    const f = ecg1(full);
+    const peakMv = (f.base - Math.min(...f.ys)) / (10 * 3.1);
+    expect(peakMv).toBeGreaterThan(1);
+    const q = ecg1(pane);
+    expect((q.base - Math.min(...q.ys)) / q.h).toBeCloseTo((peakMv * 10) / unit, 2);
+  });
+});
