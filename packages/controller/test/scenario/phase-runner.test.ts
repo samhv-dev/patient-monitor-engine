@@ -545,3 +545,39 @@ describe('PhaseRunner: mhExcess is read from the signals (D2)', () => {
     expect(r.stateId).toBe('b');
   });
 });
+
+// The MH /2 card's recognition clock (brief fv2-debrief-recognition-clock-nov1, the coordinator's ruling the same day):
+// a judged row's display rule may be a phase's entry (`phaseEntered`), so the clock starts when the strip shows Early
+// signs (its rule held through its hold, as the /1 card's "early signs" state is EtCO₂ > 45 held 20 s) — not when a bare
+// EtCO₂ threshold is first crossed (the premedicated patient's 46 before intubation), and not at the rule's first truth.
+describe('PhaseRunner: a judged clock on a phase\'s entry (phaseEntered)', () => {
+  const EARLY: PhaseRule = { all: [
+    { value: { var: 'etco2', op: '>', value: 45 } },
+    { slope: { var: 'etco2', op: '>', perMin: 0.2, overS: 120 } },
+    { unchanged: { var: 'setMinuteVentilationLMin', withinPct: 5, overS: 120 } },
+  ] };
+  const doc = (display: unknown) => card([{ id: 'a', next: ['early'] }, { id: 'early', label: 'Early signs', enter: EARLY, holdS: 20 }],
+    { judged: [{ id: 'name', text: 'Name it', kind: 'recognition', display: display as never }] });
+  // EtCO₂ 46 at 20–40 s without a ventilator (no set ventilation: the guard cannot hold), 40 at 40–200 s, then on the
+  // ventilator from 50 s rising 3 mmHg/min from 200 s: past 45 at 300 s
+  const etco2 = (t: number) => (t >= 20 && t < 40 ? 46 : t < 200 ? 40 : 40 + (t - 200) * 0.05);
+  const feed = (t: number) => [truth({ etco2: etco2(t) }), display({ etco2: etco2(t) }), signals({ setMinuteVentilationLMin: t < 50 ? null : 6 })];
+  const rise = (r: PhaseRunner, rule: string) => r.edges.find((e) => e.rule === rule && e.value)?.t;
+
+  it('a threshold that held before the MH does not start the recognition clock; the Early signs entry does, at its second', () => {
+    const bare = new PhaseRunner(doc({ value: { var: 'etco2', op: '>', value: 45 } }));
+    const coupled = new PhaseRunner(doc({ phaseEntered: 'early' }));
+    for (const r of [bare, coupled]) {
+      r.start(0);
+      run(r, 0, 400, feed, 0.2);
+    }
+    expect(rise(bare, 'judged:name')).toBeCloseTo(20, 6); // the bare threshold: the clock from the pre-intubation 46
+    const rule = rise(coupled, 'phase:early') as number;
+    expect(rule).toBeGreaterThan(300); // EtCO₂ past 45 on the rise
+    expect(rule).toBeLessThan(301);
+    const entry = coupled.phases.find((p) => p.id === 'early')?.t as number;
+    expect(entry).toBeCloseTo(rule + 20, 6); // the entry: after the 20-s hold
+    expect(rise(coupled, 'judged:name')).toBe(entry); // the clock: the entry's own second, not one advance later
+    expect(coupled.edges.filter((e) => e.rule === 'judged:name')).toEqual([{ rule: 'judged:name', t: entry, value: true }]); // it stays true
+  });
+});

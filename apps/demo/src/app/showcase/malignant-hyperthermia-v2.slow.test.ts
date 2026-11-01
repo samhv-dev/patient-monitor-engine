@@ -26,8 +26,16 @@
 // printed; asserted: the call, the hyperventilation, the propofol infusion, dantrolene's first dose and the ventilation
 // back met (D3's anchors and precondition), the second dose met in the window Recrudescence opens, calcium, insulin and
 // CPR not applicable, no violation. The /1-versus-/2 table itself: mh-v1-v2-table.slow.test.ts.
+// The Debrief's first key time on the same graded run, the call ticked as the recognition (brief
+// fv2-debrief-recognition-clock-nov1 and the coordinator's ruling the same day): "Recognition (instructor's tick)" runs
+// from Early signs' entry (the judged row's display rule is that phase's entry: its rule held through its 20-s hold, when
+// the strip shows it) to the tick, as the /1 card's runs from its "early signs" state (EtCO₂ > 45 for 20 s), so both
+// print the same interval; it ran from 03:51, a bare EtCO₂ > 45 the premedicated patient crossed before intubation.
 import { describe, expect, it } from 'vitest';
 import { grade, validateScenario, type ScenarioDocV2 } from '@pme/controller/scenario';
+import { keyTimes } from '../debrief-moments.ts';
+import { drugWords } from '../glossary.ts';
+import { emptyRun, type RunData } from '../record.ts';
 import { anyShowcaseDoc, runCard, type Act, type Run } from './harness.ts';
 
 /** The run sheet's demo path, §3 (the talk run's sim times; the stops hold the clock, so they are not in sim time). */
@@ -152,5 +160,23 @@ describe('showcase-mh-v2: the MH card in pme-scenario/2 on the demo path', () =>
     expect(row('insulin').grade).toBe('not applicable');
     expect(row('cpr').grade).toBe('not applicable');
     expect(g.violations).toEqual([]);
+
+    // the Debrief's recognition key time, the instructor's tick at the call (08:12)
+    const doc = anyShowcaseDoc('showcase-mh-v2') as ScenarioDocV2;
+    const tick = PATH.find((p) => p.v2 === 'callCrisis')!.t;
+    const d: RunData = {
+      ...emptyRun('M 35 y 80 kg', 80, 0), doc, format: 2, phases: v2.phases, admin: v2.admin, edges: v2.edges, samples: [],
+      rows: [{ t: 0, kind: 'scenario', text: 'Scenario loaded: MH' }, { t: tick, kind: 'note', text: `Objective met: ${drugWords(doc.judged?.[0]?.text ?? '')}` }],
+    };
+    const k = keyTimes(d).find((x) => x.id === 'recognition')!;
+    const mmss1 = (t: number | null) => (t === null ? 'not ticked' : `${String(Math.floor(t / 60)).padStart(2, '0')}:${(t % 60).toFixed(1).padStart(4, '0')}`);
+    console.log(`  key time: ${k.label} | ${k.fromLabel} ${mmss1(k.fromT)} → ${mmss1(k.toT)}`);
+    const entry = v2.phases.find((p) => p.id === 'earlySigns')!.t;
+    expect(g.judged.find((j) => j.id === 'nameMh')?.fromT, 'the judged clock is Early signs\' entry').toBe(entry);
+    expect(k).toEqual({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: entry, fromLabel: 'early signs', toT: tick, state: 'measured' });
+    // the /1 card on the same path: its recognition from its "early signs" state, the same second within a poll
+    const a: Run = await runCard('showcase-mh', PATH.map((p) => ({ press: p.v1, t: p.t })), TALK_END_S, undefined, POLL_S);
+    const early1 = a.states.find(([, id]) => id === 'earlySigns')![0];
+    expect(Math.abs(entry - early1), `/2 from ${mmss1(entry)}, /1 from ${mmss1(early1)}`).toBeLessThanOrEqual(2 * POLL_S + 1e-6);
   }, SLOW);
 });

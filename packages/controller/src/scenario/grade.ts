@@ -27,7 +27,7 @@
 //   falls and rises again makes no repeat row). NOT graded yet: `order`, the unconditional
 //   `repeat`, `cumulative.min` and `cumulative.windowS` (the ceiling is summed over the whole run), and a decision with
 //   several effects is graded on the first effect of the record's kind.
-import type { Action, Administration, Amount, Anchor, Dose, PhaseEntry, PhaseRule, RuleEdge, ScenarioDocV2, Settings } from './types-v2.ts';
+import type { Action, Administration, Amount, Anchor, AnyRule, Dose, PhaseEntry, PhaseRule, RuleEdge, ScenarioDocV2, Settings } from './types-v2.ts';
 
 export type Grade = 'met' | 'deviation' | 'overdue' | 'failed' | 'due' | 'not applicable';
 export interface RepeatGrade { n: number; grade: Grade; dueT?: number; t?: number; lines: string[] }
@@ -76,16 +76,22 @@ function heldAt(edges: readonly RuleEdge[], rule: string, t: number): boolean {
 /** The first time at or after `t` the rule holds. */
 const trueFrom = (edges: readonly RuleEdge[], rule: string, t: number) => (heldAt(edges, rule, t) ? t : firstTrue(edges, rule, t));
 
-/** A rule in words ("k > 5.5", "etco2 > 45 for 20 s"). */
-export function ruleWords(r: PhaseRule): string {
+/** A rule in words ("k > 5.5", "etco2 > 45 for 20 s"). A `phaseEntered` leaf is its phase's label up to the first colon,
+ *  lower-cased as a word ("Early signs" → "early signs", the /1 card's recognition start), given the card's phases; the
+ *  phase id without them. */
+export function ruleWords(r: AnyRule, phases?: ReadonlyArray<{ id: string; label: string }>): string {
+  if ('phaseEntered' in r) {
+    const head = (phases?.find((p) => p.id === r.phaseEntered)?.label ?? r.phaseEntered).split(':')[0] as string;
+    return /^.[a-z]/.test(head) ? head.charAt(0).toLowerCase() + head.slice(1) : head;
+  }
   if ('value' in r) return `${r.value.var} ${r.value.op} ${r.value.value}${r.value.forS ? ` for ${r.value.forS} s` : ''}`;
   if ('slope' in r) return `${r.slope.var} slope ${r.slope.op} ${r.slope.perMin}/min over ${r.slope.overS} s`;
   if ('unchanged' in r) return `${r.unchanged.var} unchanged within ${r.unchanged.withinPct} %${r.unchanged.since ? ' since the phase start' : ` over ${r.unchanged.overS} s`}`;
   if ('visited' in r) return `${r.visited} visited`;
   if ('signal' in r) return r.signal;
-  if ('all' in r) return r.all.map(ruleWords).join(' and ');
-  if ('any' in r) return r.any.map(ruleWords).join(' or ');
-  return `not (${ruleWords(r.not)})`;
+  if ('all' in r) return r.all.map((x) => ruleWords(x, phases)).join(' and ');
+  if ('any' in r) return r.any.map((x) => ruleWords(x, phases)).join(' or ');
+  return `not (${ruleWords(r.not, phases)})`;
 }
 
 /** In the amount: a `min`/`max` range when one is given, else `value` ± `tolerance` (0). */

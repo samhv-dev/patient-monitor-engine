@@ -28,7 +28,7 @@ import type { VitalHold } from './runner.ts';
 import { compare } from './runner.ts';
 import { EPS, holds, namedRules, slopePerMin, spreadPct, walkLeaves, windowOf, type NamedRule, type RuleCtx } from './rules.ts';
 import type { DocCommand } from './types.ts';
-import type { Administration, Phase, PhaseEntry, PhaseRule, PhaseRunnerState, RuleEdge, RunnerInputV2, ScenarioDocV2, ScriptEntry } from './types-v2.ts';
+import type { Administration, AnyRule, Phase, PhaseEntry, PhaseRule, PhaseRunnerState, RuleEdge, RunnerInputV2, ScenarioDocV2, ScriptEntry } from './types-v2.ts';
 
 export type PhaseRunnerEffect =
   | {
@@ -77,6 +77,8 @@ export class PhaseRunner {
   private s: PhaseRunnerState;
   private readonly byId = new Map<string, Phase>();
   private readonly rules: NamedRule[];
+  /** The rules with a phaseEntered leaf, re-read after an entry. */
+  private readonly entryRules: NamedRule[];
   private readonly actions: Set<string>;
   /** The longest slope/unchanged window per variable: how long its ring is kept. */
   private readonly ringSpan = new Map<string, number>();
@@ -90,6 +92,11 @@ export class PhaseRunner {
     this.seed = (opts.seed ?? doc.seed ?? 1) >>> 0;
     for (const p of doc.phases) this.byId.set(p.id, p);
     this.rules = namedRules(doc);
+    this.entryRules = this.rules.filter((nr) => {
+      let e = false;
+      walkLeaves(nr.rule, nr.name, (leaf) => void (e ||= 'phaseEntered' in leaf));
+      return e;
+    });
     this.actions = new Set(doc.actions.map((a) => a.id));
     for (const nr of this.rules) {
       walkLeaves(nr.rule, nr.name, (leaf) => {
@@ -231,7 +238,15 @@ export class PhaseRunner {
       }
       const held = (id: string) => (this.s.holdFor?.[id] ?? 0) >= (this.byId.get(id)?.holdS ?? 0) - EPS;
       const to = (this.state().next ?? []).find((id) => id !== this.s.stateId && now.get(`phase:${id}`) && held(id));
-      if (to !== undefined) out = this.enter(t, to, `enter:${to}`);
+      if (to !== undefined) {
+        out = this.enter(t, to, `enter:${to}`);
+        // a judged clock on a phase's entry (phaseEntered) reads the timeline: re-read it now, so it rises at the entry
+        for (const nr of this.entryRules) {
+          const v = holds(nr.rule, nr.name, nr.rank, this.ctx);
+          if (v !== (this.s.ruleNow[nr.name] ?? false)) this.edge({ rule: nr.name, t, value: v });
+          this.s.ruleNow[nr.name] = v;
+        }
+      }
       out.push(...this.clockScript(t));
     }
     if (inputs.length || out.length || edged) this.log.splice(at, 0, { op: 'advance', t, inputs: structuredClone(inputs) });
@@ -358,7 +373,7 @@ export class PhaseRunner {
 
   /** Is one of the rule's guards (an `unchanged` leaf outside a `not`) false now? */
   private guardBroken(nr: NamedRule): boolean {
-    const broken = (r: PhaseRule, key: string): boolean =>
+    const broken = (r: AnyRule, key: string): boolean =>
       'unchanged' in r ? !holds(r, key, nr.rank, this.ctx)
       : 'all' in r ? r.all.some((x, i) => broken(x, `${key}.${i}`))
       : 'any' in r ? r.any.some((x, i) => broken(x, `${key}.${i}`))

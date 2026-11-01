@@ -10,8 +10,10 @@
 //   its value at the current phase's entry.
 // - visited: the phase is in the timeline. signal: `pulseLoss` (no pulse), `rosc` (a pulse after a loss), `rhythm:<id>`
 //   (the rhythm id the engine draws: VF is told from VT and asystole from PEA by the id, never by RHYTHMS[id].group).
+// - phaseEntered (a judged row's display rule only): the phase is in the timeline, entered once its rule held through its
+//   hold, as `visited`; the runner re-reads such a rule after an entry, so its first true edge is the entry's second.
 import { compare } from './runner.ts';
-import type { PhaseRule, ScenarioDocV2 } from './types-v2.ts';
+import type { AnyRule, PhaseRule, ScenarioDocV2 } from './types-v2.ts';
 
 /** Comparison slack for clocks and windows (sim seconds), as the /1 runner's [ENG]. */
 export const EPS = 1e-6;
@@ -19,7 +21,7 @@ export const EPS = 1e-6;
 /** A rule of the card by the name its edges are logged under, and the store it reads. */
 export interface NamedRule {
   name: string;
-  rule: PhaseRule;
+  rule: AnyRule;
   rank: 2 | 3;
 }
 
@@ -31,7 +33,7 @@ export interface NamedRule {
  */
 export function namedRules(doc: ScenarioDocV2): NamedRule[] {
   const out: NamedRule[] = [];
-  const add = (name: string, rule: PhaseRule | undefined, rank: 2 | 3 = 3) => {
+  const add = (name: string, rule: AnyRule | undefined, rank: 2 | 3 = 3) => {
     if (rule) out.push({ name, rule, rank });
   };
   for (const p of doc.phases) add(`phase:${p.id}`, p.enter);
@@ -45,14 +47,14 @@ export function namedRules(doc: ScenarioDocV2): NamedRule[] {
     add(`outcome:${o.id}`, o.rule);
     if (typeof o.anchor !== 'string') add(`outcome:${o.id}:anchor`, o.anchor.rule);
   }
-  for (const j of doc.judged ?? []) add(`judged:${j.id}`, j.display as PhaseRule | undefined, 2);
+  for (const j of doc.judged ?? []) add(`judged:${j.id}`, j.display, 2);
   add('pulseLoss', { signal: 'pulseLoss' });
   add('rosc', { signal: 'rosc' });
   return out;
 }
 
 /** Visit every leaf with its key: `<key>`, then `.i` per all/any member and `.0` under a not. */
-export function walkLeaves(r: PhaseRule, key: string, fn: (leaf: PhaseRule, key: string) => void): void {
+export function walkLeaves(r: AnyRule, key: string, fn: (leaf: AnyRule, key: string) => void): void {
   if ('all' in r) r.all.forEach((c, i) => walkLeaves(c, `${key}.${i}`, fn));
   else if ('any' in r) r.any.forEach((c, i) => walkLeaves(c, `${key}.${i}`, fn));
   else if ('not' in r) walkLeaves(r.not, `${key}.0`, fn);
@@ -112,7 +114,7 @@ export function spreadPct(samples: ReadonlyArray<readonly [number, number]>): nu
 }
 
 /** Does the rule hold now? `rank` is the store its value leaves read (3 truth, 2 displayed). */
-export function holds(r: PhaseRule, key: string, rank: 2 | 3, c: RuleCtx): boolean {
+export function holds(r: AnyRule, key: string, rank: 2 | 3, c: RuleCtx): boolean {
   if ('value' in r) {
     const { var: name, op, value, forS = 0 } = r.value;
     const v = c.value(name, rank);
@@ -133,6 +135,7 @@ export function holds(r: PhaseRule, key: string, rank: 2 | 3, c: RuleCtx): boole
     const p = w.full ? spreadPct(w.samples) : undefined;
     return p !== undefined && p <= r.unchanged.withinPct + EPS;
   }
+  if ('phaseEntered' in r) return c.visited(r.phaseEntered);
   if ('visited' in r) return c.visited(r.visited);
   if ('signal' in r) {
     if (r.signal === 'pulseLoss') return c.pulse === false;

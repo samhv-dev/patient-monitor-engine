@@ -29,12 +29,17 @@ export type PhaseRule =
   | { any: PhaseRule[] }
   | { not: PhaseRule };
 
-/** A rule on the displayed numerics (rank 2): a judged row's clock (§7). */
+/** A rule on the displayed numerics (rank 2): a judged row's clock (§7). `phaseEntered` is true once the phase has been
+ *  entered (its rule held through its hold): the clock starts at the phase's first entry, when the strip shows it. */
 export type DisplayRule =
   | { value: { var: VitalVar; op: Op; value: number; forS?: number } }
+  | { phaseEntered: string }
   | { all: DisplayRule[] }
   | { any: DisplayRule[] }
   | { not: DisplayRule };
+
+/** Any rule of a card: a phase rule, or a judged row's display rule. */
+export type AnyRule = PhaseRule | DisplayRule;
 
 /** Where a window starts: 'start', 'pulseLoss', 'rosc', `phase:<id>` (its entry), `action:<id>` (its first taking), or
  *  the first second a rule holds. */

@@ -97,7 +97,7 @@
       }
     },
     "displayRule": {
-      "description": "A rule on the displayed numerics (rank 2), for a judged row's clock: what the learners could see (§7).",
+      "description": "A rule on the displayed numerics (rank 2), for a judged row's clock: what the learners could see (§7). A `phaseEntered` leaf is true once the named phase has been entered (its rule held through its hold): the clock starts at the phase's first entry, the moment the strip shows it, so a recognition clock is the phase it recognises, written once.",
       "type": "object",
       "minProperties": 1,
       "maxProperties": 1,
@@ -107,6 +107,7 @@
           "type": "object", "required": ["var", "op", "value"], "additionalProperties": false,
           "properties": { "var": { "$ref": "pme-scenario-1.schema.json#/definitions/vitalVar" }, "op": { "$ref": "#/definitions/op" }, "value": { "type": "number" }, "forS": { "type": "number", "minimum": 0 } }
         },
+        "phaseEntered": { "$ref": "#/definitions/id" },
         "all": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/displayRule" } },
         "any": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/displayRule" } },
         "not": { "$ref": "#/definitions/displayRule" }
