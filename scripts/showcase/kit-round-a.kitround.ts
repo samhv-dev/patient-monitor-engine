@@ -10,7 +10,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { loadavg } from 'node:os';
 import { isAbsolute, join } from 'node:path';
-import { devices, expect, test, type Browser, type Locator, type Page } from '@playwright/test';
+import { devices, test, type Browser, type Locator, type Page } from '@playwright/test';
 import { alarms, hist, latest, maxOf, minOf, r1, record, REPO, simNow, stateId, watchConsole, type Sample } from './showcase-support.ts';
 import { pdfInfo } from '../../apps/demo/e2e/pdf-text.ts';
 
@@ -235,8 +235,9 @@ class Run {
   /** The Debrief link: today's session bar, or the Instructor v2 dock. */
   debriefLink = () => (this.v2 ? this.page.locator('.ip2-dock a.ip2-debrief') : this.page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }));
   /** To the Debrief by the panel's own path: today's session-bar link; under PME_PANEL=teach2 (#/teach2 has no session
-   *  bar) the dock's Finish the case — shown for a pme-scenario/2 card only: it ends the run, pauses, and lights
-   *  Debrief — then the dock's Debrief. A /1 card in Instructor v2 goes straight to the dock's Debrief. */
+   *  bar) a /1 card goes straight to the dock's Debrief (as on main), a /2 card through Finish the case. (Since main's
+   *  Finish pane, #214, was merged into the /2 chain, the dock shows Finish for a /1 card too and a press opens the
+   *  pane instead of lighting Debrief: the F11 path that pressed it whenever it showed failed the /1 A4 round here.) */
   async toDebrief(): Promise<void> {
     if (this.v2 && this.card === 2) {
       // a /2 card (main's Finish pane, board "Finish 2"): Finish the case pauses and opens the pane; its "Debrief now"
@@ -250,14 +251,6 @@ class Run {
       }
       await this.page.evaluate(() => (location.hash = '#/debrief'));
       return;
-    }
-    if (this.v2) {
-      const finish = this.page.locator('.ip2-dock').getByRole('button', { name: 'Finish the case', exact: true });
-      if (await finish.isVisible()) {
-        await finish.click();
-        await expect(this.debriefLink()).toHaveAttribute('data-ready', 'true', { timeout: 5_000 });
-        await this.row('Finish the case (dock)');
-      }
     }
     await this.debriefLink().click();
   }
@@ -1935,7 +1928,7 @@ test('A4 /2 MH (phases card): the induction sequence, early call, three 5-min fa
       etco2PerMinuteAfterDose2: Array.from({ length: Math.floor(((sinceDose2.at(-1)?.t ?? tDose2) - tDose2) / 60) + 1 }, (_, m) => sinceDose2.find((x) => x.t >= tDose2 + m * 60)).map((x, m) => `+${m} ${x ? Math.round(x.etco2) : '–'}`).join(' · '),
       awrrEnd: (await latest(page)).awrr ?? null,
       // the /2 card: the runner's phase history, the phase waits
-      phases: await R.phases(), recoveringBeforeNormoAt: tRec === null ? null : mmss(tRec), recrudescenceAt: tRecrud === null ? null : mmss(tRecrud),
+      phases: await R.phases(), recoveringSeenAt: tRec === null ? null : mmss(tRec), recrudescenceAt: tRecrud === null ? null : mmss(tRecrud),
     };
     await R.pauseToggle();
     await a4Debrief(R, page, 'mh');
@@ -2042,7 +2035,7 @@ test('Q1 /2 30-minute talk on the phases card: opening, MH (pme-scenario/2) with
     if (tRec === null) M.r.notes.push(`stop 2: the phase was ${await stateId(page)} 3 min after span 1, not Recovering`);
     await M.pauseToggle();
     await M.row('span 1 ended: Pause (stop 2)');
-    seg('2 the call, hyperventilation, dantrolene; EtCO₂ falls (span 1)', { recoveringWaitedAt: tRec === null ? null : mmss(tRec) });
+    seg('2 the call, hyperventilation, dantrolene; EtCO₂ falls (span 1)', { recoveringSeenAt: tRec === null ? null : mmss(tRec) });
 
     // ---- STOP 2
     stops.push(await lookInside(M, page, phones, modelTab, 2, dir));
@@ -2098,7 +2091,7 @@ test('Q1 /2 30-minute talk on the phases card: opening, MH (pme-scenario/2) with
       normoAt: mmss(tP), etco2Above45AfterNormoAt: above45 ? mmss(above45.t) : null, dose2At: mmss(tDose2), dose2AfterAbove45S: above45 ? r1(tDose2 - above45.t) : null,
       etco2AtDose2: r1(afterNormo.filter((x) => x.t <= tDose2).at(-1)?.etco2), etco2PerMinuteAfterNormo: perMin(tP, afterNormo.filter((x) => x.t < tDose2)), etco2PerMinuteAfterDose2: perMin(tDose2, sinceDose2),
       stopClocks: stops.map((s) => s.clock),
-      phases: await M.phases(), recoveringWaitedAt: tRec === null ? null : mmss(tRec), recrudescenceAt: tRecrud === null ? null : mmss(tRecrud), secondRecoveringAt: tRec2 === null ? null : mmss(tRec2),
+      phases: await M.phases(), recoveringSeenAt: tRec === null ? null : mmss(tRec), recrudescenceAt: tRecrud === null ? null : mmss(tRecrud), secondRecoveringAt: tRec2 === null ? null : mmss(tRec2),
     };
     seg('end');
   } finally {
