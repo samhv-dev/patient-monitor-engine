@@ -55,6 +55,6 @@ export default defineConfig(({ mode }) => {
     },
     // The renderer tests drive a real engine through the sweep (5–8 s budgets); on the loaded CI runner the 5 s default
     // timed out once per run once the full physiology raised the per-tick cost. Same budget as engine-core.
-    test: { testTimeout: 30_000 },
+    test: { testTimeout: 30_000, setupFiles: ['test/_diag/loop-gap.ts'] },
   };
 });
