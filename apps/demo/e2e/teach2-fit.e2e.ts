@@ -12,9 +12,11 @@ import { openApp, startVite } from './app-support.ts';
 import { app, openMhV2, pressPath, to } from './mh-v2-path.ts';
 import { laneTextOverlaps, recordLaneTexts } from './teach2-lane-texts.ts';
 
-let vite: ViteDevServer;
-let base = '';
-test.beforeAll(async () => ({ vite, base } = await startVite()));
+let vite: ViteDevServer | undefined;
+let base = process.env.PME_KIT_BASE ?? ''; // PME_KIT_BASE=<url>: a server already running (as teach2-mh-v2.e2e.ts)
+test.beforeAll(async () => {
+  if (!base) ({ vite, base } = await startVite());
+});
 test.afterAll(async () => vite?.close());
 
 type W = { __pmeApp: { link: { send(c: unknown): Promise<{ accepted: boolean }>; ctl: { scenario: { stateId: string | null; doc: { states: Array<{ id: string; transitions?: Array<{ when: Record<string, unknown> }> }> } | null }; hostPaused: boolean } } } };
@@ -159,27 +161,32 @@ for (const [card, target] of [['showcase-mh', 'awake'], ['showcase-haemorrhage',
 
 // Plan F11 (F6's acceptance on the /2 card): the MH card in pme-scenario/2 (showcase-mh-v2) at 1440 × 900. A /2 phase is
 // entered by its own rule, never by goto, so each phase is reached on the demo path's presses (mh-v2-path.ts) and
-// fast-forward (on that path since the demo-day fixes D1–D4: Latent 06:17, Early signs 08:43 after the call, Treated
-// 10:58 after the dantrolene). At Latent, Early signs and Treated: no scroll (the page, the view, ACTION, the strip),
+// fast-forward. On that path since the owner's phase rules of 1 November (harness times): Latent 06:17, Early signs
+// 08:43 after the call, Treated 10:58 and Recovering 0.4 s later, Recrudescence 14:59 and the second Treated 0.4 s
+// later, the second Recovering 23:53. The two one-poll phases cannot be held on this path, so the fit is measured at
+// every phase that can: Latent, Early signs, Recovering (after the dantrolene), the second Treated (after ventilation
+// back) and the second Recovering (after the second dose). At each: no scroll (the page, the view, ACTION, the strip),
 // every open action of the phase a row of ACTION, no row disabled, no phase name cut.
-for (const [target, presses] of [['latent', 5], ['earlySigns', 6], ['treated', 7]] as const) {
-  test(`Instructor v2 fits 1440 × 900 on the /2 MH card at ${target}: no scroll, every open action a row, no row disabled`, async ({ page, browserName }, info) => {
+for (const [target, presses, tag] of [['latent', 5, 'latent'], ['earlySigns', 6, 'earlySigns'], ['recovering', 7, 'recovering'], ['treated', 8, 'treated-2'], ['recovering', 9, 'recovering-2']] as const) {
+  test(`Instructor v2 fits 1440 × 900 on the /2 MH card at ${tag}: no scroll, every open action a row, no row disabled`, async ({ page, browserName }, info) => {
     test.setTimeout(360_000);
     await openMhV2(page, (h) => openApp(page, base, h, { warmMs: 2000 }));
     await pressPath(page, (i) => i < presses);
-    // the phase comes from the physiology: fast-forward in 10 s steps until it is entered (at most 5 sim-min)
-    for (let n = 0; (await app(page)).stateId !== target && n < 30; n++) await to(page, Math.floor((await app(page)).simT) + 10);
+    // the phase comes from the physiology: fast-forward in 30 s steps until it is entered (at most 15 sim-min; every phase
+    // targeted here lasts over 2 min on this path, so a step cannot pass one; 10 s steps ran the second Recovering, 4:40
+    // after the second dose, out of the test's time)
+    for (let n = 0; (await app(page)).stateId !== target && n < 30; n++) await to(page, Math.floor((await app(page)).simT) + 30);
     expect((await app(page)).stateId).toBe(target);
     await page.waitForTimeout(1500); // the view repaints (≤ 2 Hz)
     const running = await measure(page);
     const dir = process.env.TEACH2_SHOTS ?? info.outputPath();
     mkdirSync(dir, { recursive: true });
-    await page.screenshot({ path: join(dir, `teach2-fit-mh-v2-${target}-${browserName}-page.png`) });
+    await page.screenshot({ path: join(dir, `teach2-fit-mh-v2-${tag}-${browserName}-page.png`) });
     await page.locator('.ip2-head button.ip2-pill').click();
     await page.waitForFunction(() => (window as unknown as W).__pmeApp.link.ctl.hostPaused === true, null, { timeout: 10_000 });
     await page.waitForTimeout(1200);
     const paused = await measure(page);
-    const report = { browser: browserName, card: 'showcase-mh-v2', target, running, paused };
+    const report = { browser: browserName, card: 'showcase-mh-v2', target: tag, simT: (await app(page)).simT, running, paused };
     console.log(`teach2-fit ${JSON.stringify(report)}`);
     info.annotations.push({ type: 'teach2-fit', description: JSON.stringify(report) });
     for (const [when, m] of [['running', running], ['paused', paused]] as const) {

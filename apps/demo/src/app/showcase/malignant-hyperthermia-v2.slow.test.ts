@@ -9,9 +9,18 @@
 // Early signs is entered, its hold latched by the call (D1), 60 s after its rule first held, which is the same EtCO₂
 // crossing as /1's earlySigns less /1's 20-s forS, so 40 s after /1's earlySigns; Treated 60 s after its rule
 // (dantroleneE > 0.2 and mhExcess falling, D2) first held, before the second dose.
+// Since the owner's rules of 1 November (brief fv2-mh-phase-rules-nov1; Recovering = after Treated, EtCO₂ < 45 and not
+// rising over 120 s; Recrudescence = after Recovering, EtCO₂ > 45 and rising over 120 s; rising = slope ≥ 1 mmHg/min,
+// both at whatever ventilation is set), also from the rules: Recovering one poll after Treated (its rule has held since
+// the call's hyperventilation brought the EtCO₂ down, 08:25, so its 60-s hold ran out before Treated was entered);
+// Recrudescence 60 s after its rule first held in Recovering (the climb after the ventilation back, 13:52); the second
+// Treated one poll after it (Treated's rule has held since 09:58); the second Recovering 60 s after its rule held again
+// (the EtCO₂ under 45 after the second dose), before the talk's end. The two one-poll phases are the measured defect
+// the PR reports, pinned by name: any other phase shorter than its 60-s hold still fails.
 // F3: the same path stopped at the talk's end (24:31) and graded by grade() as the debrief would (final): the table is
 // printed; asserted: the call, the hyperventilation, the propofol infusion, dantrolene's first dose and the ventilation
-// back met (D3's anchors and precondition), calcium, insulin and CPR not applicable, no violation.
+// back met (D3's anchors and precondition), the second dose met in the window Recrudescence opens, calcium, insulin and
+// CPR not applicable, no violation. The /1-versus-/2 table itself: mh-v1-v2-table.slow.test.ts.
 import { describe, expect, it } from 'vitest';
 import { grade, validateScenario, type ScenarioDocV2 } from '@pme/controller/scenario';
 import { anyShowcaseDoc, runCard, type Act, type Run } from './harness.ts';
@@ -28,7 +37,7 @@ const PATH: Array<{ t: number; v1: string; v2: string }> = [
   { t: 832, v1: 'EtCO₂ normal: ventilation back to 12 × 500', v2: 'ventilationBack' }, // 13:52
   { t: 1153, v1: 'Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600, O₂ 100 %)', v2: 'dantroleneAgain' }, // 19:13
 ];
-/** The talk ends at 24:31; the run goes on to the hour so the later phases (recovering, recrudescence) are printed. */
+/** The talk ends at 24:31; the run goes on to the hour so a later phase would be printed (none since the rules of 1 Nov). */
 const END_S = 3600;
 /** The app's poll at ×4 (the run sheet's speed from 7:30). */
 const POLL_S = 0.4;
@@ -65,8 +74,17 @@ describe('showcase-mh-v2: the MH card in pme-scenario/2 on the demo path', () =>
     const ids = b.states.map(([, id]) => id);
     expect(ids[0]).toBe('baseline');
     expect(ids).toContain('latent');
-    // the 60-s hold: no phase lasts less than 60 s except by a later rule's own 60-s hold (no flapping)
-    for (let i = 1; i < b.states.length; i++) expect(b.states[i]![0] - b.states[i - 1]![0], `${ids[i - 1]} → ${ids[i]}`).toBeGreaterThanOrEqual(60 - 1e-6);
+    // the 60-s hold: no phase lasts less than 60 s (no flapping), except the two one-poll phases of the owner's rules of
+    // 1 November on this path, named (header): Treated → Recovering and Recrudescence → Treated
+    const ONE_POLL = ['treated → recovering', 'recrudescence → treated'];
+    const short: string[] = [];
+    for (let i = 1; i < b.states.length; i++) {
+      const d = b.states[i]![0] - b.states[i - 1]![0];
+      if (d >= 60 - 1e-6) continue;
+      short.push(`${ids[i - 1]} → ${ids[i]}`);
+      expect(d, `${ids[i - 1]} → ${ids[i]}: one poll`).toBeCloseTo(POLL_S, 6);
+    }
+    expect(short).toEqual(ONE_POLL);
     expect(b.states.length).toBeLessThan(20);
 
     // D1, D2 (the derivations are in the header); one poll of slack either way
@@ -80,9 +98,21 @@ describe('showcase-mh-v2: the MH card in pme-scenario/2 on the demo path', () =>
     const treated2 = at(b, 'treated')!;
     expect(treated2 - rose('phase:treated', early2)!, 'Treated: its hold from the rule (D2)').toBeCloseTo(60, 0);
     expect(treated2).toBeLessThan(PATH.find((p) => p.v2 === 'dantroleneAgain')!.t);
+    // the owner's rules of 1 November (header); nth entry of a phase
+    const nth = (id: string, n: number) => b.states.filter(([, s]) => s === id)[n - 1]?.[0];
+    const t = (id: string) => PATH.find((p) => p.v2 === id)!.t;
+    expect(ids.slice(ids.indexOf('treated'))).toEqual(['treated', 'recovering', 'recrudescence', 'treated', 'recovering']);
+    expect(nth('recovering', 1)! - treated2, 'Recovering: one poll after Treated').toBeCloseTo(POLL_S, 6);
+    expect(rose('phase:recovering', t('callCrisis'))!, 'Recovering\'s rule held from the call\'s hyperventilation').toBeLessThan(t('dantrolene'));
+    const recrud = nth('recrudescence', 1)!;
+    expect(recrud - rose('phase:recrudescence', t('ventilationBack'))!, 'Recrudescence: its hold from the climb after ventilation back').toBeCloseTo(60, 0);
+    expect(nth('treated', 2)! - recrud, 'the second Treated: one poll after Recrudescence').toBeCloseTo(POLL_S, 6);
+    const rec2 = nth('recovering', 2)!;
+    expect(rec2 - rose('phase:recovering', t('dantroleneAgain'))!, 'the second Recovering: its hold').toBeCloseTo(60, 0);
+    expect(rec2, 'the second Recovering before the end pause, 24:24').toBeLessThan(1464);
   }, SLOW);
 
-  it('graded at the talk\'s end (24:31, final): the call, its ventilation and infusion, dantrolene\'s first dose and ventilation back met; K⁺ and CPR not applicable; no violation', async () => {
+  it('graded at the talk\'s end (24:31, final): the call, its ventilation and infusion, both dantrolene doses and ventilation back met; K⁺ and CPR not applicable; no violation', async () => {
     const TALK_END_S = 1471;
     const b: Run = await runCard('showcase-mh-v2', PATH.map((p) => ({ press: p.v2, action: p.v2, t: p.t })), TALK_END_S, undefined, POLL_S);
     expect(b.refused).toEqual([]);
@@ -111,9 +141,12 @@ describe('showcase-mh-v2: the MH card in pme-scenario/2 on the demo path', () =>
     // D3: ventilation back's precondition (EtCO₂ < 40 for 120 s) held 10:26–12:32, before the press at 13:52: met
     expect(row('ventilationBack').grade).toBe('met');
     expect(row('dantrolene').firstGrade).toBe('met'); // the first dose
-    // NOT asserted, printed: the second dose. Its window (D3) opens at Recrudescence's entry, and on this path the card
-    // never enters Recrudescence (mhExcess keeps falling through 19:13: the first dose at its peak), so dantrolene has
-    // no repeat row and dantroleneAgain reads not applicable — /1's objective 4 reads met. For the owner (see the PR).
+    // the second dose: its window (D3, 300 s) opens at Recrudescence's entry (14:59), so the press at 19:13 is met, as
+    // /1's objective 4; dantrolene's repeat row is met with it
+    const recrud = v2.phases.find((p) => p.id === 'recrudescence')!.t;
+    expect(row('dantroleneAgain')).toMatchObject({ grade: 'met', dueT: recrud });
+    expect(row('dantrolene').grade).toBe('met');
+    expect(row('dantrolene').repeats.map((r) => r.grade)).toEqual(['met']);
     expect(row('calcium').grade).toBe('not applicable');
     expect(row('insulin').grade).toBe('not applicable');
     expect(row('cpr').grade).toBe('not applicable');

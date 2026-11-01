@@ -14,9 +14,11 @@ import { openApp, scanEngineIds, startVite } from './app-support.ts';
 import { END_S, openMhV2, pressPath, to } from './mh-v2-path.ts';
 
 const out = resolve(import.meta.dirname, process.env.PME_SHOTS === '1' ? '../../../docs/gates/stage-13' : '../../../test-results/gate-shots/stage-13'); // FU-11 K1: evidence only on request
-let vite: ViteDevServer;
-let base = '';
-test.beforeAll(async () => ({ vite, base } = await startVite()));
+let vite: ViteDevServer | undefined;
+let base = process.env.PME_KIT_BASE ?? ''; // PME_KIT_BASE=<url>: a server already running (as teach2-mh-v2.e2e.ts)
+test.beforeAll(async () => {
+  if (!base) ({ vite, base } = await startVite());
+});
 test.afterAll(async () => vite?.close());
 
 type W = { __pmeApp: { link: { simT: number; ctl: { hostPaused: boolean } }; engineIds: string[] } };
@@ -493,6 +495,9 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
   expect(j.phases.length, 'the phases entered').toBeGreaterThan(1);
   expect(j.actions.length, 'the graded actions').toBeGreaterThan(0);
   expect(j.actions.filter((a) => a.givenT !== null).map((a) => a.id)).toEqual(expect.arrayContaining(['callCrisis', 'dantrolene', 'ventilationBack'])); // the setup actions (induce …) are not graded on this card
+  // the owner's phase rules of 1 November: Recrudescence is entered (14:59) and opens the second dose's window, so the
+  // second dose at 19:13 is met, as the /1 card's objective 4
+  expect(Object.fromEntries(j.actions.filter((a) => ['callCrisis', 'dantrolene', 'dantroleneAgain', 'ventilationBack'].includes(a.id)).map((a) => [a.id, a.grade]))).toEqual({ callCrisis: 'met', dantrolene: 'met', dantroleneAgain: 'met', ventilationBack: 'met' });
   const results = resolve(import.meta.dirname, '../../../test-results');
   mkdirSync(results, { recursive: true });
   writeFileSync(`${results}/debrief-mh-v2-${browserName}.json`, JSON.stringify(j, null, 1));
