@@ -27,9 +27,10 @@
 // back met (D3's anchors and precondition), the second dose met in the window Recrudescence opens, calcium, insulin and
 // CPR not applicable, no violation. The /1-versus-/2 table itself: mh-v1-v2-table.slow.test.ts.
 // The Debrief's first key time on the same graded run, the call ticked as the recognition (brief
-// fv2-debrief-recognition-clock-nov1): "Recognition (instructor's tick)" runs from the Early signs rule's first truth (the
-// judged row's display rule is that phase's rule) to the tick, as the /1 card's runs from its "early signs" state; it ran
-// from 03:51, a bare EtCO₂ > 45 the premedicated patient crossed before intubation.
+// fv2-debrief-recognition-clock-nov1 and the coordinator's ruling the same day): "Recognition (instructor's tick)" runs
+// from Early signs' entry (the judged row's display rule is that phase's entry: its rule held through its 20-s hold, when
+// the strip shows it) to the tick, as the /1 card's runs from its "early signs" state (EtCO₂ > 45 for 20 s), so both
+// print the same interval; it ran from 03:51, a bare EtCO₂ > 45 the premedicated patient crossed before intubation.
 import { describe, expect, it } from 'vitest';
 import { grade, validateScenario, type ScenarioDocV2 } from '@pme/controller/scenario';
 import { keyTimes } from '../debrief-moments.ts';
@@ -170,11 +171,12 @@ describe('showcase-mh-v2: the MH card in pme-scenario/2 on the demo path', () =>
     const k = keyTimes(d).find((x) => x.id === 'recognition')!;
     const mmss1 = (t: number | null) => (t === null ? 'not ticked' : `${String(Math.floor(t / 60)).padStart(2, '0')}:${(t % 60).toFixed(1).padStart(4, '0')}`);
     console.log(`  key time: ${k.label} | ${k.fromLabel} ${mmss1(k.fromT)} → ${mmss1(k.toT)}`);
-    const latent = v2.phases.find((p) => p.id === 'latent')!.t;
-    const earlyRule = v2.edges.find((e) => e.rule === 'phase:earlySigns' && e.value)!.t;
-    expect(earlyRule, 'the Early signs rule first holds in Latent, after the MH began').toBeGreaterThan(latent);
-    expect(g.judged.find((j) => j.id === 'nameMh')?.fromT, 'the judged clock is the Early signs rule').toBe(earlyRule);
-    expect(k).toEqual({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: earlyRule, fromLabel: 'early signs', toT: tick, state: 'measured' });
-    expect(tick - (k.fromT ?? 0), 'seconds, not minutes: the signs at most a minute before the call').toBeLessThan(60);
+    const entry = v2.phases.find((p) => p.id === 'earlySigns')!.t;
+    expect(g.judged.find((j) => j.id === 'nameMh')?.fromT, 'the judged clock is Early signs\' entry').toBe(entry);
+    expect(k).toEqual({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: entry, fromLabel: 'early signs', toT: tick, state: 'measured' });
+    // the /1 card on the same path: its recognition from its "early signs" state, the same second within a poll
+    const a: Run = await runCard('showcase-mh', PATH.map((p) => ({ press: p.v1, t: p.t })), TALK_END_S, undefined, POLL_S);
+    const early1 = a.states.find(([, id]) => id === 'earlySigns')![0];
+    expect(Math.abs(entry - early1), `/2 from ${mmss1(entry)}, /1 from ${mmss1(early1)}`).toBeLessThanOrEqual(2 * POLL_S + 1e-6);
   }, SLOW);
 });

@@ -546,11 +546,11 @@ describe('PhaseRunner: mhExcess is read from the signals (D2)', () => {
   });
 });
 
-// The MH /2 card's recognition clock (brief fv2-debrief-recognition-clock-nov1): a judged row's display rule may be a
-// phase's own entry rule (`phaseRule`), read as the phase reads it (truth, its own key), so the clock starts when the
-// Early signs rule first holds — not when a bare EtCO₂ threshold is first crossed (the premedicated patient's 46 before
-// intubation), and not at the phase's entry after its hold.
-describe('PhaseRunner: a judged clock on a phase\'s rule (phaseRule)', () => {
+// The MH /2 card's recognition clock (brief fv2-debrief-recognition-clock-nov1, the coordinator's ruling the same day):
+// a judged row's display rule may be a phase's entry (`phaseEntered`), so the clock starts when the strip shows Early
+// signs (its rule held through its hold, as the /1 card's "early signs" state is EtCO₂ > 45 held 20 s) — not when a bare
+// EtCO₂ threshold is first crossed (the premedicated patient's 46 before intubation), and not at the rule's first truth.
+describe('PhaseRunner: a judged clock on a phase\'s entry (phaseEntered)', () => {
   const EARLY: PhaseRule = { all: [
     { value: { var: 'etco2', op: '>', value: 45 } },
     { slope: { var: 'etco2', op: '>', perMin: 0.2, overS: 120 } },
@@ -564,9 +564,9 @@ describe('PhaseRunner: a judged clock on a phase\'s rule (phaseRule)', () => {
   const feed = (t: number) => [truth({ etco2: etco2(t) }), display({ etco2: etco2(t) }), signals({ setMinuteVentilationLMin: t < 50 ? null : 6 })];
   const rise = (r: PhaseRunner, rule: string) => r.edges.find((e) => e.rule === rule && e.value)?.t;
 
-  it('a threshold that held before the MH does not start the recognition clock; the Early signs rule\'s first truth does', () => {
+  it('a threshold that held before the MH does not start the recognition clock; the Early signs entry does, at its second', () => {
     const bare = new PhaseRunner(doc({ value: { var: 'etco2', op: '>', value: 45 } }));
-    const coupled = new PhaseRunner(doc({ phaseRule: 'early' }));
+    const coupled = new PhaseRunner(doc({ phaseEntered: 'early' }));
     for (const r of [bare, coupled]) {
       r.start(0);
       run(r, 0, 400, feed, 0.2);
@@ -575,17 +575,9 @@ describe('PhaseRunner: a judged clock on a phase\'s rule (phaseRule)', () => {
     const rule = rise(coupled, 'phase:early') as number;
     expect(rule).toBeGreaterThan(300); // EtCO₂ past 45 on the rise
     expect(rule).toBeLessThan(301);
-    expect(rise(coupled, 'judged:name')).toBe(rule); // the clock: the phase's rule, the same second
-    expect(coupled.phases.find((p) => p.id === 'early')?.t).toBeCloseTo(rule + 20, 6); // the entry: after the 20-s hold
-    // its edges are the phase rule's, both ways
-    const of = (r: PhaseRunner, rule: string) => r.edges.filter((e) => e.rule === rule).map((e) => [e.t, e.value]);
-    expect(of(coupled, 'judged:name')).toEqual(of(coupled, 'phase:early'));
-  });
-
-  it('reads the phase\'s rule on truth, as the phase does: a displayed (rank 2) value alone does not start it', () => {
-    const r = new PhaseRunner(doc({ phaseRule: 'early' }));
-    r.start(0);
-    run(r, 0, 400, (t) => [truth({ etco2: 40 }), display({ etco2: etco2(t) }), signals({})], 0.2);
-    expect(rise(r, 'judged:name')).toBeUndefined();
+    const entry = coupled.phases.find((p) => p.id === 'early')?.t as number;
+    expect(entry).toBeCloseTo(rule + 20, 6); // the entry: after the 20-s hold
+    expect(rise(coupled, 'judged:name')).toBe(entry); // the clock: the entry's own second, not one advance later
+    expect(coupled.edges.filter((e) => e.rule === 'judged:name')).toEqual([{ rule: 'judged:name', t: entry, value: true }]); // it stays true
   });
 });

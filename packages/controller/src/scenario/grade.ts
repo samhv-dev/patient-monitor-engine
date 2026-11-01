@@ -76,12 +76,12 @@ function heldAt(edges: readonly RuleEdge[], rule: string, t: number): boolean {
 /** The first time at or after `t` the rule holds. */
 const trueFrom = (edges: readonly RuleEdge[], rule: string, t: number) => (heldAt(edges, rule, t) ? t : firstTrue(edges, rule, t));
 
-/** A rule in words ("k > 5.5", "etco2 > 45 for 20 s"). A `phaseRule` leaf is its phase's label up to the first colon,
+/** A rule in words ("k > 5.5", "etco2 > 45 for 20 s"). A `phaseEntered` leaf is its phase's label up to the first colon,
  *  lower-cased as a word ("Early signs" → "early signs", the /1 card's recognition start), given the card's phases; the
  *  phase id without them. */
 export function ruleWords(r: AnyRule, phases?: ReadonlyArray<{ id: string; label: string }>): string {
-  if ('phaseRule' in r) {
-    const head = (phases?.find((p) => p.id === r.phaseRule)?.label ?? r.phaseRule).split(':')[0] as string;
+  if ('phaseEntered' in r) {
+    const head = (phases?.find((p) => p.id === r.phaseEntered)?.label ?? r.phaseEntered).split(':')[0] as string;
     return /^.[a-z]/.test(head) ? head.charAt(0).toLowerCase() + head.slice(1) : head;
   }
   if ('value' in r) return `${r.value.var} ${r.value.op} ${r.value.value}${r.value.forS ? ` for ${r.value.forS} s` : ''}`;

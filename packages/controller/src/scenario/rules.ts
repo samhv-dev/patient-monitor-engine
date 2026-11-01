@@ -10,8 +10,8 @@
 //   its value at the current phase's entry.
 // - visited: the phase is in the timeline. signal: `pulseLoss` (no pulse), `rosc` (a pulse after a loss), `rhythm:<id>`
 //   (the rhythm id the engine draws: VF is told from VT and asystole from PEA by the id, never by RHYTHMS[id].group).
-// - phaseRule (a judged row's display rule only): the named phase's entry rule, evaluated as the phase evaluates it (its
-//   key `phase:<id>`, truth): true exactly when `phase:<id>` is, so a recognition clock is the phase's rule, written once.
+// - phaseEntered (a judged row's display rule only): the phase is in the timeline, entered once its rule held through its
+//   hold, as `visited`; the runner re-reads such a rule after an entry, so its first true edge is the entry's second.
 import { compare } from './runner.ts';
 import type { AnyRule, PhaseRule, ScenarioDocV2 } from './types-v2.ts';
 
@@ -71,8 +71,6 @@ export interface RuleCtx {
   visited(phaseId: string): boolean;
   /** A `since: 'phaseStart'` variable's value at the current phase's entry. */
   phaseRef(name: string): number | undefined;
-  /** A phase's entry rule (a `phaseRule` leaf reads it). */
-  enter(phaseId: string): PhaseRule | undefined;
   rhythm: string | null;
   pulse: boolean | null;
   pulseLost: boolean;
@@ -137,10 +135,7 @@ export function holds(r: AnyRule, key: string, rank: 2 | 3, c: RuleCtx): boolean
     const p = w.full ? spreadPct(w.samples) : undefined;
     return p !== undefined && p <= r.unchanged.withinPct + EPS;
   }
-  if ('phaseRule' in r) {
-    const e = c.enter(r.phaseRule);
-    return e !== undefined && holds(e, `phase:${r.phaseRule}`, 3, c);
-  }
+  if ('phaseEntered' in r) return c.visited(r.phaseEntered);
   if ('visited' in r) return c.visited(r.visited);
   if ('signal' in r) {
     if (r.signal === 'pulseLoss') return c.pulse === false;

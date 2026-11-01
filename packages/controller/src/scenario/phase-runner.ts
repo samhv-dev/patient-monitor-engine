@@ -77,6 +77,8 @@ export class PhaseRunner {
   private s: PhaseRunnerState;
   private readonly byId = new Map<string, Phase>();
   private readonly rules: NamedRule[];
+  /** The rules with a phaseEntered leaf, re-read after an entry. */
+  private readonly entryRules: NamedRule[];
   private readonly actions: Set<string>;
   /** The longest slope/unchanged window per variable: how long its ring is kept. */
   private readonly ringSpan = new Map<string, number>();
@@ -90,6 +92,11 @@ export class PhaseRunner {
     this.seed = (opts.seed ?? doc.seed ?? 1) >>> 0;
     for (const p of doc.phases) this.byId.set(p.id, p);
     this.rules = namedRules(doc);
+    this.entryRules = this.rules.filter((nr) => {
+      let e = false;
+      walkLeaves(nr.rule, nr.name, (leaf) => void (e ||= 'phaseEntered' in leaf));
+      return e;
+    });
     this.actions = new Set(doc.actions.map((a) => a.id));
     for (const nr of this.rules) {
       walkLeaves(nr.rule, nr.name, (leaf) => {
@@ -111,7 +118,6 @@ export class PhaseRunner {
       ring: (name) => self.s.rings[name] ?? [],
       visited: (id) => self.s.phases.some((p) => p.id === id),
       phaseRef: (name) => self.s.phaseRef?.[name],
-      enter: (id) => self.byId.get(id)?.enter,
       get rhythm() {
         return self.s.rhythm;
       },
@@ -232,7 +238,15 @@ export class PhaseRunner {
       }
       const held = (id: string) => (this.s.holdFor?.[id] ?? 0) >= (this.byId.get(id)?.holdS ?? 0) - EPS;
       const to = (this.state().next ?? []).find((id) => id !== this.s.stateId && now.get(`phase:${id}`) && held(id));
-      if (to !== undefined) out = this.enter(t, to, `enter:${to}`);
+      if (to !== undefined) {
+        out = this.enter(t, to, `enter:${to}`);
+        // a judged clock on a phase's entry (phaseEntered) reads the timeline: re-read it now, so it rises at the entry
+        for (const nr of this.entryRules) {
+          const v = holds(nr.rule, nr.name, nr.rank, this.ctx);
+          if (v !== (this.s.ruleNow[nr.name] ?? false)) this.edge({ rule: nr.name, t, value: v });
+          this.s.ruleNow[nr.name] = v;
+        }
+      }
       out.push(...this.clockScript(t));
     }
     if (inputs.length || out.length || edged) this.log.splice(at, 0, { op: 'advance', t, inputs: structuredClone(inputs) });

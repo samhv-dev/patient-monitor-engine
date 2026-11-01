@@ -116,7 +116,7 @@ function countManual(w: When): number {
 
 // --- pme-scenario/2 ------------------------------------------------------------------------------------------------
 const RULE_KEYS = 'value, slope, unchanged, visited, signal, all, any, not';
-const DISPLAY_KEYS = 'value, phaseRule, all, any, not';
+const DISPLAY_KEYS = 'value, phaseEntered, all, any, not';
 let compiledV2: ReturnType<Ajv['compile']> | null = null;
 const DEFS = (schemaV2 as { definitions: Record<string, object> }).definitions;
 
@@ -230,12 +230,13 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
       rule(c.when, `${ct}/when`);
     });
   });
-  // a display rule's phaseRule leaf names a phase of the card that has an entry rule (the initial phase has none)
+  // a display rule's phaseEntered leaf names a phase of the card that has an entry rule (the initial phase is entered at
+  // the start: no clock)
   const display = (r: DisplayRule | undefined, path: string): void => {
     if (!r) return;
-    if ('phaseRule' in r) {
-      if (!phases.has(r.phaseRule)) errors.push(`${path}/phaseRule: no phase "${r.phaseRule}"`);
-      else if (!doc.phases.find((p) => p.id === r.phaseRule)?.enter) errors.push(`${path}/phaseRule: the phase "${r.phaseRule}" has no entry rule`);
+    if ('phaseEntered' in r) {
+      if (!phases.has(r.phaseEntered)) errors.push(`${path}/phaseEntered: no phase "${r.phaseEntered}"`);
+      else if (!doc.phases.find((p) => p.id === r.phaseEntered)?.enter) errors.push(`${path}/phaseEntered: the phase "${r.phaseEntered}" has no entry rule`);
     } else if ('all' in r) r.all.forEach((c, k) => display(c, `${path}/all/${k}`));
     else if ('any' in r) r.any.forEach((c, k) => display(c, `${path}/any/${k}`));
     else if ('not' in r) display(r.not, `${path}/not`);

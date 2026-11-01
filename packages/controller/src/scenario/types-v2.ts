@@ -29,11 +29,11 @@ export type PhaseRule =
   | { any: PhaseRule[] }
   | { not: PhaseRule };
 
-/** A rule on the displayed numerics (rank 2): a judged row's clock (§7). `phaseRule` is a phase's own entry rule, read
- *  as the phase reads it (truth, rank 3): the clock starts when that phase's rule first holds, not at its entry. */
+/** A rule on the displayed numerics (rank 2): a judged row's clock (§7). `phaseEntered` is true once the phase has been
+ *  entered (its rule held through its hold): the clock starts at the phase's first entry, when the strip shows it. */
 export type DisplayRule =
   | { value: { var: VitalVar; op: Op; value: number; forS?: number } }
-  | { phaseRule: string }
+  | { phaseEntered: string }
   | { all: DisplayRule[] }
   | { any: DisplayRule[] }
   | { not: DisplayRule };

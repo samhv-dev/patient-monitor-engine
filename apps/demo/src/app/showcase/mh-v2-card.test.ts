@@ -97,15 +97,16 @@ describe('showcase-mh-v2: Recovering and Recrudescence on EtCO₂ at the set ven
   });
 });
 
-// The Debrief's recognition clock (brief fv2-debrief-recognition-clock-nov1): the judged row's display rule is the Early
-// signs phase's own rule (`phaseRule`), so "Recognition (instructor's tick)" counts from the moment the early signs became
-// recognisable, as the /1 card's "early signs" state does; it was a bare EtCO₂ > 45, which the premedicated, then induced
-// patient crosses before intubation (46 at 03:51 in the kit round), five minutes before the MH shows. Pure: the phase
-// runner, grade() and keyTimes() on the card, synthetic inputs in the shape of the demo path.
-describe('showcase-mh-v2: the recognition clock starts at the Early signs rule (the /1 card\'s early signs)', () => {
+// The Debrief's recognition clock (brief fv2-debrief-recognition-clock-nov1, the coordinator's ruling the same day): the
+// judged row's display rule is the Early signs phase's entry (`phaseEntered`), so "Recognition (instructor's tick)"
+// counts from the moment the strip shows Early signs (its rule held through its 20-s hold), as the /1 card's counts from
+// its "early signs" state (EtCO₂ > 45 for 20 s); it was a bare EtCO₂ > 45, which the premedicated, then induced patient
+// crosses before intubation (46 at 03:51 in the kit round), five minutes before the MH shows. Pure: the phase runner,
+// grade() and keyTimes() on the card, synthetic inputs in the shape of the demo path.
+describe('showcase-mh-v2: the recognition clock starts at the Early signs entry (the /1 card\'s early signs)', () => {
   // EtCO₂ 46 at 03:51–04:13 before the ventilator (no set ventilation); 38 on it from 05:00; from 06:00 the MH: EtCO₂
-  // climbing 3.6 mmHg/min (past 45 at 07:57), HR rising, MH activity on. The tick at 08:12, the run sheet's call.
-  const etco2 = (t: number) => (t >= 231 && t <= 253 ? 46 : t < 360 ? 38 : 38 + 0.06 * (t - 360));
+  // climbing 4.1 mmHg/min (past 45 at 07:43, as on the demo path), HR rising, MH activity on. The tick at 08:12, the run sheet's call.
+  const etco2 = (t: number) => (t >= 231 && t <= 253 ? 46 : t < 360 ? 38 : 38 + 0.068 * (t - 360));
   const hr = (t: number) => 64 + 0.03 * Math.max(0, t - 360);
   const TICK = 492;
   function runOf(card: ScenarioDocV2): RunData {
@@ -128,18 +129,19 @@ describe('showcase-mh-v2: the recognition clock starts at the Early signs rule (
   const rec = (d: RunData) => keyTimes(d).find((k) => k.id === 'recognition');
   const rose = (d: RunData, rule: string) => d.edges?.find((e) => e.rule === rule && e.value)?.t;
 
-  it('the judged row\'s display rule is the Early signs phase\'s rule, written once', () => {
-    expect(doc.judged?.find((j) => j.kind === 'recognition')?.display).toEqual({ phaseRule: 'earlySigns' });
+  it('the judged row\'s display rule is the Early signs phase\'s entry, the phase written once', () => {
+    expect(doc.judged?.find((j) => j.kind === 'recognition')?.display).toEqual({ phaseEntered: 'earlySigns' });
   });
 
-  it('a threshold that held before the MH does not start the recognition clock; the Early signs rule\'s first truth does', () => {
+  it('a threshold that held before the MH does not start the recognition clock; the Early signs entry does', () => {
     const d = runOf(doc);
-    const early = rose(d, 'phase:earlySigns') as number;
-    expect(early).toBe(477); // 07:57: EtCO₂ past 45, rising at the set ventilation, HR rising
-    expect(rose(d, 'judged:nameMh')).toBe(early);
-    expect(d.phases?.find((p) => p.id === 'earlySigns')?.t).toBe(early + 20); // the phase entry, after its hold: not the clock
-    expect(rec(d)).toEqual({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: early, fromLabel: 'early signs', toT: TICK, state: 'measured' });
-    // the card as it was (a bare EtCO₂ > 45 on the display): the clock from the pre-intubation 46, 04:06 before the signs
+    const rule = rose(d, 'phase:earlySigns') as number;
+    expect(rule).toBe(463); // 07:43: EtCO₂ past 45, rising at the set ventilation, HR rising
+    const entry = d.phases?.find((p) => p.id === 'earlySigns')?.t as number;
+    expect(entry).toBe(rule + 20); // 08:03, after its 20-s hold: the strip turns to Early signs
+    expect(rose(d, 'judged:nameMh')).toBe(entry);
+    expect(rec(d)).toEqual({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: entry, fromLabel: 'early signs', toT: TICK, state: 'measured' });
+    // the card as it was (a bare EtCO₂ > 45 on the display): the clock from the pre-intubation 46, minutes before the signs
     const bare = structuredClone(doc);
     bare.judged![0]!.display = { value: { var: 'etco2', op: '>', value: 45 } };
     expect(rec(runOf(bare))).toMatchObject({ fromT: 231, fromLabel: 'etco2 > 45', toT: TICK });

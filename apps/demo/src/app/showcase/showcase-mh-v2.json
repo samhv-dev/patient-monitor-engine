@@ -1005,9 +1005,9 @@
       "id": "nameMh",
       "kind": "recognition",
       "text": "Name malignant hyperthermia from the monitor: EtCO₂ rising at unchanged ventilation when it should be falling (42 → 45; without MH it settles 36–39) with a rising heart rate (64 → 80, blunted by fentanyl) (instructor-assessed)",
-      "$comment": "The recognition clock starts at the first second the Early signs rule holds (EtCO₂ above 45 and rising at unchanged set ventilation, HR rising: the phase's own rule, written once), not at a bare EtCO₂ threshold: the premedicated, then induced patient's EtCO₂ passes 45 at 03:51 before intubation, five minutes before the MH shows. The /1 card counts from its 'early signs' state, the same moment.",
+      "$comment": "The recognition clock starts when Early signs is entered (its rule, EtCO₂ above 45 and rising at unchanged set ventilation with HR rising, held through its 20-s hold): the moment the strip shows Early signs, which the instructor ticks against, and the /1 card's 'early signs' state (EtCO₂ above 45 for 20 s), so both cards print the same interval for the same patient (the coordinator's ruling, 1 November). Not a bare EtCO₂ threshold: the premedicated, then induced patient's EtCO₂ passes 45 at 03:51 before intubation, five minutes before the MH shows.",
       "display": {
-        "phaseRule": "earlySigns"
+        "phaseEntered": "earlySigns"
       }
     }
   ],

@@ -472,8 +472,9 @@ test('Debrief B on the haemorrhage card: the learner handout within one A4 page'
 // violations, judged rows; no /2 objectives or steps), the action table is in the report, and in print media at the
 // 182 mm content width page 1 and the learner handout each fit one A4 page (≤ 267 mm, IP8); Chromium prints the
 // handout on one page. Both engines. The instructor ticks the recognition (the judged row) at the call, 08:12: the
-// Debrief's "Recognition (instructor's tick)" runs from the Early signs rule (brief fv2-debrief-recognition-clock-nov1),
-// in seconds, not from the pre-intubation EtCO₂ of 03:51.
+// Debrief's "Recognition (instructor's tick)" runs from Early signs' entry, as the /1 card's from its "early signs"
+// state (brief fv2-debrief-recognition-clock-nov1 and the ruling the same day), in seconds, not from the pre-intubation
+// EtCO₂ of 03:51.
 test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout within one A4 page', async ({ page, browserName }) => {
   test.setTimeout(480_000);
   await openMhV2(page, (h) => openApp(page, base, h, { warmMs: 1500 }));
@@ -503,11 +504,12 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
   // the owner's phase rules of 1 November: Recrudescence is entered (14:59) and opens the second dose's window, so the
   // second dose at 19:13 is met, as the /1 card's objective 4
   expect(Object.fromEntries(j.actions.filter((a) => ['callCrisis', 'dantrolene', 'dantroleneAgain', 'ventilationBack'].includes(a.id)).map((a) => [a.id, a.grade]))).toEqual({ callCrisis: 'met', dantrolene: 'met', dantroleneAgain: 'met', ventilationBack: 'met' });
-  // the recognition key time: from the Early signs rule's first truth (in Latent, after the MH began) to the tick
+  // the recognition key time: from Early signs' entry to the tick
   const rec = (j.keyTimes as Array<{ id: string; fromT: number; fromLabel?: string; toT: number | null }>).find((k) => k.id === 'recognition');
-  const latentT = (j.phases as Array<{ id: string; t: number }>).find((p) => p.id === 'latent')?.t ?? Infinity;
+  const earlyT = (j.phases as Array<{ id: string; t: number }>).find((p) => p.id === 'earlySigns')?.t;
+  test.info().annotations.push({ type: 'MH /2 recognition', description: `${rec?.fromLabel} ${rec?.fromT} → ${rec?.toT}` });
   expect(rec?.fromLabel).toBe('early signs');
-  expect(rec?.fromT, 'the clock starts after Latent is entered, not at the pre-intubation EtCO₂').toBeGreaterThan(latentT);
+  expect(rec?.fromT, 'the clock starts at Early signs\' entry, not at the pre-intubation EtCO₂').toBe(earlyT);
   expect((rec?.toT ?? Infinity) - (rec?.fromT ?? 0), 'seconds, not minutes').toBeLessThan(60);
   const results = resolve(import.meta.dirname, '../../../test-results');
   mkdirSync(results, { recursive: true });

@@ -236,11 +236,11 @@ describe('grade(): repeats, violations, outcomes, judged rows', () => {
     expect(grade(doc, PH, [], on('judged:name', 222), 1000).judged).toEqual([{ id: 'name', text: 'Name MH', kind: 'recognition', fromT: 222 }]);
   });
 
-  it('ruleWords: a phase\'s rule (phaseRule) reads as the phase\'s name, as the /1 card\'s recognition start ("early signs")', () => {
+  it('ruleWords: a phase\'s entry (phaseEntered) reads as the phase\'s name, as the /1 card\'s recognition start ("early signs")', () => {
     const phases = [{ id: 'earlySigns', label: 'Early signs' }, { id: 'rosc', label: 'ROSC: the return' }];
-    expect(ruleWords({ phaseRule: 'earlySigns' }, phases)).toBe('early signs');
-    expect(ruleWords({ phaseRule: 'rosc' }, phases)).toBe('ROSC'); // an acronym keeps its case; the label up to its colon
-    expect(ruleWords({ all: [{ phaseRule: 'earlySigns' }, { value: { var: 'hr', op: '>', value: 100 } }] }, phases)).toBe('early signs and hr > 100');
-    expect(ruleWords({ phaseRule: 'earlySigns' })).toBe('earlySigns'); // without the card's phases: the id
+    expect(ruleWords({ phaseEntered: 'earlySigns' }, phases)).toBe('early signs');
+    expect(ruleWords({ phaseEntered: 'rosc' }, phases)).toBe('ROSC'); // an acronym keeps its case; the label up to its colon
+    expect(ruleWords({ all: [{ phaseEntered: 'earlySigns' }, { value: { var: 'hr', op: '>', value: 100 } }] }, phases)).toBe('early signs and hr > 100');
+    expect(ruleWords({ phaseEntered: 'earlySigns' })).toBe('earlySigns'); // without the card's phases: the id
   });
 });

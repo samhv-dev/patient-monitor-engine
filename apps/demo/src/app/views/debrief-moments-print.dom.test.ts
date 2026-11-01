@@ -59,13 +59,14 @@ describe('Debrief print: every key moment (#3) and recognition from the early si
     expect(tile?.querySelector('.db-tile-sub')?.textContent).toBe('08:38 early signs → 08:40 ticked');
   });
 
-  // the new-format card (pme-scenario/2): its clock is the Early signs phase's rule, named as the /1 card's; the edges
-  // are the harness's on the demo path (the rule first held at 08:03.2, the call ticked at 08:12)
+  // the new-format card (pme-scenario/2): its clock is the Early signs phase's entry, named as the /1 card's; the times
+  // are the harness's on the demo path (the rule first held at 07:43.2, Early signs entered at 08:03.2, the call ticked
+  // at 08:12)
   it('MH /2: "Recognition (instructor\'s tick)" reads 9 s, 08:03 early signs → 08:12 ticked', () => {
     const v = open({
       ...emptyRun('M 35 y 80 kg', 80, 0), doc: mhV2, format: 2, admin: [],
-      phases: [{ id: 'baseline', t: 0, exitT: 377, rule: 'initial' }, { id: 'latent', t: 377, exitT: 503.2, rule: 'enter:latent' }, { id: 'earlySigns', t: 503.2, rule: 'enter:earlySigns' }],
-      edges: [{ rule: 'phase:earlySigns', t: 483.2, value: true }, { rule: 'judged:nameMh', t: 483.2, value: true }],
+      phases: [{ id: 'baseline', t: 0, exitT: 377, rule: 'initial' }, { id: 'latent', t: 377, exitT: 483.2, rule: 'enter:latent' }, { id: 'earlySigns', t: 483.2, rule: 'enter:earlySigns' }],
+      edges: [{ rule: 'phase:earlySigns', t: 463.2, value: true }, { rule: 'judged:nameMh', t: 483.2, value: true }],
       rows: [{ t: 0, kind: 'scenario', text: 'Scenario loaded: MH' }, { t: 492, kind: 'note', text: `Objective met: ${drugWords(mhV2.judged[0]?.text ?? '')}` }],
     });
     leave = v.leave;
