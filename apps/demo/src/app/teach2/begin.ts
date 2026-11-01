@@ -65,13 +65,6 @@ const ICONS: Record<'free' | 'library' | 'archive', string> = {
   archive: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 13h3M8 16h6"/>',
 };
 
-/** The way the status line's right-hand keys read. */
-export const KEYS_OF: Record<Way, string> = {
-  menu: '1–3 loads a case · Space pauses',
-  cases: '1–9 loads a case · Esc back to the three ways · Space pauses',
-  free: 'Esc back to the three ways to begin · Space pauses',
-};
-
 /** ACTION with no case: the three cards and the two buttons under them, or the case list. Free roam is ACTION's own
  *  no-card form (action.ts); this pane is hidden then. `draw()` repaints it and sets the digits. */
 export function mountBeginPane(ctx: Teach2Ctx, host: HTMLElement): { el: HTMLElement; draw(): void; destroy(): void } {

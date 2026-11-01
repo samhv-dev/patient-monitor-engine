@@ -197,14 +197,15 @@ for (const [target, presses] of [['latent', 5], ['earlySigns', 6], ['treated', 7
 }
 
 // The owner's board "Empty 5" (approved 30 October): with no case loaded the view fits 1440 × 900 without a scroll,
-// with the strip's dashed chip and the status line, the default patient's cue box and ACTION's three cards; 2 opens the
+// with the strip's one dashed chip (the owner, 1 November: one row, no status line), the default patient's cue box and
+// ACTION's three cards; 2 opens the
 // case list and 1 loads its first row (the MH card, a demonstration), after which ACTION is the card's steps. The
 // page's screenshot is written to TEACH2_SHOTS for the owner's look. The owner's ruling on the monitor's height: while
 // the cards show there is nothing to skip to, so the Fast forward row is hidden and the learners' monitor gets its
 // height back; Free roam brings the row back. The monitor's canvas texts (wave labels, scale values, sweep speeds) are
 // recorded where they are drawn (teach2-lane-texts.ts: the renderer on the main thread) and the pairs whose ink touches
 // are reported.
-test('Instructor v2 with no case fits 1440 × 900: the three cards, the strip chip, the status line; 2 then 1 loads the MH card', async ({ page, browserName }, info) => {
+test('Instructor v2 with no case fits 1440 × 900: the three cards, the strip\'s one chip; 2 then 1 loads the MH card', async ({ page, browserName }, info) => {
   test.setTimeout(90_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await recordLaneTexts(page);
@@ -214,7 +215,7 @@ test('Instructor v2 with no case fits 1440 × 900: the three cards, the strip ch
   await expect(cards).toHaveCount(3);
   await expect(cards.locator('.ip2-begin-title')).toHaveText(['Free roam', 'Scenario library', 'Debrief archive']);
   await expect(page.locator('.ip2-strip .ip2-chip-none')).toHaveText('No case loaded · the stages appear here when one is');
-  await expect(page.locator('.ip2-strip [role="status"]')).toBeVisible();
+  await expect(page.locator('.ip2-strip [role="status"]')).toBeHidden();
   await expect(page.locator('.ip2-cue-name')).toHaveText('Default patient');
   await expect(page.locator('.ip2-title')).toHaveText('No case loaded');
   await expect.poll(() => page.evaluate(() => /\d/.test(document.querySelector('.stage .pme-stile[data-param="SpO2"] [data-pme="v"]')?.textContent ?? '')), { timeout: 30_000, intervals: [500] }).toBe(true);
@@ -246,6 +247,8 @@ test('Instructor v2 with no case fits 1440 × 900: the three cards, the strip ch
   expect(m.view[0], 'the view scrolls').toBeLessThanOrEqual(m.view[1] as number);
   expect(m.action[0], 'ACTION scrolls').toBeLessThanOrEqual(m.action[1] as number);
   expect(m.pane.w).toBeGreaterThan(400);
+  // the strip is its own 75 px, one row (no status line under it): STATE starts right under it
+  expect(layout.strip[3], 'the empty strip\'s height').toBe(75);
   // the cards sit at 80 % of the pane; the two buttons directly under the third card; the foot line under them
   const [, , aw] = layout.action as number[];
   expect(Math.abs((layout.cards[2] as number) - 0.8 * ((aw as number) - 28))).toBeLessThanOrEqual(2);
@@ -327,7 +330,7 @@ test('Instructor v2 at 1440 × 900: no footer line, the dock flush with the bott
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page, base, '?scenario=showcase-mh#/teach2', { warmMs: 1500 });
   await page.waitForFunction(() => !!document.querySelector('.ip2-strip .ip2-current'), null, { timeout: 30_000 });
-  // a status line under the chips (#210's no case, #211's Case briefing, #214's finishing) adds its 40 px to the strip's
+  // a status line under the chips (#211's Case briefing, #214's finishing) adds its 40 px to the strip's
   // 75: the MH card opens with its briefing where #211 is in the tree; ended, the strip is its own height again
   const status = page.locator('.ip2-strip [role="status"]');
   if (await status.isVisible()) {
@@ -351,35 +354,143 @@ test('Instructor v2 at 1440 × 900: no footer line, the dock flush with the bott
   expect(m.chip.height, 'the chips grow with the row').toBeGreaterThan(30);
 });
 
-// The strip's hint at the owner's 1440 × 900 (it showed only at 1920 × 1080: beside five chips it had no room and `fit`
-// hid it): on its own line under the chips, inside the 75-px strip, whole, at both cards' widest windows; the chips
-// still fit without a cut or a sideways scroll.
-for (const [w, hgt] of [[1440, 900], [1920, 1080]] as const)
-  for (const [card, target] of [['showcase-mh', 'awake'], ['showcase-haemorrhage', 'bleeding']] as const) {
-    test(`the strip's hint shows at ${w} × ${hgt}, ${card.replace('showcase-', '')} ${target}`, async ({ page }) => {
-      test.setTimeout(60_000);
-      await page.setViewportSize({ width: w, height: hgt });
-      await openApp(page, base, `?scenario=${card}#/teach2`, { warmMs: 1500 });
-      await page.waitForFunction((id) => (window as unknown as W).__pmeApp.link.ctl.scenario.stateId === id, target, { timeout: 30_000 });
-      await page.waitForTimeout(1200);
-      const m = await measure(page);
-      const h = await page.evaluate(() => {
-        const box = (e: Element) => e.getBoundingClientRect();
-        const hint = document.querySelector('.ip2-strip-hint') as HTMLElement;
-        const strip = box(document.querySelector('.ip2-strip') as HTMLElement);
-        const chipsBottom = Math.max(...[...document.querySelectorAll('.ip2-strip .ip2-chip')].map((c) => box(c).bottom));
-        const b = box(hint);
-        return { shown: !hint.hidden && b.height > 0, whole: hint.scrollWidth <= hint.clientWidth, text: hint.textContent, top: b.top, bottom: b.bottom, chipsBottom, strip: [strip.top, strip.bottom] };
-      });
-      console.log(`teach2-hint ${w}x${hgt} ${card} ${JSON.stringify(h)}`);
-      expect(h.shown, 'the hint is hidden').toBe(true);
-      expect(h.whole, 'the hint is cut').toBe(true);
-      expect(h.top, 'the hint overlaps the chips').toBeGreaterThanOrEqual(h.chipsBottom);
-      expect(h.bottom, 'the hint leaves the strip').toBeLessThanOrEqual(h.strip[1] as number);
-      expect(m.strip[0], 'the strip scrolls sideways').toBeLessThanOrEqual(m.strip[1] as number);
-      expect(m.cut).toBe(0);
-    });
+/** The strip's one row against its band (the strip above its status line, or the whole strip without one): the chips'
+ *  vertical centre's offset from the band's, the strip's and the band's heights, the main grid's strip row, and whether
+ *  a hint, a note or a status line shows. */
+function stripRow(page: Page) {
+  return page.evaluate(() => {
+    const strip = document.querySelector('.ip2-strip') as HTMLElement;
+    const s = strip.getBoundingClientRect();
+    const status = strip.querySelector('.ip2-status') as HTMLElement;
+    const bottom = status.hidden ? s.bottom - 1 : status.getBoundingClientRect().top; // less the strip's 1-px rule
+    const chips = [...strip.querySelectorAll('.ip2-chips > .ip2-chip, .ip2-chips > .ip2-chip-none')].map((c) => c.getBoundingClientRect());
+    const top = Math.min(...chips.map((c) => c.top));
+    const bot = Math.max(...chips.map((c) => c.bottom));
+    const row = getComputedStyle(document.querySelector('.main[data-route="teach2"]') as HTMLElement).gridTemplateRows.split(' ')[1];
+    return { chips: chips.length, off: Math.round(((top + bot) / 2 - (s.top + bottom) / 2) * 10) / 10, strip: Math.round(s.height), band: Math.round(bottom - s.top), row, extra: strip.querySelectorAll('.ip2-strip-hint, .ip2-strip-note').length, status: !status.hidden, text: strip.querySelector('.ip2-chips')?.textContent };
+  });
+}
+
+// The owner, 1 November: no hint line under the chips ("past: return to its start · future: jump to it"; the stage's box
+// says what a press does), and the chips' row centred in the strip in every state: no case loaded (one row, the chip
+// alone: no note, no status line), a case, its Case briefing and Finish the case (the status line under the row). At the
+// laptop's 1440 × 900 and the projector's 1920 × 1080; at 1440 the no-case and case strips are written to TEACH2_SHOTS.
+for (const [w, hgt] of [[1440, 900], [1920, 1080]] as const) {
+  test(`the strip's one row is centred at ${w} × ${hgt}: no case, a case, its briefing, finishing; no hint line`, async ({ page, browserName }, info) => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: w, height: hgt });
+    await openApp(page, base, '#/teach2', { warmMs: 1500 });
+    await expect(page.locator('.ip2-strip .ip2-chip-none')).toHaveText('No case loaded · the stages appear here when one is');
+    const dir = process.env.TEACH2_SHOTS ?? info.outputPath();
+    mkdirSync(dir, { recursive: true });
+    const shot = (name: string) => (w === 1440 ? page.screenshot({ path: join(dir, `teach2-strip-${name}-${w}x${hgt}-${browserName}.png`) }) : null);
+    const empty = await stripRow(page);
+    await shot('empty');
+    // 2 then 1: the MH card, whose Case briefing holds the status line for its first minute
+    await page.locator('body').click({ position: { x: 700, y: 5 } }); // no field has the focus
+    await page.keyboard.press('2');
+    await page.keyboard.press('1');
+    await page.waitForFunction(() => (window as unknown as W).__pmeApp.link.ctl.scenario.doc !== null, null, { timeout: 30_000 });
+    await expect(page.locator('.ip2-strip[data-briefing]')).toHaveCount(1);
+    await expect(page.locator('.ip2-strip .ip2-current')).toBeVisible();
+    const briefing = await stripRow(page);
+    await page.locator('.ip2-strip [role="status"]').getByRole('button', { name: 'End briefing' }).click();
+    await expect(page.locator('.ip2-strip [role="status"]')).toBeHidden();
+    const loaded = await stripRow(page);
+    await shot('case');
+    await page.locator('.ip2-dock .ip2-finish-btn').click();
+    await expect(page.locator('.ip2-strip[data-finishing]')).toHaveCount(1);
+    const finishing = await stripRow(page);
+    await page.locator('body').click({ position: { x: 700, y: 5 } });
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.ip2-strip[data-finishing]')).toHaveCount(0);
+    const rows = { empty, loaded, briefing, finishing };
+    console.log(`teach2-strip-row ${w}x${hgt} ${JSON.stringify(rows)}`);
+    for (const [when, r] of Object.entries(rows)) {
+      expect(r.chips, `${when}: the chips`).toBeGreaterThan(0);
+      expect(r.extra, `${when}: a hint or note line`).toBe(0);
+      expect(Math.abs(r.off), `${when}: the chips' row is off the band's centre by ${r.off} px`).toBeLessThanOrEqual(1);
+      expect(r.row, `${when}: the main grid's strip row is the strip`).toBe(`${r.strip}px`);
+      expect(r.text ?? '', `${when}: the hint`).not.toMatch(/return to its start|jump to it/i);
+    }
+    for (const r of [empty, loaded]) expect([r.strip, r.status]).toEqual([75, false]);
+    for (const r of [briefing, finishing]) expect([r.strip, r.band, r.status]).toEqual([115, 74, true]);
+  });
+}
+
+/** A stage's box: the box, its title, its button and its text lines (each text's client rects) against the box and the
+ *  window. */
+function popFit(page: Page) {
+  return page.evaluate(() => {
+    const pop = document.querySelector('.ip2-pop') as HTMLElement;
+    const p = pop.getBoundingClientRect();
+    const within = (r: DOMRect, o: DOMRect) => r.left >= o.left - 0.5 && r.right <= o.right + 0.5 && r.top >= o.top - 0.5 && r.bottom <= o.bottom + 0.5;
+    const lines = (e: Element) => {
+      const range = document.createRange();
+      range.selectNodeContents(e);
+      return [...range.getClientRects()].filter((r) => r.width > 0);
+    };
+    const btn = pop.querySelector('button') as HTMLButtonElement;
+    const b = btn.getBoundingClientRect();
+    const head = pop.querySelector('.ip2-pop-head') as HTMLElement;
+    return {
+      box: [Math.round(p.left), Math.round(p.top), Math.round(p.width), Math.round(p.height)],
+      inWindow: p.left >= 0 && p.right <= innerWidth,
+      kidsInside: [...pop.children].every((k) => within(k.getBoundingClientRect(), p)),
+      btnInside: within(b, p),
+      btnTextInside: lines(btn).every((r) => within(r, b)),
+      btnLines: new Set(lines(btn).map((r) => Math.round(r.top))).size,
+      headInside: lines(head).every((r) => within(r, p)),
+      headLines: new Set(lines(head).map((r) => Math.round(r.top))).size,
+      btn: [btn.textContent, btn.getAttribute('aria-label')],
+    };
+  });
+}
+
+// The owner, 1 November (his screenshot 22.48.47): the stage's box showed "Jump to Midazolam 2 mg and fentanyl 100 µg
+// given", whose text wrapped out of the 32-px button and out of the box. The button no longer repeats the stage ("Jump to
+// it", "Return to its start"; the accessible name carries it), the box is as wide as its content, and a long title wraps
+// inside it. At 1440 × 900, the MH card's longest stage name, as a future stage and as a past one; the box's
+// screenshot is written to TEACH2_SHOTS.
+test('a stage\'s box at 1440 × 900: the long title wraps inside, "Jump to it" and "Return to its start" stay inside the box', async ({ page, browserName }, info) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openApp(page, base, '?scenario=showcase-mh#/teach2', { warmMs: 1500 });
+  await page.waitForFunction(() => (window as unknown as W).__pmeApp.link.ctl.scenario.stateId === 'awake', null, { timeout: 30_000 });
+  const NAME = 'Midazolam 2 mg and fentanyl 100 µg given';
+  const dir = process.env.TEACH2_SHOTS ?? info.outputPath();
+  mkdirSync(dir, { recursive: true });
+  // a future stage
+  const future = page.locator('.ip2-strip button.ip2-future', { hasText: NAME });
+  await future.click();
+  await expect(page.locator('.ip2-pop .ip2-pop-head')).toHaveText(NAME);
+  await expect(page.locator('.ip2-pop').getByRole('button', { name: `Jump to ${NAME}` })).toHaveText('Jump to it');
+  const fut = await popFit(page);
+  await page.screenshot({ path: join(dir, `teach2-strip-pop-future-1440x900-${browserName}.png`), clip: { x: 0, y: 0, width: 1440, height: 400 } });
+  await future.click(); // a second press closes it
+  await expect(page.locator('.ip2-pop')).toHaveCount(0);
+  // a past stage with its entry: through Premedicated to Preoxygenating
+  for (const target of ['premedicated', 'preoxygenated']) {
+    expect((await send(page, { type: 'scenario', action: 'goto', target })).accepted).toBe(true);
+    await page.waitForFunction((id) => (window as unknown as W).__pmeApp.link.ctl.scenario.stateId === id, target, { timeout: 15_000 });
   }
+  const past = page.locator('.ip2-strip button.ip2-past', { hasText: NAME });
+  await expect(past).not.toHaveClass(/ip2-skipped/);
+  await past.click();
+  await expect(page.locator('.ip2-pop').getByRole('button', { name: `Return to the start of ${NAME}` })).toHaveText('Return to its start');
+  const back = await popFit(page);
+  await page.screenshot({ path: join(dir, `teach2-strip-pop-past-1440x900-${browserName}.png`), clip: { x: 0, y: 0, width: 1440, height: 400 } });
+  console.log(`teach2-strip-pop ${JSON.stringify({ future: fut, past: back })}`);
+  for (const [when, f] of [['future', fut], ['past', back]] as const) {
+    expect(f.inWindow, `${when}: the box leaves the window`).toBe(true);
+    expect(f.kidsInside, `${when}: a part of the box lies outside it`).toBe(true);
+    expect(f.btnInside, `${when}: the button lies outside the box`).toBe(true);
+    expect(f.btnTextInside, `${when}: the button's text spills out of the button`).toBe(true);
+    expect(f.btnLines, `${when}: the button's text wraps`).toBe(1);
+    expect(f.headInside, `${when}: the title spills out of the box`).toBe(true);
+    expect(f.box[2] as number, `${when}: the box's width`).toBeLessThanOrEqual(320);
+  }
+});
 
 // A toast rests on the dock (8 px above its top edge), not 40 px over it, at the laptop's and the projector's window,
 // whatever sits under the dock; one raised by a jump, the way the strip raises it.

@@ -84,8 +84,9 @@ asked.
    no print [Q1-MH].
 9. **Saadat-style monitor, and no style change during the talk** (E20): after a change the AGENTS tile reads "---"
    [MEAS §8].
-10. **Say the known misses yourself**: untreated MH is too slow on this build (no arrest within 51 min of the
-    succinylcholine, core 37.3 °C; the tables' "+1 °C per 5–15 min" would need 2–4 × the heat the sourced VO₂ can make)
+10. **Say the known misses yourself**: untreated, the core rises at the registries' median rate (0.76 °C per 15 min;
+    38.5 °C at +46 min, 38.7 °C at 51 min of the succinylcholine; the textbook "1–2 °C every 5 min" comes from swine and
+    fulminant cases: research/e131-2-mh-heat-evidence.md), but it does not arrest within 51 min
     [SPK §2; `docs/validation/known-misses.md`]; the MH temperature barely moves on the demo path (Tcore 36.4–36.8);
     dantrolene's 10-min EtCO₂ effect misses its guard (−4.6 against ≤ −5) [SPK §7]; the premedication over-sedates
     (RR 6); the charcoal filters and the refrigerated fluid are words only; sepsis is not built [RM; SYN].

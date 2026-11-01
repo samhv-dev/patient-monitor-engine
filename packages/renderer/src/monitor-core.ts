@@ -330,11 +330,27 @@ export class MonitorCore {
       const g = judgeGain(j, amp, k, pl.gainOptions, pl.gainLaneMm);
       if (g !== this.gainMult[i]) {
         this.gainMult[i] = g;
-        (this.lanes[i] as SweepLane).cfg.gainMmPerMv = g * 10;
+        (this.lanes[i] as SweepLane).cfg.gainMmPerMv = this.drawnMmPerMv(i);
         changed.push(i);
       }
     });
     if (changed.length > 0) this.drawChrome(changed);
+  }
+
+  /**
+   * Lane i's ECG scale as drawn (mm per mV at the calibration). The auto-gain judges its size for the unit's lane
+   * (`gainLaneMm`, the same in every window, #213); a window whose lane is shorter than that (the instructor's STATE
+   * pane: 16 mm against the unit's 37.1 mm) draws the unit's lane in miniature, so each mV takes the share of the lane
+   * it takes on the unit and the size that fits there fits here (owner's run of 31 October: at 10 mm/mV in the 16-mm
+   * pane the MH card's PVCs were cut at both edges). A lane as tall as the unit's or taller keeps the calibration
+   * (Philips IntelliVue IFU M8000-9001K p.121: the size is an adjustment factor of the wave, and the 1 mV calibration
+   * bar shows the true scale). A fixed-size lane keeps 10 mm/mV × size in every window.
+   */
+  private drawnMmPerMv(i: number, h = this.laneBox(i).h): number {
+    const pl = this.plan.lanes[i] as PlanLane;
+    const mmPerMv = (this.gainMult[i] ?? 1) * 10;
+    if (!pl.autoGain || !(pl.gainLaneMm > 0)) return mmPerMv;
+    return mmPerMv * Math.min(1, h / this.pxPerMm / pl.gainLaneMm);
   }
 
   /** Wave lanes (125 Hz; any channel the plan names), auto-scaled pleth, cleared on 'none'. */
@@ -400,7 +416,7 @@ export class MonitorCore {
           background: p.background, lineWidth: p.lineWidth, eraseGapPx: p.eraseGapPx, grid: p.grid, cursorLine: p.cursorLine, fill: pl.fill,
           smoothN: Math.max(1, Math.round((pl.smoothMs / 1000) * rate)), smoothGate: SMOOTH_GATE_MMHG,
           hLines: pl.scaleLines ? { values: pl.scaleLines, color: p.scaleLineColor ?? pl.color } : null, recordBand: this.overprint,
-          ...(pl.kind === 'ecg' ? { baseline: 0.6, gainMmPerMv: (this.gainMult[i] as number) * 10 } : scaleFor(lo, hi, h, this.pxPerMm)),
+          ...(pl.kind === 'ecg' ? { baseline: 0.6, gainMmPerMv: this.drawnMmPerMv(i, h) } : scaleFor(lo, hi, h, this.pxPerMm)),
         },
         dpr,
       );
@@ -576,7 +592,7 @@ export class MonitorCore {
     const pl = this.plan.lanes[i] as PlanLane;
     const { y: y0, h } = this.laneBox(i);
     const base = y0 + 0.6 * h;
-    const mv = Math.min(0.5 * h, (this.gainMult[i] ?? 1) * 10 * this.pxPerMm); // 1 mV at the lane gain
+    const mv = Math.min(0.5 * h, this.drawnMmPerMv(i, h) * this.pxPerMm); // 1 mV as the lane draws it
     if (clear) {
       ctx.fillStyle = this.plan.background;
       ctx.fillRect(12, y0 + 0.1 * h - 2, 36, 0.5 * h + 4);

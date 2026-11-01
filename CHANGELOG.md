@@ -190,6 +190,18 @@ the public API is what the packages export (see the API reference), the `pme-sce
   line adds 40: 115 px (it was 92, and the line took 17 px from the chips).
 
 ### Fixed
+- The untreated MH core rises at the registry median rate: the evidence check E131-2 (owner, 1 November: "the
+  temperature still does not rise properly") found the engine right and three bands wrong. The human registry's
+  MAXIMAL rate of core rise in grade 5–6 MH is 0.80 (IQR 0.50–1.00) °C per 15 min in survivors and 0.65 (0.53–1.32)
+  in deaths (Toyota et al., Biomed Res Int 2023, 128 cases); the engine's untreated core rises 0.76 °C per 15 min at
+  full activity. The textbook "1–2 °C every 5 min" traces to swine (Nelson 1990) and fulminant single cases; the
+  established-crisis band of 17–21 min was the 705-W prototype's and would need a whole-body VO₂ of × 4–5, against
+  × 1.8–2.7 measured in swine and × 2–3 in reviews of man. No engine change: the heat and temperature tests' MH rate
+  bands are now that IQR (both met), the MH card's established crisis (+45.6 min, inside the ≈ 35–63 min the IQR gives
+  on the anaesthetised core) is measured in the passing untreated arm, the hyperthermic-VF arm stays an expected
+  failure with its reason restated, and the card story and presenter notes no longer say 37.3 °C at 51 min and
+  "established after about 100 minutes" (it is 38.7 °C and 46 min). Evidence and verdict:
+  `docs/review-inputs/research/e131-2-mh-heat-evidence.md`.
 - Malignant hyperthermia now warms the core: the MH sympathetic surge constricts the skin. Untreated on the MH card the
   core showed 36.5 °C at 15 min and 36.9 °C at 35 min (the owner's run of 30 October): the 140 W of MH heat was real,
   but under anaesthesia the core-to-skin conductance stayed fully dilated and the periphery took up about as much heat
@@ -248,6 +260,14 @@ the public API is what the packages export (see the API reference), the `pme-sce
   past the current size's threshold and two consecutive windows asking for it (Philips "Auto Size" and Mindray "Auto"
   choose from discrete sizes; neither manual gives a cadence or a band, so those are [ENG]). Philips-like stays at
   10 mm/mV. No gain control yet (a later piece).
+- **The ECG trace no longer runs off its lane in Instructor v2's STATE pane** (the clinical owner's run of 31 October:
+  the MH card at Early signs, HR ≈ 130, lead II cut flat at the top and the bottom while the lane read X1). The pane's
+  monitor at a 1440 × 900 window is 372 × 267 px, so ECG1 is 50 px, 16 mm at the skin's 3.10 px/mm, while the
+  auto-gain chooses the size for the unit's 37 mm lane; at 10 mm/mV the lane held +0.97 / −0.65 mV, and the card's
+  PVCs reach +1.9 / −1.65 mV (the sinus beats, +0.9 / −0.4 mV, rightly X1). An auto-gain ECG lane drawn shorter than
+  the unit's lane now draws the unit's lane in miniature (each mV takes the share of the lane it takes on the unit;
+  the 1 mV bar follows), so the size that fits the unit fits every window and the label stays the same everywhere. A
+  lane as tall as the unit's or taller keeps 10 mm/mV × size; fixed-size lanes (Philips-like) are unchanged.
 - Instructor v2's stage-strip chips keep their state looks (a finished stage's no frame, the current one's blue, a
   future one's dashed) with the sheets loaded: the tray's `.ip2-chip` rule in `sheets.css` is scoped to the tray.
 - Instructor v2 reads a `pme-scenario/1` card's spoke states (a state whose only exit is a short `afterS` back to its

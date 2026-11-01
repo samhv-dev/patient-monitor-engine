@@ -4,9 +4,10 @@
 // stage, the current one, the next two; "‹ n earlier" and "n later ›" arrows page the window; "back to now" recentres;
 // the future ordered from the current stage, two stages of one step reading "or"), entry times from the history,
 // "auto"; a press on a stage opens its inline box, and the box's button is the confirmation (the owner's report of 30
-// October: no dialog): a future stage's "Jump to <stage>" sends what today's jump sends (both mounted on one fake Link,
-// compared deep-equal); a past stage's box shows its entry time and a disabled return until IP2's stage marks exist,
-// then "Return to the start of <stage>" restores the mark.
+// October: no dialog): a future stage's "Jump to it" (named "Jump to <stage>") sends what today's jump sends (both
+// mounted on one fake Link, compared deep-equal); a past stage's box shows its entry time and a disabled return until
+// IP2's stage marks exist, then "Return to its start" (named "Return to the start of <stage>") restores the mark. The
+// button never repeats the box's title, and the strip has no hint line (the owner, 1 November).
 // The status line under the chips (the owner's choice of 31 October): while a card's Case briefing runs it reads
 // "Case briefing on every screen · 0:48 left" with End briefing; the chips' row carries no briefing element.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -185,8 +186,12 @@ describe('stage strip: clicks', () => {
     expect(document.querySelector('dialog[open]')).toBeNull();
     const pop = r.el.querySelector('.ip2-pop') as HTMLElement;
     expect(pop.getAttribute('aria-label')).toBe('Stage Cardiac arrest');
+    expect(pop.querySelector('.ip2-pop-head')?.textContent).toBe('Cardiac arrest');
     const go = pop.querySelector('button') as HTMLButtonElement;
-    expect(go.textContent).toBe('Jump to Cardiac arrest');
+    // the owner, 1 November: the button does not repeat the stage (a long name wrapped it out of the box); its
+    // accessible name carries it
+    expect(go.textContent).toBe('Jump to it');
+    expect(go.getAttribute('aria-label')).toBe('Jump to Cardiac arrest');
     go.click();
     await settle();
     await settle();
@@ -205,10 +210,11 @@ describe('stage strip: clicks', () => {
     expect(r.sent).toHaveLength(1);
   });
 
-  it('the hint names both boxes and no longer says "asks once"', () => {
+  it('no hint line (the owner, 1 November): the strip is the chips\' row and the status line, nothing else', () => {
     const r = rig(MH, 'treating', MH_TO_TREATING);
-    const hint = r.el.querySelector('.ip2-strip-hint')?.textContent ?? '';
-    expect(hint).toBe('past: return to its start · future: jump to it');
+    expect([...r.el.children].map((c) => c.className)).toEqual(['ip2-chips', 'ip2-status']);
+    expect(r.el.querySelector('.ip2-strip-hint')).toBeNull();
+    expect(r.el.textContent).not.toMatch(/return to its start|jump to it/i);
     expect(r.el.innerHTML).not.toContain('asks once');
   });
 
@@ -217,8 +223,10 @@ describe('stage strip: clicks', () => {
     (r.el.querySelector('button.ip2-past[aria-label^="Stage Trigger off"]') as HTMLButtonElement).click();
     const pop = r.el.querySelector('.ip2-pop') as HTMLElement;
     expect(pop.querySelector('.ip2-pop-time')?.textContent).toBe('Entered at 08:16');
+    expect(pop.querySelector('.ip2-pop-head')?.textContent).toBe('Trigger off');
     const back = pop.querySelector('button') as HTMLButtonElement;
-    expect(back.textContent).toBe('Return to the start of Trigger off');
+    expect(back.textContent).toBe('Return to its start');
+    expect(back.getAttribute('aria-label')).toBe('Return to the start of Trigger off');
     expect(back.disabled).toBe(true);
     back.click();
     await settle();
@@ -258,11 +266,13 @@ describe('stage strip: clicks', () => {
     expect(r.sent).toHaveLength(1);
   });
 
-  it('no scenario: says so (board "Empty 5"), and a load redraws from the start', () => {
+  it('no scenario: the one chip says so (board "Empty 5"; the owner, 1 November: one row, no status line), and a load redraws from the start', () => {
     const r = rig(MH, 'treating', MH_TO_TREATING);
     r.sv.doc = null;
     r.slot.refresh();
-    expect(r.el.textContent).toContain('No case loaded · the stages appear here when one is');
+    expect([...r.el.querySelectorAll('.ip2-chips > *')].map((c) => c.textContent)).toEqual(['No case loaded · the stages appear here when one is']);
+    expect(r.el.hasAttribute('data-empty')).toBe(true);
+    expect(r.el.querySelector<HTMLElement>('.ip2-status')?.hidden).toBe(true);
     r.sv.doc = HAEM;
     r.sv.docVersion = 2;
     r.sv.stateId = 'bleeding';
@@ -303,12 +313,11 @@ describe('stage strip: the status line while a Case briefing runs', () => {
       expect(status(x.el)?.hidden ?? true).toBe(true);
       expect(x.el.hasAttribute('data-briefing')).toBe(false);
       expect(x.el.querySelector('.cb-end')).toBeNull();
-      expect((x.el.querySelector('.ip2-strip-hint') as HTMLElement).hidden).toBe(false);
     }
     expect(chipTexts(r.el)).toEqual(chipTexts(plain.el));
   });
 
-  it('while it runs: the sentence with the time left and End briefing; the chips and the hint as without it', async () => {
+  it('while it runs: the sentence with the time left and End briefing; the chips as without it', async () => {
     const host = fakeHost();
     const r = rig(MH, 'treating', MH_TO_TREATING, 600, host);
     const before = chipTexts(r.el);
@@ -321,7 +330,6 @@ describe('stage strip: the status line while a Case briefing runs', () => {
     expect([...r.el.querySelectorAll('.ip2-chips *')].some((n) => /briefing/i.test(n.textContent ?? ''))).toBe(false);
     r.slot.refresh();
     expect(chipTexts(r.el)).toEqual(before);
-    expect((r.el.querySelector('.ip2-strip-hint') as HTMLElement).hidden, 'the hint stays').toBe(false);
     await vi.advanceTimersByTimeAsync(12_000);
     expect(line(r.el)).toBe('Case briefing on every screen · 0:48 left');
     // End briefing: the session's end (every screen), and the line goes
