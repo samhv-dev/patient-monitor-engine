@@ -61,19 +61,18 @@ const MARK_NUM: Readonly<Record<string, readonly [number, number]>> = { good: [1
 const SPANS = [5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600];
 
 /**
- * The grid's big square, in seconds of the time axis (the owner, 1 November): one minute while a minute is at least
- * 20 drawing units of the 610-unit plot (fine squares ≥ 4 units, 0.8 mm on the printed report: a run up to ≈ 30½
- * min), else five minutes. A big square is also a panel's height, so it is held between 20 and 60 units: a run so
- * short that a minute is wider than 60 units (under ≈ 10 min) steps down to 30, 15, 10 or 5 s; a run so long that
- * five minutes are wider than 60 units (≈ 30½ to 51 min) steps down to two minutes; one so long that five minutes are
- * under 20 units steps up to 10, 15, 30 or 60 min.
+ * The grid's big square, in seconds of the time axis, which is also a panel's height (the owner, 2 November, his
+ * option 1): the largest of 1, 2 or 5 minutes that is at most 60 drawing units of the 610-unit plot, so a panel is
+ * about 40–60 units tall on the demo cards (the 11½-min tamponade one minute, 53 units; the 25-min MH two minutes, 49;
+ * the 23-min haemorrhage two minutes, 53). A run so short that a minute is over 60 units steps down to 30, 15, 10 or
+ * 5 s; one so long that five minutes are under 60 units steps up to 10, 15, 30 or 60 min while they stay within 60.
+ * The big square falls under 40 units only on runs of ≈ 15–20 min (one minute, 30–40) and ≈ 31–51 min (two minutes,
+ * 24–40), where the next span up would be over 60.
  */
 export function gridMajorS(end: number): number {
   const w = (s: number): number => (s / Math.max(end, 1)) * PLOT;
-  let i = SPANS.indexOf(w(60) >= 20 ? 60 : 300);
-  while (w(SPANS[i] as number) < 20 && i < SPANS.length - 1) i++;
-  while (w(SPANS[i] as number) > 60 && i > 0) i--;
-  return SPANS[i] as number;
+  const fits = SPANS.filter((s) => w(s) <= 60 + 1e-9);
+  return fits.at(-1) ?? (SPANS[0] as number);
 }
 
 /**

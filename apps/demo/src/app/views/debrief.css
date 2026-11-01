@@ -194,7 +194,7 @@
   .debrief .db-tile-v { font-size: 13pt; }
   .debrief .db-tile-sub { font-size: 8pt; }
   .debrief .db-course svg { max-width: none; }
-  .debrief #db-course .db-course svg { width: 80%; }
+  .debrief #db-course .db-course svg { width: var(--db-print-w, 80%); } /* at most 52 mm tall (debrief.ts PRINT_MM): page 1 keeps to one A4 page */
   .debrief .db-course text { fill: #000; }
   .debrief .db-course .db-badge-n { fill: #fff; }
   .debrief .db-course .db-scenario .db-badge-n { fill: #000; }

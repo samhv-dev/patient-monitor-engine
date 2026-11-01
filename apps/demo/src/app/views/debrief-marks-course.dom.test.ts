@@ -97,6 +97,11 @@ describe('the Debrief course strip: events at the top, ECG paper, marks at the b
     expect(glyphs[1]?.querySelector('title')?.textContent).toBe('2 · 07:50 Bookmark: Mark 2 at 07:50 · discuss: “what did the monitor show here?”');
     expect([...v.el.querySelectorAll('#db-bookmarks li')].map((li) => [li.textContent?.slice(0, 9), li.classList.contains('undone')])).toEqual([['1 · 05:00', true], ['2 · 07:50', false]]);
     expect(v.el.querySelector('#db-course .db-legend')?.textContent).toBe(`${LEGEND} · marks: bad discuss`);
+    // printed at most 52 mm tall: narrower than 80 % of the 182 mm width when its squares would print it taller
+    const H = svg.viewBox.baseVal.height;
+    const w = parseFloat((v.el.querySelector('#db-course .db-course') as HTMLElement).style.getPropertyValue('--db-print-w'));
+    expect(w).toBeCloseTo(Math.min(80, (52 * COURSE_W * 100) / (182 * H)), 1);
+    expect((H / COURSE_W) * ((w / 100) * 182)).toBeLessThanOrEqual(52.05);
     // the learner handout: its rc.3 strip, the badges, no marks
     expect(v.el.querySelectorAll('#db-handout .db-bm')).toHaveLength(0);
     expect(v.el.querySelectorAll('#db-handout .db-badge')).toHaveLength(7);
@@ -157,14 +162,14 @@ describe('the Debrief course strip: events at the top, ECG paper, marks at the b
     expect(frames[0], 'the events row: three fine squares').toBeCloseTo((3 * big) / 5, 0);
   });
 
-  it('the grid rule: a minute to ≈ 30½ min, five minutes beyond; a big square held to 20–60 units', () => {
-    expect(gridMajorS(689)).toBe(60); // the tamponade, 53 units
-    expect(gridMajorS(1483)).toBe(60); // the MH recording, 24.7 units
-    expect(gridMajorS(1830)).toBe(60); // a minute is 20.0 units of the 610-unit plot
-    expect(gridMajorS(1831)).toBe(120); // five minutes would be 100 units: two
+  it('the grid rule: the largest of 1, 2 or 5 minutes at most 60 units (sub-minute on a short run, longer on a long one)', () => {
+    expect(gridMajorS(689)).toBe(60); // the tamponade: a minute is 53 units, two would be 106
+    expect(gridMajorS(1483)).toBe(120); // the MH recording: two minutes, 49 units (one would be 24.7)
+    expect(gridMajorS(1383)).toBe(120); // the haemorrhage: two minutes, 53 units
+    expect(gridMajorS(1219)).toBe(60); // two minutes would be 60.05
     expect(gridMajorS(3060)).toBe(300); // ≈ 51 min: five minutes, 59.8 units
-    expect(gridMajorS(300)).toBe(15); // a 5-min run: a minute would be 122 units
-    // a 60-min run on the page: five-minute squares
+    expect(gridMajorS(300)).toBe(15); // a 5-min run: a minute would be 122 units, 30 s 61
+    // a 60-min run on the page: five-minute squares (ten would be 101.7 units)
     const long: RunData = { ...emptyRun('x', 70, 0), samples: Array.from({ length: 3600 }, (_, t) => ({ t, hr: 80, map: 70, spo2: 97, etco2: 35, rr: null, temp: null, k: null, lactate: null, ph: null, glucose: null, tcore: null })) };
     const b = verticals(parse(courseSvg(long, [], { trends: [...TRENDS] })).querySelector('path.db-paper-b')?.getAttribute('d') ?? '');
     expect((b[1] as number) - (b[0] as number)).toBeCloseTo((300 / 3599) * 610, 0);

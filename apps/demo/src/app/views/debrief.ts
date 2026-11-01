@@ -21,7 +21,7 @@ import type { Grade } from '@pme/controller/scenario';
 import { debriefJson } from '../debrief-export.ts';
 import { keyMoments, keyTimes, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
 import { LAB_KEYS, TREND_KEYS, type Row, type RunData, type TrendKey } from '../record.ts';
-import { courseSvg, type CourseMark } from './debrief-course.ts';
+import { COURSE_W, courseSvg, type CourseMark } from './debrief-course.ts';
 import { MARKS } from '../teach2/dock.ts';
 import { hrefOf } from '../router.ts';
 import { cardOf } from '../scenarios.ts';
@@ -231,6 +231,15 @@ const legend = (shapes: keyof typeof SHAPES, tail = '', more: Array<Node | strin
 const WHO: Readonly<Record<Who, string>> = { team: 'Team', patient: 'Patient', scenario: 'Scenario' };
 const whoCell = (w: Who): HTMLElement => h('td', { class: 'db-whocell' }, w === 'scenario' ? null : h('span', { class: `db-${w}` }, w === 'team' ? '■ ' : '● '), WHO[w]);
 const TRENDS4: TrendKey[] = ['hr', 'map', 'spo2', 'etco2']; // E56: the same four for every case
+/** The printed course strip: at most this tall (mm), at 80 % of the 182 mm content width or less. A strip whose squares
+ *  would print it taller (the owner's big squares of 40–60 units on a 25-min run, with its marks) prints narrower, so
+ *  its squares are smaller in print only and page 1 keeps to one A4 page (the owner, 2 November). */
+const PRINT_MM = 52;
+/** The strip's printed width (% of the content width) from its viewBox: its height is width × H / 728. */
+const printWidth = (svg: string): string => {
+  const h = Number(/viewBox="0 0 \d+ ([\d.]+)"/.exec(svg)?.[1] ?? 0);
+  return Math.min(80, h > 0 ? (PRINT_MM * COURSE_W * 100) / (182 * h) : 80).toFixed(1);
+};
 /** The fixed sentence under the key moments when a row is pulseless (E60; the owner's list, item 11; reworded for E126). */
 const SPO2_DASH = 'SpO₂ as the monitor showed it: – while pulseless without compressions (no pulsatile signal); a number during CPR reflects compression-generated flow and is unreliable.';
 /** The learner handout's fixed text (E51; the owner's list, item 3: non-clinical, as drafted unless he changes it). */
@@ -367,6 +376,7 @@ export function debriefView(session: AppSession, link: Link): View {
     const cm = courseMarks(nums);
     const course = h('div', { class: 'db-course' });
     course.innerHTML = courseSvg(d, ms, { trends: TRENDS4, marks: cm });
+    course.style.setProperty('--db-print-w', `${printWidth(course.innerHTML)}%`);
     live1.replaceChildren(...kids(
       band,
       tiles.length ? section('keytimes', 'Key times', h('div', { class: 'db-tiles' }, ...tiles)) : null,
