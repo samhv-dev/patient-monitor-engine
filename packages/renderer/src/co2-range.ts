@@ -6,10 +6,11 @@
 //  - the judged value is each breath's peak as the engine's EtCO2 detector finds it (engine-core co2-numerics.ts: a
 //    breath rises above 50 % of a decaying recent peak and ends below 30 %), read from the same displayed samples, never
 //    a single sample;
-//  - WIDEN one step after CO2_WIDEN_BREATHS consecutive breaths whose peak reaches CO2_WIDEN_AT of the current top
-//    (47.5 of 50: the plateau within 5 % of the roof);
+//  - WIDEN one step after CO2_WIDEN_BREATHS consecutive breaths whose peak EXCEEDS the current top (over 50 on the 50
+//    lane, over 80 on the 80 lane: the plateau would be clipped), so a plateau of 49.5 stays on the 0–50 scale
+//    (orchestrator's ruling on #250, 2 Nov: the MH card's early-signs stop stays on 0–50, as in every rehearsal);
 //  - NARROW one step after CO2_NARROW_BREATHS consecutive breaths whose peak stays under CO2_NARROW_UNDER of the
-//    next-lower top (40 of 50, 64 of 80). The band between (40–47.5 on the 50/80 step) is the hysteresis: a lane at 80
+//    next-lower top (40 of 50, 64 of 80). The band between (40–50 on the 50/80 step) is the hysteresis: a lane at 80
 //    with peaks of 45 stays at 80, a lane at 50 with peaks of 45 stays at 50, so it never flaps at 50;
 //  - nothing above the widest top widens further: the trace clips at the lane top there (E63 at the top range);
 //  - no breath (apnoea, a detached line) changes nothing.
@@ -22,8 +23,6 @@
 export const CO2_WIDEN_BREATHS = 2;
 /** Consecutive breaths well under the lower scale before the lane narrows (three times as long: ≈ 30 s at RR 12) [ENG]. */
 export const CO2_NARROW_BREATHS = 6;
-/** A breath peak at or over this fraction of the current top counts towards widening [ENG]. */
-export const CO2_WIDEN_AT = 0.95;
 /** A breath peak under this fraction of the next-lower top counts towards narrowing [ENG]. */
 export const CO2_NARROW_UNDER = 0.8;
 // The engine's EtCO2 detector (engine-core l3/co2-numerics/co2-numerics.ts, brief §4.4), repeated here: the renderer
@@ -56,7 +55,7 @@ export function restartCo2Range(r: Co2Range): void {
 export function judgeCo2Breath(r: Co2Range, peak: number, tops: readonly number[]): number {
   const top = tops[r.at] as number;
   const lower = r.at > 0 ? (tops[r.at - 1] as number) : null;
-  r.over = r.at < tops.length - 1 && peak >= CO2_WIDEN_AT * top ? r.over + 1 : 0;
+  r.over = r.at < tops.length - 1 && peak > top ? r.over + 1 : 0;
   r.under = lower !== null && peak < CO2_NARROW_UNDER * lower ? r.under + 1 : 0;
   if (r.over >= CO2_WIDEN_BREATHS) {
     r.at++;

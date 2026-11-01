@@ -46,23 +46,32 @@ describe('the CO2 auto-range rule (co2-range.ts)', () => {
     expect(scalesAfter([42, 42, 52, 53, 54, 54, 54])).toEqual([50, 50, 50, 80, 80, 80, 80]);
   });
 
+  it('a peak must EXCEED the top: 49.5 (the first ventilated breaths after the apnoea) and exactly 50 never widen', () => {
+    expect(scalesAfter(Array(12).fill(49.5))).toEqual(Array(12).fill(50));
+    expect(scalesAfter(Array(12).fill(50))).toEqual(Array(12).fill(50));
+    expect(scalesAfter([49.5, 49.5, 50.5, 50.5])).toEqual([50, 50, 50, 80]);
+    expect(scalesAfter([60, 60, 79.5, 79.5, 80, 80, 80], 0)).toEqual([50, 80, 80, 80, 80, 80, 80]);
+  });
+
   it('a single breath above 50 does not widen (hysteresis): 42, 55, 42, 42, and 42, 55, 42, 55, 42', () => {
     expect(scalesAfter([42, 55, 42, 42])).toEqual([50, 50, 50, 50]);
     expect(scalesAfter([42, 55, 42, 55, 42])).toEqual([50, 50, 50, 50, 50]);
   });
 
-  it(`back under 40 the lane narrows to 0–50 after ${CO2_NARROW_BREATHS} breaths; in the 40–47.5 band it never moves`, () => {
+  it(`back under 40 the lane narrows to 0–50 after ${CO2_NARROW_BREATHS} breaths; in the 40–50 band it never moves`, () => {
     expect(CO2_NARROW_BREATHS).toBe(6);
     expect(scalesAfter([38, 38, 38, 38, 38, 38, 38], 1)).toEqual([80, 80, 80, 80, 80, 50, 50]);
     // one breath back over 40 restarts the count
     expect(scalesAfter([38, 38, 38, 38, 38, 41, 38, 38, 38, 38, 38, 38], 1)).toEqual([...Array(11).fill(80), 50]);
-    // the hysteresis band: 45 stays on whichever scale it is shown on
-    expect(scalesAfter(Array(20).fill(45), 1)).toEqual(Array(20).fill(80));
-    expect(scalesAfter(Array(20).fill(45), 0)).toEqual(Array(20).fill(50));
+    // the hysteresis band: 45 and 49.5 stay on whichever scale they are shown on
+    for (const p of [45, 49.5]) {
+      expect(scalesAfter(Array(20).fill(p), 1)).toEqual(Array(20).fill(80));
+      expect(scalesAfter(Array(20).fill(p), 0)).toEqual(Array(20).fill(50));
+    }
   });
 
   it('the climb goes 50 → 80 → 100 a step at a time, and nothing widens past the widest (E63 there)', () => {
-    expect(scalesAfter([60, 60, 78, 78, 120, 120, 120])).toEqual([50, 80, 80, 100, 100, 100, 100]);
+    expect(scalesAfter([60, 60, 82, 82, 120, 120, 120])).toEqual([50, 80, 80, 100, 100, 100, 100]);
     expect(scalesAfter([60, 60, 60], 0)).toEqual([50, 80, 80]);
   });
 
