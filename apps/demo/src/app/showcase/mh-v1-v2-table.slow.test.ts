@@ -30,11 +30,12 @@ const PATH: Array<{ t: number; v1: string; v2: string }> = [
   { t: 832, v1: 'EtCO₂ normal: ventilation back to 12 × 500', v2: 'ventilationBack' }, // 13:52
   { t: 1153, v1: 'Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600, O₂ 100 %)', v2: 'dantroleneAgain' }, // 19:13
 ];
-/** The run of show's four pauses: after the first fast-forward, after span 1, after span 2, the end. */
-const PAUSES = [485, 825, 1145, 1464];
+/** The run of show's four pauses (after the first fast-forward, after span 1, after span 2, the end) and 08:45, the
+ *  pause the owner would use on /2 for Early signs (its 60-s hold puts it at 08:43). */
+const PAUSES = [485, 525, 825, 1145, 1464];
 const END_S = 1464;
-/** Run on past the talk so a late phase is still printed. */
-const RUN_S = 1800;
+/** Run on to the hour, past the talk, so a late phase is still printed and the entries per hour are counted. */
+const RUN_S = 3600;
 const POLL_S = 0.4; // the app's poll at ×4
 const V2 = process.env.MH_TABLE_V2 ?? 'showcase-mh-v2';
 
@@ -114,8 +115,8 @@ it(`the MH table: /1 (showcase-mh) against /2 (${V2}) on the demo path, printed`
   L.push(`  /1 host-wired run (its Debrief below): ${a.states.map(([t, s]) => `${s} ${mmss(t)}`).join(', ')}`);
   L.push(`  /2 all: ${S2.map(([t, s]) => `${s} ${mmss(t)}`).join(', ')}`);
   const short = S2.slice(1).map(([t, s], i) => [s, t - (S2[i] as [number, string])[0], S2[i]?.[1]] as const).filter(([, d]) => d < 60 - 1e-6);
-  L.push(`  /2 phases held < 60 s: ${short.length ? short.map(([s, d, prev]) => `${prev} for ${d.toFixed(1)} s before ${s}`).join('; ') : 'none'}; entries ${S2.length}`);
-  L.push('', '2. The strip at the four pauses (/1 | /2)');
+  L.push(`  /2 phases held < 60 s: ${short.length ? short.map(([s, d, prev]) => `${prev} for ${d.toFixed(1)} s before ${s}`).join('; ') : 'none'}; entries ${S2.length} in ${RUN_S / 60} min`);
+  L.push('', '2. The strip at the four pauses and 08:45 (/1 | /2)');
   for (const t of PAUSES) L.push(`  ${mmss(t).slice(0, 5)}  /1 ${label1(at(S1, t))}  |  /2 ${label2(at(S2, t))}`);
   L.push('', `3. Debrief at ${mmss(END_S).slice(0, 5)} (/1 objectives(); /2 grade(), final)`);
   const end1 = a.rec.data;

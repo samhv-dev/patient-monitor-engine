@@ -36,41 +36,53 @@ describe('showcase-mh-v2: Arrest at once, CPR from the pulse loss in every phase
 // The owner's rules of 1 November (brief fv2-mh-phase-rules-nov1): Recovering after Treated when EtCO₂ is under 45 and
 // not rising over 120 s; Recrudescence after Recovering when EtCO₂ is above 45 and rising over 120 s; rising = the
 // least-squares slope at least 1 mmHg/min (2 mmHg over the 120 s), not rising its negation; both read EtCO₂ at whatever
-// ventilation is set (no unchanged-ventilation guard) and no MH activity. Pure: the phase runner on the card.
-describe('showcase-mh-v2: Recovering and Recrudescence on EtCO₂ at the set ventilation (owner, 1 November)', () => {
+// ventilation is set (no unchanged-ventilation guard) and no MH activity. Proposed the same day for the owner's ruling
+// (brief fv2-mh-treated-rule-hold-nov1): Treated = a dose coming in, the dantrolene effect rising (its slope over 60 s
+// above 0.02/min), false while the drug only decays; and a phase's 60-s hold counts from when the phase is reachable.
+// Pure: the phase runner on the card.
+describe('showcase-mh-v2: Recovering and Recrudescence on EtCO₂ at the set ventilation (owner, 1 November); Treated on a dose coming in (proposal)', () => {
   const ph = (id: string) => doc.phases.find((p) => p.id === id)!;
-  it('the rules read EtCO₂ only; Recrudescence is reached from Recovering (and ROSC), no longer from Treated', () => {
+  it('the rules read EtCO₂ only and the dantrolene effect\'s rise; Recrudescence is reached from Recovering (and ROSC), no longer from Treated', () => {
     expect(ph('recovering').enter).toEqual({ all: [{ value: { var: 'etco2', op: '<', value: 45 } }, { slope: { var: 'etco2', op: '<', perMin: 1, overS: 120 } }] });
     expect(ph('recrudescence').enter).toEqual({ all: [{ value: { var: 'etco2', op: '>', value: 45 } }, { slope: { var: 'etco2', op: '>=', perMin: 1, overS: 120 } }] });
+    expect(ph('treated').enter).toEqual({ slope: { var: 'dantroleneE', op: '>', perMin: 0.02, overS: 60 } });
     expect(ph('treated').next).toEqual(['recovering', 'arrest']);
     expect(doc.phases.filter((p) => p.next?.includes('recrudescence')).map((p) => p.id)).toEqual(['recovering', 'rosc']);
-    expect(ph('recovering').holdS).toBe(60);
-    expect(ph('recrudescence').holdS).toBe(60);
+    for (const id of ['treated', 'recovering', 'recrudescence']) expect(ph(id).holdS, id).toBe(60);
   });
 
-  it('a flat EtCO₂ of 40 is Recovering; the climb after the ventilation is turned down is Recrudescence 60 s after its rule', () => {
+  it('a dose\'s rise is Treated; Recovering 60 s after Treated; the climb is Recrudescence; the second Treated waits for the second dose', () => {
     const r = new PhaseRunner(doc);
     r.start(0);
-    // the MH active from 0; dantrolene from 200 s, its excess falling; EtCO₂ 40 flat at 12 L/min, then from 400 s at
-    // 6 L/min climbing 3 mmHg/min (45 at 500 s)
+    // the MH active from 0. The dantrolene effect: a first dose rising 0.06/min from 200 s to 400 s, then decaying slowly
+    // (−0.0006/min, as the drug's tail); a second dose rising 0.03/min from 650 s. EtCO₂ 40 flat at 12 L/min, then from
+    // 400 s at 6 L/min climbing 3 mmHg/min (45 at 500 s)
+    const dantE = (t: number) => (t < 200 ? 0 : t < 400 ? 0.001 * (t - 200) : t < 650 ? 0.2 - 1e-5 * (t - 400) : 0.1975 + 0.0005 * (t - 650));
     const etco2 = (t: number) => (t < 400 ? 40 : 40 + 0.05 * (t - 400));
-    for (let t = 1; t <= 700; t++) {
+    for (let t = 1; t <= 800; t++) {
       r.advance(t, [
         { kind: 'values', rank: 3, values: { etco2: etco2(t), hr: 80 } },
-        { kind: 'signals', signals: { pulse: true, dantroleneE: t >= 200 ? 0.5 : 0, setMinuteVentilationLMin: t < 400 ? 12 : 6, map: 80, mhActivity: 0.3, mhExcess: t >= 200 ? 1 - 0.001 * (t - 200) : 1 } },
+        { kind: 'signals', signals: { pulse: true, dantroleneE: dantE(t), setMinuteVentilationLMin: t < 400 ? 12 : 6, map: 80, mhActivity: 0.3, mhExcess: 1 } },
       ]);
     }
     const at = (id: string, n = 1) => r.phases.filter((p) => p.id === id)[n - 1]?.t;
     const rule = (name: string, from: number) => r.edges.find((e) => e.rule === name && e.value && e.t >= from)?.t as number;
+    const fell = (name: string, from: number) => r.edges.find((e) => e.rule === name && !e.value && e.t >= from)?.t as number;
     expect(r.phases.map((p) => p.id)).toEqual(['baseline', 'latent', 'treated', 'recovering', 'recrudescence', 'treated']);
-    // Recovering's rule held while Latent and Treated were current (EtCO₂ flat from the first full 120-s window), so its
-    // hold had run out: it follows Treated on the next advance (the one-poll Treated the demo path shows, 10:58)
+    // Treated: 60 s after the first dose's rise began (Treated is reachable from Latent)
+    expect(rule('phase:treated', 0)).toBeGreaterThan(200);
+    expect(at('treated')! - rule('phase:treated', 0)).toBe(60);
+    // Recovering's rule held long before (EtCO₂ flat from the first full 120-s window), but its hold counts from when it
+    // became reachable: 60 s after Treated, not one advance after it
     expect(rule('phase:recovering', 0) + 60).toBeLessThan(at('treated')!);
-    expect(at('recovering')! - at('treated')!).toBe(1);
+    expect(at('recovering')! - at('treated')!).toBe(60);
     // the rule ignores the ventilation change at 400 s; it holds once EtCO₂ passes 45 with the slope at 3 mmHg/min
     expect(rule('phase:recrudescence', 400)).toBe(501);
     expect(at('recrudescence')).toBe(561);
-    // Treated's own rule (D2, unchanged) has held throughout: the second Treated follows at once (14:59 on the demo path)
-    expect(at('treated', 2)! - at('recrudescence')!).toBe(1);
+    // Treated's rule fell with the first dose's rise (the decay is not a dose coming in) and holds again only with the
+    // second dose's: the second Treated is 60 s after that rise, not one advance after Recrudescence
+    expect(fell('phase:treated', 400)).toBeLessThan(at('recrudescence')!);
+    expect(rule('phase:treated', at('recrudescence')!)).toBeGreaterThan(650);
+    expect(at('treated', 2)! - rule('phase:treated', 650)).toBe(60);
   });
 });

@@ -170,25 +170,14 @@
       "id": "treated",
       "label": "Treated",
       "cue": "EtCO₂ falling with the ventilation held",
-      "$comment": "[ENG] dantrolene effect present = dantroleneE > 0.2 (the unsuppressed share below 0.8); falling = slope < 0/min over 60 s of mhExcess, the MH's dantrolene-sensitive excess (decision D2: mhActivity = severity × onset ramp × mhExcess, and the 15-min ramp outgrows the fall of the excess after an early dose, so the activity cannot fall before the ramp ends).",
+      "$comment": "[ENG] Treated = a dose coming in (proposal of 1 November, for the owner's ruling): the dantrolene effect dantroleneE rising, its least-squares slope over 60 s above 0.02/min (two hundredths of the 0–1 effect per minute); false while the drug only decays, so the second Treated needs the second dose. The signal is the engine's unrounded effect, so its resolution sets no floor; 0.02/min is set by the drug's course, with a margin on both sides: the second 2.5 mg/kg dose, on top of the first, raises the effect at most 0.049/min (2.5 times 0.02), and the first dose's rise, near its peak, tapers through 0.007/min one hold after Recrudescence is entered (14:59 + 60 s on the demo path; 0.02 is 2.9 times that). It replaces D2's dantroleneE > 0.2 with mhExcess falling, which held from 09:58 without a break, through the recrudescence.",
       "enter": {
-        "all": [
-          {
-            "value": {
-              "var": "dantroleneE",
-              "op": ">",
-              "value": 0.2
-            }
-          },
-          {
-            "slope": {
-              "var": "mhExcess",
-              "op": "<",
-              "perMin": 0,
-              "overS": 60
-            }
-          }
-        ]
+        "slope": {
+          "var": "dantroleneE",
+          "op": ">",
+          "perMin": 0.02,
+          "overS": 60
+        }
       },
       "holdS": 60,
       "next": [
