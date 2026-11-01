@@ -11,11 +11,14 @@ import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { pdfInfo, pdfText, squash } from './pdf-text.ts';
 import { openApp, scanEngineIds, startVite } from './app-support.ts';
+import { END_S, openMhV2, pressPath, to } from './mh-v2-path.ts';
 
 const out = resolve(import.meta.dirname, process.env.PME_SHOTS === '1' ? '../../../docs/gates/stage-13' : '../../../test-results/gate-shots/stage-13'); // FU-11 K1: evidence only on request
-let vite: ViteDevServer;
-let base = '';
-test.beforeAll(async () => ({ vite, base } = await startVite()));
+let vite: ViteDevServer | undefined;
+let base = process.env.PME_KIT_BASE ?? ''; // PME_KIT_BASE=<url>: a server already running (as teach2-mh-v2.e2e.ts)
+test.beforeAll(async () => {
+  if (!base) ({ vite, base } = await startVite());
+});
 test.afterAll(async () => vite?.close());
 
 type W = { __pmeApp: { link: { simT: number; ctl: { hostPaused: boolean } }; engineIds: string[] } };
@@ -460,6 +463,59 @@ test('Debrief B on the haemorrhage card: the learner handout within one A4 page'
     const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
     mkdirSync(out, { recursive: true });
     writeFileSync(`${out}/debrief-b-haemorrhage-handout.pdf`, pdf);
+    expect(pdfInfo(pdf).boxes).toHaveLength(1);
+  }
+});
+
+// Plan F11 (F7's acceptance on a live /2 run): the MH card in pme-scenario/2 driven on the demo path from Instructor v2
+// to the talk's end, paused, then the Debrief: its JSON export is pme-debrief/3 (phases, graded actions, outcomes,
+// violations, judged rows; no /2 objectives or steps), the action table is in the report, and in print media at the
+// 182 mm content width page 1 and the learner handout each fit one A4 page (≤ 267 mm, IP8); Chromium prints the
+// handout on one page. Both engines.
+test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout within one A4 page', async ({ page, browserName }) => {
+  test.setTimeout(480_000);
+  await openMhV2(page, (h) => openApp(page, base, h, { warmMs: 1500 }));
+  await pressPath(page, () => true);
+  await to(page, END_S);
+  await page.locator('.ip2-head button.ip2-pill').click(); // Instructor v2's clock pill pauses (it has no session bar)
+  await expect.poll(() => page.evaluate(() => (window as unknown as W).__pmeApp.link.ctl.hostPaused), { timeout: 20_000, message: 'the host has paused' }).toBe(true);
+  await page.setViewportSize({ width: Math.round(182 * MM), height: 1000 }); // the A4 content width (182 mm)
+  await page.evaluate(() => (location.hash = '#/debrief'));
+  const view = page.locator('[data-view=debrief]');
+  await expect(view.getByRole('heading', { level: 1, name: 'Debrief' })).toBeVisible({ timeout: 10_000 });
+  await expect(view.locator('#db-actions tbody tr.db-act').first()).toBeVisible();
+  await expect(view.locator('#db-steps')).toHaveCount(0); // a /2 run has the action table instead
+
+  const [dl] = await Promise.all([page.waitForEvent('download'), view.getByRole('button', { name: 'Download the record (JSON)' }).click()]);
+  expect(dl.suggestedFilename()).toMatch(/^debrief-showcase-mh-v2-\d{4}-\d\d-\d\d\.json$/);
+  const j = JSON.parse(readFileSync(await dl.path(), 'utf8')) as Record<string, unknown> & { phases: Array<{ id?: string; phaseId?: string }>; actions: Array<{ id: string; grade: string; givenT: number | null }> };
+  expect(j.schema).toBe('pme-debrief/3');
+  for (const k of ['version', 'build', 'record', 'phases', 'actions', 'outcomes', 'violations', 'judged', 'facts', 'keyTimes', 'keyMoments', 'minutes', 'marks']) expect(j, `pme-debrief/3 key ${k}`).toHaveProperty(k);
+  for (const k of ['objectives', 'steps']) expect(j, `no /2 key ${k}`).not.toHaveProperty(k);
+  expect(j.phases.length, 'the phases entered').toBeGreaterThan(1);
+  expect(j.actions.length, 'the graded actions').toBeGreaterThan(0);
+  expect(j.actions.filter((a) => a.givenT !== null).map((a) => a.id)).toEqual(expect.arrayContaining(['callCrisis', 'dantrolene', 'ventilationBack'])); // the setup actions (induce …) are not graded on this card
+  // the owner's phase rules of 1 November: Recrudescence is entered (14:59) and opens the second dose's window, so the
+  // second dose at 19:13 is met, as the /1 card's objective 4
+  expect(Object.fromEntries(j.actions.filter((a) => ['callCrisis', 'dantrolene', 'dantroleneAgain', 'ventilationBack'].includes(a.id)).map((a) => [a.id, a.grade]))).toEqual({ callCrisis: 'met', dantrolene: 'met', dantroleneAgain: 'met', ventilationBack: 'met' });
+  const results = resolve(import.meta.dirname, '../../../test-results');
+  mkdirSync(results, { recursive: true });
+  writeFileSync(`${results}/debrief-mh-v2-${browserName}.json`, JSON.stringify(j, null, 1));
+  test.info().annotations.push({ type: 'MH /2 grades', description: j.actions.map((a) => `${a.id}:${a.grade}`).join(' ') });
+
+  await page.emulateMedia({ media: 'print' });
+  await printFontLoaded(page);
+  const { page1, printFont } = await printHeights(page);
+  await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
+  const { handout } = await printHeights(page);
+  test.info().annotations.push({ type: 'MH /2 heights (mm)', description: `page 1 ${page1.toFixed(1)}, handout ${handout.toFixed(1)}` });
+  expect(printFont, 'the bundled print font is loaded').toBe(true);
+  expect(page1, 'page 1 (mm)').toBeLessThanOrEqual(267);
+  expect(handout, 'handout (mm)').toBeLessThanOrEqual(267);
+  if (browserName === 'chromium') {
+    const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    mkdirSync(out, { recursive: true });
+    writeFileSync(`${out}/debrief-mh-v2-handout.pdf`, pdf);
     expect(pdfInfo(pdf).boxes).toHaveLength(1);
   }
 });

@@ -4,7 +4,8 @@
 // intervals the facilitator reads first: the instructor's recognition tick, the first team action, each objective's
 // measured interval, the pulse loss to CPR and the time without a pulse. Every number traces to a row or a sample; an
 // absent one is null, never a guess. Read on the KEPT course, as the debrief's rules are. No DOM.
-import { endOf, isEvent, objectives, type DebriefExport } from './debrief.ts';
+import { asV1 } from '@pme/controller';
+import { displayWords, endOf, isEvent, objectives, report3, type DebriefExport } from './debrief.ts';
 import type { Row, RunData, Sample } from './record.ts';
 
 export type Who = 'team' | 'patient' | 'scenario';
@@ -24,7 +25,7 @@ const MAX_TILES = 6;
 /** Who moved the scenario from state `prev` into `id`: its transitions there all manual → the team; any other kind →
  *  the patient; none (an instructor's jump) → the scenario. */
 export function whoOf(d: RunData, prev: string, id: string): Who {
-  const ts = (d.doc?.states.find((s) => s.id === prev)?.transitions ?? []).filter((x) => x.to === id || x.else === id);
+  const ts = (asV1(d.doc)?.states.find((s) => s.id === prev)?.transitions ?? []).filter((x) => x.to === id || x.else === id);
   if (!ts.length) return 'scenario';
   return ts.every((x) => 'manual' in x.when) ? 'team' : 'patient';
 }
@@ -98,7 +99,7 @@ export function keyMoments(d: RunData): KeyMoment[] {
  *  "within 180 s of arrival", bronchospasm), and so does a tick before the state: the start. Its label is the state's
  *  label up to the first colon ("Early signs: EtCO₂ rising …" → "early signs"). */
 function recognitionFrom(d: RunData, tick: number | undefined): { t: number; label: string } {
-  const doc = d.doc;
+  const doc = asV1(d.doc); // a pme-scenario/2 card: no states, no objectives (F7)
   const named = new Set((doc?.objectives ?? []).flatMap((o) => (typeof o !== 'string' && o.rule?.kind === 'eventWithin' ? [o.rule.after].flat() : []))
     .filter((a) => a.startsWith('state:')).map((a) => a.slice('state:'.length)));
   const byPatient = (id: string) => (doc?.states ?? []).some((s) => (s.transitions ?? []).some((x) => (x.to === id || x.else === id) && !('manual' in x.when)));
@@ -115,13 +116,18 @@ function recognitionFrom(d: RunData, tick: number | undefined): { t: number; lab
  *  out (the objective's is kept). */
 export function keyTimes(d: RunData, moments: KeyMoment[] = keyMoments(d)): KeyTime[] {
   const objs = objectives(d);
-  const docObjs = d.doc?.objectives ?? [];
+  const docObjs = asV1(d.doc)?.objectives ?? [];
   const out: KeyTime[] = [];
   const ri = docObjs.findIndex((o) => typeof o !== 'string' && o.debrief === 'recognition');
   if (ri >= 0) {
     const tk = objs[ri]?.verdict.tickedT;
     const from = recognitionFrom(d, tk);
     out.push({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: from.t, fromLabel: from.label, toT: tk ?? null, state: tk === undefined ? 'notTicked' : 'measured' });
+  }
+  // a /2 run (plan F7): the judged row of kind recognition, from its display clock (what the monitor showed) to the press
+  const rec = report3(d)?.judged.find((j) => j.kind === 'recognition');
+  if (rec) {
+    out.push({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: rec.fromT ?? 0, fromLabel: rec.fromT === null ? 'start' : (displayWords(d, rec.id) ?? 'start'), toT: rec.pressedT, state: rec.pressedT === null ? 'notTicked' : 'measured' });
   }
   const team = moments.find((m) => m.who === 'team');
   if (team) out.push({ id: 'firstTeam', label: 'Start → first team action', fromT: 0, toT: team.t, state: 'measured' });

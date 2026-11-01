@@ -3,7 +3,7 @@
 // for the engine events the session does not keep (alarmStatus, deviceStatus), plus the clinical log. On the host
 // document `host` is the AppSession (patient restart, skin, sound); a Remote has none of those.
 import type { AlarmEntry, EngineEvent } from '@pme/engine-core';
-import { manualLabel, StageBuffer, type AckResult, type CommandInput, type ControllerSession, type ManagedTransport, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
+import { asV1, isV2, manualLabel, StageBuffer, type AckResult, type CommandInput, type ControllerSession, type ManagedTransport, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
 import { describeCommand, spanText, timeText } from './describe.ts';
 import type { AppSession } from './session.ts';
 
@@ -137,8 +137,10 @@ export class Link {
         this.add({ simT: e.t, kind: 'system', text: `Fast-forward ended${e.stopped ? ` early (${e.stopped})` : ''}; ${al.length ? `alarms during it: ${al.join(', ')}` : 'no alarms during it'}` });
       }
     } else if (e.type === 'scenario') {
-      const st = this.ctl.scenario.doc?.states.find((s) => s.id === e.stateId);
-      this.add({ simT: e.t, kind: 'scenario', text: `Scenario state: ${st?.label ?? 'next state'}` });
+      // a /1 state's label, or a /2 phase's (F11: a phase read "next state")
+      const doc = this.ctl.scenario.doc;
+      const name = doc && isV2(doc) ? doc.phases.find((p) => p.id === e.stateId)?.label : asV1(doc)?.states.find((s) => s.id === e.stateId)?.label;
+      this.add({ simT: e.t, kind: 'scenario', text: `Scenario state: ${name ?? 'next state'}` });
     }
   }
 

@@ -10,7 +10,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { loadavg } from 'node:os';
 import { isAbsolute, join } from 'node:path';
-import { devices, test, type Browser, type Page } from '@playwright/test';
+import { devices, test, type Browser, type Locator, type Page } from '@playwright/test';
 import { alarms, hist, latest, maxOf, minOf, r1, record, REPO, simNow, stateId, watchConsole, type Sample } from './showcase-support.ts';
 import { pdfInfo } from '../../apps/demo/e2e/pdf-text.ts';
 
@@ -53,7 +53,7 @@ type Hook = {
       simT: number;
       send(c: unknown): Promise<{ accepted: boolean; reason?: string }>;
       alarms: { allOff?: boolean; silencedUntil?: number; pausedUntil?: number; active?: Array<{ text: string }> } | null;
-      ctl: { timeScale: number; hostPaused: boolean; scenario: { stateId: string | null }; fastForward: unknown; lastFastForward: { fromT: number; endT: number; alarms: Array<{ text: string; since: number; ended: boolean }> } | null };
+      ctl: { timeScale: number; hostPaused: boolean; scenario: { stateId: string | null; history?: Array<{ t: number; stateId: string }> }; fastForward: unknown; lastFastForward: { fromT: number; endT: number; alarms: Array<{ text: string; since: number; ended: boolean }> } | null };
     };
   };
   __pmeFollower?: { sync?: { status: string; resyncs: number; lagS: number } };
@@ -78,6 +78,9 @@ class Run {
   loads: number[] = [];
   /** PME_PANEL=teach2: true once the case is loaded and the run has moved to the Instructor v2 view. */
   v2 = false;
+  /** The card's format: 2 = a pme-scenario/2 card (start's `o.card`, the /2 rounds below); 1 = every other round, whose
+   *  path is unchanged (each `card === 2` branch below is taken for a /2 card only). */
+  card: 1 | 2 = 1;
   constructor(readonly page: Page, readonly browser: Browser, name: string) {
     this.r = {
       case: name, browser: test.info().project.name, kit: KIT_SHA, server: process.env.SHOWCASE_SERVER ?? '', base: process.env.SHOWCASE_BASE ?? '', reactS: REACT_S, phonesN: N_PHONES,
@@ -112,6 +115,21 @@ class Run {
   untilT = async (t: number) => this.waitSim(Math.max(0, t - (await this.sim())) + 5, (now) => now >= t);
   until = (id: string, maxSimS: number) => this.waitSim(maxSimS, async () => (await stateId(this.page)) === id);
   untilAlarm = (re: RegExp, after: number, maxSimS: number) => this.waitSim(maxSimS, async () => (await alarms(this.page)).some((a) => a.t >= after && re.test(a.text)));
+  /** A /2 card: the phase entries of the run, from the runner's own history (a one-poll phase is in it; the 100-ms state
+   *  log may miss one at ×4). */
+  phases = () => this.page.evaluate(() => ((window as unknown as Hook).__pmeApp.link.ctl.scenario.history ?? []).map((e) => ({ t: Math.round(e.t * 10) / 10, id: e.stateId })));
+  /** A /2 card: wait until the phase `id` has been entered at or after sim `from` (the runner's history), or maxSimS of
+   *  sim time passed; the entry's sim time, or null. A phase wait, not a clock time: the phase times move with the rules. */
+  async untilEntered(id: string, from: number, maxSimS: number): Promise<number | null> {
+    const hit = async () => (await this.phases()).find((e) => e.id === id && e.t >= from - 0.5)?.t ?? null;
+    return (await this.waitSim(maxSimS, async () => (await hit()) !== null)) === null ? null : hit();
+  }
+  /** A /2 card: a row not due now is in ACTION's "Not due now" fold (rows.ts classifyV2 `later`), pressable once open. */
+  async unfold(btn: Locator): Promise<void> {
+    if (await btn.isVisible().catch(() => false)) return;
+    const fold = this.page.locator('.ip2-action details.ip2-later');
+    if ((await fold.count()) && !(await fold.evaluate((d) => (d as HTMLDetailsElement).open))) await fold.locator('summary').click();
+  }
   react = () => this.page.waitForTimeout(REACT_S * 1000);
   /** The instructor view the run goes back to (#/teach, or #/teach2 under PME_PANEL=teach2 once loaded). */
   home = () => (this.v2 ? '#/teach2' : '#/teach');
@@ -138,11 +156,14 @@ class Run {
     if (this.v2 && (await this.page.evaluate(() => location.hash)) !== '#/teach2') await this.teachTab('scenario');
     const btn = this.cardButton(label);
     const before = await stateId(this.page);
+    if (this.card === 2) await this.unfold(btn);
     await btn.click();
     const t = await this.sim();
     await this.page.waitForTimeout(800);
     let after = await stateId(this.page);
     const rec: Row = { label, clock: mmss(t), simS: r1(t), wall: this.wall(), before, after, load1: load1(), toast: (await this.page.locator('.toasts').innerText().catch(() => '')).split('\n').slice(-2).join(' | ') };
+    // a /2 press never changes the phase (no expectState, no second press): the row's look says whether it was taken
+    if (this.card === 2) rec.look = await btn.getAttribute('data-look', { timeout: 5000 }).catch(() => 'row gone');
     // a transient state ("Dantrolene 2.5 mg/kg given" lasts 2 s of sim) may already have passed: the state log says
     // whether the press was taken (the first chromium MH runs pressed such buttons twice: kept as probes, not used)
     const passed = expectState ? await this.page.evaluate(([id, from]) => ((window as unknown as Hook).__st ?? []).some((x) => x.id === id && x.t >= (from as number) - 0.5), [expectState, t] as const) : true;
@@ -213,6 +234,26 @@ class Run {
   panel = () => (this.v2 ? this.page.locator('.ip2-sheets .ip2-sheet:not([hidden])') : this.page.locator('#teach-panel'));
   /** The Debrief link: today's session bar, or the Instructor v2 dock. */
   debriefLink = () => (this.v2 ? this.page.locator('.ip2-dock a.ip2-debrief') : this.page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }));
+  /** To the Debrief by the panel's own path: today's session-bar link; under PME_PANEL=teach2 (#/teach2 has no session
+   *  bar) a /1 card goes straight to the dock's Debrief (as on main), a /2 card through Finish the case. (Since main's
+   *  Finish pane, #214, was merged into the /2 chain, the dock shows Finish for a /1 card too and a press opens the
+   *  pane instead of lighting Debrief: the F11 path that pressed it whenever it showed failed the /1 A4 round here.) */
+  async toDebrief(): Promise<void> {
+    if (this.v2 && this.card === 2) {
+      // a /2 card (main's Finish pane, board "Finish 2"): Finish the case pauses and opens the pane; its "Debrief now"
+      // writes the run's end into the record (the Debrief grades it final) and opens the saved debrief; the run is then
+      // read on the live Debrief (#/debrief: the same run, its JSON export the pme-debrief/3 of the live record)
+      if ((await this.debriefLink().getAttribute('data-ready')) !== 'true') {
+        await this.page.locator('.ip2-dock').getByRole('button', { name: 'Finish the case', exact: true }).click();
+        await this.page.locator('button.ip2-finish-now').click();
+        await this.page.waitForFunction(() => location.hash.startsWith('#/debrief'), null, { timeout: 10_000 });
+        await this.row(`Finish the case (dock) → Debrief now (${await this.page.evaluate(() => location.hash)})`);
+      }
+      await this.page.evaluate(() => (location.hash = '#/debrief'));
+      return;
+    }
+    await this.debriefLink().click();
+  }
 
   /** The QR moment: N_PHONES emulated phones join the session `code` (before any case is loaded). */
   async joinPhones(code: string): Promise<void> {
@@ -232,8 +273,9 @@ class Run {
   /** Fresh page, the phones, limit alarms on, Sound on, Load, Bookmark, the recorders. Q1 (`o.phones`): the same page
    *  and the phones already following (the 30-minute talk in one page); `o.cardOrder`: Load · All alarms on · speed ·
    *  Bookmark, the cue cards' order (the earlier rounds set the speed before All alarms on). */
-  async start(title: string, speed: 1 | 4 | 8 = 4, bookmark: 'before-alarms' | 'after-alarms' = 'before-alarms', o: { phones?: Page[]; cardOrder?: boolean } = {}): Promise<void> {
+  async start(title: string, speed: 1 | 4 | 8 = 4, bookmark: 'before-alarms' | 'after-alarms' = 'before-alarms', o: { phones?: Page[]; cardOrder?: boolean; card?: 2 } = {}): Promise<void> {
     const p = this.page;
+    if (o.card === 2) this.card = 2; // a /2 card: chosen by its exact title (a /1 title can be a part of it)
     if (!o.phones) {
       await p.goto(`${process.env.SHOWCASE_BASE}/?relay#/teach`);
       await p.waitForFunction(() => '__pmeApp' in window, null, { timeout: 30_000 });
@@ -266,13 +308,14 @@ class Run {
     }
     const chip = title === 'Severe bronchospasm on the ventilator' ? 'Airway and breathing' : 'Showcase';
     await p.locator('.chip-btn', { hasText: chip }).click();
-    const card = p.locator('section[aria-label="Scenario library"] article.scard').filter({ has: p.locator('h3', { hasText: title }) });
+    const card = p.locator('section[aria-label="Scenario library"] article.scard').filter({ has: this.card === 2 ? p.locator('h3').getByText(title, { exact: true }) : p.locator('h3', { hasText: title }) });
     await card.locator('button', { hasText: 'Load' }).first().click();
     const confirm = p.getByRole('button', { name: 'Load scenario', exact: true });
     if (await confirm.waitFor({ timeout: 1500 }).then(() => true, () => false)) await confirm.click();
     await p.locator('.toasts').getByText(`Scenario loaded: ${title}`).waitFor({ timeout: 15_000 });
     this.w0 = Date.now();
     this.r.setup.panel = PANEL;
+    if (this.card === 2) this.r.setup.card = 'pme-scenario/2';
     if (PANEL === 'teach2') {
       this.v2 = true;
       await this.teachTab('scenario');
@@ -337,7 +380,7 @@ class Run {
   async debrief(o: { json?: boolean } = {}): Promise<Row> {
     const p = this.page;
     const at = await this.sim();
-    await this.debriefLink().click();
+    await this.toDebrief();
     const view = p.locator('[data-view=debrief]');
     await view.getByRole('heading', { level: 1, name: 'Debrief' }).waitFor({ timeout: 15_000 });
     await p.waitForTimeout(1500);
@@ -349,6 +392,8 @@ class Run {
     const keyTimes = Object.fromEntries(await view.locator('#db-keytimes .db-tile').evaluateAll((t) => t.map((x) => [x.querySelector('.db-tile-cap')?.textContent ?? '', `${x.querySelector('.db-tile-v')?.textContent ?? ''} (${x.querySelector('.db-tile-sub')?.textContent ?? ''})`])));
     const moments = (await view.locator('#db-moments tbody tr[data-n]').allInnerTexts()).map((x) => x.replace(/\s+/g, ' ').trim());
     const d: Row = { openedAt: mmss(at), objectives, facts: Object.fromEntries(dts.map((k, i) => [k, dds[i]])), keyTimes, moments, timelineRows: timeline.length, timeline, minuteRows };
+    // a /2 card: the action table (every row: the action's first administration, then each repeat, with its grade)
+    if (this.card === 2) d.actions = await view.locator('#db-actions tbody tr').evaluateAll((trs) => trs.map((tr) => { const td = [...tr.querySelectorAll('td')].map((c) => (c.firstChild?.textContent ?? '').trim()); return { row: tr.classList.contains('db-repeat') ? 'repeat' : 'action', grade: tr.getAttribute('data-grade'), label: td[0], due: td[1], given: td[2], why: [...tr.querySelectorAll('.db-why')].map((w) => (w.textContent ?? '').trim()) }; }));
     this.r.debrief = d;
     if (o.json) {
       // Q1: the report's own JSON export (Stage 13 Q3), as the presenter's button saves it (input of debrief-fa.mjs)
@@ -402,7 +447,7 @@ class Run {
       '', `Alarms raised: ${this.r.alarms.join(' · ') || 'none'}`,
       '', `Spans: ${this.r.spans.map((s) => JSON.stringify(s)).join('\n\n')}`,
       '', `Measures: ${JSON.stringify(this.r.measures)}`,
-      '', `Debrief: ${this.r.debrief ? JSON.stringify({ objectives: this.r.debrief.objectives, facts: this.r.debrief.facts, timelineRows: this.r.debrief.timelineRows, minuteRows: this.r.debrief.minuteRows }) : 'not opened'}`,
+      '', `Debrief: ${this.r.debrief ? JSON.stringify({ objectives: this.r.debrief.objectives, ...(this.card === 2 ? { actions: this.r.debrief.actions } : {}), facts: this.r.debrief.facts, timelineRows: this.r.debrief.timelineRows, minuteRows: this.r.debrief.minuteRows }) : 'not opened'}`,
       '', `Phones: ${JSON.stringify(this.r.phones)}`,
       '', `Notes: ${this.r.notes.join(' · ')}`, '', `Errors: ${this.r.errors.slice(0, 8).join(' · ') || 'none'}`, ''];
     writeFileSync(join(OUTDIR, `${base}.md`), md.join('\n'));
@@ -1595,11 +1640,11 @@ test('Q1 30-minute talk, the 3 November programme: opening, MH (E119) with three
     M.r.measures.wallLoadToEndS = M.wall();
     const wDb = Date.now();
     await M.debrief({ json: true });
-    await page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }).click();
+    await M.toDebrief(); // F11: #/teach2 has no session bar; the v2 path is the dock (Finish the case → Debrief)
     await page.locator('[data-view=debrief]').getByRole('heading', { level: 1, name: 'Debrief' }).waitFor({ timeout: 15_000 });
     await page.waitForTimeout(1200);
     await page.screenshot({ path: join(dir, `debrief-mh-on-screen-${M.r.browser}.png`) }).catch(() => undefined);
-    await page.evaluate(() => (location.hash = '#/teach'));
+    await page.evaluate((h) => (location.hash = h), M.home());
     await page.waitForTimeout(800);
     M.r.measures.debriefReadWallS = r1((Date.now() - wDb) / 1000);
     seg('4 the end of the case and the MH Debrief, read on screen');
@@ -1797,6 +1842,262 @@ test('A4 MH (E119): the induction sequence, early call, three 5-min fast-forward
     await a4Debrief(R, page, 'mh');
   } finally {
     await R.finish();
+  }
+});
+
+// ------------------------------------------------------- the /2 rounds (1 November): the MH card in pme-scenario/2
+// The same two rounds on the new-format MH card ("Malignant hyperthermia (phases)", showcase-mh-v2), for a kit carrying
+// both cards. Run with PME_PANEL=teach2 (Instructor v2 is the /2 card's panel). What differs from the /1 rounds above,
+// and only that: the card is chosen by its exact title (the /1 title is a part of it); a press waits for no state and is
+// never pressed twice (a /2 press does not change the phase; the row's look after it is recorded instead); the waits
+// are on /2 PHASES, never on clock times, because the phase times move with the card's rules: the first pause is the
+// first Early signs (≈ 08:43 on PR #239's rules, not the /1 08:09), "ventilation back" waits for Recovering, the second
+// dose and the third stop for Recrudescence to have been entered since ventilation back, and the end for the second
+// Recovering (and no sooner than the /1 end, the dose + 317 s); the Debrief's action table is read beside its judged
+// rows. The same measures in the same JSON/MD shape (a4mh, mhStops) as the /1 rounds, plus the phase history. The test
+// names do not contain "A4 MH" or "Q1 30-minute talk", so the /1 rounds' -g patterns select the /1 rounds only.
+const MH2 = 'Malignant hyperthermia (phases)';
+
+test('A4 /2 MH (phases card): the induction sequence, early call, three 5-min fast-forwards, Debrief printed', async ({ page, browser }) => {
+  test.skip(PANEL !== 'teach2', 'the /2 card runs on Instructor v2: PME_PANEL=teach2');
+  page.setDefaultTimeout(60_000); // a press that cannot land fails the run instead of waiting out the test
+  const R = new Run(page, browser, 'A4 MH phases card induction sequence and early call (kit round)');
+  try {
+    await R.start(MH2, 8, 'after-alarms', { card: 2 });
+    await R.untilT(R.t0 + 30);
+    await R.press('Premedicate: midazolam 2 mg, fentanyl 100 µg');
+    await R.untilT(R.t0 + 60);
+    await R.press('Preoxygenate: 100 % O₂ by face mask');
+    await R.untilT(R.t0 + 240);
+    const tInd = await R.press('Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg');
+    await R.untilT(R.t0 + 300);
+    const tInt = await R.press('Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %');
+    await R.untilT(R.t0 + 360);
+    await R.press('Start surgery: rocuronium 0.6 mg/kg');
+    await R.untilT(R.t0 + 450);
+    await R.speed(4);
+    await R.row('7:30 ×4: watch the CO₂ tile');
+    const tEarly = await R.until('earlySigns', 300);
+    await R.row('state Early signs');
+    await R.tick(/^Name malignant hyperthermia/);
+    const tCall = await R.press(CRISIS);
+    await R.untilT(tCall + 20);
+    await R.press('Dantrolene 2.5 mg/kg');
+    const below40 = await R.waitSim(120, (_n, v) => (v.etco2 ?? 99) < 40);
+    await R.row('EtCO₂ below 40');
+    await R.ff(5);
+    // ventilation back in Recovering (the phase waited for, ≤ 2 min of sim)
+    const tRec = await R.until('recovering', 120);
+    const tNormo = tRec !== null ? await R.press(NORMO) : null;
+    if (tNormo === null) R.r.notes.push(`after span 1 and 2 min the phase was ${await stateId(page)}: ventilation back NOT pressed`);
+    await R.ff(5);
+    // the second dose once Recrudescence has been entered since ventilation back (≤ 5 min of sim)
+    const tRecrud = tNormo === null ? null : await R.untilEntered('recrudescence', tNormo, 300);
+    if (tRecrud === null) R.r.notes.push(`no Recrudescence since ventilation back by ${mmss(await R.sim())} (phase ${await stateId(page)}): the second dose pressed at the wait's end`);
+    await R.row('after span 2: the EtCO₂ climbing back at normal ventilation', { recrudescenceAt: tRecrud === null ? null : mmss(tRecrud) });
+    if (SHOTS) await R.cardButton(DOSE2).scrollIntoViewIfNeeded().catch(() => undefined);
+    await shot(R, page, 'owr4-1-before-second-dose');
+    const tDose2 = await R.press(DOSE2);
+    await shot(R, page, 'owr4-2-second-dose-pressed');
+    await R.ff(5);
+    const sinceDose2 = (await hist(page, tDose2, Infinity)).filter((x) => typeof x.etco2 === 'number') as Array<{ t: number; etco2: number }>;
+    let run2: number | null = null;
+    let held2: number | null = null;
+    for (const x of sinceDose2) {
+      run2 = x.etco2 < 40 ? (run2 ?? x.t) : null;
+      if (held2 === null && run2 !== null && x.t - run2 >= 120) held2 = x.t;
+    }
+    const tNormo2 = held2 !== null && (await stateId(page)) === 'recovering' ? await R.press(NORMO) : null;
+    if (tNormo2 === null) R.r.notes.push(`after span 3 (${mmss(await R.sim())}) the phase was ${await stateId(page)} and EtCO₂ had ${held2 === null ? 'not yet' : 'already'} stayed below 40 for 2 min since the second dose: ventilation back again ${held2 === null ? 'NOT pressed (its rule not met)' : 'not pressed (not Recovering)'}`);
+    await shot(R, page, 'owr4-3-end-of-case');
+    await R.pauseToggle();
+    await R.row('end: paused');
+    const h = await hist(page, tInd, tInt + 60);
+    const afterNormo = tNormo === null ? [] : ((await hist(page, tNormo, Infinity)).filter((x) => typeof x.etco2 === 'number') as Array<{ t: number; etco2: number }>);
+    const above45 = afterNormo.find((x) => x.etco2 > 45) ?? null;
+    const peak = afterNormo.reduce<{ t: number; etco2: number } | null>((b, x) => (!b || x.etco2 > b.etco2 ? x : b), null);
+    const perMin = tNormo === null ? [] : Array.from({ length: Math.floor(((afterNormo.at(-1)?.t ?? tNormo) - tNormo) / 60) + 1 }, (_, m) => afterNormo.find((x) => x.t >= (tNormo as number) + m * 60)).map((x, m) => `+${m} ${x ? Math.round(x.etco2) : '–'}`);
+    R.r.measures.a4mh = {
+      states: await stateLog(page), inducedAt: mmss(tInd), intubatedAt: mmss(tInt), earlySignsAt: tEarly === null ? null : mmss(tEarly),
+      earlyAfterSuxS: tEarly === null ? null : r1(tEarly - tInd), callAt: mmss(tCall), callAfterEarlyS: tEarly === null ? null : r1(tCall - tEarly),
+      etco2Below40At: below40 === null ? null : mmss(below40), normoAt: tNormo === null ? null : mmss(tNormo), spo2MinInductionToTube: r1(minOf(h, 'spo2')),
+      etco2Above45AfterNormoAt: above45 === null ? null : mmss(above45.t), dose2At: mmss(tDose2), dose2AfterAbove45S: above45 === null ? null : r1(tDose2 - above45.t),
+      etco2AtDose2: r1(afterNormo.filter((x) => x.t <= tDose2).at(-1)?.etco2), etco2PeakAfterNormo: peak ? `${r1(peak.etco2)} at ${mmss(peak.t)}` : null, etco2PerMinuteAfterNormo: perMin.join(' · '),
+      etco2Below40AfterDose2At: ((b) => (b ? `${mmss(b.t)} (+${r1(b.t - tDose2)} s)` : null))(sinceDose2.find((x) => x.etco2 < 40)),
+      held2At: held2 === null ? null : mmss(held2), normo2At: tNormo2 === null ? null : mmss(tNormo2),
+      etco2PerMinuteAfterDose2: Array.from({ length: Math.floor(((sinceDose2.at(-1)?.t ?? tDose2) - tDose2) / 60) + 1 }, (_, m) => sinceDose2.find((x) => x.t >= tDose2 + m * 60)).map((x, m) => `+${m} ${x ? Math.round(x.etco2) : '–'}`).join(' · '),
+      awrrEnd: (await latest(page)).awrr ?? null,
+      // the /2 card: the runner's phase history, the phase waits
+      phases: await R.phases(), recoveringSeenAt: tRec === null ? null : mmss(tRec), recrudescenceAt: tRecrud === null ? null : mmss(tRecrud),
+    };
+    await R.pauseToggle();
+    await a4Debrief(R, page, 'mh');
+  } finally {
+    await R.finish();
+  }
+});
+
+test('Q1 /2 30-minute talk on the phases card: opening, MH (pme-scenario/2) with three look-inside stops on the Explore view, the MH Debrief read', async ({ page, browser }) => {
+  test.skip(PANEL !== 'teach2', 'the /2 card runs on Instructor v2: PME_PANEL=teach2');
+  test.setTimeout(60 * 60_000);
+  page.setDefaultTimeout(30_000);
+  const talk0 = Date.now();
+  const T = () => mmss((Date.now() - talk0) / 1000);
+  const talk: Row[] = [];
+  const segW: Record<string, number | null> = {};
+  let segStart = Date.now();
+  const seg = (what: string, extra: Row = {}) => {
+    const wallS = r1((Date.now() - segStart) / 1000);
+    talk.push({ tPlus: T(), segment: what, segmentWallS: wallS, ...extra });
+    segW[what] = wallS;
+    segStart = Date.now();
+  };
+  const dir = SHOTS || OUTDIR;
+  let phones: Page[] = [];
+  let modelTab: Page | null = null;
+  const stops: Row[] = [];
+  const saveTalk = () => {
+    mkdirSync(OUTDIR, { recursive: true });
+    writeFileSync(join(OUTDIR, `q1-talk-${test.info().project.name}.json`), JSON.stringify({ kit: KIT_SHA, browser: test.info().project.name, card: 'pme-scenario/2', startedAt: new Date(talk0).toISOString(), reactS: REACT_S, stopLookS: STOP_LOOK_S, segments: talk, segmentWallS: segW, stops }, null, 2));
+  };
+
+  // ---- 0 opening on Home and the Room (as the /1 talk)
+  const O = new Run(page, browser, 'Q1 0 opening and QR');
+  try {
+    O.w0 = Date.now();
+    await page.goto(`${process.env.SHOWCASE_BASE}/?relay#/`);
+    await page.waitForFunction(() => '__pmeApp' in window, null, { timeout: 30_000 });
+    await page.waitForTimeout(1500);
+    const about = { start: await page.locator('[data-view=home] [data-about]').first().innerText().catch(() => 'no [data-about] on Home'), footer: await page.locator('.app-foot').innerText().catch(() => 'no footer line'), documentationLink: await page.locator('[data-view=home] .home-links a', { hasText: 'Documentation' }).getAttribute('href').catch(() => null) } as Row;
+    O.r.measures.about = about;
+    // the pre-flight item: a second tab with the first stop's model page, opened before the talk
+    modelTab = await page.context().newPage();
+    O.r.measures.modelTabPrepared = await modelTab.goto(MODEL_PAGE(STOPS[1].modelPages[0] ?? 'endocrine-thermal'), { timeout: 20_000, waitUntil: 'domcontentloaded' }).then((r) => r?.status() ?? 'no response', (e: Error) => `not loaded: ${e.message.split('\n')[0]}`);
+    await page.bringToFront();
+    const code = await page.evaluate(() => (window as unknown as Hook).__pmeApp.session.code);
+    O.r.setup.sessionCode = code;
+    segStart = Date.now();
+    await page.locator('[data-view=home]').getByRole('link', { name: 'Start here' }).click().catch(async () => page.evaluate(() => (location.hash = '#/room')));
+    const sheet = page.locator('section.room-join');
+    await sheet.locator('.phones-url').waitFor({ timeout: 15_000 }).catch(() => undefined);
+    const qr: Row = { url: await sheet.locator('.phones-url').innerText().catch(() => null), code: await sheet.locator('.phones-code').innerText().catch(() => null), countBefore: await sheet.locator('.phones-count').innerText().catch(() => null) };
+    const wJoin = Date.now();
+    await O.joinPhones(code);
+    phones = O.phones;
+    await page.waitForTimeout(2000);
+    qr.joinWallS = r1((Date.now() - wJoin) / 1000);
+    qr.countAfter = await sheet.locator('.phones-count').innerText().catch(() => null);
+    O.r.measures.qr = qr;
+    O.r.measures.phonesAfterJoin = await holds(phones);
+    seg('0 opening on Home and the Room, the phones join', { about, qr });
+  } finally {
+    await O.finish({ keepPhones: true });
+  }
+
+  const M = new Run(page, browser, 'Q1 1 malignant hyperthermia phases card with three look-inside stops');
+  try {
+    // ---- 1 MH to the early signs: the first pause is the first Early signs reading (a phase, not 08:05)
+    await M.start(MH2, 8, 'after-alarms', { phones, cardOrder: true, card: 2 });
+    await M.untilT(M.t0 + 30);
+    await M.press('Premedicate: midazolam 2 mg, fentanyl 100 µg');
+    await M.untilT(M.t0 + 60);
+    await M.press('Preoxygenate: 100 % O₂ by face mask');
+    await M.untilT(M.t0 + 240);
+    const tInd = await M.press('Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg');
+    await M.untilT(M.t0 + 300);
+    await M.press('Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %');
+    await M.untilT(M.t0 + 360);
+    const tSurg = await M.press('Start surgery: rocuronium 0.6 mg/kg');
+    await M.untilT(M.t0 + 450);
+    await M.speed(4);
+    await M.row('7:30 ×4: watch the CO₂ tile');
+    const tEarly = await M.until('earlySigns', 600);
+    await M.pauseToggle();
+    await M.row('state Early signs: Pause (stop 1)');
+    mkdirSync(OUTDIR, { recursive: true });
+    await page.locator('.stage').screenshot({ path: join(OUTDIR, `q2-mh-monitor-early-signs-${M.r.browser}.png`) }).catch(() => undefined);
+    seg('1 MH to the early signs (×8 then ×4)', { earlySignsAt: tEarly === null ? null : mmss(tEarly) });
+
+    // ---- STOP 1
+    stops.push(await lookInside(M, page, phones, modelTab, 1, dir));
+    await M.tick(/^Name malignant hyperthermia/);
+    await M.pauseToggle();
+    seg('stop 1 (machine part: Pause, Explore, model tab, back, tick, Resume)');
+
+    // ---- 2 the call, dantrolene; span 1; stop 2 once the phase is Recovering (≤ 3 min of sim after the span)
+    const tC = await M.press(CRISIS);
+    await M.untilT(tC + 20);
+    const tD1 = await M.press('Dantrolene 2.5 mg/kg');
+    const below40 = await M.waitSim(120, (_n, v) => (v.etco2 ?? 99) < 40);
+    await M.row('EtCO₂ below 40');
+    await M.ff(5);
+    const tRec = await M.until('recovering', 180);
+    if (tRec === null) M.r.notes.push(`stop 2: the phase was ${await stateId(page)} 3 min after span 1, not Recovering`);
+    await M.pauseToggle();
+    await M.row('span 1 ended: Pause (stop 2)');
+    seg('2 the call, hyperventilation, dantrolene; EtCO₂ falls (span 1)', { recoveringSeenAt: tRec === null ? null : mmss(tRec) });
+
+    // ---- STOP 2
+    stops.push(await lookInside(M, page, phones, modelTab, 2, dir));
+    await M.pauseToggle();
+    seg('stop 2 (machine part)');
+
+    // ---- 3 ventilation back, the climb (span 2); stop 3 once Recrudescence has been entered since (≤ 5 min of sim)
+    const stateAtNormo = await stateId(page);
+    const tP = await M.press(NORMO);
+    await M.untilT(tP + 4);
+    await M.ff(5);
+    const tRecrud = await M.untilEntered('recrudescence', tP, 300);
+    if (tRecrud === null) M.r.notes.push(`stop 3: no Recrudescence since ventilation back by ${mmss(await M.sim())} (phase ${await stateId(page)})`);
+    await M.pauseToggle();
+    await M.row('span 2 ended: Pause (stop 3), before the second dose', { recrudescenceAt: tRecrud === null ? null : mmss(tRecrud) });
+    seg('3 ventilation back, the climb (span 2)', { stateAtNormo });
+
+    // ---- STOP 3
+    stops.push(await lookInside(M, page, phones, modelTab, 3, dir));
+    await M.pauseToggle();
+    seg('stop 3 (machine part)');
+
+    // ---- 4 the second dose, span 3, the end at the second Recovering (≤ 10 min of sim) and no sooner than the /1
+    // round's end (the dose + 317 s); the MH Debrief read on screen
+    const tDose2 = await M.press(DOSE2);
+    await M.ff(5);
+    const tRec2 = await M.untilEntered('recovering', tDose2, 600);
+    if (tRec2 === null) M.r.notes.push(`end: no second Recovering within 10 min of the second dose (phase ${await stateId(page)})`);
+    await M.untilT(tDose2 + 317);
+    await M.pauseToggle();
+    await M.row('end of the case: Pause (do not press ventilation back)', { secondRecoveringAt: tRec2 === null ? null : mmss(tRec2), normoOffered: (await M.cardButton(NORMO).count()) > 0 });
+    await page.screenshot({ path: join(dir, `end-instructor-${M.r.browser}.png`) }).catch(() => undefined);
+    M.r.measures.wallLoadToEndS = M.wall();
+    const wDb = Date.now();
+    await M.debrief({ json: true });
+    await M.toDebrief();
+    await page.locator('[data-view=debrief]').getByRole('heading', { level: 1, name: 'Debrief' }).waitFor({ timeout: 15_000 });
+    await page.waitForTimeout(1200);
+    await page.screenshot({ path: join(dir, `debrief-mh-on-screen-${M.r.browser}.png`) }).catch(() => undefined);
+    await page.evaluate((h) => (location.hash = h), M.home());
+    await page.waitForTimeout(800);
+    M.r.measures.debriefReadWallS = r1((Date.now() - wDb) / 1000);
+    seg('4 the end of the case and the MH Debrief, read on screen');
+
+    const all = (await hist(page, 0, Infinity)).filter((x) => typeof x.etco2 === 'number') as Array<{ t: number; etco2: number }>;
+    const afterNormo = all.filter((x) => x.t >= tP);
+    const above45 = afterNormo.find((x) => x.etco2 > 45) ?? null;
+    const sinceDose2 = all.filter((x) => x.t >= tDose2);
+    const perMin = (from: number, xs: Array<{ t: number; etco2: number }>) => Array.from({ length: Math.floor(((xs.at(-1)?.t ?? from) - from) / 60) + 1 }, (_, m) => xs.find((x) => x.t >= from + m * 60)).map((x, m) => `+${m} ${x ? Math.round(x.etco2) : '–'}`).join(' · ');
+    M.r.measures.mhStops = {
+      states: await stateLog(page), inducedAt: mmss(tInd), surgeryAt: mmss(tSurg), earlySignsAt: tEarly === null ? null : mmss(tEarly), earlyAfterSuxS: tEarly === null ? null : r1(tEarly - tInd),
+      callAt: mmss(tC), callAfterEarlyS: tEarly === null ? null : r1(tC - tEarly), dantroleneAt: mmss(tD1), etco2Below40At: below40 === null ? null : mmss(below40),
+      normoAt: mmss(tP), etco2Above45AfterNormoAt: above45 ? mmss(above45.t) : null, dose2At: mmss(tDose2), dose2AfterAbove45S: above45 ? r1(tDose2 - above45.t) : null,
+      etco2AtDose2: r1(afterNormo.filter((x) => x.t <= tDose2).at(-1)?.etco2), etco2PerMinuteAfterNormo: perMin(tP, afterNormo.filter((x) => x.t < tDose2)), etco2PerMinuteAfterDose2: perMin(tDose2, sinceDose2),
+      stopClocks: stops.map((s) => s.clock),
+      phases: await M.phases(), recoveringSeenAt: tRec === null ? null : mmss(tRec), recrudescenceAt: tRecrud === null ? null : mmss(tRecrud), secondRecoveringAt: tRec2 === null ? null : mmss(tRec2),
+    };
+    seg('end');
+  } finally {
+    await M.finish();
+    if (modelTab) await modelTab.close().catch(() => undefined);
+    saveTalk();
   }
 });
 

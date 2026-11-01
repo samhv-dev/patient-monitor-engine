@@ -8,7 +8,8 @@
 // monitor carries PAUSED, and the pill's tooltip says when a step pressed now is given).
 import './state.css';
 import type { StateVar } from '@pme/engine-core';
-import { byItself, stageOf, stagesOf } from '../card-read.ts';
+import { asV1, isV2 } from '@pme/controller';
+import { byItself, phaseRuleWords, stageOf, stagesOf } from '../card-read.ts';
 import { drugWords } from '../glossary.ts';
 import type { Link } from '../link.ts';
 import { hrefOf } from '../router.ts';
@@ -75,7 +76,23 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       return `${vitalLabel(v)}${spec ? ` ${showVital(spec, st?.values[v])}` : ''} (${heldFor(link.simT - (since.get(v) as number))})`;
     }).join(' · ')}` : '');
 
-    const doc = sv.doc;
+    // a pme-scenario/2 card (F6): the phase, always "entered by its own rule: …", the learners' cue and its Say line
+    const v2 = sv.doc && isV2(sv.doc) ? sv.doc : null;
+    const phase = v2?.phases.find((p) => p.id === sv.stateId);
+    box.classList.toggle('ip2-cue-none', !!v2 && !phase);
+    if (v2 && phase) {
+      const entry = stageEntries(v2, historyOf(link), sv, link.simT).filter((e) => e.stage === phase.id).at(-1) ?? null;
+      setText(name, phase.label);
+      const frozen = paused || sv.paused;
+      setText(inStage, `${clock(sv.timeInState(link.simT))} in phase${frozen ? ' · frozen' : ''}`);
+      inStage.classList.toggle('ip2-frozen', frozen);
+      setText(how, phase.enter ? `entered by its own rule ${clock(entry?.t ?? sv.enteredT)} (${phaseRuleWords(phase.enter, v2)}${phase.holdS ? `, held ${phase.holdS} s` : ''})` : 'the case starts here');
+      setText(line, phase.cue ? `Learners see: ${phase.cue}` : phase.label);
+      say.hidden = !phase.notes;
+      setText(say, phase.notes ? `${/^say\b/i.test(phase.notes) ? '' : 'Say: '}${drugWords(phase.notes)}` : '');
+      return;
+    }
+    const doc = asV1(sv.doc);
     const state = sv.current();
     const stage = doc && sv.stateId ? stageOf(doc, sv.stateId) : null;
     box.classList.toggle('ip2-cue-default', !doc);

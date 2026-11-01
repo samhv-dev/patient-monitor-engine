@@ -7,13 +7,23 @@
 // - handles every `scenario` command through `driver.hook` (load/goto/trigger/pause/resume, and bookmarks that
 //   hold the engine snapshot AND the runner state);
 // - on poll() advances the runner at the engine's sim time and dispatches each command batch as one stage group.
-import { RHYTHM_IDS, type Command, type DispatchResult, type EngineEvent, type PatientSnapshot } from '@pme/engine-core';
+// A pme-scenario/2 document (plan F2) runs on a PhaseRunner instead (chosen by `load` from `doc.schema`): its phases go
+// out as today's `scenario` event (stateId = the phase id, transitionId = `enter:<id>`, Q20), one stage mark per phase
+// entry (no hops in /2), its script entries as card-set groups (ids `card-set-<n>-<i>`), and an entry anchored on an
+// action's taking (a command stamped with `actionId`) in that press's own stage group, on its tick. A /2 phase is never
+// entered by a goto or a trigger (Q5). The /1 runner never receives a /2-only input.
+// The administration record (plan F3, §8.2): every clinical act a /2 card's run sees through `driver.host`, ACCEPTED OR
+// REFUSED, goes into the PhaseRunner's state (administrationOf), so grade() can grade a refused dose and a restore rewinds
+// the record with the course. The driver is the one place that sees them all: a Remote's refusal reaches only its ack.
+import { DRUGS, RHYTHM_IDS, routeHonoured, type Command, type DispatchResult, type EngineEvent, type PatientSnapshot, type PkRoute } from '@pme/engine-core';
 import type { ClinicalEvent, ScenarioCommand, ScenarioEvent, WireCommand, WireEvent } from '../protocol.ts';
 import type { HostTarget, ScenarioHookResult } from '../session/host-session.ts';
+import { PhaseRunner, type PhaseRunnerEffect } from './phase-runner.ts';
 import { ScenarioRunner, type RunnerEffect, type RunnerInput, type RunnerState, type VitalHold } from './runner.ts';
 import { BUILTIN_SCENARIOS } from './builtins.ts';
 import { resolveRhythm } from './standins.ts';
-import type { DocCommand, ScenarioDoc, ScenarioState } from './types.ts';
+import { isV2, type AnyScenarioDoc, type DocCommand, type ScenarioState } from './types.ts';
+import type { Administration, PhaseRunnerState, RunnerInputV2 } from './types-v2.ts';
 import { validateScenario } from './validate.ts';
 
 export interface ScenarioDriverOptions {
@@ -33,17 +43,21 @@ export interface ScenarioDriverOptions {
 
 interface Mark {
   snapshot: PatientSnapshot;
-  doc: ScenarioDoc | null;
+  doc: AnyScenarioDoc | null;
   seed: number;
-  runner: RunnerState | null;
+  runner: RunnerState | PhaseRunnerState | null;
 }
 
 /** Where a run stands, as a bookmark holds it, minus the document (plain JSON: an app keeps it across a reload). */
 export interface RunPosition {
   snapshot: PatientSnapshot;
   seed: number;
-  runner: RunnerState;
+  /** `pme-scenario-runner/1` for a /1 card, `pme-scenario-runner/2` for a /2 card. */
+  runner: RunnerState | PhaseRunnerState;
 }
+
+/** Either runner: the /1 state machine or the /2 phase runner. */
+type AnyRunner = ScenarioRunner | PhaseRunner;
 
 /** A stage mark with the position it holds (plain JSON: an app keeps the marks across a reload, beside the run's own
  *  position, and places them again with `holdStageMarks`). */
@@ -63,13 +77,16 @@ export function isHop(s: ScenarioState): boolean {
 
 export class ScenarioDriver {
   readonly host: HostTarget;
-  runner: ScenarioRunner | null = null;
+  /** The run: a /1 card's ScenarioRunner or a /2 card's PhaseRunner. */
+  private cur: AnyRunner | null = null;
   /** Load-time warnings and stand-in notes for the current document. */
   notes: string[] = [];
   private readonly o: ScenarioDriverOptions;
   private readonly known: ReadonlySet<string>;
   private readonly marks = new Map<string, Mark>();
-  private pending: RunnerInput[] = [];
+  /** Inputs since the last poll. Only a /2 runner is ever given a `signals` input or the labs/endo truths (truthInputs):
+   *  they are queued only while one runs, and `load`/`restoreBookmark` empty the queue when the runner changes. */
+  private pending: RunnerInputV2[] = [];
   private n = 0; // batch counter; never restored, so ids and stage groups stay unique across bookmark restores
   private k = 0;
   private inFlight = 0; // runner commands sent and not yet answered by the monitor
@@ -77,12 +94,14 @@ export class ScenarioDriver {
   private stageMarkList: ScenarioCommand[] = [];
   private stageN = 0; // never restored, so stage-mark labels stay unique across restores
   /** A stage entered whose mark is not placed yet: the runner and its entry count (placed once position() is consistent). */
-  private stageWanted: { runner: ScenarioRunner; entry: number; stateId: string } | null = null;
+  private stageWanted: { runner: AnyRunner; entry: number; stateId: string } | null = null;
   private placing = false;
   /** Whether stage marks are placed (option `stageMarks`, or `markStages`). */
   private marking: boolean;
   /** The stage last entered on the current course: a return into it from one of its hops is not a new stage entry. */
   private lastStage: string | null = null;
+  /** The last press seen (actionId and stage group, or command id): its further commands are the same taking. */
+  private lastTaking: string | null = null;
   private readonly off: () => void;
 
   constructor(o: ScenarioDriverOptions) {
@@ -93,13 +112,27 @@ export class ScenarioDriver {
     this.off = o.target.on((e) => this.onEngine(e));
   }
 
+  /** The /1 card's runner (null while a /2 card runs, or none). Setting it to null ends the run, of either format. */
+  get runner(): ScenarioRunner | null {
+    return this.cur instanceof ScenarioRunner ? this.cur : null;
+  }
+  set runner(r: ScenarioRunner | null) {
+    this.cur = r;
+  }
+  /** The /2 card's runner (null while a /1 card runs, or none). */
+  get phaseRunner(): PhaseRunner | null {
+    return this.cur instanceof PhaseRunner ? this.cur : null;
+  }
+
   /** Advance the runner to the engine's current sim time (call once per frame, or per tick in tests). */
-  poll(): RunnerEffect[] {
+  poll(): Array<RunnerEffect | PhaseRunnerEffect> {
     const inputs = this.pending;
     this.pending = [];
-    if (!this.runner) return [];
-    const r = this.runner;
-    const fx = this.step(r, () => r.advance(this.o.target.now().simT, inputs));
+    const r = this.cur;
+    if (!r) return [];
+    const simT = this.o.target.now().simT;
+    // the /1 runner takes today's kinds only (its take() reads any other input as values and would throw)
+    const fx = this.step(r, () => (r instanceof PhaseRunner ? r.advance(simT, inputs) : r.advance(simT, inputs.filter(v1Input))));
     this.placeStageMark().catch((e: unknown) => console.warn('[pme] stage mark not placed:', e));
     return fx;
   }
@@ -111,8 +144,8 @@ export class ScenarioDriver {
     if (!on) this.stageWanted = null;
   }
 
-  /** Validate and start a document (or a built-in id). */
-  load(input: unknown): { ok: true; doc: ScenarioDoc } | { ok: false; reason: string } {
+  /** Validate and start a document (or a built-in id): a /1 card on a ScenarioRunner, a /2 card on a PhaseRunner. */
+  load(input: unknown): { ok: true; doc: AnyScenarioDoc } | { ok: false; reason: string } {
     const raw = typeof input === 'string' ? (this.o.builtins ?? BUILTIN_SCENARIOS)[input] : input;
     if (raw === undefined) return { ok: false, reason: `no built-in scenario ${String(input)}` };
     const v = validateScenario(raw, { rhythms: [...this.known] });
@@ -122,7 +155,8 @@ export class ScenarioDriver {
     for (const c of this.stageMarkList) this.marks.delete(c.target as string); // a new run: the old run's stage marks go
     this.stageMarkList = [];
     this.lastStage = null;
-    const r = (this.runner = new ScenarioRunner(v.doc));
+    this.lastTaking = null;
+    const r = (this.cur = runnerFor(v.doc));
     this.step(r, () => r.start(this.o.target.now().simT));
     return { ok: true, doc: v.doc };
   }
@@ -140,7 +174,7 @@ export class ScenarioDriver {
       case 'bookmark': {
         const label = cmd.target ?? `Bookmark ${++this.k}`;
         const snapshot = await this.o.target.snapshot();
-        const r = this.runner;
+        const r = this.cur;
         this.marks.set(label, { snapshot, doc: r?.doc ?? null, seed: r?.seed ?? 0, runner: r?.getState() ?? null });
         return yes({ ...cmd, target: label });
       }
@@ -153,17 +187,36 @@ export class ScenarioDriver {
         // the course after this mark is discarded: so are its stage marks (the ones taken later than the mark)
         for (const c of this.stageMarkList.filter((x) => (x.atTick ?? 0) > m.snapshot.tick)) this.marks.delete(c.target as string);
         this.stageMarkList = this.stageMarkList.filter((x) => (x.atTick ?? 0) <= m.snapshot.tick);
+        this.lastTaking = null;
         if (m.doc && m.runner) {
-          if (this.runner?.doc !== m.doc) this.runner = new ScenarioRunner(m.doc, { seed: m.seed });
-          this.runner.setState(m.runner);
-          this.lastStage = this.stageOf(this.runner);
-          this.o.publish?.({ type: 'scenario', t: this.runner.enteredT, stateId: this.runner.stateId });
-        } else this.runner = null;
+          const r = this.cur?.doc === m.doc ? this.cur : runnerFor(m.doc, m.seed);
+          if (r instanceof PhaseRunner) r.setState(m.runner as PhaseRunnerState);
+          else r.setState(m.runner as RunnerState);
+          this.cur = r;
+          this.lastStage = this.stageOf(r);
+          this.o.publish?.({ type: 'scenario', t: r.enteredT, stateId: r.stateId });
+        } else this.cur = null;
         return yes(undefined, m.snapshot.tick);
       }
     }
-    const r = this.runner;
+    const r = this.cur;
     if (!r) return no('no scenario loaded');
+    if (r instanceof PhaseRunner) {
+      switch (cmd.action) {
+        // Q5: a phase is entered by its own rule, never by an action, and a goto or a trigger is one
+        case 'goto':
+          return no('a pme-scenario/2 phase is entered by its own rule, never by goto');
+        case 'trigger':
+          return no('a pme-scenario/2 card has no transitions to trigger');
+        case 'pause':
+          r.pause(simT);
+          return yes();
+        case 'resume':
+          r.resume(simT);
+          return yes();
+      }
+      return no(`unknown scenario action ${String(cmd.action)}`);
+    }
     switch (cmd.action) {
       case 'goto':
         if (!cmd.target || !r.doc.states.some((s) => s.id === cmd.target)) return no(`no state ${String(cmd.target)}`);
@@ -188,7 +241,7 @@ export class ScenarioDriver {
 
   /** HostSession `welcomeEvents` option: a late joiner learns the current state (the doc comes as a sticky load). */
   welcomeEvents(): WireEvent[] {
-    const r = this.runner;
+    const r = this.cur;
     // the stage marks as sticky bookmark replays (they are never announced live: today's panel and record list every
     // live bookmark, and these are not the instructor's)
     const marks: WireEvent[] = this.stageMarkList.map((c) => ({ type: 'commandApplied', commandId: c.id, tick: c.atTick ?? 0, resolved: { command: c, replay: true } }));
@@ -250,7 +303,7 @@ export class ScenarioDriver {
    * [] without a scenario. A follower has no runner; its view shows value against threshold only.
    */
   vitalHolds(): VitalHold[] {
-    return this.runner?.vitalHolds() ?? [];
+    return this.cur?.vitalHolds() ?? [];
   }
 
   /**
@@ -259,11 +312,12 @@ export class ScenarioDriver {
    * state (or a new run) entered while the snapshot was taken. A caller takes it again a little later.
    */
   async position(): Promise<RunPosition | null> {
-    const r = this.runner;
-    if (!r || this.inFlight > 0 || this.pending.some((p) => p.kind !== 'values')) return null;
+    const r = this.cur;
+    // levels (values, the rhythm, the signals) are read again next poll; an event or a sensor change would be lost
+    if (!r || this.inFlight > 0 || this.pending.some((p) => p.kind === 'clinical' || p.kind === 'sensor')) return null;
     const runner = r.getState();
     const snapshot = await this.o.target.snapshot();
-    if (this.runner !== r || r.getState().batch !== runner.batch || r.stateId !== runner.stateId) return null;
+    if (this.cur !== r || r.getState().batch !== runner.batch || r.stateId !== runner.stateId) return null;
     return { snapshot, seed: r.seed, runner };
   }
 
@@ -272,8 +326,8 @@ export class ScenarioDriver {
    * restores a run kept across a reload this way). False when no document is loaded or `p` is another document's.
    */
   hold(label: string, p: RunPosition): boolean {
-    const doc = this.runner?.doc;
-    if (!doc || p.runner.docId !== doc.id) return false;
+    const doc = this.cur?.doc;
+    if (!doc || p.runner.docId !== doc.id || (p.runner.schema === 'pme-scenario-runner/2') !== isV2(doc)) return false;
     this.marks.set(label, { snapshot: p.snapshot, doc, seed: p.seed, runner: p.runner });
     return true;
   }
@@ -283,12 +337,12 @@ export class ScenarioDriver {
   }
 
   // --- internals ---------------------------------------------------------------------------------------------
-  /** Run one runner call and dispatch its effects; a stage it entered (not a hop) wants its mark. */
-  private step(r: ScenarioRunner, call: () => RunnerEffect[]): RunnerEffect[] {
+  /** Run one runner call and dispatch its effects; a stage it entered (not a hop: a /2 phase never is) wants its mark. */
+  private step(r: AnyRunner, call: () => Array<RunnerEffect | PhaseRunnerEffect>): Array<RunnerEffect | PhaseRunnerEffect> {
     const before = r.entries;
     const fx = call();
     this.exec(fx);
-    if (r.entries > before && !isHop(r.state())) {
+    if (r.entries > before && !(r instanceof ScenarioRunner && isHop(r.state()))) {
       // one mark per stage entry: the return from one of the stage's own hops (treating → potassium → treating) is not one
       if (this.marking && r.stateId !== this.lastStage) this.stageWanted = { runner: r, entry: r.entries, stateId: r.stateId };
       this.lastStage = r.stateId;
@@ -296,8 +350,9 @@ export class ScenarioDriver {
     return fx;
   }
 
-  /** The stage `r` is in: its state, or for a hop the state its exit leads to (answer 2's fold, one step). */
-  private stageOf(r: ScenarioRunner): string {
+  /** The stage `r` is in: its state (a /2 card: its phase), or for a hop the state its exit leads to (answer 2's fold). */
+  private stageOf(r: AnyRunner): string {
+    if (r instanceof PhaseRunner) return r.stateId;
     const s = r.state();
     return isHop(s) ? ((s.transitions?.[0] as { to: string }).to) : s.id;
   }
@@ -310,11 +365,11 @@ export class ScenarioDriver {
   private async placeStageMark(): Promise<void> {
     const w = this.stageWanted;
     if (!w || this.placing) return;
-    if (this.runner !== w.runner || w.runner.entries !== w.entry) return void (this.stageWanted = null);
+    if (this.cur !== w.runner || w.runner.entries !== w.entry) return void (this.stageWanted = null);
     this.placing = true;
     try {
       const p = await this.position();
-      if (!p || this.stageWanted !== w || this.runner !== w.runner || w.runner.entries !== w.entry) return; // the next poll tries again
+      if (!p || this.stageWanted !== w || this.cur !== w.runner || w.runner.entries !== w.entry) return; // the next poll tries again
       this.stageWanted = null;
       const n = ++this.stageN;
       const label = `stage:${w.stateId}:${n}`;
@@ -325,22 +380,29 @@ export class ScenarioDriver {
     }
   }
 
-  private exec(fx: RunnerEffect[]): void {
+  /** Dispatch effects: a batch is one stage group (`scenario-<n>`); a script entry is labelled card-set (`card-set-<n>`)
+   *  and goes in the press's group when a press fired it. */
+  private exec(fx: Array<RunnerEffect | PhaseRunnerEffect>): void {
     for (const f of fx) {
       if (f.kind === 'event') {
         this.o.publish?.(f.event);
         continue;
       }
-      const group = `scenario-${++this.n}`;
-      f.commands.forEach((dc, i) => this.send({ ...this.standIn(dc), id: `${group}-${i}`, issuedBy: 'scenario', stageGroup: group } as Command));
+      const card = 'cardSet' in f && f.cardSet === true;
+      const id = `${card ? 'card-set' : 'scenario'}-${++this.n}`;
+      const group = ('group' in f && f.group) || id;
+      f.commands.forEach((dc, i) => this.send({ ...this.standIn(dc), id: `${id}-${i}`, issuedBy: 'scenario', stageGroup: group } as Command, card));
     }
   }
 
-  private send(cmd: Command): void {
-    const r = this.runner;
+  private send(cmd: Command, cardSet = false): void {
+    const r = this.cur;
     const t = this.o.target.now().simT;
-    const rec = (res: DispatchResult) =>
-      r?.log.push({ op: 'dispatch', t, commandId: cmd.id, type: cmd.type, accepted: res.accepted, tick: res.tick, ...(res.reason ? { reason: res.reason } : {}) });
+    const rec = (res: DispatchResult) => {
+      const e = { op: 'dispatch' as const, t, commandId: cmd.id, type: cmd.type, accepted: res.accepted, tick: res.tick, ...(res.reason ? { reason: res.reason } : {}) };
+      if (r instanceof PhaseRunner) r.log.push({ ...e, ...(cardSet ? { cardSet: true as const } : {}) });
+      else r?.log.push(e);
+    };
     const res = (this.o.submit ?? ((c: Command) => this.host.dispatch(c)))(cmd);
     if (!(res instanceof Promise)) return void rec(res);
     this.inFlight++;
@@ -358,9 +420,14 @@ export class ScenarioDriver {
   private wrap(inner: HostTarget): HostTarget {
     const observe = (c: Command, r: DispatchResult): DispatchResult => {
       const w = c as WireCommand;
+      this.taking(c);
       let res = r;
       if ((w.type === 'applyEvent' || w.type === 'attachSensor') && !r.accepted && NOT_IMPLEMENTED.test(r.reason ?? '')) {
         res = { accepted: true, tick: Math.max(c.atTick ?? 0, r.tick + 1), reason: `scenario only: the engine does not model ${w.type} yet` };
+      }
+      if (w.type === 'applyEvent' && this.cur instanceof PhaseRunner) {
+        const a = administrationOf(w, res, this.o.target.now().simT, this.cur.doc.patient?.weightKg);
+        if (a) this.cur.record(a);
       }
       if (!res.accepted) return res;
       // Engine-core's event union adds `thermal` and ventilation fico2/effort, outside the brief's verbatim
@@ -393,6 +460,21 @@ export class ScenarioDriver {
     };
   }
 
+  /**
+   * A command stamped with an `actionId` (an A press; F3 types the field, F6 stamps it) is a taking of that action,
+   * accepted or not: the script entries it anchors go out now, in the press's stage group, so they land on its tick.
+   * The further commands of the same press (same action, same stage group) are the same taking.
+   */
+  private taking(c: Command): void {
+    const actionId = (c as { actionId?: unknown }).actionId;
+    const r = this.cur;
+    if (typeof actionId !== 'string' || !(r instanceof PhaseRunner)) return;
+    const key = `${actionId}|${c.stageGroup ?? c.id}`;
+    if (key === this.lastTaking) return;
+    this.lastTaking = key;
+    this.exec(r.take(this.o.target.now().simT, actionId, c.stageGroup));
+  }
+
   private onEngine(e: EngineEvent): void {
     const w = e as WireEvent;
     if (w.type === 'measurement') {
@@ -403,6 +485,85 @@ export class ScenarioDriver {
       const values: Record<string, number> = {};
       for (const [k, v] of Object.entries(w.values)) if (typeof v === 'number') values[k] = v;
       this.pending.push({ kind: 'values', rank: 3, values });
+      // the rhythm id the state event already carries, for a PhaseRunner only (truthInputs adds F4's truths below)
+      if (this.cur instanceof PhaseRunner && w.rhythm?.id) this.pending.push({ kind: 'rhythm', id: w.rhythm.id });
     }
+    if (this.cur instanceof PhaseRunner) this.pending.push(...truthInputs(w)); // F4: a /2 runner only
   }
+}
+
+/** The input kinds a /1 runner takes. */
+function v1Input(i: RunnerInputV2): i is RunnerInput {
+  return i.kind === 'clinical' || i.kind === 'values' || i.kind === 'sensor';
+}
+
+const MASS = /^(mcg|mg|g)$/;
+/** The fields administrationOf reads, of every clinical event kind at once (the union, flattened). */
+type FlatEvent = {
+  kind: string; drugId: string; dose: number; unit: string; route: PkRoute; infusion?: boolean; overS?: number; rate: number;
+  mode: string; target: number; agent: string; dialPct: number; fgfLpm?: number; fluid: string; volumeMl: number; source: string;
+  rr?: number; vtMl?: number; fio2: number; peep?: number; active: boolean; action: string; energyJ?: number; device: string; durationS: number;
+};
+
+/**
+ * One applyEvent as an administration (plan F3), or null for an event that is not a clinical act (a condition, a bleed,
+ * an airway state, a line, a surgical stimulus, the pacer). Source: 'action' when the command carries an `actionId` (an A
+ * press), 'script' (card-set, never graded) when the driver sent it (issuedBy 'scenario'), 'remote' for a Remote
+ * (issuedBy 'remote' or a ControllerSession's 'controller:<peer>'), else 'panel'. `perKg` is the dose over the card's
+ * weight for a mass unit, the dose itself for a `/kg` unit. A face-mask preoxygenation is a 'procedure' (it is the act of
+ * preoxygenating, not a ventilator setting); a `drug` event with `infusion: true` is an 'infusion' at that rate.
+ */
+function administrationOf(c: { issuedBy: string; actionId?: string; event: unknown }, res: DispatchResult, t: number, weightKg?: number): Omit<Administration, 'seq'> | null {
+  const e = c.event as FlatEvent;
+  const by = c.issuedBy;
+  const source: Administration['source'] = typeof c.actionId === 'string' ? 'action' : by === 'scenario' ? 'script' : by === 'remote' || by.startsWith('controller:') ? 'remote' : 'panel';
+  const result: Administration['result'] = res.accepted ? { accepted: true } : { accepted: false, reason: res.reason ?? '', routeNotModelled: e.kind === 'drug' && e.route !== undefined && e.drugId in DRUGS && !routeHonoured(e.drugId, e.route) };
+  const base = { t, source, ...(source === 'action' ? { actionId: c.actionId as string } : {}) };
+  const tail = { result, ...(source === 'script' ? { cardSet: true as const } : {}) };
+  const cls = (id: string) => (DRUGS[id]?.cls !== undefined ? { cls: DRUGS[id]?.cls as string } : {});
+  const set = (o: Record<string, unknown>) => ({ settings: Object.fromEntries(Object.entries(o).filter(([, v]) => typeof v === 'number' || typeof v === 'string')) as Record<string, number | string> });
+  switch (e.kind) {
+    case 'drug': {
+      if (e.infusion) return { ...base, kind: 'infusion', drugId: e.drugId, ...cls(e.drugId), rate: e.dose, rateUnit: e.unit, route: e.route, ...tail };
+      const perKg = e.unit.endsWith('/kg') ? e.dose : MASS.test(e.unit) && weightKg ? e.dose / weightKg : undefined;
+      return { ...base, kind: 'drug', drugId: e.drugId, ...cls(e.drugId), dose: e.dose, unit: e.unit, ...(perKg !== undefined ? { perKg } : {}), route: e.route, ...(e.overS !== undefined ? { overS: e.overS } : {}), ...tail };
+    }
+    case 'infusion':
+      return { ...base, kind: 'infusion', drugId: e.drugId, ...cls(e.drugId), rate: e.rate, rateUnit: e.unit, ...tail };
+    case 'tci':
+      return { ...base, kind: 'tci', drugId: e.drugId, ...cls(e.drugId), ...set({ mode: e.mode, target: e.target }), ...tail };
+    case 'vaporiser':
+      return { ...base, kind: 'vaporiser', ...set({ agent: e.agent, dialPct: e.dialPct, fgfLpm: e.fgfLpm }), ...tail };
+    case 'fluid':
+      return { ...base, kind: 'fluid', fluid: { type: e.fluid, volumeMl: e.volumeMl, rateMlMin: e.overS ? e.volumeMl / (e.overS / 60) : e.volumeMl }, ...tail };
+    case 'ventilation':
+      return { ...base, kind: 'ventilation', ...set({ source: e.source, rr: e.rr, vtMl: e.vtMl, fio2: e.fio2, peep: e.peep }), ...tail };
+    case 'cpr':
+      return { ...base, kind: 'cpr', ...set({ active: e.active ? 1 : 0, rate: e.rate }), ...tail };
+    case 'defib':
+      return { ...base, kind: 'defib', ...set({ action: e.action, energyJ: e.energyJ }), ...tail };
+    case 'airwayDevice':
+      return { ...base, kind: 'airway', ...set({ device: e.device }), ...tail };
+    case 'preoxygenate':
+      return { ...base, kind: 'procedure', ...set({ fio2: e.fio2, durationS: e.durationS }), ...tail };
+  }
+  return null;
+}
+
+/** The runner a document runs on. */
+function runnerFor(doc: AnyScenarioDoc, seed?: number): AnyRunner {
+  const o = seed === undefined ? {} : { seed };
+  return isV2(doc) ? new PhaseRunner(doc, o) : new ScenarioRunner(doc, o);
+}
+
+/**
+ * The engine truths a `pme-scenario/2` runner reads beyond the state's values (plan F4, Q21): the state event's
+ * `signals` (the MH activity among them, unrounded: the `endo` event's is rounded to 0.01 and is not fed), the labs pH,
+ * lactate and K⁺, as rank 3. Never given to a /1 runner: its take()
+ * would throw on a `signals` input, and a rank-3 `k` or `map` would shadow a /1 card's vital vars.
+ */
+function truthInputs(w: WireEvent): RunnerInputV2[] {
+  if (w.type === 'state') return 'signals' in w && w.signals ? [{ kind: 'signals', signals: w.signals }] : []; // not a host-synthesised state
+  if (w.type === 'labs') return [{ kind: 'values', rank: 3, values: { ph: w.values.ph, lactate: w.values.lactate, k: w.values.k } }];
+  return [];
 }

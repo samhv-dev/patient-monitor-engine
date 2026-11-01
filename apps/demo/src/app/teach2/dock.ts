@@ -5,7 +5,8 @@
 // its own label and counter ("Mark 2 at 08:20", plan R10), so the Log tab's bookmarks and the marks never share a name.
 // It carries its kind (IP2's `kind`) and, when the note field (filled by the sheets slot) holds text, that text as
 // its note (IP2's `note`); the field is then cleared (answer 13).
-import type { MarkKind as ControllerMarkKind } from '@pme/controller';
+import { isV2, type MarkKind as ControllerMarkKind } from '@pme/controller';
+import { CASE_FINISHED } from '../debrief.ts';
 import type { Link } from '../link.ts';
 import { hrefOf } from '../router.ts';
 import { clock, h, toast } from '../ui.ts';
@@ -48,6 +49,26 @@ export interface Dock {
   refresh(): void;
 }
 
+/** The instructor's end of a /2 case: the note "Finish the case" (teach2/finish.ts) writes into the record (the
+ *  Debrief's timeline and the Log) when one of its buttons saves the debrief of a /2 card; the Debrief grades final
+ *  once it stands (debrief.ts runEnded). */
+export const FINISHED = CASE_FINISHED;
+
+/** Has the instructor finished the running case on this host: a "Case finished" note, not undone by a return, since
+ *  the last load? (A follower keeps no record: false.) */
+export function caseFinished(link: Link): boolean {
+  const rows = link.host?.record.data.rows ?? [];
+  let from = 0;
+  rows.forEach((r, i) => {
+    if (r.kind === 'scenario' && r.text.startsWith('Scenario loaded')) from = i + 1;
+  });
+  return rows.slice(from).some((r) => r.kind === 'note' && r.text === FINISHED && r.undone === undefined);
+}
+
+/** The Debrief "ready" flag of a /2 card (design §6, Q11: failed at the phase's end or the run's end): the case is in
+ *  one of its end phases (a phase with no next: F2's ended()), or the instructor finished it. */
+export const readyV2 = (link: Link): boolean => link.ctl.scenario.ended() || caseFinished(link);
+
 /** The dock: the tool and note areas the sheets slot fills, the three marks, Finish (`o.finish`, while `o.canFinish()`),
  *  Debrief. */
 export function mountDock(link: Link, o: { finish?(): void; canFinish?(): boolean; finishing?(): boolean } = {}): Dock {
@@ -70,10 +91,11 @@ export function mountDock(link: Link, o: { finish?(): void; canFinish?(): boolea
     debrief);
   return {
     el, tools, note,
-    // Debrief is lit once the case has ended (as today's session-bar link)
+    // Debrief is lit once the case has ended (as today's session-bar link); a /2 card: an end phase or Finish the case
     refresh: () => {
       const sv = link.ctl.scenario;
-      debrief.dataset.ready = String(!!sv.doc && !sv.current()?.transitions?.length);
+      const v2 = !!sv.doc && isV2(sv.doc);
+      debrief.dataset.ready = String(v2 ? readyV2(link) : !!sv.doc && !sv.current()?.transitions?.length);
       finish.hidden = !o.canFinish?.();
       finish.setAttribute('aria-pressed', String(!!o.finishing?.()));
     },

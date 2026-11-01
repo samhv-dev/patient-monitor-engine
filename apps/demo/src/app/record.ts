@@ -5,14 +5,16 @@
 // trend of six numerics and five laboratory values of the model (K⁺, lactate, pH, glucose, core temperature). A state
 // row names the transition that entered it and whether a press, its rule or a jump did, as the scenario's event says
 // the runner took it (never a match of a press to a state's time); an item of a staged delivery
-// keeps its own row with the delivery's id (Instructor v2, IP8; all additive). It lives
+// keeps its own row with the delivery's id (Instructor v2, IP8; all additive). A pme-scenario/2 run also keeps a copy
+// of the phase runner's grade inputs (phases, administrations, rule edges; plan F7), taken each second and on every
+// phase, so the debrief, its export and a reload never need the driver. It lives
 // beside the engine, NOT in its snapshot: a return to a bookmark rewinds the engine, the trends and the clocks but not
 // this record — the discarded course stays, marked undone, so the debrief shows the run as it happened, and its rules
 // and charts read the course that was kept. A new patient or scenario (a 'restart' timeline) starts a new record. Plain
 // JSON data; no DOM.
 import type { EngineEvent } from '@pme/engine-core';
-import type { AppliedResolution, MarkKind, WireEvent } from '@pme/controller';
-import type { ScenarioDoc } from '@pme/controller/scenario';
+import { asV1, isV2, type AnyScenarioDoc, type AppliedResolution, type MarkKind, type WireEvent } from '@pme/controller';
+import type { Administration, PhaseEntry, RuleEdge } from '@pme/controller/scenario';
 import { alarmLine } from './alarms.ts';
 import { describeCommand } from './describe.ts';
 
@@ -70,12 +72,24 @@ export interface RunData {
   lastWall: number;
   patient: string;
   weightKg: number;
-  doc: ScenarioDoc | null;
+  /** Either format; a `pme-scenario/2` card's phase rows read the phase's label. */
+  doc: AnyScenarioDoc | null;
   rows: Row[];
   /** One per simulated second of the kept course. */
   samples: Sample[];
   /** Returns to a bookmark so far. */
   returns: number;
+  /** A pme-scenario/2 run (plan F7): the host's phase runner's grade inputs as of the last copy (none on a /1 run). */
+  format?: 2;
+  phases?: PhaseEntry[];
+  admin?: Administration[];
+  edges?: RuleEdge[];
+}
+/** What the record copies from the host's phase runner (`ScenarioDriver.phaseRunner`). */
+export interface GradeInputs {
+  readonly phases: readonly PhaseEntry[];
+  readonly admin: readonly Administration[];
+  readonly edges: readonly RuleEdge[];
 }
 
 /** Ventilated breaths "begin" after this long without one [ENG: longer than any set rate's interval, 6/min = 10 s]. */
@@ -121,10 +135,13 @@ export class RunRecord {
 
   private readonly who: () => { patient: string; weightKg: number };
   private readonly now: () => number;
+  private readonly runner: () => GradeInputs | null;
 
-  constructor(who: () => { patient: string; weightKg: number }, now: () => number = Date.now) {
+  /** `runner`: the host's phase runner (a follower has none). */
+  constructor(who: () => { patient: string; weightKg: number }, now: () => number = Date.now, runner: () => GradeInputs | null = () => null) {
     this.who = who;
     this.now = now;
+    this.runner = runner;
     const w = who();
     this.data = emptyRun(w.patient, w.weightKg, now());
   }
@@ -134,18 +151,23 @@ export class RunRecord {
     if (e.type === 'timeline') return e.cause === 'restore' ? this.restored(e.t) : this.reset();
     if (e.type === 'scenario') {
       if (!this.data.doc) return void (this.held = e); // a load publishes its first state before its own commandApplied
+      this.copy(); // a phase entered (or a resync's repeat of it)
       // a return to a bookmark re-publishes the bookmark's state, with the time it was entered, BEFORE the timeline
       // event: it is not a new state (the return's row says where the run went back to)
       if (e.t < (this.data.rows.at(-1)?.t ?? 0) - RESYNC_S) return;
       const kept = this.data.rows.filter((r) => r.kind === 'scenario' && r.undone === undefined).at(-1);
       if (kept?.ev === `state:${e.stateId}`) return; // a resync's repeat of the state we are in
-      const label = this.data.doc?.states.find((s) => s.id === e.stateId)?.label ?? 'next state';
+      const doc = this.data.doc;
+      // a /1 state's label, or a /2 phase's (F11: a phase read "next state")
+      const label = (doc && isV2(doc) ? doc.phases.find((p) => p.id === e.stateId)?.label : asV1(doc)?.states.find((s) => s.id === e.stateId)?.label) ?? 'next state';
       // how it was entered, as the runner took it (the event's `by`: the press of this transition held when it fired,
       // its rule alone, or a jump). Not matched from the press's acknowledgement: the host reads its clock once for the
-      // acknowledgement's tick and again for the state's time, and at ×8 the two can be more than a tick apart
+      // acknowledgement's tick and again for the state's time, and at ×8 the two can be more than a tick apart. A /2
+      // phase is always entered by its own rule (Q5), so its entry (`enter:<id>`) reads 'rule'
+      const by = e.by ?? (doc && isV2(doc) && e.transitionId ? 'rule' : undefined);
       const row: Row = {
         t: e.t, kind: 'scenario', text: `Scenario state: ${label}`, ev: `state:${e.stateId}`,
-        ...(e.transitionId ? { tr: e.transitionId } : {}), ...(e.by ? { by: e.by } : {}),
+        ...(e.transitionId ? { tr: e.transitionId } : {}), ...(by ? { by } : {}),
       };
       return this.add(row);
     }
@@ -163,7 +185,7 @@ export class RunRecord {
     const text = describeCommand(c);
     if (c.type === 'scenario') {
       if (c.action === 'load' && c.doc) {
-        this.data.doc = c.doc as ScenarioDoc;
+        this.data.doc = c.doc as AnyScenarioDoc;
         this.add({ t, kind: 'scenario', text });
         if (this.held) this.wire(this.held);
         return void (this.held = null);
@@ -245,9 +267,19 @@ export class RunRecord {
     for (const k of LAB_KEYS) row[k] = this.lab[k] ?? null;
     const last = this.data.samples.at(-1);
     if (last && last.t === s) Object.assign(last, row);
-    else if (!last || s > last.t) this.data.samples.push(row);
+    else if (!last || s > last.t) {
+      this.data.samples.push(row);
+      this.copy(); // once a second, with the sample
+    }
     if (this.data.samples.length > SAMPLES_MAX) this.data.samples.splice(0, this.data.samples.length - SAMPLES_MAX);
     this.data.lastWall = this.now();
+  }
+
+  /** A /2 run: the runner's grade inputs, copied (the runner closes a phase entry in place). */
+  private copy(): void {
+    const r = this.runner();
+    if (!r || !this.data.doc || !isV2(this.data.doc)) return;
+    Object.assign(this.data, { format: 2, phases: r.phases.map((p) => ({ ...p })), admin: structuredClone([...r.admin]), edges: [...r.edges] });
   }
 
   /** The record and its trackers as plain JSON (kept with the run's position across a reload of the page). */
@@ -296,6 +328,7 @@ export class RunRecord {
   private restored(t: number): void {
     this.data.samples = this.data.samples.filter((s) => s.t <= t + EPS);
     this.since = t;
+    this.copy(); // the runner went back with the engine
   }
 
   /**

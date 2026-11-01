@@ -9,6 +9,113 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Added
 
+- **`pme-scenario/2` F3: the administration record and a pure `grade()`.** The scenario driver records every
+  clinical act of a `/2` card (drugs, infusions, TCI, vaporiser, fluids, ventilation, CPR, defibrillation, airway
+  devices, preoxygenation) in the phase runner's state, accepted or refused, with its source (`action` for an A press
+  stamped `actionId`, `script` card-set, `panel`, `remote`), sim time, dose per kg, settings and the engine's answer
+  (`routeNotModelled`); a bookmark restore rewinds it. `grade(doc, phases, admin, edges, t, { final })`
+  (`@pme/controller/scenario`) grades each action (met, deviation, overdue, failed, due, not applicable; lines, Q13's
+  conditional repeats, live strings), the outcomes, the contraindication violations and the judged rows' clocks.
+  `CommandBase` gains the metadata field `actionId`. The MH `/2` card's demo path prints its grade table at 24:31.
+
+- **The Debrief and its export for a `pme-scenario/2` run (F7, post-demo, draft).** The run record copies the host
+  phase runner's phases, administrations and rule edges each second and on every phase, so the Debrief, its export and
+  a page reload never need the driver; a `/1` run's record is unchanged. For a `/2` run the Debrief grades with F3's
+  `grade()` (final, at the run's end: the panel's function on the panel's inputs) and prints the judged rows on page 1
+  (in place of the objectives) and the action table (grade, due and given times, the criteria lines, repeats), the
+  outcomes and the violations in place of the steps; the recognition key time runs from the judged row's display clock
+  to the instructor's press. The export of a `/2` run is `pme-debrief/3` (`phases`, `actions`, `outcomes`,
+  `violations`, `judged` in place of `objectives`, `steps` and `/2`'s `judged`); a `/1` run still exports
+  `pme-debrief/2`, unchanged. `debrief-fa.mjs` reads `/3`; its new words are in `fa-debrief.json` as English keys
+  awaiting the Persian (`"fa": null`, F7.6).
+
+- **`pme-scenario/2` F5.1: "route not modelled" asked of the engine.** `@pme/engine-core` exports
+  `routeHonoured(drugId, route)` (the route rule `validatePkCommand` applies; false for an unknown drug or a volatile
+  row) and `IV_ROUTES`. The administration record's `routeNotModelled` now comes from `routeHonoured` instead of
+  matching the refusal's sentence, so an IM dose refused first for its dose still carries it. `validateScenario` warns
+  for a `/2` drug action whose judged route set holds a route the engine does not model ("dantrolene: route im is
+  judged; the engine does not model it"); the card stays valid, and a `/1` card validates exactly as before. No
+  kinetics change: the route models are F5.2.
+
+- **`pme-scenario/2`: the MH card's demo-day fixes, D1–D6 (post-demo, draft).** Merged with main at kit E
+  (649ab03c): one Finish the case (#214's pane); its save writes "Case finished" into a `/2` record. The phase runner
+  latches a running hold when the rule falls because an `unchanged` guard changed, the team's response (D1); the MH
+  card's Early signs reads that guard over the same 120 s as the rise. The state event carries `mhExcess`, the MH's
+  dantrolene-sensitive excess (exposure only, D2), and the card's Treated and Recrudescence read it. `grade()` opens a
+  rule anchor's window only after the action's first phase entry, credits a device or a decision only inside its
+  window, and reads a precondition as held before the press (D3); the repeat dantrolene and its ventilation are due
+  for 300 s from Recrudescence's entry. Arrest and ROSC carry no hold, and CPR is open in every phase (D4). A Debrief
+  opened mid-case grades open windows as open (D5). On the run sheet's path: Early signs 08:43 (`/1` 08:03), Treated
+  10:58, and the call, its ventilation and infusion, dantrolene and ventilation back met. Recovering, Recrudescence and
+  the second Treated are not reached before the talk's end, so the second dose reads not applicable (see the PR).
+  `/1` cards and their readers are unchanged.
+
+- **`pme-scenario/2`: the MH card's Recovering and Recrudescence on EtCO₂ at the set ventilation (post-demo, draft;
+  the owner's ruling of 1 November).** Recovering is entered after Treated when EtCO₂ is under 45 mmHg and not rising
+  over 120 s; Recrudescence after Recovering when EtCO₂ is above 45 mmHg and rising over 120 s, which opens the second
+  dose's window. Rising is a least-squares slope of at least 1 mmHg/min (2 mmHg over the 120 s) and not rising its
+  negation; neither rule reads MH activity or has an unchanged-ventilation guard; Treated no longer leads to
+  Recrudescence. On the run sheet's path: Recovering 10:58, Recrudescence 14:59, the second Treated 14:59, the second
+  Recovering 23:53 (`/1` 23:53); the strip reads Latent, Recovering, Treated, Recovering at the talk's pauses (`/1`:
+  Early signs, Recovering, Ventilation back, Recovering), and every graded row the `/1` card grades now matches it, the
+  second dose included. Treated after the first dose and Recrudescence each last one poll (their successors' rules had
+  already held 60 s); see the PR. `mh-v1-v2-table.slow.test.ts` prints the `/1`-versus-`/2` table. `/1` cards and their
+  readers are unchanged.
+
+- **`pme-scenario/2`: the MH card's Early signs held 20 s (post-demo, draft; the owner's ruling of 1 November).** Every
+  other phase still holds 60 s, and Arrest and ROSC none. 20 s is the `/1` card's own settle for its early signs (EtCO₂
+  above 45 for 20 s), not a number fitted to the run. On the run sheet's path Early signs is now entered at 08:03, the
+  `/1` card's second, instead of 08:43, and the strip reads Early signs at the 08:05 and 08:45 pauses in the harness;
+  the later phases are unchanged (Treated 09:57, Recovering 10:57, Recrudescence 14:59, the second Treated 20:58, the
+  second Recovering 23:53). A team that calls the crisis when the strip shows Early signs now calls at 08:03, as on
+  `/1`; EtCO₂ then stays under 40 for 278 s, so the ventilation-back precondition holds 10:16–12:54 and every graded
+  row is met. In the app Early signs comes 1–4 s later than in the harness, so the 08:05 pause reads Latent or
+  Early signs. The card's notes now describe Treated's rule of #242. `/1` cards are unchanged.
+
+- **Instructor v2 on a `pme-scenario/2` card: the panel gaps F11 found (post-demo, draft).** ACTION's rows carry the
+  live grade (`grade()` once a sim second, `final: false`): "due m:ss", "overdue m:ss" with the ring, "met mm:ss",
+  "deviation: <criterion>" (the met look, its label amber) or "not applicable", and the grade's lines after the
+  prescription; a row reads given when `grade()` graded an administration for it, whoever pressed (the call's press gives
+  hyperventilation and the propofol infusion). The rows not due now (a graded action not applicable and not given; an
+  ungraded one given in an earlier phase) sit in a "Not due now" fold, still pressable rows, and the `/2` rows are
+  denser, so the MH card's ACTION fits 1440 × 900 at Latent, Early signs and Treated. Finish the case (since the
+  merge with main, #214's pane) writes "Case finished" into a `/2` record, and the Debrief is ready at an end phase or
+  once finished. The
+  session bar, the record's timeline and the Log name the phase by its label. The Debrief's action row prints the first
+  administration's grade (`firstGrade`, also in `pme-debrief/3` and the Persian handout), each repeat its own. The kit
+  round's Q1 reaches the Debrief by the dock under `PME_PANEL=teach2`. `/1` cards are unchanged.
+
+- **`pme-scenario/2` F11: integration tests for the `/2` MH chain (post-demo, draft).** `debrief.e2e.ts` runs the
+  `/2` MH card on the run sheet's demo path from Instructor v2 to 24:31 and checks the Debrief on both browsers: the
+  export is `pme-debrief/3`, and page 1 and the learner handout each fit one A4 page (≤ 267 mm). The demo path is
+  shared with `teach2-mh-v2.e2e.ts` through `e2e/mh-v2-path.ts`. No app, engine or card change.
+
+- **Instructor v2 reads a `pme-scenario/2` card (F6, post-demo, draft).** The strip lists the phases with their entry
+  times; a future phase reads "auto" and is not a button (a phase is never entered by a press). The cue box names the
+  phase, "entered by its own rule" with the rule in words and its hold, the learners' cue and the Say line. ACTION lists
+  the phase's actions (prescription words as the subtitle), the judged rows and the rules out of the phase with their
+  60-s hold as the bar; an A press sends the action's `give` as one staged batch stamped with its `actionId` and moves
+  nothing; a taken action stays pressable ("given ×n"). The app loads a `/2` card from the library; the Debrief-ready
+  flag reads the phase runner's end; today's Scenario tab says to run it from Instructor v2. The MH `/2` card's demo
+  path is driven from v2 end to end (e2e `teach2-mh-v2`). Grades on the rows come with F3.
+
+- **The malignant-hyperthermia card in `pme-scenario/2` (F8, post-demo, draft): `showcase-mh-v2`, the owner's phase
+  table of 31 October.** Nine phases (Baseline, Latent, Early signs, Established, Treated, Recovering, Recrudescence,
+  Arrest, ROSC), each entered by its own rule on engine truth and held 60 s before it changes, with the learners' cue
+  beside it; the call, the treatments and the return to normal ventilation as actions with the `/1` objectives' windows;
+  the induction sequence offered in Baseline and not graded; the `/1` take-home lines verbatim; #211's briefing block.
+  The MH starts at Induce as on the `/1` card (a card-set script entry in the press's stage group), so on the run
+  sheet's demo path the engine's course is the `/1` card's to the second (a slow test). The format gains a phase's
+  `holdS` and `cue`, an `unchanged` leaf `since: 'phaseStart'`, an action's `graded: false` and the `briefing` block;
+  `vitalHolds()` shows each hold. The showcase harness presses a `/2` action. The `/1` card is unchanged.
+
+- **`pme-scenario/2` integration branch (post-demo, draft): F2's phase runner with F4's engine signals, and
+  `signals.mhActivity`.** `fv2-mh` is `feat-fv2-f2` (#201) with `feat-fv2-f4` (#200) merged; the driver feeds F4's
+  truths to a `PhaseRunner` only. The `state` event's `signals` gain `mhActivity`, the thermal model's MH activity
+  (`l2/thermal/mh.ts`) unrounded and read from the committed state (exposure, no physiology): the `endo` event rounds
+  it to 0.01, and a `/2` slope over a quantised activity flips sign second to second (F2's replay of the MH trace). A
+  `/2` runner reads the signal; the `endo` event's rounded copy is no longer fed to it.
+
 - **Instructor v2 (E127) as a second view** beside today's Instructor view, at `#/teach2` ("Instructor v2" on the
   rail, right after Instructor). Today's view is unchanged and stays the default: the scenario deep link, the
   Scenarios view's Load and the other "Instructor view" links still open it; the alarm count and the reveal gesture go

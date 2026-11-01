@@ -22,7 +22,7 @@
 // reads "Case briefing on every screen · 0:48 left" with End briefing at its right (the owner's choice of 31 October:
 // the control left the chips' row, which it pushed past the window on the MH card in the first minute).
 import './state.css';
-import type { BriefingNotice, ScenarioDoc } from '@pme/controller';
+import { asV1, isV2, type AnyScenarioDoc, type BriefingNotice } from '@pme/controller';
 import { briefingLeftS, briefingStatusText } from '../briefing.ts';
 import { rowsOf, stagesOf, type Stage } from '../card-read.ts';
 import type { Link } from '../link.ts';
@@ -71,7 +71,7 @@ export interface StageEntry {
  * (an entry earlier than the one before it rewound the clock), and nothing later than `simT`. Without a history (a
  * late joiner) the current state's entry stands alone.
  */
-export function stageEntries(doc: ScenarioDoc, history: ReadonlyArray<{ t: number; stateId: string; transitionId?: string }>, current: { stateId: string | null; enteredT: number }, simT: number): StageEntry[] {
+export function stageEntries(doc: AnyScenarioDoc, history: ReadonlyArray<{ t: number; stateId: string; transitionId?: string }>, current: { stateId: string | null; enteredT: number }, simT: number): StageEntry[] {
   const home = new Map(stagesOf(doc).flatMap((g) => g.states.map((s) => [s, g.id] as const)));
   const out: StageEntry[] = [];
   for (const e of keptCourse(history)) {
@@ -115,9 +115,13 @@ export type StripItem =
   | { kind: 'later'; n: number };
 
 /** The stage-to-stage edges of the card: a transition (`to` or `else`) of any state of a stage into another stage. */
-function edgesOf(doc: ScenarioDoc, stages: readonly Stage[]): Map<string, Set<string>> {
+function edgesOf(doc: AnyScenarioDoc, stages: readonly Stage[]): Map<string, Set<string>> {
   const home = new Map(stages.flatMap((g) => g.states.map((s) => [s, g.id] as const)));
   const out = new Map(stages.map((g) => [g.id, new Set<string>()]));
+  if (isV2(doc)) { // a /2 card (F6): a phase leads to its `next`
+    for (const p of doc.phases) for (const to of p.next ?? []) if (to !== p.id) out.get(p.id)?.add(to);
+    return out;
+  }
   for (const s of doc.states)
     for (const t of s.transitions ?? [])
       for (const to of [t.to, t.else]) {
@@ -136,8 +140,8 @@ function edgesOf(doc: ScenarioDoc, stages: readonly Stage[]): Map<string, Set<st
  * future stage no path from the current one reaches comes last. The window starts KEEP_PAST before the current stage
  * (slid to keep WINDOW stages at either end of the line), moved by `offset` stages (the arrows; 0 = now).
  */
-export function stripModel(doc: ScenarioDoc, stateId: string | null, entries: readonly StageEntry[], offset = 0, fired: ReadonlySet<string> = new Set()): StripItem[] {
-  const stages = stagesOf(doc);
+export function stripModel(doc: AnyScenarioDoc, stateId: string | null, entries: readonly StageEntry[], offset = 0, fired: ReadonlySet<string> = new Set()): StripItem[] {
+  const stages = stagesOf(doc); // a /2 card's stages are its phases (F6)
   const at = stages.findIndex((g) => stateId !== null && g.states.includes(stateId));
   const last = (id: string) => entries.filter((e) => e.stage === id).at(-1) ?? null;
   type Slot = { stage: Stage; kind: 'past' | 'current' | 'future'; layer: number };
@@ -342,8 +346,11 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       else
         x.stages.forEach((g, j) => {
           if (j > 0) kids.push(h('span', { class: 'ip2-or' }, 'or'));
-          const label = doc.states.find((s) => s.id === g.id)?.label ?? 'State';
-          kids.push(chip(g, 'ip2-future', [g.byRule ? h('span', { class: 'ip2-auto' }, 'auto') : null],
+          const v1 = asV1(doc);
+          const label = v1?.states.find((s) => s.id === g.id)?.label ?? 'State';
+          // a /2 phase is entered by its own rule only (Q5): its chip is not a button, and the panel never moves the case
+          if (!v1) kids.push(chip(g, 'ip2-future', [h('span', { class: 'ip2-auto' }, 'auto')], { 'aria-label': `Phase ${(names.get(g.id) ?? '')}: entered by its own rule` }));
+          else kids.push(chip(g, 'ip2-future', [g.byRule ? h('span', { class: 'ip2-auto' }, 'auto') : null],
             { 'aria-label': `Stage ${(names.get(g.id) ?? '')}${g.byRule ? ', entered by a rule' : ''}: show its jump`, 'aria-haspopup': 'true' },
             (b) => showFuture(b, g, label)));
         });

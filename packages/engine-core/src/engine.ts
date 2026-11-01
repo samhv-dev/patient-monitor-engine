@@ -36,7 +36,7 @@ import {
   type RhythmOpts,
   type SimSeconds,
 } from './types.ts';
-import type { SensorId } from './types-hemo.ts';
+import type { SensorId, StateSignals } from './types-hemo.ts';
 import { engineKey } from './version.ts';
 import { createL1State, l1Target, l1Value, setL1Target, type L1State, type L1Var } from './l1/state.ts'; // l1Value, setL1Target
 import {
@@ -51,7 +51,7 @@ import {
   type HemoChannel,
   type HemoState,
 } from './l2/hemo/pipeline.ts';
-import { HEMO_RATE } from './l2/hemo/params.ts';
+import { ARREST_AFTER_S, HEMO_RATE } from './l2/hemo/params.ts';
 import { applyDeviceCommand, createDevice, deviceOnQrs, stepDevice, validateDeviceCommand, type DeviceHost, type DeviceState } from './l3/device-layer.ts';
 import {
   advanceResp,
@@ -67,6 +67,7 @@ import {
 import { advanceEndo, applyEndoCommand, createEndoState, validateEndoCommand, type EndoState } from './l2/endo/pipeline.ts';
 import { ecgDeltas, writeBlood, writeCirc, writeCond, writeLung } from './l2/endo/adapters.ts';
 import { upgradeThermal } from './l2/thermal/heat.ts';
+import { mhActivity } from './l2/thermal/mh.ts';
 import { gasPatient } from './l2/gas/params.ts';
 import { SINUS_FAMILY } from './l2/circ/rate-rule.ts'; // The rate rule: only the sinus node takes the endocrine HR factor
 import { advancePk, applyPkCommand, createPkState, NEUTRAL_PK_CTX, pkPatientOf, validatePkCommand, type PkCtx, type PkState } from './l2/pk/pipeline.ts';
@@ -144,6 +145,26 @@ function sensorMap(ps: PipelineState): Partial<Record<SensorId, string>> {
     spo2: h.pleth.state, nibp: h.nibp.sensor, abp: h.lines.abp.sensor, cvp: h.lines.cvp.sensor, pap: h.lines.pap.sensor,
     co2: ps.resp.co2Sensor, temp: ps.resp.tempSensor, pv: h.pvOn ? 'on' : 'off',
     icp: ps.organs.sensors.icp, pbto2: ps.organs.sensors.pbto2, urometer: ps.organs.sensors.urometer,
+  };
+}
+
+/**
+ * The `state` event's signals at time `t` (scenario-format-v2 plan F4, Q21/Q22): values the models already hold, read,
+ * never computed anew. `pulse` is the debrief's rule (no arrest state); `map` is the last site beat's MAP, or while no
+ * beat has ejected for the arrest window the circuit's `mapNow` — the rule `l2/hemo/pipeline.ts` `isArrested` gives
+ * the state's sbp/dbp (restated here, not imported: the physiology module is not touched).
+ */
+function stateSignals(ps: PipelineState, t: number): StateSignals {
+  const h = ps.hemo;
+  const d = ps.resp.driver;
+  const flat = t - h.circ.lastEjT > Math.max(ARREST_AFTER_S, 2.2 * h.lastRR);
+  return {
+    pulse: h.circ.arrest === null || h.circ.arrest === undefined,
+    dantroleneE: ps.pk.bus.metabolic.dantroleneE,
+    setMinuteVentilationLMin: d.source === 'ventilator' ? (d.vent.rr * d.vent.vt) / 1000 : null,
+    map: flat ? h.circ.mapNow : h.lastSite.map,
+    mhActivity: mhActivity(ps.resp.temp.mh, t),
+    mhExcess: ps.resp.temp.mh ? (ps.resp.temp.mh.s ?? 1) : null,
   };
 }
 
@@ -743,6 +764,7 @@ class Engine implements MonitorEngine {
       e.sensors = sensorMap(this.st); // 1 Hz, built only here
       const dev = this.st.neuro.airway;
       e.breathing = { source: this.st.resp.driver.source, device: dev === 'auto' ? 'none' : dev }; // E121b
+      e.signals = stateSignals(this.st, e.t); // scenario-format-v2 F4
     }
     return due;
   }

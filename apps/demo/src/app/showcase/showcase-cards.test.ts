@@ -3,23 +3,42 @@
 // are checkable (a number or a time in each), and the library lists the Showcase cards in the demonstration order. The
 // physiology of each card is in the *.slow.test.ts files beside this one (PME_TEST_SET=showcase).
 import { createEngine, type Command } from '@pme/engine-core';
-import { engineOptionsOf, validateScenario, type DocCommand, type ScenarioDoc } from '@pme/controller/scenario';
+import { engineOptionsOf, isV2, validateScenario, type DocCommand, type ScenarioDoc } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
 import { LIBRARY, objectiveText, SHOWCASE_ORDER } from '../scenarios.ts';
-import { SHOWCASE_IDS, showcaseDoc } from './harness.ts';
+import { anyShowcaseDoc, SHOWCASE_IDS, showcaseDoc } from './harness.ts';
 
-const SHOWCASE = ['showcase-induction', 'showcase-induction-premed', 'showcase-anaphylaxis', 'showcase-mh', 'showcase-tamponade', 'showcase-haemorrhage'];
+/** The /1 cards (the /2 MH card, plan F8, has phases, not states: its own test below). */
+const V1_IDS = SHOWCASE_IDS.filter((id) => !isV2(anyShowcaseDoc(id)));
+
+const SHOWCASE = ['showcase-induction', 'showcase-induction-premed', 'showcase-anaphylaxis', 'showcase-mh', 'showcase-mh-v2', 'showcase-tamponade', 'showcase-haemorrhage'];
 const NEW = ['showcase-induction', 'showcase-induction-premed', 'showcase-mh', 'showcase-tamponade', 'showcase-haemorrhage'];
 
 describe('Showcase cards', () => {
-  it('the Showcase group is the six cards, in the demonstration order, first in the library; bronchospasm stays in the library', () => {
+  it('the Showcase group is the seven cards (the /2 MH card after the /1 one), in the demonstration order, first in the library; bronchospasm stays in the library', () => {
     expect(SHOWCASE_ORDER).toEqual(SHOWCASE);
     expect(LIBRARY.filter((c) => c.category === 'Showcase').map((c) => c.id)).toEqual(SHOWCASE);
     expect(LIBRARY.slice(0, SHOWCASE.length).map((c) => c.id)).toEqual(SHOWCASE);
     expect(LIBRARY.find((c) => c.id === 'showcase-bronchospasm')?.category).toBe('Airway and breathing');
   });
 
-  it.each(SHOWCASE_IDS)('%s: valid, every state reachable, every command accepted by an engine of its own patient', (id) => {
+  it('showcase-mh-v2 (pme-scenario/2): valid, and every action\'s give and script command accepted by an engine of its own patient', () => {
+    const doc = anyShowcaseDoc('showcase-mh-v2');
+    if (!isV2(doc)) throw new Error('not /2');
+    const v = validateScenario(doc);
+    expect(v.ok ? [] : v.errors).toEqual([]);
+    const eo = engineOptionsOf(doc, 7);
+    const e = createEngine({ ...eo, mode: doc.mode ?? 'modeled', patient: { ...eo.patient, ...(doc.patient?.sensors ? { sensors: doc.patient.sensors } : {}) } } as never);
+    const cmds: DocCommand[] = [...doc.actions.flatMap((a) => a.give ?? []), ...(doc.script ?? []).flatMap((s) => s.commands)];
+    expect(cmds.length).toBeGreaterThan(20);
+    for (const [i, c] of cmds.entries()) {
+      const { $comment: _drop, ...cmd } = c as DocCommand & { $comment?: string };
+      const r = e.dispatch({ id: `v2-${i}`, issuedBy: 'test', ...(cmd as object) } as Command);
+      expect(r.accepted, `${JSON.stringify(c)}: ${r.reason}`).toBe(true);
+    }
+  });
+
+  it.each(V1_IDS)('%s: valid, every state reachable, every command accepted by an engine of its own patient', (id) => {
     const doc = showcaseDoc(id);
     const v = validateScenario(doc);
     expect(v.ok ? [] : v.errors).toEqual([]);

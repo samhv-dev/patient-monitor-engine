@@ -8,7 +8,7 @@ import {
   ControllerSession, createBroadcastChannelTransport, createInProcessHub, createWebSocketTransport, epochNow, HostSession, newSessionCode, normalizeSessionCode,
   type AppliedResolution, type BriefingNotice, type HostTarget, type ScenarioEvent, type WireEvent,
 } from '@pme/controller';
-import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type ScenarioDoc } from '@pme/controller/scenario';
+import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type AnyScenarioDoc } from '@pme/controller/scenario';
 import type { ManagedTransport } from '@pme/controller';
 import { mountMonitor, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
@@ -143,7 +143,8 @@ export class AppSession {
     this.skin = o.skin;
     this.theme = o.theme;
     this.code = normalizeSessionCode(o.code ?? '') ?? newSessionCode();
-    this.record = new RunRecord(() => ({ patient: oneLiner(this.spec), weightKg: this.spec.weightKg }));
+    // the host's phase runner (a pme-scenario/2 card): the record copies its grade inputs (plan F7)
+    this.record = new RunRecord(() => ({ patient: oneLiner(this.spec), weightKg: this.spec.weightKg }), Date.now, () => this.driver?.phaseRunner ?? null);
     const target: HostTarget = {
       dispatch: (c) => this.need().dispatch(c),
       snapshot: () => this.need().snapshot(),
@@ -438,7 +439,7 @@ export class AppSession {
   /** Load a scenario: its patient body restarts the engine, then the runner starts (never silently over a live run —
    *  the caller confirms first). `room` (a "Save and restart the case"): the probes and the cuff as they were, over the
    *  card's own. */
-  loadScenario(raw: unknown, room?: RoomKeep): { ok: true; doc: ScenarioDoc } | { ok: false; reason: string } {
+  loadScenario(raw: unknown, room?: RoomKeep): { ok: true; doc: AnyScenarioDoc } | { ok: false; reason: string } {
     // The host refuses the scenario command during a fast-forward — the new body would run without its scenario
     if (this.fastForwarding) return { ok: false, reason: 'the simulation is fast-forwarding; try again when it ends' };
     const v = validateScenario(raw);

@@ -1,0 +1,305 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/samhv-dev/patient-monitor-engine/packages/controller/scenarios/pme-scenario-2.schema.json",
+  "title": "pme-scenario/2",
+  "description": "Teaching case with phases read from the engine's truth, actions that carry their acceptance criteria, outcomes, judged rows and a card-set script (docs/plans/scenario-format-v2.md §3). The header is pme-scenario/1's, whole; patient, device and the command definitions are /1's, by reference. `$comment` is allowed on the document and on every block entry and is never interpreted. The cross-references a schema cannot express (unique ids, one initial phase, existing targets, drug ids and classes) are validate.ts's.",
+  "type": "object",
+  "required": ["schema", "id", "title", "phases", "actions"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "$comment": { "type": "string" },
+    "schema": { "const": "pme-scenario/2" },
+    "id": { "$ref": "#/definitions/id" },
+    "title": { "type": "string", "minLength": 1 },
+    "notes": { "type": "string" },
+    "category": { "type": "string", "minLength": 1 },
+    "story": { "type": "string" },
+    "takeHome": { "type": "array", "maxItems": 4, "items": { "type": "string", "minLength": 1 } },
+    "durationMin": { "type": "number", "exclusiveMinimum": 0 },
+    "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+    "mode": { "enum": ["manual", "modeled"] },
+    "patient": { "$ref": "pme-scenario-1.schema.json#/definitions/patient" },
+    "device": { "$ref": "pme-scenario-1.schema.json#/properties/device" },
+    "phases": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/phase" }, "description": "The disease's course: one phase holds at a time; each tick the entry rules of the current phase's `next` are tested in document order and the first that holds wins (§4)." },
+    "actions": { "type": "array", "items": { "$ref": "#/definitions/action" }, "description": "What the team should do: the prescription and its grading; the kind decides which criteria block applies (§5)." },
+    "outcomes": { "type": "array", "items": { "$ref": "#/definitions/outcome" }, "description": "What the physiology should reach: reached / not reached, never an action's grade (§7)." },
+    "judged": { "type": "array", "items": { "$ref": "#/definitions/judged" }, "description": "Recognition and communication the instructor judges; the clock starts on a displayed (rank 2) rule (§7)." },
+    "script": { "type": "array", "items": { "$ref": "#/definitions/scriptEntry" }, "description": "Events the card imposes, each card-set and never graded (§3)." },
+    "briefing": {
+      "type": "object",
+      "required": ["text"],
+      "additionalProperties": false,
+      "description": "Optional: the learner-facing Case briefing (#211's block, the same shape as on /1 there). Never names the diagnosis.",
+      "properties": {
+        "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "estimatedMinutes": { "type": "number", "exclusiveMinimum": 0 },
+        "durationS": { "type": "number", "exclusiveMinimum": 0, "maximum": 600 },
+        "lang": { "enum": ["en", "fa"] }
+      }
+    }
+  },
+  "definitions": {
+    "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$" },
+    "ids": { "type": "array", "items": { "$ref": "#/definitions/id" }, "uniqueItems": true },
+    "op": { "enum": ["<", "<=", ">", ">=", "==", "!="] },
+    "truthVar": {
+      "description": "A value a phase rule reads on engine truth (rank 3): the StateVars, the beat MAP, the labs pH and lactate, the endocrine MH activity and the engine signals of F4 (dantrolene effect, set minute ventilation).",
+      "enum": ["hr", "sbp", "dbp", "cvp", "papSys", "papDia", "pawp", "spo2", "pi", "rr", "vt", "etco2", "fio2",
+               "shunt", "tempCore", "contractility", "svr", "k", "qtc", "volumeStatus", "paceThresholdMa",
+               "map", "ph", "lactate", "mhActivity", "mhExcess", "dantroleneE", "setMinuteVentilationLMin"]
+    },
+    "route": { "enum": ["iv", "io", "im", "inh", "neb", "sc", "perineural", "central"] },
+    "amount": {
+      "description": "A prescribed value and what is accepted: `value` (with an optional `tolerance` either side), and/or a `min`/`max` range.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "value": { "type": "number" }, "tolerance": { "type": "number", "minimum": 0 }, "min": { "type": "number" }, "max": { "type": "number" } },
+      "anyOf": [{ "properties": { "value": { "type": "number" } }, "required": ["value"] }, { "properties": { "min": { "type": "number" } }, "required": ["min"] }, { "properties": { "max": { "type": "number" } }, "required": ["max"] }],
+      "dependencies": { "tolerance": ["value"] }
+    },
+    "settings": {
+      "description": "Device or physical settings by name (ventilator rr, vtMlPerKg, fio2, peep; defib energyJ; cpr rate; vaporiser dialPct, fgfLpm): a numeric amount, or a word that must match.",
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/definitions/id" },
+      "additionalProperties": { "anyOf": [{ "$ref": "#/definitions/amount" }, { "type": "string", "minLength": 1 }] }
+    },
+    "phaseRule": {
+      "description": "A rule on engine truth (rank 3). Exactly one leaf or combinator: value (with forS), slope, unchanged, visited, signal, all, any, not. No manual, event or afterS leaf: a phase is never entered by an action (§4, §8.4).",
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "type": "object", "required": ["var", "op", "value"], "additionalProperties": false,
+          "properties": { "var": { "$ref": "#/definitions/truthVar" }, "op": { "$ref": "#/definitions/op" }, "value": { "type": "number" }, "forS": { "type": "number", "minimum": 0 } }
+        },
+        "slope": {
+          "type": "object", "required": ["var", "op", "perMin", "overS"], "additionalProperties": false,
+          "properties": { "var": { "$ref": "#/definitions/truthVar" }, "op": { "enum": ["<", "<=", ">", ">="] }, "perMin": { "type": "number" }, "overS": { "type": "number", "exclusiveMinimum": 0 } }
+        },
+        "unchanged": {
+          "description": "Every sample of the last `overS` seconds within ± `withinPct` % of the newest; or, with `since: \"phaseStart\"`, the value within ± `withinPct` % of its value at the current phase's entry (the owner's \"unchanged set ventilation\", 31 October).",
+          "type": "object", "required": ["var", "withinPct"], "additionalProperties": false,
+          "properties": { "var": { "$ref": "#/definitions/truthVar" }, "withinPct": { "type": "number", "exclusiveMinimum": 0 }, "overS": { "type": "number", "exclusiveMinimum": 0 }, "since": { "const": "phaseStart" } },
+          "oneOf": [{ "properties": { "overS": { "type": "number" } }, "required": ["overS"] }, { "properties": { "since": { "const": "phaseStart" } }, "required": ["since"] }]
+        },
+        "visited": { "$ref": "#/definitions/id" },
+        "signal": {
+          "description": "pulseLoss, rosc, or `rhythm:<id>` (the rhythm id the engine draws: VF is told from VT and asystole from PEA by the id, not the rhythm group).",
+          "anyOf": [{ "enum": ["pulseLoss", "rosc"] }, { "type": "string", "pattern": "^rhythm:[A-Za-z][A-Za-z0-9_.-]{0,63}$" }]
+        },
+        "all": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/phaseRule" } },
+        "any": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/phaseRule" } },
+        "not": { "$ref": "#/definitions/phaseRule" }
+      }
+    },
+    "displayRule": {
+      "description": "A rule on the displayed numerics (rank 2), for a judged row's clock: what the learners could see (§7).",
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "type": "object", "required": ["var", "op", "value"], "additionalProperties": false,
+          "properties": { "var": { "$ref": "pme-scenario-1.schema.json#/definitions/vitalVar" }, "op": { "$ref": "#/definitions/op" }, "value": { "type": "number" }, "forS": { "type": "number", "minimum": 0 } }
+        },
+        "all": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/displayRule" } },
+        "any": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/displayRule" } },
+        "not": { "$ref": "#/definitions/displayRule" }
+      }
+    },
+    "anchor": {
+      "description": "Where a timing window starts: the run's start, a phase entry, an action's first taking, the model's pulse loss or ROSC, or the first second a rule holds (a value crossing such as k > 5.5).",
+      "anyOf": [
+        { "type": "string", "pattern": "^(start|pulseLoss|rosc|(phase|action):[A-Za-z][A-Za-z0-9_.-]{0,63})$" },
+        { "type": "object", "required": ["rule"], "additionalProperties": false, "properties": { "rule": { "$ref": "#/definitions/phaseRule" } } }
+      ]
+    },
+    "phase": {
+      "type": "object",
+      "required": ["id", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "label": { "type": "string", "minLength": 1 },
+        "notes": { "type": "string", "description": "The Say line." },
+        "$comment": { "type": "string" },
+        "initial": { "const": true },
+        "enter": { "$ref": "#/definitions/phaseRule" },
+        "holdS": { "type": "number", "minimum": 0, "description": "The entry rule must hold without a break for this many seconds before the phase changes (the owner's 60-s boundary hold, 31 October)." },
+        "cue": { "type": "string", "minLength": 1, "description": "What the learners see at this phase, shown beside its rule." },
+        "next": { "$ref": "#/definitions/ids" }
+      },
+      "if": { "properties": { "initial": { "const": true } }, "required": ["initial"] },
+      "then": {},
+      "else": { "properties": { "enter": { "type": "object" } }, "required": ["enter"] }
+    },
+    "dose": {
+      "type": "object",
+      "required": ["unit"],
+      "additionalProperties": false,
+      "properties": {
+        "value": { "type": "number", "exclusiveMinimum": 0 }, "tolerance": { "type": "number", "minimum": 0 }, "min": { "type": "number", "minimum": 0 }, "max": { "type": "number", "minimum": 0 },
+        "unit": { "type": "string", "minLength": 1, "description": "The engine's dose or rate unit (types-pk.ts DoseUnit | RateUnit); a per-kg unit is per the card's weight." }
+      },
+      "anyOf": [{ "properties": { "value": { "type": "number" } }, "required": ["value"] }, { "properties": { "min": { "type": "number" } }, "required": ["min"] }, { "properties": { "max": { "type": "number" } }, "required": ["max"] }],
+      "dependencies": { "tolerance": ["value"] }
+    },
+    "drugCriteria": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "description": "A drug id of the engine's library (DRUGS)." },
+        "cls": { "type": "string", "minLength": 1, "description": "A drug class of the library (`cls`, such as alpha1)." },
+        "alternatives": {
+          "type": "array", "minItems": 2,
+          "items": { "type": "object", "required": ["id"], "additionalProperties": false, "properties": { "id": { "type": "string", "minLength": 1 }, "dose": { "$ref": "#/definitions/dose" } } }
+        },
+        "dose": { "$ref": "#/definitions/dose" },
+        "cumulative": {
+          "type": "object", "required": ["unit"], "additionalProperties": false,
+          "properties": { "min": { "type": "number", "minimum": 0 }, "max": { "type": "number", "minimum": 0 }, "unit": { "type": "string", "minLength": 1 }, "windowS": { "type": "number", "exclusiveMinimum": 0 } },
+          "anyOf": [{ "properties": { "min": { "type": "number" } }, "required": ["min"] }, { "properties": { "max": { "type": "number" } }, "required": ["max"] }]
+        },
+        "route": {
+          "type": "object", "required": ["set"], "additionalProperties": false,
+          "properties": { "set": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/definitions/route" } }, "preferred": { "$ref": "#/definitions/route" } }
+        },
+        "rate": {
+          "type": "object", "minProperties": 1, "maxProperties": 1, "additionalProperties": false,
+          "properties": {
+            "bolus": { "const": true },
+            "overS": { "$ref": "#/definitions/amount" },
+            "infusion": { "$ref": "#/definitions/dose" }
+          }
+        }
+      },
+      "oneOf": [{ "properties": { "id": { "type": "string" } }, "required": ["id"] }, { "properties": { "cls": { "type": "string" } }, "required": ["cls"] }, { "properties": { "alternatives": { "type": "array" } }, "required": ["alternatives"] }]
+    },
+    "deviceKind": { "enum": ["ventilation", "cpr", "defib", "vaporiser", "airway"] },
+    "adminFilter": {
+      "description": "Which administrations a contraindication matches.",
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "type": "string", "minLength": 1 },
+        "drugId": { "type": "string", "minLength": 1 },
+        "cls": { "type": "string", "minLength": 1 },
+        "route": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/definitions/route" } },
+        "dose": { "$ref": "#/definitions/dose" }
+      }
+    },
+    "contraindication": {
+      "type": "object",
+      "required": ["text", "match"],
+      "additionalProperties": false,
+      "properties": {
+        "$comment": { "type": "string" },
+        "text": { "type": "string", "minLength": 1 },
+        "match": { "$ref": "#/definitions/adminFilter" },
+        "inPhases": { "$ref": "#/definitions/ids" },
+        "afterAction": { "$ref": "#/definitions/id" },
+        "when": { "$ref": "#/definitions/phaseRule" },
+        "harm": { "const": "notModelled", "description": "The physiology does not carry the harm: the violation line says so." }
+      }
+    },
+    "action": {
+      "type": "object",
+      "required": ["id", "label", "kind", "phases"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "label": { "type": "string", "minLength": 1 },
+        "notes": { "type": "string" },
+        "$comment": { "type": "string" },
+        "kind": { "enum": ["drug", "device", "procedure", "fluid", "physical", "sample", "communication", "decision"] },
+        "phases": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/definitions/id" }, "description": "The action opens when one of them is entered." },
+        "graded": { "const": false, "description": "Offered and recorded, never graded (a setup action such as the induction sequence). Absent: graded." },
+        "give": { "type": "array", "items": { "$ref": "pme-scenario-1.schema.json#/definitions/command" }, "description": "The commands an A press sends (/1 command definitions)." },
+        "drug": { "$ref": "#/definitions/drugCriteria" },
+        "device": {
+          "type": "object", "required": ["kind", "settings"], "additionalProperties": false,
+          "properties": { "kind": { "$ref": "#/definitions/deviceKind" }, "settings": { "$ref": "#/definitions/settings" } }
+        },
+        "fluid": {
+          "type": "object", "minProperties": 1, "additionalProperties": false,
+          "properties": { "type": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }, "volumeMl": { "$ref": "#/definitions/amount" }, "rateMlMin": { "$ref": "#/definitions/amount" } }
+        },
+        "physical": {
+          "type": "object", "required": ["measure"], "additionalProperties": false,
+          "properties": { "measure": { "$ref": "#/definitions/id" }, "settings": { "$ref": "#/definitions/settings" } }
+        },
+        "effect": {
+          "description": "A decision is graded on its engine-visible effect, never on a button (stop the trigger: vaporiser 0 %, FGF ≥ 10 L/min).",
+          "type": "array", "minItems": 1,
+          "items": { "type": "object", "required": ["kind", "settings"], "additionalProperties": false, "properties": { "kind": { "$ref": "#/definitions/deviceKind" }, "settings": { "$ref": "#/definitions/settings" } } }
+        },
+        "window": {
+          "type": "object", "required": ["anchor", "withinS"], "additionalProperties": false,
+          "properties": { "anchor": { "$ref": "#/definitions/anchor" }, "withinS": { "type": "number", "exclusiveMinimum": 0 }, "notBeforeS": { "type": "number", "minimum": 0 } }
+        },
+        "order": {
+          "type": "object", "minProperties": 1, "additionalProperties": false,
+          "properties": { "after": { "$ref": "#/definitions/ids" }, "before": { "$ref": "#/definitions/ids" } }
+        },
+        "repeat": {
+          "type": "object", "required": ["intervalS"], "additionalProperties": false,
+          "properties": { "intervalS": { "$ref": "#/definitions/amount" }, "maxCount": { "type": "integer", "minimum": 1 } }
+        },
+        "repeatWhile": {
+          "type": "object", "required": ["rule", "intervalS"], "additionalProperties": false,
+          "properties": { "rule": { "$ref": "#/definitions/phaseRule" }, "intervalS": { "$ref": "#/definitions/amount" } }
+        },
+        "precondition": { "$ref": "#/definitions/phaseRule" },
+        "contraindications": { "type": "array", "items": { "$ref": "#/definitions/contraindication" } }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "required": ["id", "text", "rule", "anchor", "withinS"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "text": { "type": "string", "minLength": 1 },
+        "$comment": { "type": "string" },
+        "rule": { "$ref": "#/definitions/phaseRule" },
+        "anchor": { "$ref": "#/definitions/anchor" },
+        "withinS": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "judged": {
+      "type": "object",
+      "required": ["id", "text", "kind"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "text": { "type": "string", "minLength": 1 },
+        "$comment": { "type": "string" },
+        "kind": { "enum": ["recognition", "communication"] },
+        "display": { "$ref": "#/definitions/displayRule" }
+      }
+    },
+    "scriptEntry": {
+      "type": "object",
+      "required": ["id", "on", "commands"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "$comment": { "type": "string" },
+        "on": {
+          "description": "`phase:<id>` (its entry), `action:<id>#<n>` (the nth taking), or { atScenarioS }.",
+          "anyOf": [
+            { "type": "string", "pattern": "^(phase:[A-Za-z][A-Za-z0-9_.-]{0,63}|action:[A-Za-z][A-Za-z0-9_.-]{0,63}#[1-9][0-9]*)$" },
+            { "type": "object", "required": ["atScenarioS"], "additionalProperties": false, "properties": { "atScenarioS": { "type": "number", "minimum": 0 } } }
+          ]
+        },
+        "commands": { "type": "array", "minItems": 1, "items": { "$ref": "pme-scenario-1.schema.json#/definitions/command" } }
+      }
+    }
+  }
+}

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Persian (Farsi) handout of the Debrief report: reads the report's own JSON export ("Download the record (JSON)",
-// schema pme-debrief/1 or pme-debrief/2, Stage 13 Q3; /2 adds `version` and the redesign's verdict words) and prints a
+// schema pme-debrief/1, /2 or /3, Stage 13 Q3; /2 adds `version` and the redesign's verdict words; /3, a pme-scenario/2
+// run's (plan F7), has the judged rows, the action table, the outcomes and the violations in place of the objectives) and prints a
 // right-to-left A4 PDF with the English report's sections in its order: the case, objectives with their verdicts,
 // measured facts (the labs row included), trends, drugs and fluids, the timeline (the undone course struck through),
 // bookmarks, the talking points (/2 only), the take-home points (the learner handout's section: the card's lines, else
@@ -41,7 +42,8 @@ const parse = (en) => {
   if (last < en.length) parts.push({ lit: en.slice(last) });
   return parts;
 };
-const TEMPLATES = TABLE.templates.map((e) => ({ e, kind: e.kind ?? 'top', parts: parse(e.en) }));
+// a template without its Persian yet (`fa: null`, e.g. the /3 words awaiting F7.6) is skipped: its line prints in English
+const TEMPLATES = TABLE.templates.filter((e) => e.fa).map((e) => ({ e, kind: e.kind ?? 'top', parts: parse(e.en) }));
 /** Placeholders read with a fixed pattern; every other placeholder is free text checked by its own lookup. */
 const TYPED = { t: /\d{2,}:\d{2}/y, span: /\d+ s|\d+ min \d{2} s/y, n: /-?\d+(?:\.\d+)?/y, c: /\d+/y, u: /\S+/y, code: /[A-Za-z0-9](?:[\w.+-]*[\w+-])?(?: \d(?:[\w.+-]*[\w+-])?)?/y };
 
@@ -267,6 +269,8 @@ const PEARLS = [
   ['Analysis', 'Take one key moment: what did you see, what did you think, what did you do?'],
   ['Summary', 'One thing to keep doing, one thing to do differently next time.'],
 ];
+/** A /3 action's grade words (views/debrief.ts GRADE_WORDS, without the glyph). */
+const GRADE = { met: 'met', deviation: 'deviation', overdue: 'overdue', failed: 'failed', due: 'due', 'not applicable': 'not applicable' };
 const KIND = { action: 'Action', remote: 'Remote', scenario: 'Scenario', alarm: 'Alarm', bookmark: 'Bookmark', restore: 'Return', patient: 'Patient', note: 'Note' };
 
 /** One trend as inline SVG (views/debrief.ts chart()): time runs left to right as on the monitor; a dashed line at each return. */
@@ -401,7 +405,21 @@ export function render(j, fontsCss, version) {
 <dt>${D.t('Started')}</dt><dd>${esc(solar)} (${esc(greg)})</dd>
 <dt>${D.t('Duration')}</dt><dd>${D.t(`${mmss(end)} simulated · ${span(wall)} on the clock`)}</dd></dl>
 <p class="runby">${D.t('Run by')}: <span></span></p>`;
-  const obj = j.objectives.length
+  const v3 = j.schema === 'pme-debrief/3';
+  const at = (t) => (t === null || t === undefined ? '–' : mmss(t));
+  const lines = (ls) => ls.map((l) => `<div class="why">${D.t(l)}</div>`).join('');
+  // /3 (views/debrief.ts): the judged rows on page 1, then the action table, the outcomes and the violations
+  const judged = v3 && (j.judged.length
+    ? `<ol class="obj">${j.judged.map((x) => `<li><span class="mark">${x.pressedT === null ? ICON['not assessable'] + D.t('Not ticked') : ICON.met + D.t('Observed')}</span> ${D.t(x.text)}<div class="why">${x.pressedT === null ? D.t('The instructor did not tick it.') : D.t(`Observed by the instructor at ${mmss(x.pressedT)}.`)}</div></li>`).join('')}</ol>`
+    : `<p class="muted">${D.t('This run has no rows for the instructor to judge.')}</p>`);
+  const actions = v3 && `<table class="actions"><thead><tr><th>${D.t('Action')}</th><th>${D.t('Due')}</th><th>${D.t('Given')}</th><th>${D.t('Grade')}</th></tr></thead><tbody>${j.actions.map((a) =>
+    `<tr><td>${D.t(a.label)}${lines(a.lines)}</td><td class="num">${a.dueT === null ? '–' : `${mmss(a.dueT)}${a.windowS !== null ? ` + ${spanFa(span(a.windowS))}` : ''}`}</td><td class="num">${at(a.givenT)}</td><td>${D.t(GRADE[a.firstGrade ?? a.grade])}</td></tr>`
+    + a.repeats.map((r) => `<tr><td>${D.t(`repeat ${r.n}`)}${lines(r.lines)}</td><td></td><td class="num">${at(r.t)}</td><td>${D.t(GRADE[r.grade])}</td></tr>`).join('')).join('')}</tbody></table>`;
+  const outcomes = v3 && j.outcomes.length ? `<ul>${j.outcomes.map((o) => `<li>${D.t(o.status)} ${D.t(o.text)}<div class="why">${D.t(o.why)}</div></li>`).join('')}</ul>` : '';
+  const violations = v3 && (j.violations.length
+    ? `<ul>${j.violations.map((x) => `<li><bdi dir="ltr">${mmss(x.t)}</bdi> ${D.t(x.text)}${x.harm === 'not modelled' ? ` (${D.t('harm not modelled')})` : ''}</li>`).join('')}</ul>`
+    : `<p class="muted">${D.t('No contraindicated administration.')}</p>`);
+  const obj = v3 ? '' : j.objectives.length
     ? `<ol class="obj">${j.objectives.map((o) => {
       const m = markOf(o, j.schema);
       return `<li data-status="${esc(o.verdict.status)}"${m.mark ? ` data-mark="${m.mark}"` : ''}><span class="mark">${m.icon}${D.t(m.words)}</span> ${D.t(o.text)}<div class="why">${D.t(m.why)}</div></li>`;
@@ -431,13 +449,16 @@ export function render(j, fontsCss, version) {
     : `<p>${D.t('Your take-home points')}</p>${'<div class="ruled"></div>'.repeat(3)}`;
 
   const body = [
-    section('objectives', D.t('Objectives'), obj),
+    v3 ? section('objectives', D.t('Judged by the instructor'), judged) : section('objectives', D.t('Objectives'), obj),
     section('facts', D.t('Measured facts'), facts),
     section('trends', D.t('Trends'), TREND_KEYS.map((k) => chart(D, d, k, end)).join('')),
     section('drugs', D.t('Drugs and fluids'), drugs),
+    v3 ? section('actions', D.t('Actions on the card'), actions) : '',
+    outcomes ? section('outcomes', D.t('Outcomes'), outcomes) : '',
+    v3 ? section('violations', D.t('Violations'), violations) : '',
     section('timeline', D.t('Timeline'), timeline),
     section('bookmarks', D.t('Bookmarks'), bookmarks),
-    j.schema === 'pme-debrief/2' ? section('pearls', D.t('Talking points'), `<div class="pearls">${PEARLS.map(([ph, pr]) => `<div class="pearl"><b>${D.t(ph)}</b><p>${D.t(pr)}</p></div>`).join('')}</div>`) : '',
+    j.schema !== 'pme-debrief/1' ? section('pearls', D.t('Talking points'), `<div class="pearls">${PEARLS.map(([ph, pr]) => `<div class="pearl"><b>${D.t(ph)}</b><p>${D.t(pr)}</p></div>`).join('')}</div>`) : '',
     section('takehome', D.t('Take-home points'), takeHome),
     section('notes', D.t('Notes'), '<div class="notes"></div>'),
     section('minutes', D.t('Appendix: one row per minute'), minutes),
@@ -485,7 +506,7 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
   }
   const inputs = args.map((file) => {
     const j = JSON.parse(readFileSync(file, 'utf8'));
-    if (j.schema !== 'pme-debrief/1' && j.schema !== 'pme-debrief/2') throw new Error(`${file}: not a Debrief export (schema ${j.schema}; pme-debrief/1 or pme-debrief/2 expected)`);
+    if (!['pme-debrief/1', 'pme-debrief/2', 'pme-debrief/3'].includes(j.schema)) throw new Error(`${file}: not a Debrief export (schema ${j.schema}; pme-debrief/1, /2 or /3 expected)`);
     const version = j.version ?? versionArg;
     if (!version) {
       console.error(`${file}: the Debrief JSON carries the build (${j.build}) but not the version. Pass --version with the version that build printed on its Start screen and in the English Debrief footer (e.g. --version 1.0.0-rc.1).\n${USAGE}`);

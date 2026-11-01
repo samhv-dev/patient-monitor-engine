@@ -1,7 +1,8 @@
 // Debrief: the report of the run, read from the session's run record — the case, the objectives judged by their rules,
 // the measured facts, trend charts drawn as inline SVG, drugs and fluids, the timeline (the discarded course of a
 // return to a bookmark included, struck through as undone; a staged delivery on one line), the card's steps with
-// their status (Instructor v2, IP8), bookmarks with a mark's kind and note, the instructor's notes and a one-row-per-minute
+// their status (Instructor v2, IP8) — for a pme-scenario/2 run the action table with its grades, the outcomes, the
+// violations and, on page 1, the judged rows (plan F7) —, bookmarks with a mark's kind and note, the instructor's notes and a one-row-per-minute
 // appendix; page 1 reads the key times, the course strip and the objectives, page 2 the key moments with what the
 // monitor showed (Debrief redesign B), and a learner handout without verdicts prints on its own (E51). The browser PRINTS it to PDF (debrief.css: A4 portrait, the app's chrome hidden, no colour needed to read
 // it; the footer and the build on every page); no PDF library. "Download the record (JSON)" saves the same data. Opened
@@ -9,12 +10,13 @@
 // The archive (board "Finish 2", archive.ts): a debrief "Finish the case" saved opens here (#/debrief/archive/<id>, and
 // …/print prints it), with the resident's name in the header band and the handout's; the view lists the archive in its
 // own section (screen only), exports it all as one JSON file and clears it behind a confirm.
-import type { MarkKind } from '@pme/controller';
+import { asV1, type MarkKind } from '@pme/controller';
 import { archive, hhmm, type ArchiveMeta } from '../archive.ts';
 import './debrief.css';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
-import { axisRange, drugTotals, endOf, facts, mmss, objectives, perMinute, span, steps, trendMeta, type DebriefExport, type Step, type StepStatus } from '../debrief.ts';
+import { axisRange, drugTotals, endOf, facts, mmss, objectives, perMinute, report3, span, steps, trendMeta, type DebriefExport, type Report3, type Step, type StepStatus } from '../debrief.ts';
+import type { Grade } from '@pme/controller/scenario';
 import { debriefJson } from '../debrief-export.ts';
 import { keyMoments, keyTimes, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
 import { LAB_KEYS, TREND_KEYS, type Row, type RunData, type TrendKey } from '../record.ts';
@@ -64,7 +66,7 @@ const MARK_WORDS: Readonly<Record<Exclude<MarkKind, 'stage'>, string>> = { good:
  *  the stage's first row, the order due, the button's words, when it was taken (and its place among the stage's taken
  *  steps), and its status. */
 function stepsTable(ss: Step[], d: RunData): HTMLElement {
-  const label = (id: string) => d.doc?.states.find((s) => s.id === id)?.label ?? id;
+  const label = (id: string) => asV1(d.doc)?.states.find((s) => s.id === id)?.label ?? id;
   return h('table', { class: 'db-table db-steps' },
     h('thead', {}, h('tr', {}, ...['Stage', 'n', 'Step', 'Taken (order)', 'Status'].map((c) => h('th', { scope: 'col' }, c)))),
     h('tbody', {}, ...ss.map((x, i) => h('tr', { 'data-status': x.status, ...(ss[i - 1]?.stateId !== x.stateId ? { class: 'db-stage' } : {}) },
@@ -73,6 +75,26 @@ function stepsTable(ss: Step[], d: RunData): HTMLElement {
       h('td', { class: 'num' }, x.takenT === null ? '–' : `${mmss(x.takenT)} (${x.order})`),
       h('td', {}, STEP_WORDS[x.status], x.ruleT !== undefined ? ` (its rule, ${mmss(x.ruleT)})` : '')))));
 }
+/** A /2 action's grade words (grade.ts `Grade`), each with a glyph so no colour is needed to read it. */
+const GRADE_WORDS: Readonly<Record<Grade, string>> = { met: '✓ met', deviation: '◆ deviation', overdue: '! overdue', failed: '✗ failed', due: '… due', 'not applicable': '– not applicable' };
+const at = (t: number | null): string => (t === null ? '–' : mmss(t));
+/** A /2 run's action table (plan F7): each graded action in the card's order with its first administration's grade,
+ *  when it was due (the window's opening and length) and given, the criteria it was off on lines under it, then its
+ *  repeats, each with its own grade. */
+function actionsTable(r: Report3): HTMLElement {
+  return h('table', { class: 'db-table db-actions' },
+    h('thead', {}, h('tr', {}, ...['Action', 'Due', 'Given', 'Grade'].map((c) => h('th', { scope: 'col' }, c)))),
+    h('tbody', {}, ...r.actions.flatMap((a) => [
+      // the row: the first administration's own grade; each repeat's grade on its own row (F11: the worst read "overdue")
+      h('tr', { 'data-grade': a.firstGrade, class: 'db-act' },
+        h('td', {}, a.label, ...a.lines.map((l) => h('div', { class: 'db-why' }, l))),
+        h('td', { class: 'num' }, a.dueT === null ? '–' : `${mmss(a.dueT)}${a.windowS !== null ? ` + ${span(a.windowS)}` : ''}`),
+        h('td', { class: 'num' }, at(a.givenT)), h('td', {}, GRADE_WORDS[a.firstGrade])),
+      ...a.repeats.map((x) => h('tr', { 'data-grade': x.grade, class: 'db-repeat' },
+        h('td', {}, `repeat ${x.n}`, ...x.lines.map((l) => h('div', { class: 'db-why' }, l))), h('td', {}), h('td', { class: 'num' }, at(x.t)), h('td', {}, GRADE_WORDS[x.grade]))),
+    ])));
+}
+
 /** The timeline's rows, a staged delivery's items on one line (each item keeps its own row in the record). */
 function timelineRows(d: RunData): HTMLElement[] {
   const line = (r: Row, text: string, isSetup: boolean) => h('tr', { 'data-kind': r.kind, ...(r.undone ? { class: 'undone' } : isSetup ? { class: 'db-setup' } : {}) },
@@ -299,6 +321,7 @@ export function debriefView(session: AppSession, link: Link): View {
       h('p', { class: 'db-sub' }, `${d.patient} · ${mmss(end)} simulated (${span(wall)} on the clock) · ${new Date(d.startedAt).toLocaleString()} · Run by: `,
         h('span', { class: 'db-runby' }, who.value)));
     const obj = objectives(d);
+    const r3 = report3(d); // a pme-scenario/2 run (F7)
     const fs = facts(d);
     const meds = d.rows.filter((r) => r.ev?.startsWith('drug:') || r.ev === 'fluid');
     const totals = drugTotals(d);
@@ -313,7 +336,12 @@ export function debriefView(session: AppSession, link: Link): View {
       band,
       tiles.length ? section('keytimes', 'Key times', h('div', { class: 'db-tiles' }, ...tiles)) : null,
       d.samples.length ? section('course', 'The course', legend('□', ' · numbers match Key moments'), course) : null,
-      section('objectives', 'Objectives', h('p', { class: 'db-subhead' }, 'What the record shows: it reads the run, it does not grade the person'), obj.length
+      r3 ? section('objectives', 'Judged by the instructor', r3.judged.length
+        ? h('ol', { class: 'db-obj' }, ...r3.judged.map((j) => h('li', { 'data-mark': j.pressedT === null ? 'not-assessable' : 'observed' },
+          h('b', { class: 'db-mark db-chip' }, j.pressedT === null ? '– Not ticked' : '✓ Observed'), ' ', j.text,
+          h('div', { class: 'db-why' }, j.pressedT === null ? 'The instructor did not tick it.' : `Observed by the instructor at ${mmss(j.pressedT)}${j.fromT !== null ? `; the monitor showed it from ${mmss(j.fromT)}` : ''}.`))))
+        : h('p', { class: 'muted' }, 'This run has no rows for the instructor to judge.'))
+      : section('objectives', 'Objectives', h('p', { class: 'db-subhead' }, 'What the record shows: it reads the run, it does not grade the person'), obj.length
         ? h('ol', { class: 'db-obj' }, ...obj.map((o) => {
           const m = markOf(o);
           return h('li', { 'data-status': o.verdict.status, 'data-mark': m.mark }, h('b', { class: 'db-mark db-chip' }, m.words), ' ', o.text,
@@ -335,6 +363,13 @@ export function debriefView(session: AppSession, link: Link): View {
           h('tbody', {}, ...meds.map((r) => h('tr', r.undone ? { class: 'undone' } : {}, h('td', { class: 'num' }, mmss(r.t)), h('td', {}, r.text + undoneText(r))))))
         : h('p', { class: 'muted' }, 'No drugs or fluids were given.'),
         totals.length ? h('ul', { class: 'db-totals' }, ...totals.map((x) => h('li', {}, `${drugName(x.drugId)}: ${x.total} in ${x.n} ${x.n === 1 ? 'bolus' : 'boluses'}`))) : null),
+      ...(r3 ? [
+        section('actions', 'Actions on the card', h('p', { class: 'db-subhead' }, 'What the record shows: each action against its prescription and window; it does not grade the person'), actionsTable(r3)),
+        ...(r3.outcomes.length ? [section('outcomes', 'Outcomes', h('ul', { class: 'db-outcomes' }, ...r3.outcomes.map((o) => h('li', { 'data-status': o.status }, h('b', {}, o.status === 'reached' ? '✓ reached' : o.status === 'pending' ? '… pending' : '✗ not reached'), ` ${o.text}`, h('div', { class: 'db-why' }, o.why)))))] : []),
+        section('violations', 'Violations', r3.violations.length
+          ? h('ul', { class: 'db-violations' }, ...r3.violations.map((v) => h('li', {}, `${mmss(v.t)} ${v.text}${v.harm === 'not modelled' ? ' (harm not modelled)' : ''}`)))
+          : h('p', { class: 'muted' }, 'No contraindicated administration.')),
+      ] : []),
       ...(ss.length ? [section('steps', 'Steps on the card', h('p', { class: 'db-subhead' }, 'What the record shows: each step in the card’s order and when it was taken; it does not grade the person'), stepsTable(ss, d))] : []),
       section('timeline', 'Timeline', h('table', { class: 'db-table db-timeline' },
         h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Time'), h('th', { scope: 'col' }, 'Kind'), h('th', { scope: 'col' }, 'Event'))),
@@ -429,7 +464,7 @@ export function debriefView(session: AppSession, link: Link): View {
   link.onChange(() => {
     const sv = link.ctl.scenario;
     const key = `${sv.docVersion}:${sv.stateId}`;
-    if (!sv.doc || key === ended || sv.current()?.transitions?.length) return;
+    if (!asV1(sv.doc) || key === ended || sv.current()?.transitions?.length) return; // /2: no end known until F2's ended()
     ended = key;
     toast('The scenario has ended: the debrief is ready (Debrief, in the session bar)');
   });

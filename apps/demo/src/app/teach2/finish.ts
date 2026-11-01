@@ -10,6 +10,7 @@
 // default patient, the no-case window's three cards). A restart or a close leaves the new patient running. If the archive cannot be
 // written (storage full or blocked) nothing ends and the pane stays.
 import './finish.css';
+import { isV2 } from '@pme/controller';
 import { archive, hhmm, markCounts, marksLine, objectiveCounts, objectivesLine } from '../archive.ts';
 import type { Link } from '../link.ts';
 import { APP_BUILD } from '../position.ts';
@@ -17,6 +18,7 @@ import { cardOf } from '../scenarios.ts';
 import { clock, h, setText, toast } from '../ui.ts';
 import { archiveHref, archiveList, entryTitle, exportAll } from '../views/archive-list.ts';
 import type { Teach2Ctx } from './ctx.ts';
+import { caseFinished, FINISHED } from './dock.ts';
 
 /** What the app does at the end of a case (main.ts): load the same card again with the room kept (false: refused), or
  *  end it (the page's default patient, no card). */
@@ -123,6 +125,9 @@ export function mountFinish(el: HTMLElement, ctx: Teach2Ctx, repaint: () => void
     if (!open || !d) return;
     busy = true;
     try {
+      // a /2 card: the run's end in its record (the Debrief grades it final: failed what is still open; design §6, Q11)
+      const doc = link.ctl.scenario.doc;
+      if (doc && isV2(doc) && !caseFinished(link)) link.note(FINISHED, 'marker');
       const e = archive.save(d, field.value, APP_BUILD);
       if (!e) return toast(NOT_SAVED, 'alert');
       if (how === 'now') {

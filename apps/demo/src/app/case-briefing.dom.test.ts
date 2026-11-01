@@ -343,8 +343,10 @@ describe("the MH demonstration card's briefing", () => {
     expect(mh.initialState).toBe('awake');
   });
 
-  it('is the only card of the library with a briefing', async () => {
+  it('is the only card of the library with a briefing (with its pme-scenario/2 translation, the same briefing)', async () => {
     const { LIBRARY } = await import('./scenarios.ts');
-    expect(LIBRARY.filter((c) => c.doc.briefing).map((c) => c.id)).toEqual(['showcase-mh']);
+    expect(LIBRARY.filter((c) => c.doc.briefing).map((c) => c.id)).toEqual(['showcase-mh', 'showcase-mh-v2']);
+    const doc = (id: string) => LIBRARY.find((c) => c.id === id)?.doc;
+    expect(doc('showcase-mh-v2')?.briefing).toEqual(doc('showcase-mh')?.briefing);
   });
 });

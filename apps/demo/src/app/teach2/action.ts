@@ -9,13 +9,14 @@
 // then the foot line. Rows are kept by key across the ≤ 2 Hz repaint, so a press or the
 // keyboard focus is never lost to a redraw.
 import './action.css';
+import { asV1, isV2 } from '@pme/controller';
 import type { Link } from '../link.ts';
 import { stagesOf } from '../card-read.ts';
 import { clock, h, setText } from '../ui.ts';
 import { FOOT_NONE, mountBeginPane, type Way } from './begin.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
-import { judge, pressStep } from './press.ts';
-import { classify, NOT_AN_ACTION, type HoldLike, type LiveRow } from './rows.ts';
+import { judge, pressAction, pressStep } from './press.ts';
+import { classify, classifyV2, liveGrades, NOT_AN_ACTION, type HoldLike, type LiveRow } from './rows.ts';
 import { historyOf } from './course.ts';
 import { stageNames } from './strip.ts';
 
@@ -50,7 +51,11 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const { link, keys } = ctx;
   const press = (p: Pill) => {
     const r = p.live.row;
-    if (r.kind === 'step') void pressStep(link, r.label);
+    if (r.kind === 'step' && r.actionId !== undefined) {
+      const doc = link.ctl.scenario.doc;
+      const a = doc && isV2(doc) ? doc.actions.find((x) => x.id === r.actionId) : undefined;
+      if (a) void pressAction(link, a);
+    } else if (r.kind === 'step') void pressStep(link, r.label);
     else if (r.kind === 'judged') judge(link, r.text);
   };
 
@@ -74,6 +79,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     p.el.dataset.kind = r.kind;
     if (live.overdue !== null) p.el.dataset.overdue = 'true';
     else delete p.el.dataset.overdue;
+    if (live.grade !== undefined) p.el.dataset.grade = live.grade; // a /2 action's live grade (deviation: its label amber)
+    else delete p.el.dataset.grade;
     setText(p.key, n);
     setText(p.title, r.title);
     setText(p.sub, live.subtitle);
@@ -95,13 +102,19 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const finSummary = h('summary', {});
   const finList = h('ol', { class: 'ip2-rows ip2-finished-list', 'aria-label': 'Finished steps' });
   const finished = h('details', { class: 'ip2-fold ip2-finished' }, finSummary, finList);
+  // a /2 card's rows not due now (rows.ts classifyV2 `later`): rows of ACTION in a fold, closed by default
+  const laterSummary = h('summary', { title: 'Actions not applicable yet (their trigger has not happened) and setup given in an earlier phase: still pressable here, and by their numbers' });
+  const laterList = h('ol', { class: 'ip2-rows ip2-later-list', 'aria-label': 'Not due now' });
+  const later = h('details', { class: 'ip2-fold ip2-later' }, laterSummary, laterList);
+  later.hidden = true;
   // with no case loaded (board "Empty 5"): the three ways to begin, or the case list; Free roam is this slot's no-card form
   const begin = mountBeginPane(ctx, el);
   const foot = h('p', { class: 'ip2-foot' }, FOOT);
-  const wrap = h('div', { class: 'ip2-list' }, list, offCard, finished, foot);
+  const wrap = h('div', { class: 'ip2-list' }, list, later, offCard, finished, foot);
   el.replaceChildren(wrap);
 
   const pills = new Map<string, Pill>();
+  const laterPills = new Map<string, Pill>();
   const groups = new Map<string, Group>();
   const base = new Map<string, number>();
   let docV = -1;
@@ -154,7 +167,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const setDigits = (rows: readonly LiveRow[]) => {
     for (let n = 1; n <= 9; n++) {
       const live = rows.find((r) => r.row.kind !== 'auto' && r.row.n === n && r.look !== 'waiting');
-      const p = live ? pills.get(keyOf(live)) : undefined;
+      const p = live ? (pills.get(keyOf(live)) ?? laterPills.get(keyOf(live))) : undefined;
       keys.digit(n, p ? () => press(p) : null);
     }
   };
@@ -177,32 +190,55 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     // "Finish the case" (board "Finish 2") holds ACTION: its rows are not in view, and the digits press none of them
     if (ctx.finish?.open) return setDigits([]);
     const sv = link.ctl.scenario;
-    const doc = sv.doc;
+    const v2 = sv.doc && isV2(sv.doc) ? sv.doc : null;
+    const doc = asV1(sv.doc);
     const stateId = sv.stateId;
     if (docV !== sv.docVersion) {
       docV = sv.docVersion;
       base.clear();
       groups.clear();
-      const stages = doc ? stagesOf(doc) : [];
+      const stages = sv.doc ? stagesOf(sv.doc) : [];
       names = stageNames(stages);
       labels = new Map(stages.map((g) => [g.id, g.label]));
     }
     const was = way;
-    way = doc ? 'menu' : (ctx.begin?.way ?? 'menu');
-    if (doc) ctx.begin?.reset();
+    way = sv.doc ? 'menu' : (ctx.begin?.way ?? 'menu');
+    if (sv.doc) ctx.begin?.reset();
     const free = way === 'free';
     // with a card loaded the pane is not in the page at all (its builder button is disabled; no ACTION row ever is)
-    if (doc) begin.el.remove();
+    if (sv.doc) begin.el.remove();
     else if (begin.el.parentElement !== wrap) wrap.prepend(begin.el);
     begin.el.hidden = free;
-    list.hidden = finished.hidden = !doc;
-    offCard.hidden = !doc && !free;
-    setText(foot, doc ? FOOT : FOOT_NONE);
+    list.hidden = finished.hidden = !sv.doc;
+    offCard.hidden = !sv.doc && !free;
+    later.hidden = true;
+    setText(foot, sv.doc ? FOOT : FOOT_NONE);
+    if (v2 && stateId) { // a pme-scenario/2 card (F6): the phase's actions, the judged rows, the rules out of the phase
+      wrap.dataset.format = '2'; // the denser /2 rows (action.css): the MH card's Latent opens 11 actions
+      const pr = link.host?.driver.phaseRunner ?? null;
+      const board = classifyV2({
+        doc: v2, phaseId: stateId, log: link.log, takings: pr?.takings ?? null, holds: pr?.vitalHolds() ?? null, paused: link.ctl.hostPaused,
+        grades: pr ? liveGrades(v2, pr, link.simT) : null, admin: pr?.admin ?? null, enteredT: sv.enteredT,
+      });
+      const rest = board.later ?? [];
+      sync(list, pills, board.list, false, keyOf);
+      sync(laterList, laterPills, rest, false, keyOf);
+      syncFinished(board.finished);
+      setDigits([...board.list, ...rest]);
+      later.hidden = !rest.length;
+      setText(laterSummary, `Not due now · ${rest.length}`);
+      setText(finSummary, `Finished steps · ${board.finished.length}`);
+      finished.hidden = !board.finished.length; // a /2 Finished holds the judged rows met: shown once one is
+      offCard.hidden = true;
+      return;
+    }
+    delete wrap.dataset.format;
+    sync(laterList, laterPills, [], false, keyOf);
     if (!doc || !stateId) {
       sync(list, pills, [], false, keyOf);
       syncFinished([]);
       setDigits([]);
-      if (doc) return;
+      if (sv.doc) return;
       begin.draw();
       if (free && was !== 'free') (freeT = link.simT), (offCard.open = true);
       if (!free) return;

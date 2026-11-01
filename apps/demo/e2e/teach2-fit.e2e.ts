@@ -9,11 +9,14 @@ import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
+import { app, openMhV2, pressPath, to } from './mh-v2-path.ts';
 import { laneTextOverlaps, recordLaneTexts } from './teach2-lane-texts.ts';
 
-let vite: ViteDevServer;
-let base = '';
-test.beforeAll(async () => ({ vite, base } = await startVite()));
+let vite: ViteDevServer | undefined;
+let base = process.env.PME_KIT_BASE ?? ''; // PME_KIT_BASE=<url>: a server already running (as teach2-mh-v2.e2e.ts)
+test.beforeAll(async () => {
+  if (!base) ({ vite, base } = await startVite());
+});
 test.afterAll(async () => vite?.close());
 
 type W = { __pmeApp: { link: { send(c: unknown): Promise<{ accepted: boolean }>; ctl: { scenario: { stateId: string | null; doc: { states: Array<{ id: string; transitions?: Array<{ when: Record<string, unknown> }> }> } | null }; hostPaused: boolean } } } };
@@ -66,7 +69,8 @@ function measure(page: Page) {
   return page.evaluate(() => {
     const w = window as unknown as W;
     const sv = w.__pmeApp.link.ctl.scenario;
-    const st = sv.doc?.states.find((s) => s.id === sv.stateId);
+    const v2 = sv.doc as unknown as { phases?: unknown[]; actions: Array<{ phases: string[] }> } | null;
+    const st = v2?.phases ? undefined : sv.doc?.states.find((s) => s.id === sv.stateId);
     const manual = (x: Record<string, unknown>): boolean => 'manual' in x || (['any', 'all'] as const).some((k) => Array.isArray(x[k]) && (x[k] as Array<Record<string, unknown>>).some(manual));
     const view = document.querySelector('.view[data-view="teach2"]') as HTMLElement;
     const action = document.querySelector('.ip2-action') as HTMLElement;
@@ -82,7 +86,8 @@ function measure(page: Page) {
       page: [se.scrollHeight, se.clientHeight],
       view: [view.scrollHeight, view.clientHeight],
       action: [action.scrollHeight, action.clientHeight],
-      cardSteps: (st?.transitions ?? []).filter((t) => manual(t.when)).length,
+      // a pme-scenario/2 card (F11): its open actions are the actions that name the phase (card-read.ts phaseRowsOf)
+      cardSteps: v2?.phases ? v2.actions.filter((a) => a.phases.includes(sv.stateId as string)).length : (st?.transitions ?? []).filter((t) => manual(t.when)).length,
       stepRows: rows.filter((r) => r.dataset.kind === 'step').length,
       rows: rows.map((r) => `${r.querySelector('.ip2-key')?.textContent}:${r.dataset.look}`),
       disabled: [...document.querySelectorAll('.ip2-action .ip2-row')].filter((r) => r.matches('[disabled], [aria-disabled="true"]') && (r as HTMLElement).dataset.look !== 'waiting').length,
@@ -151,6 +156,52 @@ for (const [card, target] of [['showcase-mh', 'awake'], ['showcase-haemorrhage',
     expect(m.chips.filter((c) => c !== 'or' && !/earlier$|later ›$/.test(c ?? ''))).toHaveLength(5);
     expect(m.strip[0]).toBeLessThanOrEqual(m.strip[1] as number);
     expect(m.cut).toBe(0);
+  });
+}
+
+// Plan F11 (F6's acceptance on the /2 card): the MH card in pme-scenario/2 (showcase-mh-v2) at 1440 × 900. A /2 phase is
+// entered by its own rule, never by goto, so each phase is reached on the demo path's presses (mh-v2-path.ts) and
+// fast-forward. On that path since the owner's phase rules of 1 November, with the Treated rule (the dantrolene effect
+// rising) and the hold from reachability proposed the same day, and Early signs held 20 s (the owner's ruling of the
+// same afternoon; harness times): Latent 06:17, Early signs 08:03 before the call (so it is measured just after the
+// call at 08:12), Treated 09:57 after the first dose, Recovering 10:57, Recrudescence 14:59 after ventilation back, the
+// second Treated 20:58 after the second dose, the second Recovering 23:53. Every phase lasts at least 60 s, so the fit
+// is measured at each: Latent, Early signs, Treated and Recovering (after the dantrolene), Recrudescence (after
+// ventilation back), the second Treated and the second Recovering (after the second dose). At each: no scroll (the page,
+// the view, ACTION, the strip), every open action of the phase a row of ACTION, no row disabled, no phase name cut.
+for (const [target, presses, tag] of [['latent', 5, 'latent'], ['earlySigns', 6, 'earlySigns'], ['treated', 7, 'treated'], ['recovering', 7, 'recovering'], ['recrudescence', 8, 'recrudescence'], ['treated', 9, 'treated-2'], ['recovering', 9, 'recovering-2']] as const) {
+  test(`Instructor v2 fits 1440 × 900 on the /2 MH card at ${tag}: no scroll, every open action a row, no row disabled`, async ({ page, browserName }, info) => {
+    test.setTimeout(360_000);
+    await openMhV2(page, (h) => openApp(page, base, h, { warmMs: 2000 }));
+    await pressPath(page, (i) => i < presses);
+    // the phase comes from the physiology: fast-forward in 30 s steps until it is entered (at most 15 sim-min; every phase
+    // targeted here lasts at least 60 s on this path, two steps, so a step cannot pass one; 10 s steps ran the second
+    // Recovering, 4:40 after the second dose, out of the test's time)
+    for (let n = 0; (await app(page)).stateId !== target && n < 30; n++) await to(page, Math.floor((await app(page)).simT) + 30);
+    expect((await app(page)).stateId).toBe(target);
+    await page.waitForTimeout(1500); // the view repaints (≤ 2 Hz)
+    const running = await measure(page);
+    const dir = process.env.TEACH2_SHOTS ?? info.outputPath();
+    mkdirSync(dir, { recursive: true });
+    await page.screenshot({ path: join(dir, `teach2-fit-mh-v2-${tag}-${browserName}-page.png`) });
+    await page.locator('.ip2-head button.ip2-pill').click();
+    await page.waitForFunction(() => (window as unknown as W).__pmeApp.link.ctl.hostPaused === true, null, { timeout: 10_000 });
+    await page.waitForTimeout(1200);
+    const paused = await measure(page);
+    const report = { browser: browserName, card: 'showcase-mh-v2', target: tag, simT: (await app(page)).simT, running, paused };
+    console.log(`teach2-fit ${JSON.stringify(report)}`);
+    info.annotations.push({ type: 'teach2-fit', description: JSON.stringify(report) });
+    for (const [when, m] of [['running', running], ['paused', paused]] as const) {
+      expect.soft(m.state, when).toBe(target);
+      expect.soft(m.page[0], `${when}: the page scrolls`).toBeLessThanOrEqual(m.page[1] as number);
+      expect.soft(m.view[0], `${when}: the view scrolls`).toBeLessThanOrEqual(m.view[1] as number);
+      expect.soft(m.action[0], `${when}: ACTION scrolls`).toBeLessThanOrEqual(m.action[1] as number);
+      expect.soft(m.cardSteps, `${when}: the phase has open actions`).toBeGreaterThan(0);
+      expect.soft(m.stepRows, `${when}: every open action of the phase is a row`).toBe(m.cardSteps);
+      expect.soft(m.disabled, `${when}: a row is disabled`).toBe(0);
+      expect.soft(m.strip[0], `${when}: the strip scrolls sideways`).toBeLessThanOrEqual(m.strip[1] as number);
+      expect.soft(m.cut, `${when}: a phase name is cut`).toBe(0);
+    }
   });
 }
 

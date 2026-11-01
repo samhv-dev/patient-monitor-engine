@@ -5,10 +5,14 @@ import type {
   AlarmEntry,
   Command,
   DispatchResult,
+  DoseUnit,
   EngineEvent,
   NumericId,
   PatientSnapshot,
+  PkClinicalEvent,
+  PkRoute,
   Ramp,
+  RateUnit,
   RhythmId,
   SimSeconds,
   StateVar,
@@ -27,15 +31,23 @@ export type ControlFlag = 'modeled' | 'pinned' | 'ramping' | 'override';
  * The host and the engine ignore it; it travels in `commandApplied` so a record can tell which items went together.
  */
 export type BatchMeta = { batch?: { id: string; n: number } };
-type CommandBase = { id: string; issuedBy: string; atTick?: Tick; stageGroup?: string } & BatchMeta;
+/** `actionId` (plan F3): the /2 card's action an A press sends the command for. Metadata, as `batch`: the host and the
+ *  engine ignore it; the scenario driver reads it (a taking, and the administration record's source). */
+type CommandBase = { id: string; issuedBy: string; atTick?: Tick; stageGroup?: string; actionId?: string } & BatchMeta;
 
-/** Brief §7.2 `ClinicalEvent`, verbatim (drug ids stay strings). */
+/**
+ * Brief §7.2 `ClinicalEvent` (drug ids stay strings), widened to the engine's shapes (plan F1; the schema checks `kind`
+ * only): the drug model's units, routes (`PkRoute`), `overS` and `concentrationPct`, and its kinds `infusion`, `tci` and
+ * `vaporiser` (types-pk.ts); the neuro model's `airwayDevice`; the fluids the cards send (`saline`, `balanced`).
+ */
 export type ClinicalEvent =
   | {
-      kind: 'drug'; drugId: string; dose: number; unit: 'mcg' | 'mg' | 'mcg/kg' | 'mg/kg' | 'mEq' | 'units' | 'mcg/kg/min';
-      route: 'iv' | 'io' | 'im' | 'inh'; infusion?: boolean;
+      kind: 'drug'; drugId: string; dose: number; unit: DoseUnit | RateUnit;
+      route: PkRoute; infusion?: boolean; overS?: number; concentrationPct?: number;
     }
-  | { kind: 'fluid'; fluid: 'crystalloid' | 'colloid' | 'blood'; volumeMl: number; overS: number }
+  | Extract<PkClinicalEvent, { kind: 'infusion' | 'tci' | 'vaporiser' }>
+  | { kind: 'airwayDevice'; device: 'none' | 'ett' | 'sga' }
+  | { kind: 'fluid'; fluid: 'crystalloid' | 'colloid' | 'blood' | 'saline' | 'balanced'; volumeMl: number; overS: number }
   | { kind: 'bleed'; rateMlPerMin?: number; volumeMl?: number; overS?: number }
   | {
       kind: 'airway'; state: 'patent' | 'obstructed' | 'apnoea' | 'disconnected' | 'oesophageal' | 'endobronchial' | 'bronchospasm';
