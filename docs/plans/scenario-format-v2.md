@@ -186,7 +186,9 @@ by name: a display rule may be a phase's entry (`{ "phaseEntered": "earlySigns" 
 clock starts when the strip shows the phase the sign stands for (the MH card's Early signs: EtCO₂ above 45 and rising
 at unchanged set ventilation, held through its 20-s hold, as the /1 card's "early signs" state is EtCO₂ above 45 for
 20 s), not at a bare threshold the patient may cross for another reason (the premedicated, then induced patient's
-EtCO₂ 46 before intubation).
+EtCO₂ 46 before intubation). The clock's start is also when the row is offered: Instructor v2 lists a judged row from
+the first second its display rule holds and keeps it until met, never before (1 November); a row with no display
+rule is offered, and its clock counts, from the start.
 
 **Violations** are administrations a contraindication matches: dantrolene IM; a calcium-channel blocker with
 dantrolene (hyperkalaemia, myocardial depression); epinephrine 1 mg IV in ROSC. A violation is its own timed line,

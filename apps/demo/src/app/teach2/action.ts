@@ -218,7 +218,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       const pr = link.host?.driver.phaseRunner ?? null;
       const board = classifyV2({
         doc: v2, phaseId: stateId, log: link.log, takings: pr?.takings ?? null, holds: pr?.vitalHolds() ?? null, paused: link.ctl.hostPaused,
-        grades: pr ? liveGrades(v2, pr, link.simT) : null, admin: pr?.admin ?? null, enteredT: sv.enteredT,
+        grades: pr ? liveGrades(v2, pr, link.simT) : null, admin: pr?.admin ?? null, enteredT: sv.enteredT, history: sv.history,
       });
       const rest = board.later ?? [];
       sync(list, pills, board.list, false, keyOf);

@@ -137,7 +137,10 @@ parts of it show:
 - **Objectives.** An objective is tied to a step when its rule's `event` is `state:<to>` of the step, or `drug:<id>`
   for a drug in `<to>`'s `onEnter`; its `eventWithin` window gives the step a timer ("due", then "overdue"), and an
   `after` that is a `value:` event fades the step until it is true (it stays pressable). An objective without a rule
-  is a "you judge it" row. An untaken step shows as failed only when such an objective still asks for it and the card
+  is a "you judge it" row. The `"recognition"` one is offered from the moment its Debrief clock starts, never before:
+  once the run enters a state an `eventWithin` objective counts from (`after: "state:…"`) that the patient enters by a
+  rule (the MH card's Early signs); a card with no such state offers it from the start. In a `pme-scenario/2` card a
+  judged row is offered from the first second its `display` rule holds (no rule: from the start). An untaken step shows as failed only when such an objective still asks for it and the card
   can no longer reach it; an alternative branch not chosen is never a failure.
 - **`notes`** of a state are the cue box's Say line, so write them as what the instructor says or watches for.
 

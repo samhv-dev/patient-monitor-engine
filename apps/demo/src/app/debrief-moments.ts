@@ -4,7 +4,7 @@
 // intervals the facilitator reads first: the instructor's recognition tick, the first team action, each objective's
 // measured interval, the pulse loss to CPR and the time without a pulse. Every number traces to a row or a sample; an
 // absent one is null, never a guess. Read on the KEPT course, as the debrief's rules are. No DOM.
-import { asV1 } from '@pme/controller';
+import { asV1, type ScenarioDoc } from '@pme/controller';
 import { displayWords, endOf, isEvent, objectives, report3, type DebriefExport } from './debrief.ts';
 import type { Row, RunData, Sample } from './record.ts';
 
@@ -92,6 +92,18 @@ export function keyMoments(d: RunData): KeyMoment[] {
   });
 }
 
+/** The states whose entry makes a /1 card's sign recognisable: those the card's own timed rules count from (an
+ *  `eventWithin` whose `after` is `state:…`) which the patient enters (a transition into it that is not manual). The
+ *  Debrief's recognition clock starts at the first one entered (`recognitionFrom`), and Instructor v2 offers the judged
+ *  recognition row from then (teach2/rows.ts): one reading, so the row is never there before its clock can start. Empty:
+ *  the card shows its signs from Load. */
+export function signStates(doc: ScenarioDoc): Set<string> {
+  const named = new Set((doc.objectives ?? []).flatMap((o) => (typeof o !== 'string' && o.rule?.kind === 'eventWithin' ? [o.rule.after].flat() : []))
+    .filter((a) => a.startsWith('state:')).map((a) => a.slice('state:'.length)));
+  const byPatient = (id: string) => doc.states.some((s) => (s.transitions ?? []).some((x) => (x.to === id || x.else === id) && !('manual' in x.when)));
+  return new Set([...named].filter(byPatient));
+}
+
 /** Where the recognition interval starts (UI review #18): the moment the sign became recognisable, not Load. That is the
  *  first state the card's own timed rules count from (an `eventWithin` whose `after` is `state:…`: the MH card's "call
  *  the crisis within 120 s of the early signs") which the patient enters (a transition into it that is not manual),
@@ -100,11 +112,9 @@ export function keyMoments(d: RunData): KeyMoment[] {
  *  label up to the first colon ("Early signs: EtCO₂ rising …" → "early signs"). */
 function recognitionFrom(d: RunData, tick: number | undefined): { t: number; label: string } {
   const doc = asV1(d.doc); // a pme-scenario/2 card: no states, no objectives (F7)
-  const named = new Set((doc?.objectives ?? []).flatMap((o) => (typeof o !== 'string' && o.rule?.kind === 'eventWithin' ? [o.rule.after].flat() : []))
-    .filter((a) => a.startsWith('state:')).map((a) => a.slice('state:'.length)));
-  const byPatient = (id: string) => (doc?.states ?? []).some((s) => (s.transitions ?? []).some((x) => (x.to === id || x.else === id) && !('manual' in x.when)));
+  const signs = doc ? signStates(doc) : new Set<string>();
   const idOf = (r: Row) => (r.ev?.startsWith('state:') ? r.ev.slice('state:'.length) : '');
-  const r = kept(d).find((x) => (tick === undefined || x.t <= tick) && named.has(idOf(x)) && byPatient(idOf(x)));
+  const r = kept(d).find((x) => (tick === undefined || x.t <= tick) && signs.has(idOf(x)));
   if (!r) return { t: 0, label: 'start' };
   const head = (doc?.states.find((s) => s.id === idOf(r))?.label ?? idOf(r)).split(':')[0] as string;
   return { t: r.t, label: /^.[a-z]/.test(head) ? head.charAt(0).toLowerCase() + head.slice(1) : head };

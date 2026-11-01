@@ -161,7 +161,7 @@ describe('ACTION list parity with today\'s Scenario tab', () => {
     const r = rig(MH, 'surgery');
     const autos = [...r.v2el.querySelectorAll('.ip2-row[data-kind="auto"]')];
     expect(autos.map((a) => [a.tagName, a.querySelector('.ip2-key')?.textContent, a.getAttribute('data-look')])).toEqual([['DIV', 'A', 'pending']]);
-    expect([...r.digits.keys()]).toEqual([1, 2]); // the crisis step and the judged objective
+    expect([...r.digits.keys()]).toEqual([1]); // the crisis step; the judged recognition row is offered from Early signs (judged-offer.dom.test.ts)
   });
 
   it('rows keep their element across repaints (a press is never lost to a redraw)', () => {
