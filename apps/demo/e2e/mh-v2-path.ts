@@ -10,8 +10,8 @@ export const app = (page: Page) => page.evaluate(() => {
 });
 
 export const PATH: Array<[number, string]> = [
-  [30, 'Premedicate: midazolam 2 mg, fentanyl 100 µg'],
-  [60, 'Preoxygenate: 100 % O₂ by face mask'],
+  [30, 'Preoxygenate: 100 % O₂ by face mask'],
+  [60, 'Premedicate: midazolam 2 mg, fentanyl 100 µg'],
   [240, 'Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg'],
   [300, 'Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %'],
   [360, 'Start surgery: rocuronium 0.6 mg/kg'],

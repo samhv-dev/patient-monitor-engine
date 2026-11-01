@@ -40,8 +40,8 @@ import { anyShowcaseDoc, runCard, type Act, type Run } from './harness.ts';
 
 /** The run sheet's demo path, §3 (the talk run's sim times; the stops hold the clock, so they are not in sim time). */
 const PATH: Array<{ t: number; v1: string; v2: string }> = [
-  { t: 30, v1: 'Premedicate: midazolam 2 mg, fentanyl 100 µg', v2: 'premedicate' },
-  { t: 60, v1: 'Preoxygenate: 100 % O₂ by face mask', v2: 'preoxygenate' },
+  { t: 30, v1: 'Preoxygenate: 100 % O₂ by face mask', v2: 'preoxygenate' },
+  { t: 60, v1: 'Premedicate: midazolam 2 mg, fentanyl 100 µg', v2: 'premedicate' },
   { t: 240, v1: 'Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg', v2: 'induce' },
   { t: 300, v1: 'Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %', v2: 'intubate' },
   { t: 360, v1: 'Start surgery: rocuronium 0.6 mg/kg', v2: 'startSurgery' },
