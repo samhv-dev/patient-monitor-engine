@@ -4,7 +4,7 @@
 // right-to-left A4 PDF with the English report's sections in its order: the case, objectives with their verdicts,
 // measured facts (the labs row included), trends, drugs and fluids, the timeline (the undone course struck through),
 // bookmarks, the talking points (/2 only), the take-home points (the learner handout's section: the card's lines, else
-// ruled lines), notes and the one-row-per-minute appendix; the footer (the release wording of views/debrief.ts FOOT,
+// ruled lines), notes and the one-row-per-minute appendix; the footer (the E125 wording of views/debrief.ts FOOT,
 // with the version and the build) and "page n of N" on every page. A handout
 // script, NOT an app feature: the app and its tests are untouched (the in-app translation is planned for a later
 // release). Words come from docs/showcase/i18n/fa-debrief.json; a string the table does not cover is printed in English
@@ -390,7 +390,7 @@ export function render(j, fontsCss, version) {
   const greg = `${gr.day} ${gr.month} ${gr.year} میلادی`;
   const wall = Math.max(0, (d.lastWall - d.startedAt) / 1000);
   // the English footer's words and arithmetic (views/debrief.ts FOOT): "(pre-release)" when the version has a suffix
-  const foot = D.plain(`For education only. Not a medical device and not clinically validated: never use it for patient care. Version ${version}${version.includes('-') ? ' (pre-release)' : ''}, build ${j.build}.`);
+  const foot = D.plain(`For educational use only; Not to be used in patient care. Version ${version}${version.includes('-') ? ' (pre-release)' : ''}, build ${j.build}.`);
   const pageT = TABLE.templates.find((e) => e.en === 'Page {c} of {c}');
   D.used.add(pageT);
   const [pa, , pb] = pageT.fa.split(/(\{c\})/);
