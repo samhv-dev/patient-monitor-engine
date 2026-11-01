@@ -56,6 +56,7 @@
 .debrief .db-svg text { font-size: 11px; fill: var(--text-muted); }
 .debrief .db-legend { margin: var(--s-1) 0 var(--s-2); font-size: var(--t-13); }
 .debrief .db-legend .db-scen { color: #777; font-weight: 700; }
+.debrief .db-bm-key svg { vertical-align: -1px; margin-right: 0.15em; }
 .debrief .db-table { border-collapse: collapse; width: 100%; font-size: var(--t-13); }
 .debrief .db-table th, .debrief .db-table td { text-align: left; padding: 3px 8px 3px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
 .debrief .db-table td.num { white-space: nowrap; width: 4.5em; }
@@ -87,6 +88,16 @@
 .debrief .db-course .axis, .debrief .db-course .ticks line { stroke: var(--text-muted); }
 .debrief .db-course .grid { stroke: var(--line); stroke-dasharray: 2 3; }
 .debrief .db-course .db-pulseless, .debrief .db-course .db-pulseless-l rect { fill: var(--line); }
+/* the instructor's marks (debrief-course.ts): the dock's icons above the badges, a thin tick down to the axis; the
+   label shows on hover (the title) and in print; an undone mark grey and struck, as the Bookmarks list */
+.debrief .db-course .db-bm { cursor: help; }
+.debrief .db-course .db-bm path { stroke: var(--text-strong); stroke-width: 2.4; stroke-linejoin: round; }
+.debrief .db-course .db-bm-t { stroke: var(--text-strong); stroke-width: 0.8; }
+.debrief .db-course .db-bm-t.undone { stroke: var(--text-muted); stroke-dasharray: 1 2; }
+.debrief .db-course .db-bm.undone path { stroke: var(--text-muted); }
+.debrief .db-course .db-bm-x { stroke: var(--text-strong); stroke-width: 1.4; }
+.debrief .db-course .db-bm-l { display: none; font-size: 8px; fill: var(--text-strong); paint-order: stroke; stroke: #fff; stroke-width: 3px; }
+.debrief .db-course .db-bm.undone .db-bm-l { fill: var(--text-muted); text-decoration: line-through; }
 .debrief .db-svg .db-mk-n { font-size: 9px; font-weight: 700; fill: var(--text-strong); }
 /* an objective's measured interval: the outline is the time asked */
 .debrief .db-measure { display: inline-flex; align-items: center; gap: 0.3em; margin-left: var(--s-2); font-size: var(--t-13); white-space: nowrap; }
@@ -184,6 +195,10 @@
   .debrief .db-course path { stroke: #000; }
   .debrief .db-course .axis, .debrief .db-course .ticks line, .debrief .db-course .grid { stroke: #555; }
   .debrief .db-course .db-pulseless, .debrief .db-course .db-pulseless-l rect { fill: #e6e6e6; }
+  .debrief .db-course .db-bm-l { display: inline; fill: #000; }
+  .debrief .db-course .db-bm path, .debrief .db-course .db-bm-t, .debrief .db-course .db-bm-x { stroke: #000; }
+  .debrief .db-course .db-bm.undone path, .debrief .db-course .db-bm-t.undone { stroke: #777; }
+  .debrief .db-course .db-bm.undone .db-bm-l { fill: #555; }
   .debrief .db-course, .debrief .db-course *, .debrief .db-bar, .debrief .db-bar * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .debrief .db-subhead, .debrief .db-note60 { font-size: 8.5pt; }
   .debrief .db-obj li { margin-bottom: 1.2mm; line-height: 1.3; }

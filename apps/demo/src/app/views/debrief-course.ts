@@ -1,9 +1,11 @@
 // The Debrief's course strip: the run on one time axis as an SVG string (no DOM state). It draws the trends HR, MAP,
 // SpO₂ and EtCO₂ as small multiples (E56), with the numbered key moments as badges (■ team in blue, ● patient in
-// vermillion, □ an open grey square for a scenario state; the numbers are those of the key-moments table), and a grey band over each
-// pulseless span. Every line is what the monitor showed: the SpO₂ line breaks where the oximeter showed its dash and runs
-// through the compression-generated reading during CPR (E126; E60 broke it over the whole band). A trend never measured
-// is left out. The legend is the view's.
+// vermillion, □ an open grey square for a scenario state; the numbers are those of the key-moments table), a grey band
+// over each pulseless span, and the instructor's marks (every bookmark of the run: the dock's good / bad / discuss
+// flags with the dock's own icons, a plain bookmark as a ribbon) in rows above the badges, each with a thin tick down
+// to the axis at its time. Every line is what the monitor showed: the SpO₂ line breaks where the oximeter showed its
+// dash and runs through the compression-generated reading during CPR (E126; E60 broke it over the whole band). A trend
+// never measured is left out. The legend is the view's.
 import { axisRange, endOf, mmss, span, trendMeta } from '../debrief.ts';
 import { pulselessSpans, type KeyMoment } from '../debrief-moments.ts';
 import type { RunData, TrendKey } from '../record.ts';
@@ -12,7 +14,14 @@ export interface CourseOptions {
   trends: TrendKey[];
   /** The learner handout's copy: the same strip, labelled as the learner's run. */
   learner?: boolean;
+  /** The instructor's marks (the run's bookmark rows), drawn at their times; none on the learner's copy. */
+  marks?: CourseMark[];
 }
+
+/** A mark on the strip: its time, its kind (the dock's `good` / `bad` / `discuss`, or `bookmark` for a plain one),
+ *  its label, the words of the Bookmarks list (its title, shown on hover), whether a return undid it, and its icon (a
+ *  24-unit path, the dock's own). */
+export interface CourseMark { t: number; kind: string; label: string; title: string; undone: boolean; icon: string }
 
 const esc = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 const TEAM = '#0072B2';
@@ -30,6 +39,29 @@ const LANE = 46, LANE_LEARNER = 26;
 const BADGE_MIN = 18;
 /** Half a badge: no badge centre nearer the plot's edges than this (the haemorrhage's 18 and 19 ran past the right). */
 const BADGE_HALF = 7;
+/** A row of mark glyphs (10-unit icons) above the badges (row 0 over their top margin, its glyphs ending 1 unit above
+ *  them), so a mark never covers a key moment's badge; a mark whose glyph or printed label would meet an earlier one's
+ *  goes a row up (at most MARK_ROWS rows: page 1 of the printed report keeps within one A4 page). */
+const MARK_ROW = 12, MARK_ROWS = 2, MARK_ICON = 10, MARK_TOP = -6;
+/** A printed label's width in drawing units (8-unit text, ≈ 4.4 per character) after the glyph. */
+const labelW = (s: string): number => MARK_ICON / 2 + 3 + s.length * 4.4;
+
+/** Is a mark's label printed left of its glyph (it would run past the strip's right edge)? */
+const labelLeft = (x: number, label: string): boolean => x + labelW(label) > COURSE_W - 2;
+/** The row of each mark (marks sorted by time, at plot positions `at`): the lowest row whose last glyph and label end
+ *  before this one's start; when none, the row that ends first. */
+function markRows(at: readonly number[], labels: readonly string[]): number[] {
+  const ends: number[] = [];
+  return at.map((x, i) => {
+    const l = labels[i] as string;
+    const left = labelLeft(x, l);
+    const from = (left ? x - labelW(l) : x - MARK_ICON / 2) - 2;
+    let r = ends.findIndex((e) => e <= from);
+    if (r < 0) r = ends.length < MARK_ROWS ? ends.length : ends.indexOf(Math.min(...ends));
+    ends[r] = left ? x + MARK_ICON / 2 : x + labelW(l);
+    return r;
+  });
+}
 
 /**
  * UI review #19: badge centres for moments at plot positions `at` (sorted), at least `gap` apart and inside [lo, hi],
@@ -64,8 +96,12 @@ export function courseSvg(d: RunData, moments: KeyMoment[], o: CourseOptions): s
   const spans = pulselessSpans(d);
   const lanes = o.trends.filter((k) => d.samples.some((s) => s[k] !== null));
   const LANE_H = o.learner ? LANE_LEARNER : LANE;
-  const H = BADGES + lanes.length * (LANE_H + GAP) + AXIS;
+  const mks = [...(o.marks ?? [])].sort((a, b) => a.t - b.t);
   const x = (t: number) => L + (t / end) * (COURSE_W - L - R);
+  const rowOf = markRows(mks.map((mk) => x(mk.t)), mks.map((mk) => mk.label));
+  // the marks' rows sit above the badges: everything else moves down by their height (none without marks)
+  const MK = mks.length ? -MARK_TOP + Math.max(...rowOf) * MARK_ROW + 1 : 0;
+  const H = MK + BADGES + lanes.length * (LANE_H + GAP) + AXIS;
   const top = BADGES, bottom = BADGES + lanes.length * (LANE_H + GAP);
 
   const bands = spans.map(([a, b]) => `<rect class="db-pulseless" x="${x(a).toFixed(1)}" y="${top}" width="${Math.max(1, x(b) - x(a)).toFixed(1)}" height="${bottom - top}" fill="#e9e9e9"/>`).join('');
@@ -119,7 +155,27 @@ export function courseSvg(d: RunData, moments: KeyMoment[], o: CourseOptions): s
       + `${bx !== at ? `<line x1="${at.toFixed(1)}" x2="${bx.toFixed(1)}" y1="${BADGES - 6}" y2="18" stroke="${c}"/>` : ''}${shape}${num}</g>`;
   }).join('');
 
-  const label = `${o.learner ? 'Your run' : 'The course'}, ${mmss(0)} to ${mmss(end)}${moments.length ? `: ${moments.map((m) => `${m.n} at ${mmss(m.t)}, ${m.who}, ${m.text}`).join('; ')}` : ''}`;
+  // a mark: its tick from its glyph to the axis (under the lanes' lines and the badges), its icon, its label (printed;
+  // on screen the title shows on hover); an undone one grey and struck through, as the Bookmarks list strikes it
+  const markTicks = mks.map((mk, i) => {
+    const at = x(mk.t).toFixed(1);
+    return `<line class="db-bm-t${mk.undone ? ' undone' : ''}" data-t="${mk.t}" x1="${at}" x2="${at}" y1="${(MARK_TOP - (rowOf[i] as number) * MARK_ROW + MARK_ICON + 1).toFixed(1)}" y2="${bottom}"/>`;
+  }).join('');
+  const markGlyphs = mks.map((mk, i) => {
+    const at = x(mk.t);
+    const gy = MARK_TOP - (rowOf[i] as number) * MARK_ROW; // row 0 just above the badges, row 1 over it
+    const half = MARK_ICON / 2 + 1;
+    const strike = mk.undone ? `<line class="db-bm-x" x1="${(at - half).toFixed(1)}" x2="${(at + half).toFixed(1)}" y1="${(gy + MARK_ICON).toFixed(1)}" y2="${gy.toFixed(1)}"/>` : '';
+    return `<g class="db-bm${mk.undone ? ' undone' : ''}" data-kind="${esc(mk.kind)}" data-t="${mk.t}"><title>${esc(mk.title)}</title>`
+      + `<rect x="${(at - half).toFixed(1)}" y="${(gy - 1).toFixed(1)}" width="${2 * half}" height="${MARK_ICON + 2}" fill="#fff"/>`
+      + `<path transform="translate(${(at - MARK_ICON / 2).toFixed(1)} ${gy.toFixed(1)}) scale(${MARK_ICON / 24})" d="${esc(mk.icon)}" fill="none"/>${strike}`
+      + (labelLeft(at, mk.label)
+        ? `<text class="db-bm-l" x="${(at - MARK_ICON / 2 - 3).toFixed(1)}" y="${(gy + 8).toFixed(1)}" text-anchor="end">${esc(mk.label)}</text></g>`
+        : `<text class="db-bm-l" x="${(at + MARK_ICON / 2 + 3).toFixed(1)}" y="${(gy + 8).toFixed(1)}">${esc(mk.label)}</text></g>`);
+  }).join('');
+
+  const label = `${o.learner ? 'Your run' : 'The course'}, ${mmss(0)} to ${mmss(end)}${moments.length ? `: ${moments.map((m) => `${m.n} at ${mmss(m.t)}, ${m.who}, ${m.text}`).join('; ')}` : ''}${mks.length ? `; marks: ${mks.map((mk) => mk.title).join('; ')}` : ''}`;
+  const body = `${bands}${markTicks}${rows}<line class="axis" x1="${L}" x2="${COURSE_W - R}" y1="${bottom}" y2="${bottom}"/><g class="ticks">${ticks}</g>${bandLabels}${badges}${markGlyphs}`;
   return `<svg class="db-course-svg${o.learner ? ' learner' : ''}" viewBox="0 0 ${COURSE_W} ${H}" role="img" aria-label="${esc(label)}">`
-    + `${bands}${rows}<line class="axis" x1="${L}" x2="${COURSE_W - R}" y1="${bottom}" y2="${bottom}"/><g class="ticks">${ticks}</g>${bandLabels}${badges}</svg>`;
+    + `${MK ? `<g transform="translate(0 ${MK})">${body}</g>` : body}</svg>`;
 }

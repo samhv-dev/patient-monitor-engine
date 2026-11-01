@@ -14,7 +14,8 @@ import { clock, h, toast } from '../ui.ts';
 /** The kinds of the instructor's marks: the controller's `MarkKind` without the driver's own `stage`. */
 type MarkKind = Exclude<ControllerMarkKind, 'stage'>;
 
-const MARKS: ReadonlyArray<[MarkKind, string, string]> = [
+/** The three marks: kind, words, icon (a 24-unit path; the Debrief's course strip draws the same icons). */
+export const MARKS: ReadonlyArray<[MarkKind, string, string]> = [
   ['good', 'Mark: good', 'M7 11v10H3V11zM7 11l4-8c2 0 3 1 3 3v3h5a2 2 0 0 1 2 2l-1.5 8a2 2 0 0 1-2 2H7'],
   ['bad', 'Mark: bad', 'M17 13V3h4v10zM17 13l-4 8c-2 0-3-1-3-3v-3H5a2 2 0 0 1-2-2l1.5-8a2 2 0 0 1 2-2H17'],
   ['discuss', 'Mark: discuss', 'M4 5h16v11H9l-5 4z'],
