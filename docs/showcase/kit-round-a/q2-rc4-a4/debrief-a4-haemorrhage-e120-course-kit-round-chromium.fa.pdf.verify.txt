@@ -1,0 +1,2 @@
+pages: 8
+WARN  3 em/en dash(es) in text — not Persian punctuation

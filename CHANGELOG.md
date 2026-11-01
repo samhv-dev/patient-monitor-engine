@@ -229,7 +229,7 @@ the public API is what the packages export (see the API reference), the `pme-sce
   monitor's header at the right of the wave area (UI review #25, 26 October), they covered the right half of the first
   ECG lane on the Saadat-like skin, whose traces run the wave column's full width.
 
-## [1.0.0-rc.4] - 2026-10-30
+## [1.0.0-rc.4] - 2026-10-29
 
 Fourth public **pre-release** (release candidate) of a teaching simulator. It is for education only: it is not a
 medical device and it is not clinically validated. It is not the final 1.0.0: the calibration pass and the blind

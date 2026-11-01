@@ -1,0 +1,55 @@
+{
+  "kit": "/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/rc3-release/kit/pme-showcase-kit-fcf99b70",
+  "node": "v26.12.1",
+  "at": "2026-10-23T10:27:12.144Z",
+  "pass": true,
+  "results": [
+    {
+      "run": "Windows launchers (.cmd files)",
+      "pass": true,
+      "steps": [
+        "Start Classroom.cmd: 3050 bytes, CRLF, ASCII",
+        "Start Simulator.cmd: 3114 bytes, CRLF, ASCII"
+      ]
+    },
+    {
+      "run": "relay.mjs alone (the bundle)",
+      "pass": true,
+      "steps": [
+        "64-byte binary frame sent (the relay drops binary frames)",
+        "host hello (127 bytes) answered: {\"relay\":\"peers\",\"hostOnline\":true,\"peers\":0}",
+        "controller hello answered (peers 1); the host was told and got the hello",
+        "host event (1176 bytes) forwarded to the controller byte for byte",
+        "/pme-relay.json still answers: {\"relay\":\"pme\",\"port\":62313,\"addresses\":[\"192.168.1.100\"],\"serves\":true}",
+        "the relay is still running after the frames",
+        "stopped; port 62313 free"
+      ]
+    },
+    {
+      "run": "Start Classroom.command (PME_PORT=8690, stripped environment)",
+      "pass": true,
+      "steps": [
+        "64-byte binary frame sent (the relay drops binary frames)",
+        "host hello (127 bytes) answered: {\"relay\":\"peers\",\"hostOnline\":true,\"peers\":0}",
+        "controller hello answered (peers 1); the host was told and got the hello",
+        "host event (1176 bytes) forwarded to the controller byte for byte",
+        "/pme-relay.json still answers: {\"relay\":\"pme\",\"port\":8690,\"addresses\":[\"192.168.1.100\"],\"serves\":true}",
+        "the relay is still running after the frames",
+        "stopped; port 8690 free"
+      ]
+    },
+    {
+      "run": "server/launch.mjs classroom, as Start Classroom.cmd runs it (PME_PORT=8690, stripped environment)",
+      "pass": true,
+      "steps": [
+        "64-byte binary frame sent (the relay drops binary frames)",
+        "host hello (127 bytes) answered: {\"relay\":\"peers\",\"hostOnline\":true,\"peers\":0}",
+        "controller hello answered (peers 1); the host was told and got the hello",
+        "host event (1176 bytes) forwarded to the controller byte for byte",
+        "/pme-relay.json still answers: {\"relay\":\"pme\",\"port\":8690,\"addresses\":[\"192.168.1.100\"],\"serves\":true}",
+        "the relay is still running after the frames",
+        "stopped; port 8690 free"
+      ]
+    }
+  ]
+}

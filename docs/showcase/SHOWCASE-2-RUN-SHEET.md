@@ -5,9 +5,13 @@
 owner explains the physiology the engine is computing, on the Explore view, with the matching model page open behind it
 in a second browser tab.** The class IV haemorrhage case (E120) leaves the programme and stays in the build as a reserve
 (Appendix B, Reserve R5). Bronchospasm and tamponade are not in the programme; their sections, the round-C notes and the
-other reserve cases are kept, unchanged, in the appendices. Freeze Saturday 31 October 12:00; tag Sunday 1 November;
-the owner's smoke and live rehearsal Sunday evening; the room dry run Monday 2 November [RC4]. Every stop says only
-what the speaker's reference [SPK] says the build computes.*
+other reserve cases are kept, unchanged, in the appendices. Frozen and tagged early by the owner's ruling of
+29 October: **v1.0.0-rc.4 (pre-release) was tagged on 29 October** (0c4b396f); **its kit is
+`_sandbox/pme-kit-release-0c4b396f/`**, rehearsed on both engines that day [Q2-rc4], and the **rc.3 kit
+`_sandbox/pme-kit-release-fcf99b70/` is its fallback**. An rc.5 candidate from main is rehearsed separately; which kit
+is in the room is decided at the room dry run [R00 2026-10-29]. The owner's smoke and live rehearsal Sunday evening;
+the room dry run Monday 2 November [RC4]. Every stop says only what the speaker's reference [SPK] says the build
+computes.*
 
 > **History.** 22 October slot (17 October answers): bronchospasm → tamponade → Debrief → MH. 24 October: the two
 > live-demo cards changed (E119 MH with the induction, E120 the owner's haemorrhage course, E121 no implicit oxygen;
@@ -71,7 +75,10 @@ printed page per segment; each stop has its own card).
   a 3-s look at each Explore screen; the script does not talk, so W has no talk in it). **T+** is the time into the
   30-minute slot: the programme's slots (P29) with the measured machine wall inside them; the talk itself is planned,
   not measured. A time estimated here is marked "(est.)".
-- A 5-min fast-forward takes **10.1–10.6 s** of wall and **leaves the speed as it was** [Q1-MH; Q1-2D; UIR: 10.5–10.9 s].
+- **On the rc.4 kit** the same talk ran on both engines [Q2-rc4]. The rows that moved more than 2 s (the early signs on
+  Chromium, Recovering on WebKit, the first `RR TOO LOW`, the E22 window on Chromium, the Debrief's highest EtCO₂) and
+  the measured values beside them are in §3 "On the rc.4 kit".
+- A 5-min fast-forward takes **10.1–10.6 s** of wall and **leaves the speed as it was** [Q1-MH; Q1-2D; UIR: 10.5–10.9 s; Q2-rc4: 10.4–10.5 s].
 - **Boxed words** are the exact on-screen labels, from the card files and the run rows. "C / W" = Chromium / WebKit.
 - Monitor and Explore numbers are what the run read on the instructor's page. Real presses land a few seconds
   differently, so expect ± a few units [R45 tolerances HR ± 5, pressures ± 5, SpO₂ ± 2, EtCO₂ ± 3].
@@ -80,6 +87,7 @@ printed page per segment; each stop has its own card).
 | Key | File |
 |---|---|
 | Q1-MH | `scratch/kitround-mh-only/q1-{0,1}-*-chromium.{json,md}`, `q1-talk-chromium.json` (segment walls and every Explore row read at each stop) and `debrief-q1-1-*.json`: the talk test of the new programme (`kit-round-a.kitround.ts`, "Q1 30-minute talk"), kit a88f95a7 (main, Home reads 1.0.0-rc.3), 2026-10-29, Chromium, 3 phones, reaction 2 s, 3 s per Explore screen; WebKit not run. Screenshots of each stop, the model pages and the Debrief: `scratch/owner-review/mh-only-programme/` (its README) |
+| Q2-rc4 | `docs/showcase/kit-round-a/q2-rc4/q1-{0,1}-*-{chromium,webkit}.{json,md}`, `q1-talk-{chromium,webkit}.json` and `debrief-q1-1-*.json`: the same talk test on the **rc.4 kit** `pme-showcase-kit-0c4b396f` (tag `v1.0.0-rc.4`, pre-release), 2026-10-29, **both engines**, 3 phones, reaction 2 s, 3 s per Explore screen; the stop screenshots in `q2-rc4/shots/stop{1,2,3}-*-{chromium,webkit}.png` (Explore sections and the model pages), `debrief-mh-on-screen-*.png`, `end-instructor-*.png`, the monitor at the early signs `q2-rc4/q2-mh-monitor-early-signs-{chromium,webkit}.png`; kit round A4 on the same kit in `q2-rc4-a4/`. Write-up: MEASUREMENTS §"Q2 on rc.4"; gate note `docs/gates/rc4-release.md` |
 | SPK | `scratch/owner-review/mh-mechanisms-on-the-demo-build.md` (the speaker's reference: the nine mechanisms as this build computes them, "Not in this build", the two sentences for the stage) |
 | Q1-2D | `scratch/kitround-2demos-q1/q1-{0,1,2}-*-chromium.{json,md}` and `debrief-q1-*.json`: the two-demos talk run of #130 (the 24 October programme) (kit 2ebd743d, 2026-10-24, Chromium, 3 phones, reaction 2 s; WebKit not run) |
 | DRAFT | `scratch/plans-backup/cue-cards-two-demos-draft.md` (the timing draft written from Q1-2D) |
@@ -101,7 +109,7 @@ printed page per segment; each stop has its own card).
 | G12 / G12P | `docs/gates/stage-12.md` / `docs/gates/stage-12-real-phone.md` (phones; the owner's step) |
 | CR12 | `docs/showcase/CLASSROOM.md` (also `_sandbox/pme-classroom-dryrun/CLASSROOM.md`) |
 | PF / OPT | `_sandbox/pme-classroom-dryrun/PRE-FLIGHT.md` / `OWN-PHONE-TEST.md` |
-| KIT | `_sandbox/pme-classroom-dryrun/kit/VERSION.txt`; `_sandbox/pme-kit-release-3db25a3b/README.txt` (the release-build kit) |
+| KIT | `_sandbox/pme-kit-release-0c4b396f/README.txt` (the rc.4 release kit, with its Windows zip; the same kit in `_sandbox/pme-classroom-dryrun/kit/` and `_sandbox/pme-debrief-dryrun/`); the fallback `_sandbox/pme-kit-release-fcf99b70/README.txt` (the rc.3 kit). Before rc.3: `pme-kit-release-3db25a3b` (rc.1, retired) |
 | G13 / DB-T / DB-MH | `docs/gates/stage-13.md` / `docs/gates/stage-13/rehearsal/debrief-tamponade-*.json` / `debrief-mh-*.json` (kit 58b2c13c) |
 | PRINT | `_sandbox/pme-debrief-dryrun/HOW-TO-CHECK-THE-PRINT.txt` |
 | CARD | `apps/demo/src/app/showcase/showcase-*.json` (objective text, Debrief rule, states, button labels, take-home lines) |
@@ -179,7 +187,11 @@ Owner questions this checklist depends on: **E13** which Mac presents and its No
 phones [R31 §3]. Tick every line.
 
 **The kit** (matches `PRE-FLIGHT.md` [PF])
-- [ ] **For 3 November: the rc.4 kit** (tag Sunday 1 November) [RC4]; the lines below are the floor any kit must pass.
+- [ ] **For 3 November: the rc.4 kit** `_sandbox/pme-kit-release-0c4b396f/pme-showcase-kit-0c4b396f` (pre-release
+      1.0.0-rc.4, tagged 29 October; Home reads "Version 1.0.0-rc.4 · pre-release · build 0c4b396f"; relay 4 of 4 on
+      29 October) [KIT; Q2-rc4]. **The fallback is the rc.3 kit** `_sandbox/pme-kit-release-fcf99b70/` (older MH and
+      haemorrhage cards, no Home: see "On a kit without Home", §2) [RC4 Task 8]. Both kits and both Windows zips on the
+      stick. The lines below are the floor any kit must pass.
 - [ ] The kit is built from **main at 62e521c3 or later**: the kit's `VERSION.txt` line `Commit:` reads `62e521c3…` or a
       later main commit [KIT: the owner's sandbox kits are now the 3db25a3b release build, `pme-classroom-dryrun/kit`
       ("Commit: 3db25a3b3f1c…") and `pme-debrief-dryrun/pme-showcase-kit-3db25a3b`; the owner's hand checks of
@@ -275,7 +287,9 @@ phones [R31 §3]. Tick every line.
          "Equations in words"; for stop 3, Cmd-F `DANT_GAIN` in the Parameters table);
       2. `…/blob/main/docs/model/pharmacology.md`, Cmd-F `dantrolene` (the drug row: gamma, tables §7 21; M10, TXT);
       3. `…/blob/main/docs/model/blood.md#equations-in-words` (the potassium and treatments bullets).
-      Screenshots of the three as they render: `scratch/owner-review/mh-only-programme/stop{1,2,3}-model-*.png`.
+      Screenshots of the three as they render: `scratch/owner-review/mh-only-programme/stop{1,2,3}-model-*.png`; on the
+      rc.4 kit, both engines: `docs/showcase/kit-round-a/q2-rc4/shots/stop{1,2,3}-model-*-{chromium,webkit}.png`
+      [Q2-rc4: each page answered 200].
 - [ ] **These tabs are not instructor tabs**: they are GitHub pages, they make no session and show no QR. The rule
       "one instructor tab only" still holds.
 - [ ] **The Explore view check** (on the loaded case or any case, then load MH fresh): the rail's **Explore physiology**
@@ -289,10 +303,14 @@ phones [R31 §3]. Tick every line.
       rail → Resume. The clock must not move while you are away (it held to the second at all three stops [Q1-MH]).
 
 **Handouts**
-- [ ] **Only the MH Persian handout is printed for the day**: from the MH Debrief JSON of the owner's Sunday rehearsal,
-      `node scripts/showcase/debrief-fa.mjs <debrief-showcase-mh-….json> --fonts <Vazirmatn folder>`
-      (`docs/showcase/i18n/README.md`). The haemorrhage handout stays in the kit (Reserve R5), not printed. The English
-      report is not printed on the day either (the Debrief is read on screen, §4).
+- [ ] **Only the MH Persian handout is printed for the day**: `_sandbox/pme-debrief-fa/debrief-fa-malignant-hyperthermia-2026-10-29.pdf`,
+      rendered on 29 October from kit round A4's MH Debrief on the rc.4 kit (8 A4 pages, 0 strings left in English,
+      with PR #161's Persian drafts, which the owner has still to read) [Q2-rc4]. A re-render (after his read of #161,
+      or from the MH Debrief JSON of his Sunday rehearsal) is
+      `node scripts/showcase/debrief-fa.mjs <debrief-….json> --fonts <Vazirmatn folder>`
+      (`docs/showcase/i18n/README.md`). The haemorrhage handout (`debrief-fa-haemorrhage-2026-10-29.pdf`) stays in the
+      kit (Reserve R5), not printed. The English report is not printed on the day either (the Debrief is read on screen,
+      §4). **The handout's footer does not word the disclaimer as the screen does**: §2, "Two disclaimer wordings".
 
 **Last minute (T−10 min)**
 - [ ] Open the page fresh: **Home** shows, with the footer line "For educational use only; Not to be used in patient
@@ -319,7 +337,8 @@ phones [R31 §3]. Tick every line.
   and come back: Safari suspends a hidden tab after about 4 min (FX-14).
 - **Print the learner handout only after the fast-forward banner has gone** (≈ 8 s after a span): printed earlier, the
   banner prints on every page, and on screen it covers **Print the learner handout** [UIR #9].
-- **The MH report prints 8 A4 pages**, not 7 [UIR #31], if it is ever printed: on the day it is read on screen (§4).
+- **The MH report prints 8 A4 pages**, not 7 [UIR #31; Q2-rc4: 8 on the rc.4 kit], if it is ever printed: on the day it
+  is read on screen (§4).
 
 ---
 
@@ -347,6 +366,16 @@ demonstrations*, MH and the haemorrhage, first), **Patient**, the **Instructor**
 **On a kit without Home** (the rc.3 fallback kit): QR from the **Monitor** view → pointer to the top edge → **Phones**;
 the case from **Open the instructor view** → **Scenario** → **Showcase** → the card → **Load** [RUN4].
 
+> **Two disclaimer wordings (read before the talk).** The screen, on the rc.4 kit, says E125's line: "For educational
+> use only; Not to be used in patient care." (Home's foot, every page but the monitor screens, the Debrief's footer)
+> [Q2-rc4 `q1-0`].
+> The printed Persian MH handout of 29 October carries the older sentence in Persian at its foot (for education only;
+> not a medical device; not clinically validated; never for patient care) [Q2-rc4 `.fa.txt`]. PR #161 drafts the E125
+> wording in Persian for the handout's footer; it reaches the print only when the owner has read #161 and the
+> handouts are rendered again, and the Persian words will still not be the screen's English ones. Both say the same
+> thing: if a dean reads the screen and the handout side by side, that is why they differ. Your opening line (above)
+> says it in your own words.
+
 Measured capacity, if asked: 30 phones cost the relay under 2 % of one core; each phone receives about 1.3 KB/s at ×1 and
 10.5–11.7 KB/s at ×8; at 120 simulated phones relay CPU ≤ 2 %, lag p95 ≤ 2.8 ms [G12 §5]. In the two-demos run three
 emulated phones followed both cases with no stale reading on the haemorrhage and one 2.5-s AGENTS blank on MH
@@ -373,6 +402,37 @@ nav and the session-bar title [UIR #9].
 
 **Monitor style:** Saadat-style, no change during the case (E20).
 
+### On the rc.4 kit: rows that moved more than 2 s [Q2-rc4]
+
+The tables of §3 and §4 are from the talk run on kit a88f95a7 [Q1-MH]. The same test on the **rc.4 kit** (29 October,
+both engines) moved the rows below by more than 2 s. Each table keeps one clock: the run's record (its measures and
+state list, floored to the second; the Q1-MH column from the same kind of record), or the Debrief's own clock (its key
+times, objectives and facts). Bold: more than 2 s from Q1-MH on the same clock.
+
+**On the record's clock**
+
+| Row | Q1-MH (a88f95a7, C) | rc.4 Chromium | rc.4 WebKit |
+|---|---|---|---|
+| Early signs (segment 1's last row; Pause at once) | 8:09 (Pause 8:10) | **8:12** (Pause 8:12) | 8:11, 2 s (Pause 8:11) |
+| Recovering (inside fast-forward 1) | 9:35 | 9:37 | **9:38** |
+| The first `RR TOO LOW` (segment 1, after Preoxygenate) | 3:09 | **2:40** | **2:40** |
+
+**On the Debrief's clock** (what §4 reads aloud)
+
+| Row | Q1-MH (a88f95a7, C) | rc.4 Chromium | rc.4 WebKit |
+|---|---|---|---|
+| Ventilation back is "met" from (E22: below 40 for 2 min) | 10:34 (08:34 → 10:34) | **10:37** (08:37 → 10:37) | 10:36, 2 s (08:36 → 10:36) |
+| Highest EtCO₂ (the facts) | 64 at 18:46 | **65 at 19:07** | **65 at 19:11** |
+
+**Measured beside them** [Q2-rc4]. The Key times tiles: Recognition **0 s** on Chromium (08:12 early signs → 08:12
+ticked; 1 s on WebKit, 08:10 → 08:11; 1 s on Q1-MH), the call 2 s / 3 s, dantrolene 21 s on both. On the record's
+clock: the call 8:14 / 8:13, dantrolene 8:34 / 8:33, EtCO₂ below 40 from 8:38 / 8:37 (Q1-MH 8:36), the stops held at
+**8:12 / 8:11, 13:52 / 13:51, 19:12 / 19:11**, ventilation back 13:53, EtCO₂ past 45 at 14:07 / 14:06, the second dose
+19:13, Recovering again 23:39 / 23:37 (Q1-MH 23:37), the end 24:31 / 24:30 (EtCO₂ 41). EtCO₂ at stop 3 reads **65**
+(64 on Q1-MH). Explore at the stops: MH activity **0.280** / 0.510–0.520 / 0.550, VO₂ (Blood) 333 at stop 1, PaCO₂
+44.3 and 70.2. The machine wall: 5:03 (Chromium), 4:57 (WebKit). The Debrief: ✓ ✓ ✓ ✓ – ✓, 63 / 60 timeline rows.
+The tightest window is unchanged in practice: ventilation back is pressed after stop 2 (13:53), long after 10:37.
+
 ### The stop method (every stop, the same five moves)
 
 1. **Pause** on the Instructor view (session bar). The clock pill stops; every phone reads "Following session ‹code›
@@ -395,6 +455,9 @@ below is from the speaker's reference; a size marked [ENG] is an engineering siz
 - Under **Drugs**, dantrolene is **Ce (Dantrolene)** in "drug unit" (reference doses, 1 = 2.5 mg/kg), and the Total
   column reads "200 mg, µg"; under **Blood**, Glucose reads "102 mmol/L and mg/dL" (it is mg/dL). Read the number and
   say the unit yourself [Q1-MH screenshots].
+- Under **Endocrine** (the first screen of stop 1), **Glucose reads "102 mmol/L"** (it is mg/dL; the Debrief's facts
+  give 6.6 mmol/L) and **Stress response reads 88.0** on a "0–1" scale (it is 0–100). Do not point at either
+  [Q2-rc4 `shots/stop1-endocrine-*.png`; fixed on main after the tag, #178].
 - The **VA** row (alveolar ventilation, L/min) sits two rows below VCO₂ and VO₂: point at VA alone.
 
 ### The card and how to Load
@@ -441,6 +504,15 @@ practice a rigid jaw after succinylcholine means a non-triggering anaesthetic fr
 today we keep the volatile running to show the crisis. Masseter rigidity with a rising EtCO₂ makes two signs."*
 
 ### Stop 1: why the EtCO₂ rises when it should fall. Slot 3:00 (T+5:00 → 8:00); clock held at 8:10
+
+> **The NIBP alarm at this pause: point at the arterial line.** At the early signs the alarm bar can show a red
+> **NIBP SYS TOO LOW**, and the alarm button can read that alarm rather than **No alarms**. The reading is stale, not
+> spurious: the alarm was raised during the dip after induction (05:34 on Chromium, 05:36 on WebKit; the lowest mean,
+> 62 mmHg, at 05:24–05:25), and at the pause the NIBP tile still shows that last cuff reading (87/48 (63) on one rc.4
+> run, 85/60 (63) on the other, AUTO 5 min) while the arterial line reads **107/67 (77)** [Q2-rc4
+> `q2-mh-monitor-early-signs-*.png`; the records' alarm lists]. It is the cuff's old number, not the patient now; the
+> next cuff cycle replaces it. Whether it still shows at the pause depends on when the cycle fell in that run (Q1-MH
+> raised no NIBP alarm). Do not acknowledge it on stage; point at the arterial line.
 
 **Press, open:** (Paused at 8:10) → rail **Explore physiology** → **Endocrine** → **Blood, acid–base and
 temperature** (first screen, then scroll to **BE**: K⁺ to pH on screen) → the **endocrine-thermal** tab ("Equations in
@@ -609,7 +681,9 @@ never on a timer [OWR4]. **Ruled (owner, 29 October):** one case, three look-ins
 **Against kit round A4** (the same presses without the stops, kit 503caeab / 2c341aa3) [E132 rc.4; OWR4]: early signs
 8:14 (talk run 8:09), call 8:16 (8:12), dantrolene 8:37 (8:32), below 40 from 8:42 (8:34), ventilation back 13:56
 (13:52), the second dose 19:14 (19:13), Recovering 23:36 (23:35), at 24:31 EtCO₂ 41, HR 70 (69), MAP 67 (67). The stops
-hold the clock, so the course in sim time is A4's within 5 s.
+hold the clock, so the course in sim time is A4's within 5 s. **On the rc.4 kit** (A4, 29 October, C / W) [Q2-rc4]:
+early signs 8:13 / 8:12, call 8:14 / 8:13, below 40 from 8:38 / 8:37, ventilation back 13:52 / 13:50, EtCO₂ past 45
+at 14:06 / 14:04, the second dose 19:08 / 19:07 (EtCO₂ 65); marks ✓ ✓ ✓ ✓ – ✓; the report 8 A4 pages, the handout 1.
 
 ---
 
@@ -664,6 +738,7 @@ for "what is not in this build".
 | You opened Explore without pausing (the clock still runs; Explore has no Pause button) | Back to **Instructor** at once, **Pause**, then Explore again. If the case moved on, read the numbers it shows now: the stop's points hold within a few units | [Q1-MH: no session bar on Explore] |
 | The QR relay fails, "Start Classroom" needs Node, or phones say "cannot reach the instructor's laptop" | Carry on with **Start Simulator** and **Open on a second screen** (the same browser) for the projector; phones are not needed for either case | [CR12 "(c)" and "If something goes wrong"] |
 | The sheet says "The relay does not answer", or the black window stops | Close the Classroom window, double-click **Start Classroom** again, reload the page, **Sound on**. A kit before 62e521c3 stops at the first phone (KR-A1): use the 62e521c3 kit or later | [CR12; MEAS §9 item 1] |
+| The laptop's presses are refused while the case keeps running (a card button, Pause or a speed gets no answer, or is refused as "a viewer cannot command") | **Reload the instructor page** (Cmd-R): the case comes back ("Restored after reload: ‹title›, mm:ss"); then **Sound on** and **All alarms on**, as in the reload row below. **The phones reconnect on their own** (the session code is kept and the phones follow the reloaded page): do not ask the room to scan again. After the reload the phones' status pills can lag the real state by up to half a second (the pill is redrawn on a 500 ms poll), and with the cuff on they can read "The ventilator is on the main screen" for 2–3 s before "Following": cosmetic, the phones are following throughout (measured on the rc.5 candidate kit C, 30 October; both causes found the same night: a display poll on the phone and the cuff start announcing the ventilator to the phones; fixes drafted post-demo, #191 and a follow-up). Main has the relay fix (#183: a second socket can no longer take the laptop's place); the rc.4 kit does not. The defect was verified on main 5808d0b6, whose relay and host files are the tag's; it needs a hand-written frame, so it is not reachable by accident | [MEAS §7; UIR #1; R00 2026-10-29 and 2026-10-30; #183; `scratch/reviews/verify-relay-peer-identity.md`; `scratch/rc5-candidate-2/browser-reconnect-*.log`] |
 | Sound fails | Say so (*"the sound has failed; the alarms still show on screen"*) and continue; alarms stay visual | [G10 §7] |
 | A card press shows **"Not available now: the case has moved to …"** | Press again: the button now belongs to the current state | [G10 §8 item 1] |
 | A scenario goes wrong (wrong press, missed window) | Session bar **Bookmark** list → **Return here** on the bookmark taken at Load (the **last** one in the list: MH's "Bookmark 1 at 00:06" [Q1-MH]); the patient and the screen are restored together. **The alarms come back as they were when the bookmark was taken** | [FU-11 E4; A3.2] |
@@ -684,8 +759,9 @@ for "what is not in this build".
 
 1. **The talk.** The talk run [Q1-MH] is presses, Explore openings and a 3-s look per screen (5:03 of wall from the
    opening to the Debrief); the stops' 3:00 and the segments' talk are the owner's planning, not measurements.
-2. **WebKit (Safari) on the new programme.** Not run: Chromium only. Kit round A4 on the MH card agreed within a few
-   seconds between the engines [A4]; the Explore view and the rail on Safari were not run here.
+2. **WebKit (Safari) on the new programme.** Run on the rc.4 kit, 29 October [Q2-rc4]: the same stops, marks and
+   Explore numbers within 0.01; every state and press time within 2 s of Chromium on the record's clock (the Debrief's
+   highest EtCO₂ at 19:11 against 19:07). Headless WebKit, not the owner's Safari.
 3. **The model-page tab in a real browser.** The headless run brought the tab to the front and back, but the
    instructor page stayed "visible" to the page (headless Chromium does not hide a background tab), so the hidden-tab
    rule was not exercised. By the code a Paused session stays paused and is not resumed on return
@@ -693,8 +769,8 @@ for "what is not in this build".
    hidden tab is suspended after about 4 min (FX-14).
 4. **The model pages offline.** The kit does not carry `docs/model/`; the pages are GitHub's and need the internet when
    opened. Whether the travel router has internet is not known.
-5. **The rc.4 kit.** The run is on kit a88f95a7 (main, Home reads 1.0.0-rc.3); the rc.4 kit is rehearsed on release
-   day [RC4].
+5. **The rc.4 kit.** Rehearsed on 29 October on both engines [Q2-rc4]: the rows that moved are in §3 "On the rc.4
+   kit". The owner's smoke and live rehearsal on it follow (Sunday evening or Monday morning) [RC4].
 6. **The Scenarios library path on the talk run.** The script loaded MH from the Instructor's Scenario tab (Showcase
    chip); Home → **Start here** → Room was run, Scenarios → **Open the library** → **Load** was not [Q1-MH].
 7. **Real devices**: measured by the owner on 18 October (one phone over the Mac's hotspot) [G12P; G13 §0]: H17,
@@ -1105,6 +1181,14 @@ pulse-check pause, rebased onto main 25771808 with E131, E133 and #153 (kit 503c
 
 Machine wall, Load → end: **4:34** (273.5 s) on the rc.4 rebase [E132 rc.4] (4:33 on E126 only, 4:34 before it) against 5:05 on 24 October [E132; A4]: the stretch after
 the second shock now runs at ×4. The T+ times after 16:35 are estimated from the E132 wall (no talk run on this card).
+
+**On the rc.4 kit** (kit round A4, 29 October, C / W) [Q2-rc4], the rows that moved more than 2 s from the E132 column:
+**PEA 10:26 / 10:28** (10:24), with ART 19/12 (14) at the PEA state (the objective says "about 20/14"). Within 2 s:
+junctional 9:15 / 9:17, pulse loss 10:59 / 11:00, the second epinephrine 18:56 / 18:57, idioventricular 12:55 / 12:56,
+asystole 15:35, CPR 15:38, rhythm checks 17:37 / 17:38 and 19:44 / 19:45, shocks 17:45 / 17:46 (→ asystole) and 19:52 /
+19:54 (→ organised, no pulse), the return of circulation **20:56 / 20:57**, CPR stopped 57 s / 58 s after it. Marks – ✗
+✓. **The report prints 8 A4 pages on the rc.4 kit** (9 on kit 503caeab), 95 / 101 timeline rows, 21 key moments; the
+handout 1 page with the three take-home lines.
 
 **What the audience should look at:** the HR climbing while the pressure holds, then the pulse pressure narrowing
 (8:00); the ECG turning **junctional** at 50/min (9:16, the card); **PEA** (10:24): a rhythm on the ECG with the
