@@ -50,6 +50,18 @@ the public API is what the packages export (see the API reference), the `pme-sce
   the second Treated are not reached before the talk's end, so the second dose reads not applicable (see the PR).
   `/1` cards and their readers are unchanged.
 
+- **`pme-scenario/2`: the MH card's Recovering and Recrudescence on EtCO₂ at the set ventilation (post-demo, draft;
+  the owner's ruling of 1 November).** Recovering is entered after Treated when EtCO₂ is under 45 mmHg and not rising
+  over 120 s; Recrudescence after Recovering when EtCO₂ is above 45 mmHg and rising over 120 s, which opens the second
+  dose's window. Rising is a least-squares slope of at least 1 mmHg/min (2 mmHg over the 120 s) and not rising its
+  negation; neither rule reads MH activity or has an unchanged-ventilation guard; Treated no longer leads to
+  Recrudescence. On the run sheet's path: Recovering 10:58, Recrudescence 14:59, the second Treated 14:59, the second
+  Recovering 23:53 (`/1` 23:53); the strip reads Latent, Recovering, Treated, Recovering at the talk's pauses (`/1`:
+  Early signs, Recovering, Ventilation back, Recovering), and every graded row the `/1` card grades now matches it, the
+  second dose included. Treated after the first dose and Recrudescence each last one poll (their successors' rules had
+  already held 60 s); see the PR. `mh-v1-v2-table.slow.test.ts` prints the `/1`-versus-`/2` table. `/1` cards and their
+  readers are unchanged.
+
 - **Instructor v2 on a `pme-scenario/2` card: the panel gaps F11 found (post-demo, draft).** ACTION's rows carry the
   live grade (`grade()` once a sim second, `final: false`): "due m:ss", "overdue m:ss" with the ring, "met mm:ss",
   "deviation: <criterion>" (the met look, its label amber) or "not applicable", and the grade's lines after the
