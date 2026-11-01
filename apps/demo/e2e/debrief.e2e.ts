@@ -111,7 +111,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   await expect(mark).toHaveAttribute('data-kind', 'bookmark');
   await expect(mark.locator('path')).toBeVisible();
   const listed = (await view.locator('#db-bookmarks li').first().innerText()).trim();
-  expect(listed).toMatch(/^00:0\d Bookmark: Bookmark \d+ at 00:0\d$/);
+  expect(listed).toMatch(/^1 · 00:0\d Bookmark: Bookmark \d+ at 00:0\d$/); // numbered as on the strip (the owner, 2 November)
   expect(await mark.locator('title').textContent()).toBe(listed);
   expect(Number(await mark.getAttribute('data-t'))).toBeLessThan(10);
   const minuteRows = await view.locator('#db-minutes tbody tr').allInnerTexts(); // Q1: one row per minute
@@ -159,7 +159,8 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   });
   const boxes = browserName === 'chromium';
   expect(layout).toEqual({ topbar: false, stage: false, bar: false, tools: false, report: true, trends: 'page', timeline: 'auto', minutes: 'page', moments: 'page', chart: 'avoid', ink: 'rgb(0, 0, 0)', body: 'visible', undone: 'line-through', marginBoxes: boxes, runFeet: boxes ? 0 : 4 });
-  expect(await page.evaluate(() => getComputedStyle(document.querySelector('#db-course .db-bm-l') as Element).display), 'the mark\'s label prints').not.toBe('none');
+  expect(await page.evaluate(() => getComputedStyle(document.querySelector('#db-course g.db-bm') as Element).display), 'the mark prints').not.toBe('none');
+  expect(await page.evaluate(() => document.querySelector('#db-course g.db-bm .db-bm-n')?.textContent), 'its number inside').toBe('1');
   mkdirSync(out, { recursive: true });
   await page.screenshot({ path: `${out}/debrief-print-${browserName}.png`, fullPage: true });
 
@@ -327,8 +328,8 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   expect(tiles).toEqual([['recognition', '–'], ['firstTeam', '7 min 51 s'], ['objective:1', '3 s'], ['objective:2', '1 min 30 s'], ['objective:3', '2 s'], ['pulseless', '3 min 07 s']]);
   await expect(view.locator('#db-keytimes [data-key=recognition] .db-tile-sub')).toHaveText('not ticked');
   await expect(view.locator('#db-course .db-badge')).toHaveCount(7);
-  await expect(view.locator('#db-course rect.db-pulseless')).toHaveCount(1);
-  await expect(view.locator('#db-course .db-legend')).toHaveText('■ team action · ● patient event · □ scenario state · numbers match Key moments · marks: bookmark'); // the recording's bookmark at 00:13
+  await expect(view.locator('#db-course rect.db-pulseless')).toHaveCount(4); // the band, in each of the four panels
+  await expect(view.locator('#db-course .db-legend')).toHaveText('▼ team action · ▼ patient event · ▽ scenario state · numbers match Key moments · marks: bookmark'); // the recording's bookmark at 00:13
   await expect(view.locator('#db-course g.db-bm')).toHaveCount(1);
   await expect(view.locator('#db-objectives .db-measure')).toHaveText(['3 s of 10 s', '1 min 30 s of 2 min 00 s', '2 s of 30 s']);
   expect(await view.locator('#db-steps tbody tr').count(), 'IP8: the steps section is in the report measured below').toBeGreaterThan(0);

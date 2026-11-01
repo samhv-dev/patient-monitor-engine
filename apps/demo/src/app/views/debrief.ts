@@ -114,12 +114,19 @@ function timelineRows(d: RunData): HTMLElement[] {
 /** A bookmark's line: its time and words, a mark's kind and note, and its undoing. */
 const markLine = (r: Row): string => `${mmss(r.t)} ${r.text}${r.markKind ? ` · ${MARK_WORDS[r.markKind]}` : ''}${r.note ? `: “${r.note}”` : ''}${undoneText(r)}`;
 
+/** The marks' numbers: every bookmark row in time order (record order within a second), 1…n; the course strip draws
+ *  each number inside its mark and the Bookmarks list prints the same. */
+const markNumbers = (d: RunData): Map<Row, number> =>
+  new Map(d.rows.filter((r) => r.kind === 'bookmark').map((r, i) => [r, i] as const).sort((a, b) => a[0].t - b[0].t || a[1] - b[1]).map(([r], i) => [r, i + 1]));
+/** A bookmark's line in the list and its title on the course strip: its number, then its words. */
+const numberedLine = (r: Row, n: number): string => `${n} · ${markLine(r)}`;
 /** The course strip's marks (debrief-course.ts): every bookmark row, the dock's icon for its kind (a ribbon for a plain
- *  bookmark, the session bar's and the Log's), the Bookmarks list's words as its title; an undone one is drawn struck. */
+ *  bookmark, the session bar's and the Log's), its number, the Bookmarks list's words as its title; an undone one is
+ *  drawn struck. */
 const MARK_ICON: Readonly<Record<string, string>> = { ...Object.fromEntries(MARKS.map(([k, , d]) => [k, d])), bookmark: 'M6 3h12v18l-6-5-6 5z' };
-const courseMarks = (d: RunData): CourseMark[] => d.rows.filter((r) => r.kind === 'bookmark').map((r) => {
+const courseMarks = (nums: Map<Row, number>): CourseMark[] => [...nums].map(([r, n]) => {
   const kind = r.markKind ?? 'bookmark';
-  return { t: r.t, kind, label: r.mark ?? r.text, title: markLine(r), undone: r.undone !== undefined, icon: MARK_ICON[kind] as string };
+  return { t: r.t, n, kind, title: numberedLine(r, n), undone: r.undone !== undefined, icon: MARK_ICON[kind] as string };
 });
 /** The marks' part of the course's legend (only when the run has marks): each kind drawn, its icon and its word. */
 const markKeys = (cm: CourseMark[]): Array<Node | string> => {
@@ -211,9 +218,16 @@ function minutes(d: RunData): HTMLElement {
       ...keys.map((k) => h('td', { class: 'num' }, r.values[k] === null ? '–' : (r.values[k] as number).toFixed(trendMeta(k).digits))))))));
 }
 
+/** The shapes of the moments: the report's course strip (`debrief-course.ts`) draws each as a down arrow, a scenario
+ *  state's outlined; the learner's strip a square, a dot and an open square; a trend chart a square, a dot and a bare
+ *  line for a scenario state (R-B N2). */
+const SHAPES = { course: ['▼', '▼', '▽'], learner: ['■', '●', '□'], charts: ['■', '●', '│'] } as const;
 /** The legend of the course strip and the trend charts: each accent with its shape and its words (E45), and on the
- *  course strip the marks drawn (`more`). A scenario state is an open grey square on the course strip (`debrief-course.ts`) and a bare line on a trend chart (R-B N2). */
-const legend = (scen: '□' | '│', tail = '', more: Array<Node | string> = []): HTMLElement => h('p', { class: 'db-legend' }, h('span', { class: 'db-team' }, '■'), ' team action · ', h('span', { class: 'db-patient' }, '●'), ' patient event · ', h('span', { class: 'db-scen' }, scen), ` scenario state${tail}`, ...more);
+ *  course strip the marks drawn (`more`). */
+const legend = (shapes: keyof typeof SHAPES, tail = '', more: Array<Node | string> = []): HTMLElement => {
+  const [team, patient, scen] = SHAPES[shapes];
+  return h('p', { class: 'db-legend' }, h('span', { class: 'db-team' }, team), ' team action · ', h('span', { class: 'db-patient' }, patient), ' patient event · ', h('span', { class: 'db-scen' }, scen), ` scenario state${tail}`, ...more);
+};
 const WHO: Readonly<Record<Who, string>> = { team: 'Team', patient: 'Patient', scenario: 'Scenario' };
 const whoCell = (w: Who): HTMLElement => h('td', { class: 'db-whocell' }, w === 'scenario' ? null : h('span', { class: `db-${w}` }, w === 'team' ? '■ ' : '● '), WHO[w]);
 const TRENDS4: TrendKey[] = ['hr', 'map', 'spo2', 'etco2']; // E56: the same four for every case
@@ -349,13 +363,14 @@ export function debriefView(session: AppSession, link: Link): View {
     const ms = keyMoments(d);
     const kt = keyTimes(d, ms);
     const tiles = kt.map((k) => tile(k, ms)).filter((x): x is HTMLElement => x !== null);
-    const cm = courseMarks(d);
+    const nums = markNumbers(d);
+    const cm = courseMarks(nums);
     const course = h('div', { class: 'db-course' });
     course.innerHTML = courseSvg(d, ms, { trends: TRENDS4, marks: cm });
     live1.replaceChildren(...kids(
       band,
       tiles.length ? section('keytimes', 'Key times', h('div', { class: 'db-tiles' }, ...tiles)) : null,
-      d.samples.length ? section('course', 'The course', legend('□', ' · numbers match Key moments', markKeys(cm)), course) : null,
+      d.samples.length ? section('course', 'The course', legend('course', ' · numbers match Key moments', markKeys(cm)), course) : null,
       r3 ? section('objectives', 'Judged by the instructor', r3.judged.length
         ? h('ol', { class: 'db-obj' }, ...r3.judged.map((j) => h('li', { 'data-mark': j.pressedT === null ? 'not-assessable' : 'observed' },
           h('b', { class: 'db-mark db-chip' }, j.pressedT === null ? '– Not ticked' : '✓ Observed'), ' ', j.text,
@@ -376,7 +391,7 @@ export function debriefView(session: AppSession, link: Link): View {
     live2.replaceChildren(
       runFoot(),
       section('trends', 'Trends',
-        legend('│'),
+        legend('charts'),
         h('div', { class: 'db-charts' }, ...TREND_KEYS.map((k) => chart(d, k, end, ms)))),
       section('drugs', 'Drugs and fluids', meds.length
         ? h('table', { class: 'db-table' }, h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Time'), h('th', { scope: 'col' }, 'Given'))),
@@ -395,7 +410,7 @@ export function debriefView(session: AppSession, link: Link): View {
         h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Time'), h('th', { scope: 'col' }, 'Kind'), h('th', { scope: 'col' }, 'Event'))),
         h('tbody', {}, ...timelineRows(d)))),
       section('bookmarks', 'Bookmarks', marks.length
-        ? h('ul', {}, ...marks.map((r) => h('li', r.undone ? { class: 'undone' } : {}, markLine(r))))
+        ? h('ul', {}, ...marks.map((r) => h('li', r.undone ? { class: 'undone' } : {}, nums.has(r) ? numberedLine(r, nums.get(r) as number) : markLine(r))))
         : h('p', { class: 'muted' }, 'No bookmarks.')),
       runFoot(),
       section('minutes', 'Appendix: one row per minute', minutes(d)),
@@ -411,7 +426,7 @@ export function debriefView(session: AppSession, link: Link): View {
         ...kids(residentLine(d)),
         h('p', { class: 'db-sub' }, `${d.patient} · ${mmss(end)} simulated`)),
       h('p', { class: 'db-intro' }, HANDOUT.intro),
-      h('section', { class: 'db-hsec' }, h('h3', {}, 'Your run at a glance'), legend('□'), learnerCourse),
+      h('section', { class: 'db-hsec' }, h('h3', {}, 'Your run at a glance'), legend('learner'), learnerCourse),
       ms.length ? h('section', { class: 'db-hsec' }, h('h3', {}, 'Key moments'), h('table', { class: 'db-table db-hmoments' },
         h('thead', {}, h('tr', {}, ...['n', 'Time', 'Who', 'What happened'].map((c) => h('th', { scope: 'col' }, c)))),
         h('tbody', {}, ...ms.map((m) => h('tr', { 'data-n': String(m.n) }, h('td', { class: 'num' }, String(m.n)), h('td', { class: 'num' }, mmss(m.t)), whoCell(m.who), h('td', {}, m.text)))))) : null,
