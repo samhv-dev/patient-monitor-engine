@@ -13,11 +13,14 @@
 //   taking of an action, the scenario clock), as one command batch labelled card-set, never graded. An entry anchored on
 //   an action's taking carries the press's stage group, so the driver sends it with the press, on the press's tick.
 // - A phase with `holdS` (the owner's 60-s boundary hold, 31 October) is entered only once its rule has held without a
-//   break for that long (unpaused sim seconds, counted from the rule's true edge). An `unchanged` leaf is the rule's
-//   guard that the team has not changed what it reads (the set ventilation: "rising at unchanged ventilation"); a hold
-//   once started is NOT broken by that guard's change, which is the team's response to what the rule saw, nor by what
-//   follows from it (decision D1, review B1): when the rule falls with one of its guards false, the hold is latched and
-//   runs on to its end. A rule that falls with every guard still true (the course itself turned) starts the hold again.
+//   break for that long while the phase is reachable (in the current phase's `next`): unpaused sim seconds, counted from
+//   the later of the rule's true edge and the phase's becoming reachable, so a rule that held before its phase could be
+//   entered does not enter it at once (proposal of 1 November); leaving reachability resets the hold. An `unchanged`
+//   leaf is the rule's guard that the team has not changed what it reads (the set ventilation: "rising at unchanged
+//   ventilation"); a hold once started is NOT broken by that guard's change, which is the team's response to what the
+//   rule saw, nor by what follows from it (decision D1, review B1): when the rule falls with one of its guards false, the
+//   hold is latched and runs on to its end. A rule that falls with every guard still true (the course itself turned)
+//   starts the hold again.
 // - The phase timeline, the administration record (record(); the driver fills it, F3), the edges, the rings and the script entries fired are
 //   all in the plain-JSON state (`pme-scenario-runner/2`): a bookmark restores them and the run log replays them.
 import type { ScenarioEvent, SensorId } from '../protocol.ts';
@@ -220,7 +223,9 @@ export class PhaseRunner {
           // on a true rule: `was`)
           if (!v && was && candidates.has(id) && (this.byId.get(id)?.holdS ?? 0) > 0 && this.guardBroken(nr)) (this.s.latched ??= {})[id] = true;
           const latched = this.s.latched?.[id] === true;
-          hf[id] = (v && was) || latched ? (hf[id] ?? 0) + dt : 0;
+          // the hold runs while the rule held over the interval with the phase reachable (the current phase was current
+          // through it: an entry happens at the end of a call); a latched hold runs on as D1 has it
+          hf[id] = (v && was && candidates.has(id)) || latched ? (hf[id] ?? 0) + dt : 0;
           if (latched) now.set(nr.name, true);
         }
       }
