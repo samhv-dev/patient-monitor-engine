@@ -10,9 +10,16 @@ const doc = anyShowcaseDoc('showcase-mh-v2') as ScenarioDocV2;
 const sig = (pulse: boolean): RunnerInputV2 => ({ kind: 'signals', signals: { pulse, dantroleneE: 0, setMinuteVentilationLMin: 6, map: pulse ? 80 : 20, mhActivity: 0, mhExcess: null } });
 
 describe('showcase-mh-v2: Arrest at once, CPR from the pulse loss in every phase (D4)', () => {
-  it('Arrest and ROSC carry no hold; every other phase but Baseline keeps the owner\'s 60 s', () => {
+  it('Arrest and ROSC carry no hold; Early signs holds 20 s, the /1 card\'s own settle for its early signs (EtCO₂ past 45 for 20 s; the owner\'s ruling of 1 November); every other phase but Baseline keeps the owner\'s 60 s', () => {
     expect(doc.phases.filter((p) => p.holdS === undefined).map((p) => p.id)).toEqual(['baseline', 'arrest', 'rosc']);
-    expect(new Set(doc.phases.filter((p) => p.holdS !== undefined).map((p) => p.holdS))).toEqual(new Set([60]));
+    expect(Object.fromEntries(doc.phases.filter((p) => p.holdS !== undefined).map((p) => [p.id, p.holdS]))).toEqual({
+      latent: 60,
+      earlySigns: 20,
+      established: 60,
+      treated: 60,
+      recovering: 60,
+      recrudescence: 60,
+    });
   });
 
   it('a pulse loss in Baseline enters Arrest on the next advance, and its return enters ROSC at once', () => {

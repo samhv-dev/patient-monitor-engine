@@ -7,8 +7,8 @@
 // under study). MH_TABLE_CALL=earlySigns presses the call at the /2 card's first Early signs reading (as a team that
 // waits for the strip does: the kit round) and dantrolene 20 s after it (the run sheet's gap), instead of at the run
 // sheet's 08:12 and 08:32; the other presses stay at their run-sheet times, and the /1 card is pressed at the same
-// times. MH_TABLE_EARLY_HOLD=<s> measures the /2 card with Early signs' hold at <s> seconds instead of 60 (a variant held
-// in memory; the card file is unchanged). Section 4 is the hyperventilation's EtCO₂ and the ventilation-back
+// times. MH_TABLE_EARLY_HOLD=<s> measures the /2 card with Early signs' hold at <s> seconds instead of the card's 20 (a
+// variant held in memory; the card file is unchanged; 60 is the hold before the owner's ruling of 1 November). Section 4 is the hyperventilation's EtCO₂ and the ventilation-back
 // precondition (EtCO₂ < 40 for 120 s, truth). PRINT ONLY: the times are pinned in malignant-hyperthermia(-v2).slow.test.ts; this file asserts only that
 // every press was taken, nothing was refused, and both cards drove the same patient.
 // /1's Debrief rows are objectives() on the run record wired as AppSession wires it (the Debrief's own reader); /2's are
@@ -36,7 +36,8 @@ const PATH: Array<{ t: number; v1: string; v2: string }> = [
   { t: 1153, v1: 'Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600, O₂ 100 %)', v2: 'dantroleneAgain' }, // 19:13
 ];
 /** The run of show's four pauses (after the first fast-forward, after span 1, after span 2, the end) and 08:45, the
- *  pause the owner would use on /2 for Early signs (its 60-s hold puts it at 08:43). */
+ *  pause the owner would use on /2 for Early signs while it was held 60 s (08:43); with the 20-s hold of 1 November
+ *  Early signs comes at 08:03 and reads at the run sheet's own 08:05 pause. */
 const PAUSES = [485, 525, 825, 1145, 1464];
 const END_S = 1464;
 /** Run on to the hour, past the talk, so a late phase is still printed and the entries per hour are counted. */

@@ -5,12 +5,16 @@
 // Asserted: every row is in ACTION when the path presses it and its press is accepted; the strip and the cue box follow
 // the phases the physiology enters; no command is refused. PRINTED: the sim time of each press and each phase entry.
 // The run of show's four pauses (08:05 after the first fast-forward, 13:45 after span 1, 19:05 after span 2, 24:24 the
-// end) and 08:45, the pause the owner would use on /2 for Early signs (its 60-s hold puts it at 08:43 in the harness):
-// the strip's current phase there, printed, and at the four pinned to the owner's rules of 1 November with the Treated
-// rule and the hold from reachability proposed the same day, as measured (Latent, Recovering, Recrudescence,
-// Recovering; the /1 card reads Early signs, Recovering, Ventilation back, Recovering). 08:45 is printed, not pinned:
-// in the app Early signs was entered between 08:44 and 08:48 in the runs measured (the presses land a fraction of a second
-// after their run-sheet times, and the rule's edge moves with the patient's course), so 08:45 reads Latent or Early signs.
+// end) and 08:45, the pause the owner used on /2 for Early signs while it was held 60 s (08:43 in the harness): the
+// strip's current phase there, printed, and at four of them pinned to the owner's rules of 1 November (with the
+// Treated rule and the hold from reachability of #242, and Early signs held 20 s, the owner's ruling the same afternoon:
+// the /1 card's own settle), as measured: Early signs at 08:45, Recovering, Recrudescence, Recovering (the /1 card
+// reads MH treatment under way, Recovering, Ventilation back, Recovering). 08:05 is printed, not pinned: Early signs is
+// entered at 08:03.2 in the harness, the /1 card's own second, but in the app its rule (the EtCO₂ crossing 45, the same
+// crossing as /1's) rose 1–4 s after the harness's 07:43.2, so Early signs was entered between 08:04.1 and
+// 08:07.4 in the eight runs measured on 1 November (the presses land a fraction of a second after their run-sheet times,
+// and the patient's course moves with them), and the 08:05 pause (485.4–486.0 s) read Early signs in three of five. It
+// reads Latent or Early signs. 08:45 is pinned: Early signs is entered by 08:08 and Treated comes at 09:58.
 // PME_KIT_BASE=<url> runs it against a built kit (F11) instead of the dev server.
 import { expect, test } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
@@ -43,8 +47,8 @@ test('the /2 MH card\'s demo path, every press a row of Instructor v2', async ({
   const mmss = (x: number) => `${String(Math.floor(x / 60)).padStart(2, '0')}:${String(Math.round(x % 60)).padStart(2, '0')}`;
   console.log(['presses (sim):', ...pressed.map(([t, x]) => `  ${mmss(t)} (${t.toFixed(1)} s) ${x}`), 'phases (sim):', ...a.history.map((e) => `  ${mmss(e.t)} (${e.t.toFixed(1)} s) ${e.stateId}`), 'the strip at the pauses:', ...atPauses.map(([t, chip, id]) => `  ${mmss(t)} (${t.toFixed(1)} s) ${chip} (${id})`)].join('\n'));
   expect(pressed.map(([, x]) => x)).toEqual(PATH.map(([, x]) => x));
-  expect(atPauses.filter((_, i) => i !== 1).map(([, chip]) => chip)).toEqual(['Latent', 'Recovering', 'Recrudescence', 'Recovering']);
-  expect(['Latent', 'Early signs']).toContain(atPauses[1]?.[1]); // 08:45, within seconds of Early signs' entry (header)
+  expect(atPauses.slice(1).map(([, chip]) => chip)).toEqual(['Early signs', 'Recovering', 'Recrudescence', 'Recovering']);
+  expect(['Latent', 'Early signs']).toContain(atPauses[0]?.[1]); // 08:05, within seconds of Early signs' entry in the app (header)
   expect(a.refused).toEqual([]);
   expect(a.history.map((e) => e.stateId).filter((x) => x !== 'baseline')[0]).toBe('latent'); // the view's history may begin after the initial phase
   // the strip and the cue box follow the phase the physiology is in
