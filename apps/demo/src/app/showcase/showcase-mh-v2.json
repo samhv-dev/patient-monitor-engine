@@ -18,7 +18,7 @@
     "Keep hyperventilating until the EtCO₂ stays down; if it climbs again, repeat dantrolene.",
     "After the crisis: ICU 24–48 h, dantrolene 1 mg/kg every 4–6 h for 24 h (recrudescence in up to 50 %), then referral for testing and family counselling."
   ],
-  "notes": "pme-scenario/2 translation of showcase-mh (F8; the owner's phase table of 31 October). PHASES are regions of the MH course, each entered by its own rule on engine truth and held 60 s before it changes (owner, Q1; Arrest and ROSC at once, D4); no button moves a phase. ACTIONS are the team's: the induction sequence (offered in Baseline, recorded, not graded: the orchestrator's call), the call of the crisis, the treatments and the return to normal ventilation, each with its acceptance criteria. The MH starts at the Induce press as on the /1 card: a card-set script entry (condition mh, severity 1) on the Induce action's first taking, in the press's stage group, so the engine receives the /1 card's commands at the /1 card's ticks (F8 step a; the susceptibility model, step b, is not in this card). Thresholds marked [ENG] in the $comments are the orchestrator's engineering readings of the owner's words: activity above zero > 0.01, high > 0.8, low < 0.2; dantrolene effect present: dantroleneE > 0.2; rising/falling: the least-squares slope over the plan's windows (EtCO₂ > 0.2 mmHg/min over 120 s; activity over 60 s falling, 120 s rising; HR and the EtCO₂ fall over 120 s, any sign); unchanged set ventilation: within 5 % of its value at the phase's start. Cool is offered only above 38.5 °C core; the saline is the /1 card's (21 °C, the whole 1.6 L): #216's refrigerated fluid and its stop at 38 °C need engine fields not on this base. Charcoal filters are not modelled (words only), as on the /1 card. The treatments are open from Latent: on the demo path the call (9 s after the /1 card's early signs) comes inside Early signs' 60-s hold; the hold is latched by the ventilation change (D1), so Early signs is entered a minute after the rise began.",
+  "notes": "pme-scenario/2 translation of showcase-mh (F8; the owner's phase table of 31 October). PHASES are regions of the MH course, each entered by its own rule on engine truth and held 60 s before it changes (owner, Q1; Arrest and ROSC at once, D4); no button moves a phase. ACTIONS are the team's: the induction sequence (offered in Baseline, recorded, not graded: the orchestrator's call), the call of the crisis, the treatments and the return to normal ventilation, each with its acceptance criteria. The MH starts at the Induce press as on the /1 card: a card-set script entry (condition mh, severity 1) on the Induce action's first taking, in the press's stage group, so the engine receives the /1 card's commands at the /1 card's ticks (F8 step a; the susceptibility model, step b, is not in this card). Thresholds marked [ENG] in the $comments are the orchestrator's engineering readings of the owner's words: activity above zero > 0.01, high > 0.8, low < 0.2; dantrolene effect present: dantroleneE > 0.2; rising/falling: the least-squares slope over the plan's windows (EtCO₂ > 0.2 mmHg/min over 120 s; HR over 120 s, any sign; mhExcess falling over 60 s for Treated; for Recovering and Recrudescence, the owner's rules of 1 November, EtCO₂ rising = at least 1 mmHg/min over 120 s and not rising its negation, read at whatever ventilation is set); unchanged set ventilation: within 5 % of its value at the phase's start. Cool is offered only above 38.5 °C core; the saline is the /1 card's (21 °C, the whole 1.6 L): #216's refrigerated fluid and its stop at 38 °C need engine fields not on this base. Charcoal filters are not modelled (words only), as on the /1 card. The treatments are open from Latent: on the demo path the call (9 s after the /1 card's early signs) comes inside Early signs' 60-s hold; the hold is latched by the ventilation change (D1), so Early signs is entered a minute after the rise began.",
   "seed": 7,
   "mode": "modeled",
   "patient": {
@@ -193,7 +193,6 @@
       "holdS": 60,
       "next": [
         "recovering",
-        "recrudescence",
         "arrest"
       ]
     },
@@ -201,7 +200,7 @@
       "id": "recovering",
       "label": "Recovering",
       "cue": "EtCO₂ steady at normal ventilation",
-      "$comment": "[ENG] EtCO₂ falling = slope < 0/min over 120 s; activity low = mhActivity < 0.2.",
+      "$comment": "The owner's ruling of 1 November: entered after Treated, when EtCO₂ is under 45 mmHg at the ventilation the team has set and is not rising over 120 s; no condition on MH activity and no unchanged-ventilation guard (the rule reads EtCO₂ under whatever ventilation is set). [ENG] rising = the least-squares slope of the EtCO₂ truth over 120 s at least 1 mmHg/min, i.e. a rise of 2 mmHg over the 120 s, two units of the monitor's 1-mmHg EtCO₂ number (a rise of one unit is inside the display's rounding); not rising = the negation of rising (slope below 1 mmHg/min), so every course is either rising or not rising and no dead band is left between the owner's two words.",
       "enter": {
         "all": [
           {
@@ -215,15 +214,8 @@
             "slope": {
               "var": "etco2",
               "op": "<",
-              "perMin": 0,
+              "perMin": 1,
               "overS": 120
-            }
-          },
-          {
-            "value": {
-              "var": "mhActivity",
-              "op": "<",
-              "value": 0.2
             }
           }
         ]
@@ -238,17 +230,21 @@
       "id": "recrudescence",
       "label": "Recrudescence",
       "cue": "EtCO₂ climbing back",
-      "$comment": "[ENG] rising = slope > 0/min over 120 s of mhExcess, after a Treated phase: the excess creeping back up as the drug wanes (the engine's recrudescence, l2/thermal/mh.ts). It reads mhExcess as Treated does since D2: on the product the onset ramp keeps the activity rising for 15 min, so Treated and Recrudescence held together and the two phases alternated at every poll (measured).",
+      "$comment": "The owner's ruling of 1 November: entered after Recovering (Treated no longer leads here: the only way in is Recovering, or ROSC on the arrest branch), when EtCO₂ is above 45 mmHg and rising over 120 s at the ventilation the team has set; no unchanged-ventilation guard, so the climb after the team turns the ventilation back to 12 × 500 is the recrudescence (the /1 card's objective 4). Its entry opens the second-dose window (dantroleneAgain, and dantrolene's repeat, 300 s: decision D3). [ENG] rising = the least-squares slope of the EtCO₂ truth over 120 s at least 1 mmHg/min (2 mmHg over the 120 s), as Recovering's.",
       "enter": {
         "all": [
           {
-            "visited": "treated"
+            "value": {
+              "var": "etco2",
+              "op": ">",
+              "value": 45
+            }
           },
           {
             "slope": {
-              "var": "mhExcess",
-              "op": ">",
-              "perMin": 0,
+              "var": "etco2",
+              "op": ">=",
+              "perMin": 1,
               "overS": 120
             }
           }
