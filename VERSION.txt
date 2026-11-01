@@ -1,10 +1,10 @@
 Patient monitor simulator - offline showcase kit
-Commit:   417eaaaf968c00e6a881d340d91a8a3557e351c9
+Commit:   5e269618bbb44735c2c5ac2e4ce5d35470a10b71
 Branch:   HEAD
-Subject:  Merge pull request #235 from samhv-dev/fix-pack-smoke-pinned-deps
-Built:    2026-11-01T06:50:33.097Z
-Built by: node scripts/showcase/make-bundle.mjs "/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/kit-f/kit" (node v26.12.1, vite build --base ./ in apps/demo)
-App size: 3.4 MB
+Subject:  Merge pull request #239 from samhv-dev/fv2-mh-phase-rules
+Built:    2026-11-01T17:06:32.414Z
+Built by: node scripts/showcase/make-bundle.mjs "/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/kit-g-release/kit" (node v26.12.1, vite build --base ./ in apps/demo)
+App size: 3.5 MB
 Runtime:  runtime/ left EMPTY: /opt/homebrew/Cellar/node/26.12.1/bin/node (v26.12.1) is not an official signed Node.js build (ad-hoc signature (not an official Node.js build)). The launcher uses ruby, then perl.
 Servers tried in order: bundled node, /usr/bin/ruby (WEBrick), /usr/bin/perl (core modules), python3 (only a real one).
 Classroom: server/relay.mjs (pme-relay + ws 8.21.3, MIT) on runtime/node-* or an installed Node.js >= 22.
