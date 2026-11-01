@@ -28,10 +28,12 @@ button.ip2-chip:hover { background: var(--ip2-card); }
 .ip2-fold { border: 1px solid var(--ip2-control); color: var(--ip2-soft); }
 .ip2-now { margin-left: 10px; border: 1px solid var(--ip2-blue); color: var(--ip2-blue-text); } /* the window was moved: back to the current stage */
 .ip2-or { flex: none; padding: 0 6px; color: var(--ip2-muted); }
-.ip2-link { flex: none; width: 14px; height: 1px; background: #4b5563; }
+/* the connectors, all in one neutral colour (the owner, 1 November: the one into the current stage was blue, and only the
+   current stage's box is); a finished stage's chip is framed in that colour, at the future chips' 1 px */
+.ip2-link { flex: none; width: 14px; height: 1px; background: var(--ip2-link); }
 .ip2-strip[data-tight] .ip2-link { width: 8px; }
-.ip2-link-next { background: var(--ip2-blue); }
-.ip2-link-dashed { height: 0; border-top: 1px dashed #4b5563; background: none; }
+.ip2-link-dashed { height: 0; border-top: 1px dashed var(--ip2-link); background: none; }
+.ip2-strip .ip2-past { border-color: var(--ip2-link); }
 
 /* a stage's box: its name as the title, a past stage's entry time, and the button ("Jump to it", "Return to its
    start"). The box is as wide as its content up to 320 px (and the window); a long title wraps inside it, and the

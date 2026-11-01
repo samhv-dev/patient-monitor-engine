@@ -787,7 +787,9 @@ a.rail-item:hover { color: var(--text-strong); background: color-mix(in srgb, va
 .app[data-route='teach2'] .rail { padding-block: 0; }
 .app[data-route='teach2'] .rail > .rail-brand { flex: none; height: var(--rail-rule-y, 122px); padding: var(--s-3) 0 0; align-items: flex-start; }
 .app[data-route='teach2'] .rail-list { position: relative; }
-.app[data-route='teach2'] .rail-list > .rail-item:first-child { position: absolute; left: 0; right: 0; bottom: calc(100% + var(--s-2)); }
+/* Home on the strip's row (owner, 1 November): centred on the chips row's centre as measured (--rail-row-y; the fallback
+   the 75-px strip's middle, 48 + 37 px), in the brand's space above the list; the items under it keep their places */
+.app[data-route='teach2'] .rail-list > .rail-item:first-child { position: absolute; left: 0; right: 0; top: calc(var(--rail-row-y, 85px) - var(--rail-rule-y, 122px)); transform: translateY(-50%); }
 .app[data-route='teach2'] .rail-list > .rail-hr:first-of-type { margin-top: 0; }
 .app[data-route='teach2'] .rail-foot { flex: none; height: var(--rail-foot-h, 64px); padding: 0; align-items: center; justify-content: center; }
 /* toasts rest on the dock, not over its marks: its top edge as measured (--dock-foot, ui.ts trackChromeBottom); a fixed

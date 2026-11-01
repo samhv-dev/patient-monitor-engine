@@ -61,9 +61,10 @@ tiles. A skin without the rule resolves byte-identically either way (test `senso
 so `iran-icu-as-found`) declares `co2: RESP → CO2` and `RR → CO2 (IMCO2, AWRR)` (research/06 §3.1 F6, §5). The
 renderer's `mountMonitor` starts from the engine's `patient.sensors.co2` and follows every accepted `attachSensor co2`.
 In `layout.grid` (landscape), a tile named in a rule is drawn as its replacement's stand-in while the sensor is off
-(rule O4, pass 3): the replacement's colour, value size (`grid.fontPx`), label size (`grid.labelPx`) and, for a split
-row, its parts' width (`data-as`, `--pme-slots`), so the swap shows only in the content. A stand-in for a split row is
-drawn as one part of it (Saadat-like's RR: RR with BrPM beside it, its limits left of the digits, as the EtCo2 part).
+(rule O4, pass 3): the replacement's colour, value size (`grid.fontPx`) and label size (`grid.labelPx`) (`data-as`). A
+stand-in for a split row is drawn as one part laid out by the row's first-part rule, as wide as its own tile
+(Saadat-like's RR: RR with BrPM beside it, its limits left of the digits, the digits centred in the rest, as the EtCo2
+part; the owner, 1 November: held to the EtCo2 part's third, it sat low-left in an otherwise empty box).
 
 ## Lanes as on the real unit (rc.3, PR-L; every key optional)
 

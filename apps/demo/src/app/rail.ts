@@ -177,23 +177,27 @@ export class Rail {
  * rows, so they follow the strip whatever height it takes (the Case briefing and the finishing state add their
  * 40-px status line under it): on the rail, `--rail-rule-y` (the rail's top to the top of the strip's bottom border) and
  * `--rail-foot-h` (the dock's top edge, its border, to the rail's bottom); app.css lays the teach2 rail out from them.
- * Removed while the view is hidden, so no other route reads them.
+ * And Home on the strip's row (owner, 1 November: it sat 9 px under the chips, 49 px during the Case briefing):
+ * `--rail-row-y`, the rail's top to the vertical centre of the strip's chips row (`.ip2-chips`, the "No case loaded" box
+ * or the stage chips), which app.css centres the Home item on. Removed while the view is hidden, so no other route reads
+ * them.
  */
 export function trackPageLines(rail: HTMLElement, strip: HTMLElement | null, dock: HTMLElement | null): () => void {
   const set = () => {
     const s = strip?.getBoundingClientRect();
     const d = dock?.getBoundingClientRect();
     if (!strip || !s || !d || s.height === 0 || d.height === 0) {
-      rail.style.removeProperty('--rail-rule-y');
-      rail.style.removeProperty('--rail-foot-h');
+      for (const v of ['--rail-rule-y', '--rail-foot-h', '--rail-row-y']) rail.style.removeProperty(v);
       return;
     }
     const r = rail.getBoundingClientRect();
+    const row = (strip.querySelector('.ip2-chips') ?? strip).getBoundingClientRect();
     rail.style.setProperty('--rail-rule-y', `${s.bottom - parseFloat(getComputedStyle(strip).borderBottomWidth) - r.top}px`);
     rail.style.setProperty('--rail-foot-h', `${r.bottom - d.top}px`);
+    rail.style.setProperty('--rail-row-y', `${(row.top + row.bottom) / 2 - r.top}px`);
   };
   const ro = new ResizeObserver(set);
-  for (const e of [rail, strip, dock]) if (e) ro.observe(e);
+  for (const e of [rail, strip, strip?.querySelector('.ip2-chips'), dock]) if (e) ro.observe(e);
   addEventListener('resize', set);
   set();
   return () => {

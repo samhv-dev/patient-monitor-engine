@@ -87,6 +87,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     deliver.setAttribute('aria-disabled', String(n === 0));
     setText(staged, `Staged · ${n}`);
     staged.dataset.count = String(n);
+    staged.hidden = n === 0; // the owner, 1 November: shown only while something is staged
   };
   cache.onChange(drawCache);
   drawCache();
