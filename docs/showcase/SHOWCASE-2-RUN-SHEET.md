@@ -559,7 +559,7 @@ mmHg**, **VA 4.41 L/min**, f set 12, VT set 500. Vitals: HR 89, ART M 75, EtCO�
   later, then 48, 46, 44, 42; Recovering from 23:35; at the end (24:31) EtCO₂ 41, still at 20 × 600 [Q1-MH]. Ventilation
   back again only once the EtCO₂ has stayed below 40 for 2 min (headless, the same path: at 27:12, after the talk's end
   [S1 demo path (owner rc.4)]).
-- **True recrudescence** (the card's take-home line: up to 50 %) is why the patient goes to ICU on dantrolene 1 mg/kg
+- **True recrudescence** (the card's take-home line: about 20 %) is why the patient goes to ICU on dantrolene 1 mg/kg
   every 4–6 h. In the engine, as the drug wanes the floor rises again; this talk does not run that long.
 - **What comes next, and why it waited** (the stage paragraph, verbatim [SPK]): *"The next layer of the muscle model is
   already built on a branch, with its sources named and its numbers measured: muscle lactate with its own limits (the
@@ -586,8 +586,8 @@ vasodilation and hypercapnic myocardial depression (PR #162, post-demo).
 **Take-home lines (the card's, owner-agreed 26 October, verbatim)** [CARD]: *"A rising EtCO₂ at the same ventilation
 with a rising heart rate: think of MH early."* · *"Trigger off, 100 % oxygen at high flow, hyperventilation, and
 dantrolene 2.5 mg/kg."* · *"Keep hyperventilating until the EtCO₂ stays down; if it climbs again, repeat dantrolene."* ·
-*"After the crisis: ICU 24–48 h, dantrolene 1 mg/kg every 4–6 h for 24 h (recrudescence in up to 50 %), then referral
-for testing and family counselling."*
+*"After the crisis: ICU 24–48 h, dantrolene 1 mg/kg every 4–6 h for 24 h (recrudescence in about 20 %, mostly within
+the first day), then referral for testing and family counselling."*
 
 If asked about the end: *"He stays hyperventilated until the EtCO₂ has stayed below 40 for 2 minutes, then back to
 12 × 500, as the first time."* Measured past the talk (headless): ventilation back again at 27:12, then up to 44 (never

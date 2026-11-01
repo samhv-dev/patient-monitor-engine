@@ -212,6 +212,11 @@ the public API is what the packages export (see the API reference), the `pme-sce
   line adds 40: 115 px (it was 92, and the line took 17 px from the chips).
 
 ### Fixed
+- The MH card's take-home line gives the registry's recrudescence rate: "recrudescence in about 20 %, mostly within
+  the first day" in place of the unsourced "up to 50 %" (20 %, 63 of 308, at a mean 13 h after the initial reaction:
+  Burkman JM, Posner KL, Domino KB, Anesthesiology 2007, PMID 17457120; evidence note E135). Text only: the old-format
+  card `showcase-mh.json`, the handout test that pins its lines, the cue cards, the run sheet and the English of the
+  Persian debrief table's entry (its Persian stays the owner's to write).
 - The untreated MH core rises at the registry median rate: the evidence check E131-2 (owner, 1 November: "the
   temperature still does not rise properly") found the engine right and three bands wrong. The human registry's
   MAXIMAL rate of core rise in grade 5–6 MH is 0.80 (IQR 0.50–1.00) °C per 15 min in survivors and 0.65 (0.53–1.32)
