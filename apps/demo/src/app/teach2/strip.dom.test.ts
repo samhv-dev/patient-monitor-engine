@@ -10,6 +10,8 @@
 // button never repeats the box's title, and the strip has no hint line (the owner, 1 November).
 // The status line under the chips (the owner's choice of 31 October): while a card's Case briefing runs it reads
 // "Case briefing on every screen · 0:48 left" with End briefing; the chips' row carries no briefing element.
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { epochNow, ScenarioView, type AckResult, type CommandInput, type ScenarioDoc } from '@pme/controller';
 import { stagesOf } from '../card-read.ts';
@@ -280,6 +282,37 @@ describe('stage strip: clicks', () => {
     r.slot.refresh();
     expect(r.el.querySelector('.ip2-current')?.textContent).toBe('Bleeding 2.5 L over 10 min00:00 · 2 open');
   });
+});
+
+// The owner, 1 November (the live kit G, MH at "Midazolam 2 mg and fentanyl 100 µg given"): the connector into the
+// current stage was blue and the finished stage had no frame. Only the current stage's box is blue; every connector is
+// the one neutral colour, and a finished stage is framed in it, 1 px as the future ones. With the strip's own sheets.
+describe('stage strip: the connector colour and the finished stages\' frame (the owner, 1 November)', () => {
+  const sheet = (f: string) => readFileSync(resolve(import.meta.dirname, f), 'utf8');
+  const LINK = '#4b5563';
+  for (const [card, doc, stateId, history] of [
+    ['the old MH card at its second stage', MH, 'premedicated', MH_TO_TREATING.slice(0, 2)],
+    ['the haemorrhage card past its first stage', HAEM, null, null],
+  ] as const) {
+    it(`${card}: the connector before the current chip is the neutral one, a past chip has a 1-px frame in it`, () => {
+      document.head.replaceChildren(...['teach2.css', 'state.css'].map((f) => Object.assign(document.createElement('style'), { textContent: sheet(f) })));
+      const at = stateId ?? stagesOf(doc)[1]?.id as string;
+      const r = rig(doc, at, history ? [...history] : [{ t: 0, stateId: stagesOf(doc)[0]?.id as string }, { t: 60, stateId: at }]);
+      r.el.className = 'ip2-strip';
+      const cur = r.el.querySelector('.ip2-chips > .ip2-current') as HTMLElement;
+      const before = cur.previousElementSibling as HTMLElement;
+      const after = cur.nextElementSibling as HTMLElement;
+      const past = r.el.querySelector('.ip2-chips > .ip2-past') as HTMLElement;
+      expect(before.classList.contains('ip2-link'), 'a connector leads into the current chip').toBe(true);
+      expect(getComputedStyle(before).backgroundColor, 'the connector into the current chip').toBe(LINK);
+      expect(getComputedStyle(after).borderTopColor, 'the connector out of it, to the future').toBe(LINK);
+      expect(getComputedStyle(past).borderTopColor, 'a past chip: its frame in the connector colour').toBe(LINK);
+      expect(getComputedStyle(past).borderTopStyle).toBe('solid');
+      expect(getComputedStyle(past).borderTopWidth).toBe('1px');
+      expect(getComputedStyle(cur).borderTopColor, 'the current chip: still its blue box').toBe('#3b82f6');
+      document.head.replaceChildren();
+    });
+  }
 });
 
 describe('stage strip: the status line while a Case briefing runs', () => {

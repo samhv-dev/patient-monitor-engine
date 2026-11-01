@@ -7,6 +7,7 @@
   --ip2-card: #1c2127;
   --ip2-line: #2b323a;
   --ip2-control: #3a434d;
+  --ip2-link: #4b5563; /* the stage strip's connectors and a finished stage's frame (state.css) */
   --ip2-text: #e8ecef;
   --ip2-soft: #c6ced6;
   --ip2-muted: #9aa4ad;

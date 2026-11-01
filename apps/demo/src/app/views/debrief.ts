@@ -3,7 +3,8 @@
 // return to a bookmark included, struck through as undone; a staged delivery on one line), the card's steps with
 // their status (Instructor v2, IP8) — for a pme-scenario/2 run the action table with its grades, the outcomes, the
 // violations and, on page 1, the judged rows (plan F7) —, bookmarks with a mark's kind and note, the instructor's notes and a one-row-per-minute
-// appendix; page 1 reads the key times, the course strip and the objectives, page 2 the key moments with what the
+// appendix; page 1 reads the key times, the course strip (the instructor's marks on it at their times) and the
+// objectives, page 2 the key moments with what the
 // monitor showed (Debrief redesign B), and a learner handout without verdicts prints on its own (E51). The browser PRINTS it to PDF (debrief.css: A4 portrait, the app's chrome hidden, no colour needed to read
 // it; the footer and the build on every page); no PDF library. "Download the record (JSON)" saves the same data. Opened
 // from the session bar; when a scenario reaches a state with no way out, a toast says the debrief is ready.
@@ -20,7 +21,8 @@ import type { Grade } from '@pme/controller/scenario';
 import { debriefJson } from '../debrief-export.ts';
 import { keyMoments, keyTimes, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
 import { LAB_KEYS, TREND_KEYS, type Row, type RunData, type TrendKey } from '../record.ts';
-import { courseSvg } from './debrief-course.ts';
+import { courseSvg, type CourseMark } from './debrief-course.ts';
+import { MARKS } from '../teach2/dock.ts';
 import { hrefOf } from '../router.ts';
 import { cardOf } from '../scenarios.ts';
 import type { AppSession } from '../session.ts';
@@ -112,6 +114,23 @@ function timelineRows(d: RunData): HTMLElement[] {
 /** A bookmark's line: its time and words, a mark's kind and note, and its undoing. */
 const markLine = (r: Row): string => `${mmss(r.t)} ${r.text}${r.markKind ? ` · ${MARK_WORDS[r.markKind]}` : ''}${r.note ? `: “${r.note}”` : ''}${undoneText(r)}`;
 
+/** The course strip's marks (debrief-course.ts): every bookmark row, the dock's icon for its kind (a ribbon for a plain
+ *  bookmark, the session bar's and the Log's), the Bookmarks list's words as its title; an undone one is drawn struck. */
+const MARK_ICON: Readonly<Record<string, string>> = { ...Object.fromEntries(MARKS.map(([k, , d]) => [k, d])), bookmark: 'M6 3h12v18l-6-5-6 5z' };
+const courseMarks = (d: RunData): CourseMark[] => d.rows.filter((r) => r.kind === 'bookmark').map((r) => {
+  const kind = r.markKind ?? 'bookmark';
+  return { t: r.t, kind, label: r.mark ?? r.text, title: markLine(r), undone: r.undone !== undefined, icon: MARK_ICON[kind] as string };
+});
+/** The marks' part of the course's legend (only when the run has marks): each kind drawn, its icon and its word. */
+const markKeys = (cm: CourseMark[]): Array<Node | string> => {
+  const kinds = ['good', 'bad', 'discuss', 'bookmark'].filter((k) => cm.some((m) => m.kind === k));
+  return kinds.length ? [' · marks:', ...kinds.map((k) => {
+    const s = h('span', { class: 'db-bm-key', 'data-kind': k });
+    s.innerHTML = ` <svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="${MARK_ICON[k]}"/></svg>${k}`;
+    return s;
+  })] : [];
+};
+
 /** A mark on a chart, one per key moment: a thin dashed line with a shape on top, ■ team (blue), ● patient (vermillion),
  *  │ scenario (grey), and the moment's number (the numbers of Key moments and the course strip). */
 const MARK_SVG: Readonly<Record<Who, (x: number, top: number) => string>> = {
@@ -192,9 +211,9 @@ function minutes(d: RunData): HTMLElement {
       ...keys.map((k) => h('td', { class: 'num' }, r.values[k] === null ? '–' : (r.values[k] as number).toFixed(trendMeta(k).digits))))))));
 }
 
-/** The legend of the course strip and the trend charts: each accent with its shape and its words (E45). A scenario
- *  state is an open grey square on the course strip (`debrief-course.ts`) and a bare line on a trend chart (R-B N2). */
-const legend = (scen: '□' | '│', tail = ''): HTMLElement => h('p', { class: 'db-legend' }, h('span', { class: 'db-team' }, '■'), ' team action · ', h('span', { class: 'db-patient' }, '●'), ' patient event · ', h('span', { class: 'db-scen' }, scen), ` scenario state${tail}`);
+/** The legend of the course strip and the trend charts: each accent with its shape and its words (E45), and on the
+ *  course strip the marks drawn (`more`). A scenario state is an open grey square on the course strip (`debrief-course.ts`) and a bare line on a trend chart (R-B N2). */
+const legend = (scen: '□' | '│', tail = '', more: Array<Node | string> = []): HTMLElement => h('p', { class: 'db-legend' }, h('span', { class: 'db-team' }, '■'), ' team action · ', h('span', { class: 'db-patient' }, '●'), ' patient event · ', h('span', { class: 'db-scen' }, scen), ` scenario state${tail}`, ...more);
 const WHO: Readonly<Record<Who, string>> = { team: 'Team', patient: 'Patient', scenario: 'Scenario' };
 const whoCell = (w: Who): HTMLElement => h('td', { class: 'db-whocell' }, w === 'scenario' ? null : h('span', { class: `db-${w}` }, w === 'team' ? '■ ' : '● '), WHO[w]);
 const TRENDS4: TrendKey[] = ['hr', 'map', 'spo2', 'etco2']; // E56: the same four for every case
@@ -330,12 +349,13 @@ export function debriefView(session: AppSession, link: Link): View {
     const ms = keyMoments(d);
     const kt = keyTimes(d, ms);
     const tiles = kt.map((k) => tile(k, ms)).filter((x): x is HTMLElement => x !== null);
+    const cm = courseMarks(d);
     const course = h('div', { class: 'db-course' });
-    course.innerHTML = courseSvg(d, ms, { trends: TRENDS4 });
+    course.innerHTML = courseSvg(d, ms, { trends: TRENDS4, marks: cm });
     live1.replaceChildren(...kids(
       band,
       tiles.length ? section('keytimes', 'Key times', h('div', { class: 'db-tiles' }, ...tiles)) : null,
-      d.samples.length ? section('course', 'The course', legend('□', ' · numbers match Key moments'), course) : null,
+      d.samples.length ? section('course', 'The course', legend('□', ' · numbers match Key moments', markKeys(cm)), course) : null,
       r3 ? section('objectives', 'Judged by the instructor', r3.judged.length
         ? h('ol', { class: 'db-obj' }, ...r3.judged.map((j) => h('li', { 'data-mark': j.pressedT === null ? 'not-assessable' : 'observed' },
           h('b', { class: 'db-mark db-chip' }, j.pressedT === null ? '– Not ticked' : '✓ Observed'), ' ', j.text,
