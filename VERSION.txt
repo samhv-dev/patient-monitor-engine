@@ -1,9 +1,9 @@
 Patient monitor simulator - offline showcase kit
-Commit:   649ab03c3742d5377923bb0a20d7933330fa2109
+Commit:   ab57fe251e31ddec339f42b7f6065fb63c654517
 Branch:   HEAD
-Subject:  Merge pull request #226 from samhv-dev/fix-teach2-toast-dock-gap
-Built:    2026-10-31T17:57:07.753Z
-Built by: node scripts/showcase/make-bundle.mjs "/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/kit-e/kit" (node v26.12.1, vite build --base ./ in apps/demo)
+Subject:  Merge pull request #232 from samhv-dev/e131-2-mh-heat-budget
+Built:    2026-11-01T05:35:49.321Z
+Built by: node scripts/showcase/make-bundle.mjs "/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/kit-f/kit" (node v26.12.1, vite build --base ./ in apps/demo)
 App size: 3.4 MB
 Runtime:  runtime/ left EMPTY: /opt/homebrew/Cellar/node/26.12.1/bin/node (v26.12.1) is not an official signed Node.js build (ad-hoc signature (not an official Node.js build)). The launcher uses ruby, then perl.
 Servers tried in order: bundled node, /usr/bin/ruby (WEBrick), /usr/bin/perl (core modules), python3 (only a real one).
