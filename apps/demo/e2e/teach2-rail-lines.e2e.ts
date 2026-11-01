@@ -3,7 +3,9 @@
 // at the laptop's 1440 × 900 and a 1920 × 1080 window, with no case (the 75-px strip, no status line since the owner's
 // ruling of 1 November) and with a case loaded: first during its Case briefing, then once the briefing is ended in the
 // strip's status line, live (the strip's 40-px status line goes: 115 px, then 75). Both are measured, so they follow the strip whatever height it takes. And the coupling stays on
-// teach2: today's Instructor view keeps its rail after a visit to v2.
+// teach2: today's Instructor view keeps its rail after a visit to v2. The owner, 1 November: the rail's Home is centred on
+// the strip's row (the chips, or the "No case loaded" box), measured the same way, also at 1280 × 800 (it sat 9 px
+// under the row, 49 px during the briefing).
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { go, openApp, startVite } from './app-support.ts';
@@ -14,10 +16,12 @@ test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 
 /** The tops of the four 1-px lines, in window pixels: the strip's bottom border, the rail's first divider, the dock's top
- *  border and the rail foot's top border; and whether the strip shows no case. */
+ *  border and the rail foot's top border; the vertical centres of the rail's Home and of the strip's chips row; and
+ *  whether the strip shows no case. */
 function lines(page: Page) {
   return page.evaluate(() => {
     const top = (sel: string) => (document.querySelector(sel) as HTMLElement).getBoundingClientRect().top;
+    const mid = (sel: string) => { const r = (document.querySelector(sel) as HTMLElement).getBoundingClientRect(); return (r.top + r.bottom) / 2; };
     const strip = document.querySelector('.ip2-strip') as HTMLElement;
     return {
       empty: strip.hasAttribute('data-empty'),
@@ -27,11 +31,13 @@ function lines(page: Page) {
       railRule: top('.rail .rail-hr'),
       dock: top('.ip2-dock'),
       railFoot: top('.rail .rail-foot'),
+      home: mid('.rail .rail-list > .rail-item'),
+      row: mid('.ip2-strip .ip2-chips'),
     };
   });
 }
 
-for (const [w, h] of [[1440, 900], [1920, 1080]] as const) {
+for (const [w, h] of [[1440, 900], [1280, 800], [1920, 1080]] as const) {
   for (const state of ['loaded', 'empty'] as const) {
     test(`teach2 at ${w} × ${h}, ${state === 'loaded' ? 'a case loaded' : 'no case'}: the rail's two lines sit on the strip's and the dock's lines`, async ({ page }) => {
       test.setTimeout(60_000);
@@ -44,6 +50,7 @@ for (const [w, h] of [[1440, 900], [1920, 1080]] as const) {
         expect(m.stripH, `${when}: the strip's height`).toBeCloseTo(stripH, 0);
         expect(Math.abs(m.railRule - m.strip), `${when}: rail divider ${m.railRule} vs strip line ${m.strip}`).toBeLessThanOrEqual(1);
         expect(Math.abs(m.railFoot - m.dock), `${when}: rail foot ${m.railFoot} vs dock line ${m.dock}`).toBeLessThanOrEqual(1);
+        expect(Math.abs(m.home - m.row), `${when}: Home's centre ${m.home} vs the strip row's ${m.row}`).toBeLessThanOrEqual(1);
       };
       if (state === 'empty') {
         await expect.poll(async () => (await lines(page)).empty, { timeout: 15_000 }).toBe(true);

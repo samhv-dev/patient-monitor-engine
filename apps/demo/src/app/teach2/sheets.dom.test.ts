@@ -68,6 +68,7 @@ describe('the sheets', () => {
     const r = rig();
     expect([...r.tools.querySelectorAll('.ip2-tool')].map((b) => b.textContent)).toEqual(['Drug', 'Airway', 'Defib · CPR', 'Vitals', 'Devices', 'Patient', 'Log']);
     expect(r.tools.querySelector('.ip2-staged')?.textContent).toBe('Staged · 0');
+    expect((r.tools.querySelector('.ip2-staged') as HTMLElement).hidden, 'hidden while nothing is staged').toBe(true);
     expect(r.layer.children).toHaveLength(0); // nothing built until a sheet opens
     (r.tools.querySelector('[data-sheet="devices"]') as HTMLButtonElement).click();
     expect(r.open()).toEqual(['devices']);
@@ -122,8 +123,10 @@ describe('the sheets', () => {
     expect(r.sheet().querySelector('[role=tab][aria-selected="true"]')?.textContent).toBe('Induction');
     expect(r.sheet().querySelector('.ip2-pick[aria-pressed="true"]')?.getAttribute('data-key')).toBe('drug:propofol');
     expect(r.sheet().querySelector('.ip2-drug-name')?.textContent).toBe('Propofol');
-    // the dock's "Staged · n" reopens the last sheet
+    // the dock's "Staged · n", shown once an item is staged, reopens the last sheet
+    (r.sheet().querySelector('.ip2-add') as HTMLButtonElement).click();
     key('Escape');
+    expect((r.tools.querySelector('.ip2-staged') as HTMLElement).hidden).toBe(false);
     (r.tools.querySelector('.ip2-staged') as HTMLButtonElement).click();
     expect(r.open()).toEqual(['drug']);
   });

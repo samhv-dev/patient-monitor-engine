@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 // The strip's chips and the sheets' tray share the class name `ip2-chip` (state.css, sheets.css). With both sheets
-// loaded, in either order, a strip chip keeps its state's look (a finished stage's chip no frame and the muted text, the
+// loaded, in either order, a strip chip keeps its state's look (a finished stage's chip its frame in the connectors' colour and the muted text, the
 // current one its blue frame, a future one its dashed frame), and a tray chip keeps the tray's frame. Before, the tray's
 // unscoped `.ip2-chip { border: 1px solid … }` tied the state rules on specificity and won when sheets.css came later.
 import { readFileSync } from 'node:fs';
@@ -29,7 +29,7 @@ describe('a strip chip keeps its state look with the sheets\' tray loaded', () =
   for (const order of [['tokens', 'state', 'sheets'], ['tokens', 'sheets', 'state']] as Array<Array<keyof typeof SHEETS>>) {
     it(`loaded ${order.slice(1).join(' then ')}`, () => {
       const { cs } = page(order);
-      expect(cs('past').borderTopColor, 'a finished stage: no frame').toBe('transparent');
+      expect(cs('past').borderTopColor, 'a finished stage: framed in the connector colour (the owner, 1 November)').toBe('#4b5563');
       expect(cs('past').color, 'a finished stage: the muted text').toBe('#9aa4ad');
       expect(cs('cur').borderTopColor, 'the current stage: its blue frame').toBe('#3b82f6');
       expect(cs('fut').borderTopStyle, 'a future stage: its dashed frame').toBe('dashed');
