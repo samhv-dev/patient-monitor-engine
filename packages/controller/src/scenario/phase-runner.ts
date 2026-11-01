@@ -28,7 +28,7 @@ import type { VitalHold } from './runner.ts';
 import { compare } from './runner.ts';
 import { EPS, holds, namedRules, slopePerMin, spreadPct, walkLeaves, windowOf, type NamedRule, type RuleCtx } from './rules.ts';
 import type { DocCommand } from './types.ts';
-import type { Administration, Phase, PhaseEntry, PhaseRule, PhaseRunnerState, RuleEdge, RunnerInputV2, ScenarioDocV2, ScriptEntry } from './types-v2.ts';
+import type { Administration, AnyRule, Phase, PhaseEntry, PhaseRule, PhaseRunnerState, RuleEdge, RunnerInputV2, ScenarioDocV2, ScriptEntry } from './types-v2.ts';
 
 export type PhaseRunnerEffect =
   | {
@@ -111,6 +111,7 @@ export class PhaseRunner {
       ring: (name) => self.s.rings[name] ?? [],
       visited: (id) => self.s.phases.some((p) => p.id === id),
       phaseRef: (name) => self.s.phaseRef?.[name],
+      enter: (id) => self.byId.get(id)?.enter,
       get rhythm() {
         return self.s.rhythm;
       },
@@ -358,7 +359,7 @@ export class PhaseRunner {
 
   /** Is one of the rule's guards (an `unchanged` leaf outside a `not`) false now? */
   private guardBroken(nr: NamedRule): boolean {
-    const broken = (r: PhaseRule, key: string): boolean =>
+    const broken = (r: AnyRule, key: string): boolean =>
       'unchanged' in r ? !holds(r, key, nr.rank, this.ctx)
       : 'all' in r ? r.all.some((x, i) => broken(x, `${key}.${i}`))
       : 'any' in r ? r.any.some((x, i) => broken(x, `${key}.${i}`))

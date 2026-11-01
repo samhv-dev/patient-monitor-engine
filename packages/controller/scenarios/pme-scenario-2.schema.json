@@ -97,7 +97,7 @@
       }
     },
     "displayRule": {
-      "description": "A rule on the displayed numerics (rank 2), for a judged row's clock: what the learners could see (§7).",
+      "description": "A rule on the displayed numerics (rank 2), for a judged row's clock: what the learners could see (§7). A `phaseRule` leaf is a phase's own entry rule, read as the phase reads it (engine truth, rank 3): the clock starts the first second that phase's rule holds (not its entry after the hold), so a recognition clock is written once, as the phase it recognises.",
       "type": "object",
       "minProperties": 1,
       "maxProperties": 1,
@@ -107,6 +107,7 @@
           "type": "object", "required": ["var", "op", "value"], "additionalProperties": false,
           "properties": { "var": { "$ref": "pme-scenario-1.schema.json#/definitions/vitalVar" }, "op": { "$ref": "#/definitions/op" }, "value": { "type": "number" }, "forS": { "type": "number", "minimum": 0 } }
         },
+        "phaseRule": { "$ref": "#/definitions/id" },
         "all": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/displayRule" } },
         "any": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/displayRule" } },
         "not": { "$ref": "#/definitions/displayRule" }

@@ -7,7 +7,7 @@
 // of the controller on the inputs the record copied (the panel's function), as actions, outcomes, violations and judged
 // rows (`pme-debrief/3`). No DOM.
 import { asV1, isV2, manualLabel, type MarkKind } from '@pme/controller';
-import { grade, ruleWords, type Anchor, type Grade, type Grades, type ObjectiveRule, type PhaseEntry, type PhaseRule, type RunEventId, type ScenarioDocV2 } from '@pme/controller/scenario';
+import { grade, ruleWords, type Anchor, type Grade, type Grades, type ObjectiveRule, type PhaseEntry, type RunEventId, type ScenarioDocV2 } from '@pme/controller/scenario';
 import { FIXED_ALARM_WORDS } from './alarms.ts';
 import { untakenStatus, type Evidence } from './card-read.ts';
 import { CONDITIONS } from './describe.ts';
@@ -368,10 +368,12 @@ export function report3(d: RunData): Report3 | null {
     })),
   };
 }
-/** A judged row's display rule in words ("etco2 > 45"): what its clock starts on. */
+/** A judged row's display rule in words ("etco2 > 45"; a phase's rule by the phase's name, "early signs"): what its
+ *  clock starts on. */
 export const displayWords = (d: RunData, id: string): string | null => {
-  const r = d.doc && isV2(d.doc) ? d.doc.judged?.find((j) => j.id === id)?.display : undefined;
-  return r ? ruleWords(r as PhaseRule) : null;
+  const doc = d.doc && isV2(d.doc) ? d.doc : undefined;
+  const r = doc?.judged?.find((j) => j.id === id)?.display;
+  return r && doc ? ruleWords(r, doc.phases) : null;
 };
 
 /** Every mark (bookmark) of the run in order, with its kind and note when it has them; an undone one says so. */

@@ -11,7 +11,7 @@ import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { pdfInfo, pdfText, squash } from './pdf-text.ts';
 import { openApp, scanEngineIds, startVite } from './app-support.ts';
-import { END_S, openMhV2, pressPath, to } from './mh-v2-path.ts';
+import { END_S, openMhV2, PATH, pressPath, to } from './mh-v2-path.ts';
 
 const out = resolve(import.meta.dirname, process.env.PME_SHOTS === '1' ? '../../../docs/gates/stage-13' : '../../../test-results/gate-shots/stage-13'); // FU-11 K1: evidence only on request
 let vite: ViteDevServer | undefined;
@@ -471,11 +471,16 @@ test('Debrief B on the haemorrhage card: the learner handout within one A4 page'
 // to the talk's end, paused, then the Debrief: its JSON export is pme-debrief/3 (phases, graded actions, outcomes,
 // violations, judged rows; no /2 objectives or steps), the action table is in the report, and in print media at the
 // 182 mm content width page 1 and the learner handout each fit one A4 page (≤ 267 mm, IP8); Chromium prints the
-// handout on one page. Both engines.
+// handout on one page. Both engines. The instructor ticks the recognition (the judged row) at the call, 08:12: the
+// Debrief's "Recognition (instructor's tick)" runs from the Early signs rule (brief fv2-debrief-recognition-clock-nov1),
+// in seconds, not from the pre-intubation EtCO₂ of 03:51.
 test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout within one A4 page', async ({ page, browserName }) => {
   test.setTimeout(480_000);
   await openMhV2(page, (h) => openApp(page, base, h, { warmMs: 1500 }));
-  await pressPath(page, () => true);
+  const CALL = PATH.findIndex(([, x]) => x.startsWith('MH crisis'));
+  await pressPath(page, (i) => i <= CALL);
+  await page.locator('.ip2-action button.ip2-row').filter({ has: page.locator('.ip2-row-title', { hasText: 'Name malignant hyperthermia' }) }).first().click();
+  await pressPath(page, () => true, CALL + 1);
   await to(page, END_S);
   await page.locator('.ip2-head button.ip2-pill').click(); // Instructor v2's clock pill pauses (it has no session bar)
   await expect.poll(() => page.evaluate(() => (window as unknown as W).__pmeApp.link.ctl.hostPaused), { timeout: 20_000, message: 'the host has paused' }).toBe(true);
@@ -498,6 +503,12 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
   // the owner's phase rules of 1 November: Recrudescence is entered (14:59) and opens the second dose's window, so the
   // second dose at 19:13 is met, as the /1 card's objective 4
   expect(Object.fromEntries(j.actions.filter((a) => ['callCrisis', 'dantrolene', 'dantroleneAgain', 'ventilationBack'].includes(a.id)).map((a) => [a.id, a.grade]))).toEqual({ callCrisis: 'met', dantrolene: 'met', dantroleneAgain: 'met', ventilationBack: 'met' });
+  // the recognition key time: from the Early signs rule's first truth (in Latent, after the MH began) to the tick
+  const rec = (j.keyTimes as Array<{ id: string; fromT: number; fromLabel?: string; toT: number | null }>).find((k) => k.id === 'recognition');
+  const latentT = (j.phases as Array<{ id: string; t: number }>).find((p) => p.id === 'latent')?.t ?? Infinity;
+  expect(rec?.fromLabel).toBe('early signs');
+  expect(rec?.fromT, 'the clock starts after Latent is entered, not at the pre-intubation EtCO₂').toBeGreaterThan(latentT);
+  expect((rec?.toT ?? Infinity) - (rec?.fromT ?? 0), 'seconds, not minutes').toBeLessThan(60);
   const results = resolve(import.meta.dirname, '../../../test-results');
   mkdirSync(results, { recursive: true });
   writeFileSync(`${results}/debrief-mh-v2-${browserName}.json`, JSON.stringify(j, null, 1));

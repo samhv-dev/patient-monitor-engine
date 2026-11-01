@@ -181,7 +181,12 @@ only; an outcome never changes an action's grade.
 **Judged objectives** are what only the instructor can see: recognition ("names MH from the monitor") and
 communication without a prescription. They stay rows of their own, met when the instructor presses them, with the
 time. Their clock starts on what the learners could see, the displayed numerics (rank 2: the capnograph's EtCO₂
-past 45), never on engine truth, so no one is judged late for a change the monitor had not yet shown.
+past 45), never on engine truth, so no one is judged late for a change the monitor had not yet shown. One exception,
+by name: a display rule may be a phase's own entry rule (`{ "phaseRule": "earlySigns" }`, 1 November), read as the
+phase reads it, so a recognition clock starts when the sign the phase stands for first holds (the MH card's Early
+signs: EtCO₂ above 45 and rising at unchanged set ventilation, as the /1 card's "early signs" state), not at a bare
+threshold the patient may cross for another reason (the premedicated, then induced patient's EtCO₂ 46 before
+intubation).
 
 **Violations** are administrations a contraindication matches: dantrolene IM; a calcium-channel blocker with
 dantrolene (hyperkalaemia, myocardial depression); epinephrine 1 mg IV in ROSC. A violation is its own timed line,

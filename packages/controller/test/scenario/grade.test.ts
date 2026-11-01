@@ -3,7 +3,7 @@
 // before the anchor, precondition, conditional repeat (Q13), cumulative ceiling, contraindication, device settings, a
 // decision on its effect, not applicable, live against final, and the owner's IM-dantrolene example.
 import { describe, expect, it } from 'vitest';
-import { grade, type ActionGrade } from '../../src/scenario/grade.ts';
+import { grade, ruleWords, type ActionGrade } from '../../src/scenario/grade.ts';
 import type { Action, Administration, PhaseEntry, RuleEdge, ScenarioDocV2 } from '../../src/scenario/types-v2.ts';
 
 /** A card of two phases (`base` initial, `early`) for an 80-kg patient, with these actions (id `x` unless given). */
@@ -234,5 +234,13 @@ describe('grade(): repeats, violations, outcomes, judged rows', () => {
   it('judged rows: the clock from the first true edge of their display rule', () => {
     const doc = card([DAN], { judged: [{ id: 'name', text: 'Name MH', kind: 'recognition', display: { value: { var: 'etco2', op: '>', value: 45 } } }] });
     expect(grade(doc, PH, [], on('judged:name', 222), 1000).judged).toEqual([{ id: 'name', text: 'Name MH', kind: 'recognition', fromT: 222 }]);
+  });
+
+  it('ruleWords: a phase\'s rule (phaseRule) reads as the phase\'s name, as the /1 card\'s recognition start ("early signs")', () => {
+    const phases = [{ id: 'earlySigns', label: 'Early signs' }, { id: 'rosc', label: 'ROSC: the return' }];
+    expect(ruleWords({ phaseRule: 'earlySigns' }, phases)).toBe('early signs');
+    expect(ruleWords({ phaseRule: 'rosc' }, phases)).toBe('ROSC'); // an acronym keeps its case; the label up to its colon
+    expect(ruleWords({ all: [{ phaseRule: 'earlySigns' }, { value: { var: 'hr', op: '>', value: 100 } }] }, phases)).toBe('early signs and hr > 100');
+    expect(ruleWords({ phaseRule: 'earlySigns' })).toBe('earlySigns'); // without the card's phases: the id
   });
 });

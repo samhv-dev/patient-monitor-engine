@@ -26,8 +26,15 @@
 // printed; asserted: the call, the hyperventilation, the propofol infusion, dantrolene's first dose and the ventilation
 // back met (D3's anchors and precondition), the second dose met in the window Recrudescence opens, calcium, insulin and
 // CPR not applicable, no violation. The /1-versus-/2 table itself: mh-v1-v2-table.slow.test.ts.
+// The Debrief's first key time on the same graded run, the call ticked as the recognition (brief
+// fv2-debrief-recognition-clock-nov1): "Recognition (instructor's tick)" runs from the Early signs rule's first truth (the
+// judged row's display rule is that phase's rule) to the tick, as the /1 card's runs from its "early signs" state; it ran
+// from 03:51, a bare EtCO₂ > 45 the premedicated patient crossed before intubation.
 import { describe, expect, it } from 'vitest';
 import { grade, validateScenario, type ScenarioDocV2 } from '@pme/controller/scenario';
+import { keyTimes } from '../debrief-moments.ts';
+import { drugWords } from '../glossary.ts';
+import { emptyRun, type RunData } from '../record.ts';
 import { anyShowcaseDoc, runCard, type Act, type Run } from './harness.ts';
 
 /** The run sheet's demo path, §3 (the talk run's sim times; the stops hold the clock, so they are not in sim time). */
@@ -152,5 +159,22 @@ describe('showcase-mh-v2: the MH card in pme-scenario/2 on the demo path', () =>
     expect(row('insulin').grade).toBe('not applicable');
     expect(row('cpr').grade).toBe('not applicable');
     expect(g.violations).toEqual([]);
+
+    // the Debrief's recognition key time, the instructor's tick at the call (08:12)
+    const doc = anyShowcaseDoc('showcase-mh-v2') as ScenarioDocV2;
+    const tick = PATH.find((p) => p.v2 === 'callCrisis')!.t;
+    const d: RunData = {
+      ...emptyRun('M 35 y 80 kg', 80, 0), doc, format: 2, phases: v2.phases, admin: v2.admin, edges: v2.edges, samples: [],
+      rows: [{ t: 0, kind: 'scenario', text: 'Scenario loaded: MH' }, { t: tick, kind: 'note', text: `Objective met: ${drugWords(doc.judged?.[0]?.text ?? '')}` }],
+    };
+    const k = keyTimes(d).find((x) => x.id === 'recognition')!;
+    const mmss1 = (t: number | null) => (t === null ? 'not ticked' : `${String(Math.floor(t / 60)).padStart(2, '0')}:${(t % 60).toFixed(1).padStart(4, '0')}`);
+    console.log(`  key time: ${k.label} | ${k.fromLabel} ${mmss1(k.fromT)} → ${mmss1(k.toT)}`);
+    const latent = v2.phases.find((p) => p.id === 'latent')!.t;
+    const earlyRule = v2.edges.find((e) => e.rule === 'phase:earlySigns' && e.value)!.t;
+    expect(earlyRule, 'the Early signs rule first holds in Latent, after the MH began').toBeGreaterThan(latent);
+    expect(g.judged.find((j) => j.id === 'nameMh')?.fromT, 'the judged clock is the Early signs rule').toBe(earlyRule);
+    expect(k).toEqual({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: earlyRule, fromLabel: 'early signs', toT: tick, state: 'measured' });
+    expect(tick - (k.fromT ?? 0), 'seconds, not minutes: the signs at most a minute before the call').toBeLessThan(60);
   }, SLOW);
 });

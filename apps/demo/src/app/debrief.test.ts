@@ -476,7 +476,8 @@ describe('F7: a pme-scenario/2 run — the action table, outcomes, violations, j
   });
 
   it('keyTimes: "recognition" reads the judged row of kind recognition — from its display clock to the instructor’s press', () => {
-    expect(keyTimes(d2)[0]).toEqual({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: 410, fromLabel: 'etco2 > 45', toT: 450, state: 'measured' });
+    // its display rule is the Early signs phase's rule: the clock is named as the /1 card's ("early signs")
+    expect(keyTimes(d2)[0]).toEqual({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: 410, fromLabel: 'early signs', toT: 450, state: 'measured' });
     const unticked = keyTimes({ ...d2, rows: d2.rows.slice(0, 1), edges: [] })[0];
     expect(unticked).toEqual({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: 0, fromLabel: 'start', toT: null, state: 'notTicked' });
   });

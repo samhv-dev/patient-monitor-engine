@@ -9,7 +9,7 @@ import { DRUGS, routeHonoured } from '@pme/engine-core';
 import schema from '../../scenarios/pme-scenario-1.schema.json';
 import schemaV2 from '../../scenarios/pme-scenario-2.schema.json';
 import type { AnyScenarioDoc, DocCommand, ScenarioDoc, When } from './types.ts';
-import type { Anchor, PhaseRule, ScenarioDocV2 } from './types-v2.ts';
+import type { Anchor, DisplayRule, PhaseRule, ScenarioDocV2 } from './types-v2.ts';
 
 export const SCENARIO_SCHEMA: object = schema;
 export const SCENARIO_SCHEMA_V2: object = schemaV2;
@@ -116,7 +116,7 @@ function countManual(w: When): number {
 
 // --- pme-scenario/2 ------------------------------------------------------------------------------------------------
 const RULE_KEYS = 'value, slope, unchanged, visited, signal, all, any, not';
-const DISPLAY_KEYS = 'value, all, any, not';
+const DISPLAY_KEYS = 'value, phaseRule, all, any, not';
 let compiledV2: ReturnType<Ajv['compile']> | null = null;
 const DEFS = (schemaV2 as { definitions: Record<string, object> }).definitions;
 
@@ -230,6 +230,17 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
       rule(c.when, `${ct}/when`);
     });
   });
+  // a display rule's phaseRule leaf names a phase of the card that has an entry rule (the initial phase has none)
+  const display = (r: DisplayRule | undefined, path: string): void => {
+    if (!r) return;
+    if ('phaseRule' in r) {
+      if (!phases.has(r.phaseRule)) errors.push(`${path}/phaseRule: no phase "${r.phaseRule}"`);
+      else if (!doc.phases.find((p) => p.id === r.phaseRule)?.enter) errors.push(`${path}/phaseRule: the phase "${r.phaseRule}" has no entry rule`);
+    } else if ('all' in r) r.all.forEach((c, k) => display(c, `${path}/all/${k}`));
+    else if ('any' in r) r.any.forEach((c, k) => display(c, `${path}/any/${k}`));
+    else if ('not' in r) display(r.not, `${path}/not`);
+  };
+  doc.judged?.forEach((j, i) => display(j.display, `/judged/${i}/display`));
   doc.outcomes?.forEach((o, i) => {
     rule(o.rule, `/outcomes/${i}/rule`);
     anchor(o.anchor, `/outcomes/${i}/anchor`);
