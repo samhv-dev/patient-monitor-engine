@@ -77,7 +77,12 @@ const BANDS = {
   // E131-2: the established crisis, measured (old prototype centre → this build, same tolerances): establishedMin
   // 18.77 → 45.6 (± 10 %), etco2 75 → 73, hr 126 → 148, pH 7.09 → 7.03, K⁺ 5.7 → 6.8, lactate 4.6 → 12.2, MAP 85 → 87.93.
   // The registry's range for this number is ≈ 35–63 min (research/e131-2-mh-heat-evidence.md); the band is the engine's.
-  'S1 untreated established (E131-2)': { establishedMin: [41.04, 50.16], etco2AtEstablished: [70, 76], hrAtEstablished: [143, 153], phAtEstablished: [7.0, 7.06], kAtEstablished: [6.5, 7.1], lactateAtEstablished: [11.7, 12.7], mapAtEstablished: [82.93, 92.93] },
+  // Preoxygenation before premedication (the owner's ruling of 1 November: preoxygenate 0:30, premedicate on the mask
+  // 1:00): hrAtEstablished left its band and is re-centred on this build, same ± 5 (148 → 139). The single sample at the
+  // entry sits inside the ectopy runs on both orders (HR read 116–157 within ± 60 s of the entry on the old order, 122–160
+  // on the new, almost every sample within 10 s after a PVC), and the entry moved 18 s earlier (45.6 → 45.3 min): the
+  // averaging of the ectopic beats, not a different tachycardia. Reported; not tuned.
+  'S1 untreated established (E131-2)': { establishedMin: [41.04, 50.16], etco2AtEstablished: [70, 76], hrAtEstablished: [134, 144], phAtEstablished: [7.0, 7.06], kAtEstablished: [6.5, 7.1], lactateAtEstablished: [11.7, 12.7], mapAtEstablished: [82.93, 92.93] },
   'S1 untreated ectopy (E133)': { firstPvcMin: [8.95, 12.95], events51Min: [270, 420], runs51Min: [19, 54] },
   'S1 early': { refused: [0, 0], crisisMin: [5.65, 7.42], pulseLost: [0, 0], recoveringMin: [18.67, 22.07], established: [0, 0], tcMax: [36.6, 37.0], hrMax: [87, 97], kMax: [4.5, 5.1], etco2Plus5: [47, 53], hrPlus15: [63, 73] },
   'S1 preoxygenation (E121)': { withSpo2AtInduction: [98, 100], withSpo2Min: [97, 100], withoutSpo2AtInduction: [87, 93], withoutSpo2Min: [55, 71], withoutDesatAlarmAfterInductionS: [56, 96] },
@@ -107,19 +112,26 @@ const CALL_S = 1440;
  *  CMRO₂ go DOWN (they went up against the old induced baseline); the other 19 are the MH rows as before. E131: at
  *  24:00 the core was below the awake baseline (the anaesthetic redistribution outweighed the ≈ 140 W of MH heat), so
  *  Tcore read DOWN and T1 was not among the changed rows. Since the MH sympathetic surge constricts the skin (thermal
- *  heat.ts `kcp`) the MH heat stays in the core: Tcore reads UP and T1 is among the changed rows (UP). */
+ *  heat.ts `kcp`) the MH heat stays in the core: Tcore reads UP and T1 is among the changed rows (UP). Since the owner's
+ *  ruling of 1 November (preoxygenation 0:30, premedication 1:00) the 1:00 baseline is the awake patient 30 s on the
+ *  face mask, the premedication given that second and not yet acting: CO no longer reads UP against it (it did against
+ *  the premedicated baseline) and is dropped from the list (22 → 21 rows); the oxygen rows (FiO₂, PaO₂, PO₂, CaO₂, DO₂)
+ *  now read DOWN (FiO₂ 1.0 on the mask then, 0.5 on the ventilator at 24:00), and SpO₂ and SaO₂ no longer read UP:
+ *  none of them is in the list. */
 const EXPLORE_AT_CALL = [
   'monitor:HR:up', 'monitor:ART M:down', 'monitor:EtCO₂:up', 'monitor:awRR:up', 'monitor:T1:up',
-  'circulation:CO:up', 'circulation:SV:down', 'circulation:SVR:down', 'circulation:LVEF:down', 'circulation:Myocardial O2 supply/demand:down',
+  'circulation:SV:down', 'circulation:SVR:down', 'circulation:LVEF:down', 'circulation:Myocardial O2 supply/demand:down',
   'blood:pH:down', 'blood:PCO₂:up', 'blood:BE:down', 'blood:Lactate:up', 'blood:K⁺:up', 'blood:Tcore:up', 'blood:VO₂:up', 'blood:SvO₂:down',
   'endocrine:MH activity:up', 'endocrine:Epinephrine:up', 'endocrine:Norepinephrine:up', 'brain:CMRO₂:down',
 ];
-/** E119: the induction sequence on the kit-round path — premedication 0:30, preoxygenation 1:00, induction (propofol,
- *  succinylcholine: the MH condition starts here) 4:00, intubation and sevoflurane 5:00, surgery (rocuronium) 6:00. */
+/** E119: the induction sequence on the kit-round path — preoxygenation 0:30, premedication on the mask 1:00 (the owner's
+ *  ruling of 1 November: the opioid blunts the breathing, so the oxygen goes on first; until then premedication 0:30,
+ *  preoxygenation 1:00), induction (propofol, succinylcholine: the MH condition starts here) 4:00, intubation and
+ *  sevoflurane 5:00, surgery (rocuronium) 6:00. */
 const SUX_S = 240;
 const INDUCTION: Act[] = [
-  { press: 'Premedicate: midazolam 2 mg, fentanyl 100 µg', t: 30 },
-  { press: 'Preoxygenate: 100 % O₂ by face mask', t: 60 },
+  { press: 'Preoxygenate: 100 % O₂ by face mask', t: 30 },
+  { press: 'Premedicate: midazolam 2 mg, fentanyl 100 µg', t: 60 },
   { press: 'Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg', t: SUX_S },
   { press: 'Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %', t: 300 },
   { press: 'Start surgery: rocuronium 0.6 mg/kg', t: 360 },

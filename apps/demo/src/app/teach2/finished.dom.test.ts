@@ -14,12 +14,12 @@ import { classify } from './rows.ts';
 
 const MH = showcaseDoc('showcase-mh') as ScenarioDoc;
 type H = { t: number; stateId: string; transitionId?: string };
-/** rows.test.ts's course to treating: premedicate, induce without preoxygenating, intubate, surgery, early signs by
+/** rows.test.ts's course to treating: premedicate without preoxygenating (the awake patient's second button), induce, intubate, surgery, early signs by
  *  their rule, the crisis called, dantrolene. */
 const TO_TREATING: H[] = [
   { t: 0, stateId: 'awake' },
-  { t: 10, stateId: 'premedicated', transitionId: 'premed' },
-  { t: 20, stateId: 'induced', transitionId: 'induce-premed' },
+  { t: 10, stateId: 'premedicated', transitionId: 'premed-air' },
+  { t: 20, stateId: 'induced', transitionId: 'induce' },
   { t: 30, stateId: 'intubated', transitionId: 'intubate' },
   { t: 40, stateId: 'surgery', transitionId: 'surgery' },
   { t: 80, stateId: 'earlySigns', transitionId: 'early' },
@@ -57,8 +57,8 @@ describe('ACTION: finished steps grouped by stage (the owner\'s report of 30 Oct
     expect(r.el.querySelector('.ip2-finished summary')?.textContent).toBe(`Finished steps · ${r.board.finished.length}`);
     expect(r.board.finished).toHaveLength(7);
     expect(groups(r.el)).toEqual([
-      ['Awake on the table · 00:00', '1 Premedicate: midazolam 2 mg, fentanyl 100 µg'],
-      ['Midazolam 2 mg and fentanyl 100 µg given · 00:10', '2 Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg'],
+      ['Awake on the table · 00:00', '2 Premedicate: midazolam 2 mg, fentanyl 100 µg'], // 1 is Preoxygenate, not chosen
+      ['Midazolam 2 mg and fentanyl 100 µg given · 00:10', '1 Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg'],
       ['Induced · 00:20', '1 Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %'],
       ['Intubated · 00:30', '1 Start surgery: rocuronium 0.6 mg/kg'],
       ['Surgery under way · 00:40', 'A Early signs: EtCO₂ rising at unchanged ventilation, heart rate rising'],

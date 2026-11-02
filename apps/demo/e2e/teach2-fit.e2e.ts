@@ -478,8 +478,9 @@ test('a stage\'s box at 1440 × 900: the long title wraps inside, "Jump to it" a
   await page.screenshot({ path: join(dir, `teach2-strip-pop-future-1440x900-${browserName}.png`), clip: { x: 0, y: 0, width: 1440, height: 400 } });
   await future.click(); // a second press closes it
   await expect(page.locator('.ip2-pop')).toHaveCount(0);
-  // a past stage with its entry: through Premedicated to Preoxygenating
-  for (const target of ['premedicated', 'preoxygenated']) {
+  // a past stage with its entry: through Preoxygenating and Premedicated to Induced (preoxygenation first: the owner's
+  // ruling of 1 November)
+  for (const target of ['preoxygenated', 'premedicated', 'induced']) {
     expect((await send(page, { type: 'scenario', action: 'goto', target })).accepted).toBe(true);
     await page.waitForFunction((id) => (window as unknown as W).__pmeApp.link.ctl.scenario.stateId === id, target, { timeout: 15_000 });
   }

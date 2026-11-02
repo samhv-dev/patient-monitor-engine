@@ -167,6 +167,18 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Changed
 
+- **Both MH cards preoxygenate first and premedicate on the mask second** (the owner's ruling of 1 November: "the
+  narcotic will reduce the breathing effort and preoxygenation will not be as effective"). The induction segment of
+  *Malignant hyperthermia* (`/1`) and *Malignant hyperthermia (phases)* (`/2`) is now Preoxygenate 0:30, Premedicate
+  (midazolam 2 mg, fentanyl 100 µg) 1:00, Induce 4:00; the face-mask oxygen (FiO₂ 1.0) stays on through the
+  premedication until Intubate, and the premedication changes neither the airway nor the FiO₂ (its two drug commands
+  only). On `/1` the stages run awake → preoxygenated → premedicated → induced (ids unchanged); the awake patient also
+  offers Premedicate on room air (`premed-air`), the run without preoxygenation that E121 teaches, and Induce is offered
+  in Premedicated only (`induce-premed` is gone). On `/2` the two Baseline actions swap order. Stage texts, notes,
+  briefing and story follow; the induce step and the objectives are unchanged. Measured on the demo path: early signs
+  08:03 → 08:10 (both cards, harness), the call at 08:12 still met; one band re-centred (`/1` untreated
+  `hrAtEstablished` 148 → 139, ectopy averaging at an entry 18 s earlier); Explore at 24:00 no longer lists CO up (the
+  1:00 baseline is now the unpremedicated patient on the mask). Run sheet, cue cards, kit-round script and tests follow.
 - **One Instructor entry; the view is chosen in Settings** (the clinical owner, 30 October). The rail lists
   "Instructor" once (no "Instructor v2" entry); Settings → Display → "Instructor view" chooses today's view (`#/teach`,
   the default, the 3 November demo's) or Instructor v2 (`#/teach2`), saved in the site profile (`instructor`) like the

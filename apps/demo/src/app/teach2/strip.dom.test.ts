@@ -67,7 +67,7 @@ afterEach(() => void (stageMarks.of = restoreMarks));
 
 /** A course through the MH card to `treating`: the states entered, with the hops, at these times. */
 const MH_TO_TREATING = [
-  { t: 0, stateId: 'awake' }, { t: 60, stateId: 'premedicated', transitionId: 'premed' }, { t: 120, stateId: 'preoxygenated', transitionId: 'preox' },
+  { t: 0, stateId: 'awake' }, { t: 60, stateId: 'preoxygenated', transitionId: 'preox' }, { t: 120, stateId: 'premedicated', transitionId: 'premed' },
   { t: 240, stateId: 'induced', transitionId: 'induce' }, { t: 300, stateId: 'intubated', transitionId: 'intubate' }, { t: 360, stateId: 'surgery', transitionId: 'surgery' },
   { t: 420, stateId: 'earlySigns', transitionId: 'early' }, { t: 470, stateId: 'established', transitionId: 'established' }, { t: 496, stateId: 'triggerOff', transitionId: 'crisis-established' },
   { t: 520, stateId: 'dantrolene', transitionId: 'dant' }, { t: 522, stateId: 'treating', transitionId: 'back' },
@@ -87,8 +87,9 @@ describe('stage strip: the stages and the fold rule', () => {
   it('MH at the start (the owner\'s ruling for IP9): exactly five chips with full names, the current and the next four; "9 later ›"; an arrow pages, "back to now" recentres', () => {
     const r = rig(MH, 'awake', [{ t: 0, stateId: 'awake' }], 10);
     expect(stageChips(r.el)).toHaveLength(WINDOW);
-    expect(chipTexts(r.el)).toEqual(['Awake on the table00:00 · 1 open', 'Midazolam 2 mg and fentanyl 100 µg given', 'Preoxygenating', 'Induced', 'Intubated', '9 later ›']);
-    // the future ordered from the current stage: premedicated leads to both, so "Preoxygenating or Induced"
+    expect(chipTexts(r.el)).toEqual(['Awake on the table00:00 · 2 open', 'Preoxygenating', 'Midazolam 2 mg and fentanyl 100 µg given', 'Induced', 'Intubated', '9 later ›']);
+    // the future ordered from the current stage: awake leads to both (premedication without preoxygenation the second),
+    // so "Preoxygenating or Midazolam…"
     expect(r.el.querySelector('.ip2-or')?.previousElementSibling?.textContent).toBe('Preoxygenating');
     expect(r.el.querySelector('.ip2-earlier')).toBeNull();
     expect(r.el.querySelector('.ip2-now')).toBeNull();
@@ -105,7 +106,7 @@ describe('stage strip: the stages and the fold rule', () => {
     expect(r.el.querySelector('.ip2-later')).toBeNull();
     (r.el.querySelector('.ip2-now') as HTMLButtonElement).click();
     expect(chipTexts(r.el).at(-1)).toBe('9 later ›');
-    expect(r.el.querySelector('.ip2-current')?.textContent).toBe('Awake on the table00:00 · 1 open');
+    expect(r.el.querySelector('.ip2-current')?.textContent).toBe('Awake on the table00:00 · 2 open');
     expect(r.el.querySelector('.ip2-now')).toBeNull();
   });
 
@@ -137,10 +138,10 @@ describe('stage strip: the stages and the fold rule', () => {
 
   it('a stage the run skipped shows no time; a discarded course (a restore) is not shown', () => {
     // induced → crisis straight to triggerOff: intubated…established never entered; then a restore back to 05:00
-    const hist = [{ t: 0, stateId: 'awake' }, { t: 240, stateId: 'induced', transitionId: 'induce-premed' }, { t: 280, stateId: 'triggerOff', transitionId: 'crisis' }, { t: 250, stateId: 'induced' }];
+    const hist = [{ t: 0, stateId: 'awake' }, { t: 240, stateId: 'induced', transitionId: 'induce' }, { t: 280, stateId: 'triggerOff', transitionId: 'crisis' }, { t: 250, stateId: 'induced' }];
     const r = rig(MH, 'induced', hist, 300);
     r.sv.enteredT = 250;
-    expect(chipTexts(r.el).slice(0, 4)).toEqual(['‹ 1 earlier', 'Midazolam 2 mg and fentanyl 100 µg given', 'Preoxygenating', 'Induced04:00 · 2 open']);
+    expect(chipTexts(r.el).slice(0, 4)).toEqual(['‹ 1 earlier', 'Preoxygenating', 'Midazolam 2 mg and fentanyl 100 µg given', 'Induced04:00 · 2 open']);
     expect(r.el.querySelectorAll('.ip2-skipped')).toHaveLength(2);
   });
 
@@ -291,7 +292,7 @@ describe('stage strip: the connector colour and the finished stages\' frame (the
   const sheet = (f: string) => readFileSync(resolve(import.meta.dirname, f), 'utf8');
   const LINK = '#4b5563';
   for (const [card, doc, stateId, history] of [
-    ['the old MH card at its second stage', MH, 'premedicated', MH_TO_TREATING.slice(0, 2)],
+    ['the old MH card at its second stage', MH, 'preoxygenated', MH_TO_TREATING.slice(0, 2)],
     ['the haemorrhage card past its first stage', HAEM, null, null],
   ] as const) {
     it(`${card}: the connector before the current chip is the neutral one, a past chip has a 1-px frame in it`, () => {
