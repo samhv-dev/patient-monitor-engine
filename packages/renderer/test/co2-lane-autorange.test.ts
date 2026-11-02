@@ -101,8 +101,14 @@ const drawn = (ctx: FakeCtx) => ctx.calls.filter((k) => k.op === 'fillText').map
 const lanes = (c: MonitorCore) => (c as unknown as { lanes: SweepLane[] }).lanes;
 const plan = (): RenderPlan => renderPlan(resolveSkin('saadat-like', { sensors: { co2: true } }));
 
-/** A monitor whose co2 channel is replaced by a known capnogram (the sim clock's sample index → mmHg). */
-function monitor(peaks: (k: number) => number, size = { cssW: 1056, cssH: 600, dpr: 1 }, fps: 60 | 30 = 60) {
+/**
+ * A monitor whose co2 channel is replaced by a known capnogram (the sim clock's sample index → mmHg). `still`: the
+ * engine is not advanced (the clock and the CO2 lane run; the other lanes have nothing new to draw), which keeps these
+ * cases cheap: the CO2 judgement reads only the co2 channel. `joinAt` (s): the window's first frame is at that sim time
+ * with nothing held before it, as a follower that takes the host's snapshot there.
+ */
+function monitor(peaks: (k: number) => number, o: { size?: { cssW: number; cssH: number; dpr: number }; fps?: 60 | 30; still?: boolean; joinAt?: number } = {}) {
+  const { size = { cssW: 1056, cssH: 600, dpr: 1 }, fps = 60, still = true } = o;
   const ctx = new FakeCtx();
   const p = plan();
   const core = new MonitorCore({ width: 0, height: 0 }, ctx, size, { engine: { seed: 1, device: { skin: 'saadat-like' }, patient: { sensors: { co2: 'on' } } }, plan: p, fps }, () => {});
@@ -118,6 +124,11 @@ function monitor(peaks: (k: number) => number, size = { cssW: 1056, cssH: 600, d
     return n;
   }) as typeof e.readSamples;
   e.latestSampleIndex = ((ch) => (ch === 'co2' ? Math.floor(core.clock.simT * RATE) : latest(ch))) as typeof e.latestSampleIndex;
+  if (still) e.advanceTo = () => {};
+  if (o.joinAt !== undefined) {
+    core.clock.setTick(Math.round(o.joinAt / 0.02)); // 50 Hz ticks
+    (core as unknown as { historyT: number }).historyT = core.clock.simT;
+  }
   const i = p.lanes.findIndex((l) => l.channel === 'co2');
   let ms = 0;
   const run = (s: number) => {
@@ -168,23 +179,31 @@ describe('MonitorCore: the CO2 lane follows its range', () => {
     expect(m.pl().scaleLines).toEqual([50]);
   });
 
-  it('two windows on the same timeline take the same steps at the same breaths: a pane and a full screen, 60 and 30 fps, one joined later', () => {
-    const peaks = (k: number) => [42, 42, 42, 52, 53, 54, 60, 66, 70, 79, 82, 84, 70, 60, 50, 38, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36][k] ?? 36;
+  it('two windows on the same timeline take the same steps at the same breaths: a pane and a full screen, 60 and 30 fps; one joined later agrees once caught up', () => {
+    // breaths of 5 s: 42, then 52–55 (the lane widens when breath 2 ends, at 15 s), then 36 (it narrows when the sixth
+    // of them ends, breath 10, at 55 s)
+    const peaks = (k: number) => (k === 0 ? 42 : k <= 4 ? 51 + k : 36);
     const a = monitor(peaks);
-    const b = monitor(peaks, { cssW: 360, cssH: 267, dpr: 2 }, 30);
-    const c = monitor(peaks);
-    const seen: string[][] = [[], [], []];
-    for (let s = 0; s < 160; s++) {
-      a.run(1);
-      b.run(1);
-      if (s >= 4) c.run(s === 4 ? 5 : 1); // c starts later (its first frame at 4 s of a's clock … caught up at once)
-      [a, b, c].forEach((m, n) => seen[n]!.push(String(m.pl().range![1])));
-    }
-    expect(seen[0]).toContain('100');
-    expect(seen[0]).toContain('80');
-    expect(seen[1]).toEqual(seen[0]);
-    expect(seen[2]!.slice(10)).toEqual(seen[0]!.slice(10));
-    expect(seen[0]!.at(-1)).toBe('50');
+    const b = monitor(peaks, { size: { cssW: 360, cssH: 267, dpr: 2 }, fps: 30 });
+    const c = monitor(peaks, { joinAt: 12 }); // a follower whose snapshot is at 12 s, mid-breath 2
+    const steps = (m: ReturnType<typeof monitor>, from: number, to: number) => {
+      const out: Array<[number, number]> = [];
+      for (let t = from; t < to; t += 0.25) {
+        const before = m.pl().range![1];
+        m.run(0.25);
+        const t = m.core.clock.simT;
+        // a step is named by the breath in which it was shown: it must come within half a second of that breath's start,
+        // when the breath before it ended
+        if (m.pl().range![1] !== before) out.push([Math.floor(t / BREATH_S), m.pl().range![1]]), expect(t % BREATH_S).toBeLessThan(0.5);
+      }
+      return out;
+    };
+    const sa = steps(a, 0, 57);
+    expect(sa).toEqual([[3, 80], [11, 50]]); // shown as breath 3 starts (15 s) and as breath 11 starts (55 s)
+    expect(steps(b, 0, 57)).toEqual(sa);
+    // the late window starts at 50, judges breaths 2 (53, its part from 12 s) and 3 (54): 80 at the end of breath 3,
+    // and from then on it shows what the others show, narrowing at the same breath
+    expect(steps(c, 12, 57)).toEqual([[4, 80], [11, 50]]);
   });
 
   it('a restore keeps the scale shown (the follower takes the host\'s snapshot), and a theme switch keeps it too', () => {
