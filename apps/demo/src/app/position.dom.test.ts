@@ -134,7 +134,7 @@ describe('stage marks across a reload (the owner\'s report of 30 October)', () =
     const a = page();
     a.load(a.card);
     await a.run(1);
-    for (const st of ['premedicated', 'preoxygenated', 'induced', 'intubated', 'surgery', 'earlySigns', 'established', 'triggerOff', 'treating', 'triggerOff', 'treating']) await a.goto(st);
+    for (const st of ['preoxygenated', 'premedicated', 'induced', 'intubated', 'surgery', 'earlySigns', 'established', 'triggerOff', 'treating', 'triggerOff', 'treating']) await a.goto(st);
     const before = a.driver.stageMarks();
     expect(before.filter((m) => m.note === 'triggerOff')).toHaveLength(2);
     const stop = keepPositions(a.s, 5);
@@ -149,7 +149,7 @@ describe('stage marks across a reload (the owner\'s report of 30 October)', () =
     expect(b.driver.runner?.stateId).toBe('treating');
     // the course's marks are back (the latest of each stage: the one the strip returns to), with their labels
     expect(b.driver.stageMarks().map((m) => m.target)).toEqual(latestPerStage(before).map((m) => m.target));
-    expect(b.driver.stageMarks().map((m) => m.note)).toEqual(['awake', 'premedicated', 'preoxygenated', 'induced', 'intubated', 'surgery', 'earlySigns', 'established', 'triggerOff', 'treating']);
+    expect(b.driver.stageMarks().map((m) => m.note)).toEqual(['awake', 'preoxygenated', 'premedicated', 'induced', 'intubated', 'surgery', 'earlySigns', 'established', 'triggerOff', 'treating']);
     // …and the course's history, so the strip has each past stage's entry
     expect(b.sv.history.slice(0, a.driver.runner?.history.length)).toEqual(a.driver.runner?.history);
 

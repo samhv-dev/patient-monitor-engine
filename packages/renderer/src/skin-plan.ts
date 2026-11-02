@@ -37,6 +37,8 @@ export interface PlanLane {
   rightLabel: { text: string; color: string; sub?: string; leftInsetPx?: number } | null;
   /** Unit printed after the top scale value ('mmHg' on a CO2 lane with lane text, as "50mmHg"); '' = none. */
   scaleSuffix: string;
+  /** The CO2 lane's auto-range scale tops (skin `co2.autoScales`, first = `range[1]`; co2-range.ts); null = a fixed range. */
+  autoRanges: number[] | null;
 }
 
 export interface RenderPlan {
@@ -155,7 +157,7 @@ export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride, 
     const mmPerS = rl?.mmPerS ?? s.sweep.ibp.default;
     if (id.startsWith('ECG')) {
       const lead = leadAt(ecgIndex++);
-      return { id, kind: 'ecg', channel: lead, color, mmPerS, gainMmPerMv: rl?.gainMmPerMv ?? 10, autoGain: rl?.autoGain ?? false, gainOptions, gainLaneMm: gainLaneMm[i] as number, range: null, label: s.ecg.laneLabel, fill: false, smoothMs: 0, scaleLines: null, scaleMid: null, rightLabel: null, scaleSuffix: '' };
+      return { id, kind: 'ecg', channel: lead, color, mmPerS, gainMmPerMv: rl?.gainMmPerMv ?? 10, autoGain: rl?.autoGain ?? false, gainOptions, gainLaneMm: gainLaneMm[i] as number, range: null, label: s.ecg.laneLabel, fill: false, smoothMs: 0, scaleLines: null, scaleMid: null, rightLabel: null, scaleSuffix: '', autoRanges: null };
     }
     const scaleKey = IBP_SCALE_KEY[id];
     const sc = scaleKey ? s.ibp.scales[scaleKey] : undefined;
@@ -165,7 +167,8 @@ export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride, 
       smoothMs: id === 'CO2' ? (s.co2.displaySmoothMs ?? 0) : 0,
       scaleLines: dotted && sc ? [sc[2], sc[1], sc[0]] : id === 'CO2' && s.co2.scaleLineTop && range ? [range[1]] : null, scaleMid: dotted && sc ? sc[1] : null,
       rightLabel: lt ? rightLabel(lt.labels?.[id], id === 'PLETH' ? 'PLETH' : id, r.render.foreground, !portrait) : null,
-      scaleSuffix: lt && id === 'CO2' ? s.co2.scaleUnit : '' };
+      scaleSuffix: lt && id === 'CO2' ? s.co2.scaleUnit : '',
+      autoRanges: id === 'CO2' && range && s.co2.scaleUnit === 'mmHg' && s.co2.autoScales ? [range[1], ...[...s.co2.autoScales].sort((a, b) => a - b).filter((v) => v > range[1])] : null };
   });
   return {
     skin: r.id,
@@ -226,12 +229,12 @@ function rightLabel(l: LaneTextLabel | undefined, text: string, fg: string, land
 /** The legacy look (monitor-core THEME, WAVE_STYLE) for pages that pass `lanes`/`waves` and no skin. */
 export function legacyPlan(leads: readonly LeadId[], waves: readonly WaveLaneId[]): RenderPlan {
   const ecg = leads.map((lead): PlanLane => ({
-    id: 'ECG', kind: 'ecg', channel: lead, color: '#00ff66', mmPerS: 25, gainMmPerMv: 10, autoGain: false, gainOptions: [], gainLaneMm: NOMINAL_ECG_LANE_MM, range: null, label: '{lead}  {FILTER}', fill: false, smoothMs: 0, scaleLines: null, scaleMid: null, rightLabel: null, scaleSuffix: '',
+    id: 'ECG', kind: 'ecg', channel: lead, color: '#00ff66', mmPerS: 25, gainMmPerMv: 10, autoGain: false, gainOptions: [], gainLaneMm: NOMINAL_ECG_LANE_MM, range: null, label: '{lead}  {FILTER}', fill: false, smoothMs: 0, scaleLines: null, scaleMid: null, rightLabel: null, scaleSuffix: '', autoRanges: null,
   }));
   const wv = waves.map((w): PlanLane => ({
     id: w, kind: 'wave', channel: w, color: WAVE_STYLE[w].color, mmPerS: WAVE_STYLE[w].mmPerS ?? 25, gainMmPerMv: 10, // co2/resp 6.25 mm/s
     autoGain: false, gainOptions: [], gainLaneMm: 0,
-    range: WAVE_STYLE[w].range ? [WAVE_STYLE[w].range[0], WAVE_STYLE[w].range[1]] : null, label: WAVE_STYLE[w].label, fill: false, smoothMs: 0, scaleLines: null, scaleMid: null, rightLabel: null, scaleSuffix: '',
+    range: WAVE_STYLE[w].range ? [WAVE_STYLE[w].range[0], WAVE_STYLE[w].range[1]] : null, label: WAVE_STYLE[w].label, fill: false, smoothMs: 0, scaleLines: null, scaleMid: null, rightLabel: null, scaleSuffix: '', autoRanges: null,
   }));
   return {
     skin: 'legacy', background: '#000', foreground: '#00ff66', lineWidth: 1.75, eraseGapPx: 16, cursorLine: false, grid: null,

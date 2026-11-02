@@ -5,9 +5,9 @@
   "title": "Malignant hyperthermia (phases)",
   "category": "Showcase",
   "durationMin": 40,
-  "story": "A fit 35-year-old man on the table, breathing room air: premedicated with midazolam and fentanyl, preoxygenated, induced with propofol and succinylcholine, intubated and maintained on sevoflurane 2 %. The jaw is stiff after the succinylcholine. Minutes into surgery the EtCO₂ rises at unchanged ventilation when it should be falling (42 → 45; without MH it settles at 36–39), with a rising heart rate (64 → 80, blunted by fentanyl); untreated on this build, the core temperature rises slowly (about 37.3 °C at 51 minutes) and the established state comes only after about 100 minutes; the arrest branch is not reached on the demo path. Run the MH crisis: trigger off with a propofol infusion in its place, oxygen, hyperventilation, dantrolene (again if the EtCO₂ climbs back), cooling above 38.5 °C and the potassium.",
+  "story": "A fit 35-year-old man on the table, breathing room air: preoxygenated by face mask, premedicated with midazolam and fentanyl on the mask, induced with propofol and succinylcholine, intubated and maintained on sevoflurane 2 %. The jaw is stiff after the succinylcholine. Minutes into surgery the EtCO₂ rises at unchanged ventilation when it should be falling (42 → 45; without MH it settles at 36–39), with a rising heart rate (64 → 80, blunted by fentanyl); untreated on this build, the core temperature rises slowly (about 37.3 °C at 51 minutes) and the established state comes only after about 100 minutes; the arrest branch is not reached on the demo path. Run the MH crisis: trigger off with a propofol infusion in its place, oxygen, hyperventilation, dantrolene (again if the EtCO₂ climbs back), cooling above 38.5 °C and the potassium.",
   "briefing": {
-    "text": "You are the anaesthesia resident in theatre. A fit 35-year-old man, 80 kg, is on the table for elective surgery: awake, monitored, breathing room air. He will be premedicated with midazolam and fentanyl, preoxygenated, induced with propofol and succinylcholine, intubated, and maintained on sevoflurane 2 % with the ventilator at 12 × 500; then surgery begins.\n\nWatch the monitor. Say what you see as it changes, and what you would do about it.",
+    "text": "You are the anaesthesia resident in theatre. A fit 35-year-old man, 80 kg, is on the table for elective surgery: awake, monitored, breathing room air. He will be preoxygenated by face mask, premedicated with midazolam and fentanyl on the mask, induced with propofol and succinylcholine, intubated, and maintained on sevoflurane 2 % with the ventilator at 12 × 500; then surgery begins.\n\nWatch the monitor. Say what you see as it changes, and what you would do about it.",
     "estimatedMinutes": 25,
     "durationS": 60,
     "lang": "en"
@@ -275,6 +275,26 @@
   ],
   "actions": [
     {
+      "id": "preoxygenate",
+      "label": "Preoxygenate: 100 % O₂ by face mask",
+      "kind": "procedure",
+      "graded": false,
+      "phases": [
+        "baseline"
+      ],
+      "notes": "Preoxygenate first, then premedicate: the opioid blunts the breathing, so a preoxygenation after it would be less effective (the owner's ruling of 1 November). The mask stays on, 100 % O₂, through the premedication until the tube is in (Intubate).",
+      "give": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "preoxygenate",
+            "fio2": 1,
+            "durationS": 3600
+          }
+        }
+      ]
+    },
+    {
       "id": "premedicate",
       "label": "Premedicate: midazolam 2 mg, fentanyl 100 µg",
       "kind": "procedure",
@@ -282,7 +302,7 @@
       "phases": [
         "baseline"
       ],
-      "notes": "Preoxygenate before the induction. If you induce without it, the apnoea before the tube desaturates sooner: that is the point of the step.",
+      "notes": "Given on the face mask, which stays on until the tube is in (Intubate). If you premedicate and induce without Preoxygenate, the apnoea before the tube desaturates sooner: that is the point of the step.",
       "give": [
         {
           "type": "applyEvent",
@@ -302,26 +322,6 @@
             "dose": 100,
             "unit": "mcg",
             "route": "iv"
-          }
-        }
-      ]
-    },
-    {
-      "id": "preoxygenate",
-      "label": "Preoxygenate: 100 % O₂ by face mask",
-      "kind": "procedure",
-      "graded": false,
-      "phases": [
-        "baseline"
-      ],
-      "notes": "The mask stays on, 100 % O₂, until the tube is in (Intubate).",
-      "give": [
-        {
-          "type": "applyEvent",
-          "event": {
-            "kind": "preoxygenate",
-            "fio2": 1,
-            "durationS": 3600
           }
         }
       ]

@@ -48,8 +48,8 @@ function action(d: ScenarioDoc, history: H[], simT: number, log: ClinicalLogEntr
 const MH = doc('showcase-mh');
 const TO_SURGERY: H[] = [
   { t: 0, stateId: 'awake' },
-  { t: 10, stateId: 'premedicated', transitionId: 'premed' },
-  { t: 20, stateId: 'induced', transitionId: 'induce-premed' },
+  { t: 10, stateId: 'premedicated', transitionId: 'premed-air' },
+  { t: 20, stateId: 'induced', transitionId: 'induce' },
   { t: 30, stateId: 'intubated', transitionId: 'intubate' },
   { t: 40, stateId: 'surgery', transitionId: 'surgery' },
 ];

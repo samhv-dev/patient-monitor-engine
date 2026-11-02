@@ -62,7 +62,7 @@ async function course(r: ReturnType<typeof setup>) {
   await waitFor(() => r.ctl.hostOnline);
   expect((await r.ctl.send({ type: 'scenario', action: 'load', doc: MH })).accepted).toBe(true);
   await r.run(2);
-  for (const t of ['premed', 'preox', 'induce', 'intubate', 'surgery', 'crisis-surgery', 'dant', 'kTreat-treating']) await r.press(t); // Cool is offered only above 38.5 °C: the potassium hop
+  for (const t of ['preox', 'premed', 'induce', 'intubate', 'surgery', 'crisis-surgery', 'dant', 'kTreat-treating']) await r.press(t); // Cool is offered only above 38.5 °C: the potassium hop
   expect((await r.ctl.send({ type: 'scenario', action: 'goto', target: 'recovering' })).accepted).toBe(true);
   await r.run(2);
   for (const t of ['normo', 'dant-normoventilated']) await r.press(t);
@@ -97,7 +97,7 @@ describe('stage marks (driver, host side)', () => {
     const marks = r.driver.stageMarks();
     // one per stage entry, in order: a state entered right after itself through its own hop is the same stage entry
     expect(marks.map((m) => m.note)).toEqual(all.filter((id) => !hops.has(id)).filter((id, i, xs) => xs[i - 1] !== id));
-    expect(marks.map((m) => m.note)).toEqual(['awake', 'premedicated', 'preoxygenated', 'induced', 'intubated', 'surgery', 'triggerOff', 'treating', 'recovering', 'normoventilated', 'treating']);
+    expect(marks.map((m) => m.note)).toEqual(['awake', 'preoxygenated', 'premedicated', 'induced', 'intubated', 'surgery', 'triggerOff', 'treating', 'recovering', 'normoventilated', 'treating']);
     expect(marks.every((m) => m.kind === 'stage' && m.action === 'bookmark' && m.target === `stage:${m.note}:${marks.indexOf(m) + 1}`)).toBe(true);
     expect(r.driver.bookmarks()).toEqual(expect.arrayContaining(marks.map((m) => m.target as string)));
     expect(r.ctl.bookmarks).toEqual([]); // not the instructor's bookmarks
@@ -118,7 +118,7 @@ describe('stage marks (driver, host side)', () => {
     await r.press('dant');
     expect(r.driver.runner?.stateId).toBe('treating');
     // the discarded course's marks went with it (IP9 review M1): the kept course's, then the new treating
-    expect(r.driver.stageMarks().map((m) => m.note)).toEqual(['awake', 'premedicated', 'preoxygenated', 'induced', 'intubated', 'surgery', 'triggerOff', 'treating']);
+    expect(r.driver.stageMarks().map((m) => m.note)).toEqual(['awake', 'preoxygenated', 'premedicated', 'induced', 'intubated', 'surgery', 'triggerOff', 'treating']);
     expect(r.driver.bookmarks().filter((b) => b.startsWith('stage:'))).toEqual(r.driver.stageMarks().map((m) => m.target));
   }, 120_000);
 
@@ -186,7 +186,7 @@ describe('stage marks (driver, host side)', () => {
     // the run goes on: the next stage gets a mark whose label no kept mark had
     await b.press('dant');
     const labels = b.driver.stageMarks().map((m) => m.target);
-    expect(b.driver.stageMarks().map((m) => m.note)).toEqual(['awake', 'premedicated', 'preoxygenated', 'induced', 'intubated', 'surgery', 'triggerOff', 'treating']);
+    expect(b.driver.stageMarks().map((m) => m.note)).toEqual(['awake', 'preoxygenated', 'premedicated', 'induced', 'intubated', 'surgery', 'triggerOff', 'treating']);
     expect(new Set(labels).size).toBe(labels.length);
   }, 240_000);
 });

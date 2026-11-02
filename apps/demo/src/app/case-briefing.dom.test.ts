@@ -334,7 +334,7 @@ describe('the Case briefing', () => {
 describe("the MH demonstration card's briefing", () => {
   it('is the reviewed learner text, 25 minutes, 60 s, English, and never names the diagnosis', () => {
     expect(mh.briefing).toEqual({
-      text: 'You are the anaesthesia resident in theatre. A fit 35-year-old man, 80 kg, is on the table for elective surgery: awake, monitored, breathing room air. He will be premedicated with midazolam and fentanyl, preoxygenated, induced with propofol and succinylcholine, intubated, and maintained on sevoflurane 2 % with the ventilator at 12 × 500; then surgery begins.\n\nWatch the monitor. Say what you see as it changes, and what you would do about it.',
+      text: 'You are the anaesthesia resident in theatre. A fit 35-year-old man, 80 kg, is on the table for elective surgery: awake, monitored, breathing room air. He will be preoxygenated by face mask, premedicated with midazolam and fentanyl on the mask, induced with propofol and succinylcholine, intubated, and maintained on sevoflurane 2 % with the ventilator at 12 × 500; then surgery begins.\n\nWatch the monitor. Say what you see as it changes, and what you would do about it.',
       estimatedMinutes: 25, durationS: 60, lang: 'en',
     });
     expect(mh.briefing.text).not.toMatch(/hyperthermia|\bMH\b|malignant/i);

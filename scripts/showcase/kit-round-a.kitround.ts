@@ -1574,9 +1574,9 @@ test('Q1 30-minute talk, the 3 November programme: opening, MH (E119) with three
     // ---- 1 MH to the early signs
     await M.start('Malignant hyperthermia', 8, 'after-alarms', { phones, cardOrder: true });
     await M.untilT(M.t0 + 30);
-    await M.press('Premedicate: midazolam 2 mg, fentanyl 100 µg', 'premedicated');
-    await M.untilT(M.t0 + 60);
     await M.press('Preoxygenate: 100 % O₂ by face mask', 'preoxygenated');
+    await M.untilT(M.t0 + 60);
+    await M.press('Premedicate: midazolam 2 mg, fentanyl 100 µg', 'premedicated');
     await M.untilT(M.t0 + 240);
     const tInd = await M.press('Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg', 'induced');
     await M.untilT(M.t0 + 300);
@@ -1774,9 +1774,9 @@ test('A4 MH (E119): the induction sequence, early call, three 5-min fast-forward
     // cue card: Load · All alarms on · Bookmark · ×8
     await R.start('Malignant hyperthermia', 8, 'after-alarms');
     await R.untilT(R.t0 + 30);
-    await R.press('Premedicate: midazolam 2 mg, fentanyl 100 µg', 'premedicated');
-    await R.untilT(R.t0 + 60);
     await R.press('Preoxygenate: 100 % O₂ by face mask', 'preoxygenated');
+    await R.untilT(R.t0 + 60);
+    await R.press('Premedicate: midazolam 2 mg, fentanyl 100 µg', 'premedicated');
     await R.untilT(R.t0 + 240);
     const tInd = await R.press('Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg', 'induced');
     await R.untilT(R.t0 + 300);
@@ -1865,9 +1865,9 @@ test('A4 /2 MH (phases card): the induction sequence, early call, three 5-min fa
   try {
     await R.start(MH2, 8, 'after-alarms', { card: 2 });
     await R.untilT(R.t0 + 30);
-    await R.press('Premedicate: midazolam 2 mg, fentanyl 100 µg');
-    await R.untilT(R.t0 + 60);
     await R.press('Preoxygenate: 100 % O₂ by face mask');
+    await R.untilT(R.t0 + 60);
+    await R.press('Premedicate: midazolam 2 mg, fentanyl 100 µg');
     await R.untilT(R.t0 + 240);
     const tInd = await R.press('Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg');
     await R.untilT(R.t0 + 300);
@@ -1999,9 +1999,9 @@ test('Q1 /2 30-minute talk on the phases card: opening, MH (pme-scenario/2) with
     // ---- 1 MH to the early signs: the first pause is the first Early signs reading (a phase, not 08:05)
     await M.start(MH2, 8, 'after-alarms', { phones, cardOrder: true, card: 2 });
     await M.untilT(M.t0 + 30);
-    await M.press('Premedicate: midazolam 2 mg, fentanyl 100 µg');
-    await M.untilT(M.t0 + 60);
     await M.press('Preoxygenate: 100 % O₂ by face mask');
+    await M.untilT(M.t0 + 60);
+    await M.press('Premedicate: midazolam 2 mg, fentanyl 100 µg');
     await M.untilT(M.t0 + 240);
     const tInd = await M.press('Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg');
     await M.untilT(M.t0 + 300);

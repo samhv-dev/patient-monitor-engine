@@ -47,8 +47,8 @@ test('a reload mid-card comes back in the same card, state and clock, and the ph
   await phone.goto(`${base}/?join=${code}&relay=${encodeURIComponent(ws)}`);
   await phone.waitForFunction(() => (window as unknown as W).__pmeFollower?.sync?.status === 'synced', null, { timeout: 30_000 });
 
-  // the MH card to `intubated` by its own buttons (premedicate, induce, intubate), then a while in that state
-  for (const t of ['premed', 'induce-premed', 'intubate']) {
+  // the MH card to `intubated` by its own buttons (premedicate on room air, induce, intubate), then a while in that state
+  for (const t of ['premed-air', 'induce', 'intubate']) {
     const r = await page.evaluate((target) => (window as unknown as W).__pmeApp.link.send({ type: 'scenario', action: 'trigger', target }), t);
     expect(r.accepted, `${t}: ${r.reason ?? ''}`).toBe(true);
   }
@@ -112,7 +112,7 @@ test('Finish the case: a reload after "Save and restart" restores the new run; a
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page, base, '?scenario=showcase-mh#/teach2', { warmMs: 1500 });
   const code = await app(page, (w) => w.__pmeApp.session.code);
-  for (const t of ['premed', 'induce-premed', 'intubate']) {
+  for (const t of ['premed-air', 'induce', 'intubate']) {
     const r = await page.evaluate((target) => (window as unknown as W).__pmeApp.link.send({ type: 'scenario', action: 'trigger', target }), t);
     expect(r.accepted, `${t}: ${r.reason ?? ''}`).toBe(true);
   }

@@ -12,6 +12,7 @@ import type { ClockAnchor, CoreOptions, Size } from './protocol.ts';
 import { ecgLabel, formatSpeed, legacyPlan, type LaneTextPlan, type PlanLane, type RenderPlan } from './skin-plan.ts';
 import { SweepLane } from './sweep-lane.ts';
 import { autoRange, scaleFor } from './wave-lanes.ts';
+import { feedCo2Range, newCo2Range, restartCo2Range } from './co2-range.ts';
 
 export const THEME = { background: '#000', ecg: '#00ff66', label: '#00ff66', grid: '#222' } as const; // legacy look (legacyPlan)
 export const LABEL_W = 56; // CSS px reserved at the left of each lane for chrome
@@ -58,6 +59,8 @@ export const STALL_MS = 1000;
 const GAIN_BEATS_KEPT = 64;
 /** FX-25: how far back heldFrom looks — past the lanes' 100-s backfill, inside the engine's 120-s buffer [ENG]. */
 const HELD_PROBE_S = 110;
+/** The CO2 auto-range judges at most this far back after a start or a gap (the lanes' backfill, inside the buffer) [ENG]. */
+const CO2_RANGE_BACK_S = 100;
 
 export interface CanvasTarget {
   width: number;
@@ -84,6 +87,10 @@ export class MonitorCore {
    *  clears the buffers). The lanes' backfill and the auto-gain never read before it. */
   private historyT = 0;
   private gainMult: number[] = []; // per lane, ECG gain multiplier (label and auto gain)
+  /** The CO2 lane's auto-range (co2-range.ts): its state and the next co2 sample index it judges (-1: start afresh). */
+  private co2Range = newCo2Range();
+  private co2Next = -1;
+  private readonly co2Scratch = new Float32Array(1024);
   /** ECG labels wider than LABEL_W (e.g. Saadat-like `II  X1  NORMAL`) run into the sweep area; kept to repaint them. */
   private labelTail: Array<{ text: string; w: number } | null> = [];
   /** The lane generation the right-hand texts were last painted on (a cleared lane gets them back at once). */
@@ -146,7 +153,14 @@ export class MonitorCore {
 
   /** Switch skin/page/theme: new lanes and chrome, same engine (no restart, tick continuity). */
   setPlan(plan: RenderPlan): void {
+    // the CO2 auto-range survives a skin, page or theme switch whose CO2 lane offers the scale shown now
+    const shown = this.co2Lane()?.range?.[1];
     this.plan = plan;
+    const next = this.co2Lane();
+    const at = shown === undefined || !next ? -1 : (next.autoRanges as number[]).indexOf(shown);
+    if (at > 0) this.setCo2Top(next as PlanLane, shown as number);
+    this.co2Range = newCo2Range(Math.max(0, at));
+    this.co2Next = -1;
     this.gainMult = []; // the new plan's own gains
     this.overlays.clear();
     this.sendLeads();
@@ -174,6 +188,7 @@ export class MonitorCore {
     this.beatTs = [];
     this.gainK = -Infinity;
     for (const j of this.gainJudge) j.pending = null;
+    this.co2Next = -1; // the CO2 auto-range keeps its scale and counts the new timeline's breaths afresh
     this.layout();
   }
 
@@ -273,6 +288,7 @@ export class MonitorCore {
     const t = this.clock.renderT;
     if (this.visible) {
       this.autoGain(t);
+      this.co2AutoRange(t);
       this.plan.lanes.forEach((pl, i) => {
         const lane = this.lanes[i] as SweepLane;
         if (pl.kind === 'wave') {
@@ -351,6 +367,53 @@ export class MonitorCore {
     const mmPerMv = (this.gainMult[i] ?? 1) * 10;
     if (!pl.autoGain || !(pl.gainLaneMm > 0)) return mmPerMv;
     return mmPerMv * Math.min(1, h / this.pxPerMm / pl.gainLaneMm);
+  }
+
+  /** The plan's auto-ranged CO2 lane (skin `co2.autoScales`), if it has one. */
+  private co2Lane(): PlanLane | undefined {
+    return this.plan.lanes.find((l) => l.channel === 'co2' && l.autoRanges !== null && l.range !== null);
+  }
+
+  /** Lane `pl`'s CO2 scale top becomes `top`: its range, the dotted line at its top and so its scale texts follow. */
+  private setCo2Top(pl: PlanLane, top: number): void {
+    pl.range = [pl.range?.[0] ?? 0, top];
+    if (pl.scaleLines) pl.scaleLines = [top];
+  }
+
+  /**
+   * Owner ruling of 1 Nov 2026 (E63 revisited): the CO2 lane's auto-range (co2-range.ts). Every co2 sample drawn by now
+   * is judged once, in index order, whatever the frames (so every window on the same timeline takes the same steps at
+   * the same breaths). A new scale redraws the lane whole from the engine's buffer at that scale, with its texts.
+   */
+  private co2AutoRange(t: number): void {
+    const pl = this.co2Lane();
+    if (!pl) return;
+    const tops = pl.autoRanges as number[];
+    const latest = this.engine.latestSampleIndex('co2');
+    if (latest < 0) return void (this.co2Next = -1);
+    const rate = this.engine.sampleRate('co2');
+    const end = Math.min(latest, Math.floor(t * rate + 1e-9)); // the last sample the lane draws this frame
+    const back = Math.floor(CO2_RANGE_BACK_S * rate);
+    if (this.co2Next < 0 || end - this.co2Next > back) {
+      // a start (a new monitor, plan or timeline, an attached line) or a gap longer than the backfill (a fast-forward):
+      // the breaths are counted afresh from what the engine holds; the scale shown stays
+      restartCo2Range(this.co2Range);
+      this.co2Next = Math.max(this.heldFrom('co2'), Math.ceil(this.historyT * rate - 1e-6), end + 1 - back);
+    }
+    while (this.co2Next <= end) {
+      const got = this.engine.readSamples('co2', this.co2Next, this.co2Scratch.subarray(0, Math.min(this.co2Scratch.length, end + 1 - this.co2Next)));
+      if (got <= 0) break;
+      feedCo2Range(this.co2Range, this.co2Scratch, got, rate, tops);
+      this.co2Next += got;
+    }
+    const top = tops[this.co2Range.at] as number;
+    if (top === (pl.range as [number, number])[1]) return;
+    this.setCo2Top(pl, top);
+    const i = this.plan.lanes.indexOf(pl);
+    const lane = this.lanes[i] as SweepLane;
+    Object.assign(lane.cfg, scaleFor((pl.range as [number, number])[0], top, lane.cfg.height, this.pxPerMm), pl.scaleLines && lane.cfg.hLines ? { hLines: { ...lane.cfg.hLines, values: pl.scaleLines } } : {});
+    lane.reset(this.ctx); // the next draw backfills the lane at the new scale
+    this.drawChrome([i]);
   }
 
   /** Wave lanes (125 Hz; any channel the plan names), auto-scaled pleth, cleared on 'none'. */

@@ -23,13 +23,14 @@ describe('courseSvg on A3.1', () => {
   const ms = keyMoments(d);
   const svg = courseSvg(d, ms, { trends: [...TRENDS] });
 
-  it('four trends, seven badges (team, patient), one band labelled with its span', () => {
+  it('four trends, seven badges (team, patient), one band (drawn in each of the four panels) labelled with its span', () => {
     expect([...svg.matchAll(/data-trend="(\w+)"/g)].map((m) => m[1])).toEqual([...TRENDS]);
     expect(count(svg, /class="db-badge /g)).toBe(7);
     expect([...svg.matchAll(/data-n="(\d+)"/g)].map((m) => Number(m[1]))).toEqual([1, 2, 3, 4, 5, 6, 7]);
     expect(count(svg, /class="db-badge db-team"/g)).toBe(4);
     expect(count(svg, /class="db-badge db-patient"/g)).toBe(3);
-    expect(count(svg, /<rect class="db-pulseless"/g)).toBe(1);
+    expect(count(svg, /<rect class="db-pulseless"/g)).toBe(4);
+    expect(count(svg, /class="db-pulseless-l"/g)).toBe(1);
     expect(svg).toContain('pulseless 3 min 07 s');
   });
 
@@ -68,17 +69,20 @@ describe('courseSvg on A3.1', () => {
 
 // UI review #19: on the A4 haemorrhage record badges 18 and 19 ran past the plot's right edge (19 clipped, 18 under it)
 // and the MH badges 9–12 touched. Badges keep apart, stay inside the plot, and sit as near their moment as they can.
+// The owner's strip of 1–2 November draws the report's moments as the events row's 22-unit down arrows, an arrow's
+// width and 2 apart; the learner's strip keeps its 14-unit badges, 18 apart.
 describe('the key-moment badges never collide (UI review #19)', () => {
-  const xs = (svg: string) => [...svg.matchAll(/<text x="([\d.]+)" y="15"/g)].map((m) => Number(m[1]));
+  const report = (svg: string) => [...svg.matchAll(/<text x="([\d.]+)" y="[\d.]+" text-anchor="middle" class="db-badge-n db-arrow-n"/g)].map((m) => Number(m[1]));
+  const learner = (svg: string) => [...svg.matchAll(/<text x="([\d.]+)" y="15"/g)].map((m) => Number(m[1]));
   for (const [name, rec, n] of [['A4 haemorrhage', a4haem, 19], ['A4 MH', a4mh, 13]] as const) {
-    it(`${name}: ${n} badges, 18 units apart or more, all inside the plot`, () => {
+    it(`${name}: ${n} arrows (report) and ${n} badges (learner), apart, all inside the plot`, () => {
       const d = structuredClone(rec.record) as unknown as RunData;
-      for (const learner of [false, true]) {
-        const b = xs(courseSvg(d, keyMoments(d), { trends: [...TRENDS], learner }));
+      for (const [isLearner, xs, gap, half] of [[false, report, 24, 11], [true, learner, 18, 7]] as const) {
+        const b = xs(courseSvg(d, keyMoments(d), { trends: [...TRENDS], learner: isLearner }));
         expect(b).toHaveLength(n);
-        for (let i = 1; i < b.length; i++) expect((b[i] as number) - (b[i - 1] as number), `badges ${i} and ${i + 1}`).toBeGreaterThanOrEqual(17.9);
-        expect(Math.min(...b)).toBeGreaterThanOrEqual(108 + 7 - 0.05);
-        expect(Math.max(...b)).toBeLessThanOrEqual(COURSE_W - 10 - 7 + 0.05);
+        for (let i = 1; i < b.length; i++) expect((b[i] as number) - (b[i - 1] as number), `badges ${i} and ${i + 1}`).toBeGreaterThanOrEqual(gap - 0.1);
+        expect(Math.min(...b)).toBeGreaterThanOrEqual(108 + half - 0.05);
+        expect(Math.max(...b)).toBeLessThanOrEqual(COURSE_W - 10 - half + 0.05);
       }
     });
   }

@@ -379,8 +379,10 @@ nav and the session-bar title [UIR #9].
    (paused)" within a second and holds the paused monitor [Q1-MH: all three phones at every stop].
 2. **Explore physiology** in the rail (on the Instructor view the rail is the icon strip: the chart icon, the tooltip
    reads "Explore physiology"). Explore opens on *At the bedside*; pick the stop's sections in the **Body systems** list.
-   "Changed only" stays **off**. The **Change** column is against the patient at 01:00 (awake, premedicated), so the
-   anaesthetic's own effects show there too (ART M down); read the **Now** column. There is no session bar on Explore.
+   "Changed only" stays **off**. The **Change** column is against the patient at 01:00 (awake, 30 s on the face mask,
+   the premedication given that second: preoxygenation first since the owner's ruling of 1 November), so the
+   anaesthetic's own effects show there too (ART M down) and the oxygen rows read down (FiO₂ 1.0 on the mask then, 0.5
+   on the ventilator); read the **Now** column. There is no session bar on Explore.
 3. Point at the stop's numbers (below; each talk point names the number on screen).
 4. The **model page**: click its tab (right of the instructor tab), point, click the instructor tab again. The session
    stays Paused [`hidden-tab.ts`; the clock held to the second at every stop, Q1-MH].
@@ -404,8 +406,10 @@ running case: Instructor → Scenario → **Choose another scenario** → **Show
 **Load scenario**. The talk run loaded it from the Instructor's Scenario tab, Showcase chip [Q1-MH].)
 
 Card: *Malignant hyperthermia* (Showcase). **The card starts awake on room air** and every step of the induction is a
-button [CARD]: Awake on the table, monitoring on, breathing room air → **Premedicate: midazolam 2 mg, fentanyl 100 µg** →
-**Preoxygenate: 100 % O₂ by face mask** → **Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg** (the MH condition
+button [CARD]: Awake on the table, monitoring on, breathing room air → **Preoxygenate: 100 % O₂ by face mask** →
+**Premedicate: midazolam 2 mg, fentanyl 100 µg** (on the mask, which stays on until Intubate: the owner's ruling of
+1 November, the opioid blunts the breathing, so the oxygen goes on first) → **Induce: propofol 2 mg/kg, then
+succinylcholine 1.5 mg/kg** (the MH condition
 starts here; say the masseter line) → **Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %** → **Start
 surgery: rocuronium 0.6 mg/kg** → Early signs → **MH crisis: stop sevoflurane, charcoal filters, propofol infusion,
 O₂ 100 % at 10 L/min, hyperventilate** (Trigger off: 20 × 600, propofol 100 µg/kg/min) → **Dantrolene 2.5 mg/kg** →
@@ -415,18 +419,26 @@ O₂ 100 %)** when the EtCO₂ climbs back → Recovering → ventilation back a
 to 0 % at 10 L/min, the ventilator 20 × 600 at FiO₂ 1.0 and a propofol infusion of 100 µg/kg/min. The **charcoal
 filters are not modelled** (the label names them; the fresh gas washes the agent out). **Cool: refrigerated saline
 20 mL/kg (1.6 L)** is pressed only above 38.5 °C, so **not on this path**; the engine has no cold-fluid input and gives
-that saline at the theatre's 21 °C [REV #4]. **Oxygen is never implicit (E121):** skip Preoxygenate and SpO₂ reads 90 %
-at the induction and 63 % when the tube goes in 60 s later [S1 E121 slow test]. The **MH crisis** button is offered in
+that saline at the theatre's 21 °C [REV #4]. **Oxygen is never implicit (E121):** skip Preoxygenate (the awake patient's
+second button, Premedicate, on room air) and SpO₂ reads 91 % at the induction and 65 % when the tube goes in 60 s later
+[S1 E121 slow test, preoxygenation-first order]. The **MH crisis** button is offered in
 Induced, Intubated, Surgery, Early signs and Established; **ventilation back** only in Recovering [CARD].
 
 ### Segment 1: MH to the early signs (×8 then ×4). Slot 2:00 (T+3:00 → 5:00)
 
+**[KR-PF]** = re-measured for the owner's ruling of 1 November (preoxygenate 0:30, premedicate on the mask 1:00): kit
+round A4 MH on Chromium, kit e838b5c4, Instructor v2, against the same round on main a8ab641f the same night. That pair
+moved: `RR TOO LOW` 3:15 → 3:59, `CO2 APNEA` 4:55 → 4:54, SpO₂ at the 1:00 press 96 → 99 (the mask has been on 30 s),
+Early signs 8:12 → 8:16 and the call 8:14 → 8:18 (/1); on the phases card Early signs 8:10 → 8:21, the call 8:15 →
+8:26. Every Debrief verdict is unchanged (the call 2 s after Early signs, dantrolene 21 s after the call). The rows below
+the 4:00 row are still the talk run's (Q1-MH, old order): expect Early signs a few seconds later than the 8:09 printed.
+
 | T+ | W | Sim | Speed | Press / do | Point at (measured, Q1-MH) |
 |---|---|---|---|---|---|
 | ≈ 3:30 (est.) | 0:00 | 0:00 | **×8** | **Load · All alarms on · Bookmark** (bookmark at 00:06) | HR 69, ART 122/80 (93); room air |
-| | 0:07 | 0:30 | ×8 | **Premedicate: midazolam 2 mg, fentanyl 100 µg** | state 0:32; HR 70, SpO₂ 96, EtCO₂ 37 |
-| | 0:11 | 1:00 | ×8 | **Preoxygenate: 100 % O₂ by face mask** | state 1:02; then `RR TOO LOW` 3:09 (RR 6 after the premedication) |
-| | 0:33 | **4:00** | ×8 | **Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg**; the masseter line (below) | state 4:03; SpO₂ 99, EtCO₂ 46, RR 6; `CO2 APNEA` 4:49 |
+| | 0:07 | 0:30 | ×8 | **Preoxygenate: 100 % O₂ by face mask** (first: the opioid blunts the breathing) | state 0:37; HR 70, SpO₂ 96, EtCO₂ 37, RR 14 (room air until now) [KR-PF] |
+| | 0:11 | 1:00 | ×8 | **Premedicate: midazolam 2 mg, fentanyl 100 µg** (on the mask: it stays on until Intubate) | state 1:06; SpO₂ 99 on the mask, EtCO₂ 39, RR 13; then `RR TOO LOW` 3:59 (RR 6 after the premedication) [KR-PF] |
+| | 0:33 | **4:00** | ×8 | **Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg**; the masseter line (below) | state 4:06; SpO₂ 99, EtCO₂ 46, RR 6; `CO2 APNEA` 4:54 [KR-PF] |
 | | 0:41 | **5:00** | ×8 | **Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %** | state 5:02; ART 95/59 (69); apnoea alarm to ventilated breaths 13 s |
 | | 0:48 | **6:00** | ×8 | **Start surgery: rocuronium 0.6 mg/kg** | state 6:04; HR 71, ART 96/59 (69), EtCO₂ 42 |
 | | 0:59 | 7:30 | **×4** | watch the CO₂ tile climb at the same ventilation | 7:34: EtCO₂ 45, HR 75, ART 105/64 (75) |

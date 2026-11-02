@@ -522,7 +522,7 @@ describe('ScenarioDriver: engine truth for a /2 runner only (F4)', () => {
   };
 
   it('a /1 card\'s runner receives exactly today\'s input kinds and values: the MH demo card\'s command stream', async () => {
-    const o = await oneCard('showcase-mh.json', ['premed', 'preox', 'induce', 'intubate', 'surgery', 'crisis-earlySigns', 'crisis-established', 'dant', 'cool-treating', 'normo'], 1200);
+    const o = await oneCard('showcase-mh.json', ['preox', 'premed', 'induce', 'intubate', 'surgery', 'crisis-earlySigns', 'crisis-established', 'dant', 'cool-treating', 'normo'], 1200);
     expect(o.pressed).toBeGreaterThanOrEqual(7);
     expect(o.states).toContain('triggerOff');
     checkToday(o);
