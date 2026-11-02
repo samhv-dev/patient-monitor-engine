@@ -82,14 +82,14 @@ beforeEach(() => document.body.replaceChildren());
 
 /** The MH course to the treatment stage (the crisis called from Established MH, dantrolene from Trigger off). */
 const MH_TO_TREATING: H[] = [
-  { t: 0, stateId: 'awake' }, { t: 60, stateId: 'premedicated', transitionId: 'premed' }, { t: 120, stateId: 'induced', transitionId: 'induce-premed' },
+  { t: 0, stateId: 'awake' }, { t: 60, stateId: 'premedicated', transitionId: 'premed-air' }, { t: 120, stateId: 'induced', transitionId: 'induce' },
   { t: 180, stateId: 'intubated', transitionId: 'intubate' }, { t: 240, stateId: 'surgery', transitionId: 'surgery' },
   { t: 420, stateId: 'earlySigns', transitionId: 'early' }, { t: 470, stateId: 'established', transitionId: 'established' },
   { t: 496, stateId: 'triggerOff', transitionId: 'crisis-established' },
   { t: 520, stateId: 'dantrolene', transitionId: 'dant' }, { t: 522, stateId: 'treating', transitionId: 'back' },
 ];
 const MH_ROWS = [
-  st(0, 'awake'), st(60, 'premedicated', 'premed', 'press'), st(120, 'induced', 'induce-premed', 'press'), st(180, 'intubated', 'intubate', 'press'),
+  st(0, 'awake'), st(60, 'premedicated', 'premed-air', 'press'), st(120, 'induced', 'induce', 'press'), st(180, 'intubated', 'intubate', 'press'),
   st(240, 'surgery', 'surgery', 'press'), st(420, 'earlySigns', 'early', 'rule'), st(470, 'established', 'established', 'rule'),
   st(496, 'triggerOff', 'crisis-established', 'press'), st(520, 'dantrolene', 'dant', 'press'), st(522, 'treating', 'back', 'rule'),
 ];

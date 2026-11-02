@@ -19,7 +19,7 @@ const tr = (doc: ScenarioDoc, id: string) => doc.states.flatMap((s) => s.transit
 describe('stagesOf (answer 2: hops fold into the state their exit leads to)', () => {
   it('MH: 14 stages in document order; the five 2-second treatment states fold into treating; triggerOff and treating are two stages', () => {
     const st = stagesOf(MH);
-    expect(st.map((s) => s.id)).toEqual(['awake', 'premedicated', 'preoxygenated', 'induced', 'intubated', 'surgery', 'earlySigns', 'established', 'triggerOff', 'treating', 'recovering', 'normoventilated', 'arrest', 'cpr']);
+    expect(st.map((s) => s.id)).toEqual(['awake', 'preoxygenated', 'premedicated', 'induced', 'intubated', 'surgery', 'earlySigns', 'established', 'triggerOff', 'treating', 'recovering', 'normoventilated', 'arrest', 'cpr']);
     expect(st.find((s) => s.id === 'treating')?.states).toEqual(['treating', 'dantrolene', 'dantroleneAgain', 'cooling', 'potassium', 'bicarbonate']);
     expect(st.filter((s) => s.states.length > 1).map((s) => s.id)).toEqual(['treating']);
     expect(st.find((s) => s.id === 'treating')?.label).toBe('MH treatment under way');
@@ -117,9 +117,9 @@ describe('stepCommand (the same resolution as today\'s press)', () => {
 // `when` (`s.state === …`, inCrisis = triggerOff, treating or recovering) or, for a timed act, from the card's path at
 // that time. The source files are parsed below, so a press added to a slow test without a line here fails this test.
 const PRESSED_IN: Record<string, { card: string; states: string[] }> = {
-  'Premedicate: midazolam 2 mg, fentanyl 100 µg': { card: 'showcase-mh', states: ['awake'] },
-  'Preoxygenate: 100 % O₂ by face mask': { card: 'showcase-mh', states: ['premedicated'] },
-  'Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg': { card: 'showcase-mh', states: ['preoxygenated', 'premedicated'] }, // the second: the run without preoxygenation
+  'Preoxygenate: 100 % O₂ by face mask': { card: 'showcase-mh', states: ['awake'] },
+  'Premedicate: midazolam 2 mg, fentanyl 100 µg': { card: 'showcase-mh', states: ['preoxygenated', 'awake'] }, // the second: the run without preoxygenation
+  'Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg': { card: 'showcase-mh', states: ['premedicated'] },
   'Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %': { card: 'showcase-mh', states: ['induced'] },
   'Start surgery: rocuronium 0.6 mg/kg': { card: 'showcase-mh', states: ['intubated'] },
   'MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate': { card: 'showcase-mh', states: ['earlySigns', 'established'] },

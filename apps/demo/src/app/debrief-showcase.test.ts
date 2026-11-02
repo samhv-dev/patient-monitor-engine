@@ -61,8 +61,8 @@ const once = (fn: (t: number, rec: RunRecord) => boolean, tr: string) => {
   let done = false;
   return (t: number, rec: RunRecord) => (!done && fn(t, rec) ? ((done = true), tr) : null);
 };
-/** The MH early call as the cue card runs it after the E119 induction sequence, on the card's own clock (premedication
- *  0:30, preoxygenation 1:00, induction 4:00, intubation 5:00, surgery 6:00, as kit round A4 presses them; call 9 s into
+/** The MH early call as the cue card runs it after the E119 induction sequence, on the card's own clock (preoxygenation
+ *  0:30, premedication 1:00 (the owner's ruling of 1 November), induction 4:00, intubation 5:00, surgery 6:00, as kit round A4 presses them; call 9 s into
  *  Early signs, dantrolene +20 s; no cooling below 38.5 °C, E132), then "ventilation back" when `normo` says so. Until
  *  the E132 rebase onto E131 this path was compressed (induction 1:00, surgery 2:30); under E131 that compressed
  *  course is not the card's: at 20 × 600 its EtCO₂ dips below 40 for only ≈ 90 s (39 at 7:00–8:00, 40 from 8:30), so
@@ -75,7 +75,7 @@ const mhPresses = (normo: (t: number, rec: RunRecord, at: (id: string) => number
     const go = (tr: string, ok: boolean) => (ok && !done.has(tr) ? (done.add(tr), tr) : null);
     const early = at('earlySigns');
     const off = at('triggerOff');
-    return go('premed', t >= 30) ?? go('preox', t >= 60) ?? go('induce', t >= 240) ?? go('intubate', t >= 300) ?? go('surgery', t >= 360) ?? go('crisis-earlySigns', early !== undefined && t >= early + 9) ?? go('dant', off !== undefined && t >= off + 20)
+    return go('preox', t >= 30) ?? go('premed', t >= 60) ?? go('induce', t >= 240) ?? go('intubate', t >= 300) ?? go('surgery', t >= 360) ?? go('crisis-earlySigns', early !== undefined && t >= early + 9) ?? go('dant', off !== undefined && t >= off + 20)
       ?? go('normo', at('recovering') !== undefined && normo(t, rec, at));
   };
 };
@@ -174,12 +174,12 @@ describe('IP8: the new record fields change no verdict', () => {
       const pressed = d.rows.filter((r) => r.by === 'press').map((r) => [r.tr, r.t]);
       expect(steps(d).filter((x) => x.takenT !== null).map((x) => [x.id, x.takenT]).sort(), name).toEqual(pressed.sort());
     }
-    expect(mhRun.data.rows.filter((r) => r.by === 'press').map((r) => r.tr)).toEqual(['premed', 'preox', 'induce', 'intubate', 'surgery', 'crisis-earlySigns', 'dant', 'normo']);
+    expect(mhRun.data.rows.filter((r) => r.by === 'press').map((r) => r.tr)).toEqual(['preox', 'premed', 'induce', 'intubate', 'surgery', 'crisis-earlySigns', 'dant', 'normo']);
     // the table: every press, and the one step an objective still asks for (objective 4: dantrolene again after the
     // ventilation is back); the alternatives not chosen (induction without pre-oxygenation, the crisis buttons of the
     // stages it was not called from, the other treatments) are left out
     expect(steps(mhRun.data).map((x) => [x.id, x.status])).toEqual([
-      ['premed', 'taken'], ['preox', 'taken'], ['induce', 'taken'], ['intubate', 'taken'], ['surgery', 'taken'], ['crisis-earlySigns', 'taken'],
+      ['preox', 'taken'], ['premed', 'taken'], ['induce', 'taken'], ['intubate', 'taken'], ['surgery', 'taken'], ['crisis-earlySigns', 'taken'],
       ['dant', 'taken'], ['normo', 'taken'], ['dant-normoventilated', 'not done'],
     ]);
     expect(haemRun.data.rows.filter((r) => r.by === 'press').map((r) => r.tr)).toEqual(['oxygen', 'intubate-o2', 'cpr-pea', 'volume', 'epi-running']);
@@ -283,7 +283,7 @@ describe('IP9 (ruling 1): the ACTION list and the Debrief steps table read a ste
 describe('F7: the /2 MH card on the engine — the debrief grades what the panel grades', () => {
   /** The run sheet's A presses (docs/showcase/SHOWCASE-2-RUN-SHEET.md §3; malignant-hyperthermia-v2.slow.test.ts PATH),
    *  to the talk's end (24:31). */
-  const PATH: Array<[number, string]> = [[30, 'premedicate'], [60, 'preoxygenate'], [240, 'induce'], [300, 'intubate'], [360, 'startSurgery'], [492, 'callCrisis'], [512, 'dantrolene'], [832, 'ventilationBack'], [1153, 'dantroleneAgain']];
+  const PATH: Array<[number, string]> = [[30, 'preoxygenate'], [60, 'premedicate'], [240, 'induce'], [300, 'intubate'], [360, 'startSurgery'], [492, 'callCrisis'], [512, 'dantrolene'], [832, 'ventilationBack'], [1153, 'dantroleneAgain']];
   const END_S = 1471.2;
 
   it('the record copies the runner’s inputs; grade() on them (final, at the end) equals grade() on the runner’s own; the export is pme-debrief/3', async () => {
