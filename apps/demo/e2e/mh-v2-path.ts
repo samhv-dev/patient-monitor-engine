@@ -21,6 +21,12 @@ export const PATH: Array<[number, string]> = [
   [1153, 'Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600, O₂ 100 %)'],
 ];
 export const END_S = 1471; // 24:31, the talk's end
+/** A press that waits, after its run-sheet time, for the phase the team presses it in: the call is pressed at Early signs'
+ *  entry or at 08:12, whichever is later. Since the preoxygenation-first order of 1 November Early signs comes at 08:10
+ *  in the harness (it was 08:03) and 1–4 s later in the app, so a press at the clock alone could land before it on a slow
+ *  runner (CI run 41368401579: the row stayed "current", unmet). The 08:12 floor keeps the run sheet's clock for the
+ *  presses after it (dantrolene at 08:32, the 08:45 pause read as Early signs). */
+export const AFTER_PHASE: Record<string, string> = { [PATH[5]![1]]: 'earlySigns' };
 
 /** Bring the sim clock to `s`: a fast-forward of the gap (whole seconds), then wait until the clock is there. */
 export async function to(page: Page, s: number): Promise<void> {
@@ -46,6 +52,8 @@ export async function pressPath(page: Page, go: (i: number) => boolean | Promise
   for (let i = from; i < PATH.length && (await go(i)); i++) {
     const [t, title] = PATH[i] as [number, string];
     await to(page, t);
+    const phase = AFTER_PHASE[title];
+    if (phase) await expect.poll(async () => (await app(page)).stateId, { timeout: 30_000, message: `${title}: waiting for ${phase}` }).toBe(phase);
     const row = page.locator('.ip2-action .ip2-rows:not(.ip2-finished-list) button.ip2-row').filter({ has: page.locator('.ip2-row-title', { hasText: title }) }).first();
     // a row not due now is in ACTION's "Not due now" fold (rows.ts classifyV2 `later`): pressable there once it is open
     const fold = page.locator('.ip2-action details.ip2-later');
