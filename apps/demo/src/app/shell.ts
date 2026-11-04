@@ -5,7 +5,6 @@
 // The pages before a session (Home, Room, Scenarios, Patient: CONSOLE_ROUTES) are full pages beside the rail: the shell
 // hides the stage, the session bar and the top bar there and shows them again on every other route.
 import { resolveSkin } from '@pme/skins';
-import { FOOTER_LINE } from './about.ts';
 import { CONSOLE_ROUTES, hrefOf, onRoute, type Route, type RouteId } from './router.ts';
 import { contrast } from './color.ts';
 import { h } from './ui.ts';
@@ -66,10 +65,9 @@ export class Shell {
     this.stage = h('div', { class: 'stage', id: 'monitor' }, this.monitorHost);
     this.bar = h('div', { class: 'sessionbar', role: 'region', 'aria-label': 'Session' });
     this.main = h('main', { class: 'main', id: 'main', tabindex: -1 }, this.bar, this.stage);
-    // The owner's disclaimer as a quiet footer line on every page but the monitor screens (the Monitor view and the
-    // Ventilator cockpit: app.css; a learner's window and a phone have no footer)
-    const foot = o.follower ? null : h('footer', { class: 'app-foot' }, FOOTER_LINE);
-    this.root = h('div', { class: 'app' }, h('a', { class: 'skip', href: '#main', onclick: (e: Event) => (e.preventDefault(), this.main.focus()) }, 'Skip to the main content'), top, this.main, foot);
+    // No footer line under the views (the owner, 30 October: Instructor v2's dock sits flush with the bottom); the
+    // education line is Home's own (views/home.ts), Settings → About's and the Debrief's printed footer
+    this.root = h('div', { class: 'app' }, h('a', { class: 'skip', href: '#main', onclick: (e: Event) => (e.preventDefault(), this.main.focus()) }, 'Skip to the main content'), top, this.main);
     parent.append(this.root);
     if (o.follower) this.bar.hidden = true;
     if (o.hostless) {

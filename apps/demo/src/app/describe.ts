@@ -89,7 +89,8 @@ function event(e: Any): string {
   }
 }
 
-export function describeCommand(c: Any): string {
+/** `step`: for a scenario trigger, the label of the step pressed (link.ts `scenarioStep`); the Log then names it. */
+export function describeCommand(c: Any, step?: string): string {
   switch (c.type) {
     case 'setTarget':
     case 'pin': {
@@ -118,6 +119,7 @@ export function describeCommand(c: Any): string {
       if (a === 'bookmark') return `Bookmark: ${c.target ?? ''}`.trim();
       if (a === 'restoreBookmark') return `Returned to bookmark ${c.target ?? ''}`.trim();
       if (a === 'goto') return 'Scenario: jumped to a state';
+      if (a === 'trigger' && step) return `Scenario event: ${step}`;
       return a === 'pause' ? 'Scenario timer held' : a === 'resume' ? 'Scenario timer running' : 'Scenario event';
     }
     case 'applyEvent':

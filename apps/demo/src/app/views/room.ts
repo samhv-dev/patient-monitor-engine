@@ -5,6 +5,10 @@
 // this window, the windows of this browser and the phones that said hello, with their state and when they were last
 // heard; the openers for this computer; and the windows opened from here this session (nothing is remembered across a
 // reload, so nothing is claimed).
+// Post-demo (4 November): "Show large" (or Q on the Room) puts the same QR, drawn again as vector at the size of the
+// screen, with the code, the address and the live count beneath, for a hall to scan from the back; Escape or the same
+// control returns. At 1920×1080 the card's QR is 220 px (a fifth of the height): scannable from the front rows only.
+import { isTyping } from '@pme/controller';
 import type { ManagedTransport, WireMessage } from '@pme/controller';
 import { qrTarget, relayInfo, type RelayInfo } from '../classroom.ts';
 import { qrSvg } from '../qr.ts';
@@ -63,8 +67,36 @@ export function roomView(d: RoomDeps): RoomView {
 
   // ------------------------------------------------------------------------------------------------------------ join
   const count = h('p', { class: 'phones-count', role: 'status' });
-  const drawCount = (n: number) => setText(count, n === 1 ? '1 phone following' : `${n} phones following`);
+  // The large view: a modal dialog (Escape closes it natively), its QR drawn from the same address at full size
+  const bigQr = h('div', { class: 'room-big-qr', role: 'img' });
+  const bigCode = h('p', { class: 'room-big-code', 'aria-label': `Code ${d.code.split('').join(' ')}` }, d.code);
+  const bigAddr = h('p', { class: 'room-big-url' });
+  const bigCount = h('p', { class: 'room-big-count', role: 'status' });
+  const big = h('dialog', { class: 'room-big', 'aria-label': 'Join code, large' },
+    bigQr, bigCode, bigAddr, bigCount,
+    button('Back to the Room', () => big.close(), 'room-big-back', { 'aria-keyshortcuts': 'Escape Q' }));
+  const drawCount = (n: number) => {
+    const t = n === 1 ? '1 phone following' : `${n} phones following`;
+    setText(count, t);
+    setText(bigCount, t);
+  };
   drawCount(d.followers());
+  let target = '';
+  const toggleBig = () => {
+    if (big.open) return big.close();
+    if (!target) return;
+    bigQr.replaceChildren(qrSvg(target, 1000)); // vector (crispEdges): the CSS sets the drawn size
+    bigQr.setAttribute('aria-label', `QR code of ${target}`);
+    setText(bigAddr, target);
+    bigCount.hidden = !d.relay;
+    big.showModal();
+  };
+  const large = button('Show large', toggleBig, 'room-large', { 'aria-keyshortcuts': 'Q', title: 'Show the QR code at the size of the screen (Q)', hidden: true });
+  const onKey = (e: KeyboardEvent) => {
+    if ((e.key !== 'q' && e.key !== 'Q') || isTyping(e) || e.metaKey || e.ctrlKey || e.altKey || !target) return;
+    e.preventDefault();
+    toggleBig();
+  };
   const qr = h('div', { class: 'room-qr-slot' });
   const scanWay = h('li', {}, h('span', { class: 'n', 'aria-hidden': 'true' }, '1'), h('span', {}, h('b', {}, 'Scan the code'), " with the phone's camera."));
   const addr = h('code', { class: 'phones-url' });
@@ -73,7 +105,7 @@ export function roomView(d: RoomDeps): RoomView {
   const why = h('p', { class: 'error', role: 'alert' });
   const ways = h('ol', { class: 'room-ways' }, scanWay, typeWay);
   const join = h('section', { class: 'room-card room-join', 'aria-labelledby': 'room-join-h' },
-    h('h2', { id: 'room-join-h' }, 'Join'), qr,
+    h('h2', { id: 'room-join-h' }, 'Join'), qr, large,
     h('p', { class: 'phones-code', 'aria-label': `Code ${d.code.split('').join(' ')}` }, d.code),
     why, ways, others, count);
   let asked = false;
@@ -87,7 +119,10 @@ export function roomView(d: RoomDeps): RoomView {
   const show = (t: ReturnType<typeof qrTarget>) => {
     ways.hidden = !t.ok;
     count.hidden = !d.relay;
+    large.hidden = !t.ok;
+    target = t.ok ? t.url : '';
     if (!t.ok) {
+      if (big.open) big.close();
       qr.replaceChildren();
       setText(why, t.why);
       setText(others, '');
@@ -154,7 +189,7 @@ export function roomView(d: RoomDeps): RoomView {
       h('header', { class: 'console-head' },
         h('div', {}, h('h1', { id: 'room-h' }, 'Room'), h('p', { class: 'console-sub' }, 'Every screen and phone that joins with this code follows the same patient.')),
         status),
-      h('div', { class: 'room-cols' }, join, connected)));
+      h('div', { class: 'room-cols' }, join, connected)), big);
   // Wired once everything above exists (a transport replays its status on subscribe)
   listen(d.local, 'local');
   if (d.relayLink) listen(d.relayLink, 'relay');
@@ -170,8 +205,11 @@ export function roomView(d: RoomDeps): RoomView {
       if (!asked) void findAddress();
       draw();
       timer ??= setInterval(draw, 1000);
+      document.addEventListener('keydown', onKey);
     },
     leave() {
+      document.removeEventListener('keydown', onKey);
+      if (big.open) big.close();
       if (timer) clearInterval(timer);
       timer = null;
     },

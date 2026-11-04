@@ -20,6 +20,12 @@ export interface Flow {
   /** Volume still to run (bolus orders): delivery stops at exactly the ordered volume whatever the grid phase. */
   leftMl?: number;
   comp: Composition | null; // null = haemorrhage (whole blood out)
+  /** The fluid's temperature at the cannula, °C (absent: a crystalloid or colloid at the theatre's temperature; the
+   * heat model's IV term, thermal/environment.ts `ivInflow`). Refrigerated saline is 4 °C. */
+  tempC?: number;
+  /** The team stops this infusion once the core has fallen to this temperature, °C (a cooling infusion: MHAUS "stop
+   * cooling when the temperature has decreased to < 38 °C"); absent: it runs to its volume. */
+  stopAtCoreC?: number;
 }
 
 export interface FluidState {

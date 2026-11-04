@@ -54,8 +54,12 @@ test('no engine id reaches a clinical view', { tag: '@known-flaky' }, async ({ p
   await probe.close();
 
   // every tab of a remote joined by code, paired the way the passing remote test pairs: a fresh host showing its code
+  // (a second instructor tab of this browser is asked first, host-guard.ts: this one starts a session of its own)
   const host = await page.context().newPage();
-  await openApp(host, base, '#/', { warmMs: 2000 });
+  await host.goto(`${base}/#/`);
+  await host.getByRole('button', { name: 'Start a new session' }).click();
+  await host.waitForFunction(() => '__pmeApp' in window);
+  await host.waitForTimeout(2000);
   await go(host, '#/remote');
   const code2 = await host.evaluate(() => (window as unknown as { __pmeApp: { session: { code: string } } }).__pmeApp.session.code);
   const errors: string[] = [];
