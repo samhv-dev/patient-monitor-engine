@@ -3,10 +3,11 @@
 // conditions, lung conditions incl. pregnancy), blood and neuro — is fixed when the host creates its engine, so every
 // host (the validation segment runner, a demo host) builds it from this one mapping.
 import type { EngineOptions, PatientProfile } from '@pme/engine-core';
-import type { ScenarioDoc } from './types.ts';
+import type { AnyScenarioDoc } from './types.ts';
 
-/** EngineOptions for `doc` (engine seed `seed`); keys the document does not set are left out, so defaults apply. */
-export function engineOptionsOf(doc: ScenarioDoc, seed = 1): EngineOptions {
+/** EngineOptions for `doc` (engine seed `seed`); keys the document does not set are left out, so defaults apply. Either
+ *  format: `pme-scenario/2` keeps the /1 header whole. */
+export function engineOptionsOf(doc: AnyScenarioDoc, seed = 1): EngineOptions {
   const p = doc.patient ?? {};
   const pr = p.profile ?? {};
   const patient: PatientProfile = {

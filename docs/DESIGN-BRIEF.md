@@ -1417,7 +1417,8 @@ export type EngineEvent =
   | { type: 'toneCancel'; after: SimSeconds }
   | { type: 'state'; t: SimSeconds; tick: Tick; mode: 'manual'|'modeled'; values: Partial<Record<StateVar, number>>;
       control: Partial<Record<StateVar, 'modeled'|'pinned'|'ramping'|'override'>> }                 // 1 Hz
-  | { type: 'scenario'; t: SimSeconds; stateId: string; transitionId?: string }
+  | { type: 'scenario'; t: SimSeconds; stateId: string; transitionId?: string;
+      by?: 'press'|'rule'|'goto' }   // how the runner took it (additive, Instructor v2: the host's record reads it)
   | { type: 'commandApplied'; commandId: string; tick: Tick; resolved: unknown; ignored?: string[] }; // resolved-state echo (04 §5)
 ```
 

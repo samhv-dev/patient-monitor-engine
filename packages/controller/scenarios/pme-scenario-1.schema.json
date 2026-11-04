@@ -18,6 +18,18 @@
     "objectives": { "type": "array", "items": { "anyOf": [{ "type": "string", "minLength": 1 }, { "$ref": "#/definitions/objective" }] }, "description": "FU-8 (R-S9-4): learning objectives, one per line. Stage 13: an objective may carry a debrief rule, { text, rule }; one without a rule is listed as not assessable." },
     "takeHome": { "type": "array", "maxItems": 4, "items": { "type": "string", "minLength": 1 }, "description": "Optional: up to four take-home lines the learner handout prints, as written (the author's reviewed words)." },
     "durationMin": { "type": "number", "exclusiveMinimum": 0, "description": "FU-8 (R-S9-4): the expected run time in minutes." },
+    "briefing": {
+      "type": "object",
+      "required": ["text"],
+      "additionalProperties": false,
+      "description": "Optional: the learner-facing Case briefing every learner screen shows over the running monitor when the card loads (owner's board Orientation 7b). Not the instructor's story: who the learner is, the patient, what has happened, what is connected, what to do. Never names the diagnosis.",
+      "properties": {
+        "text": { "type": "string", "minLength": 1, "maxLength": 4000, "description": "The briefing; paragraphs separated by blank lines." },
+        "estimatedMinutes": { "type": "number", "exclusiveMinimum": 0, "description": "The \"Estimated scenario time about N minutes\" line (absent: no line)." },
+        "durationS": { "type": "number", "exclusiveMinimum": 0, "maximum": 600, "description": "How long it shows, s (default 60); a tap or click ends it earlier on that screen." },
+        "lang": { "enum": ["en", "fa"], "description": "The language of the text and of the chrome around it (default en); fa is right-to-left with Persian digits." }
+      }
+    },
     "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
     "mode": { "enum": ["manual", "modeled"] },
     "patient": { "$ref": "#/definitions/patient" },

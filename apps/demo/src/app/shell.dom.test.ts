@@ -42,10 +42,10 @@ describe('Instructor v2 (E127): its own session bar', () => {
     expect(shell.bar.hidden).toBe(true);
     expect(shell.stage.hidden).toBe(true);
   });
-  it('the rail lists "Instructor v2" right after Instructor', () => {
+  it('the rail lists one "Instructor" (the view chosen in Settings, owner 30 October); #/teach2 keeps its title', () => {
     const ids = RAIL.map((e) => e[0]);
-    expect(ids.indexOf('teach2')).toBe(ids.indexOf('teach') + 1);
-    expect(RAIL[ids.indexOf('teach2')]).toEqual(['teach2', 'Instructor v2']);
+    expect(RAIL.filter((e) => e.length === 2 && e[1].startsWith('Instructor'))).toEqual([['teach', 'Instructor']]);
+    expect(ids).not.toContain('teach2');
     expect(NAV).toContainEqual(['teach2', 'Instructor v2']);
   });
 });

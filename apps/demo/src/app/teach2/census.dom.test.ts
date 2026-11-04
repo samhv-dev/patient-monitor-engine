@@ -267,7 +267,8 @@ async function v2(cfg: Config, scope: 'all' | 'scenario') {
   view = 'v2';
   const r = rig(cfg);
   const top = { soundOn: () => false, toggleSound: () => undefined, code: 'CNS234', phones: () => 0 };
-  const v = teach2View(r.link, { site: DEFAULT_SITE, weightKg: () => 70, top });
+  // as main.ts mounts it: the no-case window's Load is the app's one load (begin.ts), never a `scenario load` send
+  const v = teach2View(r.link, { site: DEFAULT_SITE, weightKg: () => 70, top, loadScenario: () => true });
   document.body.append(v.el);
   v.enter?.('');
   r.changed();

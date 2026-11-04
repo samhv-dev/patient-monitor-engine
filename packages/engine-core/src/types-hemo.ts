@@ -42,6 +42,28 @@ export type NibpDeviceAction = { device: 'nibp'; action: 'start' | 'stat' | 'sto
 export type NibpPhase = 'idle' | 'inflating' | 'deflating' | 'done' | 'failed';
 export type ControlFlag = 'modeled' | 'pinned' | 'ramping' | 'override';
 
+/** The `state` event's `signals` (scenario-format-v2 plan F4, Q21/Q22): truths the engine already computes, exposed. */
+export interface StateSignals {
+  /** The circulation has a pulse: no arrest state (`hemo.circ.arrest` is null), the rule the debrief's pulse loss reads. */
+  pulse: boolean;
+  /** The dantrolene effect 0–1 (`pk.bus.metabolic.dantroleneE`). */
+  dantroleneE: number;
+  /** The ventilator's set rate × set VT (L/min); null when the ventilator does not drive the breaths (spontaneous,
+   *  bag-mask, none, or the Ventilator view's external frames). */
+  setMinuteVentilationLMin: number | null;
+  /** The beat MAP (mmHg): the site beat statistic of the last beat (`hemo.lastSite.map`, the beat behind `abpMean`),
+   *  or the circuit's `mapNow` while no beat ejects — the same beat and the same flat rule as the state's sbp/dbp. */
+  map: number;
+  /** MH activity 0–1 (`l2/thermal/mh.ts` `mhActivity` on the committed thermal state), unrounded: the `endo` event
+   *  rounds it to 0.01, and a /2 slope over a minute of a quantised value flips sign second to second (F2's trace). */
+  mhActivity: number;
+  /** The MH's dantrolene-sensitive metabolic excess `s` (`l2/thermal/mh.ts` MhState.s: 1 untreated, relaxing toward
+   *  1 − DANT_GAIN·E with dantrolene), read from the committed thermal state; null without an MH. `mhActivity` is
+   *  severity × onset ramp × s, and its 15-min ramp outgrows the fall of s after an early dose (review B1): s is the
+   *  signal dantrolene changes. Exposure only. */
+  mhExcess: number | null;
+}
+
 /** Haemodynamic event variants (brief §7.3). */
 export type HemoEvent =
   | {
@@ -60,4 +82,9 @@ export type HemoEvent =
       /** Who breathes and through what (E121b), so a panel can tell a spontaneously breathing patient without an airway
        *  device from a bagged, ventilated (external = the Ventilator view) or intubated one. Assembled with `sensors`. */
       breathing?: { source: 'spontaneous' | 'bvm' | 'ventilator' | 'none' | 'external'; device: 'none' | 'ett' | 'sga' };
+      /** Engine truths a `pme-scenario/2` phase rule reads (scenario-format-v2 plan F4, Q21/Q22), otherwise only in the
+       *  opt-in truth tree or nowhere. Set on every emitted state event: the engine fills it from the committed state
+       *  when the event is committed, as it does `sensors` (optional in the type for the same reason: the haemodynamic
+       *  pipeline builds the record without it). */
+      signals?: StateSignals;
     }; // The brief §7.3 `alarm` event (NIBP INOP) is the copy in types.ts
