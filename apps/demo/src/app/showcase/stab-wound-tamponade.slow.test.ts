@@ -15,9 +15,20 @@ import { bands, entered, first, near, range, runCard, type Act } from './harness
  *  run moves the pulse loss 471 → 470 s and with it the phase of every later beat against the compressions. The peak is
  *  one beat summing with a compression in the 10 s of CPR left before "Pulse back"; drainage and ROSC are at the same
  *  second (602.1, 698 s). With the PVC placement made a no-op the course is byte-identical to main (196.5). Every other
- *  S2 number stayed in its band. */
+ *  S2 number stayed in its band.
+ *  The arterial search-back (#164, l3/pulse/detector.ts) re-centred sysMaxAtRosc 208.5 → 191, same ± 5 (ruling of
+ *  2026-10-29). Measured on one run (ROSC 698 s, window 698–728 s), the old detector's numeric beside the new one and
+ *  the engine's own systolic (the radial truth of each ejecting beat, `circ.beats` sbp): old numeric 208.5 (707 s), new
+ *  numeric 191.1 (706–707 s); the truth's maximum 202.0 (705 s) read as the numeric reads it (the mean of the last ≤ 6
+ *  ejecting beats that ended in the last 6 s), 185.7 (707 s) on the diagnosis's ideal reading (every ejecting beat
+ *  that ended in the last 6 s). The old 208.5 was a merged-interval artefact across a missed foot: at 707 s it
+ *  averages the interval 702.99–705.71 s, the 205 mmHg beat's peak read over it and the two missed beats of 176 and
+ *  151 mmHg. Second by second the new numeric is nearer the truth (mean error 6.3 against 10.9 mmHg on the 6-beat
+ *  truth; nearer in 8 of the 10 seconds that differ). The fence follows the numeric, and the numeric now tracks the
+ *  truth more closely.
+ *  Every other S2 number stayed in its band. */
 const BANDS = {
-  'S2 happy': { refused: [0, 0], hrAt60: [94, 104], sysAt60: [101, 111], diaAt60: [82, 92], cvpAt60: [15, 19], etco2At60: [29, 35], pulsusMean: [0, 1.9], pulsusMax: [0, 2.6], deterioratingS: [336, 410], hrAtDeteriorating: [130, 140], cvpAtDeteriorating: [18, 22], pulseLossS: [424, 518], peaStateS: [425, 519], pea: [1, 1], drainS: [542, 662], roscAfterDrainS: [81, 111], sysPlus60: [113, 123], hrPlus60: [58, 68], cvpPlus60: [8, 12], etco2Plus60: [32, 38], sysMaxAtRosc: [203.5, 213.5], pulseHeld: [1, 1] },
+  'S2 happy': { refused: [0, 0], hrAt60: [94, 104], sysAt60: [101, 111], diaAt60: [82, 92], cvpAt60: [15, 19], etco2At60: [29, 35], pulsusMean: [0, 1.9], pulsusMax: [0, 2.6], deterioratingS: [336, 410], hrAtDeteriorating: [130, 140], cvpAtDeteriorating: [18, 22], pulseLossS: [424, 518], peaStateS: [425, 519], pea: [1, 1], drainS: [542, 662], roscAfterDrainS: [81, 111], sysPlus60: [113, 123], hrPlus60: [58, 68], cvpPlus60: [8, 12], etco2Plus60: [32, 38], sysMaxAtRosc: [186, 196], pulseHeld: [1, 1] },
   'S2 epinephrine': { refused: [0, 0], roscAfterDrainS: [79, 109] },
   'S2 undrained': { refused: [0, 0], pulseBack: [0, 0], cvpMax: [30, 34], etco2Plus3: [6, 12] },
   'S2 at ×8 poll': { refused: [0, 0], pulseLossS: [424, 518], peaStateS: [426, 520], roscAfterDrainS: [80, 110] },

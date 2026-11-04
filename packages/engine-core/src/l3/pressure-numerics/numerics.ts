@@ -7,7 +7,7 @@
 // p. 57); otherwise it is a STATIC pressure, shown per skin: S/D/M kept with the pulse "-?-" (Philips, [S2] p. 57) or
 // the mean only with S/D invalid (Saadat, research/06 §4.1: "static pressure hides SYS/DIA and shows a larger mean").
 import type { Measured } from '../../types.ts';
-import { createPulseDet, DET_RATE, pulseRate, pulseStep, type PulseDetState } from '../pulse/detector.ts';
+import { createPulseDet, DET_RATE, MISSED_AVG_N, MISSED_LIMIT, pulseRate, pulseStep, type PulseDetState } from '../pulse/detector.ts';
 
 export const AVG_BEATS = 6; // 4–8 beats (brief §4.2) [ENG]
 const RING = 400; // 3.2 s at 125 Hz: the longest beat measured (HR ≥ 19)
@@ -32,14 +32,13 @@ export const REPULSE_AMP_MMHG = 4;
  * definition). When the detector misses a foot, the interval to the next found foot spans two or more pulses and its
  * max − min is not one pulse's amplitude (in a low-flow tamponade run the interval 755.78–758.34 s spanned two pulses
  * and read 0.336 — a missed pulse's peak over the found one's trough — among pulses of 0.20–0.25; the found pulse's own
- * amplitude is 0.168). The interval holds a missed beat when it exceeds the RR MISSED LIMIT, 166 % of the average of
- * the recent intervals (Pan J & Tompkins WJ, IEEE Trans Biomed Eng 1985;32:230–236, the QRS detector's search-back
- * rule); the pulse is then measured over one average period from its own foot — its upstroke, peak and run-off, as a
- * pulse whose next foot had been found. The average is the median of the last ≤ 8 intervals before this one [ENG: the
- * median rather than Pan–Tompkins' range-limited mean, so one merged interval does not lengthen it].
+ * amplitude is 0.168). The interval holds a missed beat when it exceeds the RR MISSED LIMIT (detector.ts MISSED_LIMIT,
+ * Pan & Tompkins 1985); the pulse is then measured over one average period from its own foot — its upstroke, peak and
+ * run-off, as a pulse whose next foot had been found. The pressure lines do not use it: over a genuine long diastole
+ * one median period would truncate the diastole (MAP 71 → 83 at an HR step 120 → 40 in the 2026-10-27 shadow run), and
+ * the arterial line's detector recovers the missed pulse itself (detector.ts search-back).
  */
-export const MISSED_LIMIT = 1.66;
-const MISSED_AVG_N = 8;
+export { MISSED_LIMIT };
 
 export interface BeatValues {
   t: number; // foot time of the beat's end (s)
@@ -86,8 +85,9 @@ function ownPulseEnd(feet: readonly number[], p: number, f: number): number {
 }
 
 /** Feed one displayed sample (absolute index m, 125 Hz). Returns the completed beat, if any. `ownPulse` (the pleth):
- *  a beat's amplitude is its own pulse's, never the max − min of an interval that spans missed beats (MISSED_LIMIT). */
-export function numericsStep(wn: WaveNumerics, m: number, x: number, ownPulse = false): BeatValues | null {
+ *  a beat's amplitude is its own pulse's, never the max − min of an interval that spans missed beats (MISSED_LIMIT).
+ *  `searchBack` (the systemic arterial line): the detector recovers a missed pulse itself (detector.ts `pulseStep`). */
+export function numericsStep(wn: WaveNumerics, m: number, x: number, ownPulse = false, searchBack = false): BeatValues | null {
   if (wn.n !== m) {
     // a gap (sensor detached/re-attached): restart detection at m
     wn.det = createPulseDet(wn.det.floor, m);
@@ -97,7 +97,7 @@ export function numericsStep(wn: WaveNumerics, m: number, x: number, ownPulse = 
   wn.first ??= m;
   wn.n = m + 1;
   wn.ring[m % RING] = x;
-  const f = pulseStep(wn.det, x);
+  const f = pulseStep(wn.det, x, searchBack);
   if (f < 0) return null;
   wn.feet.push(f / 125);
   if (wn.feet.length > 10) wn.feet.shift();

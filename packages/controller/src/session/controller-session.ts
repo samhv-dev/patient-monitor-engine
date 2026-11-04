@@ -336,6 +336,8 @@ export function describe(c: WireCommand): string {
       return `event ${Object.values(c.event).join(' ')}`;
     case 'attachSensor':
       return `sensor ${c.sensor} ${c.state}${c.site ? ` @${c.site}` : ''}`;
+    case 'note': // A remote's judged objective or note (plan instructor-peer-role.md §6; nothing sends it before P6)
+      return `${c.kind} ${c.text}`;
     case 'externalDrive':
       return `drive paw ${c.frame.pawCmH2O.toFixed(1)} flow ${c.frame.flowLps.toFixed(2)}`;
   }
