@@ -157,7 +157,8 @@ export interface ScenarioDoc extends C {
   briefing?: ScenarioBriefing;
   /** Optional: up to four take-home lines the learner handout prints, as written (the author's reviewed words). */
   takeHome?: string[];
-  /** Seeds the runner's `scenario` PRNG stream (the engine keeps the host's own seed). */
+  /** Seeds the run: the runner's `scenario` PRNG stream, and the engine of a host that honours it (the app; the
+   *  validation runner). */
   seed?: number;
   mode?: 'manual' | 'modeled';
   patient?: ScenarioPatient;

@@ -608,7 +608,7 @@ Exported without a doc comment: `riskOf`, `vfShare`, `createBaro`, `createOut`, 
 
 ## Tests
 
-235 tests in 66 files; 19 expected failures, 1 skipped.
+237 tests in 66 files; 19 expected failures, 1 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -631,7 +631,7 @@ Exported without a doc comment: `riskOf`, `vfShare`, `createBaro`, `createOut`, 
 | [`engine/circ-manual-ischaemia.test.ts`](../../packages/engine-core/test/engine/circ-manual-ischaemia.test.ts) | 1 | 1 | 0 |
 | [`engine/circ-manual-rosc-ramp.test.ts`](../../packages/engine-core/test/engine/circ-manual-rosc-ramp.test.ts) | 1 | 0 | 0 |
 | [`engine/circ-manual.test.ts`](../../packages/engine-core/test/engine/circ-manual.test.ts) | 3 | 0 | 0 |
-| [`engine/circ-modeled.test.ts`](../../packages/engine-core/test/engine/circ-modeled.test.ts) | 2 | 0 | 0 |
+| [`engine/circ-modeled.test.ts`](../../packages/engine-core/test/engine/circ-modeled.test.ts) | 4 | 0 | 0 |
 | [`engine/circ-negative-volume.test.ts`](../../packages/engine-core/test/engine/circ-negative-volume.test.ts) | 4 | 0 | 0 |
 | [`engine/circ-pea-resuscitation.test.ts`](../../packages/engine-core/test/engine/circ-pea-resuscitation.test.ts) | 1 | 0 | 0 |
 | [`engine/circ-pipeline.test.ts`](../../packages/engine-core/test/engine/circ-pipeline.test.ts) | 3 | 0 | 0 |

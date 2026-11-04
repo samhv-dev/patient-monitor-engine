@@ -45,6 +45,12 @@ function onMessage(ev: MessageEvent<ToWorker>): void {
         scope.postMessage({ type: 'result', reqId: m.reqId, result });
         return;
       }
+      case 'commands': {
+        // R15: one message, one task — the engine runs no tick between these dispatches
+        const results = m.cmds.map((c) => (core ? core.command(c) : { accepted: false, tick: 0, reason: 'not initialised' }));
+        scope.postMessage({ type: 'results', reqId: m.reqId, results });
+        return;
+      }
       case 'resize':
         core?.resize(m.size);
         return;

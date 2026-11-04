@@ -33,6 +33,8 @@ export type ToWorker =
   | { type: 'frame'; epochMs: number }
   | { type: 'catchUp'; epochMs: number }
   | { type: 'command'; reqId: number; cmd: Command }
+  // R15: several commands dispatched in one task (a stage group lands on its one tick)
+  | { type: 'commands'; reqId: number; cmds: Command[] }
   | { type: 'resize'; size: Size }
   | { type: 'timeScale'; k: number }
   | { type: 'pause' }
@@ -53,6 +55,7 @@ export type FromWorker =
   | { type: 'ready'; path: 'worker-raf' | 'worker-pump' }
   | { type: 'events'; anchor: ClockAnchor; events: EngineEvent[] }
   | { type: 'result'; reqId: number; result: DispatchResult }
+  | { type: 'results'; reqId: number; results: DispatchResult[] }
   | { type: 'error'; message: string; reqId?: number } // reqId when a request failed inside the worker
   | { type: 'snapshot'; reqId: number; snapshot: PatientSnapshot }
   | { type: 'restored'; reqId: number; error?: string }

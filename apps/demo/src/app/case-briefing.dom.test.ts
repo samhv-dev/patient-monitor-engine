@@ -58,6 +58,7 @@ vi.mock('@pme/renderer', async () => {
       return {
         skin: resolveSkin(o.skin),
         dispatch: () => Promise.resolve({ accepted: true, tick: ++tick }),
+        dispatchAll: (cs: unknown[]) => Promise.resolve(cs.map(() => ({ accepted: true, tick: ++tick }))),
         on: () => () => {},
         snapshot: () => Promise.resolve({ schema: 'pme-snapshot/1', tick }),
         restore: () => Promise.resolve(),

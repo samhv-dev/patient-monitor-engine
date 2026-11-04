@@ -41,7 +41,7 @@ import { briefingLayer, followBriefing } from '../briefing.ts';
 import { applySkinAlarmColours, type Shell } from '../shell.ts';
 import { DEFAULT_SITE, MONITORS, THEMES, type SiteProfile } from '../site.ts';
 import { button, h, pausedMark, setText } from '../ui.ts';
-import { followerStatus, phoneStyle } from './follower-status.ts';
+import { followerStatus, hostPause, phoneStyle } from './follower-status.ts';
 
 /**
  * A phone's socket is dropped and reopened when nothing (not even the relay's 10 s heartbeat) arrived for this long — a
@@ -168,8 +168,9 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   // Host liveness — a running host sends at least its 1 Hz state; a paused one may be silent. Silence of more than 5 s
   // while running means the instructor's window is gone or reloading (it comes back under the same code).
   let heard = performance.now();
-  let paused = false;
+  const pause = hostPause();
   const offHost = transport.onMessage((m) => {
+    pause.onMessage(m);
     if (m.kind === 'hello' && m.role !== 'host') return;
     if (m.kind === 'command') return;
     heard = performance.now();
@@ -179,8 +180,6 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     for (const e of m.body) {
       if (e.type === 'cockpit') cockpitAt = e.off ? -Infinity : performance.now(); // `off`: the view closed (UI-A #2)
       if (e.type === 'style' && net) wearPhone(e.skin, e.theme);
-      const c = e.type === 'commandApplied' ? (e.resolved as { command?: { type?: string; action?: string } } | undefined)?.command : undefined;
-      if (c?.type === 'time' && (c.action === 'pause' || c.action === 'resume')) paused = c.action === 'pause';
     }
   });
   /** The instructor's style, upright on this phone (or the default, said under the monitor). */
@@ -199,6 +198,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   const pausedEl = pausedMark(shell.stage); // UI review #32: the phone's monitor says PAUSED too
   function drawStatus(): void {
     const now = performance.now();
+    const paused = pause.paused;
     pausedEl.set(paused);
     const v = followerStatus({
       code, net: !!net, sync: f.sync?.status ?? 'waiting', transport: transport.status, opened, sinceStartMs: now - t0, refused, hostAway,

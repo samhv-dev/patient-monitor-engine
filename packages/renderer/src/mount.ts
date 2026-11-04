@@ -76,6 +76,9 @@ export interface ViewerClock {
 
 export interface MonitorHandle {
   dispatch(cmd: Command): Promise<DispatchResult>;
+  /** R15: dispatch several commands in ONE engine task, in order: the engine runs no tick between them, so the commands
+   *  of a stage group land on the group's one tick however long the round trip to the worker takes. */
+  dispatchAll(cmds: Command[]): Promise<DispatchResult[]>;
   on(fn: (e: EngineEvent) => void): () => void;
   calibrate(pxPerMm: number): void;
   /** Must be called from a user gesture (brief §3.6). */
@@ -447,8 +450,15 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       if (res.accepted) accepted(cmd, h);
       return res;
     });
+  const dispatchAll = (cmds: Command[]) =>
+    hostP.then(async (h) => {
+      const rs = await h.commands(cmds);
+      rs.forEach((res, i) => res.accepted && accepted(cmds[i] as Command, h));
+      return rs;
+    });
   return {
     dispatch,
+    dispatchAll,
     on(fn) {
       listeners.add(fn);
       return () => {

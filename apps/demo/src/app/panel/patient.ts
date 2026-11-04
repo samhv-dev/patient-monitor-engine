@@ -1,7 +1,7 @@
 // Patient (research/13 §4.9): the one patient card — who the patient is, MODELED or MANUAL, and "Restart patient",
-// which asks first and says what resets (drugs, fluids, ventilation, the scenario) and what carries on (the session
-// code, the paired remote, the log). The body is fixed when the engine is created, so profile edits need a restart;
-// the mode switches live.
+// which asks first and says what resets (drugs, fluids, ventilation; a running case starts again from 0:00, FX-12) and
+// what carries on (the bookmarks, the session code, the paired remote, the log). The body is fixed when the engine is
+// created, so profile edits need a restart; the mode switches live.
 import { COMORBIDITIES, oneLiner } from '../patients.ts';
 import { ACUTE_EVENTS, activeText, conditionCommand, eventLabel, NOT_AN_EVENT, SEVERITIES, severityWord } from '../events.ts';
 import { button, confirmDialog, h, seg, setText, toast } from '../ui.ts';
@@ -19,10 +19,16 @@ export function patientTab(c: PanelCtx): HTMLElement {
   const host = link.host;
   const restart = host
     ? button('Restart patient', async () => {
-        if (!(await confirmDialog('Restart the patient?', 'Drugs, fluids, ventilation and the scenario reset. The session code, the paired remote and the log carry on.', 'Restart patient', true, 'Keep this patient'))) return;
-        host.restart({ spec: host.spec, mode: host.mode });
-        link.note('Patient restarted', 'system');
-        toast('Patient restarted');
+        // FX-12: a running case starts again from 0:00 on its own patient, and keeps its bookmarks
+        const inCase = host.caseDoc() !== null;
+        const what = inCase
+          ? 'The case starts again from 0:00 on its patient: drugs, fluids and ventilation reset. The bookmarks, the session code, the paired remote and the log carry on.'
+          : 'Drugs, fluids and ventilation reset. The session code, the paired remote and the log carry on.';
+        if (!(await confirmDialog('Restart the patient?', what, 'Restart patient', true, 'Keep this patient'))) return;
+        const r = host.restartPatient();
+        if (!r.ok) return toast(`The patient could not restart: ${r.reason}`, 'alert');
+        link.note(inCase ? 'Patient restarted: the case starts again from 0:00' : 'Patient restarted', 'system');
+        toast(inCase ? 'Patient restarted: the case starts again' : 'Patient restarted');
       }) // a secondary button: red is for alarms; the confirm dialog carries the danger styling
     : null;
   const edit = host ? h('a', { class: 'btn ghost', href: '#/' }, 'Change the patient on the Start screen') : h('p', { class: 'hint' }, 'The patient is chosen on the monitor screen.');
