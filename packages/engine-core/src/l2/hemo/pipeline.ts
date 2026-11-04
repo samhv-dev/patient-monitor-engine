@@ -709,7 +709,7 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
     if (ab.sensor !== 'none') {
       const v = displaySample(ab);
       write('abp', m, v);
-      numericsStep(hs.num.abp, m, v);
+      numericsStep(hs.num.abp, m, v, false, true); // the arterial line's search-back (detector.ts pulseStep)
     }
     if (pa.sensor !== 'none') {
       const v = displaySample(pa);
