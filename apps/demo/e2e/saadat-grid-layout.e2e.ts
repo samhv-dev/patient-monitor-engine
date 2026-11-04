@@ -21,11 +21,12 @@ const box = (page: Page) =>
       return { x: b.x, y: b.y, w: b.width, h: b.height };
     };
     return {
-      host: r('.stage > .monitor-host'), hdr: r('.pme-hdr'), canvas: r('canvas[data-lanes]'), strip: r('.pme-strip'), tiles: r('.pme-grid'),
+      // the monitor itself: with layout.grid.screenPx it is laid out at 1280 × 800 and scaled as one unit into the host
+      host: r('.stage > .monitor-host'), mon: r('.stage [data-pme-scale]'), hdr: r('.pme-hdr'), canvas: r('canvas[data-lanes]'), strip: r('.pme-strip'), tiles: r('.pme-grid'),
       fields: document.querySelectorAll('.pme-sfield').length, hr: document.querySelectorAll('.pme-stile[data-param="HR"]').length,
       spo2: document.querySelectorAll('.pme-stile[data-param="SpO2"]').length,
       // the monitor height the grid's sizes scale with; unset without a grid (the rollback reproduces main exactly)
-      pmeH: (document.querySelector('.stage > .monitor-host > div') as HTMLElement | null)?.style.getPropertyValue('--pme-h') ?? null,
+      pmeH: (document.querySelector('.stage [data-pme-scale]') as HTMLElement | null)?.style.getPropertyValue('--pme-h') ?? null,
     };
   });
 
@@ -36,7 +37,13 @@ async function monitor(page: Page, skin: string): Promise<void> {
 }
 
 function expectGrid(b: Awaited<ReturnType<typeof box>>): void {
-  const host = b.host as NonNullable<typeof b.host>;
+  const box0 = b.host as NonNullable<typeof b.host>;
+  const host = b.mon as NonNullable<typeof b.mon>;
+  // uniform scaling: the 1280 × 800 screen at one factor, as large as the host allows, centred in it
+  expect(host.w / host.h).toBeCloseTo(1280 / 800, 2);
+  expect(Math.min(box0.w - host.w, box0.h - host.h)).toBeCloseTo(0, 0);
+  expect(host.x - box0.x).toBeCloseTo(box0.x + box0.w - (host.x + host.w), 0);
+  expect(host.y - box0.y).toBeCloseTo(box0.y + box0.h - (host.y + host.h), 0);
   const canvas = b.canvas as NonNullable<typeof b.canvas>;
   const strip = b.strip as NonNullable<typeof b.strip>;
   const hdr = b.hdr as NonNullable<typeof b.hdr>;
@@ -49,7 +56,7 @@ function expectGrid(b: Awaited<ReturnType<typeof box>>): void {
   expect(b.fields).toBe(6);
   expect(b.hr).toBe(1);
   expect(b.spo2).toBe(1);
-  expect(b.pmeH).toBe(`${Math.round(host.h)}px`);
+  expect(b.pmeH).toBe('800px'); // the design height: the grid's sizes are their skin values, then scaled with the rest
 }
 
 test('a Settings switch saadat-like → philips-like → saadat-like: grid, columns, grid, nothing left over', async ({ page }) => {
