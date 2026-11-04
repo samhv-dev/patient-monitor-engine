@@ -230,6 +230,11 @@ the public API is what the packages export (see the API reference), the `pme-sce
   screen: this monitor waits until it closes" for about 2.5 s and resynced although the view was closed. The cuff's
   command now goes to a same-browser learner monitor without the notice; the Ventilator view still holds the phones
   while it is on screen (found 2026-10-30 by the follower pill fix, #191).
+- A learner's phone says "Following session …" as soon as it follows again after the instructor's page reloads. Its
+  status line was redrawn only twice a second, so a phone already synced could still read "Waiting for the instructor's
+  monitor …" or "The instructor's monitor is not answering" (a kit check caught two of three phones that way); it is
+  now redrawn on every message from the instructor as well. A reloaded instructor's page also clears the "The
+  ventilator is on the main screen" hold left by the page before it, whose Ventilator view closed with it.
 - The MH card's take-home line gives the registry's recrudescence rate: "recrudescence in about 20 %, mostly within
   the first day" in place of the unsourced "up to 50 %" (20 %, 63 of 308, at a mean 13 h after the initial reaction:
   Burkman JM, Posner KL, Domino KB, Anesthesiology 2007, PMID 17457120; evidence note E135). Text only: the old-format
