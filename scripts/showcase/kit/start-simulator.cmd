@@ -9,16 +9,16 @@ rem into its own folder (the kit can run from a read-only USB stick).
 rem Knobs for the kit's own tests (a presenter never needs them), set without quotes:
 rem   PME_NO_OPEN=1   do not open the browser
 rem   PME_PORT=8642   first port to try (the next 49 are tried if it is busy)
-rem   PME_NODE=path   use this node.exe when the kit has no runtime\node.exe
+rem   PME_NODE=path   use only this node.exe, even if the kit has runtime\node.exe
 setlocal EnableExtensions DisableDelayedExpansion
 title Patient monitor simulator
 
 rem Started from inside the .zip, Explorer extracted this file alone: say so (launch.mjs is not there to say it)
 if not exist "%~dp0server\launch.mjs" goto nokit
-rem Node.js: the kit's runtime\node.exe first, then PME_NODE, then one on PATH, then the .msi's default folder
+rem Node.js: PME_NODE alone if set, else the kit's runtime\node.exe, then one on PATH, then the .msi's default folder
 set "NODE="
-if exist "%~dp0runtime\node.exe" set "NODE=%~dp0runtime\node.exe"
-if not defined NODE if defined PME_NODE set "NODE=%PME_NODE%"
+if defined PME_NODE set "NODE=%PME_NODE%"
+if not defined NODE if exist "%~dp0runtime\node.exe" set "NODE=%~dp0runtime\node.exe"
 if not defined NODE for /f "delims=" %%n in ('where node.exe 2^>nul') do if not defined NODE set "NODE=%%n"
 if not defined NODE if exist "%ProgramFiles%\nodejs\node.exe" set "NODE=%ProgramFiles%\nodejs\node.exe"
 if not defined NODE goto nonode

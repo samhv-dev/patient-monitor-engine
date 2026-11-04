@@ -14,7 +14,8 @@
 //   runtime/                  node-<arch> ONLY if this machine's node is an official signed Node.js build; else empty
 //                             node.exe, NODE-LICENSE.txt, NODE-VERSION.txt ONLY with --win-node: the official Windows
 //                             build's node.exe, taken from a zip whose SHA-256 matches its SHASUMS256.txt (default: the
-//                             one beside the zip); the .cmd launchers use it first (win-node.mjs). Never downloaded here.
+//                             one beside the zip); the .cmd launchers use it before an installed one (win-node.mjs).
+//                             Never downloaded here.
 //   READ ME FIRST.txt, VERSION.txt
 //   NOTICES.md, LICENSES/     Stage 12 (R50 I1): the notices of what the kit's app and relay carry (MIT/BSD texts)
 // Rerunnable: it replaces only the kit's own entries, so a videos/ folder (or anything else) beside them is kept.
@@ -135,7 +136,7 @@ if (winNode) {
     'Check node.exe on Windows: certutil -hashfile node.exe SHA256',
     '',
   ].join('\r\n'));
-  winNote = `runtime/node.exe = Node.js ${winNode.version} for Windows x64 from ${winNode.zipName} (zip SHA-256 ${winNode.zipSha}; node.exe SHA-256 ${winNode.exeSha}); the .cmd launchers use it first.`;
+  winNote = `runtime/node.exe = Node.js ${winNode.version} for Windows x64 from ${winNode.zipName} (zip SHA-256 ${winNode.zipSha}; node.exe SHA-256 ${winNode.exeSha}); the .cmd launchers use it before an installed Node.js.`;
   console.log(winNote);
 }
 

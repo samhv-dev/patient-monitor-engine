@@ -51,7 +51,7 @@ describe('the kit gets the Windows launchers', () => {
     }
   });
 
-  it('both launchers look for the kit\'s runtime\\node.exe first, then PME_NODE, then PATH, then Program Files; one version check for all', () => {
+  it('both launchers take PME_NODE alone if set, else the kit\'s runtime\\node.exe, then PATH, then Program Files (as the Mac launcher); one version check for all', () => {
     for (const [src] of kitLaunchers.WINDOWS_LAUNCHERS) {
       const text = readFileSync(join(showcase, 'kit', src), 'utf8');
       const at = (line: string) => {
@@ -61,8 +61,8 @@ describe('the kit gets the Windows launchers', () => {
       };
       const order = [
         at('set "NODE="'),
-        at('if exist "%~dp0runtime\\node.exe" set "NODE=%~dp0runtime\\node.exe"'),
-        at('if not defined NODE if defined PME_NODE set "NODE=%PME_NODE%"'),
+        at('if defined PME_NODE set "NODE=%PME_NODE%"'),
+        at('if not defined NODE if exist "%~dp0runtime\\node.exe" set "NODE=%~dp0runtime\\node.exe"'),
         at('if not defined NODE for /f "delims=" %%n in (\'where node.exe 2^>nul\') do if not defined NODE set "NODE=%%n"'),
         at('if not defined NODE if exist "%ProgramFiles%\\nodejs\\node.exe" set "NODE=%ProgramFiles%\\nodejs\\node.exe"'),
         at('if not defined NODE goto nonode'),

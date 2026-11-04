@@ -23,7 +23,8 @@ LEARNERS' PHONES (optional; needs Node.js 22 or later on this Mac, and a network
 
 WINDOWS (a backup for a Windows PC; needs Node.js 22 or later: the kit's own, or one installed on that PC)
 Windows launcher: untested on Windows at this release; test on the room's PC before the day (checklist below).
-   If this kit has a file runtime\node.exe, it brings its own Node.js and needs NO install: the launchers use it first.
+   If this kit has a file runtime\node.exe, it brings its own Node.js and needs NO install: the launchers use it
+   before any installed one.
    It is the official Node.js build for Windows from nodejs.org; its version and SHA-256 checksum are in
    runtime\NODE-VERSION.txt (to compare: certutil -hashfile runtime\node.exe SHA256, in a Command Prompt).
    If runtime\node.exe is not there: install Node.js from nodejs.org (the LTS, version 22 or later, the "Windows

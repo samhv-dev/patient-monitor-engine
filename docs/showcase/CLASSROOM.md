@@ -30,7 +30,7 @@ and **the presenting Mac's Node.js**. Until they are settled, tick every line:
   10-line checklist in the kit's `READ ME FIRST.txt` (section WINDOWS) on the room's PC before the day.
   A kit built with `node scripts/showcase/make-bundle.mjs <out> --win-node node-v22.x.y-win-x64.zip` (the official
   zip from nodejs.org, downloaded beforehand with its `SHASUMS256.txt` beside it, or named by `--win-node-sums`)
-  carries `runtime\node.exe` and needs **no Node.js install** on the PC: both `.cmd` launchers use it first. The
+  carries `runtime\node.exe` and needs **no Node.js install** on the PC: both `.cmd` launchers use it before an installed one. The
   bundler refuses a zip whose SHA-256 is not the one `SHASUMS256.txt` lists, takes only `node.exe` and its `LICENSE`
   (as `runtime\NODE-LICENSE.txt`), and writes the version and both checksums to `runtime\NODE-VERSION.txt` and a
   line to `VERSION.txt`. It does not check the signature of `SHASUMS256.txt` itself: fetch both files from
