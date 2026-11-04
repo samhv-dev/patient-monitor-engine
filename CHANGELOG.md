@@ -224,6 +224,12 @@ the public API is what the packages export (see the API reference), the `pme-sce
   line adds 40: 115 px (it was 92, and the line took 17 px from the chips).
 
 ### Fixed
+- Starting the saadat-like cuff no longer tells the learners' phones that the ventilator is on the main screen. The
+  host started the cuff on AUTO at every patient start and card load (also the load that restores a case after a page
+  reload) and mirrored the command with the Ventilator view's notice, so each phone held "The ventilator is on the main
+  screen: this monitor waits until it closes" for about 2.5 s and resynced although the view was closed. The cuff's
+  command now goes to a same-browser learner monitor without the notice; the Ventilator view still holds the phones
+  while it is on screen (found 2026-10-30 by the follower pill fix, #191).
 - A learner's phone says "Following session …" as soon as it follows again after the instructor's page reloads. Its
   status line was redrawn only twice a second, so a phone already synced could still read "Waiting for the instructor's
   monitor …" or "The instructor's monitor is not answering" (a kit check caught two of three phones that way); it is
