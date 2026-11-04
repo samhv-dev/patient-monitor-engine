@@ -224,6 +224,12 @@ the public API is what the packages export (see the API reference), the `pme-sce
   line adds 40: 115 px (it was 92, and the line took 17 px from the chips).
 
 ### Fixed
+- Starting the saadat-like cuff no longer tells the learners' phones that the ventilator is on the main screen. The
+  host started the cuff on AUTO at every patient start and card load (also the load that restores a case after a page
+  reload) and mirrored the command with the Ventilator view's notice, so each phone held "The ventilator is on the main
+  screen: this monitor waits until it closes" for about 2.5 s and resynced although the view was closed. The cuff's
+  command now goes to a same-browser learner monitor without the notice; the Ventilator view still holds the phones
+  while it is on screen (found 2026-10-30 by the follower pill fix, #191).
 - The MH card's take-home line gives the registry's recrudescence rate: "recrudescence in about 20 %, mostly within
   the first day" in place of the unsourced "up to 50 %" (20 %, 63 of 308, at a mean 13 h after the initial reaction:
   Burkman JM, Posner KL, Domino KB, Anesthesiology 2007, PMID 17457120; evidence note E135). Text only: the old-format
