@@ -76,3 +76,68 @@ describe('the host boundary', () => {
     expect(Math.max(...batches.map((b) => JSON.stringify(b).length))).toBeLessThanOrEqual(MESSAGE_BUDGET_BYTES + 2048);
   });
 });
+
+// Plan `docs/plans/instructor-peer-role.md` P1 (§7, "a defect found while planning"): the host keeps its peers' state
+// (the sequence filter, the viewer set) per transport, so a peer on another transport that claims the panel's `from`
+// can neither make the panel a viewer nor make the host drop the panel's next commands. #183 made this change; these
+// three tests are P1's record.
+describe('the host keys its peers by transport (P1)', () => {
+  /** Two separate in-process hubs: the panel's transport and the relay's, each one host-side transport. */
+  function twoTransports() {
+    const hubA = createInProcessHub();
+    const hubB = createInProcessHub();
+    hs = new HostSession({ session: S, target: target(), stateIntervalMs: 0 });
+    hs.addTransport(hubA.connect());
+    hs.addTransport(hubB.connect());
+    const panel = hubA.connect();
+    const phone = hubB.connect();
+    return { panel, phone, got: collect(panel) };
+  }
+  const cmd = (id: string, value: number) => ({ kind: 'command' as const, body: { id, issuedBy: 'panel', type: 'setTarget', variable: 'hr', value } as never });
+
+  it("a peer on transport B that says hello as a viewer with the panel's from does not stop the panel's commands on A", async () => {
+    const { panel, phone, got } = twoTransports();
+    const p = createStamper(S, 'panel-7');
+    panel.send(p({ kind: 'hello', role: 'controller' }));
+    panel.send(p(cmd('before', 90)));
+    await waitFor(() => got.some((m) => m.kind === 'ack' && m.commandId === 'before'));
+    // the impostor's seq is just above the panel's last (2), and the panel's next is above it: on one shared filter
+    // neither is dropped, so this case tests the viewer set alone
+    phone.send({ ...createStamper(S, 'panel-7')({ kind: 'hello', role: 'viewer' }), seq: 3 } as WireMessage);
+    await new Promise((r) => setTimeout(r, 20));
+    void p({ kind: 'hello', role: 'controller' }); // stamped, not sent: the panel's next message is seq 4
+    panel.send(p(cmd('after', 100)));
+    await waitFor(() => got.some((m) => m.kind === 'ack' && m.commandId === 'after'));
+    expect(got.find((m) => m.kind === 'ack' && m.commandId === 'after')).toMatchObject({ accepted: true });
+    expect(hs?.stats.applied).toBe(2);
+  });
+
+  it("a hello on B with seq 1e9 and the panel's from does not make the host drop the panel's next command on A", async () => {
+    const { panel, phone, got } = twoTransports();
+    const p = createStamper(S, 'panel-7');
+    panel.send(p({ kind: 'hello', role: 'controller' }));
+    panel.send(p(cmd('before', 90)));
+    await waitFor(() => got.some((m) => m.kind === 'ack' && m.commandId === 'before'));
+    phone.send({ ...createStamper(S, 'panel-7')({ kind: 'hello', role: 'controller' }), seq: 1e9 } as WireMessage);
+    await new Promise((r) => setTimeout(r, 20));
+    panel.send(p(cmd('after', 100)));
+    await waitFor(() => got.some((m) => m.kind === 'ack' && m.commandId === 'after'));
+    expect(got.find((m) => m.kind === 'ack' && m.commandId === 'after')).toMatchObject({ accepted: true });
+    expect(hs?.stats.applied).toBe(2);
+  });
+
+  it("today's cases are unchanged: a viewer on its own transport is refused; the same peer saying controller then commands", async () => {
+    const { phone } = twoTransports();
+    const got = collect(phone);
+    const v = createStamper(S, 'view-ab12cd');
+    phone.send(v({ kind: 'hello', role: 'viewer' }));
+    phone.send(v(cmd('from-viewer', 130)));
+    await waitFor(() => got.some((m) => m.kind === 'ack' && m.commandId === 'from-viewer'));
+    expect(got.find((m) => m.kind === 'ack' && m.commandId === 'from-viewer')).toMatchObject({ accepted: false, reason: 'a viewer cannot command' });
+    phone.send(v({ kind: 'hello', role: 'controller' }));
+    phone.send(v(cmd('now-controller', 80)));
+    await waitFor(() => got.some((m) => m.kind === 'ack' && m.commandId === 'now-controller'));
+    expect(got.find((m) => m.kind === 'ack' && m.commandId === 'now-controller')).toMatchObject({ accepted: true });
+    expect(hs?.stats.applied).toBe(1);
+  });
+});
