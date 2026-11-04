@@ -278,6 +278,11 @@ export interface ManagedTransport extends Transport {
    * (BroadcastChannel, in-process): a session then learns presence from the host's hello and its 1 Hz state.
    */
   onPresence?(fn: (p: { hostOnline: boolean }) => void): () => void;
+  /**
+   * R29: a peer's socket left the link's room (only a link to a relay knows; it says so to the host). The host forgets
+   * that peer's state on this transport, so the next socket under the id starts fresh.
+   */
+  onPeerLeft?(fn: (from: string) => void): () => void;
 }
 
 export type AckResult = DispatchResult & { commandId: string; rttMs: number };

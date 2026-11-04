@@ -205,6 +205,13 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
     }
   };
 
+  /**
+   * R29: the host hears that a peer's socket left, so it forgets that peer's sequence and role (the known gap of #183:
+   * a hello forged under a Remote's id while the Remote reconnected outlived the forger's socket). Host only.
+   */
+  const peerLeft = (room: Room, p: Peer) => {
+    if (room.host) frame(room.host.ws, { relay: 'peer-left', id: p.id });
+  };
   /** Stage 12: the host hears how many peers follow (the instructor's QR panel counts the phones). */
   const tellHost = (room: Room) => {
     if (room.host) frame(room.host.ws, peersFrame(room));
@@ -279,7 +286,8 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
         log(`room ${r.code}: ${holder.role} ${holder.id} did not answer within ${takenCheckMs} ms: closed for the newcomer ${m.role} ${m.from}`);
         holder.ws.terminate();
         if (r.host === holder) r.host = null;
-        r.peers.delete(holder);
+        // R29: told now, before the newcomer's hello reaches the host (the terminated socket's close event comes later)
+        if (r.peers.delete(holder)) peerLeft(r, holder);
         r.awaiting.delete(holder);
         r.welcomed?.delete(holder);
         join(r, m, data);
@@ -317,7 +325,8 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
         room.host = null;
         for (const p of room.peers) frame(p.ws, peersFrame(room));
       } else {
-        room.peers.delete(peer);
+        // Not in the room any more: a half-open socket the relay already replaced (join), which told the host then
+        if (room.peers.delete(peer)) peerLeft(room, peer);
         room.awaiting.delete(peer);
         room.welcomed?.delete(peer);
         tellHost(room);

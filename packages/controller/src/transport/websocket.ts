@@ -79,6 +79,7 @@ class WsTransport extends TransportBase {
       if (isRelayFrame(o)) {
         if (o.relay === 'error') this.setStatus('error');
         if (o.relay === 'peers') this.presence({ hostOnline: o.hostOnline }); // The session hears it too
+        if (o.relay === 'peer-left' && typeof o.id === 'string') this.peerLeft(o.id); // R29: the host forgets that peer
         this.o.onRelayFrame?.(o);
         return;
       }

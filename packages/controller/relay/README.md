@@ -52,7 +52,8 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
 - Stage 12: a session takes `--max-peers` non-host peers; the next is refused `full` (close code 4029, no retry). With
   `--remote-roles viewer`, a socket from another device saying `host` or `controller` is refused `forbidden` (close
   code 4003); this machine (loopback or one of its own addresses) may still host and command. The host gets a
-  `{relay:'peers'}` frame whenever a peer comes or goes (the QR sheet counts the phones).
+  `{relay:'peers'}` frame whenever a peer comes or goes (the QR sheet counts the phones), and `{relay:'peer-left', id}`
+  when a non-host socket leaves (R29: the host forgets that peer; learners never get it).
 - While the host is away, a joining peer gets the cached snapshot and `{relay:'peers', hostOnline:false}`.
 - Heartbeat every 10 s: a WebSocket ping (dead sockets are terminated) and a `{relay:'hb'}` frame, so browser
   clients can notice a dead link (they cannot see pings).
@@ -66,8 +67,10 @@ The session code is the only secret — and in a classroom it is on the projecto
 the host refuses a viewer's command as well. A peer id belongs to one live socket per session: when a second socket
 says hello with an id in use (or as a second host), the relay pings the socket that holds it and refuses the newcomer
 if it answers within 3 s (an id: close 4010, which the client retries; another host: close 4009), or closes it and
-lets the newcomer in if it does not, so a phone whose network dropped or a reloaded laptop gets back in. One gap is
-known: while a peer's socket is down the host still holds that peer's last sequence number, so a hand-written hello
-with its id and a higher number sent in that window blocks the peer's commands until its page reloads. Run the relay on a trusted LAN, or behind a TLS reverse proxy
+lets the newcomer in if it does not, so a phone whose network dropped or a reloaded laptop gets back in. When a
+non-host socket leaves the room (or is closed for a newcomer, before the newcomer's hello goes on), the relay tells the
+host `{relay:'peer-left', id}` and the host forgets that peer's sequence number and role, so a hello forged under an id
+while its owner reconnects dies with the forger's socket (R29; before it, such a hello blocked the owner's commands
+until its page reloaded). Run the relay on a trusted LAN, or behind a TLS reverse proxy
 (`wss://`) with access control if it must be reachable from the internet. Messages larger than 256 KB, or
 carrying typed arrays or long numeric arrays, are refused.
