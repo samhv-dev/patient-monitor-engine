@@ -45,8 +45,10 @@ ectopy), and the demo cards' rc.4 changes (#163); it was not regenerated, and th
 It is older than the 1.0.0-rc.5 pre-release tree too: since 1.0.0-rc.4 the MH sympathetic surge constricts the
 skin, so the MH heat stays in the core (E131, #209), and an infused fluid carries its own temperature (the MH card's
 refrigerated saline, #216); the other engine changes since rc.4 add signals for `pme-scenario/2` rules and refuse an
-IV command for a volatile agent (#186). The weekly `validation` run of 2 November on `079d4851`, the tree this
-pre-release tags (run 41413230295), ran `pnpm validate` to its end ("49 queued, 21 gating", so the job exits 1) with
+IV command for a volatile agent (#186); and after the demonstration of 3 November the arterial line's pulse detector
+searches back for a missed smaller beat (#164), which lowers the displayed arterial systolic where a beat was missed.
+The weekly `validation` run of 2 November on `079d4851`, the demonstration's tree, not the tree this pre-release tags
+(`46fbf1b3` and its release records; run 41413230295), ran `pnpm validate` to its end ("49 queued, 21 gating", so the job exits 1) with
 the PWDB dataset not fetched (HTTP 403 from Zenodo: the pwdb-rise band skipped); its report is the run's
 `validation-report` artifact and was not landed here, so the counts above stay those of 18 October.
 

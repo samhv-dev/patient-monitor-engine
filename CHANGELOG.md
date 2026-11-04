@@ -7,7 +7,7 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ## [Unreleased]
 
-## [1.0.0-rc.5] - 2026-11-04
+## [1.0.0-rc.5] - 2026-11-05
 
 **In this release candidate:** the `pme-scenario/2` card format, with the malignant-hyperthermia card in phases
 (`showcase-mh-v2`); Instructor v2, chosen in Settings, with the Case briefing and Finish the case; the Debrief's course
@@ -17,9 +17,20 @@ claimed twice.
 
 Fifth public **pre-release** (release candidate) of a teaching simulator. It is for education only: it is not a
 medical device and it is not clinically validated. It is not the final 1.0.0: the calibration pass and the blind
-realism review have not run. Its product code is that of `main` 079d4851, the build the demonstration of 3 November
-2026 ran (classroom kit G3); this release candidate adds the version and its release records. The known limitations
-listed under 1.0.0-rc.4, 1.0.0-rc.3, 1.0.0-rc.2 and 1.0.0-rc.1 still apply, except where this section says otherwise.
+realism review have not run. The demonstration of 3 November 2026 ran `main` 079d4851 (classroom kit G3); this
+release candidate is `main` 46fbf1b3, which adds ten pull requests merged after the demonstration, and the version and
+its release records. Those ten: the arterial line's pulse detector searches back for a missed smaller beat, so the
+displayed systolic no longer reads high after a larger beat (#164); starting the Saadat-like cuff no longer tells the
+learners' phones that the ventilator is on the main screen (#194); a learner's phone says "Following session …" as soon
+as it follows again after the instructor's page reloads (#191); the Room has a large QR view, and a second instructor
+tab asks before starting a session (#256); the classroom kit's Windows launchers use the kit's own `runtime\node.exe`,
+which `make-bundle.mjs --win-node` ships checksum-verified (#255); `@pme/controller`'s protocol has the types and guard
+rules of an `instructor` role, which nothing sends yet (#192); the census of the commands the two Instructor views send,
+a test (#193); two end-to-end tests read the paused clock after the engine took the pause and check the physiology
+console on the built page (#259); the `/2` MH run-sheet helper closes the fold it opened and the Saadat grid test waits
+for the skin switch (#260); and a roadmap note on a press lost when its button is rebuilt under the pointer (#261). The
+known limitations listed under 1.0.0-rc.4, 1.0.0-rc.3, 1.0.0-rc.2 and 1.0.0-rc.1 still apply, except where this section
+says otherwise.
 
 ### Added
 
@@ -194,6 +205,30 @@ listed under 1.0.0-rc.4, 1.0.0-rc.3, 1.0.0-rc.2 and 1.0.0-rc.1 still apply, exce
   bad, discuss; a ribbon for a plain bookmark), the Bookmarks list's words on hover, an undone mark struck through. The
   learner handout's strip has no marks. A run with no bookmark draws the strip as before; nothing recorded, exported or
   graded changes.
+- **Room: a large QR view** (after the 3 November demo): **Show large** under the Room's QR, or **Q** while the Room is
+  showing, opens a full-screen view of the same QR, drawn again as vector from the same address, at 796 × 796 px at
+  1920 × 1080 (the card's is 220 × 220 px), with the code, the address and the live "n phones following" beneath it in
+  large type. Escape, Q or **Back to the Room** returns; Q is ignored while typing, and leaving the Room closes the view.
+- **A second instructor tab asks before starting a session** (after the 3 November demo). Opening the app's address in
+  a second tab (or a duplicated tab with the same code) started a new session without saying so, and the phones kept
+  following a tab nobody was looking at. Before it starts, the instructor's page now asks this browser's other tabs
+  (BroadcastChannel `pme.hosts`) which sessions they host, waiting 200 ms: **Open that tab's session here** hands the
+  session over (the old tab sends its kept position, stops and reads "This session moved to another tab"); **Start a
+  new session** gets a new code while the other tab carries on. A tab the browser has suspended (Safari after about 4
+  minutes hidden) does not answer, and other browsers and computers are not asked (`docs/showcase/CLASSROOM.md`, "One
+  instructor tab"). The learner phone, the second screen and the Remote never run this check.
+- **The classroom kit's Windows launchers use the kit's own `runtime\node.exe`** (after the 3 November demo): `Start
+  Classroom.cmd` and `Start Simulator.cmd` look for Node.js as `PME_NODE` (alone, if set), then `runtime\node.exe`, then
+  the first `node.exe` on the path, then `%ProgramFiles%\nodejs\node.exe`, as the Mac launcher does.
+  `make-bundle.mjs --win-node <node-v22.x.y-win-x64.zip>` puts the official build into the kit after checking its
+  SHA-256 against the `SHASUMS256.txt` beside it (not that file's GPG signature); it refuses a wrong name, a major below
+  22, an unlisted file or a mismatched sum before building, and records the version and both checksums in
+  `runtime/NODE-VERSION.txt` and `VERSION.txt`. Nothing is downloaded. Untested on a Windows machine.
+- `@pme/controller`'s protocol has the types and guard rules of an `instructor` role (piece P2 of
+  `docs/plans/instructor-peer-role.md`): a hello with a 4–8 digit `pin`, the `grant` message, the `note` command, the
+  `instructorView` event, the close codes `denied` 4013 and `tooManyTries` 4028, and the allow-list
+  `INSTRUCTOR_COMMANDS` with `commandShape` and `instructorMay`, exported from the package. No behaviour change: nothing
+  sends these yet.
 
 ### Changed
 
@@ -460,11 +495,15 @@ listed under 1.0.0-rc.4, 1.0.0-rc.3, 1.0.0-rc.2 and 1.0.0-rc.1 still apply, exce
 - Browser coverage: as under 1.0.0-rc.4. The temporary rule that a WebKit test passing only on a retry is a warning,
   not a failure, was set until the demonstration of 3 November and is still in force on this tree; its revert waits for
   the calibration pass's re-harvest of the known-flaky list (docs/gates/stage-14.md, "Temporary relaxation"). Chromium
-  runs every test and fails on a retry-only pass. On `main` 079d4851 (CI run 41381444329) the Chromium job failed its
-  first attempt on two untagged tests that passed only on a retry, `teach2-fit.e2e.ts:173` at Early signs and at
-  Recrudescence on the `/2` MH card, and passed on the second attempt (180 passed); the gating WebKit job passed with
-  two retry-only passes, `debrief.e2e.ts:225` and `saadat-instructor-tiles.e2e.ts:138`; the WebKit quarantine with two,
-  `return-here-restore.e2e.ts:15` and `showcase-capnogram.e2e.ts:28`.
+  runs every test and fails on a retry-only pass. On `main` 46fbf1b3, the code of this release candidate (CI run
+  41917194127), the Chromium job failed on one untagged test that passed only on a retry, `sim-line.e2e.ts:52` (the
+  sim line on the Monitor view and the learner window); every other job passed; the gating WebKit job passed with three
+  retry-only passes, `ui-polish-a.e2e.ts:52`, `teach2-fit.e2e.ts:173` at Early signs on the `/2` MH card and
+  `saadat-instructor-tiles.e2e.ts:138`; the WebKit quarantine with none. (On 079d4851, the demonstration's build, run
+  41381444329: Chromium `teach2-fit.e2e.ts:173` twice, passed on its second attempt; WebKit `debrief.e2e.ts:225` and
+  `saadat-instructor-tiles.e2e.ts:138`.)
+- The second-tab guard's end-to-end test (`room-qr-tab-guard.e2e.ts:74`) passes only on a retry on WebKit in CI: the
+  guard waits 200 ms for a background tab's answer. A fix is in progress.
 - The Persian Debrief handout prints in English every line its Persian table does not hold: 46 entries of
   `docs/showcase/i18n/fa-debrief.json` have no Persian yet (26 at 1.0.0-rc.4): 25 of those, the MH take-home line
   reworded for the registry's recrudescence rate, and 20 labels of the `pme-debrief/3` Debrief of a `pme-scenario/2`
