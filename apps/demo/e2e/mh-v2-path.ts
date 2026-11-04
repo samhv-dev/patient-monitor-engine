@@ -55,13 +55,21 @@ export async function pressPath(page: Page, go: (i: number) => boolean | Promise
     const phase = AFTER_PHASE[title];
     if (phase) await expect.poll(async () => (await app(page)).stateId, { timeout: 30_000, message: `${title}: waiting for ${phase}` }).toBe(phase);
     const row = page.locator('.ip2-action .ip2-rows:not(.ip2-finished-list) button.ip2-row').filter({ has: page.locator('.ip2-row-title', { hasText: title }) }).first();
-    // a row not due now is in ACTION's "Not due now" fold (rows.ts classifyV2 `later`): pressable there once it is open
+    // a row not due now is in ACTION's "Not due now" fold (rows.ts classifyV2 `later`): pressable there once it is open.
+    // ACTION repaints at ≤ 2 Hz, so a row whose phase has just been entered is still in the fold for up to 500 ms: wait
+    // one repaint and more (1 s) for it to come out before opening the fold. The fold is closed again after the press, so
+    // the view the tests measure is the instructor's, never one this helper opened (CI run 41785967473, PR #257:
+    // Early signs entered at 08:13, after the 08:12 floor, the fold was opened for the MH call and left open, and ACTION
+    // measured 776 px for 685).
     const fold = page.locator('.ip2-action details.ip2-later');
-    if (!(await row.isVisible()) && (await fold.count()) && !(await fold.evaluate((d) => (d as HTMLDetailsElement).open))) await fold.locator('summary').click();
+    await row.waitFor({ state: 'visible', timeout: 1000 }).catch(() => undefined);
+    const opened = !(await row.isVisible()) && (await fold.count()) > 0 && !(await fold.evaluate((d) => (d as HTMLDetailsElement).open));
+    if (opened) await fold.locator('summary').click();
     await expect(row, `${title} in ACTION at ${t} s (phase ${(await app(page)).stateId})`).toBeVisible();
     const at = (await app(page)).simT;
     await row.click();
     await expect(row).toHaveAttribute('data-look', 'taken', { timeout: 10_000 });
+    if (opened && (await fold.count()) && (await fold.evaluate((d) => (d as HTMLDetailsElement).open))) await fold.locator('summary').click();
     pressed.push([at, title]);
   }
   return pressed;
