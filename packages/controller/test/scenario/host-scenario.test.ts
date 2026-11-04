@@ -8,6 +8,7 @@ import { ScenarioDriver } from '../../src/scenario/driver.ts';
 import { StageBuffer } from '../../src/panel/staging.ts';
 import { createStamper, type AppliedResolution, type ScenarioEvent, type WireEvent } from '../../src/protocol.ts';
 import { manualHost } from '../fakes/manual-host.ts';
+import { minimalV2 } from './fixtures-v2.ts';
 import { collect, waitFor } from '../helpers.ts';
 
 const S = 'SCN234';
@@ -180,5 +181,47 @@ describe('scenario over a HostSession', () => {
     expect(host.engine.now().tick).toBe(1500);
     expect(driver.runner?.stateId).toBe('stable');
     await waitFor(() => ctl.scenario.stateId === 'stable');
+  });
+});
+
+describe('E141: ScenarioView.history begins at the first stage', () => {
+  // A load publishes its initial state's `scenario` event before its own commandApplied; the history must not restart on
+  // that commandApplied and lose the entry, so every reader of the history (the Scenario tab, Instructor v2) has it.
+  it('/1: after a load the history holds the initial state\'s entry at the load, then each transition', async () => {
+    const { ctl, run, driver } = setup();
+    await waitFor(() => ctl.hostOnline);
+    await run(2);
+    await ctl.send({ type: 'scenario', action: 'load', target: 'acls-vf-witnessed' });
+    await waitFor(() => ctl.scenario.doc?.id === 'acls-vf-witnessed');
+    expect(ctl.scenario.history).toEqual([{ t: 2, stateId: 'stable' }]);
+    await run(62.02); // the card's arrest comes 60 s into its first state
+    await waitFor(() => ctl.scenario.stateId === 'vf');
+    expect(ctl.scenario.history.map((h) => [h.t, h.stateId, h.transitionId])).toEqual([[2, 'stable', undefined], [62, 'vf', 'arrest']]);
+    // the controller's history is the host runner's own (position.ts copies the runner's into the view on a reload)
+    expect(ctl.scenario.history).toEqual(driver.runner?.history);
+  });
+
+  it('/2: the initial phase\'s entry is there too', async () => {
+    const { ctl, run } = setup();
+    await waitFor(() => ctl.hostOnline);
+    await run(1);
+    expect((await ctl.send({ type: 'scenario', action: 'load', doc: minimalV2() })).accepted).toBe(true);
+    await waitFor(() => ctl.scenario.doc?.id === 'mh2');
+    expect(ctl.scenario.history).toEqual([{ t: 1, stateId: 'baseline' }]);
+  });
+
+  it('a late joiner: the sticky load gives the initial entry, the welcome event the current state, once each', async () => {
+    const { ctl, hub, run } = setup();
+    await waitFor(() => ctl.hostOnline);
+    await ctl.send({ type: 'scenario', action: 'load', target: 'acls-vf-witnessed' });
+    const late0 = new ControllerSession({ session: S, transport: hub.connect(), issuedBy: 'remote' });
+    cleanup.push(() => late0.close());
+    await waitFor(() => late0.scenario.stateId === 'stable' && late0.scenario.doc !== null);
+    expect(late0.scenario.history).toEqual([{ t: 0, stateId: 'stable' }]); // still in it: one entry, not two
+    await run(61);
+    const late = new ControllerSession({ session: S, transport: hub.connect(), issuedBy: 'remote' });
+    cleanup.push(() => late.close());
+    await waitFor(() => late.scenario.stateId === 'vf');
+    expect(late.scenario.history.map((h) => [h.t, h.stateId])).toEqual([[0, 'stable'], [60, 'vf']]);
   });
 });
