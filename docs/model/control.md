@@ -264,7 +264,7 @@ None recorded.
 
 ## Tests
 
-346 tests in 72 files; 0 expected failures, 0 skipped.
+354 tests in 72 files; 0 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -282,7 +282,7 @@ None recorded.
 | [`panel/scenario-tab.dom.test.ts`](../../packages/controller/test/panel/scenario-tab.dom.test.ts) | 6 | 0 | 0 |
 | [`panel/staging.test.ts`](../../packages/controller/test/panel/staging.test.ts) | 2 | 0 | 0 |
 | [`protocol.test.ts`](../../packages/controller/test/protocol.test.ts) | 5 | 0 | 0 |
-| [`relay/kit-windows.test.ts`](../../packages/controller/test/relay/kit-windows.test.ts) | 9 | 0 | 0 |
+| [`relay/kit-windows.test.ts`](../../packages/controller/test/relay/kit-windows.test.ts) | 17 | 0 | 0 |
 | [`relay/peer-identity.test.ts`](../../packages/controller/test/relay/peer-identity.test.ts) | 10 | 0 | 0 |
 | [`relay/relay-classroom.test.ts`](../../packages/controller/test/relay/relay-classroom.test.ts) | 9 | 0 | 0 |
 | [`relay/relay-hostile.test.ts`](../../packages/controller/test/relay/relay-hostile.test.ts) | 3 | 0 | 0 |
