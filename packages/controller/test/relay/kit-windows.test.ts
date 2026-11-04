@@ -1,13 +1,16 @@
 // The classroom kit on Windows (rc.3; UNTESTED ON WINDOWS until the owner runs the checklist in the kit's READ ME). Nobody
 // here can run Windows, so these tests pin what can be checked elsewhere: the .cmd files the kit gets (CRLF, ASCII),
 // the Windows branch of the browser opener (process.platform faked), the relay's and serve.mjs's "inside the app
-// folder" test on Windows paths (path.win32), the Windows interface names for the QR code, and server/launch.mjs (what
-// the .cmd files run) on this OS.
-import { spawn } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+// folder" test on Windows paths (path.win32), the Windows interface names for the QR code, server/launch.mjs (what
+// the .cmd files run) on this OS, the .cmd files' Node.js lookup (the kit's runtime\node.exe first), and the bundler's
+// --win-node check (win-node.mjs) on small fixture zips made here (nothing is downloaded).
+import { spawn, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { chmodSync, copyFileSync, linkSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path, { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { crc32, deflateRawSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 import { isInside, lanAddresses } from '../../relay/http.ts';
 import { waitFor } from '../helpers.ts';
@@ -17,6 +20,11 @@ const showcase = resolve(import.meta.dirname, '../../../../scripts/showcase');
 const kitLaunchers = (await import(pathToFileURL(join(showcase, 'kit-launchers.mjs')).href)) as {
   WINDOWS_LAUNCHERS: Array<[string, string]>;
   writeWindowsLaunchers: (kitSrc: string, out: string) => void;
+};
+type WinNode = { version: string; zipName: string; zipSha: string; exe: Buffer; exeSha: string; license: Buffer };
+const winNode = (await import(pathToFileURL(join(showcase, 'win-node.mjs')).href)) as {
+  readWindowsNode: (zip: string, sums: string) => WinNode;
+  listedSum: (sums: string, name: string) => string | null;
 };
 const launch = (await import(pathToFileURL(join(showcase, 'server/launch.mjs')).href)) as {
   openCommand: (url: string, platform?: string) => { cmd: string; args: string[]; opts: Record<string, unknown> };
@@ -40,6 +48,29 @@ describe('the kit gets the Windows launchers', () => {
       expect(text).toContain('if not exist "%~dp0server\\launch.mjs" goto nokit');
       expect(text).toContain('if not "%ERRORLEVEL%"=="0" goto oldnode');
       expect(text).not.toMatch(/^if errorlevel/m);
+    }
+  });
+
+  it('both launchers look for the kit\'s runtime\\node.exe first, then PME_NODE, then PATH, then Program Files; one version check for all', () => {
+    for (const [src] of kitLaunchers.WINDOWS_LAUNCHERS) {
+      const text = readFileSync(join(showcase, 'kit', src), 'utf8');
+      const at = (line: string) => {
+        const i = text.split(/\r?\n/).indexOf(line);
+        expect(i, `${src}: no line ${line}`).toBeGreaterThan(-1);
+        return i;
+      };
+      const order = [
+        at('set "NODE="'),
+        at('if exist "%~dp0runtime\\node.exe" set "NODE=%~dp0runtime\\node.exe"'),
+        at('if not defined NODE if defined PME_NODE set "NODE=%PME_NODE%"'),
+        at('if not defined NODE for /f "delims=" %%n in (\'where node.exe 2^>nul\') do if not defined NODE set "NODE=%%n"'),
+        at('if not defined NODE if exist "%ProgramFiles%\\nodejs\\node.exe" set "NODE=%ProgramFiles%\\nodejs\\node.exe"'),
+        at('if not defined NODE goto nonode'),
+        at('if not "%ERRORLEVEL%"=="0" goto oldnode'),
+        at('"%NODE%" "%~dp0server\\launch.mjs" ' + (src.includes('classroom') ? 'classroom' : 'simulator')),
+      ];
+      expect(order, `${src}: lookup order`).toEqual([...order].sort((a, b) => a - b));
+      expect(text.match(/set "NODE=/g)?.length, `${src}: no other place sets NODE`).toBe(5);
     }
   });
 
@@ -120,8 +151,8 @@ describe('server/launch.mjs, what the .cmd files run (here on this OS)', () => {
     for (const f of ['launch.mjs', 'serve.mjs']) copyFileSync(join(showcase, 'server', f), join(kit, 'server', f));
     return kit;
   };
-  const run = (kit: string, mode: string) => {
-    const p = spawn(process.execPath, [join(kit, 'server/launch.mjs'), mode], { env: { PATH: process.env.PATH ?? '', PME_NO_OPEN: '1', PME_PORT: String(20000 + Math.floor(Math.random() * 20000)) }, stdio: ['ignore', 'pipe', 'pipe'] });
+  const run = (kit: string, mode: string, node = process.execPath) => {
+    const p = spawn(node, [join(kit, 'server/launch.mjs'), mode], { env: { PATH: process.env.PATH ?? '', PME_NO_OPEN: '1', PME_PORT: String(20000 + Math.floor(Math.random() * 20000)) }, stdio: ['ignore', 'pipe', 'pipe'] });
     let out = '';
     p.stdout.on('data', (d) => (out += d));
     p.stderr.on('data', (d) => (out += d));
@@ -144,6 +175,29 @@ describe('server/launch.mjs, what the .cmd files run (here on this OS)', () => {
     await expect(fetch(`http://127.0.0.1:${port}/`)).rejects.toThrow();
   }, 30_000);
 
+  it('started by the kit\'s runtime/ node (as the .cmd does with runtime\\node.exe): SERVER names that node, which serves', async (ctx) => {
+    const kit = miniKit();
+    mkdirSync(join(kit, 'runtime'));
+    const own = join(kit, 'runtime', process.platform === 'win32' ? 'node.exe' : 'node');
+    try {
+      linkSync(process.execPath, own); // a hard link keeps its own path in process.execPath (a symlink would not)
+    } catch {
+      copyFileSync(process.execPath, own);
+      chmodSync(own, 0o755);
+    }
+    // An official Node.js build (CI's, the kit's) is one self-contained file; a shared-library build (Homebrew's) cannot
+    // start from another folder, and then there is nothing to test here
+    const probe = spawnSync(own, ['-v'], { encoding: 'utf8', env: { PATH: process.env.PATH ?? '' } }); // run()'s environment
+    if (probe.status !== 0) ctx.skip(`this machine's node cannot run from another folder (${process.execPath}: a shared-library build)`);
+    const r = run(kit, 'simulator', own);
+    await waitFor(() => /ADDRESS: http:\/\/127\.0\.0\.1:\d+\//.test(r.out()), 15_000, 'ADDRESS');
+    expect(r.out()).toContain(`SERVER: node ${process.version} (${own}) serve.mjs`);
+    const port = Number(/ADDRESS: http:\/\/127\.0\.0\.1:(\d+)\//.exec(r.out())![1]);
+    expect(await (await fetch(`http://127.0.0.1:${port}/`)).text()).toContain('<title>mini kit</title>');
+    r.p.kill('SIGTERM');
+    expect(await r.exited).toBe(0);
+  }, 30_000);
+
   it('classroom without the relay bundle: says the kit is incomplete (and how to unzip), exits 1', async () => {
     const r = run(miniKit(), 'classroom');
     expect(await r.exited).toBe(1);
@@ -152,4 +206,97 @@ describe('server/launch.mjs, what the .cmd files run (here on this OS)', () => {
     expect(r.out()).toContain('Extract All');
     expect([...Buffer.from(r.out())].every((c) => c < 0x80), 'ASCII output only').toBe(true);
   }, 30_000);
+});
+
+describe('make-bundle.mjs --win-node: the official Windows Node.js zip, verified (win-node.mjs; fixture zips)', () => {
+  /** A zip as nodejs.org lays it out: one top folder; `deflate` per entry (an official zip deflates). */
+  const makeZip = (files: Array<[string, Buffer]>, mangle?: (crc: number) => number) => {
+    const locals: Buffer[] = [];
+    const central: Buffer[] = [];
+    let off = 0;
+    for (const [name, data] of files) {
+      const body = deflateRawSync(data);
+      const n = Buffer.from(name);
+      const crc = mangle ? mangle(crc32(data)) : crc32(data);
+      const h = Buffer.alloc(30);
+      h.writeUInt32LE(0x04034b50, 0); h.writeUInt16LE(20, 4); h.writeUInt16LE(8, 8); h.writeUInt32LE(crc, 14);
+      h.writeUInt32LE(body.length, 18); h.writeUInt32LE(data.length, 22); h.writeUInt16LE(n.length, 26);
+      const c = Buffer.alloc(46);
+      c.writeUInt32LE(0x02014b50, 0); c.writeUInt16LE(20, 4); c.writeUInt16LE(20, 6); c.writeUInt16LE(8, 10); c.writeUInt32LE(crc, 16);
+      c.writeUInt32LE(body.length, 20); c.writeUInt32LE(data.length, 24); c.writeUInt16LE(n.length, 28); c.writeUInt32LE(off, 42);
+      locals.push(h, n, body);
+      central.push(c, n);
+      off += h.length + n.length + body.length;
+    }
+    const cd = Buffer.concat(central);
+    const e = Buffer.alloc(22);
+    e.writeUInt32LE(0x06054b50, 0); e.writeUInt16LE(files.length, 8); e.writeUInt16LE(files.length, 10);
+    e.writeUInt32LE(cd.length, 12); e.writeUInt32LE(off, 16);
+    return Buffer.concat([...locals, cd, e]);
+  };
+  const exe = Buffer.concat([Buffer.from('MZ'), Buffer.alloc(4096, 7)]); // stands in for node.exe: a PE file starts "MZ"
+  const license = Buffer.from('Node.js is licensed for use as follows: (fixture)\n');
+  const sha = (b: Buffer) => createHash('sha256').update(b).digest('hex');
+  /** A folder with the zip and a SHASUMS256.txt listing `listed` for it (the real sum unless a test says otherwise). */
+  const fixture = (version = '22.23.4', opts: { listed?: string; files?: Array<[string, Buffer]>; mangle?: (crc: number) => number } = {}) => {
+    const dir = mkdtempSync(join(tmpdir(), 'kit-win-node-'));
+    const name = `node-v${version}-win-x64.zip`;
+    const top = `node-v${version}-win-x64/`;
+    const zip = makeZip(opts.files ?? [[`${top}README.md`, Buffer.from('readme')], [`${top}node.exe`, exe], [`${top}LICENSE`, license], [`${top}npm.cmd`, Buffer.from('@echo off')]], opts.mangle);
+    writeFileSync(join(dir, name), zip);
+    writeFileSync(join(dir, 'SHASUMS256.txt'), `${'0'.repeat(64)}  node-v${version}-x64.msi\n${opts.listed ?? sha(zip)}  ${name}\n`);
+    return { zip: join(dir, name), sums: join(dir, 'SHASUMS256.txt'), zipSha: sha(zip) };
+  };
+
+  it('the right SHA-256: node.exe and LICENSE only come out, byte for byte, with both checksums and the version', () => {
+    const f = fixture();
+    const w = winNode.readWindowsNode(f.zip, f.sums);
+    expect(w.version).toBe('v22.23.4');
+    expect(w.zipName).toBe('node-v22.23.4-win-x64.zip');
+    expect(w.zipSha).toBe(f.zipSha);
+    expect(w.exe.equals(exe)).toBe(true);
+    expect(w.exeSha).toBe(sha(exe));
+    expect(w.license.equals(license)).toBe(true);
+  });
+
+  it('a wrong SHA-256 is refused, naming both sums', () => {
+    const f = fixture('22.23.4', { listed: 'ab'.repeat(32) });
+    expect(() => winNode.readWindowsNode(f.zip, f.sums)).toThrow(new RegExp(`SHA-256 MISMATCH.*${f.zipSha}.*${'ab'.repeat(32)}.*Refused`));
+  });
+
+  it('a zip changed after its sum was listed (one byte) is refused', () => {
+    const f = fixture();
+    const b = readFileSync(f.zip);
+    b[40] = b[40]! ^ 1;
+    writeFileSync(f.zip, b);
+    expect(() => winNode.readWindowsNode(f.zip, f.sums)).toThrow(/SHA-256 MISMATCH/);
+  });
+
+  it('refused: a SHASUMS256.txt that does not list the zip, a zip not named like an official build, Node.js older than 22', () => {
+    const f = fixture();
+    writeFileSync(f.sums, `${f.zipSha}  node-v22.23.4-linux-x64.tar.xz\n`);
+    expect(() => winNode.readWindowsNode(f.zip, f.sums)).toThrow(/lists no node-v22\.23\.4-win-x64\.zip/);
+    const renamed = join(mkdtempSync(join(tmpdir(), 'kit-win-node-')), 'node.zip');
+    copyFileSync(f.zip, renamed);
+    expect(() => winNode.readWindowsNode(renamed, f.sums)).toThrow(/not named like an official build/);
+    const old = fixture('20.18.0');
+    expect(() => winNode.readWindowsNode(old.zip, old.sums)).toThrow(/Node\.js 20\.18\.0; the kit needs 22 or later/);
+  });
+
+  it('refused even with a matching sum: no node.exe in the zip, a node.exe that is not a Windows executable, a CRC-32 mismatch', () => {
+    const top = 'node-v22.23.4-win-x64/';
+    const noExe = fixture('22.23.4', { files: [[`${top}LICENSE`, license]] });
+    expect(() => winNode.readWindowsNode(noExe.zip, noExe.sums)).toThrow(/the zip has no node-v22\.23\.4-win-x64\/node\.exe/);
+    const notPe = fixture('22.23.4', { files: [[`${top}node.exe`, Buffer.from('#!/bin/sh')], [`${top}LICENSE`, license]] });
+    expect(() => winNode.readWindowsNode(notPe.zip, notPe.sums)).toThrow(/not a Windows executable/);
+    const badCrc = fixture('22.23.4', { mangle: (c) => (c ^ 1) >>> 0 });
+    expect(() => winNode.readWindowsNode(badCrc.zip, badCrc.sums)).toThrow(/CRC-32 or size does not match/);
+  });
+
+  it('SHASUMS256.txt lines: "<sum>  <name>" (and the binary-mode "*<name>"); the name must match exactly', () => {
+    const sum = 'C0FFEE'.repeat(10) + 'C0FE';
+    expect(winNode.listedSum(`${sum}  node-v22.23.4-win-x64.zip\r\n`, 'node-v22.23.4-win-x64.zip')).toBe(sum.toLowerCase());
+    expect(winNode.listedSum(`${sum} *node-v22.23.4-win-x64.zip`, 'node-v22.23.4-win-x64.zip')).toBe(sum.toLowerCase());
+    expect(winNode.listedSum(`${sum}  node-v22.23.4-win-x64.zip.asc`, 'node-v22.23.4-win-x64.zip')).toBeNull();
+  });
 });

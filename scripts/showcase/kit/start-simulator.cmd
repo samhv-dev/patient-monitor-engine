@@ -2,20 +2,23 @@
 rem Start Simulator (Windows) - double-click this file in File Explorer. UNTESTED ON WINDOWS at this release: the
 rem owner's checklist is in "READ ME FIRST.txt", section WINDOWS.
 rem It starts a small web server on this computer only (127.0.0.1), then opens the simulator in the default browser.
-rem It needs Node.js 22 or later (nodejs.org, the LTS). The steps are in server\launch.mjs (the same as
+rem It needs Node.js 22 or later: the kit's own runtime\node.exe if it has one (make-bundle.mjs --win-node), else an
+rem installed one (nodejs.org, the LTS). The steps are in server\launch.mjs (the same as
 rem "Start Simulator.command" on a Mac, with its bundled-node server); this file only finds Node.js. It writes nothing
 rem into its own folder (the kit can run from a read-only USB stick).
 rem Knobs for the kit's own tests (a presenter never needs them), set without quotes:
 rem   PME_NO_OPEN=1   do not open the browser
 rem   PME_PORT=8642   first port to try (the next 49 are tried if it is busy)
-rem   PME_NODE=path   use only this node.exe
+rem   PME_NODE=path   use this node.exe when the kit has no runtime\node.exe
 setlocal EnableExtensions DisableDelayedExpansion
 title Patient monitor simulator
 
 rem Started from inside the .zip, Explorer extracted this file alone: say so (launch.mjs is not there to say it)
 if not exist "%~dp0server\launch.mjs" goto nokit
+rem Node.js: the kit's runtime\node.exe first, then PME_NODE, then one on PATH, then the .msi's default folder
 set "NODE="
-if defined PME_NODE set "NODE=%PME_NODE%"
+if exist "%~dp0runtime\node.exe" set "NODE=%~dp0runtime\node.exe"
+if not defined NODE if defined PME_NODE set "NODE=%PME_NODE%"
 if not defined NODE for /f "delims=" %%n in ('where node.exe 2^>nul') do if not defined NODE set "NODE=%%n"
 if not defined NODE if exist "%ProgramFiles%\nodejs\node.exe" set "NODE=%ProgramFiles%\nodejs\node.exe"
 if not defined NODE goto nonode
