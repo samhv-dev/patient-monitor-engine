@@ -2,23 +2,38 @@
 // engine's truth event, a phenylephrine bolus from the rail makes one change-log entry and turns the SVR delta
 // positive. Screenshots (JPEG clips, ≤ 60 KB each) for the gate note.
 // Run: PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/physiology-console.e2e.ts
-import { mkdirSync, statSync } from 'node:fs';
-import { resolve } from 'node:path';
+// Served from a production build of this page (`vite build` + `vite preview`), not the dev server: the claim below is a
+// property of the shipped product (the truth tree crosses the worker boundary). On the dev server the worker loads its
+// own copy of the module graph one request per module (278–1875 ms to 'ready' on an idle Mac), close to the renderer's
+// 2 s READY_TIMEOUT_MS; on the CI runner it sometimes lost and the page fell back to the main thread (run 41808357837:
+// "render path main"). The built worker is one inline bundle, which is what a user runs.
+import { mkdirSync, mkdtempSync, rmSync, statSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
-import { createServer, type ViteDevServer } from 'vite';
+import { build, preview, type PreviewServer } from 'vite';
 
-let vite: ViteDevServer;
+let server: PreviewServer;
+let outDir = '';
 let base = '';
 const out = resolve(import.meta.dirname, process.env.PME_SHOTS === '1' ? '../../../docs/gates/stage-7x' : '../../../test-results/gate-shots/stage-7x'); // FU-11 K1: evidence only on request
 
 test.beforeAll(async () => {
-  vite = await createServer({ root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
-  await vite.listen();
-  const addr = vite.httpServer?.address();
+  test.setTimeout(120_000); // the one-page build: ≈ 2 s on a Mac
+  const root = resolve(import.meta.dirname, '..');
+  const configFile = resolve(root, 'vite.config.ts');
+  outDir = mkdtempSync(join(tmpdir(), 'pme-console-build-'));
+  const input = { 'physiology-console': resolve(root, 'dev/physiology-console.html') }; // this page only
+  await build({ root, configFile, logLevel: 'error', build: { outDir, emptyOutDir: true, rollupOptions: { input } } });
+  server = await preview({ root, configFile, logLevel: 'error', build: { outDir }, preview: { port: 0, host: '127.0.0.1' } });
+  const addr = server.httpServer.address();
   base = `http://127.0.0.1:${typeof addr === 'object' && addr ? addr.port : 0}`;
   mkdirSync(out, { recursive: true });
 });
-test.afterAll(async () => vite?.close());
+test.afterAll(async () => {
+  await server?.close();
+  if (outDir) rmSync(outDir, { recursive: true, force: true });
+});
 
 type Hook = { ready: boolean; renderPath(): Promise<string>; ui: { model: { t: number; baseT: number | null; truth: { leaves: number; bytes: number; truncated: boolean } } } };
 const simT = (page: Page) => page.evaluate(() => (window as unknown as { __pmeConsole: Hook }).__pmeConsole.ui.model.t);
@@ -42,6 +57,17 @@ test('physiology console: monitor + organ tree; phenylephrine → one log entry,
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.setViewportSize({ width: 1440, height: 900 });
+  // The worker's time from construction to its 'ready' message, printed with the render path (READY_TIMEOUT_MS is 2 s)
+  await page.addInitScript(() => {
+    const W = window.Worker;
+    window.Worker = class extends W {
+      constructor(url: string | URL, o?: WorkerOptions) {
+        super(url, o);
+        const t = performance.now();
+        this.addEventListener('message', (e: MessageEvent<{ type?: string }>) => void (e.data?.type === 'ready' && Object.assign(window, { __pmeWorkerReadyMs: performance.now() - t })));
+      }
+    };
+  });
   await page.goto(`${base}/dev/physiology-console.html`);
   await page.waitForFunction(() => (window as unknown as { __pmeConsole?: Hook }).__pmeConsole?.ready === true);
   await page.selectOption('[data-id="speed"]', '4');
@@ -57,7 +83,8 @@ test('physiology console: monitor + organ tree; phenylephrine → one log entry,
   // the truth tree crossed the worker boundary inside the monitor's event batches, pruned and under the 50 KB budget
   const path = await page.evaluate(() => (window as unknown as { __pmeConsole: Hook }).__pmeConsole.renderPath());
   const truth = await page.evaluate(() => (window as unknown as { __pmeConsole: Hook }).__pmeConsole.ui.model.truth);
-  console.log(`render path ${path}; truth ${truth.leaves} leaves, ${truth.bytes} B${truth.truncated ? ' (TRUNCATED)' : ''}`);
+  const readyMs = await page.evaluate(() => (window as unknown as { __pmeWorkerReadyMs?: number }).__pmeWorkerReadyMs);
+  console.log(`render path ${path} (worker ready ${readyMs === undefined ? 'never' : `${Math.round(readyMs)} ms`}); truth ${truth.leaves} leaves, ${truth.bytes} B${truth.truncated ? ' (TRUNCATED)' : ''}`);
   if (test.info().project.name !== 'webkit') expect(path).toMatch(/^worker/);
   expect(truth.bytes).toBeLessThan(50_000);
   await shots(page, 'rest');
