@@ -191,7 +191,8 @@ test('a following phone sweeps at the cursor and keeps its ECG gain after a fast
   // signal, as at any monitor's start, then the same choice as the first phone; never one taken on a sliver of signal
   for (const l of jnLabels) expect([gain, 'II  X1  NORMAL']).toContain(l);
   expect(jnLabels.at(-1)).toBe(gain);
-  // ... and no later than one auto-gain judgement after that window (AUTO_GAIN_WINDOW_S 4 + AUTO_GAIN_EVERY_S 2)
+  // ... and no later than one auto-gain judgement after that window (a monitor not yet judged takes its first
+  // AUTO_GAIN_WINDOW_S 4-s window at once; 2 s of slack)
   expect(switchS).not.toBeNull();
   expect(switchS as number).toBeLessThanOrEqual(6);
   await a.context().close();

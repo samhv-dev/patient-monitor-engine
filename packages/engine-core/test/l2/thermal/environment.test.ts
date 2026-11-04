@@ -41,6 +41,7 @@ describe('environment terms', () => {
     expect(ivInflow([saline, bleed], false, 10, 21)).toEqual({ mlPerMin: 60, tempC: 21 });
     expect(ivInflow([rbc], true, 10, 21)).toEqual({ mlPerMin: 56, tempC: 4 });
     expect(ivInflow([rbc], false, 10, 21).tempC).toBe(37);
+    expect(ivInflow([{ ...saline, tempC: 4 }], false, 10, 21)).toEqual({ mlPerMin: 60, tempC: 4 }); // a crystalloid at its own temperature (refrigerated)
     expect(ivInflow([{ ...rbc, leftMl: 0 }, { ...saline, until: 5 }], true, 10, 21)).toEqual({ mlPerMin: 0, tempC: 21 });
     // one 280 mL unit at 4 °C: ≈ 0.24 °C of a 70 kg core (the tables' 0.25 °C per unit)
     expect((-infusionW(56, 4, 36.8) * 300) / (3500 * 70 * (2 / 3))).toBeCloseTo(0.235, 2);

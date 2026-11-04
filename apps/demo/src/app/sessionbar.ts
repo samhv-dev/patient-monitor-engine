@@ -3,6 +3,7 @@
 // It reads the same Link as the panel, so it is identical same-screen and on a Remote.
 import type { Link } from './link.ts';
 import { hrefOf } from './router.ts';
+import { asV1, isV2 } from '@pme/controller';
 import { cardOf } from './scenarios.ts';
 import { oneLiner } from './patients.ts';
 import { activeText } from './events.ts';
@@ -11,6 +12,7 @@ import type { StateVar } from '@pme/engine-core';
 import { bookmark } from './commands.ts';
 import { FF_SPANS } from './fast-forward.ts';
 import { spanText } from './describe.ts';
+import { readyV2 } from './teach2/dock.ts';
 import { button, clock, h, infoDialog, PIN_SVG, seg, setText, throttle, toast, WAVE_SVG } from './ui.ts';
 
 /** The speeds the bar offers (×8 added for the 22 Oct demonstration; the host accepts 0.25–8). */
@@ -72,8 +74,9 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
     badge.append(m === 'modeled' ? (n ? `MODELED, ${n} held` : 'MODELED') : 'MANUAL');
     badge.setAttribute('aria-label', `Physiology mode ${m === 'modeled' ? 'MODELED' : 'MANUAL'}${n ? `, ${n} values held by you` : ''}: show details`);
     const sv = link.ctl.scenario;
-    setText(scen, sv.doc ? `${cardOf(sv.doc).title}: ${sv.stateLabel()} ${clock(sv.timeInState(link.simT))}` : 'No scenario');
-    debrief.dataset.ready = String(!!sv.doc && !sv.current()?.transitions?.length); // the scenario has ended
+    // label(): a /1 state's label (as stateLabel()) or a /2 phase's
+    setText(scen, sv.doc ? `${cardOf(sv.doc).title}: ${sv.label()} ${clock(sv.timeInState(link.simT))}` : 'No scenario');
+    debrief.dataset.ready = String(sv.doc && isV2(sv.doc) ? readyV2(link) : !!asV1(sv.doc) && !sv.current()?.transitions?.length); // the scenario has ended (/2: an end phase or Finish the case)
     setText(t, clock(link.simT));
     for (const b of ffs) b.disabled = link.ctl.fastForward !== null; // One at a time
     // The speed and pause the HOST runs at, wherever they were set (a Remote showed ×1 under a ×4 host)

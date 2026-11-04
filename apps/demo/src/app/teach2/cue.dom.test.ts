@@ -103,11 +103,11 @@ describe('cue box', () => {
     expect(r.el.querySelector('a.ip2-swap')?.getAttribute('href')).toBe('#/monitor');
   });
 
-  it('no scenario: says so', () => {
+  it('no scenario: the default patient (board "Empty 5"; empty.dom.test.ts has the rest)', () => {
     const r = rig(MH, 'induced', [], 0);
     r.sv.doc = null;
     r.slot.refresh();
-    expect(r.text('.ip2-cue-name')).toBe('No scenario running');
-    expect(r.shown('.ip2-say')).toBe(false);
+    expect(r.text('.ip2-cue-name')).toBe('Default patient');
+    expect(r.shown('.ip2-say')).toBe(true);
   });
 });
