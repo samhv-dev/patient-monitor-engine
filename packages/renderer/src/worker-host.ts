@@ -11,6 +11,9 @@ export type RenderPath = 'worker-raf' | 'worker-pump' | 'main';
 export type EventsHandler = (anchor: ClockAnchor, events: EngineEvent[]) => void;
 export type ControlMsg = Extract<ToWorker, { type: 'resize' | 'timeScale' | 'pause' | 'resume' | 'fps' | 'calibrate' | 'plan' }>;
 
+/** The fallback keeps a monitor alive when its worker never loads (no 'ready', no error): the page then runs the engine on
+ *  the main thread. A built page's worker is one inline bundle and is ready well inside it; the Vite dev server loads the
+ *  worker one module per request and can exceed it (278–1875 ms on an idle Mac, more on a loaded runner). */
 export const READY_TIMEOUT_MS = 2000;
 const HIDDEN_PUMP_MS = 1000;
 /** A worker silent this long with requests waiting is dead (its frames post every ≤ 250 ms) [ENG]. */
