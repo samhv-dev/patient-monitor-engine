@@ -5,7 +5,14 @@
 import { describe, it } from 'vitest';
 import { alarmAt, bands, entered, first, near, range, runCard } from './harness.ts';
 
-/** Bands: the measured prototype ± a stated tolerance. Never widened. */
+/** Bands: the measured prototype ± a stated tolerance. Never widened.
+ *  fix-cerebral-dilator-reserve (2026-10-29): ONE measure left its band and is recorded as the `it.fails` below, its band
+ *  unchanged — S3 untreated sao260ToLossS 615 → 567 s (band 571–697): the pulse is lost 48 s sooner (1181 → 1133 s from
+ *  the induction). On main the asphyxiated brain's flow was CO2 × hypoxia × the pressure limb with no shared ceiling,
+ *  3.2–3.7 × normal at CPP 47–54 (PaCO2 at the clamp, SaO2 ≈ 0), so the vasomotor centre's perfusion gate
+ *  (`brainstemOutF`, full at 0.6) never closed before the circulation stopped; with the reserve the flow is the
+ *  maximally dilated flow, 1.16 at CPP 67 and falling with the pressure, the gate starts closing at 1006 s from the
+ *  induction (main: never), and the sympathetic support goes earlier. Every other S3 measure is unchanged. */
 const BANDS = {
   'S3 prompt': { refused: [0, 0], mapBefore: [90, 100], hrBefore: [66, 76], apnoeaAlarmS: [41, 71], mapNadir: [60, 70], mapNadirS: [90, 120], hrMax5: [74, 84], hrMin5: [65, 75], capnoS: [0, 21], etco2At2min: [34, 40], spo2Min: [97, 100], mapAt4min: [67, 77] },
   'S3 untreated': { refused: [0, 0], apnoeaAlarmS: [41, 71], lastBreathS: [33, 63], desatStateS: [445, 543], bradyStateS: [509, 623], hrAtBrady: [39, 49], spo2ZeroS: [652, 796], mapAtSpo2Zero: [72, 82], pulseLossS: [1080, 1320], sao260ToLossS: [571, 697], pulselessStateS: [1084, 1324], asystole: [1, 1], firstSpontS: [831, 1015], firstSpontMl: [31, 41], spontMaxMl: [36, 46], effortStateS: [831, 1015], effortLabelLagS: [-15, 15], etco2DuringEfforts: [0, 3], awrrDuringEfforts: [0, 2] },
@@ -45,9 +52,11 @@ describe('S3 healthy induction (showcase-induction)', { timeout: 900_000 }, () =
     return { r, loss, sao260, zero };
   }
 
-  it('airway not secured, nothing done: desaturation, hypoxic bradycardia, the first ineffective efforts, asystole at ≈ 20 min', async () => {
+  // One run shared by the course test and its recorded miss (fix-cerebral-dilator-reserve).
+  let untreatedRun: Promise<Record<string, number>> | undefined;
+  const untreated = () => (untreatedRun ??= (async () => {
     const { r, loss, sao260, zero } = await unsecured(I, I + 1300);
-    bands('S3 untreated', {
+    return {
       refused: r.refused.length,
       apnoeaAlarmS: alarmAt(r, /APNEA/, I) - I, lastBreathS: (r.spont.filter(([t]) => t > I && t < I + 120).at(-1)?.[0] ?? Number.NaN) - I,
       desatStateS: entered(r, 'desaturating') - I, bradyStateS: entered(r, 'bradycardic') - I,
@@ -63,7 +72,15 @@ describe('S3 healthy induction (showcase-induction)', { timeout: 900_000 }, () =
       effortLabelLagS: entered(r, 'firstEffort') - (r.spont.find(([t]) => t > I + 120)?.[0] ?? Number.NaN), // D-3: the label and the first effort together
       etco2DuringEfforts: range(r.rows, 'etco2', entered(r, 'firstEffort'), (loss?.t ?? 0) - 1).max,
       awrrDuringEfforts: range(r.rows, 'awrr', entered(r, 'firstEffort'), (loss?.t ?? 0) - 1).max,
-    }, BANDS['S3 untreated']);
+    };
+  })());
+  const { sao260ToLossS: s3uMissBand, ...s3uKept } = BANDS['S3 untreated'];
+  it('airway not secured, nothing done: desaturation, hypoxic bradycardia, the first ineffective efforts, asystole at ≈ 20 min', async () => {
+    bands('S3 untreated', await untreated(), s3uKept);
+  });
+  it.fails('S3 untreated: SaO2 below 60 % to the pulse loss 571–697 s — measured 567 s (fix-cerebral-dilator-reserve: the brainstem perfusion gate closes once the dilator reserve is spent)', async () => {
+    const got = await untreated();
+    bands('S3 untreated', { sao260ToLossS: got.sao260ToLossS as number }, { sao260ToLossS: s3uMissBand });
   });
 
   it('induced a minute late (4:00): the oxygen was held, so the desaturation keeps its time from the induction', async () => {

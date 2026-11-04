@@ -138,4 +138,41 @@ describe('BrainModel', () => {
     expect(n.hypo).toBeGreaterThanOrEqual(0.35);
     expect(n.hypo).toBeLessThanOrEqual(0.4);
   });
+  // fix-cerebral-dilator-reserve. Sources: Harper & Glass 1965 (J Neurol Neurosurg Psychiatry 28:449, dogs, krypton
+  // clearance; the sigmoid fitted to their data by Gersten 1999, arXiv physics/9911029, gives the hypercapnic ceiling
+  // relative to PaCO2 40 as 2.11 ± 0.035 at MAP 150, 1.52 ± 0.032 at MAP 100 and 0.997 ± 0.010 at MAP 50: flat); Okuda
+  // 1976 (J Neurol Neurosurg Psychiatry 39:221, baboons: "abolished" at systolic 60, kept at higher pressures); Gregory
+  // 1981 (J Cereb Blood Flow Metab 1:195, cats at MAP 36–37: no change with trimetaphan, < half control with
+  // nitroprusside).
+  const hold = (b: BrainState, inp: BrainInputs, s: number) => {
+    for (let k = 0; k < s * 10; k++) stepBrain(b, inp, 0.1);
+  };
+  it('normal CPP (MAP 90, ICP 10): the CO2 response is today’s 3 %/mmHg — PaCO2 50 → CBF 1.30, 30 → 0.70', () => {
+    const b = createBrain(brainParams(), REST);
+    hold(b, { ...REST, paco2: 50 }, 120);
+    expect(b.cpp).toBeGreaterThan(70);
+    expect(b.cbfRel).toBeCloseTo(1.3, 2);
+    hold(b, { ...REST, paco2: 30 }, 120);
+    expect(b.cbfRel).toBeCloseTo(0.7, 2);
+  });
+  it('below the lower limit (MAP 43, CPP ≈ 35): PaCO2 40 → 52 adds no flow (Harper & Glass at MAP 50: 0.997 ± 0.010)', () => {
+    const low = { ...REST, map: 43 };
+    const b = createBrain(brainParams(), low);
+    hold(b, low, 120);
+    const base = b.cbfRel;
+    expect(b.cpp).toBeLessThan(40);
+    hold(b, { ...low, paco2: 52 }, 120);
+    const ratio = b.cbfRel / base;
+    console.log(`dilator reserve: CPP ${b.cpp.toFixed(1)}, CBF ${base.toFixed(3)} → ${b.cbfRel.toFixed(3)} at PaCO2 52 (×${ratio.toFixed(3)})`);
+    expect(ratio).toBeGreaterThanOrEqual(0.99);
+    expect(ratio).toBeLessThanOrEqual(1.01);
+  });
+  it('below the lower limit, hypoxia shares the same spent reserve: PaO2 100 → 40 adds no flow either', () => {
+    const low = { ...REST, map: 43 };
+    const b = createBrain(brainParams(), low);
+    hold(b, low, 120);
+    const base = b.cbfRel;
+    hold(b, { ...low, pao2: 40, sao2: 0.75 }, 120);
+    expect(b.cbfRel / base).toBeLessThanOrEqual(1.01);
+  });
 });

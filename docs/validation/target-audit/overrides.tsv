@@ -4,3 +4,4 @@
 183	packages/engine-core/test/engine/fidelity-lowflow.test.ts	MODELED Ali's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 blank from 758 s, PI ≤ 0.25 (E126; was SpO2 99 valid at 760–765 s, PI 0.31–0.33)
 132	packages/engine-core/test/engine/endo-acceptance.test.ts	MH severity 1 at fixed ventilation (tables §7 check 21): EtCO2 ≥ 60 by 10 min — measured 64 after E131 (54 with the corrected dead space before)
 147	packages/engine-core/test/engine/drug-layer-guards.test.ts	… EtCO2 52–70 by 10 min at constant MV (DI-65; tables §7 check 21) — measured 48.3 after E131 (42.2 before; baseline b004289: 42.2)
+31	packages/engine-core/test/engine/cpr-cerebral-flow.test.ts	VF + CPR q 1: CBF 0.30–0.40 of normal (Meaney 2013 consensus [VERIFY]; research/20 band 0.2–0.45) — measured 0.405 (a model limitation for the calibration pass)

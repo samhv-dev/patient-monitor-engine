@@ -3,7 +3,7 @@
 // each step; CSF displacement, mass lesion, oedema, osmotherapy and head-up posture change the volume; Cushing
 // (cushing.ts) and herniation are states.
 import { createCushing, cushingDMap, stepCushing, type CushingState } from './cushing.ts';
-import { autoreg, brainOxygen, caO2, cbvRel, co2Factor, NO_DRUGS, o2Factor, tempCmro2, type BrainDrugs } from './flow.ts';
+import { autoreg, brainOxygen, caO2, cbvRel, co2Factor, dilatorReserve, NO_DRUGS, o2Factor, spendReserve, tempCmro2, type BrainDrugs } from './flow.ts';
 import { csfDisplacementRate, elastance, icpOfVolume } from './mechanics.ts';
 import {
   CBF_LL, CBF_UL, CBV0_ML, CBV_EFF, CPP_REF, CSF_RESERVE_ML, HEAD_HEIGHT_CM, HEADUP_VOL_ML_30, HERNIATION_CPP, HERNIATION_S,
@@ -77,7 +77,10 @@ export function createBrain(p: BrainParams, inp: BrainInputs): BrainState {
 
 function targetCbf(b: BrainState, inp: BrainInputs, cpp: number): number {
   const m = inp.drugs.cmro2Mult * tempCmro2(inp.tempC) * inp.drugs.cbfVaso;
-  return autoreg(cpp, b.p.ll, b.p.ul, b.p.ar) * co2Factor(inp.paco2, b.paco2Ref) * o2Factor(inp.pao2) * m;
+  // The CO2, hypoxic and drug limbs spend one finite vasodilatory reserve (flow.ts `dilatorReserve`): below the lower
+  // limit the vessels are maximally dilated and no limb adds flow (fix-cerebral-dilator-reserve).
+  const p = b.p;
+  return autoreg(cpp, p.ll, p.ul, p.ar) * spendReserve(co2Factor(inp.paco2, b.paco2Ref) * o2Factor(inp.pao2) * m, dilatorReserve(cpp, p.ll, p.ul, p.ar));
 }
 
 /** Osmotic brain-water loss (mL, ≥ 0) at time t: Bateman shape normalised to its peak × saturation × Vmax. */
