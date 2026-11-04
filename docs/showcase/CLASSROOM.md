@@ -58,6 +58,17 @@ and **the presenting Mac's Node.js**. Until they are settled, tick every line:
   back ("Connection lost: reconnecting…" while it is away).
 - One session takes up to **60 phones**; the 61st is told "This session is full: please watch the main screen".
 
+## One instructor tab
+
+Run the session in **one** tab. The phones follow the tab that runs the session; a second tab that started its own
+session would have a new code, and the phones would stay with the first one. So when the app's address is opened in
+another tab of the same browser (or typed again without its `?session=` part) while a session is running, it asks
+first: "A classroom session is already running in another tab (code ……)". **Open that tab's session here** moves the
+session to the new tab: the same code, the case where it was (as after a reload), and the phones and second screens
+follow it there; the old tab stops and says "This session moved to another tab". **Start a new session** gives the new
+tab its own code; the phones stay with the old tab. Only tabs of the same browser are asked, and a tab the browser has
+put to sleep (Safari, after about 4 minutes hidden) does not answer: then the new tab starts its own session as before.
+
 ## The day before (at the venue if at all possible)
 
 1. Start the kit with **Start Classroom** on the presenting Mac. When macOS asks whether "node" may accept incoming
@@ -96,6 +107,8 @@ laptop. Is it on the classroom Wi-Fi?" — nothing breaks.
 
 1. The **Room** on the projector: Home → **Start here**, or **Room** in the rail at the left (the Monitor view's
    **Phones** button opens it too). It shows the QR code, the 6-letter code, the address and "0 phones following".
+   For a hall, click **Show large** under the QR code (or press **Q**): the same code fills the screen's height, with
+   the 6-letter code, the address and the count beneath; **Escape** (or Q, or **Back to the Room**) returns.
 2. Say: *"Please join the Wi-Fi called ‹network› and scan this code with your camera. You will get the monitor on your
    phone — it follows what I do here. It is silent: tap Sound off if you want to hear it."*
 3. Watch the count rise ("12 phones following"). If a phone does not open the page: is it on that Wi-Fi? (mobile data
