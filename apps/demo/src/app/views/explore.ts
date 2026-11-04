@@ -8,7 +8,7 @@ import type { EngineEvent } from '@pme/engine-core';
 import { ConsoleModel, type Row } from '../../physiology-console/model.ts';
 import { fmtDelta, fmtValue } from '../../physiology-console/format.ts';
 import type { GroupId } from '../../physiology-console/organs.ts';
-import { DISPLAY_AS, DISPLAY_SCALE, engineUnit, entry, labelOf, lookup, rowKey, shortLabel, unitOf } from '../glossary.ts';
+import { DISPLAY_AS, DISPLAY_SCALE, drugHasRow, engineUnit, entry, labelOf, lookup, rowKey, shortLabel, unitOf } from '../glossary.ts';
 import { hrefOf } from '../router.ts';
 import type { AppSession } from '../session.ts';
 import type { SiteProfile } from '../site.ts';
@@ -65,6 +65,7 @@ export interface ExploreCell { path: string; label: string; value: string; unit:
 export function sectionRows(model: ConsoleModel, id: string, changedOnly = false): { cells: ExploreCell[]; rest: Row[] } {
   const s = SECTIONS.find((x) => x.id === id) ?? (SECTIONS[0] as Section);
   const rows = model.rows().filter((r) => {
+    if (!drugHasRow(r.path)) return false; // a TCI target or pump rate of a drug without that model: no row, not "—"
     const l = lookup(r.path);
     if (s.withGroup && r.group === s.withGroup) return true;
     if (s.gloss) return !!l && s.gloss.includes(l.e.s);

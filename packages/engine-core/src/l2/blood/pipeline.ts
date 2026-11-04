@@ -199,6 +199,9 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
     const t = bs.k * BLOOD_DT_S;
     c.fl.anaesthesia = rs.temp.anaesthesia === 'general';
     if (bs.keto && t < bs.keto.until) c.so.keto += bs.keto.rate * BLOOD_DT_S;
+    // A cooling infusion the team stops by protocol once the core has fallen to its stop temperature (MHAUS: "Stop
+    // cooling when the temperature has decreased to <38°C"): the order ends here, whatever volume is left
+    for (const fl of c.fl.flows) if (fl.stopAtCoreC !== undefined && rs.temp.tc <= fl.stopAtCoreC) fl.until = Math.min(fl.until, t);
     const bv0 = bloodMl(c.fl);
     const coLpm = rs.coRatio * CI_LPM_PER_KG * rs.pat.effKg;
     if (settling && !bs.rest.latched) {
@@ -290,8 +293,10 @@ export function validateBloodCommand(cmd: Command): string | undefined | null {
   switch (ev.kind) {
     case 'fluid':
     case 'bleed': {
-      const f = ev as { fluid?: string; volumeMl?: number; overS?: number; rateMlPerMin?: number };
+      const f = ev as { fluid?: string; volumeMl?: number; overS?: number; rateMlPerMin?: number; tempC?: number; stopAtCoreC?: number };
       if (f.fluid !== undefined && !FLUID_IDS.includes(f.fluid)) return `fluid must be one of ${FLUID_IDS.join(', ')}`;
+      const temp = ev.kind === 'fluid' ? num('tempC', f.tempC, 0, 42) ?? num('stopAtCoreC', f.stopAtCoreC, 30, 42) : undefined;
+      if (temp) return temp;
       if (f.rateMlPerMin !== undefined) return num('rateMlPerMin', f.rateMlPerMin, 0, 2000);
       return f.volumeMl === undefined ? 'volumeMl or rateMlPerMin is required' : num('volumeMl', f.volumeMl, 1, 5000) ?? num('overS', f.overS, 1, 86_400);
     }
@@ -341,16 +346,17 @@ function applyBloodEvent(bs: BloodState, cmd: Command, t: number, rs: RespState)
   switch (ev.kind) {
     case 'fluid':
     case 'bleed': {
-      const f = ev as { fluid?: string; volumeMl?: number; overS?: number; rateMlPerMin?: number };
+      const f = ev as { fluid?: string; volumeMl?: number; overS?: number; rateMlPerMin?: number; tempC?: number; stopAtCoreC?: number };
+      const own = { ...(f.tempC !== undefined && ev.kind === 'fluid' ? { tempC: f.tempC } : {}), ...(f.stopAtCoreC !== undefined && ev.kind === 'fluid' ? { stopAtCoreC: f.stopAtCoreC } : {}) };
       const comp = ev.kind === 'bleed' ? null : f.fluid === undefined ? FLUIDS.saline : (ALIAS[f.fluid] ?? FLUIDS[f.fluid as FluidId]);
       if (f.rateMlPerMin !== undefined) {
         // an open-ended rate replaces the previous open-ended flow of the same kind; 0 stops it
         c.fl.flows = c.fl.flows.filter((x) => !((x.comp === null) === (comp === null) && x.leftMl === undefined && x.until >= 1e8));
-        if (f.rateMlPerMin > 0) c.fl.flows.push({ rate: f.rateMlPerMin, until: 1e9, comp });
+        if (f.rateMlPerMin > 0) c.fl.flows.push({ rate: f.rateMlPerMin, until: 1e9, comp, ...own });
       } else {
         const over = f.overS ?? (ev.kind === 'bleed' ? 60 : 600);
         const ml = f.volumeMl as number;
-        c.fl.flows.push({ rate: (ml * 60) / over, until: 1e9, leftMl: ml, comp }); // exactly the ordered volume
+        c.fl.flows.push({ rate: (ml * 60) / over, until: 1e9, leftMl: ml, comp, ...own }); // exactly the ordered volume
       }
       return true;
     }

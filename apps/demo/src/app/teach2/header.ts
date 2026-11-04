@@ -13,6 +13,7 @@ import { hrefOf } from '../router.ts';
 import { cardOf } from '../scenarios.ts';
 import { SPEEDS } from '../sessionbar.ts';
 import { clock, h, setText, toast } from '../ui.ts';
+import { defaultPatient, NO_CASE } from './begin.ts';
 
 /** The top bar's controls the header carries on this route (main.ts: the same toggle and the same pairing code). */
 export interface TopControls {
@@ -121,14 +122,17 @@ export function mountHeader(link: Link, top?: TopControls): Header {
   const refresh = () => {
     const host = link.host;
     const p = link.ctl.scenario.doc?.patient;
-    const base = host ? oneLiner(host.spec) : p ? [p.sex ?? '', p.ageY !== undefined ? `${p.ageY} y` : '', p.weightKg !== undefined ? `${p.weightKg} kg` : ''].filter(Boolean).join(' ') : '';
+    const none = !link.ctl.scenario.doc;
+    const dp = none && host ? defaultPatient(link) : null; // no case (board "Empty 5"): "Adult · 70 kg"
+    const base = dp ? `${dp.band} · ${dp.kg} kg` : host ? oneLiner(host.spec) : p ? [p.sex ?? '', p.ageY !== undefined ? `${p.ageY} y` : '', p.weightKg !== undefined ? `${p.weightKg} kg` : ''].filter(Boolean).join(' ') : '';
     setText(who, [base, ...activeText(link.conditions)].filter(Boolean).join(' · '));
     const m = link.ctl.state?.mode ?? host?.mode ?? 'manual';
     const n = m === 'modeled' ? held().length : 0;
     mode.dataset.mode = m;
     setText(mode, m === 'modeled' ? (n ? `MODELED, ${n} held` : 'MODELED') : 'MANUAL');
     const sv = link.ctl.scenario;
-    setText(title, sv.doc ? cardOf(sv.doc).title : 'No scenario');
+    setText(title, sv.doc ? cardOf(sv.doc).title : NO_CASE);
+    title.toggleAttribute('data-none', none);
     // The pause and speed the HOST runs at, wherever they were set
     if (!asking && paused !== link.ctl.hostPaused) paused = link.ctl.hostPaused;
     drawPill();

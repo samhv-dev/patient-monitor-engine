@@ -180,35 +180,48 @@ const hasTci = (r: DrugRow): boolean => r.pk.kind === 'model';
  *  an infusion reference, unless the row names the consumer of its rate). */
 const hasRate = (r: DrugRow): boolean =>
   !!r.rateActsVia || !(r.pk.kind === 'blood' || (r.pk.kind === 'gamma' && r.pk.refRate === undefined));
+/** Per-drug rows that exist only for some drugs: the engine writes `rate` and `tci` (null) on every drug's row, but a
+ *  drug without an infusion model has no pump rate and a drug without a compartment model has no TCI target. */
+const DRUG_HAS: Readonly<Record<string, (r: DrugRow) => boolean>> = {
+  'ev.drugs.drugs.<id>.rate': hasRate, 'ev.drugs.drugs.<id>.tci': hasTci, 'ev.drugs.drugs.<id>.tci.target': hasTci,
+};
+/** Whether the drug has this per-drug row, false for a TCI target or a pump rate it has no model for (DRUG_HAS) or a
+ *  drug id the library does not know. A screen prints no row then, rather than a row without a unit. */
+export function drugHasRow(path: string): boolean {
+  const l = lookup(path);
+  const has = l ? DRUG_HAS[l.key] : undefined;
+  if (!l || !has) return true;
+  const r = DRUGS[l.caps[0] ?? ''] as DrugRow | undefined;
+  return !!r && has(r);
+}
 /**
- * Glossary keys whose unit is per drug in the engine. The glossary writes a placeholder for these ("drug unit", "per
- * row", "mg, µg"); the screen prints the unit of that drug's row in the `drugs` event (engine-core types-pk.ts
+ * Glossary keys whose unit is per drug in the engine. The glossary writes a description for these ("drug unit", "mg,
+ * µg", the rate/target pair); the screen prints the unit of that drug's row in the `drugs` event (engine-core types-pk.ts
  * `DrugPanelRow`, or the bus agent for the site-specific Ce): Cp, Ce and the TCI target in the row's concentration unit `unit` (µg/mL for a mg drug, ng/mL for a mcg
  * drug, × ref dose for a curve drug); the pump rate in `rateUnit`, which the engine defines as the amount unit per minute
- * (`${amountUnit}/min`, written from `amountUnit` while no pump runs); the total in `amountUnit`. A drug without a TCI
- * model or without an infusion model has no unit for that row: it keeps the glossary's. The CSHT row
- * (`decrement50Min`) is deliberately absent: it is a time, always the glossary's min, never the drug's unit.
+ * (`${amountUnit}/min`, written from `amountUnit` while no pump runs); the total in `amountUnit`. The TCI target and
+ * rate rows of a drug without that model are not printed at all (drugHasRow). The CSHT row (`decrement50Min`) is
+ * deliberately absent: it is a time, always the glossary's min, never the drug's unit.
  */
-const ENGINE_UNIT: Readonly<Record<string, (f: DrugField, r: DrugRow | undefined) => unknown>> = {
+const ENGINE_UNIT: Readonly<Record<string, (f: DrugField) => unknown>> = {
   'ev.drugs.drugs.<id>.cp': (f) => f('unit'),
   'ev.drugs.drugs.<id>.ce': (f) => f('unit'),
-  'ev.drugs.drugs.<id>.tci': (f, r) => (r && hasTci(r) ? f('unit') : undefined),
-  'ev.drugs.drugs.<id>.tci.target': (f, r) => (r && hasTci(r) ? f('unit') : undefined),
-  'ev.drugs.drugs.<id>.rate': (f, r) => (r && hasRate(r) ? (f('rateUnit') ?? (typeof f('amountUnit') === 'string' ? `${f('amountUnit') as string}/min` : undefined)) : undefined),
+  'ev.drugs.drugs.<id>.tci': (f) => f('unit'),
+  'ev.drugs.drugs.<id>.tci.target': (f) => f('unit'),
+  'ev.drugs.drugs.<id>.rate': (f) => f('rateUnit') ?? (typeof f('amountUnit') === 'string' ? `${f('amountUnit') as string}/min` : undefined),
   'ev.drugs.drugs.<id>.totalAmount': (f) => f('amountUnit'),
   // the site-specific effect sites of the drug bus (engine-core types-pk.ts `BusAgent`: every field in its `unit`)
   'pk.bus.agents.<id>.nmj': (f) => f('unit'), 'pk.bus.agents.<id>.dia': (f) => f('unit'), 'pk.bus.agents.<id>.vent': (f) => f('unit'),
 };
 
 /** The engine's unit for a per-drug path (see ENGINE_UNIT), read from that drug's row (the path up to its drug id)
- *  through `get`; undefined when the path is not per drug or the drug defines no unit for it. */
+ *  through `get`; undefined when the path is not per drug or the drug's row carries no unit for it. */
 export function engineUnit(path: string, get: (p: string) => unknown): string | undefined {
   const l = lookup(path);
   const fn = l ? ENGINE_UNIT[l.key] : undefined;
   if (!l || !fn) return undefined;
-  const id = l.caps[0] ?? '';
-  const row = `${l.key.slice(0, l.key.indexOf('<id>'))}${id}`;
-  const u = fn((field) => get(`${row}.${field}`), DRUGS[id] as DrugRow | undefined);
+  const row = `${l.key.slice(0, l.key.indexOf('<id>'))}${l.caps[0] ?? ''}`;
+  const u = fn((field) => get(`${row}.${field}`));
   return typeof u === 'string' && u !== '' ? unitText(u) : undefined;
 }
 

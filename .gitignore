@@ -16,3 +16,7 @@ docs/api/
 .audit-physiology/
 # offline showcase kit (scripts/showcase/make-bundle.mjs)
 pme-showcase/
+
+# the showcase kit's Windows Node.js (make-bundle.mjs --win-node): never in git, wherever the kit is built
+node.exe
+node-v*-win-x64.zip

@@ -342,6 +342,12 @@ export interface Skin {
     displaySmoothMs?: number;
     /** Pass 2 (optional): a dotted line at the top of the CO2 scale, as on the IBP lanes (`ibp.scaleLineColor`). */
     scaleLineTop?: boolean;
+    /**
+     * Auto-range (optional): the lane's scale tops (mmHg, ascending, the first = `scale`). The lane widens one step when
+     * the breath peaks reach its top and narrows back one step when they stay well under the next-lower top
+     * (renderer `co2-range.ts`, with hysteresis). Absent = the fixed `scale`, clipped at its top.
+     */
+    autoScales?: number[];
   };
   alarms: {
     levels: 3;

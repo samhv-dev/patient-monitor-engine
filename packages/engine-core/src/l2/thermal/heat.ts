@@ -14,7 +14,9 @@
 // plateau are unchanged. E131: the part of k_cp above tissue conduction (TISSUE_K_W_M2_C·BSA, Gagge 1971) is carried by
 // skin blood flow, so it is × the perfusion fraction perfFrac (a FLOW fraction from the blood pipeline: CO relative to
 // the flow at which a normally oxygenated patient's delivery becomes critical): k = min(k_v, k_t) + max(0, k_v − k_t)·
-// perfFrac — unchanged at full perfusion, tissue conduction at no flow. The awake patient at 21 °C is calibrated to that heat model's balance (m0, gradient 4.3 °C)
+// perfFrac — unchanged at full perfusion, tissue conduction at no flow. The MH sympathetic surge constricts the skin:
+// k_v falls toward the two-node model's maximally constricted conductance with the MH sympathetic drive (mh.ts
+// `mhSympDrive`; params.ts SKBF_MIN_L_H_M2), so the heat the crisis makes stays in the core. The awake patient at 21 °C is calibrated to that heat model's balance (m0, gradient 4.3 °C)
 // with the respiratory loss on the core and the insulation solved from the environment terms (environment.ts).
 // Stepped at 1 Hz. Plain data.
 import type { TempSite } from '../../types-resp.ts';
@@ -22,10 +24,10 @@ import {
   bsaM2, calibrateInsulation, dryW, forcedAirW, infusionW, respiratoryW, AIR_SPEED_MS, FORCED_AIR_AREA, FORCED_AIR_TAU_S, PREP_EVAP_W_70,
   SKIN_EVAP_W_70, type Envelope, type Ventilation,
 } from './environment.ts';
-import { stepMh, type MhState } from './mh.ts';
+import { mhSympDrive, stepMh, type MhState } from './mh.ts';
 import {
-  AMBIENT_C, CORE_FRACTION, EMERGE_TAU_S, GA_KCP, GA_M, HEAT_CAP_J_KG_C, M_AWAKE_W_70, MH_RQ, NEURAXIAL_BLOCK_FRAC, NEURAXIAL_H,
-  NEURAXIAL_THR_SHIFT_C, PERIPH_GRADIENT_C, T_NORMAL, TISSUE_K_W_M2_C, VASOCONSTRICT_KCP,
+  AMBIENT_C, BLOOD_HEAT_WH_L_C, CORE_FRACTION, EMERGE_TAU_S, GA_KCP, GA_M, HEAT_CAP_J_KG_C, M_AWAKE_W_70, MH_RQ, NEURAXIAL_BLOCK_FRAC, NEURAXIAL_H,
+  NEURAXIAL_THR_SHIFT_C, PERIPH_GRADIENT_C, SKBF_MIN_L_H_M2, T_NORMAL, TISSUE_K_W_M2_C, VASOCONSTRICT_KCP,
 } from './params.ts';
 import { mhO2Demand, oxyKjPerL } from './metabolic.ts';
 import { RQ } from '../gas/params.ts';
@@ -152,11 +154,16 @@ export function currentThresholds(st: ThermalState): Thresholds {
 /** The fraction of the effectors (vasomotor tone, shivering) a neuraxial block abolishes; 0 otherwise. */
 const blocked = (st: ThermalState): number => (st.anaesthesia === 'neuraxial' ? NEURAXIAL_BLOCK_FRAC : 0);
 
-function kcp(st: ThermalState, tc: number, thr: Thresholds): { k: number; f: number } {
+function kcp(st: ThermalState, t: number, tc: number, thr: Thresholds): { k: number; f: number } {
   // Below a neuraxial block the vessels are fully dilated; above it they keep their thermoregulatory tone
   const b = blocked(st);
   const f = b + (1 - b) * vasoDilation(tc, thr);
-  const kv = st.k0 * (VASOCONSTRICT_KCP + (GA_KCP - VASOCONSTRICT_KCP) * f);
+  const kTherm = st.k0 * (VASOCONSTRICT_KCP + (GA_KCP - VASOCONSTRICT_KCP) * f);
+  // The MH sympathetic surge (≈ 20 × catecholamines) constricts the α-adrenergic skin vessels the anaesthetic keeps
+  // dilated, toward the two-node model's maximally constricted conductance (params.ts SKBF_MIN_L_H_M2; Sessler 2008,
+  // Gagge 1986); it never dilates
+  const kMin = st.env.bsa * (TISSUE_K_W_M2_C + BLOOD_HEAT_WH_L_C * SKBF_MIN_L_H_M2);
+  const kv = kTherm - Math.min(1, Math.max(0, mhSympDrive(st.mh, t))) * Math.max(0, kTherm - kMin);
   const perf = st.perfFrac ?? 1;
   if (perf >= 1) return { k: kv, f };
   // E131: the blood-borne part above tissue conduction follows skin perfusion; tissue conduction stays at no flow
@@ -172,7 +179,7 @@ function basalW(st: ThermalState): number {
 /** All heat flows at the current state (W). */
 function balance(st: ThermalState, t: number, x: ThermalInputs = {}): ThermalOut {
   const thr = currentThresholds(st);
-  const { k, f } = kcp(st, st.tc, thr);
+  const { k, f } = kcp(st, t, st.tc, thr);
   const ex = EXPOSURE[st.exposure];
   const env = { bsa: st.env.bsa, rIns: st.env.rIns * ex.ins };
   const neur = st.anaesthesia === 'neuraxial' ? NEURAXIAL_H : 1;
