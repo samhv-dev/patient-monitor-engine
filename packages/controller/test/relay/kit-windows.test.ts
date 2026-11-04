@@ -6,7 +6,7 @@
 // --win-node check (win-node.mjs) on small fixture zips made here (nothing is downloaded).
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { chmodSync, copyFileSync, linkSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path, { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -178,17 +178,13 @@ describe('server/launch.mjs, what the .cmd files run (here on this OS)', () => {
   it('started by the kit\'s runtime/ node (as the .cmd does with runtime\\node.exe): SERVER names that node, which serves', async (ctx) => {
     const kit = miniKit();
     mkdirSync(join(kit, 'runtime'));
-    const own = join(kit, 'runtime', process.platform === 'win32' ? 'node.exe' : 'node');
-    try {
-      linkSync(process.execPath, own); // a hard link keeps its own path in process.execPath (a symlink would not)
-    } catch {
-      copyFileSync(process.execPath, own);
-      chmodSync(own, 0o755);
-    }
+    const own = join(realpathSync(kit), 'runtime', process.platform === 'win32' ? 'node.exe' : 'node'); // execPath is a real path
+    copyFileSync(process.execPath, own); // a copy, not a link: macOS may report a hard link by its other name
+    chmodSync(own, 0o755);
     // An official Node.js build (CI's, the kit's) is one self-contained file; a shared-library build (Homebrew's) cannot
-    // start from another folder, and then there is nothing to test here
-    const probe = spawnSync(own, ['-v'], { encoding: 'utf8', env: { PATH: process.env.PATH ?? '' } }); // run()'s environment
-    if (probe.status !== 0) ctx.skip(`this machine's node cannot run from another folder (${process.execPath}: a shared-library build)`);
+    // start from another folder, and then there is nothing to test here. Probed in run()'s environment.
+    const probe = spawnSync(own, ['-p', 'process.execPath'], { encoding: 'utf8', env: { PATH: process.env.PATH ?? '' } });
+    if (probe.status !== 0 || probe.stdout.trim() !== own) ctx.skip(`this machine's node cannot run from another folder (${process.execPath}: a shared-library build)`);
     const r = run(kit, 'simulator', own);
     await waitFor(() => /ADDRESS: http:\/\/127\.0\.0\.1:\d+\//.test(r.out()), 15_000, 'ADDRESS');
     expect(r.out()).toContain(`SERVER: node ${process.version} (${own}) serve.mjs`);
