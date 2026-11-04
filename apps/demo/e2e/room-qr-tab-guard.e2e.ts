@@ -5,6 +5,12 @@
 // (2) A second instructor tab of the same browser no longer starts a new session silently: it offers the live one
 //     (host-guard.ts). "Open that tab's session here" runs the same code with the running case and the first tab
 //     stops; "Start a new session" gives a new code and the other tab carries on.
+// (3) The first tab asleep (5 November: on WebKit in CI the first tab, now in the background, did not answer the 200 ms
+//     ask, so no dialog and a new code): the browser's lock manager says the session exists, so the dialog appears; the
+//     hand-over waits for the tab and completes when it runs again. Playwright keeps every page "visible" and has no
+//     control that suspends one, so the sleeping background tab is stood in for by the first tab's main thread held
+//     busy: none of its timers or messages run until it ends, as in a tab the browser has suspended. (Chromium's
+//     CDP frozen state was tried and does not hold back BroadcastChannel messages: the frozen tab answered at once.)
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -104,4 +110,42 @@ test('a second instructor tab is asked: "open that session here" takes the code 
   await b.waitForTimeout(500);
   expect(await codeOf(b)).toBe(code);
   expect(new URL(b.url()).searchParams.get('moved')).toBeNull();
+});
+
+/** Put page `a` to sleep for `ms` (its main thread held busy: it runs nothing else); resolves with the wait for its wake. */
+async function putToSleep(a: Page, ms: number): Promise<() => Promise<void>> {
+  const busy = a.evaluate((n) => {
+    const end = performance.now() + n;
+    while (performance.now() < end); // the page runs nothing else
+  }, ms);
+  await new Promise((r) => setTimeout(r, 100)); // the loop has begun
+  return async () => void (await busy);
+}
+
+test('the first tab asleep (a background tab): the dialog still appears; the hand-over completes when that tab wakes', async ({ context }) => {
+  test.setTimeout(120_000);
+  const a = await context.newPage();
+  await openApp(a, base, '?scenario=acls-vf-witnessed', { warmMs: 3000 });
+  const code = await codeOf(a);
+  const wake = await putToSleep(a, 12_000); // past B's load, the dialog, the click and TAKE_MS (2 s): the notice shows
+
+  const b = await context.newPage();
+  await b.goto(`${base}/`);
+  const ask = b.locator('dialog.host-guard');
+  await expect(ask).toBeVisible(); // from the browser's lock manager: A answered nothing
+  await expect(ask).toContainText(`(code ${code})`);
+  await ask.getByRole('button', { name: "Open that tab's session here" }).click();
+  // A has not handed over: B waits for it, says so, and has started nothing
+  const wait = b.locator('dialog.host-wait');
+  await expect(wait).toBeVisible();
+  await expect(wait).toContainText(`(code ${code})`);
+  expect(await b.evaluate(() => '__pmeApp' in window)).toBe(false);
+
+  await wake();
+  await b.waitForFunction(() => '__pmeApp' in window);
+  await expect(wait).toBeHidden();
+  expect(await codeOf(b)).toBe(code);
+  await expect(b.locator('.toast', { hasText: 'Restored after the move from the other tab' })).toBeVisible({ timeout: 20_000 });
+  expect(await b.evaluate(() => (window as unknown as W).__pmeApp.session.driver.runner?.doc.id)).toBe('acls-vf-witnessed');
+  await expect(a.getByRole('heading', { name: 'This session moved to another tab' })).toBeVisible();
 });
