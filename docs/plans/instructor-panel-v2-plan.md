@@ -1,6 +1,6 @@
 # Instructor panel v2 (E127): implementation plan
 
-**Status:** draft for review. Written 2026-10-29 by the planner from the checkout `scratch/wt-ip-design` (main 8e4e8471 + the design). No file was changed. Spec: `docs/plans/instructor-panel-redesign.md` (the design). Every `file:line` below is a starting point. Find code by the function name. The orchestrator's answers to the questions are in `instructor-panel-v2-answers.md` beside this file and in the section "Answers applied" at the end; they bind the executors.
+**Status:** executed: built in PR #177 (merged 2026-10-29); the as-built record and the owner's later rulings are in the design doc, `instructor-panel-redesign.md`. Bracketed notes below mark the statements the rulings overtook. Written 2026-10-29 by the planner from the checkout `scratch/wt-ip-design` (main 8e4e8471 + the design). No file was changed. Spec: `docs/plans/instructor-panel-redesign.md` (the design). Every `file:line` below is a starting point. Find code by the function name. The orchestrator's answers to the questions are in `instructor-panel-v2-answers.md` beside this file and in the section "Answers applied" at the end; they bind the executors.
 
 **Goal.** A second Instructor view, chosen from the rail, built as the design describes (session bar, stage strip, STATE, ACTION, dock, sheets, staged cache, marks, paused state). The debrief gains steps, judged objectives and marks. The phone layout (§6) is out of scope.
 
@@ -15,7 +15,7 @@
 - The view has its own header, so `shell.bar` is hidden on this route.
 - New code lives in `apps/demo/src/app/teach2/`.
 - Reading the card is one pure module, `card-read.ts`, used by both the panel and the debrief.
-- Two controller additions: batch metadata on staged commands, and a kind and a note on bookmarks.
+- Two controller additions: batch metadata on staged commands, and a kind and a note on bookmarks. [As built: also the hold accessor (A8) and the opt-in stage marks (A3 as ruled 11:00); see the design doc §7.]
 - Debrief additions are additive fields on the record. `objectives()` is not touched.
 
 **Common gate (every piece, before every push).**
@@ -88,7 +88,7 @@ Two shared files need care:
 - **Gate:** common, with `@pme/controller`.
 
 ### IP2: Controller: marks with kinds (2 h)
-- `protocol.ts`: the scenario command gains `kind?: 'good' | 'bad' | 'discuss'` and `note?: string`, meaningful with `action: 'bookmark'`.
+- `protocol.ts`: the scenario command gains `kind?: 'good' | 'bad' | 'discuss'` and `note?: string`, meaningful with `action: 'bookmark'`. [As built: `MarkKind` also has `stage`, the driver's own hidden stage marks (ruled 11:00).]
 - Both bookmark paths (`ScenarioDriver.hook`, and `HostSession.scenario` without a hook) already return `{...cmd, target}`. Tests prove that kind and note survive in `applied`, in `commandApplied` and in the sticky late-join replay, and that `restoreBookmark` is unchanged.
 - **Gate:** common, with `@pme/controller`.
 
@@ -130,7 +130,7 @@ Two shared files need care:
 - Header, sending exactly the session bar's commands (`sessionbar.ts`):
   - clock pill: `time pause` / `time resume` (Q9);
   - speed box: `time scale` 1/2/4/8;
-  - fast-forward fan: `time jump` 60/120/300/600 (`FF_MAX_S` = 600).
+  - fast-forward fan: `time jump` 60/120/300/600 (`FF_MAX_S` = 600). [Overtaken by option G (ruled 21:30): Fast forward is a box in STATE with +2 min and +5 min (`time jump` 120 and 300), not in the header.]
 - `keys.ts` handles Space, Esc, 1–9 and the letters. It is ignored while typing (`isTyping`) and while the view is hidden (the `el.closest('[hidden]')` pattern from `panel.ts`). Digit and letter registries are filled by IP6 and IP7.
 - Dock skeleton.
 - **Tests:**
@@ -154,7 +154,7 @@ Two shared files need care:
   - the stage line (Q21);
   - the Say line = `state.notes`, italic.
 - Monitor: the shared `stage` in the STATE grid area. Swap per Q18.
-- Paused: a banner, and "frozen" on the in-stage clock.
+- Paused: a banner, and "frozen" on the in-stage clock. [Overtaken by option G (ruled 21:30): no banner; the rule is the clock pill's tooltip.]
 - **Tests:** `strip.dom.test.ts`, `cue.dom.test.ts` (Say line shown, goto confirm sends the same command as today's jump).
 - **Gate:** common.
 
@@ -309,25 +309,25 @@ These answers come from `instructor-panel-v2-answers.md` and bind every piece. "
 - A19: the alarm count and the reveal gesture go to the view used last (a small `main.ts` change).
 
 **IP5 (STATE and strip):**
-- A3: a future-stage click = `goto` behind today's jump confirm, hint "jumps to it (asks once)". A past-stage click only shows its entry time and places no mark.
+- A3: a future-stage click = `goto` behind today's jump confirm, hint "jumps to it (asks once)". A past-stage click only shows its entry time and places no mark. [Superseded by the owner's ruling of 11:00: a past-stage click restores the hidden stage mark placed at that stage's entry, behind one confirm.]
 - A2: the strip is built from the stages defined in A2.
 - A4: the cue box says "by your button", "by its rule", "by a jump", or "entered" plus the time when IP8's field is absent.
 - A21: the stage line is the state label. A18: Swap navigates to `#/monitor`; no swapped layout. A14: HELD values are shown in STATE only.
 
 **IP6 (ACTION):**
-- A4 and A5: row subtitles as in IP3. A6 and A7: the row statuses exactly as defined; "out of order" = taken after a step with a higher array index in the same stage.
+- A4 and A5: row subtitles as in IP3. A6 and A7: the row statuses exactly as defined [A7 refined 13:00: an untaken step that no objective asks for is never "failed" and is dropped once its stage passed]; "out of order" = taken after a step with a higher array index in the same stage.
 - A8: the auto-row bar. Host: value against threshold, times the hold fraction (from the IP1 accessor). Follower: value against threshold only.
 - A20: Off the card lists the off-card actions taken in this stage, read from the log; no launchers.
 
 **IP7 (sheets and cache):**
-- A10, give rule: when the sheet's dose equals the card's, Give sends the trigger only; when it differs, Give sends the bolus and not the trigger, with "this dose is off the card".
+- A10, give rule: when the sheet's dose equals the card's, Give sends the trigger only; when it differs, Give sends the bolus and not the trigger, with "this dose is off the card". [Contested; as built, INTERIM until `pme-scenario/2` (ruled 17:00): at a different dose two buttons, "Give the card's step" and "Give <dose> off the card" (`pinnedGiveRule`); see `instructor-panel-v2-answers.md` item 10.]
 - A11: "Add to the cache" is disabled for a pinned card step, with the note "card steps are given from ACTION".
 - A13: the Log sheet gets a marks list with "Return here", using today's bookmark restore. The dock marks and the note field also belong to IP7: Enter writes a note, and a mark takes and clears the field.
 - A14: today's tab bodies inside the sheet frame are acceptable. Gas is not built. A15: the CPR takeover is not built. A16: keys as in IP4.
 
 **IP8 (debrief):**
 - A17: additive fields in `pme-debrief/2`; the keys test is updated; `debrief-fa.mjs` is untouched.
-- A12: one record row per item, one Debrief line per batch. A7: `steps(d)` statuses exactly as defined. A4: `by` takes `press`, `rule` or `goto`. A13: a mark's note is kept on its bookmark row; free notes stay note rows.
+- A12: one record row per item, one Debrief line per batch. A7: `steps(d)` statuses exactly as defined [refined 13:00, as for IP6]. A4: `by` takes `press`, `rule` or `goto`. A13: a mark's note is kept on its bookmark row; free notes stay note rows.
 
 **IP9 (integration and measurement):**
 - A1: final names are confirmed here. A9: the e2e checks that Fast forward is disabled while paused. A16: the keyboard e2e follows A16. A19: the e2e checks that the alarm count goes to the view used last. A18: there is no Swap layout to measure.

@@ -7,7 +7,12 @@ import type { EngineEvent } from '@pme/engine-core';
 export type Leaf = number | boolean | string | null;
 export type Leaves = Map<string, Leaf>;
 
-/** Arrays longer than this inside events are histories, not values. */
+/**
+ * An array longer than this is a history (samples by index), not a value, and is dropped. An array whose every element
+ * carries an `id`/`drugId`/`agent` is a table of rows keyed by identity (the `drugs` event's one row per drug given),
+ * not a history: its length is the number of things present, so it is kept at any length. No engine event carries a
+ * history today; the truth tree's arrays are already cut by the engine's pruneTruth (TRUTH_LIMITS).
+ */
 const MAX_EVENT_ARRAY = 16;
 /** Event leaves that are timestamps or counters, not physiology. */
 const EVENT_SKIP_KEYS = new Set(['t', 'tick', 'seq']);
@@ -18,13 +23,15 @@ const EVENT_SKIP_KEYS = new Set(['t', 'tick', 'seq']);
  */
 export const SKIP_EVENTS: ReadonlySet<string> = new Set(['tone', 'toneCancel', 'marker', 'alarm', 'atrial', 'alarmStatus', 'truth', 'measurement']);
 
-/** The key of one array element: its `id`/`drugId`/`agent` when it has one (a drug row, a lung unit), else the index. */
-function keyOf(x: unknown, i: number): string {
-  if (x === null || typeof x !== 'object') return String(i);
+/** An array element's `id`/`drugId`/`agent` when it has one (a drug row, a lung unit). */
+function idOf(x: unknown): string | undefined {
+  if (x === null || typeof x !== 'object') return undefined;
   const o = x as { id?: unknown; drugId?: unknown; agent?: unknown };
   const id = o.id ?? o.drugId ?? o.agent;
-  return typeof id === 'string' || typeof id === 'number' ? String(id) : String(i);
+  return typeof id === 'string' || typeof id === 'number' ? String(id) : undefined;
 }
+/** The key of one array element: its id when it has one, else the index. */
+const keyOf = (x: unknown, i: number): string => idOf(x) ?? String(i);
 
 export function flatten(v: unknown, prefix: string, out: Leaves, skipKeys?: ReadonlySet<string>, depth = 0): void {
   if (v === null || typeof v === 'number' || typeof v === 'boolean' || typeof v === 'string') {
@@ -33,7 +40,7 @@ export function flatten(v: unknown, prefix: string, out: Leaves, skipKeys?: Read
   }
   if (typeof v !== 'object' || depth > 12 || ArrayBuffer.isView(v)) return;
   if (Array.isArray(v)) {
-    if (v.length > MAX_EVENT_ARRAY) return;
+    if (v.length > MAX_EVENT_ARRAY && !v.every((x) => idOf(x) !== undefined)) return;
     v.forEach((x, i) => flatten(x, prefix ? `${prefix}.${keyOf(x, i)}` : keyOf(x, i), out, skipKeys, depth + 1));
     return;
   }

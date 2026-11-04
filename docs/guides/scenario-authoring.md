@@ -13,6 +13,7 @@ Schema is `packages/controller/scenarios/pme-scenario-1.schema.json`; `validateS
 | `schema` | always `"pme-scenario/1"` |
 | `id`, `title`, `notes` | identifier (`[A-Za-z][A-Za-z0-9_.-]*`), title, instructor notes |
 | `category`, `story`, `durationMin` | the library group (e.g. `ACLS`, `Induction`), the learner-facing case text shown before the start, the expected run time in minutes |
+| `briefing` | optional, the learner-facing **Case briefing**: `{ "text", "estimatedMinutes", "durationS", "lang" }`. When the card loads, every learner screen (the Monitor view, a second-screen learner monitor, every phone following) shows it over the running monitor for `durationS` seconds (default 60, at most 600), then fades into the monitor; a tap or click ends it on the host's screen and a press-and-hold on a phone's (a tap does nothing there), and the instructor's "End briefing" (today's Instructor view, v2's stage strip) ends it everywhere. A phone that joins while it runs shows the remainder. `text` is required: paragraphs separated by blank lines (the last of several is set in italics, for what to do); `estimatedMinutes` adds "Estimated scenario time about N minutes"; `lang` is `"en"` (default) or `"fa"` (right to left, Persian chrome and digits; the monitor's own labels never change). Write it for the learner: who they are, the patient, what has happened, what is connected, what to do (watch and say). It is not `notes` or `story`, and it never names the diagnosis. Not shown again by the load that restores a case after the instructor's page reloads |
 | `objectives` | learning objectives, one per entry: a string, or `{ "text", "rule", "debrief" }` where the rule (`eventWithin`, `occurred`, `never`, …) lets the Debrief report mark it ✓ Observed or ✗ Not observed, and the optional `debrief` says how the report uses it: `"recognition"` (a rule-less objective the instructor ticks in the Scenario tab when the cues are named; its tick is the time to recognition) or `"discuss"` (a structural lesson: not met, it prints ◆ Discuss instead of ✗ Not observed). An objective with neither a rule nor a tick prints – Not assessable |
 | `takeHome` | optional, up to three non-empty strings: the take-home lines the Debrief's learner handout prints, as written. Write only reviewed words (they are clinical teaching points); without them the handout prints blank lines to write on |
 | `seed` | uint32; the same seed and the same learner actions replay the same run |
@@ -136,7 +137,10 @@ parts of it show:
 - **Objectives.** An objective is tied to a step when its rule's `event` is `state:<to>` of the step, or `drug:<id>`
   for a drug in `<to>`'s `onEnter`; its `eventWithin` window gives the step a timer ("due", then "overdue"), and an
   `after` that is a `value:` event fades the step until it is true (it stays pressable). An objective without a rule
-  is a "you judge it" row. An untaken step shows as failed only when such an objective still asks for it and the card
+  is a "you judge it" row. The `"recognition"` one is offered from the moment its Debrief clock starts, never before:
+  once the run enters a state an `eventWithin` objective counts from (`after: "state:…"`) that the patient enters by a
+  rule (the MH card's Early signs); a card with no such state offers it from the start. In a `pme-scenario/2` card a
+  judged row is offered from the first second its `display` rule holds (no rule: from the start). An untaken step shows as failed only when such an objective still asks for it and the card
   can no longer reach it; an alternative branch not chosen is never a failure.
 - **`notes`** of a state are the cue box's Say line, so write them as what the instructor says or watches for.
 
