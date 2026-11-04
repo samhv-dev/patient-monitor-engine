@@ -30,9 +30,9 @@ shows at the common laptop and projector sizes, and says which ones the uniform-
 
 ## Fault table
 
-62 cells were audited (6 views × 10 viewports, and the phone in its two orientations). The table has 18 rows, one per
+62 cells were audited (6 views × 10 viewports, and the phone in its two orientations). The table has 19 rows, one per
 fault and view and viewport (F2 is one row for the Monitor view at every size): 10 rows are fixed by this PR (F1 to F4),
-8 are listed for the orchestrator (O1 to O8) and are not touched here.
+9 are listed for the orchestrator (O1 to O9) and are not touched here; O9 is a consequence of this PR.
 
 | # | View | Viewport | Fault (demo build) | Measured | This PR |
 |---|------|----------|--------------------|----------|---------|
@@ -53,6 +53,7 @@ fault and view and viewport (F2 is one row for the Monitor view at every size): 
 | O5 | Instructor v2 | 1280 to 1600 wide | The Fast forward box's note is cut to "the phones catch u…" (its text is the only place that says the phones catch up at the end) | 355 px of text in 114–261 px | Orchestrator |
 | O6 | Instructor v2 | every size below 1920 | ACTION's row titles and sub-lines are cut with an ellipsis (designed so; at 1280 the call row reads "MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 %…") | 1 row at 1920, 4 or more below | Orchestrator (design check) |
 | O7 | Room | every size | The typed join address breaks inside the session code ("…?join=S9T" / "567"), so the code reads as two pieces | see `room-*.png` | Orchestrator |
+| O9 | Instructor v2 | 1920 × 1080 | Made by this PR: the 9-px floor of UI review #24 (`LIM_MIN_PX`) works in the monitor's own px, so inside a monitor scaled below 1 the units and the T column's limits fall under 9 screen px. The demo build stretched the monitor to the pane's 802 × 604 and kept them at 9 px or more; this PR draws the whole screen at 802 × 501 (k = 0.63), every font at the skin's size × k. Whether a floor should hold in screen px (which breaks the one scale) is a ruling. | 11 texts at 8.2–8.8 px (units, T1/T2 limits), SpO₂ "%" 6.9 px; 0 in the demo build | Orchestrator (ruling) |
 | O8 | Monitor | 1920 × 1080 at 1.25 and 1.5 | Not measurable from the page: the host monitor draws in a worker (OffscreenCanvas), so the canvas element's size does not show its backing store. Layout identical to 100 %. | — | Orchestrator (a check in the worker if wanted) |
 
 Home, Scenarios and Debrief showed no fault at any of the ten viewports (no scroll of the page, no clipped text, nothing
@@ -62,6 +63,16 @@ The 1920 × 1080 layouts at device scale factors 1.25 and 1.5 are the same as at
 The sizes in the last column are the whole screen at k = min(pane width / 1280, pane height / 800) for the pane the demo
 build measured; the pane's height follows the cue text of the phase on screen, so a run at another moment gives other
 panes (the PR's screenshots), never another proportion.
+
+## The same audit on this PR's build
+
+At every viewport, in every view: no tile text wraps, leaves its tile or inks over another (0 findings; the demo build
+had 20 texts outside a tile and 4 overlaps in Instructor v2), no sideways overflow of the page. Texts below 9 screen px remain
+where the monitor is drawn small: Instructor v2 52 to 72 of them below 1920 wide (O1), 11 at 1920 (O9); the sideways
+phone 60 (the whole screen at k = 0.42, the size of the owner's mock-up m14); the Monitor view 1 at 1024 × 768 (SpO₂'s
+"%"). The Monitor view at 1920 × 1080 is 1670 × 1044 with 125 px of the skin's black at each side. The canvas backing
+store follows the device pixels where it can be read (the phone, drawn on the main thread: 1039 × 777 for a
+347 × 259 CSS px canvas at device scale factor 3).
 
 ## What this PR changes
 
