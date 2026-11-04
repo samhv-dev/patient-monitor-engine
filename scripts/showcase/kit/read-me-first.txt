@@ -19,6 +19,8 @@ LEARNERS' PHONES (optional; needs Node.js 22 or later on this Mac, and a network
    and follow your case.
 10. Phones start with their sound off; each learner taps "Sound off" to hear it. Go on to your case from the bar at
     the left ("Scenarios" or "Instructor").
+    Use only one instructor tab: the phones follow the tab that runs the session. A second tab asks first; choose
+    "Open that tab's session here" to move the session (same code, same case) into it.
 11. If "Start Classroom" says it cannot start, use "Start Simulator": everything works except the phones.
 
 WINDOWS (a backup for a Windows PC; needs Node.js 22 or later on that PC)
