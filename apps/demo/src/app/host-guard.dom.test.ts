@@ -79,14 +79,18 @@ function sleepingHost(l: ReturnType<typeof fakeLocks>, code: string) {
   void l.request(HOST_LOCK + code, { mode: 'shared' }, () => new Promise<void>((r) => (close = r)));
   const c = new BroadcastChannel(HOSTS_CHANNEL);
   const inbox: unknown[] = [];
-  c.onmessage = (e) => void inbox.push(e.data); // queued, not answered: the page does not run
+  let awake = false;
+  c.onmessage = (e) => {
+    inbox.push(e.data); // queued, not answered, while the page does not run
+    if (awake && e.data.kind === 'got') close(); // the receipt: it stops
+  };
   stops.push(() => c.close());
   return {
     inbox,
     close: () => close(),
     wake: (kept: Record<string, string>) => {
+      awake = true;
       if (inbox.some((m) => (m as { kind: string }).kind === 'take')) c.postMessage({ kind: 'given', code, kept });
-      close();
     },
   };
 }
@@ -162,6 +166,34 @@ describe('a host tab that is asleep (the browser runs none of its page: a backgr
     expect(a.inbox).toContainEqual({ kind: 'take', code: 'QFBAWA' });
     a.wake({ 'pme.position': '{"code":"QFBAWA"}' });
     expect(await r).toEqual({ 'pme.position': '{"code":"QFBAWA"}' });
+    await until(() => !l.held.length);
+    expect(l.held).toEqual([]); // it let go on the receipt
+  });
+
+  it('with Web Locks, an answer delivered after the lock is let go still hands the case over (no timing between them)', async () => {
+    const l = fakeLocks();
+    setLocks(l);
+    const a = sleepingHost(l, 'QFBAWA');
+    const r = takeOver('QFBAWA', 10, () => () => undefined);
+    await tick(20);
+    // The old tab answers and the new tab has not read it yet: the old tab still holds its lock (it waits for the
+    // receipt), so the wait does not end with no case however late the message is read
+    a.wake({ 'pme.position': '{"code":"QFBAWA"}' });
+    expect(l.held.map((x) => x.name)).toEqual([HOST_LOCK + 'QFBAWA']);
+    expect(await r).toEqual({ 'pme.position': '{"code":"QFBAWA"}' });
+  });
+
+  it('a new tab that goes away mid-hand-over leaves the old tab hosting', async () => {
+    const a = hostA('QFBAWA');
+    const c = new BroadcastChannel(HOSTS_CHANNEL);
+    stops.push(() => c.close());
+    const got: unknown[] = [];
+    c.onmessage = (e) => void got.push(e.data);
+    c.postMessage({ kind: 'take', code: 'QFBAWA' }); // and never sends the receipt
+    await until(() => got.length > 0);
+    await tick(50);
+    expect(got).toContainEqual({ kind: 'given', code: 'QFBAWA', kept: { 'pme.position': '{"code":"QFBAWA"}' } });
+    expect(a.gone).toBe(0);
   });
 
   it('with Web Locks, a host tab closed before it answered: the hand-over ends with no case', async () => {

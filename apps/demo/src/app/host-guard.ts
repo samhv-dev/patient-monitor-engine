@@ -15,7 +15,10 @@
 // The hand-over still needs the other tab's page (only it can read its kept position: sessionStorage is the tab's own),
 // so it goes over the BroadcastChannel: the new tab asks, and waits for the answer for as long as the browser says that
 // tab still hosts the code. The message waits in a sleeping tab's queue; when the tab runs again (shown, or unfrozen) it
-// answers with its position and stops. Past TAKE_MS the instructor is told the other tab is asleep and may start here
+// answers with its position, and it stops (letting go of its lock) only on the new tab's receipt: so a lock let go with
+// no answer means a tab that closed or crashed, whatever order the browser delivers the two in (it does not order a
+// channel message against a lock release; the first version assumed an answer would come within ASK_MS of the
+// release and lost the case on WebKit in CI), and a new tab that closes mid-hand-over leaves the old one hosting. Past TAKE_MS the instructor is told the other tab is asleep and may start here
 // at once under the same code, without its case (the sleeping tab then stops when it wakes: the newer tab runs it).
 // A tab that starts hosting a code says so on the channel, and any other tab hosting that same code stops.
 // Fallback: no Web Locks (Safari < 15.4, Chrome < 69, Firefox < 96, or a page that is not a secure context: the kit's
@@ -39,7 +42,8 @@ type Msg =
   | { kind: 'who' }
   | { kind: 'here'; code: string }
   | { kind: 'take'; code: string }
-  | { kind: 'given'; code: string; kept: Record<string, string> };
+  | { kind: 'given'; code: string; kept: Record<string, string> }
+  | { kind: 'got'; code: string };
 
 type Channel = { postMessage(m: Msg): void; close(): void; onmessage: ((e: MessageEvent) => void) | null };
 const open = (): Channel | null => {
@@ -95,13 +99,14 @@ export function takeOver(code: string, waitMs = TAKE_MS, slow: (code: string, wi
     t = setTimeout(() => (l ? (dismiss = slow(code, () => end(null))) : end(null)), waitMs);
     c.onmessage = (e) => {
       const m = e.data as Msg;
-      if (m?.kind === 'given' && m.code === code) end(m.kept);
+      if (m?.kind !== 'given' || m.code !== code) return;
+      c.postMessage({ kind: 'got', code }); // the receipt: the old tab stops on it
+      end(m.kept);
     };
     c.postMessage({ kind: 'take', code });
-    // Granted once no tab holds the host lock any more: the tab stopped, closed or crashed. A tab that answered posted
-    // its answer before it let go, but the browser does not order a channel message against a lock release, so an
-    // answer already sent is given ASK_MS (a same-browser hop takes a few ms) to arrive before this ends with none.
-    l?.request(HOST_LOCK + code, { signal: stop.signal }, async () => void (t = setTimeout(() => end(null), ASK_MS))).catch(() => undefined);
+    // Granted once no tab holds the host lock any more. A tab that answers keeps its lock until our receipt, which we
+    // send only once we have its answer: granted before that = the tab closed or crashed without answering.
+    l?.request(HOST_LOCK + code, { signal: stop.signal }, async () => end(null)).catch(() => undefined);
   });
 }
 
@@ -117,9 +122,9 @@ export function waitNotice(code: string, without: () => void): () => void {
   return () => d.remove();
 }
 
-/** This tab hosts `code`: hold its host lock, say so, answer the other tabs' question, and on a hand-over request (or
- *  another tab starting the same code) give `kept()` and call `gone()`, which must stop this page hosting. Returns a
- *  stopper. The lock is shared: in a hand-over both tabs hold it until the older one stops. */
+/** This tab hosts `code`: hold its host lock, say so, answer the other tabs' question, and on a hand-over request give
+ *  `kept()`; on the taker's receipt (or another tab starting the same code) call `gone()`, which must stop this page
+ *  hosting. Returns a stopper. The lock is shared: in a hand-over both tabs hold it until the older one stops. */
 export function announceHost(code: string, d: { kept(): Record<string, string>; gone(): void }): () => void {
   let quitted = false;
   let release = (): void => undefined;
@@ -134,10 +139,8 @@ export function announceHost(code: string, d: { kept(): Record<string, string>; 
   c.onmessage = (e) => {
     const m = e.data as Msg;
     if (m?.kind === 'who') c.postMessage({ kind: 'here', code });
-    else if (m?.kind === 'take' && m.code === code) {
-      c.postMessage({ kind: 'given', code, kept: d.kept() });
-      stop();
-    } else if (m?.kind === 'here' && m.code === code) stop(); // a newer tab runs this session
+    else if (m?.kind === 'take' && m.code === code) c.postMessage({ kind: 'given', code, kept: d.kept() });
+    else if ((m?.kind === 'got' || m?.kind === 'here') && m.code === code) stop(); // handed over, or a newer tab runs it
   };
   c.postMessage({ kind: 'here', code });
   return quit;
