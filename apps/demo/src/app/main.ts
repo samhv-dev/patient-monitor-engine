@@ -9,7 +9,8 @@ import { joinCode, relayOf } from './classroom.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
 import { PATIENT_PRESETS } from './patients.ts';
-import { keepPositions, readPosition, restorePosition } from './position.ts';
+import { announceHost, askJoin, chooseHostSession } from './host-guard.ts';
+import { keepPositions, keptItems, putKeptItems, readPosition, restorePosition } from './position.ts';
 import { RAIL_VERSION } from './about.ts';
 import { simLine } from './sim-line.ts';
 import { Rail, trackPageLines } from './rail.ts';
@@ -49,6 +50,8 @@ const q = new URLSearchParams(location.search);
 const join = joinCode(location);
 const follow = join ?? normalizeSessionCode(q.get('follow') ?? '');
 const relay = relayOf(location);
+// `?moved=<code>`: this tab handed its session to another tab of this browser (host-guard.ts)
+const moved = normalizeSessionCode(q.get('moved') ?? '');
 if (join) document.documentElement.dataset.learner = 'phone'; // the portrait learner layout (app.css)
 const hostless = !follow && parseRoute(location.hash).id === 'remote';
 const shell = new Shell(document.getElementById('app') as HTMLElement, { hostless, follower: !!follow });
@@ -79,15 +82,22 @@ if (follow) {
   mountFastForward(shell.root, { get fastForward() { return follower.sync?.fastForward ?? null; }, get lastFastForward() { return follower.sync?.lastFastForward ?? null; } }, { simT: () => follower.sync?.fastForwardAt ?? null, font: () => follower.monitor.skin?.render.fontStack, latch: (a) => follower.monitor.latchAlarms(a) });
   shell.start();
   Object.assign(window, { __pmeFollower: follower, __pmeApp: { shell, frames, site } });
+} else if (moved) {
+  document.body.replaceChildren(h('main', { class: 'host-moved' },
+    h('h1', {}, 'This session moved to another tab'),
+    h('p', {}, `The classroom session ${moved} now runs in another tab of this browser; its phones follow that tab. This tab no longer runs it: you can close it.`),
+    h('a', { class: 'btn', href: location.pathname }, 'Start a new session in this tab')));
 } else if (hostless) {
   shell.add(remoteView({ site, hostless: true, bar: shell.bar }));
   shell.add(settingsView(site, null));
   shell.start();
   Object.assign(window, { __pmeApp: { shell, frames, site } });
-} else {
+} else void chooseHostSession(normalizeSessionCode(q.get('session') ?? ''), askJoin).then(({ code: start, kept: handed }) => {
+  // One instructor tab per session (host-guard.ts): a live session in another tab is offered before one starts here
+  if (handed) putKeptItems(handed);
   const base = PATIENT_PRESETS[0]?.spec;
   if (!base) throw new Error('no patient presets');
-  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: q.get('session'), load: q.get('load') === 'perf8' ? 'perf8' : null, relay });
+  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay });
   // The session code survives a reload of this window, so a learner monitor and a Remote that follow it find it again
   // (a reload made a new code and left them on a frozen screen)
   publishStyle(session.code, () => ({ skin: session.skin, theme: session.theme }), (f) => session.onSkin(f));
@@ -256,7 +266,7 @@ if (follow) {
   if (kept && (!deep || deep === kept.cardId)) {
     session.live = true;
     void restorePosition(kept, session, loadScenario).then((ok) => {
-      const text = ok ? `Restored after reload: ${kept.title}, ${clock(kept.simT)}` : `The case could not be restored after the reload: ${kept.title} starts again`;
+      const text = ok ? `Restored after ${handed ? 'the move from the other tab' : 'reload'}: ${kept.title}, ${clock(kept.simT)}` : `The case could not be restored after ${handed ? 'the move from the other tab' : 'the reload'}: ${kept.title} starts again`;
       toast(text, 'alert'); // after a reload, on whichever view it landed
       link.note(text, 'system');
     });
@@ -265,8 +275,10 @@ if (follow) {
     if (!location.hash) location.hash = hrefOf(instructor()); // a deep link to a card opens the chosen Instructor view
   }
   keepPositions(session);
+  // Another tab took this session (or started it anew): stop hosting it here, and say where it went
+  announceHost(session.code, { kept: () => keptItems(), gone: () => (session.destroy(), location.replace(`${location.pathname}?moved=${session.code}`)) });
   shell.start();
   // e2e hook: the engine ids the glossary test must never find in a clinical view
   const engineIds = [...RHYTHM_IDS, ...DRUG_IDS, ...LUNG_CONDITIONS.map((c) => c.id)];
   Object.assign(window, { __pmeApp: { shell, session, link, frames, site, teach, teach2, engineIds, skinAlarmBar, room, rail, archive } });
-}
+});
