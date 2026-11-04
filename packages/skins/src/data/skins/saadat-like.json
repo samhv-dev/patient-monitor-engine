@@ -175,7 +175,7 @@
       "LAP": [-10, 15, 40], "RAP": [-10, 10, 30], "ICP": [-10, 15, 40]
     }
   },
-  "co2": { "unit": "mmHg", "scale": 50, "scaleUnit": "mmHg", "sidestreamDelayS": 2.6, "riseTimeMs": 200, "fill": true, "displaySmoothMs": 320, "scaleLineTop": true },
+  "co2": { "unit": "mmHg", "scale": 50, "scaleUnit": "mmHg", "sidestreamDelayS": 2.6, "riseTimeMs": 200, "fill": true, "displaySmoothMs": 320, "scaleLineTop": true, "autoScales": [50, 80, 100] },
   "alarms": {
     "levels": 3,
     "levelNames": ["1", "2", "3"],
@@ -347,9 +347,10 @@
     "ibp.scaleLineColor": { "tag": "measured", "source": "research/34 §8 (owner-approved mock-up, scratch/skin-mockup/NOTES.md colours: dotted scale lines, 2026-10-20)" },
     "ibp.staticDisplay": { "tag": "documented", "source": "research/06 §4.1 (static pressure: SYS/DIA hidden, a larger mean shown)" },
     "co2.unit": { "tag": "documented", "source": "research/06 §4.1 (M p.270); research/00 R12" },
-    "co2.scale": { "tag": "measured", "source": "owner's photos of a real unit, 2026-10-18, research/34 §3 row 2 (\"50mmHg\" scale label, IMG_8112–8116)", "note": "Tuesday set T2: was 10 %V (research/06 §3.2, M p.305). Values above 50 mmHg clip at the lane top, as on the real unit; the EtCO2 number is unaffected (owner E63, accepted 2026-10-18)" },
+    "co2.scale": { "tag": "measured", "source": "owner's photos of a real unit, 2026-10-18, research/34 §3 row 2 (\"50mmHg\" scale label, IMG_8112–8116)", "note": "Tuesday set T2: was 10 %V (research/06 §3.2, M p.305). Values above 50 mmHg clipped at the lane top (owner E63, accepted 2026-10-18); revisited 2026-11-01: the lane widens to 80 and 100 when the plateau exceeds it (co2.autoScales), and clips only above 100; the EtCO2 number is unaffected" },
     "co2.fill": { "tag": "measured", "source": "research/34 §3 row 2 (IMG_8113: area under the capnogram filled yellow, 4 of 4 units)" },
     "co2.displaySmoothMs": { "tag": "measured", "source": "research/34 §8 M2 (owner, 2026-10-20: cardiogenic oscillations softer and fainter than the mock-up)", "note": "display-side only: the engine's co2 channel and EtCO2 are unchanged (capno.ts CARDIO_MMHG kept); measured at planning ±0.3–0.5 mmHg with plateau steps 0.16 mmHg (plan D12). 320 ms halves the late-plateau ripple (0.90 → 0.43 mmHg peak to peak, seed 1, HR 98, RR 12); the renderer averages only windows whose range is under 1.5–3 mmHg, so the upstroke and a curare cleft are drawn as they are" },
+    "co2.autoScales": { "tag": "assumed", "source": "owner ruling 2026-11-01 night (E63 revisited: the lane widens its range when the plateau exceeds it and narrows back, as real units do); research/06 §3.2 (M p.304–305: the B9 offers a CO2 scale AUTO beside its fixed scales)", "note": "50 is the photographed scale (co2.scale); the B9 manual's AUTO steps in mmHg are not in our sources, so 80 and 100 follow common capnograph scale sets (0–60/0–80/0–100 mmHg). Rule and breath counts: renderer co2-range.ts. Above 100 mmHg the trace clips at the lane top (E63 at the widest range)" },
     "co2.scaleLineTop": { "tag": "measured", "source": "research/34 §3 row 9 (IMG_8113, rectified 1280 x 800) [MEASURED] pixel read ±2 px; owner photo review 2026-10-22 (W10)", "note": "pass 2: a dotted line at the 50 mmHg level, as on the IBP lanes" },
     "co2.scaleUnit": { "tag": "measured", "source": "owner's photos of a real unit, 2026-10-18, research/34 §3 row 2 (\"50mmHg\" scale label, IMG_8112–8116)", "note": "Tuesday set T2: was \"%\"" },
     "alarms.levels": { "tag": "documented", "source": "research/06 §4.2 (M p.21, 47); brief §6.4.1" },

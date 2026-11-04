@@ -107,7 +107,6 @@ describe('pass 3: the RR tile is set as the EtCO2 part it stands in for (rule O4
     const rr = tile('RR');
     expect(rr.classList.contains('split-row')).toBe(true);
     expect(rr.dataset.as).toBe('CO2');
-    expect(rr.style.getPropertyValue('--pme-slots')).toBe('3');
     expect([...rr.querySelectorAll('[data-part] .pl')].map((e) => e.textContent)).toEqual(['RR']);
     expect(rr.querySelector('[data-part="0"] .pu')?.textContent).toBe('BrPM');
     const v = rr.querySelector('[data-part="0"] .pv') as HTMLElement;
@@ -115,6 +114,24 @@ describe('pass 3: the RR tile is set as the EtCO2 part it stands in for (rule O4
     expect(rr.style.color.toUpperCase()).toBe(resolveSkin('saadat-like', { sensors: { co2: true } }).render.tileColors.CO2?.toUpperCase()); // the digits' colour
     expect(css()).toContain('[data-as="CO2"] .ph .pl{font-size:calc(21 * var(--pme-h, 800px) / 800)}'); // labelPx.CO2
     ui.destroy();
+  });
+
+  it('the owner, 1 November: RR\'s box is its own tile, its digits laid out by the EtCo2 part\'s rule (not held to a third of the tile)', () => {
+    const a = mount('saadat-like');
+    const rr = a.tile('RR');
+    const shape = (t: HTMLElement) => [...(t.querySelector('[data-part="0"]') as HTMLElement).querySelectorAll('*')].map((e) => `${e.tagName}.${e.className}`);
+    const b = mount('saadat-like', true);
+    // the same part skeleton as the EtCo2 part: head (label, unit beside it), limits, digits; so the same grid rules
+    // place it (limits left of the digits, the digits centred in the rest, the head over both)
+    expect(shape(rr)).toEqual(shape(b.tile('CO2')));
+    expect(rr.querySelectorAll('[data-part]')).toHaveLength(1);
+    // one part, as wide as the tile: no rule narrows a stand-in's part to its replacement's slot
+    expect(css()).not.toMatch(/\.stand-in \.part\{/);
+    expect(rr.style.getPropertyValue('--pme-slots')).toBe('');
+    const part = rr.querySelector('[data-part="0"]') as HTMLElement;
+    expect(getComputedStyle(part).flexGrow, 'the part grows to the tile\'s width').toBe('1');
+    a.ui.destroy();
+    b.ui.destroy();
   });
 
   it('with the CO2 line: the CO2 tile is itself (no stand-in mark)', () => {

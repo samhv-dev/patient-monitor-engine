@@ -314,8 +314,10 @@ function photoCss(g: LayoutGrid): string[] {
     '.pme-grid .pme-stile.split-row.unit-under .part:first-child .ph{flex-direction:column;align-items:flex-start;gap:0}',
     `.pme-grid .pme-stile.split-row .part .lim{font-size:calc(${gridFont(g.fontPx.limit ?? 11)} * var(--pme-lim-k, 1))}`,
     `.pme-grid .pme-stile.split-row .pu{font-size:${f(13)}}`,
-    // O4: a tile standing in for a split tile (RR for the CO2 tile) gives its part the width of the replacement's part
-    '.pme-grid .pme-stile.stand-in .part{flex:0 0 calc((100% - (var(--pme-slots) - 1) * 4px) / var(--pme-slots))}',
+    // O4: a tile standing in for a split tile (RR for the CO2 tile) is one part, laid out by the first part's rule above
+    // (EtCo2's: unit beside the label, limits left of the digits, the digits centred in the rest), over the tile's whole
+    // width: its box is the tile. The owner, 1 November: held to the EtCo2 part's third, "RR 14" sat low-left in an
+    // otherwise empty box
     // the split row's bell at the bottom right, as the T column's was (it printed over the AWRR limit)
     `.pme-grid .pme-stile.split-row>.h{top:auto;bottom:${f(4)}}`,
     // UI-A #10 (demo review 24 Oct #10): the module tiles sharing a cell with BFA (NMT, AGENTS) take their content's
@@ -608,8 +610,9 @@ export class DeviceUI {
   private buildTile(given: TileSpec): Tile {
     const r = this.r;
     // O4 (pass 3): in the grid, a tile another takes the place of while a sensor is attached (RR for the CO2 tile) is
-    // set as that tile — its colour, sizes and part width; only the content differs. A stand-in for a split row is
-    // drawn as one part of it: its label with its unit beside it, its own limit pair left of its digits
+    // set as that tile — its colour and sizes; only the content differs. A stand-in for a split row is drawn as its
+    // first part (the EtCo2 part's rule): its label with its unit beside it, its own limit pair left of its digits, the
+    // part as wide as the tile (the owner, 1 November)
     const as = gridOf(r, this.portrait) ? replacementOf(r, given.param) : undefined;
     const spec: TileSpec = as?.split === 'row' && !given.split ? standInPart(given) : given;
     const doc = this.tiles.ownerDocument;
@@ -631,7 +634,6 @@ export class DeviceUI {
     if (as) {
       el.dataset.as = as.param;
       el.classList.add('stand-in');
-      el.style.setProperty('--pme-slots', String(as.parts?.length ?? 1));
       el.style.color = r.render.tileColors[as.param] ?? el.style.color;
     }
     if (spec.split) {

@@ -2,7 +2,7 @@
 // given"), for the run strip's "next" list. The controller's own describeTransition prints engine ids; this is the
 // panel's copy of the same grammar with glossary labels and state names.
 import { DRUGS, type StateVar } from '@pme/engine-core';
-import type { ScenarioDoc, Transition, When } from '@pme/controller';
+import { asV1, type AnyScenarioDoc, type Transition, type When } from '@pme/controller';
 import { drugName, labelOf } from './glossary.ts';
 import { SENSORS } from './describe.ts';
 import { vitalLabel, vitalOf } from './vitals.ts';
@@ -41,8 +41,8 @@ export function whenText(w: When): string {
 }
 
 /** "a shock of at least 150 J → ROSC (30 % chance, else stays)". */
-export function transitionText(t: Transition, doc: ScenarioDoc | null): string {
-  const name = (id: string) => doc?.states.find((s) => s.id === id)?.label ?? 'next state';
+export function transitionText(t: Transition, doc: AnyScenarioDoc | null): string {
+  const name = (id: string) => asV1(doc)?.states.find((s) => s.id === id)?.label ?? 'next state'; // /2: no states
   const p = t.probability !== undefined ? ` (${Math.round(t.probability * 100)} % chance${t.else ? `, else ${name(t.else)}` : ''})` : '';
   const w = whenText(t.when);
   return `${w.charAt(0).toUpperCase()}${w.slice(1)}: ${name(t.to)}${p}`;

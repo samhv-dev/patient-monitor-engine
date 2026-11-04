@@ -84,6 +84,40 @@ describe('blood pipeline: commands, view, labs, ECG targets', () => {
   });
 });
 
+describe('a crystalloid at its own temperature; a cooling infusion the team stops by protocol', () => {
+  it('validates tempC (0–42 °C) and stopAtCoreC (30–42 °C) on a fluid order', () => {
+    expect(validateBloodCommand(ev({ kind: 'fluid', fluid: 'saline', volumeMl: 1600, overS: 900, tempC: 4, stopAtCoreC: 38 }))).toBeUndefined();
+    expect(validateBloodCommand(ev({ kind: 'fluid', fluid: 'saline', volumeMl: 1600, tempC: 60 }))).toMatch(/tempC/);
+    expect(validateBloodCommand(ev({ kind: 'fluid', fluid: 'saline', volumeMl: 1600, stopAtCoreC: 20 }))).toMatch(/stopAtCoreC/);
+  });
+  it('refrigerated saline (4 °C, MHAUS/EMHG "chilled 4–8 °C") runs into the heat model at 4 °C; without tempC at room temperature', () => {
+    const { bs, ctx, rs } = rig();
+    applyBloodCommand(bs, ev({ kind: 'fluid', fluid: 'saline', volumeMl: 1600, overS: 900, tempC: 4 }), 0, ctx.resp);
+    advanceBlood(bs, ctx, 10);
+    expect(rs.temp.iv.mlPerMin).toBeCloseTo(1600 / 15, 6);
+    expect(rs.temp.iv.tempC).toBe(4);
+    const b = rig();
+    applyBloodCommand(b.bs, ev({ kind: 'fluid', fluid: 'saline', volumeMl: 1600, overS: 900 }), 0, b.ctx.resp);
+    advanceBlood(b.bs, b.ctx, 10);
+    expect(b.rs.temp.iv.tempC).toBe(b.rs.temp.ta); // the theatre's 21 °C, as before
+  });
+  it('stopAtCoreC: the cooling infusion stops once the core has fallen to it (MHAUS: stop cooling at 38 °C), not before', () => {
+    const { bs, ctx, rs } = rig();
+    rs.temp.tc = 38.6;
+    applyBloodCommand(bs, ev({ kind: 'fluid', fluid: 'saline', volumeMl: 1600, overS: 900, tempC: 4, stopAtCoreC: 38 }), 0, ctx.resp);
+    advanceBlood(bs, ctx, 60);
+    expect(bs.core.fl.flows).toHaveLength(1);
+    expect(rs.temp.iv.mlPerMin).toBeGreaterThan(100);
+    rs.temp.tc = 37.99;
+    advanceBlood(bs, ctx, 61);
+    expect(bs.core.fl.flows).toHaveLength(0);
+    expect(rs.temp.iv.mlPerMin).toBe(0);
+    rs.temp.tc = 38.6; // a stopped order does not restart
+    advanceBlood(bs, ctx, 70);
+    expect(rs.temp.iv.mlPerMin).toBe(0);
+  });
+});
+
 describe('drug-bus observer', () => {
   const bus = (doses: unknown[], kShift = 0) => ({ bus: { doses, metabolic: { kShift } } });
   it('pkBus reads the drug bus by duck typing; absent → null (fallback)', () => {

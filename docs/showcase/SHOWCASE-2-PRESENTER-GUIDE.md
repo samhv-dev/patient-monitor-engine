@@ -84,8 +84,9 @@ asked.
    no print [Q1-MH].
 9. **Saadat-style monitor, and no style change during the talk** (E20): after a change the AGENTS tile reads "---"
    [MEAS §8].
-10. **Say the known misses yourself**: untreated MH is too slow on this build (no arrest within 51 min of the
-    succinylcholine, core 37.3 °C; the tables' "+1 °C per 5–15 min" would need 2–4 × the heat the sourced VO₂ can make)
+10. **Say the known misses yourself**: untreated, the core rises at the registries' median rate (0.76 °C per 15 min;
+    38.5 °C at +46 min, 38.7 °C at 51 min of the succinylcholine; the textbook "1–2 °C every 5 min" comes from swine and
+    fulminant cases: research/e131-2-mh-heat-evidence.md), but it does not arrest within 51 min
     [SPK §2; `docs/validation/known-misses.md`]; the MH temperature barely moves on the demo path (Tcore 36.4–36.8);
     dantrolene's 10-min EtCO₂ effect misses its guard (−4.6 against ≤ −5) [SPK §7]; the premedication over-sedates
     (RR 6); the charcoal filters and the refrigerated fluid are words only; sepsis is not built [RM; SYN].
@@ -94,7 +95,7 @@ asked.
 
 | What | The number [Q1-MH] |
 |---|---|
-| Induction | Load 0:00 awake on room air; premedicate 0:30, preoxygenate 1:00, induce 4:00 (MH starts 4:03), intubate 5:00, surgery 6:00 |
+| Induction | Load 0:00 awake on room air; preoxygenate 0:30, premedicate on the mask 1:00 (the owner's ruling of 1 November: the opioid blunts the breathing, so the oxygen goes on first), induce 4:00 (MH starts 4:03), intubate 5:00, surgery 6:00 |
 | Early signs | **8:09**: EtCO₂ 42 → 45 → **46** at the same ventilation, HR 64 → **78**, Tcore 36.5; MH activity 0.27 |
 | Treatment | call 8:12 (3 s), dantrolene 8:32 (21 s), EtCO₂ < 40 from 8:34; Recovering 9:34; ventilation back 13:52 (met from 10:34) |
 | The climb | EtCO₂ past 45 at 14:06; per minute 40, 53, 56, 59, 61, **64** at 19:11; MH activity 0.55, dantrolene at its peak |

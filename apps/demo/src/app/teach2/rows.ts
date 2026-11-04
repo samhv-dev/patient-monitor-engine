@@ -7,15 +7,27 @@
 // Which untaken step an objective asks for, its window and "failed" are card-read.ts `standingOf` / `untakenStatus`, the
 // one reading the Debrief's steps table (debrief.ts `steps`) also uses, so the two agree by construction.
 //
-// The rows of the list are the CURRENT stage's (its own state's rows; a hop shows the stage it folds into). Every step
-// of the stage stays in the list whatever its look, so nothing the card offers is hidden: a step taken that the card
-// still offers (the treatment fan-out loops back into its stage) stays a pressable green row. Rows the case has left
-// move to "Finished": the taken, failed and fired rows of the stages passed, and the judged objectives met.
-// Nothing here ever disables a row: the look is all a status changes.
-import type { ScenarioDoc, Transition } from '@pme/controller';
+// The rows of the list are the CURRENT stage's (its own state's rows; a hop shows the stage it folds into). A /1 card's
+// spoke (a hop: a state whose only exit is a short `afterS` back to its hub, card-read.ts `isHop`) is an action of its
+// hub stage, not a stage: the treatment fan-out's press keeps the hub's visit, its entry time and its other rows' looks.
+// A row is open until it is finished; a finished row moves to "Finished" at once, in every stage (the clinical owner's
+// report of 30 October): a step taken (green), a rule that fired (amber), a step failed (red), a judged objective met.
+// A judged recognition row is offered from the moment its Debrief clock starts, and not before (the owner's ruling of 1
+// November: "visible from the beginning … makes no sense"): on a /1 card once the run has entered the state the clock
+// counts from (debrief-moments.ts `signStates`, the MH card's Early signs), on a /2 card from the first second its
+// display rule holds (grade() `fromT`, the MH card's `phaseEntered: earlySigns`); a card with no such state or rule
+// offers it from the start. Before that it is not listed; once offered it stays until met.
+// The mark names the transition taken: a step with no rule of its own is a press whenever it fired (card-read.ts
+// `byItself`), never "fired by its own rule", whatever the record's attribution; a spoke's return is not a row.
+// The look is all a status changes, with one exception: a step the runner would refuse now (a press guarded by a vital in
+// its `all`, the MH card's Cool below 38.5 °C core: runner.ts `trigger`) is "waiting" (its subtitle already names the rule, card-read.ts),
+// shows the value against it and offers no press until the rule holds.
+import type { ScenarioDoc, Transition, When } from '@pme/controller';
 import type { RunEventId } from '@pme/controller/scenario';
-import { conditionNotMet, objectivesOf, rowsOf, stagesOf, standingOf, untakenStatus, type Evidence, type Row, type Stage } from '../card-read.ts';
+import { byItself, conditionNotMet, objectivesOf, phaseRowsOf, rowsOf, stagesOf, standingOf, untakenStatus, type Evidence, type History, type Row, type Stage } from '../card-read.ts';
+import { grade, type Administration, type DisplayRule, type Grade, type Grades, type Judged, type PhaseEntry, type PhaseHold, type RuleEdge, type ScenarioDocV2 } from '@pme/controller/scenario';
 import { eventWords, isEvent, mmss, trendMeta, verdict } from '../debrief.ts';
+import { signStates } from '../debrief-moments.ts';
 import { drugWords } from '../glossary.ts';
 import type { ClinicalLogEntry } from '../link.ts';
 import type { RunData, ValueKey } from '../record.ts';
@@ -23,12 +35,15 @@ import { showVital, vitalOf } from '../vitals.ts';
 import type { StateVar } from '@pme/engine-core';
 
 /** The five looks of the design's row-state table (§3.5), with the A rows' two and the judged objective's "met". */
-export type Look = 'current' | 'ready' | 'unmet' | 'taken' | 'met' | 'failed' | 'pending' | 'fired';
+export type Look = 'current' | 'ready' | 'unmet' | 'waiting' | 'taken' | 'met' | 'failed' | 'pending' | 'fired';
 
 export interface LiveRow {
   row: Row;
   /** The stage the row belongs to. */
   stage: string;
+  /** When the visit of that stage began (sim seconds): Finished groups its rows under it (the owner's report of 30
+   *  October). */
+  entered: number;
   look: Look;
   /** The subtitle with the live part (a timer, a condition) appended. */
   subtitle: string;
@@ -42,16 +57,21 @@ export interface LiveRow {
   at: number | null;
   /** An A row's bar, 0–1 (answer 8), else null. */
   progress: number | null;
+  /** A /2 action's live grade (grade.ts, final: false); absent for a /1 row and for an action the card does not grade. */
+  grade?: Grade;
 }
 
 export interface Board {
   stage: Stage | null;
-  /** The current stage's rows in IP3's order (steps, judged objectives numbered on, automatic rows). */
+  /** The current stage's open rows in IP3's order (steps, judged objectives numbered on, automatic rows). */
   list: LiveRow[];
-  /** Every taken, failed, fired or met row the case has left, in time order. */
+  /** Every taken, failed, fired or met row, of the stages passed and of the current one, in time order. */
   finished: LiveRow[];
   /** The off-card actions taken in this stage, from the log (answer 20). */
   offCard: ClinicalLogEntry[];
+  /** A /2 phase's rows not due now (its "Not due now" fold, still rows of ACTION, pressable): a graded action not
+   *  applicable and not given, an ungraded one given in an earlier phase. Absent for /1. */
+  later?: LiveRow[];
 }
 
 /** One `vital` rule as the host-side runner reads it (`ScenarioDriver.vitalHolds()`, @pme/controller `VitalHold`). */
@@ -120,6 +140,17 @@ export function firstT(src: Pick<Source, 'record' | 'history'>, want: RunEventId
   return d.rows.find((r) => r.undone === undefined && r.t >= from && isEvent(r.ev, w))?.t ?? null;
 }
 
+/** The history on the kept course: an entry earlier than the one before it (a return to a bookmark) drops what came
+ *  after the time it returned to. */
+function keptCourse(h: History): History {
+  const out: Array<History[number]> = [];
+  for (const e of h) {
+    while (out.length && (out.at(-1) as History[number]).t > e.t + 1e-6) out.pop();
+    out.push(e);
+  }
+  return out;
+}
+
 // ---- the stage visits, from the scenario history ----
 interface Visit {
   stage: string;
@@ -157,11 +188,12 @@ function visitsOf(src: Source, home: Map<string, string>): Visit[] {
 }
 
 const firedAt = (v: Visit, id: string): number | null => v.fired.find((f) => f.id === id)?.t ?? null;
-/** Whether the host's record says transition `id`, fired at `t`, was fired by its own rule, not by a press (IP8's `by`;
- *  a follower has no record and cannot tell, so its mixed steps read taken). The Debrief's steps table reads the same
- *  field: such a step is not taken there either. */
-const byItsRule = (src: Source, id: string, t: number): boolean =>
-  !!src.record?.rows.some((r) => r.kind === 'scenario' && r.undone === undefined && r.tr === id && r.by === 'rule' && Math.abs(r.t - t) <= 0.05);
+/** Whether step `tr`, fired at `t`, was fired by its own rule, not by a press: only a step with a rule of its own can
+ *  be (card-read.ts `byItself`: a mixed `any`, answer 4's "or by itself"), and then the host's record says which (IP8's
+ *  `by`; a follower has no record and cannot tell, so its mixed steps read taken). A step that is a press only is taken
+ *  whatever the record's `by` reads (the owner's report of 30 October: the Cool press read "fired by its own rule"). */
+const byItsRule = (src: Source, tr: Transition, t: number): boolean =>
+  byItself(tr.when) && !!src.record?.rows.some((r) => r.kind === 'scenario' && r.undone === undefined && r.tr === tr.id && r.by === 'rule' && Math.abs(r.t - t) <= 0.05);
 /** Taken after a step with a higher index of the same stage visit was taken. */
 function outOfOrder(v: Visit, rows: readonly Row[], r: Extract<Row, { kind: 'step' }>, t: number): boolean {
   return rows.some((o) => o.kind === 'step' && o.index > r.index && (firedAt(v, o.tr.id) ?? Infinity) < t);
@@ -175,6 +207,16 @@ const show = (v: string, x: number): string => {
 };
 /** The share of an A row's bar the value fills before its rule is met; the hold fills the rest (answer 8). */
 export const VALUE_PART = 0.7;
+/** The vital in a press's `all` that does not hold now, as the runner refuses the press for it (runner.ts `trigger`),
+ *  else null. A value not yet seen (no state event) never holds a press back. */
+function guardUnmet(w: When, values: Source['values']): Extract<When, { vital: unknown }> | null {
+  if (!('all' in w)) return null;
+  return (w.all.find((c) => {
+    if (!('vital' in c)) return false;
+    const v = values?.[c.vital.var];
+    return v !== undefined && Number.isFinite(v) && !(OP_MET[c.vital.op] ?? (() => false))(v, c.vital.value);
+  }) ?? null) as Extract<When, { vital: unknown }> | null;
+}
 /** How near an A row is (answer 8): its value against the threshold, from where the stage began, times the runner's
  *  hold fraction on the host. */
 function autoBar(src: Source, visit: Visit, tr: Transition): { progress: number | null; right: string } {
@@ -201,7 +243,7 @@ function autoBar(src: Source, visit: Visit, tr: Transition): { progress: number 
 // ---- the off-card actions ----
 /** The log lines that are not a clinical action: the clock, the scenario's own commands (a step's press is
  *  "Scenario event"), marks and returns (describe.ts `describeCommand`). */
-const NOT_AN_ACTION = /^(Simulation (paused|resumed)|Speed ×|Fast-forward|Time changed|Scenario|Bookmark|Returned to bookmark)/;
+export const NOT_AN_ACTION = /^(Simulation (paused|resumed)|Speed ×|Fast-forward|Time changed|Scenario|Bookmark|Returned to bookmark)/;
 
 /** The board of the current stage. */
 export function classify(src: Source): Board {
@@ -210,6 +252,7 @@ export function classify(src: Source): Board {
   const visits = visitsOf(src, home);
   const visit = visits.at(-1) as Visit;
   const stage = stages.find((g) => g.id === visit.stage) ?? null;
+  const here = stage?.label ?? 'Stage';
   const rows = rowsOf(doc, visit.stage);
   const d = src.record ?? ({ doc } as RunData); // eventWords reads only the card's state labels
   // a follower cannot see the values a condition names: it never fades a step for one (the step stays "ready")
@@ -219,16 +262,21 @@ export function classify(src: Source): Board {
   const ev: Evidence = { first: (w, from) => firstT(src, w, from), met: (rule) => rec !== null && verdict(rule, rec).status === 'met' };
   const lives: LiveRow[] = [];
   const finished: LiveRow[] = [];
-  const base = (row: Row): LiveRow => ({ row, stage: visit.stage, look: 'ready', subtitle: row.subtitle, right: '', overdue: null, outOfOrder: false, at: null, progress: null });
+  const base = (row: Row): LiveRow => ({ row, stage: visit.stage, entered: visit.t0, look: 'ready', subtitle: row.subtitle, right: '', overdue: null, outOfOrder: false, at: null, progress: null });
 
+  // the recognition row's clock has started: the run entered a state the sign shows in (none on the card: from Load)
+  const signs = signStates(doc);
+  const signed = !signs.size || signs.has(src.stateId) || keptCourse(src.history).some((e) => signs.has(e.stateId));
   let expected = false;
   for (const row of rows) {
     const live = base(row);
     if (row.kind === 'judged') {
       const said = `Objective met: ${drugWords(row.text)}`;
       const met = src.log.find((x) => x.kind === 'marker' && x.text === said);
+      const o = doc.objectives?.[row.objective];
+      const recognition = typeof o === 'object' && o.debrief === 'recognition';
       if (met) finished.push({ ...live, look: 'met', at: met.simT, right: met.simT === null ? '' : mmss(met.simT), subtitle: 'you judged it' });
-      else lives.push({ ...live, right: 'press when met', subtitle: 'you judge it · for the debrief only, the patient does not change' });
+      else if (signed || !recognition) lives.push({ ...live, right: 'press when met', subtitle: 'you judge it · for the debrief only, the patient does not change' });
       continue;
     }
     if (row.kind === 'auto') {
@@ -237,20 +285,26 @@ export function classify(src: Source): Board {
       else lives.push({ ...live, look: 'pending', ...autoBar(src, visit, row.tr) });
       continue;
     }
+    // a step fired in this visit (a spoke's press, the hub still current): finished, into the fold at once
     const taken = firedAt(visit, row.tr.id);
-    if (taken !== null && byItsRule(src, row.tr.id, taken)) {
+    if (taken !== null && byItsRule(src, row.tr, taken)) {
       // a mixed step its own rule fired (answer 4's "or by itself"): the case moved by itself, as an A row's would
-      lives.push({ ...live, look: 'fired', at: taken, right: mmss(taken), subtitle: `${row.subtitle} · fired by its own rule` });
+      finished.push({ ...live, look: 'fired', at: taken, right: mmss(taken), subtitle: `${here} · fired by its own rule` });
       continue;
     }
     if (taken !== null) {
       const ooo = outOfOrder(visit, rows, row, taken);
-      lives.push({ ...live, look: 'taken', at: taken, outOfOrder: ooo, right: mmss(taken), subtitle: `${row.subtitle} · taken${ooo ? ', out of order' : ''}` });
+      finished.push({ ...live, look: 'taken', at: taken, outOfOrder: ooo, right: mmss(taken), subtitle: `${here} · taken${ooo ? ', out of order' : ''}` });
       continue;
     }
     // in a hop of the stage: failed only under the shared rule (an asking objective, its target out of reach)
     if (untakenStatus(doc, row.tr, { stateId: visit.stage, current: src.stateId, dueT: visit.t0, leftT: null, now: src.simT }, ev)?.status === 'failed') {
       finished.push({ ...live, look: 'failed', at: src.simT, right: `failed ${mmss(src.simT)}` });
+      continue;
+    }
+    const guard = guardUnmet(row.tr.when, src.values);
+    if (guard) {
+      lives.push({ ...live, look: 'waiting', subtitle: `${row.subtitle} · not offered yet`, right: `${show(guard.vital.var, src.values?.[guard.vital.var] as number)} → ${show(guard.vital.var, guard.vital.value)}` });
       continue;
     }
     const linked = objectivesOf(doc, row.tr);
@@ -282,10 +336,10 @@ export function classify(src: Source): Board {
     for (const row of vr) {
       if (row.kind === 'judged') continue;
       const t = firedAt(v, row.tr.id);
-      const live: LiveRow = { ...base(row), stage: v.stage };
+      const live: LiveRow = { ...base(row), stage: v.stage, entered: v.t0 };
       if (row.kind === 'auto') {
         if (t !== null) finished.push({ ...live, look: 'fired', at: t, right: mmss(t), subtitle: `${name} · fired, the case moved by itself` });
-      } else if (t !== null && byItsRule(src, row.tr.id, t)) {
+      } else if (t !== null && byItsRule(src, row.tr, t)) {
         finished.push({ ...live, look: 'fired', at: t, right: mmss(t), subtitle: `${name} · fired by its own rule` });
       } else if (t !== null) {
         const ooo = outOfOrder(v, vr, row, t);
@@ -315,4 +369,124 @@ function conditionNow(src: Source, cond: readonly RunEventId[]): string {
   const x = last[k];
   const m = trendMeta(k);
   return x === null ? 'not yet' : `${m.label} ${x.toFixed(m.digits)}`;
+}
+
+// ---- a pme-scenario/2 card (plan F6) ----
+
+/** What a /2 board is read from: the card, the current phase, the log (the judged rows' ticks) and, on the host, the
+ *  phase runner's takings, its holds and the live grades (a follower has none: its action rows stay "ready", "graded on
+ *  the host", its A rows empty). */
+export interface SourceV2 {
+  doc: ScenarioDocV2;
+  phaseId: string;
+  log: readonly ClinicalLogEntry[];
+  takings: Readonly<Record<string, number>> | null;
+  holds: readonly PhaseHold[] | null;
+  paused: boolean;
+  /** grade() on the phase runner's inputs now, final: false (`liveGrades`); null on a follower (Q16). */
+  grades: Grades | null;
+  /** The host's administration record (when an action's own press was given) and the current phase's entry time; a
+   *  follower has neither (null): it folds nothing. */
+  admin?: readonly Administration[] | null;
+  enteredT?: number;
+  /** The scenario view's phase history: a follower (no grades) reads a judged row's `phaseEntered` clock from it. */
+  history?: History;
+}
+
+/** The grade inputs a /2 host's phase runner keeps (PhaseRunner `phases`, `admin`, `edges`). */
+export interface GradeInputs {
+  readonly phases: readonly PhaseEntry[];
+  readonly admin: readonly Administration[];
+  readonly edges: readonly RuleEdge[];
+}
+let lastGrades: { doc: ScenarioDocV2; second: number; n: string; grades: Grades } | null = null;
+/** The live grades of a /2 run (design §8.3: the panel calls grade() every second, final: false): recomputed when the
+ *  sim second, the timeline, the record or the edges change, else the last answer. */
+export function liveGrades(doc: ScenarioDocV2, run: GradeInputs, t: number): Grades {
+  const second = Math.floor(t);
+  const n = `${run.phases.length}|${run.admin.length}|${run.edges.length}`;
+  const c = lastGrades;
+  if (c && c.doc === doc && c.second === second && c.n === n) return c.grades;
+  const grades = grade(doc, run.phases, run.admin, run.edges, second);
+  lastGrades = { doc, second, n, grades };
+  return grades;
+}
+
+const mmssS = (s: number): string => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+/** "overdue 1:48" → 108 (the ring's seconds past the window). */
+const overdueS = (live: string): number => {
+  const m = /^overdue (\d+):(\d\d)$/.exec(live);
+  return m ? Number(m[1]) * 60 + Number(m[2]) : 0;
+};
+
+/** Whether a /2 judged row is offered: from its clock's start, the first second its display rule held (grade()
+ *  `fromT`, which stays once set), and from the start when it has none. A follower has no grades: it reads the phases
+ *  entered from the history and never hides a row for a value it cannot see. */
+function offeredV2(src: SourceV2, j: Judged | undefined): boolean {
+  if (!j?.display) return true;
+  if (src.grades) return src.grades.judged.find((x) => x.id === j.id)?.fromT !== undefined;
+  const seen = new Set([src.phaseId, ...keptCourse(src.history ?? []).map((e) => e.stateId)]);
+  return onHistory(j.display, seen) !== false;
+}
+/** A display rule on the phases entered: true, false, or undefined where a value leaf decides it (unseen on a follower). */
+function onHistory(r: DisplayRule, seen: ReadonlySet<string>): boolean | undefined {
+  if ('phaseEntered' in r) return seen.has(r.phaseEntered);
+  if ('not' in r) {
+    const v = onHistory(r.not, seen);
+    return v === undefined ? undefined : !v;
+  }
+  if (!('all' in r) && !('any' in r)) return undefined;
+  const vs = ('all' in r ? r.all : r.any).map((c) => onHistory(c, seen));
+  const decisive = 'all' in r ? false : true;
+  return vs.includes(decisive) ? decisive : vs.includes(undefined) ? undefined : !decisive;
+}
+
+/** The board of a /2 phase: its open actions, each with its live grade at the right and the grade's lines under the
+ *  prescription (design §10: "due 3:12", "overdue 0:40", "met 08:16", "deviation: route", "not applicable"; an action
+ *  the card does not grade keeps "press to give" / "given ×n"); a taken one stays pressable, green; the judged rows (met
+ *  ones move to Finished as on /1), and the rules out of the phase with the 60-s hold's bar.
+ *  `later` (F11: the MH card's Latent opens 11 actions and ACTION scrolled at 1440 × 900): the rows not due now — a
+ *  graded action not applicable and not given (its anchor or precondition has not happened: design §10 puts "not
+ *  applicable" out of the open list), and an action the card does not grade, given in an earlier phase (the induction's
+ *  setup carried into Latent). They stay rows of ACTION, numbered and pressable, in a fold; a due, overdue or given graded
+ *  action and the judged rows are never folded. */
+export function classifyV2(src: SourceV2): Board {
+  const list: LiveRow[] = [];
+  const later: LiveRow[] = [];
+  const finished: LiveRow[] = [];
+  /** When the action's own press was last given (the record's actionId stamp), else null. */
+  const pressedAt = (id: string): number | null => src.admin?.filter((a) => a.actionId === id && !a.cardSet).at(-1)?.t ?? null;
+  const base = (row: Row): LiveRow => ({ row, stage: src.phaseId, entered: src.enteredT ?? 0, look: 'ready', subtitle: row.subtitle, right: '', overdue: null, outOfOrder: false, at: null, progress: null });
+  for (const row of phaseRowsOf(src.doc, src.phaseId)) {
+    const live = base(row);
+    if (row.kind === 'step') {
+      const n = (row.actionId !== undefined ? src.takings?.[row.actionId] : 0) ?? 0;
+      const g = src.grades?.actions.find((a) => a.id === row.actionId);
+      if (g) {
+        // the grade's look: due, or overdue and still not given (the first dose or a repeat), the expected blue (overdue
+        // with the ring); given, green — by the record grade() graded (another action's press may give it: the call's
+        // ventilator and infusion) or the row's own press (deviation: the met look, its label amber; given late: the
+        // ring); not applicable, faded. Still pressable whatever the look.
+        const worstGiven = g.grade === g.firstGrade ? g.givenT !== undefined : g.repeats.find((r) => r.grade === g.grade)?.t !== undefined;
+        const open = (g.grade === 'due' || g.grade === 'overdue') && !worstGiven;
+        const given = n > 0 || g.givenT !== undefined;
+        const look: Look = open ? 'current' : given ? 'taken' : g.grade === 'not applicable' ? 'unmet' : g.grade === 'failed' ? 'failed' : 'ready';
+        (g.grade === 'not applicable' && !given ? later : list).push({ ...live, look, grade: g.grade, right: g.live, subtitle: [row.subtitle, ...g.lines].join(' · '), overdue: g.grade === 'overdue' ? overdueS(g.live) : null, at: g.givenT ?? null });
+      } else if (n > 0) {
+        const t = row.actionId !== undefined ? pressedAt(row.actionId) : null;
+        const earlier = t !== null && src.enteredT !== undefined && t < src.enteredT - 1e-6;
+        (earlier ? later : list).push({ ...live, look: 'taken', right: `given${n > 1 ? ` ×${n}` : ''}`, at: t });
+      } else list.push({ ...live, right: src.takings ? 'press to give' : 'graded on the host' });
+    } else if (row.kind === 'judged') {
+      const met = src.log.find((x) => x.kind === 'marker' && x.text === `Objective met: ${drugWords(row.text)}`);
+      if (met) finished.push({ ...live, look: 'met', at: met.simT, right: met.simT === null ? '' : mmss(met.simT), subtitle: 'you judged it' });
+      else if (offeredV2(src, src.doc.judged?.[row.objective])) list.push({ ...live, right: 'press when met', subtitle: 'you judge it · for the debrief only, the patient does not change' });
+    } else {
+      const hold = src.holds?.find((x) => x.transitionId === row.tr.id && x.leaf === 'hold') ?? null;
+      const progress = hold ? hold.fraction : 0;
+      const right = src.paused ? 'frozen' : hold ? (hold.met ? `held ${mmssS(hold.heldS)} of ${mmssS(hold.forS)}` : 'not met') : '';
+      list.push({ ...live, look: 'pending', progress, right });
+    }
+  }
+  return { stage: stagesOf(src.doc).find((g) => g.id === src.phaseId) ?? null, list, finished, offCard: [], later };
 }
