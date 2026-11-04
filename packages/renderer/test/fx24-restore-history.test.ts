@@ -10,8 +10,13 @@ import { renderPlan } from '../src/skin-plan.ts';
 import type { SweepLane } from '../src/sweep-lane.ts';
 import { FakeCtx } from './fake-ctx.ts';
 
-// the rc.3 chrome (one label string) at 96 dpi: the gain logic under test, without the pass-2 lane text and screen scale
-const plan = () => ({ ...renderPlan(resolveSkin('saadat-like'), undefined, undefined, true), pxPerMm: null });
+// the rc.3 chrome (one label string) at 96 dpi: the gain logic under test, without the pass-2 lane text and screen scale;
+// an 18-mm nominal ECG lane, so the auto-gain has a choice of its own to keep (X0.5, not the skin's X1)
+const plan = () => {
+  const p = { ...renderPlan(resolveSkin('saadat-like'), undefined, undefined, true), pxPerMm: null };
+  for (const l of p.lanes) if (l.kind === 'ecg') l.gainLaneMm = 18;
+  return p;
+};
 const make = (ctx = new FakeCtx()) =>
   new MonitorCore({ width: 0, height: 0 }, ctx, { cssW: 1056, cssH: 444, dpr: 1 }, { engine: { seed: 1, device: { skin: 'saadat-like' } }, plan: plan() }, () => {});
 const lanes = (c: MonitorCore) => (c as unknown as { lanes: SweepLane[] }).lanes;
@@ -49,7 +54,7 @@ describe('FX-24: the lanes and the ECG gain after a restore (a follower joining,
   });
 
   it('after a fast-forward the ECG gain stays the one the follower showed (the auto-gain waits for 4 s of new signal)', () => {
-    expect(hostGain).toBe('II  X0.5  NORMAL'); // this test's short ECG lane (444 px at the photo's lane weights: 115 / 614 × 444 ≈ 83 px, as 500 / 6 before PR-G): the auto-gain halves the skin's X1
+    expect(hostGain).toBe('II  X0.5  NORMAL'); // this test's 18-mm nominal ECG lane: the auto-gain halves the skin's X1
     const ctx = new FakeCtx();
     const f = make(ctx);
     for (let ms = 0; ms <= 10_000; ms += FRAME_MS) f.frame(2_000_000 + ms); // a follower that has been following

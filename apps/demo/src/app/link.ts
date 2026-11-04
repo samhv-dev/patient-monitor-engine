@@ -3,7 +3,7 @@
 // for the engine events the session does not keep (alarmStatus, deviceStatus), plus the clinical log. On the host
 // document `host` is the AppSession (patient restart, skin, sound); a Remote has none of those.
 import type { AlarmEntry, EngineEvent } from '@pme/engine-core';
-import { StageBuffer, type AckResult, type CommandInput, type ControllerSession, type ManagedTransport, type WireEvent, type WireMessage } from '@pme/controller';
+import { asV1, isV2, manualLabel, StageBuffer, type AckResult, type CommandInput, type ControllerSession, type ManagedTransport, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
 import { describeCommand, spanText, timeText } from './describe.ts';
 import type { AppSession } from './session.ts';
 
@@ -57,7 +57,7 @@ export class Link {
 
   /** Send with a log line; resolves with the ack (rejections are logged with the engine's reason). */
   async send(c: CommandInput, kind: ClinicalLogEntry['kind'] = 'instructor'): Promise<AckResult> {
-    const text = describeCommand(c as Record<string, unknown>);
+    const text = describeCommand(c as Record<string, unknown>, scenarioStep(this.ctl.scenario, c)); // read before the press moves the state
     const r = await this.ctl.send(c);
     this.track(c, r);
     this.add({ simT: this.simT, kind, text, ...(r.accepted ? {} : { refused: r.reason ?? 'refused' }) });
@@ -137,8 +137,10 @@ export class Link {
         this.add({ simT: e.t, kind: 'system', text: `Fast-forward ended${e.stopped ? ` early (${e.stopped})` : ''}; ${al.length ? `alarms during it: ${al.join(', ')}` : 'no alarms during it'}` });
       }
     } else if (e.type === 'scenario') {
-      const st = this.ctl.scenario.doc?.states.find((s) => s.id === e.stateId);
-      this.add({ simT: e.t, kind: 'scenario', text: `Scenario state: ${st?.label ?? 'next state'}` });
+      // a /1 state's label, or a /2 phase's (F11: a phase read "next state")
+      const doc = this.ctl.scenario.doc;
+      const name = doc && isV2(doc) ? doc.phases.find((p) => p.id === e.stateId)?.label : asV1(doc)?.states.find((s) => s.id === e.stateId)?.label;
+      this.add({ simT: e.t, kind: 'scenario', text: `Scenario state: ${name ?? 'next state'}` });
     }
   }
 
@@ -152,6 +154,15 @@ export class Link {
   private changed(): void {
     for (const fn of [...this.fns]) fn();
   }
+}
+
+/** The step a scenario trigger presses: its button label (or the transition's label) in the view's current state, the
+ *  state the press is made in; undefined for any other command or an unknown transition. */
+export function scenarioStep(view: ScenarioView, c: CommandInput | Record<string, unknown>): string | undefined {
+  const x = c as { type?: unknown; action?: unknown; target?: unknown };
+  if (x.type !== 'scenario' || x.action !== 'trigger') return undefined;
+  const tr = view.current()?.transitions?.find((t) => t.id === x.target);
+  return tr ? (manualLabel(tr.when) ?? tr.label) : undefined;
 }
 
 /** CSV of the clinical log (the debrief export). */

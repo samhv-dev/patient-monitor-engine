@@ -9,6 +9,113 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Added
 
+- **`pme-scenario/2` F3: the administration record and a pure `grade()`.** The scenario driver records every
+  clinical act of a `/2` card (drugs, infusions, TCI, vaporiser, fluids, ventilation, CPR, defibrillation, airway
+  devices, preoxygenation) in the phase runner's state, accepted or refused, with its source (`action` for an A press
+  stamped `actionId`, `script` card-set, `panel`, `remote`), sim time, dose per kg, settings and the engine's answer
+  (`routeNotModelled`); a bookmark restore rewinds it. `grade(doc, phases, admin, edges, t, { final })`
+  (`@pme/controller/scenario`) grades each action (met, deviation, overdue, failed, due, not applicable; lines, Q13's
+  conditional repeats, live strings), the outcomes, the contraindication violations and the judged rows' clocks.
+  `CommandBase` gains the metadata field `actionId`. The MH `/2` card's demo path prints its grade table at 24:31.
+
+- **The Debrief and its export for a `pme-scenario/2` run (F7, post-demo, draft).** The run record copies the host
+  phase runner's phases, administrations and rule edges each second and on every phase, so the Debrief, its export and
+  a page reload never need the driver; a `/1` run's record is unchanged. For a `/2` run the Debrief grades with F3's
+  `grade()` (final, at the run's end: the panel's function on the panel's inputs) and prints the judged rows on page 1
+  (in place of the objectives) and the action table (grade, due and given times, the criteria lines, repeats), the
+  outcomes and the violations in place of the steps; the recognition key time runs from the judged row's display clock
+  to the instructor's press. The export of a `/2` run is `pme-debrief/3` (`phases`, `actions`, `outcomes`,
+  `violations`, `judged` in place of `objectives`, `steps` and `/2`'s `judged`); a `/1` run still exports
+  `pme-debrief/2`, unchanged. `debrief-fa.mjs` reads `/3`; its new words are in `fa-debrief.json` as English keys
+  awaiting the Persian (`"fa": null`, F7.6).
+
+- **`pme-scenario/2` F5.1: "route not modelled" asked of the engine.** `@pme/engine-core` exports
+  `routeHonoured(drugId, route)` (the route rule `validatePkCommand` applies; false for an unknown drug or a volatile
+  row) and `IV_ROUTES`. The administration record's `routeNotModelled` now comes from `routeHonoured` instead of
+  matching the refusal's sentence, so an IM dose refused first for its dose still carries it. `validateScenario` warns
+  for a `/2` drug action whose judged route set holds a route the engine does not model ("dantrolene: route im is
+  judged; the engine does not model it"); the card stays valid, and a `/1` card validates exactly as before. No
+  kinetics change: the route models are F5.2.
+
+- **`pme-scenario/2`: the MH card's demo-day fixes, D1–D6 (post-demo, draft).** Merged with main at kit E
+  (649ab03c): one Finish the case (#214's pane); its save writes "Case finished" into a `/2` record. The phase runner
+  latches a running hold when the rule falls because an `unchanged` guard changed, the team's response (D1); the MH
+  card's Early signs reads that guard over the same 120 s as the rise. The state event carries `mhExcess`, the MH's
+  dantrolene-sensitive excess (exposure only, D2), and the card's Treated and Recrudescence read it. `grade()` opens a
+  rule anchor's window only after the action's first phase entry, credits a device or a decision only inside its
+  window, and reads a precondition as held before the press (D3); the repeat dantrolene and its ventilation are due
+  for 300 s from Recrudescence's entry. Arrest and ROSC carry no hold, and CPR is open in every phase (D4). A Debrief
+  opened mid-case grades open windows as open (D5). On the run sheet's path: Early signs 08:43 (`/1` 08:03), Treated
+  10:58, and the call, its ventilation and infusion, dantrolene and ventilation back met. Recovering, Recrudescence and
+  the second Treated are not reached before the talk's end, so the second dose reads not applicable (see the PR).
+  `/1` cards and their readers are unchanged.
+
+- **`pme-scenario/2`: the MH card's Recovering and Recrudescence on EtCO₂ at the set ventilation (post-demo, draft;
+  the owner's ruling of 1 November).** Recovering is entered after Treated when EtCO₂ is under 45 mmHg and not rising
+  over 120 s; Recrudescence after Recovering when EtCO₂ is above 45 mmHg and rising over 120 s, which opens the second
+  dose's window. Rising is a least-squares slope of at least 1 mmHg/min (2 mmHg over the 120 s) and not rising its
+  negation; neither rule reads MH activity or has an unchanged-ventilation guard; Treated no longer leads to
+  Recrudescence. On the run sheet's path: Recovering 10:58, Recrudescence 14:59, the second Treated 14:59, the second
+  Recovering 23:53 (`/1` 23:53); the strip reads Latent, Recovering, Treated, Recovering at the talk's pauses (`/1`:
+  Early signs, Recovering, Ventilation back, Recovering), and every graded row the `/1` card grades now matches it, the
+  second dose included. Treated after the first dose and Recrudescence each last one poll (their successors' rules had
+  already held 60 s); see the PR. `mh-v1-v2-table.slow.test.ts` prints the `/1`-versus-`/2` table. `/1` cards and their
+  readers are unchanged.
+
+- **`pme-scenario/2`: the MH card's Early signs held 20 s (post-demo, draft; the owner's ruling of 1 November).** Every
+  other phase still holds 60 s, and Arrest and ROSC none. 20 s is the `/1` card's own settle for its early signs (EtCO₂
+  above 45 for 20 s), not a number fitted to the run. On the run sheet's path Early signs is now entered at 08:03, the
+  `/1` card's second, instead of 08:43, and the strip reads Early signs at the 08:05 and 08:45 pauses in the harness;
+  the later phases are unchanged (Treated 09:57, Recovering 10:57, Recrudescence 14:59, the second Treated 20:58, the
+  second Recovering 23:53). A team that calls the crisis when the strip shows Early signs now calls at 08:03, as on
+  `/1`; EtCO₂ then stays under 40 for 278 s, so the ventilation-back precondition holds 10:16–12:54 and every graded
+  row is met. In the app Early signs comes 1–4 s later than in the harness, so the 08:05 pause reads Latent or
+  Early signs. The card's notes now describe Treated's rule of #242. `/1` cards are unchanged.
+
+- **Instructor v2 on a `pme-scenario/2` card: the panel gaps F11 found (post-demo, draft).** ACTION's rows carry the
+  live grade (`grade()` once a sim second, `final: false`): "due m:ss", "overdue m:ss" with the ring, "met mm:ss",
+  "deviation: <criterion>" (the met look, its label amber) or "not applicable", and the grade's lines after the
+  prescription; a row reads given when `grade()` graded an administration for it, whoever pressed (the call's press gives
+  hyperventilation and the propofol infusion). The rows not due now (a graded action not applicable and not given; an
+  ungraded one given in an earlier phase) sit in a "Not due now" fold, still pressable rows, and the `/2` rows are
+  denser, so the MH card's ACTION fits 1440 × 900 at Latent, Early signs and Treated. Finish the case (since the
+  merge with main, #214's pane) writes "Case finished" into a `/2` record, and the Debrief is ready at an end phase or
+  once finished. The
+  session bar, the record's timeline and the Log name the phase by its label. The Debrief's action row prints the first
+  administration's grade (`firstGrade`, also in `pme-debrief/3` and the Persian handout), each repeat its own. The kit
+  round's Q1 reaches the Debrief by the dock under `PME_PANEL=teach2`. `/1` cards are unchanged.
+
+- **`pme-scenario/2` F11: integration tests for the `/2` MH chain (post-demo, draft).** `debrief.e2e.ts` runs the
+  `/2` MH card on the run sheet's demo path from Instructor v2 to 24:31 and checks the Debrief on both browsers: the
+  export is `pme-debrief/3`, and page 1 and the learner handout each fit one A4 page (≤ 267 mm). The demo path is
+  shared with `teach2-mh-v2.e2e.ts` through `e2e/mh-v2-path.ts`. No app, engine or card change.
+
+- **Instructor v2 reads a `pme-scenario/2` card (F6, post-demo, draft).** The strip lists the phases with their entry
+  times; a future phase reads "auto" and is not a button (a phase is never entered by a press). The cue box names the
+  phase, "entered by its own rule" with the rule in words and its hold, the learners' cue and the Say line. ACTION lists
+  the phase's actions (prescription words as the subtitle), the judged rows and the rules out of the phase with their
+  60-s hold as the bar; an A press sends the action's `give` as one staged batch stamped with its `actionId` and moves
+  nothing; a taken action stays pressable ("given ×n"). The app loads a `/2` card from the library; the Debrief-ready
+  flag reads the phase runner's end; today's Scenario tab says to run it from Instructor v2. The MH `/2` card's demo
+  path is driven from v2 end to end (e2e `teach2-mh-v2`). Grades on the rows come with F3.
+
+- **The malignant-hyperthermia card in `pme-scenario/2` (F8, post-demo, draft): `showcase-mh-v2`, the owner's phase
+  table of 31 October.** Nine phases (Baseline, Latent, Early signs, Established, Treated, Recovering, Recrudescence,
+  Arrest, ROSC), each entered by its own rule on engine truth and held 60 s before it changes, with the learners' cue
+  beside it; the call, the treatments and the return to normal ventilation as actions with the `/1` objectives' windows;
+  the induction sequence offered in Baseline and not graded; the `/1` take-home lines verbatim; #211's briefing block.
+  The MH starts at Induce as on the `/1` card (a card-set script entry in the press's stage group), so on the run
+  sheet's demo path the engine's course is the `/1` card's to the second (a slow test). The format gains a phase's
+  `holdS` and `cue`, an `unchanged` leaf `since: 'phaseStart'`, an action's `graded: false` and the `briefing` block;
+  `vitalHolds()` shows each hold. The showcase harness presses a `/2` action. The `/1` card is unchanged.
+
+- **`pme-scenario/2` integration branch (post-demo, draft): F2's phase runner with F4's engine signals, and
+  `signals.mhActivity`.** `fv2-mh` is `feat-fv2-f2` (#201) with `feat-fv2-f4` (#200) merged; the driver feeds F4's
+  truths to a `PhaseRunner` only. The `state` event's `signals` gain `mhActivity`, the thermal model's MH activity
+  (`l2/thermal/mh.ts`) unrounded and read from the committed state (exposure, no physiology): the `endo` event rounds
+  it to 0.01, and a `/2` slope over a quantised activity flips sign second to second (F2's replay of the MH trace). A
+  `/2` runner reads the signal; the `endo` event's rounded copy is no longer fed to it.
+
 - **Instructor v2 (E127) as a second view** beside today's Instructor view, at `#/teach2` ("Instructor v2" on the
   rail, right after Instructor). Today's view is unchanged and stays the default: the scenario deep link, the
   Scenarios view's Load and the other "Instructor view" links still open it; the alarm count and the reveal gesture go
@@ -38,8 +145,196 @@ the public API is what the packages export (see the API reference), the `pme-sce
   the host when it is shown). Not built: the phone layout (design §6), the Gas sheet, the CPR takeover and an onset
   ramp for delivered items. The Drug sheet's rule for a dose that differs from the card's step is interim, pending the
   owner's ruling.
+- **The Case briefing** (the owner's board Orientation 7b, its phone twin and the Persian twins, 30 October). A card
+  may carry a learner-facing `briefing` (`pme-scenario/1`, additive: `{ text, estimatedMinutes?, durationS? (60, at most
+  600), lang? ("en" | "fa") }`; schema, types, `validateScenario`, `briefingOf` in `@pme/controller/scenario` and the
+  authoring guide). When such a card loads, the host's Monitor view, a second-screen learner monitor and every phone
+  show it over the running monitor (the monitor at 40 % under a frost): "Case briefing", the estimated scenario time,
+  the paragraphs, a footer counting down to the monitor and a line filling along the bottom edge; after `durationS` it
+  fades into the monitor. A tap or click ends it on that screen; "End briefing", shown only while one runs, ends it
+  everywhere: in today's Instructor view over the panel, and in Instructor v2's status line, the 40-px row under the
+  stage strip ("Case briefing on every screen · 0:48 left" beside the button; the owner's choice of 31 October, as in
+  the strip's own row it pushed the MH card's chips past the window). The host sends it as a new `briefing` wire event with its
+  start time (a viewer event; the relay passes it to the phones) and again in every answer to a hello while it runs, so
+  a phone that joins or reloads shows the remainder; not again for the load that restores a case after the
+  instructor's page reloads, nor in free roam. Persian: right to left, the reviewed chrome strings, Persian digits, the
+  Vazirmatn font stack (no font file added). The malignant hyperthermia card has one (25 minutes, 60 s, English); no
+  other card does.
+- **The Case briefing on a phone ends by a press-and-hold** (the owner's ruling of 31 October): a tap does nothing
+  there, as residents brush the screen; a press held 800 ms (the panel reveal's long-press time) ends it on that
+  phone, the hairline over the footer filling while held; the footer reads "Press and hold anywhere to continue now"
+  (Persian: «برای ادامه، هر جای صفحه را لمس کنید و نگه دارید»). The host's screen keeps its tap or click.
+
+### Changed
+
+- **Both MH cards preoxygenate first and premedicate on the mask second** (the owner's ruling of 1 November: "the
+  narcotic will reduce the breathing effort and preoxygenation will not be as effective"). The induction segment of
+  *Malignant hyperthermia* (`/1`) and *Malignant hyperthermia (phases)* (`/2`) is now Preoxygenate 0:30, Premedicate
+  (midazolam 2 mg, fentanyl 100 µg) 1:00, Induce 4:00; the face-mask oxygen (FiO₂ 1.0) stays on through the
+  premedication until Intubate, and the premedication changes neither the airway nor the FiO₂ (its two drug commands
+  only). On `/1` the stages run awake → preoxygenated → premedicated → induced (ids unchanged); the awake patient also
+  offers Premedicate on room air (`premed-air`), the run without preoxygenation that E121 teaches, and Induce is offered
+  in Premedicated only (`induce-premed` is gone). On `/2` the two Baseline actions swap order. Stage texts, notes,
+  briefing and story follow; the induce step and the objectives are unchanged. Measured on the demo path: early signs
+  08:03 → 08:10 (both cards, harness), the call at 08:12 still met; one band re-centred (`/1` untreated
+  `hrAtEstablished` 148 → 139, ectopy averaging at an entry 18 s earlier); Explore at 24:00 no longer lists CO up (the
+  1:00 baseline is now the unpremedicated patient on the mask). Run sheet, cue cards, kit-round script and tests follow.
+- **One Instructor entry; the view is chosen in Settings** (the clinical owner, 30 October). The rail lists
+  "Instructor" once (no "Instructor v2" entry); Settings → Display → "Instructor view" chooses today's view (`#/teach`,
+  the default, the 3 November demo's) or Instructor v2 (`#/teach2`), saved in the site profile (`instructor`) like the
+  monitor and kept after a reload. The rail's entry, a Load from the Scenarios library, a `?scenario=` deep link, the
+  Patient page's "Open the instructor view" and "Back to the Instructor", the monitor's "Instructor view", the `i` key
+  and the reveal gestures, and the alarm count all open the chosen view (the alarm count and the reveal gesture
+  followed the view used last). Both addresses stay as deep links. Neither view changed in what it does or sends.
+- **Instructor v2 with no case loaded** (the owner's board "Empty 5", 30 October): the header reads the default
+  patient ("Adult · 70 kg") and "No case loaded"; the stage strip holds one dashed chip with a status line under it
+  ("Ready. The phones can join now…"); STATE's cue box is the default patient's; ACTION offers three ways to begin,
+  1–3 on the keyboard: **Free roam** (ACTION's no-card form, "Off the card" open, the sheets in reach), **Scenario
+  library** (the library's cards as rows, its two demonstrations first, 1–9 loading through the app's one load, Esc
+  back; "The whole library" opens the Scenarios view) and **Debrief archive** (opens the Debrief view until the archive
+  comes with the Debrief redesign); under them Room setup (opens Settings for now) and the Scenario builder (disabled,
+  "after the demo"). While the cards or the case list show, the Fast forward row is hidden (nothing to skip to) and
+  the learners' monitor takes its height; Free roam or a card brings it back. With a card loaded none of it shows.
+
+- **Instructor v2: "Finish the case"** (the owner's board "Finish 2", 30 October). The dock gains "Finish the case"
+  beside Debrief while a card runs. It pauses the clock; the strip's amber status line says nothing is written yet,
+  and ACTION becomes the Finish pane: the card and the time, a **Resident** field (the name goes into the debrief's
+  header band, its PDF and the learner handout), the run's objective and mark counts, and three buttons, each of which
+  first saves the debrief to the browser's archive: **Save and restart the case** (the same card again from 0:00 on a
+  fresh engine; the skin, the attached probes, the cuff's cycling and the session code, so the phones, stay; the field
+  is cleared for the next name), **Debrief now** (the Debrief view on the saved debrief; the case stays paused) and
+  **Save and close** (the case ends on the page's default patient and the no-case window's three cards show; the `?scenario=` deep
+  link is dropped from the address). A reload after "Save and restart" restores the new run; after "Save and close"
+  it shows the empty window. Esc, the pill or Space give the case back with nothing written. The **archive** is kept in
+  localStorage until it is cleared (`pme.archive`: an index, and one key per debrief holding its `pme-debrief/2`
+  JSON): it is listed under the buttons and in a new Archive section of the Debrief view (open · PDF · JSON per row,
+  "Export all" as one `pme-archive/1` JSON file, as no zip library is in the dependencies, and "Clear the archive"
+  behind a confirm); a saved debrief opens at `#/debrief/archive/<id>`. The no-case window's Debrief archive card
+  reads "Open · n" and opens that section.
+
+- **The education line leaves the bottom of the working views** (the owner, 30 October). The shell's footer line
+  ("For educational use only; Not to be used in patient care.") is gone from the Instructor views, Scenarios, Room,
+  Patient, Explore, Debrief on screen, Settings and the tools pages; those views gain its 23 px. Home keeps the
+  sentence as part of its own page, at the same place and size; Settings → About and the Debrief's printed footer line
+  are unchanged. In Instructor v2 the dock now ends at the window's bottom edge, and the stage strip takes the height:
+  52 → 75 px, its chips 30 → 40 px high (15 px text on a 20 px line, 9 × 12 px padding; were 13 px, 16 px, 6 × 10 px).
+  The strip's hint ("past: return to its start · …") is a line of its own under the chips, so it shows at 1440 × 900
+  too (beside five chips it had no room and showed only at 1920 × 1080). While a status line shows under the chips (no
+  case, the Case briefing, finishing a case), the strip keeps its 75 px, with the hint or note under the chips, and the
+  line adds 40: 115 px (it was 92, and the line took 17 px from the chips).
 
 ### Fixed
+- The MH card's take-home line gives the registry's recrudescence rate: "recrudescence in about 20 %, mostly within
+  the first day" in place of the unsourced "up to 50 %" (20 %, 63 of 308, at a mean 13 h after the initial reaction:
+  Burkman JM, Posner KL, Domino KB, Anesthesiology 2007, PMID 17457120; evidence note E135). Text only: the old-format
+  card `showcase-mh.json`, the handout test that pins its lines, the cue cards, the run sheet and the English of the
+  Persian debrief table's entry (its Persian stays the owner's to write).
+- The untreated MH core rises at the registry median rate: the evidence check E131-2 (owner, 1 November: "the
+  temperature still does not rise properly") found the engine right and three bands wrong. The human registry's
+  MAXIMAL rate of core rise in grade 5–6 MH is 0.80 (IQR 0.50–1.00) °C per 15 min in survivors and 0.65 (0.53–1.32)
+  in deaths (Toyota et al., Biomed Res Int 2023, 128 cases); the engine's untreated core rises 0.76 °C per 15 min at
+  full activity. The textbook "1–2 °C every 5 min" traces to swine (Nelson 1990) and fulminant single cases; the
+  established-crisis band of 17–21 min was the 705-W prototype's and would need a whole-body VO₂ of × 4–5, against
+  × 1.8–2.7 measured in swine and × 2–3 in reviews of man. No engine change: the heat and temperature tests' MH rate
+  bands are now that IQR (both met), the MH card's established crisis (+45.6 min, inside the ≈ 35–63 min the IQR gives
+  on the anaesthetised core) is measured in the passing untreated arm, the hyperthermic-VF arm stays an expected
+  failure with its reason restated, and the card story and presenter notes no longer say 37.3 °C at 51 min and
+  "established after about 100 minutes" (it is 38.7 °C and 46 min). Evidence and verdict:
+  `docs/review-inputs/research/e131-2-mh-heat-evidence.md`.
+- Malignant hyperthermia now warms the core: the MH sympathetic surge constricts the skin. Untreated on the MH card the
+  core showed 36.5 °C at 15 min and 36.9 °C at 35 min (the owner's run of 30 October): the 140 W of MH heat was real,
+  but under anaesthesia the core-to-skin conductance stayed fully dilated and the periphery took up about as much heat
+  as the crisis made. In an MH crisis the circulating catecholamines reach about 20 times normal and constrict the
+  skin directly, whatever the anaesthetic has done to the hypothalamic threshold (Sessler, Anesthesiology 2008; Gronert
+  et al., Anesthesiology 1978); the skin is mottled (European MH Group, 2024). The conductance now falls with the MH
+  sympathetic drive from its anaesthetised value (48.9 W/°C at 70 kg) toward the two-node model's maximally
+  constricted value (10.8 W/°C; Gagge et al. 1986), and dantrolene's suppression of the surge re-dilates it. On the
+  same path the core is now 37.1 °C at 15 min and 38.0 °C at 35 min; "established" (38.5 °C) comes about 46 min after
+  the succinylcholine instead of about 103. Without MH nothing changes (the anaesthetised redistribution, the awake
+  patient, the haemorrhage and anaphylaxis cards print the same numbers). Four MH test bands were re-centred for the
+  owner's ruling, two expected failures are now met (resp-coupling's > 1 °C in 30 min, heat.test's dantrolene arm) and
+  one new one is recorded (the hour after a VF imposed at 40.3 °C cools 2.3 °C against 0.5–1.5); the MH card's story
+  text, the run sheet's temperature talk points and the cue cards still describe the old course.
+
+- **MH card: Cool is offered only above 38.5 °C, the saline is refrigerated and the team stops it at 38 °C; the Log
+  names the step pressed** (the owner's 120-minute over-treated run on the preview: core 34.4 °C after the Cool button
+  had been pressed at any temperature). The card's four Cool steps are a press guarded by `tempCore > 38.5` (an `all`
+  of a vital and the manual); the scenario runner now refuses a press whose guarding vital does not hold ("not offered
+  now: needs tempCore > 38.5") instead of keeping it to fire later (events in an `all` still latch as before). The
+  `fluid` event takes the fluid's own temperature `tempC` (0–42 °C; absent: the theatre's 21 °C, as before) and
+  `stopAtCoreC` (30–42 °C), at which the blood model ends the infusion: the card gives 20 mL/kg at 4 °C (EMHG 2024
+  "chilled (4-8 °C) crystalloids"; Rosenberg 2015 "normal saline at 4 °C") stopped once the core has fallen to 38 °C
+  (MHAUS "Stop cooling when the temperature has decreased to <38°C"). From an established crisis on this build the 4 °C
+  line removes 104 kJ in 727 mL and stops at 38.0 °C (the 21 °C line: 115 kJ over the whole 1.6 L, to 37.88 °C). The
+  clinical Log's line for a step pressed reads "Scenario event: <the step's label>" (it said "Scenario event" only).
+  The demo path never presses Cool: no band or printed number of the MH slow test moved.
+- Instructor v2's stage strip asks once, not twice: the inline box a stage opens is the confirmation. A past stage's
+  "Return to the start of <stage>" restores its mark at once, and a future stage now opens the same kind of box,
+  "Jump to <stage>", whose click sends today's `goto` with today's toast; neither opens a dialog any more (the clinical
+  owner's report of 30 October). The hint reads "past: return to its start · future: jump to it".
+- After a reload of the instructor's page, Instructor v2's past stages can be returned to again. The restored case
+  came back without its stage marks (the new page's driver had none of the course's, so every past stage's Return was
+  off) and with the panel's scenario history beginning at the reload (so the past stages showed no entry time). The
+  page now keeps the latest stage mark of each stage, with the snapshot it holds, beside the reload position in
+  `sessionStorage` (written only when the marks change; a storage too full for both keeps the position and drops the
+  marks), places them again after the return, and gives the panel the restored runner's history (the clinical owner's
+  report of 30 October). `@pme/controller`: `ScenarioDriver.stageMarkPositions()` and `holdStageMarks()`, and the type
+  `StageMarkPosition`.
+- Instructor v2's "Finished steps · n" says which stage each step belonged to: its rows are grouped under a small
+  title per stage visit, the stage's name (as on the strip; the full label on hover) and the time it was entered, in
+  the order the stages were entered, each row keeping its number within its stage. Several stages on, the fold read as
+  a run of steps all numbered 1 (the clinical owner's report of 30 October). A stage entered twice gets two titles.
+  The count and the record are unchanged.
+- Phones joining the classroom relay together all get the host's welcome. A phone that said hello between the host's
+  welcome to another phone (its sticky replays, the monitor style, a running Case briefing) and the snapshot after it
+  used to receive that snapshot and show as following, without the welcome: no briefing, the wrong monitor style. The
+  relay now sends a welcome's snapshot only to the peers the welcome went to, and the newcomer gets the host's answer
+  to its own hello.
+- **The ECG auto-gain (Saadat-like X0.5/X1/X2) holds through ectopy, changes with hysteresis, and reads the same in
+  every window** (owner review of 30 October). It is judged per 4-s window on the sim clock's grid, on the median of
+  the window's beats' peak-to-peak (one PVC or paced beat no longer drops it, as X0.5 at 34:56 of the MH case did),
+  against the lane's nominal height on the real unit carried in the plan (`gainLaneMm`: the photo's 115 px at
+  3.10 px/mm ≈ 37 mm), not the pixel height of the window drawing it, so the instructor's pane and the learners'
+  monitor no longer show X0.5 and X2 at the same moment (both X1, as the photo). A new size needs the amplitude 20 %
+  past the current size's threshold and two consecutive windows asking for it (Philips "Auto Size" and Mindray "Auto"
+  choose from discrete sizes; neither manual gives a cadence or a band, so those are [ENG]). Philips-like stays at
+  10 mm/mV. No gain control yet (a later piece).
+- **The ECG trace no longer runs off its lane in Instructor v2's STATE pane** (the clinical owner's run of 31 October:
+  the MH card at Early signs, HR ≈ 130, lead II cut flat at the top and the bottom while the lane read X1). The pane's
+  monitor at a 1440 × 900 window is 372 × 267 px, so ECG1 is 50 px, 16 mm at the skin's 3.10 px/mm, while the
+  auto-gain chooses the size for the unit's 37 mm lane; at 10 mm/mV the lane held +0.97 / −0.65 mV, and the card's
+  PVCs reach +1.9 / −1.65 mV (the sinus beats, +0.9 / −0.4 mV, rightly X1). An auto-gain ECG lane drawn shorter than
+  the unit's lane now draws the unit's lane in miniature (each mV takes the share of the lane it takes on the unit;
+  the 1 mV bar follows), so the size that fits the unit fits every window and the label stays the same everywhere. A
+  lane as tall as the unit's or taller keeps 10 mm/mV × size; fixed-size lanes (Philips-like) are unchanged.
+- Instructor v2's stage-strip chips keep their state looks (a finished stage's no frame, the current one's blue, a
+  future one's dashed) with the sheets loaded: the tray's `.ip2-chip` rule in `sheets.css` is scoped to the tray.
+- Instructor v2 reads a `pme-scenario/1` card's spoke states (a state whose only exit is a short `afterS` back to its
+  hub: the MH card's dantrolene, cooling, potassium and bicarbonate, the haemorrhage card's epinephrine and volume) as
+  actions of their hub stage, and a finished row moves to "Finished steps · n" at once, in every stage: a step pressed
+  in the treatment stage goes green into the fold with its number and time, the stage stays current with its entry
+  time, the strip's "n open" counts the steps still open, and the stage's other rows keep their state. A step with no
+  rule of its own is a press whenever it fires: it is never marked "fired by its own rule", and a stage it enters reads
+  "entered by your button", whatever order the host saw the state and the press's acknowledgement in (the Cool press
+  read as an automatic task). The clinical owner's three reports of 30 October; the card, the driver and the Debrief
+  are unchanged.
+- Instructor v2 shows a press the runner would refuse now as waiting. A manual step guarded by a vital in its `all` is
+  faded and offers no press, neither the row nor its digit key, and its right-hand label shows the value against the
+  rule ("36.7 → 38.5"); it becomes ready when the rule holds. Example: the MH card's Cool below 38.5 °C core (#216). It
+  read as a ready step at 36.7 °C, and the runner refused the press.
+- The host's record attributes a stage entry by the transition the scenario runner took, never by matching a press to
+  a state within a tick: the `scenario` event carries `by` (`press` when the instructor's press of that transition was
+  held when it fired, `rule` when its condition fired it alone, `goto` for a jump; additive, brief §7.3), and the record
+  copies it. The record had matched the press's acknowledgement (the tick of the host's first clock read) to the state
+  (the time of a second read, eight times the wall between them later at ×8) within 0.02 s, so a manual press could be
+  recorded as its rule — the amber "Cool" of 30 October — and the Debrief then left that step out as not taken.
+- The Debrief no longer lists a step of the MH treating hub as overdue for a later hub state when it was pressed in an
+  earlier one: each hub state (Trigger off, treating, recovering, ventilation back) has its own Potassium button into
+  the same hop, and the Debrief read each as a separate step, crediting a giving only from that state's first entry
+  and the objective's anchor on. A press that entered the step's state, from any state, now makes the step done; a step
+  the card repeats has its own state (the second dantrolene) and is still asked for. The instructor panel is unchanged.
+- Instructor v2's toasts rest on the dock (8 px above its top edge, measured as `--dock-foot`) instead of a fixed
+  104 px from the window's bottom, which left them about 40 px over the dock once nothing sat under it.
 - A second socket claiming an existing peer id can no longer block that peer's commands: the host keeps each peer's
   sequence and viewer role per transport, and counts a hello only after its sequence check, so a phone on the relay
   that says hello with the laptop panel's id leaves the panel's commands applied. The relay gives each peer id one live
@@ -60,6 +355,15 @@ the public API is what the packages export (see the API reference), the `pme-sce
 - An IV drug or infusion command for a volatile agent (sevoflurane, isoflurane, desflurane, N₂O) is refused with the
   reason, the agent being given through the vaporiser. The engine used to accept the bolus and then stop with an error
   on the next tick, and to accept the infusion and do nothing with it.
+- Explore's Drugs page no longer prints "per row" on five rows (rc.5 candidate round): a drug the engine gives no
+  TCI model (dantrolene, midazolam, rocuronium, succinylcholine: only compartment-model drugs take a TCI) has no TCI
+  target row, and a drug it refuses as an infusion (dantrolene, a curve row without an infusion reference) has no
+  infusion rate row; they printed "—" with the glossary's placeholder unit. The glossary's tooltip for the rate and
+  target rows names the units in place of "per row".
+- The Monitor view's return controls (Instructor view, Full screen, Open on a second screen, Home) no longer cover the
+  ECG: shown on hover, they sit in a strip of their own under the monitor, at the window's foot. Placed under the
+  monitor's header at the right of the wave area (UI review #25, 26 October), they covered the right half of the first
+  ECG lane on the Saadat-like skin, whose traces run the wave column's full width.
 
 ## [1.0.0-rc.4] - 2026-10-30
 

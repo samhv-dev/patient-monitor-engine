@@ -1,8 +1,9 @@
 // Home (E125, owner's mockup f1-home): the page the app opens on (`#/`, `#/home`). The product mark, the name, the
 // version and build, one paragraph, ONE button ("Start here" → Room), the repository address alone on its line, the
-// documentation links and three live tiles (meters.ts says what each measures); the disclaimer is the shell's footer
-// line. Centred, about 640 px wide. The session's engine already runs behind it; nothing here touches the patient.
-import { HOME_VERSION, REPO } from '../about.ts';
+// documentation links and three live tiles (meters.ts says what each measures); the disclaimer is the page's own footer
+// line (the shell's left the working views on 30 October; Home keeps it, at the same place and size). Centred, about
+// 640 px wide. The session's engine already runs behind it; nothing here touches the patient.
+import { EDUCATION_LINE, HOME_VERSION, REPO } from '../about.ts';
 import { Meters, type MeterValues } from '../meters.ts';
 import { hrefOf } from '../router.ts';
 import type { View } from '../shell.ts';
@@ -46,7 +47,8 @@ export function homeView(o: { meters?: Meters } = {}): View {
       h('a', { class: 'btn primary home-start', href: hrefOf('room') }, 'Start here'),
       h('code', { class: 'home-repo' }, REPO),
       h('p', { class: 'home-links' }, ...LINKS.map(([t, href]) => h('a', { href, target: '_blank', rel: 'noopener' }, t))),
-      h('div', { class: 'home-stats' }, cpu.el, memory.el, engine.el)));
+      h('div', { class: 'home-stats' }, cpu.el, memory.el, engine.el)),
+    h('footer', { class: 'home-foot' }, EDUCATION_LINE));
   return {
     id: 'home',
     el,

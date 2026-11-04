@@ -31,6 +31,10 @@ export { mountRemote, type RemoteHandle, type RemoteOptions, type Via } from './
 export { ScenarioView, type NextTransition } from './scenario/view.ts';
 export { describeWhen, describeTransition, manualLabel, type Labeller } from './scenario/describe.ts'; // Labeller
 export type { ScenarioDoc, ScenarioState, Transition, When, DocCommand } from './scenario/types.ts';
+// pme-scenario/2 (plan F1): a document of either format, and the test that tells them apart
+export { asV1, isV2 } from './scenario/types.ts';
+export type { AnyScenarioDoc } from './scenario/types.ts';
+export type { ScenarioDocV2 } from './scenario/types-v2.ts';
 
 import { createBroadcastChannelTransport } from './transport/broadcast-channel.ts';
 import { createInProcessHub } from './transport/in-process.ts';

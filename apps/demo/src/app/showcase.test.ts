@@ -7,7 +7,7 @@ import { LIBRARY } from './scenarios.ts';
 describe('showcase cases (Task 26)', () => {
   it('lead the library, carry their card fields, are not drafts, and validate', () => {
     const show = LIBRARY.filter((c) => c.category === 'Showcase');
-    expect(show.map((c) => c.id).sort()).toEqual(['showcase-anaphylaxis', 'showcase-haemorrhage', 'showcase-induction', 'showcase-induction-premed', 'showcase-mh', 'showcase-tamponade']);
+    expect(show.map((c) => c.id).sort()).toEqual(['showcase-anaphylaxis', 'showcase-haemorrhage', 'showcase-induction', 'showcase-induction-premed', 'showcase-mh', 'showcase-mh-v2', 'showcase-tamponade']);
     expect(LIBRARY.slice(0, 5).every((c) => c.category === 'Showcase')).toBe(true);
     for (const c of show) {
       expect(c.draft, c.id).toBe(false);

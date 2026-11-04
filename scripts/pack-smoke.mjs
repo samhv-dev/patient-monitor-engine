@@ -3,10 +3,13 @@
 // NOTICES.md and the LICENSES/ texts (and the renderer no orphan dist/assets map), installs the tarballs into a fresh
 // consumer project with npm, type-checks a consumer file under moduleResolution Bundler AND NodeNext with
 // skipLibCheck off, imports and runs the packed engine in Node, and bundles the consumer with Vite. Needs
-// `pnpm build` first and network access to the npm registry (the consumer installs typescript and vite).
+// `pnpm build` first and network access to the npm registry (the consumer installs typescript and vite). Every
+// third-party package the consumer installs is pinned to the version pnpm-lock.yaml names, so the smoke checks OUR
+// tarballs against KNOWN dependencies: on 31 Oct 2026 a bare `npm install` asked for a rollup 4.67.3 published minutes
+// earlier, the registry CDN 404'd it, and main went red for a reason unrelated to the tree.
 // Usage: pnpm pack-smoke [workDir]
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -15,6 +18,13 @@ const work = process.argv[2] ? resolve(process.argv[2]) : mkdtempSync(join(tmpdi
 const PKGS = ['engine-core', 'renderer', 'audio', 'controller', 'skins', 'ventilator'];
 const pnpm = process.env.npm_execpath ? [process.execPath, process.env.npm_execpath] : ['pnpm'];
 const run = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, stdio: ['ignore', 'pipe', 'inherit'], encoding: 'utf8' });
+// name → versions from the lockfile's `packages:` section (keys like `rollup@4.63.5:` or `'@types/estree@1.0.9':`)
+const locked = {};
+const lockPackages = readFileSync(join(root, 'pnpm-lock.yaml'), 'utf8').split(/^packages:$/m)[1].split(/^snapshots:$/m)[0];
+for (const [, name, v] of lockPackages.matchAll(/^  '?((?:@[^/\s]+\/)?[^@\s']+)@([^(':\s]+)/gm)) (locked[name] ??= new Set()).add(v);
+// npm overrides take one version per name; a name locked at several versions is left to npm and caught by the check below
+const pins = Object.fromEntries(Object.entries(locked).filter(([, vs]) => vs.size === 1).map(([name, vs]) => [name, [...vs][0]]));
+for (const name of ['typescript', 'vite']) if (!pins[name]) throw new Error(`pack-smoke: pnpm-lock.yaml names no single ${name} version`);
 
 rmSync(work, { recursive: true, force: true });
 const tarballs = join(work, 'tarballs');
@@ -33,8 +43,8 @@ for (const [name, spec] of Object.entries(tgz)) { // licence texts travel with e
 }
 writeFileSync(join(app, 'package.json'), JSON.stringify({
   name: 'pme-pack-smoke', private: true, type: 'module',
-  dependencies: tgz, overrides: tgz, // sibling @pme deps resolve to the local tarballs, never the registry
-  devDependencies: { typescript: '5.9.3', vite: '6.4.3' },
+  dependencies: tgz, overrides: { ...pins, ...tgz }, // sibling @pme deps resolve to the local tarballs, the rest to the lockfile
+  devDependencies: { typescript: pins.typescript, vite: pins.vite },
 }, null, 2));
 writeFileSync(join(app, 'src', 'main.ts'), `import { mountMonitor, version, type MonitorHandle } from '@pme/renderer';
 import { createEngine, type EngineEvent } from '@pme/engine-core';
@@ -54,8 +64,12 @@ writeFileSync(join(app, 'tsconfig.json'), tsconfig('Bundler', 'ESNext'));
 writeFileSync(join(app, 'tsconfig.nodenext.json'), tsconfig('NodeNext', 'NodeNext'));
 writeFileSync(join(app, 'index.html'), '<!doctype html><div id="pm" style="height:300px"></div><script type="module" src="/src/main.ts"></script>\n');
 run('npm', ['install', '--no-audit', '--no-fund', '--loglevel=error'], app);
+const installed = Object.entries(JSON.parse(readFileSync(join(app, 'package-lock.json'), 'utf8')).packages)
+  .filter(([path, p]) => path && !p.link).map(([path, p]) => [path.replace(/^.*node_modules\//, ''), p.version]).filter(([name]) => !name.startsWith('@pme/'));
+const drift = installed.filter(([name, v]) => !locked[name]?.has(v)).map(([name, v]) => `${name}@${v} (lockfile: ${[...(locked[name] ?? [])].join(', ') || 'none'})`);
+if (drift.length) throw new Error(`pack-smoke: the consumer installed versions pnpm-lock.yaml does not name: ${drift.join('; ')}`);
 run('npx', ['tsc', '-p', 'tsconfig.json'], app);
 run('npx', ['tsc', '-p', 'tsconfig.nodenext.json'], app);
 run('node', ['--input-type=module', '-e', "const m = await import('@pme/engine-core'); m.createEngine({ seed: 1 }).advanceTo(1);"], app); // the packed ESM runs in Node
 run('npx', ['vite', 'build', '--logLevel', 'error'], app);
-console.log(`pack-smoke: OK — ${PKGS.length} tarballs carry the licence texts and install; tsc (Bundler, NodeNext, skipLibCheck off), a Node import and vite build pass (${work})`);
+console.log(`pack-smoke: OK — ${PKGS.length} tarballs carry the licence texts and install with ${installed.length} third-party packages, all at their pnpm-lock.yaml versions; tsc (Bundler, NodeNext, skipLibCheck off), a Node import and vite build pass (${work})`);
