@@ -100,6 +100,7 @@ export interface IvFlowLike {
   until: number;
   leftMl?: number;
   comp: { citrate?: number } | null; // null = haemorrhage
+  tempC?: number; // the fluid's own temperature, °C (absent: room temperature for a crystalloid or colloid)
 }
 /** Stored blood products leave the blood bank at ≈ 4 °C [TXT]. */
 export const STORED_BLOOD_C = 4;
@@ -107,7 +108,8 @@ export const STORED_BLOOD_C = 4;
 /**
  * The IV inflow the heat model sees (the blood model's pipeline writes it into `rs.temp.iv` every 100 ms): every
  * running infusion except haemorrhage; blood-bank (citrated) products at 4 °C while an unwarmed unit is running, else
- * 37 °C (warmed); crystalloids and colloids at room temperature. One unit of RBC (280 mL at 4 °C) then removes
+ * 37 °C (warmed); crystalloids and colloids at their order's own temperature (`tempC`: refrigerated saline 4 °C), else
+ * at room temperature. One unit of RBC (280 mL at 4 °C) then removes
  * 38 kJ ≈ 0.24 °C of a 70 kg core — the tables' 0.25 °C per unit.
  */
 export function ivInflow(flows: readonly IvFlowLike[], coldRunning: boolean, t: number, roomC: number): { mlPerMin: number; tempC: number } {
@@ -115,7 +117,7 @@ export function ivInflow(flows: readonly IvFlowLike[], coldRunning: boolean, t: 
   let heat = 0;
   for (const f of flows) {
     if (f.comp === null || t >= f.until || (f.leftMl !== undefined && f.leftMl <= 0)) continue;
-    const c = (f.comp.citrate ?? 0) > 0 ? (coldRunning ? STORED_BLOOD_C : 37) : roomC;
+    const c = (f.comp.citrate ?? 0) > 0 ? (coldRunning ? STORED_BLOOD_C : 37) : (f.tempC ?? roomC);
     ml += f.rate;
     heat += f.rate * c;
   }

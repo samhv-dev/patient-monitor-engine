@@ -54,10 +54,11 @@ function rig() {
   const open = () => layer.querySelector<HTMLElement>('.ip2-sheet:not([hidden])');
   const deliver = () => layer.querySelector<HTMLButtonElement>('.ip2-deliver') as HTMLButtonElement;
   const staged = () => tools.querySelector('.ip2-staged')?.textContent;
+  const stagedShown = () => { const b = tools.querySelector<HTMLElement>('.ip2-staged'); return !!b && !b.hidden; };
   const pick = (k: string) => (open()?.querySelector(`.ip2-pick[data-key="${k}"]`) as HTMLButtonElement).click();
   const group = (g: string) => (open()?.querySelector(`[data-group="${g}"]`) as HTMLButtonElement).click();
   const add = () => (open()?.querySelector('.ip2-add') as HTMLButtonElement).click();
-  return { ctl, link, got, layer, tools, ctx, slot, sheet, open, deliver, staged, pick, group, add };
+  return { ctl, link, got, layer, tools, ctx, slot, sheet, open, deliver, staged, stagedShown, pick, group, add };
 }
 
 describe('the staged-delivery cache', () => {
@@ -95,7 +96,23 @@ describe('the staged-delivery cache', () => {
     expect(lines[0]?.text).toMatch(/^Staged delivery, 3 at one instant: .*propofol.* · .*crystalloid.* · .*airway/i);
     expect(r.ctl.log.filter((l) => l.kind === 'command').length).toBe(ctlBefore + 1); // IP1: one controller line too
     expect(r.staged()).toBe('Staged · 0');
+    expect(r.stagedShown()).toBe(false);
     expect(r.deliver().disabled).toBe(true);
+  });
+
+  it('the dock\'s "Staged · n" shows only while something is staged (the owner, 1 November): hidden at 0, "Staged · 1" with one item, hidden again after Deliver', async () => {
+    const r = rig();
+    expect(r.stagedShown()).toBe(false);
+    key('d');
+    r.group('all');
+    r.pick('drug:propofol');
+    r.add();
+    expect(r.stagedShown()).toBe(true);
+    expect(r.staged()).toBe('Staged · 1');
+    r.deliver().click();
+    await until(() => r.got.length === 1 && !r.stagedShown());
+    expect(r.got).toHaveLength(1);
+    expect(r.stagedShown()).toBe(false);
   });
 
   it('n = 0: Deliver is grey, not clickable, and sends nothing', async () => {
@@ -120,6 +137,7 @@ describe('the staged-delivery cache', () => {
     key('Escape');
     expect(r.open()).toBeNull();
     expect(r.staged()).toBe('Staged · 2');
+    expect(r.stagedShown()).toBe(true);
     key('v'); // another sheet shows the same cache
     expect(r.open()?.querySelector('.ip2-tray-count')?.textContent).toBe('Staged · 2');
     (r.open()?.querySelector('.ip2-chip-x') as HTMLButtonElement).click();
@@ -140,5 +158,6 @@ describe('the staged-delivery cache', () => {
     expect(r.open()?.textContent).toContain('card steps are given from ACTION');
     key('s', r.open() as HTMLElement);
     expect(r.staged()).toBe('Staged · 0');
+    expect(r.stagedShown()).toBe(false);
   });
 });

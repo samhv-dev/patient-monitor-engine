@@ -4,6 +4,7 @@
 // always 0, whatever the event says; a ventilator event without a PEEP keeps the ventilator's previous PEEP, which the
 // event does not know, so the text leaves PEEP out.
 import { describe, expect, it } from 'vitest';
+import type { AnyScenarioDoc, ScenarioDocV2 } from '@pme/controller/scenario';
 import { describeCommand } from './describe.ts';
 
 const vent = (event: Record<string, unknown>) => describeCommand({ type: 'applyEvent', event: { kind: 'ventilation', ...event } });
@@ -27,8 +28,9 @@ describe('ventilation events in clinical words (F29)', () => {
 
   it('no ventilation event of the showcase cards prints "undefined"', async () => {
     const { LIBRARY } = await import('./scenarios.ts');
+    const { isV2 } = await import('@pme/controller');
     for (const c of LIBRARY)
-      for (const s of c.doc.states)
+      for (const s of isV2(c.doc as AnyScenarioDoc) ? (c.doc as unknown as ScenarioDocV2).actions.map((a) => ({ id: a.id, onEnter: a.give })) : c.doc.states)
         for (const cmd of s.onEnter ?? [])
           if (cmd.type === 'applyEvent' && cmd.event.kind === 'ventilation') expect(describeCommand(cmd as never), `${c.id}/${s.id}`).not.toMatch(/undefined/);
   });

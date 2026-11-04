@@ -102,7 +102,12 @@ export class HostSession {
   private readonly stamp: (b: WireBody) => WireMessage;
   private readonly now: () => number;
   private readonly transports = new Map<ManagedTransport, () => void>();
-  private readonly seqs = new SeqFilter();
+  /**
+   * Per transport, each peer's sequence filter and whether its last hello said `viewer` — keyed by (transport, from),
+   * so a frame on one transport (a phone on the relay claiming the panel's id) never touches a peer on another (the
+   * in-process panel). A detached transport's peers are forgotten with it (verification 2026-10-29).
+   */
+  private readonly peers = new WeakMap<ManagedTransport, { seqs: SeqFilter; viewers: Set<string> }>();
   private readonly seen = new Map<string, AckBody>();
   private readonly groups = new Map<string, { tick: Tick; at: number }>();
   private readonly sticky = new Map<string, WireCommand>();
@@ -302,6 +307,7 @@ export class HostSession {
   private detach(t: ManagedTransport): void {
     this.transports.get(t)?.();
     this.transports.delete(t);
+    this.peers.delete(t);
   }
 
   private queue(e: WireEvent): void {
@@ -317,18 +323,19 @@ export class HostSession {
     for (const t of this.transports.keys()) t.send(m);
   }
 
-  /** Peers whose last hello said `viewer`. */
-  private readonly viewerPeers = new Set<string>();
-
   private async receive(t: ManagedTransport, m: WireMessage): Promise<void> {
     if (m.session !== this.o.session) return; // A message for another session is not ours, whatever channel it came on
+    if (m.from === this.peerId) return;
+    let p = this.peers.get(t);
+    if (!p) this.peers.set(t, (p = { seqs: new SeqFilter(), viewers: new Set() }));
+    if (p.seqs.check(m) === 'duplicate') return;
     // A peer that said hello as a viewer sends no commands — the relay already refuses them on a WebSocket; a
-    // BroadcastChannel peer is held to the same rule (one trust model per role, whatever the transport)
-    if (m.kind === 'hello') (m.role === 'viewer' ? this.viewerPeers.add(m.from) : this.viewerPeers.delete(m.from));
-    if (m.from === this.peerId || this.seqs.check(m) === 'duplicate') return;
+    // BroadcastChannel peer is held to the same rule (one trust model per role, whatever the transport). Only a hello
+    // the sequence check accepted counts: a stale frame carrying a peer's id changes nothing
+    if (m.kind === 'hello') (m.role === 'viewer' ? p.viewers.add(m.from) : p.viewers.delete(m.from));
     if (m.kind === 'hello' && m.role === 'viewer') this.viewerSeenAt = this.now();
     if (m.kind === 'hello' && m.role !== 'host') return this.welcome(t);
-    if (m.kind === 'command' && this.viewerPeers.has(m.from)) {
+    if (m.kind === 'command' && p.viewers.has(m.from)) {
       t.send(this.stamp({ kind: 'ack', commandId: m.body.id, accepted: false, tick: this.o.target.now().tick, reason: 'a viewer cannot command' }));
       return;
     }

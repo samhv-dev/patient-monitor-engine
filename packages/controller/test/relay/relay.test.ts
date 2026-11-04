@@ -103,6 +103,31 @@ describe('relay', () => {
     expect(c1.wire('event')).toEqual([]);
   });
 
+  // Two phones joining together (#211's CI, 31 October: the second phone synced with no Case briefing): one says hello
+  // between the host's welcome to the other and the snapshot after it. That snapshot is the other's; the newcomer waits
+  // for the host's answer to its own hello, welcome and snapshot both, never a snapshot without its welcome.
+  it('a peer that says hello between a welcome and its snapshot gets its own welcome and snapshot, not the other peer\'s snapshot', async () => {
+    const host = await client('h', 'host');
+    const v1 = await client('v1', 'viewer');
+    await waitFor(() => host.wire('hello').length === 1);
+    const welcome = (n: number) => host.send({ kind: 'event', body: [{ type: 'style', skin: 'philips-like', theme: String(n), replay: true } as never] });
+    welcome(1);
+    await waitFor(() => v1.wire('event').length === 1);
+    const v2 = await client('v2', 'viewer'); // says hello now, after the welcome to v1
+    await waitFor(() => host.wire('hello').length === 2);
+    host.send({ kind: 'snapshot', body: snap });
+    await waitFor(() => v1.wire('snapshot').length === 1);
+    await sleep(30);
+    expect(v2.wire('snapshot')).toEqual([]); // not yet: its welcome has not come
+    welcome(2);
+    host.send({ kind: 'snapshot', body: { ...snap, tick: 900 } });
+    await waitFor(() => v2.wire('snapshot').length === 1);
+    await sleep(20);
+    expect(v2.wire('event').map((m) => (m as unknown as { body: Array<{ theme: string }> }).body[0]?.theme)).toEqual(['2']);
+    expect(v1.wire('event').length).toBe(1);
+    expect(v1.wire('snapshot').length).toBe(1);
+  });
+
   it('routes controller commands only to the host, and the ack only to the issuer', async () => {
     const host = await client('h', 'host');
     const c1 = await client('c1', 'controller');

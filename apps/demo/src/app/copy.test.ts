@@ -1,7 +1,7 @@
 // The UX-copy rules as tests: scenario cards, trigger text and log lines never show an engine id, a build-stage or a
 // ruling number (research/13 brief).
 import { describe, expect, it } from 'vitest';
-import type { ScenarioDoc } from '@pme/controller';
+import { isV2, type ScenarioDoc } from '@pme/controller';
 import { describeCommand } from './describe.ts';
 import { LIBRARY } from './scenarios.ts';
 import { SCENARIO_META } from './scenario-meta.ts';
@@ -24,6 +24,7 @@ describe('clinical copy', () => {
   });
   it('every transition of every scenario reads in clinical words', () => {
     for (const c of LIBRARY) {
+      if (isV2(c.doc)) continue; // a /2 card has no transitions (its actions' labels are checked with the titles)
       const doc = c.doc as ScenarioDoc;
       for (const s of doc.states) for (const t of s.transitions ?? []) expect(transitionText(t, doc), `${c.id}/${t.id}`).not.toMatch(LEAK);
     }

@@ -27,7 +27,7 @@ const STEP = 25; // the host's FF_STEP_TICKS: the reference run steps and polls 
 async function run(withFastForward: boolean) {
   const v = validateScenario(BUILTIN_SCENARIOS['acls-pea-hypovolaemia']);
   if (!v.ok) throw new Error(v.errors.join('; '));
-  const doc: ScenarioDoc = v.doc;
+  const doc = v.doc as ScenarioDoc; // a built-in: pme-scenario/1
   const eo = engineOptionsOf(doc, 7);
   const host = manualHost({ ...eo, truthHz: 1, patient: { ...eo.patient, ...(doc.patient?.sensors ? { sensors: doc.patient.sensors } : {}) } });
   const step = (n: number) => host.engine.advanceTo((host.engine.now().tick + n) * 0.02 + 1e-9);

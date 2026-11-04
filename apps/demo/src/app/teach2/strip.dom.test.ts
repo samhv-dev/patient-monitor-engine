@@ -3,11 +3,17 @@
 // cards with hops folded in, the owner's ruling for IP9 (exactly five chips with full names: two before the current
 // stage, the current one, the next two; "‹ n earlier" and "n later ›" arrows page the window; "back to now" recentres;
 // the future ordered from the current stage, two stages of one step reading "or"), entry times from the history,
-// "auto"; a future stage sends
-// what today's jump sends behind the same confirm (both mounted on one fake Link, compared deep-equal); a past stage
-// shows its entry time and a disabled return until IP2's stage marks exist, then restores the mark behind one confirm.
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ScenarioView, type AckResult, type CommandInput, type ScenarioDoc } from '@pme/controller';
+// "auto"; a press on a stage opens its inline box, and the box's button is the confirmation (the owner's report of 30
+// October: no dialog): a future stage's "Jump to it" (named "Jump to <stage>") sends what today's jump sends (both
+// mounted on one fake Link, compared deep-equal); a past stage's box shows its entry time and a disabled return until
+// IP2's stage marks exist, then "Return to its start" (named "Return to the start of <stage>") restores the mark. The
+// button never repeats the box's title, and the strip has no hint line (the owner, 1 November).
+// The status line under the chips (the owner's choice of 31 October): while a card's Case briefing runs it reads
+// "Case briefing on every screen · 0:48 left" with End briefing; the chips' row carries no briefing element.
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { epochNow, ScenarioView, type AckResult, type CommandInput, type ScenarioDoc } from '@pme/controller';
 import { stagesOf } from '../card-read.ts';
 import type { Link } from '../link.ts';
 import type { PanelCtx } from '../panel/ctx.ts';
@@ -20,7 +26,7 @@ const MH = showcaseDoc('showcase-mh');
 const HAEM = showcaseDoc('showcase-haemorrhage');
 const OK: AckResult = { accepted: true, tick: 0, commandId: 'c1', rttMs: 0 };
 
-function rig(doc: ScenarioDoc, stateId: string, history: Array<{ t: number; stateId: string; transitionId?: string }> = [], simT = 600) {
+function rig(doc: ScenarioDoc, stateId: string, history: Array<{ t: number; stateId: string; transitionId?: string }> = [], simT = 600, host: unknown = null) {
   const sv = new ScenarioView();
   sv.doc = doc;
   sv.docVersion = 1;
@@ -29,7 +35,7 @@ function rig(doc: ScenarioDoc, stateId: string, history: Array<{ t: number; stat
   sv.history = history;
   const sent: CommandInput[] = [];
   const send = async (c: CommandInput) => (sent.push(structuredClone(c)), OK);
-  const link = { ctl: { scenario: sv, bookmarks: [], simT, hostPaused: false, send }, host: null, simT, send, note: () => undefined } as unknown as Link;
+  const link = { ctl: { scenario: sv, bookmarks: [], simT, hostPaused: false, send }, host, simT, send, note: () => undefined } as unknown as Link;
   const escapes: Array<() => boolean> = [];
   const ctx = { link, keys: { digit: () => undefined, letter: () => undefined, escape: (fn: () => boolean) => (escapes.push(fn), () => undefined) } } as unknown as Teach2Ctx;
   const el = document.createElement('nav');
@@ -61,7 +67,7 @@ afterEach(() => void (stageMarks.of = restoreMarks));
 
 /** A course through the MH card to `treating`: the states entered, with the hops, at these times. */
 const MH_TO_TREATING = [
-  { t: 0, stateId: 'awake' }, { t: 60, stateId: 'premedicated', transitionId: 'premed' }, { t: 120, stateId: 'preoxygenated', transitionId: 'preox' },
+  { t: 0, stateId: 'awake' }, { t: 60, stateId: 'preoxygenated', transitionId: 'preox' }, { t: 120, stateId: 'premedicated', transitionId: 'premed' },
   { t: 240, stateId: 'induced', transitionId: 'induce' }, { t: 300, stateId: 'intubated', transitionId: 'intubate' }, { t: 360, stateId: 'surgery', transitionId: 'surgery' },
   { t: 420, stateId: 'earlySigns', transitionId: 'early' }, { t: 470, stateId: 'established', transitionId: 'established' }, { t: 496, stateId: 'triggerOff', transitionId: 'crisis-established' },
   { t: 520, stateId: 'dantrolene', transitionId: 'dant' }, { t: 522, stateId: 'treating', transitionId: 'back' },
@@ -81,8 +87,9 @@ describe('stage strip: the stages and the fold rule', () => {
   it('MH at the start (the owner\'s ruling for IP9): exactly five chips with full names, the current and the next four; "9 later ›"; an arrow pages, "back to now" recentres', () => {
     const r = rig(MH, 'awake', [{ t: 0, stateId: 'awake' }], 10);
     expect(stageChips(r.el)).toHaveLength(WINDOW);
-    expect(chipTexts(r.el)).toEqual(['Awake on the table00:00 · 1 open', 'Midazolam 2 mg and fentanyl 100 µg given', 'Preoxygenating', 'Induced', 'Intubated', '9 later ›']);
-    // the future ordered from the current stage: premedicated leads to both, so "Preoxygenating or Induced"
+    expect(chipTexts(r.el)).toEqual(['Awake on the table00:00 · 2 open', 'Preoxygenating', 'Midazolam 2 mg and fentanyl 100 µg given', 'Induced', 'Intubated', '9 later ›']);
+    // the future ordered from the current stage: awake leads to both (premedication without preoxygenation the second),
+    // so "Preoxygenating or Midazolam…"
     expect(r.el.querySelector('.ip2-or')?.previousElementSibling?.textContent).toBe('Preoxygenating');
     expect(r.el.querySelector('.ip2-earlier')).toBeNull();
     expect(r.el.querySelector('.ip2-now')).toBeNull();
@@ -99,7 +106,7 @@ describe('stage strip: the stages and the fold rule', () => {
     expect(r.el.querySelector('.ip2-later')).toBeNull();
     (r.el.querySelector('.ip2-now') as HTMLButtonElement).click();
     expect(chipTexts(r.el).at(-1)).toBe('9 later ›');
-    expect(r.el.querySelector('.ip2-current')?.textContent).toBe('Awake on the table00:00 · 1 open');
+    expect(r.el.querySelector('.ip2-current')?.textContent).toBe('Awake on the table00:00 · 2 open');
     expect(r.el.querySelector('.ip2-now')).toBeNull();
   });
 
@@ -131,10 +138,10 @@ describe('stage strip: the stages and the fold rule', () => {
 
   it('a stage the run skipped shows no time; a discarded course (a restore) is not shown', () => {
     // induced → crisis straight to triggerOff: intubated…established never entered; then a restore back to 05:00
-    const hist = [{ t: 0, stateId: 'awake' }, { t: 240, stateId: 'induced', transitionId: 'induce-premed' }, { t: 280, stateId: 'triggerOff', transitionId: 'crisis' }, { t: 250, stateId: 'induced' }];
+    const hist = [{ t: 0, stateId: 'awake' }, { t: 240, stateId: 'induced', transitionId: 'induce' }, { t: 280, stateId: 'triggerOff', transitionId: 'crisis' }, { t: 250, stateId: 'induced' }];
     const r = rig(MH, 'induced', hist, 300);
     r.sv.enteredT = 250;
-    expect(chipTexts(r.el).slice(0, 4)).toEqual(['‹ 1 earlier', 'Midazolam 2 mg and fentanyl 100 µg given', 'Preoxygenating', 'Induced04:00 · 2 open']);
+    expect(chipTexts(r.el).slice(0, 4)).toEqual(['‹ 1 earlier', 'Preoxygenating', 'Midazolam 2 mg and fentanyl 100 µg given', 'Induced04:00 · 2 open']);
     expect(r.el.querySelectorAll('.ip2-skipped')).toHaveLength(2);
   });
 
@@ -159,29 +166,59 @@ describe('stage strip: the stages and the fold rule', () => {
 });
 
 describe('stage strip: clicks', () => {
-  it('a future stage sends what today\'s jump sends, behind the same confirm, with the same toast', async () => {
+  it('a future stage (the owner\'s report of 30 October): its inline box "Jump to <stage>" is the confirmation; its click sends what today\'s jump sends, with the same toast, and no dialog', async () => {
     const r = rig(MH, 'treating', MH_TO_TREATING);
-    // today's Scenario tab on the same Link
+    // today's Scenario tab on the same Link: its jump, behind its own confirm
     let refresh = () => undefined as void;
     const today = scenarioTab({ link: r.link, staging: {}, site: {}, weightKg: () => 70, onRefresh: (fn: () => void) => (refresh = fn), goTab: () => undefined } as unknown as PanelCtx);
     document.body.append(today);
     refresh();
     const toasts = () => [...document.querySelectorAll('.toast')].map((t) => t.textContent);
-    const run = async (press: () => void) => {
-      r.sent.splice(0);
-      document.querySelectorAll('.toast').forEach((t) => t.remove());
-      press();
-      const title = await answer('Jump');
-      return { title, sent: [...r.sent], toasts: toasts() };
-    };
-    const v1 = await run(() => (today.querySelector('button[aria-label="Jump to Cardiac arrest"]') as HTMLButtonElement).click());
-    const v2 = await run(() => (r.el.querySelector('button.ip2-future[aria-label^="Stage Cardiac arrest"]') as HTMLButtonElement).click());
-    expect(v2).toEqual(v1);
-    expect(v2).toEqual({ title: 'Jump to this state?', sent: [{ type: 'scenario', action: 'goto', target: 'arrest' }], toasts: ['Scenario: Cardiac arrest'] });
-    // "Stay in this state" sends nothing
-    (r.el.querySelector('button.ip2-future') as HTMLButtonElement).click();
-    await answer('Stay in this state');
+    (today.querySelector('button[aria-label="Jump to Cardiac arrest"]') as HTMLButtonElement).click();
+    expect(await answer('Jump')).toBe('Jump to this state?');
+    const v1 = { sent: [...r.sent], toasts: toasts() };
+    r.sent.splice(0);
+    document.querySelectorAll('.toast').forEach((t) => t.remove());
+    today.remove();
+    // the strip: the chip opens its box, nothing sent yet
+    const chip = r.el.querySelector('button.ip2-future[aria-label^="Stage Cardiac arrest"]') as HTMLButtonElement;
+    expect(chip.getAttribute('aria-label')).toBe('Stage Cardiac arrest, entered by a rule: show its jump');
+    chip.click();
+    await settle();
+    expect(r.sent).toEqual([]);
+    expect(document.querySelector('dialog[open]')).toBeNull();
+    const pop = r.el.querySelector('.ip2-pop') as HTMLElement;
+    expect(pop.getAttribute('aria-label')).toBe('Stage Cardiac arrest');
+    expect(pop.querySelector('.ip2-pop-head')?.textContent).toBe('Cardiac arrest');
+    const go = pop.querySelector('button') as HTMLButtonElement;
+    // the owner, 1 November: the button does not repeat the stage (a long name wrapped it out of the box); its
+    // accessible name carries it
+    expect(go.textContent).toBe('Jump to it');
+    expect(go.getAttribute('aria-label')).toBe('Jump to Cardiac arrest');
+    go.click();
+    await settle();
+    await settle();
+    expect(document.querySelector('dialog[open]')).toBeNull();
+    expect(r.el.querySelector('.ip2-pop')).toBeNull();
+    expect({ sent: [...r.sent], toasts: toasts() }).toEqual(v1);
+    expect(v1).toEqual({ sent: [{ type: 'scenario', action: 'goto', target: 'arrest' }], toasts: ['Scenario: Cardiac arrest'] });
+    // a second press on the chip closes its box; Esc closes it too; neither sends
+    chip.click();
+    expect(r.el.querySelector('.ip2-pop')).not.toBeNull();
+    chip.click();
+    expect(r.el.querySelector('.ip2-pop')).toBeNull();
+    chip.click();
+    expect(r.escapes.some((f) => f())).toBe(true);
+    expect(r.el.querySelector('.ip2-pop')).toBeNull();
     expect(r.sent).toHaveLength(1);
+  });
+
+  it('no hint line (the owner, 1 November): the strip is the chips\' row and the status line, nothing else', () => {
+    const r = rig(MH, 'treating', MH_TO_TREATING);
+    expect([...r.el.children].map((c) => c.className)).toEqual(['ip2-chips', 'ip2-status']);
+    expect(r.el.querySelector('.ip2-strip-hint')).toBeNull();
+    expect(r.el.textContent).not.toMatch(/return to its start|jump to it/i);
+    expect(r.el.innerHTML).not.toContain('asks once');
   });
 
   it('a past stage shows its entry time and a disabled "Return to the start of …" until IP2\'s stage marks exist', async () => {
@@ -189,8 +226,10 @@ describe('stage strip: clicks', () => {
     (r.el.querySelector('button.ip2-past[aria-label^="Stage Trigger off"]') as HTMLButtonElement).click();
     const pop = r.el.querySelector('.ip2-pop') as HTMLElement;
     expect(pop.querySelector('.ip2-pop-time')?.textContent).toBe('Entered at 08:16');
+    expect(pop.querySelector('.ip2-pop-head')?.textContent).toBe('Trigger off');
     const back = pop.querySelector('button') as HTMLButtonElement;
-    expect(back.textContent).toBe('Return to the start of Trigger off');
+    expect(back.textContent).toBe('Return to its start');
+    expect(back.getAttribute('aria-label')).toBe('Return to the start of Trigger off');
     expect(back.disabled).toBe(true);
     back.click();
     await settle();
@@ -206,34 +245,144 @@ describe('stage strip: clicks', () => {
     expect(r.el.querySelector('.ip2-pop')).toBeNull();
   });
 
-  it('with a stage mark: one confirm, then today\'s bookmark restore of that mark', async () => {
+  it('with a stage mark (the owner\'s report of 30 October): the box\'s "Return to the start of …" is the confirmation; its click restores that mark, no dialog', async () => {
     const seen: unknown[] = [];
     stageMarks.of = (_l, e) => (seen.push(e), `stage:${e.stage}@${e.t}`);
     const r = rig(MH, 'treating', MH_TO_TREATING);
     (r.el.querySelector('button.ip2-past[aria-label^="Stage Trigger off"]') as HTMLButtonElement).click();
     expect(seen).toEqual([{ stage: 'triggerOff', stateId: 'triggerOff', t: 496, transitionId: 'crisis-established' }]);
+    expect(r.sent).toEqual([]);
     const back = r.el.querySelector('.ip2-pop button') as HTMLButtonElement;
     expect(back.disabled).toBe(false);
     back.click();
-    expect(await answer('Return')).toBe('Return to the start of Trigger off?');
+    await settle();
+    await settle();
+    expect(document.querySelector('dialog[open]')).toBeNull();
+    expect(r.el.querySelector('.ip2-pop')).toBeNull();
     expect(r.sent).toEqual([{ type: 'scenario', action: 'restoreBookmark', target: 'stage:triggerOff@496' }]);
-    // Stay here sends nothing
-    (r.el.querySelector('button.ip2-past[aria-label^="Stage Trigger off"]') as HTMLButtonElement).click();
-    (r.el.querySelector('.ip2-pop button') as HTMLButtonElement).click();
-    await answer('Stay here');
+    // the box closed without its button (a second press, Esc) sends nothing
+    const chip = r.el.querySelector('button.ip2-past[aria-label^="Stage Trigger off"]') as HTMLButtonElement;
+    chip.click();
+    chip.click();
+    chip.click();
+    expect(r.escapes.some((f) => f())).toBe(true);
     expect(r.sent).toHaveLength(1);
   });
 
-  it('no scenario: says so, and a load redraws from the start', () => {
+  it('no scenario: the one chip says so (board "Empty 5"; the owner, 1 November: one row, no status line), and a load redraws from the start', () => {
     const r = rig(MH, 'treating', MH_TO_TREATING);
     r.sv.doc = null;
     r.slot.refresh();
-    expect(r.el.textContent).toContain('No scenario running');
+    expect([...r.el.querySelectorAll('.ip2-chips > *')].map((c) => c.textContent)).toEqual(['No case loaded · the stages appear here when one is']);
+    expect(r.el.hasAttribute('data-empty')).toBe(true);
+    expect(r.el.querySelector<HTMLElement>('.ip2-status')?.hidden).toBe(true);
     r.sv.doc = HAEM;
     r.sv.docVersion = 2;
     r.sv.stateId = 'bleeding';
     r.sv.history = [{ t: 0, stateId: 'bleeding' }];
     r.slot.refresh();
     expect(r.el.querySelector('.ip2-current')?.textContent).toBe('Bleeding 2.5 L over 10 min00:00 · 2 open');
+  });
+});
+
+// The owner, 1 November (the live kit G, MH at "Midazolam 2 mg and fentanyl 100 µg given"): the connector into the
+// current stage was blue and the finished stage had no frame. Only the current stage's box is blue; every connector is
+// the one neutral colour, and a finished stage is framed in it, 1 px as the future ones. With the strip's own sheets.
+describe('stage strip: the connector colour and the finished stages\' frame (the owner, 1 November)', () => {
+  const sheet = (f: string) => readFileSync(resolve(import.meta.dirname, f), 'utf8');
+  const LINK = '#4b5563';
+  for (const [card, doc, stateId, history] of [
+    ['the old MH card at its second stage', MH, 'preoxygenated', MH_TO_TREATING.slice(0, 2)],
+    ['the haemorrhage card past its first stage', HAEM, null, null],
+  ] as const) {
+    it(`${card}: the connector before the current chip is the neutral one, a past chip has a 1-px frame in it`, () => {
+      document.head.replaceChildren(...['teach2.css', 'state.css'].map((f) => Object.assign(document.createElement('style'), { textContent: sheet(f) })));
+      const at = stateId ?? stagesOf(doc)[1]?.id as string;
+      const r = rig(doc, at, history ? [...history] : [{ t: 0, stateId: stagesOf(doc)[0]?.id as string }, { t: 60, stateId: at }]);
+      r.el.className = 'ip2-strip';
+      const cur = r.el.querySelector('.ip2-chips > .ip2-current') as HTMLElement;
+      const before = cur.previousElementSibling as HTMLElement;
+      const after = cur.nextElementSibling as HTMLElement;
+      const past = r.el.querySelector('.ip2-chips > .ip2-past') as HTMLElement;
+      expect(before.classList.contains('ip2-link'), 'a connector leads into the current chip').toBe(true);
+      expect(getComputedStyle(before).backgroundColor, 'the connector into the current chip').toBe(LINK);
+      expect(getComputedStyle(after).borderTopColor, 'the connector out of it, to the future').toBe(LINK);
+      expect(getComputedStyle(past).borderTopColor, 'a past chip: its frame in the connector colour').toBe(LINK);
+      expect(getComputedStyle(past).borderTopStyle).toBe('solid');
+      expect(getComputedStyle(past).borderTopWidth).toBe('1px');
+      expect(getComputedStyle(cur).borderTopColor, 'the current chip: still its blue box').toBe('#3b82f6');
+      document.head.replaceChildren();
+    });
+  }
+});
+
+describe('stage strip: the status line while a Case briefing runs', () => {
+  /** The host's briefing as the session gives it (session.ts onBriefing / endBriefing), on a clock we move. */
+  function fakeHost() {
+    type B = { text: string; durationS: number; startedAt: number; lang: 'en' } | null;
+    const fns = new Set<(b: unknown) => void>();
+    const h: { cur: B; ended: number; record: unknown; onBriefing(fn: (b: unknown) => void): () => void; endBriefing(): void; set(b: B): void; start(): void; fns: typeof fns } = {
+      cur: null,
+      ended: 0,
+      record: { data: { rows: [] } }, // the run record course.ts reads: its initial state at 0
+      onBriefing: (fn: (b: unknown) => void) => (fns.add(fn), fn(h.cur), () => void fns.delete(fn)),
+      endBriefing: () => (h.ended++, h.set(null)),
+      set: (b) => ((h.cur = b), fns.forEach((fn) => fn(b))),
+      start: () => h.set({ text: 'x', durationS: 60, startedAt: epochNow(), lang: 'en' }),
+      fns,
+    };
+    return h;
+  }
+  beforeEach(() => void vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date', 'performance'] }));
+  afterEach(() => void vi.useRealTimers());
+  const status = (el: Element) => el.querySelector<HTMLElement>('.ip2-status');
+  const line = (el: Element) => el.querySelector('.ip2-status-text')?.textContent ?? '';
+  const end = (el: Element) => [...(status(el)?.querySelectorAll('button') ?? [])].find((b) => b.textContent === 'End briefing');
+
+  it('no briefing: no status line shown, nothing in the strip changes', () => {
+    const host = fakeHost();
+    const r = rig(MH, 'treating', MH_TO_TREATING, 600, host);
+    const plain = rig(MH, 'treating', MH_TO_TREATING); // a follower: no host, no briefing
+    for (const x of [r, plain]) {
+      expect(status(x.el)?.hidden ?? true).toBe(true);
+      expect(x.el.hasAttribute('data-briefing')).toBe(false);
+      expect(x.el.querySelector('.cb-end')).toBeNull();
+    }
+    expect(chipTexts(r.el)).toEqual(chipTexts(plain.el));
+  });
+
+  it('while it runs: the sentence with the time left and End briefing; the chips as without it', async () => {
+    const host = fakeHost();
+    const r = rig(MH, 'treating', MH_TO_TREATING, 600, host);
+    const before = chipTexts(r.el);
+    host.start();
+    expect(r.el.hasAttribute('data-briefing')).toBe(true);
+    expect(status(r.el)?.hidden).toBe(false);
+    expect(line(r.el)).toBe('Case briefing on every screen · 1:00 left');
+    expect(end(r.el)).toBeTruthy();
+    expect(r.el.querySelector('.cb-end'), 'no briefing element in the chips\' row').toBeNull();
+    expect([...r.el.querySelectorAll('.ip2-chips *')].some((n) => /briefing/i.test(n.textContent ?? ''))).toBe(false);
+    r.slot.refresh();
+    expect(chipTexts(r.el)).toEqual(before);
+    await vi.advanceTimersByTimeAsync(12_000);
+    expect(line(r.el)).toBe('Case briefing on every screen · 0:48 left');
+    // End briefing: the session's end (every screen), and the line goes
+    end(r.el)?.click();
+    expect(host.ended).toBe(1);
+    expect(status(r.el)?.hidden).toBe(true);
+    expect(r.el.hasAttribute('data-briefing')).toBe(false);
+  });
+
+  it('ends by itself: the line goes; destroy lets go of the session', async () => {
+    const host = fakeHost();
+    const r = rig(MH, 'treating', MH_TO_TREATING, 600, host);
+    host.start();
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(line(r.el)).toBe('Case briefing on every screen · 0:30 left');
+    host.set(null);
+    expect(status(r.el)?.hidden).toBe(true);
+    expect(r.el.hasAttribute('data-briefing')).toBe(false);
+    r.slot.destroy();
+    expect(host.fns.size).toBe(0);
   });
 });
