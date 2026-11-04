@@ -30,10 +30,20 @@ const box = (page: Page) =>
     };
   });
 
+/** The skin switch has landed: the monitor is laid out as the skin's 1280 × 800 screen (its grid sets --pme-h) or as
+ *  the columns (no --pme-h). setSkin waits for the engine's answer before it relayouts, so a fixed settle time could
+ *  measure the old layout (CI run 41797581549, WebKit: the box read 1280 × 764, the columns' fill, for the grid). */
+const settled = (page: Page, grid: boolean) =>
+  page.waitForFunction((g) => {
+    const o = document.querySelector<HTMLElement>('.stage [data-pme-scale]');
+    return !!o && (o.style.getPropertyValue('--pme-h') === '800px') === g && [...document.querySelectorAll<HTMLElement>('.stage .pme-strip')].some((e) => e.offsetParent !== null) === g;
+  }, grid, { timeout: 15_000 });
+
 async function monitor(page: Page, skin: string): Promise<void> {
   await go(page, '#/settings');
   await page.getByRole('combobox', { name: 'Monitor', exact: true }).selectOption(skin);
   await go(page, '#/monitor', 1500);
+  await settled(page, skin === 'saadat-like');
 }
 
 function expectGrid(b: Awaited<ReturnType<typeof box>>): void {
@@ -62,6 +72,7 @@ function expectGrid(b: Awaited<ReturnType<typeof box>>): void {
 test('a Settings switch saadat-like → philips-like → saadat-like: grid, columns, grid, nothing left over', async ({ page }) => {
   test.setTimeout(90_000);
   await openApp(page, base, '#/monitor', { warmMs: 1500 });
+  await settled(page, true);
   expectGrid(await box(page));
   await monitor(page, 'philips-like');
   const p = await box(page);
