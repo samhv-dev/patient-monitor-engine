@@ -8,6 +8,8 @@
 // the server answers (not with PME_NO_OPEN=1), and lives as long as the server: Ctrl+C or closing the window stops
 // both. It writes nothing into the kit (the simulator's port file goes to the temp folder). ASCII output only: the
 // Windows console's code page cannot garble it.
+// The relay and serve.mjs are started with process.execPath: the node.exe the .cmd chose (the kit's runtime\node.exe
+// when it has one), never a second lookup; the "SERVER:" line names it.
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
