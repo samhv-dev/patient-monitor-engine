@@ -17,7 +17,9 @@ export type BloodDrugId =
  * and the blood model observes the accepted doses on `ps.pk.bus.doses`.
  */
 export type BloodClinicalEvent =
-  | { kind: 'fluid'; fluid?: BloodFluidId; volumeMl?: number; overS?: number; rateMlPerMin?: number }
+  /** `tempC`: the fluid's temperature, °C (absent: the theatre's; refrigerated 4 °C). `stopAtCoreC`: the team stops the
+   * infusion once the core has fallen to it (a cooling infusion; MHAUS: stop cooling at 38 °C). */
+  | { kind: 'fluid'; fluid?: BloodFluidId; volumeMl?: number; overS?: number; rateMlPerMin?: number; tempC?: number; stopAtCoreC?: number }
   | { kind: 'bleed'; volumeMl?: number; overS?: number; rateMlPerMin?: number }
   | { kind: 'transfusion'; product: BloodProductId; units: number; overS?: number; storageDays?: number; warmed?: boolean }
   | { kind: 'drug'; drugId: BloodDrugId; dose: number; unit: 'mg' | 'g' | 'mcg' | 'mmol' | 'mmol/kg' | 'mg/kg' | 'units'; route?: 'iv' | 'neb' }

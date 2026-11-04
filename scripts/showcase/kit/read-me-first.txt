@@ -19,15 +19,24 @@ LEARNERS' PHONES (optional; needs Node.js 22 or later on this Mac, and a network
    and follow your case.
 10. Phones start with their sound off; each learner taps "Sound off" to hear it. Go on to your case from the bar at
     the left ("Scenarios" or "Instructor").
+    Use only one instructor tab: the phones follow the tab that runs the session. A second tab asks first; choose
+    "Open that tab's session here" to move the session (same code, same case) into it.
 11. If "Start Classroom" says it cannot start, use "Start Simulator": everything works except the phones.
 
-WINDOWS (a backup for a Windows PC; needs Node.js 22 or later on that PC)
+WINDOWS (a backup for a Windows PC; needs Node.js 22 or later: the kit's own, or one installed on that PC)
 Windows launcher: untested on Windows at this release; test on the room's PC before the day (checklist below).
-   Before the day: install Node.js from nodejs.org (the LTS, version 22 or later, the "Windows Installer (.msi)"; its
-   defaults are fine). Unzip the kit first: right-click the .zip > Properties > tick "Unblock" > OK (else Windows may
+   If this kit has a file runtime\node.exe, it brings its own Node.js and needs NO install: the launchers use it
+   before any installed one.
+   It is the official Node.js build for Windows from nodejs.org; its version and SHA-256 checksum are in
+   runtime\NODE-VERSION.txt (to compare: certutil -hashfile runtime\node.exe SHA256, in a Command Prompt).
+   If runtime\node.exe is not there: install Node.js from nodejs.org (the LTS, version 22 or later, the "Windows
+   Installer (.msi)"; its defaults are fine). The launchers then use the installed one.
+   Unzip the kit first: right-click the .zip > Properties > tick "Unblock" > OK (else Windows may
    warn, or block, at every start), then right-click the .zip > Extract All. The launchers cannot run inside a zip.
 W1. Double-click "Start Classroom.cmd" (Windows may hide the ".cmd": it is "Start Classroom", type "Windows Command
-    Script"). If Windows says "Windows protected your PC": click "More info", then "Run anyway".
+    Script"). If Windows says "Windows protected your PC" (SmartScreen, for a file that came from the internet):
+    click "More info", then "Run anyway". The node.exe in runtime is the official build; its checksum is in
+    runtime\NODE-VERSION.txt.
 W2. A black window opens, then the simulator opens in the default browser (Edge or Chrome).
 W3. If Windows Defender Firewall asks about "Node.js JavaScript Runtime": tick BOTH "Private networks" and "Public
     networks", then click "Allow access" (it may ask for an administrator). Without it, phones cannot connect. If the
@@ -40,7 +49,8 @@ W5. To stop: close the black window (or press Ctrl+C in it, then Y). Closing the
 W6. Without phones: double-click "Start Simulator.cmd" instead (this PC only; no firewall question).
 
 OWNER'S TEST CHECKLIST FOR WINDOWS (on the room's PC, before the day; report any line that fails, with a photo)
-[ ] 1. In a Command Prompt, "node -v" prints v22 or later (if not: install the LTS from nodejs.org, open a new prompt).
+[ ] 1. The kit has runtime\node.exe, OR in a Command Prompt "node -v" prints v22 or later (if neither: install the LTS
+       from nodejs.org, open a new prompt). The window's last line "SERVER: node v22... (...)" names the one used.
 [ ] 2. The kit is unzipped into a folder whose path has a space in it (e.g. Desktop\PME kit); nothing runs from the zip.
 [ ] 3. "Start Simulator.cmd": the browser shows the simulator at 127.0.0.1:8642, and no firewall question appears.
 [ ] 4. Close that black window: within a few seconds a reload of 127.0.0.1:8642 no longer loads.

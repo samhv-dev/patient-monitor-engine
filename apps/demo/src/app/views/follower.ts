@@ -37,6 +37,7 @@
 import { createBroadcastChannelTransport, createWebSocketTransport, ViewerSync, type ManagedTransport, type RelayFrame } from '@pme/controller';
 import { engineKey as engineVersion } from '@pme/engine-core'; // The snapshot key, version + build
 import { mountMonitor, type MonitorHandle } from '@pme/renderer';
+import { briefingLayer, followBriefing } from '../briefing.ts';
 import { applySkinAlarmColours, type Shell } from '../shell.ts';
 import { DEFAULT_SITE, MONITORS, THEMES, type SiteProfile } from '../site.ts';
 import { button, h, pausedMark, setText } from '../ui.ts';
@@ -127,8 +128,11 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   // While the Ventilator view drives the patient, a phone's monitor is held still behind this line
   const holdNote = h('div', { class: 'learner-hold', hidden: true }, h('p', {}, 'The ventilator is on the main screen'), h('p', { class: 'muted' }, 'This monitor continues when the ventilator view closes.'));
   shell.stage.append(holdNote);
+  // The card's Case briefing over this monitor, from its start time: a phone that joins late shows the remainder
+  const briefing = briefingLayer(shell.stage, { phone: !!net });
   let hold = false;
   let raf = 0;
+  let offDraw = () => {}; // The pill's redraw on host messages (after the sync's own handler)
   const f: Follower = { monitor, transport, sync: null, destroy, style: { skin: site.skin, theme: site.theme } };
   const style = net ? null : styleChannel(code); // Same-browser only
   if (style) style.onmessage = (ev: MessageEvent<StyleMsg>) => {
@@ -142,6 +146,9 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   void monitor.viewerClock().then((clock) => {
     const sync = new ViewerSync({ session: code, transport, target: clock, engineVersion });
     f.sync = sync;
+    // The pill after every host message, once the sync has taken it (subscribed after it): the 500 ms poll alone showed
+    // what the phone knew during an instructor's reload for up to a poll after it was synced again (kit check 30 Oct)
+    offDraw = transport.onMessage(drawStatus);
     const loop = () => {
       if (hold) clock.setPaused(true); // It cannot follow the cockpit's patient — still, not wrong
       else sync.follow(); // once per frame: steers this monitor's clock onto the instructor's (a frame behind is fine)
@@ -166,7 +173,9 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     if (m.kind === 'hello' && m.role !== 'host') return;
     if (m.kind === 'command') return;
     heard = performance.now();
+    if (m.kind === 'hello') cockpitAt = -Infinity; // A (re)loaded instructor's page: its Ventilator view is not open yet
     if (m.kind !== 'event') return;
+    followBriefing(briefing, m);
     for (const e of m.body) {
       if (e.type === 'cockpit') cockpitAt = e.off ? -Infinity : performance.now(); // `off`: the view closed (UI-A #2)
       if (e.type === 'style' && net) wearPhone(e.skin, e.theme);
@@ -188,7 +197,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   const t0 = performance.now();
   const offOpen = transport.onStatus((st) => void (st === 'open' && (opened = true)));
   const pausedEl = pausedMark(shell.stage); // UI review #32: the phone's monitor says PAUSED too
-  const draw = setInterval(() => {
+  function drawStatus(): void {
     const now = performance.now();
     pausedEl.set(paused);
     const v = followerStatus({
@@ -200,12 +209,15 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     holdNote.hidden = !hold;
     setText(status, v.text);
     status.dataset.ok = String(v.ok);
-  }, 500);
+  }
+  const draw = setInterval(drawStatus, 500);
   function destroy(): void {
+    offDraw();
     offHost();
     offOpen();
     document.removeEventListener('visibilitychange', onVisible);
     holdNote.remove();
+    briefing.end();
     style?.close();
     cancelAnimationFrame(raf);
     clearInterval(draw);
