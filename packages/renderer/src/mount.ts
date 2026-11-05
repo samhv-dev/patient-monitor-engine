@@ -11,7 +11,8 @@ import { AlarmAudioBridge } from './alarm-audio.ts';
 import { DeviceUI, gridOf } from './device-ui.ts';
 import { NumericTile } from './numerics-dom.ts';
 import { formatNibp, formatPressure, PressureTile } from './numerics-hemo.ts';
-import { filterModeFor, renderPlan, type LaneOverride } from './skin-plan.ts';
+import { normalIbpScales, type IbpChannel, type IbpScales } from './ibp-scale.ts';
+import { filterModeFor, renderPlan, type LaneOverride, type RenderPlan } from './skin-plan.ts';
 import { WAVE_STYLE, type WaveLaneId } from './wave-lanes.ts';
 import { formatEtco2, formatRr, formatSpo2, formatTemp } from './numerics-resp.ts';
 import { simClock } from './overlays.ts';
@@ -53,6 +54,8 @@ export interface MountOptions {
   portrait?: boolean;
   /** The bed line of a two-row header (skin `layout.headerStyle`); default "BED 01" (rc.3, E96). */
   bed?: string;
+  /** E130: the IBP1/IBP2 lane scales at mount (a channel left out: the skin's fixed scale). */
+  ibpScales?: IbpScales;
 }
 
 /** A monitor either owns the simulation ('host') or mirrors one from its snapshot and commands ('viewer'). */
@@ -111,6 +114,15 @@ export interface MonitorHandle {
   setSkin(id: string, opts?: { theme?: string; page?: string }): Promise<void>;
   /** The resolved skin in use (null without `skin`). */
   readonly skin: ResolvedSkin | null;
+  /**
+   * E130: the IBP1/IBP2 lane scales: a typed range within 0–200 mmHg or AUTO per channel, a channel left out (or
+   * refused) is the skin's fixed scale. Kept across a skin switch; the canvas carries them as `data-ibp-scales`.
+   */
+  setIbpScales(scales: IbpScales): void;
+  /** The scales in use (as `setIbpScales` kept them). */
+  readonly ibpScales: IbpScales;
+  /** The skin's fixed range of each IBP channel the current lanes draw (E130). */
+  readonly ibpFixed: Partial<Record<IbpChannel, [number, number]>>;
   /** 12 leads × the last 10 s, diagnostic filter (brief §6.6). */
   capture12(): Promise<Capture12>;
   /** 1 Hz numerics for 8 h (brief §6.7). */
@@ -373,6 +385,9 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     // the canvas is laid out in design px and shown k times as large: its backing store follows the device pixels
     dpr: (globalThis.devicePixelRatio || 1) * k,
   });
+  let ibpScales: IbpScales = normalIbpScales(opts.ibpScales);
+  const markIbp = () => void (canvas.dataset.ibpScales = JSON.stringify(ibpScales));
+  markIbp();
   const only: LaneOverride | undefined = opts.lanes || opts.waves ? { ...(opts.lanes ? { lanes: opts.lanes } : {}), waves: opts.waves ?? [] } : undefined;
   const engineOpts: EngineOptions | undefined = r ? { ...(opts.engine ?? {}), device: { ...(opts.engine?.device ?? {}), skin: opts.skin as string } } : opts.engine;
   const coreOpts = {
@@ -381,8 +396,9 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     ...(opts.waves ? { waves: opts.waves } : {}),
     ...(opts.fps ? { fps: opts.fps } : {}),
     ...(opts.pxPerMm ? { pxPerMm: opts.pxPerMm } : {}),
-    ...(r ? { plan: renderPlan(r, page, only, portrait) } : {}),
+    ...(r ? { plan: renderPlan(r, page, only, portrait, ibpScales) } : {}),
   };
+  let planIn: RenderPlan | null = coreOpts.plan ?? null; // the plan last sent (the IBP lanes' fixed ranges are read from it)
   /** The lanes the canvas draws, as data for tests and embedders (the labels themselves are canvas pixels). */
   const markLanes = (lanes: ReadonlyArray<{ id: string }>) => void (canvas.dataset.lanes = lanes.map((l) => l.id).join(' '));
   if (coreOpts.plan) markLanes(coreOpts.plan.lanes);
@@ -457,7 +473,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   };
   /** The plan for the current skin, with the ECG leads chosen on this skin kept. */
   const planNow = (sk: ResolvedSkin) => {
-    const p = renderPlan(sk, page, only, portrait);
+    const p = renderPlan(sk, page, only, portrait, ibpScales);
     let k = 0;
     for (const l of p.lanes) if (l.kind === 'ecg') l.channel = leads.get(k++) ?? l.channel;
     return p;
@@ -472,6 +488,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     r = next;
     if (same) return;
     const plan = planNow(next);
+    planIn = plan;
     h.control({ type: 'plan', plan });
     markLanes(plan.lanes);
     ui.setSkin(next, page);
@@ -583,7 +600,8 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       r = next;
       page = o.page;
       leads.clear();
-      const plan = renderPlan(next, page, only, portrait);
+      const plan = renderPlan(next, page, only, portrait, ibpScales);
+      planIn = plan;
       h.control({ type: 'plan', plan });
       markLanes(plan.lanes);
       ui.setSkin(next, page);
@@ -597,6 +615,20 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     },
     get skin() {
       return r;
+    },
+    setIbpScales(s) {
+      ibpScales = normalIbpScales(s);
+      markIbp();
+      const scales = ibpScales;
+      void hostP.then((h) => h.control({ type: 'ibpScales', scales }));
+    },
+    get ibpScales() {
+      return ibpScales;
+    },
+    get ibpFixed() {
+      const out: Partial<Record<IbpChannel, [number, number]>> = {};
+      for (const l of planIn?.lanes ?? []) if (l.ibp && !out[l.ibp.channel]) out[l.ibp.channel] = [l.ibp.fixed[0], l.ibp.fixed[2]];
+      return out;
     },
     capture12: () => hostP.then((h) => h.capture12()),
     advance: (ticks, last) =>
@@ -630,6 +662,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       const sk = r;
       void hostP.then((h) => {
         const plan = planNow(sk);
+        planIn = plan;
         h.control({ type: 'plan', plan });
         markLanes(plan.lanes);
       });

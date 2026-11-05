@@ -629,10 +629,50 @@ empty).
 - `haemorrhage-anaphylaxis.slow.test.ts` (haemorrhage arms only), `debrief-showcase.test.ts`, kit round A4
   haemorrhage, the run sheet: as in F8.
 - **Gate:** as F8, for the haemorrhage card: O1–O5 (amended 2026-10-29 after review).
+- **Built (5 November), with the owner's rulings of that day, which override the above where they differ:** a new card
+  `showcase-haemorrhage-v2` beside the `/1` card; VF only from the physiology, MEASURED: none on this course, so no VF
+  phase, no rhythm-check VF script and no shock row (six phases); CPR graded with a fail limit (`failAfterS`); the
+  unconditional `repeat` graded from the previous dose as given; call for help a timed communication action (the
+  scenario `record` command, Q19); a drug by a route outside the set leaves the action open; a `preparation` flag
+  (the card has no preparation step: its monitoring is attached at the start and it has no line action). The
+  correspondence table and the numbers left to the owner are in the F9 PR.
+- **The owner's second set of rulings, 5 November (F9):** the 29 October answer to Q3 ("name MH from the monitor"
+  stays a judged row; the 17:00 ruling: recognition objectives are judged rows) is AMENDED for `/2` cards: recognition
+  and announcing the diagnosis is a TIMED ACTION the instructor presses when the team says it aloud, its window from
+  the first sign. Applied to the haemorrhage card in F9; the MH card (`showcase-mh-v2`, its name-MH row) follows in a
+  separate PR. Also added: an action window anchored on each taking of another action (`each:action:<id>`: resume CPR
+  within 10 s of each rhythm check) and on the earliest of several anchors (`{ first: [...] }`: CPR from the pulse loss
+  or ERC 2025's operating-room rule, whichever is first), and a window anchored on a rule on the DISPLAYED numerics
+  (`{ display: rule }`, alone or as a `first` member: the operating-room trigger reads what the monitor shows).
+- **Judged rows retired (5 November, the owner's ruling; it withdraws the 29 October ruling "recognition stays a judged
+  row").** Every row of a `/2` card is an automatic row (a phase's rule) or an action. A judged tick is a recorded team
+  act, so it is a `record` action (a communication, procedure or sample action with no `give`: the press sends the
+  scenario `record` command, Q19), timed by its window when the card says so and recorded-not-timed without one (a
+  quality verdict such as "closed-loop communication was used" is a record action ticked at the end, no clock). The
+  schema has no `judged` block: a card that declares one fails validation with one line naming the replacement;
+  `grade()` has no judged path; Instructor v2 draws a record action as any action (its press the record command, no
+  marker note); the Debrief's action table carries it, `pme-debrief/3` has no `judged` key and a `/2` run has no
+  recognition key-time tile (its window and press are the action's row). The two `/2` cards: `showcase-mh-v2`'s "name
+  MH from the monitor" (`nameMh`) is a timed record action from Early signs' entry, 120 s long (the owner's number,
+  his ruling of 5 November; no source states one, and it was derived as the card's own crisis-call window from the same
+  signs); `showcase-haemorrhage-v2`'s
+  "recognise the return of circulation" (`recogniseRosc`) is a timed record action from ROSC's entry, timed at 120 s (the
+  owner's ruling of 5 November; derived from the `/1` card's objective 3). `/1` cards and their readers keep their judged objectives (Q33).
+- **A rule for future cards (the owner, 5 November):** the operating-room CPR trigger (displayed systolic below 50 mmHg
+  on the cuff, or below 40 mmHg on an arterial line, for 30 s, with EtCO₂ below 25 mmHg) does NOT apply while bleeding
+  is uncontrolled. Harper et al., Br J Anaesth 2020;124:234–238, p.235, excludes "haemorrhagic shock with uncontrolled
+  bleeding, in which chest compressions might accelerate blood loss and lead to worse outcomes"; Hinkelbein et al.
+  (ESAIC/ESTES), Eur J Anaesthesiol 2023;40:724–736, p.733: in hypovolaemic pseudo-PEA "CCC should be withheld and
+  resuscitation should focus on haemorrhage control and replacement of fluids and blood products". A card whose bleed is
+  still running when the trigger can fire must not anchor CPR on it. The haemorrhage card qualifies only because its
+  bleed is controlled at 10:00, before the trigger can fire.
 
 ### F10: Authoring guide, CHANGELOG, roadmap (4 h est.)
 - `docs/guides/scenario-authoring.md`: a `/2` section with one validated example (`<!-- example: pme-scenario/2 -->`);
-  `docs-examples.test.ts` learns the tag.
+  `docs-examples.test.ts` learns the tag. It documents F9's additions too: `window.failAfterS`, `preparation`, the
+  graded unconditional `repeat` (from the previous dose as given), the scenario `record` command for an action with
+  no engine command, an action's optional `src` (its numbers' source, quoted and cited; never interpreted), and the window anchors
+  `each:action:<id>` (one window per taking of another action) and `{ first: [anchors] }` (the earliest of several).
 - `CHANGELOG.md` Unreleased: the format, the routes modelled, the debrief `/3`.
 - Roadmap rows: the arrest-phase sheet (18:30 ruling 4), the preparation bench (18:00), the charcoal filter and the MH
   activity reading the agent level (18:00), curve rows by a non-IV route, grades on a follower (Q16), the in-place swap,
@@ -863,7 +903,7 @@ The orchestrator's answers, 2026-10-29, after the independent review. One line e
 above, with the review's amendment where it names one. The owner's questions stay open and are listed as his.
 
 **Accepted as recommended (the orchestrator).**
-- 2026-10-29 Q3 (in part): "name MH from the monitor" stays a judged row (17:00 ruling: recognition objectives are judged rows); the rest of Q3 is the owner's.
+- 2026-10-29 Q3 (in part): "name MH from the monitor" stays a judged row (17:00 ruling: recognition objectives are judged rows); the rest of Q3 is the owner's. WITHDRAWN by the owner on 5 November: judged rows are retired; it is a timed record action (F9 above).
 - 2026-10-29 Q7: a log and debrief line now ("tissue injury; not modelled", registered by F5.3); CK and K⁺ effects go to the engine roadmap with sources (F10).
 - 2026-10-29 Q10: `pme-debrief/3` for a `/2` run; a `/1` run keeps `pme-debrief/2`, unchanged.
 - 2026-10-29 Q14: an action whose anchor never happens grades "not applicable" with its reason line; the owner is told.
@@ -891,7 +931,7 @@ above, with the review's amendment where it names one. The owner's questions sta
 **Open for the owner** (with the review's note where it has one).
 - Q1: the † qualitative limits; measured on F0's traces, then his ruling, before F8 step b.
 - Q2: a route outside the allowed set: the action stays open, or "deviation".
-- Q3 (the rest): timed communication ("call for help") as an action or a judged row. Note: the 17:00 ruling says communication objectives stay judged rows, while the 17:20 catalogue lists communication actions.
+- Q3 (the rest), answered 5 November (the owner: every row is an automatic row or an action; F9 above): timed communication ("call for help") as an action or a judged row. Note: the 17:00 ruling says communication objectives stay judged rows, while the 17:20 catalogue lists communication actions.
 - Q4: script rhythms. Note: the rhythm-check VF script enters a phase because of a press, one step removed, against the design's anti-goal ("a phase entered because a button was pressed") and the 17:00 ruling.
 - Q8: his epinephrine example (IV in arrest against IM in anaphylaxis).
 - Q9: the withheld CPR in the haemorrhage demo. Note: the plan's table says "overdue" (given at +279 s), design §12 Q9 says "failed"; by §6 a late administration is overdue.

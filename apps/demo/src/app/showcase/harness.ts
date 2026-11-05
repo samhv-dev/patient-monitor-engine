@@ -26,7 +26,8 @@ export interface Sample {
  *  of a press: a clinical event sent as an instructor panel control sends it (e.g. the Defib tab's Charge and Shock), through
  *  the driver so the card's `event` transitions see it; `press` is then only the act's name. `action` (a pme-scenario/2
  *  card, plan F8): the action's `give` commands, stamped with its `actionId` and one stage group, through `driver.host`
- *  as Instructor v2's A press sends them; `press` is then only the act's name. */
+ *  as Instructor v2's A press sends them (an action with no `give`: the scenario `record` command); `press` is then
+ *  only the act's name. */
 export interface Act { press: string; send?: Record<string, unknown>; action?: string; t?: number; when?: (s: Sample) => boolean; delayS?: number }
 
 export interface Run {
@@ -135,6 +136,14 @@ export async function runCard(id: string, acts: readonly Act[], untilS: number, 
       }
       if (a.action !== undefined) {
         const action = isV2(doc) ? doc.actions.find((x) => x.id === a.action) : undefined;
+        if (action && !action.give?.length && ['procedure', 'sample', 'communication'].includes(action.kind)) {
+          // Q19 (plan F9): an action with nothing for the engine (call for help) is the scenario `record` command, as
+          // Instructor v2 sends it; the hook takes it synchronously
+          void driver.hook({ id: `act-${i}`, issuedBy: 'instructor', type: 'scenario', action: 'record', target: a.action } as never);
+          driver.poll();
+          run.pressed[i] = t;
+          continue;
+        }
         if (!action?.give?.length) throw new Error(`${id}: no action ${a.action} with a give list`);
         action.give.forEach((c, k) => {
           const { $comment: _drop, ...cmd } = c as typeof c & { $comment?: string };

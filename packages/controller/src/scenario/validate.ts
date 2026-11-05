@@ -127,8 +127,14 @@ function validatorV2(): ReturnType<Ajv['compile']> {
   return compiledV2;
 }
 
+/** Judged rows are retired (the owner's ruling of 5 November): every row is an automatic row or an action, and a team
+ *  act the instructor observes is a record action (the scenario `record` command, Q19), timed by its window when the card
+ *  times it, recorded-not-timed without one. A card that still declares `judged` gets this one line. */
+const JUDGED_RETIRED = '/judged: judged rows are retired (owner, 5 November): write each as a record action in "actions" (kind "communication" with no give; a window when the card times it, none when it is recorded, not timed)';
+
 function formatV2(e: ErrorObject): string {
   const at = e.instancePath || '/';
+  if (e.keyword === 'additionalProperties' && at === '/' && (e.params as { additionalProperty?: string }).additionalProperty === 'judged') return JUDGED_RETIRED;
   if (e.keyword === 'maxProperties' || e.keyword === 'minProperties') {
     if (e.parentSchema === DEFS.phaseRule) return `${at}: a phase rule must have exactly one of ${RULE_KEYS}`;
     if (e.parentSchema === DEFS.displayRule) return `${at}: a display rule must have exactly one of ${DISPLAY_KEYS}`;
@@ -163,7 +169,6 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
   const phases = unique(doc.phases, 'phases', 'phase');
   const actions = unique(doc.actions, 'actions', 'action');
   unique(doc.outcomes, 'outcomes', 'outcome');
-  unique(doc.judged, 'judged', 'judged');
   unique(doc.script, 'script', 'script');
   const phase = (id: string, path: string) => phases.has(id) || errors.push(`${path}: no phase "${id}"`);
   const action = (id: string, path: string) => actions.has(id) || errors.push(`${path}: no action "${id}"`);
@@ -191,6 +196,8 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
       if (c.type === 'applyEvent' && c.event.kind === 'drug') drug(c.event.drugId, `${path}/${k}/event/drugId`);
     });
 
+  /** Display-rule anchors of action windows (F9), checked below. */
+  const displayAnchors: Array<[DisplayRule, string]> = [];
   let initial: string | null = null;
   doc.phases.forEach((p, i) => {
     if (p.initial) {
@@ -216,7 +223,18 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
       const ids = [a.drug.id, ...(a.drug.alternatives ?? []).map((x) => x.id)].filter((id): id is string => id !== undefined && id in DRUGS);
       a.drug.route?.set.forEach((r, k) => ids.forEach((id) => routeHonoured(id, r) || warnings.push(`${at}/drug/route/set/${k}: ${id}: route ${r} is judged; the engine does not model it`)));
     }
-    if (a.window) anchor(a.window.anchor, `${at}/window/anchor`);
+    const wa = a.window?.anchor;
+    if (wa !== undefined && typeof wa !== 'string' && 'first' in wa) wa.first.forEach((x, k) => (typeof x !== 'string' && 'display' in x ? displayAnchors.push([x.display, `${at}/window/anchor/first/${k}/display`]) : anchor(x as Anchor, `${at}/window/anchor/first/${k}`)));
+    else if (wa !== undefined && typeof wa !== 'string' && 'display' in wa) displayAnchors.push([wa.display, `${at}/window/anchor/display`]);
+    else if (typeof wa === 'string' && wa.startsWith('each:action:')) {
+      action(wa.slice(12), `${at}/window/anchor`);
+      if (a.window?.failAfterS !== undefined) errors.push(`${at}/window/failAfterS: not with an each:action anchor`);
+    } else if (wa !== undefined) anchor(wa as Anchor, `${at}/window/anchor`);
+    if (a.window?.failAfterS !== undefined && a.window.failAfterS <= a.window.withinS) errors.push(`${at}/window/failAfterS: ${a.window.failAfterS} s must be greater than withinS ${a.window.withinS} s`);
+    if (a.preparation && a.window) errors.push(`${at}/window: a preparation step is recorded, never graded: it has no window`);
+    if (a.repeat && a.repeatWhile) errors.push(`${at}/repeat: an action has repeat or repeatWhile, not both`);
+    const iv = a.repeat?.intervalS;
+    if (iv && (iv.min ?? iv.value) === undefined) errors.push(`${at}/repeat/intervalS: a repeat needs its shortest interval (min or value)`);
     a.order?.after?.forEach((x, k) => action(x, `${at}/order/after/${k}`));
     a.order?.before?.forEach((x, k) => action(x, `${at}/order/before/${k}`));
     rule(a.repeatWhile?.rule, `${at}/repeatWhile/rule`);
@@ -241,7 +259,7 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
     else if ('any' in r) r.any.forEach((c, k) => display(c, `${path}/any/${k}`));
     else if ('not' in r) display(r.not, `${path}/not`);
   };
-  doc.judged?.forEach((j, i) => display(j.display, `/judged/${i}/display`));
+  for (const [r, path] of displayAnchors) display(r, path);
   doc.outcomes?.forEach((o, i) => {
     rule(o.rule, `/outcomes/${i}/rule`);
     anchor(o.anchor, `/outcomes/${i}/anchor`);

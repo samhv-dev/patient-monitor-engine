@@ -17,7 +17,6 @@ import { FOOT_NONE, mountBeginPane, type Way } from './begin.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { judge, pressAction, pressStep } from './press.ts';
 import { classify, classifyV2, liveGrades, NOT_AN_ACTION, type HoldLike, type LiveRow } from './rows.ts';
-import { historyOf } from './course.ts';
 import { stageNames } from './strip.ts';
 
 export const FOOT = 'No penalty comes from the panel. Consequences come from the physiology, and the debrief records overdue, out of order, failed and not done, each with the time and the order it was due.';
@@ -213,12 +212,12 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     offCard.hidden = !sv.doc && !free;
     later.hidden = true;
     setText(foot, sv.doc ? FOOT : FOOT_NONE);
-    if (v2 && stateId) { // a pme-scenario/2 card (F6): the phase's actions, the judged rows, the rules out of the phase
+    if (v2 && stateId) { // a pme-scenario/2 card (F6): the phase's actions (record actions among them), the rules out of the phase
       wrap.dataset.format = '2'; // the denser /2 rows (action.css): the MH card's Latent opens 11 actions
       const pr = link.host?.driver.phaseRunner ?? null;
       const board = classifyV2({
         doc: v2, phaseId: stateId, log: link.log, takings: pr?.takings ?? null, holds: pr?.vitalHolds() ?? null, paused: link.ctl.hostPaused,
-        grades: pr ? liveGrades(v2, pr, link.simT) : null, admin: pr?.admin ?? null, enteredT: sv.enteredT, history: sv.history,
+        grades: pr ? liveGrades(v2, pr, link.simT) : null, admin: pr?.admin ?? null, enteredT: sv.enteredT,
       });
       const rest = board.later ?? [];
       sync(list, pills, board.list, false, keyOf);
@@ -228,7 +227,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       later.hidden = !rest.length;
       setText(laterSummary, `Not due now · ${rest.length}`);
       setText(finSummary, `Finished steps · ${board.finished.length}`);
-      finished.hidden = !board.finished.length; // a /2 Finished holds the judged rows met: shown once one is
+      finished.hidden = !board.finished.length; // empty on /2 (judged rows are retired): hidden
       offCard.hidden = true;
       return;
     }
@@ -247,7 +246,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       return;
     }
     const board = classify({
-      doc, stateId, history: historyOf(link), enteredT: sv.enteredT, simT: link.simT, inState: sv.timeInState(link.simT),
+      doc, stateId, history: link.ctl.scenario.history, enteredT: sv.enteredT, simT: link.simT, inState: sv.timeInState(link.simT),
       paused: link.ctl.hostPaused, log: link.log, record: link.host?.record.data ?? null,
       values: link.ctl.state?.values as Partial<Record<string, number>> | undefined, holds: holdsOf(link), base,
     });

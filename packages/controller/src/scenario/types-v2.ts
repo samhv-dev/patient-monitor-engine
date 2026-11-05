@@ -29,7 +29,7 @@ export type PhaseRule =
   | { any: PhaseRule[] }
   | { not: PhaseRule };
 
-/** A rule on the displayed numerics (rank 2): a judged row's clock (§7). `phaseEntered` is true once the phase has been
+/** A rule on the displayed numerics (rank 2): an action window's `display` anchor (§7, F9). `phaseEntered` is true once the phase has been
  *  entered (its rule held through its hold): the clock starts at the phase's first entry, when the strip shows it. */
 export type DisplayRule =
   | { value: { var: VitalVar; op: Op; value: number; forS?: number } }
@@ -38,13 +38,16 @@ export type DisplayRule =
   | { any: DisplayRule[] }
   | { not: DisplayRule };
 
-/** Any rule of a card: a phase rule, or a judged row's display rule. */
+/** Any rule of a card: a phase rule, or a display rule. */
 export type AnyRule = PhaseRule | DisplayRule;
 
 /** Where a window starts: 'start', 'pulseLoss', 'rosc', `phase:<id>` (its entry), `action:<id>` (its first taking), or
  *  the first second a rule holds. */
 export type Anchor = 'start' | 'pulseLoss' | 'rosc' | `phase:${string}` | `action:${string}` | { rule: PhaseRule };
 
+/** An action window's anchor (plan F9): any Anchor; `each:action:<id>`, one window per taking of that action; or the
+ *  first second a rule on the displayed numerics (rank 2) holds; or the earliest of several anchors. */
+export type WindowAnchor = Anchor | `each:action:${string}` | { display: DisplayRule } | { first: Array<Anchor | { display: DisplayRule }> };
 /** A prescribed value and what is accepted: `value` (± `tolerance`) and/or a `min`/`max` range. */
 export interface Amount { value?: number; tolerance?: number; min?: number; max?: number }
 export interface Dose extends Amount { unit: string }
@@ -85,14 +88,22 @@ export interface Action extends C {
   give?: DocCommand[];
   /** false: offered and recorded, never graded (a setup action). Absent: graded. */
   graded?: false;
+  /** A preparation step (monitoring, lines; owner, 5 November): offered and recorded with its time, no verdict, never
+   *  graded. */
+  preparation?: true;
+  /** Provenance of the action's numbers: the source quoted and cited; never interpreted (plan F9). */
+  src?: string;
   drug?: DrugCriteria;
   device?: { kind: DeviceKind; settings: Settings };
   fluid?: { type?: string[]; volumeMl?: Amount; rateMlMin?: Amount };
   physical?: { measure: string; settings?: Settings };
   /** A decision is graded on its engine-visible effect. */
   effect?: Array<{ kind: DeviceKind; settings: Settings }>;
-  window?: { anchor: Anchor; withinS: number; notBeforeS?: number };
+  /** `failAfterS`: seconds from the anchor after which the action is failed even if done (owner, 5 November: CPR after
+   *  2 min of the pulse loss), > withinS. */
+  window?: { anchor: WindowAnchor; withinS: number; notBeforeS?: number; failAfterS?: number };
   order?: { after?: string[]; before?: string[] };
+  /** Unconditional repeat while one of the action's phases holds, each from the previous dose as given (owner, 5 Nov). */
   repeat?: { intervalS: Amount; maxCount?: number };
   /** Conditional repeat: again while the rule holds. */
   repeatWhile?: { rule: PhaseRule; intervalS: Amount };
@@ -116,7 +127,6 @@ export interface Phase extends C {
 }
 
 export interface Outcome extends C { id: string; text: string; rule: PhaseRule; anchor: Anchor; withinS: number }
-export interface Judged extends C { id: string; text: string; kind: 'recognition' | 'communication'; display?: DisplayRule }
 export interface ScriptEntry extends C {
   id: string;
   /** `phase:<id>` (its entry), `action:<id>#<n>` (the nth taking), or a scenario time. */
@@ -132,7 +142,6 @@ export interface ScenarioDocV2 extends Header {
   phases: Phase[];
   actions: Action[];
   outcomes?: Outcome[];
-  judged?: Judged[];
   script?: ScriptEntry[];
   /** #211's learner-facing Case briefing (the same shape as on /1; `briefingOf` reads either). */
   briefing?: { text: string; estimatedMinutes?: number; durationS?: number; lang?: 'en' | 'fa' };
@@ -144,8 +153,7 @@ export interface ScenarioDocV2 extends Header {
  *  initial phase). */
 export interface PhaseEntry { id: string; t: number; exitT?: number; rule: string }
 
-/** A true/false edge of a named rule (a phase rule, an anchor, a precondition, a conditional repeat, an outcome, a
- *  judged display rule): grade() reads these instead of the values' history. */
+/** A true/false edge of a named rule (a phase rule, an anchor, a precondition, a conditional repeat, an outcome): grade() reads these instead of the values' history. */
 export interface RuleEdge { rule: string; t: number; value: boolean }
 
 /** One clinical act as the driver saw it, accepted or refused (plan F3). F3 may only ADD fields. */
@@ -210,7 +218,7 @@ export interface PhaseRunnerState {
   enteredT: number;
   /** Engine truth (rank 3) by name, which every phase, outcome and anchor rule reads (Q22). */
   truth: Record<string, { v: number; t: number }>;
-  /** The displayed numerics (rank 2) by name, which only a judged row's clock reads (§7). */
+  /** The displayed numerics (rank 2) by name, which only a `display` window anchor reads (§7). */
   display: Record<string, { v: number; t: number }>;
   /** The rhythm id the engine draws; null until one arrives. */
   rhythm: string | null;

@@ -1,7 +1,7 @@
 // The scenario library: every `pme-scenario/1` document in packages/controller/scenarios (the five the scenario runner
 // bundles and the depth and neuromuscular cases the neuro model added), so a case a later stage adds appears without a
-// code change. A `pme-scenario/2` document (plan F1) is read for its header; its case details are its judged rows and
-// graded actions (F6). The library holds one /2 card (showcase-mh-v2, F8): `ScenarioCard`'s default type parameter
+// code change. A `pme-scenario/2` document (plan F1) is read for its header; its case details are its graded actions'
+// graded actions (F6). The library holds two /2 cards (showcase-mh-v2, F8; showcase-haemorrhage-v2, F9): `ScenarioCard`'s default type parameter
 // still says /1, so every reader of `doc` checks `isV2` first (F1's narrowing).
 import { isV2, type AnyScenarioDoc, type ScenarioDoc } from '@pme/controller';
 import type { Objective } from '@pme/controller/scenario';
@@ -44,13 +44,14 @@ export function cardOf<D extends AnyScenarioDoc>(doc: D): ScenarioCard<D> {
   };
 }
 
-/** A /2 card's case details (plan F6): its judged rows, then its graded actions' labels. */
+/** A /2 card's case details (plan F6): its graded actions' labels (a team act the instructor observes is a record action
+ *  among them: judged rows are retired, the owner's ruling of 5 November). */
 function v2Objectives(doc: Extract<AnyScenarioDoc, { schema: 'pme-scenario/2' }>): string[] {
-  return [...(doc.judged ?? []).map((j) => j.text), ...doc.actions.filter((a) => a.graded !== false).map((a) => a.label)];
+  return doc.actions.filter((a) => a.graded !== false && !a.preparation).map((a) => a.label);
 }
 
 /** The Showcase cards in the order of the demonstration's run sheet; every other group sorts by title. */
-export const SHOWCASE_ORDER: readonly string[] = ['showcase-induction', 'showcase-induction-premed', 'showcase-anaphylaxis', 'showcase-mh', 'showcase-mh-v2', 'showcase-tamponade', 'showcase-haemorrhage'];
+export const SHOWCASE_ORDER: readonly string[] = ['showcase-induction', 'showcase-induction-premed', 'showcase-anaphylaxis', 'showcase-mh', 'showcase-mh-v2', 'showcase-tamponade', 'showcase-haemorrhage', 'showcase-haemorrhage-v2'];
 
 export const LIBRARY: readonly ScenarioCard[] = Object.entries(FILES)
   .filter(([path]) => !path.endsWith('.schema.json'))

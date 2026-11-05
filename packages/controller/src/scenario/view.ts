@@ -41,6 +41,10 @@ export class ScenarioView {
         this.pausedTotal = 0;
         this.pausedAt = this.paused ? e.t : null;
       }
+      // the entry a load already put in (its initial state, at the load) is not entered twice: a late joiner's welcome
+      // event while the run is still in it says the same thing again
+      const last = this.history.at(-1);
+      if (e.transitionId === undefined && last && last.transitionId === undefined && last.stateId === e.stateId && last.t === e.t) return true;
       this.history = [...this.history.slice(-199), { t: e.t, stateId: e.stateId, ...(e.transitionId ? { transitionId: e.transitionId } : {}) }];
       return true;
     }
@@ -49,14 +53,19 @@ export class ScenarioView {
     if (c?.type !== 'scenario') return false;
     const t = e.tick * TICK_S;
     if (c.action === 'load' && c.doc && typeof c.doc === 'object') {
+      // a late joiner's sticky replay is stamped with the join's tick; the load's own is its `atTick` (host-session.ts)
+      const at = (c.atTick ?? e.tick) * TICK_S;
       this.doc = c.doc as AnyScenarioDoc;
       this.docVersion++;
       this.stateId = isV2(this.doc) ? ((this.doc.phases.find((p) => p.initial) ?? this.doc.phases[0])?.id ?? null) : this.doc.initialState;
-      this.enteredT = t;
+      this.enteredT = at;
       this.paused = false;
       this.pausedAt = null;
       this.pausedTotal = 0;
-      this.history = [];
+      // the run's course starts here, in its initial stage (E141). The load's own `scenario` event for it came before
+      // this commandApplied (the driver publishes it while it starts the runner), so it is put back, at the load, as
+      // the host runner's history has it; without it every reader of the history began at the first transition
+      this.history = this.stateId === null ? [] : [{ t: at, stateId: this.stateId }];
       return true;
     }
     // FX-12: a restore brings the case its mark holds (the state comes with the `scenario` event before it): another
