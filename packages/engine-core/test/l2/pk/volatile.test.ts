@@ -60,3 +60,8 @@ describe('volatile uptake (decision 9)', () => {
     expect(s.fa).toBeLessThan(0.01);
   });
 });
+
+// The "not modelled" register (plan F5.3; the 18:00 ruling): the MH card's trigger-off step names the filters.
+describe('not modelled: the activated charcoal filter', () => {
+  it.todo('the activated charcoal filter on the circuit removes the agent from the inspired gas: not modelled, the agent washes out through the vaporiser at 0 % and the fresh gas only');
+});

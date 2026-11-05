@@ -104,6 +104,9 @@ export interface DrugPanelRow {
 
 /** A dose above the row's documented maximum (`DrugRow.maxDose`) — the dose is still given, as ordered. */
 export type DrugWarningEvent = { type: 'drugWarning'; t: SimSeconds; drugId: string; text: string };
+/** A dose by a modelled non-IV route that has a local effect (`DrugRow.routeModels`): what it does at the site, with its
+ * source. Raised once per dose; nothing on the monitor follows from it. */
+export type DrugLocalEffectEvent = { type: 'drugLocalEffect'; t: SimSeconds; drugId: string; route: PkRoute; amount: number; amountUnit: string; text: string; src: string };
 
 export type DrugsEvent = {
   type: 'drugs'; t: SimSeconds;
