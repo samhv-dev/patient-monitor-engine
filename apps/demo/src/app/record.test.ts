@@ -309,7 +309,7 @@ describe('the run record', () => {
     pr.admin.push({ seq: 1, t: 30.5, source: 'action', actionId: 'premedicate', kind: 'drug', drugId: 'midazolam', dose: 2, unit: 'mg', route: 'iv', result: { accepted: true } });
     r.engine(meas(30.5, 99)); // the second's sample: the copy goes with it
     expect(r.data.admin).toHaveLength(1);
-    pr.edges.push({ rule: 'judged:nameMh', t: 40, value: true });
+    pr.edges.push({ rule: 'action:callCrisis:anchor', t: 40, value: true });
     r.engine(meas(40.2, 99));
     pr.phases[0]!.exitT = 60; // the runner closes the entry in place: the copy is not a reference to it
     pr.phases.push({ id: 'latent', t: 60, rule: 'enter:latent' });

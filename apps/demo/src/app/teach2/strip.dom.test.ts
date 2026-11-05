@@ -324,7 +324,7 @@ describe('stage strip: the status line while a Case briefing runs', () => {
     const h: { cur: B; ended: number; record: unknown; onBriefing(fn: (b: unknown) => void): () => void; endBriefing(): void; set(b: B): void; start(): void; fns: typeof fns } = {
       cur: null,
       ended: 0,
-      record: { data: { rows: [] } }, // the run record course.ts reads: its initial state at 0
+      record: { data: { rows: [] } }, // an empty run record
       onBriefing: (fn: (b: unknown) => void) => (fns.add(fn), fn(h.cur), () => void fns.delete(fn)),
       endBriefing: () => (h.ended++, h.set(null)),
       set: (b) => ((h.cur = b), fns.forEach((fn) => fn(b))),

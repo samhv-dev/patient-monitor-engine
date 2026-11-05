@@ -39,7 +39,11 @@ const fullV2 = () => {
     { id: 'intubate', label: 'Intubate', kind: 'procedure', phases: ['baseline'], window: { anchor: 'start', withinS: 600 } },
   );
   d.outcomes = [{ id: 'etco2Down', text: 'EtCO₂ below 40 within 10 min of the first dantrolene dose', rule: { value: { var: 'etco2', op: '<', value: 40 } }, anchor: 'action:dantrolene', withinS: 600 }];
-  d.judged = [{ id: 'nameMh', text: 'Names MH from the monitor', kind: 'recognition', display: { value: { var: 'etco2', op: '>', value: 45 } } }, { id: 'brief', text: 'Briefs the team', kind: 'communication' }];
+  // a team act the instructor observes is a record action (the owner's ruling of 5 November): timed, or recorded-not-timed
+  d.actions.push(
+    { id: 'nameMh', label: 'Names MH from the monitor', kind: 'communication', phases: ['early'], window: { anchor: { display: { value: { var: 'etco2', op: '>', value: 45 } } }, withinS: 120 } },
+    { id: 'brief', label: 'Briefs the team', kind: 'communication', phases: ['early'] },
+  );
   d.script = [
     { id: 'vf', on: 'phase:arrest', commands: [{ type: 'setRhythm', rhythm: 'vfCoarse' }] },
     { id: 'bleed', on: { atScenarioS: 0 }, commands: [{ type: 'applyEvent', event: { kind: 'bleed', volumeMl: 2500, overS: 600 } }] },
@@ -104,15 +108,38 @@ describe('pme-scenario/2: the shape rules, each with its path', () => {
     ['a malformed anchor', (d: any) => (d.actions[0].window.anchor = 'phase early'), '/actions/0/window/anchor: must match pattern'],
     ['an outcome without withinS', (d: any) => (d.outcomes = [{ id: 'o', text: 'x', rule: { value: { var: 'etco2', op: '<', value: 40 } }, anchor: 'start' }]), '/outcomes/0: missing required property "withinS"'],
     ['an outcome on a displayed value', (d: any) => (d.outcomes = [{ id: 'o', text: 'x', rule: { value: { var: 'abpMean', op: '>', value: 65 } }, anchor: 'start', withinS: 60 }]), '/outcomes/0/rule/value/var: must be one of'],
-    ['an unknown judged kind', (d: any) => (d.judged = [{ id: 'j', text: 'x', kind: 'technical' }]), '/judged/0/kind: must be one of "recognition", "communication"'],
-    ['a display rule with two leaves', (d: any) => (d.judged = [{ id: 'j', text: 'x', kind: 'recognition', display: { phaseEntered: 'early', value: { var: 'etco2', op: '>', value: 45 } } }]), '/judged/0/display: a display rule must have exactly one of value, phaseEntered, all, any, not'],
-    ['a judged clock on a manual press', (d: any) => (d.judged = [{ id: 'j', text: 'x', kind: 'recognition', display: { manual: { label: 'x' } } }]), '/judged/0/display: unexpected property "manual"'],
+    ['a display rule with two leaves', (d: any) => (d.actions[0].window.anchor = { display: { phaseEntered: 'early', value: { var: 'etco2', op: '>', value: 45 } } }), '/actions/0/window/anchor/display: a display rule must have exactly one of value, phaseEntered, all, any, not'],
+    ['a display anchor on a manual press', (d: any) => (d.actions[0].window.anchor = { display: { manual: { label: 'x' } } }), '/actions/0/window/anchor/display: unexpected property "manual"'],
     ['a malformed script anchor', (d: any) => (d.script = [{ id: 's', on: 'action:dantrolene', commands: [{ type: 'setRhythm', rhythm: 'sinus' }] }]), '/script/0/on: must match pattern'],
     ['a script entry with no commands', (d: any) => (d.script = [{ id: 's', on: 'phase:early', commands: [] }]), '/script/0/commands: must NOT have fewer than 1 items'],
   ])('rejects %s', (_name, mutate, message) => {
     const d = minimalV2();
     mutate(d);
     expect(errs(d).some((e) => e.startsWith(message)), errs(d).join('\n')).toBe(true);
+  });
+});
+
+describe('pme-scenario/2: judged rows are retired (the owner\'s ruling of 5 November)', () => {
+  // every row is an automatic row or an action: a team act the instructor observes is a `record` action (a
+  // communication, procedure or sample action with no give), timed when the card says so, recorded-not-timed otherwise
+  const RETIRED = '/judged: judged rows are retired (owner, 5 November): write each as a record action in "actions" (kind "communication" with no give; a window when the card times it, none when it is recorded, not timed)';
+  it.each([
+    ['a recognition row with a display clock', [{ id: 'nameMh', text: 'Names MH from the monitor', kind: 'recognition', display: { phaseEntered: 'early' } }]],
+    ['a communication row with no clock', [{ id: 'brief', text: 'Briefs the team', kind: 'communication' }]],
+    ['an empty list', []],
+  ])('rejects a card that still declares one (%s), with the one plain message naming the replacement', (_name, judged) => {
+    const d: any = minimalV2();
+    d.judged = judged;
+    expect(errs(d)).toEqual([RETIRED]);
+  });
+  it('the replacement validates: a timed record action (a window from a phase\'s entry or a display rule) and an untimed one', () => {
+    const d: any = minimalV2();
+    d.actions.push(
+      { id: 'nameMh', label: 'Names MH from the monitor', kind: 'communication', phases: ['early'], window: { anchor: 'phase:early', withinS: 120 } },
+      { id: 'nameMh2', label: 'Names MH (display clock)', kind: 'communication', phases: ['early'], window: { anchor: { display: { phaseEntered: 'early' } }, withinS: 120 } },
+      { id: 'closedLoop', label: 'Closed-loop communication was used', kind: 'communication', phases: ['early'] },
+    );
+    expect(validateScenario(d)).toMatchObject({ ok: true, warnings: [] });
   });
 });
 
@@ -141,9 +168,8 @@ describe('pme-scenario/2: the cross-checks (§8.4), each with its path', () => {
     ['a contraindication in a missing phase', (d: any) => (d.actions[0].contraindications = [{ text: 'x', match: { route: ['im'] }, inPhases: ['q'] }]), '/actions/0/contraindications/0/inPhases/0: no phase "q"'],
     ['an outcome anchored on a missing action', (d: any) => (d.outcomes = [{ id: 'o', text: 'x', rule: { value: { var: 'etco2', op: '<', value: 40 } }, anchor: 'action:q', withinS: 60 }]), '/outcomes/0/anchor: no action "q"'],
     ['a duplicate outcome id', (d: any) => (d.outcomes = [0, 1].map(() => ({ id: 'o', text: 'x', rule: { signal: 'rosc' }, anchor: 'start', withinS: 60 }))), '/outcomes/1/id: duplicate outcome id "o"'],
-    ['a duplicate judged id', (d: any) => (d.judged = [0, 1].map(() => ({ id: 'j', text: 'x', kind: 'recognition' }))), '/judged/1/id: duplicate judged id "j"'],
-    ['a judged clock on a phase that does not exist', (d: any) => (d.judged = [{ id: 'j', text: 'x', kind: 'recognition', display: { phaseEntered: 'q' } }]), '/judged/0/display/phaseEntered: no phase "q"'],
-    ['a judged clock on the initial phase (no entry rule)', (d: any) => (d.judged = [{ id: 'j', text: 'x', kind: 'recognition', display: { any: [{ phaseEntered: 'baseline' }] } }]), '/judged/0/display/any/0/phaseEntered: the phase "baseline" has no entry rule'],
+    ['a display anchor on a phase that does not exist', (d: any) => (d.actions[0].window.anchor = { display: { phaseEntered: 'q' } }), '/actions/0/window/anchor/display/phaseEntered: no phase "q"'],
+    ['a display anchor on the initial phase (no entry rule)', (d: any) => (d.actions[0].window.anchor = { display: { any: [{ phaseEntered: 'baseline' }] } }), '/actions/0/window/anchor/display/any/0/phaseEntered: the phase "baseline" has no entry rule'],
     ['a script entry on a missing phase', (d: any) => (d.script = [{ id: 's', on: 'phase:q', commands: [{ type: 'setRhythm', rhythm: 'sinus' }] }]), '/script/0/on: no phase "q"'],
     ['a script entry on a missing action', (d: any) => (d.script = [{ id: 's', on: 'action:q#1', commands: [{ type: 'setRhythm', rhythm: 'sinus' }] }]), '/script/0/on: no action "q"'],
     ['a duplicate script id', (d: any) => (d.script = [0, 1].map(() => ({ id: 's', on: { atScenarioS: 1 }, commands: [{ type: 'setRhythm', rhythm: 'sinus' }] }))), '/script/1/id: duplicate script id "s"'],
@@ -222,5 +248,39 @@ describe('pme-scenario/2: a judged route the engine does not model is a warning 
     const before = validateScenario(one);
     one.states[0].onEnter = [...(one.states[0].onEnter ?? []), { type: 'applyEvent', event: { kind: 'drug', drugId: 'dantrolene', dose: 2.5, unit: 'mg/kg', route: 'im' } }];
     expect(validateScenario(one)).toEqual({ ...before, doc: one });
+  });
+});
+
+// Plan F9 (the owner's rulings of 5 November): a window's fail limit and a preparation step; both additive.
+describe('pme-scenario/2: failAfterS and preparation (plan F9)', () => {
+  const withAction = (a: object) => {
+    const d = minimalV2() as any;
+    d.actions.push({ id: 'y', label: 'Y', kind: 'procedure', phases: [d.phases[0].id], ...a });
+    return d;
+  };
+  it('accepts a window with failAfterS greater than withinS, a preparation step without a window, and an action\'s src', () => {
+    for (const a of [{ window: { anchor: 'start', withinS: 30, failAfterS: 120 } }, { preparation: true }, { src: 'Miller 10e Ch82 p.7: "1 breath every 6 seconds"' }]) {
+      const r = validateScenario(withAction(a));
+      expect(r.ok ? [] : r.errors).toEqual([]);
+    }
+  });
+  it('accepts an each:action anchor and a first-of anchor; refuses an unknown action, a single-member first, failAfterS with each', () => {
+    for (const a of [{ window: { anchor: 'each:action:y', withinS: 10 } }, { window: { anchor: { first: ['pulseLoss', { rule: { value: { var: 'sbp', op: '<', value: 50, forS: 10 } } }] }, withinS: 30 } },
+      { window: { anchor: { first: ['pulseLoss', { display: { all: [{ value: { var: 'abpSys', op: '<', value: 40, forS: 30 } }, { value: { var: 'etco2', op: '<', value: 25 } }] } }] }, withinS: 30 } },
+      { window: { anchor: { display: { value: { var: 'nibpSys', op: '<', value: 50, forS: 30 } } }, withinS: 30 } }]) {
+      const r = validateScenario(withAction(a));
+      expect(r.ok ? [] : r.errors).toEqual([]);
+    }
+    expect(errs(withAction({ window: { anchor: 'each:action:nope', withinS: 10 } }))).toContain('/actions/1/window/anchor: no action "nope"');
+    expect(errs(withAction({ window: { anchor: { first: ['pulseLoss'] }, withinS: 10 } })).length).toBeGreaterThan(0);
+    expect(errs(withAction({ window: { anchor: 'each:action:y', withinS: 10, failAfterS: 20 } }))).toContain('/actions/1/window/failAfterS: not with an each:action anchor');
+  });
+  it('refuses failAfterS not past withinS, a preparation step with a window, preparation other than true, repeat with repeatWhile', () => {
+    expect(errs(withAction({ window: { anchor: 'start', withinS: 30, failAfterS: 30 } }))).toContain('/actions/1/window/failAfterS: 30 s must be greater than withinS 30 s');
+    expect(errs(withAction({ preparation: true, window: { anchor: 'start', withinS: 30 } }))).toContain('/actions/1/window: a preparation step is recorded, never graded: it has no window');
+    expect(errs(withAction({ preparation: false })).join(' ')).toMatch(/preparation/);
+    expect(errs(withAction({ src: '' })).join(' ')).toMatch(/src/);
+    expect(errs(withAction({ repeat: { intervalS: { min: 1 } }, repeatWhile: { rule: { signal: 'rosc' }, intervalS: { min: 1 } } }))).toContain('/actions/1/repeat: an action has repeat or repeatWhile, not both');
+    expect(errs(withAction({ repeat: { intervalS: { max: 300 } } }))).toContain('/actions/1/repeat/intervalS: a repeat needs its shortest interval (min or value)');
   });
 });
