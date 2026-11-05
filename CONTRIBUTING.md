@@ -17,6 +17,8 @@ pnpm build && pnpm check-notices && pnpm check-licences && pnpm check-size
 pnpm test:e2e                                      # Playwright; PW_SYSTEM_CHROME=1 uses your installed Chrome
 ```
 
+A pull request that changes only documents (`docs/`, a root `*.md`, `CITATION.cff`) runs one CI job, `docs`: the unit tests that read a document (`scripts/ci/docs-tests.mjs`), `check-notices` and `check-licences`.
+
 ## Rules that CI or review enforce
 
 1. **One piece of work per pull request**, described in the PR template (including "Sources consulted").
