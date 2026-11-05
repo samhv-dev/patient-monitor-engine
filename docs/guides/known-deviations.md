@@ -16,7 +16,7 @@ as `(cond ? it.fails : it)(…)`, nor the lung-signature `KNOWN` list; those are
 
 On this tree there are **158 expected-failure calls**, all read by the lister: 157 `it.fails` (the bronchospasm row of
 `packages/ventilator/test/link-parity.test.ts` is a literal `it.fails`) and 1 `it.fails.each` with three cases
-(`packages/engine-core/test/engine/fidelity-arrest.test.ts`), and **1 skipped test**. "Tracked in" names the gate note (and its section)
+(`packages/engine-core/test/engine/fidelity-arrest.test.ts`), and **6 skipped tests** (1 skipped test and 5 `.todo` entries: the harms and the device the scenario format declares "not modelled", and epinephrine IM). "Tracked in" names the gate note (and its section)
 that records the miss with its number; the open questions it cites (Q…, R-…, E-…) are listed in that note.
 
 ## Tests that record a miss (`it.fails`, and `test.fail` in the browser tests)
@@ -186,6 +186,11 @@ Behaviour that has a test title but no running test yet: each is a known gap, no
 | Test file | What is not tested yet (test title, verbatim) | Tracked in |
 |---|---|---|
 | `packages/engine-core/test/l2/circ/lvad.test.ts` | VA-ECMO pulsatility fades with flow fraction (tables §8.5) — awaits the bypass-device model | Not tracked: no stage owns ECMO and the 'Stage 7h' in the title does not exist; VA-ECMO pulsatility versus flow fraction is untested (the LVAD/VA-ECMO interface came with `docs/gates/stage-7a.md`). |
+| `packages/engine-core/test/l2/pk/route-models.test.ts` | IM dantrolene: the tissue injury at the injection site is an event only; the injury itself is not modelled | `docs/roadmap/v1.0-remaining.md`, the row "IM dantrolene's local harm (scenario format piece F5.3)"; the plan's answer to Q7 (`docs/plans/scenario-format-v2-plan.md`, "Answers") |
+| `packages/engine-core/test/l2/pk/route-models.test.ts` | IM dantrolene: the creatine kinase rise from the injured muscle is not modelled | `docs/roadmap/v1.0-remaining.md`, the row "IM dantrolene's local harm (scenario format piece F5.3)"; the plan's answer to Q7 (`docs/plans/scenario-format-v2-plan.md`, "Answers") |
+| `packages/engine-core/test/l2/pk/route-models.test.ts` | IM dantrolene: the potassium released from the injured muscle is not modelled | `docs/roadmap/v1.0-remaining.md`, the row "IM dantrolene's local harm (scenario format piece F5.3)"; the plan's answer to Q7 (`docs/plans/scenario-format-v2-plan.md`, "Answers") |
+| `packages/engine-core/test/l2/pk/route-models.test.ts` | epinephrine IM: route not modelled until a PK source states its bioavailability F and absorption rate ka | `docs/roadmap/v1.0-remaining.md`, the row "Routes other than IV beyond IM dantrolene (scenario format piece F5.2)"; `docs/plans/scenario-format-v2-plan.md`, "F5.2 the route models" |
+| `packages/engine-core/test/l2/pk/volatile.test.ts` | the activated charcoal filter on the circuit removes the agent from the inspired gas: not modelled, the agent washes out through the vaporiser at 0 % and the fresh gas only | `docs/roadmap/v1.0-remaining.md`, the row "Charcoal filter (E137)" (the owner's ruling of 2026-10-29 18:00); `docs/plans/scenario-format-v2-plan.md`, Q26 |
 
 ## Lung-condition signatures outside their band (allow-list, not `it.fails`)
 
