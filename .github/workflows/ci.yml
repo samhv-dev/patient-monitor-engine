@@ -83,9 +83,7 @@ jobs:
           sort showcase-a.txt showcase-b.txt | uniq -d > both.txt
           if [ -s both.txt ]; then echo "in both showcase halves:"; cat both.txt; exit 1; fi
           sort -u showcase-a.txt showcase-b.txt | diff showcase.txt -
-      - run: pnpm test
-        env:
-          PME_TEST_SET: fast # the slow engine set runs in the test-slow job
+      # The unit tests run in the `unit` job (three runners, no dependency order); this job keeps the checks.
       # The tick benchmark, alone on the runner (the fast set leaves it out): inside `pnpm test` the other suites' load
       # pushed its p50 over 6 ms with the engine unchanged. `vitest run` without --passWithNoTests, so a set that
       # matches no file fails instead of passing empty.
@@ -103,6 +101,36 @@ jobs:
       # kit check let every kit from 51a37063 to 56f3761f ship a relay that exited at the first client frame)
       - name: kit classroom relay smoke test
         run: node scripts/showcase/make-bundle.mjs "$RUNNER_TEMP/kit" > "$RUNNER_TEMP/kit-build.log" && node scripts/showcase/check-relay.mjs "$RUNNER_TEMP/kit"
+
+  # The unit tests (the fast set; the slow engine set and the showcase cards are in test-slow), in three parallel jobs:
+  # `pnpm -r test` ran the packages in dependency order (engine-core → controller → validation → demo, ≈ 31–43 min),
+  # though every test runs from source and none needs another package's tests first (research/42 §1.2, §1.4 d3).
+  unit:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [controller, ventilator, rest]
+    name: unit (${{ matrix.part }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PME_TEST_SET: fast
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @pme/controller test
+        if: matrix.part == 'controller'
+      - run: pnpm --filter @pme/ventilator test
+        if: matrix.part == 'ventilator'
+      - run: pnpm -r --no-sort --filter '!@pme/controller' --filter '!@pme/ventilator' test # audio, skins, engine-core, renderer, validation, demo
+        if: matrix.part == 'rest'
 
   # fix-ci-webkit-3: the renderer IIFE is built once, here, and shared: the e2e jobs need only it (iife-smoke.html loads
   # it from file://; every other e2e page runs on a Vite dev server from source), so they start without waiting for the
