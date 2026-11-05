@@ -21,7 +21,16 @@ export async function pressAction(link: Link, action: Action): Promise<void> {
     const { $comment: _drop, ...cmd } = c as typeof c & { $comment?: string };
     return { ...cmd, actionId: action.id } as unknown as CommandInput;
   });
-  if (!cmds.length) return void toast(`${action.label}: nothing to give from this row; use a sheet.`);
+  if (!cmds.length) {
+    // Q19 (plan F9): a procedure, sample or communication with nothing for the engine (call for help) is recorded, with
+    // its time, by the scenario `record` command on the host
+    if (action.kind === 'procedure' || action.kind === 'sample' || action.kind === 'communication') {
+      const r = await link.send({ type: 'scenario', action: 'record', target: action.id } as CommandInput);
+      if (!r.accepted) toast(`${action.label}: not recorded (${r.reason ?? 'refused'}).`);
+      return;
+    }
+    return void toast(`${action.label}: nothing to give from this row; use a sheet.`);
+  }
   await link.sendBatch(cmds);
 }
 
