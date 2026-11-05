@@ -116,10 +116,12 @@ other lacks. From reading the code, the set is expected to be:
 | Family | Allowed | Reason |
 |---|---|---|
 | `time` | `pause`, `resume`, `scale` (0.25 to 8), `jump` (0 to 600 s) | the session bar, the v2 header, the Fast forward box, Space |
-| `scenario` | `trigger`, `goto`, `bookmark` (kind `good`, `bad`, `discuss`, or none), `restoreBookmark` | steps, the strip's jump and return, marks, the bookmark list |
-| `applyEvent` | every `ClinicalEvent` kind the Drug, Airway, Defib · CPR, Vitals and Devices bodies send | the sheets and today's tabs |
+| `scenario` | `trigger`, `goto`, `bookmark` (kind `good`, `bad`, `discuss`, or none), `restoreBookmark`, `pause`, `resume` | steps, the strip's jump and return, marks, the bookmark list; `pause` / `resume`: today's Scenario tab's Hold the timer (Instructor v2 has no such button) |
+| `applyEvent` | every `ClinicalEvent` kind the Drug, Airway, Defib · CPR, Vitals, Devices and Patient bodies send | the sheets and today's tabs |
 | engine | `device`, `setTarget`, `pin`, `release`, `setRhythm`, `setMode`, `attachSensor` | the Vitals, Devices and Patient bodies, the alarm keys |
 | `note` (new, §6) | `kind: 'note' \| 'marker'`, text of at most 500 characters | what the laptop writes locally today: a judged objective, a note |
+
+*§2 amended 2026-10-30 after P0's census: `scenario pause` / `resume` and the Patient body's `applyEvent` (`condition`) were measured and are allowed; the set is the union of what the two laptop views send.*
 
 Refused for the instructor, each with its reason in the ack:
 - `scenario load`: "Load the case on the instructor's computer." The laptop's Load is more than the wire command:
@@ -127,8 +129,7 @@ Refused for the instructor, each with its reason in the ack:
   sees a `loadScenario` call, not a send). A `load` from a remote starts the runner on the old body. That is a defect of today's Remote too (`panel/scenario.ts` `load`
   without `c.loadScenario`).
 - `bookmark` with kind `stage`: that mark is the driver's own.
-- `scenario pause` / `resume`, `setFactor`, `setModifiers`, `externalDrive`, `time step`: no Instructor view sends
-  them. `externalDrive` is the Ventilator view's frames.
+- `setFactor`, `setModifiers`, `externalDrive`, `time step`: no Instructor view sends them. `externalDrive` is the Ventilator view's frames.
 - Patient restart, the skin, sound, the Ventilator view, the Debrief page and its export are host-document actions,
   not commands. They stay on the laptop.
 
