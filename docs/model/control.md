@@ -266,7 +266,7 @@ None recorded.
 
 ## Tests
 
-404 tests in 73 files; 0 expected failures, 0 skipped.
+405 tests in 73 files; 0 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
