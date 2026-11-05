@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
 
+# A PR's run of an older head stops when the branch gets a newer push; main's runs never cancel (research/42 §1.4 d1).
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.head_ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
