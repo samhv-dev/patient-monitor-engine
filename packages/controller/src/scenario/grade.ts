@@ -344,8 +344,9 @@ export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: 
         }
         const g = next.a.t;
         const r: Row & { n: number } = { n, grade: g <= end + EPS ? 'met' : 'overdue', lines: [], devs: [], dueT: due, windowS: hi - lo, givenT: g };
-        if (g < due - EPS) r.devs.push(`interval ${n2(g - prev)} s, ${asked(rp.intervalS)} s asked`);
-        else if (g > end + EPS) r.lines.push(`interval ${n2(g - prev)} s, ${asked(rp.intervalS)} s asked`);
+        const iv = rp.intervalS.value !== undefined && rp.intervalS.tolerance ? `${n2(rp.intervalS.value)} ± ${n2(rp.intervalS.tolerance)}` : asked(rp.intervalS);
+        if (g < due - EPS) r.devs.push(`interval ${n2(g - prev)} s, ${iv} s asked`);
+        else if (g > end + EPS) r.lines.push(`interval ${n2(g - prev)} s, ${iv} s asked`);
         r.devs.push(...deviations(act, next.a, next.id, w));
         if (r.grade === 'met' && r.devs.length) r.grade = 'deviation';
         repeats.push(r);

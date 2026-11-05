@@ -310,6 +310,8 @@ describe('grade(): the owner\'s rulings of 5 November (plan F9)', () => {
   it('repeat: value ± tolerance as the interval (a rhythm check every 120 s)', () => {
     const chk = grade(card([{ ...EPI, repeat: { intervalS: { value: 120 } } }]), ph(), [epi(150), epi(270), epi(398)], [], 400, { final: true }).actions[0] as ActionGrade;
     expect(chk.repeats.slice(0, 2)).toMatchObject([{ grade: 'met' }, { grade: 'overdue', lines: ['interval 128 s, 120 s asked'] }]);
+    const tol = grade(card([{ ...EPI, repeat: { intervalS: { value: 120, tolerance: 10 } } }]), ph(), [epi(150), epi(275), epi(407)], [], 500, { final: true }).actions[0] as ActionGrade;
+    expect(tol.repeats.slice(0, 2)).toMatchObject([{ grade: 'met' }, { grade: 'overdue', lines: ['interval 132 s, 120 ± 10 s asked'] }]);
   });
 
   it('preparation: recorded, never graded (left out of the grades like graded: false)', () => {
