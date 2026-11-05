@@ -392,6 +392,8 @@ No exported `…State` type in this module.
 | `ago` | [`apps/demo/src/app/room-status.ts`](../../apps/demo/src/app/room-status.ts) | "now", "12 s ago", "3 min ago", "1 h ago". |
 | `onRoute` | [`apps/demo/src/app/router.ts`](../../apps/demo/src/app/router.ts) | Calls `fn` now and on every hash change; |
 | `storyOf` | [`apps/demo/src/app/scenario-meta.ts`](../../apps/demo/src/app/scenario-meta.ts) | Card fallback for a document without meta: |
+| `keepImported` | [`apps/demo/src/app/scenarios.ts`](../../apps/demo/src/app/scenarios.ts) | Keep a validated document as an imported card; |
+| `removeImported` | [`apps/demo/src/app/scenarios.ts`](../../apps/demo/src/app/scenarios.ts) | Remove an imported card; |
 | `applySkinAlarmColours` | [`apps/demo/src/app/shell.ts`](../../apps/demo/src/app/shell.ts) | Mirror the active skin's alarm colours AND priority marks into the shell (brief §6.2: |
 | `skinAlarmBar` | [`apps/demo/src/app/shell.ts`](../../apps/demo/src/app/shell.ts) | The active skin's message-bar colours (L1–L3), or null for an unknown skin. |
 | `skinAlwaysOn` | [`apps/demo/src/app/shell.ts`](../../apps/demo/src/app/shell.ts) | What the skin (and its preset) says still alarms with every limit group off. |
@@ -405,6 +407,7 @@ No exported `…State` type in this module.
 | `mount` | [`apps/demo/src/app/teach2/action.ts`](../../apps/demo/src/app/teach2/action.ts) | Mount this slot into `el` (the fixed slot signature, teach2/ctx.ts). |
 | `defaultPatient` | [`apps/demo/src/app/teach2/begin.ts`](../../apps/demo/src/app/teach2/begin.ts) | The default patient as the board writes it: |
 | `caseList` | [`apps/demo/src/app/teach2/begin.ts`](../../apps/demo/src/app/teach2/begin.ts) | The library's cards in the library's order: |
+| `openCardFile` | [`apps/demo/src/app/teach2/begin.ts`](../../apps/demo/src/app/teach2/begin.ts) | One card file: |
 | `mountBeginPane` | [`apps/demo/src/app/teach2/begin.ts`](../../apps/demo/src/app/teach2/begin.ts) | ACTION with no case: |
 | `enteredWords` | [`apps/demo/src/app/teach2/cue.ts`](../../apps/demo/src/app/teach2/cue.ts) | How the stage was entered, in words (answer 4). |
 | `byOf` | [`apps/demo/src/app/teach2/cue.ts`](../../apps/demo/src/app/teach2/cue.ts) | The record's `by` for the state row of `entry`: |
@@ -853,6 +856,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mou
 | [`apps/demo/e2e/skins-page.e2e.ts`](../../apps/demo/e2e/skins-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/sound-toggle.e2e.ts`](../../apps/demo/e2e/sound-toggle.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-fit.e2e.ts`](../../apps/demo/e2e/teach2-fit.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/teach2-import-card.e2e.ts`](../../apps/demo/e2e/teach2-import-card.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-keys.e2e.ts`](../../apps/demo/e2e/teach2-keys.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-mh-v2.e2e.ts`](../../apps/demo/e2e/teach2-mh-v2.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-rail-lines.e2e.ts`](../../apps/demo/e2e/teach2-rail-lines.e2e.ts) | 0 | 0 |
@@ -891,6 +895,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mou
 | [`apps/demo/src/app/glossary.test.ts`](../../apps/demo/src/app/glossary.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/hidden-tab.test.ts`](../../apps/demo/src/app/hidden-tab.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/host-guard.dom.test.ts`](../../apps/demo/src/app/host-guard.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/imported.dom.test.ts`](../../apps/demo/src/app/imported.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/instructor-choice.dom.test.ts`](../../apps/demo/src/app/instructor-choice.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-timeline.test.ts`](../../apps/demo/src/app/link-timeline.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/meters.test.ts`](../../apps/demo/src/app/meters.test.ts) | 0 | 0 |
@@ -936,6 +941,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mou
 | [`apps/demo/src/app/teach2/finish.dom.test.ts`](../../apps/demo/src/app/teach2/finish.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/finished.dom.test.ts`](../../apps/demo/src/app/teach2/finished.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/header.dom.test.ts`](../../apps/demo/src/app/teach2/header.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/teach2/import-card.dom.test.ts`](../../apps/demo/src/app/teach2/import-card.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/integration.dom.test.ts`](../../apps/demo/src/app/teach2/integration.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/judged-offer.dom.test.ts`](../../apps/demo/src/app/teach2/judged-offer.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/keys.dom.test.ts`](../../apps/demo/src/app/teach2/keys.dom.test.ts) | 0 | 0 |
