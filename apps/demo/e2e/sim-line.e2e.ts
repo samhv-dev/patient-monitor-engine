@@ -36,11 +36,22 @@ const where = (p: Page) =>
     };
   }, LINE);
 const hostBox = (p: Page) => p.locator('.stage > .monitor-host').boundingBox();
-/** Go to a route and wait until the shell shows it (a loaded CI WebKit runner took over 5 s once, run 40320503647). */
+/**
+ * Go to a route and wait until the shell shows it (a loaded CI WebKit runner took over 5 s once, run 40320503647), then
+ * until a frame has been drawn on it. The route switch resizes the monitor's host at once, but the monitor learns its
+ * new height from a ResizeObserver, which delivers in the next rendering update (after layout, before paint) and only
+ * then sets `--pme-h`, the height the two-row header's rows scale with. A box read before that frame is a forced layout
+ * of a state never painted: the Teach view's host with the Monitor view's header (main 46fbf1b3, run 41917194127,
+ * Chromium attempt 1: 68.203125 px, the header sized for the Monitor view's taller monitor, instead of the Teach view's
+ * 63.59375; a read made right after the switch, before any frame, gives exactly 68.203125 on this Mac, and one frame
+ * later 63.59375). On a loaded runner the reads land in that gap more often; the second animation frame callback runs
+ * after the first frame's ResizeObserver step.
+ */
 async function go(p: Page, hash: string): Promise<void> {
   await p.evaluate((h) => (location.hash = h), hash);
   const id = hash.replace(/^#\/?/, '').split('/')[0] || 'home';
   await p.waitForFunction((r) => document.querySelector('.app')?.getAttribute('data-route') === r, id, { timeout: 15_000 });
+  await p.evaluate(() => new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done()))));
 }
 async function classroom(): Promise<string> {
   const dir = mkdtempSync(join(tmpdir(), 'sim-'));
@@ -51,6 +62,10 @@ async function classroom(): Promise<string> {
 
 test('the line is on the Monitor view and the learner window, never on the instructor pages; no footer on a monitor', async ({ page, context }) => {
   test.setTimeout(150_000);
+  const loads: string[] = []; // every new document in this test's windows, for the learner window's diagnosis below
+  const onLoad = (p: Page) => p.on('load', () => loads.push(`${p === page ? 'host' : 'other'} ${p.url()}`));
+  onLoad(page);
+  context.on('page', onLoad);
   const ws = await classroom();
   await openApp(page, base, `?relay=${encodeURIComponent(ws)}#/teach`, { warmMs: 1500, site: { skin: 'saadat-like' } });
   // the Instructor view: the same monitor, no line, no footer line under it
@@ -82,9 +97,16 @@ test('the line is on the Monitor view and the learner window, never on the instr
   const code = await page.evaluate(() => (window as unknown as W).__pmeApp.session.code);
   const win = await context.newPage();
   await win.goto(`${base}/?follow=${code}#/monitor`);
-  await win.waitForFunction(() => (window as unknown as W).__pmeFollower?.sync?.status === 'synced', null, { timeout: 30_000 });
+  await win.waitForFunction(() => (window as unknown as W).__pmeFollower?.sync?.status === 'synced', null, { timeout: 30_000 }).catch(async (e: Error) => {
+    throw new Error(`${e.message}\nwhat each window saw: ${JSON.stringify({ loads, host: await seen(page), win: await seen(win) })}`);
+  });
   await expect.poll(() => where(win)).toEqual({ at: 'header', footer: false });
 });
+/** A window's own account (the learner window's wait failed on CI WebKit only, runs 41921015041 and 41927894797). */
+const seen = (p: Page) => p.evaluate(() => {
+  const w = window as unknown as { __pmeFollower?: { sync: { status: string; resyncs: number } | null; transport: { status: string } }; __pmeApp?: { session?: { code: string; host: { stats: unknown } } } };
+  return { url: location.href, vis: document.visibilityState, focus: document.hasFocus(), pill: document.querySelector('.status-pill')?.textContent ?? null, follower: w.__pmeFollower ? { sync: w.__pmeFollower.sync?.status ?? null, resyncs: w.__pmeFollower.sync?.resyncs, transport: w.__pmeFollower.transport.status } : null, host: w.__pmeApp?.session ? { code: w.__pmeApp.session.code, stats: w.__pmeApp.session.host.stats } : null };
+}).catch((e: Error) => ({ error: e.message }));
 
 test("the line is on a learner's phone held upright: the idle message area, whole at 390 px, no footer", async ({ page, browser, browserName }) => {
   // FX-2, as mobile-learner.e2e.ts: the 2-vCPU CI WebKit runner cannot hold an instructor, a phone and the relay in step —
