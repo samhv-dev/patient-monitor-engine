@@ -247,14 +247,6 @@
  ],
  "keyTimes": [
   {
-   "id": "recognition",
-   "label": "Recognition (instructor's tick)",
-   "fromT": 0,
-   "fromLabel": "start",
-   "toT": null,
-   "state": "notTicked"
-  },
-  {
    "id": "firstTeam",
    "label": "Start → first team action",
    "fromT": 0,
@@ -522,16 +514,7 @@
    }
   ],
   "outcomes": [],
-  "violations": [],
-  "judged": [
-   {
-    "id": "recogniseRosc",
-    "text": "Recognise the return of circulation on the arterial line and the capnogram at the rhythm check",
-    "kind": "recognition",
-    "fromT": null,
-    "pressedT": null
-   }
-  ]
+  "violations": []
  },
  "perMinute": [
   {
