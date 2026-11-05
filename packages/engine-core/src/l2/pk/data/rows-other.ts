@@ -66,6 +66,10 @@ export const OTHER_ROWS: DrugRow[] = [
     pd: [{ target: 'glucose', emax: 300, ec50: 1 }], doses: '25 g (50 mL of 50 %)', onset: 'glucose ↑ at once, back over 30–60 min (7e owns glucose)', ir: '?', src: '[TXT] placeholder for 7e', tag: 'TXT' },
   { id: 'dantrolene', name: 'Dantrolene', cls: 'dantrolene', amountUnit: 'mg', pk: gammaPk(2.5, true, 600, 21600),
     maxDose: { amount: 10, perKg: true, scope: 'cumulative', src: 'tables §7 21; the row: repeat to 10 mg/kg' },
+    // IM (design §9.2): F = 0, no systemic effect, one local tissue-injury event; the monitor shows nothing (the lesson)
+    routeModels: { im: { F: 0, ka: null, lagS: null,
+      src: "F = 0: the owner's ruling of 2026-10-29 17:00 (\"IM dantrolene = no effect + local harm\"); the label's \"IV only\" is an instruction, not a bioavailability",
+      local: { text: 'Dantrolene IM: no systemic effect; the alkaline solution (pH about 9.5) injures the tissue at the injection site (tissue injury not modelled)', src: 'Dantrium Intravenous label: 20 mg with 60 mL water, pH approximately 9.5; extravasation caution for the high pH' } } },
     pd: [], doses: '2.5 mg/kg, repeat to 10 mg/kg', onset: 'EtCO2 falls within 5–10 min, HR normal by 15–20 (tables §7 21); bus.metabolic.dantroleneE → 7e/Stage 3 MH', ir: '?', src: 'tables §7 21; M10 ch. on neuromuscular disorders (2.4 mg/kg max twitch depression)', tag: 'TXT' },
   { id: 'furosemide', name: 'Furosemide', cls: 'diuretic', amountUnit: 'mg', pk: gammaPk(20, false, 900, 7200), pd: [{ target: 'v0Frac', emax: 0.06, ec50: 1 }],
     doses: '10–40 mg IV', onset: 'venodilation within 5–15 min (modelled); diuresis 5–30 min (7d owns urine)', ir: '?', src: '[TXT]; 7d plan Task 11', tag: 'TXT' },
