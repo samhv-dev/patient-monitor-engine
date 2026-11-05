@@ -1,5 +1,6 @@
 // The key moments and the key times of a run, computed from the run record alone (`record.ts` `RunData`): the scenario's
-// states after the first, the pulse lost and back (the model), and the team's drugs, fluids, shocks and CPR; each with
+// states after the first (each the team's, the patient's or the scenario's as the record's `by` says), the pulse lost
+// and back (the model), and the team's drugs, fluids, shocks and CPR; each with
 // what the monitor's trend held at that second and the alarms raised since the moment before. The key times are the
 // intervals the facilitator reads first: the instructor's recognition tick, the first team action, each objective's
 // measured interval, the pulse loss to CPR, the time without a pulse and the hands-off time within it (with the
@@ -29,6 +30,16 @@ export function whoOf(d: RunData, prev: string, id: string): Who {
   const ts = (asV1(d.doc)?.states.find((s) => s.id === prev)?.transitions ?? []).filter((x) => x.to === id || x.else === id);
   if (!ts.length) return 'scenario';
   return ts.every((x) => 'manual' in x.when) ? 'team' : 'patient';
+}
+
+/** The who of each way a state is entered (record.ts `Row.by`, the runner's own account): the instructor's press of the
+ *  team's step → the team; the transition's own rule (every pme-scenario/2 phase) → the patient; a jump → the scenario. */
+const BY: Readonly<Record<NonNullable<Row['by']>, Who>> = { press: 'team', rule: 'patient', goto: 'scenario' };
+/** Who moved the scenario into the state of `row` from state `prev` (D4): the record's `by` first, read, never matched;
+ *  a row without one (a record made before Instructor v2 IP8 kept none) falls back to the card's transitions
+ *  (`whoOf`), so an old export prints as it did. */
+export function whoAt(d: RunData, row: Row, prev: string): Who {
+  return row.by ? BY[row.by] : whoOf(d, prev, (row.ev ?? '').slice('state:'.length));
 }
 
 /** The pulseless spans of the kept course, [from, to]: a kept pulse loss to the next kept return of circulation; a span
@@ -88,7 +99,7 @@ export function keyMoments(d: RunData): KeyMoment[] {
   for (const r of kept(d)) {
     if (r.ev?.startsWith('state:')) {
       const id = r.ev.slice('state:'.length);
-      if (prev !== undefined) raw.push({ t: r.t, who: whoOf(d, prev, id), text: r.text.startsWith(STATE) ? r.text.slice(STATE.length) : r.text });
+      if (prev !== undefined) raw.push({ t: r.t, who: whoAt(d, r, prev), text: r.text.startsWith(STATE) ? r.text.slice(STATE.length) : r.text });
       prev = id;
     } else if (r.ev === 'pulseLoss' || r.ev === 'rosc') raw.push({ t: r.t, who: 'patient', text: r.text });
     else if ((r.kind === 'action' || r.kind === 'remote') && (r.ev?.startsWith('drug:') || r.ev === 'fluid' || r.ev === 'shock' || r.ev === 'cpr')) raw.push({ t: r.t, who: 'team', text: r.text });
