@@ -204,7 +204,7 @@ export function recognitionAt(d: RunData): Recognition | null {
   return { source: 'press', fromT: from.t, fromLabel: from.label, t: press.t };
 }
 /** Each reading's words: the tile's caption and the key moment's text. */
-const RECOGNISED: Readonly<Record<Recognition['source'], { tile: string; moment: string }>> = {
+export const RECOGNISED: Readonly<Record<Recognition['source'], { tile: string; moment: string }>> = {
   action: { tile: 'Recognition (timed action)', moment: 'Recognised (timed action, recorded by the instructor)' },
   tick: { tile: "Recognition (instructor's tick)", moment: "Recognised (instructor's tick)" },
   press: { tile: "Recognition (instructor's press)", moment: 'Recognised (instructor)' },

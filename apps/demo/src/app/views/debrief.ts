@@ -20,7 +20,7 @@ import type { Link } from '../link.ts';
 import { axisRange, drugTotals, endOf, facts, mmss, objectives, perMinute, report3, span, steps, trendMeta, type DebriefExport, type Report3, type Step, type StepStatus } from '../debrief.ts';
 import type { Grade } from '@pme/controller/scenario';
 import { debriefJson } from '../debrief-export.ts';
-import { keyMoments, keyTimes, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
+import { keyMoments, keyTimes, RECOGNISED, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
 import { LAB_KEYS, TREND_KEYS, type Row, type RunData, type TrendKey } from '../record.ts';
 import { COURSE_W, courseSvg, type CourseMark } from './debrief-course.ts';
 import { MARKS } from '../teach2/dock.ts';
@@ -277,7 +277,7 @@ function tile(k: KeyTime, moments: KeyMoment[]): HTMLElement | null {
   else if (!ticked) sub = 'not ticked';
   else if (k.id === 'pulseless') sub = `first lost ${mmss(k.fromT ?? 0)}`;
   else if (k.id === 'handsOff') sub = `compression fraction ${Math.round((k.fraction ?? 0) * 100)} %`;
-  else if (k.id === 'recognition' && k.fromT !== null && k.toT !== null) sub = `${mmss(k.fromT)} ${k.fromLabel ?? 'start'} → ${mmss(k.toT)} ticked`; // #18: from the early signs, not Load
+  else if (k.id === 'recognition' && k.fromT !== null && k.toT !== null) sub = `${mmss(k.fromT)} ${k.fromLabel ?? 'start'} → ${mmss(k.toT)} ${k.label === RECOGNISED.press.tile ? 'pressed' : 'ticked'}`; // #18: from the early signs, not Load; D5: the /1 press
   else if (k.fromT !== null && k.toT !== null) {
     const action = k.id === 'firstTeam' ? moments.find((m) => m.t === k.toT)?.text : undefined;
     sub = `${mmss(k.fromT)} → ${mmss(k.toT)}${k.askedS !== undefined ? ` · asked ≤ ${span(k.askedS)}` : ''}${action ? ` (${action})` : ''}`;
