@@ -163,7 +163,7 @@ describe('showcase-mh-v2: the MH card in pme-scenario/2 on the demo path', () =>
     expect(row('cpr').grade).toBe('not applicable');
     expect(g.violations).toEqual([]);
 
-    // the recognition, pressed at the call (08:12): met, its window from Early signs' entry, 120 s [owner placeholder]
+    // the recognition, pressed at the call (08:12): met, its window from Early signs' entry, 120 s (the owner's number, 5 November)
     const mmss1 = (t: number | null) => (t === null ? 'not pressed' : `${String(Math.floor(t / 60)).padStart(2, '0')}:${(t % 60).toFixed(1).padStart(4, '0')}`);
     const entry = v2.phases.find((p) => p.id === 'earlySigns')!.t;
     console.log(`  nameMh: window ${mmss1(row('nameMh').dueT ?? null)} + ${row('nameMh').windowS} s → pressed ${mmss1(row('nameMh').givenT ?? null)}`);

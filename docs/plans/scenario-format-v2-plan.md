@@ -653,10 +653,11 @@ empty).
   `grade()` has no judged path; Instructor v2 draws a record action as any action (its press the record command, no
   marker note); the Debrief's action table carries it, `pme-debrief/3` has no `judged` key and a `/2` run has no
   recognition key-time tile (its window and press are the action's row). The two `/2` cards: `showcase-mh-v2`'s "name
-  MH from the monitor" (`nameMh`) is a timed record action from Early signs' entry, 120 s long (an OWNER PLACEHOLDER: no
-  source or ruling states one; it is the card's own crisis-call window from the same signs); `showcase-haemorrhage-v2`'s
-  "recognise the return of circulation" (`recogniseRosc`) is a timed record action from ROSC's entry, 120 s (the `/1`
-  card's objective 3). `/1` cards and their readers keep their judged objectives (Q33).
+  MH from the monitor" (`nameMh`) is a timed record action from Early signs' entry, 120 s long (the owner's number,
+  his ruling of 5 November; no source states one, and it was derived as the card's own crisis-call window from the same
+  signs); `showcase-haemorrhage-v2`'s
+  "recognise the return of circulation" (`recogniseRosc`) is a timed record action from ROSC's entry, timed at 120 s (the
+  owner's ruling of 5 November; derived from the `/1` card's objective 3). `/1` cards and their readers keep their judged objectives (Q33).
 - **A rule for future cards (the owner, 5 November):** the operating-room CPR trigger (displayed systolic below 50 mmHg
   on the cuff, or below 40 mmHg on an arterial line, for 30 s, with EtCO₂ below 25 mmHg) does NOT apply while bleeding
   is uncontrolled. Harper et al., Br J Anaesth 2020;124:234–238, p.235, excludes "haemorrhagic shock with uncontrolled

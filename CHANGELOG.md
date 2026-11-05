@@ -42,9 +42,9 @@ the public API is what the packages export (see the API reference), the `pme-sce
   fails validation with one line naming the replacement; `grade()` returns actions, outcomes and violations only;
   Instructor v2 draws a record action as any action (no "press when met" row, no marker note); the Debrief's action table
   carries it, `pme-debrief/3` has no `judged` key and a `/2` run has no recognition key-time tile. `showcase-mh-v2`:
-  "name malignant hyperthermia from the monitor" is a timed record action from Early signs' entry, 120 s (an owner
-  placeholder); `showcase-haemorrhage-v2`: "recognise the return of circulation" is one from ROSC's entry, 120 s (the
-  `/1` card's objective 3). `/1` cards keep their judged objectives.
+  "name malignant hyperthermia from the monitor" is a timed record action from Early signs' entry, 120 s (the
+  owner's number, 5 November); `showcase-haemorrhage-v2`: "recognise the return of circulation" is one from ROSC's
+  entry, timed at 120 s (the owner's ruling of 5 November, from the `/1` card's objective 3). `/1` cards keep their judged objectives.
 
 ### Fixed
 - A hello forged under a Remote's peer id while the Remote reconnects no longer blocks the Remote's commands

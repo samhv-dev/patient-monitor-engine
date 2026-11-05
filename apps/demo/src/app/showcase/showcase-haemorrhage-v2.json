@@ -645,7 +645,7 @@
         "anchor": "phase:rosc",
         "withinS": 120
       },
-      "src": "Window from ROSC's entry: the former judged row's own clock (display rule phaseEntered rosc). Window length 120 s: the card's own number, the /1 card's objective 3, 'Recognise the return of circulation on the arterial line and the capnogram at the rhythm check, and stop CPR (debrief: within 120 s of the return of circulation)', of which this is the recognition half; no source read states a time."
+      "src": "Window from ROSC's entry: the former judged row's own clock (display rule phaseEntered rosc). Window length 120 s, timed: the owner's ruling of 5 November. Derived from the card's own number, the /1 card's objective 3, 'Recognise the return of circulation on the arterial line and the capnogram at the rhythm check, and stop CPR (debrief: within 120 s of the return of circulation)', of which this is the recognition half; no source read states a time."
     }
   ],
   "script": [

@@ -99,7 +99,7 @@ describe('showcase-mh-v2: Recovering and Recrudescence on EtCO₂ at the set ven
 // "early signs" state (EtCO₂ > 45 for 20 s); it was a bare EtCO₂ > 45, which the premedicated, then induced patient
 // crosses before intubation (46 at 03:51 in the kit round), five minutes before the MH shows. Judged rows are retired
 // (the owner's ruling of 5 November): "name MH" is a timed record action whose window opens at Early signs' entry, 120 s
-// long (an OWNER PLACEHOLDER). Pure: the phase runner and grade() on the card, synthetic inputs in the shape of the demo
+// long (the owner's number, his ruling of 5 November). Pure: the phase runner and grade() on the card, synthetic inputs in the shape of the demo
 // path.
 describe('showcase-mh-v2: "name MH" is a timed record action, its window from the Early signs entry (the /1 card\'s early signs)', () => {
   // EtCO₂ 46 at 03:51–04:13 before the ventilator (no set ventilation); 38 on it from 05:00; from 06:00 the MH: EtCO₂
@@ -129,7 +129,8 @@ describe('showcase-mh-v2: "name MH" is a timed record action, its window from th
     expect(a?.give).toBeUndefined();
     expect(a?.label).toMatch(/^Name malignant hyperthermia from the monitor/);
     expect(doc.actions.at(-1)?.id).toBe('nameMh'); // every other row keeps its key
-    expect(a?.src).toMatch(/OWNER PLACEHOLDER/);
+    expect(a?.src).toMatch(/the owner's number \(his ruling of 5 November\)/);
+    expect(a?.src).not.toMatch(/PLACEHOLDER/i);
   });
 
   it('the window opens at the Early signs entry (08:03), not at the pre-intubation 46: met at the call, overdue after 120 s, failed if never', () => {
