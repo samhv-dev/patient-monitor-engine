@@ -18,7 +18,7 @@ import { anyShowcaseDoc, first, runCard, type Act, type Run, type Sample } from 
 
 const V2 = 'showcase-haemorrhage-v2';
 const END_S = 1500;
-const SLOW = 900_000;
+const SLOW = 1_800_000;
 const VF = /^(vfCoarse|vfFine|vtPoly|torsades)$/;
 const mmss = (t: number) => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.round(t % 60)).padStart(2, '0')}`;
 
@@ -102,27 +102,33 @@ describe('showcase-haemorrhage-v2: the haemorrhage card in pme-scenario/2', () =
     expect(r.warnings).toEqual([]);
   });
 
-  it('VF from the physiology (owner, 5 November): the engine draws none on this course, untreated, on the A4 path or with CPR in the PEA', async () => {
-    const untreated = await withRhythms(V2, [{ press: 'oxygen', action: 'oxygen', t: 30 }, { press: 'intubate', action: 'intubate', t: 60 }], 1800);
+  // VF from the physiology (owner, 5 November): one run per arm, each its own test (the four runs in one test passed
+  // 900 s on a loaded machine)
+  const noVf = (name: string, r: Run & { rhythms: Array<[number, string]> }) => {
+    console.log(`VF measurement, ${name}: ${words(r)}; pulse lost ${mmss(first(r.rows, (s) => !s.pulse)?.t ?? Number.NaN)}`);
+    expect(r.refused, name).toEqual([]);
+    expect(r.pressed.filter((x) => Number.isNaN(x)), name).toEqual([]);
+    expect(r.rhythms.filter(([, id]) => VF.test(id)), `${name}: a VF the physiology drew; the card then needs its VF phase (ruling 1)`).toEqual([]);
+  };
+  it('VF measurement, untreated to 30:00: no VF; PEA decays to asystole, which stays', async () => {
+    const r = await withRhythms(V2, [{ press: 'oxygen', action: 'oxygen', t: 30 }, { press: 'intubate', action: 'intubate', t: 60 }], 1800);
+    noVf('untreated to 30:00', r);
+    expect(phaseIds(r)).toEqual(['bleeding', 'decompensating', 'arrestPea', 'arrestAsystole']);
+  }, SLOW);
+  it('VF measurement, the A4 path (CPR 15 s into asystole) to 25:00: no VF, no ROSC; the /1 card\'s VF is its own two', async () => {
     const a = await withRhythms('showcase-haemorrhage', V1_PATH, END_S);
-    const a4 = await withRhythms(V2, v2Path(a.pressed), END_S);
-    const prompt = await withRhythms(V2, promptPath(), END_S);
-    for (const [name, r] of [['untreated to 30:00', untreated], ['the A4 path to 25:00', a4], ['CPR 10 s after the pulse loss to 25:00', prompt]] as const) {
-      console.log(`VF measurement, ${name}: ${words(r)}; pulse lost ${mmss(first(r.rows, (s) => !s.pulse)?.t ?? Number.NaN)}`);
-      expect(r.refused, name).toEqual([]);
-      expect(r.pressed.filter((x) => Number.isNaN(x)), name).toEqual([]);
-      expect(r.rhythms.filter(([, id]) => VF.test(id)), `${name}: a VF the physiology drew; the card then needs its VF phase (ruling 1)`).toEqual([]);
-    }
-    // the /1 card's VF on the same path is the card's own (its two rhythm checks), nowhere else
+    const r = await withRhythms(V2, v2Path(a.pressed), END_S);
+    noVf('the A4 path to 25:00', r);
     expect(a.rhythms.filter(([, id]) => VF.test(id)).length).toBe(2);
-    // untreated and on the A4 path: PEA → asystole, which stays (no ROSC)
-    expect(phaseIds(untreated)).toEqual(['bleeding', 'decompensating', 'arrestPea', 'arrestAsystole']);
-    expect(phaseIds(a4)).toEqual(['bleeding', 'decompensating', 'arrestPea', 'arrestAsystole']);
-    expect(a4.rows.filter((s) => s.t > a.pressed[2]! && s.pulse)).toEqual([]);
-    // CPR in the PEA: the pulse comes back from the PEA, held 120 s into Post-resuscitation
-    expect(phaseIds(prompt)).toEqual(['bleeding', 'decompensating', 'arrestPea', 'rosc', 'postResuscitation']);
-    const rosc = prompt.states.find(([, s]) => s === 'rosc')![0];
-    expect(prompt.states.find(([, s]) => s === 'postResuscitation')![0] - rosc).toBeCloseTo(120, 0);
+    expect(phaseIds(r)).toEqual(['bleeding', 'decompensating', 'arrestPea', 'arrestAsystole']);
+    expect(r.rows.filter((s) => s.t > a.pressed[2]! && s.pulse)).toEqual([]);
+  }, SLOW);
+  it('VF measurement, CPR 10 s after the pulse loss to 25:00: no VF; ROSC from the PEA, held 120 s into Post-resuscitation', async () => {
+    const r = await withRhythms(V2, promptPath(), END_S);
+    noVf('CPR 10 s after the pulse loss to 25:00', r);
+    expect(phaseIds(r)).toEqual(['bleeding', 'decompensating', 'arrestPea', 'rosc', 'postResuscitation']);
+    const rosc = r.states.find(([, s]) => s === 'rosc')![0];
+    expect(r.states.find(([, s]) => s === 'postResuscitation')![0] - rosc).toBeCloseTo(120, 0);
   }, SLOW);
 
   it('O1: on the A4 path the engine\'s course is the /1 card\'s second by second up to the first rhythm check (where /1 sets VF)', async () => {

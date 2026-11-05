@@ -1173,6 +1173,30 @@ panel, the report or the print.
 The handout and the report carry no fast-forward banner here (the haemorrhage has no span); after a span, print only
 once the banner has gone (≈ 8 s) [UIR #9].
 
+### Reserve R5b: the same case in phases (`showcase-haemorrhage-v2`, `pme-scenario/2`, plan F9, 5 November). Not in a programme; Instructor v2 only
+
+*Class IV haemorrhage, PEA and resuscitation (phases)*, beside the R5 card (which is unchanged). It runs in Instructor
+v2 (today's Instructor view says so). **What differs from R5, by the owner's rulings of 5 November:** no button moves
+the case: six phases follow the engine's truth (Bleeding → Decompensating at a systolic below 60 for 10 s, the card
+setting the junctional rhythm there as R5 does → Arrest: PEA at the model's pulse loss → Arrest: asystole → ROSC →
+Post-resuscitation after 120 s of ROSC). **No VF and no shock:** the card no longer sets VF at the rhythm checks, and
+measured on this course the engine draws none (untreated to 30:00, CPR into asystole, CPR in the PEA) [F9 slow test].
+The rhythm check stops the compressions and changes no rhythm; press **Start CPR** again to resume them.
+
+**The course on the demo's timing has no return of circulation.** On R5's presses (CPR 15 s into asystole at 15:46,
+the volume and TXA at 15:56, epinephrine 16:08 and 19:08, rhythm checks 17:46 and 19:58) the patient stays in asystole
+to the end: in this engine asystole never regains a pulse (R5's own note above), and on R5 it was the card's VF and the
+second shock that left an organised rhythm. The engine's course is R5's to the second up to the first rhythm check
+(17:46) [F9 slow test, O1]. **With CPR in the PEA** (the pulse lost at 11:00; CPR at 11:10, 12:00, 13:00 or 14:20 was
+measured) the pulse returns from the PEA (14:20 with CPR at 11:10; Post-resuscitation 16:20). The PEA turns
+idioventricular at 12:52 and to asystole at 15:25 untreated: CPR after that is too late on this course.
+
+**Rows and grades** (Instructor v2's ACTION, graded live): oxygen and intubate in Bleeding/Decompensating; in the arrest
+phases call for help, **Start CPR** (within 30 s of the pulse loss met, to 2 min overdue, later failed though started),
+bag 10/min, epinephrine 1 mg IV (again every 3–5 min from the previous dose), source control, massive transfusion, TXA
+1 g, rhythm check (every 2 min); in ROSC "Rhythm check: pulse back, stop CPR" (within 2 min of ROSC). Epinephrine 1 mg
+IV in ROSC prints as a violation. Numbers no ruling gives are marked as placeholders in the card (the F9 PR lists them).
+
 ### Reserve R1: Induction after fentanyl and midazolam (the premed contrast). Round-B slot 4:00, ×4 throughout
 
 Card: *Induction after fentanyl and midazolam* (Showcase). States: Awake, preoxygenating → Fentanyl 2 µg/kg and
