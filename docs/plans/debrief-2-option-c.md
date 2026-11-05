@@ -1,9 +1,10 @@
 # Debrief 2 (Option C): the record grows, the recognised mark, the swimlane, authored hints, in-app Persian — Implementation Plan
 
-**STATUS: DRAFT FOR REVIEW 2026-11-05; amended 2026-11-05 with the owner's rulings on DQ1–DQ8 and one new
-requirement (the expected window of every timed action drawn on the swimlane, D7a/D7b).** Written by a planning
-executor from brief 15 of the post-demo set. DQ9–DQ12 are still open (section 10). No product code, test or card was
-changed while writing it.
+**STATUS: READY TO BUILD 2026-11-05.** Every owner question (DQ1–DQ12) is ruled (5 November, section 10), with one
+added requirement (the expected window of every timed action on the swimlane, D7a/D7b) and two added scopes (the
+Briefing in Persian, D13b; the learner handout's time-anchored questions per card, D16). Written by a planning
+executor from brief 15 of the post-demo set; amended twice on 5 November with the rulings. No product code, test or
+card was changed while writing it.
 
 **Base and preconditions.**
 - Base: `origin/main` **8718fe1d** (Merge PR #257, `release-rc5`), read in the worktree
@@ -67,11 +68,14 @@ Non-goals
 - No change to the engine or the physiology. The E60 calibration items stay in the calibration queue (section 9).
 - No score, no pass mark, no percentage of objectives (the run sheet's "it reads the run, it does not grade the
   person", `views/debrief.ts:389`).
-- The learner handout stays what it is (`views/debrief.ts:428–446`) except that a Recognised row, being a key moment,
-  appears in its key-moments table. The mock-up's handout questions anchored to times ("At 06:13 the systolic fell
-  below 80 …", mock-up page 3) are NOT built: they are generated prompts (E46, E51).
-- No in-app Persian outside the Debrief page and its handout (the rest of the app is DOC-1,
-  `research/roadmap-whole-app-inventory-2026-10-27.md:290`).
+- The learner handout stays what it is (`views/debrief.ts:428–446`, no values, no verdicts) except for two things:
+  a recognition row, being a key moment, appears in its key-moments table; and (DQ12, ruled 5 November) a card's own
+  time-anchored questions, drafted by an executor and printed only once the owner has reviewed them (D16). A question
+  is never generated at run time and never has a time or value written into its sentence (Decision 8).
+- No in-app Persian outside the Briefing, the Debrief page and the learner handout (DQ9, ruled 5 November; the rest of
+  the app is DOC-1, `research/roadmap-whole-app-inventory-2026-10-27.md:290`).
+- No pressure band on the course strip (DQ11, ruled 5 November): the new pressures go in the key-moments table and the
+  minute appendix only; a band on the strip is a later item, mock-up first.
 - No phone press of the Recognised mark (it waits on the peer-role pieces P6/P7).
 
 Anti-goals
@@ -97,11 +101,11 @@ additive (section 4, Decision 1).
 | C3 | Systolic, diastolic, CVP at 1 Hz | the monitor's ART S/D (or NIBP S/D) and CVP numerics per sample | Not recorded. `TREND` keeps six numerics (`record.ts:54`); the monitor's ids exist (`glossary-data.ts:24` `mon.abpSys`, `:25` `mon.abpDia`, `:27` `mon.cvpMean`, `:32` `mon.nibpSys`/`nibpDia`) and every measurement event already passes through `RunRecord.engine` (`record.ts:250–252`), which keeps only the TREND ids in a sample (`record.ts:266`) | Yes: three sample keys | D1 |
 | C4 | Alarm end and acknowledgement times (both stored, ruled 5 November) | per alarm raise: when its condition cleared, and when it was acknowledged | Not recorded. A raise is a row (`record.ts:221–222`); the tracker forgets the alarm when it leaves the active list (`record.ts:223`). The engine's status carries what is needed: `AlarmEntry.latched` ("the condition is gone but the alarm is latched") and `acked` (`packages/engine-core/src/types-device.ts:51–61`) | Yes: `endT` and `ackT` on the raise row | D2 |
 | C5 | CPR hands-off time | when compressions started and stopped, inside the pulseless spans | Half recorded. A CPR command row gets `ev: 'cpr'` only when it starts compressions (`record.ts:212`); a stop is a row ("CPR stopped", `describe.ts:68–69`) with no `ev`. Pulseless spans exist (`debrief-moments.ts:35–44`) | Yes: `ev: 'cprStop'` on the stop row | D3 |
-| C6 | The swimlane (placement ruled 5 November: heads page 2) | lanes: patient, team, monitor alarms (raise ▸ end), drugs and fluids, and the pressures | Partly: the course strip draws the moments, the four trends and the marks (`views/debrief-course.ts:186`); lanes need C1, C3, C4 | No (built from C1–C5) | D7a, D7b |
+| C6 | The swimlane (placement ruled 5 November: heads page 2) | lanes: patient, team, the expected windows, monitor alarms (raise ▸ end, acknowledged), drugs and fluids; no pressures lane (DQ11) | Partly: the course strip draws the moments, the four trends and the marks (`views/debrief-course.ts:186`); lanes need C1, C4, C11 | No (built from C1, C2, C4, C5, C11) | D7a, D7b |
 | C11 | Expected windows on the lanes (new, owner 5 November) | per timed action: its window (anchor → deadline), the act's time, its verdict | `/2`: `report3` already carries each graded action's `dueT`, `windowS`, `givenT`, `firstGrade` and repeats (`debrief.ts:316–323`, from `grade()`, which reads the rule edges the record copies, `record.ts:84–86`, `grade.ts:196`). `/1`: an `eventWithin` verdict carries `measure` only when both events happened (`debrief.ts:138`); a window whose act never came (`:139`) or whose run ended early (`:140`) keeps no times | `/1`: an additive `window` on the verdict (`{ fromT, askedS }`) whenever the anchor was found; no record change | D7a |
 | C7 | Authored per-scenario hints | the card's own "what this case is built to show" | Not in either format. `/1` has `story` and `takeHome` (`types.ts:150–159`; schema `pme-scenario-1.schema.json:17–19`); `/2` has `takeHome` (`pme-scenario-2.schema.json:18`) | Yes: an optional document-level `debriefHints` in both schemas | D8, D9, D10 |
 | C8 | Advocacy-inquiry openers (E46) | the owner's sentence per card, and the event it is about | Not anywhere. The page prints the four fixed PEARLS prompts (`views/debrief.ts:40–45`) | Yes: `debriefHints.openers[]` with an anchor event; printed only when the anchor happened on the kept course | D8, D9, D10 |
-| C9 | In-app Persian | the Debrief page and its handout in Persian, from the one table | Persian is a handout script only (`scripts/showcase/debrief-fa.mjs:1–14`; `docs/showcase/i18n/README.md:3–8`); the table has 46 entries still `"fa": null` (the `/3` words of F7.6, `research/40-post-demo-inventory.md:115`) | No record change; the matcher moves to a shared module, the font is bundled | D11, D12, D13 |
+| C9 | In-app Persian (ruled 5 November: the Briefing, the Debrief page and the learner handout) | the Debrief page and its handout in Persian, from the one table; the Briefing in Persian for a card written in English | Persian is a handout script only (`scripts/showcase/debrief-fa.mjs:1–14`; `docs/showcase/i18n/README.md:3–8`); the table has 46 entries still `"fa": null` (the `/3` words of F7.6, `research/40-post-demo-inventory.md:115`) | No record change; the matcher moves to a shared module, the font is bundled. The Briefing already renders a card written in Persian (`lang: 'fa'`, `briefing.ts:14–16`, `:62–69`; schema `pme-scenario-1.schema.json:21–31`, `types-v2.ts:137–138`) but has no Persian text for a card written in English, and no font file (`briefing.ts:14–15`) | D11, D12, D13, D13b |
 | C10 | Key moments with SBP/DBP/CVP and alarms cleared | the table's new columns and lines | `momentsTable` prints HR, MAP, SpO₂, EtCO₂ and "Alarms since the last row" (`views/debrief.ts:303–316`) | No (reads C3, C4) | D6 |
 
 ### Does the export change schema? No bump; a capability list instead
@@ -189,6 +193,15 @@ None of these is clinical. Each can be reversed by the orchestrator before the p
     the word beside the tick, and the band's outline weight and fill as the chip's (solid, bold, dashed grey, grey
     fill; `views/debrief.css:43–46`). A hue per verdict would reopen E45: the orchestrator asks the owner only if he
     meant hues.
+14. **The handout's card questions** (D16) live in `debriefHints.handoutQuestions` (≤ 3, each `{ at, text }`, the
+    openers' shape, Decision 7). When a card has reviewed questions, they print under "Questions to think about" in
+    place of the first two fixed prompts (`views/debrief.ts:249–250`), each with its anchor's `mm:ss` as a label before
+    it and three ruled lines; the third fixed prompt ("One thing you will keep doing …", `:251`) stays. A question
+    whose anchor did not happen on the kept course is left out and a fixed prompt takes its place, so the handout keeps
+    its one-page shape (`debrief.e2e.ts:433`, `:464`).
+15. **One Persian setting for the host.** The Debrief page's switch (D13) is also the language the host's Briefing is
+    sent in (D13b): the setting lives with the host's other per-browser settings, and the Briefing notice already
+    carries a `lang` (`briefing.ts:62`), so followers and phones need no setting of their own.
 
 ---
 
@@ -408,7 +421,7 @@ e2e on both projects, CI green. **CI load:** 1 run.
 sentence (`views/debrief.ts:244`, E126). **Gate:** unit, model-docs guard, Debrief e2e both projects, the Persian
 script on the D0 fixtures (unchanged output), CI green. **CI load:** 1 run.
 
-### D7a: The swimlane builder, with the expected windows (13 h: 8 for the lanes, 5 for the windows)
+### D7a: The swimlane builder, with the expected windows (12 h: 7 for the lanes, 5 for the windows)
 
 **Depends on:** D2 and D4 (its inputs' shapes); can start on synthetic data after D2 merges, beside D3/D5.
 **Files:** `apps/demo/src/app/views/debrief-swimlane.ts` (new, pure: a string from data, like
@@ -428,8 +441,7 @@ script on the D0 fixtures (unchanged output), CI green. **CI load:** 1 run.
   - **Monitor:** one bar per alarm raise, solid from raise to `endT` (open to the end when it has none), a small
     mark at `ackT`; an alarm without `endT` in a pre-D file is a tick only, with "end not recorded" in the lane label;
   - **Drugs and fluids:** one ▲ per kept drug or fluid row;
-  - **Pressures:** SBP–DBP as a band with MAP inside it, and CVP; cuff values as points, the gaps between cycles blank
-    (DQ1); only when `keeps` has `'pressures'` and the run measured them; EtCO₂ is on the course strip already.
+  - No pressures lane: the new pressures are in the key-moments table and the appendix only (DQ11, ruled 5 November).
   - Every lane: words at its left; no colour without a shape (E45); height ≤ 90 mm at 182 mm for up to six windows
     (more windows: the band rows tighten to 3 mm; the executor measures the MH `/2` card's count and states it).
 - [ ] **Where the windows come from (one reading each, never a second bookkeeping):**
@@ -445,7 +457,7 @@ script on the D0 fixtures (unchanged output), CI green. **CI load:** 1 run.
 - [ ] **Red first:** unit tests on the D0 fixtures (A3.1 `/2` export: three `eventWithin` windows, each with its
   tick; the `/3` MH fixture: every graded action with a `dueT`), a synthetic `/1` run whose act never came (band, no
   tick, "✗ Not observed" at the deadline), a synthetic run that ended inside a window (band open to the end,
-  "– Not assessable"), synthetic `endT`/`ackT` and pressures; the lanes, the bar and band counts, an `aria-label`
+  "– Not assessable"), synthetic `endT`/`ackT`; the lanes, the bar and band counts, an `aria-label`
   listing every window with its verdict, no lane for a fact not recorded.
 
 **Acceptance:** as above; every band's ends equal the times `report3` or the verdict carries, to the second.
@@ -536,7 +548,7 @@ script imports through `--experimental-strip-types`, or a `.mjs` both import; th
 **Acceptance:** byte-identical output; `0 strings without translation` unchanged. **Must not touch:**
 `fa-debrief.json`. **Gate:** validation tests, CI green. **CI load:** 1 run.
 
-### D12: Persian words for Option C (4 h executor, plus the owner's reading)
+### D12: Persian words for Option C (5 h executor, plus the owner's reading)
 
 **Depends on:** D6, D7b, D9 (the English words frozen); D11. **Files:** `docs/showcase/i18n/fa-debrief.json`,
 `docs/showcase/i18n/README.md`.
@@ -551,11 +563,17 @@ script imports through `--experimental-strip-types`, or a `.mjs` both import; th
   the orchestrator, with his date.
 - [ ] Authored hints and openers (D10) in Persian: only if the owner writes or confirms the Persian text himself; the
   table gets a `hints` group keyed by card id. Without it, the Persian page prints the hints in English, marked so.
+- [ ] **Briefing texts (DQ9, +1 h):** a Persian draft of each showcase card's English `briefing.text` (today
+  `showcase-mh.json` and `showcase-mh-v2.json` carry a briefing), with the `persian-writing` skill, in the same file for
+  the owner. Only a text he has read enters the card as `briefing.textFa` (D13b); none is marked unread on a card.
+- [ ] **DQ10, ruled 5 November (option A):** an entry the owner has not read stays `"reviewed": false`, and wherever
+  it prints (screen or paper, Debrief, handout, script) the page carries the visible line "Persian draft: not yet read
+  by the clinical owner" until he clears it.
 
 **Gate:** `debrief-fa.mjs` on the D0 fixtures and a D-era export: `0 strings without translation`; validation tests;
 CI green. **CI load:** 1 run (plus a re-run if the owner's corrections arrive after the PR opens).
 
-### D13: The Debrief page in Persian (10 h)
+### D13: The Debrief page and the learner handout in Persian (10 h)
 
 **Depends on:** D11 (the matcher), D9 (the page's sections settled); D12 for the words (D13 can merge with the
 entries still unreviewed, labelled as such). **Files:** `views/debrief.ts`, `views/debrief.css` (a `[lang=fa]`
@@ -567,8 +585,9 @@ a DOM test.
   the page prints the missing ones in English (as the script does, `debrief-fa.mjs:11–12`); clinical values and
   times stay Western digits, left to right; the SVGs (course strip, swimlane) keep their English labels unless the
   table has them; the footer is the table's footer entry.
-- [ ] A screen line under the switch while any printed entry is `"reviewed": false`: "Persian draft: not yet read by
-  the clinical owner" (DQ10). It prints too.
+- [ ] **DQ10, ruled 5 November (option A):** while any printed entry is `"reviewed": false`, the visible line
+  "Persian draft: not yet read by the clinical owner" stands under the switch and on every printed page of the report
+  and of the handout, until the owner clears the entries; a DOM test pins it on and off.
 - [ ] The switch is per browser (localStorage, wrapped in try/catch), English by default; `#db-who` and `.db-notes`
   are not touched (Decision 11 of the A/B plan).
 - [ ] Print: Chrome and Safari, A4; page 1 within one page in Persian on the A3.1 path, both projects.
@@ -579,9 +598,55 @@ a DOM test.
 bundle limit concerns the engine bundle; the executor confirms the font is not in it), model-docs guard, CI green.
 **CI load:** 1–2 runs.
 
+### D13b: The Briefing in Persian (5 h; DQ9, ruled 5 November)
+
+**Depends on:** D13 (the bundled font and the host's Persian setting, Decision 15); D12 for the reviewed card texts.
+**Files:** `packages/controller/scenarios/pme-scenario-1.schema.json` and `pme-scenario-2.schema.json` (`briefing.textFa`,
+optional, ≤ 4000, additive), `packages/controller/src/scenario/types.ts`, `types-v2.ts:138`, the host's briefing notice
+(where the session builds it from `briefingOf`), `apps/demo/src/app/briefing.ts`, `briefing.css` (the bundled Vazirmatn
+in the stack), the showcase cards whose Persian text the owner read, tests and one e2e.
+
+- [ ] **Red:** a card with `briefing: { text, textFa }` and the host set to Persian sends a notice with `lang: 'fa'`
+  and the Persian text; set to English, the English text; a card written in Persian (`lang: 'fa'`, no `textFa`) shows
+  as today in both settings; a card without `textFa` shows its English text in the Persian setting (no machine
+  translation at run time); the phone (follower) renders what the notice carries (`followBriefing`, `briefing.ts:12`).
+- [ ] The chrome strings stay the reviewed ones of `CHROME` (`briefing.ts:35–40`, checked in
+  `owner-review/instructor-ux/empty-finish/briefing-fa.md`); Persian digits in the chrome as today.
+- [ ] e2e (both projects): host in Persian, one phone: both show the Persian briefing right-to-left in Vazirmatn.
+
+**Must not touch:** the briefing's timing and dismissal rules (`briefing.ts:1–13`). **Gate:** typecheck, controller +
+demo unit, the case-briefing e2e both projects ×3, `pnpm check-licences`, model-docs guard, CI green. **CI load:** 1 run.
+
 ### D14: (withdrawn) the PEARLS mode table
 
 Not built: the owner ruled the two hint blocks only (DQ6, 5 November).
+
+### D16: Time-anchored questions on the learner handout, drafted per card (8 h; DQ12, ruled 5 November)
+
+**Depends on:** D10 (the drafting and review route for card hints, and its schema from D8), D12 and D13 (the handout's
+Persian path). **Files:** the two scenario schemas and types (`debriefHints.handoutQuestions`, Decision 14),
+`validate.ts`, `views/debrief.ts` (the handout's questions, `:443`), `debrief-moments.ts` (each question's anchor time,
+by the openers' reading of D9), `scripts/showcase/debrief-fa.mjs` and the shared matcher (the questions in the Persian
+handout), `fa-debrief.json` (a `hints` group entry per question), a draft file `scratch/debrief2-handout-q-drafts.md`,
+the cards the owner reviewed, tests.
+
+- [ ] **Drafts (2 h):** for each showcase card, up to three questions built only from that card's objectives and from
+  its key moments on its recorded kit-round run, each with its anchor event and the objective it comes from, headed
+  **DRAFT, not reviewed**. No new clinical claim; no verdict, no value, no "you should".
+- [ ] **Review:** the file goes to the owner through the orchestrator; only the questions he accepted or rewrote enter a
+  card, in his words, with their Persian (persian-writing skill, read by him). Nothing marked draft reaches a card.
+- [ ] **Red (schema, 1 h):** `handoutQuestions` validates in `/1` and `/2` with the openers' anchor rules (D8); four
+  are refused.
+- [ ] **Red (handout, 3 h):** a card with two reviewed questions prints them in place of fixed prompts 1–2, each
+  with its anchor's `mm:ss` as a label and three ruled lines, then fixed prompt 3; a question whose anchor did not
+  happen is left out and the fixed prompt prints instead; the handout's text still contains no verdict word, no value
+  and no objective text (the A/B plan's DOM check, `debrief-redesign.md:986–988`); the handout fits one A4 page on
+  the tamponade, MH and haemorrhage cards (`debrief.e2e.ts:433`, `:464`).
+- [ ] **Red (Persian, 2 h):** the in-app handout in Persian and `debrief-fa.mjs` print the same Persian question
+  text for the same export; a question with no reviewed Persian prints in English with the DQ10 line.
+
+**Gate:** typecheck, unit, DOM, Debrief e2e both projects ×3, the Persian script on a D-era export, model-docs guard, CI
+green. **CI load:** 1 run.
 
 ### D15: Docs, the rehearsal reader, the gate (6 h)
 
@@ -603,35 +668,41 @@ automated test makes, as in `debrief-redesign.md:1290–1293`). **CI load:** 1 r
 ## 8. Partition, critical path, merge order, CI load
 
 ```
-D0 ──┬── D1 ── D2 ──┬── D3 ── D5 ── D6 ──┬── D7b ── D9 ──┬── D13 ── D12* ── D15
-     │              │                    │               │
-     ├── D4 ────────┴─(D5 needs D4)      │               ├── D10* (owner's words; any time after D8)
+D0 ──┬── D1 ── D2 ──┬── D3 ── D5 ── D6 ──┬── D7b ── D9 ──┬── D13 ── D12* ──┬── D16* ── D15
+     │              │                    │               │                 └── D13b ─┘
+     ├── D4 ────────┴─(D5 needs D4)      │               ├── D10* (owner's edit; any time after D8; D16 needs it)
      │              └── D7a ─────────────┘               │
      ├── D8 ──────────────────────────────────── (D9 needs D8)
      └── D11 ───────────────────────────────────────────────┘ (D13 needs D11)
 * waits on the owner
 ```
 
-- **Critical path (executor hours):** D0 2 → D1 5 → D2 5 → D3 5 → D5 5 → D6 4 → D7b 3 → D9 4 → D13 10 → D12 4 →
-  D15 6 = **53 h**, plus the owner's reading of D12, his edit of the D10 drafts, and (for D5's `/2` part) the card
-  change that retires the judged rows. D7a (13 h) runs beside D3/D5 once D2 is merged and must merge before D7b: it
-  starts at hour 12 of the path and ends at hour 25, one hour before D6 does (hour 26), so it is NOT on the critical
-  path but has one hour of slack; a slip in D7a's windows moves D7b day for day. D4, D8 and D11 run beside D1–D3 from D0.
+- **Critical path (executor hours):** D0 2 → D1 5 → D2 5 → D3 5 → D5 5 → D6 4 → D7b 3 → D9 4 → D13 10 → D12 5 →
+  D16 8 → D15 6 = **62 h**, plus the owner's reading of D12, his review of the D10 and D16 drafts, and (for D5's `/2`
+  part) the card change that retires the judged rows. D13b (5 h) runs beside D16 after D12. D7a (12 h) runs beside
+  D3/D5 once D2 is merged: it starts at hour 12 of the path and ends at hour 24, two hours before D6 does (hour 26), so
+  it is not on the critical path, with two hours of slack. D4, D8, D10 and D11 run beside the chain from D0/D8.
 - **What runs in parallel:** at most two executors at once without touching the same file: one on the
-  `record.ts` → `debrief-moments.ts` → `views/debrief.ts` chain, one on D4, D8, D11, D7a in turn (D4 touches
+  `record.ts` → `debrief-moments.ts` → `views/debrief.ts` chain, one on D4, D8, D11, D7a, D10 in turn (D4 touches
   `debrief-moments.ts`, so it merges before D3's key-time change starts; D7a touches `debrief.ts` for the `/1`
-  `window`, so it rebases over D3).
+  `window`, so it rebases over D3); after D12, D16 and D13b in parallel (different files except the two schemas,
+  which D13b touches first).
 - **Merge order:** D0 · D8 · D11 · D1 · D4 · D2 · D3 · D7a · D5 · D6 · D7b · D9 · D10 (when the owner has edited) ·
-  D13 · D12 · D15. The pieces on one file merge strictly in that order and each rebases on main before its last push.
-- **CI load:** 16 PRs (D0–D13, D15) at ≈ 1 run each on the PR plus 1 on main after each merge ≈ **32 runs**, plus
-  re-runs for review fixes (count ≈ 1 in 3). The last measured run length is ≈ 45 min (`debrief-redesign.md:62–64`,
-  18 October), and a run is 13–15 jobs against 20 concurrent, so two runs at once queue. At two executors this is
-  ≈ 2–3 runs a day.
-- **Total executor effort:** D0 2 + D1 5 + D2 5 + D3 5 + D4 3 + D5 5 + D6 4 + D7a 13 + D7b 3 + D8 3 + D9 4 + D10 4 +
-  D11 5 + D12 4 + D13 10 + D15 6 = **81 h**. The first draft was 70 h; the owner's answers of 5 November add 11 h:
-  the expected windows +6 (D7a +5, D7b +1), DQ1's last-reading-with-age +2 (D1 +1, D6 +1), DQ2's acknowledgement +1
-  (D2), DQ3's reference lines +1 (D3), DQ7's drafted hints +2 (D10), and DQ4 −1 (D5: no generic press on `/2`). That
-  is just over the research's 60–80 h (`research/33:405–407`), and it does not count the `/2` card change D5 waits on.
+  D13 · D12 · D13b · D16 · D15. The pieces on one file merge strictly in that order and each rebases on main before
+  its last push.
+- **CI load:** 18 PRs (D0–D13, D13b, D15, D16) at ≈ 1 run each on the PR plus 1 on main after each merge ≈
+  **36 runs**, plus re-runs for review fixes (count ≈ 1 in 3). The last measured run length is ≈ 45 min
+  (`debrief-redesign.md:62–64`, 18 October), and a run is 13–15 jobs against 20 concurrent, so two runs at once queue.
+  At two executors this is ≈ 2–3 runs a day.
+- **Total executor effort:** D0 2 + D1 5 + D2 5 + D3 5 + D4 3 + D5 5 + D6 4 + D7a 12 + D7b 3 + D8 3 + D9 4 + D10 4 +
+  D11 5 + D12 5 + D13 10 + D13b 5 + D15 6 + D16 8 = **94 h**. The first draft was 70 h. The rulings of 5 November:
+  - DQ1–DQ8 and the expected windows: +11 h (the windows +6, DQ1 +2, DQ2 +1, DQ3 +1, DQ7 +2, DQ4 −1), to 81 h;
+  - DQ9 the Briefing in Persian: +6 h (D13b 5, its card texts in D12 +1);
+  - DQ11 no pressures lane on the swimlane: −1 h (D7a);
+  - DQ12 the handout's card questions: +8 h (D16).
+
+  94 h is above the research's 60–80 h (`research/33:405–407`) because the rulings added the windows, the Briefing and
+  the handout questions; it does not count the `/2` card change D5 waits on, nor the owner's reading and reviews.
 
 | Piece | h | Depends on | Owner needed | CI runs |
 |---|---|---|---|---|
@@ -641,17 +712,19 @@ D0 ──┬── D1 ── D2 ──┬── D3 ── D5 ── D6 ──┬
 | D3 CPR stop, hands-off, 60/80 % lines | 5 | D2 | DQ3 ruled | 1 |
 | D4 who from `by` | 3 | D0 | — | 1 |
 | D5 recognition reading, `/1` press | 5 | D3, D4; `/2`: the judged-rows retirement | DQ4 ruled | 1 |
-| D6 key moments, export, minute table | 4 | D1, D2, D3, D5 | — | 1 |
-| D7a swimlane builder + expected windows | 13 | D2, D4 | (E45 note, Decision 13) | 1 |
+| D6 key moments, export, minute table | 4 | D1, D2, D3, D5 | DQ11 ruled | 1 |
+| D7a swimlane builder + expected windows | 12 | D2, D4 | (E45 note, Decision 13) | 1 |
 | D7b swimlane heads page 2 | 3 | D6, D7a | DQ5 ruled | 1 |
 | D8 `debriefHints` schema | 3 | D0 | — | 1 |
 | D9 hints in the report | 4 | D6, D8, D7b | DQ6 ruled | 1 |
 | D10 drafted hints on the cards | 4 | D8 | his edit of every draft line | 1 |
 | D11 shared Persian matcher | 5 | D0 | — | 1 |
-| D12 Persian words | 4 | D6, D7b, D9, D11 | his reading of every line | 1 |
-| D13 in-app Persian Debrief | 10 | D11, D9 | DQ9, DQ10 (open) | 1–2 |
+| D12 Persian words (+ Briefing texts) | 5 | D6, D7b, D9, D11 | his reading of every line | 1 |
+| D13 Debrief and handout in Persian | 10 | D11, D9 | DQ9, DQ10 ruled | 1–2 |
+| D13b Briefing in Persian | 5 | D13, D12 | DQ9 ruled; his reading of each text | 1 |
+| D16 handout questions per card | 8 | D10, D12, D13 | DQ12 ruled; his review of every draft | 1 |
 | D15 docs, reader, gate | 6 | all | the Safari hand print | 1 |
-| **Total** | **81** | | | **≈ 16 PR + 16 main** |
+| **Total** | **94** | | | **≈ 18 PR + 18 main** |
 
 ---
 
@@ -670,10 +743,11 @@ D0 ──┬── D1 ── D2 ──┬── D3 ── D5 ── D6 ──┬
 - **The phone's Recognised press:** after the peer-role pieces P6/P7 (R25).
 - **Structured Persian messages** (Decision 9): a later refactor.
 - **Rules on the new pressures** (`value:sys<80` in `/1` objectives): not planned (Decision 6).
+- **A pressure band on the course strip** (DQ11): a later item, mock-up first.
 
 ---
 
-## 10. Questions for the owner (each with the default the plan uses if no answer comes)
+## 10. Questions for the owner (all ruled 5 November)
 
 Nothing clinical is decided by the plan. Where a question carries a threshold or wording, the source named is the one
 the executor would use; the owner may name another.
@@ -688,10 +762,10 @@ the executor would use; the owner may name another.
 | **DQ6** | The card's hints: the two blocks, or also the PEARLS mode table? | **Ruled 5 November:** the two hint blocks only (D9; D14 withdrawn) |
 | **DQ7** | Who writes the hints and openers? | **Ruled 5 November:** an executor drafts them from each card's objectives, marked drafts; the owner edits or rejects before anything prints (D10) |
 | **DQ8** | The mock-up's "○ Instructor" and "◆ Gap to explore", or the ruled words? | **Ruled 5 November:** the ruled verdict words everywhere (Decision 11) |
-| **DQ9** | In-app Persian: the Debrief page and its handout only, or the whole app? | Open. Default: the Debrief page and its handout only |
-| **DQ10** | Until you have read every Persian line, the Persian page prints "Persian draft: not yet read by the clinical owner". Keep that line on paper too? | Open. Default: yes, on screen and on paper |
-| **DQ11** | The new pressures: in the key-moments table and the minute appendix, and also as trend charts on the trends page? | Open. Default: table and appendix only |
-| **DQ12** | The learner handout stays as it is (no values, no verdicts, the three fixed questions). The mock-up's time-anchored questions are not built. Agreed? | Open. Default: agreed; the handout is unchanged except that a recognition moment appears in its key-moments list |
+| **DQ9** | In-app Persian: the Debrief page and its handout only, or the whole app? | **Ruled 5 November:** the Briefing, the Debrief page and the learner handout; not the rest of the app (D13, D13b) |
+| **DQ10** | Until you have read every Persian line, the Persian page prints "Persian draft: not yet read by the clinical owner". Keep that line on paper too? | **Ruled 5 November (option A):** a Persian string the owner has not yet read carries the visible line "Persian draft: not yet read by the clinical owner" on screen and on paper until he clears it (D12, D13) |
+| **DQ11** | The new pressures: in the key-moments table and the minute appendix, and also elsewhere? | **Ruled 5 November (option A):** the key-moments table and the appendix only; the course strip is unchanged (a pressure band on the strip is a later item, mock-up first); no pressures lane on the swimlane (D6, D7a) |
+| **DQ12** | The learner handout: as it is, or with time-anchored questions? | **Ruled 5 November (option B, with a twist):** the handout gains time-anchored questions per card, drafted by an executor from the card's objectives and key moments, marked drafts, and printed only once the owner has reviewed them (D16, Decision 14) |
 
 ---
 
@@ -737,6 +811,10 @@ Every claim about what exists today, with the line read:
   words `views/debrief.ts:81`; the chip styles `views/debrief.css:43–46`; `AlarmEntry.acked`
   `packages/engine-core/src/types-device.ts:61`; the MH `/2` card still has `"judged"` on `origin/main` 9a4636c2
   (`apps/demo/src/app/showcase/showcase-mh-v2.json:1003`).
+- Added with the second 5 November amendment: the Briefing's Persian rendering and font fallback
+  `apps/demo/src/app/briefing.ts:14–16`, its one render function `:62–69`, the follower path `:12`, the chrome strings
+  `:35–40`; the briefing block with `additionalProperties: false` and `lang` `pme-scenario-1.schema.json:21–31`, on
+  `/2` `types-v2.ts:137–138`; the handout's fixed prompts `views/debrief.ts:249–251`, printed at `:443`.
 
 What this plan did not verify:
 - How the hemo pipeline emits NIBP between cuff cycles (D1 reads it; DQ1 depends on it).
