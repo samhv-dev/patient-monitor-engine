@@ -299,7 +299,8 @@ async function showRecorded(page: Page, run = A31, card = TAMPONADE): Promise<vo
   await page.evaluate(() => (location.hash = '#/debrief'));
   await expect(page.locator('[data-view=debrief] #db-moments')).toBeVisible();
 }
-/** Heights in print media (mm): the page-1 block (header band to the end of the objectives) and the handout; whether
+/** Heights in print media (mm): the page-1 block (header band to the end of the objectives; a /2 run has no objectives
+ *  section since judged rows were retired, 5 November: to the end of the course strip) and the handout; whether
  *  the bundled print font is loaded (rc.3: the heights are measured in it on every platform); and the printed size (pt)
  *  of the handout course strip's labels (0 when the handout is not shown). */
 /** The view loads the bundled print font on entering (loadPrintFont, not awaited) and its print buttons await it; a
@@ -315,7 +316,8 @@ const printHeights = (page: Page) => page.evaluate((mm) => {
   const label = strip.querySelector('.db-lane-l') as SVGTextElement;
   const stripPt = (strip.getBoundingClientRect().width / strip.viewBox.baseVal.width) * parseFloat(getComputedStyle(label).fontSize) * 0.75;
   const printFont = [...document.fonts].some((f) => f.family.replace(/["']/g, '') === 'Inter Print' && f.status === 'loaded');
-  return { page1: (r('#db-objectives').bottom - r('#db-live-1 > .db-band').top) / mm, handout: r('#db-handout').height / mm, printFont, stripPt };
+  const end = document.querySelector('#db-objectives') ? '#db-objectives' : '#db-course';
+  return { page1: (r(end).bottom - r('#db-live-1 > .db-band').top) / mm, handout: r('#db-handout').height / mm, printFont, stripPt };
 }, MM);
 
 test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, the learner handout', async ({ page, browserName }) => {
@@ -482,12 +484,12 @@ test('Debrief B on the haemorrhage card: the learner handout within one A4 page'
 
 // Plan F11 (F7's acceptance on a live /2 run): the MH card in pme-scenario/2 driven on the demo path from Instructor v2
 // to the talk's end, paused, then the Debrief: its JSON export is pme-debrief/3 (phases, graded actions, outcomes,
-// violations, judged rows; no /2 objectives or steps), the action table is in the report, and in print media at the
+// violations; no /2 objectives, steps or judged rows), the action table is in the report, and in print media at the
 // 182 mm content width page 1 and the learner handout each fit one A4 page (≤ 267 mm, IP8); Chromium prints the
-// handout on one page. Both engines. The instructor ticks the recognition (the judged row) at the call, 08:12: the
-// Debrief's "Recognition (instructor's tick)" runs from Early signs' entry, as the /1 card's from its "early signs"
-// state (brief fv2-debrief-recognition-clock-nov1 and the ruling the same day), in seconds, not from the pre-intubation
-// EtCO₂ of 03:51.
+// handout on one page. Both engines. The instructor presses the recognition at the call, 08:12: a timed record action
+// since the owner's ruling of 5 November retired judged rows, its window from Early signs' entry, as the /1 card's
+// recognition runs from its "early signs" state (brief fv2-debrief-recognition-clock-nov1 and the ruling the same day),
+// met in seconds, not from the pre-intubation EtCO₂ of 03:51.
 test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout within one A4 page', async ({ page, browserName }) => {
   test.setTimeout(480_000);
   await openMhV2(page, (h) => openApp(page, base, h, { warmMs: 1500 }));
@@ -507,23 +509,24 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
 
   const [dl] = await Promise.all([page.waitForEvent('download'), view.getByRole('button', { name: 'Download the record (JSON)' }).click()]);
   expect(dl.suggestedFilename()).toMatch(/^debrief-showcase-mh-v2-\d{4}-\d\d-\d\d\.json$/);
-  const j = JSON.parse(readFileSync(await dl.path(), 'utf8')) as Record<string, unknown> & { phases: Array<{ id?: string; phaseId?: string }>; actions: Array<{ id: string; grade: string; givenT: number | null }> };
+  const j = JSON.parse(readFileSync(await dl.path(), 'utf8')) as Record<string, unknown> & { phases: Array<{ id?: string; phaseId?: string }>; actions: Array<{ id: string; grade: string; dueT: number | null; givenT: number | null }> };
   expect(j.schema).toBe('pme-debrief/3');
-  for (const k of ['version', 'build', 'record', 'phases', 'actions', 'outcomes', 'violations', 'judged', 'facts', 'keyTimes', 'keyMoments', 'minutes', 'marks']) expect(j, `pme-debrief/3 key ${k}`).toHaveProperty(k);
-  for (const k of ['objectives', 'steps']) expect(j, `no /2 key ${k}`).not.toHaveProperty(k);
+  for (const k of ['version', 'build', 'record', 'phases', 'actions', 'outcomes', 'violations', 'facts', 'keyTimes', 'keyMoments', 'minutes', 'marks']) expect(j, `pme-debrief/3 key ${k}`).toHaveProperty(k);
+  for (const k of ['objectives', 'steps', 'judged']) expect(j, `no /2 key ${k}`).not.toHaveProperty(k);
   expect(j.phases.length, 'the phases entered').toBeGreaterThan(1);
   expect(j.actions.length, 'the graded actions').toBeGreaterThan(0);
   expect(j.actions.filter((a) => a.givenT !== null).map((a) => a.id)).toEqual(expect.arrayContaining(['callCrisis', 'dantrolene', 'ventilationBack'])); // the setup actions (induce …) are not graded on this card
   // the owner's phase rules of 1 November: Recrudescence is entered (14:59) and opens the second dose's window, so the
   // second dose at 19:13 is met, as the /1 card's objective 4
   expect(Object.fromEntries(j.actions.filter((a) => ['callCrisis', 'dantrolene', 'dantroleneAgain', 'ventilationBack'].includes(a.id)).map((a) => [a.id, a.grade]))).toEqual({ callCrisis: 'met', dantrolene: 'met', dantroleneAgain: 'met', ventilationBack: 'met' });
-  // the recognition key time: from Early signs' entry to the tick
-  const rec = (j.keyTimes as Array<{ id: string; fromT: number; fromLabel?: string; toT: number | null }>).find((k) => k.id === 'recognition');
+  // the recognition, a record action: its window from Early signs' entry, pressed at the call; no recognition tile on /2
+  const rec = j.actions.find((a) => a.id === 'nameMh');
   const earlyT = (j.phases as Array<{ id: string; t: number }>).find((p) => p.id === 'earlySigns')?.t;
-  test.info().annotations.push({ type: 'MH /2 recognition', description: `${rec?.fromLabel} ${rec?.fromT} → ${rec?.toT}` });
-  expect(rec?.fromLabel).toBe('early signs');
-  expect(rec?.fromT, 'the clock starts at Early signs\' entry, not at the pre-intubation EtCO₂').toBe(earlyT);
-  expect((rec?.toT ?? Infinity) - (rec?.fromT ?? 0), 'seconds, not minutes').toBeLessThan(60);
+  test.info().annotations.push({ type: 'MH /2 recognition', description: `nameMh ${rec?.grade}: window ${rec?.dueT} → pressed ${rec?.givenT}` });
+  expect(rec?.grade).toBe('met');
+  expect(rec?.dueT, 'the window opens at Early signs\' entry, not at the pre-intubation EtCO₂').toBe(earlyT);
+  expect((rec?.givenT ?? Infinity) - (rec?.dueT ?? 0), 'seconds, not minutes').toBeLessThan(60);
+  expect((j.keyTimes as Array<{ id: string }>).map((k) => k.id)).not.toContain('recognition');
   const results = resolve(import.meta.dirname, '../../../test-results');
   mkdirSync(results, { recursive: true });
   writeFileSync(`${results}/debrief-mh-v2-${browserName}.json`, JSON.stringify(j, null, 1));

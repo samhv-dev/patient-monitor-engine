@@ -11,7 +11,8 @@ import { AlarmAudioBridge } from './alarm-audio.ts';
 import { DeviceUI, gridOf } from './device-ui.ts';
 import { NumericTile } from './numerics-dom.ts';
 import { formatNibp, formatPressure, PressureTile } from './numerics-hemo.ts';
-import { filterModeFor, renderPlan, type LaneOverride } from './skin-plan.ts';
+import { normalIbpScales, type IbpChannel, type IbpScales } from './ibp-scale.ts';
+import { filterModeFor, renderPlan, type LaneOverride, type RenderPlan } from './skin-plan.ts';
 import { WAVE_STYLE, type WaveLaneId } from './wave-lanes.ts';
 import { formatEtco2, formatRr, formatSpo2, formatTemp } from './numerics-resp.ts';
 import { simClock } from './overlays.ts';
@@ -36,6 +37,7 @@ export interface MountOptions {
   /** Show the temperature tile (T1/T2). */
   temp?: boolean;
   fps?: 60 | 30;
+  /** Screen CSS px per mm (a calibration); with `layout.grid.screenPx` it is converted into the scaled screen's px. */
   pxPerMm?: number;
   /** The part this monitor plays in a session (brief §7.5). Default 'host'. */
   role?: MonitorRole;
@@ -52,6 +54,8 @@ export interface MountOptions {
   portrait?: boolean;
   /** The bed line of a two-row header (skin `layout.headerStyle`); default "BED 01" (rc.3, E96). */
   bed?: string;
+  /** E130: the IBP1/IBP2 lane scales at mount (a channel left out: the skin's fixed scale). */
+  ibpScales?: IbpScales;
 }
 
 /** A monitor either owns the simulation ('host') or mirrors one from its snapshot and commands ('viewer'). */
@@ -77,6 +81,7 @@ export interface ViewerClock {
 export interface MonitorHandle {
   dispatch(cmd: Command): Promise<DispatchResult>;
   on(fn: (e: EngineEvent) => void): () => void;
+  /** Screen CSS px per mm, measured on this screen; a monitor scaled as one unit converts it into its own px. */
   calibrate(pxPerMm: number): void;
   /** Must be called from a user gesture (brief §3.6). */
   enableSound(): Promise<void>;
@@ -106,6 +111,15 @@ export interface MonitorHandle {
   setSkin(id: string, opts?: { theme?: string; page?: string }): Promise<void>;
   /** The resolved skin in use (null without `skin`). */
   readonly skin: ResolvedSkin | null;
+  /**
+   * E130: the IBP1/IBP2 lane scales: a typed range within 0–200 mmHg or AUTO per channel, a channel left out (or
+   * refused) is the skin's fixed scale. Kept across a skin switch; the canvas carries them as `data-ibp-scales`.
+   */
+  setIbpScales(scales: IbpScales): void;
+  /** The scales in use (as `setIbpScales` kept them). */
+  readonly ibpScales: IbpScales;
+  /** The skin's fixed range of each IBP channel the current lanes draw (E130). */
+  readonly ibpFixed: Partial<Record<IbpChannel, [number, number]>>;
   /** 12 leads × the last 10 s, diagnostic filter (brief §6.6). */
   capture12(): Promise<Capture12>;
   /** 1 Hz numerics for 8 h (brief §6.7). */
@@ -133,6 +147,11 @@ export interface MonitorHandle {
    * switch.
    */
   setHeaderNote(text: string): boolean;
+  /**
+   * The phone turned: `true` lays the monitor out upright (`MountOptions.portrait`), `false` as the skin's own screen
+   * (with `layout.grid`, the whole screen scaled as one unit). The engine and the trends are kept.
+   */
+  setPortrait(on: boolean): void;
   /** With `audioSilence: 'window'`, this window's own alarm-sound Silence (pressed again: ends it). Returns
    *  whether this window is now silenced; false before sound is enabled. */
   silenceAudio(): boolean;
@@ -162,10 +181,17 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   /** ECG lead per ECG lane chosen since the skin was set, kept when a sensor swaps a lane (a new skin starts afresh). */
   const leads = new Map<number, LeadId>();
   const doc = el.ownerDocument;
+  let portrait = opts.portrait === true;
+  // Uniform scaling (roadmap "Uniform scaling and the landscape phone"): a skin with `layout.grid.screenPx` is laid out
+  // at that one size (the frame its layout was measured in) and the whole of it — waves, tiles, header, strip and every
+  // font — is scaled by one factor k = min(width / w, height / h) into the space it is given, centred, the rest in the
+  // skin's background. Its proportions never change, so no tile wraps at any window size. Without screenPx (the other
+  // skins, a phone held upright) the monitor fills its box as before.
+  const frame = doc.createElement('div');
+  frame.style.cssText = `position:relative;width:100%;height:100%;overflow:hidden;background:${r?.render.background ?? '#000'};`;
   const outer = doc.createElement('div');
-  outer.style.cssText = 'display:flex;flex-direction:column;width:100%;height:100%;overflow:hidden;';
   const root = doc.createElement('div');
-  root.style.cssText = `display:flex;flex:1;min-height:0;width:100%;background:${r?.render.background ?? '#000'};overflow:hidden;${opts.portrait ? 'flex-direction:column;' : ''}`;
+  root.style.cssText = `display:flex;flex:1;min-height:0;width:100%;background:${r?.render.background ?? '#000'};overflow:hidden;${portrait ? 'flex-direction:column;' : ''}`;
   const wrap = doc.createElement('div');
   wrap.style.cssText = 'flex:1;position:relative;min-width:0;min-height:0;';
   // The wave column: box-less (display:contents) for the tile columns; with a skin's layout.grid (rc.3) it holds the
@@ -177,11 +203,12 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   wrap.append(canvas);
   const tiles = doc.createElement('div');
   tiles.style.cssText = `width:${TILE_W}px;flex:none;border-left:1px solid #222;overflow-y:auto;`; // Scroll
-  const ui = r ? new DeviceUI(doc, wrap, r, page, opts.portrait, opts.bed) : null; // Device layer; portrait
+  const ui = r ? new DeviceUI(doc, wrap, r, page, portrait, opts.bed) : null; // Device layer; portrait
   root.append(left, ui ? ui.tiles : tiles);
   outer.append(root);
   if (ui) outer.append(ui.strip);
-  el.append(outer);
+  frame.append(outer);
+  el.append(frame);
   // The monitor height the grid's sizes scale with (--pme-h: layout.grid's fonts and the two-row header's rows). Set only
   // with a grid: without one (other skins, portrait, the rollback by data) the monitor draws exactly as before (R-G 3)
   let grid = false;
@@ -189,11 +216,31 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     if (grid) outer.style.setProperty('--pme-h', `${outer.clientHeight}px`);
     else outer.style.removeProperty('--pme-h');
   };
+  /** The design screen (layout.grid.screenPx) while one is in use, and the factor it is drawn at. */
+  let screen: { w: number; h: number } | null = null;
+  let k = 1;
+  let calPx: number | null = opts.pxPerMm ?? null; // a calibration, in screen CSS px per mm (the option, calibrate())
+  const fit = () => {
+    if (!screen) {
+      k = 1;
+      outer.style.cssText = 'display:flex;flex-direction:column;width:100%;height:100%;overflow:hidden;';
+    } else {
+      const W = frame.clientWidth;
+      const H = frame.clientHeight;
+      k = W > 0 && H > 0 ? Math.min(W / screen.w, H / screen.h) : 1;
+      const x = (W - screen.w * k) / 2;
+      const y = (H - screen.h * k) / 2;
+      outer.style.cssText = `display:flex;flex-direction:column;position:absolute;left:0;top:0;width:${screen.w}px;height:${screen.h}px;overflow:hidden;transform-origin:0 0;transform:translate(${x}px,${y}px) scale(${k});`;
+    }
+    outer.dataset.pmeScale = k.toFixed(4); // for tests and embedders: the factor the monitor is drawn at
+    setH();
+  };
   /** The header, the wave column and the strip for the current skin (at mount and after every DeviceUI.setSkin). */
   const place = () => {
-    const g = ui && r ? gridOf(r, opts.portrait === true) : null;
+    const g = ui && r ? gridOf(r, portrait) : null;
     grid = g !== null;
-    setH();
+    screen = g?.screenPx ?? null;
+    fit();
     if (!ui || !r) {
       left.style.cssText = 'display:contents';
       return;
@@ -332,8 +379,12 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   const sizeOf = (): Size => ({
     cssW: Math.max(200, wrap.clientWidth),
     cssH: Math.max(100, wrap.clientHeight),
-    dpr: globalThis.devicePixelRatio || 1,
+    // the canvas is laid out in design px and shown k times as large: its backing store follows the device pixels
+    dpr: (globalThis.devicePixelRatio || 1) * k,
   });
+  let ibpScales: IbpScales = normalIbpScales(opts.ibpScales);
+  const markIbp = () => void (canvas.dataset.ibpScales = JSON.stringify(ibpScales));
+  markIbp();
   const only: LaneOverride | undefined = opts.lanes || opts.waves ? { ...(opts.lanes ? { lanes: opts.lanes } : {}), waves: opts.waves ?? [] } : undefined;
   const engineOpts: EngineOptions | undefined = r ? { ...(opts.engine ?? {}), device: { ...(opts.engine?.device ?? {}), skin: opts.skin as string } } : opts.engine;
   const coreOpts = {
@@ -342,8 +393,9 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     ...(opts.waves ? { waves: opts.waves } : {}),
     ...(opts.fps ? { fps: opts.fps } : {}),
     ...(opts.pxPerMm ? { pxPerMm: opts.pxPerMm } : {}),
-    ...(r ? { plan: renderPlan(r, page, only, opts.portrait === true) } : {}),
+    ...(r ? { plan: renderPlan(r, page, only, portrait, ibpScales) } : {}),
   };
+  let planIn: RenderPlan | null = coreOpts.plan ?? null; // the plan last sent (the IBP lanes' fixed ranges are read from it)
   /** The lanes the canvas draws, as data for tests and embedders (the labels themselves are canvas pixels). */
   const markLanes = (lanes: ReadonlyArray<{ id: string }>) => void (canvas.dataset.lanes = lanes.map((l) => l.id).join(' '));
   if (coreOpts.plan) markLanes(coreOpts.plan.lanes);
@@ -352,12 +404,21 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   if (r) void hostP.then((h) => h.command(skinCmd({ type: 'device', action: { device: 'ecg', action: 'filter', value: filterModeFor(r!.render.ecgFilter.band) } })));
 
   // Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia).
+  /** The canvas size and, while scaled, the calibration in design px (a screen mm is 1/k design px wider). */
+  const resize = () =>
+    void hostP.then((h) => {
+      h.control({ type: 'resize', size: sizeOf() });
+      if (calPx !== null) h.control({ type: 'calibrate', pxPerMm: calPx / k });
+    });
   const ro = new ResizeObserver((entries) => {
+    const framed = entries.some((e) => e.target === frame);
+    if (framed) fit(); // a new factor: the wave column keeps its design size, so the canvas is resized from here
     if (entries.some((e) => e.target === outer)) setH();
-    if (entries.some((e) => e.target === wrap)) void hostP.then((h) => h.control({ type: 'resize', size: sizeOf() }));
+    if (framed || entries.some((e) => e.target === wrap)) resize();
   });
   ro.observe(wrap);
   ro.observe(outer);
+  ro.observe(frame);
   let mq: MediaQueryList | null = null;
   const watchDpr = () => {
     mq?.removeEventListener('change', onDpr);
@@ -365,7 +426,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     mq.addEventListener('change', onDpr);
   };
   const onDpr = () => {
-    void hostP.then((h) => h.control({ type: 'resize', size: sizeOf() }));
+    resize();
     watchDpr();
   };
   watchDpr();
@@ -409,7 +470,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   };
   /** The plan for the current skin, with the ECG leads chosen on this skin kept. */
   const planNow = (sk: ResolvedSkin) => {
-    const p = renderPlan(sk, page, only, opts.portrait === true);
+    const p = renderPlan(sk, page, only, portrait, ibpScales);
     let k = 0;
     for (const l of p.lanes) if (l.kind === 'ecg') l.channel = leads.get(k++) ?? l.channel;
     return p;
@@ -424,6 +485,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     r = next;
     if (same) return;
     const plan = planNow(next);
+    planIn = plan;
     h.control({ type: 'plan', plan });
     markLanes(plan.lanes);
     ui.setSkin(next, page);
@@ -455,7 +517,10 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
         listeners.delete(fn);
       };
     },
-    calibrate: (pxPerMm) => void hostP.then((h) => h.control({ type: 'calibrate', pxPerMm })),
+    calibrate: (pxPerMm) => {
+      calPx = pxPerMm;
+      void hostP.then((h) => h.control({ type: 'calibrate', pxPerMm: pxPerMm / k }));
+    },
     enableSound() {
       muted = false; // On again after disableSound()
       if (audio) audio.master.gain.value = 1;
@@ -499,7 +564,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       audio?.close();
       ui?.destroy();
       void hostP.then((h) => h.destroy());
-      outer.remove();
+      frame.remove();
     },
     renderPath: hostP.then((h) => h.path),
     get audioLog() {
@@ -525,12 +590,14 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       r = next;
       page = o.page;
       leads.clear();
-      const plan = renderPlan(next, page, only, opts.portrait === true);
+      const plan = renderPlan(next, page, only, portrait, ibpScales);
+      planIn = plan;
       h.control({ type: 'plan', plan });
       markLanes(plan.lanes);
       ui.setSkin(next, page);
       place();
       root.style.background = next.render.background;
+      frame.style.background = next.render.background;
       if (soundChanged && audio) {
         play = playerFor(audio, next);
         makeSounder();
@@ -538,6 +605,20 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     },
     get skin() {
       return r;
+    },
+    setIbpScales(s) {
+      ibpScales = normalIbpScales(s);
+      markIbp();
+      const scales = ibpScales;
+      void hostP.then((h) => h.control({ type: 'ibpScales', scales }));
+    },
+    get ibpScales() {
+      return ibpScales;
+    },
+    get ibpFixed() {
+      const out: Partial<Record<IbpChannel, [number, number]>> = {};
+      for (const l of planIn?.lanes ?? []) if (l.ibp && !out[l.ibp.channel]) out[l.ibp.channel] = [l.ibp.fixed[0], l.ibp.fixed[2]];
+      return out;
     },
     capture12: () => hostP.then((h) => h.capture12()),
     advance: (ticks, last) =>
@@ -561,6 +642,22 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
         }
       }),
     setHeaderNote: (text) => ui?.setNote(text) ?? false,
+    setPortrait(on) {
+      if (on === portrait) return;
+      portrait = on;
+      root.style.flexDirection = on ? 'column' : 'row';
+      if (!ui || !r) return;
+      ui.setPortrait(on, page);
+      place();
+      const sk = r;
+      void hostP.then((h) => {
+        const plan = planNow(sk);
+        planIn = plan;
+        h.control({ type: 'plan', plan });
+        markLanes(plan.lanes);
+      });
+      resize();
+    },
     latchAlarms(alarms) {
       ffLatched = alarms.map(({ numeric: _n, ...x }) => ({ ...x, id: `ff:${x.id}`, text: `${x.text} · during fast-forward ${simClock(x.since)}`, latched: true, acked: false, sounding: false }));
       if (lastStatus) ui?.onEvent(withLatched(lastStatus));

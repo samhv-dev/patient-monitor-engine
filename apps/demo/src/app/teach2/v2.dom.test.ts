@@ -1,8 +1,8 @@
 // @vitest-environment happy-dom
 // Plan F6: Instructor v2 reads a pme-scenario/2 card (the MH card in phases, F8). The strip lists the PHASES (entry times
 // from the scenario history; a future phase does not jump: no goto, Q5); the cue box names the phase, "entered by its own
-// rule", the learners' cue and the phase's Say line; ACTION lists the open actions (the current phase's) and the judged
-// row once its clock has started, numbered, and the A rows are the rules out of the phase with their 60-s hold's bar (vitalHolds, leaf 'hold'); an A
+// rule", the learners' cue and the phase's Say line; ACTION lists the open actions (the current phase's; a record action
+// is one of them: judged rows are retired, the owner's ruling of 5 November), numbered, and the A rows are the rules out of the phase with their 60-s hold's bar (vitalHolds, leaf 'hold'); an A
 // press sends the action's `give` as ONE staged batch, each command stamped with the action's id, and moves nothing.
 import { describe, expect, it } from 'vitest';
 import { ScenarioView, type AnyScenarioDoc, type CommandInput } from '@pme/controller';
@@ -13,7 +13,6 @@ import { mount as mountAction } from './action.ts';
 import { mount as mountCue } from './cue.ts';
 import { mount as mountStrip } from './strip.ts';
 import type { Teach2Ctx } from './ctx.ts';
-import { drugWords } from '../glossary.ts';
 
 const MH2 = anyShowcaseDoc('showcase-mh-v2') as AnyScenarioDoc;
 
@@ -73,7 +72,7 @@ describe('Instructor v2 reads a pme-scenario/2 card (F6)', () => {
     expect(el.textContent).toContain('masseter rigidity');
   });
 
-  it('ACTION: the phase\'s actions, numbered (the judged row not before its clock starts); the A rows are the rules out of the phase, with the hold\'s bar', () => {
+  it('ACTION: the phase\'s actions, numbered ("name MH" not before Early signs); the A rows are the rules out of the phase, with the hold\'s bar', () => {
     const hold: PhaseHold = { transitionId: 'enter:earlySigns', key: 'phase:earlySigns:hold', leaf: 'hold', variable: 'earlySigns', op: '>=', threshold: 60, value: 30, met: true, heldS: 30, forS: 60, fraction: 0.5 };
     const { ctx } = rig({ holds: [hold], takings: { intubate: 1 } });
     const el = document.createElement('div');
@@ -187,7 +186,7 @@ describe('Instructor v2: a /2 row\'s given look follows the graded administratio
 // F11's fit (teach2-fit.e2e.ts): at Latent the MH card opens 11 actions and ACTION scrolled at 1440 × 900. The rows not
 // due now — a graded action not applicable and not given, an action the card does not grade given in an earlier phase —
 // sit in a "Not due now" fold of ACTION: still rows, numbered, pressable and on their digits; never a due, overdue or
-// given graded action, never the judged row.
+// given graded action.
 describe('Instructor v2: a /2 phase\'s rows not due now are folded, still rows of ACTION', () => {
   it('Latent after the induction: intubate and start surgery (setup, given in Baseline) and the K⁺ rows (not applicable) fold; the call and the A rows stay', () => {
     const setup: Administration[] = [
@@ -204,7 +203,7 @@ describe('Instructor v2: a /2 phase\'s rows not due now are folded, still rows o
     expect(folded.some((t) => t.startsWith('Start surgery'))).toBe(true);
     expect(folded.some((t) => t.startsWith('Potassium: calcium'))).toBe(true);
     expect(shown.some((t) => t.startsWith('MH crisis'))).toBe(true); // due: never folded
-    expect(shown.some((t) => /^Name malignant hyperthermia/.test(t))).toBe(false); // the judged row: not before Early signs
+    expect(shown.some((t) => /^Name malignant hyperthermia/.test(t))).toBe(false); // the record action: not before Early signs
     expect(shown.filter((t) => ['Early signs', 'Treated', 'Arrest'].includes(t))).toHaveLength(3);
     const fold = el.querySelector('details.ip2-later') as HTMLDetailsElement;
     expect(fold.hidden).toBe(false);
@@ -220,56 +219,60 @@ describe('Instructor v2: a /2 phase\'s rows not due now are folded, still rows o
 });
 
 // The owner's ruling of 1 November: the judged row "Name malignant hyperthermia from the monitor … (press when met)" was
-// in ACTION from Baseline, before any sign existed ("visible from the beginning … makes no sense"). It is offered from
-// the moment its Debrief clock starts — its display rule's first true second (`phaseEntered: earlySigns`, grade()'s
-// `fromT`) — and stays until met; then it is in Finished. One reading: the clock and the offer are the same edge.
-describe('Instructor v2: the /2 judged row is offered from its clock\'s start (the owner\'s ruling of 1 November)', () => {
+// in ACTION from Baseline, before any sign existed ("visible from the beginning … makes no sense"). The owner's ruling
+// of 5 November retired judged rows: it is now a timed record action, open in the phases from Early signs on (so still
+// never before the sign), drawn as any action (its grade at the right, "due m:ss" from Early signs' entry), its press
+// the scenario `record` command (no marker note), and once pressed a green row of its phase (no Finished, no "met" look).
+describe('Instructor v2: "name MH" is a record action (judged rows retired, the owner\'s ruling of 5 November)', () => {
   const EARLY: PhaseEntry[] = [{ id: 'baseline', t: 0, rule: 'start' }, { id: 'latent', t: 377, exitT: 483, rule: 'enter:latent' }, { id: 'earlySigns', t: 483, rule: 'enter:earlySigns' }];
-  const CLOCK: RuleEdge[] = [{ rule: 'judged:nameMh', t: 483, value: true }];
-  /** The rig in `phaseId` (entered at `t`), the board read: the open rows' titles and right labels, the finished titles. */
-  function board(o: Parameters<typeof rig>[0] & { phaseId?: string; t?: number; history?: Array<{ t: number; stateId: string }>; follower?: boolean; ticked?: boolean }) {
+  const SAID: Administration = { seq: 9, t: 492, source: 'action', actionId: 'nameMh', kind: 'communication', result: { accepted: true } };
+  /** The rig in `phaseId` (entered at `t`), the board read: the "name MH" row (its kind, look, right label, key), the finished rows. */
+  function board(o: Parameters<typeof rig>[0] & { phaseId?: string; t?: number; history?: Array<{ t: number; stateId: string }>; follower?: boolean }) {
     const r = rig(o);
     if (o.phaseId) (r.sv.stateId = o.phaseId), (r.sv.enteredT = o.t ?? 0);
     if (o.history) r.sv.history = o.history;
     if (o.follower) (r.link as unknown as { host: null }).host = null;
-    const text = (MH2 as unknown as { judged: Array<{ text: string }> }).judged[0]!.text;
-    if (o.ticked) r.link.log.push({ kind: 'marker', text: `Objective met: ${drugWords(text)}`, simT: 492 });
     const el = document.createElement('div');
     mountAction(el, r.ctx).refresh();
     const title = (x: Element) => x.querySelector('.ip2-row-title')?.textContent ?? '';
-    const open = [...el.querySelectorAll('.ip2-rows:not(.ip2-finished-list) .ip2-row')];
-    const judged = open.find((x) => /^Name malignant hyperthermia/.test(title(x)));
+    const open = [...el.querySelectorAll<HTMLElement>('.ip2-rows:not(.ip2-finished-list) .ip2-row')];
+    const row = open.find((x) => /^Name malignant hyperthermia/.test(title(x)));
     return {
-      judged: judged ? { right: judged.querySelector('.ip2-row-right')?.textContent, key: judged.querySelector('.ip2-key')?.textContent } : null,
-      finished: [...el.querySelectorAll('.ip2-finished-list .ip2-row')].map(title).filter((t) => /^Name malignant hyperthermia/.test(t)),
+      r, el, btn: row as HTMLButtonElement | undefined,
+      row: row ? { kind: row.dataset.kind, look: row.dataset.look, right: row.querySelector('.ip2-row-right')?.textContent, key: row.querySelector('.ip2-key')?.textContent } : null,
+      finished: el.querySelectorAll('.ip2-finished-list .ip2-row').length,
+      judgedKind: el.querySelectorAll('[data-kind="judged"]').length,
     };
   }
 
-  it('Baseline and Latent, no sign yet: the judged row is absent (not greyed, not folded), on the host and on a follower', () => {
-    expect(board({ phaseId: 'baseline', t: 0, simT: 100, history: [{ t: 0, stateId: 'baseline' }], run: { phases: [{ id: 'baseline', t: 0, rule: 'start' }] } }).judged).toBeNull();
-    expect(board({ simT: 470 }).judged).toBeNull();
-    expect(board({ simT: 470, follower: true }).judged).toBeNull();
+  it('Baseline and Latent, no sign yet: the row is absent (not greyed, not folded), on the host and on a follower', () => {
+    expect(board({ phaseId: 'baseline', t: 0, simT: 100, history: [{ t: 0, stateId: 'baseline' }], run: { phases: [{ id: 'baseline', t: 0, rule: 'start' }] } }).row).toBeNull();
+    expect(board({ simT: 470 }).row).toBeNull();
+    expect(board({ simT: 470, follower: true }).row).toBeNull();
   });
 
-  it('Early signs entered (the clock\'s edge at 08:03): the row is offered, "press when met", numbered after the actions; still there phases later', () => {
-    const at = board({ phaseId: 'earlySigns', t: 483, simT: 490, run: { phases: EARLY, edges: CLOCK } });
-    expect(at.judged?.right).toBe('press when met');
-    expect(Number(at.judged?.key)).toBe((MH2 as unknown as { actions: Array<{ phases: string[] }> }).actions.filter((a) => a.phases.includes('earlySigns')).length + 1);
+  it('Early signs entered (08:03): an action row, due 2 min from the entry, numbered last of the phase\'s actions (its old number); overdue phases later', () => {
+    const at = board({ phaseId: 'earlySigns', t: 483, simT: 490, run: { phases: EARLY } });
+    expect(at.row).toMatchObject({ kind: 'step', look: 'current', right: 'due 1:53' });
+    expect(Number(at.row?.key)).toBe((MH2 as unknown as { actions: Array<{ phases: string[] }> }).actions.filter((a) => a.phases.includes('earlySigns')).length);
+    expect(at.judgedKind).toBe(0);
     const later: PhaseEntry[] = [...EARLY.slice(0, 2), { id: 'earlySigns', t: 483, exitT: 600, rule: 'enter:earlySigns' }, { id: 'established', t: 600, rule: 'enter:established' }];
-    expect(board({ phaseId: 'established', t: 600, simT: 640, run: { phases: later, edges: CLOCK } }).judged?.right).toBe('press when met');
+    expect(board({ phaseId: 'established', t: 600, simT: 640, run: { phases: later } }).row).toMatchObject({ kind: 'step', right: 'overdue 0:37' });
   });
 
-  it('a follower (no grades) reads the clock\'s phase from the history: offered in Early signs and after it', () => {
+  it('a follower (no grades): the row is there from Early signs on, "graded on the host", as any action', () => {
     const h = [{ t: 0, stateId: 'baseline' }, { t: 377, stateId: 'latent' }, { t: 483, stateId: 'earlySigns' }];
-    expect(board({ phaseId: 'earlySigns', t: 483, simT: 490, history: h, follower: true }).judged?.right).toBe('press when met');
-    expect(board({ phaseId: 'established', t: 600, simT: 640, history: [...h, { t: 600, stateId: 'established' }], follower: true }).judged?.right).toBe('press when met');
-    // a return to a bookmark in Latent drops the Early signs entry after it: not offered again until it is re-entered
-    expect(board({ simT: 420, history: [...h, { t: 400, stateId: 'latent' }], follower: true }).judged).toBeNull();
+    expect(board({ phaseId: 'earlySigns', t: 483, simT: 490, history: h, follower: true }).row).toMatchObject({ kind: 'step', right: 'graded on the host' });
   });
 
-  it('after the tick: in Finished, no longer an open row', () => {
-    const r = board({ phaseId: 'earlySigns', t: 483, simT: 500, run: { phases: EARLY, edges: CLOCK }, ticked: true });
-    expect(r.judged).toBeNull();
-    expect(r.finished).toHaveLength(1);
+  it('its press sends the scenario record command for nameMh (no note, nothing to the engine); recorded, it is a green row of its phase, met', async () => {
+    const b = board({ phaseId: 'earlySigns', t: 483, simT: 490, run: { phases: EARLY } });
+    b.btn?.click();
+    await Promise.resolve();
+    expect(b.r.single).toEqual([{ type: 'scenario', action: 'record', target: 'nameMh' }]);
+    expect(b.r.sent).toEqual([]);
+    const done = board({ phaseId: 'earlySigns', t: 483, simT: 500, takings: { nameMh: 1 }, run: { phases: EARLY, admin: [SAID] } });
+    expect(done.row).toMatchObject({ kind: 'step', look: 'taken', right: 'met 08:12' });
+    expect(done.finished).toBe(0);
   });
 });

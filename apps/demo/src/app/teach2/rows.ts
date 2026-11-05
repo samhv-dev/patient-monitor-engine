@@ -14,9 +14,10 @@
 // report of 30 October): a step taken (green), a rule that fired (amber), a step failed (red), a judged objective met.
 // A judged recognition row is offered from the moment its Debrief clock starts, and not before (the owner's ruling of 1
 // November: "visible from the beginning … makes no sense"): on a /1 card once the run has entered the state the clock
-// counts from (debrief-moments.ts `signStates`, the MH card's Early signs), on a /2 card from the first second its
-// display rule holds (grade() `fromT`, the MH card's `phaseEntered: earlySigns`); a card with no such state or rule
-// offers it from the start. Before that it is not listed; once offered it stays until met.
+// counts from (debrief-moments.ts `signStates`, the MH card's Early signs); a card with no such state offers it from the
+// start. Before that it is not listed; once offered it stays until met. A /2 card has no judged rows (retired by the
+// owner's ruling of 5 November): a team act the instructor observes is a record action, drawn and pressed as any action,
+// open in its phases (the MH card's "name MH" from Early signs on).
 // The mark names the transition taken: a step with no rule of its own is a press whenever it fired (card-read.ts
 // `byItself`), never "fired by its own rule", whatever the record's attribution; a spoke's return is not a row.
 // The look is all a status changes, with one exception: a step the runner would refuse now (a press guarded by a vital in
@@ -25,7 +26,7 @@
 import type { ScenarioDoc, Transition, When } from '@pme/controller';
 import type { RunEventId } from '@pme/controller/scenario';
 import { byItself, conditionNotMet, objectivesOf, phaseRowsOf, rowsOf, stagesOf, standingOf, untakenStatus, type Evidence, type History, type Row, type Stage } from '../card-read.ts';
-import { grade, type Administration, type DisplayRule, type Grade, type Grades, type Judged, type PhaseEntry, type PhaseHold, type RuleEdge, type ScenarioDocV2 } from '@pme/controller/scenario';
+import { grade, type Administration, type Grade, type Grades, type PhaseEntry, type PhaseHold, type RuleEdge, type ScenarioDocV2 } from '@pme/controller/scenario';
 import { eventWords, isEvent, mmss, trendMeta, verdict } from '../debrief.ts';
 import { signStates } from '../debrief-moments.ts';
 import { drugWords } from '../glossary.ts';
@@ -373,7 +374,7 @@ function conditionNow(src: Source, cond: readonly RunEventId[]): string {
 
 // ---- a pme-scenario/2 card (plan F6) ----
 
-/** What a /2 board is read from: the card, the current phase, the log (the judged rows' ticks) and, on the host, the
+/** What a /2 board is read from: the card, the current phase, the log and, on the host, the
  *  phase runner's takings, its holds and the live grades (a follower has none: its action rows stay "ready", "graded on
  *  the host", its A rows empty). */
 export interface SourceV2 {
@@ -389,8 +390,6 @@ export interface SourceV2 {
    *  follower has neither (null): it folds nothing. */
   admin?: readonly Administration[] | null;
   enteredT?: number;
-  /** The scenario view's phase history: a follower (no grades) reads a judged row's `phaseEntered` clock from it. */
-  history?: History;
 }
 
 /** The grade inputs a /2 host's phase runner keeps (PhaseRunner `phases`, `admin`, `edges`). */
@@ -419,37 +418,16 @@ const overdueS = (live: string): number => {
   return m ? Number(m[1]) * 60 + Number(m[2]) : 0;
 };
 
-/** Whether a /2 judged row is offered: from its clock's start, the first second its display rule held (grade()
- *  `fromT`, which stays once set), and from the start when it has none. A follower has no grades: it reads the phases
- *  entered from the history and never hides a row for a value it cannot see. */
-function offeredV2(src: SourceV2, j: Judged | undefined): boolean {
-  if (!j?.display) return true;
-  if (src.grades) return src.grades.judged.find((x) => x.id === j.id)?.fromT !== undefined;
-  const seen = new Set([src.phaseId, ...keptCourse(src.history ?? []).map((e) => e.stateId)]);
-  return onHistory(j.display, seen) !== false;
-}
-/** A display rule on the phases entered: true, false, or undefined where a value leaf decides it (unseen on a follower). */
-function onHistory(r: DisplayRule, seen: ReadonlySet<string>): boolean | undefined {
-  if ('phaseEntered' in r) return seen.has(r.phaseEntered);
-  if ('not' in r) {
-    const v = onHistory(r.not, seen);
-    return v === undefined ? undefined : !v;
-  }
-  if (!('all' in r) && !('any' in r)) return undefined;
-  const vs = ('all' in r ? r.all : r.any).map((c) => onHistory(c, seen));
-  const decisive = 'all' in r ? false : true;
-  return vs.includes(decisive) ? decisive : vs.includes(undefined) ? undefined : !decisive;
-}
-
 /** The board of a /2 phase: its open actions, each with its live grade at the right and the grade's lines under the
  *  prescription (design §10: "due 3:12", "overdue 0:40", "met 08:16", "deviation: route", "not applicable"; an action
- *  the card does not grade keeps "press to give" / "given ×n"); a taken one stays pressable, green; the judged rows (met
- *  ones move to Finished as on /1), and the rules out of the phase with the 60-s hold's bar.
+ *  the card does not grade keeps "press to give" / "given ×n"); a taken one stays pressable, green (a record action, the
+ *  team act the instructor observes, is one of them: judged rows are retired, owner 5 November); and the rules out of the
+ *  phase with the 60-s hold's bar. Finished stays empty on /2: an action given stays a row of its phase.
  *  `later` (F11: the MH card's Latent opens 11 actions and ACTION scrolled at 1440 × 900): the rows not due now — a
  *  graded action not applicable and not given (its anchor or precondition has not happened: design §10 puts "not
  *  applicable" out of the open list), and an action the card does not grade, given in an earlier phase (the induction's
  *  setup carried into Latent). They stay rows of ACTION, numbered and pressable, in a fold; a due, overdue or given graded
- *  action and the judged rows are never folded. */
+ *  action is never folded. */
 export function classifyV2(src: SourceV2): Board {
   const list: LiveRow[] = [];
   const later: LiveRow[] = [];
@@ -477,11 +455,7 @@ export function classifyV2(src: SourceV2): Board {
         const earlier = t !== null && src.enteredT !== undefined && t < src.enteredT - 1e-6;
         (earlier ? later : list).push({ ...live, look: 'taken', right: `given${n > 1 ? ` ×${n}` : ''}`, at: t });
       } else list.push({ ...live, right: src.takings ? 'press to give' : 'graded on the host' });
-    } else if (row.kind === 'judged') {
-      const met = src.log.find((x) => x.kind === 'marker' && x.text === `Objective met: ${drugWords(row.text)}`);
-      if (met) finished.push({ ...live, look: 'met', at: met.simT, right: met.simT === null ? '' : mmss(met.simT), subtitle: 'you judged it' });
-      else if (offeredV2(src, src.doc.judged?.[row.objective])) list.push({ ...live, right: 'press when met', subtitle: 'you judge it · for the debrief only, the patient does not change' });
-    } else {
+    } else if (row.kind === 'auto') {
       const hold = src.holds?.find((x) => x.transitionId === row.tr.id && x.leaf === 'hold') ?? null;
       const progress = hold ? hold.fraction : 0;
       const right = src.paused ? 'frozen' : hold ? (hold.met ? `held ${mmssS(hold.heldS)} of ${mmssS(hold.forS)}` : 'not met') : '';

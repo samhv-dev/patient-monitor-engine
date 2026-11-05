@@ -1,0 +1,683 @@
+{
+  "$schema": "../../../../../packages/controller/scenarios/pme-scenario-2.schema.json",
+  "schema": "pme-scenario/2",
+  "id": "showcase-haemorrhage-v2",
+  "title": "Class IV haemorrhage, PEA and resuscitation (phases)",
+  "category": "Showcase",
+  "durationMin": 25,
+  "story": "A 35-year-old man bleeding 2.5 L over 10 minutes, breathing room air: oxygen and the ventilator come only from your steps. The bleed ends at 10 minutes: that is the surgeon's source control. Intubated and ventilated, positive pressure cuts the venous return of an empty patient and he loses his pulse at about 11 minutes on a junctional rhythm (PEA). Start CPR at once, with massive transfusion (1 L crystalloid, then red cells and plasma by rapid infuser), tranexamic acid and epinephrine every 3–5 minutes: compressions and volume restore the coronary perfusion pressure, and the circulation comes back from the PEA, which you recognise at a rhythm check on the arterial line and the capnogram. Left untreated, the PEA decays into asystole about 4½ minutes after the pulse loss, and in this model a heart in asystole does not regain its pulse: the time to CPR decides the case. Nothing on this card sets VF: the physiology does not produce it on this course.",
+  "takeHome": [
+    "Positive pressure and induction can tip a compensated bleeding patient into arrest.",
+    "In haemorrhagic arrest, stopping the bleeding and giving blood come first; compressions cannot fill an empty heart.",
+    "EtCO₂ and the arterial diastolic pressure show how good the CPR is, and they show the return of circulation."
+  ],
+  "notes": "pme-scenario/2 translation of showcase-haemorrhage (plan F9; design §4.2 and §11; the owner's rulings of 5 November). PHASES are the course, each entered by its own rule on engine truth, none by a button: Bleeding (start; the card-set 2.5 L bleed over 10 min), Decompensating (systolic below 60 for 10 s, the /1 card's own rule; the card sets a junctional rhythm at 50/min on its entry, as the /1 card does), Arrest PEA and Arrest asystole (the model's pulse loss, told apart by the rhythm id the engine draws: asystole, or any other), ROSC (the model's return of circulation) and Post-resuscitation (ROSC held 120 s, design §4.2). NO VF PHASE: the owner's ruling of 5 November (VF comes from the physiology, never from a press) and its measurement on this card's course (the PR of plan F9): the engine draws no VF on this course untreated (to 30:00), with CPR into asystole (the demo's timing) or with CPR in the PEA; the /1 card's scripted VF at the first two rhythm checks is gone, and with it the shocks. The rhythm check is an action: it stops the compressions for the check and does nothing to the rhythm. ACTIONS are the team's, each with its criteria and, in its src, the source of its numbers quoted and cited (the owner's ruling of 5 November, 'guideline for all'); an action whose sources state no window is recorded, not timed. The engine receives the /1 card's commands for the same presses (the press gives are the /1 states' onEnter commands), except the scripted VF and what follows from it.",
+  "seed": 7,
+  "mode": "modeled",
+  "patient": {
+    "ageY": 35,
+    "sex": "M",
+    "weightKg": 75,
+    "heightCm": 178,
+    "ageBand": "adult",
+    "sensors": {
+      "ecg": "on",
+      "spo2": "on",
+      "nibp": "on",
+      "abp": "connected",
+      "co2": "on",
+      "temp": "on"
+    }
+  },
+  "phases": [
+    {
+      "id": "bleeding",
+      "label": "Bleeding",
+      "initial": true,
+      "cue": "tachycardia, the pressure holding",
+      "notes": "Bleeding 2.5 L over 10 min, breathing room air: oxygen and the ventilator come only from your steps.",
+      "next": [
+        "decompensating",
+        "arrestPea",
+        "arrestAsystole"
+      ]
+    },
+    {
+      "id": "decompensating",
+      "label": "Decompensating",
+      "cue": "systolic below 60",
+      "enter": {
+        "value": {
+          "var": "sbp",
+          "op": "<",
+          "value": 60,
+          "forS": 10
+        }
+      },
+      "$comment": "The /1 card's rule from its ventilated state (systolic below 60 for 10 s), read on truth. The /1 card also let a button force the junctional rhythm; a phase is never entered by a button (design §4, plan Q5), so that press is gone.",
+      "notes": "The card sets the rhythm: a junctional rhythm at 50/min (an instructor rhythm event, not the physiology). The pulse loss that follows is the model's.",
+      "next": [
+        "arrestPea",
+        "arrestAsystole"
+      ]
+    },
+    {
+      "id": "arrestPea",
+      "label": "Arrest: PEA",
+      "cue": "a rhythm, no pulse",
+      "enter": {
+        "all": [
+          {
+            "signal": "pulseLoss"
+          },
+          {
+            "not": {
+              "signal": "rhythm:asystole"
+            }
+          }
+        ]
+      },
+      "$comment": "The model's pulse loss on an organised rhythm (the running junctional rhythm, then its slow idioventricular decay: the engine's 'agonal'). No hold: a pulseless patient is shown pulseless at once (the MH card's D4). No VF is told apart: the engine draws none on this course (the measurement in the F9 PR).",
+      "notes": "The model's PEA on the running junctional rhythm: the arterial line first reads about 20/14 (pseudo-PEA: a pressure too low to feel), then goes flat. On the owner's course it is left untreated: it slows, becomes idioventricular and turns to asystole about 5 minutes after the pulse loss.",
+      "next": [
+        "arrestAsystole",
+        "rosc"
+      ]
+    },
+    {
+      "id": "arrestAsystole",
+      "label": "Arrest: asystole",
+      "cue": "a flat line",
+      "enter": {
+        "all": [
+          {
+            "signal": "pulseLoss"
+          },
+          {
+            "signal": "rhythm:asystole"
+          }
+        ]
+      },
+      "notes": "The untreated PEA has decayed to asystole. In this model asystole stays: compressions and volume no longer bring the pulse back (the engine's ROSC is that of an organised rhythm).",
+      "next": [
+        "arrestPea",
+        "rosc"
+      ]
+    },
+    {
+      "id": "rosc",
+      "label": "ROSC",
+      "cue": "a pulse again",
+      "enter": {
+        "signal": "rosc"
+      },
+      "notes": "The pulse is back: CPR and volume have held the coronary perfusion pressure (at least 15 mmHg) and the myocardium for 60 s. Recognise it at the rhythm check on the arterial line and the capnogram, then stop CPR.",
+      "next": [
+        "postResuscitation",
+        "arrestPea",
+        "arrestAsystole"
+      ]
+    },
+    {
+      "id": "postResuscitation",
+      "label": "Post-resuscitation",
+      "cue": "circulation held",
+      "enter": {
+        "signal": "rosc"
+      },
+      "holdS": 120,
+      "$comment": "ROSC held 120 s (design §4.2): the rule is the return of circulation, held without a break for 120 s from ROSC's entry.",
+      "next": [
+        "arrestPea",
+        "arrestAsystole"
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "announceDiagnosis",
+      "label": "Recognise and announce the diagnosis: PEA from hypovolaemia (pseudo-PEA)",
+      "kind": "communication",
+      "phases": [
+        "decompensating",
+        "arrestPea",
+        "arrestAsystole"
+      ],
+      "$comment": "Replaces the /1 card's judged objective 1 (the owner's ruling of 5 November). The instructor presses it when the team says the diagnosis aloud; no engine command (the scenario record command).",
+      "window": {
+        "anchor": {
+          "rule": {
+            "value": {
+              "var": "sbp",
+              "op": "<",
+              "value": 25,
+              "forS": 10
+            }
+          }
+        },
+        "withinS": 30
+      },
+      "src": "Window from the first sign of the PEA the learners can see: systolic below 25 mmHg held 10 s, the /1 card's own PEA rule (pseudo-PEA, ART about 20/14), 34 s before the model's pulse loss on this course; the decompensation entry (systolic below 60) is a sign of shock, not yet of the PEA. Window length 30 s: the owner's number (5 November); no source states one. The owner's ruling of 5 November withdraws the 29 October ruling (recognition stays a judged row) and retires judged rows from /2 cards: recognition is a timed record action the instructor presses when the team says the diagnosis aloud."
+    },
+    {
+      "id": "oxygen",
+      "label": "Oxygen by face mask, FiO₂ 1.0",
+      "kind": "procedure",
+      "phases": [
+        "bleeding",
+        "decompensating"
+      ],
+      "$comment": "Graded as done in Bleeding or Decompensating (no window: see src).",
+      "give": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "preoxygenate",
+            "fio2": 1,
+            "durationS": 3600
+          }
+        }
+      ],
+      "src": "No window: none stated (ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769) and ERC Guidelines 2025 Special Circumstances, Traumatic cardiac arrest (Resuscitation 2025;215:110753) read). recorded, not timed: no window is stated in the sources read; graded as done in Bleeding or Decompensating."
+    },
+    {
+      "id": "intubate",
+      "label": "Intubate and ventilate, FiO₂ 1.0",
+      "kind": "procedure",
+      "phases": [
+        "bleeding",
+        "decompensating"
+      ],
+      "$comment": "Graded as done in Bleeding or Decompensating (no window: see src). Positive pressure then takes the empty patient into arrest: the lesson needs no phase (design §4.2).",
+      "notes": "Ventilator 12 × 500, PEEP 5, FiO₂ 1.0.",
+      "give": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "airwayDevice",
+            "device": "ett"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "preoxygenate",
+            "fio2": 0.21,
+            "durationS": 1
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "ventilation",
+            "source": "ventilator",
+            "rr": 12,
+            "vtMl": 500,
+            "peep": 5,
+            "fio2": 1
+          }
+        }
+      ],
+      "src": "No window: none stated (ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769) read; p.3 states only that 'only rescuers with a high success rate should use tracheal intubation'). recorded, not timed: no window is stated in the sources read; graded as done in Bleeding or Decompensating."
+    },
+    {
+      "id": "callForHelp",
+      "label": "Call for help",
+      "kind": "communication",
+      "phases": [
+        "bleeding",
+        "decompensating",
+        "arrestPea",
+        "arrestAsystole"
+      ],
+      "$comment": "The owner's ruling of 5 November: an action the instructor presses when the team calls. No engine command: the press is recorded by the scenario record command. No window (see src): graded as done in its phases.",
+      "src": "No window: ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769), p.6: 'All hospital staff should be able to recognise cardiac arrest rapidly, call for help, start CPR and defibrillate' (no time stated). recorded, not timed: no window is stated in the sources read; graded as done in its phases."
+    },
+    {
+      "id": "cpr",
+      "label": "Start CPR: compressions 100–120/min, bag via the tube 10/min, FiO₂ 1.0",
+      "kind": "device",
+      "phases": [
+        "decompensating",
+        "arrestPea",
+        "arrestAsystole"
+      ],
+      "$comment": "The /1 card's objective 2 (CPR within 30 s of the model's pulse loss) and the owner's ruling of 5 November: within 30 s met, 30 s to 2 min overdue, after 2 min failed though started (failAfterS). Rate 100–120/min (design §11). Pressed again it also resumes the compressions after a rhythm check (as the Resume CPR row does).",
+      "give": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "cpr",
+            "active": true,
+            "rate": 110,
+            "quality": 0.8
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "ventilation",
+            "source": "bvm",
+            "rr": 10,
+            "vtMl": 500,
+            "peep": 5,
+            "fio2": 1
+          }
+        }
+      ],
+      "device": {
+        "kind": "cpr",
+        "settings": {
+          "rate": {
+            "min": 100,
+            "max": 120
+          }
+        }
+      },
+      "window": {
+        "anchor": {
+          "first": [
+            "pulseLoss",
+            {
+              "display": {
+                "any": [
+                  {
+                    "all": [
+                      {
+                        "value": {
+                          "var": "abpSys",
+                          "op": "<",
+                          "value": 40,
+                          "forS": 30
+                        }
+                      },
+                      {
+                        "value": {
+                          "var": "etco2",
+                          "op": "<",
+                          "value": 25
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "all": [
+                      {
+                        "not": {
+                          "value": {
+                            "var": "abpSys",
+                            "op": ">",
+                            "value": -1
+                          }
+                        }
+                      },
+                      {
+                        "value": {
+                          "var": "nibpSys",
+                          "op": "<",
+                          "value": 50,
+                          "forS": 30
+                        }
+                      },
+                      {
+                        "value": {
+                          "var": "etco2",
+                          "op": "<",
+                          "value": 25
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "withinS": 30,
+        "failAfterS": 120
+      },
+      "src": "Window from the EARLIER of the model's pulse loss (the /1 card's objective 2) and the operating-room trigger, read on the DISPLAYED monitor: ERC Guidelines 2025 Special Circumstances (Resuscitation 2025;215:110753), p.11: 'Start chest compressions if the systolic blood pressure suddenly decreases below 50 mmHg, in association with fall in ETCO2, despite appropriate interventions.' Threshold: the cuff (NIBP) systolic below 50 mmHg when only a cuff is displayed, the arterial systolic below 40 mmHg when an arterial line is displayed (this card), by Harper NJN, Nolan JP, Soar J, Cook TM, Br J Anaesth 2020;124:234-238, p.236: 'the proposed NIBP systolic pressure threshold of 50 mm Hg'; p.237: 'when NIBP is less than 50 mm Hg the actual systolic arterial pressure is likely to be ~10 mm Hg lower'. Duration 30 s: the owner's number (5 November); the sources give none (NAP7, Nolan et al., Anaesthesia 2024;79:914-923, p.919: 'decreases and remains < 50 mmHg despite interventions'; Harper p.235: 'decreases to less than 50 mm Hg'). EtCO2 below 25 mmHg at the moment the pressure condition is met: the owner's clinical number (5 November); Hinkelbein et al., ESAIC/ESTES, Eur J Anaesthesiol 2023;40:724-736, p.728, reports only an association of '<20 mmHg' with severe anaphylaxis and nonsurvival, and Harper p.236 states that further work is needed 'before one is able to propose a threshold value of PECO2'. 'Despite appropriate interventions' is not computed; Harper p.235 names them: 'Primary interventions include haemostasis, intravenous fluids, and vasoactive drugs'. Scope: Harper p.235 excludes 'haemorrhagic shock with uncontrolled bleeding, in which chest compressions might accelerate blood loss'; Hinkelbein p.733: in hypovolaemic pseudo-PEA 'CCC should be withheld and resuscitation should focus on haemorrhage control and replacement of fluids and blood products'. The trigger applies to this card because the bleed is controlled at 10:00, before it can fire (the owner's ruling, 5 November). Within 30 s: the /1 card's objective 2; fail limit 120 s: the owner's ruling of 5 November; rate 100–120/min: design §11. Resuming after a rhythm check (the CPR press again) is also the Resume CPR row's."
+    },
+    {
+      "id": "bag",
+      "label": "Bag via the tube 10/min, FiO₂ 1.0",
+      "kind": "device",
+      "phases": [
+        "arrestPea",
+        "arrestAsystole"
+      ],
+      "$comment": "Design §11 (bag 10/min); graded on the bag-valve ventilation whatever sent it (the CPR press sends it).",
+      "give": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "ventilation",
+            "source": "bvm",
+            "rr": 10,
+            "vtMl": 500,
+            "peep": 5,
+            "fio2": 1
+          }
+        }
+      ],
+      "device": {
+        "kind": "ventilation",
+        "settings": {
+          "source": "bvm",
+          "rr": {
+            "value": 10
+          },
+          "fio2": {
+            "value": 1
+          }
+        }
+      },
+      "src": "10/min: ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769), p.8: 'Once a tracheal tube or a SGA has been inserted, ventilate the lungs at a rate of 10 min-1 and continue chest compressions without pausing during ventilations.' No window (recorded, not timed: no window is stated in the sources read)."
+    },
+    {
+      "id": "epinephrine",
+      "label": "Epinephrine 1 mg IV",
+      "kind": "drug",
+      "phases": [
+        "arrestPea",
+        "arrestAsystole"
+      ],
+      "$comment": "Design §11: epinephrine 1 mg IV/IO every 3–5 min, each repeat from the previous dose as given (the owner's ruling of 5 November). The violation: epinephrine 1 mg IV or IO after the return of circulation (design §7).",
+      "give": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "epinephrine",
+            "dose": 1,
+            "unit": "mg",
+            "route": "iv"
+          }
+        }
+      ],
+      "drug": {
+        "id": "epinephrine",
+        "dose": {
+          "value": 1,
+          "unit": "mg"
+        },
+        "route": {
+          "set": [
+            "iv",
+            "io"
+          ],
+          "preferred": "iv"
+        }
+      },
+      "repeat": {
+        "intervalS": {
+          "min": 180,
+          "max": 300
+        }
+      },
+      "contraindications": [
+        {
+          "text": "Epinephrine 1 mg IV or IO after the return of circulation: the arrest dose into a beating heart",
+          "match": {
+            "drugId": "epinephrine",
+            "route": [
+              "iv",
+              "io"
+            ],
+            "dose": {
+              "value": 1,
+              "unit": "mg"
+            }
+          },
+          "inPhases": [
+            "rosc",
+            "postResuscitation"
+          ]
+        }
+      ],
+      "src": "ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769), p.8: 'Give adrenaline 1 mg as soon as possible for adult patients in cardiac arrest with a non-shockable rhythm.' and 'Repeat adrenaline 1 mg every 3–5 min whilst ALS continues.' The first dose: 'as soon as possible', no number (recorded, not timed: no window is stated in the sources read); the repeat 180–300 s from the previous dose as given. UNDER THE OWNER'S REVIEW: ERC Guidelines 2025 Special Circumstances, Traumatic cardiac arrest (Resuscitation 2025;215:110753), p.31: 'the role of inotropes and vasopressors in traumatic cardiac arrest (TCA) is unclear.' Violation IV or IO: the owner's ruling of 5 November."
+    },
+    {
+      "id": "sourceControl",
+      "label": "Surgeon controls the bleeding",
+      "kind": "procedure",
+      "phases": [
+        "arrestPea",
+        "arrestAsystole"
+      ],
+      "$comment": "Design §11. The bleed rate goes to 0 (the 2.5 L bleed has already ended at 10:00 on this course).",
+      "give": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "bleed",
+            "rateMlPerMin": 0
+          }
+        }
+      ],
+      "src": "No window: ERC Guidelines 2025 Special Circumstances, Traumatic cardiac arrest (Resuscitation 2025;215:110753), p.31: 'The main principle is to achieve immediate haemostasis.' (no time stated). recorded, not timed: no window is stated in the sources read; offered in the arrest phases, as on the /1 card."
+    },
+    {
+      "id": "massiveTransfusion",
+      "label": "Massive transfusion: 1 L warmed crystalloid, then red cells and plasma by rapid infuser",
+      "kind": "fluid",
+      "phases": [
+        "arrestPea",
+        "arrestAsystole"
+      ],
+      "$comment": "The press gives the /1 card's 1 L balanced crystalloid over 90 s and 1200 mL of the engine's whole blood over 144 s (500 mL/min). The crystalloid enters at the theatre's 21 °C (no fluid warmer in the scenario schema).",
+      "give": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "fluid",
+            "fluid": "balanced",
+            "volumeMl": 1000,
+            "overS": 90
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "fluid",
+            "fluid": "blood",
+            "volumeMl": 1200,
+            "overS": 144
+          }
+        }
+      ],
+      "fluid": {
+        "type": [
+          "blood"
+        ],
+        "rateMlMin": {
+          "min": 300
+        }
+      },
+      "src": "Blood at ≥ 300 mL/min: the plan's criterion (scenario-format-v2-plan.md §F9). No source read states a massive-transfusion volume or rate: ERC Guidelines 2025 Special Circumstances, Traumatic cardiac arrest (Resuscitation 2025;215:110753), p.31, only 'enabling the hospital to activate the massive transfusion protocol'; Miller's Anesthesia, 10th ed., Ch45, Ch46 and Ch62 define none (nearest: Ch45 Fig. 45.7, PDF p.23, printed p.1420, 'BP <90 mm Hg after 2 PRBC' and 'Blood loss = circulating blood volume'; Ch62 Fig. 62.9, PDF p.21, printed p.2020, 'EBL > 150 mL/min'). No window (recorded, not timed: no window is stated in the sources read)."
+    },
+    {
+      "id": "txa",
+      "label": "Tranexamic acid 1 g IV",
+      "kind": "drug",
+      "phases": [
+        "arrestPea",
+        "arrestAsystole"
+      ],
+      "$comment": "Design §11: TXA 1 g IV. Logged: no effect on the monitor until a coagulation model exists.",
+      "give": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "tranexamicAcid",
+            "dose": 1000,
+            "unit": "mg",
+            "route": "iv"
+          }
+        }
+      ],
+      "drug": {
+        "id": "tranexamicAcid",
+        "dose": {
+          "value": 1000,
+          "unit": "mg"
+        },
+        "route": {
+          "set": [
+            "iv"
+          ]
+        }
+      },
+      "src": "1 g: ERC 2025 gives no dose (ERC Guidelines 2025 Special Circumstances, Traumatic cardiac arrest (Resuscitation 2025;215:110753), p.31: 'splints (pelvic splint), blood products, IV fluids and tranexamic acid can be used while transferring the patient for surgical haemorrhage control'); the dose from Miller's Anesthesia, 10th ed., Ch62 Fig. 62.9 (PDF p.21, printed p.2020): 'Consider tranexamic acid 1 g over 10 minutes followed by infusion of 1 g over 8 hours'. No window (recorded, not timed: no window is stated in the sources read); the 3-h clause dropped (CRASH-2's window is always satisfied in this 25-min case)."
+    },
+    {
+      "id": "rhythmCheck",
+      "label": "Rhythm check (compressions pause)",
+      "kind": "procedure",
+      "phases": [
+        "arrestPea",
+        "arrestAsystole"
+      ],
+      "$comment": "Design §11: a rhythm check every 2 min (the values and their source: src). The owner's ruling of 5 November: it stops CPR for the check and does nothing to the rhythm (no card-set VF). Resume the compressions with the CPR press.",
+      "give": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "cpr",
+            "active": false
+          }
+        }
+      ],
+      "window": {
+        "anchor": "action:cpr",
+        "withinS": 130,
+        "notBeforeS": 110
+      },
+      "repeat": {
+        "intervalS": {
+          "value": 120,
+          "tolerance": 10
+        }
+      },
+      "src": "Every 2 min: ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769), p.7: '...perform a rhythm and pulse check every two minutes.' Tolerance ±10 s: AHA 2025 Guidelines Part 7 Adult Basic Life Support (Kleinman et al., Circulation 2025;152(suppl 2):S448–S478), S462 (class 1): 'During rhythm checks for adult cardiac arrest, the health care professional should minimize the time taken to check for a pulse (no more than 10 s)'; beside it ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769), p.34: 'pulse/rhythm checks (less than 10 s)'. First check 110–130 s after CPR starts, then every 110–130 s from the previous check as taken."
+    },
+    {
+      "id": "resumeCpr",
+      "label": "Resume CPR after the rhythm check",
+      "kind": "device",
+      "phases": [
+        "arrestPea",
+        "arrestAsystole"
+      ],
+      "$comment": "The owner's ruling of 5 November: a timed action, compressions back within 10 s of each rhythm check (window anchored on each taking of the rhythm check). Graded on the compressions whatever sent them (this row or the CPR row).",
+      "give": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "cpr",
+            "active": true,
+            "rate": 110,
+            "quality": 0.8
+          }
+        }
+      ],
+      "device": {
+        "kind": "cpr",
+        "settings": {
+          "rate": {
+            "min": 100,
+            "max": 120
+          }
+        }
+      },
+      "window": {
+        "anchor": "each:action:rhythmCheck",
+        "withinS": 10
+      },
+      "src": "Within 10 s of each rhythm check: AHA 2025 Guidelines Part 7 Adult Basic Life Support (Kleinman et al., Circulation 2025;152(suppl 2):S448–S478), S462 (class 1): '...minimize the time taken to check for a pulse (no more than 10 s), and if the rescuer does not definitely feel a pulse, chest compressions should be restarted immediately.' The 10 s is AHA's pulse-check cap and the owner's number (5 November). The card's rhythm check is one instant press (compressions stop), so the window runs 10 s from that press. A check that finds a pulse (ROSC within the window) asks for no resumption."
+    },
+    {
+      "id": "stopCpr",
+      "label": "Rhythm check: pulse back, stop CPR",
+      "kind": "procedure",
+      "phases": [
+        "rosc",
+        "postResuscitation"
+      ],
+      "$comment": "The /1 card's objective 3: stop CPR within 120 s of the model's return of circulation. The press gives the /1 card's rosc state: compressions off, the ventilator back at 12 × 500, PEEP 5, FiO₂ 1.0.",
+      "give": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "cpr",
+            "active": false
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "ventilation",
+            "source": "ventilator",
+            "rr": 12,
+            "vtMl": 500,
+            "peep": 5,
+            "fio2": 1
+          }
+        }
+      ],
+      "window": {
+        "anchor": "rosc",
+        "withinS": 120
+      },
+      "src": "Within 120 s of ROSC: the /1 card's objective 3."
+    },
+    {
+      "id": "recogniseRosc",
+      "label": "Recognise the return of circulation on the arterial line and the capnogram at the rhythm check",
+      "kind": "communication",
+      "phases": [
+        "rosc",
+        "postResuscitation"
+      ],
+      "$comment": "The /1 card's objective 3, its recognition half (the stop-CPR half is the action stopCpr), a judged row until the owner's ruling of 5 November retired the kind: a team act the instructor observes is a record action. The instructor presses it when the team says the circulation is back; no engine command (the scenario record command, Q19). Timed: the window opens at ROSC's entry, when the strip shows it, which the judged row's clock started on. Last in the list, so every other row keeps its key.",
+      "window": {
+        "anchor": "phase:rosc",
+        "withinS": 120
+      },
+      "src": "Window from ROSC's entry: the former judged row's own clock (display rule phaseEntered rosc). Window length 120 s, timed: the owner's ruling of 5 November. Derived from the card's own number, the /1 card's objective 3, 'Recognise the return of circulation on the arterial line and the capnogram at the rhythm check, and stop CPR (debrief: within 120 s of the return of circulation)', of which this is the recognition half; no source read states a time."
+    }
+  ],
+  "script": [
+    {
+      "id": "bleed",
+      "on": "phase:bleeding",
+      "$comment": "The /1 card's bleeding state: 2.5 L over 10 min from the start.",
+      "commands": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "bleed",
+            "volumeMl": 2500,
+            "overS": 600
+          }
+        }
+      ]
+    },
+    {
+      "id": "junctional",
+      "on": "phase:decompensating",
+      "$comment": "The /1 card's junctional state: the card sets a junctional rhythm at 50/min (an instructor rhythm event, not the physiology). The pulse loss that follows is the model's.",
+      "commands": [
+        {
+          "type": "setRhythm",
+          "rhythm": "junctionalEscape",
+          "opts": {
+            "rateBpm": 50
+          },
+          "when": "nextBeat"
+        }
+      ]
+    }
+  ]
+}

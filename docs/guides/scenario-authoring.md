@@ -150,9 +150,17 @@ parts of it show:
   `after` that is a `value:` event fades the step until it is true (it stays pressable). An objective without a rule
   is a "you judge it" row. The `"recognition"` one is offered from the moment its Debrief clock starts, never before:
   once the run enters a state an `eventWithin` objective counts from (`after: "state:…"`) that the patient enters by a
-  rule (the MH card's Early signs); a card with no such state offers it from the start. In a `pme-scenario/2` card a
-  judged row is offered from the first second its `display` rule holds (no rule: from the start). An untaken step shows as failed only when such an objective still asks for it and the card
+  rule (the MH card's Early signs); a card with no such state offers it from the start. An untaken step shows as failed only when such an objective still asks for it and the card
   can no longer reach it; an alternative branch not chosen is never a failure.
+- **A `pme-scenario/2` card has no judged rows** (retired by the owner's ruling of 5 November; the design is
+  `docs/plans/scenario-format-v2.md`). Every row is an automatic row (a phase's rule) or an action. **A team act you
+  observe is a record action**: an action of kind `communication` (or `procedure`, `sample`) with no `give`, which the
+  row's press records with its time (the scenario `record` command). Give it a `window` when the card times it (the
+  MH card's "name MH from the monitor": `"window": { "anchor": "phase:earlySigns", "withinS": 120 }`, from the moment the
+  strip shows Early signs; a `{ "display": … }` anchor reads the monitor's numbers instead), and none when it is
+  recorded, not timed (a quality verdict such as "closed-loop communication was used", pressed at the end). List it in
+  the phases where the team can do it: the row is not there before. A card that still has a `judged` block fails
+  validation with one line naming this replacement.
 - **`notes`** of a state are the cue box's Say line, so write them as what the instructor says or watches for.
 
 ## Checklist

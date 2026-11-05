@@ -90,7 +90,7 @@ export type ExtraCommand = CommandBase &
     | { type: 'setMode'; mode: 'manual' | 'modeled' }
     | {
         type: 'scenario';
-        action: 'load' | 'goto' | 'trigger' | 'pause' | 'resume' | 'bookmark' | 'restoreBookmark';
+        action: 'load' | 'goto' | 'trigger' | 'pause' | 'resume' | 'bookmark' | 'restoreBookmark' | 'record';
         target?: string;
         doc?: unknown;
         /** With `bookmark` (Instructor v2 marks): the mark's kind and the instructor's note. Metadata only: carried on the
@@ -175,9 +175,10 @@ export type ExtraEvent =
   /**
    * The instructor's monitor style, for a phone on the relay (the second screen has its own same-browser style channel).
    * Sent with every answer to a hello (`replay: true`: the relay routes it as the welcome) and at every change.
-   * Presentation only.
+   * Presentation only. `ibp` (E130): the IBP1/IBP2 lane scales (a channel left out is the skin's fixed scale), so a
+   * phone draws the instructor's range.
    */
-  | { type: 'style'; skin: string; theme: string; replay?: true }
+  | { type: 'style'; skin: string; theme: string; ibp?: StyleIbpScales; replay?: true }
   /**
    * The card's Case briefing, for every learner screen (owner's board Orientation 7b): sent when a card with one loads,
    * with every answer to a hello while it runs (`replay: true`, so a phone that joins or reloads shows the remainder:
@@ -199,6 +200,9 @@ export interface BriefingNotice {
   estimatedMinutes?: number;
   lang: 'en' | 'fa';
 }
+
+/** E130: the IBP1/IBP2 lane scales as the renderer takes them (`@pme/renderer` IbpScales). */
+export type StyleIbpScales = Partial<Record<'IBP1' | 'IBP2', { mode: 'fixed' } | { mode: 'custom'; lower: number; upper: number } | { mode: 'auto' }>>;
 
 /** An alarm raised during a fast-forward (it did not sound); `ended`: it came and went inside the span. */
 export type FastForwardAlarm = AlarmEntry & { ended: boolean };
@@ -280,6 +284,11 @@ export interface ManagedTransport extends Transport {
    */
   onPresence?(fn: (p: { hostOnline: boolean }) => void): () => void;
   /**
+   * R29: a peer's socket left the link's room (only a link to a relay knows; it says so to the host). The host forgets
+   * that peer's state on this transport, so the next socket under the id starts fresh.
+   */
+  onPeerLeft?(fn: (from: string) => void): () => void;
+  /**
    * The relay's control frames (its refusals among them), when the link has a relay. An instructor's session reads the
    * refusal's code and words from it (plan instructor-peer-role.md P5): `denied`, `too-many-tries`.
    */
@@ -300,7 +309,7 @@ export const INSTRUCTOR_COMMANDS: ReadonlySet<string> = new Set([
   'applyEvent airway', 'applyEvent bleed', 'applyEvent condition', 'applyEvent cpr', 'applyEvent defib', 'applyEvent drug',
   'applyEvent fluid', 'applyEvent infusion', 'applyEvent lungCondition', 'applyEvent pacer', 'applyEvent vaporiser',
   'applyEvent ventilation', 'attachSensor', 'device', 'pin', 'release', 'scenario bookmark', 'scenario goto',
-  'scenario pause', 'scenario restoreBookmark', 'scenario resume', 'scenario trigger', 'setMode', 'setRhythm', 'setTarget',
+  'scenario pause', 'scenario record', 'scenario restoreBookmark', 'scenario resume', 'scenario trigger', 'setMode', 'setRhythm', 'setTarget',
   'time jump', 'time pause', 'time resume', 'time scale', 'note',
 ]);
 
