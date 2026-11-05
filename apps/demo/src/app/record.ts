@@ -78,7 +78,8 @@ export type ValueKey = TrendKey | LabKey;
  * the CVP. A value counts only in the second it was measured in (its `at`): the arterial line and the CVP report every
  * second, the cuff once per cycle (`l2/hemo/pipeline.ts` `nibpEvents`), so a cuff value sits in the sample of its
  * cycle's second and the seconds between cycles are null (a trend draws the gap blank; DQ1, ruled 5 November). A line
- * that stops reporting is null from its first silent second, never its last value.
+ * that stops reporting is null from its first silent second, never its last value. Stored in whole mmHg, the
+ * monitor's displayed precision (the debrief shows what the monitor showed).
  */
 export const PRESSURES = { sys: ['abpSys', 'nibpSys'], dia: ['abpDia', 'nibpDia'], cvp: ['cvpMean'] } as const;
 export type PressureKey = keyof typeof PRESSURES;
@@ -316,7 +317,10 @@ export class RunRecord {
     const row = { t: s } as Sample;
     for (const k of TREND_KEYS) row[k] = TREND[k].map((id) => this.cur[id]).find((v) => typeof v === 'number') ?? null;
     const now = (id: string) => (Math.floor((this.curAt[id] ?? -Infinity) + EPS) === s ? this.cur[id] : null); // measured in this second
-    for (const k of PRESSURE_KEYS) row[k] = PRESSURES[k].map(now).find((v) => typeof v === 'number') ?? null;
+    for (const k of PRESSURE_KEYS) {
+      const v = PRESSURES[k].map(now).find((x) => typeof x === 'number');
+      row[k] = typeof v === 'number' ? Math.round(v) : null; // whole mmHg, as the monitor prints it
+    }
     for (const k of LAB_KEYS) row[k] = this.lab[k] ?? null;
     const last = this.data.samples.at(-1);
     if (last && last.t === s) Object.assign(last, row);
