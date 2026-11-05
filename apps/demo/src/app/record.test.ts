@@ -156,6 +156,76 @@ describe('the run record', () => {
     expect(r.data.rows.filter((x) => x.ev === 'alarm:A').map((x) => [x.t, x.endT, x.ackT])).toEqual([[10, 31, undefined]]);
   });
 
+  it('D3: a CPR command that stops compressions is a row with ev "cprStop" (the instructor\'s, a Remote\'s or the card\'s)', () => {
+    const r = fresh();
+    r.wire(applied(500, { type: 'applyEvent', event: { kind: 'cpr', active: true, rate: 110 } }));
+    r.wire(applied(1000, { type: 'applyEvent', event: { kind: 'cpr', active: false } }));
+    r.wire(applied(1500, { type: 'applyEvent', event: { kind: 'cpr', active: true }, issuedBy: 'remote' }));
+    r.wire(applied(2000, { type: 'applyEvent', event: { kind: 'cpr', active: false }, issuedBy: 'scenario' }));
+    expect(r.data.rows.map((x) => [x.t, x.kind, x.text, x.ev])).toEqual([
+      [10, 'action', 'CPR started, 110 /min', 'cpr'], [20, 'action', 'CPR stopped', 'cprStop'],
+      [30, 'remote', 'CPR started', 'cpr'], [40, 'scenario', 'CPR stopped', 'cprStop'],
+    ]);
+    expect(r.data.keeps).toEqual(expect.arrayContaining(['pressures', 'alarmEnd', 'cprStop']));
+  });
+
+  it('D3 cross-check on a real host: the CPR rows\' on/off times are the edges of the engine\'s hemo.cpr.active, within one tick', async () => {
+    const v = validateScenario(BUILTIN_SCENARIOS['acls-pea-hypovolaemia']);
+    if (!v.ok) throw new Error(v.errors.join('; '));
+    const eo = engineOptionsOf(v.doc, 7);
+    const engine = createEngine({ ...eo, mode: 'modeled', truthHz: 1, patient: { ...eo.patient, ...(v.doc.patient?.sensors ? { sensors: v.doc.patient.sensors } : {}) } } as never);
+    // the engine's own CPR state (l2/hemo/pipeline.ts `hs.cpr.active`), read after every tick: the truth event carries
+    // it too (`tree.hemo.cpr.active`) but at most at 2 Hz, too coarse to place an edge within a tick
+    const cprActive = () => (engine as unknown as { st: { hemo: { cpr: { active: boolean } } } }).st.hemo.cpr.active;
+    const target: HostTarget = { dispatch: (c) => engine.dispatch(c), snapshot: () => engine.snapshot(), restore: (s) => engine.restore(s), on: (f) => engine.on(f), now: () => engine.now(), time: () => {} };
+    let hs: HostSession | null = null;
+    const driver = new ScenarioDriver({ target, submit: (c) => (hs as HostSession).submit(c), publish: (e) => hs?.publish(e) });
+    hs = new HostSession({ session: 'REC567', target: driver.host, scenario: driver.hook, stateIntervalMs: 0 });
+    const hub = createInProcessHub();
+    hs.addTransport(hub.connect());
+    const r = fresh();
+    hub.connect().onMessage((m) => m.kind === 'event' && m.body.forEach((e) => r.wire(e)));
+    const edges: Array<[number, 'cpr' | 'cprStop']> = [];
+    const truths: boolean[] = [];
+    engine.on((e) => {
+      r.engine(e);
+      if (e.type === 'truth') truths.push((e.tree.hemo as { cpr?: { active?: unknown } } | undefined)?.cpr?.active === true);
+    });
+    let was = cprActive();
+    const settle = () => new Promise((res) => setTimeout(res, 0));
+    const run = async (to: number) => {
+      while (engine.now().simT < to - 1e-9) {
+        for (let i = 0; i < 5; i++) {
+          engine.advanceTo((engine.now().tick + 1) * 0.02 + 1e-9);
+          const on = cprActive();
+          if (on !== was) edges.push([engine.now().tick * 0.02, on ? 'cpr' : 'cprStop']);
+          was = on;
+        }
+        driver.poll();
+        await settle();
+      }
+    };
+    const cmd = async (c: Record<string, unknown>) => expect((await hs.submit({ id: `x${Math.random()}`, issuedBy: 'instructor', ...c } as never)).accepted).toBe(true);
+    await cmd({ type: 'scenario', action: 'load', doc: v.doc });
+    await run(2);
+    await cmd({ type: 'scenario', action: 'trigger', target: 'losePulse' }); // PEA
+    for (const [t, active] of [[6, true], [16, false], [21, true], [33, false]] as const) {
+      await run(t);
+      await cmd({ type: 'applyEvent', event: { kind: 'cpr', active, rate: 110, quality: 0.8 } });
+    }
+    await run(40);
+    hs.close();
+    const loss = r.data.rows.find((x) => x.ev === 'pulseLoss');
+    expect(loss && loss.t < 6).toBe(true); // all four inside one pulseless span (no return of circulation)
+    expect(r.data.rows.some((x) => x.ev === 'rosc')).toBe(false);
+    const rows = r.data.rows.filter((x) => x.ev === 'cpr' || x.ev === 'cprStop').map((x): [number, string] => [x.t, x.ev as string]);
+    expect(rows.map((x) => x[1])).toEqual(['cpr', 'cprStop', 'cpr', 'cprStop']);
+    // every edge of the engine's own state has its row, and no edge comes without a command
+    expect(edges.map((x) => x[1])).toEqual(rows.map((x) => x[1]));
+    edges.forEach(([t], i) => expect(Math.abs(t - (rows[i] as [number, string])[0]), `edge ${i} at ${t}`).toBeLessThanOrEqual(0.02 + 1e-6));
+    expect(truths.filter((x, i) => i > 0 && x !== truths[i - 1])).toHaveLength(4); // the 1 Hz truth sees the same four
+  }, 60_000);
+
   it('E133: a run of ≥ 3 PVCs is one row at its first PVC, counting its beats; single PVCs and couplets are not', () => {
     const r = fresh();
     const beat = (t: number, pvc: boolean) => r.engine({ type: 'beat', t, seq: 0, origin: pvc ? 'ventricular' : 'sinus', template: pvc ? 'pvc' : 'normal', qrsMs: 90, qtMs: 380, mech: { perfused: true, kSV: 1, svMl: 70, lvetMs: 280 } } as EngineEvent);
@@ -285,7 +355,7 @@ describe('the run record', () => {
     const copy = JSON.parse(JSON.stringify(r.data));
     expect(copy).toEqual(r.data);
     r.wire({ type: 'timeline', t: 0, tick: 0, cause: 'restart' } as WireEvent);
-    expect(r.data).toEqual({ startedAt: 1_000, lastWall: 1_000, patient: 'M 40 y 70 kg', weightKg: 70, doc: null, rows: [], samples: [], returns: 0, keeps: ['pressures', 'alarmEnd'] });
+    expect(r.data).toEqual({ startedAt: 1_000, lastWall: 1_000, patient: 'M 40 y 70 kg', weightKg: 70, doc: null, rows: [], samples: [], returns: 0, keeps: ['pressures', 'alarmEnd', 'cprStop'] });
   });
 
   it('on a real host: a bookmark restore keeps the course before it and marks the course after it undone', async () => {
