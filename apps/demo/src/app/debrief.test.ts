@@ -480,9 +480,10 @@ describe('F7: a pme-scenario/2 run — the action table (record actions among th
     expect(report3(run([]))).toBeNull();
   });
 
-  it('keyTimes: a /2 run has no recognition tile (judged rows are retired): the recognition is the action row above, its window and press', () => {
-    expect(keyTimes(d2).map((k) => k.id)).not.toContain('recognition');
-    // an old marker note (a judged tick from before the ruling) is no tile either
-    expect(keyTimes({ ...d2, rows: [...d2.rows, { t: 450, kind: 'note', text: 'Objective met: Name malignant hyperthermia' }] }).map((k) => k.id)).not.toContain('recognition');
+  it('keyTimes: a /2 run\'s recognition tile is the card\'s marked action (D5: nameMh), its window and press, never a note', () => {
+    const want = { id: 'recognition', label: 'Recognition (timed action)', fromT: 410, fromLabel: 'early signs', toT: 450, askedS: 120, grade: 'met', state: 'measured' };
+    expect(keyTimes(d2).find((k) => k.id === 'recognition')).toEqual(want);
+    // an old marker note (a judged tick from before the ruling) changes nothing: no note is read for a /2 run
+    expect(keyTimes({ ...d2, rows: [...d2.rows, { t: 300, kind: 'note', text: 'Objective met: Name malignant hyperthermia' }] }).find((k) => k.id === 'recognition')).toEqual(want);
   });
 });

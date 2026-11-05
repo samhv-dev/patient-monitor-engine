@@ -284,3 +284,21 @@ describe('pme-scenario/2: failAfterS and preparation (plan F9)', () => {
     expect(errs(withAction({ repeat: { intervalS: { max: 300 } } }))).toContain('/actions/1/repeat/intervalS: a repeat needs its shortest interval (min or value)');
   });
 });
+
+// Debrief 2, D5 (the owner's ruling of 5 November): on a /2 card recognition is a timed action, and the card marks which
+// one with `recognition: true` (the Debrief reads that action, never a match by label). At most one per card.
+describe('pme-scenario/2: the recognition action (Debrief 2, D5)', () => {
+  const withActions = (...as: object[]) => {
+    const d = minimalV2() as any;
+    as.forEach((a, i) => d.actions.push({ id: `r${i}`, label: `R${i}`, kind: 'communication', phases: [d.phases[0].id], ...a }));
+    return d;
+  };
+  it('accepts one action marked recognition: true', () => {
+    const r = validateScenario(withActions({ recognition: true, window: { anchor: 'start', withinS: 120 } }, {}));
+    expect(r.ok ? [] : r.errors).toEqual([]);
+  });
+  it('refuses a second recognition action, and recognition other than true', () => {
+    expect(errs(withActions({ recognition: true }, { recognition: true }))).toContain('/actions/2/recognition: a second recognition action (the first is "r0"); a card has at most one');
+    expect(errs(withActions({ recognition: false })).join(' ')).toMatch(/recognition/);
+  });
+});
