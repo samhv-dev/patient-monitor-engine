@@ -29,9 +29,13 @@ for (const skin of ['saadat-like', 'philips-like'] as const) {
       await openApp(page, base, '#/monitor', { warmMs: 2500, site: { skin } });
       await page.locator('.stage').hover({ position: { x: w / 2, y: h / 3 } });
       const strip = page.getByRole('toolbar', { name: 'Monitor view' });
+      // The hover starts the strip's 180-ms fade-in (app.css `.reveal`, a CSS transition). Its end was awaited on the page's
+      // animation clock, which a loaded CI WebKit runner held still mid-fade for the whole 5-s wait: opacity 0.927648,
+      // 0.975625 and 0.969409, the same value at every poll (runs 41809522564, 41921015041, 41927894797). The fade is not
+      // what this test measures, so the shot finishes it (Playwright's `animations: 'disabled'` calls finish() on every
+      // finite animation) and the strip's opacity is read after that: the hover's own value, by no clock.
+      await page.screenshot({ path: `${out}/${skin}-${w}.png`, animations: 'disabled' });
       await expect(strip).toHaveCSS('opacity', '1');
-      await page.waitForTimeout(400); // the opacity transition
-      await page.screenshot({ path: `${out}/${skin}-${w}.png` });
       const s = (await strip.boundingBox()) as Box;
       const stage = (await page.locator('.stage').boundingBox()) as Box;
       const canvas = (await page.locator('.stage canvas[data-lanes]').first().boundingBox()) as Box;
