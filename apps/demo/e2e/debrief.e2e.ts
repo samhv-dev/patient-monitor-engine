@@ -299,7 +299,8 @@ async function showRecorded(page: Page, run = A31, card = TAMPONADE): Promise<vo
   await page.evaluate(() => (location.hash = '#/debrief'));
   await expect(page.locator('[data-view=debrief] #db-moments')).toBeVisible();
 }
-/** Heights in print media (mm): the page-1 block (header band to the end of the objectives) and the handout; whether
+/** Heights in print media (mm): the page-1 block (header band to the end of the objectives; a /2 run has no objectives
+ *  section since judged rows were retired, 5 November: to the end of the course strip) and the handout; whether
  *  the bundled print font is loaded (rc.3: the heights are measured in it on every platform); and the printed size (pt)
  *  of the handout course strip's labels (0 when the handout is not shown). */
 /** The view loads the bundled print font on entering (loadPrintFont, not awaited) and its print buttons await it; a
@@ -315,7 +316,8 @@ const printHeights = (page: Page) => page.evaluate((mm) => {
   const label = strip.querySelector('.db-lane-l') as SVGTextElement;
   const stripPt = (strip.getBoundingClientRect().width / strip.viewBox.baseVal.width) * parseFloat(getComputedStyle(label).fontSize) * 0.75;
   const printFont = [...document.fonts].some((f) => f.family.replace(/["']/g, '') === 'Inter Print' && f.status === 'loaded');
-  return { page1: (r('#db-objectives').bottom - r('#db-live-1 > .db-band').top) / mm, handout: r('#db-handout').height / mm, printFont, stripPt };
+  const end = document.querySelector('#db-objectives') ? '#db-objectives' : '#db-course';
+  return { page1: (r(end).bottom - r('#db-live-1 > .db-band').top) / mm, handout: r('#db-handout').height / mm, printFont, stripPt };
 }, MM);
 
 test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, the learner handout', async ({ page, browserName }) => {
