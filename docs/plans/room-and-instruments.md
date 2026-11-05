@@ -17,8 +17,17 @@ code" is pressed, across reloads, restarts and days, and the kit's busy-port fal
 new piece R1b. Q4 = A: **build the ventilator in its own window**, on a second screen of the laptop or on a tablet,
 with a new wire for its frames, keeping E128: while it drives, every network follower holds for the whole case. The
 optional R8 becomes four pieces of the plan proper, R8a to R8d (§7), and the totals, the critical path and the merge
-order are updated (§9). The ventilator's wire is an owner-ruled exception to the "no new wire" anti-goal (§2). Q5 to
-Q10 stay open.
+order are updated (§9). The ventilator's wire is an owner-ruled exception to the "no new wire" anti-goal (§2).
+
+**Amended a third time 2026-11-05:** Q5 and Q6 are **ruled 5 November** (§10), both the larger option. Q5 = B:
+learners press Charge and Shock on the defibrillator window and the host applies them, the product's FIRST
+learner-operated command path, planned as R5c (a `defib` role, admitted by the room code, and a relay allow-list of
+exactly those two commands) and R5d (the host applies them through the same guard and device logic as the
+instructor's panel, records each press under the device, and the e2e proves the window can send nothing else).
+Q6 = B: the instructor picks the defibrillator model in Room setup, apart from the monitor skin, and the host adopts
+its energies: R5a decouples the defibrillator's device profile from the skin in the engine's device layer, and R5b
+puts the choice in Room setup; R0's drift measurement becomes R5a's acceptance. The pieces, hours, critical path and
+merge order are updated (§7, §9). Q7 to Q10 stay open.
 
 **Base and preconditions.**
 - Base: `origin/main` **8d79f188** (Merge PR #197, `feat-peer-p4`), read in the worktree `scratch/wt-room-plan`
@@ -86,7 +95,9 @@ Non-goals
 
 Anti-goals (a piece that does one of these is rejected)
 - **The phones stop following the host.** Every instrument on another device is a follower (`views/follower.ts`): it
-  computes nothing the host did not command. No instrument sends a command.
+  computes nothing the host did not command. No instrument sends a command, with ONE exception the owner ruled on 5
+  November (Q5): the defibrillator window sends Charge and Shock, and nothing else (R5c, R5d). The host applies
+  them; the window still computes only what the host's engine commanded.
 - **A screen shows something the engine does not compute.** No EEG trace, no SQI, no EMG bar, no balloon-pressure
   wave, no defibrillator value other than the one the engine's device layer holds.
 - **A role is granted without the PIN.** The picker's "Instructor remote" leads to P7's PIN form; the room code alone
@@ -181,13 +192,24 @@ Anti-goals (a piece that does one of these is rejected)
   ("QR shown ONLY here") give one QR on the Room. P7's planned second QR of `?relay#/remote?code=CODE`
   (`instructor-peer-role.md:478–479`) is superseded by the picker's "Instructor remote" entry, which opens the same
   address. The PIN is still never in any address.
-- **D5. A defibrillator window may only wear a style whose device profile equals the host's.** R0 measures whether a
-  follower wearing another skin stays sample-identical through charge, shock and pacing at the defaults. Until the
-  owner answers Q6: Zoll-style when the host's skin has no defibrillator or is Zoll-like (the fallback is Zoll's
-  values, `defib.ts:11`); LIFEPAK-style only when the host is LIFEPAK-like. Any other pairing is not offered.
-- **D6. Instruments are display only.** A defibrillator window has no Charge or Shock button; the depth screen has
-  no On button. The instructor commands from the laptop (or, after P7, the PIN-granted phone). Learner presses on an
-  instrument would be a commanding role for viewers (Q5).
+- **D5. The room's defibrillator is a model of its own (Q6 ruled 5 November).** Today the defibrillator's spec is the
+  monitor skin's: `setSkin` sends `device monitor skin` (`packages/renderer/src/mount.ts:522`), and the device layer
+  rebuilds the whole profile, defibrillator included, from that skin (`device-layer.ts:91`, `:175–181`; a skin without
+  one falls back to Zoll's values, `defib.ts:11`). R5a gives the device layer a defibrillator model set by its own
+  command, `device {device:'defib', action:'model', value}`, which a skin change no longer overrides; the host sends
+  it from Room setup (R5b), so every follower replays it. A defibrillator window then wears the model's look and its
+  engine holds the model's spec, whatever the monitor skin. The models the engine knows today are the two skins with
+  a defibrillator block: **Zoll-style** (`zoll-like.json:27`: 120 J adult, 50 J paediatric, no AED ladder, charge time
+  by the 7 s / 200 J rule, `defib.ts:12–13`) and **LIFEPAK-style** (`lifepak-like.json:27`: 200 J adult, 50 J
+  paediatric, AED ladder 200, 300, 360 J, charge 7 s at 200 J and 10 s at 360 J). The owner's department's actual
+  machine is named in Q6; it may need a new profile with sourced energies, not one of these two.
+- **D6. The defibrillator window is the one instrument that commands, and only Charge and Shock (Q5 ruled 5
+  November).** The depth screen has no On button; the monitor screens have no controls. The window's two presses
+  carry no energy: the energy is the room's (the device's selected energy, `defib.ts:76`: a charge without `energyJ`
+  keeps `d.energyJ`, which starts at the model's adult energy, `defib.ts:32–33`, or the instructor's selection).
+  Shock is never disabled by the window: a shock without a charge is refused by the device
+  (`defib.ts:57`, "defibrillator is not charged"), not by a panel lock. The role is admitted by the room code alone,
+  with no PIN, because the power it carries is exactly the two presses a learner at a real defibrillator has.
 - **D7. Hashes for the instruments.** On a follower page: `#/monitor` (today's; upright on `?join=`, landscape on
   `?follow=`), `#/monitor/wide` (landscape over the relay), `#/defib`, `#/depth`, `#/pick`. The same hashes work on
   `?follow=` (this computer) and `?join=` (the relay). `router.ts` `ROUTES` is the host's list (`router.ts:5`) and
@@ -217,9 +239,9 @@ Anti-goals (a piece that does one of these is rejected)
   port range only; no owner identifier anywhere; no closing keyword before a `#number`; identity through
   `GIT_AUTHOR_*` / `GIT_COMMITTER_*` on every commit.
 - **Tests first** in every piece: the failing test is committed before the code, and the PR body pastes both runs.
-- **Must not touch (every piece):** `packages/engine-core`, `packages/skins`, the scenario format, the showcase
+- **Must not touch (every piece):** `packages/engine-core` (except R5a, owner-ruled Q6), `packages/skins`, the scenario format, the showcase
   cards (`apps/demo/src/app/showcase`), `packages/controller/src/session/viewer-sync.ts`, `host-session.ts` (P3's
-  file; R8c alone extends it, after P3 merges, and its gate drops that path from the diff check below), and what any
+  file; R8c and R5d alone extend it, after P3 merges, and its gate drops that path from the diff check below), and what any
   Instructor press sends, except R6's one new control, named there. `packages/ventilator` is touched by R8a (one
   additive `LinkMsg` kind) and R8c (a new `relay-port.ts`) only, never its mechanics.
   `packages/renderer` is untouched unless R0 shows that a look-only skin is needed (then R5 stops and reports; §4 D5).
@@ -385,7 +407,7 @@ PR for the owner, who rules the final words:
 | Ventilator | "Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient." | Card shown with the chip "On the instructor's computer" and no "Show here": its frames do not cross the relay (§3.4) |
 | Depth of anaesthesia | "BIS-style index with SQI and EMG, following the hypnotic effect-site concentration." | "BIS-like depth index and suppression ratio, from the hypnotic effect-site concentrations." The engine computes no SQI and no EMG value (`depth.ts:1–7`); the picture drops m5's "SQI 92 / EMG 28" and its EEG line. Shown only once R6 has merged |
 | Intra-aortic balloon pump | "Timing, augmentation and the arterial trace with the balloon's effect." chip "Coming later", button disabled | As m5: chip "Coming later", no action (Q8; §9) |
-| Defibrillator | "Rhythm strip, energy selection, charge and shock, pacing." | "Rhythm strip, energy, charging and pacing as the instructor sets them." Display only until Q5 is answered (§4 D6). Shown only once R5 has merged |
+| Defibrillator | "Rhythm strip, energy selection, charge and shock, pacing." | "Rhythm strip, energy selection, charge and shock, pacing", kept with "energy selection" read as the room's model and the instructor's choice: the window has Charge and Shock (Q5 ruled 5 November, R5d), not energy selection. Shown only once R5 has merged |
 | Learner phones | "Each learner's phone follows the monitor; they tick what they noticed for the debrief." | "Learner monitor: this phone follows the patient monitor." No "tick what they noticed" control exists in the app (no such feature at 8d79f188) |
 | (Instructor remote) | not in m5 | "Run the case from this phone. Needs the instructor's PIN." Shown only once P7 has merged; its action opens P7's PIN form |
 
@@ -413,23 +435,107 @@ projects. **CI load:** 1 run.
 
 ### R5: The defibrillator window `#/defib` (5 h)
 
-**Depends on:** R0 (which styles), R4 (the follower's hash handling). **Files:** new `apps/demo/src/app/instrument.ts`
-(pure: which skin an instrument wears given the host's style, per §4 D5), `instrument.test.ts`;
+**Depends on:** R5b (the room's model), R4 (the follower's hash handling). **Files:** new
+`apps/demo/src/app/instrument.ts` (pure: which skin an instrument wears: the room's defibrillator model's look, §4
+D5), `instrument.test.ts`;
 `views/follower.ts` (the defibrillator page: the instrument's skin, the host's `style` events change the theme only,
 `:137–145`, `:181`); `views/room.ts` (the opener "Defibrillator in a new window", `?follow=CODE#/defib`, as
 `:145–150`); `join.ts` (the entry).
 **Tests first:**
-- `defibSkin('saadat-like')` = `zoll-like`; `defibSkin('lifepak-like')` = `lifepak-like`; `defibSkin('philips-like')`
-  follows R0's result (Philips has no defibrillator block in the profile: fallback, so Zoll-like);
+- `defibSkin(model)` is the model's own look for each model R5a knows, whatever the monitor skin;
 - dom: the defibrillator window shows the energy and CHARGING / READY from its own engine at the same tick the host's
-  readout does (`deviceText`), with no Charge or Shock control (§4 D6);
-- a host style change to another monitor keeps the window on its defibrillator skin, or, if the new host style
-  changes the allowed defibrillator (to LIFEPAK-like or back), switches with it;
+  readout does (`deviceText`); its Charge and Shock come in R5d;
+- a host monitor-style change keeps the window on the model's look; a model change in Room setup switches it;
 - e2e (`learner-monitor-follows.e2e.ts`, a new case): a `#/defib` window on this computer and one over the relay show
   "120 J CHARGING" within one second of the host's charge.
-**Acceptance:** the tests pass; R0's measurement holds (no beat drift beyond the learner monitor's). **Must not
-touch:** `panel/defib.ts` and what it sends; `packages/renderer`. **Gate:** common, with `@pme/demo`, plus
+**Acceptance:** the tests pass; R5a's acceptance holds in the window (host and window agree on energy, charge time
+and the shock's outcome; no beat drift beyond the learner monitor's). **Must not touch:** `panel/defib.ts` and what
+it sends; `packages/renderer`. **Gate:** common, with `@pme/demo`, plus
 `learner-monitor-follows.e2e.ts` and `mobile-learner.e2e.ts` on both projects. **CI load:** 1 run.
+
+### R5a: The defibrillator model apart from the monitor skin, in the engine's device layer (6 h)
+
+**Depends on:** R0. **Owner-ruled exception (Q6, 5 November) to the global "must not touch `packages/engine-core`".**
+**Files:** `packages/engine-core/src/l3/device-layer.ts` (`DeviceState` gains `defibModel: string | null`;
+`defibSpec(d)` reads the model's spec, else today's skin profile, `:91`; the `monitor skin` branch, `:175–181`, keeps
+the model; the command's validation beside `:125–135`), `src/types-device.ts` (the `device: 'defib'` action
+`model`), `src/l3/alarms/profile.ts` (`DEFIB_MODELS`: the two models of §4 D5, their numbers taken from the skins'
+`defib` blocks, with the skins' own provenance), `src/l3/defib-pacer/defib.ts` (nothing in its arithmetic); tests in
+`packages/engine-core/test/` beside the device-layer tests; the snapshot round trip; `docs/model/*` regenerated.
+**Tests first:**
+- with no model set, every device-layer and validation test is unchanged (today's skin-driven behaviour exactly);
+- `device defib model lifepak-like` on a `saadat-like` monitor: a charge with no energy charges 200 J in 7 s; at 360 J
+  in 10 s; a later `monitor skin` change keeps those;
+- `device defib model zoll-like`: 120 J, charge time by the 7 s / 200 J rule (`defib.ts:12–13`);
+- an unknown model is refused with its reason; the pacer is untouched (it stays the skin's: not ruled);
+- snapshot then restore keeps the model; a follower that replays the command holds the same spec;
+- **R0's measurement as the acceptance:** a `saadat-like` host with model `lifepak-like` and a follower wearing the
+  `lifepak-like` skin agree on the default energy, the charge time, the READY tick and the shock's outcome through
+  charge, shock and pacing at the defaults, with no beat drift beyond the learner monitor's (R0's pinned difference
+  turns into an equality).
+**Acceptance:** the tests pass; the validation suites (`packages/validation`) and the slow showcase goldens are
+unchanged; `known-misses.md` unchanged. **Must not touch:** the shock outcome table, the alarm profiles, anything
+else in the engine. **Gate:** common, with `@pme/engine-core` and `@pme/validation`, plus the validation workflow;
+model-docs regenerated and committed as `docs(model): regenerate after R5a`. **CI load:** 1 run, plus the validation
+workflow.
+
+### R5b: Room setup's defibrillator choice, and the panel's energies from it (4 h)
+
+**Depends on:** R5a, R7's Room page (or its base, if R7 is not yet in: the choice sits in its own card). **Files:**
+`apps/demo/src/app/site.ts` (the site profile gains `defibModel`, kept per room as the monitor style is, `:32–40`,
+`:54–62`), `views/room.ts` (a "Defibrillator in this room" choice: Zoll-style (120 J) · LIFEPAK-style (200, 300,
+360 J), and a line "Your department's machine: not named yet" until Q6's second half is answered),
+`session.ts` (the host sends `device defib model` at each patient mount and on a change, through the host's command
+path so followers replay it), `panel/defib.ts` (the energy stepper starts at the model's adult energy instead of the
+fixed 200, `:18`, and offers the model's AED ladder as presets when it has one); tests beside each; the census
+(`teach2/census.dom.test.ts`) unchanged in shape (`device`), its review copy gains `device defib model`.
+**Tests first:** the choice is saved and re-sent after a patient restart and a scenario load; a follower's spec
+equals the host's after the change; the panel's default energy follows the model; nothing else in what a press
+sends changes. **Acceptance:** the tests pass; MH and haemorrhage showcase goldens unchanged with no model chosen.
+**Must not touch:** the engine. **Gate:** common, with `@pme/demo`. **CI load:** 1 run.
+
+### R5c: The learner defibrillator role: hello, guard, relay allow-list (4 h)
+
+**Depends on:** R3. **The first learner-operated command path (Q5 ruled 5 November).** **Files:**
+`packages/controller/src/protocol.ts` (`Role` gains `'defib'`, `:27`; `LEARNER_DEFIB_COMMANDS`, exactly two shapes:
+`applyEvent defib charge` and `applyEvent defib shock`, each with no `energyJ`, no `outcome`, no `atTick`;
+`learnerDefibMay(cmd)` → null or the refusal), `src/guard.ts` (`ROLES`, `:100`; `show`/`device` legal with `defib`
+too), `relay/server.ts` (the classroom rule admits `defib` from another device, `:393`, counted with the learners
+under `--max-peers`; a `defib` socket is routed as a viewer for everything it RECEIVES, lean copies; of what it SENDS,
+only a command that passes `learnerDefibMay` goes to the host, and any other command gets `{relay:'error',
+code:'forbidden'}`; at most 4 commands a second per socket [ENG: a charge and a shock per cycle with a margin for
+double taps], over that `too-many-tries`; acks route back as for a controller, `server.ts:221–231`), `relay/README.md`;
+tests in `test/guard.test.ts`, new `test/relay/relay-defib.test.ts`, `relay-hostile.test.ts`.
+**Tests first:** the relay forwards exactly the two shapes and refuses each of: `defib charge` with `energyJ: 360`,
+`defib shock` with `atTick`, `defib selectEnergy`, `defib preselect`, `defib disarm`, `syncOn`, `pacer`, `drug`,
+`cpr`, any `time`, `scenario`, `device`, `setTarget`, `pin`, `note`, a `vent` message, a hello as another role on the
+same socket; a viewer's command is still `forbidden` (unchanged); the learners' frames are unchanged.
+**Acceptance:** every relay and guard test passes unchanged besides the new ones. **Must not touch:** `host-session.ts`,
+the app. **Gate:** common, with `@pme/controller`, plus `check-relay.mjs` with one new step (a defib socket's charge
+reaches the host; its `selectEnergy` does not). **CI load:** 1 run.
+
+### R5d: The host applies a learner's Charge and Shock; the record says who; the window's two buttons (6 h)
+
+**Depends on:** R5c, R5, P3 merged (same file as R8c; merge after it). **Files:** `host-session.ts` (a `defib` peer's
+command is applied only if `learnerDefibMay` passes, checked again on the host whatever the relay did; `issuedBy`
+overwritten with `learner`, and the device key of its hello carried as `by`, as P3 overwrites an instructor's with
+`remote`, `instructor-peer-role.md` §2), `apps/demo/src/app/record.ts` (`RowKind` gains `learner`, `:21`; the row
+keeps `by`, `:22–33`, `:206`), the Debrief's who line (its name from R7's remembered layout, else "Defibrillator
+window n"), `views/follower.ts` and the defibrillator page (Charge and Shock, 44 px, always enabled; the ack's refusal
+shown as the device's words, "Not charged"), new `apps/demo/e2e/learner-defib.e2e.ts`; tests beside each.
+**Tests first:**
+- a learner's charge then shock land as the instructor's would: the same `applyEvent` path into the engine, the same
+  validation (`defib.ts:50–66`), the room's energy (no `energyJ`), the same outcome table;
+- a learner's shock without a charge comes back refused with the device's reason; nothing in the window blocks it;
+- every learner press is a record row of kind `learner` with the device's key and name; the Debrief shows "Shock
+  200 J at 04:12, by Defibrillator (bed 2)"; the instructor's own presses keep their rows;
+- a `defib` peer's every other shape is refused at the HOST too, with the relay bypassed (an in-process transport);
+- e2e: the window charges and shocks the free-roam patient after the instructor sets VF; a forged `applyEvent drug` and a `time pause`
+  sent on the window's own socket are refused and change nothing on the host; a learner phone (viewer) still cannot
+  command; the learner phones see the shock as followers do.
+**Acceptance:** the tests pass; P3's and the census tests pass unchanged; the Debrief e2e passes with only additions.
+**Must not touch:** `panel/defib.ts`'s sends; the engine. **Gate:** common, with `@pme/controller` and `@pme/demo`,
+plus the new e2e and `debrief.e2e.ts` on both projects. **CI load:** 1 run.
 
 ### R6: The depth-index screen `#/depth`, and its switch on the Devices sheet (6 h)
 
@@ -640,29 +746,32 @@ No duplicate work: the peer plan's P7 file list (`instructor-peer-role.md:473–
 ## 9. Partition, critical path, merge order, CI load, dependencies out of scope
 
 ```
-R0 ──────────────────────────────────────► R5 ─┐
-R3 ─┬─► R2 ─────────────────► R7 ──────────────┤
-    ├─► R4 ─┬─► R5                             │
-    │       └─► R6 ────────────────────────────┤
-    └─► R8a ─┬─► R8b ──────┐                   ├─► R9 ─► R10
-   [P3 merged]─┴─► R8c ────┴─► R8d ────────────┤
-   [P7 merged] ──────────────► R8d             │
-R1 ─► R1b ─────────────────► R7 ───────────────┘
+R0 ─► R5a ─► R5b ─► R5 ─► R5d ──────────────────┐
+R3 ─┬─► R4 ───────────► R5                      │
+    ├─► R5c ─────────────────► R5d              │
+    ├─► R2 ─────────────────► R7 ───────────────┤
+    │   R4 ─► R6 ───────────────────────────────┤
+    └─► R8a ─┬─► R8b ──────┐                    ├─► R9 ─► R10
+   [P3 merged]─┴─► R8c ────┴─► R8d ─────────────┤
+   [P3 merged] ──────────────► R5d              │
+   [P7 merged] ──────────────► R8d              │
+R1 ─► R1b ─────────────────► R7 ────────────────┘
 ```
 
-- **Critical path:** R3 (2) → R8a (3) → R8c (8) → R8d (6) → R9 (3) → R10 (5) = **27 h**, and it waits on two peer
-  pieces outside this plan: P3's merge (a ready draft) before R8c, and P7 (5 h, unbuilt, after P3) before R8d. P7
-  can run beside R8c, so it adds nothing to the path if it starts the day P3 merges. The old path, R3 → R2 → R7 → R9
-  → R10 (22 h), now runs beside it.
-- **Parallelism:** at most three executors: {R0, R1, R3} first; then {R2, R4, R8a}; then {R5, R1b, R8b} and R8c once
-  P3 is in; then {R6, R7, R8d}.
-- **Merge order:** R0, R3, R1, R1b, R2, R4, R8a, R8b, (P3), R8c, R5, R6, R7, (P7), R8d, R9, R10. R5, R6, R7 and R8d
-  all touch `views/room.ts` (the openers) and R4, R5, R6 and R8d touch `join.ts`; R1b and R2 touch `relay/server.ts`;
-  R8b too: each rebases on the one before.
-- **CI load:** 15 PRs, one full CI run each (build with the kit relay smoke test, renderer, e2e on
+- **Critical path:** R0 (2) → R5a (6) → R5b (4) → R5 (5) → R5d (6) → R9 (3) → R10 (5) = **31 h**. R5d also waits on
+  P3's merge (a ready draft) and on R8c (same file, `host-session.ts`). The ventilator path, R3 → R8a → R8c → R8d → R9
+  → R10 (27 h), runs beside it and waits on P3 and P7 (5 h, unbuilt, after P3; it can run beside R8c). R5b does not
+  wait for R7: it puts its choice in a card of today's Room page, and R7 rebases over it.
+- **Parallelism:** at most three executors: {R0, R1, R3} first; then {R5a, R4, R8a}; then {R2, R5c, R1b}; then
+  {R5b, R8b, R6} and R8c once P3 is in; then {R5, R7, R8d}; then R5d.
+- **Merge order:** R0, R3, R1, R5a, R4, R8a, R1b, R2, R5c, R8b, R6, R5b, (P3), R8c, R5, R5d, R7, (P7), R8d, R9, R10.
+  R5b, R5, R5d, R6, R7 and R8d touch `views/room.ts` or the follower pages; R4, R5, R6 and R8d touch `join.ts`; R1b,
+  R2, R5c and R8b touch `relay/server.ts`; R8c and R5d touch `host-session.ts`; R5d touches `record.ts`, which the
+  Debrief 2 plan's D1–D5 also change (coordinate: the later one rebases); each rebases on the one before.
+- **CI load:** 19 PRs, one full CI run each (build with the kit relay smoke test, renderer, e2e on
   chromium and webkit, the slow-test matrix: `.github/workflows/ci.yml:9`, `:48`, `:105`, `:195`), plus reruns of a
-  rebased head; R8c and R8d also run the validation workflow. Three new e2e files (`room-code.e2e.ts`,
-  `vent-window.e2e.ts`, `room-and-instruments.e2e.ts`) and new cases in three existing ones; no new CI job.
+  rebased head; R5a, R8c and R8d also run the validation workflow. Four new e2e files (`room-code.e2e.ts`,
+  `vent-window.e2e.ts`, `learner-defib.e2e.ts`, `room-and-instruments.e2e.ts`) and new cases in three existing ones; no new CI job.
 
 **Effort**
 
@@ -675,6 +784,10 @@ R1 ─► R1b ─────────────────► R7 ──�
 | R3 `show` and `device` on the hello | 2 |
 | R4 picker (mock-up m5), instrument hashes | 7 |
 | R5 defibrillator window | 5 |
+| R5a defibrillator model in the engine's device layer | 6 |
+| R5b Room setup's defibrillator choice; panel energies | 4 |
+| R5c learner `defib` role, guard, relay allow-list | 4 |
+| R5d host applies learner presses; record; window buttons; e2e | 6 |
 | R6 depth-index screen and switch | 6 |
 | R7 Room setup | 7 |
 | R8a `ventilator` role, `vent` message, guard | 3 |
@@ -683,7 +796,7 @@ R1 ─► R1b ─────────────────► R7 ──�
 | R8d ventilator device page, laptop window, picker card | 6 |
 | R9 kit and docs | 3 |
 | R10 end to end, measurements | 5 |
-| **Total** | **72 h**, plus ≈ 8 h of review (before Q3/Q4: 46 h without the ventilator window) |
+| **Total** | **92 h**, plus ≈ 10 h of review (46 h before Q3–Q6; 72 h after Q3/Q4) |
 
 **Dependencies out of this plan (new models or new wire)**
 - **IABP console:** a balloon-pressure waveform and trigger/timing marks are not computed
@@ -692,8 +805,9 @@ R1 ─► R1b ─────────────────► R7 ──�
 - **Learners' phones that follow the ventilator's patient instead of holding:** the relay still drops the mirrored
   frames (`server.ts:251–253`), so a network follower holds while the cockpit drives (E128, kept by Q4's ruling).
   Sending the frames to every phone is another change, not ruled.
-- **A room defibrillator chosen apart from the monitor skin:** if Q6 asks for LIFEPAK-style beside a Saadat monitor,
-  the engine needs a device-profile option separate from the skin (`device-layer.ts:175–181`): an engine piece.
+- **The department's own defibrillator model**, if it is neither of the two the engine knows (Q6): a new profile
+  with sourced energies, charge times and ladder, then one line in R5a's `DEFIB_MODELS`.
+- **The pacer apart from the skin:** R5a decouples the defibrillator only; the pacer stays the skin's (not ruled).
 - **EEG trace, SQI, EMG on the depth screen:** not computed (`depth.ts` gives an index and SR only).
 
 ## 10. Questions for the owner (each with the default the plan uses if no answer comes)
@@ -713,11 +827,15 @@ R1 ─► R1b ─────────────────► R7 ──�
    it drives, every phone holds ("The ventilator is on the main screen") for the whole case. This includes any
    defibrillator or depth screen on another device, since they follow the same way; screens of the laptop itself keep
    following. (Not built by default before: the Ventilator view only.)
-5. **The defibrillator window: display only, or learners press Charge and Shock on it?** Pressing would make a
-   learner's device a commanding role. **Default: display only; the instructor charges and shocks from the laptop.**
-6. **Which defibrillator does the room have?** The engine's defibrillator follows the monitor skin; a Saadat room
-   uses Zoll values (120 J). **Default: the defibrillator window is Zoll-style in such a room, LIFEPAK-style only in
-   a LIFEPAK room.** A LIFEPAK beside a Saadat monitor needs an engine change (§9).
+5. **The defibrillator window. RULED 5 November: B.** Learners press Charge and Shock on the window and the host
+   applies them (R5c, R5d): a `defib` role admitted by the room code, exactly those two commands, the room's energy,
+   the device refusing a shock without a charge, every press recorded under the device for the Debrief. (Option A,
+   display only, was not chosen.)
+6. **Which defibrillator does the room have? RULED 5 November: B.** The instructor picks the model in Room setup,
+   apart from the monitor skin, and the host adopts its energies (R5a, R5b). The engine knows two today: Zoll-style
+   (120 J) and LIFEPAK-style (200, 300, 360 J). **Still open, for you to name:** your department's actual machine
+   (maker and model) — ____________________. If it is neither, it needs its own profile with sourced energies and
+   charge times before it can be offered (§9).
 7. **The depth screen's name.** The engine's index is BIS-like, not BIS. **Default: "Depth index (BIS-like)"**, and a
    "Depth monitor on / off" control on the Devices sheet.
 8. **IABP.** **Default: not offered in this stage** (your "IABP later"); it needs a model first (§9).
