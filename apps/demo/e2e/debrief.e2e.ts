@@ -519,14 +519,15 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
   // the owner's phase rules of 1 November: Recrudescence is entered (14:59) and opens the second dose's window, so the
   // second dose at 19:13 is met, as the /1 card's objective 4
   expect(Object.fromEntries(j.actions.filter((a) => ['callCrisis', 'dantrolene', 'dantroleneAgain', 'ventilationBack'].includes(a.id)).map((a) => [a.id, a.grade]))).toEqual({ callCrisis: 'met', dantrolene: 'met', dantroleneAgain: 'met', ventilationBack: 'met' });
-  // the recognition, a record action: its window from Early signs' entry, pressed at the call; no recognition tile on /2
+  // the recognition, a record action: its window from Early signs' entry, pressed at the call; D5: the card marks it
+  // recognition: true, so the recognition tile is that action (its window, its press)
   const rec = j.actions.find((a) => a.id === 'nameMh');
   const earlyT = (j.phases as Array<{ id: string; t: number }>).find((p) => p.id === 'earlySigns')?.t;
   test.info().annotations.push({ type: 'MH /2 recognition', description: `nameMh ${rec?.grade}: window ${rec?.dueT} → pressed ${rec?.givenT}` });
   expect(rec?.grade).toBe('met');
   expect(rec?.dueT, 'the window opens at Early signs\' entry, not at the pre-intubation EtCO₂').toBe(earlyT);
   expect((rec?.givenT ?? Infinity) - (rec?.dueT ?? 0), 'seconds, not minutes').toBeLessThan(60);
-  expect((j.keyTimes as Array<{ id: string }>).map((k) => k.id)).not.toContain('recognition');
+  expect((j.keyTimes as Array<{ id: string; fromT: number | null; toT: number | null; grade?: string }>).find((k) => k.id === 'recognition')).toMatchObject({ fromT: rec?.dueT, toT: rec?.givenT, grade: 'met' });
   const results = resolve(import.meta.dirname, '../../../test-results');
   mkdirSync(results, { recursive: true });
   writeFileSync(`${results}/debrief-mh-v2-${browserName}.json`, JSON.stringify(j, null, 1));
@@ -547,4 +548,35 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
     writeFileSync(`${out}/debrief-mh-v2-handout.pdf`, pdf);
     expect(pdfInfo(pdf).boxes).toHaveLength(1);
   }
+});
+
+// Debrief 2, D5: the /1 fallback press. On a free run the session bar's "Recognised" writes one note row with the run
+// event 'recognised' at the host's time; the Debrief's recognition tile and its key moment read that time.
+test('D5: Recognised pressed on a free run at ≈ 30 s: the Debrief shows the tile and the key moment at the recorded time', async ({ page, browserName }) => {
+  const busy = loadedWebKit(browserName);
+  test.setTimeout(busy ? 180_000 : 90_000);
+  await openApp(page, base, '#/teach', { warmMs: 1500 });
+  const bar = page.locator('.sessionbar');
+  await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: busy ? '×2' : '×4' }).click();
+  await expect.poll(() => simT(page), { timeout: busy ? 60_000 : 30_000 }).toBeGreaterThanOrEqual(30);
+  const button = bar.getByRole('button', { name: 'Recognised', exact: true });
+  await expect(button).not.toHaveAttribute('aria-keyshortcuts');
+  await button.click();
+  type R = { __pmeApp: { session: { record: { data: { rows: Array<{ t: number; ev?: string }> } } } } };
+  await expect.poll(() => page.evaluate(() => (window as unknown as R).__pmeApp.session.record.data.rows.filter((r) => r.ev === 'recognised').length)).toBe(1);
+  const t = await page.evaluate(() => (window as unknown as R).__pmeApp.session.record.data.rows.find((r) => r.ev === 'recognised')?.t as number);
+  expect(t).toBeGreaterThanOrEqual(30);
+  expect(t).toBeLessThan(60);
+  await pauseHost(page);
+  await openDebrief(page, busy);
+  const view = page.locator('[data-view=debrief]');
+  const mmss = `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+  const tile = view.locator('#db-keytimes [data-key=recognition]');
+  await expect(tile.locator('.db-tile-cap')).toHaveText("Recognition (instructor's press)");
+  await expect(tile.locator('.db-tile-v')).toHaveText(`${Math.round(t)} s`);
+  await expect(tile.locator('.db-tile-sub')).toHaveText(`00:00 start → ${mmss} pressed`);
+  const row = view.locator('#db-moments tbody tr[data-recognised]');
+  await expect(row).toHaveCount(1);
+  await expect(row.locator('td').nth(1)).toHaveText(mmss);
+  await expect(row.locator('td').nth(3)).toHaveText('Recognised (instructor)');
 });
