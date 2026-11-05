@@ -6,6 +6,7 @@
 import { isV2, type AnyScenarioDoc, type ScenarioDoc } from '@pme/controller';
 import type { Objective } from '@pme/controller/scenario';
 import { CATEGORIES as CATS, draft, SCENARIO_META, storyOf, type Category } from './scenario-meta.ts';
+import { store } from './store.ts';
 
 const FILES = {
   // The five showcase cases (reviewed, not drafts) live with the app; they carry their own card fields
@@ -62,4 +63,43 @@ function rank(c: string): number {
   return i < 0 ? CATS.length : i;
 }
 
-export const scenarioById = (id: string): ScenarioCard | undefined => LIBRARY.find((c) => c.id === id);
+/** A card of the library, or one imported in this browser (a built-in id is never an imported card's: keepImported). */
+export const scenarioById = (id: string): ScenarioCard | undefined => LIBRARY.find((c) => c.id === id) ?? importedCards().find((c) => c.id === id);
+
+// --- Imported cards (brief 22) ---------------------------------------------------------------------------------------
+// A card file opened in Instructor v2 (teach2/begin.ts), already passed by the controller's validator, kept in this
+// browser's storage beside the library: per browser, never on the wire. The driver validates it again at every load,
+// as it does a built-in card, so a stored document edited by hand runs only if it still passes.
+const IMPORTED = 'imported-cards';
+
+function importedDocs(): AnyScenarioDoc[] {
+  try {
+    const v = JSON.parse(store.get(IMPORTED) ?? '[]') as unknown;
+    return Array.isArray(v) ? v.filter((d): d is AnyScenarioDoc => !!d && typeof d === 'object' && typeof (d as { id?: unknown }).id === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+/** The imported cards, in the order they came. Typed as the library's cards are (every reader of `doc` checks isV2). */
+export const importedCards = (): ScenarioCard[] => importedDocs().map((d) => cardOf(d as ScenarioDoc));
+
+/** Keep a validated document as an imported card; the same id again replaces the earlier import. */
+export function keepImported(doc: AnyScenarioDoc): { ok: true; card: ScenarioCard; replaced: boolean } | { ok: false; reason: string } {
+  if (LIBRARY.some((c) => c.id === doc.id)) return { ok: false, reason: `its id “${doc.id}” is a built-in card's; give the card an id of its own` };
+  const before = importedDocs();
+  const rest = before.filter((d) => d.id !== doc.id);
+  const text = JSON.stringify([...rest, doc]);
+  store.set(IMPORTED, text);
+  if (store.get(IMPORTED) !== text) return { ok: false, reason: 'this browser did not keep it (its storage is off or full)' };
+  return { ok: true, card: cardOf(doc as ScenarioDoc), replaced: rest.length < before.length };
+}
+
+/** Remove an imported card; false when no imported card has that id. */
+export function removeImported(id: string): boolean {
+  const before = importedDocs();
+  const rest = before.filter((d) => d.id !== id);
+  if (rest.length === before.length) return false;
+  store.set(IMPORTED, JSON.stringify(rest));
+  return true;
+}
