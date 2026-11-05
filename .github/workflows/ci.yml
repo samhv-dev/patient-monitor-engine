@@ -11,7 +11,49 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # What the PR changes (research/42 §1.4 a, d2): code at all (if not, the docs job alone runs) and the engine or the
+  # root config (if not, the engine's slow groups skip). On main every job runs.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.f.outputs.code }}
+      engine: ${{ steps.f.outputs.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # the PR's merge commit and its base parent
+      - id: f
+        run: |
+          if [ "${{ github.event_name }}" != pull_request ]; then echo "code=true" >> "$GITHUB_OUTPUT"; echo "engine=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          git diff --name-only HEAD^1 HEAD > "$RUNNER_TEMP/files.txt"; cat "$RUNNER_TEMP/files.txt"
+          code=false; grep -qvE '^(docs/|[^/]+\.md$|CITATION\.cff$)' "$RUNNER_TEMP/files.txt" && code=true
+          engine=false; grep -qE '^(packages/(engine-core|skins)/|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|package\.json$|tsconfig[^/]*\.json$|vitest\.workspace\.ts$|\.github/workflows/)' "$RUNNER_TEMP/files.txt" && engine=true
+          echo "code=$code engine=$engine"
+          echo "code=$code" >> "$GITHUB_OUTPUT"; echo "engine=$engine" >> "$GITHUB_OUTPUT"
+
+  # Documents-only PRs (docs/, root *.md, CITATION.cff): every unit-test file that reads a document
+  # (scripts/ci/docs-tests.mjs; packages/validation/test/docs-readers.test.ts keeps that list complete) and the NOTICES
+  # and licence checks, nothing else. No e2e test reads docs/ (research/42 §1.4 a).
+  docs:
+    needs: changes
+    if: needs.changes.outputs.code == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/ci/docs-tests.mjs
+      - run: pnpm check-notices
+      - run: pnpm check-licences
+
   build:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -57,6 +99,8 @@ jobs:
   # it from file://; every other e2e page runs on a Vite dev server from source), so they start without waiting for the
   # unit tests in the build job.
   renderer:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     outputs:
       playwright: ${{ steps.playwright.outputs.version }}
@@ -99,7 +143,8 @@ jobs:
   # (docs/gates/stage-14.md, "Temporary relaxation"; docs/guides/known-deviations.md, "Browser tests that passed only on
   # a retry").
   e2e:
-    needs: renderer
+    needs: [changes, renderer]
+    if: needs.changes.outputs.code == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -199,6 +244,8 @@ jobs:
           fi
 
   test-slow:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     # Multi-sim-hour drift runs and long clinical scenarios of @pme/engine-core, one file at a time (see
     # packages/engine-core/vite.config.ts SLOW). Kept apart from the main job so their long synchronous stretches
     # cannot starve the Vitest worker RPC there. Nine file groups, one job each, packed on the per-file CI maximum (≤ 33 min of tests each on the slowest runner seen).
