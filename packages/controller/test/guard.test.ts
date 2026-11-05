@@ -52,3 +52,41 @@ describe('parseWireMessage (untrusted input)', () => {
     expect(parseWireMessage({ ...stamp({ kind: 'event', body: [] }), body: [{ type: 'x', data: new Float32Array(2) }] })).toBeNull();
   });
 });
+
+describe('the instructor role on the wire (plan instructor-peer-role.md §1, §2, §6; P2)', () => {
+  const hello = (role: string, pin?: unknown) => ({ ...stamp({ kind: 'hello', role: 'controller' }), role, ...(pin === undefined ? {} : { pin }) });
+  const command = (body: Record<string, unknown>) => ({ ...stamp({ kind: 'command', body: { id: 'c1', issuedBy: 'x', type: 'setTarget', variable: 'hr', value: 80 } }), body: { id: 'c2', issuedBy: 'remote', ...body } });
+
+  it('accepts an instructor hello with a PIN of 4 to 8 digits', () => {
+    expect(parseWireMessage(hello('instructor', '4729'))).toMatchObject({ kind: 'hello', role: 'instructor', pin: '4729' });
+    expect(parseWireMessage(JSON.stringify(hello('instructor', '47291234')))).not.toBeNull();
+  });
+
+  it('refuses a PIN on any other role, a non-digit PIN, and a PIN of 3 or of 9 characters', () => {
+    for (const role of ['host', 'controller', 'viewer']) expect(parseWireMessage(hello(role, '4729')), role).toBeNull();
+    for (const pin of ['47a9', '47 9', '４７２９', '-472', '4729\n', 4729, null, ''])
+      expect(parseWireMessage(hello('instructor', pin)), JSON.stringify(pin)).toBeNull();
+    expect(parseWireMessage(hello('instructor', '472'))).toBeNull();
+    expect(parseWireMessage(hello('instructor', '472912345'))).toBeNull();
+  });
+
+  it('accepts grant {to, granted, reason?} and refuses a grant without to or granted', () => {
+    const grant = (o: Record<string, unknown>) => ({ ...stamp({ kind: 'ack', commandId: 'x', accepted: true, tick: 0 }), kind: 'grant', commandId: undefined, accepted: undefined, tick: undefined, ...o });
+    expect(parseWireMessage(JSON.stringify(grant({ to: 'ctl-abc.1', granted: true })))).toMatchObject({ kind: 'grant', to: 'ctl-abc.1', granted: true });
+    expect(parseWireMessage(grant({ to: 'ctl-abc.1', granted: false, reason: 'the PIN was changed' }))).not.toBeNull();
+    expect(parseWireMessage(grant({ granted: true }))).toBeNull();
+    expect(parseWireMessage(grant({ to: 'ctl-abc.1' }))).toBeNull();
+    expect(parseWireMessage(grant({ to: 'ctl-abc.1', granted: 'yes' }))).toBeNull();
+    expect(parseWireMessage(grant({ to: 7, granted: true }))).toBeNull();
+    expect(parseWireMessage(grant({ to: 'ctl-abc.1', granted: false, reason: 3 }))).toBeNull();
+  });
+
+  it('accepts the note command (kind note or marker, text of at most 500 characters) and refuses a longer text', () => {
+    expect(parseWireMessage(command({ type: 'note', kind: 'note', text: 'Dantrolene drawn up' }))).not.toBeNull();
+    expect(parseWireMessage(command({ type: 'note', kind: 'marker', text: 'x'.repeat(500) }))).not.toBeNull();
+    expect(parseWireMessage(command({ type: 'note', kind: 'note', text: 'x'.repeat(501) }))).toBeNull();
+    expect(parseWireMessage(command({ type: 'note', kind: 'stage', text: 'x' }))).toBeNull();
+    expect(parseWireMessage(command({ type: 'note', text: 'x' }))).toBeNull();
+    expect(parseWireMessage(command({ type: 'note', kind: 'note' }))).toBeNull();
+  });
+});

@@ -27,6 +27,7 @@ export type * from './types-circ.ts';
 export type * from './types-pk.ts';
 export { DRUG_BUS_NEUTRAL } from './types-pk.ts';
 export type { PkState, DrugInst } from './l2/pk/pipeline.ts';
+export { IV_ROUTES, routeHonoured } from './l2/pk/pipeline.ts'; // the validator, the record and the Drug sheet ask the engine
 export { DRUGS, DRUG_IDS } from './l2/pk/data/drugs.ts'; // demo/controller drug pickers
 export { gammaConc, gammaN, gammaShape } from './l2/pk/gamma.ts'; // Evidence page: the onset shapes (gamma vs chain)
 export { shockStateFactor } from './l3/defib-pacer/outcome.ts'; // Evidence page: the shock-state factor

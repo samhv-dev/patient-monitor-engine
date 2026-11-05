@@ -1,46 +1,18 @@
 // UI-B (the read-only demo UI review of 24 October, the remaining monitor and panel rows). #25 — the Monitor view's
-// hover strip sits under the monitor's header (it covered the date, the time and the HR tile's label). #32 — a paused
-// session puts PAUSED over the monitor, never in print. #14 — a scenario's NIBP cuff cycles from Load (the Saadat
-// default, AUTO every 5 min); the tile showed "/" for the whole case.
+// hover strip covered the date, the time and the HR tile's label; since the owner's review of 30 October it sits under
+// the monitor, off it altogether (monitor-return-controls.e2e.ts). #32 — a paused session puts PAUSED over the
+// monitor, never in print. #14 — a scenario's NIBP cuff cycles from Load (the Saadat default, AUTO every 5 min); the
+// tile showed "/" for the whole case.
 import { expect, test } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
 
 type Box = { x: number; y: number; width: number; height: number };
-const meets = (a: Box, b: Box) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 
 let vite: ViteDevServer;
 let base = '';
 test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
-
-for (const [w, h] of [[1280, 800], [1920, 1080]] as const) {
-  test(`UI-B #25 Monitor view at ${w} × ${h}: the hover strip leaves the header, the date and the HR tile visible`, async ({ page }) => {
-    test.setTimeout(90_000);
-    await page.setViewportSize({ width: w, height: h });
-    await openApp(page, base, '?scenario=showcase-mh#/monitor', { warmMs: 2000 });
-    // CI run 40403985512: the strip was placed once, on pointerenter, while the header was still at its 62 px minimum
-    // (before the monitor height --pme-h applied), and stayed 63 px down over a 71/96 px header. Replayed here: the
-    // pointer arrives while the header is at that minimum, then the header grows to its size
-    const outer = '.stage [style*="--pme-h"]';
-    const h0 = await page.locator(outer).first().evaluate((e) => (e as HTMLElement).style.getPropertyValue('--pme-h'));
-    await page.locator(outer).first().evaluate((e) => (e as HTMLElement).style.setProperty('--pme-h', '0px'));
-    const stage = page.locator('.stage');
-    await stage.hover({ position: { x: w / 2, y: 40 } });
-    await page.locator(outer).first().evaluate((e, v) => (e as HTMLElement).style.setProperty('--pme-h', v), h0);
-    await page.waitForTimeout(300);
-    const strip = page.getByRole('toolbar', { name: 'Monitor view' });
-    await expect(strip).toHaveCSS('opacity', '1');
-    const s = (await strip.boundingBox()) as Box;
-    const hdr = (await page.locator('.stage .pme-hdr').boundingBox()) as Box;
-    const hr = (await page.locator('.stage .pme-stile[data-param="HR"]').boundingBox()) as Box;
-    console.log(`UI-B #25 ${w}x${h}: strip ${JSON.stringify(s)} header ${JSON.stringify(hdr)}`);
-    expect(meets(s, hdr), 'strip over the header').toBe(false);
-    expect(meets(s, hr), 'strip over the HR tile').toBe(false);
-    expect(s.y).toBeGreaterThanOrEqual(hdr.y + hdr.height - 1);
-    expect(s.y).toBeLessThan(hdr.y + hdr.height + 4); // just under it, still at the top
-  });
-}
 
 // #32 — a paused session says so on the monitor (the traces only froze), never in print
 test('UI-B #32: Pause puts PAUSED over the monitor, Resume takes it away; it never prints', async ({ page }) => {

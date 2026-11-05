@@ -34,8 +34,8 @@ const looks = (rows: readonly LiveRow[]) => rows.map((r) => [r.row.kind === 'aut
 /** MH from the start to the treatment stage: the crisis called from early signs at 100, dantrolene at 150. */
 const TO_TREATING: H[] = [
   { t: 0, stateId: 'awake' },
-  { t: 10, stateId: 'premedicated', transitionId: 'premed' },
-  { t: 20, stateId: 'induced', transitionId: 'induce-premed' },
+  { t: 10, stateId: 'premedicated', transitionId: 'premed-air' },
+  { t: 20, stateId: 'induced', transitionId: 'induce' },
   { t: 30, stateId: 'intubated', transitionId: 'intubate' },
   { t: 40, stateId: 'surgery', transitionId: 'surgery' },
   { t: 80, stateId: 'earlySigns', transitionId: 'early' },
@@ -92,25 +92,27 @@ describe('rows.ts: the open looks', () => {
 });
 
 describe('rows.ts: taken, failed, fired, met and the folds', () => {
-  it('taken (answer 7): a step of the treatment fan-out stays a pressable green row with its time; "out of order" when a later step came first', () => {
+  it('taken (answer 7): a step of the treatment fan-out (a spoke) goes green into Finished at once with its time; "out of order" when a later step came first', () => {
     const h: H[] = [...TO_TREATING,
       { t: 200, stateId: 'potassium', transitionId: 'kTreat-treating' }, { t: 202, stateId: 'treating', transitionId: 'back-potassium' },
       { t: 250, stateId: 'dantrolene', transitionId: 'dant-treating' }, { t: 252, stateId: 'treating', transitionId: 'back' }];
     const b = classify(src(MH, 'treating', { history: h, simT: 260 }));
-    const k = titled(b.list, 'Potassium') as LiveRow;
-    const d = titled(b.list, 'Dantrolene') as LiveRow;
+    const k = titled(b.finished.filter((r) => r.stage === 'treating'), 'Potassium') as LiveRow;
+    const d = titled(b.finished.filter((r) => r.stage === 'treating'), 'Dantrolene') as LiveRow;
     expect([k.look, k.at, k.right, k.outOfOrder]).toEqual(['taken', 200, '03:20', false]);
     expect([d.look, d.at, d.outOfOrder]).toEqual(['taken', 250, true]);
     expect(d.subtitle).toContain('taken, out of order');
-    expect(looks(b.list).slice(0, 4)).toEqual([[1, 'taken'], [2, 'current'], [3, 'taken'], [4, 'ready']]);
+    // the open list keeps the steps not yet taken, the first of them current
+    expect(looks(b.list).slice(0, 2)).toEqual([[2, 'current'], [4, 'ready']]);
+    expect(b.list.some((r) => r.look === 'taken')).toBe(false);
   });
 
   it('Finished: the stages passed give their taken steps (green) and their fired A rows (amber); a branch not chosen is dropped', () => {
     const b = classify(src(MH, 'treating', { history: TO_TREATING, simT: 160 }));
     const fin = b.finished.map((r) => [r.stage, r.row.kind, r.look, r.at]);
     expect(fin).toEqual([
-      ['awake', 'step', 'taken', 10],
-      ['premedicated', 'step', 'taken', 20], // Preoxygenate (no objective on it) was not chosen: dropped, not failed
+      ['awake', 'step', 'taken', 10], // Preoxygenate (no objective on it) was not chosen: dropped, not failed
+      ['premedicated', 'step', 'taken', 20],
       ['induced', 'step', 'taken', 30],
       ['intubated', 'step', 'taken', 40],
       ['surgery', 'auto', 'fired', 80],
@@ -123,18 +125,18 @@ describe('rows.ts: taken, failed, fired, met and the folds', () => {
     expect(b.finished.some((r) => r.look === 'failed')).toBe(false);
   });
 
-  it('an alternative branch not chosen is not a failure: induce without pre-oxygenation, after pre-oxygenating, is not shown and not failed', () => {
+  it('an alternative branch not chosen is not a failure: premedicate without pre-oxygenation, after pre-oxygenating, is not shown and not failed', () => {
     const h: H[] = [
       { t: 0, stateId: 'awake' },
-      { t: 10, stateId: 'premedicated', transitionId: 'premed' },
-      { t: 20, stateId: 'preoxygenated', transitionId: 'preox' },
+      { t: 10, stateId: 'preoxygenated', transitionId: 'preox' },
+      { t: 20, stateId: 'premedicated', transitionId: 'premed' },
       { t: 30, stateId: 'induced', transitionId: 'induce' },
       { t: 40, stateId: 'intubated', transitionId: 'intubate' },
     ];
     const b = classify(src(MH, 'intubated', { history: h, simT: 50 }));
     const all = [...b.list, ...b.finished];
-    expect(all.some((r) => r.row.kind === 'step' && r.row.tr.id === 'induce-premed')).toBe(false);
-    expect(b.finished.map((r) => [r.stage, r.look])).toEqual([['awake', 'taken'], ['premedicated', 'taken'], ['preoxygenated', 'taken'], ['induced', 'taken']]);
+    expect(all.some((r) => r.row.kind === 'step' && r.row.tr.id === 'premed-air')).toBe(false);
+    expect(b.finished.map((r) => [r.stage, r.look])).toEqual([['awake', 'taken'], ['preoxygenated', 'taken'], ['premedicated', 'taken'], ['induced', 'taken']]);
   });
 
   it('failed (red): a step a linked objective asked for whose stage has passed and whose target cannot be reached', () => {

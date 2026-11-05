@@ -20,10 +20,11 @@ import { FakeCtx } from './fake-ctx.ts';
 const rc3 = (co2: boolean): RenderPlan => ({ ...renderPlan(resolveSkin('saadat-like', { sensors: { co2 } }), undefined, undefined, true), pxPerMm: null });
 const pass2 = (co2: boolean): RenderPlan => renderPlan(resolveSkin('saadat-like', { sensors: { co2 } }));
 
-function make(sensors: Record<string, string>, cssW = 1056, cssH = 600, mode: 'rc3' | 'pass2' = 'rc3') {
+function make(sensors: Record<string, string>, cssW = 1056, cssH = 600, mode: 'rc3' | 'pass2' = 'rc3', gainLaneMm?: number) {
   const ctx = new FakeCtx();
   const co2 = sensors.co2 === 'on';
   const plan = mode === 'rc3' ? rc3(co2) : pass2(co2);
+  if (gainLaneMm !== undefined) for (const l of plan.lanes) if (l.kind === 'ecg') l.gainLaneMm = gainLaneMm;
   const core = new MonitorCore({ width: 0, height: 0 }, ctx, { cssW, cssH, dpr: 1 }, { engine: { seed: 1, device: { skin: 'saadat-like' }, patient: { sensors } }, plan }, () => {});
   let f = 0;
   const run = (s: number) => {
@@ -221,7 +222,7 @@ describe('saadat-like lane text, pass 2 (landscape: IMG_8113 rows T1, T2, G1, G2
   });
 
   it('a gain change repaints only the gain part: the old "X1" box is cleared, "NORMAL" and "II" stay', () => {
-    const { ctx, run } = make({}, 1056, 320, 'pass2'); // ECG1 115/614 × 320 ≈ 60 px: the auto-gain halves the gain
+    const { ctx, run } = make({}, 1056, 320, 'pass2', 18); // an 18-mm nominal ECG lane: the auto-gain halves the gain
     ctx.texts = [];
     run(6.5);
     expect(ctx.texts).toContain('X0.5');

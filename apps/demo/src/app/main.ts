@@ -4,19 +4,22 @@ import './app.css';
 import { attachReveal, normalizeSessionCode, RevealGesture } from '@pme/controller';
 import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 import { alarmLine, limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
+import { mountHostBriefing } from './briefing.ts';
 import { joinCode, relayOf } from './classroom.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
 import { PATIENT_PRESETS } from './patients.ts';
-import { keepPositions, readPosition, restorePosition } from './position.ts';
+import { announceHost, askJoin, chooseHostSession } from './host-guard.ts';
+import { keepPositions, keptItems, putKeptItems, readPosition, restorePosition } from './position.ts';
 import { RAIL_VERSION } from './about.ts';
 import { simLine } from './sim-line.ts';
-import { Rail } from './rail.ts';
+import { Rail, trackPageLines } from './rail.ts';
 import { noteRecent } from './recent.ts';
-import { hrefOf, parseRoute } from './router.ts';
+import { hrefOf, parseRoute, revealTarget } from './router.ts';
 import { SCENARIO_META } from './scenario-meta.ts';
-import { LIBRARY, scenarioById, type ScenarioCard } from './scenarios.ts';
-import { AppSession } from './session.ts';
+import { archive } from './archive.ts';
+import { cardOf, LIBRARY, scenarioById, type ScenarioCard } from './scenarios.ts';
+import { AppSession, type RoomKeep } from './session.ts';
 import { mountSessionBar } from './sessionbar.ts';
 import { applySkinAlarmColours, LEVEL_MARK, LEVEL_NAME, Shell, skinAlarmBar, skinAlwaysOn } from './shell.ts';
 import { loadSite, setLightScreen } from './site.ts';
@@ -47,6 +50,8 @@ const q = new URLSearchParams(location.search);
 const join = joinCode(location);
 const follow = join ?? normalizeSessionCode(q.get('follow') ?? '');
 const relay = relayOf(location);
+// `?moved=<code>`: this tab handed its session to another tab of this browser (host-guard.ts)
+const moved = normalizeSessionCode(q.get('moved') ?? '');
 if (join) document.documentElement.dataset.learner = 'phone'; // the portrait learner layout (app.css)
 const hostless = !follow && parseRoute(location.hash).id === 'remote';
 const shell = new Shell(document.getElementById('app') as HTMLElement, { hostless, follower: !!follow });
@@ -77,15 +82,22 @@ if (follow) {
   mountFastForward(shell.root, { get fastForward() { return follower.sync?.fastForward ?? null; }, get lastFastForward() { return follower.sync?.lastFastForward ?? null; } }, { simT: () => follower.sync?.fastForwardAt ?? null, font: () => follower.monitor.skin?.render.fontStack, latch: (a) => follower.monitor.latchAlarms(a) });
   shell.start();
   Object.assign(window, { __pmeFollower: follower, __pmeApp: { shell, frames, site } });
+} else if (moved) {
+  document.body.replaceChildren(h('main', { class: 'host-moved' },
+    h('h1', {}, 'This session moved to another tab'),
+    h('p', {}, `The classroom session ${moved} now runs in another tab of this browser; its phones follow that tab. This tab no longer runs it: you can close it.`),
+    h('a', { class: 'btn', href: location.pathname }, 'Start a new session in this tab')));
 } else if (hostless) {
   shell.add(remoteView({ site, hostless: true, bar: shell.bar }));
   shell.add(settingsView(site, null));
   shell.start();
   Object.assign(window, { __pmeApp: { shell, frames, site } });
-} else {
+} else void chooseHostSession(normalizeSessionCode(q.get('session') ?? ''), askJoin).then(({ code: start, kept: handed }) => {
+  // One instructor tab per session (host-guard.ts): a live session in another tab is offered before one starts here
+  if (handed) putKeptItems(handed);
   const base = PATIENT_PRESETS[0]?.spec;
   if (!base) throw new Error('no patient presets');
-  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: q.get('session'), load: q.get('load') === 'perf8' ? 'perf8' : null, relay });
+  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay });
   // The session code survives a reload of this window, so a learner monitor and a Remote that follow it find it again
   // (a reload made a new code and left them on a frozen screen)
   publishStyle(session.code, () => ({ skin: session.skin, theme: session.theme, ibp: session.ibpScales }), (f) => {
@@ -108,8 +120,8 @@ if (follow) {
     toast('The monitor stopped — Restart the patient', 'alert');
   });
 
-  const loadScenario = (c: ScenarioCard): boolean => {
-    const r = session.loadScenario(c.doc);
+  const loadScenario = (c: ScenarioCard, room?: RoomKeep): boolean => {
+    const r = session.loadScenario(c.doc, room);
     if (!r.ok) {
       toast(`The scenario could not load: ${c.title}`, 'alert');
       return false;
@@ -126,12 +138,12 @@ if (follow) {
     else await session.enableSound();
     drawSound();
   };
-  // E127 (answer 19): the alarm count and the reveal gesture go to the Instructor view used last, today's or v2
-  let instructor: 'teach' | 'teach2' = 'teach';
-  shell.onRoute((r) => void ((r.id === 'teach' || r.id === 'teach2') && (instructor = r.id)));
+  // The alarm count, the reveal gestures, a Load and every other way to the instructor open the Instructor view chosen in
+  // Settings, today's or v2 (owner, 30 October; it replaced answer 19's "the view used last")
+  const instructor = () => site.instructor;
   const openAlarms = (): void => {
-    location.hash = hrefOf(instructor);
-    if (instructor === 'teach') teach.panel.select('devices');
+    location.hash = hrefOf(instructor());
+    if (instructor() === 'teach') teach.panel.select('devices');
     else teach2.openSheet('devices');
   };
   // E125: the pages before a session — Home, Room (the QR code, who follows), Scenarios, Patient — and the rail
@@ -141,20 +153,34 @@ if (follow) {
     followers: () => session.followers, onFollowers: (f) => session.onFollowers(f),
   });
   shell.add(room);
-  shell.add(scenariosView({ session, loadScenario }));
+  shell.add(scenariosView({ session, loadScenario, instructor }));
   shell.add(patientView({ session, site }));
-  shell.add(monitorView(shell.stage, { session, link, learnerUrl: followUrl(session.code), phones: !!relay }));
+  shell.add(monitorView({ session, link, learnerUrl: followUrl(session.code), phones: !!relay, instructor }));
   const teach = teachView(link, { site, main: shell.main, stage: shell.stage, weightKg, loadScenario });
   shell.add(teach);
   // option G: the app's top bar is not shown on #/teach2; its header carries the top bar's Sound switch and Room code
-  const teach2 = teach2View(link, { site, weightKg, top: { soundOn: () => session.soundOn, toggleSound, code: session.code, phones: () => session.followers } });
+  // "Finish the case" (board "Finish 2"): the same card again with the room kept (the probes, the cuff, the session code
+  // and so the phones), or the case ended on the page's default patient, the deep link it was opened from spent so that
+  // a reload shows no case either
+  const finish = {
+    restart: (): boolean => {
+      const doc = session.driver.runner?.doc;
+      return !!doc && loadScenario(scenarioById(doc.id) ?? cardOf(doc), session.roomKeep());
+    },
+    close: (): void => {
+      session.endCase();
+      const u = new URL(location.href);
+      if (u.searchParams.has('scenario')) (u.searchParams.delete('scenario'), history.replaceState(null, '', u));
+    },
+  };
+  const teach2 = teach2View(link, { site, weightKg, loadScenario, finish, top: { soundOn: () => session.soundOn, toggleSound, code: session.code, phones: () => session.followers } });
   shell.add(teach2);
   shell.add(remoteView({ site, hostless: false, bar: shell.bar, code: session.code }));
   shell.add(exploreView(session, site));
   shell.add(ventView(session));
   shell.add(validateView());
   shell.add(devView());
-  shell.add(settingsView(site, session));
+  shell.add(settingsView(site, session, { onInstructor: () => rail.refresh() }));
   shell.add(debriefView(session, link));
   mountSessionBar(shell.bar, link);
   // The rail's switch is the site profile's Screen theme (Settings' "Screen"): dark ↔ projector-light, saved as Settings
@@ -171,12 +197,14 @@ if (follow) {
       patient: () => (link.ctl.scenario.doc ? 'case running' : 'free run'),
     },
     theme: { light: () => site.theme === 'projector-light', set: setTheme },
+    instructor,
   });
   shell.setRail(rail);
   session.onFollowers(() => rail.refresh());
   link.onChange(throttle(() => rail.refresh(), 1000));
   shell.onRoute(() => rail.refresh());
   trackChromeBottom(shell.root); // UI-A #8/#9: the toasts and the fast-forward banner sit under the bars
+  trackPageLines(rail.el, shell.root.querySelector('.ip2-strip'), shell.root.querySelector('.ip2-dock')); // Instructor v2: the rail's lines on the page's
   // FX-14/15: a hidden instructor tab pauses the session through the Pause button's own command, so the phones show
   // "(paused)" instead of "not answering", and resumes it on return (HIDDEN_TAB_POLICY, the owner's E82 switch). A
   // fast-forward refuses every command, the pause included: a hide then sends nothing and claims nothing.
@@ -215,12 +243,13 @@ if (follow) {
   // UI review #32: PAUSED over the monitor while the session is paused (the Pause button, a hidden tab's pause)
   const paused = pausedMark(shell.stage);
   link.onChange(() => paused.set(link.ctl.hostPaused));
+  // A card's Case briefing over the Monitor view, as on every learner screen that follows (briefing.ts)
+  mountHostBriefing(shell.stage, session);
 
   // Learner monitor ↔ instructor view: the hidden panel's reveal gestures
   attachReveal(window, new RevealGesture(() => {
-    const r = shell.route.id;
-    if (r === 'monitor') location.hash = hrefOf(instructor);
-    else if (r === 'teach' || r === 'teach2') location.hash = hrefOf('monitor');
+    const to = revealTarget(shell.route.id, instructor());
+    if (to) location.hash = hrefOf(to);
   }));
   shell.onRoute((r) => {
     if (r.id === 'teach' || r.id === 'teach2' || r.id === 'monitor') session.live = true;
@@ -241,17 +270,19 @@ if (follow) {
   if (kept && (!deep || deep === kept.cardId)) {
     session.live = true;
     void restorePosition(kept, session, loadScenario).then((ok) => {
-      const text = ok ? `Restored after reload: ${kept.title}, ${clock(kept.simT)}` : `The case could not be restored after the reload: ${kept.title} starts again`;
+      const text = ok ? `Restored after ${handed ? 'the move from the other tab' : 'reload'}: ${kept.title}, ${clock(kept.simT)}` : `The case could not be restored after ${handed ? 'the move from the other tab' : 'the reload'}: ${kept.title} starts again`;
       toast(text, 'alert'); // after a reload, on whichever view it landed
       link.note(text, 'system');
     });
   } else if (card && loadScenario(card)) {
     session.live = true;
-    if (!location.hash) location.hash = hrefOf('teach');
+    if (!location.hash) location.hash = hrefOf(instructor()); // a deep link to a card opens the chosen Instructor view
   }
   keepPositions(session);
+  // Another tab took this session (or started it anew): stop hosting it here, and say where it went
+  announceHost(session.code, { kept: () => keptItems(), gone: () => (session.destroy(), location.replace(`${location.pathname}?moved=${session.code}`)) });
   shell.start();
   // e2e hook: the engine ids the glossary test must never find in a clinical view
   const engineIds = [...RHYTHM_IDS, ...DRUG_IDS, ...LUNG_CONDITIONS.map((c) => c.id)];
-  Object.assign(window, { __pmeApp: { shell, session, link, frames, site, teach, teach2, engineIds, skinAlarmBar, room, rail } });
-}
+  Object.assign(window, { __pmeApp: { shell, session, link, frames, site, teach, teach2, engineIds, skinAlarmBar, room, rail, archive } });
+});

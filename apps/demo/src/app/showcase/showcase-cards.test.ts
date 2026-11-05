@@ -3,23 +3,42 @@
 // are checkable (a number or a time in each), and the library lists the Showcase cards in the demonstration order. The
 // physiology of each card is in the *.slow.test.ts files beside this one (PME_TEST_SET=showcase).
 import { createEngine, type Command } from '@pme/engine-core';
-import { engineOptionsOf, validateScenario, type DocCommand, type ScenarioDoc } from '@pme/controller/scenario';
+import { engineOptionsOf, isV2, validateScenario, type DocCommand, type ScenarioDoc } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
 import { LIBRARY, objectiveText, SHOWCASE_ORDER } from '../scenarios.ts';
-import { SHOWCASE_IDS, showcaseDoc } from './harness.ts';
+import { anyShowcaseDoc, SHOWCASE_IDS, showcaseDoc } from './harness.ts';
 
-const SHOWCASE = ['showcase-induction', 'showcase-induction-premed', 'showcase-anaphylaxis', 'showcase-mh', 'showcase-tamponade', 'showcase-haemorrhage'];
+/** The /1 cards (the /2 MH card, plan F8, has phases, not states: its own test below). */
+const V1_IDS = SHOWCASE_IDS.filter((id) => !isV2(anyShowcaseDoc(id)));
+
+const SHOWCASE = ['showcase-induction', 'showcase-induction-premed', 'showcase-anaphylaxis', 'showcase-mh', 'showcase-mh-v2', 'showcase-tamponade', 'showcase-haemorrhage'];
 const NEW = ['showcase-induction', 'showcase-induction-premed', 'showcase-mh', 'showcase-tamponade', 'showcase-haemorrhage'];
 
 describe('Showcase cards', () => {
-  it('the Showcase group is the six cards, in the demonstration order, first in the library; bronchospasm stays in the library', () => {
+  it('the Showcase group is the seven cards (the /2 MH card after the /1 one), in the demonstration order, first in the library; bronchospasm stays in the library', () => {
     expect(SHOWCASE_ORDER).toEqual(SHOWCASE);
     expect(LIBRARY.filter((c) => c.category === 'Showcase').map((c) => c.id)).toEqual(SHOWCASE);
     expect(LIBRARY.slice(0, SHOWCASE.length).map((c) => c.id)).toEqual(SHOWCASE);
     expect(LIBRARY.find((c) => c.id === 'showcase-bronchospasm')?.category).toBe('Airway and breathing');
   });
 
-  it.each(SHOWCASE_IDS)('%s: valid, every state reachable, every command accepted by an engine of its own patient', (id) => {
+  it('showcase-mh-v2 (pme-scenario/2): valid, and every action\'s give and script command accepted by an engine of its own patient', () => {
+    const doc = anyShowcaseDoc('showcase-mh-v2');
+    if (!isV2(doc)) throw new Error('not /2');
+    const v = validateScenario(doc);
+    expect(v.ok ? [] : v.errors).toEqual([]);
+    const eo = engineOptionsOf(doc, 7);
+    const e = createEngine({ ...eo, mode: doc.mode ?? 'modeled', patient: { ...eo.patient, ...(doc.patient?.sensors ? { sensors: doc.patient.sensors } : {}) } } as never);
+    const cmds: DocCommand[] = [...doc.actions.flatMap((a) => a.give ?? []), ...(doc.script ?? []).flatMap((s) => s.commands)];
+    expect(cmds.length).toBeGreaterThan(20);
+    for (const [i, c] of cmds.entries()) {
+      const { $comment: _drop, ...cmd } = c as DocCommand & { $comment?: string };
+      const r = e.dispatch({ id: `v2-${i}`, issuedBy: 'test', ...(cmd as object) } as Command);
+      expect(r.accepted, `${JSON.stringify(c)}: ${r.reason}`).toBe(true);
+    }
+  });
+
+  it.each(V1_IDS)('%s: valid, every state reachable, every command accepted by an engine of its own patient', (id) => {
     const doc = showcaseDoc(id);
     const v = validateScenario(doc);
     expect(v.ok ? [] : v.errors).toEqual([]);
@@ -69,5 +88,16 @@ describe('Showcase cards', () => {
     });
     expect((doc.objectives ?? []).map(objectiveText)).not.toContainEqual(expect.stringMatching(/within 300 s of EtCO₂ falling below 40/));
     expect(doc.objectives).toHaveLength(6); // the other four unchanged, after E52's recognition objective
+  });
+
+  it('the MH Cool is offered only above 38.5 °C; its saline is refrigerated (4 °C) and the team stops it at 38 °C (MHAUS)', () => {
+    const doc: ScenarioDoc = showcaseDoc('showcase-mh');
+    const COOL = 'Cool: refrigerated saline 20 mL/kg (1.6 L)';
+    const cools = doc.states.flatMap((s) => (s.transitions ?? []).filter((t) => t.to === 'cooling').map((t) => [s.id, t.when] as const));
+    expect(cools.map(([s]) => s)).toEqual(['triggerOff', 'treating', 'recovering', 'normoventilated']);
+    for (const [s, when] of cools) expect(when, s).toEqual({ all: [{ vital: { var: 'tempCore', op: '>', value: 38.5 } }, { manual: { label: COOL } }] });
+    const fluid = doc.states.find((s) => s.id === 'cooling')?.onEnter?.find((c) => c.type === 'applyEvent');
+    expect(fluid).toMatchObject({ type: 'applyEvent', event: { kind: 'fluid', fluid: 'saline', volumeMl: 1600, overS: 900, tempC: 4, stopAtCoreC: 38 } });
+    expect(doc.notes).not.toMatch(/no input for refrigerated fluid/);
   });
 });

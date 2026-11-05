@@ -6,12 +6,14 @@
 import { capture12, Clock, createEngine, type Capture12, type ChannelId, type Command, type DispatchResult, type EngineEvent, type LeadId, type MonitorEngine, type PatientSnapshot } from '@pme/engine-core';
 import { DEFAULT_PX_PER_MM } from './calibration.ts';
 import type { Ctx2D } from './ctx.ts';
+import { AUTO_GAIN_WINDOW_S, beatAmplitude, judgeGain, newJudge, type GainJudge } from './ecg-gain.ts';
 import { drawLeadOffDashes, drawMark, Overlays, shows } from './overlays.ts';
 import type { ClockAnchor, CoreOptions, Size } from './protocol.ts';
 import { autoIbpRange, IBP_AUTO_EVERY_S, ibpScaleError, type IbpScales } from './ibp-scale.ts';
 import { ecgLabel, formatSpeed, ibpBaseRange, legacyPlan, setIbpRange, type LaneTextPlan, type PlanLane, type RenderPlan } from './skin-plan.ts';
 import { SweepLane } from './sweep-lane.ts';
 import { autoRange, scaleFor } from './wave-lanes.ts';
+import { feedCo2Range, newCo2Range, restartCo2Range } from './co2-range.ts';
 
 export const THEME = { background: '#000', ecg: '#00ff66', label: '#00ff66', grid: '#222' } as const; // legacy look (legacyPlan)
 export const LABEL_W = 56; // CSS px reserved at the left of each lane for chrome
@@ -54,12 +56,12 @@ const EVENT_POST_MS = 250; // post the clock anchor at least this often even wit
  *  ≤ 250 ms. It is credited in full like a hidden stretch (catchUp) instead of being clamped to 250 ms, so the hidden
  *  minutes are not lost when the worker's rAF wakes before the page's visibility catch-up. [ENG] */
 export const STALL_MS = 1000;
-/** Auto gain (RR-2) [ENG]: every 2 s the last 4 s of the lead should fill ≤ 60 % of the lane height. */
-export const AUTO_GAIN_EVERY_S = 2;
-export const AUTO_GAIN_WINDOW_S = 4;
-export const AUTO_GAIN_FILL = 0.6;
+/** The R times the auto-gain keeps for its per-beat amplitude: a 4-s window's beats at any rate, with room [ENG]. */
+const GAIN_BEATS_KEPT = 64;
 /** FX-25: how far back heldFrom looks — past the lanes' 100-s backfill, inside the engine's 120-s buffer [ENG]. */
 const HELD_PROBE_S = 110;
+/** The CO2 auto-range judges at most this far back after a start or a gap (the lanes' backfill, inside the buffer) [ENG]. */
+const CO2_RANGE_BACK_S = 100;
 
 export interface CanvasTarget {
   width: number;
@@ -78,11 +80,20 @@ export class MonitorCore {
   private readonly plethScratch = new Float32Array(1250); // 10 s at 125 Hz
   private readonly gainScratch = new Float32Array(AUTO_GAIN_WINDOW_S * 500);
   private heldScratch = new Float32Array(0); // heldFrom's read, sized on first use
-  private autoGainT = -Infinity;
+  /** The last auto-gain window judged (its index on the clock's AUTO_GAIN_WINDOW_S grid). */
+  private gainK = -Infinity;
+  /** Per lane, the auto-gain's state (ecg-gain.ts): the size shown and the size asked for. */
+  private gainJudge: GainJudge[] = [];
+  /** The engine's recent R times (beat events), for the auto-gain's per-beat amplitude. */
+  private beatTs: number[] = [];
   /** FX-24: sim time of the oldest sample the engine holds — 0 for a new engine, the snapshot's time after a restore (it
    *  clears the buffers). The lanes' backfill and the auto-gain never read before it. */
   private historyT = 0;
   private gainMult: number[] = []; // per lane, ECG gain multiplier (label and auto gain)
+  /** The CO2 lane's auto-range (co2-range.ts): its state and the next co2 sample index it judges (-1: start afresh). */
+  private co2Range = newCo2Range();
+  private co2Next = -1;
+  private readonly co2Scratch = new Float32Array(1024);
   /** ECG labels wider than LABEL_W (e.g. Saadat-like `II  X1  NORMAL`) run into the sweep area; kept to repaint them. */
   private labelTail: Array<{ text: string; w: number } | null> = [];
   /** The lane generation the right-hand texts were last painted on (a cleared lane gets them back at once). */
@@ -126,6 +137,7 @@ export class MonitorCore {
     this.engine.on((e) => {
       this.batch.push(e);
       this.overlays.push(e);
+      if (e.type === 'beat' && this.beatTs.push(e.t) > GAIN_BEATS_KEPT) this.beatTs.shift();
     });
     this.layout();
   }
@@ -144,7 +156,14 @@ export class MonitorCore {
 
   /** Switch skin/page/theme: new lanes and chrome, same engine (no restart, tick continuity). */
   setPlan(plan: RenderPlan): void {
+    // the CO2 auto-range survives a skin, page or theme switch whose CO2 lane offers the scale shown now
+    const shown = this.co2Lane()?.range?.[1];
     this.plan = plan;
+    const next = this.co2Lane();
+    const at = shown === undefined || !next ? -1 : (next.autoRanges as number[]).indexOf(shown);
+    if (at > 0) this.setCo2Top(next as PlanLane, shown as number);
+    this.co2Range = newCo2Range(Math.max(0, at));
+    this.co2Next = -1;
     this.gainMult = []; // the new plan's own gains
     this.overlays.clear();
     this.sendLeads();
@@ -182,7 +201,13 @@ export class MonitorCore {
     this.historyT = this.clock.simT;
     this.lastEpoch = null; // the clock restarts at the bookmark on the next frame: the restore's own wall time is not sim time
     this.overlays.clear();
-    this.layout(); // FX-24: the lanes keep their ECG gain (the auto-gain waits for a full window of the new signal)
+    // FX-24: the lanes keep their ECG gain (the auto-gain waits for a full window of the new signal); what the old
+    // timeline's windows asked for is forgotten
+    this.beatTs = [];
+    this.gainK = -Infinity;
+    for (const j of this.gainJudge) j.pending = null;
+    this.co2Next = -1; // the CO2 auto-range keeps its scale and counts the new timeline's breaths afresh
+    this.layout();
   }
 
   /** Apply a command (lane/filter changes also update the chrome). */
@@ -197,6 +222,7 @@ export class MonitorCore {
       } else if (cmd.action.action === 'lead' && typeof cmd.action.lane === 'number' && cmd.action.lane < ecgLanes.length) {
         const i = ecgLanes[cmd.action.lane] as number;
         (this.plan.lanes[i] as PlanLane).channel = cmd.action.value as LeadId;
+        this.gainJudge[i] = newJudge(this.gainMult[i] ?? 1); // a new lead is sized afresh
         this.lanes[i]?.reset(this.ctx);
         this.drawChrome(this.plan.laneText ? ecgLanes : [i]); // with lane text a repeated lead is unlabelled: all may change
       } else this.layout();
@@ -279,7 +305,8 @@ export class MonitorCore {
     if (ticks > 0) this.engine.advanceTo(this.clock.simT);
     const t = this.clock.renderT;
     if (this.visible) {
-      if (t - this.autoGainT >= AUTO_GAIN_EVERY_S) this.autoGain(t);
+      this.autoGain(t);
+      this.co2AutoRange(t);
       this.plan.lanes.forEach((pl, i) => {
         const lane = this.lanes[i] as SweepLane;
         if (pl.kind === 'wave') {
@@ -314,31 +341,97 @@ export class MonitorCore {
     return out;
   }
 
-  /** RR-2: pick the largest skin gain whose last-4-s peak-to-peak fits AUTO_GAIN_FILL of the lane. */
+  /**
+   * RR-2, owner review 2026-10-30: the ECG auto-gain (ecg-gain.ts). Windows sit on the sim clock's grid
+   * [kW − W, kW] (W = AUTO_GAIN_WINDOW_S), so every window drawing the same timeline judges the same samples; a lane not
+   * yet judged (a new monitor, a new plan or lead) takes the last W s as soon as it has them. The judgement is in mV
+   * against the plan's nominal lane (gainLaneMm), never the drawn height, so a pane and a full screen agree.
+   */
   private autoGain(t: number): void {
-    this.autoGainT = t;
+    const k = Math.floor(t / AUTO_GAIN_WINDOW_S + 1e-9);
+    const due = k > this.gainK;
+    if (due) this.gainK = k;
     const changed: number[] = [];
     this.plan.lanes.forEach((pl, i) => {
-      if (!pl.autoGain || pl.gainOptions.length === 0 || t - AUTO_GAIN_WINDOW_S < this.historyT) return; // FX-24: a full window
-      const n = this.engine.readSamples(pl.channel as LeadId, Math.floor((t - AUTO_GAIN_WINDOW_S) * 500), this.gainScratch);
-      let lo = Infinity;
-      let hi = -Infinity;
-      for (let k = 0; k < n; k++) {
-        const v = this.gainScratch[k] as number;
-        if (v < lo) lo = v;
-        if (v > hi) hi = v;
-      }
-      if (!(hi > lo)) return;
-      const lane = this.lanes[i] as SweepLane;
-      const fits = pl.gainOptions.filter((g) => (hi - lo) * g * 10 * this.pxPerMm <= AUTO_GAIN_FILL * lane.cfg.height).sort((a, b) => b - a);
-      const g = fits[0] ?? Math.min(...pl.gainOptions);
+      if (!pl.autoGain || pl.gainOptions.length === 0) return;
+      const j = this.gainJudge[i] as GainJudge;
+      const end = j.judged ? k * AUTO_GAIN_WINDOW_S : t;
+      if ((j.judged && !due) || end - AUTO_GAIN_WINDOW_S < this.historyT) return; // FX-24: a full window
+      const from = Math.floor((end - AUTO_GAIN_WINDOW_S) * 500);
+      const n = this.engine.readSamples(pl.channel as LeadId, from, this.gainScratch);
+      const amp = beatAmplitude(this.gainScratch, n, from / 500, 500, this.beatTs);
+      if (!(amp > 0)) return;
+      const g = judgeGain(j, amp, k, pl.gainOptions, pl.gainLaneMm);
       if (g !== this.gainMult[i]) {
         this.gainMult[i] = g;
-        lane.cfg.gainMmPerMv = g * 10;
+        (this.lanes[i] as SweepLane).cfg.gainMmPerMv = this.drawnMmPerMv(i);
         changed.push(i);
       }
     });
     if (changed.length > 0) this.drawChrome(changed);
+  }
+
+  /**
+   * Lane i's ECG scale as drawn (mm per mV at the calibration). The auto-gain judges its size for the unit's lane
+   * (`gainLaneMm`, the same in every window, #213); a window whose lane is shorter than that (the instructor's STATE
+   * pane: 16 mm against the unit's 37.1 mm) draws the unit's lane in miniature, so each mV takes the share of the lane
+   * it takes on the unit and the size that fits there fits here (owner's run of 31 October: at 10 mm/mV in the 16-mm
+   * pane the MH card's PVCs were cut at both edges). A lane as tall as the unit's or taller keeps the calibration
+   * (Philips IntelliVue IFU M8000-9001K p.121: the size is an adjustment factor of the wave, and the 1 mV calibration
+   * bar shows the true scale). A fixed-size lane keeps 10 mm/mV × size in every window.
+   */
+  private drawnMmPerMv(i: number, h = this.laneBox(i).h): number {
+    const pl = this.plan.lanes[i] as PlanLane;
+    const mmPerMv = (this.gainMult[i] ?? 1) * 10;
+    if (!pl.autoGain || !(pl.gainLaneMm > 0)) return mmPerMv;
+    return mmPerMv * Math.min(1, h / this.pxPerMm / pl.gainLaneMm);
+  }
+
+  /** The plan's auto-ranged CO2 lane (skin `co2.autoScales`), if it has one. */
+  private co2Lane(): PlanLane | undefined {
+    return this.plan.lanes.find((l) => l.channel === 'co2' && l.autoRanges !== null && l.range !== null);
+  }
+
+  /** Lane `pl`'s CO2 scale top becomes `top`: its range, the dotted line at its top and so its scale texts follow. */
+  private setCo2Top(pl: PlanLane, top: number): void {
+    pl.range = [pl.range?.[0] ?? 0, top];
+    if (pl.scaleLines) pl.scaleLines = [top];
+  }
+
+  /**
+   * Owner ruling of 1 Nov 2026 (E63 revisited): the CO2 lane's auto-range (co2-range.ts). Every co2 sample drawn by now
+   * is judged once, in index order, whatever the frames (so every window on the same timeline takes the same steps at
+   * the same breaths). A new scale redraws the lane whole from the engine's buffer at that scale, with its texts.
+   */
+  private co2AutoRange(t: number): void {
+    const pl = this.co2Lane();
+    if (!pl) return;
+    const tops = pl.autoRanges as number[];
+    const latest = this.engine.latestSampleIndex('co2');
+    if (latest < 0) return void (this.co2Next = -1);
+    const rate = this.engine.sampleRate('co2');
+    const end = Math.min(latest, Math.floor(t * rate + 1e-9)); // the last sample the lane draws this frame
+    const back = Math.floor(CO2_RANGE_BACK_S * rate);
+    if (this.co2Next < 0 || end - this.co2Next > back) {
+      // a start (a new monitor, plan or timeline, an attached line) or a gap longer than the backfill (a fast-forward):
+      // the breaths are counted afresh from what the engine holds; the scale shown stays
+      restartCo2Range(this.co2Range);
+      this.co2Next = Math.max(this.heldFrom('co2'), Math.ceil(this.historyT * rate - 1e-6), end + 1 - back);
+    }
+    while (this.co2Next <= end) {
+      const got = this.engine.readSamples('co2', this.co2Next, this.co2Scratch.subarray(0, Math.min(this.co2Scratch.length, end + 1 - this.co2Next)));
+      if (got <= 0) break;
+      feedCo2Range(this.co2Range, this.co2Scratch, got, rate, tops);
+      this.co2Next += got;
+    }
+    const top = tops[this.co2Range.at] as number;
+    if (top === (pl.range as [number, number])[1]) return;
+    this.setCo2Top(pl, top);
+    const i = this.plan.lanes.indexOf(pl);
+    const lane = this.lanes[i] as SweepLane;
+    Object.assign(lane.cfg, scaleFor((pl.range as [number, number])[0], top, lane.cfg.height, this.pxPerMm), pl.scaleLines && lane.cfg.hLines ? { hLines: { ...lane.cfg.hLines, values: pl.scaleLines } } : {});
+    lane.reset(this.ctx); // the next draw backfills the lane at the new scale
+    this.drawChrome([i]);
   }
 
   /** Wave lanes (125 Hz; any channel the plan names), auto-scaled pleth, cleared on 'none'. */
@@ -421,8 +514,11 @@ export class MonitorCore {
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.ctx.fillStyle = p.background;
     this.ctx.fillRect(0, 0, cssW, cssH);
-    // FX-24: the ECG gain survives a resize or a restore (the auto-gain re-judges it); a new plan starts from its own
-    if (this.gainMult.length !== p.lanes.length) this.gainMult = p.lanes.map((l) => l.gainMmPerMv / 10);
+    // FX-24: the ECG gain survives a resize or a restore; a new plan starts from its own, judged afresh
+    if (this.gainMult.length !== p.lanes.length) {
+      this.gainMult = p.lanes.map((l) => l.gainMmPerMv / 10);
+      this.gainJudge = this.gainMult.map((g) => newJudge(g));
+    }
     this.labelTail = [];
     this.over = [];
     this.overGen = [];
@@ -436,7 +532,7 @@ export class MonitorCore {
           background: p.background, lineWidth: p.lineWidth, eraseGapPx: p.eraseGapPx, grid: p.grid, cursorLine: p.cursorLine, fill: pl.fill,
           smoothN: Math.max(1, Math.round((pl.smoothMs / 1000) * rate)), smoothGate: SMOOTH_GATE_MMHG,
           hLines: pl.scaleLines ? { values: pl.scaleLines, color: p.scaleLineColor ?? pl.color } : null, recordBand: this.overprint,
-          ...(pl.kind === 'ecg' ? { baseline: 0.6, gainMmPerMv: (this.gainMult[i] as number) * 10 } : scaleFor(lo, hi, h, this.pxPerMm)),
+          ...(pl.kind === 'ecg' ? { baseline: 0.6, gainMmPerMv: this.drawnMmPerMv(i, h) } : scaleFor(lo, hi, h, this.pxPerMm)),
         },
         dpr,
       );
@@ -446,7 +542,6 @@ export class MonitorCore {
     this.waveLive = p.lanes.map(() => false);
     this.autoRangeT = p.lanes.map(() => -1);
     this.ibpAutoB = p.lanes.map(() => Number.NaN);
-    this.autoGainT = -Infinity;
     this.drawChrome(p.lanes.map((_, i) => i));
     this.rightGen = this.lanes.map((l) => l.generation);
   }
@@ -614,7 +709,7 @@ export class MonitorCore {
     const pl = this.plan.lanes[i] as PlanLane;
     const { y: y0, h } = this.laneBox(i);
     const base = y0 + 0.6 * h;
-    const mv = Math.min(0.5 * h, (this.gainMult[i] ?? 1) * 10 * this.pxPerMm); // 1 mV at the lane gain
+    const mv = Math.min(0.5 * h, this.drawnMmPerMv(i, h) * this.pxPerMm); // 1 mV as the lane draws it
     if (clear) {
       ctx.fillStyle = this.plan.background;
       ctx.fillRect(12, y0 + 0.1 * h - 2, 36, 0.5 * h + 4);
