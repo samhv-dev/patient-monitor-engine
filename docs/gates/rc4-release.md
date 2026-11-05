@@ -133,7 +133,7 @@ Debrief's facts 6.6 mmol/L), "Stress response 88.0" on a 0–1 scale, VO₂ 270 
 at the same stop, rocuronium "Total 48000 mg, µg" (all four display defects, fixed on main after the tag by #178, for a
 later release). At the early-signs stop the monitor shows a red **NIBP SYS TOO LOW** from the cuff's last reading,
 taken in the dip after induction (alarm 05:34 / 05:36; 87/48 on Chromium, 85/60 on WebKit), while the arterial line
-reads 107/67: a stale reading, not a spurious one; a presenter's note in the run sheet. The
+reads 107/67: a stale reading, not a spurious one; a presenter's note in the run sheet as run (`docs/showcase/SHOWCASE-2-RC4-KIT-NOTES.md`). The
 model pages load GitHub `main`, not the tag.
 
 ## Persian handouts (Task 5)

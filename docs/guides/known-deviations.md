@@ -467,3 +467,24 @@ From `grep -rn "INTERIM" packages/*/src` (three hits, two stand-ins):
 - **Used, with known gaps** (`docs/gates/stage-8a.md` §2): VitalDB (N-080) and PTB-XL (N-052) as listed; MGH/MF
   (N-081) has no PPG channel, so the V3 pleth-shape rows have no recorded MGH/MF side, and its CO2 is uncalibrated
   (report-only).
+
+## The rc.4 tag (2026-10-29)
+
+### The rc.4 tag's release date
+
+The tag commit `0c4b396f` (`v1.0.0-rc.4`, pre-release) carries **2026-10-30** in `CHANGELOG.md` and `CITATION.cff`: the bump PR (#166) was written for a planned 30 October tag, and the tag was cut a day early, on 2026-10-29 (11:36 UTC). Main's `CHANGELOG.md` heading is corrected to 2026-10-29 by the rc.4 docs PR (#225; main's `CITATION.cff` has since moved to rc.5); the tag's text is not rewritten.
+
+### Retry-only passes on the rc.4 tag commit
+
+Main **0c4b396f**, the `v1.0.0-rc.4` (pre-release) tag commit, push run **40860980902**: every job passed. These tests
+passed only on a retry in it (`gh run view 40860980902 --log`). No test was changed. The macOS WebKit set run on the
+release day from the tag worktree (FX-16 three times, FX-24, FX-25, FX-14, `saadat-instructor-tiles`) passed with
+none skipped and no retry (`docs/gates/rc4-release.md`).
+
+| Test (file:line, this tree) | Test title | Job | Note |
+|---|---|---|---|
+| `saadat-grid-layout.e2e.ts:55` | a Settings switch saadat-like → philips-like → saadat-like | `e2e (webkit)`, gating | **new**: not tagged `@known-flaky`; passed on its retry; WebKit warns, not fails, until the demo of 3 November. Watch it on the next main runs |
+| `time-control.e2e.ts:30` | ×8 and a 5-minute fast-forward from the instructor view: paced panel everywhere, sound muted, cue, banner, log, trends | `e2e (chromium)` | tagged `@known-flaky` (row in the table above), so the enforced Chromium job stays green |
+| `debrief.e2e.ts:48` | a showcase run ends in a debrief that prints (timeline, facts, objectives) | `e2e-quarantine (webkit)` | tagged; recorded above |
+| `return-here-restore.e2e.ts:15` | Return here: the clock, the trends and the waveforms go back with the patient | `e2e-quarantine (webkit)` | tagged; recorded above |
+| `vent-view-new-patient.e2e.ts:16` | the cockpit is unloaded by a new patient and reloads fresh on the next visit (or at once when shown) | `e2e-quarantine (webkit)` | tagged; recorded above |

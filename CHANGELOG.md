@@ -518,7 +518,7 @@ says otherwise.
 - The owner's checks: this release candidate gets a smoke check after the tag, recorded in the repository's gate
   notes.
 
-## [1.0.0-rc.4] - 2026-10-30
+## [1.0.0-rc.4] - 2026-10-29
 
 Fourth public **pre-release** (release candidate) of a teaching simulator. It is for education only: it is not a
 medical device and it is not clinically validated. It is not the final 1.0.0: the calibration pass and the blind
