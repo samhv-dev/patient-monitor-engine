@@ -910,6 +910,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mou
 | [`apps/demo/src/app/showcase/mh-v2-card.test.ts`](../../apps/demo/src/app/showcase/mh-v2-card.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/showcase/showcase-cards.test.ts`](../../apps/demo/src/app/showcase/showcase-cards.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts`](../../apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/sim-clock-monotonic.dom.test.ts`](../../apps/demo/src/app/sim-clock-monotonic.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/site.test.ts`](../../apps/demo/src/app/site.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/staging.test.ts`](../../apps/demo/src/app/staging.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/action-parity.dom.test.ts`](../../apps/demo/src/app/teach2/action-parity.dom.test.ts) | 0 | 0 |
