@@ -31,6 +31,8 @@ function tileFindings(page: Page): Promise<{ texts: number; bad: string[] }> {
       if (tile.offsetParent === null) continue;
       const p = tile.dataset.param ?? '?';
       const tb = tile.getBoundingClientRect();
+      // the monitor is scaled as one unit (layout.grid.screenPx): the computed font sizes are layout px, the boxes screen px
+      const k = tile.offsetWidth > 0 ? tb.width / tile.offsetWidth : 1;
       const inks: Array<{ t: string; l: number; r: number; top: number; bot: number }> = [];
       const walk = document.createTreeWalker(tile, NodeFilter.SHOW_TEXT);
       for (let n = walk.nextNode(); n; n = walk.nextNode()) {
@@ -46,7 +48,7 @@ function tileFindings(page: Page): Promise<{ texts: number; bad: string[] }> {
         if (rects.length !== 1) continue;
         texts++;
         const rc = rects[0] as DOMRect;
-        g.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+        g.font = `${cs.fontStyle} ${cs.fontWeight} ${parseFloat(cs.fontSize) * k}px ${cs.fontFamily}`;
         const m = g.measureText(text);
         const baseY = rc.top + (rc.height - (m.fontBoundingBoxAscent + m.fontBoundingBoxDescent)) / 2 + m.fontBoundingBoxAscent;
         const ink = { t: text.trim(), l: rc.left - m.actualBoundingBoxLeft, r: rc.left + m.actualBoundingBoxRight, top: baseY - m.actualBoundingBoxAscent, bot: baseY + m.actualBoundingBoxDescent };
