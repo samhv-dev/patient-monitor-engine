@@ -1,7 +1,8 @@
 // The key moments and the key times of a run, computed from the run record alone (`record.ts` `RunData`): the scenario's
 // states after the first (each the team's, the patient's or the scenario's as the record's `by` says), the pulse lost
 // and back (the model), and the team's drugs, fluids, shocks and CPR; each with
-// what the monitor's trend held at that second and the alarms raised since the moment before. The key times are the
+// what the monitor's trend held at that second (and, in a record of Debrief 2, the systolic/diastolic and CVP, a cuff
+// reading with its age) and the alarms raised since the moment before (with when each ended and was acknowledged). The key times are the
 // intervals the facilitator reads first: the recognition (one reading, `recognitionAt`: a /2 card's timed action, a /1
 // card's tick or the instructor's press), the first team action, each objective's
 // measured interval, the pulse loss to CPR, the time without a pulse and the hands-off time within it (with the
@@ -9,7 +10,7 @@
 // absent one is null, never a guess. Read on the KEPT course, as the debrief's rules are. No DOM.
 import { asV1, isV2, type ScenarioDoc } from '@pme/controller';
 import type { Grade, ScenarioDocV2 } from '@pme/controller/scenario';
-import { endOf, isEvent, objectives, report3, type DebriefExport } from './debrief.ts';
+import { endOf, isEvent, objectives, report3, type DebriefExport, type Pressure } from './debrief.ts';
 import type { Row, RunData, Sample } from './record.ts';
 
 export type Who = 'team' | 'patient' | 'scenario';
@@ -82,13 +83,31 @@ export function handsOff(d: RunData): { handsOffS: number; pulselessS: number; f
 }
 
 /** The value of `k` at second ⌊t⌋, else the first measured in the next three seconds, else null. */
-function valueAt(at: Map<number, Sample>, k: 'hr' | 'map' | 'spo2' | 'etco2', t: number): number | null {
+function valueAt(at: Map<number, Sample>, k: 'hr' | 'map' | 'spo2' | 'etco2' | 'cvp', t: number): number | null {
   const f = Math.floor(t);
   for (let s = f; s <= f + LOOK_S; s++) {
     const v = at.get(s)?.[k];
     if (v !== null && v !== undefined) return v;
   }
   return null;
+}
+
+/** A moment's systolic and diastolic (D6; the owner's cuff rule of 5 November, DQ1). The arterial line reports every
+ *  second and the cuff only in its cycle's second (record.ts `PRESSURES`), so a reading whose seconds on both sides
+ *  hold none is a cuff cycle. A line value: the first in ⌊t⌋…⌊t⌋+3 s (as `valueAt`). Else the LAST cuff reading at or
+ *  before ⌊t⌋, with its age `t − its second` (a cuff after the moment is never borrowed). Else null. */
+function pressureAt(at: Map<number, Sample>, t: number): { sys: Pressure; dia: Pressure } {
+  const has = (s: number) => typeof at.get(s)?.sys === 'number';
+  const cuff = (s: number) => has(s) && !has(s - 1) && !has(s + 1);
+  const f = Math.floor(t);
+  for (let s = f; s <= f + LOOK_S; s++) if (has(s) && !cuff(s)) return { sys: at.get(s)?.sys ?? null, dia: at.get(s)?.dia ?? null };
+  for (let s = f; s >= 0; s--) {
+    if (!cuff(s)) continue;
+    const x = at.get(s) as Sample;
+    const ageS = t - s;
+    return { sys: { v: x.sys as number, ageS }, dia: typeof x.dia === 'number' ? { v: x.dia, ageS } : null };
+  }
+  return { sys: null, dia: null };
 }
 
 /** The key moments of the kept course in time order, numbered 1…n. Values as recorded (unrounded) — what the monitor
@@ -120,14 +139,21 @@ export function keyMoments(d: RunData): KeyMoment[] {
   const at = new Map(d.samples.map((s) => [s.t, s]));
   const alarms = kept(d).filter((r) => r.kind === 'alarm');
   const spans = pulselessSpans(d);
+  const pressures = !!d.keeps?.includes('pressures');
+  const ends = !!d.keeps?.includes('alarmEnd');
   return merged.map((m, i) => {
     const from = i ? (merged[i - 1] as { t: number }).t : -Infinity;
     const pulseless = pulselessAt(d, m.t, spans);
+    const raised = alarms.filter((a) => from < a.t && a.t <= m.t + ALARM_S);
     return {
       n: i + 1, t: m.t, who: m.who, text: m.text,
-      values: { hr: valueAt(at, 'hr', m.t), map: valueAt(at, 'map', m.t), spo2: valueAt(at, 'spo2', m.t), etco2: valueAt(at, 'etco2', m.t) },
+      values: {
+        hr: valueAt(at, 'hr', m.t), map: valueAt(at, 'map', m.t), spo2: valueAt(at, 'spo2', m.t), etco2: valueAt(at, 'etco2', m.t),
+        ...(pressures ? { ...pressureAt(at, m.t), cvp: valueAt(at, 'cvp', m.t) } : {}),
+      },
       pulseless,
-      alarms: alarms.filter((a) => from < a.t && a.t <= m.t + ALARM_S).map((a) => a.text),
+      alarms: raised.map((a) => a.text),
+      ...(ends ? { alarmTimes: raised.map((a) => ({ t: a.t, endT: a.endT ?? null, ackT: a.ackT ?? null })) } : {}),
       ...(m.recognised ? { recognised: true as const } : {}),
     };
   });

@@ -51,7 +51,7 @@ describe('D6: the key moments read the new facts', () => {
 
   it('the minute table gains SBP, DBP and CVP (the first measured in the minute; – when none was)', () => {
     const el = open(now);
-    expect(cells(el.querySelector('#db-minutes thead tr')).slice(0, 6)).toEqual(['Time', 'HRbpm', 'MAPmmHg', 'SBPmmHg', 'DBPmmHg', 'CVPmmHg']);
+    expect(cells(el.querySelector('#db-minutes thead tr')).slice(0, 6)).toEqual(['Time', 'HRbpm', 'ART M / NIBP MmmHg', 'SBPmmHg', 'DBPmmHg', 'CVPmmHg']);
     const r = [...el.querySelectorAll('#db-minutes tbody tr')].map(cells);
     expect(r.slice(0, 3).map((x) => x.slice(3, 6))).toEqual([['92', '58', '17'], ['92', '58', '17'], ['98', '60', '17']]);
     expect(r[3]?.slice(3, 6)).toEqual(['–', '–', '17']);
