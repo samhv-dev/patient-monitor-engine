@@ -168,7 +168,7 @@ describe('grade(): one action per case', () => {
   }
 });
 
-describe('grade(): repeats, violations, outcomes, judged rows', () => {
+describe('grade(): repeats, violations, outcomes, record actions', () => {
   /** Dantrolene with Q13's conditional repeat: again 300–600 s after, from when the condition holds. */
   const REP: Partial<Action> = { ...DAN, repeatWhile: { rule: K, intervalS: { min: 300, max: 600 } } };
   const rw = (t: number, off?: number) => on('action:x:repeatWhile', t, off);
@@ -234,9 +234,35 @@ describe('grade(): repeats, violations, outcomes, judged rows', () => {
     expect(grade(doc, PH, [dan(150)], [], 400, { final: true }).outcomes[0]?.grade).toBe('not reached');
   });
 
-  it('judged rows: the clock from the first true edge of their display rule', () => {
-    const doc = card([DAN], { judged: [{ id: 'name', text: 'Name MH', kind: 'recognition', display: { value: { var: 'etco2', op: '>', value: 45 } } }] });
-    expect(grade(doc, PH, [], on('judged:name', 222), 1000).judged).toEqual([{ id: 'name', text: 'Name MH', kind: 'recognition', fromT: 222 }]);
+  // judged rows are retired (the owner's ruling of 5 November): a team act the instructor observes is a record action,
+  // the scenario `record` command's administration stamped with the action's id (kind communication, no give)
+  const said = (t: number, id = 'name') => adm(t, { kind: 'communication', actionId: id });
+  const NAME: Partial<Action> = { id: 'name', label: 'Name MH', kind: 'communication', window: { anchor: 'phase:early', withinS: 120 } };
+  it('grade() has no judged path: its grades are actions, outcomes and violations only', () => {
+    expect(Object.keys(grade(card([NAME]), PH, [], [], 1000))).toEqual(['actions', 'outcomes', 'violations']);
+  });
+  it('a timed record action (window from a phase\'s entry): met inside, overdue after, due with its clock, failed at the end', () => {
+    const doc = card([NAME]);
+    expect(grade(doc, PH, [said(150)], [], 1000).actions[0]).toMatchObject({ id: 'name', grade: 'met', dueT: 100, windowS: 120, givenT: 150, live: 'met 02:30' });
+    expect(grade(doc, PH, [said(260)], [], 1000).actions[0]).toMatchObject({ grade: 'overdue', givenT: 260, live: 'overdue 0:40' });
+    expect(grade(doc, PH, [], [], 160).actions[0]).toMatchObject({ grade: 'due', live: 'due 1:00' });
+    expect(grade(doc, PH, [], [], 1000, { final: true }).actions[0]).toMatchObject({ grade: 'failed', live: 'failed' });
+    // another action's record, or a record by no action, is not this one
+    expect(grade(doc, PH, [said(150, 'other'), adm(150, { kind: 'communication' })], [], 160).actions[0]?.grade).toBe('due');
+  });
+  it('a timed record action on a display clock (what the monitor showed): the window from its first true edge', () => {
+    const doc = card([{ ...NAME, window: { anchor: { display: { value: { var: 'etco2', op: '>', value: 45 } } }, withinS: 120 } }]);
+    expect(grade(doc, PH, [said(300)], on('action:name:anchor', 222), 1000).actions[0]).toMatchObject({ grade: 'met', dueT: 222, givenT: 300 });
+    expect(grade(doc, PH, [said(400)], on('action:name:anchor', 222), 1000).actions[0]).toMatchObject({ grade: 'overdue', dueT: 222 });
+  });
+  it('an untimed record action (recorded, not timed: a quality verdict ticked at the end): met when recorded in its phases, no clock', () => {
+    const doc = card([{ id: 'loop', label: 'Closed-loop communication was used', kind: 'communication' }]);
+    const g = grade(doc, PH, [said(900, 'loop')], [], 1000, { final: true }).actions[0];
+    expect(g).toMatchObject({ id: 'loop', grade: 'met', givenT: 900, live: 'met 15:00' });
+    expect(g?.dueT).toBeUndefined();
+    expect(g?.windowS).toBeUndefined();
+    expect(grade(doc, PH, [], [], 500).actions[0]).toMatchObject({ grade: 'due', live: 'due' }); // live: open, no clock
+    expect(grade(doc, PH, [], [], 1000, { final: true }).actions[0]?.grade).toBe('failed'); // never recorded
   });
 
   it('ruleWords: a phase\'s entry (phaseEntered) reads as the phase\'s name, as the /1 card\'s recognition start ("early signs")', () => {
