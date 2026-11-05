@@ -14,6 +14,8 @@ the public API is what the packages export (see the API reference), the `pme-sce
   host drop the reconnected Remote's frames as duplicates. The relay now sends the host `{relay:'peer-left', id}` when a
   non-host socket leaves the room (before the newcomer's hello when it replaces a half-open socket), and the host
   forgets that peer on that transport only.
+
+### Added
 - **`pme-scenario/2` F5.2 and F5.3: IM dantrolene modelled, and the "not modelled" register.** A drug row may carry
   `routeModels`, one mechanism per route other than IV: bioavailability `F`, absorption rate `ka`, lag `lagS`, each
   from its `src`, and an optional local effect raised as a new `drugLocalEffect` event. Dantrolene IM is the one row:
