@@ -32,6 +32,14 @@ the public API is what the packages export (see the API reference), the `pme-sce
   or the operating-room trigger, whichever is first). A window may also open on a rule on the DISPLAYED numerics
   (`{ display: rule }`): the operating-room trigger reads the monitor, arterial systolic below 40 mmHg (cuff below 50
   without an arterial line) for 30 s with EtCO₂ below 25 mmHg (ERC 2025; Harper et al. 2020; the owner's numbers).
+
+### Fixed
+- A hello forged under a Remote's peer id while the Remote reconnects no longer blocks the Remote's commands
+  until its page reloads (R29, the known gap of #183). The host kept each relay peer's last sequence number and role
+  while its socket was down, so a hand-written hello with that id and a higher number, sent in that window, made the
+  host drop the reconnected Remote's frames as duplicates. The relay now sends the host `{relay:'peer-left', id}` when a
+  non-host socket leaves the room (before the newcomer's hello when it replaces a half-open socket), and the host
+  forgets that peer on that transport only.
 - **`pme-scenario/2` F5.2 and F5.3: IM dantrolene modelled, and the "not modelled" register.** A drug row may carry
   `routeModels`, one mechanism per route other than IV: bioavailability `F`, absorption rate `ka`, lag `lagS`, each
   from its `src`, and an optional local effect raised as a new `drugLocalEffect` event. Dantrolene IM is the one row:
