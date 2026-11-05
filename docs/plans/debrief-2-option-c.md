@@ -1,10 +1,14 @@
 # Debrief 2 (Option C): the record grows, the recognised mark, the swimlane, authored hints, in-app Persian — Implementation Plan
 
-**STATUS: READY TO BUILD 2026-11-05.** Every owner question (DQ1–DQ12) is ruled (5 November, section 10), with one
-added requirement (the expected window of every timed action on the swimlane, D7a/D7b) and two added scopes (the
-Briefing in Persian, D13b; the learner handout's time-anchored questions per card, D16). Written by a planning
-executor from brief 15 of the post-demo set; amended twice on 5 November with the rulings. No product code, test or
-card was changed while writing it.
+**STATUS: READY TO BUILD 2026-11-05, BUILT WHOLE IN SEVEN PULL REQUESTS.** Every owner question (DQ1–DQ12) is ruled
+(5 November, section 10), with one added requirement (the expected window of every timed action on the swimlane,
+D7a/D7b) and two added scopes (the Briefing in Persian, D13b; the learner handout's time-anchored questions per card,
+D16). On the evening of 5 November the owner ruled that Debrief 2 is built whole, not staged, on the seven-PR cut of
+`research/42-ci-and-process-review.md` §2.3, and that the swimlane carries no pressures lane (section 10, R1 and R2).
+PR 1 (D0) is open as PR #277 (head `595b4714`); PRs 2–7 follow in dependency order (section 8). Written by a planning
+executor from brief 15 of the post-demo set; amended twice on 5 November with the rulings, and a third time (brief 31)
+to regroup the pieces into seven PRs and restate effort in executor-hours and CI runs. No product code, test or card
+was changed while writing it.
 
 **Base and preconditions.**
 - Base: `origin/main` **8718fe1d** (Merge PR #257, `release-rc5`), read in the worktree
@@ -31,7 +35,8 @@ card was changed while writing it.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan piece by piece. Steps use checkbox (`- [ ]`) syntax for tracking.
-> Each piece is ONE pull request with its own gate; never two pieces in one PR.
+> The pieces are grouped into SEVEN pull requests (section 8, the review's §2.3 cut). Inside a PR each piece keeps its
+> own tests, acceptance and gate, in the PR's strict internal order: tests first, one red→green commit per fact.
 
 ---
 
@@ -40,8 +45,8 @@ card was changed while writing it.
 The Debrief today ("B via A") reads well, but it can state only what the record keeps, and the record does not keep
 several things the facilitator needs: the pressures the tamponade card is built around (systolic, diastolic, CVP),
 when an alarm stopped, when compressions stopped, and a time to recognition on a card that has no "Name the …"
-objective. Option C makes the record keep them, then shows them: in the key-moments table, on a swimlane of the run,
-and as tiles. It adds the owner's own words per card (debrief hints and analysis openers), and it lets the Debrief
+objective. Option C makes the record keep them, then shows them: the pressures in the key-moments table and the minute
+appendix, the alarm ends, compressions and recognition on a swimlane of the run and as tiles. It adds the owner's own words per card (debrief hints and analysis openers), and it lets the Debrief
 page itself read in Persian.
 
 The order is the research's (`research/33:424–427`): first what makes "who" and "recognition" exact rather than
@@ -143,7 +148,9 @@ None of these is clinical. Each can be reversed by the orchestrator before the p
 3. **Recognition has one reading; the press exists only as the `/1` fallback** (ruled 5 November, DQ4).
    - On a `/2` card, "recognise and announce the diagnosis" is a timed action of the card (the owner retired the
      judged rows on 5 November): it is pressed and graded like every action, and the Debrief reads its time and grade
-     from `report3`/`grade()`. No button and no note row of its own.
+     from `report3`/`grade()`. No button and no note row of its own. Which action it is: the one marked with the
+     additive `recognition: true` (at most one per card), defined in D5 because PR #276 left the format without a
+     marker (amended 5 November evening).
    - On a `/1` card with a recognition objective (`debrief: 'recognition'`), the tick stays as it is
      (`panel/scenario.ts:114`); the "Recognised" button in the session bar (beside Bookmark, `sessionbar.ts:47`) and the
      Instructor v2 dock (`teach2/dock.ts:18–22`) sends that same note.
@@ -208,7 +215,7 @@ None of these is clinical. Each can be reversed by the orchestrator before the p
 ## 5. Global constraints (every piece)
 
 - `00-common-rules.md` applies to every executor: own worktree under `scratch/` on a branch from `origin/main`; never
-  merge, tag, force-push or push gh-pages; one PR per piece, draft until its checks pass; `npx -y pnpm@9.15.9`; the
+  merge, tag, force-push or push gh-pages; one PR per group of section 8 (seven in all), draft until its checks pass; `npx -y pnpm@9.15.9`; the
   executor's port range only; no owner identifier anywhere; no closing keyword before a `#number`.
 - **Tests first** in every piece: the failing test is committed before the code that makes it pass, and the PR body
   pastes both runs.
@@ -236,8 +243,11 @@ npx -y pnpm@9.15.9 --filter @pme/validation test -- model-docs
 ```
 
   A regenerated page is committed as `docs(model): regenerate after D<n>`.
-- **New e2e tests** pass 3 of 3 local runs on chromium and webkit before the push, go after the existing Debrief
-  tests (`apps/demo/e2e/debrief.e2e.ts`), and are never tagged `@known-flaky`.
+- **Local testing before a push (review §2.4 item 5, ruled 5 November):** run only the unit test files the commit
+  touches and the one e2e file it touches (one pass, chromium then webkit); never a full suite locally: CI runs the
+  full suites on both projects, with its retries. New e2e tests go after the existing Debrief tests
+  (`apps/demo/e2e/debrief.e2e.ts`) and are never tagged `@known-flaky`; a new test that fails once in CI is a finding,
+  not a re-run.
 - **Persian:** every Persian string is written with the `persian-writing` skill, enters the table with
   `"reviewed": false` and a `source`, and is read by the owner line by line before it is marked reviewed. No executor
   marks an entry reviewed. Register and digits as the table states (`fa-debrief.json:1–4`).
@@ -258,12 +268,32 @@ npx -y pnpm@9.15.9 --filter @pme/validation test -- model-docs
 
 ---
 
-## 7. Pieces
+## 7. Pieces, grouped into seven pull requests
 
-Effort is focused executor hours including tests, as the A/B plan counted them (`debrief-redesign.md:352–384`). It
-does not include the owner's reading or wording time, nor review.
+The pieces are grouped exactly as the review's §2.3 table (`research/42-ci-and-process-review.md`): PR 1 = D0;
+PR 2 = D1 + D2 + D3; PR 3 = D4 + D5 + D6; PR 4 = D7a + D7b; PR 5 = D8 + D9 + D10; PR 6 = D11 + D12 + D13 + D13b;
+PR 7 = D16 + D15. Nothing is dropped: every piece keeps its tests, acceptance, "must not touch" and gate below; only
+the PR boundaries moved. Rules for a grouped PR:
 
-### D0: Baseline, fixtures, the pre-D readers pinned (2 h)
+- **Strict internal order:** the pieces go in the order each PR heading gives; one piece is finished (its acceptance
+  green locally on the touched files) before the next starts.
+- **Tests first, one red→green commit per fact:** each fact a piece names (one Red bullet) is a failing-test commit
+  followed by the commit that makes it pass; a piece's model-docs regeneration is its own commit
+  (`docs(model): regenerate after D<n>`).
+- **The gate of a PR** is the union of its pieces' gates, run once by CI on the PR's head; D0's compat test stays green
+  at every commit. Local runs follow section 5 (touched unit files and the touched e2e file only).
+- **The PR body** has one section per piece: what it built, its red and green runs, and what it measured.
+
+Each piece's hours are the plan's original unit ("focused executor hours … as the A/B plan counted them",
+`debrief-redesign.md:352–384`), kept so the rulings' history in section 8 still adds up. Section 8 converts them to
+executor-hours as measured this week (plan h ÷ 6–8, review §2.1) and names the owner's reading separately.
+
+### PR 1: D0, the baseline (DONE: PR #277, head `595b4714`)
+
+PR #277 ("test(debrief): Debrief 2 D0: pre-D fixtures (/1-card and /3 exports) and pinned readers") is open at head
+`595b4714`, CI running when this was written; its fixtures and snapshot are the guard every later PR keeps green.
+
+#### D0: Baseline, fixtures, the pre-D readers pinned (2 h)
 
 **Depends on:** nothing. **Files:** `apps/demo/src/app/debrief-compat.test.ts` (new), fixtures under
 `apps/demo/src/app/__fixtures__/debrief-2/` (new; copies of committed exports, no new recording).
@@ -278,9 +308,13 @@ does not include the owner's reading or wording time, nor review.
   translation` or the count it prints today).
 
 **Acceptance:** the new test passes on 8718fe1d unchanged. **Must not touch:** any source file. **Gate:** unit +
-CI green. **CI load:** 1 run.
+CI green. **PR:** 1.
 
-### D1: The record keeps systolic, diastolic and CVP; `RunData.keeps` (5 h)
+### PR 2: the record, D1 + D2 + D3 (in that order)
+
+One file chain (`record.ts`), one size measurement (D1's), three facts. **Depends on:** PR 1 merged.
+
+#### D1: The record keeps systolic, diastolic and CVP; `RunData.keeps` (5 h)
 
 **Depends on:** D0. **Files:** `apps/demo/src/app/record.ts`, `record.test.ts`, `debrief-compat.test.ts`.
 
@@ -303,11 +337,11 @@ CI green. **CI load:** 1 run.
 
 **Acceptance:** red then green; D0's compat test still green; the pre-D fixtures read `sys` as `undefined`, which
 `debrief-compat.test.ts` maps to "not recorded". **Must not touch:** `TREND`, `VALUE` (`debrief.ts:39`), the charts,
-the engine. **Gate:** typecheck, unit, model-docs guard, CI green. **CI load:** 1 run.
+the engine. **Gate:** typecheck, unit, model-docs guard, CI green. **PR:** 2.
 
-### D2: Alarm end and acknowledgement times (5 h)
+#### D2: Alarm end and acknowledgement times (5 h)
 
-**Depends on:** D1 (same file, merge after it). **Files:** `record.ts`, `record.test.ts`.
+**Depends on:** D1 (same file, committed after it in PR 2). **Files:** `record.ts`, `record.test.ts`.
 
 - [ ] **Red (DQ2, ruled 5 November: both stored):** an alarm raised at 10, still active at 11, absent from the
   status at 25 has `endT: 25`; one reported `latched: true` at 20 and `acked: true` at 30 has `endT: 20, ackT: 30`;
@@ -320,9 +354,9 @@ the engine. **Gate:** typecheck, unit, model-docs guard, CI green. **CI load:** 
   both when later than `t` on kept rows. `Row.endT?: number`, `Row.ackT?: number`, each with its doc line.
 
 **Acceptance:** as Red; D0 green. **Must not touch:** the alarm manager (`packages/engine-core/src/l3/alarms/`),
-`alarmLine`. **Gate:** typecheck, unit, model-docs guard, CI green. **CI load:** 1 run.
+`alarmLine`. **Gate:** typecheck, unit, model-docs guard, CI green. **PR:** 2.
 
-### D3: CPR stop in the record; hands-off time (5 h)
+#### D3: CPR stop in the record; hands-off time (5 h)
 
 **Depends on:** D2 (same file). **Files:** `record.ts`, `record.test.ts`, `debrief-moments.ts`,
 `debrief-moments.test.ts`, `debrief.ts` (the `DebriefExport` key-time id union, `debrief.ts:487`).
@@ -347,9 +381,14 @@ the engine. **Gate:** typecheck, unit, model-docs guard, CI green. **CI load:** 
 
 **Acceptance:** as Red. **Must not touch:** the `cpr` rule event (`record.ts:212` keeps `ev: 'cpr'` on starts).
 **Gate:** typecheck, unit, model-docs guard, the Debrief e2e on both projects (the tiles row), CI green.
-**CI load:** 1 run.
+**PR:** 2.
 
-### D4: "Who" from the record (team rows for manual transitions) (3 h)
+### PR 3: moments, recognition and export, D4 + D5 + D6 (in that order)
+
+One file chain (`debrief-moments.ts`); D0's compat snapshot is the gate for all three. **Depends on:** PR 2 merged; for
+D5's `/2` part, PR #276 (feat-retire-judged-rows), merged on 5 November (`f114b676`).
+
+#### D4: "Who" from the record (team rows for manual transitions) (3 h)
 
 **Depends on:** D0 (can run beside D1–D3: different file). **Files:** `debrief-moments.ts`,
 `debrief-moments.test.ts`.
@@ -363,30 +402,52 @@ the engine. **Gate:** typecheck, unit, model-docs guard, CI green. **CI load:** 
 
 **Acceptance:** as Red; D0's compat snapshot changes ONLY in `who` of the `/3` fixture's phase moments, and the PR body
 lists each changed row. **Must not touch:** `record.ts`, `steps()`. **Gate:** unit, model-docs guard, the Debrief e2e
-on both projects (the `/2` MH test at `debrief.e2e.ts:491`), CI green. **CI load:** 1 run.
+on both projects (the `/2` MH test at `debrief.e2e.ts:491`), CI green. **PR:** 3.
 
-### D5: Recognition: one reading; the `/1` fallback press (5 h)
+#### D5: Recognition: one reading; the `/1` fallback press (5 h)
 
 **Ruled 5 November (DQ4):** on `/2` cards "recognise and announce the diagnosis" is a timed action and the judged
 rows are retired; the generic "Recognised" press exists only for `/1` cards (Decision 3).
 
-**Depends on:** D3 (record.ts) and D4 (debrief-moments.ts); for the `/2` part, the card/format change that retires the
-judged rows and makes recognition an action (not this plan's piece; not on `origin/main` 9a4636c2, where
-`showcase-mh-v2.json:1003` still has `"judged"`). If that change has not merged when D5 starts, D5 ships the `/1`
-part and the `/2` reading is added by a follow-up of ≈ 1 h inside the same piece's branch once it lands (the
-orchestrator decides which). **Files:** `record.ts` (`note()` takes an optional `ev`), `link.ts` (the note path carries
+**Depends on:** D3 (record.ts) and D4 (debrief-moments.ts); for the `/2` part, PR #276 (feat-retire-judged-rows), the
+card/format change that retires the judged rows and makes recognition a timed record action (not this plan's piece;
+merged on 5 November as `f114b676`). The `/2` reading below uses the ≈ 1 h this piece always allowed for it.
+
+**The `/2` recognition reading, defined (open design point from PR #276's executor, 5 November).** PR #276 turns the
+two judged recognition rows into timed record actions (`nameMh` on `showcase-mh-v2`, window `phase:earlySigns` +
+120 s; `recogniseRosc` on `showcase-haemorrhage-v2`, window `phase:rosc` + 120 s), and it cuts the `/2`
+"Recognition (instructor's tick)" key-time tile, because nothing in the format marks which action is the
+recognition. So after PR #276 a `/2` Debrief has no recognition tile, and D5 defines one:
+
+- **What the reading is:** the grade of the card's timed "recognise and announce the diagnosis" action, as `grade()`
+  gives it and `report3` carries it: its anchor (`dueT`), its window (`windowS`), its press (`givenT`) and its grade
+  (`firstGrade`, the ruled grade word, Decision 11). The tile prints the grade word with its glyph and the interval
+  from the anchor to the press (or "not given" / "not applicable" as the grade says); the key moment is the press.
+  Nothing is computed beside `grade()`: the tile, the key moment and the swimlane's ◇ read this one row.
+- **Which action it is:** an additive optional boolean `recognition` on a `/2` action (`pme-scenario-2.schema.json`,
+  `types-v2.ts`), at most one per card (the validator refuses two), set on `nameMh` and `recogniseRosc` in this
+  piece. Matching by label or by kind (`communication`) stays refused. A `/2` card without the marker prints no
+  recognition tile (as after PR #276), never "not ticked". This is a plan decision (section 4: reversible by the
+  orchestrator before D5 starts); the alternative, no `/2` tile at all, leaves the reading in the action table only. **Files:** `record.ts` (`note()` takes an optional `ev`), `link.ts` (the note path carries
 it, `link.ts:96`, `:148`), `sessionbar.ts`, `teach2/dock.ts`, a new `apps/demo/src/app/recognised.ts` (the `/1` press:
-which note it sends on this card), `debrief-moments.ts` (`recognitionAt`), their tests, one e2e after the existing
-Debrief tests.
+which note it sends on this card), `debrief-moments.ts` (`recognitionAt`), for the `/2` marker
+`packages/controller/scenarios/pme-scenario-2.schema.json`, `packages/controller/src/scenario/types-v2.ts`, the `/2`
+validator, `showcase-mh-v2.json` and `showcase-haemorrhage-v2.json` (the one field each), their tests, one e2e after
+the existing Debrief tests.
 
 - [ ] **Red (`/1` press):** on the tamponade card the button sends exactly `Objective met: <its recognition
   objective's words>` (the text `panel/scenario.ts:114` sends); on the haemorrhage card and a free run, a note row
   `{ kind: 'note', ev: 'recognised', text: 'Recognised (instructor)' }`; `keeps` gains `'recognised'`; on a `/2` card
   the button is not rendered.
-- [ ] **Red (`/2` reading):** on a `/2` run, `recognitionAt(d)` returns the recognition action's administration time
-  and its window from `report3` (`dueT`, `windowS`, `givenT`, `firstGrade`, `debrief.ts:316–323`); the action is the
-  one the format change marks as the recognition (the executor uses that change's own field; if it has none, STOP and
-  ask the orchestrator rather than matching by label). No note text is read for a `/2` run.
+- [ ] **Red (`/2` marker):** a `/2` card with `"recognition": true` on one action validates; on two actions it is
+  refused with its reason; a card without it validates as today; `nameMh` and `recogniseRosc` carry it.
+- [ ] **Red (`/2` reading):** on a `/2` run, `recognitionAt(d)` returns the marked action's row from `report3`
+  (`dueT`, `windowS`, `givenT`, `firstGrade`, `debrief.ts:316–323`); the `/2` tile prints that grade word and the
+  anchor-to-press interval (on the MH graded path of PR #276's test 1, `nameMh met, due 08:10 + 120 s, given 08:12`,
+  the tile prints the grade word for `met` with its glyph and the interval 08:10 → 08:12); a marked action whose
+  anchor never came prints
+  its "not applicable" grade (the haemorrhage A4 path of PR #276's test 3); a `/2` card with no marked action prints no
+  tile. No note text is read for a `/2` run.
 - [ ] **Red (reading, `/1`):** `recognitionAt(d)` returns the first kept tick or `recognised` row, with its clock start:
   the card's sign state (`recognitionFrom`, `debrief-moments.ts:113–121`), else the start. `keyTimes`
   (`debrief-moments.ts:131–141`) and `keyMoments` (a team moment) call it; nothing else reads recognition. An undone
@@ -400,9 +461,9 @@ Debrief tests.
   green).
 
 **Acceptance:** as Red. **Must not touch:** `grade()`. **Gate:** typecheck, unit, model-docs guard, Debrief e2e + fx18
-e2e on both projects, CI green. **CI load:** 1 run.
+e2e on both projects, CI green. **PR:** 3.
 
-### D6: Key moments and the export read the new facts (4 h)
+#### D6: Key moments and the export read the new facts (4 h)
 
 **Depends on:** D1, D2, D3, D5. **Files:** `debrief-moments.ts`, `debrief.ts` (`DebriefExport` value types,
 `debrief.ts:494–498`), `views/debrief.ts` (`momentsTable`, `minutes`), `views/debrief.css`, their tests.
@@ -419,11 +480,17 @@ e2e on both projects, CI green. **CI load:** 1 run.
 
 **Acceptance:** as Red; the D0 snapshot changes only by the added keys. **Must not touch:** the SpO₂ rule and
 sentence (`views/debrief.ts:244`, E126). **Gate:** unit, model-docs guard, Debrief e2e both projects, the Persian
-script on the D0 fixtures (unchanged output), CI green. **CI load:** 1 run.
+script on the D0 fixtures (unchanged output), CI green. **PR:** 3.
 
-### D7a: The swimlane builder, with the expected windows (12 h: 7 for the lanes, 5 for the windows)
+### PR 4: the swimlane, D7a + D7b (in that order)
 
-**Depends on:** D2 and D4 (its inputs' shapes); can start on synthetic data after D2 merges, beside D3/D5.
+The builder's unit tests, then the report section; the Debrief e2e runs once (in CI, both projects), not once per piece.
+No pressures lane (section 10, R2). **Depends on:** PR 3 merged (D7a needs D4, D7b needs D6); D7a's builder
+(a new file) may be written beside PR 3 on synthetic data.
+
+#### D7a: The swimlane builder, with the expected windows (12 h: 7 for the lanes, 5 for the windows)
+
+**Depends on:** D2 and D4 (its inputs' shapes); can start on synthetic data once PR 2 has merged, beside PR 3.
 **Files:** `apps/demo/src/app/views/debrief-swimlane.ts` (new, pure: a string from data, like
 `views/debrief-course.ts:1–14`), `debrief-swimlane.test.ts` (new), `debrief.ts` (the `/1` verdict's additive
 `window`, below), `debrief.test.ts`.
@@ -462,9 +529,9 @@ script on the D0 fixtures (unchanged output), CI green. **CI load:** 1 run.
 
 **Acceptance:** as above; every band's ends equal the times `report3` or the verdict carries, to the second.
 **Must not touch:** `debrief-course.ts`, `grade()`, every reason line. **Gate:** unit, model-docs guard, CI green.
-**CI load:** 1 run.
+**PR:** 4.
 
-### D7b: The swimlane in the report (3 h)
+#### D7b: The swimlane in the report (3 h)
 
 **Depends on:** D6, D7a. **Files:** `views/debrief.ts`, `views/debrief.css`, the Debrief e2e.
 
@@ -477,9 +544,15 @@ script on the D0 fixtures (unchanged output), CI green. **CI load:** 1 run.
   action and each tick's verdict word present; in print media it does not split (`break-inside: avoid`); page counts
   as measured, written in the PR body; page 1 heights unchanged (`debrief.e2e.ts:321`, `:433`, `:464`, `:491`).
 
-**Gate:** Debrief e2e both projects ×3, model-docs guard, CI green. **CI load:** 1 run.
+**Gate:** Debrief e2e both projects (CI; locally one pass of the touched e2e file, section 5), model-docs guard, CI green. **PR:** 4.
 
-### D8: `debriefHints` in both scenario formats (3 h)
+### PR 5: the hints, D8 + D9 + D10 (in that order)
+
+Schema, view, then the drafted card text; the owner's edit gates the card lines, not the code. **Depends on:** PR 4
+merged (D9 needs D7b); D8 and D10's drafts may be written beside PR 4 once PR 3 has merged (controller package and a
+scratch file: no file PR 4 touches; D8 shares the `/2` schema and `types-v2.ts` with D5).
+
+#### D8: `debriefHints` in both scenario formats (3 h)
 
 **Depends on:** D0 (controller package only; runs beside D1–D7). **Files:**
 `packages/controller/scenarios/pme-scenario-1.schema.json`, `pme-scenario-2.schema.json`,
@@ -492,9 +565,9 @@ run event or anchor), controller tests.
   `report3` reads at `debrief.ts:338–344`).
 - [ ] No card gets the field in this piece.
 
-**Gate:** controller unit, typecheck, model-docs guard, CI green. **CI load:** 1 run.
+**Gate:** controller unit, typecheck, model-docs guard, CI green. **PR:** 5.
 
-### D9: Hints and openers in the report (4 h)
+#### D9: Hints and openers in the report (4 h)
 
 **Depends on:** D6, D8 (and D7b, to keep page 2's layout settled). **Files:** `views/debrief.ts`, `views/debrief.css`,
 `debrief-moments.ts` (`openersAt(d)`: each opener's anchor time on the kept course, by the same `first()` reading the
@@ -511,14 +584,14 @@ rules use, `debrief.ts:42–53`, or `report3`'s anchor reading for `/2`), tests.
 - [ ] Tests: a DOM test that the printed text equals the card's strings character for character (no interpolation);
   the handout (`#db-handout`) contains none of them (the learner handout is unchanged).
 
-**Gate:** unit, DOM tests, Debrief e2e both projects, model-docs guard, CI green. **CI load:** 1 run.
+**Gate:** unit, DOM tests, Debrief e2e both projects, model-docs guard, CI green. **PR:** 5.
 
-### D10: Hints on the showcase cards: drafts by an executor, the owner edits or rejects (4 h executor, plus the owner's edit)
+#### D10: Hints on the showcase cards: drafts by an executor, the owner edits or rejects (4 h executor, plus the owner's edit)
 
 **Ruled 5 November (DQ7):** an executor drafts the hints from each card's own objectives, marked as drafts; the owner
 edits or rejects each line before anything prints.
 
-**Depends on:** D8 merged. **Files:** a draft file outside the cards first (`scratch/debrief2-hint-drafts.md`), then
+**Depends on:** D8 (committed first in PR 5; the drafts may be written before). **Files:** a draft file outside the cards first (`scratch/debrief2-hint-drafts.md`), then
 `apps/demo/src/app/showcase/showcase-*.json` (only the lines he accepted), `showcase-cards.test.ts`.
 
 - [ ] **Drafts:** for every showcase card (`apps/demo/src/app/showcase/showcase-*.json`, `/1` and `/2`), the
@@ -531,9 +604,16 @@ edits or rejects each line before anything prints.
   final words; the PR body quotes his answer and its date. A rejected or unanswered line: no field (as `takeHome` was
   handled, `debrief-redesign.md:262–264`). Nothing marked draft ever reaches a card or the page.
 
-**Gate:** controller + demo unit (`showcase-cards.test.ts`), CI green. **CI load:** 1 run.
+**Gate:** controller + demo unit (`showcase-cards.test.ts`), CI green. **PR:** 5.
 
-### D11: One Persian matcher for the script and the app (5 h)
+### PR 6: Persian, D11 + D13 + D12 + D13b (in that order)
+
+The commit order is the plan's merge order (D11, D13, D12, D13b), so the page that prints the words exists before the
+words are filled; the section order below is the plan's numbering. The owner's reading is the gate: one reading
+session over one PR instead of four. **Depends on:** PR 5 merged (D12 and D13 need D9); D11 may be written beside PRs
+2–5 (script and a new module: no shared file).
+
+#### D11: One Persian matcher for the script and the app (5 h)
 
 **Depends on:** D0; the fate of `docs-fa-handout-strings` (rebase over it if it is merged first). **Files:**
 `scripts/showcase/debrief-fa.mjs`, a new shared module (e.g. `apps/demo/src/app/i18n/fa-match.ts`, plain TS the
@@ -546,9 +626,9 @@ script imports through `--experimental-strip-types`, or a `.mjs` both import; th
   the functions they serve) into the module; the script imports it. No string changes.
 
 **Acceptance:** byte-identical output; `0 strings without translation` unchanged. **Must not touch:**
-`fa-debrief.json`. **Gate:** validation tests, CI green. **CI load:** 1 run.
+`fa-debrief.json`. **Gate:** validation tests, CI green. **PR:** 6.
 
-### D12: Persian words for Option C (5 h executor, plus the owner's reading)
+#### D12: Persian words for Option C (5 h executor, plus the owner's reading)
 
 **Depends on:** D6, D7b, D9 (the English words frozen); D11. **Files:** `docs/showcase/i18n/fa-debrief.json`,
 `docs/showcase/i18n/README.md`.
@@ -571,11 +651,11 @@ script imports through `--experimental-strip-types`, or a `.mjs` both import; th
   by the clinical owner" until he clears it.
 
 **Gate:** `debrief-fa.mjs` on the D0 fixtures and a D-era export: `0 strings without translation`; validation tests;
-CI green. **CI load:** 1 run (plus a re-run if the owner's corrections arrive after the PR opens).
+CI green. **PR:** 6 (plus a re-run if the owner's corrections arrive after the PR opens).
 
-### D13: The Debrief page and the learner handout in Persian (10 h)
+#### D13: The Debrief page and the learner handout in Persian (10 h)
 
-**Depends on:** D11 (the matcher), D9 (the page's sections settled); D12 for the words (D13 can merge with the
+**Depends on:** D11 (the matcher), D9 (the page's sections settled); D12 for the words (PR 6 can merge with the
 entries still unreviewed, labelled as such). **Files:** `views/debrief.ts`, `views/debrief.css` (a `[lang=fa]`
 right-to-left block), `apps/demo/src/app/fonts/` (Vazirmatn, Decision 10), `NOTICES.md`, `LICENSES/`, the Debrief e2e,
 a DOM test.
@@ -594,11 +674,11 @@ a DOM test.
 - [ ] The script and the page print the same Persian for the same export: a test renders both through the shared
   matcher and compares the section texts.
 
-**Gate:** typecheck, unit, DOM, Debrief e2e both projects ×3, `pnpm check-licences`, `pnpm check-size` (the IIFE
+**Gate:** typecheck, unit, DOM, Debrief e2e both projects (CI; locally one pass of the touched e2e file, section 5), `pnpm check-licences`, `pnpm check-size` (the IIFE
 bundle limit concerns the engine bundle; the executor confirms the font is not in it), model-docs guard, CI green.
-**CI load:** 1–2 runs.
+**PR:** 6.
 
-### D13b: The Briefing in Persian (5 h; DQ9, ruled 5 November)
+#### D13b: The Briefing in Persian (5 h; DQ9, ruled 5 November)
 
 **Depends on:** D13 (the bundled font and the host's Persian setting, Decision 15); D12 for the reviewed card texts.
 **Files:** `packages/controller/scenarios/pme-scenario-1.schema.json` and `pme-scenario-2.schema.json` (`briefing.textFa`,
@@ -615,13 +695,13 @@ in the stack), the showcase cards whose Persian text the owner read, tests and o
 - [ ] e2e (both projects): host in Persian, one phone: both show the Persian briefing right-to-left in Vazirmatn.
 
 **Must not touch:** the briefing's timing and dismissal rules (`briefing.ts:1–13`). **Gate:** typecheck, controller +
-demo unit, the case-briefing e2e both projects ×3, `pnpm check-licences`, model-docs guard, CI green. **CI load:** 1 run.
+demo unit, the case-briefing e2e both projects (CI; locally one pass of the touched e2e file, section 5), `pnpm check-licences`, model-docs guard, CI green. **PR:** 6.
 
-### D14: (withdrawn) the PEARLS mode table
+### PR 7: questions, docs and the gate note, D16 + D15 (in that order)
 
-Not built: the owner ruled the two hint blocks only (DQ6, 5 November).
+The gate note is written against what merged. **Depends on:** PR 6 merged.
 
-### D16: Time-anchored questions on the learner handout, drafted per card (8 h; DQ12, ruled 5 November)
+#### D16: Time-anchored questions on the learner handout, drafted per card (8 h; DQ12, ruled 5 November)
 
 **Depends on:** D10 (the drafting and review route for card hints, and its schema from D8), D12 and D13 (the handout's
 Persian path). **Files:** the two scenario schemas and types (`debriefHints.handoutQuestions`, Decision 14),
@@ -645,10 +725,10 @@ the cards the owner reviewed, tests.
 - [ ] **Red (Persian, 2 h):** the in-app handout in Persian and `debrief-fa.mjs` print the same Persian question
   text for the same export; a question with no reviewed Persian prints in English with the DQ10 line.
 
-**Gate:** typecheck, unit, DOM, Debrief e2e both projects ×3, the Persian script on a D-era export, model-docs guard, CI
-green. **CI load:** 1 run.
+**Gate:** typecheck, unit, DOM, Debrief e2e both projects (CI; locally one pass of the touched e2e file, section 5), the Persian script on a D-era export, model-docs guard, CI
+green. **PR:** 7.
 
-### D15: Docs, the rehearsal reader, the gate (6 h)
+#### D15: Docs, the rehearsal reader, the gate (6 h)
 
 **Depends on:** every piece merged that the release carries. **Files:** `scripts/showcase/kit-round-a.kitround.ts`
 (the reader returns the new tiles, the swimlane's lanes and the hints count), `docs/guides/scenario-authoring.md`
@@ -661,70 +741,93 @@ green. **CI load:** 1 run.
 - [ ] The gate note lists every Option C item with the PR that built it, or the reason it is out.
 
 **Gate:** kit-round both projects, the Persian script, CI green; the owner's hand print in Safari (the one check no
-automated test makes, as in `debrief-redesign.md:1290–1293`). **CI load:** 1 run.
+automated test makes, as in `debrief-redesign.md:1290–1293`). **PR:** 7.
+
+### Withdrawn: D14, the PEARLS mode table
+
+Not built: the owner ruled the two hint blocks only (DQ6, 5 November).
 
 ---
 
 ## 8. Partition, critical path, merge order, CI load
 
+**Built whole, PRs 2–7 in dependency order; PRs 3 and 5 may run in parallel with 4 where their files do not overlap**
+(the owner, 5 November evening, section 10 R1). There is no staged "2a" and "2b": every piece below ships, in seven
+pull requests, as the review's §2.3 cut (`research/42-ci-and-process-review.md` §2.2–2.3) grouped them.
+
 ```
-D0 ──┬── D1 ── D2 ──┬── D3 ── D5 ── D6 ──┬── D7b ── D9 ──┬── D13 ── D12* ──┬── D16* ── D15
-     │              │                    │               │                 └── D13b ─┘
-     ├── D4 ────────┴─(D5 needs D4)      │               ├── D10* (owner's edit; any time after D8; D16 needs it)
-     │              └── D7a ─────────────┘               │
-     ├── D8 ──────────────────────────────────── (D9 needs D8)
-     └── D11 ───────────────────────────────────────────────┘ (D13 needs D11)
-* waits on the owner
+PR 1 ── PR 2 ────────── PR 3 ─────────────── PR 4 ──────────── PR 5 ─────────────── PR 6 ───────────────────────── PR 7
+D0      D1 → D2 → D3    D4 → D5 → D6         D7a → D7b         D8 → D9 → D10*       D11 → D13 → D12* → D13b*       D16* → D15*
+#277                     (D5 /2: PR #276, merged)
+beside the chain, no shared file: D7a's builder beside PR 3 · D8 and the D10 drafts beside PR 4 · D11 beside PRs 2–5
+* waits on the owner's reading or review
 ```
 
-- **Critical path (executor hours):** D0 2 → D1 5 → D2 5 → D3 5 → D5 5 → D6 4 → D7b 3 → D9 4 → D13 10 → D12 5 →
-  D16 8 → D15 6 = **62 h**, plus the owner's reading of D12, his review of the D10 and D16 drafts, and (for D5's `/2`
-  part) the card change that retires the judged rows. D13b (5 h) runs beside D16 after D12. D7a (12 h) runs beside
-  D3/D5 once D2 is merged: it starts at hour 12 of the path and ends at hour 24, two hours before D6 does (hour 26), so
-  it is not on the critical path, with two hours of slack. D4, D8, D10 and D11 run beside the chain from D0/D8.
-- **What runs in parallel:** at most two executors at once without touching the same file: one on the
-  `record.ts` → `debrief-moments.ts` → `views/debrief.ts` chain, one on D4, D8, D11, D7a, D10 in turn (D4 touches
-  `debrief-moments.ts`, so it merges before D3's key-time change starts; D7a touches `debrief.ts` for the `/1`
-  `window`, so it rebases over D3); after D12, D16 and D13b in parallel (different files except the two schemas,
-  which D13b touches first).
-- **Merge order:** D0 · D8 · D11 · D1 · D4 · D2 · D3 · D7a · D5 · D6 · D7b · D9 · D10 (when the owner has edited) ·
-  D13 · D12 · D13b · D16 · D15. The pieces on one file merge strictly in that order and each rebases on main before
-  its last push.
-- **CI load:** 18 PRs (D0–D13, D13b, D15, D16) at ≈ 1 run each on the PR plus 1 on main after each merge ≈
-  **36 runs**, plus re-runs for review fixes (count ≈ 1 in 3). The last measured run length is ≈ 45 min
-  (`debrief-redesign.md:62–64`, 18 October), and a run is 13–15 jobs against 20 concurrent, so two runs at once queue.
-  At two executors this is ≈ 2–3 runs a day.
-- **Total executor effort:** D0 2 + D1 5 + D2 5 + D3 5 + D4 3 + D5 5 + D6 4 + D7a 12 + D7b 3 + D8 3 + D9 4 + D10 4 +
-  D11 5 + D12 5 + D13 10 + D13b 5 + D15 6 + D16 8 = **94 h**. The first draft was 70 h. The rulings of 5 November:
+- **Why the chain is a chain:** PR 3 needs D3 (D5, D6 read the record's new facts); PR 4 needs D4 and D6 (D7a's
+  inputs, D7b's page 2); PR 5's D9 needs D7b (page 2 settled); PR 6's D12 and D13 need D9 (the English words frozen,
+  the page's sections settled); PR 7's D16 needs D10, D12 and D13, and D15 needs everything. Each PR merges after the
+  one before it.
+- **What runs in parallel, and only where the files do not overlap:**
+  - *PR 4 beside PR 3:* D7a's builder is a new file (`views/debrief-swimlane.ts` and its test) and can be written on
+    synthetic data while PR 3 is open. Its `/1` `window` on `Verdict` (`debrief.ts`) and all of D7b (`views/debrief.ts`,
+    `views/debrief.css`, `debrief.e2e.ts`) share files with D6, so PR 4 rebases on main after PR 3 merges and only
+    then adds those commits.
+  - *PR 5 beside PR 4:* D8 (the two scenario schemas, `types.ts`, `types-v2.ts`, `validate.ts`, controller tests) and
+    the D10 drafts (`scratch/debrief2-hint-drafts.md`) share no file with PR 4; D8 starts after PR 3 has merged,
+    because D5's `/2` marker touches `pme-scenario-2.schema.json` and `types-v2.ts` too. D9 (`views/debrief.ts`,
+    `views/debrief.css`, `debrief-moments.ts`) waits until PR 4 has merged.
+  - *D11* (the script and a new shared module) shares no file with PRs 2–5 and may be written at any time; it enters
+    PR 6 first.
+  - At most two Debrief executors at once (one on the chain, one beside it), and at most three browser executors on
+    this Mac in all (the 07:26 ruling of 5 November, review §2.4 item 5).
+- **Merge order:** PR 1 (#277) · PR 2 · PR 3 (PR #276, feat-retire-judged-rows, which D5's `/2` part
+  needs, merged on 5 November as `f114b676`) · PR 4 · PR 5 · PR 6 · PR 7. A PR that shares files with what merged before it merges main into its
+  branch before its last push (the repository's rule for shared files, review §2.4 item 3); the plan's former
+  piece-by-piece order (D0 · D8 · D11 · D1 · D4 · D2 · D3 · D7a · D5 · D6 · D7b · D9 · D10 · D13 · D12 · D13b · D16 ·
+  D15) survives as the commit order inside and across the PRs.
+- **Local testing before a push:** only the touched unit files and the touched e2e file, one pass; never a full suite
+  locally (section 5; review §2.4 item 5). CI runs every suite on both projects.
+
+**Effort in executor-hours and CI runs, measured this week.** The pieces' plan hours are human-equivalent focused
+hours; this week's six measured pieces (P3, P4, P5, F5.2 + F5.3, F9, D0) took 5–9 times less executor wall time than
+their plan hours (review §2.1), so an executor-hour here is **plan h ÷ 8 to plan h ÷ 6**, rounded to 0.1 h. D0 is the
+check: 2 plan hours, ≈ 0.2 h from launch to PR #277 opening. CI numbers are the review's medians of 4–5 November
+(§1.2): a PR run is ≈ 409 runner-minutes and takes a median 61 min wall (p75 84 min; 49 min when it met no queue);
+33 of 68 PR runs that day were re-merge runs (≈ 1 in 2); the plan's own allowance for review-fix re-runs is ≈ 1 in 3.
+
+| PR | Pieces, in order | Plan h | Executor-h (÷8 – ÷6) | CI runs (PR + main) | Depends on | The owner's own time |
+|---|---|---|---|---|---|---|
+| 1 | D0 baseline, fixtures | 2 | 0.25–0.33 (measured: ≈ 0.2 to PR open) | 1 + 1 | — | — |
+| 2 | D1 SBP/DBP/CVP and `keeps` → D2 alarm end and acknowledgement → D3 CPR stop, hands-off, 60/80 % lines | 15 (5 + 5 + 5) | 1.9–2.5 | 1 + 1 | PR 1 | — (DQ1–DQ3 ruled) |
+| 3 | D4 who from `by` → D5 recognition (the `/1` press; the `/2` reading of the marked action) → D6 key moments, export, minute table | 12 (3 + 5 + 4) | 1.5–2.0 | 1 + 1 | PR 2 (PR #276, which D5's `/2` part needs, merged) | — (DQ4, DQ11 ruled; the D5 `/2` marker is a plan decision the orchestrator may reverse) |
+| 4 | D7a swimlane builder + expected windows (no pressures lane) → D7b the swimlane heads page 2 | 15 (12 + 3) | 1.9–2.5 | 1 + 1 | PR 3 (D7a's builder may start beside it) | — (DQ5 ruled; R2) |
+| 5 | D8 `debriefHints` schema → D9 hints in the report → D10 drafted hints on the cards | 11 (3 + 4 + 4) | 1.4–1.8 | 1 + 1 | PR 4 (D8 and the D10 drafts may start beside it) | **D10:** edit or reject every drafted line: up to 4 "built to show" lines and 4 openers on each of the 9 showcase cards (≤ 72 lines) |
+| 6 | D11 shared Persian matcher → D13 Debrief and handout in Persian → D12 Persian words and Briefing texts → D13b Briefing in Persian | 25 (5 + 10 + 5 + 5) | 3.1–4.2 | 1–2 + 1, plus 1 if his corrections arrive after the PR opens | PR 5 (D11 may start beside PRs 2–5) | **D12/D13:** read every Persian line before it is marked reviewed: each new English string of D3, D5, D6, D7, D9, the 46 `"fa": null` `/3` entries if F7.6 has not landed, the two cards' Briefing texts (`showcase-mh`, `showcase-mh-v2`), and the Persian page on paper |
+| 7 | D16 handout questions per card → D15 docs, reader, gate note | 14 (8 + 6) | 1.8–2.3 | 1 + 1 | PR 6 | **D16:** review every drafted question (≤ 3 on each of the 9 cards, ≤ 27) and its Persian; **D15:** the Safari hand print |
+| **All** | 18 pieces (D14 withdrawn) | **94** | **≈ 11.8–15.7 (≈ 12–16)**; PRs 2–7: ≈ 11.5–15.3 | **≈ 17–19 runs** for PRs 2–7 (6 PR + 6 main, ≈ 3 re-merge, ≈ 2 review-fix, + 0–2 for PR 6) | | not estimated in hours: no measurement of it exists, and it is calendar time no executor speed shortens (review §2.2) |
+
+- **CI calendar on the critical path:** six merges after PR 1, each waiting for one PR run and, about every second
+  time, one re-merge run: 6–12 runs at the 61 min median ≈ **6–12 h of waiting on CI**, with today's workflow. If the
+  review's §1.6 changes land first, an app PR's run is estimated at ≈ 25–30 min (an estimate, not measured): ≈ 2.5–6 h.
+  Runner cost: ≈ 17–19 runs × ≈ 409 runner-min ≈ 7,000–7,800 runner-min (the former 18-PR cut: 36 runs ≈ 14,700
+  runner-min plus its re-merges, review §2.2). The plan's former "13–15 jobs against 20 concurrent" is out of date:
+  a run is 15 jobs and the measured ceiling is 40 at once (review §1.2).
+- **The owner's time is the other long pole:** PR 5 cannot merge with draft card lines (D10 prints only what he
+  accepted), PR 6 can merge with Persian entries still unreviewed but labelled (DQ10), and PR 7's D16 prints only
+  questions he reviewed. Sending him the D10 and D16 draft files as soon as D8 merges (inside PR 5's branch) keeps his
+  reading off the critical path as far as it can be.
+- **History of the plan hours (the original unit):** D0 2 + D1 5 + D2 5 + D3 5 + D4 3 + D5 5 + D6 4 + D7a 12 + D7b 3 +
+  D8 3 + D9 4 + D10 4 + D11 5 + D12 5 + D13 10 + D13b 5 + D15 6 + D16 8 = **94 h**. The first draft was 70 h. The
+  rulings of 5 November:
   - DQ1–DQ8 and the expected windows: +11 h (the windows +6, DQ1 +2, DQ2 +1, DQ3 +1, DQ7 +2, DQ4 −1), to 81 h;
   - DQ9 the Briefing in Persian: +6 h (D13b 5, its card texts in D12 +1);
   - DQ11 no pressures lane on the swimlane: −1 h (D7a);
-  - DQ12 the handout's card questions: +8 h (D16).
+  - DQ12 the handout's card questions: +8 h (D16);
+  - R1 (seven PRs) and the D5 `/2` reading defined here: 0 h (the boundaries move; the `/2` reading uses the ≈ 1 h D5
+    always allowed for it).
 
   94 h is above the research's 60–80 h (`research/33:405–407`) because the rulings added the windows, the Briefing and
-  the handout questions; it does not count the `/2` card change D5 waits on, nor the owner's reading and reviews.
-
-| Piece | h | Depends on | Owner needed | CI runs |
-|---|---|---|---|---|
-| D0 baseline, fixtures | 2 | — | — | 1 |
-| D1 SBP/DBP/CVP, `keeps` | 5 | D0 | DQ1 ruled | 1 |
-| D2 alarm end and acknowledgement | 5 | D1 | DQ2 ruled | 1 |
-| D3 CPR stop, hands-off, 60/80 % lines | 5 | D2 | DQ3 ruled | 1 |
-| D4 who from `by` | 3 | D0 | — | 1 |
-| D5 recognition reading, `/1` press | 5 | D3, D4; `/2`: the judged-rows retirement | DQ4 ruled | 1 |
-| D6 key moments, export, minute table | 4 | D1, D2, D3, D5 | DQ11 ruled | 1 |
-| D7a swimlane builder + expected windows | 12 | D2, D4 | (E45 note, Decision 13) | 1 |
-| D7b swimlane heads page 2 | 3 | D6, D7a | DQ5 ruled | 1 |
-| D8 `debriefHints` schema | 3 | D0 | — | 1 |
-| D9 hints in the report | 4 | D6, D8, D7b | DQ6 ruled | 1 |
-| D10 drafted hints on the cards | 4 | D8 | his edit of every draft line | 1 |
-| D11 shared Persian matcher | 5 | D0 | — | 1 |
-| D12 Persian words (+ Briefing texts) | 5 | D6, D7b, D9, D11 | his reading of every line | 1 |
-| D13 Debrief and handout in Persian | 10 | D11, D9 | DQ9, DQ10 ruled | 1–2 |
-| D13b Briefing in Persian | 5 | D13, D12 | DQ9 ruled; his reading of each text | 1 |
-| D16 handout questions per card | 8 | D10, D12, D13 | DQ12 ruled; his review of every draft | 1 |
-| D15 docs, reader, gate | 6 | all | the Safari hand print | 1 |
-| **Total** | **94** | | | **≈ 18 PR + 18 main** |
+  the handout questions; it does not count PR #276 (merged), which D5's `/2` part needed, nor the owner's reading and reviews.
 
 ---
 
@@ -766,6 +869,13 @@ the executor would use; the owner may name another.
 | **DQ10** | Until you have read every Persian line, the Persian page prints "Persian draft: not yet read by the clinical owner". Keep that line on paper too? | **Ruled 5 November (option A):** a Persian string the owner has not yet read carries the visible line "Persian draft: not yet read by the clinical owner" on screen and on paper until he clears it (D12, D13) |
 | **DQ11** | The new pressures: in the key-moments table and the minute appendix, and also elsewhere? | **Ruled 5 November (option A):** the key-moments table and the appendix only; the course strip is unchanged (a pressure band on the strip is a later item, mock-up first); no pressures lane on the swimlane (D6, D7a) |
 | **DQ12** | The learner handout: as it is, or with time-anchored questions? | **Ruled 5 November (option B, with a twist):** the handout gains time-anchored questions per card, drafted by an executor from the card's objectives and key moments, marked drafts, and printed only once the owner has reviewed them (D16, Decision 14) |
+
+The owner's two rulings of the evening of 5 November (after the CI and process review, `research/42`):
+
+| ID | Ruling (5 November 2026, evening) | Where |
+|---|---|---|
+| **R1** | Debrief 2 is built **whole**, not staged: no "2a" first and "2b" later. It is built on the review's seven-PR cut (§2.2–2.3), PRs 2–7 in dependency order; PRs 3 and 5 may run in parallel with 4 where their files do not overlap. | sections 7 and 8 |
+| **R2** | The swimlane carries **no pressures lane** (DQ11 confirmed). The owner's reason as given: the course graph on the same page already draws the pressures. Checked on `origin/main` for this amendment: the course strip draws HR, MAP, SpO₂ and EtCO₂ (`TRENDS4`, `views/debrief.ts:233`; `views/debrief-course.ts:4`), and the six trend charts are HR, MAP, SpO₂, EtCO₂, RR and temperature (`TREND`, `record.ts:54`); none draws systolic, diastolic or CVP, and this plan does not change them (DQ11; D1 must not touch `TREND`). On the built page the three pressures are in the key-moments table and the minute appendix only (D6). The ruling does not depend on the reason; the orchestrator puts the discrepancy to the owner. | D7a, D6 |
 
 ---
 
