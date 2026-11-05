@@ -64,7 +64,15 @@ test('×8 and a 5-minute fast-forward from the instructor view: paced panel ever
   const p0 = await page.evaluate(() => performance.now());
   await bar.getByRole('group', { name: 'Fast-forward' }).getByRole('button', { name: 'Fast-forward 5 min' }).click();
   const veil = page.locator('.ff-veil.on');
-  await expect(veil).toBeVisible({ timeout: 5000 });
+  // What the host says about its fast-forward (the panel shows while one runs): a failure below names how it ended — a
+  // `stopped` reason (the monitor failed, a new timeline) — instead of only "not visible" or a 300 s hang
+  const ffState = () => page.evaluate(() => {
+    const l = (window as unknown as Win).__pmeApp.link as unknown as { ctl: { fastForward: unknown; lastFastForward: unknown }; log: Array<{ text: string }> };
+    return JSON.stringify({ running: l.ctl.fastForward, last: l.ctl.lastFastForward, log: l.log.map((e) => e.text).filter((t) => /fast-forward|monitor|stopped/i.test(t)).slice(-4) });
+  });
+  await expect(veil, "the panel shows").toBeVisible({ timeout: 5000 }).catch(async (e: Error) => {
+    throw new Error(`${e.message}\nhost: ${await ffState()}`);
+  });
   await expect(veil.locator('.ff-title')).toHaveText('FAST FORWARD · 5 MIN');
   await expect(veil.locator('.ff-mute svg')).toBeVisible(); // FX-23: the icon, no words on screen
   expect(await veil.innerText()).not.toMatch(/\d\d:\d\d/); // no clock, no start or end time
@@ -77,7 +85,11 @@ test('×8 and a 5-minute fast-forward from the instructor view: paced panel ever
   });
   expect(Math.abs(air.gap - air.line), JSON.stringify(air)).toBeLessThanOrEqual(1);
   // the bar fills visibly
-  const fillW = () => veil.locator('.ff-fill').evaluate((el) => (el as HTMLElement).style.width);
+  // bounded: a fast-forward that ended early leaves no panel to read (the wait hung to the 300 s test timeout in CI run
+  // 41987299802, hiding why); the failure carries the host's account of it
+  const fillW = () => veil.locator('.ff-fill').evaluate((el) => (el as HTMLElement).style.width, undefined, { timeout: 10_000 }).catch(async (e: Error) => {
+    throw new Error(`${e.message}\nthe panel went before the bar was read; host: ${await ffState()}`);
+  });
   const c0 = await fillW();
   await page.waitForTimeout(1500);
   expect(await fillW()).not.toBe(c0);
