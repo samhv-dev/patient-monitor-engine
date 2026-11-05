@@ -10,7 +10,15 @@ source is the owner's mock-up m5 "instrument cards" of 26 October (`research/00-
 "the DEVICE that scans the QR opens the instrument picker (mockup 5)"), copied into this branch so it survives the
 disposable folder it came from: `docs/plans/room-and-instruments/mockup/` (`m5-instruments-owner.html`, `.png`,
 `instruments.css`, `instruments.js`, and `base.css`, which the page links). R4 follows its layout and wording, with
-the exceptions listed in R4. Q3 to Q10 stay open.
+the exceptions listed in R4.
+
+**Amended again 2026-11-05:** Q3 and Q4 are **ruled 5 November** (§10). Q3 = A: the room code lives until "New room
+code" is pressed, across reloads, restarts and days, and the kit's busy-port fallback (a new origin) must not lose it:
+new piece R1b. Q4 = A: **build the ventilator in its own window**, on a second screen of the laptop or on a tablet,
+with a new wire for its frames, keeping E128: while it drives, every network follower holds for the whole case. The
+optional R8 becomes four pieces of the plan proper, R8a to R8d (§7), and the totals, the critical path and the merge
+order are updated (§9). The ventilator's wire is an owner-ruled exception to the "no new wire" anti-goal (§2). Q5 to
+Q10 stay open.
 
 **Base and preconditions.**
 - Base: `origin/main` **8d79f188** (Merge PR #197, `feat-peer-p4`), read in the worktree `scratch/wt-room-plan`
@@ -61,8 +69,9 @@ Goals
 - **Device table with pings.** Every device on the relay is listed, quiet ones included, with what it shows, its
   measured round-trip time and a status light; the status box gives the count and the worst ping (owner, 12:40).
 - **One instrument per screen**, for the instruments the engine computes today: the learner monitor (phone,
-  upright), the monitor (landscape), the defibrillator window (`#/defib`), the depth-index screen. The ventilator stays
-  on the instructor's computer (§3.4). The IABP is a dependency (§9).
+  upright), the monitor (landscape), the defibrillator window (`#/defib`), the depth-index screen, and the ventilator
+  in its own window (Q4 ruled 5 November): on a second screen of the laptop, or on a tablet over the relay (R8a–R8d).
+  The IABP is a dependency (§9).
 - **"Room setup"** is the Room page grown into the owner's sidebar window: Instructor v2's "Room setup" opens it, it
   holds the remembered layout and device names, the openers for this computer's windows (the ventilator among them),
   and the room code's controls.
@@ -83,7 +92,9 @@ Anti-goals (a piece that does one of these is rejected)
 - **A role is granted without the PIN.** The picker's "Instructor remote" leads to P7's PIN form; the room code alone
   admits followers only (`packages/controller/relay/server.ts:393`, the classroom rule).
 - **A new wire format where today's frames carry it.** The instrument rides the existing `hello` as an optional field
-  (§4 D1); the ping rides the existing host-only `peers` frame (§4 D2). No new `kind`, no new relay frame.
+  (§4 D1); the ping rides the existing host-only `peers` frame (§4 D2). No new `kind`, no new relay frame, with ONE
+  exception the owner ruled on 5 November (Q4): the ventilator's link frames get a wire of their own, `vent`, between
+  the host and one PIN-granted ventilator device only (§4 D9, R8a–R8d).
 - **A fitted number or an estimate shown as a measurement.** The ping is measured by the relay; every threshold is
   marked [ENG] with its reason.
 
@@ -110,7 +121,7 @@ Anti-goals (a piece that does one of these is rejected)
 | A tab opened without `?session=` asks this browser's other tabs which codes they host, and offers "Open that tab's session here" | `host-guard.ts:94–100` (`chooseHostSession`), `:103–120` (`askJoin`) | It is called with the stored code as `param`, so a second tab with the room's code is asked as a duplicated tab is today (`host-guard.ts:96`). "Start a new session" there gives a code that is NOT stored (§4 D3) |
 | The relay refuses a second host while the first answers | `relay/server.ts:360–382` (`join`, the holder's ping) | Unchanged: a persistent code makes this the normal path after a laptop restart |
 | Per-viewer storage, `pme.`-prefixed, try/catch | `apps/demo/src/app/store.ts:2–17` | Key `pme.roomCode` (R1); P7's `pme.instructorPin` beside it (`instructor-peer-role.md:62`) |
-| The kit opens `http://127.0.0.1:<port>/?relay#/` and tries ports 8650–8659 | `scripts/showcase/kit/start-classroom.command:19`, `:75–76`, `:91` | localStorage is per origin: if 8650 is busy, the next port is a new origin and a new stored code. R1's Room says so; R9's launcher text says so |
+| The kit opens `http://127.0.0.1:<port>/?relay#/` and tries ports 8650–8659 | `scripts/showcase/kit/start-classroom.command:19`, `:75–76`, `:91` | localStorage is per origin: if 8650 is busy, the next port is a new origin and an empty store. Q3 (ruled 5 November) asks that the code survive this: R1b has the kit's relay keep the last room code in the computer's own application-data folder and hand it to the app |
 
 ### 3.3 The device table vs the relay's room state and heartbeats
 
@@ -130,7 +141,7 @@ Anti-goals (a piece that does one of these is rejected)
 | Monitor (landscape) | as above | the same follower, not portrait (`?follow=` on this computer: `views/follower.ts:77–79`) | Over the relay it is new only in layout: `#/monitor/wide` (R4) |
 | Defibrillator window `#/defib` | the device layer's defibrillator and pacer; their spec comes from the engine's ONE device profile, chosen by the skin (`packages/engine-core/src/l3/device-layer.ts:91–100`, `:175–181`); a skin without a defibrillator falls back to Zoll-like values (`packages/engine-core/src/l3/defib-pacer/defib.ts:11`, equal to `packages/skins/src/data/skins/zoll-like.json:27`; `saadat-like.json:241` is `defib: null`) | the defibrillator skins `zoll-like` and `lifepak-like` (`apps/demo/src/app/site.ts:38–39`); the readout `deviceText` (`packages/renderer/src/device-ui.ts:348–356`) | New route on the follower, wearing a defibrillator skin. **Hazard:** `setSkin` sends `device monitor skin` to that window's own engine (`packages/renderer/src/mount.ts:522`), so the window's device profile becomes its skin's. LIFEPAK-like starts at 200 J (`lifepak-like.json:27`), Zoll-like and the fallback at 120 J: a LIFEPAK window beside a Saadat host would show and deliver a default the host never had. R0 measures it; R5 offers only a style whose profile equals the host's (§4 D5, Q6) |
 | Depth index screen `#/depth` | `di` and `sr`, a BIS-LIKE index, "NOT a BIS algorithm" (`packages/engine-core/src/l2/neuro/depth.ts:1–7`; ids at `types-neuro.ts:47`), published at 1 Hz while the depth device is on (`{device:'depth', action:'on'|'off'}`, `types-neuro.ts:45`) | the BFA tile, a module tile drawn only while the device publishes (`packages/renderer/src/numerics-neuro.ts:1–4`, `:16–20`); on `philips-like` only (`packages/skins/src/data/skins/philips-like.json:19`) | New route showing `di`, `sr` and the window's own trend of `di`. **Gap:** no app control turns the depth device on; only the developer page does (`apps/demo/src/dev/depth-neuromuscular.ts:83`, `:86`). R6 adds the control. No EEG trace: the engine computes none |
-| Ventilator | the cockpit computes its own mechanics and sends 50 frames a second into the engine (`docs/plans/stage-v-ventilator-link.md`, decision 3) | `views/vent.ts`, an iframe linked by a direct frame port (`views/vent.ts:156–159`); the cockpit can also link over BroadcastChannel `pme-vent/<session>` in the same browser (`apps/demo/src/vent/hamilton-page.ts:1–3`, `:12`) | **On this computer only.** Its frames are samples: the relay drops them (`views/follower.ts:18–21`) and an instructor may not send `externalDrive` (`instructor-peer-role.md:132`). While it drives, every network follower HOLDS (`views/follower.ts:32–35`). The Room's opener opens the Ventilator view (R7); a ventilator in its own window is R8, after Q4 |
+| Ventilator | the cockpit computes its own mechanics and sends 50 frames a second into the engine (`docs/plans/stage-v-ventilator-link.md`, decision 3) | `views/vent.ts`, an iframe linked by a direct frame port (`views/vent.ts:156–159`); the cockpit can also link over BroadcastChannel `pme-vent/<session>` in the same browser (`apps/demo/src/vent/hamilton-page.ts:1–3`, `:12`) **Built (Q4 ruled 5 November), R8a–R8d.** Today its link messages go over a frame port or BroadcastChannel only (`packages/ventilator/src/link/port.ts:1–14`, `:22–27`), "deliberately not" through the controller (`port.ts:3–4`); the host mirrors its commands to same-browser viewers (`packages/controller/src/session/host-session.ts:195–209`) and the relay drops those mirrors (`relay/server.ts:251–253`); an instructor may not send `externalDrive` (`instructor-peer-role.md:132`); while it drives, every network follower HOLDS (`views/follower.ts:32–35`; the host's `cockpit` notice, `host-session.ts:87`, `:124`). R8a–R8d carry the link messages over the relay as their own `vent` kind; the holds stay |
 | IABP | the balloon exists in the circulation (`packages/engine-core/src/l2/circ/devices.ts:1–32`; command `device iabp start/stop/set`, `types-circ.ts:18`; output ratio and augmentation, `types-circ.ts:32`, `l2/hemo/pipeline.ts:547`) | none; no app control sends `device iabp` (`grep -rn iabp apps/demo/src/app` finds only glossary rows, `glossary-data.ts:111`, `:303`) | **Out** (owner: "IABP later"). A console needs a balloon-pressure wave and trigger marks the engine does not compute: a new model, §9 |
 | Instructor remote | P2/P5 on main; P3 draft | `views/remote.ts` (today's panel) | The picker's entry opens P7's form (§8) |
 
@@ -186,6 +197,19 @@ Anti-goals (a piece that does one of these is rejected)
   needed; 64 covers a full room plus spares]. A device with a remembered key gets its name; a remembered device that
   is absent is a grey row "expected, not connected". Phones without a key (older builds) are "Phone n" as today.
 
+- **D9. The ventilator's wire (Q4 ruled 5 November).** The link messages the cockpit and the monitor already exchange
+  (`port.ts:22–27`: `cmds`, `lungState`, `clock`, `run`, `time`, `control`) travel over the relay inside one new
+  envelope kind, `{kind:'vent', to?, body: LinkMsg}`, plus one new link message, `settings` (the cockpit's settings,
+  for the hand-over, which today reads them through the iframe, `views/vent.ts:60–66`). Nothing else changes kind:
+  the cockpit's commands are still built by the link core (`packages/ventilator/src/link/core.ts:50–62`:
+  `setTarget` stand-ins once, `applyEvent airway` on a change, `externalDrive` every tick) and applied on the host by
+  the same `attachMonitorToLink` the view uses (`views/vent.ts:76`). The ventilator device is a ROLE of its own,
+  `ventilator`, granted with the instructor's PIN by the same host check as P3's, because a device that drives the
+  patient is a commanding device (anti-goal: no role without the PIN), and because P3's option B (one instructor
+  phone, the newest takes over) must not let a ventilator tablet unseat the instructor's phone. A second screen of the
+  laptop (same browser) links over the existing BroadcastChannel port (`apps/demo/src/vent/hamilton-page.ts:12`), with
+  no PIN, as today's same-browser windows are trusted.
+
 ## 5. Global constraints (every piece)
 
 - `00-common-rules.md` applies: own worktree under `scratch/` on a branch from `origin/main`; never merge, tag,
@@ -195,7 +219,9 @@ Anti-goals (a piece that does one of these is rejected)
 - **Tests first** in every piece: the failing test is committed before the code, and the PR body pastes both runs.
 - **Must not touch (every piece):** `packages/engine-core`, `packages/skins`, the scenario format, the showcase
   cards (`apps/demo/src/app/showcase`), `packages/controller/src/session/viewer-sync.ts`, `host-session.ts` (P3's
-  file), and what any Instructor press sends, except R6's one new control, named there.
+  file; R8c alone extends it, after P3 merges, and its gate drops that path from the diff check below), and what any
+  Instructor press sends, except R6's one new control, named there. `packages/ventilator` is touched by R8a (one
+  additive `LinkMsg` kind) and R8c (a new `relay-port.ts`) only, never its mechanics.
   `packages/renderer` is untouched unless R0 shows that a look-only skin is needed (then R5 stops and reports; §4 D5).
 - **Common gate (before every push):**
 
@@ -265,10 +291,40 @@ store key), `room-code.test.ts`; `main.ts` (`:95`, `:100–108`); `host-guard.do
   left open on the old page reconnects and follows the new host (the relay's holder ping, `server.ts:360–382`);
 - `store` failing (private window): a new code each time, as today, and no error.
 **Change:** `room-code.ts`; `main.ts` passes the start code to `chooseHostSession` and stores the code the first tab
-starts. No Room UI here (R7 adds "New room code").
+starts. No Room UI here (R7 adds "New room code"). Q3 ruled 5 November: the code lives until "New room code" is
+pressed (reloads, restarts and the next day keep it); R1b covers the kit's port change.
 **Acceptance:** the tests pass; `reload-keeps-case.e2e.ts`, `room-qr-tab-guard.e2e.ts`, `host-guard.dom.test.ts`
 pass unchanged. **Must not touch:** `host-guard.ts` logic, `session.ts`. **Gate:** common, with `@pme/demo`, plus the
 three e2e files above on both projects. **CI load:** 1 run.
+
+### R1b: The room code survives the kit's port change (4 h)
+
+**Depends on:** R1. **Why:** the kit opens `http://127.0.0.1:<port>` and moves to the next port when 8650 is busy
+(`start-classroom.command:19`, `:75–76`, `:91`); a new port is a new origin, whose store is empty, so R1 alone would
+draw a new code (Q3 ruled 5 November says the code must live until "New room code"). **Files:**
+`packages/controller/relay/bin.ts` (a `--state-dir DIR` option), `relay/http.ts` (`/pme-relay.json` gains
+`lastRoom`), `relay/server.ts` (the code of the last room a host opened, written to `DIR/room.json` when a host says
+hello); `apps/demo/src/app/classroom.ts` (`RelayInfo` gains `lastRoom?`, `:16–22`), `room-code.ts` (the start order
+becomes `?session=` → stored → the relay's `lastRoom` → new); `scripts/showcase/kit/start-classroom.command` and
+`.cmd` (pass `--state-dir` to the computer's own application-data folder: `$HOME/Library/Application Support/PME
+Classroom` on macOS, `%LOCALAPPDATA%\PME Classroom` on Windows; the launcher still writes nothing into the kit's own
+folder, `start-classroom.command:8`); tests in `test/relay/relay-state.test.ts`, `room-code.test.ts`,
+`kit-windows.test.ts`; one step in `check-relay.mjs`.
+**Tests first:**
+- a relay started with `--state-dir` answers `lastRoom` after a host's hello, and a NEW relay process on another port
+  with the same directory answers the same `lastRoom`;
+- without `--state-dir` (`pnpm relay`, the developer's use) nothing is written and `lastRoom` is absent;
+- `room.json` holds the room code only: never a PIN, a peer id, an address or a name;
+- the app on an empty store takes `lastRoom` and stores it; a `?session=` or a stored code still wins; "New room code"
+  (R7) also replaces `lastRoom` at the next host hello;
+- e2e (`room-code.e2e.ts`): two relays in turn on two ports with one state directory; the page on the second origin
+  starts under the first's code, and a phone that stayed on the first address's page is told by its failing socket,
+  as today, to scan again (a phone page's relay is its page's own host, `classroom.ts:34–40`: it cannot follow a port
+  change by itself, which the Room states).
+**Acceptance:** the tests pass; every relay test and the kit's `check-relay.mjs` pass. P7's PIN is NOT carried (a
+secret is not written to disk): on a new origin the PIN is drawn again and the Room says so (§8). **Must not touch:**
+`host-session.ts`. **Gate:** common, with `@pme/controller` and `@pme/demo`, plus `check-relay.mjs` on a kit built
+from the branch. **CI load:** 1 run.
 
 ### R2: The relay measures each device's ping and tells the host (5 h)
 
@@ -429,34 +485,114 @@ in the PR rather than built by default.
 `@pme/demo`, plus `room-qr-tab-guard.e2e.ts`, `mobile-learner.e2e.ts`, `app-accessibility.e2e.ts` on both projects.
 **CI load:** 1 run.
 
-### R8: The ventilator in its own window on this computer (6 h; only after Q4 is answered yes)
+### R8a: The `ventilator` role and the `vent` message (3 h)
 
-**Depends on:** R7, Q4. **Files:** `views/vent.ts` (the link and the hand-over, shared by the view and the window),
-`views/room.ts` (the opener), a new dom test beside `vent-handover.dom.test.ts`; a new e2e beside
-`vent-handover-phones.e2e.ts`.
+**Depends on:** R3; P3 merged (its grant, which R8c extends). **Files:** `packages/controller/src/protocol.ts` (`Role`
+gains `'ventilator'`, `:27`; the hello's `pin` legal with `instructor` or `ventilator`, `:251`; `WireMessage` gains
+`{kind:'vent'; to?: string; body: VentLinkBody}`), `src/guard.ts` (`KINDS`, `:99`; the hello rule, `:122–125`; the
+`vent` body), `src/transport/relay-frames.ts` (`RELAY_CLOSE` unchanged; error codes unchanged);
+`packages/ventilator/src/link/port.ts` (`LinkMsg` gains `{kind:'settings'; cfg: VentConfig}`, additive, `:22–27`);
+tests in `test/guard.test.ts`, `test/types.test-d.ts`, `packages/ventilator/test/port.test.ts`.
+**What the guard must check (the frames it drops today):** a `vent` body is one of the link kinds; a `cmds` body has
+an integer `tick` and at most 4 commands [ENG: the link core emits at most 3 per tick, `core.ts:50–62`, plus one
+spare], each of type `externalDrive` with `source: 'ventilator'`, `applyEvent` of kind `airway`, or `setTarget`; no
+other command type rides `vent`; a `vent` body is at most 4 KB [ENG: one `cmds` with a VentFrame is ≈ 0.6 KB; a batch
+of 5 ticks fits]; the sample rule (`FORBIDDEN_KEYS`, `guard.ts:24`) applies unchanged (a VentFrame carries one value
+per signal per tick, not a sample array; the test proves it on a real frame).
+**Tests first:** the guard accepts a real cockpit's `cmds`, `settings`, `lungState`, `clock`, `run` and `time` bodies
+captured from `vent-hamilton.html`; refuses a `vent` with any other command type, an oversized body, a `pin` on a
+viewer, a `ventilator` hello without a PIN. **Acceptance:** typecheck green; no behaviour change (nobody sends `vent`).
+**Must not touch:** relay, sessions, the app. **Gate:** common, with `@pme/controller` and `@pme/ventilator`.
+**CI load:** 1 run.
+
+### R8b: The relay carries `vent` between the host and one granted ventilator (5 h)
+
+**Depends on:** R8a. **Files:** `packages/controller/relay/server.ts`, `relay/README.md`; new
+`test/relay/relay-vent.test.ts`; additions to `relay-hostile.test.ts`; one step in `check-relay.mjs`.
+**What the relay must do (today it routes only the host's frames out and controllers' commands in,
+`server.ts:5–8`, `:202–231`, and drops mirrored samples, `:251–253`):**
+- admit a `ventilator` hello from another device in classroom mode (`server.ts:393`), PENDING as an instructor is,
+  with its own single place beside `INSTRUCTOR_PLACES` (`server.ts:112`), under the same per-address PIN limits;
+- the host's `grant` for it applies as for an instructor (`server.ts:232–246`);
+- `vent` from a GRANTED ventilator goes to the host only; `vent` from the host goes to the socket named in `to` only;
+  never to a viewer or an instructor, never cached, never in a lean copy; a pending or denied socket's `vent` is
+  dropped with `forbidden`;
+- at most 120 `vent` messages a second per socket each way [ENG: the cockpit sends one `cmds` per engine tick, 50 a
+  second at ×1 and 400 at ×8 (`host-session.ts:195`); R8c batches to one message per 20 ms of wall time, so 50 a
+  second at any speed, and 120 leaves room for `clock` and `settings`]; over that, the socket is closed with
+  `too-many-tries`;
+- the ventilator appears in R2's `devices` with `role: 'ventilator'`;
+- the learners' traffic is unchanged byte for byte.
+**Tests first:** the cases above on a fake clock; a learner's socket receives none of 1 000 `vent` frames; an
+ungranted ventilator's `cmds` never reach the host. **Acceptance:** every relay test and `mobile-learner.e2e.ts` pass
+unchanged; `check-relay.mjs` passes on a kit built from the branch with the new step (grant, `cmds` to the host,
+`clock` back). **Must not touch:** `host-session.ts`, the app. **Gate:** common, with `@pme/controller`, plus
+`check-relay.mjs`. **CI load:** 1 run.
+
+### R8c: The host drives from a remote cockpit, and hands over on its loss (8 h)
+
+**Depends on:** R8a, P3 merged; beside R8b. **Files:** `packages/controller/src/session/host-session.ts` (P3's grant
+extended to `ventilator`, its own single place, option B within its own role only; `onVent(from, body)` for a
+granted ventilator; the PIN change revokes it too); new `packages/ventilator/src/link/relay-port.ts` (a `LinkPort`
+over a `ManagedTransport`, batching `cmds` per 20 ms wall); `apps/demo/src/app/views/vent.ts` (one cockpit at a
+time — view, laptop window or device — sharing `link`, `unlink` and `handOver`, `:69–131`); `session.ts` (wire
+`onVent`, `instructorPin` already from P6/P7's wiring); tests in `test/session/host-ventilator.test.ts`,
+`packages/ventilator/test/relay-port.test.ts`, `views/vent-handover.dom.test.ts`.
+**The mechanism:** the host attaches `attachMonitorToLink(session.linked(m), relayPort)` exactly as the view does, so
+the engine stays the master clock (`clock` limits, the 75-tick lead, `stage-v-ventilator-link.md` decision 3) and the
+frames are stamped `atTick` on the host; the host's mirror and `cockpit` notices run as for the view
+(`host-session.ts:87`, `:195–209`), so every network follower holds while it drives (E128, Q4 ruled 5 November).
+**E128 on a device:** the cockpit drives only while its page is visible; it sends `settings` on every change and
+once a second; the host hands over to the engine's own ventilator with the last `settings` (the same `engineVentilation`
+as `views/vent.ts:25–34`) when the page is hidden, closed, revoked, or silent for 1 s [ENG: 50 link messages a
+second, so 1 s is 50 missed; the relay's heartbeat would take up to 20 s, too long for an unventilated patient].
 **Tests first:**
-- one cockpit drives at a time: opening the window while the view is open hands the view's cockpit over first; the
-  view then says "The ventilator is in its own window";
-- the window drives only while it is visible, as the view does on screen (E128, `views/vent.ts:4–9`); hidden or
-  closed, the engine's own ventilator takes over with the cockpit's settings, read through the window handle
-  (`window.open` without `noopener`, same origin, as `views/vent.ts:60–66` reads the iframe);
-- network followers hold while it drives and follow at once when it stops (`views/follower.ts:32–35`);
-- the host's frame budget with the window open: the validation performance gate (`validation-perf.html`) holds.
-**Acceptance:** the tests pass; `vent-handover-phones.e2e.ts` unchanged. If the frame budget fails without
-`noopener`, the executor stops and reports (the learner monitor window uses `noopener` for this reason,
-`views/room.ts:146–147`). **Must not touch:** `packages/ventilator`. **Gate:** common, with `@pme/demo`, plus the
-vent e2e files on both projects. **CI load:** 1 run, plus the validation workflow.
+- an ungranted ventilator's `vent` never reaches `attachMonitorToLink`; a granted one drives;
+- the second granted ventilator takes over (the first is told), and an instructor phone's grant is untouched;
+- silence of 1 s → hand-over with the last `settings`, exactly once, the patient ventilated throughout (the FU-11 H6
+  rule, `views/vent.ts:124`, `:132`);
+- the view and a remote cockpit never drive together: opening one hands the other over first;
+- the same-browser viewer stays sample-identical while a remote cockpit drives (the mirror path);
+- network followers hold while it drives and follow at once after the hand-over (`views/follower.ts:32–35`).
+**Acceptance:** the tests pass; `vent-handover.dom.test.ts` and `vent-handover-phones.e2e.ts` pass unchanged; P3's
+tests pass unchanged. **Must not touch:** the cockpit's mechanics (`packages/ventilator/src/mechanics.ts`,
+`vent.ts`), what any Instructor press sends. **Gate:** common, with `@pme/controller`, `@pme/ventilator`,
+`@pme/demo`. **CI load:** 1 run.
+
+### R8d: The ventilator on its own screen: the device page, the laptop window, the picker card (6 h)
+
+**Depends on:** R8b, R8c, R4, P7 (its PIN form, reused, not rebuilt). **Files:** `apps/demo/src/vent/hamilton-page.ts`
+(a third link: `?join=CODE#/vent` over the relay after the PIN, beside `?link=` and `&via=parent`, `:10–12`);
+`views/join.ts` (m5's Ventilator card gets "Show here", opening P7's PIN form, then the cockpit full screen);
+`views/room.ts` (the opener "Ventilator in a new window", `vent-hamilton.html?link=<code>` over BroadcastChannel,
+and the device row "Ventilator · driving / handed over"); `classroom.ts` (the address); a new
+`apps/demo/e2e/vent-window.e2e.ts`.
+**Tests first:**
+- e2e, laptop window: the Room's opener opens the cockpit in its own window; while it is visible it drives; closing it
+  hands over; the phones hold, then follow;
+- e2e, a tablet over the in-process relay (phone viewport, `?e2e-remote` as `mobile-learner.e2e.ts` marks another
+  device): picker → Ventilator → PIN → cockpit; a wrong PIN is refused; `context.setOffline(true)` for 5 s → the host
+  hands over within 1 s of the silence and the patient stays ventilated; back online, the cockpit signs in again and
+  takes over from the engine's settings;
+- the PIN never appears in an address, the QR, `room.json` or a learner's frames.
+**Measure (in the PR):** the frames' lateness on the host (frames stamped late by the offset rule) over the kit relay
+on Wi-Fi with a real tablet, median and p95, at ×1 and ×4, on the owner's smoke; in CI only loopback.
+**Acceptance:** the e2e passes 3 of 3 on both engines; the validation performance gate (`validation-perf.html`) holds
+with the laptop window open. **Must not touch:** the cockpit's mechanics and UI beyond the link choice. **Gate:** common,
+plus the vent e2e files and `mobile-learner.e2e.ts` on both projects. **CI load:** 1 run, plus the validation
+workflow.
 
 ### R9: The kit's launchers, CLASSROOM.md, CHANGELOG, roadmap (3 h)
 
-**Depends on:** R1, R4, R5, R6, R7 (R8 if built). **Files:** `scripts/showcase/kit/start-classroom.command`
+**Depends on:** R1, R1b, R4, R5, R6, R7, R8d. **Files:** `scripts/showcase/kit/start-classroom.command`
 (`:6` "Phones may only FOLLOW" → "Phones follow; the instructor's phone commands only with the PIN" once P7 has
 merged, else unchanged; `:100` "Monitor view, \"Phones\" (or the \"Phones\" button at the top right)" → "the Room
 (Home → Start here)"; a line that the room code is kept on this computer for this address), the same in
 `start-classroom.cmd` (printable ASCII only, `scripts/showcase/kit-launchers.mjs:15–17`), `kit/read-me-first.txt`
 (`:18`); `docs/showcase/CLASSROOM.md` (new sections "Room setup", "What each screen can show", "The room code";
 `:108–116` the QR moment gains the picker); `CHANGELOG.md` (Unreleased); `docs/roadmap/v1.0-remaining.md:43` (the row
-states what shipped and what waits: IABP, a networked ventilator, the defibrillator choice).
+states what shipped and what waits: IABP, the defibrillator choice); CLASSROOM.md also gains "The ventilator on its
+own screen" (the PIN, and that every phone holds while it drives).
 **Tests first:** `kit-windows.test.ts` still passes (ASCII, CRLF); the docs-honesty tests (`@pme/validation`) pass;
 every sentence added names a control that exists on main. **Acceptance:** a kit built from the branch shows the new
 launcher lines. **Must not touch:** product code. **Gate:** `@pme/validation` docs tests, `check-relay.mjs` on the
@@ -464,7 +600,7 @@ built kit. **CI load:** 1 run.
 
 ### R10: End to end, measurements (5 h, last)
 
-**Depends on:** R1–R7 (R8 if built). **Files:** new `apps/demo/e2e/room-and-instruments.e2e.ts`; a "Results" section
+**Depends on:** R1–R7, R1b, R8a–R8d. **Files:** new `apps/demo/e2e/room-and-instruments.e2e.ts`; a "Results" section
 appended to this plan.
 **Tests first (red against R3's head, green at the end):**
 1. a phone scans the QR, the picker opens, one tap: the learner monitor follows; the Room lists it with a ping;
@@ -475,8 +611,10 @@ appended to this plan.
    names;
 5. a device's Wi-Fi drops (`context.setOffline(true)` for 15 s): its row goes Weak then disappears, the status box
    says so, and it comes back;
-6. a learner phone's captured frames (`page.on('websocket')`) never contain `devices`, another device's `show`, or a
-   PIN.
+6. a learner phone's captured frames (`page.on('websocket')`) never contain `devices`, another device's `show`, a
+   `vent` message, or a PIN;
+7. a fourth device signs in as the Ventilator: the three followers hold, the Room says "Ventilator · driving"; the
+   ventilator device closes: the hand-over lands and the three follow again.
 **Measure:** a learner phone's bytes per minute at ×8 with and without R2's `devices` frame (learners' copy: equal);
 the host's `peers` frame size with 30 devices; the ping on the kit relay over real Wi-Fi (median, p95) on the owner's
 smoke, not in CI.
@@ -489,9 +627,10 @@ on both projects. **CI load:** 1 run.
 | Peer piece | State at 8d79f188 | This stage |
 |---|---|---|
 | P0–P2, P4, P5 | on main | Builds on them: the `instructor` role and its relay routing exist; R2 reports `granted` per device from the relay's flag (`server.ts:58`) |
-| P3 (host verifies the PIN) | draft, `feat-peer-p3` 1b191180 | Leaves it: no piece here touches `host-session.ts`. R7's instructor row reads only what the relay knows; the denial count and "taken over" are P3's `onInstructors` / denials, shown by P7 |
+| P3 (host verifies the PIN) | draft, `feat-peer-p3` 1b191180 | Builds on it, and only after it merges: R8c extends P3's grant to the `ventilator` role (its own place, option B within that role only) in `host-session.ts`, the one piece here that touches that file. R7's instructor row reads only what the relay knows; the denial count and "taken over" are P3's, shown by P7 |
 | P6 (view feed, note command) | unbuilt | Leaves it entirely. No instrument needs the feed |
 | P7 (the phone's way in, the Room page) | unbuilt | **Split.** P7 keeps: the PIN form and its states in `views/remote.ts`; the PIN behind press-and-hold, "change PIN", in the Room's `#room-instructor` slot (R7 leaves it empty); the instructor's address builder in `classroom.ts`; its CLASSROOM.md section. This stage absorbs: the instructor phone's ROW in the device table (R7, from R2's `devices`), and the way in (R4's picker entry, which opens P7's address). P7's second QR (`instructor-peer-role.md:478–479`) is dropped (§4 D4). Whichever of R7 and P7 merges second rebases on the other; recommended order R7 then P7 |
+| P7's PIN form | unbuilt | R8d reuses it for the ventilator device; it is not rebuilt. On a new origin (R1b) the PIN is drawn again: a secret is never written to `room.json` |
 | P8 (instructor e2e, kit check) | unbuilt | Leaves it. Its cases enter by P7's address directly; after R4 the picker is one more way in, covered by one case in R4's dom test, not by P8 |
 | R24 (the phone remote's layout) | unbuilt, owner points open (`research/00-orchestrator-rulings.md:2694`) | Leaves it |
 
@@ -501,22 +640,29 @@ No duplicate work: the peer plan's P7 file list (`instructor-peer-role.md:473–
 ## 9. Partition, critical path, merge order, CI load, dependencies out of scope
 
 ```
-R0 ───────────────────────────────► R5 ─┐
-R3 ─┬─► R2 ─────────► R7 ─┬─► (R8)      ├─► R9 ─► R10
-    └─► R4 ─┬─► R5        │             │
-            └─► R6 ───────┴─────────────┘
-R1 ─────────────────► R7
+R0 ──────────────────────────────────────► R5 ─┐
+R3 ─┬─► R2 ─────────────────► R7 ──────────────┤
+    ├─► R4 ─┬─► R5                             │
+    │       └─► R6 ────────────────────────────┤
+    └─► R8a ─┬─► R8b ──────┐                   ├─► R9 ─► R10
+   [P3 merged]─┴─► R8c ────┴─► R8d ────────────┤
+   [P7 merged] ──────────────► R8d             │
+R1 ─► R1b ─────────────────► R7 ───────────────┘
 ```
 
-- **Critical path:** R3 (2) → R2 (5) → R7 (7) → R9 (3) → R10 (5) = **22 h**. R4 → R5/R6 (7 + 6) runs beside R2 → R7.
-- **Parallelism:** at most three executors: {R0, R1, R3} first; then {R2, R4} and R5 when R0 and R4 are in; then
-  {R6, R7}. R8 waits for Q4.
-- **Merge order:** R0, R3, R1, R2, R4, R5, R6, R7, (R8), R9, R10. R5, R6 and R7 all touch `views/room.ts` (the
-  openers) and R4, R5, R6 touch `views/follower.ts` and `join.ts`: each rebases on the one before.
-- **CI load:** 10 PRs (11 with R8), one full CI run each (build with the kit relay smoke test, renderer, e2e on
+- **Critical path:** R3 (2) → R8a (3) → R8c (8) → R8d (6) → R9 (3) → R10 (5) = **27 h**, and it waits on two peer
+  pieces outside this plan: P3's merge (a ready draft) before R8c, and P7 (5 h, unbuilt, after P3) before R8d. P7
+  can run beside R8c, so it adds nothing to the path if it starts the day P3 merges. The old path, R3 → R2 → R7 → R9
+  → R10 (22 h), now runs beside it.
+- **Parallelism:** at most three executors: {R0, R1, R3} first; then {R2, R4, R8a}; then {R5, R1b, R8b} and R8c once
+  P3 is in; then {R6, R7, R8d}.
+- **Merge order:** R0, R3, R1, R1b, R2, R4, R8a, R8b, (P3), R8c, R5, R6, R7, (P7), R8d, R9, R10. R5, R6, R7 and R8d
+  all touch `views/room.ts` (the openers) and R4, R5, R6 and R8d touch `join.ts`; R1b and R2 touch `relay/server.ts`;
+  R8b too: each rebases on the one before.
+- **CI load:** 15 PRs, one full CI run each (build with the kit relay smoke test, renderer, e2e on
   chromium and webkit, the slow-test matrix: `.github/workflows/ci.yml:9`, `:48`, `:105`, `:195`), plus reruns of a
-  rebased head. Two new e2e files (`room-code.e2e.ts`, `room-and-instruments.e2e.ts`) and new cases in three
-  existing ones; no new CI job.
+  rebased head; R8c and R8d also run the validation workflow. Three new e2e files (`room-code.e2e.ts`,
+  `vent-window.e2e.ts`, `room-and-instruments.e2e.ts`) and new cases in three existing ones; no new CI job.
 
 **Effort**
 
@@ -524,23 +670,28 @@ R1 ─────────────────► R7
 |---|---|
 | R0 baseline, defibrillator-profile measurement | 2 |
 | R1 persistent room code | 4 |
+| R1b the code survives the kit's port change | 4 |
 | R2 relay ping and `devices` | 5 |
 | R3 `show` and `device` on the hello | 2 |
 | R4 picker (mock-up m5), instrument hashes | 7 |
 | R5 defibrillator window | 5 |
 | R6 depth-index screen and switch | 6 |
 | R7 Room setup | 7 |
-| R8 ventilator window (only if Q4 yes) | 6 |
+| R8a `ventilator` role, `vent` message, guard | 3 |
+| R8b relay carries `vent` | 5 |
+| R8c host drives from a remote cockpit; hand-over | 8 |
+| R8d ventilator device page, laptop window, picker card | 6 |
 | R9 kit and docs | 3 |
 | R10 end to end, measurements | 5 |
-| **Total** | **46 h without R8, 52 h with it**, plus ≈ 5 h of review |
+| **Total** | **72 h**, plus ≈ 8 h of review (before Q3/Q4: 46 h without the ventilator window) |
 
 **Dependencies out of this plan (new models or new wire)**
 - **IABP console:** a balloon-pressure waveform and trigger/timing marks are not computed
   (`l2/circ/devices.ts` models the balloon's flow into the aorta, not its own pressure); an app control for
   `device iabp`; a renderer. A physiology piece first, then a renderer, then an instrument entry here.
-- **A ventilator on another device:** its 50 frames a second are samples the relay drops; carrying them is a new wire
-  and a new role (`instructor-peer-role.md:132`). Not in this stage.
+- **Learners' phones that follow the ventilator's patient instead of holding:** the relay still drops the mirrored
+  frames (`server.ts:251–253`), so a network follower holds while the cockpit drives (E128, kept by Q4's ruling).
+  Sending the frames to every phone is another change, not ruled.
 - **A room defibrillator chosen apart from the monitor skin:** if Q6 asks for LIFEPAK-style beside a Saadat monitor,
   the engine needs a device-profile option separate from the skin (`device-layer.ts:175–181`): an engine piece.
 - **EEG trace, SQI, EMG on the depth screen:** not computed (`depth.ts` gives an index and SR only).
@@ -554,13 +705,14 @@ R1 ─────────────────► R7
    code, remembered layout), and Instructor v2's "Room setup" opens it. (Option B, a page of its own beside the Room,
    was not chosen.) Still the plan's default, not ruled: the monitor style stays in Settings with a link, the probes
    are shown read-only, and "reset the room" forgets the layout and names only.
-3. **The room code's lifetime.** Kept on this computer until "New room code" is pressed, or a new code each day.
-   **Default: kept until pressed.** A learner from an earlier class who kept the address can follow again, never
-   command.
-4. **The ventilator in its own window.** While a cockpit drives the patient, every phone holds ("The ventilator is on
-   the main screen", your E128 rule); a ventilator window on a second screen would drive for the whole case, so the
-   phones would hold for the whole case. **Default: not built (R8 waits); the Room's "Ventilator" opens the
-   Ventilator view in this window.**
+3. **The room code's lifetime. RULED 5 November: A.** Kept until "New room code" is pressed; reloads, restarts and
+   the next day keep it (R1), and so does the kit's move to another port when 8650 is busy (R1b). A learner from an
+   earlier class who kept the address can follow again, never command.
+4. **The ventilator in its own window. RULED 5 November: A, build it.** On a second screen of the laptop or on a
+   tablet, with a new wire for its frames (R8a–R8d), signed in with the instructor's PIN. Your E128 rule stays: while
+   it drives, every phone holds ("The ventilator is on the main screen") for the whole case. This includes any
+   defibrillator or depth screen on another device, since they follow the same way; screens of the laptop itself keep
+   following. (Not built by default before: the Ventilator view only.)
 5. **The defibrillator window: display only, or learners press Charge and Shock on it?** Pressing would make a
    learner's device a commanding role. **Default: display only; the instructor charges and shocks from the laptop.**
 6. **Which defibrillator does the room have?** The engine's defibrillator follows the monitor skin; a Saadat room
@@ -659,3 +811,6 @@ Disagreements found while reading:
    a device-side choice (§4 D4).
 5. A defibrillator style on a follower changes that follower's device profile (`mount.ts:522`): the "defib window"
    of the brief is not just a skin, and R0 measures it first.
+6. The ventilator link's own header says it "deliberately does NOT go through the controller's HostSession (roles,
+   auth, samples guard)" (`packages/ventilator/src/link/port.ts:3–4`). Q4's ruling reverses that for a device off the
+   laptop: R8a–R8c put it through the guard, the relay's grant and the host's PIN check.
