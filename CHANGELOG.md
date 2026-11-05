@@ -9,7 +9,7 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Added
 
-- **The card author's hints on the Debrief (Debrief 2 D8, D9)**: both scenario formats take an optional
+- **The card author's hints for the Debrief (Debrief 2 D8)**: both scenario formats take an optional
   `debriefHints` block: up to four `show` lines ("What this case is built to show") and up to four `openers`, each a
   sentence anchored on an event (`at`: on `pme-scenario/1` a run event, a `state:` one naming a state of the card; on
   `pme-scenario/2` the anchors the report reads: `start`, `pulseLoss`, `rosc`, `phase:<id>`, `action:<id>` of the card).
