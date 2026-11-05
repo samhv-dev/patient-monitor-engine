@@ -4,7 +4,7 @@ import type { ScenarioDoc } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
 import a31 from '../../../../docs/showcase/kit-round-a/fa/debrief-a3-tamponade-cue-card-path-kit-round-chromium.json';
 import { debriefJson } from './debrief-export.ts';
-import { handsOff, keyMoments, keyTimes, pulselessAt, whoOf } from './debrief-moments.ts';
+import { handsOff, keyMoments, keyTimes, pulselessAt, whoAt, whoOf } from './debrief-moments.ts';
 import { drugWords } from './glossary.ts';
 import { emptyRun, type Row, type RunData, type Sample } from './record.ts';
 import { objectiveText } from './scenarios.ts';
@@ -12,6 +12,7 @@ import a4mh from '../../../../docs/showcase/kit-round-a/debrief-a4-mh-e119-induc
 import anaphylaxis from './showcase/showcase-anaphylaxis.json';
 import mh from './showcase/showcase-mh.json';
 import tamponade from './showcase/showcase-tamponade.json';
+import h3 from './__fixtures__/debrief-2/haemorrhage-phases-v3.json';
 
 const card = tamponade as unknown as ScenarioDoc;
 /** The A3.1 record (a `/1` export) with the card's objectives as A1 left them. */
@@ -77,6 +78,51 @@ describe('key moments on the A3.1 tamponade path', () => {
     expect(whoOf(d, 'arrival', 'deteriorating')).toBe('patient');
     expect(whoOf(d, 'pea', 'cpr')).toBe('team');
     expect(whoOf(d, 'arrival', 'roscFluid')).toBe('scenario');
+  });
+});
+
+describe('D4: who from the record (`by` on the state rows)', () => {
+  const stateRows = (d: RunData) => d.rows.filter((r) => r.ev?.startsWith('state:'));
+  it('the A3.1 export has no `by` on any state row (made before Instructor v2 IP8): every moment\'s who is today\'s whoOf', () => {
+    const d = a31Run();
+    expect(stateRows(d).some((r) => r.by !== undefined)).toBe(false);
+    const rows = stateRows(d);
+    rows.slice(1).forEach((r, i) => expect(whoAt(d, r, (rows[i] as Row).ev?.slice(6) as string)).toBe(whoOf(d, (rows[i] as Row).ev?.slice(6) as string, r.ev?.slice(6) as string)));
+  });
+
+  it('with `by`: press → team, rule → patient, goto → scenario; where it agrees with whoOf the who is unchanged', () => {
+    const d = a31Run();
+    const by: Record<string, Row['by']> = { deteriorating: 'rule', pea: 'rule', cpr: 'press', cprDrained: 'press', rosc: 'press', roscFluid: 'press' };
+    for (const r of stateRows(d)) {
+      const b = by[r.ev?.slice(6) as string];
+      if (b) r.by = b;
+    }
+    const before = keyMoments(a31Run());
+    const after = keyMoments(d);
+    expect(after.map((m) => m.who)).toEqual(before.map((m) => m.who)); // every `by` here agrees with the card's transitions
+    const goto = structuredClone(d);
+    (stateRows(goto).find((r) => r.ev === 'state:cprDrained') as Row).by = 'goto'; // the instructor jumped instead
+    expect(keyMoments(goto).find((m) => m.text.startsWith('CPR: pericardium drained'))?.who).toBe('scenario');
+    const rule = structuredClone(d);
+    (stateRows(rule).find((r) => r.ev === 'state:cpr') as Row).by = 'rule'; // its own rule fired (a mixed transition)
+    expect(keyMoments(rule).find((m) => m.text.startsWith('CPR, ventilated'))?.who).toBe('patient');
+  });
+
+  it('a pme-scenario/2 phase is entered by its own rule: on the /3 haemorrhage fixture every phase moment is the patient\'s', () => {
+    const d = structuredClone(h3.record) as unknown as RunData;
+    const phases = new Set(stateRows(d).slice(1).map((r) => r.t));
+    const ms = keyMoments(d);
+    expect(ms.filter((m) => phases.has(m.t) || m.text.includes('Arrest')).map((m) => [m.who, m.text])).toEqual([
+      ['patient', 'Decompensating'],
+      ['patient', 'Pulse lost (the model) · Arrest'], // the pulse loss and the phase it causes, 0.05 s apart: one patient moment (MERGE_S)
+      ['patient', 'Arrest: asystole'],
+    ]);
+    expect(ms.some((m) => m.who === 'scenario')).toBe(false);
+  });
+
+  it('a record with no `by` on any state row prints as today (the card\'s transitions decide)', () => {
+    const d = a31Run();
+    expect(keyMoments(d).map((m) => m.who)).toEqual(['patient', 'patient', 'team', 'team', 'patient', 'team', 'team']);
   });
 });
 
