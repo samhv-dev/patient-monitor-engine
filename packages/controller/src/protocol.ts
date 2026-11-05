@@ -5,17 +5,26 @@ import type {
   AlarmEntry,
   Command,
   DispatchResult,
+  DoseUnit,
   EngineEvent,
   NumericId,
   PatientSnapshot,
+  PkClinicalEvent,
+  PkRoute,
   Ramp,
+  RateUnit,
   RhythmId,
   SimSeconds,
   StateVar,
   Tick,
 } from '@pme/engine-core';
+import type { RelayFrame } from './transport/relay-frames.ts';
 
-export type Role = 'host' | 'controller' | 'viewer';
+/**
+ * `instructor` (plan instructor-peer-role.md §1): a peer from anywhere that proves the instructor's PIN in its hello;
+ * the host grants it before it may command. A `controller` stays a peer its transport already trusts.
+ */
+export type Role = 'host' | 'controller' | 'viewer' | 'instructor';
 export type TransportKind = 'in-process' | 'postMessage' | 'broadcastChannel' | 'websocket' | 'webrtc';
 export type TransportStatus = 'connecting' | 'open' | 'closed' | 'error';
 export type ModelInput = 'hrFactor' | 'svrFactor' | 'contractilityFactor' | 'vo2Factor' | 'vco2Factor';
@@ -27,15 +36,23 @@ export type ControlFlag = 'modeled' | 'pinned' | 'ramping' | 'override';
  * The host and the engine ignore it; it travels in `commandApplied` so a record can tell which items went together.
  */
 export type BatchMeta = { batch?: { id: string; n: number } };
-type CommandBase = { id: string; issuedBy: string; atTick?: Tick; stageGroup?: string } & BatchMeta;
+/** `actionId` (plan F3): the /2 card's action an A press sends the command for. Metadata, as `batch`: the host and the
+ *  engine ignore it; the scenario driver reads it (a taking, and the administration record's source). */
+type CommandBase = { id: string; issuedBy: string; atTick?: Tick; stageGroup?: string; actionId?: string } & BatchMeta;
 
-/** Brief §7.2 `ClinicalEvent`, verbatim (drug ids stay strings). */
+/**
+ * Brief §7.2 `ClinicalEvent` (drug ids stay strings), widened to the engine's shapes (plan F1; the schema checks `kind`
+ * only): the drug model's units, routes (`PkRoute`), `overS` and `concentrationPct`, and its kinds `infusion`, `tci` and
+ * `vaporiser` (types-pk.ts); the neuro model's `airwayDevice`; the fluids the cards send (`saline`, `balanced`).
+ */
 export type ClinicalEvent =
   | {
-      kind: 'drug'; drugId: string; dose: number; unit: 'mcg' | 'mg' | 'mcg/kg' | 'mg/kg' | 'mEq' | 'units' | 'mcg/kg/min';
-      route: 'iv' | 'io' | 'im' | 'inh'; infusion?: boolean;
+      kind: 'drug'; drugId: string; dose: number; unit: DoseUnit | RateUnit;
+      route: PkRoute; infusion?: boolean; overS?: number; concentrationPct?: number;
     }
-  | { kind: 'fluid'; fluid: 'crystalloid' | 'colloid' | 'blood'; volumeMl: number; overS: number }
+  | Extract<PkClinicalEvent, { kind: 'infusion' | 'tci' | 'vaporiser' }>
+  | { kind: 'airwayDevice'; device: 'none' | 'ett' | 'sga' }
+  | { kind: 'fluid'; fluid: 'crystalloid' | 'colloid' | 'blood' | 'saline' | 'balanced'; volumeMl: number; overS: number }
   | { kind: 'bleed'; rateMlPerMin?: number; volumeMl?: number; overS?: number }
   | {
       kind: 'airway'; state: 'patent' | 'obstructed' | 'apnoea' | 'disconnected' | 'oesophageal' | 'endobronchial' | 'bronchospasm';
@@ -84,6 +101,8 @@ export type ExtraCommand = CommandBase &
     // `jump` = fast-forward `value` sim seconds (> 0, ≤ 600) as fast as the host's monitor runs; `step` is refused
     | { type: 'time'; action: 'pause' | 'resume' | 'scale' | 'step' | 'jump'; value?: number }
     | { type: 'applyEvent'; event: ClinicalEvent }
+    /** A judged objective (`marker`) or a note for the debrief, sent by a remote (plan §6); text ≤ WIRE_LIMITS.noteChars. */
+    | { type: 'note'; kind: 'note' | 'marker'; text: string }
     | {
         type: 'attachSensor'; sensor: SensorId; state: string; site?: string; leadSet?: 3 | 5 | 12;
         sampling?: 'sidestream' | 'mainstream';
@@ -101,6 +120,8 @@ export type ScenarioCommand = Extract<ExtraCommand, { type: 'scenario' }>;
 /** applyEvent / attachSensor: the host passes them to the engine, which validates them (Stages 3, 4 and 7 model them). */
 export type ClinicalCommand = Extract<ExtraCommand, { type: 'applyEvent' | 'attachSensor' }>;
 export type ScenarioEvent = Extract<ExtraEvent, { type: 'scenario' }>;
+/** How a scenario state was entered (the `scenario` event's `by`). */
+export type ScenarioEntry = 'press' | 'rule' | 'goto';
 
 /** Brief §7.3 EngineEvent variants not yet in engine-core's union (verbatim shapes). */
 export type ExtraEvent =
@@ -128,7 +149,14 @@ export type ExtraEvent =
       /** Who breathes and through what (E121b; the engine's own state, absent from a host-synthesised one). */
       breathing?: { source: 'spontaneous' | 'bvm' | 'ventilator' | 'none' | 'external'; device: 'none' | 'ett' | 'sga' };
     }
-  | { type: 'scenario'; t: SimSeconds; stateId: string; transitionId?: string }
+  /**
+   * The scenario entered `stateId` at `t`, by `transitionId` (`<id>:else` for a failed probability roll). `by` (additive,
+   * Instructor v2): how the runner took it — `press` when the instructor's press of that transition was held when it
+   * fired, `rule` when its condition fired it alone, `goto` for a jump. Absent for the first state and for a
+   * re-publish of the current state (a return to a bookmark, a late joiner's welcome). The host's record reads it, so
+   * a stage entry is a fact of the runner, not a match of the press's acknowledgement to the state's time.
+   */
+  | { type: 'scenario'; t: SimSeconds; stateId: string; transitionId?: string; by?: ScenarioEntry }
   | { type: 'commandApplied'; commandId: string; tick: Tick; resolved: unknown; ignored?: string[] }
   /** The host replaced its engine (patient restart, scenario load): sim time starts again at `t` on a new timeline.
    *  Within one timeline a peer's clock only moves forward; across this boundary it restarts (showcase hotfix). */
@@ -149,7 +177,28 @@ export type ExtraEvent =
    * Sent with every answer to a hello (`replay: true`: the relay routes it as the welcome) and at every change.
    * Presentation only.
    */
-  | { type: 'style'; skin: string; theme: string; replay?: true };
+  | { type: 'style'; skin: string; theme: string; replay?: true }
+  /**
+   * The card's Case briefing, for every learner screen (owner's board Orientation 7b): sent when a card with one loads,
+   * with every answer to a hello while it runs (`replay: true`, so a phone that joins or reloads shows the remainder:
+   * `startedAt` and the message's `sentAt` are both the host's clock), and `ended` when the instructor ends it
+   * everywhere or a new load replaces it. Presentation only.
+   */
+  | ({ type: 'briefing'; replay?: true; ended?: true } & BriefingNotice)
+  /**
+   * The host's view feed for a granted instructor (plan §6): what Instructor v2 shows (rows, cue, strip), computed by
+   * the host app. Opaque here, and never in VIEWER_EVENTS: learners never receive it.
+   */
+  | { type: 'instructorView'; t: SimSeconds; body: unknown };
+
+/** A running Case briefing: the card's `briefing` with its defaults, and when the host started it (epoch ms, its clock). */
+export interface BriefingNotice {
+  startedAt: number;
+  durationS: number;
+  text: string;
+  estimatedMinutes?: number;
+  lang: 'en' | 'fa';
+}
 
 /** An alarm raised during a fast-forward (it did not sound); `ended`: it came and went inside the span. */
 export type FastForwardAlarm = AlarmEntry & { ended: boolean };
@@ -178,10 +227,10 @@ export type WireEvent = EngineEvent | ExtraEvent;
  * The events a VIEWER uses — it runs its own engine from the host's snapshot, so it needs the clock anchor (`state`),
  * the beats it checks its own against, the commands it mirrors, the host's timeline and fast-forward (ViewerSync; the
  * follower page's liveness and pause read the same), the scenario's state (small, 1 Hz at most), the Ventilator view's
- * `cockpit` notice and the instructor's monitor `style`. The relay sends a viewer on the network only these (at ×8 the
+ * `cockpit` notice, the instructor's monitor `style` and the card's Case `briefing`. The relay sends a viewer on the network only these (at ×8 the
  * rest — measurements, alarm and organ status its own engine computes — was 4/5 of a phone's traffic).
  */
-export const VIEWER_EVENTS: ReadonlySet<WireEvent['type']> = new Set<WireEvent['type']>(['state', 'beat', 'commandApplied', 'timeline', 'fastForward', 'scenario', 'cockpit', 'style']);
+export const VIEWER_EVENTS: ReadonlySet<WireEvent['type']> = new Set<WireEvent['type']>(['state', 'beat', 'commandApplied', 'timeline', 'fastForward', 'scenario', 'cockpit', 'style', 'briefing']);
 export type StateEvent = Extract<ExtraEvent, { type: 'state' }>;
 export type CommandAppliedEvent = Extract<ExtraEvent, { type: 'commandApplied' }>;
 
@@ -199,8 +248,10 @@ export interface AppliedResolution {
 
 /** Brief §7.5, exactly. */
 export type WireMessage = { v: 1; session: string; from: string; seq: number; sentAt: number } & (
-  | { kind: 'hello'; role: Role }
+  | { kind: 'hello'; role: Role; pin?: string } // `pin`: only with role 'instructor', 4 to 8 digits (guard.ts)
   | { kind: 'command'; body: WireCommand }
+  /** The host's answer to an instructor hello, sent before its welcome (plan §1); `granted: false` also revokes. */
+  | { kind: 'grant'; to: string; granted: boolean; reason?: string }
   | { kind: 'ack'; commandId: string; accepted: boolean; tick: Tick; reason?: string }
   | { kind: 'event'; body: WireEvent[] } // batched per frame, never samples
   | { kind: 'snapshot'; body: PatientSnapshot }
@@ -228,10 +279,47 @@ export interface ManagedTransport extends Transport {
    * (BroadcastChannel, in-process): a session then learns presence from the host's hello and its 1 Hz state.
    */
   onPresence?(fn: (p: { hostOnline: boolean }) => void): () => void;
+  /**
+   * The relay's control frames (its refusals among them), when the link has a relay. An instructor's session reads the
+   * refusal's code and words from it (plan instructor-peer-role.md P5): `denied`, `too-many-tries`.
+   */
+  onRelayFrame?(fn: (f: RelayFrame) => void): () => void;
 }
 
 export type AckResult = DispatchResult & { commandId: string; rttMs: number };
 export type MeasuredMap = Partial<Record<NumericId, import('@pme/engine-core').Measured>>;
+
+// --- what an instructor may send (plan instructor-peer-role.md §2) -------------------------------------------------
+/**
+ * The shapes a granted instructor may send (plan §2): what the laptop's Instructor views send, measured by the command
+ * census of 2026-10-30 on 1b274d5d (P0), never listed by hand, plus `note` (§6), which the laptop writes locally and
+ * only the phone sends. The census test (P0/P6) compares the measured laptop set against INSTRUCTOR_COMMANDS minus
+ * `note`, which only the phone sends.
+ */
+export const INSTRUCTOR_COMMANDS: ReadonlySet<string> = new Set([
+  'applyEvent airway', 'applyEvent bleed', 'applyEvent condition', 'applyEvent cpr', 'applyEvent defib', 'applyEvent drug',
+  'applyEvent fluid', 'applyEvent infusion', 'applyEvent lungCondition', 'applyEvent pacer', 'applyEvent vaporiser',
+  'applyEvent ventilation', 'attachSensor', 'device', 'pin', 'release', 'scenario bookmark', 'scenario goto',
+  'scenario pause', 'scenario restoreBookmark', 'scenario resume', 'scenario trigger', 'setMode', 'setRhythm', 'setTarget',
+  'time jump', 'time pause', 'time resume', 'time scale', 'note',
+]);
+
+/** The census key of a command (its `type`, plus its `action` when that is a word, plus `event.kind` for applyEvent). */
+export function commandShape(c: WireCommand | CommandInput): string {
+  const x = c as { type: string; action?: unknown; event?: { kind?: unknown } };
+  if (x.type === 'applyEvent') return `applyEvent ${String(x.event?.kind)}`;
+  return typeof x.action === 'string' ? `${x.type} ${x.action}` : x.type;
+}
+
+/** Null when a granted instructor may send `c`, else the reason its ack carries (plan §2). */
+export function instructorMay(c: WireCommand | CommandInput): string | null {
+  const shape = commandShape(c);
+  // A remote load would start the runner on the old body: the laptop remounts the engine first (AppSession.loadScenario).
+  if (shape === 'scenario load') return "Load the case on the instructor's computer.";
+  if (shape === 'scenario bookmark' && (c as { kind?: unknown }).kind === 'stage') return "A stage mark is the scenario driver's own.";
+  if (INSTRUCTOR_COMMANDS.has(shape)) return null;
+  return 'No Instructor view sends this command.'; // setFactor, setModifiers, externalDrive, time step and the rest
+}
 
 // --- session codes ------------------------------------------------------------------------------------------
 /** 31 symbols: no 0/O, 1/I/L — unambiguous when read off a projector or typed on a phone [ENG]. */

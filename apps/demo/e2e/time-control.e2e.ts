@@ -25,6 +25,7 @@ type Win = {
   };
   __pmeFollower: { sync: { status: string; lastFastForward: unknown } | null; monitor: unknown };
   __osc: Array<{ hz: number; at: number }>;
+  __bar: Array<{ text: string; latched: boolean; simT: number }>;
 };
 
 test('×8 and a 5-minute fast-forward from the instructor view: paced panel everywhere, sound muted, cue, banner, log, trends', { tag: '@known-flaky' }, async ({ page, context, browserName }) => {
@@ -117,10 +118,30 @@ test('×8 and a 5-minute fast-forward from the instructor view: paced panel ever
   const d = await simT();
   await expect.poll(() => tones(d + 0.5, 1e9, ['qrs', 'pulse']), { timeout: 10_000 }).toBeGreaterThan(0);
 
-  // owner's decision 5: a fast-forward alarm is latched, silent, in the monitor's alarm area until the next acknowledge
+  // owner's decision 5: a fast-forward alarm is latched, silent, in the monitor's alarm area until the next acknowledge.
+  // The alarm area is the message bar, and the saadat-like bar ROTATES the messages of its top level (with the
+  // unacknowledged INOPs) every 6 s of sim time: once the case has arrested, the level-1 test alarm shares it with ART
+  // MEAN TOO LOW, HR TOO LOW, CO2 APNEA and three INOPs and is due once in 42 s, longer than this poll. So every message
+  // the bar paints is recorded, and the session runs at ×8 while the poll waits, which fits a whole rotation in it.
   await page.evaluate(() => (location.hash = '#/monitor'));
+  await page.evaluate(() => {
+    const w = window as unknown as Win;
+    w.__bar = [];
+    const rec = () => {
+      for (const el of document.querySelectorAll<HTMLElement>('.pme-bar')) {
+        const b = { text: el.textContent ?? '', latched: el.dataset.latched === 'true', simT: w.__pmeApp.link.simT };
+        const last = w.__bar.at(-1);
+        if (last?.text !== b.text || last.latched !== b.latched) w.__bar.push(b);
+      }
+    };
+    new MutationObserver(rec).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['data-latched'] });
+  });
+  const speed = async (k: number) => expect((await page.evaluate((v) => (window as unknown as Win).__pmeApp.link.send({ type: 'time', action: 'scale', value: v }), k)).accepted).toBe(true);
+  await speed(8);
   await page.evaluate(() => (window as unknown as Win).__pmeApp.session.monitor.latchAlarms([{ id: 'E2E', text: 'E2E LATCHED', level: 1, category: 'physiological', since: 1, latched: false, acked: false }]));
-  await expect.poll(async () => (await page.locator('.pme-bar').allTextContents()).join(' '), { timeout: 15_000 }).toContain('E2E LATCHED · during fast-forward 00:01');
+  // shown in the bar, in the latched style
+  await expect.poll(() => page.evaluate(() => (window as unknown as Win).__bar.filter((b) => b.text.includes('E2E LATCHED')).map((b) => `${b.text} (latched: ${b.latched})`)[0]), { timeout: 15_000 }).toBe('E2E LATCHED · during fast-forward 00:01 (latched: true)');
+  await speed(1);
   expect((await page.evaluate(() => (window as unknown as Win).__pmeApp.link.send({ type: 'device', action: { device: 'alarm', action: 'ack' } }))).accepted).toBe(true);
   await expect.poll(async () => (await page.locator('.pme-bar').allTextContents()).join(' '), { timeout: 5000 }).not.toContain('E2E LATCHED');
 

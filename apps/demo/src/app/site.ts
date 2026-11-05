@@ -1,7 +1,11 @@
 // The site profile (research/13 P11, Laerdal's profile vs scenario split): which monitor the room shows, its theme and
 // alarm defaults, and the shell's units and speed. It belongs to the room, not to a case, so loading a scenario never
 // changes it. Stored per browser (a convenience, research/13 brief §5) and exportable as one JSON file.
+import type { RouteId } from './router.ts';
 import { store } from './store.ts';
+
+/** The two Instructor views: today's (#/teach) and Instructor v2 (#/teach2). */
+export type InstructorRoute = Extract<RouteId, 'teach' | 'teach2'>;
 
 export interface SiteProfile {
   schema: 'pme-site/1';
@@ -20,6 +24,8 @@ export interface SiteProfile {
   /** Drug names on every screen (Ali's open question Q13): 'us' "epinephrine / norepinephrine"
    *  (default), 'uk' "adrenaline / noradrenaline". */
   drugNames: 'us' | 'uk';
+  /** The Instructor view the rail's one "Instructor" entry and every route to the instructor open (owner, 30 October). */
+  instructor: InstructorRoute;
 }
 
 /** Monitor choices, in the words the Settings and Start screens use. */
@@ -34,9 +40,11 @@ export const MONITORS: ReadonlyArray<{ id: string; label: string; hint: string }
 ];
 /** The drug-name sets, in the words the Settings screen uses. */
 export const DRUG_NAME_SETS: ReadonlyArray<[SiteProfile['drugNames'], string]> = [['us', 'Epinephrine, norepinephrine'], ['uk', 'Adrenaline, noradrenaline']];
+/** The Instructor views, in the words the Settings screen uses. */
+export const INSTRUCTOR_VIEWS: ReadonlyArray<[InstructorRoute, string]> = [['teach', "Today's view"], ['teach2', 'Instructor v2']];
 export const THEMES: ReadonlyArray<[SiteProfile['theme'], string]> = [['', 'Dark'], ['projector-light', 'Projector (light)'], ['ecg-grid', 'ECG paper grid']];
 
-export const DEFAULT_SITE: SiteProfile = { schema: 'pme-site/1', skin: 'saadat-like', theme: '', fps: 60, panel: 'split', gasUnit: 'mmHg', sensorsOff: false, drugNames: 'us' };
+export const DEFAULT_SITE: SiteProfile = { schema: 'pme-site/1', skin: 'saadat-like', theme: '', fps: 60, panel: 'split', gasUnit: 'mmHg', sensorsOff: false, drugNames: 'us', instructor: 'teach' }; // today's view: the 3 November demo's
 
 export function parseSite(raw: unknown): SiteProfile {
   const o = (raw && typeof raw === 'object' ? raw : {}) as Partial<SiteProfile>;
@@ -50,6 +58,7 @@ export function parseSite(raw: unknown): SiteProfile {
     gasUnit: o.gasUnit === 'kPa' ? 'kPa' : 'mmHg',
     sensorsOff: o.sensorsOff === true,
     drugNames: o.drugNames === 'uk' ? 'uk' : 'us',
+    instructor: INSTRUCTOR_VIEWS.some(([v]) => v === o.instructor) ? (o.instructor as InstructorRoute) : d.instructor,
   };
 }
 

@@ -19,7 +19,7 @@ test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 test.afterEach(async () => relay?.close());
 
-type W = { __pmeApp: { session: { code: string; paused: boolean; simNow(): number } } };
+type W = { __pmeApp: { session: { code: string; paused: boolean; simNow(): number; monitor: { snapshot(): Promise<unknown> } | null } } };
 const setHidden = (p: Page, hidden: boolean) =>
   p.evaluate((h) => {
     Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (h ? 'hidden' : 'visible') });
@@ -27,6 +27,12 @@ const setHidden = (p: Page, hidden: boolean) =>
     document.dispatchEvent(new Event('visibilitychange'));
   }, hidden);
 const host = (p: Page) => p.evaluate(() => { const s = (window as unknown as W).__pmeApp.session; return { paused: s.paused, simT: s.simNow() }; });
+/** The pause has reached the engine: a request to the monitor's worker, sent after the pause, has come back. The worker
+ *  answers in order, so every event batch it posted before it applied the pause has been taken by then. Those batches
+ *  carry engine times past the host's wall-clock estimate (session.simNow), and taking them moves the paused estimate
+ *  onto the engine's real stopping time: a correction of up to a frame or two (0.08–0.11 s on the CI runner, run
+ *  41809522564), not a running clock. */
+const engineTookPause = (p: Page) => p.evaluate(async () => void (await (window as unknown as W).__pmeApp.session.monitor?.snapshot()));
 
 test('a hidden instructor tab pauses the session (the phone shows "(paused)") and resumes it on return with a toast', async ({ page, browser, browserName }) => {
   test.setTimeout(90_000);
@@ -48,6 +54,7 @@ test('a hidden instructor tab pauses the session (the phone shows "(paused)") an
   await setHidden(page, true);
   await expect.poll(async () => (await host(page)).paused).toBe(true);
   await expect(pill).toHaveText(`Following session ${code} (paused)`, { timeout: 10_000 });
+  await engineTookPause(page);
   const t0 = (await host(page)).simT;
   await page.waitForTimeout(3000);
   expect((await host(page)).simT - t0).toBeLessThan(0.05); // the clock stood still while hidden

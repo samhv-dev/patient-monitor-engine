@@ -2,11 +2,12 @@
 // on the engine (driver, host and run record wired as AppSession wires them) the anaphylaxis and induction cards are
 // judged as the presenter would judge them: treated in time = met, never = not met.
 import { createEngine, DRUGS } from '@pme/engine-core';
-import { createInProcessHub, HostSession, ScenarioView, type HostTarget } from '@pme/controller';
-import { engineOptionsOf, ScenarioDriver, validateScenario, type ScenarioDoc } from '@pme/controller/scenario';
+import { asV1, createInProcessHub, HostSession, ScenarioView, type HostTarget } from '@pme/controller';
+import { engineOptionsOf, grade, ScenarioDriver, validateScenario, type ScenarioDoc, type ScenarioDocV2 } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
 import { FIXED_ALARM_WORDS } from './alarms.ts';
-import { endOf, facts, objectives, steps } from './debrief.ts';
+import { endOf, facts, gradesOf, objectives, steps } from './debrief.ts';
+import { debriefJson } from './debrief-export.ts';
 import { CONDITIONS } from './describe.ts';
 import { emptyRun, RunRecord, type Row, type RunData, type Sample } from './record.ts';
 import { LIBRARY } from './scenarios.ts';
@@ -16,6 +17,7 @@ import anaphylaxis from './showcase/showcase-anaphylaxis.json';
 import haemorrhage from './showcase/showcase-haemorrhage.json';
 import induction from './showcase/showcase-induction.json';
 import mh from './showcase/showcase-mh.json';
+import mhV2 from './showcase/showcase-mh-v2.json';
 
 const known = (ev: string, doc: ScenarioDoc): boolean => {
   const [k = '', id = ''] = ev.split(':');
@@ -59,8 +61,8 @@ const once = (fn: (t: number, rec: RunRecord) => boolean, tr: string) => {
   let done = false;
   return (t: number, rec: RunRecord) => (!done && fn(t, rec) ? ((done = true), tr) : null);
 };
-/** The MH early call as the cue card runs it after the E119 induction sequence, on the card's own clock (premedication
- *  0:30, preoxygenation 1:00, induction 4:00, intubation 5:00, surgery 6:00, as kit round A4 presses them; call 9 s into
+/** The MH early call as the cue card runs it after the E119 induction sequence, on the card's own clock (preoxygenation
+ *  0:30, premedication 1:00 (the owner's ruling of 1 November), induction 4:00, intubation 5:00, surgery 6:00, as kit round A4 presses them; call 9 s into
  *  Early signs, dantrolene +20 s; no cooling below 38.5 °C, E132), then "ventilation back" when `normo` says so. Until
  *  the E132 rebase onto E131 this path was compressed (induction 1:00, surgery 2:30); under E131 that compressed
  *  course is not the card's: at 20 × 600 its EtCO₂ dips below 40 for only ≈ 90 s (39 at 7:00–8:00, 40 from 8:30), so
@@ -73,14 +75,14 @@ const mhPresses = (normo: (t: number, rec: RunRecord, at: (id: string) => number
     const go = (tr: string, ok: boolean) => (ok && !done.has(tr) ? (done.add(tr), tr) : null);
     const early = at('earlySigns');
     const off = at('triggerOff');
-    return go('premed', t >= 30) ?? go('preox', t >= 60) ?? go('induce', t >= 240) ?? go('intubate', t >= 300) ?? go('surgery', t >= 360) ?? go('crisis-earlySigns', early !== undefined && t >= early + 9) ?? go('dant', off !== undefined && t >= off + 20)
+    return go('preox', t >= 30) ?? go('premed', t >= 60) ?? go('induce', t >= 240) ?? go('intubate', t >= 300) ?? go('surgery', t >= 360) ?? go('crisis-earlySigns', early !== undefined && t >= early + 9) ?? go('dant', off !== undefined && t >= off + 20)
       ?? go('normo', at('recovering') !== undefined && normo(t, rec, at));
   };
 };
 const alarmAt = (rec: RunRecord) => rec.data.rows.find((r) => r.ev?.startsWith('alarm:apnoea'))?.t;
 /** The verdict of the objective whose rule starts at the apnoea alarm (its place in the list is the card's business). */
 const apnoeaObjective = (rec: RunRecord) => {
-  const i = (rec.data.doc?.objectives ?? []).findIndex((o) => typeof o !== 'string' && o.rule?.kind === 'eventWithin' && o.rule.after === 'alarm:apnoea');
+  const i = (asV1(rec.data.doc)?.objectives ?? []).findIndex((o) => typeof o !== 'string' && o.rule?.kind === 'eventWithin' && o.rule.after === 'alarm:apnoea');
   return objectives(rec.data)[i]?.verdict;
 };
 
@@ -172,12 +174,12 @@ describe('IP8: the new record fields change no verdict', () => {
       const pressed = d.rows.filter((r) => r.by === 'press').map((r) => [r.tr, r.t]);
       expect(steps(d).filter((x) => x.takenT !== null).map((x) => [x.id, x.takenT]).sort(), name).toEqual(pressed.sort());
     }
-    expect(mhRun.data.rows.filter((r) => r.by === 'press').map((r) => r.tr)).toEqual(['premed', 'preox', 'induce', 'intubate', 'surgery', 'crisis-earlySigns', 'dant', 'normo']);
+    expect(mhRun.data.rows.filter((r) => r.by === 'press').map((r) => r.tr)).toEqual(['preox', 'premed', 'induce', 'intubate', 'surgery', 'crisis-earlySigns', 'dant', 'normo']);
     // the table: every press, and the one step an objective still asks for (objective 4: dantrolene again after the
     // ventilation is back); the alternatives not chosen (induction without pre-oxygenation, the crisis buttons of the
     // stages it was not called from, the other treatments) are left out
     expect(steps(mhRun.data).map((x) => [x.id, x.status])).toEqual([
-      ['premed', 'taken'], ['preox', 'taken'], ['induce', 'taken'], ['intubate', 'taken'], ['surgery', 'taken'], ['crisis-earlySigns', 'taken'],
+      ['preox', 'taken'], ['premed', 'taken'], ['induce', 'taken'], ['intubate', 'taken'], ['surgery', 'taken'], ['crisis-earlySigns', 'taken'],
       ['dant', 'taken'], ['normo', 'taken'], ['dant-normoventilated', 'not done'],
     ]);
     expect(haemRun.data.rows.filter((r) => r.by === 'press').map((r) => r.tr)).toEqual(['oxygen', 'intubate-o2', 'cpr-pea', 'volume', 'epi-running']);
@@ -280,5 +282,64 @@ describe('IP9 (ruling 1): the ACTION list and the Debrief steps table read a ste
       // a step its own rule fired (haemorrhage junctional) is no taken step in either: amber "fired" on the panel, unlisted here
       for (const [id, st] of panel) if (st !== 'open') expect([name, id, listed.get(id)]).toEqual([name, id, st === 'fired' ? undefined : st]);
     }
+  }, 300_000);
+});
+
+describe('F7: the /2 MH card on the engine — the debrief grades what the panel grades', () => {
+  /** The run sheet's A presses (docs/showcase/SHOWCASE-2-RUN-SHEET.md §3; malignant-hyperthermia-v2.slow.test.ts PATH),
+   *  to the talk's end (24:31). */
+  const PATH: Array<[number, string]> = [[30, 'preoxygenate'], [60, 'premedicate'], [240, 'induce'], [300, 'intubate'], [360, 'startSurgery'], [492, 'callCrisis'], [512, 'dantrolene'], [832, 'ventilationBack'], [1153, 'dantroleneAgain']];
+  const END_S = 1471.2;
+
+  it('the record copies the runner’s inputs; grade() on them (final, at the end) equals grade() on the runner’s own; the export is pme-debrief/3', async () => {
+    const doc = mhV2 as unknown as ScenarioDocV2;
+    const v = validateScenario(doc);
+    if (!v.ok) throw new Error(v.errors.join('; '));
+    const eo = engineOptionsOf(v.doc, 7);
+    const engine = createEngine({ ...eo, mode: v.doc.mode ?? 'modeled', truthHz: 1, patient: { ...eo.patient, ...(v.doc.patient?.sensors ? { sensors: v.doc.patient.sensors } : {}) } } as never);
+    const target: HostTarget = { dispatch: (c) => engine.dispatch(c), snapshot: () => engine.snapshot(), restore: (s) => engine.restore(s), on: (f) => engine.on(f), now: () => engine.now(), time: () => {} };
+    let hs: HostSession | null = null;
+    const driver = new ScenarioDriver({ target, submit: (c) => (hs as HostSession).submit(c), publish: (e) => hs?.publish(e) });
+    hs = new HostSession({ session: 'SHW235', target: driver.host, scenario: driver.hook, stateIntervalMs: 0 });
+    const hub = createInProcessHub();
+    hs.addTransport(hub.connect());
+    const tap = hub.connect();
+    // as AppSession wires it: the record reads the host's phase runner
+    const rec = new RunRecord(() => ({ patient: 'test', weightKg: v.doc.patient?.weightKg ?? 80 }), Date.now, () => driver.phaseRunner);
+    tap.onMessage((m) => m.kind === 'event' && m.body.forEach((e) => rec.wire(e)));
+    engine.on((e) => rec.engine(e));
+    const settle = () => new Promise((r) => setTimeout(r, 0));
+    await hs.submit({ id: 'load', issuedBy: 'instructor', type: 'scenario', action: 'load', doc: v.doc } as never);
+    let k = 0;
+    for (let n = 1; n <= Math.round(END_S / 0.4); n++) {
+      const t = Math.round(n * 0.4 * 1000) / 1000;
+      engine.advanceTo(t);
+      driver.poll();
+      const next = PATH[k];
+      if (next && t >= next[0]) {
+        k++;
+        const action = doc.actions.find((a) => a.id === next[1]);
+        for (const [i, c] of (action?.give ?? []).entries()) {
+          const { $comment: _drop, ...cmd } = c as typeof c & { $comment?: string };
+          await hs.submit({ ...cmd, id: `act-${k}-${i}`, issuedBy: 'instructor', stageGroup: `act-${k}`, actionId: next[1] } as never);
+        }
+        driver.poll();
+      }
+      await settle();
+    }
+    hs.close();
+    expect(k).toBe(PATH.length);
+    const pr = driver.phaseRunner;
+    if (!pr) throw new Error('no phase runner');
+    // the talk's end at a Pause, mid-case (no end phase, not finished): the Debrief grades as the panel does, live (D5)
+    const panel = grade(doc, pr.phases, pr.admin, pr.edges, engine.now().simT, { final: false });
+    expect(rec.data.format).toBe(2);
+    expect(rec.data.admin?.length).toBeGreaterThan(0);
+    expect(gradesOf(rec.data)).toEqual(panel);
+    expect(panel.actions.find((a) => a.id === 'dantrolene')?.firstGrade).toBe('met');
+    const j = JSON.parse(debriefJson(rec.data, 'test'));
+    expect(j.schema).toBe('pme-debrief/3');
+    expect(j.actions.map((a: { id: string; grade: string }) => [a.id, a.grade])).toEqual(panel.actions.map((a) => [a.id, a.grade]));
+    expect(j.phases).toEqual(JSON.parse(JSON.stringify(pr.phases)));
   }, 300_000);
 });

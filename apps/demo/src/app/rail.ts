@@ -1,11 +1,11 @@
 // The workflow rail (E125, owner's mockups of 26 October): the app's navigation in the order of a teaching session —
-// Home; before the session Room, Scenarios, Patient; during it Instructor, Monitor, Ventilator; after it Debrief; then
-// Explore physiology, Tools (Validate · Developer) and Settings, the groups parted by a thin line (no captions: the
-// owner's correction of 26 October). Its foot carries the light/dark switch (the site profile's "Screen" theme, saved
-// as Settings saves it) and a clock: the time on one line, the Gregorian and the Persian date on the next (the Persian
-// date in Persian script and digits, «۴ آبان ۱۴۰۵», owner's request of 26 October). It replaces
-// the top bar's tabs; on the Instructor view it collapses to a 56-px icon strip (app.css), on the Monitor view, a
-// learner's window and a phone it is not shown.
+// Home; before the session Room, Scenarios, Patient; during it Instructor (today's view or v2, chosen in Settings:
+// owner, 30 October), Monitor, Ventilator; after it Debrief; then Explore physiology, Tools (Validate · Developer) and
+// Settings, the groups parted by a thin line (no captions: the owner's correction of 26 October). Its foot carries the
+// light/dark switch (the site profile's "Screen" theme, saved as Settings saves it) and a clock: the time on one line,
+// the Gregorian and the Persian date on the next (the Persian date in Persian script and digits, «۴ آبان ۱۴۰۵», owner's
+// request of 26 October). It replaces the top bar's tabs; on the Instructor view it collapses to a 56-px icon strip
+// (app.css), on the Monitor view, a learner's window and a phone it is not shown.
 import type { RouteId } from './router.ts';
 import { hrefOf } from './router.ts';
 import { h, setText } from './ui.ts';
@@ -17,7 +17,6 @@ const ICONS: Record<string, string> = {
   scenarios: 'M4 5h16v14H4zM8 9h8M8 13h5',
   patient: 'M12 4.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7zM5 20c.9-3.9 3.6-6 7-6s6.1 2.1 7 6',
   teach: 'M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11M19 17h1M15 5v4M9 10v4M17 15v4',
-  teach2: 'M3 5h18v14H3zM10 5v14M13 9h5M13 12.5h5M13 16h3', // Instructor v2: STATE beside ACTION
   monitor: 'M3 5h18v14H3zM5 13h3l1.5-4 3 7 1.5-3H19',
   vent: 'M3 9h10a3 3 0 1 0-3-3M3 13h14a3 3 0 1 1-3 3M3 17h6',
   debrief: 'M9 4h6v3H9zM7 5.5H5V21h14V5.5h-2M9 14l2 2 4-4',
@@ -43,7 +42,7 @@ type Entry = ['hr'] | [RouteId, string] | ['tools'];
 export const RAIL: readonly Entry[] = [
   ['home', 'Home'],
   ['hr'], ['room', 'Room'], ['scenarios', 'Scenarios'], ['patient', 'Patient'],
-  ['hr'], ['teach', 'Instructor'], ['teach2', 'Instructor v2'], ['monitor', 'Monitor'], ['vent', 'Ventilator'],
+  ['hr'], ['teach', 'Instructor'], ['monitor', 'Monitor'], ['vent', 'Ventilator'], // Instructor: the view chosen in Settings
   ['hr'], ['debrief', 'Debrief'],
   ['hr'], ['explore', 'Explore physiology'], ['tools'], ['settings', 'Settings'],
 ];
@@ -55,6 +54,8 @@ export interface RailOptions {
   badges?: Partial<Record<RouteId, () => string>>;
   /** The site's screen theme: light or not, and the switch's action (it saves the site profile). */
   theme: { light(): boolean; set(light: boolean): void };
+  /** The Instructor view chosen in Settings: the one "Instructor" entry leads there (today's view without it). */
+  instructor?: () => 'teach' | 'teach2';
   /** For tests: the clock's time source. */
   now?: () => Date;
 }
@@ -118,14 +119,18 @@ export class Rail {
     this.timer = setInterval(() => this.refresh(), 15_000);
   }
 
-  /** Mark the current page (aria-current) — the Tools row is current on Validate and on Developer. */
+  /** Mark the current page (aria-current) — the Tools row is current on Validate and on Developer, Instructor on either
+   *  Instructor view (a deep link to the other one included). */
   mark(id: RouteId): void {
-    for (const [rid, as] of this.links) for (const a of as) (rid === id ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
+    const at = id === 'teach2' ? 'teach' : id;
+    for (const [rid, as] of this.links) for (const a of as) (rid === at ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
     this.el.querySelector('.rail-tools')?.classList.toggle('on', id === 'validate' || id === 'dev');
   }
 
   /** Redraw the badges, the switch and the clock. */
   refresh(): void {
+    const to = this.o.instructor?.() ?? 'teach';
+    for (const a of this.links.get('teach') ?? []) (a.setAttribute('href', hrefOf(to)), (a.dataset.route = to));
     for (const [id, el] of this.badgeEls) setText(el, this.o.badges?.[id]?.() ?? '');
     this.drawTheme();
     const c = railClock(this.o.now?.() ?? new Date());
@@ -164,4 +169,39 @@ export class Rail {
       h('span', { class: 'rail-text' }, 'Tools'),
       h('span', { class: 'rail-sub' }, validate, h('span', { class: 'rail-text', 'aria-hidden': 'true' }, '·'), dev));
   }
+}
+
+/**
+ * Instructor v2 (owner, 31 October): the rail's upper divider and its foot's border sit at the height of the page lines
+ * they mirror — the line under the stage strip and the line on top of the dock. Measured, not copied from the page's grid
+ * rows, so they follow the strip whatever height it takes (the Case briefing and the finishing state add their
+ * 40-px status line under it): on the rail, `--rail-rule-y` (the rail's top to the top of the strip's bottom border) and
+ * `--rail-foot-h` (the dock's top edge, its border, to the rail's bottom); app.css lays the teach2 rail out from them.
+ * And Home on the strip's row (owner, 1 November: it sat 9 px under the chips, 49 px during the Case briefing):
+ * `--rail-row-y`, the rail's top to the vertical centre of the strip's chips row (`.ip2-chips`, the "No case loaded" box
+ * or the stage chips), which app.css centres the Home item on. Removed while the view is hidden, so no other route reads
+ * them.
+ */
+export function trackPageLines(rail: HTMLElement, strip: HTMLElement | null, dock: HTMLElement | null): () => void {
+  const set = () => {
+    const s = strip?.getBoundingClientRect();
+    const d = dock?.getBoundingClientRect();
+    if (!strip || !s || !d || s.height === 0 || d.height === 0) {
+      for (const v of ['--rail-rule-y', '--rail-foot-h', '--rail-row-y']) rail.style.removeProperty(v);
+      return;
+    }
+    const r = rail.getBoundingClientRect();
+    const row = (strip.querySelector('.ip2-chips') ?? strip).getBoundingClientRect();
+    rail.style.setProperty('--rail-rule-y', `${s.bottom - parseFloat(getComputedStyle(strip).borderBottomWidth) - r.top}px`);
+    rail.style.setProperty('--rail-foot-h', `${r.bottom - d.top}px`);
+    rail.style.setProperty('--rail-row-y', `${(row.top + row.bottom) / 2 - r.top}px`);
+  };
+  const ro = new ResizeObserver(set);
+  for (const e of [rail, strip, strip?.querySelector('.ip2-chips'), dock]) if (e) ro.observe(e);
+  addEventListener('resize', set);
+  set();
+  return () => {
+    ro.disconnect();
+    removeEventListener('resize', set);
+  };
 }

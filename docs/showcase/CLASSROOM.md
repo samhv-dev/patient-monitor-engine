@@ -28,6 +28,15 @@ and **the presenting Mac's Node.js**. Until they are settled, tick every line:
   The hosted (https) copy cannot reach the laptop; a phone that opens it only waits ("Waiting for the instructor…").
 - [ ] **A Windows PC as the backup** (optional): `Start Classroom.cmd` in the kit, untested on Windows at rc.3; tick the
   10-line checklist in the kit's `READ ME FIRST.txt` (section WINDOWS) on the room's PC before the day.
+  A kit built with `node scripts/showcase/make-bundle.mjs <out> --win-node node-v22.x.y-win-x64.zip` (the official
+  zip from nodejs.org, downloaded beforehand with its `SHASUMS256.txt` beside it, or named by `--win-node-sums`)
+  carries `runtime\node.exe` and needs **no Node.js install** on the PC: both `.cmd` launchers use it before an installed one. The
+  bundler refuses a zip whose SHA-256 is not the one `SHASUMS256.txt` lists, takes only `node.exe` and its `LICENSE`
+  (as `runtime\NODE-LICENSE.txt`), and writes the version and both checksums to `runtime\NODE-VERSION.txt` and a
+  line to `VERSION.txt`. It does not check the signature of `SHASUMS256.txt` itself: fetch both files from
+  `https://nodejs.org/dist/` yourself. If Windows says "Windows protected your PC" (SmartScreen): **More info** →
+  **Run anyway**; `node.exe` is the official build, its checksum in `NODE-VERSION.txt`. A kit built without the option
+  still works on a PC with Node.js 22 or later installed (the launchers then find it on PATH or in Program Files).
 
 ## What the room sees
 
@@ -48,6 +57,17 @@ and **the presenting Mac's Node.js**. Until they are settled, tick every line:
 - A phone that is locked, switched to another app or loses the Wi-Fi for a moment catches up by itself when it comes
   back ("Connection lost: reconnecting…" while it is away).
 - One session takes up to **60 phones**; the 61st is told "This session is full: please watch the main screen".
+
+## One instructor tab
+
+Run the session in **one** tab. The phones follow the tab that runs the session; a second tab that started its own
+session would have a new code, and the phones would stay with the first one. So when the app's address is opened in
+another tab of the same browser (or typed again without its `?session=` part) while a session is running, it asks
+first: "A classroom session is already running in another tab (code ……)". **Open that tab's session here** moves the
+session to the new tab: the same code, the case where it was (as after a reload), and the phones and second screens
+follow it there; the old tab stops and says "This session moved to another tab". **Start a new session** gives the new
+tab its own code; the phones stay with the old tab. Only tabs of the same browser are asked, and a tab the browser has
+put to sleep (Safari, after about 4 minutes hidden) does not answer: then the new tab starts its own session as before.
 
 ## The day before (at the venue if at all possible)
 
@@ -87,6 +107,8 @@ laptop. Is it on the classroom Wi-Fi?" — nothing breaks.
 
 1. The **Room** on the projector: Home → **Start here**, or **Room** in the rail at the left (the Monitor view's
    **Phones** button opens it too). It shows the QR code, the 6-letter code, the address and "0 phones following".
+   For a hall, click **Show large** under the QR code (or press **Q**): the same code fills the screen's height, with
+   the 6-letter code, the address and the count beneath; **Escape** (or Q, or **Back to the Room**) returns.
 2. Say: *"Please join the Wi-Fi called ‹network› and scan this code with your camera. You will get the monitor on your
    phone — it follows what I do here. It is silent: tap Sound off if you want to hear it."*
 3. Watch the count rise ("12 phones following"). If a phone does not open the page: is it on that Wi-Fi? (mobile data
