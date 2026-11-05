@@ -108,6 +108,54 @@ describe('the run record', () => {
     expect(Object.keys(c as object).sort()).toEqual(['dose', 'ev', 'kind', 't', 'text']); // a row with nothing new is as before
   });
 
+  it('D2: an alarm raise row keeps when its condition cleared (endT) and when it was acknowledged (ackT)', () => {
+    const r = fresh();
+    const st = (t: number, a: Array<[string, { latched?: boolean; acked?: boolean }?]>) => r.engine({ type: 'alarmStatus', t, active: a.map(([id, f]) => ({ id, level: 1, text: id, acked: f?.acked ?? false, latched: f?.latched ?? false })) } as unknown as EngineEvent);
+    st(10, [['A'], ['B'], ['C'], ['D']]);
+    st(11, [['A'], ['B'], ['C'], ['D']]); // all four still active
+    st(12, [['A'], ['B'], ['C', { acked: true }], ['D']]); // C acknowledged at 12 while its condition lasts
+    st(13, [['A'], ['B'], ['C', { acked: true }], ['D']]);
+    st(20, [['A'], ['B', { latched: true }], ['C', { acked: true }], ['D']]); // B's condition gone, the alarm latched
+    st(25, [['B', { latched: true }], ['C', { acked: true }], ['D']]); // A left the active list
+    st(30, [['B', { latched: true, acked: true }], ['C', { acked: true }], ['D']]);
+    st(40, [['D']]); // B and C end; D is still active at the end of the record
+    st(50, [['A'], ['D']]); // A raised again after its end: its own row
+    const row = (id: string, i = 0) => r.data.rows.filter((x) => x.ev === `alarm:${id}`)[i];
+    expect(['A', 'B', 'C', 'D'].map((id) => [row(id)?.t, row(id)?.endT, row(id)?.ackT])).toEqual([[10, 25, undefined], [10, 20, 30], [10, 40, 12], [10, undefined, undefined]]);
+    expect([row('A', 1)?.t, row('A', 1)?.endT]).toEqual([50, undefined]);
+    expect(r.data.keeps).toEqual(expect.arrayContaining(['pressures', 'alarmEnd']));
+    // a row with nothing new is as before (no endT/ackT keys while open)
+    expect(Object.keys(row('D') as object).sort()).toEqual(['ev', 'kind', 't', 'text']);
+  });
+
+  it('D2: a latched alarm whose condition comes back is live again: its end is the later one (manager.ts: "the condition came back while latched")', () => {
+    const r = fresh();
+    const st = (t: number, latched: boolean | null) => r.engine({ type: 'alarmStatus', t, active: latched === null ? [] : [{ id: 'X', level: 1, text: 'X', acked: false, latched }] } as unknown as EngineEvent);
+    st(10, false); st(15, true); st(18, false); st(30, true); st(35, null);
+    expect(r.data.rows.map((x) => [x.t, x.endT])).toEqual([[10, 30]]);
+  });
+
+  it('D2: a return to a bookmark clears every end and acknowledgement later than the restore; the alarm active at the bookmark ends on the kept course', () => {
+    const r = fresh();
+    const st = (t: number, a: Array<[string, boolean?]>) => r.engine({ type: 'alarmStatus', t, active: a.map(([id, acked]) => ({ id, level: 1, text: id, acked: acked ?? false, latched: false })) } as unknown as EngineEvent);
+    st(5, [['E']]);
+    st(8, []); // E ended before the bookmark: kept
+    st(10, [['A']]);
+    r.wire(applied(750, { type: 'scenario', action: 'bookmark', target: 'Bookmark 1 at 00:15' })); // 15 s: A active
+    st(18, [['A', true]]);
+    st(22, [['B']]); // raised after the bookmark: undone with the course
+    st(25, [['B']]); // A ends at 25 on the discarded course
+    r.wire({ type: 'timeline', t: 15, tick: 750, cause: 'restore' } as WireEvent);
+    r.wire(applied(750, { type: 'scenario', action: 'restoreBookmark', target: 'Bookmark 1 at 00:15' }));
+    const a = () => r.data.rows.find((x) => x.ev === 'alarm:A');
+    expect([a()?.endT, a()?.ackT]).toEqual([undefined, undefined]);
+    expect(r.data.rows.find((x) => x.ev === 'alarm:E')?.endT).toBe(8);
+    expect(r.data.rows.find((x) => x.ev === 'alarm:B')?.undone).toBe(1);
+    st(16, [['A']]); // the restored engine: A still active, not raised again
+    st(31, []); // and it ends at 31 on the kept course
+    expect(r.data.rows.filter((x) => x.ev === 'alarm:A').map((x) => [x.t, x.endT, x.ackT])).toEqual([[10, 31, undefined]]);
+  });
+
   it('E133: a run of ≥ 3 PVCs is one row at its first PVC, counting its beats; single PVCs and couplets are not', () => {
     const r = fresh();
     const beat = (t: number, pvc: boolean) => r.engine({ type: 'beat', t, seq: 0, origin: pvc ? 'ventricular' : 'sinus', template: pvc ? 'pvc' : 'normal', qrsMs: 90, qtMs: 380, mech: { perfused: true, kSV: 1, svMl: 70, lvetMs: 280 } } as EngineEvent);
@@ -237,7 +285,7 @@ describe('the run record', () => {
     const copy = JSON.parse(JSON.stringify(r.data));
     expect(copy).toEqual(r.data);
     r.wire({ type: 'timeline', t: 0, tick: 0, cause: 'restart' } as WireEvent);
-    expect(r.data).toEqual({ startedAt: 1_000, lastWall: 1_000, patient: 'M 40 y 70 kg', weightKg: 70, doc: null, rows: [], samples: [], returns: 0, keeps: ['pressures'] });
+    expect(r.data).toEqual({ startedAt: 1_000, lastWall: 1_000, patient: 'M 40 y 70 kg', weightKg: 70, doc: null, rows: [], samples: [], returns: 0, keeps: ['pressures', 'alarmEnd'] });
   });
 
   it('on a real host: a bookmark restore keeps the course before it and marks the course after it undone', async () => {
