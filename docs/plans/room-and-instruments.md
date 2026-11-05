@@ -1,6 +1,8 @@
 # Room and instruments (E124): room set-up on the start page, roles and PIN, one instrument per screen — Implementation Plan
 
-**STATUS: DRAFT FOR REVIEW 2026-11-05.** Written by a planning executor from brief 18 of the post-demo set. Nothing in
+**STATUS: READY TO BUILD EXCEPT THE DEFIBRILLATOR MODEL (2026-11-05).** Every question in §10 is ruled; the one open
+line is the owner's department's actual defibrillator (Q6's second half), which only R5a's model list waits on.
+Originally a draft for review. Written by a planning executor from brief 18 of the post-demo set. Nothing in
 it is ruled until the owner answers "Questions for the owner" (§10) and the orchestrator reviews the pieces. No product
 code, test, card or kit file was changed while writing it.
 
@@ -27,7 +29,16 @@ instructor's panel, records each press under the device, and the e2e proves the 
 Q6 = B: the instructor picks the defibrillator model in Room setup, apart from the monitor skin, and the host adopts
 its energies: R5a decouples the defibrillator's device profile from the skin in the engine's device layer, and R5b
 puts the choice in Room setup; R0's drift measurement becomes R5a's acceptance. The pieces, hours, critical path and
-merge order are updated (§7, §9). Q7 to Q10 stay open.
+merge order are updated (§7, §9).
+
+**Amended a fourth time 2026-11-05:** Q7 to Q10 are **ruled 5 November** (§10). Q7: the owner rejects a single
+"BIS-like" screen. Several depth-of-anaesthesia monitors exist, each with its own method, and each must work from its
+true mechanism, which needs a simulated EEG the engine does not have. **R6 (the depth screen) leaves this stage**:
+the picker and the device table keep the slot "Depth of anaesthesia" as "Not available yet", never a screen without
+an honest signal behind it, and §9a states what the depth devices need (an EEG model and per-device algorithms, an
+engine stage of its own, sourced from Miller's Anesthesia 10th ed., Chapter 36). Q8 = A: the IABP is not in this
+stage (engine roadmap). Q9 = A: "Weak" is a ping over 300 ms or one missed 10 s heartbeat, an engineering choice.
+Q10 = A: device names are kept across days; "Forget the room" clears them. Totals re-made (§9): 86 h, 18 PRs.
 
 **Base and preconditions.**
 - Base: `origin/main` **8d79f188** (Merge PR #197, `feat-peer-p4`), read in the worktree `scratch/wt-room-plan`
@@ -65,7 +76,7 @@ no ping is measured (`apps/demo/src/app/room-status.ts:8`); and Instructor v2's 
 (`apps/demo/src/app/teach2/begin.ts:97–99`).
 
 This stage gives the room a code that stays, lets each device choose what it is (learner monitor, a full monitor, a
-defibrillator window, a depth-index screen, the instructor's remote), and shows the instructor a device table with a
+defibrillator window, the ventilator, the instructor's remote; "Depth of anaesthesia" as a slot not available yet), and shows the instructor a device table with a
 measured ping and a status light. It does so with the engine's own numbers only, and with no new message kind.
 
 ## 2. Goals, non-goals, anti-goals
@@ -78,7 +89,7 @@ Goals
 - **Device table with pings.** Every device on the relay is listed, quiet ones included, with what it shows, its
   measured round-trip time and a status light; the status box gives the count and the worst ping (owner, 12:40).
 - **One instrument per screen**, for the instruments the engine computes today: the learner monitor (phone,
-  upright), the monitor (landscape), the defibrillator window (`#/defib`), the depth-index screen, and the ventilator
+  upright), the monitor (landscape), the defibrillator window (`#/defib`), and the ventilator
   in its own window (Q4 ruled 5 November): on a second screen of the laptop, or on a tablet over the relay (R8a–R8d).
   The IABP is a dependency (§9).
 - **"Room setup"** is the Room page grown into the owner's sidebar window: Instructor v2's "Room setup" opens it, it
@@ -117,7 +128,7 @@ Anti-goals (a piece that does one of these is rejected)
 |---|---|---|
 | The QR carries `http://<laptop>:<port>/?join=<CODE>` | `apps/demo/src/app/classroom.ts:42–46` (`learnerUrl`), `:56–68` (`qrTarget`) | The QR's address gains `#/pick` (R4). `?join=CODE` without a hash keeps today's behaviour, so the 11 e2e files and the two kit scripts that open it (`grep -rl "join=" apps/demo/e2e scripts/showcase`) are unchanged |
 | A `?join=` page is a phone learner monitor at once: `data-learner=phone`, portrait follower | `main.ts:50–55`, `:71–84`; `views/follower.ts:101` (`portrait: !!net`) | The picker is a page before the follower; `#/monitor` stays the learner monitor; new hashes pick the other instruments |
-| A follower forces `#/monitor` | `main.ts:72` | Kept for unknown hashes; the instrument hashes (`#/monitor/wide`, `#/defib`, `#/depth`) are allowed |
+| A follower forces `#/monitor` | `main.ts:72` | Kept for unknown hashes; the instrument hashes (`#/monitor/wide`, `#/defib`) are allowed |
 | The follower says `hello {role:'viewer'}` and nothing else | `packages/controller/src/session/viewer-sync.ts:168` | The hello gains `show` and `device` (§4 D1), added in the follower page, not in `viewer-sync.ts` |
 | The guard checks only `role` and `pin` on a hello; other fields pass | `packages/controller/src/guard.ts:122–125` | `show` and `device` are validated when present (R3) |
 | Another device may say only `viewer` or `instructor` in classroom mode | `relay/server.ts:393` | Unchanged |
@@ -151,7 +162,7 @@ Anti-goals (a piece that does one of these is rejected)
 | Learner monitor (phone, upright) | the follower's own engine (`viewer-sync.ts`), sample-identical | `mountMonitor(..., { role:'viewer', portrait: !!net })`, `views/follower.ts:101` | Exists. Default choice in the picker |
 | Monitor (landscape) | as above | the same follower, not portrait (`?follow=` on this computer: `views/follower.ts:77–79`) | Over the relay it is new only in layout: `#/monitor/wide` (R4) |
 | Defibrillator window `#/defib` | the device layer's defibrillator and pacer; their spec comes from the engine's ONE device profile, chosen by the skin (`packages/engine-core/src/l3/device-layer.ts:91–100`, `:175–181`); a skin without a defibrillator falls back to Zoll-like values (`packages/engine-core/src/l3/defib-pacer/defib.ts:11`, equal to `packages/skins/src/data/skins/zoll-like.json:27`; `saadat-like.json:241` is `defib: null`) | the defibrillator skins `zoll-like` and `lifepak-like` (`apps/demo/src/app/site.ts:38–39`); the readout `deviceText` (`packages/renderer/src/device-ui.ts:348–356`) | New route on the follower, wearing a defibrillator skin. **Hazard:** `setSkin` sends `device monitor skin` to that window's own engine (`packages/renderer/src/mount.ts:522`), so the window's device profile becomes its skin's. LIFEPAK-like starts at 200 J (`lifepak-like.json:27`), Zoll-like and the fallback at 120 J: a LIFEPAK window beside a Saadat host would show and deliver a default the host never had. R0 measures it; R5 offers only a style whose profile equals the host's (§4 D5, Q6) |
-| Depth index screen `#/depth` | `di` and `sr`, a BIS-LIKE index, "NOT a BIS algorithm" (`packages/engine-core/src/l2/neuro/depth.ts:1–7`; ids at `types-neuro.ts:47`), published at 1 Hz while the depth device is on (`{device:'depth', action:'on'|'off'}`, `types-neuro.ts:45`) | the BFA tile, a module tile drawn only while the device publishes (`packages/renderer/src/numerics-neuro.ts:1–4`, `:16–20`); on `philips-like` only (`packages/skins/src/data/skins/philips-like.json:19`) | New route showing `di`, `sr` and the window's own trend of `di`. **Gap:** no app control turns the depth device on; only the developer page does (`apps/demo/src/dev/depth-neuromuscular.ts:83`, `:86`). R6 adds the control. No EEG trace: the engine computes none |
+| Depth of anaesthesia | `di` and `sr`, a BIS-LIKE index, "NOT a BIS algorithm" (`packages/engine-core/src/l2/neuro/depth.ts:1–7`; ids at `types-neuro.ts:47`), from effect-site concentrations, with no EEG; published at 1 Hz while the depth device is on (`types-neuro.ts:45`) | the BFA tile on `philips-like` only (`packages/renderer/src/numerics-neuro.ts:1–4`, `:16–20`; `philips-like.json:19`) | **Not in this stage (Q7 ruled 5 November).** Real depth monitors (BIS, Entropy, Narcotrend, SedLine/PSI, qCON and others) each derive their number from the EEG by their own method; the engine has no EEG, so no screen is offered. The slot stays in the picker and the device table as "Not available yet". What an honest one needs: §9a |
 | Ventilator | the cockpit computes its own mechanics and sends 50 frames a second into the engine (`docs/plans/stage-v-ventilator-link.md`, decision 3) | `views/vent.ts`, an iframe linked by a direct frame port (`views/vent.ts:156–159`); the cockpit can also link over BroadcastChannel `pme-vent/<session>` in the same browser (`apps/demo/src/vent/hamilton-page.ts:1–3`, `:12`) **Built (Q4 ruled 5 November), R8a–R8d.** Today its link messages go over a frame port or BroadcastChannel only (`packages/ventilator/src/link/port.ts:1–14`, `:22–27`), "deliberately not" through the controller (`port.ts:3–4`); the host mirrors its commands to same-browser viewers (`packages/controller/src/session/host-session.ts:195–209`) and the relay drops those mirrors (`relay/server.ts:251–253`); an instructor may not send `externalDrive` (`instructor-peer-role.md:132`); while it drives, every network follower HOLDS (`views/follower.ts:32–35`; the host's `cockpit` notice, `host-session.ts:87`, `:124`). R8a–R8d carry the link messages over the relay as their own `vent` kind; the holds stay |
 | IABP | the balloon exists in the circulation (`packages/engine-core/src/l2/circ/devices.ts:1–32`; command `device iabp start/stop/set`, `types-circ.ts:18`; output ratio and augmentation, `types-circ.ts:32`, `l2/hemo/pipeline.ts:547`) | none; no app control sends `device iabp` (`grep -rn iabp apps/demo/src/app` finds only glossary rows, `glossary-data.ts:111`, `:303`) | **Out** (owner: "IABP later"). A console needs a balloon-pressure wave and trigger marks the engine does not compute: a new model, §9 |
 | Instructor remote | P2/P5 on main; P3 draft | `views/remote.ts` (today's panel) | The picker's entry opens P7's form (§8) |
@@ -164,7 +175,7 @@ Anti-goals (a piece that does one of these is rejected)
 | The rail's "Room" page | `apps/demo/src/app/rail.ts:44`; `router.ts:5`, `:14`, `:18` | It is the "Room setup" window (Q2): join, devices, this computer's windows, room code, remembered layout |
 | Settings holds the monitor style (site profile) | `views/settings.ts:24` | Unchanged; Room setup shows the style and links to it (Q2) |
 | "Save and restart" keeps probes and cuff (`RoomKeep`) | `session.ts:28–33`, `:431–438` | Unchanged; Room setup shows the probes attached now, read-only (Q2) |
-| "Open on this computer": learner monitor window, a remote | `views/room.ts:145–156` | Adds Monitor, Defibrillator, Depth index windows and the Ventilator view (R5, R6, R7) |
+| "Open on this computer": learner monitor window, a remote | `views/room.ts:145–156` | Adds Monitor and Defibrillator windows, and the Ventilator (R5, R7, R8d) |
 | The top bar's code pill says "Remote" and opens the pairing page | `main.ts:216`; `views/remote.ts:20–36` | It opens the Room (R7): pairing goes through the one QR |
 | The Monitor view's "Phones" button opens the Room | `views/monitor.ts:22–23` | Unchanged |
 
@@ -204,14 +215,14 @@ Anti-goals (a piece that does one of these is rejected)
   paediatric, AED ladder 200, 300, 360 J, charge 7 s at 200 J and 10 s at 360 J). The owner's department's actual
   machine is named in Q6; it may need a new profile with sourced energies, not one of these two.
 - **D6. The defibrillator window is the one instrument that commands, and only Charge and Shock (Q5 ruled 5
-  November).** The depth screen has no On button; the monitor screens have no controls. The window's two presses
+  November).** The monitor screens have no controls. The window's two presses
   carry no energy: the energy is the room's (the device's selected energy, `defib.ts:76`: a charge without `energyJ`
   keeps `d.energyJ`, which starts at the model's adult energy, `defib.ts:32–33`, or the instructor's selection).
   Shock is never disabled by the window: a shock without a charge is refused by the device
   (`defib.ts:57`, "defibrillator is not charged"), not by a panel lock. The role is admitted by the room code alone,
   with no PIN, because the power it carries is exactly the two presses a learner at a real defibrillator has.
 - **D7. Hashes for the instruments.** On a follower page: `#/monitor` (today's; upright on `?join=`, landscape on
-  `?follow=`), `#/monitor/wide` (landscape over the relay), `#/defib`, `#/depth`, `#/pick`. The same hashes work on
+  `?follow=`), `#/monitor/wide` (landscape over the relay), `#/defib`, `#/pick` (the ventilator's own page is R8d's). The same hashes work on
   `?follow=` (this computer) and `?join=` (the relay). `router.ts` `ROUTES` is the host's list (`router.ts:5`) and
   does not change: the follower branch of `main.ts` parses its own hashes.
 - **D8. Remembered layout = names and expected instruments per device key.** `store` key `pme.roomLayout` on the
@@ -242,7 +253,7 @@ Anti-goals (a piece that does one of these is rejected)
 - **Must not touch (every piece):** `packages/engine-core` (except R5a, owner-ruled Q6), `packages/skins`, the scenario format, the showcase
   cards (`apps/demo/src/app/showcase`), `packages/controller/src/session/viewer-sync.ts`, `host-session.ts` (P3's
   file; R8c and R5d alone extend it, after P3 merges, and its gate drops that path from the diff check below), and what any
-  Instructor press sends, except R6's one new control, named there. `packages/ventilator` is touched by R8a (one
+  Instructor press sends, except R5b's defibrillator-model command, named there. `packages/ventilator` is touched by R8a (one
   additive `LinkMsg` kind) and R8c (a new `relay-port.ts`) only, never its mechanics.
   `packages/renderer` is untouched unless R0 shows that a look-only skin is needed (then R5 stops and reports; §4 D5).
 - **Common gate (before every push):**
@@ -405,7 +416,7 @@ PR for the owner, who rules the final words:
 |---|---|---|
 | Patient monitor | "ECG, pressures, SpO₂, capnography and temperature in the Saadat-style skin." | Kept, with the room's own style named instead of "Saadat-style" (the host's style, `views/follower.ts:181`) |
 | Ventilator | "Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient." | Card shown with the chip "On the instructor's computer" and no "Show here": its frames do not cross the relay (§3.4) |
-| Depth of anaesthesia | "BIS-style index with SQI and EMG, following the hypnotic effect-site concentration." | "BIS-like depth index and suppression ratio, from the hypnotic effect-site concentrations." The engine computes no SQI and no EMG value (`depth.ts:1–7`); the picture drops m5's "SQI 92 / EMG 28" and its EEG line. Shown only once R6 has merged |
+| Depth of anaesthesia | "BIS-style index with SQI and EMG, following the hypnotic effect-site concentration." | Card kept, chip **"Not available yet"**, no action, and one line: "Needs a simulated EEG: planned as an engine stage of its own." (Q7 ruled 5 November; §9a). The picture drops m5's index, SQI, EMG and EEG line: nothing on it the engine computes |
 | Intra-aortic balloon pump | "Timing, augmentation and the arterial trace with the balloon's effect." chip "Coming later", button disabled | As m5: chip "Coming later", no action (Q8; §9) |
 | Defibrillator | "Rhythm strip, energy selection, charge and shock, pacing." | "Rhythm strip, energy selection, charge and shock, pacing", kept with "energy selection" read as the room's model and the instructor's choice: the window has Charge and Shock (Q5 ruled 5 November, R5d), not energy selection. Shown only once R5 has merged |
 | Learner phones | "Each learner's phone follows the monitor; they tick what they noticed for the debrief." | "Learner monitor: this phone follows the patient monitor." No "tick what they noticed" control exists in the app (no such feature at 8d79f188) |
@@ -414,7 +425,7 @@ PR for the owner, who rules the final words:
 m5's foot line "Last time in this room: … Reopen that layout" is a host-side feature: R7 (the remembered layout).
 **Tests first:**
 - dom: `#/pick` shows the m5 cards in m5's order, Learner monitor first, focused and preselected (Q1 ruled 5 November);
-  Defibrillator and Depth of anaesthesia only once R5 and R6 have merged; "Instructor remote" only once P7 has merged,
+  Defibrillator only once R5 has merged; Depth of anaesthesia always present with "Not available yet" and no action; "Instructor remote" only once P7 has merged,
   opening P7's address; the Ventilator and the IABP cards have no "Show here" and say why;
 - the card words equal the "Picker's words" column above (one literal in the test, so a wording change is a reviewed
   diff);
@@ -537,25 +548,6 @@ shown as the device's words, "Not charged"), new `apps/demo/e2e/learner-defib.e2
 **Must not touch:** `panel/defib.ts`'s sends; the engine. **Gate:** common, with `@pme/controller` and `@pme/demo`,
 plus the new e2e and `debrief.e2e.ts` on both projects. **CI load:** 1 run.
 
-### R6: The depth-index screen `#/depth`, and its switch on the Devices sheet (6 h)
-
-**Depends on:** R4. **Files:** new `apps/demo/src/app/views/depth.ts` (the page: `di`, `sr`, a trend of the window's
-own `di` values; the staleness rule of `MODULE_TILES`, `numerics-neuro.ts:16–20`), `depth.dom.test.ts`;
-`views/follower.ts` (the route); `panel/devices.ts` (one control: "Depth monitor on / off", sending
-`device {device:'depth', action}`), `panel/devices.dom.test.ts`; `views/room.ts` (the opener); `join.ts` (the entry).
-**Tests first:**
-- dom: with the depth device on, the screen shows the index and SR as the engine publishes them; after 5 s without a
-  value it reads "Depth monitor off" (the BFA tile's rule, `numerics-neuro.ts:16–20`), never a frozen number;
-- the label is "Depth index (BIS-like)" (Q7), never "BIS" alone (`depth.ts:3`: not a BIS algorithm);
-- the Devices control sends exactly `{type:'device', action:{device:'depth', action:'on'}}` and `off`; the census
-  (`teach2/census.dom.test.ts:44`) is unchanged, its shape being `device`, and the review copy's finer key gains
-  `device depth on/off` (`census.dom.test.ts:55–58`), named in the PR;
-- e2e: on the MH card, the instructor turns the depth monitor on; a `#/depth` window over the relay shows the same
-  index as the host's `measurement` within one second.
-**Acceptance:** the tests pass; `INSTRUCTOR_COMMANDS` (`protocol.ts:299–302`) unchanged. **Must not touch:**
-`packages/engine-core` (the index and its device are used as they are), any other Devices control. **Gate:** common,
-with `@pme/demo`. **CI load:** 1 run.
-
 ### R7: Room setup: the device table with pings, the status box, the windows, the code, the remembered layout (7 h)
 
 **Depends on:** R1, R2. **Files:** `views/room.ts`, `room-status.ts`, new `apps/demo/src/app/room-layout.ts` (pure:
@@ -571,7 +563,8 @@ clarification keeps the host's page to the QR, the connection method and the dev
 in the PR rather than built by default.
 **Tests first:**
 - `roomStatus` with `devices`: Stable when every device answered its last ping under the weak threshold; Weak when the
-  worst ping is over it or a device missed a heartbeat (Q9: [ENG] 300 ms and one missed 10 s heartbeat); Disconnected
+  worst ping is over it or a device missed a heartbeat (Q9 ruled 5 November: 300 ms and one missed 10 s heartbeat,
+  an engineering choice, stated as such on the page's legend); Disconnected
   when the relay socket is down, as today; the box reads "7 devices · worst ping 42 ms";
 - the table: one row per `devices` entry (role, `show` as "Learner monitor" / "Monitor" / "Defibrillator" / "Depth
   index" / "Instructor remote", ping, last heard), plus this computer's windows from their hellos (today's `local`
@@ -583,7 +576,9 @@ in the PR rather than built by default.
   "expected, not connected" row; "Forget the room" clears the layout, not the code or the PIN;
 - the code: "New room code" asks first ("phones following ABC234 will stay on it"), then reloads the page under the
   new code (`?session=` replaced) and stores it;
-- the openers: Learner monitor, Monitor, and (from R5, R6) Defibrillator and Depth index windows; "Ventilator" opens
+- the table lists a "Depth of anaesthesia" device as "Not available yet" if one ever says `show:'depth'` (it cannot
+  today: the picker offers no action);
+- the openers: Learner monitor, Monitor, and (from R5) Defibrillator windows; "Ventilator" opens
   the Ventilator view in this window (`hrefOf('vent')`, as `panel/airway.ts:106` does);
 - Instructor v2's "Room setup" opens `#/room`; its title no longer says "until the room setup has its own window".
 **Acceptance:** the tests pass; `room-qr-tab-guard.e2e.ts` and `mobile-learner.e2e.ts` pass with only additions.
@@ -690,7 +685,7 @@ workflow.
 
 ### R9: The kit's launchers, CLASSROOM.md, CHANGELOG, roadmap (3 h)
 
-**Depends on:** R1, R1b, R4, R5, R6, R7, R8d. **Files:** `scripts/showcase/kit/start-classroom.command`
+**Depends on:** R1, R1b, R4, R5, R5b, R5d, R7, R8d. **Files:** `scripts/showcase/kit/start-classroom.command`
 (`:6` "Phones may only FOLLOW" → "Phones follow; the instructor's phone commands only with the PIN" once P7 has
 merged, else unchanged; `:100` "Monitor view, \"Phones\" (or the \"Phones\" button at the top right)" → "the Room
 (Home → Start here)"; a line that the room code is kept on this computer for this address), the same in
@@ -711,7 +706,7 @@ appended to this plan.
 **Tests first (red against R3's head, green at the end):**
 1. a phone scans the QR, the picker opens, one tap: the learner monitor follows; the Room lists it with a ping;
 2. a second device picks Defibrillator: the Room says "Defibrillator", and its readout follows a charge;
-3. a third picks Depth index; the instructor turns the depth monitor on; the index matches the host's;
+3. a third device opens the picker: "Depth of anaesthesia" reads "Not available yet" and cannot be chosen;
 4. the laptop's page is closed and the app opened again at its bare address: same code; all three devices follow
    again within 15 s [ENG: the follower's back-off plus one heartbeat] without a new scan, and the Room keeps their
    names;
@@ -750,7 +745,6 @@ R0 ─► R5a ─► R5b ─► R5 ─► R5d ───────────�
 R3 ─┬─► R4 ───────────► R5                      │
     ├─► R5c ─────────────────► R5d              │
     ├─► R2 ─────────────────► R7 ───────────────┤
-    │   R4 ─► R6 ───────────────────────────────┤
     └─► R8a ─┬─► R8b ──────┐                    ├─► R9 ─► R10
    [P3 merged]─┴─► R8c ────┴─► R8d ─────────────┤
    [P3 merged] ──────────────► R5d              │
@@ -763,12 +757,12 @@ R1 ─► R1b ─────────────────► R7 ──�
   → R10 (27 h), runs beside it and waits on P3 and P7 (5 h, unbuilt, after P3; it can run beside R8c). R5b does not
   wait for R7: it puts its choice in a card of today's Room page, and R7 rebases over it.
 - **Parallelism:** at most three executors: {R0, R1, R3} first; then {R5a, R4, R8a}; then {R2, R5c, R1b}; then
-  {R5b, R8b, R6} and R8c once P3 is in; then {R5, R7, R8d}; then R5d.
-- **Merge order:** R0, R3, R1, R5a, R4, R8a, R1b, R2, R5c, R8b, R6, R5b, (P3), R8c, R5, R5d, R7, (P7), R8d, R9, R10.
-  R5b, R5, R5d, R6, R7 and R8d touch `views/room.ts` or the follower pages; R4, R5, R6 and R8d touch `join.ts`; R1b,
+  {R5b, R8b} and R8c once P3 is in; then {R5, R7, R8d}; then R5d.
+- **Merge order:** R0, R3, R1, R5a, R4, R8a, R1b, R2, R5c, R8b, R5b, (P3), R8c, R5, R5d, R7, (P7), R8d, R9, R10.
+  R5b, R5, R5d, R7 and R8d touch `views/room.ts` or the follower pages; R4, R5 and R8d touch `join.ts`; R1b,
   R2, R5c and R8b touch `relay/server.ts`; R8c and R5d touch `host-session.ts`; R5d touches `record.ts`, which the
   Debrief 2 plan's D1–D5 also change (coordinate: the later one rebases); each rebases on the one before.
-- **CI load:** 19 PRs, one full CI run each (build with the kit relay smoke test, renderer, e2e on
+- **CI load:** 18 PRs, one full CI run each (build with the kit relay smoke test, renderer, e2e on
   chromium and webkit, the slow-test matrix: `.github/workflows/ci.yml:9`, `:48`, `:105`, `:195`), plus reruns of a
   rebased head; R5a, R8c and R8d also run the validation workflow. Four new e2e files (`room-code.e2e.ts`,
   `vent-window.e2e.ts`, `learner-defib.e2e.ts`, `room-and-instruments.e2e.ts`) and new cases in three existing ones; no new CI job.
@@ -788,7 +782,6 @@ R1 ─► R1b ─────────────────► R7 ──�
 | R5b Room setup's defibrillator choice; panel energies | 4 |
 | R5c learner `defib` role, guard, relay allow-list | 4 |
 | R5d host applies learner presses; record; window buttons; e2e | 6 |
-| R6 depth-index screen and switch | 6 |
 | R7 Room setup | 7 |
 | R8a `ventilator` role, `vent` message, guard | 3 |
 | R8b relay carries `vent` | 5 |
@@ -796,7 +789,7 @@ R1 ─► R1b ─────────────────► R7 ──�
 | R8d ventilator device page, laptop window, picker card | 6 |
 | R9 kit and docs | 3 |
 | R10 end to end, measurements | 5 |
-| **Total** | **92 h**, plus ≈ 10 h of review (46 h before Q3–Q6; 72 h after Q3/Q4) |
+| **Total** | **86 h** in 18 PRs, plus ≈ 10 h of review (46 h before Q3–Q6; 72 h after Q3/Q4; 92 h after Q5/Q6; R6's 6 h removed by Q7) |
 
 **Dependencies out of this plan (new models or new wire)**
 - **IABP console:** a balloon-pressure waveform and trigger/timing marks are not computed
@@ -808,7 +801,64 @@ R1 ─► R1b ─────────────────► R7 ──�
 - **The department's own defibrillator model**, if it is neither of the two the engine knows (Q6): a new profile
   with sourced energies, charge times and ladder, then one line in R5a's `DEFIB_MODELS`.
 - **The pacer apart from the skin:** R5a decouples the defibrillator only; the pacer stays the skin's (not ruled).
-- **EEG trace, SQI, EMG on the depth screen:** not computed (`depth.ts` gives an index and SR only).
+- **The IABP (Q8 ruled 5 November: not in this stage)** is on the engine roadmap as above.
+- **Depth of anaesthesia (Q7 ruled 5 November):** an EEG model and the device algorithms, §9a.
+
+## 9a. Depth-of-anaesthesia devices: what they need
+
+**Ruling (Q7, 5 November).** No single "BIS-like" screen. Each depth monitor the room may gain must be selectable and
+must work from its true mechanism; all of them read the EEG. The engine's depth index is computed from effect-site
+concentrations through an interaction model, with no EEG (`packages/engine-core/src/l2/neuro/depth.ts:1–7`), so it
+cannot stand in for any of them. The EEG model and the per-device algorithms are **an engine stage of their own, to be
+planned separately under the coupling backlog**; this stage keeps only the empty slot (R4, R7).
+
+**Source.** Miller's Anesthesia, 10th ed. (2025), Chapter 36, "Monitoring the Brain's Response to Anesthesia and
+Surgery" (Sleigh, Gaskell, Hight), printed pp. 1133–1152 (the book's table of contents,
+`library/sources/tocs/miller-10th-toc.pdf`: Ch. 36 at 1133, Ch. 37 at 1153). The library's chapter file named for
+Chapter 35 (`library/sources/miller-10th-2025/Ch35 - Neurophysiologic onitoring.pdf`) holds Chapter 36 as its PDF
+pages 40–63, so the pages below were read there with PyMuPDF; the printed page numbers are the book's. Chapter 23
+("Intravenous Drug Delivery Systems") and Chapter 68 ("Ambulatory Anesthesia") name the devices; Chapter 35 has the EEG
+patterns by depth. Chapter 36 is the right source for the EEG; it states that the indices' algorithms "usually remain
+a proprietary secret" (p. 1147), so a device's own method is "to be sourced" from its maker's documentation or the
+validation literature wherever Miller does not give it.
+
+| Device (owner's list, and those Miller names) | What it derives from the EEG | Scale | Source |
+|---|---|---|---|
+| BIS (Bispectral Index, Medtronic) | A weighted combination of EEG features (Miller: band powers, burst suppression and other components, details proprietary); a burst-suppression ratio, with a "QUAZI" sub-algorithm for the forme-fruste suppression that feeds the index; artefact detection and rejection | 100 awake to 0, target 40–60 in the trials | Miller 10e pp. 1140 (suppression ratio, QUAZI), 1146 (history, artefact rejection, burst-suppression detection), 1147 (features proprietary; a BIS of 50 differs between patients, awareness at 40–90), 1149 (Table 36.4, BIS 40–60 trials); scale range p. 2148 (Ch. 68). Feature definitions beyond this: to be sourced |
+| Entropy (GE: State Entropy SE, Response Entropy RE) | Spectral entropy of the EEG (SE) and of a band reaching into the EMG range (RE) | to be sourced | Named, with SE and RE, Miller 10e p. 637 (Ch. 23); spectral entropy correlating with propofol effect-site concentration as BIS does, p. 516 (Ch. 21); bands and scale: to be sourced |
+| Narcotrend (MonitorTechnik) | to be sourced (Miller names it only) | to be sourced | Named, Miller 10e p. 637 (Ch. 23), p. 2148 (Ch. 68) |
+| SedLine / Patient State Index (Masimo) | to be sourced (Miller reports PSI pharmacodynamics, not its method) | PSI values of 29–68 at the clinical end points studied | Named p. 637; PSI-1/PSI-2 C50 and PSI50 values for propofol and sevoflurane, pp. 633–635 (Ch. 23, Kuizenga 2019; Fig. 23.10) |
+| qCON (Quantium Medical / CONOX), with qNOX | to be sourced (Miller names it; qNOX as a nociception index) | to be sourced | Named p. 637 (Ch. 23); a qCON/qNOX study in Ch. 68's reference list |
+| NeuroSENSE (NeuroWave) | to be sourced | to be sourced | Named p. 637 |
+| SNAP II (Stryker) | to be sourced | to be sourced | Named p. 637 |
+| BARM Function Brain Monitor (Cortical Dynamics) | to be sourced | to be sourced | Named p. 637 |
+| Spectral edge frequency (any EEG monitor) | The frequency below which a set share of EEG power lies | Hz | Miller 10e p. 1146 (tracks anaesthesia "quite well", sensitive to eye-movement artefact awake) |
+
+**What a simulated EEG must produce for these algorithms to be honest** (Miller 10e, Ch. 36 unless noted). A
+broadband ("1/f") spectrum whose slope steepens with dose (p. 1139), carrying oscillations in the classic bands —
+slow wave 0.1–2 Hz, delta 0.5–4, theta 4–8, alpha 8–12, beta 12–30 Hz (Table 36.1, p. 1140). By state: awake,
+posterior alpha with eyes closed; at induction a "beta buzz" of about 15–25 Hz, then loss of posterior alpha and
+frontal alpha appearing ("anteriorization", p. 1138); at surgical depth the alpha–delta pattern, with beta and gamma
+power falling (p. 1139); deeper, burst suppression — suppressed stretches under 5 µV alternating with high-amplitude
+bursts, the suppressions lengthening with dose to an isoelectric EEG, read by every monitor as a suppression ratio
+over a 30–60 s window, preceded by a forme-fruste state of brief drops in power above ~2 Hz (pp. 1139–1140; the
+patterns by agent, Ch. 35 p. 1107); at emergence, slow and delta power falling and the alpha peak moving to higher
+frequency before it fades, beta rising, with hysteresis between induction and emergence (p. 1142). By drug, not one
+pattern: sevoflurane loses power above ~20 Hz (pp. 1142–1143); propofol gives more pronounced alpha and delta and
+rarely a theta peak (p. 1143); nitrous oxide changes the EEG little, but abrupt changes in its concentration give
+short-lived large delta waves (p. 1144); ketamine decreases alpha and adds theta and gamma, at hypnotic doses huge slow
+waves with gamma bursts, and "spurious elevation" of the indices (p. 1144); dexmedetomidine gives sleep-like spindles
+(p. 1144); opioids alone, at high concentration, increase delta power (pp. 1144–1145). Age: low-amplitude EEG in
+older patients gives high index values (Table 36.3, p. 1148). And the artefacts the devices must reject or be fooled
+by: scalp EMG at induction and emergence (p. 1142), whose loss under neuromuscular block drops the BIS in an awake
+subject (p. 1148, the "awake paralysis" false negative); eye blinks and eye movements, electrocautery, and ECG
+spikes (p. 1146, Fig. 36.10). A simulated EEG that cannot produce each of these from the engine's drug and
+physiology state would make every device on top of it a fitted display, which the project's rule forbids.
+
+**What the engine stage will need to decide (not decided here):** the EEG's source signal (a generative spectral
+model per state and agent, at the frontal montage the devices use); how it couples to the existing effect-site
+concentrations, the neuromuscular block and stimulation; and, per device, an algorithm that is either the maker's
+published method or, where it is secret, stated as an approximation and labelled so on the screen.
 
 ## 10. Questions for the owner (each with the default the plan uses if no answer comes)
 
@@ -836,14 +886,18 @@ R1 ─► R1b ─────────────────► R7 ──�
    (120 J) and LIFEPAK-style (200, 300, 360 J). **Still open, for you to name:** your department's actual machine
    (maker and model) — ____________________. If it is neither, it needs its own profile with sourced energies and
    charge times before it can be offered (§9).
-7. **The depth screen's name.** The engine's index is BIS-like, not BIS. **Default: "Depth index (BIS-like)"**, and a
-   "Depth monitor on / off" control on the Devices sheet.
-8. **IABP.** **Default: not offered in this stage** (your "IABP later"); it needs a model first (§9).
-9. **When the room reads "Weak".** **Default [ENG]: a device whose last ping is over 300 ms, or that missed one 10 s
-   heartbeat** (the relay closes it at the second). 300 ms is an engineering choice: a follower at that delay still
-   mirrors commands, but a ping that high on a room's Wi-Fi is worth a look. Not a clinical threshold.
-10. **Device names kept across days**, under a random key each device keeps in its own browser (never leaves the
-    room's network). **Default: yes, with "Forget the room" to clear them.**
+7. **Depth of anaesthesia. RULED 5 November.** No single "BIS-like" screen: each depth monitor (BIS, Entropy,
+   Narcotrend, SedLine/PSI and others) must be selectable and work from its true mechanism, which needs a simulated
+   EEG. R6 leaves this stage; the slot stays "Not available yet" (R4, R7); the EEG model and the device algorithms
+   are an engine stage of their own (§9a).
+8. **IABP. RULED 5 November: A.** Not in this stage; engine roadmap (§9).
+9. **When the room reads "Weak". RULED 5 November: A.** A device whose last ping is over 300 ms, or that missed one
+   10 s heartbeat (the relay closes it at the second). 300 ms is an engineering choice, stated as such: a follower at
+   that delay still mirrors commands, but a ping that high on a room's Wi-Fi is worth a look. Not a clinical threshold.
+10. **Device names kept across days. RULED 5 November: A.** Under a random key each device keeps in its own browser
+    (never leaves the room's network); "Forget the room" clears them.
+
+**The one open line:** the owner's department's defibrillator (Q6), which R5a's model list waits on.
 
 ## 11. Self-review against the codebase (8d79f188)
 
@@ -918,8 +972,9 @@ Every claim about today's code, with the line it was read at:
 
 Disagreements found while reading:
 1. The brief says BIS "needs an engine signal and a renderer". The engine already computes a BIS-like index and SR
-   (`depth.ts`), and the renderer has its tile (`numerics-neuro.ts`). What is missing is an app control to switch the
-   device on and a screen of its own (R6). The IABP does need a new model (§9).
+   (`depth.ts`), and the renderer has its tile (`numerics-neuro.ts`); but that index has no EEG behind it, and the
+   owner ruled (Q7) that a depth screen must come from a real device's mechanism on a simulated EEG (§9a). The IABP
+   needs a new model too (§9).
 2. The kit launcher tells the presenter to find the QR under "Monitor view, Phones (or the Phones button at the top
    right)" (`start-classroom.command:100`); the top right carries "Remote" and the code (`main.ts:216`), and the QR
    is on the Room. R9 rewrites the line.
