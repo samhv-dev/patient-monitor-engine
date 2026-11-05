@@ -121,11 +121,12 @@
       ]
     },
     "windowAnchor": {
-      "description": "Where an action's window starts: any anchor; or `each:action:<id>`, one window per taking of that action (resume CPR within 10 s of each rhythm check; plan F9, the owner's ruling of 5 November); or { first: [anchors] }, the earliest of several (CPR from the model's pulse loss or ERC's operating-room rule, whichever comes first).",
+      "description": "Where an action's window starts: any anchor; or `each:action:<id>`, one window per taking of that action (resume CPR within 10 s of each rhythm check; plan F9, the owner's ruling of 5 November); or { display: rule }, the first second a rule on the displayed numerics holds; or { first: [anchors] }, the earliest of several (CPR from the model's pulse loss or ERC's operating-room rule, whichever comes first).",
       "anyOf": [
         { "$ref": "#/definitions/anchor" },
         { "type": "string", "pattern": "^each:action:[A-Za-z][A-Za-z0-9_.-]{0,63}$" },
-        { "type": "object", "required": ["first"], "additionalProperties": false, "properties": { "first": { "type": "array", "minItems": 2, "items": { "$ref": "#/definitions/anchor" } } } }
+        { "type": "object", "required": ["display"], "additionalProperties": false, "properties": { "display": { "$ref": "#/definitions/displayRule" } }, "description": "The first second a rule on the DISPLAYED numerics (rank 2) holds: what the monitor shows, such as the arterial or cuff systolic and the end-tidal CO2 (the operating-room CPR trigger, plan F9)." },
+        { "type": "object", "required": ["first"], "additionalProperties": false, "properties": { "first": { "type": "array", "minItems": 2, "items": { "anyOf": [{ "$ref": "#/definitions/anchor" }, { "type": "object", "required": ["display"], "additionalProperties": false, "properties": { "display": { "$ref": "#/definitions/displayRule" } } }] } } } }
       ]
     },
     "phase": {

@@ -371,10 +371,13 @@ describe('F9: the /2 haemorrhage card on the engine — the debrief grades what 
     const panel = grade(doc, pr.phases, pr.admin, pr.edges, engine.now().simT, { final: false });
     expect(gradesOf(rec.data)).toEqual(panel);
     const g = Object.fromEntries(panel.actions.map((a) => [a.id, a.grade]));
-    // CPR at 11:10 is 10 s after the pulse loss but 60 s after ERC's operating-room rule fired (10:10 on this course,
-    // the earlier anchor since the owner's ruling of 5 November): overdue; the compressions back 10 s after the rhythm
-    // check (CPR row at 13:20): resume met
-    expect(g).toMatchObject({ cpr: 'overdue', resumeCpr: 'met', callForHelp: 'met', epinephrine: 'met', massiveTransfusion: 'met', txa: 'met', sourceControl: 'met', stopCpr: 'met' });
+    // CPR's window opens at the earlier of the pulse loss (11:00) and the operating-room trigger on the displayed monitor
+    // (arterial systolic < 40 for 30 s with EtCO₂ < 25: about 10:40 on this course; the owner's ruling of 5 November):
+    // CPR at 11:10 is within 30 s of it, met. The compressions back 10 s after the rhythm check (CPR row at 13:20):
+    // resume met
+    const cprRow = panel.actions.find((a) => a.id === 'cpr')!;
+    expect(cprRow.dueT).toBeLessThan(660);
+    expect(g).toMatchObject({ cpr: 'met', resumeCpr: 'met', callForHelp: 'met', epinephrine: 'met', massiveTransfusion: 'met', txa: 'met', sourceControl: 'met', stopCpr: 'met' });
     const j = JSON.parse(debriefJson(rec.data, 'test'));
     expect(j.schema).toBe('pme-debrief/3');
     expect(j.actions.map((a: { id: string }) => a.id)).toEqual(panel.actions.map((a) => a.id));

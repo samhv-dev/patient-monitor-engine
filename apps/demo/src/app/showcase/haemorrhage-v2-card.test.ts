@@ -77,12 +77,19 @@ describe('showcase-haemorrhage-v2: the grades of the owner\'s rulings (5 Novembe
     expect(row([a(670, { actionId: 'callForHelp', kind: 'communication' })], 'callForHelp').grade).toBe('met');
     expect(row([], 'callForHelp').grade).toBe('failed');
   });
-  it('CPR from the earlier of the pulse loss and the operating-room rule (SBP < 50 for 10 s with EtCO₂ falling)', () => {
+  it('CPR from the earlier of the pulse loss and the operating-room trigger (displayed arterial systolic < 40 for 30 s, or cuff < 50 with no arterial line, with EtCO₂ < 25)', () => {
     const e2 = [...edges, { rule: 'action:cpr:anchor:1', t: 600, value: true }];
     const g = (admin: Administration[]) => grade(doc, PH, admin, e2, 1200, { final: true }).actions.find((x) => x.id === 'cpr')!;
     expect(g([cpr(620)])).toMatchObject({ grade: 'met', dueT: 600 });
     expect(g([cpr(680)])).toMatchObject({ grade: 'overdue', dueT: 600 }); // in time for the pulse loss, late for the rule
     expect(doc.actions.find((a) => a.id === 'cpr')?.phases).toEqual(['decompensating', 'arrestPea', 'arrestAsystole']);
+    // the trigger reads the displayed monitor (rank 2): the runner evaluates it on displayed values only
+    const r = new PhaseRunner(doc);
+    r.start(0);
+    const disp = (abpSys: number, etco2: number): RunnerInputV2 => ({ kind: 'values', rank: 2, values: { abpSys, etco2 } });
+    for (let t = 1; t <= 100; t++) r.advance(t, [sbp(55), disp(t < 40 ? 60 : 35, t < 60 ? 30 : 22)]);
+    // arterial < 40 from 40 s, held 30 s by 70 s; EtCO₂ < 25 from 60 s: the trigger rises at 70 s (truth sbp 55 ignored)
+    expect(r.edges.find((e) => e.rule === 'action:cpr:anchor:1' && e.value)?.t).toBe(70);
   });
   it('resume CPR within 10 s of each rhythm check (AHA 2025 Part 7 S462; the owner\'s 10 s)', () => {
     const chk = (t: number) => a(t, { actionId: 'rhythmCheck', kind: 'cpr', settings: { active: 0 } });

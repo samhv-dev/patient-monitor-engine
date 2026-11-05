@@ -239,7 +239,9 @@ describe('pme-scenario/2: failAfterS and preparation (plan F9)', () => {
     }
   });
   it('accepts an each:action anchor and a first-of anchor; refuses an unknown action, a single-member first, failAfterS with each', () => {
-    for (const a of [{ window: { anchor: 'each:action:y', withinS: 10 } }, { window: { anchor: { first: ['pulseLoss', { rule: { value: { var: 'sbp', op: '<', value: 50, forS: 10 } } }] }, withinS: 30 } }]) {
+    for (const a of [{ window: { anchor: 'each:action:y', withinS: 10 } }, { window: { anchor: { first: ['pulseLoss', { rule: { value: { var: 'sbp', op: '<', value: 50, forS: 10 } } }] }, withinS: 30 } },
+      { window: { anchor: { first: ['pulseLoss', { display: { all: [{ value: { var: 'abpSys', op: '<', value: 40, forS: 30 } }, { value: { var: 'etco2', op: '<', value: 25 } }] } }] }, withinS: 30 } },
+      { window: { anchor: { display: { value: { var: 'nibpSys', op: '<', value: 50, forS: 30 } } }, withinS: 30 } }]) {
       const r = validateScenario(withAction(a));
       expect(r.ok ? [] : r.errors).toEqual([]);
     }

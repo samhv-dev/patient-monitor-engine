@@ -307,7 +307,7 @@ export function actionWords(a: Action): string {
 }
 
 function anchorWords(x: Action['window'] extends infer W ? (W extends { anchor: infer A } ? A : never) : never): string {
-  if (typeof x !== 'string') return 'first' in x ? `the first of ${x.first.map((y) => anchorWords(y)).join(' or ')}` : phaseRuleWords(x.rule);
+  if (typeof x !== 'string') return 'first' in x ? `the first of ${x.first.map((y) => anchorWords(y)).join(' or ')}` : 'display' in x ? `the monitor showing ${phaseRuleWords(x.display as PhaseRule)}` : phaseRuleWords(x.rule);
   if (x.startsWith('each:action:')) return `each "${x.slice(12)}"`;
   if (x === 'start') return 'the start';
   if (x === 'pulseLoss') return 'the pulse loss';
@@ -318,7 +318,7 @@ function anchorWords(x: Action['window'] extends infer W ? (W extends { anchor: 
 
 const VAR_WORDS: Record<string, string> = {
   etco2: 'EtCO₂', hr: 'HR', tempCore: 'core temperature', mhActivity: 'MH activity', mhExcess: 'MH metabolic excess', ph: 'pH', dantroleneE: 'dantrolene effect',
-  setMinuteVentilationLMin: 'set minute ventilation', k: 'K⁺', sbp: 'SBP', map: 'MAP', spo2: 'SpO₂', lactate: 'lactate',
+  setMinuteVentilationLMin: 'set minute ventilation', k: 'K⁺', sbp: 'SBP', abpSys: 'arterial systolic', nibpSys: 'cuff systolic', map: 'MAP', spo2: 'SpO₂', lactate: 'lactate',
 };
 const varWords = (v: string): string => VAR_WORDS[v] ?? v;
 

@@ -157,7 +157,7 @@
         },
         "withinS": 30
       },
-      "src": "Window from the first sign of the PEA the learners can see: systolic below 25 mmHg held 10 s, the /1 card's own PEA rule (pseudo-PEA, ART about 20/14), 34 s before the model's pulse loss on this course; the decompensation entry (systolic below 60) is a sign of shock, not yet of the PEA. Window length 30 s [PLACEHOLDER: no source; the /1 card's response time for CPR]. The owner's ruling of 5 November amends the 29 October ruling (recognition stays a judged row) for /2 cards: recognition is a timed action the instructor presses when the team says the diagnosis aloud."
+      "src": "Window from the first sign of the PEA the learners can see: systolic below 25 mmHg held 10 s, the /1 card's own PEA rule (pseudo-PEA, ART about 20/14), 34 s before the model's pulse loss on this course; the decompensation entry (systolic below 60) is a sign of shock, not yet of the PEA. Window length 30 s: the owner's number (5 November); no source states one. The owner's ruling of 5 November amends the 29 October ruling (recognition stays a judged row) for /2 cards: recognition is a timed action the instructor presses when the team says the diagnosis aloud."
     },
     {
       "id": "oxygen",
@@ -279,23 +279,54 @@
           "first": [
             "pulseLoss",
             {
-              "rule": {
-                "all": [
+              "display": {
+                "any": [
                   {
-                    "value": {
-                      "var": "sbp",
-                      "op": "<",
-                      "value": 50,
-                      "forS": 10
-                    }
+                    "all": [
+                      {
+                        "value": {
+                          "var": "abpSys",
+                          "op": "<",
+                          "value": 40,
+                          "forS": 30
+                        }
+                      },
+                      {
+                        "value": {
+                          "var": "etco2",
+                          "op": "<",
+                          "value": 25
+                        }
+                      }
+                    ]
                   },
                   {
-                    "slope": {
-                      "var": "etco2",
-                      "op": "<",
-                      "perMin": 0,
-                      "overS": 60
-                    }
+                    "all": [
+                      {
+                        "not": {
+                          "value": {
+                            "var": "abpSys",
+                            "op": ">",
+                            "value": -1
+                          }
+                        }
+                      },
+                      {
+                        "value": {
+                          "var": "nibpSys",
+                          "op": "<",
+                          "value": 50,
+                          "forS": 30
+                        }
+                      },
+                      {
+                        "value": {
+                          "var": "etco2",
+                          "op": "<",
+                          "value": 25
+                        }
+                      }
+                    ]
                   }
                 ]
               }
@@ -305,7 +336,7 @@
         "withinS": 30,
         "failAfterS": 120
       },
-      "src": "Window from the EARLIER of the model's pulse loss (the /1 card's objective 2) and ERC's operating-room rule, ERC Guidelines 2025 Special Circumstances (Resuscitation 2025;215:110753), p.11: 'Start chest compressions if the systolic blood pressure suddenly decreases below 50 mmHg, in association with fall in ETCO2, despite appropriate interventions.' (p.36: 'Recent proposals suggest starting chest compression if systolic blood pressure stays below 50 mmHg despite interventions to treat the underlying cause.'). Measured as: systolic (engine truth) below 50 mmHg held N = 10 s [PLACEHOLDER: the /1 card's own hold for its systolic rules], with EtCO2 falling, least-squares slope below Y = 0 mmHg/min (any fall) [PLACEHOLDER: ERC gives no size] over Z = 60 s [PLACEHOLDER: no source]. 'Despite appropriate interventions' cannot be computed and is not part of the rule. Within 30 s: the /1 card's objective 2; fail limit 120 s: the owner's ruling of 5 November; rate 100–120/min: design §11. UNDER THE OWNER'S REVIEW (5 November): ERC Guidelines 2025 Special Circumstances, Traumatic cardiac arrest (Resuscitation 2025;215:110753), p.29: 'Immediate resuscitative efforts in traumatic cardiac arrest focus on simultaneous treatment of reversible causes, which takes priority over chest compressions.' Resuming after a rhythm check (the CPR press again) is recorded, not timed: no window is stated in the sources read: ERC 2025 ALS states resumption only after a shock (p.7: 'Immediately resume chest compressions after shock delivery.'); for a check without a shock, Miller's Anesthesia, 10th ed. (2025), Ch82 'Cardiopulmonary Resuscitation and Advanced Cardiac Life Support' (AHA-based; the source the owner's 'guideline for all' ruling takes, 5 November, until the ERC 2021 text is in the library), PDF p.3: 'the compressions should be resumed as soon as possible after rhythm analysis or defibrillation.'"
+      "src": "Window from the EARLIER of the model's pulse loss (the /1 card's objective 2) and the operating-room trigger, read on the DISPLAYED monitor: ERC Guidelines 2025 Special Circumstances (Resuscitation 2025;215:110753), p.11: 'Start chest compressions if the systolic blood pressure suddenly decreases below 50 mmHg, in association with fall in ETCO2, despite appropriate interventions.' Threshold: the cuff (NIBP) systolic below 50 mmHg when only a cuff is displayed, the arterial systolic below 40 mmHg when an arterial line is displayed (this card), by Harper NJN, Nolan JP, Soar J, Cook TM, Br J Anaesth 2020;124:234-238, p.236: 'the proposed NIBP systolic pressure threshold of 50 mm Hg'; p.237: 'when NIBP is less than 50 mm Hg the actual systolic arterial pressure is likely to be ~10 mm Hg lower'. Duration 30 s: the owner's number (5 November); the sources give none (NAP7, Nolan et al., Anaesthesia 2024;79:914-923, p.919: 'decreases and remains < 50 mmHg despite interventions'; Harper p.235: 'decreases to less than 50 mm Hg'). EtCO2 below 25 mmHg at the moment the pressure condition is met: the owner's clinical number (5 November); Hinkelbein et al., ESAIC/ESTES, Eur J Anaesthesiol 2023;40:724-736, p.728, reports only an association of '<20 mmHg' with severe anaphylaxis and nonsurvival, and Harper p.236 states that further work is needed 'before one is able to propose a threshold value of PECO2'. 'Despite appropriate interventions' is not computed; Harper p.235 names them: 'Primary interventions include haemostasis, intravenous fluids, and vasoactive drugs'. Scope: Harper p.235 excludes 'haemorrhagic shock with uncontrolled bleeding, in which chest compressions might accelerate blood loss'; Hinkelbein p.733: in hypovolaemic pseudo-PEA 'CCC should be withheld and resuscitation should focus on haemorrhage control and replacement of fluids and blood products'. The trigger applies to this card because the bleed is controlled at 10:00, before it can fire (the owner's ruling, 5 November). Within 30 s: the /1 card's objective 2; fail limit 120 s: the owner's ruling of 5 November; rate 100–120/min: design §11. Resuming after a rhythm check (the CPR press again) is also the Resume CPR row's."
     },
     {
       "id": "bag",

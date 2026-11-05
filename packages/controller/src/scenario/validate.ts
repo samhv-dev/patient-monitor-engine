@@ -191,6 +191,8 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
       if (c.type === 'applyEvent' && c.event.kind === 'drug') drug(c.event.drugId, `${path}/${k}/event/drugId`);
     });
 
+  /** Display-rule anchors of action windows (F9), checked with the judged rows' display rules below. */
+  const displayAnchors: Array<[DisplayRule, string]> = [];
   let initial: string | null = null;
   doc.phases.forEach((p, i) => {
     if (p.initial) {
@@ -217,7 +219,8 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
       a.drug.route?.set.forEach((r, k) => ids.forEach((id) => routeHonoured(id, r) || warnings.push(`${at}/drug/route/set/${k}: ${id}: route ${r} is judged; the engine does not model it`)));
     }
     const wa = a.window?.anchor;
-    if (wa !== undefined && typeof wa !== 'string' && 'first' in wa) wa.first.forEach((x, k) => anchor(x, `${at}/window/anchor/first/${k}`));
+    if (wa !== undefined && typeof wa !== 'string' && 'first' in wa) wa.first.forEach((x, k) => (typeof x !== 'string' && 'display' in x ? displayAnchors.push([x.display, `${at}/window/anchor/first/${k}/display`]) : anchor(x as Anchor, `${at}/window/anchor/first/${k}`)));
+    else if (wa !== undefined && typeof wa !== 'string' && 'display' in wa) displayAnchors.push([wa.display, `${at}/window/anchor/display`]);
     else if (typeof wa === 'string' && wa.startsWith('each:action:')) {
       action(wa.slice(12), `${at}/window/anchor`);
       if (a.window?.failAfterS !== undefined) errors.push(`${at}/window/failAfterS: not with an each:action anchor`);
@@ -252,6 +255,7 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
     else if ('not' in r) display(r.not, `${path}/not`);
   };
   doc.judged?.forEach((j, i) => display(j.display, `/judged/${i}/display`));
+  for (const [r, path] of displayAnchors) display(r, path);
   doc.outcomes?.forEach((o, i) => {
     rule(o.rule, `/outcomes/${i}/rule`);
     anchor(o.anchor, `/outcomes/${i}/anchor`);

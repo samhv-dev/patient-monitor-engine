@@ -642,7 +642,16 @@ empty).
   the first sign. Applied to the haemorrhage card in F9; the MH card (`showcase-mh-v2`, its name-MH row) follows in a
   separate PR. Also added: an action window anchored on each taking of another action (`each:action:<id>`: resume CPR
   within 10 s of each rhythm check) and on the earliest of several anchors (`{ first: [...] }`: CPR from the pulse loss
-  or ERC 2025's operating-room rule, whichever is first).
+  or ERC 2025's operating-room rule, whichever is first), and a window anchored on a rule on the DISPLAYED numerics
+  (`{ display: rule }`, alone or as a `first` member: the operating-room trigger reads what the monitor shows).
+- **A rule for future cards (the owner, 5 November):** the operating-room CPR trigger (displayed systolic below 50 mmHg
+  on the cuff, or below 40 mmHg on an arterial line, for 30 s, with EtCO₂ below 25 mmHg) does NOT apply while bleeding
+  is uncontrolled. Harper et al., Br J Anaesth 2020;124:234–238, p.235, excludes "haemorrhagic shock with uncontrolled
+  bleeding, in which chest compressions might accelerate blood loss and lead to worse outcomes"; Hinkelbein et al.
+  (ESAIC/ESTES), Eur J Anaesthesiol 2023;40:724–736, p.733: in hypovolaemic pseudo-PEA "CCC should be withheld and
+  resuscitation should focus on haemorrhage control and replacement of fluids and blood products". A card whose bleed is
+  still running when the trigger can fire must not anchor CPR on it. The haemorrhage card qualifies only because its
+  bleed is controlled at 10:00, before the trigger can fire.
 
 ### F10: Authoring guide, CHANGELOG, roadmap (4 h est.)
 - `docs/guides/scenario-authoring.md`: a `/2` section with one validated example (`<!-- example: pme-scenario/2 -->`);

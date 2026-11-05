@@ -224,7 +224,7 @@ export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: 
     return gradeOf(an.slice(7))?.given?.t;
   };
   const anchorWords = (an: WindowAnchor): string =>
-    typeof an !== 'string' ? ('first' in an ? `none of ${an.first.length} anchors happened` : `${ruleWords(an.rule)} never held`)
+    typeof an !== 'string' ? ('first' in an ? `none of ${an.first.length} anchors happened` : `${ruleWords('display' in an ? an.display : an.rule)} never held`)
     : an.startsWith('each:action:') ? `action ${an.slice(12)} never taken` : an.startsWith('phase:') ? `phase ${an.slice(6)} never entered` : an.startsWith('action:') ? `action ${an.slice(7)} never given` : `${an} never happened`;
 
   function gradeOf(id: string): { row: ActionGrade; given?: Administration } | undefined {

@@ -1194,7 +1194,8 @@ idioventricular at 12:52 and to asystole at 15:25 untreated: CPR after that is t
 **Rows and grades** (Instructor v2's ACTION, graded live): oxygen and intubate in Bleeding/Decompensating; **Recognise
 and announce the diagnosis** (press it when the team says it aloud; within 30 s of the systolic below 25 for 10 s, a
 placeholder window); **Start CPR** from Decompensating on (within 30 s of the pulse loss or of ERC's operating-room rule,
-systolic below 50 with EtCO₂ falling, whichever is first, met; to 2 min overdue; later failed though started); in the
+the operating-room trigger on the monitor, arterial systolic below 40 for 30 s with EtCO₂ below 25 (10:39 on the
+A4 path), whichever is first, met; to 2 min overdue; later failed though started); in the
 arrest phases call for help, **Resume CPR after the rhythm check** (within 10 s of each check),
 bag 10/min, epinephrine 1 mg IV (again every 3–5 min from the previous dose), source control, massive transfusion, TXA
 1 g, rhythm check (every 2 min); in ROSC "Rhythm check: pulse back, stop CPR" (within 2 min of ROSC). Epinephrine 1 mg

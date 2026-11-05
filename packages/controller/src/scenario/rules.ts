@@ -41,8 +41,9 @@ export function namedRules(doc: ScenarioDocV2): NamedRule[] {
     const an = a.window?.anchor;
     if (an && typeof an !== 'string') {
       if ('rule' in an) add(`action:${a.id}:anchor`, an.rule);
+      else if ('display' in an) add(`action:${a.id}:anchor`, an.display, 2); // the displayed numerics (F9)
       // the earliest of several (F9): each rule member is its own named rule, `action:<id>:anchor:<i>`
-      else an.first.forEach((x, i) => typeof x !== 'string' && add(`action:${a.id}:anchor:${i}`, x.rule));
+      else an.first.forEach((x, i) => typeof x !== 'string' && ('display' in x ? add(`action:${a.id}:anchor:${i}`, x.display, 2) : add(`action:${a.id}:anchor:${i}`, x.rule)));
     }
     add(`action:${a.id}:precondition`, a.precondition);
     add(`action:${a.id}:repeatWhile`, a.repeatWhile?.rule);

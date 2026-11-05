@@ -46,8 +46,8 @@ export type AnyRule = PhaseRule | DisplayRule;
 export type Anchor = 'start' | 'pulseLoss' | 'rosc' | `phase:${string}` | `action:${string}` | { rule: PhaseRule };
 
 /** An action window's anchor (plan F9): any Anchor; `each:action:<id>`, one window per taking of that action; or the
- *  earliest of several anchors. */
-export type WindowAnchor = Anchor | `each:action:${string}` | { first: Anchor[] };
+ *  first second a rule on the displayed numerics (rank 2) holds; or the earliest of several anchors. */
+export type WindowAnchor = Anchor | `each:action:${string}` | { display: DisplayRule } | { first: Array<Anchor | { display: DisplayRule }> };
 /** A prescribed value and what is accepted: `value` (± `tolerance`) and/or a `min`/`max` range. */
 export interface Amount { value?: number; tolerance?: number; min?: number; max?: number }
 export interface Dose extends Amount { unit: string }
