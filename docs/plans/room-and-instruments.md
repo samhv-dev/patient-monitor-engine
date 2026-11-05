@@ -4,6 +4,14 @@
 it is ruled until the owner answers "Questions for the owner" (§10) and the orchestrator reviews the pieces. No product
 code, test, card or kit file was changed while writing it.
 
+**Amended 2026-11-05 (owner's first rulings on this plan):** Q1 and Q2 are **ruled 5 November** (§10): the QR opens
+the picker, Learner monitor first and preselected, one tap; Room setup is the Room page grown. The picker's design
+source is the owner's mock-up m5 "instrument cards" of 26 October (`research/00-orchestrator-rulings.md:2086–2087`:
+"the DEVICE that scans the QR opens the instrument picker (mockup 5)"), copied into this branch so it survives the
+disposable folder it came from: `docs/plans/room-and-instruments/mockup/` (`m5-instruments-owner.html`, `.png`,
+`instruments.css`, `instruments.js`, and `base.css`, which the page links). R4 follows its layout and wording, with
+the exceptions listed in R4. Q3 to Q10 stay open.
+
 **Base and preconditions.**
 - Base: `origin/main` **8d79f188** (Merge PR #197, `feat-peer-p4`), read in the worktree `scratch/wt-room-plan`
   (branch `plan-room-and-instruments`). Every `file:line` below is on 8d79f188 and is a starting point only: an
@@ -296,17 +304,44 @@ relay smoke test, `.github/workflows/ci.yml:48`, covers the new step).
 workspace; no behaviour change. **Must not touch:** `relay/`, sessions, the app. **Gate:** common, with
 `@pme/controller`. **CI load:** 1 run.
 
-### R4: The picker on the device, and the follower's instrument hashes (6 h)
+### R4: The picker on the device, and the follower's instrument hashes (7 h; 6 h before m5 became its design source, +1 h for the cards and their drawings)
 
 **Depends on:** R3. **Files:** new `apps/demo/src/app/views/join.ts` (the picker), `join.dom.test.ts`;
 `classroom.ts` (`learnerUrl` adds `#/pick` for the QR only; an `instrumentOf(hash)` parser), `classroom.test.ts`;
 `main.ts` (the follower branch, `:71–84`, and `:55`'s phone layout only for the learner); `views/follower.ts` (the
 transport wrapper that adds `show` and `device` to its hellos; `portrait` from the instrument, `:101`);
 `app.css`; `mobile-learner.e2e.ts` (its QR-address assertions, `:107–108`, gain `#/pick`).
+**Design source (Q1 ruled 5 November): mock-up m5**, `docs/plans/room-and-instruments/mockup/m5-instruments-owner.html`
+and its 1280 px capture. The picker takes m5's layout: one card per instrument in a grid (three across at 1280 px, one
+column on a phone at 375 px), each card a picture (`instruments.js`'s drawings, as inline SVG, no external font or
+image), the title, a status chip (`.st`, `.st.on` for the one this device shows), one line of description, and the
+card's action; the room code under the title, as m5's header shows it. m5 was drawn as a host page ("New window", "To
+a device", "This screen"); on the device the card's one action is **"Show here"**, and the host-side actions belong to
+R7's Room setup. m5's titles are kept: "Patient monitor", "Ventilator", "Depth of anaesthesia", "Intra-aortic balloon
+pump", "Defibrillator", plus "Learner monitor" (m5's "Learner phones" card, said from the phone) and "Instructor
+remote" (the 11:55 ruling, not drawn in m5). Its descriptions are kept where the product does what they say, and
+changed where it does not (anti-goal: nothing on a screen the engine does not compute). Each change is listed in the
+PR for the owner, who rules the final words:
+
+| m5 card | m5's words | Picker's words, and why |
+|---|---|---|
+| Patient monitor | "ECG, pressures, SpO₂, capnography and temperature in the Saadat-style skin." | Kept, with the room's own style named instead of "Saadat-style" (the host's style, `views/follower.ts:181`) |
+| Ventilator | "Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient." | Card shown with the chip "On the instructor's computer" and no "Show here": its frames do not cross the relay (§3.4) |
+| Depth of anaesthesia | "BIS-style index with SQI and EMG, following the hypnotic effect-site concentration." | "BIS-like depth index and suppression ratio, from the hypnotic effect-site concentrations." The engine computes no SQI and no EMG value (`depth.ts:1–7`); the picture drops m5's "SQI 92 / EMG 28" and its EEG line. Shown only once R6 has merged |
+| Intra-aortic balloon pump | "Timing, augmentation and the arterial trace with the balloon's effect." chip "Coming later", button disabled | As m5: chip "Coming later", no action (Q8; §9) |
+| Defibrillator | "Rhythm strip, energy selection, charge and shock, pacing." | "Rhythm strip, energy, charging and pacing as the instructor sets them." Display only until Q5 is answered (§4 D6). Shown only once R5 has merged |
+| Learner phones | "Each learner's phone follows the monitor; they tick what they noticed for the debrief." | "Learner monitor: this phone follows the patient monitor." No "tick what they noticed" control exists in the app (no such feature at 8d79f188) |
+| (Instructor remote) | not in m5 | "Run the case from this phone. Needs the instructor's PIN." Shown only once P7 has merged; its action opens P7's PIN form |
+
+m5's foot line "Last time in this room: … Reopen that layout" is a host-side feature: R7 (the remembered layout).
 **Tests first:**
-- dom: `#/pick` lists Learner monitor (first, focused, preselected), Monitor (landscape), and — only once R5 and R6
-  have merged — Defibrillator and Depth index; "Instructor remote" only once P7 has merged, opening P7's address;
-  the Ventilator is not offered (a line says it runs on the instructor's computer);
+- dom: `#/pick` shows the m5 cards in m5's order, Learner monitor first, focused and preselected (Q1 ruled 5 November);
+  Defibrillator and Depth of anaesthesia only once R5 and R6 have merged; "Instructor remote" only once P7 has merged,
+  opening P7's address; the Ventilator and the IABP cards have no "Show here" and say why;
+- the card words equal the "Picker's words" column above (one literal in the test, so a wording change is a reviewed
+  diff);
+- the grid is one column at 375 px and three at 1280 px; every card's action is a 44 px target
+  (`app-accessibility.e2e.ts`);
 - the last choice is kept in the device's `store` (`pme.instrument`) and is preselected next time, never applied
   without a tap (Q1);
 - a "Change" control in the follower bar returns to `#/pick`;
@@ -366,6 +401,12 @@ the remembered layout, D8), `room-layout.test.ts`; `console-pages.dom.test.ts` (
 `teach2/begin.ts` (`:97–99`: "Room setup" opens `#/room`); `main.ts` (`:216`: the code pill opens the Room;
 `session.ts`'s `onFollowers` gains the `devices` list beside the count); `room-qr-tab-guard.e2e.ts` (new cases);
 `app-accessibility.e2e.ts` (the new controls).
+**Q2 ruled 5 November:** Room setup is this page grown. The host-side parts of mock-up m5 land here, not in R4: the
+openers ("New window" per instrument), the remembered layout ("Last time in this room: … Reopen that layout") and the
+which-screen chips ("This screen", "Screen 2"), using R4's card component so the two pages look alike. m5's "To a
+device" is read as "show the join QR preset to that instrument" (`?join=CODE#/defib`, never a PIN); the owner's 11:35
+clarification keeps the host's page to the QR, the connection method and the device table, so this is offered to him
+in the PR rather than built by default.
 **Tests first:**
 - `roomStatus` with `devices`: Stable when every device answered its last ping under the weak threshold; Weak when the
   worst ping is over it or a device missed a heartbeat (Q9: [ENG] 300 ms and one missed 10 s heartbeat); Disconnected
@@ -467,7 +508,7 @@ R3 ─┬─► R2 ─────────► R7 ─┬─► (R8)      ├�
 R1 ─────────────────► R7
 ```
 
-- **Critical path:** R3 (2) → R2 (5) → R7 (7) → R9 (3) → R10 (5) = **22 h**. R4 → R5/R6 (6 + 6) runs beside R2 → R7.
+- **Critical path:** R3 (2) → R2 (5) → R7 (7) → R9 (3) → R10 (5) = **22 h**. R4 → R5/R6 (7 + 6) runs beside R2 → R7.
 - **Parallelism:** at most three executors: {R0, R1, R3} first; then {R2, R4} and R5 when R0 and R4 are in; then
   {R6, R7}. R8 waits for Q4.
 - **Merge order:** R0, R3, R1, R2, R4, R5, R6, R7, (R8), R9, R10. R5, R6 and R7 all touch `views/room.ts` (the
@@ -485,14 +526,14 @@ R1 ─────────────────► R7
 | R1 persistent room code | 4 |
 | R2 relay ping and `devices` | 5 |
 | R3 `show` and `device` on the hello | 2 |
-| R4 picker, instrument hashes | 6 |
+| R4 picker (mock-up m5), instrument hashes | 7 |
 | R5 defibrillator window | 5 |
 | R6 depth-index screen and switch | 6 |
 | R7 Room setup | 7 |
 | R8 ventilator window (only if Q4 yes) | 6 |
 | R9 kit and docs | 3 |
 | R10 end to end, measurements | 5 |
-| **Total** | **45 h without R8, 51 h with it**, plus ≈ 5 h of review |
+| **Total** | **46 h without R8, 52 h with it**, plus ≈ 5 h of review |
 
 **Dependencies out of this plan (new models or new wire)**
 - **IABP console:** a balloon-pressure waveform and trigger/timing marks are not computed
@@ -506,13 +547,13 @@ R1 ─────────────────► R7
 
 ## 10. Questions for the owner (each with the default the plan uses if no answer comes)
 
-1. **The picker on scan.** The QR opens the picker with Learner monitor first and preselected (one tap), and the
-   phone remembers its last choice as the preselected one. Or the QR opens the learner monitor at once, with a
-   "Change" button to the picker. **Default: the picker, one tap** (your 11:35 picture).
-2. **Room setup.** The Room page becomes the "Room setup" window (join, devices, windows, room code, remembered
-   layout), Instructor v2's "Room setup" opens it, the monitor style stays in Settings with a link, and the probes are
-   shown read-only. Or Room setup is a page of its own beside the Room. **Default: the Room page grown into Room
-   setup; "reset the room" forgets the layout and names only.**
+1. **The picker on scan. RULED 5 November: A.** The QR opens the picker, Learner monitor first and preselected, one
+   tap; the phone remembers its last choice as the preselected one. The picker follows mock-up m5 (R4). (Option B, the
+   learner monitor at once with a "Change" button, was not chosen.)
+2. **Room setup. RULED 5 November: A.** The Room page becomes the "Room setup" window (join, devices, windows, room
+   code, remembered layout), and Instructor v2's "Room setup" opens it. (Option B, a page of its own beside the Room,
+   was not chosen.) Still the plan's default, not ruled: the monitor style stays in Settings with a link, the probes
+   are shown read-only, and "reset the room" forgets the layout and names only.
 3. **The room code's lifetime.** Kept on this computer until "New room code" is pressed, or a new code each day.
    **Default: kept until pressed.** A learner from an earlier class who kept the address can follow again, never
    command.
