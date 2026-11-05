@@ -90,7 +90,7 @@ export type ExtraCommand = CommandBase &
     | { type: 'setMode'; mode: 'manual' | 'modeled' }
     | {
         type: 'scenario';
-        action: 'load' | 'goto' | 'trigger' | 'pause' | 'resume' | 'bookmark' | 'restoreBookmark';
+        action: 'load' | 'goto' | 'trigger' | 'pause' | 'resume' | 'bookmark' | 'restoreBookmark' | 'record';
         target?: string;
         doc?: unknown;
         /** With `bookmark` (Instructor v2 marks): the mark's kind and the instructor's note. Metadata only: carried on the
@@ -309,7 +309,7 @@ export const INSTRUCTOR_COMMANDS: ReadonlySet<string> = new Set([
   'applyEvent airway', 'applyEvent bleed', 'applyEvent condition', 'applyEvent cpr', 'applyEvent defib', 'applyEvent drug',
   'applyEvent fluid', 'applyEvent infusion', 'applyEvent lungCondition', 'applyEvent pacer', 'applyEvent vaporiser',
   'applyEvent ventilation', 'attachSensor', 'device', 'pin', 'release', 'scenario bookmark', 'scenario goto',
-  'scenario pause', 'scenario restoreBookmark', 'scenario resume', 'scenario trigger', 'setMode', 'setRhythm', 'setTarget',
+  'scenario pause', 'scenario record', 'scenario restoreBookmark', 'scenario resume', 'scenario trigger', 'setMode', 'setRhythm', 'setTarget',
   'time jump', 'time pause', 'time resume', 'time scale', 'note',
 ]);
 
