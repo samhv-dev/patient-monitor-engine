@@ -91,7 +91,7 @@ transports (`src/protocol.ts`).
 | `batch` | `number` | Command batches sent (the start's setup and the script's entries); `driver.position()` reads it. |
 | `enteredT` | `number` | The sim time the current phase was entered. |
 | `truth` | `Record<string, { v: number; t: number }>` | Engine truth (rank 3) by name, which every phase, outcome and anchor rule reads (Q22). |
-| `display` | `Record<string, { v: number; t: number }>` | The displayed numerics (rank 2) by name, which only a judged row's clock reads (§7). |
+| `display` | `Record<string, { v: number; t: number }>` | The displayed numerics (rank 2) by name, which only a `display` window anchor reads (§7). |
 | `rhythm` | `string \| null` | The rhythm id the engine draws; null until one arrives. |
 | `pulse` | `boolean \| null` | The pulse (F4's `signals.pulse`); null until one arrives. |
 | `pulseLost` | `boolean` | The pulse has been lost at some point of the course (`rosc` is a pulse after a loss). |

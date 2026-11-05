@@ -304,7 +304,7 @@ No exported `…State` type in this module.
 | `reachable` | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | Whether `to` can still be reached from `from` on the card graph (`to` and `else` of every transition; |
 | `standingOf` | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | Whether an objective asks for untaken step `tr` of a stage current from `dueT` until it was left at `leftT` (null: |
 | `untakenStatus` | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | An untaken step's status (answer 7 as refined): |
-| `phaseRowsOf` | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | ---- a pme-scenario/2 card (plan F6) ---- The open actions of phase `phaseId` (in the card's order), then its judged rows, then the rules out of the phase: |
+| `phaseRowsOf` | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | ---- a pme-scenario/2 card (plan F6) ---- The open actions of phase `phaseId` (in the card's order), then the rules out of the phase: |
 | `actionWords` | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | A /2 action's prescription in words, for its row's subtitle ("not graded" for a setup action; |
 | `phaseRuleWords` | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | A /2 phase rule in words: |
 | `scenarioCard` | [`apps/demo/src/app/cards.ts`](../../apps/demo/src/app/cards.ts) | Scenario card: |

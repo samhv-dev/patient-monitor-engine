@@ -4,8 +4,9 @@
 // from the glossary and the alarm table. Also the one-row-per-minute table, the card's steps with their status, the
 // instructor's judged objectives and the marks (Instructor v2, IP8), and the export's shape (written by
 // `debrief-export.ts`). A pme-scenario/2 run (plan F7) has no objectives and no steps: its report is the grade()
-// of the controller on the inputs the record copied (the panel's function), as actions, outcomes, violations and judged
-// rows (`pme-debrief/3`). No DOM.
+// of the controller on the inputs the record copied (the panel's function), as actions, outcomes and violations
+// (`pme-debrief/3`; a team act the instructor observes is a record action among the actions: judged rows are retired,
+// the owner's ruling of 5 November). No DOM.
 import { asV1, isV2, manualLabel, type MarkKind } from '@pme/controller';
 import { grade, ruleWords, type Anchor, type Grade, type Grades, type ObjectiveRule, type PhaseEntry, type RunEventId, type ScenarioDocV2 } from '@pme/controller/scenario';
 import { FIXED_ALARM_WORDS } from './alarms.ts';
@@ -324,8 +325,6 @@ export interface Report3 {
   /** `pending`: the run has not ended (D5) and the outcome's window is still open. */
   outcomes: Array<{ id: string; text: string; status: 'reached' | 'not reached' | 'pending'; t: number | null; why: string }>;
   violations: Array<{ t: number; seq: number; text: string; harm: 'modelled' | 'not modelled' }>;
-  /** The instructor's rows: `fromT` the display clock's start (the monitor showed it), `pressedT` the instructor's press. */
-  judged: Array<{ id: string; text: string; kind: 'recognition' | 'communication'; fromT: number | null; pressedT: number | null }>;
 }
 
 /** The report of a /2 run (null: a /1 run, or no copied inputs). */
@@ -342,7 +341,6 @@ export function report3(d: RunData): Report3 | null {
   const anchorAt = (id: string, an: Anchor): number | undefined =>
     an === 'start' ? 0 : typeof an !== 'string' ? firstEdge(`outcome:${id}:anchor`) : an.startsWith('phase:') ? (d.phases ?? []).find((p: PhaseEntry) => p.id === an.slice(6))?.t
     : an.startsWith('action:') ? g.actions.find((a) => a.id === an.slice(7))?.givenT : firstEdge(an);
-  const ticks = kept(d).filter((r) => r.kind === 'note');
   return {
     actions: g.actions.map((a) => ({
       id: a.id, label: a.label, kind: doc.actions.find((x) => x.id === a.id)?.kind ?? '', grade: a.grade, firstGrade: a.firstGrade, lines: a.lines,
@@ -362,19 +360,8 @@ export function report3(d: RunData): Report3 | null {
       return { id: o.id, text: o.text, status: o.grade, t: o.t ?? null, why };
     }),
     violations: g.violations.map((v) => ({ t: v.t, seq: v.seq, text: v.text, harm: v.harm })),
-    judged: g.judged.map((j) => ({
-      id: j.id, text: j.text, kind: j.kind, fromT: j.fromT ?? null,
-      pressedT: ticks.find((r) => r.text === `Objective met: ${drugWords(j.text)}`)?.t ?? null, // teach2/press.ts judge()
-    })),
   };
 }
-/** A judged row's display rule in words ("etco2 > 45"; a phase's rule by the phase's name, "early signs"): what its
- *  clock starts on. */
-export const displayWords = (d: RunData, id: string): string | null => {
-  const doc = d.doc && isV2(d.doc) ? d.doc : undefined;
-  const r = doc?.judged?.find((j) => j.id === id)?.display;
-  return r && doc ? ruleWords(r, doc.phases) : null;
-};
 
 /** Every mark (bookmark) of the run in order, with its kind and note when it has them; an undone one says so. */
 export function marks(d: RunData): Array<{ t: number; label: string; kind?: Exclude<MarkKind, 'stage'>; note?: string; undone?: number }> {

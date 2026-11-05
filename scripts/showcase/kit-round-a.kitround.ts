@@ -367,10 +367,12 @@ class Run {
     await this.row(`Load "${title}" at ×${speed}, Bookmark`);
   }
 
-  /** Scenario tab: tick the running card's objective whose words match (the instructor's judgement, E54/E52). */
+  /** Scenario tab: tick the running card's objective whose words match (the instructor's judgement, E54/E52). A /2 card
+   *  has no judged rows (retired, the owner's ruling of 5 November): its row is a record action, pressed as any action. */
   async tick(re: RegExp): Promise<void> {
     await this.teachTab('scenario');
-    if (this.v2) await this.page.locator('.ip2-action .ip2-rows:not(.ip2-finished-list) button.ip2-row[data-kind=judged]', { has: this.page.locator('.ip2-row-title', { hasText: re }) }).click();
+    if (this.card === 2) await this.page.locator('.ip2-action .ip2-rows:not(.ip2-finished-list) button.ip2-row[data-kind=step]', { has: this.page.locator('.ip2-row-title', { hasText: re }) }).click();
+    else if (this.v2) await this.page.locator('.ip2-action .ip2-rows:not(.ip2-finished-list) button.ip2-row[data-kind=judged]', { has: this.page.locator('.ip2-row-title', { hasText: re }) }).click();
     else await this.page.locator('section[aria-label="Running scenario"] ul[aria-label="Objectives"] li').filter({ hasText: re }).locator('input[type=checkbox]').check();
     await this.row(`objective ticked: ${re.source}`);
   }
@@ -1853,8 +1855,8 @@ test('A4 MH (E119): the induction sequence, early call, three 5-min fast-forward
 // are on /2 PHASES, never on clock times, because the phase times move with the card's rules: the first pause is the
 // first Early signs (≈ 08:43 on PR #239's rules, not the /1 08:09), "ventilation back" waits for Recovering, the second
 // dose and the third stop for Recrudescence to have been entered since ventilation back, and the end for the second
-// Recovering (and no sooner than the /1 end, the dose + 317 s); the Debrief's action table is read beside its judged
-// rows. The same measures in the same JSON/MD shape (a4mh, mhStops) as the /1 rounds, plus the phase history. The test
+// Recovering (and no sooner than the /1 end, the dose + 317 s); the Debrief's action table is read (the recognition a
+// record action in it: judged rows are retired, 5 November). The same measures in the same JSON/MD shape (a4mh, mhStops) as the /1 rounds, plus the phase history. The test
 // names do not contain "A4 MH" or "Q1 30-minute talk", so the /1 rounds' -g patterns select the /1 rounds only.
 const MH2 = 'Malignant hyperthermia (phases)';
 
@@ -2235,7 +2237,7 @@ test('A4 haemorrhage (E120): PEA on a junctional rhythm → asystole → CPR, vo
 // resumes them 10 s later (within its 10-s window, AHA 2025 Part 7 S462) (the /1 round resumed them with the shock, ≈ 10 s after the check); the waits are on /2
 // PHASES (Decompensating, Arrest: PEA, Arrest: asystole), and "pulse back, stop CPR" is pressed only if the model's pulse
 // is back at the third rhythm check (on this path it is not: asystole stays in this model). The Debrief is read and
-// printed as on the /1 round, its action table and judged rows beside the phase history. The test name does not
+// printed as on the /1 round, its action table beside the phase history. The test name does not
 // contain "A4 haemorrhage (E120)", so the /1 round's -g pattern selects the /1 round only.
 const HAEM2 = 'Class IV haemorrhage, PEA and resuscitation (phases)';
 

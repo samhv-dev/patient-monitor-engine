@@ -157,7 +157,7 @@
         },
         "withinS": 30
       },
-      "src": "Window from the first sign of the PEA the learners can see: systolic below 25 mmHg held 10 s, the /1 card's own PEA rule (pseudo-PEA, ART about 20/14), 34 s before the model's pulse loss on this course; the decompensation entry (systolic below 60) is a sign of shock, not yet of the PEA. Window length 30 s: the owner's number (5 November); no source states one. The owner's ruling of 5 November amends the 29 October ruling (recognition stays a judged row) for /2 cards: recognition is a timed action the instructor presses when the team says the diagnosis aloud."
+      "src": "Window from the first sign of the PEA the learners can see: systolic below 25 mmHg held 10 s, the /1 card's own PEA rule (pseudo-PEA, ART about 20/14), 34 s before the model's pulse loss on this course; the decompensation entry (systolic below 60) is a sign of shock, not yet of the PEA. Window length 30 s: the owner's number (5 November); no source states one. The owner's ruling of 5 November withdraws the 29 October ruling (recognition stays a judged row) and retires judged rows from /2 cards: recognition is a timed record action the instructor presses when the team says the diagnosis aloud."
     },
     {
       "id": "oxygen",
@@ -631,17 +631,21 @@
         "withinS": 120
       },
       "src": "Within 120 s of ROSC: the /1 card's objective 3."
-    }
-  ],
-  "judged": [
+    },
     {
       "id": "recogniseRosc",
-      "kind": "recognition",
-      "text": "Recognise the return of circulation on the arterial line and the capnogram at the rhythm check",
-      "$comment": "The /1 card's objective 3, its recognition half (the stop-CPR half is the action stopCpr). The clock starts at ROSC's entry, when the strip shows it.",
-      "display": {
-        "phaseEntered": "rosc"
-      }
+      "label": "Recognise the return of circulation on the arterial line and the capnogram at the rhythm check",
+      "kind": "communication",
+      "phases": [
+        "rosc",
+        "postResuscitation"
+      ],
+      "$comment": "The /1 card's objective 3, its recognition half (the stop-CPR half is the action stopCpr), a judged row until the owner's ruling of 5 November retired the kind: a team act the instructor observes is a record action. The instructor presses it when the team says the circulation is back; no engine command (the scenario record command, Q19). Timed: the window opens at ROSC's entry, when the strip shows it, which the judged row's clock started on. Last in the list, so every other row keeps its key.",
+      "window": {
+        "anchor": "phase:rosc",
+        "withinS": 120
+      },
+      "src": "Window from ROSC's entry: the former judged row's own clock (display rule phaseEntered rosc). Window length 120 s, timed: the owner's ruling of 5 November. Derived from the card's own number, the /1 card's objective 3, 'Recognise the return of circulation on the arterial line and the capnogram at the rhythm check, and stop CPR (debrief: within 120 s of the return of circulation)', of which this is the recognition half; no source read states a time."
     }
   ],
   "script": [

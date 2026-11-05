@@ -165,7 +165,6 @@ describe('showcase-haemorrhage-v2: the haemorrhage card in pme-scenario/2', () =
       for (const l of r.lines) lines.push(`      | ${l}`);
       for (const x of r.repeats) lines.push(`      repeat #${x.n}: ${x.grade}  due ${at(x.dueT)}  given ${at(x.t)}${x.lines.length ? `  (${x.lines.join('; ')})` : ''}`);
     }
-    for (const j of g.judged) lines.push(`  judged ${j.id}: clock from ${at(j.fromT)}`);
     lines.push(`  violations: ${g.violations.length ? g.violations.map((v) => `${mmss(v.t)} ${v.text}`).join('; ') : 'none'}`);
     lines.push(`  phases: ${v2.phases.map((p) => `${p.id} ${mmss(p.t)}`).join(', ')}`);
     console.log(lines.join('\n'));
@@ -178,7 +177,7 @@ describe('showcase-haemorrhage-v2: the haemorrhage card in pme-scenario/2', () =
     expect(row('cpr').dueT).toBeLessThanOrEqual(lossT + 1);
     // objective 3 and its recognition: no ROSC on this path (asystole stays), so neither applies
     expect(row('stopCpr').grade).toBe('not applicable');
-    expect(g.judged.find((j) => j.id === 'recogniseRosc')!.fromT).toBeUndefined();
+    expect(row('recogniseRosc').grade).toBe('not applicable'); // a record action since judged rows were retired (5 November)
     // objective 1, now a timed action (owner, 5 November): its window opens at SBP < 25 for 10 s on truth, the /1 card's
     // own PEA rule (the /1 pea state, read on the display, within a second); never pressed on the /1 path → failed
     const pea1 = a.states.find(([, s]) => s === 'pea')![0];
