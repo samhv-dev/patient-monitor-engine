@@ -56,7 +56,7 @@ export function boardOf(link: Link): Board | null {
     const pr = link.host?.driver.phaseRunner ?? null;
     return classifyV2({
       doc: sv.doc, phaseId: stateId, log: link.log, takings: pr?.takings ?? null, holds: pr?.vitalHolds() ?? null, paused: link.ctl.hostPaused,
-      grades: pr ? liveGrades(sv.doc, pr, link.simT) : null, admin: pr?.admin ?? null, enteredT: sv.enteredT, history: sv.history,
+      grades: pr ? liveGrades(sv.doc, pr, link.simT) : null, admin: pr?.admin ?? null, enteredT: sv.enteredT,
     });
   }
   const doc = asV1(sv.doc);

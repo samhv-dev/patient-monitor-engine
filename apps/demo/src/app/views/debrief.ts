@@ -2,7 +2,8 @@
 // the measured facts, trend charts drawn as inline SVG, drugs and fluids, the timeline (the discarded course of a
 // return to a bookmark included, struck through as undone; a staged delivery on one line), the card's steps with
 // their status (Instructor v2, IP8) — for a pme-scenario/2 run the action table with its grades, the outcomes, the
-// violations and, on page 1, the judged rows (plan F7) —, bookmarks with a mark's kind and note, the instructor's notes and a one-row-per-minute
+// violations (plan F7; a team act the instructor observes is a record action in the table: judged rows are retired,
+// the owner's ruling of 5 November) —, bookmarks with a mark's kind and note, the instructor's notes and a one-row-per-minute
 // appendix; page 1 reads the key times, the course strip (the instructor's marks on it at their times) and the
 // objectives, page 2 the key moments with what the
 // monitor showed (Debrief redesign B), and a learner handout without verdicts prints on its own (E51). The browser PRINTS it to PDF (debrief.css: A4 portrait, the app's chrome hidden, no colour needed to read
@@ -381,11 +382,7 @@ export function debriefView(session: AppSession, link: Link): View {
       band,
       tiles.length ? section('keytimes', 'Key times', h('div', { class: 'db-tiles' }, ...tiles)) : null,
       d.samples.length ? section('course', 'The course', legend('course', ' · numbers match Key moments', markKeys(cm)), course) : null,
-      r3 ? section('objectives', 'Judged by the instructor', r3.judged.length
-        ? h('ol', { class: 'db-obj' }, ...r3.judged.map((j) => h('li', { 'data-mark': j.pressedT === null ? 'not-assessable' : 'observed' },
-          h('b', { class: 'db-mark db-chip' }, j.pressedT === null ? '– Not ticked' : '✓ Observed'), ' ', j.text,
-          h('div', { class: 'db-why' }, j.pressedT === null ? 'The instructor did not tick it.' : `Observed by the instructor at ${mmss(j.pressedT)}${j.fromT !== null ? `; the monitor showed it from ${mmss(j.fromT)}` : ''}.`))))
-        : h('p', { class: 'muted' }, 'This run has no rows for the instructor to judge.'))
+      r3 ? null
       : section('objectives', 'Objectives', h('p', { class: 'db-subhead' }, 'What the record shows: it reads the run, it does not grade the person'), obj.length
         ? h('ol', { class: 'db-obj' }, ...obj.map((o) => {
           const m = markOf(o);

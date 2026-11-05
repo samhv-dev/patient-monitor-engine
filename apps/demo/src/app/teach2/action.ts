@@ -207,7 +207,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     offCard.hidden = !sv.doc && !free;
     later.hidden = true;
     setText(foot, sv.doc ? FOOT : FOOT_NONE);
-    if (v2 && stateId) { // a pme-scenario/2 card (F6): the phase's actions, the judged rows, the rules out of the phase
+    if (v2 && stateId) { // a pme-scenario/2 card (F6): the phase's actions (record actions among them), the rules out of the phase
       wrap.dataset.format = '2'; // the denser /2 rows (action.css): the MH card's Latent opens 11 actions
       // the host's board (feed.ts: the host's own, its feed's on a remote; a remote without one reads what it has)
       const board = boardOf(link) as Board;
@@ -219,7 +219,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       later.hidden = !rest.length;
       setText(laterSummary, `Not due now · ${rest.length}`);
       setText(finSummary, `Finished steps · ${board.finished.length}`);
-      finished.hidden = !board.finished.length; // a /2 Finished holds the judged rows met: shown once one is
+      finished.hidden = !board.finished.length; // empty on /2 (judged rows are retired): hidden
       offCard.hidden = true;
       return;
     }
