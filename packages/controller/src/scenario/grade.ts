@@ -61,8 +61,9 @@ export interface ActionGrade {
 }
 export interface OutcomeGrade { id: string; text: string; grade: 'reached' | 'not reached' | 'pending'; t?: number }
 export interface Violation { t: number; seq: number; action: string; text: string; harm: 'modelled' | 'not modelled' }
-export interface JudgedRow { id: string; text: string; kind: 'recognition' | 'communication'; fromT?: number }
-export interface Grades { actions: ActionGrade[]; outcomes: OutcomeGrade[]; violations: Violation[]; judged: JudgedRow[] }
+/** The grades of a run: the actions (a team act the instructor observes is a record action among them: judged rows are
+ *  retired, the owner's ruling of 5 November), the outcomes and the violations. */
+export interface Grades { actions: ActionGrade[]; outcomes: OutcomeGrade[]; violations: Violation[] }
 
 const EPS = 1e-6;
 const RANK: Record<Grade, number> = { 'not applicable': 0, met: 1, deviation: 2, due: 3, overdue: 4, failed: 5 };
@@ -198,7 +199,7 @@ function deviations(act: Action, a: Administration, id: Ident, w?: number): stri
 interface Row { grade: Grade; lines: string[]; devs: string[]; dueT?: number; windowS?: number; givenT?: number }
 
 /**
- * Grade the run at sim time `t`: every graded action, the outcomes, the violations and the judged rows' clocks. `final`
+ * Grade the run at sim time `t`: every graded action, the outcomes and the violations. `final`
  * (the debrief): an open action is failed rather than due or overdue, an outcome not reached rather than pending.
  */
 export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: readonly Administration[], edges: readonly RuleEdge[], t: number, opts: { final?: boolean } = {}): Grades {
@@ -445,10 +446,5 @@ export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: 
     return { ...base, grade: !final && t < end - EPS ? 'pending' : 'not reached' };
   });
 
-  const judged: JudgedRow[] = (doc.judged ?? []).map((j) => {
-    const fromT = firstTrue(edges, `judged:${j.id}`);
-    return { id: j.id, text: j.text, kind: j.kind, ...(fromT !== undefined ? { fromT } : {}) };
-  });
-
-  return { actions, outcomes, violations, judged };
+  return { actions, outcomes, violations };
 }

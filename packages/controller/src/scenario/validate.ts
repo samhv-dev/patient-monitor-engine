@@ -127,8 +127,14 @@ function validatorV2(): ReturnType<Ajv['compile']> {
   return compiledV2;
 }
 
+/** Judged rows are retired (the owner's ruling of 5 November): every row is an automatic row or an action, and a team
+ *  act the instructor observes is a record action (the scenario `record` command, Q19), timed by its window when the card
+ *  times it, recorded-not-timed without one. A card that still declares `judged` gets this one line. */
+const JUDGED_RETIRED = '/judged: judged rows are retired (owner, 5 November): write each as a record action in "actions" (kind "communication" with no give; a window when the card times it, none when it is recorded, not timed)';
+
 function formatV2(e: ErrorObject): string {
   const at = e.instancePath || '/';
+  if (e.keyword === 'additionalProperties' && at === '/' && (e.params as { additionalProperty?: string }).additionalProperty === 'judged') return JUDGED_RETIRED;
   if (e.keyword === 'maxProperties' || e.keyword === 'minProperties') {
     if (e.parentSchema === DEFS.phaseRule) return `${at}: a phase rule must have exactly one of ${RULE_KEYS}`;
     if (e.parentSchema === DEFS.displayRule) return `${at}: a display rule must have exactly one of ${DISPLAY_KEYS}`;
@@ -163,7 +169,6 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
   const phases = unique(doc.phases, 'phases', 'phase');
   const actions = unique(doc.actions, 'actions', 'action');
   unique(doc.outcomes, 'outcomes', 'outcome');
-  unique(doc.judged, 'judged', 'judged');
   unique(doc.script, 'script', 'script');
   const phase = (id: string, path: string) => phases.has(id) || errors.push(`${path}: no phase "${id}"`);
   const action = (id: string, path: string) => actions.has(id) || errors.push(`${path}: no action "${id}"`);
@@ -191,7 +196,7 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
       if (c.type === 'applyEvent' && c.event.kind === 'drug') drug(c.event.drugId, `${path}/${k}/event/drugId`);
     });
 
-  /** Display-rule anchors of action windows (F9), checked with the judged rows' display rules below. */
+  /** Display-rule anchors of action windows (F9), checked below. */
   const displayAnchors: Array<[DisplayRule, string]> = [];
   let initial: string | null = null;
   doc.phases.forEach((p, i) => {
@@ -254,7 +259,6 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
     else if ('any' in r) r.any.forEach((c, k) => display(c, `${path}/any/${k}`));
     else if ('not' in r) display(r.not, `${path}/not`);
   };
-  doc.judged?.forEach((j, i) => display(j.display, `/judged/${i}/display`));
   for (const [r, path] of displayAnchors) display(r, path);
   doc.outcomes?.forEach((o, i) => {
     rule(o.rule, `/outcomes/${i}/rule`);

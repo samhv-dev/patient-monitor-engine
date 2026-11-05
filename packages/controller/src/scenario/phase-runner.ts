@@ -240,7 +240,7 @@ export class PhaseRunner {
       const to = (this.state().next ?? []).find((id) => id !== this.s.stateId && now.get(`phase:${id}`) && held(id));
       if (to !== undefined) {
         out = this.enter(t, to, `enter:${to}`);
-        // a judged clock on a phase's entry (phaseEntered) reads the timeline: re-read it now, so it rises at the entry
+        // a display clock on a phase's entry (phaseEntered) reads the timeline: re-read it now, so it rises at the entry
         for (const nr of this.entryRules) {
           const v = holds(nr.rule, nr.name, nr.rank, this.ctx);
           if (v !== (this.s.ruleNow[nr.name] ?? false)) this.edge({ rule: nr.name, t, value: v });
