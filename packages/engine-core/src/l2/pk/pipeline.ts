@@ -270,9 +270,11 @@ export function validatePkCommand(cmd: Command, _pk: PkState): string | undefine
   if (d.concentrationPct !== undefined && (row.id !== 'hypertonicSaline' || ![3, 7.5, 23.4].includes(d.concentrationPct))) return 'concentrationPct is hypertonic saline only: 3, 7.5 or 23.4';
   const isRate = d.unit.includes('/min') || d.unit.includes('/h');
   if (row.pk.kind === 'blood' && (isRate || d.infusion) && !row.rateActsVia) return bloodBolusOnly;
-  // The route is explicit — the engine's kinetics are intravenous; any other route is refused, not given as IV
-  const routes = row.routes ?? IV_ROUTES;
+  // The route is explicit — the row's kinetics are intravenous, plus the routes its `routeModels` give; any other route
+  // is refused, not given as IV
+  const routes = honouredRoutes(row);
   if (d.route !== undefined && !routes.includes(d.route)) return `${row.id}: route ${d.route} is not modelled — the engine gives ${routes.join(', ')} doses only`; // an event without a route (scenario/oracle JSON) is IV, as before
+  if (d.route !== undefined && row.routeModels?.[d.route] && (isRate || d.infusion || (d.overS ?? 0) > 0)) return `${row.id}: route ${d.route} takes a bolus only`;
   // A curve-based row without an infusion reference cannot act as an infusion (it was accepted and did nothing)
   if (row.pk.kind === 'gamma' && row.pk.refRate === undefined && !row.rateActsVia && (isRate || d.infusion)) return `${row.id} has no infusion model: give it as a bolus`;
   if (!isRate && d.dose === 0) return 'dose must be > 0';
@@ -283,10 +285,15 @@ export function validatePkCommand(cmd: Command, _pk: PkState): string | undefine
 /** The routes whose kinetics the engine's intravenous models honour (IO and a central line are IV). */
 export const IV_ROUTES: readonly PkRoute[] = ['iv', 'io', 'central'];
 
+/** The row's intravenous routes, then the routes its `routeModels` give. */
+function honouredRoutes(row: DrugRow): PkRoute[] {
+  return [...(row.routes ?? IV_ROUTES), ...(Object.keys(row.routeModels ?? {}) as PkRoute[])];
+}
+
 /** True when the engine models a dose of this drug by this route (validatePkCommand's route rule; a volatile row takes no drug dose). */
 export function routeHonoured(drugId: string, route: PkRoute): boolean {
   const row = DRUGS[drugId];
-  return !!row && row.pk.kind !== 'volatile' && (row.routes ?? IV_ROUTES).includes(route);
+  return !!row && row.pk.kind !== 'volatile' && honouredRoutes(row).includes(route);
 }
 
 /** Apply a validated command. True for every drug/infusion/tci/vaporiser command (the drug model consumes them all). */
@@ -305,6 +312,15 @@ export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {
     return true;
   }
   const row = DRUGS[ev.drugId] as DrugRow;
+  // A route model with F = 0 (validated: a bolus): nothing reaches the circulation, so no drug state is made and the
+  // dose log (the systemic consumers' stream) is untouched; only the local effect is raised
+  const rm = ev.kind === 'drug' && ev.route !== undefined ? row.routeModels?.[ev.route] : undefined;
+  if (ev.kind === 'drug' && rm) {
+    if (rm.F !== 0) throw new Error(`${row.id}: route ${ev.route} has F ${rm.F}; no absorption depot is built`);
+    const amount = toAmount(ev.dose, ev.unit, row.amountUnit, pk.patient.weightKg, row.syringePerMl) as number;
+    if (rm.local) pk.out.push({ type: 'drugLocalEffect', t, drugId: row.id, route: ev.route as PkRoute, amount, amountUnit: row.amountUnit, text: rm.local.text, src: rm.local.src });
+    return true;
+  }
   const d = inst(pk, row.id);
   const w = pk.patient.weightKg;
   const pct = ev.kind === 'drug' && row.id === 'hypertonicSaline' ? (ev.concentrationPct ?? 3) : undefined;

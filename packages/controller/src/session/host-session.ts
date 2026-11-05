@@ -522,7 +522,7 @@ export class HostSession {
     if (this.o.scenario) {
       const { applied: a, ...result } = await this.o.scenario(cmd);
       const applied = a ?? cmd;
-      if (result.accepted) this.scenarioApplied(applied);
+      if (result.accepted) this.scenarioApplied(applied, result.tick);
       return { result, applied };
     }
     if (cmd.action === 'bookmark') {
@@ -544,11 +544,13 @@ export class HostSession {
   }
 
   /** Sticky scenario state for late joiners, and a viewer resync after a restore. */
-  private scenarioApplied(c: ScenarioCommand): void {
+  private scenarioApplied(c: ScenarioCommand, tick: Tick): void {
     if (c.action === 'bookmark') this.sticky.set(`bookmark.${c.target}`, c);
     if (c.action === 'load') {
       this.sticky.delete('scenario.run');
-      this.sticky.set('scenario.load', c);
+      // with the tick it was applied on (a replay is stamped with the join's tick): a late joiner's ScenarioView puts
+      // the run's first stage at the load, as the live view did (E141), like the sticky jump's `atTick`
+      this.sticky.set('scenario.load', { ...c, atTick: tick });
     }
     if (c.action === 'pause' || c.action === 'resume') this.sticky.set('scenario.run', c);
     if (c.action === 'restoreBookmark') {
