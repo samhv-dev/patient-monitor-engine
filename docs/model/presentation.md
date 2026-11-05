@@ -314,6 +314,7 @@ No exported `…State` type in this module.
 | `relayInfo` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | The relay's own description, from its http side; |
 | `contrast` | [`apps/demo/src/app/color.ts`](../../apps/demo/src/app/color.ts) | Colour arithmetic for the shell (no DOM): |
 | `whoOf` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | Who moved the scenario from state `prev` into `id`: |
+| `whoAt` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | Who moved the scenario into the state of `row` from state `prev` (D4): |
 | `pulselessSpans` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The pulseless spans of the kept course, [from, to]: |
 | `handsOff` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The hands-off time inside the pulseless spans, and the compression fraction `1 − handsOff / pulseless` (D3). |
 | `keyMoments` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The key moments of the kept course in time order, numbered 1…n. |
@@ -579,7 +580,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mou
 | [`apps/demo/src/app/color.ts`](../../apps/demo/src/app/color.ts) | Colour arithmetic for the shell (no DOM): WCAG 2.x contrast, used for the skin's alarm mirror and the token test. |
 | [`apps/demo/src/app/commands.ts`](../../apps/demo/src/app/commands.ts) | Two actions reachable from several places (session bar, Scenario and Log tabs, keyboard, Settings): a bookmark that the 6b driver can restore (CAE Maestro's marker-revert), and the keyboard shortcut sheet (brief §9). |
 | [`apps/demo/src/app/debrief-export.ts`](../../apps/demo/src/app/debrief-export.ts) | The Debrief's export (`pme-debrief/2`; `pme-debrief/3` for a pme-scenario/2 run, plan F7). |
-| [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The key moments and the key times of a run, computed from the run record alone (`record.ts` `RunData`): the scenario's states after the first, the pulse lost and back (the model), and the team's drugs, fluids, shocks and |
+| [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The key moments and the key times of a run, computed from the run record alone (`record.ts` `RunData`): the scenario's states after the first (each the team's, the patient's or the scenario's as the record's `by` says), |
 | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | What the debrief states from a run record — each objective met / not met / not assessable from its rule (types.ts `ObjectiveRule`), with the reason and the simulated times in one line, and the facts the engine can measur |
 | [`apps/demo/src/app/describe.ts`](../../apps/demo/src/app/describe.ts) | One clinical line per command, for the instructor log, toasts and the Remote (research/13 brief §7 "Toast": the same verb as the button). |
 | [`apps/demo/src/app/drugs.ts`](../../apps/demo/src/app/drugs.ts) | The dose picker's data (research/13 brief §7 "Dose picker"). |
