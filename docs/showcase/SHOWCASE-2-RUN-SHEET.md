@@ -1198,7 +1198,9 @@ the operating-room trigger on the monitor, arterial systolic below 40 for 30 s w
 A4 path), whichever is first, met; to 2 min overdue; later failed though started); in the
 arrest phases call for help, **Resume CPR after the rhythm check** (within 10 s of each check),
 bag 10/min, epinephrine 1 mg IV (again every 3–5 min from the previous dose), source control, massive transfusion, TXA
-1 g, rhythm check (every 2 min); in ROSC "Rhythm check: pulse back, stop CPR" (within 2 min of ROSC). Epinephrine 1 mg
+1 g, rhythm check (every 2 min); in ROSC "Rhythm check: pulse back, stop CPR" (within 2 min of ROSC) and **Recognise the
+return of circulation** (press it when the team says so; within 2 min of ROSC's entry: a record action, as every row the
+instructor observes since judged rows were retired, 5 November). Epinephrine 1 mg
 IV or IO in ROSC prints as a violation. Each action's numbers carry their source in the card's `src` (Miller 10th ed.
 Ch82 for the bag, epinephrine and rhythm-check figures; a row whose sources state no window is recorded, not timed).
 

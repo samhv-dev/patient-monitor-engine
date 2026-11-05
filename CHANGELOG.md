@@ -33,6 +33,19 @@ the public API is what the packages export (see the API reference), the `pme-sce
   (`{ display: rule }`): the operating-room trigger reads the monitor, arterial systolic below 40 mmHg (cuff below 50
   without an arterial line) for 30 s with EtCO₂ below 25 mmHg (ERC 2025; Harper et al. 2020; the owner's numbers).
 
+### Removed
+
+- **Judged rows from `pme-scenario/2` (the owner's ruling of 5 November; it withdraws the 29 October ruling
+  "recognition stays a judged row").** Every row of a `/2` card is an automatic row or an action: a team act the
+  instructor observes is a record action (no `give`; the press sends the scenario `record` command), timed by its window
+  when the card times it, recorded-not-timed without one. The schema has no `judged` block, and a card that declares one
+  fails validation with one line naming the replacement; `grade()` returns actions, outcomes and violations only;
+  Instructor v2 draws a record action as any action (no "press when met" row, no marker note); the Debrief's action table
+  carries it, `pme-debrief/3` has no `judged` key and a `/2` run has no recognition key-time tile. `showcase-mh-v2`:
+  "name malignant hyperthermia from the monitor" is a timed record action from Early signs' entry, 120 s (an owner
+  placeholder); `showcase-haemorrhage-v2`: "recognise the return of circulation" is one from ROSC's entry, 120 s (the
+  `/1` card's objective 3). `/1` cards keep their judged objectives.
+
 ### Fixed
 - A hello forged under a Remote's peer id while the Remote reconnects no longer blocks the Remote's commands
   until its page reloads (R29, the known gap of #183). The host kept each relay peer's last sequence number and role

@@ -53,7 +53,7 @@ Anti-goals
 | `phases` | the disease's course: label, Say line, entry rule on engine truth |
 | `actions` | what the team should do: prescription and grading |
 | `outcomes` | what the physiology should reach: reached / not reached |
-| `judged` | recognition and communication the instructor judges |
+| `judged` | recognition and communication the instructor judges (RETIRED 5 November: see §7) |
 | `script` | events the card imposes (a bleed, a rhythm), each labelled "card-set" |
 
 A `script` entry fires on a phase entry, the nth taking of an action, or a scenario time, and applies `/1`
@@ -178,6 +178,13 @@ ends.
 dose", "MAP above 65 within 5 min of ROSC" (a value rule, an anchor, `withinS`). Graded **reached / not reached**
 only; an outcome never changes an action's grade.
 
+**Retired 5 November 2026 by the owner's ruling** (it withdraws the 29 October ruling "recognition stays a judged
+row"): there are no judged rows. Every row is an automatic row or an action, and a team act the instructor observes is
+a `record` action (no `give`: the press is recorded by the scenario `record` command), timed by its window when the
+card says so, recorded-not-timed otherwise (a quality verdict such as "closed-loop communication was used" is a record
+action ticked at the end, no clock). A recognition's clock is its window's anchor: a phase's entry (`phase:earlySigns`)
+or a rule on the displayed numerics (`{ "display": … }`). The paragraph below is the design as it was.
+
 **Judged objectives** are what only the instructor can see: recognition ("names MH from the monitor") and
 communication without a prescription. They stay rows of their own, met when the instructor presses them, with the
 time. Their clock starts on what the learners could see, the displayed numerics (rank 2: the capnograph's EtCO₂
@@ -252,7 +259,8 @@ rhythm group, and the pulse-loss and ROSC signals the debrief already reads. Exp
 
 ## 10. What Instructor v2 reads differently
 
-The concept stays: STATE and ACTION, one list, A rows, judged rows, sheets, marks, paused.
+The concept stays: STATE and ACTION, one list, A rows, judged rows, sheets, marks, paused. (5 November: no judged rows
+on a `/2` card; a record action is drawn and pressed as any action, §7.)
 - **Strip**: phases. Every future phase is "auto"; entry times come from the phase timeline. A past-phase click
   restores its mark. A future-phase click cannot jump, since the panel never moves the case (Q5).
 - **Cue box**: always "entered by its own rule: …"; the Say line is the phase's `notes`.
@@ -315,7 +323,8 @@ with "stop CPR". Violation: epinephrine 1 mg IV in ROSC.
 2. A route outside the allowed set: here the action stays open and the dose is a violation if contraindicated.
    The alternative is "deviation".
 3. "Declare the diagnosis": a communication action or a judged row? The rulings name it in both. Proposed: timed
-   acts are actions, qualitative judgements judged rows.
+   acts are actions, qualitative judgements judged rows. Answered 5 November by the owner: an action, always (judged
+   rows retired, §7); a qualitative judgement is a record action without a window.
 4. May a `/2` card still impose a rhythm (`script`), as the haemorrhage card does three times? Proposed yes,
    labelled card-set, never graded.
 5. The strip's future-phase click: removed, or "fast forward until <phase>" at top speed?
