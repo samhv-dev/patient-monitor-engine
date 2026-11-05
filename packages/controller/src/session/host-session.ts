@@ -105,7 +105,8 @@ export class HostSession {
   /**
    * Per transport, each peer's sequence filter and whether its last hello said `viewer` — keyed by (transport, from),
    * so a frame on one transport (a phone on the relay claiming the panel's id) never touches a peer on another (the
-   * in-process panel). A detached transport's peers are forgotten with it (verification 2026-10-29).
+   * in-process panel). A detached transport's peers are forgotten with it (verification 2026-10-29), and one peer when
+   * the relay says its socket left (R29), so a hello forged under its id dies with the forger's socket.
    */
   private readonly peers = new WeakMap<ManagedTransport, { seqs: SeqFilter; viewers: Set<string> }>();
   private readonly seen = new Map<string, AckBody>();
@@ -155,9 +156,14 @@ export class HostSession {
       if (s === 'open') t.send(this.stamp({ kind: 'hello', role: 'host' }));
       if (s === 'closed') this.detach(t);
     });
+    // R29: the relay says a peer's socket left; frames are handled in order on this.chain, so the forgetting is too
+    const offLeft = t.onPeerLeft?.((from) => {
+      this.chain = this.chain.then(() => this.forget(t, from));
+    });
     this.transports.set(t, () => {
       offMsg();
       offStatus();
+      offLeft?.();
     });
     return () => this.detach(t);
   }
@@ -308,6 +314,13 @@ export class HostSession {
     this.transports.get(t)?.();
     this.transports.delete(t);
     this.peers.delete(t);
+  }
+
+  /** R29: a relay peer left: its sequence and role on this transport are forgotten (its next socket starts fresh). */
+  private forget(t: ManagedTransport, from: string): void {
+    const p = this.peers.get(t);
+    p?.seqs.forget(from);
+    p?.viewers.delete(from);
   }
 
   private queue(e: WireEvent): void {
@@ -509,7 +522,7 @@ export class HostSession {
     if (this.o.scenario) {
       const { applied: a, ...result } = await this.o.scenario(cmd);
       const applied = a ?? cmd;
-      if (result.accepted) this.scenarioApplied(applied);
+      if (result.accepted) this.scenarioApplied(applied, result.tick);
       return { result, applied };
     }
     if (cmd.action === 'bookmark') {
@@ -531,11 +544,13 @@ export class HostSession {
   }
 
   /** Sticky scenario state for late joiners, and a viewer resync after a restore. */
-  private scenarioApplied(c: ScenarioCommand): void {
+  private scenarioApplied(c: ScenarioCommand, tick: Tick): void {
     if (c.action === 'bookmark') this.sticky.set(`bookmark.${c.target}`, c);
     if (c.action === 'load') {
       this.sticky.delete('scenario.run');
-      this.sticky.set('scenario.load', c);
+      // with the tick it was applied on (a replay is stamped with the join's tick): a late joiner's ScenarioView puts
+      // the run's first stage at the load, as the live view did (E141), like the sticky jump's `atTick`
+      this.sticky.set('scenario.load', { ...c, atTick: tick });
     }
     if (c.action === 'pause' || c.action === 'resume') this.sticky.set('scenario.run', c);
     if (c.action === 'restoreBookmark') {

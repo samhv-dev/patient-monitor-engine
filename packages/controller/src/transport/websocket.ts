@@ -82,6 +82,7 @@ class WsTransport extends TransportBase {
         // for a command is the relay's per-command answer: the socket stays open and follows.
         if (o.relay === 'error' && (o.code === 'denied' || o.code === 'too-many-tries')) this.setStatus('error');
         if (o.relay === 'peers') this.presence({ hostOnline: o.hostOnline }); // The session hears it too
+        if (o.relay === 'peer-left' && typeof o.id === 'string') this.peerLeft(o.id); // R29: the host forgets that peer
         this.o.onRelayFrame?.(o);
         return;
       }

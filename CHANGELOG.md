@@ -23,6 +23,13 @@ the public API is what the packages export (see the API reference), the `pme-sce
   `ibp-scale.ts`, `renderPlan`'s `ibpScales`, `MonitorCore.setIbpScales`, `MonitorHandle.setIbpScales`; the
   controller's `style` event gains `ibp`.)
 
+### Fixed
+- A hello forged under a Remote's peer id while the Remote reconnects no longer blocks the Remote's commands
+  until its page reloads (R29, the known gap of #183). The host kept each relay peer's last sequence number and role
+  while its socket was down, so a hand-written hello with that id and a higher number, sent in that window, made the
+  host drop the reconnected Remote's frames as duplicates. The relay now sends the host `{relay:'peer-left', id}` when a
+  non-host socket leaves the room (before the newcomer's hello when it replaces a half-open socket), and the host
+  forgets that peer on that transport only.
 - **`pme-scenario/2` F5.2 and F5.3: IM dantrolene modelled, and the "not modelled" register.** A drug row may carry
   `routeModels`, one mechanism per route other than IV: bioavailability `F`, absorption rate `ka`, lag `lagS`, each
   from its `src`, and an optional local effect raised as a new `drugLocalEffect` event. Dantrolene IM is the one row:
