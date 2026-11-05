@@ -74,6 +74,15 @@ jobs:
           sort $(printf '%s.txt ' $groups) | uniq -d > both.txt
           if [ -s both.txt ]; then echo "in two slow groups:"; cat both.txt; exit 1; fi
           sort -u $(printf '%s.txt ' $groups) | diff slow.txt -
+      - name: the showcase halves are disjoint, are together the showcase set, and are in the test-slow matrix
+        working-directory: apps/demo
+        run: |
+          for g in showcase showcase-a showcase-b; do PME_TEST_SET=$g pnpm exec vitest list --filesOnly | sort > "$RUNNER_TEMP/$g.txt"; echo "$g: $(wc -l < "$RUNNER_TEMP/$g.txt") files"; done
+          for g in showcase-a showcase-b; do grep -Eq "^ +group: \[.*\b$g\b" ../../.github/workflows/ci.yml || { echo "$g is not in the test-slow matrix"; exit 1; }; done
+          cd "$RUNNER_TEMP"
+          sort showcase-a.txt showcase-b.txt | uniq -d > both.txt
+          if [ -s both.txt ]; then echo "in both showcase halves:"; cat both.txt; exit 1; fi
+          sort -u showcase-a.txt showcase-b.txt | diff showcase.txt -
       - run: pnpm test
         env:
           PME_TEST_SET: fast # the slow engine set runs in the test-slow job
@@ -249,10 +258,13 @@ jobs:
     # Multi-sim-hour drift runs and long clinical scenarios of @pme/engine-core, one file at a time (see
     # packages/engine-core/vite.config.ts SLOW). Kept apart from the main job so their long synchronous stretches
     # cannot starve the Vitest worker RPC there. Nine file groups, one job each, packed on the per-file CI maximum (≤ 33 min of tests each on the slowest runner seen).
+    # On a PR the nine engine groups run only when the engine, the skins or the root config change (the changes job;
+    # engine-core's only workspace dependency is @pme/skins); main runs them all. The showcase cards, split in two
+    # halves (apps/demo/vite.config.ts), run on every code PR: they also run @pme/controller and the demo's debrief.
     strategy:
       fail-fast: false
       matrix:
-        group: [slow-a, slow-b, slow-c, slow-d, slow-e, slow-f, slow-g, slow-h, slow-i, showcase]
+        group: [slow-a, slow-b, slow-c, slow-d, slow-e, slow-f, slow-g, slow-h, slow-i, showcase-a, showcase-b]
     name: test-slow (${{ matrix.group }})
     runs-on: ubuntu-latest
     timeout-minutes: 90
@@ -265,12 +277,12 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @pme/engine-core test
-        if: matrix.group != 'showcase'
+        if: ${{ !startsWith(matrix.group, 'showcase') && needs.changes.outputs.engine == 'true' }}
         env:
           PME_TEST_SET: ${{ matrix.group }}
       # Stage 11: the showcase cards' scenario tests (apps/demo vite.config.ts); `vitest run` without the package
       # script's --passWithNoTests, so a set that matches no file fails instead of passing empty
       - run: pnpm --filter @pme/demo exec vitest run
-        if: matrix.group == 'showcase'
+        if: startsWith(matrix.group, 'showcase')
         env:
-          PME_TEST_SET: showcase
+          PME_TEST_SET: ${{ matrix.group }}
