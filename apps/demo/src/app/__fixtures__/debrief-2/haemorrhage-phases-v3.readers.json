@@ -1,0 +1,906 @@
+{
+ "objectives": [],
+ "facts": [
+  {
+   "label": "Lowest SpO₂",
+   "value": "96 % at 00:10"
+  },
+  {
+   "label": "Lowest ART M / NIBP M",
+   "value": "3 mmHg at 11:14"
+  },
+  {
+   "label": "Highest EtCO₂",
+   "value": "38 mmHg at 00:54"
+  },
+  {
+   "label": "Highest T1 / T2",
+   "value": "36.8 °C at 00:01"
+  },
+  {
+   "label": "Apnoea alarm to ventilated breaths",
+   "value": "none after the alarm at 11:55"
+  },
+  {
+   "label": "Pulseless",
+   "value": "11 min 47 s in all; first lost at 11:00"
+  },
+  {
+   "label": "Return of circulation",
+   "value": "not during the run"
+  },
+  {
+   "label": "Epinephrine, boluses in all",
+   "value": "2 mg (2 doses)"
+  },
+  {
+   "label": "Labs (the model): last (lowest–highest)",
+   "value": "K⁺ 4.5 mmol/L (4.2–4.7) · Lactate 5.2 mmol/L (1.0–5.2) · pH 7.12 (7.12–7.41) · Glucose 7.7 mmol/L (5.6–7.7) · Tcore 36.3 °C (36.3–36.8)"
+  }
+ ],
+ "keyMoments": [
+  {
+   "n": 1,
+   "t": 556.6997491385047,
+   "who": "scenario",
+   "text": "Decompensating",
+   "values": {
+    "hr": 160,
+    "map": 49.65932927442872,
+    "spo2": 99,
+    "etco2": 22
+   },
+   "pulseless": false,
+   "alarms": [
+    "EtCO₂ low",
+    "SpO₂: low perfusion",
+    "ART S low",
+    "ART M low",
+    "HR high"
+   ]
+  },
+  {
+   "n": 2,
+   "t": 660,
+   "who": "patient",
+   "text": "Pulse lost (the model)",
+   "values": {
+    "hr": 54,
+    "map": 8.85892162330404,
+    "spo2": 99,
+    "etco2": 13
+   },
+   "pulseless": true,
+   "alarms": [
+    "ART D low",
+    "ART: no pulsatile pressure",
+    "ART S low",
+    "ART D low",
+    "SpO₂: low perfusion",
+    "ART: no pulsatile pressure",
+    "SpO₂: low perfusion"
+   ]
+  },
+  {
+   "n": 3,
+   "t": 660.0496000000238,
+   "who": "scenario",
+   "text": "Arrest: PEA",
+   "values": {
+    "hr": 54,
+    "map": 8.85892162330404,
+    "spo2": 99,
+    "etco2": 13
+   },
+   "pulseless": true,
+   "alarms": []
+  },
+  {
+   "n": 4,
+   "t": 922.4615999999047,
+   "who": "scenario",
+   "text": "Arrest: asystole",
+   "values": {
+    "hr": 19,
+    "map": 4.924065446080627,
+    "spo2": null,
+    "etco2": 0
+   },
+   "pulseless": true,
+   "alarms": [
+    "HR low",
+    "SpO₂: no pulse detected",
+    "NIBP measurement failed",
+    "Apnoea (no CO₂ breaths)"
+   ]
+  },
+  {
+   "n": 5,
+   "t": 928.14,
+   "who": "team",
+   "text": "CPR started, 110 /min",
+   "values": {
+    "hr": 18,
+    "map": 4.572060295828327,
+    "spo2": null,
+    "etco2": 0
+   },
+   "pulseless": true,
+   "alarms": []
+  },
+  {
+   "n": 6,
+   "t": 929.82,
+   "who": "team",
+   "text": "Crystalloid 1000 mL over 1.5 min",
+   "values": {
+    "hr": 119,
+    "map": 8.161775786423568,
+    "spo2": null,
+    "etco2": 0
+   },
+   "pulseless": true,
+   "alarms": []
+  },
+  {
+   "n": 7,
+   "t": 929.82,
+   "who": "team",
+   "text": "Blood 1200 mL over 2.4 min",
+   "values": {
+    "hr": 119,
+    "map": 8.161775786423568,
+    "spo2": null,
+    "etco2": 0
+   },
+   "pulseless": true,
+   "alarms": []
+  },
+  {
+   "n": 8,
+   "t": 930.6800000000001,
+   "who": "team",
+   "text": "Tranexamic acid 1000 mg IV",
+   "values": {
+    "hr": 119,
+    "map": 13.654225122661504,
+    "spo2": null,
+    "etco2": 1
+   },
+   "pulseless": true,
+   "alarms": []
+  },
+  {
+   "n": 9,
+   "t": 948.36,
+   "who": "team",
+   "text": "Epinephrine 1 mg IV",
+   "values": {
+    "hr": 111,
+    "map": 19.745331841417865,
+    "spo2": 99,
+    "etco2": 5
+   },
+   "pulseless": true,
+   "alarms": [
+    "ART S low",
+    "ART D low",
+    "awRR low",
+    "EtCO₂ low",
+    "SpO₂: low perfusion",
+    "NIBP measurement failed"
+   ]
+  },
+  {
+   "n": 10,
+   "t": 1057.8600000000001,
+   "who": "team",
+   "text": "CPR started, 110 /min",
+   "values": {
+    "hr": 106,
+    "map": 27.28001387359544,
+    "spo2": null,
+    "etco2": 19
+   },
+   "pulseless": true,
+   "alarms": [
+    "SpO₂: no pulse detected",
+    "ART: no pulsatile pressure",
+    "Asystole"
+   ]
+  },
+  {
+   "n": 11,
+   "t": 1128.66,
+   "who": "team",
+   "text": "Epinephrine 1 mg IV",
+   "values": {
+    "hr": 110,
+    "map": 50.312312776878635,
+    "spo2": 99,
+    "etco2": 21
+   },
+   "pulseless": true,
+   "alarms": [
+    "ART D low",
+    "SpO₂: low perfusion"
+   ]
+  },
+  {
+   "n": 12,
+   "t": 1188.56,
+   "who": "team",
+   "text": "CPR started, 110 /min",
+   "values": {
+    "hr": 112,
+    "map": 27.648197858507704,
+    "spo2": null,
+    "etco2": 21
+   },
+   "pulseless": true,
+   "alarms": [
+    "SpO₂: no pulse detected",
+    "ART: no pulsatile pressure",
+    "Asystole"
+   ]
+  }
+ ],
+ "keyTimes": [
+  {
+   "id": "recognition",
+   "label": "Recognition (instructor's tick)",
+   "fromT": 0,
+   "fromLabel": "start",
+   "toT": null,
+   "state": "notTicked"
+  },
+  {
+   "id": "firstTeam",
+   "label": "Start → first team action",
+   "fromT": 0,
+   "toT": 928.14,
+   "state": "measured"
+  },
+  {
+   "id": "pulseLostToCpr",
+   "label": "Pulse lost → CPR",
+   "fromT": 660,
+   "toT": 928.14,
+   "state": "measured"
+  },
+  {
+   "id": "pulseless",
+   "label": "Pulseless in all",
+   "fromT": 660,
+   "toT": null,
+   "totalS": 706.9000000000001,
+   "state": "measured"
+  }
+ ],
+ "report3": {
+  "actions": [
+   {
+    "id": "announceDiagnosis",
+    "label": "Recognise and announce the diagnosis: PEA from hypovolaemia (pseudo-PEA)",
+    "kind": "communication",
+    "grade": "failed",
+    "firstGrade": "failed",
+    "lines": [],
+    "dueT": 625.6163375628915,
+    "givenT": null,
+    "windowS": 30,
+    "repeats": [],
+    "admin": []
+   },
+   {
+    "id": "oxygen",
+    "label": "Oxygen by face mask, FiO₂ 1.0",
+    "kind": "procedure",
+    "grade": "met",
+    "firstGrade": "met",
+    "lines": [],
+    "dueT": null,
+    "givenT": 36.70997347366646,
+    "windowS": null,
+    "repeats": [],
+    "admin": [
+     1
+    ]
+   },
+   {
+    "id": "intubate",
+    "label": "Intubate and ventilate, FiO₂ 1.0",
+    "kind": "procedure",
+    "grade": "met",
+    "firstGrade": "met",
+    "lines": [],
+    "dueT": null,
+    "givenT": 67.55354271836985,
+    "windowS": null,
+    "repeats": [],
+    "admin": [
+     2,
+     3,
+     4
+    ]
+   },
+   {
+    "id": "callForHelp",
+    "label": "Call for help",
+    "kind": "communication",
+    "grade": "failed",
+    "firstGrade": "failed",
+    "lines": [],
+    "dueT": null,
+    "givenT": null,
+    "windowS": null,
+    "repeats": [],
+    "admin": []
+   },
+   {
+    "id": "cpr",
+    "label": "Start CPR: compressions 100–120/min, bag via the tube 10/min, FiO₂ 1.0",
+    "kind": "device",
+    "grade": "failed",
+    "firstGrade": "failed",
+    "lines": [
+     "given 4:48 after the anchor, failed after 2:00"
+    ],
+    "dueT": 639.6082386798032,
+    "givenT": 928.105599999994,
+    "windowS": 30,
+    "repeats": [],
+    "admin": [
+     5,
+     13,
+     16
+    ]
+   },
+   {
+    "id": "bag",
+    "label": "Bag via the tube 10/min, FiO₂ 1.0",
+    "kind": "device",
+    "grade": "met",
+    "firstGrade": "met",
+    "lines": [],
+    "dueT": null,
+    "givenT": 928.1060999999941,
+    "windowS": null,
+    "repeats": [],
+    "admin": [
+     4,
+     6
+    ]
+   },
+   {
+    "id": "epinephrine",
+    "label": "Epinephrine 1 mg IV",
+    "kind": "drug",
+    "grade": "failed",
+    "firstGrade": "met",
+    "lines": [],
+    "dueT": null,
+    "givenT": 948.312699999988,
+    "windowS": null,
+    "repeats": [
+     {
+      "n": 2,
+      "grade": "met",
+      "t": 1128.6643999999762,
+      "lines": []
+     },
+     {
+      "n": 3,
+      "grade": "failed",
+      "t": null,
+      "lines": []
+     }
+    ],
+    "admin": [
+     11,
+     14
+    ]
+   },
+   {
+    "id": "sourceControl",
+    "label": "Surgeon controls the bleeding",
+    "kind": "procedure",
+    "grade": "met",
+    "firstGrade": "met",
+    "lines": [],
+    "dueT": null,
+    "givenT": 928.939599999994,
+    "windowS": null,
+    "repeats": [],
+    "admin": [
+     7
+    ]
+   },
+   {
+    "id": "massiveTransfusion",
+    "label": "Massive transfusion: 1 L warmed crystalloid, then red cells and plasma by rapid infuser",
+    "kind": "fluid",
+    "grade": "met",
+    "firstGrade": "met",
+    "lines": [],
+    "dueT": null,
+    "givenT": 929.791,
+    "windowS": null,
+    "repeats": [],
+    "admin": [
+     9
+    ]
+   },
+   {
+    "id": "txa",
+    "label": "Tranexamic acid 1 g IV",
+    "kind": "drug",
+    "grade": "met",
+    "firstGrade": "met",
+    "lines": [],
+    "dueT": null,
+    "givenT": 930.6415000000001,
+    "windowS": null,
+    "repeats": [],
+    "admin": [
+     10
+    ]
+   },
+   {
+    "id": "rhythmCheck",
+    "label": "Rhythm check (compressions pause)",
+    "kind": "procedure",
+    "grade": "failed",
+    "firstGrade": "met",
+    "lines": [],
+    "dueT": 928.105599999994,
+    "givenT": 1047.7874000000654,
+    "windowS": 130,
+    "repeats": [
+     {
+      "n": 2,
+      "grade": "overdue",
+      "t": 1178.2326999999882,
+      "lines": [
+       "interval 130.45 s, 120 ± 10 s asked"
+      ]
+     },
+     {
+      "n": 3,
+      "grade": "failed",
+      "t": null,
+      "lines": []
+     }
+    ],
+    "admin": [
+     12,
+     15
+    ]
+   },
+   {
+    "id": "resumeCpr",
+    "label": "Resume CPR after the rhythm check",
+    "kind": "device",
+    "grade": "overdue",
+    "firstGrade": "overdue",
+    "lines": [
+     "given 10.05 s after the taking of rhythmCheck"
+    ],
+    "dueT": 1047.7874000000654,
+    "givenT": 1057.8326999999879,
+    "windowS": 10,
+    "repeats": [
+     {
+      "n": 2,
+      "grade": "overdue",
+      "t": 1188.5266000000238,
+      "lines": [
+       "given 10.29 s after the taking of rhythmCheck"
+      ]
+     }
+    ],
+    "admin": [
+     5,
+     13,
+     16
+    ]
+   },
+   {
+    "id": "stopCpr",
+    "label": "Rhythm check: pulse back, stop CPR",
+    "kind": "procedure",
+    "grade": "not applicable",
+    "firstGrade": "not applicable",
+    "lines": [
+     "anchor never happened: rosc never happened"
+    ],
+    "dueT": null,
+    "givenT": null,
+    "windowS": null,
+    "repeats": [],
+    "admin": []
+   }
+  ],
+  "outcomes": [],
+  "violations": [],
+  "judged": [
+   {
+    "id": "recogniseRosc",
+    "text": "Recognise the return of circulation on the arterial line and the capnogram at the rhythm check",
+    "kind": "recognition",
+    "fromT": null,
+    "pressedT": null
+   }
+  ]
+ },
+ "perMinute": [
+  {
+   "t": 0,
+   "values": {
+    "hr": 71,
+    "map": 94.07038316705197,
+    "spo2": 96,
+    "etco2": 36,
+    "rr": 14,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1,
+    "ph": 7.41,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 60,
+   "values": {
+    "hr": 75,
+    "map": 93.69600539460824,
+    "spo2": 97,
+    "etco2": 38,
+    "rr": 14,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1,
+    "ph": 7.39,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 120,
+   "values": {
+    "hr": 81,
+    "map": 93.29282085252639,
+    "spo2": 99,
+    "etco2": 35,
+    "rr": 12,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1,
+    "ph": 7.4,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 180,
+   "values": {
+    "hr": 88,
+    "map": 92.41944195728354,
+    "spo2": 99,
+    "etco2": 34,
+    "rr": 12,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1.1,
+    "ph": 7.4,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 240,
+   "values": {
+    "hr": 95,
+    "map": 90.97247157803709,
+    "spo2": 99,
+    "etco2": 32,
+    "rr": 12,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1.1,
+    "ph": 7.4,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 300,
+   "values": {
+    "hr": 105,
+    "map": 89.15058895432225,
+    "spo2": 99,
+    "etco2": 31,
+    "rr": 12,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1.2,
+    "ph": 7.39,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 360,
+   "values": {
+    "hr": 118,
+    "map": 85.60431458016922,
+    "spo2": 99,
+    "etco2": 30,
+    "rr": 13,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1.3,
+    "ph": 7.39,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 420,
+   "values": {
+    "hr": 129,
+    "map": 77.13365616985331,
+    "spo2": 99,
+    "etco2": 28,
+    "rr": 13,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1.5,
+    "ph": 7.39,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 480,
+   "values": {
+    "hr": 140,
+    "map": 66.7868966838886,
+    "spo2": 99,
+    "etco2": 26,
+    "rr": 13,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1.7,
+    "ph": 7.38,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 540,
+   "values": {
+    "hr": 157,
+    "map": 53.026724972767205,
+    "spo2": 99,
+    "etco2": 23,
+    "rr": 14,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1.9,
+    "ph": 7.37,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 600,
+   "values": {
+    "hr": 50,
+    "map": 39.72782265612854,
+    "spo2": 99,
+    "etco2": 20,
+    "rr": 15,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 2.1,
+    "ph": 7.36,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 660,
+   "values": {
+    "hr": 54,
+    "map": 8.85892162330404,
+    "spo2": 99,
+    "etco2": 13,
+    "rr": 15,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 2.3,
+    "ph": 7.35,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 720,
+   "values": {
+    "hr": 40,
+    "map": 3.957321988310291,
+    "spo2": null,
+    "etco2": 1,
+    "rr": 0,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 2.6,
+    "ph": 7.31,
+    "glucose": 5.7,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 780,
+   "values": {
+    "hr": 18,
+    "map": 4.33667430437834,
+    "spo2": null,
+    "etco2": 0,
+    "rr": 0,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 2.9,
+    "ph": 7.28,
+    "glucose": 5.8,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 840,
+   "values": {
+    "hr": 20,
+    "map": 4.398216566418149,
+    "spo2": null,
+    "etco2": 0,
+    "rr": 0,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 3.2,
+    "ph": 7.26,
+    "glucose": 5.9,
+    "tcore": 36.7
+   }
+  },
+  {
+   "t": 900,
+   "values": {
+    "hr": 19,
+    "map": 4.483875472313382,
+    "spo2": 99,
+    "etco2": 0,
+    "rr": 0,
+    "temp": 36.7,
+    "k": 4.2,
+    "lactate": 3.6,
+    "ph": 7.23,
+    "glucose": 6.1,
+    "tcore": 36.7
+   }
+  },
+  {
+   "t": 960,
+   "values": {
+    "hr": 109,
+    "map": 27.670929269958748,
+    "spo2": 99,
+    "etco2": 8,
+    "rr": 1,
+    "temp": 36.7,
+    "k": 4.3,
+    "lactate": 3.8,
+    "ph": 7.21,
+    "glucose": 6.2,
+    "tcore": 36.6
+   }
+  },
+  {
+   "t": 1020,
+   "values": {
+    "hr": 106,
+    "map": 48.646909689174855,
+    "spo2": 99,
+    "etco2": 18,
+    "rr": 10,
+    "temp": 36.5,
+    "k": 4.5,
+    "lactate": 4.1,
+    "ph": 7.19,
+    "glucose": 6.4,
+    "tcore": 36.4
+   }
+  },
+  {
+   "t": 1080,
+   "values": {
+    "hr": 112,
+    "map": 51.16364565226812,
+    "spo2": 99,
+    "etco2": 18,
+    "rr": 10,
+    "temp": 36.4,
+    "k": 4.7,
+    "lactate": 4.4,
+    "ph": 7.17,
+    "glucose": 6.7,
+    "tcore": 36.4
+   }
+  },
+  {
+   "t": 1140,
+   "values": {
+    "hr": 112,
+    "map": 50.15118349510144,
+    "spo2": 99,
+    "etco2": 22,
+    "rr": 10,
+    "temp": 36.4,
+    "k": 4.6,
+    "lactate": 4.5,
+    "ph": 7.16,
+    "glucose": 6.9,
+    "tcore": 36.4
+   }
+  },
+  {
+   "t": 1200,
+   "values": {
+    "hr": 110,
+    "map": 48.826570910703964,
+    "spo2": 99,
+    "etco2": 19,
+    "rr": 10,
+    "temp": 36.4,
+    "k": 4.6,
+    "lactate": 4.7,
+    "ph": 7.15,
+    "glucose": 7.1,
+    "tcore": 36.3
+   }
+  },
+  {
+   "t": 1260,
+   "values": {
+    "hr": 112,
+    "map": 49.2009501347971,
+    "spo2": 99,
+    "etco2": 23,
+    "rr": 10,
+    "temp": 36.3,
+    "k": 4.6,
+    "lactate": 4.9,
+    "ph": 7.14,
+    "glucose": 7.3,
+    "tcore": 36.3
+   }
+  },
+  {
+   "t": 1320,
+   "values": {
+    "hr": 112,
+    "map": 48.71491614449061,
+    "spo2": 99,
+    "etco2": 25,
+    "rr": 10,
+    "temp": 36.3,
+    "k": 4.5,
+    "lactate": 5.1,
+    "ph": 7.13,
+    "glucose": 7.5,
+    "tcore": 36.3
+   }
+  }
+ ]
+}
