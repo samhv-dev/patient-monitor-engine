@@ -207,6 +207,45 @@ for (const [target, presses, tag] of [['latent', 5, 'latent'], ['earlySigns', 6,
   });
 }
 
+// Plan F9: the haemorrhage card in pme-scenario/2 (showcase-haemorrhage-v2) at 1440 × 900, at its fan-out: the arrest
+// phases, where ten actions open at once (announce the diagnosis, call for help, CPR, bag, epinephrine, source control,
+// massive transfusion, TXA, rhythm check, resume CPR). The phases come from the physiology: oxygen at 0:30 and the ventilator
+// at 1:00 (the run sheet's presses), then fast-forward until Arrest: PEA (the model's pulse loss, ≈ 11:00) and, with no
+// CPR, Arrest: asystole (≈ 15:25). At each: no scroll, every open action a row, no row disabled, no phase name cut.
+for (const target of ['arrestPea', 'arrestAsystole'] as const) {
+  test(`Instructor v2 fits 1440 × 900 on the /2 haemorrhage card at ${target}: no scroll, every open action a row, no row disabled`, async ({ page, browserName }, info) => {
+    test.setTimeout(360_000);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openApp(page, base, '?scenario=showcase-haemorrhage-v2#/teach2', { warmMs: 2000 });
+    await page.waitForFunction(() => !!(window as unknown as W).__pmeApp.link.ctl.scenario.doc, null, { timeout: 30_000 });
+    for (const [t, title] of [[30, 'Oxygen by face mask, FiO₂ 1.0'], [60, 'Intubate and ventilate, FiO₂ 1.0']] as const) {
+      await to(page, t);
+      const row = page.locator('.ip2-action .ip2-rows:not(.ip2-finished-list) button.ip2-row').filter({ has: page.locator('.ip2-row-title', { hasText: title }) }).first();
+      await row.click();
+      await expect(row).toHaveAttribute('data-look', 'taken', { timeout: 10_000 });
+    }
+    for (let n = 0; (await app(page)).stateId !== target && n < 40; n++) await to(page, Math.floor((await app(page)).simT) + 30);
+    expect((await app(page)).stateId).toBe(target);
+    await page.waitForTimeout(1500);
+    const running = await measure(page);
+    const dir = process.env.TEACH2_SHOTS ?? info.outputPath();
+    mkdirSync(dir, { recursive: true });
+    await page.screenshot({ path: join(dir, `teach2-fit-haemorrhage-v2-${target}-${browserName}-page.png`) });
+    const report = { browser: browserName, card: 'showcase-haemorrhage-v2', target, simT: (await app(page)).simT, running };
+    console.log(`teach2-fit ${JSON.stringify(report)}`);
+    info.annotations.push({ type: 'teach2-fit', description: JSON.stringify(report) });
+    expect.soft(running.state).toBe(target);
+    expect.soft(running.page[0], 'the page scrolls').toBeLessThanOrEqual(running.page[1] as number);
+    expect.soft(running.view[0], 'the view scrolls').toBeLessThanOrEqual(running.view[1] as number);
+    expect.soft(running.action[0], 'ACTION scrolls').toBeLessThanOrEqual(running.action[1] as number);
+    expect.soft(running.cardSteps, 'the phase has its ten open actions').toBe(10);
+    expect.soft(running.stepRows, 'every open action of the phase is a row').toBe(running.cardSteps);
+    expect.soft(running.disabled, 'a row is disabled').toBe(0);
+    expect.soft(running.strip[0], 'the strip scrolls sideways').toBeLessThanOrEqual(running.strip[1] as number);
+    expect.soft(running.cut, 'a phase name is cut').toBe(0);
+  });
+}
+
 // The owner's board "Empty 5" (approved 30 October): with no case loaded the view fits 1440 × 900 without a scroll,
 // with the strip's one dashed chip (the owner, 1 November: one row, no status line), the default patient's cue box and
 // ACTION's three cards; 2 opens the

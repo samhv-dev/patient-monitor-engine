@@ -2226,3 +2226,84 @@ test('A4 haemorrhage (E120): PEA on a junctional rhythm → asystole → CPR, vo
     await R.finish();
   }
 });
+
+// ------------------------------------------------ the /2 round (plan F9): the haemorrhage card in pme-scenario/2
+// The A4 haemorrhage round on "Class IV haemorrhage, PEA and resuscitation (phases)" (showcase-haemorrhage-v2), run with
+// PME_PANEL=teach2. The same presses at the same cues as the /1 round above, with what the /2 card changes and only
+// that (the owner's rulings of 5 November): no VF is set at the rhythm checks (VF comes from the physiology, which draws
+// none on this course), so there is no Charge and no Shock; each rhythm check stops the compressions and the Resume CPR row
+// resumes them 10 s later (within its 10-s window, AHA 2025 Part 7 S462) (the /1 round resumed them with the shock, ≈ 10 s after the check); the waits are on /2
+// PHASES (Decompensating, Arrest: PEA, Arrest: asystole), and "pulse back, stop CPR" is pressed only if the model's pulse
+// is back at the third rhythm check (on this path it is not: asystole stays in this model). The Debrief is read and
+// printed as on the /1 round, its action table and judged rows beside the phase history. The test name does not
+// contain "A4 haemorrhage (E120)", so the /1 round's -g pattern selects the /1 round only.
+const HAEM2 = 'Class IV haemorrhage, PEA and resuscitation (phases)';
+
+test('A4 /2 haemorrhage (phases card): PEA → asystole → CPR, volume, epinephrine, rhythm checks with no VF, Debrief printed', async ({ page, browser }) => {
+  test.skip(PANEL !== 'teach2', 'the /2 card runs on Instructor v2: PME_PANEL=teach2');
+  page.setDefaultTimeout(60_000);
+  const R = new Run(page, browser, 'A4 haemorrhage phases card (kit round)');
+  try {
+    await R.start(HAEM2, 8, 'after-alarms', { card: 2 });
+    await logRhythms(page);
+    await R.untilT(R.t0 + 30);
+    await R.press('Oxygen by face mask, FiO₂ 1.0');
+    await R.untilT(R.t0 + 60);
+    await R.press('Intubate and ventilate, FiO₂ 1.0');
+    await R.untilT(R.t0 + 240);
+    await R.row('4:00');
+    await R.untilT(R.t0 + 480);
+    await R.row('8:00');
+    const tJ = await R.until('decompensating', 300);
+    await R.row('phase Decompensating (the card sets the junctional rhythm)');
+    await R.speed(4);
+    const tPea = await R.until('arrestPea', 240);
+    await R.row('phase Arrest: PEA (the model\'s pulse loss)');
+    await R.speed(8);
+    const tAsy = await R.until('arrestAsystole', 600);
+    await R.speed(1);
+    await R.row('phase Arrest: asystole');
+    await R.react();
+    const tCpr = await R.press('Start CPR: compressions 100–120/min, bag via the tube 10/min, FiO₂ 1.0');
+    await R.press('Surgeon controls the bleeding');
+    await R.press('Massive transfusion: 1 L warmed crystalloid, then red cells and plasma by rapid infuser');
+    await R.press('Tranexamic acid 1 g IV');
+    await R.untilT(tCpr + 20);
+    await R.press('Epinephrine 1 mg IV');
+    await R.speed(4);
+    await R.untilT(tCpr + 60);
+    await R.row('1 min into CPR');
+    await R.untilT(tCpr + 118);
+    await R.speed(1);
+    const tPc1 = await R.press('Rhythm check (compressions pause)');
+    await R.untilT(tPc1 + 10);
+    const tRes1 = await R.press('Resume CPR after the rhythm check');
+    await R.speed(4);
+    await R.untilT(tRes1 + 70);
+    const tEpi2 = await R.press('Epinephrine 1 mg IV');
+    await R.untilT(tRes1 + 118);
+    await R.speed(1);
+    const tPc2 = await R.press('Rhythm check (compressions pause)');
+    await R.untilT(tPc2 + 10);
+    const tRes2 = await R.press('Resume CPR after the rhythm check');
+    await R.speed(4);
+    await R.untilT(tRes2 + 118);
+    await R.speed(1);
+    await R.row('the third rhythm check');
+    const back = (await modelPulse(page)) === true;
+    const tStop = back ? await R.press('Rhythm check: pulse back, stop CPR') : null;
+    if (!back) R.r.notes.push(`no pulse at the third rhythm check (${mmss(await R.sim())}): stop CPR not pressed; the patient is in ${await stateId(page)}`);
+    await R.speed(4);
+    await R.untilT((tStop ?? tRes2 + 118) + 60);
+    await R.row('end');
+    R.r.measures.a4haemorrhage2 = {
+      phases: await R.phases(), decompensatingAt: tJ === null ? null : mmss(tJ), peaAt: tPea === null ? null : mmss(tPea), asystoleAt: tAsy === null ? null : mmss(tAsy),
+      asystoleAfterPeaS: tAsy === null || tPea === null ? null : r1(tAsy - tPea), cprAt: mmss(tCpr), cprAfterPeaS: tPea === null ? null : r1(tCpr - tPea),
+      rhythmCheck1At: mmss(tPc1), resume1At: mmss(tRes1), epinephrine2At: mmss(tEpi2), rhythmCheck2At: mmss(tPc2), resume2At: mmss(tRes2),
+      pulseBackAtThirdCheck: back, stopAt: tStop === null ? null : mmss(tStop), rhythms: (await rhythmLog(page)).map((x) => `${mmss(x.t)} ${x.id}`),
+    };
+    await a4Debrief(R, page, 'haemorrhage-v2');
+  } finally {
+    await R.finish();
+  }
+});
