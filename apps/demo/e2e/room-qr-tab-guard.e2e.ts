@@ -7,11 +7,18 @@
 //     stops; "Start a new session" gives a new code and the other tab carries on.
 // (3) The first tab asleep (5 November: on WebKit in CI the first tab, now in the background, did not answer the 200 ms
 //     ask, so no dialog and a new code): the browser's lock manager says the session exists, so the dialog appears; the
-//     hand-over waits for the tab and completes when it runs again. Playwright keeps every page "visible" and has no
-//     control that suspends one, so the sleeping background tab is stood in for by the first tab's main thread held
-//     busy: none of its timers or messages run until it ends, as in a tab the browser has suspended. (Chromium's
-//     CDP frozen state was tried and does not hold back BroadcastChannel messages: the frozen tab answered at once.)
+//     hand-over waits for the tab and completes when it runs again. Playwright cannot hide or suspend a page, so the
+//     background tab is stood in for as a browser makes one: hidden first (visibilityState overridden and
+//     visibilitychange dispatched, as fx14-pause-while-hidden does: the app pauses its own session and its worker runs
+//     the hidden pump, as in a real hidden tab), then suspended: its main thread parked in a synchronous request that
+//     the test answers only when the tab is to wake, so none of its tasks run and it uses no CPU meanwhile.
+//     Two earlier stand-ins did not hold: Chromium's CDP frozen state still delivered BroadcastChannel messages at once,
+//     and a 12 s busy loop kept the tab's engine worker running and its main thread spinning, so on the 2-vCPU CI runner
+//     the waking tab and the new tab's restore fought over the cores and the restore toast came late or not at all
+//     (runs 41929876356, 41946822037). A suspended tab costs nothing; this one now costs nothing.
 import { mkdtempSync, writeFileSync } from 'node:fs';
+import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
@@ -26,7 +33,7 @@ test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 test.afterEach(async () => relay?.close());
 
-type W = { __pmeApp: { session: { code: string; driver: { runner: { doc: { id: string } } | null } } } };
+type W = { __pmeApp: { session: { code: string; paused: boolean; driver: { runner: { doc: { id: string } } | null } } } };
 const codeOf = (p: Page) => p.evaluate(() => (window as unknown as W).__pmeApp.session.code);
 
 test.describe('the Room at 1920×1080', () => {
@@ -112,14 +119,43 @@ test('a second instructor tab is asked: "open that session here" takes the code 
   expect(new URL(b.url()).searchParams.get('moved')).toBeNull();
 });
 
-/** Put page `a` to sleep for `ms` (its main thread held busy: it runs nothing else); resolves with the wait for its wake. */
-async function putToSleep(a: Page, ms: number): Promise<() => Promise<void>> {
-  const busy = a.evaluate((n) => {
-    const end = performance.now() + n;
-    while (performance.now() < end); // the page runs nothing else
-  }, ms);
-  await new Promise((r) => setTimeout(r, 100)); // the loop has begun
-  return async () => void (await busy);
+/** The page's own visibility, as fx14-pause-while-hidden sets it (Playwright cannot hide a page). */
+const setHidden = (p: Page, hidden: boolean) =>
+  p.evaluate((x) => {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (x ? 'hidden' : 'visible') });
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => x });
+    document.dispatchEvent(new Event('visibilitychange'));
+  }, hidden);
+
+/** Put page `a` to sleep as a browser does a background tab: hidden (the app pauses itself), then suspended (its main
+ *  thread parked in a synchronous request this test holds open). Resolves once it is parked, with its wake: the request
+ *  answered, the page running again and shown. */
+async function putToSleep(a: Page): Promise<() => Promise<void>> {
+  await setHidden(a, true);
+  await expect.poll(() => a.evaluate(() => (window as unknown as W).__pmeApp.session.paused)).toBe(true);
+  let arrived!: () => void;
+  let answer!: () => void;
+  const parkedThere = new Promise<void>((r) => (arrived = r));
+  const answered = new Promise<void>((r) => (answer = r));
+  const srv = createServer((_req, res) => {
+    arrived();
+    void answered.then(() => res.writeHead(200, { 'access-control-allow-origin': '*', 'content-type': 'text/plain' }).end('awake'));
+  });
+  await new Promise<void>((r) => srv.listen(0, '127.0.0.1', r));
+  const url = `http://127.0.0.1:${(srv.address() as AddressInfo).port}/park`;
+  const parked = a.evaluate((u) => {
+    const x = new XMLHttpRequest();
+    x.open('GET', u, false); // synchronous: the page runs nothing until it is answered
+    x.send();
+  }, url);
+  await parkedThere;
+  return async () => {
+    answer();
+    await parked;
+    srv.close();
+    // Shown again (the instructor clicks it); a tab that has already handed over and moved has no page left to show
+    await setHidden(a, false).catch(() => undefined);
+  };
 }
 
 test('the first tab asleep (a background tab): the dialog still appears; the hand-over completes when that tab wakes', async ({ context }) => {
@@ -127,11 +163,10 @@ test('the first tab asleep (a background tab): the dialog still appears; the han
   const a = await context.newPage();
   await openApp(a, base, '?scenario=acls-vf-witnessed', { warmMs: 3000 });
   const code = await codeOf(a);
-  // A tab that went to sleep in the background had kept its case long before (every SAVE_MS = 1 s, position.ts); on
-  // the 2-vCPU CI runner the first save can come after the 3 s warm-up, and a tab put to sleep before it has none to
-  // hand over (CI run 41929876356, WebKit retries: no "Restored" toast). So it sleeps once its case is kept.
+  // A tab that went to sleep in the background had kept its case long before (every SAVE_MS = 1 s, position.ts; not
+  // while hidden); on the 2-vCPU CI runner the first save can come after the 3 s warm-up. So it sleeps once it is kept.
   await a.waitForFunction(() => sessionStorage.getItem('pme.position') !== null, undefined, { timeout: 20_000 });
-  const wake = await putToSleep(a, 12_000); // past B's load, the dialog, the click and TAKE_MS (2 s): the notice shows
+  const wake = await putToSleep(a); // asleep until wake(): past B's load, the dialog, the click and TAKE_MS
 
   const b = await context.newPage();
   await b.goto(`${base}/`);
