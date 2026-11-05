@@ -129,7 +129,10 @@ jobs:
         if: matrix.part == 'controller'
       - run: pnpm --filter @pme/ventilator test
         if: matrix.part == 'ventilator'
-      - run: pnpm -r --no-sort --filter '!@pme/controller' --filter '!@pme/ventilator' test # audio, skins, engine-core, renderer, validation, demo
+      # audio, skins, engine-core, renderer, validation, demo: one package at a time (each Vitest run already uses every
+      # core; with pnpm's default of four at once, renderer's real-engine tests timed out at 30 s on the first run of
+      # this job), in no dependency order, and every package runs even after one fails, so each reports its counts.
+      - run: pnpm -r --no-sort --workspace-concurrency=1 --no-bail --filter '!@pme/controller' --filter '!@pme/ventilator' test
         if: matrix.part == 'rest'
 
   # fix-ci-webkit-3: the renderer IIFE is built once, here, and shared: the e2e jobs need only it (iife-smoke.html loads
