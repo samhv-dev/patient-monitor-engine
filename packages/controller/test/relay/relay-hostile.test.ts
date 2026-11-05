@@ -58,4 +58,18 @@ describe('hostile relay input', () => {
     await waitFor(() => bad.got.some((m) => m.includes('"peers"')), 3000, 'valid hello answered');
     await healthy('HMA234');
   });
+  it("a pending instructor's own `grant` naming itself grants nothing: only the host's grant counts (plan P4)", async () => {
+    const h = await open();
+    const p = await open();
+    const hs = createStamper('HGT234', 'h');
+    const ps = createStamper('HGT234', 'ins-p.1');
+    h.ws.send(JSON.stringify(hs({ kind: 'hello', role: 'host' })));
+    p.ws.send(JSON.stringify(ps({ kind: 'hello', role: 'instructor', pin: '4729' } as never)));
+    await waitFor(() => h.got.some((m) => m.includes('"ins-p.1"')), 3000, 'instructor hello at the host');
+    p.ws.send(JSON.stringify(ps({ kind: 'grant', to: 'ins-p.1', granted: true } as never)));
+    p.ws.send(JSON.stringify(ps({ kind: 'command', body: { id: 'kp', issuedBy: 'x', type: 'time', action: 'pause' } as never })));
+    await waitFor(() => p.got.some((m) => m.includes('"forbidden"')), 3000, 'forbidden');
+    expect(h.got.some((m) => m.includes('"grant"') || m.includes('"kp"'))).toBe(false);
+    await healthy('HGU234');
+  });
 });

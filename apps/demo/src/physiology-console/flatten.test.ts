@@ -15,6 +15,14 @@ describe('flatten', () => {
     flatten({ a: Array.from({ length: 17 }, () => 1), b: new Float32Array(2), c: 1 }, 'x', out);
     expect([...out]).toEqual([['x.c', 1]]);
   });
+  it('keeps a long array whose every element carries an id: a table of rows (one per drug given), not a history', () => {
+    const out: Leaves = new Map();
+    const rows = Array.from({ length: 40 }, (_, i) => ({ id: `d${i}`, ce: i }));
+    flatten({ drugs: rows, hist: Array.from({ length: 17 }, (_, i) => ({ t: i })) }, 'x', out);
+    expect([...out.keys()].filter((k) => k.endsWith('.ce'))).toHaveLength(40);
+    expect(out.get('x.drugs.d39.ce')).toBe(39);
+    expect([...out.keys()].filter((k) => k.startsWith('x.hist'))).toEqual([]); // 17 unkeyed objects: still a history
+  });
 });
 
 describe('foldEvent', () => {

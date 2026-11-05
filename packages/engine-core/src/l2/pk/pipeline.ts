@@ -253,6 +253,8 @@ export function validatePkCommand(cmd: Command, _pk: PkState): string | undefine
     if (c.model !== undefined && !['eleveld', 'schnider', 'marsh', 'minto', 'shafer', 'gepts'].includes(c.model)) return `unknown TCI model ${c.model}`;
     return c.target >= 0 && c.target <= 100 && (c.mode === 'plasma' || c.mode === 'effect') ? undefined : 'target must be 0–100 with mode plasma or effect';
   }
+  // A volatile row has no compartment model: an IV bolus was accepted and then threw in pkSystem on the next tick
+  if (row.pk.kind === 'volatile') return `${row.id}: a volatile agent is given through the vaporiser, not as an IV drug`;
   const bloodBolusOnly = `${row.id} is given as a bolus in v1; 7c owns its kinetics`;
   if (ev.kind === 'infusion') {
     if (row.pk.kind === 'blood' && !row.rateActsVia) return bloodBolusOnly; // KCl declares its rate consumer
@@ -280,6 +282,12 @@ export function validatePkCommand(cmd: Command, _pk: PkState): string | undefine
 
 /** The routes whose kinetics the engine's intravenous models honour (IO and a central line are IV). */
 export const IV_ROUTES: readonly PkRoute[] = ['iv', 'io', 'central'];
+
+/** True when the engine models a dose of this drug by this route (validatePkCommand's route rule; a volatile row takes no drug dose). */
+export function routeHonoured(drugId: string, route: PkRoute): boolean {
+  const row = DRUGS[drugId];
+  return !!row && row.pk.kind !== 'volatile' && (row.routes ?? IV_ROUTES).includes(route);
+}
 
 /** Apply a validated command. True for every drug/infusion/tci/vaporiser command (the drug model consumes them all). */
 export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {

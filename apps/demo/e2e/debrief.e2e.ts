@@ -11,11 +11,14 @@ import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { pdfInfo, pdfText, squash } from './pdf-text.ts';
 import { openApp, scanEngineIds, startVite } from './app-support.ts';
+import { END_S, openMhV2, PATH, pressPath, to } from './mh-v2-path.ts';
 
 const out = resolve(import.meta.dirname, process.env.PME_SHOTS === '1' ? '../../../docs/gates/stage-13' : '../../../test-results/gate-shots/stage-13'); // FU-11 K1: evidence only on request
-let vite: ViteDevServer;
-let base = '';
-test.beforeAll(async () => ({ vite, base } = await startVite()));
+let vite: ViteDevServer | undefined;
+let base = process.env.PME_KIT_BASE ?? ''; // PME_KIT_BASE=<url>: a server already running (as teach2-mh-v2.e2e.ts)
+test.beforeAll(async () => {
+  if (!base) ({ vite, base } = await startVite());
+});
 test.afterAll(async () => vite?.close());
 
 type W = { __pmeApp: { link: { simT: number; ctl: { hostPaused: boolean } }; engineIds: string[] } };
@@ -101,6 +104,16 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   // redesign B (B6 b): key times and key moments on this run
   expect(await view.locator('#db-keytimes .db-tile').count()).toBeGreaterThanOrEqual(1);
   expect(await view.locator('#db-moments tbody tr').count()).toBeGreaterThanOrEqual(1);
+  // the owner, 1 November: the bookmark set during the run is on the course strip, at its time, its title the Bookmarks
+  // list's words
+  const mark = view.locator('#db-course g.db-bm');
+  await expect(mark).toHaveCount(1);
+  await expect(mark).toHaveAttribute('data-kind', 'bookmark');
+  await expect(mark.locator('path')).toBeVisible();
+  const listed = (await view.locator('#db-bookmarks li').first().innerText()).trim();
+  expect(listed).toMatch(/^1 · 00:0\d Bookmark: Bookmark \d+ at 00:0\d$/); // numbered as on the strip (the owner, 2 November)
+  expect(await mark.locator('title').textContent()).toBe(listed);
+  expect(Number(await mark.getAttribute('data-t'))).toBeLessThan(10);
   const minuteRows = await view.locator('#db-minutes tbody tr').allInnerTexts(); // Q1: one row per minute
   expect(minuteRows.length).toBeGreaterThanOrEqual(2); // the kept course is ≈ 1½–2 sim-min
   expect(minuteRows[0]).toMatch(/^00:00\s+\d+/);
@@ -146,6 +159,8 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   });
   const boxes = browserName === 'chromium';
   expect(layout).toEqual({ topbar: false, stage: false, bar: false, tools: false, report: true, trends: 'page', timeline: 'auto', minutes: 'page', moments: 'page', chart: 'avoid', ink: 'rgb(0, 0, 0)', body: 'visible', undone: 'line-through', marginBoxes: boxes, runFeet: boxes ? 0 : 4 });
+  expect(await page.evaluate(() => getComputedStyle(document.querySelector('#db-course g.db-bm') as Element).display), 'the mark prints').not.toBe('none');
+  expect(await page.evaluate(() => document.querySelector('#db-course g.db-bm .db-bm-n')?.textContent), 'its number inside').toBe('1');
   mkdirSync(out, { recursive: true });
   await page.screenshot({ path: `${out}/debrief-print-${browserName}.png`, fullPage: true });
 
@@ -313,8 +328,9 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   expect(tiles).toEqual([['recognition', '–'], ['firstTeam', '7 min 51 s'], ['objective:1', '3 s'], ['objective:2', '1 min 30 s'], ['objective:3', '2 s'], ['pulseless', '3 min 07 s']]);
   await expect(view.locator('#db-keytimes [data-key=recognition] .db-tile-sub')).toHaveText('not ticked');
   await expect(view.locator('#db-course .db-badge')).toHaveCount(7);
-  await expect(view.locator('#db-course rect.db-pulseless')).toHaveCount(1);
-  await expect(view.locator('#db-course .db-legend')).toHaveText('■ team action · ● patient event · □ scenario state · numbers match Key moments');
+  await expect(view.locator('#db-course rect.db-pulseless')).toHaveCount(4); // the band, in each of the four panels
+  await expect(view.locator('#db-course .db-legend')).toHaveText('▼ team action · ▼ patient event · ▽ scenario state · numbers match Key moments · marks: bookmark'); // the recording's bookmark at 00:13
+  await expect(view.locator('#db-course g.db-bm')).toHaveCount(1);
   await expect(view.locator('#db-objectives .db-measure')).toHaveText(['3 s of 10 s', '1 min 30 s of 2 min 00 s', '2 s of 30 s']);
   expect(await view.locator('#db-steps tbody tr').count(), 'IP8: the steps section is in the report measured below').toBeGreaterThan(0);
 
@@ -460,6 +476,72 @@ test('Debrief B on the haemorrhage card: the learner handout within one A4 page'
     const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
     mkdirSync(out, { recursive: true });
     writeFileSync(`${out}/debrief-b-haemorrhage-handout.pdf`, pdf);
+    expect(pdfInfo(pdf).boxes).toHaveLength(1);
+  }
+});
+
+// Plan F11 (F7's acceptance on a live /2 run): the MH card in pme-scenario/2 driven on the demo path from Instructor v2
+// to the talk's end, paused, then the Debrief: its JSON export is pme-debrief/3 (phases, graded actions, outcomes,
+// violations, judged rows; no /2 objectives or steps), the action table is in the report, and in print media at the
+// 182 mm content width page 1 and the learner handout each fit one A4 page (≤ 267 mm, IP8); Chromium prints the
+// handout on one page. Both engines. The instructor ticks the recognition (the judged row) at the call, 08:12: the
+// Debrief's "Recognition (instructor's tick)" runs from Early signs' entry, as the /1 card's from its "early signs"
+// state (brief fv2-debrief-recognition-clock-nov1 and the ruling the same day), in seconds, not from the pre-intubation
+// EtCO₂ of 03:51.
+test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout within one A4 page', async ({ page, browserName }) => {
+  test.setTimeout(480_000);
+  await openMhV2(page, (h) => openApp(page, base, h, { warmMs: 1500 }));
+  const CALL = PATH.findIndex(([, x]) => x.startsWith('MH crisis'));
+  await pressPath(page, (i) => i <= CALL);
+  await page.locator('.ip2-action button.ip2-row').filter({ has: page.locator('.ip2-row-title', { hasText: 'Name malignant hyperthermia' }) }).first().click();
+  await pressPath(page, () => true, CALL + 1);
+  await to(page, END_S);
+  await page.locator('.ip2-head button.ip2-pill').click(); // Instructor v2's clock pill pauses (it has no session bar)
+  await expect.poll(() => page.evaluate(() => (window as unknown as W).__pmeApp.link.ctl.hostPaused), { timeout: 20_000, message: 'the host has paused' }).toBe(true);
+  await page.setViewportSize({ width: Math.round(182 * MM), height: 1000 }); // the A4 content width (182 mm)
+  await page.evaluate(() => (location.hash = '#/debrief'));
+  const view = page.locator('[data-view=debrief]');
+  await expect(view.getByRole('heading', { level: 1, name: 'Debrief' })).toBeVisible({ timeout: 10_000 });
+  await expect(view.locator('#db-actions tbody tr.db-act').first()).toBeVisible();
+  await expect(view.locator('#db-steps')).toHaveCount(0); // a /2 run has the action table instead
+
+  const [dl] = await Promise.all([page.waitForEvent('download'), view.getByRole('button', { name: 'Download the record (JSON)' }).click()]);
+  expect(dl.suggestedFilename()).toMatch(/^debrief-showcase-mh-v2-\d{4}-\d\d-\d\d\.json$/);
+  const j = JSON.parse(readFileSync(await dl.path(), 'utf8')) as Record<string, unknown> & { phases: Array<{ id?: string; phaseId?: string }>; actions: Array<{ id: string; grade: string; givenT: number | null }> };
+  expect(j.schema).toBe('pme-debrief/3');
+  for (const k of ['version', 'build', 'record', 'phases', 'actions', 'outcomes', 'violations', 'judged', 'facts', 'keyTimes', 'keyMoments', 'minutes', 'marks']) expect(j, `pme-debrief/3 key ${k}`).toHaveProperty(k);
+  for (const k of ['objectives', 'steps']) expect(j, `no /2 key ${k}`).not.toHaveProperty(k);
+  expect(j.phases.length, 'the phases entered').toBeGreaterThan(1);
+  expect(j.actions.length, 'the graded actions').toBeGreaterThan(0);
+  expect(j.actions.filter((a) => a.givenT !== null).map((a) => a.id)).toEqual(expect.arrayContaining(['callCrisis', 'dantrolene', 'ventilationBack'])); // the setup actions (induce …) are not graded on this card
+  // the owner's phase rules of 1 November: Recrudescence is entered (14:59) and opens the second dose's window, so the
+  // second dose at 19:13 is met, as the /1 card's objective 4
+  expect(Object.fromEntries(j.actions.filter((a) => ['callCrisis', 'dantrolene', 'dantroleneAgain', 'ventilationBack'].includes(a.id)).map((a) => [a.id, a.grade]))).toEqual({ callCrisis: 'met', dantrolene: 'met', dantroleneAgain: 'met', ventilationBack: 'met' });
+  // the recognition key time: from Early signs' entry to the tick
+  const rec = (j.keyTimes as Array<{ id: string; fromT: number; fromLabel?: string; toT: number | null }>).find((k) => k.id === 'recognition');
+  const earlyT = (j.phases as Array<{ id: string; t: number }>).find((p) => p.id === 'earlySigns')?.t;
+  test.info().annotations.push({ type: 'MH /2 recognition', description: `${rec?.fromLabel} ${rec?.fromT} → ${rec?.toT}` });
+  expect(rec?.fromLabel).toBe('early signs');
+  expect(rec?.fromT, 'the clock starts at Early signs\' entry, not at the pre-intubation EtCO₂').toBe(earlyT);
+  expect((rec?.toT ?? Infinity) - (rec?.fromT ?? 0), 'seconds, not minutes').toBeLessThan(60);
+  const results = resolve(import.meta.dirname, '../../../test-results');
+  mkdirSync(results, { recursive: true });
+  writeFileSync(`${results}/debrief-mh-v2-${browserName}.json`, JSON.stringify(j, null, 1));
+  test.info().annotations.push({ type: 'MH /2 grades', description: j.actions.map((a) => `${a.id}:${a.grade}`).join(' ') });
+
+  await page.emulateMedia({ media: 'print' });
+  await printFontLoaded(page);
+  const { page1, printFont } = await printHeights(page);
+  await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
+  const { handout } = await printHeights(page);
+  test.info().annotations.push({ type: 'MH /2 heights (mm)', description: `page 1 ${page1.toFixed(1)}, handout ${handout.toFixed(1)}` });
+  expect(printFont, 'the bundled print font is loaded').toBe(true);
+  expect(page1, 'page 1 (mm)').toBeLessThanOrEqual(267);
+  expect(handout, 'handout (mm)').toBeLessThanOrEqual(267);
+  if (browserName === 'chromium') {
+    const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    mkdirSync(out, { recursive: true });
+    writeFileSync(`${out}/debrief-mh-v2-handout.pdf`, pdf);
     expect(pdfInfo(pdf).boxes).toHaveLength(1);
   }
 });

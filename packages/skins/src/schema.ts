@@ -238,7 +238,7 @@ export const skinSchema: JsonSchema = {
     ),
     co2: obj(
       { unit: en(['mmHg', 'kPa', '%']), scale: num(1, 100), scaleUnit: en(['mmHg', '%']), sidestreamDelayS: num(0, 10), riseTimeMs: num(20, 1000) },
-      { fill: bool, displaySmoothMs: num(0, 500), scaleLineTop: bool },
+      { fill: bool, displaySmoothMs: num(0, 500), scaleLineTop: bool, autoScales: arr(num(1, 200), 2) },
     ),
     alarms,
     limits: obj({ adult: limitBand, paed: limitBand, neo: limitBand }),
