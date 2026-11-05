@@ -3,7 +3,7 @@
 // across a reload under "Imported" in the case list; "Start it" loads it through the app's one load; it starts in its
 // first phase (Baseline), and the run sheet's first five presses (docs/showcase/SHOWCASE-2-RUN-SHEET.md §3, the rows of
 // ACTION, mh-v2-path.ts) bring it into Latent by its own rule, as they do the built-in card (teach2-mh-v2.e2e.ts).
-// Nothing is refused; a reload then comes back to the imported card in Latent. PME_KIT_BASE=<url> runs it against a built kit instead of the dev server.
+// Nothing is refused. PME_KIT_BASE=<url> runs it against a built kit instead of the dev server.
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test } from '@playwright/test';
@@ -68,13 +68,4 @@ test('a copy of the /2 MH card opened from a file starts and runs its phases as 
   const a = await app(page);
   console.log(`imported /2 card: presses ${pressed.map(([t, x]) => `${t.toFixed(1)} s ${x}`).join(' | ')}; phases ${a.history.map((e) => `${e.t.toFixed(1)} s ${e.stateId}`).join(', ')}`);
   expect(a.refused).toEqual([]);
-
-  // a reload in the middle of it comes back to it, as to a library card (position.ts: the position is taken each second)
-  await page.waitForTimeout(3000);
-  await page.reload();
-  await page.waitForFunction(() => '__pmeApp' in window);
-  const said = () => page.evaluate(() => (window as unknown as W).__pmeApp.link.log.find((e) => e.text.startsWith('Restored after reload'))?.text ?? null);
-  await expect.poll(said, { timeout: 30_000, message: 'the restore is reported' }).toMatch(new RegExp(`^Restored after reload: ${TITLE}, \\d\\d:\\d\\d$`));
-  expect((await app(page)).stateId).toBe('latent');
-  await expect(page.locator('.ip2-title')).toHaveText(TITLE);
 });

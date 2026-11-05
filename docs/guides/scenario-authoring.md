@@ -129,7 +129,7 @@ and checks it with `validateScenario` (a `pme-scenario/2` card, or a `/1` card).
 the validator's errors, one per line with the JSON path of each, and keeps nothing. A card whose `id` is a built-in
 card's is refused: give your card an id of its own. A card that passes is kept in this browser's library, under
 **Imported** at the end of the Scenario library's case list, and the pane offers to start it. It runs as a built-in
-card does (phases, actions, the Debrief, a reload in the middle of the case). Opening a file with the same `id` again
+card does (phases, actions, the Debrief). Opening a file with the same `id` again
 replaces the earlier copy; **Remove** takes it out. The card lives in this browser's storage only: it is not sent to
 the learners' phones (they see the running case as always) and another computer does not have it.
 
