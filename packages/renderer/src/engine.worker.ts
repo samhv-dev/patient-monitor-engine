@@ -29,6 +29,7 @@ function onMessage(ev: MessageEvent<ToWorker>): void {
       case 'init': {
         const ctx = m.canvas.getContext('2d', { alpha: false, desynchronized: true }) as unknown as Ctx2D;
         core = new MonitorCore(m.canvas, ctx, m.size, m.opts, (anchor, events) => scope.postMessage({ type: 'events', anchor, events }));
+        core.onProgress = () => scope.postMessage({ type: 'progress' }); // FX-11a: the watchdog sees a long run working
         useRaf = !m.mainPump && typeof scope.requestAnimationFrame === 'function';
         scope.postMessage({ type: 'ready', path: useRaf ? 'worker-raf' : 'worker-pump' });
         if (useRaf) scope.requestAnimationFrame?.(loop);

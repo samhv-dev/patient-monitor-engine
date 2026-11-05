@@ -231,6 +231,7 @@ export const skinSchema: JsonSchema = {
         gridDefault: bool,
         scaleLines: en(['dotted-upper-mid-lower', 'none']),
         staticDisplay: en(['keep', 'mean-only']),
+        noSensorMessage: bool,
         meanOnlyLabels: arr(str),
         scales: record(triple),
       },

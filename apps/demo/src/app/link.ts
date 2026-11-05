@@ -108,7 +108,7 @@ export class Link {
 
   /** The highest active alarm level (1 = high) and how many alarms are active. */
   get alarmSummary(): { level: 1 | 2 | 3 | null; n: number; top: AlarmEntry | null } {
-    const act = (this.alarms?.active ?? []).filter((a) => !a.acked || a.latched);
+    const act = (this.alarms?.active ?? []).filter((a) => (!a.acked || a.latched) && !a.prompt); // A prompt is not an alarm (MUI-7)
     const top = [...act].sort((a, b) => a.level - b.level)[0] ?? null;
     return { level: top ? top.level : null, n: act.length, top };
   }

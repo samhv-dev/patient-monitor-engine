@@ -64,6 +64,8 @@ export interface AlarmEntry {
    * (philips-like #H30: visual only). Absent in older events: read as `!acked`.
    */
   sounding?: boolean;
+  /** A technical PROMPT (MUI-7: saadat-like "IBP1 NO SENSOR"): shown in the message bar, with no tone and no lamp. */
+  prompt?: boolean;
 }
 
 /** Brief §6.4 alarm-limit table as the device layer uses it: parameter key → [low, high] (null = no limit). */

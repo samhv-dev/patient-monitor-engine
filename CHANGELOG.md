@@ -224,6 +224,15 @@ the public API is what the packages export (see the API reference), the `pme-sce
   line adds 40: 115 px (it was 92, and the line took 17 px from the chips).
 
 ### Fixed
+
+- **Classroom defects, the monitor and Home (post-demo).** The worker watchdog warns first (`pme-monitor-slow`,
+  `pme-monitor-recovered`) and judges the worker by its own progress: a long run reports progress (`progress` worker
+  message) and a silent worker is stopped only when a probe worker answers (FX-11a). The host's sim clock is monotonic
+  within a timeline, and a scenario runner no longer counts a clock step-back twice (FX-11b). The saadat-like monitor
+  says "IBP1 NO SENSOR" with no transducer on the channel: a technical prompt (`AlarmEntry.prompt`, skin
+  `ibp.noSensorMessage`), no tone, no lamp (MUI-7). Home's CPU tile reads the last 2 s; a browser with no memory API
+  has no Memory tile (MUI-17).
+
 - Starting the saadat-like cuff no longer tells the learners' phones that the ventilator is on the main screen. The
   host started the cuff on AUTO at every patient start and card load (also the load that restores a case after a page
   reload) and mirrored the command with the Ventilator view's notice, so each phone held "The ventilator is on the main

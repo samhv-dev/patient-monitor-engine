@@ -325,6 +325,8 @@ export interface Skin {
      * ('keep', Philips IFU [S2] p. 57) or with the mean only ('mean-only', Saadat, research/06 §4.1).
      */
     staticDisplay: 'keep' | 'mean-only';
+    /** No transducer on the IBP channel is said in the message bar as a prompt, no tone (saadat-like "IBP1 NO SENSOR"). */
+    noSensorMessage: boolean;
     /** Colour of the dotted scale lines (optional; absent = the lane colour). Themes darken it like `colors`. */
     scaleLineColor?: string;
   };

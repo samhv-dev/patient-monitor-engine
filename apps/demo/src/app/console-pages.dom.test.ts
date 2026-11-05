@@ -146,7 +146,10 @@ describe('the rail foot', () => {
 
 describe('Home', () => {
   it('one button to the Room, the repository, the tiles CPU · Memory · Engine', () => {
+    // a browser with a memory API (Chrome, Edge); without one there is no Memory tile (MUI-17, home-tiles.dom.test.ts)
+    Object.defineProperty(performance, 'memory', { configurable: true, value: { usedJSHeapSize: 1048576 } });
     const v = homeView({ meters: new Meters() });
+    delete (performance as Performance & { memory?: unknown }).memory;
     document.body.append(v.el);
     expect(v.el.querySelector('h1')?.textContent).toBe('Patient monitor simulator');
     expect([...v.el.querySelectorAll('.btn')].map((b) => [b.textContent, b.getAttribute('href')])).toEqual([['Start here', '#/room']]);

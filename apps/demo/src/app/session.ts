@@ -118,6 +118,8 @@ export class AppSession {
   private offMon: (() => void) | null = null;
   private lastT = 0;
   private lastWall = performance.now();
+  /** FX-11b: the highest sim time simNow has given on this timeline — the estimate never goes below it. */
+  private shownT = 0;
   private readonly pollTimer: ReturnType<typeof setInterval>;
   /** The same-browser channel (a learner monitor window, a Remote window); the Room page lists who said hello on it. */
   readonly bc: ReturnType<typeof createBroadcastChannelTransport>;
@@ -151,6 +153,7 @@ export class AppSession {
       restore: async (s: PatientSnapshot) => {
         await this.need().restore(s);
         this.lastT = s.tick * TICK_S;
+        this.shownT = this.lastT; // A restore is a new timeline: the clock goes back with the engine
         this.lastWall = performance.now();
       },
       on: (fn) => {
@@ -348,11 +351,15 @@ export class AppSession {
     for (const res of this.ffWaiters.splice(0)) res();
   }
 
-  /** Sim time: the last engine event's time run forward on the wall clock at the current speed, capped [ENG]. */
+  /**
+   * Sim time: the last engine event's time run forward on the wall clock at the current speed, capped [ENG]. FX-11b:
+   * monotonic within a timeline — after a worker stall the estimate has run ahead (to the cap), and the stalled worker's
+   * next event would take it back; it holds instead until the engine passes it. A new timeline starts it again.
+   */
   simNow(): number {
-    if (this.paused || this.fastForwarding) return this.lastT; // Exact between fast-forward steps
     const dt = ((performance.now() - this.lastWall) / 1000) * this.timeScale;
-    return this.lastT + Math.min(Math.max(0, dt), EST_CAP_S * this.timeScale);
+    const est = this.paused || this.fastForwarding ? this.lastT : this.lastT + Math.min(Math.max(0, dt), EST_CAP_S * this.timeScale); // Exact between fast-forward steps
+    return (this.shownT = Math.max(this.shownT, est));
   }
 
   send(c: Omit<Command, 'id' | 'issuedBy'> & Record<string, unknown>): Promise<{ accepted: boolean; reason?: string }> {
@@ -511,6 +518,7 @@ export class AppSession {
     this.monitor?.destroy();
     this.el.replaceChildren();
     this.lastT = 0;
+    this.shownT = 0; // A new engine, a new timeline
     this.lastWall = performance.now();
     this.last = {};
     this.fastForwarding = false; // A new monitor (the host stops a fast-forward on the old timeline)

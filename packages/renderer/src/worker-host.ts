@@ -16,7 +16,14 @@ export type ControlMsg = Extract<ToWorker, { type: 'resize' | 'timeScale' | 'pau
  *  worker one module per request and can exceed it (278–1875 ms on an idle Mac, more on a loaded runner). */
 export const READY_TIMEOUT_MS = 2000;
 const HIDDEN_PUMP_MS = 1000;
-/** A worker silent this long with requests waiting is dead (its frames post every ≤ 250 ms) [ENG]. */
+/**
+ * A worker silent this long with requests waiting is SLOW (warned: `pme-monitor-slow`). It posts every ≤ 250 ms — its
+ * frames, and from inside a long run its progress (MonitorCore.onProgress) — measured on a Mac (gaps between its
+ * messages, FX-11a): p99.9 270 ms idle, 267 ms with 16 CPU-bound processes, 436 ms with those and the browser at
+ * background QoS (Chromium; WebKit ≤ 269 ms): 3 s is 7× the longest gap measured. It is DEAD when, past this, a probe
+ * worker started at the warning has answered — the machine runs workers and this one makes no progress; a starved
+ * machine starves the probe too, and the monitor waits (FX-11a) [ENG].
+ */
 export const WORKER_SILENT_MS = 3000;
 /** …unless the page caught up a hidden stretch this recently (one catch-up can run several seconds) [ENG]. */
 const CATCHUP_GRACE_MS = 30_000;
@@ -119,6 +126,44 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
   let lastCatchUp = -Infinity;
   let watch: ReturnType<typeof setInterval> | null = null;
   let lastWatch = 0;
+  // FX-11a: the warning and its probe — a fresh worker's answer says the machine runs workers; this one's silence after
+  // that is its own (no progress), not the machine's load
+  let warnedAt: number | null = null;
+  let probe: { w: Worker | null; answeredAt: number | null } | null = null;
+  const stopProbe = () => {
+    probe?.w?.terminate();
+    probe = null;
+  };
+  const startProbe = () => {
+    probe = { w: null, answeredAt: null };
+    const p = probe;
+    try {
+      const url = URL.createObjectURL(new Blob(['onmessage=()=>postMessage(0)'], { type: 'text/javascript' }));
+      p.w = new Worker(url);
+      URL.revokeObjectURL(url);
+      p.w.onmessage = () => {
+        p.answeredAt = performance.now();
+        if (warnedAt !== null) dead(); // Still silent when the machine has run a fresh worker: no need to wait a watch tick
+      };
+      p.w.postMessage(0);
+    } catch {
+      p.answeredAt = performance.now(); // No probe possible (a CSP): judged on this worker's silence alone, as before
+    }
+    if (p.answeredAt !== null) dead();
+  };
+  /** The verdict: this worker is dead (FX-11a: silent past the threshold while a fresh worker answers). */
+  function dead(): void {
+    fail(new Error("the monitor's worker stopped responding"));
+    worker.terminate();
+  }
+  /** The worker spoke: a warning raised is over. */
+  const heard = () => {
+    lastHeard = performance.now();
+    if (warnedAt === null) return;
+    warnedAt = null;
+    stopProbe();
+    canvas.dispatchEvent(new CustomEvent('pme-monitor-recovered', { bubbles: true }));
+  };
   const post = (m: ToWorker, transfer: Transferable[] = []) => {
     if (m.type === 'catchUp') lastCatchUp = performance.now();
     if (!failure) worker.postMessage(m, transfer);
@@ -126,6 +171,7 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
   const stopWatch = () => {
     if (watch !== null) clearInterval(watch);
     watch = null;
+    stopProbe();
   };
   const fail = (err: Error, report = true) => {
     if (failure) return;
@@ -150,10 +196,17 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
     if (requests.size === 0) return stopWatch();
     if (late) return void (lastHeard = Math.max(lastHeard, now - WATCH_MS));
     if (document.visibilityState !== 'visible' || now - lastCatchUp < CATCHUP_GRACE_MS) return; // a long catch-up runs silently
-    if (now - lastHeard > WORKER_SILENT_MS) {
-      fail(new Error("the monitor's worker stopped responding"));
-      worker.terminate();
+    if (now - lastHeard <= WORKER_SILENT_MS) return;
+    if (warnedAt === null) {
+      // Warn first (FX-11a): slow is not dead
+      warnedAt = now;
+      canvas.dispatchEvent(new CustomEvent('pme-monitor-slow', { bubbles: true, detail: { silentMs: Math.round(now - lastHeard) } }));
+      startProbe();
+      return;
     }
+    // Dead: silent past the threshold — no frame, no answer, no progress from a long run — while the machine runs a
+    // fresh worker (the probe answered). A starved machine starves the probe too, and the monitor waits.
+    if ((probe?.answeredAt ?? null) !== null) dead();
   };
   const request = <T>(make: (id: number) => ToWorker, command = false): Promise<T> => {
     if (failure) return Promise.reject(failure);
@@ -170,7 +223,7 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
   const path = new Promise<RenderPath>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('worker did not become ready')), READY_TIMEOUT_MS);
     worker.onmessage = (ev: MessageEvent<FromWorker>) => {
-      lastHeard = performance.now();
+      heard();
       const m = ev.data;
       if (m.type === 'ready') {
         clearTimeout(timer);
@@ -178,6 +231,7 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
         pumping = m.path === 'worker-pump';
         resolve(m.path);
       } else if (m.type === 'events') onEvents(m.anchor, m.events);
+      else if (m.type === 'progress') return; // FX-11a: heard (above) — the worker is working
       else if (m.type === 'result') settle(m.reqId, (r) => r.resolve(m.result as never));
       else if (m.type === 'snapshot') settle(m.reqId, (r) => r.resolve(m.snapshot as never));
       else if (m.type === 'restored') settle(m.reqId, (r) => (m.error === undefined ? r.resolve(undefined as never) : r.reject(new Error(m.error))));
