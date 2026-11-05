@@ -298,7 +298,7 @@
         "arrestPea",
         "arrestAsystole"
       ],
-      "$comment": "Design §11: epinephrine 1 mg IV/IO every 3–5 min (the repeat, from the previous dose as given: the owner's ruling of 5 November). The first dose has no window: [PLACEHOLDER, owner to rule] (ERC 2021 ALS: in a non-shockable rhythm, as soon as possible). The violation: epinephrine 1 mg IV after the return of circulation (design §7).",
+      "$comment": "Design §11: epinephrine 1 mg IV/IO every 3–5 min (the repeat, from the previous dose as given: the owner's ruling of 5 November). The first dose has no window: [PLACEHOLDER, owner to rule] (ERC 2021 ALS: in a non-shockable rhythm, as soon as possible). The violation: epinephrine 1 mg IV or IO after the return of circulation (design §7; the owner's ruling of 5 November: IV and IO alike).",
       "give": [
         {
           "type": "applyEvent",
@@ -333,11 +333,12 @@
       },
       "contraindications": [
         {
-          "text": "Epinephrine 1 mg IV after the return of circulation: the arrest dose into a beating heart",
+          "text": "Epinephrine 1 mg IV or IO after the return of circulation: the arrest dose into a beating heart",
           "match": {
             "drugId": "epinephrine",
             "route": [
-              "iv"
+              "iv",
+              "io"
             ],
             "dose": {
               "value": 1,
@@ -416,7 +417,7 @@
         "arrestPea",
         "arrestAsystole"
       ],
-      "$comment": "Design §11: TXA 1 g IV. Its precondition (within 3 h of the injury) always holds on this card (the injury at 0:00, a 25-min case) and the format has no time leaf for it, so it is not written. No window: [PLACEHOLDER, owner to rule]. Logged: no effect on the monitor until a coagulation model exists.",
+      "$comment": "Design §11: TXA 1 g IV. No precondition: CRASH-2's window (within 3 h of the injury) is always satisfied in this 25-min case, the injury at 0:00 (the owner's ruling of 5 November: the clause dropped). No window: [PLACEHOLDER, owner to rule]. Logged: no effect on the monitor until a coagulation model exists.",
       "give": [
         {
           "type": "applyEvent",

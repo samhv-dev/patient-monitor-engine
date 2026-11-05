@@ -60,12 +60,12 @@ describe('showcase-haemorrhage-v2: the grades of the owner\'s rulings (5 Novembe
     expect(row([cpr(720)], 'cpr').grade).toBe('overdue');
     expect(row([cpr(939)], 'cpr').grade).toBe('failed');
   });
-  it('epinephrine: every 180–300 s from the previous dose as given; none due after ROSC; 1 mg IV in ROSC a violation', () => {
+  it('epinephrine: every 180–300 s from the previous dose as given; none due after ROSC; 1 mg IV or IO in ROSC a violation', () => {
     const r = row([epi(700), epi(878)], 'epinephrine');
     expect(r.repeats).toMatchObject([{ n: 2, grade: 'deviation', lines: ['interval 178 s, 180–300 s asked'] }]);
     expect(row([epi(700)], 'epinephrine').repeats).toEqual([]); // ROSC at 900, inside the window (880–1000): none due
-    const g = grade(doc, PH, [epi(700), epi(950)], edges, 1200, { final: true });
-    expect(g.violations.map((v) => [v.t, v.action])).toEqual([[950, 'epinephrine']]);
+    const g = grade(doc, PH, [epi(700), epi(950), a(1000, { drugId: 'epinephrine', dose: 1, unit: 'mg', route: 'io' })], edges, 1200, { final: true });
+    expect(g.violations.map((v) => [v.t, v.action])).toEqual([[950, 'epinephrine'], [1000, 'epinephrine']]); // IV and IO alike (owner, 5 November)
   });
   it('epinephrine IM (a route outside the set): the action stays open, no deviation, the dose recorded (ruling 6)', () => {
     const r = row([epi(700, 'im')], 'epinephrine');
