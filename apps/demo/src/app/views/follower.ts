@@ -101,8 +101,12 @@ export interface NetFollow {
 export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar: HTMLElement, net?: NetFollow): Follower {
   applySkinAlarmColours(site.skin, site.theme);
   // This window's alarm SOUND is its own (its Sound and Silence buttons); the alarms are the patient's
-  // A phone shows the monitor upright (tiles under the waveforms)
-  const monitor = mountMonitor(shell.monitorHost, { skin: site.skin, ...(site.theme ? { theme: site.theme } : {}), role: 'viewer', worker: 'off', audioSilence: 'window', portrait: !!net });
+  // A phone held upright shows the monitor upright (tiles under the waveforms); turned sideways, the skin's own screen
+  // (the whole Saadat-like screen scaled as one unit, the owner's mock-up m14 of 26 October), and it follows each turn
+  const upright = net ? matchMedia('(orientation: portrait)') : null;
+  const monitor = mountMonitor(shell.monitorHost, { skin: site.skin, ...(site.theme ? { theme: site.theme } : {}), role: 'viewer', worker: 'off', audioSilence: 'window', portrait: upright?.matches ?? false });
+  const onTurn = () => monitor.setPortrait(upright?.matches ?? false);
+  upright?.addEventListener('change', onTurn);
   let refused: { code: string; message: string } | null = null; // The relay's refusal (a full session)
   let hostAway = false; // The relay says the instructor's page is not connected
   let cockpitAt = -Infinity; // Wall ms of the host's last `cockpit` event (the Ventilator view drives)
@@ -228,6 +232,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   }
   const draw = setInterval(drawStatus, 500);
   function destroy(): void {
+    upright?.removeEventListener('change', onTurn);
     offDraw();
     offHost();
     offOpen();
