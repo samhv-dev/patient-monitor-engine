@@ -227,8 +227,15 @@ export class SweepLane {
     const rects: Rect[] = [];
     ctx.fillStyle = c.background;
     let a = x0;
+    // The lap is counted on, never recomputed from a / width: for a width that is not a short binary fraction,
+    // floor(k·w / w) can come out k − 1, and the band that ended on a lap's edge would restart that lap for ever
+    let lap = Math.floor(a / c.width);
+    if (lap * c.width > a) lap--;
     while (a < x1) {
-      const lap = Math.floor(a / c.width);
+      if ((lap + 1) * c.width <= a) {
+        lap++;
+        continue;
+      }
       const end = Math.min(x1, (lap + 1) * c.width);
       const la = this.snap(a - lap * c.width);
       const lb = end - lap * c.width >= c.width ? c.width : this.snap(end - lap * c.width) + 1 / this.dpr;
@@ -239,6 +246,7 @@ export class SweepLane {
       this.paintHLines(ctx, r);
       rects.push(r);
       a = end;
+      lap++;
     }
     return rects;
   }

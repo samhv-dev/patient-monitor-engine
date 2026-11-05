@@ -86,6 +86,26 @@ describe('SweepLane 4b options', () => {
     for (const e of edges) expect(Math.abs(e - Math.round(e))).toBeLessThan(1e-6);
   });
 
+  it('a lane whose width is not a short binary fraction still clears each wrap once: the lap loop always moves on', () => {
+    // 802.1492094222176 px: floor(23·w / w) is 22 in floating point, so a band ending on the 23rd lap's edge used to
+    // restart the same lap for ever (each pass one more rect: the page ran out of memory, PR #275's first CI run)
+    const ctx = new FakeCtx();
+    const lane = new SweepLane(cfg({ x: 0, width: 802.1492094222176, mmPerS: 25, rate: 125 }), 1);
+    const fillRect = ctx.fillRect.bind(ctx);
+    let perDraw = 0;
+    ctx.fillRect = (...a: [number, number, number, number]) => {
+      if (++perDraw > 100) throw new Error('clearSpan did not finish');
+      fillRect(...a);
+    };
+    const laps = 26;
+    const end = (laps * 802.1492094222176) / lane.pxPerS;
+    for (let f = 1; f <= end * 30; f++) {
+      perDraw = 0;
+      lane.draw(ctx, f / 30, flat);
+    }
+    expect(lane.xOf(lane.lastDrawnIndex) / lane.cfg.width).toBeGreaterThan(laps - 1);
+  });
+
   // A synthetic capnogram at 62.5 Hz: 0 mmHg for 1 s, then a 38 mmHg plateau with a 50 ms cardiogenic bump at 1.6 Hz;
   // `cleft` adds a 5 mmHg curare cleft at 4 s (a feature the smoothing must keep).
   const RATE = 62.5;
