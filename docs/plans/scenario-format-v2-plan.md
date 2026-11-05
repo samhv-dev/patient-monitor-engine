@@ -640,8 +640,8 @@ empty).
 ### F10: Authoring guide, CHANGELOG, roadmap (4 h est.)
 - `docs/guides/scenario-authoring.md`: a `/2` section with one validated example (`<!-- example: pme-scenario/2 -->`);
   `docs-examples.test.ts` learns the tag. It documents F9's additions too: `window.failAfterS`, `preparation`, the
-  graded unconditional `repeat` (from the previous dose as given) and the scenario `record` command for an action with
-  no engine command.
+  graded unconditional `repeat` (from the previous dose as given), the scenario `record` command for an action with
+  no engine command, and an action's optional `src` (its numbers' source, quoted and cited; never interpreted).
 - `CHANGELOG.md` Unreleased: the format, the routes modelled, the debrief `/3`.
 - Roadmap rows: the arrest-phase sheet (18:30 ruling 4), the preparation bench (18:00), the charcoal filter and the MH
   activity reading the agent level (18:00), curve rows by a non-IV route, grades on a follower (Q16), the in-place swap,

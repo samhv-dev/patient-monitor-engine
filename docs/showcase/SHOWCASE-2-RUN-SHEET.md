@@ -1195,7 +1195,8 @@ idioventricular at 12:52 and to asystole at 15:25 untreated: CPR after that is t
 phases call for help, **Start CPR** (within 30 s of the pulse loss met, to 2 min overdue, later failed though started),
 bag 10/min, epinephrine 1 mg IV (again every 3–5 min from the previous dose), source control, massive transfusion, TXA
 1 g, rhythm check (every 2 min); in ROSC "Rhythm check: pulse back, stop CPR" (within 2 min of ROSC). Epinephrine 1 mg
-IV in ROSC prints as a violation. Numbers no ruling gives are marked as placeholders in the card (the F9 PR lists them).
+IV or IO in ROSC prints as a violation. Each action's numbers carry their source in the card's `src` (Miller 10th ed.
+Ch82 for the bag, epinephrine and rhythm-check figures; a row whose sources state no window is recorded, not timed).
 
 ### Reserve R1: Induction after fentanyl and midazolam (the premed contrast). Round-B slot 4:00, ×4 throughout
 

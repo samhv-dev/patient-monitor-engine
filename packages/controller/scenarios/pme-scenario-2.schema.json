@@ -221,6 +221,7 @@
         "kind": { "enum": ["drug", "device", "procedure", "fluid", "physical", "sample", "communication", "decision"] },
         "phases": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/definitions/id" }, "description": "The action opens when one of them is entered." },
         "graded": { "const": false, "description": "Offered and recorded, never graded (a setup action such as the induction sequence). Absent: graded." },
+        "src": { "type": "string", "minLength": 1, "description": "Provenance of the action's numbers: the source's own words quoted and cited (document, section or page). Read by people; never interpreted (plan F9, the owner's ruling of 5 November)." },
         "preparation": { "const": true, "description": "A preparation step (monitoring, lines; the owner's ruling of 5 November): offered and recorded with its time, no verdict, never graded. Absent: graded (unless graded is false)." },
         "give": { "type": "array", "items": { "$ref": "pme-scenario-1.schema.json#/definitions/command" }, "description": "The commands an A press sends (/1 command definitions)." },
         "drug": { "$ref": "#/definitions/drugCriteria" },

@@ -232,8 +232,8 @@ describe('pme-scenario/2: failAfterS and preparation (plan F9)', () => {
     d.actions.push({ id: 'y', label: 'Y', kind: 'procedure', phases: [d.phases[0].id], ...a });
     return d;
   };
-  it('accepts a window with failAfterS greater than withinS, and a preparation step without a window', () => {
-    for (const a of [{ window: { anchor: 'start', withinS: 30, failAfterS: 120 } }, { preparation: true }]) {
+  it('accepts a window with failAfterS greater than withinS, a preparation step without a window, and an action\'s src', () => {
+    for (const a of [{ window: { anchor: 'start', withinS: 30, failAfterS: 120 } }, { preparation: true }, { src: 'Miller 10e Ch82 p.7: "1 breath every 6 seconds"' }]) {
       const r = validateScenario(withAction(a));
       expect(r.ok ? [] : r.errors).toEqual([]);
     }
@@ -242,6 +242,7 @@ describe('pme-scenario/2: failAfterS and preparation (plan F9)', () => {
     expect(errs(withAction({ window: { anchor: 'start', withinS: 30, failAfterS: 30 } }))).toContain('/actions/1/window/failAfterS: 30 s must be greater than withinS 30 s');
     expect(errs(withAction({ preparation: true, window: { anchor: 'start', withinS: 30 } }))).toContain('/actions/1/window: a preparation step is recorded, never graded: it has no window');
     expect(errs(withAction({ preparation: false })).join(' ')).toMatch(/preparation/);
+    expect(errs(withAction({ src: '' })).join(' ')).toMatch(/src/);
     expect(errs(withAction({ repeat: { intervalS: { min: 1 } }, repeatWhile: { rule: { signal: 'rosc' }, intervalS: { min: 1 } } }))).toContain('/actions/1/repeat: an action has repeat or repeatWhile, not both');
     expect(errs(withAction({ repeat: { intervalS: { max: 300 } } }))).toContain('/actions/1/repeat/intervalS: a repeat needs its shortest interval (min or value)');
   });

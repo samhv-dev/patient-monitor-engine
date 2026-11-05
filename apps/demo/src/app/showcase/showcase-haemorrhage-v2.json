@@ -11,7 +11,7 @@
     "In haemorrhagic arrest, stopping the bleeding and giving blood come first; compressions cannot fill an empty heart.",
     "EtCO₂ and the arterial diastolic pressure show how good the CPR is, and they show the return of circulation."
   ],
-  "notes": "pme-scenario/2 translation of showcase-haemorrhage (plan F9; design §4.2 and §11; the owner's rulings of 5 November). PHASES are the course, each entered by its own rule on engine truth, none by a button: Bleeding (start; the card-set 2.5 L bleed over 10 min), Decompensating (systolic below 60 for 10 s, the /1 card's own rule; the card sets a junctional rhythm at 50/min on its entry, as the /1 card does), Arrest PEA and Arrest asystole (the model's pulse loss, told apart by the rhythm id the engine draws: asystole, or any other), ROSC (the model's return of circulation) and Post-resuscitation (ROSC held 120 s, design §4.2). NO VF PHASE: the owner's ruling of 5 November (VF comes from the physiology, never from a press) and its measurement on this card's course (the PR of plan F9): the engine draws no VF on this course untreated (to 30:00), with CPR into asystole (the demo's timing) or with CPR in the PEA; the /1 card's scripted VF at the first two rhythm checks is gone, and with it the shocks. The rhythm check is an action: it stops the compressions for the check and does nothing to the rhythm. ACTIONS are the team's, each with its criteria; the numbers the design, the plan, the rulings and the /1 card do not give are placeholders marked [PLACEHOLDER, owner to rule] in the actions' $comments. The engine receives the /1 card's commands for the same presses (the press gives are the /1 states' onEnter commands), except the scripted VF and what follows from it.",
+  "notes": "pme-scenario/2 translation of showcase-haemorrhage (plan F9; design §4.2 and §11; the owner's rulings of 5 November). PHASES are the course, each entered by its own rule on engine truth, none by a button: Bleeding (start; the card-set 2.5 L bleed over 10 min), Decompensating (systolic below 60 for 10 s, the /1 card's own rule; the card sets a junctional rhythm at 50/min on its entry, as the /1 card does), Arrest PEA and Arrest asystole (the model's pulse loss, told apart by the rhythm id the engine draws: asystole, or any other), ROSC (the model's return of circulation) and Post-resuscitation (ROSC held 120 s, design §4.2). NO VF PHASE: the owner's ruling of 5 November (VF comes from the physiology, never from a press) and its measurement on this card's course (the PR of plan F9): the engine draws no VF on this course untreated (to 30:00), with CPR into asystole (the demo's timing) or with CPR in the PEA; the /1 card's scripted VF at the first two rhythm checks is gone, and with it the shocks. The rhythm check is an action: it stops the compressions for the check and does nothing to the rhythm. ACTIONS are the team's, each with its criteria and, in its src, the source of its numbers quoted and cited (the owner's ruling of 5 November, 'guideline for all'); an action whose sources state no window is recorded, not timed. The engine receives the /1 card's commands for the same presses (the press gives are the /1 states' onEnter commands), except the scripted VF and what follows from it.",
   "seed": 7,
   "mode": "modeled",
   "patient": {
@@ -142,7 +142,7 @@
         "bleeding",
         "decompensating"
       ],
-      "$comment": "Graded as done in Bleeding or Decompensating, with no window: [PLACEHOLDER, owner to rule] (the design, the plan and the /1 card give none).",
+      "$comment": "Graded as done in Bleeding or Decompensating (no window: see src).",
       "give": [
         {
           "type": "applyEvent",
@@ -152,7 +152,8 @@
             "durationS": 3600
           }
         }
-      ]
+      ],
+      "src": "No window: none is stated in the sources read (owner's ruling of 5 November: recorded, not timed: no window is stated in the sources read); graded as done in Bleeding or Decompensating."
     },
     {
       "id": "intubate",
@@ -162,7 +163,7 @@
         "bleeding",
         "decompensating"
       ],
-      "$comment": "Graded as done in Bleeding or Decompensating, with no window: [PLACEHOLDER, owner to rule]. Positive pressure then takes the empty patient into arrest: the lesson needs no phase (design §4.2).",
+      "$comment": "Graded as done in Bleeding or Decompensating (no window: see src). Positive pressure then takes the empty patient into arrest: the lesson needs no phase (design §4.2).",
       "notes": "Ventilator 12 × 500, PEEP 5, FiO₂ 1.0.",
       "give": [
         {
@@ -191,7 +192,8 @@
             "fio2": 1
           }
         }
-      ]
+      ],
+      "src": "No window: none is stated in the sources read (recorded, not timed: no window is stated in the sources read); graded as done in Bleeding or Decompensating."
     },
     {
       "id": "callForHelp",
@@ -203,11 +205,8 @@
         "arrestPea",
         "arrestAsystole"
       ],
-      "$comment": "The owner's ruling of 5 November: a timed action the instructor presses when the team calls, graded by the clock. Anchor the model's pulse loss, within 30 s: both [PLACEHOLDER, owner to rule] (the ruling names no anchor and no window; 30 s is the CPR window of the /1 card's objective 2). No engine command: the press is recorded by the scenario record command.",
-      "window": {
-        "anchor": "pulseLoss",
-        "withinS": 30
-      }
+      "$comment": "The owner's ruling of 5 November: an action the instructor presses when the team calls. No engine command: the press is recorded by the scenario record command. No window (see src): graded as done in its phases.",
+      "src": "No window: no source reachable states one (recorded, not timed: no window is stated in the sources read); graded as done in its phases."
     },
     {
       "id": "cpr",
@@ -253,7 +252,8 @@
         "anchor": "pulseLoss",
         "withinS": 30,
         "failAfterS": 120
-      }
+      },
+      "src": "Window: the /1 card's objective 2 (within 30 s of the pulse loss); fail limit 120 s: the owner's ruling of 5 November; rate 100–120/min: design §11. Resuming after a rhythm check (the CPR press again) is recorded, not timed: no window is stated in the sources read: Miller's Anesthesia, 10th ed. (2025), Ch82 'Cardiopulmonary Resuscitation and Advanced Cardiac Life Support' (AHA-based; the source the owner's 'guideline for all' ruling takes, 5 November, until the ERC 2021 text is in the library), PDF p.3: 'the compressions should be resumed as soon as possible after rhythm analysis or defibrillation.'"
     },
     {
       "id": "bag",
@@ -263,7 +263,7 @@
         "arrestPea",
         "arrestAsystole"
       ],
-      "$comment": "Design §11 (bag 10/min); graded on the bag-valve ventilation whatever sent it (the CPR press sends it). No window: [PLACEHOLDER, owner to rule].",
+      "$comment": "Design §11 (bag 10/min); graded on the bag-valve ventilation whatever sent it (the CPR press sends it).",
       "give": [
         {
           "type": "applyEvent",
@@ -288,7 +288,8 @@
             "value": 1
           }
         }
-      }
+      },
+      "src": "10/min: Miller's Anesthesia, 10th ed. (2025), Ch82 'Cardiopulmonary Resuscitation and Advanced Cardiac Life Support' (AHA-based; the source the owner's 'guideline for all' ruling takes, 5 November, until the ERC 2021 text is in the library), PDF p.7: 'After placement of an advanced airway, it is recommended to provide 1 breath every 6 seconds (10 breaths/min) while continuous chest compressions are being performed.' No window (recorded, not timed: no window is stated in the sources read)."
     },
     {
       "id": "epinephrine",
@@ -298,7 +299,7 @@
         "arrestPea",
         "arrestAsystole"
       ],
-      "$comment": "Design §11: epinephrine 1 mg IV/IO every 3–5 min (the repeat, from the previous dose as given: the owner's ruling of 5 November). The first dose has no window: [PLACEHOLDER, owner to rule] (ERC 2021 ALS: in a non-shockable rhythm, as soon as possible). The violation: epinephrine 1 mg IV or IO after the return of circulation (design §7; the owner's ruling of 5 November: IV and IO alike).",
+      "$comment": "Design §11: epinephrine 1 mg IV/IO every 3–5 min, each repeat from the previous dose as given (the owner's ruling of 5 November). The violation: epinephrine 1 mg IV or IO after the return of circulation (design §7).",
       "give": [
         {
           "type": "applyEvent",
@@ -350,7 +351,8 @@
             "postResuscitation"
           ]
         }
-      ]
+      ],
+      "src": "Repeat 180–300 s from the previous dose as given: Miller's Anesthesia, 10th ed. (2025), Ch82 'Cardiopulmonary Resuscitation and Advanced Cardiac Life Support' (AHA-based; the source the owner's 'guideline for all' ruling takes, 5 November, until the ERC 2021 text is in the library), PDF p.9: 'standard-dose epinephrine (1 mg every 3–5 minutes) is recommended for patients in cardiac arrest.' The first dose has no window (recorded, not timed: no window is stated in the sources read). Violation IV or IO: the owner's ruling of 5 November."
     },
     {
       "id": "sourceControl",
@@ -360,7 +362,7 @@
         "arrestPea",
         "arrestAsystole"
       ],
-      "$comment": "Design §11. Offered in the arrest phases, where the /1 card offers it; whether it (and the transfusion and TXA) should open from Bleeding is the owner's. No window: [PLACEHOLDER, owner to rule]. The bleed rate goes to 0 (the 2.5 L bleed has already ended at 10:00 on this course).",
+      "$comment": "Design §11. The bleed rate goes to 0 (the 2.5 L bleed has already ended at 10:00 on this course).",
       "give": [
         {
           "type": "applyEvent",
@@ -369,7 +371,8 @@
             "rateMlPerMin": 0
           }
         }
-      ]
+      ],
+      "src": "No window (recorded, not timed: no window is stated in the sources read); offered in the arrest phases, as on the /1 card."
     },
     {
       "id": "massiveTransfusion",
@@ -379,7 +382,7 @@
         "arrestPea",
         "arrestAsystole"
       ],
-      "$comment": "Plan §F9: blood at ≥ 300 mL/min; the press gives the /1 card's 1 L balanced crystalloid over 90 s and 1200 mL of the engine's whole blood over 144 s (500 mL/min). No window: [PLACEHOLDER, owner to rule]. The crystalloid enters at the theatre's 21 °C (no fluid warmer in the scenario schema).",
+      "$comment": "The press gives the /1 card's 1 L balanced crystalloid over 90 s and 1200 mL of the engine's whole blood over 144 s (500 mL/min). The crystalloid enters at the theatre's 21 °C (no fluid warmer in the scenario schema).",
       "give": [
         {
           "type": "applyEvent",
@@ -407,7 +410,8 @@
         "rateMlMin": {
           "min": 300
         }
-      }
+      },
+      "src": "Blood at ≥ 300 mL/min: the plan's criterion (scenario-format-v2-plan.md §F9). Miller's Anesthesia, 10th ed., Ch45, Ch46 and Ch62 were read and define no massive-transfusion volume or rate; the nearest statements: Ch45 Fig. 45.7 (PDF p.23, printed p.1420), indications for the transfusion protocol 'BP <90 mm Hg after 2 PRBC' and 'Blood loss = circulating blood volume'; Ch62 Fig. 62.9 (PDF p.21, printed p.2020), activation in the trauma OR at 'EBL > 150 mL/min'. No window (recorded, not timed: no window is stated in the sources read)."
     },
     {
       "id": "txa",
@@ -417,7 +421,7 @@
         "arrestPea",
         "arrestAsystole"
       ],
-      "$comment": "Design §11: TXA 1 g IV. No precondition: CRASH-2's window (within 3 h of the injury) is always satisfied in this 25-min case, the injury at 0:00 (the owner's ruling of 5 November: the clause dropped). No window: [PLACEHOLDER, owner to rule]. Logged: no effect on the monitor until a coagulation model exists.",
+      "$comment": "Design §11: TXA 1 g IV. Logged: no effect on the monitor until a coagulation model exists.",
       "give": [
         {
           "type": "applyEvent",
@@ -441,7 +445,8 @@
             "iv"
           ]
         }
-      }
+      },
+      "src": "1 g: Miller's Anesthesia, 10th ed., Ch62 Fig. 62.9 (PDF p.21, printed p.2020): 'Consider tranexamic acid 1 g over 10 minutes followed by infusion of 1 g over 8 hours'. No window (recorded, not timed: no window is stated in the sources read); the 3-h clause dropped (CRASH-2's window is always satisfied in this 25-min case)."
     },
     {
       "id": "rhythmCheck",
@@ -451,7 +456,7 @@
         "arrestPea",
         "arrestAsystole"
       ],
-      "$comment": "Design §11: a rhythm check every 2 min; the first 2 min after CPR starts (window from the CPR action, 120 s), then every 120 s from the previous check as taken. The tolerance is [PLACEHOLDER, owner to rule]: 0 s here, the guideline's bare 2 min. The owner's ruling of 5 November: it stops CPR for the check and does nothing to the rhythm (no card-set VF). Resume the compressions with the CPR press.",
+      "$comment": "Design §11: a rhythm check every 2 min (the values and their source: src). The owner's ruling of 5 November: it stops CPR for the check and does nothing to the rhythm (no card-set VF). Resume the compressions with the CPR press.",
       "give": [
         {
           "type": "applyEvent",
@@ -463,13 +468,16 @@
       ],
       "window": {
         "anchor": "action:cpr",
-        "withinS": 120
+        "withinS": 130,
+        "notBeforeS": 110
       },
       "repeat": {
         "intervalS": {
-          "value": 120
+          "value": 120,
+          "tolerance": 10
         }
-      }
+      },
+      "src": "Every 2 min: Miller's Anesthesia, 10th ed. (2025), Ch82 'Cardiopulmonary Resuscitation and Advanced Cardiac Life Support' (AHA-based; the source the owner's 'guideline for all' ruling takes, 5 November, until the ERC 2021 text is in the library), PDF p.9: compressions 'continued for 2 minutes before reassessing the underlying cardiac rhythm'. Tolerance ±10 s: the 10 s is the pulse-check pause limit, PDF p.3 ('The health care provider should take no more than 10 seconds to check for a pulse'), applied by the orchestrator as the interval tolerance (5 November); the text states no tolerance for the interval. First check 110–130 s after CPR starts, then every 110–130 s from the previous check as taken."
     },
     {
       "id": "stopCpr",
@@ -503,7 +511,8 @@
       "window": {
         "anchor": "rosc",
         "withinS": 120
-      }
+      },
+      "src": "Within 120 s of ROSC: the /1 card's objective 3."
     }
   ],
   "judged": [

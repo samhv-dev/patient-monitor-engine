@@ -88,6 +88,8 @@ export interface Action extends C {
   /** A preparation step (monitoring, lines; owner, 5 November): offered and recorded with its time, no verdict, never
    *  graded. */
   preparation?: true;
+  /** Provenance of the action's numbers: the source quoted and cited; never interpreted (plan F9). */
+  src?: string;
   drug?: DrugCriteria;
   device?: { kind: DeviceKind; settings: Settings };
   fluid?: { type?: string[]; volumeMl?: Amount; rateMlMin?: Amount };
