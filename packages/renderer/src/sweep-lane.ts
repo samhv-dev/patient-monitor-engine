@@ -86,6 +86,22 @@ export class SweepLane {
   constructor(cfg: LaneConfig, dpr: number) {
     this.cfg = cfg;
     this.dpr = dpr;
+    this.alignX();
+  }
+
+  /**
+   * Put the lane's left edge on a device-pixel boundary, its right edge where it was. The lane works in device columns
+   * counted from its left edge (the band it clears, the clip it draws in, the columns' centres), so an edge between two
+   * device pixels put every frame's cleared band half over the column drawn the frame before: the clear took part of it
+   * and the antialiased redraw, clipped at the same edge, gave back only part, frame after frame. A filled capnogram
+   * came out dim and striped (Saadat-like, CO2 lane at x 18 of a monitor shown at 1.2555 device px per layout px, i.e.
+   * a Retina screen: 86 and 144 of 240 in WebKit, 161 and 182 in Chromium; fx25-co2-attach.e2e.ts on WebKit).
+   */
+  private alignX(): void {
+    const c = this.cfg;
+    const x = Math.round(c.x * this.dpr) / this.dpr;
+    c.width += c.x - x;
+    c.x = x;
   }
 
   get pxPerS(): number {
@@ -95,6 +111,7 @@ export class SweepLane {
   /** Forget drawn history (after resize, calibration change, or a big time jump). */
   reset(ctx: Ctx2D, dpr: number = this.dpr): void {
     this.dpr = dpr;
+    this.alignX();
     this.resets++;
     this.lastIndex = -1;
     this.lastCol = -1;

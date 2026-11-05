@@ -72,6 +72,20 @@ describe('SweepLane 4b options', () => {
     expect(ops.lastIndexOf('stroke')).toBeGreaterThan(ops.lastIndexOf('fill'));
   });
 
+  it('a lane whose left edge falls between device pixels starts on the pixel boundary, its right edge kept, every band on whole pixels', () => {
+    // the Saadat-like CO2 lane at x 18 of a monitor shown at 1.25549 device px per layout px (a Retina screen, the
+    // monitor scaled into the Instructor view): the band edges between pixels dimmed the fill frame after frame
+    const dpr = 1.25549;
+    const ctx = new FakeCtx();
+    const lane = new SweepLane(capCfg({ x: 18, width: 400, fill: true }), dpr);
+    expect(Number.isInteger(Math.round(lane.cfg.x * dpr * 1e6) / 1e6)).toBe(true);
+    expect(lane.cfg.x + lane.cfg.width).toBeCloseTo(418, 9);
+    for (let f = 1; f <= 120; f++) lane.draw(ctx, f / 60, const40);
+    const edges = ctx.calls.filter((k) => k.op === 'fillRect' && k.style === lane.cfg.background).map((k) => (k.args[0] as number) * dpr);
+    expect(edges.length).toBeGreaterThan(50);
+    for (const e of edges) expect(Math.abs(e - Math.round(e))).toBeLessThan(1e-6);
+  });
+
   // A synthetic capnogram at 62.5 Hz: 0 mmHg for 1 s, then a 38 mmHg plateau with a 50 ms cardiogenic bump at 1.6 Hz;
   // `cleft` adds a 5 mmHg curare cleft at 4 s (a feature the smoothing must keep).
   const RATE = 62.5;
