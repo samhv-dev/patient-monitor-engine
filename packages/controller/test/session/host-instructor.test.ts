@@ -301,4 +301,38 @@ describe('who holds the role', () => {
     await waitFor(() => seen.length === 5);
     expect(seen).toEqual([1, 1, 0, 1, 0]); // the holder's transport went away
   });
+
+  it("R29 with P3: the relay's peer-left for the granted phone drops its grant; a socket under its id proves the PIN again", async () => {
+    const seen: number[] = [];
+    const host = new HostSession({ session: S, target: target(), stateIntervalMs: 0, instructorPin: () => PIN, onInstructors: (n) => seen.push(n) });
+    hosts.push(host);
+    const hub = createInProcessHub();
+    // A transport double that reports peer-left, as the relay's link does (the in-process hub does not)
+    const fns = new Set<(id: string) => void>();
+    const linkT = Object.assign(Object.create(hub.connect()) as ManagedTransport, {
+      onPeerLeft: (fn: (id: string) => void) => (fns.add(fn), () => void fns.delete(fn)),
+    });
+    const left = (id: string) => fns.forEach((fn) => fn(id));
+    host.addTransport(linkT);
+    const relay = hub.connect();
+    const got = collect(relay);
+    const first = phone(relay, 'ph.1');
+    first.hello(PIN);
+    await waitFor(() => seen.length === 1);
+    left('ph.2'); // another peer leaves: the grant stays
+    const k1 = first.command(hr, 'k1');
+    await waitFor(() => ackOf(got, k1) !== undefined);
+    expect(ackOf(got, k1)).toMatchObject({ accepted: true });
+    left('ph.1'); // the holder's socket left
+    await waitFor(() => seen.length === 2);
+    expect(seen).toEqual([1, 0]);
+    const next = phone(relay, 'ph.1'); // the next socket under the id, its sequence fresh: it proves the PIN again
+    next.hello(PIN);
+    await waitFor(() => seen.length === 3);
+    expect(seen).toEqual([1, 0, 1]);
+    expect(grants(got, 'ph.1').map((g) => g.granted)).toEqual([true, true]); // granted afresh, never told a revoke
+    const k2 = next.command(hr, 'k2');
+    await waitFor(() => ackOf(got, k2) !== undefined);
+    expect(ackOf(got, k2)).toMatchObject({ accepted: true });
+  });
 });

@@ -32,6 +32,8 @@ function inks(page: Page, params: string[]): Promise<{ boxes: Ink[]; out: Ink[];
       const tile = document.querySelector<HTMLElement>(`.stage .pme-stile[data-param="${p}"]`);
       if (!tile || tile.offsetParent === null) continue;
       const tb = tile.getBoundingClientRect();
+      // the monitor is scaled as one unit (layout.grid.screenPx): the computed font sizes are layout px, the boxes screen px
+      const k = tile.offsetWidth > 0 ? tb.width / tile.offsetWidth : 1;
       const walk = document.createTreeWalker(tile, NodeFilter.SHOW_TEXT);
       for (let n = walk.nextNode(); n; n = walk.nextNode()) {
         const text = n.textContent ?? '';
@@ -48,7 +50,7 @@ function inks(page: Page, params: string[]): Promise<{ boxes: Ink[]; out: Ink[];
           continue;
         }
         const rc = rects[0] as DOMRect;
-        g.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+        g.font = `${cs.fontStyle} ${cs.fontWeight} ${parseFloat(cs.fontSize) * k}px ${cs.fontFamily}`;
         const m = g.measureText(text);
         // the DOM content box is fontAscent + fontDescent high and starts fontAscent above the baseline
         const baseY = rc.top + (rc.height - (m.fontBoundingBoxAscent + m.fontBoundingBoxDescent)) / 2 + m.fontBoundingBoxAscent;

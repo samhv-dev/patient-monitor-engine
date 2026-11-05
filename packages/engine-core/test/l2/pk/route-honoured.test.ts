@@ -18,8 +18,9 @@ describe('routeHonoured (F5.1a)', () => {
       }
     expect(off).toEqual([]);
   });
-  it('IM dantrolene is not honoured, IV is; nebulised salbutamol is; an unknown drug is not', () => {
-    expect(routeHonoured('dantrolene', 'im')).toBe(false);
+  it('IM epinephrine is not honoured; IV and IM dantrolene are (IM: its route model, F5.2); nebulised salbutamol is; an unknown drug is not', () => {
+    expect(routeHonoured('epinephrine', 'im')).toBe(false);
+    expect(routeHonoured('dantrolene', 'im')).toBe(true);
     expect(routeHonoured('dantrolene', 'iv')).toBe(true);
     expect(routeHonoured('salbutamol', 'neb')).toBe(true);
     expect(routeHonoured('unobtainium', 'iv')).toBe(false);

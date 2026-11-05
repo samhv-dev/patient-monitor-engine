@@ -7,6 +7,25 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ## [Unreleased]
 
+### Fixed
+- A hello forged under a Remote's peer id while the Remote reconnects no longer blocks the Remote's commands
+  until its page reloads (R29, the known gap of #183). The host kept each relay peer's last sequence number and role
+  while its socket was down, so a hand-written hello with that id and a higher number, sent in that window, made the
+  host drop the reconnected Remote's frames as duplicates. The relay now sends the host `{relay:'peer-left', id}` when a
+  non-host socket leaves the room (before the newcomer's hello when it replaces a half-open socket), and the host
+  forgets that peer on that transport only.
+- **`pme-scenario/2` F5.2 and F5.3: IM dantrolene modelled, and the "not modelled" register.** A drug row may carry
+  `routeModels`, one mechanism per route other than IV: bioavailability `F`, absorption rate `ka`, lag `lagS`, each
+  from its `src`, and an optional local effect raised as a new `drugLocalEffect` event. Dantrolene IM is the one row:
+  F = 0 (the owner's ruling of 2026-10-29 17:00, "IM dantrolene = no effect + local harm"), so the dose is accepted,
+  nothing reaches the circulation (`dantroleneE` stays 0; an MH crisis given IM dantrolene runs exactly as the untreated
+  one), and one tissue-injury event names the solution's pH of about 9.5 (Dantrium Intravenous label). `routeHonoured`
+  and the record therefore no longer flag IM dantrolene as "route not modelled"; it is accepted and still does not
+  satisfy an IV-only action. Epinephrine IM stays "route not modelled": no source read states both its F and its ka,
+  and a ka back-solved from a peak time would be a fitted constant; no absorption depot is built. Every IV, IO and
+  central path is unchanged. The local injury, its creatine kinase and potassium effects, the charcoal filter and
+  epinephrine IM are `.todo` entries listed in `docs/guides/known-deviations.md`, each with its roadmap row.
+
 ## [1.0.0-rc.5] - 2026-11-05
 
 **In this release candidate:** the `pme-scenario/2` card format, with the malignant-hyperthermia card in phases

@@ -268,20 +268,6 @@ export function untakenStatus(doc: AnyScenarioDoc, tr: Transition, at: { stateId
 /** A scenario history as ScenarioView keeps it: `{ t, stateId, transitionId? }`, oldest first. */
 export type History = ReadonlyArray<{ t: number; stateId: string; transitionId?: string }>;
 
-/**
- * The history with the card's start in front. A load publishes its first state before its own commandApplied, and
- * ScenarioView's history restarts on that commandApplied, so the history begins at the first transition and the
- * initial state's entry is missing (record.ts keeps it the same way: `held`). This puts it back at `startT` (the run
- * record's entry of the initial state on the host), so the strip gives the first stage its time and ACTION's Finished
- * its taken step. Unchanged when the history is empty or already begins at the start.
- */
-export function withStart(doc: AnyScenarioDoc, history: History, startT: number): History {
-  if (isV2(doc)) return history;
-  const h0 = history[0];
-  if (!h0 || (h0.stateId === doc.initialState && h0.transitionId === undefined) || h0.t < startT) return history;
-  return [{ t: startT, stateId: doc.initialState }, ...history];
-}
-
 // ---- a pme-scenario/2 card (plan F6) ----
 
 /** The open actions of phase `phaseId` (in the card's order), then its judged rows, then the rules out of the phase: the
