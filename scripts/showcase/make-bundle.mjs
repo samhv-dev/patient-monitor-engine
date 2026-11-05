@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Offline showcase kit builder. Run from the repo root:
 //   node scripts/showcase/make-bundle.mjs [OUTPUT_DIR]        (default ./pme-showcase)
+//       [--win-node node-v22.x.y-win-x64.zip [--win-node-sums SHASUMS256.txt]]   (or PME_WIN_NODE_ZIP=...)
 // Builds apps/demo with a relative base (works from any folder and any port) and assembles OUTPUT_DIR:
 //   app/                      the built site (the whole dist: the one-page app plus the pages it frames)
 //   Start Simulator.command   double-click launcher (macOS)
@@ -11,6 +12,10 @@
 //                             launch.mjs (what the Windows launchers run);
 //                             relay.mjs (Stage 12: pme-relay in one file, its `ws` dependency inside)
 //   runtime/                  node-<arch> ONLY if this machine's node is an official signed Node.js build; else empty
+//                             node.exe, NODE-LICENSE.txt, NODE-VERSION.txt ONLY with --win-node: the official Windows
+//                             build's node.exe, taken from a zip whose SHA-256 matches its SHASUMS256.txt (default: the
+//                             one beside the zip); the .cmd launchers use it before an installed one (win-node.mjs).
+//                             Never downloaded here.
 //   READ ME FIRST.txt, VERSION.txt
 //   NOTICES.md, LICENSES/     Stage 12 (R50 I1): the notices of what the kit's app and relay carry (MIT/BSD texts)
 // Rerunnable: it replaces only the kit's own entries, so a videos/ folder (or anything else) beside them is kept.
@@ -19,11 +24,15 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { chmodSync, copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseArgs } from 'node:util';
 import { WINDOWS_LAUNCHERS, writeWindowsLaunchers } from './kit-launchers.mjs';
+import { readWindowsNode } from './win-node.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, '../..');
-const out = resolve(process.argv[2] ?? 'pme-showcase');
+const { values: opt, positionals } = parseArgs({ allowPositionals: true, options: { 'win-node': { type: 'string' }, 'win-node-sums': { type: 'string' } } });
+const out = resolve(positionals[0] ?? 'pme-showcase');
+const winZip = opt['win-node'] ?? process.env.PME_WIN_NODE_ZIP;
 const step = (s) => console.log(`\n== ${s}`);
 const run = (cmd, args, cwd = repo) => {
   const r = spawnSync(cmd, args, { cwd, stdio: 'inherit' });
@@ -39,6 +48,16 @@ const git = (...a) => {
 
 if (!existsSync(join(repo, 'apps/demo/vite.config.ts'))) throw new Error(`not the patient-monitor-engine repo: ${repo}`);
 if (out === repo || repo.startsWith(out + '/')) throw new Error(`refusing to build into ${out}`);
+if (opt['win-node-sums'] && !winZip) throw new Error('--win-node-sums needs --win-node (or PME_WIN_NODE_ZIP)');
+
+// Checked before the build, so a wrong checksum stops the bundler before it touches the kit
+let winNode = null;
+if (winZip) {
+  step('Windows Node.js (verify the official zip against its SHASUMS256.txt)');
+  const sums = resolve(opt['win-node-sums'] ?? join(dirname(resolve(winZip)), 'SHASUMS256.txt'));
+  winNode = readWindowsNode(resolve(winZip), sums);
+  console.log(`${winNode.zipName}: SHA-256 ${winNode.zipSha} matches ${sums}`);
+}
 
 step('dependencies');
 const vite = join(repo, 'node_modules/.bin/vite'); // a root devDependency
@@ -99,9 +118,27 @@ if (authority) {
   runtimeNote = `runtime/node-${arch} = ${nodePath} (${process.version}; ${authority[0]})`;
 } else {
   const why = /Signature=adhoc/.test(sigText) ? 'ad-hoc signature (not an official Node.js build)' : (/TeamIdentifier=\S+/.exec(sigText)?.[0] ?? 'no Node.js Foundation / OpenJS Developer ID');
-  runtimeNote = `runtime/ left EMPTY: ${nodePath} (${process.version}) is not an official signed Node.js build (${why}). The launcher uses ruby, then perl.`;
+  runtimeNote = `runtime/ has no macOS node: ${nodePath} (${process.version}) is not an official signed Node.js build (${why}). The launcher uses ruby, then perl.`;
 }
 console.log(runtimeNote);
+let winNote = 'none (built without --win-node): Start Simulator.cmd / Start Classroom.cmd need an installed Node.js >= 22.';
+if (winNode) {
+  writeFileSync(join(out, 'runtime/node.exe'), winNode.exe);
+  writeFileSync(join(out, 'runtime/NODE-LICENSE.txt'), winNode.license);
+  const built = new Date().toISOString();
+  writeFileSync(join(out, 'runtime/NODE-VERSION.txt'), [
+    'runtime/node.exe: the official Node.js build for Windows x64, as published at nodejs.org',
+    `Version:          ${winNode.version}`,
+    `From:             ${winNode.zipName} (node.exe and LICENSE only; LICENSE is NODE-LICENSE.txt here)`,
+    `Zip SHA-256:      ${winNode.zipSha} (matched SHASUMS256.txt)`,
+    `node.exe SHA-256: ${winNode.exeSha}`,
+    `Added:            ${built}`,
+    'Check node.exe on Windows: certutil -hashfile node.exe SHA256',
+    '',
+  ].join('\r\n'));
+  winNote = `runtime/node.exe = Node.js ${winNode.version} for Windows x64 from ${winNode.zipName} (zip SHA-256 ${winNode.zipSha}; node.exe SHA-256 ${winNode.exeSha}); the .cmd launchers use it before an installed Node.js.`;
+  console.log(winNote);
+}
 
 step('VERSION.txt');
 const dirty = git('status', '--porcelain', '--untracked-files=no') ? ' (with uncommitted changes)' : '';
@@ -120,7 +157,8 @@ writeFileSync(join(out, 'VERSION.txt'), [
   `Runtime:  ${runtimeNote}`,
   'Servers tried in order: bundled node, /usr/bin/ruby (WEBrick), /usr/bin/perl (core modules), python3 (only a real one).',
   'Classroom: server/relay.mjs (pme-relay + ws 8.21.3, MIT) on runtime/node-* or an installed Node.js >= 22.',
-  'Windows: Start Simulator.cmd / Start Classroom.cmd run server/launch.mjs on an installed Node.js >= 22 (untested on Windows at this release).',
+  'Windows: Start Simulator.cmd / Start Classroom.cmd run server/launch.mjs on runtime\\node.exe if the kit has it, else an installed Node.js >= 22 (untested on Windows at this release).',
+  `Windows runtime: ${winNote}`,
   '',
 ].join('\n'));
 

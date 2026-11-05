@@ -680,6 +680,18 @@ a.rail-item:hover { color: var(--text-strong); background: color-mix(in srgb, va
 .room-ways .n { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: var(--go-soft); color: var(--go); font-size: 12px; }
 .room-others { margin: 10px 0 0; overflow-wrap: anywhere; }
 .room-join .phones-count { margin: 14px 0 0; font-size: 14px; color: var(--text-muted); text-align: center; }
+.room-join .room-large { display: flex; margin: 12px auto 0; }
+.room-join .room-large[hidden] { display: none; }
+/* The large view (post-demo): the whole screen; the QR takes the height the code, the address and the count leave
+   (≈ 250 px of type and margins), capped by the width; a vector drawing at that size, never a scaled image */
+dialog.room-big { box-sizing: border-box; width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 24px 32px; border: 0; border-radius: 0; background: var(--page); color: var(--text); }
+dialog.room-big[open] { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.room-big-qr { --side: min(100dvh - 260px, 100vw - 64px); box-sizing: border-box; width: var(--side); height: var(--side); padding: 12px; border-radius: 12px; background: #fff; }
+.room-big-qr svg { display: block; width: 100%; height: 100%; }
+.room-big-code { margin: 14px 0 0; font-family: var(--font-plex-mono); font-weight: 500; font-size: 64px; line-height: 1; letter-spacing: 0.14em; color: var(--text-strong); }
+.room-big-url { margin: 10px 0 0; font-family: var(--font-plex-mono); font-size: 26px; color: var(--text-strong); overflow-wrap: anywhere; text-align: center; }
+.room-big-count { margin: 8px 0 0; font-size: 22px; color: var(--text-muted); }
+.room-big-back { position: absolute; top: 16px; right: 16px; }
 .room-scroll { overflow-x: auto; }
 .room-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .room-table th { padding: 0 10px 8px 0; text-align: left; font-size: 12.5px; font-weight: 500; color: var(--text-muted); }
@@ -801,3 +813,6 @@ a.rail-item:hover { color: var(--text-strong); background: color-mix(in srgb, va
 /* toasts rest on the dock, not over its marks: its top edge as measured (--dock-foot, ui.ts trackChromeBottom); a fixed
    64 + 40 px left them about 40 px above it once nothing sat under the dock */
 body:has(.app[data-route='teach2']) .toasts { bottom: calc(var(--dock-foot, 64px) + var(--s-2)); }
+/* host-guard.ts: the tab that handed its session to another tab */
+.host-moved { max-width: 560px; margin: 15vh auto 0; padding: 0 16px; }
+.host-moved h1 { font-size: var(--t-18); color: var(--text-strong); }

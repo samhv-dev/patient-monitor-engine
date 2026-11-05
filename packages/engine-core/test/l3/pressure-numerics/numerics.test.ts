@@ -105,6 +105,66 @@ describe('fresh beats, the non-pulsatile rule and the searching start', () => {
     expect(run(8)).toBe(true); // was pulsatile: ≥ 3 mmHg keeps it
   });
 
+  it('a pressure line: a small upstroke after large beats is its own beat (search-back), never merged into the interval before it', () => {
+    // 0.6 s beats rising 40 mmHg (80 ms upstroke, run-off, dicrotic notch and wave, diastolic tail); the one at 6.5 s
+    // rises 20 mmHg, under 60 % of the SSF peaks. Before the search-back the interval 5.9–7.1 s spanned two beats and
+    // read the large beat's systolic over the small beat's end-diastole.
+    const pulse = (u: number) => {
+      if (u <= 0) return 0;
+      if (u < 0.08) return 0.5 * (1 - Math.cos((Math.PI * u) / 0.08));
+      const v = u - 0.08;
+      return Math.exp(-((v / 0.15) ** 2)) + 0.25 * Math.exp(-v / 1.2) * (1 - Math.exp(-v / 0.05)) + 0.4 * Math.exp(-(((u - 0.36) / 0.045) ** 2));
+    };
+    const onsets: number[] = [];
+    for (let t = 0.5; t < 12; t += 0.6) onsets.push(t);
+    const rise = (t: number) => (Math.abs(t - 6.5) < 0.01 ? 20 : 40);
+    const x = (t: number) => 60 + onsets.reduce((s, o) => s + rise(o) * pulse(t - o), 0);
+    const wn = createWaveNumerics(3);
+    const beats: Array<{ t: number; sys: number; dur: number }> = [];
+    for (let m = 0; m < 125 * 12; m++) {
+      const b = numericsStep(wn, m, x(m / 125), false, true);
+      if (b) beats.push(b);
+    }
+    const end = (t: number) => beats.find((b) => Math.abs(b.t - t) < 0.04);
+    const before = end(6.5); // the large beat 5.9–6.5 s
+    const small = end(7.1); // the small beat 6.5–7.1 s
+    expect(before?.dur).toBeCloseTo(0.6, 1);
+    expect(small?.dur).toBeCloseTo(0.6, 1);
+    expect((small?.sys as number) - (before?.sys as number)).toBeLessThan(-15); // its own, smaller systolic
+    expect(beats.every((b) => b.dur < 0.7)).toBe(true); // no interval spans two beats
+  });
+
+  it('a pressure line: a genuine long diastole (HR 120 → 40, post-ROSC slow beats) is one beat with its own diastolic, the search-back changing no beat', () => {
+    // The shadow run of 2026-10-27 measured #153's own-period rule on such beats: MAP 71 → 83 at an HR step 120 → 40.
+    // With the search-back the beats are exactly those of the line without it: nothing is found inside a long beat
+    const pulse = (u: number, dicrotic: number) => {
+      if (u <= 0) return 0;
+      if (u < 0.08) return 0.5 * (1 - Math.cos((Math.PI * u) / 0.08));
+      const v = u - 0.08;
+      return Math.exp(-((v / 0.15) ** 2)) + 0.25 * Math.exp(-v / 1.2) * (1 - Math.exp(-v / 0.05)) + dicrotic * Math.exp(-(((u - 0.36) / 0.045) ** 2));
+    };
+    const onsets: Array<[number, number, number]> = [];
+    for (let t = 0.5; t < 8; t += 0.5) onsets.push([t, 40, 0.45]); // HR 120
+    for (let t = 8; t < 16; t += 1.5) onsets.push([t, 45, 0.45]); // HR 40
+    for (let t = 36; t < 44; t += 1.4) onsets.push([t, 70, 0.3]); // 20 s of arrest, then the slow, large post-ROSC beats
+    const x = (t: number) => 60 + onsets.reduce((s, [o, a, d]) => s + a * pulse(t - o, d), 0);
+    const run = (searchBack: boolean) => {
+      const wn = createWaveNumerics(3);
+      const beats: Array<{ t: number; sys: number; dia: number; mean: number; dur: number }> = [];
+      for (let m = 0; m < 125 * 44; m++) {
+        const b = numericsStep(wn, m, x(m / 125), false, searchBack);
+        if (b) beats.push(b);
+      }
+      return beats;
+    };
+    const on = run(true);
+    expect(on).toEqual(run(false));
+    const slow = on.filter((b) => b.t > 9.6 && b.t < 16);
+    expect(slow.length).toBeGreaterThanOrEqual(4);
+    for (const b of slow) expect(b.dur).toBeCloseTo(1.5, 1); // each slow beat foot to foot, its diastole whole
+    for (const b of on.filter((b) => b.t > 37.5)) expect(b.dur).toBeCloseTo(1.4, 1);
+  });
+
   it('pleth (ownPulse): a pulse is measured over its own period when the detector missed the next foot (MISSED_LIMIT, Pan & Tompkins 1985); a pressure line keeps the foot-to-foot beat', () => {
     // 1 Hz pulses of 0.2 (steep upstroke, run-off); the pulse at 10 s rises too slowly to be detected and peaks at 0.3,
     // so the interval from the foot at 9 s to the next found foot (11 s) spans two pulses

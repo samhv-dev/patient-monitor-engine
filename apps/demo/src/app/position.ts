@@ -61,6 +61,33 @@ interface KeptStageMarks {
   marks: StageMarkPosition[];
 }
 type Owner = Pick<Position, 'code' | 'build' | 'engine' | 'cardId'>;
+/** The kept position and stage marks as stored (key → value), for a hand-over to another tab of this browser
+ *  (host-guard.ts): sessionStorage is the tab's own, so the other tab cannot read them. */
+export function keptItems(s: Storage | null = storage()): Record<string, string> {
+  const out: Record<string, string> = {};
+  try {
+    for (const k of [KEY, MARKS_KEY]) {
+      const v = s?.getItem(k);
+      if (typeof v === 'string') out[k] = v;
+    }
+  } catch {
+    /* nothing kept */
+  }
+  return out;
+}
+
+/** Store a position handed over by another tab (keptItems there); readPosition then checks it as after a reload. */
+export function putKeptItems(items: Record<string, string>, s: Storage | null = storage()): void {
+  for (const k of [KEY, MARKS_KEY]) {
+    const v = items[k];
+    try {
+      if (typeof v === 'string') s?.setItem(k, v);
+    } catch {
+      /* too full or blocked: the case starts again */
+    }
+  }
+}
+
 /** Bumped by clearPosition, so keepPositions writes the marks again after a new body or a restore forgot them. */
 let cleared = 0;
 
