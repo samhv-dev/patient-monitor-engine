@@ -127,6 +127,10 @@ test('the first tab asleep (a background tab): the dialog still appears; the han
   const a = await context.newPage();
   await openApp(a, base, '?scenario=acls-vf-witnessed', { warmMs: 3000 });
   const code = await codeOf(a);
+  // A tab that went to sleep in the background had kept its case long before (every SAVE_MS = 1 s, position.ts); on
+  // the 2-vCPU CI runner the first save can come after the 3 s warm-up, and a tab put to sleep before it has none to
+  // hand over (CI run 41929876356, WebKit retries: no "Restored" toast). So it sleeps once its case is kept.
+  await a.waitForFunction(() => sessionStorage.getItem('pme.position') !== null, undefined, { timeout: 20_000 });
   const wake = await putToSleep(a, 12_000); // past B's load, the dialog, the click and TAKE_MS (2 s): the notice shows
 
   const b = await context.newPage();
@@ -147,5 +151,7 @@ test('the first tab asleep (a background tab): the dialog still appears; the han
   expect(await codeOf(b)).toBe(code);
   await expect(b.locator('.toast', { hasText: 'Restored after the move from the other tab' })).toBeVisible({ timeout: 20_000 });
   expect(await b.evaluate(() => (window as unknown as W).__pmeApp.session.driver.runner?.doc.id)).toBe('acls-vf-witnessed');
-  await expect(a.getByRole('heading', { name: 'This session moved to another tab' })).toBeVisible();
+  // A stops on B's receipt, which it reads after the 12 s of work it was kept from (its engine's frames queued
+  // meanwhile): on the CI runner that took longer than the 5 s default (run 41929876356, first attempt)
+  await expect(a.getByRole('heading', { name: 'This session moved to another tab' })).toBeVisible({ timeout: 20_000 });
 });
