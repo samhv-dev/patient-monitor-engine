@@ -103,6 +103,15 @@ describe('relay', () => {
     expect(c1.wire('event')).toEqual([]);
   });
 
+  it('E130: a style event carries the IBP1/IBP2 scales to a viewer whole (the phones draw the instructor\'s range)', async () => {
+    const host = await client('h', 'host');
+    const v = await client('v', 'viewer');
+    const ibp = { IBP1: { mode: 'custom' as const, lower: 20, upper: 180 }, IBP2: { mode: 'auto' as const } };
+    host.send({ kind: 'event', body: [{ type: 'style', skin: 'saadat-like', theme: '', ibp }] });
+    await waitFor(() => v.wire('event').length === 1);
+    expect((v.wire('event')[0] as Extract<WireMessage, { kind: 'event' }>).body).toEqual([{ type: 'style', skin: 'saadat-like', theme: '', ibp }]);
+  });
+
   // Two phones joining together (#211's CI, 31 October: the second phone synced with no Case briefing): one says hello
   // between the host's welcome to the other and the snapshot after it. That snapshot is the other's; the newcomer waits
   // for the host's answer to its own hello, welcome and snapshot both, never a snapshot without its welcome.
