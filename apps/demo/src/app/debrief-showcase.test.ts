@@ -12,7 +12,6 @@ import { CONDITIONS } from './describe.ts';
 import { emptyRun, RunRecord, type Row, type RunData, type Sample } from './record.ts';
 import { LIBRARY } from './scenarios.ts';
 import { classify } from './teach2/rows.ts';
-import { withStart } from './card-read.ts';
 import anaphylaxis from './showcase/showcase-anaphylaxis.json';
 import haemorrhage from './showcase/showcase-haemorrhage.json';
 import induction from './showcase/showcase-induction.json';
@@ -263,10 +262,9 @@ describe('IP9 (ruling 1): the ACTION list and the Debrief steps table read a ste
       const sv = new ScenarioView();
       const d = (await hostRun(raw, until, press, sv)).data;
       const simT = endOf(d);
-      // as the view reads it (teach2/course.ts): the history with the initial state's entry from the record
-      const start = d.rows.find((r) => r.ev === `state:${(sv.doc as ScenarioDoc).initialState}`)?.t ?? 0;
+      // as the view reads it: ScenarioView's history, which begins at the initial state's entry (E141)
       const board = classify({
-        doc: sv.doc as ScenarioDoc, stateId: sv.stateId as string, history: withStart(sv.doc as ScenarioDoc, sv.history, start), enteredT: sv.enteredT, simT, inState: sv.timeInState(simT),
+        doc: sv.doc as ScenarioDoc, stateId: sv.stateId as string, history: sv.history, enteredT: sv.enteredT, simT, inState: sv.timeInState(simT),
         paused: false, log: [], record: d, values: undefined, holds: null, base: new Map(),
       });
       const panel = new Map<string, string>();
