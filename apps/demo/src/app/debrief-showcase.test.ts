@@ -358,9 +358,13 @@ describe('F7: the /2 MH card on the engine — the debrief grades what the panel
 
 describe('F9: the /2 haemorrhage card on the engine — the debrief grades what the panel grades', () => {
   /** A team that starts CPR in the PEA (the model's pulse loss at 11:00 on this card, haemorrhage-v2.slow.test.ts):
-   *  CPR and the call for help at 11:10, the volume and TXA at 11:20, epinephrine at 11:30, the 2-min rhythm check at
-   *  13:10 (compressions resumed at 13:20), stop CPR 10 s into ROSC (14:30); to 18:20, past Post-resuscitation. */
-  const PATH: Array<[number, string]> = [[30, 'oxygen'], [60, 'intubate'], [670, 'cpr'], [670, 'callForHelp'], [680, 'sourceControl'], [680, 'massiveTransfusion'], [680, 'txa'], [690, 'epinephrine'], [790, 'rhythmCheck'], [800, 'cpr'], [870, 'stopCpr']];
+   *  CPR at the end of its window, 30 s after the operating-room trigger fires on the displayed monitor (10:39.2, so CPR
+   *  at 11:09.2), the call for help at 11:10, the volume and TXA at 11:20, epinephrine at 11:30, the 2-min rhythm check
+   *  at 13:10 (compressions resumed at 13:20), stop CPR 10 s into ROSC (14:30); to 18:20, past Post-resuscitation.
+   *  The trigger was 10:40 before the escape-onset change (a junctional escape focus waits its own cycle, so its first
+   *  beat comes 0.87 s later and the displayed arterial systolic holds below 40 from 10:09.2 instead of 10:10.0); the
+   *  CPR press follows the trigger by the same 30 s it did then. */
+  const PATH: Array<[number, string]> = [[30, 'oxygen'], [60, 'intubate'], [669.2, 'cpr'], [670, 'callForHelp'], [680, 'sourceControl'], [680, 'massiveTransfusion'], [680, 'txa'], [690, 'epinephrine'], [790, 'rhythmCheck'], [800, 'cpr'], [870, 'stopCpr']];
   const END_S = 1100;
 
   it('the call for help goes through the host as a scenario record; the record copies the runner’s inputs; grade() on them equals the runner’s; the export is pme-debrief/3', async () => {
@@ -377,8 +381,8 @@ describe('F9: the /2 haemorrhage card on the engine — the debrief grades what 
     expect(gradesOf(rec.data)).toEqual(panel);
     const g = Object.fromEntries(panel.actions.map((a) => [a.id, a.grade]));
     // CPR's window opens at the earlier of the pulse loss (11:00) and the operating-room trigger on the displayed monitor
-    // (arterial systolic < 40 for 30 s with EtCO₂ < 25: about 10:40 on this course; the owner's ruling of 5 November):
-    // CPR at 11:10 is within 30 s of it, met. The compressions back 10 s after the rhythm check (CPR row at 13:20):
+    // (arterial systolic < 40 for 30 s with EtCO₂ < 25: 10:39.2 on this course; the owner's ruling of 5 November):
+    // CPR at 11:09.2 is within 30 s of it, met. The compressions back 10 s after the rhythm check (CPR row at 13:20):
     // resume met
     const cprRow = panel.actions.find((a) => a.id === 'cpr')!;
     expect(cprRow.dueT).toBeLessThan(660);
