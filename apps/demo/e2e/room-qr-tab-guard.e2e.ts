@@ -33,7 +33,11 @@ test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 test.afterEach(async () => relay?.close());
 
-type W = { __pmeApp: { session: { code: string; paused: boolean; driver: { runner: { doc: { id: string } } | null } } } };
+type W = { __pmeApp: { session: { code: string; paused: boolean; driver: { runner: { doc: { id: string } } | null } }; link: { log: Array<{ text: string }> } } };
+/** The restore after the hand-over, as the page reports it: the toast's text is also the Log's line (main.ts link.note),
+ *  which stays. The 4-s toast itself can be gone before a slow runner looks (as reload-keeps-case found on CI WebKit,
+ *  run 40180609451; here run 41961260591: this file's line-87 test, attempt 0, no toast in 20 s, passed on retry). */
+const restoredNote = (p: Page) => p.evaluate(() => (window as unknown as W).__pmeApp.link.log.find((e) => e.text.startsWith('Restored after the move from the other tab'))?.text ?? null);
 const codeOf = (p: Page) => p.evaluate(() => (window as unknown as W).__pmeApp.session.code);
 
 test.describe('the Room at 1920×1080', () => {
@@ -101,7 +105,7 @@ test('a second instructor tab is asked: "open that session here" takes the code 
   await b.waitForFunction(() => '__pmeApp' in window);
   expect(await codeOf(b)).toBe(code);
   expect(new URL(b.url()).searchParams.get('session')).toBe(code);
-  await expect(b.locator('.toast', { hasText: 'Restored after the move from the other tab' })).toBeVisible({ timeout: 20_000 });
+  await expect.poll(() => restoredNote(b), { timeout: 20_000, message: 'the restore is reported' }).toMatch(/^Restored after the move from the other tab: /);
   expect(await b.evaluate(() => (window as unknown as W).__pmeApp.session.driver.runner?.doc.id)).toBe('acls-vf-witnessed');
   // A stopped and says where the session went
   await expect(a.getByRole('heading', { name: 'This session moved to another tab' })).toBeVisible();
@@ -184,7 +188,7 @@ test('the first tab asleep (a background tab): the dialog still appears; the han
   await b.waitForFunction(() => '__pmeApp' in window);
   await expect(wait).toBeHidden();
   expect(await codeOf(b)).toBe(code);
-  await expect(b.locator('.toast', { hasText: 'Restored after the move from the other tab' })).toBeVisible({ timeout: 20_000 });
+  await expect.poll(() => restoredNote(b), { timeout: 20_000, message: 'the restore is reported' }).toMatch(/^Restored after the move from the other tab: /);
   expect(await b.evaluate(() => (window as unknown as W).__pmeApp.session.driver.runner?.doc.id)).toBe('acls-vf-witnessed');
   // A stops on B's receipt, which it reads after the 12 s of work it was kept from (its engine's frames queued
   // meanwhile): on the CI runner that took longer than the 5 s default (run 41929876356, first attempt)
