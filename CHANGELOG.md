@@ -7,6 +7,31 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ## [Unreleased]
 
+## [1.0.0-rc.5] - 2026-11-05
+
+**In this release candidate:** the `pme-scenario/2` card format, with the malignant-hyperthermia card in phases
+(`showcase-mh-v2`); Instructor v2, chosen in Settings, with the Case briefing and Finish the case; the Debrief's course
+graph on ECG paper with the instructor's marks; the ECG auto-gain with hysteresis; the CO₂ lane's auto-range on the
+Saadat-like skin; both MH cards preoxygenating before the premedication; and the relay's liveness check on a peer id
+claimed twice.
+
+Fifth public **pre-release** (release candidate) of a teaching simulator. It is for education only: it is not a
+medical device and it is not clinically validated. It is not the final 1.0.0: the calibration pass and the blind
+realism review have not run. The demonstration of 3 November 2026 ran `main` 079d4851 (classroom kit G3); this
+release candidate is `main` 46fbf1b3, which adds ten pull requests merged after the demonstration, and the version and
+its release records. Those ten: the arterial line's pulse detector searches back for a missed smaller beat, so the
+displayed systolic no longer reads high after a larger beat (#164); starting the Saadat-like cuff no longer tells the
+learners' phones that the ventilator is on the main screen (#194); a learner's phone says "Following session …" as soon
+as it follows again after the instructor's page reloads (#191); the Room has a large QR view, and a second instructor
+tab asks before starting a session (#256); the classroom kit's Windows launchers use the kit's own `runtime\node.exe`,
+which `make-bundle.mjs --win-node` ships checksum-verified (#255); `@pme/controller`'s protocol has the types and guard
+rules of an `instructor` role, which nothing sends yet (#192); the census of the commands the two Instructor views send,
+a test (#193); two end-to-end tests read the paused clock after the engine took the pause and check the physiology
+console on the built page (#259); the `/2` MH run-sheet helper closes the fold it opened and the Saadat grid test waits
+for the skin switch (#260); and a roadmap note on a press lost when its button is rebuilt under the pointer (#261). The
+known limitations listed under 1.0.0-rc.4, 1.0.0-rc.3, 1.0.0-rc.2 and 1.0.0-rc.1 still apply, except where this section
+says otherwise.
+
 ### Added
 
 - **`pme-scenario/2` F3: the administration record and a pure `grade()`.** The scenario driver records every
@@ -165,6 +190,46 @@ the public API is what the packages export (see the API reference), the `pme-sce
   phone, the hairline over the footer filling while held; the footer reads "Press and hold anywhere to continue now"
   (Persian: «برای ادامه، هر جای صفحه را لمس کنید و نگه دارید»). The host's screen keeps its tap or click.
 
+- **The CO₂ lane widens its range when the plateau exceeds it** (the owner's ruling of 1 November, E63 revisited).
+  A new optional skin key, `co2.autoScales`: the Saadat-like skin (and its `iran-icu-as-found` preset) steps 0–50 →
+  0–80 → 0–100 mmHg; every other skin keeps its fixed lane, and the default stays 0–50. Each breath's peak is judged,
+  found as the EtCO₂ detector finds it: the lane widens one step after 2 consecutive breaths whose peak exceeds the
+  current top, and narrows one step after 6 consecutive breaths under 80 % of the next-lower top, so peaks between 40
+  and 50 keep whichever scale is shown. Above 100 the trace still clips at the top; apnoea changes nothing. The dotted
+  top line and the scale text follow the range, and the lane is redrawn at the new scale; the EtCO₂ number is
+  unchanged. Nothing goes on the wire: each window computes the range from its own sample-identical engine, so the
+  instructor's pane, a learner monitor and a phone step at the same breaths. The 80 and 100 steps follow common
+  capnograph scale sets (provenance `assumed`): the manual offers an AUTO scale without its steps. On the MH demo path
+  the lane widens once, at about 14:26, during the climb.
+- **The Debrief's course strip carries the instructor's marks** at their times: the dock's icon for each kind (good,
+  bad, discuss; a ribbon for a plain bookmark), the Bookmarks list's words on hover, an undone mark struck through. The
+  learner handout's strip has no marks. A run with no bookmark draws the strip as before; nothing recorded, exported or
+  graded changes.
+- **Room: a large QR view** (after the 3 November demo): **Show large** under the Room's QR, or **Q** while the Room is
+  showing, opens a full-screen view of the same QR, drawn again as vector from the same address, at 796 × 796 px at
+  1920 × 1080 (the card's is 220 × 220 px), with the code, the address and the live "n phones following" beneath it in
+  large type. Escape, Q or **Back to the Room** returns; Q is ignored while typing, and leaving the Room closes the view.
+- **A second instructor tab asks before starting a session** (after the 3 November demo). Opening the app's address in
+  a second tab (or a duplicated tab with the same code) started a new session without saying so, and the phones kept
+  following a tab nobody was looking at. Before it starts, the instructor's page now asks this browser's other tabs
+  (BroadcastChannel `pme.hosts`) which sessions they host, waiting 200 ms: **Open that tab's session here** hands the
+  session over (the old tab sends its kept position, stops and reads "This session moved to another tab"); **Start a
+  new session** gets a new code while the other tab carries on. A tab the browser has suspended (Safari after about 4
+  minutes hidden) does not answer, and other browsers and computers are not asked (`docs/showcase/CLASSROOM.md`, "One
+  instructor tab"). The learner phone, the second screen and the Remote never run this check.
+- **The classroom kit's Windows launchers use the kit's own `runtime\node.exe`** (after the 3 November demo): `Start
+  Classroom.cmd` and `Start Simulator.cmd` look for Node.js as `PME_NODE` (alone, if set), then `runtime\node.exe`, then
+  the first `node.exe` on the path, then `%ProgramFiles%\nodejs\node.exe`, as the Mac launcher does.
+  `make-bundle.mjs --win-node <node-v22.x.y-win-x64.zip>` puts the official build into the kit after checking its
+  SHA-256 against the `SHASUMS256.txt` beside it (not that file's GPG signature); it refuses a wrong name, a major below
+  22, an unlisted file or a mismatched sum before building, and records the version and both checksums in
+  `runtime/NODE-VERSION.txt` and `VERSION.txt`. Nothing is downloaded. Untested on a Windows machine.
+- `@pme/controller`'s protocol has the types and guard rules of an `instructor` role (piece P2 of
+  `docs/plans/instructor-peer-role.md`): a hello with a 4–8 digit `pin`, the `grant` message, the `note` command, the
+  `instructorView` event, the close codes `denied` 4013 and `tooManyTries` 4028, and the allow-list
+  `INSTRUCTOR_COMMANDS` with `commandShape` and `instructorMay`, exported from the package. No behaviour change: nothing
+  sends these yet.
+
 ### Changed
 
 - **Both MH cards preoxygenate first and premedicate on the mask second** (the owner's ruling of 1 November: "the
@@ -222,6 +287,17 @@ the public API is what the packages export (see the API reference), the `pme-sce
   too (beside five chips it had no room and showed only at 1920 × 1080). While a status line shows under the chips (no
   case, the Case briefing, finishing a case), the strip keeps its 75 px, with the hint or note under the chips, and the
   line adds 40: 115 px (it was 92, and the line took 17 px from the chips).
+
+- **The Debrief's course strip is drawn on ECG paper** (the owner's mock-ups of 1–2 November): each vital (HR, ART/NIBP,
+  SpO₂, EtCO₂) in its own panel with black curves; five fine squares to a big square, a big square one panel high and
+  the largest of 1, 2 or 5 minutes that fits (finer for short runs, coarser for long ones); the key moments as numbered
+  arrows in a row at the top, the instructor's marks as numbered icons in a row at the bottom, no text in either (the
+  words show on hover; the Bookmarks list on page 2 is numbered the same way). Each scale is rounded outward to fives,
+  never below 0, SpO₂ never above 100. The printed strip is at most 52 mm tall, so page 1 still fits one A4 page. Both
+  `pme-debrief/2` and `/3` records; the learner handout's strip is unchanged.
+- Instructor v2's stage strip is one row (the owner's run of 1 November): with no case only the "No case loaded" chip,
+  centred, with no note and no status line; no hint line under the chips in any state; a stage's box says "Jump to it"
+  or "Return to its start" (the box's title names the stage; the accessible names keep it).
 
 ### Fixed
 
@@ -404,6 +480,54 @@ the public API is what the packages export (see the API reference), the `pme-sce
   ECG: shown on hover, they sit in a strip of their own under the monitor, at the window's foot. Placed under the
   monitor's header at the right of the wave area (UI review #25, 26 October), they covered the right half of the first
   ECG lane on the Saadat-like skin, whose traces run the wave column's full width.
+- On the `pme-scenario/2` MH card the Debrief's recognition key time starts at Early signs' entry, not at a bare
+  "EtCO₂ above 45": the hypoventilating patient before intubation reached 46 at 03:51, so the key time read about five
+  minutes (03:51 → 08:52) against the old card's two seconds. A display rule can now name a phase's entry
+  (`{ "phaseEntered": "earlySigns" }`); on the demo path the key time reads "early signs 08:03 → 08:12".
+- The judged recognition row ("Name malignant hyperthermia from the monitor …") is offered in Instructor v2 from the
+  moment its Debrief clock starts, not from the first stage: on both MH cards from Early signs, on anaphylaxis from the
+  reaction; bronchospasm and tamponade, whose signs show from Load, offer it from the start as before.
+- Instructor v2's left rail lines up with the page: its divider and its foot's border are measured from the stage
+  strip's bottom line and the dock's top edge (they were 72 px and 7 px off at 1440 × 900), and Home sits on the strip
+  row's centre (it sat 9 px under it with no case, 49 px during a Case briefing).
+- Instructor v2 and the monitor (the owner's review of 1 November): RR standing in for the CO₂ tile is laid out like the
+  EtCO₂ number, not held to the tile's left third; every stage-strip connector is the neutral grey, and a past chip is
+  framed in it; the dock's "Staged · n" is hidden while nothing is staged.
+- `pnpm pack-smoke` installs the dependency versions `pnpm-lock.yaml` names and fails on a drift: its consumer project
+  resolved everything below its direct dependencies from the registry of the minute, and main went red on 31 October
+  when a rollup version published minutes earlier was not yet served.
+
+### Known limitations
+
+- Windows launchers (`.cmd`): untested on Windows at this release.
+- Pulsus paradoxus in severe tamponade is still not reproduced: the systolic swing is 3.4 mmHg against the target of
+  at least 10 mmHg (Spodick 2003; `docs/model/circulation.md`). The work on it (E118) is open.
+- A hidden instructor tab still pauses the session and resumes it on return (owner ruling E82).
+- Browser coverage: as under 1.0.0-rc.4. The temporary rule that a WebKit test passing only on a retry is a warning,
+  not a failure, was set until the demonstration of 3 November and is still in force on this tree; its revert waits for
+  the calibration pass's re-harvest of the known-flaky list (docs/gates/stage-14.md, "Temporary relaxation"). Chromium
+  runs every test and fails on a retry-only pass. On `main` 46fbf1b3, the code of this release candidate (CI run
+  41917194127), the Chromium job failed on one untagged test that passed only on a retry, `sim-line.e2e.ts:52` (the
+  sim line on the Monitor view and the learner window); every other job passed; the gating WebKit job passed with three
+  retry-only passes, `ui-polish-a.e2e.ts:52`, `teach2-fit.e2e.ts:173` at Early signs on the `/2` MH card and
+  `saadat-instructor-tiles.e2e.ts:138`; the WebKit quarantine with none. (On 079d4851, the demonstration's build, run
+  41381444329: Chromium `teach2-fit.e2e.ts:173` twice, passed on its second attempt; WebKit `debrief.e2e.ts:225` and
+  `saadat-instructor-tiles.e2e.ts:138`.)
+- The second-tab guard's end-to-end test (`room-qr-tab-guard.e2e.ts:74`) passes only on a retry on WebKit in CI: the
+  guard waits 200 ms for a background tab's answer. A fix is in progress.
+- The Persian Debrief handout prints in English every line its Persian table does not hold: 46 entries of
+  `docs/showcase/i18n/fa-debrief.json` have no Persian yet (26 at 1.0.0-rc.4): 25 of those, the MH take-home line
+  reworded for the registry's recrudescence rate, and 20 labels of the `pme-debrief/3` Debrief of a `pme-scenario/2`
+  run. The Persian drafts of PR #161 await the clinical owner's review.
+- The classroom kit is still built from a source checkout with `node scripts/showcase/make-bundle.mjs` (Node.js ≥ 22);
+  it is not a release asset.
+- ES module packages: build from source. They are not on npm at this release candidate.
+- Not run at this release: the two release-checklist runs of `RELEASE.md` — the 600 s tick-cost gate on an idle
+  machine (item 8) and the 10-minute soak with a busy Ventilator view and a paired Remote (item 9).
+- `docs/validation/report.md` was not regenerated for this tree (docs/guides/validation-summary.md says what it
+  predates).
+- The owner's checks: this release candidate gets a smoke check after the tag, recorded in the repository's gate
+  notes.
 
 ## [1.0.0-rc.4] - 2026-10-30
 
@@ -1105,7 +1229,8 @@ realism review have not run, and the limits below are known.
   the documentation, and a few developer pages are leftovers; a clean-up follows this release candidate, then the
   calibration pass and the realism review.
 
-[Unreleased]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.4...HEAD
+[Unreleased]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.5...HEAD
+[1.0.0-rc.5]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.4...v1.0.0-rc.5
 [1.0.0-rc.4]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.3...v1.0.0-rc.4
 [1.0.0-rc.3]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.2...v1.0.0-rc.3
 [1.0.0-rc.2]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.1...v1.0.0-rc.2
