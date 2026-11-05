@@ -2,12 +2,14 @@
 // states after the first (each the team's, the patient's or the scenario's as the record's `by` says), the pulse lost
 // and back (the model), and the team's drugs, fluids, shocks and CPR; each with
 // what the monitor's trend held at that second and the alarms raised since the moment before. The key times are the
-// intervals the facilitator reads first: the instructor's recognition tick, the first team action, each objective's
+// intervals the facilitator reads first: the recognition (one reading, `recognitionAt`: a /2 card's timed action, a /1
+// card's tick or the instructor's press), the first team action, each objective's
 // measured interval, the pulse loss to CPR, the time without a pulse and the hands-off time within it (with the
 // compression fraction). Every number traces to a row or a sample; an
 // absent one is null, never a guess. Read on the KEPT course, as the debrief's rules are. No DOM.
-import { asV1, type ScenarioDoc } from '@pme/controller';
-import { endOf, isEvent, objectives, type DebriefExport } from './debrief.ts';
+import { asV1, isV2, type ScenarioDoc } from '@pme/controller';
+import type { Grade, ScenarioDocV2 } from '@pme/controller/scenario';
+import { endOf, isEvent, objectives, report3, type DebriefExport } from './debrief.ts';
 import type { Row, RunData, Sample } from './record.ts';
 
 export type Who = 'team' | 'patient' | 'scenario';
@@ -94,7 +96,7 @@ function valueAt(at: Map<number, Sample>, k: 'hr' | 'map' | 'spo2' | 'etco2', t:
  *  during CPR (E126; E60 blanked every pulseless row). `pulseless` marks the rows the footnote explains. A state's own
  *  set-up rows are not moments. */
 export function keyMoments(d: RunData): KeyMoment[] {
-  const raw: Array<{ t: number; who: Who; text: string }> = [];
+  const raw: Array<{ t: number; who: Who; text: string; recognised?: true }> = [];
   let prev: string | undefined;
   for (const r of kept(d)) {
     if (r.ev?.startsWith('state:')) {
@@ -104,6 +106,10 @@ export function keyMoments(d: RunData): KeyMoment[] {
     } else if (r.ev === 'pulseLoss' || r.ev === 'rosc') raw.push({ t: r.t, who: 'patient', text: r.text });
     else if ((r.kind === 'action' || r.kind === 'remote') && (r.ev?.startsWith('drug:') || r.ev === 'fluid' || r.ev === 'shock' || r.ev === 'cpr')) raw.push({ t: r.t, who: 'team', text: r.text });
   }
+  // the recognition, a team moment (D5): a /2 card's marked action as pressed; a /1 tick or press only in a record that
+  // keeps 'recognised' (made with the press), so an older export's moments stay as they were
+  const rec = recognitionAt(d);
+  if (rec && rec.t !== null && (rec.source === 'action' || d.keeps?.includes('recognised'))) raw.push({ t: rec.t, who: 'team', text: RECOGNISED[rec.source].moment, recognised: true });
   raw.sort((a, b) => a.t - b.t);
   const merged: typeof raw = [];
   for (const m of raw) {
@@ -122,6 +128,7 @@ export function keyMoments(d: RunData): KeyMoment[] {
       values: { hr: valueAt(at, 'hr', m.t), map: valueAt(at, 'map', m.t), spo2: valueAt(at, 'spo2', m.t), etco2: valueAt(at, 'etco2', m.t) },
       pulseless,
       alarms: alarms.filter((a) => from < a.t && a.t <= m.t + ALARM_S).map((a) => a.text),
+      ...(m.recognised ? { recognised: true as const } : {}),
     };
   });
 }
@@ -150,27 +157,75 @@ function recognitionFrom(d: RunData, tick: number | undefined): { t: number; lab
   const idOf = (r: Row) => (r.ev?.startsWith('state:') ? r.ev.slice('state:'.length) : '');
   const r = kept(d).find((x) => (tick === undefined || x.t <= tick) && signs.has(idOf(x)));
   if (!r) return { t: 0, label: 'start' };
-  const head = (doc?.states.find((s) => s.id === idOf(r))?.label ?? idOf(r)).split(':')[0] as string;
-  return { t: r.t, label: /^.[a-z]/.test(head) ? head.charAt(0).toLowerCase() + head.slice(1) : head };
+  return { t: r.t, label: headOf(doc?.states.find((s) => s.id === idOf(r))?.label ?? idOf(r)) };
+}
+/** A state's or phase's label as the tile names it: up to the first colon, a capital lowered unless it is an acronym
+ *  ("Early signs: EtCO₂ rising …" → "early signs"). */
+function headOf(label: string): string {
+  const head = label.split(':')[0] as string;
+  return /^.[a-z]/.test(head) ? head.charAt(0).toLowerCase() + head.slice(1) : head;
 }
 
-/** The key times, in order: recognition, the first team action, the objectives' measured intervals (document order),
+/** The recognition of a run, read ONE way (D5; plan Decision 3, the owner's ruling of 5 November): `t` when the team
+ *  named the problem as the instructor recorded it (null: not yet), counted from `fromT`.
+ *  - a pme-scenario/2 run: the card's action marked `recognition: true` (at most one, the validator says), as
+ *    `report3` grades it: its window's opening (`dueT`, named by its anchor phase) and length, its press (`givenT`) and
+ *    its first grade. Read by the field, never by a label; no note is read. None when the card marks none (a card made
+ *    before the field, such as an archived /3 export with the retired judged rows) or the window never opened.
+ *  - a /1 card with a recognition objective (`debrief: 'recognition'`): its first kept tick (the Scenario tab's
+ *    checkbox, Instructor v2's row, or the Recognised press, which sends the same note), from the sign state
+ *    (`recognitionFrom`); `t` null when not ticked.
+ *  - any other /1 card or a free run: the first kept note with `ev: 'recognised'` (the Recognised press), from the sign
+ *    state; none when the record keeps no 'recognised' (made before the press) or nobody pressed.
+ *  An undone press or tick is not counted (the kept course). The tile, the key moments and the swimlane read this. */
+export type Recognition =
+  | { source: 'action'; actionId: string; fromT: number; fromLabel: string; t: number | null; windowS: number | null; grade: Grade }
+  | { source: 'tick' | 'press'; fromT: number; fromLabel: string; t: number | null };
+export function recognitionAt(d: RunData): Recognition | null {
+  if (d.doc && isV2(d.doc)) {
+    const doc: ScenarioDocV2 = d.doc;
+    const act = doc.actions.find((a) => a.recognition);
+    const g = act ? report3(d)?.actions.find((a) => a.id === act.id) : undefined;
+    if (!act || !g || g.dueT === null) return null;
+    const an = act.window?.anchor;
+    const phase = typeof an === 'string' && an.startsWith('phase:') ? doc.phases.find((p) => p.id === an.slice(6)) : undefined;
+    const fromLabel = phase ? headOf(phase.label) : g.dueT === 0 ? 'start' : 'its window';
+    return { source: 'action', actionId: act.id, fromT: g.dueT, fromLabel, t: g.givenT, windowS: g.windowS, grade: g.firstGrade };
+  }
+  const ri = (asV1(d.doc)?.objectives ?? []).findIndex((o) => typeof o !== 'string' && o.debrief === 'recognition');
+  if (ri >= 0) {
+    const tk = objectives(d)[ri]?.verdict.tickedT;
+    const from = recognitionFrom(d, tk);
+    return { source: 'tick', fromT: from.t, fromLabel: from.label, t: tk ?? null };
+  }
+  const press = d.keeps?.includes('recognised') ? kept(d).find((r) => r.kind === 'note' && r.ev === 'recognised') : undefined;
+  if (!press) return null;
+  const from = recognitionFrom(d, press.t);
+  return { source: 'press', fromT: from.t, fromLabel: from.label, t: press.t };
+}
+/** Each reading's words: the tile's caption and the key moment's text. */
+const RECOGNISED: Readonly<Record<Recognition['source'], { tile: string; moment: string }>> = {
+  action: { tile: 'Recognition (timed action)', moment: 'Recognised (timed action, recorded by the instructor)' },
+  tick: { tile: "Recognition (instructor's tick)", moment: "Recognised (instructor's tick)" },
+  press: { tile: "Recognition (instructor's press)", moment: 'Recognised (instructor)' },
+};
+
+/** The key times, in order: recognition (`recognitionAt`), the first team action, the objectives' measured intervals (document order),
  *  the pulse loss to CPR, the time pulseless, the hands-off time (`handsOff`); at most six that print a tile. A `noneAfter` interval prints none (the
  *  view drops it), so it does not count toward the six (R-B N1). A generic interval equal to an objective's is left
  *  out (the objective's is kept). */
 export function keyTimes(d: RunData, moments: KeyMoment[] = keyMoments(d)): KeyTime[] {
   const objs = objectives(d);
-  const docObjs = asV1(d.doc)?.objectives ?? [];
   const out: KeyTime[] = [];
-  const ri = docObjs.findIndex((o) => typeof o !== 'string' && o.debrief === 'recognition');
-  if (ri >= 0) {
-    const tk = objs[ri]?.verdict.tickedT;
-    const from = recognitionFrom(d, tk);
-    out.push({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: from.t, fromLabel: from.label, toT: tk ?? null, state: tk === undefined ? 'notTicked' : 'measured' });
+  const rec = recognitionAt(d);
+  if (rec) {
+    out.push({
+      id: 'recognition', label: RECOGNISED[rec.source].tile, fromT: rec.fromT, fromLabel: rec.fromLabel, toT: rec.t,
+      ...(rec.source === 'action' ? { ...(rec.windowS !== null ? { askedS: rec.windowS } : {}), grade: rec.grade } : {}),
+      state: rec.t === null ? 'notTicked' : 'measured',
+    });
   }
-  // a /2 run has no recognition tile: judged rows are retired (the owner's ruling of 5 November); the recognition is a
-  // record action, printed in the action table with its window (from Early signs' entry on the MH card) and its press
-  const team = moments.find((m) => m.who === 'team');
+  const team = moments.find((m) => m.who === 'team' && !m.recognised); // naming the problem is not the first action
   if (team) out.push({ id: 'firstTeam', label: 'Start → first team action', fromT: 0, toT: team.t, state: 'measured' });
   const objTiles: KeyTime[] = [];
   objs.forEach((o, i) => {

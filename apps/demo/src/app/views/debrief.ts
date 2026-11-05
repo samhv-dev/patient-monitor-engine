@@ -266,13 +266,15 @@ export const takeHomeSection = (take: readonly string[] = []): HTMLElement =>
     : h('div', {}, h('p', { class: 'db-subhead' }, 'Your take-home points'), ...ruled(3)));
 
 /** One key-time tile: its caption, the interval as a big value, and the times it runs between. A tile whose end is
- *  absent is not drawn, except the recognition tile, which reads "–" "not ticked" (E44). */
+ *  absent is not drawn, except the recognition tile, which reads "–" "not ticked" (E44), or on a /2 card its timed
+ *  action's window and grade words (D5). */
 function tile(k: KeyTime, moments: KeyMoment[]): HTMLElement | null {
   if (k.state === 'noneAfter') return null;
   const ticked = k.state !== 'notTicked';
   const taken = k.totalS ?? (k.toT !== null && k.fromT !== null ? k.toT - k.fromT : null);
   let sub = '';
-  if (!ticked) sub = 'not ticked';
+  if (k.grade) sub = `${k.fromT === null ? '–' : mmss(k.fromT)} ${k.fromLabel ?? 'start'} → ${k.toT === null ? '–' : mmss(k.toT)}${k.askedS !== undefined ? ` · asked ≤ ${span(k.askedS)}` : ''} · ${GRADE_WORDS[k.grade]}`; // D5: a /2 card's timed action
+  else if (!ticked) sub = 'not ticked';
   else if (k.id === 'pulseless') sub = `first lost ${mmss(k.fromT ?? 0)}`;
   else if (k.id === 'handsOff') sub = `compression fraction ${Math.round((k.fraction ?? 0) * 100)} %`;
   else if (k.id === 'recognition' && k.fromT !== null && k.toT !== null) sub = `${mmss(k.fromT)} ${k.fromLabel ?? 'start'} → ${mmss(k.toT)} ticked`; // #18: from the early signs, not Load
@@ -281,7 +283,7 @@ function tile(k: KeyTime, moments: KeyMoment[]): HTMLElement | null {
     sub = `${mmss(k.fromT)} → ${mmss(k.toT)}${k.askedS !== undefined ? ` · asked ≤ ${span(k.askedS)}` : ''}${action ? ` (${action})` : ''}`;
   }
   const met = k.askedS !== undefined && taken !== null && taken <= k.askedS;
-  return h('div', { class: `db-tile${met ? ' met' : ''}${ticked ? '' : ' unticked'}`, 'data-key': k.id, 'data-state': k.state },
+  return h('div', { class: `db-tile${met ? ' met' : ''}${ticked ? '' : ' unticked'}`, 'data-key': k.id, 'data-state': k.state, ...(k.id === 'recognition' ? { 'data-recognised': '' } : {}) },
     h('div', { class: 'db-tile-cap', title: k.label }, k.label),
     h('div', { class: 'db-tile-v' }, taken === null ? '–' : span(taken)),
     h('div', { class: 'db-tile-sub' }, sub),
@@ -327,7 +329,7 @@ function momentsTable(ms: KeyMoment[]): Node[] {
     h('table', { class: 'db-table db-moments' },
       h('thead', {}, h('tr', {}, ...['n', 'Time', 'Who', 'What happened', 'HR', 'MAP', 'SpO₂', 'EtCO₂'].map((c) => h('th', { scope: 'col' }, c)))),
       h('tbody', {}, ...ms.flatMap((m) => [
-        h('tr', { 'data-n': String(m.n), ...(m.pulseless ? { 'data-pulseless': 'true' } : {}) }, h('td', { class: 'num' }, String(m.n)), h('td', { class: 'num' }, mmss(m.t)), whoCell(m.who), h('td', {}, m.text),
+        h('tr', { 'data-n': String(m.n), ...(m.pulseless ? { 'data-pulseless': 'true' } : {}), ...(m.recognised ? { 'data-recognised': '' } : {}) }, h('td', { class: 'num' }, String(m.n)), h('td', { class: 'num' }, mmss(m.t)), whoCell(m.who), h('td', {}, m.text),
           v(m.values.hr), v(m.values.map), v(m.values.spo2), v(m.values.etco2)),
         ...(m.alarms.length ? [h('tr', { class: 'db-alarms' }, h('td', {}), h('td', { colspan: '7' }, `Alarms since the last row: ${m.alarms.join(', ')}`))] : []),
       ]))),

@@ -477,6 +477,8 @@ export interface DebriefExport {
     fraction?: number;
     /** Recognition only: what `fromT` is ("early signs", the state the card's rules count from; "start" without one). */
     fromLabel?: string;
+    /** Recognition on a /2 run only (D5): the timed action's first grade (`report3`'s `firstGrade`); `askedS` its window. */
+    grade?: Grade;
     state: 'measured' | 'notTicked' | 'noneAfter';
   }>;
   /** Values as recorded, unrounded, except SpO₂: null while pulseless (`pulseless` says why). */
@@ -484,6 +486,8 @@ export interface DebriefExport {
     n: number; t: number; who: 'team' | 'patient' | 'scenario'; text: string;
     values: { hr: number | null; map: number | null; spo2: number | null; etco2: number | null };
     pulseless: boolean; alarms: string[];
+    /** The recognition moment (D5, `recognitionAt`): the team named the problem. */
+    recognised?: true;
   }>;
   minutes: ReturnType<typeof perMinute>;
   steps: Step[];

@@ -16,6 +16,8 @@ export interface ClinicalLogEntry {
   text: string;
   /** Rejected by the engine: the reason, in the log only. */
   refused?: string;
+  /** The run event a note is, into the record with it (D5: 'recognised', the /1 Recognised press). */
+  ev?: 'recognised';
 }
 
 export class Link {
@@ -93,8 +95,8 @@ export class Link {
     }
   }
 
-  note(text: string, kind: ClinicalLogEntry['kind'] = 'note'): void {
-    this.add({ simT: this.simT, kind, text });
+  note(text: string, kind: ClinicalLogEntry['kind'] = 'note', ev?: ClinicalLogEntry['ev']): void {
+    this.add({ simT: this.simT, kind, text, ...(ev ? { ev } : {}) });
   }
 
   onChange(fn: () => void): () => void {
@@ -145,7 +147,7 @@ export class Link {
   }
 
   private add(x: ClinicalLogEntry): void {
-    if (x.kind === 'note' || x.kind === 'marker') this.host?.record.note(x.simT ?? this.simT, x.text); // Into the debrief
+    if (x.kind === 'note' || x.kind === 'marker') this.host?.record.note(x.simT ?? this.simT, x.text, x.ev); // Into the debrief
     this.log.push(x);
     if (this.log.length > 1000) this.log.splice(0, this.log.length - 1000);
     this.changed();
