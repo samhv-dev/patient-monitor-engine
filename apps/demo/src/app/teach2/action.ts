@@ -17,7 +17,6 @@ import { FOOT_NONE, mountBeginPane, type Way } from './begin.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { judge, pressAction, pressStep } from './press.ts';
 import { classify, classifyV2, liveGrades, NOT_AN_ACTION, type HoldLike, type LiveRow } from './rows.ts';
-import { historyOf } from './course.ts';
 import { stageNames } from './strip.ts';
 
 export const FOOT = 'No penalty comes from the panel. Consequences come from the physiology, and the debrief records overdue, out of order, failed and not done, each with the time and the order it was due.';
@@ -247,7 +246,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       return;
     }
     const board = classify({
-      doc, stateId, history: historyOf(link), enteredT: sv.enteredT, simT: link.simT, inState: sv.timeInState(link.simT),
+      doc, stateId, history: link.ctl.scenario.history, enteredT: sv.enteredT, simT: link.simT, inState: sv.timeInState(link.simT),
       paused: link.ctl.hostPaused, log: link.log, record: link.host?.record.data ?? null,
       values: link.ctl.state?.values as Partial<Record<string, number>> | undefined, holds: holdsOf(link), base,
     });
