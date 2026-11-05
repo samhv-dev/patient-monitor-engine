@@ -203,15 +203,18 @@ describe('pme-scenario/2: holdS, cue, unchanged since the phase start, graded: f
 });
 
 describe('pme-scenario/2: a judged route the engine does not model is a warning (F5.1b)', () => {
-  it('a card that judges IM dantrolene validates, with the warning at the route', () => {
+  it('a card that judges SC dantrolene validates, with the warning at the route', () => {
     const d = minimalV2() as any;
-    d.actions[0].drug.route = { set: ['iv', 'im'], preferred: 'iv' };
+    d.actions[0].drug.route = { set: ['iv', 'sc'], preferred: 'iv' };
     const r = validateScenario(d);
     expect(r.ok).toBe(true);
-    expect(r.warnings).toEqual(['/actions/0/drug/route/set/1: dantrolene: route im is judged; the engine does not model it']);
+    expect(r.warnings).toEqual(['/actions/0/drug/route/set/1: dantrolene: route sc is judged; the engine does not model it']);
   });
-  it('a judged route the engine models is no warning', () => {
+  it('a judged route the engine models is no warning: IV, and IM dantrolene (its route model, F5.2)', () => {
     expect(validateScenario(minimalV2()).warnings).toEqual([]);
+    const d = minimalV2() as any;
+    d.actions[0].drug.route = { set: ['iv', 'im'], preferred: 'iv' };
+    expect(validateScenario(d).warnings).toEqual([]);
   });
   it('a /1 card validates exactly as before: an IM dose in it is no judged route', () => {
     for (const raw of Object.values(BUILTIN_SCENARIOS)) expect(validateScenario(raw).warnings.filter((w) => w.includes('judged'))).toEqual([]);
