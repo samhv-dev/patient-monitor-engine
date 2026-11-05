@@ -383,6 +383,44 @@ describe('D5: recognition has one reading (recognitionAt)', () => {
   });
 });
 
+describe('D6: key moments read the pressures and the alarm ends', () => {
+  // the arterial line 0–99 s (92/58, CVP 17), then no line; one cuff cycle at 150 s (100/60, its second only); the CVP
+  // transducer reports to 199 s (CVP 12 from 100 s), then nothing
+  const press = (t: number): Partial<Sample> => (t < 100 ? { sys: 92, dia: 58, cvp: 17 } : t === 150 ? { sys: 100, dia: 60, cvp: 12 } : { sys: null, dia: null, cvp: t < 200 ? 12 : null });
+  const run = (rows: Row[]): RunData => ({ ...emptyRun('free', 70, 0), samples: Array.from({ length: 400 }, (_, t) => ({ ...sampleAt(t), ...press(t) })), rows });
+
+  it('the arterial (or CVP) value at ⌊t⌋ (then +3 s); a cuff value is the LAST reading at or before the moment, with its age', () => {
+    const ms = keyMoments(run([
+      { t: 50.4, kind: 'action', text: 'Fluid 500 mL', ev: 'fluid' },
+      { t: 150.5, kind: 'action', text: 'Epinephrine 10 µg IV', ev: 'drug:epinephrine' },
+      { t: 280.2, kind: 'action', text: 'Epinephrine 10 µg IV', ev: 'drug:epinephrine' },
+      { t: 140, kind: 'action', text: 'Crystalloid 250 mL', ev: 'fluid' },
+    ]));
+    expect(ms.map((m) => [m.t, m.values.sys, m.values.dia, m.values.cvp])).toEqual([
+      [50.4, 92, 58, 17],
+      [140, null, null, 12], // no reading at or before it since the line stopped (the cycle at 150 s is after it)
+      [150.5, { v: 100, ageS: 0.5 }, { v: 60, ageS: 0.5 }, 12],
+      [280.2, { v: 100, ageS: 130.2 }, { v: 60, ageS: 130.2 }, null],
+    ]);
+  });
+
+  it('each alarm under a moment carries its end and acknowledgement (null: still on, not acknowledged)', () => {
+    const d = run([
+      { t: 362, kind: 'alarm', text: 'CVP high', ev: 'alarm:cvp-high', endT: 460, ackT: 380 },
+      { t: 365, kind: 'alarm', text: 'HR high', ev: 'alarm:hr-high' },
+      { t: 370, kind: 'action', text: 'Fluid 500 mL', ev: 'fluid' },
+    ]);
+    const m = keyMoments(d)[0];
+    expect(m?.alarms).toEqual(['CVP high', 'HR high']);
+    expect(m?.alarmTimes).toEqual([{ t: 362, endT: 460, ackT: 380 }, { t: 365, endT: null, ackT: null }]);
+  });
+
+  it('a pre-D record (no `keeps`): no pressure keys and no alarm times on its moments (the view prints "not recorded")', () => {
+    const ms = keyMoments(a31Run());
+    expect(ms.every((m) => !('sys' in m.values) && !('dia' in m.values) && !('cvp' in m.values) && !('alarmTimes' in m))).toBe(true);
+  });
+});
+
 describe('E126: the SpO₂ column prints what the monitor showed', () => {
   it('a dash while pulseless without compressions, the number during CPR, the number after the return', () => {
     // the oximeter: valid to 64 s, its dash from the pulse loss + 4 s to CPR + 10 s, then the compression reading

@@ -117,7 +117,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   const minuteRows = await view.locator('#db-minutes tbody tr').allInnerTexts(); // Q1: one row per minute
   expect(minuteRows.length).toBeGreaterThanOrEqual(2); // the kept course is ≈ 1½–2 sim-min
   expect(minuteRows[0]).toMatch(/^00:00\s+\d+/);
-  await expect(view.locator('#db-minutes thead th')).toHaveCount(12);
+  await expect(view.locator('#db-minutes thead th')).toHaveCount(15); // D6: SBP, DBP and CVP
   // R56: no engine id in the report (as stage9-glossary: an id that is also an English word, "epinephrine", is not a leak)
   const ids = (await page.evaluate(() => (window as unknown as W).__pmeApp.engineIds)).filter((id) => /[A-Z0-9]/.test(id));
   expect(await scanEngineIds(page, ids)).toEqual([]);
@@ -339,8 +339,11 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   // page 2: the key moments with SpO₂ as the monitor showed it (E126: this rc.2 record kept the oximeter's reading through
   // the pulseless span, CPR having begun 3 s after the loss), and the sentence that says what it means
   const moments = await view.locator('#db-moments tbody tr[data-n]').evaluateAll((tr) => tr.map((x) => [...x.querySelectorAll('td')].map((td) => td.textContent?.trim())));
-  expect(moments.map((m) => [m[0], m[1], m[6]])).toEqual([['1', '06:13', '99'], ['2', '07:48', '99'], ['3', '07:51', '99'], ['4', '09:21', '99'], ['5', '10:55', '99'], ['6', '10:57', '99'], ['7', '11:27', '99']]);
-  expect(moments.map((m) => m[5])).toEqual(['71', '21', '20', '28', '45', '63', '90']); // MAP rounded
+  expect(moments.map((m) => [m[0], m[1], m[8]])).toEqual([['1', '06:13', '99'], ['2', '07:48', '99'], ['3', '07:51', '99'], ['4', '09:21', '99'], ['5', '10:55', '99'], ['6', '10:57', '99'], ['7', '11:27', '99']]);
+  expect(moments.map((m) => m[6])).toEqual(['71', '21', '20', '28', '45', '63', '90']); // MAP rounded
+  // D6: this rc.2 export predates the pressures and the alarm ends: "·" in SBP/DBP and CVP, one "not recorded" line
+  expect(moments.map((m) => [m[5], m[7]])).toEqual(Array.from({ length: 7 }, () => ['·', '·']));
+  await expect(view.locator('#db-moments .db-norecord')).toHaveCount(1);
   await expect(view.locator('#db-moments .db-note60')).toHaveCount(1);
   await expect(view.locator('#db-moments .db-note60')).toHaveText('SpO₂ as the monitor showed it: – while pulseless without compressions (no pulsatile signal); a number during CPR reflects compression-generated flow and is unreliable.'); // the owner's ruling E126, 2026-10-26 (was E60, 2026-10-19)
   await expect(view.locator('#db-moments tr.db-alarms').first()).toHaveText(/Alarms since the last row: CVP high, SpO₂: low perfusion, ART S low/);
@@ -539,6 +542,18 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
   await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
   const { handout } = await printHeights(page);
   test.info().annotations.push({ type: 'MH /2 heights (mm)', description: `page 1 ${page1.toFixed(1)}, handout ${handout.toFixed(1)}` });
+  // D6, page 2 on a record of this build (the pressures and alarm ends kept): the key-moments table with its ten
+  // columns fits the 182 mm content width, and no Who cell wraps (else the plan drops its word to the shape alone)
+  const p2 = await page.evaluate((mm) => {
+    const sec = document.querySelector('#db-moments') as HTMLElement;
+    const table = sec.querySelector('table.db-moments') as HTMLElement;
+    const who = [...sec.querySelectorAll('td.db-whocell')].map((td) => td.getBoundingClientRect().height / parseFloat(getComputedStyle(td).lineHeight || '0'));
+    const bp = [...sec.querySelectorAll('tbody tr[data-n]')].map((tr) => tr.querySelectorAll('td')[5]?.textContent ?? '');
+    return { section: sec.getBoundingClientRect().width / mm, table: table.getBoundingClientRect().width / mm, height: sec.getBoundingClientRect().height / mm, whoLines: Math.max(...who), bp };
+  }, MM);
+  test.info().annotations.push({ type: 'MH /2 page 2 (mm)', description: `key moments ${p2.height.toFixed(1)} tall, table ${p2.table.toFixed(1)} of ${p2.section.toFixed(1)} wide, Who cells ≤ ${p2.whoLines.toFixed(2)} lines; SBP/DBP ${p2.bp.join(' | ')}` });
+  expect(p2.table, 'the key-moments table within the content width (mm)').toBeLessThanOrEqual(p2.section + 0.5);
+  expect(p2.bp.some((x) => /^\d+\/\d+/.test(x)), 'an SBP/DBP printed on this run (arterial, or the cuff with its age)').toBe(true);
   expect(printFont, 'the bundled print font is loaded').toBe(true);
   expect(page1, 'page 1 (mm)').toBeLessThanOrEqual(267);
   expect(handout, 'handout (mm)').toBeLessThanOrEqual(267);
