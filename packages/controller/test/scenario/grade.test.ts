@@ -149,6 +149,9 @@ const CASES: Case[] = [
     want: { grade: 'overdue', lines: ['route im not allowed', 'route not modelled'] } },
   { name: 'IM dantrolene: failed at the end', actions: [DAN], admin: [dan(150, { route: 'im', result: { accepted: false, reason: 'dantrolene: route im is not modelled', routeNotModelled: true } })], t: 500, final: true,
     want: { grade: 'failed' } },
+  // since F5.2 the engine accepts IM dantrolene (F = 0: no systemic effect): the record says accepted, the route still does not satisfy
+  { name: 'IM dantrolene, accepted by the engine (F5.2): the action stays open, the route line printed', actions: [DAN],
+    admin: [dan(150, { route: 'im' })], t: 500, want: { grade: 'overdue', lines: ['route im not allowed'] } },
 ];
 
 describe('grade(): one action per case', () => {

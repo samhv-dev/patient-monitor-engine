@@ -578,13 +578,19 @@ describe('ScenarioDriver: the administration record of a /2 card (F3)', () => {
     ]);
   });
 
-  it('an IM dantrolene through driver.host is refused by the engine and still recorded, with its reason and routeNotModelled', () => {
+  it('a dose by a route the engine does not model (dantrolene SC) is refused and still recorded, with its reason and routeNotModelled', () => {
     const { driver, run } = rig3();
     run(1);
-    const r = driver.host.dispatch(cmd('im1', { ...GIVE, route: 'im' })) as { accepted: boolean; reason?: string };
+    const r = driver.host.dispatch(cmd('sc1', { ...GIVE, route: 'sc' })) as { accepted: boolean; reason?: string };
     expect(r.accepted).toBe(false);
     const a = driver.phaseRunner!.admin.at(-1);
-    expect(a).toMatchObject({ kind: 'drug', drugId: 'dantrolene', route: 'im', result: { accepted: false, reason: r.reason, routeNotModelled: true } });
+    expect(a).toMatchObject({ kind: 'drug', drugId: 'dantrolene', route: 'sc', result: { accepted: false, reason: r.reason, routeNotModelled: true } });
+  });
+  it('an IM dantrolene through driver.host is accepted (the engine models it: F = 0, F5.2) and recorded as given, by route im', () => {
+    const { driver, run } = rig3();
+    run(1);
+    expect((driver.host.dispatch(cmd('im1', { ...GIVE, route: 'im' })) as { accepted: boolean }).accepted).toBe(true);
+    expect(driver.phaseRunner!.admin.at(-1)).toMatchObject({ kind: 'drug', drugId: 'dantrolene', route: 'im', result: { accepted: true } });
   });
 
   it('the record rewinds with a bookmark restore', async () => {
@@ -617,14 +623,16 @@ describe('ScenarioDriver: "route not modelled" in the record comes from routeHon
     return driver;
   }
 
-  it('the IM dantrolene administration carries the flag', () => {
+  it('a dantrolene SC administration carries the flag; IM, now modelled (F5.2), is accepted', () => {
     const driver = rig();
+    driver.host.dispatch(cmd('sc1', { ...GIVE, route: 'sc' }));
+    expect(driver.phaseRunner!.admin.at(-1)).toMatchObject({ drugId: 'dantrolene', route: 'sc', result: { accepted: false, routeNotModelled: true } });
     driver.host.dispatch(cmd('im1', { ...GIVE, route: 'im' }));
-    expect(driver.phaseRunner!.admin.at(-1)).toMatchObject({ drugId: 'dantrolene', route: 'im', result: { accepted: false, routeNotModelled: true } });
+    expect(driver.phaseRunner!.admin.at(-1)).toMatchObject({ drugId: 'dantrolene', route: 'im', result: { accepted: true } });
   });
-  it('an IM dose refused for another reason first still carries the flag: the route is asked of the engine, not read from the sentence', () => {
+  it('an SC dose refused for another reason first still carries the flag: the route is asked of the engine, not read from the sentence', () => {
     const driver = rig();
-    driver.host.dispatch(cmd('im2', { ...GIVE, dose: -1, route: 'im' }));
+    driver.host.dispatch(cmd('sc2', { ...GIVE, dose: -1, route: 'sc' }));
     const a = driver.phaseRunner!.admin.at(-1)!;
     expect(a.result).toMatchObject({ accepted: false, routeNotModelled: true });
     expect(a.result.accepted ? '' : a.result.reason).not.toMatch(/route/);

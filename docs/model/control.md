@@ -267,7 +267,7 @@ None recorded.
 
 ## Tests
 
-410 tests in 75 files; 0 expected failures, 0 skipped.
+411 tests in 75 files; 0 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -296,7 +296,7 @@ None recorded.
 | [`remote/remote.dom.test.ts`](../../packages/controller/test/remote/remote.dom.test.ts) | 1 | 0 | 0 |
 | [`scenario/briefing.test.ts`](../../packages/controller/test/scenario/briefing.test.ts) | 4 | 0 | 0 |
 | [`scenario/builtins.test.ts`](../../packages/controller/test/scenario/builtins.test.ts) | 1 | 0 | 0 |
-| [`scenario/driver.test.ts`](../../packages/controller/test/scenario/driver.test.ts) | 31 | 0 | 0 |
+| [`scenario/driver.test.ts`](../../packages/controller/test/scenario/driver.test.ts) | 32 | 0 | 0 |
 | [`scenario/fast-forward-determinism.test.ts`](../../packages/controller/test/scenario/fast-forward-determinism.test.ts) | 1 | 0 | 0 |
 | [`scenario/grade.test.ts`](../../packages/controller/test/scenario/grade.test.ts) | 13 | 0 | 0 |
 | [`scenario/host-scenario.test.ts`](../../packages/controller/test/scenario/host-scenario.test.ts) | 8 | 0 | 0 |

@@ -76,6 +76,22 @@ export interface CnsSpec {
   cbfDirect?: readonly [number, number];
 }
 
+/**
+ * A route other than the intravenous ones: bioavailability F (0–1), first-order absorption rate ka (1/min) and lag
+ * lagS (s), each from `src`, plus an optional local effect raised as a `drugLocalEffect` event when the dose is given.
+ * F = 0: the dose is accepted, nothing reaches the circulation and ka, lagS are null (there is nothing to absorb).
+ * F > 0 would need a first-order depot feeding the row's central compartment, with F and ka as a PK source states
+ * them; no row has one (no source read for this engine states both), so the depot is not built and a row with F > 0
+ * is refused by the route-model guard test.
+ */
+export interface RouteModel {
+  F: number;
+  ka: number | null;
+  lagS: number | null;
+  src: string;
+  local?: { text: string; src: string };
+}
+
 export interface DrugRow {
   id: string;
   name: string;
@@ -98,9 +114,11 @@ export interface DrugRow {
   /** competitive antagonist of a whole class (naloxone → opioid, flumazenil → benzodiazepine): occupancy = hill(c, ec50, emax) */
   antagonises?: { cls: DrugClass; ec50: number; emax: number };
   shared?: 'blood'; // The blood model also acts on this id, via bus.doses (the drug model still consumes the event)
-  /** The routes this row honours — the engine's kinetics are intravenous; absent = IV_ROUTES. A dose by any other
-   * route is refused with a reason (no absorption model is built). */
+  /** The routes this row honours with its intravenous kinetics; absent = IV_ROUTES. A dose by a route neither here nor
+   * in `routeModels` is refused with "route X is not modelled". */
   routes?: readonly PkRoute[];
+  /** Routes other than the intravenous ones that a source supports (design §9.2), one mechanism per route. */
+  routeModels?: Partial<Record<PkRoute, RouteModel>>;
   /** A documented maximum — exceeding it raises a `drugWarning` event, never a clamp. `perKg`: × actual weight;
    * `scope` 'cumulative' sums every bolus of the row. Only maxima the row's own `doses` text sources are set; the rest
    * wait on Ali's dosing-preset table. */
