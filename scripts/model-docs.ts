@@ -156,7 +156,12 @@ const DATA: Record<string, (root: string) => Promise<Rows[]>> = {
   pharmacology: async (root) => {
     const { DRUGS, DRUG_IDS } = await imp(root, 'packages/engine-core/src/l2/pk/data/drugs.ts');
     const pk = (r: { pk: { kind: string; model?: string } }) => (r.pk.kind === 'model' ? r.pk.model : r.pk.kind) ?? NONE;
-    return [{ title: `Drug rows (${DRUG_IDS.length}; \`packages/engine-core/src/l2/pk/data/\`)`, head: ['Id', 'Name', 'Class', 'PK', 'Source', 'Tag'], rows: DRUG_IDS.map((id: string) => { const r = DRUGS[id]; return [`\`${id}\``, r.name, r.cls, pk(r), r.src, r.tag]; }) }];
+    type Rm = { F: number; ka: number | null; lagS: number | null; src: string; local?: { text: string; src: string } };
+    const routeRows = DRUG_IDS.flatMap((id: string) => Object.entries((DRUGS[id].routeModels ?? {}) as Record<string, Rm>).map(([route, m]) => [`\`${id}\``, route, String(m.F), m.ka === null ? NONE : String(m.ka), m.lagS === null ? NONE : String(m.lagS), m.src, m.local ? `${m.local.text} (${m.local.src})` : NONE]));
+    return [
+      { title: `Drug rows (${DRUG_IDS.length}; \`packages/engine-core/src/l2/pk/data/\`)`, head: ['Id', 'Name', 'Class', 'PK', 'Source', 'Tag'], rows: DRUG_IDS.map((id: string) => { const r = DRUGS[id]; return [`\`${id}\``, r.name, r.cls, pk(r), r.src, r.tag]; }) },
+      { title: 'Routes other than IV (`DrugRow.routeModels`; every other non-IV route is refused: "route X is not modelled")', head: ['Id', 'Route', 'F', 'ka (1/min)', 'Lag (s)', 'Source', 'Local effect (source)'], rows: routeRows },
+    ];
   },
   lungs: async (root) => {
     const { LUNG_CONDITIONS } = await imp(root, 'packages/engine-core/data/lung-pathology.ts');
