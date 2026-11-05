@@ -768,7 +768,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mou
 
 ## Tests
 
-1199 tests in 272 files; 2 expected failures, 0 skipped.
+1201 tests in 272 files; 2 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -811,7 +811,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mou
 | [`apps/demo/e2e/fx24-follower-after-fast-forward.e2e.ts`](../../apps/demo/e2e/fx24-follower-after-fast-forward.e2e.ts) | 1 | 0 | 0 |
 | [`apps/demo/e2e/fx25-co2-attach.e2e.ts`](../../apps/demo/e2e/fx25-co2-attach.e2e.ts) | 1 | 0 | 0 |
 | [`apps/demo/e2e/fx4-alarm-pause.e2e.ts`](../../apps/demo/e2e/fx4-alarm-pause.e2e.ts) | 1 | 0 | 0 |
-| [`apps/demo/e2e/ibp-scales.e2e.ts`](../../apps/demo/e2e/ibp-scales.e2e.ts) | 6 | 0 | 0 |
+| [`apps/demo/e2e/ibp-scales.e2e.ts`](../../apps/demo/e2e/ibp-scales.e2e.ts) | 8 | 0 | 0 |
 | [`apps/demo/e2e/iife-smoke.e2e.ts`](../../apps/demo/e2e/iife-smoke.e2e.ts) | 2 | 0 | 0 |
 | [`apps/demo/e2e/iife-transports-snapshot.e2e.ts`](../../apps/demo/e2e/iife-transports-snapshot.e2e.ts) | 2 | 0 | 0 |
 | [`apps/demo/e2e/learner-monitor-follows.e2e.ts`](../../apps/demo/e2e/learner-monitor-follows.e2e.ts) | 4 | 0 | 0 |
