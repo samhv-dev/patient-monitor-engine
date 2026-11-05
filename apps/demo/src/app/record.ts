@@ -1,5 +1,6 @@
 // The debrief's record of one run — what happened, in order, at the simulated time the monitor showed: every command
-// applied (from the panel, a Remote or the scenario), the scenario's states, the alarms raised, bookmarks and returns
+// applied (from the panel, a Remote or the scenario), the scenario's states, the alarms raised (each with when it ended
+// and was acknowledged), bookmarks and returns
 // to them (a mark's kind and note with it), the pulse lost and back (from the model), runs of ventricular tachycardia (≥ 3 consecutive PVCs on the drawn
 // ECG, the model's or the instructor's), ventilated breaths beginning, the instructor's notes, and a 1 Hz
 // trend of six numerics, the systolic, diastolic and CVP the monitor measured, and five laboratory values of the model
@@ -47,6 +48,11 @@ export interface Row {
   /** An action row given in a staged delivery: the delivery's id and its number of items. Each item keeps its own row
    *  (a rule still sees its `drug:<id>`); the Debrief's timeline prints one line per delivery. */
   batch?: { id: string; n: number };
+  /** An alarm raise row (D2): when its condition cleared — the first status where it left the active list or was
+   *  latched (`AlarmEntry.latched`), whichever came first; absent while it is active (drawn open to the end). */
+  endT?: number;
+  /** An alarm raise row (D2): the first status reporting it acknowledged (`AlarmEntry.acked`). */
+  ackT?: number;
 }
 /** A mark's kind (Instructor v2): a good moment, a bad one, or one to discuss. */
 /** The instructor's mark kinds (the controller's `MarkKind` without the driver's own `stage`). */
@@ -80,8 +86,9 @@ const PRESSURE_KEYS = Object.keys(PRESSURES) as PressureKey[];
 /** One second of the record. The pressures are optional: a record made before D1 has none ("not recorded"). */
 export type Sample = { t: number } & Record<ValueKey, number | null> & Partial<Record<PressureKey, number | null>>;
 /** The facts this build's recorder keeps beyond the first record's (plan §3): a reader treats a word missing from a
- *  file's `keeps`, or no `keeps`, as "not recorded in this file". 'pressures': `Sample.sys`, `dia`, `cvp`. */
-export const KEEPS = ['pressures'] as const;
+ *  file's `keeps`, or no `keeps`, as "not recorded in this file". 'pressures': `Sample.sys`, `dia`, `cvp`; 'alarmEnd':
+ *  `Row.endT` and `Row.ackT` on alarm rows. */
+export const KEEPS = ['pressures', 'alarmEnd'] as const;
 
 export interface RunData {
   /** Wall clock (ms since 1970) when the run began, and of the last thing recorded. */
@@ -140,6 +147,8 @@ export const emptyRun = (patient = '', weightKg = 70, now = Date.now()): RunData
 export class RunRecord {
   data: RunData;
   private active = new Set<string>();
+  /** The kept raise row of each alarm still in the engine's active list (its end and acknowledgement go on it). */
+  private open = new Map<string, Row>();
   private lastVent = -Infinity;
   private pulse: boolean | null = null;
   /** The PVCs in a row so far, the first one's time, and the run's row once it is one. */
@@ -240,8 +249,24 @@ export class RunRecord {
   /** The host's engine events (truth included: it stays on this page). */
   engine(e: EngineEvent): void {
     if (e.type === 'alarmStatus') {
-      for (const a of e.active) if (!this.active.has(a.id)) this.add({ t: e.t, kind: 'alarm', text: alarmLine(a).text, ev: `alarm:${a.id}` });
+      for (const a of e.active) {
+        if (!this.active.has(a.id)) {
+          const row: Row = { t: e.t, kind: 'alarm', text: alarmLine(a).text, ev: `alarm:${a.id}` };
+          this.add(row);
+          this.open.set(a.id, row);
+        }
+        const row = this.open.get(a.id);
+        if (!row) continue;
+        if (a.latched) row.endT ??= e.t;
+        else delete row.endT; // the condition came back while latched (the manager un-latches it): not ended yet
+        if (a.acked) row.ackT ??= e.t;
+      }
       this.active = new Set(e.active.map((a) => a.id));
+      for (const [id, row] of this.open) {
+        if (this.active.has(id)) continue;
+        row.endT ??= e.t;
+        this.open.delete(id);
+      }
     } else if (e.type === 'beat') {
       // a run of VT is recorded at its third PVC and its row counts the beats until a beat that is not a PVC
       const r = this.pvcRun;
@@ -319,6 +344,7 @@ export class RunRecord {
     this.data.rows = this.data.rows.filter((r) => r.t <= t + EPS);
     this.data.samples = this.data.samples.filter((s) => s.t <= t + EPS);
     this.active = new Set(k.active);
+    this.reopen(t);
     this.lastVent = k.lastVent ?? -Infinity;
     this.pulse = k.pulse;
     this.held = null;
@@ -340,6 +366,7 @@ export class RunRecord {
     const w = this.who();
     this.data = emptyRun(w.patient, w.weightKg, this.now());
     this.active = new Set();
+    this.open.clear();
     this.lastVent = -Infinity;
     this.pulse = null;
     this.pvcRun = { n: 0, t: 0, row: null };
@@ -367,6 +394,21 @@ export class RunRecord {
    * raised again. A bookmark this record never saw: the rows after `t`, the trackers from the kept rows, and every alarm
    * the restored engine reports is raised.
    */
+  /** The alarm rows after the engine went back to time `t`: an end or an acknowledgement later than `t` is undone on
+   *  every kept row, and each alarm the trackers hold active is open again on its latest kept raise row. */
+  private reopen(t: number): void {
+    const rows = this.data.rows.filter((r) => r.kind === 'alarm' && r.undone === undefined);
+    for (const r of rows) {
+      if (r.endT !== undefined && r.endT > t + EPS) delete r.endT;
+      if (r.ackT !== undefined && r.ackT > t + EPS) delete r.ackT;
+    }
+    this.open = new Map();
+    for (const r of rows) {
+      const id = (r.ev ?? '').slice('alarm:'.length);
+      if (r.endT === undefined && this.active.has(id)) this.open.set(id, r);
+    }
+  }
+
   private undo(label: string, t: number): void {
     const n = ++this.data.returns;
     const rows = this.data.rows;
@@ -378,6 +420,7 @@ export class RunRecord {
     const m = this.marks.get(label);
     this.lastVent = m ? m.lastVent : -Infinity;
     this.active = new Set(m?.active ?? []);
+    this.reopen(t);
     this.pulse = m ? m.pulse : rows.filter((r) => r.undone === undefined && (r.ev === 'pulseLoss' || r.ev === 'rosc')).at(-1)?.ev !== 'pulseLoss';
   }
 }
