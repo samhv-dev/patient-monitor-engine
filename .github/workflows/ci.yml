@@ -118,13 +118,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
         timeout-minutes: 5
-      # The image has no jq (the report steps below use it); a pinned, checksummed binary from the jq release, no apt
-      - name: jq 1.7.1
-        timeout-minutes: 2
-        run: |
-          curl -fsSL --retry 3 -o /usr/local/bin/jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64
-          echo "5942c9b0934e510ee61eb3e30273f1b3fe2590df93933a93d7c58b81d19c8ff5  /usr/local/bin/jq" | sha256sum -c -
-          chmod +x /usr/local/bin/jq
+      # No jq: the report steps below read the JSON with Node (scripts/ci/e2e-report.mjs), which the image has, so
+      # nothing is downloaded (the jq download from github.com failed three runs before any test ran; research/42 §1.5)
       - name: browsers come from the image (no download)
         run: |
           echo "PLAYWRIGHT_BROWSERS_PATH=$PLAYWRIGHT_BROWSERS_PATH"; ls "$PLAYWRIGHT_BROWSERS_PATH"
@@ -137,27 +132,34 @@ jobs:
         with:
           name: ventilator-monitor-embed
           path: apps/demo/dist/embed
-      - run: pnpm test:e2e --project=${{ matrix.browser }} ${{ matrix.grep }} --reporter=list,json
+      - id: e2e
+        run: pnpm test:e2e --project=${{ matrix.browser }} ${{ matrix.grep }} --reporter=list,json
         continue-on-error: ${{ matrix.set == 'known-flaky' }} # quarantine: its results are summarised below instead
         env:
           PLAYWRIGHT_JSON_OUTPUT_FILE: playwright-report-${{ matrix.report }}.json
       - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' }}
         with:
           name: e2e-report-${{ matrix.report }}
           path: |
             playwright-report-${{ matrix.report }}.json
             test-results/
           if-no-files-found: warn
+      # A set-up step failed and no test ran: say so, as an infrastructure failure, and skip the report checks below (a
+      # red job here has no test result; re-running it discards no test outcome).
+      - name: no test ran (infrastructure)
+        if: ${{ failure() && steps.e2e.outcome == 'skipped' }}
+        run: |
+          echo "::error title=infrastructure::a set-up step failed before any test ran; this job has no test result (re-run the failed job)"
+          exit 1
       # ci-stabilise: the quarantine's own record. Per test: passed first time ("expected"), passed only on a retry
       # ("flaky"), failed every attempt ("unexpected"), skipped. Warnings only; a missing report is an error annotation.
       - name: quarantined @known-flaky tests (WebKit, non-blocking) - pass / retry / fail counts
-        if: ${{ !cancelled() && matrix.set == 'known-flaky' }}
+        if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' && matrix.set == 'known-flaky' }}
         run: |
           f=playwright-report-${{ matrix.report }}.json
           [ -f "$f" ] || { echo "::error title=e2e quarantine::no e2e JSON report ($f)"; exit 1; }
-          jq -r '.. | objects | select(has("specs")) | .specs[] | . as $s | .tests[]
-            | "\(.status)\t\($s.file):\($s.line) \($s.title)"' "$f" | sort > "$RUNNER_TEMP/q.tsv"
+          node scripts/ci/e2e-report.mjs quarantine "$f" | sort > "$RUNNER_TEMP/q.tsv"
           n() { grep -c "^$1$(printf "\t")" "$RUNNER_TEMP/q.tsv" || true; }
           {
             echo "### e2e-quarantine (webkit): the @known-flaky tests, non-blocking"
@@ -174,12 +176,11 @@ jobs:
       # Revert (make webkit exit 1 again) after the demo, when the calibration pass's Task 0 re-harvests the known-flaky
       # list (docs/gates/stage-14.md, "Temporary relaxation").
       - name: e2e tests that passed only on retry (fails unless the test is tagged @known-flaky; webkit warns, temporarily)
-        if: ${{ !cancelled() && matrix.set != 'known-flaky' }}
+        if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' && matrix.set != 'known-flaky' }}
         run: |
           f=playwright-report-${{ matrix.browser }}.json
           [ -f "$f" ] || { echo "::error title=e2e JSON report::no e2e JSON report ($f): the retry check cannot run"; exit 1; }
-          jq -r '.. | objects | select(has("specs")) | .specs[] | . as $s | .tests[] | select(.status == "flaky")
-            | "\(if ($s.tags | index("known-flaky")) then "known" else "new" end)\t\($s.file):\($s.line) [\(.projectName)] \($s.title)"' "$f" > "$RUNNER_TEMP/flaky.raw" \
+          node scripts/ci/e2e-report.mjs retry "$f" > "$RUNNER_TEMP/flaky.raw" \
             || { echo "::error title=e2e JSON report::$f could not be read: the retry check cannot run"; exit 1; }
           sort -u "$RUNNER_TEMP/flaky.raw" > "$RUNNER_TEMP/flaky.tsv"
           { echo "### e2e tests that passed only on retry: $(wc -l < "$RUNNER_TEMP/flaky.tsv")"; sed -e 's/^known\t/- (@known-flaky) /' -e 's/^new\t/- **NEW** /' "$RUNNER_TEMP/flaky.tsv"; } >> "$GITHUB_STEP_SUMMARY"
