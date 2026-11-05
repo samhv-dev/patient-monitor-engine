@@ -170,6 +170,8 @@ export const skinSchema: JsonSchema = {
         // pass 2 (optional): per-tile label sizes and the label weight (types.ts LayoutGrid)
         labelPx: obj({}, Object.fromEntries(TILE_PARAMS.map((k) => [k, num(6, 200)]))),
         labelWeight: int(100, 900),
+        // uniform scaling (optional): the screen the grid was measured on, drawn at one scale (types.ts LayoutGrid)
+        screenPx: obj({ w: num(320, 4096), h: num(200, 4096) }),
       }),
     }),
     pages: arr(page, 1),

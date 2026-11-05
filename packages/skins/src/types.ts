@@ -138,6 +138,12 @@ export interface LayoutGrid {
   labelPx?: Partial<Record<TileParam, number>>;
   /** Pass 2 (optional): the tile and strip label weight (default 400). */
   labelWeight?: number;
+  /**
+   * Uniform scaling (optional): the screen, in px, the grid was measured on. The live monitor lays itself out at this
+   * size and scales the whole of it by one factor to the space it is given (letterboxed in the skin's background), so
+   * every tile, lane and font keeps its proportion at any window size. Absent = the monitor fills its box.
+   */
+  screenPx?: { w: number; h: number };
   cells: GridCell[];
   /** Full-width strip under the waves and the tiles: one tile, then label fields of equal width. */
   strip: { heightPct: number; tile: { param: TileParam; widthPct: number; extras?: string[] }; fields: StripField[] };
