@@ -629,10 +629,36 @@ empty).
 - `haemorrhage-anaphylaxis.slow.test.ts` (haemorrhage arms only), `debrief-showcase.test.ts`, kit round A4
   haemorrhage, the run sheet: as in F8.
 - **Gate:** as F8, for the haemorrhage card: O1–O5 (amended 2026-10-29 after review).
+- **Built (5 November), with the owner's rulings of that day, which override the above where they differ:** a new card
+  `showcase-haemorrhage-v2` beside the `/1` card; VF only from the physiology, MEASURED: none on this course, so no VF
+  phase, no rhythm-check VF script and no shock row (six phases); CPR graded with a fail limit (`failAfterS`); the
+  unconditional `repeat` graded from the previous dose as given; call for help a timed communication action (the
+  scenario `record` command, Q19); a drug by a route outside the set leaves the action open; a `preparation` flag
+  (the card has no preparation step: its monitoring is attached at the start and it has no line action). The
+  correspondence table and the numbers left to the owner are in the F9 PR.
+- **The owner's second set of rulings, 5 November (F9):** the 29 October answer to Q3 ("name MH from the monitor"
+  stays a judged row; the 17:00 ruling: recognition objectives are judged rows) is AMENDED for `/2` cards: recognition
+  and announcing the diagnosis is a TIMED ACTION the instructor presses when the team says it aloud, its window from
+  the first sign. Applied to the haemorrhage card in F9; the MH card (`showcase-mh-v2`, its name-MH row) follows in a
+  separate PR. Also added: an action window anchored on each taking of another action (`each:action:<id>`: resume CPR
+  within 10 s of each rhythm check) and on the earliest of several anchors (`{ first: [...] }`: CPR from the pulse loss
+  or ERC 2025's operating-room rule, whichever is first), and a window anchored on a rule on the DISPLAYED numerics
+  (`{ display: rule }`, alone or as a `first` member: the operating-room trigger reads what the monitor shows).
+- **A rule for future cards (the owner, 5 November):** the operating-room CPR trigger (displayed systolic below 50 mmHg
+  on the cuff, or below 40 mmHg on an arterial line, for 30 s, with EtCO₂ below 25 mmHg) does NOT apply while bleeding
+  is uncontrolled. Harper et al., Br J Anaesth 2020;124:234–238, p.235, excludes "haemorrhagic shock with uncontrolled
+  bleeding, in which chest compressions might accelerate blood loss and lead to worse outcomes"; Hinkelbein et al.
+  (ESAIC/ESTES), Eur J Anaesthesiol 2023;40:724–736, p.733: in hypovolaemic pseudo-PEA "CCC should be withheld and
+  resuscitation should focus on haemorrhage control and replacement of fluids and blood products". A card whose bleed is
+  still running when the trigger can fire must not anchor CPR on it. The haemorrhage card qualifies only because its
+  bleed is controlled at 10:00, before the trigger can fire.
 
 ### F10: Authoring guide, CHANGELOG, roadmap (4 h est.)
 - `docs/guides/scenario-authoring.md`: a `/2` section with one validated example (`<!-- example: pme-scenario/2 -->`);
-  `docs-examples.test.ts` learns the tag.
+  `docs-examples.test.ts` learns the tag. It documents F9's additions too: `window.failAfterS`, `preparation`, the
+  graded unconditional `repeat` (from the previous dose as given), the scenario `record` command for an action with
+  no engine command, an action's optional `src` (its numbers' source, quoted and cited; never interpreted), and the window anchors
+  `each:action:<id>` (one window per taking of another action) and `{ first: [anchors] }` (the earliest of several).
 - `CHANGELOG.md` Unreleased: the format, the routes modelled, the debrief `/3`.
 - Roadmap rows: the arrest-phase sheet (18:30 ruling 4), the preparation bench (18:00), the charcoal filter and the MH
   activity reading the agent level (18:00), curve rows by a non-IV route, grades on a follower (Q16), the in-place swap,

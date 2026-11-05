@@ -137,7 +137,9 @@ The host also overwrites `issuedBy` on every instructor command with `'remote'`,
 Remote's rows (`record.ts` `wire`, kind `'remote'`). Today a peer may write any `issuedBy`, including `'scenario'`,
 which the record would take for the runner's own command.
 
-## 3. Two instructors connected (the owner has not ruled)
+## 3. Two instructors connected (the owner ruled: option B)
+
+Ruled 5 November by the owner: option B (one phone at a time, the newest takes over).
 
 The laptop's own panels are always instructors. They are trusted, need no PIN, and are never revoked. The question is
 a second commander beside them, and a second phone.

@@ -120,6 +120,15 @@
         { "type": "object", "required": ["rule"], "additionalProperties": false, "properties": { "rule": { "$ref": "#/definitions/phaseRule" } } }
       ]
     },
+    "windowAnchor": {
+      "description": "Where an action's window starts: any anchor; or `each:action:<id>`, one window per taking of that action (resume CPR within 10 s of each rhythm check; plan F9, the owner's ruling of 5 November); or { display: rule }, the first second a rule on the displayed numerics holds; or { first: [anchors] }, the earliest of several (CPR from the model's pulse loss or ERC's operating-room rule, whichever comes first).",
+      "anyOf": [
+        { "$ref": "#/definitions/anchor" },
+        { "type": "string", "pattern": "^each:action:[A-Za-z][A-Za-z0-9_.-]{0,63}$" },
+        { "type": "object", "required": ["display"], "additionalProperties": false, "properties": { "display": { "$ref": "#/definitions/displayRule" } }, "description": "The first second a rule on the DISPLAYED numerics (rank 2) holds: what the monitor shows, such as the arterial or cuff systolic and the end-tidal CO2 (the operating-room CPR trigger, plan F9)." },
+        { "type": "object", "required": ["first"], "additionalProperties": false, "properties": { "first": { "type": "array", "minItems": 2, "items": { "anyOf": [{ "$ref": "#/definitions/anchor" }, { "type": "object", "required": ["display"], "additionalProperties": false, "properties": { "display": { "$ref": "#/definitions/displayRule" } } }] } } } }
+      ]
+    },
     "phase": {
       "type": "object",
       "required": ["id", "label"],
@@ -221,6 +230,8 @@
         "kind": { "enum": ["drug", "device", "procedure", "fluid", "physical", "sample", "communication", "decision"] },
         "phases": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/definitions/id" }, "description": "The action opens when one of them is entered." },
         "graded": { "const": false, "description": "Offered and recorded, never graded (a setup action such as the induction sequence). Absent: graded." },
+        "src": { "type": "string", "minLength": 1, "description": "Provenance of the action's numbers: the source's own words quoted and cited (document, section or page). Read by people; never interpreted (plan F9, the owner's ruling of 5 November)." },
+        "preparation": { "const": true, "description": "A preparation step (monitoring, lines; the owner's ruling of 5 November): offered and recorded with its time, no verdict, never graded. Absent: graded (unless graded is false)." },
         "give": { "type": "array", "items": { "$ref": "pme-scenario-1.schema.json#/definitions/command" }, "description": "The commands an A press sends (/1 command definitions)." },
         "drug": { "$ref": "#/definitions/drugCriteria" },
         "device": {
@@ -242,13 +253,17 @@
         },
         "window": {
           "type": "object", "required": ["anchor", "withinS"], "additionalProperties": false,
-          "properties": { "anchor": { "$ref": "#/definitions/anchor" }, "withinS": { "type": "number", "exclusiveMinimum": 0 }, "notBeforeS": { "type": "number", "minimum": 0 } }
+          "properties": {
+            "anchor": { "$ref": "#/definitions/windowAnchor" }, "withinS": { "type": "number", "exclusiveMinimum": 0 }, "notBeforeS": { "type": "number", "minimum": 0 },
+            "failAfterS": { "type": "number", "exclusiveMinimum": 0, "description": "Seconds from the anchor after which the action is failed even if done (the owner's ruling of 5 November: CPR within 30 s met, 30 s to 2 min overdue, after 2 min failed though started). Greater than withinS." }
+          }
         },
         "order": {
           "type": "object", "minProperties": 1, "additionalProperties": false,
           "properties": { "after": { "$ref": "#/definitions/ids" }, "before": { "$ref": "#/definitions/ids" } }
         },
         "repeat": {
+          "description": "An unconditional repeat while one of the action's phases holds: each next dose is due intervalS (min–max) after the previous dose AS GIVEN (the owner's ruling of 5 November); sooner is a deviation, later overdue; none is due once the action's phases have ended before its deadline.",
           "type": "object", "required": ["intervalS"], "additionalProperties": false,
           "properties": { "intervalS": { "$ref": "#/definitions/amount" }, "maxCount": { "type": "integer", "minimum": 1 } }
         },

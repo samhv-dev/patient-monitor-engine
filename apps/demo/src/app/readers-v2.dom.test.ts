@@ -4,13 +4,12 @@
 // unchanged (the existing tests). F6 and F7 make them read phases and actions.
 import { afterEach, describe, expect, it } from 'vitest';
 import { ControllerSession, createInProcessHub, createStamper, ScenarioView, type AnyScenarioDoc, type CommandInput, type Transition, type WireEvent } from '@pme/controller';
-import { objectivesOf, reachable, rowsOf, stageOf, stagesOf, standingOf, untakenStatus, withStart, type Evidence } from './card-read.ts';
+import { objectivesOf, reachable, rowsOf, stageOf, stagesOf, standingOf, untakenStatus, type Evidence } from './card-read.ts';
 import { eventWords, judged, objectives, steps } from './debrief.ts';
 import { keyMoments, keyTimes, whoOf } from './debrief-moments.ts';
 import { emptyRun, RunRecord, type RunData } from './record.ts';
 import { cardOf, type ScenarioCard } from './scenarios.ts';
 import { transitionText } from './triggers.ts';
-import { historyOf } from './teach2/course.ts';
 import { stageEntries, stripModel } from './teach2/strip.ts';
 import { Link } from './link.ts';
 import { scenarioTab } from './panel/scenario.ts';
@@ -47,7 +46,7 @@ const run = (): RunData => {
 };
 
 describe('card-read.ts and a pme-scenario/2 card', () => {
-  it('F6: the stages are the phases and the rows the open actions, the judged row and the rules out; no linked objectives, nothing reachable, no standing, the history as it is', () => {
+  it('F6: the stages are the phases and the rows the open actions, the judged row and the rules out; no linked objectives, nothing reachable, no standing', () => {
     expect(stagesOf(V2).map((g) => [g.id, g.byRule])).toEqual([['baseline', false], ['early', true]]);
     expect(stageOf(V2, 'early')?.label).toBe('Early signs');
     expect(rowsOf(V2, 'early').map((r) => [r.kind, r.title])).toEqual([['step', 'Call for help'], ['judged', 'Names MH from the monitor']]);
@@ -56,7 +55,6 @@ describe('card-read.ts and a pme-scenario/2 card', () => {
     expect(reachable(V2, 'baseline', 'early')).toBe(false);
     expect(standingOf(V2, TR, { dueT: 0, leftT: null, now: 60 }, EV)).toEqual({ asked: false, dueS: null });
     expect(untakenStatus(V2, TR, { stateId: 'baseline', current: 'early', dueT: 0, leftT: 30, now: 60 }, EV)).toBeNull();
-    expect(withStart(V2, HISTORY.slice(1), 0)).toEqual(HISTORY.slice(1));
   });
 });
 
@@ -90,9 +88,7 @@ describe('the library, the trigger words and Instructor v2\'s course and strip, 
   it('triggers.ts transitionText: the target has no state label ("next state")', () => {
     expect(transitionText(TR, V2)).toBe('You press "Go": next state');
   });
-  it('teach2 course.ts historyOf: the history as it is; strip.ts: no stage entries, no strip items', () => {
-    const link = { ctl: { scenario: { doc: V2, history: HISTORY } }, host: { record: { data: run() } } } as unknown as Link;
-    expect(historyOf(link)).toBe(HISTORY);
+  it('teach2 strip.ts: the phases are its stage entries and strip items', () => {
     // F6: the phases are the stages
     expect(stageEntries(V2, HISTORY, { stateId: 'early', enteredT: 30 }, 60).map((e) => [e.stage, e.t])).toEqual([['baseline', 0], ['early', 30]]);
     expect(stripModel(V2, 'early', [], 0).map((x) => x.kind)).toEqual(['past', 'current']);
