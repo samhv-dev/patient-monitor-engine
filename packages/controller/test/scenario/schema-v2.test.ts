@@ -284,3 +284,21 @@ describe('pme-scenario/2: failAfterS and preparation (plan F9)', () => {
     expect(errs(withAction({ repeat: { intervalS: { max: 300 } } }))).toContain('/actions/1/repeat/intervalS: a repeat needs its shortest interval (min or value)');
   });
 });
+
+describe('pme-scenario/2: debriefHints (D8)', () => {
+  const withHints = (h: unknown) => ({ ...minimalV2(), debriefHints: h });
+  it('accepts openers on the anchor forms report3 reads: start, pulseLoss, rosc, phase:<id>, action:<id>', () => {
+    const openers = ['start', 'pulseLoss', 'rosc', 'phase:early', 'action:dantrolene'].slice(0, 4).map((at) => ({ at, text: `About ${at}?` }));
+    const r = validateScenario(withHints({ show: ['One.', 'Two.', 'Three.', 'Four.'], openers }));
+    expect(r.ok ? [] : r.errors).toEqual([]);
+    const r2 = validateScenario(withHints({ openers: [{ at: 'action:dantrolene', text: 'When did you reach for it?' }] }));
+    expect(r2.ok ? [] : r2.errors).toEqual([]);
+  });
+  it('refuses an unknown phase or action, a /1 run-event form, a rule object, five show lines', () => {
+    expect(errs(withHints({ openers: [{ at: 'phase:late', text: 'x' }] }))).toEqual(['/debriefHints/openers/0/at: no phase "late"']);
+    expect(errs(withHints({ openers: [{ at: 'action:nope', text: 'x' }] }))).toEqual(['/debriefHints/openers/0/at: no action "nope"']);
+    expect(errs(withHints({ openers: [{ at: 'state:early', text: 'x' }] })).join()).toMatch(/debriefHints\/openers\/0\/at/);
+    expect(errs(withHints({ openers: [{ at: { rule: { signal: 'rosc' } }, text: 'x' }] })).join()).toMatch(/debriefHints\/openers\/0\/at/);
+    expect(errs(withHints({ show: ['1', '2', '3', '4', '5'] })).join()).toMatch(/^\/debriefHints\/show: /);
+  });
+});

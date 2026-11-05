@@ -17,6 +17,7 @@
     "story": { "type": "string" },
     "takeHome": { "type": "array", "maxItems": 4, "items": { "type": "string", "minLength": 1 } },
     "durationMin": { "type": "number", "exclusiveMinimum": 0 },
+    "debriefHints": { "$ref": "#/definitions/debriefHints" },
     "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
     "mode": { "enum": ["manual", "modeled"] },
     "patient": { "$ref": "pme-scenario-1.schema.json#/definitions/patient" },
@@ -39,6 +40,17 @@
     }
   },
   "definitions": {
+    "debriefHints": {
+      "type": "object", "minProperties": 1, "additionalProperties": false,
+      "description": "Optional (Debrief 2 D8): /1's debriefHints, with each opener anchored on the string anchor forms the report reads: start, pulseLoss, rosc, phase:<id> (its first entry), action:<id> (its graded taking); the phase or action must be this card's.",
+      "properties": {
+        "show": { "type": "array", "minItems": 1, "maxItems": 4, "items": { "type": "string", "minLength": 1 } },
+        "openers": {
+          "type": "array", "minItems": 1, "maxItems": 4,
+          "items": { "type": "object", "required": ["at", "text"], "additionalProperties": false, "properties": { "at": { "type": "string", "pattern": "^(start|pulseLoss|rosc|(phase|action):[A-Za-z][A-Za-z0-9_.-]{0,63})$" }, "text": { "type": "string", "minLength": 1 } } }
+        }
+      }
+    },
     "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$" },
     "ids": { "type": "array", "items": { "$ref": "#/definitions/id" }, "uniqueItems": true },
     "op": { "enum": ["<", "<=", ">", ">=", "==", "!="] },
