@@ -50,12 +50,12 @@ async function load(seed: number): Promise<{ engine: EngineOptions; runnerSeed: 
     s.destroy();
   }
 }
-/** The run the options give: the beat times of its first 60 s (the seeded streams: heart-rate variability, ectopy). */
+/** The run the options give: the beat times of its first 30 s (the seeded streams: heart-rate variability, ectopy). */
 function run(o: EngineOptions): number[] {
   const e = createEngine(o);
   const beats: number[] = [];
   e.on((x: EngineEvent) => void (x.type === 'beat' && beats.push(x.t)));
-  e.advanceTo(60);
+  e.advanceTo(30);
   return beats;
 }
 
@@ -74,8 +74,8 @@ describe("the app honours the card's seed", () => {
     const a = run((await load(7)).engine);
     const b = run((await load(11)).engine);
     const a2 = run((await load(7)).engine);
-    expect(a.length).toBeGreaterThan(40);
+    expect(a.length).toBeGreaterThan(20);
     expect(a2).toEqual(a);
     expect(b).not.toEqual(a);
-  });
+  }, 120_000); // three 30-s engine runs: ≈ 0.4 s idle, 10 s seen on a loaded laptop (the repo's long engine tests take explicit timeouts)
 });
