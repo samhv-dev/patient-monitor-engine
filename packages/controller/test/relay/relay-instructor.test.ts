@@ -173,6 +173,9 @@ describe("the host's grant", () => {
     expect(ins.closeCode).toBe(RELAY_CLOSE.denied);
     expect(ins.errorBeforeClose).toBe('denied'); // the frame first, then the close (P5's contract)
     expect(errorOf(ins)).toEqual({ relay: 'error', code: 'denied', message: 'wrong PIN' });
+    // The client's close event can come before the relay's own close handler has removed the peer, so the count is
+    // read only after the relay records the removal (its `left` line is written after it deletes the peer).
+    await waitFor(() => relayLog.includes(`room ${SESSION}: instructor ins-a.1 left`), 2000, 'the relay removed the instructor');
     expect(relay!.room(SESSION)?.peers).toBe(1);
   });
 
