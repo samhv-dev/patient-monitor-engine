@@ -77,9 +77,10 @@ describe('what the instructor may send (plan instructor-peer-role.md §2; P2)', 
   ];
   const cmd = (c: CommandInput): WireCommand => ({ id: 'ctl-x-1', issuedBy: 'remote', ...c }) as WireCommand;
 
-  it('INSTRUCTOR_COMMANDS is the measured census plus note (the §2 table; only the phone sends note)', () => {
-    expect([...INSTRUCTOR_COMMANDS].sort()).toEqual([...CENSUS, 'note'].sort());
-    expect([...INSTRUCTOR_COMMANDS].filter((s) => s !== 'note').sort()).toEqual(CENSUS);
+  // plan F9 (Q19): Instructor v2's A press of an action with no engine command (call for help) sends `scenario record`
+  it('INSTRUCTOR_COMMANDS is the measured census plus note (the §2 table; only the phone sends note) plus scenario record (F9)', () => {
+    expect([...INSTRUCTOR_COMMANDS].sort()).toEqual([...CENSUS, 'note', 'scenario record'].sort());
+    expect([...INSTRUCTOR_COMMANDS].filter((s) => s !== 'note' && s !== 'scenario record').sort()).toEqual(CENSUS);
     expect(commandShape({ id: 'c', issuedBy: 'remote', type: 'note', kind: 'note', text: 'x' })).toBe('note');
   });
 

@@ -1,0 +1,930 @@
+{
+  "case": "A4 haemorrhage phases card (kit round)",
+  "browser": "chromium",
+  "kit": "2e3bb984",
+  "server": "Start Classroom.command (relay + static app, node, as built)",
+  "base": "http://127.0.0.1:8961",
+  "reactS": 2,
+  "phonesN": 3,
+  "startedAt": "2026-11-05T11:59:59.336Z",
+  "loadAvg": {
+    "start": 3.05,
+    "end": 6.34,
+    "min": 3.05,
+    "max": 8.08
+  },
+  "setup": {
+    "sessionCode": "GRMBFB",
+    "alarmButtonAtOpen": "No alarms",
+    "alarmButtonAfterAllOn": "No alarms",
+    "soundButton": "Sound on",
+    "panel": "teach2",
+    "card": "pme-scenario/2",
+    "alarmButtonAfterLoad": "No alarms",
+    "limitsAfterLoad": "limit alarms on after Load",
+    "alarmButtonRightAfterLoad": "No alarms",
+    "bookmarkAt": "00:05",
+    "alarmButtonAtEnd": "!!! ART M low +3"
+  },
+  "rows": [
+    {
+      "wall": 1.8,
+      "clock": "00:05",
+      "simS": 5.7,
+      "speed": 8,
+      "state": "bleeding",
+      "load1": 3.42,
+      "what": "Load \"Class IV haemorrhage, PEA and resuscitation (phases)\" at ×8, Bookmark",
+      "hr": 69,
+      "art": "–/– (–)",
+      "spo2": null,
+      "etco2": null,
+      "rr": null
+    },
+    {
+      "wall": 6.5,
+      "clock": "00:43",
+      "simS": 43.1,
+      "speed": 8,
+      "state": "bleeding",
+      "load1": 3.42,
+      "what": "press **Oxygen by face mask, FiO₂ 1.0**",
+      "hr": 72,
+      "art": "120/80 (93)",
+      "spo2": 96,
+      "etco2": 37,
+      "rr": 14
+    },
+    {
+      "wall": 10.3,
+      "clock": "01:14",
+      "simS": 74,
+      "speed": 8,
+      "state": "bleeding",
+      "load1": 4.1,
+      "what": "press **Intubate and ventilate, FiO₂ 1.0**",
+      "hr": 75,
+      "art": "119/83 (95)",
+      "spo2": 99,
+      "etco2": 38,
+      "rr": 14
+    },
+    {
+      "wall": 32,
+      "clock": "04:07",
+      "simS": 247.2,
+      "speed": 8,
+      "state": "bleeding",
+      "load1": 4.52,
+      "what": "4:00",
+      "hr": 96,
+      "art": "107/83 (91)",
+      "spo2": 99,
+      "etco2": 32,
+      "rr": 12
+    },
+    {
+      "wall": 62,
+      "clock": "08:07",
+      "simS": 487.2,
+      "speed": 8,
+      "state": "bleeding",
+      "load1": 4.14,
+      "what": "8:00",
+      "hr": 140,
+      "art": "73/59 (64)",
+      "spo2": 99,
+      "etco2": 25,
+      "rr": 13
+    },
+    {
+      "wall": 70.7,
+      "clock": "09:16",
+      "simS": 556.7,
+      "speed": 8,
+      "state": "decompensating",
+      "load1": 3.97,
+      "what": "phase Decompensating (the card sets the junctional rhythm)",
+      "hr": 160,
+      "art": "56/46 (50)",
+      "spo2": 99,
+      "etco2": 22,
+      "rr": 14
+    },
+    {
+      "wall": 96.3,
+      "clock": "11:00",
+      "simS": 660.4,
+      "speed": 4,
+      "state": "arrestPea",
+      "load1": 4.41,
+      "what": "phase Arrest: PEA (the model's pulse loss)",
+      "hr": 54,
+      "art": "–/– (9)",
+      "spo2": 99,
+      "etco2": 13,
+      "rr": 15
+    },
+    {
+      "wall": 129.9,
+      "clock": "15:26",
+      "simS": 926,
+      "speed": 1,
+      "state": "arrestAsystole",
+      "load1": 4.42,
+      "what": "phase Arrest: asystole",
+      "hr": 18,
+      "art": "–/– (5)",
+      "spo2": null,
+      "etco2": 0,
+      "rr": 12
+    },
+    {
+      "wall": 132.7,
+      "clock": "15:28",
+      "simS": 928.9,
+      "speed": 1,
+      "state": "arrestAsystole",
+      "load1": 4.23,
+      "what": "press **Start CPR: compressions 100–120/min, bag via the tube 10/min, FiO₂ 1.0**",
+      "hr": 18,
+      "art": "–/– (5)",
+      "spo2": null,
+      "etco2": 0,
+      "rr": 12
+    },
+    {
+      "wall": 133.6,
+      "clock": "15:29",
+      "simS": 929.7,
+      "speed": 1,
+      "state": "arrestAsystole",
+      "load1": 4.23,
+      "what": "press **Surgeon controls the bleeding**",
+      "hr": null,
+      "art": "–/– (8)",
+      "spo2": null,
+      "etco2": 0,
+      "rr": 14
+    },
+    {
+      "wall": 134.4,
+      "clock": "15:30",
+      "simS": 930.6,
+      "speed": 1,
+      "state": "arrestAsystole",
+      "load1": 4.23,
+      "what": "press **Massive transfusion: 1 L warmed crystalloid, then red cells and plasma by rapid infuser**",
+      "hr": 119,
+      "art": "–/– (14)",
+      "spo2": null,
+      "etco2": 1,
+      "rr": 14
+    },
+    {
+      "wall": 135.3,
+      "clock": "15:31",
+      "simS": 931.4,
+      "speed": 1,
+      "state": "arrestAsystole",
+      "load1": 4.23,
+      "what": "press **Tranexamic acid 1 g IV**",
+      "hr": 115,
+      "art": "–/– (16)",
+      "spo2": null,
+      "etco2": 0,
+      "rr": 14
+    },
+    {
+      "wall": 153,
+      "clock": "15:49",
+      "simS": 949.1,
+      "speed": 1,
+      "state": "arrestAsystole",
+      "load1": 6.62,
+      "what": "press **Epinephrine 1 mg IV**",
+      "hr": 111,
+      "art": "35/12 (20)",
+      "spo2": 99,
+      "etco2": 6,
+      "rr": 13
+    },
+    {
+      "wall": 163,
+      "clock": "16:28",
+      "simS": 988.3,
+      "speed": 4,
+      "state": "arrestAsystole",
+      "load1": 5.83,
+      "what": "1 min into CPR",
+      "hr": 108,
+      "art": "63/27 (40)",
+      "spo2": 99,
+      "etco2": 13,
+      "rr": 10
+    },
+    {
+      "wall": 178.9,
+      "clock": "17:28",
+      "simS": 1048.6,
+      "speed": 1,
+      "state": "arrestAsystole",
+      "load1": 5.2,
+      "what": "press **Rhythm check (compressions pause)**",
+      "hr": 107,
+      "art": "73/36 (51)",
+      "spo2": 99,
+      "etco2": 20,
+      "rr": 10
+    },
+    {
+      "wall": 188.9,
+      "clock": "17:38",
+      "simS": 1058.6,
+      "speed": 1,
+      "state": "arrestAsystole",
+      "load1": 5.02,
+      "what": "press **Resume CPR after the rhythm check**",
+      "hr": null,
+      "art": "–/– (27)",
+      "spo2": null,
+      "etco2": 19,
+      "rr": 10
+    },
+    {
+      "wall": 207.5,
+      "clock": "18:51",
+      "simS": 1131.9,
+      "speed": 4,
+      "state": "arrestAsystole",
+      "load1": 4.77,
+      "what": "press **Epinephrine 1 mg IV**",
+      "hr": 110,
+      "art": "75/38 (51)",
+      "spo2": 99,
+      "etco2": 22,
+      "rr": 10
+    },
+    {
+      "wall": 220.1,
+      "clock": "19:39",
+      "simS": 1179.1,
+      "speed": 1,
+      "state": "arrestAsystole",
+      "load1": 4.35,
+      "what": "press **Rhythm check (compressions pause)**",
+      "hr": 111,
+      "art": "74/38 (51)",
+      "spo2": 99,
+      "etco2": 23,
+      "rr": 10
+    },
+    {
+      "wall": 230.4,
+      "clock": "19:49",
+      "simS": 1189.3,
+      "speed": 1,
+      "state": "arrestAsystole",
+      "load1": 4.06,
+      "what": "press **Resume CPR after the rhythm check**",
+      "hr": null,
+      "art": "–/– (30)",
+      "spo2": null,
+      "etco2": 21,
+      "rr": 10
+    },
+    {
+      "wall": 260.7,
+      "clock": "21:49",
+      "simS": 1309,
+      "speed": 1,
+      "state": "arrestAsystole",
+      "load1": 8.08,
+      "what": "the third rhythm check",
+      "hr": 112,
+      "art": "73/36 (49)",
+      "spo2": 99,
+      "etco2": 25,
+      "rr": 10
+    },
+    {
+      "wall": 275.4,
+      "clock": "22:46",
+      "simS": 1366.7,
+      "speed": 4,
+      "state": "arrestAsystole",
+      "load1": 6.81,
+      "what": "end",
+      "hr": 111,
+      "art": "72/36 (49)",
+      "spo2": 99,
+      "etco2": 26,
+      "rr": 10
+    },
+    {
+      "wall": 275.6,
+      "clock": "22:46",
+      "simS": 1366.9,
+      "speed": 4,
+      "state": "arrestAsystole",
+      "load1": 6.81,
+      "what": "Finish the case (dock) → Debrief now (#/debrief/archive/mw3i04iwu9iz)",
+      "hr": 111,
+      "art": "72/36 (49)",
+      "spo2": 99,
+      "etco2": 26,
+      "rr": 10
+    }
+  ],
+  "presses": [
+    {
+      "label": "Oxygen by face mask, FiO₂ 1.0",
+      "clock": "00:36",
+      "simS": 36.6,
+      "wall": 6.5,
+      "before": "bleeding",
+      "after": "bleeding",
+      "load1": 3.42,
+      "toast": "",
+      "look": "taken"
+    },
+    {
+      "label": "Intubate and ventilate, FiO₂ 1.0",
+      "clock": "01:07",
+      "simS": 67.5,
+      "wall": 10.3,
+      "before": "bleeding",
+      "after": "bleeding",
+      "load1": 4.1,
+      "toast": "",
+      "look": "taken"
+    },
+    {
+      "label": "Start CPR: compressions 100–120/min, bag via the tube 10/min, FiO₂ 1.0",
+      "clock": "15:28",
+      "simS": 928.1,
+      "wall": 132.7,
+      "before": "arrestAsystole",
+      "after": "arrestAsystole",
+      "load1": 4.23,
+      "toast": "Speed ×1",
+      "look": "taken"
+    },
+    {
+      "label": "Surgeon controls the bleeding",
+      "clock": "15:28",
+      "simS": 928.9,
+      "wall": 133.6,
+      "before": "arrestAsystole",
+      "after": "arrestAsystole",
+      "load1": 4.23,
+      "toast": "",
+      "look": "taken"
+    },
+    {
+      "label": "Massive transfusion: 1 L warmed crystalloid, then red cells and plasma by rapid infuser",
+      "clock": "15:29",
+      "simS": 929.8,
+      "wall": 134.4,
+      "before": "arrestAsystole",
+      "after": "arrestAsystole",
+      "load1": 4.23,
+      "toast": "",
+      "look": "taken"
+    },
+    {
+      "label": "Tranexamic acid 1 g IV",
+      "clock": "15:30",
+      "simS": 930.6,
+      "wall": 135.3,
+      "before": "arrestAsystole",
+      "after": "arrestAsystole",
+      "load1": 4.23,
+      "toast": "",
+      "look": "taken"
+    },
+    {
+      "label": "Epinephrine 1 mg IV",
+      "clock": "15:48",
+      "simS": 948.3,
+      "wall": 153,
+      "before": "arrestAsystole",
+      "after": "arrestAsystole",
+      "load1": 6.62,
+      "toast": "",
+      "look": "current"
+    },
+    {
+      "label": "Rhythm check (compressions pause)",
+      "clock": "17:27",
+      "simS": 1047.8,
+      "wall": 178.9,
+      "before": "arrestAsystole",
+      "after": "arrestAsystole",
+      "load1": 5.2,
+      "toast": "Speed ×1",
+      "look": "current"
+    },
+    {
+      "label": "Resume CPR after the rhythm check",
+      "clock": "17:37",
+      "simS": 1057.8,
+      "wall": 188.9,
+      "before": "arrestAsystole",
+      "after": "arrestAsystole",
+      "load1": 5.02,
+      "toast": "",
+      "look": "taken"
+    },
+    {
+      "label": "Epinephrine 1 mg IV",
+      "clock": "18:48",
+      "simS": 1128.6,
+      "wall": 207.4,
+      "before": "arrestAsystole",
+      "after": "arrestAsystole",
+      "load1": 4.77,
+      "toast": "",
+      "look": "current"
+    },
+    {
+      "label": "Rhythm check (compressions pause)",
+      "clock": "19:38",
+      "simS": 1178.2,
+      "wall": 220.1,
+      "before": "arrestAsystole",
+      "after": "arrestAsystole",
+      "load1": 4.35,
+      "toast": "Speed ×1",
+      "look": "taken"
+    },
+    {
+      "label": "Resume CPR after the rhythm check",
+      "clock": "19:48",
+      "simS": 1188.5,
+      "wall": 230.4,
+      "before": "arrestAsystole",
+      "after": "arrestAsystole",
+      "load1": 4.06,
+      "toast": "",
+      "look": "taken"
+    }
+  ],
+  "spans": [],
+  "states": [
+    {
+      "t": 2.6,
+      "clock": "00:02",
+      "id": "bleeding"
+    },
+    {
+      "t": 557.3,
+      "clock": "09:17",
+      "id": "decompensating"
+    },
+    {
+      "t": 660.3,
+      "clock": "11:00",
+      "id": "arrestPea"
+    },
+    {
+      "t": 923,
+      "clock": "15:23",
+      "id": "arrestAsystole"
+    }
+  ],
+  "alarms": [
+    "06:21 ETCO2 TOO LOW",
+    "08:19 SPO2 LOW PERFUSION",
+    "08:29 ART SYS TOO LOW",
+    "08:35 ART MEAN TOO LOW",
+    "08:50 HR TOO HIGH",
+    "10:05 ART DIA TOO LOW",
+    "10:10 IBP1 STATIC PRESSURE",
+    "10:15 ART SYS TOO LOW",
+    "10:15 ART DIA TOO LOW",
+    "10:16 SPO2 LOW PERFUSION",
+    "10:48 IBP1 STATIC PRESSURE",
+    "10:55 SPO2 LOW PERFUSION",
+    "11:06 HR TOO LOW",
+    "11:06 SPO2 NO PULSE",
+    "11:09 NIBP MEASUREMENT FAILED",
+    "11:55 CO2 APNEA",
+    "15:34 ART SYS TOO LOW",
+    "15:34 ART DIA TOO LOW",
+    "15:42 AWRR TOO LOW",
+    "15:42 ETCO2 TOO LOW",
+    "15:45 SPO2 LOW PERFUSION",
+    "15:47 NIBP MEASUREMENT FAILED",
+    "17:34 SPO2 NO PULSE",
+    "17:34 IBP1 STATIC PRESSURE",
+    "17:37 ECG ASYSTOLE",
+    "17:43 ART DIA TOO LOW",
+    "17:54 SPO2 LOW PERFUSION",
+    "19:44 SPO2 NO PULSE",
+    "19:44 IBP1 STATIC PRESSURE",
+    "19:48 ECG ASYSTOLE",
+    "19:54 ART DIA TOO LOW",
+    "20:05 SPO2 LOW PERFUSION",
+    "20:47 NIBP MEASUREMENT FAILED"
+  ],
+  "measures": {
+    "a4haemorrhage2": {
+      "phases": [
+        {
+          "t": 0,
+          "id": "bleeding"
+        },
+        {
+          "t": 556.7,
+          "id": "decompensating"
+        },
+        {
+          "t": 660,
+          "id": "arrestPea"
+        },
+        {
+          "t": 922.5,
+          "id": "arrestAsystole"
+        }
+      ],
+      "decompensatingAt": "09:16",
+      "peaAt": "11:00",
+      "asystoleAt": "15:23",
+      "asystoleAfterPeaS": 263,
+      "cprAt": "15:28",
+      "cprAfterPeaS": 267.6,
+      "rhythmCheck1At": "17:27",
+      "resume1At": "17:37",
+      "epinephrine2At": "18:48",
+      "rhythmCheck2At": "19:38",
+      "resume2At": "19:48",
+      "pulseBackAtThirdCheck": false,
+      "stopAt": null,
+      "rhythms": [
+        "00:06 sinus",
+        "09:18 junctionalEscape",
+        "12:49 agonal",
+        "15:22 asystole"
+      ]
+    },
+    "pdf": {
+      "pages": 8,
+      "a4": true,
+      "title": "Debrief Class IV haemorrhage, PEA and resuscitation (phases) 2026-11-05"
+    },
+    "handoutPdf": {
+      "pages": 1
+    }
+  },
+  "debrief": {
+    "openedAt": "22:46",
+    "objectives": [
+      {
+        "status": null,
+        "mark": "not-assessable",
+        "text": "– Not ticked Recognise the return of circulation on the arterial line and the capnogram at the rhythm checkThe instructor did not tick it."
+      }
+    ],
+    "facts": {
+      "Lowest SpO₂": "96 % at 00:10",
+      "Lowest ART M / NIBP M": "3 mmHg at 11:14",
+      "Highest EtCO₂": "38 mmHg at 00:54",
+      "Highest T1 / T2": "36.8 °C at 00:01",
+      "Apnoea alarm to ventilated breaths": "none after the alarm at 11:55",
+      "Pulseless": "11 min 47 s in all; first lost at 11:00",
+      "Return of circulation": "not during the run",
+      "Epinephrine, boluses in all": "2 mg (2 doses)",
+      "Labs (the model): last (lowest–highest)": "K⁺ 4.5 mmol/L (4.2–4.7) · Lactate 5.2 mmol/L (1.0–5.2) · pH 7.12 (7.12–7.41) · Glucose 7.7 mmol/L (5.6–7.7) · Tcore 36.3 °C (36.3–36.8)"
+    },
+    "keyTimes": {
+      "Recognition (instructor's tick)": "– (not ticked)",
+      "Start → first team action": "15 min 28 s (00:00 → 15:28 (CPR started, 110 /min))",
+      "Pulse lost → CPR": "4 min 28 s (11:00 → 15:28)",
+      "Pulseless in all": "11 min 47 s (first lost 11:00)"
+    },
+    "moments": [
+      "1 09:16 Scenario Decompensating 160 50 99 22",
+      "2 11:00 ● Patient Pulse lost (the model) 54 9 99 13",
+      "3 11:00 Scenario Arrest: PEA 54 9 99 13",
+      "4 15:22 Scenario Arrest: asystole 19 5 – 0",
+      "5 15:28 ■ Team CPR started, 110 /min 18 5 – 0",
+      "6 15:29 ■ Team Crystalloid 1000 mL over 1.5 min 119 8 – 0",
+      "7 15:29 ■ Team Blood 1200 mL over 2.4 min 119 8 – 0",
+      "8 15:30 ■ Team Tranexamic acid 1000 mg IV 119 14 – 1",
+      "9 15:48 ■ Team Epinephrine 1 mg IV 111 20 99 5",
+      "10 17:37 ■ Team CPR started, 110 /min 106 27 – 19",
+      "11 18:48 ■ Team Epinephrine 1 mg IV 110 50 99 21",
+      "12 19:48 ■ Team CPR started, 110 /min 112 28 – 21"
+    ],
+    "timelineRows": 68,
+    "timeline": [
+      "00:00 Scenario Scenario loaded: Class IV haemorrhage, PEA and resuscitation (phases)",
+      "00:00 Scenario Scenario state: Bleeding",
+      "00:00 Scenario Blood loss 2500 mL over 10 min",
+      "00:02 Action Speed ×8",
+      "00:05 Bookmark Bookmark: Mark 1 at 00:05",
+      "00:36 Action Delivered together: Preoxygenation, FiO₂ 100 %",
+      "01:07 Action Delivered together: Tracheal tube in place; Preoxygenation, FiO₂ 21 %; Ventilator: RR 12 /min, VT 500 mL, PEEP 5 cmH₂O, FiO₂ 100 %",
+      "01:07 Patient Ventilated breaths began",
+      "06:21 Alarm EtCO₂ low",
+      "08:19 Alarm SpO₂: low perfusion",
+      "08:29 Alarm ART S low",
+      "08:35 Alarm ART M low",
+      "08:50 Alarm HR high",
+      "09:16 Scenario Scenario state: Decompensating",
+      "09:16 Scenario Rhythm: Junctional escape",
+      "09:19 Action Speed ×4",
+      "10:05 Alarm ART D low",
+      "10:10 Alarm ART: no pulsatile pressure",
+      "10:15 Alarm ART S low",
+      "10:15 Alarm ART D low",
+      "10:16 Alarm SpO₂: low perfusion",
+      "10:48 Alarm ART: no pulsatile pressure",
+      "10:55 Alarm SpO₂: low perfusion",
+      "11:00 Patient Pulse lost (the model)",
+      "11:00 Scenario Scenario state: Arrest: PEA",
+      "11:01 Action Speed ×8",
+      "11:06 Alarm HR low",
+      "11:06 Alarm SpO₂: no pulse detected",
+      "11:09 Alarm NIBP measurement failed",
+      "11:55 Alarm Apnoea (no CO₂ breaths)",
+      "15:22 Scenario Scenario state: Arrest: asystole",
+      "15:25 Action Speed ×1",
+      "15:28 Action Delivered together: CPR started, 110 /min; Bag-mask: RR 10 /min, VT 500 mL, PEEP 0 cmH₂O, FiO₂ 100 %",
+      "15:28 Action Delivered together: Bleeding 0 mL/min",
+      "15:29 Action Delivered together: Crystalloid 1000 mL over 1.5 min; Blood 1200 mL over 2.4 min",
+      "15:30 Action Delivered together: Tranexamic acid 1000 mg IV",
+      "15:34 Alarm ART S low",
+      "15:34 Alarm ART D low",
+      "15:42 Alarm awRR low",
+      "15:42 Alarm EtCO₂ low",
+      "15:45 Alarm SpO₂: low perfusion",
+      "15:47 Alarm NIBP measurement failed",
+      "15:48 Action Delivered together: Epinephrine 1 mg IV",
+      "15:49 Action Speed ×4",
+      "17:27 Action Speed ×1",
+      "17:27 Action Delivered together: CPR stopped",
+      "17:34 Alarm SpO₂: no pulse detected",
+      "17:34 Alarm ART: no pulsatile pressure",
+      "17:37 Alarm Asystole",
+      "17:37 Action Delivered together: CPR started, 110 /min",
+      "17:38 Action Speed ×4",
+      "17:43 Alarm ART D low",
+      "17:54 Alarm SpO₂: low perfusion",
+      "18:48 Action Delivered together: Epinephrine 1 mg IV",
+      "19:37 Action Speed ×1",
+      "19:38 Action Delivered together: CPR stopped",
+      "19:44 Alarm SpO₂: no pulse detected",
+      "19:44 Alarm ART: no pulsatile pressure",
+      "19:48 Alarm Asystole",
+      "19:48 Action Delivered together: CPR started, 110 /min",
+      "19:49 Action Speed ×4",
+      "19:54 Alarm ART D low",
+      "20:05 Alarm SpO₂: low perfusion",
+      "20:47 Alarm NIBP measurement failed",
+      "21:48 Action Speed ×1",
+      "21:49 Action Speed ×4",
+      "22:46 Action Simulation paused",
+      "22:46 Note Case finished"
+    ],
+    "minuteRows": 23,
+    "actions": [
+      {
+        "row": "action",
+        "grade": "failed",
+        "label": "Recognise and announce the diagnosis: PEA from hypovolaemia (pseudo-PEA)",
+        "due": "10:25 + 30 s",
+        "given": "–",
+        "why": []
+      },
+      {
+        "row": "action",
+        "grade": "met",
+        "label": "Oxygen by face mask, FiO₂ 1.0",
+        "due": "–",
+        "given": "00:36",
+        "why": []
+      },
+      {
+        "row": "action",
+        "grade": "met",
+        "label": "Intubate and ventilate, FiO₂ 1.0",
+        "due": "–",
+        "given": "01:07",
+        "why": []
+      },
+      {
+        "row": "action",
+        "grade": "failed",
+        "label": "Call for help",
+        "due": "–",
+        "given": "–",
+        "why": []
+      },
+      {
+        "row": "action",
+        "grade": "failed",
+        "label": "Start CPR: compressions 100–120/min, bag via the tube 10/min, FiO₂ 1.0",
+        "due": "10:39 + 30 s",
+        "given": "15:28",
+        "why": [
+          "given 4:48 after the anchor, failed after 2:00"
+        ]
+      },
+      {
+        "row": "action",
+        "grade": "met",
+        "label": "Bag via the tube 10/min, FiO₂ 1.0",
+        "due": "–",
+        "given": "15:28",
+        "why": []
+      },
+      {
+        "row": "action",
+        "grade": "met",
+        "label": "Epinephrine 1 mg IV",
+        "due": "–",
+        "given": "15:48",
+        "why": []
+      },
+      {
+        "row": "repeat",
+        "grade": "met",
+        "label": "repeat 2",
+        "due": "",
+        "given": "18:48",
+        "why": []
+      },
+      {
+        "row": "repeat",
+        "grade": "failed",
+        "label": "repeat 3",
+        "due": "",
+        "given": "–",
+        "why": []
+      },
+      {
+        "row": "action",
+        "grade": "met",
+        "label": "Surgeon controls the bleeding",
+        "due": "–",
+        "given": "15:28",
+        "why": []
+      },
+      {
+        "row": "action",
+        "grade": "met",
+        "label": "Massive transfusion: 1 L warmed crystalloid, then red cells and plasma by rapid infuser",
+        "due": "–",
+        "given": "15:29",
+        "why": []
+      },
+      {
+        "row": "action",
+        "grade": "met",
+        "label": "Tranexamic acid 1 g IV",
+        "due": "–",
+        "given": "15:30",
+        "why": []
+      },
+      {
+        "row": "action",
+        "grade": "met",
+        "label": "Rhythm check (compressions pause)",
+        "due": "15:28 + 2 min 10 s",
+        "given": "17:27",
+        "why": []
+      },
+      {
+        "row": "repeat",
+        "grade": "overdue",
+        "label": "repeat 2",
+        "due": "",
+        "given": "19:38",
+        "why": [
+          "interval 130.45 s, 120 ± 10 s asked"
+        ]
+      },
+      {
+        "row": "repeat",
+        "grade": "failed",
+        "label": "repeat 3",
+        "due": "",
+        "given": "–",
+        "why": []
+      },
+      {
+        "row": "action",
+        "grade": "overdue",
+        "label": "Resume CPR after the rhythm check",
+        "due": "17:27 + 10 s",
+        "given": "17:37",
+        "why": [
+          "given 10.05 s after the taking of rhythmCheck"
+        ]
+      },
+      {
+        "row": "repeat",
+        "grade": "overdue",
+        "label": "repeat 2",
+        "due": "",
+        "given": "19:48",
+        "why": [
+          "given 10.29 s after the taking of rhythmCheck"
+        ]
+      },
+      {
+        "row": "action",
+        "grade": "not applicable",
+        "label": "Rhythm check: pulse back, stop CPR",
+        "due": "–",
+        "given": "–",
+        "why": [
+          "anchor never happened: rosc never happened"
+        ]
+      }
+    ],
+    "json": "debrief-a4-haemorrhage-phases-card-kit-round-chromium.json (debrief-showcase-haemorrhage-v2-2026-11-05.json)"
+  },
+  "phones": {
+    "rule": "a parameter whose NUMBER differs (> 1 unit, or a number vs a blank; a trailing quality mark such as \"?\" ignored and counted apart) for more than 2 s while comparable = S12-F2 seen",
+    "s12f2Seen": true,
+    "marks": [],
+    "perPhone": [
+      {
+        "maxMismatchS": 3.5,
+        "worst": {
+          "param": "NIBP",
+          "forS": 3.5,
+          "instructorFirst": "54",
+          "phoneFirst": "62",
+          "instructorNow": "150",
+          "phoneNow": "143",
+          "atWallS": 130.3
+        },
+        "samples": 556,
+        "compared": 552,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 292,
+        "holdSamples": 0,
+        "status": {
+          "synced": 556
+        },
+        "resyncs": 2,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 3.5,
+        "worst": {
+          "param": "NIBP",
+          "forS": 3.5,
+          "instructorFirst": "54",
+          "phoneFirst": "62",
+          "instructorNow": "150",
+          "phoneNow": "143",
+          "atWallS": 130.3
+        },
+        "samples": 556,
+        "compared": 552,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 291,
+        "holdSamples": 0,
+        "status": {
+          "synced": 556
+        },
+        "resyncs": 2,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 3.5,
+        "worst": {
+          "param": "NIBP",
+          "forS": 3.5,
+          "instructorFirst": "54",
+          "phoneFirst": "62",
+          "instructorNow": "150",
+          "phoneNow": "139",
+          "atWallS": 130.3
+        },
+        "samples": 556,
+        "compared": 552,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 292,
+        "holdSamples": 0,
+        "status": {
+          "synced": 556
+        },
+        "resyncs": 2,
+        "lagS": 0.1
+      }
+    ]
+  },
+  "notes": [
+    "phone 0 (Pixel 7 emulation) synced before Load",
+    "phone 1 (Pixel 7 emulation) synced before Load",
+    "phone 2 (Pixel 7 emulation) synced before Load",
+    "no pulse at the third rhythm check (21:49): stop CPR not pressed; the patient is in arrestAsystole"
+  ],
+  "errors": []
+}
