@@ -173,6 +173,11 @@ jobs:
 
   # fix-ci-webkit-3: one e2e job per browser (was one step running both on one 2-vCPU runner, so each browser's
   # wall-clock-sensitive tests ran beside the other's load). Retries stay at 2 (playwright.config.ts, CI).
+  # ci-faster: each gating suite runs in three shards (Playwright --shard, by file; every e2e server binds port 0 and
+  # each shard is its own machine; WebKit keeps workers: 1 inside its shard). Each shard uploads its own report and runs
+  # the retry-only check on it; the e2e-count job proves the shards together ran every test (research/42 §1.4 b). The
+  # quarantine stays one job. Three shards, not four: the shard that gets teach2-fit.e2e.ts (≈ 18 min alone) sets the
+  # floor, which three already reach.
   # ci-stabilise (2026-10-24): the jobs run in the official Playwright image, which carries the browsers and their
   # system libraries, so no job runs `playwright install --with-deps` (its apt step stalled up to 40 min on the runner's
   # Ubuntu mirror). The @known-flaky tests run on WebKit in their own non-blocking job, e2e-quarantine (webkit); the
@@ -186,10 +191,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { browser: chromium, set: all, grep: '', report: chromium }
-          - { browser: webkit, set: gating, grep: '--grep-invert @known-flaky', report: webkit }
-          - { browser: webkit, set: known-flaky, grep: '--grep @known-flaky', report: webkit-known-flaky }
-    name: ${{ matrix.set == 'known-flaky' && 'e2e-quarantine' || 'e2e' }} (${{ matrix.browser }})
+          - { browser: chromium, set: all, grep: '', report: chromium, shard: 1, of: 3 }
+          - { browser: chromium, set: all, grep: '', report: chromium, shard: 2, of: 3 }
+          - { browser: chromium, set: all, grep: '', report: chromium, shard: 3, of: 3 }
+          - { browser: webkit, set: gating, grep: '--grep-invert @known-flaky', report: webkit, shard: 1, of: 3 }
+          - { browser: webkit, set: gating, grep: '--grep-invert @known-flaky', report: webkit, shard: 2, of: 3 }
+          - { browser: webkit, set: gating, grep: '--grep-invert @known-flaky', report: webkit, shard: 3, of: 3 }
+          - { browser: webkit, set: known-flaky, grep: '--grep @known-flaky', report: webkit-known-flaky, shard: 1, of: 1 }
+    name: ${{ matrix.set == 'known-flaky' && 'e2e-quarantine' || 'e2e' }} (${{ matrix.browser }} ${{ matrix.shard }}/${{ matrix.of }})
     runs-on: ubuntu-latest
     timeout-minutes: 60
     continue-on-error: ${{ matrix.set == 'known-flaky' }} # the quarantine never fails the run
@@ -220,14 +229,14 @@ jobs:
           name: ventilator-monitor-embed
           path: apps/demo/dist/embed
       - id: e2e
-        run: pnpm test:e2e --project=${{ matrix.browser }} ${{ matrix.grep }} --reporter=list,json
+        run: pnpm test:e2e --project=${{ matrix.browser }} ${{ matrix.grep }} --shard=${{ matrix.shard }}/${{ matrix.of }} --reporter=list,json
         continue-on-error: ${{ matrix.set == 'known-flaky' }} # quarantine: its results are summarised below instead
         env:
           PLAYWRIGHT_JSON_OUTPUT_FILE: playwright-report-${{ matrix.report }}.json
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' }}
         with:
-          name: e2e-report-${{ matrix.report }}
+          name: e2e-report-${{ matrix.report }}-${{ matrix.shard }}of${{ matrix.of }}
           path: |
             playwright-report-${{ matrix.report }}.json
             test-results/
@@ -279,6 +288,27 @@ jobs:
               echo "::error title=e2e passed only on retry::a test without the @known-flaky tag passed only on retry: a retry is not a pass"; exit 1
             fi
           fi
+
+  # The shards together ran every test: per set, the summed totals of its shards' reports equal `playwright test --list`
+  # on the same tree (scripts/ci/e2e-count.mjs; a gating set that differs fails, the quarantine warns).
+  e2e-count:
+    needs: [changes, e2e]
+    if: ${{ !cancelled() && needs.changes.outputs.code == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: e2e-report-*
+          path: reports
+      - run: node scripts/ci/e2e-count.mjs reports
 
   test-slow:
     needs: changes
