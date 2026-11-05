@@ -29,7 +29,6 @@ import type { Link } from '../link.ts';
 import { clock, h, setText, toast } from '../ui.ts';
 import { NO_CASE } from './begin.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
-import { historyOf } from './course.ts';
 
 /** The chips in view (the owner's ruling for IP9): the KEEP_PAST stages before the current one, the current one and
  *  the KEEP_NEXT after it; the rest fold behind the arrows "‹ n earlier" and "n later ›". */
@@ -322,7 +321,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       return;
     }
     if (docV !== sv.docVersion) (docV = sv.docVersion), (offset = 0), (names = stageNames(stagesOf(doc))), closePop();
-    const history = historyOf(link);
+    const history = link.ctl.scenario.history;
     const entries = stageEntries(doc, history, sv, link.simT);
     const items = stripModel(doc, sv.stateId, entries, offset, firedInStage(history, entries.at(-1), link.simT));
     const key = JSON.stringify([docV, offset, items.map((x) => (x.kind === 'fold' || x.kind === 'later' ? [x.kind, x.n] : x.kind === 'future' ? x.stages.map((g) => g.id) : [x.stage.id, x.entry?.t, x.kind === 'current' ? x.open : 0]))]);
