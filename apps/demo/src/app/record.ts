@@ -87,8 +87,9 @@ const PRESSURE_KEYS = Object.keys(PRESSURES) as PressureKey[];
 export type Sample = { t: number } & Record<ValueKey, number | null> & Partial<Record<PressureKey, number | null>>;
 /** The facts this build's recorder keeps beyond the first record's (plan §3): a reader treats a word missing from a
  *  file's `keeps`, or no `keeps`, as "not recorded in this file". 'pressures': `Sample.sys`, `dia`, `cvp`; 'alarmEnd':
- *  `Row.endT` and `Row.ackT` on alarm rows. */
-export const KEEPS = ['pressures', 'alarmEnd'] as const;
+ *  `Row.endT` and `Row.ackT` on alarm rows; 'cprStop': `ev: 'cprStop'` on the command
+ *  row that stops compressions (a record without it kept no stop, so its hands-off time is unknown). */
+export const KEEPS = ['pressures', 'alarmEnd', 'cprStop'] as const;
 
 export interface RunData {
   /** Wall clock (ms since 1970) when the run began, and of the last thing recorded. */
@@ -240,6 +241,7 @@ export class RunRecord {
     if (ev?.kind === 'drug' && !ev.infusion) row.dose = { drugId: String(ev.drugId), dose: Number(ev.dose), unit: String(ev.unit) };
     if (ev?.kind === 'fluid') row.ev = 'fluid';
     if (ev?.kind === 'cpr' && ev.active) row.ev = 'cpr';
+    if (ev?.kind === 'cpr' && !ev.active) row.ev = 'cprStop'; // D3: the hands-off time reads the stops
     if (ev?.kind === 'defib' && ev.action === 'shock') row.ev = 'shock';
     if (ev?.kind === 'condition' && Number(ev.severity) > 0) row.ev = `condition:${String(ev.id)}`;
     if (ev?.kind === 'airway') row.ev = `airway:${String(ev.state)}`;

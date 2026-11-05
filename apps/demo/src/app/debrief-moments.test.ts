@@ -208,7 +208,7 @@ describe('key times', () => {
 });
 
 describe('D3: hands-off time inside the pulseless spans, and the compression fraction', () => {
-  const run = (rows: Row[], keeps = emptyRun().keeps): RunData => ({ ...emptyRun('free', 70, 0), keeps, samples: Array.from({ length: 400 }, (_, t) => sampleAt(t)), rows });
+  const run = (rows: Row[]): RunData => ({ ...emptyRun('free', 70, 0), samples: Array.from({ length: 400 }, (_, t) => sampleAt(t)), rows });
   const twoSpans: Row[] = [
     { t: 100, kind: 'patient', text: 'Pulse lost (the model)', ev: 'pulseLoss' },
     { t: 110, kind: 'action', text: 'CPR started, 110 /min', ev: 'cpr' },
@@ -234,7 +234,7 @@ describe('D3: hands-off time inside the pulseless spans, and the compression fra
   });
 
   it('a record whose keeps has no "cprStop" (made before D3) gives no hands-off: never a guess from the starts alone', () => {
-    const old = run(twoSpans.map((r) => (r.ev === 'cprStop' ? { t: r.t, kind: r.kind, text: r.text } : r)), undefined);
+    const { keeps: _, ...old } = run(twoSpans.map((r) => (r.ev === 'cprStop' ? { t: r.t, kind: r.kind, text: r.text } : r)));
     expect(handsOff(old)).toBeNull();
     expect(keyTimes(old).map((k) => k.id)).not.toContain('handsOff');
     expect(keyTimes(a31Run()).map((k) => k.id)).not.toContain('handsOff'); // the A3.1 export, a /1 record of 22 October
