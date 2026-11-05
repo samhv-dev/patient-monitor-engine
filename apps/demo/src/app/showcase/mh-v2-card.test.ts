@@ -4,9 +4,6 @@
 import { describe, expect, it } from 'vitest';
 import { grade, PhaseRunner, type Administration, type PhaseEntry, type RuleEdge, type RunnerInputV2, type ScenarioDocV2 } from '@pme/controller/scenario';
 import { phaseRowsOf } from '../card-read.ts';
-import { keyTimes } from '../debrief-moments.ts';
-import { drugWords } from '../glossary.ts';
-import { emptyRun, type RunData } from '../record.ts';
 import { anyShowcaseDoc } from './harness.ts';
 
 const doc = anyShowcaseDoc('showcase-mh-v2') as ScenarioDocV2;
@@ -97,19 +94,20 @@ describe('showcase-mh-v2: Recovering and Recrudescence on EtCO₂ at the set ven
   });
 });
 
-// The Debrief's recognition clock (brief fv2-debrief-recognition-clock-nov1, the coordinator's ruling the same day): the
-// judged row's display rule is the Early signs phase's entry (`phaseEntered`), so "Recognition (instructor's tick)"
-// counts from the moment the strip shows Early signs (its rule held through its 20-s hold), as the /1 card's counts from
-// its "early signs" state (EtCO₂ > 45 for 20 s); it was a bare EtCO₂ > 45, which the premedicated, then induced patient
-// crosses before intubation (46 at 03:51 in the kit round), five minutes before the MH shows. Pure: the phase runner,
-// grade() and keyTimes() on the card, synthetic inputs in the shape of the demo path.
-describe('showcase-mh-v2: the recognition clock starts at the Early signs entry (the /1 card\'s early signs)', () => {
+// The recognition's clock (brief fv2-debrief-recognition-clock-nov1, the coordinator's ruling the same day): it counts
+// from the moment the strip shows Early signs (its rule held through its 20-s hold), as the /1 card's counts from its
+// "early signs" state (EtCO₂ > 45 for 20 s); it was a bare EtCO₂ > 45, which the premedicated, then induced patient
+// crosses before intubation (46 at 03:51 in the kit round), five minutes before the MH shows. Judged rows are retired
+// (the owner's ruling of 5 November): "name MH" is a timed record action whose window opens at Early signs' entry, 120 s
+// long (an OWNER PLACEHOLDER). Pure: the phase runner and grade() on the card, synthetic inputs in the shape of the demo
+// path.
+describe('showcase-mh-v2: "name MH" is a timed record action, its window from the Early signs entry (the /1 card\'s early signs)', () => {
   // EtCO₂ 46 at 03:51–04:13 before the ventilator (no set ventilation); 38 on it from 05:00; from 06:00 the MH: EtCO₂
-  // climbing 4.1 mmHg/min (past 45 at 07:43, as on the demo path), HR rising, MH activity on. The tick at 08:12, the run sheet's call.
+  // climbing 4.1 mmHg/min (past 45 at 07:43, as on the demo path), HR rising, MH activity on. The press at 08:12, the run sheet's call.
   const etco2 = (t: number) => (t >= 231 && t <= 253 ? 46 : t < 360 ? 38 : 38 + 0.068 * (t - 360));
   const hr = (t: number) => 64 + 0.03 * Math.max(0, t - 360);
   const TICK = 492;
-  function runOf(card: ScenarioDocV2): RunData {
+  function runOf(card: ScenarioDocV2) {
     const r = new PhaseRunner(card);
     r.start(0);
     for (let t = 1; t <= 600; t++) {
@@ -120,30 +118,30 @@ describe('showcase-mh-v2: the recognition clock starts at the Early signs entry 
         { kind: 'signals', signals: { pulse: true, dantroleneE: 0, setMinuteVentilationLMin: t < 300 ? null : 6, map: 80, mhActivity: t < 360 ? 0 : 0.05, mhExcess: null } },
       ]);
     }
-    return {
-      ...emptyRun('M 35 y 80 kg', 80, 0), doc: card, format: 2, phases: [...r.phases], admin: [], edges: [...r.edges],
-      rows: [{ t: 0, kind: 'scenario', text: 'Scenario loaded: MH' }, { t: TICK, kind: 'note', text: `Objective met: ${drugWords(card.judged?.[0]?.text ?? '')}` }],
-      samples: [],
-    };
+    return r;
   }
-  const rec = (d: RunData) => keyTimes(d).find((k) => k.id === 'recognition');
-  const rose = (d: RunData, rule: string) => d.edges?.find((e) => e.rule === rule && e.value)?.t;
+  const said = (t: number): Administration => ({ seq: 1, t, source: 'action', actionId: 'nameMh', kind: 'communication', result: { accepted: true } });
 
-  it('the judged row\'s display rule is the Early signs phase\'s entry, the phase written once', () => {
-    expect(doc.judged?.find((j) => j.kind === 'recognition')?.display).toEqual({ phaseEntered: 'earlySigns' });
+  it('no judged rows: "name MH" is a communication action with no give (the record command), last in the list, open from Early signs on', () => {
+    expect(doc).not.toHaveProperty('judged');
+    const a = doc.actions.find((x) => x.id === 'nameMh');
+    expect(a).toMatchObject({ kind: 'communication', phases: ['earlySigns', 'established', 'treated', 'recovering', 'recrudescence'], window: { anchor: 'phase:earlySigns', withinS: 120 } });
+    expect(a?.give).toBeUndefined();
+    expect(a?.label).toMatch(/^Name malignant hyperthermia from the monitor/);
+    expect(doc.actions.at(-1)?.id).toBe('nameMh'); // every other row keeps its key
+    expect(a?.src).toMatch(/OWNER PLACEHOLDER/);
   });
 
-  it('a threshold that held before the MH does not start the recognition clock; the Early signs entry does', () => {
-    const d = runOf(doc);
-    const rule = rose(d, 'phase:earlySigns') as number;
+  it('the window opens at the Early signs entry (08:03), not at the pre-intubation 46: met at the call, overdue after 120 s, failed if never', () => {
+    const r = runOf(doc);
+    const rule = r.edges.find((e) => e.rule === 'phase:earlySigns' && e.value)?.t as number;
     expect(rule).toBe(463); // 07:43: EtCO₂ past 45, rising at the set ventilation, HR rising
-    const entry = d.phases?.find((p) => p.id === 'earlySigns')?.t as number;
+    const entry = r.phases.find((p) => p.id === 'earlySigns')?.t as number;
     expect(entry).toBe(rule + 20); // 08:03, after its 20-s hold: the strip turns to Early signs
-    expect(rose(d, 'judged:nameMh')).toBe(entry);
-    expect(rec(d)).toEqual({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: entry, fromLabel: 'early signs', toT: TICK, state: 'measured' });
-    // the card as it was (a bare EtCO₂ > 45 on the display): the clock from the pre-intubation 46, minutes before the signs
-    const bare = structuredClone(doc);
-    bare.judged![0]!.display = { value: { var: 'etco2', op: '>', value: 45 } };
-    expect(rec(runOf(bare))).toMatchObject({ fromT: 231, fromLabel: 'etco2 > 45', toT: TICK });
+    const g = (admin: Administration[], final = true) => grade(doc, r.phases, admin, r.edges, 600, { final }).actions.find((x) => x.id === 'nameMh');
+    expect(g([said(TICK)])).toMatchObject({ grade: 'met', dueT: entry, windowS: 120, givenT: TICK });
+    expect(g([said(entry + 150)])).toMatchObject({ grade: 'overdue', dueT: entry });
+    expect(g([])?.grade).toBe('failed');
+    expect(g([], false)?.live).toBe('due 0:03'); // live at 10:00: the window 08:03 + 2:00 ends at 10:03
   });
 });

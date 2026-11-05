@@ -998,17 +998,24 @@
         "anchor": "pulseLoss",
         "withinS": 30
       }
-    }
-  ],
-  "judged": [
+    },
     {
       "id": "nameMh",
-      "kind": "recognition",
-      "text": "Name malignant hyperthermia from the monitor: EtCO₂ rising at unchanged ventilation when it should be falling (42 → 45; without MH it settles 36–39) with a rising heart rate (64 → 80, blunted by fentanyl) (instructor-assessed)",
-      "$comment": "The recognition clock starts when Early signs is entered (its rule, EtCO₂ above 45 and rising at unchanged set ventilation with HR rising, held through its 20-s hold): the moment the strip shows Early signs, which the instructor ticks against, and the /1 card's 'early signs' state (EtCO₂ above 45 for 20 s), so both cards print the same interval for the same patient (the coordinator's ruling, 1 November). Not a bare EtCO₂ threshold: the premedicated, then induced patient's EtCO₂ passes 45 at 03:51 before intubation, five minutes before the MH shows.",
-      "display": {
-        "phaseEntered": "earlySigns"
-      }
+      "label": "Name malignant hyperthermia from the monitor: EtCO₂ rising at unchanged ventilation when it should be falling (42 → 45; without MH it settles 36–39) with a rising heart rate (64 → 80, blunted by fentanyl) (instructor-assessed)",
+      "kind": "communication",
+      "phases": [
+        "earlySigns",
+        "established",
+        "treated",
+        "recovering",
+        "recrudescence"
+      ],
+      "$comment": "The /1 card's objective 1, a judged row until the owner's ruling of 5 November retired the kind: a team act the instructor observes is a record action. The instructor presses it when the team names MH aloud; no engine command (the scenario record command, Q19). Timed: the window opens at Early signs' entry (its rule, EtCO₂ above 45 and rising at unchanged set ventilation with HR rising, held through its 20-s hold), the moment the strip shows Early signs and the /1 card's 'early signs' state, which the judged row's clock started on (the coordinator's ruling, 1 November). Not a bare EtCO₂ threshold: the premedicated, then induced patient's EtCO₂ passes 45 at 03:51 before intubation, five minutes before the MH shows. Open in the phases after the sign; last in the list, so every other row keeps its key.",
+      "window": {
+        "anchor": "phase:earlySigns",
+        "withinS": 120
+      },
+      "src": "Window from Early signs' entry: the former judged row's own clock (display rule phaseEntered earlySigns). Window length 120 s: an OWNER PLACEHOLDER. No source read and no ruling states one; 120 s is the card's own window for calling the crisis from the same early signs (callCrisis; the /1 card's objective 2), which naming MH precedes, so the placeholder is that bound and no more. The /1 card's objective 1 has no time."
     }
   ],
   "script": [
