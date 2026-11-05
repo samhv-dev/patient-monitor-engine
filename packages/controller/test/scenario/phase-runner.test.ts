@@ -547,17 +547,18 @@ describe('PhaseRunner: mhExcess is read from the signals (D2)', () => {
 });
 
 // The MH /2 card's recognition clock (brief fv2-debrief-recognition-clock-nov1, the coordinator's ruling the same day):
-// a judged row's display rule may be a phase's entry (`phaseEntered`), so the clock starts when the strip shows Early
-// signs (its rule held through its hold, as the /1 card's "early signs" state is EtCO₂ > 45 held 20 s) — not when a bare
-// EtCO₂ threshold is first crossed (the premedicated patient's 46 before intubation), and not at the rule's first truth.
-describe('PhaseRunner: a judged clock on a phase\'s entry (phaseEntered)', () => {
+// a display rule may be a phase's entry (`phaseEntered`), so the clock starts when the strip shows Early signs (its rule
+// held through its hold, as the /1 card's "early signs" state is EtCO₂ > 45 held 20 s) — not when a bare EtCO₂ threshold
+// is first crossed (the premedicated patient's 46 before intubation), and not at the rule's first truth. Judged rows are
+// retired (owner, 5 November): the clock is a record action's window anchor (`{ display: … }`, `action:<id>:anchor`).
+describe('PhaseRunner: a display anchor on a phase\'s entry (phaseEntered)', () => {
   const EARLY: PhaseRule = { all: [
     { value: { var: 'etco2', op: '>', value: 45 } },
     { slope: { var: 'etco2', op: '>', perMin: 0.2, overS: 120 } },
     { unchanged: { var: 'setMinuteVentilationLMin', withinPct: 5, overS: 120 } },
   ] };
   const doc = (display: unknown) => card([{ id: 'a', next: ['early'] }, { id: 'early', label: 'Early signs', enter: EARLY, holdS: 20 }],
-    { judged: [{ id: 'name', text: 'Name it', kind: 'recognition', display: display as never }] });
+    { actions: [{ id: 'name', label: 'Name it', kind: 'communication', phases: ['early'], window: { anchor: { display: display as never }, withinS: 120 } }] });
   // EtCO₂ 46 at 20–40 s without a ventilator (no set ventilation: the guard cannot hold), 40 at 40–200 s, then on the
   // ventilator from 50 s rising 3 mmHg/min from 200 s: past 45 at 300 s
   const etco2 = (t: number) => (t >= 20 && t < 40 ? 46 : t < 200 ? 40 : 40 + (t - 200) * 0.05);
@@ -571,13 +572,13 @@ describe('PhaseRunner: a judged clock on a phase\'s entry (phaseEntered)', () =>
       r.start(0);
       run(r, 0, 400, feed, 0.2);
     }
-    expect(rise(bare, 'judged:name')).toBeCloseTo(20, 6); // the bare threshold: the clock from the pre-intubation 46
+    expect(rise(bare, 'action:name:anchor')).toBeCloseTo(20, 6); // the bare threshold: the clock from the pre-intubation 46
     const rule = rise(coupled, 'phase:early') as number;
     expect(rule).toBeGreaterThan(300); // EtCO₂ past 45 on the rise
     expect(rule).toBeLessThan(301);
     const entry = coupled.phases.find((p) => p.id === 'early')?.t as number;
     expect(entry).toBeCloseTo(rule + 20, 6); // the entry: after the 20-s hold
-    expect(rise(coupled, 'judged:name')).toBe(entry); // the clock: the entry's own second, not one advance later
-    expect(coupled.edges.filter((e) => e.rule === 'judged:name')).toEqual([{ rule: 'judged:name', t: entry, value: true }]); // it stays true
+    expect(rise(coupled, 'action:name:anchor')).toBe(entry); // the clock: the entry's own second, not one advance later
+    expect(coupled.edges.filter((e) => e.rule === 'action:name:anchor')).toEqual([{ rule: 'action:name:anchor', t: entry, value: true }]); // it stays true
   });
 });

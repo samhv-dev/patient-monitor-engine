@@ -38,5 +38,6 @@ test('alarm pause follows the skin: disabled with a reason on Saadat-like, refus
   await expect(page.locator('.panel').getByText(REASON)).toBeHidden();
   await pause.click();
   await expect(page.locator('.toasts')).toContainText('Alarms paused');
-  await expect(page.locator('.panel p[role=status]')).toContainText(/Alarms paused, 0[12]:\d\d left/, { timeout: 20_000 });
+  // the alarm-pause status line; the tab's other status lines are the IBP scale modes (E130, `data-ibp-now`)
+  await expect(page.locator('.panel p[role=status]:not([data-ibp-now])')).toContainText(/Alarms paused, 0[12]:\d\d left/, { timeout: 20_000 });
 });

@@ -73,6 +73,9 @@ function onMessage(ev: MessageEvent<ToWorker>): void {
       case 'plan':
         core?.setPlan(m.plan);
         return;
+      case 'ibpScales':
+        core?.setIbpScales(m.scales);
+        return;
       case 'capture12': // The 12 lead arrays are transferred, not copied
         try {
           if (!core) throw new Error('not initialised');

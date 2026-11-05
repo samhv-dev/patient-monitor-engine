@@ -3,7 +3,8 @@
 // the command a step sends, the objectives that ride on a step, and reachability on the card graph. One module for the
 // panel and the debrief, so both read the card the same way. Pure: no DOM, no session; it reads `pme-scenario/1` as the
 // cards already carry it. A `pme-scenario/2` card has no states (plan F1): its stages are its PHASES and its rows its
-// open actions, its judged rows and the rules out of the phase (F6); every /1-only reader gives it the empty answer.
+// open actions and the rules out of the phase (F6; judged rows are retired on /2, the owner's ruling of 5 November: a
+// team act the instructor observes is a record action); every /1-only reader gives it the empty answer.
 import { isV2, manualLabel, type AnyScenarioDoc, type CommandInput, type ScenarioDoc, type ScenarioState, type Transition, type When } from '@pme/controller';
 import type { Action, PhaseRule, ScenarioDocV2 } from '@pme/controller/scenario';
 import { HOP_MAX_S, isHop, type ObjectiveRule, type RunEventId } from '@pme/controller/scenario';
@@ -270,7 +271,7 @@ export type History = ReadonlyArray<{ t: number; stateId: string; transitionId?:
 
 // ---- a pme-scenario/2 card (plan F6) ----
 
-/** The open actions of phase `phaseId` (in the card's order), then its judged rows, then the rules out of the phase: the
+/** The open actions of phase `phaseId` (in the card's order), then the rules out of the phase: the
  *  /2 rows of the ACTION list. An action is open in the phases it names (design §5); the panel never refuses anything
  *  else, which the sheets give. */
 export function phaseRowsOf(doc: ScenarioDocV2, phaseId: string): Row[] {
@@ -278,14 +279,13 @@ export function phaseRowsOf(doc: ScenarioDocV2, phaseId: string): Row[] {
     kind: 'step', n: i + 1, index: doc.actions.indexOf(a), tr: { id: `action:${a.id}`, to: phaseId, when: { manual: { label: a.label } } },
     label: a.label, title: a.label, subtitle: actionWords(a), actionId: a.id,
   }));
-  const judged: Row[] = (doc.judged ?? []).map((j, i) => ({ kind: 'judged', n: steps.length + i + 1, objective: i, text: j.text, title: drugWords(j.text), subtitle: 'you judge it' }));
   const phase = doc.phases.find((p) => p.id === phaseId);
   const autos: Row[] = (phase?.next ?? []).flatMap((id, index) => {
     const p = doc.phases.find((x) => x.id === id);
     if (!p?.enter) return [];
     return [{ kind: 'auto', index, tr: { id: `enter:${id}`, to: id, when: { manual: { label: p.label } } }, trigger: 'other', title: p.label, subtitle: `${p.cue ? `${p.cue} · ` : ''}when ${phaseRuleWords(p.enter, doc)}${p.holdS ? `, held ${p.holdS} s` : ''}` } as Row];
   });
-  return [...steps, ...judged, ...autos];
+  return [...steps, ...autos];
 }
 
 /** A /2 action's prescription in words, for its row's subtitle ("not graded" for a setup action; "preparation: recorded, no

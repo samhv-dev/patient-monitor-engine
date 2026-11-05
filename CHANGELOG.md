@@ -9,6 +9,19 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Added
 
+- **IBP1 / IBP2 lane scales (E130)**: per channel the skin's fixed scale, a range the instructor types within 0–200
+  mmHg (lower below upper; anything else refused), or AUTO, set in the Devices tab of today's Instructor view and in
+  Instructor v2's Devices sheet, which show the mode and the numbers. AUTO is judged every 30 s of sim time over the
+  two 30-s windows before the boundary, never beat by beat: the smallest of 0–60, 0–100, 0–160, 0–200 (arterial) or
+  −10–30, 0–60, 0–100, 0–160, 0–200 (venous) that holds the window with 10 % headroom, two outlier seconds ignored,
+  stepping down only when two windows in a row fit (no vendor manual read states an interval: Philips IntelliVue's
+  Optimum Scale is one-shot, Mindray's Auto gives none; the ranges are GE CARESCAPE's display scales up to the ruled
+  200). The dotted scale lines and the printed values follow. The scales travel with the monitor style to the
+  second-screen learner monitor and to the phones, which judge AUTO from the same samples at the same boundaries and
+  so draw the same range. **Changed:** the Saadat-like arterial lane's fixed scale is the ruled 0–200 (marks
+  200 / 100 / 0); the photo-matched 40 / 120 / 200 goes. The Philips-like scales are unchanged. (`@pme/renderer`
+  `ibp-scale.ts`, `renderPlan`'s `ibpScales`, `MonitorCore.setIbpScales`, `MonitorHandle.setIbpScales`; the
+  controller's `style` event gains `ibp`.)
 - **The class IV haemorrhage card in `pme-scenario/2` (plan F9): `showcase-haemorrhage-v2`, beside the `/1` card,
   which is unchanged and still runs.** Six phases on engine truth (Bleeding, Decompensating, Arrest: PEA, Arrest:
   asystole, ROSC, Post-resuscitation after 120 s of ROSC); the bleed and the junctional rhythm are card-set as on the
@@ -32,6 +45,19 @@ the public API is what the packages export (see the API reference), the `pme-sce
   or the operating-room trigger, whichever is first). A window may also open on a rule on the DISPLAYED numerics
   (`{ display: rule }`): the operating-room trigger reads the monitor, arterial systolic below 40 mmHg (cuff below 50
   without an arterial line) for 30 s with EtCO₂ below 25 mmHg (ERC 2025; Harper et al. 2020; the owner's numbers).
+
+### Removed
+
+- **Judged rows from `pme-scenario/2` (the owner's ruling of 5 November; it withdraws the 29 October ruling
+  "recognition stays a judged row").** Every row of a `/2` card is an automatic row or an action: a team act the
+  instructor observes is a record action (no `give`; the press sends the scenario `record` command), timed by its window
+  when the card times it, recorded-not-timed without one. The schema has no `judged` block, and a card that declares one
+  fails validation with one line naming the replacement; `grade()` returns actions, outcomes and violations only;
+  Instructor v2 draws a record action as any action (no "press when met" row, no marker note); the Debrief's action table
+  carries it, `pme-debrief/3` has no `judged` key and a `/2` run has no recognition key-time tile. `showcase-mh-v2`:
+  "name malignant hyperthermia from the monitor" is a timed record action from Early signs' entry, 120 s (the
+  owner's number, 5 November); `showcase-haemorrhage-v2`: "recognise the return of circulation" is one from ROSC's
+  entry, timed at 120 s (the owner's ruling of 5 November, from the `/1` card's objective 3). `/1` cards keep their judged objectives.
 
 ### Fixed
 - A hello forged under a Remote's peer id while the Remote reconnects no longer blocks the Remote's commands
