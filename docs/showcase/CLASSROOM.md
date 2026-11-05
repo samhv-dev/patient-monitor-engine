@@ -66,8 +66,14 @@ another tab of the same browser (or typed again without its `?session=` part) wh
 first: "A classroom session is already running in another tab (code ……)". **Open that tab's session here** moves the
 session to the new tab: the same code, the case where it was (as after a reload), and the phones and second screens
 follow it there; the old tab stops and says "This session moved to another tab". **Start a new session** gives the new
-tab its own code; the phones stay with the old tab. Only tabs of the same browser are asked, and a tab the browser has
-put to sleep (Safari, after about 4 minutes hidden) does not answer: then the new tab starts its own session as before.
+tab its own code; the phones stay with the old tab. The new tab learns of the running session from the browser itself,
+so a tab the browser has put to sleep in the background (Safari, after about 4 minutes hidden) is still found. Such a
+tab can only hand its case over once it runs again: the new tab then says "Waiting for the other tab to hand over its
+session"; click the old tab once and the session moves with its case, or press **Start here without its case** (same
+code, the phones come to the new tab, the case starts again). Only tabs of the same browser are found. An old browser
+(Safari before 15.4) or the instructor's page opened at the laptop's network address instead of `127.0.0.1` cannot
+ask the browser: there the tabs are asked directly, and a sleeping tab is missed as before (the new tab starts its own
+session).
 
 ## The day before (at the venue if at all possible)
 
