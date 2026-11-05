@@ -252,8 +252,9 @@ describe('the run record', () => {
 
   it('D1: systolic, diastolic and CVP join the sample: the arterial line first, else the cuff in the second of its cycle only', () => {
     const r = fresh();
-    r.engine(numerics(10, { abpSys: 92, abpDia: 58, abpMean: 70, cvpMean: 17, nibpSys: 120, nibpDia: 80 })); // ART before the cuff
-    expect(r.data.samples.at(-1)).toMatchObject({ t: 10, sys: 92, dia: 58, cvp: 17, map: 70 });
+    // ART before the cuff; each stored in whole mmHg, as the monitor prints it (the orchestrator's ruling on #282)
+    r.engine(numerics(10, { abpSys: 92.4, abpDia: 57.6, abpMean: 70.2, cvpMean: 16.5, nibpSys: 120, nibpDia: 80 }));
+    expect(r.data.samples.at(-1)).toMatchObject({ t: 10, sys: 92, dia: 58, cvp: 17, map: 70.2 }); // `map` (TREND) as before
     // no arterial line reading; a cuff cycle reports 100/60 at 40.3 s (the hemo pipeline's one measurement of a cycle)
     r.engine(numerics(40, { abpSys: null, abpDia: null, abpMean: null, cvpMean: 12 }));
     r.engine(numerics(40.3, { nibpSys: 100, nibpDia: 60, nibpMean: 73 }));
@@ -303,7 +304,8 @@ describe('the run record', () => {
     // the pipeline emits nibpSys once per cycle (pipeline.ts nibpEvents): as many measurement events as cycles
     expect(nibpEvents).toBe(cycles.length);
     const withSys = r.data.samples.filter((s) => s.sys !== null);
-    expect(withSys.map((s) => [s.t, s.sys])).toEqual(cycles.map((c) => [Math.floor(c.t), c.sys]));
+    expect(withSys.map((s) => [s.t, s.sys])).toEqual(cycles.map((c) => [Math.floor(c.t), Math.round(c.sys)]));
+    expect(r.data.samples.every((s) => s.sys === null || Number.isInteger(s.sys))).toBe(true);
     expect(r.data.samples.every((s) => s.cvp === null)).toBe(true); // the card has no CVP line
   }, 60_000);
 
