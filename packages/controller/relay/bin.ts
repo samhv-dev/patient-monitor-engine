@@ -3,8 +3,9 @@
 //   [--room-ttl-min 10] [--quiet] [--static DIR] [--max-peers 60] [--remote-roles viewer|all].
 //   Runs on Node ≥ 22.12 with type stripping (no build step).
 // Stage 12 (the classroom): `--static DIR` also serves the built app on the same port, so learners' phones open
-// http://<this laptop>:<port>/?join=CODE; with it, other devices may only FOLLOW (`--remote-roles viewer`, the default
-// there) — the session code is on the projector.
+// http://<this laptop>:<port>/?join=CODE. Other devices may only FOLLOW, or sign in as the instructor's phone with the
+// PIN (`--remote-roles viewer`, the default with or without `--static`: plan instructor-peer-role.md Q12(b), a relay
+// started by hand is no weaker than the classroom's); `--remote-roles all` lets any device that knows the code command.
 import { parseArgs } from 'node:util';
 import { lanAddresses } from './http.ts';
 import { startRelay } from './server.ts';
@@ -21,7 +22,7 @@ const { values } = parseArgs({
     'remote-roles': { type: 'string' },
   },
 });
-const roles = values['remote-roles'] ?? (values.static ? 'viewer' : 'all');
+const roles = values['remote-roles'] ?? 'viewer';
 if (roles !== 'viewer' && roles !== 'all') throw new Error('--remote-roles must be viewer or all');
 const relay = await startRelay({
   port: Number(values.port),
