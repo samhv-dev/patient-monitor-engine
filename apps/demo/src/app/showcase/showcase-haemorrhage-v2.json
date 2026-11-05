@@ -153,7 +153,7 @@
           }
         }
       ],
-      "src": "No window: none is stated in the sources read (owner's ruling of 5 November: recorded, not timed: no window is stated in the sources read); graded as done in Bleeding or Decompensating."
+      "src": "No window: none stated (ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769) and ERC Guidelines 2025 Special Circumstances, Traumatic cardiac arrest (Resuscitation 2025;215:110753) read). recorded, not timed: no window is stated in the sources read; graded as done in Bleeding or Decompensating."
     },
     {
       "id": "intubate",
@@ -193,7 +193,7 @@
           }
         }
       ],
-      "src": "No window: none is stated in the sources read (recorded, not timed: no window is stated in the sources read); graded as done in Bleeding or Decompensating."
+      "src": "No window: none stated (ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769) read; p.3 states only that 'only rescuers with a high success rate should use tracheal intubation'). recorded, not timed: no window is stated in the sources read; graded as done in Bleeding or Decompensating."
     },
     {
       "id": "callForHelp",
@@ -206,7 +206,7 @@
         "arrestAsystole"
       ],
       "$comment": "The owner's ruling of 5 November: an action the instructor presses when the team calls. No engine command: the press is recorded by the scenario record command. No window (see src): graded as done in its phases.",
-      "src": "No window: no source reachable states one (recorded, not timed: no window is stated in the sources read); graded as done in its phases."
+      "src": "No window: ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769), p.6: 'All hospital staff should be able to recognise cardiac arrest rapidly, call for help, start CPR and defibrillate' (no time stated). recorded, not timed: no window is stated in the sources read; graded as done in its phases."
     },
     {
       "id": "cpr",
@@ -253,7 +253,7 @@
         "withinS": 30,
         "failAfterS": 120
       },
-      "src": "Window: the /1 card's objective 2 (within 30 s of the pulse loss); fail limit 120 s: the owner's ruling of 5 November; rate 100–120/min: design §11. Resuming after a rhythm check (the CPR press again) is recorded, not timed: no window is stated in the sources read: Miller's Anesthesia, 10th ed. (2025), Ch82 'Cardiopulmonary Resuscitation and Advanced Cardiac Life Support' (AHA-based; the source the owner's 'guideline for all' ruling takes, 5 November, until the ERC 2021 text is in the library), PDF p.3: 'the compressions should be resumed as soon as possible after rhythm analysis or defibrillation.'"
+      "src": "Window: the /1 card's objective 2 (within 30 s of the pulse loss); fail limit 120 s: the owner's ruling of 5 November; rate 100–120/min: design §11. UNDER THE OWNER'S REVIEW (5 November): ERC Guidelines 2025 Special Circumstances, Traumatic cardiac arrest (Resuscitation 2025;215:110753), p.29: 'Immediate resuscitative efforts in traumatic cardiac arrest focus on simultaneous treatment of reversible causes, which takes priority over chest compressions.' Resuming after a rhythm check (the CPR press again) is recorded, not timed: no window is stated in the sources read: ERC 2025 ALS states resumption only after a shock (p.7: 'Immediately resume chest compressions after shock delivery.'); for a check without a shock, Miller's Anesthesia, 10th ed. (2025), Ch82 'Cardiopulmonary Resuscitation and Advanced Cardiac Life Support' (AHA-based; the source the owner's 'guideline for all' ruling takes, 5 November, until the ERC 2021 text is in the library), PDF p.3: 'the compressions should be resumed as soon as possible after rhythm analysis or defibrillation.'"
     },
     {
       "id": "bag",
@@ -289,7 +289,7 @@
           }
         }
       },
-      "src": "10/min: Miller's Anesthesia, 10th ed. (2025), Ch82 'Cardiopulmonary Resuscitation and Advanced Cardiac Life Support' (AHA-based; the source the owner's 'guideline for all' ruling takes, 5 November, until the ERC 2021 text is in the library), PDF p.7: 'After placement of an advanced airway, it is recommended to provide 1 breath every 6 seconds (10 breaths/min) while continuous chest compressions are being performed.' No window (recorded, not timed: no window is stated in the sources read)."
+      "src": "10/min: ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769), p.8: 'Once a tracheal tube or a SGA has been inserted, ventilate the lungs at a rate of 10 min-1 and continue chest compressions without pausing during ventilations.' No window (recorded, not timed: no window is stated in the sources read)."
     },
     {
       "id": "epinephrine",
@@ -352,7 +352,7 @@
           ]
         }
       ],
-      "src": "Repeat 180–300 s from the previous dose as given: Miller's Anesthesia, 10th ed. (2025), Ch82 'Cardiopulmonary Resuscitation and Advanced Cardiac Life Support' (AHA-based; the source the owner's 'guideline for all' ruling takes, 5 November, until the ERC 2021 text is in the library), PDF p.9: 'standard-dose epinephrine (1 mg every 3–5 minutes) is recommended for patients in cardiac arrest.' The first dose has no window (recorded, not timed: no window is stated in the sources read). Violation IV or IO: the owner's ruling of 5 November."
+      "src": "ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769), p.8: 'Give adrenaline 1 mg as soon as possible for adult patients in cardiac arrest with a non-shockable rhythm.' and 'Repeat adrenaline 1 mg every 3–5 min whilst ALS continues.' The first dose: 'as soon as possible', no number (recorded, not timed: no window is stated in the sources read); the repeat 180–300 s from the previous dose as given. UNDER THE OWNER'S REVIEW: ERC Guidelines 2025 Special Circumstances, Traumatic cardiac arrest (Resuscitation 2025;215:110753), p.31: 'the role of inotropes and vasopressors in traumatic cardiac arrest (TCA) is unclear.' Violation IV or IO: the owner's ruling of 5 November."
     },
     {
       "id": "sourceControl",
@@ -372,7 +372,7 @@
           }
         }
       ],
-      "src": "No window (recorded, not timed: no window is stated in the sources read); offered in the arrest phases, as on the /1 card."
+      "src": "No window: ERC Guidelines 2025 Special Circumstances, Traumatic cardiac arrest (Resuscitation 2025;215:110753), p.31: 'The main principle is to achieve immediate haemostasis.' (no time stated). recorded, not timed: no window is stated in the sources read; offered in the arrest phases, as on the /1 card."
     },
     {
       "id": "massiveTransfusion",
@@ -411,7 +411,7 @@
           "min": 300
         }
       },
-      "src": "Blood at ≥ 300 mL/min: the plan's criterion (scenario-format-v2-plan.md §F9). Miller's Anesthesia, 10th ed., Ch45, Ch46 and Ch62 were read and define no massive-transfusion volume or rate; the nearest statements: Ch45 Fig. 45.7 (PDF p.23, printed p.1420), indications for the transfusion protocol 'BP <90 mm Hg after 2 PRBC' and 'Blood loss = circulating blood volume'; Ch62 Fig. 62.9 (PDF p.21, printed p.2020), activation in the trauma OR at 'EBL > 150 mL/min'. No window (recorded, not timed: no window is stated in the sources read)."
+      "src": "Blood at ≥ 300 mL/min: the plan's criterion (scenario-format-v2-plan.md §F9). No source read states a massive-transfusion volume or rate: ERC Guidelines 2025 Special Circumstances, Traumatic cardiac arrest (Resuscitation 2025;215:110753), p.31, only 'enabling the hospital to activate the massive transfusion protocol'; Miller's Anesthesia, 10th ed., Ch45, Ch46 and Ch62 define none (nearest: Ch45 Fig. 45.7, PDF p.23, printed p.1420, 'BP <90 mm Hg after 2 PRBC' and 'Blood loss = circulating blood volume'; Ch62 Fig. 62.9, PDF p.21, printed p.2020, 'EBL > 150 mL/min'). No window (recorded, not timed: no window is stated in the sources read)."
     },
     {
       "id": "txa",
@@ -446,7 +446,7 @@
           ]
         }
       },
-      "src": "1 g: Miller's Anesthesia, 10th ed., Ch62 Fig. 62.9 (PDF p.21, printed p.2020): 'Consider tranexamic acid 1 g over 10 minutes followed by infusion of 1 g over 8 hours'. No window (recorded, not timed: no window is stated in the sources read); the 3-h clause dropped (CRASH-2's window is always satisfied in this 25-min case)."
+      "src": "1 g: ERC 2025 gives no dose (ERC Guidelines 2025 Special Circumstances, Traumatic cardiac arrest (Resuscitation 2025;215:110753), p.31: 'splints (pelvic splint), blood products, IV fluids and tranexamic acid can be used while transferring the patient for surgical haemorrhage control'); the dose from Miller's Anesthesia, 10th ed., Ch62 Fig. 62.9 (PDF p.21, printed p.2020): 'Consider tranexamic acid 1 g over 10 minutes followed by infusion of 1 g over 8 hours'. No window (recorded, not timed: no window is stated in the sources read); the 3-h clause dropped (CRASH-2's window is always satisfied in this 25-min case)."
     },
     {
       "id": "rhythmCheck",
@@ -477,7 +477,7 @@
           "tolerance": 10
         }
       },
-      "src": "Every 2 min: Miller's Anesthesia, 10th ed. (2025), Ch82 'Cardiopulmonary Resuscitation and Advanced Cardiac Life Support' (AHA-based; the source the owner's 'guideline for all' ruling takes, 5 November, until the ERC 2021 text is in the library), PDF p.9: compressions 'continued for 2 minutes before reassessing the underlying cardiac rhythm'. Tolerance ±10 s: the 10 s is the pulse-check pause limit, PDF p.3 ('The health care provider should take no more than 10 seconds to check for a pulse'), applied by the orchestrator as the interval tolerance (5 November); the text states no tolerance for the interval. First check 110–130 s after CPR starts, then every 110–130 s from the previous check as taken."
+      "src": "Every 2 min: ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769), p.7: '...the underlying cardiac arrest rhythm may guide the decision to perform a rhythm and pulse check every two minutes.' Tolerance ±10 s UNDER THE OWNER'S REVIEW: the 10 s was the pulse-check pause limit of Miller's Anesthesia, 10th ed. (2025), Ch82 'Cardiopulmonary Resuscitation and Advanced Cardiac Life Support' (AHA-based; the source the owner's 'guideline for all' ruling takes, 5 November, until the ERC 2021 text is in the library) (PDF p.3, 'no more than 10 seconds to check for a pulse'), applied by the orchestrator as the interval tolerance; ERC 2025 ALS states 'pulse/rhythm checks (less than 10 s)' (p.34) and, for the rhythm, 'identify a cardiac arrest rhythm (within 5 s)' (p.6); no source states a tolerance for the interval. ERC 2025 ALS p.7 also: 'If asystole is displayed there would be no need to pause chest compressions for a rhythm check.' First check 110–130 s after CPR starts, then every 110–130 s from the previous check as taken."
     },
     {
       "id": "stopCpr",
