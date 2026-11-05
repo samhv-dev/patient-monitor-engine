@@ -135,6 +135,31 @@
   ],
   "actions": [
     {
+      "id": "announceDiagnosis",
+      "label": "Recognise and announce the diagnosis: PEA from hypovolaemia (pseudo-PEA)",
+      "kind": "communication",
+      "phases": [
+        "decompensating",
+        "arrestPea",
+        "arrestAsystole"
+      ],
+      "$comment": "Replaces the /1 card's judged objective 1 (the owner's ruling of 5 November). The instructor presses it when the team says the diagnosis aloud; no engine command (the scenario record command).",
+      "window": {
+        "anchor": {
+          "rule": {
+            "value": {
+              "var": "sbp",
+              "op": "<",
+              "value": 25,
+              "forS": 10
+            }
+          }
+        },
+        "withinS": 30
+      },
+      "src": "Window from the first sign of the PEA the learners can see: systolic below 25 mmHg held 10 s, the /1 card's own PEA rule (pseudo-PEA, ART about 20/14), 34 s before the model's pulse loss on this course; the decompensation entry (systolic below 60) is a sign of shock, not yet of the PEA. Window length 30 s [PLACEHOLDER: no source; the /1 card's response time for CPR]. The owner's ruling of 5 November amends the 29 October ruling (recognition stays a judged row) for /2 cards: recognition is a timed action the instructor presses when the team says the diagnosis aloud."
+    },
+    {
       "id": "oxygen",
       "label": "Oxygen by face mask, FiO₂ 1.0",
       "kind": "procedure",
@@ -213,10 +238,11 @@
       "label": "Start CPR: compressions 100–120/min, bag via the tube 10/min, FiO₂ 1.0",
       "kind": "device",
       "phases": [
+        "decompensating",
         "arrestPea",
         "arrestAsystole"
       ],
-      "$comment": "The /1 card's objective 2 (CPR within 30 s of the model's pulse loss) and the owner's ruling of 5 November: within 30 s met, 30 s to 2 min overdue, after 2 min failed though started (failAfterS). Rate 100–120/min (design §11). Press it again to resume the compressions after a rhythm check.",
+      "$comment": "The /1 card's objective 2 (CPR within 30 s of the model's pulse loss) and the owner's ruling of 5 November: within 30 s met, 30 s to 2 min overdue, after 2 min failed though started (failAfterS). Rate 100–120/min (design §11). Pressed again it also resumes the compressions after a rhythm check (as the Resume CPR row does).",
       "give": [
         {
           "type": "applyEvent",
@@ -249,11 +275,37 @@
         }
       },
       "window": {
-        "anchor": "pulseLoss",
+        "anchor": {
+          "first": [
+            "pulseLoss",
+            {
+              "rule": {
+                "all": [
+                  {
+                    "value": {
+                      "var": "sbp",
+                      "op": "<",
+                      "value": 50,
+                      "forS": 10
+                    }
+                  },
+                  {
+                    "slope": {
+                      "var": "etco2",
+                      "op": "<",
+                      "perMin": 0,
+                      "overS": 60
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
         "withinS": 30,
         "failAfterS": 120
       },
-      "src": "Window: the /1 card's objective 2 (within 30 s of the pulse loss); fail limit 120 s: the owner's ruling of 5 November; rate 100–120/min: design §11. UNDER THE OWNER'S REVIEW (5 November): ERC Guidelines 2025 Special Circumstances, Traumatic cardiac arrest (Resuscitation 2025;215:110753), p.29: 'Immediate resuscitative efforts in traumatic cardiac arrest focus on simultaneous treatment of reversible causes, which takes priority over chest compressions.' Resuming after a rhythm check (the CPR press again) is recorded, not timed: no window is stated in the sources read: ERC 2025 ALS states resumption only after a shock (p.7: 'Immediately resume chest compressions after shock delivery.'); for a check without a shock, Miller's Anesthesia, 10th ed. (2025), Ch82 'Cardiopulmonary Resuscitation and Advanced Cardiac Life Support' (AHA-based; the source the owner's 'guideline for all' ruling takes, 5 November, until the ERC 2021 text is in the library), PDF p.3: 'the compressions should be resumed as soon as possible after rhythm analysis or defibrillation.'"
+      "src": "Window from the EARLIER of the model's pulse loss (the /1 card's objective 2) and ERC's operating-room rule, ERC Guidelines 2025 Special Circumstances (Resuscitation 2025;215:110753), p.11: 'Start chest compressions if the systolic blood pressure suddenly decreases below 50 mmHg, in association with fall in ETCO2, despite appropriate interventions.' (p.36: 'Recent proposals suggest starting chest compression if systolic blood pressure stays below 50 mmHg despite interventions to treat the underlying cause.'). Measured as: systolic (engine truth) below 50 mmHg held N = 10 s [PLACEHOLDER: the /1 card's own hold for its systolic rules], with EtCO2 falling, least-squares slope below Y = 0 mmHg/min (any fall) [PLACEHOLDER: ERC gives no size] over Z = 60 s [PLACEHOLDER: no source]. 'Despite appropriate interventions' cannot be computed and is not part of the rule. Within 30 s: the /1 card's objective 2; fail limit 120 s: the owner's ruling of 5 November; rate 100–120/min: design §11. UNDER THE OWNER'S REVIEW (5 November): ERC Guidelines 2025 Special Circumstances, Traumatic cardiac arrest (Resuscitation 2025;215:110753), p.29: 'Immediate resuscitative efforts in traumatic cardiac arrest focus on simultaneous treatment of reversible causes, which takes priority over chest compressions.' Resuming after a rhythm check (the CPR press again) is recorded, not timed: no window is stated in the sources read: ERC 2025 ALS states resumption only after a shock (p.7: 'Immediately resume chest compressions after shock delivery.'); for a check without a shock, Miller's Anesthesia, 10th ed. (2025), Ch82 'Cardiopulmonary Resuscitation and Advanced Cardiac Life Support' (AHA-based; the source the owner's 'guideline for all' ruling takes, 5 November, until the ERC 2021 text is in the library), PDF p.3: 'the compressions should be resumed as soon as possible after rhythm analysis or defibrillation.'"
     },
     {
       "id": "bag",
@@ -477,7 +529,42 @@
           "tolerance": 10
         }
       },
-      "src": "Every 2 min: ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769), p.7: '...the underlying cardiac arrest rhythm may guide the decision to perform a rhythm and pulse check every two minutes.' Tolerance ±10 s UNDER THE OWNER'S REVIEW: the 10 s was the pulse-check pause limit of Miller's Anesthesia, 10th ed. (2025), Ch82 'Cardiopulmonary Resuscitation and Advanced Cardiac Life Support' (AHA-based; the source the owner's 'guideline for all' ruling takes, 5 November, until the ERC 2021 text is in the library) (PDF p.3, 'no more than 10 seconds to check for a pulse'), applied by the orchestrator as the interval tolerance; ERC 2025 ALS states 'pulse/rhythm checks (less than 10 s)' (p.34) and, for the rhythm, 'identify a cardiac arrest rhythm (within 5 s)' (p.6); no source states a tolerance for the interval. ERC 2025 ALS p.7 also: 'If asystole is displayed there would be no need to pause chest compressions for a rhythm check.' First check 110–130 s after CPR starts, then every 110–130 s from the previous check as taken."
+      "src": "Every 2 min: ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769), p.7: '...perform a rhythm and pulse check every two minutes.' Tolerance ±10 s: AHA 2025 Guidelines Part 7 Adult Basic Life Support (Kleinman et al., Circulation 2025;152(suppl 2):S448–S478), S462 (class 1): 'During rhythm checks for adult cardiac arrest, the health care professional should minimize the time taken to check for a pulse (no more than 10 s)'; beside it ERC Guidelines 2025 Adult Advanced Life Support (Soar et al., Resuscitation 2025;215:110769), p.34: 'pulse/rhythm checks (less than 10 s)'. First check 110–130 s after CPR starts, then every 110–130 s from the previous check as taken."
+    },
+    {
+      "id": "resumeCpr",
+      "label": "Resume CPR after the rhythm check",
+      "kind": "device",
+      "phases": [
+        "arrestPea",
+        "arrestAsystole"
+      ],
+      "$comment": "The owner's ruling of 5 November: a timed action, compressions back within 10 s of each rhythm check (window anchored on each taking of the rhythm check). Graded on the compressions whatever sent them (this row or the CPR row).",
+      "give": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "cpr",
+            "active": true,
+            "rate": 110,
+            "quality": 0.8
+          }
+        }
+      ],
+      "device": {
+        "kind": "cpr",
+        "settings": {
+          "rate": {
+            "min": 100,
+            "max": 120
+          }
+        }
+      },
+      "window": {
+        "anchor": "each:action:rhythmCheck",
+        "withinS": 10
+      },
+      "src": "Within 10 s of each rhythm check: AHA 2025 Guidelines Part 7 Adult Basic Life Support (Kleinman et al., Circulation 2025;152(suppl 2):S448–S478), S462 (class 1): '...minimize the time taken to check for a pulse (no more than 10 s), and if the rescuer does not definitely feel a pulse, chest compressions should be restarted immediately.' The 10 s is AHA's pulse-check cap and the owner's number (5 November). The card's rhythm check is one instant press (compressions stop), so the window runs 10 s from that press. A check that finds a pulse (ROSC within the window) asks for no resumption."
     },
     {
       "id": "stopCpr",
@@ -516,20 +603,6 @@
     }
   ],
   "judged": [
-    {
-      "id": "recognisePea",
-      "kind": "recognition",
-      "text": "Recognise PEA from hypovolaemia: a rhythm on the ECG with no palpable pulse (pseudo-PEA at ART about 20/14: name it)",
-      "$comment": "The /1 card's objective 1. The clock starts on the displayed arterial systolic below 25 mmHg for 10 s, the /1 card's own PEA state (pseudo-PEA: ART about 20/14), what the learners see.",
-      "display": {
-        "value": {
-          "var": "sbp",
-          "op": "<",
-          "value": 25,
-          "forS": 10
-        }
-      }
-    },
     {
       "id": "recogniseRosc",
       "kind": "recognition",

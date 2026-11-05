@@ -77,6 +77,27 @@ describe('showcase-haemorrhage-v2: the grades of the owner\'s rulings (5 Novembe
     expect(row([a(670, { actionId: 'callForHelp', kind: 'communication' })], 'callForHelp').grade).toBe('met');
     expect(row([], 'callForHelp').grade).toBe('failed');
   });
+  it('CPR from the earlier of the pulse loss and the operating-room rule (SBP < 50 for 10 s with EtCO₂ falling)', () => {
+    const e2 = [...edges, { rule: 'action:cpr:anchor:1', t: 600, value: true }];
+    const g = (admin: Administration[]) => grade(doc, PH, admin, e2, 1200, { final: true }).actions.find((x) => x.id === 'cpr')!;
+    expect(g([cpr(620)])).toMatchObject({ grade: 'met', dueT: 600 });
+    expect(g([cpr(680)])).toMatchObject({ grade: 'overdue', dueT: 600 }); // in time for the pulse loss, late for the rule
+    expect(doc.actions.find((a) => a.id === 'cpr')?.phases).toEqual(['decompensating', 'arrestPea', 'arrestAsystole']);
+  });
+  it('resume CPR within 10 s of each rhythm check (AHA 2025 Part 7 S462; the owner\'s 10 s)', () => {
+    const chk = (t: number) => a(t, { actionId: 'rhythmCheck', kind: 'cpr', settings: { active: 0 } });
+    const r = grade(doc, PH, [cpr(680), chk(800), cpr(808), chk(860), cpr(875)], edges, 1200, { final: true }).actions.find((x) => x.id === 'resumeCpr')!;
+    expect(r).toMatchObject({ firstGrade: 'met', grade: 'overdue', givenT: 808 });
+    expect(r.repeats).toMatchObject([{ n: 2, grade: 'overdue', t: 875 }]);
+  });
+  it('announce the diagnosis: a timed action from SBP < 25 for 10 s (the /1 PEA rule), 30 s [placeholder]; the judged PEA row is gone', () => {
+    const e2 = [...edges, { rule: 'action:announceDiagnosis:anchor', t: 630, value: true }];
+    const g = (admin: Administration[]) => grade(doc, PH, admin, e2, 1200, { final: true }).actions.find((x) => x.id === 'announceDiagnosis')!;
+    expect(g([a(650, { actionId: 'announceDiagnosis', kind: 'communication' })])).toMatchObject({ grade: 'met', dueT: 630 });
+    expect(g([a(700, { actionId: 'announceDiagnosis', kind: 'communication' })]).grade).toBe('overdue');
+    expect(g([]).grade).toBe('failed');
+    expect(doc.judged?.map((j) => j.id)).toEqual(['recogniseRosc']);
+  });
   it('stop CPR within 120 s of ROSC (the /1 card\'s objective 3)', () => {
     expect(row([a(960, { actionId: 'stopCpr', kind: 'cpr', settings: { active: 0 } })], 'stopCpr').grade).toBe('met');
   });

@@ -216,7 +216,12 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
       const ids = [a.drug.id, ...(a.drug.alternatives ?? []).map((x) => x.id)].filter((id): id is string => id !== undefined && id in DRUGS);
       a.drug.route?.set.forEach((r, k) => ids.forEach((id) => routeHonoured(id, r) || warnings.push(`${at}/drug/route/set/${k}: ${id}: route ${r} is judged; the engine does not model it`)));
     }
-    if (a.window) anchor(a.window.anchor, `${at}/window/anchor`);
+    const wa = a.window?.anchor;
+    if (wa !== undefined && typeof wa !== 'string' && 'first' in wa) wa.first.forEach((x, k) => anchor(x, `${at}/window/anchor/first/${k}`));
+    else if (typeof wa === 'string' && wa.startsWith('each:action:')) {
+      action(wa.slice(12), `${at}/window/anchor`);
+      if (a.window?.failAfterS !== undefined) errors.push(`${at}/window/failAfterS: not with an each:action anchor`);
+    } else if (wa !== undefined) anchor(wa as Anchor, `${at}/window/anchor`);
     if (a.window?.failAfterS !== undefined && a.window.failAfterS <= a.window.withinS) errors.push(`${at}/window/failAfterS: ${a.window.failAfterS} s must be greater than withinS ${a.window.withinS} s`);
     if (a.preparation && a.window) errors.push(`${at}/window: a preparation step is recorded, never graded: it has no window`);
     if (a.repeat && a.repeatWhile) errors.push(`${at}/repeat: an action has repeat or repeatWhile, not both`);

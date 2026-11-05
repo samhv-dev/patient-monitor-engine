@@ -238,6 +238,15 @@ describe('pme-scenario/2: failAfterS and preparation (plan F9)', () => {
       expect(r.ok ? [] : r.errors).toEqual([]);
     }
   });
+  it('accepts an each:action anchor and a first-of anchor; refuses an unknown action, a single-member first, failAfterS with each', () => {
+    for (const a of [{ window: { anchor: 'each:action:y', withinS: 10 } }, { window: { anchor: { first: ['pulseLoss', { rule: { value: { var: 'sbp', op: '<', value: 50, forS: 10 } } }] }, withinS: 30 } }]) {
+      const r = validateScenario(withAction(a));
+      expect(r.ok ? [] : r.errors).toEqual([]);
+    }
+    expect(errs(withAction({ window: { anchor: 'each:action:nope', withinS: 10 } }))).toContain('/actions/1/window/anchor: no action "nope"');
+    expect(errs(withAction({ window: { anchor: { first: ['pulseLoss'] }, withinS: 10 } })).length).toBeGreaterThan(0);
+    expect(errs(withAction({ window: { anchor: 'each:action:y', withinS: 10, failAfterS: 20 } }))).toContain('/actions/1/window/failAfterS: not with an each:action anchor');
+  });
   it('refuses failAfterS not past withinS, a preparation step with a window, preparation other than true, repeat with repeatWhile', () => {
     expect(errs(withAction({ window: { anchor: 'start', withinS: 30, failAfterS: 30 } }))).toContain('/actions/1/window/failAfterS: 30 s must be greater than withinS 30 s');
     expect(errs(withAction({ preparation: true, window: { anchor: 'start', withinS: 30 } }))).toContain('/actions/1/window: a preparation step is recorded, never graded: it has no window');

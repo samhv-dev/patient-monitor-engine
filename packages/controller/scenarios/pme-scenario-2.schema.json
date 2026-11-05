@@ -120,6 +120,14 @@
         { "type": "object", "required": ["rule"], "additionalProperties": false, "properties": { "rule": { "$ref": "#/definitions/phaseRule" } } }
       ]
     },
+    "windowAnchor": {
+      "description": "Where an action's window starts: any anchor; or `each:action:<id>`, one window per taking of that action (resume CPR within 10 s of each rhythm check; plan F9, the owner's ruling of 5 November); or { first: [anchors] }, the earliest of several (CPR from the model's pulse loss or ERC's operating-room rule, whichever comes first).",
+      "anyOf": [
+        { "$ref": "#/definitions/anchor" },
+        { "type": "string", "pattern": "^each:action:[A-Za-z][A-Za-z0-9_.-]{0,63}$" },
+        { "type": "object", "required": ["first"], "additionalProperties": false, "properties": { "first": { "type": "array", "minItems": 2, "items": { "$ref": "#/definitions/anchor" } } } }
+      ]
+    },
     "phase": {
       "type": "object",
       "required": ["id", "label"],
@@ -245,7 +253,7 @@
         "window": {
           "type": "object", "required": ["anchor", "withinS"], "additionalProperties": false,
           "properties": {
-            "anchor": { "$ref": "#/definitions/anchor" }, "withinS": { "type": "number", "exclusiveMinimum": 0 }, "notBeforeS": { "type": "number", "minimum": 0 },
+            "anchor": { "$ref": "#/definitions/windowAnchor" }, "withinS": { "type": "number", "exclusiveMinimum": 0 }, "notBeforeS": { "type": "number", "minimum": 0 },
             "failAfterS": { "type": "number", "exclusiveMinimum": 0, "description": "Seconds from the anchor after which the action is failed even if done (the owner's ruling of 5 November: CPR within 30 s met, 30 s to 2 min overdue, after 2 min failed though started). Greater than withinS." }
           }
         },

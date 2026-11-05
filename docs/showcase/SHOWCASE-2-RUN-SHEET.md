@@ -1191,8 +1191,11 @@ second shock that left an organised rhythm. The engine's course is R5's to the s
 measured) the pulse returns from the PEA (14:20 with CPR at 11:10; Post-resuscitation 16:20). The PEA turns
 idioventricular at 12:52 and to asystole at 15:25 untreated: CPR after that is too late on this course.
 
-**Rows and grades** (Instructor v2's ACTION, graded live): oxygen and intubate in Bleeding/Decompensating; in the arrest
-phases call for help, **Start CPR** (within 30 s of the pulse loss met, to 2 min overdue, later failed though started),
+**Rows and grades** (Instructor v2's ACTION, graded live): oxygen and intubate in Bleeding/Decompensating; **Recognise
+and announce the diagnosis** (press it when the team says it aloud; within 30 s of the systolic below 25 for 10 s, a
+placeholder window); **Start CPR** from Decompensating on (within 30 s of the pulse loss or of ERC's operating-room rule,
+systolic below 50 with EtCO₂ falling, whichever is first, met; to 2 min overdue; later failed though started); in the
+arrest phases call for help, **Resume CPR after the rhythm check** (within 10 s of each check),
 bag 10/min, epinephrine 1 mg IV (again every 3–5 min from the previous dose), source control, massive transfusion, TXA
 1 g, rhythm check (every 2 min); in ROSC "Rhythm check: pulse back, stop CPR" (within 2 min of ROSC). Epinephrine 1 mg
 IV or IO in ROSC prints as a violation. Each action's numbers carry their source in the card's `src` (Miller 10th ed.

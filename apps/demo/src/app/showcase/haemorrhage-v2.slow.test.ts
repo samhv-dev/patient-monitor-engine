@@ -175,12 +175,21 @@ describe('showcase-haemorrhage-v2: the haemorrhage card in pme-scenario/2', () =
     // objective 2: CPR at +271 s, past the 2-min fail limit (ruling 2): failed though started
     expect(cprGap).toBeGreaterThan(120);
     expect(row('cpr')).toMatchObject({ grade: 'failed', givenT: a.pressed[2] });
+    expect(row('cpr').dueT).toBeLessThanOrEqual(lossT + 1);
     // objective 3 and its recognition: no ROSC on this path (asystole stays), so neither applies
     expect(row('stopCpr').grade).toBe('not applicable');
     expect(g.judged.find((j) => j.id === 'recogniseRosc')!.fromT).toBeUndefined();
-    // objective 1: the judged PEA clock from the displayed ART below 25 for 10 s, the /1 card's own PEA state
+    // objective 1, now a timed action (owner, 5 November): its window opens at SBP < 25 for 10 s on truth, the /1 card's
+    // own PEA rule (the /1 pea state, read on the display, within a second); never pressed on the /1 path → failed
     const pea1 = a.states.find(([, s]) => s === 'pea')![0];
-    expect(Math.abs(g.judged.find((j) => j.id === 'recognisePea')!.fromT! - pea1)).toBeLessThanOrEqual(1);
+    expect(Math.abs(row('announceDiagnosis').dueT! - pea1)).toBeLessThanOrEqual(2);
+    expect(row('announceDiagnosis').grade).toBe('failed');
+    // CPR's window opens at the earlier of the pulse loss and ERC's operating-room rule (SBP < 50 for 10 s with EtCO2
+    // falling over 60 s): printed; the CPR at +4:46 is failed under either
+    const orT = v2.edges.find((e) => e.rule === 'action:cpr:anchor:1' && e.value)?.t;
+    console.log(`CPR anchors on the A4 path: pulse loss ${mmss(lossT)}, operating-room rule ${orT === undefined ? 'never' : mmss(orT)}; window from ${mmss(row('cpr').dueT!)}`);
+    expect(row('cpr').dueT).toBe(Math.min(lossT, orT ?? Infinity) === lossT ? row('cpr').dueT : orT);
+    // resume CPR within 10 s of each rhythm check: the two resumes (with the /1 card's shocks) printed above
     // the rows /1 never judged: as measured (printed above; the PR's table)
     for (const id of ['oxygen', 'intubate', 'bag', 'sourceControl', 'massiveTransfusion', 'txa']) expect(row(id).grade, id).toBe('met');
     expect(row('callForHelp').grade).toBe('failed'); // never pressed on the /1 path

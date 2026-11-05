@@ -208,8 +208,8 @@ for (const [target, presses, tag] of [['latent', 5, 'latent'], ['earlySigns', 6,
 }
 
 // Plan F9: the haemorrhage card in pme-scenario/2 (showcase-haemorrhage-v2) at 1440 × 900, at its fan-out: the arrest
-// phases, where eight actions open at once (CPR, call for help, bag, epinephrine, source control, massive transfusion,
-// TXA, rhythm check) beside the judged PEA row. The phases come from the physiology: oxygen at 0:30 and the ventilator
+// phases, where ten actions open at once (announce the diagnosis, call for help, CPR, bag, epinephrine, source control,
+// massive transfusion, TXA, rhythm check, resume CPR). The phases come from the physiology: oxygen at 0:30 and the ventilator
 // at 1:00 (the run sheet's presses), then fast-forward until Arrest: PEA (the model's pulse loss, ≈ 11:00) and, with no
 // CPR, Arrest: asystole (≈ 15:25). At each: no scroll, every open action a row, no row disabled, no phase name cut.
 for (const target of ['arrestPea', 'arrestAsystole'] as const) {
@@ -238,7 +238,7 @@ for (const target of ['arrestPea', 'arrestAsystole'] as const) {
     expect.soft(running.page[0], 'the page scrolls').toBeLessThanOrEqual(running.page[1] as number);
     expect.soft(running.view[0], 'the view scrolls').toBeLessThanOrEqual(running.view[1] as number);
     expect.soft(running.action[0], 'ACTION scrolls').toBeLessThanOrEqual(running.action[1] as number);
-    expect.soft(running.cardSteps, 'the phase has its eight open actions').toBe(8);
+    expect.soft(running.cardSteps, 'the phase has its ten open actions').toBe(10);
     expect.soft(running.stepRows, 'every open action of the phase is a row').toBe(running.cardSteps);
     expect.soft(running.disabled, 'a row is disabled').toBe(0);
     expect.soft(running.strip[0], 'the strip scrolls sideways').toBeLessThanOrEqual(running.strip[1] as number);

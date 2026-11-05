@@ -27,6 +27,9 @@ the public API is what the packages export (see the API reference), the `pme-sce
   later overdue, none due once the action's phases ended). A procedure, sample or communication action is recorded by
   its taking: a press of non-act commands (source control's bleed rate of 0) records one administration of its kind, and
   an action with nothing for the engine (call for help) is the new scenario `record` command, which Instructor v2 sends.
+  An action window may open on each taking of another action (`each:action:<id>`, one window per taking: resume CPR
+  within 10 s of each rhythm check) or at the earliest of several anchors (`{ first: [...] }`: CPR from the pulse loss
+  or ERC 2025's operating-room rule, systolic below 50 mmHg with a falling EtCO₂).
 - **`pme-scenario/2` F5.2 and F5.3: IM dantrolene modelled, and the "not modelled" register.** A drug row may carry
   `routeModels`, one mechanism per route other than IV: bioavailability `F`, absorption rate `ka`, lag `lagS`, each
   from its `src`, and an optional local effect raised as a new `drugLocalEffect` event. Dantrolene IM is the one row:

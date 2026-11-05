@@ -35,7 +35,7 @@
 //   first true EDGE at or after the previous dose, within intervalS.max − min; a condition already true at the dose that
 //   never falls and rises again makes no repeat row). NOT graded yet: `order`, `cumulative.min` and `cumulative.windowS` (the ceiling is summed over the whole run), and a decision with
 //   several effects is graded on the first effect of the record's kind.
-import type { Action, Administration, Amount, Anchor, AnyRule, Dose, PhaseEntry, PhaseRule, RuleEdge, ScenarioDocV2, Settings } from './types-v2.ts';
+import type { Action, Administration, Amount, AnyRule, Dose, PhaseEntry, PhaseRule, RuleEdge, ScenarioDocV2, Settings, WindowAnchor } from './types-v2.ts';
 
 export type Grade = 'met' | 'deviation' | 'overdue' | 'failed' | 'due' | 'not applicable';
 export interface RepeatGrade { n: number; grade: Grade; dueT?: number; t?: number; lines: string[] }
@@ -211,15 +211,21 @@ export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: 
   const phaseAt = (at: number) => phases.filter((p) => p.t <= at + EPS).at(-1)?.id;
 
   /** When the anchor opens the window; a rule (and pulseLoss, rosc) from `from` on (D3: the action's opening). */
-  const anchorT = (an: Anchor, rule: string, from = -Infinity): number | undefined => {
+  const anchorT = (an: WindowAnchor, rule: string, from = -Infinity): number | undefined => {
     if (an === 'start') return 0;
+    if (typeof an !== 'string' && 'first' in an) {
+      // the earliest of several (F9): each member from `from` on, its rule member named `<rule>:<i>`
+      const ts = an.first.map((x, i) => anchorT(x, `${rule}:${i}`, from)).filter((x): x is number => x !== undefined);
+      return ts.length ? Math.min(...ts) : undefined;
+    }
     if (an === 'pulseLoss' || an === 'rosc') return trueFrom(edges, an, from);
     if (typeof an !== 'string') return trueFrom(edges, rule, from);
     if (an.startsWith('phase:')) return phases.find((p) => p.id === an.slice(6))?.t;
     return gradeOf(an.slice(7))?.given?.t;
   };
-  const anchorWords = (an: Anchor): string =>
-    typeof an !== 'string' ? `${ruleWords(an.rule)} never held` : an.startsWith('phase:') ? `phase ${an.slice(6)} never entered` : an.startsWith('action:') ? `action ${an.slice(7)} never given` : `${an} never happened`;
+  const anchorWords = (an: WindowAnchor): string =>
+    typeof an !== 'string' ? ('first' in an ? `none of ${an.first.length} anchors happened` : `${ruleWords(an.rule)} never held`)
+    : an.startsWith('each:action:') ? `action ${an.slice(12)} never taken` : an.startsWith('phase:') ? `phase ${an.slice(6)} never entered` : an.startsWith('action:') ? `action ${an.slice(7)} never given` : `${an} never happened`;
 
   function gradeOf(id: string): { row: ActionGrade; given?: Administration } | undefined {
     const act = byId.get(id);
@@ -252,8 +258,42 @@ export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: 
     let row: Row;
     let given: (typeof sat)[number] | undefined;
 
+    const repeats: Array<Row & { n: number }> = [];
+    const inPhases = (x: number) => act.phases.includes(phaseAt(x) ?? '');
+    /** When the action's phases were left after `x` (Infinity: never, so far). */
+    const leftAfter = (x: number) => phases.find((p) => p.t > x + EPS && !act.phases.includes(p.id))?.t ?? Infinity;
+    const eachOf = typeof act.window?.anchor === 'string' && act.window.anchor.startsWith('each:action:') ? act.window.anchor.slice(12) : undefined;
+
     if (pre && trueFrom(edges, pre, opening ?? -Infinity) === undefined) row = na(`precondition never held: ${ruleWords(act.precondition as PhaseRule)}`);
-    else if (act.window) {
+    else if (act.window && eachOf !== undefined) {
+      // F9: one window per taking of `eachOf` (resume CPR within 10 s of each rhythm check), while one of this action's
+      // phases holds at the taking; each window takes the first satisfying record from its taking to the next taking. A
+      // window whose phases end before its deadline with no record is not due (the check found a pulse). The first
+      // window is the row, the later ones its repeats (n = 2, 3, …).
+      const { withinS } = act.window;
+      const takes = [...new Set(team.filter((a) => a.actionId === eachOf).map((a) => a.t))].sort((x, y) => x - y).filter((x) => inPhases(x));
+      const rows: Row[] = [];
+      takes.forEach((T, i) => {
+        const end = T + withinS;
+        const next = takes[i + 1] ?? Infinity;
+        const m = sat.find((x) => x.a.t >= T - EPS && x.a.t < next - EPS);
+        if (!m) {
+          if (leftAfter(T) <= Math.min(end, final ? Infinity : t) + EPS) return;
+          rows.push({ grade: open(end), lines: [], devs: [], dueT: T, windowS: withinS });
+          return;
+        }
+        const r: Row = { grade: m.a.t <= end + EPS ? 'met' : 'overdue', lines: [], devs: deviations(act, m.a, m.id, w), dueT: T, windowS: withinS, givenT: m.a.t };
+        if (r.grade === 'overdue') r.lines.push(`given ${n2(m.a.t - T)} s after the taking of ${eachOf}`);
+        if (r.grade === 'met' && r.devs.length) r.grade = 'deviation';
+        rows.push(r);
+        given ??= m;
+      });
+      if (!rows.length) row = na(takes.length ? `no window due: the phases ended after each taking of ${eachOf}` : `anchor never happened: ${anchorWords(act.window.anchor)}`);
+      else {
+        row = rows[0] as Row;
+        rows.slice(1).forEach((r, k) => repeats.push({ ...r, n: k + 2 }));
+      }
+    } else if (act.window) {
       const { anchor, withinS, notBeforeS, failAfterS } = act.window;
       // a rule-like anchor of an action none of whose phases occurred never opens its window (D3)
       const ruleLike = typeof anchor !== 'string' || anchor === 'pulseLoss' || anchor === 'rosc';
@@ -300,7 +340,6 @@ export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: 
     }
     if (row.grade === 'met' && row.devs.length) row.grade = 'deviation';
 
-    const repeats: Array<Row & { n: number }> = [];
     const rw = act.repeatWhile;
     if (given && rw) {
       const name = `action:${act.id}:repeatWhile`;
@@ -327,11 +366,9 @@ export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: 
     if (given && rp) {
       const lo = rp.intervalS.min ?? (rp.intervalS.value ?? 0) - (rp.intervalS.tolerance ?? 0);
       const hi = rp.intervalS.max ?? (rp.intervalS.value !== undefined ? rp.intervalS.value + (rp.intervalS.tolerance ?? 0) : Infinity);
-      const inPhases = (x: number) => act.phases.includes(phaseAt(x) ?? '');
-      /** When the action's phases were left after `x` (Infinity: never, so far). */
-      const leftAfter = (x: number) => phases.find((p) => p.t > x + EPS && !act.phases.includes(p.id))?.t ?? Infinity;
-      const doses = sat.filter((m) => m.a.t > given.a.t + EPS && inPhases(m.a.t));
-      let prev = given.a.t;
+      const t0 = given.a.t;
+      const doses = sat.filter((m) => m.a.t > t0 + EPS && inPhases(m.a.t));
+      let prev = t0;
       for (let n = 2; rp.maxCount === undefined || n <= rp.maxCount; n++) {
         const due = prev + lo;
         const end = prev + hi;

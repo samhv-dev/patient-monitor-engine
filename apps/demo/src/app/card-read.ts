@@ -321,7 +321,8 @@ export function actionWords(a: Action): string {
 }
 
 function anchorWords(x: Action['window'] extends infer W ? (W extends { anchor: infer A } ? A : never) : never): string {
-  if (typeof x !== 'string') return phaseRuleWords(x.rule);
+  if (typeof x !== 'string') return 'first' in x ? `the first of ${x.first.map((y) => anchorWords(y)).join(' or ')}` : phaseRuleWords(x.rule);
+  if (x.startsWith('each:action:')) return `each "${x.slice(12)}"`;
   if (x === 'start') return 'the start';
   if (x === 'pulseLoss') return 'the pulse loss';
   if (x === 'rosc') return 'ROSC';

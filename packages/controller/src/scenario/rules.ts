@@ -27,7 +27,7 @@ export interface NamedRule {
 
 /**
  * Every rule named anywhere in the card (Q17), in a fixed order: phase entry rules `phase:<id>`; per action its rule
- * anchor `action:<id>:anchor`, `action:<id>:precondition`, `action:<id>:repeatWhile`, `action:<id>:contraindication:<i>`;
+ * anchor `action:<id>:anchor` (a `first` anchor's rule members `action:<id>:anchor:<i>`), `action:<id>:precondition`, `action:<id>:repeatWhile`, `action:<id>:contraindication:<i>`;
  * `outcome:<id>` and its rule anchor `outcome:<id>:anchor`; a judged row's display rule `judged:<id>` (rank 2); and the
  * two anchors every card may name, `pulseLoss` and `rosc`.
  */
@@ -38,7 +38,12 @@ export function namedRules(doc: ScenarioDocV2): NamedRule[] {
   };
   for (const p of doc.phases) add(`phase:${p.id}`, p.enter);
   for (const a of doc.actions) {
-    if (a.window && typeof a.window.anchor !== 'string') add(`action:${a.id}:anchor`, a.window.anchor.rule);
+    const an = a.window?.anchor;
+    if (an && typeof an !== 'string') {
+      if ('rule' in an) add(`action:${a.id}:anchor`, an.rule);
+      // the earliest of several (F9): each rule member is its own named rule, `action:<id>:anchor:<i>`
+      else an.first.forEach((x, i) => typeof x !== 'string' && add(`action:${a.id}:anchor:${i}`, x.rule));
+    }
     add(`action:${a.id}:precondition`, a.precondition);
     add(`action:${a.id}:repeatWhile`, a.repeatWhile?.rule);
     a.contraindications?.forEach((c, i) => add(`action:${a.id}:contraindication:${i}`, c.when));

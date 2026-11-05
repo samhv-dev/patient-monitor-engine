@@ -325,3 +325,40 @@ describe('grade(): the owner\'s rulings of 5 November (plan F9)', () => {
     expect(a.admin.length).toBe(1);
   });
 });
+
+// Plan F9, the owner's rulings of 5 November (second set): a window per taking of another action (resume CPR within
+// 10 s of each rhythm check) and a window opening at the earliest of several anchors (CPR from the pulse loss or the
+// operating-room rule, whichever is first).
+describe('grade(): each:action and first anchors (plan F9)', () => {
+  const PH2: PhaseEntry[] = [PH[0] as PhaseEntry, { id: 'early', t: 100, rule: 'enter:early' }];
+  const chk = (t: number) => adm(t, { actionId: 'check', kind: 'cpr', settings: { active: 0 } });
+  const on1 = (t: number) => adm(t, { actionId: 'resume', kind: 'cpr', settings: { active: 1, rate: 110 } });
+  const RES: Partial<Action> = { id: 'resume', kind: 'device', device: { kind: 'cpr', settings: { rate: { min: 100, max: 120 } } }, window: { anchor: 'each:action:check', withinS: 10 } };
+  const CHECK: Partial<Action> = { id: 'check', kind: 'procedure' };
+  const g = (admin: Administration[], t: number, final = false, ph = PH2) => grade(card([CHECK, RES]), ph, admin, [], t, { final }).actions.find((a) => a.id === 'resume') as ActionGrade;
+
+  it('each:action: one window per taking; met within 10 s, overdue later, the worst taken', () => {
+    const a = g([chk(200), on1(205), chk(320), on1(335)], 400, true);
+    expect(a).toMatchObject({ firstGrade: 'met', grade: 'overdue', dueT: 200, givenT: 205 });
+    expect(a.repeats).toMatchObject([{ n: 2, grade: 'overdue', dueT: 320, t: 335 }]);
+  });
+  it('each:action: none after a taking → due, then overdue, failed at the end; a record before the taking does not count', () => {
+    expect(g([on1(150), chk(200)], 205).grade).toBe('due');
+    expect(g([chk(200)], 215).grade).toBe('overdue');
+    expect(g([chk(200)], 215, true).grade).toBe('failed');
+  });
+  it('each:action: no window when the phases end inside it (the check found a pulse); never taken → not applicable', () => {
+    const ph: PhaseEntry[] = [...PH2.slice(0, 1), { id: 'early', t: 100, exitT: 205, rule: 'enter:early' }, { id: 'base', t: 205, rule: 'enter:base' }];
+    expect(g([chk(200)], 400, true, ph).grade).toBe('not applicable');
+    expect(g([], 400, true).grade).toBe('not applicable');
+  });
+  it('first: the window opens at the earliest anchor that happened', () => {
+    const CPR: Partial<Action> = { id: 'cpr', kind: 'device', device: { kind: 'cpr', settings: { rate: { min: 100, max: 120 } } }, window: { anchor: { first: ['pulseLoss', { rule: K }] }, withinS: 30 } };
+    const cprOn = (t: number) => adm(t, { kind: 'cpr', settings: { active: 1, rate: 110 } });
+    const row = (edges: RuleEdge[], admin: Administration[]) => grade(card([CPR]), PH2, admin, edges, 1000, { final: true }).actions[0] as ActionGrade;
+    expect(row([...on('pulseLoss', 300), ...on('action:cpr:anchor:1', 250)], [cprOn(270)])).toMatchObject({ grade: 'met', dueT: 250 });
+    expect(row([...on('pulseLoss', 300), ...on('action:cpr:anchor:1', 250)], [cprOn(310)])).toMatchObject({ grade: 'overdue', dueT: 250 });
+    expect(row(on('pulseLoss', 300), [cprOn(310)])).toMatchObject({ grade: 'met', dueT: 300 });
+    expect(row([], [])).toMatchObject({ grade: 'not applicable' });
+  });
+});

@@ -45,6 +45,9 @@ export type AnyRule = PhaseRule | DisplayRule;
  *  the first second a rule holds. */
 export type Anchor = 'start' | 'pulseLoss' | 'rosc' | `phase:${string}` | `action:${string}` | { rule: PhaseRule };
 
+/** An action window's anchor (plan F9): any Anchor; `each:action:<id>`, one window per taking of that action; or the
+ *  earliest of several anchors. */
+export type WindowAnchor = Anchor | `each:action:${string}` | { first: Anchor[] };
 /** A prescribed value and what is accepted: `value` (± `tolerance`) and/or a `min`/`max` range. */
 export interface Amount { value?: number; tolerance?: number; min?: number; max?: number }
 export interface Dose extends Amount { unit: string }
@@ -98,7 +101,7 @@ export interface Action extends C {
   effect?: Array<{ kind: DeviceKind; settings: Settings }>;
   /** `failAfterS`: seconds from the anchor after which the action is failed even if done (owner, 5 November: CPR after
    *  2 min of the pulse loss), > withinS. */
-  window?: { anchor: Anchor; withinS: number; notBeforeS?: number; failAfterS?: number };
+  window?: { anchor: WindowAnchor; withinS: number; notBeforeS?: number; failAfterS?: number };
   order?: { after?: string[]; before?: string[] };
   /** Unconditional repeat while one of the action's phases holds, each from the previous dose as given (owner, 5 Nov). */
   repeat?: { intervalS: Amount; maxCount?: number };

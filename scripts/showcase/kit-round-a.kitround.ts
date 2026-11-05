@@ -2231,8 +2231,8 @@ test('A4 haemorrhage (E120): PEA on a junctional rhythm → asystole → CPR, vo
 // The A4 haemorrhage round on "Class IV haemorrhage, PEA and resuscitation (phases)" (showcase-haemorrhage-v2), run with
 // PME_PANEL=teach2. The same presses at the same cues as the /1 round above, with what the /2 card changes and only
 // that (the owner's rulings of 5 November): no VF is set at the rhythm checks (VF comes from the physiology, which draws
-// none on this course), so there is no Charge and no Shock; each rhythm check stops the compressions and the CPR row
-// resumes them 10 s later (the /1 round resumed them with the shock, ≈ 10 s after the check); the waits are on /2
+// none on this course), so there is no Charge and no Shock; each rhythm check stops the compressions and the Resume CPR row
+// resumes them 10 s later (within its 10-s window, AHA 2025 Part 7 S462) (the /1 round resumed them with the shock, ≈ 10 s after the check); the waits are on /2
 // PHASES (Decompensating, Arrest: PEA, Arrest: asystole), and "pulse back, stop CPR" is pressed only if the model's pulse
 // is back at the third rhythm check (on this path it is not: asystole stays in this model). The Debrief is read and
 // printed as on the /1 round, its action table and judged rows beside the phase history. The test name does not
@@ -2277,7 +2277,7 @@ test('A4 /2 haemorrhage (phases card): PEA → asystole → CPR, volume, epineph
     await R.speed(1);
     const tPc1 = await R.press('Rhythm check (compressions pause)');
     await R.untilT(tPc1 + 10);
-    const tRes1 = await R.press('Start CPR: compressions 100–120/min, bag via the tube 10/min, FiO₂ 1.0');
+    const tRes1 = await R.press('Resume CPR after the rhythm check');
     await R.speed(4);
     await R.untilT(tRes1 + 70);
     const tEpi2 = await R.press('Epinephrine 1 mg IV');
@@ -2285,7 +2285,7 @@ test('A4 /2 haemorrhage (phases card): PEA → asystole → CPR, volume, epineph
     await R.speed(1);
     const tPc2 = await R.press('Rhythm check (compressions pause)');
     await R.untilT(tPc2 + 10);
-    const tRes2 = await R.press('Start CPR: compressions 100–120/min, bag via the tube 10/min, FiO₂ 1.0');
+    const tRes2 = await R.press('Resume CPR after the rhythm check');
     await R.speed(4);
     await R.untilT(tRes2 + 118);
     await R.speed(1);

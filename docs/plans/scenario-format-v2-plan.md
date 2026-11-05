@@ -636,12 +636,20 @@ empty).
   scenario `record` command, Q19); a drug by a route outside the set leaves the action open; a `preparation` flag
   (the card has no preparation step: its monitoring is attached at the start and it has no line action). The
   correspondence table and the numbers left to the owner are in the F9 PR.
+- **The owner's second set of rulings, 5 November (F9):** the 29 October answer to Q3 ("name MH from the monitor"
+  stays a judged row; the 17:00 ruling: recognition objectives are judged rows) is AMENDED for `/2` cards: recognition
+  and announcing the diagnosis is a TIMED ACTION the instructor presses when the team says it aloud, its window from
+  the first sign. Applied to the haemorrhage card in F9; the MH card (`showcase-mh-v2`, its name-MH row) follows in a
+  separate PR. Also added: an action window anchored on each taking of another action (`each:action:<id>`: resume CPR
+  within 10 s of each rhythm check) and on the earliest of several anchors (`{ first: [...] }`: CPR from the pulse loss
+  or ERC 2025's operating-room rule, whichever is first).
 
 ### F10: Authoring guide, CHANGELOG, roadmap (4 h est.)
 - `docs/guides/scenario-authoring.md`: a `/2` section with one validated example (`<!-- example: pme-scenario/2 -->`);
   `docs-examples.test.ts` learns the tag. It documents F9's additions too: `window.failAfterS`, `preparation`, the
   graded unconditional `repeat` (from the previous dose as given), the scenario `record` command for an action with
-  no engine command, and an action's optional `src` (its numbers' source, quoted and cited; never interpreted).
+  no engine command, an action's optional `src` (its numbers' source, quoted and cited; never interpreted), and the window anchors
+  `each:action:<id>` (one window per taking of another action) and `{ first: [anchors] }` (the earliest of several).
 - `CHANGELOG.md` Unreleased: the format, the routes modelled, the debrief `/3`.
 - Roadmap rows: the arrest-phase sheet (18:30 ruling 4), the preparation bench (18:00), the charcoal filter and the MH
   activity reading the agent level (18:00), curve rows by a non-IV route, grades on a follower (Q16), the in-place swap,
