@@ -21,11 +21,19 @@
 //   precondition ("given before X") is met when X held at any time from the opening to the press, so the line's words
 //   are true.
 // - Precedence failed > overdue > due > deviation > met; a late, wrongly sized dose is overdue with the deviation line
-//   under it; repeats are graded each and the action takes the worst. `graded: false` actions are left out.
-// - Repeats: `repeatWhile` only (Q13: due from the later of the previous dose + intervalS.min and the condition's first
-//   true EDGE at or after the previous dose, within intervalS.max − min; a condition already true at the dose that never
-//   falls and rises again makes no repeat row). NOT graded yet: `order`, the unconditional
-//   `repeat`, `cumulative.min` and `cumulative.windowS` (the ceiling is summed over the whole run), and a decision with
+//   under it; repeats are graded each and the action takes the worst. `graded: false` and `preparation` actions are
+//   left out (a preparation step is recorded with its time, no verdict: the owner's ruling of 5 November).
+// - `window.failAfterS` (owner, 5 November: CPR within 30 s of the pulse loss met, 30 s to 2 min overdue, after 2 min
+//   failed though started): an administration later than anchor + failAfterS is failed, with its time as a line; with
+//   none, the row is failed live from that moment (not "overdue").
+// - `repeat` (unconditional; owner, 5 November: "a repeat's window runs from the previous dose as given"): each next
+//   matching administration given while one of the action's phases holds is due from the previous one + intervalS min
+//   to + max (min/max, or value ± tolerance): sooner is a deviation ("interval 178 s, 180–300 s asked"), later overdue,
+//   none failed at the end; no repeat is due once the action's phases have ended before its deadline (the arrest ended
+//   in ROSC before the next epinephrine was due). `maxCount` caps the rows.
+// - Conditional repeats, `repeatWhile` (Q13: due from the later of the previous dose + intervalS.min and the condition's
+//   first true EDGE at or after the previous dose, within intervalS.max − min; a condition already true at the dose that
+//   never falls and rises again makes no repeat row). NOT graded yet: `order`, `cumulative.min` and `cumulative.windowS` (the ceiling is summed over the whole run), and a decision with
 //   several effects is graded on the first effect of the record's kind.
 import type { Action, Administration, Amount, Anchor, AnyRule, Dose, PhaseEntry, PhaseRule, RuleEdge, ScenarioDocV2, Settings } from './types-v2.ts';
 
@@ -200,6 +208,7 @@ export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: 
   const done = new Map<string, { row: ActionGrade; given?: Administration }>();
   const busy = new Set<string>();
   const team = admin.filter((a) => !a.cardSet);
+  const phaseAt = (at: number) => phases.filter((p) => p.t <= at + EPS).at(-1)?.id;
 
   /** When the anchor opens the window; a rule (and pulseLoss, rosc) from `from` on (D3: the action's opening). */
   const anchorT = (an: Anchor, rule: string, from = -Infinity): number | undefined => {
@@ -245,7 +254,7 @@ export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: 
 
     if (pre && trueFrom(edges, pre, opening ?? -Infinity) === undefined) row = na(`precondition never held: ${ruleWords(act.precondition as PhaseRule)}`);
     else if (act.window) {
-      const { anchor, withinS, notBeforeS } = act.window;
+      const { anchor, withinS, notBeforeS, failAfterS } = act.window;
       // a rule-like anchor of an action none of whose phases occurred never opens its window (D3)
       const ruleLike = typeof anchor !== 'string' || anchor === 'pulseLoss' || anchor === 'rosc';
       const at = ruleLike && opening === undefined ? undefined : anchorT(anchor, `action:${act.id}:anchor`, opening);
@@ -259,11 +268,13 @@ export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: 
         given = undefined;
       } else {
         const deadline = at + withinS;
-        row = { grade: open(deadline), lines: [], devs: [], dueT: at, windowS: withinS };
+        const failT = failAfterS !== undefined ? at + failAfterS : undefined;
+        row = { grade: !final && failT !== undefined && t > failT + EPS ? 'failed' : open(deadline), lines: [], devs: [], dueT: at, windowS: withinS };
         if (given) {
           const g = given.a.t;
           row.givenT = g;
-          row.grade = g <= deadline + EPS ? 'met' : 'overdue';
+          row.grade = g <= deadline + EPS ? 'met' : failT !== undefined && g > failT + EPS ? 'failed' : 'overdue';
+          if (row.grade === 'failed') row.lines.push(`given ${dur(g - at)} after the anchor, failed after ${dur(failAfterS as number)}`);
           if (g < at - EPS) row.lines.push('given before the window opened');
           row.devs = deviations(act, given.a, given.id, w);
           if (notBeforeS && g >= at - EPS && g < at + notBeforeS - EPS) row.devs.push(`given ${n2(g - at)} s after the anchor, not before ${notBeforeS} s`);
@@ -312,6 +323,36 @@ export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: 
       }
     }
 
+    const rp = act.repeat;
+    if (given && rp) {
+      const lo = rp.intervalS.min ?? (rp.intervalS.value ?? 0) - (rp.intervalS.tolerance ?? 0);
+      const hi = rp.intervalS.max ?? (rp.intervalS.value !== undefined ? rp.intervalS.value + (rp.intervalS.tolerance ?? 0) : Infinity);
+      const inPhases = (x: number) => act.phases.includes(phaseAt(x) ?? '');
+      /** When the action's phases were left after `x` (Infinity: never, so far). */
+      const leftAfter = (x: number) => phases.find((p) => p.t > x + EPS && !act.phases.includes(p.id))?.t ?? Infinity;
+      const doses = sat.filter((m) => m.a.t > given.a.t + EPS && inPhases(m.a.t));
+      let prev = given.a.t;
+      for (let n = 2; rp.maxCount === undefined || n <= rp.maxCount; n++) {
+        const due = prev + lo;
+        const end = prev + hi;
+        const next = doses.find((m) => m.a.t > prev + EPS);
+        if (!next) {
+          // none given: due only while the action's phases hold through to the window's end (or to now, live)
+          if (leftAfter(prev) <= Math.min(end, final ? Infinity : t) + EPS || (final && t < due - EPS)) break;
+          repeats.push({ n, grade: open(end), lines: [], devs: [], dueT: due, windowS: hi - lo });
+          break;
+        }
+        const g = next.a.t;
+        const r: Row & { n: number } = { n, grade: g <= end + EPS ? 'met' : 'overdue', lines: [], devs: [], dueT: due, windowS: hi - lo, givenT: g };
+        if (g < due - EPS) r.devs.push(`interval ${n2(g - prev)} s, ${asked(rp.intervalS)} s asked`);
+        else if (g > end + EPS) r.lines.push(`interval ${n2(g - prev)} s, ${asked(rp.intervalS)} s asked`);
+        r.devs.push(...deviations(act, next.a, next.id, w));
+        if (r.grade === 'met' && r.devs.length) r.grade = 'deviation';
+        repeats.push(r);
+        prev = g;
+      }
+    }
+
     const worst = [row, ...repeats].reduce((b, r) => (RANK[r.grade] > RANK[b.grade] ? r : b), row);
     const deadline = worst.dueT !== undefined ? worst.dueT + (worst.windowS ?? 0) : undefined;
     const live =
@@ -331,9 +372,8 @@ export function grade(doc: ScenarioDocV2, phases: readonly PhaseEntry[], admin: 
     };
   }
 
-  const actions = doc.actions.filter((a) => a.graded !== false).map((a) => (gradeOf(a.id) as { row: ActionGrade }).row);
+  const actions = doc.actions.filter((a) => a.graded !== false && !a.preparation).map((a) => (gradeOf(a.id) as { row: ActionGrade }).row);
 
-  const phaseAt = (at: number) => phases.filter((p) => p.t <= at + EPS).at(-1)?.id;
   const violations: Violation[] = [];
   for (const act of doc.actions) {
     act.contraindications?.forEach((c, i) => {

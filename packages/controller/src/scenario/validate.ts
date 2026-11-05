@@ -217,6 +217,11 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
       a.drug.route?.set.forEach((r, k) => ids.forEach((id) => routeHonoured(id, r) || warnings.push(`${at}/drug/route/set/${k}: ${id}: route ${r} is judged; the engine does not model it`)));
     }
     if (a.window) anchor(a.window.anchor, `${at}/window/anchor`);
+    if (a.window?.failAfterS !== undefined && a.window.failAfterS <= a.window.withinS) errors.push(`${at}/window/failAfterS: ${a.window.failAfterS} s must be greater than withinS ${a.window.withinS} s`);
+    if (a.preparation && a.window) errors.push(`${at}/window: a preparation step is recorded, never graded: it has no window`);
+    if (a.repeat && a.repeatWhile) errors.push(`${at}/repeat: an action has repeat or repeatWhile, not both`);
+    const iv = a.repeat?.intervalS;
+    if (iv && (iv.min ?? iv.value) === undefined) errors.push(`${at}/repeat/intervalS: a repeat needs its shortest interval (min or value)`);
     a.order?.after?.forEach((x, k) => action(x, `${at}/order/after/${k}`));
     a.order?.before?.forEach((x, k) => action(x, `${at}/order/before/${k}`));
     rule(a.repeatWhile?.rule, `${at}/repeatWhile/rule`);

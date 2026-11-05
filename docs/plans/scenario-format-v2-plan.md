@@ -629,10 +629,19 @@ empty).
 - `haemorrhage-anaphylaxis.slow.test.ts` (haemorrhage arms only), `debrief-showcase.test.ts`, kit round A4
   haemorrhage, the run sheet: as in F8.
 - **Gate:** as F8, for the haemorrhage card: O1–O5 (amended 2026-10-29 after review).
+- **Built (5 November), with the owner's rulings of that day, which override the above where they differ:** a new card
+  `showcase-haemorrhage-v2` beside the `/1` card; VF only from the physiology, MEASURED: none on this course, so no VF
+  phase, no rhythm-check VF script and no shock row (six phases); CPR graded with a fail limit (`failAfterS`); the
+  unconditional `repeat` graded from the previous dose as given; call for help a timed communication action (the
+  scenario `record` command, Q19); a drug by a route outside the set leaves the action open; a `preparation` flag
+  (the card has no preparation step: its monitoring is attached at the start and it has no line action). The
+  correspondence table and the numbers left to the owner are in the F9 PR.
 
 ### F10: Authoring guide, CHANGELOG, roadmap (4 h est.)
 - `docs/guides/scenario-authoring.md`: a `/2` section with one validated example (`<!-- example: pme-scenario/2 -->`);
-  `docs-examples.test.ts` learns the tag.
+  `docs-examples.test.ts` learns the tag. It documents F9's additions too: `window.failAfterS`, `preparation`, the
+  graded unconditional `repeat` (from the previous dose as given) and the scenario `record` command for an action with
+  no engine command.
 - `CHANGELOG.md` Unreleased: the format, the routes modelled, the debrief `/3`.
 - Roadmap rows: the arrest-phase sheet (18:30 ruling 4), the preparation bench (18:00), the charcoal filter and the MH
   activity reading the agent level (18:00), curve rows by a non-IV route, grades on a follower (Q16), the in-place swap,

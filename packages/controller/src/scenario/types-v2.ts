@@ -85,14 +85,20 @@ export interface Action extends C {
   give?: DocCommand[];
   /** false: offered and recorded, never graded (a setup action). Absent: graded. */
   graded?: false;
+  /** A preparation step (monitoring, lines; owner, 5 November): offered and recorded with its time, no verdict, never
+   *  graded. */
+  preparation?: true;
   drug?: DrugCriteria;
   device?: { kind: DeviceKind; settings: Settings };
   fluid?: { type?: string[]; volumeMl?: Amount; rateMlMin?: Amount };
   physical?: { measure: string; settings?: Settings };
   /** A decision is graded on its engine-visible effect. */
   effect?: Array<{ kind: DeviceKind; settings: Settings }>;
-  window?: { anchor: Anchor; withinS: number; notBeforeS?: number };
+  /** `failAfterS`: seconds from the anchor after which the action is failed even if done (owner, 5 November: CPR after
+   *  2 min of the pulse loss), > withinS. */
+  window?: { anchor: Anchor; withinS: number; notBeforeS?: number; failAfterS?: number };
   order?: { after?: string[]; before?: string[] };
+  /** Unconditional repeat while one of the action's phases holds, each from the previous dose as given (owner, 5 Nov). */
   repeat?: { intervalS: Amount; maxCount?: number };
   /** Conditional repeat: again while the rule holds. */
   repeatWhile?: { rule: PhaseRule; intervalS: Amount };

@@ -302,16 +302,21 @@ export function phaseRowsOf(doc: ScenarioDocV2, phaseId: string): Row[] {
   return [...steps, ...judged, ...autos];
 }
 
-/** A /2 action's prescription in words, for its row's subtitle ("not graded" for a setup action). */
+/** A /2 action's prescription in words, for its row's subtitle ("not graded" for a setup action; "preparation: recorded, no
+ *  verdict" for a preparation step, owner 5 November). */
 export function actionWords(a: Action): string {
   const parts: string[] = [];
   const d = a.drug?.dose;
   if (d?.min !== undefined && d.max !== undefined) parts.push(`${d.min}–${d.max} ${d.unit}`);
   if (a.drug?.route) parts.push(a.drug.route.set.map((r) => r.toUpperCase()).join('/'));
-  if (a.window) parts.push(`within ${Math.round(a.window.withinS / 60 * 10) / 10} min of ${anchorWords(a.window.anchor)}`);
+  const min = (x: number) => Math.round(x / 60 * 10) / 10;
+  if (a.window) parts.push(`within ${min(a.window.withinS)} min of ${anchorWords(a.window.anchor)}${a.window.failAfterS ? `, failed after ${min(a.window.failAfterS)} min` : ''}`);
   if (a.precondition) parts.push(`when ${phaseRuleWords(a.precondition)}`);
   if (a.repeatWhile) parts.push(`again every ${Math.round((a.repeatWhile.intervalS.min ?? 0) / 60)}–${Math.round((a.repeatWhile.intervalS.max ?? 0) / 60)} min while ${phaseRuleWords(a.repeatWhile.rule)}`);
-  if (a.graded === false) parts.push('not graded');
+  const iv = a.repeat?.intervalS;
+  if (iv) parts.push(iv.min !== undefined && iv.max !== undefined ? `again every ${min(iv.min)}–${min(iv.max)} min` : `again every ${min(iv.value ?? iv.min ?? 0)} min`);
+  if (a.preparation) parts.push('preparation: recorded, no verdict');
+  else if (a.graded === false) parts.push('not graded');
   return parts.join(' · ') || 'press to give';
 }
 

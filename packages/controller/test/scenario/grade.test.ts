@@ -244,3 +244,79 @@ describe('grade(): repeats, violations, outcomes, judged rows', () => {
     expect(ruleWords({ phaseEntered: 'earlySigns' })).toBe('earlySigns'); // without the card's phases: the id
   });
 });
+
+// Plan F9, the owner's rulings of 5 November: a fail limit on a window (CPR), the unconditional repeat from the previous
+// dose as given (epinephrine), a preparation step recorded without a verdict, and a route outside the set leaving the
+// action open with no deviation.
+describe('grade(): the owner\'s rulings of 5 November (plan F9)', () => {
+  /** CPR 100–120/min within 30 s of the pulse loss, failed after 120 s though started. The pulse is lost at 200. */
+  const CPR: Partial<Action> = { id: 'cpr', kind: 'device', device: { kind: 'cpr', settings: { rate: { min: 100, max: 120 } } }, window: { anchor: 'pulseLoss', withinS: 30, failAfterS: 120 } };
+  const cprOn = (t: number) => adm(t, { kind: 'cpr', settings: { active: 1, rate: 110 } });
+  const loss = on('pulseLoss', 200);
+  const cprAt = (admin: Administration[], t: number, final = false) => grade(card([CPR]), PH, admin, loss, t, { final }).actions[0] as ActionGrade;
+
+  it('failAfterS: within 30 s met; 30 s to 2 min overdue; after 2 min failed though started, with the line', () => {
+    expect(cprAt([cprOn(225)], 1000, true)).toMatchObject({ grade: 'met', givenT: 225 });
+    expect(cprAt([cprOn(290)], 1000, true)).toMatchObject({ grade: 'overdue', live: 'overdue 1:00' });
+    expect(cprAt([cprOn(320)], 1000, true)).toMatchObject({ grade: 'overdue' }); // exactly 2 min: still overdue
+    const late = cprAt([cprOn(479)], 1000, true); // the demo's CPR at +279 s
+    expect(late).toMatchObject({ grade: 'failed', givenT: 479, live: 'failed' });
+    expect(late.lines).toContain('given 4:39 after the anchor, failed after 2:00');
+  });
+  it('failAfterS: none given → live due, then overdue, then failed from the fail limit; final failed', () => {
+    expect(cprAt([], 220).grade).toBe('due');
+    expect(cprAt([], 300).grade).toBe('overdue');
+    expect(cprAt([], 321).grade).toBe('failed');
+    expect(cprAt([], 250, true).grade).toBe('failed');
+  });
+
+  /** Epinephrine 1 mg every 180–300 s while `early` holds (the arrest), the first dose without a window. */
+  const EPI: Partial<Action> = { id: 'epi', drug: { id: 'epinephrine', dose: { value: 1, unit: 'mg' }, route: { set: ['iv', 'io'], preferred: 'iv' } }, repeat: { intervalS: { min: 180, max: 300 } } };
+  const epi = (t: number, x: Partial<Administration> = {}) => adm(t, { drugId: 'epinephrine', dose: 1, unit: 'mg', route: 'iv', ...x });
+  /** The arrest (`early`) from 100; ROSC (`base` again, outside the action's phases) at `rosc`. */
+  const ph = (rosc?: number): PhaseEntry[] => [PH[0] as PhaseEntry, { id: 'early', t: 100, rule: 'enter:early', ...(rosc !== undefined ? { exitT: rosc } : {}) }, ...(rosc !== undefined ? [{ id: 'base', t: rosc, rule: 'enter:base' }] : [])];
+  const epiAt = (admin: Administration[], t: number, final = false, rosc?: number) => grade(card([EPI]), ph(rosc), admin, [], t, { final }).actions[0] as ActionGrade;
+
+  it('repeat: each window runs from the previous dose AS GIVEN; in [min, max] met', () => {
+    const a = epiAt([epi(150), epi(350), epi(600)], 700, false);
+    expect(a.repeats).toMatchObject([{ n: 2, grade: 'met', dueT: 330, t: 350 }, { n: 3, grade: 'met', dueT: 530, t: 600 }, { n: 4 }]); // 3rd: from 350, not from 330
+    expect(a.repeats[2]).toMatchObject({ n: 4, grade: 'due', dueT: 780 });
+  });
+  it('repeat: sooner is a deviation with the interval; later overdue with the interval; the action takes the worst', () => {
+    const early = epiAt([epi(150), epi(328)], 400, true, 400); // the plan's 178 s
+    expect(early.repeats[0]).toMatchObject({ grade: 'deviation', lines: ['interval 178 s, 180–300 s asked'] });
+    expect(early.grade).toBe('deviation');
+    const late = epiAt([epi(150), epi(500)], 600, true, 600);
+    expect(late.repeats[0]).toMatchObject({ grade: 'overdue', lines: ['interval 350 s, 180–300 s asked'] });
+    expect(late.grade).toBe('overdue');
+  });
+  it('repeat: none given → due, overdue, failed at the end; none is due once the phases ended before the deadline (ROSC)', () => {
+    expect(epiAt([epi(150)], 400).repeats).toMatchObject([{ grade: 'due', dueT: 330 }]);
+    expect(epiAt([epi(150)], 500).repeats).toMatchObject([{ grade: 'overdue' }]);
+    expect(epiAt([epi(150)], 500, true).repeats).toMatchObject([{ grade: 'failed' }]);
+    expect(epiAt([epi(150)], 1000, true, 420).repeats).toEqual([]); // ROSC inside the window: no dose due
+    expect(epiAt([epi(150)], 1000, true, 300).repeats).toEqual([]); // ROSC before the window opened
+    expect(epiAt([epi(150)], 1000, true, 460).repeats).toMatchObject([{ grade: 'failed' }]); // ROSC after the deadline passed
+    expect(epiAt([epi(150)], 250, true).repeats).toEqual([]); // the run ended before the next dose was due
+  });
+  it('repeat: a dose after the phases ended is not a repeat; maxCount caps the rows', () => {
+    expect(epiAt([epi(150), epi(450)], 1000, true, 420).repeats).toEqual([]);
+    const capped = grade(card([{ ...EPI, repeat: { intervalS: { min: 180, max: 300 }, maxCount: 2 } }]), ph(), [epi(150), epi(350), epi(550)], [], 2000, { final: true }).actions[0] as ActionGrade;
+    expect(capped.repeats.map((r) => r.n)).toEqual([2]);
+  });
+  it('repeat: value ± tolerance as the interval (a rhythm check every 120 s)', () => {
+    const chk = grade(card([{ ...EPI, repeat: { intervalS: { value: 120 } } }]), ph(), [epi(150), epi(270), epi(398)], [], 400, { final: true }).actions[0] as ActionGrade;
+    expect(chk.repeats.slice(0, 2)).toMatchObject([{ grade: 'met' }, { grade: 'overdue', lines: ['interval 128 s, 120 s asked'] }]);
+  });
+
+  it('preparation: recorded, never graded (left out of the grades like graded: false)', () => {
+    const g = grade(card([{ id: 'line', kind: 'procedure', preparation: true }]), PH, [adm(120, { kind: 'procedure', actionId: 'line' })], [], 1000, { final: true });
+    expect(g.actions).toEqual([]);
+  });
+  it('a drug by a route outside the set leaves the action open (no deviation); the dose stays in its record', () => {
+    const a = epiAt([epi(150, { route: 'im' })], 400) as ActionGrade;
+    expect(a.grade).toBe('due');
+    expect(a.lines).toEqual(['route im not allowed']);
+    expect(a.admin.length).toBe(1);
+  });
+});

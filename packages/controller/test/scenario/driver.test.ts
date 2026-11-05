@@ -586,6 +586,37 @@ describe('ScenarioDriver: the administration record of a /2 card (F3)', () => {
     expect(a).toMatchObject({ kind: 'drug', drugId: 'dantrolene', route: 'im', result: { accepted: false, reason: r.reason, routeNotModelled: true } });
   });
 
+  // Q19 (plan F9): a procedure, sample or communication is recorded by its taking: a press whose commands are not
+  // clinical acts records one administration of the action's kind; one with no command is the scenario `record` command
+  it('a procedure press of non-act commands is recorded once per taking; a communication by `scenario record`', async () => {
+    const host = manualHost({ seed: 42 });
+    const driver = new ScenarioDriver({ target: host });
+    const card = {
+      ...CARD, id: 'rec2b',
+      actions: [
+        ...CARD.actions,
+        { id: 'source', label: 'Source control', kind: 'procedure', phases: ['calm'], give: [{ type: 'applyEvent', event: { kind: 'bleed', rateMlPerMin: 0 } }] },
+        { id: 'help', label: 'Call for help', kind: 'communication', phases: ['calm'] },
+      ],
+    };
+    expect(driver.load(card).ok).toBe(true);
+    host.engine.advanceTo(1);
+    driver.poll();
+    const t = host.engine.now().simT;
+    driver.host.dispatch(cmd('s1', { kind: 'bleed', rateMlPerMin: 0 }, { actionId: 'source', stageGroup: 'press-1' }));
+    driver.host.dispatch(cmd('s2', { kind: 'bleed', rateMlPerMin: 0 }, { actionId: 'source', stageGroup: 'press-1' })); // the same taking
+    driver.host.dispatch(cmd('b1', { kind: 'bleed', rateMlPerMin: 0 })); // a panel bleed: no action, not recorded
+    const rec = await driver.hook({ id: 'h1', issuedBy: 'instructor', type: 'scenario', action: 'record', target: 'help' });
+    expect(rec.accepted).toBe(true);
+    expect(driver.phaseRunner!.admin).toEqual([
+      { seq: 1, t, source: 'action', actionId: 'source', kind: 'procedure', result: { accepted: true } },
+      { seq: 2, t, source: 'action', actionId: 'help', kind: 'communication', result: { accepted: true } },
+    ]);
+    expect(driver.phaseRunner!.takings).toEqual({ source: 1, help: 1 });
+    expect((await driver.hook({ id: 'h2', issuedBy: 'instructor', type: 'scenario', action: 'record', target: 'dantrolene' })).accepted).toBe(false); // a drug: its own commands
+    expect((await driver.hook({ id: 'h3', issuedBy: 'instructor', type: 'scenario', action: 'record', target: 'nope' })).accepted).toBe(false);
+  });
+
   it('the record rewinds with a bookmark restore', async () => {
     const { driver, run } = rig3();
     run(1);

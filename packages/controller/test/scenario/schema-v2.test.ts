@@ -221,3 +221,25 @@ describe('pme-scenario/2: a judged route the engine does not model is a warning 
     expect(validateScenario(one)).toEqual({ ...before, doc: one });
   });
 });
+
+// Plan F9 (the owner's rulings of 5 November): a window's fail limit and a preparation step; both additive.
+describe('pme-scenario/2: failAfterS and preparation (plan F9)', () => {
+  const withAction = (a: object) => {
+    const d = minimalV2() as any;
+    d.actions.push({ id: 'y', label: 'Y', kind: 'procedure', phases: [d.phases[0].id], ...a });
+    return d;
+  };
+  it('accepts a window with failAfterS greater than withinS, and a preparation step without a window', () => {
+    for (const a of [{ window: { anchor: 'start', withinS: 30, failAfterS: 120 } }, { preparation: true }]) {
+      const r = validateScenario(withAction(a));
+      expect(r.ok ? [] : r.errors).toEqual([]);
+    }
+  });
+  it('refuses failAfterS not past withinS, a preparation step with a window, preparation other than true, repeat with repeatWhile', () => {
+    expect(errs(withAction({ window: { anchor: 'start', withinS: 30, failAfterS: 30 } }))).toContain('/actions/1/window/failAfterS: 30 s must be greater than withinS 30 s');
+    expect(errs(withAction({ preparation: true, window: { anchor: 'start', withinS: 30 } }))).toContain('/actions/1/window: a preparation step is recorded, never graded: it has no window');
+    expect(errs(withAction({ preparation: false })).join(' ')).toMatch(/preparation/);
+    expect(errs(withAction({ repeat: { intervalS: { min: 1 } }, repeatWhile: { rule: { signal: 'rosc' }, intervalS: { min: 1 } } }))).toContain('/actions/1/repeat: an action has repeat or repeatWhile, not both');
+    expect(errs(withAction({ repeat: { intervalS: { max: 300 } } }))).toContain('/actions/1/repeat/intervalS: a repeat needs its shortest interval (min or value)');
+  });
+});
