@@ -539,21 +539,27 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
   await page.emulateMedia({ media: 'print' });
   await printFontLoaded(page);
   const { page1, printFont } = await printHeights(page);
-  await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
-  const { handout } = await printHeights(page);
-  test.info().annotations.push({ type: 'MH /2 heights (mm)', description: `page 1 ${page1.toFixed(1)}, handout ${handout.toFixed(1)}` });
   // D6, page 2 on a record of this build (the pressures and alarm ends kept): the key-moments table with its ten
   // columns fits the 182 mm content width, and no Who cell wraps (else the plan drops its word to the shape alone)
   const p2 = await page.evaluate((mm) => {
     const sec = document.querySelector('#db-moments') as HTMLElement;
     const table = sec.querySelector('table.db-moments') as HTMLElement;
-    const who = [...sec.querySelectorAll('td.db-whocell')].map((td) => td.getBoundingClientRect().height / parseFloat(getComputedStyle(td).lineHeight || '0'));
+    const who = [...sec.querySelectorAll('td.db-whocell')].map((td) => { // the lines its words take (not the row's height)
+      const r = document.createRange();
+      r.selectNodeContents(td);
+      return new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size;
+    });
     const bp = [...sec.querySelectorAll('tbody tr[data-n]')].map((tr) => tr.querySelectorAll('td')[5]?.textContent ?? '');
     return { section: sec.getBoundingClientRect().width / mm, table: table.getBoundingClientRect().width / mm, height: sec.getBoundingClientRect().height / mm, whoLines: Math.max(...who), bp };
   }, MM);
-  test.info().annotations.push({ type: 'MH /2 page 2 (mm)', description: `key moments ${p2.height.toFixed(1)} tall, table ${p2.table.toFixed(1)} of ${p2.section.toFixed(1)} wide, Who cells ≤ ${p2.whoLines.toFixed(2)} lines; SBP/DBP ${p2.bp.join(' | ')}` });
+  test.info().annotations.push({ type: 'MH /2 page 2 (mm)', description: `key moments ${p2.height.toFixed(1)} tall, table ${p2.table.toFixed(1)} of ${p2.section.toFixed(1)} wide, Who cells ≤ ${p2.whoLines} line(s); SBP/DBP ${p2.bp.join(' | ')}` });
+  expect(p2.height, 'the key-moments section is laid out in print').toBeGreaterThan(0);
+  expect(p2.whoLines, 'no Who cell wraps').toBe(1);
   expect(p2.table, 'the key-moments table within the content width (mm)').toBeLessThanOrEqual(p2.section + 0.5);
   expect(p2.bp.some((x) => /^\d+\/\d+/.test(x)), 'an SBP/DBP printed on this run (arterial, or the cuff with its age)').toBe(true);
+  await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
+  const { handout } = await printHeights(page);
+  test.info().annotations.push({ type: 'MH /2 heights (mm)', description: `page 1 ${page1.toFixed(1)}, handout ${handout.toFixed(1)}` });
   expect(printFont, 'the bundled print font is loaded').toBe(true);
   expect(page1, 'page 1 (mm)').toBeLessThanOrEqual(267);
   expect(handout, 'handout (mm)').toBeLessThanOrEqual(267);
