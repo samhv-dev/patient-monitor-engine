@@ -97,13 +97,22 @@ describe('showcase-haemorrhage-v2: the grades of the owner\'s rulings (5 Novembe
     expect(r).toMatchObject({ firstGrade: 'met', grade: 'overdue', givenT: 808 });
     expect(r.repeats).toMatchObject([{ n: 2, grade: 'overdue', t: 875 }]);
   });
-  it('announce the diagnosis: a timed action from SBP < 25 for 10 s (the /1 PEA rule), 30 s [placeholder]; the judged PEA row is gone', () => {
+  it('announce the diagnosis: a timed action from SBP < 25 for 10 s (the /1 PEA rule), 30 s [placeholder]; no judged PEA row', () => {
     const e2 = [...edges, { rule: 'action:announceDiagnosis:anchor', t: 630, value: true }];
     const g = (admin: Administration[]) => grade(doc, PH, admin, e2, 1200, { final: true }).actions.find((x) => x.id === 'announceDiagnosis')!;
     expect(g([a(650, { actionId: 'announceDiagnosis', kind: 'communication' })])).toMatchObject({ grade: 'met', dueT: 630 });
     expect(g([a(700, { actionId: 'announceDiagnosis', kind: 'communication' })]).grade).toBe('overdue');
     expect(g([]).grade).toBe('failed');
-    expect(doc.judged?.map((j) => j.id)).toEqual(['recogniseRosc']);
+  });
+  it('no judged rows (retired, owner 5 November): recognising ROSC is a timed record action, 120 s from ROSC\'s entry (the /1 card\'s objective 3)', () => {
+    expect(doc).not.toHaveProperty('judged');
+    expect(doc.actions.find((x) => x.id === 'recogniseRosc')).toMatchObject({ kind: 'communication', phases: ['rosc', 'postResuscitation'], window: { anchor: 'phase:rosc', withinS: 120 } });
+    expect(doc.actions.find((x) => x.id === 'recogniseRosc')?.give).toBeUndefined(); // the press is the scenario record command
+    const said = (t: number) => a(t, { actionId: 'recogniseRosc', kind: 'communication' });
+    expect(row([said(960)], 'recogniseRosc')).toMatchObject({ grade: 'met', dueT: 900, windowS: 120, givenT: 960 });
+    expect(row([said(1080)], 'recogniseRosc').grade).toBe('overdue');
+    expect(row([], 'recogniseRosc').grade).toBe('failed');
+    expect(phaseRowsOf(doc, 'rosc').map((r) => r.kind)).not.toContain('judged');
   });
   it('stop CPR within 120 s of ROSC (the /1 card\'s objective 3)', () => {
     expect(row([a(960, { actionId: 'stopCpr', kind: 'cpr', settings: { active: 0 } })], 'stopCpr').grade).toBe('met');

@@ -27,16 +27,14 @@
 // printed; asserted: the call, the hyperventilation, the propofol infusion, dantrolene's first dose and the ventilation
 // back met (D3's anchors and precondition), the second dose met in the window Recrudescence opens, calcium, insulin and
 // CPR not applicable, no violation. The /1-versus-/2 table itself: mh-v1-v2-table.slow.test.ts.
-// The Debrief's first key time on the same graded run, the call ticked as the recognition (brief
-// fv2-debrief-recognition-clock-nov1 and the coordinator's ruling the same day): "Recognition (instructor's tick)" runs
-// from Early signs' entry (the judged row's display rule is that phase's entry: its rule held through its 20-s hold, when
-// the strip shows it) to the tick, as the /1 card's runs from its "early signs" state (EtCO₂ > 45 for 20 s), so both
-// print the same interval; it ran from 03:51, a bare EtCO₂ > 45 the premedicated patient crossed before intubation.
+// The recognition on the same graded run, "name MH" pressed at the call as the run sheet ticks it (08:12): a timed
+// record action since the owner's ruling of 5 November retired judged rows. Its window opens at Early signs' entry (the
+// former judged row's clock, brief fv2-debrief-recognition-clock-nov1 and the coordinator's ruling the same day: that
+// phase's rule held through its 20-s hold, when the strip shows it), as the /1 card's recognition runs from its "early
+// signs" state (EtCO₂ > 45 for 20 s), so both print the same start; not a bare EtCO₂ > 45 the premedicated patient
+// crossed before intubation (03:51).
 import { describe, expect, it } from 'vitest';
 import { grade, validateScenario, type ScenarioDocV2 } from '@pme/controller/scenario';
-import { keyTimes } from '../debrief-moments.ts';
-import { drugWords } from '../glossary.ts';
-import { emptyRun, type RunData } from '../record.ts';
 import { anyShowcaseDoc, runCard, type Act, type Run } from './harness.ts';
 
 /** The run sheet's demo path, §3 (the talk run's sim times; the stops hold the clock, so they are not in sim time). */
@@ -124,7 +122,10 @@ describe('showcase-mh-v2: the MH card in pme-scenario/2 on the demo path', () =>
 
   it('graded at the talk\'s end (24:31, final): the call, its ventilation and infusion, both dantrolene doses and ventilation back met; K⁺ and CPR not applicable; no violation', async () => {
     const TALK_END_S = 1471;
-    const b: Run = await runCard('showcase-mh-v2', PATH.map((p) => ({ press: p.v2, action: p.v2, t: p.t })), TALK_END_S, undefined, POLL_S);
+    // the run sheet's path with the recognition pressed at the call (the instructor's tick, 08:12): the record command only
+    const tick = PATH.find((p) => p.v2 === 'callCrisis')!.t;
+    const path = [...PATH.map((p) => ({ press: p.v2, action: p.v2, t: p.t })), { press: 'nameMh', action: 'nameMh', t: tick }].sort((x, y) => x.t - y.t);
+    const b: Run = await runCard('showcase-mh-v2', path, TALK_END_S, undefined, POLL_S);
     expect(b.refused).toEqual([]);
     const v2 = b.v2!;
     const g = grade(anyShowcaseDoc('showcase-mh-v2') as ScenarioDocV2, v2.phases, v2.admin, v2.edges, TALK_END_S, { final: true });
@@ -137,7 +138,6 @@ describe('showcase-mh-v2: the MH card in pme-scenario/2 on the demo path', () =>
     }
     lines.push(`  violations: ${g.violations.length ? g.violations.map((v) => `${mmss(v.t)} ${v.text} (${v.harm})`).join('; ') : 'none'}`);
     for (const o of g.outcomes) lines.push(`  outcome ${o.id}: ${o.grade}${o.t !== undefined ? ` ${mmss(o.t)}` : ''}`);
-    for (const j of g.judged) lines.push(`  judged ${j.id}: from ${at(j.fromT)}`);
     const named = ['action:callCrisis:anchor', 'action:ventilationBack:precondition', 'action:dantrolene:repeatWhile', 'action:dantroleneAgain:precondition'];
     for (const n of named) lines.push(`  edges ${n}: ${v2.edges.filter((e) => e.rule === n).map((e) => `${e.value ? '↑' : '↓'}${mmss(e.t)}`).join(' ')}`);
     lines.push(`  phases: ${v2.phases.map((p) => `${p.id} ${mmss(p.t)}`).join(', ')}`);
@@ -163,19 +163,11 @@ describe('showcase-mh-v2: the MH card in pme-scenario/2 on the demo path', () =>
     expect(row('cpr').grade).toBe('not applicable');
     expect(g.violations).toEqual([]);
 
-    // the Debrief's recognition key time, the instructor's tick at the call (08:12)
-    const doc = anyShowcaseDoc('showcase-mh-v2') as ScenarioDocV2;
-    const tick = PATH.find((p) => p.v2 === 'callCrisis')!.t;
-    const d: RunData = {
-      ...emptyRun('M 35 y 80 kg', 80, 0), doc, format: 2, phases: v2.phases, admin: v2.admin, edges: v2.edges, samples: [],
-      rows: [{ t: 0, kind: 'scenario', text: 'Scenario loaded: MH' }, { t: tick, kind: 'note', text: `Objective met: ${drugWords(doc.judged?.[0]?.text ?? '')}` }],
-    };
-    const k = keyTimes(d).find((x) => x.id === 'recognition')!;
-    const mmss1 = (t: number | null) => (t === null ? 'not ticked' : `${String(Math.floor(t / 60)).padStart(2, '0')}:${(t % 60).toFixed(1).padStart(4, '0')}`);
-    console.log(`  key time: ${k.label} | ${k.fromLabel} ${mmss1(k.fromT)} → ${mmss1(k.toT)}`);
+    // the recognition, pressed at the call (08:12): met, its window from Early signs' entry, 120 s (the owner's number, 5 November)
+    const mmss1 = (t: number | null) => (t === null ? 'not pressed' : `${String(Math.floor(t / 60)).padStart(2, '0')}:${(t % 60).toFixed(1).padStart(4, '0')}`);
     const entry = v2.phases.find((p) => p.id === 'earlySigns')!.t;
-    expect(g.judged.find((j) => j.id === 'nameMh')?.fromT, 'the judged clock is Early signs\' entry').toBe(entry);
-    expect(k).toEqual({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: entry, fromLabel: 'early signs', toT: tick, state: 'measured' });
+    console.log(`  nameMh: window ${mmss1(row('nameMh').dueT ?? null)} + ${row('nameMh').windowS} s → pressed ${mmss1(row('nameMh').givenT ?? null)}`);
+    expect(row('nameMh'), 'the recognition window opens at Early signs\' entry').toMatchObject({ grade: 'met', dueT: entry, windowS: 120, givenT: tick });
     // the /1 card on the same path: its recognition from its "early signs" state, the same second within a poll
     const a: Run = await runCard('showcase-mh', PATH.map((p) => ({ press: p.v1, t: p.t })), TALK_END_S, undefined, POLL_S);
     const early1 = a.states.find(([, id]) => id === 'earlySigns')![0];
