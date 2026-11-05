@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest';
 import { facts, objectives, perMinute, report3 } from './debrief.ts';
 import { debriefJson } from './debrief-export.ts';
 import { keyMoments, keyTimes } from './debrief-moments.ts';
-import type { RunData } from './record.ts';
+import { emptyRun, type RunData, type Sample } from './record.ts';
 
 const DIR = join(import.meta.dirname, '__fixtures__', 'debrief-2');
 /** fixture → the committed export it copies (the PR body says why each was taken). */
@@ -34,6 +34,9 @@ const raw = (name: keyof typeof FIXTURES): string => readFileSync(join(DIR, `${n
 const runOf = (name: keyof typeof FIXTURES): RunData => (JSON.parse(raw(name)) as { record: RunData }).record;
 
 /** What the Debrief's readers make of a record (the sections the export and the page print). */
+/** What a reader prints for a sample's systolic (D1): a file whose `keeps` lacks 'pressures' did not record it. */
+const sysWord = (d: RunData, s: Sample): string | number => (d.keeps?.includes('pressures') ? (s.sys ?? '–') : 'not recorded in this file');
+
 function readers(d: RunData) {
   const moments = keyMoments(d);
   return { objectives: objectives(d), facts: facts(d), keyMoments: moments, keyTimes: keyTimes(d, moments), report3: report3(d), perMinute: perMinute(d) };
@@ -46,6 +49,16 @@ describe.each(Object.keys(FIXTURES) as Array<keyof typeof FIXTURES>)('Debrief 2 
 
   it('objectives, facts, keyMoments, keyTimes, report3 and perMinute equal the pre-D golden', async () => {
     await expect(`${JSON.stringify(readers(runOf(name)), null, 1)}\n`).toMatchFileSnapshot(join(DIR, `${name}.readers.json`));
+  });
+
+  it('D1: a pre-D file has no `keeps` and no systolic, diastolic or CVP: "not recorded in this file", never a value', () => {
+    const d = runOf(name);
+    expect(d.keeps).toBeUndefined();
+    expect(d.samples.every((s) => s.sys === undefined && s.dia === undefined && s.cvp === undefined)).toBe(true);
+    expect(new Set(d.samples.map((s) => sysWord(d, s)))).toEqual(new Set(['not recorded in this file']));
+    // a record of this build says what it measured: a value, or "–" for a second with none
+    const now = { ...emptyRun(), samples: [{ ...(d.samples[0] as Sample), sys: 92 }, { ...(d.samples[1] as Sample), sys: null }] };
+    expect(now.samples.map((s) => sysWord(now, s))).toEqual([92, '–']);
   });
 
   it('debriefJson round-trips: the same record, and the sections the readers make', () => {

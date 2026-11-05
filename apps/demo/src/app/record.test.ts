@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import type { Administration, PhaseEntry, RuleEdge } from '@pme/controller/scenario';
 import induction from './showcase/showcase-induction.json';
 import mhV2 from './showcase/showcase-mh-v2.json';
-import { RunRecord } from './record.ts';
+import { emptyRun, RunRecord } from './record.ts';
 
 const applied = (tick: number, command: Record<string, unknown>, extra: Record<string, unknown> = {}): WireEvent =>
   ({ type: 'commandApplied', commandId: `c${tick}`, tick, resolved: { command: { id: `c${tick}`, issuedBy: 'instructor', ...command }, ...extra } }) as WireEvent;
@@ -18,6 +18,10 @@ const meas = (t: number, spo2: number): EngineEvent => ({ type: 'measurement', t
 const breath = (t: number, kind: string): EngineEvent => ({ type: 'breath', t, seq: 1, kind, tiS: 1, teS: 2, vtMl: 500, etco2True: 38 }) as unknown as EngineEvent;
 const labs = (t: number, k: number): EngineEvent => ({ type: 'labs', t, values: { k, lactate: 1.4, ph: 7.31 } }) as unknown as EngineEvent;
 const NO_LABS = { k: null, lactate: null, ph: null, glucose: null, tcore: null };
+/** D1: the pressures of a sample with no arterial line, no CVP and no cuff cycle in its second. */
+const NO_P = { sys: null, dia: null, cvp: null };
+/** A measurement event of the given numerics, each measured at `at` (default: the event's time), `null` invalid. */
+const numerics = (t: number, v: Record<string, number | null>, at = t): EngineEvent => ({ type: 'measurement', t, values: Object.fromEntries(Object.entries(v).map(([k, x]) => [k, { value: x, flag: x === null ? 'invalid' : 'valid', at }])) }) as unknown as EngineEvent;
 const fresh = () => new RunRecord(() => ({ patient: 'M 40 y 70 kg', weightKg: 70 }), () => 1_000);
 
 describe('the run record', () => {
@@ -123,10 +127,67 @@ describe('the run record', () => {
     r.engine(meas(0.7, 98)); // same second: the latest value
     r.engine(meas(1.1, 97));
     expect(r.data.samples).toEqual([
-      { t: 0, hr: 80, map: 75, spo2: 98, etco2: null, rr: null, temp: null, ...NO_LABS },
-      { t: 1, hr: 80, map: 75, spo2: 97, etco2: null, rr: null, temp: null, ...NO_LABS },
+      { t: 0, hr: 80, map: 75, spo2: 98, etco2: null, rr: null, temp: null, ...NO_LABS, ...NO_P },
+      { t: 1, hr: 80, map: 75, spo2: 97, etco2: null, rr: null, temp: null, ...NO_LABS, ...NO_P },
     ]);
   });
+
+  it('D1: systolic, diastolic and CVP join the sample: the arterial line first, else the cuff in the second of its cycle only', () => {
+    const r = fresh();
+    r.engine(numerics(10, { abpSys: 92, abpDia: 58, abpMean: 70, cvpMean: 17, nibpSys: 120, nibpDia: 80 })); // ART before the cuff
+    expect(r.data.samples.at(-1)).toMatchObject({ t: 10, sys: 92, dia: 58, cvp: 17, map: 70 });
+    // no arterial line reading; a cuff cycle reports 100/60 at 40.3 s (the hemo pipeline's one measurement of a cycle)
+    r.engine(numerics(40, { abpSys: null, abpDia: null, abpMean: null, cvpMean: 12 }));
+    r.engine(numerics(40.3, { nibpSys: 100, nibpDia: 60, nibpMean: 73 }));
+    r.engine(numerics(40.6, { hr: 88 })); // a later event of the same second keeps the cycle's value
+    for (let t = 41; t <= 45; t++) r.engine(numerics(t, { abpSys: null, abpDia: null, abpMean: null, cvpMean: 12, hr: 88 }));
+    // the same cycle's reading repeated, as a monitor's tile would hold it: it is still the cycle of 40 s, not a new one
+    r.engine(numerics(46, { nibpSys: 100, nibpDia: 60, nibpMean: 73 }, 40.3));
+    r.engine(numerics(100.2, { nibpSys: 104, nibpDia: 62, nibpMean: 76 })); // the next cycle
+    const at = (t: number) => r.data.samples.find((x) => x.t === t);
+    expect(at(40)).toMatchObject({ sys: 100, dia: 60, cvp: 12 });
+    expect([41, 42, 43, 44, 45, 46].map((t) => [at(t)?.sys, at(t)?.dia])).toEqual(Array(6).fill([null, null])); // the gap stays blank
+    expect(at(100)).toMatchObject({ sys: 104, dia: 62 });
+    // the finding D1 reports and does not change: `map` (TREND, the first valid of abpMean then nibpMean) holds the
+    // cycle's 73 in every second until the next cycle
+    expect([41, 46].map((t) => at(t)?.map)).toEqual([73, 73]);
+    // an invalid value is null; a line that stops reporting is null in the seconds it is silent, never its last value
+    r.engine(numerics(101, { abpSys: null, abpDia: null, cvpMean: null }));
+    r.engine(numerics(102, { hr: 70 }));
+    expect([at(101), at(102)].map((x) => [x?.sys, x?.dia, x?.cvp])).toEqual([[null, null, null], [null, null, null]]);
+  });
+
+  it('D1: a record keeps `keeps` = the facts its build records; a new record and emptyRun() have "pressures"', () => {
+    expect(fresh().data.keeps).toEqual(expect.arrayContaining(['pressures']));
+    expect(emptyRun().keeps).toEqual(expect.arrayContaining(['pressures']));
+    const r = fresh();
+    r.wire({ type: 'timeline', t: 0, tick: 0, cause: 'restart' } as WireEvent);
+    expect(r.data.keeps).toEqual(expect.arrayContaining(['pressures']));
+  });
+
+  it('D1 on a real engine: a cuff with no arterial line gives sys/dia in the second of each cycle only', async () => {
+    const v = validateScenario(induction);
+    if (!v.ok) throw new Error(v.errors.join('; '));
+    const eo = engineOptionsOf(v.doc, 7);
+    const engine = createEngine({ ...eo, mode: 'modeled', truthHz: 1, patient: { ...eo.patient, sensors: { ...v.doc.patient?.sensors, abp: 'none' } } } as never);
+    const r = fresh();
+    const cycles: Array<{ t: number; sys: number }> = [];
+    let nibpEvents = 0;
+    engine.on((e) => {
+      r.engine(e);
+      if (e.type === 'nibp' && e.result) cycles.push({ t: e.t, sys: e.result.sys });
+      if (e.type === 'measurement' && 'nibpSys' in e.values) nibpEvents++;
+    });
+    engine.advanceTo(1);
+    engine.dispatch({ id: 'n1', issuedBy: 'instructor', type: 'device', action: { device: 'nibp', action: 'auto', intervalMin: 1 } } as never);
+    for (let t = 1; t < 200; t += 0.5) engine.advanceTo(t + 0.5);
+    expect(cycles.length).toBeGreaterThanOrEqual(3);
+    // the pipeline emits nibpSys once per cycle (pipeline.ts nibpEvents): as many measurement events as cycles
+    expect(nibpEvents).toBe(cycles.length);
+    const withSys = r.data.samples.filter((s) => s.sys !== null);
+    expect(withSys.map((s) => [s.t, s.sys])).toEqual(cycles.map((c) => [Math.floor(c.t), c.sys]));
+    expect(r.data.samples.every((s) => s.cvp === null)).toBe(true); // the card has no CVP line
+  }, 60_000);
 
   it('Q7: the model’s K⁺, lactate, pH, glucose and core temperature join the 1 Hz sample', () => {
     const r = fresh();
@@ -136,8 +197,8 @@ describe('the run record', () => {
     r.engine({ type: 'truth', t: 1, tree: { hemo: { circ: { arrest: null } }, resp: { temp: { tc: 38.04 } } }, leaves: 2, dropped: 0, truncated: false } as unknown as EngineEvent);
     r.engine(meas(1.5, 97));
     expect(r.data.samples).toEqual([
-      { t: 0, hr: 80, map: 75, spo2: 99, etco2: null, rr: null, temp: null, ...NO_LABS },
-      { t: 1, hr: 80, map: 75, spo2: 97, etco2: null, rr: null, temp: null, k: 5.6, lactate: 1.4, ph: 7.31, glucose: 6.1, tcore: 38 },
+      { t: 0, hr: 80, map: 75, spo2: 99, etco2: null, rr: null, temp: null, ...NO_LABS, ...NO_P },
+      { t: 1, hr: 80, map: 75, spo2: 97, etco2: null, rr: null, temp: null, k: 5.6, lactate: 1.4, ph: 7.31, glucose: 6.1, tcore: 38, ...NO_P },
     ]);
   });
 
@@ -176,7 +237,7 @@ describe('the run record', () => {
     const copy = JSON.parse(JSON.stringify(r.data));
     expect(copy).toEqual(r.data);
     r.wire({ type: 'timeline', t: 0, tick: 0, cause: 'restart' } as WireEvent);
-    expect(r.data).toEqual({ startedAt: 1_000, lastWall: 1_000, patient: 'M 40 y 70 kg', weightKg: 70, doc: null, rows: [], samples: [], returns: 0 });
+    expect(r.data).toEqual({ startedAt: 1_000, lastWall: 1_000, patient: 'M 40 y 70 kg', weightKg: 70, doc: null, rows: [], samples: [], returns: 0, keeps: ['pressures'] });
   });
 
   it('on a real host: a bookmark restore keeps the course before it and marks the course after it undone', async () => {
@@ -334,6 +395,6 @@ describe('the run record', () => {
     one.wire(applied(0, { type: 'scenario', action: 'load', doc: induction }));
     one.wire({ type: 'scenario', t: 0, stateId: 'awake' } as WireEvent);
     one.engine(meas(1, 99));
-    expect(Object.keys(one.data)).toEqual(['startedAt', 'lastWall', 'patient', 'weightKg', 'doc', 'rows', 'samples', 'returns']);
+    expect(Object.keys(one.data)).toEqual(['startedAt', 'lastWall', 'patient', 'weightKg', 'doc', 'rows', 'samples', 'returns', 'keeps']);
   });
 });
