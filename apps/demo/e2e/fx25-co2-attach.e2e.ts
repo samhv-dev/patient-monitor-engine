@@ -71,7 +71,13 @@ async function save(page: Page, name: string, browserName: string): Promise<void
   writeFileSync(`${out}/${process.env.FX25_SHOT_TAG ?? 'after'}-${name}.png`, await shot8(page, 1)); // 1280×800, indexed
 }
 
-test('attaching the CO2 line on a ventilated patient: the CO2 lane starts blank at the attach point and fills from there', async ({ page, browserName }) => {
+// @known-flaky, class crash (outside our code): CI run 42132450433 (PR #288), e2e (webkit 1/3), attempt 1: "page.click:
+// Target page, context or browser has been closed" at 32 s, on the Devices tab click — before the CO2 line is attached,
+// so neither the attach point nor the lane's drawing (the device-pixel defect of #275) had run; retry #1 passed with
+// 0 of 12 captures inked beyond the sweep; local macOS WebKit 20/20. debrief.e2e.ts:225 in the same shard lost its page
+// the same way 6 min earlier, as main run 39539902747 did here before: the Linux WebKit web-process crash class
+// F-FX1-1 (docs/guides/known-deviations.md)
+test('attaching the CO2 line on a ventilated patient: the CO2 lane starts blank at the attach point and fills from there', { tag: '@known-flaky' }, async ({ page, browserName }) => {
   test.setTimeout(90_000);
   await page.setViewportSize({ width: 1280, height: 800 });
   await openApp(page, base, '#/teach', { warmMs: 2000 });
