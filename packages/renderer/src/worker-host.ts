@@ -178,8 +178,14 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
         ready = true;
         pumping = m.path === 'worker-pump';
         resolve(m.path);
-      } else if (m.type === 'events') onEvents(m.anchor, m.events);
-      else if (m.type === 'result') settle(m.reqId, (r) => r.resolve(m.result as never));
+      } else if (m.type === 'events') {
+        // read, then acknowledged: the worker sends the next batch only now, so a slow page holds one batch, not a queue
+        try {
+          onEvents(m.anchor, m.events);
+        } finally {
+          post({ type: 'eventsAck' });
+        }
+      } else if (m.type === 'result') settle(m.reqId, (r) => r.resolve(m.result as never));
       else if (m.type === 'snapshot') settle(m.reqId, (r) => r.resolve(m.snapshot as never));
       else if (m.type === 'restored') settle(m.reqId, (r) => (m.error === undefined ? r.resolve(undefined as never) : r.reject(new Error(m.error))));
       else if (m.type === 'advanced') settle(m.reqId, (r) => r.resolve({ tick: m.tick, simT: m.simT } as never));

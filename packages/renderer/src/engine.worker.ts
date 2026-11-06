@@ -5,7 +5,8 @@
 // importScripts the IIFE for a headless createEngine — it is inert and never touches that scope's onmessage.
 import { MonitorCore } from './monitor-core.ts';
 import type { Ctx2D } from './ctx.ts';
-import type { FromWorker, ToWorker } from './protocol.ts';
+import type { EngineEvent } from '@pme/engine-core';
+import type { ClockAnchor, FromWorker, ToWorker } from './protocol.ts';
 
 interface WorkerScope {
   postMessage(msg: FromWorker): void;
@@ -16,6 +17,34 @@ interface WorkerScope {
 let scope: WorkerScope; // Set by startWorker()
 let core: MonitorCore | null = null;
 let useRaf = false;
+// Brief 58: one event batch in flight. A batch is posted only when the page has acknowledged the last one; what the
+// engine generates meanwhile is merged into `held` (in order, the newest clock anchor), never dropped. A page slower
+// than this worker queued a batch per frame without bound, and a command's answer, on the same port, waited behind
+// them: 3.4 s at the CO2 press on WebKit in CI, 9.2 s at worst (PR #301's run 42184042259).
+let unread = 0; // batches posted and not yet acknowledged: 1 at most, 2 just after an answer sent the held ones
+let held: { anchor: ClockAnchor; events: EngineEvent[] } | null = null;
+function postEvents(anchor: ClockAnchor, events: EngineEvent[]): void {
+  if (unread > 0) {
+    held = { anchor, events: held ? held.events.concat(events) : [...events] }; // a copy: the core reuses its batch
+    return;
+  }
+  unread++;
+  scope.postMessage({ type: 'events', anchor, events });
+}
+/** What is held goes now, even with a batch in flight: an answer never overtakes events generated before it. */
+function release(): void {
+  if (!held) return;
+  const h = held;
+  held = null;
+  unread++;
+  scope.postMessage({ type: 'events', anchor: h.anchor, events: h.events });
+}
+/** Every answer to the page goes through here: the held events first, then the answer. */
+function answer(msg: FromWorker, transfer?: Transferable[]): void {
+  release();
+  if (transfer) (scope.postMessage as (msg: FromWorker, transfer: Transferable[]) => void)(msg, transfer);
+  else scope.postMessage(msg);
+}
 
 function loop(t: number): void {
   core?.frame(performance.timeOrigin + t);
@@ -28,12 +57,18 @@ function onMessage(ev: MessageEvent<ToWorker>): void {
     switch (m.type) {
       case 'init': {
         const ctx = m.canvas.getContext('2d', { alpha: false, desynchronized: true }) as unknown as Ctx2D;
-        core = new MonitorCore(m.canvas, ctx, m.size, m.opts, (anchor, events) => scope.postMessage({ type: 'events', anchor, events }));
+        unread = 0;
+        held = null;
+        core = new MonitorCore(m.canvas, ctx, m.size, m.opts, postEvents);
         useRaf = !m.mainPump && typeof scope.requestAnimationFrame === 'function';
         scope.postMessage({ type: 'ready', path: useRaf ? 'worker-raf' : 'worker-pump' });
         if (useRaf) scope.requestAnimationFrame?.(loop);
         return;
       }
+      case 'eventsAck': // the page has read a batch: once it has read them all, the held ones go
+        unread = Math.max(0, unread - 1);
+        if (unread === 0) release();
+        return;
       case 'frame':
         if (!useRaf) core?.frame(m.epochMs);
         return;
@@ -42,7 +77,7 @@ function onMessage(ev: MessageEvent<ToWorker>): void {
         return;
       case 'command': {
         const result = core ? core.command(m.cmd) : { accepted: false, tick: 0, reason: 'not initialised' };
-        scope.postMessage({ type: 'result', reqId: m.reqId, result });
+        answer({ type: 'result', reqId: m.reqId, result });
         return;
       }
       case 'resize':
@@ -67,8 +102,8 @@ function onMessage(ev: MessageEvent<ToWorker>): void {
         core?.setVisible(m.visible);
         return;
       case 'snapshot':
-        if (core) scope.postMessage({ type: 'snapshot', reqId: m.reqId, snapshot: core.engine.snapshot() });
-        else scope.postMessage({ type: 'error', message: 'not initialised', reqId: m.reqId });
+        if (core) answer({ type: 'snapshot', reqId: m.reqId, snapshot: core.engine.snapshot() });
+        else answer({ type: 'error', message: 'not initialised', reqId: m.reqId });
         return;
       case 'plan':
         core?.setPlan(m.plan);
@@ -80,32 +115,29 @@ function onMessage(ev: MessageEvent<ToWorker>): void {
         try {
           if (!core) throw new Error('not initialised');
           const capture = core.capture12();
-          (scope.postMessage as (msg: FromWorker, transfer: Transferable[]) => void)(
-            { type: 'capture12', reqId: m.reqId, capture },
-            Object.values(capture.leads).map((a) => a.buffer),
-          );
+          answer({ type: 'capture12', reqId: m.reqId, capture }, Object.values(capture.leads).map((a) => a.buffer));
         } catch (err) {
-          scope.postMessage({ type: 'capture12', reqId: m.reqId, error: err instanceof Error ? err.message : String(err) });
+          answer({ type: 'capture12', reqId: m.reqId, error: err instanceof Error ? err.message : String(err) });
         }
         return;
       case 'advance': // a fast-forward step; its events were posted before this answer
         if (!core) throw new Error('not initialised');
-        scope.postMessage({ type: 'advanced', reqId: m.reqId, ...core.advance(m.ticks, m.last) });
+        answer({ type: 'advanced', reqId: m.reqId, ...core.advance(m.ticks, m.last) });
         return;
       case 'restore':
         try {
           if (!core) throw new Error('not initialised');
           core.restore(m.snapshot); // The lanes restart with the engine
-          scope.postMessage({ type: 'restored', reqId: m.reqId });
+          answer({ type: 'restored', reqId: m.reqId });
         } catch (err) {
-          scope.postMessage({ type: 'restored', reqId: m.reqId, error: err instanceof Error ? err.message : String(err) });
+          answer({ type: 'restored', reqId: m.reqId, error: err instanceof Error ? err.message : String(err) });
         }
         return;
     }
   } catch (err) {
     // A request that threw answers its own reqId, so the caller's promise rejects instead of waiting forever
     const reqId = 'reqId' in m ? m.reqId : undefined;
-    scope.postMessage({ type: 'error', message: err instanceof Error ? err.message : String(err), ...(reqId !== undefined ? { reqId } : {}) });
+    answer({ type: 'error', message: err instanceof Error ? err.message : String(err), ...(reqId !== undefined ? { reqId } : {}) });
   }
 }
 

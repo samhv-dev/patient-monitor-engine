@@ -32,6 +32,8 @@ export interface ClockAnchor {
 export type ToWorker =
   | { type: 'init'; canvas: OffscreenCanvas; size: Size; opts: CoreOptions; mainPump: boolean }
   | { type: 'frame'; epochMs: number }
+  // the page has read the last event batch (one batch in flight, engine.worker.ts)
+  | { type: 'eventsAck' }
   | { type: 'catchUp'; epochMs: number }
   | { type: 'command'; reqId: number; cmd: Command }
   | { type: 'resize'; size: Size }
