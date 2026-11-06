@@ -89,4 +89,12 @@ describe('the Recognised press (D5, the /1 fallback)', () => {
       document.body.replaceChildren();
     }
   });
+
+  it('on a remote (no host record) the `recognised` form is hidden: the wire\'s note command carries no run event; the tick form shows', () => {
+    for (const [doc, shown] of [[null, false], [haemorrhage, false], [tamponade, true], [mhV2, false]] as const) {
+      const link = { ctl: { scenario: Object.assign(new ScenarioView(), { doc }) }, host: null, simT: 30 } as unknown as Link;
+      const b = recognisedButton(link, 'btn small');
+      expect(b.el.hidden, (doc as { id?: string } | null)?.id ?? 'free run').toBe(!shown);
+    }
+  });
 });

@@ -17,18 +17,23 @@ export function recognisedNote(doc: AnyScenarioDoc | null): { text: string; ev?:
   return o ? { text: `Objective met: ${drugWords(objectiveText(o))}` } : { text: 'Recognised (instructor)', ev: 'recognised' };
 }
 
-/** The button (`cls` its classes where it sits): hidden on a /2 card (`refresh` reads the card loaded now). */
+/** The button (`cls` its classes where it sits): hidden on a /2 card (`refresh` reads the card loaded now), and on a
+ *  remote where the press is the `recognised` note: the wire's `note` command carries no run event, so the host would
+ *  file it as a plain note (the tick form travels as the Scenario tab's tick does). */
 export function recognisedButton(link: Link, cls: string): { el: HTMLButtonElement; refresh(): void } {
   const el = h('button', {
     type: 'button', class: cls, title: 'The team named the problem: records the moment for the debrief',
     onclick: () => {
       const n = recognisedNote(link.ctl.scenario.doc);
       if (!n) return;
-      link.note(n.text, 'marker', n.ev);
+      link.note(n.text, 'marker', link.simT, n.ev);
       toast(`Recognised at ${clock(link.simT)}`);
     },
   }, 'Recognised') as HTMLButtonElement;
-  const refresh = () => void (el.hidden = recognisedNote(link.ctl.scenario.doc) === null);
+  const refresh = () => {
+    const n = recognisedNote(link.ctl.scenario.doc);
+    el.hidden = n === null || (!link.host && n.ev !== undefined);
+  };
   refresh();
   return { el, refresh };
 }
