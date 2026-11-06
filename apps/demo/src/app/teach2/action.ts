@@ -9,7 +9,8 @@
 // then the foot line. Rows are kept by key across the ≤ 2 Hz repaint, so a press or the
 // keyboard focus is never lost to a redraw.
 import './action.css';
-import { asV1, isV2 } from '@pme/controller';
+import { asV1, bolusDrugOf, isV2 } from '@pme/controller';
+import { lockLabel } from '../drugs.ts';
 import type { Link } from '../link.ts';
 import { stagesOf } from '../card-read.ts';
 import { clock, h, setText } from '../ui.ts';
@@ -67,9 +68,21 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     if (pressable) p.el.addEventListener('click', () => press(p));
     return p;
   };
+  /** The drugs a step row gives as a bolus: a /2 action's `give`, or the /1 step's target state's onEnter. */
+  const drugsOf = (r: LiveRow['row']): string[] => {
+    if (r.kind !== 'step') return [];
+    const doc = link.ctl.scenario.doc;
+    const cmds = r.actionId !== undefined ? (doc && isV2(doc) ? doc.actions.find((a) => a.id === r.actionId)?.give : undefined) : asV1(doc)?.states.find((s) => s.id === r.tr.to)?.onEnter;
+    return (cmds ?? []).flatMap((c) => bolusDrugOf(c as never) ?? []);
+  };
   const paint = (p: Pill, live: LiveRow) => {
     p.live = live;
     const r = live.row;
+    // a drug the row gives, given within 10 s on any device, is locked (the host refuses it): the right label says when
+    const lock = drugsOf(r).map((id) => lockLabel(link, id)).find((x) => x !== null) ?? null;
+    const right = lock ?? live.right;
+    if (lock) p.el.dataset.locked = 'true';
+    else delete p.el.dataset.locked;
     const n = r.kind === 'auto' ? 'A' : String(r.n);
     p.el.dataset.look = live.look;
     p.el.dataset.kind = r.kind;
@@ -82,12 +95,12 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     setText(p.sub, live.subtitle);
     // one line each on screen (the page fits 1440 × 900 at the fan-out): the whole text on hover and in the aria-label
     p.el.title = `${r.title}\n${live.subtitle}`;
-    setText(p.right, live.right);
+    setText(p.right, right);
     if (p.fill) p.fill.style.width = `${Math.round((live.progress ?? 0) * 100)}%`;
     if (p.el instanceof HTMLButtonElement) {
       p.el.disabled = live.look === 'waiting'; // the one exception to "a look never stops a press": rows.ts
       if (r.kind !== 'auto' && r.n <= 9) p.el.setAttribute('aria-keyshortcuts', n);
-      p.el.setAttribute('aria-label', `${n}. ${r.title}. ${live.subtitle}. ${live.right}`);
+      p.el.setAttribute('aria-label', `${n}. ${r.title}. ${live.subtitle}. ${right}`);
     }
   };
 

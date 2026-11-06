@@ -5,7 +5,7 @@
 import type { ClinicalEvent } from '@pme/controller';
 import { bleed, fluid, infusion, vaporiser } from '../../physiology-console/actions.ts';
 import { describeCommand } from '../describe.ts';
-import { doseUnits, findDrugs, perKg, rateUnits, unitText, type DrugItem } from '../drugs.ts';
+import { doseUnits, findDrugs, lockLabel, perKg, rateUnits, unitText, type DrugItem } from '../drugs.ts';
 import { button, h, input, seg, setText, stepper, toast } from '../ui.ts';
 import type { PanelCtx } from './ctx.ts';
 
@@ -48,12 +48,20 @@ export function drugsTab(c: PanelCtx): HTMLElement {
   const dose = stepper({ label: 'Dose', unit: '', min: 0, max: 100000, step: 1, value: 0, digits: 2, onchange: () => drawKg() });
   const unitSel = h('select', { class: 'input unitsel', 'aria-label': 'Dose unit', onchange: () => drawKg() });
   const kg = h('p', { class: 'hint num' });
+  // a bolus just given is locked for 10 s on every device (drugs.ts lockLabel): said here, counting down
+  const lockLine = h('p', { class: 'hint lock', role: 'status', hidden: true });
+  const drawLock = () => {
+    const l = drug && route === 'bolus' ? lockLabel(link, drug.id) : null;
+    setText(lockLine, l ?? '');
+    lockLine.hidden = l === null;
+  };
+  c.onRefresh(drawLock);
   const give = button('Give now', () => void giveNow(), 'primary');
   const stage = button('Stage', () => {
     const cmd = build();
     if (cmd) staging.submit(cmd as never, `drug-${drug?.id}-${route}`, describeCommand(cmd));
   });
-  card.append(name, cls, routeSeg, presets, h('div', { class: 'row' }, dose.el, unitSel), kg, h('div', { class: 'row' }, give, stage));
+  card.append(name, cls, routeSeg, presets, h('div', { class: 'row' }, dose.el, unitSel), kg, lockLine, h('div', { class: 'row' }, give, stage));
 
   const build = (): Record<string, unknown> | null => {
     if (!drug || !(dose.value > 0)) return null;
@@ -100,6 +108,7 @@ export function drugsTab(c: PanelCtx): HTMLElement {
     } else dose.set(0);
     give.textContent = route === 'bolus' ? 'Give now' : 'Start infusion';
     drawKg();
+    drawLock();
   };
   const drawKg = () => setText(kg, perKg(dose.value, unitSel.value, c.weightKg()) || `Patient ${c.weightKg()} kg`);
 

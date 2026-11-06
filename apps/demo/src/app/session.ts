@@ -209,6 +209,7 @@ export class AppSession {
     this.driver = new ScenarioDriver({ target, submit: (c) => (hs as HostSession).submit(c), publish: (e: ScenarioEvent) => hs?.publish(e) });
     hs = new HostSession({
       session: this.code, target: this.driver.host, scenario: this.driver.hook,
+      scenarioGives: (c) => this.driver.triggerGives(c), // a step press is locked as its drug is (drug-lock.ts)
       // With a relay, every answer to a hello also carries the monitor style (a phone wears it)
       // and a running Case briefing, with its start time: a phone that joins or reloads shows the remainder
       welcomeEvents: () => [

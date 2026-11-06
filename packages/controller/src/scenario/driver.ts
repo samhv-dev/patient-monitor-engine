@@ -22,6 +22,7 @@ import { DRUGS, RHYTHM_IDS, routeHonoured, type Command, type DispatchResult, ty
 import type { ClinicalEvent, ScenarioCommand, ScenarioEvent, WireCommand, WireEvent } from '../protocol.ts';
 import type { HostTarget, ScenarioHookResult } from '../session/host-session.ts';
 import { PhaseRunner, type PhaseRunnerEffect } from './phase-runner.ts';
+import { bolusDrugOf } from '../session/drug-lock.ts';
 import { ScenarioRunner, type RunnerEffect, type RunnerInput, type RunnerState, type VitalHold } from './runner.ts';
 import { BUILTIN_SCENARIOS } from './builtins.ts';
 import { resolveRhythm } from './standins.ts';
@@ -124,6 +125,19 @@ export class ScenarioDriver {
   set runner(r: ScenarioRunner | null) {
     this.cur = r;
   }
+  /**
+   * The drugs a /1 step press would give as a bolus: the onEnter of the state its transition (in the current state)
+   * leads to. The host refuses the press while one of them is locked (drug-lock.ts; the orchestrator's ruling of
+   * 5 November 2026, reversible by the owner): the card's script is never altered. Anything else gives nothing.
+   */
+  triggerGives(cmd: ScenarioCommand): string[] {
+    const r = this.runner;
+    if (!r || cmd.action !== 'trigger') return [];
+    const tr = r.doc.states.find((s) => s.id === r.stateId)?.transitions?.find((t) => t.id === cmd.target);
+    const to = tr ? r.doc.states.find((s) => s.id === tr.to) : undefined;
+    return (to?.onEnter ?? []).flatMap((c) => bolusDrugOf(c as never) ?? []);
+  }
+
   /** The /2 card's runner (null while a /1 card runs, or none). */
   get phaseRunner(): PhaseRunner | null {
     return this.cur instanceof PhaseRunner ? this.cur : null;
