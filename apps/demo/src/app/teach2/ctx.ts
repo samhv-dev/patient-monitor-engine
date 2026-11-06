@@ -23,8 +23,9 @@ export interface Teach2Ctx {
   begin?: Begin;
   /** "Finish the case" (board "Finish 2"): whether its pane is open; the strip, ACTION and the dock read it. */
   finish?: Finish;
-  /** The app's one load (main.ts), as the library's Load; without it a case row sends today's `scenario load`. */
-  loadScenario?(card: ScenarioCard): boolean;
+  /** The app's one load (main.ts), as the library's Load (retire-instructor-v1 decision 7: required; a peer instructor
+   *  is refused `scenario load` anyway). */
+  loadScenario(card: ScenarioCard): boolean;
 }
 
 export interface Slot {

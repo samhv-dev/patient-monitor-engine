@@ -4,6 +4,8 @@
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error -- a plain .mjs script without type declarations
 import { assignShards, fileDurations } from '../../../scripts/ci/e2e-shard-plan.mjs';
+// @ts-expect-error -- a plain .mjs script without type declarations
+import { e2eMatrix, SETS } from '../../../scripts/ci/e2e-sets.mjs';
 
 type Plan = { median: number; shards: { ms: number; files: { file: string; ms: number; recorded: boolean }[] }[] };
 const plan = (files: string[], d: Record<string, number>, n: number) => assignShards(files, new Map(Object.entries(d)), n) as Plan | null;
@@ -48,5 +50,19 @@ describe('e2e shard plan (scripts/ci/e2e-shard-plan.mjs)', () => {
     const d = { a: 5, b: 5, c: 5, d: 5 };
     expect(names(plan(['d', 'c', 'b', 'a'], d, 2)!)).toEqual(names(plan(['a', 'b', 'c', 'd'], d, 2)!));
     expect(plan(['a', 'b'], { other: 1 }, 2)).toBeNull();
+  });
+
+  it("builds ci.yml's e2e matrix from each set's shard count in scripts/ci/e2e-sets.mjs: one row per shard, in order", () => {
+    type Row = { browser: string; set: string; grep: string; report: string; shard: number; of: number };
+    const sets = SETS as Record<string, { args: string[]; set: string; shards: number }>;
+    const rows = (e2eMatrix() as { include: Row[] }).include;
+    for (const [report, s] of Object.entries(sets)) {
+      const mine = rows.filter((r) => r.report === report);
+      expect(mine.map((r) => `${r.shard}/${r.of}`)).toEqual(Array.from({ length: s.shards }, (_, i) => `${i + 1}/${s.shards}`));
+      for (const r of mine) expect([`--project=${r.browser}`, ...(r.grep ? r.grep.split(' ') : [])]).toEqual(s.args);
+      expect(new Set(mine.map((r) => r.set))).toEqual(new Set([s.set]));
+    }
+    expect(rows.length).toBe(Object.values(sets).reduce((n, s) => n + s.shards, 0));
+    expect(sets['webkit-known-flaky']?.shards).toBe(1); // the quarantine stays one job
   });
 });

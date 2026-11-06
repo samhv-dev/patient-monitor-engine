@@ -3,7 +3,7 @@
 // interval ran SpO2 91 → 64 where the first run had 95 → 92.
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
-import { openApp, startVite } from './app-support.ts';
+import { openApp, speedV2, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -42,8 +42,8 @@ const at = async (p: Page, t: number) => {
 test('after "Return here" on the Ventilator view the replayed minute matches the first one', { tag: '@known-flaky' }, async ({ page, browserName }) => {
   test.skip(browserName === 'webkit' && !!process.env.CI, 'FX-1 finding F-FX1-1: CI Linux WebKit page crash after "Return here" in this ×4 Ventilator-view flow');
   test.setTimeout(180_000);
-  await openApp(page, base, '?scenario=showcase-bronchospasm', { warmMs: 1500 });
-  await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×4' }).click();
+  await openApp(page, base, '?scenario=showcase-bronchospasm#/teach2', { warmMs: 1500 });
+  await speedV2(page, 4);
   await page.evaluate(() => (location.hash = '#/vent'));
   await at(page, 30);
   const b = Math.ceil(await ventilating(page, 'before the bookmark')); // ≥ 30 s: the bookmark holds a ventilated patient

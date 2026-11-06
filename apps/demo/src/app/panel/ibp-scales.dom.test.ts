@@ -21,6 +21,8 @@ function fakeHost(fixed: Record<IbpChannel, [number, number] | null> = { IBP1: [
     ibpFixedRange: (ch: IbpChannel) => fixed[ch],
     spec: { attached: false },
     soundOn: false,
+    learner: false, // the Devices body's learner switch (G1) reads and follows it
+    onLearner: () => () => undefined,
   };
   return { host, set };
 }

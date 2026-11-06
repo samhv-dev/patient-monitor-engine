@@ -20,7 +20,7 @@ test('typing in the Debrief notes is text, not shortcuts; `i` on the Monitor sti
   await openApp(page, base, '#/monitor', { warmMs: 1500 });
   await page.evaluate(() => (location.hash = '#/debrief'));
   await expect.poll(() => route(page)).toBe('debrief');
-  const panel = page.getByRole('region', { name: 'Instructor panel' });
+  const panel = page.getByRole('region', { name: 'Instructor v2' });
   const shown = await panel.isVisible();
   const notes = page.locator('[data-view=debrief] .db-notes');
   await notes.click();
@@ -35,6 +35,6 @@ test('typing in the Debrief notes is text, not shortcuts; `i` on the Monitor sti
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   await expect(panel).toBeHidden();
   await page.keyboard.press('i');
-  await expect.poll(() => route(page)).toBe('teach');
+  await expect.poll(() => route(page)).toBe('teach2');
   await expect(panel).toBeVisible();
 });
