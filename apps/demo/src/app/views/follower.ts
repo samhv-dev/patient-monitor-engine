@@ -35,7 +35,7 @@
 //    phone HOLDS (its monitor still, "The ventilator is on the main screen") and takes a fresh snapshot when they stop.
 //    UI-A #2: only while the view is ON SCREEN — its close sends `cockpit {off: true}` and the phone follows at once.
 //    A page hidden for a while (a locked phone) also takes a fresh snapshot instead of computing the gap.
-import { createBroadcastChannelTransport, createWebSocketTransport, ViewerSync, type ManagedTransport, type RelayFrame } from '@pme/controller';
+import { createBroadcastChannelTransport, createWebSocketTransport, ViewerSync, type Instrument, type ManagedTransport, type RelayFrame, type WireMessage } from '@pme/controller';
 import { engineKey as engineVersion } from '@pme/engine-core'; // The snapshot key, version + build
 import { mountMonitor, type IbpScales, type MonitorHandle } from '@pme/renderer';
 import { briefingLayer, followBriefing } from '../briefing.ts';
@@ -98,12 +98,34 @@ export interface NetFollow {
   relay: string;
 }
 
-export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar: HTMLElement, net?: NetFollow): Follower {
+/** What this window shows and its device's key, said on every hello (plan room-and-instruments.md R4, §4 D1). */
+export interface FollowerInstrument {
+  show: Extract<Instrument, 'learner' | 'monitor'>;
+  device: string;
+}
+
+/**
+ * The transport with `show` and `device` on every hello it sends; everything else is the transport's own. The page
+ * adds them (viewer-sync.ts, which says the hello, is not changed: §4 D1).
+ */
+export function withInstrument(t: ManagedTransport, i: FollowerInstrument): ManagedTransport {
+  const send = (m: WireMessage) => t.send(m.kind === 'hello' ? { ...m, show: i.show, device: i.device } : m);
+  return new Proxy(t, {
+    get(target, key) {
+      if (key === 'send') return send;
+      const v: unknown = Reflect.get(target, key, target);
+      return typeof v === 'function' ? (v as (...a: unknown[]) => unknown).bind(target) : v;
+    },
+  });
+}
+
+export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar: HTMLElement, net?: NetFollow, instrument?: FollowerInstrument): Follower {
   applySkinAlarmColours(site.skin, site.theme);
   // This window's alarm SOUND is its own (its Sound and Silence buttons); the alarms are the patient's
   // A phone held upright shows the monitor upright (tiles under the waveforms); turned sideways, the skin's own screen
   // (the whole Saadat-like screen scaled as one unit, the owner's mock-up m14 of 26 October), and it follows each turn
-  const upright = net ? matchMedia('(orientation: portrait)') : null;
+  // R4: the patient monitor (`#/monitor/wide`) stays landscape, held either way
+  const upright = net && instrument?.show !== 'monitor' ? matchMedia('(orientation: portrait)') : null;
   const monitor = mountMonitor(shell.monitorHost, { skin: site.skin, ...(site.theme ? { theme: site.theme } : {}), role: 'viewer', worker: 'off', audioSilence: 'window', portrait: upright?.matches ?? false });
   const onTurn = () => monitor.setPortrait(upright?.matches ?? false);
   upright?.addEventListener('change', onTurn);
@@ -114,7 +136,8 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     if (fr.relay === 'error') refused = fr;
     if (fr.relay === 'peers') hostAway = !fr.hostOnline;
   };
-  const transport = net ? createWebSocketTransport({ url: net.relay, livenessMs: PHONE_LIVENESS_MS, onRelayFrame: onRelay }) : createBroadcastChannelTransport(code);
+  const link = net ? createWebSocketTransport({ url: net.relay, livenessMs: PHONE_LIVENESS_MS, onRelayFrame: onRelay }) : createBroadcastChannelTransport(code);
+  const transport = instrument ? withInstrument(link, instrument) : link;
   const status = h('span', { class: 'status-pill', role: 'status' }, `Waiting for the instructor's monitor ${code}…`);
   // On and off again, this window only
   const drawSound = () => ((sound.textContent = monitor.soundOn ? 'Sound on' : 'Sound off'), sound.setAttribute('aria-pressed', String(monitor.soundOn)), (hush.disabled = !monitor.soundOn));
@@ -130,6 +153,8 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   hush.title = "Silence this window's alarm sound";
   hush.disabled = true;
   bar.append(status, sound, hush);
+  // R4: back to the instrument picker (a link, not a control of the patient)
+  if (instrument) bar.append(h('a', { class: 'btn small follower-change', href: '#/pick' }, 'Change'));
   // Under a phone's monitor when the instructor's style has no phone layout
   const styleNote = h('p', { class: 'follower-note', hidden: true });
   if (net) bar.append(styleNote);

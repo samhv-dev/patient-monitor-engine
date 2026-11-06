@@ -70,8 +70,7 @@ describe('the instrument picker at #/pick (R4)', () => {
   beforeEach(() => document.body.replaceChildren());
 
   it("shows m5's cards in m5's order with Learner monitor first, in the words above", () => {
-    const el = pickerView({ code: CODE, store: memory(), go: () => {} });
-    document.body.append(el);
+    const el = pickerView({ code: CODE, store: memory(), go: () => {}, parent: document.body });
     expect(PICKER_WORDS).toEqual(WORDS);
     expect(el.querySelector('h1')?.textContent).toBe(WORDS.title);
     expect(el.querySelector('.join-lead')?.textContent).toBe(WORDS.lead);
@@ -99,8 +98,7 @@ describe('the instrument picker at #/pick (R4)', () => {
   it('Learner monitor is preselected and focused; one tap opens it, and the choice is kept on this device', () => {
     const store = memory();
     const go = vi.fn();
-    const el = pickerView({ code: CODE, store, go });
-    document.body.append(el);
+    const el = pickerView({ code: CODE, store, go, parent: document.body });
     const first = cards(el)[0] as HTMLElement;
     expect(first.dataset.selected).toBe('true');
     expect(cards(el).filter((c) => c.dataset.selected === 'true')).toHaveLength(1);
@@ -114,8 +112,7 @@ describe('the instrument picker at #/pick (R4)', () => {
   it('the last choice is preselected next time and marked, never applied without a tap', () => {
     const store = memory({ instrument: 'monitor' });
     const go = vi.fn();
-    const el = pickerView({ code: CODE, store, go });
-    document.body.append(el);
+    const el = pickerView({ code: CODE, store, go, parent: document.body });
     const [learner, monitor] = cards(el) as [HTMLElement, HTMLElement];
     expect(learner.dataset.show).toBe('learner'); // the order stays m5's
     expect(monitor.dataset.selected).toBe('true');
