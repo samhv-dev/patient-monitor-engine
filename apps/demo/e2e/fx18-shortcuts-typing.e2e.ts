@@ -17,10 +17,10 @@ test('typing in the Debrief notes is text, not shortcuts; `i` on the Monitor sti
   test.setTimeout(90_000);
   // the Debrief is opened after load: the notes typed right after a load on #/debrief (FX-20, debrief.e2e.ts) are not
   // this test's subject
-  await openApp(page, base, '#/monitor', { warmMs: 1500 });
+  await openApp(page, base, '#/monitor', { warmMs: 1500, site: { instructor: 'teach2' } });
   await page.evaluate(() => (location.hash = '#/debrief'));
   await expect.poll(() => route(page)).toBe('debrief');
-  const panel = page.getByRole('region', { name: 'Instructor panel' });
+  const panel = page.getByRole('region', { name: 'Instructor v2' });
   const shown = await panel.isVisible();
   const notes = page.locator('[data-view=debrief] .db-notes');
   await notes.click();
@@ -35,6 +35,6 @@ test('typing in the Debrief notes is text, not shortcuts; `i` on the Monitor sti
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   await expect(panel).toBeHidden();
   await page.keyboard.press('i');
-  await expect.poll(() => route(page)).toBe('teach');
+  await expect.poll(() => route(page)).toBe('teach2');
   await expect(panel).toBeVisible();
 });

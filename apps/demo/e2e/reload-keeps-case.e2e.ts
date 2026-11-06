@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { devices, expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
-import { openApp, startVite } from './app-support.ts';
+import { openApp, speedV2, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -40,7 +40,7 @@ test('a reload mid-card comes back in the same card, state and clock, and the ph
   writeFileSync(join(dir, 'index.html'), '<!doctype html>');
   relay = await startRelay({ port: 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer' });
   const ws = `ws://127.0.0.1:${relay.port}/`;
-  await openApp(page, base, `?relay=${encodeURIComponent(ws)}&scenario=showcase-mh`, { warmMs: 1500 });
+  await openApp(page, base, `?relay=${encodeURIComponent(ws)}&scenario=showcase-mh#/teach2`, { warmMs: 1500 });
   const code = await app(page, (w) => w.__pmeApp.session.code);
   const { defaultBrowserType: _b, ...dev } = browserName === 'webkit' ? devices['iPhone 13'] : devices['Pixel 7'];
   const phone = await (await browser.newContext(dev)).newPage();
@@ -53,10 +53,12 @@ test('a reload mid-card comes back in the same card, state and clock, and the ph
     expect(r.accepted, `${t}: ${r.reason ?? ''}`).toBe(true);
   }
   await expect.poll(() => app(page, (w) => w.__pmeApp.link.ctl.scenario.stateId)).toBe('intubated');
-  await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×4' }).click();
+  await speedV2(page, 4);
   await page.waitForTimeout(8000);
-  const bar = page.locator('.sessionbar .scen');
-  await expect(bar).toHaveText(/^Malignant hyperthermia: /);
+  // Instructor v2: the header names the case, the cue box the state the case is in (the session bar's "card: state")
+  const bar = page.locator('.ip2-head .ip2-title');
+  const state = page.locator('.ip2-cue .ip2-cue-name');
+  await expect(bar).toHaveText('Malignant hyperthermia');
   const before = await app(page, (w) => w.__pmeApp.session.simNow());
   const resyncs = (await app(phone, (w) => w.__pmeFollower.sync?.resyncs)) ?? 0;
 
@@ -74,10 +76,10 @@ test('a reload mid-card comes back in the same card, state and clock, and the ph
   expect(await app(page, (w) => w.__pmeApp.link.ctl.scenario.stateId)).toBe('intubated');
   await expect.poll(() => app(page, (w) => w.__pmeApp.link.ctl.timeScale), { message: 'the speed comes back' }).toBe(4);
   expect(await app(page, (w) => w.__pmeApp.link.ctl.scenario.doc?.id)).toBe('showcase-mh');
-  await expect(bar).toHaveText(/^Malignant hyperthermia: Intubated/);
-  // the card goes on from there: the next button is the intubated state's
-  await page.click('[role=tab][data-tab=scenario]');
-  await expect(page.getByRole('button', { name: /^Start surgery: rocuronium/ })).toBeVisible();
+  await expect(bar).toHaveText('Malignant hyperthermia');
+  await expect(state).toHaveText(/^Intubated/);
+  // the card goes on from there: the next button (ACTION's open row) is the intubated state's
+  await expect(page.locator('.ip2-action .ip2-rows:not(.ip2-finished-list) button.ip2-row', { has: page.locator('.ip2-row-title', { hasText: /^Start surgery: rocuronium/ }) })).toBeVisible();
 
   // the phone re-follows the restored case: synced again, and the same numbers as the instructor's screen — within 5 s
   // here, within 20 s on CI and on WebKit (the 2-vCPU Linux WebKit runner holds an instructor, a phone and the relay;
@@ -96,7 +98,7 @@ test('a reload mid-card comes back in the same card, state and clock, and the ph
   await page.waitForFunction(() => '__pmeApp' in window);
   await page.waitForTimeout(3000);
   expect(await app(page, (w) => w.__pmeApp.link.ctl.scenario.doc)).toBeNull();
-  await expect(bar).toHaveText('No scenario');
+  await expect(bar).toHaveText('No case loaded');
 });
 
 // The owner's board "Finish 2" (approved 30 October): "Save and restart the case" saves the debrief to the browser's

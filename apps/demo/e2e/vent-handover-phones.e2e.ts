@@ -67,9 +67,9 @@ test('leaving the Ventilator view hands the patient to the engine ventilator: on
   relay = await startRelay({ port: 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer' });
   await page.setViewportSize({ width: 1600, height: 900 });
   // the owner's path: the Scenarios library, Load on the first demonstration
-  await openApp(page, base, `?relay=${encodeURIComponent(ws())}#/scenarios/library`, { warmMs: 1500 });
+  await openApp(page, base, `?relay=${encodeURIComponent(ws())}#/scenarios/library`, { warmMs: 1500, site: { instructor: 'teach2' } });
   await page.locator('[data-view=scenarios]').getByRole('button', { name: /^Load/ }).first().click();
-  await expect(page).toHaveURL(/#\/teach/);
+  await expect(page).toHaveURL(/#\/teach2/);
   const code = await page.evaluate(() => (window as unknown as W).__pmeApp.session.code);
   const f = await phone(browser, browserName, code);
   await f.waitForFunction(() => (window as unknown as W).__pmeFollower?.sync?.status === 'synced', null, { timeout: 30_000 });
@@ -100,7 +100,7 @@ test('leaving the Ventilator view hands the patient to the engine ventilator: on
     const held = await resyncs(f);
     console.log(`[E128] visit ${visit} on the Ventilator view 6 s: ${JSON.stringify(onVent)} cockpit ${JSON.stringify(await cockpitCfg(page))}`);
 
-    await page.evaluate(() => (location.hash = '#/teach'));
+    await page.evaluate(() => (location.hash = '#/teach2'));
     await expect(f.locator('.learner-hold')).toBeHidden({ timeout: 3000 });
     // the hand-over: the engine's own ventilator, the cockpit paused and silent
     await expect.poll(async () => (await patient(page)).source, { timeout: 5000 }).toBe('ventilator');

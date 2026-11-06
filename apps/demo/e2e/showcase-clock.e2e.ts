@@ -3,7 +3,7 @@
 // up, not stay frozen at the previous case's high-water time while the vital signs move.
 import { expect, test } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
-import { openApp, startVite } from './app-support.ts';
+import { openApp, speedV2, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -18,25 +18,24 @@ const seconds = (s: string): number => {
 
 test('loading another scenario restarts the session clock and the time in state, which then count up', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(90_000);
-  await openApp(page, base, '?scenario=showcase-tamponade', { warmMs: 1000 });
-  await expect(page).toHaveURL(/#\/teach$/);
-  const bar = page.locator('.sessionbar');
-  const clockText = () => bar.locator('.clock').innerText();
-  await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×4' }).click();
+  // Instructor v2 (a Load from the library opens the view Settings names: v2 here): the header's clock pill and speed
+  // box; the time in state is the cue box's in-stage clock ("02:13 in stage")
+  await openApp(page, base, '?scenario=showcase-tamponade#/teach2', { warmMs: 1000, site: { instructor: 'teach2' } });
+  await expect(page).toHaveURL(/#\/teach2$/);
+  const head = page.locator('.ip2-head');
+  const clockText = () => head.locator('.ip2-pill-time').innerText();
+  const inStage = async () => seconds((await page.locator('.ip2-cue .ip2-cue-clock').innerText()).split(' ')[0] ?? '');
+  await speedV2(page, 4);
   // the first case runs well past a minute of sim time
   await expect.poll(async () => seconds(await clockText()), { timeout: 40_000, intervals: [500] }).toBeGreaterThan(60);
   const before = await page.evaluate(() => (window as unknown as App).__pmeApp.link.simT);
 
-  await page.click('[role=tab][data-tab=scenario]');
-  // fix-ci-webkit-3: the Scenario tab's first repaint (it names the running case) comes before "Choose another scenario".
-  // A press before that repaint used to be undone by it (finding F-CW3-1, fixed in fix-choose-scenario-repaint and
-  // covered by scenario-choose-another.e2e.ts). This test is about the clock, so it still waits.
-  await expect(page.getByRole('region', { name: 'Running scenario' }).locator('h3').first()).not.toBeEmpty({ timeout: 10_000 });
-  await page.getByRole('button', { name: 'Choose another scenario' }).click();
-  await expect(page.getByRole('region', { name: 'Scenario library' })).toBeVisible();
-  await page.getByRole('article', { name: 'Anaphylaxis under anaesthesia' }).getByRole('button', { name: 'Load' }).click();
+  // v2 has no in-panel library: another scenario is loaded from the Scenarios library, which asks before replacing
+  await page.evaluate(() => (location.hash = '#/scenarios/library'));
+  await page.locator('[data-view=scenarios]').getByRole('button', { name: 'Load Anaphylaxis under anaesthesia', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Load scenario' }).click();
-  await expect(bar.locator('.scen')).toContainText('Anaphylaxis under anaesthesia', { timeout: 10_000 });
+  await expect(page).toHaveURL(/#\/teach2$/);
+  await expect(head.locator('.ip2-title')).toContainText('Anaphylaxis under anaesthesia', { timeout: 10_000 });
 
   // restarted near 00:00 (the controller's clock and the bar), well below where the first case stood
   await expect.poll(async () => seconds(await clockText()), { timeout: 5_000, intervals: [250] }).toBeLessThan(15);
@@ -57,10 +56,10 @@ test('loading another scenario restarts the session clock and the time in state,
 
   // …and it counts up: the bar's clock and the scenario's time in state both advance
   const c1 = seconds(await clockText());
-  const s1 = seconds(await bar.locator('.scen').innerText());
+  const s1 = await inStage();
   await page.waitForTimeout(3000);
   const c2 = seconds(await clockText());
-  const s2 = seconds(await bar.locator('.scen').innerText());
+  const s2 = await inStage();
   expect(c2).toBeGreaterThan(c1);
   expect(s2).toBeGreaterThan(s1);
   expect(c2).toBeLessThan(40);
