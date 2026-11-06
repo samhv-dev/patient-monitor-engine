@@ -15,7 +15,7 @@ import { qrSvg } from '../qr.ts';
 import { ago, PeerLog, RESYNC_MS, roomStatus, type PeerSeen, type RelayState, type RoomLevel } from '../room-status.ts';
 import { hrefOf } from '../router.ts';
 import type { View } from '../shell.ts';
-import { DEFIB_CHOICES, defibDefaults } from '../site.ts';
+import { DEFIB_CHOICES, defibDefaults, pacerDefaults } from '../site.ts';
 import { button, h, select, setText } from '../ui.ts';
 
 export interface RoomDeps {
@@ -194,7 +194,9 @@ export function roomView(d: RoomDeps): RoomView {
     const choice = d.defib;
     const label = (id: string, l: string) => {
       const e = defibDefaults(id);
-      return `${l}: ${e.energyAdultJ} J adult${e.energyPaedJ === null ? '' : `, ${e.energyPaedJ} J paediatric`}`;
+      const p = pacerDefaults(id); // the pacer follows the model too (row 58)
+      const pacer = p ? `; pacer ${p.ratePpm} ppm, PAUSE at ${p.pausePct === null ? '0 mA' : `${p.pausePct} % of the rate`}` : '';
+      return `${l}: ${e.energyAdultJ} J adult${e.energyPaedJ === null ? '' : `, ${e.energyPaedJ} J paediatric`}${pacer}`;
     };
     const pick = select('Model', [['', "Not chosen: the monitor style's own values"], ...DEFIB_CHOICES.map((c): [string, string] => [c.id, label(c.id, c.label)])], choice.model() ?? '', (v) => choice.choose(v || null));
     return h('section', { class: 'room-card room-defib', 'aria-labelledby': 'room-defib-h' },
