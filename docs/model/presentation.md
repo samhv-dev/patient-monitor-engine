@@ -415,6 +415,7 @@ No exported `…State` type in this module.
 | `headerHasRoom` | [`apps/demo/src/app/sim-line.ts`](../../apps/demo/src/app/sim-line.ts) | Whether this skin's header carries the line (the two-row header; |
 | `simLine` | [`apps/demo/src/app/sim-line.ts`](../../apps/demo/src/app/sim-line.ts) | The line for the monitor in `stage` (its strip is placed in the stage, above the monitor). |
 | `defibDefaults` | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | A model's energies as the panel offers them; |
+| `pacerDefaults` | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | The Room card's view of a model's pacer (row 58, the pacer following the model too), null with no model chosen. |
 | `setLightScreen` | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | The rail's light/dark switch (E125): |
 | `mount` | [`apps/demo/src/app/teach2/action.ts`](../../apps/demo/src/app/teach2/action.ts) | Mount this slot into `el` (the fixed slot signature, teach2/ctx.ts). |
 | `defaultPatient` | [`apps/demo/src/app/teach2/begin.ts`](../../apps/demo/src/app/teach2/begin.ts) | The default patient as the board writes it: |
