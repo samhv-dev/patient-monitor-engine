@@ -151,11 +151,15 @@ export class AppSession {
 
   /** `?load=perf8`: mount the validation harness's performance layout instead of the site's skin (the frame gate). */
   private readonly perf8: boolean;
+  /** The room's defibrillator model (R5b; a site.ts DEFIB_CHOICES id), sent to the engine at every patient mount, or
+   *  null: none sent (the monitor style's own defibrillator values). */
+  defibModel: string | null;
   /** The page's first patient (the default patient): "Save and close" ends a case on it (endCase). */
   private readonly first: SessionStart;
 
-  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null }) {
+  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null; defibModel?: string | null }) {
     this.el = el;
+    this.defibModel = o.defibModel ?? null;
     this.perf8 = o.load === 'perf8';
     this.spec = start.spec;
     this.mode = start.mode;
@@ -459,8 +463,8 @@ export class AppSession {
   }
 
   /** The monitor style a phone wears: the skin, the theme and the IBP scales (E130). */
-  private styleEvent(): { type: 'style'; skin: string; theme: string; ibp: IbpScales } {
-    return { type: 'style', skin: this.skin, theme: this.theme, ibp: this.ibp };
+  private styleEvent(): { type: 'style'; skin: string; theme: string; ibp: IbpScales; defib: string | null } {
+    return { type: 'style', skin: this.skin, theme: this.theme, ibp: this.ibp, defib: this.defibModel }; // R5: the window's look
   }
 
   private ibp: IbpScales = {};
@@ -500,6 +504,22 @@ export class AppSession {
     for (const f of this.skinFns) f(skin, theme); // The learner monitor follows the style
     applySkinAlarmColours(skin, theme);
     await this.monitor?.setSkin(skin, theme ? { theme } : {});
+  }
+
+  /**
+   * Room setup's defibrillator choice (R5b). A model is sent to the patient's engine now, through the host's command
+   * path (every follower replays it), and at every patient mount after; null sends nothing: the engine keeps the model
+   * it holds until the next patient start (it has no "no model" command, R5a).
+   */
+  setDefibModel(model: string | null): void {
+    this.defibModel = model;
+    this.sendDefibModel();
+    for (const f of this.skinFns) f(this.skin, this.theme); // the style says the model: a defibrillator window's look (R5)
+  }
+
+  private sendDefibModel(): void {
+    if (!this.defibModel || this.perf8) return; // the frame gate's layout is not a room's
+    void this.panel.send({ type: 'device', action: { device: 'defib', action: 'model', value: this.defibModel } } as never);
   }
 
   enableSound(): Promise<void> {
@@ -642,6 +662,7 @@ export class AppSession {
     m.setTimeScale(this.timeScale);
     if (this.paused) m.pause();
     if (this.soundOn) void m.enableSound();
+    this.sendDefibModel(); // a new engine starts with no model: the room's again (R5b)
     for (const fn of this.mountFns) fn(m);
   }
 }
