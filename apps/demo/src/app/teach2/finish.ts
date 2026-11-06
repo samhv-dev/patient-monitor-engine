@@ -10,11 +10,13 @@
 // default patient, the no-case window's three cards). A restart or a close leaves the new patient running. If the archive cannot be
 // written (storage full or blocked) nothing ends and the pane stays.
 import './finish.css';
-import { isV2 } from '@pme/controller';
+import { isV2, type ScenarioDoc } from '@pme/controller';
+import type { ScenarioDriver } from '@pme/controller/scenario';
 import { archive, hhmm, markCounts, marksLine, objectiveCounts, objectivesLine } from '../archive.ts';
 import type { Link } from '../link.ts';
 import { APP_BUILD } from '../position.ts';
-import { cardOf } from '../scenarios.ts';
+import { cardOf, scenarioById, type ScenarioCard } from '../scenarios.ts';
+import type { RoomKeep } from '../session.ts';
 import { clock, h, setText, toast } from '../ui.ts';
 import { archiveHref, archiveList, entryTitle, exportAll } from '../views/archive-list.ts';
 import type { Teach2Ctx } from './ctx.ts';
@@ -25,6 +27,17 @@ import { caseFinished, FINISHED } from './dock.ts';
 export interface FinishHooks {
   restart(): boolean;
   close(): void;
+}
+
+/**
+ * The app's "Save and restart the case" (main.ts `finish.restart`): the card now running loaded again through the app's
+ * one load (`load`, with the room as it stands), so it starts from its first stage with a new engine, a new runner and a
+ * new record. The card is the run's of either format: the /1 runner or the /2 phase runner (reading only the /1 one, a
+ * /2 card was saved and then not restarted). False with no card running, or when the load is refused.
+ */
+export function restartSameCard(driver: Pick<ScenarioDriver, 'runner' | 'phaseRunner'>, load: (c: ScenarioCard, room?: RoomKeep) => boolean, room: () => RoomKeep): boolean {
+  const doc = (driver.runner ?? driver.phaseRunner)?.doc;
+  return !!doc && load(scenarioById(doc.id) ?? cardOf(doc as ScenarioDoc), room()); // typed as the library's cards are (scenarios.ts importedCards)
 }
 
 export interface Finish {

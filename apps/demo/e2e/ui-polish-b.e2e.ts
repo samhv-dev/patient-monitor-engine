@@ -36,7 +36,15 @@ test('UI-B #32: Pause puts PAUSED over the monitor, Resume takes it away; it nev
   await expect(mark).toBeHidden({ timeout: 5_000 });
 });
 
-test('UI-B #14: a loaded scenario starts the cuff on AUTO every 5 min and the NIBP tile shows a result', async ({ page }) => {
+// @known-flaky, class crash (outside our code): CI run 42111824225 (PR #285), e2e (webkit 3/3), attempt 1 ended at 53.4 s,
+// inside the 90-s wait below and without its time-out: Playwright's expect stops early only when the page or browser is
+// closed under it (its call log ends on the close, no "Timeout" line). The cuff was mid-cycle and normal up to the end
+// (inflated to 150, stepping down 8 mmHg every ≈ 3.5 s, at 78), so the result was seconds away; retry #1 passed in
+// 30.3 s; local macOS WebKit 20/20. Debrief :493 in shard 1/3 of the same run lost its page the same way 2 min earlier
+// ("Target page, context or browser has been closed"): the Linux WebKit web-process crash class F-FX1-1
+// (docs/guides/known-deviations.md). Not a wait: one cycle from Load is 27.7 sim s, the result ≈ 29.5 s after the app's
+// hook, at ×1 in each of 4 local probe runs under CPU load; the wait is 90 s.
+test('UI-B #14: a loaded scenario starts the cuff on AUTO every 5 min and the NIBP tile shows a result', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 1280, height: 800 });
   await openApp(page, base, '?scenario=showcase-mh', { warmMs: 1500 });

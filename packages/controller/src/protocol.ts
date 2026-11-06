@@ -101,13 +101,20 @@ export type ExtraCommand = CommandBase &
     // `jump` = fast-forward `value` sim seconds (> 0, ≤ 600) as fast as the host's monitor runs; `step` is refused
     | { type: 'time'; action: 'pause' | 'resume' | 'scale' | 'step' | 'jump'; value?: number }
     | { type: 'applyEvent'; event: ClinicalEvent }
-    /** A judged objective (`marker`) or a note for the debrief, sent by a remote (plan §6); text ≤ WIRE_LIMITS.noteChars. */
-    | { type: 'note'; kind: 'note' | 'marker'; text: string }
+    /** A judged objective (`marker`) or a note for the debrief, sent by a remote (plan §6); text ≤ WIRE_LIMITS.noteChars.
+     *  `ev`: the run event the note is (one of NOTE_EVENTS), filed on the record's note row with it — the phone's
+     *  Recognised press is the laptop's (brief 52). */
+    | { type: 'note'; kind: 'note' | 'marker'; text: string; ev?: NoteEvent }
     | {
         type: 'attachSensor'; sensor: SensorId; state: string; site?: string; leadSet?: 3 | 5 | 12;
         sampling?: 'sidestream' | 'mainstream';
       }
   );
+/** The run events a `note` command may carry (the guard refuses any other): 'recognised', the /1 Recognised press
+ *  (the demo's record.ts KEEPS; brief 52). */
+export const NOTE_EVENTS = ['recognised'] as const;
+export type NoteEvent = (typeof NOTE_EVENTS)[number];
+
 /**
  * A mark's kind (Instructor v2): a good moment, a bad one, or one to discuss — or `stage`, the mark the host's scenario
  * driver places by itself at every stage entry (its note is the state id). Views keep `stage` marks out of the marks list.
@@ -178,7 +185,8 @@ export type ExtraEvent =
    * Presentation only. `ibp` (E130): the IBP1/IBP2 lane scales (a channel left out is the skin's fixed scale), so a
    * phone draws the instructor's range.
    */
-  | { type: 'style'; skin: string; theme: string; ibp?: StyleIbpScales; replay?: true }
+  // `defib` (Room plan R5): the room's defibrillator model, which a defibrillator window wears the look of (null: none)
+  | { type: 'style'; skin: string; theme: string; ibp?: StyleIbpScales; defib?: string | null; replay?: true }
   /**
    * The card's Case briefing, for every learner screen (owner's board Orientation 7b): sent when a card with one loads,
    * with every answer to a hello while it runs (`replay: true`, so a phone that joins or reloads shows the remainder:
@@ -311,6 +319,9 @@ export const INSTRUCTOR_COMMANDS: ReadonlySet<string> = new Set([
   'applyEvent ventilation', 'attachSensor', 'device', 'pin', 'release', 'scenario bookmark', 'scenario goto',
   'scenario pause', 'scenario record', 'scenario restoreBookmark', 'scenario resume', 'scenario trigger', 'setMode', 'setRhythm', 'setTarget',
   'time jump', 'time pause', 'time resume', 'time scale', 'note',
+  // measured by the census once it crawled the pme-scenario/2 cards (P6): Instructor v2's A presses on the MH card in
+  // phases send its actions' `give`, which holds these two (the induction's airway device and preoxygenation)
+  'applyEvent airwayDevice', 'applyEvent preoxygenate',
 ]);
 
 /** The census key of a command (its `type`, plus its `action` when that is a word, plus `event.kind` for applyEvent). */

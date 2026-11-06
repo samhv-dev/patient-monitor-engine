@@ -170,6 +170,27 @@ describe('what a granted instructor may send', () => {
     expect(applied(got, id)?.resolved.command).toMatchObject({ type: 'note', kind: 'marker', text: 'Called for help', issuedBy: 'remote' });
   });
 
+  it("a note with the event tag (brief 52) → onNote(t, text, kind, ev) with the tag, from the granted phone and a controller alike; the applied command carries it; a note without one passes no tag", async () => {
+    const notes: unknown[][] = [];
+    const { relay, got } = setup({ onNote: (...a) => void notes.push(a) });
+    const p = phone(relay, 'ph.1');
+    p.hello(PIN);
+    await waitFor(() => grants(got, 'ph.1').length === 1);
+    const id = p.command({ type: 'note', kind: 'marker', text: 'Recognised (instructor)', ev: 'recognised' });
+    await waitFor(() => applied(got, id) !== undefined);
+    const st = createStamper(S, 'ctl-b.1');
+    relay.send(st({ kind: 'hello', role: 'controller' }));
+    relay.send(st({ kind: 'command', body: { id: 'k1', issuedBy: 'remote', type: 'note', kind: 'marker', text: 'Recognised (instructor)', ev: 'recognised' } as never }));
+    await waitFor(() => applied(got, 'k1') !== undefined);
+    const plain = p.command({ type: 'note', kind: 'note', text: 'IV access' });
+    await waitFor(() => applied(got, plain) !== undefined);
+    expect(ackOf(got, id)).toMatchObject({ accepted: true });
+    // at the host's sim time when it applied each (P6's `t`; this engine has not run, so 0)
+    expect(notes).toEqual([[0, 'Recognised (instructor)', 'marker', 'recognised'], [0, 'Recognised (instructor)', 'marker', 'recognised'], [0, 'IV access', 'note', undefined]]);
+    expect(applied(got, id)?.resolved.command).toMatchObject({ type: 'note', kind: 'marker', ev: 'recognised', issuedBy: 'remote' });
+    expect(applied(got, plain)?.resolved.command).not.toHaveProperty('ev');
+  });
+
   it('a note on a host without onNote is refused with a reason', async () => {
     const { relay, got } = setup();
     const p = phone(relay, 'ph.1');
@@ -334,5 +355,31 @@ describe('who holds the role', () => {
     const k2 = next.command(hr, 'k2');
     await waitFor(() => ackOf(got, k2) !== undefined);
     expect(ackOf(got, k2)).toMatchObject({ accepted: true });
+  });
+
+  it("a command from a peer a peer-left forgot, with no hello since, is refused 'say hello first' (not the controller path)", async () => {
+    const host = new HostSession({ session: S, target: target(), stateIntervalMs: 0, instructorPin: () => PIN });
+    hosts.push(host);
+    const hub = createInProcessHub();
+    const fns = new Set<(id: string) => void>();
+    const linkT = Object.assign(Object.create(hub.connect()) as ManagedTransport, {
+      onPeerLeft: (fn: (id: string) => void) => (fns.add(fn), () => void fns.delete(fn)),
+    });
+    host.addTransport(linkT);
+    const relay = hub.connect();
+    const got = collect(relay);
+    const st = createStamper(S, 'ph.1');
+    relay.send(st({ kind: 'hello', role: 'instructor', pin: PIN }));
+    await waitFor(() => grants(got, 'ph.1').length === 1);
+    fns.forEach((fn) => fn('ph.1')); // its socket left: its role and grant are forgotten
+    relay.send(st({ kind: 'command', body: { id: 'ph.1-9', issuedBy: 'ph.1', ...hr } as never }));
+    await waitFor(() => ackOf(got, 'ph.1-9') !== undefined);
+    expect(ackOf(got, 'ph.1-9')).toMatchObject({ accepted: false, reason: 'say hello first' });
+    expect(host.stats.applied).toBe(0);
+    // once it says hello again it is a peer like any other (here a controller on this transport)
+    relay.send(st({ kind: 'hello', role: 'controller' }));
+    relay.send(st({ kind: 'command', body: { id: 'ph.1-10', issuedBy: 'ph.1', ...hr } as never }));
+    await waitFor(() => ackOf(got, 'ph.1-10') !== undefined);
+    expect(ackOf(got, 'ph.1-10')).toMatchObject({ accepted: true });
   });
 });

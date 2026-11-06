@@ -10,6 +10,7 @@ import {
   type ControlFlag,
   type FastForwardAlarm,
   type ManagedTransport,
+  type NoteEvent,
   type Role,
   type ScenarioCommand,
   type StateEvent,
@@ -72,8 +73,9 @@ export interface HostSessionOptions {
    * Absent or null (no PIN set, or an older app): every instructor is denied. Never logged, never sent.
    */
   instructorPin?: () => string | null;
-  /** A `note` command (plan §6): the remote's judged objective or note, at the host's sim time `t`. Absent: refused. */
-  onNote?: (t: SimSeconds, text: string, kind: 'note' | 'marker') => void;
+  /** A `note` command (plan §6): the remote's judged objective or note, at the host's sim time `t`, with the run event
+   *  it carries (`ev`, brief 52; undefined when none). Absent: refused. */
+  onNote?: (t: SimSeconds, text: string, kind: 'note' | 'marker', ev?: NoteEvent) => void;
   /** How many instructor phones are granted (0 or 1: the newest takes over), called at every grant and revocation. */
   onInstructors?: (n: number) => void;
 }
@@ -111,6 +113,10 @@ export function samePin(candidate: string, pin: string): boolean {
 export const STAGE_LEAD_TICKS = 3;
 const STAGE_GROUP_TTL_MS = 5000;
 const SEEN_MAX = 500;
+/** The ack of a command from a relay peer whose role a peer-left forgot and that has not said hello again. */
+export const NO_HELLO = 'say hello first';
+/** The most departed peer ids a transport remembers for NO_HELLO (a long class of reconnecting phones) [ENG]. */
+const LEFT_MAX = 1000;
 /**
  * A hidden-tab catch-up arrives as ONE batch, and the app's 1 Hz truth events are up to 27 KB each (200 events reached
  * 379 KB) — every wire message holds at most this much JSON and this many events, so it passes the receivers' 256 KB
@@ -148,7 +154,7 @@ export class HostSession {
    * in-process panel). A detached transport's peers are forgotten with it (verification 2026-10-29), and one peer when
    * the relay says its socket left (R29), so a hello forged under its id dies with the forger's socket.
    */
-  private readonly peers = new WeakMap<ManagedTransport, { seqs: SeqFilter; roles: Map<string, Role> }>();
+  private readonly peers = new WeakMap<ManagedTransport, { seqs: SeqFilter; roles: Map<string, Role>; left: Set<string> }>();
   /**
    * The one granted instructor phone, by (transport, from), and the PIN it proved (plan §3 option B: the newest right
    * PIN takes over). The laptop's own panels are controllers: they need no grant and are never revoked.
@@ -430,6 +436,8 @@ export class HostSession {
     const p = this.peers.get(t);
     p?.seqs.forget(from);
     p?.roles.delete(from);
+    p?.left.add(from);
+    if (p && p.left.size > LEFT_MAX) p.left.delete(p.left.values().next().value as string); // the oldest goes first
     if (this.holder?.t === t && this.holder.from === from) this.setHolder(null);
   }
 
@@ -450,12 +458,15 @@ export class HostSession {
     if (m.session !== this.o.session) return; // A message for another session is not ours, whatever channel it came on
     if (m.from === this.peerId) return;
     let p = this.peers.get(t);
-    if (!p) this.peers.set(t, (p = { seqs: new SeqFilter(), roles: new Map() }));
+    if (!p) this.peers.set(t, (p = { seqs: new SeqFilter(), roles: new Map(), left: new Set() }));
     if (p.seqs.check(m) === 'duplicate') return;
     // A peer that said hello as a viewer sends no commands — the relay already refuses them on a WebSocket; a
     // BroadcastChannel peer is held to the same rule (one trust model per role, whatever the transport). Only a hello
     // the sequence check accepted counts: a stale frame carrying a peer's id changes nothing
-    if (m.kind === 'hello') p.roles.set(m.from, m.role);
+    if (m.kind === 'hello') {
+      p.roles.set(m.from, m.role);
+      p.left.delete(m.from);
+    }
     if (m.kind === 'hello' && m.role === 'viewer') this.viewerSeenAt = this.now();
     if (m.kind === 'hello' && m.role === 'instructor') this.verify(t, m.from, m.pin);
     if (m.kind === 'hello' && m.role !== 'host') return this.welcome(t);
@@ -463,6 +474,8 @@ export class HostSession {
     const role = p.roles.get(m.from);
     const refuse = (reason: string) => t.send(this.stamp({ kind: 'ack', commandId: m.body.id, accepted: false, tick: this.o.target.now().tick, reason }));
     if (role === 'viewer') return refuse('a viewer cannot command');
+    // forgotten by a peer-left (R29) and no hello since: not the controller path (the relay refuses it too)
+    if (role === undefined && p.left.has(m.from)) return refuse(NO_HELLO);
     if (role !== 'instructor') return this.command(t, m.body, m.from);
     // An instructor phone: granted, on the allow-list, and filed as the Remote's rows whatever it wrote (record.ts)
     const why = this.instructorRefusal(t, m.from, m.body);
@@ -535,7 +548,7 @@ export class HostSession {
     if (cmd.type === 'note') {
       // A remote's judged objective or note (plan §6), recorded by the host app at the host's sim time
       if (!this.o.onNote) return reject(INSTRUCTOR_REASONS.noNotes);
-      this.o.onNote(simT, cmd.text, cmd.kind);
+      this.o.onNote(simT, cmd.text, cmd.kind, cmd.ev);
       return { result: { accepted: true, tick }, applied: cmd };
     }
     // Pin, release and setMode go to the engine, which validates them. setFactor reaches the engine too and is refused

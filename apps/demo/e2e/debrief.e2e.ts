@@ -117,7 +117,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   const minuteRows = await view.locator('#db-minutes tbody tr').allInnerTexts(); // Q1: one row per minute
   expect(minuteRows.length).toBeGreaterThanOrEqual(2); // the kept course is ≈ 1½–2 sim-min
   expect(minuteRows[0]).toMatch(/^00:00\s+\d+/);
-  await expect(view.locator('#db-minutes thead th')).toHaveCount(12);
+  await expect(view.locator('#db-minutes thead th')).toHaveCount(15); // D6: SBP, DBP and CVP
   // R56: no engine id in the report (as stage9-glossary: an id that is also an English word, "epinephrine", is not a leak)
   const ids = (await page.evaluate(() => (window as unknown as W).__pmeApp.engineIds)).filter((id) => /[A-Z0-9]/.test(id));
   expect(await scanEngineIds(page, ids)).toEqual([]);
@@ -149,7 +149,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
     const css = (s: string, p: string) => getComputedStyle(document.querySelector(s) as Element).getPropertyValue(p);
     return {
       topbar: vis('.topbar'), stage: vis('.stage'), bar: vis('.sessionbar'), tools: vis('.db-tools'), report: vis('.debrief'),
-      trends: css('#db-trends', 'break-before'), timeline: css('#db-timeline', 'break-before'), minutes: css('#db-minutes', 'break-before'), moments: css('#db-moments', 'break-before'),
+      trends: css('#db-trends', 'break-before'), timeline: css('#db-timeline', 'break-before'), minutes: css('#db-minutes', 'break-before'), swimlane: css('#db-swimlane', 'break-before'), moments: css('#db-moments', 'break-before'),
       chart: css('.db-chart', 'break-inside'), ink: css('.db-svg path', 'stroke'), body: css('body', 'overflow'),
       undone: css('#db-timeline tbody tr.undone td', 'text-decoration-line'),
       // the footer on every page: @page margin boxes where the browser has them (Chromium), else a line before each break
@@ -158,7 +158,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
     };
   });
   const boxes = browserName === 'chromium';
-  expect(layout).toEqual({ topbar: false, stage: false, bar: false, tools: false, report: true, trends: 'page', timeline: 'auto', minutes: 'page', moments: 'page', chart: 'avoid', ink: 'rgb(0, 0, 0)', body: 'visible', undone: 'line-through', marginBoxes: boxes, runFeet: boxes ? 0 : 4 });
+  expect(layout).toEqual({ topbar: false, stage: false, bar: false, tools: false, report: true, trends: 'page', timeline: 'auto', minutes: 'page', swimlane: 'page', moments: 'auto', chart: 'avoid', ink: 'rgb(0, 0, 0)', body: 'visible', undone: 'line-through', marginBoxes: boxes, runFeet: boxes ? 0 : 4 });
   expect(await page.evaluate(() => getComputedStyle(document.querySelector('#db-course g.db-bm') as Element).display), 'the mark prints').not.toBe('none');
   expect(await page.evaluate(() => document.querySelector('#db-course g.db-bm .db-bm-n')?.textContent), 'its number inside').toBe('1');
   mkdirSync(out, { recursive: true });
@@ -222,7 +222,12 @@ test('FX-20: notes typed right after opening the app on the Debrief are kept; a 
 // there a click on the session bar's Debrief link at ×8 was not served within 5 s (main run 39173099640, 3 of 3). At ×4
 // it then failed the same way (PR #105 run 39524573921, PR #107 39578631031 attempts 1 and 3): there it now goes at ×2
 // to 3 sim-min on the page's clock, and the Debrief is opened once the host has acknowledged the pause.
-test('a free run prints in at most four pages; its export is pme-debrief/2', async ({ page, browserName }) => {
+// @known-flaky, class crash (outside our code): CI run 42132450433 (PR #288), e2e (webkit 1/3), attempt 1: "page.evaluate:
+// Target page, context or browser has been closed" at 101.7 s, inside the 150-s wait for 3 sim-min below (no time-out);
+// no page snapshot could be taken; retry #1 passed in 93.8 s; local macOS WebKit 10/10. fx25-co2-attach :80 in the same
+// shard lost its page the same way 6 min later: the Linux WebKit web-process crash class F-FX1-1
+// (docs/guides/known-deviations.md)
+test('a free run prints in at most four pages; its export is pme-debrief/2', { tag: '@known-flaky' }, async ({ page, browserName }) => {
   const busy = loadedWebKit(browserName);
   test.setTimeout(busy ? 240_000 : 120_000);
   await openApp(page, base, '#/teach', { warmMs: 1500 }); // the Monitor with the session bar, no scenario
@@ -320,6 +325,23 @@ const printHeights = (page: Page) => page.evaluate((mm) => {
   return { page1: (r(end).bottom - r('#db-live-1 > .db-band').top) / mm, handout: r('#db-handout').height / mm, printFont, stripPt };
 }, MM);
 
+/** D7b: the swimlane heads page 2, before the key moments, whole on its page; its printed height (mm) at the 182 mm
+ *  content width, and its window rows' labels and verdict words. Read in print media. */
+const swimPrint = (page: Page) => page.evaluate((mm) => {
+  const sec = document.querySelector('#db-swimlane') as HTMLElement;
+  const cs = getComputedStyle(sec);
+  return {
+    next: sec.nextElementSibling?.id ?? '', prev: (sec.previousElementSibling as HTMLElement | null)?.className ?? '',
+    breakBefore: cs.breakBefore, breakInside: cs.breakInside,
+    momentsBreak: getComputedStyle(document.querySelector('#db-moments') as Element).breakBefore,
+    heightMm: (sec.querySelector('svg') as SVGSVGElement).getBoundingClientRect().height / mm,
+    widthMm: (sec.querySelector('svg') as SVGSVGElement).getBoundingClientRect().width / mm,
+  };
+}, MM);
+const swimRows = (page: Page) => page.locator('#db-swimlane .db-swim-win').evaluateAll((gs) => gs.map((g) => ({
+  label: g.querySelector('title')?.textContent ?? '', words: [...g.querySelectorAll('.db-swim-tick .db-swim-v, .db-swim-missed .db-swim-v')].map((t) => t.textContent),
+})));
+
 test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, the learner handout', async ({ page, browserName }) => {
   test.setTimeout(90_000);
   await showRecorded(page);
@@ -339,11 +361,20 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   // page 2: the key moments with SpO₂ as the monitor showed it (E126: this rc.2 record kept the oximeter's reading through
   // the pulseless span, CPR having begun 3 s after the loss), and the sentence that says what it means
   const moments = await view.locator('#db-moments tbody tr[data-n]').evaluateAll((tr) => tr.map((x) => [...x.querySelectorAll('td')].map((td) => td.textContent?.trim())));
-  expect(moments.map((m) => [m[0], m[1], m[6]])).toEqual([['1', '06:13', '99'], ['2', '07:48', '99'], ['3', '07:51', '99'], ['4', '09:21', '99'], ['5', '10:55', '99'], ['6', '10:57', '99'], ['7', '11:27', '99']]);
-  expect(moments.map((m) => m[5])).toEqual(['71', '21', '20', '28', '45', '63', '90']); // MAP rounded
+  expect(moments.map((m) => [m[0], m[1], m[8]])).toEqual([['1', '06:13', '99'], ['2', '07:48', '99'], ['3', '07:51', '99'], ['4', '09:21', '99'], ['5', '10:55', '99'], ['6', '10:57', '99'], ['7', '11:27', '99']]);
+  expect(moments.map((m) => m[6])).toEqual(['71', '21', '20', '28', '45', '63', '90']); // MAP rounded
+  // D6: this rc.2 export predates the pressures and the alarm ends: "·" in SBP/DBP and CVP, one "not recorded" line
+  expect(moments.map((m) => [m[5], m[7]])).toEqual(Array.from({ length: 7 }, () => ['·', '·']));
+  await expect(view.locator('#db-moments .db-norecord')).toHaveCount(1);
   await expect(view.locator('#db-moments .db-note60')).toHaveCount(1);
   await expect(view.locator('#db-moments .db-note60')).toHaveText('SpO₂ as the monitor showed it: – while pulseless without compressions (no pulsatile signal); a number during CPR reflects compression-generated flow and is unreliable.'); // the owner's ruling E126, 2026-10-26 (was E60, 2026-10-19)
   await expect(view.locator('#db-moments tr.db-alarms').first()).toHaveText(/Alarms since the last row: CVP high, SpO₂: low perfusion, ART S low/);
+
+  // D7b: page 2 opens with the swimlane — one window row per timed objective, each tick with its verdict words
+  await expect(view.locator('#db-swimlane h2')).toHaveText('The run, lane by lane');
+  await expect(view.locator('#db-swimlane .db-legend')).toContainText('▭ expected window, │ the act, with its verdict');
+  expect(await swimRows(page)).toEqual([{ label: 'Objective 2', words: ['✓ Observed'] }, { label: 'Objective 3', words: ['✓ Observed'] }, { label: 'Objective 4', words: ['✓ Observed'] }]);
+  await expect(view.locator('#db-swimlane svg')).toHaveAttribute('aria-label', /expected windows: Objective 2, 07:48 to 07:58: 07:51 ✓ Observed; Objective 3/);
 
   // (g) typing in Run by and Notes across a 5 s refresh: the text and the caret stay
   const who = view.locator('#db-who');
@@ -380,6 +411,10 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   const report = await printHeights(page);
   expect(report.printFont, 'the bundled print font is loaded').toBe(true);
   expect(report.page1, 'page 1 (mm)').toBeLessThanOrEqual(267);
+  const sw = await swimPrint(page);
+  expect(sw).toMatchObject({ next: 'db-moments', breakBefore: 'page', breakInside: 'avoid', momentsBreak: 'auto' });
+  expect(sw.heightMm, 'the swimlane (mm)').toBeLessThanOrEqual(90);
+  test.info().annotations.push({ type: 'A3.1 swimlane (mm)', description: `${sw.heightMm.toFixed(1)} high at ${sw.widthMm.toFixed(1)} wide` });
   await expect(view.locator('#db-handout')).toBeHidden(); // never with the report
   const foot = (await view.locator('.db-foot').textContent()) ?? '';
   let reportPdf: Buffer | null = null;
@@ -438,6 +473,7 @@ test('Debrief B on the MH card: page 1 and the handout within one A4 page', asyn
   const view = page.locator('[data-view=debrief]');
   await expect(view.locator('#db-objectives li')).toHaveCount(6);
   await expect(view.locator('#db-keytimes [data-key=recognition]')).toBeVisible(); // the MH recognition objective (E52)
+  expect((await swimRows(page)).map((r) => r.label)).toEqual(['Objective 2', 'Objective 3']); // the two eventWithin objectives whose anchor came
   expect(await view.locator('#db-steps tbody tr').count(), 'IP8: the steps section is in the report').toBeGreaterThan(0);
   await page.emulateMedia({ media: 'print' });
   await printFontLoaded(page);
@@ -519,22 +555,53 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
   // the owner's phase rules of 1 November: Recrudescence is entered (14:59) and opens the second dose's window, so the
   // second dose at 19:13 is met, as the /1 card's objective 4
   expect(Object.fromEntries(j.actions.filter((a) => ['callCrisis', 'dantrolene', 'dantroleneAgain', 'ventilationBack'].includes(a.id)).map((a) => [a.id, a.grade]))).toEqual({ callCrisis: 'met', dantrolene: 'met', dantroleneAgain: 'met', ventilationBack: 'met' });
-  // the recognition, a record action: its window from Early signs' entry, pressed at the call; no recognition tile on /2
+  // the recognition, a record action: its window from Early signs' entry, pressed at the call; D5: the card marks it
+  // recognition: true, so the recognition tile is that action (its window, its press)
   const rec = j.actions.find((a) => a.id === 'nameMh');
   const earlyT = (j.phases as Array<{ id: string; t: number }>).find((p) => p.id === 'earlySigns')?.t;
   test.info().annotations.push({ type: 'MH /2 recognition', description: `nameMh ${rec?.grade}: window ${rec?.dueT} → pressed ${rec?.givenT}` });
   expect(rec?.grade).toBe('met');
   expect(rec?.dueT, 'the window opens at Early signs\' entry, not at the pre-intubation EtCO₂').toBe(earlyT);
   expect((rec?.givenT ?? Infinity) - (rec?.dueT ?? 0), 'seconds, not minutes').toBeLessThan(60);
-  expect((j.keyTimes as Array<{ id: string }>).map((k) => k.id)).not.toContain('recognition');
+  expect((j.keyTimes as Array<{ id: string; fromT: number | null; toT: number | null; grade?: string }>).find((k) => k.id === 'recognition')).toMatchObject({ fromT: rec?.dueT, toT: rec?.givenT, grade: 'met' });
   const results = resolve(import.meta.dirname, '../../../test-results');
   mkdirSync(results, { recursive: true });
   writeFileSync(`${results}/debrief-mh-v2-${browserName}.json`, JSON.stringify(j, null, 1));
   test.info().annotations.push({ type: 'MH /2 grades', description: j.actions.map((a) => `${a.id}:${a.grade}`).join(' ') });
 
+  // D7b: one window row per graded action with a window opened (report3's dueT), each act's grade words beside its tick
+  const timed = (j.actions as unknown as Array<{ label: string; dueT: number | null; givenT: number | null; firstGrade: string }>).filter((a) => a.dueT !== null);
+  const rows = await swimRows(page);
+  test.info().annotations.push({ type: 'MH /2 windows', description: `${rows.length}: ${rows.map((r) => `${r.label} ${r.words.join(' ')}`).join('; ')}` });
+  expect(rows.map((r) => r.label)).toEqual(timed.map((a) => a.label));
+  const GRADE: Record<string, string> = { met: '✓ met', deviation: '◆ deviation', overdue: '! overdue', failed: '✗ failed', due: '… due', 'not applicable': '– not applicable' };
+  timed.forEach((a, i) => expect(rows[i]?.words[0], a.label).toBe(GRADE[a.firstGrade]));
+
   await page.emulateMedia({ media: 'print' });
   await printFontLoaded(page);
   const { page1, printFont } = await printHeights(page);
+  // D6, page 2 on a record of this build (the pressures and alarm ends kept): the key-moments table with its ten
+  // columns fits the 182 mm content width, and no Who cell wraps (else the plan drops its word to the shape alone)
+  const p2 = await page.evaluate((mm) => {
+    const sec = document.querySelector('#db-moments') as HTMLElement;
+    const table = sec.querySelector('table.db-moments') as HTMLElement;
+    const who = [...sec.querySelectorAll('td.db-whocell')].map((td) => { // the lines its words take (not the row's height)
+      const r = document.createRange();
+      r.selectNodeContents(td);
+      return new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size;
+    });
+    const bp = [...sec.querySelectorAll('tbody tr[data-n]')].map((tr) => tr.querySelectorAll('td')[5]?.textContent ?? '');
+    return { section: sec.getBoundingClientRect().width / mm, table: table.getBoundingClientRect().width / mm, height: sec.getBoundingClientRect().height / mm, whoLines: Math.max(...who), bp };
+  }, MM);
+  test.info().annotations.push({ type: 'MH /2 page 2 (mm)', description: `key moments ${p2.height.toFixed(1)} tall, table ${p2.table.toFixed(1)} of ${p2.section.toFixed(1)} wide, Who cells ≤ ${p2.whoLines} line(s); SBP/DBP ${p2.bp.join(' | ')}` });
+  expect(p2.height, 'the key-moments section is laid out in print').toBeGreaterThan(0);
+  expect(p2.whoLines, 'no Who cell wraps').toBe(1);
+  expect(p2.table, 'the key-moments table within the content width (mm)').toBeLessThanOrEqual(p2.section + 0.5);
+  expect(p2.bp.some((x) => /^\d+\/\d+/.test(x)), 'an SBP/DBP printed on this run (arterial, or the cuff with its age)').toBe(true);
+  const sw = await swimPrint(page);
+  test.info().annotations.push({ type: 'MH /2 swimlane (mm)', description: `${sw.heightMm.toFixed(1)} high at ${sw.widthMm.toFixed(1)} wide, ${rows.length} windows` });
+  expect(sw).toMatchObject({ next: 'db-moments', breakBefore: 'page', breakInside: 'avoid', momentsBreak: 'auto' });
+  if (rows.length <= 6) expect(sw.heightMm, 'the swimlane (mm)').toBeLessThanOrEqual(90);
   await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
   const { handout } = await printHeights(page);
   test.info().annotations.push({ type: 'MH /2 heights (mm)', description: `page 1 ${page1.toFixed(1)}, handout ${handout.toFixed(1)}` });
@@ -546,5 +613,40 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
     mkdirSync(out, { recursive: true });
     writeFileSync(`${out}/debrief-mh-v2-handout.pdf`, pdf);
     expect(pdfInfo(pdf).boxes).toHaveLength(1);
+    await page.evaluate(() => document.querySelector('.debrief')?.removeAttribute('data-print'));
+    const report = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    writeFileSync(`${out}/debrief-mh-v2.pdf`, report);
+    test.info().annotations.push({ type: 'MH /2 pages', description: String(pdfInfo(report).boxes.length) });
   }
+});
+
+// Debrief 2, D5: the /1 fallback press. On a free run the session bar's "Recognised" writes one note row with the run
+// event 'recognised' at the host's time; the Debrief's recognition tile and its key moment read that time.
+test('D5: Recognised pressed on a free run at ≈ 30 s: the Debrief shows the tile and the key moment at the recorded time', async ({ page, browserName }) => {
+  const busy = loadedWebKit(browserName);
+  test.setTimeout(busy ? 180_000 : 90_000);
+  await openApp(page, base, '#/teach', { warmMs: 1500 });
+  const bar = page.locator('.sessionbar');
+  await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: busy ? '×2' : '×4' }).click();
+  await expect.poll(() => simT(page), { timeout: busy ? 60_000 : 30_000 }).toBeGreaterThanOrEqual(30);
+  const button = bar.getByRole('button', { name: 'Recognised', exact: true });
+  await expect(button).not.toHaveAttribute('aria-keyshortcuts');
+  await button.click();
+  type R = { __pmeApp: { session: { record: { data: { rows: Array<{ t: number; ev?: string }> } } } } };
+  await expect.poll(() => page.evaluate(() => (window as unknown as R).__pmeApp.session.record.data.rows.filter((r) => r.ev === 'recognised').length)).toBe(1);
+  const t = await page.evaluate(() => (window as unknown as R).__pmeApp.session.record.data.rows.find((r) => r.ev === 'recognised')?.t as number);
+  expect(t).toBeGreaterThanOrEqual(30);
+  expect(t).toBeLessThan(60);
+  await pauseHost(page);
+  await openDebrief(page, busy);
+  const view = page.locator('[data-view=debrief]');
+  const mmss = `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+  const tile = view.locator('#db-keytimes [data-key=recognition]');
+  await expect(tile.locator('.db-tile-cap')).toHaveText("Recognition (instructor's press)");
+  await expect(tile.locator('.db-tile-v')).toHaveText(`${Math.round(t)} s`);
+  await expect(tile.locator('.db-tile-sub')).toHaveText(`00:00 start → ${mmss} pressed`);
+  const row = view.locator('#db-moments tbody tr[data-recognised]');
+  await expect(row).toHaveCount(1);
+  await expect(row.locator('td').nth(1)).toHaveText(mmss);
+  await expect(row.locator('td').nth(3)).toHaveText('Recognised (instructor)');
 });

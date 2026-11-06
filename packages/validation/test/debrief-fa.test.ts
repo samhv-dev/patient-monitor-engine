@@ -96,3 +96,15 @@ describe('scripts/showcase/debrief-fa: one Persian matcher, shared with the app'
     expect(faDigits(2026)).toBe('۲۰۲۶');
   });
 });
+
+// Debrief 2, D5: recognition on a /2 card is now the card's timed action (`recognition: true`); a /3 export made before
+// judged rows were retired (5 November) still carries them, and the Persian handout prints them from the file as it did.
+describe('scripts/showcase/debrief-fa: an archived /3 export with judged rows', () => {
+  it('the haemorrhage phases-card export (made before 5 November) prints its judged recognition row under "Judged by the instructor"', () => {
+    const j = read('docs/showcase/kit-round-a/f9/debrief-a4-haemorrhage-phases-card-kit-round-chromium.json');
+    expect(j.schema).toBe('pme-debrief/3');
+    expect(j.judged.map((x: { id: string }) => x.id)).toEqual(['recogniseRosc']);
+    const { html } = render(j, '', 'test');
+    expect(/<section id="objectives">.*?<\/section>/s.exec(html)?.[0] ?? '').toMatch(/<ol class="obj"><li>/);
+  });
+});
