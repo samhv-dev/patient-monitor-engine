@@ -18,7 +18,7 @@ regenerations. The list of known misses across modules is [known-misses.md](../v
 | [Blood, acid–base, electrolytes and fluids](blood.md) | 12 | 41 | 10 |
 | [Brain, kidney and liver](organs.md) | 14 | 30 | 13 |
 | [Endocrine, metabolism and temperature](endocrine-thermal.md) | 17 | 40 | 17 |
-| [Anaesthetic depth, ventilatory drive and neuromuscular block](neuro.md) | 11 | 24 | 6 |
+| [Anaesthetic depth, ventilatory drive and neuromuscular block](neuro.md) | 14 | 28 | 6 |
 | [Pharmacology: PK, PD and the drug rows](pharmacology.md) | 20 | 47 | 34 |
 | [Monitor measurements (device layer)](monitor.md) | 15 | 30 | 7 |
 | [Alarms](alarms.md) | 4 | 15 | 0 |

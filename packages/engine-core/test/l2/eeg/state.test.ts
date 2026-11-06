@@ -2,11 +2,11 @@
 // as values (research/43 P-1, P-2, P-7, P-12; Miller Ch35/Ch36; Stecker 2001).
 import { describe, expect, it } from 'vitest';
 import {
-  brainDo2Rel, cortexInputsOf, cortexStep, DEXMED_LOR_NG_ML, N2O_TRIGGER_MAC, N2O_TRANSIENT_TAU_S, SUPP_ESTABLISHED, SUPP_NEAR_ISO,
+  brainDo2Rel, cortexInputsOf, DEEP_ONSET, cortexStep, DEXMED_LOR_NG_ML, N2O_TRIGGER_MAC, N2O_TRANSIENT_TAU_S, SUPP_ESTABLISHED, SUPP_NEAR_ISO,
 } from '../../../src/l2/eeg/state.ts';
 import { ce50Propofol, locPropofol } from '../../../src/l2/neuro/depth.ts';
 import { DEXMED_EEG_C50_NG_ML } from '../../../src/l2/pk/combine.ts';
-import { MAC_AWAKE } from '../../../src/l2/pk/volatile.ts';
+import { AGENTS, MAC_AWAKE } from '../../../src/l2/pk/volatile.ts';
 import { busFixture } from '../../helpers/neuro-bus.ts';
 import type { CortexInputs } from '../../../src/types-eeg.ts';
 
@@ -48,6 +48,7 @@ describe('EEG E1 cortical state', () => {
   });
 
   it('deep: 0 until sevoflurane ≈ 1.7 % (Ch36 p. 1143) = 1.7/1.80 MAC at 40 y, then grows', () => {
+    expect(DEEP_ONSET).toBeCloseTo(1.7 / AGENTS.sevoflurane.mac40, 12); // one MAC40, the drug model's
     expect(cx({ mac: { sevoflurane: 0.9 } }).deep).toBe(0);
     expect(cx({ mac: { sevoflurane: 1.7 / 1.8 } }).deep).toBeCloseTo(0, 9);
     expect(cx({ mac: { sevoflurane: 1.2 } }).deep).toBeGreaterThan(0.2);
