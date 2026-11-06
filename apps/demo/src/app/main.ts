@@ -8,6 +8,7 @@ import { mountHostBriefing } from './briefing.ts';
 import { joinCode, relayOf } from './classroom.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
+import { feedOf } from './teach2/feed.ts';
 import { PATIENT_PRESETS } from './patients.ts';
 import { announceHost, askJoin, chooseHostSession } from './host-guard.ts';
 import { keepPositions, keptItems, putKeptItems, readPosition, restorePosition } from './position.ts';
@@ -113,6 +114,9 @@ if (follow) {
   if (site.fps === 30) session.monitor?.setFps(30);
   applySkinAlarmColours(site.skin, site.theme);
   const link = new Link(session.panel, session.panelTransport, session);
+  // the instructor phone (plan instructor-peer-role.md §6): its notes are filed as the laptop's own, and its view feed
+  // is read from this Link by Instructor v2's functions
+  session.serveInstructors({ note: (text, kind, t) => link.note(text, kind, t), feed: () => feedOf(link) });
   // A monitor whose worker stopped is final (no fallback) — say so and name the way out; the reason goes to the console
   // for the gate note's diagnostics
   shell.monitorHost.addEventListener('pme-monitor-failed', (e) => {

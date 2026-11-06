@@ -12,11 +12,12 @@ import './action.css';
 import { asV1, isV2 } from '@pme/controller';
 import type { Link } from '../link.ts';
 import { stagesOf } from '../card-read.ts';
-import { clock, h, setText } from '../ui.ts';
+import { clock, h, keepOrder, setText } from '../ui.ts';
 import { FOOT_NONE, mountBeginPane, type Way } from './begin.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { judge, pressAction, pressStep } from './press.ts';
-import { classify, classifyV2, liveGrades, NOT_AN_ACTION, type HoldLike, type LiveRow } from './rows.ts';
+import { boardOf } from './feed.ts';
+import { NOT_AN_ACTION, type Board, type LiveRow } from './rows.ts';
 import { stageNames } from './strip.ts';
 
 export const FOOT = 'No penalty comes from the panel. Consequences come from the physiology, and the debrief records overdue, out of order, failed and not done, each with the time and the order it was due.';
@@ -25,6 +26,8 @@ export const FOOT = 'No penalty comes from the panel. Consequences come from the
 const keyOf = (r: LiveRow): string => `${r.stage}|${r.row.kind}|${r.row.kind === 'judged' ? r.row.objective : r.row.index}`;
 
 interface Pill {
+  /** The row's own list item, kept with it (the dropped press: rows were moved into new <li> on every order change). */
+  li: HTMLElement;
   el: HTMLElement;
   key: HTMLElement;
   title: HTMLElement;
@@ -40,10 +43,6 @@ interface Group {
   rows: HTMLElement;
   pills: Map<string, Pill>;
 }
-
-/** The host's hold progress (`ScenarioDriver.vitalHolds()`, answer 8): every `vital` rule of the current state with
- *  the runner's own hold fraction. A follower has no driver: null, and its bars show value against threshold only. */
-const holdsOf = (link: Link): readonly HoldLike[] | null => link.host?.driver.vitalHolds() ?? null;
 
 /** Mount this slot into `el` (the fixed slot signature, teach2/ctx.ts). */
 export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
@@ -66,7 +65,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     const fill = live.row.kind === 'auto' && !inFinished ? h('span', { class: 'ip2-bar-fill' }) : null;
     const right = h('span', { class: 'ip2-row-right' });
     const text = h('span', { class: 'ip2-row-text' }, title, sub, fill ? h('span', { class: 'ip2-bar', 'aria-hidden': 'true' }, fill) : null);
-    const p: Pill = { el: h(pressable ? 'button' : 'div', { class: 'ip2-row', ...(pressable ? { type: 'button' } : {}) }, key, text, right), key, title, sub, right, fill, live };
+    const el = h(pressable ? 'button' : 'div', { class: 'ip2-row', ...(pressable ? { type: 'button' } : {}) }, key, text, right);
+    const p: Pill = { li: h('li', {}, el), el, key, title, sub, right, fill, live };
     if (pressable) p.el.addEventListener('click', () => press(p));
     return p;
   };
@@ -115,13 +115,12 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const pills = new Map<string, Pill>();
   const laterPills = new Map<string, Pill>();
   const groups = new Map<string, Group>();
-  const base = new Map<string, number>();
   let docV = -1;
   /** The stages' short names (the strip's chips) and full labels, for Finished's titles. */
   let names = new Map<string, string>();
   let labels = new Map<string, string>();
 
-  /** Keep each row's element across repaints; put them in order without moving a node that is already in place. */
+  /** Keep each row's element and its list item across repaints; move only the rows whose place changed (keepOrder). */
   const sync = (into: HTMLElement, cache: Map<string, Pill>, rows: readonly LiveRow[], inFinished: boolean, keyFn: (r: LiveRow) => string) => {
     const want: HTMLElement[] = [];
     const seen = new Set<string>();
@@ -131,11 +130,10 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       let p = cache.get(k);
       if (!p) cache.set(k, (p = pill(live, inFinished)));
       paint(p, live);
-      want.push(p.el);
+      want.push(p.li);
     }
     for (const k of [...cache.keys()]) if (!seen.has(k)) cache.delete(k);
-    const items = [...into.children].map((li) => li.firstElementChild);
-    if (items.length !== want.length || items.some((x, i) => x !== want[i])) into.replaceChildren(...want.map((p) => h('li', {}, p)));
+    keepOrder(into, want);
   };
 
   /** Finished, grouped (the owner's report of 30 October): one group per stage visit, titled with the stage's name and
@@ -160,7 +158,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       want.push(g.li);
     }
     for (const k of [...groups.keys()]) if (!by.has(k)) groups.delete(k);
-    if (finList.children.length !== want.length || want.some((li, i) => finList.children[i] !== li)) finList.replaceChildren(...want);
+    keepOrder(finList, want);
   };
 
   const setDigits = (rows: readonly LiveRow[]) => {
@@ -194,7 +192,6 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     const stateId = sv.stateId;
     if (docV !== sv.docVersion) {
       docV = sv.docVersion;
-      base.clear();
       groups.clear();
       const stages = sv.doc ? stagesOf(sv.doc) : [];
       names = stageNames(stages);
@@ -214,11 +211,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     setText(foot, sv.doc ? FOOT : FOOT_NONE);
     if (v2 && stateId) { // a pme-scenario/2 card (F6): the phase's actions (record actions among them), the rules out of the phase
       wrap.dataset.format = '2'; // the denser /2 rows (action.css): the MH card's Latent opens 11 actions
-      const pr = link.host?.driver.phaseRunner ?? null;
-      const board = classifyV2({
-        doc: v2, phaseId: stateId, log: link.log, takings: pr?.takings ?? null, holds: pr?.vitalHolds() ?? null, paused: link.ctl.hostPaused,
-        grades: pr ? liveGrades(v2, pr, link.simT) : null, admin: pr?.admin ?? null, enteredT: sv.enteredT,
-      });
+      // the host's board (feed.ts: the host's own, its feed's on a remote; a remote without one reads what it has)
+      const board = boardOf(link) as Board;
       const rest = board.later ?? [];
       sync(list, pills, board.list, false, keyOf);
       sync(laterList, laterPills, rest, false, keyOf);
@@ -245,11 +239,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       drawOffs(link.log.filter((x) => (x.kind === 'instructor' || x.kind === 'learner') && !x.refused && (x.simT ?? -Infinity) >= freeT - 1e-6 && !NOT_AN_ACTION.test(x.text)), none, true);
       return;
     }
-    const board = classify({
-      doc, stateId, history: link.ctl.scenario.history, enteredT: sv.enteredT, simT: link.simT, inState: sv.timeInState(link.simT),
-      paused: link.ctl.hostPaused, log: link.log, record: link.host?.record.data ?? null,
-      values: link.ctl.state?.values as Partial<Record<string, number>> | undefined, holds: holdsOf(link), base,
-    });
+    const board = boardOf(link) as Board;
     sync(list, pills, board.list, false, keyOf);
     syncFinished(board.finished);
     setDigits(board.list);

@@ -124,6 +124,17 @@ In the clinical app, the Instructor view's scenario library loads the built-in s
 `ScenarioRunner` from `@pme/controller/scenario` run a validated document against a monitor handle or a headless
 engine; the run log (`runLog`, `replayRunLog`) replays a session exactly.
 
+### Running your card
+
+In Instructor v2 (`#/teach2`) with no case loaded, **Open a card file…** under the three cards reads one JSON file
+and checks it with `validateScenario` (a `pme-scenario/2` card, or a `/1` card). If the check fails, the pane lists
+the validator's errors, one per line with the JSON path of each, and keeps nothing. A card whose `id` is a built-in
+card's is refused: give your card an id of its own. A card that passes is kept in this browser's library, under
+**Imported** at the end of the Scenario library's case list, and the pane offers to start it. It runs as a built-in
+card does (phases, actions, the Debrief). Opening a file with the same `id` again
+replaces the earlier copy; **Remove** takes it out. The card lives in this browser's storage only: it is not sent to
+the learners' phones (they see the running case as always) and another computer does not have it.
+
 ### How Instructor v2 reads a card
 
 Instructor v2 (`#/teach2`, E127) reads the same `pme-scenario/1` document; nothing new is needed in a card, but these

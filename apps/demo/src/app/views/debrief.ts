@@ -17,11 +17,11 @@ import { archive, hhmm, type ArchiveMeta } from '../archive.ts';
 import './debrief.css';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
-import { axisRange, drugTotals, endOf, facts, mmss, objectives, perMinute, report3, span, steps, trendMeta, type DebriefExport, type Report3, type Step, type StepStatus } from '../debrief.ts';
+import { axisRange, drugTotals, endOf, facts, mmss, objectives, perMinute, PRESSURE_KEYS, report3, span, steps, trendMeta, type DebriefExport, type Pressure, type Report3, type Step, type StepStatus } from '../debrief.ts';
 import type { Grade } from '@pme/controller/scenario';
 import { debriefJson } from '../debrief-export.ts';
-import { keyMoments, keyTimes, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
-import { LAB_KEYS, TREND_KEYS, type Row, type RunData, type TrendKey } from '../record.ts';
+import { keyMoments, keyTimes, RECOGNISED, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
+import { LAB_KEYS, TREND_KEYS, type PressureKey, type Row, type RunData, type TrendKey, type ValueKey } from '../record.ts';
 import { COURSE_W, courseSvg, type CourseMark } from './debrief-course.ts';
 import { MARKS } from '../teach2/dock.ts';
 import { hrefOf } from '../router.ts';
@@ -206,17 +206,30 @@ const PAGE_CSS = `@page { @bottom-left { content: "${FOOT}"; font: 7pt 'Inter Pr
 const loadPrintFont = (): Promise<unknown> => (document.fonts?.load("1em 'Inter Print'") ?? Promise.resolve()).catch(() => undefined);
 const printWithFont = (): void => void loadPrintFont().then(() => window.print());
 
-/** Q1: the appendix table — the six trends and the five labs, the first sample of each minute. */
+/** The pressures' column heads (D6), each in whole mmHg as the record keeps it. */
+const PRESSURE_HEAD: Readonly<Record<PressureKey, string>> = { sys: 'SBP', dia: 'DBP', cvp: 'CVP' };
+/** What a record made before Debrief 2 lacks, said once under a table (plan §3: a missing fact is "not recorded in this
+ *  file", never a dash, which means "not measured"). */
+const NOT_RECORDED = ' not recorded in this file.';
+const notRecorded = (what: string): HTMLElement => h('p', { class: 'db-norecord' }, `${what}:${NOT_RECORDED}`);
+
+/** Q1: the appendix table — the six trends, the systolic, diastolic and CVP after MAP (D6), and the five labs, the first
+ *  sample of each minute; a pre-D file prints "·" in the pressures and says once that they were not recorded. */
 function minutes(d: RunData): HTMLElement {
-  const keys = [...TREND_KEYS, ...LAB_KEYS];
+  const kept = !!d.keeps?.includes('pressures');
+  const keys: Array<ValueKey | PressureKey> = [...TREND_KEYS.flatMap((k): Array<ValueKey | PressureKey> => (k === 'map' ? [k, ...PRESSURE_KEYS] : [k])), ...LAB_KEYS];
+  const isP = (k: ValueKey | PressureKey): k is PressureKey => (PRESSURE_KEYS as string[]).includes(k);
   const head = keys.map((k) => {
-    const m = trendMeta(k);
+    const m = isP(k) ? { label: PRESSURE_HEAD[k], unit: 'mmHg' } : trendMeta(k);
     return h('th', { scope: 'col' }, m.label, m.unit ? h('span', { class: 'unit' }, m.unit) : null);
   });
+  const cell = (k: ValueKey | PressureKey, v: number | null | undefined) =>
+    h('td', { class: 'num' }, isP(k) && !kept ? '·' : v === null || v === undefined ? '–' : isP(k) ? String(v) : v.toFixed(trendMeta(k).digits));
   return h('div', { class: 'db-scroll' }, h('table', { class: 'db-table db-minutes' },
     h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Time'), ...head)),
     h('tbody', {}, ...perMinute(d).map((r) => h('tr', {}, h('td', { class: 'num' }, mmss(r.t)),
-      ...keys.map((k) => h('td', { class: 'num' }, r.values[k] === null ? '–' : (r.values[k] as number).toFixed(trendMeta(k).digits))))))));
+      ...keys.map((k) => cell(k, (r.values as Record<string, number | null | undefined>)[k])))))),
+  kept ? null : notRecorded('SBP, DBP and CVP'));
 }
 
 /** The shapes of the moments: the report's course strip (`debrief-course.ts`) draws each as a down arrow, a scenario
@@ -266,24 +279,45 @@ export const takeHomeSection = (take: readonly string[] = []): HTMLElement =>
     : h('div', {}, h('p', { class: 'db-subhead' }, 'Your take-home points'), ...ruled(3)));
 
 /** One key-time tile: its caption, the interval as a big value, and the times it runs between. A tile whose end is
- *  absent is not drawn, except the recognition tile, which reads "–" "not ticked" (E44). */
+ *  absent is not drawn, except the recognition tile, which reads "–" "not ticked" (E44), or on a /2 card its timed
+ *  action's window and grade words (D5). */
 function tile(k: KeyTime, moments: KeyMoment[]): HTMLElement | null {
   if (k.state === 'noneAfter') return null;
   const ticked = k.state !== 'notTicked';
   const taken = k.totalS ?? (k.toT !== null && k.fromT !== null ? k.toT - k.fromT : null);
   let sub = '';
-  if (!ticked) sub = 'not ticked';
+  if (k.grade) sub = `${k.fromT === null ? '–' : mmss(k.fromT)} ${k.fromLabel ?? 'start'} → ${k.toT === null ? '–' : mmss(k.toT)}${k.askedS !== undefined ? ` · asked ≤ ${span(k.askedS)}` : ''} · ${GRADE_WORDS[k.grade]}`; // D5: a /2 card's timed action
+  else if (!ticked) sub = 'not ticked';
   else if (k.id === 'pulseless') sub = `first lost ${mmss(k.fromT ?? 0)}`;
-  else if (k.id === 'recognition' && k.fromT !== null && k.toT !== null) sub = `${mmss(k.fromT)} ${k.fromLabel ?? 'start'} → ${mmss(k.toT)} ticked`; // #18: from the early signs, not Load
+  else if (k.id === 'handsOff') sub = `compression fraction ${Math.round((k.fraction ?? 0) * 100)} %`;
+  else if (k.id === 'recognition' && k.fromT !== null && k.toT !== null) sub = `${mmss(k.fromT)} ${k.fromLabel ?? 'start'} → ${mmss(k.toT)} ${k.label === RECOGNISED.press.tile ? 'pressed' : 'ticked'}`; // #18: from the early signs, not Load; D5: the /1 press
   else if (k.fromT !== null && k.toT !== null) {
     const action = k.id === 'firstTeam' ? moments.find((m) => m.t === k.toT)?.text : undefined;
     sub = `${mmss(k.fromT)} → ${mmss(k.toT)}${k.askedS !== undefined ? ` · asked ≤ ${span(k.askedS)}` : ''}${action ? ` (${action})` : ''}`;
   }
   const met = k.askedS !== undefined && taken !== null && taken <= k.askedS;
-  return h('div', { class: `db-tile${met ? ' met' : ''}${ticked ? '' : ' unticked'}`, 'data-key': k.id, 'data-state': k.state },
+  return h('div', { class: `db-tile${met ? ' met' : ''}${ticked ? '' : ' unticked'}`, 'data-key': k.id, 'data-state': k.state, ...(k.id === 'recognition' ? { 'data-recognised': '' } : {}) },
     h('div', { class: 'db-tile-cap', title: k.label }, k.label),
     h('div', { class: 'db-tile-v' }, taken === null ? '–' : span(taken)),
-    h('div', { class: 'db-tile-sub' }, sub));
+    h('div', { class: 'db-tile-sub' }, sub),
+    k.id === 'handsOff' ? fractionBar(k.fraction ?? 0) : null);
+}
+
+/** Reference lines of the compression-fraction bar (DQ3, ruled 5 November): the owner's values, drawn and labelled
+ *  alike; the bar carries no grade and no colour change at either. */
+const FRACTION_REFS = [60, 80] as const;
+/** The hands-off tile's compression fraction as a small bar: the outline is 100 %, the fill the fraction, with a
+ *  labelled line at each reference value. */
+function fractionBar(f: number): HTMLElement {
+  const W = 60, x = (p: number) => (0.5 + (p / 100) * W).toFixed(1);
+  const svg = h('span', { class: 'db-bar db-fraction' });
+  svg.innerHTML = `<svg viewBox="0 0 ${W + 1} 15" width="${W + 1}" height="15" aria-hidden="true">`
+    + `<rect x="0.5" y="0.5" width="${(Math.min(Math.max(f, 0), 1) * W).toFixed(1)}" height="7" fill="#000"/>`
+    + `<rect x="0.5" y="0.5" width="${W}" height="7" fill="none" stroke="#000" stroke-width="1"/>`
+    + FRACTION_REFS.map((p) => `<line data-ref="${p}" x1="${x(p)}" y1="0" x2="${x(p)}" y2="9" stroke="#000" stroke-width="0.6" stroke-dasharray="1 1"/>`
+      + `<text x="${x(p)}" y="14.5" font-size="5.5" text-anchor="middle">${p} %</text>`).join('')
+    + '</svg>';
+  return svg;
 }
 
 /** An objective's measured interval as a bar: the outline is the time asked, the fill the time taken; time past the
@@ -301,17 +335,41 @@ function bar(m: { fromT: number; toT: number; askedS: number }): HTMLElement {
 
 /** Every key moment (UI review #3: no cap; on paper the table runs on with its header repeated) with what the monitor
  *  showed at that second (values rounded; SpO₂ "–" where the oximeter showed its dash, E126), and the alarms raised since the row before. */
-function momentsTable(ms: KeyMoment[]): Node[] {
-  const v = (x: number | null) => h('td', { class: 'num' }, x === null ? '–' : String(Math.round(x)));
+/** A moment's SBP/DBP cell (D6): "92/58" from the arterial line; a cuff reading with its age, "98/60 (cuff, 2 min 10 s
+ *  before)" (the owner's rule of 5 November, DQ1); "–" when none; "·" in a file that did not record them. */
+function bpText(m: KeyMoment): string {
+  const { sys, dia } = m.values;
+  if (sys === undefined) return '·';
+  if (sys === null) return '–';
+  const num = (x: Pressure | undefined) => (x === null || x === undefined ? '–' : String(Math.round(typeof x === 'number' ? x : x.v)));
+  if (typeof sys === 'number') return `${num(sys)}/${num(dia)}`;
+  return `${num(sys)}/${num(dia)} (cuff${sys.ageS < 0.5 ? '' : `, ${span(sys.ageS)} before`})`;
+}
+/** An alarm under a moment (D6): its raise, and when it cleared and was acknowledged when the record kept them. */
+function alarmText(m: KeyMoment, i: number): string {
+  const text = m.alarms[i] as string;
+  const a = m.alarmTimes?.[i];
+  if (!a) return text;
+  return `${text} ${mmss(a.t)} ▸ ${a.endT === null ? '(still on)' : `cleared ${mmss(a.endT)}`}${a.ackT === null ? '' : ` · acknowledged ${mmss(a.ackT)}`}`;
+}
+
+/** Every key moment (UI review #3: no cap; on paper the table runs on with its header repeated) with what the monitor
+ *  showed at that second (values rounded; SpO₂ "–" where the oximeter showed its dash, E126; SBP/DBP and CVP, D6), and
+ *  the alarms raised since the row before, each with its end and acknowledgement. A file made before the record kept
+ *  them prints "·" in the new cells and says so once under the table. */
+function momentsTable(ms: KeyMoment[], d: RunData): Node[] {
+  const v = (x: number | null | undefined) => h('td', { class: 'num' }, x === undefined ? '·' : x === null ? '–' : String(Math.round(x)));
+  const missing = [d.keeps?.includes('pressures') ? '' : 'SBP/DBP and CVP', d.keeps?.includes('alarmEnd') ? '' : 'when an alarm ended or was acknowledged'].filter(Boolean);
   return kids(
     h('p', { class: 'db-subhead' }, 'values at that second'),
     h('table', { class: 'db-table db-moments' },
-      h('thead', {}, h('tr', {}, ...['n', 'Time', 'Who', 'What happened', 'HR', 'MAP', 'SpO₂', 'EtCO₂'].map((c) => h('th', { scope: 'col' }, c)))),
+      h('thead', {}, h('tr', {}, ...['n', 'Time', 'Who', 'What happened', 'HR', 'SBP/DBP', 'MAP', 'CVP', 'SpO₂', 'EtCO₂'].map((c) => h('th', { scope: 'col' }, c)))),
       h('tbody', {}, ...ms.flatMap((m) => [
-        h('tr', { 'data-n': String(m.n), ...(m.pulseless ? { 'data-pulseless': 'true' } : {}) }, h('td', { class: 'num' }, String(m.n)), h('td', { class: 'num' }, mmss(m.t)), whoCell(m.who), h('td', {}, m.text),
-          v(m.values.hr), v(m.values.map), v(m.values.spo2), v(m.values.etco2)),
-        ...(m.alarms.length ? [h('tr', { class: 'db-alarms' }, h('td', {}), h('td', { colspan: '7' }, `Alarms since the last row: ${m.alarms.join(', ')}`))] : []),
+        h('tr', { 'data-n': String(m.n), ...(m.pulseless ? { 'data-pulseless': 'true' } : {}), ...(m.recognised ? { 'data-recognised': '' } : {}) }, h('td', { class: 'num' }, String(m.n)), h('td', { class: 'num' }, mmss(m.t)), whoCell(m.who), h('td', {}, m.text),
+          v(m.values.hr), h('td', { class: 'num db-bp' }, bpText(m)), v(m.values.map), v(m.values.cvp), v(m.values.spo2), v(m.values.etco2)),
+        ...(m.alarms.length ? [h('tr', { class: 'db-alarms' }, h('td', {}), h('td', { colspan: '9' }, `Alarms since the last row: ${m.alarms.map((_, i) => alarmText(m, i)).join(m.alarmTimes ? '; ' : ', ')}`))] : []),
       ]))),
+    missing.length ? notRecorded(missing.join(', and ').replace(/^./, (c) => c.toUpperCase())) : null,
     ms.some((m) => m.pulseless) ? h('p', { class: 'db-note60' }, SPO2_DASH) : null,
   );
 }
@@ -390,7 +448,7 @@ export function debriefView(session: AppSession, link: Link): View {
             o.verdict.measure ? bar(o.verdict.measure) : null, h('div', { class: 'db-why' }, m.why));
         }))
         : h('p', { class: 'muted' }, 'This run has no objectives.')),
-      ...(ms.length ? [runFoot(), section('moments', 'Key moments and what the monitor showed', ...momentsTable(ms))] : []),
+      ...(ms.length ? [runFoot(), section('moments', 'Key moments and what the monitor showed', ...momentsTable(ms, d))] : []),
       section('facts', 'Measured facts', fs.length
         ? h('dl', { class: 'db-facts' }, ...fs.flatMap((x) => [h('dt', {}, x.label), h('dd', {}, x.value)]))
         : h('p', { class: 'muted' }, 'Nothing was measured yet.')),

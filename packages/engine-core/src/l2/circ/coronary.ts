@@ -124,7 +124,7 @@ export function createCoronary(ref: Stabilised['ref']): CoronaryState {
 /** The beat's diastolic aortic pressure for the supply — the balloon-augmented value when one is set. */
 const aoDiaOf = (b: CircBeat): number => (b as CircBeat & { aoDiaEff?: number }).aoDiaEff ?? b.aoDia;
 
-export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: number, dt: number, hr: number, o2Rel = 1, noBeat?: NoBeat, modeled = true): void {
+export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: number, dt: number, hr: number, o2Rel = 1, noBeat?: NoBeat, modeled = true, compressions?: NoBeat): void {
   const b = beats[beats.length - 1];
   if (!b && !noBeat) return;
   const r = c.ref;
@@ -190,6 +190,21 @@ export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: 
     }
     const work = workOf(b, hrR);
     demand = modeled ? (winDemand ?? D_BASAL + D_EC * hrR * ee + (1 - D_BASAL - D_EC) * work) : work; // + basal, E–C shares
+    if (compressions) {
+      // Chest compressions over a heart that still beats (a pseudo-PEA, or CPR not yet stopped after a return): the
+      // compressions set the aortic, ventricular and intrathoracic pressures, and the myocardium is perfused in their
+      // relaxation phase, driven by the relaxation-phase aortic − right-atrial pressure (Paradis 1990, the same
+      // continuous CPP the arrested heart is read by, model.ts `cppAcc`). A beat's CoPP is its minimum minus the LV
+      // pressure at the NEXT beat's onset — an instant of the compression cycle: on the class IV haemorrhage card's
+      // junctional 50 under CPR 110 the onset LV pressures of consecutive beats ran 1.8–13.7 mmHg and the pleural
+      // −4.0 to −0.3 while the continuous CPP held 17–20, and as 5 beats take exactly 11 compressions the pattern
+      // locked, so the sub-second phase of the CPR press decided whether the heart re-perfused or arrested (6 of 9
+      // presses 0.1–0.9 s apart arrested at 661–663 s). The supply is read the arrested heart's way; the demand stays
+      // the beating heart's.
+      cpp = compressions.cpp;
+      dtf = compressions.dtf;
+      beatFlow = null;
+    }
   }
   c.cpp = cpp;
   const flow = cfr * (beatFlow ?? Math.max(0, (cpp - P_ZF) / Math.max(5, cpp0 - P_ZF)) * (dtf / c.dtf0));

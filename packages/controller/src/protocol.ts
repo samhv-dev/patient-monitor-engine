@@ -311,6 +311,9 @@ export const INSTRUCTOR_COMMANDS: ReadonlySet<string> = new Set([
   'applyEvent ventilation', 'attachSensor', 'device', 'pin', 'release', 'scenario bookmark', 'scenario goto',
   'scenario pause', 'scenario record', 'scenario restoreBookmark', 'scenario resume', 'scenario trigger', 'setMode', 'setRhythm', 'setTarget',
   'time jump', 'time pause', 'time resume', 'time scale', 'note',
+  // measured by the census once it crawled the pme-scenario/2 cards (P6): Instructor v2's A presses on the MH card in
+  // phases send its actions' `give`, which holds these two (the induction's airway device and preoxygenation)
+  'applyEvent airwayDevice', 'applyEvent preoxygenate',
 ]);
 
 /** The census key of a command (its `type`, plus its `action` when that is a word, plus `event.kind` for applyEvent). */
