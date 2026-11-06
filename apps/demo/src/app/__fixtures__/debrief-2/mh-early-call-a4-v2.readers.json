@@ -1,0 +1,736 @@
+{
+ "objectives": [
+  {
+   "text": "Name malignant hyperthermia from the monitor: EtCO₂ above 45 mmHg at the same ventilation, tachycardia (instructor-assessed)",
+   "verdict": {
+    "status": "not assessable",
+    "why": "This objective has no rule: the instructor judges it. The instructor ticked it at 08:40.",
+    "tickedT": 520.02
+   }
+  },
+  {
+   "text": "Call the MH crisis (stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ above 45 mmHg at the same ventilation)",
+   "verdict": {
+    "status": "met",
+    "why": "The state \"Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\" 2 s after the state \"Early signs: EtCO₂ rising at the same ventilation, tachycardia\" (08:38 → 08:40; within 2 min 00 s asked).",
+    "measure": {
+     "fromT": 518.2939635447129,
+     "toT": 520.2732320757331,
+     "askedS": 120
+    },
+    "window": {
+     "fromT": 518.2939635447129,
+     "askedS": 120
+    }
+   }
+  },
+  {
+   "text": "Give dantrolene 2.5 mg/kg within 300 s of calling the crisis",
+   "verdict": {
+    "status": "met",
+    "why": "Dantrolene 21 s after the state \"Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\" (08:40 → 09:00; within 5 min 00 s asked).",
+    "measure": {
+     "fromT": 520.2732320757331,
+     "toT": 540.9,
+     "askedS": 300
+    },
+    "window": {
+     "fromT": 520.2732320757331,
+     "askedS": 300
+    }
+   }
+  },
+  {
+   "text": "Repeat dantrolene 2.5 mg/kg within 600 s of the first dose while EtCO₂ is still above 45 mmHg",
+   "verdict": {
+    "status": "not assessable",
+    "why": "This objective has no rule: the instructor judges it."
+   }
+  },
+  {
+   "text": "Treat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L",
+   "verdict": {
+    "status": "not assessable",
+    "why": "K⁺ above 5.5 mmol/L did not happen."
+   }
+  },
+  {
+   "text": "Hyperventilation kept until EtCO₂ has stayed below 40 mmHg for 2 min, then ventilation normalised (back to 12 × 500)",
+   "verdict": {
+    "status": "met",
+    "why": "The state \"Ventilation back to 12 × 500, O₂ 100 %\" at 14:28, after EtCO₂ had stayed below 40 mmHg for 2 min 00 s (09:03 → 11:03)."
+   }
+  }
+ ],
+ "facts": [
+  {
+   "label": "Lowest SpO₂",
+   "value": "96 % at 00:10"
+  },
+  {
+   "label": "Lowest ART M / NIBP M",
+   "value": "62 mmHg at 05:25"
+  },
+  {
+   "label": "Highest EtCO₂",
+   "value": "54 mmHg at 20:57"
+  },
+  {
+   "label": "Highest T1 / T2",
+   "value": "37.1 °C at 21:52"
+  },
+  {
+   "label": "Apnoea alarm to ventilated breaths",
+   "value": "17 s (04:47 → 05:04)"
+  },
+  {
+   "label": "Labs (the model): last (lowest–highest)",
+   "value": "K⁺ 4.6 mmol/L (4.2–4.8) · Lactate 1.6 mmol/L (1.0–1.6) · pH 7.28 (7.26–7.42) · Glucose 6.6 mmol/L (5.6–6.6) · Tcore 37.2 °C (36.6–37.2)"
+  }
+ ],
+ "keyMoments": [
+  {
+   "n": 1,
+   "t": 34.783718553360096,
+   "who": "team",
+   "text": "Midazolam 2 mg and fentanyl 100 µg given, breathing room air",
+   "values": {
+    "hr": 70,
+    "map": 93.81506625787108,
+    "spo2": 96,
+    "etco2": 37
+   },
+   "pulseless": false,
+   "alarms": []
+  },
+  {
+   "n": 2,
+   "t": 66.19498270635837,
+   "who": "team",
+   "text": "Preoxygenating: 100 % O₂ by face mask",
+   "values": {
+    "hr": 65,
+    "map": 89.93767518967054,
+    "spo2": 96,
+    "etco2": 38
+   },
+   "pulseless": false,
+   "alarms": []
+  },
+  {
+   "n": 3,
+   "t": 245.15519999980927,
+   "who": "team",
+   "text": "Induced: propofol 2 mg/kg, succinylcholine 1.5 mg/kg (masseter rigidity); airway not yet secured",
+   "values": {
+    "hr": 63,
+    "map": 88.69316124572447,
+    "spo2": 99,
+    "etco2": 46
+   },
+   "pulseless": false,
+   "alarms": [
+    "RR low"
+   ]
+  },
+  {
+   "n": 4,
+   "t": 304.516,
+   "who": "team",
+   "text": "Intubated: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 % at 2 L/min",
+   "values": {
+    "hr": 67,
+    "map": 70.32735162462062,
+    "spo2": 99,
+    "etco2": 0
+   },
+   "pulseless": false,
+   "alarms": [
+    "RR low",
+    "EtCO₂ low",
+    "Apnoea (no CO₂ breaths)"
+   ]
+  },
+  {
+   "n": 5,
+   "t": 365.8343052271231,
+   "who": "team",
+   "text": "Surgery under way: sevoflurane 2 %, rocuronium",
+   "values": {
+    "hr": 71,
+    "map": 67.38292782783758,
+    "spo2": 99,
+    "etco2": 42
+   },
+   "pulseless": false,
+   "alarms": [
+    "RR low",
+    "awRR low"
+   ]
+  },
+  {
+   "n": 6,
+   "t": 518.2939635447129,
+   "who": "patient",
+   "text": "Early signs: EtCO₂ rising at the same ventilation, tachycardia",
+   "values": {
+    "hr": 78,
+    "map": 78.06447723060059,
+    "spo2": 99,
+    "etco2": 45
+   },
+   "pulseless": false,
+   "alarms": []
+  },
+  {
+   "n": 7,
+   "t": 520.2732320757331,
+   "who": "team",
+   "text": "Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600",
+   "values": {
+    "hr": 80,
+    "map": 78.45579257098397,
+    "spo2": 99,
+    "etco2": 45
+   },
+   "pulseless": false,
+   "alarms": []
+  },
+  {
+   "n": 8,
+   "t": 540.8541272957054,
+   "who": "team",
+   "text": "Dantrolene 2.5 mg/kg given",
+   "values": {
+    "hr": 79,
+    "map": 79.23095835643909,
+    "spo2": 99,
+    "etco2": 40
+   },
+   "pulseless": false,
+   "alarms": []
+  },
+  {
+   "n": 9,
+   "t": 543.0692000002861,
+   "who": "patient",
+   "text": "MH treatment under way",
+   "values": {
+    "hr": 79,
+    "map": 79.26974742940732,
+    "spo2": 99,
+    "etco2": 39
+   },
+   "pulseless": false,
+   "alarms": []
+  },
+  {
+   "n": 10,
+   "t": 551.2912066620128,
+   "who": "team",
+   "text": "Cooling: 2 L saline at room temperature running",
+   "values": {
+    "hr": 81,
+    "map": 80.36480375473286,
+    "spo2": 99,
+    "etco2": 38
+   },
+   "pulseless": false,
+   "alarms": []
+  },
+  {
+   "n": 11,
+   "t": 553.46,
+   "who": "patient",
+   "text": "MH treatment under way",
+   "values": {
+    "hr": 80,
+    "map": 80.1816756404962,
+    "spo2": 99,
+    "etco2": 38
+   },
+   "pulseless": false,
+   "alarms": []
+  },
+  {
+   "n": 12,
+   "t": 613.66,
+   "who": "patient",
+   "text": "Recovering: EtCO₂ below 45",
+   "values": {
+    "hr": 81,
+    "map": 84.94426471842662,
+    "spo2": 99,
+    "etco2": 36
+   },
+   "pulseless": false,
+   "alarms": []
+  },
+  {
+   "n": 13,
+   "t": 868.3564000000954,
+   "who": "team",
+   "text": "Ventilation back to 12 × 500, O₂ 100 %",
+   "values": {
+    "hr": 76,
+    "map": 88.82846413664731,
+    "spo2": 99,
+    "etco2": 35
+   },
+   "pulseless": false,
+   "alarms": []
+  }
+ ],
+ "keyTimes": [
+  {
+   "id": "recognition",
+   "label": "Recognition (instructor's tick)",
+   "fromT": 518.2939635447129,
+   "fromLabel": "early signs",
+   "toT": 520.02,
+   "state": "measured"
+  },
+  {
+   "id": "firstTeam",
+   "label": "Start → first team action",
+   "fromT": 0,
+   "toT": 34.783718553360096,
+   "state": "measured"
+  },
+  {
+   "id": "objective:1",
+   "label": "Call the MH crisis (stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ above 45 mmHg at the same ventilation)",
+   "fromT": 518.2939635447129,
+   "toT": 520.2732320757331,
+   "askedS": 120,
+   "state": "measured"
+  },
+  {
+   "id": "objective:2",
+   "label": "Give dantrolene 2.5 mg/kg within 300 s of calling the crisis",
+   "fromT": 520.2732320757331,
+   "toT": 540.9,
+   "askedS": 300,
+   "state": "measured"
+  }
+ ],
+ "report3": null,
+ "perMinute": [
+  {
+   "t": 0,
+   "values": {
+    "hr": 71,
+    "map": 93.44698413954046,
+    "spo2": 96,
+    "etco2": 36,
+    "rr": 15,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1,
+    "ph": 7.41,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 60,
+   "values": {
+    "hr": 66,
+    "map": 91.24098467226604,
+    "spo2": 96,
+    "etco2": 37,
+    "rr": 14,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1,
+    "ph": 7.39,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 120,
+   "values": {
+    "hr": 64,
+    "map": 88.53707987587548,
+    "spo2": 99,
+    "etco2": 42,
+    "rr": 8,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1,
+    "ph": 7.36,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 180,
+   "values": {
+    "hr": 63,
+    "map": 87.38322946039762,
+    "spo2": 99,
+    "etco2": 44,
+    "rr": 7,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1,
+    "ph": 7.33,
+    "glucose": 5.6,
+    "tcore": 36.7
+   }
+  },
+  {
+   "t": 240,
+   "values": {
+    "hr": 64,
+    "map": 88.11742709105452,
+    "spo2": 99,
+    "etco2": 46,
+    "rr": 6,
+    "temp": 36.7,
+    "k": 4.2,
+    "lactate": 1,
+    "ph": 7.32,
+    "glucose": 5.6,
+    "tcore": 36.7
+   }
+  },
+  {
+   "t": 300,
+   "values": {
+    "hr": 66,
+    "map": 70.23571772747441,
+    "spo2": 99,
+    "etco2": 0,
+    "rr": 0,
+    "temp": 36.7,
+    "k": 4.3,
+    "lactate": 1,
+    "ph": 7.28,
+    "glucose": 5.6,
+    "tcore": 36.6
+   }
+  },
+  {
+   "t": 360,
+   "values": {
+    "hr": 71,
+    "map": 67.49926253467582,
+    "spo2": 99,
+    "etco2": 42,
+    "rr": 12,
+    "temp": 36.6,
+    "k": 4.5,
+    "lactate": 1,
+    "ph": 7.34,
+    "glucose": 5.6,
+    "tcore": 36.6
+   }
+  },
+  {
+   "t": 420,
+   "values": {
+    "hr": 74,
+    "map": 73.63262300293829,
+    "spo2": 99,
+    "etco2": 43,
+    "rr": 12,
+    "temp": 36.6,
+    "k": 4.6,
+    "lactate": 1,
+    "ph": 7.34,
+    "glucose": 5.6,
+    "tcore": 36.6
+   }
+  },
+  {
+   "t": 480,
+   "values": {
+    "hr": 77,
+    "map": 76.98790092837204,
+    "spo2": 99,
+    "etco2": 45,
+    "rr": 12,
+    "temp": 36.6,
+    "k": 4.8,
+    "lactate": 1,
+    "ph": 7.33,
+    "glucose": 5.6,
+    "tcore": 36.6
+   }
+  },
+  {
+   "t": 540,
+   "values": {
+    "hr": 79,
+    "map": 79.23095835643909,
+    "spo2": 99,
+    "etco2": 40,
+    "rr": 18,
+    "temp": 36.6,
+    "k": 4.7,
+    "lactate": 1,
+    "ph": 7.38,
+    "glucose": 5.7,
+    "tcore": 36.6
+   }
+  },
+  {
+   "t": 600,
+   "values": {
+    "hr": 80,
+    "map": 84.30901838486197,
+    "spo2": 99,
+    "etco2": 36,
+    "rr": 20,
+    "temp": 36.6,
+    "k": 4.6,
+    "lactate": 1.1,
+    "ph": 7.41,
+    "glucose": 5.8,
+    "tcore": 36.6
+   }
+  },
+  {
+   "t": 660,
+   "values": {
+    "hr": 81,
+    "map": 87.88627604317549,
+    "spo2": 99,
+    "etco2": 36,
+    "rr": 20,
+    "temp": 36.7,
+    "k": 4.6,
+    "lactate": 1.1,
+    "ph": 7.41,
+    "glucose": 5.8,
+    "tcore": 36.7
+   }
+  },
+  {
+   "t": 720,
+   "values": {
+    "hr": 80,
+    "map": 89.24486973120499,
+    "spo2": 99,
+    "etco2": 35,
+    "rr": 20,
+    "temp": 36.7,
+    "k": 4.5,
+    "lactate": 1.2,
+    "ph": 7.41,
+    "glucose": 5.9,
+    "tcore": 36.7
+   }
+  },
+  {
+   "t": 780,
+   "values": {
+    "hr": 80,
+    "map": 90.15991905795518,
+    "spo2": 99,
+    "etco2": 35,
+    "rr": 20,
+    "temp": 36.7,
+    "k": 4.5,
+    "lactate": 1.3,
+    "ph": 7.42,
+    "glucose": 6,
+    "tcore": 36.7
+   }
+  },
+  {
+   "t": 840,
+   "values": {
+    "hr": 78,
+    "map": 89.5990132528858,
+    "spo2": 99,
+    "etco2": 35,
+    "rr": 20,
+    "temp": 36.7,
+    "k": 4.4,
+    "lactate": 1.3,
+    "ph": 7.42,
+    "glucose": 6,
+    "tcore": 36.7
+   }
+  },
+  {
+   "t": 900,
+   "values": {
+    "hr": 76,
+    "map": 87.66872652493659,
+    "spo2": 99,
+    "etco2": 43,
+    "rr": 13,
+    "temp": 36.8,
+    "k": 4.4,
+    "lactate": 1.4,
+    "ph": 7.34,
+    "glucose": 6.1,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 960,
+   "values": {
+    "hr": 76,
+    "map": 87.16740380600992,
+    "spo2": 99,
+    "etco2": 46,
+    "rr": 12,
+    "temp": 36.8,
+    "k": 4.4,
+    "lactate": 1.5,
+    "ph": 7.32,
+    "glucose": 6.2,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 1020,
+   "values": {
+    "hr": 75,
+    "map": 87.4566701384398,
+    "spo2": 99,
+    "etco2": 48,
+    "rr": 12,
+    "temp": 36.8,
+    "k": 4.4,
+    "lactate": 1.5,
+    "ph": 7.3,
+    "glucose": 6.2,
+    "tcore": 36.9
+   }
+  },
+  {
+   "t": 1080,
+   "values": {
+    "hr": 75,
+    "map": 88.18232241457116,
+    "spo2": 99,
+    "etco2": 50,
+    "rr": 12,
+    "temp": 36.9,
+    "k": 4.4,
+    "lactate": 1.6,
+    "ph": 7.29,
+    "glucose": 6.3,
+    "tcore": 36.9
+   }
+  },
+  {
+   "t": 1140,
+   "values": {
+    "hr": 75,
+    "map": 89.41268741617701,
+    "spo2": 99,
+    "etco2": 52,
+    "rr": 12,
+    "temp": 36.9,
+    "k": 4.5,
+    "lactate": 1.6,
+    "ph": 7.28,
+    "glucose": 6.3,
+    "tcore": 37
+   }
+  },
+  {
+   "t": 1200,
+   "values": {
+    "hr": 75,
+    "map": 90.50548919189835,
+    "spo2": 99,
+    "etco2": 52,
+    "rr": 12,
+    "temp": 37,
+    "k": 4.5,
+    "lactate": 1.6,
+    "ph": 7.27,
+    "glucose": 6.4,
+    "tcore": 37
+   }
+  },
+  {
+   "t": 1260,
+   "values": {
+    "hr": 74,
+    "map": 91.35241369602811,
+    "spo2": 99,
+    "etco2": 54,
+    "rr": 12,
+    "temp": 37,
+    "k": 4.5,
+    "lactate": 1.6,
+    "ph": 7.26,
+    "glucose": 6.4,
+    "tcore": 37.1
+   }
+  },
+  {
+   "t": 1320,
+   "values": {
+    "hr": 73,
+    "map": 92.07654701564483,
+    "spo2": 99,
+    "etco2": 53,
+    "rr": 13,
+    "temp": 37.1,
+    "k": 4.5,
+    "lactate": 1.6,
+    "ph": 7.27,
+    "glucose": 6.5,
+    "tcore": 37.1
+   }
+  },
+  {
+   "t": 1380,
+   "values": {
+    "hr": 74,
+    "map": 92.93301904257667,
+    "spo2": 99,
+    "etco2": 53,
+    "rr": 14,
+    "temp": 37.1,
+    "k": 4.5,
+    "lactate": 1.6,
+    "ph": 7.27,
+    "glucose": 6.5,
+    "tcore": 37.1
+   }
+  },
+  {
+   "t": 1440,
+   "values": {
+    "hr": 72,
+    "map": 93.35656685888809,
+    "spo2": 99,
+    "etco2": 52,
+    "rr": 14,
+    "temp": 37.1,
+    "k": 4.5,
+    "lactate": 1.6,
+    "ph": 7.27,
+    "glucose": 6.5,
+    "tcore": 37.1
+   }
+  },
+  {
+   "t": 1500,
+   "values": {
+    "hr": 72,
+    "map": 93.45044757015488,
+    "spo2": 99,
+    "etco2": 51,
+    "rr": 15,
+    "temp": 37.1,
+    "k": 4.6,
+    "lactate": 1.6,
+    "ph": 7.28,
+    "glucose": 6.6,
+    "tcore": 37.2
+   }
+  }
+ ]
+}

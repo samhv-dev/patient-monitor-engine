@@ -1,0 +1,1 @@
+`debrief-a4-haemorrhage-phases-card-kit-round-chromium.json` is the Debrief export (`pme-debrief/3`) of the run in `a4-haemorrhage-phases-card-kit-round-chromium.json` (kit build 2e3bb984, rc.5), committed unchanged on 2026-11-05 for the Debrief 2 D0 fixtures.

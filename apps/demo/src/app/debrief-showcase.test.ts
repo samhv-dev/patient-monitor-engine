@@ -184,7 +184,12 @@ describe('IP8: the new record fields change no verdict', () => {
     ]);
     expect(haemRun.data.rows.filter((r) => r.by === 'press').map((r) => r.tr)).toEqual(['oxygen', 'intubate-o2', 'cpr-pea', 'volume', 'epi-running']);
     // the presses only: the junctional rhythm came by its own rule, and no objective asks for an untaken step here (the
-    // tube from Bleeding was the alternative to the one taken; ROSC never came, so "stop CPR" is not yet asked for)
+    // tube from Bleeding was the alternative to the one taken; ROSC never came, so "stop CPR" is not yet asked for).
+    // #208 (escape onset) moved the junctional beats 0.34 s against the clock and this run gained an engine arrest at
+    // 661 s, a ROSC at 781 s and a "stop-running: not done" row: the coronary supply under CPR read each escape beat's
+    // onset LV pressure, an instant of the compression cycle, so the press's sub-second phase decided the course. Read
+    // from the relaxation-phase CPP (coronary.ts `compressions`), the run never arrests whatever the phase (kIsch
+    // minimum 0.255–0.286 over eight presses 0.1 s apart), and this record is the physiology's, not a lucky phase.
     expect(steps(haemRun.data).map((x) => [x.id, x.status])).toEqual([['oxygen', 'taken'], ['intubate-o2', 'taken'], ['cpr-pea', 'taken'], ['volume', 'taken'], ['epi-running', 'taken']]);
   }, 300_000);
 });
@@ -352,10 +357,14 @@ describe('F7: the /2 MH card on the engine — the debrief grades what the panel
 });
 
 describe('F9: the /2 haemorrhage card on the engine — the debrief grades what the panel grades', () => {
-  /** A team that starts CPR in the PEA (the model's pulse loss at 11:00 on this card, haemorrhage-v2.slow.test.ts):
-   *  CPR and the call for help at 11:10, the volume and TXA at 11:20, epinephrine at 11:30, the 2-min rhythm check at
-   *  13:10 (compressions resumed at 13:20), stop CPR 10 s into ROSC (14:30); to 18:20, past Post-resuscitation. */
-  const PATH: Array<[number, string]> = [[30, 'oxygen'], [60, 'intubate'], [670, 'cpr'], [670, 'callForHelp'], [680, 'sourceControl'], [680, 'massiveTransfusion'], [680, 'txa'], [690, 'epinephrine'], [790, 'rhythmCheck'], [800, 'cpr'], [870, 'stopCpr']];
+  /** A team that starts CPR when the pulse goes (the model's pulse loss at 11:00 on this card, haemorrhage-v2.slow.test.ts),
+   *  20.8 s after the operating-room trigger fired on the displayed monitor (10:39.2): met with margin, not on the 30-s
+   *  edge. The call for help at 11:10, the volume and TXA at 11:20, epinephrine at 11:30, the 2-min rhythm check at
+   *  13:10 (compressions resumed at 13:20), stop CPR 10 s into ROSC (14:30); to 18:20, past Post-resuscitation.
+   *  What the test asserts about the window is where it opens (dueT 639.2 s on this course, before the pulse loss),
+   *  not its edge. The trigger was 10:40.0 before the escape-onset change: a junctional escape focus waits its own
+   *  cycle, so its first beat comes 0.87 s later and the displayed arterial systolic holds below 40 from 10:09.2. */
+  const PATH: Array<[number, string]> = [[30, 'oxygen'], [60, 'intubate'], [660, 'cpr'], [670, 'callForHelp'], [680, 'sourceControl'], [680, 'massiveTransfusion'], [680, 'txa'], [690, 'epinephrine'], [790, 'rhythmCheck'], [800, 'cpr'], [870, 'stopCpr']];
   const END_S = 1100;
 
   it('the call for help goes through the host as a scenario record; the record copies the runner’s inputs; grade() on them equals the runner’s; the export is pme-debrief/3', async () => {
@@ -372,8 +381,8 @@ describe('F9: the /2 haemorrhage card on the engine — the debrief grades what 
     expect(gradesOf(rec.data)).toEqual(panel);
     const g = Object.fromEntries(panel.actions.map((a) => [a.id, a.grade]));
     // CPR's window opens at the earlier of the pulse loss (11:00) and the operating-room trigger on the displayed monitor
-    // (arterial systolic < 40 for 30 s with EtCO₂ < 25: about 10:40 on this course; the owner's ruling of 5 November):
-    // CPR at 11:10 is within 30 s of it, met. The compressions back 10 s after the rhythm check (CPR row at 13:20):
+    // (arterial systolic < 40 for 30 s with EtCO₂ < 25: 10:39.2 on this course; the owner's ruling of 5 November):
+    // CPR at 11:00 is 20.8 s after it, met. The compressions back 10 s after the rhythm check (CPR row at 13:20):
     // resume met
     const cprRow = panel.actions.find((a) => a.id === 'cpr')!;
     expect(cprRow.dueT).toBeLessThan(660);

@@ -1,6 +1,6 @@
 // Runtime half of the "raw samples never cross the wire" guarantee (brief §3.7, §7.5), plus envelope
 // validation for untrusted input (relay, postMessage from other frames, WebSocket, DataChannel).
-import type { WireMessage } from './protocol.ts';
+import { NOTE_EVENTS, type WireMessage } from './protocol.ts';
 
 export const WIRE_LIMITS = {
   /** Largest serialised message accepted anywhere (an L1-only snapshot is ≈ 7 KB) [ENG]. */
@@ -127,6 +127,7 @@ export function parseWireMessage(data: unknown): WireMessage | null {
       const b = m.body as Record<string, unknown> | null;
       if (!b || typeof b !== 'object' || typeof b.id !== 'string' || typeof b.type !== 'string' || typeof b.issuedBy !== 'string') return null;
       if (b.type === 'note' && ((b.kind !== 'note' && b.kind !== 'marker') || typeof b.text !== 'string' || b.text.length > WIRE_LIMITS.noteChars)) return null;
+      if (b.type === 'note' && b.ev !== undefined && !(NOTE_EVENTS as readonly unknown[]).includes(b.ev)) return null; // a known tag only
       break;
     }
     case 'ack':
