@@ -437,6 +437,7 @@ No exported `…State` type in this module.
 | `entriesOf` | [`apps/demo/src/app/teach2/feed.ts`](../../apps/demo/src/app/teach2/feed.ts) | The strip's stage entries as this Link reads them: |
 | `firedOf` | [`apps/demo/src/app/teach2/feed.ts`](../../apps/demo/src/app/teach2/feed.ts) | The transitions fired since the current stage was entered (strip.ts `firedInStage`), the host's on a remote. |
 | `feedOf` | [`apps/demo/src/app/teach2/feed.ts`](../../apps/demo/src/app/teach2/feed.ts) | The feed's body, read on the host from its own Link (session.ts sends it). |
+| `restartSameCard` | [`apps/demo/src/app/teach2/finish.ts`](../../apps/demo/src/app/teach2/finish.ts) | The app's "Save and restart the case" (main.ts `finish.restart`): |
 | `mountFinish` | [`apps/demo/src/app/teach2/finish.ts`](../../apps/demo/src/app/teach2/finish.ts) | Mount the pane into `el` (inside ACTION); |
 | `mountHeader` | [`apps/demo/src/app/teach2/header.ts`](../../apps/demo/src/app/teach2/header.ts) | The view's session bar on `link`; |
 | `mountKeys` | [`apps/demo/src/app/teach2/keys.ts`](../../apps/demo/src/app/teach2/keys.ts) | The view's keyboard on the document, answering only while `el` is shown. |
@@ -838,6 +839,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/e2e/endocrine-thermal-page.e2e.ts`](../../apps/demo/e2e/endocrine-thermal-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/explore-baseline.e2e.ts`](../../apps/demo/e2e/explore-baseline.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/f28-phone-portrait-saadat.e2e.ts`](../../apps/demo/e2e/f28-phone-portrait-saadat.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/finish-restart-v2.e2e.ts`](../../apps/demo/e2e/finish-restart-v2.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/fx14-pause-while-hidden.e2e.ts`](../../apps/demo/e2e/fx14-pause-while-hidden.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/fx16-follower-beep-gate.e2e.ts`](../../apps/demo/e2e/fx16-follower-beep-gate.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/fx18-shortcuts-typing.e2e.ts`](../../apps/demo/e2e/fx18-shortcuts-typing.e2e.ts) | 0 | 0 |
