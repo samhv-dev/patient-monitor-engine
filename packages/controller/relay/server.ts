@@ -9,7 +9,9 @@
 // Plan room-and-instruments.md R8b: a `ventilator` socket (a cockpit on another device, with the same PIN) is pending
 // in the same way, in its own single place; granted, it exchanges `vent` messages with the host and nothing else: no
 // command, no event, no snapshot (it follows nothing), and no learner is ever sent a `vent` or counts it.
+import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { createServer, type IncomingMessage } from 'node:http';
+import { join } from 'node:path';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { httpHandler, isLocalAddress, lanAddresses } from './http.ts';
 import { WIRE_LIMITS, parseWireMessage } from '../src/guard.ts';
@@ -50,6 +52,23 @@ export interface RelayOptions {
    * half-open socket): it is closed and the newcomer joins.
    */
   takenCheckMs?: number;
+  /**
+   * Room plan R1b: a folder where the relay keeps the code of the last room a host opened (`room.json`, the code only:
+   * never a PIN, a peer id, an address or a name), read again at start and answered as `lastRoom` in /pme-relay.json.
+   * The classroom kit moves to the next port when its first is busy, a new origin whose store is empty: the instructor's
+   * page then starts under this code. Created at the first write. Absent (the default, `pnpm relay`): nothing is written.
+   */
+  stateDir?: string;
+}
+
+/** The last room's code kept in `dir`, or null when there is none or the file is not ours. */
+export function readLastRoom(dir: string): string | null {
+  try {
+    const v = (JSON.parse(readFileSync(join(dir, 'room.json'), 'utf8')) as { lastRoom?: unknown } | null)?.lastRoom;
+    return typeof v === 'string' && SESSION_CODE_RE.test(v) ? v : null;
+  } catch {
+    return null;
+  }
 }
 
 interface Peer {
@@ -154,6 +173,20 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
   const clock = opts.now ?? Date.now;
   /** Per address: the times of its recent wrong PINs and instructor hellos, and until when it may not say `instructor`. */
   const denials = new Map<string, { at: number[]; hellos: number[]; until: number }>();
+  let lastRoom = opts.stateDir ? readLastRoom(opts.stateDir) : null;
+  /** R1b: a host's hello names the room it runs; kept (whole-file replace) when it changes. A write that fails is logged. */
+  const keepLastRoom = (code: string) => {
+    if (!opts.stateDir || code === lastRoom) return;
+    lastRoom = code;
+    try {
+      mkdirSync(opts.stateDir, { recursive: true });
+      const file = join(opts.stateDir, 'room.json');
+      writeFileSync(`${file}.tmp`, `${JSON.stringify({ lastRoom: code })}\n`);
+      renameSync(`${file}.tmp`, file);
+    } catch (err) {
+      log(`the last room was not kept in ${opts.stateDir}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
   const blocked = (address: string) => (denials.get(address)?.until ?? 0) > clock();
   /** Counts one instructor hello from `address`; false (not counted) past HELLO_TRIES in the window. */
   const mayHello = (address: string) => {
@@ -179,7 +212,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
     denials.set(address, d);
   };
   // Stage 12: one http server carries the WebSockets, `/pme-relay.json` and (with staticDir) the app itself
-  const http = createServer(httpHandler({ ...(opts.staticDir ? { staticDir: opts.staticDir } : {}), info: () => ({ relay: 'pme', port, addresses: lanAddresses(), serves: !!opts.staticDir }) }));
+  const http = createServer(httpHandler({ ...(opts.staticDir ? { staticDir: opts.staticDir } : {}), info: () => ({ relay: 'pme', port, addresses: lanAddresses(), serves: !!opts.staticDir, ...(lastRoom ? { lastRoom } : {}) }) }));
   await new Promise<void>((resolve, reject) => {
     http.once('listening', resolve);
     http.once('error', reject); // a busy port rejects (the WebSocketServer is attached after: it re-threw this error)
@@ -405,6 +438,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
         const old = r.host;
         if (old && old.ws !== ws) old.ws.close(1000, 'replaced by reconnect');
         r.host = p;
+        keepLastRoom(r.code);
         // A grant is the granting host's: a new host socket (a reloaded laptop, or the same one after a Wi-Fi blip)
         // verifies every instructor again. A granted phone is told so first, in the relay's own grant false, so that it
         // says its hello again on the host's hello below (review F1); it is not a denial: its socket stays open.

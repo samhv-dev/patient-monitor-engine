@@ -29,6 +29,7 @@ import {
 } from '../protocol.ts';
 import type { RelayFrame } from '../transport/relay-frames.ts';
 import { ScenarioView } from '../scenario/view.ts';
+import { RecentGives } from './drug-lock.ts';
 
 export interface LogEntry {
   /** Wall time (epoch ms) the entry was made. */
@@ -106,6 +107,8 @@ export class ControllerSession {
   /** The host's simulation speed and pause, from its applied `time` commands (sticky replays included). */
   timeScale = 1;
   hostPaused = false;
+  /** The host's lock on a drug just given (drug-lock.ts), read from the applied commands every device receives. */
+  readonly gives = new RecentGives();
   /** The host's fast-forward while it runs (null otherwise), and the last one that ended. */
   fastForward: { fromT: SimSeconds; toT: SimSeconds } | null = null;
   lastFastForward: FastForwardDone | null = null;
@@ -233,9 +236,9 @@ export class ControllerSession {
     this.retryTimer = null;
   }
 
-  private answer(id: string, p: Pending, a: { accepted: boolean; tick: number; reason?: string }): void {
+  private answer(id: string, p: Pending, a: { accepted: boolean; tick: number; reason?: string; code?: 'recent' }): void {
     this.pending.delete(id);
-    const r: AckResult = { commandId: id, accepted: a.accepted, tick: a.tick, rttMs: this.now() - p.sentAt, ...(a.reason !== undefined ? { reason: a.reason } : {}) };
+    const r: AckResult = { commandId: id, accepted: a.accepted, tick: a.tick, rttMs: this.now() - p.sentAt, ...(a.reason !== undefined ? { reason: a.reason } : {}), ...(a.code !== undefined ? { code: a.code } : {}) };
     if (p.cmd.batch) this.batchAnswered(p.cmd.batch.id, id, a);
     else this.addLog('ack', a.accepted ? `ok (${Math.round(r.rttMs)} ms)` : `rejected: ${a.reason ?? ''}`, id);
     p.resolve(r);
@@ -369,6 +372,7 @@ export class ControllerSession {
       // a new engine (patient restart, scenario load): the clock restarts; the old run ended with the old body.
       // A bookmark restore starts a timeline too — the clock goes back, the scenario run continues.
       this.simT = e.t;
+      this.gives.clear(); // as the host's (its clock starts again)
       if (e.cause !== 'restore') this.scenario.reset();
       this.fastForward = null; // A fast-forward ends with its timeline
       return;
@@ -402,6 +406,7 @@ export class ControllerSession {
       // The driver's own stage marks are not the instructor's bookmarks (the marks list shows the instructor's only)
       if (c?.type === 'scenario' && c.action === 'bookmark' && c.kind !== 'stage' && c.target && !this.bookmarks.includes(c.target)) this.bookmarks = [...this.bookmarks, c.target];
       if (c?.type === 'setRhythm') this.rhythm = c.rhythm;
+      if (c && !res?.replay && !res?.mirror) this.gives.note(c, (c.atTick ?? e.tick) * 0.02);
       const mine = e.commandId.startsWith(`${this.peerId}-`); // our own commands are already logged with their ack
       if (c && !res?.replay && !res?.mirror && !mine) this.addLog('applied', describe(c), e.commandId); // Link traffic is not a log line
     }

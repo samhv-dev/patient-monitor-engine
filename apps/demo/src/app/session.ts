@@ -9,7 +9,7 @@ import {
   type AppliedResolution, type BriefingNotice, type HostTarget, type ScenarioEvent, type WireEvent,
 } from '@pme/controller';
 import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type AnyScenarioDoc } from '@pme/controller/scenario';
-import type { ManagedTransport } from '@pme/controller';
+import type { ManagedTransport, NoteEvent } from '@pme/controller';
 import { mountMonitor, normalIbpScales, type IbpChannel, type IbpScales, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
@@ -60,8 +60,8 @@ export const FEED_MS = 1000;
 /** What the host's own panel Link gives the instructor phone (main.ts `serveInstructors`, teach2/feed.ts). */
 export interface InstructorServe {
   /** A remote's note or judged objective, filed as the laptop files its own (Link.note: the log and the record), at
-   *  the host's sim time `t`. */
-  note(text: string, kind: 'note' | 'marker', t: number): void;
+   *  the host's sim time `t`, with the run event the note command carries (`ev`, brief 52). */
+  note(text: string, kind: 'note' | 'marker', t: number, ev?: NoteEvent): void;
   /** The view feed's body (teach2/feed.ts `feedOf`). */
   feed(): unknown;
 }
@@ -217,6 +217,7 @@ export class AppSession {
     this.driver = new ScenarioDriver({ target, submit: (c) => (hs as HostSession).submit(c), publish: (e: ScenarioEvent) => hs?.publish(e) });
     hs = new HostSession({
       session: this.code, target: this.driver.host, scenario: this.driver.hook,
+      scenarioGives: (c) => this.driver.triggerGives(c), // a step press is locked as its drug is (drug-lock.ts)
       // With a relay, every answer to a hello also carries the monitor style (a phone wears it)
       // and a running Case briefing, with its start time: a phone that joins or reloads shows the remainder
       welcomeEvents: () => [
@@ -227,7 +228,7 @@ export class AppSession {
       // the instructor phone (plan instructor-peer-role.md P3, P6): its PIN, read at every hello (null or absent: no
       // phone), its notes, and how many are granted (the stage marks and the view feed follow it)
       ...(o.instructorPin ? { instructorPin: o.instructorPin } : {}),
-      onNote: (t, text, kind) => (this.serve ? this.serve.note(text, kind, t) : this.record.note(t, text)),
+      onNote: (t, text, kind, ev) => (this.serve ? this.serve.note(text, kind, t, ev) : this.record.note(t, text, ev)),
       onInstructors: (n) => this.setInstructors(n),
     });
     this.host = hs;
