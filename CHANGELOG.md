@@ -104,6 +104,14 @@ the public API is what the packages export (see the API reference), the `pme-sce
   entry, timed at 120 s (the owner's ruling of 5 November, from the `/1` card's objective 3). `/1` cards keep their judged objectives.
 
 ### Fixed
+- **A `pme-scenario/2` card keeps its position across a reload of the instructor's page, as a `/1` card does.** On
+  main a `/2` run (built in or imported) was lost on a reload (the card started again, or no case): the page took the
+  run's position every second from the `/1` runner only (`ScenarioDriver.runner`), so no `pme.position` was ever kept
+  for a `/2` card. The position is now taken from the run of either format, and the reload returns to it through the
+  same `/1` path (the `pme.reload` bookmark): the phase, its entry time, the takings, the holds and the record of
+  administrations come back, and the Debrief's `/2` report reads the same as before the reload. The stage marks a `/2`
+  run placed come back too (`holdStageMarks` read the `/1` runner's card only). `grade()` and the card formats are
+  unchanged.
 - A hello forged under a Remote's peer id while the Remote reconnects no longer blocks the Remote's commands
   until its page reloads (R29, the known gap of #183). The host kept each relay peer's last sequence number and role
   while its socket was down, so a hand-written hello with that id and a higher number, sent in that window, made the
