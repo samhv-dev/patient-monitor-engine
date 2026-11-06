@@ -19,6 +19,24 @@ the public API is what the packages export (see the API reference), the `pme-sce
   device for the host only (`devices` in the host's `peers` frame: 7.6 KB at 60 devices). The QR grows from version 3
   to version 4 for the kit's usual address (29 → 33 modules).
 
+- **`pme-scenario/2`, the format as a whole, and its authoring guide (plan F10).** A `/2` card is a teaching case whose
+  course is a set of phases, each entered by its own rule on the engine's truth and never by a press. The team's work
+  is a set of actions, each carrying its acceptance criteria: a drug with its dose, route set and rate; a device or a
+  decision with its settings; a fluid; a procedure, sample or communication recorded by its own taking or by the
+  scenario `record` command. An action may have a window, anchored on the start, a phase entry, another action,
+  the pulse loss or the return of circulation, a truth rule, each taking of another action, a rule on the
+  displayed numerics, or the earliest of several. An action may also have a fail limit (`failAfterS`), an unconditional or
+  conditional repeat, a precondition and violations. A card may also have outcomes and a card-set script. The new
+  guide documents all of this, together with the owner's authoring rules of 5 November:
+  - a card names its bleeding source and orders haemostasis against compressions accordingly;
+  - the operating-room CPR trigger, as the haemorrhage card writes it, and when it does not apply;
+  - VF comes from the physiology;
+  - one remote.
+
+  The guide is the `/2` section of `docs/guides/scenario-authoring.md`. Its one example card is checked by
+  `docs-examples.test.ts`, which now knows the `<!-- example: pme-scenario/2 -->` tag. The route models (IM dantrolene,
+  F = 0) and the Debrief's `pme-debrief/3` export are the entries below and under 1.0.0-rc.5. No product code changed.
+
 - **The run record keeps three more facts for the Debrief (Debrief 2, D1–D3)**: each second's systolic, diastolic
   and CVP in whole mmHg (the arterial line first, else the cuff, which sits only in the second of its cycle, so the gap between
   cycles stays blank); on each alarm raise row the time its condition cleared (`endT`) and the first time it was
