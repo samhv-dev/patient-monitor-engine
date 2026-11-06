@@ -53,6 +53,7 @@
 .debrief .db-svg .axis, .debrief .db-svg .ticks line { stroke: var(--text-muted); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .debrief .db-svg .grid { stroke: var(--line); stroke-dasharray: 2 3; vector-effect: non-scaling-stroke; }
 .debrief .db-svg .ret { stroke: var(--text-strong); stroke-dasharray: 5 3; vector-effect: non-scaling-stroke; }
+.debrief .db-svg path.cvp { stroke-dasharray: 4 2; } /* the Pressures panel: CVP dashed, on its own right-hand axis */
 .debrief .db-svg text { font-size: 11px; fill: var(--text-muted); }
 .debrief .db-legend { margin: var(--s-1) 0 var(--s-2); font-size: var(--t-13); }
 .debrief .db-legend .db-scen { color: #777; font-weight: 700; }
