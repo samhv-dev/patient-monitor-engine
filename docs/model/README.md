@@ -21,7 +21,7 @@ regenerations. The list of known misses across modules is [known-misses.md](../v
 | [Anaesthetic depth, ventilatory drive and neuromuscular block](neuro.md) | 11 | 23 | 6 |
 | [Pharmacology: PK, PD and the drug rows](pharmacology.md) | 20 | 47 | 34 |
 | [Monitor measurements (device layer)](monitor.md) | 15 | 30 | 7 |
-| [Alarms](alarms.md) | 4 | 15 | 0 |
+| [Alarms](alarms.md) | 4 | 16 | 0 |
 | [Defibrillator and pacer](defib-pacer.md) | 4 | 8 | 0 |
 | [Ventilator](ventilator.md) | 15 | 22 | 5 |
 | [Engine runtime: loop, clock, commands, snapshots](engine-runtime.md) | 10 | 16 | 0 |
