@@ -290,12 +290,13 @@ function withSteps(rows: StateRow[], card: Card): void {
 }
 /** The view with a recorded run in place of the live one (its scenario's objectives as the card holds them now): the
  *  simulation paused first, so nothing is added to it; the Debrief opened by its route, not the session-bar link. */
-async function showRecorded(page: Page, run = A31, card = TAMPONADE): Promise<void> {
+async function showRecorded(page: Page, run = A31, card = TAMPONADE, debriefHints?: unknown): Promise<void> {
   const rec = JSON.parse(readFileSync(run, 'utf8')).record;
   const doc = JSON.parse(readFileSync(card, 'utf8'));
   withSteps(rec.rows, doc);
   rec.doc.objectives = doc.objectives;
   rec.doc.takeHome = doc.takeHome; // rc.3: the owner's take-home lines (the recordings predate them)
+  if (debriefHints !== undefined) rec.doc.debriefHints = debriefHints; // a TEST copy of the card (D16): no card carries them yet
   await page.setViewportSize({ width: Math.round(182 * MM), height: 1000 }); // the A4 content width (182 mm)
   await openApp(page, base, '#/teach', { warmMs: 1000 });
   await page.locator('.sessionbar').getByRole('button', { name: 'Pause' }).click();
@@ -517,6 +518,57 @@ test('Debrief B on the haemorrhage card: the learner handout within one A4 page'
     expect(pdfInfo(pdf).boxes).toHaveLength(1);
   }
 });
+
+// D16 (Decision 14): two card questions on the learner handout in place of fixed prompts 1–2 — each with its anchor's
+// mm:ss and three ruled lines, then fixed prompt 3 — on a TEST copy of the tamponade, MH and haemorrhage cards (no card
+// carries questions until the owner has reviewed them), each on its recorded run: the handout's visible text has no
+// verdict word and no objective text (the A/B DOM check, (e)), and it stays within one A4 page (≤ 267 mm at the 182 mm
+// content width), both engines; Chromium prints it on one page. The fit holds because a card question, label and all,
+// prints on one line as the fixed prompt it replaces does (measured: 18.3 mm an item with its ruled lines; a question
+// that wraps to two lines adds 4.7 mm, and the MH handout without questions is 266.9 mm): each question's item is
+// asserted no taller than a fixed prompt's. The test strings are as long as the longer drafts (about 90 characters).
+const Q_TEXT = [
+  'Test question one: what did you see on the monitor here, and what did you make of it?',
+  'Test question two: from this moment, what did the team do first, and who decided it?',
+] as const;
+const QS = (a: string, b: string) => ({ handoutQuestions: [{ at: a, text: Q_TEXT[0] }, { at: b, text: Q_TEXT[1] }] });
+for (const [name, run, card, hints] of [
+  ['tamponade', A31, TAMPONADE, QS('state:deteriorating', 'rosc')],
+  ['MH', MH_RUN, MH, QS('state:earlySigns', 'state:normoventilated')],
+  ['haemorrhage', HAEM_RUN, HAEM, QS('pulseLoss', 'rosc')],
+] as const) {
+  test(`D16 on the ${name} card: two card questions on the learner handout, within one A4 page`, async ({ page, browserName }) => {
+    test.setTimeout(90_000);
+    await showRecorded(page, run, card, hints);
+    const view = page.locator('[data-view=debrief]');
+    const qs = view.locator('#db-handout ol.db-qs > li');
+    await expect(qs).toHaveCount(3);
+    await expect(qs.nth(0).locator('.db-q-text')).toHaveText(Q_TEXT[0]);
+    await expect(qs.nth(1).locator('.db-q-text')).toHaveText(Q_TEXT[1]);
+    for (const i of [0, 1]) await expect(qs.nth(i).locator('.db-q-at')).toHaveText(/^\d\d:\d\d$/);
+    await expect(qs.nth(2)).toHaveText('One thing you will keep doing, and one thing you will do differently.');
+    for (const i of [0, 1, 2]) await expect(qs.nth(i).locator('.db-ruled')).toHaveCount(3);
+    await page.emulateMedia({ media: 'print' });
+    await printFontLoaded(page);
+    await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
+    const text = await page.evaluate(() => (document.querySelector('.debrief') as HTMLElement).innerText);
+    expect(text).toContain('Questions to think about');
+    for (const q of Q_TEXT) expect(text).toContain(q);
+    expect(text).not.toMatch(VERDICT);
+    for (const o of JSON.parse(readFileSync(card, 'utf8')).objectives as Array<string | { text: string }>) expect(text).not.toContain(typeof o === 'string' ? o : o.text);
+    const items = await page.evaluate((mm) => [...document.querySelectorAll('#db-handout ol.db-qs > li')].map((li) => li.getBoundingClientRect().height / mm), MM);
+    for (const i of [0, 1]) expect(items[i] as number, `card question ${i + 1}: one line, as tall as the fixed prompt (mm)`).toBeLessThanOrEqual((items[2] as number) + 0.5);
+    const { handout } = await printHeights(page);
+    test.info().annotations.push({ type: `D16 ${name} handout (mm)`, description: handout.toFixed(1) });
+    expect(handout, 'handout (mm)').toBeLessThanOrEqual(267);
+    if (browserName === 'chromium') {
+      const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+      mkdirSync(out, { recursive: true });
+      writeFileSync(`${out}/debrief-d16-${name.toLowerCase()}-handout.pdf`, pdf);
+      expect(pdfInfo(pdf).boxes).toHaveLength(1);
+    }
+  });
+}
 
 // Plan F11 (F7's acceptance on a live /2 run): the MH card in pme-scenario/2 driven on the demo path from Instructor v2
 // to the talk's end, paused, then the Debrief: its JSON export is pme-debrief/3 (phases, graded actions, outcomes,
