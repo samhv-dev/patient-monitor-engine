@@ -24,6 +24,18 @@ the public API is what the packages export (see the API reference), the `pme-sce
   browser's storage and listed under "Imported" at the end of the case list, removable, and offered to start; it loads
   through the app's one load, as a library card does. Nothing new is
   sent to the phones and the card format is unchanged. The Scenarios page's own "Import a scenario file" is unchanged.
+
+- **The Debrief reads what the record now keeps (Debrief 2, D4–D6)**: "who" of each scenario state comes from the
+  record's own account (the instructor's press: the team; the state's rule, every `pme-scenario/2` phase: the patient;
+  a jump: the scenario), falling back to the card's transitions for an older record. Recognition has one reading: on a
+  `pme-scenario/2` card the timed action the card marks `recognition: true` (new optional field, at most one per card;
+  set on "name MH" and "recognise the return of circulation"), with its window, press and grade; on a
+  `pme-scenario/1` card the recognition objective's tick, or else the new "Recognised" button (session bar and
+  Instructor v2 dock, `/1` cards and free runs only), which writes a `recognised` note. The key-moments table gains
+  SBP/DBP (a cuff value printed with its age, "98/60 (cuff, 2 min 10 s before)") and CVP, and each alarm under a
+  moment its end and acknowledgement ("▸ cleared 07:40 · acknowledged 06:20", or "(still on)"); the minute table gains
+  SBP, DBP and CVP. A file made before prints "·" and "not recorded in this file" there. No schema change.
+
 - **IBP1 / IBP2 lane scales (E130)**: per channel the skin's fixed scale, a range the instructor types within 0–200
   mmHg (lower below upper; anything else refused), or AUTO, set in the Devices tab of today's Instructor view and in
   Instructor v2's Devices sheet, which show the mode and the numbers. AUTO is judged every 30 s of sim time over the
