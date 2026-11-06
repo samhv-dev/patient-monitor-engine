@@ -3,6 +3,7 @@
 import { resolveSkin, type LimitTable, type ResolvedSkin, type Skin } from '@pme/skins';
 import type { AgeBand, AlarmLevel } from '../../types-device.ts';
 import type { NumericId } from '../../types.ts';
+import { FALLBACK_DEFIB } from '../defib-pacer/defib.ts';
 
 /** Skin limit key → the measured numeric it watches and its display labels (IEC-style / Saadat-like). */
 export const LIMIT_KEYS: Readonly<Record<string, { numeric: NumericId; label: string; upper: string; gas?: boolean }>> = {
@@ -114,6 +115,16 @@ export interface DeviceProfile {
   /** The cuff settings of the skin (and age band): NibpState.cfg. */
   nibp: { initial: number; nextAbove: number; statSpacingS: number; statCount: number; statWindowS: number };
 }
+
+/**
+ * The defibrillator models a room can choose (Room plan R5a, §4 D5; owner's Q6 ruling of 5 November): the device
+ * layer's defibrillator spec when one is set, whatever the monitor skin. Only the generic model ships (Q6's second
+ * half): its values are the fallback's (defib.ts FALLBACK_DEFIB), equal to zoll-like.json's defibrillator block, whose
+ * provenance they carry (energies and ready timeout documented, research/05 §2.6, brief §6.5; no published charge
+ * time: the 7 s / 200 J rule, unverified). The department's own machine joins later as a skin with its own sourced
+ * block, and one line here.
+ */
+export const DEFIB_MODELS: Readonly<Record<string, NonNullable<DeviceProfile['defib']>>> = { generic: FALLBACK_DEFIB };
 
 const numberOr = (v: unknown): number | null => (typeof v === 'number' ? v : null);
 
