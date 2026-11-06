@@ -57,6 +57,8 @@ const detailOf = (c: CommandInput): string | null => {
     return `device ${String(a.device)}.${String(a.action)}`;
   }
   if (x.type === 'scenario' && x.action === 'bookmark') return `scenario bookmark kind=${x.kind === undefined ? '(none)' : String(x.kind)}`;
+  // brief 52: a remote's note carries its event tag (the Recognised press on a free run or a /1 card without a recognition objective)
+  if (x.type === 'note') return `note kind=${String(x.kind)} ev=${(c as { ev?: unknown }).ev === undefined ? '(none)' : String((c as { ev?: unknown }).ev)}`;
   return null;
 };
 
@@ -373,5 +375,9 @@ describe('the command census of the laptop\'s Instructor views (P0)', () => {
     // retire-instructor-v1: v2 alone sends every shape the two views send (v2 ⊇ the union)
     const ofV2 = new Set(sent.filter((x) => x.view === 'v2').map((x) => x.shape));
     expect(shapes.filter((x) => !ofV2.has(x)), 'a shape only today\'s view sends').toEqual([]);
+    // brief 52: a remote's Recognised press on a free run or a /1 card without a recognition objective sends the note
+    // with its event tag (the session bar and the dock on a remote; the guard's NOTE_EVENTS); a judged objective without
+    const notes = [...new Set(sent.filter((x) => x.shape === 'note').map((x) => x.detail))].sort();
+    expect(notes).toEqual(['note kind=marker ev=(none)', 'note kind=marker ev=recognised']);
   }, 600_000);
 });
