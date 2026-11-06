@@ -37,7 +37,7 @@ describe('the swimlane on the A3.1 tamponade path (the D0 fixture)', () => {
   it('the lanes in order, each with its words; no lane for the pressures; alarm ends not recorded in this pre-D file', () => {
     expect(attrs(svg, /data-lane="(\w+)"/g)).toEqual(['patient', 'team', 'windows', 'monitor', 'drugs']);
     for (const w of ['Patient', 'Team', 'Expected windows', 'Monitor alarms', 'Drugs and fluids', 'end not recorded']) expect(svg).toContain(`>${w}<`);
-    expect(svg).not.toMatch(/SBP|DBP|CVP<|pressure/i);
+    expect(svg).not.toMatch(/data-lane="pressures"|>(SBP|DBP|SBP\/DBP, CVP|Pressures)</); // DQ11: no pressures lane
     expect(count(svg, /class="db-swim-alarm/g)).toBe(0); // ticks only: no bar without a recorded end
     expect(count(svg, /class="db-swim-a"/g)).toBe(d.rows.filter((r) => r.kind === 'alarm' && r.undone === undefined).length);
     expect(count(svg, /class="db-swim-d"/g)).toBe(d.rows.filter((r) => r.undone === undefined && (r.ev?.startsWith('drug:') || r.ev === 'fluid')).length);
