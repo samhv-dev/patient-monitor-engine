@@ -102,4 +102,25 @@ describe('hostile relay input', () => {
     expect(relay.stats().dropped - before).toBe(4);
     await healthy('HVC234');
   });
+  // R5c (plan room-and-instruments.md): what a hostile defibrillator window can do with its two commands
+  it("a `defib` socket's forged ack, grant, event and snapshot are dropped; a malformed charge is forbidden; the room keeps working", async () => {
+    const h = await open();
+    const d = await open();
+    const hs = createStamper('HDA234', 'h');
+    const ds = createStamper('HDA234', 'defib-p.1');
+    h.ws.send(JSON.stringify(hs({ kind: 'hello', role: 'host' })));
+    d.ws.send(JSON.stringify(ds({ kind: 'hello', role: 'defib' } as never)));
+    await waitFor(() => h.got.some((m) => m.includes('"defib-p.1"')), 3000, 'defib hello at the host');
+    const before = relay.stats().dropped;
+    d.ws.send(JSON.stringify(ds({ kind: 'ack', commandId: 'x', accepted: true, tick: 1 })));
+    d.ws.send(JSON.stringify(ds({ kind: 'grant', to: 'defib-p.1', granted: true })));
+    d.ws.send(JSON.stringify(ds({ kind: 'event', body: [{ type: 'state', t: 1, tick: 1, mode: 'manual', values: {}, control: {} }] } as never)));
+    d.ws.send(JSON.stringify(ds({ kind: 'snapshot', body: { schema: 'pme-snapshot/1', tick: 0 } } as never)));
+    await waitFor(() => relay.stats().dropped - before === 4, 3000, 'four frames dropped');
+    for (const event of [null, 'charge', ['defib', 'charge'], { kind: 'defib', action: 'charge', energyJ: '360' }])
+      d.ws.send(JSON.stringify(ds({ kind: 'command', body: { id: 'bad', issuedBy: 'x', type: 'applyEvent', event } } as never)));
+    await waitFor(() => d.got.filter((m) => m.includes('"forbidden"')).length === 4, 3000, 'four forbidden');
+    expect(h.got.some((m) => m.includes('"bad"') || m.includes('"kind":"ack"') || m.includes('"kind":"grant"'))).toBe(false);
+    await healthy('HDB234');
+  });
 });

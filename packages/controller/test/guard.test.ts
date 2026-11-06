@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { assertWireSafe, findSampleLeak, parseWireMessage, WIRE_LIMITS, WireSafetyError } from '../src/guard.ts';
-import { createStamper, INSTRUMENTS, type WireMessage } from '../src/protocol.ts';
+import { createStamper, INSTRUMENTS, LEARNER_DEFIB_COMMANDS, learnerDefibMay, type CommandInput, type WireMessage } from '../src/protocol.ts';
 import { createEngine } from '@pme/engine-core';
 
 const stamp = createStamper('ABC234', 'host-1');
@@ -126,5 +126,61 @@ describe("the hello's `show` and `device` (plan room-and-instruments.md §4 D1, 
       expect(parseWireMessage(m), role).toEqual(m);
     }
     expect(parseWireMessage(hello('instructor', { pin: '4729' }))).toMatchObject({ role: 'instructor', pin: '4729' });
+  });
+});
+
+// Plan room-and-instruments.md R5c (Q5 ruled 5 November): the learner defibrillator window joins as `defib`, like a
+// learner (no PIN), and may send exactly two command shapes: Charge and Shock, the room's model choosing the energy.
+describe('the learner defibrillator role (plan room-and-instruments.md R5c)', () => {
+  const hello = (role: string, extra: Record<string, unknown> = {}) => ({ ...stamp({ kind: 'hello', role: 'viewer' }), role, ...extra });
+  it('a `defib` hello is legal alone and with show and device; never with a PIN', () => {
+    expect(parseWireMessage(hello('defib'))).toMatchObject({ kind: 'hello', role: 'defib' });
+    expect(parseWireMessage(hello('defib', { show: 'defib', device: 'k3x9q2m7' }))).toMatchObject({ role: 'defib', show: 'defib', device: 'k3x9q2m7' });
+    expect(parseWireMessage(hello('defib', { device: 'k3x9q2m7' }))).not.toBeNull();
+    expect(parseWireMessage(hello('defib', { pin: '4729' }))).toBeNull();
+    expect(parseWireMessage(hello('defib', { show: 'vent' }))).toBeNull();
+    expect(parseWireMessage(hello('defib', { device: 'K3X9' }))).toBeNull();
+  });
+
+  const cmd = (c: object) => ({ id: 'k1', issuedBy: 'defib-a', ...c }) as CommandInput;
+  const defib = (event: object, extra: object = {}) => cmd({ type: 'applyEvent', event: { kind: 'defib', ...event }, ...extra });
+  it('LEARNER_DEFIB_COMMANDS is exactly Charge and Shock; learnerDefibMay passes both, bare', () => {
+    expect([...LEARNER_DEFIB_COMMANDS].sort()).toEqual(['applyEvent defib charge', 'applyEvent defib shock']);
+    expect(learnerDefibMay(defib({ action: 'charge' }))).toBeNull();
+    expect(learnerDefibMay(defib({ action: 'shock' }))).toBeNull();
+  });
+
+  it('refuses an energy, an outcome or a tick, every other defibrillator action and every other command', () => {
+    const refused: Array<[string, CommandInput]> = [
+      ['charge with energyJ 360', defib({ action: 'charge', energyJ: 360 })],
+      ['shock with energyJ', defib({ action: 'shock', energyJ: 200 })],
+      ['shock with an outcome', defib({ action: 'shock', outcome: 'sinus' })],
+      ['shock with atTick', defib({ action: 'shock' }, { atTick: 5000 })],
+      ['charge with atTick 0', defib({ action: 'charge' }, { atTick: 0 })],
+      ['shock with a stray field', defib({ action: 'shock', sync: true })],
+      ['charge with a stray command field', defib({ action: 'charge' }, { stageGroup: 'g' })],
+      ['selectEnergy', defib({ action: 'selectEnergy', energyJ: 360 })],
+      ['preselect', defib({ action: 'preselect', outcome: 'sinus' })],
+      ['disarm', defib({ action: 'disarm' })],
+      ['syncOn', defib({ action: 'syncOn' })],
+      ['syncOff', defib({ action: 'syncOff' })],
+      ['pacer', cmd({ type: 'applyEvent', event: { kind: 'pacer', mode: 'fixed', ratePpm: 70, mA: 80 } })],
+      ['drug', cmd({ type: 'applyEvent', event: { kind: 'drug', drugId: 'adrenaline', dose: 1, unit: 'mg', route: 'iv' } })],
+      ['cpr', cmd({ type: 'applyEvent', event: { kind: 'cpr', active: true } })],
+      ['time pause', cmd({ type: 'time', action: 'pause' })],
+      ['time resume', cmd({ type: 'time', action: 'resume' })],
+      ['time scale', cmd({ type: 'time', action: 'scale', value: 8 })],
+      ['time jump', cmd({ type: 'time', action: 'jump', value: 60 })],
+      ['time step', cmd({ type: 'time', action: 'step' })],
+      ['scenario trigger', cmd({ type: 'scenario', action: 'trigger', target: 't1' })],
+      ['scenario load', cmd({ type: 'scenario', action: 'load' })],
+      ['device', cmd({ type: 'device', action: { device: 'alarm', action: 'ack' } })],
+      ['setTarget', cmd({ type: 'setTarget', variable: 'hr', value: 80 })],
+      ['pin', cmd({ type: 'pin', variable: 'hr', value: 30 })],
+      ['note', cmd({ type: 'note', kind: 'note', text: 'shocked' })],
+      ['setRhythm', cmd({ type: 'setRhythm', rhythm: 'sinus' })],
+      ['applyEvent without an event', cmd({ type: 'applyEvent' })],
+    ];
+    for (const [what, c] of refused) expect(learnerDefibMay(c), what).toEqual(expect.any(String));
   });
 });
