@@ -667,7 +667,7 @@ test('D9: the card author\'s hints on page 2 of the MH run, whole, the handout u
     const r = (s: string) => (document.querySelector(s) as Element).getBoundingClientRect();
     const hints = document.querySelector('#db-hints');
     return { page2: (r('#db-facts').bottom - r('#db-swimlane').top) / mm, hints: hints ? hints.getBoundingClientRect().height / mm : 0,
-      breakInside: hints ? getComputedStyle(hints).breakInside : '', prev: hints?.previousElementSibling?.id ?? '', handout: (document.querySelector('#db-handout') as HTMLElement).innerHTML };
+      breakInside: hints ? getComputedStyle(hints).breakInside : '', labelFont: [...document.querySelectorAll('#db-hints .db-hint-at')].map((x) => getComputedStyle(x).fontFamily), prev: hints?.previousElementSibling?.id ?? '', handout: (document.querySelector('#db-handout') as HTMLElement).innerHTML };
   }, MM);
   const before = await page2();
   const pagesBefore = browserName === 'chromium' ? pdfInfo(await page.pdf({ preferCSSPageSize: true, printBackground: false })).boxes.length : 0;
@@ -698,6 +698,9 @@ test('D9: the card author\'s hints on page 2 of the MH run, whole, the handout u
   test.info().annotations.push({ type: 'D9 MH page 2 (mm)', description: `without hints ${before.page2.toFixed(1)}, with ${after.page2.toFixed(1)} (the block ${after.hints.toFixed(1)})` });
   expect(after.prev, 'after the key moments').toBe('db-moments');
   expect(after.breakInside, 'whole on its page').toBe('avoid');
+  // the opener's time label stays in the bundled print font (the app-wide .num class would set system-ui, taller on Linux)
+  expect(after.labelFont, "the labels' print font").toHaveLength(3);
+  for (const f of after.labelFont) expect(f.split(',')[0]?.replace(/["']/g, '').trim(), "a label's print font").toBe('Inter Print');
   expect(after.handout, 'the learner handout unchanged').toBe(before.handout);
   if (browserName === 'chromium') {
     const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });

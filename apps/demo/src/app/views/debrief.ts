@@ -388,7 +388,7 @@ export function hintsSection(d: RunData, ms: KeyMoment[]): HTMLElement | null {
     show.length ? h('div', { class: 'db-hint-block' }, h('h3', {}, 'What this case is built to show'), h('ul', { class: 'db-hint-show' }, ...show.map((x) => h('li', {}, x)))) : null,
     op ? h('div', { class: 'db-hint-block' }, h('h3', {}, 'Openers for the analysis'),
       op.shown.length ? h('ol', { class: 'db-hint-openers' }, ...op.shown.map((o) => h('li', {},
-        h('span', { class: 'db-hint-at num' }, o.n === null ? mmss(o.t) : `${mmss(o.t)} · moment ${o.n}`), ' ', h('span', { class: 'db-hint-text' }, o.text)))) : null,
+        h('span', { class: 'db-hint-at' }, o.n === null ? mmss(o.t) : `${mmss(o.t)} · moment ${o.n}`), ' ', h('span', { class: 'db-hint-text' }, o.text)))) : null,
       n ? h('p', { class: 'db-hint-left muted' }, n === 1 ? '1 opener not shown: its event did not happen in this run' : `${n} openers not shown: their events did not happen in this run`) : null) : null);
 }
 
