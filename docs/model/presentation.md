@@ -453,7 +453,7 @@ No exported `…State` type in this module.
 | `transitionText` | [`apps/demo/src/app/triggers.ts`](../../apps/demo/src/app/triggers.ts) | "a shock of at least 150 J → ROSC (30 % chance, else stays)". |
 | `countdown` | [`apps/demo/src/app/triggers.ts`](../../apps/demo/src/app/triggers.ts) | Seconds left for a time trigger, or null. |
 | `h` | [`apps/demo/src/app/ui.ts`](../../apps/demo/src/app/ui.ts) | Element builder: |
-| `tip` | [`apps/demo/src/app/ui.ts`](../../apps/demo/src/app/ui.ts) | "ⓘ" button that shows a glossary entry's long name, unit and normal range. |
+| `keepOrder` | [`apps/demo/src/app/ui.ts`](../../apps/demo/src/app/ui.ts) | "ⓘ" button that shows a glossary entry's long name, unit and normal range. |
 | `glossLabel` | [`apps/demo/src/app/ui.ts`](../../apps/demo/src/app/ui.ts) | A glossary label with its tooltip, by glossary number. |
 | `seg` | [`apps/demo/src/app/ui.ts`](../../apps/demo/src/app/ui.ts) | Segmented control: |
 | `stepper` | [`apps/demo/src/app/ui.ts`](../../apps/demo/src/app/ui.ts) | − value + with a unit in the accessible name; |
@@ -585,7 +585,7 @@ No exported `…State` type in this module.
 | `resolveSkin` | [`resolve.ts`](../../packages/skins/src/resolve.ts) | Resolve a skin or preset id (optionally with a theme) into the complete skin plus the renderer/audio contract. |
 | `partialOf` | [`schema.ts`](../../packages/skins/src/schema.ts) | The same schema with every `required` removed (recursively): |
 
-Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `parseRoute`, `cardOf`, `mountSessionBar`, `parseSite`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `mountFollower`, `homeView`, `monitorView`, `patientView`, `remoteView`, `roomView`, `scenariosView`, `teachView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
+Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `parseRoute`, `cardOf`, `mountSessionBar`, `parseSite`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `mountFollower`, `homeView`, `monitorView`, `patientView`, `remoteView`, `roomView`, `scenariosView`, `teachView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
 
 ## Source files
 
@@ -852,6 +852,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/e2e/pacer-overlay-device-tab.e2e.ts`](../../apps/demo/e2e/pacer-overlay-device-tab.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/physiology-console-mechanics.e2e.ts`](../../apps/demo/e2e/physiology-console-mechanics.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/physiology-console.e2e.ts`](../../apps/demo/e2e/physiology-console.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/press-across-repaint.e2e.ts`](../../apps/demo/e2e/press-across-repaint.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/reload-keeps-case.e2e.ts`](../../apps/demo/e2e/reload-keeps-case.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/resolution-fit.e2e.ts`](../../apps/demo/e2e/resolution-fit.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/respiratory-evidence-page.e2e.ts`](../../apps/demo/e2e/respiratory-evidence-page.e2e.ts) | 0 | 0 |
@@ -870,7 +871,9 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/e2e/sim-line.e2e.ts`](../../apps/demo/e2e/sim-line.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/skins-page.e2e.ts`](../../apps/demo/e2e/skins-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/sound-toggle.e2e.ts`](../../apps/demo/e2e/sound-toggle.e2e.ts) | 0 | 0 |
-| [`apps/demo/e2e/teach2-fit.e2e.ts`](../../apps/demo/e2e/teach2-fit.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/teach2-fit-panes.e2e.ts`](../../apps/demo/e2e/teach2-fit-panes.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/teach2-fit-stages.e2e.ts`](../../apps/demo/e2e/teach2-fit-stages.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/teach2-fit-strip.e2e.ts`](../../apps/demo/e2e/teach2-fit-strip.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-import-card.e2e.ts`](../../apps/demo/e2e/teach2-import-card.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-keys.e2e.ts`](../../apps/demo/e2e/teach2-keys.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-mh-v2.e2e.ts`](../../apps/demo/e2e/teach2-mh-v2.e2e.ts) | 0 | 0 |
@@ -944,6 +947,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/showcase/mh-v2-card.test.ts`](../../apps/demo/src/app/showcase/mh-v2-card.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/showcase/showcase-cards.test.ts`](../../apps/demo/src/app/showcase/showcase-cards.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts`](../../apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/sim-clock-monotonic.dom.test.ts`](../../apps/demo/src/app/sim-clock-monotonic.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/site.test.ts`](../../apps/demo/src/app/site.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/staging.test.ts`](../../apps/demo/src/app/staging.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/action-parity.dom.test.ts`](../../apps/demo/src/app/teach2/action-parity.dom.test.ts) | 0 | 0 |
@@ -964,6 +968,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/teach2/keys.dom.test.ts`](../../apps/demo/src/app/teach2/keys.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/marks-note.dom.test.ts`](../../apps/demo/src/app/teach2/marks-note.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/press.dom.test.ts`](../../apps/demo/src/app/teach2/press.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/teach2/rows-stay.dom.test.ts`](../../apps/demo/src/app/teach2/rows-stay.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/rows.test.ts`](../../apps/demo/src/app/teach2/rows.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/sheets.dom.test.ts`](../../apps/demo/src/app/teach2/sheets.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/spokes.dom.test.ts`](../../apps/demo/src/app/teach2/spokes.dom.test.ts) | 0 | 0 |

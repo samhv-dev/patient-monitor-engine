@@ -179,8 +179,9 @@ jobs:
   # ci-faster: each gating suite runs in three shards (Playwright --shard, by file; every e2e server binds port 0 and
   # each shard is its own machine; WebKit keeps workers: 1 inside its shard). Each shard uploads its own report and runs
   # the retry-only check on it; the e2e-count job proves the shards together ran every test (research/42 §1.4 b). The
-  # quarantine stays one job. Three shards, not four: the shard that gets teach2-fit.e2e.ts (≈ 18 min alone) sets the
-  # floor, which three already reach.
+  # quarantine stays one job. Three shards, not four: the shard that got teach2-fit.e2e.ts (≈ 18 min alone) set the
+  # floor, which three already reach. That file is now three (teach2-fit-stages, -panes, -strip); Playwright fills a
+  # shard with a contiguous run of files by test count, so the three adjacent files still share one shard.
   # ci-stabilise (2026-10-24): the jobs run in the official Playwright image, which carries the browsers and their
   # system libraries, so no job runs `playwright install --with-deps` (its apt step stalled up to 40 min on the runner's
   # Ubuntu mirror). The @known-flaky tests run on WebKit in their own non-blocking job, e2e-quarantine (webkit); the
