@@ -15,6 +15,7 @@ import { keepPositions, keptItems, putKeptItems, readPosition, restorePosition }
 import { RAIL_VERSION } from './about.ts';
 import { simLine } from './sim-line.ts';
 import { Rail, trackPageLines } from './rail.ts';
+import { keepRoomCode, keepsRoomCode, startCode, storedRoomCode } from './room-code.ts';
 import { noteRecent } from './recent.ts';
 import { hrefOf, parseRoute, revealTarget } from './router.ts';
 import { SCENARIO_META } from './scenario-meta.ts';
@@ -93,7 +94,13 @@ if (follow) {
   shell.add(settingsView(site, null));
   shell.start();
   Object.assign(window, { __pmeApp: { shell, frames, site } });
-} else void chooseHostSession(normalizeSessionCode(q.get('session') ?? ''), askJoin).then(({ code: start, kept: handed }) => {
+} else void (async () => {
+  // Room plan R1: the code is the page's own ?session=, else the room code this browser kept (room-code.ts)
+  const param = normalizeSessionCode(q.get('session') ?? '');
+  let answer: 'join' | 'new' | null = null;
+  const chosen = await chooseHostSession(startCode({ param, stored: storedRoomCode() }), async (c) => (answer = await askJoin(c)));
+  return { ...chosen, keep: keepsRoomCode({ param, answer }) };
+})().then(({ code: start, kept: handed, keep }) => {
   // One instructor tab per session (host-guard.ts): a live session in another tab is offered before one starts here
   if (handed) putKeptItems(handed);
   const base = PATIENT_PRESETS[0]?.spec;
@@ -106,6 +113,7 @@ if (follow) {
     const offIbp = session.onIbpScales(f); // E130: the IBP lane scales travel with the style
     return () => (offSkin(), offIbp());
   });
+  if (keep) keepRoomCode(session.code); // the room's code from now on, until "New room code" (§4 D3: never a new session's)
   if (q.get('session') !== session.code) {
     const u = new URL(location.href);
     u.searchParams.set('session', session.code);

@@ -4,7 +4,7 @@
 // kept case, and A stops; "Start a new session" runs a new code and A carries on.
 // Two paths: with Web Locks (the browser says which tabs host a session, awake or not: a small lock manager stands in
 // for the browser's here, happy-dom has none) and without them (the fallback: the tabs are asked over the channel).
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { announceHost, askJoin, chooseHostSession, HOST_LOCK, HOSTS_CHANNEL, liveHosts, takeOver } from './host-guard.ts';
 import { keepRoomCode, keepsRoomCode, startCode, storedRoomCode } from './room-code.ts';
 
@@ -13,6 +13,7 @@ afterEach(() => {
   for (const s of stops.splice(0)) s();
   document.body.replaceChildren();
   setLocks(undefined);
+  vi.unstubAllGlobals();
 });
 
 /** Host A: a tab running session `code` with a kept case; `gone` counts its stops. */
@@ -139,6 +140,9 @@ describe.each([
   // Room plan R1: the bare address starts under the stored room code, so a second tab while the first runs it is asked
   // as a duplicated tab is; "Start a new session" there runs a code for that tab alone and the room keeps its code (§4 D3)
   it('the room code stored and live in tab A: a new tab without ?session is asked about it; "start a new session" does not replace the stored code', async () => {
+    // this browser's storage (Node's own localStorage global, without --localstorage-file, stands in front of happy-dom's)
+    const m = new Map<string, string>();
+    vi.stubGlobal('localStorage', { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v) });
     keepRoomCode('QFBAWA');
     const a = hostA('QFBAWA');
     const asked: string[] = [];
@@ -152,7 +156,6 @@ describe.each([
     expect(storedRoomCode()).toBe('QFBAWA');
     await tick(50);
     expect(a.gone).toBe(0);
-    localStorage.removeItem('pme.roomCode');
   });
 
   it('a tab that starts hosting a code stops the other tab hosting it', async () => {
