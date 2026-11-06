@@ -304,7 +304,7 @@ export class ScenarioDriver {
    * placed later stay unique. Returns how many were placed.
    */
   holdStageMarks(kept: readonly StageMarkPosition[]): number {
-    const doc = this.runner?.doc;
+    const doc = this.cur?.doc;
     if (!doc) return 0;
     const now = this.o.target.now().tick;
     const ok = kept.filter((k) => k.mark.kind === 'stage' && typeof k.mark.target === 'string' && k.run.runner.docId === doc.id && (k.mark.atTick ?? 0) <= now)
