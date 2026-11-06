@@ -1,0 +1,65 @@
+{
+  "case": "Q1 0 opening and QR",
+  "browser": "chromium",
+  "kit": "da364762",
+  "server": "Start Classroom.command (relay + static app, node, as built)",
+  "base": "http://127.0.0.1:9164",
+  "reactS": 2,
+  "phonesN": 3,
+  "startedAt": "2026-11-06T13:31:40.979Z",
+  "loadAvg": {
+    "start": 7.08,
+    "end": 4.76,
+    "min": 7.08,
+    "max": 7.08
+  },
+  "setup": {
+    "sessionCode": "CUNP2Z",
+    "alarmButtonAtEnd": "No alarms"
+  },
+  "rows": [],
+  "presses": [],
+  "spans": [],
+  "states": [],
+  "alarms": [],
+  "measures": {
+    "about": {
+      "start": "Version 1.0.0-rc.5 · pre-release · build da364762",
+      "footer": "no footer line",
+      "documentationLink": "https://github.com/samhv-dev/patient-monitor-engine/tree/main/docs"
+    },
+    "modelTabPrepared": "not loaded: page.goto: Timeout 20000ms exceeded.",
+    "qr": {
+      "url": "http://192.168.1.100:9164/?join=CUNP2Z",
+      "code": "CUNP2Z",
+      "countBefore": "0 phones following",
+      "joinWallS": 2.5,
+      "countAfter": "3 phones following"
+    },
+    "phonesAfterJoin": [
+      {
+        "hold": false,
+        "status": "synced",
+        "resyncs": 0
+      },
+      {
+        "hold": false,
+        "status": "synced",
+        "resyncs": 0
+      },
+      {
+        "hold": false,
+        "status": "synced",
+        "resyncs": 0
+      }
+    ]
+  },
+  "debrief": null,
+  "phones": null,
+  "notes": [
+    "phone 0 (Pixel 7 emulation) synced before Load",
+    "phone 1 (Pixel 7 emulation) synced before Load",
+    "phone 2 (Pixel 7 emulation) synced before Load"
+  ],
+  "errors": []
+}
