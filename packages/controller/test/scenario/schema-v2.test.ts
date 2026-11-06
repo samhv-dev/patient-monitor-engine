@@ -333,4 +333,8 @@ describe('pme-scenario/2: debriefHints.handoutQuestions (D16)', () => {
     expect(errs(withQ([{ at: 'drug:dantrolene', text: 'x' }])).join()).toMatch(/debriefHints\/handoutQuestions\/0\/at/);
     expect(errs(withQ([1, 2, 3, 4].map(() => ({ at: 'start', text: 'x' })))).join()).toMatch(/^\/debriefHints\/handoutQuestions: /);
   });
+  it('refuses a question longer than one printed handout line (the /1 limit, D16)', () => {
+    expect(validateScenario(withQ([{ at: 'start', text: 'x'.repeat(92) }])).ok).toBe(true);
+    expect(errs(withQ([{ at: 'start', text: 'x'.repeat(93) }]))).toEqual(['/debriefHints/handoutQuestions/0/text: at most 92 characters, about 90 characters — one line of the A4 handout; a wrapped question pushes the MH handout over one page (measured 276.4 mm of 267)']);
+  });
 });
