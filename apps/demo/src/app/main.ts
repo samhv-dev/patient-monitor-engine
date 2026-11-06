@@ -5,7 +5,7 @@ import { attachReveal, normalizeSessionCode, RevealGesture } from '@pme/controll
 import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 import { alarmLine, limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
 import { mountHostBriefing } from './briefing.ts';
-import { joinCode, relayOf } from './classroom.ts';
+import { joinCode, relayInfo, relayOf } from './classroom.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
 import { feedOf } from './teach2/feed.ts';
@@ -16,6 +16,7 @@ import { keepPositions, keptItems, putKeptItems, readPosition, restorePosition }
 import { RAIL_VERSION } from './about.ts';
 import { simLine } from './sim-line.ts';
 import { Rail, trackPageLines } from './rail.ts';
+import { keepRoomCode, keepsRoomCode, startCode, storedRoomCode } from './room-code.ts';
 import { noteRecent } from './recent.ts';
 import { hrefOf, parseRoute, revealTarget } from './router.ts';
 import { SCENARIO_META } from './scenario-meta.ts';
@@ -97,7 +98,16 @@ if (follow) {
   shell.add(settingsView(site, null));
   shell.start();
   Object.assign(window, { __pmeApp: { shell, frames, site } });
-} else void chooseHostSession(normalizeSessionCode(q.get('session') ?? ''), askJoin).then(({ code: start, kept: handed }) => {
+} else void (async () => {
+  // Room plan R1: the code is the page's own ?session=, else the room code this browser kept, else (R1b: a new origin,
+  // the kit on another port) the relay's last room (room-code.ts)
+  const param = normalizeSessionCode(q.get('session') ?? '');
+  const stored = storedRoomCode();
+  const lastRoom = !param && !stored && relay ? (await relayInfo(relay))?.lastRoom : undefined;
+  let answer: 'join' | 'new' | null = null;
+  const chosen = await chooseHostSession(startCode({ param, stored, lastRoom }), async (c) => (answer = await askJoin(c)));
+  return { ...chosen, keep: keepsRoomCode({ param, answer }) };
+})().then(({ code: start, kept: handed, keep }) => {
   // One instructor tab per session (host-guard.ts): a live session in another tab is offered before one starts here
   if (handed) putKeptItems(handed);
   const base = PATIENT_PRESETS[0]?.spec;
@@ -110,6 +120,7 @@ if (follow) {
     const offIbp = session.onIbpScales(f); // E130: the IBP lane scales travel with the style
     return () => (offSkin(), offIbp());
   });
+  if (keep) keepRoomCode(session.code); // the room's code from now on, until "New room code" (§4 D3: never a new session's)
   if (q.get('session') !== session.code) {
     const u = new URL(location.href);
     u.searchParams.set('session', session.code);
