@@ -375,6 +375,7 @@ No exported `…State` type in this module.
 | `announceHost` | [`apps/demo/src/app/host-guard.ts`](../../apps/demo/src/app/host-guard.ts) | This tab hosts `code`: |
 | `chooseHostSession` | [`apps/demo/src/app/host-guard.ts`](../../apps/demo/src/app/host-guard.ts) | Which session a starting instructor page runs. |
 | `askJoin` | [`apps/demo/src/app/host-guard.ts`](../../apps/demo/src/app/host-guard.ts) | The choice, put to the instructor (a modal dialog: |
+| `defibReadout` | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | The window's readout: |
 | `scenarioStep` | [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | The step a scenario trigger presses: |
 | `logCsv` | [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | CSV of the clinical log (the debrief export). |
 | `busyFraction` | [`apps/demo/src/app/meters.ts`](../../apps/demo/src/app/meters.ts) | The busy fraction (0–1) of the main thread over [now − windowMs, now] (method above). |
@@ -416,6 +417,7 @@ No exported `…State` type in this module.
 | `bands` | [`apps/demo/src/app/showcase/harness.ts`](../../apps/demo/src/app/showcase/harness.ts) | The bands: every number a card promises sits in [lo, hi], taken from the measured prototype ± a stated tolerance. |
 | `headerHasRoom` | [`apps/demo/src/app/sim-line.ts`](../../apps/demo/src/app/sim-line.ts) | Whether this skin's header carries the line (the two-row header; |
 | `simLine` | [`apps/demo/src/app/sim-line.ts`](../../apps/demo/src/app/sim-line.ts) | The line for the monitor in `stage` (its strip is placed in the stage, above the monitor). |
+| `defibDefaults` | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | A model's energies as the panel offers them; |
 | `setLightScreen` | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | The rail's light/dark switch (E125): |
 | `mount` | [`apps/demo/src/app/teach2/action.ts`](../../apps/demo/src/app/teach2/action.ts) | Mount this slot into `el` (the fixed slot signature, teach2/ctx.ts). |
 | `defaultPatient` | [`apps/demo/src/app/teach2/begin.ts`](../../apps/demo/src/app/teach2/begin.ts) | The default patient as the board writes it: |
@@ -436,6 +438,7 @@ No exported `…State` type in this module.
 | `entriesOf` | [`apps/demo/src/app/teach2/feed.ts`](../../apps/demo/src/app/teach2/feed.ts) | The strip's stage entries as this Link reads them: |
 | `firedOf` | [`apps/demo/src/app/teach2/feed.ts`](../../apps/demo/src/app/teach2/feed.ts) | The transitions fired since the current stage was entered (strip.ts `firedInStage`), the host's on a remote. |
 | `feedOf` | [`apps/demo/src/app/teach2/feed.ts`](../../apps/demo/src/app/teach2/feed.ts) | The feed's body, read on the host from its own Link (session.ts sends it). |
+| `restartSameCard` | [`apps/demo/src/app/teach2/finish.ts`](../../apps/demo/src/app/teach2/finish.ts) | The app's "Save and restart the case" (main.ts `finish.restart`): |
 | `mountFinish` | [`apps/demo/src/app/teach2/finish.ts`](../../apps/demo/src/app/teach2/finish.ts) | Mount the pane into `el` (inside ACTION); |
 | `mountHeader` | [`apps/demo/src/app/teach2/header.ts`](../../apps/demo/src/app/teach2/header.ts) | The view's session bar on `link`; |
 | `mountKeys` | [`apps/demo/src/app/teach2/keys.ts`](../../apps/demo/src/app/teach2/keys.ts) | The view's keyboard on the document, answering only while `el` is shown. |
@@ -617,6 +620,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | The clinical glossary at run time: engine key → clinical label, long name, unit and adult normal range. |
 | [`apps/demo/src/app/hidden-tab.ts`](../../apps/demo/src/app/hidden-tab.ts) | FX-14 / FX-15: Safari suspends a hidden tab (≈ 4 min, the whole page and its engine worker), so the instructor's page sends nothing — the phones say "The instructor's monitor is not answering" — and on return the worker' |
 | [`apps/demo/src/app/host-guard.ts`](../../apps/demo/src/app/host-guard.ts) | Post-demo (4 November): one instructor tab per session. |
+| [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | Which skin an instrument wears, and what the defibrillator window reads out (Room plan R5, §4 D5). |
 | [`apps/demo/src/app/learner-actions.ts`](../../apps/demo/src/app/learner-actions.ts) | The learner action bar: what the team at the bedside does. |
 | [`apps/demo/src/app/learner.ts`](../../apps/demo/src/app/learner.ts) | Learner controls: the scenario runner's "Learner:" bar as a strip under the learner's monitor. |
 | [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | What the instructor panel talks to (research/13 brief §4.4: the same panel same-screen and as a Remote). |
@@ -836,6 +840,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/e2e/endocrine-thermal-page.e2e.ts`](../../apps/demo/e2e/endocrine-thermal-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/explore-baseline.e2e.ts`](../../apps/demo/e2e/explore-baseline.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/f28-phone-portrait-saadat.e2e.ts`](../../apps/demo/e2e/f28-phone-portrait-saadat.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/finish-restart-v2.e2e.ts`](../../apps/demo/e2e/finish-restart-v2.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/fx14-pause-while-hidden.e2e.ts`](../../apps/demo/e2e/fx14-pause-while-hidden.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/fx16-follower-beep-gate.e2e.ts`](../../apps/demo/e2e/fx16-follower-beep-gate.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/fx18-shortcuts-typing.e2e.ts`](../../apps/demo/e2e/fx18-shortcuts-typing.e2e.ts) | 0 | 0 |
@@ -907,6 +912,8 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/debrief-moments.test.ts`](../../apps/demo/src/app/debrief-moments.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/debrief-showcase.test.ts`](../../apps/demo/src/app/debrief-showcase.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/debrief.test.ts`](../../apps/demo/src/app/debrief.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/defib-model-session.dom.test.ts`](../../apps/demo/src/app/defib-model-session.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/defib-model-sync.test.ts`](../../apps/demo/src/app/defib-model-sync.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/describe-ventilation.test.ts`](../../apps/demo/src/app/describe-ventilation.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/drugs.test.ts`](../../apps/demo/src/app/drugs.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/events.test.ts`](../../apps/demo/src/app/events.test.ts) | 0 | 0 |
@@ -920,11 +927,13 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/host-guard.dom.test.ts`](../../apps/demo/src/app/host-guard.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/imported.dom.test.ts`](../../apps/demo/src/app/imported.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/instructor-choice.dom.test.ts`](../../apps/demo/src/app/instructor-choice.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/instrument.test.ts`](../../apps/demo/src/app/instrument.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-timeline.test.ts`](../../apps/demo/src/app/link-timeline.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/meters.test.ts`](../../apps/demo/src/app/meters.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/oxygen.test.ts`](../../apps/demo/src/app/oxygen.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/pairing.test.ts`](../../apps/demo/src/app/pairing.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/airway.dom.test.ts`](../../apps/demo/src/app/panel/airway.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/panel/defib.dom.test.ts`](../../apps/demo/src/app/panel/defib.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/devices.dom.test.ts`](../../apps/demo/src/app/panel/devices.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/ibp-scales.dom.test.ts`](../../apps/demo/src/app/panel/ibp-scales.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/panel/panel-load-tab.dom.test.ts`](../../apps/demo/src/app/panel/panel-load-tab.dom.test.ts) | 0 | 0 |
@@ -993,11 +1002,13 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/views/debrief-recognised.dom.test.ts`](../../apps/demo/src/app/views/debrief-recognised.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-steps.dom.test.ts`](../../apps/demo/src/app/views/debrief-steps.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-swimlane.test.ts`](../../apps/demo/src/app/views/debrief-swimlane.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/defib-window.dom.test.ts`](../../apps/demo/src/app/views/defib-window.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/explore-drugs.dom.test.ts`](../../apps/demo/src/app/views/explore-drugs.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/explore.dom.test.ts`](../../apps/demo/src/app/views/explore.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/follower-pill.dom.test.ts`](../../apps/demo/src/app/views/follower-pill.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/follower-status.test.ts`](../../apps/demo/src/app/views/follower-status.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/monitor.dom.test.ts`](../../apps/demo/src/app/views/monitor.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/room-defib.dom.test.ts`](../../apps/demo/src/app/views/room-defib.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/teach2.dom.test.ts`](../../apps/demo/src/app/views/teach2.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/vent-handover.dom.test.ts`](../../apps/demo/src/app/views/vent-handover.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/physiology-console/actions.test.ts`](../../apps/demo/src/physiology-console/actions.test.ts) | 0 | 0 |
@@ -1070,6 +1081,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`transports.test.ts`](../../packages/renderer/test/transports.test.ts) | 0 | 0 |
 | [`version.test.ts`](../../packages/renderer/test/version.test.ts) | 0 | 0 |
 | [`views.test.ts`](../../packages/renderer/test/views.test.ts) | 0 | 0 |
+| [`worker-pump-backpressure.test.ts`](../../packages/renderer/test/worker-pump-backpressure.test.ts) | 0 | 0 |
 | [`alarm-wording.test.ts`](../../packages/skins/test/alarm-wording.test.ts) | 0 | 0 |
 | [`co2-sampling.test.ts`](../../packages/skins/test/co2-sampling.test.ts) | 0 | 0 |
 | [`color.test.ts`](../../packages/skins/test/color.test.ts) | 0 | 0 |

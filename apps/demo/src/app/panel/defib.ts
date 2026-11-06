@@ -1,11 +1,16 @@
 // Defib, pacing & CPR (research/13 §4.3 item 5). Shock, charge and CPR are urgent: they apply at once, never staged
 // (research/13 P6). The defibrillator state (charging, ready, shocks delivered, last outcome) mirrors the engine's
 // `deviceStatus`, so the instructor sees what the learner's defibrillator is doing.
+import type { Skin } from '@pme/skins';
 import { describeCommand } from '../describe.ts';
+import { defibDefaults } from '../site.ts';
 import { button, h, seg, setText, stepper, toast, toggle } from '../ui.ts';
 import type { PanelCtx } from './ctx.ts';
 
 const OUTCOME: Readonly<Record<string, string>> = { unchanged: 'no change', vf: 'VF', asystole: 'asystole', pea: 'PEA', rosc: 'return of circulation', sinus: 'sinus rhythm' };
+
+/** A defibrillator's AED ladder as the panel's energy presets (none without one). */
+export const presetsOf = (d: Partial<NonNullable<Skin['defib']>>): number[] => [...(d.aedSequenceJ ?? [])];
 
 export function defibTab(c: PanelCtx): HTMLElement {
   const { link, staging } = c;
@@ -15,7 +20,18 @@ export function defibTab(c: PanelCtx): HTMLElement {
     toast(r.accepted ? describeCommand(cmd) : `Not done: ${r.reason ?? 'refused'}`);
   };
 
-  const energy = stepper({ label: 'Energy', unit: 'J', min: 1, max: 360, step: 10, value: 200 });
+  // R5b: the energy starts at the room's defibrillator model's adult energy (200 J with no model, as before) and moves to
+  // a new model's at the next repaint; the model's AED ladder, when it has one, is a row of presets
+  let model = c.site.defibModel;
+  let defaults = defibDefaults(model);
+  const energy = stepper({ label: 'Energy', unit: 'J', min: 1, max: 360, step: 10, value: defaults.energyAdultJ });
+  const presets = h('div', { class: 'row defib-presets', role: 'group', 'aria-label': 'Energy presets' });
+  const drawPresets = () => {
+    const ladder = presetsOf({ aedSequenceJ: defaults.ladderJ });
+    presets.replaceChildren(...ladder.map((j) => button(`${j} J`, () => energy.set(j), 'small')));
+    if (ladder.length) defib.insertBefore(presets, defib.children[1] ?? null);
+    else presets.remove();
+  };
   const state = h('p', { class: 'hint', role: 'status' });
   const sync = toggle('Synchronised', false, (on) => void now({ kind: 'defib', action: on ? 'syncOn' : 'syncOff' }), 'small');
   const defib = h('div', {},
@@ -25,6 +41,7 @@ export function defibTab(c: PanelCtx): HTMLElement {
       button('Shock', () => void now({ kind: 'defib', action: 'shock', energyJ: energy.value }), 'primary'),
       button('Disarm', () => void now({ kind: 'defib', action: 'disarm' }), 'ghost')),
     state);
+  drawPresets();
 
   let mode: 'off' | 'demand' | 'fixed' = 'off';
   const pmode = seg<'off' | 'demand' | 'fixed'>('Pacer mode', [['off', 'Off'], ['demand', 'Demand'], ['fixed', 'Fixed']], mode, (v) => (mode = v));
@@ -45,6 +62,12 @@ export function defibTab(c: PanelCtx): HTMLElement {
       button('Stop CPR', () => void now({ kind: 'cpr', active: false }))));
 
   c.onRefresh(() => {
+    if (c.site.defibModel !== model) {
+      model = c.site.defibModel;
+      defaults = defibDefaults(model);
+      energy.set(defaults.energyAdultJ);
+      drawPresets();
+    }
     const d = link.device?.defib;
     if (!d) return setText(state, 'Defibrillator idle');
     const last = d.lastShock ? `; last shock ${d.lastShock.energyJ} J, ${OUTCOME[d.lastShock.outcome] ?? 'rhythm changed'}` : '';

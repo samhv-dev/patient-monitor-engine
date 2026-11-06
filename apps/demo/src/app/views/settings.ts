@@ -48,6 +48,7 @@ export function settingsView(site: SiteProfile, session: AppSession | null, o: {
       o.onInstructor?.();
       save('Site profile imported');
       skin();
+      session?.setDefibModel(site.defibModel); // the room's defibrillator model comes with the profile (R5b)
     } catch {
       toast('That file is not a site profile');
     }
