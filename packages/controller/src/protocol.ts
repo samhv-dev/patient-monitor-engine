@@ -185,7 +185,8 @@ export type ExtraEvent =
    * Presentation only. `ibp` (E130): the IBP1/IBP2 lane scales (a channel left out is the skin's fixed scale), so a
    * phone draws the instructor's range.
    */
-  | { type: 'style'; skin: string; theme: string; ibp?: StyleIbpScales; replay?: true }
+  // `defib` (Room plan R5): the room's defibrillator model, which a defibrillator window wears the look of (null: none)
+  | { type: 'style'; skin: string; theme: string; ibp?: StyleIbpScales; defib?: string | null; replay?: true }
   /**
    * The card's Case briefing, for every learner screen (owner's board Orientation 7b): sent when a card with one loads,
    * with every answer to a hello while it runs (`replay: true`, so a phone that joins or reloads shows the remainder:

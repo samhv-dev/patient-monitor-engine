@@ -9,6 +9,7 @@ import { joinCode, relayOf } from './classroom.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
 import { feedOf } from './teach2/feed.ts';
+import { restartSameCard } from './teach2/finish.ts';
 import { PATIENT_PRESETS } from './patients.ts';
 import { announceHost, askJoin, chooseHostSession } from './host-guard.ts';
 import { keepPositions, keptItems, putKeptItems, readPosition, restorePosition } from './position.ts';
@@ -19,11 +20,11 @@ import { noteRecent } from './recent.ts';
 import { hrefOf, parseRoute, revealTarget } from './router.ts';
 import { SCENARIO_META } from './scenario-meta.ts';
 import { archive } from './archive.ts';
-import { cardOf, LIBRARY, scenarioById, type ScenarioCard } from './scenarios.ts';
+import { LIBRARY, scenarioById, type ScenarioCard } from './scenarios.ts';
 import { AppSession, type RoomKeep } from './session.ts';
 import { mountSessionBar } from './sessionbar.ts';
 import { applySkinAlarmColours, LEVEL_MARK, LEVEL_NAME, Shell, skinAlarmBar, skinAlwaysOn } from './shell.ts';
-import { loadSite, setLightScreen } from './site.ts';
+import { loadSite, saveSite, setLightScreen } from './site.ts';
 import { button, clock, h, pausedMark, setText, throttle, toast, trackChromeBottom } from './ui.ts';
 import { debriefView } from './views/debrief.ts';
 import { devView } from './views/dev.ts';
@@ -53,7 +54,9 @@ const follow = join ?? normalizeSessionCode(q.get('follow') ?? '');
 const relay = relayOf(location);
 // `?moved=<code>`: this tab handed its session to another tab of this browser (host-guard.ts)
 const moved = normalizeSessionCode(q.get('moved') ?? '');
-if (join) document.documentElement.dataset.learner = 'phone'; // the portrait learner layout (app.css)
+// Room plan R5: `#/defib` on a follower page is the defibrillator window (landscape, the room model's look)
+const defibWindow = !!follow && location.hash.replace(/^#\/?/, '').replace(/\/$/, '') === 'defib';
+if (join && !defibWindow) document.documentElement.dataset.learner = 'phone'; // the portrait learner layout (app.css)
 const hostless = !follow && parseRoute(location.hash).id === 'remote';
 const shell = new Shell(document.getElementById('app') as HTMLElement, { hostless, follower: !!follow });
 if (site.theme === 'projector-light') document.documentElement.dataset.theme = 'bench';
@@ -72,11 +75,12 @@ requestAnimationFrame(onFrame);
 if (follow) {
   if (parseRoute(location.hash).id !== 'monitor') history.replaceState(null, '', `${location.pathname}${location.search}${hrefOf('monitor')}`);
   // Its status and its own Sound / Silence sit under the monitor: the monitor route hides the top bar
-  const bar = h('div', { class: 'follower-bar', role: 'toolbar', 'aria-label': 'Learner monitor' });
-  shell.add({ id: 'monitor', el: h('section', { 'aria-labelledby': 'fol-h' }, h('h1', { id: 'fol-h', class: 'sr-only' }, 'Learner monitor'), bar) });
-  const follower = mountFollower(shell, site, follow, bar, join && relay ? { relay } : undefined);
+  const what = defibWindow ? 'Defibrillator' : 'Learner monitor';
+  const bar = h('div', { class: 'follower-bar', role: 'toolbar', 'aria-label': what });
+  shell.add({ id: 'monitor', el: h('section', { 'aria-labelledby': 'fol-h' }, h('h1', { id: 'fol-h', class: 'sr-only' }, what), bar) });
+  const follower = mountFollower(shell, site, follow, bar, join && relay ? { relay } : undefined, { defib: defibWindow });
   // "SIMULATION · not a clinical monitor" at the top of this monitor (in a two-row header, else a strip above it)
-  const line = simLine(shell.stage, !!join);
+  const line = simLine(shell.stage, !!join && !defibWindow);
   line.set(follower.monitor, follower.style, true);
   follower.onStyle = (s) => line.set(follower.monitor, s, true);
   // The second screen shows the same fast-forward panel and latches the alarms that came and went
@@ -98,10 +102,10 @@ if (follow) {
   if (handed) putKeptItems(handed);
   const base = PATIENT_PRESETS[0]?.spec;
   if (!base) throw new Error('no patient presets');
-  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay });
+  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, defibModel: site.defibModel });
   // The session code survives a reload of this window, so a learner monitor and a Remote that follow it find it again
   // (a reload made a new code and left them on a frozen screen)
-  publishStyle(session.code, () => ({ skin: session.skin, theme: session.theme, ibp: session.ibpScales }), (f) => {
+  publishStyle(session.code, () => ({ skin: session.skin, theme: session.theme, ibp: session.ibpScales, defib: session.defibModel }), (f) => {
     const offSkin = session.onSkin(f);
     const offIbp = session.onIbpScales(f); // E130: the IBP lane scales travel with the style
     return () => (offSkin(), offIbp());
@@ -155,6 +159,8 @@ if (follow) {
   const room = roomView({
     code: session.code, relay, relayLink: session.relay, local: session.bc, hostPeerId: session.host.peerId, learnerUrl: followUrl(session.code),
     followers: () => session.followers, onFollowers: (f) => session.onFollowers(f),
+    // R5b: the room's defibrillator model, kept with the site profile (the monitor style's place) and sent to the patient
+    defib: { model: () => site.defibModel, choose: (m) => ((site.defibModel = m), saveSite(site), session.setDefibModel(m)) },
   });
   shell.add(room);
   shell.add(scenariosView({ session, loadScenario, instructor }));
@@ -167,10 +173,7 @@ if (follow) {
   // and so the phones), or the case ended on the page's default patient, the deep link it was opened from spent so that
   // a reload shows no case either
   const finish = {
-    restart: (): boolean => {
-      const doc = session.driver.runner?.doc;
-      return !!doc && loadScenario(scenarioById(doc.id) ?? cardOf(doc), session.roomKeep());
-    },
+    restart: (): boolean => restartSameCard(session.driver, loadScenario, () => session.roomKeep()),
     close: (): void => {
       session.endCase();
       const u = new URL(location.href);
