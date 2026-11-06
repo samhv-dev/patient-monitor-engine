@@ -5,7 +5,7 @@
 // tile showed "/" for the whole case.
 import { expect, test } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
-import { openApp, startVite } from './app-support.ts';
+import { openApp, pillV2, startVite } from './app-support.ts';
 
 type Box = { x: number; y: number; width: number; height: number };
 
@@ -18,11 +18,12 @@ test.afterAll(async () => vite?.close());
 test('UI-B #32: Pause puts PAUSED over the monitor, Resume takes it away; it never prints', async ({ page }) => {
   test.setTimeout(90_000);
   await page.setViewportSize({ width: 1280, height: 800 });
-  await openApp(page, base, '?scenario=showcase-mh', { warmMs: 1500 });
+  await openApp(page, base, '?scenario=showcase-mh#/teach2', { warmMs: 1500 });
   const mark = page.locator('.stage .paused-mark');
   await expect(mark).toBeHidden();
-  const bar = page.locator('.sessionbar');
-  await bar.getByRole('button', { name: 'Pause', exact: true }).click();
+  const pill = pillV2(page); // Instructor v2's clock pill: the session bar's Pause / Resume
+  await expect(pill).toHaveAttribute('data-state', 'running');
+  await pill.click();
   await expect(mark).toBeVisible({ timeout: 5_000 });
   await expect(mark).toHaveText('PAUSED');
   const box = (await mark.boundingBox()) as Box;
@@ -32,7 +33,8 @@ test('UI-B #32: Pause puts PAUSED over the monitor, Resume takes it away; it nev
   await page.emulateMedia({ media: 'print' });
   await expect(mark).toBeHidden();
   await page.emulateMedia({ media: 'screen' });
-  await bar.getByRole('button', { name: 'Resume', exact: true }).click();
+  await expect(pill).toHaveAttribute('data-state', 'paused');
+  await pill.click();
   await expect(mark).toBeHidden({ timeout: 5_000 });
 });
 
@@ -47,7 +49,7 @@ test('UI-B #32: Pause puts PAUSED over the monitor, Resume takes it away; it nev
 test('UI-B #14: a loaded scenario starts the cuff on AUTO every 5 min and the NIBP tile shows a result', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 1280, height: 800 });
-  await openApp(page, base, '?scenario=showcase-mh', { warmMs: 1500 });
+  await openApp(page, base, '?scenario=showcase-mh#/teach2', { warmMs: 1500 }); // the NIBP tile on v2's monitor pane
   const nibp = page.locator('.stage .pme-stile[data-param="NIBP"]');
   await expect(nibp.locator('[data-pme="mode"]')).toHaveText('AUTO(5Min)', { timeout: 20_000 });
   await expect(nibp.locator('[data-pme="v"]')).toHaveText(/^\d+ \/ \d+$/, { timeout: 90_000 });

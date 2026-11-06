@@ -14,7 +14,7 @@ import { join } from 'node:path';
 import { devices, expect, test, type Browser, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
-import { openApp, startVite } from './app-support.ts';
+import { ffV2, openApp, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -142,7 +142,9 @@ test('a following phone sweeps at the cursor and keeps its ECG gain after a fast
   writeFileSync(join(dir, 'index.html'), '<!doctype html>'); // the pages come from Vite here
   relay = await startRelay({ port: 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer' });
   const ws = encodeURIComponent(`ws://127.0.0.1:${relay.port}/`);
-  await openApp(page, base, `?relay=${ws}#/teach`, { warmMs: 1500 });
+  await openApp(page, base, `?relay=${ws}#/teach2`, { warmMs: 1500 });
+  // Instructor v2 with no case shows the Fast forward box once Free roam is chosen (board "Empty 5"; the default patient)
+  await page.locator('.ip2-begin-card[data-way="free"]').click();
   const code = await page.evaluate(() => (window as unknown as { __pmeApp: { session: { code: string } } }).__pmeApp.session.code);
   const url = `${base}/?join=${code}&relay=${ws}`;
 
@@ -156,7 +158,7 @@ test('a following phone sweeps at the cursor and keeps its ECG gain after a fast
   expect(gain).toMatch(/^II\s+X/);
 
   // 1. a 2-min fast-forward: the phone holds, then restores the host's snapshot at the end
-  await page.locator('.sessionbar').getByRole('group', { name: 'Fast-forward' }).getByRole('button', { name: 'Fast-forward 2 min' }).click();
+  await ffV2(page, 2); // STATE's Fast forward box
   await expect(a.locator('.ff-veil.on')).toBeVisible({ timeout: 10_000 });
   await expect(a.locator('.ff-veil.on')).toHaveCount(0, { timeout: 60_000 });
   await synced(a);

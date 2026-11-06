@@ -11,7 +11,7 @@ import { join } from 'node:path';
 import { devices, expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
-import { openApp, startVite } from './app-support.ts';
+import { openApp, startVite, TEACH2 } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -85,6 +85,16 @@ function faults(r: Awaited<ReturnType<typeof inks>>): string[] {
   return bad;
 }
 
+/** The least clear space between a BFA label and its right-hand neighbour on the same line, px (the measured margin). */
+function minGap(r: Awaited<ReturnType<typeof inks>>): number {
+  let m = Number.POSITIVE_INFINITY;
+  for (const a of r.labels) {
+    const right = r.labels.filter((b) => b !== a && b.l >= a.l && Math.min(a.bot, b.bot) - Math.max(a.top, b.top) > 0).sort((x, y) => x.l - y.l)[0];
+    if (right) m = Math.min(m, right.l - a.r);
+  }
+  return m;
+}
+
 const sevo = async (page: Page) => {
   type L = { __pmeApp: { link: { send(c: unknown): Promise<{ accepted: boolean }> } } };
   for (const event of [{ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, peep: 5, fio2: 0.5 }, { kind: 'vaporiser', agent: 'sevoflurane', dialPct: 2, fgfLpm: 2 }]) {
@@ -106,17 +116,23 @@ for (const [w, h] of [[1280, 800], [1920, 1080], [1990, 920]] as const) {
   test(`UI-A #10 Saadat skin at ${w} × ${h}: the BFI/EtAA row has clear space on the Instructor and Monitor views`, async ({ page, browserName }) => {
     test.setTimeout(150_000);
     await page.setViewportSize({ width: w, height: h });
-    await openApp(page, base, '#/teach', { warmMs: 2000, site: { skin: 'saadat-like' } });
+    await openApp(page, base, TEACH2, { warmMs: 2000, site: { skin: 'saadat-like' } }); // Instructor v2's monitor pane
     await sevo(page);
     await agentsShown(page);
     const teach = await inks(page);
+    // the geometry measured (retire-instructor-v1 PR 2: re-measured on Instructor v2's monitor pane)
+    const pane = await page.locator('.stage > .monitor-host').boundingBox().then((r) => (r ? `${r.width.toFixed(0)} × ${r.height.toFixed(0)}` : 'none'));
+    const bfa = await page.evaluate(() => {
+      const t = [...document.querySelectorAll<HTMLElement>('.pme-stile[data-param="BFA"]')].find((e) => e.offsetParent !== null)?.getBoundingClientRect();
+      return t ? `${t.width.toFixed(1)} × ${t.height.toFixed(1)}` : 'none';
+    });
     await shot(page, `${browserName}-${w}x${h}-teach`);
     await page.evaluate(() => (location.hash = '#/monitor'));
     await page.waitForTimeout(800);
     const mon = await inks(page);
     await shot(page, `${browserName}-${w}x${h}-monitor`);
     const bad = [...faults(teach).map((s) => `teach: ${s}`), ...faults(mon).map((s) => `monitor: ${s}`)];
-    console.log(`UI-A #10 ${browserName} ${w}x${h}: ${teach.boxes.length + mon.boxes.length} ink boxes; ${bad.length} faults\n${bad.join('\n')}`);
+    console.log(`UI-A #10 ${browserName} ${w}x${h}: ${teach.boxes.length + mon.boxes.length} ink boxes; ${bad.length} faults; instructor pane ${pane}, BFA tile ${bfa}, the BFA labels' least clear space ${minGap(teach).toFixed(1)} px\n${bad.join('\n')}`);
     expect(teach.boxes.map((b) => b.t)).toEqual(expect.arrayContaining(['BFI%', 'BS%', 'SQI%', 'EMG%', 'EtAA']));
     expect(teach.boxes.some((b) => /^MAC /.test(b.t))).toBe(true);
     expect(bad).toEqual([]);
