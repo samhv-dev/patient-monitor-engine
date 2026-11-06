@@ -51,11 +51,10 @@ async function run(scale: number, seconds: number) {
   v.scale = scale;
   const frameMs = 1000 / 60;
   const t0 = Date.now();
-  let n = 0;
   while (Date.now() - t0 < seconds * 1000) {
     await vi.advanceTimersByTimeAsync(frameMs);
     v.frame(Date.now() - t0);
-    if (++n % 1 === 0) e.advanceTo(((Date.now() - t0) / 1000) * scale + 1e-9);
+    e.advanceTo(((Date.now() - t0) / 1000) * scale + 1e-9);
   }
   await vi.advanceTimersByTimeAsync(RELAY_BATCH_MS);
   detach();
@@ -79,10 +78,12 @@ describe('the relay port batches the cockpit\'s `cmds` per 20 ms of wall time (R
     expect(r.posted.length).toBeGreaterThanOrEqual(3900); // ≈ 400 ticks a second for 10 s
     expect(r.peak).toBeLessThanOrEqual(1000 / RELAY_BATCH_MS); // 50
     expect(r.heard).toEqual(r.posted);
-    for (let i = 1; i < r.withCmds.length; i++) expect((r.withCmds[i] as { at: number }).at - (r.withCmds[i - 1] as { at: number }).at).toBeGreaterThanOrEqual(RELAY_BATCH_MS);
+    // one flush per 20 ms of wall time at most (a burst larger than one body goes as several bodies of one flush)
+    const flushes = [...new Set(r.withCmds.map((s) => s.at))];
+    for (let i = 1; i < flushes.length; i++) expect((flushes[i] as number) - (flushes[i - 1] as number)).toBeGreaterThanOrEqual(RELAY_BATCH_MS);
     for (const s of r.up) expect(JSON.stringify(s.body).length).toBeLessThanOrEqual(RELAY_BODY_BYTES);
     for (const s of r.up) if (s.body.kind === 'batch') expect(s.body.msgs.length).toBeLessThanOrEqual(RELAY_BATCH_MAX);
-    console.log(`R8c batching ×8: ${r.posted.length} ticks in 10 s → ${r.withCmds.length} messages (${(r.withCmds.length / 10).toFixed(1)}/s, peak ${r.peak} in a second)`);
+    console.log(`R8c batching ×8: ${r.posted.length} ticks in 10 s → ${r.withCmds.length} messages (${(r.withCmds.length / 10).toFixed(1)}/s, peak ${r.peak} in a second; ${new Set(r.withCmds.map((s) => s.at)).size} flushes)`);
   }, 60_000);
 
   it('×1: 50 ticks a second, never more than 50 messages a second, every tick heard', async () => {

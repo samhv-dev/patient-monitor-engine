@@ -127,6 +127,7 @@ describe('the host grants one remote ventilator (R8c)', () => {
     await waitFor(() => grants(got, 'vent-a.1').length === 1);
     expect(host.ventilator).toBe('vent-a.1');
     expect(host.ventPost({ v: 1, kind: 'clock', ventTick: 80 })).toBe(true);
+    await waitFor(() => got.some((m) => m.kind === 'vent'));
     expect(got.filter((m) => m.kind === 'vent')).toMatchObject([{ kind: 'vent', to: 'vent-a.1', body: { kind: 'clock', ventTick: 80 } }]);
   });
 
@@ -170,6 +171,7 @@ describe('the host grants one remote ventilator (R8c)', () => {
     await waitFor(() => grants(got, 'ph.1').length === 1);
     setPin('5555');
     host.instructorPinChanged();
+    await waitFor(() => grants(got, 'ph.1').length === 2);
     expect(grants(got, 'vent-a.1').at(-1)).toMatchObject({ granted: false, reason: INSTRUCTOR_REASONS.pinChanged });
     expect(grants(got, 'ph.1').at(-1)).toMatchObject({ granted: false, reason: INSTRUCTOR_REASONS.pinChanged });
     expect(holders).toEqual(['vent-a.1', null]);

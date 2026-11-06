@@ -142,6 +142,12 @@ No exported `…State` type in this module.
 | `UNREACHABLE_MS` | `6000` | ms | [ENG] | The phone has not reached the relay for this long: it is probably not on the classroom network [ENG]. |
 | `COCKPIT_QUIET_MS` | `2500` | ms | [ENG] | The host's `cockpit` events come once a second; this long without one, the Ventilator view has closed [ENG]. |
 
+### [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `COCKPIT_SILENCE_MS` | `1000` | ms | [ENG: it sends 50 link messages a second and its settings once a second, so 1 s is 50 missed; the relay's heartbeat would take up to 20 s, too long for an unventilated patient] | R8c: a remote cockpit silent this long is handed over [ENG: it sends 50 link messages a second and its settings once a second, so 1 s is 50 missed; the relay's heartbeat would take up to 20 s, too long for an unventilated patient]. |
+
 ### [`apps/demo/src/dev/rhythm-strip.ts`](../../apps/demo/src/dev/rhythm-strip.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -481,6 +487,8 @@ No exported `…State` type in this module.
 | `teach2View` | [`apps/demo/src/app/views/teach2.ts`](../../apps/demo/src/app/views/teach2.ts) | The Instructor v2 view on `link`, for `shell.add`. |
 | `engineVentilation` | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | The cockpit's settings as the engine's `ventilation` event takes them (its own ventilator is volume control). |
 | `cockpitPatch` | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | The engine's ventilator settings as a cockpit settings patch (volume control; |
+| `cockpitDesk` | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | The session's one desk. |
+| `serveRemoteCockpit` | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | R8c: the host drives from the granted remote cockpit (HostSession onVent / onVentilator) exactly as the view does: |
 | `describe` | [`apps/demo/src/physiology-console/actions.ts`](../../apps/demo/src/physiology-console/actions.ts) | One line for the change log. |
 | `foldEvent` | [`apps/demo/src/physiology-console/flatten.ts`](../../apps/demo/src/physiology-console/flatten.ts) | Fold one engine event into `out`. |
 | `autoDigits` | [`apps/demo/src/physiology-console/format.ts`](../../apps/demo/src/physiology-console/format.ts) | Decimals by magnitude when the metadata has none: |
@@ -987,6 +995,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/views/monitor.dom.test.ts`](../../apps/demo/src/app/views/monitor.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/teach2.dom.test.ts`](../../apps/demo/src/app/views/teach2.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/vent-handover.dom.test.ts`](../../apps/demo/src/app/views/vent-handover.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/vent-remote.dom.test.ts`](../../apps/demo/src/app/views/vent-remote.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/physiology-console/actions.test.ts`](../../apps/demo/src/physiology-console/actions.test.ts) | 0 | 0 |
 | [`apps/demo/src/physiology-console/flatten.test.ts`](../../apps/demo/src/physiology-console/flatten.test.ts) | 0 | 0 |
 | [`apps/demo/src/physiology-console/format.test.ts`](../../apps/demo/src/physiology-console/format.test.ts) | 0 | 0 |

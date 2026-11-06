@@ -42,7 +42,7 @@ import { scenariosView } from './views/scenarios.ts';
 import { teachView } from './views/teach.ts';
 import { teach2View } from './views/teach2.ts';
 import { validateView } from './views/validate.ts';
-import { ventView } from './views/vent.ts';
+import { serveRemoteCockpit, ventView } from './views/vent.ts';
 
 const site = loadSite();
 setDrugNames(site.drugNames); // One set of drug names on every screen
@@ -193,6 +193,7 @@ if (follow && shows === 'pick') {
   shell.add(remoteView({ site, hostless: false, bar: shell.bar, code: session.code }));
   shell.add(exploreView(session, site));
   shell.add(ventView(session));
+  serveRemoteCockpit(session); // R8c: the host drives from a granted remote cockpit too, one cockpit at a time
   shell.add(validateView());
   shell.add(devView());
   shell.add(settingsView(site, session, { onInstructor: () => rail.refresh() }));

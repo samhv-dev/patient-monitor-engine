@@ -253,9 +253,21 @@ describe('the host drives from a granted remote cockpit (R8c)', () => {
     expect(handOvers()[0]?.event).toMatchObject({ source: 'ventilator', ...engineVentilation(cfg, measured) });
     expect(handOvers()[0]?.event).toMatchObject({ rr: 16, peep: 7 });
     expect(cockpitNotices(ph).at(-1)).toMatchObject({ off: true });
+    const notices = cockpitNotices(ph).length;
     await vi.advanceTimersByTimeAsync(8000); // past the engine's 5 s drive watchdog
+    expect(cockpitNotices(ph)).toHaveLength(notices); // the phones follow: no hold since
     expect(handOvers()).toHaveLength(1);
-    expect(sources(t0 - 4)).not.toContain('none');
+    // it lands after the cockpit's last frame (which ran a few ticks ahead of the engine), at most 1 s of sim later:
+    // the external drive held its last frame that long, far inside the engine's 5 s drive watchdog (no apnoea)
+    const lastFrame = Math.max(...frames('vent-a.1').map((f) => f.tick));
+    const at = handOvers()[0]?.tick ?? 0;
+    console.log(`R8c silent: last frame tick ${lastFrame}, hand-over applied on tick ${at} (+${at - lastFrame} ticks)`);
+    expect(at).toBeGreaterThan(lastFrame);
+    expect(at - lastFrame).toBeLessThanOrEqual(COCKPIT_SILENCE_MS / 20 + 1);
+    const who = sources(t0 - 4);
+    console.log(`R8c silent: who breathed, 1 Hz from 4 s before the cut: ${who.join(' ')}`);
+    expect(who.length).toBeGreaterThanOrEqual(12);
+    expect(who).not.toContain('none');
     expect(sources(simNow() - 2)).toEqual(expect.arrayContaining(['ventilator']));
     expect(cockpitDesk(s).driving).toBeNull();
   });
@@ -307,6 +319,7 @@ describe('the host drives from a granted remote cockpit (R8c)', () => {
     expect(cockpitDesk(s).driving).toBeNull();
     console.log(`R8c hand-over: ${JSON.stringify(timings)} ms (wall, fake clock)`);
     for (const ms of Object.values(timings)) expect(ms).toBeLessThanOrEqual(20);
+    expect(sources(0).length).toBeGreaterThanOrEqual(8);
     expect(sources(0)).not.toContain('none');
   });
 
@@ -345,6 +358,7 @@ describe('the host drives from a granted remote cockpit (R8c)', () => {
     const both = [...ticks('view-')].filter((k) => ticks('vent-a.1').has(k));
     expect(both).toEqual([]);
     expect(ticks('vent-a.1').size).toBeGreaterThan(50);
+    expect(sources(0).length).toBeGreaterThanOrEqual(8);
     expect(sources(0)).not.toContain('none');
     r.stop();
   });

@@ -146,8 +146,9 @@ describe('R8c: the relay port\'s bodies', () => {
   it('every body a real cockpit sends through the relay port at ×8 passes the guard inside a `vent`, and leaks no sample', async () => {
     const { createRelayPort, createVentDriver: drive } = await import('../../ventilator/src/index.ts');
     const out: unknown[] = [];
-    const port = createRelayPort({ send: (b) => void out.push(JSON.parse(JSON.stringify(b))), onBody: () => () => {} }, { settings: () => ({ cfg: normal.cfg, measured: { RR: 12, VTE: 480 } }) });
-    const d = drive(port, 'anaphylaxis-bronchospasm');
+    let d: ReturnType<typeof drive> | null = null; // the cockpit's driver takes the port: its settings follow it
+    const port = createRelayPort({ send: (b) => void out.push(JSON.parse(JSON.stringify(b))), onBody: () => () => {} }, { settings: () => (d ? { cfg: d.vs.cfg, measured: { RR: 12, VTE: 480 } } : null) });
+    d = drive(port, 'anaphylaxis-bronchospasm');
     d.scale = 8;
     d.frame(0);
     d.frame(100); // 40 ticks in one animation frame: one flush splits them
@@ -155,6 +156,7 @@ describe('R8c: the relay port\'s bodies', () => {
     port.setHidden(true);
     port.close();
     expect(out.some((b) => (b as { kind: string }).kind === 'batch')).toBe(true);
+    expect(out.some((b) => (b as { kind: string; hidden?: boolean }).kind === 'settings' && (b as { hidden?: boolean }).hidden === true)).toBe(true);
     for (const b of out) expect(parseWireMessage(JSON.stringify(vent(b))), JSON.stringify(b).slice(0, 80)).not.toBeNull();
     for (const b of out) expect(findSampleLeak(vent(b))).toBeNull();
   });
