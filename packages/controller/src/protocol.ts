@@ -22,9 +22,11 @@ import type { RelayFrame } from './transport/relay-frames.ts';
 
 /**
  * `instructor` (plan instructor-peer-role.md §1): a peer from anywhere that proves the instructor's PIN in its hello;
- * the host grants it before it may command. A `controller` stays a peer its transport already trusts.
+ * the host grants it before it may command. A `controller` stays a peer its transport already trusts. `ventilator`
+ * (plan room-and-instruments.md R8a, §4 D9): the cockpit on another device, which proves the same PIN and, once granted,
+ * exchanges only `vent` messages with the host — it sends no `command`.
  */
-export type Role = 'host' | 'controller' | 'viewer' | 'instructor';
+export type Role = 'host' | 'controller' | 'viewer' | 'instructor' | 'ventilator';
 export type TransportKind = 'in-process' | 'postMessage' | 'broadcastChannel' | 'websocket' | 'webrtc';
 export type TransportStatus = 'connecting' | 'open' | 'closed' | 'error';
 export type ModelInput = 'hrFactor' | 'svrFactor' | 'contractilityFactor' | 'vo2Factor' | 'vco2Factor';
@@ -258,11 +260,39 @@ export interface AppliedResolution {
 export const INSTRUMENTS = ['learner', 'monitor', 'defib', 'depth'] as const;
 export type Instrument = (typeof INSTRUMENTS)[number];
 
+/**
+ * The commands a ventilator's `cmds` may carry (plan room-and-instruments.md R8a): what the link core builds
+ * (`packages/ventilator/src/link/core.ts` linkTick): one VentFrame a tick (`externalDrive`), the airway on a circuit
+ * change, the profile's stand-in targets once. guard.ts checks them at run time.
+ */
+export type VentCommand =
+  | Extract<Command, { type: 'externalDrive' } | { type: 'setTarget' }>
+  | (Extract<Command, { type: 'applyEvent' }> & { event: { kind: 'airway' } });
+/**
+ * A ventilator link message as it rides a `vent` (plan §4 D9): `packages/ventilator`'s `LinkMsg` (`link/port.ts`), typed
+ * structurally because this package does not depend on that one (test/types.test-d.ts holds the two together).
+ * The cockpit's configuration (`control`'s patch, `settings`) stays opaque here.
+ */
+export type VentLinkBody =
+  | { v: 1; kind: 'cmds'; tick: number; cmds: VentCommand[] }
+  | { v: 1; kind: 'lungState'; ev: Extract<EngineEvent, { type: 'lungState' }> }
+  | { v: 1; kind: 'clock'; ventTick: number }
+  | { v: 1; kind: 'run'; ventTick: number }
+  | { v: 1; kind: 'time'; action: 'pause' | 'resume' | 'scale'; value?: number }
+  | { v: 1; kind: 'control'; patch?: object; circuit?: 'connected' | 'disconnected'; profile?: string }
+  | { v: 1; kind: 'settings'; cfg: object };
+export type VentLinkKind = VentLinkBody['kind'];
+
 /** Brief §7.5, exactly. */
 export type WireMessage = { v: 1; session: string; from: string; seq: number; sentAt: number } & (
-  // `pin`: only with role 'instructor', 4 to 8 digits; `show` and `device` (a key the device keeps, [a-z0-9]{8,16}):
-  // only with role 'viewer' (guard.ts; plan room-and-instruments.md §4 D1)
+  // `pin`: only with role 'instructor' or 'ventilator' (which must carry one), 4 to 8 digits; `show` and `device` (a key
+  // the device keeps, [a-z0-9]{8,16}): only with role 'viewer' (guard.ts; plan room-and-instruments.md §4 D1, R8a)
   | { kind: 'hello'; role: Role; pin?: string; show?: Instrument; device?: string }
+  /**
+   * R8a: a ventilator link message between the host and ONE granted ventilator (the relay routes it, R8b): from the
+   * ventilator to the host, or from the host `to` the ventilator's id. Never to a viewer or an instructor, never cached.
+   */
+  | { kind: 'vent'; to?: string; body: VentLinkBody }
   | { kind: 'command'; body: WireCommand }
   /** The host's answer to an instructor hello, sent before its welcome (plan §1); `granted: false` also revokes. */
   | { kind: 'grant'; to: string; granted: boolean; reason?: string }

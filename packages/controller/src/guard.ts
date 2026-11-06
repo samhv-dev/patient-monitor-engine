@@ -17,6 +17,15 @@ export const WIRE_LIMITS = {
   noteChars: 500,
 } as const;
 
+/**
+ * A `vent` body's limits (plan room-and-instruments.md R8a). `cmds`: the most commands the ventilator link core builds on
+ * one tick [ENG, measured on every profile by test/guard-vent.test.ts]: the profile's stand-in targets once (4 for the
+ * two shock profiles, `profiles.ts` STAND_INS), the airway on a circuit change and the tick's VentFrame — 6, not the
+ * plan's 4 ("3 plus a spare" counted one stand-in), which would drop the first tick of anaphylaxis and air embolism.
+ * `bytes`: a `vent` body's largest JSON [ENG: that 6-command first tick is 0.8 KB, a steady tick's `cmds` 0.25 KB].
+ */
+export const VENT_LIMITS = { cmds: 6, bytes: 4 * 1024 } as const;
+
 /** An instructor's PIN on the wire: 4 to 8 ASCII digits (plan §1). */
 export const PIN_RE = /^[0-9]{4,8}$/;
 
@@ -100,8 +109,47 @@ export function assertWireSafe(m: WireMessage): void {
   if (leak) throw new WireSafetyError(`refusing to send sample data: ${leak}`);
 }
 
-const KINDS = new Set(['hello', 'command', 'ack', 'event', 'snapshot', 'grant']);
-const ROLES = new Set(['host', 'controller', 'viewer', 'instructor']);
+const KINDS = new Set(['hello', 'command', 'ack', 'event', 'snapshot', 'grant', 'vent']);
+const ROLES = new Set(['host', 'controller', 'viewer', 'instructor', 'ventilator']);
+
+const isObj = (x: unknown): x is Record<string, unknown> => x !== null && typeof x === 'object' && !Array.isArray(x);
+const TIME_ACTIONS: ReadonlySet<unknown> = new Set(['pause', 'resume', 'scale']);
+const CIRCUITS: ReadonlySet<unknown> = new Set(['connected', 'disconnected']);
+/** One command a ventilator's `cmds` may carry (R8a): its VentFrame, the airway, a stand-in target; nothing else. */
+function ventCommandOk(c: unknown): boolean {
+  if (!isObj(c) || typeof c.id !== 'string' || typeof c.issuedBy !== 'string') return false;
+  if (c.type === 'externalDrive') return c.source === 'ventilator' && isObj(c.frame);
+  if (c.type === 'applyEvent') return isObj(c.event) && c.event.kind === 'airway';
+  return c.type === 'setTarget' && typeof c.variable === 'string' && typeof c.value === 'number';
+}
+/** Whether a `vent` body is one of the ventilator link's messages, within VENT_LIMITS (plan R8a). */
+function ventBodyOk(b: unknown): boolean {
+  if (!isObj(b) || b.v !== 1) return false;
+  switch (b.kind) {
+    case 'cmds':
+      if (!Number.isInteger(b.tick) || !Array.isArray(b.cmds) || b.cmds.length > VENT_LIMITS.cmds || !b.cmds.every(ventCommandOk)) return false;
+      break;
+    case 'lungState':
+      if (!isObj(b.ev) || b.ev.type !== 'lungState') return false;
+      break;
+    case 'clock':
+    case 'run':
+      if (!Number.isInteger(b.ventTick)) return false;
+      break;
+    case 'time':
+      if (!TIME_ACTIONS.has(b.action) || (b.value !== undefined && typeof b.value !== 'number')) return false;
+      break;
+    case 'control':
+      if ((b.patch !== undefined && !isObj(b.patch)) || (b.circuit !== undefined && !CIRCUITS.has(b.circuit)) || (b.profile !== undefined && typeof b.profile !== 'string')) return false;
+      break;
+    case 'settings':
+      if (!isObj(b.cfg)) return false;
+      break;
+    default:
+      return false;
+  }
+  return utf8Bytes(JSON.stringify(b)) <= VENT_LIMITS.bytes;
+}
 
 /**
  * Parses and validates untrusted input (a JSON string or a structured-clone object). Returns null for anything
@@ -125,7 +173,8 @@ export function parseWireMessage(data: unknown): WireMessage | null {
   switch (m.kind) {
     case 'hello':
       if (!ROLES.has(m.role as string)) return null;
-      if (m.pin !== undefined && (m.role !== 'instructor' || typeof m.pin !== 'string' || !PIN_RE.test(m.pin))) return null;
+      if (m.pin !== undefined && ((m.role !== 'instructor' && m.role !== 'ventilator') || typeof m.pin !== 'string' || !PIN_RE.test(m.pin))) return null;
+      if (m.role === 'ventilator' && m.pin === undefined) return null; // R8a: a device that drives the patient proves the PIN
       if (m.show !== undefined && (m.role !== 'viewer' || !SHOWS.has(m.show))) return null;
       if (m.device !== undefined && (m.role !== 'viewer' || typeof m.device !== 'string' || !DEVICE_RE.test(m.device))) return null;
       break;
@@ -149,6 +198,9 @@ export function parseWireMessage(data: unknown): WireMessage | null {
       if (!b || typeof b !== 'object' || typeof b.schema !== 'string' || typeof b.tick !== 'number') return null;
       break;
     }
+    case 'vent':
+      if ((m.to !== undefined && typeof m.to !== 'string') || !ventBodyOk(m.body)) return null;
+      break;
   }
   const msg = o as WireMessage;
   return wireBudgetError(msg) ? null : msg;
