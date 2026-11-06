@@ -36,3 +36,23 @@
   SBP/DBP (a cuff value printed with its age, "98/60 (cuff, 2 min 10 s before)") and CVP, and each alarm under a
   moment its end and acknowledgement ("▸ cleared 07:40 · acknowledged 06:20", or "(still on)"); the minute table gains
   SBP, DBP and CVP. A file made before prints "·" and "not recorded in this file" there. No schema change.
+
+### Added
+
+- **`pme-scenario/2`, the format as a whole, and its authoring guide (plan F10).** A `/2` card is a teaching case whose
+  course is a set of phases, each entered by its own rule on the engine's truth and never by a press. The team's work
+  is a set of actions, each carrying its acceptance criteria: a drug with its dose, route set and rate; a device or a
+  decision with its settings; a fluid; a procedure, sample or communication recorded by its own taking or by the
+  scenario `record` command. An action may have a window, anchored on the start, a phase entry, another action,
+  the pulse loss or the return of circulation, a truth rule, each taking of another action, a rule on the
+  displayed numerics, or the earliest of several. An action may also have a fail limit (`failAfterS`), an unconditional or
+  conditional repeat, a precondition and violations. A card may also have outcomes and a card-set script. The new
+  guide documents all of this, together with the owner's authoring rules of 5 November:
+  - a card names its bleeding source and orders haemostasis against compressions accordingly;
+  - the operating-room CPR trigger, as the haemorrhage card writes it, and when it does not apply;
+  - VF comes from the physiology;
+  - one remote.
+
+  The guide is the `/2` section of `docs/guides/scenario-authoring.md`. Its one example card is checked by
+  `docs-examples.test.ts`, which now knows the `<!-- example: pme-scenario/2 -->` tag. The route models (IM dantrolene,
+  F = 0) and the Debrief's `pme-debrief/3` export are the entries below and under 1.0.0-rc.5. No product code changed.
