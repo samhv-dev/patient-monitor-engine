@@ -12,6 +12,8 @@ import { drawHrvPhase, type HrvPhase } from './l2/ecg/hrv.ts';
 import { applyRhythm, createRhythmState, planUntil, type RhythmCtx, type RhythmState } from './l2/ecg/rhythm-engine.ts';
 import { DEFAULT_FLUTTER_ATRIAL_BPM, RHYTHMS } from './l2/ecg/rhythms.ts';
 import { projectLead } from './l2/ecg/vcg.ts';
+import { advanceEeg, applyEegSetting, createEegState, EEG_RATE, validateEegCommand, type EegCtx, type EegState } from './l2/eeg/pipeline.ts';
+import type { EegDeviceAction } from './types-eeg.ts';
 import { createFilterState, designEcgFilter, filterBand, filterSample, type Biquad } from './l3/ecg-filter.ts';
 import { createHrState, hrAveragingOf, hrMeasure, hrOnQrs, type HrAveraging, type HrMethod, type HrState } from './l3/hr.ts';
 import { resolveSkin } from '@pme/skins'; // Data-only dependency
@@ -129,6 +131,7 @@ interface PipelineState {
   pkHooks: RhythmHookState;
   neuro: NeuroState; // NMB, depth, drive depression
   organs: OrgansState; // Brain, kidney, liver
+  eeg?: EegState; // The frontal EEG, present only while an EEG device is on (l2/eeg/pipeline.ts, plan D4)
 }
 
 /**
@@ -467,6 +470,7 @@ class Engine implements MonitorEngine {
     this.syncHemoBuffers();
     this.syncRespBuffers();
     this.syncOrganBuffers();
+    if (!this.st.eeg) this.bufs.delete('eeg'); // EEG off in the bookmark: no channel
     for (const b of this.bufs.values()) b.clear(); // The discarded timeline's samples are not history
     const simT = this.now().simT;
     this.emit({ type: 'toneCancel', after: simT }); // a different timeline: every tone after now is void
@@ -526,8 +530,8 @@ class Engine implements MonitorEngine {
    */
   private speculate(): void {
     const simT = this.now().simT;
-    const spec = structuredClone(this.st);
-    this.advance(spec, (this.tick + this.lookTicks) * SAMPLES_PER_TICK);
+    const spec = structuredClone({ ...this.st, eeg: undefined }); // the look-ahead pass skips the EEG, so it is not cloned
+    this.advance(spec, (this.tick + this.lookTicks) * SAMPLES_PER_TICK, true);
     const fresh = new Map<string, Detection>();
     for (const d of this.committedDet) if (d.n >= this.dirtyFromN) fresh.set(toneId(d), d);
     for (const d of spec.detections) fresh.set(toneId(d), d);
@@ -600,8 +604,12 @@ class Engine implements MonitorEngine {
     };
   }
 
-  /** Generate samples up to and including absolute ECG index `end` for pipeline state `ps`. */
-  private advance(ps: PipelineState, end: number): void {
+  /**
+   * Generate samples up to and including absolute ECG index `end` for pipeline state `ps`. `lookahead`: the
+   * speculative pass (speculate()), which the EEG skips — it has no tone to post, so its samples are committed ones
+   * only and the look-ahead costs it nothing.
+   */
+  private advance(ps: PipelineState, end: number, lookahead = false): void {
     if (end < ps.n) return;
     const ctx = rhythmCtx(ps);
     planUntil(ps.rhythm, end / ECG_RATE + PLAN_LEAD_S, ctx);
@@ -734,6 +742,8 @@ class Engine implements MonitorEngine {
       Math.floor(end / 4),
       (ch, m, v) => this.hemoWrite(ch, m, v),
     );
+    // The EEG (only while on, committed pass only): after the neuro and organ steps, reading what they published
+    if (ps.eeg && !lookahead) advanceEeg(ps.eeg, this.eegCtx(ps), Math.floor((end * EEG_RATE) / ECG_RATE), (m, v) => this.eegWrite(m, v));
     ps.n = end + 1;
   }
 
@@ -850,6 +860,8 @@ class Engine implements MonitorEngine {
     if (pkV !== null) return pkV;
     const neuro = validateNeuroCommand(cmd); // After pk (the chain); null for every drug/vaporiser event
     if (neuro !== null) return neuro;
+    const eeg = validateEegCommand(cmd, this.st.eeg !== undefined); // `device eeg …` only (null otherwise)
+    if (eeg !== null) return eeg;
     const organs = validateOrgansCommand(cmd); // After pk (and neuro), before blood/endo/resp — its own ids only (null otherwise)
     if (organs !== null) return organs;
     const blood = validateBloodCommand(cmd); // After pk — which owns `drug` — and before resp, whose `condition` rejects unknown ids
@@ -914,6 +926,10 @@ class Engine implements MonitorEngine {
     if (applyDeviceCommand(this.dev, cmd, this.deviceHost(simT), devOut)) {
       this.syncCo2Sampler(); // A skin switch changes the sidestream module
       for (const e of devOut) this.emit(e);
+      return;
+    }
+    if (cmd.type === 'device' && (cmd.action as { device: string }).device === 'eeg') {
+      this.applyEeg(ps, cmd.action as EegDeviceAction);
       return;
     }
     const alias = obstructiveAlias(cmd); // One PE event, one tension-PTX source — both owners, before the chain
@@ -1096,6 +1112,46 @@ class Engine implements MonitorEngine {
     if (!b) {
       b = new RingBuffer(ICP_RATE, BUFFER_SECONDS);
       this.bufs.set(ch, b);
+    }
+    b.write(m, v);
+  }
+
+  /** What the EEG reads (l2/eeg/pipeline.ts): the drug bus, the neuro and organ models' last published state, the ECG
+   * model's artefact state and the heart's own VCG (for the ECG pickup). Read only. */
+  private eegCtx(ps: PipelineState): EegCtx {
+    const v = ps.organs.view;
+    const bx = this.bufs.get('vcgX') as RingBuffer;
+    const by = this.bufs.get('vcgY') as RingBuffer;
+    const bz = this.bufs.get('vcgZ') as RingBuffer;
+    const endo = (ps as unknown as { endo?: { cascade?: { macF?: number } } }).endo;
+    return {
+      bus: ps.pk.bus, ageY: ps.neuro.ageY, stimulus: ps.neuro.stim.level, antinoc: ps.neuro.antinoc, t1: ps.neuro.last.tof.t1,
+      tube: ps.neuro.airway === 'ett', cbfRel: ps.organs.brain.cbfRel, hb: v?.hb ?? 14, sao2: v?.sao2 ?? 0.97, pao2: v?.pao2 ?? 95,
+      tempC: ps.resp.temp.tc, macF: endo?.cascade?.macF ?? 1, art: ps.mods.artefact, mainsHz: this.mainsHz,
+      ecgMvAt: (tS) => {
+        const n = Math.round(tS * ECG_RATE);
+        const a = projectLead('aVF', bx.at(n), by.at(n), bz.at(n));
+        return Number.isFinite(a) ? a : 0;
+      },
+    };
+  }
+
+  /** `device eeg on|off` creates or drops the EEG state and its channel; the other actions set the running EEG. */
+  private applyEeg(ps: PipelineState, a: EegDeviceAction): void {
+    if (a.action === 'on') {
+      ps.eeg ??= createEegState(this.seed, Math.ceil((ps.n * EEG_RATE) / ECG_RATE), this.eegCtx(ps));
+    } else if (a.action === 'off') {
+      delete ps.eeg;
+      this.bufs.delete('eeg');
+    } else if (ps.eeg) applyEegSetting(ps.eeg, a);
+  }
+
+  /** Write one EEG sample; the buffer is created on the first write. */
+  private eegWrite(m: number, v: number): void {
+    let b = this.bufs.get('eeg');
+    if (!b) {
+      b = new RingBuffer(EEG_RATE, BUFFER_SECONDS);
+      this.bufs.set('eeg', b);
     }
     b.write(m, v);
   }

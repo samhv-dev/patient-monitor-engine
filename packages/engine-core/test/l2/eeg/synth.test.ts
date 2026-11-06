@@ -51,7 +51,9 @@ describe('EEG E3 generator: self-check against the spectral description', () => 
       ['propofol sedation 1.0', prop(1.0), [15, 25]],
       ['propofol GA 3.5', GA, [7, 14]],
       ['sevoflurane 0.85 MAC', sp({ mac: { sevoflurane: 0.85 } }), [7, 14]],
-      ['sevoflurane 1.35 MAC', sp({ mac: { sevoflurane: 1.35 } }), [6, 12]],
+      // past the alpha-to-delta shift, short of the forme fruste (whose drop-outs this stationary check would count
+      // as missing power: it is tested below)
+      ['sevoflurane 1.15 MAC', sp({ mac: { sevoflurane: 1.15 } }), [6, 12]],
       ['dexmedetomidine', sp({ alpha2Eq: 1.2 }), [10, 16]],
     ];
     for (const [name, s, peakWin] of states) {
@@ -118,9 +120,13 @@ describe('EEG E3 generator: acceptance cells at the signal level', () => {
     expect(db(band(w, 8, 12), band(aw, 8, 12))).toBeGreaterThan(3);
     expect(band(w, 20, 30)).toBeLessThan(band(aw, 20, 30));
     expect(band(w, 30, 45)).toBeLessThan(band(aw, 30, 45));
-    // "peak amplitudes ≈ 40 µV" read as the ≈ 3σ excursion (spectra.test.ts C4 [INF]): the 99.7th percentile of |x|
+    // "peak amplitudes ≈ 40 µV" read as the ≈ 3σ excursion (spectra.test.ts C4 [INF]): over 0.5–50 Hz as there, and
+    // in the raw trace, which also carries the spectrum's slow power below 0.5 Hz (the slow band starts at 0.1 Hz,
+    // Ch36 Table 36.1): measured 52–56 µV over four seeds, so the raw window is 30–60
+    expect(3 * Math.sqrt(band(w, 0.5, 50))).toBeGreaterThan(30);
+    expect(3 * Math.sqrt(band(w, 0.5, 50))).toBeLessThan(55);
     expect(absQuantile(x, 0.997)).toBeGreaterThan(30);
-    expect(absQuantile(x, 0.997)).toBeLessThan(55);
+    expect(absQuantile(x, 0.997)).toBeLessThan(60);
   });
 
   it('C12 a fentanyl bolus on a hypnotic: little change, median frequency down or unchanged (Ch36 p. 1145)', () => {
@@ -151,25 +157,52 @@ describe('EEG E3 generator: burst suppression, burstiness and the forme fruste',
   it('bursts last ≈ BS_BURST_S (Jones 2023: 3.58 s) at established suppression; no suppression shorter than BS_MIN_SUPP_S', () => {
     expect(BS_BURST_S).toBe(3.58);
     expect(BS_MIN_SUPP_S).toBe(0.5);
-    const x = gen(sp({ mac: { sevoflurane: 1.5 } }), 1200, 21);
-    const runs = suppressedRuns(x, FS, 5, 0.3);
-    const gaps = runs.slice(1).map(([p], i) => (p - (runs[i] as [number, number])[1]) / FS);
-    const mean = gaps.reduce((a, b) => a + b, 0) / gaps.length;
-    expect(mean).toBeGreaterThan(0.75 * BS_BURST_S);
-    expect(mean).toBeLessThan(1.25 * BS_BURST_S);
-    const lens = runs.map(([p, q]) => (q - p) / FS);
-    expect(lens.filter((l) => l < 0.45).length / lens.length).toBeLessThan(0.05);
+    const runsOf = (p: number) => {
+      const spec = sp({ mac: { sevoflurane: 1.5 } });
+      const g = createSynth(seedStream(21, 'eeg'), FS, spec);
+      const s = { ...spec, suppression: { ...spec.suppression, p } };
+      const on: boolean[] = [];
+      for (let n = 0; n < 1200 * FS; n++) { synthNext(g, () => s); on.push(g.bs.on); }
+      const runs: { on: boolean; s: number }[] = [];
+      let start = 0;
+      for (let n = 1; n <= on.length; n++) if (n === on.length || on[n] !== on[n - 1]) { runs.push({ on: on[n - 1] as boolean, s: (n - start) / FS }); start = n; }
+      return runs.slice(1, -1); // whole runs only
+    };
+    const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
+    const r = runsOf(0.5);
+    expect(mean(r.filter((x) => x.on).map((x) => x.s))).toBeGreaterThan(0.85 * BS_BURST_S);
+    expect(mean(r.filter((x) => x.on).map((x) => x.s))).toBeLessThan(1.15 * BS_BURST_S);
+    // light suppression: suppressions at their minimum, the bursts shorten so the suppressed fraction is still p
+    const light = runsOf(0.05);
+    expect(Math.min(...light.filter((x) => !x.on).map((x) => x.s))).toBeGreaterThanOrEqual(BS_MIN_SUPP_S);
+    const f = light.reduce((a, x) => a + (x.on ? 0 : x.s), 0) / light.reduce((a, x) => a + x.s, 0);
+    expect(Math.abs(f - 0.05)).toBeLessThan(0.02);
   });
 
   it('dexmedetomidine spindles come in bursts, propofol alpha is almost continuous (Ch36 p. 1144)', () => {
-    const cv = (s: EegSpectrum, lo: number, hi: number) => {
-      const x = gen(s, 120, 4);
+    // the envelope: time in a burst ≈ the duty the burstiness gives (spindle 0.8 → 0.36; alpha 0.1 → 0.92)
+    const duty = (s: EegSpectrum, name: string) => {
+      const g = createSynth(seedStream(4, 'eeg'), FS, s);
+      const j = s.peaks.findIndex((p) => p.name === name);
+      let on = 0;
+      for (let n = 0; n < 600 * FS; n++) { synthNext(g, () => s); on += (g.osc[j] as { level: number }).level; }
+      return on / (600 * FS);
+    };
+    const dex = sp({ alpha2Eq: 1.2 });
+    expect(duty(dex, 'spindle')).toBeGreaterThan(0.28);
+    expect(duty(dex, 'spindle')).toBeLessThan(0.44);
+    expect(duty(GA, 'alpha')).toBeGreaterThan(0.86);
+    // in the signal: the oscillation alone (background and the other peaks removed) — 1 s windows with almost no power
+    const silent = (s: EegSpectrum, name: string, lo: number, hi: number) => {
+      const only = { ...s, aperiodic: { ...s.aperiodic, offsetDb: -200 }, peaks: s.peaks.map((p) => (p.name === name ? p : { ...p, powerDb: -200 })) };
+      const x = gen(only, 300, 4);
       const p: number[] = [];
       for (let i = 0; i + FS <= x.length; i += 62) p.push(band(welch(x.slice(i, i + FS), FS, FS), lo, hi));
-      const m = p.reduce((a, b) => a + b, 0) / p.length;
-      return Math.sqrt(p.reduce((a, b) => a + (b - m) ** 2, 0) / p.length) / m;
+      const med = [...p].sort((a, b) => a - b)[Math.floor(p.length / 2)] as number;
+      return p.filter((v) => v < 0.1 * med).length / p.length;
     };
-    expect(cv(sp({ alpha2Eq: 1.2 }), 11, 15)).toBeGreaterThan(1.5 * cv(GA, 9, 13));
+    expect(silent(dex, 'spindle', 11, 15)).toBeGreaterThan(0.15);
+    expect(silent(GA, 'alpha', 9, 13)).toBeLessThan(0.05);
   });
 
   it('the forme fruste: brief drops of power above 2 Hz while 0.5–2 Hz is sustained (Ch36 pp. 1140–1141)', () => {

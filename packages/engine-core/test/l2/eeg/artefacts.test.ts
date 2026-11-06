@@ -122,7 +122,7 @@ describe('EEG E4 artefacts', () => {
     const perMin = count(x) / 10;
     expect(perMin).toBeGreaterThan(BLINK_PER_MIN * 0.8);
     expect(perMin).toBeLessThan(BLINK_PER_MIN * 1.2);
-    expect(Math.max(...x)).toBeLessThan(BLINK_UV_MAX + 15);
+    expect(Math.max(...x)).toBeLessThan(BLINK_UV_MAX + 25); // a blink plus the awake EMG (6.7 µV RMS)
     expect(count(art(600, () => ({}), { ...AWAKE, lor: 1.2 }))).toBe(0);
   });
 

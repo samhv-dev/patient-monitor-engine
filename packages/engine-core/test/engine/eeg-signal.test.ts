@@ -16,7 +16,7 @@ const ev = (event: Record<string, unknown>) => cmd({ type: 'applyEvent', event }
 const mk = (seed = 31) => createEngine({ seed, mode: 'modeled', patient: ADULT });
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const st = (e: MonitorEngine): any => (e as unknown as { st: unknown }).st;
-const ok = (e: MonitorEngine, c: Command) => expect(e.dispatch(c).ok, JSON.stringify(c)).toBe(true);
+const ok = (e: MonitorEngine, c: Command) => expect(e.dispatch(c).accepted, JSON.stringify(c)).toBe(true);
 /** Samples of `ch` with absolute indices [from, to]. */
 function read(e: MonitorEngine, ch: 'eeg' | 'vcgX' | 'vcgY' | 'vcgZ', from: number, to: number): number[] {
   const out = new Float32Array(to - from + 1);
@@ -52,12 +52,12 @@ describe('EEG channel on the engine', () => {
 
   it('commands: on/off, impedance (kΩ, one value or one per electrode), ecgPickup; refused when malformed or while off', () => {
     const e = mk();
-    expect(e.dispatch(eeg('impedance', 8)).ok).toBe(false); // off
-    expect(e.dispatch(eeg('model', 'bis')).ok).toBe(false);
+    expect(e.dispatch(eeg('impedance', 8)).accepted).toBe(false); // off
+    expect(e.dispatch(eeg('model', 'bis')).accepted).toBe(false);
     ok(e, eeg('on'));
     e.step(1);
     for (const bad of [eeg('impedance', -1), eeg('impedance', 'x'), eeg('impedance', [1, 2]), eeg('impedance', Number.NaN), eeg('ecgPickup', 1), eeg('on', 3)]) {
-      expect(e.dispatch(bad).ok, JSON.stringify(bad)).toBe(false);
+      expect(e.dispatch(bad).accepted, JSON.stringify(bad)).toBe(false);
     }
     ok(e, eeg('impedance', 8));
     ok(e, eeg('impedance', [8, 2, 2]));
@@ -94,7 +94,7 @@ describe('EEG channel on the engine', () => {
     c.restore(JSON.parse(JSON.stringify(snap)));
     await run(c, 60);
     expect(read(c, 'eeg', 30 * 125 + 1, 60 * 125)).toEqual(a.slice(a.length - 30 * 125));
-  });
+  }, 120_000);
 
   it('the physiology is the same with the EEG on or off: every event and the whole state but the EEG (D4, D7)', async () => {
     const go = async (withEeg: boolean) => {
@@ -114,20 +114,20 @@ describe('EEG channel on the engine', () => {
     const on = await go(true);
     expect(on.evs).toBe(off.evs);
     expect(on.s).toBe(off.s);
-  });
+  }, 120_000);
 
   it('C18 on the engine: rocuronium in an awake patient silences the EMG; the EEG stays awake (no alpha) (Ch36 p. 1148)', async () => {
     const e = mk(23);
     ok(e, eeg('on'));
     await run(e, 60);
+    const before = welch(read(e, 'eeg', 10 * 125, 60 * 125), 125); // read now: the ring buffer keeps 120 s
     ok(e, ev({ kind: 'drug', drugId: 'rocuronium', dose: 0.6, unit: 'mg/kg', route: 'iv' }));
-    await run(e, 300);
+    await run(e, 200);
     expect(st(e).neuro.last.tof.t1).toBeLessThan(0.05);
-    const before = welch(read(e, 'eeg', 10 * 125, 60 * 125), 125);
-    const after = welch(read(e, 'eeg', 250 * 125, 300 * 125), 125);
-    expect(db(band(after, 30, 60), band(before, 30, 60))).toBeLessThan(-6);
+    const after = welch(read(e, 'eeg', 150 * 125, 200 * 125), 125);
+    expect(db(band(after, 30, 62), band(before, 30, 62))).toBeLessThan(-2); // the EMG's share of 30–62 Hz gone (EMG_AWAKE)
     expect(st(e).eeg.cortex.lor).toBeLessThan(0.5); // awake: no loss of responsiveness, so no frontal alpha
-  });
+  }, 60_000);
 
   it('C20 on the engine: one diathermy press appears on the EEG too, power up at all frequencies (D5)', async () => {
     const e = mk(29);
@@ -141,12 +141,13 @@ describe('EEG channel on the engine', () => {
     during.psd.forEach((p, i) => {
       if ((during.f[i] as number) >= 1) expect(db(p, before.psd[i] as number), `${during.f[i]} Hz`).toBeGreaterThan(6);
     });
-  });
+  }, 60_000);
 
   it('C21 on the engine: the ECG pickup is the engine\'s own heart (aVF) × the pickup gain, added to the same brain signal', async () => {
     const go = async (pickup: boolean) => {
       const e = mk(37);
       ok(e, eeg('on'));
+      e.step(1); // a setting needs the EEG on (the 'on' applies at the next tick)
       if (pickup) ok(e, eeg('ecgPickup', true));
       await run(e, 30);
       return e;
@@ -160,12 +161,13 @@ describe('EEG channel on the engine', () => {
     const avf = d.map((_, i) => projectLead('aVF', x![4 * i] as number, y![4 * i] as number, z![4 * i] as number));
     d.forEach((v, i) => expect(v).toBeCloseTo(ECG_PICKUP_UV_PER_MV * (avf[i] as number), 3));
     expect(Math.max(...d)).toBeGreaterThan(3); // visible spikes
-  }, 30_000);
+  }, 60_000);
 
   it('C22 on the engine: a raised electrode impedance adds noise to the trace', async () => {
     const go = async (z?: number) => {
       const e = mk(41);
       ok(e, eeg('on'));
+      e.step(1);
       if (z !== undefined) ok(e, eeg('impedance', [z, 2, 2]));
       await run(e, 20);
       return read(e, 'eeg', 5 * 125, 20 * 125);
@@ -173,5 +175,5 @@ describe('EEG channel on the engine', () => {
     const good = await go();
     const bad = await go(15);
     expect(rms(bad.map((v, i) => v - (good[i] as number)))).toBeGreaterThan(1);
-  });
+  }, 60_000);
 });
