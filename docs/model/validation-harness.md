@@ -246,6 +246,7 @@ None recorded.
 | File | Expected failures | Skipped |
 |---|---|---|
 | [`bedside/bedside.test.ts`](../../packages/validation/test/bedside/bedside.test.ts) | 0 | 0 |
+| [`changelog-fragments.test.ts`](../../packages/validation/test/changelog-fragments.test.ts) | 0 | 0 |
 | [`check-licences.test.ts`](../../packages/validation/test/check-licences.test.ts) | 0 | 0 |
 | [`check-notices.test.ts`](../../packages/validation/test/check-notices.test.ts) | 0 | 0 |
 | [`check-size.test.ts`](../../packages/validation/test/check-size.test.ts) | 0 | 0 |
