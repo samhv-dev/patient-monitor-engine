@@ -47,16 +47,16 @@ export function learnerUrl(code: string, origin: string, pathname: string, relay
 
 /**
  * The follower page's hashes (plan room-and-instruments.md §4 D7): `#/pick` the instrument picker (the QR's address),
- * `#/monitor` today's learner monitor (upright on a phone), `#/monitor/wide` the patient monitor (landscape). Any other
- * hash is today's learner monitor. `#/defib` joins them when R5 merges.
+ * `#/monitor` today's learner monitor (upright on a phone), `#/monitor/wide` the patient monitor (landscape), `#/defib`
+ * the defibrillator window (Room plan R5). Any other hash is today's learner monitor.
  */
-export type FollowerHash = 'pick' | Extract<Instrument, 'learner' | 'monitor'>;
+export type FollowerHash = 'pick' | Extract<Instrument, 'learner' | 'monitor' | 'defib'>;
 /** What a follower page at `hash` shows (the picker, or an instrument); any hash it does not know is the learner monitor. */
 export function instrumentOf(hash: string): FollowerHash {
   const path = hash.replace(/^#\/?/, '').replace(/\/$/, '');
-  return path === 'pick' ? 'pick' : path === 'monitor/wide' ? 'monitor' : 'learner';
+  return path === 'pick' ? 'pick' : path === 'monitor/wide' ? 'monitor' : path === 'defib' ? 'defib' : 'learner';
 }
-export const hashOf = (show: Exclude<FollowerHash, 'pick'>): string => (show === 'monitor' ? '#/monitor/wide' : '#/monitor');
+export const hashOf = (show: Exclude<FollowerHash, 'pick'>): string => (show === 'monitor' ? '#/monitor/wide' : show === 'defib' ? '#/defib' : '#/monitor');
 /** The QR's address ends here: the device that scans it opens the picker (Q1 ruled 5 November). */
 export const PICK_HASH = '#/pick';
 

@@ -272,6 +272,7 @@ None recorded.
 | File | Expected failures | Skipped |
 |---|---|---|
 | [`briefing-wire.test.ts`](../../packages/controller/test/briefing-wire.test.ts) | 0 | 0 |
+| [`guard-vent.test.ts`](../../packages/controller/test/guard-vent.test.ts) | 0 | 0 |
 | [`guard.test.ts`](../../packages/controller/test/guard.test.ts) | 0 | 0 |
 | [`index.test.ts`](../../packages/controller/test/index.test.ts) | 0 | 0 |
 | [`panel/controls-follow-shock.dom.test.ts`](../../packages/controller/test/panel/controls-follow-shock.dom.test.ts) | 0 | 0 |
@@ -293,6 +294,7 @@ None recorded.
 | [`relay/relay-hostile.test.ts`](../../packages/controller/test/relay/relay-hostile.test.ts) | 0 | 0 |
 | [`relay/relay-instructor.test.ts`](../../packages/controller/test/relay/relay-instructor.test.ts) | 0 | 0 |
 | [`relay/relay-refuses-mirror.test.ts`](../../packages/controller/test/relay/relay-refuses-mirror.test.ts) | 0 | 0 |
+| [`relay/relay-vent.test.ts`](../../packages/controller/test/relay/relay-vent.test.ts) | 0 | 0 |
 | [`relay/relay.test.ts`](../../packages/controller/test/relay/relay.test.ts) | 0 | 0 |
 | [`remote/remote-scenario.dom.test.ts`](../../packages/controller/test/remote/remote-scenario.dom.test.ts) | 0 | 0 |
 | [`remote/remote.dom.test.ts`](../../packages/controller/test/remote/remote.dom.test.ts) | 0 | 0 |

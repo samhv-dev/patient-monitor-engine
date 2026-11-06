@@ -78,11 +78,14 @@ describe('the follower\'s instrument hashes (R4, §4 D7)', () => {
     const usual = qrTarget('AB2CD3', at('http://127.0.0.1:8650/?relay'), 'ws://127.0.0.1:8650/', info({ port: 8650 }));
     expect(usual.ok && encodeQr(usual.url).length).toBe(33); // 43 characters: one more than a version 3 at level M holds (42)
   });
-  it('#/pick is the picker; #/monitor/wide the landscape monitor; #/monitor and anything else today\'s learner monitor', () => {
+  it('#/pick is the picker; #/monitor/wide the landscape monitor; #/defib the defibrillator window (R5); #/monitor and anything else today\'s learner monitor', () => {
     expect(instrumentOf('#/pick')).toBe('pick');
     expect(instrumentOf('#/monitor/wide')).toBe('monitor');
-    for (const h of ['#/monitor', '', '#/', '#/teach', '#/defib', '#/pick/x', '#/monitor/tall']) expect(instrumentOf(h), h).toBe('learner');
+    expect(instrumentOf('#/defib')).toBe('defib');
+    expect(instrumentOf('#/defib/')).toBe('defib');
+    for (const h of ['#/monitor', '', '#/', '#/teach', '#/defib/x', '#/pick/x', '#/monitor/tall']) expect(instrumentOf(h), h).toBe('learner');
     expect(hashOf('learner')).toBe('#/monitor');
     expect(hashOf('monitor')).toBe('#/monitor/wide');
+    expect(hashOf('defib')).toBe('#/defib');
   });
 });

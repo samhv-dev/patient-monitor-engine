@@ -6,13 +6,8 @@
 import { spawnSync } from 'node:child_process';
 import { appendFileSync, readdirSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
+import { SETS } from './e2e-sets.mjs';
 
-// report name (playwright-report-<name>.json) → the arguments the e2e job gives `playwright test`
-const SETS = {
-  chromium: { args: ['--project=chromium'], gating: true },
-  webkit: { args: ['--project=webkit', '--grep-invert', '@known-flaky'], gating: true },
-  'webkit-known-flaky': { args: ['--project=webkit', '--grep', '@known-flaky'], gating: false },
-};
 
 const dir = process.argv[2];
 const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(d, e.name)) : [join(d, e.name)]));
