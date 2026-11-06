@@ -34,8 +34,10 @@ const HAEM2 = anyShowcaseDoc('showcase-haemorrhage-v2') as AnyScenarioDoc;
  * laptop views send, plus `note` (§6), which a remote Link sends for a judged objective or a note (link.ts `note`; this
  * census mounts the views on a remote Link, as a phone's). So this test is the one parity check between the laptop and
  * the allow-list: a shape either side gains alone fails it. The measured set as P0 recorded it (amended 2026-10-30, the
- * orchestrator's rulings): `scenario pause` / `resume` are today's Scenario tab's "Hold the timer"; `applyEvent` is every
- * ClinicalEvent kind the Drug, Airway, Defib · CPR, Vitals, Devices and Patient bodies send.
+ * orchestrator's rulings): `scenario pause` / `resume` are today's Scenario tab's "Hold the timer" and, since
+ * retire-instructor-v1 G2, v2's cue box's "Hold the stage timer"; `applyEvent` is every ClinicalEvent kind the Drug,
+ * Airway, Defib · CPR, Vitals, Devices and Patient bodies send. Instructor v2 sends every shape of the union (the plan's
+ * condition for retiring today's view).
  */
 const PLAN_S2: readonly string[] = [...INSTRUCTOR_COMMANDS].sort();
 
@@ -368,5 +370,8 @@ describe('the command census of the laptop\'s Instructor views (P0)', () => {
     expect(loads.length).toBeGreaterThan(0);
     expect(shapes.filter((s) => PLAN_S2_REFUSED.includes(s)), 'a refused shape is sent').toEqual([]);
     expect(shapes).toEqual(PLAN_S2);
+    // retire-instructor-v1: v2 alone sends every shape the two views send (v2 ⊇ the union)
+    const ofV2 = new Set(sent.filter((x) => x.view === 'v2').map((x) => x.shape));
+    expect(shapes.filter((x) => !ofV2.has(x)), 'a shape only today\'s view sends').toEqual([]);
   }, 600_000);
 });

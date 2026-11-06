@@ -6,7 +6,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ScenarioView, type ScenarioDoc } from '@pme/controller';
 import type { Link } from '../link.ts';
-import { showcaseDoc } from '../showcase/harness.ts';
+import { anyShowcaseDoc, showcaseDoc } from '../showcase/harness.ts';
 import type { Teach2Ctx } from './ctx.ts';
 import { enteredWords, mount } from './cue.ts';
 
@@ -22,14 +22,15 @@ function rig(doc: ScenarioDoc, stateId: string, history: Array<{ t: number; stat
   sv.history = history;
   const ctl = { scenario: sv, simT, hostPaused: false, state: o.state ?? null };
   const host = o.host === false ? null : { record: { data: { rows: o.rows ?? [] } } };
-  const link = { ctl, host, ramps: new Map(), get simT() { return ctl.simT; } } as unknown as Link;
+  const sent: unknown[] = [];
+  const link = { ctl, host, ramps: new Map(), get simT() { return ctl.simT; }, send: async (c: unknown) => (sent.push(c), { accepted: true }) } as unknown as Link;
   const ctx = { link } as unknown as Teach2Ctx;
   const el = document.createElement('div');
   document.body.append(el);
   const slot = mount(el, ctx);
   const text = (s: string) => (el.querySelector(s) as HTMLElement).textContent;
   const shown = (s: string) => !(el.querySelector(s) as HTMLElement).hidden;
-  return { sv, ctl, el, slot, text, shown };
+  return { sv, ctl, el, slot, text, shown, sent };
 }
 
 beforeEach(() => document.body.replaceChildren());
@@ -109,5 +110,33 @@ describe('cue box', () => {
     r.slot.refresh();
     expect(r.text('.ip2-cue-name')).toBe('Default patient');
     expect(r.shown('.ip2-say')).toBe(true);
+  });
+
+  it('Hold the stage timer (retire-instructor-v1 G2): sends `scenario pause`, the in-stage clock reads frozen, the button then resumes; no case, no button', async () => {
+    const r = rig(MH, 'induced', [{ t: 240, stateId: 'induced', transitionId: 'induce' }], 300);
+    const hold = () => r.el.querySelector<HTMLButtonElement>('button.ip2-cue-hold');
+    expect(hold()?.textContent).toBe('Hold the stage timer');
+    expect(hold()?.hidden).toBe(false);
+    hold()?.click();
+    await Promise.resolve();
+    expect(r.sent).toEqual([{ type: 'scenario', action: 'pause' }]);
+    r.sv.paused = true; // the host applied it (ScenarioView.paused)
+    r.slot.refresh();
+    expect(r.text('.ip2-cue-clock')).toBe('01:00 in stage · frozen');
+    expect(hold()?.textContent).toBe('Resume the stage timer');
+    hold()?.click();
+    await Promise.resolve();
+    expect(r.sent.at(-1)).toEqual({ type: 'scenario', action: 'resume' });
+    r.sv.paused = false;
+    r.slot.refresh();
+    expect(hold()?.textContent).toBe('Hold the stage timer');
+    expect(r.text('.ip2-cue-clock')).toBe('01:00 in stage');
+    // a pme-scenario/2 card: the same button (both runners honour the pause)
+    const v2 = rig(anyShowcaseDoc('showcase-mh-v2') as unknown as ScenarioDoc, 'baseline', [{ t: 0, stateId: 'baseline' }], 30);
+    expect(v2.el.querySelector<HTMLButtonElement>('button.ip2-cue-hold')?.hidden).toBe(false);
+    // no case loaded: no button
+    r.sv.doc = null;
+    r.slot.refresh();
+    expect(hold() === null || hold()?.hidden === true).toBe(true);
   });
 });
