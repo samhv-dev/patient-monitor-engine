@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { MemoryStorage } from './memory-storage.ts';
 import { DEFAULT_SITE, DEFIB_CHOICES, defibDefaults, gas, loadSite, parseSite, saveSite } from './site.ts';
 
 describe('site profile', () => {
@@ -21,10 +22,12 @@ describe('site profile', () => {
 describe("the room's defibrillator model", () => {
   it('is not chosen by default (the monitor style\'s own defibrillator values, as before), and is kept per room', () => {
     expect(DEFAULT_SITE.defibModel).toBeNull();
+    vi.stubGlobal('localStorage', new MemoryStorage()); // this browser's storage (none is guaranteed under Node)
     saveSite({ ...DEFAULT_SITE, defibModel: 'generic' });
     expect(loadSite().defibModel).toBe('generic');
     saveSite({ ...DEFAULT_SITE });
     expect(loadSite().defibModel).toBeNull();
+    vi.unstubAllGlobals();
   });
   it('offers the generic model only (Q6\'s second half): 120 J adult, 50 J paediatric, no ladder; its look is zoll-like', () => {
     expect(DEFIB_CHOICES.map((c) => [c.id, c.look])).toEqual([['generic', 'zoll-like']]);
