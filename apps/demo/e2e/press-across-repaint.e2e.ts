@@ -28,14 +28,41 @@ const goto = async (p: Page, target: string) => {
   expect(await p.evaluate((t) => (window as unknown as W).__pmeApp.link.send({ type: 'scenario', action: 'goto', target: t }).then((r) => r.accepted), target)).toBe(true);
   await expect.poll(() => stateId(p)).toBe(target);
 };
+/** PR #310 (run 42284394110, Chromium): one of 20 presses did not take and the retry found no button under the box's
+ *  centre, with nothing printed. Each press is now recorded in the page: the click's target, the trigger's answer (the
+ *  press sends it on link.ctl, not link.send) and any toast, and a miss or an empty centre prints them. The assertions
+ *  are unchanged. */
+async function record(p: Page): Promise<void> {
+  await p.evaluate(() => {
+    const w = window as unknown as { __press?: { log: string[] }; __pmeApp: { link: { ctl: { send: (c: unknown) => Promise<unknown>; scenario: { stateId: string | null } } } } };
+    if (w.__press) return;
+    const r = (w.__press = { log: [] as string[] });
+    const t0 = performance.now();
+    const at = () => Math.round(performance.now() - t0);
+    const C = w.__pmeApp.link.ctl;
+    const send = C.send.bind(C);
+    C.send = (c: unknown) => send(c).then((a) => ((c as { action?: string }).action === 'trigger' && r.log.push(`${at()} trigger answered ${JSON.stringify(a)} in ${C.scenario.stateId}`), a));
+    document.addEventListener('click', (e) => r.log.push(`${at()} click on ${(e.target as HTMLElement).tagName} "${(e.target as HTMLElement).textContent?.slice(0, 40)}"`), true);
+    new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => (n as HTMLElement).classList?.contains('toast') && r.log.push(`${at()} toast "${(n as HTMLElement).textContent}"`)))).observe(document.body, { subtree: true, childList: true });
+  });
+}
+const pressLog = (p: Page) => p.evaluate(() => (window as unknown as { __press: { log: string[] } }).__press.log.splice(0));
+
 /** Press `button`, force `repaint` while it is held, release: the press must take (the case reaches "preoxygenated"). */
 async function pressAcrossRepaint(p: Page, button: import('@playwright/test').Locator, repaint: () => Promise<void>): Promise<void> {
   // into view through its list, which stays (on main the button itself is rebuilt twice a second and may be gone)
   await button.evaluate((b) => b.closest('ul, ol')?.scrollIntoView({ block: 'center' })).catch(() => undefined);
   const box = await button.boundingBox();
   if (!box) throw new Error('no button box');
+  await record(p);
+  await pressLog(p);
   // the press must start ON the button: what is under the pointer is the button (or a node inside it)
-  expect(await p.evaluate(([x, y]) => document.elementFromPoint(x as number, y as number)?.closest('button')?.textContent ?? null, [box.x + box.width / 2, box.y + box.height / 2])).toContain('Preoxygenate');
+  const under = await p.evaluate(([x, y]) => {
+    const e = document.elementFromPoint(x as number, y as number);
+    return { button: e?.closest('button')?.textContent ?? null, element: e ? `${e.tagName}.${(e as HTMLElement).className} "${e.textContent?.slice(0, 40)}"` : null, state: (window as unknown as W).__pmeApp.link.ctl.scenario.stateId };
+  }, [box.x + box.width / 2, box.y + box.height / 2]);
+  if (!under.button) console.log(`press-across-repaint: no button under the box's centre ${JSON.stringify({ ...under, box })}`);
+  expect(under.button).toContain('Preoxygenate');
   await p.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await p.mouse.down();
   await repaint();
@@ -54,6 +81,7 @@ test('the first Instructor view: a "What happens next" press across a forced rep
     await b.waitFor();
     await pressAcrossRepaint(page, b, () => page.evaluate(() => (window as unknown as W).__pmeApp.teach.panel.select('scenario')));
     if (await expect.poll(() => stateId(page), { timeout: 3000 }).toBe('preoxygenated').then(() => true, () => false)) taken++;
+    else console.log(`press-across-repaint: press ${i} did not take in 3 s, state ${await stateId(page)} ${JSON.stringify(await pressLog(page))}`);
   }
   expect(taken, `presses taken of ${RUNS}`).toBe(RUNS);
 });
@@ -68,6 +96,7 @@ test('Instructor v2: an ACTION row press across a forced repaint takes, 20 of 20
     await b.waitFor();
     await pressAcrossRepaint(page, b, () => page.evaluate(() => (window as unknown as W).__pmeApp.teach2.enter()));
     if (await expect.poll(() => stateId(page), { timeout: 3000 }).toBe('preoxygenated').then(() => true, () => false)) taken++;
+    else console.log(`press-across-repaint: press ${i} did not take in 3 s, state ${await stateId(page)} ${JSON.stringify(await pressLog(page))}`);
   }
   expect(taken, `presses taken of ${RUNS}`).toBe(RUNS);
 });
