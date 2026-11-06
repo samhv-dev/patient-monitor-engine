@@ -58,7 +58,7 @@ export function defibDefaults(model: string | null): { energyAdultJ: number; ene
   const d: Skin['defib'] = look ? resolveSkin(look).skin.defib : null;
   return d ? { energyAdultJ: d.energyAdultJ, energyPaedJ: d.energyPaedJ, ladderJ: [...(d.aedSequenceJ ?? [])] } : { energyAdultJ: NO_MODEL_ENERGY_J, energyPaedJ: null, ladderJ: [] };
 }
-/** A model's pacer as the Room card names it (row 58: the pacer follows the model too); no model chosen = none. */
+/** The Room card's view of a model's pacer (row 58, the pacer following the model too), null with no model chosen. */
 export function pacerDefaults(model: string | null): { ratePpm: number; pausePct: number | null } | null {
   const look = DEFIB_CHOICES.find((c) => c.id === model)?.look;
   const p: Skin['pacer'] = look ? resolveSkin(look).skin.pacer : null;
