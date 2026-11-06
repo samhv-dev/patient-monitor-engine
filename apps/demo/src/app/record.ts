@@ -2,7 +2,8 @@
 // applied (from the panel, a Remote or the scenario), the scenario's states, the alarms raised (each with when it ended
 // and was acknowledged), bookmarks and returns
 // to them (a mark's kind and note with it), the pulse lost and back (from the model), runs of ventricular tachycardia (≥ 3 consecutive PVCs on the drawn
-// ECG, the model's or the instructor's), ventilated breaths beginning, the instructor's notes, and a 1 Hz
+// ECG, the model's or the instructor's), ventilated breaths beginning, the instructor's notes (the /1 Recognised press
+// among them, as its own run event), and a 1 Hz
 // trend of six numerics, the systolic, diastolic and CVP the monitor measured, and five laboratory values of the model
 // (K⁺, lactate, pH, glucose, core temperature). `keeps` names the facts this build records, so a reader can tell an
 // older file's "not recorded" from a value that was not measured (Debrief 2, plan §3). A state
@@ -89,8 +90,10 @@ export type Sample = { t: number } & Record<ValueKey, number | null> & Partial<R
 /** The facts this build's recorder keeps beyond the first record's (plan §3): a reader treats a word missing from a
  *  file's `keeps`, or no `keeps`, as "not recorded in this file". 'pressures': `Sample.sys`, `dia`, `cvp`; 'alarmEnd':
  *  `Row.endT` and `Row.ackT` on alarm rows; 'cprStop': `ev: 'cprStop'` on the command
- *  row that stops compressions (a record without it kept no stop, so its hands-off time is unknown). */
-export const KEEPS = ['pressures', 'alarmEnd', 'cprStop'] as const;
+ *  row that stops compressions (a record without it kept no stop, so its hands-off time is unknown); 'recognised': the
+ *  instructor's "Recognised" press on a /1 card without a recognition objective or a free run is a note row with
+ *  `ev: 'recognised'` (a record without it had no such press, so its absence says nothing). */
+export const KEEPS = ['pressures', 'alarmEnd', 'cprStop', 'recognised'] as const;
 
 export interface RunData {
   /** Wall clock (ms since 1970) when the run began, and of the last thing recorded. */
@@ -359,9 +362,10 @@ export class RunRecord {
     this.add({ t, kind: 'restore', text: 'Restored after a reload of the page' });
   }
 
-  /** An instructor note or an objective ticked in the Scenario tab (the Link's log). */
-  note(t: number, text: string): void {
-    this.add({ t, kind: 'note', text });
+  /** An instructor note or an objective ticked in the Scenario tab (the Link's log); `ev` the run event a note is (D5:
+   *  'recognised', the /1 Recognised press). */
+  note(t: number, text: string, ev?: 'recognised'): void {
+    this.add({ t, kind: 'note', text, ...(ev ? { ev } : {}) });
   }
 
   private add(r: Row): void {

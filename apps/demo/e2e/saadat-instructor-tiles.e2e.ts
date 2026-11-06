@@ -166,7 +166,20 @@ for (const [w, h, paneW, pane] of [[1990, 920, 1374, 820], [1990, 1080, 1374, 98
     expect(vent.accepted).toBe(true);
     await tab(page, 'devices');
     await page.getByRole('button', { name: 'CO₂ sampling line' }).click();
-    await expect(page.locator('.stage .pme-stile[data-param="CO2"]')).toBeVisible({ timeout: 5_000 });
+    // CI run 42111824225 (PR #285, webkit 2/3, attempt 1): no CO2 tile 5 s after the press, the toggle pressed, no
+    // refusal on the page, the session clock running; local macOS WebKit 20/20, and 8 probe runs (idle and under CPU
+    // load) answered the attach in 16–30 ms with the tile at once. The mechanism is not found: a miss now prints the
+    // press's answer, the engine's reported line and the clocks, so the next one names it (the assertion is unchanged)
+    const co2Tile = page.locator('.stage .pme-stile[data-param="CO2"]');
+    const tileShown = await co2Tile.waitFor({ state: 'visible', timeout: 5_000 }).then(() => true, () => false);
+    if (!tileShown) {
+      const why = await page.evaluate(() => {
+        const a = (window as unknown as { __pmeApp: { link: { simT: number; log: Array<{ simT: number | null; text: string; refused?: string }>; ctl: { state: unknown; pendingCount: number } }; session: { simNow(): number } } }).__pmeApp;
+        return { log: a.link.log.slice(-4), engineCo2: (a.link.ctl.state as { sensors?: { co2?: string } } | null)?.sensors?.co2 ?? null, pending: a.link.ctl.pendingCount, linkSimT: a.link.simT, hostSimT: a.session.simNow(), pressed: document.querySelector('[role=tabpanel] .toggles button:nth-child(4)')?.getAttribute('aria-pressed') ?? null };
+      });
+      console.log(`saadat-p3 ${browserName} ${w}x${h}: no CO2 tile 5 s after the press ${JSON.stringify(why)}`);
+    }
+    expect(tileShown, 'the CO2 tile within 5 s of the CO₂ sampling line press').toBe(true);
     // the CO2 numerics fill: EtCO2 and the AWRR (the ventilator's rate) both printed
     const co2Filled = () =>
       page.evaluate(() => [...document.querySelectorAll('.stage .pme-stile[data-param="CO2"] .pv')].filter((e) => /\d/.test(e.textContent ?? '')).length);

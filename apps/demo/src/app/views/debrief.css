@@ -121,7 +121,7 @@
 .debrief .db-outcomes, .debrief .db-violations { padding-left: 1.4em; }
 .debrief .db-moments tr.db-alarms td { color: var(--text-muted); font-size: var(--t-12, 12px); border-bottom-style: dotted; }
 .debrief .db-whocell { white-space: nowrap; }
-.debrief .db-note60 { font-size: var(--t-13); color: var(--text-muted); }
+.debrief .db-note60, .debrief .db-norecord { font-size: var(--t-13); color: var(--text-muted); }
 /* the learner handout: on screen at the end of the view, under its own heading */
 .debrief .db-kicker { font-size: var(--t-13); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
 .debrief .db-handout-live { border: 1px dashed var(--line-strong); border-radius: var(--r-control); padding: var(--s-3); }
@@ -210,7 +210,7 @@
   .debrief .db-course .db-bm.undone path { stroke: #bbb; }
   .debrief .db-course .db-bm.undone .db-bm-n { fill: #777; }
   .debrief .db-course, .debrief .db-course *, .debrief .db-bar, .debrief .db-bar * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .debrief .db-subhead, .debrief .db-note60 { font-size: 8.5pt; }
+  .debrief .db-subhead, .debrief .db-note60, .debrief .db-norecord { font-size: 8.5pt; }
   .debrief .db-obj li { margin-bottom: 1.2mm; line-height: 1.3; }
   .debrief .db-why { font-size: 8.5pt; line-height: 1.25; }
   .debrief .db-moments { font-size: 9pt; }

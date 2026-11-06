@@ -2,11 +2,11 @@
 // by teach2-mh-v2, teach2-fit-support and debrief (plan F6, F11). Not a test file (testMatch is *.e2e.ts).
 import { expect, type Page } from '@playwright/test';
 
-export type W = { __pmeApp: { link: { simT: number; send(c: unknown): Promise<{ accepted: boolean; reason?: string }>; log: Array<{ text: string; simT: number | null; refused?: string }>; ctl: { hostPaused: boolean; scenario: { stateId: string | null; doc: unknown; history: Array<{ t: number; stateId: string }> } } } } };
+export type W = { __pmeApp: { link: { simT: number; send(c: unknown): Promise<{ accepted: boolean; reason?: string }>; log: Array<{ text: string; simT: number | null; refused?: string }>; ctl: { hostPaused: boolean; fastForward: { fromT: number; toT: number } | null; scenario: { stateId: string | null; doc: unknown; history: Array<{ t: number; stateId: string }> } } } } };
 
 export const app = (page: Page) => page.evaluate(() => {
   const l = (window as unknown as W).__pmeApp.link;
-  return { simT: l.simT, stateId: l.ctl.scenario.stateId, history: l.ctl.scenario.history.map((e) => ({ t: e.t, stateId: e.stateId })), refused: l.log.filter((x) => x.refused).map((x) => `${x.text}: ${x.refused}`) };
+  return { simT: l.simT, ff: l.ctl.fastForward !== null, stateId: l.ctl.scenario.stateId, history: l.ctl.scenario.history.map((e) => ({ t: e.t, stateId: e.stateId })), refused: l.log.filter((x) => x.refused).map((x) => `${x.text}: ${x.refused}`) };
 });
 
 export const PATH: Array<[number, string]> = [
@@ -28,14 +28,22 @@ export const END_S = 1471; // 24:31, the talk's end
  *  presses after it (dantrolene at 08:32, the 08:45 pause read as Early signs). */
 export const AFTER_PHASE: Record<string, string> = { [PATH[5]![1]]: 'earlySigns' };
 
-/** Bring the sim clock to `s`: a fast-forward of the gap (whole seconds), then wait until the clock is there. */
+/** Bring the sim clock to `s`: a fast-forward of the gap (whole seconds), then wait until the clock is there and the
+ *  host has ended the fast-forward. The host refuses every command while it fast-forwards ("the simulation is
+ *  fast-forwarding; try again when it ends", host-session.ts) and starts the span at the monitor's own tick, which is
+ *  ahead of this page's clock (0.18–0.38 s in local runs), so the span can end past s and the clock pass s − 0.5 during
+ *  its last 0.5-s step (FF_STEP_TICKS), before the host has ended it. A press then is refused before the scenario sees
+ *  it and the row is never taken (CI run 42111824225, PR #285: the Intubate row stayed "ready", "press to give", 10 s
+ *  after its press at 05:00; reproduced locally: four "fast-forwarding" refusals, no taking). The end is the host's own
+ *  `fastForward` end event (ctl.fastForward back to null); the clock at s − 0.5 is seen only after the start event, so
+ *  null there means ended. */
 export async function to(page: Page, s: number): Promise<void> {
   const gap = Math.floor(s - (await app(page)).simT);
   if (gap >= 2) {
     const r = await page.evaluate((v) => (window as unknown as W).__pmeApp.link.send({ type: 'time', action: 'jump', value: v }), gap);
     expect(r.accepted, r.reason).toBe(true);
   }
-  await expect.poll(async () => (await app(page)).simT, { timeout: 60_000 }).toBeGreaterThanOrEqual(s - 0.5);
+  await expect.poll(async () => { const a = await app(page); return a.simT >= s - 0.5 && !a.ff; }, { timeout: 60_000, message: `the clock at ${s - 0.5} s and the fast-forward ended` }).toBe(true);
   await page.waitForTimeout(400); // the skip's end reaches the panel; ACTION repaints (≤ 2 Hz)
 }
 
