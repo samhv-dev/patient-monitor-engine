@@ -4,7 +4,7 @@ import type { ScenarioDoc } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
 import a31 from '../../../../docs/showcase/kit-round-a/fa/debrief-a3-tamponade-cue-card-path-kit-round-chromium.json';
 import { debriefJson } from './debrief-export.ts';
-import { handsOff, keyMoments, keyTimes, pulselessAt, whoOf } from './debrief-moments.ts';
+import { handsOff, keyMoments, keyTimes, pulselessAt, recognitionAt, whoAt, whoOf } from './debrief-moments.ts';
 import { drugWords } from './glossary.ts';
 import { emptyRun, type Row, type RunData, type Sample } from './record.ts';
 import { objectiveText } from './scenarios.ts';
@@ -12,6 +12,12 @@ import a4mh from '../../../../docs/showcase/kit-round-a/debrief-a4-mh-e119-induc
 import anaphylaxis from './showcase/showcase-anaphylaxis.json';
 import mh from './showcase/showcase-mh.json';
 import tamponade from './showcase/showcase-tamponade.json';
+import h3 from './__fixtures__/debrief-2/haemorrhage-phases-v3.json';
+import haemV1 from './showcase/showcase-haemorrhage.json';
+import haemV2 from './showcase/showcase-haemorrhage-v2.json';
+import mhV2 from './showcase/showcase-mh-v2.json';
+import type { ScenarioDocV2 } from '@pme/controller/scenario';
+import { anyShowcaseDoc, SHOWCASE_IDS } from './showcase/harness.ts';
 
 const card = tamponade as unknown as ScenarioDoc;
 /** The A3.1 record (a `/1` export) with the card's objectives as A1 left them. */
@@ -77,6 +83,51 @@ describe('key moments on the A3.1 tamponade path', () => {
     expect(whoOf(d, 'arrival', 'deteriorating')).toBe('patient');
     expect(whoOf(d, 'pea', 'cpr')).toBe('team');
     expect(whoOf(d, 'arrival', 'roscFluid')).toBe('scenario');
+  });
+});
+
+describe('D4: who from the record (`by` on the state rows)', () => {
+  const stateRows = (d: RunData) => d.rows.filter((r) => r.ev?.startsWith('state:'));
+  it('the A3.1 export has no `by` on any state row (made before Instructor v2 IP8): every moment\'s who is today\'s whoOf', () => {
+    const d = a31Run();
+    expect(stateRows(d).some((r) => r.by !== undefined)).toBe(false);
+    const rows = stateRows(d);
+    rows.slice(1).forEach((r, i) => expect(whoAt(d, r, (rows[i] as Row).ev?.slice(6) as string)).toBe(whoOf(d, (rows[i] as Row).ev?.slice(6) as string, r.ev?.slice(6) as string)));
+  });
+
+  it('with `by`: press → team, rule → patient, goto → scenario; where it agrees with whoOf the who is unchanged', () => {
+    const d = a31Run();
+    const by: Record<string, Row['by']> = { deteriorating: 'rule', pea: 'rule', cpr: 'press', cprDrained: 'press', rosc: 'press', roscFluid: 'press' };
+    for (const r of stateRows(d)) {
+      const b = by[r.ev?.slice(6) as string];
+      if (b) r.by = b;
+    }
+    const before = keyMoments(a31Run());
+    const after = keyMoments(d);
+    expect(after.map((m) => m.who)).toEqual(before.map((m) => m.who)); // every `by` here agrees with the card's transitions
+    const goto = structuredClone(d);
+    (stateRows(goto).find((r) => r.ev === 'state:cprDrained') as Row).by = 'goto'; // the instructor jumped instead
+    expect(keyMoments(goto).find((m) => m.text.startsWith('CPR: pericardium drained'))?.who).toBe('scenario');
+    const rule = structuredClone(d);
+    (stateRows(rule).find((r) => r.ev === 'state:cpr') as Row).by = 'rule'; // its own rule fired (a mixed transition)
+    expect(keyMoments(rule).find((m) => m.text.startsWith('CPR, ventilated'))?.who).toBe('patient');
+  });
+
+  it('a pme-scenario/2 phase is entered by its own rule: on the /3 haemorrhage fixture every phase moment is the patient\'s', () => {
+    const d = structuredClone(h3.record) as unknown as RunData;
+    const phases = new Set(stateRows(d).slice(1).map((r) => r.t));
+    const ms = keyMoments(d);
+    expect(ms.filter((m) => phases.has(m.t) || m.text.includes('Arrest')).map((m) => [m.who, m.text])).toEqual([
+      ['patient', 'Decompensating'],
+      ['patient', 'Pulse lost (the model) · Arrest'], // the pulse loss and the phase it causes, 0.05 s apart: one patient moment (MERGE_S)
+      ['patient', 'Arrest: asystole'],
+    ]);
+    expect(ms.some((m) => m.who === 'scenario')).toBe(false);
+  });
+
+  it('a record with no `by` on any state row prints as today (the card\'s transitions decide)', () => {
+    const d = a31Run();
+    expect(keyMoments(d).map((m) => m.who)).toEqual(['patient', 'patient', 'team', 'team', 'patient', 'team', 'team']);
   });
 });
 
@@ -239,6 +290,134 @@ describe('D3: hands-off time inside the pulseless spans, and the compression fra
     expect(keyTimes(old).map((k) => k.id)).not.toContain('handsOff');
     expect(keyTimes(a31Run()).map((k) => k.id)).not.toContain('handsOff'); // the A3.1 export, a /1 record of 22 October
     expect(handsOff(run([]))).toBeNull(); // no pulse loss: no tile
+  });
+});
+
+describe('D5: recognition has one reading (recognitionAt)', () => {
+  /** A /2 MH run: Early signs entered at 08:03.2, "name MH" pressed at 08:12 (views/debrief-moments-print.dom.test.ts). */
+  const mhRun = (admin = [{ seq: 1, t: 492, source: 'action', actionId: 'nameMh', kind: 'communication', result: { accepted: true } }], doc: unknown = mhV2): RunData => ({
+    ...emptyRun('M 35 y 80 kg', 80, 0), doc: doc as ScenarioDocV2, format: 2, admin: admin as RunData['admin'],
+    phases: [{ id: 'baseline', t: 0, exitT: 377, rule: 'initial' }, { id: 'latent', t: 377, exitT: 483.2, rule: 'enter:latent' }, { id: 'earlySigns', t: 483.2, rule: 'enter:earlySigns' }],
+    edges: [{ rule: 'phase:earlySigns', t: 463.2, value: true }],
+    samples: Array.from({ length: 500 }, (_, t) => sampleAt(t)),
+    rows: [{ t: 0, kind: 'scenario', text: 'Scenario loaded: MH' }],
+  });
+
+  it('the /2 cards mark ONE action each: nameMh on the MH card, recogniseRosc on the haemorrhage card', () => {
+    const marked = (d: unknown) => (d as ScenarioDocV2).actions.filter((a) => a.recognition).map((a) => a.id);
+    expect(marked(mhV2)).toEqual(['nameMh']);
+    expect(marked(haemV2)).toEqual(['recogniseRosc']);
+  });
+
+  it('/2: the marked action\'s window and press from report3 (dueT, windowS, givenT, firstGrade); a tile and a team moment', () => {
+    const d = mhRun();
+    expect(recognitionAt(d)).toEqual({ source: 'action', actionId: 'nameMh', fromT: 483.2, fromLabel: 'early signs', t: 492, windowS: 120, grade: 'met' });
+    const k = keyTimes(d).find((x) => x.id === 'recognition');
+    expect(k).toEqual({ id: 'recognition', label: 'Recognition (timed action)', fromT: 483.2, fromLabel: 'early signs', toT: 492, askedS: 120, grade: 'met', state: 'measured' });
+    const m = keyMoments(d).find((x) => x.recognised);
+    expect(m).toMatchObject({ t: 492, who: 'team', text: 'Recognised (timed action, recorded by the instructor)', recognised: true });
+  });
+
+  it('/2: read by the field, never by the label or a note: a renamed action still counts, an unmarked one never does', () => {
+    const renamed = structuredClone(mhV2) as unknown as ScenarioDocV2;
+    (renamed.actions.find((a) => a.id === 'nameMh') as { label: string }).label = 'Say it aloud';
+    expect(recognitionAt(mhRun(undefined, renamed))?.t).toBe(492);
+    const unmarked = structuredClone(mhV2) as unknown as ScenarioDocV2;
+    delete (unmarked.actions.find((a) => a.id === 'nameMh') as { recognition?: true }).recognition;
+    const d = mhRun(undefined, unmarked);
+    d.rows.push({ t: 300, kind: 'note', text: 'Recognised (instructor)', ev: 'recognised' }, { t: 310, kind: 'note', text: `Objective met: ${drugWords('Name malignant hyperthermia')}` });
+    expect(recognitionAt(d)).toBeNull();
+    expect(keyTimes(d).map((x) => x.id)).not.toContain('recognition');
+    expect(keyMoments(d).some((x) => x.recognised)).toBe(false);
+  });
+
+  it('/2: not pressed yet: the window and its grade, no time; "not ticked" is never printed for a /2 tile', () => {
+    const d = mhRun([]);
+    expect(recognitionAt(d)).toMatchObject({ source: 'action', fromT: 483.2, t: null, windowS: 120, grade: 'due' });
+    expect(keyTimes(d).find((x) => x.id === 'recognition')).toMatchObject({ toT: null, grade: 'due', state: 'notTicked' });
+    expect(keyMoments(d).some((x) => x.recognised)).toBe(false);
+  });
+
+  it('/1 with a recognition objective: the first kept tick, from the sign state (as today); a moment only for a record that keeps "recognised"', () => {
+    const tam = a31Run([tickOf(card, 130)]);
+    expect(recognitionAt(tam)).toEqual({ source: 'tick', fromT: 0, fromLabel: 'start', t: 130 });
+    expect(keyMoments(tam).some((m) => m.recognised)).toBe(false); // the A3.1 export kept no "recognised": its moments as they were
+    tam.keeps = ['pressures', 'alarmEnd', 'cprStop', 'recognised'];
+    expect(keyMoments(tam).find((m) => m.recognised)).toMatchObject({ t: 130, who: 'team', text: "Recognised (instructor's tick)" });
+  });
+
+  it('/1 without one, and a free run: the first kept `recognised` row (an undone press is not counted); the first team action is not it', () => {
+    const free: RunData = {
+      ...emptyRun('free', 70, 0), samples: Array.from({ length: 200 }, (_, t) => sampleAt(t)),
+      rows: [
+        { t: 20, kind: 'note', text: 'Recognised (instructor)', ev: 'recognised', undone: 1 },
+        { t: 31, kind: 'note', text: 'Recognised (instructor)', ev: 'recognised' },
+        { t: 40, kind: 'action', text: 'Epinephrine 1 mg IV', ev: 'drug:epinephrine' },
+        { t: 50, kind: 'note', text: 'Recognised (instructor)', ev: 'recognised' },
+      ],
+    };
+    expect(recognitionAt(free)).toEqual({ source: 'press', fromT: 0, fromLabel: 'start', t: 31 });
+    const ks = keyTimes(free);
+    expect(ks.find((k) => k.id === 'recognition')).toEqual({ id: 'recognition', label: "Recognition (instructor's press)", fromT: 0, fromLabel: 'start', toT: 31, state: 'measured' });
+    expect(ks.find((k) => k.id === 'firstTeam')?.toT).toBe(40);
+    const ms = keyMoments(free);
+    expect(ms.map((m) => [m.t, m.who, m.text, m.recognised ?? false])).toEqual([[31, 'team', 'Recognised (instructor)', true], [40, 'team', 'Epinephrine 1 mg IV', false]]);
+    // the haemorrhage /1 card has no recognition objective: its press is read the same way
+    expect(recognitionAt({ ...free, doc: haemV1 as unknown as ScenarioDoc })?.t).toBe(31);
+    // no press on such a card: no tile (the press is the fallback; nothing to say it was due)
+    expect(recognitionAt({ ...free, rows: [] })).toBeNull();
+  });
+
+  it('old files: a /1 record without "recognised" in keeps and no recognition objective has no tile, never "not ticked"; the pre-change /3 export has none', () => {
+    const { keeps: _, ...old } = { ...emptyRun('free', 70, 0), rows: [{ t: 31, kind: 'note', text: 'Recognised (instructor)', ev: 'recognised' }] as Row[] };
+    expect(recognitionAt(old)).toBeNull();
+    expect(keyTimes(old).map((k) => k.id)).not.toContain('recognition');
+    const h = structuredClone(h3.record) as unknown as RunData; // its card has the retired judged rows and no marked action
+    expect(recognitionAt(h)).toBeNull();
+    expect(keyTimes(h).map((k) => k.id)).not.toContain('recognition');
+  });
+
+  it('no showcase card other than the two /2 cards marks a recognition action', () => {
+    const ids = SHOWCASE_IDS.filter((id) => ((anyShowcaseDoc(id) as Partial<ScenarioDocV2>).actions ?? []).some((a) => a.recognition));
+    expect(ids.sort()).toEqual(['showcase-haemorrhage-v2', 'showcase-mh-v2']);
+  });
+});
+
+describe('D6: key moments read the pressures and the alarm ends', () => {
+  // the arterial line 0–99 s (92/58, CVP 17), then no line; one cuff cycle at 150 s (100/60, its second only); the CVP
+  // transducer reports to 199 s (CVP 12 from 100 s), then nothing
+  const press = (t: number): Partial<Sample> => (t < 100 ? { sys: 92, dia: 58, cvp: 17 } : t === 150 ? { sys: 100, dia: 60, cvp: 12 } : { sys: null, dia: null, cvp: t < 200 ? 12 : null });
+  const run = (rows: Row[]): RunData => ({ ...emptyRun('free', 70, 0), samples: Array.from({ length: 400 }, (_, t) => ({ ...sampleAt(t), ...press(t) })), rows });
+
+  it('the arterial (or CVP) value at ⌊t⌋ (then +3 s); a cuff value is the LAST reading at or before the moment, with its age', () => {
+    const ms = keyMoments(run([
+      { t: 50.4, kind: 'action', text: 'Fluid 500 mL', ev: 'fluid' },
+      { t: 150.5, kind: 'action', text: 'Epinephrine 10 µg IV', ev: 'drug:epinephrine' },
+      { t: 280.2, kind: 'action', text: 'Epinephrine 10 µg IV', ev: 'drug:epinephrine' },
+      { t: 140, kind: 'action', text: 'Crystalloid 250 mL', ev: 'fluid' },
+    ]));
+    expect(ms.map((m) => [m.t, m.values.sys, m.values.dia, m.values.cvp])).toEqual([
+      [50.4, 92, 58, 17],
+      [140, null, null, 12], // no reading at or before it since the line stopped (the cycle at 150 s is after it)
+      [150.5, { v: 100, ageS: 0.5 }, { v: 60, ageS: 0.5 }, 12],
+      [280.2, { v: 100, ageS: 130.2 }, { v: 60, ageS: 130.2 }, null],
+    ]);
+  });
+
+  it('each alarm under a moment carries its end and acknowledgement (null: still on, not acknowledged)', () => {
+    const d = run([
+      { t: 362, kind: 'alarm', text: 'CVP high', ev: 'alarm:cvp-high', endT: 460, ackT: 380 },
+      { t: 365, kind: 'alarm', text: 'HR high', ev: 'alarm:hr-high' },
+      { t: 370, kind: 'action', text: 'Fluid 500 mL', ev: 'fluid' },
+    ]);
+    const m = keyMoments(d)[0];
+    expect(m?.alarms).toEqual(['CVP high', 'HR high']);
+    expect(m?.alarmTimes).toEqual([{ t: 362, endT: 460, ackT: 380 }, { t: 365, endT: null, ackT: null }]);
+  });
+
+  it('a pre-D record (no `keeps`): no pressure keys and no alarm times on its moments (the view prints "not recorded")', () => {
+    const ms = keyMoments(a31Run());
+    expect(ms.every((m) => !('sys' in m.values) && !('dia' in m.values) && !('cvp' in m.values) && !('alarmTimes' in m))).toBe(true);
   });
 });
 

@@ -45,6 +45,42 @@ document.addEventListener('pointerdown', (e) => !(e.target as Element).closest?.
 
 /** "ⓘ" button that shows a glossary entry's long name, unit and normal range. `label` names the button after the row
  *  it sits in ("About Cp (Propofol)"), so two rows of one entry never share a button name. */
+/**
+ * Put `into`'s children in the order of `want`, keeping every node that stays (the dropped press: a press whose down
+ * and up straddle a repaint is lost when its button is replaced or moved under the pointer, WebKit seen). Children not
+ * in `want` go; the nodes on the longest run already in order stay put, and only the others are moved (one insertBefore
+ * each), so a row whose place did not change is never touched.
+ */
+export function keepOrder(into: Element, want: readonly Element[]): void {
+  const keep = new Set<Element>(want);
+  for (const c of [...into.children]) if (!keep.has(c)) c.remove();
+  const at = new Map<Element, number>(want.map((e, i) => [e, i]));
+  const cur = [...into.children].map((c) => at.get(c) as number); // positions in `want` of the children there now
+  // the longest increasing run of `cur` (patience sorting with back links): those children are already in order
+  const tails: number[] = [];
+  const prev = new Array<number>(cur.length).fill(-1);
+  cur.forEach((v, i) => {
+    let lo = 0;
+    let hi = tails.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if ((cur[tails[mid] as number] as number) < v) lo = mid + 1;
+      else hi = mid;
+    }
+    if (lo > 0) prev[i] = tails[lo - 1] as number;
+    tails[lo] = i;
+  });
+  const stay = new Set<number>();
+  for (let i = tails.length ? (tails[tails.length - 1] as number) : -1; i >= 0; i = prev[i] as number) stay.add(cur[i] as number);
+  // from the end: each node not staying goes just before the next one in `want`
+  for (let i = want.length - 1; i >= 0; i--) {
+    const e = want[i] as Element;
+    if (stay.has(i)) continue;
+    const next = want[i + 1] ?? null;
+    if (e.nextElementSibling !== next || e.parentElement !== into) into.insertBefore(e, next);
+  }
+}
+
 export function tip(e: GlossaryEntry, label = shortLabel(e)): HTMLButtonElement {
   const text = `${e.label}\n${describeEntry(e)}`;
   const b = h('button', { type: 'button', class: 'tip', 'aria-label': `About ${label}` }, 'ⓘ');

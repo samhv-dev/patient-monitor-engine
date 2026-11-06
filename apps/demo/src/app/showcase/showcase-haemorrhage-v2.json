@@ -636,6 +636,7 @@
       "id": "recogniseRosc",
       "label": "Recognise the return of circulation on the arterial line and the capnogram at the rhythm check",
       "kind": "communication",
+      "recognition": true,
       "phases": [
         "rosc",
         "postResuscitation"
