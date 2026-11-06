@@ -222,7 +222,12 @@ test('FX-20: notes typed right after opening the app on the Debrief are kept; a 
 // there a click on the session bar's Debrief link at ×8 was not served within 5 s (main run 39173099640, 3 of 3). At ×4
 // it then failed the same way (PR #105 run 39524573921, PR #107 39578631031 attempts 1 and 3): there it now goes at ×2
 // to 3 sim-min on the page's clock, and the Debrief is opened once the host has acknowledged the pause.
-test('a free run prints in at most four pages; its export is pme-debrief/2', async ({ page, browserName }) => {
+// @known-flaky, class crash (outside our code): CI run 42132450433 (PR #288), e2e (webkit 1/3), attempt 1: "page.evaluate:
+// Target page, context or browser has been closed" at 101.7 s, inside the 150-s wait for 3 sim-min below (no time-out);
+// no page snapshot could be taken; retry #1 passed in 93.8 s; local macOS WebKit 10/10. fx25-co2-attach :80 in the same
+// shard lost its page the same way 6 min later: the Linux WebKit web-process crash class F-FX1-1
+// (docs/guides/known-deviations.md)
+test('a free run prints in at most four pages; its export is pme-debrief/2', { tag: '@known-flaky' }, async ({ page, browserName }) => {
   const busy = loadedWebKit(browserName);
   test.setTimeout(busy ? 240_000 : 120_000);
   await openApp(page, base, '#/teach', { warmMs: 1500 }); // the Monitor with the session bar, no scenario
