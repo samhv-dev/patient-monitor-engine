@@ -16,12 +16,12 @@ import { store } from './store.ts';
 /** store.ts key: `pme.roomCode`. */
 export const ROOM_CODE_KEY = 'roomCode';
 
-/** The code a starting instructor's page runs under (null: none, a new one is drawn). Invalid values are ignored. */
+/** The code a starting instructor's page runs under, or null when it has none and draws a new one. Invalid values are ignored. */
 export function startCode(o: { param: string | null; stored: string | null; lastRoom?: string | null | undefined }): string | null {
   return normalizeSessionCode(o.param ?? '') ?? normalizeSessionCode(o.stored ?? '') ?? normalizeSessionCode(o.lastRoom ?? '');
 }
 
-/** Whether the code this page runs becomes the room's: started without `?session=`, and not "Start a new session". */
+/** Whether the code this page runs becomes the room's, which it does when started without `?session=` and not after "Start a new session". */
 export function keepsRoomCode(o: { param: string | null; answer: 'join' | 'new' | null }): boolean {
   return o.param === null && o.answer !== 'new';
 }

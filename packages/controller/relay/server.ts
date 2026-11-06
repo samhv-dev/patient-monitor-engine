@@ -58,7 +58,7 @@ export interface RelayOptions {
   stateDir?: string;
 }
 
-/** The last room's code kept in `dir` (null: none, or a file that is not ours). */
+/** The last room's code kept in `dir`, or null when there is none or the file is not ours. */
 export function readLastRoom(dir: string): string | null {
   try {
     const v = (JSON.parse(readFileSync(join(dir, 'room.json'), 'utf8')) as { lastRoom?: unknown } | null)?.lastRoom;
