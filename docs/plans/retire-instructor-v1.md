@@ -498,6 +498,13 @@ F7.5 (scenario-format plan) after PR 3; D5 (Debrief 2 PR 3) at any time, one sha
 
 ## 10. Questions for the owner (each with the default the plan uses)
 
+**Rulings, 6 November 2026 (the owner):** every question answered A, the plan's default: Q1 the Remote keeps today's
+panel until the phone layout (phase 2); Q2 "Hold the timer" kept as one button in the cue box; Q3 "Learner controls on
+the monitor" kept, in the Devices sheet, host only; Q4 the Onset choice beside Deliver is built before the old view
+goes; Q5 tablets use the Remote until the phone layout; Q6 the address stays `#/teach2`; Q7 the 3 November records
+keep one header line; Q8 the smaller monitor with Swap stands until the in-place swap; Q9 the three `/1` kit rounds
+retire (their last records are kit G4's, `docs/showcase/kit-round-a/g4/`).
+
 | # | Question | Default used |
 |---|---|---|
 | Q1 | The Remote (a second window, or a tablet over the relay) keeps today's panel until the phone layout replaces it. Retire it now instead, leaving no tablet instructor until then? | Keep it until the phone layout (phase 2) |
