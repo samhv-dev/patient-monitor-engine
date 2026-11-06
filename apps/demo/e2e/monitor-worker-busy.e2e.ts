@@ -6,6 +6,11 @@
 // machine runs workers, this one makes no progress — is the worker stopped.
 // The busy worker here: one fast-forward step sized to ≈ 8 s of THIS machine's worker, from a 5000-tick step timed first
 // (a Mac ran 10 000 ticks in 532–653 ms; CI's WebKit is many times slower, so a fixed size outran the test's timeout).
+// The short timing overstates the cost of a tick (CI WebKit, run 42163657382: 0.576 ms a tick timed, 0.214 ms in the
+// 13 884-tick step, which lasted 2967 ms: under the threshold). So a step that ends short of the threshold plus 2 s is
+// sized again from its own rate and run again; the one that counts lasts past WORKER_SILENT_MS + 2000 ms (5 s against
+// 3 s), the product's own constant, read from the module the page runs.
+import { resolve } from 'node:path';
 import { expect, test } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
@@ -28,18 +33,28 @@ test('a worker busy for several seconds with a request out reports its progress:
   });
   await openApp(page, base, '#/monitor', { warmMs: 1500 });
   test.skip(!/^worker/.test(await page.evaluate(() => (window as unknown as W).__pmeApp.session.monitor.renderPath)), 'no worker on this browser');
-  const r = await page.evaluate(async () => {
+  const r = await page.evaluate(async (root) => {
+    const { WORKER_SILENT_MS } = (await import('/@fs' + root + '/packages/renderer/src/worker-host.ts')) as { WORKER_SILENT_MS: number };
     const m = (window as unknown as W).__pmeApp.session.monitor;
+    const minMs = WORKER_SILENT_MS + 2000; // a clear margin past the warn threshold
     const c0 = performance.now();
     await m.advance(5000, true);
-    const perTickMs = (performance.now() - c0) / 5000;
-    const ticks = Math.round(8000 / perTickMs); // ≈ 8 s by the timing; a longer step runs faster per tick (it was 3.0–3.4 s for a 5 s aim)
-    const t0 = performance.now();
-    const step = await m.advance(ticks, true).then((x) => x.tick, (e: Error) => `rejected: ${e.message}`);
-    return { step, ticks, perTickMs: Math.round(perTickMs * 1000) / 1000, ms: Math.round(performance.now() - t0) };
-  });
+    let perTickMs = (performance.now() - c0) / 5000;
+    const runs: Array<{ ticks: number; ms: number }> = [];
+    let step: number | string = 'not run';
+    for (let k = 0; k < 4; k++) {
+      const ticks = Math.round(8000 / perTickMs); // ≈ 8 s by the latest rate
+      const t0 = performance.now();
+      step = await m.advance(ticks, true).then((x) => x.tick, (e: Error) => `rejected: ${e.message}`);
+      const ms = Math.round(performance.now() - t0);
+      runs.push({ ticks, ms });
+      if (typeof step !== 'number' || ms > minMs) break;
+      perTickMs = ms / ticks; // the long step's own rate
+    }
+    return { step, minMs, threshold: WORKER_SILENT_MS, runs, ms: runs[runs.length - 1]?.ms ?? 0 };
+  }, resolve(import.meta.dirname, '../../..'));
   console.log('busy worker', JSON.stringify(r));
-  expect(r.ms, 'the worker was busy past the 3 s threshold').toBeGreaterThan(3500);
+  expect(r.ms, `the worker was busy past the ${r.threshold} ms threshold with a margin (${r.minMs} ms)`).toBeGreaterThan(r.minMs);
   expect(typeof r.step, `the step was answered (${String(r.step)})`).toBe('number');
   expect(await page.evaluate(() => (window as unknown as W).failed)).toEqual([]);
   expect(await page.evaluate(() => (window as unknown as W).slow), 'a working worker is not slow').toBe(0);
