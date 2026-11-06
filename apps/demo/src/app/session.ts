@@ -54,6 +54,17 @@ export const PERF8 = {
 const EST_CAP_S = 1.5;
 /** The Ventilator view ventilates the patient while its last frame is this recent (it sends 50 a second) [ENG]. */
 const VENT_DRIVING_MS = 2000;
+/** The view feed's period (plan instructor-peer-role.md §6: at most once a second, and only on a change). */
+export const FEED_MS = 1000;
+
+/** What the host's own panel Link gives the instructor phone (main.ts `serveInstructors`, teach2/feed.ts). */
+export interface InstructorServe {
+  /** A remote's note or judged objective, filed as the laptop files its own (Link.note: the log and the record), at
+   *  the host's sim time `t`. */
+  note(text: string, kind: 'note' | 'marker', t: number): void;
+  /** The view feed's body (teach2/feed.ts `feedOf`). */
+  feed(): unknown;
+}
 
 export class AppSession {
   readonly code: string;
@@ -131,13 +142,19 @@ export class AppSession {
   /** Peers on the relay besides this host (the phones following), from the relay's `peers` frames. */
   followers = 0;
   private readonly followerFns = new Set<(n: number) => void>();
+  /** Instructor phones granted now (HostSession onInstructors: 0 or 1, the newest takes over). */
+  instructors = 0;
+  private serve: InstructorServe | null = null;
+  private feedTimer: ReturnType<typeof setInterval> | null = null;
+  private feedLast = ''; // The last body sent (JSON): a body is sent only when it changed
+  private feedAt = -Infinity; // Wall ms of the last body sent
 
   /** `?load=perf8`: mount the validation harness's performance layout instead of the site's skin (the frame gate). */
   private readonly perf8: boolean;
   /** The page's first patient (the default patient): "Save and close" ends a case on it (endCase). */
   private readonly first: SessionStart;
 
-  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null }) {
+  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null }) {
     this.el = el;
     this.perf8 = o.load === 'perf8';
     this.spec = start.spec;
@@ -203,6 +220,11 @@ export class AppSession {
         ...(this.briefing ? [{ type: 'briefing' as const, ...this.briefing, replay: true as const }] : []),
       ],
       fastForwardWallMs: FF_WALL_MS, // Paced so the room sees the clock run
+      // the instructor phone (plan instructor-peer-role.md P3, P6): its PIN, read at every hello (null or absent: no
+      // phone), its notes, and how many are granted (the stage marks and the view feed follow it)
+      ...(o.instructorPin ? { instructorPin: o.instructorPin } : {}),
+      onNote: (t, text, kind) => (this.serve ? this.serve.note(text, kind, t) : this.record.note(t, text)),
+      onInstructors: (n) => this.setInstructors(n),
     });
     this.host = hs;
     const hub = createInProcessHub();
@@ -231,6 +253,50 @@ export class AppSession {
     this.mount(start.seed ?? 7);
     // the runner advances at the engine's sim time; 10 Hz is enough for triggers stated in seconds [ENG]
     this.pollTimer = setInterval(() => !this.fastForwarding && this.driver.poll(), 100); // A fast-forward polls per step
+  }
+
+  /**
+   * The host's own panel Link serves the instructor phone (main.ts): a remote's note goes into its log and so into the
+   * record as the laptop's own does, and the view feed is read from it.
+   */
+  serveInstructors(s: InstructorServe): void {
+    this.serve = s;
+  }
+
+  /**
+   * A phone granted or revoked (HostSession onInstructors). While one is granted: the driver places its stage marks (a
+   * phone returns to a stage's start with the laptop on any view; once on, they stay on, as Instructor v2's own `enter`
+   * leaves them, so a revoke never takes a return from the laptop), and the view feed runs: a body at once on a first
+   * grant, then at most once a FEED_MS, only when it changed. A phone that signs in again gets the next body whatever
+   * it is (its page may have reloaded).
+   */
+  private setInstructors(n: number): void {
+    this.instructors = n;
+    this.feedLast = '';
+    if (n > 0) {
+      this.driver.markStages(true);
+      if (this.feedTimer === null) {
+        this.feedTimer = setInterval(() => this.sendFeed(), FEED_MS);
+        if (performance.now() - this.feedAt >= FEED_MS) this.sendFeed();
+      }
+    } else if (this.feedTimer !== null) {
+      clearInterval(this.feedTimer);
+      this.feedTimer = null;
+    }
+  }
+
+  /** One view feed body (plan §6): an instructor-only event, never in VIEWER_EVENTS (the relay sends it to a granted
+   *  phone only), sent when it differs from the last one. */
+  private sendFeed(): void {
+    if (this.instructors === 0 || !this.serve) return;
+    const body = this.serve.feed();
+    const s = JSON.stringify(body);
+    if (s === this.feedLast) return;
+    this.feedLast = s;
+    this.feedAt = performance.now();
+    // `t`: the sim time the body was read at, the host panel's clock (feed.ts reads the panel's Link), so the event never
+    // moves that clock on (the session's own estimate can run ahead of it: a pause taken between engine events)
+    this.host.publish({ type: 'instructorView', t: this.panel.simT ?? 0, body: JSON.parse(s) as unknown });
   }
 
   /** Every change in the number of phones following on the relay. */
@@ -505,6 +571,7 @@ export class AppSession {
 
   destroy(): void {
     clearInterval(this.pollTimer);
+    if (this.feedTimer !== null) clearInterval(this.feedTimer);
     if (this.briefingTimer !== null) clearTimeout(this.briefingTimer);
     this.offMon?.();
     this.monitor?.destroy();

@@ -18,7 +18,8 @@ import { clock, h, setText } from '../ui.ts';
 import { showVital, vitalLabel, vitalOf } from '../vitals.ts';
 import { defaultPatient } from './begin.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
-import { stageEntries, stageNames, type StageEntry } from './strip.ts';
+import { entriesOf } from './feed.ts';
+import { stageNames, type StageEntry } from './strip.ts';
 
 /** The host's tick (s): a state row of the record and the scenario event it came from lie within one. */
 const TICK_S = 0.02;
@@ -32,9 +33,15 @@ export function enteredWords(by: string | undefined, t: number, rule: string | n
   return `entered ${at}`;
 }
 
-/** The record's `by` for the state row of `entry` (host only; absent on a follower and on a record made before the field existed). */
-function byOf(link: Link, entry: StageEntry): string | undefined {
-  const rows = link.host?.record.data.rows ?? [];
+/** The record's `by` for the state row of `entry`: the host's record, or on a remote the host's view feed for the
+ *  current entry (feed.ts); absent on a follower and on a record made before the field existed. */
+export function byOf(link: Link, entry: StageEntry): string | undefined {
+  if (!link.host) {
+    const fed = link.viewNow?.();
+    const cur = fed?.entries.at(-1);
+    return fed?.by != null && cur?.stage === entry.stage && cur.t === entry.t ? fed.by : undefined;
+  }
+  const rows = link.host.record.data.rows;
   const row = rows.filter((r) => r.kind === 'scenario' && r.undone === undefined && r.ev === `state:${entry.stateId}` && Math.abs(r.t - entry.t) <= TICK_S + 1e-6).at(-1);
   const by = (row as { by?: unknown } | undefined)?.by;
   return typeof by === 'string' ? by : undefined;
@@ -80,7 +87,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     const phase = v2?.phases.find((p) => p.id === sv.stateId);
     box.classList.toggle('ip2-cue-none', !!v2 && !phase);
     if (v2 && phase) {
-      const entry = stageEntries(v2, link.ctl.scenario.history, sv, link.simT).filter((e) => e.stage === phase.id).at(-1) ?? null;
+      const entry = entriesOf(link).filter((e) => e.stage === phase.id).at(-1) ?? null;
       setText(name, phase.label);
       const frozen = paused || sv.paused;
       setText(inStage, `${clock(sv.timeInState(link.simT))} in phase${frozen ? ' · frozen' : ''}`);
@@ -114,7 +121,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       say.hidden = true;
       return;
     }
-    const entry = stageEntries(doc, link.ctl.scenario.history, sv, link.simT).filter((e) => e.stage === stage.id).at(-1) ?? null;
+    const entry = entriesOf(link).filter((e) => e.stage === stage.id).at(-1) ?? null;
     setText(name, stageNames(stagesOf(doc)).get(stage.id) ?? stage.label);
     // time in the stage: the state's own clock (pauses excluded), plus the hops and returns before it since the stage began
     const t = sv.timeInState(link.simT) + (entry ? Math.max(0, sv.enteredT - entry.t) : 0);

@@ -9,8 +9,8 @@ regenerations. The list of known misses across modules is [known-misses.md](../v
 | Module | Source files | Test files | Known misses |
 |---|---|---|---|
 | [Patient state and the two modes](patient-state.md) | 5 | 5 | 0 |
-| [Rhythms and the ECG](rhythms-ecg.md) | 38 | 46 | 3 |
-| [Circulation](circulation.md) | 21 | 66 | 19 |
+| [Rhythms and the ECG](rhythms-ecg.md) | 38 | 47 | 3 |
+| [Circulation](circulation.md) | 21 | 67 | 19 |
 | [Pressure waveforms and pleth](pressure-waveforms.md) | 9 | 16 | 1 |
 | [Lungs: mechanics, ventilation–perfusion, pathology](lungs.md) | 19 | 39 | 6 |
 | [Gas exchange and capnography](gas-exchange.md) | 6 | 9 | 2 |
@@ -26,6 +26,6 @@ regenerations. The list of known misses across modules is [known-misses.md](../v
 | [Ventilator](ventilator.md) | 15 | 22 | 5 |
 | [Engine runtime: loop, clock, commands, snapshots](engine-runtime.md) | 10 | 16 | 0 |
 | [Control: commands, transports, scenarios](control.md) | 43 | 75 | 0 |
-| [Presentation: renderer, audio, skins, the app](presentation.md) | 193 | 280 | 2 |
-| [Validation harness](validation-harness.md) | 59 | 46 | 0 |
+| [Presentation: renderer, audio, skins, the app](presentation.md) | 195 | 286 | 2 |
+| [Validation harness](validation-harness.md) | 59 | 47 | 0 |
 | [Whole-patient scenario suites](integration.md) | 0 | 1 | 10 |
