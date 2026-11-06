@@ -142,7 +142,10 @@ for (const [w, h, paneW, pane] of [[1990, 920, 1374, 820], [1990, 1080, 1374, 98
     await page.setViewportSize({ width: w, height: h });
     await openApp(page, base, '#/teach', { warmMs: 2500 });
     const host = await page.locator('.stage > .monitor-host').boundingBox();
-    console.log(`saadat-p3 ${browserName} ${w}x${h}: monitor pane ${host?.width.toFixed(0)} × ${host?.height.toFixed(0)}`);
+    // the render path (brief 47): a browser whose worker has no requestAnimationFrame runs 'worker-pump', where the page
+    // posts the frames; that path once queued them without bound and the CO2 attach below was answered seconds late
+    const path = await page.evaluate(() => (window as unknown as { __pmeApp: { session: { monitor: { renderPath: Promise<string> } } } }).__pmeApp.session.monitor.renderPath);
+    console.log(`saadat-p3 ${browserName} ${w}x${h}: monitor pane ${host?.width.toFixed(0)} × ${host?.height.toFixed(0)}, render path ${path}`);
     expect(Math.abs((host?.width ?? 0) - paneW)).toBeLessThan(15); // the instructor panel is open beside the monitor
     expect(Math.abs((host?.height ?? 0) - pane)).toBeLessThan(15);
 

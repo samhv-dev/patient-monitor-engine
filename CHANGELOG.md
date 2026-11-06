@@ -87,6 +87,13 @@ the public API is what the packages export (see the API reference), the `pme-sce
   entry, timed at 120 s (the owner's ruling of 5 November, from the `/1` card's objective 3). `/1` cards keep their judged objectives.
 
 ### Fixed
+- On a browser whose monitor worker has no animation-frame clock of its own (the `worker-pump` path: the page posts
+  the frames), an instructor's command no longer waits seconds, and longer as the case runs, before the monitor applies
+  it. The page posted a frame at every display refresh whether or not the worker had drawn the last one, so where one
+  frame took longer than a refresh the worker's queue grew without bound and every command waited behind it (the
+  Saadat-like Instructor test on WebKit in CI: no CO₂ tile 5 s after "CO₂ sampling line", passing only on retry). The
+  page now keeps one frame in flight and posts the next once the worker says it drew the last, as the worker's own
+  clock does. With frames forced to cost 25 ms, a command was answered within 26 ms throughout 40 s instead of not at all.
 - A hello forged under a Remote's peer id while the Remote reconnects no longer blocks the Remote's commands
   until its page reloads (R29, the known gap of #183). The host kept each relay peer's last sequence number and role
   while its socket was down, so a hand-written hello with that id and a higher number, sent in that window, made the
