@@ -8,12 +8,14 @@
 // the server answers (not with PME_NO_OPEN=1), and lives as long as the server: Ctrl+C or closing the window stops
 // both. It writes nothing into the kit (the simulator's port file goes to the temp folder). ASCII output only: the
 // Windows console's code page cannot garble it.
+// Room plan R1b: the classroom relay keeps the last room code (room.json, the code only) in this computer's own
+// application-data folder, `stateDir()` below, so the room code survives a restart and the move to the next port.
 // The relay and serve.mjs are started with process.execPath: the node.exe the .cmd chose (the kit's runtime\node.exe
 // when it has one), never a second lookup; the "SERVER:" line names it.
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, posix, resolve, win32 } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /** How to open `url` in the default browser on `platform`. Windows: `start` is a cmd.exe built-in whose first quoted
@@ -24,6 +26,21 @@ export function openCommand(url, platform = process.platform) {
   if (platform === 'win32') return { cmd: process.env.ComSpec || 'cmd.exe', args: ['/d', '/c', 'start', '""', `"${url}"`], opts: { windowsVerbatimArguments: true } };
   if (platform === 'darwin') return { cmd: '/usr/bin/open', args: [url], opts: {} };
   return { cmd: 'xdg-open', args: [url], opts: {} };
+}
+
+/** Where the classroom relay keeps the last room code: PME_STATE_DIR (the kit's own tests), else %LOCALAPPDATA%\PME
+ *  Classroom on Windows, ~/Library/Application Support/PME Classroom on macOS; null (no --state-dir: nothing kept)
+ *  when that folder is not known or on another system. */
+export function stateDir(platform = process.platform, env = process.env) {
+  if (env.PME_STATE_DIR) return env.PME_STATE_DIR;
+  if (platform === 'win32') return env.LOCALAPPDATA ? win32.join(env.LOCALAPPDATA, 'PME Classroom') : null;
+  if (platform === 'darwin') return env.HOME ? posix.join(env.HOME, 'Library', 'Application Support', 'PME Classroom') : null;
+  return null;
+}
+
+/** The classroom relay's arguments. */
+export function relayArgs(relay, port, app, state) {
+  return [relay, '--port', String(port), '--static', app, ...(state ? ['--state-dir', state] : [])];
 }
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -105,10 +122,11 @@ async function classroom() {
     fail('The kit is incomplete: the app or the relay is missing.', `no ${join(app, 'index.html')} or ${relay}`, 'If you opened it inside the .zip file: right-click the .zip, choose "Extract All", and start it from the extracted folder.');
   }
   const first = Number(process.env.PME_PORT || 8650);
+  const state = stateDir();
   let s = null;
   let last = '';
   for (let port = first; port < first + 10 && !stopping; port++) {
-    const t = startNode([relay, '--port', String(port), '--static', app], (o) => /ready on ws:\/\//.test(o), 10_000);
+    const t = startNode(relayArgs(relay, port, app, state), (o) => /ready on ws:\/\//.test(o), 10_000);
     if (await t.up) {
       s = { ...t, port };
       break;

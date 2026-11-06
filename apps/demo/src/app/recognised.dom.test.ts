@@ -90,11 +90,23 @@ describe('the Recognised press (D5, the /1 fallback)', () => {
     }
   });
 
-  it('on a remote (no host record) the `recognised` form is hidden: the wire\'s note command carries no run event; the tick form shows', () => {
-    for (const [doc, shown] of [[null, false], [haemorrhage, false], [tamponade, true], [mhV2, false]] as const) {
-      const link = { ctl: { scenario: Object.assign(new ScenarioView(), { doc }) }, host: null, simT: 30 } as unknown as Link;
+  it('on a remote (no host record) both forms show (brief 52: the wire\'s note command carries the event): a free run and a /1 card without a recognition objective send the `recognised` note, the tamponade card its tick; none on a /2 card', async () => {
+    for (const [doc, shown, want] of [
+      [null, true, { kind: 'marker', text: 'Recognised (instructor)', ev: 'recognised' }],
+      [haemorrhage, true, { kind: 'marker', text: 'Recognised (instructor)', ev: 'recognised' }],
+      [tamponade, true, { kind: 'marker', text: tick(tamponade as unknown as ScenarioDoc) }],
+      [mhV2, false, null],
+    ] as const) {
+      const name = (doc as { id?: string } | null)?.id ?? 'free run';
+      const sent: unknown[] = [];
+      const ctl = { scenario: Object.assign(new ScenarioView(), { doc }), simT: 30, send: (c: unknown) => (sent.push(c), Promise.resolve({ accepted: true })), onChange: () => () => undefined };
+      const link = new Link(ctl as unknown as ControllerSession, { onMessage: () => () => undefined } as never, null);
       const b = recognisedButton(link, 'btn small');
-      expect(b.el.hidden, (doc as { id?: string } | null)?.id ?? 'free run').toBe(!shown);
+      expect(b.el.hidden, name).toBe(!shown);
+      b.el.click();
+      await settle();
+      expect(sent, name).toEqual(want ? [{ type: 'note', ...want }] : []);
+      link.close();
     }
   });
 });

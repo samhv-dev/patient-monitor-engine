@@ -187,6 +187,10 @@ export function readPosition(o: { code: string; build?: string; engine?: string;
   return ok ? p : null;
 }
 
+/** The run of either format: a /1 card's ScenarioRunner or a /2 card's PhaseRunner (brief 50: reading only the /1 one,
+ *  no /2 run was ever kept). */
+const runOf = (s: AppSession) => s.driver.runner ?? s.driver.phaseRunner;
+
 /**
  * Take the running case's position every `every` ms while a library card runs (not while a fast-forward runs, a restore
  * is under way or the tab is hidden — a hidden tab pauses itself, and that pause is not the instructor's). A moment
@@ -196,12 +200,12 @@ export function keepPositions(s: AppSession, every = SAVE_MS): () => void {
   let busy = false;
   let marksKept = '';
   const take = async () => {
-    const r = s.driver.runner;
+    const r = runOf(s);
     if (busy || !r || s.restoring || s.fastForwarding || s.host.fastForwarding || document.hidden || !scenarioById(r.doc.id)) return;
     busy = true;
     try {
       const run = await s.driver.position();
-      if (!run || s.driver.runner !== r || s.restoring) return; // a new body or a restore began meanwhile
+      if (!run || runOf(s) !== r || s.restoring) return; // a new body or a restore began meanwhile
       const p: Position = {
         schema: 'pme-position/1', code: s.code, build: APP_BUILD, engine: engineKey, savedAt: Date.now(), cardId: r.doc.id, title: cardOf(r.doc).title,
         stateId: run.runner.stateId, simT: run.snapshot.tick * TICK_S, speed: s.timeScale, paused: s.paused, learner: s.learner, run, record: s.record.keep(),
@@ -236,7 +240,7 @@ export async function restorePosition(p: Position, s: AppSession, load: (c: Scen
     // the course's stage marks placed again, and the course's history for the panel's view: it saw only the Load and
     // the return (ScenarioView keeps what the wire said), so the strip had no entry for any past stage
     s.driver.holdStageMarks(marks);
-    const history = s.driver.runner?.history;
+    const history = runOf(s)?.history;
     if (history) s.panel.scenario.history = [...history];
     s.record.resume(p.record, p.run.snapshot.tick * TICK_S);
     s.setLearner(p.learner);
