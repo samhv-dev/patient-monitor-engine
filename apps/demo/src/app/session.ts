@@ -144,6 +144,7 @@ export class AppSession {
   private readonly followerFns = new Set<(n: number) => void>();
   /** Instructor phones granted now (HostSession onInstructors: 0 or 1, the newest takes over). */
   instructors = 0;
+  private readonly instructorFns = new Set<(n: number) => void>();
   private serve: InstructorServe | null = null;
   private feedTimer: ReturnType<typeof setInterval> | null = null;
   private feedLast = ''; // The last body sent (JSON): a body is sent only when it changed
@@ -272,6 +273,7 @@ export class AppSession {
    */
   private setInstructors(n: number): void {
     this.instructors = n;
+    for (const fn of [...this.instructorFns]) fn(n);
     this.feedLast = '';
     if (n > 0) {
       this.driver.markStages(true);
@@ -297,6 +299,12 @@ export class AppSession {
     // `t`: the sim time the body was read at, the host panel's clock (feed.ts reads the panel's Link), so the event never
     // moves that clock on (the session's own estimate can run ahead of it: a pause taken between engine events)
     this.host.publish({ type: 'instructorView', t: this.panel.simT ?? 0, body: JSON.parse(s) as unknown });
+  }
+
+  /** Every grant and revocation of the instructor phone (the Room page's row; a new phone taking over calls it too). */
+  onInstructors(fn: (n: number) => void): () => void {
+    this.instructorFns.add(fn);
+    return () => void this.instructorFns.delete(fn);
   }
 
   /** Every change in the number of phones following on the relay. */

@@ -415,6 +415,32 @@ body:has(.app[data-route='monitor']) .toast[data-kind='info'] { display: none; }
 .status-pill { display: inline-block; margin: var(--s-2) var(--s-3); padding: 2px var(--s-3); border: 1px solid var(--line-strong); border-radius: 999px; font-size: var(--t-13); color: var(--text); }
 .remote-panel { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); }
 .remote-panel .panel { border-left: 0; }
+/* The instructor phone's way in (plan instructor-peer-role.md P7): the PIN form's keypad, thumb-sized (56 px keys,
+   above the 44 px touch target), and the Room page's instructor card */
+.ip-peer-form { max-width: 420px; margin: var(--s-4) auto; }
+.ip-peer-pin { font-family: var(--font-mono); font-size: 28px; letter-spacing: 0.3em; text-align: center; }
+.ip-peer-keypad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-2); }
+.ip-peer-key { min-height: 56px; font-size: 22px; justify-content: center; }
+.ip-peer-go { font-size: 17px; }
+.ip-peer-error:not(:empty) { margin: 0; }
+.ip-peer-notice { margin: 0 var(--s-3) var(--s-2); }
+.ip-peer-room { grid-column: 1; }
+.ip-peer-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 14px; }
+.ip-peer-row b { font-weight: 500; color: var(--text-strong); }
+.ip-peer-when { color: var(--text-muted); }
+.ip-peer-denials { margin: 8px 0 0; }
+.ip-peer-pinbox { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 16px 0 0; font-size: 14px; }
+.ip-peer-pinbox[hidden], .ip-peer-qr[hidden] { display: none; }
+.ip-peer-pin-label { color: var(--text-muted); }
+.ip-peer-pin-value { min-width: 4.5em; font-family: var(--font-plex-mono); font-size: 26px; letter-spacing: 0.14em; color: var(--text-strong); }
+.ip-peer-hold, .ip-peer-change { min-height: 44px; }
+.ip-peer-hold { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.ip-peer-qr { margin: 16px 0 0; font-size: 14px; }
+.ip-peer-qr summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; color: var(--text-strong); }
+.ip-peer-qr .room-qr { margin: 8px 0; }
+.ip-peer-qr .room-qr svg { width: 160px; height: 160px; }
+.ip-peer-url { display: block; word-break: break-all; color: var(--text-strong); }
+.ip-peer-room .hint { margin: 10px 0 0; }
 .page.narrow { max-width: 760px; }
 .page.wide { max-width: none; }
 .framed iframe { height: calc(100dvh - 220px); min-height: 480px; border: 1px solid var(--line); border-radius: var(--r-card); }

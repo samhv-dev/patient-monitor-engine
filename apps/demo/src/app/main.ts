@@ -6,6 +6,7 @@ import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 import { alarmLine, limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
 import { mountHostBriefing } from './briefing.ts';
 import { joinCode, relayOf } from './classroom.ts';
+import { instructorPin } from './instructor-pin.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
 import { feedOf } from './teach2/feed.ts';
@@ -37,6 +38,7 @@ import { settingsView } from './views/settings.ts';
 import { homeView } from './views/home.ts';
 import { patientView } from './views/patient.ts';
 import { roomView } from './views/room.ts';
+import { instructorRoomCard } from './views/room-instructor.ts';
 import { scenariosView } from './views/scenarios.ts';
 import { teachView } from './views/teach.ts';
 import { teach2View } from './views/teach2.ts';
@@ -98,7 +100,10 @@ if (follow) {
   if (handed) putKeptItems(handed);
   const base = PATIENT_PRESETS[0]?.spec;
   if (!base) throw new Error('no patient presets');
-  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay });
+  // The instructor phone's PIN (plan instructor-peer-role.md P7): this computer's store only; the host reads it at every
+  // instructor hello. Never in an address, a QR code or the tab's state (instructor-pin.ts)
+  const pin = instructorPin();
+  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, instructorPin: () => pin.get() });
   // The session code survives a reload of this window, so a learner monitor and a Remote that follow it find it again
   // (a reload made a new code and left them on a frozen screen)
   publishStyle(session.code, () => ({ skin: session.skin, theme: session.theme, ibp: session.ibpScales }), (f) => {
@@ -155,6 +160,7 @@ if (follow) {
   const room = roomView({
     code: session.code, relay, relayLink: session.relay, local: session.bc, hostPeerId: session.host.peerId, learnerUrl: followUrl(session.code),
     followers: () => session.followers, onFollowers: (f) => session.onFollowers(f),
+    instructor: instructorRoomCard({ code: session.code, relay, pin, host: session.host, instructors: () => session.instructors, onInstructors: (f) => session.onInstructors(f) }),
   });
   shell.add(room);
   shell.add(scenariosView({ session, loadScenario, instructor }));
