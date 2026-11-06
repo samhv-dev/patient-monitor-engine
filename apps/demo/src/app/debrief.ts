@@ -25,6 +25,9 @@ export interface Verdict {
   why: string;
   /** An `eventWithin` verdict that found both events: the times its reason line prints, and the seconds asked. */
   measure?: { fromT: number; toT: number; askedS: number };
+  /** An `eventWithin` verdict whose anchor was found (Debrief 2, D7a): the window the swimlane draws, from the anchor
+   *  for the seconds asked, also when the act never came or the run ended inside it. */
+  window?: { fromT: number; askedS: number };
 }
 /** An objective's verdict in the report: `tickedT`, the instructor's tick (seconds), only on a rule-less objective. */
 export type ObjectiveVerdict = Verdict & { tickedT?: number };
@@ -138,10 +141,11 @@ export function verdict(rule: ObjectiveRule | undefined, d: RunData): Verdict {
     const b = first(d, rule.event, a.t);
     const aw = `${eventWords(rule.after, d)}${since}`;
     const bw = eventWords(rule.event, d);
-    if (!b && !measured(d, rule.event, a.t)) return no(unmeasured(rule.event, `after ${aw} at ${mmss(a.t)}`));
-    if (b) return { status: b.t - a.t <= rule.withinS ? 'met' : 'not met', why: `${cap(bw)} ${span(b.t - a.t)} after ${aw} (${mmss(a.t)} → ${mmss(b.t)}; within ${span(rule.withinS)} asked).`, measure: { fromT: a.t, toT: b.t, askedS: rule.withinS } };
-    if (end - a.t >= rule.withinS) return { status: 'not met', why: `No ${bw} within ${span(rule.withinS)} of ${aw} at ${mmss(a.t)}.` };
-    return no(`The run ended ${span(end - a.t)} after ${aw} at ${mmss(a.t)}, before ${span(rule.withinS)} had passed.`);
+    const window = { fromT: a.t, askedS: rule.withinS };
+    if (!b && !measured(d, rule.event, a.t)) return { ...no(unmeasured(rule.event, `after ${aw} at ${mmss(a.t)}`)), window };
+    if (b) return { status: b.t - a.t <= rule.withinS ? 'met' : 'not met', why: `${cap(bw)} ${span(b.t - a.t)} after ${aw} (${mmss(a.t)} → ${mmss(b.t)}; within ${span(rule.withinS)} asked).`, measure: { fromT: a.t, toT: b.t, askedS: rule.withinS }, window };
+    if (end - a.t >= rule.withinS) return { status: 'not met', why: `No ${bw} within ${span(rule.withinS)} of ${aw} at ${mmss(a.t)}.`, window };
+    return { ...no(`The run ended ${span(end - a.t)} after ${aw} at ${mmss(a.t)}, before ${span(rule.withinS)} had passed.`), window };
   }
   const m = trendMeta(rule.value);
   const limit = [rule.above !== undefined ? `above ${fmt(rule.value, rule.above)}` : '', rule.below !== undefined ? `below ${fmt(rule.value, rule.below)}` : ''].filter(Boolean).join(' and ');

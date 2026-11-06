@@ -6,13 +6,17 @@
 // Each button writes the debrief to the browser's archive first: "Save and restart the case" then loads the same card
 // again (the Resident field cleared for the next name), "Debrief now" opens the Debrief view on the saved debrief (the
 // case stays paused, the pane says it is saved), "Save and close" ends the case (#210's three cards show).
-import { ScenarioView, type AckResult, type CommandInput, type ScenarioDoc, type WireEvent } from '@pme/controller';
+import { createEngine, type Command, type EngineEvent, type PatientSnapshot } from '@pme/engine-core';
+import { ScenarioView, type AckResult, type CommandInput, type ScenarioCommand, type ScenarioDoc, type WireEvent } from '@pme/controller';
+import { engineOptionsOf, ScenarioDriver, type Action, type ScenarioDocV2 } from '@pme/controller/scenario';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { archive } from '../archive.ts';
 import type { Link } from '../link.ts';
 import { MemoryStorage } from '../memory-storage.ts';
 import { RunRecord } from '../record.ts';
-import { cardOf } from '../scenarios.ts';
+import { cardOf, scenarioById, type ScenarioCard } from '../scenarios.ts';
+import type { RoomKeep } from '../session.ts';
+import { restartSameCard } from './finish.ts';
 import induction from '../showcase/showcase-induction.json';
 import { DEFAULT_SITE } from '../site.ts';
 import { teach2View, type Teach2View } from '../views/teach2.ts';
@@ -363,4 +367,131 @@ describe('Finish the case: the archive under the buttons, and #210\'s Debrief ar
     r.key('3');
     expect(location.hash).toBe('#/debrief/archive');
   });
+});
+
+// fix-v2-save-and-restart: "Save and restart the case" found the card to load again through ScenarioDriver.runner, the
+// /1 runner only, so on a /2 card it saved the debrief and then did nothing (the pane stayed, the run went on). It now
+// reads the run of either format, as the reload's position does (PR #300, fix/v2-card-position-reload). The app's hook
+// (main.ts finish.restart = restartSameCard) on the real driver, a real engine and the real record; the load is the
+// session's (session.ts loadScenario: the runner ended, a new engine, a new record, the card's load).
+describe('"Save and restart the case" on a /2 card', () => {
+  function v2rig(id = 'showcase-mh-v2') {
+    const card = scenarioById(id) as ScenarioCard;
+    const fns = new Set<(e: EngineEvent) => void>();
+    const body = () => {
+      const e = createEngine({ ...engineOptionsOf(card.doc, 7), mode: card.doc.mode ?? 'modeled', truthHz: 1 } as never);
+      e.on((x) => fns.forEach((fn) => fn(x)));
+      return e;
+    };
+    let engine = body();
+    const sv = new ScenarioView();
+    const record = new RunRecord(() => ({ patient: 'M 35 y 80 kg', weightKg: 80 }), Date.now, () => driver.phaseRunner);
+    fns.add((e) => record.engine(e as never));
+    const driver: ScenarioDriver = new ScenarioDriver({
+      target: { dispatch: (c: Command) => engine.dispatch(c), snapshot: () => engine.snapshot(), restore: (x: PatientSnapshot) => engine.restore(x), on: (fn) => (fns.add(fn), () => void fns.delete(fn)), now: () => engine.now(), time: () => undefined },
+      publish: (e) => (sv.onEvent(e), record.wire(e as WireEvent)),
+    });
+    const sent: CommandInput[] = [];
+    let n = 0;
+    const ctl = { scenario: sv, state: { mode: 'modeled', values: {}, control: {} }, timeScale: 1, hostPaused: false, fastForward: null, simT: 0, bookmarks: [] };
+    const send = async (c: CommandInput): Promise<AckResult> => {
+      sent.push(structuredClone(c));
+      const x = c as { type: string; action?: string };
+      if (x.type === 'time') ctl.hostPaused = x.action === 'pause' ? true : x.action === 'resume' ? false : ctl.hostPaused;
+      if (x.type !== 'scenario') return { accepted: true, tick: engine.now().tick, commandId: `c${++n}`, rttMs: 0 };
+      const cmd = { ...c, id: `c${++n}`, issuedBy: 'instructor' } as ScenarioCommand;
+      const r = await driver.hook(cmd);
+      const ev = { type: 'commandApplied', commandId: cmd.id, tick: r.tick, resolved: { command: r.applied ?? cmd } } as WireEvent;
+      if (r.accepted) (sv.onEvent(ev), record.wire(ev));
+      return { ...r, commandId: cmd.id, rttMs: 0 };
+    };
+    const host = { spec: SPEC, mode: 'modeled', record, driver };
+    const link = {
+      ctl, get simT() { return engine.now().simT; }, conditions: new Map(), alarms: null, alarmSummary: { level: null, n: 0, top: null }, log: [], ramps: new Map(), host,
+      send, sendBatch: async (cs: CommandInput[]) => Promise.all(cs.map(send)), note: () => undefined, onChange: () => () => undefined,
+    } as unknown as Link;
+    /** The session's load (session.ts loadScenario): the run ended, a new body, a new record (its 'restart' timeline), the card's load. */
+    const loads: Array<[string, RoomKeep | undefined]> = [];
+    const load = (c: ScenarioCard, room?: RoomKeep) => {
+      loads.push([c.id, room]);
+      driver.runner = null;
+      engine = body();
+      record.wire({ type: 'timeline', cause: 'restart', t: 0 } as WireEvent);
+      void send({ type: 'scenario', action: 'load', doc: c.doc } as CommandInput);
+      return true;
+    };
+    const ROOM: RoomKeep = { sensors: { cvp: 'connected' } };
+    const hooks = { restart: () => restartSameCard(driver, load, () => ROOM), close: () => undefined };
+    const run = async (secs: number) => {
+      const end = engine.now().tick + Math.round(secs * 50);
+      for (let tick = engine.now().tick + 1; tick <= end; tick++) {
+        engine.advanceTo(tick * 0.02);
+        driver.poll();
+        if (tick % 10 === 0) await new Promise((r) => setTimeout(r, 0));
+      }
+      ctl.simT = engine.now().simT;
+    };
+    /** An A press (teach2/press.ts pressAction): the action's `give`, every command stamped with its id. */
+    const press = async (actionId: string) => {
+      const act = (card.doc as unknown as ScenarioDocV2).actions.find((a) => a.id === actionId) as Action;
+      for (const c of act.give ?? []) {
+        const { $comment: _drop, ...cmd } = c as typeof c & { $comment?: string };
+        expect((await driver.host.dispatch({ ...cmd, id: `p${++n}`, issuedBy: 'instructor', stageGroup: `press-${actionId}`, actionId } as unknown as Command)).accepted, actionId).toBe(true);
+      }
+      await run(1);
+    };
+    return { card, sv, driver, record, link, hooks, loads, ROOM, send, run, press, sent, ctl };
+  }
+
+  it('saves the run to the archive, then loads the same card again: Baseline, a new phase runner, a fresh record', async () => {
+    const r = v2rig();
+    expect(await r.send({ type: 'scenario', action: 'load', doc: r.card.doc } as CommandInput)).toMatchObject({ accepted: true });
+    await r.run(2);
+    await r.press('preoxygenate');
+    await r.press('premedicate');
+    await r.run(5);
+    const first = r.driver.phaseRunner;
+    expect(first?.takings).toEqual({ preoxygenate: 1, premedicate: 1 });
+    const run = r.record.data.startedAt;
+
+    const v = teach2View(r.link, { site: DEFAULT_SITE, weightKg: () => 80, loadScenario: () => true, finish: r.hooks });
+    use({ v });
+    document.body.append(v.el);
+    v.enter?.('');
+    const click = async (sel: string) => {
+      (v.el.querySelector(sel) as HTMLElement).click();
+      for (let i = 0; i < 4; i++) await settle();
+      v.enter?.('');
+    };
+    await click('.ip2-finish-btn');
+    const f = v.el.querySelector('.ip2-finish-resident') as HTMLInputElement;
+    f.value = 'Dr Karimi';
+    f.dispatchEvent(new Event('input', { bubbles: true }));
+    await click('.ip2-finish-restart');
+
+    // saved first: the archive has the run, its /2 debrief with the two takings
+    const [e] = archive.list();
+    expect(archive.list()).toHaveLength(1);
+    expect(e).toMatchObject({ resident: 'Dr Karimi', title: 'Malignant hyperthermia (phases)', runStartedAt: run });
+    const saved = JSON.parse(archive.debrief(e?.id as string) as string) as { schema: string };
+    expect(saved.schema).toBe('pme-debrief/3');
+    // then the same card again, with the room as it stood, through the app's one load
+    expect(r.loads).toEqual([['showcase-mh-v2', r.ROOM]]);
+    for (let i = 0; i < 4; i++) await settle();
+    await r.run(1);
+    const again = r.driver.phaseRunner;
+    expect(again, 'a new phase runner').not.toBe(first);
+    expect(again?.doc.id).toBe('showcase-mh-v2');
+    expect(again?.stateId).toBe('baseline');
+    expect(again?.takings).toEqual({});
+    expect(again?.phases.map((p) => p.id)).toEqual(['baseline']);
+    // a fresh record: the new run's, its load the first row, nothing of the saved run's
+    expect(r.record.data.startedAt).not.toBe(run);
+    expect(r.record.data.doc?.id).toBe('showcase-mh-v2');
+    expect(r.record.data.rows[0]?.text).toBe('Scenario loaded: Malignant hyperthermia (phases)');
+    expect(r.record.data.admin ?? []).toEqual([]);
+    const pane = v.el.querySelector<HTMLElement>('.ip2-finish');
+    expect(!pane || pane.hidden || !!pane.closest('[hidden]'), 'the pane closed').toBe(true);
+    expect([...document.querySelectorAll('.toast')].map((t) => t.textContent)).toContain('Debrief saved: Dr Karimi · Malignant hyperthermia (phases). The case starts again.');
+  }, 60_000);
 });
