@@ -8,7 +8,7 @@
 // (`pme-debrief/3`; a team act the instructor observes is a record action among the actions: judged rows are retired,
 // the owner's ruling of 5 November). No DOM.
 import { asV1, isV2, manualLabel, type MarkKind } from '@pme/controller';
-import { grade, ruleWords, type Anchor, type Grade, type Grades, type ObjectiveRule, type PhaseEntry, type RunEventId, type ScenarioDocV2 } from '@pme/controller/scenario';
+import { grade, ruleWords, type Anchor, type Grade, type Grades, type HintAnchor, type ObjectiveRule, type PhaseEntry, type RunEventId, type ScenarioDocV2 } from '@pme/controller/scenario';
 import { FIXED_ALARM_WORDS } from './alarms.ts';
 import { untakenStatus, type Evidence } from './card-read.ts';
 import { CONDITIONS } from './describe.ts';
@@ -46,7 +46,7 @@ export const isEvent = (id: string | undefined, want: RunEventId): boolean => !!
 const VALUE = /^value:(hr|map|spo2|etco2|rr|temp|k|lactate|ph|glucose|tcore)([<>])(\d+(?:\.\d+)?)$/;
 /** The first kept row of `want` (or of any of a list) at or after `from`, or null. 'start' is the run's first second; a
  *  'value:' event is the first sample past its limit. */
-function first(d: RunData, want: RunEventId | RunEventId[], from = -Infinity): Row | null {
+export function first(d: RunData, want: RunEventId | RunEventId[], from = -Infinity): Row | null {
   if (Array.isArray(want)) return want.map((w) => first(d, w, from)).filter((r): r is Row => r !== null).sort((a, b) => a.t - b.t)[0] ?? null;
   if (want === 'start') return { t: 0, kind: 'scenario', text: 'the start' };
   const v = VALUE.exec(want);
@@ -334,6 +334,16 @@ export interface Report3 {
   violations: Array<{ t: number; seq: number; text: string; harm: 'modelled' | 'not modelled' }>;
 }
 
+/** When a string anchor happened on a /2 run (grade()'s reading: 'start' is 0, a phase its first entry, an action its
+ *  graded dose, pulseLoss / rosc the first true edge), or undefined: it did not. The outcomes and the card's openers (D9)
+ *  read it. */
+export function stringAnchorAt(d: RunData, g: Grades, an: HintAnchor): number | undefined {
+  if (an === 'start') return 0;
+  if (an.startsWith('phase:')) return (d.phases ?? []).find((p: PhaseEntry) => p.id === an.slice(6))?.t;
+  if (an.startsWith('action:')) return g.actions.find((a) => a.id === an.slice(7))?.givenT;
+  return (d.edges ?? []).find((e) => e.rule === an && e.value)?.t;
+}
+
 /** The report of a /2 run (null: a /1 run, or no copied inputs). */
 export function report3(d: RunData): Report3 | null {
   const g = gradesOf(d);
@@ -345,9 +355,7 @@ export function report3(d: RunData): Report3 | null {
     typeof an !== 'string' ? ruleWords(an.rule) : an.startsWith('phase:') ? `the phase "${doc.phases.find((p) => p.id === an.slice(6))?.label ?? an.slice(6)}"`
     : an.startsWith('action:') ? label(an.slice(7)) : ({ start: 'the start', pulseLoss: 'the pulse loss', rosc: 'the return of circulation' } as Record<string, string>)[an] ?? an;
   // when the outcome's anchor happened (grade()'s reading: the first entry, the action's graded dose, the first true edge)
-  const anchorAt = (id: string, an: Anchor): number | undefined =>
-    an === 'start' ? 0 : typeof an !== 'string' ? firstEdge(`outcome:${id}:anchor`) : an.startsWith('phase:') ? (d.phases ?? []).find((p: PhaseEntry) => p.id === an.slice(6))?.t
-    : an.startsWith('action:') ? g.actions.find((a) => a.id === an.slice(7))?.givenT : firstEdge(an);
+  const anchorAt = (id: string, an: Anchor): number | undefined => (typeof an !== 'string' ? firstEdge(`outcome:${id}:anchor`) : stringAnchorAt(d, g, an));
   return {
     actions: g.actions.map((a) => ({
       id: a.id, label: a.label, kind: doc.actions.find((x) => x.id === a.id)?.kind ?? '', grade: a.grade, firstGrade: a.firstGrade, lines: a.lines,
