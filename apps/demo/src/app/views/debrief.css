@@ -97,7 +97,7 @@
 .debrief .db-swim svg { display: block; width: 100%; height: auto; max-width: 60rem; }
 .debrief .db-hint-block h3 { margin: var(--s-2) 0 var(--s-1); font-size: var(--t-13); }
 .debrief .db-hint-show, .debrief .db-hint-openers { margin: 0; padding-left: 1.4em; }
-.debrief .db-hint-at { font-weight: 700; white-space: nowrap; }
+.debrief .db-hint-at { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .debrief .db-swim text { font: 8px sans-serif; fill: var(--text-muted); }
 .debrief .db-swim .db-swim-l { font: 700 9px sans-serif; fill: var(--text-strong); }
 .debrief .db-swim .db-swim-wl, .debrief .db-swim .db-swim-v { fill: var(--text-strong); }
