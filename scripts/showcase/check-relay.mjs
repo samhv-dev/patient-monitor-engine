@@ -10,8 +10,9 @@
 // Per run: a 64-byte binary frame (the relay drops it), a host hello of >= 64 bytes (answer: the relay's `peers` frame),
 // a controller hello, a 1 KB host event that the relay forwards to the controller byte for byte, /pme-relay.json still
 // answers; after the relay's first heartbeat sweep (10 s), a viewer that joins makes the host's `peers` frame list the
-// controller with its measured round trip (`devices`, plan room-and-instruments.md R2); the relay is still running; then
-// the relay is stopped and the port is free again.
+// controller with its measured round trip (`devices`, plan room-and-instruments.md R2); a ventilator says hello with a
+// PIN, the host grants it, its `vent` `cmds` reach the host and the host's `vent` `clock` reaches it, byte for byte
+// (R8b); the relay is still running; then the relay is stopped and the port is free again.
 //   node scripts/showcase/check-relay.mjs [KIT_DIR] [--port 8690] [--json OUT.json]
 // Needs Node.js >= 22 (its built-in WebSocket client). Port 8690 (and the next 9) keeps clear of a classroom on 8650.
 import { spawn } from 'node:child_process';
@@ -161,6 +162,37 @@ async function frames(port, proc, steps) {
   if (!ctlRow || typeof ctlRow.rttMs !== 'number' || !viewRow || viewRow.show !== 'learner' || viewRow.device !== 'kitcheck0123')
     throw new Error(`the host's device table after a sweep: ${JSON.stringify(table)}`);
   step(`after one sweep the host's devices list the controller with rttMs ${ctlRow.rttMs} and the viewer showing ${viewRow.show}`);
+
+  // R8b: the ventilator's wire. A cockpit says hello with the PIN, the host grants it, and `vent` runs between them only
+  const hostNext = async (what, pred) => {
+    for (let i = 0; i < 6; i++) {
+      const raw = await host.next(what);
+      if (pred(JSON.parse(raw))) return raw;
+    }
+    throw new Error(`the host never got ${what}`);
+  };
+  const VENT_ID = 'kit-check-ventilator';
+  const vent = socket(port, proc);
+  await vent.opened;
+  vent.ws.send(wire('hello', VENT_ID, 1, { role: 'ventilator', pin: '4729' }));
+  await hostNext('the ventilator hello', (f) => f.kind === 'hello' && f.from === VENT_ID && f.role === 'ventilator');
+  host.ws.send(wire('grant', 'kit-check-host-0123456789abcdef', 3, { to: VENT_ID, granted: true }));
+  for (let f = null; f?.kind !== 'grant'; ) f = JSON.parse(await vent.next('the grant at the ventilator'));
+  const frame = { pawCmH2O: 5, flowLps: 0, volumeMl: 0, fio2: 0.4, peepCmH2O: 5 };
+  const cmds = wire('vent', VENT_ID, 2, { body: { v: 1, kind: 'cmds', tick: 1, cmds: [{ id: 'vent-1', issuedBy: 'ventilator', type: 'externalDrive', source: 'ventilator', frame }] } });
+  vent.ws.send(cmds);
+  const upGot = await hostNext('the ventilator cmds', (f) => f.kind === 'vent');
+  if (upGot !== cmds) throw new Error(`the ventilator's cmds differ at the host (${upGot.length} vs ${cmds.length} bytes)`);
+  const clock = wire('vent', 'kit-check-host-0123456789abcdef', 4, { to: VENT_ID, body: { v: 1, kind: 'clock', ventTick: 80 } });
+  host.ws.send(clock);
+  let downGot = null;
+  for (let i = 0; i < 4 && !downGot; i++) {
+    const r = await vent.next("the host's clock at the ventilator");
+    if (JSON.parse(r).kind === 'vent') downGot = r;
+  }
+  if (downGot !== clock) throw new Error(`the host's clock differs at the ventilator: ${downGot}`);
+  step(`ventilator granted; its vent cmds (${Buffer.byteLength(cmds)} bytes) reached the host and the host's vent clock reached it, byte for byte`);
+  vent.ws.close();
   view.ws.close();
   host.ws.close();
   ctl.ws.close();
