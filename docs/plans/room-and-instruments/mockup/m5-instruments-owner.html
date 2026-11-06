@@ -1,0 +1,30 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Room setup — instrument cards</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet"><link rel="stylesheet" href="base.css"><link rel="stylesheet" href="instruments.css">
+<style>
+:root{--bg:#0d1014;--ink:#e8edf2;--muted:#8a95a3;--surface:#141920;--line:#222a34;--btn:#1f2731;--accent:#5fd99b;--on-accent:#06120b}
+.page{max-width:1120px;margin:0 auto;padding:32px 32px 60px}
+.top{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.top p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.join{display:flex;align-items:center;gap:14px}
+.join .code{font-size:26px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.card h3{margin:0;font-size:17px;font-weight:600}
+.card p{margin:0;color:#c6ced8;font-size:13.5px;min-height:38px}
+.card .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card .acts{display:flex;gap:6px}
+.card .acts button{padding:7px 10px;font-size:13px}
+.foot{margin-top:22px;color:var(--muted);font-size:13.5px}
+</style></head><body><div class="page">
+<div class="top"><div><h1>Room setup</h1><p>Each screen in the room is one instrument. Open an instrument here, on a second screen, or on a device that scans the code.</p></div>
+ <div class="join"><div class="qr" style="width:56px;height:56px;border-radius:6px;background:repeating-conic-gradient(#e8edf2 0 25%,#0d1014 0 50%) 0 0/7px 7px;border:4px solid #fff"></div><div><div class="small muted">Room code</div><div class="code">GP3P4G</div></div></div></div>
+<section class="grid">
+ <article class="card"><div class="pic" data-pic="monitor"></div><div class="row"><h3>Patient monitor</h3><span class="st on">This screen</span></div><p>ECG, pressures, SpO₂, capnography and temperature in the Saadat-style skin.</p><div class="row"><span class="small muted">Projector</span><div class="acts"><button>New window</button><button>To a device</button></div></div></article>
+ <article class="card"><div class="pic" data-pic="vent"></div><div class="row"><h3>Ventilator</h3><span class="st on">Screen 2</span></div><p>Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient.</p><div class="row"><span class="small muted">Opened 21:40</span><div class="acts"><button>New window</button><button>To a device</button></div></div></article>
+ <article class="card"><div class="pic" data-pic="bis"></div><div class="row"><h3>Depth of anaesthesia</h3><span class="st">Not open</span></div><p>BIS-style index with SQI and EMG, following the hypnotic effect-site concentration.</p><div class="row"><span class="small muted">—</span><div class="acts"><button>New window</button><button>To a device</button></div></div></article>
+ <article class="card"><div class="pic" data-pic="iabp"></div><div class="row"><h3>Intra-aortic balloon pump</h3><span class="st">Coming later</span></div><p>Timing, augmentation and the arterial trace with the balloon's effect.</p><div class="row"><span class="small muted">Not in this release</span><div class="acts"><button disabled>New window</button></div></div></article>
+ <article class="card"><div class="pic" data-pic="defib"></div><div class="row"><h3>Defibrillator</h3><span class="st">Not open</span></div><p>Rhythm strip, energy selection, charge and shock, pacing.</p><div class="row"><span class="small muted">—</span><div class="acts"><button>New window</button><button>To a device</button></div></div></article>
+ <article class="card"><div class="pic" data-pic="phone"></div><div class="row"><h3>Learner phones</h3><span class="st on">3 following</span></div><p>Each learner's phone follows the monitor; they tick what they noticed for the debrief.</p><div class="row"><span class="small muted">Scan the room code</span><div class="acts"><button>Show large QR</button></div></div></article>
+</section>
+<p class="foot">Last time in this room: monitor on the projector, ventilator on screen 2, 3 phones. <a href="#">Reopen that layout</a></p>
+</div><script src="instruments.js"></script></body></html>

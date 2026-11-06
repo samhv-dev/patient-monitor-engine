@@ -199,6 +199,7 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
   /** Display-rule anchors of action windows (F9), checked below. */
   const displayAnchors: Array<[DisplayRule, string]> = [];
   let initial: string | null = null;
+  let recognition: string | null = null;
   doc.phases.forEach((p, i) => {
     if (p.initial) {
       if (initial === null) initial = p.id;
@@ -231,6 +232,10 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
       if (a.window?.failAfterS !== undefined) errors.push(`${at}/window/failAfterS: not with an each:action anchor`);
     } else if (wa !== undefined) anchor(wa as Anchor, `${at}/window/anchor`);
     if (a.window?.failAfterS !== undefined && a.window.failAfterS <= a.window.withinS) errors.push(`${at}/window/failAfterS: ${a.window.failAfterS} s must be greater than withinS ${a.window.withinS} s`);
+    if (a.recognition) {
+      if (recognition === null) recognition = a.id;
+      else errors.push(`${at}/recognition: a second recognition action (the first is "${recognition}"); a card has at most one`);
+    }
     if (a.preparation && a.window) errors.push(`${at}/window: a preparation step is recorded, never graded: it has no window`);
     if (a.repeat && a.repeatWhile) errors.push(`${at}/repeat: an action has repeat or repeatWhile, not both`);
     const iv = a.repeat?.intervalS;

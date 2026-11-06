@@ -1,5 +1,6 @@
 // The session bar (research/13 brief §5, §7): patient one-liner, the MODELED / MANUAL / "n held" badge (a popover
-// dialog lists held values with "Return to model"), the scenario's state and time, sim speed and pause, and a bookmark.
+// dialog lists held values with "Return to model"), the scenario's state and time, sim speed and pause, a bookmark, and
+// the /1 "Recognised" press (recognised.ts; not shown on a pme-scenario/2 card).
 // It reads the same Link as the panel, so it is identical same-screen and on a Remote.
 import type { Link } from './link.ts';
 import { hrefOf } from './router.ts';
@@ -13,6 +14,7 @@ import { bookmark } from './commands.ts';
 import { FF_SPANS } from './fast-forward.ts';
 import { spanText } from './describe.ts';
 import { readyV2 } from './teach2/dock.ts';
+import { recognisedButton } from './recognised.ts';
 import { button, clock, h, infoDialog, PIN_SVG, seg, setText, throttle, toast, WAVE_SVG } from './ui.ts';
 
 /** The speeds the bar offers (×8 added for the 22 Oct demonstration; the host accepts 0.25–8). */
@@ -46,6 +48,7 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
   const ff = h('div', { class: 'ff-group', role: 'group', 'aria-label': 'Fast-forward' }, ...ffs);
   const mark = button('Bookmark', () => void bookmark(link), 'small ghost');
   mark.setAttribute('aria-keyshortcuts', 'Shift+B');
+  const recognised = recognisedButton(link, 'btn small ghost sb-recognised'); // D5: beside Bookmark; no keyboard key
 
   const held = (): StateVar[] => Object.entries(link.ctl.state?.control ?? {}).filter(([, f]) => f === 'pinned' || f === 'ramping').map(([v]) => v as StateVar);
   badge.addEventListener('click', () => {
@@ -58,9 +61,9 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
     void infoDialog(m === 'modeled' ? 'MODELED' : 'MANUAL', body);
   });
 
-  bar.replaceChildren(h('div', { class: 'sb-left' }, who, badge, scen), h('div', { class: 'sb-right' }, t, speed, pause, ff, mark));
+  bar.replaceChildren(h('div', { class: 'sb-left' }, who, badge, scen), h('div', { class: 'sb-right' }, t, speed, pause, ff, mark, recognised.el));
   const debrief = h('a', { class: 'btn small ghost sb-debrief', href: hrefOf('debrief') }, 'Debrief'); // The report, at any time
-  mark.after(debrief);
+  recognised.el.after(debrief);
   const draw = throttle(() => {
     const host = link.host;
     const p = link.ctl.scenario.doc?.patient;
@@ -78,6 +81,7 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
     setText(scen, sv.doc ? `${cardOf(sv.doc).title}: ${sv.label()} ${clock(sv.timeInState(link.simT))}` : 'No scenario');
     debrief.dataset.ready = String(sv.doc && isV2(sv.doc) ? readyV2(link) : !!asV1(sv.doc) && !sv.current()?.transitions?.length); // the scenario has ended (/2: an end phase or Finish the case)
     setText(t, clock(link.simT));
+    recognised.refresh();
     for (const b of ffs) b.disabled = link.ctl.fastForward !== null; // One at a time
     // The speed and pause the HOST runs at, wherever they were set (a Remote showed ×1 under a ×4 host)
     const k = String(link.ctl.timeScale);
