@@ -12,10 +12,10 @@ test.afterAll(async () => vite?.close());
 
 type App = { __pmeApp: { session: { code: string; simNow(): number; monitor: unknown; spec: unknown; mode: string; restart(s: unknown): void }; link: { simT: number; log: Array<{ kind: string; text: string }>; ctl: { state: { values: Record<string, number>; control: Record<string, string> } | null } }; shell: { monitorHost: HTMLElement } } };
 
-const ROUTES = ['#/explore/haemodynamics', '#/settings', '#/dev', '#/monitor', '#/', '#/teach', '#/teach2'];
+const ROUTES = ['#/explore/haemodynamics', '#/settings', '#/dev', '#/monitor', '#/', '#/teach2'];
 const engineT = (page: Page) => page.evaluate(() => (window as unknown as App).__pmeApp.link.simT);
 
-/** The seven views (Instructor v2 added, IP9), the engine clock read at each; `at` runs before a route is shown. Fails if the engine clock went back. */
+/** The six views (Instructor v2 added, IP9; today's Instructor view dropped, retire-instructor-v1 PR 2), the engine clock read at each; `at` runs before a route is shown. Fails if the engine clock went back. */
 async function walk(page: Page, at: Partial<Record<string, () => Promise<void>>> = {}): Promise<void> {
   let prev = await engineT(page);
   for (const r of ROUTES) {
@@ -29,7 +29,7 @@ async function walk(page: Page, at: Partial<Record<string, () => Promise<void>>>
 
 test('every view shares the one engine session', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(60_000); // fix-ci-webkit-3: CI's WebKit hit the 30 s default in the route walk (29.3 s, page closed)
-  await openApp(page, base, '#/teach', { warmMs: 3000 });
+  await openApp(page, base, '#/teach2', { warmMs: 3000 });
   await page.evaluate(() => ((window as unknown as { __host: unknown }).__host = (window as unknown as App).__pmeApp.shell.monitorHost.firstElementChild));
   const simNow = () => page.evaluate(() => (window as unknown as App).__pmeApp.session.simNow());
   const t0 = await simNow();
@@ -51,7 +51,7 @@ test('every view shares the one engine session', { tag: '@known-flaky' }, async 
 // restart (a new engine) still fails the check.
 test('a stalled engine worker is not a restart; a new engine is (FX-11)', async ({ page }) => {
   test.setTimeout(60_000);
-  await openApp(page, base, '#/teach', { warmMs: 3000 });
+  await openApp(page, base, '#/teach2', { warmMs: 3000 });
   const worker = page.workers().at(-1);
   test.skip(!worker, 'this browser runs the monitor on the main thread (no worker to stall)');
   await page.evaluate(() => ((window as unknown as { __host: unknown }).__host = (window as unknown as App).__pmeApp.shell.monitorHost.firstElementChild));
@@ -63,9 +63,9 @@ test('a stalled engine worker is not a restart; a new engine is (FX-11)', async 
 });
 
 test('the scenario deep link loads the case into the instructor view', async ({ page }) => {
-  await openApp(page, base, '?scenario=acls-vf-witnessed');
-  await expect(page).toHaveURL(/#\/teach$/);
-  await expect(page.locator('.sessionbar .scen')).toContainText('Witnessed VF in PACU', { timeout: 10_000 });
+  await openApp(page, base, '?scenario=acls-vf-witnessed'); // a deep link with no hash opens the Instructor view
+  await expect(page).toHaveURL(/#\/teach2$/);
+  await expect(page.locator('.ip2-head .ip2-title')).toContainText('Witnessed VF in PACU', { timeout: 10_000 });
 });
 
 test('changing the monitor in Settings updates the mirrored alarm colours', async ({ page }) => {
@@ -83,18 +83,19 @@ test('learner controls: off by default, switched on per scenario, logged as lear
   await openApp(page, base, '?scenario=acls-vf-witnessed', { warmMs: 1500 });
   await go(page, '#/monitor');
   await expect(page.locator('.learner-strip')).toBeHidden();
-  await go(page, '#/teach');
-  await page.click('[role=tab][data-tab=scenario]');
-  await page.getByRole('button', { name: 'Learner controls on the monitor' }).click();
+  // retire-instructor-v1 G1: the switch is in the Devices body; Instructor v2's Devices sheet carries it
+  await go(page, '#/teach2');
+  await page.locator('.ip2-dock button.ip2-tool[data-sheet="devices"]').click();
+  await page.locator('.ip2-sheet[data-sheet="devices"]').getByRole('button', { name: 'Learner controls on the monitor' }).click();
   await go(page, '#/monitor');
   await expect(page.locator('.learner-strip')).toBeVisible();
   await page.locator('.learner-strip').getByRole('button', { name: 'Charge 200 J' }).click();
   // fix-ci-webkit-3: a learner action is logged when the engine acknowledges it; CI's WebKit took longer than the 5 s the
   // Log tab check allowed (no learner line at all). Wait for the acknowledged entry in the link's log, then check the tab.
   await expect.poll(() => page.evaluate(() => (window as unknown as App).__pmeApp.link.log.filter((e) => e.kind === 'learner').map((e) => e.text).join(' | ')), { timeout: 20_000 }).toContain('Defibrillator charging to 200 J');
-  await go(page, '#/teach');
-  await page.click('[role=tab][data-tab=log]');
-  await expect(page.locator('.log li[data-kind=learner]')).toContainText('Defibrillator charging to 200 J');
+  await go(page, '#/teach2');
+  await page.locator('.ip2-dock button.ip2-tool[data-sheet="log"]').click();
+  await expect(page.locator('.ip2-sheet[data-sheet="log"] .log li[data-kind=learner]')).toContainText('Defibrillator charging to 200 J');
 });
 
 test('a remote pairs by code and changes the host patient', { tag: '@known-flaky' }, async ({ page, context }) => {
@@ -117,7 +118,7 @@ test('a remote pairs by code and changes the host patient', { tag: '@known-flaky
   // the engine's own state says HR is held before the badge is read (R50 review F7: the badge redraws at ≤ 2 Hz on a
   // page that was in the background, so reading it first raced under two workers)
   await expect.poll(() => page.evaluate(() => (window as unknown as App).__pmeApp.link.ctl.state?.control.hr ?? ''), { timeout: 10_000 }).toBe('pinned');
-  await page.bringToFront(); // a background tab draws no frames, so its session bar waits until it is visible
-  await go(page, '#/teach');
-  await expect(page.locator('.sessionbar .mode-badge')).toContainText('1 held', { timeout: 10_000 });
+  await page.bringToFront(); // a background tab draws no frames, so its header waits until it is visible
+  await go(page, '#/teach2'); // the host's Instructor view (v2's header carries the session bar's mode badge)
+  await expect(page.locator('.ip2-head .ip2-mode')).toContainText('1 held', { timeout: 10_000 });
 });
