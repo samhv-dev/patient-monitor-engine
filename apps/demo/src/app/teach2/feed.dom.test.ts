@@ -291,7 +291,7 @@ describe('P6: the view feed and the note path', () => {
     await hostLink.send({ type: 'time', action: 'pause' });
     s.endBriefing(); // its countdown runs on the wall clock
     await run(10, 1500);
-    const v = teach2View(hostLink, { site: DEFAULT_SITE, weightKg: () => 80 });
+    const v = teach2View(hostLink, { site: DEFAULT_SITE, weightKg: () => 80, loadScenario: () => true });
     document.body.append(v.el);
     closers.push(() => v.destroy());
     v.enter?.('');

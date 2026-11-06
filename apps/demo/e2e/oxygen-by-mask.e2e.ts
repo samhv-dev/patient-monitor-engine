@@ -5,7 +5,7 @@
 // Driven through the visible UI only. Chromium only (one engine path; CI amendment rules).
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
-import { openApp, startVite, tab } from './app-support.ts';
+import { debriefLinkV2, deliver, openApp, sheet, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -13,47 +13,44 @@ test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 
 const LINE = 'Oxygen by face mask 10 L/min (FiO₂ 60 %)';
-const fio2 = async (page: Page) => {
-  await tab(page, 'vitals');
-  return page.locator('[data-var=fio2] .now').innerText();
-};
+// Instructor v2: the Vitals and Airway sheets (today's tab bodies); Deliver is the staged footer's Commit
+const fio2 = async (page: Page) => (await sheet(page, 'vitals')).locator('[data-var=fio2] .now').innerText();
 const giveOxygen = async (page: Page, device: string) => {
-  await tab(page, 'airway');
-  await page.getByRole('group', { name: 'Oxygen' }).getByRole('button', { name: device }).click();
-  await page.locator('h3:text-is("Oxygen") ~ .row').first().getByRole('button', { name: 'Stage' }).click();
-  await page.locator('.stagebar button.primary').click(); // Commit
+  const airway = await sheet(page, 'airway');
+  await airway.getByRole('group', { name: 'Oxygen' }).getByRole('button', { name: device }).click();
+  await airway.locator('h3:text-is("Oxygen") ~ .row').first().getByRole('button', { name: 'Stage' }).click();
+  await deliver(page); // Commit
 };
 
 test('oxygen by face mask on the breathing patient: FiO₂ 21 → 60 %, logged, and printed by the Debrief', async ({ page, browserName }) => {
   test.skip(browserName === 'webkit', 'Chromium only');
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 1280, height: 800 });
-  await openApp(page, base, '#/patient', { warmMs: 2000 }); // E125: the free-run patient's page
+  await openApp(page, base, '#/patient', { warmMs: 2000 }); // E125: the free-run patient's page; its button opens Instructor v2
   await page.click('text=Open the instructor view');
 
   await expect.poll(() => fio2(page), { timeout: 10_000 }).toBe('21');
   await giveOxygen(page, 'Face mask');
   await expect.poll(() => fio2(page), { timeout: 15_000 }).toBe('60');
 
-  await tab(page, 'log');
-  await expect(page.locator('.log')).toContainText(LINE);
+  await expect((await sheet(page, 'log')).locator('.log')).toContainText(LINE);
 
   await giveOxygen(page, 'Off (room air)');
   await expect.poll(() => fio2(page), { timeout: 15_000 }).toBe('21');
 
   // on the ventilator the control is off: FiO₂ is the ventilator's, and Oxygen must never take the patient off it
-  await tab(page, 'airway');
-  await page.getByRole('group', { name: 'Breathing' }).getByRole('button', { name: 'Ventilator' }).click();
-  await page.locator('h3:text-is("Breathing") ~ .row').first().getByRole('button', { name: 'Stage' }).click();
-  await page.locator('.stagebar button.primary').click(); // Commit
-  const o2Stage = page.locator('h3:text-is("Oxygen") ~ .row').first().getByRole('button', { name: 'Stage' });
+  const airway = await sheet(page, 'airway');
+  await airway.getByRole('group', { name: 'Breathing' }).getByRole('button', { name: 'Ventilator' }).click();
+  await airway.locator('h3:text-is("Breathing") ~ .row').first().getByRole('button', { name: 'Stage' }).click();
+  await deliver(page); // Commit
+  const o2Stage = airway.locator('h3:text-is("Oxygen") ~ .row').first().getByRole('button', { name: 'Stage' });
   await expect(o2Stage).toBeDisabled({ timeout: 10_000 });
   // the FiO₂ the engine reports: it reaches the ventilator's 50 % within a few seconds of the commit
-  await expect(page.getByText(/in use.*: FiO₂ 50 % from the ventilator\./)).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByRole('group', { name: 'Oxygen' }).locator('[aria-pressed=true]')).toHaveCount(0);
-  await expect(page.getByRole('group', { name: 'Oxygen' }).getByRole('button', { name: 'Face mask' })).toBeDisabled();
+  await expect(airway.getByText(/in use.*: FiO₂ 50 % from the ventilator\./)).toBeVisible({ timeout: 15_000 });
+  await expect(airway.getByRole('group', { name: 'Oxygen' }).locator('[aria-pressed=true]')).toHaveCount(0);
+  await expect(airway.getByRole('group', { name: 'Oxygen' }).getByRole('button', { name: 'Face mask' })).toBeDisabled();
 
-  await page.click('.sessionbar >> text=Debrief');
+  await debriefLinkV2(page).click();
   const timeline = page.locator('.db-timeline');
   await expect(timeline).toContainText(LINE, { timeout: 10_000 });
   await expect(timeline).toContainText('Oxygen off: room air (FiO₂ 21 %)');

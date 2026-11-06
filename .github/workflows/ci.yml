@@ -18,6 +18,7 @@ jobs:
     outputs:
       code: ${{ steps.f.outputs.code }}
       engine: ${{ steps.f.outputs.engine }}
+      e2e_matrix: ${{ steps.e2e.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,6 +31,12 @@ jobs:
           engine=false; grep -qE '^(packages/(engine-core|skins)/|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|package\.json$|tsconfig[^/]*\.json$|vitest\.workspace\.ts$|\.github/workflows/)' "$RUNNER_TEMP/files.txt" && engine=true
           echo "code=$code engine=$engine"
           echo "code=$code" >> "$GITHUB_OUTPUT"; echo "engine=$engine" >> "$GITHUB_OUTPUT"
+      # The e2e matrix, one row per shard, from scripts/ci/e2e-sets.mjs: the one place each set's shard count is set (the
+      # shard plan and e2e-count read it there too).
+      - id: e2e
+        run: |
+          m=$(node scripts/ci/e2e-sets.mjs matrix); echo "$m"
+          echo "matrix=$m" >> "$GITHUB_OUTPUT"
 
   # Documents-only PRs (docs/, root *.md, CITATION.cff): every unit-test file that reads a document
   # (scripts/ci/docs-tests.mjs; packages/validation/test/docs-readers.test.ts keeps that list complete) and the NOTICES
@@ -189,15 +196,19 @@ jobs:
 
   # fix-ci-webkit-3: one e2e job per browser (was one step running both on one 2-vCPU runner, so each browser's
   # wall-clock-sensitive tests ran beside the other's load). Retries stay at 2 (playwright.config.ts, CI).
-  # ci-faster: each gating suite runs in three shards (Playwright --shard, by file; every e2e server binds port 0 and
+  # ci-faster: each gating suite runs in shards (Playwright --shard, by file; every e2e server binds port 0 and
   # each shard is its own machine; WebKit keeps workers: 1 inside its shard). Each shard uploads its own report and runs
   # the retry-only check on it; the e2e-count job proves the shards together ran every test (research/42 §1.4 b). The
-  # quarantine stays one job. Three shards, not four: the shard that got teach2-fit.e2e.ts (≈ 18 min alone) set the
+  # quarantine stays one job. Three shards then, not four: the shard that got teach2-fit.e2e.ts (≈ 18 min alone) set the
   # floor, which three already reach. That file is now three (teach2-fit-stages, -panes, -strip); Playwright fills a
   # shard with a contiguous run of files by test count, so the three adjacent files still shared one shard. So each
   # shard's files now come from scripts/ci/e2e-shard-plan.mjs: per-file durations from the last green main run's
   # reports of the same set, longest first onto the least-loaded shard; Playwright's --shard when there is no usable
   # report. The e2e-count job's proof is unchanged (it sums the shard reports, however the files were split).
+  # ci-shard4: Chromium in four shards. Balanced by duration, its three still each held ≈ 34 recorded min over two workers,
+  # ≈ 17 min of tests plus set-up = 20.3–20.4 min wall; four put each near 13 min of tests. WebKit stays at three (≈ 16.4
+  # recorded min each). The matrix is built in the changes job from scripts/ci/e2e-sets.mjs, where each set's shard
+  # count is set once; e2e-shard-plan.mjs and e2e-count.mjs read the same count.
   # ci-stabilise (2026-10-24): the jobs run in the official Playwright image, which carries the browsers and their
   # system libraries, so no job runs `playwright install --with-deps` (its apt step stalled up to 40 min on the runner's
   # Ubuntu mirror). The @known-flaky tests run on WebKit in their own non-blocking job, e2e-quarantine (webkit); the
@@ -209,15 +220,8 @@ jobs:
     if: needs.changes.outputs.code == 'true'
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - { browser: chromium, set: all, grep: '', report: chromium, shard: 1, of: 3 }
-          - { browser: chromium, set: all, grep: '', report: chromium, shard: 2, of: 3 }
-          - { browser: chromium, set: all, grep: '', report: chromium, shard: 3, of: 3 }
-          - { browser: webkit, set: gating, grep: '--grep-invert @known-flaky', report: webkit, shard: 1, of: 3 }
-          - { browser: webkit, set: gating, grep: '--grep-invert @known-flaky', report: webkit, shard: 2, of: 3 }
-          - { browser: webkit, set: gating, grep: '--grep-invert @known-flaky', report: webkit, shard: 3, of: 3 }
-          - { browser: webkit, set: known-flaky, grep: '--grep @known-flaky', report: webkit-known-flaky, shard: 1, of: 1 }
+      # rows { browser, set, grep, report, shard, of }, one per shard of each set of scripts/ci/e2e-sets.mjs
+      matrix: ${{ fromJSON(needs.changes.outputs.e2e_matrix) }}
     name: ${{ matrix.set == 'known-flaky' && 'e2e-quarantine' || 'e2e' }} (${{ matrix.browser }} ${{ matrix.shard }}/${{ matrix.of }})
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -263,7 +267,7 @@ jobs:
         id: plan
         run: |
           d=.e2e-main-reports; [ -d "$d" ] || d=none
-          if [ ${{ matrix.of }} -gt 1 ] && node scripts/ci/e2e-shard-plan.mjs ${{ matrix.report }} ${{ matrix.shard }} ${{ matrix.of }} "$d" > "$RUNNER_TEMP/shard-files.txt" 2> "$RUNNER_TEMP/plan.txt"; then
+          if [ ${{ matrix.of }} -gt 1 ] && node scripts/ci/e2e-shard-plan.mjs ${{ matrix.report }} ${{ matrix.shard }} "$d" > "$RUNNER_TEMP/shard-files.txt" 2> "$RUNNER_TEMP/plan.txt"; then
             echo "args=--test-list $RUNNER_TEMP/shard-files.txt" >> "$GITHUB_OUTPUT"
             echo "shard ${{ matrix.shard }}/${{ matrix.of }}: $(wc -l < "$RUNNER_TEMP/shard-files.txt") files by recorded duration" >> "$RUNNER_TEMP/plan.txt"
           else

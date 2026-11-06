@@ -61,12 +61,6 @@
 .case-briefing[lang='fa'] .cb-p { max-width: 60ch; line-height: 1.8; letter-spacing: 0; }
 .case-briefing[lang='fa'] .cb-count { font-family: inherit; }
 
-/* The instructor's "End briefing" in today's Instructor view, over the panel */
-.cb-end { display: flex; align-items: center; gap: var(--s-2, 8px); flex-wrap: wrap; }
-.cb-end[hidden] { display: none; }
-.cb-end-t { font-variant-numeric: tabular-nums; }
-.view[data-view='teach'] > .cb-end { padding: var(--s-2, 8px) var(--s-3, 12px); border-bottom: 1px solid var(--line, #333); }
-
 /* Instructor v2: the status line under the stage strip carries it (the owner's choice of 31 October; teach2/strip.ts).
    While the briefing runs the strip grows by the line's 40 px, as while finishing (#214); the chips' row keeps its
    full width, centred in the strip's own 75 px; the frame's areas are unchanged (app.css). */

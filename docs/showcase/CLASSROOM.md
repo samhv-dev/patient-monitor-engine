@@ -102,7 +102,7 @@ The refused press is not in the debrief; it shows only in the pressing device's 
 1. Mac and phones on the same Wi-Fi (the guest network usually isolates devices: ask for the staff network, or test as
    above).
 2. Double-click **Start Classroom**; leave its black window open.
-3. Load the case as usual (Instructor > Scenario > Showcase > Load).
+3. Load the case as usual (Scenarios > Open the library > Load, or the Instructor view's case list).
 4. **The QR moment** (below), then back to the case (**Instructor** in the rail); teach as usual.
 
 ## (b) A local network you bring (the Mac's own hotspot or a travel router)
