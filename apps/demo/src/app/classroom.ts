@@ -75,8 +75,8 @@ export function qrTarget(code: string, loc: PageLocation, relay: string | null, 
     const a = info.addresses[0];
     if (!a) return { ok: false, why: 'This computer is on no network: join the venue Wi-Fi or turn on the hotspot, then reload this page.' };
     const origin = `http://${a}:${info.port}`;
-    // the QR only gains the picker; the addresses under it, typed by hand, open today's learner monitor at once
-    return { ok: true, url: learnerUrl(code, origin, '/', null) + PICK_HASH, origin, others: info.addresses.slice(1).map((x) => learnerUrl(code, `http://${x}:${info.port}`, '/', null)) };
+    // the room sheet's addresses open the picker (a second screen of this computer, `followUrl`, does not)
+    return { ok: true, url: learnerUrl(code, origin, '/', null) + PICK_HASH, origin, others: info.addresses.slice(1).map((x) => learnerUrl(code, `http://${x}:${info.port}`, '/', null) + PICK_HASH) };
   }
   if (LOOPBACK.test(loc.hostname)) return { ok: false, why: 'This address works on this computer only: start the relay with --static (Start Classroom).' };
   if (loc.protocol === 'https:' && relay.startsWith('ws:')) return { ok: false, why: 'A secure (https) page cannot send phones to a ws:// relay.' };

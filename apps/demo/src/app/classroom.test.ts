@@ -39,9 +39,8 @@ describe('where the QR code sends phones', () => {
   it('the relay serves the app: its first network address, even when the instructor\'s page is on 127.0.0.1', () => {
     // R4 (Q1 ruled 5 November): the QR opens the instrument picker, `#/pick`
     expect(qrTarget('AB2CD3', at('http://127.0.0.1:8642/?relay'), 'ws://127.0.0.1:8642/', info())).toEqual({ ok: true, url: 'http://192.168.1.20:8642/?join=AB2CD3#/pick', origin: 'http://192.168.1.20:8642', others: [] });
-    // the relay lists the hotspot first (relay/http.ts); the computer's other networks are offered under the code, as
-    // typed addresses without the picker (today's learner monitor at once)
-    expect(qrTarget('AB2CD3', at('http://127.0.0.1:8642/?relay'), 'ws://127.0.0.1:8642/', info({ addresses: ['192.168.2.1', '10.0.0.7'] }))).toMatchObject({ url: 'http://192.168.2.1:8642/?join=AB2CD3#/pick', others: ['http://10.0.0.7:8642/?join=AB2CD3'] });
+    // the relay lists the hotspot first (relay/http.ts); the computer's other networks are offered under the code
+    expect(qrTarget('AB2CD3', at('http://127.0.0.1:8642/?relay'), 'ws://127.0.0.1:8642/', info({ addresses: ['192.168.2.1', '10.0.0.7'] }))).toMatchObject({ url: 'http://192.168.2.1:8642/?join=AB2CD3#/pick', others: ['http://10.0.0.7:8642/?join=AB2CD3#/pick'] });
   });
   it('says why when phones cannot join: no relay, a relay that does not answer, no network, a loopback-only page, https', () => {
     const local = at('http://127.0.0.1:5173/');
