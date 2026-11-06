@@ -80,6 +80,8 @@ const { stageMarks } = await import('./strip.ts');
 const { drugWords } = await import('../glossary.ts');
 const { DEFAULT_SITE } = await import('../site.ts');
 const { teach2View } = await import('../views/teach2.ts');
+const { recognisedButton } = await import('../recognised.ts');
+const { recognitionAt } = await import('../debrief-moments.ts');
 
 const CODE = 'KFQB2N';
 const PIN = '4729';
@@ -115,7 +117,7 @@ describe('P6: the view feed and the note path', () => {
     s = new AppSession(el, { spec, mode: 'modeled' }, { skin: 'saadat-like', theme: '', code: CODE, relay: 'ws://relay.test/', instructorPin: () => pin.v });
     hostLink = new Link(s.panel, s.panelTransport, s);
     // as main.ts wires it
-    s.serveInstructors({ note: (text, kind, t) => hostLink.note(text, kind, t), feed: () => feedOf(hostLink) });
+    s.serveInstructors({ note: (text, kind, t, ev) => hostLink.note(text, kind, t, ev), feed: () => feedOf(hostLink) });
     await settle();
   });
   afterEach(() => {
@@ -239,6 +241,34 @@ describe('P6: the view feed and the note path', () => {
     expect(Object.keys(phoneRow ?? {}).sort()).toEqual(Object.keys(laptopRow ?? {}).sort());
     // no second row for the command itself (record.ts files a remote's commands as `remote` rows)
     expect(s.record.data.rows.filter((r) => r.kind === 'remote')).toHaveLength(0);
+  });
+
+  it("the phone's Recognised press on a free run (brief 52) files the laptop's own row { kind: note, text, ev: recognised } at the host's sim time, once, and the Debrief's recognitionAt reads it", async () => {
+    const p = await phone();
+    await run(20);
+    s.setPaused(true); // the host's clock holds while the note crosses
+    await run(20, 400);
+    expect(s.record.data.doc ?? null, 'a free run').toBeNull();
+    // P6's `t`: the host files a remote's note at its own sim-time estimate when it applies the command (HostSession
+    // onNote; AppSession.simNow), which runs on the wall clock past the last 1 Hz state the laptop's Link shows
+    const at = s.simNow();
+    const onPhone = recognisedButton(p.link, 'btn small');
+    expect(onPhone.el.hidden, 'the form shows on the phone').toBe(false);
+    onPhone.el.click();
+    await vi.advanceTimersByTimeAsync(50);
+    await settle();
+    const pressed = () => s.record.data.rows.filter((r) => r.kind === 'note' && r.ev === 'recognised');
+    expect(pressed()).toEqual([{ t: at, kind: 'note', text: 'Recognised (instructor)', ev: 'recognised' }]);
+    expect(s.record.data.keeps).toContain('recognised');
+    expect(recognitionAt(s.record.data)).toMatchObject({ source: 'press', t: at });
+    expect(hostLink.log.filter((x) => x.ev === 'recognised'), "in the host's log once").toHaveLength(1);
+    // no second row for the command itself (record.ts files a remote's commands as `remote` rows)
+    expect(s.record.data.rows.filter((r) => r.kind === 'remote')).toHaveLength(0);
+    recognisedButton(hostLink, 'btn small').el.click(); // the laptop's own press, for the comparison
+    await settle();
+    const [fromPhone, fromLaptop] = pressed();
+    expect(fromLaptop?.t).toBe(hostLink.simT); // the laptop stamps its press with its Link's time
+    expect({ ...fromPhone, t: 0 }, 'the same row but its time').toEqual({ ...fromLaptop, t: 0 });
   });
 
   it('stage marks are placed while an instructor is granted with the laptop on the Monitor view (no Instructor v2 shown), and the phone returns by their labels', async () => {

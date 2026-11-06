@@ -10,6 +10,7 @@ import {
   type ControlFlag,
   type FastForwardAlarm,
   type ManagedTransport,
+  type NoteEvent,
   type Role,
   type ScenarioCommand,
   type StateEvent,
@@ -73,8 +74,9 @@ export interface HostSessionOptions {
    * Absent or null (no PIN set, or an older app): every instructor is denied. Never logged, never sent.
    */
   instructorPin?: () => string | null;
-  /** A `note` command (plan §6): the remote's judged objective or note, at the host's sim time `t`. Absent: refused. */
-  onNote?: (t: SimSeconds, text: string, kind: 'note' | 'marker') => void;
+  /** A `note` command (plan §6): the remote's judged objective or note, at the host's sim time `t`, with the run event
+   *  it carries (`ev`, brief 52; undefined when none). Absent: refused. */
+  onNote?: (t: SimSeconds, text: string, kind: 'note' | 'marker', ev?: NoteEvent) => void;
   /** How many instructor phones are granted (0 or 1: the newest takes over), called at every grant and revocation. */
   onInstructors?: (n: number) => void;
   /** The drugs a scenario command would give as a bolus (ScenarioDriver.triggerGives: a /1 step press's onEnter); a press
@@ -564,7 +566,7 @@ export class HostSession {
     if (cmd.type === 'note') {
       // A remote's judged objective or note (plan §6), recorded by the host app at the host's sim time
       if (!this.o.onNote) return reject(INSTRUCTOR_REASONS.noNotes);
-      this.o.onNote(simT, cmd.text, cmd.kind);
+      this.o.onNote(simT, cmd.text, cmd.kind, cmd.ev);
       return { result: { accepted: true, tick }, applied: cmd };
     }
     // Pin, release and setMode go to the engine, which validates them. setFactor reaches the engine too and is refused

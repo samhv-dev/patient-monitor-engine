@@ -169,6 +169,7 @@ None recorded.
 | File | Expected failures | Skipped |
 |---|---|---|
 | [`engine/defib-engine.test.ts`](../../packages/engine-core/test/engine/defib-engine.test.ts) | 0 | 0 |
+| [`engine/defib-model.test.ts`](../../packages/engine-core/test/engine/defib-model.test.ts) | 0 | 0 |
 | [`engine/defib-tones.test.ts`](../../packages/engine-core/test/engine/defib-tones.test.ts) | 0 | 0 |
 | [`engine/pacer-engine.test.ts`](../../packages/engine-core/test/engine/pacer-engine.test.ts) | 0 | 0 |
 | [`engine/pacer-sensing.test.ts`](../../packages/engine-core/test/engine/pacer-sensing.test.ts) | 0 | 0 |
