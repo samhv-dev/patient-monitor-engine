@@ -1,6 +1,6 @@
 // Runtime half of the "raw samples never cross the wire" guarantee (brief §3.7, §7.5), plus envelope
 // validation for untrusted input (relay, postMessage from other frames, WebSocket, DataChannel).
-import type { WireMessage } from './protocol.ts';
+import { INSTRUMENTS, type WireMessage } from './protocol.ts';
 
 export const WIRE_LIMITS = {
   /** Largest serialised message accepted anywhere (an L1-only snapshot is ≈ 7 KB) [ENG]. */
@@ -19,6 +19,10 @@ export const WIRE_LIMITS = {
 
 /** An instructor's PIN on the wire: 4 to 8 ASCII digits (plan §1). */
 export const PIN_RE = /^[0-9]{4,8}$/;
+
+/** A device's own key on a viewer's hello: 8 to 16 lower-case ASCII letters or digits (plan room-and-instruments.md §4 D1). */
+export const DEVICE_RE = /^[a-z0-9]{8,16}$/;
+const SHOWS: ReadonlySet<unknown> = new Set(INSTRUMENTS);
 
 /** Keys that only a waveform leak would use. */
 export const FORBIDDEN_KEYS: ReadonlySet<string> = new Set(['samples', 'sampleData', 'waveform', 'buffer']);
@@ -122,6 +126,8 @@ export function parseWireMessage(data: unknown): WireMessage | null {
     case 'hello':
       if (!ROLES.has(m.role as string)) return null;
       if (m.pin !== undefined && (m.role !== 'instructor' || typeof m.pin !== 'string' || !PIN_RE.test(m.pin))) return null;
+      if (m.show !== undefined && (m.role !== 'viewer' || !SHOWS.has(m.show))) return null;
+      if (m.device !== undefined && (m.role !== 'viewer' || typeof m.device !== 'string' || !DEVICE_RE.test(m.device))) return null;
       break;
     case 'command': {
       const b = m.body as Record<string, unknown> | null;

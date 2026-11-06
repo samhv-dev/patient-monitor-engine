@@ -250,9 +250,19 @@ export interface AppliedResolution {
   mirror?: boolean;
 }
 
+/**
+ * What a follower device shows, named on its hello (plan room-and-instruments.md §4 D1): the learner monitor (phone,
+ * upright), the monitor (landscape), the defibrillator window, the depth-of-anaesthesia slot. Legal with `role:
+ * 'viewer'` only (guard.ts); the ventilator is a role of its own (R8a), never an instrument here.
+ */
+export const INSTRUMENTS = ['learner', 'monitor', 'defib', 'depth'] as const;
+export type Instrument = (typeof INSTRUMENTS)[number];
+
 /** Brief §7.5, exactly. */
 export type WireMessage = { v: 1; session: string; from: string; seq: number; sentAt: number } & (
-  | { kind: 'hello'; role: Role; pin?: string } // `pin`: only with role 'instructor', 4 to 8 digits (guard.ts)
+  // `pin`: only with role 'instructor', 4 to 8 digits; `show` and `device` (a key the device keeps, [a-z0-9]{8,16}):
+  // only with role 'viewer' (guard.ts; plan room-and-instruments.md §4 D1)
+  | { kind: 'hello'; role: Role; pin?: string; show?: Instrument; device?: string }
   | { kind: 'command'; body: WireCommand }
   /** The host's answer to an instructor hello, sent before its welcome (plan §1); `granted: false` also revokes. */
   | { kind: 'grant'; to: string; granted: boolean; reason?: string }
