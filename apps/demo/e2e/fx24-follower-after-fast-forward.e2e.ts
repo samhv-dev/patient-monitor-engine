@@ -112,7 +112,11 @@ async function offCursor(p: Page, from: number, pxPerS: number, ms: number): Pro
   let k = 1; // the largest sim-time step between two frames (a re-anchoring jump of the follower's clock), for the log
   for (let i = 2; i < pts.length; i++) if ((pts[i] as { t: number }).t - (pts[i - 1] as { t: number }).t > (pts[k] as { t: number }).t - (pts[k - 1] as { t: number }).t) k = i;
   const step = pts.length > 1 ? `${((pts[k] as { t: number }).t - (pts[k - 1] as { t: number }).t).toFixed(2)} s at +${((pts[k] as { at: number }).at - from).toFixed(0)} ms` : '';
-  return { step, off: off.length, frames: pts.length, worst: Math.max(0, ...dev), at: off.slice(0, 8).map((i) => `+${((pts[i] as { at: number }).at - from).toFixed(0)} ms`) };
+  // each off frame with its own clock step (s) and offset (px): CI's off frames sat at the window's largest clock step (the
+  // follower's catch-up jump, 1.17–1.48 s) on a starved runner, but a jump forced locally drew no frame off — the next
+  // sighting says whether every off frame is a jump's
+  const why = (i: number) => (i > 0 ? `, step ${((pts[i] as { t: number }).t - (pts[i - 1] as { t: number }).t).toFixed(2)} s, ${(dev[i] as number).toFixed(0)} px` : '');
+  return { step, off: off.length, frames: pts.length, worst: Math.max(0, ...dev), at: off.slice(0, 8).map((i) => `+${((pts[i] as { at: number }).at - from).toFixed(0)} ms${why(i)}`) };
 }
 
 const labelsSince = (p: Page, from: number) => p.evaluate((t) => (window as unknown as Win).__fx24.labels.filter((l) => l.at >= t).map((l) => l.text), from);
