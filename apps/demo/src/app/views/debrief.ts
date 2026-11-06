@@ -18,11 +18,11 @@ import './debrief.css';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
 import { axisRange, drugTotals, endOf, facts, mmss, objectives, perMinute, PRESSURE_KEYS, report3, span, steps, trendMeta, type DebriefExport, type Pressure, type Report3, type Step, type StepStatus } from '../debrief.ts';
-import type { Grade } from '@pme/controller/scenario';
 import { debriefJson } from '../debrief-export.ts';
-import { keyMoments, keyTimes, RECOGNISED, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
+import { keyMoments, keyTimes, recognitionAt, RECOGNISED, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
 import { LAB_KEYS, TREND_KEYS, type PressureKey, type Row, type RunData, type TrendKey, type ValueKey } from '../record.ts';
 import { COURSE_W, courseSvg, tracePath, type CourseMark } from './debrief-course.ts';
+import { GRADE_WORDS, swimlaneSvg, verdictMark, windowsOf } from './debrief-swimlane.ts';
 import { MARKS } from '../teach2/dock.ts';
 import { hrefOf } from '../router.ts';
 import { cardOf } from '../scenarios.ts';
@@ -49,10 +49,8 @@ const KIND: Readonly<Record<Row['kind'], string>> = { action: 'Action', remote: 
  *  rule-less objective the instructor ticked reads Observed, with the tick's time as its reason. */
 function markOf(o: ReturnType<typeof objectives>[number]): { mark: 'observed' | 'not-observed' | 'not-assessable' | 'discuss'; words: string; why: string } {
   const v = o.verdict;
-  if (v.status === 'met') return { mark: 'observed', words: '✓ Observed', why: v.why };
-  if (v.status === 'not met') return o.discuss ? { mark: 'discuss', words: '◆ Discuss', why: v.why } : { mark: 'not-observed', words: '✗ Not observed', why: v.why };
-  if (v.tickedT !== undefined) return { mark: 'observed', words: '✓ Observed', why: `Observed by the instructor at ${mmss(v.tickedT)}.` };
-  return { mark: 'not-assessable', words: '– Not assessable', why: v.why };
+  if (v.status === 'not assessable' && v.tickedT !== undefined) return { mark: 'observed', words: '✓ Observed', why: `Observed by the instructor at ${mmss(v.tickedT)}.` };
+  return { ...verdictMark(v.status, o.discuss), why: v.why };
 }
 const esc = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const undoneText = (r: Row): string => (r.undone ? ` — undone by return ${r.undone}` : '');
@@ -78,8 +76,6 @@ function stepsTable(ss: Step[], d: RunData): HTMLElement {
       h('td', { class: 'num' }, x.takenT === null ? '–' : `${mmss(x.takenT)} (${x.order})`),
       h('td', {}, STEP_WORDS[x.status], x.ruleT !== undefined ? ` (its rule, ${mmss(x.ruleT)})` : '')))));
 }
-/** A /2 action's grade words (grade.ts `Grade`), each with a glyph so no colour is needed to read it. */
-const GRADE_WORDS: Readonly<Record<Grade, string>> = { met: '✓ met', deviation: '◆ deviation', overdue: '! overdue', failed: '✗ failed', due: '… due', 'not applicable': '– not applicable' };
 const at = (t: number | null): string => (t === null ? '–' : mmss(t));
 /** A /2 run's action table (plan F7): each graded action in the card's order with its first administration's grade,
  *  when it was due (the window's opening and length) and given, the criteria it was off on lines under it, then its
@@ -232,6 +228,12 @@ const legend = (shapes: keyof typeof SHAPES, tail = '', more: Array<Node | strin
   const [team, patient, scen] = SHAPES[shapes];
   return h('p', { class: 'db-legend' }, h('span', { class: 'db-team' }, team), ' team action · ', h('span', { class: 'db-patient' }, patient), ' patient event · ', h('span', { class: 'db-scen' }, scen), ` scenario state${tail}`, ...more);
 };
+/** The swimlane's legend line (D7b): each shape and what it is, the window band and its tick, the verdict glyphs. */
+const swimLegend = (r3: boolean): HTMLElement => h('p', { class: 'db-legend' },
+  h('span', { class: 'db-patient' }, '●'), ' patient event · ', h('span', { class: 'db-team' }, '■'), ' team action · ', h('span', { class: 'db-scen' }, '□'), ' scenario state · ',
+  h('span', { class: 'db-team' }, '◇'), ' recognised · ▭ expected window, │ the act, with its verdict ',
+  r3 ? '(✓ met · ◆ deviation · ! overdue · ✗ failed · … due)' : '(✓ Observed · ✗ Not observed · – Not assessable · ◆ Discuss)',
+  ' · ▬ alarm, raised to ended, ○ acknowledged · ▲ drug or fluid · numbers match Key moments');
 const WHO: Readonly<Record<Who, string>> = { team: 'Team', patient: 'Patient', scenario: 'Scenario' };
 const whoCell = (w: Who): HTMLElement => h('td', { class: 'db-whocell' }, w === 'scenario' ? null : h('span', { class: `db-${w}` }, w === 'team' ? '■ ' : '● '), WHO[w]);
 const TRENDS4: TrendKey[] = ['hr', 'map', 'spo2', 'etco2']; // E56: the same four for every case
@@ -426,6 +428,9 @@ export function debriefView(session: AppSession, link: Link): View {
     const course = h('div', { class: 'db-course' });
     course.innerHTML = courseSvg(d, ms, { trends: TRENDS4, marks: cm });
     course.style.setProperty('--db-print-w', `${printWidth(course.innerHTML)}%`);
+    const swim = h('div', { class: 'db-swim' });
+    const rec = recognitionAt(d)?.t; // the one reading of the recognition (D5): drawn ◇ on the Team lane
+    swim.innerHTML = swimlaneSvg(d, ms, windowsOf(d), rec === null || rec === undefined ? {} : { recognisedT: rec });
     live1.replaceChildren(...kids(
       band,
       tiles.length ? section('keytimes', 'Key times', h('div', { class: 'db-tiles' }, ...tiles)) : null,
@@ -438,7 +443,8 @@ export function debriefView(session: AppSession, link: Link): View {
             o.verdict.measure ? bar(o.verdict.measure) : null, h('div', { class: 'db-why' }, m.why));
         }))
         : h('p', { class: 'muted' }, 'This run has no objectives.')),
-      ...(ms.length ? [runFoot(), section('moments', 'Key moments and what the monitor showed', ...momentsTable(ms, d))] : []),
+      // page 2 (DQ5, option A), which a run with key moments has: the swimlane at its head, then the key moments
+      ...(ms.length ? [runFoot(), section('swimlane', 'The run, lane by lane', swimLegend(r3 !== null), swim), section('moments', 'Key moments and what the monitor showed', ...momentsTable(ms, d))] : []),
       section('facts', 'Measured facts', fs.length
         ? h('dl', { class: 'db-facts' }, ...fs.flatMap((x) => [h('dt', {}, x.label), h('dd', {}, x.value)]))
         : h('p', { class: 'muted' }, 'Nothing was measured yet.')),

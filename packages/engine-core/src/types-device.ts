@@ -44,8 +44,17 @@ export type AlarmDeviceAction = {
   lane?: never;
 };
 
-/** The skin (and age band) the device layer follows; `setSkin` without an engine restart (brief §3.8). */
-export type MonitorDeviceAction = { device: 'monitor'; action: 'skin' | 'ageBand'; value: string; lane?: never };
+/**
+ * The room's defibrillator model (Room plan R5a, owner's Q6 ruling of 5 November): its spec (energies, charge times,
+ * ladder) is the model's, apart from the monitor skin, until another model is set; `value` is a `DEFIB_MODELS` key.
+ */
+export type DefibDeviceAction = { device: 'defib'; action: 'model'; value: string; lane?: never };
+
+/**
+ * The skin (and age band) the device layer follows; `setSkin` without an engine restart (brief §3.8). The
+ * defibrillator model rides this union so `DeviceAction` (types.ts) carries it unchanged.
+ */
+export type MonitorDeviceAction = { device: 'monitor'; action: 'skin' | 'ageBand'; value: string; lane?: never } | DefibDeviceAction;
 
 /** One active (or latched) alarm as the renderer shows it. */
 export interface AlarmEntry {
