@@ -264,7 +264,11 @@ export type WireMessage = { v: 1; session: string; from: string; seq: number; se
   | { kind: 'command'; body: WireCommand }
   /** The host's answer to an instructor hello, sent before its welcome (plan §1); `granted: false` also revokes. */
   | { kind: 'grant'; to: string; granted: boolean; reason?: string }
-  | { kind: 'ack'; commandId: string; accepted: boolean; tick: Tick; reason?: string }
+  /** `code: 'recent'` (drug-lock.ts): the same drug was given as a bolus within SAME_DRUG_LOCK_S, from `recent.by`. */
+  | {
+      kind: 'ack'; commandId: string; accepted: boolean; tick: Tick; reason?: string;
+      code?: 'recent'; recent?: { drugId: string; agoS: number; by: 'laptop' | 'phone' | 'card' };
+    }
   | { kind: 'event'; body: WireEvent[] } // batched per frame, never samples
   | { kind: 'snapshot'; body: PatientSnapshot }
 );
@@ -303,7 +307,8 @@ export interface ManagedTransport extends Transport {
   onRelayFrame?(fn: (f: RelayFrame) => void): () => void;
 }
 
-export type AckResult = DispatchResult & { commandId: string; rttMs: number };
+/** `code`: the host's refusal code when it gave one (`recent`: the same-drug lock, drug-lock.ts). */
+export type AckResult = DispatchResult & { commandId: string; rttMs: number; code?: 'recent' };
 export type MeasuredMap = Partial<Record<NumericId, import('@pme/engine-core').Measured>>;
 
 // --- what an instructor may send (plan instructor-peer-role.md §2) -------------------------------------------------

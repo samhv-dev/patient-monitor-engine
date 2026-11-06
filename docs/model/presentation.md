@@ -354,6 +354,7 @@ No exported `…State` type in this module.
 | `doseUnits` | [`apps/demo/src/app/drugs.ts`](../../apps/demo/src/app/drugs.ts) | Dose units offered for a drug: |
 | `findDrugs` | [`apps/demo/src/app/drugs.ts`](../../apps/demo/src/app/drugs.ts) | Search by name, id or another name ("noradr" finds norepinephrine). |
 | `perKg` | [`apps/demo/src/app/drugs.ts`](../../apps/demo/src/app/drugs.ts) | "0.1 µg/kg/min = 7 µg/min" for this patient's weight; |
+| `lockLabel` | [`apps/demo/src/app/drugs.ts`](../../apps/demo/src/app/drugs.ts) | A drug's lock as its rows read it (the owner's ruling of 5 November 2026: |
 | `conditionCommand` | [`apps/demo/src/app/events.ts`](../../apps/demo/src/app/events.ts) | The engine command that starts (severity > 0) or stops (0) an acute event. |
 | `activeText` | [`apps/demo/src/app/events.ts`](../../apps/demo/src/app/events.ts) | "Cardiac tamponade (severe)", for the session bar and the Patient tab. |
 | `fastForwardDoneLines` | [`apps/demo/src/app/fast-forward.ts`](../../apps/demo/src/app/fast-forward.ts) | The two lines of the banner after a fast-forward, worded here only: |
@@ -870,6 +871,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/e2e/saadat-bfi-etaa-row.e2e.ts`](../../apps/demo/e2e/saadat-bfi-etaa-row.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/saadat-grid-layout.e2e.ts`](../../apps/demo/e2e/saadat-grid-layout.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/saadat-instructor-tiles.e2e.ts`](../../apps/demo/e2e/saadat-instructor-tiles.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/same-drug-lock.e2e.ts`](../../apps/demo/e2e/same-drug-lock.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/scenario-choose-another.e2e.ts`](../../apps/demo/e2e/scenario-choose-another.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/scenario-panel-stale-press.e2e.ts`](../../apps/demo/e2e/scenario-panel-stale-press.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/scenario-runner-page.e2e.ts`](../../apps/demo/e2e/scenario-runner-page.e2e.ts) | 0 | 0 |
@@ -969,6 +971,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/teach2/chip-cascade.dom.test.ts`](../../apps/demo/src/app/teach2/chip-cascade.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/cue.dom.test.ts`](../../apps/demo/src/app/teach2/cue.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/dock.dom.test.ts`](../../apps/demo/src/app/teach2/dock.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/teach2/drug-lock.dom.test.ts`](../../apps/demo/src/app/teach2/drug-lock.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/drug-sheet.dom.test.ts`](../../apps/demo/src/app/teach2/drug-sheet.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/empty.dom.test.ts`](../../apps/demo/src/app/teach2/empty.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/feed.dom.test.ts`](../../apps/demo/src/app/teach2/feed.dom.test.ts) | 0 | 0 |
