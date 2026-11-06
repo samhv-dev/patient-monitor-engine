@@ -2,7 +2,9 @@
 // instructor asks for a new one, through reloads, restarts and the next day. Before this every fresh tab drew a new code
 // (session.ts), so the phones and screens that scanned yesterday's QR found nothing today.
 // The start order of an instructor's page: its own `?session=` (a reload keeps its code, main.ts writes it there), else
-// the room code this browser stored, else none (the session draws a new one, and this page stores it). The live-host
+// the room code this browser stored, else the relay's `lastRoom` (R1b: the kit moved to the next port, a new origin whose
+// store is empty; the relay keeps the last room's code in the computer's application-data folder), else none (the
+// session draws a new one, and this page stores it). The live-host
 // question stays host-guard.ts's: main.ts hands it the start code as its `param`, so a second tab of the same browser
 // while the first runs the room is asked as a duplicated tab is.
 // §4 D3: the stored code is the ROOM's. Only a page started without `?session=` stores the code it runs, and never
@@ -15,8 +17,8 @@ import { store } from './store.ts';
 export const ROOM_CODE_KEY = 'roomCode';
 
 /** The code a starting instructor's page runs under (null: none, a new one is drawn). Invalid values are ignored. */
-export function startCode(o: { param: string | null; stored: string | null }): string | null {
-  return normalizeSessionCode(o.param ?? '') ?? normalizeSessionCode(o.stored ?? '');
+export function startCode(o: { param: string | null; stored: string | null; lastRoom?: string | null | undefined }): string | null {
+  return normalizeSessionCode(o.param ?? '') ?? normalizeSessionCode(o.stored ?? '') ?? normalizeSessionCode(o.lastRoom ?? '');
 }
 
 /** Whether the code this page runs becomes the room's: started without `?session=`, and not "Start a new session". */
