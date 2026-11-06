@@ -2,9 +2,13 @@
 // same patient, clock and numbers, through an instructor command, a bookmark restore, a patient restart, and while the
 // Ventilator view drives the patient, across an instructor reload — instead of starting a patient of its own; it opens
 // with `noopener` (its own process) and says so when the instructor's window is gone.
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
-import { openApp, startVite } from './app-support.ts';
+import { startRelay } from '../../../packages/controller/relay/server.ts';
+import { openApp, speedV2, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -56,8 +60,8 @@ async function follow(page: Page, scenario: string, browserName: string): Promis
   const ctx = page.context();
   ctx.on('console', (m) => m.page() !== page && logs.length < 40 && logs.push(`${m.type()}: ${m.text()}`));
   ctx.on('weberror', (e) => logs.length < 40 && logs.push(`error: ${e.error().message}`));
-  await openApp(page, base, `?scenario=${scenario}`, { warmMs: 1500 });
-  await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×4' }).click();
+  await openApp(page, base, `?scenario=${scenario}#/teach2`, { warmMs: 1500 });
+  await speedV2(page, 4); // Instructor v2's header
   await page.evaluate(() => (location.hash = '#/monitor'));
   const button = page.getByRole('button', { name: 'Open on a second screen', includeHidden: true });
   let f: Page;
@@ -157,4 +161,33 @@ test("it wears the instructor's monitor style and follows a change; its alarm so
   await f.getByRole('button', { name: 'Sound on' }).click();
   await expect(f.getByRole('button', { name: 'Sound off' })).toHaveAttribute('aria-pressed', 'false');
   await expect(hush).toBeDisabled();
+});
+
+// Room plan R5: the defibrillator window `#/defib`, on this computer (`?follow=`, the browser's channel) and over the
+// relay (`?join=`, the in-process relay as mobile-learner.e2e.ts runs it). Each shows the energy and CHARGING / READY
+// from its OWN engine: within one second of the host's charge both read "120 J CHARGING" (the room's generic model).
+test('a defibrillator window on this computer and one over the relay show "120 J CHARGING" within a second of the host\'s charge', async ({ page }) => {
+  test.setTimeout(120_000);
+  const dir = mkdtempSync(join(tmpdir(), 'r5-'));
+  writeFileSync(join(dir, 'index.html'), '<!doctype html>');
+  const relay = await startRelay({ port: 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer' });
+  try {
+    const ws = `ws://127.0.0.1:${relay.port}/`;
+    await openApp(page, base, `?relay=${encodeURIComponent(ws)}&scenario=showcase-induction`, { warmMs: 1500, site: { defibModel: 'generic' } });
+    const code = await page.evaluate(() => (window as unknown as W).__pmeApp.session.code);
+    const local = await page.context().newPage();
+    await local.goto(`${base}/?follow=${code}#/defib`);
+    const phone = await (await page.context().browser()!.newContext()).newPage();
+    await phone.goto(`${base}/?join=${code}&relay=${encodeURIComponent(ws)}#/defib`);
+    for (const w of [local, phone]) {
+      await w.waitForFunction(() => (window as unknown as W).__pmeFollower?.sync?.status === 'synced', null, { timeout: 30_000, polling: 250 });
+      await expect(w.locator('.defib-readout')).toHaveText('120 J', { timeout: 10_000 }); // the room's model, from its own engine
+    }
+    // the send resolves on the host's acknowledgement (the charge applied there): the windows have one second from it
+    expect((await send(page, { type: 'applyEvent', event: { kind: 'defib', action: 'charge' } })).accepted).toBe(true);
+    await Promise.all([local, phone].map((w) => expect(w.locator('.defib-readout')).toHaveText('120 J CHARGING', { timeout: 1000 })));
+    await Promise.all([local, phone].map((w) => expect(w.locator('.defib-readout')).toHaveText('120 J READY', { timeout: 10_000 })));
+  } finally {
+    await relay.close();
+  }
 });

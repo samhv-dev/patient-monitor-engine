@@ -3,7 +3,7 @@
 // its window only.
 import { expect, test } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
-import { openApp, startVite } from './app-support.ts';
+import { openApp, startVite, TEACH2 } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -15,8 +15,8 @@ const state = (page: import('@playwright/test').Page) => page.evaluate(() => { c
 
 test('Sound on, then off again, then on: the button, its pressed state and the monitor\'s audio agree', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(60_000);
-  await openApp(page, base, '#/teach', { warmMs: 500 });
-  const sound = page.locator('.topright .sound');
+  await openApp(page, base, TEACH2, { warmMs: 500 });
+  const sound = page.locator('.ip2-head .ip2-sound') // Instructor v2's header carries the top bar's Sound switch;
   await expect(sound).toHaveText('Sound off');
   await sound.click();
   await expect(sound).toHaveText('Sound on');
