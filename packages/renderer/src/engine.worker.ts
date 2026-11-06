@@ -70,7 +70,9 @@ function onMessage(ev: MessageEvent<ToWorker>): void {
         if (unread === 0) release();
         return;
       case 'frame':
-        if (!useRaf) core?.frame(m.epochMs);
+        if (useRaf) return;
+        core?.frame(m.epochMs);
+        scope.postMessage({ type: 'framed' }); // the page posts the next frame only now (worker-host.ts, `inFlight`)
         return;
       case 'catchUp':
         core?.catchUp(m.epochMs);
