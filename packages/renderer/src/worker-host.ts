@@ -118,7 +118,7 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
   let pumping = false;
   // worker-pump: a frame posted and not yet drawn. The page posts the next only when the worker says it drew this one,
   // as the worker's own rAF does not fire while it draws: posting at every page frame queued them faster than a slow
-  // worker drew them, and every command waited behind the queue, seconds and growing (brief 47)
+  // worker drew them, and every command waited behind the queue, seconds and growing (found under brief 47)
   let inFlight = false;
   let hiddenTimer: ReturnType<typeof setInterval> | null = null;
   let lastHeard = performance.now();

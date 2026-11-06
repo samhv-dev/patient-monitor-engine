@@ -142,8 +142,8 @@ for (const [w, h, paneW, pane] of [[1990, 920, 1374, 820], [1990, 1080, 1374, 98
     await page.setViewportSize({ width: w, height: h });
     await openApp(page, base, '#/teach', { warmMs: 2500 });
     const host = await page.locator('.stage > .monitor-host').boundingBox();
-    // the render path (brief 47): a browser whose worker has no requestAnimationFrame runs 'worker-pump', where the page
-    // posts the frames; that path once queued them without bound and the CO2 attach below was answered seconds late
+    // the render path (brief 47): 'worker-pump' (the page posts the frames) once queued them without bound and delayed every
+    // command; CI's WebKit printed 'worker-raf' (run 42170491121), so a miss below is not that
     const path = await page.evaluate(() => (window as unknown as { __pmeApp: { session: { monitor: { renderPath: Promise<string> } } } }).__pmeApp.session.monitor.renderPath);
     console.log(`saadat-p3 ${browserName} ${w}x${h}: monitor pane ${host?.width.toFixed(0)} × ${host?.height.toFixed(0)}, render path ${path}`);
     expect(Math.abs((host?.width ?? 0) - paneW)).toBeLessThan(15); // the instructor panel is open beside the monitor
@@ -159,6 +159,7 @@ for (const [w, h, paneW, pane] of [[1990, 920, 1374, 820], [1990, 1080, 1374, 98
         return /\d+ \/ \d+/.test(v('NIBP')) && /\d/.test(v('SpO2')) && /\d/.test(v('RR')) && /\d/.test(v('HR'));
       });
     await expect.poll(filled, { timeout: 60_000, intervals: [500] }).toBe(true);
+    const tFilled = Date.now();
     const a = await inks(page, [...TILES, 'RR']);
     await shot(page, `${w}x${h}-rr`, browserName);
     const rr = await type(page, 'RR').catch(() => null);
@@ -168,8 +169,39 @@ for (const [w, h, paneW, pane] of [[1990, 920, 1374, 820], [1990, 1080, 1374, 98
     const vent = await page.evaluate(() => (window as unknown as W).__pmeApp.session.monitor.dispatch({ id: 'p3-vent', issuedBy: 'test', type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, peep: 5, fio2: 0.5 } }));
     expect(vent.accepted).toBe(true);
     await tab(page, 'devices');
+    // brief 47: the press's path is timed in the page (the main thread's longest stall, the panel's send and answer, the
+    // monitor's dispatch and answer, the tile's arrival), so a miss says where the time went; the assertion is unchanged
+    await page.evaluate(() => {
+      const app = (window as unknown as { __pmeApp: { link: { send: (c: unknown) => Promise<unknown> }; session: { monitor: { dispatch: (c: unknown) => Promise<unknown> } } } }).__pmeApp;
+      const t0 = performance.now();
+      const at = () => Math.round(performance.now() - t0);
+      const d: { log: string[]; stallMs: number } = { log: [], stallMs: 0 };
+      (window as unknown as { __p47: typeof d }).__p47 = d;
+      let beat = performance.now();
+      setInterval(() => ((d.stallMs = Math.max(d.stallMs, performance.now() - beat - 50)), (beat = performance.now())), 50);
+      const wrap = (o: Record<string, unknown>, k: string, name: string) => {
+        const f = (o[k] as (c: unknown) => Promise<unknown>).bind(o);
+        o[k] = (c: unknown) => (d.log.push(`${at()} ${name} ${(c as { type?: string }).type}`), f(c).then((r) => (d.log.push(`${at()} ${name} answered ${JSON.stringify(r)}`), r)));
+      };
+      wrap(app.link as never, 'send', 'panel');
+      wrap(app.session.monitor as never, 'dispatch', 'monitor');
+      document.addEventListener('click', () => d.log.push(`${at()} click`), true);
+      new MutationObserver(() => document.querySelector('.stage .pme-stile[data-param="CO2"]') && !d.log.some((l) => l.endsWith('tile')) && d.log.push(`${at()} tile`)).observe(document.body, { subtree: true, childList: true });
+    });
+    const tPress = Date.now();
     await page.getByRole('button', { name: 'CO₂ sampling line' }).click();
-    await expect(page.locator('.stage .pme-stile[data-param="CO2"]')).toBeVisible({ timeout: 5_000 });
+    const co2Tile = page.locator('.stage .pme-stile[data-param="CO2"]');
+    const tileShown = await co2Tile.waitFor({ state: 'visible', timeout: 5_000 }).then(() => true, () => false);
+    if (!tileShown) {
+      // for the diagnosis only (the test still fails): how late the tile comes, if it comes
+      await co2Tile.waitFor({ state: 'visible', timeout: 25_000 }).catch(() => undefined);
+      const why = await page.evaluate(() => {
+        const a = (window as unknown as { __pmeApp: { link: { log: unknown[]; ctl: { state: unknown; pendingCount: number } } } }).__pmeApp;
+        return { ...(window as unknown as { __p47: object }).__p47, panelLog: a.link.log.slice(-3), engineCo2: (a.link.ctl.state as { sensors?: { co2?: string } } | null)?.sensors?.co2 ?? null, pending: a.link.ctl.pendingCount, visibility: document.visibilityState };
+      });
+      console.log(`saadat-p3 ${browserName} ${w}x${h}: no CO2 tile 5 s after the press (filled → press ${tPress - tFilled} ms) ${JSON.stringify(why)}`);
+    } else console.log(`saadat-p3 ${browserName} ${w}x${h}: CO2 tile within 5 s (filled → press ${tPress - tFilled} ms)`);
+    expect(tileShown, 'the CO2 tile within 5 s of the CO₂ sampling line press').toBe(true);
     // the CO2 numerics fill: EtCO2 and the AWRR (the ventilator's rate) both printed
     const co2Filled = () =>
       page.evaluate(() => [...document.querySelectorAll('.stage .pme-stile[data-param="CO2"] .pv')].filter((e) => /\d/.test(e.textContent ?? '')).length);

@@ -1,8 +1,8 @@
 // The worker-pump path (a browser with an OffscreenCanvas worker but no requestAnimationFrame inside it): the page posts
 // the frames. It posted one at EVERY page frame whether or not the worker had drawn the last, so on a machine where one
 // frame costs more than a display refresh the worker's queue grew without bound and every command waited behind it: an
-// attach answered seconds late, later and later (the Saadat Instructor test on WebKit in CI, no CO2 tile 5 s after the
-// press: brief 47). One frame in flight, as the worker's own rAF gives: the page posts the next when the worker says it
+// attach answered seconds late, later and later (found under brief 47 with the path forced and a slowed worker; WebKit
+// in CI runs worker-raf, so this is not the Saadat test's CI miss). One frame in flight, as the worker's own rAF gives: the page posts the next when the worker says it
 // drew the last, so a command waits at most one frame.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FromWorker, ToWorker } from '../src/protocol.ts';
