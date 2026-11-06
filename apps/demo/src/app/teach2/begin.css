@@ -42,3 +42,18 @@
 .ip2-case-mode { padding: 4px 7px; border: 1px solid var(--ip2-control); border-radius: 4px; font: 500 11px/1 var(--font-plex-mono); letter-spacing: 0.04em; color: var(--ip2-soft); }
 a.ip2-case-all { text-decoration: none; }
 a.ip2-case-all:hover { border-color: var(--ip2-control); }
+
+/* "Open a card file…" (brief 22): the third button, across both columns under the two; what the file came to under it
+   (an error in the alarm's colour, a kept card with its Start); the case list's "Imported" heading and rows, each with
+   its Remove */
+.ip2-begin-open { grid-column: 1 / -1; }
+.ip2-begin-note { width: 80%; box-sizing: border-box; padding: 10px 14px; border: 1px solid var(--ip2-line); border-radius: 8px; background: var(--ip2-card); font-size: 13px; line-height: 1.45; color: var(--ip2-soft); }
+.ip2-begin-note[role="alert"] { border-color: var(--ip2-control); }
+.ip2-begin-note-head { margin: 0; color: var(--ip2-text); }
+.ip2-begin-note-list { margin: 6px 0 0; padding-left: 18px; max-height: 160px; overflow-y: auto; font: 12px/1.5 var(--font-plex-mono); overflow-wrap: anywhere; }
+.ip2-begin-start { margin-top: 8px; padding: 0 16px; }
+.ip2-imported { margin-top: 18px; }
+.ip2-imported-h { margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ip2-muted); }
+.ip2-imported-item { display: flex; gap: 8px; align-items: stretch; }
+.ip2-imported-item > .ip2-case-row { flex: 1 1 auto; min-width: 0; }
+.ip2-imported-remove { flex: none; height: auto; padding: 0 12px; }

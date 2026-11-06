@@ -94,6 +94,10 @@ export interface Action extends C {
   /** A preparation step (monitoring, lines; owner, 5 November): offered and recorded with its time, no verdict, never
    *  graded. */
   preparation?: true;
+  /** The card's recognition (Debrief 2, D5; the owner's ruling of 5 November): the team announcing the diagnosis, a timed
+   *  communication action the instructor presses. The Debrief's recognition tile and key moment read THIS action's window,
+   *  press and grade, never a label. At most one per card. */
+  recognition?: true;
   /** Provenance of the action's numbers: the source quoted and cited; never interpreted (plan F9). */
   src?: string;
   drug?: DrugCriteria;

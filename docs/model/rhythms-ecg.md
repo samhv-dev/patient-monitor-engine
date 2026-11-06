@@ -556,6 +556,7 @@ Exported without a doc comment: `afTemplatesAvailable`, `vfFreqHz`, `vfAmplitude
 | [`l2/ecg/rhythms/beat-templates.test.ts`](../../packages/engine-core/test/l2/ecg/rhythms/beat-templates.test.ts) | 0 | 0 |
 | [`l2/ecg/rhythms/breath-clock.test.ts`](../../packages/engine-core/test/l2/ecg/rhythms/breath-clock.test.ts) | 0 | 0 |
 | [`l2/ecg/rhythms/electrolytes.test.ts`](../../packages/engine-core/test/l2/ecg/rhythms/electrolytes.test.ts) | 0 | 0 |
+| [`l2/ecg/rhythms/escape-onset.test.ts`](../../packages/engine-core/test/l2/ecg/rhythms/escape-onset.test.ts) | 0 | 0 |
 | [`l2/ecg/rhythms/escape-reset.test.ts`](../../packages/engine-core/test/l2/ecg/rhythms/escape-reset.test.ts) | 2 | 0 |
 | [`l2/ecg/rhythms/fingerprint.test.ts`](../../packages/engine-core/test/l2/ecg/rhythms/fingerprint.test.ts) | 0 | 0 |
 | [`l2/ecg/rhythms/helpers.test.ts`](../../packages/engine-core/test/l2/ecg/rhythms/helpers.test.ts) | 0 | 0 |

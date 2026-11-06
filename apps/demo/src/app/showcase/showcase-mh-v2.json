@@ -1003,6 +1003,7 @@
       "id": "nameMh",
       "label": "Name malignant hyperthermia from the monitor: EtCO₂ rising at unchanged ventilation when it should be falling (42 → 45; without MH it settles 36–39) with a rising heart rate (64 → 80, blunted by fentanyl) (instructor-assessed)",
       "kind": "communication",
+      "recognition": true,
       "phases": [
         "earlySigns",
         "established",

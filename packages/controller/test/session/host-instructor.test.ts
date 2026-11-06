@@ -335,4 +335,30 @@ describe('who holds the role', () => {
     await waitFor(() => ackOf(got, k2) !== undefined);
     expect(ackOf(got, k2)).toMatchObject({ accepted: true });
   });
+
+  it("a command from a peer a peer-left forgot, with no hello since, is refused 'say hello first' (not the controller path)", async () => {
+    const host = new HostSession({ session: S, target: target(), stateIntervalMs: 0, instructorPin: () => PIN });
+    hosts.push(host);
+    const hub = createInProcessHub();
+    const fns = new Set<(id: string) => void>();
+    const linkT = Object.assign(Object.create(hub.connect()) as ManagedTransport, {
+      onPeerLeft: (fn: (id: string) => void) => (fns.add(fn), () => void fns.delete(fn)),
+    });
+    host.addTransport(linkT);
+    const relay = hub.connect();
+    const got = collect(relay);
+    const st = createStamper(S, 'ph.1');
+    relay.send(st({ kind: 'hello', role: 'instructor', pin: PIN }));
+    await waitFor(() => grants(got, 'ph.1').length === 1);
+    fns.forEach((fn) => fn('ph.1')); // its socket left: its role and grant are forgotten
+    relay.send(st({ kind: 'command', body: { id: 'ph.1-9', issuedBy: 'ph.1', ...hr } as never }));
+    await waitFor(() => ackOf(got, 'ph.1-9') !== undefined);
+    expect(ackOf(got, 'ph.1-9')).toMatchObject({ accepted: false, reason: 'say hello first' });
+    expect(host.stats.applied).toBe(0);
+    // once it says hello again it is a peer like any other (here a controller on this transport)
+    relay.send(st({ kind: 'hello', role: 'controller' }));
+    relay.send(st({ kind: 'command', body: { id: 'ph.1-10', issuedBy: 'ph.1', ...hr } as never }));
+    await waitFor(() => ackOf(got, 'ph.1-10') !== undefined);
+    expect(ackOf(got, 'ph.1-10')).toMatchObject({ accepted: true });
+  });
 });

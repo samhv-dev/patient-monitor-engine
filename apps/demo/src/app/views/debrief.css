@@ -93,6 +93,15 @@
 .debrief .db-course .db-paper { fill: none; stroke: var(--text-muted); stroke-opacity: 0.14; stroke-width: 0.5; }
 .debrief .db-course .db-paper-b { stroke-opacity: 0.32; stroke-width: 0.8; }
 .debrief .db-course .db-pulseless, .debrief .db-course .db-pulseless-l rect { fill: var(--line); }
+/* the swimlane (an SVG string from debrief-swimlane.ts, D7b): lanes on a faint ground, the minutes as faint lines */
+.debrief .db-swim svg { display: block; width: 100%; height: auto; max-width: 60rem; }
+.debrief .db-swim text { font: 8px sans-serif; fill: var(--text-muted); }
+.debrief .db-swim .db-swim-l { font: 700 9px sans-serif; fill: var(--text-strong); }
+.debrief .db-swim .db-swim-wl, .debrief .db-swim .db-swim-v { fill: var(--text-strong); }
+.debrief .db-swim .db-swim-n { font: 700 8px sans-serif; fill: var(--text-strong); }
+.debrief .db-swim .db-swim-bg { fill: var(--text-muted); fill-opacity: 0.06; }
+.debrief .db-swim .db-swim-grid { stroke: var(--text-muted); stroke-opacity: 0.3; stroke-width: 0.5; }
+.debrief .db-swim .db-pulseless { fill: var(--line); }
 /* the instructor's marks (debrief-course.ts): the dock's icons in the marks row under the time labels, white inside,
    a light outline so the number inside reads first (a tight white halo, no box), a line up to the row's top at the
    time; the words on hover (the title); an undone mark lighter still and struck, as the Bookmarks list */
@@ -121,7 +130,7 @@
 .debrief .db-outcomes, .debrief .db-violations { padding-left: 1.4em; }
 .debrief .db-moments tr.db-alarms td { color: var(--text-muted); font-size: var(--t-12, 12px); border-bottom-style: dotted; }
 .debrief .db-whocell { white-space: nowrap; }
-.debrief .db-note60 { font-size: var(--t-13); color: var(--text-muted); }
+.debrief .db-note60, .debrief .db-norecord { font-size: var(--t-13); color: var(--text-muted); }
 /* the learner handout: on screen at the end of the view, under its own heading */
 .debrief .db-kicker { font-size: var(--t-13); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
 .debrief .db-handout-live { border: 1px dashed var(--line-strong); border-radius: var(--r-control); padding: var(--s-3); }
@@ -184,7 +193,15 @@
   .debrief #db-live-1 > .db-sec { margin-top: 4mm; }
   .debrief #db-live-1 h2 { margin: 0 0 2mm; padding-bottom: 0.8mm; }
   .debrief .db-legend { margin: 0 0 1mm; font-size: 8.5pt; }
-  .debrief #db-moments { break-before: page; }
+  .debrief #db-moments, .debrief #db-swimlane { break-before: page; }
+  .debrief #db-swimlane + #db-moments { break-before: auto; } /* page 2 opens with the swimlane (DQ5, option A) */
+  .debrief #db-swimlane { break-inside: avoid; }
+  .debrief .db-swim svg { max-width: none; }
+  .debrief .db-swim text, .debrief .db-swim .db-swim-l { fill: #000; }
+  .debrief .db-swim .db-swim-bg { fill: #000; fill-opacity: 0.05; }
+  .debrief .db-swim .db-swim-grid { stroke: #000; stroke-opacity: 0.25; }
+  .debrief .db-swim .db-pulseless { fill: #e6e6e6; }
+  .debrief .db-swim, .debrief .db-swim * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .debrief #db-keytimes, .debrief #db-course, .debrief .db-tile, .debrief #db-moments tr { break-inside: avoid; }
   .debrief .db-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2mm; } /* R-B C1: MH page 1 within one A4 page */
   .debrief .db-tile { border: 0.6pt solid #000; padding: 1mm 1.5mm; line-height: 1.2; }
@@ -210,7 +227,7 @@
   .debrief .db-course .db-bm.undone path { stroke: #bbb; }
   .debrief .db-course .db-bm.undone .db-bm-n { fill: #777; }
   .debrief .db-course, .debrief .db-course *, .debrief .db-bar, .debrief .db-bar * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .debrief .db-subhead, .debrief .db-note60 { font-size: 8.5pt; }
+  .debrief .db-subhead, .debrief .db-note60, .debrief .db-norecord { font-size: 8.5pt; }
   .debrief .db-obj li { margin-bottom: 1.2mm; line-height: 1.3; }
   .debrief .db-why { font-size: 8.5pt; line-height: 1.25; }
   .debrief .db-moments { font-size: 9pt; }
