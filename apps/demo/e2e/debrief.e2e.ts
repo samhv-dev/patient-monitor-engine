@@ -556,7 +556,11 @@ for (const [name, run, card, hints] of [
     for (const q of Q_TEXT) expect(text).toContain(q);
     expect(text).not.toMatch(VERDICT);
     for (const o of JSON.parse(readFileSync(card, 'utf8')).objectives as Array<string | { text: string }>) expect(text).not.toContain(typeof o === 'string' ? o : o.text);
+    // the label prints in the bundled print font like the rest of the handout (a system-ui label made the line taller
+    // on Linux WebKit: MH 267.1 mm, CI run 42233122004)
+    expect(await page.evaluate(() => getComputedStyle(document.querySelector('#db-handout .db-q-at') as Element).fontFamily)).toMatch(/^["']?Inter Print/);
     const items = await page.evaluate((mm) => [...document.querySelectorAll('#db-handout ol.db-qs > li')].map((li) => li.getBoundingClientRect().height / mm), MM);
+    console.log(`D16 ${name} ${browserName}: items ${items.map((x) => x.toFixed(2)).join(' / ')} mm`);
     for (const i of [0, 1]) expect(items[i] as number, `card question ${i + 1}: one line, as tall as the fixed prompt (mm)`).toBeLessThanOrEqual((items[2] as number) + 0.5);
     const { handout } = await printHeights(page);
     test.info().annotations.push({ type: `D16 ${name} handout (mm)`, description: handout.toFixed(1) });

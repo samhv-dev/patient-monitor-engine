@@ -281,7 +281,7 @@ export function handoutQuestions(d: RunData): HTMLElement {
   const qs = handoutQuestionsAt(d).slice(0, 2);
   const fixed = HANDOUT.prompts.slice(qs.length).map((q) => h('li', {}, q, ...ruled(3)));
   return h('section', { class: 'db-hsec' }, h('h3', {}, 'Questions to think about'), h('ol', { class: 'db-qs' },
-    ...qs.map((q) => h('li', { class: 'db-q-card' }, h('span', { class: 'db-q-at num' }, mmss(q.t)), ' ', h('span', { class: 'db-q-text' }, q.text), ...ruled(3))),
+    ...qs.map((q) => h('li', { class: 'db-q-card' }, h('span', { class: 'db-q-at' }, mmss(q.t)), ' ', h('span', { class: 'db-q-text' }, q.text), ...ruled(3))),
     ...fixed));
 }
 /** The handout's take-home section: the card's `takeHome` lines as written (the owner's words), else blank lines to
