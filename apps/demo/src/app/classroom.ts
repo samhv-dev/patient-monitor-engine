@@ -19,6 +19,8 @@ export interface RelayInfo {
   port: number;
   addresses: string[];
   serves: boolean;
+  /** Room plan R1b: the code of the last room a host opened on this relay, kept across its restarts (`--state-dir`). */
+  lastRoom?: string;
 }
 
 /** Loopback hosts: an address on them works on this computer only. */

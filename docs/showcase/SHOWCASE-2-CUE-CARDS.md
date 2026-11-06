@@ -1,5 +1,7 @@
 # Showcase 2: cue cards (Tuesday 3 November 2026, 12 Aban 1405, the 30-minute slot)
 
+> **A record of the 3 November 2026 build:** the first Instructor view it describes (`#/teach`, its tabs and session bar) was retired on 6 November 2026 (retire-instructor-v1 PR 3; Instructor v2, `#/teach2`, is now the only Instructor view, and `#/teach` opens it). Nothing else in this record was changed.
+
 *One card per page, for the lectern. Print from a Markdown preview at 150 % or more, one card per page (a page break
 follows each card). **The programme (owner, 29 October, P29): one case, malignant hyperthermia on the E119 card, with
 three look-inside stops: the engine Paused, the Explore view opened from the Instructor side, the model page behind it

@@ -11,7 +11,7 @@ import { join } from 'node:path';
 import { devices, expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
-import { openApp, startVite } from './app-support.ts';
+import { openApp, speedV2, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -72,7 +72,7 @@ test('at ×4 a following phone beeps for (nearly) every beat the host beeps for'
   const ws = encodeURIComponent(`ws://127.0.0.1:${relay.port}/`);
 
   await page.addInitScript(countBeeps);
-  await openApp(page, base, `?relay=${ws}#/teach`, { warmMs: 1500 });
+  await openApp(page, base, `?relay=${ws}#/teach2`, { warmMs: 1500 });
   const code = await page.evaluate(() => (window as unknown as { __pmeApp: { session: { code: string } } }).__pmeApp.session.code);
 
   const { defaultBrowserType: _b, ...dev } = browserName === 'webkit' ? devices['iPhone 13'] : devices['Pixel 7'];
@@ -84,9 +84,10 @@ test('at ×4 a following phone beeps for (nearly) every beat the host beeps for'
   await phone.locator('button.sound').click();
   await expect(phone.locator('button.sound')).toHaveText('Sound on');
 
-  await page.locator('.topright .sound').click();
-  await expect(page.locator('.topright .sound')).toHaveText('Sound on');
-  await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×4' }).click();
+  // Instructor v2's header carries the top bar's Sound switch and the speed box
+  await page.locator('.ip2-head .ip2-sound').click();
+  await expect(page.locator('.ip2-head .ip2-sound')).toHaveText('Sound on');
+  await speedV2(page, 4);
   await page.waitForTimeout(4000); // the phone re-anchors on the speed change
 
   const [h0, p0] = await Promise.all([beeps(page), beeps(phone)]);

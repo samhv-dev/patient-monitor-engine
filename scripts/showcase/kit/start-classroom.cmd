@@ -6,10 +6,13 @@ rem browser, and learners' phones on the same Wi-Fi (or this PC's Mobile hotspot
 rem or later: the kit's own runtime\node.exe if it has one (make-bundle.mjs --win-node), else an installed one
 rem (nodejs.org, the LTS). The steps are in server\launch.mjs (the same as "Start Classroom.command" on a Mac);
 rem this file only finds Node.js. It writes nothing into its own folder.
+rem The room code is kept for the next start (also on another port) in %LOCALAPPDATA%\PME Classroom\room.json:
+rem the code only, written by the relay (server\launch.mjs passes the folder).
 rem Knobs for the kit's own tests (a presenter never needs them), set without quotes:
 rem   PME_NO_OPEN=1   do not open the browser
 rem   PME_PORT=8650   first port to try (the next 9 are tried if it is busy)
 rem   PME_NODE=path   use only this node.exe, even if the kit has runtime\node.exe (the Node 22 check's own test)
+rem   PME_STATE_DIR=dir   keep the last room code in this folder instead (the kit's own tests)
 setlocal EnableExtensions DisableDelayedExpansion
 title Patient monitor simulator - Classroom
 

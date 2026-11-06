@@ -6,8 +6,7 @@
 // along the bottom edge fills as the time passes. No ring, no chips, no eyebrow. A tap or click ends it on the host's
 // screen; on a phone a press-and-hold ends it there and a tap does nothing (the owner's ruling of 31 October: residents
 // brush the screen; `holdToEnd`, the hairline over the footer filling while held);
-// the instructor's "End briefing" ends it everywhere: in today's Instructor view over the panel, in Instructor v2's
-// status line under the stage strip (the owner's choice of 31 October; teach2/strip.ts, `briefingStatusText`).
+// the instructor's "End briefing" ends it everywhere: in Instructor v2's status line under the stage strip (the owner's choice of 31 October; teach2/strip.ts, `briefingStatusText`).
 // ONE render function (`renderBriefing`) and one layer (`briefingLayer`) serve the host and the followers; the host
 // feeds it from its session, a follower from the wire (`followBriefing`: the start time and the message's `sentAt`
 // are both the host's clock, so a phone that joins late shows the remainder whatever its own clock says).
@@ -18,7 +17,7 @@ import './briefing.css';
 import { DEFAULT_REVEAL, epochNow, type BriefingNotice, type WireMessage } from '@pme/controller';
 import { EDUCATION_LINE } from './about.ts';
 import type { AppSession } from './session.ts';
-import { button, h, setText } from './ui.ts';
+import { h, setText } from './ui.ts';
 
 /** The fade into the monitor, ms (the board: about 600 ms). */
 export const BRIEFING_FADE_MS = 600;
@@ -179,21 +178,3 @@ export const briefingLeftS = (b: Pick<BriefingNotice, 'durationS' | 'startedAt'>
 
 /** Instructor v2's status line while a briefing runs (beside its End briefing): "Case briefing on every screen · 0:48 left". */
 export const briefingStatusText = (leftS: number): string => `Case briefing on every screen · ${mmss(leftS)} left`;
-
-/** Today's Instructor view's "End briefing", with the time left; shown only while a briefing runs. */
-export function briefingEnd(session: Pick<AppSession, 'onBriefing' | 'endBriefing'>): HTMLElement {
-  const left = h('span', { class: 'cb-end-t' });
-  const el = h('div', { class: 'cb-end', role: 'group', 'aria-label': "The learners' case briefing", hidden: true },
-    h('span', {}, "Case briefing on the learners' screens "), left, button('End briefing', () => session.endBriefing(), 'small'));
-  let timer: ReturnType<typeof setInterval> | null = null;
-  session.onBriefing((b) => {
-    if (timer !== null) clearInterval(timer);
-    timer = null;
-    el.hidden = !b;
-    if (!b) return;
-    const draw = () => setText(left, mmss(briefingLeftS(b)));
-    draw();
-    timer = setInterval(draw, 500);
-  });
-  return el;
-}

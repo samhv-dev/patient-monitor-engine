@@ -98,11 +98,13 @@ export function trendMeta(k: ValueKey): { label: string; unit: string; digits: n
   return { label: keys.map((key) => labelOf(key) ?? '').filter(Boolean).join(' / '), unit: l ? unitOf(l.e) : '', digits: DIGITS[k] ?? 0 };
 }
 /** The least span of a trend chart's axis, so a few-point wobble is not drawn at
- *  full height; RR has no floor (± 1 when flat, as before). */
-const AXIS_FLOOR: Partial<Record<TrendKey, number>> = { spo2: 20, hr: 40, map: 40, etco2: 20, temp: 2 };
+ *  full height; RR has no floor (± 1 when flat, as before). The Pressures panel's left axis (SBP and DBP together,
+ *  `sys`) keeps MAP's 40 mmHg; its right axis (CVP) 10 mmHg, about a quarter of CVP's 0–20 mmHg working range as 40 is
+ *  of MAP's. */
+const AXIS_FLOOR: Partial<Record<TrendKey | PressureKey, number>> = { spo2: 20, hr: 40, map: 40, etco2: 20, temp: 2, sys: 40, cvp: 10 };
 /** The axis of one trend chart: the data's own range, or the floor centred on the data (SpO₂ never above 100, and never
  *  below zero when the data are not). */
-export function axisRange(k: TrendKey, lo: number, hi: number): [number, number] {
+export function axisRange(k: TrendKey | PressureKey, lo: number, hi: number): [number, number] {
   const floor = AXIS_FLOOR[k];
   if (floor === undefined) return hi - lo < 2 ? [lo - 1, hi + 1] : [lo, hi];
   if (hi - lo >= floor) return [lo, hi];

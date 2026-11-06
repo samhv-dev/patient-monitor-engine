@@ -101,13 +101,20 @@ export type ExtraCommand = CommandBase &
     // `jump` = fast-forward `value` sim seconds (> 0, ≤ 600) as fast as the host's monitor runs; `step` is refused
     | { type: 'time'; action: 'pause' | 'resume' | 'scale' | 'step' | 'jump'; value?: number }
     | { type: 'applyEvent'; event: ClinicalEvent }
-    /** A judged objective (`marker`) or a note for the debrief, sent by a remote (plan §6); text ≤ WIRE_LIMITS.noteChars. */
-    | { type: 'note'; kind: 'note' | 'marker'; text: string }
+    /** A judged objective (`marker`) or a note for the debrief, sent by a remote (plan §6); text ≤ WIRE_LIMITS.noteChars.
+     *  `ev`: the run event the note is (one of NOTE_EVENTS), filed on the record's note row with it — the phone's
+     *  Recognised press is the laptop's (brief 52). */
+    | { type: 'note'; kind: 'note' | 'marker'; text: string; ev?: NoteEvent }
     | {
         type: 'attachSensor'; sensor: SensorId; state: string; site?: string; leadSet?: 3 | 5 | 12;
         sampling?: 'sidestream' | 'mainstream';
       }
   );
+/** The run events a `note` command may carry (the guard refuses any other): 'recognised', the /1 Recognised press
+ *  (the demo's record.ts KEEPS; brief 52). */
+export const NOTE_EVENTS = ['recognised'] as const;
+export type NoteEvent = (typeof NOTE_EVENTS)[number];
+
 /**
  * A mark's kind (Instructor v2): a good moment, a bad one, or one to discuss — or `stage`, the mark the host's scenario
  * driver places by itself at every stage entry (its note is the state id). Views keep `stage` marks out of the marks list.
@@ -257,7 +264,11 @@ export type WireMessage = { v: 1; session: string; from: string; seq: number; se
   | { kind: 'command'; body: WireCommand }
   /** The host's answer to an instructor hello, sent before its welcome (plan §1); `granted: false` also revokes. */
   | { kind: 'grant'; to: string; granted: boolean; reason?: string }
-  | { kind: 'ack'; commandId: string; accepted: boolean; tick: Tick; reason?: string }
+  /** `code: 'recent'` (drug-lock.ts): the same drug was given as a bolus within SAME_DRUG_LOCK_S, from `recent.by`. */
+  | {
+      kind: 'ack'; commandId: string; accepted: boolean; tick: Tick; reason?: string;
+      code?: 'recent'; recent?: { drugId: string; agoS: number; by: 'laptop' | 'phone' | 'card' };
+    }
   | { kind: 'event'; body: WireEvent[] } // batched per frame, never samples
   | { kind: 'snapshot'; body: PatientSnapshot }
 );
@@ -296,7 +307,8 @@ export interface ManagedTransport extends Transport {
   onRelayFrame?(fn: (f: RelayFrame) => void): () => void;
 }
 
-export type AckResult = DispatchResult & { commandId: string; rttMs: number };
+/** `code`: the host's refusal code when it gave one (`recent`: the same-drug lock, drug-lock.ts). */
+export type AckResult = DispatchResult & { commandId: string; rttMs: number; code?: 'recent' };
 export type MeasuredMap = Partial<Record<NumericId, import('@pme/engine-core').Measured>>;
 
 // --- what an instructor may send (plan instructor-peer-role.md §2) -------------------------------------------------

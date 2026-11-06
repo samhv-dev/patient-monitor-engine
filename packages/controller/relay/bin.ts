@@ -1,11 +1,14 @@
 #!/usr/bin/env -S node --experimental-strip-types --no-warnings
 // pme-relay: the @pme/controller WebSocket relay (brief §3.7). Usage: pme-relay [--port 8787] [--host 0.0.0.0]
-//   [--room-ttl-min 10] [--quiet] [--static DIR] [--max-peers 60] [--remote-roles viewer|all].
+//   [--room-ttl-min 10] [--quiet] [--static DIR] [--max-peers 60] [--remote-roles viewer|all] [--state-dir DIR].
 //   Runs on Node ≥ 22.12 with type stripping (no build step).
 // Stage 12 (the classroom): `--static DIR` also serves the built app on the same port, so learners' phones open
 // http://<this laptop>:<port>/?join=CODE. Other devices may only FOLLOW, or sign in as the instructor's phone with the
 // PIN (`--remote-roles viewer`, the default with or without `--static`: plan instructor-peer-role.md Q12(b), a relay
 // started by hand is no weaker than the classroom's); `--remote-roles all` lets any device that knows the code command.
+// `--state-dir DIR` (room plan R1b; the classroom kit's launchers pass this computer's application-data folder): the
+// code of the last room a host opened is kept in DIR/room.json, so the room code survives a restart on another port.
+// Without it nothing is written.
 import { parseArgs } from 'node:util';
 import { lanAddresses } from './http.ts';
 import { startRelay } from './server.ts';
@@ -20,6 +23,7 @@ const { values } = parseArgs({
     static: { type: 'string' },
     'max-peers': { type: 'string', default: '60' },
     'remote-roles': { type: 'string' },
+    'state-dir': { type: 'string' },
   },
 });
 const roles = values['remote-roles'] ?? 'viewer';
@@ -31,6 +35,7 @@ const relay = await startRelay({
   maxPeersPerRoom: Number(values['max-peers']),
   remoteRoles: roles,
   ...(values.static ? { staticDir: values.static } : {}),
+  ...(values['state-dir'] ? { stateDir: values['state-dir'] } : {}),
   ...(values.quiet ? {} : { log: (l: string) => console.log(`[pme-relay] ${l}`) }),
 });
 console.log(`pme-relay ready on ws://${values.host}:${relay.port}/ (Ctrl+C to stop)`);

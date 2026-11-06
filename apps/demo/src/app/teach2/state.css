@@ -56,6 +56,8 @@ button.ip2-chip:hover { background: var(--ip2-card); }
 .ip2-cue-none .ip2-cue-name { font-size: 15px; color: var(--ip2-muted); }
 .ip2-cue-clock { font-family: var(--font-plex-mono); font-variant-numeric: tabular-nums; color: var(--ip2-muted); }
 .ip2-cue-clock.ip2-frozen { color: var(--ip2-pause); }
+.ip2-cue-hold { height: 24px; padding: 0 8px; font-size: 12px; align-self: center; } /* Hold the stage timer (G2): small, beside the clock */
+.ip2-cue-hold[hidden] { display: none; }
 .ip2-cue-how { font-size: 13px; color: var(--ip2-muted); }
 .ip2-swap { align-self: center; display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border: 1px solid var(--ip2-control); border-radius: 6px; color: var(--ip2-text); font-size: 12px; text-decoration: none; }
 .ip2-swap:hover { background: var(--ip2-bar); }
