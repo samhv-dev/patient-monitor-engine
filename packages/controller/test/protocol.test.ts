@@ -106,6 +106,8 @@ describe('what the instructor may send (plan instructor-peer-role.md §2; P2)', 
     expect(instructorMay(cmd({ type: 'setTarget', variable: 'hr', value: 80 }))).toBeNull();
     expect(instructorMay(cmd({ type: 'note', kind: 'note', text: 'Dantrolene drawn up' }))).toBeNull();
     expect(instructorMay(cmd({ type: 'note', kind: 'marker', text: 'Objective met: called for help' }))).toBeNull();
+    expect(instructorMay(cmd({ type: 'note', kind: 'marker', text: 'Recognised (instructor)', ev: 'recognised' }))).toBeNull(); // brief 52
+    expect(commandShape(cmd({ type: 'note', kind: 'marker', text: 'Recognised (instructor)', ev: 'recognised' }))).toBe('note'); // one shape, tag or not
     // the MH card in phases' induction actions (measured by P6's census of the /2 cards)
     expect(instructorMay(cmd({ type: 'applyEvent', event: { kind: 'preoxygenate', fio2: 1, durationS: 180 } }))).toBeNull();
     expect(instructorMay(cmd({ type: 'applyEvent', event: { kind: 'airwayDevice', device: 'ett' } } as unknown as CommandInput))).toBeNull();

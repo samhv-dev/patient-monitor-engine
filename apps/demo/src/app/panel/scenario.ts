@@ -91,6 +91,7 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
     const cmd: CommandInput = { type: 'scenario', action: 'trigger', target: tr.id };
     const r = await link.ctl.send(cmd); // not link.send: that logs a refused command too
     if (r.accepted) link.note(describeCommand(cmd as Record<string, unknown>), 'instructor');
+    else if (r.code === 'recent') toast(`${label}: not given (${r.reason ?? 'refused'}). Press again after the lock.`); // drug-lock.ts
     else moved();
   };
 
