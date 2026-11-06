@@ -87,8 +87,9 @@ export function createEegState(seed: number, m0: number, ctx: EegCtx): EegState 
 
 const okKohm = (v: unknown) => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= EEG_IMPEDANCE_MAX_KOHM;
 
-/** A reason, undefined (accepted) or null (not an EEG command). `on`: the EEG is on now. */
-export function validateEegCommand(cmd: Command, on: boolean): string | undefined | null {
+/** A reason, undefined (accepted) or null (not an EEG command). `on`: the EEG is on now; `models`: the device
+ * registry's ids (l3/eeg-devices/registry.ts — the engine passes them, so this layer does not import the devices). */
+export function validateEegCommand(cmd: Command, on: boolean, models: readonly string[] = []): string | undefined | null {
   if (cmd.type !== 'device' || (cmd.action as { device: string }).device !== 'eeg') return null;
   const a = cmd.action as EegDeviceAction & { value?: unknown };
   switch (a.action) {
@@ -104,13 +105,16 @@ export function validateEegCommand(cmd: Command, on: boolean): string | undefine
     case 'ecgPickup':
       if (!on) return 'eeg is off: switch it on first';
       return typeof a.value === 'boolean' ? undefined : 'ecgPickup must be true or false';
+    case 'model':
+      if (!on) return 'eeg is off: switch it on first';
+      return typeof a.value === 'string' && models.includes(a.value) ? undefined : `eeg model must be one of: ${models.join(', ')} (got ${String(a.value)})`;
     default:
-      return `eeg action must be on, off, impedance or ecgPickup (got ${String((a as { action: unknown }).action)})`;
+      return `eeg action must be on, off, impedance, ecgPickup or model (got ${String((a as { action: unknown }).action)})`;
   }
 }
 
-/** Apply an accepted impedance or ecgPickup command to a running EEG (on/off are the engine's: they create or drop
- * the state). */
+/** Apply an accepted impedance or ecgPickup command to a running EEG (on/off and the model are the engine's: they
+ * create or drop the state and the device). */
 export function applyEegSetting(es: EegState, a: EegDeviceAction): void {
   if (a.action === 'impedance') es.impedanceKOhm = typeof a.value === 'number' ? new Array<number>(EEG_ELECTRODES).fill(a.value) : [...a.value];
   else if (a.action === 'ecgPickup') es.ecgPickup = a.value;

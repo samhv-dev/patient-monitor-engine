@@ -178,6 +178,13 @@ const DATA: Record<string, (root: string) => Promise<Rows[]>> = {
     const { CIRC_CONDITIONS } = await imp(root, 'packages/engine-core/src/l2/circ/conditions.ts');
     return [{ title: 'Circulation conditions (`packages/engine-core/src/l2/circ/conditions.ts`)', head: ['Id'], rows: [...CIRC_CONDITIONS].map((id: string) => [`\`${id}\``]) }];
   },
+  monitor: async (root) => {
+    const file = 'packages/engine-core/src/l3/eeg-devices/registry.ts';
+    const { EEG_DEVICES } = await imp(root, file);
+    type Spec = { id: string; label: string; updateS: number; constants: Record<string, { value: number; unit: string; tag: string; what: string }> };
+    const specs = Object.values(EEG_DEVICES as Record<string, { spec: Spec }>).map((d) => d.spec);
+    return [{ title: `EEG devices: the registry's spec rows (EEG plan D8; \`${file}\`)`, head: ['Device', 'Label', 'Constant', 'Value', 'Unit', 'Source / tag', 'What'], rows: specs.flatMap((sp) => Object.entries(sp.constants).map(([k, c]) => [`\`${sp.id}\``, sp.label, `\`${k}\``, String(c.value), c.unit, c.tag, c.what])) }];
+  },
   blood: async (root) => {
     const { FLUIDS } = await imp(root, 'packages/engine-core/src/l2/blood/params.ts');
     const keys = Object.keys(Object.values(FLUIDS)[0] as object);

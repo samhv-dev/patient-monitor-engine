@@ -138,13 +138,33 @@ describe('C23: awake with blinks, the SEF is disturbed by eye movement (Ch36 p. 
 });
 
 describe('C25: the suppression ratio over 30–60 s, < 5 µV for ≥ 0.5 s (Ch36 pp. 1139–1140; Ch35 p. 1106; P-8)', () => {
-  it('suppression targeted for protection (p 0.65): SR reads within 50–80 %', () => {
-    const deep: EegSpectrum = { ...GA, suppression: { ...GA.suppression, p: 0.65 } };
-    const rs = readAll(brain(deep, 240, 17)).slice(-120);
-    const sr = rs.map((r) => num(r, 'eegSr'));
-    console.log(`[C25] SR at p 0.65: median ${median(sr)} %, range ${Math.min(...sr)}–${Math.max(...sr)} %`);
-    expect(Math.min(...sr)).toBeGreaterThanOrEqual(50);
-    expect(Math.max(...sr)).toBeLessThanOrEqual(80);
+  it('SR is the time truly suppressed in its window (the generator\'s own gate) within 3 points; targeted (p 0.65) it reads 50–80 %', () => {
+    // The generator's bursts (mean 3.58 s) leave only a few cycles in 60 s, so the SIGNAL's suppressed fraction itself
+    // wanders from window to window; the reader is judged against that, reading by reading.
+    for (const p of [0.5, 0.65, 0.8]) {
+      const spec: EegSpectrum = { ...GA, suppression: { ...GA.suppression, p } };
+      const s = createSynth(seedStream(17, 'eeg'), FS, spec);
+      const g = createGeneric(FS);
+      const gate: number[] = [];
+      const sr: number[] = [];
+      const diff: number[] = [];
+      for (let n = 0; n < 300 * FS; n++) {
+        const v = synthNext(s, () => spec);
+        gate.push(s.bs.on ? 0 : 1);
+        for (const r of genericRead(g, [v], GOOD)) {
+          if (r.n < 60 * FS) continue;
+          const truth = (100 * gate.slice(-60 * FS).reduce((a, b) => a + b, 0)) / (60 * FS);
+          sr.push(num(r, 'eegSr'));
+          diff.push(num(r, 'eegSr') - truth);
+        }
+      }
+      console.log(`[C25] p ${p}: SR median ${median(sr)} % (${Math.min(...sr)}–${Math.max(...sr)}); SR − true suppressed % ${Math.min(...diff).toFixed(1)} to ${Math.max(...diff).toFixed(1)}`);
+      expect(Math.max(...diff.map(Math.abs)), `p ${p}`).toBeLessThanOrEqual(3);
+      if (p === 0.65) {
+        expect(median(sr)).toBeGreaterThanOrEqual(50);
+        expect(median(sr)).toBeLessThanOrEqual(80);
+      }
+    }
   });
   it('the window: 60 s of silence then activity — SR is 100, falls steadily, still > 0 at 30 s and 0 by 61 s', () => {
     const x = [...new Array<number>(90 * FS).fill(0), ...sine(90, 10, 20)];

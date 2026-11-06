@@ -3,7 +3,7 @@
 // ventilator), sugammadex / neostigmine reversal, remifentanil apnoea, residual block at extubation. Every drug and the
 // vaporiser go through the drug model; the neuro model supplies the TOF/depth devices, the tiles' data and the panel.
 import type { Command, EngineEvent } from '@pme/engine-core';
-import { mountMonitor } from '@pme/renderer';
+import { createEegDisplay, drawEegRaw, mountMonitor, paintDsa, pushEegDisplay, type EegDisplay } from '@pme/renderer';
 
 type Body = Command extends infer C ? (C extends Command ? Omit<C, 'id' | 'issuedBy'> : never) : never;
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -75,12 +75,49 @@ pm.on((e: EngineEvent) => {
       `stress ${e.stress}${e.movement ? ' MOVING' : ''} · antinociception ${e.outputs.antinoc.toFixed(2)} · thermoregulatory depth ${e.outputs.thermoDepth.toFixed(2)} · CMRO2 ×${e.outputs.cmro2Mult.toFixed(2)}\n` +
       `Ce: ${ce}`;
   } else if (e.type === 'neuroMark') log(e.kind);
+  else if (e.type === 'eegReading') drawEeg(e);
+  if (e.type === 'measurement' && e.values.sef) {
+    const v = e.values;
+    const f = (m: typeof v.sef, d = 1, u = '') => (m ? `${m.value === null ? '--' : m.value.toFixed(d)}${u}${m.flag !== 'valid' ? ` (${m.flag})` : ''}` : '--');
+    $('eegNums').textContent = `SEF ${f(v.sef, 1, ' Hz')}  MF ${f(v.mf, 1, ' Hz')}  SR ${f(v.eegSr, 0, ' %')}  impedance ${f(v.eegImp, 1, ' kΩ')}`;
+  }
 });
+
+// EEG plan E5: the device's raw trace and spectrogram strip (generic look), drawn from its readings
+let eegView: EegDisplay | null = null;
+function drawEeg(e: Extract<EngineEvent, { type: 'eegReading' }>): void {
+  if (!eegView || eegView.model !== e.model) eegView = createEegDisplay(e.model, 125);
+  pushEegDisplay(eegView, e);
+  $('eeg').style.display = 'block';
+  $('eegLabel').textContent = e.label;
+  const raw = $<HTMLCanvasElement>('eegRaw');
+  const rc = raw.getContext('2d');
+  if (rc) {
+    rc.strokeStyle = e.flags.invalid ? '#f66' : e.flags.questionable ? '#fc8' : '#9ad0ff';
+    drawEegRaw(rc, eegView.raw, raw.width, raw.height, eegView.rawN, 100);
+  }
+  const dsa = $<HTMLCanvasElement>('eegDsa');
+  const dc = dsa.getContext('2d');
+  if (dc && e.display.dsa) {
+    const img = dc.createImageData(dsa.width, dsa.height);
+    paintDsa(img, eegView.cols, { minDb: -20, maxDb: 25 }); // dB re 1 µV²/Hz [ENG: the generator's suppression floor to its slow-wave peak]
+    dc.putImageData(img, 0, 0);
+  }
+  (window as unknown as { __eeg: unknown }).__eeg = { raw: eegView.raw.length, cols: eegView.cols.length, label: e.label };
+}
 
 $('speed').addEventListener('change', () => pm.setTimeScale(Number(($('speed') as HTMLSelectElement).value)));
 $('tofStart').addEventListener('click', () => void dev({ device: 'tof', action: 'start', intervalS: 15 }));
 $('ptc').addEventListener('click', () => void dev({ device: 'tof', action: 'ptc' }));
 $('depthOn').addEventListener('click', () => void dev({ device: 'depth', action: 'on' }));
+$('eegOn').addEventListener('click', () => { void dev({ device: 'eeg', action: 'on' }); log('EEG on: Processed EEG (generic)'); });
+$('eegOff').addEventListener('click', () => { void dev({ device: 'eeg', action: 'off' }); $('eeg').style.display = 'none'; eegView = null; log('EEG off'); });
+$('eegImp').addEventListener('click', () => { void dev({ device: 'eeg', action: 'impedance', value: [9, 2, 2] }); log('EEG electrode 9 kΩ'); });
+$('eegImpOk').addEventListener('click', () => void dev({ device: 'eeg', action: 'impedance', value: 2 }));
+$('eegDia').addEventListener('click', () => {
+  void send({ type: 'setModifiers', modifiers: { artefact: { electrosurgery: { atS: simT + 1, durationS: 3 } } } } as Body);
+  log('diathermy 3 s');
+});
 $('induction').addEventListener('click', () => {
   void dev({ device: 'tof', action: 'start', intervalS: 15 });
   void dev({ device: 'depth', action: 'on' });
