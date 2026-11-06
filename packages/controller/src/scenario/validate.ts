@@ -104,9 +104,9 @@ export function validateScenario(input: unknown, opts: ValidateOptions = {}): Va
   doc.bookmarks?.forEach((b, i) => {
     if (!stateIds.has(b.state)) errors.push(`/bookmarks/${i}/state: no state "${b.state}"`);
   });
-  doc.debriefHints?.openers?.forEach((o, i) => {
-    if (o.at.startsWith('state:') && !stateIds.has(o.at.slice(6))) errors.push(`/debriefHints/openers/${i}/at: no state "${o.at.slice(6)}"`);
-  });
+  (['openers', 'handoutQuestions'] as const).forEach((k) => doc.debriefHints?.[k]?.forEach((o, i) => {
+    if (o.at.startsWith('state:') && !stateIds.has(o.at.slice(6))) errors.push(`/debriefHints/${k}/${i}/at: no state "${o.at.slice(6)}"`);
+  }));
   return errors.length ? { ok: false, errors: errors.slice(0, MAX_ERRORS), warnings } : { ok: true, doc, warnings };
 }
 
@@ -272,7 +272,7 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
     rule(o.rule, `/outcomes/${i}/rule`);
     anchor(o.anchor, `/outcomes/${i}/anchor`);
   });
-  doc.debriefHints?.openers?.forEach((o, i) => anchor(o.at, `/debriefHints/openers/${i}/at`));
+  (['openers', 'handoutQuestions'] as const).forEach((k) => doc.debriefHints?.[k]?.forEach((o, i) => anchor(o.at, `/debriefHints/${k}/${i}/at`)));
   doc.script?.forEach((s, i) => {
     const m = typeof s.on === 'string' ? new RegExp(`^(phase|action):(${ID})`).exec(s.on) : null;
     if (m?.[1] === 'phase') phase(m[2] as string, `/script/${i}/on`);

@@ -108,4 +108,17 @@ describe('the Debrief fields (Debrief redesign A)', () => {
     expect(errs({ ...base(), debriefHints: { pearls: [] } }).join()).toMatch(/unexpected property "pearls"/);
     expect(errs({ ...base(), debriefHints: {} }).join()).toMatch(/debriefHints/);
   });
+  it('accepts debriefHints.handoutQuestions: up to three, anchored as the openers are (D16)', () => {
+    const q = [{ at: 'state:b', text: 'What did you see here?' }, { at: 'drug:phenylephrine', text: 'Why then?' }, { at: 'start', text: 'What did you notice first?' }];
+    const r = validateScenario({ ...base(), debriefHints: { handoutQuestions: q } });
+    expect(r.ok ? [] : r.errors).toEqual([]);
+    expect(validateScenario({ ...base(), debriefHints: { openers: [{ at: 'state:a', text: 'x' }], handoutQuestions: [{ at: 'value:map<60', text: 'y' }] } }).ok).toBe(true);
+  });
+  it('refuses handoutQuestions on a state the card does not have, four questions, an unknown anchor form, an empty text (D16)', () => {
+    expect(errs({ ...base(), debriefHints: { handoutQuestions: [{ at: 'state:deteriorating', text: 'What did you see?' }] } })).toEqual(['/debriefHints/handoutQuestions/0/at: no state "deteriorating"']);
+    const q = { at: 'start', text: 'x' };
+    expect(errs({ ...base(), debriefHints: { handoutQuestions: [q, q, q, q] } }).join()).toMatch(/^\/debriefHints\/handoutQuestions: /);
+    expect(errs({ ...base(), debriefHints: { handoutQuestions: [{ at: 'phase:early', text: 'x' }] } }).join()).toMatch(/debriefHints\/handoutQuestions\/0\/at/);
+    expect(errs({ ...base(), debriefHints: { handoutQuestions: [{ at: 'start', text: '' }] } }).join()).toMatch(/debriefHints\/handoutQuestions\/0\/text/);
+  });
 });

@@ -320,3 +320,17 @@ describe('pme-scenario/2: the recognition action (Debrief 2, D5)', () => {
     expect(errs(withActions({ recognition: false })).join(' ')).toMatch(/recognition/);
   });
 });
+
+describe('pme-scenario/2: debriefHints.handoutQuestions (D16)', () => {
+  const withQ = (q: unknown) => ({ ...minimalV2(), debriefHints: { handoutQuestions: q } });
+  it('accepts up to three questions on the anchor forms the openers take', () => {
+    const r = validateScenario(withQ(['start', 'phase:early', 'action:dantrolene'].map((at) => ({ at, text: `About ${at}?` }))));
+    expect(r.ok ? [] : r.errors).toEqual([]);
+  });
+  it('refuses an unknown phase, an unknown action, a /1 run-event form, four questions', () => {
+    expect(errs(withQ([{ at: 'phase:late', text: 'x' }]))).toEqual(['/debriefHints/handoutQuestions/0/at: no phase "late"']);
+    expect(errs(withQ([{ at: 'action:nope', text: 'x' }]))).toEqual(['/debriefHints/handoutQuestions/0/at: no action "nope"']);
+    expect(errs(withQ([{ at: 'drug:dantrolene', text: 'x' }])).join()).toMatch(/debriefHints\/handoutQuestions\/0\/at/);
+    expect(errs(withQ([1, 2, 3, 4].map(() => ({ at: 'start', text: 'x' })))).join()).toMatch(/^\/debriefHints\/handoutQuestions: /);
+  });
+});
