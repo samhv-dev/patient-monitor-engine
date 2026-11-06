@@ -209,16 +209,22 @@ for (const [w, h, paneW, pane] of [[1990, 920, 1374, 820], [1990, 1080, 1374, 98
     const tPress = Date.now();
     const lagAtPress = await page.evaluate(() => ({ ...(window as unknown as { __p47lag: object }).__p47lag }));
     await page.getByRole('button', { name: 'CO₂ sampling line' }).click();
+    // CI run 42111824225 (PR #285, webkit 2/3, attempt 1): no CO2 tile 5 s after the press, the toggle pressed, no
+    // refusal on the page, the session clock running; local macOS WebKit 20/20, and 8 probe runs (idle and under CPU
+    // load) answered the attach in 16–30 ms with the tile at once. The mechanism is not found: a miss now prints the
+    // press's answer, the engine's reported line and the clocks, so the next one names it (the assertion is unchanged)
     const co2Tile = page.locator('.stage .pme-stile[data-param="CO2"]');
     const tileShown = await co2Tile.waitFor({ state: 'visible', timeout: 5_000 }).then(() => true, () => false);
     if (!tileShown) {
-      // for the diagnosis only (the test still fails): how late the tile comes, if it comes
-      await co2Tile.waitFor({ state: 'visible', timeout: 25_000 }).catch(() => undefined);
-      const why = await page.evaluate(() => {
-        const a = (window as unknown as { __pmeApp: { link: { log: unknown[]; ctl: { state: unknown; pendingCount: number } } } }).__pmeApp;
-        return { ...(window as unknown as { __p47: object }).__p47, workerEventLag: (window as unknown as { __p47lag: object }).__p47lag, panelLog: a.link.log.slice(-3), engineCo2: (a.link.ctl.state as { sensors?: { co2?: string } } | null)?.sensors?.co2 ?? null, pending: a.link.ctl.pendingCount, visibility: document.visibilityState };
+      const at5 = await page.evaluate(() => {
+        const a = (window as unknown as { __pmeApp: { link: { simT: number; log: Array<{ simT: number | null; text: string; refused?: string }>; ctl: { state: unknown; pendingCount: number } }; session: { simNow(): number } } }).__pmeApp;
+        return { log: a.link.log.slice(-4), engineCo2: (a.link.ctl.state as { sensors?: { co2?: string } } | null)?.sensors?.co2 ?? null, pending: a.link.ctl.pendingCount, linkSimT: a.link.simT, hostSimT: a.session.simNow(), pressed: document.querySelector('[role=tabpanel] .toggles button:nth-child(4)')?.getAttribute('aria-pressed') ?? null, workerEventLag: (window as unknown as { __p47lag: object }).__p47lag, visibility: document.visibilityState };
       });
-      console.log(`saadat-p3 ${browserName} ${w}x${h}: no CO2 tile 5 s after the press (filled → press ${tPress - tFilled} ms, worker event lag at the press ${JSON.stringify(lagAtPress)}) ${JSON.stringify(why)}`);
+      console.log(`saadat-p3 ${browserName} ${w}x${h}: no CO2 tile 5 s after the press (filled → press ${tPress - tFilled} ms, worker event lag at the press ${JSON.stringify(lagAtPress)}) ${JSON.stringify(at5)}`);
+      // for the diagnosis only (the test still fails): how late the tile comes, if it comes, and the press's timeline
+      await co2Tile.waitFor({ state: 'visible', timeout: 25_000 }).catch(() => undefined);
+      const later = await page.evaluate(() => ({ ...(window as unknown as { __p47: object }).__p47, workerEventLag: (window as unknown as { __p47lag: object }).__p47lag }));
+      console.log(`saadat-p3 ${browserName} ${w}x${h}: the press's timeline ${JSON.stringify(later)}`);
     } else console.log(`saadat-p3 ${browserName} ${w}x${h}: CO2 tile within 5 s (filled → press ${tPress - tFilled} ms, worker event lag at the press ${JSON.stringify(lagAtPress)})`);
     expect(tileShown, 'the CO2 tile within 5 s of the CO₂ sampling line press').toBe(true);
     // the CO2 numerics fill: EtCO2 and the AWRR (the ventilator's rate) both printed

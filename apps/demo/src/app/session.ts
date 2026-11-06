@@ -129,6 +129,9 @@ export class AppSession {
   private offMon: (() => void) | null = null;
   private lastT = 0;
   private lastWall = performance.now();
+  /** The latest sim time `simNow` returned: the estimate never goes below it on one course (a restore or a new monitor
+   *  sets it back with the clock). */
+  private readT = 0;
   private readonly pollTimer: ReturnType<typeof setInterval>;
   /** The same-browser channel (a learner monitor window, a Remote window); the Room page lists who said hello on it. */
   readonly bc: ReturnType<typeof createBroadcastChannelTransport>;
@@ -169,6 +172,7 @@ export class AppSession {
         await this.need().restore(s);
         this.lastT = s.tick * TICK_S;
         this.lastWall = performance.now();
+        this.readT = this.lastT; // the course goes back to the bookmark
       },
       on: (fn) => {
         this.listeners.add(fn);
@@ -415,11 +419,17 @@ export class AppSession {
     for (const res of this.ffWaiters.splice(0)) res();
   }
 
-  /** Sim time: the last engine event's time run forward on the wall clock at the current speed, capped [ENG]. */
+  /** Sim time: the last engine event's time run forward on the wall clock at the current speed, capped [ENG], and
+   *  never earlier than a time it has already given. An engine event can arrive with a time below the running estimate
+   *  (the engine a few ms behind the wall clock, its events late under load); the estimate then holds until the engine
+   *  passes it, rather than step back: two reads either side of that event (two quick gotos) kept their order, so the
+   *  scenario's history did too (the strip read an entry earlier than the one before it as a rewind and showed the stage
+   *  between as skipped; teach2-fit.e2e.ts :505, CI run 42113324793). */
   simNow(): number {
-    if (this.paused || this.fastForwarding) return this.lastT; // Exact between fast-forward steps
     const dt = ((performance.now() - this.lastWall) / 1000) * this.timeScale;
-    return this.lastT + Math.min(Math.max(0, dt), EST_CAP_S * this.timeScale);
+    const est = this.paused || this.fastForwarding ? this.lastT : this.lastT + Math.min(Math.max(0, dt), EST_CAP_S * this.timeScale); // exact between fast-forward steps
+    this.readT = Math.max(this.readT, est);
+    return this.readT;
   }
 
   send(c: Omit<Command, 'id' | 'issuedBy'> & Record<string, unknown>): Promise<{ accepted: boolean; reason?: string }> {
@@ -607,6 +617,7 @@ export class AppSession {
     this.el.replaceChildren();
     this.lastT = 0;
     this.lastWall = performance.now();
+    this.readT = 0; // a new monitor is a new timeline
     this.last = {};
     this.fastForwarding = false; // A new monitor (the host stops a fast-forward on the old timeline)
     this.ffTick = null;
