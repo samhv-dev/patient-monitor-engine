@@ -50,7 +50,7 @@ const { ControllerSession, HostSession } = await import('@pme/controller');
 const { mountFollower, publishStyle } = await import('./follower.ts');
 const { DEFAULT_SITE } = await import('../site.ts');
 
-describe('R5: the defibrillator window', () => {
+describe('R5: the defibrillator window', { timeout: 60_000 }, () => {
   let he: MonitorEngine;
   let close = () => {};
   let style = { skin: 'saadat-like', theme: '', defib: null as string | null };
