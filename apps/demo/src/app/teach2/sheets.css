@@ -83,6 +83,9 @@
 .ip2-tray-items > .ip2-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--ip2-control); border-radius: 6px; font-size: 13px; white-space: nowrap; }
 .ip2-chip-x { border: 0; background: transparent; color: var(--ip2-muted); cursor: pointer; }
 .ip2-sheet-foot { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 0 14px; border-top: 1px solid var(--ip2-line); background: var(--ip2-bar); }
+.ip2-sheet-deliver { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.ip2-onset.field { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; color: var(--ip2-muted); } /* the onset beside Deliver (G3) */
+.ip2-onset .input { width: auto; height: 34px; padding: 0 8px; border: 1px solid var(--ip2-control); border-radius: 6px; background: var(--ip2-page); color: var(--ip2-text); font: inherit; }
 .ip2-sheet-primary, .ip2-gives { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
 .ip2-foot-line { max-width: 22ch; text-align: right; line-height: 1.3; }
 .ip2-foot-line:empty { display: none; }
