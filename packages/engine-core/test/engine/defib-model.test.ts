@@ -45,7 +45,7 @@ describe('R5a: the defibrillator model (device layer)', () => {
   it('generic on a saadat-like monitor (no defibrillator block): a charge with no energy charges 120 J in 120 × 7/200 s', () => {
     const { e, ev } = devRig('saadat-like');
     e.advanceTo(1);
-    expect(e.dispatch(model('generic')).ok).toBe(true);
+    expect(e.dispatch(model('generic')).accepted).toBe(true);
     const c = charge(e, ev);
     expect(c.energyJ).toBe(120);
     expect(c.chargeS).toBeCloseTo(120 * CHARGE_S_PER_J, 10);
