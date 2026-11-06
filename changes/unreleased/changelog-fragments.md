@@ -23,3 +23,16 @@
   compressions the beating heart's supply is now the relaxation-phase CPP the arrested heart is read by (Paradis 1990),
   with the beats' own demand (`stepCoronary` `compressions`): the myocardium 24 s into CPR is 0.470–0.487 for four
   starts 0.15 s apart (was 0.123–0.250), and the showcase run never arrests (kIsch minimum 0.255–0.286 over eight).
+
+### Added
+
+- **The Debrief reads what the record now keeps (Debrief 2, D4–D6)**: "who" of each scenario state comes from the
+  record's own account (the instructor's press: the team; the state's rule, every `pme-scenario/2` phase: the patient;
+  a jump: the scenario), falling back to the card's transitions for an older record. Recognition has one reading: on a
+  `pme-scenario/2` card the timed action the card marks `recognition: true` (new optional field, at most one per card;
+  set on "name MH" and "recognise the return of circulation"), with its window, press and grade; on a
+  `pme-scenario/1` card the recognition objective's tick, or else the new "Recognised" button (session bar and
+  Instructor v2 dock, `/1` cards and free runs only), which writes a `recognised` note. The key-moments table gains
+  SBP/DBP (a cuff value printed with its age, "98/60 (cuff, 2 min 10 s before)") and CVP, and each alarm under a
+  moment its end and acknowledgement ("▸ cleared 07:40 · acknowledged 06:20", or "(still on)"); the minute table gains
+  SBP, DBP and CVP. A file made before prints "·" and "not recorded in this file" there. No schema change.

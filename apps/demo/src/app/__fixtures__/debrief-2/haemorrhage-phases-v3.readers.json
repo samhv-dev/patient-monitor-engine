@@ -42,7 +42,7 @@
   {
    "n": 1,
    "t": 556.6997491385047,
-   "who": "scenario",
+   "who": "patient",
    "text": "Decompensating",
    "values": {
     "hr": 160,
@@ -63,7 +63,7 @@
    "n": 2,
    "t": 660,
    "who": "patient",
-   "text": "Pulse lost (the model)",
+   "text": "Pulse lost (the model) · Arrest",
    "values": {
     "hr": 54,
     "map": 8.85892162330404,
@@ -83,22 +83,8 @@
   },
   {
    "n": 3,
-   "t": 660.0496000000238,
-   "who": "scenario",
-   "text": "Arrest: PEA",
-   "values": {
-    "hr": 54,
-    "map": 8.85892162330404,
-    "spo2": 99,
-    "etco2": 13
-   },
-   "pulseless": true,
-   "alarms": []
-  },
-  {
-   "n": 4,
    "t": 922.4615999999047,
-   "who": "scenario",
+   "who": "patient",
    "text": "Arrest: asystole",
    "values": {
     "hr": 19,
@@ -115,7 +101,7 @@
    ]
   },
   {
-   "n": 5,
+   "n": 4,
    "t": 928.14,
    "who": "team",
    "text": "CPR started, 110 /min",
@@ -129,7 +115,7 @@
    "alarms": []
   },
   {
-   "n": 6,
+   "n": 5,
    "t": 929.82,
    "who": "team",
    "text": "Crystalloid 1000 mL over 1.5 min",
@@ -143,7 +129,7 @@
    "alarms": []
   },
   {
-   "n": 7,
+   "n": 6,
    "t": 929.82,
    "who": "team",
    "text": "Blood 1200 mL over 2.4 min",
@@ -157,7 +143,7 @@
    "alarms": []
   },
   {
-   "n": 8,
+   "n": 7,
    "t": 930.6800000000001,
    "who": "team",
    "text": "Tranexamic acid 1000 mg IV",
@@ -171,7 +157,7 @@
    "alarms": []
   },
   {
-   "n": 9,
+   "n": 8,
    "t": 948.36,
    "who": "team",
    "text": "Epinephrine 1 mg IV",
@@ -192,7 +178,7 @@
    ]
   },
   {
-   "n": 10,
+   "n": 9,
    "t": 1057.8600000000001,
    "who": "team",
    "text": "CPR started, 110 /min",
@@ -210,7 +196,7 @@
    ]
   },
   {
-   "n": 11,
+   "n": 10,
    "t": 1128.66,
    "who": "team",
    "text": "Epinephrine 1 mg IV",
@@ -227,7 +213,7 @@
    ]
   },
   {
-   "n": 12,
+   "n": 11,
    "t": 1188.56,
    "who": "team",
    "text": "CPR started, 110 /min",
