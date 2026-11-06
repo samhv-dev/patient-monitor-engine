@@ -191,3 +191,57 @@ describe('Devices & alarms: the list reads the bar’s alarms as the tab opens (
     expect(el.querySelector('[role=status]')?.textContent).toBe('Alarm sound on');
   });
 });
+
+describe('Learner controls on the monitor (retire-instructor-v1 G1: moved here from the Scenario tab, host only)', () => {
+  beforeEach(() => document.body.replaceChildren());
+
+  /** A host link: the AppSession's learner switch (session.ts `learner`, `setLearner`, `onLearner`), and the notes. */
+  function hostRig() {
+    const { link } = fakeLink('philips-like');
+    const fns = new Set<(on: boolean) => void>();
+    const host = {
+      learner: false,
+      spec: { attached: true },
+      setLearner(on: boolean) {
+        host.learner = on;
+        for (const fn of fns) fn(on);
+      },
+      onLearner(fn: (on: boolean) => void) {
+        fns.add(fn);
+        fn(host.learner);
+        return () => void fns.delete(fn);
+      },
+    };
+    const notes: Array<[string, string]> = [];
+    Object.assign(link, { host, note: (text: string, kind: string) => void notes.push([text, kind]) });
+    const ctx = { link, staging: {}, site: {}, weightKg: () => 70, onRefresh: () => undefined, goTab: () => undefined } as unknown as PanelCtx;
+    const el = devicesTab(ctx);
+    document.body.append(el);
+    const sw = () => [...el.querySelectorAll('button')].find((b) => b.textContent === 'Learner controls on the monitor');
+    return { host, notes, el, sw };
+  }
+
+  it('on a host: shown, off; switching it on shows the strip and writes the note; a load turns it off and the switch follows', () => {
+    const r = hostRig();
+    const sw = r.sw() as HTMLButtonElement;
+    expect(sw).toBeTruthy();
+    expect(sw.getAttribute('aria-pressed')).toBe('false');
+    expect(r.el.textContent).toContain('Charge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.');
+    sw.click();
+    expect(r.host.learner).toBe(true);
+    expect(sw.getAttribute('aria-pressed')).toBe('true');
+    expect(r.notes).toEqual([['Learner controls shown on the monitor', 'system']]);
+    sw.click();
+    expect(r.host.learner).toBe(false);
+    expect(r.notes.at(-1)).toEqual(['Learner controls hidden', 'system']);
+    sw.click();
+    r.host.setLearner(false); // a Load (main.ts, session.ts): the host turns it off, and the switch follows
+    expect(sw.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('on a Remote (no host): absent', () => {
+    const { el } = rig('philips-like');
+    expect([...el.querySelectorAll('button')].some((b) => b.textContent === 'Learner controls on the monitor')).toBe(false);
+    expect(el.textContent).not.toContain('under the learner monitor');
+  });
+});
