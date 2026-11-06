@@ -428,7 +428,7 @@ touch:** skins' JSON (the mapping is in the formatter). **Gate:** common + the r
 
 ### E10: Four-channel montage (plan 6 h · 0.8–1.0 executor-h)
 
-**Depends on:** E4; **Q10**. **Files:** `l2/eeg/montage.ts`, tests; `ChannelId` gains the montage's channels.
+**Depends on:** E4; Q10 ruled B (built). **Files:** `l2/eeg/montage.ts`, tests; `ChannelId` gains the montage's channels.
 - [ ] The generator renders frontal and posterior channels from one cortical state: posterior alpha with eyes closed
   awake, lost at loss of responsiveness while frontal alpha appears (anteriorisation, Ch36 p. 1138; Ch35 p. 1106);
   occipital alpha returns at responsiveness with eyes closed (Ch36 p. 1142); delta spatially not synchronous, alpha
@@ -520,7 +520,7 @@ approved.
 E0 ─► [E1+E2] ─► [E3+E4] ─► [E5+E6] ─┬─► E7 (Q2) ──┐
                          │            ├─► E8 (Q2) ──┤
                          │            ├─► E9 (Q2) ──┼─► E13
-                         └─► E10 (Q10)┴─► E11 (Q2) ─┤
+                         └─► E10 (built)┴─► E11 (Q2) ─┤
               [room R3, R4, R7 merged] ─► E12 ──────┘
 ```
 
@@ -564,6 +564,18 @@ Ten PRs (the lean cut of `research/42` §2.3: one PR per file chain; tests first
   (a later stage behind the same interface, if the owner wants it); moving physiology onto the cortical state (Q4).
 
 ## 10. Questions for the owner (each with the default the plan uses if no answer comes)
+
+**Rulings, 6 November 2026 (the owner):** Q1 A (generic processed EEG first, then BIS-type, Entropy, Narcotrend, PSI as
+their sources are approved). Q2 A (published papers as the candidate sources, each still to be approved before its
+piece is built). Q3 A. Q4 A, and the move of the physiology onto the cortical state is a later piece, recorded in
+`research/41` as its own row. Q5 A, with a review of what more Miller says on the burst-suppression MAC before PR 2
+(reported to the owner). Q6 A. Q7 A, with a review of Miller and an online search for published magnitudes before
+PR 2 (reported to the owner; what is found replaces [ENG] values with tagged ones). **Q8 B: the devices carry their
+own names (BIS, Entropy, Narcotrend, PSI) with a note on the tile and on the model page that the maker's algorithm is
+proprietary and unavailable, so the reading is the published components only.** Q9: the artefact controls for the
+instructor go into E12, the depth window, not into a separate later piece (the Devices sheet is being reshaped by two
+other plans). **Q10 B: the four-channel montage (E10) is built, PSI is not deferred.** Q11 B: the owner checks the
+Saadat BFA module's manual with the department; P-20 stays open until then.
 
 1. **Which devices first?** Default: the generic processed-EEG monitor (raw EEG, spectrogram, SEF, SR: all published in
    Miller) as the first selectable instrument (PR 4), then BIS-type, Entropy, Narcotrend, PSI in that order as their
