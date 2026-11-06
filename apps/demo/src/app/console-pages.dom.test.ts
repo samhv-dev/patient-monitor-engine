@@ -20,7 +20,7 @@ import { DEMO_CARDS, scenariosView } from './views/scenarios.ts';
 import { Meters } from './meters.ts';
 
 const view = (id: RouteId): View => ({ id, el: document.createElement('section') });
-const ALL: RouteId[] = ['home', 'room', 'scenarios', 'patient', 'teach', 'monitor', 'explore', 'debrief'];
+const ALL: RouteId[] = ['home', 'room', 'scenarios', 'patient', 'teach2', 'monitor', 'explore', 'debrief'];
 
 function shellWithRail() {
   const shell = new Shell(document.body, { hostless: false });
@@ -54,23 +54,24 @@ describe('the frame', () => {
     shell.show({ id: 'room', sub: '' });
     expect(current()).toEqual(['room']);
     expect(rail.el.querySelector('[data-route="room"] .rail-badge')?.textContent).toBe('3 devices');
-    shell.show({ id: 'teach', sub: '' });
-    expect(current()).toEqual(['teach']);
+    shell.show({ id: 'teach2', sub: '' });
+    expect(current()).toEqual(['teach2']);
     shell.show({ id: 'home', sub: '' });
     expect(current()).toEqual(['home']);
     expect(rail.el.querySelectorAll('.rail-hr')).toHaveLength(4); // groups parted by lines, no captions
     rail.destroy();
   });
 
-  it('hides the stage and the session bar on the pages before a session, shows them on the Instructor and Monitor views', () => {
+  it('hides the stage and the session bar on the pages before a session, shows the stage on the Instructor and Monitor views', () => {
     const { shell } = shellWithRail();
     for (const id of ['home', 'room', 'scenarios', 'patient'] as const) {
       shell.show({ id, sub: '' });
       expect([shell.stage.hidden, shell.bar.hidden], id).toEqual([true, true]);
     }
-    for (const id of ['teach', 'monitor'] as const) {
+    // Instructor v2 carries its own header in place of the session bar (OWN_BAR_ROUTES, shell.dom.test.ts)
+    for (const [id, bar] of [['teach2', true], ['monitor', false]] as const) {
       shell.show({ id, sub: '' });
-      expect([shell.stage.hidden, shell.bar.hidden], id).toEqual([false, false]);
+      expect([shell.stage.hidden, shell.bar.hidden], id).toEqual([false, bar]);
     }
   });
 
@@ -78,7 +79,7 @@ describe('the frame', () => {
     // the owner, 30 October: the line leaves the bottom of the working pages so Instructor v2's dock sits flush
     const shell = new Shell(document.body, { hostless: false });
     shell.add({ ...homeView({ meters: new Meters() }), enter: undefined });
-    for (const id of ['teach', 'teach2', 'scenarios', 'settings', 'debrief'] as const) shell.add(view(id));
+    for (const id of ['teach2', 'scenarios', 'settings', 'debrief'] as const) shell.add(view(id));
     shell.setRail(new Rail({ version: 'x', theme: { light: () => false, set: () => undefined } }));
     /** The page's text as shown: hidden views left out. */
     const shown = () => {
@@ -87,7 +88,7 @@ describe('the frame', () => {
       return c.textContent ?? '';
     };
     const times = (t: string) => t.split(EDUCATION_LINE).length - 1;
-    for (const id of ['teach', 'teach2', 'scenarios', 'settings', 'debrief'] as const) {
+    for (const id of ['teach2', 'scenarios', 'settings', 'debrief'] as const) {
       shell.show({ id, sub: '' });
       expect(document.querySelectorAll('.app-foot'), id).toHaveLength(0);
       expect(times(shown()), id).toBe(0);
@@ -219,7 +220,7 @@ describe('Scenarios', () => {
   it('two cards with full-width buttons; the library pins the two demonstrations; Recent shows a Load', async () => {
     const loaded: string[] = [];
     const session = { live: false };
-    const v = scenariosView({ session, loadScenario: (c: ScenarioCard) => (loaded.push(c.id), noteRecent(c.id), true), instructor: () => 'teach' });
+    const v = scenariosView({ session, loadScenario: (c: ScenarioCard) => (loaded.push(c.id), noteRecent(c.id), true) });
     document.body.append(v.el);
     v.enter?.('');
     expect([...v.el.querySelectorAll('.scen-card > a.scen-open')].map((a) => a.textContent)).toEqual(['Open the library', 'Open the builder']);
@@ -233,7 +234,7 @@ describe('Scenarios', () => {
     (v.el.querySelector('.scen-demos button[aria-label^="Load Malignant"]') as HTMLButtonElement).click();
     await Promise.resolve();
     expect(loaded).toEqual(['showcase-mh']);
-    expect(location.hash).toBe('#/teach');
+    expect(location.hash).toBe('#/teach2');
     v.enter?.('');
     const recent = v.el.querySelector('[aria-label="Recent"]') as HTMLElement;
     expect(recent.querySelector('.t')?.textContent).toBe('Malignant hyperthermiaDemonstration 1');

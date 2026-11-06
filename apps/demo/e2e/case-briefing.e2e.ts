@@ -2,7 +2,7 @@
 // ring): the MH card loaded with a relay, the briefing over the host's Monitor view at 1280 × 800 with the monitor
 // running under it, a phone (emulated, Pixel 7 on Chromium, iPhone 13 on WebKit) joining mid-briefing and showing the
 // remainder, a tap doing nothing there and a press-and-hold ending it on that phone only (the owner's ruling of 31 October), the instructor's "End briefing" ending it on the host and every phone
-// (today's Instructor view; Instructor v2's status line under the stage strip, at 1440 × 900, the owner's choice of 31 October);
+// (Instructor v2's status line under the stage strip, at 1440 × 900, the owner's choice of 31 October);
 // then a Persian briefing (the board's Persian text: a rendering fixture, on no card) on the host and a phone.
 // Screenshots go to PME_BRIEFING_SHOTS (default: this test's output folder) for the owner's look.
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
@@ -144,13 +144,11 @@ test('the Case briefing: over the running monitor on the host and the phones, a 
   await shot(page, 'briefing-teach2-1440x900');
   await page.locator('.ip2-strip').screenshot({ path: join(out, `briefing-teach2-strip-status-1440x900-${browserName}.png`) });
   await page.setViewportSize({ width: 1280, height: 800 });
-  // the instructor's End briefing (today's Instructor view) ends it on the host and every phone
-  await page.evaluate(() => (location.hash = '#/teach'));
+  // the instructor's End briefing (Instructor v2's status line; today's view's step dropped, retire-instructor-v1 PR 2)
+  // ends it on the host and every phone
   await expect(layer(page)).toBeHidden();
-  const end = page.locator('.view[data-view="teach"] > .cb-end');
-  await expect(end).toBeVisible();
-  await end.getByRole('button', { name: 'End briefing' }).click();
-  await expect(end).toBeHidden();
+  await status.getByRole('button', { name: 'End briefing' }).click();
+  await expect(status).toBeHidden();
   await expect(g.locator('.stage > .case-briefing')).toHaveCount(0, { timeout: 5_000 });
   await page.evaluate(() => (location.hash = '#/monitor'));
   await expect(page.locator('.stage > .case-briefing')).toHaveCount(0, { timeout: 3_000 });

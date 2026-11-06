@@ -20,7 +20,7 @@ export interface View {
 
 /** Every view's name (the document title); a hostless Remote's top bar lists Settings beside it. */
 export const NAV: ReadonlyArray<[RouteId, string]> = [
-  ['home', 'Home'], ['room', 'Room'], ['scenarios', 'Scenarios'], ['patient', 'Patient'], ['teach', 'Instructor'], ['teach2', 'Instructor v2'], ['monitor', 'Monitor'],
+  ['home', 'Home'], ['room', 'Room'], ['scenarios', 'Scenarios'], ['patient', 'Patient'], ['teach2', 'Instructor'], ['monitor', 'Monitor'],
   ['vent', 'Ventilator'], ['debrief', 'Debrief'], ['explore', 'Explore physiology'], ['validate', 'Validate'], ['dev', 'Developer'], ['settings', 'Settings'],
 ];
 
