@@ -10,7 +10,7 @@
 
 .ip2-sheet-head { display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--ip2-line); font-size: 13px; }
 .ip2-sheet-name { margin: 0; font-size: 14px; font-weight: 600; }
-.ip2-sheet-hint { color: var(--ip2-faint); font-size: 12px; }
+.ip2-sheet-hint { color: var(--ip2-muted); font-size: 12px; } /* faint #6b7682 is 3.58:1 on the sheet's #1a1f25 (WCAG 1.4.3 needs 4.5:1 for 12-px text); muted #9aa4ad, the same grey-blue, is 6.54:1, as finish.css's note does */
 .ip2-sheet-close { width: 28px; height: 28px; border: 1px solid var(--ip2-control); border-radius: 6px; background: transparent; color: var(--ip2-text); cursor: pointer; }
 .ip2-sheet-tabs { display: flex; align-items: center; gap: 4px; min-height: 38px; padding: 0 14px; border-bottom: 1px solid var(--ip2-line); background: var(--ip2-page); font-size: 13px; overflow-x: auto; }
 .ip2-sheet-tabs[hidden] { display: none; }
