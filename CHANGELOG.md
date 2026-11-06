@@ -414,6 +414,13 @@ says otherwise.
   or "Return to its start" (the box's title names the stage; the accessible names keep it).
 
 ### Fixed
+
+- **A press dropped when its button was rebuilt under the pointer (post-demo).** The first Instructor view's scenario
+  panel rebuilt the state strip, every "What happens next" button and the bookmarks on each repaint; Instructor v2's
+  ACTION moved every row into new list items when the order changed. A press whose down and up straddled a repaint was
+  lost (WebKit seen). Items are now kept by key and updated in place, and only the rows whose place changed are moved
+  (`keepOrder`, ui.ts).
+
 - Starting the saadat-like cuff no longer tells the learners' phones that the ventilator is on the main screen. The
   host started the cuff on AUTO at every patient start and card load (also the load that restores a case after a page
   reload) and mirrored the command with the Ventilator view's notice, so each phone held "The ventilator is on the main
