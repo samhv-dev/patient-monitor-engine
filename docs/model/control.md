@@ -178,6 +178,7 @@ transports (`src/protocol.ts`).
 | `attachReveal` | [`panel/reveal.ts`](../../packages/controller/src/panel/reveal.ts) | Wire a RevealGesture to a window. |
 | `commandShape` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | The census key of a command (its `type`, plus its `action` when that is a word, plus `event.kind` for applyEvent). |
 | `instructorMay` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when a granted instructor may send `c`, else the reason its ack carries (plan §2). |
+| `learnerDefibMay` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Null when a `defib` peer may send `c` (one of LEARNER_DEFIB_COMMANDS, bare), else the reason it is refused (R5c). |
 | `newSessionCode` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | A random 6-character session code (31^6 ≈ 8.9e8 codes). |
 | `normalizeSessionCode` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | Upper-cases and strips spaces/dashes; |
 | `newPeerId` | [`protocol.ts`](../../packages/controller/src/protocol.ts) | A random peer id (per page load; |
@@ -272,6 +273,7 @@ None recorded.
 | File | Expected failures | Skipped |
 |---|---|---|
 | [`briefing-wire.test.ts`](../../packages/controller/test/briefing-wire.test.ts) | 0 | 0 |
+| [`guard-vent.test.ts`](../../packages/controller/test/guard-vent.test.ts) | 0 | 0 |
 | [`guard.test.ts`](../../packages/controller/test/guard.test.ts) | 0 | 0 |
 | [`index.test.ts`](../../packages/controller/test/index.test.ts) | 0 | 0 |
 | [`panel/controls-follow-shock.dom.test.ts`](../../packages/controller/test/panel/controls-follow-shock.dom.test.ts) | 0 | 0 |
@@ -289,10 +291,12 @@ None recorded.
 | [`relay/peer-identity.test.ts`](../../packages/controller/test/relay/peer-identity.test.ts) | 0 | 0 |
 | [`relay/peer-left.test.ts`](../../packages/controller/test/relay/peer-left.test.ts) | 0 | 0 |
 | [`relay/relay-classroom.test.ts`](../../packages/controller/test/relay/relay-classroom.test.ts) | 0 | 0 |
+| [`relay/relay-defib.test.ts`](../../packages/controller/test/relay/relay-defib.test.ts) | 0 | 0 |
 | [`relay/relay-devices.test.ts`](../../packages/controller/test/relay/relay-devices.test.ts) | 0 | 0 |
 | [`relay/relay-hostile.test.ts`](../../packages/controller/test/relay/relay-hostile.test.ts) | 0 | 0 |
 | [`relay/relay-instructor.test.ts`](../../packages/controller/test/relay/relay-instructor.test.ts) | 0 | 0 |
 | [`relay/relay-refuses-mirror.test.ts`](../../packages/controller/test/relay/relay-refuses-mirror.test.ts) | 0 | 0 |
+| [`relay/relay-vent.test.ts`](../../packages/controller/test/relay/relay-vent.test.ts) | 0 | 0 |
 | [`relay/relay.test.ts`](../../packages/controller/test/relay/relay.test.ts) | 0 | 0 |
 | [`remote/remote-scenario.dom.test.ts`](../../packages/controller/test/remote/remote-scenario.dom.test.ts) | 0 | 0 |
 | [`remote/remote.dom.test.ts`](../../packages/controller/test/remote/remote.dom.test.ts) | 0 | 0 |

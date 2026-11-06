@@ -142,7 +142,7 @@ describe('the learner defibrillator role (plan room-and-instruments.md R5c)', ()
     expect(parseWireMessage(hello('defib', { device: 'K3X9' }))).toBeNull();
   });
 
-  const cmd = (c: object) => ({ id: 'k1', issuedBy: 'defib-a', ...c }) as CommandInput;
+  const cmd = (c: object) => ({ id: 'k1', issuedBy: 'defib-a', ...c }) as unknown as CommandInput;
   const defib = (event: object, extra: object = {}) => cmd({ type: 'applyEvent', event: { kind: 'defib', ...event }, ...extra });
   it('LEARNER_DEFIB_COMMANDS is exactly Charge and Shock; learnerDefibMay passes both, bare', () => {
     expect([...LEARNER_DEFIB_COMMANDS].sort()).toEqual(['applyEvent defib charge', 'applyEvent defib shock']);

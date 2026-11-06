@@ -101,9 +101,9 @@ describe('a `defib` socket joins like a learner', () => {
     expect(errors(defib)[0]).toMatchObject({ code: 'full' });
   });
 
-  it('the learners count it among the peers that follow (it follows the patient)', async () => {
-    const { viewer, host } = await room();
-    await waitFor(() => viewer.got.some((f) => f.relay === 'peers' && f.peers === 2), 2000, 'the learner told of 2');
+  it('it counts among the peers that follow (it follows the patient): its own peers frame and the host\'s say 2', async () => {
+    const { defib, host } = await room();
+    expect(defib.raw.filter((r) => r.startsWith('{"relay":"peers"'))).toEqual(['{"relay":"peers","hostOnline":true,"peers":2}']);
     expect(host.got.filter((f) => f.relay === 'peers').at(-1)).toMatchObject({ peers: 2, instructors: 0 });
   });
 
