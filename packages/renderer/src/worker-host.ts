@@ -9,7 +9,7 @@ import type { ClockAnchor, CoreOptions, FromWorker, Size, ToWorker } from './pro
 
 export type RenderPath = 'worker-raf' | 'worker-pump' | 'main';
 export type EventsHandler = (anchor: ClockAnchor, events: EngineEvent[]) => void;
-export type ControlMsg = Extract<ToWorker, { type: 'resize' | 'timeScale' | 'pause' | 'resume' | 'fps' | 'calibrate' | 'plan' }>;
+export type ControlMsg = Extract<ToWorker, { type: 'resize' | 'timeScale' | 'pause' | 'resume' | 'fps' | 'calibrate' | 'plan' | 'ibpScales' }>;
 
 /** The fallback keeps a monitor alive when its worker never loads (no 'ready', no error): the page then runs the engine on
  *  the main thread. A built page's worker is one inline bundle and is ready well inside it; the Vite dev server loads the
@@ -92,6 +92,7 @@ function mainHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, onEv
       else if (m.type === 'resume') core.clock.resume();
       else if (m.type === 'fps') core.setFps(m.fps);
       else if (m.type === 'plan') core.setPlan(m.plan);
+      else if (m.type === 'ibpScales') core.setIbpScales(m.scales);
       else core.calibrate(m.pxPerMm);
     },
     capture12: () => Promise.resolve().then(() => core.capture12()),

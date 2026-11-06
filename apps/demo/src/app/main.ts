@@ -8,6 +8,7 @@ import { mountHostBriefing } from './briefing.ts';
 import { joinCode, relayOf } from './classroom.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
+import { feedOf } from './teach2/feed.ts';
 import { PATIENT_PRESETS } from './patients.ts';
 import { announceHost, askJoin, chooseHostSession } from './host-guard.ts';
 import { keepPositions, keptItems, putKeptItems, readPosition, restorePosition } from './position.ts';
@@ -100,7 +101,11 @@ if (follow) {
   const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay });
   // The session code survives a reload of this window, so a learner monitor and a Remote that follow it find it again
   // (a reload made a new code and left them on a frozen screen)
-  publishStyle(session.code, () => ({ skin: session.skin, theme: session.theme }), (f) => session.onSkin(f));
+  publishStyle(session.code, () => ({ skin: session.skin, theme: session.theme, ibp: session.ibpScales }), (f) => {
+    const offSkin = session.onSkin(f);
+    const offIbp = session.onIbpScales(f); // E130: the IBP lane scales travel with the style
+    return () => (offSkin(), offIbp());
+  });
   if (q.get('session') !== session.code) {
     const u = new URL(location.href);
     u.searchParams.set('session', session.code);
@@ -109,6 +114,9 @@ if (follow) {
   if (site.fps === 30) session.monitor?.setFps(30);
   applySkinAlarmColours(site.skin, site.theme);
   const link = new Link(session.panel, session.panelTransport, session);
+  // the instructor phone (plan instructor-peer-role.md §6): its notes are filed as the laptop's own, and its view feed
+  // is read from this Link by Instructor v2's functions
+  session.serveInstructors({ note: (text, kind, t) => link.note(text, kind, t), feed: () => feedOf(link) });
   // A monitor whose worker stopped is final (no fallback) — say so and name the way out; the reason goes to the console
   // for the gate note's diagnostics
   shell.monitorHost.addEventListener('pme-monitor-failed', (e) => {

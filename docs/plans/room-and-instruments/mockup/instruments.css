@@ -1,0 +1,4 @@
+.pic{height:110px;border-radius:8px;background:#0b0e12;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.pic svg{width:92%;height:90%}
+.st{font-size:12.5px;padding:3px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.st.on{color:var(--accent);border-color:rgba(95,217,155,.4)}

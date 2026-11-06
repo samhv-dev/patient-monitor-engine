@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Persian (Farsi) handout of the Debrief report: reads the report's own JSON export ("Download the record (JSON)",
 // schema pme-debrief/1, /2 or /3, Stage 13 Q3; /2 adds `version` and the redesign's verdict words; /3, a pme-scenario/2
-// run's (plan F7), has the judged rows, the action table, the outcomes and the violations in place of the objectives) and prints a
+// run's (plan F7), has the action table, the outcomes and the violations in place of the objectives; judged rows only if made before 5 November) and prints a
 // right-to-left A4 PDF with the English report's sections in its order: the case, objectives with their verdicts,
 // measured facts (the labs row included), trends, drugs and fluids, the timeline (the undone course struck through),
 // bookmarks, the talking points (/2 only), the take-home points (the learner handout's section: the card's lines, else
@@ -408,8 +408,10 @@ export function render(j, fontsCss, version) {
   const v3 = j.schema === 'pme-debrief/3';
   const at = (t) => (t === null || t === undefined ? '–' : mmss(t));
   const lines = (ls) => ls.map((l) => `<div class="why">${D.t(l)}</div>`).join('');
-  // /3 (views/debrief.ts): the judged rows on page 1, then the action table, the outcomes and the violations
-  const judged = v3 && (j.judged.length
+  // /3 (views/debrief.ts): the action table, the outcomes and the violations. Judged rows were retired on 5 November (the
+  // owner's ruling: a team act the instructor observes is a record action, in the action table); a /3 export made before
+  // then still carries them, and they print on page 1 as they did
+  const judged = v3 && j.judged?.length > 0 && (j.judged.length
     ? `<ol class="obj">${j.judged.map((x) => `<li><span class="mark">${x.pressedT === null ? ICON['not assessable'] + D.t('Not ticked') : ICON.met + D.t('Observed')}</span> ${D.t(x.text)}<div class="why">${x.pressedT === null ? D.t('The instructor did not tick it.') : D.t(`Observed by the instructor at ${mmss(x.pressedT)}.`)}</div></li>`).join('')}</ol>`
     : `<p class="muted">${D.t('This run has no rows for the instructor to judge.')}</p>`);
   const actions = v3 && `<table class="actions"><thead><tr><th>${D.t('Action')}</th><th>${D.t('Due')}</th><th>${D.t('Given')}</th><th>${D.t('Grade')}</th></tr></thead><tbody>${j.actions.map((a) =>
@@ -449,7 +451,7 @@ export function render(j, fontsCss, version) {
     : `<p>${D.t('Your take-home points')}</p>${'<div class="ruled"></div>'.repeat(3)}`;
 
   const body = [
-    v3 ? section('objectives', D.t('Judged by the instructor'), judged) : section('objectives', D.t('Objectives'), obj),
+    v3 ? (judged ? section('objectives', D.t('Judged by the instructor'), judged) : '') : section('objectives', D.t('Objectives'), obj),
     section('facts', D.t('Measured facts'), facts),
     section('trends', D.t('Trends'), TREND_KEYS.map((k) => chart(D, d, k, end)).join('')),
     section('drugs', D.t('Drugs and fluids'), drugs),

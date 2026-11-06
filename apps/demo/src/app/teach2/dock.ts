@@ -1,5 +1,6 @@
 // The Instructor v2 dock (design §3.6, board "Proposal v6"): Tools on the left (the sheets' buttons), a divider, the
-// three marks (good, bad, discuss) and the note field in the centre, a divider, and Debrief at the far right, with
+// three marks (good, bad, discuss), the /1 "Recognised" press (recognised.ts; not shown on a pme-scenario/2 card) and the
+// note field in the centre, a divider, and Debrief at the far right, with
 // "Finish the case" just before it (board "Finish 2", teach2/finish.ts) while a card runs on the host.
 // A mark saves the moment with today's bookmark command (`commands.ts` `bookmark`: the 6b driver can restore it), under
 // its own label and counter ("Mark 2 at 08:20", plan R10), so the Log tab's bookmarks and the marks never share a name.
@@ -8,6 +9,7 @@
 import { isV2, type MarkKind as ControllerMarkKind } from '@pme/controller';
 import { CASE_FINISHED } from '../debrief.ts';
 import type { Link } from '../link.ts';
+import { recognisedButton } from '../recognised.ts';
 import { hrefOf } from '../router.ts';
 import { clock, h, toast } from '../ui.ts';
 
@@ -80,13 +82,14 @@ export function mountDock(link: Link, o: { finish?(): void; canFinish?(): boolea
     b.innerHTML = `<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="${d}"/></svg>`;
     return b;
   });
+  const recognised = recognisedButton(link, 'ip2-dock-btn ip2-recognised');
   const debrief = h('a', { class: 'ip2-dock-btn ip2-debrief', href: hrefOf('debrief') }, 'Debrief');
   const finish = h('button', { type: 'button', class: 'ip2-dock-btn ip2-finish-btn', 'aria-pressed': 'false', hidden: true, title: 'Stops the clock; the debrief is saved when you choose how the case ends', onclick: () => o.finish?.() }, 'Finish the case');
   const el = h('footer', { class: 'ip2-dock', 'aria-label': 'Dock' },
     h('span', { class: 'ip2-dock-label', 'aria-hidden': 'true' }, 'Tools'),
     tools,
     h('span', { class: 'ip2-dock-div', 'aria-hidden': 'true' }),
-    h('span', { class: 'ip2-dock-mid' }, h('span', { class: 'ip2-dock-marks', role: 'group', 'aria-label': 'Marks' }, ...marks), note),
+    h('span', { class: 'ip2-dock-mid' }, h('span', { class: 'ip2-dock-marks', role: 'group', 'aria-label': 'Marks' }, ...marks), recognised.el, note),
     h('span', { class: 'ip2-dock-div', 'aria-hidden': 'true' }),
     finish,
     debrief);
@@ -97,6 +100,7 @@ export function mountDock(link: Link, o: { finish?(): void; canFinish?(): boolea
       const sv = link.ctl.scenario;
       const v2 = !!sv.doc && isV2(sv.doc);
       debrief.dataset.ready = String(v2 ? readyV2(link) : !!sv.doc && !sv.current()?.transitions?.length);
+      recognised.refresh();
       finish.hidden = !o.canFinish?.();
       finish.setAttribute('aria-pressed', String(!!o.finishing?.()));
     },

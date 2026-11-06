@@ -7,6 +7,109 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ## [Unreleased]
 
+### Added
+
+- **`pme-scenario/2`, the format as a whole, and its authoring guide (plan F10).** A `/2` card is a teaching case whose
+  course is a set of phases, each entered by its own rule on the engine's truth and never by a press. The team's work
+  is a set of actions, each carrying its acceptance criteria: a drug with its dose, route set and rate; a device or a
+  decision with its settings; a fluid; a procedure, sample or communication recorded by its own taking or by the
+  scenario `record` command. An action may have a window, anchored on the start, a phase entry, another action,
+  the pulse loss or the return of circulation, a truth rule, each taking of another action, a rule on the
+  displayed numerics, or the earliest of several. An action may also have a fail limit (`failAfterS`), an unconditional or
+  conditional repeat, a precondition and violations. A card may also have outcomes and a card-set script. The new
+  guide documents all of this, together with the owner's authoring rules of 5 November:
+  - a card names its bleeding source and orders haemostasis against compressions accordingly;
+  - the operating-room CPR trigger, as the haemorrhage card writes it, and when it does not apply;
+  - VF comes from the physiology;
+  - one remote.
+
+  The guide is the `/2` section of `docs/guides/scenario-authoring.md`. Its one example card is checked by
+  `docs-examples.test.ts`, which now knows the `<!-- example: pme-scenario/2 -->` tag. The route models (IM dantrolene,
+  F = 0) and the Debrief's `pme-debrief/3` export are the entries below and under 1.0.0-rc.5. No product code changed.
+- **The run record keeps three more facts for the Debrief (Debrief 2, D1–D3)**: each second's systolic, diastolic
+  and CVP in whole mmHg (the arterial line first, else the cuff, which sits only in the second of its cycle, so the gap between
+  cycles stays blank); on each alarm raise row the time its condition cleared (`endT`) and the first time it was
+  reported acknowledged (`ackT`), both undone by a return to a bookmark; and the CPR stop as a run event (`cprStop`),
+  read by a new "Hands-off time" key-time tile: the seconds without compressions inside the pulseless spans and the
+  compression fraction, on a small bar with reference lines at 60 % and 80 % (no grade). A record lists what its
+  build kept in `keeps`; an export made before this prints as it did, with these facts "not recorded in this file".
+  No schema change (`pme-debrief/2` and `/3` stay). A record grows from about 9.6 to 11.3 KB per simulated minute (pressures in whole mmHg).
+
+- **Instructor v2 opens a card file.** "Open a card file…" on Instructor v2's start menu reads one JSON card, checks it
+  with the controller's `validateScenario` (`pme-scenario/2`, or `/1`) and, if it fails, lists the validator's errors
+  and keeps nothing; an id a built-in card has is refused with the reason. A card that passes is kept in this
+  browser's storage and listed under "Imported" at the end of the case list, removable, and offered to start; it loads
+  through the app's one load, as a library card does. Nothing new is
+  sent to the phones and the card format is unchanged. The Scenarios page's own "Import a scenario file" is unchanged.
+
+- **The Debrief reads what the record now keeps (Debrief 2, D4–D6)**: "who" of each scenario state comes from the
+  record's own account (the instructor's press: the team; the state's rule, every `pme-scenario/2` phase: the patient;
+  a jump: the scenario), falling back to the card's transitions for an older record. Recognition has one reading: on a
+  `pme-scenario/2` card the timed action the card marks `recognition: true` (new optional field, at most one per card;
+  set on "name MH" and "recognise the return of circulation"), with its window, press and grade; on a
+  `pme-scenario/1` card the recognition objective's tick, or else the new "Recognised" button (session bar and
+  Instructor v2 dock, `/1` cards and free runs only), which writes a `recognised` note. The key-moments table gains
+  SBP/DBP (a cuff value printed with its age, "98/60 (cuff, 2 min 10 s before)") and CVP, and each alarm under a
+  moment its end and acknowledgement ("▸ cleared 07:40 · acknowledged 06:20", or "(still on)"); the minute table gains
+  SBP, DBP and CVP. A file made before prints "·" and "not recorded in this file" there. No schema change.
+
+- **IBP1 / IBP2 lane scales (E130)**: per channel the skin's fixed scale, a range the instructor types within 0–200
+  mmHg (lower below upper; anything else refused), or AUTO, set in the Devices tab of today's Instructor view and in
+  Instructor v2's Devices sheet, which show the mode and the numbers. AUTO is judged every 30 s of sim time over the
+  two 30-s windows before the boundary, never beat by beat: the smallest of 0–60, 0–100, 0–160, 0–200 (arterial) or
+  −10–30, 0–60, 0–100, 0–160, 0–200 (venous) that holds the window with 10 % headroom, two outlier seconds ignored,
+  stepping down only when two windows in a row fit (no vendor manual read states an interval: Philips IntelliVue's
+  Optimum Scale is one-shot, Mindray's Auto gives none; the ranges are GE CARESCAPE's display scales up to the ruled
+  200). The dotted scale lines and the printed values follow. The scales travel with the monitor style to the
+  second-screen learner monitor and to the phones, which judge AUTO from the same samples at the same boundaries and
+  so draw the same range. **Changed:** the Saadat-like arterial lane's fixed scale is the ruled 0–200 (marks
+  200 / 100 / 0); the photo-matched 40 / 120 / 200 goes. The Philips-like scales are unchanged. (`@pme/renderer`
+  `ibp-scale.ts`, `renderPlan`'s `ibpScales`, `MonitorCore.setIbpScales`, `MonitorHandle.setIbpScales`; the
+  controller's `style` event gains `ibp`.)
+- **The class IV haemorrhage card in `pme-scenario/2` (plan F9): `showcase-haemorrhage-v2`, beside the `/1` card,
+  which is unchanged and still runs.** Six phases on engine truth (Bleeding, Decompensating, Arrest: PEA, Arrest:
+  asystole, ROSC, Post-resuscitation after 120 s of ROSC); the bleed and the junctional rhythm are card-set as on the
+  `/1` card. **No VF phase and no shock** (the owner's ruling of 5 November: VF comes from the physiology, never from a
+  press): measured on this course, the engine draws no VF untreated, with CPR into asystole or with CPR in the PEA, so
+  the `/1` card's scripted VF at the first two rhythm checks is gone; the rhythm check stops the compressions and
+  changes no rhythm. On the demo's timing (CPR 15 s into asystole) the patient stays in asystole, which this model never
+  turns back into a pulse; with CPR in the PEA (measured at 10, 60, 120 and 200 s after the pulse loss) the pulse returns.
+  Actions: oxygen, intubate, call for help, CPR, bag, epinephrine every 180–300 s, source control, massive transfusion,
+  TXA, rhythm check every 2 min, stop CPR; epinephrine 1 mg IV or IO in ROSC a violation; each action's numbers carry
+  their source, quoted and cited, in a new `src` field (Miller's Anesthesia 10th ed. Ch82 and Ch62, the /1 card, the
+  design); an action whose sources state no window is recorded, not timed. Opens in Instructor v2 (today's view says to run it there).
+- **`pme-scenario/2`, additive (the owner's rulings of 5 November):** a window's `failAfterS` (CPR within 30 s met,
+  30 s to 2 min overdue, later failed though started); an action's `preparation: true` (recorded with its time, no
+  verdict); the unconditional `repeat` now graded, each interval from the previous dose as given (sooner a deviation,
+  later overdue, none due once the action's phases ended). A procedure, sample or communication action is recorded by
+  its taking: a press of non-act commands (source control's bleed rate of 0) records one administration of its kind, and
+  an action with nothing for the engine (call for help) is the new scenario `record` command, which Instructor v2 sends.
+  An action window may open on each taking of another action (`each:action:<id>`, one window per taking: resume CPR
+  within 10 s of each rhythm check) or at the earliest of several anchors (`{ first: [...] }`: CPR from the pulse loss
+  or the operating-room trigger, whichever is first). A window may also open on a rule on the DISPLAYED numerics
+  (`{ display: rule }`): the operating-room trigger reads the monitor, arterial systolic below 40 mmHg (cuff below 50
+  without an arterial line) for 30 s with EtCO₂ below 25 mmHg (ERC 2025; Harper et al. 2020; the owner's numbers).
+
+### Removed
+
+- **Judged rows from `pme-scenario/2` (the owner's ruling of 5 November; it withdraws the 29 October ruling
+  "recognition stays a judged row").** Every row of a `/2` card is an automatic row or an action: a team act the
+  instructor observes is a record action (no `give`; the press sends the scenario `record` command), timed by its window
+  when the card times it, recorded-not-timed without one. The schema has no `judged` block, and a card that declares one
+  fails validation with one line naming the replacement; `grade()` returns actions, outcomes and violations only;
+  Instructor v2 draws a record action as any action (no "press when met" row, no marker note); the Debrief's action table
+  carries it, `pme-debrief/3` has no `judged` key and a `/2` run has no recognition key-time tile. `showcase-mh-v2`:
+  "name malignant hyperthermia from the monitor" is a timed record action from Early signs' entry, 120 s (the
+  owner's number, 5 November); `showcase-haemorrhage-v2`: "recognise the return of circulation" is one from ROSC's
+  entry, timed at 120 s (the owner's ruling of 5 November, from the `/1` card's objective 3). `/1` cards keep their judged objectives.
+
+### Fixed
+- A hello forged under a Remote's peer id while the Remote reconnects no longer blocks the Remote's commands
+  until its page reloads (R29, the known gap of #183). The host kept each relay peer's last sequence number and role
+  while its socket was down, so a hand-written hello with that id and a higher number, sent in that window, made the
+  host drop the reconnected Remote's frames as duplicates. The relay now sends the host `{relay:'peer-left', id}` when a
+  non-host socket leaves the room (before the newcomer's hello when it replaces a half-open socket), and the host
+  forgets that peer on that transport only.
 - **`pme-scenario/2` F5.2 and F5.3: IM dantrolene modelled, and the "not modelled" register.** A drug row may carry
   `routeModels`, one mechanism per route other than IV: bioavailability `F`, absorption rate `ka`, lag `lagS`, each
   from its `src`, and an optional local effect raised as a new `drugLocalEffect` event. Dantrolene IM is the one row:
@@ -18,6 +121,22 @@ the public API is what the packages export (see the API reference), the `pme-sce
   and a ka back-solved from a peak time would be a fitted constant; no absorption depot is built. Every IV, IO and
   central path is unchanged. The local injury, its creatine kinase and potassium effects, the charcoal filter and
   epinephrine IM are `.todo` entries listed in `docs/guides/known-deviations.md`, each with its roadmap row.
+
+### Fixed
+- An escape or accelerated focus no longer fires almost at once on a rhythm switch: on a switch to junctional escape,
+  accelerated junctional, idioventricular or AIVR the first focus beat comes one of the focus's own cycles (60/rate)
+  after the last ventricular beat (junctional escape 1.28 s, idioventricular 1.72 s after the last sinus beat at 75;
+  it came 0.48 / 0.41 s after it and read as a premature beat, then a pause). A row flag in the rhythm table,
+  `focusWaitsForInterval`, marks those four foci, and `applyRhythm` starts them at the last ventricular beat + 60/rate;
+  VT, polymorphic VT, torsades, AVNRT, AVRT, junctional tachycardia and the AV-block escapes keep their onset.
+  The onset moved the haemorrhage showcase's junctional beats 0.34 s against the CPR compressions, and that alone
+  turned its IP8 debrief run from "no arrest" into an engine arrest at 661 s and a return of circulation at 781 s: CPR
+  over a heart that still beats read its coronary supply from each beat's onset LV pressure, an instant of the
+  compression cycle (1.8–13.7 mmHg on consecutive beats, while the relaxation-phase CPP held 17–20), and 5 escape beats
+  to 11 compressions locked the pattern (on main, 6 of 9 CPR presses 0.1–0.9 s apart arrested at 661–663 s). Under
+  compressions the beating heart's supply is now the relaxation-phase CPP the arrested heart is read by (Paradis 1990),
+  with the beats' own demand (`stepCoronary` `compressions`): the myocardium 24 s into CPR is 0.470–0.487 for four
+  starts 0.15 s apart (was 0.123–0.250), and the showcase run never arrests (kIsch minimum 0.255–0.286 over eight).
 
 ## [1.0.0-rc.5] - 2026-11-05
 
@@ -320,6 +439,11 @@ says otherwise.
   says "IBP1 NO SENSOR" with no transducer on the channel: a technical prompt (`AlarmEntry.prompt`, skin
   `ibp.noSensorMessage`), no tone, no lamp (MUI-7). Home's CPU tile reads the last 2 s; a browser with no memory API
   has no Memory tile (MUI-17).
+- **A press dropped when its button was rebuilt under the pointer (post-demo).** The first Instructor view's scenario
+  panel rebuilt the state strip, every "What happens next" button and the bookmarks on each repaint; Instructor v2's
+  ACTION moved every row into new list items when the order changed. A press whose down and up straddled a repaint was
+  lost (WebKit seen). Items are now kept by key and updated in place, and only the rows whose place changed are moved
+  (`keepOrder`, ui.ts).
 
 - Starting the saadat-like cuff no longer tells the learners' phones that the ventilator is on the main screen. The
   host started the cuff on AUTO at every patient start and card load (also the load that restores a case after a page

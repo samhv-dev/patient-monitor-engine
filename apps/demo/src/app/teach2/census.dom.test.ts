@@ -7,17 +7,17 @@
 // option of every select, answers every confirm and presses every key the views listen to, in several states of the
 // session (both demo cards at every state, MODELED with held values and MANUAL, running and paused, no card loaded),
 // and the set of shapes (`type`, plus `action` when it is a word, plus `event.kind` for `applyEvent`) is compared with
-// §2's table, written below as a literal. Once P2 lands, P6 switches the literal to `INSTRUCTOR_COMMANDS`.
+// §2's table: since P6, the host's allow-list `INSTRUCTOR_COMMANDS` itself (P0 wrote it as a literal).
 // With PME_CENSUS_OUT set, the measured census (each shape with the controls that sent it) is written there as JSON.
 import { writeFileSync } from 'node:fs';
-import { ScenarioView, type AckResult, type CommandInput, type ControllerSession, type ManagedTransport, type ScenarioDoc } from '@pme/controller';
+import { INSTRUCTOR_COMMANDS, isV2, ScenarioView, type AckResult, type AnyScenarioDoc, type CommandInput, type ControllerSession, type ManagedTransport, type ScenarioDoc } from '@pme/controller';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DRUG_LIST } from '../drugs.ts';
 import { ACUTE_EVENTS } from '../events.ts';
 import { Link } from '../link.ts';
 import { mountPanel, TABS } from '../panel/panel.ts';
 import { mountSessionBar } from '../sessionbar.ts';
-import { showcaseDoc } from '../showcase/harness.ts';
+import { anyShowcaseDoc, showcaseDoc } from '../showcase/harness.ts';
 import { DEFAULT_SITE } from '../site.ts';
 import { teach2View } from '../views/teach2.ts';
 import { stageMarks } from './strip.ts';
@@ -25,24 +25,19 @@ import { SHEETS } from './sheets.ts';
 
 const MH = showcaseDoc('showcase-mh') as ScenarioDoc;
 const HAEM = showcaseDoc('showcase-haemorrhage') as ScenarioDoc;
+/** The two pme-scenario/2 cards (F8, F9): Instructor v2 reads them (F6); today's view does not. */
+const MH2 = anyShowcaseDoc('showcase-mh-v2') as AnyScenarioDoc;
+const HAEM2 = anyShowcaseDoc('showcase-haemorrhage-v2') as AnyScenarioDoc;
 
 /**
- * §2's table (amended 2026-10-30 after this census, the orchestrator's rulings): the UNION of what the two laptop views
- * send. `scenario pause` / `resume` are today's Scenario tab's "Hold the timer" (Instructor v2 has no such button).
- * `applyEvent`: every ClinicalEvent kind the Drug, Airway, Defib · CPR, Vitals, Devices and Patient bodies send
- * (panel/drugs.ts and teach2/drug-sheet.ts: drug, infusion, fluid, bleed, vaporiser; panel/airway.ts: airway,
- * ventilation (oxygen is a ventilation event), lungCondition; panel/defib.ts: defib, pacer, cpr; panel/patient.ts:
- * condition, the acute events; the Vitals and Devices bodies send no applyEvent). The `note` row is new (§6): no view
- * sends it today.
+ * §2's table, now the host's allow-list itself (P6): `INSTRUCTOR_COMMANDS` (protocol.ts) is the UNION of what the two
+ * laptop views send, plus `note` (§6), which a remote Link sends for a judged objective or a note (link.ts `note`; this
+ * census mounts the views on a remote Link, as a phone's). So this test is the one parity check between the laptop and
+ * the allow-list: a shape either side gains alone fails it. The measured set as P0 recorded it (amended 2026-10-30, the
+ * orchestrator's rulings): `scenario pause` / `resume` are today's Scenario tab's "Hold the timer"; `applyEvent` is every
+ * ClinicalEvent kind the Drug, Airway, Defib · CPR, Vitals, Devices and Patient bodies send.
  */
-const PLAN_S2: readonly string[] = [
-  'time pause', 'time resume', 'time scale', 'time jump',
-  'scenario trigger', 'scenario goto', 'scenario bookmark', 'scenario restoreBookmark', 'scenario pause', 'scenario resume',
-  'applyEvent drug', 'applyEvent infusion', 'applyEvent fluid', 'applyEvent bleed', 'applyEvent vaporiser',
-  'applyEvent airway', 'applyEvent ventilation', 'applyEvent lungCondition',
-  'applyEvent defib', 'applyEvent pacer', 'applyEvent cpr', 'applyEvent condition',
-  'device', 'setTarget', 'pin', 'release', 'setRhythm', 'setMode', 'attachSensor',
-].sort();
+const PLAN_S2: readonly string[] = [...INSTRUCTOR_COMMANDS].sort();
 
 /** §2's refusals that are command shapes: no Instructor view may send them. */
 const PLAN_S2_REFUSED: readonly string[] = ['scenario load', 'setFactor', 'setModifiers', 'externalDrive', 'time step'];
@@ -70,8 +65,8 @@ let view = '';
 
 interface Config {
   name: string;
-  doc: ScenarioDoc | null;
-  /** The current state (an index into the card's states). */
+  doc: AnyScenarioDoc | null;
+  /** The current state (an index into the card's states, or a /2 card's phases). */
   at?: number;
   mode: 'modeled' | 'manual';
   paused: boolean;
@@ -106,7 +101,7 @@ function rig(cfg: Config) {
   };
   if (modeled) link.conditions.set((ACUTE_EVENTS[0] as { id: string }).id, 1); // a running acute event: its Stop is live
   if (cfg.doc) {
-    const states = cfg.doc.states;
+    const states: ReadonlyArray<{ id: string }> = isV2(cfg.doc) ? cfg.doc.phases : cfg.doc.states;
     const at = Math.min(cfg.at ?? 0, states.length - 1);
     sv.doc = cfg.doc;
     sv.docVersion = 1;
@@ -318,6 +313,9 @@ const FULL: Config[] = [
 ];
 /** Every state of both cards, running, and paused with the scenario timer held: the scenario controls only (the Scenario tab; strip, cue, ACTION). */
 const EVERY_STATE: Config[] = [MH, HAEM].flatMap((doc) => doc.states.flatMap((s, at) => [false, true].map((paused): Config => ({ name: `${doc === MH ? 'MH' : 'haemorrhage'} at ${s.id}${paused ? ', paused, timer held' : ''}`, doc, at, mode: 'modeled', paused, timerHeld: paused }))));
+/** Every phase of both /2 cards, running and paused (Instructor v2 only: its strip, cue and ACTION). The haemorrhage /2
+ *  card's procedure, sample and communication actions send `scenario record` (#273, F9's Q19), which the /1 cards never do. */
+const EVERY_PHASE: Config[] = [MH2, HAEM2].flatMap((doc) => (isV2(doc) ? doc.phases : []).flatMap((p, at) => [false, true].map((paused): Config => ({ name: `${doc.id} at ${p.id}${paused ? ', paused' : ''}`, doc, at, mode: 'modeled', paused }))));
 
 let restoreMarks = stageMarks.of;
 beforeEach(() => {
@@ -345,6 +343,7 @@ describe('the command census of the laptop\'s Instructor views (P0)', () => {
       await today(cfg, 'scenario');
       await v2(cfg, 'scenario');
     }
+    for (const cfg of EVERY_PHASE) await v2(cfg, 'scenario');
 
     const shapes = [...new Set(sent.map((s) => s.shape))].sort();
     const census = shapes.map((shape) => {

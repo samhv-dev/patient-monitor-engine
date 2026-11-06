@@ -117,7 +117,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   const minuteRows = await view.locator('#db-minutes tbody tr').allInnerTexts(); // Q1: one row per minute
   expect(minuteRows.length).toBeGreaterThanOrEqual(2); // the kept course is ≈ 1½–2 sim-min
   expect(minuteRows[0]).toMatch(/^00:00\s+\d+/);
-  await expect(view.locator('#db-minutes thead th')).toHaveCount(12);
+  await expect(view.locator('#db-minutes thead th')).toHaveCount(15); // D6: SBP, DBP and CVP
   // R56: no engine id in the report (as stage9-glossary: an id that is also an English word, "epinephrine", is not a leak)
   const ids = (await page.evaluate(() => (window as unknown as W).__pmeApp.engineIds)).filter((id) => /[A-Z0-9]/.test(id));
   expect(await scanEngineIds(page, ids)).toEqual([]);
@@ -299,7 +299,8 @@ async function showRecorded(page: Page, run = A31, card = TAMPONADE): Promise<vo
   await page.evaluate(() => (location.hash = '#/debrief'));
   await expect(page.locator('[data-view=debrief] #db-moments')).toBeVisible();
 }
-/** Heights in print media (mm): the page-1 block (header band to the end of the objectives) and the handout; whether
+/** Heights in print media (mm): the page-1 block (header band to the end of the objectives; a /2 run has no objectives
+ *  section since judged rows were retired, 5 November: to the end of the course strip) and the handout; whether
  *  the bundled print font is loaded (rc.3: the heights are measured in it on every platform); and the printed size (pt)
  *  of the handout course strip's labels (0 when the handout is not shown). */
 /** The view loads the bundled print font on entering (loadPrintFont, not awaited) and its print buttons await it; a
@@ -315,7 +316,8 @@ const printHeights = (page: Page) => page.evaluate((mm) => {
   const label = strip.querySelector('.db-lane-l') as SVGTextElement;
   const stripPt = (strip.getBoundingClientRect().width / strip.viewBox.baseVal.width) * parseFloat(getComputedStyle(label).fontSize) * 0.75;
   const printFont = [...document.fonts].some((f) => f.family.replace(/["']/g, '') === 'Inter Print' && f.status === 'loaded');
-  return { page1: (r('#db-objectives').bottom - r('#db-live-1 > .db-band').top) / mm, handout: r('#db-handout').height / mm, printFont, stripPt };
+  const end = document.querySelector('#db-objectives') ? '#db-objectives' : '#db-course';
+  return { page1: (r(end).bottom - r('#db-live-1 > .db-band').top) / mm, handout: r('#db-handout').height / mm, printFont, stripPt };
 }, MM);
 
 test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, the learner handout', async ({ page, browserName }) => {
@@ -337,8 +339,11 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   // page 2: the key moments with SpO₂ as the monitor showed it (E126: this rc.2 record kept the oximeter's reading through
   // the pulseless span, CPR having begun 3 s after the loss), and the sentence that says what it means
   const moments = await view.locator('#db-moments tbody tr[data-n]').evaluateAll((tr) => tr.map((x) => [...x.querySelectorAll('td')].map((td) => td.textContent?.trim())));
-  expect(moments.map((m) => [m[0], m[1], m[6]])).toEqual([['1', '06:13', '99'], ['2', '07:48', '99'], ['3', '07:51', '99'], ['4', '09:21', '99'], ['5', '10:55', '99'], ['6', '10:57', '99'], ['7', '11:27', '99']]);
-  expect(moments.map((m) => m[5])).toEqual(['71', '21', '20', '28', '45', '63', '90']); // MAP rounded
+  expect(moments.map((m) => [m[0], m[1], m[8]])).toEqual([['1', '06:13', '99'], ['2', '07:48', '99'], ['3', '07:51', '99'], ['4', '09:21', '99'], ['5', '10:55', '99'], ['6', '10:57', '99'], ['7', '11:27', '99']]);
+  expect(moments.map((m) => m[6])).toEqual(['71', '21', '20', '28', '45', '63', '90']); // MAP rounded
+  // D6: this rc.2 export predates the pressures and the alarm ends: "·" in SBP/DBP and CVP, one "not recorded" line
+  expect(moments.map((m) => [m[5], m[7]])).toEqual(Array.from({ length: 7 }, () => ['·', '·']));
+  await expect(view.locator('#db-moments .db-norecord')).toHaveCount(1);
   await expect(view.locator('#db-moments .db-note60')).toHaveCount(1);
   await expect(view.locator('#db-moments .db-note60')).toHaveText('SpO₂ as the monitor showed it: – while pulseless without compressions (no pulsatile signal); a number during CPR reflects compression-generated flow and is unreliable.'); // the owner's ruling E126, 2026-10-26 (was E60, 2026-10-19)
   await expect(view.locator('#db-moments tr.db-alarms').first()).toHaveText(/Alarms since the last row: CVP high, SpO₂: low perfusion, ART S low/);
@@ -482,12 +487,12 @@ test('Debrief B on the haemorrhage card: the learner handout within one A4 page'
 
 // Plan F11 (F7's acceptance on a live /2 run): the MH card in pme-scenario/2 driven on the demo path from Instructor v2
 // to the talk's end, paused, then the Debrief: its JSON export is pme-debrief/3 (phases, graded actions, outcomes,
-// violations, judged rows; no /2 objectives or steps), the action table is in the report, and in print media at the
+// violations; no /2 objectives, steps or judged rows), the action table is in the report, and in print media at the
 // 182 mm content width page 1 and the learner handout each fit one A4 page (≤ 267 mm, IP8); Chromium prints the
-// handout on one page. Both engines. The instructor ticks the recognition (the judged row) at the call, 08:12: the
-// Debrief's "Recognition (instructor's tick)" runs from Early signs' entry, as the /1 card's from its "early signs"
-// state (brief fv2-debrief-recognition-clock-nov1 and the ruling the same day), in seconds, not from the pre-intubation
-// EtCO₂ of 03:51.
+// handout on one page. Both engines. The instructor presses the recognition at the call, 08:12: a timed record action
+// since the owner's ruling of 5 November retired judged rows, its window from Early signs' entry, as the /1 card's
+// recognition runs from its "early signs" state (brief fv2-debrief-recognition-clock-nov1 and the ruling the same day),
+// met in seconds, not from the pre-intubation EtCO₂ of 03:51.
 test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout within one A4 page', async ({ page, browserName }) => {
   test.setTimeout(480_000);
   await openMhV2(page, (h) => openApp(page, base, h, { warmMs: 1500 }));
@@ -507,23 +512,25 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
 
   const [dl] = await Promise.all([page.waitForEvent('download'), view.getByRole('button', { name: 'Download the record (JSON)' }).click()]);
   expect(dl.suggestedFilename()).toMatch(/^debrief-showcase-mh-v2-\d{4}-\d\d-\d\d\.json$/);
-  const j = JSON.parse(readFileSync(await dl.path(), 'utf8')) as Record<string, unknown> & { phases: Array<{ id?: string; phaseId?: string }>; actions: Array<{ id: string; grade: string; givenT: number | null }> };
+  const j = JSON.parse(readFileSync(await dl.path(), 'utf8')) as Record<string, unknown> & { phases: Array<{ id?: string; phaseId?: string }>; actions: Array<{ id: string; grade: string; dueT: number | null; givenT: number | null }> };
   expect(j.schema).toBe('pme-debrief/3');
-  for (const k of ['version', 'build', 'record', 'phases', 'actions', 'outcomes', 'violations', 'judged', 'facts', 'keyTimes', 'keyMoments', 'minutes', 'marks']) expect(j, `pme-debrief/3 key ${k}`).toHaveProperty(k);
-  for (const k of ['objectives', 'steps']) expect(j, `no /2 key ${k}`).not.toHaveProperty(k);
+  for (const k of ['version', 'build', 'record', 'phases', 'actions', 'outcomes', 'violations', 'facts', 'keyTimes', 'keyMoments', 'minutes', 'marks']) expect(j, `pme-debrief/3 key ${k}`).toHaveProperty(k);
+  for (const k of ['objectives', 'steps', 'judged']) expect(j, `no /2 key ${k}`).not.toHaveProperty(k);
   expect(j.phases.length, 'the phases entered').toBeGreaterThan(1);
   expect(j.actions.length, 'the graded actions').toBeGreaterThan(0);
   expect(j.actions.filter((a) => a.givenT !== null).map((a) => a.id)).toEqual(expect.arrayContaining(['callCrisis', 'dantrolene', 'ventilationBack'])); // the setup actions (induce …) are not graded on this card
   // the owner's phase rules of 1 November: Recrudescence is entered (14:59) and opens the second dose's window, so the
   // second dose at 19:13 is met, as the /1 card's objective 4
   expect(Object.fromEntries(j.actions.filter((a) => ['callCrisis', 'dantrolene', 'dantroleneAgain', 'ventilationBack'].includes(a.id)).map((a) => [a.id, a.grade]))).toEqual({ callCrisis: 'met', dantrolene: 'met', dantroleneAgain: 'met', ventilationBack: 'met' });
-  // the recognition key time: from Early signs' entry to the tick
-  const rec = (j.keyTimes as Array<{ id: string; fromT: number; fromLabel?: string; toT: number | null }>).find((k) => k.id === 'recognition');
+  // the recognition, a record action: its window from Early signs' entry, pressed at the call; D5: the card marks it
+  // recognition: true, so the recognition tile is that action (its window, its press)
+  const rec = j.actions.find((a) => a.id === 'nameMh');
   const earlyT = (j.phases as Array<{ id: string; t: number }>).find((p) => p.id === 'earlySigns')?.t;
-  test.info().annotations.push({ type: 'MH /2 recognition', description: `${rec?.fromLabel} ${rec?.fromT} → ${rec?.toT}` });
-  expect(rec?.fromLabel).toBe('early signs');
-  expect(rec?.fromT, 'the clock starts at Early signs\' entry, not at the pre-intubation EtCO₂').toBe(earlyT);
-  expect((rec?.toT ?? Infinity) - (rec?.fromT ?? 0), 'seconds, not minutes').toBeLessThan(60);
+  test.info().annotations.push({ type: 'MH /2 recognition', description: `nameMh ${rec?.grade}: window ${rec?.dueT} → pressed ${rec?.givenT}` });
+  expect(rec?.grade).toBe('met');
+  expect(rec?.dueT, 'the window opens at Early signs\' entry, not at the pre-intubation EtCO₂').toBe(earlyT);
+  expect((rec?.givenT ?? Infinity) - (rec?.dueT ?? 0), 'seconds, not minutes').toBeLessThan(60);
+  expect((j.keyTimes as Array<{ id: string; fromT: number | null; toT: number | null; grade?: string }>).find((k) => k.id === 'recognition')).toMatchObject({ fromT: rec?.dueT, toT: rec?.givenT, grade: 'met' });
   const results = resolve(import.meta.dirname, '../../../test-results');
   mkdirSync(results, { recursive: true });
   writeFileSync(`${results}/debrief-mh-v2-${browserName}.json`, JSON.stringify(j, null, 1));
@@ -532,6 +539,24 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
   await page.emulateMedia({ media: 'print' });
   await printFontLoaded(page);
   const { page1, printFont } = await printHeights(page);
+  // D6, page 2 on a record of this build (the pressures and alarm ends kept): the key-moments table with its ten
+  // columns fits the 182 mm content width, and no Who cell wraps (else the plan drops its word to the shape alone)
+  const p2 = await page.evaluate((mm) => {
+    const sec = document.querySelector('#db-moments') as HTMLElement;
+    const table = sec.querySelector('table.db-moments') as HTMLElement;
+    const who = [...sec.querySelectorAll('td.db-whocell')].map((td) => { // the lines its words take (not the row's height)
+      const r = document.createRange();
+      r.selectNodeContents(td);
+      return new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size;
+    });
+    const bp = [...sec.querySelectorAll('tbody tr[data-n]')].map((tr) => tr.querySelectorAll('td')[5]?.textContent ?? '');
+    return { section: sec.getBoundingClientRect().width / mm, table: table.getBoundingClientRect().width / mm, height: sec.getBoundingClientRect().height / mm, whoLines: Math.max(...who), bp };
+  }, MM);
+  test.info().annotations.push({ type: 'MH /2 page 2 (mm)', description: `key moments ${p2.height.toFixed(1)} tall, table ${p2.table.toFixed(1)} of ${p2.section.toFixed(1)} wide, Who cells ≤ ${p2.whoLines} line(s); SBP/DBP ${p2.bp.join(' | ')}` });
+  expect(p2.height, 'the key-moments section is laid out in print').toBeGreaterThan(0);
+  expect(p2.whoLines, 'no Who cell wraps').toBe(1);
+  expect(p2.table, 'the key-moments table within the content width (mm)').toBeLessThanOrEqual(p2.section + 0.5);
+  expect(p2.bp.some((x) => /^\d+\/\d+/.test(x)), 'an SBP/DBP printed on this run (arterial, or the cuff with its age)').toBe(true);
   await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
   const { handout } = await printHeights(page);
   test.info().annotations.push({ type: 'MH /2 heights (mm)', description: `page 1 ${page1.toFixed(1)}, handout ${handout.toFixed(1)}` });
@@ -544,4 +569,35 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
     writeFileSync(`${out}/debrief-mh-v2-handout.pdf`, pdf);
     expect(pdfInfo(pdf).boxes).toHaveLength(1);
   }
+});
+
+// Debrief 2, D5: the /1 fallback press. On a free run the session bar's "Recognised" writes one note row with the run
+// event 'recognised' at the host's time; the Debrief's recognition tile and its key moment read that time.
+test('D5: Recognised pressed on a free run at ≈ 30 s: the Debrief shows the tile and the key moment at the recorded time', async ({ page, browserName }) => {
+  const busy = loadedWebKit(browserName);
+  test.setTimeout(busy ? 180_000 : 90_000);
+  await openApp(page, base, '#/teach', { warmMs: 1500 });
+  const bar = page.locator('.sessionbar');
+  await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: busy ? '×2' : '×4' }).click();
+  await expect.poll(() => simT(page), { timeout: busy ? 60_000 : 30_000 }).toBeGreaterThanOrEqual(30);
+  const button = bar.getByRole('button', { name: 'Recognised', exact: true });
+  await expect(button).not.toHaveAttribute('aria-keyshortcuts');
+  await button.click();
+  type R = { __pmeApp: { session: { record: { data: { rows: Array<{ t: number; ev?: string }> } } } } };
+  await expect.poll(() => page.evaluate(() => (window as unknown as R).__pmeApp.session.record.data.rows.filter((r) => r.ev === 'recognised').length)).toBe(1);
+  const t = await page.evaluate(() => (window as unknown as R).__pmeApp.session.record.data.rows.find((r) => r.ev === 'recognised')?.t as number);
+  expect(t).toBeGreaterThanOrEqual(30);
+  expect(t).toBeLessThan(60);
+  await pauseHost(page);
+  await openDebrief(page, busy);
+  const view = page.locator('[data-view=debrief]');
+  const mmss = `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+  const tile = view.locator('#db-keytimes [data-key=recognition]');
+  await expect(tile.locator('.db-tile-cap')).toHaveText("Recognition (instructor's press)");
+  await expect(tile.locator('.db-tile-v')).toHaveText(`${Math.round(t)} s`);
+  await expect(tile.locator('.db-tile-sub')).toHaveText(`00:00 start → ${mmss} pressed`);
+  const row = view.locator('#db-moments tbody tr[data-recognised]');
+  await expect(row).toHaveCount(1);
+  await expect(row.locator('td').nth(1)).toHaveText(mmss);
+  await expect(row.locator('td').nth(3)).toHaveText('Recognised (instructor)');
 });

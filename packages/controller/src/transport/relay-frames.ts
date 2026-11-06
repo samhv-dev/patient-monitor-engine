@@ -3,6 +3,9 @@ export type RelayFrame =
   | { relay: 'hb'; t: number } // app-level heartbeat so browser clients can detect a dead relay
   // `instructors`: granted instructor phones, in the frame to the HOST only (plan instructor-peer-role.md §1)
   | { relay: 'peers'; hostOnline: boolean; peers: number; instructors?: number }
+  // R29: to the HOST only, when a non-host socket leaves the room: the host forgets that relay peer's sequence and role,
+  // so a hello forged under the id while its owner reconnects does not outlive the forger's socket (the gap of #183)
+  | { relay: 'peer-left'; id: string }
   | { relay: 'error'; code: 'bad-hello' | 'host-exists' | 'forbidden' | 'full' | 'bad-session' | 'denied' | 'too-many-tries'; message: string };
 
 /**

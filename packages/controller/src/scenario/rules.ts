@@ -1,6 +1,6 @@
 // The leaves of a pme-scenario/2 rule (docs/plans/scenario-format-v2.md §4; plan F2). Pure functions over what the phase
 // runner keeps: two value stores (truth, rank 3, for every phase, outcome and anchor rule; displayed numerics, rank 2,
-// for a judged row's clock only, Q22), the hold counters of `forS`, the 1 Hz slope rings, the rhythm id and the pulse.
+// for an action window's `display` anchor only, Q22), the hold counters of `forS`, the 1 Hz slope rings, the rhythm id and the pulse.
 // - value: `var op value`, held for `forS` (a counter of sim seconds, reset when the leaf is false, as /1's vital leaf).
 // - slope: the least-squares slope (per minute) of the variable's 1 Hz samples over the last `overS` seconds; false
 //   until the ring spans the whole window.
@@ -10,7 +10,7 @@
 //   its value at the current phase's entry.
 // - visited: the phase is in the timeline. signal: `pulseLoss` (no pulse), `rosc` (a pulse after a loss), `rhythm:<id>`
 //   (the rhythm id the engine draws: VF is told from VT and asystole from PEA by the id, never by RHYTHMS[id].group).
-// - phaseEntered (a judged row's display rule only): the phase is in the timeline, entered once its rule held through its
+// - phaseEntered (a display rule only): the phase is in the timeline, entered once its rule held through its
 //   hold, as `visited`; the runner re-reads such a rule after an entry, so its first true edge is the entry's second.
 import { compare } from './runner.ts';
 import type { AnyRule, PhaseRule, ScenarioDocV2 } from './types-v2.ts';
@@ -27,8 +27,8 @@ export interface NamedRule {
 
 /**
  * Every rule named anywhere in the card (Q17), in a fixed order: phase entry rules `phase:<id>`; per action its rule
- * anchor `action:<id>:anchor`, `action:<id>:precondition`, `action:<id>:repeatWhile`, `action:<id>:contraindication:<i>`;
- * `outcome:<id>` and its rule anchor `outcome:<id>:anchor`; a judged row's display rule `judged:<id>` (rank 2); and the
+ * anchor `action:<id>:anchor` (a `first` anchor's rule members `action:<id>:anchor:<i>`), `action:<id>:precondition`, `action:<id>:repeatWhile`, `action:<id>:contraindication:<i>`;
+ * `outcome:<id>` and its rule anchor `outcome:<id>:anchor`; and the
  * two anchors every card may name, `pulseLoss` and `rosc`.
  */
 export function namedRules(doc: ScenarioDocV2): NamedRule[] {
@@ -38,7 +38,13 @@ export function namedRules(doc: ScenarioDocV2): NamedRule[] {
   };
   for (const p of doc.phases) add(`phase:${p.id}`, p.enter);
   for (const a of doc.actions) {
-    if (a.window && typeof a.window.anchor !== 'string') add(`action:${a.id}:anchor`, a.window.anchor.rule);
+    const an = a.window?.anchor;
+    if (an && typeof an !== 'string') {
+      if ('rule' in an) add(`action:${a.id}:anchor`, an.rule);
+      else if ('display' in an) add(`action:${a.id}:anchor`, an.display, 2); // the displayed numerics (F9)
+      // the earliest of several (F9): each rule member is its own named rule, `action:<id>:anchor:<i>`
+      else an.first.forEach((x, i) => typeof x !== 'string' && ('display' in x ? add(`action:${a.id}:anchor:${i}`, x.display, 2) : add(`action:${a.id}:anchor:${i}`, x.rule)));
+    }
     add(`action:${a.id}:precondition`, a.precondition);
     add(`action:${a.id}:repeatWhile`, a.repeatWhile?.rule);
     a.contraindications?.forEach((c, i) => add(`action:${a.id}:contraindication:${i}`, c.when));
@@ -47,7 +53,6 @@ export function namedRules(doc: ScenarioDocV2): NamedRule[] {
     add(`outcome:${o.id}`, o.rule);
     if (typeof o.anchor !== 'string') add(`outcome:${o.id}:anchor`, o.anchor.rule);
   }
-  for (const j of doc.judged ?? []) add(`judged:${j.id}`, j.display, 2);
   add('pulseLoss', { signal: 'pulseLoss' });
   add('rosc', { signal: 'rosc' });
   return out;
