@@ -50,6 +50,12 @@ export function defibDefaults(model: string | null): { energyAdultJ: number; ene
   const d: Skin['defib'] = look ? resolveSkin(look).skin.defib : null;
   return d ? { energyAdultJ: d.energyAdultJ, energyPaedJ: d.energyPaedJ, ladderJ: [...(d.aedSequenceJ ?? [])] } : { energyAdultJ: NO_MODEL_ENERGY_J, energyPaedJ: null, ladderJ: [] };
 }
+/** The Room card's view of a model's pacer (row 58, the pacer following the model too), null with no model chosen. */
+export function pacerDefaults(model: string | null): { ratePpm: number; pausePct: number | null } | null {
+  const look = DEFIB_CHOICES.find((c) => c.id === model)?.look;
+  const p: Skin['pacer'] = look ? resolveSkin(look).skin.pacer : null;
+  return p ? { ratePpm: p.rateDefault, pausePct: p.pausePct } : null;
+}
 /** The drug-name sets, in the words the Settings screen uses. */
 export const DRUG_NAME_SETS: ReadonlyArray<[SiteProfile['drugNames'], string]> = [['us', 'Epinephrine, norepinephrine'], ['uk', 'Adrenaline, noradrenaline']];
 export const THEMES: ReadonlyArray<[SiteProfile['theme'], string]> = [['', 'Dark'], ['projector-light', 'Projector (light)'], ['ecg-grid', 'ECG paper grid']];
