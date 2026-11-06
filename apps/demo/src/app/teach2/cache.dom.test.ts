@@ -160,4 +160,45 @@ describe('the staged-delivery cache', () => {
     expect(r.staged()).toBe('Staged · 0');
     expect(r.stagedShown()).toBe(false);
   });
+
+  it('the onset of a staged delivery (retire-instructor-v1 G3): HR 140 and SpO₂ 88 "Over 2 min" ramp, the rhythm does not; "Now" sends no ramp; one choice for every sheet', async () => {
+    const r = rig();
+    r.ctl.state = { mode: 'manual', values: { hr: 80, spo2: 97 }, control: {} } as never; // MANUAL: Set stages a target
+    key('v');
+    const sheet = () => r.open() as HTMLElement;
+    const stageVital = (v: string, value: number) => {
+      const row = sheet().querySelector(`[data-var="${v}"]`) as HTMLElement;
+      const inp = row.querySelector('input') as HTMLInputElement;
+      inp.value = String(value);
+      inp.dispatchEvent(new Event('change'));
+      ([...row.querySelectorAll('button')].find((b) => b.textContent === 'Set') as HTMLButtonElement).click();
+    };
+    const onset = () => sheet().querySelector<HTMLSelectElement>('.ip2-onset select') as HTMLSelectElement;
+    expect([...onset().options].map((o) => [o.value, o.textContent])).toEqual([['0', 'Now'], ['30', 'Over 30 s'], ['60', 'Over 1 min'], ['120', 'Over 2 min'], ['300', 'Over 5 min']]);
+    expect(onset().value).toBe('0');
+    stageVital('hr', 140);
+    stageVital('spo2', 88);
+    ([...sheet().querySelectorAll('button')].find((b) => b.textContent === 'Stage') as HTMLButtonElement).click(); // the rhythm
+    expect(r.staged()).toBe('Staged · 3');
+    onset().value = '120';
+    onset().dispatchEvent(new Event('change'));
+    key('d'); // the Drug sheet carries the same choice: one cache, one onset
+    expect(onset().value).toBe('120');
+    const logBefore = r.link.log.length;
+    r.deliver().click();
+    await until(() => r.got.length === 3 && r.link.log.length > logBefore);
+    expect(new Set(r.got.map((c) => c.stageGroup)).size).toBe(1); // still one delivery at one instant
+    const ramp = { durationS: 120, curve: 'linear' };
+    expect(r.got.map((c) => [c.type, (c as { ramp?: unknown }).ramp])).toEqual([['setTarget', ramp], ['setTarget', ramp], ['setRhythm', undefined]]);
+    expect(r.link.log.at(-1)?.text).toMatch(/over 2 min/);
+    // "Now": no ramp (v2's behaviour before G3)
+    key('v');
+    onset().value = '0';
+    onset().dispatchEvent(new Event('change'));
+    stageVital('hr', 100);
+    r.deliver().click();
+    await until(() => r.got.length === 4);
+    expect((r.got[3] as { type: string; ramp?: unknown }).type).toBe('setTarget');
+    expect((r.got[3] as { ramp?: unknown }).ramp).toBeUndefined();
+  });
 });
