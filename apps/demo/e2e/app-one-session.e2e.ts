@@ -12,10 +12,10 @@ test.afterAll(async () => vite?.close());
 
 type App = { __pmeApp: { session: { code: string; simNow(): number; monitor: unknown; spec: unknown; mode: string; restart(s: unknown): void }; link: { simT: number; log: Array<{ kind: string; text: string }>; ctl: { state: { values: Record<string, number>; control: Record<string, string> } | null } }; shell: { monitorHost: HTMLElement } } };
 
-const ROUTES = ['#/explore/haemodynamics', '#/settings', '#/dev', '#/monitor', '#/', '#/teach', '#/teach2'];
+const ROUTES = ['#/explore/haemodynamics', '#/settings', '#/dev', '#/monitor', '#/', '#/teach2'];
 const engineT = (page: Page) => page.evaluate(() => (window as unknown as App).__pmeApp.link.simT);
 
-/** The seven views (Instructor v2 added, IP9), the engine clock read at each; `at` runs before a route is shown. Fails if the engine clock went back. */
+/** The six views (Instructor v2 added, IP9; today's Instructor view dropped, retire-instructor-v1 PR 2), the engine clock read at each; `at` runs before a route is shown. Fails if the engine clock went back. */
 async function walk(page: Page, at: Partial<Record<string, () => Promise<void>>> = {}): Promise<void> {
   let prev = await engineT(page);
   for (const r of ROUTES) {
@@ -29,7 +29,7 @@ async function walk(page: Page, at: Partial<Record<string, () => Promise<void>>>
 
 test('every view shares the one engine session', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(60_000); // fix-ci-webkit-3: CI's WebKit hit the 30 s default in the route walk (29.3 s, page closed)
-  await openApp(page, base, '#/teach', { warmMs: 3000 });
+  await openApp(page, base, '#/teach2', { warmMs: 3000 });
   await page.evaluate(() => ((window as unknown as { __host: unknown }).__host = (window as unknown as App).__pmeApp.shell.monitorHost.firstElementChild));
   const simNow = () => page.evaluate(() => (window as unknown as App).__pmeApp.session.simNow());
   const t0 = await simNow();
@@ -51,7 +51,7 @@ test('every view shares the one engine session', { tag: '@known-flaky' }, async 
 // restart (a new engine) still fails the check.
 test('a stalled engine worker is not a restart; a new engine is (FX-11)', async ({ page }) => {
   test.setTimeout(60_000);
-  await openApp(page, base, '#/teach', { warmMs: 3000 });
+  await openApp(page, base, '#/teach2', { warmMs: 3000 });
   const worker = page.workers().at(-1);
   test.skip(!worker, 'this browser runs the monitor on the main thread (no worker to stall)');
   await page.evaluate(() => ((window as unknown as { __host: unknown }).__host = (window as unknown as App).__pmeApp.shell.monitorHost.firstElementChild));
@@ -63,9 +63,9 @@ test('a stalled engine worker is not a restart; a new engine is (FX-11)', async 
 });
 
 test('the scenario deep link loads the case into the instructor view', async ({ page }) => {
-  await openApp(page, base, '?scenario=acls-vf-witnessed');
-  await expect(page).toHaveURL(/#\/teach$/);
-  await expect(page.locator('.sessionbar .scen')).toContainText('Witnessed VF in PACU', { timeout: 10_000 });
+  await openApp(page, base, '?scenario=acls-vf-witnessed', { site: { instructor: 'teach2' } }); // the instructor view Settings names
+  await expect(page).toHaveURL(/#\/teach2$/);
+  await expect(page.locator('.ip2-head .ip2-title')).toContainText('Witnessed VF in PACU', { timeout: 10_000 });
 });
 
 test('changing the monitor in Settings updates the mirrored alarm colours', async ({ page }) => {
