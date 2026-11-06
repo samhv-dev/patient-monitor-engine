@@ -15,6 +15,7 @@
 // verdicts (`Verdict.window`, `measure`); this file computes no window of its own.
 import { endOf, mmss, objectives, report3, span, type Status } from '../debrief.ts';
 import { pulselessSpans, type KeyMoment } from '../debrief-moments.ts';
+import { placeBadges } from './debrief-course.ts';
 import type { Grade } from '@pme/controller/scenario';
 import type { Row, RunData } from '../record.ts';
 
@@ -95,6 +96,8 @@ const PLOT = SWIM_W - L - R;
 const MOMENTS_H = 26, WIN_H = 20, WIN_H_TIGHT = 12, WIN_TIGHT_FROM = 7, TRACK_H = 11, DRUGS_H = 16, GAP = 4, WIN_HEAD = 12;
 /** A label longer than this is cut with "…" (its whole words in the title, shown on hover, and in the aria-label). */
 const LABEL_MAX = 30;
+/** Moment numbers: centres at least this far apart (a two-digit number at 8 units and a gap). */
+const NUM_GAP = 11;
 /** The rough width of a character of the 8-unit labels (an alarm's words take room on its track). */
 const CHAR_W = 4.2;
 /** The chip styles (debrief.css `.db-chip`): stroke, its width and dash, and the fill. */
@@ -123,7 +126,7 @@ export function swimlaneSvg(d: RunData, moments: KeyMoment[], windows: SwimWindo
   /** A lane: its words at the left (a second line under them when given), its body. */
   const lane = (id: string, h: number, words: string, body: string, sub = ''): void => {
     lanes.push(id);
-    bgs += `<rect class="db-swim-bg" x="${L}" y="${f(y)}" width="${PLOT}" height="${f(h)}"/>`;
+    bgs += `<rect class="db-swim-bg" fill="#f4f4f4" x="${L}" y="${f(y)}" width="${PLOT}" height="${f(h)}"/>`;
     out += `<g class="db-swim-lane" data-lane="${id}">`
       + `<text class="db-swim-l" x="${L - 6}" y="${f(y + Math.min(h / 2 + 3, 13))}" text-anchor="end">${esc(words)}</text>`
       + `${sub ? `<text class="db-swim-sub" x="${L - 6}" y="${f(y + Math.min(h / 2 + 3, 13) + 9)}" text-anchor="end">${esc(sub)}</text>` : ''}${body}</g>`;
@@ -132,16 +135,20 @@ export function swimlaneSvg(d: RunData, moments: KeyMoment[], windows: SwimWindo
 
   // Patient: the pulseless band, the patient's moments ●, a scenario state □
   const spans = pulselessSpans(d);
-  const moment = (m: KeyMoment, top: number, shape: string): string =>
-    `<g class="db-swim-m db-${m.who}" data-n="${m.n}" data-t="${m.t}"><title>${esc(`${m.n} · ${mmss(m.t)} ${m.text}`)}</title>${shape}`
-    + `<text class="db-swim-n" x="${f(x(m.t))}" y="${f(top + 8)}" text-anchor="middle">${m.n}</text></g>`;
+  /** A lane's moments: each shape at its time, its number above it, numbers that would meet moved apart (the course
+   *  strip's `placeBadges`), so 5 and 7 a second apart never read "57". */
+  const momentsAt = (ms: KeyMoment[], top: number, shape: (m: KeyMoment) => string): string => {
+    const nx = placeBadges(ms.map((m) => x(m.t)), L + NUM_GAP / 2, SWIM_W - R - NUM_GAP / 2, NUM_GAP);
+    return ms.map((m, i) => `<g class="db-swim-m db-${m.who}" data-n="${m.n}" data-t="${m.t}"><title>${esc(`${m.n} · ${mmss(m.t)} ${m.text}`)}</title>${shape(m)}`
+      + `<text class="db-swim-n" x="${f(nx[i] as number)}" y="${f(top + 8)}" text-anchor="middle">${m.n}</text></g>`).join('');
+  };
   {
     const top = y, cy = top + 17;
-    const band = spans.map(([a, b]) => `<rect class="db-pulseless" x="${f(x(a))}" y="${f(top)}" width="${f(Math.max(1, x(b) - x(a)))}" height="${MOMENTS_H}"/>`
+    const band = spans.map(([a, b]) => `<rect class="db-pulseless" x="${f(x(a))}" y="${f(top)}" width="${f(Math.max(1, x(b) - x(a)))}" height="${MOMENTS_H}" fill="#e9e9e9"/>`
       + `<text class="db-swim-sub" x="${f(x(a) + 2)}" y="${f(top + 8)}">pulseless ${span(b - a)}</text>`).join('');
-    const ms = moments.filter((m) => m.who !== 'team').map((m) => moment(m, top, m.who === 'patient'
+    const ms = momentsAt(moments.filter((m) => m.who !== 'team'), top, (m) => (m.who === 'patient'
       ? `<circle cx="${f(x(m.t))}" cy="${f(cy)}" r="4.5" fill="${PATIENT}"/>`
-      : `<rect x="${f(x(m.t) - 4)}" y="${f(cy - 4)}" width="8" height="8" fill="#fff" stroke="${SCENARIO}"/>`)).join('');
+      : `<rect x="${f(x(m.t) - 4)}" y="${f(cy - 4)}" width="8" height="8" fill="#fff" stroke="${SCENARIO}"/>`));
     lane('patient', MOMENTS_H, 'Patient', band + ms);
   }
   // Team: the team's moments ■, the recognition ◇ (on its moment when one is at its time)
@@ -149,7 +156,7 @@ export function swimlaneSvg(d: RunData, moments: KeyMoment[], windows: SwimWindo
     const top = y, cy = top + 17;
     const diamond = (t: number) => `<polygon class="db-swim-rec" points="${f(x(t))},${f(cy - 6)} ${f(x(t) + 6)},${f(cy)} ${f(x(t))},${f(cy + 6)} ${f(x(t) - 6)},${f(cy)}" fill="#fff" stroke="${TEAM}" stroke-width="1.6"/>`;
     const team = moments.filter((m) => m.who === 'team');
-    const ms = team.map((m) => moment(m, top, m.t === o.recognisedT ? diamond(m.t) : `<rect x="${f(x(m.t) - 4)}" y="${f(cy - 4)}" width="8" height="8" fill="${TEAM}"/>`)).join('');
+    const ms = momentsAt(team, top, (m) => (m.t === o.recognisedT ? diamond(m.t) : `<rect x="${f(x(m.t) - 4)}" y="${f(cy - 4)}" width="8" height="8" fill="${TEAM}"/>`));
     const rec = o.recognisedT !== undefined && !team.some((m) => m.t === o.recognisedT)
       ? `<g class="db-swim-m db-team" data-recognised="${o.recognisedT}"><title>${esc(`Recognised ${mmss(o.recognisedT)}`)}</title>${diamond(o.recognisedT)}</g>` : '';
     lane('team', MOMENTS_H, 'Team', ms + rec);
@@ -182,7 +189,7 @@ export function swimlaneSvg(d: RunData, moments: KeyMoment[], windows: SwimWindo
     }).join('');
     const h = windows.length * rh;
     lanes.push('windows');
-    bgs += `<rect class="db-swim-bg" x="${L}" y="${f(top)}" width="${PLOT}" height="${f(h)}"/>`;
+    bgs += `<rect class="db-swim-bg" fill="#f4f4f4" x="${L}" y="${f(top)}" width="${PLOT}" height="${f(h)}"/>`;
     out += `<g class="db-swim-lane" data-lane="windows"><text class="db-swim-l" x="${L - 6}" y="${f(head + 9)}" text-anchor="end">Expected windows</text>${body}</g>`;
     y = top + h + GAP;
   }
@@ -225,7 +232,7 @@ export function swimlaneSvg(d: RunData, moments: KeyMoment[], windows: SwimWindo
   const bottom = y - GAP;
   const step = [60, 120, 300, 600, 900, 1800, 3600].find((st) => end / st <= 12) ?? 3600;
   let ticks = '';
-  for (let t = 0; t <= end; t += step) ticks += `<line class="db-swim-grid" x1="${f(x(t))}" x2="${f(x(t))}" y1="2" y2="${f(bottom + 3)}"/><text x="${f(x(t))}" y="${f(bottom + AXIS - 4)}" text-anchor="middle">${mmss(t)}</text>`;
+  for (let t = 0; t <= end; t += step) ticks += `<line class="db-swim-grid" stroke="#bbb" x1="${f(x(t))}" x2="${f(x(t))}" y1="2" y2="${f(bottom + 3)}"/><text x="${f(x(t))}" y="${f(bottom + AXIS - 4)}" text-anchor="middle">${mmss(t)}</text>`;
   const H = bottom + AXIS;
 
   const winWords = windows.map((w) => `${w.label}, ${mmss(w.fromT)} to ${w.toT === null ? 'the end' : mmss(w.toT)}: ${[
