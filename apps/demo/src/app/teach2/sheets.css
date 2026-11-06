@@ -29,7 +29,7 @@
 .ip2-sheet-left h3, .ip2-sheet-sub { margin: 12px 0 6px; font-size: 14px; font-weight: 600; color: var(--ip2-text); }
 .ip2-sheet-left .hint { color: var(--ip2-muted); font-size: 13px; }
 
-.ip2-sheet-note { margin: 0; padding: 0 10px 6px; font-size: 11px; color: var(--ip2-faint); }
+.ip2-sheet-note { margin: 0; padding: 0 10px 6px; font-size: 11px; color: var(--ip2-muted); } /* as .ip2-sheet-hint: faint is 3.58:1 on the sheet */
 .ip2-sheet-note:empty { display: none; }
 .ip2-input { height: 34px; min-width: 0; padding: 0 10px; border: 1px solid var(--ip2-control); border-radius: 6px; background: var(--ip2-page); color: var(--ip2-text); font: inherit; }
 .ip2-search { display: flex; padding: 10px 10px 6px; }
