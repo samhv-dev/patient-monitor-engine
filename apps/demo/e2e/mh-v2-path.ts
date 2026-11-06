@@ -1,5 +1,5 @@
 // The /2 MH card's demo path (docs/showcase/SHOWCASE-2-RUN-SHEET.md §3) driven from Instructor v2 (#/teach2), shared
-// by teach2-mh-v2, teach2-fit and debrief (plan F6, F11). Not a test file (testMatch is *.e2e.ts).
+// by teach2-mh-v2, teach2-fit-support and debrief (plan F6, F11). Not a test file (testMatch is *.e2e.ts).
 import { expect, type Page } from '@playwright/test';
 
 export type W = { __pmeApp: { link: { simT: number; send(c: unknown): Promise<{ accepted: boolean; reason?: string }>; log: Array<{ text: string; simT: number | null; refused?: string }>; ctl: { hostPaused: boolean; scenario: { stateId: string | null; doc: unknown; history: Array<{ t: number; stateId: string }> } } } } };
