@@ -261,7 +261,8 @@ the owner's ruling of 2026-11-05: end it once the stability fixes are on main). 
 merged on 2026-11-05: #268 (Chromium sim-line, `fed21a45`), #265 (host guard Web Locks, `592bd59d`) and #275 (FX-25
 capnogram at device-pixel ratio 2, the sweep-wrap loop, `3aad72fa`). Since then the webkit leg exits 1 on an untagged
 retry-only pass exactly as the chromium leg does; `@known-flaky` tests stay exempt on both and still run on WebKit in
-the quarantine below.
+the quarantine below. Proposed on 2026-11-06 and **not in force** until the owner rules: a retry whose earlier
+attempts all ended in a browser crash is reported apart and does not fail the job ("Crash class (proposal)", below).
 
 ### The known-flaky WebKit quarantine (2026-10-24, PR `ci-stabilise`)
 
@@ -295,6 +296,53 @@ PR (`ci-release-container`) runs `release.yml`'s browser tests and `validation.y
 **End condition:** the quarantine ends with the known-flaky list itself. When the calibration pass's Task 0
 re-harvests the list (or a test's tag is removed after its fix), the test returns to the gating job on its own, since
 the split follows the tag. When the list is empty, delete the `known-flaky` matrix row.
+
+### Crash class (proposal, 2026-11-06; DRAFT PR `ci-crash-aware-retry-gate`, awaiting the owner's ruling)
+
+**Not in force until the owner rules (6 Nov, question 1).** The proposal: the retry check of a gating e2e job
+(`scripts/ci/e2e-report.mjs gate`) sorts each test that passed only on a retry into one of three classes:
+
+- **known**: tagged `@known-flaky`. Exempt, as before.
+- **crash**: every attempt before the passing one *failed* (a time-out does not count) and every error of every such
+  attempt is the page or its web process dying under the test, in one of the wordings below. Listed in the job
+  summary under "e2e crashes (browser died, retry passed): n" with the wording per test, one `::warning` each, and a
+  `::notice` "WebKit crashed n times on this runner" at 3 or more in one job. **Does not fail the job.** No count
+  fails it (the owner may ask for a threshold later).
+- **new**: anything else: an assertion, a time-out, a `TimeoutError` of a wait, or an attempt that mixed a crash with a
+  real failure (a crash on attempt 1 and an assertion on attempt 2 is `new`). **Fails the job**, as today.
+
+The wordings, each as Playwright prints it, each seen in CI on 2026-11-05/06 (job logs of the window below):
+`Target page, context or browser has been closed` (57 of the 63 crash retries; e.g. PR #285 run 42111824225 job
+127545043744, `debrief.e2e.ts:493` attempt 1, `page.evaluate`), `Target crashed` (3; run 42140776760 job 127641042182,
+`reload-keeps-case.e2e.ts:110`, `page.evaluate`; run 42149445087 job 127669399119, `teach2-fit.e2e.ts:175`,
+`locator.click`), `Page crashed` (3; run 42123206703 job 127581047755 and run 42159512493 job 127701863358,
+`reload-keeps-case.e2e.ts:110`, `page.reload`). Two further candidates, `Browser has been closed` and the WebKit
+`Protocol error (…): Target closed`, did not appear in any of the 88 logs and are **not** matched: a retry after
+either is `new` until one is seen and listed with its job.
+
+**Evidence (2026-11-05 20:00 to 2026-11-06 08:00 UTC).** 62 completed `ci` runs; 55 ran the gating e2e jobs
+(326 jobs); 53 of them had at least one retry-only pass in a gating job: 134 retry-only passes in 88 jobs, every job
+log read. Of the 134: 63 crash (all WebKit), 67 new (66 WebKit, 1 Chromium: `teach2-fit.e2e.ts:505` in run 42110987184),
+4 known (Chromium `time-control.e2e.ts:31`). The crash class is spread over 20 tests, none more than 13 times
+(`teach2-fit.e2e.ts:175`), the pattern of the F-FX1-1 class (the Playwright Linux WebKit web-process crash, above),
+not of one test's defect. The largest `new` source is one test: `saadat-instructor-tiles.e2e.ts:140`, 34 times, an
+assertion ("the CO2 tile within 5 s", brief 47), which the crash class does not touch. Two real reports were run
+through the classifier as well as the logs: run 42111824225 `e2e-report-webkit-1of3` (`debrief.e2e.ts:493`, crash
+then an assertion: `new`, exit 1) and run 42140776760 `e2e-report-webkit-2of3` (`reload-keeps-case.e2e.ts:110`,
+`Target crashed` then pass: `crash`, exit 0).
+
+**What it would have done on those runs** (WebKit was warn-only on all of them; "with PR #285" is the rule that PR
+makes, "with both" adds this one): with PR #285 alone all 53 runs are red (84 red jobs); with both, 47 runs are red
+(59 red jobs) and 6 are green: 42105086732, 42132450433, 42140776760, 42149017243, 42154000045, 42165627442. Run
+42149017243 (`e2e (webkit 2/3)`) and run 42110103732 (`e2e (webkit 1/3)`) had 4 crashes in one job and would carry
+the notice.
+
+**Limits.** A crash retry hides an intermittent crash of our own page: PR #275's sweep-lane loop ran the page out of
+memory (`Page crashed`; PR #275 CI run 42027456943), and a rarer loop of that kind would now pass on a retry with a
+warning. A crash that recurs on every attempt still fails the job (it is not a retry-only pass), the warning and the
+count stay in every summary, and the notice makes a cluster visible. The alternative is to tag each test a crash hits
+`@known-flaky`: 20 tests in this window, which moves them to the non-blocking quarantine for every failure, not only
+crashes.
 
 ## Open (for the orchestrator or the owner)
 
