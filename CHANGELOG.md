@@ -9,6 +9,21 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Added
 
+- **The run record keeps three more facts for the Debrief (Debrief 2, D1–D3)**: each second's systolic, diastolic
+  and CVP in whole mmHg (the arterial line first, else the cuff, which sits only in the second of its cycle, so the gap between
+  cycles stays blank); on each alarm raise row the time its condition cleared (`endT`) and the first time it was
+  reported acknowledged (`ackT`), both undone by a return to a bookmark; and the CPR stop as a run event (`cprStop`),
+  read by a new "Hands-off time" key-time tile: the seconds without compressions inside the pulseless spans and the
+  compression fraction, on a small bar with reference lines at 60 % and 80 % (no grade). A record lists what its
+  build kept in `keeps`; an export made before this prints as it did, with these facts "not recorded in this file".
+  No schema change (`pme-debrief/2` and `/3` stay). A record grows from about 9.6 to 11.3 KB per simulated minute (pressures in whole mmHg).
+
+- **Instructor v2 opens a card file.** "Open a card file…" on Instructor v2's start menu reads one JSON card, checks it
+  with the controller's `validateScenario` (`pme-scenario/2`, or `/1`) and, if it fails, lists the validator's errors
+  and keeps nothing; an id a built-in card has is refused with the reason. A card that passes is kept in this
+  browser's storage and listed under "Imported" at the end of the case list, removable, and offered to start; it loads
+  through the app's one load, as a library card does. Nothing new is
+  sent to the phones and the card format is unchanged. The Scenarios page's own "Import a scenario file" is unchanged.
 - **IBP1 / IBP2 lane scales (E130)**: per channel the skin's fixed scale, a range the instructor types within 0–200
   mmHg (lower below upper; anything else refused), or AUTO, set in the Devices tab of today's Instructor view and in
   Instructor v2's Devices sheet, which show the mode and the numbers. AUTO is judged every 30 s of sim time over the
