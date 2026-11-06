@@ -1,6 +1,7 @@
 // The site profile (research/13 P11, Laerdal's profile vs scenario split): which monitor the room shows, its theme and
 // alarm defaults, and the shell's units and speed. It belongs to the room, not to a case, so loading a scenario never
 // changes it. Stored per browser (a convenience, research/13 brief §5) and exportable as one JSON file.
+import { resolveSkin, type Skin } from '@pme/skins';
 import type { RouteId } from './router.ts';
 import { store } from './store.ts';
 
@@ -26,6 +27,10 @@ export interface SiteProfile {
   drugNames: 'us' | 'uk';
   /** The Instructor view the rail's one "Instructor" entry and every route to the instructor open (owner, 30 October). */
   instructor: InstructorRoute;
+  /** The room's defibrillator model (Room plan R5b; owner's Q6 ruling of 5 November), apart from the monitor style: a
+   *  `DEFIB_CHOICES` id, which the host sends to the engine at every patient mount, or null (not chosen: the monitor
+   *  style's own defibrillator values, as before). */
+  defibModel: string | null;
 }
 
 /** Monitor choices, in the words the Settings and Start screens use. */
@@ -38,13 +43,28 @@ export const MONITORS: ReadonlyArray<{ id: string; label: string; hint: string }
   { id: 'zoll-like', label: 'Zoll-style defibrillator', hint: 'Monitor-defibrillator' },
   { id: 'lifepak-like', label: 'LIFEPAK-style defibrillator', hint: 'Monitor-defibrillator' },
 ];
+/**
+ * The defibrillator models a room can choose, the engine's `DEFIB_MODELS` keys (R5a), each with the skin that is its
+ * look: that skin's defibrillator block is the model's spec (the generic model's is zoll-like.json's, equal to the
+ * engine's fallback). Only the generic model ships (Q6's second half); the department's own machine joins later as a skin
+ * with its own sourced block, and one line here.
+ */
+export const DEFIB_CHOICES: ReadonlyArray<{ id: string; label: string; look: string }> = [{ id: 'generic', label: 'Generic defibrillator', look: 'zoll-like' }];
+/** The Defib tab's energy before R5b (panel/defib.ts), kept when no model is chosen. */
+const NO_MODEL_ENERGY_J = 200;
+/** A model's energies as the panel offers them; no model chosen = the panel's energy as before. */
+export function defibDefaults(model: string | null): { energyAdultJ: number; energyPaedJ: number | null; ladderJ: number[] } {
+  const look = DEFIB_CHOICES.find((c) => c.id === model)?.look;
+  const d: Skin['defib'] = look ? resolveSkin(look).skin.defib : null;
+  return d ? { energyAdultJ: d.energyAdultJ, energyPaedJ: d.energyPaedJ, ladderJ: [...(d.aedSequenceJ ?? [])] } : { energyAdultJ: NO_MODEL_ENERGY_J, energyPaedJ: null, ladderJ: [] };
+}
 /** The drug-name sets, in the words the Settings screen uses. */
 export const DRUG_NAME_SETS: ReadonlyArray<[SiteProfile['drugNames'], string]> = [['us', 'Epinephrine, norepinephrine'], ['uk', 'Adrenaline, noradrenaline']];
 /** The Instructor views, in the words the Settings screen uses. */
 export const INSTRUCTOR_VIEWS: ReadonlyArray<[InstructorRoute, string]> = [['teach', "Today's view"], ['teach2', 'Instructor v2']];
 export const THEMES: ReadonlyArray<[SiteProfile['theme'], string]> = [['', 'Dark'], ['projector-light', 'Projector (light)'], ['ecg-grid', 'ECG paper grid']];
 
-export const DEFAULT_SITE: SiteProfile = { schema: 'pme-site/1', skin: 'saadat-like', theme: '', fps: 60, panel: 'split', gasUnit: 'mmHg', sensorsOff: false, drugNames: 'us', instructor: 'teach' }; // today's view: the 3 November demo's
+export const DEFAULT_SITE: SiteProfile = { schema: 'pme-site/1', skin: 'saadat-like', theme: '', fps: 60, panel: 'split', gasUnit: 'mmHg', sensorsOff: false, drugNames: 'us', instructor: 'teach', defibModel: null }; // today's view: the 3 November demo's
 
 export function parseSite(raw: unknown): SiteProfile {
   const o = (raw && typeof raw === 'object' ? raw : {}) as Partial<SiteProfile>;
@@ -59,6 +79,7 @@ export function parseSite(raw: unknown): SiteProfile {
     sensorsOff: o.sensorsOff === true,
     drugNames: o.drugNames === 'uk' ? 'uk' : 'us',
     instructor: INSTRUCTOR_VIEWS.some(([v]) => v === o.instructor) ? (o.instructor as InstructorRoute) : d.instructor,
+    defibModel: DEFIB_CHOICES.some((c) => c.id === o.defibModel) ? (o.defibModel as string) : d.defibModel,
   };
 }
 

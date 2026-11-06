@@ -13,7 +13,10 @@ import { FIXED_ALARM_WORDS } from './alarms.ts';
 import { untakenStatus, type Evidence } from './card-read.ts';
 import { CONDITIONS } from './describe.ts';
 import { drugName, drugWords, labelOf, lookup, unitOf } from './glossary.ts';
-import { LAB_KEYS, LABS, TREND, TREND_KEYS, type LabKey, type Row, type RunData, type Sample, type TrendKey, type ValueKey } from './record.ts';
+import { LAB_KEYS, LABS, PRESSURES, TREND, TREND_KEYS, type LabKey, type PressureKey, type Row, type RunData, type Sample, type TrendKey, type ValueKey } from './record.ts';
+
+/** The pressures a record of Debrief 2 keeps (record.ts `PRESSURES`). */
+export const PRESSURE_KEYS = Object.keys(PRESSURES) as PressureKey[];
 import { objectiveText } from './scenarios.ts';
 
 export type Status = 'met' | 'not met' | 'not assessable';
@@ -22,6 +25,9 @@ export interface Verdict {
   why: string;
   /** An `eventWithin` verdict that found both events: the times its reason line prints, and the seconds asked. */
   measure?: { fromT: number; toT: number; askedS: number };
+  /** An `eventWithin` verdict whose anchor was found (Debrief 2, D7a): the window the swimlane draws, from the anchor
+   *  for the seconds asked, also when the act never came or the run ended inside it. */
+  window?: { fromT: number; askedS: number };
 }
 /** An objective's verdict in the report: `tickedT`, the instructor's tick (seconds), only on a rule-less objective. */
 export type ObjectiveVerdict = Verdict & { tickedT?: number };
@@ -135,10 +141,11 @@ export function verdict(rule: ObjectiveRule | undefined, d: RunData): Verdict {
     const b = first(d, rule.event, a.t);
     const aw = `${eventWords(rule.after, d)}${since}`;
     const bw = eventWords(rule.event, d);
-    if (!b && !measured(d, rule.event, a.t)) return no(unmeasured(rule.event, `after ${aw} at ${mmss(a.t)}`));
-    if (b) return { status: b.t - a.t <= rule.withinS ? 'met' : 'not met', why: `${cap(bw)} ${span(b.t - a.t)} after ${aw} (${mmss(a.t)} → ${mmss(b.t)}; within ${span(rule.withinS)} asked).`, measure: { fromT: a.t, toT: b.t, askedS: rule.withinS } };
-    if (end - a.t >= rule.withinS) return { status: 'not met', why: `No ${bw} within ${span(rule.withinS)} of ${aw} at ${mmss(a.t)}.` };
-    return no(`The run ended ${span(end - a.t)} after ${aw} at ${mmss(a.t)}, before ${span(rule.withinS)} had passed.`);
+    const window = { fromT: a.t, askedS: rule.withinS };
+    if (!b && !measured(d, rule.event, a.t)) return { ...no(unmeasured(rule.event, `after ${aw} at ${mmss(a.t)}`)), window };
+    if (b) return { status: b.t - a.t <= rule.withinS ? 'met' : 'not met', why: `${cap(bw)} ${span(b.t - a.t)} after ${aw} (${mmss(a.t)} → ${mmss(b.t)}; within ${span(rule.withinS)} asked).`, measure: { fromT: a.t, toT: b.t, askedS: rule.withinS }, window };
+    if (end - a.t >= rule.withinS) return { status: 'not met', why: `No ${bw} within ${span(rule.withinS)} of ${aw} at ${mmss(a.t)}.`, window };
+    return { ...no(`The run ended ${span(end - a.t)} after ${aw} at ${mmss(a.t)}, before ${span(rule.withinS)} had passed.`), window };
   }
   const m = trendMeta(rule.value);
   const limit = [rule.above !== undefined ? `above ${fmt(rule.value, rule.above)}` : '', rule.below !== undefined ? `below ${fmt(rule.value, rule.below)}` : ''].filter(Boolean).join(' and ');
@@ -448,13 +455,14 @@ export function facts(d: RunData): Fact[] {
   return out;
 }
 
-/** Q1: one row per simulated minute of the kept course — each value's first measurement in that minute (none: null). */
-export function perMinute(d: RunData): Array<{ t: number; values: Record<ValueKey, number | null> }> {
-  const out: Array<{ t: number; values: Record<ValueKey, number | null> }> = [];
-  const keys = [...TREND_KEYS, ...LAB_KEYS];
+/** Q1: one row per simulated minute of the kept course — each value's first measurement in that minute (none: null).
+ *  D6: and the systolic, diastolic and CVP in a record that keeps 'pressures' (absent keys: not recorded in this file). */
+export function perMinute(d: RunData): Array<{ t: number; values: Record<ValueKey, number | null> & Partial<Record<PressureKey, number | null>> }> {
+  const out: ReturnType<typeof perMinute> = [];
+  const keys: Array<ValueKey | PressureKey> = [...TREND_KEYS, ...LAB_KEYS, ...(d.keeps?.includes('pressures') ? PRESSURE_KEYS : [])];
   for (let m = 0; m * 60 <= endOf(d); m++) {
     const xs = d.samples.filter((x) => x.t >= m * 60 && x.t < (m + 1) * 60);
-    out.push({ t: m * 60, values: Object.fromEntries(keys.map((k) => [k, xs.find((x) => x[k] !== null)?.[k] ?? null])) as Record<ValueKey, number | null> });
+    out.push({ t: m * 60, values: Object.fromEntries(keys.map((k) => [k, xs.find((x) => x[k] !== null && x[k] !== undefined)?.[k] ?? null])) as Record<ValueKey, number | null> });
   }
   return out;
 }
@@ -471,23 +479,37 @@ export interface DebriefExport {
   objectives: ReturnType<typeof objectives>;
   facts: Fact[];
   keyTimes: Array<{
-    id: 'recognition' | 'firstTeam' | `objective:${number}` | 'pulseLostToCpr' | 'pulseless';
+    id: 'recognition' | 'firstTeam' | `objective:${number}` | 'pulseLostToCpr' | 'pulseless' | 'handsOff';
     label: string; fromT: number | null; toT: number | null; askedS?: number; totalS?: number;
+    /** Hands-off only (D3): the compression fraction, 1 − `totalS` / the time pulseless (0–1). */
+    fraction?: number;
     /** Recognition only: what `fromT` is ("early signs", the state the card's rules count from; "start" without one). */
     fromLabel?: string;
+    /** Recognition on a /2 run only (D5): the timed action's first grade (`report3`'s `firstGrade`); `askedS` its window. */
+    grade?: Grade;
     state: 'measured' | 'notTicked' | 'noneAfter';
   }>;
   /** Values as recorded, unrounded, except SpO₂: null while pulseless (`pulseless` says why). */
   keyMoments: Array<{
     n: number; t: number; who: 'team' | 'patient' | 'scenario'; text: string;
-    values: { hr: number | null; map: number | null; spo2: number | null; etco2: number | null };
+    /** D6: `sys`, `dia`, `cvp` only in a record that keeps 'pressures' (absent: not recorded in this file): the arterial
+     *  or CVP value of that second, or a cuff reading as `{ v, ageS }` (the last at or before the moment, and how long
+     *  before it); null when none. */
+    values: { hr: number | null; map: number | null; spo2: number | null; etco2: number | null; sys?: Pressure; dia?: Pressure; cvp?: number | null };
     pulseless: boolean; alarms: string[];
+    /** D6: beside `alarms`, in its order, only in a record that keeps 'alarmEnd': each raise's time, end and
+     *  acknowledgement (null: still on at the record's end / not acknowledged). */
+    alarmTimes?: Array<{ t: number; endT: number | null; ackT: number | null }>;
+    /** The recognition moment (D5, `recognitionAt`): the team named the problem. */
+    recognised?: true;
   }>;
   minutes: ReturnType<typeof perMinute>;
   steps: Step[];
   judged: ReturnType<typeof judged>;
   marks: ReturnType<typeof marks>;
 }
+/** A moment's systolic or diastolic (D6): the arterial line's value at that second, a cuff reading with its age, or none. */
+export type Pressure = number | { v: number; ageS: number } | null;
 /** A pme-scenario/2 run's export (plan F7, Q10): no objectives and no steps; the phases, then the graded sections of
  *  `Report3`, then the rest as `/2`. A reader of `/2` never receives a `/2` run (R8). */
 export type DebriefExport3 = { schema: 'pme-debrief/3'; version: string; build: string; record: RunData; phases: PhaseEntry[] } & Report3

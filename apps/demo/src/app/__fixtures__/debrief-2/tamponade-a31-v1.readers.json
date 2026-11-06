@@ -1,0 +1,449 @@
+{
+ "objectives": [
+  {
+   "text": "Name the tamponade within 180 s of arrival from the monitor: tachycardia, narrow pulse pressure, CVP above 15 mmHg (instructor-assessed)",
+   "verdict": {
+    "status": "not assessable",
+    "why": "This objective has no rule: the instructor judges it."
+   }
+  },
+  {
+   "text": "Start CPR within 10 s of the pulse loss",
+   "verdict": {
+    "status": "met",
+    "why": "CPR 3 s after the pulse loss (07:48 → 07:51; within 10 s asked).",
+    "measure": {
+     "fromT": 468,
+     "toT": 471.2,
+     "askedS": 10
+    },
+    "window": {
+     "fromT": 468,
+     "askedS": 10
+    }
+   }
+  },
+  {
+   "text": "Pericardiocentesis within 120 s of starting CPR",
+   "verdict": {
+    "status": "met",
+    "why": "The state \"CPR: pericardium drained, catheter left in\" 1 min 30 s after CPR (07:51 → 09:21; within 2 min 00 s asked).",
+    "measure": {
+     "fromT": 471.2,
+     "toT": 561.371,
+     "askedS": 120
+    },
+    "window": {
+     "fromT": 471.2,
+     "askedS": 120
+    }
+   }
+  },
+  {
+   "text": "Stop CPR (“Pulse back”) within 30 s of the pulse returning on the arterial line and the capnogram",
+   "verdict": {
+    "status": "met",
+    "why": "The state \"Return of circulation: ventilated, catheter in the pericardium\" 2 s after the return of circulation (10:55 → 10:57; within 30 s asked).",
+    "measure": {
+     "fromT": 655,
+     "toT": 657.2644571225924,
+     "askedS": 30
+    },
+    "window": {
+     "fromT": 655,
+     "askedS": 30
+    }
+   }
+  },
+  {
+   "text": "Better: pericardiocentesis before the pulse loss, while the systolic pressure is above 60 mmHg — then no PEA follows",
+   "verdict": {
+    "status": "not met",
+    "why": "The pulse loss at 07:48"
+   }
+  }
+ ],
+ "facts": [
+  {
+   "label": "Lowest SpO₂",
+   "value": "95 % at 00:28"
+  },
+  {
+   "label": "Lowest ART M / NIBP M",
+   "value": "20 mmHg at 07:51"
+  },
+  {
+   "label": "Highest EtCO₂",
+   "value": "36 mmHg at 00:09"
+  },
+  {
+   "label": "Highest T1 / T2",
+   "value": "36.8 °C at 00:01"
+  },
+  {
+   "label": "Pulseless",
+   "value": "3 min 07 s in all; first lost at 07:48"
+  },
+  {
+   "label": "Return of circulation",
+   "value": "3 min 07 s after the pulse loss (10:55)"
+  },
+  {
+   "label": "Labs (the model): last (lowest–highest)",
+   "value": "K⁺ 4.2 mmol/L (4.2–4.2) · Lactate 2.2 mmol/L (1.0–2.2) · pH 7.28 (7.28–7.41) · Glucose 5.8 mmol/L (5.6–5.8) · Tcore 36.8 °C (36.8–36.8)"
+  }
+ ],
+ "keyMoments": [
+  {
+   "n": 1,
+   "t": 373.6230135253094,
+   "who": "patient",
+   "text": "Deteriorating: systolic below 80",
+   "values": {
+    "hr": 136,
+    "map": 70.55637827333294,
+    "spo2": 99,
+    "etco2": 24
+   },
+   "pulseless": false,
+   "alarms": [
+    "CVP high",
+    "SpO₂: low perfusion",
+    "ART S low"
+   ]
+  },
+  {
+   "n": 2,
+   "t": 468,
+   "who": "patient",
+   "text": "Pulse lost (the model) · PEA",
+   "values": {
+    "hr": 46,
+    "map": 20.827067102250375,
+    "spo2": 99,
+    "etco2": 14
+   },
+   "pulseless": true,
+   "alarms": [
+    "ART M low",
+    "HR high",
+    "ART D low",
+    "EtCO₂ low",
+    "ART: no pulsatile pressure",
+    "HR low"
+   ]
+  },
+  {
+   "n": 3,
+   "t": 471.1521999999881,
+   "who": "team",
+   "text": "CPR, ventilated with FiO₂ 1.0",
+   "values": {
+    "hr": 44,
+    "map": 20.12385335759351,
+    "spo2": 99,
+    "etco2": 13
+   },
+   "pulseless": true,
+   "alarms": []
+  },
+  {
+   "n": 4,
+   "t": 561.371,
+   "who": "team",
+   "text": "CPR: pericardium drained, catheter left in",
+   "values": {
+    "hr": 107,
+    "map": 27.844207039444616,
+    "spo2": 99,
+    "etco2": 9
+   },
+   "pulseless": true,
+   "alarms": [
+    "ART S low",
+    "ART D low"
+   ]
+  },
+  {
+   "n": 5,
+   "t": 655,
+   "who": "patient",
+   "text": "Circulation returned (the model)",
+   "values": {
+    "hr": 135,
+    "map": 45.25496796593358,
+    "spo2": 99,
+    "etco2": 19
+   },
+   "pulseless": true,
+   "alarms": []
+  },
+  {
+   "n": 6,
+   "t": 657.2644571225924,
+   "who": "team",
+   "text": "Return of circulation: ventilated, catheter in the pericardium",
+   "values": {
+    "hr": 119,
+    "map": 62.592438243449145,
+    "spo2": 99,
+    "etco2": 19
+   },
+   "pulseless": false,
+   "alarms": []
+  },
+  {
+   "n": 7,
+   "t": 687.428394399537,
+   "who": "team",
+   "text": "Post-ROSC: 500 mL crystalloid running",
+   "values": {
+    "hr": 64,
+    "map": 90.48955174263375,
+    "spo2": 99,
+    "etco2": 28
+   },
+   "pulseless": false,
+   "alarms": [
+    "ART D high",
+    "ART M high"
+   ]
+  }
+ ],
+ "keyTimes": [
+  {
+   "id": "firstTeam",
+   "label": "Start → first team action",
+   "fromT": 0,
+   "toT": 471.1521999999881,
+   "state": "measured"
+  },
+  {
+   "id": "objective:1",
+   "label": "Start CPR within 10 s of the pulse loss",
+   "fromT": 468,
+   "toT": 471.2,
+   "askedS": 10,
+   "state": "measured"
+  },
+  {
+   "id": "objective:2",
+   "label": "Pericardiocentesis within 120 s of starting CPR",
+   "fromT": 471.2,
+   "toT": 561.371,
+   "askedS": 120,
+   "state": "measured"
+  },
+  {
+   "id": "objective:3",
+   "label": "Stop CPR (“Pulse back”) within 30 s of the pulse returning on the arterial line and the capnogram",
+   "fromT": 655,
+   "toT": 657.2644571225924,
+   "askedS": 30,
+   "state": "measured"
+  },
+  {
+   "id": "pulseless",
+   "label": "Pulseless in all",
+   "fromT": 468,
+   "toT": null,
+   "totalS": 187,
+   "state": "measured"
+  }
+ ],
+ "report3": null,
+ "perMinute": [
+  {
+   "t": 0,
+   "values": {
+    "hr": 72,
+    "map": 68.41165542020252,
+    "spo2": 96,
+    "etco2": 36,
+    "rr": 24,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1,
+    "ph": 7.41,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 60,
+   "values": {
+    "hr": 98,
+    "map": 92.98745223366161,
+    "spo2": 98,
+    "etco2": 32,
+    "rr": 14,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1,
+    "ph": 7.39,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 120,
+   "values": {
+    "hr": 104,
+    "map": 90.42201322623357,
+    "spo2": 99,
+    "etco2": 30,
+    "rr": 14,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1,
+    "ph": 7.39,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 180,
+   "values": {
+    "hr": 112,
+    "map": 88.58728221054292,
+    "spo2": 99,
+    "etco2": 29,
+    "rr": 14,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1,
+    "ph": 7.38,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 240,
+   "values": {
+    "hr": 124,
+    "map": 85.01860866947182,
+    "spo2": 99,
+    "etco2": 27,
+    "rr": 15,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1.1,
+    "ph": 7.38,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 300,
+   "values": {
+    "hr": 128,
+    "map": 79.67628396952063,
+    "spo2": 99,
+    "etco2": 26,
+    "rr": 15,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1.1,
+    "ph": 7.37,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 360,
+   "values": {
+    "hr": 135,
+    "map": 73.12422227015492,
+    "spo2": 99,
+    "etco2": 24,
+    "rr": 15,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1.2,
+    "ph": 7.37,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 420,
+   "values": {
+    "hr": 147,
+    "map": 59.82863773744913,
+    "spo2": 99,
+    "etco2": 21,
+    "rr": 16,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1.4,
+    "ph": 7.37,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 480,
+   "values": {
+    "hr": 115,
+    "map": 33.56698241387574,
+    "spo2": 99,
+    "etco2": 11,
+    "rr": 16,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1.6,
+    "ph": 7.35,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 540,
+   "values": {
+    "hr": 115,
+    "map": 27.30685276065657,
+    "spo2": 99,
+    "etco2": 9,
+    "rr": 12,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 1.9,
+    "ph": 7.31,
+    "glucose": 5.6,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 600,
+   "values": {
+    "hr": 113,
+    "map": 45.33327195813712,
+    "spo2": 99,
+    "etco2": 15,
+    "rr": 12,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 2.1,
+    "ph": 7.29,
+    "glucose": 5.7,
+    "tcore": 36.8
+   }
+  },
+  {
+   "t": 660,
+   "values": {
+    "hr": 107,
+    "map": 76.46429573615005,
+    "spo2": 99,
+    "etco2": 19,
+    "rr": 12,
+    "temp": 36.8,
+    "k": 4.2,
+    "lactate": 2.2,
+    "ph": 7.28,
+    "glucose": 5.8,
+    "tcore": 36.8
+   }
+  }
+ ]
+}

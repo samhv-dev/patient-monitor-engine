@@ -2,13 +2,16 @@
 // ACTION shows (the three cards, the case list, or Free roam), shared by ACTION and the strip through the slot context;
 // the default patient's words for the header and the cue box; and the case list's order, the library's own (its two
 // demonstrations first, then its order). A loaded card sends the view back to the cards for the next time no case runs.
+// "Open a card file…" (brief 22) reads one card file, checks it with the controller's validator and keeps it in this
+// browser's library under "Imported" (scenarios.ts keepImported), at the case list's end, removable.
 import './begin.css';
+import { validateScenario } from '@pme/controller/scenario';
 import { drugWords } from '../glossary.ts';
 import type { Link } from '../link.ts';
 import { ageBandOf } from '../patients.ts';
 import { hrefOf } from '../router.ts';
 import { archive } from '../archive.ts';
-import { LIBRARY, type ScenarioCard } from '../scenarios.ts';
+import { importedCards, keepImported, LIBRARY, removeImported, type ScenarioCard } from '../scenarios.ts';
 import { h, setText, toast } from '../ui.ts';
 import { DEMO_CARDS } from '../views/scenarios.ts';
 import type { Teach2Ctx } from './ctx.ts';
@@ -59,6 +62,26 @@ export function caseList(): ScenarioCard[] {
   return [...demos, ...LIBRARY.filter((c) => !demos.includes(c))];
 }
 
+/** What opening a card file came to: the card kept (and whether it replaced an earlier import with its id, and the
+ *  validator's warnings), or the sentence that says why not and the validator's errors. */
+export type Opened = { ok: true; card: ScenarioCard; replaced: boolean; warnings: string[] } | { ok: false; head: string; errors: string[] };
+
+/** One card file: JSON, then the controller's validator (pme-scenario/2, or /1), then this browser's library. Nothing is
+ *  kept unless the validator passes it; a built-in card's id is refused (keepImported). */
+export async function openCardFile(f: File): Promise<Opened> {
+  const no = (why: string, errors: string[] = []): Opened => ({ ok: false, head: `${f.name} was not opened: ${why}`, errors });
+  let raw: unknown;
+  try {
+    raw = JSON.parse(await f.text());
+  } catch {
+    return no('it is not a JSON file.');
+  }
+  const v = validateScenario(raw);
+  if (!v.ok) return no('it is not a card the monitor can run. The checker says:', v.errors);
+  const k = keepImported(v.doc);
+  return k.ok ? { ...k, warnings: v.warnings } : no(`${k.reason}.`);
+}
+
 const ICONS: Record<'free' | 'library' | 'archive', string> = {
   free: '<path d="M3 12h4l2-6 4 12 2-6h6"/>',
   library: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
@@ -78,6 +101,7 @@ export function mountBeginPane(ctx: Teach2Ctx, host: HTMLElement): { el: HTMLEle
       if (!ctx.loadScenario(c)) return;
       toast(`Scenario loaded: ${c.title}`); // as the library says it
     } else void link.send({ type: 'scenario', action: 'load', doc: c.doc }).then((r) => toast(r.accepted ? `Scenario loaded: ${c.title}` : 'The monitor refused the scenario (see the log)'));
+    note.hidden = true; // an offer to start is spent
     ctx.begin?.repaint();
   };
   const openArchive = () => void (location.hash = hrefOf('debrief', 'archive'));
@@ -95,29 +119,64 @@ export function mountBeginPane(ctx: Teach2Ctx, host: HTMLElement): { el: HTMLEle
     [openArchive, card('archive', 3, 'Debrief archive', 'Every saved run: resident, card, time, objectives and score. Open one, print it, or compare residents on the same card.', 'Open · 0', openArchive)],
   ];
   // Room setup opens Settings until its own window exists; the builder comes with the pme-scenario/2 authoring guide
+  // "Open a card file…" (brief 22): the file dialog for one JSON file; what it came to shows under the buttons
+  const file = h('input', { type: 'file', accept: 'application/json,.json', class: 'ip2-begin-file', hidden: true, onchange: () => void pick() });
+  const note = h('div', { class: 'ip2-begin-note' });
+  note.hidden = true;
+  const say = (role: 'alert' | 'status', head: string, lines: readonly string[], start?: ScenarioCard) => {
+    note.setAttribute('role', role);
+    note.replaceChildren(h('p', { class: 'ip2-begin-note-head' }, head),
+      ...(lines.length ? [h('ul', { class: 'ip2-begin-note-list' }, ...lines.map((l) => h('li', {}, l)))] : []),
+      ...(start ? [h('button', { type: 'button', class: 'ip2-begin-small ip2-begin-start', onclick: () => load(start) }, 'Start it')] : []));
+    note.hidden = false;
+  };
+  const pick = async () => {
+    const f = file.files?.[0];
+    file.value = ''; // the same file again is a new pick
+    if (!f) return;
+    const r = await openCardFile(f);
+    if (!r.ok) return say('alert', r.head, r.errors);
+    const again = r.replaced ? ' It replaces the earlier import with the same id.' : '';
+    say('status', `“${drugWords(r.card.title)}” is in this browser's library, under Imported in the Scenario library.${again}`, r.warnings, r.card);
+    ctx.begin?.repaint();
+  };
   const two = h('div', { class: 'ip2-begin-two' },
     h('button', { type: 'button', class: 'ip2-begin-small', onclick: () => void (location.hash = hrefOf('settings')), title: 'Opens Settings until the room setup has its own window' }, 'Room setup'),
-    h('button', { type: 'button', class: 'ip2-begin-small', disabled: true, title: 'Comes with the pme-scenario/2 authoring guide' }, 'Scenario builder ', h('span', { class: 'ip2-begin-tag' }, 'after the demo')));
-  const menu = h('div', { class: 'ip2-begin-menu' }, h('div', { class: 'ip2-begin-cards' }, ...ways.map(([, el]) => el)), two);
+    h('button', { type: 'button', class: 'ip2-begin-small', disabled: true, title: 'Comes with the pme-scenario/2 authoring guide' }, 'Scenario builder ', h('span', { class: 'ip2-begin-tag' }, 'after the demo')),
+    h('button', { type: 'button', class: 'ip2-begin-small ip2-begin-open', onclick: () => file.click(), title: 'A pme-scenario/2 (or /1) card in JSON, checked before it is kept; it stays in this browser only' }, 'Open a card file…'));
+  const menu = h('div', { class: 'ip2-begin-menu' }, h('div', { class: 'ip2-begin-cards' }, ...ways.map(([, el]) => el)), two, note);
 
   // the case list: one row per card, the library's order; a last row opens the whole library (the Scenarios view)
   const cards = caseList();
-  const rows = cards.map((c, i) => {
-    const n = i + 1;
+  const caseRow = (c: ScenarioCard, n = 0) => {
     const title = `Load ${drugWords(c.title)}`;
     const sub = [c.patient, c.minutes ? `${c.minutes} min` : ''].filter(Boolean).join(' · ');
     const tag = (c.doc.mode ?? 'modeled').toUpperCase();
-    return h('button', { type: 'button', class: 'ip2-row ip2-case-row', 'data-card': c.id, onclick: () => load(c), 'aria-label': `${n <= 9 ? `${n}. ` : ''}${title}. ${sub}. ${tag}`, ...(n <= 9 ? { 'aria-keyshortcuts': String(n) } : {}) },
-      h('span', { class: 'ip2-key', 'aria-hidden': 'true' }, n <= 9 ? String(n) : ''),
+    const digit = n >= 1 && n <= 9;
+    return h('button', { type: 'button', class: 'ip2-row ip2-case-row', 'data-card': c.id, onclick: () => load(c), 'aria-label': `${digit ? `${n}. ` : ''}${title}. ${sub}. ${tag}`, ...(digit ? { 'aria-keyshortcuts': String(n) } : {}) },
+      h('span', { class: 'ip2-key', 'aria-hidden': 'true' }, digit ? String(n) : ''),
       h('span', { class: 'ip2-row-text' }, h('b', { class: 'ip2-row-title' }, title), h('span', { class: 'ip2-row-sub' }, sub)),
       h('span', { class: 'ip2-row-right ip2-case-mode' }, tag));
-  });
+  };
+  const rows = cards.map((c, i) => caseRow(c, i + 1));
   const whole = h('a', { class: 'ip2-row ip2-case-all', href: hrefOf('scenarios') },
     h('span', { class: 'ip2-key', 'aria-hidden': 'true' }, '…'), h('span', { class: 'ip2-row-text' }, h('b', { class: 'ip2-row-title' }, 'The whole library'), h('span', { class: 'ip2-row-sub' }, 'the Scenarios view: every card with its story and objectives')));
   const list = h('ol', { class: 'ip2-rows ip2-case-list', 'aria-label': 'Cases to load' }, ...[...rows, whole].map((r) => h('li', {}, r)));
 
+  // the imported cards (brief 22), under their own heading after the library's; each with its Remove
+  const importedList = h('ol', { class: 'ip2-rows ip2-imported-list', 'aria-labelledby': 'ip2-imported-h' });
+  const imported = h('section', { class: 'ip2-imported' }, h('h3', { class: 'ip2-imported-h', id: 'ip2-imported-h' }, 'Imported'), importedList);
+  let importedKey = '';
+  const drawImported = (cs: ScenarioCard[]) => {
+    const k = JSON.stringify(cs.map((c) => [c.id, c.title, c.patient, c.minutes]));
+    if (k === importedKey) return; // draw() runs at every repaint: the rows are rebuilt only when the list changed
+    importedKey = k;
+    importedList.replaceChildren(...cs.map((c) => h('li', { class: 'ip2-imported-item' }, caseRow(c),
+      h('button', { type: 'button', class: 'ip2-begin-small ip2-imported-remove', 'aria-label': `Remove ${drugWords(c.title)} from this browser`, onclick: () => (removeImported(c.id), toast(`Removed from this browser: ${c.title}`), draw()) }, 'Remove'))));
+  };
+
   const hint = h('span', { class: 'ip2-begin-hint' });
-  const el = h('div', { class: 'ip2-begin' }, hint, menu, list);
+  const el = h('div', { class: 'ip2-begin' }, hint, menu, list, imported, file);
 
   // Esc: the case list (and Free roam) back to the three cards; an open sheet is closed first (sheets.ts)
   const offEsc = keys.escape(() => {
@@ -127,12 +186,17 @@ export function mountBeginPane(ctx: Teach2Ctx, host: HTMLElement): { el: HTMLEle
   });
 
   const archiveBtn = ways[2]?.[1].querySelector('.ip2-begin-btn');
+  const libraryLine = ways[1]?.[1].querySelector('.ip2-begin-line');
   const draw = () => {
     const w = way();
+    const imp = importedCards();
     if (archiveBtn) setText(archiveBtn, `Open · ${archive.list().length}`);
+    if (libraryLine) setText(libraryLine, `${LIBRARY.length} cards${imp.length ? ` and ${imp.length} imported` : ''}. Pick one and this pane becomes its stages and steps.`);
     menu.hidden = w !== 'menu';
     list.hidden = w !== 'cases';
-    setText(hint, w === 'cases' ? `the library: ${LIBRARY.length} cards · 1–9 on the keyboard · Esc back` : 'no case: three ways to begin · 1–3 on the keyboard · two shortcuts');
+    drawImported(imp);
+    imported.hidden = w !== 'cases' || !imp.length;
+    setText(hint, w === 'cases' ? `the library: ${LIBRARY.length} cards · 1–9 on the keyboard · Esc back` : 'no case: three ways to begin · 1–3 on the keyboard · three shortcuts');
     for (let n = 1; n <= 9; n++) {
       const fn = w === 'menu' ? ways[n - 1]?.[0] : w === 'cases' ? ((c) => c && (() => load(c)))(cards[n - 1]) : undefined;
       keys.digit(n, fn ?? null);

@@ -13,13 +13,13 @@
 import { asV1, type ClinicalEvent, type CommandInput } from '@pme/controller';
 import { bleed, fluid, infusion, vaporiser } from '../../physiology-console/actions.ts';
 import { describeCommand } from '../describe.ts';
-import { DRUG_LIST, doseUnits, findDrugs, perKg, rateUnits, unitText, type DrugItem } from '../drugs.ts';
+import { DRUG_LIST, doseUnits, findDrugs, lockLabel, perKg, rateUnits, unitText, type DrugItem } from '../drugs.ts';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
 import { clock, h, seg, setText, stepper, toast } from '../ui.ts';
 import type { Cache } from './cache.ts';
 import { pressStep } from './press.ts';
-import { classify } from './rows.ts';
+import { boardOf } from './feed.ts';
 import type { SheetFrame } from './sheet.ts';
 
 export const DRUG_GROUPS: ReadonlyArray<[Group, string]> = [['mh', 'MH kit'], ['vaso', 'Vasoactive'], ['induction', 'Induction'], ['arrest', 'Arrest'], ['fluids', 'Fluids'], ['all', 'All']];
@@ -91,11 +91,10 @@ export function pinnedSteps(link: Link): PinnedStep[] {
   const sv = link.ctl.scenario;
   const doc = asV1(sv.doc); // a pme-scenario/2 card: no steps to pin until F6
   if (!doc || !sv.stateId) return [];
-  const board = classify({
-    doc, stateId: sv.stateId, history: link.ctl.scenario.history, enteredT: sv.enteredT, simT: link.simT, inState: sv.timeInState(link.simT),
-    paused: link.ctl.hostPaused, log: link.log, record: link.host?.record.data ?? null,
-    values: link.ctl.state?.values as Partial<Record<string, number>> | undefined, holds: null, base: new Map(),
-  });
+  // ACTION's own board (feed.ts): the host's, and on a remote its view feed's, so a step a reloaded phone's history no
+  // longer shows as taken is not offered again here
+  const board = boardOf(link);
+  if (!board) return [];
   const out: PinnedStep[] = [];
   for (const live of board.list) {
     const r = live.row;
@@ -183,7 +182,12 @@ export function drugSheet(frame: SheetFrame, o: { link: Link; weightKg(): number
         b.addEventListener('click', () => choose(items.get(b?.dataset.key ?? '') ?? it));
       }
       items.set(it.key, it);
-      setText(b.lastElementChild as HTMLElement, tag);
+      // a drug just given is locked for 10 s on every device (drugs.ts lockLabel): its row says when, and counts down
+      const id = it.kind === 'drug' ? it.drug.id : it.kind === 'step' ? it.step.drugId : null;
+      const lock = id === null ? null : lockLabel(link, id);
+      setText(b.lastElementChild as HTMLElement, lock ? (tag ? `${tag} · ${lock}` : lock) : tag);
+      if (lock) b.dataset.locked = 'true';
+      else delete b.dataset.locked;
       b.setAttribute('aria-pressed', String(chosen?.key === it.key));
       return b;
     });
