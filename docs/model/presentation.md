@@ -863,8 +863,6 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/e2e/saadat-bfi-etaa-row.e2e.ts`](../../apps/demo/e2e/saadat-bfi-etaa-row.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/saadat-grid-layout.e2e.ts`](../../apps/demo/e2e/saadat-grid-layout.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/saadat-instructor-tiles.e2e.ts`](../../apps/demo/e2e/saadat-instructor-tiles.e2e.ts) | 0 | 0 |
-| [`apps/demo/e2e/scenario-choose-another.e2e.ts`](../../apps/demo/e2e/scenario-choose-another.e2e.ts) | 0 | 0 |
-| [`apps/demo/e2e/scenario-panel-stale-press.e2e.ts`](../../apps/demo/e2e/scenario-panel-stale-press.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/scenario-runner-page.e2e.ts`](../../apps/demo/e2e/scenario-runner-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/session-pause-label.e2e.ts`](../../apps/demo/e2e/session-pause-label.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/showcase-capnogram.e2e.ts`](../../apps/demo/e2e/showcase-capnogram.e2e.ts) | 0 | 0 |
