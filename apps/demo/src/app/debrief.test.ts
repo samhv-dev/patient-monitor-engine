@@ -296,6 +296,9 @@ describe('the trend axes have a least span', () => {
     expect(axisRange('temp', 36.8, 36.8)).toEqual([35.8, 37.8]); // 2 °C
     expect(axisRange('hr', 70, 148)).toEqual([70, 148]); // a wide range is the data's own
     expect(axisRange('rr', 12, 12)).toEqual([11, 13]); // no floor ruled for RR: unchanged (± 1 when flat)
+    expect(axisRange('sys', 92, 100)).toEqual([76, 116]); // brief 63: the Pressures panel's SBP/DBP axis, MAP's 40 mmHg
+    expect(axisRange('cvp', 17, 17)).toEqual([12, 22]); // its CVP axis, 10 mmHg
+    expect(axisRange('cvp', 1, 2)).toEqual([0, 10]); // never below zero when the data are not
   });
 });
 

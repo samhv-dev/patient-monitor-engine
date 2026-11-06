@@ -215,7 +215,7 @@ const META = {
 };
 const TREND_KEYS = ['hr', 'map', 'spo2', 'etco2', 'rr', 'temp'];
 const LAB_KEYS = ['k', 'lactate', 'ph', 'glucose', 'tcore'];
-const AXIS_FLOOR = { spo2: 20, hr: 40, map: 40, etco2: 20, temp: 2 };
+const AXIS_FLOOR = { spo2: 20, hr: 40, map: 40, etco2: 20, temp: 2, sys: 40, cvp: 10 }; // sys: the Pressures panel's SBP/DBP axis
 function axisRange(k, lo, hi) {
   const floor = AXIS_FLOOR[k];
   if (floor === undefined) return hi - lo < 2 ? [lo - 1, hi + 1] : [lo, hi];
@@ -306,6 +306,53 @@ function chart(D, d, k, end) {
 <g class="ticks">${ticks}</g>${rets}<path d="${path}"/></svg></figure>`;
 }
 
+/** The Pressures panel (views/debrief.ts pressuresChart, brief 63): SBP and DBP on the left axis, CVP dashed on its
+ *  own right-hand axis; a cuff reading (only in its cycle's second) a dot, an arterial run a line. A record made
+ *  before Debrief 2 (no 'pressures' in `keeps`) has none. */
+function pressuresChart(D, d, end) {
+  if (!d.keeps?.includes('pressures')) return '';
+  const cap = `<figcaption>${D.t('Pressures')} <span class="unit">${D.t('mmHg · SBP and DBP on the left axis, CVP (dashed) on the right')}</span></figcaption>`;
+  const vals = (k) => d.samples.map((s) => s[k]).filter((v) => typeof v === 'number');
+  const [sys, dia, cvp] = ['sys', 'dia', 'cvp'].map(vals);
+  if (!sys.length && !dia.length && !cvp.length) return `<figure class="chart">${cap}<p class="muted">${D.t('Not measured during the run.')}</p></figure>`;
+  const W = 640, H = 130, L = 44, R = 10, T = 8, B = 20;
+  const x = (t) => L + (t / Math.max(end, 1)) * (W - L - R);
+  const scale = ([lo, hi]) => (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+  const both = [...sys, ...dia];
+  const left = both.length ? axisRange('sys', Math.min(...both), Math.max(...both)) : null;
+  const right = cvp.length ? axisRange('cvp', Math.min(...cvp), Math.max(...cvp)) : null;
+  const DOT = 'm-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0';
+  const trace = (k, y) => {
+    let path = '';
+    let prev = null;
+    let n = 0;
+    for (const s of d.samples) {
+      const v = s[k];
+      if (v === null || v === undefined) {
+        prev = null;
+        continue;
+      }
+      const move = prev === null || s.t - prev > 5;
+      if (move && n === 1) path += DOT;
+      n = move ? 1 : n + 1;
+      path += `${move ? 'M' : 'L'}${x(s.t).toFixed(1)} ${y(v).toFixed(1)}`;
+      prev = s.t;
+    }
+    return n === 1 ? path + DOT : path;
+  };
+  const step = [60, 120, 300, 600, 900, 1800, 3600].find((st) => end / st <= 8) ?? 3600;
+  let ticks = '';
+  for (let t = 0; t <= end; t += step) ticks += `<line x1="${x(t)}" x2="${x(t)}" y1="${H - B}" y2="${H - B + 4}"/><text x="${x(t)}" y="${H - 4}" text-anchor="middle">${mmss(t)}</text>`;
+  const rets = d.rows.filter((r) => r.kind === 'restore' && r.undone === undefined).map((r) => `<line class="ret" x1="${x(r.t)}" x2="${x(r.t)}" y1="${T}" y2="${H - B}"/>`).join('');
+  const f = (v) => v.toFixed(0);
+  const values = (left ? `<text x="${L - 4}" y="${T + 4}" text-anchor="end">${f(left[1])}</text><text x="${L - 4}" y="${H - B}" text-anchor="end">${f(left[0])}</text>` : '')
+    + (right ? `<line class="axis" x1="${W - R}" x2="${W - R}" y1="${T}" y2="${H - B}"/><text x="${W - R - 3}" y="${T + 9}" text-anchor="end">CVP ${f(right[1])}</text><text x="${W - R - 3}" y="${H - B - 3}" text-anchor="end">CVP ${f(right[0])}</text>` : '');
+  return `<figure class="chart" data-trend="pressures">${cap}<svg dir="ltr" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img">
+<line class="axis" x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}"/><line class="axis" x1="${L}" x2="${L}" y1="${T}" y2="${H - B}"/>
+<line class="grid" x1="${L}" x2="${W - R}" y1="${T}" y2="${T}"/>
+${values}<g class="ticks">${ticks}</g>${rets}<path data-p="sys" d="${left ? trace('sys', scale(left)) : ''}"/><path data-p="dia" d="${left ? trace('dia', scale(left)) : ''}"/><path data-p="cvp" class="cvp" d="${right ? trace('cvp', scale(right)) : ''}"/></svg></figure>`;
+}
+
 const section = (id, title, body) => `<section id="${id}"><h2>${title}</h2>${body}</section>`;
 
 function fontFaces(dir) {
@@ -358,6 +405,7 @@ li[data-status="not met"]:not([data-mark]) .mark { text-decoration: underline; }
 .chart .axis, .chart .ticks line { stroke: #555; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .chart .grid { stroke: #555; stroke-dasharray: 2 3; vector-effect: non-scaling-stroke; }
 .chart .ret { stroke: #000; stroke-dasharray: 5 3; vector-effect: non-scaling-stroke; }
+.chart path.cvp { stroke-dasharray: 4 2; }
 .chart text { font-size: 11px; fill: #000; font-family: "Vazirmatn", sans-serif; }
 table { border-collapse: collapse; width: 100%; font-size: 9pt; }
 thead { display: table-header-group; }
@@ -453,7 +501,7 @@ export function render(j, fontsCss, version) {
   const body = [
     v3 ? (judged ? section('objectives', D.t('Judged by the instructor'), judged) : '') : section('objectives', D.t('Objectives'), obj),
     section('facts', D.t('Measured facts'), facts),
-    section('trends', D.t('Trends'), TREND_KEYS.map((k) => chart(D, d, k, end)).join('')),
+    section('trends', D.t('Trends'), TREND_KEYS.map((k) => chart(D, d, k, end) + (k === 'map' ? pressuresChart(D, d, end) : '')).join('')),
     section('drugs', D.t('Drugs and fluids'), drugs),
     v3 ? section('actions', D.t('Actions on the card'), actions) : '',
     outcomes ? section('outcomes', D.t('Outcomes'), outcomes) : '',
