@@ -9,27 +9,36 @@
 (FU-7, FU-8 B, FU-9 B, FU-10 A + the showcase hotfix; labels unchanged since round 2, f29951b) on Chromium and WebKit at 1440×900, Saadat-style monitor (the default, now with its CO2 lane
 and tile), by `rehearsal.showcase.ts`; every label below is copied from the page's own text
 (`docs/showcase/results/rehearsal-*.json`, fields `labels`). Times are SIMULATED time at ×4 (divide by 4 for
-wall-clock time); the session-bar clock shows the same time. Round 4 changed cases 1 and 4 (see KIT-GATE "Round 4"). **Do not open the
+wall-clock time); the session bar's clock showed the same time (on Instructor v2, the header's clock pill). Round 4 changed cases 1 and 4 (see KIT-GATE "Round 4"). **Do not open the
 Ventilator view before loading a case** (it takes over ventilation; reload the page if it was opened).*
 
 ## Getting to a case (same for all five)
-*Steps 1–3 describe main since E125 (26 October 2026), from the app's source, not from a rehearsal run; the rest are
-the labels as recorded.*
+*These steps describe main since retire-instructor-v1 PR 3 (6 November 2026: Instructor v2 is the only Instructor view),
+from the app's source, not from a rehearsal run. The case sections below are the labels as recorded on the view retired
+that day: a case's "What happens next" lines are now ACTION's rows (one per open step, with its key), its state strip
+is v2's stage strip, and "Drugs & fluids" is the Drug sheet.*
 
 1. The launcher opens **Home** (`127.0.0.1:8642/#/`): heading "Patient monitor simulator", no monitor and no top bar.
    **Scenarios** → **Open the library** → **Load** on a scenario card opens the Instructor view with the case loaded,
-   on its Scenario tab, which replaces steps 3–6.
+   which replaces steps 3–5.
 2. The rail at the left, top to bottom: **Home** | **Room** · **Scenarios** · **Patient** | **Instructor** · **Monitor**
    · **Ventilator** | **Debrief** | **Explore physiology** · **Tools** (validate · developer) · **Settings**. On the
    Instructor view it is a strip of icons (the names show as tooltips). The top bar has no view tabs; on the
-   Instructor, Ventilator, Explore, Debrief, Validate, Developer and Settings views its right side has the alarm
-   button, **Sound off** and **Remote** + 6-letter code.
-3. Click **Instructor** in the rail.
-4. Instructor panel tabs (right side): **Scenario** · **Vitals & rhythm** · **Drugs & fluids** · **Airway & ventilation** · **Defib, pacing & CPR** · **Devices & alarms** · **Patient** · **Log**. Click **Scenario**.
-5. Category chips: **All** · **Showcase** · **Resuscitation** · **Haemodynamic crisis** · **Anaesthesia depth and drugs** · **Airway and breathing** · **Metabolic and thermal**. Click **Showcase**. Five cards, in this order: *Anaphylaxis under anaesthesia* · *Class IV haemorrhage, PEA and resuscitation* · *Healthy induction* · *Severe bronchospasm on the ventilator* · *Severe tamponade, then induction*.
-6. On the card, click **Load**. Toast: "Scenario loaded: <title>". The panel switches to the running case: title, **Choose another scenario**, the story, the state strip (current state outlined), "Time in state", **Hold the timer**, **Bookmark**, then **What happens next** (one line per next step, with its button), **Objectives** (tick boxes), **Bookmarks**.
-7. Session bar (under the top bar): patient chip (e.g. "M 40 y 75 kg"), **MODELED**, "<title>: <state> <time in state>", the clock, **×1** **×2** **×4**, **Pause**, **Bookmark**. Click **×4** → toast "Speed ×4".
-8. Next case: either reload the page (Cmd-R; every rehearsal case here used a fresh load) or press **Choose another scenario** — the library opens with **Back to the running case** above the chips; choose **Showcase**, **Load** on the card, confirm the dialog "Load this scenario?" with **Load scenario** (the other button is **Keep the current case**). Measured: the clock restarts (02:02 → 00:04–00:05) and runs on. Press **×4** again for the new case (not measured whether the speed carries over). Round 1's clock freeze (S2) is fixed.
+   Ventilator, Explore, Debrief, Validate, Developer and Settings views its right side has the alarm button,
+   **Sound off** and **Remote** + 6-letter code. The Instructor view has no top bar: its header carries the Sound switch
+   and the Room code, and its alarm line under the monitor opens the Devices sheet.
+3. Click **Instructor** in the rail (the old address `#/teach` opens the same view, `#/teach2`).
+4. With no case loaded, ACTION offers the ways to begin; its case list loads a card in one press, and its last row
+   opens the whole library (the Scenarios page, with its category chips: **All** · **Showcase** · …). On a card,
+   **Load**. Toast: "Scenario loaded: <title>".
+5. The view with a case: the header (patient line, **MODELED**, the card's title, the clock pill, the speed box
+   ×1 ×2 ×4 ×8, Sound, Room code); the stage strip (the current stage outlined); STATE (the cue box with the in-stage
+   clock and **Hold the stage timer**, the Fast forward box, the learners' monitor at a reduced size); ACTION (one row
+   per open step); the dock (the sheets **Drug** · **Airway** · **Defib · CPR** · **Vitals** · **Devices** ·
+   **Patient** · **Log**, the three marks, **Debrief**). A sheet stages what it sets; **Deliver** sends it, with its
+   **Onset** (now, or over 30 s, 1, 2 or 5 min). Choose **×4** in the speed box → toast "Speed ×4".
+6. Next case: either reload the page (Cmd-R; every rehearsal case here used a fresh load) or Load another card from the
+   library: the library asks "Load this scenario?" (**Load scenario** or **Keep the current case**) while a case runs.
 
 ## 1. Healthy induction
 - State strip: "Awake, preoxygenated" → "Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg" → "Intubated and ventilated".
