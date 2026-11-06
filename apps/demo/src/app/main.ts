@@ -9,6 +9,7 @@ import { joinCode, relayOf } from './classroom.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
 import { feedOf } from './teach2/feed.ts';
+import { restartSameCard } from './teach2/finish.ts';
 import { PATIENT_PRESETS } from './patients.ts';
 import { announceHost, askJoin, chooseHostSession } from './host-guard.ts';
 import { keepPositions, keptItems, putKeptItems, readPosition, restorePosition } from './position.ts';
@@ -19,7 +20,7 @@ import { noteRecent } from './recent.ts';
 import { hrefOf, parseRoute, revealTarget } from './router.ts';
 import { SCENARIO_META } from './scenario-meta.ts';
 import { archive } from './archive.ts';
-import { cardOf, LIBRARY, scenarioById, type ScenarioCard } from './scenarios.ts';
+import { LIBRARY, scenarioById, type ScenarioCard } from './scenarios.ts';
 import { AppSession, type RoomKeep } from './session.ts';
 import { mountSessionBar } from './sessionbar.ts';
 import { applySkinAlarmColours, LEVEL_MARK, LEVEL_NAME, Shell, skinAlarmBar, skinAlwaysOn } from './shell.ts';
@@ -172,10 +173,7 @@ if (follow) {
   // and so the phones), or the case ended on the page's default patient, the deep link it was opened from spent so that
   // a reload shows no case either
   const finish = {
-    restart: (): boolean => {
-      const doc = session.driver.runner?.doc;
-      return !!doc && loadScenario(scenarioById(doc.id) ?? cardOf(doc), session.roomKeep());
-    },
+    restart: (): boolean => restartSameCard(session.driver, loadScenario, () => session.roomKeep()),
     close: (): void => {
       session.endCase();
       const u = new URL(location.href);
