@@ -1,10 +1,11 @@
-// UI-A (the read-only demo UI review of 24 October, rows #5, #8 and #9): what the projected Instructor view shows the
-// audience. #5 — the scenario panel's long "What happens next" buttons wrap inside the panel at 1280 wide (they were cut
-// at its edge). #8 — the toasts after the cue card's Load · All alarms on · Bookmark · ×8 stay off the monitor stage.
+// UI-A (the read-only demo UI review of 24 October, row #9): what the projected Instructor view shows the audience.
 // #9 — the fast-forward banner sits under the nav and the session bar (it covered both), is not shown on the Debrief,
-// and neither it nor a toast prints. E128 (owner, 26 October) — a Load from the Scenarios library opens the Scenario tab,
-// and no toast covers the panel's tab strip.
-import { expect, test, type Page } from '@playwright/test';
+// and neither it nor a toast prints. Rows #5 and #8 and E128 drove today's Scenario tab and retired with it
+// (retire-instructor-v1 PR 2): #5 to teach2-fit-stages.e2e.ts / teach2-fit-panes.e2e.ts / teach2-fit-strip.e2e.ts
+// (every open step a row, long titles wrap in the box), #8 to teach2-fit-strip.e2e.ts ("a toast rests on the dock"),
+// E128 to teach2-fit-panes.e2e.ts ("Instructor v2 with no case fits 1440 × 900": a Load hands the pane to ACTION).
+// #9 stays on today's view for now: on #/teach2 the banner (top: --chrome-bottom + 8 px) covers v2's header.
+import { expect, test } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
 
@@ -15,149 +16,6 @@ test.afterAll(async () => vite?.close());
 
 type Box = { x: number; y: number; width: number; height: number };
 const meets = (a: Box, b: Box) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
-const run = (p: Page) => p.locator('section[aria-label="Running scenario"]');
-const press = (p: Page, label: string) => run(p).getByRole('button', { name: label, exact: true }).click();
-
-for (const [w, h] of [[1280, 800], [1920, 1080]] as const) {
-  test(`UI-A #5 scenario panel at ${w} × ${h}: the long "What happens next" buttons wrap inside the panel`, async ({ page }) => {
-    test.setTimeout(120_000);
-    await page.setViewportSize({ width: w, height: h });
-    await openApp(page, base, '?scenario=showcase-mh', { warmMs: 1500 });
-    await page.click('[role=tab][data-tab=scenario]');
-    await press(page, 'Premedicate: midazolam 2 mg, fentanyl 100 µg');
-    await press(page, 'Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg');
-    const intubate = run(page).getByRole('button', { name: 'Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %', exact: true });
-    await expect(intubate).toBeVisible({ timeout: 15_000 });
-    const fit = await page.evaluate(() =>
-      [...document.querySelectorAll<HTMLElement>('section[aria-label="Running scenario"] ul.next button')].map((b) => {
-        const r = b.getBoundingClientRect();
-        const list = (b.closest('ul.next') as HTMLElement).getBoundingClientRect();
-        const cs = getComputedStyle(b);
-        return { t: b.textContent, over: b.scrollWidth - b.clientWidth, right: r.right - list.right, h: r.height, minH: parseFloat(cs.minHeight), align: cs.textAlign };
-      }),
-    );
-    console.log(`UI-A #5 ${w}x${h}: ${JSON.stringify(fit)}`);
-    expect(fit.length).toBeGreaterThan(1);
-    for (const b of fit) {
-      expect(b.over, `"${b.t}" clipped`).toBeLessThanOrEqual(1);
-      expect(b.right, `"${b.t}" past the panel's edge`).toBeLessThanOrEqual(0.5);
-      expect(b.h).toBeGreaterThanOrEqual(b.minH - 0.5); // the small buttons' rhythm: one line keeps its 32 px
-      expect(b.align).toBe('left');
-    }
-    // other buttons keep their one-line look
-    const bm = await run(page).getByRole('button', { name: 'Bookmark', exact: true }).evaluate((b) => getComputedStyle(b).whiteSpace);
-    expect(bm).toBe('nowrap');
-  });
-
-  test(`UI-A #8 scenario Load at ${w} × ${h}: the toasts stay off the monitor stage`, async ({ page }) => {
-    test.setTimeout(120_000);
-    await page.setViewportSize({ width: w, height: h });
-    await openApp(page, base, '#/teach', { warmMs: 1500 });
-    const allOn = async () => {
-      await page.click('[role=tab][data-tab=devices]');
-      await page.getByRole('button', { name: 'All alarms on', exact: true }).click();
-    };
-    await allOn();
-    await page.click('[role=tab][data-tab=scenario]');
-    await page.locator('.chip-btn', { hasText: 'Showcase' }).click();
-    const card = page.locator('section[aria-label="Scenario library"] article.scard').filter({ has: page.locator('h3', { hasText: 'Malignant hyperthermia' }) });
-    await card.locator('button', { hasText: 'Load' }).first().click();
-    const confirm = page.getByRole('button', { name: 'Load scenario', exact: true });
-    if (await confirm.waitFor({ timeout: 1500 }).then(() => true, () => false)) await confirm.click();
-    await expect(run(page)).toContainText('Malignant hyperthermia', { timeout: 15_000 }); // loaded (its own toast may be gone on a loaded machine)
-    await allOn();
-    await page.click('[role=tab][data-tab=scenario]');
-    const bar = page.locator('.sessionbar');
-    await bar.getByRole('button', { name: 'Bookmark' }).click();
-    await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×8' }).click();
-    // A toast lives 4 s, which a slow runner can outlast (CI WebKit): the placement is the stack's, so a probe of each
-    // kind that stays is measured beside whatever real toasts are still up (the same durable idea as #136's log read)
-    const probe = (kind: string) =>
-      page.evaluate((kind) => {
-        const host = document.querySelector('.toasts') as HTMLElement;
-        const t = Object.assign(document.createElement('div'), { className: 'toast uia-probe', textContent: `probe ${kind}` });
-        t.dataset.kind = kind;
-        host.append(t);
-      }, kind);
-    await probe('info');
-    const toasts = await page.locator('.toast').evaluateAll((ts) => ts.map((t) => t.getBoundingClientRect().toJSON() as Box));
-    const stage = (await page.locator('.stage').boundingBox()) as Box;
-    const nav = (await page.locator('.topbar').boundingBox()) as Box;
-    const sbar = (await bar.boundingBox()) as Box;
-    const strip = (await page.locator('[role=tablist][aria-label="Instructor controls"]').boundingBox()) as Box;
-    console.log(`UI-A #8 ${w}x${h}: stage ${JSON.stringify(stage)} tab strip ${JSON.stringify(strip)} toasts (${toasts.length - 1} real + probe) ${JSON.stringify(toasts)}`);
-    expect(toasts.length).toBeGreaterThanOrEqual(1);
-    for (const t of toasts) {
-      expect(meets(t, stage), `a toast over the monitor stage ${JSON.stringify(t)}`).toBe(false);
-      expect(meets(t, nav) || meets(t, sbar), 'a toast over the nav or the session bar').toBe(false);
-      expect(meets(t, strip), `a toast over the panel's tab strip ${JSON.stringify(t)}`).toBe(false); // E128
-      expect(t.x + t.width).toBeLessThanOrEqual(w);
-      expect(t.y + t.height).toBeLessThanOrEqual(h);
-    }
-    // the Monitor view, the device alone: the instructor's feedback stays off it, an alert ("The monitor stopped", a
-    // refusal) and the learner controls' own feedback show (monitor-worker-stopped.e2e.ts: the real alert)
-    await page.evaluate(() => (location.hash = '#/monitor'));
-    await probe('alert');
-    await probe('monitor');
-    await expect(page.locator('.toast[data-kind="info"]').first()).toBeHidden();
-    await expect.poll(() => page.locator('.toast[data-kind="info"]').evaluateAll((ts) => ts.filter((t) => (t as HTMLElement).offsetParent !== null).length)).toBe(0);
-    await expect(page.locator('.uia-probe[data-kind="alert"]')).toBeVisible();
-    await expect(page.locator('.uia-probe[data-kind="monitor"]')).toBeVisible();
-    // the full-page start (#131, no bars, no stage): toasts bottom-centre; back on the Instructor view, under the bars again
-    await page.evaluate(() => (location.hash = '#/start'));
-    await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--chrome-bottom').trim())).toBe('0px');
-    expect(await page.locator('.toasts').evaluate((e) => getComputedStyle(e).bottom)).not.toBe('auto');
-    await page.evaluate(() => (location.hash = '#/teach'));
-    await expect(page.locator('.sessionbar')).toBeVisible();
-    await expect.poll(async () => {
-      const t = await page.locator('.uia-probe[data-kind="info"]').evaluate((e) => e.getBoundingClientRect().toJSON() as Box);
-      const b = (await bar.boundingBox()) as Box;
-      return t.y >= b.y + b.height && !meets(t, (await page.locator('.stage').boundingBox()) as Box);
-    }).toBe(true);
-    await page.evaluate(() => document.querySelectorAll('.uia-probe').forEach((e) => e.remove()));
-  });
-  test(`E128 Load from the Scenarios library at ${w} × ${h}: the Scenario tab opens and no toast covers the tab strip`, async ({ page }) => {
-    test.setTimeout(120_000);
-    await page.setViewportSize({ width: w, height: h });
-    await openApp(page, base, '#/teach', { warmMs: 1000 });
-    await page.click('[role=tab][data-tab=vitals]'); // the owner's case: the panel left on "Vitals & rhythm"
-    await page.evaluate(() => (location.hash = '#/scenarios/library'));
-    const lib = page.locator('[data-view=scenarios]');
-    await lib.getByRole('button', { name: /^Load .*Malignant hyperthermia/ }).first().click();
-    const confirm = page.getByRole('button', { name: 'Load scenario', exact: true });
-    if (await confirm.waitFor({ timeout: 1500 }).then(() => true, () => false)) await confirm.click();
-    await expect(page).toHaveURL(/#\/teach/);
-    await expect(page.locator('[role=tab][data-tab=scenario]')).toHaveAttribute('aria-selected', 'true', { timeout: 10_000 });
-    await expect(run(page)).toContainText('Malignant hyperthermia', { timeout: 15_000 });
-    await expect(run(page).getByRole('button', { name: 'Premedicate: midazolam 2 mg, fentanyl 100 µg', exact: true })).toBeVisible();
-    // the "Scenario loaded" toast (4 s) and a probe that stays: under the strip, the strip's tabs pressable
-    await page.evaluate(() => {
-      const t = Object.assign(document.createElement('div'), { className: 'toast uia-probe', textContent: 'Scenario loaded: a long title that wraps the probe onto the width of the panel' });
-      t.dataset.kind = 'info';
-      (document.querySelector('.toasts') as HTMLElement).append(t);
-    });
-    const strip = (await page.locator('[role=tablist][aria-label="Instructor controls"]').boundingBox()) as Box;
-    const toasts = await page.locator('.toast').evaluateAll((ts) => ts.map((t) => ({ text: t.textContent, ...(t.getBoundingClientRect().toJSON() as Box) })));
-    console.log(`E128 ${w}x${h}: tab strip ${JSON.stringify(strip)} toasts ${JSON.stringify(toasts)}`);
-    expect(toasts.some((t) => t.text?.startsWith('Scenario loaded: Malignant') || t.text?.startsWith('Scenario loaded: a long'))).toBe(true);
-    // …and not over the case's title, "Choose another scenario" or the staging bar: the stack sits just above that bar
-    const head = (await run(page).locator('.scard-head').boundingBox()) as Box;
-    const foot = (await page.locator('footer.stagebar').boundingBox()) as Box;
-    for (const t of toasts) {
-      expect(meets(t, strip), `a toast over the panel's tab strip ${JSON.stringify(t)}`).toBe(false);
-      expect(t.y).toBeGreaterThanOrEqual(strip.y + strip.height);
-      expect(meets(t, head), `a toast over the case title and "Choose another scenario" ${JSON.stringify(head)}`).toBe(false);
-      expect(meets(t, foot), `a toast over the staging bar ${JSON.stringify(foot)}`).toBe(false);
-      expect(foot.y - (t.y + t.height)).toBeLessThanOrEqual(foot.height + 400); // at the panel's foot, not its top
-      expect(meets(t, (await page.locator('.stage').boundingBox()) as Box), 'a toast over the monitor stage').toBe(false);
-    }
-    const last = toasts.reduce((m, t) => Math.max(m, t.y + t.height), 0);
-    expect(foot.y - last, 'the stack ends just above the staging bar').toBeLessThanOrEqual(24);
-    await page.locator('[role=tab][data-tab=log]').click({ timeout: 2000 }); // pressable with the toasts up (no trial click: a real one)
-    await expect(page.locator('[role=tab][data-tab=log]')).toHaveAttribute('aria-selected', 'true');
-    await page.evaluate(() => document.querySelectorAll('.uia-probe').forEach((e) => e.remove()));
-  });
-}
 
 test('UI-A #9 fast-forward: the banner sits under the nav and the session bar, not on the Debrief, never in print', async ({ page }) => {
   test.setTimeout(150_000);
