@@ -6,6 +6,7 @@
 // for the browser's here, happy-dom has none) and without them (the fallback: the tabs are asked over the channel).
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { announceHost, askJoin, chooseHostSession, HOST_LOCK, HOSTS_CHANNEL, liveHosts, takeOver } from './host-guard.ts';
+import { keepRoomCode, keepsRoomCode, startCode, storedRoomCode } from './room-code.ts';
 
 const stops: Array<() => void> = [];
 afterEach(() => {
@@ -133,6 +134,25 @@ describe.each([
     expect(asked).toBe(0);
     await chooseHostSession('QFBAWA', ask);
     expect(asked).toBe(1);
+  });
+
+  // Room plan R1: the bare address starts under the stored room code, so a second tab while the first runs it is asked
+  // as a duplicated tab is; "Start a new session" there runs a code for that tab alone and the room keeps its code (§4 D3)
+  it('the room code stored and live in tab A: a new tab without ?session is asked about it; "start a new session" does not replace the stored code', async () => {
+    keepRoomCode('QFBAWA');
+    const a = hostA('QFBAWA');
+    const asked: string[] = [];
+    let said: 'join' | 'new' | null = null;
+    const start = startCode({ param: null, stored: storedRoomCode() });
+    expect(start).toBe('QFBAWA');
+    const r = await chooseHostSession(start, async (c) => (asked.push(c), (said = await answer(/Start a new/)(c))));
+    expect(asked).toEqual(['QFBAWA']);
+    expect(r).toEqual({ code: null, kept: null });
+    expect(keepsRoomCode({ param: null, answer: said })).toBe(false);
+    expect(storedRoomCode()).toBe('QFBAWA');
+    await tick(50);
+    expect(a.gone).toBe(0);
+    localStorage.removeItem('pme.roomCode');
   });
 
   it('a tab that starts hosting a code stops the other tab hosting it', async () => {
