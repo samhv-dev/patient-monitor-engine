@@ -26,6 +26,7 @@ export const DOCS_TESTS = {
     'test/l2/blood/headers.test.ts', // NOTICES.md rows of the ported files
   ],
   'apps/demo': [
+    'src/app/debrief-compat.test.ts', // docs/showcase/kit-round-a/**/*.json, read byte for byte against its fixtures
     // docs/showcase/kit-round-a/**/*.json, imported
     'src/app/debrief-moments.test.ts',
     'src/app/views/debrief-course.test.ts',

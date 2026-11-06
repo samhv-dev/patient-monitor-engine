@@ -315,6 +315,7 @@ No exported `…State` type in this module.
 | `contrast` | [`apps/demo/src/app/color.ts`](../../apps/demo/src/app/color.ts) | Colour arithmetic for the shell (no DOM): |
 | `whoOf` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | Who moved the scenario from state `prev` into `id`: |
 | `pulselessSpans` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The pulseless spans of the kept course, [from, to]: |
+| `handsOff` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The hands-off time inside the pulseless spans, and the compression fraction `1 − handsOff / pulseless` (D3). |
 | `keyMoments` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The key moments of the kept course in time order, numbered 1…n. |
 | `signStates` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The states whose entry makes a /1 card's sign recognisable: |
 | `keyTimes` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The key times, in order: |
@@ -613,7 +614,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mou
 | [`apps/demo/src/app/qr.ts`](../../apps/demo/src/app/qr.ts) | — |
 | [`apps/demo/src/app/rail.ts`](../../apps/demo/src/app/rail.ts) | The workflow rail (E125, owner's mockups of 26 October): the app's navigation in the order of a teaching session — Home; before the session Room, Scenarios, Patient; during it Instructor (today's view or v2, chosen in Se |
 | [`apps/demo/src/app/recent.ts`](../../apps/demo/src/app/recent.ts) | The Scenarios page's "Recent" (E125): the last three library cards loaded in this browser, newest first. |
-| [`apps/demo/src/app/record.ts`](../../apps/demo/src/app/record.ts) | The debrief's record of one run — what happened, in order, at the simulated time the monitor showed: every command applied (from the panel, a Remote or the scenario), the scenario's states, the alarms raised, bookmarks a |
+| [`apps/demo/src/app/record.ts`](../../apps/demo/src/app/record.ts) | The debrief's record of one run — what happened, in order, at the simulated time the monitor showed: every command applied (from the panel, a Remote or the scenario), the scenario's states, the alarms raised (each with w |
 | [`apps/demo/src/app/rhythms.ts`](../../apps/demo/src/app/rhythms.ts) | The rhythm picker's groups (research/13 brief §7 "Rhythm picker"): the 36 library rhythms in the order a clinician looks for them. |
 | [`apps/demo/src/app/room-status.ts`](../../apps/demo/src/app/room-status.ts) | What the Room page knows about who follows the session (E125), without a DOM. |
 | [`apps/demo/src/app/router.ts`](../../apps/demo/src/app/router.ts) | Hash routing without a router dependency (research/13 brief §5): `#/teach`, `#/explore/respiratory`, `#/validate/review`. |
@@ -869,6 +870,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mou
 | [`apps/demo/src/app/console-pages.dom.test.ts`](../../apps/demo/src/app/console-pages.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/copy.test.ts`](../../apps/demo/src/app/copy.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/cuff-start-notice.dom.test.ts`](../../apps/demo/src/app/cuff-start-notice.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/debrief-compat.test.ts`](../../apps/demo/src/app/debrief-compat.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/debrief-moments.test.ts`](../../apps/demo/src/app/debrief-moments.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/debrief-showcase.test.ts`](../../apps/demo/src/app/debrief-showcase.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/debrief.test.ts`](../../apps/demo/src/app/debrief.test.ts) | 0 | 0 |
@@ -944,6 +946,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mou
 | [`apps/demo/src/app/views/debrief-archive.dom.test.ts`](../../apps/demo/src/app/views/debrief-archive.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-course.test.ts`](../../apps/demo/src/app/views/debrief-course.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-handout.dom.test.ts`](../../apps/demo/src/app/views/debrief-handout.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/debrief-handsoff.dom.test.ts`](../../apps/demo/src/app/views/debrief-handsoff.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-hub-steps.dom.test.ts`](../../apps/demo/src/app/views/debrief-hub-steps.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-marks-course.dom.test.ts`](../../apps/demo/src/app/views/debrief-marks-course.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-moments-print.dom.test.ts`](../../apps/demo/src/app/views/debrief-moments-print.dom.test.ts) | 0 | 0 |
