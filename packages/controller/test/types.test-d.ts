@@ -40,3 +40,12 @@ void stageNote;
 t.send({ ...header, kind: 'grant', granted: true });
 const feed: WireEvent = { type: 'instructorView', t: 0, body: null };
 void feed;
+
+// The hello's instrument (plan room-and-instruments.md R3): `show` and `device` compile on a viewer hello only.
+import type { Instrument } from '../src/protocol.ts';
+t.send({ ...header, kind: 'hello', role: 'viewer', show: 'defib', device: 'k3x9q2m7' });
+const shown: Instrument = 'learner';
+void shown;
+// @ts-expect-error — `vent` is not an instrument a hello names (the ventilator is its own role, R8a).
+const vent: Instrument = 'vent';
+void vent;
