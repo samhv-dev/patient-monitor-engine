@@ -2,7 +2,8 @@
 // states after the first, the pulse lost and back (the model), and the team's drugs, fluids, shocks and CPR; each with
 // what the monitor's trend held at that second and the alarms raised since the moment before. The key times are the
 // intervals the facilitator reads first: the instructor's recognition tick, the first team action, each objective's
-// measured interval, the pulse loss to CPR and the time without a pulse. Every number traces to a row or a sample; an
+// measured interval, the pulse loss to CPR, the time without a pulse and the hands-off time within it (with the
+// compression fraction). Every number traces to a row or a sample; an
 // absent one is null, never a guess. Read on the KEPT course, as the debrief's rules are. No DOM.
 import { asV1, type ScenarioDoc } from '@pme/controller';
 import { endOf, isEvent, objectives, type DebriefExport } from './debrief.ts';
@@ -44,6 +45,28 @@ export function pulselessSpans(d: RunData): Array<[number, number]> {
 }
 /** Whether simulated second `t` lies in a pulseless span, both ends included (E60). */
 export const pulselessAt = (d: RunData, t: number, spans = pulselessSpans(d)): boolean => spans.some(([a, b]) => a <= t && t <= b);
+
+/** The hands-off time inside the pulseless spans, and the compression fraction `1 − handsOff / pulseless` (D3).
+ *  Hands-off is the time inside the pulseless spans when compressions were not active. Compressions run from a kept
+ *  `cpr` row (the team's, a Remote's or the card's command; a second start while compressing changes the rate) to the
+ *  next kept `cprStop` row, or to the end of the record. Null without a pulse loss, and for a record whose `keeps` lacks
+ *  'cprStop' (made before D3: its stops have no event, so the time cannot be read, and is not guessed from the starts
+ *  alone). */
+export function handsOff(d: RunData): { handsOffS: number; pulselessS: number; fraction: number } | null {
+  const spans = pulselessSpans(d);
+  if (!d.keeps?.includes('cprStop') || !spans.length) return null;
+  const on: Array<[number, number]> = [];
+  let from: number | null = null;
+  for (const r of kept(d).filter((x) => x.ev === 'cpr' || x.ev === 'cprStop').sort((a, b) => a.t - b.t)) {
+    if (r.ev === 'cpr') from ??= r.t;
+    else if (from !== null) (on.push([from, r.t]), (from = null));
+  }
+  if (from !== null) on.push([from, endOf(d)]);
+  const pulselessS = spans.reduce((a, [f, t]) => a + t - f, 0);
+  const pressed = spans.reduce((a, [f, t]) => a + on.reduce((b, [x, y]) => b + Math.max(0, Math.min(t, y) - Math.max(f, x)), 0), 0);
+  const handsOffS = pulselessS - pressed;
+  return { handsOffS, pulselessS, fraction: pulselessS > 0 ? 1 - handsOffS / pulselessS : 0 };
+}
 
 /** The value of `k` at second ⌊t⌋, else the first measured in the next three seconds, else null. */
 function valueAt(at: Map<number, Sample>, k: 'hr' | 'map' | 'spo2' | 'etco2', t: number): number | null {
@@ -121,7 +144,7 @@ function recognitionFrom(d: RunData, tick: number | undefined): { t: number; lab
 }
 
 /** The key times, in order: recognition, the first team action, the objectives' measured intervals (document order),
- *  the pulse loss to CPR, the time pulseless; at most six that print a tile. A `noneAfter` interval prints none (the
+ *  the pulse loss to CPR, the time pulseless, the hands-off time (`handsOff`); at most six that print a tile. A `noneAfter` interval prints none (the
  *  view drops it), so it does not count toward the six (R-B N1). A generic interval equal to an objective's is left
  *  out (the objective's is kept). */
 export function keyTimes(d: RunData, moments: KeyMoment[] = keyMoments(d)): KeyTime[] {
@@ -152,6 +175,8 @@ export function keyTimes(d: RunData, moments: KeyMoment[] = keyMoments(d)): KeyT
     // the same sum as facts()' "Pulseless … in all"
     const off = pulselessSpans(d).reduce((a, [f, t]) => a + t - f, 0);
     out.push({ id: 'pulseless', label: 'Pulseless in all', fromT: loss.t, toT: null, totalS: off, state: 'measured' });
+    const ho = handsOff(d);
+    if (ho) out.push({ id: 'handsOff', label: 'Hands-off time', fromT: loss.t, toT: null, totalS: ho.handsOffS, fraction: ho.fraction, state: 'measured' });
   }
   const same = (a: KeyTime) => objTiles.some((o) => o !== a && o.fromT === a.fromT && o.toT === a.toT);
   let drawn = 0;
