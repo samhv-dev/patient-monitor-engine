@@ -223,7 +223,7 @@ Two shared files need care:
    - every `objectives[].verdict.status` is identical;
    - the new fields are present.
    Any difference is reported, not tuned.
-3. New `apps/demo/e2e/teach2-fit.e2e.ts` at 1440 × 900, at MH `normoventilated` (second dose), MH `treating` (fan-out) and haemorrhage `pea`:
+3. New `apps/demo/e2e/teach2-fit.e2e.ts` (since 6 November split into `teach2-fit-stages`, `teach2-fit-panes` and `teach2-fit-strip.e2e.ts`) at 1440 × 900, at MH `normoventilated` (second dose), MH `treating` (fan-out) and haemorrhage `pea`:
    - the view's `scrollHeight ≤ clientHeight`;
    - every open step is a row;
    - no row is disabled;
