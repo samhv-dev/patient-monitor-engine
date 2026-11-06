@@ -436,10 +436,10 @@ describe('the peers frame', () => {
     const ins = await join('ins-a.1', 'instructor');
     const last = () => host.got.filter((f) => f.relay === 'peers').at(-1);
     await waitFor(() => host.got.some((m) => m.kind === 'hello' && m.from === 'ins-a.1'), 2000, 'hello');
-    expect(last()).toEqual({ relay: 'peers', hostOnline: true, peers: 1, instructors: 0 });
+    expect(last()).toEqual({ relay: 'peers', hostOnline: true, peers: 1, instructors: 0, devices: expect.any(Array) }); // R2: the host's device table
     host.send({ kind: 'grant', to: 'ins-a.1', granted: true });
     await waitFor(() => (last() as { instructors?: number }).instructors === 1, 2000, 'instructors 1');
-    expect(last()).toEqual({ relay: 'peers', hostOnline: true, peers: 1, instructors: 1 });
+    expect(last()).toEqual({ relay: 'peers', hostOnline: true, peers: 1, instructors: 1, devices: expect.any(Array) }); // R2: the host's device table
     const v2 = await join('view-v2', 'viewer');
     ins.ws.close();
     await waitFor(() => (last() as { instructors?: number }).instructors === 0, 2000, 'instructors 0');
