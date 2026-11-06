@@ -16,7 +16,8 @@ import { ago, PeerLog, RESYNC_MS, roomStatus, type PeerSeen, type RelayState, ty
 import { hrefOf } from '../router.ts';
 import type { InstructorRoomCard } from './room-instructor.ts';
 import type { View } from '../shell.ts';
-import { button, h, setText } from '../ui.ts';
+import { DEFIB_CHOICES, defibDefaults } from '../site.ts';
+import { button, h, select, setText } from '../ui.ts';
 
 export interface RoomDeps {
   code: string;
@@ -38,6 +39,9 @@ export interface RoomDeps {
   info?: (relay: string) => Promise<RelayInfo | null>;
   /** The instructor phone's card (room-instructor.ts, plan instructor-peer-role.md P7): its own card on this page. */
   instructor?: InstructorRoomCard;
+  /** The room's defibrillator model (R5b): the site's choice, and the session's hand-over of a new one (it saves it and
+   *  sends it to the patient's engine). Absent: no card. */
+  defib?: { model(): string | null; choose(model: string | null): void };
 }
 
 export interface RoomView extends View {
@@ -188,13 +192,30 @@ export function roomView(d: RoomDeps): RoomView {
     setText(openedBox, opened.length ? `Opened from this page this session: ${opened.map((o) => `${o.what} at ${clock(o.at)}`).join(', ')}.` : '');
   }
 
+  // ------------------------------------------------------------------------------------- defibrillator in this room
+  // R5b (plan room-and-instruments.md §7; owner's Q6 ruling, 5 November): the room's defibrillator model, apart from the
+  // monitor style. In a card of its own until R7 builds Room setup proper
+  const defibCard = d.defib ? (() => {
+    const choice = d.defib;
+    const label = (id: string, l: string) => {
+      const e = defibDefaults(id);
+      return `${l}: ${e.energyAdultJ} J adult${e.energyPaedJ === null ? '' : `, ${e.energyPaedJ} J paediatric`}`;
+    };
+    const pick = select('Model', [['', "Not chosen: the monitor style's own values"], ...DEFIB_CHOICES.map((c): [string, string] => [c.id, label(c.id, c.label)])], choice.model() ?? '', (v) => choice.choose(v || null));
+    return h('section', { class: 'room-card room-defib', 'aria-labelledby': 'room-defib-h' },
+      h('h2', { id: 'room-defib-h' }, 'Defibrillator in this room'),
+      pick.el,
+      h('p', { class: 'hint' }, "Your department's machine: not named yet."),
+      h('p', { class: 'hint' }, "A model applies to the patient at once and to every new patient; 'Not chosen' applies from the next patient start."));
+  })() : null;
+
   let timer: ReturnType<typeof setInterval> | null = null;
   const el = h('section', { class: 'console room', 'aria-labelledby': 'room-h' },
     h('div', { class: 'console-page' },
       h('header', { class: 'console-head' },
         h('div', {}, h('h1', { id: 'room-h' }, 'Room'), h('p', { class: 'console-sub' }, 'Every screen and phone that joins with this code follows the same patient.')),
         status),
-      h('div', { class: 'room-cols' }, join, connected, d.instructor?.el ?? null)), big);
+      h('div', { class: 'room-cols' }, join, connected, d.instructor?.el ?? null), ...(defibCard ? [defibCard] : [])), big);
   // Wired once everything above exists (a transport replays its status on subscribe)
   listen(d.local, 'local');
   if (d.relayLink) listen(d.relayLink, 'relay');

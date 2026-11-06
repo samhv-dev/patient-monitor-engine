@@ -41,6 +41,11 @@ Anti-goals (what would make this a failure even if it works)
 - A panel that moves the case by itself where the card did not say so.
 - A panel that hides a step the card allows because a condition is not yet met.
 - Any penalty, lock or scoring applied by the panel rather than by the physiology and the debrief.
+  *Amended by the owner, 5 November 2026, for one guard only:* a drug given as a bolus is locked for 10 s of simulated
+  time on every device, so that two hands entering one event (the laptop and the instructor's phone) do not give the
+  patient two doses. It is a guard against a double entry, not a clinical rule; the host applies it, not the panel
+  (`packages/controller/src/session/drug-lock.ts`), and the refused press is answered on the device that pressed and
+  never written to the run record.
 
 ## 3. Layout (board Proposal v6; the session bar and STATE as the owner's final option G)
 

@@ -100,6 +100,18 @@ code, the phones come to the new tab, the case starts again). Only tabs of the s
 ask the browser: there the tabs are asked directly, and a sleeping tab is missed as before (the new tab starts its own
 session).
 
+## The same drug twice (the laptop and a second device)
+
+When a drug is given as a bolus, the same drug is refused for the next **10 seconds of simulated time**, whoever
+presses it: the laptop, a Remote or the instructor's phone (the owner's ruling of 5 November 2026: two people entering
+the one dose the learners asked for would give the patient two). The device that pressed is told why, for example
+"… not given (given 4 s ago from the laptop)"; a Remote counts as "the phone". Meanwhile the drug's row on
+every Instructor view reads "given 0:04 ago · 6 s left", counting down, and is live again after 10 s. Infusions, TCI,
+the vaporiser, fluids, CPR, defibrillation and the airway are never locked, nor is anything the card gives by itself.
+A card step whose button gives a drug given in the last 10 seconds is refused the same way and the card does not move;
+press it again once the lock is over (the card's own doses are never changed).
+The refused press is not in the debrief; it shows only in the pressing device's log and the laptop's console.
+
 ## The day before (at the venue if at all possible)
 
 1. Start the kit with **Start Classroom** on the presenting Mac. When macOS asks whether "node" may accept incoming

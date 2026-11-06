@@ -119,7 +119,7 @@ other lacks. From reading the code, the set is expected to be:
 | `scenario` | `trigger`, `goto`, `bookmark` (kind `good`, `bad`, `discuss`, or none), `restoreBookmark`, `pause`, `resume` | steps, the strip's jump and return, marks, the bookmark list; `pause` / `resume`: today's Scenario tab's Hold the timer (Instructor v2 has no such button) |
 | `applyEvent` | every `ClinicalEvent` kind the Drug, Airway, Defib · CPR, Vitals, Devices and Patient bodies send | the sheets and today's tabs |
 | engine | `device`, `setTarget`, `pin`, `release`, `setRhythm`, `setMode`, `attachSensor` | the Vitals, Devices and Patient bodies, the alarm keys |
-| `note` (new, §6) | `kind: 'note' \| 'marker'`, text of at most 500 characters | what the laptop writes locally today: a judged objective, a note |
+| `note` (new, §6) | `kind: 'note' \| 'marker'`, text of at most 500 characters, optional `ev` (one of `NOTE_EVENTS`: `recognised`; added by brief 52) | what the laptop writes locally today: a judged objective, a note, the Recognised press (`ev: 'recognised'`) |
 
 *§2 amended 2026-10-30 after P0's census: `scenario pause` / `resume` and the Patient body's `applyEvent` (`condition`) were measured and are allowed; the set is the union of what the two laptop views send.*
 
