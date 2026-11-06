@@ -59,9 +59,10 @@ describe('Debrief print: every key moment (#3) and recognition from the early si
   });
 
   // the new-format card (pme-scenario/2): judged rows are retired (the owner's ruling of 5 November), so there is no
-  // recognition tile and no "Judged by the instructor" section; "name MH" is a timed record action, a row of the action
-  // table: due from Early signs' entry (08:03.2, the harness's time on the demo path) + 2 min, given at the call (08:12)
-  it('MH /2: no recognition tile; "name MH" is an action row, 08:03 + 2 min 00 s, given 08:12, met', () => {
+  // "Judged by the instructor" section; "name MH" is a timed record action, a row of the action table: due from Early
+  // signs' entry (08:03.2, the harness's time on the demo path) + 2 min, given at the call (08:12). D5: the card marks it
+  // `recognition: true`, so the recognition tile reads it (its window and its grade) and the key moments have its press
+  it('MH /2: the recognition tile is the timed action (9 s, 08:03 early signs → 08:12, met); "name MH" is an action row, 08:03 + 2 min 00 s, given 08:12, met', () => {
     const v = open({
       ...emptyRun('M 35 y 80 kg', 80, 0), doc: mhV2, format: 2,
       admin: [{ seq: 1, t: 492, source: 'action', actionId: 'nameMh', kind: 'communication', result: { accepted: true } }],
@@ -70,7 +71,12 @@ describe('Debrief print: every key moment (#3) and recognition from the early si
       rows: [{ t: 0, kind: 'scenario', text: 'Scenario loaded: MH' }],
     });
     leave = v.leave;
-    expect(v.el.querySelector('#db-keytimes [data-key=recognition]')).toBeNull();
+    const tile = v.el.querySelector('#db-keytimes [data-key=recognition]');
+    expect(tile?.hasAttribute('data-recognised')).toBe(true);
+    expect(tile?.querySelector('.db-tile-cap')?.textContent).toBe('Recognition (timed action)');
+    expect(tile?.querySelector('.db-tile-v')?.textContent).toBe('9 s');
+    expect(tile?.querySelector('.db-tile-sub')?.textContent).toBe('08:03 early signs → 08:12 · asked ≤ 2 min 00 s · ✓ met');
+    expect(v.el.querySelector('#db-moments tbody tr[data-recognised]')?.textContent).toMatch(/^\d+08:12■ TeamRecognised \(timed action, recorded by the instructor\)/);
     expect(v.el.textContent).not.toMatch(/Judged by the instructor/);
     const row = [...v.el.querySelectorAll('.db-actions tr.db-act')].find((tr) => /^Name malignant hyperthermia/.test(tr.textContent ?? ''));
     expect([...(row?.querySelectorAll('td') ?? [])].slice(1).map((td) => td.textContent)).toEqual(['08:03 + 2 min 00 s', '08:12', '✓ met']);

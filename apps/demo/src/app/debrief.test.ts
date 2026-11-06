@@ -480,9 +480,22 @@ describe('F7: a pme-scenario/2 run — the action table (record actions among th
     expect(report3(run([]))).toBeNull();
   });
 
-  it('keyTimes: a /2 run has no recognition tile (judged rows are retired): the recognition is the action row above, its window and press', () => {
-    expect(keyTimes(d2).map((k) => k.id)).not.toContain('recognition');
-    // an old marker note (a judged tick from before the ruling) is no tile either
-    expect(keyTimes({ ...d2, rows: [...d2.rows, { t: 450, kind: 'note', text: 'Objective met: Name malignant hyperthermia' }] }).map((k) => k.id)).not.toContain('recognition');
+  it('keyTimes: a /2 run\'s recognition tile is the card\'s marked action (D5: nameMh), its window and press, never a note', () => {
+    const want = { id: 'recognition', label: 'Recognition (timed action)', fromT: 410, fromLabel: 'early signs', toT: 450, askedS: 120, grade: 'met', state: 'measured' };
+    expect(keyTimes(d2).find((k) => k.id === 'recognition')).toEqual(want);
+    // an old marker note (a judged tick from before the ruling) changes nothing: no note is read for a /2 run
+    expect(keyTimes({ ...d2, rows: [...d2.rows, { t: 300, kind: 'note', text: 'Objective met: Name malignant hyperthermia' }] }).find((k) => k.id === 'recognition')).toEqual(want);
+  });
+});
+
+// Debrief 2, D6: the minute table gains the three pressures, the first measured in each minute (a record of this build);
+// a pre-D record has none of the keys ("not recorded in this file").
+describe('D6: perMinute reads the pressures', () => {
+  it('sys, dia, cvp: the first measured in the minute; null when none was', () => {
+    const s = (t: number, p: Partial<Sample>): Sample => ({ t, hr: 80, map: 80, spo2: 98, etco2: 35, rr: 12, temp: 37, k: null, lactate: null, ph: null, glucose: null, tcore: null, sys: null, dia: null, cvp: null, ...p });
+    const d: RunData = { ...emptyRun('free', 70, 0), samples: [s(0, {}), s(30, { sys: 100, dia: 60 }), s(45, { sys: 98, dia: 59, cvp: 9 }), s(60, {}), s(119, {})] };
+    expect(perMinute(d).map((m) => [m.t, m.values.sys, m.values.dia, m.values.cvp])).toEqual([[0, 100, 60, 9], [60, null, null, null]]);
+    const { keeps: _, ...old } = d;
+    expect(perMinute(old).every((m) => !('sys' in m.values))).toBe(true);
   });
 });
