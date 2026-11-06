@@ -181,7 +181,7 @@ describe('Devices & alarms: the list reads the bar’s alarms as the tab opens (
 
   it('the status says the monitor’s alarm sound is on but this window is muted, as the top bar’s "Sound off" says', () => {
     const { link } = fakeLink('saadat-like');
-    (link as unknown as { host: unknown }).host = { spec: { attached: true }, soundOn: false };
+    (link as unknown as { host: unknown }).host = { spec: { attached: true }, soundOn: false, learner: false, onLearner: () => () => undefined };
     let refresh = () => undefined as void;
     const el = devicesTab({ link, staging: {}, site: {}, weightKg: () => 70, onRefresh: (fn: () => void) => (refresh = fn), goTab: () => undefined } as unknown as PanelCtx);
     refresh();

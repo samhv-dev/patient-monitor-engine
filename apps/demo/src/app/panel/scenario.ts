@@ -6,7 +6,7 @@ import { LIBRARY, cardOf, type ScenarioCard } from '../scenarios.ts';
 import { CATEGORIES } from '../scenario-meta.ts';
 import { drugWords } from '../glossary.ts';
 import { countdown, transitionText } from '../triggers.ts';
-import { button, clock, confirmDialog, h, keepOrder, setText, toast, toggle } from '../ui.ts';
+import { button, clock, confirmDialog, h, keepOrder, setText, toast } from '../ui.ts';
 import { scenarioCard } from '../cards.ts';
 import { bookmark } from '../commands.ts';
 import type { PanelCtx } from './ctx.ts';
@@ -46,16 +46,6 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
   const library = h('section', { 'aria-label': 'Scenario library' }, h('div', { class: 'scard-head' }, h('h3', {}, 'Scenario library'), back), chips, cards);
 
   // ---- run view ----
-  // Learner controls under the learner monitor: off by default, on for this run (host only)
-  const host = link.host;
-  const learnerToggle = host
-    ? toggle('Learner controls on the monitor', host.learner, (on) => {
-        host.setLearner(on);
-        link.note(on ? 'Learner controls shown on the monitor' : 'Learner controls hidden', 'system');
-      }, 'small')
-    : null;
-  host?.onLearner((on) => learnerToggle?.set(on));
-  const learnerRow = learnerToggle ? h('div', { class: 'row' }, learnerToggle, h('span', { class: 'hint' }, 'Charge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.')) : null;
   const title = h('h3', {});
   const story = h('p', { class: 'hint' });
   const strip = h('ol', { class: 'states', 'aria-label': 'Scenario states' });
@@ -68,7 +58,6 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
     h('div', { class: 'scard-head' }, title, button('Choose another scenario', () => ((choosing = true), (chosenV = sv.docVersion), (run.hidden = true), (library.hidden = false), (back.hidden = false)), 'ghost small')), story,
     strip,
     h('div', { class: 'row' }, h('span', {}, 'Time in state '), inState, hold, button('Bookmark', () => void bookmark(link), 'small')),
-    learnerRow,
     h('h3', {}, 'What happens next'), next,
     h('h3', {}, 'Objectives'), objectives,
     h('h3', {}, 'Bookmarks'), marks,
