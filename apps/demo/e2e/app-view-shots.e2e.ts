@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { shot8 } from './indexed-png.ts';
-import { go, openApp, startVite, tab } from './app-support.ts';
+import { closeSheets, go, openApp, sheet, startVite, tab } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -35,22 +35,46 @@ for (const [w, h, touch] of SIZES) {
     test.setTimeout(180_000);
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: touch, isMobile: touch });
     const page = await ctx.newPage();
-    await openApp(page, base, '#/', { warmMs: 9000 });
+    // iPad portrait (820 wide) keeps today's view: Instructor v2's dock overlaps itself there (its Recognised button
+    // covers the Devices tool), and v2 is laid out for 1280 × 720 and up (retire-instructor-v1 Q5)
+    const onV2 = w >= 1180;
+    await openApp(page, base, '#/', { warmMs: 9000, ...(onV2 ? { site: { instructor: 'teach2' } } : {}) }); // a Load opens Instructor v2
     const s = `${w}x${h}`;
     await save(page, `start-${s}`, w);
     await go(page, '#/monitor', 6000);
     await save(page, `monitor-${s}`, w);
-    await go(page, '#/teach', 1500);
-    await tab(page, 'vitals');
-    await save(page, `instructor-vitals-${s}`, w);
-    await tab(page, 'scenario');
-    await page.locator('.scard', { hasText: 'Witnessed VF in PACU' }).locator('button', { hasText: 'Load' }).click();
-    await page.waitForTimeout(8000);
-    await save(page, `instructor-scenario-${s}`, w);
-    await tab(page, 'drugs');
-    await save(page, `instructor-drugs-${s}`, w);
-    await tab(page, 'devices');
-    await save(page, `instructor-devices-${s}`, w);
+    if (onV2) {
+      // Instructor v2: its sheets for today's tabs; ACTION (no sheet open) for the Scenario tab; a Load from the library
+      await go(page, '#/teach2', 1500);
+      await sheet(page, 'vitals');
+      await page.waitForTimeout(600);
+      await save(page, `instructor-vitals-${s}`, w);
+      await go(page, '#/scenarios/library', 800);
+      await page.locator('[data-view=scenarios]').getByRole('button', { name: 'Load Witnessed VF in PACU', exact: true }).click();
+      await page.getByRole('button', { name: 'Load scenario', exact: true }).click(); // the session is live: the library asks
+      await expect(page).toHaveURL(/#\/teach2$/);
+      await closeSheets(page);
+      await page.waitForTimeout(8000);
+      await save(page, `instructor-scenario-${s}`, w);
+      await sheet(page, 'drug');
+      await page.waitForTimeout(600);
+      await save(page, `instructor-drugs-${s}`, w);
+      await sheet(page, 'devices');
+      await page.waitForTimeout(600);
+      await save(page, `instructor-devices-${s}`, w);
+    } else {
+      await go(page, '#/teach', 1500);
+      await tab(page, 'vitals');
+      await save(page, `instructor-vitals-${s}`, w);
+      await tab(page, 'scenario');
+      await page.locator('.scard', { hasText: 'Witnessed VF in PACU' }).locator('button', { hasText: 'Load' }).click();
+      await page.waitForTimeout(8000);
+      await save(page, `instructor-scenario-${s}`, w);
+      await tab(page, 'drugs');
+      await save(page, `instructor-drugs-${s}`, w);
+      await tab(page, 'devices');
+      await save(page, `instructor-devices-${s}`, w);
+    }
     for (const [r, name, wait] of [['#/remote', 'remote-pairing', 800], ['#/explore/haemodynamics', 'explore-haemodynamics', 1500], ['#/explore/respiratory', 'explore-respiratory', 1500], ['#/vent', 'ventilator', 9000], ['#/validate', 'validate', 4000], ['#/dev', 'developer', 800], ['#/settings', 'settings', 800]] as const) {
       await go(page, r, wait);
       await save(page, `${name}-${s}`, w);
