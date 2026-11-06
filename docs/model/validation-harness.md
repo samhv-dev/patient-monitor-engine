@@ -259,6 +259,7 @@ None recorded.
 | [`docs-examples.test.ts`](../../packages/validation/test/docs-examples.test.ts) | 0 | 0 |
 | [`docs-honesty.test.ts`](../../packages/validation/test/docs-honesty.test.ts) | 0 | 0 |
 | [`docs-readers.test.ts`](../../packages/validation/test/docs-readers.test.ts) | 0 | 0 |
+| [`e2e-report.test.ts`](../../packages/validation/test/e2e-report.test.ts) | 0 | 0 |
 | [`e2e-shard-plan.test.ts`](../../packages/validation/test/e2e-shard-plan.test.ts) | 0 | 0 |
 | [`engine/capture-match.test.ts`](../../packages/validation/test/engine/capture-match.test.ts) | 0 | 0 |
 | [`finish-dist.test.ts`](../../packages/validation/test/finish-dist.test.ts) | 0 | 0 |

@@ -1,0 +1,104 @@
+{
+  "config": { "version": "fixture" },
+  "suites": [
+    {
+      "title": "fixture.e2e.ts",
+      "file": "fixture.e2e.ts",
+      "specs": [
+        {
+          "title": "crash then pass",
+          "file": "fixture.e2e.ts",
+          "line": 10,
+          "tags": [],
+          "tests": [
+            {
+              "projectName": "webkit",
+              "status": "flaky",
+              "results": [
+                { "retry": 0, "status": "failed", "errors": [{ "message": "Error: page.evaluate: Target page, context or browser has been closed" }] },
+                { "retry": 1, "status": "passed", "errors": [] }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "crash, then an assertion, then pass",
+          "file": "fixture.e2e.ts",
+          "line": 20,
+          "tags": [],
+          "tests": [
+            {
+              "projectName": "webkit",
+              "status": "flaky",
+              "results": [
+                { "retry": 0, "status": "failed", "errors": [{ "message": "Error: page.evaluate: Target crashed " }] },
+                {
+                  "retry": 1,
+                  "status": "failed",
+                  "errors": [{ "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected: \"given\"\nReceived: \"press to give\"" }]
+                },
+                { "retry": 2, "status": "passed", "errors": [] }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "assertion then pass",
+          "file": "fixture.e2e.ts",
+          "line": 30,
+          "tags": [],
+          "tests": [
+            {
+              "projectName": "webkit",
+              "status": "flaky",
+              "results": [
+                { "retry": 0, "status": "failed", "errors": [{ "message": "Error: expect(received).toBeLessThan(expected)\n\nExpected: < 2\nReceived:   2.5" }] },
+                { "retry": 1, "status": "passed", "errors": [] }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "tagged, retried",
+          "file": "fixture.e2e.ts",
+          "line": 40,
+          "tags": ["known-flaky"],
+          "tests": [
+            {
+              "projectName": "webkit",
+              "status": "flaky",
+              "results": [
+                { "retry": 0, "status": "failed", "errors": [{ "message": "Error: expect(received).toBe(expected)" }] },
+                { "retry": 1, "status": "passed", "errors": [] }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "pass",
+          "file": "fixture.e2e.ts",
+          "line": 50,
+          "tags": [],
+          "tests": [{ "projectName": "webkit", "status": "expected", "results": [{ "retry": 0, "status": "passed", "errors": [] }] }]
+        },
+        {
+          "title": "crash, then a time-out, then pass",
+          "file": "fixture.e2e.ts",
+          "line": 60,
+          "tags": [],
+          "tests": [
+            {
+              "projectName": "webkit",
+              "status": "flaky",
+              "results": [
+                { "retry": 0, "status": "failed", "errors": [{ "message": "Error: page.reload: Page crashed" }] },
+                { "retry": 1, "status": "timedOut", "errors": [{ "message": "Test timeout of 120000ms exceeded." }] },
+                { "retry": 2, "status": "passed", "errors": [] }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
