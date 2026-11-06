@@ -246,6 +246,7 @@ None recorded.
 | File | Expected failures | Skipped |
 |---|---|---|
 | [`bedside/bedside.test.ts`](../../packages/validation/test/bedside/bedside.test.ts) | 0 | 0 |
+| [`changelog-fragments.test.ts`](../../packages/validation/test/changelog-fragments.test.ts) | 0 | 0 |
 | [`check-licences.test.ts`](../../packages/validation/test/check-licences.test.ts) | 0 | 0 |
 | [`check-notices.test.ts`](../../packages/validation/test/check-notices.test.ts) | 0 | 0 |
 | [`check-size.test.ts`](../../packages/validation/test/check-size.test.ts) | 0 | 0 |
@@ -258,6 +259,7 @@ None recorded.
 | [`docs-examples.test.ts`](../../packages/validation/test/docs-examples.test.ts) | 0 | 0 |
 | [`docs-honesty.test.ts`](../../packages/validation/test/docs-honesty.test.ts) | 0 | 0 |
 | [`docs-readers.test.ts`](../../packages/validation/test/docs-readers.test.ts) | 0 | 0 |
+| [`e2e-shard-plan.test.ts`](../../packages/validation/test/e2e-shard-plan.test.ts) | 0 | 0 |
 | [`engine/capture-match.test.ts`](../../packages/validation/test/engine/capture-match.test.ts) | 0 | 0 |
 | [`finish-dist.test.ts`](../../packages/validation/test/finish-dist.test.ts) | 0 | 0 |
 | [`invalid-results/compare-wave.test.ts`](../../packages/validation/test/invalid-results/compare-wave.test.ts) | 0 | 0 |

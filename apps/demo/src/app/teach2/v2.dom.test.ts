@@ -183,7 +183,7 @@ describe('Instructor v2: a /2 row\'s given look follows the graded administratio
   });
 });
 
-// F11's fit (teach2-fit.e2e.ts): at Latent the MH card opens 11 actions and ACTION scrolled at 1440 × 900. The rows not
+// F11's fit (teach2-fit-stages.e2e.ts): at Latent the MH card opens 11 actions and ACTION scrolled at 1440 × 900. The rows not
 // due now — a graded action not applicable and not given, an action the card does not grade given in an earlier phase —
 // sit in a "Not due now" fold of ACTION: still rows, numbered, pressable and on their digits; never a due, overdue or
 // given graded action.

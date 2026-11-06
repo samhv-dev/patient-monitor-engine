@@ -54,6 +54,8 @@ export type ToWorker =
 
 export type FromWorker =
   | { type: 'ready'; path: 'worker-raf' | 'worker-pump' }
+  // worker-pump: the posted frame is drawn; the page may post the next (one frame in flight)
+  | { type: 'framed' }
   | { type: 'events'; anchor: ClockAnchor; events: EngineEvent[] }
   | { type: 'result'; reqId: number; result: DispatchResult }
   // FX-11a: the worker is working through a long run (a fast-forward step, a catch-up)
