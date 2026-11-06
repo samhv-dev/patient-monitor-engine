@@ -284,16 +284,24 @@ function chart(D, d, k, end) {
   const W = 640, H = 130, L = 44, R = 10, T = 8, B = 20;
   const x = (t) => L + (t / Math.max(end, 1)) * (W - L - R);
   const y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+  // as views/debrief-course.ts tracePath(): broken where nothing was measured; a lone reading (a cuff's, one second
+  // per cycle, research/41 row 53) is a dot, not a bare move that draws nothing
+  const DOT = 'm-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0';
   let path = '';
   let prev = null;
+  let n = 0;
   for (const s of d.samples) {
     if (s[k] === null) {
       prev = null;
       continue;
     }
-    path += `${prev === null || s.t - prev > 5 ? 'M' : 'L'}${x(s.t).toFixed(1)} ${y(s[k]).toFixed(1)}`;
+    const move = prev === null || s.t - prev > 5;
+    if (move && n === 1) path += DOT;
+    n = move ? 1 : n + 1;
+    path += `${move ? 'M' : 'L'}${x(s.t).toFixed(1)} ${y(s[k]).toFixed(1)}`;
     prev = s.t;
   }
+  if (n === 1) path += DOT;
   const step = [60, 120, 300, 600, 900, 1800, 3600].find((st) => end / st <= 8) ?? 3600;
   let ticks = '';
   for (let t = 0; t <= end; t += step) ticks += `<line x1="${x(t)}" x2="${x(t)}" y1="${H - B}" y2="${H - B + 4}"/><text x="${x(t)}" y="${H - 4}" text-anchor="middle">${mmss(t)}</text>`;
