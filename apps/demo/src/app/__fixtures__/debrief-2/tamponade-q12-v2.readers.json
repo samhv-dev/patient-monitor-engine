@@ -17,6 +17,10 @@
      "fromT": 468,
      "toT": 471.2,
      "askedS": 10
+    },
+    "window": {
+     "fromT": 468,
+     "askedS": 10
     }
    }
   },
@@ -29,6 +33,10 @@
      "fromT": 471.2,
      "toT": 561.3175,
      "askedS": 120
+    },
+    "window": {
+     "fromT": 471.2,
+     "askedS": 120
     }
    }
   },
@@ -40,6 +48,10 @@
     "measure": {
      "fromT": 655,
      "toT": 657.3315571226162,
+     "askedS": 30
+    },
+    "window": {
+     "fromT": 655,
      "askedS": 30
     }
    }
