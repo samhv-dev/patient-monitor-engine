@@ -49,6 +49,33 @@ export const PROP_HYP_C50_REF = 3.08;
 /** Remifentanil → fentanyl equivalence for the potency output (tables §5d: remi 1.2 ≈ fentanyl 1.5 ng/mL). */
 export const FENT_PER_REMI = 1.25;
 
+// --- EEG stage E1: the hypnotic equivalent by EEG class, dexmedetomidine's EEG equivalent (additive outputs) ---
+/** The EEG class of a row with a hypnotic C50 (Ch36 pp. 1143–1144: propofol, the barbiturates, etomidate and the
+ * benzodiazepines have EEGs that differ; ketamine acts by another mechanism, p. 1142). Each row goes to exactly one
+ * class, so `hypByClass` sums to `hypPropEq`. */
+export function eegClassOf(r: DrugRow): keyof DrugBus['cns']['hypByClass'] {
+  if (r.cns?.dissociative) return 'dissociative';
+  if (r.cls === 'benzodiazepine') return 'benzo';
+  if (r.id === 'thiopental') return 'barbiturate';
+  if (r.id === 'etomidate') return 'etomidate';
+  return 'gabaIv';
+}
+/**
+ * Dexmedetomidine's EEG potency point, effect-site ng/mL: 2.5 ng/mL [Colin 2017, via Miller Ch23 Fig. 23.34 p. 663: the
+ * BIS-50 Ce; research/43 P-12]. The potency is borrowed from a processed index (BIS 50), not a cortical-state C50 [INF].
+ * Its BIS ke0 0.120 /min (Miller Ch23 Table 23.6 p. 660) is NOT applied a second time here: the drug row is already an
+ * EFFECT curve (a gamma row peaking 15 min after the load, rows-anaesthetic.ts), with no plasma to lag.
+ */
+export const DEXMED_EEG_C50_NG_ML = 2.5; // ng/mL
+/**
+ * ng/mL per reference unit of the dexmedetomidine gamma row (c = 1 at the 0.5 µg/kg/h steady state, and at the peak
+ * of 1 µg/kg): 0.5 µg/kg/h ÷ clearance 10 mL/kg/min = 0.83 ng/mL [ENG, derived: Miller Ch21 Table 21.1 gives
+ * clearance 10–30 mL/kg/min; the low end is the one that puts Miller Ch21's "rousable sedation at 0.2–0.3 ng/mL" at the
+ * low end of the 0.2–0.7 µg/kg/h sedation infusion (0.33 ng/mL at 0.2 µg/kg/h); the high end gives 0.28]. The row
+ * itself is unchanged.
+ */
+export const DEXMED_NG_PER_REF = 0.5 / 60 / 0.01; // ng/mL per reference unit
+
 /** Direct CBF factor of a volatile at `mac` — the vasodilation beyond flow–metabolism coupling (Matta 1999 MCA velocity
  * under an isoelectric EEG, tables §5.1) — piecewise linear through (0, 1), (0.5, 1 + at05), (1.5, 1 + at15), extended
  * with the upper slope. */
@@ -119,6 +146,7 @@ export function combine(actives: readonly Active[], ctx: PdContext): { fx: DrugE
   let hypEqDis = 0; // its dissociative share
   let hypVentEq = 0; // Propofol-equivalent for the ventilatory drive (ventShare-weighted)
   let hypVentBenzo = 0; // Its benzodiazepine share — the drive's per-class α
+  const hypByClass = { gabaIv: 0, barbiturate: 0, etomidate: 0, benzo: 0, dissociative: 0 }; // EEG E1: hypEq by EEG class
   let macRemiEq = 0; // Remifentanil-equivalent at MAC-reduction potency (the brain fentanyl-equivalent)
   let ventRemiEq = 0; // Remifentanil-equivalent at the VENTILATORY site and potency
   // The Eleveld age factor is loop-invariant — ONE exponential per combine, not one per agent
@@ -140,6 +168,7 @@ export function combine(actives: readonly Active[], ctx: PdContext): { fx: DrugE
       hypEq += eq;
       hypVentEq += eq * (r.cns?.ventShare ?? 1);
       if (r.cns?.dissociative) hypEqDis += eq;
+      hypByClass[eegClassOf(r)] += eq; // the same eq, once, in exactly one class
       if (r.cls === 'benzodiazepine') hypVentBenzo += eq * (r.cns?.ventShare ?? 1);
     }
     if (r.cns?.remiEq) {
@@ -164,6 +193,8 @@ export function combine(actives: readonly Active[], ctx: PdContext): { fx: DrugE
   // The two potency outputs the neuro model's depth and drive read
   bus.cns.hypPropEq = hypEq;
   bus.cns.hypVentPropEq = hypVentEq;
+  bus.cns.hypByClass = hypByClass;
+  bus.cns.alpha2Eq = (bus.cns.dexmedCe * DEXMED_NG_PER_REF) / DEXMED_EEG_C50_NG_ML; // EEG E1, dimensionless
   bus.cns.dissoc = hypEq > 0 ? hypEqDis / hypEq : 0;
   bus.cns.benzoShare = hypVentEq > 0 ? hypVentBenzo / hypVentEq : 0;
   // TRUE fentanyl-equivalents, antagonist applied once (the neuro model must not divide again): fentanyl Ce X alone
