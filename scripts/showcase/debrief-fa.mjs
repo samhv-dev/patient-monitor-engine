@@ -7,8 +7,8 @@
 // bookmarks, the talking points (/2 only), the take-home points (the learner handout's section: the card's lines, else
 // ruled lines), notes and the one-row-per-minute appendix; the footer (the release wording of views/debrief.ts FOOT,
 // with the version and the build) and "page n of N" on every page. A handout
-// script, NOT an app feature: the app and its tests are untouched (the in-app translation is planned for a later
-// release). Words come from docs/showcase/i18n/fa-debrief.json; a string the table does not cover is printed in English
+// script; its table lookups and digit rules are the app's own (apps/demo/src/app/i18n/fa-match.mjs, plan D11), so the
+// handout and the in-app Persian print the same words. Words come from docs/showcase/i18n/fa-debrief.json; a string the table does not cover is printed in English
 // and listed at the end of the run. Clinical values (vital signs, doses, times) keep Western digits and their units;
 // prose counts and dates use Persian digits. Rendering: headless Chromium through Playwright, the path the
 // Stage 13 print checks already use (no new dependency); the Vazirmatn font (SIL OFL) is embedded from local TTFs.
@@ -22,125 +22,15 @@ import { existsSync, readdirSync, readFileSync, realpathSync, writeFileSync } fr
 import { homedir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { faMatcher, spanFa } from '../../apps/demo/src/app/i18n/fa-match.mjs';
 
 const REPO = resolve(import.meta.dirname, '../..');
 const TABLE_PATH = join(REPO, 'docs/showcase/i18n/fa-debrief.json');
 
 // ---------------------------------------------------------------------------------------------------- the table
+// the lookups and the digit rules live in the one matcher the app shares (plan D11)
 const TABLE = JSON.parse(readFileSync(TABLE_PATH, 'utf8'));
-const lcFirst = (s) => s.charAt(0).toLowerCase() + s.slice(1);
-const GROUPS = new Map(Object.entries(TABLE.groups).map(([g, es]) => [g, new Map(es.map((e) => [e.en, e]))]));
-const EXACT = new Map(TABLE.strings.map((e) => [e.en, e]));
-const parse = (en) => {
-  const parts = [];
-  let last = 0;
-  for (const m of en.matchAll(/\{(\w+)\}/g)) {
-    if (m.index > last) parts.push({ lit: en.slice(last, m.index) });
-    parts.push({ ph: m[1] });
-    last = m.index + m[0].length;
-  }
-  if (last < en.length) parts.push({ lit: en.slice(last) });
-  return parts;
-};
-// a template without its Persian yet (`fa: null`, e.g. the /3 words awaiting F7.6) is skipped: its line prints in English
-const TEMPLATES = TABLE.templates.filter((e) => e.fa).map((e) => ({ e, kind: e.kind ?? 'top', parts: parse(e.en) }));
-/** Placeholders read with a fixed pattern; every other placeholder is free text checked by its own lookup. */
-const TYPED = { t: /\d{2,}:\d{2}/y, span: /\d+ s|\d+ min \d{2} s/y, n: /-?\d+(?:\.\d+)?/y, c: /\d+/y, u: /\S+/y, code: /[A-Za-z0-9](?:[\w.+-]*[\w+-])?(?: \d(?:[\w.+-]*[\w+-])?)?/y };
-
-const FA_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
-const faDigits = (s) => String(s).replace(/\d/g, (d) => FA_DIGITS[Number(d)]);
-/** "12 s" → "12 ثانیه", "2 min 05 s" → "2 دقیقه و 05 ثانیه" (a duration is a clinical time: Western digits). */
-const spanFa = (s) => {
-  const m = /^(\d+) min (\d{2}) s$/.exec(s);
-  return m ? `${m[1]} دقیقه و ${m[2]} ثانیه` : s.replace(/^(\d+) s$/, '$1 ثانیه');
-};
-
-/** Every way the template's parts can cover `s` (a free placeholder tries each end, shortest first). */
-function* match(parts, i, s, pos, caps) {
-  if (i === parts.length) {
-    if (pos === s.length) yield caps;
-    return;
-  }
-  const p = parts[i];
-  if (p.lit !== undefined) {
-    if (s.startsWith(p.lit, pos)) yield* match(parts, i + 1, s, pos + p.lit.length, caps);
-    return;
-  }
-  const re = TYPED[p.ph];
-  if (re) {
-    re.lastIndex = pos;
-    const m = re.exec(s);
-    if (m) yield* match(parts, i + 1, s, pos + m[0].length, [...caps, [p.ph, m[0]]]);
-    return;
-  }
-  for (let end = pos + 1; end <= s.length; end++) yield* match(parts, i + 1, s, end, [...caps, [p.ph, s.slice(pos, end)]]);
-}
-
-/** A group's Persian for `en` (also with its first letter lowered: "The state" / "Salbutamol" at a sentence start). */
-function inGroup(g, en, used) {
-  const map = GROUPS.get(g);
-  const e = map?.get(en) ?? map?.get(lcFirst(en));
-  if (!e) return null;
-  used.push(e);
-  return e.fa;
-}
-const EV_GROUPS = ['ev', 'drug', 'condition'];
-/** One placeholder's Persian, or null (the template does not fit). */
-function fill(ph, val, used, missing) {
-  if (ph in TYPED) return ph === 'c' ? faDigits(val) : ph === 'span' ? spanFa(val) : val;
-  // a value with its unit ("95 %", "36.8 °C", "250 µg + 2 U"), never a phrase that merely holds a number
-  if (ph === 'v') return /^-?\d/.test(val) && !/[\u0600-\u06FF]/.test(val) && !/\b(?:at|in|all|first|lost|after|before|the|of|and|or|not|none|asked|within)\b/.test(val) ? val : null;
-  if (ph === 's') return tr(val, used, missing, 'top');
-  if (ph === 'ev') return EV_GROUPS.map((g) => inGroup(g, val, used)).find((x) => x !== null) ?? tr(val, used, missing, 'ev');
-  if (ph === 'limit') return tr(val, used, missing, 'limit');
-  if (ph === 'lab') return labs(val, used);
-  if (ph === 'mark') {
-    const x = tr(val, used, missing, 'top');
-    if (x !== null) return x;
-    missing.add(val); // a bookmark's own label (typed by the instructor) is printed as it is
-    return val;
-  }
-  return GROUPS.has(ph) ? inGroup(ph, val, used) : null;
-}
-/** "K⁺ 4.2 mmol/L (4.2–4.2) · Lactate 1.0 mmol/L (1.0–1.0) · …": each lab's label translated, its values kept. */
-function labs(val, used) {
-  const items = val.split(' · ').map((x) => /^(.+?) (-?\d.*)$/.exec(x));
-  if (items.some((m) => !m)) return null;
-  const out = items.map((m) => {
-    const l = inGroup('label', m[1], used);
-    return l === null ? null : `${l} ${m[2]}`;
-  });
-  return out.includes(null) ? null : out.join(' · ');
-}
-/** The Persian of `en` from the table (exact string, a group's word, a template), or null. */
-function tr(en, used, missing, kind = 'top') {
-  if (kind === 'top') {
-    const e = EXACT.get(en);
-    if (e) return used.push(e), e.fa;
-    for (const g of GROUPS.keys()) {
-      const x = inGroup(g, en, used);
-      if (x !== null) return x;
-    }
-  }
-  // a reason line capitalises its first event ("The state …"): an event phrase is also tried with a lower-case start
-  const forms = kind === 'ev' && en !== lcFirst(en) ? [en, lcFirst(en)] : [en];
-  for (const t of TEMPLATES) {
-    if (t.kind !== kind) continue;
-    for (const caps of forms.flatMap((f) => [...match(t.parts, 0, f, 0, [])])) {
-      const u = [];
-      const vals = caps.map(([ph, v]) => [ph, fill(ph, v, u, missing)]);
-      if (vals.some(([, v]) => v === null)) continue;
-      const seen = {};
-      const fa = t.e.fa.replace(/\{(\w+)\}/g, (_, ph) => {
-        const k = (seen[ph] = (seen[ph] ?? -1) + 1);
-        return vals.filter(([p]) => p === ph)[k]?.[1] ?? `{${ph}}`;
-      });
-      used.push(t.e, ...u);
-      return fa;
-    }
-  }
-  return null;
-}
+const { tr, inGroup } = faMatcher(TABLE);
 
 // ---------------------------------------------------------------------------------------------------- HTML
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
