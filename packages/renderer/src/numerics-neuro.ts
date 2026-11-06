@@ -1,6 +1,7 @@
 // The neuro model's NMT (train-of-four) and BFA (BIS-like depth index) tiles. Pure formatters (Node has no DOM) from
 // the engine's `measurement` values: tofCount/tofRatio (every train), ptc (23 s after a PTC) and di/sr (1 Hz while the
-// depth monitor is on), as the neuro demo draws them. Like a plug-in module, a tile is shown only while its device
+// depth monitor is on) or an EEG device's own ids (sef/eegSr, 1 Hz while it is on; EEG plan E6), as the neuro demo
+// draws them. Like a plug-in module, a tile is shown only while its device
 // publishes (MODULE_TILES); the other tiles are always drawn.
 import type { Measured, NumericId } from '@pme/engine-core';
 import type { TileParam } from '@pme/skins';
@@ -15,7 +16,7 @@ const ok = (x: Measured | undefined): x is Measured & { value: number } => !!x &
  */
 export const MODULE_TILES: Partial<Record<TileParam, { numerics: NumericId[]; staleS: number }>> = {
   NMT: { numerics: ['tofCount', 'ptc'], staleS: 120 },
-  BFA: { numerics: ['di', 'sr'], staleS: 5 },
+  BFA: { numerics: ['di', 'sr', 'sef', 'eegSr'], staleS: 5 }, // the present index or an EEG device (E6), both 1 Hz
   AGENTS: { numerics: ['etAa', 'mac'], staleS: 5 }, // The neuro model publishes both at 1 Hz while an agent is present
 };
 
@@ -46,7 +47,25 @@ export function formatAgents(v: Values, noValue: string): { main: string; sub: s
   return { main: ok(v.etAa) ? v.etAa.value.toFixed(1) : noValue, sub: `MAC ${ok(v.mac) ? v.mac.value.toFixed(1) : noValue}` };
 }
 
-/** The depth index (dashes while the EMG artefact makes it questionable) and the suppression ratio under `srLabel`. */
-export function formatBfa(v: Values, srLabel: string, noValue: string): { main: string; sub: string } {
-  return { main: ok(v.di) ? String(Math.round(v.di.value)) : noValue, sub: `${srLabel} ${ok(v.sr) ? Math.round(v.sr.value) : noValue}` };
+/**
+ * What the BFA tile reads (EEG plan E6, Q3): the chosen EEG device's index and suppression ratio while it publishes —
+ * the generic processed-EEG reader's SEF (Hz, labelled SEF) and its SR — and the present depth index's di/sr
+ * otherwise. The EEG device wins unless the depth monitor's reading is a whole stale window (5 s) newer, i.e. the EEG
+ * device has stopped. This mapping lives here, never in a skin's JSON; parts the reader does not compute (Saadat's
+ * SQI%, EMG%) stay blank.
+ */
+export function bfaReading(v: Values): { index: Measured | undefined; sr: Measured | undefined; digits: number; label?: string } {
+  const eeg = v.eegSr ?? v.sef;
+  const depth = v.sr ?? v.di;
+  if (eeg && (!depth || eeg.at >= depth.at - (MODULE_TILES.BFA?.staleS ?? 5))) return { index: v.sef, sr: v.eegSr, digits: 1, label: 'SEF' };
+  return { index: v.di, sr: v.sr, digits: 0 };
+}
+
+/** The depth index (dashes while the EMG artefact makes it questionable, or the device reads an invalid epoch) and the
+ * suppression ratio under `srLabel`; `label` when an EEG device's index replaces the tile's own label. */
+export function formatBfa(v: Values, srLabel: string, noValue: string): { main: string; sub: string; label?: string } {
+  const r = bfaReading(v);
+  const main = ok(r.index) ? r.index.value.toFixed(r.digits) : noValue;
+  const sub = `${srLabel} ${ok(r.sr) ? Math.round(r.sr.value) : noValue}`;
+  return r.label ? { main, sub, label: r.label } : { main, sub };
 }

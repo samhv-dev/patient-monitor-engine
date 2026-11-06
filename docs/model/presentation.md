@@ -539,6 +539,10 @@ No exported `…State` type in this module.
 | `deviceText` | [`device-ui.ts`](../../packages/renderer/src/device-ui.ts) | Defibrillator / pacer readout for the header (brief §6.5: |
 | `judgeGain` | [`ecg-gain.ts`](../../packages/renderer/src/ecg-gain.ts) | Judge window k (its index on the clock's grid) with amplitude amp (mV). |
 | `beatAmplitude` | [`ecg-gain.ts`](../../packages/renderer/src/ecg-gain.ts) | The window's amplitude (mV): |
+| `pushEegDisplay` | [`eeg-strip.ts`](../../packages/renderer/src/eeg-strip.ts) | Add one reading's raw samples and its spectrogram column (when it closes one). |
+| `dsaColour` | [`eeg-strip.ts`](../../packages/renderer/src/eeg-strip.ts) | Blue (low) → cyan → green → yellow → red (high), x in 0–1 (clamped), RGB 0–255. |
+| `paintDsa` | [`eeg-strip.ts`](../../packages/renderer/src/eeg-strip.ts) | Paint the columns into an RGBA image, the newest at the right edge, one pixel column each; |
+| `drawEegRaw` | [`eeg-strip.ts`](../../packages/renderer/src/eeg-strip.ts) | The raw trace: |
 | `startWorker` | [`engine.worker.ts`](../../packages/renderer/src/engine.worker.ts) | Serve one monitor from this worker scope. |
 | `ibpChannelOf` | [`ibp-scale.ts`](../../packages/renderer/src/ibp-scale.ts) | The instructor channel of an engine channel: |
 | `ibpScaleError` | [`ibp-scale.ts`](../../packages/renderer/src/ibp-scale.ts) | Why a scale is refused, or null when it is accepted. |
@@ -554,7 +558,8 @@ No exported `…State` type in this module.
 | `modulePresent` | [`numerics-neuro.ts`](../../packages/renderer/src/numerics-neuro.ts) | Whether the tile is drawn at sim time t: |
 | `formatNmt` | [`numerics-neuro.ts`](../../packages/renderer/src/numerics-neuro.ts) | TOF ratio in % when all four twitches are present, else the count "n/4"; |
 | `formatAgents` | [`numerics-neuro.ts`](../../packages/renderer/src/numerics-neuro.ts) | The anaesthetic-agent tile (research/11 §4) — end-tidal agent % (the neuro model's `etAa`, the dominant agent) and the end-tidal MAC multiple (`mac`, Σ Fet/MAC-age). |
-| `formatBfa` | [`numerics-neuro.ts`](../../packages/renderer/src/numerics-neuro.ts) | The depth index (dashes while the EMG artefact makes it questionable) and the suppression ratio under `srLabel`. |
+| `bfaReading` | [`numerics-neuro.ts`](../../packages/renderer/src/numerics-neuro.ts) | What the BFA tile reads (EEG plan E6, Q3): |
+| `formatBfa` | [`numerics-neuro.ts`](../../packages/renderer/src/numerics-neuro.ts) | The depth index (dashes while the EMG artefact makes it questionable, or the device reads an invalid epoch) and the suppression ratio under `srLabel`; |
 | `formatUop` | [`numerics-organs.ts`](../../packages/renderer/src/numerics-organs.ts) | UOP in mL/h; |
 | `formatSpo2` | [`numerics-resp.ts`](../../packages/renderer/src/numerics-resp.ts) | SpO2: "97"; |
 | `formatEtco2` | [`numerics-resp.ts`](../../packages/renderer/src/numerics-resp.ts) | EtCO2 large, "FiCO2 n" and "awRR n" below; |
@@ -591,7 +596,7 @@ No exported `…State` type in this module.
 | `resolveSkin` | [`resolve.ts`](../../packages/skins/src/resolve.ts) | Resolve a skin or preset id (optionally with a theme) into the complete skin plus the renderer/audio contract. |
 | `partialOf` | [`schema.ts`](../../packages/skins/src/schema.ts) | The same schema with every `required` removed (recursively): |
 
-Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `parseRoute`, `cardOf`, `mountSessionBar`, `parseSite`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `mountFollower`, `homeView`, `monitorView`, `patientView`, `remoteView`, `roomView`, `scenariosView`, `teachView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
+Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `parseRoute`, `cardOf`, `mountSessionBar`, `parseSite`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `mountFollower`, `homeView`, `monitorView`, `patientView`, `remoteView`, `roomView`, `scenariosView`, `teachView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `createEegDisplay`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
 
 ## Source files
 
@@ -764,6 +769,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`device-ui.ts`](../../packages/renderer/src/device-ui.ts) | Main-thread device chrome (brief §3.1 "DOM numerics tiles (≤1 Hz, CSS flash)"; §6.4 visuals; §6.4.1; §6.9): the alarm header (lamp, message bar, silence/pause countdown, all-off bell, layout badge, date), the skin's nume |
 | [`drug-panel.ts`](../../packages/renderer/src/drug-panel.ts) | Drug panel: a compact table (drug, Cp, Ce, pump/TCI, total, 50 % decrement) plus a 10-minute Ce sparkline per drug on one canvas, and the volatile line (FI/FA/brain, MAC). |
 | [`ecg-gain.ts`](../../packages/renderer/src/ecg-gain.ts) | The ECG auto-gain's judgement (Saadat-like `ecg.gainDefault: "AUTO"`): which of the skin's discrete sizes a lane shows. |
+| [`eeg-strip.ts`](../../packages/renderer/src/eeg-strip.ts) | EEG E5 (plan §7 E5): the raw trace and the spectrogram strip (density spectral array) of an EEG device, generic look — red high, blue low (Ch36 pp. |
 | [`endo-panel.ts`](../../packages/renderer/src/endo-panel.ts) | Endocrine panel: glucose for everyone; the stress/hormone block for the instructor view only. |
 | [`engine.worker.ts`](../../packages/renderer/src/engine.worker.ts) | Worker entry: engine + renderer on an OffscreenCanvas (brief §3.4). |
 | [`ibp-scale.ts`](../../packages/renderer/src/ibp-scale.ts) | IBP1 (arterial) and IBP2 (venous) lane scales, owner ruling E130 (2026-10-26): per channel the skin's fixed scale, a range the instructor types within 0–200 mmHg, or AUTO from discrete ranges, re-judged on a timer and ne |
@@ -837,6 +843,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/e2e/device-layer-page.e2e.ts`](../../apps/demo/e2e/device-layer-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/drug-evidence-page.e2e.ts`](../../apps/demo/e2e/drug-evidence-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/drug-pkpd-page.e2e.ts`](../../apps/demo/e2e/drug-pkpd-page.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/eeg-generic-tile.e2e.ts`](../../apps/demo/e2e/eeg-generic-tile.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/endocrine-thermal-page.e2e.ts`](../../apps/demo/e2e/endocrine-thermal-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/explore-baseline.e2e.ts`](../../apps/demo/e2e/explore-baseline.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/f28-phone-portrait-saadat.e2e.ts`](../../apps/demo/e2e/f28-phone-portrait-saadat.e2e.ts) | 0 | 0 |
@@ -1046,6 +1053,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`drug-panel.test.ts`](../../packages/renderer/test/drug-panel.test.ts) | 0 | 0 |
 | [`ecg-auto-gain.test.ts`](../../packages/renderer/test/ecg-auto-gain.test.ts) | 0 | 0 |
 | [`ecg-gain.test.ts`](../../packages/renderer/test/ecg-gain.test.ts) | 0 | 0 |
+| [`eeg-strip.test.ts`](../../packages/renderer/test/eeg-strip.test.ts) | 0 | 0 |
 | [`endo-panel.test.ts`](../../packages/renderer/test/endo-panel.test.ts) | 0 | 0 |
 | [`fast-forward.test.ts`](../../packages/renderer/test/fast-forward.test.ts) | 0 | 0 |
 | [`flash-contrast.test.ts`](../../packages/renderer/test/flash-contrast.test.ts) | 0 | 0 |

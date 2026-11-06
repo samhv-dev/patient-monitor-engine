@@ -74,7 +74,7 @@ const UNIT_SUFFIX: [RegExp, string][] = [
   [/_PCT$/, '%'], [/_MMOL$/, 'mmol'], [/_G_DL$/, 'g/dL'], [/_KPA$/, 'kPa'],
 ]; // not _MIN, _C, _H: they also mean "minimum", "compliance/coefficient", "high" in this code
 const UNIT_WORD = /^(?:mmHg|cmH2O|mL|L|dL|s|ms|min|h|Hz|kg|g|mg|µg|ng|mmol|mEq|mOsm|°C|K|kPa|bpm|%|W|J|mV|µV|dyn|WU|cm²?|m²|U|IU|mU|µU|pmol|nmol|\/s|\/min|\/h|\/mL|\/mmHg|\/cmH2O)(?:[·\/^]?(?:mmHg|cmH2O|mL|L|dL|s|ms|min|h|kg|g|mg|µg|mmol|mEq|mOsm|cm|m²|cm⁵|\d|−\d|-\d))*\b/;
-const TAG_RE = /\[(?:ENG|P|TXT|VERIFY)[^\]]*\]/g;
+const TAG_RE = /\[(?:ENG|P|TXT|VERIFY|INF)[^\]]*\]/g;
 const SOURCE_RE =
   /\b[A-Z][A-Za-z'’-]+(?:\s(?:&|and)\s[A-Z][A-Za-z'’-]+|\set al\.?)?,?\s(?:19|20)\d\d[a-z]?\b|\b(?:tables?|annex|catalogue|brief|research|B)\s?\/?\s?§\s?[\w.]+|\bresearch\/?\s?\d+[\w §.]*|\bPulse(?: CFG)?\b[\w –-]*|\b(?:M10|Miller|Guyton|Nunn|West|Kaplan|Braunwald)\b[^;,)]*|\bDI-\d+[a-z]?\b/g;
 
@@ -177,6 +177,13 @@ const DATA: Record<string, (root: string) => Promise<Rows[]>> = {
   circulation: async (root) => {
     const { CIRC_CONDITIONS } = await imp(root, 'packages/engine-core/src/l2/circ/conditions.ts');
     return [{ title: 'Circulation conditions (`packages/engine-core/src/l2/circ/conditions.ts`)', head: ['Id'], rows: [...CIRC_CONDITIONS].map((id: string) => [`\`${id}\``]) }];
+  },
+  monitor: async (root) => {
+    const file = 'packages/engine-core/src/l3/eeg-devices/registry.ts';
+    const { EEG_DEVICES } = await imp(root, file);
+    type Spec = { id: string; label: string; updateS: number; constants: Record<string, { value: number; unit: string; tag: string; what: string }> };
+    const specs = Object.values(EEG_DEVICES as Record<string, { spec: Spec }>).map((d) => d.spec);
+    return [{ title: `EEG devices: the registry's spec rows (EEG plan D8; \`${file}\`)`, head: ['Device', 'Label', 'Constant', 'Value', 'Unit', 'Source / tag', 'What'], rows: specs.flatMap((sp) => Object.entries(sp.constants).map(([k, c]) => [`\`${sp.id}\``, sp.label, `\`${k}\``, String(c.value), c.unit, c.tag, c.what])) }];
   },
   blood: async (root) => {
     const { FLUIDS } = await imp(root, 'packages/engine-core/src/l2/blood/params.ts');
