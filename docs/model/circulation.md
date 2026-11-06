@@ -642,6 +642,7 @@ Exported without a doc comment: `riskOf`, `vfShare`, `createBaro`, `createOut`, 
 | [`engine/circ-sympathetic-tone.test.ts`](../../packages/engine-core/test/engine/circ-sympathetic-tone.test.ts) | 0 | 0 |
 | [`engine/circ-tamponade-drainage.test.ts`](../../packages/engine-core/test/engine/circ-tamponade-drainage.test.ts) | 0 | 0 |
 | [`engine/circ-teaching.test.ts`](../../packages/engine-core/test/engine/circ-teaching.test.ts) | 0 | 0 |
+| [`engine/cpr-beating-coronary.test.ts`](../../packages/engine-core/test/engine/cpr-beating-coronary.test.ts) | 0 | 0 |
 | [`engine/cpr-cerebral-flow.test.ts`](../../packages/engine-core/test/engine/cpr-cerebral-flow.test.ts) | 1 | 0 |
 | [`engine/cpr-ecg-artefact.test.ts`](../../packages/engine-core/test/engine/cpr-ecg-artefact.test.ts) | 0 | 0 |
 | [`engine/cpr-etco2-circulation.test.ts`](../../packages/engine-core/test/engine/cpr-etco2-circulation.test.ts) | 0 | 0 |

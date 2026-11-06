@@ -26,9 +26,16 @@ import { bands, entered, first, near, range, runCard, type Act } from './harness
  *  151 mmHg. Second by second the new numeric is nearer the truth (mean error 6.3 against 10.9 mmHg on the 6-beat
  *  truth; nearer in 8 of the 10 seconds that differ). The fence follows the numeric, and the numeric now tracks the
  *  truth more closely.
- *  Every other S2 number stayed in its band. */
+ *  Every other S2 number stayed in its band.
+ *  The CPR coronary reading over a beating heart (escape-onset PR, `stepCoronary` `compressions`) re-recorded two bands
+ *  on the owner's ruling of 5 November 2026, same ± 5: sysPlus60 118 → 123.1 (121.85 → 123.10; in the 10 s between
+ *  ROSC and "Pulse back" the supply no longer reads −12 mmHg at a beat onset inside a compression, so kIsch leaves CPR
+ *  0.084 higher and recovers on τ_up 60 s) and sysMaxAtRosc 191 → 210.8 (191.07 → 210.80). Measurement and split:
+ *  docs/validation/notes/tamponade-sysmax.md. Every timing and every other S2 number is unchanged. */
 const BANDS = {
-  'S2 happy': { refused: [0, 0], hrAt60: [94, 104], sysAt60: [101, 111], diaAt60: [82, 92], cvpAt60: [15, 19], etco2At60: [29, 35], pulsusMean: [0, 1.9], pulsusMax: [0, 2.6], deterioratingS: [336, 410], hrAtDeteriorating: [130, 140], cvpAtDeteriorating: [18, 22], pulseLossS: [424, 518], peaStateS: [425, 519], pea: [1, 1], drainS: [542, 662], roscAfterDrainS: [81, 111], sysPlus60: [113, 123], hrPlus60: [58, 68], cvpPlus60: [8, 12], etco2Plus60: [32, 38], sysMaxAtRosc: [186, 196], pulseHeld: [1, 1] },
+  'S2 happy': { refused: [0, 0], hrAt60: [94, 104], sysAt60: [101, 111], diaAt60: [82, 92], cvpAt60: [15, 19], etco2At60: [29, 35], pulsusMean: [0, 1.9], pulsusMax: [0, 2.6], deterioratingS: [336, 410], hrAtDeteriorating: [130, 140], cvpAtDeteriorating: [18, 22], pulseLossS: [424, 518], peaStateS: [425, 519], pea: [1, 1], drainS: [542, 662], roscAfterDrainS: [81, 111], sysPlus60: [118.1, 128.1], hrPlus60: [58, 68], cvpPlus60: [8, 12], etco2Plus60: [32, 38], sysMaxAtRosc: [205.8, 215.8], pulseHeld: [1, 1] },
+  // sysMaxAtRosc 191.07 → 210.8 = +8.9 mmHg from the corrected coronary reading (LV contractility +11 %, a corrected artefact)
+  // + 10.9 from the detector missing feet under compressions over a beating heart; a 2-second overshoot (706–707 s)
   'S2 epinephrine': { refused: [0, 0], roscAfterDrainS: [79, 109] },
   'S2 undrained': { refused: [0, 0], pulseBack: [0, 0], cvpMax: [30, 34], etco2Plus3: [6, 12] },
   'S2 at ×8 poll': { refused: [0, 0], pulseLossS: [424, 518], peaStateS: [426, 520], roscAfterDrainS: [80, 110] },

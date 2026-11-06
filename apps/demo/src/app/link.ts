@@ -17,6 +17,8 @@ export interface ClinicalLogEntry {
   text: string;
   /** Rejected by the engine: the reason, in the log only. */
   refused?: string;
+  /** The run event a note is, into the record with it (D5: 'recognised', the /1 Recognised press). */
+  ev?: 'recognised';
 }
 
 export class Link {
@@ -102,10 +104,12 @@ export class Link {
   /**
    * A line of the clinical log. A note or a marker (a judged objective) goes into the debrief: on the host into its
    * record (`add`), and from a remote as the `note` command (plan §6), which the host files with this same call, at its
-   * own sim time `t`.
+   * own sim time `t`. `ev`: the run event the note is (D5: 'recognised', the /1 Recognised press), into the record
+   * with it; the `note` command carries no event, so a remote's note arrives without one (recognised.ts shows the
+   * press that needs it on the host only).
    */
-  note(text: string, kind: ClinicalLogEntry['kind'] = 'note', t: number = this.simT): void {
-    this.add({ simT: t, kind, text });
+  note(text: string, kind: ClinicalLogEntry['kind'] = 'note', t: number = this.simT, ev?: ClinicalLogEntry['ev']): void {
+    this.add({ simT: t, kind, text, ...(ev ? { ev } : {}) });
     if (this.host || (kind !== 'note' && kind !== 'marker')) return;
     // the guard's limit (guard.ts): a longer note would be dropped on the wire and re-sent until it timed out
     if (text.length > WIRE_LIMITS.noteChars) return this.add({ simT: t, kind: 'system', text: `Not sent to the debrief: the note is longer than ${WIRE_LIMITS.noteChars} characters` });
@@ -172,7 +176,7 @@ export class Link {
   }
 
   private add(x: ClinicalLogEntry): void {
-    if (x.kind === 'note' || x.kind === 'marker') this.host?.record.note(x.simT ?? this.simT, x.text); // Into the debrief
+    if (x.kind === 'note' || x.kind === 'marker') this.host?.record.note(x.simT ?? this.simT, x.text, x.ev); // Into the debrief
     this.log.push(x);
     if (this.log.length > 1000) this.log.splice(0, this.log.length - 1000);
     this.changed();

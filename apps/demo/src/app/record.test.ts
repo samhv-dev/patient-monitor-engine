@@ -284,6 +284,15 @@ describe('the run record', () => {
     expect(r.data.keeps).toEqual(expect.arrayContaining(['pressures']));
   });
 
+  it('D5: note() takes an optional ev (the /1 Recognised press); `keeps` gains "recognised"; a return undoes a press after it', () => {
+    const r = fresh();
+    r.note(30, 'Recognised (instructor)', 'recognised');
+    r.note(40, 'a plain note');
+    expect(r.data.rows.slice(-2)).toEqual([{ t: 30, kind: 'note', text: 'Recognised (instructor)', ev: 'recognised' }, { t: 40, kind: 'note', text: 'a plain note' }]);
+    expect(r.data.keeps).toEqual(expect.arrayContaining(['recognised']));
+    expect(emptyRun().keeps).toEqual(expect.arrayContaining(['recognised']));
+  });
+
   it('D1 on a real engine: a cuff with no arterial line gives sys/dia in the second of each cycle only', async () => {
     const v = validateScenario(induction);
     if (!v.ok) throw new Error(v.errors.join('; '));
@@ -357,7 +366,7 @@ describe('the run record', () => {
     const copy = JSON.parse(JSON.stringify(r.data));
     expect(copy).toEqual(r.data);
     r.wire({ type: 'timeline', t: 0, tick: 0, cause: 'restart' } as WireEvent);
-    expect(r.data).toEqual({ startedAt: 1_000, lastWall: 1_000, patient: 'M 40 y 70 kg', weightKg: 70, doc: null, rows: [], samples: [], returns: 0, keeps: ['pressures', 'alarmEnd', 'cprStop'] });
+    expect(r.data).toEqual({ startedAt: 1_000, lastWall: 1_000, patient: 'M 40 y 70 kg', weightKg: 70, doc: null, rows: [], samples: [], returns: 0, keeps: ['pressures', 'alarmEnd', 'cprStop', 'recognised'] });
   });
 
   it('on a real host: a bookmark restore keeps the course before it and marks the course after it undone', async () => {

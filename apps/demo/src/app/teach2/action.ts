@@ -13,7 +13,7 @@ import { asV1, bolusDrugOf, isV2 } from '@pme/controller';
 import { lockLabel } from '../drugs.ts';
 import type { Link } from '../link.ts';
 import { stagesOf } from '../card-read.ts';
-import { clock, h, setText } from '../ui.ts';
+import { clock, h, keepOrder, setText } from '../ui.ts';
 import { FOOT_NONE, mountBeginPane, type Way } from './begin.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { judge, pressAction, pressStep } from './press.ts';
@@ -27,6 +27,8 @@ export const FOOT = 'No penalty comes from the panel. Consequences come from the
 const keyOf = (r: LiveRow): string => `${r.stage}|${r.row.kind}|${r.row.kind === 'judged' ? r.row.objective : r.row.index}`;
 
 interface Pill {
+  /** The row's own list item, kept with it (the dropped press: rows were moved into new <li> on every order change). */
+  li: HTMLElement;
   el: HTMLElement;
   key: HTMLElement;
   title: HTMLElement;
@@ -64,7 +66,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     const fill = live.row.kind === 'auto' && !inFinished ? h('span', { class: 'ip2-bar-fill' }) : null;
     const right = h('span', { class: 'ip2-row-right' });
     const text = h('span', { class: 'ip2-row-text' }, title, sub, fill ? h('span', { class: 'ip2-bar', 'aria-hidden': 'true' }, fill) : null);
-    const p: Pill = { el: h(pressable ? 'button' : 'div', { class: 'ip2-row', ...(pressable ? { type: 'button' } : {}) }, key, text, right), key, title, sub, right, fill, live };
+    const el = h(pressable ? 'button' : 'div', { class: 'ip2-row', ...(pressable ? { type: 'button' } : {}) }, key, text, right);
+    const p: Pill = { li: h('li', {}, el), el, key, title, sub, right, fill, live };
     if (pressable) p.el.addEventListener('click', () => press(p));
     return p;
   };
@@ -130,7 +133,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   let names = new Map<string, string>();
   let labels = new Map<string, string>();
 
-  /** Keep each row's element across repaints; put them in order without moving a node that is already in place. */
+  /** Keep each row's element and its list item across repaints; move only the rows whose place changed (keepOrder). */
   const sync = (into: HTMLElement, cache: Map<string, Pill>, rows: readonly LiveRow[], inFinished: boolean, keyFn: (r: LiveRow) => string) => {
     const want: HTMLElement[] = [];
     const seen = new Set<string>();
@@ -140,11 +143,10 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       let p = cache.get(k);
       if (!p) cache.set(k, (p = pill(live, inFinished)));
       paint(p, live);
-      want.push(p.el);
+      want.push(p.li);
     }
     for (const k of [...cache.keys()]) if (!seen.has(k)) cache.delete(k);
-    const items = [...into.children].map((li) => li.firstElementChild);
-    if (items.length !== want.length || items.some((x, i) => x !== want[i])) into.replaceChildren(...want.map((p) => h('li', {}, p)));
+    keepOrder(into, want);
   };
 
   /** Finished, grouped (the owner's report of 30 October): one group per stage visit, titled with the stage's name and
@@ -169,7 +171,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       want.push(g.li);
     }
     for (const k of [...groups.keys()]) if (!by.has(k)) groups.delete(k);
-    if (finList.children.length !== want.length || want.some((li, i) => finList.children[i] !== li)) finList.replaceChildren(...want);
+    keepOrder(finList, want);
   };
 
   const setDigits = (rows: readonly LiveRow[]) => {
