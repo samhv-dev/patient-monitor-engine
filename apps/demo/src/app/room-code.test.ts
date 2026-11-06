@@ -26,6 +26,22 @@ describe('startCode: ?session= → the stored room code → (none: a new one)', 
   });
 });
 
+// Room plan R1b: on a new origin (the kit moved to the next port: an empty store) the relay's last room comes next
+describe('startCode with the relay\'s lastRoom (R1b): ?session= → stored → lastRoom → (none)', () => {
+  it('an empty store takes the relay\'s lastRoom; the page then stores it (it started without ?session=)', () => {
+    expect(startCode({ param: null, stored: null, lastRoom: 'QFBAWA' })).toBe('QFBAWA');
+    expect(keepsRoomCode({ param: null, answer: null })).toBe(true);
+  });
+  it('a ?session= or a stored code still wins over lastRoom', () => {
+    expect(startCode({ param: 'KXRMTP', stored: 'KKQB2N', lastRoom: 'QFBAWA' })).toBe('KXRMTP');
+    expect(startCode({ param: null, stored: 'KKQB2N', lastRoom: 'QFBAWA' })).toBe('KKQB2N');
+  });
+  it('a lastRoom that is not a code is ignored (an older relay sends none: undefined)', () => {
+    expect(startCode({ param: null, stored: null, lastRoom: 'IIIIII' })).toBeNull();
+    expect(startCode({ param: null, stored: null, lastRoom: undefined })).toBeNull();
+  });
+});
+
 describe('keepsRoomCode: only a page started without ?session= stores its code, and never "Start a new session" (§4 D3)', () => {
   it('the first tab, no ?session=: stores it (asked nothing, or chose to open the running session here)', () => {
     expect(keepsRoomCode({ param: null, answer: null })).toBe(true);
