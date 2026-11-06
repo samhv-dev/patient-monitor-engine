@@ -31,7 +31,9 @@ export async function pressAction(link: Link, action: Action): Promise<void> {
     }
     return void toast(`${action.label}: nothing to give from this row; use a sheet.`);
   }
-  await link.sendBatch(cmds);
+  // a refused item is answered here, on the device that pressed (the host's same-drug lock among the reasons)
+  const no = (await link.sendBatch(cmds)).find((r) => !r.accepted);
+  if (no) toast(`${action.label}: not given (${no.reason ?? 'refused'})`);
 }
 
 /** Press the step labelled `label`: a copy of panel/scenario.ts `press`. */
@@ -42,6 +44,7 @@ export async function pressStep(link: Link, label: string): Promise<void> {
   if (!cmd) return moved();
   const r = await link.ctl.send(cmd); // not link.send: that logs a refused command too
   if (r.accepted) link.note(describeCommand(cmd as Record<string, unknown>), 'instructor');
+  else if (r.code === 'recent') toast(`${label}: not given (${r.reason ?? 'refused'}). Press again after the lock.`); // drug-lock.ts
   else moved();
 }
 
