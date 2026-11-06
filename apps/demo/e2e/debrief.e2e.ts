@@ -201,14 +201,14 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
 // has drawn nothing of is not a run whose notes are dropped; a scenario loaded later still starts the notes empty.
 test('FX-20: notes typed right after opening the app on the Debrief are kept; a new scenario still empties them', async ({ page }) => {
   test.setTimeout(90_000);
-  await openApp(page, base, '#/debrief', { site: { instructor: 'teach2' } }); // a Load opens Instructor v2
+  await openApp(page, base, '#/debrief'); // a Load opens Instructor v2
   const notes = page.locator('[data-view=debrief] .db-notes');
   await notes.click({ timeout: 2_000 });
   await page.keyboard.type('kept');
   await page.waitForTimeout(7_000); // past the next 5 s refresh
   await expect(notes).toHaveText('kept');
 
-  // Instructor v2 has no in-panel library: the Scenarios library's Load, which opens the instructor view Settings names
+  // Instructor v2 has no in-panel library: the Scenarios library's Load, which opens the Instructor view
   await page.evaluate(() => (location.hash = '#/scenarios/library'));
   await page.locator('[data-view=scenarios]').getByRole('button', { name: 'Load Anaphylaxis under anaesthesia', exact: true }).click();
   await expect(page).toHaveURL(/#\/teach2$/);

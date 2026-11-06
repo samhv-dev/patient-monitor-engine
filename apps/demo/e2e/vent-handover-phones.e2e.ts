@@ -67,7 +67,7 @@ test('leaving the Ventilator view hands the patient to the engine ventilator: on
   relay = await startRelay({ port: 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer' });
   await page.setViewportSize({ width: 1600, height: 900 });
   // the owner's path: the Scenarios library, Load on the first demonstration
-  await openApp(page, base, `?relay=${encodeURIComponent(ws())}#/scenarios/library`, { warmMs: 1500, site: { instructor: 'teach2' } });
+  await openApp(page, base, `?relay=${encodeURIComponent(ws())}#/scenarios/library`, { warmMs: 1500 });
   await page.locator('[data-view=scenarios]').getByRole('button', { name: /^Load/ }).first().click();
   await expect(page).toHaveURL(/#\/teach2/);
   const code = await page.evaluate(() => (window as unknown as W).__pmeApp.session.code);

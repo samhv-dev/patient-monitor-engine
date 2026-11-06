@@ -25,8 +25,8 @@ test('five instructor tasks, each under 30 s', async ({ page, browserName }) => 
   test.skip(browserName === 'webkit', 'evidence run: Chromium only');
   test.setTimeout(240_000);
   await page.setViewportSize({ width: 1280, height: 800 });
-  // E125: the free-run patient's page opens the Instructor view; Settings names Instructor v2 (retire-instructor-v1 PR 2)
-  await openApp(page, base, '#/patient', { warmMs: 3000, site: { instructor: 'teach2' } });
+  // E125: the free-run patient's page opens the Instructor view (Instructor v2)
+  await openApp(page, base, '#/patient', { warmMs: 3000 });
 
   // Task 3 runs first: holding and returning a value needs MODELED physiology, and the ACLS case runs MANUAL.
   await timed('3. Hold SpO₂ at 85 %, then return it to the model', async () => {

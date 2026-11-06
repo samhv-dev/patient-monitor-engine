@@ -3,9 +3,10 @@
 // Instructor view's scenario panel rebuilt every "What happens next" button (`next.replaceChildren`) on each repaint, so a
 // press whose down and up straddle a repaint landed on a removed node and the step never happened; Instructor v2's ACTION
 // moved every row into new <li> elements when the order changed. Here a repaint is FORCED between the press and the
-// release, 20 times on each view (Playwright runs the file on Chromium and on WebKit), and every press must take.
-// The forced repaints are the views' own: the panel repaints its tab when the tab is selected (panel.ts), Instructor v2
-// repaints at once when it is entered (views/teach2.ts paintNow).
+// release, 20 times (Playwright runs the file on Chromium and on WebKit), and every press must take. The forced repaint
+// is the view's own: Instructor v2 repaints at once when it is entered (views/teach2.ts paintNow). The first view's
+// twin of this test (its Scenario tab, repainted by selecting the tab) retired with that view (retire-instructor-v1
+// PR 3): this test holds the same intent on the only laptop view.
 // The step pressed gives NO drug (the awake patient's "Preoxygenate", whose state gives face-mask oxygen): since the
 // owner's ruling of 5 November 2026 the host refuses a step whose state gives a bolus of a drug given in the last 10 s
 // of sim time (drug-lock.ts), so twenty presses of "Start surgery" (rocuronium) a few seconds apart were refused by
@@ -22,7 +23,7 @@ test.afterAll(async () => vite?.close());
 
 const RUNS = 20;
 const PREOX = 'Preoxygenate: 100 % O₂ by face mask';
-type W = { __pmeApp: { link: { send(c: unknown): Promise<{ accepted: boolean }>; ctl: { scenario: { stateId: string | null } } }; teach: { panel: { select(id: string): void } }; teach2: { enter(): void } } };
+type W = { __pmeApp: { link: { send(c: unknown): Promise<{ accepted: boolean }>; ctl: { scenario: { stateId: string | null } } }; teach2: { enter(): void } } };
 const stateId = (p: Page) => p.evaluate(() => (window as unknown as W).__pmeApp.link.ctl.scenario.stateId);
 const goto = async (p: Page, target: string) => {
   expect(await p.evaluate((t) => (window as unknown as W).__pmeApp.link.send({ type: 'scenario', action: 'goto', target: t }).then((r) => r.accepted), target)).toBe(true);
@@ -41,22 +42,6 @@ async function pressAcrossRepaint(p: Page, button: import('@playwright/test').Lo
   await repaint();
   await p.mouse.up();
 }
-
-test('the first Instructor view: a "What happens next" press across a forced repaint takes, 20 of 20', async ({ page }) => {
-  test.setTimeout(180_000);
-  await openApp(page, base, '?scenario=showcase-mh', { warmMs: 1000 });
-  await page.click('[role=tab][data-tab=scenario]');
-  const run = page.locator('section[aria-label="Running scenario"]');
-  let taken = 0;
-  for (let i = 0; i < RUNS; i++) {
-    await goto(page, 'awake');
-    const b = run.getByRole('button', { name: PREOX, exact: true });
-    await b.waitFor();
-    await pressAcrossRepaint(page, b, () => page.evaluate(() => (window as unknown as W).__pmeApp.teach.panel.select('scenario')));
-    if (await expect.poll(() => stateId(page), { timeout: 3000 }).toBe('preoxygenated').then(() => true, () => false)) taken++;
-  }
-  expect(taken, `presses taken of ${RUNS}`).toBe(RUNS);
-});
 
 test('Instructor v2: an ACTION row press across a forced repaint takes, 20 of 20', async ({ page }) => {
   test.setTimeout(180_000);

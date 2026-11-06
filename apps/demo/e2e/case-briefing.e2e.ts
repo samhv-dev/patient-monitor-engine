@@ -2,7 +2,7 @@
 // ring): the MH card loaded with a relay, the briefing over the host's Monitor view at 1280 × 800 with the monitor
 // running under it, a phone (emulated, Pixel 7 on Chromium, iPhone 13 on WebKit) joining mid-briefing and showing the
 // remainder, a tap doing nothing there and a press-and-hold ending it on that phone only (the owner's ruling of 31 October), the instructor's "End briefing" ending it on the host and every phone
-// (today's Instructor view; Instructor v2's status line under the stage strip, at 1440 × 900, the owner's choice of 31 October);
+// (Instructor v2's status line under the stage strip, at 1440 × 900, the owner's choice of 31 October);
 // then a Persian briefing (the board's Persian text: a rendering fixture, on no card) on the host and a phone.
 // Screenshots go to PME_BRIEFING_SHOTS (default: this test's output folder) for the owner's look.
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';

@@ -18,9 +18,9 @@ const seconds = (s: string): number => {
 
 test('loading another scenario restarts the session clock and the time in state, which then count up', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(90_000);
-  // Instructor v2 (a Load from the library opens the view Settings names: v2 here): the header's clock pill and speed
+  // Instructor v2 (a Load from the library opens it): the header's clock pill and speed
   // box; the time in state is the cue box's in-stage clock ("02:13 in stage")
-  await openApp(page, base, '?scenario=showcase-tamponade#/teach2', { warmMs: 1000, site: { instructor: 'teach2' } });
+  await openApp(page, base, '?scenario=showcase-tamponade#/teach2', { warmMs: 1000 });
   await expect(page).toHaveURL(/#\/teach2$/);
   const head = page.locator('.ip2-head');
   const clockText = () => head.locator('.ip2-pill-time').innerText();

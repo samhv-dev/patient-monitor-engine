@@ -1,7 +1,7 @@
 // Instructor v2 (E127; plan IP9 step 4; answers 9, 16, 19; the owner's ruling on answer 3): the keyboard on the real
 // page — a digit presses its ACTION row (what today's state button sends), the letters open and close their sheets, Esc
 // closes a sheet first, Space pauses and resumes through the clock pill, and Fast forward is disabled while paused; the
-// alarm count and the `i` key go to the Instructor view chosen in Settings (owner, 30 October); and once, end to end, a
+// alarm count and the `i` key go to the Instructor view's Devices sheet; and once, end to end, a
 // past stage of the strip returns to its start (press, the inline box's Return, the driver's stage mark restored, the
 // stage back; no dialog).
 import { expect, test, type Page } from '@playwright/test';
@@ -73,7 +73,7 @@ test('keys: 1–9 press the rows, letters open and close sheets, Esc closes firs
   await expect(ff).toBeEnabled();
 });
 
-test('the alarm count and the `i` key go to the Instructor view chosen in Settings (owner, 30 October): today\'s its Devices tab, v2 its Devices sheet', async ({ page }) => {
+test('the alarm count and the `i` key go to the Instructor view: its Devices sheet', async ({ page }) => {
   test.setTimeout(60_000);
   await openMh(page, 'awake');
   // option G: no top bar on #/teach2; its alarm line under the monitor opens the same list (the Devices sheet)
@@ -81,16 +81,16 @@ test('the alarm count and the `i` key go to the Instructor view chosen in Settin
   await page.locator('.ip2-alarmline').click();
   await expect(sheet(page, 'Devices')).toBeVisible();
   await page.keyboard.press('Escape');
-  // Settings: Instructor v2; the rail's one Instructor entry follows at once (today's view's leg dropped,
-  // retire-instructor-v1 PR 2); Settings is a page with the top bar's alarm count, away from the Instructor view
+  // Settings is a page with the top bar's alarm count, away from the Instructor view; it has no choice of view since
+  // retire-instructor-v1 PR 3, and the rail's one Instructor entry is Instructor v2
   await go(page, '#/settings');
-  await page.getByRole('group', { name: 'Instructor view' }).getByRole('button', { name: 'Instructor v2' }).click();
+  await expect(page.getByRole('group', { name: 'Instructor view' })).toHaveCount(0);
   await expect(page.locator('nav.rail a[title="Instructor"]')).toHaveAttribute('href', '#/teach2');
   await page.locator('.alarm-count').click();
   await expect(page).toHaveURL(/#\/teach2$/);
   await expect(sheet(page, 'Devices')).toBeVisible();
   await page.keyboard.press('Escape');
-  // the learners' monitor and back: `i` opens the chosen view
+  // the learners' monitor and back: `i` opens the Instructor view
   await go(page, '#/monitor');
   await page.keyboard.press('i');
   await expect(page).toHaveURL(/#\/teach2$/);

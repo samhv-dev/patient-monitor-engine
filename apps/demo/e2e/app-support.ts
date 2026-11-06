@@ -179,7 +179,7 @@ export async function focusWalk(page: Page, n = 25): Promise<string[]> {
 // ---- Instructor v2 (#/teach2): the old view's session bar, tabs and staged footer, reached through v2's own controls
 // (retire-instructor-v1 PR 2; lifted from the kit round's dual paths, scripts/showcase/kit-round-a.kitround.ts). ----
 
-/** Instructor v2's route; a test that only deep-links sets `site: { instructor: 'teach2' }` instead. */
+/** Instructor v2's route (the only Instructor view; the old `#/teach` resolves to it). */
 export const TEACH2 = '#/teach2';
 
 /** The header's speed box: open it and choose ×k (what the session bar's speed buttons sent). */

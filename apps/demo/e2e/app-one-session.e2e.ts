@@ -63,7 +63,7 @@ test('a stalled engine worker is not a restart; a new engine is (FX-11)', async 
 });
 
 test('the scenario deep link loads the case into the instructor view', async ({ page }) => {
-  await openApp(page, base, '?scenario=acls-vf-witnessed', { site: { instructor: 'teach2' } }); // the instructor view Settings names
+  await openApp(page, base, '?scenario=acls-vf-witnessed'); // a deep link with no hash opens the Instructor view
   await expect(page).toHaveURL(/#\/teach2$/);
   await expect(page.locator('.ip2-head .ip2-title')).toContainText('Witnessed VF in PACU', { timeout: 10_000 });
 });
@@ -118,7 +118,7 @@ test('a remote pairs by code and changes the host patient', { tag: '@known-flaky
   // the engine's own state says HR is held before the badge is read (R50 review F7: the badge redraws at ≤ 2 Hz on a
   // page that was in the background, so reading it first raced under two workers)
   await expect.poll(() => page.evaluate(() => (window as unknown as App).__pmeApp.link.ctl.state?.control.hr ?? ''), { timeout: 10_000 }).toBe('pinned');
-  await page.bringToFront(); // a background tab draws no frames, so its session bar waits until it is visible
-  await go(page, '#/teach');
-  await expect(page.locator('.sessionbar .mode-badge')).toContainText('1 held', { timeout: 10_000 });
+  await page.bringToFront(); // a background tab draws no frames, so its header waits until it is visible
+  await go(page, '#/teach2'); // the host's Instructor view (v2's header carries the session bar's mode badge)
+  await expect(page.locator('.ip2-head .ip2-mode')).toContainText('1 held', { timeout: 10_000 });
 });

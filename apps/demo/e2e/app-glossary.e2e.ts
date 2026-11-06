@@ -17,7 +17,7 @@ const STATE_VARS = ['hr', 'sbp', 'dbp', 'cvp', 'papSys', 'papDia', 'pawp', 'spo2
 
 test('no engine id reaches a clinical view', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(120_000);
-  await openApp(page, base, '?scenario=acls-vf-witnessed', { warmMs: 4000, site: { instructor: 'teach2' } }); // the deep link opens Instructor v2
+  await openApp(page, base, '?scenario=acls-vf-witnessed', { warmMs: 4000 }); // the deep link opens Instructor v2
   // camelCase or digit-bearing ids only: a lowercase drug id is also the drug's English name ("propofol")
   const engineIds = await page.evaluate(() => (window as unknown as { __pmeApp: { engineIds: string[] } }).__pmeApp.engineIds);
   const IDS = [...STATE_VARS, ...engineIds].filter((id) => /[A-Z0-9]/.test(id) || STATE_VARS.includes(id));
