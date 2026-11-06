@@ -1,9 +1,10 @@
 // @vitest-environment happy-dom
 // The command census (plan `docs/plans/instructor-peer-role.md`, piece P0; §2): the exact set of command shapes the
-// laptop's two Instructor views send, measured, not listed by hand. Today's Instructor view (its session bar,
-// `sessionbar.ts`, over the panel, `panel/*` through `mountPanel`, mounted as the laptop mounts it: with
-// `loadScenario`) and Instructor v2 (`views/teach2.ts`, every slot and sheet) are each mounted on a real `Link` over a
-// recording ControllerSession (its `send` records and accepts). A crawler then presses every button, chooses every
+// laptop's Instructor view sends, measured, not listed by hand. Instructor v2 (`views/teach2.ts`, every slot and sheet,
+// mounted as the laptop mounts it: with `loadScenario`) is mounted on a real `Link` over a recording ControllerSession
+// (its `send` records and accepts). Until retire-instructor-v1 PR 3 the census crawled today's Instructor view too (its
+// session bar over the panel) and asserted v2 ⊇ the union of the two; that view is gone from the laptop, so the crawl
+// is v2's alone and the union is v2's own set. A crawler then presses every button, chooses every
 // option of every select, answers every confirm and presses every key the views listen to, in several states of the
 // session (both demo cards at every state, MODELED with held values and MANUAL, running and paused, no card loaded),
 // and the set of shapes (`type`, plus `action` when it is a word, plus `event.kind` for `applyEvent`) is compared with
@@ -12,11 +13,8 @@
 import { writeFileSync } from 'node:fs';
 import { INSTRUCTOR_COMMANDS, isV2, ScenarioView, type AckResult, type AnyScenarioDoc, type CommandInput, type ControllerSession, type ManagedTransport, type ScenarioDoc } from '@pme/controller';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DRUG_LIST } from '../drugs.ts';
 import { ACUTE_EVENTS } from '../events.ts';
 import { Link } from '../link.ts';
-import { mountPanel, TABS } from '../panel/panel.ts';
-import { mountSessionBar } from '../sessionbar.ts';
 import { anyShowcaseDoc, showcaseDoc } from '../showcase/harness.ts';
 import { DEFAULT_SITE } from '../site.ts';
 import { teach2View } from '../views/teach2.ts';
@@ -25,19 +23,19 @@ import { SHEETS } from './sheets.ts';
 
 const MH = showcaseDoc('showcase-mh') as ScenarioDoc;
 const HAEM = showcaseDoc('showcase-haemorrhage') as ScenarioDoc;
-/** The two pme-scenario/2 cards (F8, F9): Instructor v2 reads them (F6); today's view does not. */
+/** The two pme-scenario/2 cards (F8, F9), which Instructor v2 reads (F6). */
 const MH2 = anyShowcaseDoc('showcase-mh-v2') as AnyScenarioDoc;
 const HAEM2 = anyShowcaseDoc('showcase-haemorrhage-v2') as AnyScenarioDoc;
 
 /**
  * §2's table, now the host's allow-list itself (P6): `INSTRUCTOR_COMMANDS` (protocol.ts) is the UNION of what the two
- * laptop views send, plus `note` (§6), which a remote Link sends for a judged objective or a note (link.ts `note`; this
- * census mounts the views on a remote Link, as a phone's). So this test is the one parity check between the laptop and
+ * laptop views sent, plus `note` (§6), which a remote Link sends for a judged objective or a note (link.ts `note`; this
+ * census mounts the view on a remote Link, as a phone's). So this test is the one parity check between the laptop and
  * the allow-list: a shape either side gains alone fails it. The measured set as P0 recorded it (amended 2026-10-30, the
- * orchestrator's rulings): `scenario pause` / `resume` are today's Scenario tab's "Hold the timer" and, since
- * retire-instructor-v1 G2, v2's cue box's "Hold the stage timer"; `applyEvent` is every ClinicalEvent kind the Drug,
- * Airway, Defib · CPR, Vitals, Devices and Patient bodies send. Instructor v2 sends every shape of the union (the plan's
- * condition for retiring today's view).
+ * orchestrator's rulings): `scenario pause` / `resume` are v2's cue box's "Hold the stage timer" (retire-instructor-v1
+ * G2; today's Scenario tab's "Hold the timer" before it); `applyEvent` is every ClinicalEvent kind the Drug, Airway,
+ * Defib · CPR, Vitals, Devices and Patient bodies send. Instructor v2 alone sends every shape of the union (the plan's
+ * condition for retiring today's view, kept as this test's equality).
  */
 const PLAN_S2: readonly string[] = [...INSTRUCTOR_COMMANDS].sort();
 
@@ -214,60 +212,14 @@ async function pressKeys(where: string, extra: ReadonlyArray<[string, KeyboardEv
 
 const noExport = (el: Element) => /^Export /.test(el.textContent ?? ''); // a file download (ui.ts `download`), never a command
 
-/** Today's Instructor view: the session bar over the panel, as main.ts and views/teach.ts mount them on the laptop. */
-async function today(cfg: Config, scope: 'all' | 'scenario') {
-  view = 'today';
-  const r = rig(cfg);
-  const bar = document.createElement('div');
-  bar.className = 'sessionbar';
-  const offBar = mountSessionBar(bar, r.link);
-  const loads: string[] = [];
-  const panel = mountPanel(r.link, { site: DEFAULT_SITE, weightKg: () => 70, tab: 'scenario', loadScenario: (c) => (loads.push(c.title), true) });
-  document.body.append(bar, panel.el);
-  r.changed();
-  await settle();
-  const where = `today [${cfg.name}]`;
-  if (scope === 'all') await sweep(bar, `${where} session bar`);
-  for (const [id, label] of scope === 'all' ? TABS : TABS.filter(([id]) => id === 'scenario')) {
-    panel.select(id);
-    await settle();
-    const tp = panel.el.querySelector(`#tp-${id}`) as Element;
-    await sweep(tp, `${where} ${label} tab`, noExport);
-    if (id === 'drugs' && scope === 'all') {
-      // the Drugs tab lists ten drugs until a name is typed: every drug of the list, found by its name, then its card
-      const search = tp.querySelector('input[type="search"]') as HTMLInputElement;
-      for (const d of DRUG_LIST) {
-        search.value = d.name;
-        search.dispatchEvent(new Event('input'));
-        await settle();
-        await sweep(tp, `${where} ${label} tab, "${d.name}" typed`, (el) => !el.closest('.results, .card.dose'));
-      }
-    }
-    // Commit what the tab staged before the footer's other controls are pressed (Discard would drop it)
-    const footer = panel.el.querySelector('footer.stagebar') as Element;
-    const commit = [...footer.querySelectorAll('button')].find((b) => b.classList.contains('primary')) as HTMLButtonElement;
-    if (live(commit)) {
-      actor = `${where} ${label} tab → staged-changes footer → ${nameOf(commit)}`;
-      commit.click();
-      await settle();
-    }
-    await sweep(footer, `${where} ${label} tab → staged-changes footer`);
-  }
-  if (scope === 'all') await pressKeys(where);
-  panel.destroy();
-  offBar();
-  r.link.close();
-  document.body.replaceChildren();
-  return loads;
-}
-
 /** Instructor v2: header, strip, STATE (cue, Fast forward, alarm line), ACTION, the dock and every sheet. */
-async function v2(cfg: Config, scope: 'all' | 'scenario') {
+async function v2(cfg: Config, scope: 'all' | 'scenario'): Promise<string[]> {
   view = 'v2';
+  const loads: string[] = [];
   const r = rig(cfg);
   const top = { soundOn: () => false, toggleSound: () => undefined, code: 'CNS234', phones: () => 0 };
   // as main.ts mounts it: the no-case window's Load is the app's one load (begin.ts), never a `scenario load` send
-  const v = teach2View(r.link, { site: DEFAULT_SITE, weightKg: () => 70, top, loadScenario: () => true });
+  const v = teach2View(r.link, { site: DEFAULT_SITE, weightKg: () => 70, top, loadScenario: (c) => (loads.push(c.title), true) });
   document.body.append(v.el);
   v.enter?.('');
   r.changed();
@@ -308,6 +260,7 @@ async function v2(cfg: Config, scope: 'all' | 'scenario') {
   v.destroy();
   r.link.close();
   document.body.replaceChildren();
+  return loads;
 }
 
 const FULL: Config[] = [
@@ -315,7 +268,7 @@ const FULL: Config[] = [
   { name: 'haemorrhage, MANUAL, paused', doc: HAEM, at: 6, mode: 'manual', paused: true },
   { name: 'no card loaded', doc: null, mode: 'modeled', paused: false },
 ];
-/** Every state of both cards, running, and paused with the scenario timer held: the scenario controls only (the Scenario tab; strip, cue, ACTION). */
+/** Every state of both cards, running, and paused with the scenario timer held: the scenario controls only (strip, cue, ACTION). */
 const EVERY_STATE: Config[] = [MH, HAEM].flatMap((doc) => doc.states.flatMap((s, at) => [false, true].map((paused): Config => ({ name: `${doc === MH ? 'MH' : 'haemorrhage'} at ${s.id}${paused ? ', paused, timer held' : ''}`, doc, at, mode: 'modeled', paused, timerHeld: paused }))));
 /** Every phase of both /2 cards, running and paused (Instructor v2 only: its strip, cue and ACTION). The haemorrhage /2
  *  card's procedure, sample and communication actions send `scenario record` (#273, F9's Q19), which the /1 cards never do. */
@@ -335,19 +288,12 @@ afterEach(() => {
   document.body.replaceChildren();
 });
 
-describe('the command census of the laptop\'s Instructor views (P0)', () => {
-  it('the shapes the two views send are §2\'s table, and none of §2\'s refusals', async () => {
+describe('the command census of the laptop\'s Instructor view (P0)', () => {
+  it('the shapes Instructor v2 sends are §2\'s table, and none of §2\'s refusals', async () => {
     sent.splice(0);
     const loads: string[] = [];
-    for (const cfg of FULL) {
-      loads.push(...(await today(cfg, 'all')));
-      await v2(cfg, 'all');
-    }
-    for (const cfg of EVERY_STATE) {
-      await today(cfg, 'scenario');
-      await v2(cfg, 'scenario');
-    }
-    for (const cfg of EVERY_PHASE) await v2(cfg, 'scenario');
+    for (const cfg of FULL) loads.push(...(await v2(cfg, 'all')));
+    for (const cfg of [...EVERY_STATE, ...EVERY_PHASE]) await v2(cfg, 'scenario');
 
     const shapes = [...new Set(sent.map((s) => s.shape))].sort();
     const census = shapes.map((shape) => {
@@ -372,9 +318,10 @@ describe('the command census of the laptop\'s Instructor views (P0)', () => {
     expect(loads.length).toBeGreaterThan(0);
     expect(shapes.filter((s) => PLAN_S2_REFUSED.includes(s)), 'a refused shape is sent').toEqual([]);
     expect(shapes).toEqual(PLAN_S2);
-    // retire-instructor-v1: v2 alone sends every shape the two views send (v2 ⊇ the union)
+    // retire-instructor-v1: v2 alone sends every shape of the union (v2 ⊇ the union: the crawl is v2's only, so the
+    // equality above is that condition; kept as its own line so the condition is named)
     const ofV2 = new Set(sent.filter((x) => x.view === 'v2').map((x) => x.shape));
-    expect(shapes.filter((x) => !ofV2.has(x)), 'a shape only today\'s view sends').toEqual([]);
+    expect(PLAN_S2.filter((x) => !ofV2.has(x)), 'a shape of the union v2 does not send').toEqual([]);
     // brief 52: a remote's Recognised press on a free run or a /1 card without a recognition objective sends the note
     // with its event tag (the session bar and the dock on a remote; the guard's NOTE_EVENTS); a judged objective without
     const notes = [...new Set(sent.filter((x) => x.shape === 'note').map((x) => x.detail))].sort();

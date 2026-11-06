@@ -95,12 +95,10 @@ export function mountBeginPane(ctx: Teach2Ctx, host: HTMLElement): { el: HTMLEle
   const way = (): Way => ctx.begin?.way ?? 'menu';
   const go = (w: Way) => ctx.begin?.set(w);
 
-  /** The card's load: the app's one load, as the library's Load (main.ts `loadScenario`); a follower sends it. */
+  /** The card's load: the app's one load, as the library's Load (main.ts `loadScenario`). */
   const load = (c: ScenarioCard) => {
-    if (ctx.loadScenario) {
-      if (!ctx.loadScenario(c)) return;
-      toast(`Scenario loaded: ${c.title}`); // as the library says it
-    } else void link.send({ type: 'scenario', action: 'load', doc: c.doc }).then((r) => toast(r.accepted ? `Scenario loaded: ${c.title}` : 'The monitor refused the scenario (see the log)'));
+    if (!ctx.loadScenario(c)) return;
+    toast(`Scenario loaded: ${c.title}`); // as the library says it
     note.hidden = true; // an offer to start is spent
     ctx.begin?.repaint();
   };
