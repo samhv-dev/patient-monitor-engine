@@ -83,18 +83,19 @@ test('learner controls: off by default, switched on per scenario, logged as lear
   await openApp(page, base, '?scenario=acls-vf-witnessed', { warmMs: 1500 });
   await go(page, '#/monitor');
   await expect(page.locator('.learner-strip')).toBeHidden();
-  await go(page, '#/teach');
-  await page.click('[role=tab][data-tab=scenario]');
-  await page.getByRole('button', { name: 'Learner controls on the monitor' }).click();
+  // retire-instructor-v1 G1: the switch is in the Devices body; Instructor v2's Devices sheet carries it
+  await go(page, '#/teach2');
+  await page.locator('.ip2-dock button.ip2-tool[data-sheet="devices"]').click();
+  await page.locator('.ip2-sheet[data-sheet="devices"]').getByRole('button', { name: 'Learner controls on the monitor' }).click();
   await go(page, '#/monitor');
   await expect(page.locator('.learner-strip')).toBeVisible();
   await page.locator('.learner-strip').getByRole('button', { name: 'Charge 200 J' }).click();
   // fix-ci-webkit-3: a learner action is logged when the engine acknowledges it; CI's WebKit took longer than the 5 s the
   // Log tab check allowed (no learner line at all). Wait for the acknowledged entry in the link's log, then check the tab.
   await expect.poll(() => page.evaluate(() => (window as unknown as App).__pmeApp.link.log.filter((e) => e.kind === 'learner').map((e) => e.text).join(' | ')), { timeout: 20_000 }).toContain('Defibrillator charging to 200 J');
-  await go(page, '#/teach');
-  await page.click('[role=tab][data-tab=log]');
-  await expect(page.locator('.log li[data-kind=learner]')).toContainText('Defibrillator charging to 200 J');
+  await go(page, '#/teach2');
+  await page.locator('.ip2-dock button.ip2-tool[data-sheet="log"]').click();
+  await expect(page.locator('.ip2-sheet[data-sheet="log"] .log li[data-kind=learner]')).toContainText('Defibrillator charging to 200 J');
 });
 
 test('a remote pairs by code and changes the host patient', { tag: '@known-flaky' }, async ({ page, context }) => {
