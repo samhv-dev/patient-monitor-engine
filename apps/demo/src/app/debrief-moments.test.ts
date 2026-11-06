@@ -4,7 +4,7 @@ import type { ScenarioDoc } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
 import a31 from '../../../../docs/showcase/kit-round-a/fa/debrief-a3-tamponade-cue-card-path-kit-round-chromium.json';
 import { debriefJson } from './debrief-export.ts';
-import { keyMoments, keyTimes, pulselessAt, whoOf } from './debrief-moments.ts';
+import { handsOff, keyMoments, keyTimes, pulselessAt, whoOf } from './debrief-moments.ts';
 import { drugWords } from './glossary.ts';
 import { emptyRun, type Row, type RunData, type Sample } from './record.ts';
 import { objectiveText } from './scenarios.ts';
@@ -201,7 +201,44 @@ describe('key times', () => {
     expect(keyTimes(d)).toEqual([
       { id: 'pulseLostToCpr', label: 'Pulse lost → CPR', fromT: 60, toT: null, state: 'noneAfter' },
       { id: 'pulseless', label: 'Pulseless in all', fromT: 60, toT: null, totalS: 60, state: 'measured' },
+      // D3: a record of this build keeps CPR stops, so the 60 s without compressions are hands-off time (fraction 0)
+      { id: 'handsOff', label: 'Hands-off time', fromT: 60, toT: null, totalS: 60, fraction: 0, state: 'measured' },
     ]);
+  });
+});
+
+describe('D3: hands-off time inside the pulseless spans, and the compression fraction', () => {
+  const run = (rows: Row[]): RunData => ({ ...emptyRun('free', 70, 0), samples: Array.from({ length: 400 }, (_, t) => sampleAt(t)), rows });
+  const twoSpans: Row[] = [
+    { t: 100, kind: 'patient', text: 'Pulse lost (the model)', ev: 'pulseLoss' },
+    { t: 110, kind: 'action', text: 'CPR started, 110 /min', ev: 'cpr' },
+    { t: 130, kind: 'action', text: 'CPR started, 100 /min', ev: 'cpr' }, // a rate change while compressing: still on
+    { t: 150, kind: 'action', text: 'CPR stopped', ev: 'cprStop' },
+    { t: 155, kind: 'action', text: 'CPR started, 110 /min', ev: 'cpr', undone: 1 }, // on a course that was undone
+    { t: 160, kind: 'scenario', text: 'CPR started, 110 /min', ev: 'cpr' }, // the card's own command counts
+    { t: 200, kind: 'patient', text: 'Circulation returned (the model)', ev: 'rosc' },
+    { t: 202, kind: 'scenario', text: 'CPR stopped', ev: 'cprStop' },
+    { t: 300, kind: 'patient', text: 'Pulse lost (the model)', ev: 'pulseLoss' },
+    { t: 310, kind: 'remote', text: 'CPR started, 110 /min', ev: 'cpr' }, // to the end of the record (399 s)
+  ];
+
+  it('handsOff(d): the pulseless time without compressions, on the kept course, and 1 − handsOff / pulseless', () => {
+    // pulseless 100–200 and 300–399 = 199 s; compressing 110–150, 160–200, 310–399 = 169 s; hands off 10 + 10 + 10 = 30 s
+    expect(handsOff(run(twoSpans))).toEqual({ handsOffS: 30, pulselessS: 199, fraction: 1 - 30 / 199 });
+  });
+
+  it('a tile "Hands-off time" after "Pulseless in all", with the seconds and the fraction', () => {
+    const ks = keyTimes(run(twoSpans));
+    expect(ks.map((k) => k.id).slice(-2)).toEqual(['pulseless', 'handsOff']);
+    expect(ks.at(-1)).toEqual({ id: 'handsOff', label: 'Hands-off time', fromT: 100, toT: null, totalS: 30, fraction: 1 - 30 / 199, state: 'measured' });
+  });
+
+  it('a record whose keeps has no "cprStop" (made before D3) gives no hands-off: never a guess from the starts alone', () => {
+    const { keeps: _, ...old } = run(twoSpans.map((r) => (r.ev === 'cprStop' ? { t: r.t, kind: r.kind, text: r.text } : r)));
+    expect(handsOff(old)).toBeNull();
+    expect(keyTimes(old).map((k) => k.id)).not.toContain('handsOff');
+    expect(keyTimes(a31Run()).map((k) => k.id)).not.toContain('handsOff'); // the A3.1 export, a /1 record of 22 October
+    expect(handsOff(run([]))).toBeNull(); // no pulse loss: no tile
   });
 });
 

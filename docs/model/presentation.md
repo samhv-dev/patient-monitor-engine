@@ -108,6 +108,12 @@ No exported `…State` type in this module.
 |---|---|---|---|---|
 | `RESYNC_MS` | `2000` | ms | [ENG: the owner's 2 s] | A hello this recent means the device is joining or catching up [ENG: the owner's 2 s]. |
 
+### [`apps/demo/src/app/session.ts`](../../apps/demo/src/app/session.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `FEED_MS` | `1000` | ms | — | The view feed's period (plan instructor-peer-role.md §6: at most once a second, and only on a change). |
+
 ### [`apps/demo/src/app/teach2/rows.ts`](../../apps/demo/src/app/teach2/rows.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -315,6 +321,7 @@ No exported `…State` type in this module.
 | `contrast` | [`apps/demo/src/app/color.ts`](../../apps/demo/src/app/color.ts) | Colour arithmetic for the shell (no DOM): |
 | `whoOf` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | Who moved the scenario from state `prev` into `id`: |
 | `pulselessSpans` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The pulseless spans of the kept course, [from, to]: |
+| `handsOff` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The hands-off time inside the pulseless spans, and the compression fraction `1 − handsOff / pulseless` (D3). |
 | `keyMoments` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The key moments of the kept course in time order, numbered 1…n. |
 | `signStates` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The states whose entry makes a /1 card's sign recognisable: |
 | `keyTimes` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The key times, in order: |
@@ -386,6 +393,8 @@ No exported `…State` type in this module.
 | `ago` | [`apps/demo/src/app/room-status.ts`](../../apps/demo/src/app/room-status.ts) | "now", "12 s ago", "3 min ago", "1 h ago". |
 | `onRoute` | [`apps/demo/src/app/router.ts`](../../apps/demo/src/app/router.ts) | Calls `fn` now and on every hash change; |
 | `storyOf` | [`apps/demo/src/app/scenario-meta.ts`](../../apps/demo/src/app/scenario-meta.ts) | Card fallback for a document without meta: |
+| `keepImported` | [`apps/demo/src/app/scenarios.ts`](../../apps/demo/src/app/scenarios.ts) | Keep a validated document as an imported card; |
+| `removeImported` | [`apps/demo/src/app/scenarios.ts`](../../apps/demo/src/app/scenarios.ts) | Remove an imported card; |
 | `applySkinAlarmColours` | [`apps/demo/src/app/shell.ts`](../../apps/demo/src/app/shell.ts) | Mirror the active skin's alarm colours AND priority marks into the shell (brief §6.2: |
 | `skinAlarmBar` | [`apps/demo/src/app/shell.ts`](../../apps/demo/src/app/shell.ts) | The active skin's message-bar colours (L1–L3), or null for an unknown skin. |
 | `skinAlwaysOn` | [`apps/demo/src/app/shell.ts`](../../apps/demo/src/app/shell.ts) | What the skin (and its preset) says still alarms with every limit group off. |
@@ -399,8 +408,10 @@ No exported `…State` type in this module.
 | `mount` | [`apps/demo/src/app/teach2/action.ts`](../../apps/demo/src/app/teach2/action.ts) | Mount this slot into `el` (the fixed slot signature, teach2/ctx.ts). |
 | `defaultPatient` | [`apps/demo/src/app/teach2/begin.ts`](../../apps/demo/src/app/teach2/begin.ts) | The default patient as the board writes it: |
 | `caseList` | [`apps/demo/src/app/teach2/begin.ts`](../../apps/demo/src/app/teach2/begin.ts) | The library's cards in the library's order: |
+| `openCardFile` | [`apps/demo/src/app/teach2/begin.ts`](../../apps/demo/src/app/teach2/begin.ts) | One card file: |
 | `mountBeginPane` | [`apps/demo/src/app/teach2/begin.ts`](../../apps/demo/src/app/teach2/begin.ts) | ACTION with no case: |
 | `enteredWords` | [`apps/demo/src/app/teach2/cue.ts`](../../apps/demo/src/app/teach2/cue.ts) | How the stage was entered, in words (answer 4). |
+| `byOf` | [`apps/demo/src/app/teach2/cue.ts`](../../apps/demo/src/app/teach2/cue.ts) | The record's `by` for the state row of `entry`: |
 | `mount` | [`apps/demo/src/app/teach2/cue.ts`](../../apps/demo/src/app/teach2/cue.ts) | Mount this slot into `el` (the fixed slot signature, teach2/ctx.ts). |
 | `mark` | [`apps/demo/src/app/teach2/dock.ts`](../../apps/demo/src/app/teach2/dock.ts) | Save this moment as a mark of `kind`, with `note` when one is given; |
 | `caseFinished` | [`apps/demo/src/app/teach2/dock.ts`](../../apps/demo/src/app/teach2/dock.ts) | Has the instructor finished the running case on this host: |
@@ -409,6 +420,10 @@ No exported `…State` type in this module.
 | `pinnedSteps` | [`apps/demo/src/app/teach2/drug-sheet.ts`](../../apps/demo/src/app/teach2/drug-sheet.ts) | The card's open steps that give a drug, in the ACTION list's numbering (one entry per drug the step gives). |
 | `pinnedGiveRule` | [`apps/demo/src/app/teach2/drug-sheet.ts`](../../apps/demo/src/app/teach2/drug-sheet.ts) | INTERIM RULE (the owner's ruling on a typed dose that differs from a pinned card step's dose is pending; |
 | `drugSheet` | [`apps/demo/src/app/teach2/drug-sheet.ts`](../../apps/demo/src/app/teach2/drug-sheet.ts) | The Drug sheet in `frame`, giving through `link` and staging into the view's `cache`. |
+| `boardOf` | [`apps/demo/src/app/teach2/feed.ts`](../../apps/demo/src/app/teach2/feed.ts) | ACTION's board as this Link reads it: |
+| `entriesOf` | [`apps/demo/src/app/teach2/feed.ts`](../../apps/demo/src/app/teach2/feed.ts) | The strip's stage entries as this Link reads them: |
+| `firedOf` | [`apps/demo/src/app/teach2/feed.ts`](../../apps/demo/src/app/teach2/feed.ts) | The transitions fired since the current stage was entered (strip.ts `firedInStage`), the host's on a remote. |
+| `feedOf` | [`apps/demo/src/app/teach2/feed.ts`](../../apps/demo/src/app/teach2/feed.ts) | The feed's body, read on the host from its own Link (session.ts sends it). |
 | `mountFinish` | [`apps/demo/src/app/teach2/finish.ts`](../../apps/demo/src/app/teach2/finish.ts) | Mount the pane into `el` (inside ACTION); |
 | `mountHeader` | [`apps/demo/src/app/teach2/header.ts`](../../apps/demo/src/app/teach2/header.ts) | The view's session bar on `link`; |
 | `mountKeys` | [`apps/demo/src/app/teach2/keys.ts`](../../apps/demo/src/app/teach2/keys.ts) | The view's keyboard on the document, answering only while `el` is shown. |
@@ -558,7 +573,7 @@ No exported `…State` type in this module.
 | `resolveSkin` | [`resolve.ts`](../../packages/skins/src/resolve.ts) | Resolve a skin or preset id (optionally with a theme) into the complete skin plus the renderer/audio contract. |
 | `partialOf` | [`schema.ts`](../../packages/skins/src/schema.ts) | The same schema with every `required` removed (recursively): |
 
-Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `parseRoute`, `cardOf`, `mountSessionBar`, `parseSite`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `mountFastForward`, `whenText`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `mountFollower`, `homeView`, `monitorView`, `patientView`, `remoteView`, `roomView`, `scenariosView`, `teachView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
+Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `parseRoute`, `cardOf`, `mountSessionBar`, `parseSite`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `mountFollower`, `homeView`, `monitorView`, `patientView`, `remoteView`, `roomView`, `scenariosView`, `teachView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
 
 ## Source files
 
@@ -610,7 +625,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mou
 | [`apps/demo/src/app/qr.ts`](../../apps/demo/src/app/qr.ts) | — |
 | [`apps/demo/src/app/rail.ts`](../../apps/demo/src/app/rail.ts) | The workflow rail (E125, owner's mockups of 26 October): the app's navigation in the order of a teaching session — Home; before the session Room, Scenarios, Patient; during it Instructor (today's view or v2, chosen in Se |
 | [`apps/demo/src/app/recent.ts`](../../apps/demo/src/app/recent.ts) | The Scenarios page's "Recent" (E125): the last three library cards loaded in this browser, newest first. |
-| [`apps/demo/src/app/record.ts`](../../apps/demo/src/app/record.ts) | The debrief's record of one run — what happened, in order, at the simulated time the monitor showed: every command applied (from the panel, a Remote or the scenario), the scenario's states, the alarms raised, bookmarks a |
+| [`apps/demo/src/app/record.ts`](../../apps/demo/src/app/record.ts) | The debrief's record of one run — what happened, in order, at the simulated time the monitor showed: every command applied (from the panel, a Remote or the scenario), the scenario's states, the alarms raised (each with w |
 | [`apps/demo/src/app/rhythms.ts`](../../apps/demo/src/app/rhythms.ts) | The rhythm picker's groups (research/13 brief §7 "Rhythm picker"): the 36 library rhythms in the order a clinician looks for them. |
 | [`apps/demo/src/app/room-status.ts`](../../apps/demo/src/app/room-status.ts) | What the Room page knows about who follows the session (E125), without a DOM. |
 | [`apps/demo/src/app/router.ts`](../../apps/demo/src/app/router.ts) | Hash routing without a router dependency (research/13 brief §5): `#/teach`, `#/explore/respiratory`, `#/validate/review`. |
@@ -632,6 +647,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mou
 | [`apps/demo/src/app/teach2/cue.ts`](../../apps/demo/src/app/teach2/cue.ts) | Instructor v2, the cue box at the top of STATE (design §3.3 and §5, boards "Proposal v6" and "v9 paused"; plan IP5; answers 4, 14, 18, 21). |
 | [`apps/demo/src/app/teach2/dock.ts`](../../apps/demo/src/app/teach2/dock.ts) | The Instructor v2 dock (design §3.6, board "Proposal v6"): Tools on the left (the sheets' buttons), a divider, the three marks (good, bad, discuss) and the note field in the centre, a divider, and Debrief at the far righ |
 | [`apps/demo/src/app/teach2/drug-sheet.ts`](../../apps/demo/src/app/teach2/drug-sheet.ts) | Instructor v2, the Drug sheet (design §4.1, board "Proposal v11"; plan IP7; answers 10, 11, 16). |
+| [`apps/demo/src/app/teach2/feed.ts`](../../apps/demo/src/app/teach2/feed.ts) | Instructor v2's view feed (plan `docs/plans/instructor-peer-role.md` §6, piece P6): what the host's own Instructor v2 reads from the host document and a remote does not have, computed on the host by the very functions th |
 | [`apps/demo/src/app/teach2/ff.ts`](../../apps/demo/src/app/teach2/ff.ts) | Instructor v2, the Fast forward box in STATE (the owner's final layout, board "Option G"): its title with the icon, a divider, "+2 min" and "+5 min", and the catch-up note. |
 | [`apps/demo/src/app/teach2/finish.ts`](../../apps/demo/src/app/teach2/finish.ts) | "Finish the case" in Instructor v2 (the owner's board "Finish 2", approved 30 October). |
 | [`apps/demo/src/app/teach2/header.ts`](../../apps/demo/src/app/teach2/header.ts) | The Instructor v2 session bar (design §3.1; the owner's final layout, board "Option G"; answer 9). |
@@ -841,6 +857,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mou
 | [`apps/demo/e2e/skins-page.e2e.ts`](../../apps/demo/e2e/skins-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/sound-toggle.e2e.ts`](../../apps/demo/e2e/sound-toggle.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-fit.e2e.ts`](../../apps/demo/e2e/teach2-fit.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/teach2-import-card.e2e.ts`](../../apps/demo/e2e/teach2-import-card.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-keys.e2e.ts`](../../apps/demo/e2e/teach2-keys.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-mh-v2.e2e.ts`](../../apps/demo/e2e/teach2-mh-v2.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-rail-lines.e2e.ts`](../../apps/demo/e2e/teach2-rail-lines.e2e.ts) | 0 | 0 |
@@ -865,6 +882,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mou
 | [`apps/demo/src/app/console-pages.dom.test.ts`](../../apps/demo/src/app/console-pages.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/copy.test.ts`](../../apps/demo/src/app/copy.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/cuff-start-notice.dom.test.ts`](../../apps/demo/src/app/cuff-start-notice.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/debrief-compat.test.ts`](../../apps/demo/src/app/debrief-compat.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/debrief-moments.test.ts`](../../apps/demo/src/app/debrief-moments.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/debrief-showcase.test.ts`](../../apps/demo/src/app/debrief-showcase.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/debrief.test.ts`](../../apps/demo/src/app/debrief.test.ts) | 0 | 0 |
@@ -879,6 +897,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mou
 | [`apps/demo/src/app/glossary.test.ts`](../../apps/demo/src/app/glossary.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/hidden-tab.test.ts`](../../apps/demo/src/app/hidden-tab.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/host-guard.dom.test.ts`](../../apps/demo/src/app/host-guard.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/imported.dom.test.ts`](../../apps/demo/src/app/imported.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/instructor-choice.dom.test.ts`](../../apps/demo/src/app/instructor-choice.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-timeline.test.ts`](../../apps/demo/src/app/link-timeline.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/meters.test.ts`](../../apps/demo/src/app/meters.test.ts) | 0 | 0 |
@@ -920,9 +939,11 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mou
 | [`apps/demo/src/app/teach2/dock.dom.test.ts`](../../apps/demo/src/app/teach2/dock.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/drug-sheet.dom.test.ts`](../../apps/demo/src/app/teach2/drug-sheet.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/empty.dom.test.ts`](../../apps/demo/src/app/teach2/empty.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/teach2/feed.dom.test.ts`](../../apps/demo/src/app/teach2/feed.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/finish.dom.test.ts`](../../apps/demo/src/app/teach2/finish.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/finished.dom.test.ts`](../../apps/demo/src/app/teach2/finished.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/header.dom.test.ts`](../../apps/demo/src/app/teach2/header.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/teach2/import-card.dom.test.ts`](../../apps/demo/src/app/teach2/import-card.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/integration.dom.test.ts`](../../apps/demo/src/app/teach2/integration.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/judged-offer.dom.test.ts`](../../apps/demo/src/app/teach2/judged-offer.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/keys.dom.test.ts`](../../apps/demo/src/app/teach2/keys.dom.test.ts) | 0 | 0 |
@@ -938,6 +959,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `rateUnits`, `mou
 | [`apps/demo/src/app/views/debrief-archive.dom.test.ts`](../../apps/demo/src/app/views/debrief-archive.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-course.test.ts`](../../apps/demo/src/app/views/debrief-course.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-handout.dom.test.ts`](../../apps/demo/src/app/views/debrief-handout.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/debrief-handsoff.dom.test.ts`](../../apps/demo/src/app/views/debrief-handsoff.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-hub-steps.dom.test.ts`](../../apps/demo/src/app/views/debrief-hub-steps.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-marks-course.dom.test.ts`](../../apps/demo/src/app/views/debrief-marks-course.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-moments-print.dom.test.ts`](../../apps/demo/src/app/views/debrief-moments-print.dom.test.ts) | 0 | 0 |
