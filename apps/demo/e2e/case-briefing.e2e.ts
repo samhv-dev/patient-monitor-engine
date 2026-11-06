@@ -144,13 +144,11 @@ test('the Case briefing: over the running monitor on the host and the phones, a 
   await shot(page, 'briefing-teach2-1440x900');
   await page.locator('.ip2-strip').screenshot({ path: join(out, `briefing-teach2-strip-status-1440x900-${browserName}.png`) });
   await page.setViewportSize({ width: 1280, height: 800 });
-  // the instructor's End briefing (today's Instructor view) ends it on the host and every phone
-  await page.evaluate(() => (location.hash = '#/teach'));
+  // the instructor's End briefing (Instructor v2's status line; today's view's step dropped, retire-instructor-v1 PR 2)
+  // ends it on the host and every phone
   await expect(layer(page)).toBeHidden();
-  const end = page.locator('.view[data-view="teach"] > .cb-end');
-  await expect(end).toBeVisible();
-  await end.getByRole('button', { name: 'End briefing' }).click();
-  await expect(end).toBeHidden();
+  await status.getByRole('button', { name: 'End briefing' }).click();
+  await expect(status).toBeHidden();
   await expect(g.locator('.stage > .case-briefing')).toHaveCount(0, { timeout: 5_000 });
   await page.evaluate(() => (location.hash = '#/monitor'));
   await expect(page.locator('.stage > .case-briefing')).toHaveCount(0, { timeout: 3_000 });

@@ -81,12 +81,8 @@ test('the alarm count and the `i` key go to the Instructor view chosen in Settin
   await page.locator('.ip2-alarmline').click();
   await expect(sheet(page, 'Devices')).toBeVisible();
   await page.keyboard.press('Escape');
-  // nothing chosen: today's view (the deep link to #/teach2 above did not change the choice)
-  await go(page, '#/settings'); // a page with the top bar's alarm count, away from both Instructor views
-  await page.locator('.alarm-count').click();
-  await expect(page).toHaveURL(/#\/teach$/);
-  await expect(page.locator('[role=tab][data-tab=devices]')).toHaveAttribute('aria-selected', 'true');
-  // Settings: Instructor v2; the rail's one Instructor entry follows at once
+  // Settings: Instructor v2; the rail's one Instructor entry follows at once (today's view's leg dropped,
+  // retire-instructor-v1 PR 2); Settings is a page with the top bar's alarm count, away from the Instructor view
   await go(page, '#/settings');
   await page.getByRole('group', { name: 'Instructor view' }).getByRole('button', { name: 'Instructor v2' }).click();
   await expect(page.locator('nav.rail a[title="Instructor"]')).toHaveAttribute('href', '#/teach2');
