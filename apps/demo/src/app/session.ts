@@ -453,8 +453,8 @@ export class AppSession {
   }
 
   /** The monitor style a phone wears: the skin, the theme and the IBP scales (E130). */
-  private styleEvent(): { type: 'style'; skin: string; theme: string; ibp: IbpScales } {
-    return { type: 'style', skin: this.skin, theme: this.theme, ibp: this.ibp };
+  private styleEvent(): { type: 'style'; skin: string; theme: string; ibp: IbpScales; defib: string | null } {
+    return { type: 'style', skin: this.skin, theme: this.theme, ibp: this.ibp, defib: this.defibModel }; // R5: the window's look
   }
 
   private ibp: IbpScales = {};
@@ -504,6 +504,7 @@ export class AppSession {
   setDefibModel(model: string | null): void {
     this.defibModel = model;
     this.sendDefibModel();
+    for (const f of this.skinFns) f(this.skin, this.theme); // the style says the model: a defibrillator window's look (R5)
   }
 
   private sendDefibModel(): void {

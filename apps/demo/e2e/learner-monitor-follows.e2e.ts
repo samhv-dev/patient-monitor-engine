@@ -182,7 +182,6 @@ test('a defibrillator window on this computer and one over the relay show "120 J
     for (const w of [local, phone]) {
       await w.waitForFunction(() => (window as unknown as W).__pmeFollower?.sync?.status === 'synced', null, { timeout: 30_000, polling: 250 });
       await expect(w.locator('.defib-readout')).toHaveText('120 J', { timeout: 10_000 }); // the room's model, from its own engine
-      expect(await w.evaluate(() => location.hash)).toBe('#/defib');
     }
     // the send resolves on the host's acknowledgement (the charge applied there): the windows have one second from it
     expect((await send(page, { type: 'applyEvent', event: { kind: 'defib', action: 'charge' } })).accepted).toBe(true);

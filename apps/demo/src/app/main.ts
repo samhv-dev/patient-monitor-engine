@@ -53,7 +53,9 @@ const follow = join ?? normalizeSessionCode(q.get('follow') ?? '');
 const relay = relayOf(location);
 // `?moved=<code>`: this tab handed its session to another tab of this browser (host-guard.ts)
 const moved = normalizeSessionCode(q.get('moved') ?? '');
-if (join) document.documentElement.dataset.learner = 'phone'; // the portrait learner layout (app.css)
+// Room plan R5: `#/defib` on a follower page is the defibrillator window (landscape, the room model's look)
+const defibWindow = !!follow && location.hash.replace(/^#\/?/, '').replace(/\/$/, '') === 'defib';
+if (join && !defibWindow) document.documentElement.dataset.learner = 'phone'; // the portrait learner layout (app.css)
 const hostless = !follow && parseRoute(location.hash).id === 'remote';
 const shell = new Shell(document.getElementById('app') as HTMLElement, { hostless, follower: !!follow });
 if (site.theme === 'projector-light') document.documentElement.dataset.theme = 'bench';
@@ -72,11 +74,12 @@ requestAnimationFrame(onFrame);
 if (follow) {
   if (parseRoute(location.hash).id !== 'monitor') history.replaceState(null, '', `${location.pathname}${location.search}${hrefOf('monitor')}`);
   // Its status and its own Sound / Silence sit under the monitor: the monitor route hides the top bar
-  const bar = h('div', { class: 'follower-bar', role: 'toolbar', 'aria-label': 'Learner monitor' });
-  shell.add({ id: 'monitor', el: h('section', { 'aria-labelledby': 'fol-h' }, h('h1', { id: 'fol-h', class: 'sr-only' }, 'Learner monitor'), bar) });
-  const follower = mountFollower(shell, site, follow, bar, join && relay ? { relay } : undefined);
+  const what = defibWindow ? 'Defibrillator' : 'Learner monitor';
+  const bar = h('div', { class: 'follower-bar', role: 'toolbar', 'aria-label': what });
+  shell.add({ id: 'monitor', el: h('section', { 'aria-labelledby': 'fol-h' }, h('h1', { id: 'fol-h', class: 'sr-only' }, what), bar) });
+  const follower = mountFollower(shell, site, follow, bar, join && relay ? { relay } : undefined, { defib: defibWindow });
   // "SIMULATION · not a clinical monitor" at the top of this monitor (in a two-row header, else a strip above it)
-  const line = simLine(shell.stage, !!join);
+  const line = simLine(shell.stage, !!join && !defibWindow);
   line.set(follower.monitor, follower.style, true);
   follower.onStyle = (s) => line.set(follower.monitor, s, true);
   // The second screen shows the same fast-forward panel and latches the alarms that came and went
@@ -101,7 +104,7 @@ if (follow) {
   const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, defibModel: site.defibModel });
   // The session code survives a reload of this window, so a learner monitor and a Remote that follow it find it again
   // (a reload made a new code and left them on a frozen screen)
-  publishStyle(session.code, () => ({ skin: session.skin, theme: session.theme, ibp: session.ibpScales }), (f) => {
+  publishStyle(session.code, () => ({ skin: session.skin, theme: session.theme, ibp: session.ibpScales, defib: session.defibModel }), (f) => {
     const offSkin = session.onSkin(f);
     const offIbp = session.onIbpScales(f); // E130: the IBP lane scales travel with the style
     return () => (offSkin(), offIbp());

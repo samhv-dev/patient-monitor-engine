@@ -120,8 +120,8 @@ describe('R5: the defibrillator window', () => {
     await run(1);
     expect(readout()).toBe('120 J');
     const first = { host: new Map<string, number>(), window: new Map<string, number>() };
-    he.on((e) => void (first.host.has((e as Status).defib!.state) || first.host.set((e as Status).defib!.state, e.t)), ['deviceStatus']);
-    ve().on((e) => void (first.window.has((e as Status).defib!.state) || first.window.set((e as Status).defib!.state, e.t)), ['deviceStatus']);
+    he.on((e) => void (first.host.has((e as Status).defib!.state) || first.host.set((e as Status).defib!.state, (e as Status).t)), ['deviceStatus']);
+    ve().on((e) => void (first.window.has((e as Status).defib!.state) || first.window.set((e as Status).defib!.state, (e as Status).t)), ['deviceStatus']);
     const seen = new Set<string>();
     await ctl.send({ type: 'applyEvent', event: { kind: 'defib', action: 'charge' } });
     await run(6, () => void seen.add(readout() ?? ''));
