@@ -1,13 +1,14 @@
 // fix-reload-keeps-case (UI review 2026-10-24 #1): a reload of the instructor's page in the middle of a card came back as
 // "No scenario" and the default patient, with the phones following that. Now the page comes back to the card, its
 // state and its clock (position.ts), the phones re-follow over the relay, and a toast says what happened.
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { devices, expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
 import { openApp, speedV2, startVite } from './app-support.ts';
+import { pressPath, to } from './mh-v2-path.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -168,3 +169,75 @@ test('Finish the case: a reload after "Save and restart" restores the new run; a
   expect(await fin(page, (w) => w.__pmeApp.archive.list().map((x) => x.resident))).toEqual(['Dr First', 'Dr Second']);
   console.log('finish-reload', JSON.stringify({ browserName, ranTo: Math.round(ranTo), restartedAt: Math.round(restartedAt * 10) / 10 }));
 });
+
+// Brief 50 (research/41 row 55): a /2 card was lost on a reload (no `pme.position` was ever kept: the
+// position was read from the /1 runner only), so the import-card PR (#272) had to drop its reload step. Now a /2 card is
+// kept and restored by the same path as a /1 card: both built-in /2 cards and an imported copy (kept in localStorage)
+// come back in their phase, near their clock, with their takings (the rows still read taken) and their phase timeline.
+type V = W & { __pmeApp: { session: { driver: { phaseRunner: { getState(): { takings: Record<string, number>; phases: Array<{ id: string; t: number }>; admin: Array<{ seq: number }> } } | null } } } };
+const v2 = <T>(p: Page, fn: (w: V) => T) => p.evaluate(`(${fn.toString()})(window)`) as Promise<Awaited<T>>;
+const IMPORTED_ID = 'imported-mh-v2';
+const IMPORTED_TITLE = 'Malignant hyperthermia, imported copy';
+const V2_CASES: Array<{ id: string; title: string; phase: string; presses: number; until?: number; imported?: boolean }> = [
+  // the run sheet's first five presses, then Latent by its own rule (the import PR's path: Latent at about 377 s)
+  { id: 'showcase-mh-v2', title: 'Malignant hyperthermia (phases)', phase: 'latent', presses: 5, until: 420 },
+  { id: IMPORTED_ID, title: IMPORTED_TITLE, phase: 'latent', presses: 5, until: 420, imported: true },
+  // two presses of Bleeding's rows (a procedure and a communication), in its first phase
+  { id: 'showcase-haemorrhage-v2', title: 'Class IV haemorrhage, PEA and resuscitation (phases)', phase: 'bleeding', presses: 0 },
+];
+const HAEM_ROWS = ['Oxygen by face mask, FiO₂ 1.0', 'Call for help'];
+
+for (const c of V2_CASES) {
+  test(`a reload mid-card brings a /2 card back in its phase, with its takings: ${c.imported ? 'an imported copy' : c.id}`, async ({ page, browserName }) => {
+    test.setTimeout(300_000);
+    if (c.imported) {
+      const doc = JSON.parse(readFileSync(resolve(import.meta.dirname, '../src/app/showcase/showcase-mh-v2.json'), 'utf8')) as Record<string, unknown>;
+      // the import's own store (scenarios.ts keepImported): this browser's localStorage, which a reload keeps
+      const kept = JSON.stringify([{ ...doc, id: IMPORTED_ID, title: IMPORTED_TITLE }]);
+      await page.addInitScript((v) => localStorage.getItem('pme.imported-cards') ?? localStorage.setItem('pme.imported-cards', v), kept);
+    }
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openApp(page, base, `?scenario=${c.id}#/teach2`, { warmMs: 1500 });
+    await page.waitForFunction((id) => ((window as unknown as W).__pmeApp.link.ctl.scenario.doc as { id?: string } | null)?.id === id, c.id, { timeout: 30_000 });
+    const code = await app(page, (w) => w.__pmeApp.session.code);
+    let titles: string[];
+    if (c.presses) {
+      titles = (await pressPath(page, (i) => i < c.presses)).map(([, t]) => t);
+      await to(page, c.until ?? 0);
+    } else {
+      for (const t of HAEM_ROWS) {
+        const row = page.locator('.ip2-action .ip2-rows:not(.ip2-finished-list) button.ip2-row').filter({ has: page.locator('.ip2-row-title', { hasText: t }) }).first();
+        await row.click();
+        await expect(row).toHaveAttribute('data-look', 'taken', { timeout: 10_000 });
+      }
+      titles = HAEM_ROWS;
+    }
+    await expect.poll(() => app(page, (w) => w.__pmeApp.link.ctl.scenario.stateId), { timeout: 30_000 }).toBe(c.phase);
+    await page.waitForTimeout(3000); // a position is taken every second
+    const pick = (w: V) => {
+      const s = w.__pmeApp.session.driver.phaseRunner?.getState();
+      return s ? { takings: s.takings, phases: s.phases.map((p) => `${p.id}@${p.t}`), admin: s.admin.map((a) => a.seq) } : null;
+    };
+    // the rows ACTION shows as taken (its own rows and the fold of rows not due now; a row of a phase left is not listed)
+    const taken = () => page.evaluate(() => [...document.querySelectorAll('.ip2-action button.ip2-row[data-look="taken"] .ip2-row-title')].map((e) => e.textContent ?? '').sort());
+    const before = { run: await v2(page, pick), simT: await app(page, (w) => w.__pmeApp.session.simNow()), taken: await taken() };
+    expect(Object.keys(before.run?.takings ?? {})).toHaveLength(titles.length);
+    expect(before.taken.length, 'rows read taken before the reload').toBeGreaterThan(0);
+
+    await page.reload();
+    await page.waitForFunction(() => '__pmeApp' in window);
+    expect(new URL(page.url()).searchParams.get('session')).toBe(code);
+    const said = () => app(page, (w) => w.__pmeApp.link.log.find((e) => e.text.startsWith('Restored after reload'))?.text ?? null);
+    await expect.poll(said, { timeout: 30_000, message: 'the restore is reported' }).toMatch(new RegExp(`^Restored after reload: ${c.title.replace(/[()]/g, '\\$&')}, \\d\\d:\\d\\d$`));
+    const after = await app(page, (w) => w.__pmeApp.link.simT);
+    console.log('reload-keeps-case v2', JSON.stringify({ browserName, card: c.id, before: Math.round(before.simT * 10) / 10, restored: Math.round(after * 10) / 10, deltaS: Math.round((before.simT - after) * 10) / 10, takings: before.run?.takings, taken: before.taken.length, toast: await said() }));
+    expect(Math.abs(before.simT - after), 'the clock comes back within 10 s of where it was').toBeLessThan(10);
+    expect(await app(page, (w) => w.__pmeApp.link.ctl.scenario.stateId)).toBe(c.phase);
+    expect(await app(page, (w) => (w.__pmeApp.link.ctl.scenario.doc as { id?: string } | null)?.id)).toBe(c.id);
+    expect(await v2(page, pick), 'the takings, the phase timeline and the administrations as before the reload').toEqual(before.run);
+    await expect(page.locator('.ip2-title')).toHaveText(c.title);
+    await expect(page.locator('.ip2-chips .ip2-current .ip2-chip-name').first()).toHaveText(c.phase === 'latent' ? 'Latent' : 'Bleeding');
+    // what read taken in ACTION still does
+    await expect.poll(taken, { timeout: 10_000, message: 'the same rows read taken' }).toEqual(before.taken);
+  });
+}
