@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { MemoryStorage } from './memory-storage.ts';
-import { DEFAULT_SITE, DEFIB_CHOICES, defibDefaults, gas, loadSite, parseSite, saveSite } from './site.ts';
+import { DEFAULT_SITE, DEFIB_CHOICES, defibDefaults, gas, loadSite, pacerDefaults, parseSite, saveSite } from './site.ts';
 
 describe('site profile', () => {
   it('keeps known values and replaces anything else with the default', () => {
@@ -35,5 +35,9 @@ describe("the room's defibrillator model", () => {
     // no model: the panel's energy as before (200 J), so nothing a press sends changes
     expect(defibDefaults(null)).toEqual({ energyAdultJ: 200, energyPaedJ: null, ladderJ: [] });
     expect(defibDefaults('lifepak-like')).toEqual(defibDefaults(null));
+  });
+  it('the generic model\'s pacer, for the Room card (row 58): 70 ppm, PAUSE drops the output to 0 mA; no model: none named', () => {
+    expect(pacerDefaults('generic')).toEqual({ ratePpm: 70, pausePct: null });
+    expect(pacerDefaults(null)).toBeNull();
   });
 });
