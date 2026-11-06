@@ -10,8 +10,8 @@ import { createServer, type IncomingMessage } from 'node:http';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { httpHandler, isLocalAddress, lanAddresses } from './http.ts';
 import { WIRE_LIMITS, parseWireMessage } from '../src/guard.ts';
-import { SESSION_CODE_RE, VIEWER_EVENTS, type Role, type WireEvent, type WireMessage } from '../src/protocol.ts';
-import { RELAY_CLOSE, RELAY_RETRY_CLOSE, type RelayFrame } from '../src/transport/relay-frames.ts';
+import { SESSION_CODE_RE, VIEWER_EVENTS, type Instrument, type Role, type WireEvent, type WireMessage } from '../src/protocol.ts';
+import { RELAY_CLOSE, RELAY_RETRY_CLOSE, type RelayDevice, type RelayFrame } from '../src/transport/relay-frames.ts';
 
 export interface RelayOptions {
   port?: number; // 0 = random (tests)
@@ -58,6 +58,14 @@ interface Peer {
   granted: boolean;
   /** The socket's address (the wrong-PIN limit counts per address). */
   address: string;
+  /** R2: what its last hello said it shows, and its device key (null: the hello had none). */
+  show: Instrument | null;
+  device: string | null;
+  /** R2: the round trip of its last answered heartbeat ping, ms, and the number of the sweep that ping was. */
+  rttMs: number | null;
+  answered: number;
+  /** R2: when it last answered a ping (any ping), or joined (relay clock). */
+  seenAt: number;
 }
 
 interface Room {
@@ -176,7 +184,20 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
   const count = (room: Room, f: (p: Peer) => boolean) => [...room.peers].filter(f).length;
   /** Learners count the phones that follow; only the host hears of instructors (plan §1: learners are not told). */
   const peersFrame = (room: Room): Extract<RelayFrame, { relay: 'peers' }> => ({ relay: 'peers', hostOnline: room.host !== null, peers: count(room, (p) => p.role !== 'instructor') });
-  const hostPeersFrame = (room: Room): RelayFrame => ({ ...peersFrame(room), instructors: count(room, (p) => p.role === 'instructor' && p.granted) });
+  /** R2: the heartbeat sweep's number and time; each sweep's ping carries its number, so its pong is told apart. */
+  let sweepNo = 0;
+  let sweepAt = 0;
+  /**
+   * R2 (§4 D2): the host alone hears every device, with its last hello's instrument and its measured ping; a socket the
+   * relay is closing is not listed. Its round trip counts only if it answered the LAST sweep's ping.
+   */
+  const devices = (room: Room): RelayDevice[] => {
+    const t = clock();
+    return [...room.peers]
+      .filter((p) => p.ws.readyState === p.ws.OPEN)
+      .map((p) => ({ id: p.id, role: p.role, show: p.show, device: p.device, granted: p.granted, rttMs: p.answered === sweepNo ? p.rttMs : null, sinceMs: t - p.seenAt }));
+  };
+  const hostPeersFrame = (room: Room): RelayFrame => ({ ...peersFrame(room), instructors: count(room, (p) => p.role === 'instructor' && p.granted), devices: devices(room) });
   /** FU-11 (F01, BA10): one peer's frame that throws is that frame's problem, never the process's (logged and dropped). */
   const contain = (fn: () => void) => {
     try {
@@ -207,6 +228,8 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
         else {
           // A re-said instructor hello counts too: one open socket must not flood the host with PIN checks (G1)
           if (peer.role === 'instructor' && (blocked(peer.address) || !mayHello(peer.address))) return tooMany(peer.ws);
+          peer.show = m.show ?? null; // R2: what it shows is its LAST hello's
+          peer.device = m.device ?? null;
           room.awaiting.add(peer);
           if (room.host) raw(room.host.ws, data);
         }
@@ -329,7 +352,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
     let room: Room | null = null;
     let held: string[] | null = null; // This socket's frames while its hello waits on a liveness check
     const admit = (r: Room, m: Extract<WireMessage, { kind: 'hello' }>, data: string) => {
-      const p: Peer = (peer = { ws, id: m.from, role: m.role, alive: true, granted: m.role === 'controller', address });
+      const p: Peer = (peer = { ws, id: m.from, role: m.role, alive: true, granted: m.role === 'controller', address, show: m.show ?? null, device: m.device ?? null, rttMs: null, answered: 0, seenAt: clock() });
       if (m.role === 'host') {
         const old = r.host;
         if (old && old.ws !== ws) old.ws.close(1000, 'replaced by reconnect');
@@ -409,6 +432,17 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
       if (!room || m.session !== room.code || m.from !== peer.id) return void dropped++; // no spoofing
       route(room, peer, m, data);
     };
+    // R2: the round trip of this socket's answer to the sweep's ping (the pong echoes the ping's payload, RFC 6455 §5.5.3;
+    // the liveness check's ping, `answers`, carries none). Any pong says the socket is there.
+    ws.on('pong', (data) => {
+      if (!peer) return;
+      const t = clock();
+      peer.seenAt = t;
+      if (sweepNo > 0 && peer.answered !== sweepNo && data.toString() === String(sweepNo)) {
+        peer.rttMs = t - sweepAt;
+        peer.answered = sweepNo;
+      }
+    });
     const take = (data: string) => {
       if (!held) return onFrame(data);
       if (held.length < HELD_MAX) held.push(data);
@@ -484,13 +518,20 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
   });
 
   const sweep = (now = Date.now()) => {
+    const gone = new Set<WebSocket>();
     for (const ws of wss.clients) {
-      if (alive.get(ws) === false) {
-        ws.terminate();
-        continue;
-      }
+      if (alive.get(ws) !== false) continue;
+      ws.terminate();
+      gone.add(ws);
+    }
+    // R2: the host hears the answers to the last sweep's ping before this one's goes out (a closing socket is not listed)
+    for (const room of rooms.values()) tellHost(room);
+    sweepNo++;
+    sweepAt = now;
+    for (const ws of wss.clients) {
+      if (gone.has(ws)) continue;
       alive.set(ws, false);
-      ws.ping();
+      ws.ping(String(sweepNo));
       frame(ws, { relay: 'hb', t: now });
     }
     const old = (x: number) => now - x >= PIN_WINDOW_MS;

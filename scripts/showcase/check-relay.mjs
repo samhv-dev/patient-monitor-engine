@@ -9,7 +9,9 @@
 // Before the runs: the kit's Windows launchers (.cmd) exist, end every line with CRLF and hold only ASCII.
 // Per run: a 64-byte binary frame (the relay drops it), a host hello of >= 64 bytes (answer: the relay's `peers` frame),
 // a controller hello, a 1 KB host event that the relay forwards to the controller byte for byte, /pme-relay.json still
-// answers, the relay is still running; then the relay is stopped and the port is free again.
+// answers; after the relay's first heartbeat sweep (10 s), a viewer that joins makes the host's `peers` frame list the
+// controller with its measured round trip (`devices`, plan room-and-instruments.md R2); the relay is still running; then
+// the relay is stopped and the port is free again.
 //   node scripts/showcase/check-relay.mjs [KIT_DIR] [--port 8690] [--json OUT.json]
 // Needs Node.js >= 22 (its built-in WebSocket client). Port 8690 (and the next 9) keeps clear of a classroom on 8650.
 import { spawn } from 'node:child_process';
@@ -88,7 +90,17 @@ function socket(port, proc) {
       if (!m.startsWith('{"relay":"hb"')) return m;
     }
   };
-  return { ws, opened: withTimeout(opened, 'socket open'), next: nextReal };
+  /** Resolves at the relay's next heartbeat frame (its sweep), within `ms`. */
+  const heartbeat = (ms) => new Promise((ok, no) => {
+    const t = setTimeout(() => no(new Error(`no heartbeat within ${ms / 1000} s`)), ms);
+    ws.addEventListener('message', function on(e) {
+      if (typeof e.data !== 'string' || !e.data.startsWith('{"relay":"hb"')) return;
+      clearTimeout(t);
+      ws.removeEventListener('message', on);
+      ok();
+    });
+  });
+  return { ws, opened: withTimeout(opened, 'socket open'), next: nextReal, heartbeat };
 }
 
 const SESSION = 'KRATST'; // a valid session code (SESSION_CODE_RE: no I, L, O, 0, 1)
@@ -130,6 +142,26 @@ async function frames(port, proc, steps) {
   const info = await withTimeout(fetch(`http://127.0.0.1:${port}/pme-relay.json`).then((r) => r.json()), '/pme-relay.json');
   if (info.relay !== 'pme' || info.port !== port) throw new Error(`/pme-relay.json: ${JSON.stringify(info)}`);
   step(`/pme-relay.json still answers: ${JSON.stringify(info)}`);
+
+  // R2: the sweep pings every socket (the kit's heartbeat is 10 s); the controller's socket answers, and the host's next
+  // peers frame (here: a viewer joining) lists it with that round trip
+  await host.heartbeat(12_000);
+  await new Promise((r) => setTimeout(r, 300)); // the pong of a loopback socket: well under a millisecond
+  const view = socket(port, proc);
+  await view.opened;
+  view.ws.send(wire('hello', 'kit-check-viewer', 1, { role: 'viewer', show: 'learner', device: 'kitcheck0123' }));
+  let table = null;
+  for (let i = 0; i < 4 && !table; i++) {
+    const f = JSON.parse(await host.next('the host told of the viewer, with its devices'));
+    // (the sweep's own frame comes first: sent before its ping, it cannot hold that ping's answer)
+    if (f.relay === 'peers' && Array.isArray(f.devices) && f.devices.some((d) => d.id === 'kit-check-viewer')) table = f.devices;
+  }
+  const ctlRow = table?.find((d) => d.id === 'kit-check-controller-0123456789');
+  const viewRow = table?.find((d) => d.id === 'kit-check-viewer');
+  if (!ctlRow || typeof ctlRow.rttMs !== 'number' || !viewRow || viewRow.show !== 'learner' || viewRow.device !== 'kitcheck0123')
+    throw new Error(`the host's device table after a sweep: ${JSON.stringify(table)}`);
+  step(`after one sweep the host's devices list the controller with rttMs ${ctlRow.rttMs} and the viewer showing ${viewRow.show}`);
+  view.ws.close();
   host.ws.close();
   ctl.ws.close();
   await new Promise((r) => setTimeout(r, 300));

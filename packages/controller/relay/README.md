@@ -84,6 +84,23 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
 - While the host is away, a joining peer gets the cached snapshot and `{relay:'peers', hostOnline:false}`.
 - Heartbeat every 10 s: a WebSocket ping (dead sockets are terminated) and a `{relay:'hb'}` frame, so browser
   clients can notice a dead link (they cannot see pings).
+- The device table (plan room-and-instruments.md R2): the host's `peers` frame (never a learner's: theirs stays
+  `{relay, hostOnline, peers}`) carries `devices`, one entry per non-host socket in the order they joined. It is sent
+  on every join and leave, on a grant, and at every heartbeat sweep, before that sweep's ping, so it holds the answers
+  to the previous one. Each sweep's ping carries the sweep's number, which the pong echoes; the relay measures the
+  round trip on its own clock. The ping is the relay↔device hop (in the kit the relay runs on the laptop: the Wi-Fi).
+
+  | field | what it is |
+  |---|---|
+  | `id`, `role` | the socket's peer id and role, from its hello |
+  | `show`, `device` | what its LAST hello said it shows (`learner`, `monitor`, `defib`, `depth`) and its device key; `null` when the hello had none (an older build, a controller) |
+  | `granted` | it may command (a controller, or an instructor the host granted) |
+  | `rttMs` | the round trip of its answer to the last sweep's ping, ms; `null` while that ping is unanswered or before its first ping |
+  | `sinceMs` | ms since its last pong (any ping), or since it joined before its first |
+
+  A socket that misses a ping shows `rttMs: null` with a growing `sinceMs` in the frames that follow, and is
+  terminated at the next sweep (the rule above), which drops it from the table. A PIN is never in it. With 60 devices
+  the frame is ≈ 7.6 KB (`test/relay/relay-devices.test.ts`, worst case: 16-character keys, 3-digit pings).
 - `/signal?session=CODE&peer=ID` is the WebRTC signalling endpoint: frames `{to, data}` are routed to peer `to`
   in the same session as `{from, data}`. The host uses the id `host`.
 
