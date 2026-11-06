@@ -140,6 +140,24 @@ for (const [w, h, paneW, pane] of [[1990, 920, 1374, 820], [1990, 1080, 1374, 98
   test(`Saadat-like on the Instructor view at ${w} × ${h}: no tile text overlaps; the RR tile is set as the EtCO2 tile`, async ({ page, browserName }) => {
     test.setTimeout(150_000);
     await page.setViewportSize({ width: w, height: h });
+    // brief 47: how late the engine worker's event batches reach the page (now − the batch's own wall time), the largest
+    // and the latest, so a miss below can tell a queue between the worker and the page from a slow command
+    await page.addInitScript(() => {
+      const lag = { max: 0, last: 0, n: 0 };
+      Object.assign(window, { __p47lag: lag });
+      const W = window.Worker;
+      window.Worker = class extends W {
+        constructor(...a: ConstructorParameters<typeof Worker>) {
+          super(...a);
+          this.addEventListener('message', (e: MessageEvent<{ type?: string; anchor?: { epochMs: number } }>) => {
+            if (e.data?.type !== 'events' || !e.data.anchor) return;
+            lag.last = performance.timeOrigin + performance.now() - e.data.anchor.epochMs;
+            lag.max = Math.max(lag.max, lag.last);
+            lag.n++;
+          });
+        }
+      };
+    });
     await openApp(page, base, '#/teach', { warmMs: 2500 });
     const host = await page.locator('.stage > .monitor-host').boundingBox();
     // the render path (brief 47): 'worker-pump' (the page posts the frames) once queued them without bound and delayed every
@@ -189,6 +207,7 @@ for (const [w, h, paneW, pane] of [[1990, 920, 1374, 820], [1990, 1080, 1374, 98
       new MutationObserver(() => document.querySelector('.stage .pme-stile[data-param="CO2"]') && !d.log.some((l) => l.endsWith('tile')) && d.log.push(`${at()} tile`)).observe(document.body, { subtree: true, childList: true });
     });
     const tPress = Date.now();
+    const lagAtPress = await page.evaluate(() => ({ ...(window as unknown as { __p47lag: object }).__p47lag }));
     await page.getByRole('button', { name: 'CO₂ sampling line' }).click();
     const co2Tile = page.locator('.stage .pme-stile[data-param="CO2"]');
     const tileShown = await co2Tile.waitFor({ state: 'visible', timeout: 5_000 }).then(() => true, () => false);
@@ -197,10 +216,10 @@ for (const [w, h, paneW, pane] of [[1990, 920, 1374, 820], [1990, 1080, 1374, 98
       await co2Tile.waitFor({ state: 'visible', timeout: 25_000 }).catch(() => undefined);
       const why = await page.evaluate(() => {
         const a = (window as unknown as { __pmeApp: { link: { log: unknown[]; ctl: { state: unknown; pendingCount: number } } } }).__pmeApp;
-        return { ...(window as unknown as { __p47: object }).__p47, panelLog: a.link.log.slice(-3), engineCo2: (a.link.ctl.state as { sensors?: { co2?: string } } | null)?.sensors?.co2 ?? null, pending: a.link.ctl.pendingCount, visibility: document.visibilityState };
+        return { ...(window as unknown as { __p47: object }).__p47, workerEventLag: (window as unknown as { __p47lag: object }).__p47lag, panelLog: a.link.log.slice(-3), engineCo2: (a.link.ctl.state as { sensors?: { co2?: string } } | null)?.sensors?.co2 ?? null, pending: a.link.ctl.pendingCount, visibility: document.visibilityState };
       });
-      console.log(`saadat-p3 ${browserName} ${w}x${h}: no CO2 tile 5 s after the press (filled → press ${tPress - tFilled} ms) ${JSON.stringify(why)}`);
-    } else console.log(`saadat-p3 ${browserName} ${w}x${h}: CO2 tile within 5 s (filled → press ${tPress - tFilled} ms)`);
+      console.log(`saadat-p3 ${browserName} ${w}x${h}: no CO2 tile 5 s after the press (filled → press ${tPress - tFilled} ms, worker event lag at the press ${JSON.stringify(lagAtPress)}) ${JSON.stringify(why)}`);
+    } else console.log(`saadat-p3 ${browserName} ${w}x${h}: CO2 tile within 5 s (filled → press ${tPress - tFilled} ms, worker event lag at the press ${JSON.stringify(lagAtPress)})`);
     expect(tileShown, 'the CO2 tile within 5 s of the CO₂ sampling line press').toBe(true);
     // the CO2 numerics fill: EtCO2 and the AWRR (the ventilator's rate) both printed
     const co2Filled = () =>
