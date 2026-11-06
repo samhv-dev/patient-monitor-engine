@@ -471,8 +471,10 @@ export interface DebriefExport {
   objectives: ReturnType<typeof objectives>;
   facts: Fact[];
   keyTimes: Array<{
-    id: 'recognition' | 'firstTeam' | `objective:${number}` | 'pulseLostToCpr' | 'pulseless';
+    id: 'recognition' | 'firstTeam' | `objective:${number}` | 'pulseLostToCpr' | 'pulseless' | 'handsOff';
     label: string; fromT: number | null; toT: number | null; askedS?: number; totalS?: number;
+    /** Hands-off only (D3): the compression fraction, 1 − `totalS` / the time pulseless (0–1). */
+    fraction?: number;
     /** Recognition only: what `fromT` is ("early signs", the state the card's rules count from; "start" without one). */
     fromLabel?: string;
     state: 'measured' | 'notTicked' | 'noneAfter';

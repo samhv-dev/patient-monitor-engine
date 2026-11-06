@@ -19,7 +19,7 @@ import type { Link } from '../link.ts';
 import { clock, h, seg, setText, stepper, toast } from '../ui.ts';
 import type { Cache } from './cache.ts';
 import { pressStep } from './press.ts';
-import { classify } from './rows.ts';
+import { boardOf } from './feed.ts';
 import type { SheetFrame } from './sheet.ts';
 
 export const DRUG_GROUPS: ReadonlyArray<[Group, string]> = [['mh', 'MH kit'], ['vaso', 'Vasoactive'], ['induction', 'Induction'], ['arrest', 'Arrest'], ['fluids', 'Fluids'], ['all', 'All']];
@@ -91,11 +91,10 @@ export function pinnedSteps(link: Link): PinnedStep[] {
   const sv = link.ctl.scenario;
   const doc = asV1(sv.doc); // a pme-scenario/2 card: no steps to pin until F6
   if (!doc || !sv.stateId) return [];
-  const board = classify({
-    doc, stateId: sv.stateId, history: link.ctl.scenario.history, enteredT: sv.enteredT, simT: link.simT, inState: sv.timeInState(link.simT),
-    paused: link.ctl.hostPaused, log: link.log, record: link.host?.record.data ?? null,
-    values: link.ctl.state?.values as Partial<Record<string, number>> | undefined, holds: null, base: new Map(),
-  });
+  // ACTION's own board (feed.ts): the host's, and on a remote its view feed's, so a step a reloaded phone's history no
+  // longer shows as taken is not offered again here
+  const board = boardOf(link);
+  if (!board) return [];
   const out: PinnedStep[] = [];
   for (const live of board.list) {
     const r = live.row;

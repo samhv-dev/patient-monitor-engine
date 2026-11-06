@@ -2,8 +2,8 @@
 // Instructor v2 with no case loaded (the owner's board "Empty 5", approved 30 October): the header reads the default
 // patient and "No case loaded"; the strip is one row, its one dashed chip (the owner, 1 November: no note, no status
 // line; ACTION says how to begin); STATE's cue box is the
-// default patient's; ACTION holds three cards (Free roam, Scenario library, Debrief archive) with Room setup and the
-// Scenario builder under them, and the foot line. 1–3 choose a card; Browse lists the library's cards (the two
+// default patient's; ACTION holds three cards (Free roam, Scenario library, Debrief archive) with Room setup, the
+// Scenario builder and "Open a card file…" under them, and the foot line. 1–3 choose a card; Browse lists the library's cards (the two
 // demonstrations first), a row loads its card through the app's one load and ACTION becomes its steps; Esc returns.
 // With a card loaded none of it shows.
 import { ScenarioView, type AckResult, type CommandInput } from '@pme/controller';
@@ -82,7 +82,7 @@ describe('Instructor v2 with no case loaded (board "Empty 5")', () => {
     expect(r.shown('.ip2-strip [role="status"]')).toBe(false);
     expect(r.q('.ip2-strip')?.hasAttribute('data-empty')).toBe(true);
     // ACTION says how to begin
-    expect(r.text('.ip2-begin-hint')).toBe('no case: three ways to begin · 1–3 on the keyboard · two shortcuts');
+    expect(r.text('.ip2-begin-hint')).toBe('no case: three ways to begin · 1–3 on the keyboard · three shortcuts');
   });
 
   it("STATE's cue box is the default patient's: four lines, the Say line in italics", () => {
@@ -117,7 +117,7 @@ describe('Instructor v2 with no case loaded (board "Empty 5")', () => {
 
   it('ACTION: the hint, three cards in order with their texts and buttons, the two buttons under the third, the foot line', () => {
     const r = use(rig());
-    expect(r.text('.ip2-begin-hint')).toBe('no case: three ways to begin · 1–3 on the keyboard · two shortcuts');
+    expect(r.text('.ip2-begin-hint')).toBe('no case: three ways to begin · 1–3 on the keyboard · three shortcuts');
     const cards = cardsShown(r);
     expect(cards.map((c) => c.dataset.way)).toEqual(['free', 'library', 'archive']);
     expect(cards.map((c) => [c.querySelector('.ip2-begin-title')?.textContent, c.querySelector('.ip2-begin-line')?.textContent, c.querySelector('.ip2-begin-btn')?.textContent])).toEqual([
@@ -127,13 +127,16 @@ describe('Instructor v2 with no case loaded (board "Empty 5")', () => {
     ]);
     expect(cards.map((c) => c.getAttribute('aria-keyshortcuts'))).toEqual(['1', '2', '3']);
     expect(cards[1]?.classList.contains('ip2-begin-primary')).toBe(true);
-    // directly under the third card: Room setup and the Scenario builder (disabled, "after the demo")
+    // directly under the third card: Room setup and the Scenario builder (disabled, "after the demo"), and under them
+    // "Open a card file…" (brief 22; teach2/import-card.dom.test.ts); what a file came to shows under the buttons
     const two = r.all('.ip2-begin-two > button');
-    expect(two.map((b) => b.textContent?.replace(/\s+/g, ' ').trim())).toEqual(['Room setup', 'Scenario builder after the demo']);
+    expect(two.map((b) => b.textContent?.replace(/\s+/g, ' ').trim())).toEqual(['Room setup', 'Scenario builder after the demo', 'Open a card file…']);
     expect((two[1] as HTMLButtonElement).disabled).toBe(true);
     expect(two[1]?.title).toMatch(/pme-scenario\/2 authoring guide/);
     expect(two[1]?.querySelector('.ip2-begin-tag')?.textContent).toBe('after the demo');
-    expect(r.q('.ip2-begin-menu')?.lastElementChild).toBe(r.q('.ip2-begin-two'));
+    expect(r.q('.ip2-begin-two')?.previousElementSibling).toBe(r.q('.ip2-begin-cards'));
+    expect(r.q('.ip2-begin-menu')?.lastElementChild).toBe(r.q('.ip2-begin-note'));
+    expect(r.shown('.ip2-begin-note')).toBe(false);
     expect(r.text('.ip2-action .ip2-foot')).toBe('A reload keeps whatever is running. A case ends only with “Finish the case” in the dock.');
     // no numbered rows and no folds on the menu
     expect(r.shown('.ip2-action .ip2-rows:not(.ip2-case-list)')).toBe(false);

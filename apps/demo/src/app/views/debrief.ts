@@ -274,6 +274,7 @@ function tile(k: KeyTime, moments: KeyMoment[]): HTMLElement | null {
   let sub = '';
   if (!ticked) sub = 'not ticked';
   else if (k.id === 'pulseless') sub = `first lost ${mmss(k.fromT ?? 0)}`;
+  else if (k.id === 'handsOff') sub = `compression fraction ${Math.round((k.fraction ?? 0) * 100)} %`;
   else if (k.id === 'recognition' && k.fromT !== null && k.toT !== null) sub = `${mmss(k.fromT)} ${k.fromLabel ?? 'start'} → ${mmss(k.toT)} ticked`; // #18: from the early signs, not Load
   else if (k.fromT !== null && k.toT !== null) {
     const action = k.id === 'firstTeam' ? moments.find((m) => m.t === k.toT)?.text : undefined;
@@ -283,7 +284,25 @@ function tile(k: KeyTime, moments: KeyMoment[]): HTMLElement | null {
   return h('div', { class: `db-tile${met ? ' met' : ''}${ticked ? '' : ' unticked'}`, 'data-key': k.id, 'data-state': k.state },
     h('div', { class: 'db-tile-cap', title: k.label }, k.label),
     h('div', { class: 'db-tile-v' }, taken === null ? '–' : span(taken)),
-    h('div', { class: 'db-tile-sub' }, sub));
+    h('div', { class: 'db-tile-sub' }, sub),
+    k.id === 'handsOff' ? fractionBar(k.fraction ?? 0) : null);
+}
+
+/** Reference lines of the compression-fraction bar (DQ3, ruled 5 November): the owner's values, drawn and labelled
+ *  alike; the bar carries no grade and no colour change at either. */
+const FRACTION_REFS = [60, 80] as const;
+/** The hands-off tile's compression fraction as a small bar: the outline is 100 %, the fill the fraction, with a
+ *  labelled line at each reference value. */
+function fractionBar(f: number): HTMLElement {
+  const W = 60, x = (p: number) => (0.5 + (p / 100) * W).toFixed(1);
+  const svg = h('span', { class: 'db-bar db-fraction' });
+  svg.innerHTML = `<svg viewBox="0 0 ${W + 1} 15" width="${W + 1}" height="15" aria-hidden="true">`
+    + `<rect x="0.5" y="0.5" width="${(Math.min(Math.max(f, 0), 1) * W).toFixed(1)}" height="7" fill="#000"/>`
+    + `<rect x="0.5" y="0.5" width="${W}" height="7" fill="none" stroke="#000" stroke-width="1"/>`
+    + FRACTION_REFS.map((p) => `<line data-ref="${p}" x1="${x(p)}" y1="0" x2="${x(p)}" y2="9" stroke="#000" stroke-width="0.6" stroke-dasharray="1 1"/>`
+      + `<text x="${x(p)}" y="14.5" font-size="5.5" text-anchor="middle">${p} %</text>`).join('')
+    + '</svg>';
+  return svg;
 }
 
 /** An objective's measured interval as a bar: the outline is the time asked, the fill the time taken; time past the
