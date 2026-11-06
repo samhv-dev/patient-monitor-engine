@@ -52,6 +52,10 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
 - **The lean copy** (a learner's phone, a pending instructor): `VIEWER_EVENTS` only, and no `commandApplied` of a
   `scenario` or `note` command (a mark's kind and note, a judged objective: plan instructor-peer-role.md §7). The
   host's `instructorView` feed is not in `VIEWER_EVENTS`.
+- **A `note` command** (from a granted instructor or a controller) is `{type:'note', kind:'note'|'marker', text, ev?}`:
+  `text` at most 500 characters, `ev` the run event the note is, one of `NOTE_EVENTS` (`recognised`, the Recognised
+  press). The relay forwards it byte for byte; a frame the guard refuses (another `ev`, a longer text) is dropped
+  before it reaches the host.
 - **An instructor socket** (`hello {role:'instructor', pin}`, plan §1) is admitted PENDING, from any device. The host
   answers its hello with `grant {to, granted, reason?}` before its welcome. Granted: the socket commands and gets the
   host's frames byte for byte. Denied: `{relay:'error', code:'denied', message: reason}` and close 4013, which the

@@ -120,7 +120,7 @@ if (follow) {
   const link = new Link(session.panel, session.panelTransport, session);
   // the instructor phone (plan instructor-peer-role.md §6): its notes are filed as the laptop's own, and its view feed
   // is read from this Link by Instructor v2's functions
-  session.serveInstructors({ note: (text, kind, t) => link.note(text, kind, t), feed: () => feedOf(link) });
+  session.serveInstructors({ note: (text, kind, t, ev) => link.note(text, kind, t, ev), feed: () => feedOf(link) });
   // A monitor whose worker stopped is final (no fallback) — say so and name the way out; the reason goes to the console
   // for the gate note's diagnostics
   shell.monitorHost.addEventListener('pme-monitor-failed', (e) => {
