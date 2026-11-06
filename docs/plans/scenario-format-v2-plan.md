@@ -456,7 +456,7 @@ a `/2` card only; a `/1` card reads exactly as today (IP9's parity tests stay gr
   `/1` one still does); `drug-sheet.dom.test.ts` (route choice; IM dantrolene sends `route: 'im'` and the row reads
   "route not modelled"); `press.dom.test.ts` (an A press sends `give` with `actionId`, no `trigger`); the IP9 parity
   tests unchanged for `/1`.
-- **Acceptance:** `teach2-fit.e2e.ts` at 1440 × 900 with a `/2` fixture card: no scroll, every open action a row, no row
+- **Acceptance:** `teach2-fit.e2e.ts` (since 6 November `teach2-fit-stages` and `teach2-fit-strip.e2e.ts`) at 1440 × 900 with a `/2` fixture card: no scroll, every open action a row, no row
   disabled; the `/1` goldens of IP9 identical. (amended 2026-10-29 after review) The visible-surface checks (O5, F8) on
   the `/2` fixture card, each printed in the PR: the strip lists its phases; one stage mark per phase entry; which rows
   are pressable when; the record's `who` of an A press ("team", R10); the library's case details; the Debrief "ready"
