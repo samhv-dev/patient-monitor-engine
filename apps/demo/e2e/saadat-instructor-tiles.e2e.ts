@@ -10,7 +10,7 @@ import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
-import { openApp, startVite, tab } from './app-support.ts';
+import { openApp, sheet, startVite, TEACH2 } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -136,7 +136,10 @@ async function shot(page: Page, name: string, browserName: string): Promise<void
 // 30 October): the owner's window now gives a 1374 × 820 pane (1374 × 980 at 1080 high), and the 1000 × 800 pane needs a
 // 1496 × 900 window (the 440 px panel). A 1420 × 900 window gave 944 × 777 with the footer line, where the Saadat-like
 // NIBP tile wrapped (PR #137, reported).
-for (const [w, h, paneW, pane] of [[1990, 920, 1374, 820], [1990, 1080, 1374, 980], [1496, 900, 1000, 800]] as const) {
+// Retire-instructor-v1 PR 2: the same three windows on Instructor v2, whose monitor pane is STATE's (under the cue box
+// and the Fast forward box, beside ACTION; teach2.css), measured there on Chromium: 835 × 479 at 1990 × 920, 835 × 639
+// at 1990 × 1080, 607 × 381 at 1496 × 900 (today's view gave 1374 × 820, 1374 × 980 and 1000 × 800).
+for (const [w, h, paneW, pane] of [[1990, 920, 835, 479], [1990, 1080, 835, 639], [1496, 900, 607, 381]] as const) {
   test(`Saadat-like on the Instructor view at ${w} × ${h}: no tile text overlaps; the RR tile is set as the EtCO2 tile`, async ({ page, browserName }) => {
     test.setTimeout(150_000);
     await page.setViewportSize({ width: w, height: h });
@@ -158,13 +161,13 @@ for (const [w, h, paneW, pane] of [[1990, 920, 1374, 820], [1990, 1080, 1374, 98
         }
       };
     });
-    await openApp(page, base, '#/teach', { warmMs: 2500 });
+    await openApp(page, base, TEACH2, { warmMs: 2500 }); // Instructor v2's monitor pane in STATE
     const host = await page.locator('.stage > .monitor-host').boundingBox();
     // the render path (brief 47): 'worker-pump' (the page posts the frames) once queued them without bound and delayed every
     // command; CI's WebKit printed 'worker-raf' (run 42170491121), so a miss below is not that
     const path = await page.evaluate(() => (window as unknown as { __pmeApp: { session: { monitor: { renderPath: Promise<string> } } } }).__pmeApp.session.monitor.renderPath);
     console.log(`saadat-p3 ${browserName} ${w}x${h}: monitor pane ${host?.width.toFixed(0)} × ${host?.height.toFixed(0)}, render path ${path}`);
-    expect(Math.abs((host?.width ?? 0) - paneW)).toBeLessThan(15); // the instructor panel is open beside the monitor
+    expect(Math.abs((host?.width ?? 0) - paneW)).toBeLessThan(15); // Instructor v2's pane in STATE, beside ACTION
     expect(Math.abs((host?.height ?? 0) - pane)).toBeLessThan(15);
 
     // no capnograph: the RR tile stands in for the CO2 tile. First while the cuff's first cycle is running (the NIBP tile
@@ -186,7 +189,7 @@ for (const [w, h, paneW, pane] of [[1990, 920, 1374, 820], [1990, 1080, 1374, 98
     // the capnograph attached (the Devices tab's CO2 sampling line on a ventilated patient)
     const vent = await page.evaluate(() => (window as unknown as W).__pmeApp.session.monitor.dispatch({ id: 'p3-vent', issuedBy: 'test', type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, peep: 5, fio2: 0.5 } }));
     expect(vent.accepted).toBe(true);
-    await tab(page, 'devices');
+    const devs = await sheet(page, 'devices'); // Instructor v2's Devices sheet
     // brief 47: the press's path is timed in the page (the main thread's longest stall, the panel's send and answer, the
     // monitor's dispatch and answer, the tile's arrival), so a miss says where the time went; the assertion is unchanged
     await page.evaluate(() => {
@@ -208,7 +211,7 @@ for (const [w, h, paneW, pane] of [[1990, 920, 1374, 820], [1990, 1080, 1374, 98
     });
     const tPress = Date.now();
     const lagAtPress = await page.evaluate(() => ({ ...(window as unknown as { __p47lag: object }).__p47lag }));
-    await page.getByRole('button', { name: 'CO₂ sampling line' }).click();
+    await devs.getByRole('button', { name: 'CO₂ sampling line' }).click();
     // CI run 42111824225 (PR #285, webkit 2/3, attempt 1): no CO2 tile 5 s after the press, the toggle pressed, no
     // refusal on the page, the session clock running; local macOS WebKit 20/20, and 8 probe runs (idle and under CPU
     // load) answered the attach in 16–30 ms with the tile at once. The mechanism is not found: a miss now prints the
@@ -218,7 +221,7 @@ for (const [w, h, paneW, pane] of [[1990, 920, 1374, 820], [1990, 1080, 1374, 98
     if (!tileShown) {
       const at5 = await page.evaluate(() => {
         const a = (window as unknown as { __pmeApp: { link: { simT: number; log: Array<{ simT: number | null; text: string; refused?: string }>; ctl: { state: unknown; pendingCount: number } }; session: { simNow(): number } } }).__pmeApp;
-        return { log: a.link.log.slice(-4), engineCo2: (a.link.ctl.state as { sensors?: { co2?: string } } | null)?.sensors?.co2 ?? null, pending: a.link.ctl.pendingCount, linkSimT: a.link.simT, hostSimT: a.session.simNow(), pressed: document.querySelector('[role=tabpanel] .toggles button:nth-child(4)')?.getAttribute('aria-pressed') ?? null, workerEventLag: (window as unknown as { __p47lag: object }).__p47lag, visibility: document.visibilityState };
+        return { log: a.link.log.slice(-4), engineCo2: (a.link.ctl.state as { sensors?: { co2?: string } } | null)?.sensors?.co2 ?? null, pending: a.link.ctl.pendingCount, linkSimT: a.link.simT, hostSimT: a.session.simNow(), pressed: document.querySelector('.ip2-sheet[data-sheet=devices] .toggles button:nth-child(4)')?.getAttribute('aria-pressed') ?? null, workerEventLag: (window as unknown as { __p47lag: object }).__p47lag, visibility: document.visibilityState };
       });
       console.log(`saadat-p3 ${browserName} ${w}x${h}: no CO2 tile 5 s after the press (filled → press ${tPress - tFilled} ms, worker event lag at the press ${JSON.stringify(lagAtPress)}) ${JSON.stringify(at5)}`);
       // for the diagnosis only (the test still fails): how late the tile comes, if it comes, and the press's timeline

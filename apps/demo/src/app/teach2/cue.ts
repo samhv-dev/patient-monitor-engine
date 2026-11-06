@@ -6,6 +6,8 @@
 // held-values dialog reads them, answer 14); and Swap, which opens the full-size Monitor view (answer 18). While the
 // host is paused the in-stage clock reads "frozen" (the owner's option G dropped v9's banner: the pill turns amber, the
 // monitor carries PAUSED, and the pill's tooltip says when a step pressed now is given).
+// With a case loaded, "Hold the stage timer" / "Resume the stage timer" sends `scenario pause` / `resume` (the stage's
+// rules and timers stop, the physiology runs on; retire-instructor-v1 G2).
 import './state.css';
 import type { StateVar } from '@pme/engine-core';
 import { asV1, isV2 } from '@pme/controller';
@@ -57,12 +59,15 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const name = h('span', { class: 'ip2-cue-name' });
   const inStage = h('span', { class: 'ip2-cue-clock' });
   const how = h('span', { class: 'ip2-cue-how' });
+  // Hold the stage timer (retire-instructor-v1 G2): the Scenario tab's "Hold the timer", the same commands. The case's
+  // rules and timers stop while the body runs on (both runners honour `scenario pause`); the clock above reads frozen.
+  const hold = h('button', { type: 'button', class: 'ip2-btn ip2-cue-hold', onclick: () => void link.send({ type: 'scenario', action: sv.paused ? 'resume' : 'pause' }) });
   const swap = h('a', { class: 'ip2-swap', href: hrefOf('monitor'), 'aria-label': 'Swap the monitor to full size' }, 'Swap ⤢');
   const line = h('div', { class: 'ip2-cue-line' });
   const say = h('p', { class: 'ip2-say', title: 'Show all of it' });
   say.addEventListener('click', () => say.classList.toggle('ip2-say-open'));
   const held = h('div', { class: 'ip2-held' });
-  const box = h('div', { class: 'ip2-cue-box', role: 'group', 'aria-label': 'Cue' }, h('div', { class: 'ip2-cue-head' }, name, inStage, how, h('span', { class: 'ip2-spacer' }), swap), line, say, held);
+  const box = h('div', { class: 'ip2-cue-box', role: 'group', 'aria-label': 'Cue' }, h('div', { class: 'ip2-cue-head' }, name, inStage, hold, how, h('span', { class: 'ip2-spacer' }), swap), line, say, held);
   el.replaceChildren(box);
 
   /** When each held value was first seen held (sim s), for "(2 min)"; a value let go leaves it. */
@@ -70,6 +75,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
 
   const draw = () => {
     const paused = link.ctl.hostPaused;
+    hold.hidden = !sv.doc; // no case: no stage timer to hold
+    setText(hold, sv.paused ? 'Resume the stage timer' : 'Hold the stage timer');
 
     // HELD (answer 14): the values held in MODELED mode, as the session bar's held-values dialog lists them
     const st = link.ctl.state;

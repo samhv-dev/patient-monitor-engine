@@ -71,13 +71,11 @@ vi.mock('@pme/renderer', async () => {
     },
   };
 });
-vi.mock('./panel/panel.ts', () => ({ mountPanel: () => ({ el: document.createElement('div'), select: () => {} }) }));
 
 const { AppSession } = await import('./session.ts');
 const { BRIEFING_HOLD_MS, mountHostBriefing } = await import('./briefing.ts');
 const { mountFollower } = await import('./views/follower.ts');
 const { DEFAULT_SITE } = await import('./site.ts');
-const { teachView } = await import('./views/teach.ts');
 const { mount: mountStrip } = await import('./teach2/strip.ts');
 
 const CODE = 'KKQB2N';
@@ -257,18 +255,15 @@ describe('the Case briefing', () => {
     expect(late.stage.querySelector('.case-briefing')).toBeNull();
   });
 
-  it("the instructor's End briefing (today's view and v2's status line) ends it on the host and every phone", async () => {
+  it("the instructor's End briefing (v2's status line) ends it on the host and every phone", async () => {
     // a card without a briefing is loaded first: v2's status line is then measured against a live case, not against
     // "no case" (which shows #210's "Ready." line)
     s.loadScenario(card('plain'));
     await settle();
-    const teach = teachView({ host: s } as never, { site: DEFAULT_SITE, main: document.createElement('main'), stage: document.createElement('div'), weightKg: () => 70, loadScenario: () => true });
     const nav = document.createElement('nav');
     const strip = mountStrip(nav, { link: { ctl: { scenario: s.panel.scenario }, host: s }, keys: { escape: () => () => undefined } } as never);
-    const todays = () => teach.el.querySelector<HTMLElement>('.cb-end');
     const status = () => nav.querySelector<HTMLElement>('.ip2-status');
     const v2End = () => [...(status()?.querySelectorAll('button') ?? [])].find((b) => b.textContent === 'End briefing') as HTMLButtonElement | undefined;
-    expect(todays()?.hidden, 'no control without a briefing').toBe(true);
     expect(status()?.hidden, 'v2: no status line without a briefing').toBe(true);
     expect(nav.hasAttribute('data-briefing')).toBe(false);
     s.loadScenario(mh);
@@ -276,8 +271,6 @@ describe('the Case briefing', () => {
     const p = await phone();
     expect(p.layer()).toBeTruthy();
     await vi.advanceTimersByTimeAsync(1_000);
-    expect(todays()?.hidden).toBe(false);
-    expect(text(todays())).toContain('0:59');
     // v2 (the owner's choice of 31 October): the status line under the strip carries it; the chips' row carries nothing
     expect(nav.querySelector('.cb-end'), 'no briefing element in the strip').toBeNull();
     expect(nav.hasAttribute('data-briefing')).toBe(true);
@@ -291,7 +284,6 @@ describe('the Case briefing', () => {
     expect(host.layer()).toBeNull();
     expect(p.layer()).toBeNull();
     expect(briefings().at(-1)).toMatchObject({ ended: true });
-    expect(todays()?.hidden).toBe(true);
     expect(status()?.hidden, 'the status line returns to its ordinary state').toBe(true);
     expect(nav.hasAttribute('data-briefing')).toBe(false);
     // a phone that joins now shows nothing
