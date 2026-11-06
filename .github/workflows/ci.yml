@@ -144,6 +144,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       playwright: ${{ steps.playwright.outputs.version }}
+      durations_run: ${{ steps.durations.outputs.run }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -160,6 +161,18 @@ jobs:
           v=$(pnpm exec playwright --version | awk '{print $2}')
           echo "$v" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error::unexpected Playwright version: '$v'"; exit 1; }
           echo "version=$v" >> "$GITHUB_OUTPUT"
+      # e2e shards by recorded duration: the latest green run of this workflow on main, whose e2e reports the e2e jobs
+      # read (scripts/ci/e2e-shard-plan.mjs). Any failure leaves the output empty, and the e2e jobs use Playwright's --shard.
+      - name: the last green main run (its e2e reports balance the e2e shards)
+        id: durations
+        continue-on-error: true
+        timeout-minutes: 2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          id=$(gh run list -R "$GITHUB_REPOSITORY" --workflow ci.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          echo "last green main run: ${id:-none}"
+          echo "run=$id" >> "$GITHUB_OUTPUT"
       - run: pnpm --filter "@pme/renderer^..." build # Stage 8b: the renderer's workspace dependencies first (its tsconfig.build.json reads their dist/types)
       - run: pnpm --filter @pme/renderer build
       - uses: actions/upload-artifact@v4
@@ -179,8 +192,12 @@ jobs:
   # ci-faster: each gating suite runs in three shards (Playwright --shard, by file; every e2e server binds port 0 and
   # each shard is its own machine; WebKit keeps workers: 1 inside its shard). Each shard uploads its own report and runs
   # the retry-only check on it; the e2e-count job proves the shards together ran every test (research/42 §1.4 b). The
-  # quarantine stays one job. Three shards, not four: the shard that gets teach2-fit.e2e.ts (≈ 18 min alone) sets the
-  # floor, which three already reach.
+  # quarantine stays one job. Three shards, not four: the shard that got teach2-fit.e2e.ts (≈ 18 min alone) set the
+  # floor, which three already reach. That file is now three (teach2-fit-stages, -panes, -strip); Playwright fills a
+  # shard with a contiguous run of files by test count, so the three adjacent files still shared one shard. So each
+  # shard's files now come from scripts/ci/e2e-shard-plan.mjs: per-file durations from the last green main run's
+  # reports of the same set, longest first onto the least-loaded shard; Playwright's --shard when there is no usable
+  # report. The e2e-count job's proof is unchanged (it sums the shard reports, however the files were split).
   # ci-stabilise (2026-10-24): the jobs run in the official Playwright image, which carries the browsers and their
   # system libraries, so no job runs `playwright install --with-deps` (its apt step stalled up to 40 min on the runner's
   # Ubuntu mirror). The @known-flaky tests run on WebKit in their own non-blocking job, e2e-quarantine (webkit); the
@@ -231,8 +248,33 @@ jobs:
         with:
           name: ventilator-monitor-embed
           path: apps/demo/dist/embed
+      - uses: actions/download-artifact@v4 # this set's reports from the last green main run, for the shard plan
+        if: matrix.of > 1 && needs.renderer.outputs.durations_run != ''
+        continue-on-error: true
+        timeout-minutes: 3
+        with:
+          pattern: e2e-report-${{ matrix.report }}-[0-9]*
+          path: .e2e-main-reports
+          run-id: ${{ needs.renderer.outputs.durations_run }}
+          github-token: ${{ github.token }}
+      # This shard's files, balanced by recorded duration (the plan of every shard is printed here and in the summary),
+      # or Playwright's count-based --shard when the main run's reports are missing or unreadable or the plan fails.
+      - name: shard plan (by recorded duration; Playwright's --shard if none)
+        id: plan
+        run: |
+          d=.e2e-main-reports; [ -d "$d" ] || d=none
+          if [ ${{ matrix.of }} -gt 1 ] && node scripts/ci/e2e-shard-plan.mjs ${{ matrix.report }} ${{ matrix.shard }} ${{ matrix.of }} "$d" > "$RUNNER_TEMP/shard-files.txt" 2> "$RUNNER_TEMP/plan.txt"; then
+            echo "args=--test-list $RUNNER_TEMP/shard-files.txt" >> "$GITHUB_OUTPUT"
+            echo "shard ${{ matrix.shard }}/${{ matrix.of }}: $(wc -l < "$RUNNER_TEMP/shard-files.txt") files by recorded duration" >> "$RUNNER_TEMP/plan.txt"
+          else
+            echo "args=--shard=${{ matrix.shard }}/${{ matrix.of }}" >> "$GITHUB_OUTPUT"
+            if [ ${{ matrix.of }} -gt 1 ]; then echo "::warning title=e2e shard plan::no usable duration report: Playwright's --shard=${{ matrix.shard }}/${{ matrix.of }}"; fi
+          fi
+          touch "$RUNNER_TEMP/plan.txt"; cat "$RUNNER_TEMP/plan.txt"
+          [ ${{ matrix.of }} -gt 1 ] || exit 0
+          { echo "### e2e shard plan (${{ matrix.report }} ${{ matrix.shard }}/${{ matrix.of }})"; echo; echo '```'; cat "$RUNNER_TEMP/plan.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - id: e2e
-        run: pnpm test:e2e --project=${{ matrix.browser }} ${{ matrix.grep }} --shard=${{ matrix.shard }}/${{ matrix.of }} --reporter=list,json
+        run: pnpm test:e2e --project=${{ matrix.browser }} ${{ matrix.grep }} ${{ steps.plan.outputs.args }} --reporter=list,json
         continue-on-error: ${{ matrix.set == 'known-flaky' }} # quarantine: its results are summarised below instead
         env:
           PLAYWRIGHT_JSON_OUTPUT_FILE: playwright-report-${{ matrix.report }}.json

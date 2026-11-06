@@ -149,7 +149,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
     const css = (s: string, p: string) => getComputedStyle(document.querySelector(s) as Element).getPropertyValue(p);
     return {
       topbar: vis('.topbar'), stage: vis('.stage'), bar: vis('.sessionbar'), tools: vis('.db-tools'), report: vis('.debrief'),
-      trends: css('#db-trends', 'break-before'), timeline: css('#db-timeline', 'break-before'), minutes: css('#db-minutes', 'break-before'), moments: css('#db-moments', 'break-before'),
+      trends: css('#db-trends', 'break-before'), timeline: css('#db-timeline', 'break-before'), minutes: css('#db-minutes', 'break-before'), swimlane: css('#db-swimlane', 'break-before'), moments: css('#db-moments', 'break-before'),
       chart: css('.db-chart', 'break-inside'), ink: css('.db-svg path', 'stroke'), body: css('body', 'overflow'),
       undone: css('#db-timeline tbody tr.undone td', 'text-decoration-line'),
       // the footer on every page: @page margin boxes where the browser has them (Chromium), else a line before each break
@@ -158,7 +158,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
     };
   });
   const boxes = browserName === 'chromium';
-  expect(layout).toEqual({ topbar: false, stage: false, bar: false, tools: false, report: true, trends: 'page', timeline: 'auto', minutes: 'page', moments: 'page', chart: 'avoid', ink: 'rgb(0, 0, 0)', body: 'visible', undone: 'line-through', marginBoxes: boxes, runFeet: boxes ? 0 : 4 });
+  expect(layout).toEqual({ topbar: false, stage: false, bar: false, tools: false, report: true, trends: 'page', timeline: 'auto', minutes: 'page', swimlane: 'page', moments: 'auto', chart: 'avoid', ink: 'rgb(0, 0, 0)', body: 'visible', undone: 'line-through', marginBoxes: boxes, runFeet: boxes ? 0 : 4 });
   expect(await page.evaluate(() => getComputedStyle(document.querySelector('#db-course g.db-bm') as Element).display), 'the mark prints').not.toBe('none');
   expect(await page.evaluate(() => document.querySelector('#db-course g.db-bm .db-bm-n')?.textContent), 'its number inside').toBe('1');
   mkdirSync(out, { recursive: true });
@@ -325,6 +325,23 @@ const printHeights = (page: Page) => page.evaluate((mm) => {
   return { page1: (r(end).bottom - r('#db-live-1 > .db-band').top) / mm, handout: r('#db-handout').height / mm, printFont, stripPt };
 }, MM);
 
+/** D7b: the swimlane heads page 2, before the key moments, whole on its page; its printed height (mm) at the 182 mm
+ *  content width, and its window rows' labels and verdict words. Read in print media. */
+const swimPrint = (page: Page) => page.evaluate((mm) => {
+  const sec = document.querySelector('#db-swimlane') as HTMLElement;
+  const cs = getComputedStyle(sec);
+  return {
+    next: sec.nextElementSibling?.id ?? '', prev: (sec.previousElementSibling as HTMLElement | null)?.className ?? '',
+    breakBefore: cs.breakBefore, breakInside: cs.breakInside,
+    momentsBreak: getComputedStyle(document.querySelector('#db-moments') as Element).breakBefore,
+    heightMm: (sec.querySelector('svg') as SVGSVGElement).getBoundingClientRect().height / mm,
+    widthMm: (sec.querySelector('svg') as SVGSVGElement).getBoundingClientRect().width / mm,
+  };
+}, MM);
+const swimRows = (page: Page) => page.locator('#db-swimlane .db-swim-win').evaluateAll((gs) => gs.map((g) => ({
+  label: g.querySelector('title')?.textContent ?? '', words: [...g.querySelectorAll('.db-swim-tick .db-swim-v, .db-swim-missed .db-swim-v')].map((t) => t.textContent),
+})));
+
 test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, the learner handout', async ({ page, browserName }) => {
   test.setTimeout(90_000);
   await showRecorded(page);
@@ -352,6 +369,12 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   await expect(view.locator('#db-moments .db-note60')).toHaveCount(1);
   await expect(view.locator('#db-moments .db-note60')).toHaveText('SpO₂ as the monitor showed it: – while pulseless without compressions (no pulsatile signal); a number during CPR reflects compression-generated flow and is unreliable.'); // the owner's ruling E126, 2026-10-26 (was E60, 2026-10-19)
   await expect(view.locator('#db-moments tr.db-alarms').first()).toHaveText(/Alarms since the last row: CVP high, SpO₂: low perfusion, ART S low/);
+
+  // D7b: page 2 opens with the swimlane — one window row per timed objective, each tick with its verdict words
+  await expect(view.locator('#db-swimlane h2')).toHaveText('The run, lane by lane');
+  await expect(view.locator('#db-swimlane .db-legend')).toContainText('▭ expected window, │ the act, with its verdict');
+  expect(await swimRows(page)).toEqual([{ label: 'Objective 2', words: ['✓ Observed'] }, { label: 'Objective 3', words: ['✓ Observed'] }, { label: 'Objective 4', words: ['✓ Observed'] }]);
+  await expect(view.locator('#db-swimlane svg')).toHaveAttribute('aria-label', /expected windows: Objective 2, 07:48 to 07:58: 07:51 ✓ Observed; Objective 3/);
 
   // (g) typing in Run by and Notes across a 5 s refresh: the text and the caret stay
   const who = view.locator('#db-who');
@@ -388,6 +411,10 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   const report = await printHeights(page);
   expect(report.printFont, 'the bundled print font is loaded').toBe(true);
   expect(report.page1, 'page 1 (mm)').toBeLessThanOrEqual(267);
+  const sw = await swimPrint(page);
+  expect(sw).toMatchObject({ next: 'db-moments', breakBefore: 'page', breakInside: 'avoid', momentsBreak: 'auto' });
+  expect(sw.heightMm, 'the swimlane (mm)').toBeLessThanOrEqual(90);
+  test.info().annotations.push({ type: 'A3.1 swimlane (mm)', description: `${sw.heightMm.toFixed(1)} high at ${sw.widthMm.toFixed(1)} wide` });
   await expect(view.locator('#db-handout')).toBeHidden(); // never with the report
   const foot = (await view.locator('.db-foot').textContent()) ?? '';
   let reportPdf: Buffer | null = null;
@@ -446,6 +473,7 @@ test('Debrief B on the MH card: page 1 and the handout within one A4 page', asyn
   const view = page.locator('[data-view=debrief]');
   await expect(view.locator('#db-objectives li')).toHaveCount(6);
   await expect(view.locator('#db-keytimes [data-key=recognition]')).toBeVisible(); // the MH recognition objective (E52)
+  expect((await swimRows(page)).map((r) => r.label)).toEqual(['Objective 2', 'Objective 3']); // the two eventWithin objectives whose anchor came
   expect(await view.locator('#db-steps tbody tr').count(), 'IP8: the steps section is in the report').toBeGreaterThan(0);
   await page.emulateMedia({ media: 'print' });
   await printFontLoaded(page);
@@ -541,6 +569,14 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
   writeFileSync(`${results}/debrief-mh-v2-${browserName}.json`, JSON.stringify(j, null, 1));
   test.info().annotations.push({ type: 'MH /2 grades', description: j.actions.map((a) => `${a.id}:${a.grade}`).join(' ') });
 
+  // D7b: one window row per graded action with a window opened (report3's dueT), each act's grade words beside its tick
+  const timed = (j.actions as unknown as Array<{ label: string; dueT: number | null; givenT: number | null; firstGrade: string }>).filter((a) => a.dueT !== null);
+  const rows = await swimRows(page);
+  test.info().annotations.push({ type: 'MH /2 windows', description: `${rows.length}: ${rows.map((r) => `${r.label} ${r.words.join(' ')}`).join('; ')}` });
+  expect(rows.map((r) => r.label)).toEqual(timed.map((a) => a.label));
+  const GRADE: Record<string, string> = { met: '✓ met', deviation: '◆ deviation', overdue: '! overdue', failed: '✗ failed', due: '… due', 'not applicable': '– not applicable' };
+  timed.forEach((a, i) => expect(rows[i]?.words[0], a.label).toBe(GRADE[a.firstGrade]));
+
   await page.emulateMedia({ media: 'print' });
   await printFontLoaded(page);
   const { page1, printFont } = await printHeights(page);
@@ -562,6 +598,10 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
   expect(p2.whoLines, 'no Who cell wraps').toBe(1);
   expect(p2.table, 'the key-moments table within the content width (mm)').toBeLessThanOrEqual(p2.section + 0.5);
   expect(p2.bp.some((x) => /^\d+\/\d+/.test(x)), 'an SBP/DBP printed on this run (arterial, or the cuff with its age)').toBe(true);
+  const sw = await swimPrint(page);
+  test.info().annotations.push({ type: 'MH /2 swimlane (mm)', description: `${sw.heightMm.toFixed(1)} high at ${sw.widthMm.toFixed(1)} wide, ${rows.length} windows` });
+  expect(sw).toMatchObject({ next: 'db-moments', breakBefore: 'page', breakInside: 'avoid', momentsBreak: 'auto' });
+  if (rows.length <= 6) expect(sw.heightMm, 'the swimlane (mm)').toBeLessThanOrEqual(90);
   await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
   const { handout } = await printHeights(page);
   test.info().annotations.push({ type: 'MH /2 heights (mm)', description: `page 1 ${page1.toFixed(1)}, handout ${handout.toFixed(1)}` });
@@ -573,6 +613,10 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
     mkdirSync(out, { recursive: true });
     writeFileSync(`${out}/debrief-mh-v2-handout.pdf`, pdf);
     expect(pdfInfo(pdf).boxes).toHaveLength(1);
+    await page.evaluate(() => document.querySelector('.debrief')?.removeAttribute('data-print'));
+    const report = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    writeFileSync(`${out}/debrief-mh-v2.pdf`, report);
+    test.info().annotations.push({ type: 'MH /2 pages', description: String(pdfInfo(report).boxes.length) });
   }
 });
 
