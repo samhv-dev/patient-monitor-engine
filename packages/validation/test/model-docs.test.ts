@@ -7,6 +7,7 @@ import { join, relative, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { testFiles } from '../../../scripts/deviations.ts';
 import { renderKnownMisses } from '../../../scripts/known-misses.ts';
+import { CENSUS_PAGE, census, renderCensus } from '../../../scripts/coupling-seams.ts';
 import { renderAll } from '../../../scripts/model-docs.ts';
 import { MODULES, moduleOfSource, ownerOfTest } from '../../../scripts/model-modules.ts';
 
@@ -23,8 +24,11 @@ describe('model documentation is generated from the code', { timeout: 120_000 },
     const pages = await renderAll(root);
     const stale = [...pages].filter(([p, text]) => read(p) !== text).map(([p]) => p);
     expect(stale, regen).toEqual([]);
-    const orphans = readdirSync(join(root, 'docs/model')).map((f) => `docs/model/${f}`).filter((p) => !pages.has(p));
+    const orphans = readdirSync(join(root, 'docs/model')).map((f) => `docs/model/${f}`).filter((p) => !pages.has(p) && p !== CENSUS_PAGE);
     expect(orphans).toEqual([]);
+  });
+  it('docs/model/couplings-census.md is current (scripts/coupling-seams.ts --check)', () => {
+    expect(read(CENSUS_PAGE) === renderCensus(census(root)), 'run: node --experimental-strip-types scripts/coupling-seams.ts').toBe(true);
   });
   it('every hand block opens and closes once, with the names the generator expects', () => {
     for (const m of MODULES) {

@@ -16,10 +16,13 @@
 // operator (parentheses dropped) — with their factor counts, and per
 // module the exported numeric constants (model-docs.ts's `extract()`) that sit inside one of the module's own effector
 // expressions: a lower bound on the intra-module rows the registry needs.
-//   node --experimental-strip-types scripts/coupling-seams.ts          → the census as Markdown on stdout
-//   node --experimental-strip-types scripts/coupling-seams.ts --json   → the same as JSON
-// packages/validation/test/coupling-seams.test.ts pins the counting on a fixture and the real list's shape.
-import { readFileSync } from 'node:fs';
+//   node --experimental-strip-types scripts/coupling-seams.ts          → writes docs/model/couplings-census.md (places as
+//                                                                         file#function, so a moved line leaves it current)
+//   node --experimental-strip-types scripts/coupling-seams.ts --check  → exit 1 if the committed page is stale
+//   node --experimental-strip-types scripts/coupling-seams.ts --json   → the census as JSON, with each row's line
+// packages/validation/test/coupling-seams.test.ts pins the counting on a fixture and the real list's shape;
+// packages/validation/test/model-docs.test.ts fails when the committed page is stale.
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, posix, resolve } from 'node:path';
 import type * as TS from 'typescript';
@@ -29,8 +32,9 @@ import { MODULES, moduleOfSource } from './model-modules.ts';
 const ts: typeof TS = createRequire(import.meta.url)('typescript');
 
 export type SeamKind = 'ctx' | 'ext' | 'endo-write' | 'bus-read';
-export interface Seam { module: string; kind: SeamKind; field: string; file: string; line: number; sites: number }
-export interface Effector { module: string; file: string; line: number; lhs: string; op: 'product' | 'sum'; factors: number; consts: string[] }
+/** `fn`: the named function the seam sits in — the page keys on file#fn (stable); `line` is in the JSON output only. */
+export interface Seam { module: string; kind: SeamKind; field: string; file: string; fn: string; line: number; sites: number }
+export interface Effector { module: string; file: string; fn: string; line: number; lhs: string; op: 'product' | 'sum'; factors: number; consts: string[] }
 
 export const ENGINE = 'packages/engine-core/src/engine.ts';
 const BUS_TYPE = 'packages/engine-core/src/types-pk.ts';
@@ -39,6 +43,15 @@ const ENDO = 'endocrine-thermal';
 const parse = (file: string, text: string) => ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
 const lineOf = (n: TS.Node) => n.getSourceFile().getLineAndCharacterOfPosition(n.getStart()).line + 1;
 const modOf = (file: string) => moduleOfSource(file)?.id;
+/** The innermost NAMED function a node sits in (a declaration, a method, or a function bound to a const or property). */
+function where(n: TS.Node): string {
+  for (let f: TS.Node | undefined = n; f; f = f.parent)
+    if (ts.isFunctionDeclaration(f) || ts.isMethodDeclaration(f) || ts.isArrowFunction(f) || ts.isFunctionExpression(f)) {
+      const named = 'name' in f && f.name ? f.name : ts.isVariableDeclaration(f.parent) || ts.isPropertyAssignment(f.parent) ? f.parent.name : undefined;
+      if (named) return named.getText();
+    }
+  return '(top level)';
+}
 function visit(n: TS.Node, f: (n: TS.Node) => void): void {
   f(n);
   n.forEachChild((c) => visit(c, f));
@@ -133,7 +146,7 @@ export function passSeams(file: string, text: string, kinds: SeamKind[] = ['ctx'
         const o = literalOf(a);
         if (o) for (const p of props(o.lit)) {
           const name = (p as TS.ObjectLiteralElementLike).name; // a shared builder (rhythmCtx, endoCtx) is one seam per property
-          if (name) rows.push({ module, kind: 'ctx', field: `${o.via ?? callee}.${name.getText()}`, file, line: lineOf(p) });
+          if (name) rows.push({ module, kind: 'ctx', field: `${o.via ?? callee}.${name.getText()}`, file, line: lineOf(p) , fn: where(p) });
         }
       }
     if (kinds.includes('endo-write') && module === ENDO && /^write[A-Z]/.test(callee)) rows.push(...writerTargets(from, readText(from), callee));
@@ -159,7 +172,7 @@ export function writerTargets(file: string, text: string, fn: string): Omit<Seam
     if (!ts.isIdentifier(root) || own.has(root.text)) return;
     const lhs = n.left.getText();
     const sub = locals.get(root.text);
-    rows.push({ module: ENDO, kind: 'endo-write', field: `${fn}: ${sub ? sub + lhs.slice(root.text.length) : lhs}`, file, line: lineOf(n) });
+    rows.push({ module: ENDO, kind: 'endo-write', field: `${fn}: ${sub ? sub + lhs.slice(root.text.length) : lhs}`, file, line: lineOf(n) , fn: where(n) });
   });
   return rows;
 }
@@ -178,7 +191,7 @@ export function extSeams(file: string, text: string): Omit<Seam, 'sites'>[] {
   if (!module || module === 'circulation') return [];
   const rows: Omit<Seam, 'sites'>[] = [];
   visit(parse(file, text), (n) => {
-    if (ts.isPropertyAccessExpression(n) && isExtField(n) && isAssigned(n)) rows.push({ module, kind: 'ext', field: n.name.text, file, line: lineOf(n) });
+    if (ts.isPropertyAccessExpression(n) && isExtField(n) && isAssigned(n)) rows.push({ module, kind: 'ext', field: n.name.text, file, line: lineOf(n) , fn: where(n) });
   });
   return rows;
 }
@@ -209,7 +222,7 @@ export function busSeams(file: string, text: string, fields: Map<string, Set<str
     if (!onBus || !subs) return;
     const up = n.parent;
     const sub = ts.isPropertyAccessExpression(up) && up.expression === n && subs.has(up.name.text) ? `.${up.name.text}` : '';
-    rows.push({ module, kind: 'bus-read', field: `bus.${n.name.text}${sub}`, file, line: lineOf(n) });
+    rows.push({ module, kind: 'bus-read', field: `bus.${n.name.text}${sub}`, file, line: lineOf(n) , fn: where(n) });
   });
   return rows;
 }
@@ -253,7 +266,7 @@ export function effectors(file: string, text: string, constsByFile: Map<string, 
       const src = constsByFile.get(file)?.has(n.text) ? file : imp.get(n.text);
       if (src && constsByFile.get(src)?.has(n.text)) consts.add(`${src}#${n.text}`);
     });
-    out.push({ module, file, line: lineOf(at), lhs, op, factors: operands(b, op === 'product' ? PRODUCT : SUM).length, consts: [...consts] });
+    out.push({ module, file, fn: where(at), line: lineOf(at), lhs, op, factors: operands(b, op === 'product' ? PRODUCT : SUM).length, consts: [...consts] });
   };
   visit(sf, (n) => {
     if (ts.isBinaryExpression(n) && n.operatorToken.kind === ts.SyntaxKind.EqualsToken) consider(n.left.getText(), n.right, n);
@@ -297,10 +310,17 @@ export function renderCensus(c: Census): string {
   const mods = [...new Set(c.seams.map((s) => s.module))].sort();
   const n = (m: string | undefined, k: SeamKind | undefined) => c.seams.filter((s) => (!m || s.module === m) && (!k || s.kind === k)).length;
   const rank = (es: Effector[]) => [...es].sort((a, b) => b.factors - a.factors || a.file.localeCompare(b.file) || a.line - b.line).slice(0, 10);
-  const row = (e: Effector) => `| \`${short(e.file)}:${e.line}\` | \`${cell(e.lhs)}\` | ${e.op} | ${e.factors} |`;
+  const at = (x: { file: string; fn: string }) => `${short(x.file)}#${x.fn}`;
+  const row = (e: Effector) => `| \`${at(e)}\` | \`${cell(e.lhs)}\` | ${e.op} | ${e.factors} |`;
   const short = (f: string) => f.replace('packages/engine-core/src/', '');
   return [
     '# Coupling seams: census',
+    '',
+    '<!-- GENERATED by scripts/coupling-seams.ts; do not edit. Regenerate with',
+    '     node --experimental-strip-types scripts/coupling-seams.ts -->',
+    '',
+    'The engine\'s cross-module coupling seams and its effector products and sums, read from the code',
+    '(docs/plans/mechanism-tree.md, piece R0). Places are file#function; the line of each row is in the `--json` output.',
     '',
     `Seams (de-duplicated on module, kind and field): ${c.seams.length}; sites: ${c.seams.reduce((a, s) => a + s.sites, 0)}.`,
     '',
@@ -327,13 +347,27 @@ export function renderCensus(c: Census): string {
     '## Seams',
     '',
     '| Module | Kind | Field | Where | Sites |', '|---|---|---|---|---:|',
-    ...c.seams.map((s) => `| ${s.module} | ${s.kind} | \`${cell(s.field)}\` | \`${short(s.file)}:${s.line}\` | ${s.sites} |`),
+    ...c.seams.map((s) => `| ${s.module} | ${s.kind} | \`${cell(s.field)}\` | \`${at(s)}\` | ${s.sites} |`),
     '',
   ].join('\n');
 }
 
+export const CENSUS_PAGE = 'docs/model/couplings-census.md';
 const invokedDirectly = process.argv[1] !== undefined && resolve(process.argv[1]) === resolve(import.meta.filename);
 if (invokedDirectly) {
-  const c = census(resolve(dirname(import.meta.filename), '..'));
-  process.stdout.write(process.argv.includes('--json') ? JSON.stringify(c, null, 1) + '\n' : renderCensus(c));
+  const root = resolve(dirname(import.meta.filename), '..');
+  const c = census(root);
+  if (process.argv.includes('--json')) process.stdout.write(JSON.stringify(c, null, 1) + '\n');
+  else {
+    const page = renderCensus(c);
+    const path = join(root, CENSUS_PAGE);
+    const stale = !existsSync(path) || readFileSync(path, 'utf8') !== page;
+    if (process.argv.includes('--check')) {
+      if (stale) {
+        console.error(`coupling-seams: stale ${CENSUS_PAGE}; run node --experimental-strip-types scripts/coupling-seams.ts`);
+        process.exit(1);
+      }
+    } else writeFileSync(path, page);
+    console.error(`coupling-seams: ${c.seams.length} seams, ${stale ? 1 : 0} page changed`);
+  }
 }

@@ -60,6 +60,7 @@ describe('coupling seams: the counting, on a fixture', () => {
       'breathing advanceResp.neuro',
     ]);
     expect(rows.every((r) => r.kind === 'ctx' && r.file === S + 'engine.ts')).toBe(true);
+    expect(rows.map((r) => r.fn)).toEqual(['pkCtx', 'pkCtx', 'advance', 'advance', 'advance', 'advance']); // the page's file#function
   });
   it("lists an endocrine writer's targets, not its own state and not the ext fields", () => {
     const rows = passSeams(S + 'engine.ts', FIXTURE_ENGINE, ['endo-write'], () => FIXTURE_WRITER);
