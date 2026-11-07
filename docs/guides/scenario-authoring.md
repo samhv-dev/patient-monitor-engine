@@ -120,7 +120,7 @@ stream, so a seeded run replays exactly.
 
 ## Running a scenario
 
-In the clinical app, the Instructor view's scenario library loads the built-in scenarios (the developer page `dev/scenario-runner.html` loads one into the older instructor panel). In code, `ScenarioDriver` /
+In the clinical app, the Scenarios page's library and the Instructor view's case list load the built-in scenarios (the developer page `dev/scenario-runner.html` loads one into the controller's own developer panel). In code, `ScenarioDriver` /
 `ScenarioRunner` from `@pme/controller/scenario` run a validated document against a monitor handle or a headless
 engine; the run log (`runLog`, `replayRunLog`) replays a session exactly.
 

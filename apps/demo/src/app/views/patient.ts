@@ -93,11 +93,11 @@ export function patientView(d: { session: AppSession; site: SiteProfile }): View
       toast('Patient restarted');
     }
     s.live = true;
-    location.hash = hrefOf(route === 'instructor' ? d.site.instructor : route); // the Instructor view chosen in Settings
+    location.hash = hrefOf(route === 'instructor' ? 'teach2' : route);
   };
   const patientChanged = () => JSON.stringify(spec) !== JSON.stringify(s.spec) || mode !== s.mode;
 
-  const back = h('a', { class: 'btn primary', href: hrefOf(d.site.instructor) }, 'Back to the Instructor');
+  const back = h('a', { class: 'btn primary', href: hrefOf('teach2') }, 'Back to the Instructor');
   const banner = h('div', { class: 'land-live', role: 'status' },
     h('span', {}, h('b', {}, 'A case is running'), ' — the patient carries on while you look around.'), back);
   banner.hidden = !s.live;
@@ -125,7 +125,6 @@ export function patientView(d: { session: AppSession; site: SiteProfile }): View
       // Back on the page while a case runs: the banner leads back, and the page shows the running patient (nothing
       // restarts; leaving to the monitor again asks nothing unless the patient was changed here)
       banner.hidden = !s.live;
-      back.setAttribute('href', hrefOf(d.site.instructor));
       if (s.live && !timer) {
         spec = { ...s.spec, comorbid: [...s.spec.comorbid] };
         mode = s.mode;

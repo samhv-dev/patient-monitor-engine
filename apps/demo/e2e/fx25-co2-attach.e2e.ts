@@ -15,7 +15,7 @@ import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { shot8 } from './indexed-png.ts';
-import { openApp, startVite, tab } from './app-support.ts';
+import { openApp, sheet, startVite, TEACH2 } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -80,7 +80,7 @@ async function save(page: Page, name: string, browserName: string): Promise<void
 test('attaching the CO2 line on a ventilated patient: the CO2 lane starts blank at the attach point and fills from there', { tag: '@known-flaky' }, async ({ page, browserName }) => {
   test.setTimeout(90_000);
   await page.setViewportSize({ width: 1280, height: 800 });
-  await openApp(page, base, '#/teach', { warmMs: 2000 });
+  await openApp(page, base, TEACH2, { warmMs: 2000 });
   expect(await page.evaluate(() => (window as unknown as { __pmeApp: { session: { skin: string } } }).__pmeApp.session.skin)).toBe('saadat-like');
   const lanes = () => page.locator('.stage canvas[data-lanes]').getAttribute('data-lanes');
   expect(await lanes()).toBe('ECG1 ECG2 RESP IBP1 IBP2 PLETH');
@@ -88,8 +88,7 @@ test('attaching the CO2 line on a ventilated patient: the CO2 lane starts blank 
   const vent = await page.evaluate(() => (window as unknown as W).__pmeApp.session.monitor.dispatch({ id: 'fx25-vent', issuedBy: 'test', type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, peep: 5, fio2: 0.5 } }));
   expect(vent.accepted).toBe(true);
   await page.waitForTimeout(12_000);
-  await tab(page, 'devices');
-  const line = page.getByRole('button', { name: 'CO₂ sampling line' });
+  const line = (await sheet(page, 'devices')).getByRole('button', { name: 'CO₂ sampling line' });
   await expect(line).toHaveAttribute('aria-pressed', 'false');
 
   const t0 = await page.evaluate(() => performance.now());

@@ -550,7 +550,9 @@
   {"en": "No contraindicated administration.", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
   {"en": "Actions on the card", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
   {"en": "Outcomes", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
-  {"en": "Violations", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false}
+  {"en": "Violations", "fa": null, "note": "English fallback until F7.6 writes the Persian.", "source": "apps/demo/src/app/views/debrief.ts (F7: pme-debrief/3)", "reviewed": false},
+  {"en": "Pressures", "fa": null, "note": "English fallback until the Persian executor writes the Persian (brief 63).", "source": "apps/demo/src/app/views/debrief.ts pressuresChart (brief 63: the Pressures trend panel)", "reviewed": false},
+  {"en": "mmHg · SBP and DBP on the left axis, CVP (dashed) on the right", "fa": null, "note": "English fallback until the Persian executor writes the Persian (brief 63); SBP, DBP, CVP and mmHg stay as written.", "source": "apps/demo/src/app/views/debrief.ts PRESSURES_UNIT (brief 63: the Pressures trend panel)", "reviewed": false}
  ],
  "templates": [
   {"en": "{t} simulated · {span} on the clock", "fa": "{t} زمان شبیه‌سازی‌شده · {span} زمان واقعی", "source": "apps/demo/src/app/views/debrief.ts", "reviewed": false},

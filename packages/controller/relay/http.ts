@@ -52,6 +52,8 @@ export interface RelayInfo {
   addresses: string[];
   /** The relay serves the app itself: a learner's address is http://<address>:<port>/. */
   serves: boolean;
+  /** Room plan R1b: the code of the last room a host opened, kept across restarts (`--state-dir`); absent without one. */
+  lastRoom?: string;
 }
 
 export function httpHandler(o: { staticDir?: string; info: () => RelayInfo }): (req: IncomingMessage, res: ServerResponse) => void {
