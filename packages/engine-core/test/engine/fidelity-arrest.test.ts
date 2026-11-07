@@ -75,7 +75,7 @@ describe('VF → CPR → ROSC, per skin', () => {
   // unchanged. With the alveolar washout the 90 s of VF before the compressions empty the lung (EtCO2 0.2 by +120 s,
   // Falk 1988), so the window's first samples are the RISE back from nothing: 7 mmHg at 170–185 s, 12 at 200 s, 17 at
   // 240 s, mean 15.3–15.6 over 170–295 s, max 20–21 — against a floor of 10 fitted when the fall was a 70 s lag
-  // (research/10 §13, [ENG]). Falk's own patients read ≈ 7.6 mmHg (1.0 ± 0.5 %) once compressions were in place, and
+  // (research/10 §13, [FIT: floor fitted to the 70 s low-flow lag; brief research/44 TIME-01]). Falk's own patients read ≈ 7.6 mmHg (1.0 ± 0.5 %) once compressions were in place, and
   // research/26 T3 bands CPR as 5–10 poor / 10–20 adequate, so the engine's first-20-s value is defensible; the band
   // is NOT widened — the floor goes back to the owner with the number (FU-7.1 Q9).
   it.fails.each([['philips-like'], ['mindray-like'], ['saadat-like']] as const)(

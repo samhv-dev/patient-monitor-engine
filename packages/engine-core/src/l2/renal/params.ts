@@ -7,7 +7,8 @@
 // tick (one algebraic kidney at 1 Hz; see NOTICES N-P19).
 //
 // Stage 7d kidney constants. Pulse values from docs/physiology/pulse-parameter-annex.md B2 (per kidney, mmHg·min/mL,
-// all × Pulse's 1.25 calibration); our additions cite tables §5.2 or are [ENG] with the prototype number.
+// all × Pulse's 1.25 calibration); our additions cite tables §5.2 or carry `[FIT: target; brief id]` with the prototype
+// number (`[ENG: kind]` when not physiology).
 import { ICRP89_FLOW_FRACTIONS_M } from '../circ/params.ts';
 
 export const RENAL_DT_S = 1; // kidney and liver step at 1 Hz (annex B2 "one algebraic kidney at 1 Hz")
@@ -20,7 +21,7 @@ export const R_PT = 0.0167 * 1.25; // peritubular capillaries
 export const R_RV = 0.0066 * 1.25; // renal vein
 /** TGF range for R_aff: Pulse 2.2–11.2 mmHg·s/mL = 0.0367–0.187 mmHg·min/mL (CFG 608–609). The upper bound is
  *  raised by the MYOGENIC response Pulse lacks (afferent constriction to stretch, which with TGF holds RBF over RPP
- *  80–180, tables §5.2 `rblLL/rblUL`) [ENG ×MYOGENIC_MAX]: with Pulse's 11.2 alone RBF rose 21 % and GFR doubled at MAP 180. */
+ *  80–180, tables §5.2 `rblLL/rblUL`) [FIT: ×MYOGENIC_MAX; brief research/44 L2-26]: with Pulse's 11.2 alone RBF rose 21 % and GFR doubled at MAP 180. */
 export const R_AFF_MIN = 2.2 / 60;
 export const MYOGENIC_MAX = 2;
 export const R_AFF_MAX = (11.2 / 60) * MYOGENIC_MAX;
@@ -33,7 +34,7 @@ export const PI_GLOM0 = 32; // Glomerular oncotic pressure, mmHg (SET 1386–138
 export const HCT_REF = 0.45;
 export const FF_REF = 125 / (952 * (1 - HCT_REF));
 export const ALBUMIN0_G_L = 42;
-/** Bowman's space pressure [ENG]: calibrated so the resting GFR is 125 mL/min (tables/annex reference 180 L/day;
+/** Bowman's space pressure [FIT: Bowman's pressure calibrated to resting GFR 125 mL/min; brief research/44 L2-26]: calibrated so the resting GFR is 125 mL/min (tables/annex reference 180 L/day;
  *  Pulse gives 147.5 L/day, D12). UOP is calibrated separately (ef0), so this only sets GFR and the filtration fraction. */
 export const P_BOWMAN = 17.1;
 export const RENAL_FLOW_FRAC = ICRP89_FLOW_FRACTIONS_M.kidneys; // 0.17, both kidneys (ICRP-89 via Pulse SET 315, NOTICES N-P10) — audit borrow #7
@@ -43,47 +44,47 @@ export const RENAL_REF_CVP = 5;
 export const RENAL_REF_CO_L_KG = 0.08;
 /** Pressure natriuresis: Pulse's tubular reabsorption permeability vs renal arterial pressure (PH/Renal 1983–2071),
  *  used here as the excreted FRACTION ∝ (Lp(Pref)/Lp(P))^1.74 — the exponent that makes UOP(150)/UOP(100) = 3
- *  (tables U(): Guyton renal output curve); U(80) then equals the tables' 0.67 exactly [ENG fit]. */
+ *  (tables U(): Guyton renal output curve); U(80) then equals the tables' 0.67 exactly [FIT: U(80) = the tables' 0.67; fit; brief research/44 L2-07]. */
 export const LP_A = 2.00943e-6;
 export const LP_B = -8.09933e-4;
 export const LP_C = 9.37727e-2;
 export const NATRIURESIS_EXP = 1.74;
 export const UOP0_ML_KG_H = 1.0; // awake, tables `UOP0` [TXT]
 export const OLIGURIA_ML_KG_H = 0.5; // KDIGO (tables alarm row, Q40)
-export const ANURIA_ML_KG_H = 0.05; // [ENG]
-/** Efferent (angiotensin II) tone in low-flow states [ENG; Pulse has no RAAS (annex B2 stated limits)]: R_eff × (1 +
+export const ANURIA_ML_KG_H = 0.05; // [ENG: numerics]
+/** Efferent (angiotensin II) tone in low-flow states [FIT: renal neurohumoral fit; Pulse has no RAAS (annex B2 stated limits); brief research/44 L2-07]: R_eff × (1 +
  *  ANG_GAIN·a), a = 0–1 from RPP below 80 and blood volume loss — keeps GFR while RBF falls (filtration fraction ↑). */
 export const ANG_GAIN = 3;
-/** Angiotensin/efferent response time constant, s [ENG]: an instantaneous term would follow the circulation's
+/** Angiotensin/efferent response time constant, s [FIT: renal neurohumoral fit; brief research/44 L2-07]: an instantaneous term would follow the circulation's
  *  second-to-second CO wobble (CO 4.9–5.6 in MODELED HFrEF) and swing GFR 27–211 mL/min within seconds; AngII's
  *  efferent effect builds over minutes. */
 export const ANG_TAU_S = 120;
-/** Cold diuresis onset and gain per °C [ENG, Ali's Q] (Polderman 2009: direction). */
+/** Cold diuresis onset and gain per °C [FIT: renal multiplier for a condition or stimulus; the owner's Q; brief research/44 L2-08] (Polderman 2009: direction). */
 export const COLD_ONSET_C = 35;
 export const COLD_DIURESIS_PER_C = 0.2;
-export const S_GA = 0.6; // surgical stress/ADH under GA, tables `S` [ENG] (0.4–0.8)
+export const S_GA = 0.6; // surgical stress/ADH under GA, tables `S` [FIT: renal multiplier for a condition or stimulus; brief research/44 L2-08] (0.4–0.8)
 export const V_AT_15 = 0.5; // UOP factor at −15 % blood volume (tables V)
 export const V_AT_30 = 0.2; // at −30 %
-/** Excreted-fraction gain per unit blood-volume EXPANSION (ANP/ADH suppression) [ENG]: fitted so 1 L of
+/** Excreted-fraction gain per unit blood-volume EXPANSION (ANP/ADH suppression) [FIT: renal neurohumoral fit; brief research/44 L2-07]: fitted so 1 L of
  *  Ringer's over 30 min, awake, is 20–30 % intravascular 30 min after the end (Hahn 2010; the blood model's own
  *  fallback t½ 30 min, tables `t12El`); capped at V_EXP_MAX × (≈ 15 mL/min peak diuresis, Hahn's volunteers). */
 export const V_EXP_GAIN = 90;
 export const V_EXP_MAX = 12;
-/** Symmetric low-pass of the effective volume before the neurohumoral lag, s [ENG] (research/13 H1: τ ≈ 60 s). */
+/** Symmetric low-pass of the effective volume before the neurohumoral lag, s [FIT: renal neurohumoral fit; brief research/44 L2-07] (research/13 H1: τ ≈ 60 s). */
 export const EABV_TAU_S = 60;
-export const EABV_EXP = 0.35; // Effective volume = min(BV, (CO/(CO0·demandRel))^EXP) [ENG]: fitted to tables check 20 (HFrEF UOP 0.1–0.15, dobutamine 0.2–0.3)
-/** Neurohumoral (ADH/aldosterone) lag on V [ENG]: onset τ 2 min (ADH release is fast), washout τ 45 min. With an
+export const EABV_EXP = 0.35; // Effective volume = min(BV, (CO/(CO0·demandRel))^EXP) [FIT: renal neurohumoral fit; brief research/44 L2-07]: fitted to tables check 20 (HFrEF UOP 0.1–0.15, dobutamine 0.2–0.3)
+/** Neurohumoral (ADH/aldosterone) lag on V [FIT: renal neurohumoral fit; brief research/44 L2-07]: onset τ 2 min (ADH release is fast), washout τ 45 min. With an
  *  instantaneous V, dobutamine in check 20 gave 0.338 mL/kg/h at 30 min (tables 0.2–0.3 within 30–60 min); with the
  *  washout: 0.233 at 30 min, 0.284 at 60 min. Recovery after fluids is correspondingly gradual (class III → 0.53 at 60 min). */
 export const NH_TAU_ON_S = 120;
 export const NH_TAU_OFF_S = 2700;
-export const PEEP_PER_10 = 0.9; // × per 10 cmH2O mean-airway-pressure excess (tables PEEP row) [ENG]
-export const NE_EXCESS_PER_01 = 0.9; // × per 0.1 µg/kg/min α-agonist above need (tables D row) [ENG]
-export const SEPSIS_GFR_LOSS = 0.5; // Kf × (1 − 0.5·sepsis) (efferent dilation / microvascular) [ENG]; sepsis is endo's
-export const AKI_KF_LOSS = 0.8; // Condition aki severity 1 → Kf × 0.2 [ENG]; also the nephron share TGF defends
-/** Intrinsic AKI's afferent tone — the afferent floor rises × (1 + AKI_AFF_TONE·aki) [ENG, Ali's Q]. */
+export const PEEP_PER_10 = 0.9; // × per 10 cmH2O mean-airway-pressure excess (tables PEEP row) [FIT: renal multiplier for a condition or stimulus; brief research/44 L2-08]
+export const NE_EXCESS_PER_01 = 0.9; // × per 0.1 µg/kg/min α-agonist above need (tables D row) [FIT: renal multiplier for a condition or stimulus; brief research/44 L2-08]
+export const SEPSIS_GFR_LOSS = 0.5; // Kf × (1 − 0.5·sepsis) (efferent dilation / microvascular) [FIT: renal multiplier for a condition or stimulus; brief research/44 L2-08]; sepsis is endo's
+export const AKI_KF_LOSS = 0.8; // Condition aki severity 1 → Kf × 0.2 [FIT: renal multiplier for a condition or stimulus; brief research/44 L2-08]; also the nephron share TGF defends
+/** Intrinsic AKI's afferent tone — the afferent floor rises × (1 + AKI_AFF_TONE·aki) [FIT: renal multiplier for a condition or stimulus; the owner's Q; brief research/44 L2-08]. */
 export const AKI_AFF_TONE = 1;
-// Diuretics (tables §5.2 has none; label-level [TXT], shape [ENG])
+// Diuretics (tables §5.2 has none; label-level [TXT], shape [FIT: diuretic effect shape; brief research/44 L2-56])
 export const FUROSEMIDE_EMAX = 9; // excreted fraction × (1 + 9·E): 40 mg → peak UOP ≈ 7× (≈ 8 mL/min)
 export const FUROSEMIDE_ED50_MG = 20; // Own-depot path (no drug model): E = plasma mg/(mg + 20)
 /** With the drug model: E = c/(c + 1), c = its furosemide level in reference doses (row `furosemide`: gamma, ref
@@ -92,5 +93,5 @@ export const FUROSEMIDE_EC50_REF = 1;
 export const FUROSEMIDE_KA_PER_MIN = 0.2; // IV: onset ≈ 5 min, peak ≈ 30 min
 export const FUROSEMIDE_KE_PER_MIN = 0.0115; // t½ ≈ 1 h (duration ≈ 2 h)
 export const MANNITOL_KE_PER_MIN = Math.LN2 / 120; // plasma t½ ≈ 2 h (renal)
-export const MANNITOL_ML_PER_G = 14; // obligate water per g excreted at urine osmolality ≈ 400 mOsm/kg [ENG]
+export const MANNITOL_ML_PER_G = 14; // obligate water per g excreted at urine osmolality ≈ 400 mOsm/kg (5.49 mOsm/g ÷ 400 mOsm/kg = 13.7 mL/g)
 export const BLADDER_CAP_ML = 400; // Pulse PH/Renal 1549 (no catheter: auto-void)

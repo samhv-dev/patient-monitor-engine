@@ -49,17 +49,17 @@ export interface ViewerSyncOptions {
   target: ViewerTarget;
   /** Engine build of this viewer; a snapshot from a different build cannot be mirrored. */
   engineVersion: string;
-  /** How far behind the host the viewer draws, wall seconds at any speed (default 0.1 s) — the jitter budget for mirrored commands [ENG]. */
+  /** How far behind the host the viewer draws, wall seconds at any speed (default 0.1 s) — the jitter budget for mirrored commands [ENG: network]. */
   delayS?: number;
   peerId?: string;
   wallNow?: () => number;
 }
 
-const BEAT_TOLERANCE_S = 0.001; // same build ⇒ identical times; anything above this is divergence [ENG]
-const MAX_EXTRAPOLATE_S = 3; // stop running ahead of a silent host after this long [ENG]
+const BEAT_TOLERANCE_S = 0.001; // same build ⇒ identical times; anything above this is divergence [ENG: network]
+const MAX_EXTRAPOLATE_S = 3; // stop running ahead of a silent host after this long [ENG: network]
 const TICK_S = 0.02;
-const HELLO_AGAIN_MS = 3000; // FX-2: no snapshot this long after a hello — say it again (a message lost on the way) [ENG]
-const HELLO_AGAIN_MAX_MS = 24_000; // …doubling each time up to this, so phones waiting on a slow host do not snowball [ENG]
+const HELLO_AGAIN_MS = 3000; // FX-2: no snapshot this long after a hello — say it again (a message lost on the way) [ENG: network]
+const HELLO_AGAIN_MAX_MS = 24_000; // …doubling each time up to this, so phones waiting on a slow host do not snowball [ENG: network]
 
 export class ViewerSync {
   readonly peerId: string;
@@ -282,7 +282,7 @@ export class ViewerSync {
     this.o.target.dispatch(m);
   }
 
-  /** Blend a new host anchor: small disagreements are smoothed, big ones reset [ENG]. */
+  /** Blend a new host anchor: small disagreements are smoothed, big ones reset [ENG: network]. */
   private setAnchor(simT: SimSeconds): void {
     const wallMs = this.now();
     if (!this.anchor || this.hostPaused) {

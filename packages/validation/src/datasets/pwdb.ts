@@ -24,7 +24,7 @@ export function pwdbStats(indicesCsv: string, sites: PwdbSite[] = ['Radial', 'Fe
   for (const site of sites) {
     for (const age of ages) {
       const sel = rows.filter((r) => Number(r.Age) === age);
-      // non-positive times mark subjects whose onset detection failed in PWDB; they are dropped [ENG]
+      // non-positive times mark subjects whose onset detection failed in PWDB; they are dropped [ENG: measurement]
       const col = (k: string) => sel.map((r) => 1000 * Number(r[k])).filter((v) => Number.isFinite(v) && v > 0).sort((a, b) => a - b);
       const ptt = col(`${site}_PTT`);
       const sys = col(`${site}_SBP_T`);

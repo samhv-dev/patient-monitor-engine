@@ -71,12 +71,12 @@ export function createBloodState(profile: PatientProfile | undefined): BloodStat
   };
 }
 
-/** QTc change (ms) from ionised Ca: +10 per 0.1 below 1.1, −10 per 0.1 above 1.3 (tables §5b.2 Q46) [ENG]. */
+/** QTc change (ms) from ionised Ca: +10 per 0.1 below 1.1, −10 per 0.1 above 1.3 (tables §5b.2 Q46) (tables §5b.2 Q46). */
 export function qtcDeltaCa(iCa: number): number {
   return iCa < 1.1 ? (1.1 - iCa) * 100 : iCa > 1.3 ? -(iCa - 1.3) * 100 : 0;
 }
 
-/** Torsades-risk hook for the drug model/rhythms (0–1): long QTc, low Mg, low K [ENG]. Exposed, not acted on here. */
+/** Torsades-risk hook for the drug model/rhythms (0–1): long QTc, low Mg, low K [ENG: unused]. Exposed, not acted on here. */
 export function tdpRisk(qtc: number, mg: number, k: number): number {
   const q = Math.max(0, (qtc - 470) / 100);
   return Math.min(1, q * (mg < 0.7 ? 1.5 : 1) * (k < 3 ? 1.5 : 1));
@@ -106,7 +106,7 @@ export function pkBus(pk: unknown): BusLike | null {
 }
 
 /**
- * Resting-CO reference [ENG]: the circuit's running resting CO sits −13…+25 % from the circulation's stabilised
+ * Resting-CO reference [ENG: numerics]: the circuit's running resting CO sits −13…+25 % from the circulation's stabilised
  * `ref.co` depending on the rig (ventilation, PEEP, anaesthesia), which would move hbfRel and the regional lactate
  * threshold at rest. The reference low-passes the CO (τ 20 s: over breathing and the baroreflex swings) from `ref.co`
  * and latches at 120 s, or at the first perturbation (a volume/chemistry command or a drug).
@@ -114,7 +114,7 @@ export function pkBus(pk: unknown): BusLike | null {
 export const CO0_SETTLE_S = 120;
 export const CO0_TAU_S = 20;
 
-/** Hypertonic saline runs in over this time when the drug model's log gives no duration [ENG]. */
+/** Hypertonic saline runs in over this time when the drug model's log gives no duration [ENG: scenario]. */
 export const HTS_OVER_MIN = 15;
 
 /**
@@ -137,7 +137,7 @@ export function observeDoses(bs: BloodState, doses: readonly DoseLike[]): void {
       case 'calciumChloride':
       case 'calciumGluconate': {
         const mmol = g * CA_MMOL_PER_G[d.agent];
-        c.so.ca += 0.5 * mmol; // half ionised once albumin binds it [ENG]
+        c.so.ca += 0.5 * mmol; // half ionised once albumin binds it [FIT: half of administered Ca ionised; brief research/44 L2-40]
         c.doses.push({ id: d.agent, t0: d.t, amount: mmol });
         break;
       }
@@ -378,7 +378,7 @@ function applyBloodEvent(bs: BloodState, cmd: Command, t: number, rs: RespState)
       let amount = d.dose;
       if (d.drugId === 'calciumChloride' || d.drugId === 'calciumGluconate') {
         amount = (d.unit === 'mg' ? d.dose / 1000 : d.dose) * CA_MMOL_PER_G[d.drugId];
-        c.so.ca += 0.5 * amount; // half ionised once albumin binds it [ENG]
+        c.so.ca += 0.5 * amount; // half ionised once albumin binds it [FIT: half of administered Ca ionised; brief research/44 L2-40]
       } else if (d.drugId === 'sodiumBicarbonate') {
         amount = d.unit === 'mmol/kg' ? d.dose * w : d.dose;
         c.so.na += amount;
@@ -402,7 +402,7 @@ function applyBloodEvent(bs: BloodState, cmd: Command, t: number, rs: RespState)
     case 'condition': {
       const x = ev as { id: string; severity: number };
       if (x.id === 'burns') c.burns = x.severity;
-      else if (x.id === 'dka') c.so.keto = DKA_KETO_MMOL_L * x.severity * (ecfMl(c.fl) / 1000); // established DKA: 25 mmol/L at 1 [ENG]
+      else if (x.id === 'dka') c.so.keto = DKA_KETO_MMOL_L * x.severity * (ecfMl(c.fl) / 1000); // established DKA: 25 mmol/L at 1 [FIT: DKA ketoacid scale; brief research/44 L2-40]
       else return false;
       return true;
     }

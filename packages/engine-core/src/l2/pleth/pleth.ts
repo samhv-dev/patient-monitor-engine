@@ -9,7 +9,7 @@ import type { Spo2Site } from '../../types-hemo.ts';
 import { EAR_DELAY_S, FINGER_DELAY_S, WK_R0 } from '../hemo/params.ts';
 
 export const PLETH_KERNEL = { mu1: 0.259, s1: 0.1003, mu2: 0.63, s2: 0.1627 } as const;
-/** The pleth pulse detector's floor (minimum slope-sum threshold, PI units, l3/pulse/detector.ts) [ENG]: the oximeter's
+/** The pleth pulse detector's floor (minimum slope-sum threshold, PI units, l3/pulse/detector.ts) [ENG: device]: the oximeter's
  *  noise floor — a signal below it is not a pulse. */
 export const PLETH_DET_FLOOR = 0.03;
 /**
@@ -52,7 +52,7 @@ export function plethDelayS(site: Spo2Site): number {
   return site === 'ear' || site === 'forehead' ? EAR_DELAY_S : FINGER_DELAY_S;
 }
 
-/** a2/a1 from systemic resistance: R halved → 0.5 (vasodilated), R doubled → 0.1 (vasoconstricted) [ENG]. */
+/** a2/a1 from systemic resistance: R halved → 0.5 (vasodilated), R doubled → 0.1 (vasoconstricted) [FIT: pleth reflected-wave ratio from SVR; brief research/44 L2-24]. */
 export function toneRatio(R: number): number {
   return Math.min(0.6, Math.max(0.08, 0.2 - 0.3 * Math.log2(R / WK_R0)));
 }
@@ -83,7 +83,7 @@ export function plethAt(st: PlethState, t: number, occlusion: number, pi: number
   v *= occlusion;
   v += plethNoise(t); // the sensor's noise floor: what a pulseless finger shows (E126)
   if (st.state === 'motion') {
-    // motion artefact 0.5–5 Hz, larger than the pulse (research 03 §3.4) [ENG]
+    // motion artefact 0.5–5 Hz, larger than the pulse (research 03 §3.4) [ENG: device]
     const m = st.motion;
     v += 1.5 * pi * (Math.sin(2 * Math.PI * 1.3 * t + (m[0] as number)) + 0.6 * Math.sin(2 * Math.PI * 2.7 * t + (m[1] as number)) + 0.4 * Math.sin(2 * Math.PI * 0.7 * t + (m[2] as number)));
   }

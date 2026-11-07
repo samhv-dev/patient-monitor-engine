@@ -8,7 +8,7 @@ import { gradeTarget } from './grade.ts';
 import { SeriesStore } from './series.ts';
 import type { TargetResult, Unsupported, ValidationDoc } from './types.ts';
 
-/** The driver is polled every POLL_S of sim time (a 60 fps host polls every ≈ 17 ms; 100 ms keeps runs fast) [ENG]. */
+/** The driver is polled every POLL_S of sim time (a 60 fps host polls every ≈ 17 ms; 100 ms keeps runs fast) [ENG: measurement]. */
 export const POLL_S = 0.1;
 export const LATER_STAGE = /arrives in Stage|not implemented/i;
 

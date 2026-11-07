@@ -15,7 +15,7 @@
 import { compare } from './runner.ts';
 import type { AnyRule, PhaseRule, ScenarioDocV2 } from './types-v2.ts';
 
-/** Comparison slack for clocks and windows (sim seconds), as the /1 runner's [ENG]. */
+/** Comparison slack for clocks and windows (sim seconds), as the /1 runner's [ENG: scenario]. */
 export const EPS = 1e-6;
 
 /** A rule of the card by the name its edges are logged under, and the store it reads. */

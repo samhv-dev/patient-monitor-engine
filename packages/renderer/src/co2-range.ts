@@ -2,7 +2,7 @@
 // its scale when the plateau exceeds it and narrows back when it falls, with hysteresis, as real units do. Vendor
 // behaviour: the Saadat B9 offers a CO2 scale AUTO beside its fixed ones (research/06 §3.2, M p.304–305); capnographs
 // in auto-scale pick the scale from the measured EtCO2, i.e. from breath peaks, and offer steps such as 0–60/0–80/0–100
-// mmHg. None states a breath count or a margin, so these are [ENG]:
+// mmHg. None states a breath count or a margin, so these are [ENG: display]:
 //  - the judged value is each breath's peak as the engine's EtCO2 detector finds it (engine-core co2-numerics.ts: a
 //    breath rises above 50 % of a decaying recent peak and ends below 30 %), read from the same displayed samples, never
 //    a single sample;
@@ -19,11 +19,11 @@
 // same breaths, as the pleth auto-scale and the ECG auto-gain are computed in each window from the same samples.
 
 /** Consecutive breaths at the roof before the lane widens (two, as the EtCO2 number needs two breaths and the ECG
- *  auto-gain two windows: one spike never widens) [ENG]. */
+ *  auto-gain two windows: one spike never widens) [ENG: display]. */
 export const CO2_WIDEN_BREATHS = 2;
-/** Consecutive breaths well under the lower scale before the lane narrows (three times as long: ≈ 30 s at RR 12) [ENG]. */
+/** Consecutive breaths well under the lower scale before the lane narrows (three times as long: ≈ 30 s at RR 12) [ENG: display]. */
 export const CO2_NARROW_BREATHS = 6;
-/** A breath peak under this fraction of the next-lower top counts towards narrowing [ENG]. */
+/** A breath peak under this fraction of the next-lower top counts towards narrowing [ENG: display]. */
 export const CO2_NARROW_UNDER = 0.8;
 // The engine's EtCO2 detector (engine-core l3/co2-numerics/co2-numerics.ts, brief §4.4), repeated here: the renderer
 // reads only the engine's public API, and these must stay equal to the engine's.

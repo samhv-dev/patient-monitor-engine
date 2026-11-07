@@ -33,9 +33,9 @@ const OPIOID_U1 = 1.2;
 /**
  * An opioid on board deepens a HYPNOTIC's vasodilation and venodilation beyond the independent product — the hypnotic
  * class's `svr` and `v0Frac` effects × (1 + HEMO_SYN_MAX·u/(u + HEMO_SYN_U50)), u = `uOpioid`.
- * [ENG sizes; fit target [P]: Billard 1994 Anesthesiology 81:1384 (n = 120, ASA 1–2), propofol 2–3.5 mg/kg, systolic
+ * [FIT: opioid–hypnotic haemodynamic synergy sizes; src Billard 1994; brief research/44 X-11]. Fit target [P]: Billard 1994 Anesthesiology 81:1384 (n = 120, ASA 1–2), propofol 2–3.5 mg/kg, systolic
  * fall 28 mmHg alone vs 53 mmHg after fentanyl 2 µg/kg 5 min earlier (ratio 1.9) and 50 mmHg after 4 µg/kg — the same
- * within the study, hence the saturating form (fentanyl 2 µg/kg is u ≈ 3.5 at 5 min, 4 µg/kg ≈ 7).]
+ * within the study, hence the saturating form (fentanyl 2 µg/kg is u ≈ 3.5 at 5 min, 4 µg/kg ≈ 7).
  * Hypnotic class only: midazolam co-induction is additive for pressure (research/14).
  * SIZE: 0.2 is the LARGEST that keeps the two sourced bands this interaction feeds back into through the flow-dependent
  * distribution — the induction apnoea (fentanyl pair 60–240 s: 108 s at 0.2, 513 s at 2) and the laryngoscopy-response
