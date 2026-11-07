@@ -134,6 +134,8 @@ None recorded.
 | [`l3/alarms/apnoea-hooks.test.ts`](../../packages/engine-core/test/l3/alarms/apnoea-hooks.test.ts) | 0 | 0 |
 | [`l3/alarms/conditions-chaining.test.ts`](../../packages/engine-core/test/l3/alarms/conditions-chaining.test.ts) | 0 | 0 |
 | [`l3/alarms/conditions.test.ts`](../../packages/engine-core/test/l3/alarms/conditions.test.ts) | 0 | 0 |
+| [`l3/alarms/event-completeness.test.ts`](../../packages/engine-core/test/l3/alarms/event-completeness.test.ts) | 0 | 0 |
+| [`l3/alarms/ibp-no-sensor.test.ts`](../../packages/engine-core/test/l3/alarms/ibp-no-sensor.test.ts) | 0 | 0 |
 | [`l3/alarms/latching.test.ts`](../../packages/engine-core/test/l3/alarms/latching.test.ts) | 0 | 0 |
 | [`l3/alarms/limit-hygiene.test.ts`](../../packages/engine-core/test/l3/alarms/limit-hygiene.test.ts) | 0 | 0 |
 | [`l3/alarms/limit-text.test.ts`](../../packages/engine-core/test/l3/alarms/limit-text.test.ts) | 0 | 0 |

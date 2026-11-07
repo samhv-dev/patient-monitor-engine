@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { assertWireSafe, findSampleLeak, parseWireMessage, WIRE_LIMITS, WireSafetyError } from '../src/guard.ts';
-import { createStamper, INSTRUMENTS, LEARNER_DEFIB_COMMANDS, learnerDefibMay, type CommandInput, type WireMessage } from '../src/protocol.ts';
+import { createStamper, INSTRUMENTS, LEARNER_DEFIB_COMMANDS, learnerDefibMay, NOTE_EVENTS, type CommandInput, type WireMessage } from '../src/protocol.ts';
 import { createEngine } from '@pme/engine-core';
 
 const stamp = createStamper('ABC234', 'host-1');
@@ -88,6 +88,23 @@ describe('the instructor role on the wire (plan instructor-peer-role.md §1, §2
     expect(parseWireMessage(command({ type: 'note', kind: 'stage', text: 'x' }))).toBeNull();
     expect(parseWireMessage(command({ type: 'note', text: 'x' }))).toBeNull();
     expect(parseWireMessage(command({ type: 'note', kind: 'note' }))).toBeNull();
+  });
+
+  it("the note command's optional event tag (brief 52): a known tag accepted from the phone and a controller alike, an unknown or non-string tag refused, a note without one unchanged", () => {
+    for (const issuedBy of ['instructor', 'remote', 'ctl-abc.1']) {
+      for (const kind of ['note', 'marker'] as const) {
+        const m = parseWireMessage(command({ issuedBy, type: 'note', kind, text: 'Recognised (instructor)', ev: 'recognised' }));
+        expect(m, `${issuedBy} ${kind}`).toMatchObject({ kind: 'command', body: { type: 'note', kind, text: 'Recognised (instructor)', ev: 'recognised' } });
+      }
+    }
+    expect([...NOTE_EVENTS]).toEqual(['recognised']);
+    for (const ev of ['Recognised', 'recognized', 'cprStop', 'state:x', '', 1, true, null, ['recognised'], { recognised: true }])
+      expect(parseWireMessage(command({ type: 'note', kind: 'marker', text: 'x', ev })), JSON.stringify(ev)).toBeNull();
+    const plain = parseWireMessage(command({ type: 'note', kind: 'note', text: 'Dantrolene drawn up' }));
+    expect(plain).not.toBeNull();
+    expect(plain?.kind === 'command' && 'ev' in plain.body).toBe(false);
+    // the tag does not lift the text limit
+    expect(parseWireMessage(command({ type: 'note', kind: 'marker', text: 'x'.repeat(501), ev: 'recognised' }))).toBeNull();
   });
 });
 

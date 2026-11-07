@@ -82,6 +82,7 @@ device layer the engine keeps beside its physiology (`l3/device-layer.ts`).
 | `inputs` | `AlarmInputs` | — |
 | `defib` | `DefibState` | — |
 | `pacer` | `PacerState` | — |
+| `defibModel` | `string \| null` | The room's defibrillator model (a `DEFIB_MODELS` key, Room plan R5a; its pacer too, row 58), or null: the skin's defibrillator and pacer spec, else the fallback. Absent in older snapshots (read as null). |
 | `sync` | `SyncState` | — |
 | `pending` | `PendingRhythm \| null` | — |
 | `lastBeat` | `{ t: number; qtMs: number } \| null` | — |

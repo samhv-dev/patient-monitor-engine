@@ -1,6 +1,6 @@
 // pme-scenario/1 validation (brief §7.4; BUILD-PLAN Stage 6 acceptance 6: path-level error messages).
 import { describe, expect, it } from 'vitest';
-import { validateScenario } from '../../src/scenario/validate.ts';
+import { HANDOUT_QUESTION_MAX, SCENARIO_SCHEMA, SCENARIO_SCHEMA_V2, validateScenario } from '../../src/scenario/validate.ts';
 
 const base = () => ({
   schema: 'pme-scenario/1', id: 'x', title: 'X', initialState: 'a',
@@ -88,5 +88,45 @@ describe('the Debrief fields (Debrief redesign A)', () => {
     expect(validateScenario({ ...base(), takeHome: ['One.', 'Two.', 'Three.', 'Four.'] }).ok).toBe(true);
     expect(errs({ ...base(), takeHome: ['One.', 'Two.', 'Three.', 'Four.', 'Five.'] }).join()).toMatch(/takeHome/);
     expect(errs({ ...base(), takeHome: [''] }).join()).toMatch(/takeHome/);
+  });
+  it('accepts debriefHints: up to four show lines and openers anchored on a run event (D8)', () => {
+    const d = { ...base(), debriefHints: { show: ['One.', 'Two.', 'Three.', 'Four.'], openers: [{ at: 'state:b', text: 'What did you see first?' }, { at: 'drug:phenylephrine', text: 'Why that drug?' }, { at: 'start', text: 'How did it begin?' }] } };
+    const r = validateScenario(d);
+    expect(r.ok ? [] : r.errors).toEqual([]);
+    expect(validateScenario({ ...base(), debriefHints: { show: ['Only show.'] } }).ok).toBe(true);
+    expect(validateScenario({ ...base(), debriefHints: { openers: [{ at: 'state:a', text: 'Only openers.' }] } }).ok).toBe(true);
+  });
+  it('refuses debriefHints with an opener on a state the card does not have, five show lines, five openers, empty or unknown keys (D8)', () => {
+    expect(errs({ ...base(), debriefHints: { openers: [{ at: 'state:deteriorating', text: 'What did you see?' }] } })).toEqual(['/debriefHints/openers/0/at: no state "deteriorating"']);
+    expect(errs({ ...base(), debriefHints: { show: ['1', '2', '3', '4', '5'] } }).join()).toMatch(/^\/debriefHints\/show: /);
+    const o = { at: 'start', text: 'x' };
+    expect(errs({ ...base(), debriefHints: { openers: [o, o, o, o, o] } }).join()).toMatch(/^\/debriefHints\/openers: /);
+    expect(errs({ ...base(), debriefHints: { show: [''] } }).join()).toMatch(/debriefHints\/show\/0/);
+    expect(errs({ ...base(), debriefHints: { openers: [{ at: 'state:b', text: '' }] } }).join()).toMatch(/debriefHints\/openers\/0\/text/);
+    expect(errs({ ...base(), debriefHints: { openers: [{ at: 'soon', text: 'x' }] } }).join()).toMatch(/debriefHints\/openers\/0\/at/);
+    expect(errs({ ...base(), debriefHints: { openers: [{ text: 'x' }] } }).join()).toMatch(/missing required property "at"/);
+    expect(errs({ ...base(), debriefHints: { pearls: [] } }).join()).toMatch(/unexpected property "pearls"/);
+    expect(errs({ ...base(), debriefHints: {} }).join()).toMatch(/debriefHints/);
+  });
+  it('accepts debriefHints.handoutQuestions: up to three, anchored as the openers are (D16)', () => {
+    const q = [{ at: 'state:b', text: 'What did you see here?' }, { at: 'drug:phenylephrine', text: 'Why then?' }, { at: 'start', text: 'What did you notice first?' }];
+    const r = validateScenario({ ...base(), debriefHints: { handoutQuestions: q } });
+    expect(r.ok ? [] : r.errors).toEqual([]);
+    expect(validateScenario({ ...base(), debriefHints: { openers: [{ at: 'state:a', text: 'x' }], handoutQuestions: [{ at: 'value:map<60', text: 'y' }] } }).ok).toBe(true);
+  });
+  it('refuses handoutQuestions on a state the card does not have, four questions, an unknown anchor form, an empty text (D16)', () => {
+    expect(errs({ ...base(), debriefHints: { handoutQuestions: [{ at: 'state:deteriorating', text: 'What did you see?' }] } })).toEqual(['/debriefHints/handoutQuestions/0/at: no state "deteriorating"']);
+    const q = { at: 'start', text: 'x' };
+    expect(errs({ ...base(), debriefHints: { handoutQuestions: [q, q, q, q] } }).join()).toMatch(/^\/debriefHints\/handoutQuestions: /);
+    expect(errs({ ...base(), debriefHints: { handoutQuestions: [{ at: 'phase:early', text: 'x' }] } }).join()).toMatch(/debriefHints\/handoutQuestions\/0\/at/);
+    expect(errs({ ...base(), debriefHints: { handoutQuestions: [{ at: 'start', text: '' }] } }).join()).toMatch(/debriefHints\/handoutQuestions\/0\/text/);
+  });
+  it('a question longer than one printed handout line is refused, with where the limit comes from (D16)', () => {
+    expect(HANDOUT_QUESTION_MAX).toBe(92); // measured: one line of the A4 handout (validate.ts)
+    const at = (n: number) => ({ ...base(), debriefHints: { handoutQuestions: [{ at: 'start', text: 'x'.repeat(n) }] } });
+    expect(validateScenario(at(HANDOUT_QUESTION_MAX)).ok).toBe(true);
+    expect(errs(at(HANDOUT_QUESTION_MAX + 1))).toEqual(['/debriefHints/handoutQuestions/0/text: at most 92 characters, about 90 characters — one line of the A4 handout; a wrapped question pushes the MH handout over one page (measured 276.4 mm of 267)']);
+    const len = (sc: unknown) => (sc as { definitions: { debriefHints: { properties: { handoutQuestions: { items: { properties: { text: { maxLength: number } } } } } } } }).definitions.debriefHints.properties.handoutQuestions.items.properties.text.maxLength;
+    expect([len(SCENARIO_SCHEMA), len(SCENARIO_SCHEMA_V2)]).toEqual([HANDOUT_QUESTION_MAX, HANDOUT_QUESTION_MAX]);
   });
 });

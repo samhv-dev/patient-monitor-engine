@@ -13,6 +13,7 @@ export const DOCS_TESTS = {
     'test/docs-examples.test.ts', // the examples in docs/guides/scenario-authoring.md, skin-authoring.md
     'test/model-docs.test.ts', // docs/model/*, docs/validation/known-misses.md (and target-audit.tsv)
     'test/release-versions.test.ts', // CITATION.cff, CHANGELOG.md, README.md
+    'test/changelog-fragments.test.ts', // CHANGELOG.md's Unreleased section and the changes/unreleased/ fragments
     'test/debrief-fa.test.ts', // docs/showcase/i18n/fa-debrief.json, docs/showcase/kit-round-a/q2-pretag-chromium/*
     'test/datasets/sources.test.ts', // NOTICES.md rows of the bundled datasets
     'test/templates/bundled.test.ts', // NOTICES.md rows of the bundled templates
@@ -29,8 +30,11 @@ export const DOCS_TESTS = {
     // docs/showcase/kit-round-a/**/*.json, imported
     'src/app/debrief-moments.test.ts',
     'src/app/views/debrief-course.test.ts',
+    'src/app/views/debrief-handout-questions.dom.test.ts',
+    'src/app/views/debrief-hints.dom.test.ts',
     'src/app/views/debrief-marks-course.dom.test.ts',
     'src/app/views/debrief-moments-print.dom.test.ts',
+    'src/app/views/debrief-fa.dom.test.ts', // docs/showcase/i18n/fa-debrief.json, through the page (i18n/fa-dom.ts) and the script
   ],
 };
 

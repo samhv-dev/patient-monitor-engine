@@ -17,6 +17,11 @@ pnpm build && pnpm check-notices && pnpm check-licences && pnpm check-size
 pnpm test:e2e                                      # Playwright; PW_SYSTEM_CHROME=1 uses your installed Chrome
 ```
 
+CI runs the Chromium e2e suite in four shards and the WebKit one in three (each set's `shards` in
+`scripts/ci/e2e-sets.mjs`, which the e2e matrix is built from), each given its files by `scripts/ci/e2e-shard-plan.mjs`
+from the per-file durations in the last green main run's reports (longest first onto the least-loaded shard), or by
+Playwright's own `--shard` when no such report can be read.
+
 ## Rules that CI or review enforce
 
 1. **One piece of work per pull request**, described in the PR template (including "Sources consulted").
@@ -37,6 +42,13 @@ pnpm test:e2e                                      # Playwright; PW_SYSTEM_CHROM
    ≤ 60 KB.
 7. **No clinical claims.** Documentation describes what the model does and how it was measured; it never claims
    clinical validation or suitability for patient care.
+8. **A user-facing change adds a fragment, not a CHANGELOG line.** Write one file
+   `changes/unreleased/<your-branch>.md` with your lines under the Keep a Changelog headings CHANGELOG.md uses
+   (`### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed`, `### Security`, `### Known limitations`),
+   each line exactly as it should read in CHANGELOG.md; several headings may share one file. Do not edit CHANGELOG.md:
+   its Unreleased section stays empty (`changelog-fragments.test.ts` fails on a line there) and changes only at release,
+   when `scripts/changelog-assemble.ts` builds the dated section from the fragments (RELEASE.md, step 4). Distinct
+   files never conflict, so two pull requests no longer collide in CHANGELOG.md.
 
 ## Reporting realism problems
 

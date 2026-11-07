@@ -241,8 +241,11 @@ export class ScenarioRunner {
   /** Credit the time since the last call to the timers (not while paused), using the values held so far. */
   private sync(t: number): void {
     const dt = Math.max(0, t - this.s.lastT);
+    // FX-11b: a clock that steps back (the host's estimate after a stall) is not a new span: the span up to the high
+    // water was counted once already, so the last time stays there
+    if (dt === 0) return;
     this.s.lastT = t;
-    if (this.s.paused || dt === 0) return;
+    if (this.s.paused) return;
     this.s.stateT += dt;
     this.s.scenarioT += dt;
     this.trackVitals(dt);

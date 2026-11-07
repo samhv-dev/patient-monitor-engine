@@ -13,7 +13,7 @@
 import { asV1, type ClinicalEvent, type CommandInput } from '@pme/controller';
 import { bleed, fluid, infusion, vaporiser } from '../../physiology-console/actions.ts';
 import { describeCommand } from '../describe.ts';
-import { DRUG_LIST, doseUnits, findDrugs, perKg, rateUnits, unitText, type DrugItem } from '../drugs.ts';
+import { DRUG_LIST, doseUnits, findDrugs, lockLabel, perKg, rateUnits, unitText, type DrugItem } from '../drugs.ts';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
 import { clock, h, seg, setText, stepper, toast } from '../ui.ts';
@@ -182,7 +182,12 @@ export function drugSheet(frame: SheetFrame, o: { link: Link; weightKg(): number
         b.addEventListener('click', () => choose(items.get(b?.dataset.key ?? '') ?? it));
       }
       items.set(it.key, it);
-      setText(b.lastElementChild as HTMLElement, tag);
+      // a drug just given is locked for 10 s on every device (drugs.ts lockLabel): its row says when, and counts down
+      const id = it.kind === 'drug' ? it.drug.id : it.kind === 'step' ? it.step.drugId : null;
+      const lock = id === null ? null : lockLabel(link, id);
+      setText(b.lastElementChild as HTMLElement, lock ? (tag ? `${tag} · ${lock}` : lock) : tag);
+      if (lock) b.dataset.locked = 'true';
+      else delete b.dataset.locked;
       b.setAttribute('aria-pressed', String(chosen?.key === it.key));
       return b;
     });

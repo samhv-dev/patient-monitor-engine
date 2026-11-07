@@ -285,6 +285,24 @@ describe('pme-scenario/2: failAfterS and preparation (plan F9)', () => {
   });
 });
 
+describe('pme-scenario/2: debriefHints (D8)', () => {
+  const withHints = (h: unknown) => ({ ...minimalV2(), debriefHints: h });
+  it('accepts openers on the anchor forms report3 reads: start, pulseLoss, rosc, phase:<id>, action:<id>', () => {
+    const openers = ['start', 'pulseLoss', 'rosc', 'phase:early', 'action:dantrolene'].slice(0, 4).map((at) => ({ at, text: `About ${at}?` }));
+    const r = validateScenario(withHints({ show: ['One.', 'Two.', 'Three.', 'Four.'], openers }));
+    expect(r.ok ? [] : r.errors).toEqual([]);
+    const r2 = validateScenario(withHints({ openers: [{ at: 'action:dantrolene', text: 'When did you reach for it?' }] }));
+    expect(r2.ok ? [] : r2.errors).toEqual([]);
+  });
+  it('refuses an unknown phase or action, a /1 run-event form, a rule object, five show lines', () => {
+    expect(errs(withHints({ openers: [{ at: 'phase:late', text: 'x' }] }))).toEqual(['/debriefHints/openers/0/at: no phase "late"']);
+    expect(errs(withHints({ openers: [{ at: 'action:nope', text: 'x' }] }))).toEqual(['/debriefHints/openers/0/at: no action "nope"']);
+    expect(errs(withHints({ openers: [{ at: 'state:early', text: 'x' }] })).join()).toMatch(/debriefHints\/openers\/0\/at/);
+    expect(errs(withHints({ openers: [{ at: { rule: { signal: 'rosc' } }, text: 'x' }] })).join()).toMatch(/debriefHints\/openers\/0\/at/);
+    expect(errs(withHints({ show: ['1', '2', '3', '4', '5'] })).join()).toMatch(/^\/debriefHints\/show: /);
+  });
+});
+
 // Debrief 2, D5 (the owner's ruling of 5 November): on a /2 card recognition is a timed action, and the card marks which
 // one with `recognition: true` (the Debrief reads that action, never a match by label). At most one per card.
 describe('pme-scenario/2: the recognition action (Debrief 2, D5)', () => {
@@ -300,5 +318,23 @@ describe('pme-scenario/2: the recognition action (Debrief 2, D5)', () => {
   it('refuses a second recognition action, and recognition other than true', () => {
     expect(errs(withActions({ recognition: true }, { recognition: true }))).toContain('/actions/2/recognition: a second recognition action (the first is "r0"); a card has at most one');
     expect(errs(withActions({ recognition: false })).join(' ')).toMatch(/recognition/);
+  });
+});
+
+describe('pme-scenario/2: debriefHints.handoutQuestions (D16)', () => {
+  const withQ = (q: unknown) => ({ ...minimalV2(), debriefHints: { handoutQuestions: q } });
+  it('accepts up to three questions on the anchor forms the openers take', () => {
+    const r = validateScenario(withQ(['start', 'phase:early', 'action:dantrolene'].map((at) => ({ at, text: `About ${at}?` }))));
+    expect(r.ok ? [] : r.errors).toEqual([]);
+  });
+  it('refuses an unknown phase, an unknown action, a /1 run-event form, four questions', () => {
+    expect(errs(withQ([{ at: 'phase:late', text: 'x' }]))).toEqual(['/debriefHints/handoutQuestions/0/at: no phase "late"']);
+    expect(errs(withQ([{ at: 'action:nope', text: 'x' }]))).toEqual(['/debriefHints/handoutQuestions/0/at: no action "nope"']);
+    expect(errs(withQ([{ at: 'drug:dantrolene', text: 'x' }])).join()).toMatch(/debriefHints\/handoutQuestions\/0\/at/);
+    expect(errs(withQ([1, 2, 3, 4].map(() => ({ at: 'start', text: 'x' })))).join()).toMatch(/^\/debriefHints\/handoutQuestions: /);
+  });
+  it('refuses a question longer than one printed handout line (the /1 limit, D16)', () => {
+    expect(validateScenario(withQ([{ at: 'start', text: 'x'.repeat(92) }])).ok).toBe(true);
+    expect(errs(withQ([{ at: 'start', text: 'x'.repeat(93) }]))).toEqual(['/debriefHints/handoutQuestions/0/text: at most 92 characters, about 90 characters — one line of the A4 handout; a wrapped question pushes the MH handout over one page (measured 276.4 mm of 267)']);
   });
 });

@@ -1,5 +1,7 @@
 # Showcase 2: presenter guide (one page, the 30-minute slot)
 
+> **A record of the 3 November 2026 build:** the first Instructor view it describes (`#/teach`, its tabs and session bar) was retired on 6 November 2026 (retire-instructor-v1 PR 3; Instructor v2, `#/teach2`, is now the only Instructor view, and `#/teach` opens it). Nothing else in this record was changed.
+
 *Tuesday 3 November 2026 (12 Aban 1405), 30 minutes. Rehearse from [`SHOWCASE-2-RUN-SHEET.md`](SHOWCASE-2-RUN-SHEET.md);
 print [`SHOWCASE-2-CUE-CARDS.md`](SHOWCASE-2-CUE-CARDS.md) for the lectern. This page is what to remember. Source keys
 are those of the run sheet; Q1-MH = the new programme's talk run (kit a88f95a7, 29 October, Chromium, 3 phones), SPK =

@@ -32,6 +32,8 @@ export interface ClockAnchor {
 export type ToWorker =
   | { type: 'init'; canvas: OffscreenCanvas; size: Size; opts: CoreOptions; mainPump: boolean }
   | { type: 'frame'; epochMs: number }
+  // the page has read the last event batch (one batch in flight, engine.worker.ts)
+  | { type: 'eventsAck' }
   | { type: 'catchUp'; epochMs: number }
   | { type: 'command'; reqId: number; cmd: Command }
   | { type: 'resize'; size: Size }
@@ -54,8 +56,12 @@ export type ToWorker =
 
 export type FromWorker =
   | { type: 'ready'; path: 'worker-raf' | 'worker-pump' }
+  // worker-pump: the posted frame is drawn; the page may post the next (one frame in flight)
+  | { type: 'framed' }
   | { type: 'events'; anchor: ClockAnchor; events: EngineEvent[] }
   | { type: 'result'; reqId: number; result: DispatchResult }
+  // FX-11a: the worker is working through a long run (a fast-forward step, a catch-up)
+  | { type: 'progress' }
   | { type: 'error'; message: string; reqId?: number } // reqId when a request failed inside the worker
   | { type: 'snapshot'; reqId: number; snapshot: PatientSnapshot }
   | { type: 'restored'; reqId: number; error?: string }
