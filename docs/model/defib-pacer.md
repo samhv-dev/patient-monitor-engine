@@ -48,7 +48,8 @@ outcome; an embedding developer sees the device commands and state (`l3/defib-pa
 
 | Where | Relation |
 |---|---|
-| [`outcome.ts:106`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts#L106) | Synchronised cardioversion success by rhythm and biphasic energy, p = pMax / (1 + (E50/E)^2) [ENG fit] |
+| [`outcome.ts:107`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts#L107) | p = pMax / (1 + (E50/E)^2); the Hill exponent 2 is [ENG] (research/20). |
+| [`outcome.ts:111`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts#L111) | did) and E50 puts the curve through 0.68 at 70 J: E50 = 70·√(0.94/0.68 − 1) = 43.3 J. The engine's energy is the |
 
 ## State
 
@@ -119,7 +120,9 @@ outcome; an embedding developer sees the device commands and state (`l3/defib-pa
 | `TEMP_SHOCK_C` | `30` | — | ERC 2021; Danzl & Pozos 1994; Brown 2012; research/20; [ENG magnitude] | VF below 30 °C is often shock-refractory (ERC 2021 special circumstances; Danzl & Pozos 1994; Brown 2012) — termination × (1 − 0.3 per °C below 30), floor 0.2 [ENG magnitude] (research/20). |
 | `TEMP_TERM_PER_C` | `0.3` | — | — | — |
 | `TEMP_TERM_FLOOR` | `0.2` | — | — | — |
-| `CARDIOVERSION_HILL` | `2` | — | research/20; Page 2002; Mittal 2000; ERC 2021; Neumar 2010; [ENG fit]; [VERIFY] | Synchronised cardioversion success by rhythm and biphasic energy, p = pMax / (1 + (E50/E)^2) [ENG fit] (research/20). AF: Page 2002, Mittal 2000, ERC 2021 (120–150 J start); flutter and paroxysmal SVT: ERC 2021 (70–120 J), Neumar 2010 (50–100 J), > 90 %; monomorphic VT with a pulse: Neumar 2010 (100 J, > 90 %) [VERIFY]. Any other organised tachycardia, or no rhythm id, keeps the flat CARDIOVERSION_SINUS. |
+| `CARDIOVERSION_HILL` | `2` | — | research/20; Circulation 2000; ERC 2021; Neumar 2010; [ENG]; [VERIFY] | Synchronised cardioversion success by rhythm and biphasic energy (the FIRST-shock probability at that energy), p = pMax / (1 + (E50/E)^2); the Hill exponent 2 is [ENG] (research/20). AF (and pre-excited AF): Mittal S et al., Circulation 2000;101:1282 (randomised, n = 88 biphasic): RECTILINEAR biphasic shocks escalating 70 → 120 → 150 → 170 J converted 60/88 = 68 % at the first 70 J shock and 83/88 = 94 % cumulatively. pMax is the cumulative 0.94 (the curve's ceiling: no energy converts more than the whole escalation did) and E50 puts the curve through 0.68 at 70 J: E50 = 70·√(0.94/0.68 − 1) = 43.3 J. The engine's energy is the selected biphasic energy, read as Mittal's delivered rectilinear-biphasic joules (the skins model no waveform). Flutter and paroxysmal SVT: ERC 2021 (70–120 J), Neumar 2010 (50–100 J), > 90 %; monomorphic VT with a pulse: Neumar 2010 (100 J, > 90 %) [VERIFY]. Any other organised tachycardia, or no rhythm id, keeps the flat CARDIOVERSION_SINUS. |
+| `AF_FIRST_SHOCK_70J` | `0.68` | — | Mittal 2000 | Mittal 2000: 68 % at the first 70 J rectilinear-biphasic shock, 94 % cumulative over 70/120/150/170 J. |
+| `AF_CUMULATIVE` | `0.94` | — | — | — |
 
 ### [`l3/defib-pacer/pacer.ts`](../../packages/engine-core/src/l3/defib-pacer/pacer.ts)
 
