@@ -28,6 +28,9 @@ export const spanFa = (s) => {
   return m ? `${m[1]} دقیقه و ${m[2]} ثانیه` : s.replace(/^(\d+) s$/, '$1 ثانیه');
 };
 
+/** Latin and Western-digit runs ("250 µg", "RR 12 /min", "O₂ 100 %") kept whole and left-to-right inside the Persian line. */
+export const LTR_RUN = /[A-Za-z0-9µ°×+][A-Za-z0-9µ°×₀-₉⁰-⁹⁺⁻%.,:/·–+\- ]*[A-Za-z0-9µ°₀-₉⁰-⁹⁺⁻%]|[A-Za-z0-9µ°]/g;
+
 /** Every way the template's parts can cover `s` (a free placeholder tries each end, shortest first). */
 export function* match(parts, i, s, pos, caps) {
   if (i === parts.length) {

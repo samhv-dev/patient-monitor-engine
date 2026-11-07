@@ -12,6 +12,10 @@
 // The archive (board "Finish 2", archive.ts): a debrief "Finish the case" saved opens here (#/debrief/archive/<id>, and
 // …/print prints it), with the resident's name in the header band and the handout's; the view lists the archive in its
 // own section (screen only), exports it all as one JSON file and clears it behind a confirm.
+// Persian (Debrief 2, D13): a switch beside the print buttons (per browser, English by default; i18n/lang.ts, also the
+// Briefing's language) draws the two live containers, the handout and the footer through the one table and matcher the
+// handout script uses (i18n/fa-dom.ts), right to left in the bundled Vazirmatn; while an entry printed is unread by the
+// owner, "Persian draft: not yet read by the clinical owner" stands under the switch and on every printed page (DQ10).
 import { asV1, type MarkKind } from '@pme/controller';
 import { archive, hhmm, type ArchiveMeta } from '../archive.ts';
 import './debrief.css';
@@ -29,7 +33,11 @@ import { cardOf } from '../scenarios.ts';
 import type { AppSession } from '../session.ts';
 import { version } from '@pme/renderer';
 import type { View } from '../shell.ts';
-import { button, confirmDialog, download, h, toast } from '../ui.ts';
+import { button, confirmDialog, download, h, seg, toast } from '../ui.ts';
+import TABLE from '../../../../../docs/showcase/i18n/fa-debrief.json';
+import { DRAFT_LINE, faPass, translateTree, unreviewed, type FaPass } from '../i18n/fa-dom.ts';
+import { LTR_RUN } from '../i18n/fa-match.mjs';
+import { hostLang, setHostLang, type HostLang } from '../i18n/lang.ts';
 import { archiveHref, archiveList, downloadEntry, entryTitle, exportAll } from './archive-list.ts';
 
 /** The build this page was served from (vite.config.ts `define`: the git commit, "+" with uncommitted changes, the date). */
@@ -96,8 +104,8 @@ function actionsTable(r: Report3): HTMLElement {
 
 /** The timeline's rows, a staged delivery's items on one line (each item keeps its own row in the record). */
 function timelineRows(d: RunData): HTMLElement[] {
-  const line = (r: Row, text: string, isSetup: boolean) => h('tr', { 'data-kind': r.kind, ...(r.undone ? { class: 'undone' } : isSetup ? { class: 'db-setup' } : {}) },
-    h('td', { class: 'num' }, mmss(r.t)), h('td', {}, KIND[r.kind]), h('td', {}, text + undoneText(r)));
+  const line = (r: Row, text: string | string[], isSetup: boolean) => h('tr', { 'data-kind': r.kind, ...(r.undone ? { class: 'undone' } : isSetup ? { class: 'db-setup' } : {}) },
+    h('td', { class: 'num' }, mmss(r.t)), h('td', {}, KIND[r.kind]), h('td', {}, ...[text].flat(), undoneText(r))); // separate texts: the Persian page reads each (D13)
   const done = new Set<string>();
   return d.rows.flatMap((r) => {
     const b = r.batch?.id;
@@ -105,7 +113,7 @@ function timelineRows(d: RunData): HTMLElement[] {
     if (done.has(b)) return [];
     done.add(b);
     const items = d.rows.filter((x) => x.batch?.id === b);
-    return [line(r, `Delivered together: ${items.map((x) => x.text).join('; ')}`, items.every(setup))];
+    return [line(r, ['Delivered together: ', ...items.flatMap((x, i) => (i ? ['; ', x.text] : [x.text]))], items.every(setup))];
   });
 }
 /** A bookmark's line: its time and words, a mark's kind and note, and its undoing. */
@@ -261,8 +269,23 @@ const PAGE_CSS = `@page { @bottom-left { content: "${FOOT}"; font: 7pt 'Inter Pr
 
 /** The bundled print font (debrief.css @font-face): loaded on entering the view, and awaited before the print buttons
  *  print, so a print never lays out in a fallback font. A failed load still prints (in the system font). */
-const loadPrintFont = (): Promise<unknown> => (document.fonts?.load("1em 'Inter Print'") ?? Promise.resolve()).catch(() => undefined);
+const loadPrintFont = (): Promise<unknown> => Promise.all([document.fonts?.load("1em 'Inter Print'"), hostLang() === 'fa' ? document.fonts?.load('1em Vazirmatn') : undefined]).catch(() => undefined);
 const printWithFont = (): void => void loadPrintFont().then(() => window.print());
+
+/** D13: the Persian page's @page boxes: the footer (the table's footer entry, as the foot line printed it) right,
+ *  «صفحه‌ی n از N» left in Persian digits (the table's "Page {c} of {c}"), and, while an entry printed is unread by the
+ *  owner, DQ10's line at the top of every page. Each Latin run (the version, the build) is one left-to-right run. */
+function pageCssFa(foot: string, draft: boolean, p: FaPass): string {
+  const page = (TABLE.templates as Array<{ en: string; fa: string | null; reviewed: boolean }>).find((e) => e.en === 'Page {c} of {c}');
+  const [pa = '', pb = ''] = (page?.fa ?? 'صفحه‌ی {c} از {c}').split('{c}');
+  if (page) p.used.add(page as never);
+  const iso = (x: string) => x.replace(LTR_RUN, (m) => `\u2066${m.replace(/ /g, '\u00a0')}\u2069`);
+  const css = (x: string) => `"${x.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+  const box = "font: 7pt 'Vazirmatn', sans-serif; color: #000; vertical-align: top; padding-top: 2mm; border-top: 0.5pt solid #000;";
+  return `@page { @bottom-right { content: ${css(iso(foot))}; ${box} direction: rtl; text-align: right; }
+@bottom-left { content: ${css(pa)} counter(page, persian) ${css(pb)} counter(pages, persian); ${box} direction: rtl; white-space: nowrap; }${draft ? `
+@top-center { content: ${css(DRAFT_LINE)}; font: 7pt 'Inter Print', sans-serif; color: #000; vertical-align: bottom; }` : ''} }`;
+}
 
 /** The pressures' column heads (D6), each in whole mmHg as the record keeps it. */
 const PRESSURE_HEAD: Readonly<Record<PressureKey, string>> = { sys: 'SBP', dia: 'DBP', cvp: 'CVP' };
@@ -431,7 +454,7 @@ function momentsTable(ms: KeyMoment[], d: RunData): Node[] {
       h('tbody', {}, ...ms.flatMap((m) => [
         h('tr', { 'data-n': String(m.n), ...(m.pulseless ? { 'data-pulseless': 'true' } : {}), ...(m.recognised ? { 'data-recognised': '' } : {}) }, h('td', { class: 'num' }, String(m.n)), h('td', { class: 'num' }, mmss(m.t)), whoCell(m.who), h('td', {}, m.text),
           v(m.values.hr), h('td', { class: 'num db-bp' }, bpText(m)), v(m.values.map), v(m.values.cvp), v(m.values.spo2), v(m.values.etco2)),
-        ...(m.alarms.length ? [h('tr', { class: 'db-alarms' }, h('td', {}), h('td', { colspan: '9' }, `Alarms since the last row: ${m.alarms.map((_, i) => alarmText(m, i)).join(m.alarmTimes ? '; ' : ', ')}`))] : []),
+        ...(m.alarms.length ? [h('tr', { class: 'db-alarms' }, h('td', {}), h('td', { colspan: '9' }, 'Alarms since the last row: ', ...m.alarms.flatMap((_, i) => (i ? [m.alarmTimes ? '; ' : ', ', alarmText(m, i)] : [alarmText(m, i)]))))] : []),
       ]))),
     missing.length ? notRecorded(missing.join(', and ').replace(/^./, (c) => c.toUpperCase())) : null,
     ms.some((m) => m.pulseless) ? h('p', { class: 'db-note60' }, SPO2_DASH) : null,
@@ -464,6 +487,48 @@ export function debriefView(session: AppSession, link: Link): View {
   const pearls = section('pearls', 'Talking points', h('div', { class: 'db-pearls' },
     ...PEARLS.map(([phase, prompt]) => h('div', { class: 'db-pearl' }, h('b', {}, phase), h('p', {}, prompt)))));
   const handout = h('div', { class: 'db-handout-live' });
+  const HANDOUT_H = 'Learner handout (printed separately)';
+  const handoutH = h('h2', { id: 'db-handout-h' }, HANDOUT_H);
+  const handoutSec = h('section', { class: 'db-sec', id: 'db-handout', 'aria-labelledby': 'db-handout-h' }, handoutH, handout);
+  const foot = h('footer', { class: 'db-foot db-runfoot' }, FOOT);
+  // D13: the language of the report and the handout (per browser, English by default; Decision 15: the host's one
+  // setting, also the Briefing's language). Only the two live containers, the handout and the footer change with it.
+  const draft = h('p', { class: 'db-draft', lang: 'en', dir: 'ltr', hidden: true }, DRAFT_LINE);
+  const faMissing = h('details', { class: 'db-fa-missing', hidden: true }, h('summary', {}), h('ul', {}));
+  const langSwitch = seg<HostLang>('Language of the report', [['en', 'English'], ['fa', 'فارسی']], hostLang(), (l) => (setHostLang(l), render()));
+  langSwitch.lang = 'en'; // the Persian option names itself in Persian
+  const pageStyle = h('style', { id: 'db-page-style' }, PAGE_CSS);
+  /** The page in the host's language: Persian puts the containers right to left and through the table, counts what
+   *  the table lacks (listed on screen) and, while an entry printed is unread, shows DQ10's line. */
+  const applyLang = (): void => {
+    const fa = hostLang() === 'fa';
+    langSwitch.set(fa ? 'fa' : 'en');
+    handoutH.textContent = HANDOUT_H;
+    foot.textContent = FOOT;
+    for (const x of [live1, live2, handoutSec, foot]) {
+      if (fa) x.setAttribute('lang', 'fa'), x.setAttribute('dir', 'rtl');
+      else x.removeAttribute('lang'), x.removeAttribute('dir');
+    }
+    if (!fa) {
+      draft.hidden = faMissing.hidden = true;
+      pageStyle.textContent = PAGE_CSS;
+      return;
+    }
+    const p = faPass();
+    for (const x of [live1, live2, handoutSec, foot]) translateTree(x, p);
+    pageStyle.textContent = pageCssFa(foot.textContent ?? FOOT, false, p);
+    const unread = unreviewed(p);
+    draft.hidden = !unread;
+    if (unread) {
+      pageStyle.textContent = pageCssFa(foot.textContent ?? FOOT, true, p);
+      // where the browser prints no @page boxes (WebKit), the line goes with each footer line and heads the handout
+      for (const f of [...live1.querySelectorAll('.db-runfoot'), ...live2.querySelectorAll('.db-runfoot'), foot]) f.append(h('span', { class: 'db-draftline', lang: 'en', dir: 'ltr' }, DRAFT_LINE));
+      handout.prepend(h('p', { class: 'db-draftline', lang: 'en', dir: 'ltr' }, DRAFT_LINE));
+    }
+    faMissing.hidden = p.missing.size === 0;
+    (faMissing.firstElementChild as HTMLElement).textContent = `${p.missing.size} ${p.missing.size === 1 ? 'string prints' : 'strings print'} in English: not in the Persian table yet`;
+    (faMissing.lastElementChild as HTMLElement).replaceChildren(...[...p.missing].map(([en, n]) => h('li', {}, `${n}× ${en}`)));
+  };
   const runBy = (): void => {
     const s = live1.querySelector('.db-runby');
     if (s) s.textContent = who.value;
@@ -546,7 +611,7 @@ export function debriefView(session: AppSession, link: Link): View {
         d.keeps?.includes('pressures') ? null : notRecorded('SBP, DBP and CVP')),
       section('drugs', 'Drugs and fluids', meds.length
         ? h('table', { class: 'db-table' }, h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Time'), h('th', { scope: 'col' }, 'Given'))),
-          h('tbody', {}, ...meds.map((r) => h('tr', r.undone ? { class: 'undone' } : {}, h('td', { class: 'num' }, mmss(r.t)), h('td', {}, r.text + undoneText(r))))))
+          h('tbody', {}, ...meds.map((r) => h('tr', r.undone ? { class: 'undone' } : {}, h('td', { class: 'num' }, mmss(r.t)), h('td', {}, r.text, undoneText(r))))))
         : h('p', { class: 'muted' }, 'No drugs or fluids were given.'),
         totals.length ? h('ul', { class: 'db-totals' }, ...totals.map((x) => h('li', {}, `${drugName(x.drugId)}: ${x.total} in ${x.n} ${x.n === 1 ? 'bolus' : 'boluses'}`))) : null),
       ...(r3 ? [
@@ -585,6 +650,7 @@ export function debriefView(session: AppSession, link: Link): View {
       takeHomeSection(d.doc?.takeHome),
       h('p', { class: 'db-next' }, HANDOUT.next),
     ));
+    applyLang();
   };
 
   // a saved debrief on screen: which one, and the way back to the live run (screen only)
@@ -631,19 +697,21 @@ export function debriefView(session: AppSession, link: Link): View {
           }, { once: true });
           printWithFont();
         }, 'ghost'),
-        h('span', { class: 'hint' }, 'Choose "Save as PDF" as the printer. The report reads the run so far; it refreshes while open. The JSON holds the record, not the "Run by" line or the notes.')),
+        h('span', { class: 'hint' }, 'Choose "Save as PDF" as the printer. The report reads the run so far; it refreshes while open. The JSON holds the record, not the "Run by" line or the notes.'),
+        langSwitch),
+      draft,
+      faMissing,
       viewingBar,
       live1,
       h('div', { class: 'field db-who' }, h('label', { for: 'db-who' }, 'Run by'), who),
       pearls,
       section('notes', 'Notes', notes),
       live2,
-      h('section', { class: 'db-sec', id: 'db-handout', 'aria-labelledby': 'db-handout-h' }, h('h2', { id: 'db-handout-h' }, 'Learner handout (printed separately)'), handout),
+      handoutSec,
       archiveSec,
-      h('footer', { class: 'db-foot db-runfoot' }, FOOT)));
+      foot));
   // WebKit (Safari) prints no @page margin boxes: there the footer lines before each page break stand in
   el.classList.toggle('db-nomargin', typeof (window as { CSSMarginRule?: unknown }).CSSMarginRule !== 'function');
-  const pageStyle = h('style', { id: 'db-page-style' }, PAGE_CSS);
 
   // the end of a run: a state with no way out (the toast once per state reached)
   let ended = '';

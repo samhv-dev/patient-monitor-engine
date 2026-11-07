@@ -33,6 +33,7 @@ export const DOCS_TESTS = {
     'src/app/views/debrief-hints.dom.test.ts',
     'src/app/views/debrief-marks-course.dom.test.ts',
     'src/app/views/debrief-moments-print.dom.test.ts',
+    'src/app/views/debrief-fa.dom.test.ts', // docs/showcase/i18n/fa-debrief.json, through the page (i18n/fa-dom.ts) and the script
   ],
 };
 

@@ -1,11 +1,17 @@
 # Persian Debrief handout (گزارش دبریفینگ به فارسی)
 
-A **handout script, not an app feature.** `scripts/showcase/debrief-fa.mjs` reads the JSON that the Debrief view saves
-("Download the record (JSON)", schema `pme-debrief/2` (`/1` exports are still read), Stage 13 ruling Q3: the same data
-as the printed report) and prints a right-to-left A4 PDF in Persian. The app, its tests, scenarios and bands are
-untouched; an in-app translation is planned for a later release. The English report stays the reference.
-New sections in Persian: a later release (the key times, the key moments and the learner handout). A `/2` export also
-prints the talking points box and the redesign's verdict words (Observed, Not observed, Not assessable, Discuss).
+**In the app (Debrief 2, D13) and as a handout script.** The Debrief page has a language switch (English · فارسی,
+per browser, English by default): with it on «فارسی» the report, page 2 and the learner handout are drawn right to left
+in the bundled Vazirmatn (`apps/demo/src/app/fonts/`, SIL OFL 1.1, NOTICES N-018) and printed from the browser as the
+English report is. The page and `scripts/showcase/debrief-fa.mjs` read this table through ONE matcher
+(`apps/demo/src/app/i18n/fa-match.mjs`, D11), so both print the same Persian for the same run. On the page, a string the
+table does not hold prints in English in italic and is listed under the switch ("N strings print in English"); the
+charts, the course strip and the swimlane keep their English labels (SVG); the talking points, the "Run by" field and
+the notes stay as they are. The English report stays the reference.
+
+The script reads the JSON that the Debrief view saves ("Download the record (JSON)", schema `pme-debrief/2` or `/3`;
+`/1` exports are still read; Stage 13 ruling Q3: the same data as the printed report) and prints a right-to-left A4
+PDF in Persian.
 
 ## How to run
 
@@ -25,9 +31,8 @@ prints the talking points box and the redesign's verdict words (Observed, Not ob
    The PDF is written beside the JSON as `<name>.fa.pdf` (`--out-dir DIR` to put it elsewhere). Several JSON files may
    be given at once. `--html` also writes the HTML; `--text` writes the printed Persian strings one per line (for the
    spelling pass below).
-3. **Font.** Vazirmatn (SIL Open Font License, free to embed) is not in the repository. Download it from
-   <https://github.com/rastikerdar/vazirmatn/releases> (or Google Fonts) and pass the folder holding
-   `Vazirmatn-Regular.ttf` and `Vazirmatn-Bold.ttf` (or the variable `Vazirmatn[wght].ttf`) with `--fonts`, or set
+3. **Font.** Vazirmatn (SIL Open Font License, free to embed) is in the repository since D13
+   (`apps/demo/src/app/fonts/Vazirmatn-Regular.ttf` and `-Bold.ttf`): pass that folder with `--fonts`, or set
    `PME_FA_FONTS`; the script also looks in `~/Library/Fonts`, `~/.fonts`, `/Library/Fonts` and
    `/usr/share/fonts/truetype/vazirmatn`. The font is embedded in the PDF, so the reader needs nothing installed.
 

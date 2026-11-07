@@ -712,3 +712,44 @@ test('D9: the card author\'s hints on page 2 of the MH run, whole, the handout u
     test.info().annotations.push({ type: 'D9 MH pages', description: `without hints ${pagesBefore}, with ${pdfInfo(pdf).boxes.length}` });
   }
 });
+
+// D13: the Debrief in Persian on the A3.1 tamponade path, both engines: the switch puts page 1, page 2 and the handout
+// right to left in the bundled Vazirmatn; page 1 and the handout each within one A4 page in print; DQ10's line stands
+// while the entries printed are unread; Chromium prints the handout on one page with the line on it.
+test('D13: the A3.1 tamponade Debrief in Persian: page 1 and the handout within one A4 page, in Vazirmatn', async ({ page, browserName }) => {
+  test.setTimeout(90_000);
+  await showRecorded(page);
+  const view = page.locator('[data-view=debrief]');
+  await view.getByRole('button', { name: 'فارسی' }).click();
+  for (const id of ['#db-live-1', '#db-live-2', '#db-handout']) {
+    await expect(view.locator(id)).toHaveAttribute('lang', 'fa');
+    await expect(view.locator(id)).toHaveAttribute('dir', 'rtl');
+  }
+  await expect(view.locator('.db-draft')).toHaveText('Persian draft: not yet read by the clinical owner');
+  await expect(view.locator('#db-moments tbody tr[data-n]').first()).toBeVisible();
+  await page.emulateMedia({ media: 'print' });
+  await printFontLoaded(page);
+  await expect.poll(() => page.evaluate(() => [...document.fonts].some((f) => f.family.replace(/["']/g, '') === 'Vazirmatn' && f.status === 'loaded')),
+    { timeout: 10_000, message: 'the view has loaded the bundled Vazirmatn' }).toBe(true);
+  const family = await page.evaluate(() => getComputedStyle(document.querySelector('#db-live-1 h2') as Element).fontFamily);
+  expect(family).toMatch(/^"?Vazirmatn/);
+  const { page1 } = await printHeights(page);
+  await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
+  const { handout } = await printHeights(page);
+  test.info().annotations.push({ type: 'A3.1 Persian heights (mm)', description: `page 1 ${page1.toFixed(1)}, handout ${handout.toFixed(1)}` });
+  expect(page1, 'page 1 in Persian (mm)').toBeLessThanOrEqual(267);
+  expect(handout, 'handout in Persian (mm)').toBeLessThanOrEqual(267);
+  if (browserName === 'chromium') {
+    mkdirSync(out, { recursive: true });
+    const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    writeFileSync(`${out}/debrief-fa-a31-handout.pdf`, pdf);
+    expect(pdfInfo(pdf).boxes, 'the Persian handout prints on one page').toHaveLength(1);
+    await page.evaluate(() => document.querySelector('.debrief')?.removeAttribute('data-print'));
+    const report = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    writeFileSync(`${out}/debrief-fa-a31.pdf`, report);
+    test.info().annotations.push({ type: 'A3.1 Persian pages', description: String(pdfInfo(report).boxes.length) });
+  }
+  await page.emulateMedia({ media: 'screen' });
+  await view.getByRole('button', { name: 'English' }).click();
+  await expect(view.locator('#db-live-1')).not.toHaveAttribute('lang', 'fa');
+});
