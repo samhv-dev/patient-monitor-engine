@@ -30,6 +30,7 @@ export const DOCS_TESTS = {
     // docs/showcase/kit-round-a/**/*.json, imported
     'src/app/debrief-moments.test.ts',
     'src/app/views/debrief-course.test.ts',
+    'src/app/views/debrief-hints.dom.test.ts',
     'src/app/views/debrief-marks-course.dom.test.ts',
     'src/app/views/debrief-moments-print.dom.test.ts',
   ],

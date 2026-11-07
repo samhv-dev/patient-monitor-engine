@@ -10,7 +10,7 @@
 // absent one is null, never a guess. Read on the KEPT course, as the debrief's rules are. No DOM.
 import { asV1, isV2, type ScenarioDoc } from '@pme/controller';
 import type { Grade, ScenarioDocV2 } from '@pme/controller/scenario';
-import { endOf, isEvent, objectives, report3, type DebriefExport, type Pressure } from './debrief.ts';
+import { endOf, first, gradesOf, isEvent, objectives, report3, stringAnchorAt, type DebriefExport, type Pressure } from './debrief.ts';
 import type { Row, RunData, Sample } from './record.ts';
 
 export type Who = 'team' | 'patient' | 'scenario';
@@ -273,4 +273,26 @@ export function keyTimes(d: RunData, moments: KeyMoment[] = keyMoments(d)): KeyT
   const same = (a: KeyTime) => objTiles.some((o) => o !== a && o.fromT === a.fromT && o.toT === a.toT);
   let drawn = 0;
   return out.filter((k) => k.id.startsWith('objective:') || !same(k)).filter((k) => k.state === 'noneAfter' || ++drawn <= MAX_TILES);
+}
+
+/** The card author's openers (D9) on this run: each opener whose anchor happened on the kept course, in the card's order,
+ *  with the anchor's time and the number of the key moment at that second (the nearest within MERGE_S; null when no key
+ *  moment is there, e.g. a value crossing or the start), and how many were left out because their anchor did not
+ *  happen. The anchor is read as the rules read it: a /1 run event by the same `first()` the objectives use; a /2 anchor
+ *  by `report3`'s reading (`stringAnchorAt`). Null when the card has no openers. The text is the card's, never
+ *  interpolated (Decision 8). */
+export function openersAt(d: RunData, moments: KeyMoment[] = keyMoments(d)): { shown: Array<{ text: string; t: number; n: number | null }>; left: number } | null {
+  const openers = d.doc?.debriefHints?.openers;
+  if (!d.doc || !openers?.length) return null;
+  const g = isV2(d.doc) ? gradesOf(d) : null;
+  const at = (a: string): number | undefined =>
+    d.doc && isV2(d.doc) ? (g ? stringAnchorAt(d, g, a as Parameters<typeof stringAnchorAt>[2]) : undefined) : first(d, a)?.t;
+  const shown: Array<{ text: string; t: number; n: number | null }> = [];
+  for (const o of openers) {
+    const t = at(o.at);
+    if (t === undefined) continue;
+    const near = moments.filter((m) => Math.abs(m.t - t) <= MERGE_S).sort((a, b) => Math.abs(a.t - t) - Math.abs(b.t - t))[0];
+    shown.push({ text: o.text, t, n: near?.n ?? null });
+  }
+  return { shown, left: openers.length - shown.length };
 }
