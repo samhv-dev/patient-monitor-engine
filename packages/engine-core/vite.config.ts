@@ -117,6 +117,8 @@ const SLOW = [
   'test/engine/drug-layer-guards.test.ts', // The drug-layer regression guards (split from drug-layer by time)
   'test/engine/drug-layer-guards-csht.test.ts', // its context-sensitive offsets case (≈ 790 s on CI), split out by time
   'test/l2/pk/interactions-misc.test.ts', // four 8 h interaction arms, 15.2 s alone in the fast set — slow-b (the remainder)
+  'test/engine/eeg-baseline.test.ts', // EEG E0: six baseline runs, 6 420 sim-s sampled every second (≈ 45 s local; slow-h)
+  'test/engine/eeg-cortex.test.ts', // EEG E1/E2 on the engine: eight drug arms, ≈ 9 900 sim-s sampled every 5 s (slow-h)
 ];
 /**
  * NINE slow groups, re-packed longest-first from the measured CI per-file times (the mean of PR run 37199184387 and
@@ -235,6 +237,8 @@ const SLOW_H = [ // ≈ 1660 s at the CI max (27.7 min)
   'test/engine/endo-insulin-omission.test.ts', // 712 s (from slow-b)
   'test/engine/blood-potassium-chloride.test.ts', // 162 s (from slow-b)
   'test/engine/thermal-mh-arrest-heat.test.ts', // ≈ 60 s local (E129, new)
+  'test/engine/eeg-baseline.test.ts', // ≈ 45 s local (EEG E0, new)
+  'test/engine/eeg-cortex.test.ts', // EEG E1/E2 engine arms (new; local time in the PR)
 ];
 const SLOW_I = [ // ≈ 1754 s at the CI max (29.2 min)
   'test/engine/drug-apnoea.test.ts', // 562 s (from slow-f)

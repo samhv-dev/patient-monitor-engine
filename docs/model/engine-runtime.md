@@ -43,7 +43,7 @@ clinician-educator needs only that time moves in 20 ms ticks and can run from 0.
 | Where | Relation |
 |---|---|
 | [`clock.ts:2`](../../packages/engine-core/src/clock/clock.ts#L2) | simT = tick × 20 ms. Frames feed wall time through an accumulator: |
-| [`engine.ts:568`](../../packages/engine-core/src/engine.ts#L568) | gas-unit conversion gave a drug dosed after the first seconds q = CO/ref ≈ effKg/70 (a 16 kg child 0.20: |
+| [`engine.ts:572`](../../packages/engine-core/src/engine.ts#L572) | gas-unit conversion gave a drug dosed after the first seconds q = CO/ref ≈ effKg/70 (a 16 kg child 0.20: |
 
 ## State
 
