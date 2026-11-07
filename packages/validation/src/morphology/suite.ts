@@ -125,7 +125,9 @@ export function gradePairs(pairs: WindowPair[], fills: SuiteOptions['fills'] = {
   for (const b0 of BANDS) {
     const b = fills[b0.id] ? { ...b0, ...fills[b0.id] } : b0;
     // V1/V2 are graded per HR bin (brief §9); the rest over all windows, with per-source rows for information
-    const gs = b.id === 'V1' || b.id === 'V2' ? [...groups.keys()].filter((g) => g.startsWith('HR ')) : ['all', 'vitaldb', 'mghdb'];
+    // V5 (PTB-XL interval bands) is judged on 'all' only: its engine side is one pseudo-window of engine captures with no
+    // recording behind it, so a per-source row would only relabel the same 12 captures (audit V-05, target audit row 209).
+    const gs = b.id === 'V1' || b.id === 'V2' ? [...groups.keys()].filter((g) => g.startsWith('HR ')) : b.id.startsWith('V5-') ? ['all'] : ['all', 'vitaldb', 'mghdb'];
     for (const g of gs) {
       const r = gradeBand(b, groups.get(g) ?? [], g);
       if (r) rows.push(r);
