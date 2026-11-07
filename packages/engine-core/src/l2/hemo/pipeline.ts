@@ -627,12 +627,15 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
       // rule (E126: the oximeter reads the compression-generated flow; it was PI × 0.2 × quality, a CPR constant).
       const c = hs.circ;
       // SV_0 is the settled RESTING stroke volume (brief §4.3 "PI × (SV_i/SV_0)"), not a running mean of the last 16
-      // beats (which drew a 0.6 mL beat as a normal pulse: SpO2 98 / PI 2.5 at MAP 2).
+      // beats (which drew a 0.6 mL beat as a normal pulse: SpO2 98 / PI 2.5 at MAP 2) — and it is the patient's rest
+      // as the running engine settles it (`circ.svRest`, engine.ts REST_AVG_S), not the stand-alone stabiliser's
+      // `ref.sv` (79.1 against 88.9 mL for the default MANUAL adult: the sinus pulse under PEEP 5 was drawn 8 % TALLER
+      // than the set PI while ventilation lowered the stroke volume).
       // In MODELED the factor reads the circulation's CUTANEOUS tone (`circ.skinTone`: vasomotor factors only, no
       // MANUAL tracker, no viscosity): vasoconstriction lowers PI and a dilated finger (an anaesthetic's
       // sympatholysis) raises it [ENG exponent 0.5; bounded 0.25–2 ENG]. MANUAL keeps 1 (a factor there made PI rise
       // as the MANUAL tracker lowered SVR, and fall after propofol).
-      const svRef = Math.max(1, c.ref.sv || 70);
+      const svRef = Math.max(1, c.svRest ?? (c.ref.sv || 70));
       const tone = ctx.l1.mode === 'modeled' ? Math.min(2, Math.max(0.25, 1 / Math.sqrt(c.skinTone ?? 1))) : 1;
       if (c.cprEj?.length) {
         if (hs.cpr.active) {

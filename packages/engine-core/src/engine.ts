@@ -30,6 +30,7 @@ import {
   type LeadId,
   type Modifiers,
   type MonitorEngine,
+  type PatientProfile,
   type PatientSnapshot,
   type Ramp,
   type RhythmId,
@@ -44,6 +45,7 @@ import {
   applyHemoCommand,
   createHemoState,
   HEMO_CHANNELS,
+  MANUAL_TRACK_MAX_S,
   HEMO_TEACHING,
   type HemoTeachingChannel,
   hemoChannelActive,
@@ -250,6 +252,55 @@ function startRate(id: RhythmId, opts: RhythmOpts): number {
   return RHYTHMS[id].defaultRateBpm;
 }
 
+/**
+ * SV₀, the reference of the pleth's PI × SVᵢ/SV₀ rule (brief §4.3), is the patient's OWN settled resting stroke volume:
+ * what this engine reaches for this patient at rest — spontaneously breathing, unventilated, in sinus rhythm — once
+ * its own stabilisation (the MANUAL trackers, or MODELED's reflexes) has run. It is MEASURED here by running the real
+ * engine on that resting patient, not typed and not taken from the stand-alone stabiliser, so the pulse equals the
+ * instructor's PI exactly at that rest and departs from it only as the stroke volume departs from it.
+ *
+ * Why the stand-alone stabiliser's `circ.ref.sv` (79.1 mL for the default adult) is not that value — the running
+ * engine settles the same MANUAL patient at ≈ 89 mL (brief 76, research/45; measured below): `stabilise.ts` solves the
+ * bare circuit for the PROFILE's targets (HR 70, CVP 5, the band's SBP/DBP) at a CONSTANT end-expiratory pleural
+ * pressure (P_PL0 −4 mmHg). Three couplings of the running engine are missing from it:
+ *  1. MANUAL: the instructor's own numbers (L1 defaults HR 75, CVP 6, 120/80), which the MANUAL trackers then impose
+ *     with THEIR knobs — the venous unstressed volume (≈ −400 mL) and LV Emax (×0.74) — not the stabiliser's (R_sys,
+ *     C_art). Measured at seed 42, 45–90 s: HR 75/CVP 6 → 88 mL; HR 70/CVP 4.85 (the stabiliser's own targets) → 86 mL.
+ *  2. The breath driver: spontaneous breathing swings the pleural pressure from −4 to ≈ −7 mmHg (mean ≈ −5), which
+ *     raises venous return, and the MANUAL CVP tracker holds the breath-AVERAGED right-atrial pressure, so it fills by
+ *     a further ≈ 130 mL to lift the inspiratory dips (that residual 86 against 79 mL).
+ *  3. MODELED: the same breathing, and the baroreflex settling at its own point (81.3 mL at rest: SV₀; 70.8 mL on IPPV).
+ * The same fault — the trackers starting from a circulation that is not the instructor's patient and taking ≈ 40–60 s
+ * to reach it — is behind the MANUAL PEEP 0 < PEEP 5 stroke volume (84.0 against 85.5 mL): a ventilator started at
+ * t = 0 runs while the trackers are still converging. Under PEEP 5 the pressure tracker kept running to 38 s (LV Emax
+ * ×0.80) and the volume tracker, which subtracts the pleural RISE from its CVP, transfused 665 mL; under PEEP 0 the
+ * pressure tracker released at ≈ 10 s (Emax ×1.00, SBP then drifting to 129) and the volume tracker gave 367 mL. The
+ * order PEEP 0 < PEEP 5 is that race, not physiology; it is left to the trackers' own brief (no waveform here changes).
+ *
+ * The rest is the patient as configured at t = 0 (profile, conditions and the instructor's baseline values) with its
+ * scripted arrhythmia removed: a rhythm and its rate are the scenario's (the AF pulse deficit must show against the
+ * patient's sinus stroke volume, research/45), so a non-sinus `rhythm` drops with its `baseline.hr`. The settling ends
+ * when both MANUAL trackers have released (each releases by MANUAL_TRACK_MAX_S of its own run), or after
+ * MANUAL_TRACK_MAX_S in MODELED; SV₀ is then the mean pleth stroke-volume estimate (EDV − the previous beat's ESV, the
+ * numerator the pleth uses) over REST_AVG_S of beats. A patient property, not the scenario's random stream: the run uses
+ * REST_SEED, so it is deterministic and cached per resting patient and mode. It runs when the engine first steps (or
+ * is snapshotted), not at construction: an engine that restores a snapshot first takes the snapshot's SV₀ and never
+ * pays for the run (the followers and viewers of a session). [ENG procedure: REST_AVG_S, five spontaneous breaths at
+ * the default 15/min; REST_SEED, the engine's default seed.]
+ */
+export const REST_AVG_S = 20;
+export const REST_SEED = 1;
+const restSvCache = new Map<string, number>();
+
+/** The resting patient whose settled stroke volume is SV₀ (see REST_AVG_S). */
+export function restingPatient(p: PatientProfile | undefined): PatientProfile | undefined {
+  if (!p?.rhythm || p.rhythm.id === 'sinus') return p;
+  const { rhythm: _rhythm, ...rest } = p;
+  if (!rest.baseline || rest.baseline.hr === undefined) return rest;
+  const { hr: _hr, ...baseline } = rest.baseline;
+  return { ...rest, baseline };
+}
+
 class Engine implements MonitorEngine {
   readonly version = engineKey; // `${version}+${build}`, the snapshot compatibility key
   private readonly seed: number;
@@ -275,7 +326,12 @@ class Engine implements MonitorEngine {
   private readonly devOpts: EngineOptions['device']; // For restoring older snapshots
   private readonly truthEvery: number; // Ticks between truth events, 0 = off
 
-  constructor(opts: EngineOptions) {
+  /** The options SV₀'s resting run is made from; null in the resting run itself (it keeps the stand-alone reference). */
+  private readonly restOf: EngineOptions | null;
+
+  /** `rest`: this engine IS the resting run that measures SV₀ (no recursion). */
+  constructor(opts: EngineOptions, rest = false) {
+    this.restOf = rest ? null : opts;
     // MODELED is accepted (the circulation's reflexes run)
     this.seed = (opts.seed ?? 1) >>> 0;
     const look = opts.lookaheadS ?? 0.1;
@@ -334,6 +390,38 @@ class Engine implements MonitorEngine {
     this.advance(this.st, 0);
     this.st.detections.length = 0;
     this.speculate();
+  }
+
+  /** SV₀ on the committed state, measured once (see REST_AVG_S); the look-ahead clones inherit it. */
+  private ensureSvRest(): void {
+    const c = this.st.hemo.circ;
+    if (c.svRest === undefined && this.restOf) c.svRest = Engine.restingSv(this.restOf);
+  }
+
+  /** SV₀: the settled resting stroke volume of this patient in the real engine (see REST_AVG_S). */
+  private static restingSv(opts: EngineOptions): number {
+    const ro: EngineOptions = { seed: REST_SEED, mode: opts.mode ?? 'manual', ...(opts.patient ? { patient: restingPatient(opts.patient) as PatientProfile } : {}) };
+    const key = JSON.stringify(ro);
+    const hit = restSvCache.get(key);
+    if (hit !== undefined) return hit;
+    const e = new Engine(ro, true);
+    const manual = ro.mode !== 'modeled';
+    const mh = () => e.st.hemo.manHold;
+    let t = 0;
+    const STEP_S = 4; // ≤ the 16-beat buffer up to 240/min
+    while (manual ? (mh().active || mh().pActive) && t < 2 * MANUAL_TRACK_MAX_S : t < MANUAL_TRACK_MAX_S) e.advanceTo((t += STEP_S));
+    const t0 = t;
+    const seen = new Map<number, { t: number; lvedv: number; lvesv: number }>();
+    while (t < t0 + REST_AVG_S) {
+      e.advanceTo((t += STEP_S));
+      for (const b of e.st.hemo.circ.beats) if (b.t > t0) seen.set(b.t, b);
+    }
+    const bs = [...seen.values()].sort((a, b) => a.t - b.t);
+    let sum = 0;
+    for (let i = 1; i < bs.length; i++) sum += Math.max(0, (bs[i] as { lvedv: number }).lvedv - (bs[i - 1] as { lvesv: number }).lvesv);
+    const sv = bs.length > 1 ? sum / (bs.length - 1) : e.st.hemo.circ.ref.sv;
+    restSvCache.set(key, sv);
+    return sv;
   }
 
   // --- lifecycle -------------------------------------------------------------------------------
@@ -427,6 +515,7 @@ class Engine implements MonitorEngine {
 
   // --- snapshot --------------------------------------------------------------------------------
   snapshot(): PatientSnapshot {
+    this.ensureSvRest();
     return {
       schema: 'pme-snapshot/1',
       engineVersion: this.version,
@@ -457,6 +546,7 @@ class Engine implements MonitorEngine {
     if (data.mainsHz !== undefined && data.mainsHz !== this.mainsHz) {
       throw new Error(`snapshot was taken with ${data.mainsHz} Hz mains filtering, this engine uses ${this.mainsHz} Hz`);
     }
+    data.st.hemo.circ.svRest ??= data.st.hemo.circ.ref.sv; // a snapshot without SV₀ keeps the reference it was drawn with
     this.st = data.st;
     this.queue = data.queue;
     this.groupTicks = new Map(data.groups ?? []); // The bookmark's pending groups, never the discarded future's
@@ -487,6 +577,7 @@ class Engine implements MonitorEngine {
   }
 
   private runTicks(n: number): void {
+    if (n > 0) this.ensureSvRest();
     for (let i = 0; i < n; i++) this.tickOnce(i === n - 1);
   }
 
