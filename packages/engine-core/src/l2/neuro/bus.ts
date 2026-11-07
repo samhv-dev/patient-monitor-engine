@@ -33,7 +33,7 @@ export const FENT_EEG_POT = 1.6;
 /**
  * Fentanyl VENTILATORY potency relative to remifentanil — a deviation from the tables (Q54). The tables derive 1.6×
  * (C50 ≈ 0.6 ng/mL) from EEG potency; with it fentanyl 1.5 µg/kg alone (Ce ≈ 2.3 ng/mL) makes a healthy adult
- * apnoeic, against clinical experience (RR ~8–10). 0.55× (C50 ≈ 1.7 ng/mL) [ENG], flagged for Ali.
+ * apnoeic, against clinical experience (RR ~8–10). 0.55× (C50 ≈ 1.7 ng/mL) [ENG], flagged for samhv-dev.
  */
 export const FENT_VENT_POT = FENT_VENT_REMI_EQ; // ONE source — the drug model's pd.ts carries the deviation value (0.55)
 /**

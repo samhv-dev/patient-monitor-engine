@@ -25,7 +25,7 @@ export function signature(id: LungConditionId, sev: number) {
   return { crs: b.cstat, rInsp: b.rInsp, autoPeep: ap, plateau: b.pplat, drivingPressure: b.drivingP, gapPaEt: rigOut(g04).gap, shunt: rigOut(g04).shunt, spo2Fio2_04: rigOut(g04).spo2, spo2Fio2_021: rigOut(gas(0.21)).spo2, spo2Fio2_10: rigOut(gas(1)).spo2, tauII: capnoTerms(g04.ls).tauII };
 }
 /**
- * Bands the model does not meet at the prototype constants, with the measured value (plan "Deviations"; Ali's R44
+ * Bands the model does not meet at the prototype constants, with the measured value (plan "Deviations"; the owner's R44
  * calibration pass decides). A NEW miss fails the test; fixing a listed one is allowed (delete its entry).
  */
 const KNOWN: Record<string, string[]> = {

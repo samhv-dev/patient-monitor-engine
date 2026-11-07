@@ -58,7 +58,7 @@ export const ANG_GAIN = 3;
  *  second-to-second CO wobble (CO 4.9–5.6 in MODELED HFrEF) and swing GFR 27–211 mL/min within seconds; AngII's
  *  efferent effect builds over minutes. */
 export const ANG_TAU_S = 120;
-/** Cold diuresis onset and gain per °C [ENG, Ali's Q] (Polderman 2009: direction). */
+/** Cold diuresis onset and gain per °C [ENG, the owner's Q] (Polderman 2009: direction). */
 export const COLD_ONSET_C = 35;
 export const COLD_DIURESIS_PER_C = 0.2;
 export const S_GA = 0.6; // surgical stress/ADH under GA, tables `S` [ENG] (0.4–0.8)
@@ -81,7 +81,7 @@ export const PEEP_PER_10 = 0.9; // × per 10 cmH2O mean-airway-pressure excess (
 export const NE_EXCESS_PER_01 = 0.9; // × per 0.1 µg/kg/min α-agonist above need (tables D row) [ENG]
 export const SEPSIS_GFR_LOSS = 0.5; // Kf × (1 − 0.5·sepsis) (efferent dilation / microvascular) [ENG]; sepsis is endo's
 export const AKI_KF_LOSS = 0.8; // Condition aki severity 1 → Kf × 0.2 [ENG]; also the nephron share TGF defends
-/** Intrinsic AKI's afferent tone — the afferent floor rises × (1 + AKI_AFF_TONE·aki) [ENG, Ali's Q]. */
+/** Intrinsic AKI's afferent tone — the afferent floor rises × (1 + AKI_AFF_TONE·aki) [ENG, the owner's Q]. */
 export const AKI_AFF_TONE = 1;
 // Diuretics (tables §5.2 has none; label-level [TXT], shape [ENG])
 export const FUROSEMIDE_EMAX = 9; // excreted fraction × (1 + 9·E): 40 mg → peak UOP ≈ 7× (≈ 8 mL/min)

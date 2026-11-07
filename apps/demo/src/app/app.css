@@ -1,7 +1,7 @@
 /* Stage 9 app shell: "bezel and screen" (research/13 brief §6). The monitor is the screen — true black, the skin's own
    colours, untouched. Everything else is the bezel: graphite, quiet, colour only for state. One instructor accent
    (periwinkle) marks what the instructor controls; alarm colours are never shell tokens (they come from the skin).
-   System fonts by default (the OFL fonts wait for Ali's ruling, Open question Q7). No UI library. */
+   System fonts by default (the OFL fonts wait for the owner's ruling, Open question Q7). No UI library. */
 
 :root {
   color-scheme: dark;

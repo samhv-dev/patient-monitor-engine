@@ -26,7 +26,7 @@
 Every waveform comes from a coupled physiology core and passes through a model of how real monitors *measure, filter, average and alarm*. The engine is a **library first**: an embeddable ES module plus a single-file IIFE (R10). The monitor application (the demo app) comes second.
 
 **Users.**
-- *Host software:* Ali's ACLS/BLS simulator, the OR/anaesthesia simulator, the scenario builder, and the sibling `ventilator-simulator` (a static single-file HTML app with a 200 Hz physics loop, `DT = 0.005`).
+- *Host software:* the owner's ACLS/BLS simulator, the OR/anaesthesia simulator, the scenario builder, and the sibling `ventilator-simulator` (a static single-file HTML app with a 200 Hz physics loop, `DT = 0.005`).
 - *Instructors:* they drive the engine from a hidden same-screen panel or from a separate networked controller (README decision; R7).
 - *Learners:* residents in the anaesthesia orientation boot camp, using an iPad, a laptop or a projector.
 
@@ -258,7 +258,7 @@ Trends are stored at 1 Hz for 8 h: 28,800 × 24 numerics × 4 B = 2.8 MB **[ENG]
   - the beep source (ECG QRS or detected pleth pulse) is a skin setting [05 §2.5];
   - no pulse means no tone;
   - off by default on the ZOLL- and LIFEPAK-like skins [05 §2.5];
-  - `saadat-like`: BEAT VOLUME 1–7 or OFF, **default 1**; the tone follows the HR source; SpO2 pitch modulation is not documented **[unverified]**, so `pitchMap: none` until Ali's recording (§10) settles it [06 §4.1].
+  - `saadat-like`: BEAT VOLUME 1–7 or OFF, **default 1**; the tone follows the HR source; SpO2 pitch modulation is not documented **[unverified]**, so `pitchMap: none` until the owner's recording (§10) settles it [06 §4.1].
 - **Alarm bursts** are specified in §6.4. Charge and shock tones are in §6.5.
 - **When `timeScale ≠ 1`**, beeps follow sim time but alarm bursts keep real-time patterns **[ENG]**.
 
@@ -298,7 +298,7 @@ A skin is a JSON document validated by a schema in `@pme/skins`. It sets:
 
 v1 ships `saadat-like`, `philips-like`, `ge-like`, `mindray-like`, `zoll-like` and `lifepak-like`, plus the themes `projector-light` and `ecg-grid`. Skins are "-like" only, with no logos [05 §5.3]; for `saadat-like` that means no Saadat logo or trade dress beyond "-like" (R13).
 
-**Recommended build order** (orchestrator's recommendation, pending Ali's confirmation, §10 question 7): **`saadat-like` → `philips-like` → `zoll-like`**. `saadat-like` goes first because it is the monitor Iranian residents actually see; it is built to the same depth as `philips-like` (R13). `ge-like`, `mindray-like` and `lifepak-like` follow and may slip to v1.1 if Stage 4 overruns (R12).
+**Recommended build order** (orchestrator's recommendation, pending the owner's confirmation, §10 question 7): **`saadat-like` → `philips-like` → `zoll-like`**. `saadat-like` goes first because it is the monitor Iranian residents actually see; it is built to the same depth as `philips-like` (R13). `ge-like`, `mindray-like` and `lifepak-like` follow and may slip to v1.1 if Stage 4 overruns (R12).
 
 **Fields added for `saadat-like`** (R13) [06 §3.2, §5, §5.1]. The schema above lacked these. Every existing skin takes the value in the last column, so none of them changes. Field names follow the draft skin in report 06 §5, which becomes the reference instance for the schema.
 
@@ -919,7 +919,7 @@ Conditions: anaphylaxis, local anaesthetic toxicity (LAST), malignant hypertherm
 | Artefact | Numbers |
 |---|---|
 | `wander` | 0.05–0.3 mV at 0.1–0.5 Hz |
-| `mains` | 50 or 60 Hz + 3rd harmonic, 0.01–0.5 mV. Default **50 Hz** (Iran, per Ali's course location) **[ENG, confirm]** |
+| `mains` | 50 or 60 Hz + 3rd harmonic, 0.01–0.5 mV. Default **50 Hz** (Iran, per the owner's course location) **[ENG, confirm]** |
 | `emg` / `shiver` | 20–150 Hz noise with a 4–8 Hz envelope, 0.02–0.2 mV RMS |
 | `motion` | 0.5–3 Hz, 0.5–5 mV |
 | `leadContact` | — |
@@ -1081,7 +1081,7 @@ Used by the `saadat-like` skin. It replaces the levels, visuals, audio and silen
   | 3 | "DO": 1 pulse | every **30 s** (it repeats, unlike the IEC-style low) | as level 1 **[assumed]** |
 
   - Volume 1–7, **factory 1**, 47–69 dB(A) at 1 m. Touch sound 1–3 or OFF (default 1).
-  - Pulses reuse the §6.4 `PeriodicWave` **[ENG]** until Ali's recordings (§10) give the real spectrum.
+  - Pulses reuse the §6.4 `PeriodicWave` **[ENG]** until the owner's recordings (§10) give the real spectrum.
 - **Silence.**
   - One key (ALARM SILENCE, also labelled ACKNOWLEDGE) silences the **audio and the visual indication** of all physiological alarms for **120 s**.
   - The header shows a **flashing icon with a 120 s countdown**. Pressing again ends the silence. **Any new alarm ends it.**
@@ -1262,7 +1262,7 @@ Used by the `saadat-like` skin. It replaces the levels, visuals, audio and silen
 | VTAC / tachy / brady | ≥120 bpm and ≥5 beats / ≥120 / ≤50 | — | — | L1, cannot disable / L2 / L2 |
 | NIBP interval | MANUAL (STAT 10× in 5 min) | — | — | — |
 
-The engine displays CO2 in mmHg (R12). The skin stores the manual's %V limits and converts them at the simulated barometric pressure, 760 mmHg by default **[ENG]**. Where a band is "not banded", the skin inherits the adult value and the UI marks it approximate until Ali's bedside capture (§10) fills it.
+The engine displays CO2 in mmHg (R12). The skin stores the manual's %V limits and converts them at the simulated barometric pressure, 760 mmHg by default **[ENG]**. Where a band is "not banded", the skin inherits the adult value and the UI marks it approximate until the owner's bedside capture (§10) fills it.
 
 ### 6.9 Iranian practice notes [06 §1, §3.1 F7, §4, §7]
 
@@ -1275,9 +1275,9 @@ What report 06 found about how the B9 is actually used, and what it means for th
   - red crossed bells on HR and RR, and **"APNEA LIMIT: OFF"** in red.
 - **Bypass PUMP page** (P10) for the open-heart OR: a "PUMP" watermark over the ECG lane, IBP autoscale ON with the scale numbers removed, and the asystole message kept on screen through Silence while its audio is muted [M p.44].
 - **Beat tone.** The factory default is volume 1, but the observed ICU had BEAT VOLUME OFF; the beat tone is off in practice.
-- **Unknown:** whether Iranian ORs usually turn alarms on [06 §7]. Photo 8 of Ali's checklist (§10) answers it.
+- **Unknown:** whether Iranian ORs usually turn alarms on [06 §7]. Photo 8 of the owner's checklist (§10) answers it.
 
-**What this means for the default demo configuration** (recommendation, pending Ali):
+**What this means for the default demo configuration** (recommendation, pending samhv-dev):
 - `saadat-like` itself stays faithful to Appendix 1: alarms OFF, NORMAL filter, 8 s HR average, beat volume 1. The one exception is that the demo turns on the Solar date, because that is what residents see.
 - A preset, `iran-icu-as-found`, reproduces the configuration above: MONITOR filter, HR average 16, beat tone off, pace detect off, crossed bells, APNEA LIMIT OFF. It is the starting screen for the orientation-course scenarios, because "the alarms are off; turning them on is step one" is the most useful teaching point report 06 found [06 §5.1].
 - The PUMP page is available as a layout for cardiac-anaesthesia scenarios.
@@ -1516,7 +1516,7 @@ The vent sim can read `measurement` events to show SpO2 and EtCO2 on its own pan
 
 ## 8. Licence and provenance (R6)
 
-**Our code is MIT** (pending Ali's final confirmation in the README). Borrowing is limited to the table below.
+**Our code is MIT** (pending the owner's final confirmation in the README). Borrowing is limited to the table below.
 
 | May borrow | Licence | How | Source |
 |---|---|---|---|
@@ -1571,7 +1571,7 @@ Each PR's template records the "sources consulted".
 | V8 | Physiology sanity | §4.9 checks 1–9 | Report 03 §8 | All pass |
 | V9 | Determinism | SHA-256 of buffers for 40 seeds × 60 s per rhythm | Golden files | Identical on the same build [04 §7.9] |
 
-**Realism review protocol** (Ali, blind), at the gates of Stages 2, 3, 5 and 8:
+**Realism review protocol** (samhv-dev, blind), at the gates of Stages 2, 3, 5 and 8:
 1. **Build the clip set.** For each channel (ECG II, ABP, pleth, CO2), take 20 real 10-s segments from VitalDB (PhysioNet copy) and MGH/MF, and 20 synthetic segments matched for HR, BP band and rhythm class. **All are rendered through our renderer and skin**, which removes the display as a confound.
 2. **Shuffle.** Order is randomised per session.
 3. **Rate each clip.** The tasks are a forced choice ("real or synthetic"), a realism score from 1 to 5, and a comment.
@@ -1579,7 +1579,7 @@ Each PR's template records the "sources consulted".
    - identification accuracy ≤60% per channel (n = 40; chance is 50%);
    - mean synthetic realism ≥4.0;
    - synthetic realism not more than 0.5 below real **[ENG]**.
-5. **Review device behaviour.** Ali films real OR monitor *screens only* (no identifiers, within hospital policy; filming approved, R12), including **Saadat B9 screens** for the `saadat-like` skin, covering:
+5. **Review device behaviour.** samhv-dev films real OR monitor *screens only* (no identifiers, within hospital policy; filming approved, R12), including **Saadat B9 screens** for the `saadat-like` skin, covering:
    - the NIBP cycle;
    - SpO2 lag at induction;
    - alarm sounds;
@@ -1609,16 +1609,16 @@ Each PR's template records the "sources consulted".
 | Latency budget of 70–140 ms is an estimate | Measure in Stage 6 | [05 §3.2] |
 | ATLS classes and CPR EtCO2/DBP thresholds are teaching approximations | Default trajectories only; instructor override | [03 §9.5–9.6, §9.13] |
 | Performance on older iPads | Frame-budget ladder (Open Sim Lab pattern); Stage 8 performance gate | [02 §4.1] |
-| **`saadat-like` open items** [06 §7]: alarm tone frequencies, pulse lengths and gaps (none published); lamp flash rates; erase-gap width and whether a cursor line exists; paediatric and neonatal HR, SpO2, RR and Temp limits (unbanded in the manual); the IBP3/IBP4 colour conflict (manual names vs screenshot); asystole 5 s vs 10 s; the Alarm Freeze default; SpO2 pitch modulation; agent-gas colours | Ship the values tagged [assumed] / [unverified] as report 06 does. Ali's bedside capture (below) closes most of them; the Stage 4 "verify before gate" task records what remains | [06 §1, §7] |
+| **`saadat-like` open items** [06 §7]: alarm tone frequencies, pulse lengths and gaps (none published); lamp flash rates; erase-gap width and whether a cursor line exists; paediatric and neonatal HR, SpO2, RR and Temp limits (unbanded in the manual); the IBP3/IBP4 colour conflict (manual names vs screenshot); asystole 5 s vs 10 s; the Alarm Freeze default; SpO2 pitch modulation; agent-gas colours | Ship the values tagged [assumed] / [unverified] as report 06 does. The owner's bedside capture (below) closes most of them; the Stage 4 "verify before gate" task records what remains | [06 §1, §7] |
 
-**Action for Ali: Saadat bedside capture** [06 §7]. About 30 minutes at a B9, on a patient simulator or a consenting monitored patient, with no patient identifiers on screen. First run Setup → LOAD DEFAULT (ask biomed) and set the date to Solar.
+**Action for samhv-dev: Saadat bedside capture** [06 §7]. About 30 minutes at a B9, on a patient simulator or a consenting monitored patient, with no patient identifiers on screen. First run Setup → LOAD DEFAULT (ask biomed) and set the date to Solar.
 - **8 photos:** (1) factory main screen P1; (2) the ECG lane at 1/15 s, or a 240 fps clip of about 3 s, for the erase bar; (3) the MODULE COLOR window; (4) each alarm level's message bar and lamp; (5) Silence pressed, with the header countdown; (6) the paediatric and neonatal HR, SpO2 and Resp alarm windows after LOAD DEFAULT; (7) P5 (12-lead) and P10 (PUMP) with IBP connected; (8) an OR monitor and an ICU monitor as found, before changing anything.
 - **3 alarm recordings:** 40 s each of levels 1, 2 and 3, phone 30 cm away in a quiet room. Add the QRS beep at volume 3 with SpO2 falling, to settle pitch modulation.
 - **2 stopwatch tests:** lead-off with an asystole simulator to the alarm (5 s or 10 s?); HR 80→120 at the 8 s average.
 - Also ask Saadat after-sales for the English manual D01112.
 - Needed before the Stage 4 gate.
 
-**Open questions for Ali:**
+**Open questions for samhv-dev:**
 1. Is MIT the final licence? **Answered (R12):** MIT, final.
 2. Which skin goes first: Philips-like OR or ZOLL-like defib? **Answered (R12):** Philips-like for the OR, ZOLL-like for ACLS, both in v1. `saadat-like` was then added (R13) and is now recommended first; see question 7.
 3. Confirm 50 Hz mains. **Answered (R12):** 50 Hz.

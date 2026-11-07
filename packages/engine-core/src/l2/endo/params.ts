@@ -238,5 +238,5 @@ export const HUM_MAX = 1; // saturation of the arm
  * pre-existing humoral tone is essentially unchanged].
  */
 export const HUM_DEADBAND_MMHG = 3;
-export const HUM_SVR = 0.32; // × systemic resistance at full effect (AVP V1 + AT1) [ENG; 0.55 blunted Ali's tamponade collapse away]
+export const HUM_SVR = 0.32; // × systemic resistance at full effect (AVP V1 + AT1) [ENG; 0.55 blunted the owner's tamponade collapse away]
 export const HUM_V0 = 0.30; // fraction of blood volume held in the SHARED unstressed reservoir at full effect [ENG; the term that keeps the bleeding patient alive through induction]

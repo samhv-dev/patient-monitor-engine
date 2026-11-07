@@ -155,7 +155,7 @@ export function resolveProfile(pr: CircProfile = DEFAULT_PROFILE): ResolvedProfi
     ageY: pr.ageY,
     tuneLvedp: false,
     // Young adult ≈ 0.2 (the resting SVR fall under autonomic ganglionic blockade); MSNA doubles 25 → 65 y (Sundlöf &
-    // Wallin) — elderly 0.3; untreated HTN and HFrEF add below (Grassi 1998) [ENG sizes, Ali's review]
+    // Wallin) — elderly 0.3; untreated HTN and HFrEF add below (Grassi 1998) [ENG sizes, the owner's review]
     tonicSymp: band === 'elderly' ? TONIC_ELDERLY : TONIC_ADULT,
   };
   // The elderly keep 140/80 (MAP 100 against the set point 95): the organ model's check 18 (75 y HTN CBF plateau) is

@@ -4,7 +4,7 @@
 // plateau = PEEP + autoPEEP + VT/C, driving pressure = VT/C, peak − plateau = R_insp × 1 L/s; `signature` bands are the
 // clinically reported ranges and the tests require the model inside them. Textbook citations: "Miller 10e pdf p. N"
 // (running heads carry no chapter number in the extraction), "Co-Existing 8e ch. N p. M", "Dellinger 5e ch. N p. M".
-// `ENG` = engineering judgement, reasoning given; every ENG number is a row for Ali's review in
+// `ENG` = engineering judgement, reasoning given; every ENG number is a row for the owner's review in
 // docs/physiology/parameter-tables.md §4b.
 // `wired`: what acts on the field TODAY — 'vent' (ventilator mechanics), 'engine-now' (the respiratory signals' shunt
 // input), 'stage7a' (PVR/HPV/RV: the two-sided heart), 'stage7b' (dead space, diffusion: the lung module),
@@ -482,7 +482,7 @@ const AUTHORED: readonly LungPathology[] = [
     ref: { vtMl: 15, rr: 40, peep: 5, pbwKg: 3, flowLpm: 6 }, wired: W_STD,
     monitor: 'Very low compliance (≈ 0.5 mL/cmH2O/kg), PEEP- and surfactant-responsive; high rates with small VT.',
     pitfall: 'Surfactant changes compliance within minutes: pressures that were needed become injurious.',
-    sources: [{ field: 'complianceMl', src: 'ENG: surfactant-deficient lung ≈ 0.5 mL/cmH2O/kg (3 kg → 1.5); 3.0 ETT ≈ 60 cmH2O/L/s — neonatal texts not in the local library; flagged for Ali' }, { field: 'signature', src: S_MECH }],
+    sources: [{ field: 'complianceMl', src: 'ENG: surfactant-deficient lung ≈ 0.5 mL/cmH2O/kg (3 kg → 1.5); 3.0 ETT ≈ 60 cmH2O/L/s — neonatal texts not in the local library; flagged for samhv-dev' }, { field: 'signature', src: S_MECH }],
   },
 ];
 

@@ -108,15 +108,15 @@ describe('opening the browser', () => {
 describe('a file inside the app folder (the relay and serve.mjs)', () => {
   it('Windows paths (path.win32): the app\'s files are inside; a sibling folder, another drive, the parent are not', () => {
     const w = path.win32;
-    const root = 'C:\\Users\\Ali\\Desktop\\PME kit (rc.3)\\app';
+    const root = 'C:\\Users\\samhv-dev\\Desktop\\PME kit (rc.3)\\app';
     expect(isInside(root, `${root}\\index.html`, w)).toBe(true);
     expect(isInside(root, `${root}\\assets\\index-abc.js`, w)).toBe(true);
-    expect(isInside(root, 'c:\\users\\ali\\desktop\\pme kit (rc.3)\\APP\\index.html', w)).toBe(true); // Windows ignores case
+    expect(isInside(root, 'c:\\users\\owner\\desktop\\pme kit (rc.3)\\APP\\index.html', w)).toBe(true); // Windows ignores case
     expect(isInside(root, `${root}\\..foo.js`, w)).toBe(true); // a name starting with '..' is still inside
     expect(isInside(root, root, w)).toBe(false);
-    expect(isInside(root, 'C:\\Users\\Ali\\Desktop\\PME kit (rc.3)\\app2\\index.html', w)).toBe(false);
-    expect(isInside(root, 'C:\\Users\\Ali\\Desktop\\PME kit (rc.3)\\server\\relay.mjs', w)).toBe(false);
-    expect(isInside(root, 'D:\\Users\\Ali\\Desktop\\PME kit (rc.3)\\app\\index.html', w)).toBe(false);
+    expect(isInside(root, 'C:\\Users\\samhv-dev\\Desktop\\PME kit (rc.3)\\app2\\index.html', w)).toBe(false);
+    expect(isInside(root, 'C:\\Users\\samhv-dev\\Desktop\\PME kit (rc.3)\\server\\relay.mjs', w)).toBe(false);
+    expect(isInside(root, 'D:\\Users\\samhv-dev\\Desktop\\PME kit (rc.3)\\app\\index.html', w)).toBe(false);
     expect(isInside(root, '\\\\.\\CON', w)).toBe(false);
   });
   it('POSIX paths: unchanged', () => {

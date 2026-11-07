@@ -14,7 +14,7 @@
 > approval); see `docs/gates/stage-9.md`. The step boxes are left unticked on purpose: `stage-9-verify.py` and the
 > executor's applier find the blocks by the `- [ ] **Step` pattern.
 
-**Goal:** Turn the 25-page demo into ONE professional product page for Ali's course (R55): a Start screen, the learner
+**Goal:** Turn the 25-page demo into ONE professional product page for the owner's course (R55): a Start screen, the learner
 Monitor, the Instructor view (monitor + tabbed panel with a session bar, staged changes, pin/return-to-model), a paired
 Remote, Explore physiology (the 7x console in a light theme with glossary labels, the 7k mechanics slot, the v1.1 labs
 placeholder), the Ventilator and Validate pages wrapped, a Developer hub (stage pages and audit pages reachable only
@@ -32,11 +32,11 @@ engine, and both sit behind a stable `HostTarget`, so the host session, the driv
 survive. The Instructor panel is built ONLY on a `ControllerSession` plus a raw-event tap of the same transport, so the
 same panel code runs same-screen (in-process hub) and as the Remote (BroadcastChannel/relay). Every label for a
 physiological quantity comes from `glossary.ts` (generated once from research/11 §5 into `glossary-data.ts`, reviewed
-by Ali, R56). Styling is one stylesheet of tokens (`app.css`); the monitor's interior is FU-5's and untouched.
+by samhv-dev, R56). Styling is one stylesheet of tokens (`app.css`); the monitor's interior is FU-5's and untouched.
 
 **Tech Stack:** TypeScript 5.9 strict, Vite 6 (multi-page demo; the app is the `index` input), Vitest 3.2 (+ the
 existing happy-dom where a DOM test needs it), Playwright 1.63 (`PW_SYSTEM_CHROME=1`), pnpm 9.15.9 via `npx`. No new
-runtime or dev dependency (the accessibility audit is a custom Playwright check; axe is Ali's question Q8).
+runtime or dev dependency (the accessibility audit is a custom Playwright check; axe is the owner's question Q8).
 
 **Spec:** `research/13-ui-design-brief-draft.md` (the brief: §4 IA, §5 state model, §6 tokens, §7 components, §8
 layouts, §9 accessibility, §10 performance, §11 verification, §13 questions), `research/13-ui-benchmarks.md` (critique
@@ -76,7 +76,7 @@ delivered", "FU-5 plan FIXED", "CI amendment 4".
      (`packages/engine-core/src/l3/alarms/{profile,text}.ts`), plus two NEW tests. Wording only: no level, timing,
      latching or renderer change. Exception E-S9-4 (Task 7b).
   3. `apps/demo/vite.config.ts` — NONE expected (the app is the existing `index` input); listed so Task 0 confirms it.
-  4. `NOTICES.md` — NONE unless Ali approves the OFL fonts (Q7); the default ships the system-font stack.
+  4. `NOTICES.md` — NONE unless samhv-dev approves the OFL fonts (Q7); the default ships the system-font stack.
   **Never touch:** `packages/engine-core/**` and `packages/skins/**` except item 2b's lines, `packages/renderer/**`,
   `packages/audio/**`, `packages/ventilator/**`, `packages/validation/**`, `packages/controller/**` except items 2 and 2a, any existing
   `apps/demo/src/**` file, any existing e2e, `package.json`, `pnpm-lock.yaml`, `.github/**`, `docs/physiology/**`.
@@ -84,7 +84,7 @@ delivered", "FU-5 plan FIXED", "CI amendment 4".
   from `origin/main` AFTER FU-4, FU-5, V.1, FU-6, FU-7 and 7k have merged (R60 order FU-4 → V.1 → FU-6 → FU-7 → 7k →
   Stage 9 → 8b, FU-5 in parallel). Never the shared checkout (R25). Push after every task's commit
   (`git push -u origin stage-9-clinical-ui` the first time). Never push to `main`, never merge: Task 25 opens the PR
-  "Stage 9: clinical UI — one app, instructor panel, glossary labels, responsive layouts" and STOPS (Ali or the
+  "Stage 9: clinical UI — one app, instructor panel, glossary labels, responsive layouts" and STOPS (samhv-dev or the
   orchestrator merges). Before Task 25's gate run: `git fetch origin && git merge origin/main`.
 - **Find blocks:** the few edits to existing files are find/replace blocks that matched EXACTLY ONCE on
   `origin/main` `776ebb5` (FU-5 merged; checked mechanically, section "Self-review"). If a block no longer matches after FU-4, V.1, FU-6, FU-7 or 7k,
@@ -112,7 +112,7 @@ delivered", "FU-5 plan FIXED", "CI amendment 4".
   stage numbers, no camelCase in any clinical view; every number shown with its unit (thin space, unit in
   `--text-muted`); buttons say the verb the toast repeats ("Give", "Start infusion", "Commit 3 changes"); every
   physiological label through `glossary.ts` (`glossLabel(n)` / `labelOf(path)`); a label that is not in the glossary
-  is added to `GLOSSARY_S9` (entries 295–299 exist; new ones are numbered from 300; reviewed by Ali) rather than typed inline.
+  is added to `GLOSSARY_S9` (entries 295–299 exist; new ones are numbered from 300; reviewed by samhv-dev) rather than typed inline.
 - **Gate screenshots ≤ 60 KB each** (indexed PNGs from `e2e/stage9-png8.ts`: scale 1 up to 1440 px wide, 0.75 above;
   the test retries once at 0.8 / 0.6 and fails above 60 KB; record any retry in the gate note).
 
@@ -137,7 +137,7 @@ the "Prototype results" notes), `design:accessibility-review` (WCAG 2.2 AA pass:
   simulator sweep top-8 #8).
 - **D4 — The glossary is the only label source (R56).** `app/glossary-data.ts` is generated ONCE from research/11 §5
   (294 entries; the scratch generator is recorded in Task 2) plus `GLOSSARY_S9` (entries 295–299: BP target, Rhythm,
-  Onset, Contractility ×, Volume status ×), and is edited by hand afterwards (Ali reviews it). `glossary.ts` resolves
+  Onset, Contractility ×, Volume status ×), and is edited by hand afterwards (samhv-dev reviews it). `glossary.ts` resolves
   truth paths (`#` side index, `*`/`<id>` segments), strips author notes from names and units (`(engine fraction)`),
   and gives the short label, the tooltip text (name, unit, adult normal, child/pregnancy). Engine keys appear only in
   Explore → "Model internals" (collapsed) and in Developer (brief Q9). **Labels never collide (R50 review F1):** a
@@ -160,7 +160,7 @@ the "Prototype results" notes), `design:accessibility-review` (WCAG 2.2 AA pass:
   `color`/`background` itself (a computed colour inherited from `body` would otherwise keep the dark theme's text —
   found in the prototype).
 - **D6 — System fonts by default.** `--font-ui: system-ui, …`, `--font-num` = the UI face with `tabular-nums`,
-  `--font-mono: ui-monospace, …`. IBM Plex Sans/Mono and B612 (SIL OFL 1.1) are NOT shipped until Ali answers Q7; if
+  `--font-mono: ui-monospace, …`. IBM Plex Sans/Mono and B612 (SIL OFL 1.1) are NOT shipped until samhv-dev answers Q7; if
   he approves, Task 20 adds the WOFF2 files, the `@font-face` block, the NOTICES row and `LICENSES/OFL-1.1.txt`
   (research/13-ui-design-references §4: OFL is not in DESIGN-BRIEF §8's "may borrow" list).
 - **D7 — Stage, then commit, with one onset for the batch** (simulator sweep top-8 #1: Gaumard UNI's Apply list,
@@ -191,7 +191,7 @@ the "Prototype results" notes), `design:accessibility-review` (WCAG 2.2 AA pass:
   (`attachSensor`), and the log records each attach.
 - **D12 — Scenario library = every `pme-scenario/1` JSON** under `packages/controller/scenarios` (`import.meta.glob`),
   not only the five the 6b runner bundles (the 7f depth/NMB cases appear too). Cards show the story, patient,
-  category, duration and objectives from `app/scenario-meta.ts` (drafts for Ali; the author notes name build stages,
+  category, duration and objectives from `app/scenario-meta.ts` (drafts for samhv-dev; the author notes name build stages,
   so cards never print `notes`). The run view shows the state strip (current highlighted, tap to jump with a
   confirm), time in state, the next triggers in clinical words with countdowns, manual triggers as buttons,
   Hold/Resume, bookmarks with "Return here", and an objectives checklist that writes "Objective met" to the log.
@@ -267,7 +267,7 @@ the "Prototype results" notes), `design:accessibility-review` (WCAG 2.2 AA pass:
   ("Learner controls on the monitor", host only), or a case's card meta does (`learnerControls`, none today); loading a
   scenario or restarting the patient switches it off. Each button goes through the panel's link and is logged as a
   learner action (`kind: 'learner'`); labels follow the drug-name set.
-- **D28 — Drug names from the glossary, one set per site (orchestrator ruling 5; Q13 stays open for Ali):**
+- **D28 — Drug names from the glossary, one set per site (orchestrator ruling 5; Q13 stays open for samhv-dev):**
   `glossary-data.ts` `DRUG_NAMES` holds every 7g drug's display name (generated once from the library, edited by
   hand), with the British name where it differs (epinephrine/adrenaline, norepinephrine/noradrenaline). The site
   profile's `drugNames` picks the set: `us` "epinephrine / norepinephrine" (default) or `uk` "adrenaline /
@@ -357,7 +357,7 @@ documents (the app loads all 11 itself, R-S9-2).
   user guide (R-S9-5) say so; (b) an `aria-label` hook on the monitor canvas (the app sets one on its host
   element meanwhile) and a "read vitals" summary string the app can announce on demand (brief §9); (c) the saadat-like
   idle message bar (#E0E0E0 slab) under a teaching theme, and projector-light NIBP grey (3.45:1) darkened to ≥ #6B7482
-  (brief §6.2) — skin data, Ali's call.
+  (brief §6.2) — skin data, the owner's call.
 - **R-S9-2 → controller (6a/6b owner):** `describe`/`describeTransition` print engine ids (`etco2 ≥ 20 → rosc`); the
   app keeps clinical copies (`describe.ts`, `triggers.ts`) — a label hook in the controller would remove the
   duplication; and `BUILTIN_SCENARIOS` should register all 11 documents (today 5). After E-S9-2 the host forwards `pin`
@@ -441,7 +441,7 @@ index.html ── src/app/main.ts ── Shell (shell.ts): top bar · session ba
 | `apps/demo/src/app/views/explore.ts` | 17 | Explore physiology |
 | `apps/demo/src/app/views/vent.ts`, `views/validate.ts`, `views/dev.ts`, `views/settings.ts` | 18 | Ventilator, Validate, Developer, Settings |
 | `apps/demo/src/app/main.ts`, `apps/demo/index.html` (E-S9-1), `packages/controller/src/panel/styles.ts` (E-S9-3) | 19 | wire-up |
-| `apps/demo/public/fonts/**`, `NOTICES.md`, `LICENSES/OFL-1.1.txt`, `app.css` `@font-face` | 20 | ONLY if Ali approves Q7 |
+| `apps/demo/public/fonts/**`, `NOTICES.md`, `LICENSES/OFL-1.1.txt`, `app.css` `@font-face` | 20 | ONLY if samhv-dev approves Q7 |
 | `apps/demo/e2e/stage9-support.ts`, `stage9-app.e2e.ts`, `stage9-glossary.e2e.ts` | 21 | session, remote, glossary e2e |
 | `apps/demo/e2e/stage9-a11y.e2e.ts` | 22 | accessibility audit |
 | `apps/demo/e2e/stage9-tasks.e2e.ts` | 23 | five timed tasks |
@@ -578,7 +578,7 @@ IC, FEV₁/FVC, τE) ADD the path to the `keys` of the matching research/11 §5.
 146–170 by label); for the FU-4/V.1/FU-6/FU-7 leaves listed in R-S9-7 add `GLOSSARY_S9` entries numbered from 300 with
 the label the owning plan proposed, a full name, unit and "—" normal. Record every addition in
 `<scratchpad>/stage-9-clinical-ui/glossary-additions.md`; Task 2 applies it and Task 25's gate note lists it for
-Ali's review. Nothing to commit in Task 0.
+the owner's review. Nothing to commit in Task 0.
 
 ---
 
@@ -599,7 +599,7 @@ Ali's review. Nothing to commit in Task 0.
 /* Stage 9 app shell: "bezel and screen" (research/13 brief §6). The monitor is the screen — true black, the skin's own
    colours, untouched. Everything else is the bezel: graphite, quiet, colour only for state. One instructor accent
    (periwinkle) marks what the instructor controls; alarm colours are never shell tokens (they come from the skin).
-   System fonts by default (the OFL fonts wait for Ali's ruling, Open question Q7). No UI library. */
+   System fonts by default (the OFL fonts wait for the owner's ruling, Open question Q7). No UI library. */
 
 :root {
   color-scheme: dark;
@@ -1125,7 +1125,7 @@ git push
 ```ts
 // R56 clinical glossary: engine key → clinical label, full name, unit, adult normal range (research/11-capability-inventory-
 // and-glossary.md §5, 294 entries, generated 2026-09-28 by the Stage 9 plan writer from the workspace research file; edits
-// go HERE and are reviewed by Ali). `keys` are console truth paths; `#` = side index (0 L, 1 R), `*`/`<id>` = any segment.
+// go HERE and are reviewed by samhv-dev). `keys` are console truth paths; `#` = side index (0 L, 1 R), `*`/`<id>` = any segment.
 // Entries without keys are planned labels (R57/R58/R59) that the UI already uses for placeholders.
 export interface GlossaryEntry {
   n: number;
@@ -1439,7 +1439,7 @@ export const GLOSSARY: readonly GlossaryEntry[] = [
 ];
 
 /**
- * Stage 9 additions (Ali reviews them with the glossary, R56): labels the instructor controls need that research/11 does
+ * Stage 9 additions (samhv-dev reviews them with the glossary, R56): labels the instructor controls need that research/11 does
  * not list as a monitored quantity. Numbers 295–299 are these five; entries added at Task 0/2 (the labels of the truth
  * leaves FU-4, V.1, FU-6, FU-7 and 7k add) start at 300. research/11's numbers 1–294 never change.
  */
@@ -1486,7 +1486,7 @@ export const KEY_LABELS: Readonly<Record<string, string>> = {
 /**
  * Stage 9 (review F1): the screen label where research/11's label, shortened, would name two different quantities.
  * "T1" is both the core temperature (19) and the first twitch of the train-of-four (263); "UO" is mL/h (34) and
- * mL/kg/h (245). Reviewed by Ali with the glossary.
+ * mL/kg/h (245). Reviewed by samhv-dev with the glossary.
  */
 export const SHORT: Readonly<Record<number, string>> = { 245: 'UO/kg', 263: 'TOF T1' };
 
@@ -1500,7 +1500,7 @@ export const SAME_AS: Readonly<Record<number, number>> = { 233: 31, 234: 32, 256
  * Drug display names (orchestrator ruling 5 on the R50 review: drug names join the glossary, R56). One row per drug of
  * the 7g library (placeholders without PD excluded), generated once from its `DRUGS` names and edited by hand from now
  * on. `uk` is the name the site's "adrenaline / noradrenaline" set shows; the set is a site-profile option, default
- * "epinephrine / norepinephrine" (Ali's open question Q13). A drug a later stage adds shows its library name until it
+ * "epinephrine / norepinephrine" (the owner's open question Q13). A drug a later stage adds shows its library name until it
  * gets a row here.
  */
 export const DRUG_NAMES: Readonly<Record<string, { name: string; uk?: string }>> = {
@@ -2252,7 +2252,7 @@ git push
 
 **Interfaces:** `SiteProfile`, `loadSite`, `saveSite`, `parseSite`, `MONITORS`, `THEMES`; `PatientSpec`, `PATIENT_PRESETS`, `COMORBIDITIES`, `profileOf`, `oneLiner`, `ageBandOf`; `LIBRARY`, `cardOf`, `scenarioById`, `SCENARIO_META`, `CATEGORIES`, `storyOf`.
 
-**Why:** The site profile belongs to the room, not the case (research/13 P11; D20), including the drug-name set (D28, orchestrator ruling 5). Patients: presets and comorbidities mapped 1:1 onto the engine's R22/7b profile, pregnancy shown as v1.1 (R60), sensors off when the site starts patients unattached (D11). The library loads every `pme-scenario/1` document (D12) and gives each a card with learner-facing copy from `scenario-meta.ts` (drafts for Ali).
+**Why:** The site profile belongs to the room, not the case (research/13 P11; D20), including the drug-name set (D28, orchestrator ruling 5). Patients: presets and comorbidities mapped 1:1 onto the engine's R22/7b profile, pregnancy shown as v1.1 (R60), sensors off when the site starts patients unattached (D11). The library loads every `pme-scenario/1` document (D12) and gives each a card with learner-facing copy from `scenario-meta.ts` (drafts for samhv-dev).
 
 - [ ] **Step 1: Create `apps/demo/src/app/site.ts`**
 
@@ -2276,7 +2276,7 @@ export interface SiteProfile {
   gasUnit: 'mmHg' | 'kPa';
   /** New patients start with the sensors off: the learner attaches them and traces appear only then (Laerdal). */
   sensorsOff: boolean;
-  /** Drug names on every screen (orchestrator ruling 5; Ali's open question Q13): 'us' "epinephrine / norepinephrine"
+  /** Drug names on every screen (orchestrator ruling 5; the owner's open question Q13): 'us' "epinephrine / norepinephrine"
    *  (default), 'uk' "adrenaline / noradrenaline". */
   drugNames: 'us' | 'uk';
 }
@@ -2465,7 +2465,7 @@ describe('patient profiles', () => {
 // REALITi objectives checklists). `pme-scenario/1` carries the title, the notes and the patient; the category, the
 // learner-facing story, the expected duration and the objectives live here until the schema gains them (request to
 // 8b/v1.1). The document notes are written for authors (they name build stages); cards show `story` instead.
-// Every built-in is a draft until Ali's clinical review.
+// Every built-in is a draft until the owner's clinical review.
 export type Category = 'Resuscitation' | 'Haemodynamic crisis' | 'Anaesthesia depth and drugs' | 'Airway and breathing' | 'Metabolic and thermal';
 export const CATEGORIES: readonly Category[] = ['Resuscitation', 'Haemodynamic crisis', 'Anaesthesia depth and drugs', 'Airway and breathing', 'Metabolic and thermal'];
 
@@ -2691,8 +2691,8 @@ export const showVital = (s: VitalSpec, engineValue: number | undefined): string
 
 ```ts
 // The dose picker's data (research/13 brief §7 "Dose picker"). Drug names and classes come from the engine's own library
-// (7g `DRUGS`), so a drug a later stage adds is listed without a code change. The presets below are DRAFTS for Ali's
-// review (brief Q6: "start from the 7g library's ranges; Ali reviews one table before Stage 9 code").
+// (7g `DRUGS`), so a drug a later stage adds is listed without a code change. The presets below are DRAFTS for the owner's
+// review (brief Q6: "start from the 7g library's ranges; samhv-dev reviews one table before Stage 9 code").
 import { DRUGS, type DoseUnit, type RateUnit } from '@pme/engine-core';
 import { drugName } from './glossary.ts';
 
@@ -6850,7 +6850,7 @@ git push
 
 ---
 
-### Task 20: Fonts — ONLY if Ali approves Q7 (IBM Plex Sans/Mono and B612, SIL OFL 1.1)
+### Task 20: Fonts — ONLY if samhv-dev approves Q7 (IBM Plex Sans/Mono and B612, SIL OFL 1.1)
 
 **Files (only on approval):** Create `apps/demo/public/fonts/{IBMPlexSans-Regular,IBMPlexSans-Medium,IBMPlexSans-SemiBold,IBMPlexMono-Regular,B612-Regular,B612-Bold}.woff2`
 (Latin subset, ≈ 180 KB total), `LICENSES/OFL-1.1.txt`; Modify `NOTICES.md` (one row per family: name, version,
@@ -6858,7 +6858,7 @@ licence OFL-1.1, source URL, "font asset, unmodified"), `apps/demo/src/app/app.c
 `font-display: swap`, then `--font-ui: 'IBM Plex Sans', system-ui, …`, `--font-num: 'B612', var(--font-ui)`,
 `--font-mono: 'IBM Plex Mono', ui-monospace, …`).
 
-**Why:** research/13-ui-design-references §4: OFL is not in DESIGN-BRIEF §8's MIT/Apache list; bundling needs Ali's
+**Why:** research/13-ui-design-references §4: OFL is not in DESIGN-BRIEF §8's MIT/Apache list; bundling needs the owner's
 ruling, a NOTICES row and the licence text. Without the ruling this task is skipped and the system stack ships (D6).
 
 - [ ] **Step 1: Check the ruling** in `research/00-orchestrator-rulings.md` (search "Q7" / "OFL"). No approval → tick
@@ -6867,7 +6867,7 @@ ruling, a NOTICES row and the licence text. Without the ruling this task is skip
   subset to Latin with the release's own `-latin` files where provided, record sizes and SHA-256 in NOTICES.
 - [ ] **Step 3 (approved only): Run** `npx -y pnpm@9.15.9 check-notices` (expected `check-notices: OK`) and
   `npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/app/tokens.test.ts` (unchanged).
-- [ ] **Step 4 (approved only): Commit and push** (`feat(app): IBM Plex and B612 fonts (SIL OFL 1.1, Ali's ruling Q7)`
+- [ ] **Step 4 (approved only): Commit and push** (`feat(app): IBM Plex and B612 fonts (SIL OFL 1.1, the owner's ruling Q7)`
   with the trailer).
 
 ---
@@ -6961,7 +6961,7 @@ export interface A11yFinding {
 }
 
 /**
- * WCAG 2.2 AA checks that need no dependency (axe is Ali's question Q8): target size (2.5.8, 24 px; 44 px in the
+ * WCAG 2.2 AA checks that need no dependency (axe is the owner's question Q8): target size (2.5.8, 24 px; 44 px in the
  * instructor panel on a touch screen), accessible names (1.3.1/4.1.2), text contrast (1.4.3) from the rendered
  * colours, horizontal scroll (1.4.10) and clipped labels (brief §11.2), one h1 per view and a main landmark.
  */
@@ -7235,7 +7235,7 @@ git push
 
 ```ts
 // WCAG 2.2 AA audit of every view at a laptop and an iPad size, with no dependency (research/13 brief §9, §11.4;
-// axe-core is Ali's question Q8). Targets ≥ 24 px (44 px in the instructor panel on a touch screen), names on every
+// axe-core is the owner's question Q8). Targets ≥ 24 px (44 px in the instructor panel on a touch screen), names on every
 // control, text contrast from the rendered colours, no sideways scroll, no clipped button labels, one h1, a main
 // landmark, and a visible focus indicator on the first 25 tab stops.
 import { expect, test } from '@playwright/test';
@@ -7295,14 +7295,14 @@ git push
 **Files:**
 - Create: `apps/demo/e2e/stage9-tasks.e2e.ts`
 
-**Why:** Brief §11.6 as an automated script through the visible UI only; the same five tasks are Ali's timed usability run (gate note). Task 3 runs first because holding and returning a value needs MODELED physiology and the ACLS case runs MANUAL.
+**Why:** Brief §11.6 as an automated script through the visible UI only; the same five tasks are the owner's timed usability run (gate note). Task 3 runs first because holding and returning a value needs MODELED physiology and the ACLS case runs MANUAL.
 
 - [ ] **Step 1: Create `apps/demo/e2e/stage9-tasks.e2e.ts`**
 
 ```ts
 // The brief's five timed instructor tasks (research/13 brief §11.6), driven through the visible UI only — clicks, typing
 // and keys, never the app hook — so a broken path shows as a failure. Each must finish in < 30 s; the times are
-// written to the test annotations for the gate note. The same five tasks are the script for Ali's timed usability run.
+// written to the test annotations for the gate note. The same five tasks are the script for the owner's timed usability run.
 // Chromium only (a heavy evidence run, CI amendment rules).
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
@@ -7699,10 +7699,10 @@ the bench").
   3. *Accessibility* — the audit result per context (0 findings expected), the focus walk, the CVD check (Chrome
      DevTools "Emulate vision deficiencies": deuteranopia and protanopia on Instructor and Explore — look, and say
      whether any meaning is carried by colour alone), the token contrast table from `tokens.test.ts`.
-  4. *Glossary* — the glossary e2e result; the additions made at Task 0/2 (for Ali's review, R56); the count of
-     Explore rows with a clinical label vs "Model internals" per section; `SHORT` and `SAME_AS` (for Ali's review);
+  4. *Glossary* — the glossary e2e result; the additions made at Task 0/2 (for the owner's review, R56); the count of
+     Explore rows with a clinical label vs "Model internals" per section; `SHORT` and `SAME_AS` (for the owner's review);
      any alarm id the mirror did not know (`alarmLine(…).known === false`, D10) — none expected.
-  5. *Five timed tasks* — the automated times, and Ali's own times if he ran them (target < 30 s each without help).
+  5. *Five timed tasks* — the automated times, and the owner's own times if he ran them (target < 30 s each without help).
   6. *Frame gate* — the four rows and the 20-minute soak on the 8-lane load (+ iPad), with the sentence on what the
      metric measures (D23).
   7. *Decisions* D1–D29 one line each; *Deviations* from this plan and from the brief, and why — at least: no
@@ -7712,7 +7712,7 @@ the bench").
      "remember the last view" (Q1), Shift shortcuts (Q14); *v1.0 limits* the orchestrator accepted: the sweep restarts
      after a Monitor ↔ Instructor switch (ruling 3), same-browser Remote (ruling 6); *WebKit* results of the three light
      e2e files (F16); *Requests* R-S9-1…8 with their status and R-FU5-9 declined.
-  8. *Open questions* Q1–Q15 (below) with Ali's answers where given, and the orchestrator's rulings 1–6 on the R50
+  8. *Open questions* Q1–Q15 (below) with the owner's answers where given, and the orchestrator's rulings 1–6 on the R50
      review as applied.
   9. *Test counts* — per package, e2e list.
 
@@ -7727,8 +7727,8 @@ Implements docs/plans/stage-9-clinical-ui.md (R55, R56). Gate note: docs/gates/s
 
 - One app page (index.html) with hash routes and ONE engine session shared by every view: Start, learner Monitor, Instructor (monitor + panel), Remote (paired by code/QR), Explore physiology, Ventilator, Validate, Developer, Settings. The stage pages stay, reachable from Developer.
 - Instructor panel: Scenario, Vitals & rhythm, Drugs & fluids, Airway & ventilation, Defib/pacing/CPR, Devices & alarms, Patient, Log; staged changes with one onset and Commit; pin / return-to-model per value with change flags; onset progress markers; MODELED/MANUAL always visible; the same panel runs on a paired tablet.
-- R56: every clinical label from the research/11 glossary (+ Stage 9 additions and per-key labels, for Ali's review); engine keys only under Model internals and in Developer; an e2e fails on any engine id in a clinical view.
-- Tokens per the brief ("bezel and screen", one accent, the monitor true black, alarm colours from the skin); system fonts (IBM Plex/B612 await Ali's Q7); no new dependency (self-written QR encoder and indexed-PNG writer for the evidence).
+- R56: every clinical label from the research/11 glossary (+ Stage 9 additions and per-key labels, for the owner's review); engine keys only under Model internals and in Developer; an e2e fails on any engine id in a clinical view.
+- Tokens per the brief ("bezel and screen", one accent, the monitor true black, alarm colours from the skin); system fonts (IBM Plex/B612 await the owner's Q7); no new dependency (self-written QR encoder and indexed-PNG writer for the evidence).
 - Accessibility audit (no dependency): targets ≥ 24 px (44 px on touch), names, contrast, reflow, headings, focus — 0 findings at 1280×800 and 820×1180.
 - Frame gate with the shell mounted and the panel open: <p95 numbers>.
 - Exceptions: E-S9-1 index.html becomes the app; E-S9-2 the 6a host session forwards pin/release/setFactor/setMode to the engine (a pre-7a guard refused every pin) + the one stub assertion; E-S9-3 the 6a drawer is opaque.
@@ -7743,25 +7743,25 @@ Report: commits, test counts, the gate numbers, deviations, anything undone. Sto
 
 ---
 
-## Open questions for Ali (the brief's 12, with the plan's recommendation and what the plan does meanwhile)
+## Open questions for samhv-dev (the brief's 12, with the plan's recommendation and what the plan does meanwhile)
 
-| # | Question | Recommendation (what this plan implements until Ali answers) |
+| # | Question | Recommendation (what this plan implements until samhv-dev answers) |
 |---|---|---|
 | Q1 | Default landing: Instructor view or a Start screen? | **Start** on every fresh load (it is also the patient preview); a `?scenario=` link opens the Instructor view directly. "Remember the last view" is not implemented (a reload during a course should not land a projector on the instructor's panel). |
 | Q2 | Learner monitor default for the course: saadat-like `iran-icu-as-found` (alarms off)? | **Yes for the course room** — one click in Settings (site profile, exportable); the shipped default stays factory `saadat-like`, philips-like is the "international" choice. |
 | Q3 | Keep the stage pages in the release build? | **Yes, only under Developer**, opening in a new tab; none on Start. |
 | Q4 | Instructor on the same screen or a second device by default? | **Same screen in v1.0**: split beside the monitor ≥ 1200 px, drawer below (or by site choice), and a Remote in a second window of the same browser by code. A tablet over the network is version 1.1 (orchestrator ruling 6; D15). |
-| Q5 | Periwinkle accent and graphite bezel? | **Yes** (tokens in `app.css`; one variable to change if Ali prefers another hue — the token test re-checks contrast). |
-| Q6 | Dose presets: whose defaults? | **The 7g library's ranges as drafts** (`app/drugs.ts` `PRESETS`, 28 drugs) — Ali reviews that one table; nothing else encodes a dose. Note for the review: epinephrine's bolus chips put 10 µg, 100 µg and 1 mg side by side (push-dose and arrest doses, a 100-fold spread in one row). |
-| Q7 | Accept SIL OFL fonts (IBM Plex, B612) as bundled assets? **(font approval)** | **Yes** (OFL is font-specific and compatible with MIT distribution; NOTICES row + `LICENSES/OFL-1.1.txt`). Until Ali says so the system stack ships and Task 20 is skipped. |
-| Q8 | `@axe-core/playwright` (MPL-2.0) as a dev-only test dependency? | **Not needed now**: the custom audit (D22) covers targets, names, contrast, reflow, headings and focus; axe would add ARIA-pattern rules — worth it as dev-only if Ali approves, never shipped. |
-| Q9 | Show engine keys in the release console? | **Decided (D4, D16):** muted mono, only in Developer and under Explore's collapsed "Model internals". Listed for Ali's confirmation only. |
+| Q5 | Periwinkle accent and graphite bezel? | **Yes** (tokens in `app.css`; one variable to change if samhv-dev prefers another hue — the token test re-checks contrast). |
+| Q6 | Dose presets: whose defaults? | **The 7g library's ranges as drafts** (`app/drugs.ts` `PRESETS`, 28 drugs) — samhv-dev reviews that one table; nothing else encodes a dose. Note for the review: epinephrine's bolus chips put 10 µg, 100 µg and 1 mg side by side (push-dose and arrest doses, a 100-fold spread in one row). |
+| Q7 | Accept SIL OFL fonts (IBM Plex, B612) as bundled assets? **(font approval)** | **Yes** (OFL is font-specific and compatible with MIT distribution; NOTICES row + `LICENSES/OFL-1.1.txt`). Until samhv-dev says so the system stack ships and Task 20 is skipped. |
+| Q8 | `@axe-core/playwright` (MPL-2.0) as a dev-only test dependency? | **Not needed now**: the custom audit (D22) covers targets, names, contrast, reflow, headings and focus; axe would add ARIA-pattern rules — worth it as dev-only if samhv-dev approves, never shipped. |
+| Q9 | Show engine keys in the release console? | **Decided (D4, D16):** muted mono, only in Developer and under Explore's collapsed "Model internals". Listed for the owner's confirmation only. |
 | Q10 | Labs tab while 7i is deferred? | **Decided (D16):** show it with today's blood-gas rows (glossary labels, FO₂Hb/SaO₂, Mg, osmolality) and a "coming in version 1.1" note for CBC, chemistry, coagulation, TEG/ROTEM. |
 | Q11 | Persian UI text? | **No for v1** (English clinical vocabulary as on the monitor; the Jalali date stays a skin option). Strings live in the view modules; a translation layer is v1.1+. |
 | Q12 | Learner action buttons (6b "Learner:" row)? | **Decided by the orchestrator (ruling 4; D27):** a "Learner controls" strip under the learner Monitor, off by default, switched on per scenario; learner actions are logged as such. |
-| Q13 | Drug names: "Norepinephrine"/"Epinephrine" (the 7g library) or "Noradrenaline"/"Adrenaline" (UK/Iran usage)? | **Open for Ali; the orchestrator's ruling 5 sets the mechanism (D28):** drug names are glossary data (`DRUG_NAMES`) and the set is a site-profile option, default "epinephrine / norepinephrine", alternative "adrenaline / noradrenaline"; both names are searchable. Ali picks the course default; other US/UK pairs (suxamethonium, lignocaine, GTN) can join the table if he wants them. |
-| Q14 | Shortcuts with Shift (S/P/N/B) rather than single letters? | **Decided (D25):** Shift, so a stray key while talking never silences the room. Listed for Ali's confirmation only. |
-| Q15 | The 11 scenario cards' stories, categories, durations and objectives (`scenario-meta.ts`) | Drafts written for learners; Ali reviews them with the scenario documents (all are `[draft]`). |
+| Q13 | Drug names: "Norepinephrine"/"Epinephrine" (the 7g library) or "Noradrenaline"/"Adrenaline" (UK/Iran usage)? | **Open for samhv-dev; the orchestrator's ruling 5 sets the mechanism (D28):** drug names are glossary data (`DRUG_NAMES`) and the set is a site-profile option, default "epinephrine / norepinephrine", alternative "adrenaline / noradrenaline"; both names are searchable. samhv-dev picks the course default; other US/UK pairs (suxamethonium, lignocaine, GTN) can join the table if he wants them. |
+| Q14 | Shortcuts with Shift (S/P/N/B) rather than single letters? | **Decided (D25):** Shift, so a stray key while talking never silences the room. Listed for the owner's confirmation only. |
+| Q15 | The 11 scenario cards' stories, categories, durations and objectives (`scenario-meta.ts`) | Drafts written for learners; samhv-dev reviews them with the scenario documents (all are `[draft]`). |
 | — | Orchestrator: exceptions | E-S9-1, E-S9-2 and E-S9-3 APPROVED (ruling 2). **E-S9-4 needs re-confirmation:** ruling 1 said "skin JSON data only", but a working per-skin wording needs one optional schema field and three reading lines in `engine-core/src/l3/alarms` (see E-S9-4); without the re-confirmation Task 7b is skipped and R-FU5-6 goes to the FU-5 follow-up. |
 
 ## Self-review
@@ -7792,7 +7792,7 @@ Report: commits, test counts, the gate numbers, deviations, anything undone. Sto
 - **R50 review.** F1–F17 fixed as the review writes them; rulings 1–6 applied (E-S9-4 and R-S9-8, E-S9-2's test and
   wording, the sweep limit, the learner strip, the drug-name set, the same-browser Remote). Open: E-S9-4's form needs
   the orchestrator's re-confirmation; WebKit (F16) and a real-tablet check are for the executor.
-- **Placeholders.** None in code. Two data tables are drafts by design and flagged for Ali (drug presets Q6, scenario
+- **Placeholders.** None in code. Two data tables are drafts by design and flagged for samhv-dev (drug presets Q6, scenario
   card copy Q15); the glossary additions of Task 0/2 are listed in the gate note.
 - **Known limits.** Timed task 5 depends on 7k's ΔP path (R-S9-3; red on a base without 7k — the stage order puts 7k
   first). The sweep restarts after a Monitor ↔ Instructor switch (R-S9-1a, accepted for v1.0 by ruling 3). The Remote

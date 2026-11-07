@@ -346,7 +346,7 @@ an embedding developer reads it for the organ inputs it collects and the effects
 | `ANURIA_ML_KG_H` | `0.05` | — | [ENG] | [ENG] |
 | `ANG_GAIN` | `3` | — | Pulse has no RAAS; [ENG; Pulse has no RAAS (annex B2 stated limits)] | Efferent (angiotensin II) tone in low-flow states [ENG; Pulse has no RAAS (annex B2 stated limits)]: R_eff × (1 + ANG_GAIN·a), a = 0–1 from RPP below 80 and blood volume loss — keeps GFR while RBF falls (filtration fraction ↑). |
 | `ANG_TAU_S` | `120` | s | [ENG] | Angiotensin/efferent response time constant, s [ENG]: an instantaneous term would follow the circulation's second-to-second CO wobble (CO 4.9–5.6 in MODELED HFrEF) and swing GFR 27–211 mL/min within seconds; AngII's efferent effect builds over minutes. |
-| `COLD_ONSET_C` | `35` | — | Polderman 2009; [ENG, Ali's Q] | Cold diuresis onset and gain per °C [ENG, Ali's Q] (Polderman 2009: direction). |
+| `COLD_ONSET_C` | `35` | — | Polderman 2009; [ENG, the owner's Q] | Cold diuresis onset and gain per °C [ENG, the owner's Q] (Polderman 2009: direction). |
 | `COLD_DIURESIS_PER_C` | `0.2` | — | — | — |
 | `S_GA` | `0.6` | — | [ENG] | surgical stress/ADH under GA, tables `S` [ENG] (0.4–0.8) |
 | `V_AT_15` | `0.5` | — | — | UOP factor at −15 % blood volume (tables V) |
@@ -361,7 +361,7 @@ an embedding developer reads it for the organ inputs it collects and the effects
 | `NE_EXCESS_PER_01` | `0.9` | — | [ENG] | × per 0.1 µg/kg/min α-agonist above need (tables D row) [ENG] |
 | `SEPSIS_GFR_LOSS` | `0.5` | — | [ENG] | Kf × (1 − 0.5·sepsis) (efferent dilation / microvascular) [ENG]; sepsis is endo's |
 | `AKI_KF_LOSS` | `0.8` | — | [ENG] | Condition aki severity 1 → Kf × 0.2 [ENG]; also the nephron share TGF defends |
-| `AKI_AFF_TONE` | `1` | — | [ENG, Ali's Q] | Intrinsic AKI's afferent tone — the afferent floor rises × (1 + AKI_AFF_TONE·aki) [ENG, Ali's Q]. |
+| `AKI_AFF_TONE` | `1` | — | [ENG, the owner's Q] | Intrinsic AKI's afferent tone — the afferent floor rises × (1 + AKI_AFF_TONE·aki) [ENG, the owner's Q]. |
 | `FUROSEMIDE_EMAX` | `9` | — | tables §5.2; [TXT]; [ENG] | Diuretics (tables §5.2 has none; label-level [TXT], shape [ENG]) excreted fraction × (1 + 9·E): 40 mg → peak UOP ≈ 7× (≈ 8 mL/min) |
 | `FUROSEMIDE_ED50_MG` | `20` | — | — | Own-depot path (no drug model): E = plasma mg/(mg + 20) |
 | `FUROSEMIDE_EC50_REF` | `1` | — | — | With the drug model: E = c/(c + 1), c = its furosemide level in reference doses (row `furosemide`: gamma, ref 20 mg, peak 15 min, 10 % at 2 h) — the same ED50 as 20 mg. 40 mg: peak 8.2 mL/min at 15 min, 0.92 L in 4 h. |

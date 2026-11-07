@@ -1,4 +1,4 @@
-// CM MANUAL twins (research/12 §2.2: every P1 haemodynamic cell also runs in MANUAL). Ali's Q9 (what MANUAL physiology
+// CM MANUAL twins (research/12 §2.2: every P1 haemodynamic cell also runs in MANUAL). The owner's Q9 (what MANUAL physiology
 // should be) is open, so these are graded direction-only and read beside their MODELED twins.
 import { add, ASx, d, HF, hemo, m, T, V, XE } from './spec.ts';
 

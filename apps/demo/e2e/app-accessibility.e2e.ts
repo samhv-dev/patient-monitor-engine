@@ -1,5 +1,5 @@
 // WCAG 2.2 AA audit of every view at a laptop and an iPad size, with no dependency (research/13 brief §9, §11.4;
-// axe-core is Ali's question Q8). Targets ≥ 24 px (44 px in the instructor panel on a touch screen), names on every
+// axe-core is the owner's question Q8). Targets ≥ 24 px (44 px in the instructor panel on a touch screen), names on every
 // control, text contrast from the rendered colours, no sideways scroll, no clipped button labels, one h1, a main
 // landmark, and a visible focus indicator on the first 25 tab stops.
 // Since retire-instructor-v1 (PR 3) the laptop's Instructor view is Instructor v2: the laptop run audits ACTION and each

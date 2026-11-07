@@ -53,13 +53,13 @@ export function renderMarkdown(r: Report): string {
   L.push('', '## Pulse oracle (R34; annex §C/§D)', '', `Build: ${r.oracle.buildHash ? `\`${r.oracle.buildHash.slice(0, 16)}…\`` : 'not run (set PME_PULSE_DIR)'}.`, '', '| | Scenario / check | Ours | Pulse | Expected | Note |', '|---|---|---|---|---|---|');
   for (const o of r.oracle.rows) L.push(`| ${dot[o.grade]} | ${o.scenario} / ${o.id} | ${f(o.ours, 2)} | ${f(o.pulse, 2)} | ${o.expected} | ${o.note} |`);
   L.push('', `Backlog: ${r.oracle.backlog.join('; ')}.`);
-  L.push('', '## Calibration queue (R44)', '', `${q.length} rows outside their band — the input to Ali's calibration pass. Also written to \`calibration-queue.md\`.`, '');
+  L.push('', '## Calibration queue (R44)', '', `${q.length} rows outside their band — the input to the owner's calibration pass. Also written to \`calibration-queue.md\`.`, '');
   L.push(...renderQueue(q));
   return `${L.join('\n')}\n`;
 }
 
 export function renderQueue(q: QueueItem[]): string[] {
-  const L = ['| | Suite | Row | Measured | Expected | Source | Ali: decision |', '|---|---|---|---|---|---|---|'];
+  const L = ['| | Suite | Row | Measured | Expected | Source | samhv-dev: decision |', '|---|---|---|---|---|---|---|'];
   for (const x of q) L.push(`| ${dot[x.grade]} | ${x.suite} | ${x.id} | ${x.measured} | ${x.expected} | ${x.source} | |`);
   return L;
 }

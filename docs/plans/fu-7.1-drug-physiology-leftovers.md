@@ -322,7 +322,7 @@ reason) · **gated Q#** (the implementation is written and measured, but it need
 | **B8** a cuff cycle in asystole / in VF / during CPR | fails after 51 / 51 / 170 s (the device is right) | unchanged — only the display |
 | **B3** `arrest-etco2` no CPR at +20 / +30 / +60 / +120 s | 28.0 / 24.2 / 14.2 / 5.0 | 14.2 / **9.3** / **2.6** / **0.2** — the re-targeted case PASSES on Falk's ≤ 6 at 60 s |
 | **B3** `fidelity-arrest` fidelity-3 CPR window EtCO2 (min / mean / max, three skins) | ≥ 10 / — / ≤ 25, green | **7** / 15.3–15.6 / 20–21 — the floor is a record, the ceiling asserts |
-| **B3** `fidelity-lowflow` Ali's case: PI and SpO2 in the last seconds before the pulse is lost | PI ≤ 0.29, SpO2 never shown valid | **PI 0.31–0.33, SpO2 99 valid for 6 s at MAP 19–20** — recorded (Q10) |
+| **B3** `fidelity-lowflow` the owner's case: PI and SpO2 in the last seconds before the pulse is lost | PI ≤ 0.29, SpO2 never shown valid | **PI 0.31–0.33, SpO2 99 valid for 6 s at MAP 19–20** — recorded (Q10) |
 | **B3 (gated)** haemorrhage rig true EtCO2 at the arrest / +30 / +60 / +120 s | 16.7 / 11.6 / 7.8 / 3.5 | 11.8 / **4.7 / 1.8 / 0.3** |
 | **B3 (gated)** `arrest-etco2` VF rig +60 s (band 10–20) / CPR mean minutes 1–10 (17–23) / CPR +2 min (≥ 17) | 14.2 / 18.0 / 18.0 | **2.6 ✗** / 17.8 / **15.9 ✗** |
 | **B3 (gated)** the two Stage 3 known misses (`test/l2/gas/co2.test.ts`) | red (as recorded) | still red (the unit rig's VA gives τ ≈ 41 s) |
@@ -388,7 +388,7 @@ keeps its row below.
 ## Owner decisions applied (7–10 Oct), and what is left open
 
 Every question Q1–Q8 of 2026-10-07 is closed. The rulings are recorded in `../research/00-orchestrator-rulings.md`
-(entries "LITERATURE TARGETS DONE", "ALI RULING" and "ALI'S NEW DEFECTS") and the evidence behind them in
+(entries "LITERATURE TARGETS DONE", "THE OWNER RULING" and "THE OWNER'S NEW DEFECTS") and the evidence behind them in
 `../research/26-leftover-targets-evidence.md` (T1–T5).
 
 | # | Question | Decision applied here |
@@ -420,7 +420,7 @@ Every question Q1–Q8 of 2026-10-07 is closed. The rulings are recorded in `../
   collapsing circulation higher, the hypercapnic pressor response holds the stroke volume a little longer, and the
   perfusion index of the last six seconds before the pulse is lost reads 0.31–0.33 instead of 0.29 — just above the
   LOW PERF threshold (brief §4.3, PI 0.3) — so the oximeter shows SpO2 99 at MAP 19–20 for 6 s
-  (`fidelity-lowflow`, Ali's case, rows 760–765). This is the class of defect the FU-5 audit fixed (M1: a normal
+  (`fidelity-lowflow`, the owner's case, rows 760–765). This is the class of defect the FU-5 audit fixed (M1: a normal
   saturation in a nearly pulseless patient), it is 0.03 of PI wide and 6 s long, and it is recorded rather than
   hidden. **Lower the LOW PERF threshold's neighbourhood (FU-5's file, a band change), accept the 6 s, or make the
   pleth's amplitude follow the stroke volume more steeply (a mechanism change, FU-12)?**
@@ -1323,7 +1323,7 @@ an infusion-only entry and `rateUnits` answers `mmol/h` for a mmol-dosed drug. *
 - [x] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-kcl.test.ts`:
 
 ```ts
-// FU-7.1 A5 (Ali 2026-10-10 "there is no KCl as drug"): potassium chloride as an iv INFUSION in mmol, raising plasma K
+// FU-7.1 A5 (samhv-dev 2026-10-10 "there is no KCl as drug"): potassium chloride as an iv INFUSION in mmol, raising plasma K
 // through 7c's own potassium pool (the pool insulin–dextrose shifts K into: ECF K + ICF K with τ K_TAU_MIN 43 min, the
 // Na/K-ATPase set point following total-body K, K_TBK_MMOL 300). What the engine OWES the clinician is the shape: the
 // plasma K rises while the infusion runs, in proportion to the rate, peaks at its end and then falls back toward a
@@ -1434,7 +1434,7 @@ Replace with:
   // --- chemistry owned by 7c (decision 10): 7g lists them; the blood module acts ---
   { id: 'calciumChloride', name: 'Calcium chloride 10 %', cls: 'electrolyte', amountUnit: 'mg', pk: blood, pd: [], doses: '10 mg/kg (0.5–1 g) — 13.6 mEq Ca per g', onset: 'iCa ↑ in 1–3 min (7c)', ir: '?', src: '7c plan decision 8', tag: 'TXT' },
   { id: 'calciumGluconate', name: 'Calcium gluconate 10 %', cls: 'electrolyte', amountUnit: 'mg', pk: blood, pd: [], doses: '30 mg/kg (1–3 g) — 4.65 mEq Ca per g', onset: 'as chloride, one third of the calcium per gram (7c)', ir: '?', src: '7c plan decision 8', tag: 'TXT' },
-  // FU-7.1 A5 (Ali 2026-10-10 "there is no KCl as drug"): potassium chloride. 7c owns the kinetics, as for every
+  // FU-7.1 A5 (samhv-dev 2026-10-10 "there is no KCl as drug"): potassium chloride. 7c owns the kinetics, as for every
   // `blood` row: the infused mmol enter the ECF potassium pool and redistribute into cells with the pool's own τ
   // (solutes.ts K_TAU_MIN 43 min) while the Na/K-ATPase set point follows total-body K (K_TBK_MMOL 300, Sterns 1981) —
   // the same pool and kinetics insulin–dextrose shifts K into. `rateActsVia` makes it the first INFUSED blood row
@@ -1448,7 +1448,7 @@ Replace with:
   { id: 'potassiumChloride', name: 'Potassium chloride', cls: 'electrolyte', amountUnit: 'mmol', pk: blood, shared: 'blood', pd: [],
     rateActsVia: '7c potassium pool (ECF K + Cl, solutes.ts)',
     maxRatePerH: { amount: 20, src: 'peripheral line 10 mmol/h [chapter not verified], central up to 20 mmol/h with ECG monitoring [TXT: Miller 10e ch. 43 p. 1355; Stoelting Co-Existing 8e ch. 20 p. 404]' },
-    doses: '10 mmol/h peripherally, up to 20 mmol/h centrally with monitoring; never an iv bolus', onset: 'plasma K ≈ +0.25 mmol/L per 20 mmol in hypokalaemic ICU patients (Kruse 1990, PMID 2310280; grade C)', ir: '?', src: 'Ali 2026-10-10; Miller 10e ch. 43 p. 1355; Co-Existing 8e ch. 20 p. 404; Kruse 1990 (PMID 2310280)', tag: 'TXT' },
+    doses: '10 mmol/h peripherally, up to 20 mmol/h centrally with monitoring; never an iv bolus', onset: 'plasma K ≈ +0.25 mmol/L per 20 mmol in hypokalaemic ICU patients (Kruse 1990, PMID 2310280; grade C)', ir: '?', src: 'samhv-dev 2026-10-10; Miller 10e ch. 43 p. 1355; Co-Existing 8e ch. 20 p. 404; Kruse 1990 (PMID 2310280)', tag: 'TXT' },
   { id: 'sodiumBicarbonate', name: 'Sodium bicarbonate 8.4 %', cls: 'electrolyte', amountUnit: 'mmol', pk: blood, pd: [], doses: '1 mmol/kg (1 mL/kg of 8.4 %)', onset: 'pH ↑ at once; EtCO2 +5 mmHg at 90 s (7c decision 14)', ir: '?', src: '7c plan decision 14', tag: 'TXT' },
   // FU-10 E-FU10-14 (orchestrator ruling; reverses FU-10 plan D6): the row's insulin is the plain insulin row's insulin —
   // the same PK and the same K⁺ pharmacodynamics (`kShift` → bus.metabolic.kShift → 7c), so 7c's empirical whole-effect
@@ -1459,7 +1459,7 @@ In `packages/engine-core/src/l2/pk/row.ts`, find:
 ```ts
   /** FU-8 (B1): a documented maximum — exceeding it raises a `drugWarning` event, never a clamp. `perKg`: × actual
    * weight; `scope` 'cumulative' sums every bolus of the row. Only maxima the row's own `doses` text sources are set;
-   * the rest wait on Ali's dosing-preset table (review pack DP-01…DP-64). */
+   * the rest wait on the owner's dosing-preset table (review pack DP-01…DP-64). */
   maxDose?: { amount: number; perKg: boolean; scope: 'dose' | 'cumulative'; src: string };
   /** FU-8 (B1): another stage reads this row's ordered RATE and acts on it (7e reads dextrose, E-7e-4), so an infusion
    * is meaningful although the row's own curve has no infusion reference. */
@@ -1470,7 +1470,7 @@ Replace with:
 ```ts
   /** FU-8 (B1): a documented maximum — exceeding it raises a `drugWarning` event, never a clamp. `perKg`: × actual
    * weight; `scope` 'cumulative' sums every bolus of the row. Only maxima the row's own `doses` text sources are set;
-   * the rest wait on Ali's dosing-preset table (review pack DP-01…DP-64). */
+   * the rest wait on the owner's dosing-preset table (review pack DP-01…DP-64). */
   /** FU-7.1 A5: the documented maximum INFUSION rate (amount per hour); a faster rate or a bolus order is warned about. */
   maxRatePerH?: { amount: number; perKg?: boolean; src: string };
   maxDose?: { amount: number; perKg: boolean; scope: 'dose' | 'cumulative'; src: string };
@@ -1722,7 +1722,7 @@ Replace with:
         c.doses.push({ id: d.agent, t0: d.t, amount: mmol });
         break;
       }
-      // FU-7.1 A5 (Ali 2026-10-10): infused potassium chloride is a K AND Cl load on 7c's own pool — no new curve. The
+      // FU-7.1 A5 (samhv-dev 2026-10-10): infused potassium chloride is a K AND Cl load on 7c's own pool — no new curve. The
       // pool's kinetics then own the course: K into cells with τ K_TAU_MIN (43 min, tables `vK`) and the Na/K-ATPase set
       // point following total-body K (K_TBK_MMOL 300, Sterns 1981). The chloride keeps the SID honest (a K load without
       // its anion would alkalinise the patient). 7g logs the infused amount once per advance pass (A5, pipeline.ts).
@@ -1754,7 +1754,7 @@ Replace with:
   amiodarone: { bolus: [[150, 'mg'], [300, 'mg']] },
   adenosine: { bolus: [[6, 'mg'], [12, 'mg']] },
   calciumChloride: { bolus: [[10, 'mg/kg'], [1, 'g']] },
-  // FU-7.1 A5 (Ali 2026-10-10): potassium chloride is INFUSED, never pushed — the picker opens on Infusion with the
+  // FU-7.1 A5 (samhv-dev 2026-10-10): potassium chloride is INFUSED, never pushed — the picker opens on Infusion with the
   // peripheral 10 mmol/h and the central 20 mmol/h (10 and 20 mmol over the hour), and offers no bolus preset. The
   // engine warns, with its source, if a bolus or a faster rate is ordered anyway (l2/pk rows-other.ts maxRatePerH).
   potassiumChloride: { infusion: [[10, 'mmol/h'], [20, 'mmol/h']], aka: ['kcl', 'potassium'] },
@@ -1805,7 +1805,7 @@ still refuses an infusion with the same reason, and no existing row has a `maxRa
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
 git add packages/engine-core/src/l2/pk packages/engine-core/src/l2/blood/pipeline.ts packages/engine-core/src/types-pk.ts apps/demo/src/app/drugs.ts packages/engine-core/test/engine/fu71-kcl.test.ts docs/plans/fu-7.1-drug-physiology-leftovers.md
-git commit -m "feat(7g): potassium chloride, infused in mmol through 7c's potassium pool (FU-7.1 A5)" -m "Ali 2026-10-10: there is no KCl as drug. The first infused blood row (rateActsVia); a bolus order or a rate above the documented maximum warns with its source. The textbook size is recorded as a known miss (7c's pool constants own it)." -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "feat(7g): potassium chloride, infused in mmol through 7c's potassium pool (FU-7.1 A5)" -m "samhv-dev 2026-10-10: there is no KCl as drug. The first infused blood row (rateActsVia); a bolus order or a rate above the documented maximum warns with its source. The textbook size is recorded as a known miss (7c's pool constants own it)." -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 git push
 ```
 
@@ -2739,7 +2739,7 @@ Expected (the prototype, with every other task of this plan in the tree): green,
 `CPR alone after full exsanguination: no pulse, CoPP 0.1–4.1`, `fu8 A27 ROSC beat at 102.5 s` and the
 `exsanguination volume threshold` measurement unchanged. **Put every arrest and ROSC time in one table in the gate
 note.** Two files carry records this plan creates (`fidelity-arrest` fidelity-3's EtCO2 floor, `fidelity-lowflow`'s
-Ali case) — they are B3's casualties, flipped in Task B3, not B4's.
+samhv-dev case) — they are B3's casualties, flipped in Task B3, not B4's.
 **Executed (branch b, 2026-10-10): one row did NOT stay unchanged** — `exsanguination volume threshold` (a measurement,
 no band) read "no pulse in 10 min" at 2 / 2.5 / 3 / 3.5 L on main and reads **2 L none; 2.5 L pulse at +270 s; 3 L
 +240 s; 3.5 L +220 s** with B4 (the venous-reservoir hunk moves it; with only the RV hunk it is unchanged).
@@ -3092,7 +3092,7 @@ Replace with:
   240 s, mean 15.3–15.6, max 20–21 — against an [ENG] floor of 10 fitted when the fall was a 70 s lag. Falk's own
   patients read ≈ 7.6 mmHg once compressions were in place and research/26 T3 bands CPR as 5–10 poor / 10–20 adequate,
   so the engine's value is defensible; the floor is split out as a record for the three skins and the ceiling still
-  asserts. (b) `fidelity-lowflow`'s "Ali's case": the higher PaCO2 of the collapse holds the stroke volume a little
+  asserts. (b) `fidelity-lowflow`'s "the owner's case": the higher PaCO2 of the collapse holds the stroke volume a little
   longer, so the perfusion index of the last six seconds before the pulse is lost reads 0.31–0.33 instead of 0.29 —
   just above the LOW PERF threshold (brief §4.3, PI 0.3) — and the oximeter shows SpO2 99 valid at MAP 19–20 for 6 s
   (rows 760–765). That is the FU-5 audit's own M1 class of defect, 0.03 of PI wide and 6 s long: it is split out as a
@@ -3180,9 +3180,9 @@ In `packages/engine-core/test/engine/fidelity-lowflow.test.ts`, find:
     expect(shortCycles((await bleedRun()).alarms, 1, 5)).toEqual([]);
   }, 120_000);
 
-  it("MODELED Ali's case (tamponade, propofol 2 + 1, PEEP 15, sevoflurane 2 %, bleed 2 L): at MAP < 30 the SpO2 is never shown valid; no technical raise/clear cycle shorter than 5 s", async () => {
-    const { rows, alarms } = await aliRun();
-    console.log(`fidelity-lowflow Ali short cycles: technical ${JSON.stringify(shortCycles(alarms, 3, 5))}, red ${JSON.stringify(shortCycles(alarms, 1, 5))}`);
+  it("MODELED the owner's case (tamponade, propofol 2 + 1, PEEP 15, sevoflurane 2 %, bleed 2 L): at MAP < 30 the SpO2 is never shown valid; no technical raise/clear cycle shorter than 5 s", async () => {
+    const { rows, alarms } = await ownerRun();
+    console.log(`fidelity-lowflow samhv-dev short cycles: technical ${JSON.stringify(shortCycles(alarms, 3, 5))}, red ${JSON.stringify(shortCycles(alarms, 1, 5))}`);
     const on = lowFlowOnset(rows);
     expect(on).toBeDefined();
     const after = rows.filter((r) => r.t >= (on as MonRow).t + 20);
@@ -3191,7 +3191,7 @@ In `packages/engine-core/test/engine/fidelity-lowflow.test.ts`, find:
     expect(shortCycles(alarms, 3, 5)).toEqual([]);
   }, 120_000);
   // FU-8 (Task A2, E-FU8-1): flipped — the detector counted every agonal complex twice (0.14–0.24 s apart)
-  it("MODELED Ali's case: no red raise/clear cycle shorter than 5 s — measured 0 after FU-8 (3 EXTREME BRADY cycles after FU-4: 948 s +3.3, 989 s +3.1, 1000 s +3.6)", async () => {
+  it("MODELED the owner's case: no red raise/clear cycle shorter than 5 s — measured 0 after FU-8 (3 EXTREME BRADY cycles after FU-4: 948 s +3.3, 989 s +3.1, 1000 s +3.6)", async () => {
 ```
 
 Replace with:
@@ -3200,9 +3200,9 @@ Replace with:
     expect(shortCycles((await bleedRun()).alarms, 1, 5)).toEqual([]);
   }, 120_000);
 
-  it("MODELED Ali's case (tamponade, propofol 2 + 1, PEEP 15, sevoflurane 2 %, bleed 2 L): no technical raise/clear cycle shorter than 5 s", async () => {
-    const { rows, alarms } = await aliRun();
-    console.log(`fidelity-lowflow Ali short cycles: technical ${JSON.stringify(shortCycles(alarms, 3, 5))}, red ${JSON.stringify(shortCycles(alarms, 1, 5))}`);
+  it("MODELED the owner's case (tamponade, propofol 2 + 1, PEEP 15, sevoflurane 2 %, bleed 2 L): no technical raise/clear cycle shorter than 5 s", async () => {
+    const { rows, alarms } = await ownerRun();
+    console.log(`fidelity-lowflow samhv-dev short cycles: technical ${JSON.stringify(shortCycles(alarms, 3, 5))}, red ${JSON.stringify(shortCycles(alarms, 1, 5))}`);
     expect(lowFlowOnset(rows)).toBeDefined();
     expect(shortCycles(alarms, 3, 5)).toEqual([]);
   }, 120_000);
@@ -3213,21 +3213,21 @@ Replace with:
   // (brief §4.3, PI 0.3), so the oximeter shows SpO2 99 valid at MAP 19–20 for 6 s (rows 760–765). It is the FU-5 audit's
   // own M1 class of defect (a normal saturation in a nearly pulseless patient), 0.03 of PI wide and 6 s long, and it
   // goes back to the owner with these numbers (FU-7.1 Q10) rather than being hidden by a wider bound.
-  it.fails("MODELED Ali's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 99 valid at 760–765 s (MAP 19–20, PI 0.31–0.33) after FU-7.1 B3", async () => {
-    const { rows } = await aliRun();
+  it.fails("MODELED the owner's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 99 valid at 760–765 s (MAP 19–20, PI 0.31–0.33) after FU-7.1 B3", async () => {
+    const { rows } = await ownerRun();
     const on = lowFlowOnset(rows);
     const after = rows.filter((r) => r.t >= (on as MonRow).t + 20);
     expect(after.filter((r) => validShown(r.m.spo2)).map((r) => r.t)).toEqual([]);
     expect(Math.max(...after.map((r) => r.m.pi?.value ?? 0))).toBeLessThan(0.3);
   }, 120_000);
   // FU-8 (Task A2, E-FU8-1): flipped — the detector counted every agonal complex twice (0.14–0.24 s apart)
-  it("MODELED Ali's case: no red raise/clear cycle shorter than 5 s — measured 0 after FU-8 (3 EXTREME BRADY cycles after FU-4: 948 s +3.3, 989 s +3.1, 1000 s +3.6)", async () => {
+  it("MODELED the owner's case: no red raise/clear cycle shorter than 5 s — measured 0 after FU-8 (3 EXTREME BRADY cycles after FU-4: 948 s +3.3, 989 s +3.1, 1000 s +3.6)", async () => {
 ```
 
 
   Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fidelity-arrest.test.ts
   test/engine/fidelity-lowflow.test.ts`. Expected: **24 passed** (14 + 10), four of them records.
-  `fidelity-lowflow`'s Ali run takes ≈ 60 s and timed out at 120 s once under three parallel executors: if it times
+  `fidelity-lowflow`'s samhv-dev run takes ≈ 60 s and timed out at 120 s once under three parallel executors: if it times
   out, re-run the file alone before reporting it.
 
 - [x] **Step 8 — the P7 course** with the probe harness (optional, for the gate note's narrative):
@@ -3260,7 +3260,7 @@ emits is new).
 - [x] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-nibp-arrest.test.ts`:
 
 ```ts
-// FU-7.1 B8 (Ali 2026-10-10): a cuff cycle in a pulseless patient must not leave a normal pressure on the monitor.
+// FU-7.1 B8 (samhv-dev 2026-10-10): a cuff cycle in a pulseless patient must not leave a normal pressure on the monitor.
 // The oscillometric device already finds no envelope without a pulse (l3/nibp: an envelope peak < 0.3 mmHg or an
 // SBP < 50 fails the attempt; CPR corrupts every pulse, so the cycle runs to the 170 s safety deflation and fails) —
 // what was missing is that a FAILED attempt left the previous result on display. Rig: 58 y 80 kg man with the cuff on,
@@ -3339,7 +3339,7 @@ Replace with:
   for (const o of outs) {
     if (o.kind === 'failed') {
       hs.out.push({ type: 'alarm', t, id: 'nibp-failed', priority: 'low', category: 'technical', state: 'raised', text: o.text });
-      // FU-7.1 B8 (Ali 2026-10-10): a cuff that found no envelope must stop SHOWING the last pressure. The device
+      // FU-7.1 B8 (samhv-dev 2026-10-10): a cuff that found no envelope must stop SHOWING the last pressure. The device
       // already fails every attempt in an arrest (no oscillations: measured PEA, asystole and VF all fail, and every
       // compression pulse is rejected as artefact, brief §4.5) — but only an INOP was emitted, so the tile kept the
       // pre-arrest 129/76 for the rest of the case. Real monitors blank the reading when the attempt fails (Philips
@@ -3376,7 +3376,7 @@ sample: a blanked numeric is not a trend point (checked in `test/l3/trends`).
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
 git add packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/test/engine/fu71-nibp-arrest.test.ts docs/plans/fu-7.1-drug-physiology-leftovers.md
-git commit -m "fix(4b): a failed cuff cycle blanks the NIBP numerics (FU-7.1 B8)" -m "Ali 2026-10-10: the cuff showed a normal pressure during an arrest. The device already fails every attempt without a pulse; what stayed was the display." -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "fix(4b): a failed cuff cycle blanks the NIBP numerics (FU-7.1 B8)" -m "samhv-dev 2026-10-10: the cuff showed a normal pressure during an arrest. The device already fails every attempt without a pulse; what stayed was the display." -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 git push
 ```
 
@@ -3452,7 +3452,7 @@ recorded known misses with their numbers (A2's Billard ratio, A5's textbook K ri
   the measurable-document count must not change); then `npx playwright test --retries=0` (both projects).
   Expected: **green.** The records this branch creates (all with their numbers in their titles, no bound widened):
   `resp-suite` RS14 (Q5), `arrest-etco2`'s 30 s and CPR +2 min rows (Q9), `stimulus-surge` case 1's ΔMAP,
-  `fidelity-arrest` fidelity-3's EtCO2 floor × 3 skins (Q9) and `fidelity-lowflow`'s Ali case (Q10). `arrest-etco2`'s
+  `fidelity-arrest` fidelity-3's EtCO2 floor × 3 skins (Q9) and `fidelity-lowflow`'s samhv-dev case (Q10). `arrest-etco2`'s
   re-targeted no-CPR case PASSES — if it does not, stop: that is the owner's ruled target, not a record.
 - [x] **Step 3 — the five-case showcase rehearsal on this tree (the global constraint).**
 ```bash
@@ -3533,7 +3533,7 @@ the capnogram-shape owner.
 **Rules.** No band is widened anywhere in this plan. Where a change collided with a sourced band the change was
 reduced (A2: 2 → 0.2, with the scan), re-TARGETED on the owner's ruling (B3's no-flow EtCO2, which then passes), or
 recorded as a known miss with its measured number (six records: RS14, `arrest-etco2` ×2, `stimulus-surge` case 1,
-`fidelity-arrest` ×3 skins, `fidelity-lowflow`'s Ali case, A2's Billard ratio, A5's textbook K rise). Every new
+`fidelity-arrest` ×3 skins, `fidelity-lowflow`'s samhv-dev case, A2's Billard ratio, A5's textbook K rise). Every new
 constant carries its tag and citation: A2's two [ENG] sizes with Billard 1994 as the [P] fit target; A4's
 `DIAPH_EFFECTIVE`, `VT_EFFORT_ML_KG` and `VT_REST_ML_KG` [ENG] with Moerer 2005 and the label's clinical duration as
 the fit targets; A5's `maxRatePerH` [TXT] with Miller 10e ch. 43 and Co-Existing 8e ch. 20 (the row's strings corrected in PR #52,

@@ -88,14 +88,14 @@ rendered colours; no sideways scroll; no clipped labels; one h1 and a main landm
 `tokens.test.ts` re-computes the token table: text ≥ 4.5:1 on every dark and light surface, accent text 4.5:1, control
 boundaries and the focus ring 3:1, text on the accent fill 4.5:1, danger 4.5:1, the screen #000. The CVD check (Chrome
 DevTools vision-deficiency emulation) was **not run** in this headless session: chips and badges carry a glyph and a word,
-and the alarm mirror carries a mark and a word, so no state is carried by colour alone by construction — Ali's
+and the alarm mirror carries a mark and a word, so no state is carried by colour alone by construction — the owner's
 rehearsal should look once with deuteranopia emulation.
 
 ## 4. Glossary (R56)
 
 - `stage9-glossary.e2e.ts`: **0 engine ids** in 8 instructor tabs, 12 Explore sections, the other views, the Remote join
   form and every tab of a remote joined by code — Chromium and WebKit.
-- Additions for Ali's review (Task 0 Step 5 / Task 2 Step 4; `GLOSSARY_S9`): 300 `resp.lung.lp.waterShunt` "Lung-water
+- Additions for the owner's review (Task 0 Step 5 / Task 2 Step 4; `GLOSSARY_S9`): 300 `resp.lung.lp.waterShunt` "Lung-water
   shunt" (fraction); 301 `ev.lungState.pleuralCmH2O` "Ppl (extra)" (cmH₂O); 302 `neuro.resp.loc` "LOC"; 303
   `neuro.resp.pain` "Nociceptive drive"; 304 `neuro.resp.hvrDep` "HVR depression" (0–1) — the labels V.1 and FU-6
   proposed. `resp.gaLvl`, `resp.bd`, `resp.driver.vent.pmax` and `resp.palvObs` are not on a console truth path on this
@@ -104,7 +104,7 @@ rehearsal should look once with deuteranopia emulation.
 - Truth paths labelled by console group (healthy adult, 40 s): monitor 21 / 58 internals, circulation 45 / 206, ECG 1 /
   76, lungs 57 / 189, blood 47 / 112, brain 12 / 33, kidney 10 / 31, liver 4 / 12, endocrine 13 / 48, neuro 18 / 99,
   drugs 0 / 56 (per-drug rows appear once a drug is given), devices 17 / 148, controls 6 / 153 — 251 of 1,520 paths.
-- `SHORT` ("TOF T1", "UO/kg") and `SAME_AS` (ICP, CPP, glucose) as the plan writes them, for Ali's review.
+- `SHORT` ("TOF T1", "UO/kg") and `SAME_AS` (ICP, CPP, glucose) as the plan writes them, for the owner's review.
 - Alarm ids the mirror did not know (`alarmLine(…).known === false`): none (`alarms.test.ts` covers every device-layer id).
 
 ## 5. Five timed tasks (automated, through the visible UI)
@@ -117,7 +117,7 @@ rehearsal should look once with deuteranopia emulation.
 | 4. Silence the alarm and bookmark | 0.8 s |
 | 5. Find the compliance and the driving pressure | 0.9 s (after the 7k merge; before it, an expected failure) |
 
-Ali's own timed run: not yet done.
+the owner's own timed run: not yet done.
 
 ## 6. Frame gate
 
@@ -140,7 +140,7 @@ worker drew at 30 (D23). iPad Safari run (brief §10): **not run — no iPad on 
 
 ## 7. Decisions, deviations, limits
 
-- D1–D29 as the plan writes them; none revisited. Defaults for Ali's open questions are the plan's recommendations
+- D1–D29 as the plan writes them; none revisited. Defaults for the owner's open questions are the plan's recommendations
   (Start screen first; factory saadat-like monitor with the ICU preset one click away; "epinephrine / norepinephrine"
   with the "adrenaline / noradrenaline" site option).
 - Deviations from the brief (as the plan lists them): no shareable `?skin=&patient=&theme=` URL state (only `?scenario=`,
@@ -157,7 +157,7 @@ worker drew at 30 (D23). iPad Safari run (brief §10): **not run — no iPad on 
 
 ## 8. Open questions
 
-Q1–Q15 as the plan's table, answered by its recommendations until Ali rules; Q7 (fonts) not approved → Task 20 skipped.
+Q1–Q15 as the plan's table, answered by its recommendations until samhv-dev rules; Q7 (fonts) not approved → Task 20 skipped.
 Orchestrator rulings 1–6 on the R50 review applied; E-S9-4 applied in its re-confirmed form.
 
 ## 9. Test counts
@@ -207,7 +207,7 @@ Stage 9 e2e files: `stage9-app` (5), `stage9-glossary` (1), `stage9-a11y` (2), `
    requests: #125 VT + `resp.mechanics.vt`; #143 Ppeak, #144 Pplat, #146 PEEPtot, #147 PEEPi, #148 ΔP, #151 Cstat,
    #152 Cdyn, #155 Rinsp → `resp.mechanics.*`; #149 "PL (Pes-based, direct)" (PL,ei / PL,ee) and #150 "Pes (estimate)"
    with the per-context normals; #161–#165 → `resp.vd.*` (VD/VT in %); #166–#176 → `resp.volumes.*` (FVC and FEV₁ in
-   mL, FEV₁/FVC in %, as the console shows them). New entries for Ali's review: 305 "FRC (seated, PFT)", 306 "PĒCO₂",
+   mL, FEV₁/FVC in %, as the console shows them). New entries for the owner's review: 305 "FRC (seated, PFT)", 306 "PĒCO₂",
    307 "EL/Ers", 308 "V̇insp", 309 "FET", 310 "Spirometry pattern", 311 the eight "… predicted" rows (7k's N1–N7), and
    312 "VD alv fraction" (the per-lung fraction that #163 used to name; `glossary.test.ts` now expects "R VD alv fraction").
    The model's own `resp.lung.pInsp`, `resp.lung.peepTot`, `ev.lungState.*` compliance/resistance/dead space/FRC copies
@@ -271,7 +271,7 @@ Stage 9 e2e files: `stage9-app` (5), `stage9-glossary` (1), `stage9-a11y` (2), `
       < 6 mL for 5 s: in the app's default adult the stroke volume settles on its 5.2 mL floor (no output), so fu4's
       < 5 mL never fires there.
 
-### Ali should not demo (what remains true)
+### samhv-dev should not demo (what remains true)
 
 - Ventilator view in a hidden or background window (under-ventilates; keep it in front; its numbers settle after ≈ 60 s).
 - Bookmark restore (hidden in the app: markers only).

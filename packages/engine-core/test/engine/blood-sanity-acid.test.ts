@@ -19,7 +19,7 @@ describe('blood sanity II — acid–base', { timeout: 300_000 }, () => {
     expect(b.be).toBeGreaterThanOrEqual(0);
   });
   // R45: annex D3 (Cl +6–8, BE −3 to −5 at 60 min) is not reached — albumin dilution offsets the chloride acidosis
-  // (plan deviation list; prototype Cl +5, BE −2.0). Visible until Ali's calibration pass.
+  // (plan deviation list; prototype Cl +5, BE −2.0). Visible until the owner's calibration pass.
   it.fails('2 L 0.9 % saline in 30 min under GA: Cl +6–8 and BE −3 to −5 at 60 min (annex D3)', async () => {
     const s = await twoLitres('saline');
     expect(s.cl - 104).toBeGreaterThanOrEqual(6);

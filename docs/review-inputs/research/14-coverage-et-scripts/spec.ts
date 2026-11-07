@@ -1,6 +1,6 @@
 // Coverage run ET (endocrine and thermal; research/12 §5.2): the cell type, contexts, rigs and measure helpers, copied
 // from runs CM/DV and adapted. A cell names its arms, a `measure` over the arms' results and `expect` items the grader
-// turns into a verdict. Bands are PROPOSALS for Ali with their source (research/12 §2.2) and are never widened to fit
+// turns into a verdict. Bands are PROPOSALS for samhv-dev with their source (research/12 §2.2) and are never widened to fit
 // (R45). `[VERIFY]` marks a figure quoted from memory of a paper, to be checked before it becomes a test.
 import { A, VENTED, at, firstT, maxOf, mean, minOf, r1, r2, r3, type Arm, type ArmResult, type Row, type Step } from './runner.ts';
 

@@ -1,5 +1,5 @@
 {
-  "$comment": "[draft] Clinical content awaits Ali's review. Blood pressure arrives with Stage 2: every BP step is written in `$comment` as the exact command to move into onEnter then. Until then the story is carried by HR (reflex tachycardia) and the notes. Stage 7 (MODELED) will make the propofol response emerge instead of being scripted.",
+  "$comment": "[draft] Clinical content awaits the owner's review. Blood pressure arrives with Stage 2: every BP step is written in `$comment` as the exact command to move into onEnter then. Until then the story is carried by HR (reflex tachycardia) and the notes. Stage 7 (MODELED) will make the propofol response emerge instead of being scripted.",
   "schema": "pme-scenario/1",
   "id": "or-induction-hypotension",
   "title": "[draft] Post-induction hypotension",

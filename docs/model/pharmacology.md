@@ -245,7 +245,7 @@ library rows and the outputs other modules consume.
 | `adenosine` | Adenosine | adenosine | gamma | R03 §8.6; decision 11 (E 0.85 at 6 mg / 70 kg, 0.59 at 3 mg, 0.96 at 12 mg) | ENG |
 | `calciumChloride` | Calcium chloride 10 % | electrolyte | blood | 7c plan decision 8 | TXT |
 | `calciumGluconate` | Calcium gluconate 10 % | electrolyte | blood | 7c plan decision 8 | TXT |
-| `potassiumChloride` | Potassium chloride | electrolyte | blood | Ali 2026-10-10; Miller 10e ch. 43 p. 1355; Co-Existing 8e ch. 20 p. 404; Kruse 1990 (PMID 2310280) | TXT |
+| `potassiumChloride` | Potassium chloride | electrolyte | blood | samhv-dev 2026-10-10; Miller 10e ch. 43 p. 1355; Co-Existing 8e ch. 20 p. 404; Kruse 1990 (PMID 2310280) | TXT |
 | `sodiumBicarbonate` | Sodium bicarbonate 8.4 % | electrolyte | blood | 7c plan decision 14 | TXT |
 | `insulinDextrose` | Insulin + dextrose | metabolic | gamma | 7c plan decision 7; FU-10 E-FU10-14 | TXT |
 | `magnesium` | Magnesium sulfate | electrolyte | perKg | T6.2; M10 ch. 24 | TXT |

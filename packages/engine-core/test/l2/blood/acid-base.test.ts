@@ -30,7 +30,7 @@ describe('Figge/Stewart charge balance, bounded pH search (tables §5b.1)', () =
     expect(slope).toBeLessThanOrEqual(0.2);
   });
   // R45: the tables' 0.2 per mmHg needs cellular H+ release/alkalosis-driven lactate, which the one-pool Figge
-  // balance does not have (plan deviation list). Kept visible until Ali's calibration pass decides the mechanism.
+  // balance does not have (plan deviation list). Kept visible until the owner's calibration pass decides the mechanism.
   it.fails('acute respiratory alkalosis reaches the tables’ 0.2 mmol/L per mmHg (40 → 30)', () => {
     expect((solvePh(40, N).hco3 - solvePh(30, N).hco3) / 10).toBeGreaterThanOrEqual(0.18);
   });

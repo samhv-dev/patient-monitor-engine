@@ -797,7 +797,7 @@ export class DeviceUI {
       Object.assign(this.values, e.values);
       if (e.values.nibpSys?.value != null) this.nibpLast = { sys: e.values.nibpSys.value, dia: e.values.nibpDia?.value ?? 0, map: e.values.nibpMean?.value ?? 0, at: e.t };
       // A failed cuff cycle blanks the numerics (`invalid`, null) — the last result must go too, or the tile returns to
-      // the pre-arrest pressure with the device's next idle event (Ali 2026-10-10)
+      // the pre-arrest pressure with the device's next idle event (samhv-dev 2026-10-10)
       else if (e.values.nibpSys?.flag === 'invalid') {
         this.nibpLast = null;
         this.nibpPr = null; // the cuff's pulse rate belonged to the same result
