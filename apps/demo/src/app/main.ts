@@ -147,6 +147,9 @@ if (follow && shows === 'pick') {
     console.error('monitor failed:', (e as CustomEvent<{ reason: string }>).detail.reason);
     toast('The monitor stopped — Restart the patient', 'alert');
   });
+  // FX-11a: the watchdog warns first — a busy or starved worker is slow, not dead, and catches up by itself
+  shell.monitorHost.addEventListener('pme-monitor-slow', () => toast('The monitor is slow to answer: the computer is busy. It catches up by itself.'));
+  shell.monitorHost.addEventListener('pme-monitor-recovered', () => toast('The monitor has caught up'));
 
   const loadScenario = (c: ScenarioCard, room?: RoomKeep): boolean => {
     const r = session.loadScenario(c.doc, room);

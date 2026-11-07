@@ -15,7 +15,17 @@ const asy = { id: 'ASYSTOLE', level: 1 as const, category: 'physiological' as co
 const hr = { id: 'HR_HIGH', level: 2 as const, category: 'physiological' as const, text: 'HR TOO HIGH', numeric: 'hr' as const, since: 4, latched: false, acked: false };
 const leads = { id: 'ecgLeadsOff', level: 3 as const, category: 'technical' as const, text: 'ECG CHECK LA/RA/LL', since: 3, latched: false, acked: false };
 
+const noSensor = { id: 'abpNoSensor', level: 3 as const, category: 'technical' as const, text: 'IBP1 NO SENSOR', since: 2, latched: false, acked: false, sounding: false, prompt: true };
+
 describe('barView', () => {
+  it('MUI-7: a prompt (IBP1 NO SENSOR) is drawn in the technical colours with no lamp; under a live alarm the lamp is the alarm\'s', () => {
+    expect(barView(status({ active: [noSensor] }), sa, 10)).toMatchObject({ text: 'IBP1 NO SENSOR', bg: '#B0E0E8', fg: '#4A5A64', lamp: 'off', flashHz: 0 });
+    expect(barView(status({ active: [noSensor, leads] }), sa, 10).lamp).toBe('yellow-steady');
+    // under a red alarm the INOPs rotate in, the prompt does not: it takes no turn from the alarm
+    const texts = [0, 6, 12, 18].map((t) => barView(status({ active: [asy, leads, noSensor] }), sa, t).text);
+    expect(texts).toContain('ECG CHECK LA/RA/LL');
+    expect(texts).not.toContain('IBP1 NO SENSOR');
+  });
   it('saadat-like idle: grey bar, lamp off; all-off bell when every parameter alarm is OFF', () => {
     expect(barView(status({ allOff: true }), sa, 10)).toMatchObject({ text: '', bg: '#E0E0E0', lamp: 'off', allOffBell: true });
   });

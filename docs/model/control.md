@@ -317,6 +317,7 @@ None recorded.
 | [`remote/remote.dom.test.ts`](../../packages/controller/test/remote/remote.dom.test.ts) | 0 | 0 |
 | [`scenario/briefing.test.ts`](../../packages/controller/test/scenario/briefing.test.ts) | 0 | 0 |
 | [`scenario/builtins.test.ts`](../../packages/controller/test/scenario/builtins.test.ts) | 0 | 0 |
+| [`scenario/clock-step-back.test.ts`](../../packages/controller/test/scenario/clock-step-back.test.ts) | 0 | 0 |
 | [`scenario/driver.test.ts`](../../packages/controller/test/scenario/driver.test.ts) | 0 | 0 |
 | [`scenario/fast-forward-determinism.test.ts`](../../packages/controller/test/scenario/fast-forward-determinism.test.ts) | 0 | 0 |
 | [`scenario/grade.test.ts`](../../packages/controller/test/scenario/grade.test.ts) | 0 | 0 |

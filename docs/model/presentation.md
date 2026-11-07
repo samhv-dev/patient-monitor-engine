@@ -93,7 +93,7 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `CPU_WINDOW_MS` | `5000` | ms | — | Home's three live tiles (E125): Engine (ms per tick), Memory (MB used) and "CPU, this app" (% of one core). They run only while Home is on screen. What each one measures, exactly: - Engine: the median time of one 20-ms engine tick, measured by engine-bench.worker.ts on the same engine build in a background thread of this page (the monitor's own worker has no timing hook). Updated every 5 s. - Memory: `performance.memory.usedJSHeapSize` of this page (Chromium only); elsewhere "—" with a tooltip. The workers' heaps (the monitor's engine among them) are not in it. - CPU, this app: the MAIN THREAD's busy fraction over the last 5 s, in % of one core. Busy time = the long tasks a `PerformanceObserver` reports (`longtask`, every task of 50 ms or more, exact) + the frame overruns seen by requestAnimationFrame (an interval longer than 1.5 frames counts its excess over one frame as busy) that no long task already covers. Short tasks that delay no frame are not seen, and the monitor's engine and drawing run in their own worker thread, so this is the instructor page's own load, not the whole browser's. |
+| `CPU_WINDOW_MS` | `2000` | ms | — | Home's three live tiles (E125): Engine (ms per tick), Memory (MB used) and "CPU, this app" (% of one core). They run only while Home is on screen. What each one measures, exactly: - Engine: the median time of one 20-ms engine tick, measured by engine-bench.worker.ts on the same engine build in a background thread of this page (the monitor's own worker has no timing hook). Updated every 5 s. - Memory: `performance.memory.usedJSHeapSize` of this page (Chromium only); a browser without it (Safari, Firefox) has no Memory tile (MUI-17). The workers' heaps (the monitor's engine among them) are not in it. - CPU, this app: the MAIN THREAD's busy fraction over the last 2 s, in % of one core. Busy time = the long tasks a `PerformanceObserver` reports (`longtask`, every task of 50 ms or more, exact) + the frame overruns seen by requestAnimationFrame (an interval longer than 1.5 frames counts its excess over one frame as busy) that no long task already covers. Short tasks that delay no frame are not seen, and the monitor's engine and drawing run in their own worker thread, so this is the instructor page's own load, not the whole browser's. MUI-17: the owner's 2 s (it was 5 s: a change of load took 5 s to show). 2 s holds 120 frames at 60 Hz, so one frame's overrun (16.7 ms) moves the tile by 0.8 % — finer than the whole-percent it prints. |
 
 ### [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts)
 
@@ -241,6 +241,8 @@ No exported `…State` type in this module.
 |---|---|---|---|---|
 | `LABEL_W` | `56` | — | — | CSS px reserved at the left of each lane for chrome |
 | `STALL_MS` | `1000` | ms | [ENG] | FX-15: a frame gap longer than this is a stall (a suspended tab or worker), not a slow frame — frames post every ≤ 250 ms. It is credited in full like a hidden stretch (catchUp) instead of being clamped to 250 ms, so the hidden minutes are not lost when the worker's rAF wakes before the page's visibility catch-up. [ENG] |
+| `PROGRESS_MS` | `250` | ms | [ENG] | FX-11a: a long engine run reports progress at most this often (the frames' own posting cadence, ≤ 250 ms) [ENG]. |
+| `PROGRESS_TICKS` | `50` | — | [ENG] | …checking the time every this many ticks: 50 ticks (1 s of sim) cost ≈ 3 ms of the worker's time (measured: 10 000 ticks took 532–653 ms), so a report is never more than ≈ 3 ms late [ENG]. |
 
 ### [`mount.ts`](../../packages/renderer/src/mount.ts)
 
@@ -281,7 +283,7 @@ No exported `…State` type in this module.
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `READY_TIMEOUT_MS` | `2000` | ms | — | The fallback keeps a monitor alive when its worker never loads (no 'ready', no error): the page then runs the engine on the main thread. A built page's worker is one inline bundle and is ready well inside it; the Vite dev server loads the worker one module per request and can exceed it (278–1875 ms on an idle Mac, more on a loaded runner). |
-| `WORKER_SILENT_MS` | `3000` | ms | [ENG] | A worker silent this long with requests waiting is dead (its frames post every ≤ 250 ms) [ENG]. |
+| `WORKER_SILENT_MS` | `3000` | ms | [ENG] | A worker silent this long with requests waiting is SLOW (warned: `pme-monitor-slow`). It posts every ≤ 250 ms — its frames, and from inside a long run its progress (MonitorCore.onProgress) — measured on a Mac (gaps between its messages, FX-11a): p99.9 270 ms idle, 267 ms with 16 CPU-bound processes, 436 ms with those and the browser at background QoS (Chromium; WebKit ≤ 269 ms): 3 s is 7× the longest gap measured. It is DEAD when, past this, a probe worker started at the warning has answered — the machine runs workers and this one makes no progress; a starved machine starves the probe too, and the monitor waits (FX-11a) [ENG]. |
 
 ### [`resolve.ts`](../../packages/skins/src/resolve.ts)
 
@@ -868,6 +870,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/e2e/monitor-destroy-refuses.e2e.ts`](../../apps/demo/e2e/monitor-destroy-refuses.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/monitor-fidelity.e2e.ts`](../../apps/demo/e2e/monitor-fidelity.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/monitor-return-controls.e2e.ts`](../../apps/demo/e2e/monitor-return-controls.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/monitor-worker-busy.e2e.ts`](../../apps/demo/e2e/monitor-worker-busy.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/monitor-worker-stopped.e2e.ts`](../../apps/demo/e2e/monitor-worker-stopped.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/organs-page.e2e.ts`](../../apps/demo/e2e/organs-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/oxygen-by-mask.e2e.ts`](../../apps/demo/e2e/oxygen-by-mask.e2e.ts) | 0 | 0 |
@@ -976,6 +979,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/showcase/showcase-cards.test.ts`](../../apps/demo/src/app/showcase/showcase-cards.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts`](../../apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/sim-clock-monotonic.dom.test.ts`](../../apps/demo/src/app/sim-clock-monotonic.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/sim-clock.dom.test.ts`](../../apps/demo/src/app/sim-clock.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/site.test.ts`](../../apps/demo/src/app/site.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/staging.test.ts`](../../apps/demo/src/app/staging.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/action-parity.dom.test.ts`](../../apps/demo/src/app/teach2/action-parity.dom.test.ts) | 0 | 0 |
@@ -1024,6 +1028,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/views/explore.dom.test.ts`](../../apps/demo/src/app/views/explore.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/follower-pill.dom.test.ts`](../../apps/demo/src/app/views/follower-pill.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/follower-status.test.ts`](../../apps/demo/src/app/views/follower-status.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/home-tiles.dom.test.ts`](../../apps/demo/src/app/views/home-tiles.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/join.dom.test.ts`](../../apps/demo/src/app/views/join.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/monitor.dom.test.ts`](../../apps/demo/src/app/views/monitor.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/room-defib.dom.test.ts`](../../apps/demo/src/app/views/room-defib.dom.test.ts) | 0 | 0 |

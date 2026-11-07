@@ -60,6 +60,8 @@ function onMessage(ev: MessageEvent<ToWorker>): void {
         unread = 0;
         held = null;
         core = new MonitorCore(m.canvas, ctx, m.size, m.opts, postEvents);
+        // FX-11a: the watchdog sees a long run working. Not an event batch: it is never held for an eventsAck (#310)
+        core.onProgress = () => scope.postMessage({ type: 'progress' });
         useRaf = !m.mainPump && typeof scope.requestAnimationFrame === 'function';
         scope.postMessage({ type: 'ready', path: useRaf ? 'worker-raf' : 'worker-pump' });
         if (useRaf) scope.requestAnimationFrame?.(loop);
