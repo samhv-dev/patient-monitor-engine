@@ -430,7 +430,8 @@ export class AppSession {
    *  (the engine a few ms behind the wall clock, its events late under load); the estimate then holds until the engine
    *  passes it, rather than step back: two reads either side of that event (two quick gotos) kept their order, so the
    *  scenario's history did too (the strip read an entry earlier than the one before it as a rewind and showed the stage
-   *  between as skipped; teach2-fit.e2e.ts :505, CI run 42113324793). */
+   *  between as skipped; teach2-fit.e2e.ts :505, CI run 42113324793). It also keeps a worker stall's overshoot from
+   *  stepping back (FX-11b). */
   simNow(): number {
     const dt = ((performance.now() - this.lastWall) / 1000) * this.timeScale;
     const est = this.paused || this.fastForwarding ? this.lastT : this.lastT + Math.min(Math.max(0, dt), EST_CAP_S * this.timeScale); // exact between fast-forward steps

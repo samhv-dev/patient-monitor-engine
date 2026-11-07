@@ -16,7 +16,7 @@ export {
   type WebRtcOptions,
 } from './transport/webrtc.ts';
 export { backoffDelay, DEFAULT_BACKOFF, type BackoffOptions } from './transport/backoff.ts';
-export type { RelayFrame } from './transport/relay-frames.ts';
+export type { RelayDevice, RelayFrame } from './transport/relay-frames.ts';
 export { HostSession, STAGE_LEAD_TICKS, type HostSessionOptions, type HostTarget, type ScenarioHook, type ScenarioHookResult } from './session/host-session.ts';
 export { bolusDrugOf, givenByOf, lockReason, RecentGives, SAME_DRUG_LOCK_S, type DrugLock, type GivenBy } from './session/drug-lock.ts';
 export { ControllerSession, describe, type ControllerSessionOptions, type LogEntry } from './session/controller-session.ts';

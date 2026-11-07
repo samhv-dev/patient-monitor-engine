@@ -4,7 +4,7 @@
 // line (the shell's left the working views on 30 October; Home keeps it, at the same place and size). Centred, about
 // 640 px wide. The session's engine already runs behind it; nothing here touches the patient.
 import { EDUCATION_LINE, HOME_VERSION, REPO } from '../about.ts';
-import { Meters, type MeterValues } from '../meters.ts';
+import { memoryMb, Meters, type MeterValues } from '../meters.ts';
 import { hrefOf } from '../router.ts';
 import type { View } from '../shell.ts';
 import { h, setText } from '../ui.ts';
@@ -25,13 +25,16 @@ export function homeView(o: { meters?: Meters } = {}): View {
     return { el, v };
   };
   const engine = tile('Engine', 'ms per tick');
-  const memory = tile('Memory', 'MB used');
+  // MUI-17: only a browser with a memory API gets the Memory tile (Safari has none: it read "—" for good)
+  const memory = memoryMb() !== null ? tile('Memory', 'MB used') : null;
   const cpu = tile('CPU, this app', '% of one core');
   engine.el.title = 'The median time of one 20-ms engine tick on this computer: the same engine build, timed in a background thread of this page.';
   const draw = (m: MeterValues) => {
     setText(engine.v, m.engineMs === null ? '…' : m.engineMs < 10 ? m.engineMs.toFixed(2) : m.engineMs.toFixed(1));
-    setText(memory.v, m.memoryMb === null ? '—' : String(Math.round(m.memoryMb)));
-    memory.el.title = m.memoryMb === null ? 'This browser does not report memory (Chrome and Edge do).' : "This page's JavaScript memory; the monitor's engine thread is not included.";
+    if (memory) {
+      setText(memory.v, m.memoryMb === null ? '—' : String(Math.round(m.memoryMb)));
+      memory.el.title = "This page's JavaScript memory; the monitor's engine thread is not included.";
+    }
     setText(cpu.v, m.cpuPct === null ? '…' : String(Math.round(m.cpuPct)));
     cpu.el.title = meters.cpuMethod();
   };
@@ -47,7 +50,7 @@ export function homeView(o: { meters?: Meters } = {}): View {
       h('a', { class: 'btn primary home-start', href: hrefOf('room') }, 'Start here'),
       h('code', { class: 'home-repo' }, REPO),
       h('p', { class: 'home-links' }, ...LINKS.map(([t, href]) => h('a', { href, target: '_blank', rel: 'noopener' }, t))),
-      h('div', { class: 'home-stats' }, cpu.el, memory.el, engine.el)),
+      h('div', { class: 'home-stats' }, cpu.el, memory?.el ?? null, engine.el)),
     h('footer', { class: 'home-foot' }, EDUCATION_LINE));
   return {
     id: 'home',

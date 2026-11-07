@@ -9,7 +9,9 @@ export type FixedAlarmId =
   | 'ASYSTOLE' | 'VFIB' | 'VTAC' | 'EXTREME_BRADY' | 'EXTREME_TACHY' | 'BRADY' | 'TACHY' | 'PAUSE' | 'PVCS' | 'DESAT'
   | 'ecgLeadsOff' | 'spo2SensorOff' | 'nibp-failed' | 'apnoea-co2' | 'apnoea-resp' | 'co2Line'
   // Technical alarms raised by real conditions, and the arterial line's disconnect alarm
-  | 'spo2NonPulsatile' | 'spo2LowPerf' | 'spo2LowSignal' | 'abpNonPulsatile' | 'abpDisconnect' | 'abpZero' | 'tempProbeOff';
+  | 'spo2NonPulsatile' | 'spo2LowPerf' | 'spo2LowSignal' | 'abpNonPulsatile' | 'abpDisconnect' | 'abpZero' | 'tempProbeOff'
+  // A technical prompt: no transducer on the IBP channel (MUI-7)
+  | 'abpNoSensor';
 
 const IEC_TEXT: Record<FixedAlarmId, string> = {
   ASYSTOLE: 'ASYSTOLE',
@@ -35,6 +37,7 @@ const IEC_TEXT: Record<FixedAlarmId, string> = {
   abpDisconnect: 'ABP DISCONNECT', // [S2] IFU p. 44 (red: non-pulsatile, mean < 10 mmHg)
   abpZero: 'ABP ZEROING', // brief §6.4 INOP "ABP zeroing" [inferred text]
   tempProbeOff: 'TEMP NO TRANSDUCER', // [S2] IFU p. 62 "<Temp label> NO TRANSDUCER"
+  abpNoSensor: 'ABP NO TRANSDUCER', // [inferred] from [S2] IFU p. 62 "<label> NO TRANSDUCER"; raised only by a skin that has the message
 };
 
 const SAADAT_TEXT: Record<FixedAlarmId, string> = {
@@ -61,6 +64,7 @@ const SAADAT_TEXT: Record<FixedAlarmId, string> = {
   abpDisconnect: 'IBP CATHETER DISCONNECT', // research/06 §4.2 (M p.161)
   abpZero: 'IBP1 ZEROING', // [inferred] from the "IBP1 …" pattern
   tempProbeOff: 'TEMP NO CABLE', // [inferred] from "SPO2 NO CABLE" / "ECG NO CABLE" (research/06 §4.2)
+  abpNoSensor: 'IBP1 NO SENSOR', // research/34 IMG_8105, IMG_8113, IMG_8116 (photographed)
 };
 
 /** IEC-style priority marks: *** high, ** medium, * low (research/05 §2.5). Technical INOPs carry none. */

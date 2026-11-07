@@ -21,6 +21,8 @@ export interface Condition {
   holdS?: number;
   /** Kept only by a clear hysteresis — the value is not beyond the limit; the entry keeps its last text. */
   held?: boolean;
+  /** A technical prompt (MUI-7): shown, never sounded (AlarmEntry.prompt). */
+  prompt?: boolean;
 }
 
 export interface AlarmConfig {
@@ -251,7 +253,7 @@ export function stepAlarms(s: AlarmMgrState, t: number, conds: readonly Conditio
     if (e) {
       if (e.latched) {
         e.latched = false; // the condition came back while latched
-        e.sounding = !e.acked;
+        e.sounding = !e.acked && !e.prompt;
         s.dirty = true;
       }
       // The message carries the value NOW — "the message shows **SpO2 94<96 (deviation and limit)" (research/05 §2.4,
@@ -267,7 +269,8 @@ export function stepAlarms(s: AlarmMgrState, t: number, conds: readonly Conditio
     const since = (s.pending[c.id] ??= t);
     if (t - since + 1e-9 < c.delayS) continue;
     delete s.pending[c.id];
-    const entry: AlarmEntry = { id: c.id, level: c.level, category: c.category, text: c.text, since: t, latched: false, acked: false, sounding: true };
+    const entry: AlarmEntry = { id: c.id, level: c.level, category: c.category, text: c.text, since: t, latched: false, acked: false, sounding: !c.prompt };
+    if (c.prompt) entry.prompt = true;
     if (c.numeric) entry.numeric = c.numeric;
     if (c.holdS) (s.hold ??= {})[c.id] = t + c.holdS;
     s.active[c.id] = entry;

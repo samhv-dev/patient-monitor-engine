@@ -5,7 +5,7 @@ import { attachReveal, normalizeSessionCode, RevealGesture } from '@pme/controll
 import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 import { alarmLine, limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
 import { mountHostBriefing } from './briefing.ts';
-import { joinCode, relayInfo, relayOf } from './classroom.ts';
+import { instrumentOf, joinCode, relayInfo, relayOf } from './classroom.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
 import { feedOf } from './teach2/feed.ts';
@@ -32,6 +32,7 @@ import { exploreView } from './views/explore.ts';
 import { mountFastForward } from './fast-forward.ts';
 import { watchHiddenTab } from './hidden-tab.ts';
 import { followUrl, mountFollower, publishStyle } from './views/follower.ts';
+import { deviceKey, pickerView } from './views/join.ts';
 import { monitorView } from './views/monitor.ts';
 import { remoteView } from './views/remote.ts';
 import { settingsView } from './views/settings.ts';
@@ -53,9 +54,12 @@ const follow = join ?? normalizeSessionCode(q.get('follow') ?? '');
 const relay = relayOf(location);
 // `?moved=<code>`: this tab handed its session to another tab of this browser (host-guard.ts)
 const moved = normalizeSessionCode(q.get('moved') ?? '');
-// Room plan R5: `#/defib` on a follower page is the defibrillator window (landscape, the room model's look)
-const defibWindow = !!follow && location.hash.replace(/^#\/?/, '').replace(/\/$/, '') === 'defib';
-if (join && !defibWindow) document.documentElement.dataset.learner = 'phone'; // the portrait learner layout (app.css)
+// R4 (plan room-and-instruments.md §4 D7): what a follower page shows, from its hash — `#/pick` the instrument picker
+// (the QR's address), `#/monitor/wide` the patient monitor, `#/defib` the defibrillator window (Room plan R5:
+// landscape, the room model's look), anything else today's learner monitor
+const shows = follow ? instrumentOf(location.hash) : null;
+const defibWindow = shows === 'defib';
+if (join && shows === 'learner') document.documentElement.dataset.learner = 'phone'; // the portrait learner layout (app.css)
 const hostless = !follow && parseRoute(location.hash).id === 'remote';
 const shell = new Shell(document.getElementById('app') as HTMLElement, { hostless, follower: !!follow });
 if (site.theme === 'projector-light') document.documentElement.dataset.theme = 'bench';
@@ -71,15 +75,22 @@ const onFrame = (t: number) => {
 };
 requestAnimationFrame(onFrame);
 
-if (follow) {
+// A follower page is one instrument: choosing another (the picker's tap, "Change", Back) opens the page again on its hash
+if (follow) addEventListener('hashchange', () => instrumentOf(location.hash) !== shows && location.reload());
+
+if (follow && shows === 'pick') {
+  document.body.replaceChildren(); // a page of its own, as `?moved=` below: no shell, no monitor, no session
+  pickerView({ code: follow, parent: document.body });
+  document.title = 'Choose an instrument: patient monitor simulator';
+} else if (follow && shows && shows !== 'pick') {
   if (parseRoute(location.hash).id !== 'monitor') history.replaceState(null, '', `${location.pathname}${location.search}${hrefOf('monitor')}`);
   // Its status and its own Sound / Silence sit under the monitor: the monitor route hides the top bar
   const what = defibWindow ? 'Defibrillator' : 'Learner monitor';
   const bar = h('div', { class: 'follower-bar', role: 'toolbar', 'aria-label': what });
   shell.add({ id: 'monitor', el: h('section', { 'aria-labelledby': 'fol-h' }, h('h1', { id: 'fol-h', class: 'sr-only' }, what), bar) });
-  const follower = mountFollower(shell, site, follow, bar, join && relay ? { relay } : undefined, { defib: defibWindow });
+  const follower = mountFollower(shell, site, follow, bar, join && relay ? { relay } : undefined, { show: shows, device: deviceKey() });
   // "SIMULATION · not a clinical monitor" at the top of this monitor (in a two-row header, else a strip above it)
-  const line = simLine(shell.stage, !!join && !defibWindow);
+  const line = simLine(shell.stage, !!join && shows === 'learner');
   line.set(follower.monitor, follower.style, true);
   follower.onStyle = (s) => line.set(follower.monitor, s, true);
   // The second screen shows the same fast-forward panel and latches the alarms that came and went
@@ -136,6 +147,9 @@ if (follow) {
     console.error('monitor failed:', (e as CustomEvent<{ reason: string }>).detail.reason);
     toast('The monitor stopped — Restart the patient', 'alert');
   });
+  // FX-11a: the watchdog warns first — a busy or starved worker is slow, not dead, and catches up by itself
+  shell.monitorHost.addEventListener('pme-monitor-slow', () => toast('The monitor is slow to answer: the computer is busy. It catches up by itself.'));
+  shell.monitorHost.addEventListener('pme-monitor-recovered', () => toast('The monitor has caught up'));
 
   const loadScenario = (c: ScenarioCard, room?: RoomKeep): boolean => {
     const r = session.loadScenario(c.doc, room);

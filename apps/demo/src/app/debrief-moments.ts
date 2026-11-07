@@ -284,9 +284,7 @@ export function keyTimes(d: RunData, moments: KeyMoment[] = keyMoments(d)): KeyT
 export function openersAt(d: RunData, moments: KeyMoment[] = keyMoments(d)): { shown: Array<{ text: string; t: number; n: number | null }>; left: number } | null {
   const openers = d.doc?.debriefHints?.openers;
   if (!d.doc || !openers?.length) return null;
-  const g = isV2(d.doc) ? gradesOf(d) : null;
-  const at = (a: string): number | undefined =>
-    d.doc && isV2(d.doc) ? (g ? stringAnchorAt(d, g, a as Parameters<typeof stringAnchorAt>[2]) : undefined) : first(d, a)?.t;
+  const at = hintAnchorReader(d);
   const shown: Array<{ text: string; t: number; n: number | null }> = [];
   for (const o of openers) {
     const t = at(o.at);
@@ -295,4 +293,23 @@ export function openersAt(d: RunData, moments: KeyMoment[] = keyMoments(d)): { s
     shown.push({ text: o.text, t, n: near?.n ?? null });
   }
   return { shown, left: openers.length - shown.length };
+}
+
+/** When a card hint's anchor happened on the kept course (the openers' reading, D9; the handout's questions, D16), or
+ *  undefined: a /1 run event by the objectives' `first()`, a /2 anchor by `report3`'s (`stringAnchorAt`). */
+function hintAnchorReader(d: RunData): (a: string) => number | undefined {
+  const g = d.doc && isV2(d.doc) ? gradesOf(d) : null;
+  return (a) => (d.doc && isV2(d.doc) ? (g ? stringAnchorAt(d, g, a as Parameters<typeof stringAnchorAt>[2]) : undefined) : first(d, a as Parameters<typeof first>[1])?.t);
+}
+
+/** The card's handout questions (D16) whose anchor happened on the kept course, in the card's order, each with its
+ *  anchor's time; the text is the card's, never interpolated. Empty when the card has none (the fixed prompts print). */
+export function handoutQuestionsAt(d: RunData): Array<{ text: string; t: number }> {
+  const qs = d.doc?.debriefHints?.handoutQuestions ?? [];
+  if (!qs.length) return [];
+  const at = hintAnchorReader(d);
+  return qs.flatMap((q) => {
+    const t = at(q.at);
+    return t === undefined ? [] : [{ text: q.text, t }];
+  });
 }

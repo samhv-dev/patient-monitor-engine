@@ -59,7 +59,8 @@ export interface Row {
 /** The instructor's mark kinds (the controller's `MarkKind` without the driver's own `stage`). */
 const MARK_KINDS: readonly string[] = ['good', 'bad', 'discuss'] satisfies Array<Exclude<MarkKind, 'stage'>>;
 
-/** The six trended numerics; each reads the first valid of its monitor numerics (glossary keys `mon.<id>`). */
+/** The six trended numerics; each reads the first valid of its monitor numerics (glossary keys `mon.<id>`). The cuff's
+ *  `nibpMean` counts only in the second of its cycle, as the cuff pressures do (`PRESSURES`). */
 export const TREND = { hr: ['hr'], map: ['abpMean', 'nibpMean'], spo2: ['spo2'], etco2: ['etco2'], rr: ['awrr', 'rr'], temp: ['tempCore', 'tempSite'] } as const;
 export type TrendKey = keyof typeof TREND;
 export const TREND_KEYS = Object.keys(TREND) as TrendKey[];
@@ -319,8 +320,10 @@ export class RunRecord {
   private sample(t: number): void {
     const s = Math.floor(t + EPS);
     const row = { t: s } as Sample;
-    for (const k of TREND_KEYS) row[k] = TREND[k].map((id) => this.cur[id]).find((v) => typeof v === 'number') ?? null;
     const now = (id: string) => (Math.floor((this.curAt[id] ?? -Infinity) + EPS) === s ? this.cur[id] : null); // measured in this second
+    // the cuff's MAP, like its systolic and diastolic, only in the second of its cycle (research/41 row 53)
+    const read = (id: string) => (id === 'nibpMean' ? now(id) : this.cur[id]);
+    for (const k of TREND_KEYS) row[k] = TREND[k].map(read).find((v) => typeof v === 'number') ?? null;
     for (const k of PRESSURE_KEYS) {
       const v = PRESSURES[k].map(now).find((x) => typeof x === 'number');
       row[k] = typeof v === 'number' ? Math.round(v) : null; // whole mmHg, as the monitor prints it
