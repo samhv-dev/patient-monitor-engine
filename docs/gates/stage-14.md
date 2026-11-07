@@ -255,8 +255,13 @@ almost every run. These were PR #80's `showcase-events-layout.e2e.ts:37` and the
 in a week with no CI slack (freeze Tuesday 20 October, 18:00). The two timing-class tests from run 39149678598 are
 recorded, not tagged, in `stage-14/known-flaky.tsv` ("not tagged" section).
 
-**Revert condition:** make the webkit leg exit 1 again after the v1.0.0-rc.2 demo, when Task 0 of the calibration pass
-re-harvests the known-flaky list. The workflow comment above the step names this ruling and this condition.
+**Revert condition, as written on 2026-10-18:** make the webkit leg exit 1 again after the v1.0.0-rc.2 demo, when
+Task 0 of the calibration pass re-harvests the known-flaky list. **Ended 2026-11-06** (PR `end-webkit-warn-only`, on
+the owner's ruling of 2026-11-05: end it once the stability fixes are on main). The demo ran on 3 November; the fixes
+merged on 2026-11-05: #268 (Chromium sim-line, `fed21a45`), #265 (host guard Web Locks, `592bd59d`) and #275 (FX-25
+capnogram at device-pixel ratio 2, the sweep-wrap loop, `3aad72fa`). Since then the webkit leg exits 1 on an untagged
+retry-only pass exactly as the chromium leg does; `@known-flaky` tests stay exempt on both and still run on WebKit in
+the quarantine below.
 
 ### The known-flaky WebKit quarantine (2026-10-24, PR `ci-stabilise`)
 
@@ -266,8 +271,8 @@ non-blocking (`continue-on-error: true` on the job and on its test step). Its Pl
 are still uploaded (artifact `e2e-report-webkit-known-flaky`), and a step writes the tests' counts into the job
 summary: passed first time, passed only on a retry, failed all three attempts, skipped, with one line (and one
 `::warning`) for each test retried or failed. The gating `e2e (webkit)` job runs every other test
-(`--grep-invert @known-flaky`) with the rule above unchanged (warn-only for an untagged retry-only pass, until it is
-reverted). **`e2e (chromium)` still runs every test, tagged or not, and still fails on an untagged retry-only pass: a
+(`--grep-invert @known-flaky`) with the rule above (warn-only for an untagged retry-only pass until 2026-11-06; since
+then it fails, as on Chromium). **`e2e (chromium)` still runs every test, tagged or not, and still fails on an untagged retry-only pass: a
 retry is not a pass.** No test was changed; the split is two `--grep` flags in `.github/workflows/ci.yml`, and
 `playwright.config.ts` is unchanged.
 
