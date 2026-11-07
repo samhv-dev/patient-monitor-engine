@@ -1,7 +1,7 @@
 // Device-behaviour metrics computed identically on recorded numerics and engine `measurement` events:
 // - HR averaging: the displayed HR vs the HR of the last 12 R-R intervals ending at the display time
 //   (IEC-style, brief §6.1) — error distribution in bpm;
-// - NIBP vs ABP: each NIBP MAP minus the invasive MAP averaged over the 40 s before it (the cuff cycle) [ENG];
+// - NIBP vs ABP: each NIBP MAP minus the invasive MAP averaged over the 40 s before it (the cuff cycle) [ENG: measurement];
 // - EtCO2 − PaCO2: each arterial PaCO2 lab value against the median EtCO2 of the 120 s before it (recorded only;
 //   the report says so).
 import { median } from '../stats.ts';

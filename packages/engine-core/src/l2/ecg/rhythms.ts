@@ -41,8 +41,8 @@ export interface RhythmDef {
   atrialDefaultBpm: number;
 }
 
-const BACKUP_JUNCTIONAL_BPM = 40; // [ENG] junctional escape 40–60 (brief §5); low end so Wenckebach pauses stay visible
-const DISSOCIATED_ATRIAL_BPM = 80; // [ENG] (default)
+const BACKUP_JUNCTIONAL_BPM = 40; // (brief §5: junctional escape 40–60) junctional escape 40–60 (brief §5); low end so Wenckebach pauses stay visible
+const DISSOCIATED_ATRIAL_BPM = 80; // [ENG: scenario] (default)
 
 type Row = Omit<RhythmDef, 'continuous' | 'pacing' | 'conductedTemplate' | 'atrialDefaultBpm' | 'escapeTemplate' | 'backupEscapeBpm' | 'focusWaitsForInterval'> &
   Partial<Pick<RhythmDef, 'continuous' | 'pacing' | 'conductedTemplate' | 'atrialDefaultBpm' | 'escapeTemplate' | 'backupEscapeBpm' | 'focusWaitsForInterval'>>;
@@ -63,11 +63,11 @@ const J = BACKUP_JUNCTIONAL_BPM;
 export const RHYTHMS: Readonly<Record<RhythmId, RhythmDef>> = {
   // --- sinus ------------------------------------------------------------------------------------
   sinus: row({ group: 'sinus', atria: 'sinus', av: 'conducted', focus: 'none', escape: 'junctional', rateDrives: 'sinus', rateRange: [20, 250], defaultRateBpm: 75, backupEscapeBpm: J }),
-  // sinusBrady backup escape 30/min [ENG]: below the junctional 40–60 (brief §5) so it cannot pre-empt a slow sinus down to 31/min
+  // sinusBrady backup escape 30/min [ENG: display]: below the junctional 40–60 (brief §5) so it cannot pre-empt a slow sinus down to 31/min
   sinusBrady: row({ group: 'sinus', atria: 'sinus', av: 'conducted', focus: 'none', escape: 'junctional', rateDrives: 'sinus', rateRange: [20, 59], defaultRateBpm: 45, backupEscapeBpm: 30 }),
   sinusTachy: row({ group: 'sinus', atria: 'sinus', av: 'conducted', focus: 'none', escape: 'junctional', rateDrives: 'sinus', rateRange: [101, 220], defaultRateBpm: 120, backupEscapeBpm: J }),
   sinusArrhythmia: row({ group: 'sinus', atria: 'sinus', av: 'conducted', focus: 'none', escape: 'junctional', rateDrives: 'sinus', rateRange: [50, 100], defaultRateBpm: 70, backupEscapeBpm: 30 }),
-  // backup escape 15/min so a 3 s arrest stays visible [ENG]
+  // backup escape 15/min so a 3 s arrest stays visible [ENG: display]
   sinusPause: row({ group: 'sinus', atria: 'sinus', av: 'conducted', focus: 'none', escape: 'junctional', rateDrives: 'sinus', rateRange: [50, 100], defaultRateBpm: 70, backupEscapeBpm: 15 }),
   // --- atrial -----------------------------------------------------------------------------------
   atrialTach: row({ group: 'atrial', atria: 'ectopic', av: 'conducted', focus: 'none', escape: 'junctional', rateDrives: 'sinus', rateRange: [150, 250], defaultRateBpm: 170, backupEscapeBpm: J }),
@@ -87,7 +87,7 @@ export const RHYTHMS: Readonly<Record<RhythmId, RhythmDef>> = {
   avb2Mobitz1: row({ group: 'avBlock', atria: 'sinus', av: 'wenckebach', focus: 'none', escape: 'junctional', rateDrives: 'sinus', rateRange: [40, 130], defaultRateBpm: 75, backupEscapeBpm: J }),
   avb2Mobitz2: row({ group: 'avBlock', atria: 'sinus', av: 'mobitz2', focus: 'none', escape: 'junctional', rateDrives: 'sinus', rateRange: [40, 130], defaultRateBpm: 75, backupEscapeBpm: 30 }),
   avb2to1: row({ group: 'avBlock', atria: 'sinus', av: 'mobitz2', focus: 'none', escape: 'junctional', rateDrives: 'sinus', rateRange: [50, 150], defaultRateBpm: 80, backupEscapeBpm: 25 }),
-  // 3:1 at 100 → ventricle 33/min, 4:1 → 25/min; escape backup 20/min (3 s) stays behind both [ENG]
+  // 3:1 at 100 → ventricle 33/min, 4:1 → 25/min; escape backup 20/min (3 s) stays behind both [ENG: display]
   avbHighGrade: row({ group: 'avBlock', atria: 'sinus', av: 'mobitz2', focus: 'none', escape: 'junctional', rateDrives: 'sinus', rateRange: [60, 150], defaultRateBpm: 100, backupEscapeBpm: 20 }),
   avb3Narrow: row({ group: 'avBlock', atria: 'sinus', av: 'dissociated', focus: 'none', escape: 'junctional', rateDrives: 'escape', rateRange: [40, 60], defaultRateBpm: 45 }),
   avb3Wide: row({ group: 'avBlock', atria: 'sinus', av: 'dissociated', focus: 'none', escape: 'ventricular', rateDrives: 'escape', rateRange: [20, 40], defaultRateBpm: 32, escapeTemplate: 'wide' }),
@@ -111,7 +111,7 @@ export const RHYTHMS: Readonly<Record<RhythmId, RhythmDef>> = {
 
 export const RHYTHM_IDS = Object.keys(RHYTHMS) as RhythmId[];
 
-/** Dissociated atria (CHB, VT) run at their own rate (RhythmOpts.atrialRateBpm, default 80) [ENG]. */
+/** Dissociated atria (CHB, VT) run at their own rate (RhythmOpts.atrialRateBpm, default 80) [ENG: scenario]. */
 export const DEFAULT_DISSOCIATED_ATRIAL_BPM = DISSOCIATED_ATRIAL_BPM;
 /** Flutter atrial rate default (brief §5: 250–350). */
 export const DEFAULT_FLUTTER_ATRIAL_BPM = 300;

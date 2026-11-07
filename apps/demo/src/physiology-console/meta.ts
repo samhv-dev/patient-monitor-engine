@@ -126,7 +126,7 @@ function lungMeta(path: string): Meta | undefined {
 }
 
 /**
- * Absolute change tolerances by field name (whole path; `.to`/`.from` of an L1 ramp count as the variable) [ENG]:
+ * Absolute change tolerances by field name (whole path; `.to`/`.from` of an L1 ramp count as the variable) [ENG: ui]:
  * pH 0.02; temperature 0.2 °C; SpO2/SaO2/SvO2 one point; PaCO2/EtCO2 2 mmHg; K 0.2 mmol/L; lactate 0.3 mmol/L;
  * BE and HCO3 1 mmol/L (half the ±2 mmol/L normal BE range, a quarter of the 22–26 mmol/L HCO3 range; the blood
  * gas prints both to 0.1 but a 0.1 step is analyser noise, not a change). `k` is potassium only under `mods`, the L1

@@ -22,7 +22,7 @@ export interface WebSocketTransportOptions {
   url: string;
   WebSocketImpl?: WebSocketCtor;
   backoff?: BackoffOptions;
-  /** Close and reconnect when nothing arrives for this long (default 25 s = 2.5 relay heartbeats) [ENG]. */
+  /** Close and reconnect when nothing arrives for this long (default 25 s = 2.5 relay heartbeats) [ENG: network]. */
   livenessMs?: number;
   /** Relay control frames (peers, errors) for the UI. */
   onRelayFrame?: (f: RelayFrame) => void;

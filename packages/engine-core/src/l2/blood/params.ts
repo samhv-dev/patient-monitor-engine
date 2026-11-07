@@ -1,5 +1,6 @@
 // Blood constants and patient scaling (tables §1.1–1.5, §5.3, §5b.1–5b.4; annex §5b). Every number cites its
-// row, or [ENG] with the prototype number it was tuned to. Units: mmol/L, g/L albumin, g/dL Hb, mL, mmHg, s.
+// row, or `[FIT: target; brief id]` with the prototype number it was tuned to (`[ENG: kind]` when not physiology).
+// Units: mmol/L, g/L albumin, g/dL Hb, mL, mmHg, s.
 import type { PatientProfile } from '../../types.ts';
 import { sizeWeightKg } from '../body-size.ts'; // The one body-size rule
 
@@ -28,18 +29,18 @@ export const MCHC_G_PER_ML = 1 / 3;
 
 // --- fluid kinetics (tables §5b.4; annex B1 "tissue fluid branch": vascular → R_t → ECF(C) → lymph) -------------
 /**
- * Capillary filtration coefficient, whole body, mL/min/mmHg [ENG, Q47]. Fitted with CISF_PER_ML and K_EL_AWAKE (prototype
+ * Capillary filtration coefficient, whole body, mL/min/mmHg [FIT: Starling/lymph/osmotic parameter; Q47; brief research/44 L2-39]. Fitted with CISF_PER_ML and K_EL_AWAKE (prototype
  * sweep) to tables §5b.4: 1 L crystalloid over 30 min awake → 51 % intravascular at the end, 16 % 30 min later, total
  * excess halved 30 min after the end; haemorrhage refill 0.16 mL/kg/min early (band 0.1–0.5).
  */
 export const KF_ML_MIN_MMHG = 2.0;
 /** Reflection coefficient to plasma protein [TXT]. */
 export const SIGMA_PROTEIN = 0.9;
-/** Capillary hydrostatic change per mL of blood-volume change: half the venous change (C_sys 110 mL/mmHg) [ENG]. */
+/** Capillary hydrostatic change per mL of blood-volume change: half the venous change (C_sys 110 mL/mmHg) [FIT: Starling/lymph/osmotic parameter; brief research/44 L2-39]. */
 export const PC_PER_ML = 0.5 / 110;
-/** Interstitial compliance, mL/mmHg per mL of baseline ISF volume (≈ 230 mL/mmHg at 11.4 L) [ENG, fitted with Kf]. */
+/** Interstitial compliance, mL/mmHg per mL of baseline ISF volume (≈ 230 mL/mmHg at 11.4 L) [FIT: Starling/lymph/osmotic parameter; fitted with Kf; brief research/44 L2-39]. */
 export const CISF_PER_ML = 0.02;
-/** Extra lymph flow per mmHg of interstitial pressure rise, mL/min/mmHg [ENG]. */
+/** Extra lymph flow per mmHg of interstitial pressure rise, mL/min/mmHg [FIT: Starling/lymph/osmotic parameter; brief research/44 L2-39]. */
 export const LYMPH_GAIN = 2;
 /** Interstitial colloid osmotic pressure at baseline, mmHg [TXT]. */
 export const PI_ISF0 = 8;
@@ -49,17 +50,17 @@ export const PI_ISF0 = 8;
  */
 export const K_EL_AWAKE = 0.03;
 export const K_EL_GA_FACTOR = 0.2;
-/** Plasma albumin below its baseline concentration is replenished from the interstitial pool, τ 120 min [ENG]. */
+/** Plasma albumin below its baseline concentration is replenished from the interstitial pool, τ 120 min [FIT: Starling/lymph/osmotic parameter; brief research/44 L2-39]. */
 export const ALB_RESTORE_TAU_MIN = 120;
-/** Water moves between ISF and cells toward osmotic equilibrium, τ 10 min [ENG]. */
+/** Water moves between ISF and cells toward osmotic equilibrium, τ 10 min [FIT: Starling/lymph/osmotic parameter; brief research/44 L2-39]. */
 export const OSM_TAU_MIN = 10;
 /** ICF effective osmolality at baseline ≈ 2·Na 140 + 10 (glucose, urea) mOsm/kg [TXT]. */
 export const OSM0 = 290;
 
 // --- lactate and oxygen (tables §5.3) ------------------------------------------------------------------------------
-export const LACTATE_V_L_PER_KG = 0.6; // `vLac` [ENG]
-export const K_LAC_PER_H = 1.389; // `kLac` 1400 mmol/day ÷ (1.0 mmol/L · 0.6 L/kg · 70 kg) — t½ 30 min [ENG, Q41]
-export const K_ANAER = 0.05; // mmol lactate per mL O2 deficit `kAnaer` (range 0.015–0.06): untreated VF 30 min → 9–10 mmol/L (annex D1 8–12) [ENG, Q41]
+export const LACTATE_V_L_PER_KG = 0.6; // `vLac` (tables `vLac`)
+export const K_LAC_PER_H = 1.389; // `kLac` 1400 mmol/day ÷ (1.0 mmol/L · 0.6 L/kg · 70 kg) — t½ 30 min (tables `kLac`, Q41; Q41)
+export const K_ANAER = 0.05; // mmol lactate per mL O2 deficit `kAnaer` (range 0.015–0.06): untreated VF 30 min → 9–10 mmol/L (annex D1 8–12) (tables `kAnaer` range 0.015–0.06; annex D1 8–12 mmol/L after 30 min of VF; Q41)
 /**
  * E131: CO2 released when bicarbonate buffers lactic acid, mL per mmol: "22 ml for each meq of lactic acid" (Beaver WL,
  * Wasserman K, Whipp BJ, J Appl Physiol 1986;60:2020–2027); beyond the first ≈ 0.4 mmol/L the acid is buffered almost
@@ -73,7 +74,7 @@ export const SAO2_NORMAL = 0.97;
 export const DO2_CRIT_ML_KG_MIN = 6; // `do2Crit` (4.9–8.2) [TXT, Q42]
 export const ER_MAX = 0.7; // `erMax` [TXT]
 /**
- * Regional supply dependence [ENG, Q41/Q42]: splanchnic, skin and muscle beds (≈ 60 % of VO2) lose flow first when
+ * Regional supply dependence [FIT: regional supply dependence and hepatic flow, tuned to tables §7 17a class III lactate; Q41/Q42; brief research/44 L2-09]: splanchnic, skin and muscle beds (≈ 60 % of VO2) lose flow first when
  * CARDIAC OUTPUT falls (sympathetic redistribution), so they become supply-dependent as CO/CO0 falls from 0.88 to 0.40
  * — a FLOW criterion, so chronic anaemia at normal flow does not make lactate (its limit is the global DO2crit).
  * Tuned so tables §7 17a (class III: lactate 3–5 by 30 min) holds.
@@ -83,7 +84,7 @@ export const REGIONAL_FLOW_ON = 0.88;
 export const REGIONAL_FLOW_FULL = 0.55;
 /** Hepatic blood flow share of CO: ICRP-89 male 0.255 (N-P10; annex §5.3 `hbfFrac` "same"). */
 export const HBF_FRAC = 0.255;
-/** Splanchnic flow falls faster than CO: hbfRel = (CO/CO0)^2 (tables §5.3 `hbfFactor` ×0.6 on top of CO −40 % in class III) [ENG]. */
+/** Splanchnic flow falls faster than CO: hbfRel = (CO/CO0)^2 (tables §5.3 `hbfFactor` ×0.6 on top of CO −40 % in class III) [FIT: regional supply dependence and hepatic flow, tuned to tables §7 17a class III lactate; brief research/44 L2-09]. */
 export const HBF_EXP = 2;
 
 export type AgeBandB = 'neonate' | 'infant' | 'child' | 'adolescent' | 'adult' | 'elderly';
@@ -141,7 +142,7 @@ export interface Composition {
   na: number; k: number; cl: number; ca: number; mg: number;
   lactate: number; // metabolised to bicarbonate (liver)
   metab: number; // acetate (metabolised to bicarbonate, τ 15 min)
-  xa: number; // Gluconate: an unmeasured anion here (renal excretion is the organ model's) [ENG]
+  xa: number; // Gluconate: an unmeasured anion here (renal excretion is the organ model's) [ENG: numerics]
   albGL: number; // true albumin g/L (oncotic AND acid–base)
   globGL: number; // Globulins g/L (oncotic only; plasma products carry the plasma's)
   colloidGL: number; // synthetic colloid, albumin-equivalent oncotic g/L
@@ -155,7 +156,7 @@ export const FLUIDS = {
   rl: { ...Z, na: 130, k: 4, cl: 109, ca: 1.35, lactate: 28 }, // Ringer's lactate / Hartmann's
   balanced: { ...Z, na: 140, k: 5, cl: 98, mg: 1.5, metab: 27, xa: 23 }, // Plasma-Lyte 148 (acetate 27, gluconate 23)
   albumin5: { ...Z, na: 145, cl: 100, albGL: 50 }, // 5 % albumin [VERIFY Cl]
-  gelatin: { ...Z, na: 154, cl: 120, colloidGL: 35 }, // 4 % succinylated gelatin [ENG oncotic equivalent]
+  gelatin: { ...Z, na: 154, cl: 120, colloidGL: 35 }, // 4 % succinylated gelatin [FIT: Starling/lymph/osmotic parameter; oncotic equivalent; brief research/44 L2-39]
   d5w: { ...Z }, // free water once the glucose is taken up
   glycine: { ...Z, osmOther: 200 }, // 1.5 % glycine irrigant (TURP/hysteroscopy absorption)
 } as const satisfies Record<string, Composition>;
@@ -210,7 +211,7 @@ export type ProductId = keyof typeof PRODUCTS;
 /** Stored-blood supernatant K ≈ storage days mmol/L (tables `kUnit`, StoredK), in the non-cell volume [TXT]. */
 export const storedK = (days: number): number => Math.min(50, Math.max(1, days));
 /** Supernatant lactate ≈ 1.4 mmol/L per storage day (Sümpelmann R et al. Paediatr Anaesth 2001;11:169–73: 9.4 ± 4 at a
- *  mean 6.7 days in 100 units) [TXT], capped at 40 [ENG]. */
+ *  mean 6.7 days in 100 units) [TXT], capped at 40 [ENG: numerics]. */
 export const storedLactate = (days: number): number => Math.min(40, 1.4 * Math.max(0, days));
 /**
  * A cellular product after `days` of storage. K leaks out for Na (the cold-inhibited pump: an electroneutral exchange);

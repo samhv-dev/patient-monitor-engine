@@ -48,7 +48,7 @@ outcome; an embedding developer sees the device commands and state (`l3/defib-pa
 
 | Where | Relation |
 |---|---|
-| [`outcome.ts:107`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts#L107) | p = pMax / (1 + (E50/E)^2); the Hill exponent 2 is [ENG] (research/20). |
+| [`outcome.ts:107`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts#L107) | p = pMax / (1 + (E50/E)^2); the Hill exponent 2 is [FIT: cardioversion curve steepness; brief research/44 X-08] (research/20). |
 | [`outcome.ts:111`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts#L111) | did) and E50 puts the curve through 0.68 at 70 J: E50 = 70·√(0.94/0.68 − 1) = 43.3 J. The engine's energy is the |
 
 ## State
@@ -95,19 +95,19 @@ outcome; an embedding developer sees the device commands and state (`l3/defib-pa
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `CHARGE_S_PER_J` | `7 / 200` | — | research/05 §2.6; [ENG] | Charge time when a skin publishes none: LIFEPAK-like 200 J ≤ 7 s scaled linearly (research/05 §2.6) [ENG]. |
+| `CHARGE_S_PER_J` | `7 / 200` | — | research/05 §2.6; [ENG: device] | Charge time when a skin publishes none: LIFEPAK-like 200 J ≤ 7 s scaled linearly (research/05 §2.6) [ENG: device]. |
 
 ### [`l3/defib-pacer/outcome.ts`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `ASYSTOLE_SHARE` | `0.5` | — | [ENG] | Share of the asystole/PEA outcome that is asystole (the rest organised PEA) [ENG]. |
-| `LOW_ENERGY_FRACTION` | `0.5` | — | [ENG] | Energy below 50 % of the default halves the termination probability [ENG]. |
+| `ASYSTOLE_SHARE` | `0.5` | — | research/44 X; [FIT: asystole share of a non-VF outcome; brief research/44 X-08] | Share of the asystole/PEA outcome that is asystole (the rest organised PEA) [FIT: asystole share of a non-VF outcome; brief research/44 X-08]. |
+| `LOW_ENERGY_FRACTION` | `0.5` | — | research/44 X; [FIT: low-energy termination penalty; brief research/44 X-08] | Energy below 50 % of the default halves the termination probability [FIT: low-energy termination penalty; brief research/44 X-08]. |
 | `LOW_ENERGY_TERMINATION` | `0.5` | — | — | — |
-| `CARDIOVERSION_SINUS` | `0.8` | — | [ENG] | Synchronised cardioversion of an organised tachyarrhythmia with a pulse: sinus 0.8 [ENG]. |
-| `R_ON_T_VF` | `0.3` | — | [ENG] | Unsynchronised shock on the T peak ± 40 ms of a perfusing rhythm: VF 0.3 [ENG] (teaches sync). |
+| `CARDIOVERSION_SINUS` | `0.8` | — | research/44 X; [FIT: cardioversion success; brief research/44 X-08] | Synchronised cardioversion of an organised tachyarrhythmia with a pulse: sinus 0.8 [FIT: cardioversion success; brief research/44 X-08]. |
+| `R_ON_T_VF` | `0.3` | — | research/44 X; [FIT: R-on-T VF induction; brief research/44 X-08] | Unsynchronised shock on the T peak ± 40 ms of a perfusing rhythm: VF 0.3 [FIT: R-on-T VF induction; brief research/44 X-08] (teaches sync). |
 | `T_PEAK_WINDOW_S` | `0.04` | s | — | — |
-| `AA_ROSC_GAIN` | `0.3` | — | ARREST 1999; ALPS 2016; [ENG] | State factors on the ROSC share. Each is [ENG] with its sourced DIRECTION named. ARREST 1999 (survival to admission 44.3 % vs 34.6 %), ALPS 2016 |
+| `AA_ROSC_GAIN` | `0.3` | — | research/44 X; ARREST 1999; ALPS 2016; [FIT: ROSC state factor sizes (directions sourced); brief research/44 X-09] | State factors on the ROSC share. Each is [FIT: ROSC state factor sizes (directions sourced); brief research/44 X-09] with its sourced DIRECTION named. ARREST 1999 (survival to admission 44.3 % vs 34.6 %), ALPS 2016 |
 | `K_ROSC_PER_MMOL` | `0.25` | mmol | — | above 6 mmol/L (UK Renal Association: treat the K before expecting a shock to work) |
 | `K_ROSC_FLOOR` | `0.2` | — | — | — |
 | `PH_ROSC_PER_UNIT` | `1.5` | — | — | below pH 7.2 (ALS reversible causes) |
@@ -116,11 +116,11 @@ outcome; an embedding developer sees the device commands and state (`l3/defib-pa
 | `CPP_ROSC_MIN` | `0.2` | — | — | — |
 | `CPP_ROSC_MAX` | `1.3` | — | — | — |
 | `CIRCULATORY_PHASE_S` | `240` | s | Weisfeldt & Becker 2002; Cobb 1999; Wik 2003 | CoPP matters only in the circulatory phase — Weisfeldt & Becker 2002 (0–4 min electrical phase: shock at once), Cobb 1999 / Wik 2003 (CPR first helps only beyond 4–5 min). The same 240 s as VF_DURATION_FACTORS. |
-| `ARREST_ROSC_FULL_S` | `1800` | s | [ENG] | a non-VF arrest's own decay [ENG] |
-| `TEMP_SHOCK_C` | `30` | — | ERC 2021; Danzl & Pozos 1994; Brown 2012; research/20; [ENG magnitude] | VF below 30 °C is often shock-refractory (ERC 2021 special circumstances; Danzl & Pozos 1994; Brown 2012) — termination × (1 − 0.3 per °C below 30), floor 0.2 [ENG magnitude] (research/20). |
+| `ARREST_ROSC_FULL_S` | `1800` | s | research/44 X; [FIT: ROSC state factor sizes (directions sourced); brief research/44 X-09] | a non-VF arrest's own decay [FIT: ROSC state factor sizes (directions sourced); brief research/44 X-09] |
+| `TEMP_SHOCK_C` | `30` | — | ERC 2021; Danzl & Pozos 1994; Brown 2012; research/44 X; research/20; [FIT: ROSC state factor sizes (directions sourced); magnitude; brief research/44 X-09] | VF below 30 °C is often shock-refractory (ERC 2021 special circumstances; Danzl & Pozos 1994; Brown 2012) — termination × (1 − 0.3 per °C below 30), floor 0.2 [FIT: ROSC state factor sizes (directions sourced); magnitude; brief research/44 X-09] (research/20). |
 | `TEMP_TERM_PER_C` | `0.3` | — | — | — |
 | `TEMP_TERM_FLOOR` | `0.2` | — | — | — |
-| `CARDIOVERSION_HILL` | `2` | — | research/20; Circulation 2000; ERC 2021; Neumar 2010; [ENG]; [VERIFY] | Synchronised cardioversion success by rhythm and biphasic energy (the FIRST-shock probability at that energy), p = pMax / (1 + (E50/E)^2); the Hill exponent 2 is [ENG] (research/20). AF (and pre-excited AF): Mittal S et al., Circulation 2000;101:1282 (randomised, n = 88 biphasic): RECTILINEAR biphasic shocks escalating 70 → 120 → 150 → 170 J converted 60/88 = 68 % at the first 70 J shock and 83/88 = 94 % cumulatively. pMax is the cumulative 0.94 (the curve's ceiling: no energy converts more than the whole escalation did) and E50 puts the curve through 0.68 at 70 J: E50 = 70·√(0.94/0.68 − 1) = 43.3 J. The engine's energy is the selected biphasic energy, read as Mittal's delivered rectilinear-biphasic joules (the skins model no waveform). Flutter and paroxysmal SVT: ERC 2021 (70–120 J), Neumar 2010 (50–100 J), > 90 %; monomorphic VT with a pulse: Neumar 2010 (100 J, > 90 %) [VERIFY]. Any other organised tachycardia, or no rhythm id, keeps the flat CARDIOVERSION_SINUS. |
+| `CARDIOVERSION_HILL` | `2` | — | research/44 X; research/20; Circulation 2000; ERC 2021; Neumar 2010; [FIT: cardioversion curve steepness; brief research/44 X-08]; [VERIFY]; [FIT: cardioversion success curve; brief research/44 X-08] | Synchronised cardioversion success by rhythm and biphasic energy (the FIRST-shock probability at that energy), p = pMax / (1 + (E50/E)^2); the Hill exponent 2 is [FIT: cardioversion curve steepness; brief research/44 X-08] (research/20). AF (and pre-excited AF): Mittal S et al., Circulation 2000;101:1282 (randomised, n = 88 biphasic): RECTILINEAR biphasic shocks escalating 70 → 120 → 150 → 170 J converted 60/88 = 68 % at the first 70 J shock and 83/88 = 94 % cumulatively. pMax is the cumulative 0.94 (the curve's ceiling: no energy converts more than the whole escalation did) and E50 puts the curve through 0.68 at 70 J: E50 = 70·√(0.94/0.68 − 1) = 43.3 J. The engine's energy is the selected biphasic energy, read as Mittal's delivered rectilinear-biphasic joules (the skins model no waveform). Flutter and paroxysmal SVT: ERC 2021 (70–120 J), Neumar 2010 (50–100 J), > 90 %; monomorphic VT with a pulse: Neumar 2010 (100 J, > 90 %) [VERIFY]; their pMax/E50 stay [FIT: cardioversion success curve; brief research/44 X-08]. Any other organised tachycardia, or no rhythm id, keeps the flat CARDIOVERSION_SINUS. |
 | `AF_FIRST_SHOCK_70J` | `0.68` | — | Mittal 2000 | Mittal 2000: 68 % at the first 70 J rectilinear-biphasic shock, 94 % cumulative over 70/120/150/170 J. |
 | `AF_CUMULATIVE` | `0.94` | — | — | — |
 

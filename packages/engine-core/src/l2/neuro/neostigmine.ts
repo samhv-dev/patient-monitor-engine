@@ -4,9 +4,9 @@
 //   m = 1 + NEO_SMAX · x/(x + NEO_G50),   x = achGain − 1
 // The CEILING is structural: m < 1 + NEO_SMAX however large the dose, so a deep block (TOF count < 2) cannot be
 // lifted to recovery, and when the drug model's curve fades before spontaneous recovery is complete the block returns
-// (recurarisation). NEO_SMAX 0.7 [ENG] IS the ceiling (never fitted). NEO_G50 0.3 [ENG, fitted on the drug model's
+// (recurarisation). NEO_SMAX 0.7 [FIT: neostigmine reversal ceiling and G50; brief research/44 L2-36] IS the ceiling (never fitted). NEO_G50 0.3 [FIT: neostigmine reversal ceiling and G50; fitted on the drug model's
 // gain curve within 0.3–1.2: 0.05 mg/kg at TOF 2 → TOFR 0.9 in 18.3 min (band 8–20; 0.6 gave 22.0); 0.07 mg/kg at
-// PTC → TOFR 0.35 at 10 min].
+// PTC → TOFR 0.35 at 10 min; brief research/44 L2-36].
 export const NEO_SMAX = 0.7;
 export const NEO_G50 = 0.3;
 
