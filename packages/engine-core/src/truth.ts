@@ -5,7 +5,7 @@ import type { TruthLeaf, TruthTree } from './types-truth.ts';
 
 export const TRUTH_LIMITS = {
   /**
-   * Leaf cap [ENG]: a tree cut here stays under the 50 KB budget. Today's tree averages 17 JSON bytes per leaf (keys
+   * Leaf cap [ENG: numerics]: a tree cut here stays under the 50 KB budget. Today's tree averages 17 JSON bytes per leaf (keys
    * included); the busy test case (organ sub-trees + the drug model's pk with all 58 drugs given) averages 23, so 2 100
    * leaves ≈ 48.7 KB. A typical future tree (12 drugs) is ≈ 1 900 leaves and is not cut.
    */

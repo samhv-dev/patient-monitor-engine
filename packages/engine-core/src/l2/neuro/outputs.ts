@@ -1,7 +1,7 @@
 // What the anaesthetic state hands to the other systems (each consumer reads it when present).
 // NOT here: the circulation's drug effects — including the propofol/volatile baroreflex-gain depression — are the
 // drug model's PD; potassium (succinylcholine) is the blood's; MH is the endocrine model's.
-//   organs (brain): CMRO2 × (tables §5.1: −50–60 % at burst suppression; ≈ −40 % at DI 40 [ENG]);
+//   organs (brain): CMRO2 × (tables §5.1: −50–60 % at burst suppression; ≈ −40 % at DI 40 [FIT: CMRO2 −40 % at DI 40 (tables: −50–60 % at burst suppression); brief research/44 L2-38]);
 //   endocrine/thermal: `antinoc`, `nmb`, `thermoDepth` — the fields the endocrine model reads as ps.neuro.{antinoc,
 //     nmb, thermoDepth}; NeuroState mirrors them on its top level (pipeline.ts);
 //   published only: the anaesthetic MAP operating-point shift (never applied) and the pupil size.
@@ -15,7 +15,7 @@ export interface NeuroOutputs {
   antinoc: number;
   /** 0–1 neuromuscular block of peripheral muscle (thumb block; endocrine: shivering × (1 − nmb)). */
   nmb: number;
-  /** 0–1.5 thermoregulatory depth = hypnotic MAC-equivalents (Sessler: thresholds fall linearly with concentration) [ENG scale]. */
+  /** 0–1.5 thermoregulatory depth = hypnotic MAC-equivalents (Sessler: thresholds fall linearly with concentration) [FIT: MAC-equivalent thermoregulatory depth scale; scale; brief research/44 L2-38]. */
   thermoDepth: number;
 }
 

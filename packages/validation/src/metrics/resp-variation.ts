@@ -1,7 +1,7 @@
 // Respiratory variation of the arterial pulse against the ventilator cycle (brief §9 metrics list; research 03 §2.4):
 // per breath (inspiration onset to the next), PPV = (PPmax − PPmin) / mean(PPmax, PPmin) · 100 and SPV = SBPmax −
 // SBPmin; phase = (time of the PPmax beat − inspiration onset) / breath length, 0…1. Positive-pressure ventilation puts
-// PPmax early in the cycle (inspiration) — the reversed-pulsus sign. Median over breaths with ≥ 3 beats [ENG].
+// PPmax early in the cycle (inspiration) — the reversed-pulsus sign. Median over breaths with ≥ 3 beats [ENG: measurement].
 import type { PulseBeat } from './abp.ts';
 import { median } from '../stats.ts';
 

@@ -1,15 +1,15 @@
 // HRV / RSA (brief §4.1 "HRV"; research 03 §1.4):
 //   RR_n = RR_mean + A_RSA·sin(2π·f_resp·t_n + φ) + A_LF·sin(2π·0.1·t_n + ψ) + ε_n
 // Awake adult: A_RSA 30–60 ms, A_LF 20–40 ms, ε SD 10–20 ms. Amplitudes here are scaled by RR_mean (s)
-// so that tachycardia does not get 60 ms swings [ENG]. Without a breath clock, breathing is a FIXED-RATE clock.
+// so that tachycardia does not get 60 ms swings [ENG: texture]. Without a breath clock, breathing is a FIXED-RATE clock.
 import { normal, uniform, type Sfc32State } from '../../rng/sfc32.ts';
 import type { Modifiers } from '../../types.ts';
 
-export const F_RESP_HZ = 0.25; // 15 breaths/min [ENG, stand-in for the respiratory driver without a breath clock]
+export const F_RESP_HZ = 0.25; // 15 breaths/min [ENG: scenario; stand-in for the respiratory driver without a breath clock]
 export const A_RSA_MAX_S = 0.06; // rsa = 1 → 60 ms at RR 1 s
 export const A_LF_S = 0.03;
 export const EPS_SD_S = 0.012;
-export const MIN_RR_S = 0.2; // floor on a sinus RR (300/min), far above any sinus rate [ENG]
+export const MIN_RR_S = 0.2; // floor on a sinus RR (300/min), far above any sinus rate [ENG: numerics]
 
 export interface HrvPhase {
   phi: number;

@@ -48,7 +48,7 @@ export const SITES: Readonly<Record<TempSite, { tauS: number; offset: number }>>
 export const AWAKE_VE_L_MIN_KG = 0.1;
 const awakeVent = (effKg: number): Ventilation => ({ veLpm: AWAKE_VE_L_MIN_KG * effKg, dryGas: false, hme: false });
 export type Exposure = 'draped' | 'exposed' | 'prep';
-/** Insulation × and extra evaporation per exposure: 'exposed' = uncovered skin (induction, positioning) [ENG]. */
+/** Insulation × and extra evaporation per exposure: 'exposed' = uncovered skin (induction, positioning) [ENG: scenario]. */
 const EXPOSURE: Record<Exposure, { ins: number; area: number; evapX: number }> = {
   draped: { ins: 1, area: 1, evapX: 1 },
   exposed: { ins: 0.15, area: 1, evapX: 1 },
@@ -208,7 +208,7 @@ export function stepThermal(st: ThermalState, t: number, dtS: number, x: Thermal
   // below it (kcp, shivering) and lowers the shivering threshold; sedation reaches the thresholds through the neuro
   // model's depth.
   const target = Math.max(st.depthIn ?? 0, st.anaesthesia === 'general' ? 1 : 0);
-  // induction is fast (drug onset); emergence follows the elimination of the agent (τ EMERGE_TAU_S) [ENG]
+  // induction is fast (drug onset); emergence follows the elimination of the agent (τ EMERGE_TAU_S) [ENG: numerics]
   st.depth = target >= st.depth ? target : target + (st.depth - target) * Math.exp(-dtS / EMERGE_TAU_S);
   st.warmLag += ((st.warming ? 1 : 0) - st.warmLag) * (1 - Math.exp(-dtS / FORCED_AIR_TAU_S));
   stepMh(st.mh, st.dantE, dtS);

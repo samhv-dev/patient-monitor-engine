@@ -1,23 +1,24 @@
 // Thermoregulation constants (tables §5c; research 09 §7; annex B3). The temperature signal's heat-model constants
 // are here unchanged (brief §4.6; research 03 §6), so its numbers are reproduced at the default conditions; the
 // other rows are the thermoregulatory thresholds and effectors and the environment terms (annex B3 "Take").
-// Tags: [P] primary source read, [TXT] textbook, [ENG] engineering choice (tuned to the prototype number given).
+// Tags: [P] primary source read, [TXT] textbook, `[ENG: kind]` not physiology (scenario, device, numerics),
+// `[FIT: target; brief id]` fitted to a physiological target (the prototype number given).
 
 // --- heat model of the temperature signal (unchanged values and meanings) --------------------------------------
 export const HEAT_CAP_J_KG_C = 3500; // brief §4.6
 export const CORE_FRACTION = 2 / 3; // research 03 §6.2
 export const M_AWAKE_W_70 = 80; // metabolic heat ~80 W (brief §4.6), scaled by effective weight
-export const PERIPH_GRADIENT_C = 4.3; // awake core − periphery at 21 °C ambient [ENG: gives the 1–1.5 °C redistribution]
-export const AMBIENT_C = 21; // operating theatre [ENG]
+export const PERIPH_GRADIENT_C = 4.3; // awake core − periphery at 21 °C ambient [FIT: gives the 1–1.5 °C redistribution; brief research/44 L2-18]
+export const AMBIENT_C = 21; // operating theatre [ENG: scenario]
 export const GA_KCP = 3; // k_cp × 2–4 once vasodilated (brief §4.6)
 export const GA_M = 0.8; // metabolic heat −15–20 % under GA
-export const NEURAXIAL_KCP = 1.8; // redistribution 0.5–1 °C, no plateau (research 03 §6.2) [ENG] — not read (NEURAXIAL_BLOCK_FRAC)
-export const NEURAXIAL_H = 1.5; // vasodilated skin below the block loses more heat [ENG]
-// The parameter tables' own value (§5c GA vasoconstriction 34.5 ± 0.2 °C; Sessler 2000), not the [ENG] 34.8 the
+export const NEURAXIAL_KCP = 1.8; // redistribution 0.5–1 °C, no plateau (research 03 §6.2) [ENG: unused] — not read (NEURAXIAL_BLOCK_FRAC)
+export const NEURAXIAL_H = 1.5; // vasodilated skin below the block loses more heat [FIT: vasomotor core–periphery conductance fit; brief research/44 L2-18]
+// The parameter tables' own value (§5c GA vasoconstriction 34.5 ± 0.2 °C; Sessler 2000), not the earlier fitted 34.8 the
 // heat-model plateau had been fitted with — the depth extrapolation (removed by THR_DEPTH_MAX) had hidden the
 // difference by reading 34.55 at sevoflurane's depth 1.06
 export const VASOCONSTRICT_C = 34.5; // GA vasoconstriction logistic centre [TXT: tables §5c]
-/** k_cp × once constricted (thermoregulatory) [ENG]. For comparison (value unchanged): the two-node model's maximally
+/** k_cp × once constricted (thermoregulatory) [FIT: vasomotor core–periphery conductance fit; brief research/44 L2-18]. For comparison (value unchanged): the two-node model's maximally
  * constricted ÷ neutral core–skin conductance is (5.28 + 1.163·0.5)/(5.28 + 1.163·6.3) = 0.465 (Gagge 1986, below), but
  * in absolute terms 0.5·k0 (4.4 W/m²/°C at 70 kg) lies below that model's tissue conduction alone (5.28) — the MH
  * sympathetic constriction below uses the sourced absolute floor, not this. */
@@ -28,12 +29,12 @@ export const VASOCONSTRICT_KCP = 0.5;
  * centrally the patient keeps an unsedated patient's thresholds, both cold-defence thresholds ≈ 0.5 °C lower (the warm,
  * vasodilated legs are "felt" as warm). Redistribution is then smaller than general anaesthesia's (Matsukawa T et al.,
  * Anesthesiology 1995;83:961: epidural −0.8 °C in hour 1 [VERIFY the value]). Sedation adds the neuro model's depth.
- * NEURAXIAL_BLOCK_FRAC: the fraction of the vasomotor/shivering effector mass below a T10 block [ENG: legs + lower
- * trunk ≈ ½].
+ * NEURAXIAL_BLOCK_FRAC: the fraction of the vasomotor/shivering effector mass below a T10 block [FIT: vasomotor core–periphery conductance fit; legs + lower
+ * trunk ≈ ½; brief research/44 L2-18].
  */
 export const NEURAXIAL_BLOCK_FRAC = 0.5;
 export const NEURAXIAL_THR_SHIFT_C = -0.5;
-export const MH_ONSET_S = 900; // MH reaches its full activity over 15 min (tables 5–30 min) [ENG]
+export const MH_ONSET_S = 900; // MH reaches its full activity over 15 min (tables 5–30 min) [FIT: MH size fitted to the owner's E117 targets; brief research/44 L2-10]
 export const SENSOR_TAU_S = 5; // probe time constant < 10 s (research 03 §6.1)
 
 // --- vasomotor tone ----------------------------------------------------------------------------------------
@@ -41,8 +42,8 @@ export const SENSOR_TAU_S = 5; // probe time constant < 10 s (research 03 §6.1)
 // 1 dilated). Under GA (depth 1) this is exactly the heat model's formula. Awake, the tone at 36.8 °C must give k0 (the
 // heat model's awake conductance): f = (1 − 0.5)/(3 − 0.5) = 0.2 at 36.8 with the awake threshold 36.9 → w = 0.1/ln 4.
 export const THR_VASO_AWAKE = 36.9; // tables §5c awake vasoconstriction threshold [TXT]
-export const W_VASO_AWAKE = 0.1 / Math.log(4); // 0.0721 °C [ENG: reproduces the heat model's awake k0 exactly]
-export const W_VASO_GA = 0.1; // The heat model's logistic width [ENG]
+export const W_VASO_AWAKE = 0.1 / Math.log(4); // 0.0721 °C [ENG: numerics; reproduces the heat model's awake k0 exactly]
+export const W_VASO_GA = 0.1; // The heat model's logistic width [FIT: vasomotor core–periphery conductance fit; brief research/44 L2-18]
 export const T_NORMAL = 36.8; // the default core the thresholds are written for (L1 tempCore default)
 /**
  * The depth the THRESHOLDS read is capped at the GA row. Uncapped, `thresholds()` extrapolates the awake → GA line to
@@ -74,17 +75,17 @@ export const THR_SWEAT_GA = 38.0; // tables §5c GA [P]
 export const SUMMIT_W_PER_KG075 = 21;
 export const SHIVER_SPAN_C = 1.8;
 /** Shivering fades out between SHIVER_STOP_C + SHIVER_STOP_SPAN_C and SHIVER_STOP_C core (moderate hypothermia
- * abolishes it: Danzl & Pozos, NEJM 1994;331:1756 [TXT]) [ENG span]. */
+ * abolishes it: Danzl & Pozos, NEJM 1994;331:1756 [TXT]) [FIT: shivering abolition span (direction: Danzl & Pozos 1994); span; brief research/44 L2-18]. */
 export const SHIVER_STOP_C = 30;
 export const SHIVER_STOP_SPAN_C = 2;
 /** Tables §5c: shivering VO2 × 2–3 typical, × 5 maximum — the Pulse summit (≈ × 6.3 at 70 kg) is capped here. */
 export const SHIVER_MAX_X = 5;
 /** Pulse PH/Energy 668–679: sweat evaporative heat 0.25·h_sw = 0.25 × 0.20833 kcal/K/s = 218 W per °C above threshold. */
 export const SWEAT_W_PER_C = 218;
-/** Evaporation under drapes is limited: cap of the sweat heat loss at 70 kg [ENG: keeps MH ≥ 1 °C per 5–15 min]. */
+/** Evaporation under drapes is limited: cap of the sweat heat loss at 70 kg [FIT: keeps MH ≥ 1 °C per 5–15 min; brief research/44 L2-43]. */
 export const SWEAT_MAX_W_70 = 150;
 /**
- * Emergence without the neuro model: the thermoregulatory depth decays with this τ after `anaesthesia: 'none'` [ENG].
+ * Emergence without the neuro model: the thermoregulatory depth decays with this τ after `anaesthesia: 'none'` [ENG: numerics].
  */
 export const EMERGE_TAU_S = 600;
 
@@ -152,8 +153,8 @@ export const TISSUE_K_W_M2_C = 5.28;
  * hyperthermia (Charkoudian N, Mayo Clin Proc 2003;78:603–612); ≈ 10 % of cardiac output crosses the acral
  * arteriovenous shunts, which tonic sympathetic activity keeps nearly closed at room temperature (Sessler 2008).
  * The constriction is linear in the MH sympathetic drive `mhSympDrive` (mh.ts, 0–1; 1 = the fulminant surge, the
- * ≈ 20 × catecholamines): k = k_v − drive·max(0, k_v − k_min) [ENG shape: linear between the two sourced ends; no
- * fitted value]. It never raises a conductance already below the floor.
+ * ≈ 20 × catecholamines): k = k_v − drive·max(0, k_v − k_min) [FIT: vasomotor core–periphery conductance fit; shape: linear between the two sourced ends; no
+ * fitted value; brief research/44 L2-18]. It never raises a conductance already below the floor.
  */
 export const SKBF_MIN_L_H_M2 = 0.5;
 /** Blood's heat capacity per litre, W·h/L/°C (4.187 kJ/kg/°C ÷ 3600 at ≈ 1 kg/L): Gagge 1986's c_bl 1.163 [P, as above]. */
@@ -164,16 +165,16 @@ export const BLOOD_HEAT_WH_L_C = 1.163;
  * is rising before the EtCO2 leaves its baseline. Tachycardia is among the earliest and most consistent signs of MH
  * (Miller's Anesthesia 10e, malignant hyperthermia chapter; Larach MG et al., Anesth Analg 2010;110:498–507), and in
  * porcine MH the plasma catecholamines rise many-fold, as a consequence of the hypermetabolism rather than its cause
- * (Gronert GA, Milde JH, Theye RA, Anesthesiology 1977;47:411–415) [TXT direction]. The 2-min τ is [ENG]: chosen in
+ * (Gronert GA, Milde JH, Theye RA, Anesthesiology 1977;47:411–415) [TXT direction]. The 2-min τ is [FIT: MH size fitted to the owner's E117 targets; brief research/44 L2-10]: chosen in
  * the brief's 2–4 min order to meet the owner's target E117, not taken from a source.
  */
 export const MH_SYMP_TAU_S = 120;
-export const MH_RELAX_TAU_S = 600; // the unsuppressed fraction follows dantrolene with τ 10 min (tables "VCO2 excess decays τ 10–20 min") [ENG]
+export const MH_RELAX_TAU_S = 600; // the unsuppressed fraction follows dantrolene with τ 10 min (tables "VCO2 excess decays τ 10–20 min") [FIT: MH size fitted to the owner's E117 targets; brief research/44 L2-10]
 /**
  * Dantrolene's PK and effect curve are the drug model's: `bus.metabolic.dantroleneE` = C/(C + 1) with C in 2.5 mg/kg
  * reference doses (a gamma curve peaking at 10 min, t10 6 h: `gammaPk(2.5, true, 600, 21600)`). The endocrine model maps that effect onto
  * the MH activity: the unsuppressed fraction relaxes toward max(0, 1 − DANT_GAIN·E). 2.5 mg/kg (E ≈ 0.5) → floor 0.2, 5
- * mg/kg (E 0.67) → 0 (tables "repeat to response: average 5 mg/kg") [ENG, fitted in the prototype].
+ * mg/kg (E 0.67) → 0 (tables "repeat to response: average 5 mg/kg") [FIT: dantrolene dose–response (tables: average 5 mg/kg to response); fitted in the prototype; brief research/44 L2-10].
  */
 export const DANT_GAIN = 1.6;
 /**
@@ -183,7 +184,7 @@ export const DANT_GAIN = 1.6;
  * it later. Direction: Visoiu M, Young MC, Wieland K, Brandom BW, Anesth Analg 2014;118:388–396 (North American MH
  * Registry, 477 cases: onset is shorter after succinylcholine with every volatile; without succinylcholine sevoflurane
  * is faster than isoflurane or desflurane); Larach MG et al., Anesth Analg 2010;110:498–507 (clinical presentation)
- * [VERIFY the medians]. Magnitudes [ENG]: 0 s with succinylcholine; for a volatile alone the agent's registry median
+ * [VERIFY the medians]. Magnitudes [FIT: MH size fitted to the owner's E117 targets; brief research/44 L2-10]: 0 s with succinylcholine; for a volatile alone the agent's registry median
  * (below). Severity 1 = the fulminant course of the instructor's `condition mh 1` (open: fixed vs a seeded draw;
  * fulminant vs abortive).
  */

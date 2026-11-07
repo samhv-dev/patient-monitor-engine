@@ -13,12 +13,12 @@ import type { Instrument, RelayDevice, Role } from '@pme/controller';
 export type RoomLevel = 'stable' | 'weak' | 'down';
 export type RelayState = 'none' | 'open' | 'down';
 
-/** Q9 ruled 5 November = A: a ping over this is Weak [ENG: an engineering choice, stated on the legend]. */
+/** Q9 ruled 5 November = A: a ping over this is Weak [ENG: ui; an engineering choice, stated on the legend]. */
 export const WEAK_PING_MS = 300;
 /** The relay's heartbeat (the kit's and the relay's default, 10 s): a device silent longer than one has missed it. */
 export const HEARTBEAT_MS = 10_000;
 
-/** A hello this recent means the device is joining or catching up [ENG: the owner's 2 s]. */
+/** A hello this recent means the device is joining or catching up [ENG: ui; the owner's 2 s]. */
 export const RESYNC_MS = 2000;
 
 export interface PeerSeen {

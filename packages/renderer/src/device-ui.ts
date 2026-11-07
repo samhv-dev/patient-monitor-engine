@@ -989,7 +989,7 @@ export class DeviceUI {
       if (parts3) this.paintPressure(tile.value, parts3);
       else tile.value.textContent = main;
       if (p === 'HR' && tile.rc3) this.paintPrTile(tile, source);
-      // a three-part pressure ("117/80") overflows a 180 px column at the 40 px numeric size on wide skin fonts [ENG];
+      // a three-part pressure ("117/80") overflows a 180 px column at the 40 px numeric size on wide skin fonts [ENG: display];
       // the grid sizes its values from the skin (layout.grid.fontPx)
       if (!split && !grid) tile.value.style.fontSize = main.length > 5 ? (tile.spec.size === 'large' ? '48px' : '32px') : '';
       tile.sub.textContent = sub;

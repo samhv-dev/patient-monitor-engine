@@ -56,7 +56,7 @@ export function healthyParams(ibwKg = 70): LungParams {
 
 /**
  * Unit mechanics for the current aeration `aer[s]` (1 − atel − consol, dynamic) and blocked sides. Slow units get
- * R = τ_slow / C_unit; fast units take the rest of the side's conductance (never below 25 % of it) [ENG].
+ * R = τ_slow / C_unit; fast units take the rest of the side's conductance (never below 25 % of it) [ENG: numerics].
  */
 export function mechParams(lp: LungParams, aer: number[], blocked: boolean[]): MechParams {
   const units: UnitParams[] = [];

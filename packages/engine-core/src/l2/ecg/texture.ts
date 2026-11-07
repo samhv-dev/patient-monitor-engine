@@ -33,7 +33,7 @@ export function decodeTemplates(set: TemplateSet): DecodedTexture[] {
   return d;
 }
 
-export const XFADE_SAMPLES = 250; // 0.5 s equal-power crossfade [ENG]
+export const XFADE_SAMPLES = 250; // 0.5 s equal-power crossfade [ENG: numerics]
 
 export interface TexState {
   seg: number;
@@ -101,7 +101,7 @@ export function texSample(tex: readonly DecodedTexture[], s: TexState, fHz: numb
 
 // --- AR(2) resonator fallback (brief §4.1: four resonators at f_dom·{0.8, 1, 1.25, 1.6}, 1–2 Hz bandwidth) ---
 export const AR_MULT = [0.8, 1, 1.25, 1.6] as const;
-export const AR_WEIGHT = [0.4, 1, 0.5, 0.25] as const; // [ENG]
+export const AR_WEIGHT = [0.4, 1, 0.5, 0.25] as const; // [ENG: texture]
 export const AR_BANDWIDTH_HZ = 1.5;
 
 export interface ArState {

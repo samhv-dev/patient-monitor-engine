@@ -23,7 +23,7 @@ export function bateman(tMin: number, ka: number, ke: number): number {
 /**
  * Succinylcholine K release (tables: +0.5 normally; burns/denervation/immobilisation > 72 h +5–7) as an additive plasma
  * K pulse: linear rise to the peak at 4 min, then exponential decay τ 5 min (normal: back within ~15 min) or 5·(1 +
- * 5·burns) min [ENG]. Insulin and β2 agonists act on the K set point only (no unsourced second effect on the pulse's
+ * 5·burns) min [FIT: K set-point shift by insulin and β2 agonists; brief research/44 L2-17]. Insulin and β2 agonists act on the K set point only (no unsourced second effect on the pulse's
  * decay).
  */
 /** ONE disease, ONE answer. Burns > 48 h, denervation and prolonged immobilisation all upregulate extrajunctional
@@ -38,12 +38,12 @@ export function suxDeltaK(tMin: number, burns: number): number {
   return peak * Math.exp(-(tMin - tp) / (5 * (1 + 5 * burns)));
 }
 
-/** Insulin–dextrose effect 0–1: onset 10–20 min, peak ≈ 45–60 min, lasts 4–6 h (tables) [TXT shape, ENG rates]. */
+/** Insulin–dextrose effect 0–1: onset 10–20 min, peak ≈ 45–60 min, lasts 4–6 h (tables) [TXT shape] [FIT: insulin–dextrose effect rates; brief research/44 L2-17]. */
 export const insulinEffect = (tMin: number): number => bateman(tMin, 1 / 15, 1 / 180);
 /** Nebulised salbutamol effect 0–1: peak ≈ 30 min, ≈ 2 h (tables). */
 export const salbutamolEffect = (tMin: number): number => bateman(tMin, 1 / 10, 1 / 60);
 /**
- * K set-point shifts at full effect (mmol/L) [ENG]: with the pump term below, insulin–dextrose gives K −0.54 at 30 min
+ * K set-point shifts at full effect (mmol/L) [FIT: K set-point shift by insulin and β2 agonists; brief research/44 L2-17]: with the pump term below, insulin–dextrose gives K −0.54 at 30 min
  * and −0.87 at 60 min (tables −0.6 to −1.0 over 30–60 min); the blood model's own salbutamol (fallback without the drug
  * model) −0.7 at 30 min (tables −0.5 to −1.0).
  */
@@ -52,7 +52,7 @@ export const SALBUTAMOL_K_SHIFT = -1.0;
 /**
  * Insulin and β2 agonists drive K into cells through Na/K-ATPase: the uptake rate rises by K_PUMP_GAIN per mmol/L of
  * drug-driven set-point shift, so the tables' drug time courses (−0.5 to −1.0 within 30 min) hold, which the passive
- * redistribution τ of a K load (43 min, `vK`) alone cannot reach [ENG, fitted]. The drug model's salbutamol kShift
+ * redistribution τ of a K load (43 min, `vK`) alone cannot reach [FIT: K set-point shift by insulin and β2 agonists; fitted; brief research/44 L2-17]. The drug model's salbutamol kShift
  * −0.8 → K −0.55 at 30 min.
  */
 export const K_PUMP_GAIN = 1.5;
@@ -62,8 +62,8 @@ export const caMembrane = (tMin: number): number => (tMin <= 0 ? 0 : (1 - Math.e
 export const CA_MMOL_PER_G = { calciumChloride: 6.8, calciumGluconate: 2.3 } as const;
 /**
  * Sodium bicarbonate: Na enters the ECF at once (SID ↑); a fraction of the dose appears as extra CO2 to exhale,
- * delivered as a Bateman pulse (peak ≈ 1 min) into the CO2 production [ENG, tuned: 50 mmol under constant ventilation →
- * EtCO2 +5–8 mmHg peak within 1–3 min, back within ~10 min].
+ * delivered as a Bateman pulse (peak ≈ 1 min) into the CO2 production [FIT: bicarbonate CO2 load (50 mmol under constant ventilation); tuned: 50 mmol under constant ventilation →
+ * EtCO2 +5–8 mmHg peak within 1–3 min, back within ~10 min; brief research/44 L2-55].
  */
 export const BICARB_CO2_FRAC = 0.25;
 export const MMOL_CO2_ML = 22.4;

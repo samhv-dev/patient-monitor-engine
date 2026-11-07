@@ -9,21 +9,21 @@
 import type { Measured } from '../../types.ts';
 import { createPulseDet, DET_RATE, MISSED_AVG_N, MISSED_LIMIT, pulseRate, pulseStep, type PulseDetState } from '../pulse/detector.ts';
 
-export const AVG_BEATS = 6; // 4–8 beats (brief §4.2) [ENG]
+export const AVG_BEATS = 6; // 4–8 beats (brief §4.2) [ENG: device]
 const RING = 400; // 3.2 s at 125 Hz: the longest beat measured (HR ≥ 19)
-const STALE_S = 6; // no beat for 6 s → non-pulsatile [ENG]
+const STALE_S = 6; // no beat for 6 s → non-pulsatile [ENG: device]
 /** Pulse rate < 25/min or amplitude < 3 mmHg is non-pulsatile (research/05 §6 [S2] p. 57). */
 export const NONPULSATILE = { minRateBpm: 25, minAmpMmHg: 3 } as const;
-/** A line that started sampling searches this long before it calls itself static (Saadat "IBP1 SEARCH") [ENG]. */
+/** A line that started sampling searches this long before it calls itself static (Saadat "IBP1 SEARCH") [ENG: device]. */
 export const SEARCH_S = 10;
 /**
  * A static line is pulsatile again only after this long of pulsatile beats — at MAP 13 / PP 3 one ventilator swing
- * taken for a beat flipped ABP NON-PULSATILE off for 1 s every 5 s [ENG].
+ * taken for a beat flipped ABP NON-PULSATILE off for 1 s every 5 s [ENG: device].
  */
 export const REPULSE_S = 3;
 /**
  * Amplitude hysteresis on the 3 mmHg rule — a static line is pulsatile again only at this amplitude (a case at PP
- * 3–4 mmHg flipped pulsatile ↔ static ≈ 10 times in 11 min on the single 3 mmHg threshold) [ENG].
+ * 3–4 mmHg flipped pulsatile ↔ static ≈ 10 times in 11 min on the single 3 mmHg threshold) [ENG: device].
  */
 export const REPULSE_AMP_MMHG = 4;
 /**

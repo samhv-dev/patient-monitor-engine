@@ -22,14 +22,14 @@ export interface RecruitInputs {
   indFactor: number; // profile factor on ATEL_IND (obesity, pregnancy, supine) [tables §1.3–1.4]
   blocked: boolean[];
 }
-/** Plateau at which a condition's reference non-aeration was defined (PEEP 5 in ARDS): nothing extra opens below it [ENG]. */
+/** Plateau at which a condition's reference non-aeration was defined (PEEP 5 in ARDS): nothing extra opens below it (the catalogue's reference non-aeration at PEEP 5 (catalogue §6)). */
 export const P_REC_REF = 15;
 
 export function createRecruit(): RecruitState {
   return { ind: [0, 0], blk: [0, 0], open: [0, 0] };
 }
 
-/** Edmark 2003 FiO2 dependence of induction atelectasis: 1.0 → 1, 0.8 → 0.1, 0.6 → 0.04 (0.21 → 0.02 [ENG]). */
+/** Edmark 2003 FiO2 dependence of induction atelectasis: 1.0 → 1, 0.8 → 0.1, 0.6 → 0.04 (0.21 → 0.02 [FIT: FiO2 0.21 point extrapolated beyond Edmark 2003; brief research/44 L2-33]). */
 export function fio2AtelFactor(f: number): number {
   const k: ReadonlyArray<readonly [number, number]> = [[0.21, 0.02], [0.6, 0.04], [0.8, 0.1], [1, 1]];
   if (f <= 0.21) return 0.02;
