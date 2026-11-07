@@ -60,6 +60,8 @@ export type FromWorker =
   | { type: 'framed' }
   | { type: 'events'; anchor: ClockAnchor; events: EngineEvent[] }
   | { type: 'result'; reqId: number; result: DispatchResult }
+  // FX-11a: the worker is working through a long run (a fast-forward step, a catch-up)
+  | { type: 'progress' }
   | { type: 'error'; message: string; reqId?: number } // reqId when a request failed inside the worker
   | { type: 'snapshot'; reqId: number; snapshot: PatientSnapshot }
   | { type: 'restored'; reqId: number; error?: string }

@@ -139,6 +139,9 @@ export interface DocBookmark {
 export interface DebriefHints<At extends string = RunEventId> {
   show?: string[];
   openers?: Array<{ at: At; text: string }>;
+  /** Up to three questions for the learner handout (D16), anchored as the openers are; printed with their anchor's time
+   *  in place of the first two fixed prompts, and only when the anchor happened. Only owner-reviewed questions enter a card. */
+  handoutQuestions?: Array<{ at: At; text: string }>;
 }
 
 /** A card's Case briefing: `text` (paragraphs separated by blank lines), the estimated scenario time, how long it shows
@@ -148,6 +151,9 @@ export interface ScenarioBriefing {
   estimatedMinutes?: number;
   durationS?: number;
   lang?: 'en' | 'fa';
+  /** Debrief 2 D13b: the Persian of an English `text` as the clinical owner has read it; sent in its place (lang fa)
+   *  when the host is set to Persian. Never machine-translated at run time. */
+  textFa?: string;
 }
 
 export interface ScenarioDoc extends C {

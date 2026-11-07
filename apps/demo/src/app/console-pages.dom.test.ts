@@ -147,7 +147,10 @@ describe('the rail foot', () => {
 
 describe('Home', () => {
   it('one button to the Room, the repository, the tiles CPU · Memory · Engine', () => {
+    // a browser with a memory API (Chrome, Edge); without one there is no Memory tile (MUI-17, home-tiles.dom.test.ts)
+    Object.defineProperty(performance, 'memory', { configurable: true, value: { usedJSHeapSize: 1048576 } });
     const v = homeView({ meters: new Meters() });
+    delete (performance as Performance & { memory?: unknown }).memory;
     document.body.append(v.el);
     expect(v.el.querySelector('h1')?.textContent).toBe('Patient monitor simulator');
     expect([...v.el.querySelectorAll('.btn')].map((b) => [b.textContent, b.getAttribute('href')])).toEqual([['Start here', '#/room']]);
@@ -195,7 +198,7 @@ describe('Room', () => {
     });
     document.body.append(v.el);
     v.enter?.('');
-    await vi.waitFor(() => expect(v.el.querySelector('.phones-url')?.textContent).toBe('http://192.168.1.20:8787/?join=ABC234'));
+    await vi.waitFor(() => expect(v.el.querySelector('.phones-url')?.textContent).toBe('http://192.168.1.20:8787/?join=ABC234#/pick')); // R4: the QR opens the picker
     expect(v.el.querySelector('.room-qr svg')).not.toBeNull();
     const box = () => v.el.querySelector('.room-status') as HTMLElement;
     expect(box().dataset.level).toBe('stable');

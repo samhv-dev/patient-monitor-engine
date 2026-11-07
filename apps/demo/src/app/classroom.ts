@@ -1,8 +1,8 @@
 // Learners' phones follow the instructor's session over the relay (`pme-relay --static`), which serves this app on the
 // laptop's network address (the classroom). No DOM here: the QR panel, the learner page and their tests read these. The
-// QR carries ONE short address, `http://<laptop>:<port>/?join=<CODE>` — the page's relay is the page's own host — so
-// the symbol stays small enough to scan from the back of a lecture room.
-import { normalizeSessionCode } from '@pme/controller';
+// QR carries ONE short address, `http://<laptop>:<port>/?join=<CODE>#/pick` (R4: the instrument picker) — the page's
+// relay is the page's own host — so the symbol stays small enough to scan from the back of a lecture room.
+import { normalizeSessionCode, type Instrument } from '@pme/controller';
 
 export interface PageLocation {
   protocol: string;
@@ -47,6 +47,21 @@ export function learnerUrl(code: string, origin: string, pathname: string, relay
   return `${origin}${pathname}?join=${code}${relay && relay !== own ? `&relay=${encodeURIComponent(relay)}` : ''}`;
 }
 
+/**
+ * The follower page's hashes (plan room-and-instruments.md §4 D7): `#/pick` the instrument picker (the QR's address),
+ * `#/monitor` today's learner monitor (upright on a phone), `#/monitor/wide` the patient monitor (landscape), `#/defib`
+ * the defibrillator window (Room plan R5). Any other hash is today's learner monitor.
+ */
+export type FollowerHash = 'pick' | Extract<Instrument, 'learner' | 'monitor' | 'defib'>;
+/** What a follower page at `hash` shows (the picker, or an instrument); any hash it does not know is the learner monitor. */
+export function instrumentOf(hash: string): FollowerHash {
+  const path = hash.replace(/^#\/?/, '').replace(/\/$/, '');
+  return path === 'pick' ? 'pick' : path === 'monitor/wide' ? 'monitor' : path === 'defib' ? 'defib' : 'learner';
+}
+export const hashOf = (show: Exclude<FollowerHash, 'pick'>): string => (show === 'monitor' ? '#/monitor/wide' : show === 'defib' ? '#/defib' : '#/monitor');
+/** The QR's address ends here: the device that scans it opens the picker (Q1 ruled 5 November). */
+export const PICK_HASH = '#/pick';
+
 /** `others`: the learner address on this computer's other networks (shown under the code, for a phone the QR fails). */
 export type QrTarget = { ok: true; url: string; origin: string; others: string[] } | { ok: false; why: string };
 
@@ -84,9 +99,10 @@ function placeOf(loc: PageLocation, relay: string | null, info: RelayInfo | null
 const targetOf = (p: Place, build: (origin: string, pathname: string, relay: string | null) => string): QrTarget =>
   p.ok ? { ok: true, url: build(p.origin, p.pathname, p.relay), origin: p.origin, others: p.others.map((o) => build(o, '/', null)) } : p;
 
-/** Where the learners' QR code sends phones: the learner monitor (`?join=CODE`). */
+/** Where the learners' QR code sends phones: `?join=CODE#/pick`, the picker (the room sheet's addresses open it; a second
+ *  screen of this computer, `followUrl`, does not). */
 export function qrTarget(code: string, loc: PageLocation, relay: string | null, info: RelayInfo | null): QrTarget {
-  return targetOf(placeOf(loc, relay, info), (o, p, r) => learnerUrl(code, o, p, r));
+  return targetOf(placeOf(loc, relay, info), (o, p, r) => learnerUrl(code, o, p, r) + PICK_HASH);
 }
 
 /** Where the instructor's QR code sends the instructor's phone: the Remote's PIN form (`?relay#/remote?code=CODE`). */

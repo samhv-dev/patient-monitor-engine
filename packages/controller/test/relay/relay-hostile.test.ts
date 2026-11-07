@@ -72,4 +72,34 @@ describe('hostile relay input', () => {
     expect(h.got.some((m) => m.includes('"grant"') || m.includes('"kp"'))).toBe(false);
     await healthy('HGU234');
   });
+  // R8b (plan room-and-instruments.md): what a hostile peer can do with the ventilator's message
+  it('a `vent` as a first frame is a bad hello; an oversized or foreign `vent` body is dropped; the room keeps working', async () => {
+    const first = await open();
+    first.ws.send(JSON.stringify(createStamper('HVA234', 'v')({ kind: 'vent', body: { v: 1, kind: 'clock', ventTick: 1 } } as never)));
+    await waitFor(() => first.ws.readyState === WebSocket.CLOSED, 3000, 'closed: bad hello');
+    expect(first.got.some((m) => m.includes('"bad-hello"'))).toBe(true);
+    const h = await open();
+    const v = await open();
+    const hs = createStamper('HVB234', 'h');
+    const vs = createStamper('HVB234', 'vent-p.1');
+    h.ws.send(JSON.stringify(hs({ kind: 'hello', role: 'host' })));
+    v.ws.send(JSON.stringify(vs({ kind: 'hello', role: 'ventilator', pin: '4729' } as never)));
+    await waitFor(() => h.got.some((m) => m.includes('"vent-p.1"')), 3000, 'ventilator hello at the host');
+    h.ws.send(JSON.stringify(hs({ kind: 'grant', to: 'vent-p.1', granted: true })));
+    await waitFor(() => v.got.some((m) => m.includes('"grant"')), 3000, 'granted');
+    const before = relay.stats().dropped;
+    const frame = { pawCmH2O: 5, flowLps: 0, volumeMl: 0, fio2: 0.4, peepCmH2O: 5 };
+    for (const body of [
+      { v: 1, kind: 'settings', cfg: { note: 'x'.repeat(5000) } }, // over 4 KB
+      { v: 1, kind: 'cmds', tick: 1, cmds: [{ id: 'k', issuedBy: 'x', type: 'setRhythm', rhythm: 'vf' }] }, // not a ventilator command
+      { v: 1, kind: 'cmds', tick: 1, cmds: [{ id: 'k', issuedBy: 'x', type: 'externalDrive', source: 'ventilator', frame: { ...frame, samples: [1] } }] },
+      { v: 1, kind: 'snapshot' },
+    ])
+      v.ws.send(JSON.stringify(vs({ kind: 'vent', body } as never)));
+    v.ws.send(JSON.stringify(vs({ kind: 'vent', body: { v: 1, kind: 'cmds', tick: 2, cmds: [{ id: 'ok', issuedBy: 'ventilator', type: 'externalDrive', source: 'ventilator', frame }] } } as never)));
+    await waitFor(() => h.got.some((m) => m.includes('"ok"')), 3000, 'the valid vent at the host');
+    expect(h.got.filter((m) => m.includes('"kind":"vent"'))).toHaveLength(1);
+    expect(relay.stats().dropped - before).toBe(4);
+    await healthy('HVC234');
+  });
 });

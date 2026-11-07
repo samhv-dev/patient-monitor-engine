@@ -316,6 +316,10 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
     else if (lowPerf) out.push({ ...fixed('spo2LowPerf', 3, 'technical', LOW_PERF_DELAY_S), numeric: 'spo2' });
     else if (m !== undefined && m.value !== null && m.flag === 'questionable') out.push({ ...fixed('spo2LowSignal', 3, 'technical', LOW_SIGNAL_DELAY_S), numeric: 'spo2' });
   }
+  // MUI-7: no transducer on the channel (the line's sensor state 'none', not a zero pressure) — on the skins that show
+  // it (skin `ibp.noSensorMessage`). A prompt, with no tone and no lamp [inferred: the photos show it standing on
+  // monitors in use for an unused channel, which no unit would let sound]
+  if (inp.abp === 'none' && p.ibpNoSensor) out.push({ ...fixed('abpNoSensor', 3, 'technical'), prompt: true });
   if (inp.abp === 'zeroing') out.push({ ...fixed('abpZero', 3, 'technical'), numeric: 'abpMean' });
   else if (inp.abp !== 'none') {
     const mean = valid(inp, 'abpMean', t);

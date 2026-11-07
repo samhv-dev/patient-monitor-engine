@@ -21,6 +21,8 @@ export declare const parse: (en: string) => FaPart[];
 export declare const TYPED: Readonly<Record<'t' | 'span' | 'n' | 'c' | 'u' | 'code', RegExp>>;
 export declare const FA_DIGITS: string;
 export declare const faDigits: (s: string | number) => string;
+/** Latin and Western-digit runs kept whole and left to right inside a Persian line (global). */
+export declare const LTR_RUN: RegExp;
 export declare const spanFa: (s: string) => string;
 export declare function match(parts: FaPart[], i: number, s: string, pos: number, caps: Array<[string, string]>): Generator<Array<[string, string]>>;
 export interface FaMatcher {

@@ -153,7 +153,7 @@ export interface ScenarioDocV2 extends Header {
   /** Optional: the author's hints and openers for the Debrief (D8), each opener on a string anchor. */
   debriefHints?: DebriefHints<HintAnchor>;
   /** #211's learner-facing Case briefing (the same shape as on /1; `briefingOf` reads either). */
-  briefing?: { text: string; estimatedMinutes?: number; durationS?: number; lang?: 'en' | 'fa' };
+  briefing?: { text: string; estimatedMinutes?: number; durationS?: number; lang?: 'en' | 'fa'; textFa?: string };
 }
 
 // --- shared by F2 (the phase runner) and F3 (the record and grade()) ---------------------------------------------

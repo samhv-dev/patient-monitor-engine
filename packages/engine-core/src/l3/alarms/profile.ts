@@ -111,6 +111,8 @@ export interface DeviceProfile {
   ibpStaticDisplay: 'keep' | 'mean-only';
   /** The arterial-line disconnect alarm is on (skin `alarms.abpDisconnectDefault`; saadat-like off). */
   abpDisconnect: boolean;
+  /** No transducer on the IBP channel is said as a prompt (skin `ibp.noSensorMessage`; saadat-like "IBP1 NO SENSOR"). */
+  ibpNoSensor: boolean;
   /** The invasive-pressure display filter (skin `ibp.filterDefaultHz`), Hz. */
   ibpFilterHz: number;
   /** The cuff settings of the skin (and age band): NibpState.cfg. */
@@ -234,6 +236,7 @@ export function deviceProfile(id: string, band: AgeBand = 'adult'): DeviceProfil
     spo2: { averagingS: s.spo2.avgDefault, updateS: 1 / s.spo2.updateHz },
     ibpStaticDisplay: s.ibp.staticDisplay,
     abpDisconnect: a.abpDisconnectDefault,
+    ibpNoSensor: s.ibp.noSensorMessage,
     ibpFilterHz: s.ibp.filterDefaultHz,
     nibp: {
       initial: s.nibp.initialInflation[band],

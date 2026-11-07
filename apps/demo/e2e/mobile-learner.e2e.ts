@@ -104,8 +104,9 @@ test("the Room page's QR, then a phone follows in the instructor's style through
   // network address) and the count
   await page.evaluate(() => (location.hash = '#/room'));
   const sheet = page.locator('section.room-join');
-  await expect(sheet.getByRole('img', { name: /^QR code of http:\/\/\d+\.\d+\.\d+\.\d+:\d+\/\?join=/ })).toBeVisible();
-  await expect(sheet.locator('.phones-url')).toHaveText(new RegExp(`^http://\\d+\\.\\d+\\.\\d+\\.\\d+:${relay!.port}/\\?join=${code}$`));
+  // R4 (Q1 ruled 5 November): the QR's address opens the instrument picker, `#/pick`
+  await expect(sheet.getByRole('img', { name: /^QR code of http:\/\/\d+\.\d+\.\d+\.\d+:\d+\/\?join=[A-Z0-9]{6}#\/pick$/ })).toBeVisible();
+  await expect(sheet.locator('.phones-url')).toHaveText(new RegExp(`^http://\\d+\\.\\d+\\.\\d+\\.\\d+:${relay!.port}/\\?join=${code}#/pick$`));
   await expect(sheet.locator('.phones-count')).toHaveText('0 phones following');
 
   const f = await phone(browser, browserName, code);
@@ -224,4 +225,72 @@ test('a relay restart, a full session and a relay the phone cannot reach', { tag
   // a phone on another network: it waits, then says what to check
   const lost = await phone(browser, browserName, code, 'ws://127.0.0.1:9/');
   await expect(status(lost)).toHaveText("Waiting for the instructor: this phone cannot reach the instructor's laptop. Is it on the classroom Wi-Fi?", { timeout: 15_000 });
+});
+
+test("R4: the QR's address opens the instrument picker; one tap gives today's learner monitor, saying what it shows; #/monitor/wide is landscape and follows", async ({ page, browser, browserName }) => {
+  test.setTimeout(180_000);
+  await classroom();
+  const code = await instructor(page, 'showcase-induction');
+  const { defaultBrowserType: _b, ...dev } = browserName === 'webkit' ? devices['iPhone 13'] : devices['Pixel 7'];
+  const ctx = await browser.newContext(dev);
+  const p = await ctx.newPage();
+  // what the phone says on the wire: its hellos (Playwright sees the socket's frames)
+  const hellos: Array<Record<string, unknown>> = [];
+  p.on('websocket', (w) => w.on('framesent', (f) => {
+    const m = JSON.parse(String(f.payload)) as Record<string, unknown>;
+    if (m.kind === 'hello') hellos.push(m);
+  }));
+  await p.goto(`${base}/?join=${code}&relay=${encodeURIComponent(ws())}#/pick`);
+  const pick = p.locator('.join-pick');
+  await expect(pick.getByRole('heading', { level: 1 })).toHaveText('Choose what this screen shows');
+  await expect(pick.locator('.join-code .code')).toHaveText(code);
+  await expect(pick.locator('.join-card h2')).toHaveText(['Learner monitor', 'Patient monitor', 'Ventilator', 'Depth of anaesthesia', 'Intra-aortic balloon pump']);
+  const learnerBtn = pick.locator('.join-card[data-show="learner"] button');
+  await expect(learnerBtn).toBeFocused(); // preselected: one tap
+  expect(hellos).toEqual([]); // the picker follows nothing until the tap
+  // every card's action is a 44 px target; nothing scrolls sideways
+  for (const b of await pick.locator('.join-card button').all()) {
+    const r = (await b.boundingBox())!;
+    expect(Math.min(r.width, r.height), await b.textContent() ?? '').toBeGreaterThanOrEqual(44);
+  }
+  expect(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await learnerBtn.click();
+  await synced(p);
+  await expect(p).toHaveURL(new RegExp(`\\?join=${code}&relay=[^#]+#/monitor$`));
+  await expect(status(p)).toHaveText(`Following session ${code}`);
+  await expect(p.locator('.pme-portrait')).toBeVisible(); // today's learner monitor, upright
+  expect(await p.evaluate(() => document.documentElement.dataset.learner)).toBe('phone');
+  await same(p, page);
+  expect(hellos.length).toBeGreaterThan(0);
+  const key = hellos[0]?.device as string;
+  expect(key).toMatch(/^[a-z0-9]{8,16}$/);
+  for (const m of hellos) expect(m).toMatchObject({ role: 'viewer', show: 'learner', device: key });
+  // "Change" goes back to the picker, which now marks the last choice
+  await p.locator('.follower-bar a.follower-change').click();
+  await expect(p.locator('.join-card[data-show="learner"] .st.on')).toHaveText('Last on this device');
+  await expect(p.locator('.join-card[data-show="learner"] button')).toBeFocused();
+  // the patient monitor, landscape, follows; its hellos say so, under the same device key
+  hellos.length = 0;
+  await p.locator('.join-card[data-show="monitor"] button').click();
+  await synced(p);
+  await expect(p).toHaveURL(/#\/monitor\/wide$/);
+  await expect(p.locator('.pme-portrait')).toHaveCount(0);
+  expect(await p.evaluate(() => document.documentElement.dataset.learner ?? null)).toBeNull();
+  await same(p, page);
+  expect(hellos.length).toBeGreaterThan(0);
+  for (const m of hellos) expect(m).toMatchObject({ role: 'viewer', show: 'monitor', device: key });
+  await ctx.close();
+});
+
+test('R4: the picker is one column on a 375 px phone and three across at 1280 px', async ({ browser }) => {
+  for (const [width, cols] of [[375, 1], [1280, 3]] as const) {
+    const ctx = await browser.newContext({ viewport: { width, height: 800 } });
+    const p = await ctx.newPage();
+    await p.goto(`${base}/?join=ABC234&relay=${encodeURIComponent('ws://127.0.0.1:9/')}#/pick`);
+    const tops = await p.locator('.join-card').evaluateAll((cs) => cs.map((c) => Math.round(c.getBoundingClientRect().top)));
+    expect(tops.filter((t) => t === tops[0]).length, `${width} px`).toBe(cols);
+    expect(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${width} px`).toBe(true);
+    for (const b of await p.locator('.join-card button').all()) expect(((await b.boundingBox())!).height, `${width} px`).toBeGreaterThanOrEqual(44);
+    await ctx.close();
+  }
 });

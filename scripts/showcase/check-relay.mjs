@@ -9,7 +9,10 @@
 // Before the runs: the kit's Windows launchers (.cmd) exist, end every line with CRLF and hold only ASCII.
 // Per run: a 64-byte binary frame (the relay drops it), a host hello of >= 64 bytes (answer: the relay's `peers` frame),
 // a controller hello, a 1 KB host event that the relay forwards to the controller byte for byte, /pme-relay.json still
-// answers, the relay is still running; then the relay is stopped and the port is free again.
+// answers; after the relay's first heartbeat sweep (10 s), a viewer that joins makes the host's `peers` frame list the
+// controller with its measured round trip (`devices`, plan room-and-instruments.md R2); a ventilator says hello with a
+// PIN, the host grants it, its `vent` `cmds` reach the host and the host's `vent` `clock` reaches it, byte for byte
+// (R8b); the relay is still running; then the relay is stopped and the port is free again.
 // Room plan R1b: each run gets a state directory of its own (relay.mjs --state-dir; the launchers' PME_STATE_DIR, which
 // stands in for the application-data folder they use): after the host hello /pme-relay.json answers lastRoom and
 // room.json in that directory holds the room code only. After every run the kit's own folder is as it was.
@@ -92,7 +95,17 @@ function socket(port, proc) {
       if (!m.startsWith('{"relay":"hb"')) return m;
     }
   };
-  return { ws, opened: withTimeout(opened, 'socket open'), next: nextReal };
+  /** Resolves at the relay's next heartbeat frame (its sweep), within `ms`. */
+  const heartbeat = (ms) => new Promise((ok, no) => {
+    const t = setTimeout(() => no(new Error(`no heartbeat within ${ms / 1000} s`)), ms);
+    ws.addEventListener('message', function on(e) {
+      if (typeof e.data !== 'string' || !e.data.startsWith('{"relay":"hb"')) return;
+      clearTimeout(t);
+      ws.removeEventListener('message', on);
+      ok();
+    });
+  });
+  return { ws, opened: withTimeout(opened, 'socket open'), next: nextReal, heartbeat };
 }
 
 const SESSION = 'KRATST'; // a valid session code (SESSION_CODE_RE: no I, L, O, 0, 1)
@@ -139,6 +152,57 @@ async function frames(port, proc, steps, state) {
   const kept = readFileSync(join(state, 'room.json'), 'utf8');
   if (JSON.stringify(JSON.parse(kept)) !== JSON.stringify({ lastRoom: SESSION }) || readdirSync(state).join() !== 'room.json') throw new Error(`state directory: ${readdirSync(state).join()} ${kept}`);
   step(`the last room kept in the state directory: room.json ${kept.trim()} (the room code only)`);
+
+  // R2: the sweep pings every socket (the kit's heartbeat is 10 s); the controller's socket answers, and the host's next
+  // peers frame (here: a viewer joining) lists it with that round trip
+  await host.heartbeat(12_000);
+  await new Promise((r) => setTimeout(r, 300)); // the pong of a loopback socket: well under a millisecond
+  const view = socket(port, proc);
+  await view.opened;
+  view.ws.send(wire('hello', 'kit-check-viewer', 1, { role: 'viewer', show: 'learner', device: 'kitcheck0123' }));
+  let table = null;
+  for (let i = 0; i < 4 && !table; i++) {
+    const f = JSON.parse(await host.next('the host told of the viewer, with its devices'));
+    // (the sweep's own frame comes first: sent before its ping, it cannot hold that ping's answer)
+    if (f.relay === 'peers' && Array.isArray(f.devices) && f.devices.some((d) => d.id === 'kit-check-viewer')) table = f.devices;
+  }
+  const ctlRow = table?.find((d) => d.id === 'kit-check-controller-0123456789');
+  const viewRow = table?.find((d) => d.id === 'kit-check-viewer');
+  if (!ctlRow || typeof ctlRow.rttMs !== 'number' || !viewRow || viewRow.show !== 'learner' || viewRow.device !== 'kitcheck0123')
+    throw new Error(`the host's device table after a sweep: ${JSON.stringify(table)}`);
+  step(`after one sweep the host's devices list the controller with rttMs ${ctlRow.rttMs} and the viewer showing ${viewRow.show}`);
+
+  // R8b: the ventilator's wire. A cockpit says hello with the PIN, the host grants it, and `vent` runs between them only
+  const hostNext = async (what, pred) => {
+    for (let i = 0; i < 6; i++) {
+      const raw = await host.next(what);
+      if (pred(JSON.parse(raw))) return raw;
+    }
+    throw new Error(`the host never got ${what}`);
+  };
+  const VENT_ID = 'kit-check-ventilator';
+  const vent = socket(port, proc);
+  await vent.opened;
+  vent.ws.send(wire('hello', VENT_ID, 1, { role: 'ventilator', pin: '4729' }));
+  await hostNext('the ventilator hello', (f) => f.kind === 'hello' && f.from === VENT_ID && f.role === 'ventilator');
+  host.ws.send(wire('grant', 'kit-check-host-0123456789abcdef', 3, { to: VENT_ID, granted: true }));
+  for (let f = null; f?.kind !== 'grant'; ) f = JSON.parse(await vent.next('the grant at the ventilator'));
+  const frame = { pawCmH2O: 5, flowLps: 0, volumeMl: 0, fio2: 0.4, peepCmH2O: 5 };
+  const cmds = wire('vent', VENT_ID, 2, { body: { v: 1, kind: 'cmds', tick: 1, cmds: [{ id: 'vent-1', issuedBy: 'ventilator', type: 'externalDrive', source: 'ventilator', frame }] } });
+  vent.ws.send(cmds);
+  const upGot = await hostNext('the ventilator cmds', (f) => f.kind === 'vent');
+  if (upGot !== cmds) throw new Error(`the ventilator's cmds differ at the host (${upGot.length} vs ${cmds.length} bytes)`);
+  const clock = wire('vent', 'kit-check-host-0123456789abcdef', 4, { to: VENT_ID, body: { v: 1, kind: 'clock', ventTick: 80 } });
+  host.ws.send(clock);
+  let downGot = null;
+  for (let i = 0; i < 4 && !downGot; i++) {
+    const r = await vent.next("the host's clock at the ventilator");
+    if (JSON.parse(r).kind === 'vent') downGot = r;
+  }
+  if (downGot !== clock) throw new Error(`the host's clock differs at the ventilator: ${downGot}`);
+  step(`ventilator granted; its vent cmds (${Buffer.byteLength(cmds)} bytes) reached the host and the host's vent clock reached it, byte for byte`);
+  vent.ws.close();
+  view.ws.close();
   host.ws.close();
   ctl.ws.close();
   await new Promise((r) => setTimeout(r, 300));
