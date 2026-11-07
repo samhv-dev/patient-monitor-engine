@@ -1,11 +1,17 @@
 # Persian Debrief handout (گزارش دبریفینگ به فارسی)
 
-A **handout script, not an app feature.** `scripts/showcase/debrief-fa.mjs` reads the JSON that the Debrief view saves
-("Download the record (JSON)", schema `pme-debrief/2` (`/1` exports are still read), Stage 13 ruling Q3: the same data
-as the printed report) and prints a right-to-left A4 PDF in Persian. The app, its tests, scenarios and bands are
-untouched; an in-app translation is planned for a later release. The English report stays the reference.
-New sections in Persian: a later release (the key times, the key moments and the learner handout). A `/2` export also
-prints the talking points box and the redesign's verdict words (Observed, Not observed, Not assessable, Discuss).
+**In the app (Debrief 2, D13) and as a handout script.** The Debrief page has a language switch (English · فارسی,
+per browser, English by default): with it on «فارسی» the report, page 2 and the learner handout are drawn right to left
+in the bundled Vazirmatn (`apps/demo/src/app/fonts/`, SIL OFL 1.1, NOTICES N-018) and printed from the browser as the
+English report is. The page and `scripts/showcase/debrief-fa.mjs` read this table through ONE matcher
+(`apps/demo/src/app/i18n/fa-match.mjs`, D11), so both print the same Persian for the same run. On the page, a string the
+table does not hold prints in English in italic and is listed under the switch ("N strings print in English"); the
+charts, the course strip and the swimlane keep their English labels (SVG); the talking points, the "Run by" field and
+the notes stay as they are. The English report stays the reference.
+
+The script reads the JSON that the Debrief view saves ("Download the record (JSON)", schema `pme-debrief/2` or `/3`;
+`/1` exports are still read; Stage 13 ruling Q3: the same data as the printed report) and prints a right-to-left A4
+PDF in Persian.
 
 ## How to run
 
@@ -25,9 +31,8 @@ prints the talking points box and the redesign's verdict words (Observed, Not ob
    The PDF is written beside the JSON as `<name>.fa.pdf` (`--out-dir DIR` to put it elsewhere). Several JSON files may
    be given at once. `--html` also writes the HTML; `--text` writes the printed Persian strings one per line (for the
    spelling pass below).
-3. **Font.** Vazirmatn (SIL Open Font License, free to embed) is not in the repository. Download it from
-   <https://github.com/rastikerdar/vazirmatn/releases> (or Google Fonts) and pass the folder holding
-   `Vazirmatn-Regular.ttf` and `Vazirmatn-Bold.ttf` (or the variable `Vazirmatn[wght].ttf`) with `--fonts`, or set
+3. **Font.** Vazirmatn (SIL Open Font License, free to embed) is in the repository since D13
+   (`apps/demo/src/app/fonts/Vazirmatn-Regular.ttf` and `-Bold.ttf`): pass that folder with `--fonts`, or set
    `PME_FA_FONTS`; the script also looks in `~/Library/Fonts`, `~/.fonts`, `/Library/Fonts` and
    `/usr/share/fonts/truetype/vazirmatn`. The font is embedded in the PDF, so the reader needs nothing installed.
 
@@ -101,7 +106,7 @@ are written in Persian script (اپی‌نفرین، دانترولن، سالب
 
 ## Review status
 
-**An entry is `reviewed: false` (an unreviewed machine translation) until the project's clinical owner reads it; 10 of the table's 551 entries are owner-approved (below).**
+**An entry is `reviewed: false` (an unreviewed machine translation) until the project's clinical owner reads it; 10 of the table's 726 entries are owner-approved (below).**
 While any entry printed in a PDF is unreviewed, the first page carries the line «ترجمه‌ی فارسی این گزارش هنوز به
 تأیید بالینی نرسیده است. متن مرجع، گزارش انگلیسی همین اجراست.»; it disappears by itself when every entry used is set
 to `reviewed: true`. To correct a term, edit its `fa` (keep the placeholders) and set `reviewed: true`; a `note` field
@@ -119,6 +124,21 @@ prefix "SpO₂ –:" is what the cell shows and is not translated.
 «نافذ» added to the tamponade line, «از همان ابتدا» for "early" in the MH line, and "Peak" kept in Latin in the
 bronchospasm line. Every other entry (the section title «نکته‌های کلیدی» included) is still `reviewed: false`, so a
 handout still carries the notice above.
+
+**Debrief 2 drafts, 2026-11-07 (plan D12), unread by the owner:** 121 entries were drafted with the
+`persian-writing` skill, each with `"reviewed": false` and a `note` naming its id in the review file the owner reads:
+- 22 of the 48 `"fa": null` entries: the `/3` words and the two Pressures captions;
+- 22 strings the D0 fixtures printed in English (the `/3` haemorrhage card's actions and phases, its grade lines, a
+  bookmark's default label);
+- 77 new strings of Debrief 2 and of the in-app page (key-time tiles, legends, the swimlane's head, alarm ends, cuff
+  readings, "not recorded in this file", the hints' heads, the app's footer, and the monitor tokens entered unchanged).
+
+One existing entry was corrected, also `"reviewed": false`: the state "Midazolam 2 mg and fentanyl 100 µg given,
+breathing 100 % O₂ by face mask" had the Persian of the room-air state.
+
+The other 26 null entries stay null: earlier rulings (E132, E126, the rc.4 rulings) keep them for the owner to write,
+and the review file only suggests a draft for each. With these words in place, the script prints 6 strings in English
+on the D0 fixtures (it printed 46), and those 6 are reserved lines.
 
 ## The Persian-writing pass (skill `persian-writing` 1.4.0)
 

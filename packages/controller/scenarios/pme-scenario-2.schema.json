@@ -35,7 +35,8 @@
         "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
         "estimatedMinutes": { "type": "number", "exclusiveMinimum": 0 },
         "durationS": { "type": "number", "exclusiveMinimum": 0, "maximum": 600 },
-        "lang": { "enum": ["en", "fa"] }
+        "lang": { "enum": ["en", "fa"] },
+        "textFa": { "type": "string", "minLength": 1, "maxLength": 4000, "description": "Optional (Debrief 2 D13b): as on /1, the owner-read Persian of an English text, sent when the host is set to Persian." }
       }
     }
   },

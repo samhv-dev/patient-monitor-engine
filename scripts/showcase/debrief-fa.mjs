@@ -22,7 +22,7 @@ import { existsSync, readdirSync, readFileSync, realpathSync, writeFileSync } fr
 import { homedir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { faMatcher, spanFa } from '../../apps/demo/src/app/i18n/fa-match.mjs';
+import { faMatcher, LTR_RUN, spanFa } from '../../apps/demo/src/app/i18n/fa-match.mjs';
 
 const REPO = resolve(import.meta.dirname, '../..');
 const TABLE_PATH = join(REPO, 'docs/showcase/i18n/fa-debrief.json');
@@ -34,8 +34,6 @@ const { tr, inGroup } = faMatcher(TABLE);
 
 // ---------------------------------------------------------------------------------------------------- HTML
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-/** Latin and Western-digit runs ("250 µg", "RR 12 /min", "O₂ 100 %") kept whole and left-to-right inside the Persian line. */
-const LTR_RUN = /[A-Za-z0-9µ°×+][A-Za-z0-9µ°×₀-₉⁰-⁹⁺⁻%.,:/·–+\- ]*[A-Za-z0-9µ°₀-₉⁰-⁹⁺⁻%]|[A-Za-z0-9µ°]/g;
 const bidi = (s) => {
   let out = '';
   let last = 0;
