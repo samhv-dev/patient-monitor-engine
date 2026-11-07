@@ -204,7 +204,7 @@ export class HostSession {
    * PIN takes over). The laptop's own panels are controllers: they need no grant and are never revoked.
    * R8c: the one granted remote ventilator has its own single place beside it, option B within its own role only.
    */
-  private readonly held: Record<SignsIn, Holder | null> = { instructor: null, ventilator: null };
+  private readonly signedIn: Record<SignsIn, Holder | null> = { instructor: null, ventilator: null };
   private denials: number[] = []; // Wall ms of the last DENIAL_RECORD_MAX wrong PINs within DENIAL_WINDOW_MS (no lockout)
   private readonly seen = new Map<string, AckBody>();
   private readonly groups = new Map<string, { tick: Tick; at: number }>();
@@ -290,12 +290,12 @@ export class HostSession {
 
   /** R8c: the granted remote ventilator's peer id (null: none). */
   get ventilator(): string | null {
-    return this.held.ventilator?.from ?? null;
+    return this.signedIn.ventilator?.from ?? null;
   }
 
   /** R8c: send a link message to the granted remote ventilator only (`to` its id). False: none is granted. */
   ventPost(body: VentLinkBody): boolean {
-    const h = this.held.ventilator;
+    const h = this.signedIn.ventilator;
     if (!h) return false;
     h.t.send(this.stamp({ kind: 'vent', to: h.from, body }));
     return true;
@@ -458,12 +458,12 @@ export class HostSession {
     this.transports.get(t)?.();
     this.transports.delete(t);
     this.peers.delete(t);
-    for (const r of ['instructor', 'ventilator'] as const) if (this.held[r]?.t === t) this.setHolder(r, null);
+    for (const r of ['instructor', 'ventilator'] as const) if (this.signedIn[r]?.t === t) this.setHolder(r, null);
   }
 
   private setHolder(role: SignsIn, h: Holder | null): void {
-    const was = this.held[role];
-    this.held[role] = h;
+    const was = this.signedIn[role];
+    this.signedIn[role] = h;
     if (was?.t === h?.t && was?.from === h?.from) return;
     if (role === 'instructor') this.o.onInstructors?.(h ? 1 : 0);
     else this.o.onVentilator?.(h ? h.from : null);
@@ -475,7 +475,7 @@ export class HostSession {
 
   /** Tell the role's holder it is no longer granted, and forget it. */
   private revoke(role: SignsIn, reason: string): void {
-    const h = this.held[role];
+    const h = this.signedIn[role];
     if (!h) return;
     this.grant(h.t, h.from, false, reason);
     this.setHolder(role, null);
@@ -488,7 +488,7 @@ export class HostSession {
   private verify(t: ManagedTransport, from: string, pin: string | undefined, role: SignsIn): void {
     // R8c: an app that drives from no remote cockpit takes no ventilator, whatever the PIN
     const want = role === 'ventilator' && !this.o.onVent ? null : (this.o.instructorPin?.() ?? null);
-    const h = this.held[role];
+    const h = this.signedIn[role];
     const isHolder = h?.t === t && h.from === from;
     if (want === null || pin === undefined || !samePin(pin, want)) {
       if (want !== null) this.denials.push(this.now());
@@ -506,7 +506,7 @@ export class HostSession {
 
   /** Whether (t, from) holds `role` with the PIN as it is now; a PIN changed unannounced revokes it here. */
   private holds(role: SignsIn, t: ManagedTransport, from: string): boolean {
-    const h = this.held[role];
+    const h = this.signedIn[role];
     if (h?.t !== t || h.from !== from) return false;
     const pin = this.o.instructorPin?.() ?? null;
     if (pin !== null && samePin(pin, h.pin)) return true;
@@ -529,7 +529,7 @@ export class HostSession {
     p?.roles.delete(from);
     p?.left.add(from);
     if (p && p.left.size > LEFT_MAX) p.left.delete(p.left.values().next().value as string); // the oldest goes first
-    for (const r of ['instructor', 'ventilator'] as const) if (this.held[r]?.t === t && this.held[r]?.from === from) this.setHolder(r, null);
+    for (const r of ['instructor', 'ventilator'] as const) if (this.signedIn[r]?.t === t && this.signedIn[r]?.from === from) this.setHolder(r, null);
   }
 
   private queue(e: WireEvent): void {
