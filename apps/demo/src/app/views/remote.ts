@@ -88,6 +88,11 @@ export function remoteView(o: RemoteOptions): View {
   return relay ? instructorPhone(o, relay) : sameBrowserRemote(o);
 }
 
+/** A connected Remote's first row: the page's heading beside the status. The join form, which holds the other h1, hides on
+ *  connecting, so without this the connected page had no visible h1 (the accessibility audit's one-h1 rule; research/41
+ *  row 62). */
+const connectedHead = (status: HTMLElement) => h('div', { class: 'remote-head' }, h('h1', { class: 'remote-title' }, 'Instructor remote'), status);
+
 /** A same-browser Remote: a `controller` over this browser's BroadcastChannel (as before P7). */
 function sameBrowserRemote(o: RemoteOptions): View {
   const status = h('p', { class: 'status-pill', role: 'status' }, 'Not connected');
@@ -111,7 +116,7 @@ function sameBrowserRemote(o: RemoteOptions): View {
     const ctl = new ControllerSession({ session: code, transport, issuedBy: 'remote' });
     const link = new Link(ctl, transport, null);
     join.hidden = true;
-    holder.append(status);
+    holder.append(connectedHead(status));
     mountSessionBar(o.bar, link);
     mountFastForward(document.body, ctl, { simT: () => link.simT });
     o.bar.hidden = false;
@@ -223,7 +228,7 @@ function instructorPhone(o: RemoteOptions, relay: string): View {
       mounted = { panel, offs: [mountSessionBar(o.bar, link), mountFastForward(document.body, ctl, { simT: () => link.simT })] };
       o.bar.hidden = false;
       form.hidden = true;
-      holder.replaceChildren(status, notice, panel.el);
+      holder.replaceChildren(connectedHead(status), notice, panel.el);
       Object.assign(window, { __pmeRemote: { link, panel } }); // e2e hook
     };
     const draw = () => {
