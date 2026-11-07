@@ -28,6 +28,14 @@ export const NEVER = 1e12;
 /** Normothermia = the engine's own resting core (L1 tempCore default 36.8 °C): hypothermia is measured from it, so a
  * normothermic patient keeps its published clearance (Task 21: engine PK = standalone model). */
 const NORMOTHERMIA_C = STATE_SCHEMA.tempCore.def;
+/** Hypothermic CYP450 clearance. Tortorici MA et al., Crit Care Med 2007;35:2196 (review of 21 studies): mild to
+ * moderate hypothermia lowers the systemic clearance of CYP450-metabolised drugs by about 7–22 % per °C below 37 °C
+ * during cooling. Within that range, the human measurement: Hostler D et al., Drug Metab Dispos 2010;38:781
+ * (midazolam, the CYP3A4/5 probe, volunteers cooled to 35.4–35.8 °C; population PK): clearance −11.1 % per °C below
+ * 36.5 °C. Applied to every row whose hepatic share is CYP oxidation (elim.cyp). Below Hostler's 35.4 °C it is an
+ * extrapolation of the same slope. */
+export const CYP_TEMP_PER_C = 0.111;
+export const CYP_TEMP_REF_C = 36.5;
 
 export interface DrugInst {
   id: string;
@@ -103,6 +111,9 @@ export interface PkCtx {
   /** hepFn already carries the temperature (the organ model's `blood.core.liver = liverFn·tempF`), so clFactor must
    * not apply its own temperature term to the hepatic share again. */
   hepFnTemp: boolean;
+  /** The organ model's liver function WITHOUT its temperature term (liverFn), when it runs: the CYP450 share applies
+   * its own sourced temperature slope, so it reads this instead of hepFn·tempF. */
+  liverFn?: number;
 }
 export const NEUTRAL_PK_CTX: PkCtx = { coLpm: 5, vaLpm: 4.2, frcL: 2.1, tempC: 37, ph: 7.4, hepFlow: 1, hepFn: 1, renal: 1, betaBlockC: 0, vasoResp: 1, hepFnTemp: false, betaOcc: 0, betaNonSel: false };
 
@@ -180,8 +191,16 @@ function baseParams(pk: PkState, row: DrugRow, inst: DrugInst): PkParams | null 
 export function clFactor(row: DrugRow, ctx: PkCtx): number {
   const h = row.elim?.hepatic ?? 0;
   const r = row.elim?.renal ?? 0;
-  const temp = Math.max(0.5, 1 - 0.05 * Math.max(0, NORMOTHERMIA_C - ctx.tempC)); // [FIT: hypothermic clearance −5 %/°C; brief research/44 L2-27; src M10 ch. 24 p. 698 (direction)] ≈ −5 %/°C below normothermia (M10 ch. 24 p. 698 direction)
-  const hep = row.elim?.highExtraction ? ctx.hepFlow * temp : ctx.hepFn * (ctx.hepFnTemp ? 1 : temp);
+  // Pathways no hypothermia source covers (glucuronidation, esterases, renal, Hofmann): −5 %/°C below normothermia,
+  // a placeholder [FIT: hypothermic clearance −5 %/°C, non-CYP pathways; brief research/44 L2-27; src M10 ch. 24 p. 698 (direction)]
+  const temp = Math.max(0.5, 1 - 0.05 * Math.max(0, NORMOTHERMIA_C - ctx.tempC));
+  let hep: number;
+  if (row.elim?.cyp) {
+    // The hepatic share is cytochrome-P450 oxidation: its own sourced slope (CYP_TEMP_PER_C), on hepatic flow (flow-
+    // limited rows) or on the liver function WITHOUT the organ model's temperature term, so it is counted once
+    const cyp = Math.max(0.5, 1 - CYP_TEMP_PER_C * Math.max(0, CYP_TEMP_REF_C - ctx.tempC)); // Floor [FIT: hypothermic clearance floor; brief research/44 L2-27]
+    hep = (row.elim.highExtraction ? ctx.hepFlow : ctx.hepFnTemp ? (ctx.liverFn ?? 1) : ctx.hepFn) * cyp;
+  } else hep = row.elim?.highExtraction ? ctx.hepFlow * temp : ctx.hepFn * (ctx.hepFnTemp ? 1 : temp);
   const organ = h * hep + (r * ctx.renal + Math.max(0, 1 - h - r)) * temp;
   return Math.round(organ * 100) / 100;
 }

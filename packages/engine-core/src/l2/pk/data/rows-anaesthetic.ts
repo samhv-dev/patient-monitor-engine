@@ -78,7 +78,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     // 10–20 min after 1–2 mg/kg), so 10 % of the peak is ≈ 3.3 × 13.5 min after it. The row's 10–15 min is a DURATION,
     // not a 10 % time. tpS is the sourced 1-min peak.
     id: 'ketamine', name: 'Ketamine', cls: 'ketamine', amountUnit: 'mg', pk: gammaPk(1.5, true, 60, 2700, 0.01, 300, 900),
-    elim: { hepatic: 0.9, t12S: 9540 }, // t½β 2.5–2.8 h (M10 ch. 21 Table 21.1)
+    elim: { hepatic: 0.9, cyp: true, t12S: 9540 }, // t½β 2.5–2.8 h (M10 ch. 21 Table 21.1); hepatic microsomal N-demethylation (M10 ch. 21 p. 536)
     // Ketamine's pressor effect is INDIRECT (central sympathetic drive), so it is blunted by β-blockade and disappears
     // when catecholamines are depleted (M10 ch. 21: the direct myocardial depression is then unmasked); the DIRECT Ees
     // −0.2 stays. [FIT: size; fit target: MAP +15–25 % replete (T6.3) — prototype +8.7 % — and a FALL in the
@@ -121,7 +121,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     // tpS 240 s — peak effect 3–5 min, t½ke0 2–3 min (M10 ch. 21 p. 532); 180 s sat at the fast edge and put the depth
     // nadir 5 s before the 2–7 min band.
     id: 'midazolam', name: 'Midazolam', cls: 'benzodiazepine', amountUnit: 'mg', pk: gammaPk(0.05, true, 240, 3600, 0.001, 600, 1800),
-    elim: { hepatic: 1, t12S: 7740 }, // t½β 1.7–2.6 h (M10 ch. 21 Table 21.1); cirrhosis halves CL (MacGilchrist 1986)
+    elim: { hepatic: 1, cyp: true, t12S: 7740 }, // CYP3A4/5 (M10 ch. 21 p. 528); t½β 1.7–2.6 h (M10 ch. 21 Table 21.1); cirrhosis halves CL (MacGilchrist 1986)
     pd: [{ target: 'svr', emax: -0.24, ec50: 1 }, { target: 'v0Frac', emax: 0.06, ec50: 1 }, { target: 'gv', emax: -0.4, ec50: 1 }],
     // Midazolam's age effect IS pharmacodynamic (increased brain sensitivity; M10 ch. 21: reduce the dose 20–50 % in
     // the elderly). hypC50AgeK 0.008 [FIT: LOC dose at 80 y ≈ 0.5 × the 35-y dose through the neuro model's
@@ -146,7 +146,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     id: 'fentanyl', name: 'Fentanyl', cls: 'opioid', amountUnit: 'mcg', pk: { kind: 'model', model: 'shafer', ventKe0: FENTANYL_KE0 },
     // Flow-dependent distribution, as propofol — haemorrhagic shock shrinks fentanyl's central volume and clearance and
     // ≈ doubles its concentrations (Egan 1999 Anesthesiology 91:156; research/13).
-    elim: { hepatic: 1, highExtraction: true }, flowDist: true,
+    elim: { hepatic: 1, highExtraction: true, cyp: true }, flowDist: true, // CYP3A4/5 (M10 ch. 22 p. 589)
     pd: [{ target: 'hr', emax: -0.25, ec50: 2 }, { target: 'svr', emax: -0.15, ec50: 2 }, { target: 'v0Frac', emax: 0.03, ec50: 2 }, FENTANYL_VAGAL],
     // EEG 1.6 (tables §5d), MAC reduction 0.8 (remifentanil 1.2 ≈ fentanyl 1.5 ng/mL, tables §5d — the neuro model's
     // `opioidFentEq` scale), ventilation 0.55 (Bouillon 2003: ventilatory C50 ≈ 1.7 vs remifentanil 0.92)
@@ -165,7 +165,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
   },
   {
     id: 'sufentanil', name: 'Sufentanil', cls: 'opioid', amountUnit: 'mcg', pk: { kind: 'model', model: 'gepts', ventKe0: SUFENTANIL_KE0 }, // vent = brain ke0 [FIT: ventilatory ke0 = brain ke0 (no source); brief research/44 X-10]
-    elim: { hepatic: 1, highExtraction: true },
+    elim: { hepatic: 1, highExtraction: true, cyp: true }, // CYP3A4/5 N-dealkylation (M10 ch. 22 p. 590)
     pd: [{ target: 'hr', emax: -0.25, ec50: 0.25 }, { target: 'svr', emax: -0.15, ec50: 0.25 }, SUFENTANIL_VAGAL],
     // Ventilatory weight 5 [FIT: ≈ 9 × fentanyl's 0.55 — sufentanil's analgesic potency ratio to fentanyl, M10 ch. 22;
     // no ventilatory C50 source; brief research/44 X-10]. MAC weight = remiEq (the neuro model's own scale, unchanged).

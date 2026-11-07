@@ -77,8 +77,8 @@ library rows and the outputs other modules consume.
 | [`pd.ts:10`](../../packages/engine-core/src/l2/pk/pd.ts#L10) | Competitive antagonism: EC50·(1 + Cant/Ki), written with receptor occupancy o = Cant/(Cant + Ki) (capped 0.95). |
 | [`pd.ts:22`](../../packages/engine-core/src/l2/pk/pd.ts#L22) | Greco/Minto response surface, simplest form: U = Uh + Uo + α·Uh·Uo (α 1.5 (inside Bouillon 2004; within Bouillon 2004)). |
 | [`pd.ts:39`](../../packages/engine-core/src/l2/pk/pd.ts#L39) | Eleveld BIS Ce50 age slope: Ce50(age) = Ce50(35)·e^(−0.00635·(age − 35)) (tables §5d). |
-| [`pipeline.ts:190`](../../packages/engine-core/src/l2/pk/pipeline.ts#L190) | share of the chain's decline (ke); f = clFactor (research/13 H9). 1 without `elim.t12S` or a chain. |
-| [`pipeline.ts:602`](../../packages/engine-core/src/l2/pk/pipeline.ts#L602) | Step to tEnd on the absolute grid t_k = k·PK_DT_S. First, the boluses accepted since the previous call become |
+| [`pipeline.ts:209`](../../packages/engine-core/src/l2/pk/pipeline.ts#L209) | share of the chain's decline (ke); f = clFactor (research/13 H9). 1 without `elim.t12S` or a chain. |
+| [`pipeline.ts:621`](../../packages/engine-core/src/l2/pk/pipeline.ts#L621) | Step to tEnd on the absolute grid t_k = k·PK_DT_S. First, the boluses accepted since the previous call become |
 | [`row.ts:41`](../../packages/engine-core/src/l2/pk/row.ts#L41) | E = emax·c/ec50 (per-MAC effects of the volatiles, tables §6.3), clamped to ±\|emax\|·3 |
 | [`tci.ts:5`](../../packages/engine-core/src/l2/pk/tci.ts#L5) | Ce(k) = Ce_free(k) + r·Ce_unit(k), so r = min_k (target − Ce_free(k)) / Ce_unit(k) over k with Ce_unit(k) > 0 — |
 | [`volatile.ts:5`](../../packages/engine-core/src/l2/pk/volatile.ts#L5) | alveoli : VL·dFA/dt = VA·(FI − FA) − U,  U = Q·λb/g·(FA − Fv),  Fv = Σ q_i·F_i |
@@ -182,6 +182,8 @@ library rows and the outputs other modules consume.
 |---|---|---|---|---|
 | `PK_DT_S` | `0.1` | s | — | — |
 | `NEVER` | `1e12` | — | — | "Never" / "long ago" as finite numbers: snapshots travel as JSON, which turns ±Infinity into null. |
+| `CYP_TEMP_PER_C` | `0.111` | — | Med 2007; Dispos 2010 | Hypothermic CYP450 clearance. Tortorici MA et al., Crit Care Med 2007;35:2196 (review of 21 studies): mild to moderate hypothermia lowers the systemic clearance of CYP450-metabolised drugs by about 7–22 % per °C below 37 °C during cooling. Within that range, the human measurement: Hostler D et al., Drug Metab Dispos 2010;38:781 (midazolam, the CYP3A4/5 probe, volunteers cooled to 35.4–35.8 °C; population PK): clearance −11.1 % per °C below 36.5 °C. Applied to every row whose hepatic share is CYP oxidation (elim.cyp). Below Hostler's 35.4 °C it is an extrapolation of the same slope. |
+| `CYP_TEMP_REF_C` | `36.5` | — | — | — |
 | `ARM_BRAIN_S` | `12` | s | Guyton & Hall [TXT]; Guyton & Hall's 10–15 s; [TXT] | Cardiac output ÷ the patient's own resting output (the circulation's stabilised reference; else 0.075 L/min/kg), quantised to 5 % in 0.3–1.5 (cache hits) — exactly 1 at rest, so a resting engine keeps the unscaled model. Resting arm-to-brain circulation time, s (10–15 s: the classic dye/decholin circulation times, Guyton & Hall [TXT]) (a point in Guyton & Hall's 10–15 s; value); the lag at output ratio q is ARM_BRAIN_S·(1/q − 1). |
 
 ### [`l2/pk/tci.ts`](../../packages/engine-core/src/l2/pk/tci.ts)

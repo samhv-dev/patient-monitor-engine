@@ -6,7 +6,7 @@
 The engine's cross-module coupling seams and its effector products and sums, read from the code
 (docs/plans/mechanism-tree.md, piece R0). Places are file#function; the line of each row is in the `--json` output.
 
-Seams (de-duplicated on module, kind and field): 137; sites: 173.
+Seams (de-duplicated on module, kind and field): 138; sites: 174.
 
 | Module | ctx | ext | endo-write | bus-read | All |
 |---|---:|---:|---:|---:|---:|
@@ -17,10 +17,10 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | lungs | 0 | 3 | 0 | 0 | 3 |
 | neuro | 8 | 0 | 0 | 16 | 24 |
 | organs | 10 | 2 | 0 | 4 | 16 |
-| pharmacology | 18 | 0 | 0 | 0 | 18 |
+| pharmacology | 19 | 0 | 0 | 0 | 19 |
 | pressure-waveforms | 11 | 1 | 0 | 0 | 12 |
 | rhythms-ecg | 7 | 0 | 0 | 0 | 7 |
-| **All** | 75 | 22 | 9 | 31 | 137 |
+| **All** | 76 | 22 | 9 | 31 | 138 |
 
 ## Exported numeric constants inside the module's own effector expressions
 
@@ -36,14 +36,14 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | organs | 138 | 63 |
 | endocrine-thermal | 167 | 68 |
 | neuro | 76 | 42 |
-| pharmacology | 25 | 10 |
+| pharmacology | 27 | 10 |
 | monitor | 46 | 5 |
 | alarms | 17 | 0 |
 | defib-pacer | 23 | 4 |
 | engine-runtime | 6 | 2 |
-| **All** | 1004 | 369 |
+| **All** | 1006 | 369 |
 
-## The ten effector expressions with the most factors (of 1485)
+## The ten effector expressions with the most factors (of 1486)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -58,7 +58,7 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | `l2/circ/model.ts#control` | `p.pvrL` | product | 7 |
 | `l2/circ/model.ts#control` | `p.pvrR` | product | 7 |
 
-## The ten products with the most factors (of 819 products)
+## The ten products with the most factors (of 820 products)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -93,6 +93,7 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | pharmacology | ctx | `pkCtx.hepFlow` | `engine.ts#pkCtx` | 1 |
 | pharmacology | ctx | `pkCtx.hepFn` | `engine.ts#pkCtx` | 1 |
 | pharmacology | ctx | `pkCtx.hepFnTemp` | `engine.ts#pkCtx` | 1 |
+| pharmacology | ctx | `pkCtx.liverFn` | `engine.ts#pkCtx` | 1 |
 | pharmacology | ctx | `pkCtx.renal` | `engine.ts#pkCtx` | 1 |
 | pharmacology | ctx | `pkCtx.betaBlockC` | `engine.ts#pkCtx` | 1 |
 | pharmacology | ctx | `pkCtx.betaOcc` | `engine.ts#pkCtx` | 1 |
