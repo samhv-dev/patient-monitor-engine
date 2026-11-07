@@ -25,7 +25,7 @@ type Learner = Map<number, Command[]>; // tick → commands the learner sends on
 let nL = 0;
 const learner = (event: object): Command => ({ id: `L${++nL}`, issuedBy: 'learner', type: 'applyEvent', event } as unknown as Command);
 const SHOCK = { kind: 'defib', action: 'shock', energyJ: 200 };
-// Stage 4b: the engine models the defibrillator, so a shock needs a charge first (200 J charges in 7 s [ENG]).
+// Stage 4b: the engine models the defibrillator, so a shock needs a charge first (200 J charges in 7 s [ENG: device]).
 const CHARGE = { kind: 'defib', action: 'charge', energyJ: 200 };
 const CHARGE_LEAD_S = 9;
 

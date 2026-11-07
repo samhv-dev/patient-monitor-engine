@@ -4,16 +4,16 @@
 import { hash53 } from '../../../rng/sfc32.ts';
 import type { LeadId, Modifiers } from '../../../types.ts';
 
-export const RAIL_MV = 5; // amplifier saturation [ENG]
+export const RAIL_MV = 5; // amplifier saturation [ENG: device]
 export const MAINS_MAX_MV = 0.5; // 0.01–0.5 mV
-const MAINS_H3 = 0.3; // 3rd harmonic relative amplitude [ENG]
+const MAINS_H3 = 0.3; // 3rd harmonic relative amplitude [ENG: device]
 export const MOTION_MAX_MV = 3; // 0.5–5 mV
-const DIATHERMY_MV = 8; // broadband, saturating [ENG]
+const DIATHERMY_MV = 8; // broadband, saturating [ENG: device]
 const SHOCK_SAT_MIN_S = 0.05; // rail for 50–500 ms, longer at higher energy
 const SHOCK_SAT_SPAN_S = 0.45;
 const SHOCK_TAU_MIN_S = 0.5; // recovery τ 0.5–1.0 s so the baseline is back < 5 s (brief §6.5)
 const SHOCK_TAU_SPAN_S = 0.5;
-const SHOCK_OFFSET_MIN_MV = 1; // post-saturation offset step 1–3 mV [ENG]
+const SHOCK_OFFSET_MIN_MV = 1; // post-saturation offset step 1–3 mV [ENG: device]
 const SHOCK_OFFSET_SPAN_MV = 2;
 
 /** Four uniform [0,1) numbers fixed per lead (and optionally per event), from a hash. */
@@ -43,7 +43,7 @@ export function motionStage(mods: Modifiers, _mainsHz: 50 | 60, lead: LeadId, n:
   if (lvl <= 0) return v;
   const [r1, r2, r3, r4] = leadRand(lead, 2);
   const s = n / 500;
-  const env = Math.max(0, Math.sin(2 * Math.PI * 0.07 * s + 2 * Math.PI * r4)) ** 2; // intermittent bursts [ENG]
+  const env = Math.max(0, Math.sin(2 * Math.PI * 0.07 * s + 2 * Math.PI * r4)) ** 2; // intermittent bursts [ENG: device]
   const m = 0.5 * Math.sin(2 * Math.PI * 0.6 * (0.8 + 0.4 * r1) * s) + 0.3 * Math.sin(2 * Math.PI * 1.3 * (0.8 + 0.4 * r2) * s + 1) + 0.2 * Math.sin(2 * Math.PI * 2.4 * (0.8 + 0.4 * r3) * s + 2);
   return v + lvl * MOTION_MAX_MV * env * m * 2;
 }

@@ -24,7 +24,7 @@ describe('kidney (Pulse-ported haemodynamics + tables §5.2 output)', () => {
   it('UOP–MAP curve (awake, CVP 5, 30 min per step): 0 at RPP ≤ 50, rising through 65–80, 3× at 150', () => {
     const at = (map: number) => mlKgH(hold(createRenal(BASE, W), { ...BASE, map }, 1800));
     expect(at(50)).toBe(0);
-    expect(at(65)).toBeGreaterThan(0.15); // prototype 0.24 — [ENG] regression band on Pulse's curve (decision 8); the tables' linear U is Task 20's it.fails
+    expect(at(65)).toBeGreaterThan(0.15); // prototype 0.24 — [FIT: regression band on Pulse's curve; brief research/44 X-18] regression band on Pulse's curve (decision 8); the tables' linear U is Task 20's it.fails
     expect(at(65)).toBeLessThan(0.4);
     expect(at(80)).toBeGreaterThan(0.6); // prototype 0.76
     expect(at(80)).toBeLessThan(0.9);
@@ -44,7 +44,7 @@ describe('kidney (Pulse-ported haemodynamics + tables §5.2 output)', () => {
     hold(s, dobu, 1800);
     expect(mlKgH(s)).toBeLessThanOrEqual(0.3); // prototype 0.284 at 60 min (neurohumoral washout τ 45 min)
   });
-  it('class III haemorrhage → oliguria < 0.3 (tables 17a); fluids restore > 0.5 by 60 min [ENG band: gradual, washout τ 45 min]', () => {
+  it('class III haemorrhage → oliguria < 0.3 (tables 17a); fluids restore > 0.5 by 60 min [FIT: band: gradual, washout τ 45 min; brief research/44 L2-07]', () => {
     const s = hold(createRenal(BASE, W), { ...BASE, map: 65, cvp: 2, coLpm: 3.4, bvRel: 0.65 }, 1800);
     expect(mlKgH(s)).toBeLessThan(0.3); // prototype 0.046
     hold(s, { ...BASE, map: 85, cvp: 6, coLpm: 5.2, bvRel: 0.95 }, 3600);

@@ -180,7 +180,7 @@ function baseParams(pk: PkState, row: DrugRow, inst: DrugInst): PkParams | null 
 export function clFactor(row: DrugRow, ctx: PkCtx): number {
   const h = row.elim?.hepatic ?? 0;
   const r = row.elim?.renal ?? 0;
-  const temp = Math.max(0.5, 1 - 0.05 * Math.max(0, NORMOTHERMIA_C - ctx.tempC)); // [ENG] ≈ −5 %/°C below normothermia (M10 ch. 24 p. 698 direction)
+  const temp = Math.max(0.5, 1 - 0.05 * Math.max(0, NORMOTHERMIA_C - ctx.tempC)); // [FIT: hypothermic clearance −5 %/°C; brief research/44 L2-27; src M10 ch. 24 p. 698 (direction)] ≈ −5 %/°C below normothermia (M10 ch. 24 p. 698 direction)
   const hep = row.elim?.highExtraction ? ctx.hepFlow * temp : ctx.hepFn * (ctx.hepFnTemp ? 1 : temp);
   const organ = h * hep + (r * ctx.renal + Math.max(0, 1 - h - r)) * temp;
   return Math.round(organ * 100) / 100;
@@ -198,7 +198,7 @@ export function gammaDeclineRate(row: DrugRow, f: number): number {
 /** Cardiac output ÷ the patient's own resting output (the circulation's stabilised reference; else 0.075 L/min/kg),
  * quantised to 5 % in 0.3–1.5 (cache hits) — exactly 1 at rest, so a resting engine keeps the unscaled model. */
 /** Resting arm-to-brain circulation time, s (10–15 s: the classic dye/decholin circulation times, Guyton & Hall
- * [TXT]) [ENG value]; the lag at output ratio q is ARM_BRAIN_S·(1/q − 1). */
+ * [TXT]) (a point in Guyton & Hall's 10–15 s; value); the lag at output ratio q is ARM_BRAIN_S·(1/q − 1). */
 export const ARM_BRAIN_S = 12;
 export function distFactor(ctx: PkCtx, weightKg: number): number {
   const q = ctx.coLpm / (ctx.coRefLpm ?? 0.075 * weightKg);
@@ -444,7 +444,7 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
       d.infC += (d.infTarget - d.infC) * (1 - Math.exp(-PK_DT_S / tau));
       const tpS = row.pk.tpS;
       const n = gammaN(tpS, row.pk.t10S);
-      d.doses = d.doses.filter((x) => t - x.t < tpS * (4 + 12 / Math.sqrt(n))); // pruned when < 1e-4 of peak [ENG bound]
+      d.doses = d.doses.filter((x) => t - x.t < tpS * (4 + 12 / Math.sqrt(n))); // pruned when < 1e-4 of peak [ENG: numerics; bound]
       // Organ function slows the ELIMINATION share of the decline — each dose past its peak ages at rate g (dose time
       // moved forward by dt·(1 − g)); before the peak nothing changes (onset is distribution) (research/13 H9).
       d.factor = clFactor(row, ctx);

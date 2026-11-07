@@ -1,11 +1,11 @@
 // Neuromuscular block PD (tables §5d; the neuro model owns it). Effect-site concentration (ng/mL, PK via bus.ts) →
 // receptor-level block B = Ce^γ/(Ce^γ + EC50'^γ), first twitch T1 = 1 − B, then the TOF picture a stimulator records:
 //   TOF count: T1 visible above 3 %, T2 above 10 %, T3 above 20 %, T4 above 25 % of control (tables §5d [TXT, VERIFY]);
-//   TOF ratio (non-depolarising): T1^2.5 capped at 1 (tables §5d [ENG]: TOFR 0.9 at T1 0.96, 0.7 at T1 0.87);
-//   succinylcholine phase I: no fade (ratio 1); phase II: fade grows linearly from 3 to 7 mg/kg cumulative [ENG; onset
-//     at the brief §4.9 "> 3–5 mg/kg or infusion"];
+//   TOF ratio (non-depolarising): T1^2.5 capped at 1 (tables §5d [FIT: NMB monitoring parameter by fit; brief research/44 L2-36]: TOFR 0.9 at T1 0.96, 0.7 at T1 0.87);
+//   succinylcholine phase I: no fade (ratio 1); phase II: fade grows linearly from 3 to 7 mg/kg cumulative [FIT: succinylcholine phase II fade onset; onset
+//     at the brief §4.9 "> 3–5 mg/kg or infusion"; brief research/44 L2-36];
 //   post-tetanic count (TOF count 0 only): 0 while B ≥ 0.99, then 1–15 as T1 rises from 1 % to 3 % (tables §5d "PTC
-//     appears when T1 = 0 and B < 0.99" [ENG]).
+//     appears when T1 = 0 and B < 0.99" [FIT: NMB monitoring parameter by fit; brief research/44 L2-36]).
 // EC50' = EC50 × interaction/profile multipliers (interactions.ts) × neostigmine (neostigmine.ts). Pure functions.
 import type { NmbAgent } from './bus.ts';
 
@@ -24,7 +24,7 @@ export const DIA_EC50_RATIO = 1.73;
 
 /**
  * EC50 (ng/mL) and Hill γ, fitted on the drug model's PK. Rocuronium: tables §5d (Plaud 1995 [P]; γ 4.8
- * [VERIFY]). Vecuronium, cisatracurium, succinylcholine [ENG]; "max block" = the stimulator plateau.
+ * [VERIFY]). Vecuronium, cisatracurium, succinylcholine [FIT: NMB monitoring parameter by fit; brief research/44 L2-36]; "max block" = the stimulator plateau.
  * Succinylcholine keeps the drug model's effect-site value: `l2/pk/nmb.ts` re-fits it (EC50 200 → 1160, γ 4 → 6)
  * together with the paper's CL/V1, because no (V1, CL, ke0) triple holds the §5d label course at EC50 200/γ 4 on a
  * clearance within Roy 2002's measured 37 ± 7 mL·min⁻¹·kg⁻¹; this row mirrors the drug model's numbers, it does not
@@ -32,14 +32,14 @@ export const DIA_EC50_RATIO = 1.73;
  */
 export const NMB_PD: Record<NmbAgent, NmbPd> = {
   rocuronium: { ec50Thumb: 823, ec50Dia: 1424, gamma: 4.8, depolarising: false },
-  vecuronium: { ec50Thumb: 158, ec50Dia: 158 * DIA_EC50_RATIO, gamma: 4, depolarising: false }, // [ENG, fitted on the PK: max block 3.03 / T1 25 % 25.2 min]
-  cisatracurium: { ec50Thumb: 230, ec50Dia: 230 * DIA_EC50_RATIO, gamma: 6.9, depolarising: false }, // [ENG, from the drug row, meets on its PK: max block 2.48 / T1 25 % 42.4 min]
+  vecuronium: { ec50Thumb: 158, ec50Dia: 158 * DIA_EC50_RATIO, gamma: 4, depolarising: false }, // [FIT: ted on the PK: max block 3.03 / T1 25 % 25.2 min; brief research/44 L2-36]
+  cisatracurium: { ec50Thumb: 230, ec50Dia: 230 * DIA_EC50_RATIO, gamma: 6.9, depolarising: false }, // [FIT: from the drug row, meets on its PK: max block 2.48 / T1 25 % 42.4 min; brief research/44 L2-36]
   succinylcholine: { ec50Thumb: 1160, ec50Dia: 1160 * DIA_EC50_RATIO, gamma: 6, depolarising: true }, // [the PK's re-fitted effect-site value on Roy 2002's CL/V1 (measured EC50 734 ± 211 ng/mL [P]); holds onset 0.73 / T1 10 % 6.98 / 90 % 11.98 min]
 };
 
 export const TOF_THRESH = [0.03, 0.1, 0.2, 0.25] as const;
 export const TOFR_EXP = 2.5;
-export const PTC_LO = 0.01; // T1 at B = 0.99: the first post-tetanic twitch (tables §5d [ENG])
+export const PTC_LO = 0.01; // T1 at B = 0.99: the first post-tetanic twitch (tables §5d [FIT: NMB monitoring parameter by fit; brief research/44 L2-36])
 export const PTC_HI = 0.03; // T1 at which the first TOF twitch returns: PTC 15
 
 /** Fractional receptor-level block 0–1 of one agent at concentration ce. */
@@ -98,7 +98,7 @@ export function tofFrom(b: number, ndShare: number, phase2: number): TofReading 
 
 /**
  * Succinylcholine phase II fraction from the cumulative dose (the drug model's `cumulativeMgPerKg`): 0 at 3 mg/kg →
- * 1 at 7 [ENG].
+ * 1 at 7 [FIT: NMB monitoring parameter by fit; brief research/44 L2-36].
  */
 export function phase2Fraction(cumMgPerKg: number): number {
   return Math.max(0, Math.min(1, (cumMgPerKg - 3) / 4));

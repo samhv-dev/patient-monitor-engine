@@ -10,7 +10,7 @@ import type { CircModelState } from './model.ts';
 export type CircConditionId = 'tamponade' | 'pe' | 'tensionPtx' | 'rvInfarct';
 export const CIRC_CONDITIONS: readonly CircConditionId[] = ['tamponade', 'pe', 'tensionPtx', 'rvInfarct'];
 export const TAMPONADE_ML = 250;
-/** The most pericardial fluid the accumulation integrates to [ENG: beyond Q29's acute 150–250 mL]. */
+/** The most pericardial fluid the accumulation integrates to [ENG: scenario; beyond Q29's acute 150–250 mL]. */
 export const TAMPONADE_MAX_ML = 500;
 /** Optional fields of the tamponade condition — an absolute volume and an accumulation (− drainage) rate. */
 export interface TamponadeOpts {

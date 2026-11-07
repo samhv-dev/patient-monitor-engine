@@ -25,16 +25,16 @@ import { RELAY_CLOSE, RELAY_RETRY_CLOSE, type RelayDevice, type RelayFrame } fro
 export interface RelayOptions {
   port?: number; // 0 = random (tests)
   host?: string; // default '0.0.0.0' (LAN)
-  /** A room with no sockets is deleted after this long (default 10 min) [ENG]. */
+  /** A room with no sockets is deleted after this long (default 10 min) [ENG: network]. */
   roomTtlMs?: number;
-  /** ws ping + {relay:'hb'} interval (default 10 s) [ENG]. */
+  /** ws ping + {relay:'hb'} interval (default 10 s) [ENG: network]. */
   heartbeatMs?: number;
   maxRooms?: number; // default 500
   log?: (line: string) => void;
   /** Stage 12: serve this folder (the built app) over http on the same port, for learners' phones. */
   staticDir?: string;
   /**
-   * Stage 12: the most non-host peers one session takes (default 60) [ENG: twice the measured classroom of 30, see
+   * Stage 12: the most non-host peers one session takes (default 60) [ENG: network; twice the measured classroom of 30, see
    * docs/plans/stage-12-mobile-learner.md "Capacity"]. One more is refused (`full`, close 4029: it does not retry).
    */
   maxPeersPerRoom?: number;
@@ -52,7 +52,7 @@ export interface RelayOptions {
   now?: () => number;
   /**
    * How long the socket holding a peer id (or the room's host) has to answer a ping when another socket says hello
-   * with that id (or as a second host), ms (default 3 s) [ENG]. It answers: the newcomer is refused. It does not (a
+   * with that id (or as a second host), ms (default 3 s) [ENG: network]. It answers: the newcomer is refused. It does not (a
    * half-open socket): it is closed and the newcomer joins.
    */
   takenCheckMs?: number;
@@ -127,16 +127,16 @@ export interface RelayHandle {
 }
 
 const ACK_ROUTES_MAX = 1000;
-/** Frames a socket may send while its hello waits on a liveness check; more are dropped [ENG]. */
+/** Frames a socket may send while its hello waits on a liveness check; more are dropped [ENG: network]. */
 const HELD_MAX = 64;
-/** Wrong PINs one address may give within PIN_WINDOW_MS; then it may not say `instructor` for PIN_WINDOW_MS [ENG]. */
+/** Wrong PINs one address may give within PIN_WINDOW_MS; then it may not say `instructor` for PIN_WINDOW_MS [ENG: network]. */
 const PIN_TRIES = 5;
 const PIN_WINDOW_MS = 60_000;
 /**
  * Instructor hellos one address may send within PIN_WINDOW_MS, whatever the host answers (review G1): the wrong-PIN
  * limit counts the host's answers, so without this a pending socket could make the host check thousands of PINs before
  * its first denials came back. A real phone says one hello per socket, plus one per host reconnect; 20 is four times
- * the wrong-PIN limit and leaves a phone on bad Wi-Fi room for a reconnect every few seconds [ENG].
+ * the wrong-PIN limit and leaves a phone on bad Wi-Fi room for a reconnect every few seconds [ENG: network].
  */
 const HELLO_TRIES = 20;
 /** The `from` of the relay's own WireMessages (the grant false of a host readmit); its seq is the wall clock. */
@@ -145,19 +145,19 @@ const REJOINED = "the instructor's computer reconnected; signing in again";
 /**
  * Instructor sockets a room takes besides its learners (plan §1, "one reserved place"): they never count against
  * maxPeersPerRoom, so a full room of learners never shuts the instructor out; two, so a phone taking over (§3, option B)
- * gets in while the holder is still connected [ENG].
+ * gets in while the holder is still connected [ENG: network].
  */
 const INSTRUCTOR_PLACES = 2;
 /**
  * R8b: `vent` messages a socket may send, and be sent, in any one second; one more closes the ventilator's socket
- * (`too-many-tries`) [ENG, plan R8b: the cockpit sends one `cmds` per engine tick, 50 a second at ×1 and 400 at ×8;
+ * (`too-many-tries`) [ENG: network; plan R8b: the cockpit sends one `cmds` per engine tick, 50 a second at ×1 and 400 at ×8;
  * R8c batches them to one message per 20 ms of wall time, 50 a second at any speed; 120 leaves room for `clock` (measured
  * on the monitor side: 5 a second at ×1, 38 at ×8, the engine advanced every 20 ms of wall time) and `settings`].
  */
 const VENT_PER_S = 120;
 /**
  * R5c: commands a `defib` socket may send in any one second, refused ones included; one more closes it
- * (`too-many-tries`) [ENG, plan R5c: a charge and a shock per cycle, with a margin for double taps].
+ * (`too-many-tries`) [ENG: network; plan R5c: a charge and a shock per cycle, with a margin for double taps].
  */
 const DEFIB_PER_S = 4;
 /** The roles that sign in with the instructor's PIN: pending until the host's grant, under the per-address PIN limits. */

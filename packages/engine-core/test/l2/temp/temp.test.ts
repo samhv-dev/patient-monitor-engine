@@ -36,7 +36,7 @@ describe('two-compartment heat model', () => {
     expect(Math.max(...last) - Math.min(...last)).toBeLessThan(0.1);
   });
 
-  // R45 (FU-10 E5, ruling R-4, E-FU10-3): with the tables' vasoconstriction threshold 34.5 °C (was the [ENG] 34.8 this
+  // R45 (FU-10 E5, ruling R-4, E-FU10-3): with the tables' vasoconstriction threshold 34.5 °C (was the earlier fitted 34.8 this
   // band was fitted with) the GA heat model plateaus just below it — measured 34.37 °C in hour 8. Not tuned (R44).
   it.fails('GA: the hour-8 plateau stays at or above 34.5 °C — measured 34.37', () => {
     const st = createTemp(36.8, 70);

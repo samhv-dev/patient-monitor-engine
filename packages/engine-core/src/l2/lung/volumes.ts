@@ -5,20 +5,20 @@
 //     Eur Respir J 1995;8:492, for TLC/RV/FRC; the ECSC spirometry equations for FVC/FEV1), H in metres; age 18–25 is
 //     entered as 25 and age > 70 as 70 (the equations' stated range); height is clamped to 1.45–1.95 m.
 //   children < 18 y: Zapletal et al. (plethysmographic; the ERS recommendation in Stocks & Quanjer 1995, Table 7),
-//     power laws in stature (cm); below the 5 y lower bound they are extrapolated [ENG]. Children's spirometry: FVC =
-//     0.95 × VC and FEV1/FVC 0.90 [ENG; preschool FEV1/FVC ≈ 0.9 (GLI-2012 direction)]. 16–20 y: the two sets are
-//     BLENDED linearly (the switch at 18 y otherwise jumps TLC +15–24 % at one birthday) [ENG]. v1.0 uses ECSC with the
+//     power laws in stature (cm); below the 5 y lower bound they are extrapolated [ENG: numerics]. Children's spirometry: FVC =
+//     0.95 × VC and FEV1/FVC 0.90 [FIT: preschool FEV1/FVC 0.90; preschool FEV1/FVC ≈ 0.9 (GLI-2012 direction); brief research/44 L2-32; src GLI-2012 (direction)]. 16–20 y: the two sets are
+//     BLENDED linearly (the switch at 18 y otherwise jumps TLC +15–24 % at one birthday) [ENG: numerics]. v1.0 uses ECSC with the
 //     fixed FEV1/FVC ratio; GLI with the lower limit of normal is a later release's. FEV1/FVC
 //     predicted is FEV1pred/FVCpred (82.4 % at 40 y), not ECSC's separate ratio equation (87.21 − 0.18A = 80.0 %).
 //   PEF predicted: ECSC (men 6.14H − 0.043A + 0.15, women 5.50H − 0.030A − 1.11 L/s); children: the model's own
-//     healthy peak (FVCpred/τf,ref) [ENG].
+//     healthy peak (FVCpred/τf,ref) [ENG: numerics].
 // ACTUAL (this patient today) = predicted × the pathology the lung resolves:
 //   aeration   — lung that holds no gas (consolidation, compression, collapse: the conditions' atel + consol) scales
 //                TLC, RV and VC by the whole-lung aerated fraction;
 //   VOLUME_EFFECTS — the conditions whose static-volume change is not an aeration change (hyperinflation and gas
 //                trapping in COPD/asthma, parenchymal and chest-wall restriction), severity knots with their source;
 //   strength   — respiratory-muscle weakness (lp.pMax < 1: neuromuscular weakness, diaphragm paralysis) lowers TLC and
-//                raises RV (the classic restrictive pattern of weakness) [ENG].
+//                raises RV (the classic restrictive pattern of weakness) [FIT: respiratory-muscle weakness effect on TLC/RV; brief research/44 L2-32].
 // Two FRCs, two owners, two labels: the BEDSIDE FRC (supine, awake → anaesthetised: lung `frcNow` × the conditions'
 // `frc` × aeration — the O2 store, not computed here) and the PFT lab's SEATED FRC below (predicted × pathology), which
 // ERV (= FRCsit − RV) and IC (= TLC − FRCsit) are defined against, as a lab reports them (ATS/ERS 2005 lung volumes).
@@ -37,9 +37,9 @@
 // (Dawson & Elliott 1977 J Appl Physiol 43:498; Mead 1978), so it is less sensitive to peripheral resistance than the
 // rest of the forced expiration: PEF = PEFpred × Σ VC_u·r_u^(−PEAK_TAU_EXP) / FVCpred, r_u = (Rex,u·Crs,u)/(Rex·Crs)
 // healthy — restriction scales it by the forced VC, obstruction by a weaker power of the R·C ratio than FEV1's.
-// PEAK_TAU_EXP [ENG; fit: PEF % predicted tracks FEV1 % predicted within ±15 points in acute severe asthma and COPD
+// PEAK_TAU_EXP [FIT: PEF % predicted tracks FEV1 % predicted within ±15 points in acute severe asthma and COPD
 // GOLD 2–4 (BTS/SIGN 2019 and GINA grade acute asthma by PEF % of predicted/best: 33–50 % acute severe, < 33 %
-// life-threatening)]. The PFT device draws the rise to PEF and then joins the effort-independent curve below.
+// life-threatening); brief research/44 L2-32]. The PFT device draws the rise to PEF and then joins the effort-independent curve below.
 // Obstruction (raised R, fast/slow heterogeneity: asthma, COPD, bronchospasm) therefore lowers FEV1/FVC and scoops the
 // flow–volume curve (the slow units' tail); restriction lowers FVC and FEV1 together and keeps the ratio. The four
 // (VC_u, τf,u) pairs are published so a PFT device redraws the loop: V̇(t) = Σ VC_u/τf,u·e^(−t/τf,u).
@@ -56,7 +56,7 @@ export interface Predicted { tlc: number; rv: number; frc: number; vc: number; f
 /** Children below this age use the Zapletal power laws (Stocks & Quanjer 1995 Table 7, 5–18 y). */
 export const ADULT_FROM_Y = 18;
 
-/** 16–20 y: Zapletal and ECSC blended linearly by age (F11) [ENG]. */
+/** 16–20 y: Zapletal and ECSC blended linearly by age (F11) [ENG: numerics]. */
 export const BLEND_FROM_Y = 16;
 export const BLEND_TO_Y = 20;
 
@@ -97,17 +97,17 @@ function predictedRaw(p: VolPatient): Predicted {
 
 /**
  * Static-volume effects that are not an aeration change, as multipliers on the predicted TLC and RV at severity knots
- * (piecewise linear, like the catalogue's). Each row cites its source; [ENG] rows name their fit target.
+ * (piecewise linear, like the catalogue's). Each row cites its source; `[FIT]` rows name their fit target.
  */
 export const VOLUME_EFFECTS: Readonly<Record<string, { tlc?: Knots; rv?: Knots; frc?: Knots; gaAtel?: true; src: string }>> = {
   // hyperinflation and gas trapping: GOLD 1–4 at severity 0.25/0.5/0.75/1
-  copd: { tlc: [[0, 1], [0.25, 1.0], [0.5, 1.05], [0.75, 1.15], [1, 1.25]], rv: [[0, 1], [0.25, 1.15], [0.5, 1.4], [0.75, 1.75], [1, 2.2]], frc: [[0, 1], [0.25, 1.05], [0.5, 1.15], [0.75, 1.35], [1, 1.6]], src: 'COPD hyperinflation: TLC > 120 % and RV > 150–250 % pred in severe disease (ATS/ERS 2005 interpretation, Pellegrino; O\'Donnell 2001 AJRCCM 164:770 direction) [ENG knots; fit: GOLD 3–4 RV/TLC > 0.55]' },
-  asthma: { tlc: [[0, 1], [0.6, 1], [1, 1.1]], rv: [[0, 1], [0.4, 1.1], [0.6, 1.2], [1, 2.0]], frc: [[0, 1], [0.6, 1.05], [1, 1.3]], src: 'acute severe asthma: RV ≈ 200 % pred (gas trapping; McFadden & Lyons 1968 J Clin Invest 47:1566 direction) [ENG knots]' },
-  bronchospasm: { rv: [[0, 1], [1, 1.8]], frc: [[0, 1], [1, 1.25]], src: 'acute bronchospasm traps gas like acute asthma [ENG, the asthma row at the same airway resistance]' },
+  copd: { tlc: [[0, 1], [0.25, 1.0], [0.5, 1.05], [0.75, 1.15], [1, 1.25]], rv: [[0, 1], [0.25, 1.15], [0.5, 1.4], [0.75, 1.75], [1, 2.2]], frc: [[0, 1], [0.25, 1.05], [0.5, 1.15], [0.75, 1.35], [1, 1.6]], src: 'COPD hyperinflation: TLC > 120 % and RV > 150–250 % pred in severe disease (ATS/ERS 2005 interpretation, Pellegrino; O\'Donnell 2001 AJRCCM 164:770 direction) [FIT: knots; fit: GOLD 3–4 RV/TLC > 0.55; brief research/44 L2-32]' },
+  asthma: { tlc: [[0, 1], [0.6, 1], [1, 1.1]], rv: [[0, 1], [0.4, 1.1], [0.6, 1.2], [1, 2.0]], frc: [[0, 1], [0.6, 1.05], [1, 1.3]], src: 'acute severe asthma: RV ≈ 200 % pred (gas trapping; McFadden & Lyons 1968 J Clin Invest 47:1566 direction) [FIT: lung-volume severity knots (direction sourced); knots; brief research/44 L2-32]' },
+  bronchospasm: { rv: [[0, 1], [1, 1.8]], frc: [[0, 1], [1, 1.25]], src: 'acute bronchospasm traps gas like acute asthma [FIT: lung-volume severity knots (direction sourced); the asthma row at the same airway resistance; brief research/44 L2-32]' },
   // restriction
-  ild: { tlc: [[0, 1], [0.3, 0.75], [0.6, 0.6], [0.9, 0.45], [1, 0.45]], rv: [[0, 1], [0.3, 0.75], [0.6, 0.6], [0.9, 0.45], [1, 0.45]], src: "the catalogue's §7 GRADES: FVC 70–80 / 50–70 / < 50 % at severity 0.3/0.6/0.9 → TLC and RV at the band middles 0.75/0.6/0.45 (proportional restriction, RV/TLC preserved) [ENG; the §7 'FRC / TLC' row's 0.85/0.7/0.55 stays the O2-store FRC multiplier]" },
+  ild: { tlc: [[0, 1], [0.3, 0.75], [0.6, 0.6], [0.9, 0.45], [1, 0.45]], rv: [[0, 1], [0.3, 0.75], [0.6, 0.6], [0.9, 0.45], [1, 0.45]], src: "the catalogue's §7 GRADES: FVC 70–80 / 50–70 / < 50 % at severity 0.3/0.6/0.9 → TLC and RV at the band middles 0.75/0.6/0.45 (proportional restriction, RV/TLC preserved) [FIT: lung-volume severity knots (direction sourced); the §7 'FRC / TLC' row's 0.85/0.7/0.55 stays the O2-store FRC multiplier; brief research/44 L2-32]" },
   chestWall: { tlc: [[0, 1], [0.33, 0.85], [0.67, 0.7], [1, 0.5]], src: "catalogue §9 row 'FRC, VC' 0.85/0.7/0.5 (Stoelting 8e ch. 3); RV preserved (RV/TLC rises) [TXT]" },
-  obesity: { tlc: [[0, 1], [0.5, 0.97], [1, 0.9]], frc: [[0, 1], [0.5, 0.85], [1, 0.7]], gaAtel: true, src: 'obesity: TLC falls little (≈ 90 % at BMI 40) while ERV falls steeply (Jones & Nzekwu 2006 Chest 130:827) — seated FRC 70 % and ERV ≈ 25–35 % at BMI 40 [ENG knots]' },
+  obesity: { tlc: [[0, 1], [0.5, 0.97], [1, 0.9]], frc: [[0, 1], [0.5, 0.85], [1, 0.7]], gaAtel: true, src: 'obesity: TLC falls little (≈ 90 % at BMI 40) while ERV falls steeply (Jones & Nzekwu 2006 Chest 130:827) — seated FRC 70 % and ERV ≈ 25–35 % at BMI 40 [FIT: lung-volume severity knots (direction sourced); knots; brief research/44 L2-32]' },
   pregnancy: { tlc: [[0, 1], [1, 0.95]], rv: [[0, 1], [0.33, 1], [1, 0.8]], frc: [[0, 1], [0.33, 1], [1, 0.8]], gaAtel: true, src: 'term pregnancy: TLC −0–5 %, RV −20 %, FRC −20 % (Hegewald & Crapo 2011 Clin Chest Med 32:1) [TXT]' },
 };
 
@@ -120,9 +120,9 @@ export interface Actual {
   fe: { v: number[]; tau: number[] };
 }
 
-/** Forced-expiratory sensitivity to the unit's passive R·C ratio [ENG; fit: the catalogue's COPD grades = GOLD FEV1 ≥ 80 / 50–79 / 30–49 / < 30 % pred with FEV1/FVC < 0.70, and the ILD grades' FVC bands]. */
+/** Forced-expiratory sensitivity to the unit's passive R·C ratio [FIT: the catalogue's COPD grades = GOLD FEV1 ≥ 80 / 50–79 / 30–49 / < 30 % pred with FEV1/FVC < 0.70, and the ILD grades' FVC bands; brief research/44 L2-32]. */
 export const FORCED_TAU_EXP = 0.6;
-/** F3: the peak's weaker dependence on the R·C ratio [ENG; fit as the header says — 0.2/0.3/0.4/0.5 tried: 0.3 puts acute severe asthma at PEF 39 % with FEV1 35 % and COPD GOLD 1–4 at 72/58/47/35 % with FEV1 71/55/41/28 %]. */
+/** F3: the peak's weaker dependence on the R·C ratio [FIT: as the header says — 0.2/0.3/0.4/0.5 tried: 0.3 puts acute severe asthma at PEF 39 % with FEV1 35 % and COPD GOLD 1–4 at 72/58/47/35 % with FEV1 71/55/41/28 %; brief research/44 L2-32]. */
 export const PEAK_TAU_EXP = 0.3;
 /** τf,ref (s) for a predicted FEV1/FVC. */
 export function tauRef(ratio: number): number {
@@ -187,8 +187,8 @@ export function actualVolumes(pred: Predicted, lp: LungParams, specs: readonly L
   // F13: a seated PFT does not see the GA/supine atelectasis of the obesity and pregnancy rows
   const aerW = Math.min(1, SIDE_SHARE[0] * (aerCond[0] as number) + SIDE_SHARE[1] * (aerCond[1] as number) + gaAtelShare(specs));
   const weak = Math.min(1, Math.max(0, lp.pMax)); // respiratory-muscle strength
-  const tlc = pred.tlc * tlcM * aerW * (0.6 + 0.4 * weak); // [ENG] weakness: TLC 60 % at no strength
-  const rv = Math.min(tlc * 0.95, pred.rv * rvM * aerW * (1 + 0.5 * (1 - weak))); // [ENG] weakness: RV 150 %
+  const tlc = pred.tlc * tlcM * aerW * (0.6 + 0.4 * weak); // [FIT: respiratory-muscle weakness effect on TLC/RV; brief research/44 L2-32] weakness: TLC 60 % at no strength
+  const rv = Math.min(tlc * 0.95, pred.rv * rvM * aerW * (1 + 0.5 * (1 - weak))); // [FIT: respiratory-muscle weakness effect on TLC/RV; brief research/44 L2-32] weakness: RV 150 %
   const vc = Math.max(0, tlc - rv);
   const frcSit = Math.min(tlc, Math.max(rv, pred.frc * frcM * aerW));
   // forced expiration
@@ -214,7 +214,7 @@ export function actualVolumes(pred: Predicted, lp: LungParams, specs: readonly L
 }
 
 /** Closing capacity (mL, supine reference): equals the supine FRC at 44 y and the seated FRC at 66 y (Leblanc,
- * Ruff & Milic-Emili 1970 J Appl Physiol 28:448), linear in age between and beyond [ENG line through the two anchors]. */
+ * Ruff & Milic-Emili 1970 J Appl Physiol 28:448), linear in age between and beyond [FIT: line through the two anchors; brief research/44 L2-32]. */
 export function closingCapacity(pred: Predicted, ageY: number, supineFrcMl: number): number {
   const k = (ageY - 44) / (66 - 44);
   return supineFrcMl + k * (pred.frc - supineFrcMl);

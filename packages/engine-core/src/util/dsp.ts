@@ -90,7 +90,7 @@ export function rms(x: ArrayLike<number>): number {
   return Math.sqrt(s / x.length);
 }
 
-/** Fraction of [lo, hi] Hz power within ±halfWidth Hz of the dominant frequency (organisation index) [ENG]. */
+/** Fraction of [lo, hi] Hz power within ±halfWidth Hz of the dominant frequency (organisation index) [ENG: measurement]. */
 export function organisation(x: ArrayLike<number>, fs: number, lo = 1, hi = 12, halfWidth = 1, nfft = 2048): number {
   const { f, p } = welch(x, fs, nfft);
   const fd = dominantHz(x, fs, lo, hi, nfft);
