@@ -14,7 +14,7 @@ Regenerate the first two tables with `node --experimental-strip-types scripts/de
 fails when a literal-titled expected failure or skip is missing from this page. It cannot see conditional forms such
 as `(cond ? it.fails : it)(…)`, nor the lung-signature `KNOWN` list; those are listed by hand below.
 
-On this tree there are **158 expected-failure calls**, all read by the lister: 157 `it.fails` (the bronchospasm row of
+On this tree there are **155 expected-failure calls**, all read by the lister: 154 `it.fails` (the bronchospasm row of
 `packages/ventilator/test/link-parity.test.ts` is a literal `it.fails`) and 1 `it.fails.each` with three cases
 (`packages/engine-core/test/engine/fidelity-arrest.test.ts`), and **6 skipped tests** (1 skipped test and 5 `.todo` entries: the harms and the device the scenario format declares "not modelled", and epinephrine IM). "Tracked in" names the gate note (and its section)
 that records the miss with its number; the open questions it cites (Q…, R-…, E-…) are listed in that note.
@@ -161,7 +161,7 @@ that records the miss with its number; the open questions it cites (Q…, R-…,
 | `packages/engine-core/test/l2/neuro/interactions.test.ts` | 1 MAC volatile: rocuronium duration +20–45 % (this rig +13.4 %; engine cell DI-51 +48.4 % on the gate tree — the plan's third fixer measured +52.2 % — band 25–80 %) | `docs/gates/fu-7.md` §4 "`it.fails` list", #25 |
 | `packages/engine-core/test/l2/neuro/reversal.test.ts` | underdosed sugammadex (0.5 mg/kg at PTC after rocuronium 1.2) → recovery then recurarisation (TOFR falls ≥ 0.04) — capacity-limited: measured peak 0.833 at +90 min (ideal-binder ceiling 0.834), no fall | `docs/gates/fu-3.md` §1 "What shipped", item 2 (capacity-limited) and §7 "Test counts"; `docs/gates/stage-7e.md` "Expected failures (`it.fails`)" |
 | `packages/engine-core/test/l2/pk/antiarrhythmic.test.ts` | a sub-therapeutic lidocaine level (0.3 µg/mL) never converts VT in 200 seeded runs of its 20 min window — measured 3/200 (1.5 %; u 0.09 × λ_lido) | `docs/gates/fu-7.md` §4 "`it.fails` list", #26 |
-| `packages/engine-core/test/l2/pk/flow-distribution.test.ts` | S6b: 30 % haemorrhage (CO 3.1 vs 5.25) → propofol 2 mg/kg peak Ce ≥ 1.3× healthy — measured 1.29 (q 0.6, V1 share 0.5 [ENG]) | `docs/gates/fu-4.md` §4 "The `it.fails` list" |
+| `packages/engine-core/test/l2/pk/flow-distribution.test.ts` | S6b: 30 % haemorrhage (CO 3.1 vs 5.25) → propofol 2 mg/kg peak Ce ≥ 1.3× healthy — measured 1.29 (q 0.6, V1 share 0.5 [FIT: propofol V1 share; brief research/44 X-17]) | `docs/gates/fu-4.md` §4 "The `it.fails` list" |
 | `packages/engine-core/test/l2/pk/interactions-misc.test.ts` | sugammadex (DI-45): 4 mg/kg gives < 5 % HR fall — measured 13.4 % (16 mg/kg 20.5 %) | `docs/gates/fu-7.md` §4 "`it.fails` list", #27 |
 | `packages/engine-core/test/l2/pk/interactions-misc.test.ts` | second gas: 66 % N2O raises sevoflurane 2 %'s FA/FI at 5 min by +0.03 to +0.15 (Epstein 1964; M10 ch. 19); N2O's own FA/FI is unchanged (a one-way term) — measured +0.021 (0.713 → 0.733), N2O unchanged | `docs/gates/fu-7.md` §4 "`it.fails` list", #28 |
 | `packages/engine-core/test/l2/pk/interactions-misc.test.ts` | concentration effect: 66 % N2O reaches a higher FA/FI at 5 min than 30 % N2O — measured 0.810 both (not modelled in v1) | `docs/gates/fu-7.md` §4 "`it.fails` list", #29 |
@@ -478,3 +478,24 @@ From `grep -rn "INTERIM" packages/*/src` (three hits, two stand-ins):
 - **Used, with known gaps** (`docs/gates/stage-8a.md` §2): VitalDB (N-080) and PTB-XL (N-052) as listed; MGH/MF
   (N-081) has no PPG channel, so the V3 pleth-shape rows have no recorded MGH/MF side, and its CO2 is uncalibrated
   (report-only).
+
+## The rc.4 tag (2026-10-29)
+
+### The rc.4 tag's release date
+
+The tag commit `0c4b396f` (`v1.0.0-rc.4`, pre-release) carries **2026-10-30** in `CHANGELOG.md` and `CITATION.cff`: the bump PR (#166) was written for a planned 30 October tag, and the tag was cut a day early, on 2026-10-29 (11:36 UTC). Main's `CHANGELOG.md` heading is corrected to 2026-10-29 by the rc.4 docs PR (#225; main's `CITATION.cff` has since moved to rc.5); the tag's text is not rewritten.
+
+### Retry-only passes on the rc.4 tag commit
+
+Main **0c4b396f**, the `v1.0.0-rc.4` (pre-release) tag commit, push run **40860980902**: every job passed. These tests
+passed only on a retry in it (`gh run view 40860980902 --log`). No test was changed. The macOS WebKit set run on the
+release day from the tag worktree (FX-16 three times, FX-24, FX-25, FX-14, `saadat-instructor-tiles`) passed with
+none skipped and no retry (`docs/gates/rc4-release.md`).
+
+| Test (file:line, this tree) | Test title | Job | Note |
+|---|---|---|---|
+| `saadat-grid-layout.e2e.ts:55` | a Settings switch saadat-like → philips-like → saadat-like | `e2e (webkit)`, gating | **new**: not tagged `@known-flaky`; passed on its retry; WebKit warns, not fails, until the demo of 3 November. Watch it on the next main runs |
+| `time-control.e2e.ts:30` | ×8 and a 5-minute fast-forward from the instructor view: paced panel everywhere, sound muted, cue, banner, log, trends | `e2e (chromium)` | tagged `@known-flaky` (row in the table above), so the enforced Chromium job stays green |
+| `debrief.e2e.ts:48` | a showcase run ends in a debrief that prints (timeline, facts, objectives) | `e2e-quarantine (webkit)` | tagged; recorded above |
+| `return-here-restore.e2e.ts:15` | Return here: the clock, the trends and the waveforms go back with the patient | `e2e-quarantine (webkit)` | tagged; recorded above |
+| `vent-view-new-patient.e2e.ts:16` | the cockpit is unloaded by a new patient and reloads fresh on the next visit (or at once when shown) | `e2e-quarantine (webkit)` | tagged; recorded above |

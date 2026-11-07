@@ -7,6 +7,44 @@ on `origin/main` **a4163165** (#123), from the rc.3 runbook (`docs/plans/rc3-rel
 report (`scratch/plans-backup/rc3-release-day-run-2026-10-23.md`), `scratch/rc3-release/gate-notes.md`, the rulings,
 `release.yml` on #125's branch and the A4 records. Documentation only; what was not checked is **(unverified)**.
 
+> **RUN 2026-10-28/29 (the plan as run; Tasks 0–6 complete, Task 7 and the rest of Task 9 after the owner's smoke).**
+> Times are UTC from GitHub and the run logs (+0330 in brackets where the owner's day matters). The record is the
+> orchestrator's rulings log (`research/00-orchestrator-rulings.md`, from 2026-10-28) and the gate notes
+> (`scratch/rc4-release/gate-notes.md`); the repo's copy is [`docs/gates/rc4-release.md`](../gates/rc4-release.md).
+> - **The day moved forward.** By the owner's ruling of 29 October (early morning +0330) the freeze came at once and
+>   rc.4 was tagged as the **fallback build**, not on Sunday 1 November: an rc.5 from main (Instructor v2, #177, merged
+>   after the tag) only if green and liked in the Sunday smoke; the room dry run on Monday 2 November decides which kit
+>   is in the room. Saturday's freeze, the allowance reset (14:00 UTC [17:30]) and Sunday's tag slot did not apply.
+> - **Task 0.** Steps 1–2: `FREEZE_SHA` **8e4e8471** (#163's merge, 2026-10-28 18:32 [22:02]; main run 40746088523
+>   success). After it, as ruled: #165 (docs), #167 (the MH card's story text and its CHANGELOG line), #166 (the bump),
+>   #172 (the MH-only talk: run sheet and the kit-round talk test). Step 3: #128 (24 October) and #172 carried the
+>   tooling; no separate `test-kitround-rc4` PR. Step 4: the bump PR **#166** merged 2026-10-29 08:17 (CHANGELOG and
+>   `CITATION.cff` dated **2026-10-30**, the tag day the ruling then named, not "2026-11-01"; main's copies corrected to
+>   2026-10-29 by Task 9, the tag's text unchanged). **Step 5, the prep run on
+>   `FREEZE_SHA`: not run.** The expected values were instead #172's talk run (kit a88f95a7) and the 28 October run on
+>   the owner's card rulings (kit 2c341aa3). Step 6: dry run **40865772794** on 0c4b396f, 11:29–11:33, success (9 files,
+>   7 × OK, the rc.4 notes and banner, no rc.4 release yet).
+> - **Task 1.** `TAG_SHA` = **0c4b396f** = main after #172 (the orchestrator tagged after #172 so that the MH-only talk
+>   test and run sheet are in the tag), not main right after the bump. Main run 40860980902 success (10:52–11:27);
+>   retry-only passes in the gate note. Release files on the commit as Step 3 expects, with the dates above.
+> - **Task 2.** Annotated tag `v1.0.0-rc.4` pushed **2026-10-29 11:36:12 (15:06 +0330)**; release run 40866665261
+>   success (11:36–11:41); the release published 11:41:18, Pre-release, 8 assets. Step 4 run by the executor (7 × OK).
+> - **Task 3.** As written (kit build id `"0c4b396f 2026-10-29"`; relay 4 of 4; three `same:`; the Windows zip; the
+>   embed). The kit has 76 app files and a 1,545,928-B zip (rc.3 71 and 1,004,390 B): notes, ruled.
+> - **Task 4.** As written, on both engines, first time through. The A4 marks changed kind against 24 October (two
+>   objectives rewritten by the owner, #163) and the MH times came 25–38 s earlier: both ruled not a gate failure, the
+>   28 October run on 2c341aa3 (Chromium only) agreeing to the second. No F1–F10.
+> - **Task 5.** The tag's Persian table left 11 (MH) and 15 (haemorrhage) strings in English; by ruling the handouts
+>   were rendered with PR #161's 26 unreviewed drafts placed **uncommitted** in `wt-rc4-docs` (0 strings without
+>   translation each; Vazirmatn only). That table is not in this branch: it stays in #161 for the owner's read.
+> - **Task 6.** Tree `gh-pages-rc4` e1fbdc67 (91 files); the serve check ran from `wt-rc4-tag` (`wt-rc2-prep` no longer
+>   exists); pushed with the lease 12:20:40, built 12:21. **Tasks 0–6 complete after 12:21 on 29 October** (the live
+>   check ≈ 12:25 (est.)).
+> - **Task 7** (the smoke, the live rehearsal, W/E13/E14): not yet run. **Task 8:** not needed. **Task 9:** Steps 1–3,
+>   4.1–4.3 and 5 drafted on 29 October on `docs-rc4-release`, no push; #117's rc.3 gate note, Q2-rc3 evidence and
+>   six-card shots folded in (Step 2); the CHANGELOG and CITATION dates corrected to 2026-10-29 on this branch (they
+>   reach main when the PR merges).
+
 **Base and preconditions.**
 - rc.3 is tagged on **fcf99b70** (annotated, 2026-10-23 13:55; release run 39938963544; its Pages build is the local
   branch `gh-pages-rc3`, **ceac7b47**). The rc.3 kit `_sandbox/pme-kit-release-fcf99b70/` (with its zip) **becomes the
@@ -772,6 +810,26 @@ One AskUserQuestion step per item, **≈ 35 min** (tell him); his Mac (Safari, C
 **Gate items** 1, 2, 7, 8 → Task 8. The rest are findings: 4 → "phones silent, the Mac is the alarm source"; 5, 6 →
 a presenter's rule; 3 → "attach the CO₂ line first"; 9 → the English Debrief is the reference; a wished-for Saadat-like
 change → a later release.
+
+**Kit E (second dry merge, build a0fb41d5), Instructor v2.** The same twelve checks on kit E, with v2's control names.
+Expected values from `scratch/kit-e-dry-2/TALK-MEASUREMENTS.md` and its rounds (Q1 MH, A4 MH, A4 MH under v2); where a
+row says "not measured on kit E", the rc.4 expectation above stands unverified. First, once: Settings → **Instructor
+view** → "Instructor v2" (the kit's default is "Today's view"); the rail's one **"Instructor"** entry then opens v2.
+
+| # | Do (kit E, Instructor v2) | Expected on kit E |
+|---|---|---|
+| 1 | Double-click kit E's `Start Classroom.command`; Allow "node" if asked | **THE CLASSROOM IS RUNNING**; Safari opens `127.0.0.1:8650/?relay#/`; Home still reads "Version 1.0.0-rc.4 · pre-release · build a0fb41d5" (kit E carries no version bump) |
+| 2 | Monitor view → pointer over the monitor → **"Phones"** in the row **under** the monitor (#203; no longer at the top edge) → scan → **Close**; then rail → **"Instructor"** | **1 phone following**; v2's header "Room ‹code› · 1 phone". Pass 3 items as above (not re-measured on kit E) |
+| 3 | v2 dock **"Devices"** → Sensors → **CO₂ sampling line** on; 15 s | as above (not measured on kit E) |
+| 4 | Header **"Sound off"** → **"Sound on"**. **Healthy induction**: Scenarios → **Load** · dock "Devices" → **"All alarms on"** · header speed box → **"×4"**; phone Sound off; 30 s; tap again | as above (not measured on kit E) |
+| 5 | Header speed → "×1"; STATE's **"Fast forward"** row → **"+5 min"** (disabled while paused) | as above (not measured on kit E); banner "Fast-forwarded 5 min" |
+| 6 | Another Safari tab ≈ 10 s, then back | as above (not measured on kit E) |
+| 7 | **Malignant hyperthermia**: Scenarios → **Load** (or v2 with no case: ACTION "Scenario library" → "Load Malignant hyperthermia", keys 2 then 1) · dock "Devices" → "All alarms on" · "×8"; ACTION row 1 (key 1) for **Premedicate**, **Preoxygenate**, **Induce**, **Intubate**, **Start surgery**; "×4"; at the CO₂ rise ACTION row 1 **"MH crisis: …"**; dock **"Debrief"** (bottom right; **not** "Finish the case" beside it) → **Print or save as PDF**, **Print the learner handout**; the same in **Chrome** | Status line **"Case briefing on every screen · 0:59 left"** with **"End briefing"**; the phone and the Monitor view show the briefing for 60 real s, the instructor tab does not. Each pressed row leaves ACTION into "Finished steps · n". SpO₂ ≈ 99 with Preoxygenate; CO2 APNEA ≈ 4:47 (Chromium); Early signs ≈ 8:03–8:12 with EtCO₂ 46, HR 77–78, **T1 36.6**. ACTION in the crisis lists "Cool: …" as **"ready"** at T1 ≈ 36.7 although its subtitle says "only when T1 > 38.5 °C" and a press is refused (a finding, not a gate). Report A4, **8** pages (Chromium A4 round), footer "… Version 1.0.0-rc.4 (pre-release), build a0fb41d5 …"; handout 1 page with the three MH take-home lines |
+| 8 | **Class IV haemorrhage**: Load · "All alarms on" · "×8"; ACTION rows **"Oxygen by face mask, FiO₂ 1.0"**, **"Intubate and ventilate, FiO₂ 1.0"**; watch to junctional and PEA; dock "Debrief" → **Print the learner handout** | as above (not measured on kit E: no haemorrhage round in kit E's rounds) |
+| 9 | Persian PDFs | not built for kit E; the rc.4 PDFs carry rc.4's build. Skip or read the rc.4 ones |
+| 10 | H22 embed | not built for kit E; skip |
+| 11 | E121b: free play (v2 with no case: ACTION "Free roam"), dock **"Airway"** → Oxygen **"Face mask"**; then with the ventilator on | as above (not measured on kit E) |
+| 12 | GitHub Pages in Safari | still the rc.4 build 0c4b396f: kit E is not on Pages (expected) |
 
 **The live rehearsal (≈ 45 min):** his 3 November programme (P29: malignant hyperthermia with three look-inside
 stops, the model-page tabs behind Explore; the haemorrhage card is reserve R5, not rehearsed) on the same kit, phone

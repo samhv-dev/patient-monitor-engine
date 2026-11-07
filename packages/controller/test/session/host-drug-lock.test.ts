@@ -7,8 +7,8 @@ import type { Command, DispatchResult } from '@pme/engine-core';
 import { HostSession, type HostTarget } from '../../src/session/host-session.ts';
 import { RecentGives, SAME_DRUG_LOCK_S } from '../../src/session/drug-lock.ts';
 import { createInProcessHub } from '../../src/transport/in-process.ts';
-import { createStamper, type ManagedTransport, type WireMessage } from '../../src/protocol.ts';
-import { collect, waitFor } from '../helpers.ts';
+import { type AckResult, createStamper, type ManagedTransport, type WireMessage } from '../../src/protocol.ts';
+import { collect, sleep, waitFor } from '../helpers.ts';
 
 const S = 'DRG234';
 const PIN = '4729';
@@ -268,4 +268,72 @@ it("the refusal's code reaches the pressing device's ControllerSession ack (AckR
   await ctl.send(epi as never);
   tg.at(2);
   expect(await ctl.send(epi as never)).toMatchObject({ accepted: false, code: 'recent', reason: 'given 2 s ago from the laptop' });
+});
+
+describe("a staged delivery (one stageGroup, `batch` of n) is checked against the lock in the delivery's order", () => {
+  // Brief 83: the items of a staged delivery were all checked against the lock on arrival, BEFORE any of them was
+  // recorded as given (they are held until all n are in), so a delivery carrying the same bolus twice applied both,
+  // where the one-at-a-time path refuses the second. Each item is now checked against the lock as the delivery's
+  // earlier items have set it.
+  async function staged(withGroup: boolean) {
+    const { ControllerSession } = await import('../../src/session/controller-session.ts');
+    const tg = fakeTarget();
+    const groups: Command[][] = [];
+    const t: HostTarget = withGroup ? { ...tg.t, dispatchGroup: (cs) => (groups.push(cs), cs.map((c) => tg.t.dispatch(c) as DispatchResult)) } : tg.t;
+    const host = new HostSession({ session: S, target: t, stateIntervalMs: 0 });
+    hosts.push(host);
+    const hub = createInProcessHub();
+    host.addTransport(hub.connect());
+    const ctl = new ControllerSession({ session: S, transport: hub.connect(), issuedBy: 'instructor' });
+    await waitFor(() => ctl.hostOnline);
+    tg.at(20);
+    const deliver = (id: string, a: Record<string, unknown>, b: Record<string, unknown>) =>
+      Promise.all([a, b].map((c) => ctl.send({ ...c, stageGroup: id, batch: { id, n: 2 } } as never))) as Promise<[AckResult, AckResult]>;
+    return { tg, groups, ctl, deliver };
+  }
+  const reached = (got: Command[], drugId: string) => got.filter((c) => (c as { event?: { drugId?: string } }).event?.drugId === drugId);
+
+  it('the same bolus twice → the first applied, the second refused with the one-at-a-time refusal; the log reads one give, one refusal, in order', async () => {
+    // the one-at-a-time path, on the same clock: its refusal of the second press is the reference
+    const one = await staged(false);
+    expect((await one.ctl.send(epi as never)).accepted).toBe(true);
+    const ref = await one.ctl.send(epi as never);
+    expect(ref).toMatchObject({ accepted: false, code: 'recent' });
+    one.ctl.close();
+
+    const s = await staged(true);
+    const [ra, rb] = await s.deliver('cache-e', epi, epi);
+    expect(ra.accepted).toBe(true);
+    expect(rb).toMatchObject({ accepted: false, code: 'recent', reason: ref.reason });
+    expect(rb.reason).toBe('given 0 s ago from the laptop');
+    expect(reached(s.tg.got, 'epinephrine')).toHaveLength(1); // one dose reached the engine
+    expect(s.ctl.log.filter((l) => l.commandId === 'cache-e').map((l) => l.text)).toEqual([
+      'staged ×2: event drug epinephrine 1 mg iv · event drug epinephrine 1 mg iv (refused: given 0 s ago from the laptop)',
+    ]);
+    s.ctl.close();
+  });
+
+  it('two different drugs → both applied, in one dispatch', async () => {
+    const s = await staged(true);
+    const [ra, rb] = await s.deliver('cache-d', epi, amio);
+    expect(ra.accepted && rb.accepted).toBe(true);
+    expect(s.groups).toHaveLength(1);
+    expect(s.groups[0]?.map((c) => (c as { event?: { drugId?: string } }).event?.drugId)).toEqual(['epinephrine', 'amiodarone']);
+    expect(s.ctl.log.filter((l) => l.commandId === 'cache-d').map((l) => l.text)).toEqual(['staged ×2: event drug epinephrine 1 mg iv · event drug amiodarone 300 mg iv']);
+    s.ctl.close();
+  });
+
+  it('a bolus given while the delivery is held locks its held item: the lock is read when the delivery is applied', async () => {
+    const s = await staged(true);
+    const id = 'cache-h';
+    const first = s.ctl.send({ ...amio, stageGroup: id, batch: { id, n: 2 } } as never); // held: its second item is late
+    await sleep(10);
+    expect((await s.ctl.send(amio as never)).accepted).toBe(true); // a press of the same drug meanwhile, applied
+    const second = s.ctl.send({ ...epi, stageGroup: id, batch: { id, n: 2 } } as never);
+    const [ra, rb] = await Promise.all([first, second]);
+    expect(ra).toMatchObject({ accepted: false, code: 'recent', reason: 'given 0 s ago from the laptop' });
+    expect(rb.accepted).toBe(true);
+    expect(reached(s.tg.got, 'amiodarone')).toHaveLength(1);
+    s.ctl.close();
+  });
 });

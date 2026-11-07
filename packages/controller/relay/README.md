@@ -53,6 +53,7 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
 | ventilator, granted | forwarded to the host (its PIN reaches the host alone); awaits no snapshot | refused (`forbidden`: its commands ride `vent`) | dropped | dropped | dropped | dropped | to the host alone, as sent |
 | ventilator, pending | same as granted | refused (`forbidden`) | dropped | dropped | dropped | dropped | refused (`forbidden`), never at the host |
 | viewer | same as controller | refused (`{relay:'error', code:'forbidden'}`) | dropped | dropped | dropped | dropped | refused (`forbidden`) |
+| defib | same as controller | Charge or Shock, bare (`LEARNER_DEFIB_COMMANDS`): to the host; any other: refused (`forbidden`) | dropped | dropped | dropped | dropped | refused (`forbidden`) |
 
 - **The lean copy** (a learner's phone, a pending instructor): `VIEWER_EVENTS` only, and no `commandApplied` of a
   `scenario` or `note` command (a mark's kind and note, a judged objective: plan instructor-peer-role.md §7). The
@@ -82,6 +83,19 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
   `applyEvent` of kind `airway` or a `setTarget`; `settings` may carry `measured {RR, VTE}` and `hidden`; a body is at
   most 4 KB. It follows
   nothing: no event, no snapshot, no cached snapshot, and learners are neither counted it nor ever sent a `vent`.
+- **The defibrillator window** (`hello {role:'defib'}`, plan room-and-instruments.md R5c, Q5 ruled 5 November: learners
+  press Charge and Shock themselves). It joins as a learner does: from any device, with no PIN (a PIN on its hello is
+  refused by the guard), in a learner's place under `--max-peers`, and counted in `peers`. It may name `show` and
+  `device` as a viewer does. It RECEIVES what a viewer receives: the lean copy, the snapshot after its hello, the cached
+  snapshot while the host is away. Of what it SENDS, a `command` goes to the host only if `learnerDefibMay` passes it:
+  `applyEvent` of `{kind:'defib', action:'charge'}` or `{kind:'defib', action:'shock'}` and no other field (no
+  `energyJ`: the room's model sets the energy; no `outcome`; no `atTick`). Any other command is answered
+  `{relay:'error', code:'forbidden'}` and never reaches the host; the socket stays open and follows. The host's ack of a
+  passing command comes back to it, as to a controller. At most 4 commands a second through one `defib` socket,
+  refused ones included [ENG: network; a charge and a shock per cycle, with a margin for double taps]; the 5th within a sliding
+  second closes it (`too-many-tries`, close 4028). The host checks the allow-list again itself (R5d).
+- **One role per socket:** a non-host socket that says `hello` again as another role than its first is answered
+  `forbidden`; that hello never reaches the host, and the socket keeps its first role.
 - **`vent` flood:** at most 120 `vent` a second through one socket each way — from a socket, and from the host to the
   ventilator, counted on the ventilator's socket. The next closes that socket (`too-many-tries`, close 4028; the
   host's own socket is never closed for it). The cockpit makes one `cmds` a tick (50 a second at ×1, 400 at ×8); the
@@ -104,7 +118,7 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
 - Stage 12: a session takes `--max-peers` non-host peers; the next is refused `full` (close code 4029, no retry).
   Instructor sockets do not count against it: they have two places of their own (the phone, and one taking over), so
   a full room of learners never shuts the instructor out. With `--remote-roles viewer`, a socket from another device
-  saying `host` or `controller` is refused `forbidden` (close code 4003); it may say `viewer`, `instructor` or `ventilator`; this
+  saying `host` or `controller` is refused `forbidden` (close code 4003); it may say `viewer`, `defib`, `instructor` or `ventilator`; this
   machine (loopback or one of its own addresses) may still host and command. The host gets a `{relay:'peers'}` frame
   whenever a peer comes or goes or an instructor is granted (the QR sheet counts the phones; `instructors`: the granted
   instructor phones, in the host's frame only). `peers` counts the peers that are not instructors, so learners are not
@@ -123,7 +137,7 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
   |---|---|
   | `id`, `role` | the socket's peer id and role, from its hello |
   | `show`, `device` | what its LAST hello said it shows (`learner`, `monitor`, `defib`, `depth`) and its device key; `null` when the hello had none (an older build, a controller) |
-  | `granted` | it may command (a controller, or an instructor the host granted); for a `ventilator`: the host granted it, and it may exchange `vent` |
+  | `granted` | it may command (a controller, or an instructor the host granted); for a `ventilator`: the host granted it, and it may exchange `vent`; a `defib` window is never granted (it sends its two commands without) |
   | `rttMs` | the round trip of its answer to the last sweep's ping, ms; `null` while that ping is unanswered or before its first ping |
   | `sinceMs` | ms since its last pong (any ping), or since it joined before its first |
 

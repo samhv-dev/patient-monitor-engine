@@ -47,10 +47,10 @@ import { followerStatus, hostPause, phoneStyle } from './follower-status.ts';
 
 /**
  * A phone's socket is dropped and reopened when nothing (not even the relay's 10 s heartbeat) arrived for this long — a
- * phone that slept or moved to another access point often keeps a dead socket open [ENG: 1.2 heartbeats].
+ * phone that slept or moved to another access point often keeps a dead socket open [ENG: ui; 1.2 heartbeats].
  */
 const PHONE_LIVENESS_MS = 12_000;
-/** Hidden this long (a locked phone, another tab), the page starts again from a fresh snapshot [ENG]. */
+/** Hidden this long (a locked phone, another tab), the page starts again from a fresh snapshot [ENG: ui]. */
 const HIDDEN_RESYNC_MS = 2000;
 /** The styles a phone draws upright — every shipped one (measured at 375 px, both engines). */
 const UPRIGHT: ReadonlySet<string> = new Set(MONITORS.map((m) => m.id));

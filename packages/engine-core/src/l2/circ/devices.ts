@@ -11,7 +11,7 @@ export interface CircuitDevice {
 export const IABP_VOLUME_ML = 40;
 export const IABP_INFLATE_S = 0.08;
 export const IABP_DEFLATE_S = 0.06;
-/** Default deflation lead before the next R (so the balloon is empty at aortic opening) [ENG]. */
+/** Default deflation lead before the next R (so the balloon is empty at aortic opening) [ENG: device]. */
 export const IABP_DEFLATE_LEAD_S = 0.04;
 
 export interface IabpState extends CircuitDevice {
@@ -93,20 +93,20 @@ export function iabpStop(d: IabpState, t: number): void {
 
 // --- LVAD (tables §8.2: HeartMate-3-like continuous flow, 5400 rpm, 4–6 L/min; suction when the LV empties) ---
 export const LVAD_RPM = 5400;
-export const LVAD_KH = 0.45; // mL/s per mmHg of (P_ao − P_LV) [ENG HQ slope]
-export const LVAD_SUCTION_ML = 40; // LV volume below which the inflow cannula sucks (tables §8.2) [ENG]
+export const LVAD_KH = 0.45; // mL/s per mmHg of (P_ao − P_LV) [ENG: device; HQ slope]
+export const LVAD_SUCTION_ML = 40; // LV volume below which the inflow cannula sucks (tables §8.2) [ENG: device]
 /**
  * The inflow depends on filling (research/20, gap V9). The tables' 40 mL is the collapse volume of a normal adult LV
  * (resting EDV ≈ LVAD_REF_EDV_ML); a dilated LV collapses onto the cannula at a larger volume, so the collapse volume
  * scales with the LV's own resting EDV. Above it the inflow falls smoothly over LVAD_INFLOW_MARGIN of the collapse
  * volume (the LV wall approaching the inlet), to LVAD_SUCTION_FLOW at and below it (the old suction factor). Before, a
  * 1.5 L bleed in the HFrEF rig (resting EDV 197 mL) lowered the pump flow only 4.04 → 3.70 L/min and never sucked: the
- * LV emptied to 73 mL, far above an absolute 40 mL [ENG: anchor, margin].
+ * LV emptied to 73 mL, far above an absolute 40 mL [ENG: device; anchor, margin].
  */
 export const LVAD_REF_EDV_ML = 120;
 export const LVAD_INFLOW_MARGIN = 0.25;
 export const LVAD_SUCTION_FLOW = 0.3;
-/** The chance of a PVC per supraventricular beat while suction stands (suction-induced ectopy) [ENG]. */
+/** The chance of a PVC per supraventricular beat while suction stands (suction-induced ectopy) [FIT: suction-induced PVC probability; brief research/44 L2-15]. */
 export const LVAD_SUCTION_PVC_P = 0.2;
 
 export interface LvadState extends CircuitDevice {

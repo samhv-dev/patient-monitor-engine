@@ -128,7 +128,7 @@ A `null` table or cell means "not published" and must never be filled with inven
   | philips-like | 3 s | 10 s | IntelliVue IFU [S2] p. 28 (alarm delay = system delay + the measurement's trigger delay) and p. 294 (system delay "less than 3 seconds"; the bound is used); SpO2 High/Low Alarm Delay 10 s, Desat 20 s, Configuration Guide [S1] p. 66. No configurable HR/pressure on-delay is published. |
   | mindray-like | 6 s | 10 s (inherited) | BeneVision N [S4] §10.6.5, §39.4.6 factory "Alarm Delay 6 sec" (continuously measured parameters; not apnoea, not ST); the SpO2 limits keep the inherited 10 s (the skin applies `delayS` to every limit alarm except SpO2). |
   | saadat-like | 1 s | 1 s | research/06 §4.2 [M p.50] "less than 1 s" from condition to indication (the same bound convention). |
-  | iec-defaults (zoll-, lifepak-, ge-like) | 0 s [ENG] | 10 s (brief §6.4) | no vendor on-delay found in research/05; these skins carry no limit table. |
+  | iec-defaults (zoll-, lifepak-, ge-like) | 0 s [ENG: device] | 10 s (brief §6.4) | no vendor on-delay found in research/05; these skins carry no limit table. |
 - `alarms.messageBar.rotateAll` (FU-5 Task 12): the single message bar rotates every unacknowledged message, live or
   latched, every 2 s (philips-like, IFU p. 29–30), instead of the top level only.
 

@@ -205,7 +205,7 @@ describe('Instructor v2 with no case loaded (board "Empty 5")', () => {
     expect(r.all('.ip2-action .ip2-row[data-kind="step"]').length).toBeGreaterThan(0);
   });
 
-  it("Debrief archive (Open or 3) opens the Debrief view's archive; Room setup opens Settings", () => {
+  it("Debrief archive (Open or 3) opens the Debrief view's archive; Room setup opens the Room (R7)", () => {
     const r = use(rig());
     (cardsShown(r)[2] as HTMLButtonElement).click();
     expect(location.hash).toBe('#/debrief/archive');
@@ -213,8 +213,10 @@ describe('Instructor v2 with no case loaded (board "Empty 5")', () => {
     r.key('3');
     expect(location.hash).toBe('#/debrief/archive');
     location.hash = '';
-    (r.all('.ip2-begin-two > button')[0] as HTMLButtonElement).click();
-    expect(location.hash).toBe('#/settings');
+    const setup = r.all('.ip2-begin-two > button')[0] as HTMLButtonElement;
+    expect(setup.title).not.toMatch(/until the room setup has its own window/);
+    setup.click();
+    expect(location.hash).toBe('#/room');
   });
 
   it('Esc with a sheet open closes the sheet and leaves the case list as it is', () => {

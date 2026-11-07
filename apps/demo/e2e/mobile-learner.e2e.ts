@@ -113,6 +113,8 @@ test("the Room page's QR, then a phone follows in the instructor's style through
   await synced(f);
   await expect(sheet.locator('.phones-count')).toHaveText('1 phone following');
   await expect(page.locator('.room-status')).toContainText(/Stable connection|Weak connection/);
+  // R7: the relay's device table lists the phone with what it shows (its hello's `show`)
+  await expect(page.locator('.room-table tbody tr[data-show="learner"] td').nth(2)).toHaveText('Learner monitor');
   await page.evaluate(() => (location.hash = '#/teach2'));
   await expect(status(f)).toHaveText(`Following session ${code}`);
   // one screen, portrait: the waveforms over the whole width, the tiles in a grid under them, nothing to scroll, no

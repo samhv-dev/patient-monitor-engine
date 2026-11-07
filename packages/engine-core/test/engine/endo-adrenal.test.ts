@@ -35,7 +35,7 @@ describe('etomidate and adrenal insufficiency', { timeout: 900_000 }, () => {
     expect(minA).toBeLessThan(minN - 2);
     expect(pe(a) / pe(n)).toBeLessThanOrEqual(0.8);
   });
-  // R45: the permissive term ([ENG] 0.25) is not tuned to the band. Before FU-7 this was an `it.fails` (measured −3.9;
+  // R45: the permissive term ([FIT: adrenal permissive term; brief research/44 X-18] 0.25) is not tuned to the band. Before FU-7 this was an `it.fails` (measured −3.9;
   // −4.2 on the plan base 1b8bdd3). FU-7's stimulus surge (Task 10, addendum 25) now carries the incision's pressor
   // response, and the adrenal-insufficient patient's lower vasopressor responsiveness answers it less (ET-15a: healthy
   // surgical MAP 87.4 → 96.5, adrenal-insufficient 83.3 → 88.2), so the band is met on the merged tree.

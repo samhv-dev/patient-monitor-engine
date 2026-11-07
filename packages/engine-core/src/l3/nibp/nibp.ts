@@ -19,30 +19,30 @@ import type { NibpPhase, NibpSite } from '../../types-hemo.ts';
 export const NIBP = {
   INITIAL_TARGET: 165, // adult (Philips 165 ± 15) — paediatric 130, neonatal 100 are skin data
   NEXT_TARGET_ABOVE_SBP: 10, // GE rule (brief §4.5)
-  REPUMP_ABOVE: 40, // [ENG]
-  INFLATE_RATE: 20, // mmHg/s → under 10 s [ENG rate]
-  DUMP_RATE: 50, // mmHg/s final deflation [ENG]
-  STEP: 8, // mmHg [ENG]
-  STEP_SETTLE_S: 0.2, // pulses in the first 200 ms of a step are ignored [ENG]
-  STEP_MIN_WAIT_S: 1.0, // a step with no usable pulses ends after max(1.0 s, 1.5 × RR) [ENG]
+  REPUMP_ABOVE: 40, // [ENG: device]
+  INFLATE_RATE: 20, // mmHg/s → under 10 s [ENG: device; rate]
+  DUMP_RATE: 50, // mmHg/s final deflation [ENG: device]
+  STEP: 8, // mmHg [ENG: device]
+  STEP_SETTLE_S: 0.2, // pulses in the first 200 ms of a step are ignored [ENG: device]
+  STEP_MIN_WAIT_S: 1.0, // a step with no usable pulses ends after max(1.0 s, 1.5 × RR) [ENG: device]
   STEP_WAIT_RR: 1.5,
-  STEP_MAX_S: 6, // hard cap on one step [ENG]
-  MAX_PULSES: 5, // AF/ectopy: up to 5 pulses per step [ENG]
-  MATCH: 0.15, // two pulses within 15% are "matched" [ENG]
-  RR_LOOKBACK: 5, // an empty step waits 1.5 × the longest of the last 5 pulse intervals [ENG]
-  STOP_BELOW: 0.6, // stop once two smoothed steps below the peak are < 0.6·peak, i.e. past the Rd point [ENG]
-  MIN_CUFF: 30, // stop deflating below this [ENG]
+  STEP_MAX_S: 6, // hard cap on one step [ENG: device]
+  MAX_PULSES: 5, // AF/ectopy: up to 5 pulses per step [ENG: device]
+  MATCH: 0.15, // two pulses within 15% are "matched" [ENG: device]
+  RR_LOOKBACK: 5, // an empty step waits 1.5 × the longest of the last 5 pulse intervals [ENG: device]
+  STOP_BELOW: 0.6, // stop once two smoothed steps below the peak are < 0.6·peak, i.e. past the Rd point [ENG: device]
+  MIN_CUFF: 30, // stop deflating below this [ENG: device]
   RS: 0.5, // Rs 0.45–0.57 → 0.50 (brief §4.5)
   RD: 0.8, // Rd 0.75–0.86 → 0.80
   // The cuff oscillation is the arterial volume pulse under the cuff. With a sigmoid arterial P–V curve the peak
   // oscillation (cuff ≈ MAP, transmural pressure swinging ±PP/2 around 0) is A_SAT·tanh(PP / PP_KNEE): linear in PP
   // where the wall is most compliant, saturating at a wide PP (Drzewiecki 1994 Ann Biomed Eng 22:88; Babbs 2012 BioMed
   // Eng OnLine 11:56). 1.5 / 2.7 / 3.7 mmHg at PP 20 / 40 / 80 keeps the brief's 1–4 mmHg; PP 10 gives 0.8.
-  A_SAT: 4, // mmHg [ENG, fitted to the brief's 1–4 mmHg band]
-  PP_KNEE: 50, // mmHg [ENG]
-  AMP_NOISE: 0.05, // per-pulse amplitude noise (fraction) [ENG]
-  A_DETECT: 0.1, // pulses smaller than this are not seen, mmHg [ENG]
-  A_MIN_ENVELOPE: 0.3, // a smaller envelope peak is not a measurement [ENG] (MAP 13 / PP 3 fails)
+  A_SAT: 4, // mmHg [FIT: oscillation amplitude (brief's 1–4 mmHg band); fitted to the brief's 1–4 mmHg band; brief research/44 X-07]
+  PP_KNEE: 50, // mmHg [FIT: tanh knee of oscillation amplitude on pulse pressure; brief research/44 X-07]
+  AMP_NOISE: 0.05, // per-pulse amplitude noise (fraction) [ENG: device]
+  A_DETECT: 0.1, // pulses smaller than this are not seen, mmHg [ENG: device]
+  A_MIN_ENVELOPE: 0.3, // a smaller envelope peak is not a measurement [ENG: device] (MAP 13 / PP 3 fails)
   MIN_SBP: 50, // "SBP below about 50–60 fails" (brief §4.5)
   RESULT_SD: 4, // noise SD on SBP/DBP, mmHg (brief §4.5); MAP gets half
   SAFETY_S: 170, // adult safety auto-deflate (brief §4.5); neonatal 85 s (brief §4.5) is not modelled
@@ -198,7 +198,7 @@ function matched(a: readonly number[]): boolean {
  */
 /**
  * [1 2 1]/4 smoothing of the step amplitudes across neighbouring cuff steps (end steps use the two-point
- * weights), so one large or small AF pulse cannot become the envelope peak or end the deflation early [ENG].
+ * weights), so one large or small AF pulse cannot become the envelope peak or end the deflation early [ENG: device].
  * For a Gaussian envelope this adds the kernel variance, i.e. w² grows by STEP²; `invertEnvelope` removes it.
  */
 export function smoothEnvelope(steps: readonly number[][]): number[][] {
@@ -344,7 +344,7 @@ export function nibpStep(nb: NibpState, t: number, dt: number, rng: Sfc32State, 
         return;
       }
       // the mean of the step's pulses: the matched pair in a regular rhythm; with irregular pulses the device
-      // averages all it collected (up to MAX_PULSES) rather than trusting the last two [ENG]
+      // averages all it collected (up to MAX_PULSES) rather than trusting the last two [ENG: device]
       const amp = a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
       nb.steps.push([nb.stepPc, amp]);
       // done when the last TWO smoothed steps are below STOP_BELOW·peak on the low side (past the Rd point)

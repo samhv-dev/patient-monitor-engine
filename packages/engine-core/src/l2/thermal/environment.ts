@@ -17,19 +17,19 @@
 export const SIGMA = 5.670e-8; // W/m²/K⁴
 export const EMISSIVITY = 0.95; // skin [TXT]
 export const F_RAD = 0.73; // effective radiating fraction of body area, supine (Pulse) [TXT]
-export const AIR_SPEED_MS = 0.15; // theatre air speed at the patient [ENG]; laminar-flow theatre 0.3–0.5
+export const AIR_SPEED_MS = 0.15; // theatre air speed at the patient [ENG: scenario]; laminar-flow theatre 0.3–0.5
 export const SKIN_EVAP_W_70 = 10; // insensible skin evaporation, awake [TXT: ≈ 10–15 W]
-export const PREP_EVAP_W_70 = 40; // wet skin prep / open body cavity (tables: large wound 10–30 % of loss) [ENG]
+export const PREP_EVAP_W_70 = 40; // wet skin prep / open body cavity (tables: large wound 10–30 % of loss) [FIT: prep evaporation (tables: large wound 10–30 % of loss); brief research/44 L2-43]
 export const AIR_J_L_C = 1.21; // ρ·cp of air, J/L/°C
 export const LATENT_J_MG = 2.43; // water latent heat at 30–37 °C, J/mg
 export const EXHALED_C = 34; // exhaled gas temperature, saturated [TXT]
-export const ROOM_RH = 0.5; // theatre relative humidity [ENG]
+export const ROOM_RH = 0.5; // theatre relative humidity [ENG: scenario]
 export const HME_RECOVERY = 0.5; // heat–moisture exchanger returns half the respiratory loss [TXT]
 export const FORCED_AIR_C = 43; // "high" setting [TXT]
-export const FORCED_AIR_H = 10; // W/m²/°C air-to-skin under the blanket [ENG: fitted to warmed −0.9 °C and +0.5–1 °C/h]
-/** The blanket, skin and subcutaneous tissue take time to warm: the delivered power follows on/off with this τ [ENG]. */
+export const FORCED_AIR_H = 10; // W/m²/°C air-to-skin under the blanket [FIT: warmed −0.9 °C and +0.5–1 °C/h; brief research/44 L2-43]
+/** The blanket, skin and subcutaneous tissue take time to warm: the delivered power follows on/off with this τ [ENG: device]. */
 export const FORCED_AIR_TAU_S = 1800;
-export const FORCED_AIR_AREA = 0.35; // upper-body blanket fraction of the body area [ENG]
+export const FORCED_AIR_AREA = 0.35; // upper-body blanket fraction of the body area [ENG: scenario]
 export const WATER_J_ML_C = 4.18; // IV fluid heat capacity
 
 /** Du Bois body surface area, m² (Pulse's skin-area formula). */

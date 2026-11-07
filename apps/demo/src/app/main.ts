@@ -183,7 +183,7 @@ if (follow && shows === 'pick') {
   shell.add(homeView());
   const room = roomView({
     code: session.code, relay, relayLink: session.relay, local: session.bc, hostPeerId: session.host.peerId, learnerUrl: followUrl(session.code),
-    followers: () => session.followers, onFollowers: (f) => session.onFollowers(f),
+    followers: () => session.followers, onFollowers: (f) => session.onFollowers(f), devices: () => session.devices,
     instructor: instructorRoomCard({ code: session.code, relay, pin, host: session.host, instructors: () => session.instructors, onInstructors: (f) => session.onInstructors(f) }),
     // R5b: the room's defibrillator model, kept with the site profile (the monitor style's place) and sent to the patient
     defib: { model: () => site.defibModel, choose: (m) => ((site.defibModel = m), saveSite(site), session.setDefibModel(m)) },
@@ -253,7 +253,8 @@ if (follow && shows === 'pick') {
   const drawSound = () => ((sound.textContent = session.soundOn ? 'Sound on' : 'Sound off'), sound.setAttribute('aria-pressed', String(session.soundOn)));
   const sound = button('Sound off', () => void toggleSound(), 'small sound');
   sound.setAttribute('aria-pressed', 'false');
-  const code = h('a', { class: 'code-pill', href: hrefOf('remote'), 'aria-label': `Remote pairing code ${session.code.split('').join(' ')}` }, h('span', { class: 'muted' }, 'Remote '), session.code);
+  // R7: the code pill opens Room setup (the one QR code: a remote pairs through its picker)
+  const code = h('a', { class: 'code-pill', href: hrefOf('room'), 'aria-label': `Room code ${session.code.split('').join(' ')}: Room setup` }, h('span', { class: 'muted' }, 'Room '), session.code);
   shell.right.append(alarm, sound, code);
   function alarmText(): string {
     const s = link.alarmSummary;

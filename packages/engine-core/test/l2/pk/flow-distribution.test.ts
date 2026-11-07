@@ -2,12 +2,12 @@
 // SETTLED resting output (engine: 7c's latched co0 — the hbfRel reference — converted to L/min; F12(1)), quantised to
 // 5 % in 0.3–1.5: V1 × (0.5 + 0.5q), CL2/CL3 × q, CL1 unchanged (7g's clFactor carries hepatic flow), and the effect site
 // reaches the brain later — a transit lag ARM_BRAIN_S·(1/q − 1) before the bolus enters V1 (F12(3); a ke0 × q cut was
-// measured first and LOWERED the peak to 0.87× instead of delaying it, so it was not used) [ENG].
+// measured first and LOWERED the peak to 0.87× instead of delaying it, so it was not used) [FIT: propofol V1 share; brief research/44 X-17].
 // Sources: low output shrinks the initial distribution volume and slows intercompartmental exchange, so a bolus peaks
 // higher — Kazama T et al., Anesthesiology 2002;97:1156–1161 [P]; Johnson KB et al., Anesthesiology 2003;99:409–420
 // (porcine haemorrhagic shock: higher concentrations, left-shifted potency) [P]. F12(2) asked for the papers' numbers
 // here BEFORE the V1 share was chosen and for an upper bound they support: web access was unavailable in the FU-4
-// execution session, so the plan's [ENG] share 0.5 is kept, NO ceiling is asserted (none can be sourced here), and the
+// execution session, so the plan's [FIT: propofol V1 share; brief research/44 X-17] share 0.5 is kept, NO ceiling is asserted (none can be sourced here), and the
 // extraction is an open item in the gate note. Target (S6b): 30 % haemorrhage (CO ≈ 3.1 L/min) → peak Ce ≥ 1.3×.
 import { describe, expect, it } from 'vitest';
 import { advancePk, applyPkCommand, createPkState, distFactor, NEUTRAL_PK_CTX, pkPatientOf, type PkCtx } from '../../../src/l2/pk/pipeline.ts';
@@ -46,7 +46,7 @@ describe('propofol distribution follows cardiac output', () => {
     expect(s.peak / h.peak).toBeGreaterThan(1.2);
     expect(s.tPeak - h.tPeak).toBeGreaterThanOrEqual(5);
   });
-  it.fails('S6b: 30 % haemorrhage (CO 3.1 vs 5.25) → propofol 2 mg/kg peak Ce ≥ 1.3× healthy — measured 1.29 (q 0.6, V1 share 0.5 [ENG])', () => {
+  it.fails('S6b: 30 % haemorrhage (CO 3.1 vs 5.25) → propofol 2 mg/kg peak Ce ≥ 1.3× healthy — measured 1.29 (q 0.6, V1 share 0.5 [FIT: propofol V1 share; brief research/44 X-17])', () => {
     expect(peakCe(3.1, 5.25).peak / peakCe(5.25, 5.25).peak).toBeGreaterThanOrEqual(1.3);
   });
 });

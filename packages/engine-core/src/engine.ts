@@ -101,7 +101,7 @@ const DEFAULT_LANES: LeadId[] = ['ecgII', 'V5'];
 /**
  * The primary (detection) lead: the QRS detector and HR run on lead II, monitor-filtered with its own filter state,
  * whatever lead lane 0 shows. Detecting on lane 0 kept thresholds learned on II after a switch to a small lead (aVL:
- * QRS ~23 %), so HR read 0 within 4 s, a false asystole [ENG].
+ * QRS ~23 %), so HR read 0 within 4 s, a false asystole [ENG: device].
  */
 const DETECTION_LEAD: LeadId = 'ecgII';
 
@@ -173,8 +173,8 @@ function stateSignals(ps: PipelineState, t: number): StateSignals {
 /**
  * Transcutaneous pacing is painful (research/20, gap V6). The pacer's output current is a nociceptive input on the
  * endocrine stimulus scale — none up to TCP_PAIN_MA_0, rising linearly to TCP_PAIN_MAX ("laryngoscopy-grade", the
- * endocrine model's 1.5) at TCP_PAIN_MA_FULL and above [ENG; research/20 V6's smallest mechanism, fit target: an awake
- * patient paced at 50–100 mA needs analgesia/sedation (ERC 2021 ALS)]. It is ADDED to the instructor's held stimulus
+ * endocrine model's 1.5) at TCP_PAIN_MA_FULL and above [FIT: research/20 V6's smallest mechanism, fit target: an awake
+ * patient paced at 50–100 mA needs analgesia/sedation (ERC 2021 ALS); brief research/20 V6; src ERC 2021 ALS]. It is ADDED to the instructor's held stimulus
  * through the one `stimulus` shape for the duration of each pass, so the endocrine catecholamines and the neuro
  * model's arousal answer it and antinociception (opioid, hypnotic) removes it; no new effector, no new state.
  */

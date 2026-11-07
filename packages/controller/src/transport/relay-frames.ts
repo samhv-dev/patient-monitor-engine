@@ -28,7 +28,7 @@ export type RelayFrame =
   | { relay: 'error'; code: 'bad-hello' | 'host-exists' | 'forbidden' | 'full' | 'bad-session' | 'denied' | 'too-many-tries'; message: string };
 
 /**
- * WebSocket close codes the relay uses for fatal refusals (no reconnect) [ENG]. `denied`: the host refused the
+ * WebSocket close codes the relay uses for fatal refusals (no reconnect) [ENG: network]. `denied`: the host refused the
  * instructor's PIN (the page asks again rather than reconnect with it); `tooManyTries`: too many wrong PINs from one
  * address (plan instructor-peer-role.md §1).
  */
@@ -39,7 +39,7 @@ export const FATAL_CLOSE_CODES: ReadonlySet<number> = new Set(Object.values(RELA
 /**
  * Close codes for refusals the client retries with its backoff (not in FATAL_CLOSE_CODES): `idTaken`, the peer id is
  * held by another socket that answered the relay's ping. A half-open one does not answer and is closed, so a phone
- * whose network dropped, or a reloaded laptop, gets in on its next try [ENG].
+ * whose network dropped, or a reloaded laptop, gets in on its next try [ENG: network].
  */
 export const RELAY_RETRY_CLOSE = { idTaken: 4010 } as const;
 

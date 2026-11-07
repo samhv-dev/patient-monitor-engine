@@ -31,7 +31,7 @@ export function pushCircVolume(c: CircLike, dMl: number, dtS: number): void {
 
 /**
  * Blood viscosity follows the haematocrit, so the systemic resistance does: SVR × (Hb/Hb_ref)^0.6 (Weiskopf 1998 JAMA
- * 279:217, acute isovolaemic Hb 14 → 5: SVR −47 %) [ENG exponent]; the circulation model's optional `ext.viscF`.
+ * 279:217, acute isovolaemic Hb 14 → 5: SVR −47 %) [FIT: viscosity → SVR exponent; exponent; brief research/44 L2-39]; the circulation model's optional `ext.viscF`.
  */
 export const VISC_EXP = 0.6;
 /**
@@ -57,7 +57,7 @@ export function setCircChemistry(c: CircLike, k: number): void {
 }
 
 /**
- * The circulation model ABSENT (unit rigs): cardiac-output factor from blood volume [ENG]: none for the first 10 % loss
+ * The circulation model ABSENT (unit rigs): cardiac-output factor from blood volume [ENG: test]: none for the first 10 % loss
  * (compensated), then −16 % per further 10 % (class III, 35 % → 0.6), +6 % per 10 % overload, clamped 0.2–1.15.
  */
 export function volumeCoFactor(bvRatio: number): number {
@@ -67,7 +67,7 @@ export function volumeCoFactor(bvRatio: number): number {
 
 /**
  * The circulation model ABSENT (unit rigs): the `volumeStatus` coupled truth = min(current, target × volume factor),
- * factor 1 at BV0 and 0 at 35 % loss [ENG]; `contractility` coupled truth = target × chemistry factor (cleared at 1).
+ * factor 1 at BV0 and 0 at 35 % loss [ENG: test]; `contractility` coupled truth = target × chemistry factor (cleared at 1).
  */
 export function applyL1Fallback(l1: L1State, t: number, bvRatio: number, kChem: number): void {
   const c = (l1.coupled ??= {});
@@ -86,7 +86,7 @@ export function chemistryContractility(ph: number, iCa: number, kEcg = 4.2): num
   const kF = kEcg > K_CONTRACT ? Math.max(0.3, 1 - K_CONTRACT_SLOPE * (kEcg - K_CONTRACT)) : 1;
   return acid * Math.min(1, (iCa / 1.1) ** 1.5) * kF;
 }
-/** Severe hyperkalaemia depresses contractility above K_CONTRACT (membrane-effective), −20 %/mmol/L [ENG, Q5]. */
+/** Severe hyperkalaemia depresses contractility above K_CONTRACT (membrane-effective), −20 %/mmol/L [FIT: hyperkalaemic contractility loss (Q5); Q5; brief research/44 L2-05]. */
 export const K_CONTRACT = 8;
 export const K_CONTRACT_SLOPE = 0.2;
 
@@ -99,9 +99,9 @@ export function pulmCapPressure(hemo: unknown): number | null {
   const o = (hemo as { circOut?: { pPv?: unknown } } | null)?.circOut;
   return o && typeof o.pPv === 'number' ? o.pPv : null;
 }
-/** Lung-water filtration, mL/kg/min per mmHg above the oedema threshold [ENG, Q25]: EVLWI +10 mL/kg at steady state for 10 mmHg. */
+/** Lung-water filtration, mL/kg/min per mmHg above the oedema threshold [FIT: lung-water filtration and lymph clearance (Q25); Q25; brief research/44 L2-39]: EVLWI +10 mL/kg at steady state for 10 mmHg. */
 export const LW_GAIN = 1 / 60;
-/** Lung lymph clearance time constant, min [ENG, Q25]. */
+/** Lung lymph clearance time constant, min [FIT: lung-water filtration and lymph clearance (Q25); Q25; brief research/44 L2-39]. */
 export const LW_TAU_MIN = 60;
 
 /**

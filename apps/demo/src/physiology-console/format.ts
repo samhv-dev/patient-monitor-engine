@@ -37,7 +37,7 @@ export function fmtDelta(d: number | null, m: Pick<Meta, 'digits' | 'scale'>, re
 }
 
 export type Dir = 'up' | 'down' | 'diff' | null;
-/** Relative change that counts as a change [ENG]: HR 70 → 71 (1.4 %) is jitter, phenylephrine's SVR +30–40 % is not. */
+/** Relative change that counts as a change [ENG: ui]: HR 70 → 71 (1.4 %) is jitter, phenylephrine's SVR +30–40 % is not. */
 export const CHANGE_REL = 0.02;
 /**
  * Change against the baseline, for highlighting: numbers must move by ≥ the tolerance — the path's absolute one

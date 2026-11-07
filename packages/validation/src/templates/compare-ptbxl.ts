@@ -32,7 +32,7 @@ export function csvCells(line: string): string[] {
   return out;
 }
 
-/** R peaks on lead II: 5–15 Hz band-pass, 50% of the record's maximum, 250 ms refractory [ENG]. */
+/** R peaks on lead II: 5–15 Hz band-pass, 50% of the record's maximum, 250 ms refractory [ENG: measurement]. */
 export function rPeaks(x: Float64Array, fs: number): number[] {
   const f = bandpassZeroPhase(x, fs, 5, 15);
   let mx = 0;

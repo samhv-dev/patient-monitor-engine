@@ -8,7 +8,7 @@ const hrAbove = (ev: EngineEvent[], v: number) => ev.find((x): x is Meas => x.ty
 
 describe('alarm engine in the engine', () => {
   // FU-5 Task 9a, R45 re-statement (the orchestrator's ruling on the FU-5 plan's Open question 20: the vendor's alarm
-  // on-delay): was "at the first displayed value over the limit (no added delay)", the [ENG] 0 s of iec-defaults. The
+  // on-delay): was "at the first displayed value over the limit (no added delay)", the [ENG: device] 0 s of iec-defaults. The
   // target is 130 (was 150): a rise to 150 crosses philips-like's EXTREME TACHY threshold 140 within the 3 s, and the
   // live red alarm then supersedes HR HIGH (the FU-5 chain, D6) — the subject, the limit alarm's timing and priority,
   // is unchanged.
