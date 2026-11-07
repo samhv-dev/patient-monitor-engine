@@ -5,12 +5,12 @@ import { WAVE, kernel, makeEvent } from './kernels.ts';
 import { pushPending, rhythmRate, type RhythmCtx, type RhythmState } from './rhythm-state.ts';
 import type { Vec3 } from './vcg.ts';
 
-/** Junctional/AVRT retrograde P′: inverted in II (−0.12 mV) (research 03 §1.5) [ENG]. */
+/** Junctional/AVRT retrograde P′: inverted in II (−0.12 mV) (research 03 §1.5) [FIT: ECG morphology amplitude without a source; brief research/44 L2-46]. */
 export const RETRO_JUNCTIONAL_P_VEC: Vec3 = [-0.03, -0.105, 0.02];
 const JUNCTIONAL_PR_S = 0.08; // retrograde P before the QRS: short PR < 120 ms (research 03 §1.5)
-const JUNCTIONAL_RP_S = 0.1; // retrograde P after the QRS [ENG]
+const JUNCTIONAL_RP_S = 0.1; // retrograde P after the QRS [ENG: texture]
 export const AVRT_RP_ONSET_S = 0.13; // AVRT: P′ onset 130 ms after QRS onset → RP > 70 ms (research 03 §1.5)
-const FOCUS_JITTER_S = 0.004; // [ENG]
+const FOCUS_JITTER_S = 0.004; // [ENG: texture]
 
 function retroP(st: RhythmState, t: number): void {
   st.events.push(makeEvent(t, kernel(0.045, 0.022, 0.022, RETRO_JUNCTIONAL_P_VEC, WAVE.RETRO_P)));

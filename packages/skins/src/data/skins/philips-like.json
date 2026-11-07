@@ -69,7 +69,7 @@
   "provenance": {
     "co2.sidestreamDelayS": { "tag": "documented", "source": "research/09 §5 (Philips Microstream, adult; R39-5)" },
     "co2.riseTimeMs": { "tag": "documented", "source": "research/09 §5 (Philips Microstream, adult; R39-5)" },
-    "colors": { "tag": "documented", "source": "research/05 §2.1 (IntelliVue factory colour names); brief §6.8", "note": "hex values are [ENG] renderings of the colour names; NBP red (magenta in some profiles)" },
+    "colors": { "tag": "documented", "source": "research/05 §2.1 (IntelliVue factory colour names); brief §6.8", "note": "hex values are [ENG: display] renderings of the colour names; NBP red (magenta in some profiles)" },
     "colors.NMT": { "tag": "eng", "source": "ENG", "note": "FU-3 item 11: research/05 §2.1 has no NMT row; the Stage 7f demo's tile colour (apps/demo/src/dev/depth-neuromuscular.ts) kept" },
     "colors.BFA": { "tag": "eng", "source": "ENG", "note": "FU-3 item 11: research/05 §2.1 has no BIS/depth row; the Stage 7f demo's tile colour (apps/demo/src/dev/depth-neuromuscular.ts) kept" },
     "colors.AGENTS": { "tag": "documented", "source": "research/05 §2.1 [S1] GM/AGM tables", "note": "FU-8 (A10-E5): SEV yellow; the IntelliVue colours each agent (HAL red, ISO magenta, ENF orange, SEV yellow, DES cyan) — one tile colour until the engine publishes the agent id" },

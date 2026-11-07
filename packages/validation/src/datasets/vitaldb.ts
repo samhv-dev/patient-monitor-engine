@@ -83,7 +83,7 @@ const median = (xs: number[]): number => {
 };
 const vals = (p: Array<[number, number]>) => p.map(([, v]) => v);
 
-/** Minimum seconds of ART_MBP < 65 that tag a window `hypotension` [ENG; the usual IOH definition is MAP < 65]. */
+/** Minimum seconds of ART_MBP < 65 that tag a window `hypotension` [ENG: measurement; the usual IOH definition is MAP < 65]. */
 export const HYPO_MAP = 65;
 export const HYPO_MIN_S = 60;
 
@@ -150,7 +150,7 @@ export function findWindows(f: VitalFile, c: Candidate, max = 2, lenS = 300): An
   return out.sort((x, y) => x.fromS - y.fromS);
 }
 
-/** Inspiration onsets from airway pressure: upward crossings of (min + 30 % of the range) per 20 s block [ENG]. */
+/** Inspiration onsets from airway pressure: upward crossings of (min + 30 % of the range) per 20 s block [ENG: measurement]. */
 export function inspirationsFromAwp(p: Float64Array, fs: number): number[] {
   const out: number[] = [];
   const blk = Math.round(20 * fs);

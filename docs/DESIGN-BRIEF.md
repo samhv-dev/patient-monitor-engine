@@ -7,7 +7,22 @@
 **Citation convention.** `[05 §3.2]` means `research/05-rendering-ux-integration.md`, section 3.2. The other files are `01-commercial-simulators`, `02-open-source-and-academic`, `03-waveform-physiology-reference`, `04-squiggler-and-web-sims` and `06-saadat-alborz-b9` (whose `[M p.N]` means Saadat manual, PDF page N). `R1`–`R13` are the binding orchestrator rulings in `research/00-orchestrator-rulings.md`.
 
 **Confidence tags** (inherited from report 03):
-- **[ENG]** is an engineering choice: tune it, and don't cite it as literature.
+- **[ENG: kind]** marks a number that is **not physiology**, and says which kind: `numerics` (a step, a clamp, a guard,
+  an averaging window of the model's own), `device` (what a monitor, pump, cuff or detector does), `display`, `ui`,
+  `network`, `scenario` (a scenario default or a teaching rule), `control` (an instructor control or a MANUAL tracker),
+  `conversion` (unit arithmetic), `measurement` (a validation method choice), `texture` (jitter or variability added so a
+  generated signal does not look synthetic), `unused` (a constant nothing reads) or `test` (a test's own input). A note
+  may follow: `[ENG: device; no vendor value found]`. Tune it freely; never cite it as literature.
+- **[FIT: target; ref]** marks a value **fitted to a physiological target**: a gain, size, lookup or time constant tuned
+  until an output landed on a band, standing in for a mechanism or a source the engine does not have yet. It names the
+  target and must name a source (`src Billard 1994`) or a mechanism-brief id (`brief research/44 L2-09`), or both:
+  `[FIT: class III lactate band; brief research/44 L2-09]`. A FIT is a debt, not a choice: it is retired by the mechanism
+  or the sourced value its brief names, not re-tuned. A band without a source in a test or a validation suite is tagged the
+  same way.
+- The test between the two: *is this number a stand-in for a physiological coupling or target?* If yes, it is a FIT. A
+  number picked inside a range a source states carries that citation instead of a tag. `scripts/ci/markers.mjs` (CI, the
+  `changes` job) fails on a bare or variant `[ENG]` (`[ENG, fit …]`, `[ENG; …]`, `[TXT; ENG size]`), on an `[ENG: kind]`
+  outside the list above and on a `[FIT]` with neither a source nor a brief id, and reports the counts.
 - **[VERIFY]** must be checked against the primary source before the stage gate that uses it. The owning stage is named in §10.
 - An untagged number carries a report citation.
 - Saadat data quoted from report 06 keeps that report's own tags verbatim: **[measured]** (a colour sampled from the manual's native screenshots, not a value Saadat publishes), **[assumed]** (an engineering guess made to fill a skin field), **[unverified]**, **[conflict]** and **[inferred]**.

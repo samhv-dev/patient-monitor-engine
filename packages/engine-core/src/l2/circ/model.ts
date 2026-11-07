@@ -24,10 +24,10 @@ export const CTL_DT = 0.1; // control layer at 10 Hz (tables §2.1 step 6)
 /**
  * Post-extrasystolic potentiation is a contractility (calcium) effect, not only Frank–Starling (research 03 §8.3, JAHA
  * 2015): the beat after a premature one (RR < PESP_PREMATURE × the running normal RR, perfused or not) gets its Emax
- * raised by up to PESP_MAX for that one beat, scaled by prematurity [ENG magnitude, fitted to the band +8–15 mmHg
- * post-PVC SBP].
+ * raised by up to PESP_MAX for that one beat, scaled by prematurity [FIT: magnitude, fitted to the band +8–15 mmHg
+ * post-PVC SBP; brief research/44 L2-29].
  */
-/** Cardiac-output averaging time constant (CO follows compressions and beats alike) [ENG]. */
+/** Cardiac-output averaging time constant (CO follows compressions and beats alike) [ENG: numerics]. */
 export const CO_TAU_S = 4;
 export const PESP_MAX = 0.5;
 export const PESP_PREMATURE = 0.8;
@@ -37,8 +37,8 @@ export const PESP_PREMATURE = 0.8;
  * deficit for RR < ~350 ms", Annu Rev Med 1988, PubMed 3285783), so a beat that arrives EARLIER than the running normal
  * RR is weaker as well as under-filled. Applied to supraventricular beats only (ventricular beats already carry the
  * rhythm engine's k_rhythm) and only below the running normal RR, so every steady rhythm is unchanged. Recovery
- * 1 − exp(−(RR − REST_ERP_S)/REST_TAU_S), normalised to the running RR [ENG sizes; fit: AF 150/min non-ejecting beats
- * 10–20 %].
+ * 1 − exp(−(RR − REST_ERP_S)/REST_TAU_S), normalised to the running RR [FIT: sizes; fit: AF 150/min non-ejecting beats
+ * 10–20 %; brief research/44 L2-29].
  */
 export const REST_ERP_S = 0.2;
 export const REST_TAU_S = 0.06;
@@ -47,34 +47,34 @@ function restitution(rr: number, rrRef: number): number {
   return rr >= 0.97 * rrRef ? 1 : f(rr) / Math.max(1e-6, f(rrRef)); // within 3 % of the running RR (steady rhythms, the EMA lag): exactly 1
 }
 /**
- * Sinus-rate loss per unit of the hypoxic myocardial deficit `cor.hyp` [ENG, fitted: HR < 40 held within 6 min of SaO2
- * < 60 %, before the arrest].
+ * Sinus-rate loss per unit of the hypoxic myocardial deficit `cor.hyp` [FIT: ted: HR < 40 held within 6 min of SaO2
+ * < 60 %, before the arrest; brief research/44 L2-05].
  */
 export const G_SA = 1.5;
-/** Floor of the hypoxic contractility factor 1 − cor.hyp (anoxic myocardium stops ejecting) [ENG]. */
+/** Floor of the hypoxic contractility factor 1 − cor.hyp (anoxic myocardium stops ejecting) [FIT: hypoxic/hyperkalaemic arrest-side sinus and contractility rule; brief research/44 L2-05]. */
 export const K_HYP_MIN = 0.02;
 /**
  * The continuous MAP's averaging time constant (the organ and endocrine models and the arrest's no-flow rule read it)
- * [ENG].
+ * [ENG: numerics].
  */
 export const MAP_NOW_TAU_S = 2;
 /** The ischaemic SA node slows once the LV flow share falls below K_BRADY (pre-arrest, "terminal" bradycardia of
- * decompensating shock) by G_SA_ISCH per unit of kIsch below it [ENG: HR at the arrest ≤ 60 % of its shock peak]. */
+ * decompensating shock) by G_SA_ISCH per unit of kIsch below it [FIT: hypoxic/hyperkalaemic arrest-side sinus and contractility rule; HR at the arrest ≤ 60 % of its shock peak; brief research/44 L2-05]. */
 export const K_BRADY = 0.5;
 export const G_SA_ISCH = 1.2;
-/** Sinus-rate depression per mmol/L of the membrane-effective K above 7 (hyperkalaemic sinus bradycardia) [ENG]. */
+/** Sinus-rate depression per mmol/L of the membrane-effective K above 7 (hyperkalaemic sinus bradycardia) [FIT: hypoxic/hyperkalaemic arrest-side sinus and contractility rule; brief research/44 L2-05]. */
 export const G_SA_K = 0.12;
 /**
  * The STIMULUS-driven vagal reflexes — laryngoscopy, the oculocardiac reflex (traction on the extra-ocular muscles,
  * pressure on the globe) and peritoneal/mesenteric traction — add a vagal RR increment at the SA node, the same
  * additive ms term as the drug bus's `vagalMs`, and × (1 − muscarinic occupancy) so that atropine or glycopyrrolate
  * given first abolishes them (Miller, ophthalmic anaesthesia: bradycardia or asystole on traction, abolished by
- * atropine; the reflex FATIGUES on sustained or repeated traction) [P direction]. Sizes [ENG]: laryngoscopy 300 ms,
+ * atropine; the reflex FATIGUES on sustained or repeated traction) [P direction]. Sizes [FIT: vagal reflex size (direction sourced); brief research/44 L2-29]: laryngoscopy 300 ms,
  * oculocardiac and peritoneal traction 600 ms × the stimulus intensity; fatigue τ.
  */
 export const VAGAL_STIM_MS: Readonly<Record<string, number>> = { laryngoscopy: 300, oculocardiac: 600, peritoneal: 600 };
 export const VAGAL_STIM_PER_INTENSITY: Readonly<Record<string, boolean>> = { laryngoscopy: false, oculocardiac: true, peritoneal: true };
-export const VAGAL_STIM_FATIGUE_S = 120; // the reflex fades on sustained traction [ENG]
+export const VAGAL_STIM_FATIGUE_S = 120; // the reflex fades on sustained traction [FIT: vagal reflex size (direction sourced); brief research/44 L2-29]
 // The empty-ventricle (Bezold–Jarisch) term was prototyped (800 ms × (0.35 − EDV/rest)/0.35) and NOT landed: it met
 // nothing the ischaemic pre-arrest bradycardia (K_BRADY) does not already meet (class IV HR < 100 before the arrest),
 // and by slowing the obstructed heart it lowered the myocardial demand enough to move the tension pneumothorax's PEA
@@ -126,8 +126,8 @@ export interface CircModelState {
   /**
    * The cutaneous vasomotor tone (1 at rest, < 1 dilated, > 1 constricted) the finger pleth reads — the systemic
    * vasomotor factors (baroreflex incl. its tonic share, the drugs' vascular PD, chemoreflex, endocrine and humoral,
-   * Cushing) WITHOUT the MANUAL tracker or blood viscosity, which are not tone. MODELED only (1 in MANUAL). [ENG: the
-   * skin is assumed to share the systemic vasomotor factor; a skin-specific (thermoregulatory) share is not modelled.]
+   * Cushing) WITHOUT the MANUAL tracker or blood viscosity, which are not tone. MODELED only (1 in MANUAL). [FIT: skin shares the systemic vasomotor factor (stand-in for thermoregulatory skin flow); the
+   * skin is assumed to share the systemic vasomotor factor; a skin-specific (thermoregulatory) share is not modelled.; brief research/44 L2-16]
    */
   skinTone?: number;
   /** The stimulus-driven vagal event (engine observer → `circVagalStimulus`); absent until a site is seen. */
@@ -266,9 +266,9 @@ export function chemoFactors(c: { sao2: number; paco2: number }, band: string): 
   const hyp = Math.max(0, 0.85 - c.sao2); // below 85 %
   if (hyp > 0) {
     const brady = band === 'neonate' || band === 'infant' || c.sao2 < 0.6;
-    hrF = brady ? Math.max(0.5, 1 - 2.5 * hyp) : Math.min(1.3, 1 + 1.2 * hyp); // plan slope 1.6 failed its own test (SaO2 75 % infant → HR ×0.84, wanted < 0.8) [ENG]
+    hrF = brady ? Math.max(0.5, 1 - 2.5 * hyp) : Math.min(1.3, 1 + 1.2 * hyp); // plan slope 1.6 failed its own test (SaO2 75 % infant → HR ×0.84, wanted < 0.8) [FIT: chemoreflex HR/SVR multiplier; brief research/44 L2-04]
   }
-  const hcap = Math.min(0.2, Math.max(0, c.paco2 - 50) * 0.01); // +1 %/mmHg above 50, capped at +20 % [ENG]
+  const hcap = Math.min(0.2, Math.max(0, c.paco2 - 50) * 0.01); // +1 %/mmHg above 50, capped at +20 % [FIT: chemoreflex HR/SVR multiplier; brief research/44 L2-04]
   return { hrF: hrF * (1 + hcap), svrF: 1 + hcap };
 }
 
@@ -303,8 +303,8 @@ function control(m: CircModelState, env: CircEnv): void {
     de.muscBlock = d7.muscBlock ?? 0; // Muscarinic occupancy — blocks the vagal limb and the stimulus/empty-ventricle events
   }
   // Histamine (morphine, atracurium, mivacurium) — vasodilation and venodilation with a reflex tachycardia that EMERGES
-  // from the pressure fall. Sizes [ENG; fit target: fast morphine 10 mg lowers SVR 10–20 % (M10 ch. 22) and MAP 8–25 %
-  // (T6.3), with HR +3 to +25].
+  // from the pressure fall. Sizes [FIT: fast morphine 10 mg lowers SVR 10–20 % (M10 ch. 22) and MAP 8–25 %
+  // (T6.3), with HR +3 to +25; brief research/44 X-10].
   const hist = Math.min(1, Math.max(0, m.ext.histamine ?? 0));
   if (hist > 0) {
     de.svr *= 1 - HIST_SVR * hist;

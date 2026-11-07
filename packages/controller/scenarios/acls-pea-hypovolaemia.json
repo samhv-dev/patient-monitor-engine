@@ -1,5 +1,5 @@
 {
-  "$comment": "[draft] Clinical content awaits the owner's review. PEA = `pulseless: true` on an organised rhythm (brief §5; Stage 5 honours the flag, earlier engines ignore it and show the rhythm). Probabilities are [ENG] placeholders.",
+  "$comment": "[draft] Clinical content awaits the owner's review. PEA = `pulseless: true` on an organised rhythm (brief §5; Stage 5 honours the flag, earlier engines ignore it and show the rhythm). Probabilities are [FIT: draft card's teaching-outcome placeholder pending clinical review; brief research/44 X-24] placeholders.",
   "schema": "pme-scenario/1",
   "id": "acls-pea-hypovolaemia",
   "title": "[draft] PEA from haemorrhage",

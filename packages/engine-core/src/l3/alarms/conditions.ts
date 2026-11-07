@@ -7,13 +7,13 @@ import { LOW_PERF_PI } from '../spo2/spo2.ts';
 import { isEnabled, limitOf, type AlarmMgrState, type Condition } from './manager.ts';
 import { displayDigits, fixedText, limitText, type FixedAlarmId } from './text.ts';
 
-/** VF is recognised this long after it starts (a monitor needs a few seconds of analysis) [ENG]. */
+/** VF is recognised this long after it starts (a monitor needs a few seconds of analysis) [ENG: device]. */
 export const VF_CONFIRM_S = 3;
 /** Desaturation alarm delay (brief §6.4: "desaturation (<80%, 20 s)"). */
 export const DESAT_DELAY_S = 20;
-/** A displayed numeric older than this is stale and raises nothing (NIBP excepted: it is episodic) [ENG]. */
+/** A displayed numeric older than this is stale and raises nothing (NIBP excepted: it is episodic) [ENG: device]. */
 export const STALE_S = 5;
-/** A ventricular run ends when no ventricular beat came for this long [ENG]. */
+/** A ventricular run ends when no ventricular beat came for this long [ENG: device]. */
 export const VT_GAP_S = 2;
 /** Extreme brady/tachy: the HR limit ∓ 20 bpm, clamped at 40/200 (adult) or 50/240 (neonatal) (brief §6.4). */
 export const EXTREME_OFFSET = 20;
@@ -39,38 +39,38 @@ export const CHAIN: Readonly<Record<string, readonly string[]>> = {
   'apnoea-resp': ['RR_LOW', 'AWRR_LOW'],
   abpDisconnect: ['ART_S_LOW', 'ART_M_LOW', 'ART_D_LOW'],
 };
-/** An event arrhythmia alarm (PAUSE) stays at least this long once raised [ENG]. */
+/** An event arrhythmia alarm (PAUSE) stays at least this long once raised [ENG: device]. */
 export const EVENT_HOLD_S = 5;
-/** The oximeter is still acquiring (averaging window + update) this long after its probe went on [ENG]. */
+/** The oximeter is still acquiring (averaging window + update) this long after its probe went on [ENG: device]. */
 export const SPO2_SEARCH_S = 15;
 /**
  * LOW PERF is raised once PI < 0.3 (LOW_PERF_PI: "below 0.3 is marginal", research/05 §6 [S2] IFU p. 120) has held this
  * long, and cleared at PI ≥ LOW_PERF_CLEAR_PI or after this long at PI ≥ 0.3 (PI hovering at 0.3 flickered the INOP 7
- * times in the 3 L bleed) [ENG].
+ * times in the 3 L bleed) [ENG: device].
  */
 export const LOW_PERF_DELAY_S = 5;
 export const LOW_PERF_CLEAR_PI = 0.4;
 /**
  * A SpO2 shown with low signal confidence (questionable: compressions, motion) and not explained by LOW PERF raises the
  * low-signal INOP after this long — Masimo "Low Signal IQ" (Radical-7 Operator's Manual LAB-5476J p. 113), Saadat
- * "SPO2 LOW SIGNAL IQ" (research/06 §4.2). It replaces the "?" mark the tile no longer prints (E126) [ENG: the LOW PERF
+ * "SPO2 LOW SIGNAL IQ" (research/06 §4.2). It replaces the "?" mark the tile no longer prints (E126) [ENG: device; the LOW PERF
  * on-delay].
  */
 export const LOW_SIGNAL_DELAY_S = LOW_PERF_DELAY_S;
-/** SpO2 NON-PULSAT. clears only after a valid SpO2 for this long [ENG]. */
+/** SpO2 NON-PULSAT. clears only after a valid SpO2 for this long [ENG: device]. */
 export const NONPULS_CLEAR_S = 2;
 /** An arterial pressure non-pulsatile with a mean below this is a disconnection ([S2] IFU p. 44: 10 mmHg). */
 export const DISCONNECT_MMHG = 10;
-/** "continuously less than 10 mmHg" ([S2] p. 44) — for this long [ENG]. */
+/** "continuously less than 10 mmHg" ([S2] p. 44) — for this long [ENG: device]. */
 export const DISCONNECT_DELAY_S = 5;
 /**
  * An R–R at least this long keeps a standing ASYSTOLE — agonal is < 20/min (R–R ≥ 3 s, research/03 §1.5), less half a
- * second for the detector's timing of a wide complex (2.9 s measured between agonal beats generated 3 s apart) [ENG].
+ * second for the detector's timing of a wide complex (2.9 s measured between agonal beats generated 3 s apart) [ENG: device].
  */
 export const AGONAL_RR_S = 2.5;
-/** Two detections closer than this are one wide complex for the agonal hold (agonal QRS ≈ 300 ms) [ENG]. */
+/** Two detections closer than this are one wide complex for the agonal hold (agonal QRS ≈ 300 ms) [ENG: device]. */
 export const SAME_COMPLEX_S = 0.35;
-/** A live extreme-rate alarm ends only after this long back inside its threshold [ENG]. */
+/** A live extreme-rate alarm ends only after this long back inside its threshold [ENG: device]. */
 export const EXTREME_CLEAR_S = 5;
 /** The alarm is raised and live (not latched) or pending its delay — a hysteresis band applies. */
 const holdingId = (s: AlarmMgrState, id: string): boolean => (s.active[id] !== undefined && !s.active[id].latched) || s.pending[id] !== undefined;
@@ -81,7 +81,7 @@ const holdingId = (s: AlarmMgrState, id: string): boolean => (s.active[id] !== u
  * of raising "**HR 50<50" after the delay.
  */
 const raisedLiveId = (s: AlarmMgrState, id: string): boolean => s.active[id] !== undefined && !s.active[id].latched;
-const RR_EMA = 0.2; // mean R-R for the Saadat-like pause ratio (brief §6.4.1 "R-R > 2.1× mean R-R") [ENG weight]
+const RR_EMA = 0.2; // mean R-R for the Saadat-like pause ratio (brief §6.4.1 "R-R > 2.1× mean R-R") [ENG: device; weight]
 
 export interface AlarmInputs {
   measured: Partial<Record<NumericId, Measured>>;
@@ -212,7 +212,7 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
     const dd = { ...(src === d.numeric ? d : { ...d, label: 'Pulse', upper: 'PR' }), low: l.low, high: l.high }; // "**Pulse 130>120" / "PR TOO HIGH"
     // The DISPLAYED value against the limit, with one display unit of hysteresis — raised once it is beyond the limit,
     // kept until it is back inside by a full unit (CVP hovering 9.6–10.4 at a limit of 10 raised `**CVP 10>10` 100
-    // times in 11 min) [ENG, the vendors' hysteresis is not published]
+    // times in 11 min) [ENG: device; the vendors' hysteresis is not published]
     const unit = 10 ** -displayDigits(d.numeric);
     const dv = Math.round(v / unit) * unit;
     const hi = `${key}_HIGH`;
@@ -239,7 +239,7 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
     const bradyAt = ar.extreme.brady ?? Math.max(lo, (hrl?.low ?? lo) - EXTREME_OFFSET);
     const tachyAt = ar.extreme.tachy ?? Math.min(hi, (hrl?.high ?? hi) + EXTREME_OFFSET);
     // One bpm of hysteresis (the limit alarms get the same rule), the event hold (≥ 5 s once raised) and a clear delay:
-    // a live extreme alarm ends only after EXTREME_CLEAR_S back inside its threshold [ENG] — in AF 150 the HR dipped
+    // a live extreme alarm ends only after EXTREME_CLEAR_S back inside its threshold [ENG: device] — in AF 150 the HR dipped
     // below 140 for 1–2 s a dozen times, and each dip ended EXTREME TACHY and let HR HIGH blip
     const seen = (inp.extremeSeen ??= {});
     const beyond = (id: string, now: boolean, band: boolean) => {
@@ -296,7 +296,7 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
     const pi = inp.measured.pi;
     // Clear hysteresis: NON-PULSAT. holds until the SpO2 has been valid NONPULS_CLEAR_S; LOW PERF until PI ≥
     // LOW_PERF_CLEAR_PI, or ≥ LOW_PERF_PI for LOW_PERF_DELAY_S — and through a PI that is momentarily invalid (no fresh
-    // pulse for a few seconds) while the SpO2 is still shown [ENG]: LOW PERF was raised/cleared 7 times in 1–2 s cycles
+    // pulse for a few seconds) while the SpO2 is still shown [ENG: device]: LOW PERF was raised/cleared 7 times in 1–2 s cycles
     // at the end of the 3 L bleed
     const okFor = (since: number | null | undefined, s0: number) => since !== null && since !== undefined && t - since >= s0;
     const piV = pi && pi.value !== null && pi.flag !== 'invalid' ? pi.value : null;
@@ -328,7 +328,7 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
       // a static pressure (the non-pulsatile rule, pressure-numerics): the INOP marks the pulse ('keep': S/D/M stay,
       // [S2] p. 57 "Pulse numeric is displayed with -?-") or the hidden S/D ('mean-only', Saadat); the red disconnect
       // below 10 mmHg where the skin has it on (saadat-like: OFF by default, research/06 §4.1). The engine raises the
-      // INOP whatever the pulse source [ENG]; an IntelliVue raises it only for the pressure selected as the pulse source
+      // INOP whatever the pulse source [ENG: device]; an IntelliVue raises it only for the pressure selected as the pulse source
       out.push({ ...fixed('abpNonPulsatile', 3, 'technical'), numeric: keep ? 'prAbp' : 'abpSys' });
       if (p.abpDisconnect && mean < DISCONNECT_MMHG) out.push({ ...fixed('abpDisconnect', 1, 'physiological', DISCONNECT_DELAY_S), numeric: 'abpMean' });
     }

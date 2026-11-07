@@ -1,13 +1,13 @@
 // Gas-exchange and respiratory constants scaled to the patient (brief §4.3 "Oxygen truth", §4.4 "Kinetics";
-// research 03 §3.5, §4.4, §8.9). Every number cites its source, or [ENG] when the prototype tuned it. A profile layer
-// will replace the age/obesity rules with its table.
+// research 03 §3.5, §4.4, §8.9). Every number cites its source, or `[FIT: target; brief id]` when the prototype
+// tuned it (`[ENG: kind]` when not physiology). A profile layer will replace the age/obesity rules with its table.
 import type { PatientProfile } from '../../types.ts';
 
 export const GAS_DT_S = 0.1; // gas exchange at 10 Hz (brief §3.2)
-export const PB_MMHG = 760; // barometric pressure (brief §6.8 converts %V at 760) [ENG]
+export const PB_MMHG = 760; // barometric pressure (brief §6.8 converts %V at 760) [ENG: scenario]
 export const PH2O_MMHG = 47; // alveolar water vapour
 export const RQ = 0.8; // respiratory quotient (research 03 §3.5)
-export const HB_G_DL = 14; // Haemoglobin [ENG; anaemia is the profile layer's]
+export const HB_G_DL = 14; // Haemoglobin (textbook adult normal; anaemia is the profile layer's)
 export const K_CO2 = 0.863; // PaCO2 = 0.863·VCO2/VA (research 03 §4.4)
 export const PA_ET_GRADIENT = 3; // Pa − EtCO2, 2–5 mmHg normal (brief §4.4)
 export const CMH2O_TO_MMHG = 0.7356;
@@ -16,7 +16,7 @@ export const CMH2O_TO_MMHG = 0.7356;
  * Two-compartment CO2 store (brief §4.4). The brief's C_f 15–20 / C_s 40–45 / k_fs = C_s/5 min give an apnoea
  * rise of 9.5 then 4.8 mmHg/min, outside its own acceptance (12 then 3.4 ± 0.5). Fitted to the apnoea data
  * (PubMed 2516732: +12 in the first minute, then 3.4/min) with C_f 6, C_s 55 mL/mmHg and k_fs 18 mL/min/mmHg at
- * VCO2 200 mL/min, and expressed per mL/min of baseline VCO2 so any body size keeps the anchored rates [ENG]:
+ * VCO2 200 mL/min, and expressed per mL/min of baseline VCO2 so any body size keeps the anchored rates (anchored on the apnoea data cited above):
  * prototype 12.0 then 3.34 mmHg/min; a +33 % alveolar-ventilation step moves 36 % of the way at 2 min and
  * 90 % at 24.4 min (plan decision 3).
  */
@@ -25,15 +25,15 @@ export const CO2_CS_PER_VCO2 = 55 / 200;
 export const CO2_KFS_PER_VCO2 = 18 / 200; // (mL/min/mmHg) per (mL/min)
 /** Low-flow compression exponent: EtCO2 ≈ PaCO2·min(1, CO/CO_ref)^0.6 (brief §4.4). */
 export const LOW_FLOW_EXP = 0.6;
-/** The arrest EtCO2 falls over 1–2 min to ≈ 5–10 mmHg, not within seconds — τ 70 s [ENG, fit: 10–20 mmHg at 60 s and
+/** The arrest EtCO2 falls over 1–2 min to ≈ 5–10 mmHg, not within seconds — τ 70 s [FIT: 10–20 mmHg at 60 s and
  * 3–10 at 120 s after VF without CPR on the ventilated audit rig; measured 14.5 / 6.6; a single exponential needs
- * τ 51–101 s for both bands]. This τ governs the RISE of φ only (the CO2 that must come back from the tissue stores at
+ * τ 51–101 s for both bands; brief research/44 TIME-01]. This τ governs the RISE of φ only (the CO2 that must come back from the tissue stores at
  * ROSC). The FALL is the alveolar gas store being washed out by the breaths that continue, LOW_FLOW_WASHOUT_* below. */
 export const LOW_FLOW_TAU_S = 70;
 /**
  * Once pulmonary blood flow falls, no new CO2 reaches the alveoli, so the end-tidal value follows the WASHOUT of the
  * alveolar gas store, not a fixed lag: τ = V_alv/VA (an exponential dilution by the continuing breaths), bounded below
- * by one breath's worth of time [ENG bound] (research/24 P7; research 03 §4.4). V_alv is the lung's FRC when the resp
+ * by one breath's worth of time [ENG: numerics; bound] (research/24 P7; research 03 §4.4). V_alv is the lung's FRC when the resp
  * pipeline passes it, else LOW_FLOW_ALV_L.
  */
 export const LOW_FLOW_ALV_L = 2.5;
@@ -59,12 +59,12 @@ export function restingPaco2(p: PatientProfile | undefined): number {
   }
   return (k[k.length - 1] as readonly [number, number])[1];
 }
-/** Y-piece + HME on a ventilator or BVM: 50 mL adult [ENG]. */
+/** Y-piece + HME on a ventilator or BVM: 50 mL adult [ENG: device]. */
 export const APPARATUS_ADULT_ML = 50;
 /**
  * Below 33 kg the circuit is a PAEDIATRIC one — low-dead-space connectors and a paediatric/infant HME (manufacturers'
  * stated internal volumes ≈ 1–3 mL infant, ≈ 6–10 mL paediatric [TXT: device IFUs]), so the apparatus scales
- * ≈ 0.5 mL/kg [ENG]. The adult rule's 1.5 mL/kg would put 24 mL against a 4 y child's 112 mL breath (a third of it)
+ * ≈ 0.5 mL/kg (device IFUs: ≈ 1–3 mL infant, ≈ 6–10 mL paediatric). The adult rule's 1.5 mL/kg would put 24 mL against a 4 y child's 112 mL breath (a third of it)
  * and the child at PaCO2 62–76 on 7 mL/kg.
  */
 export const APPARATUS_PAED_ML_PER_KG = 0.5;
@@ -75,7 +75,7 @@ export function apparatusDeadSpaceMl(weightKg: number): number {
 /**
  * The ventilator's DEFAULT pattern for this patient (used when a `ventilation` command gives no rr/vtMl):
  * lung-protective 7 mL/kg IBW (ARDSNet-era practice for every ventilated patient, 6–8 mL/kg PBW [TXT]) and an age-band
- * rate chosen for normocapnia with the one physical dead space [ENG, fit: PaCO2 35–45 at 30 min, MODELED].
+ * rate chosen for normocapnia with the one physical dead space [FIT: PaCO2 35–45 at 30 min, MODELED; brief research/44 L2-55].
  */
 export const VENT_VT_ML_PER_KG_IBW = 7;
 export const VENT_RR_BY_AGE: Record<AgeBand, number> = { neonate: 24, infant: 20, child: 17, adult: 12, elderly: 11 };
@@ -89,7 +89,7 @@ export function ventDefaults(pat: Pick<GasPatient, 'ibwKg'>, ageY: number): { rr
  * that and gains the device's internal volume plus the Y-piece and HME.
  */
 export const ETT_BYPASS_ML_PER_KG = 1.1;
-/** Floor of the anatomical share left behind an artificial airway (fraction of the anatomical value) [ENG]. */
+/** Floor of the anatomical share left behind an artificial airway (fraction of the anatomical value) [FIT: gas-exchange parameter without a source; brief research/44 L2-55]. */
 export const ETT_BYPASS_FLOOR_FRAC = 0.3;
 /**
  * THE physical series dead space (mL) for this patient and airway — anatomical 2.2 mL/kg IBW, minus the extrathoracic
@@ -105,9 +105,9 @@ export function physicalDeadSpace(pat: Pick<GasPatient, 'deadSpaceMl' | 'ibwKg' 
   return anat + apparatusDeadSpaceMl(pat.weightKg);
 }
 export const MASS_FLOW_DEFICIT_ML_MIN = 20; // apnoeic mass flow ≈ VO2 − ~20 mL/min (research 03 §3.5)
-export const BLOOD_VENOUS_FRACTION = 0.75; // venous share of blood volume, the O2 buffer [ENG]
-export const CO_REF_LPM = 5.25; // SV_REF 70 mL × 75 bpm: CO ratio reference [ENG]
-export const CI_LPM_PER_KG = 0.075; // Q for gas exchange = CO ratio × 0.075 L/min/kg × effective weight [ENG]
+export const BLOOD_VENOUS_FRACTION = 0.75; // venous share of blood volume, the O2 buffer [FIT: gas-exchange parameter without a source; brief research/44 L2-55]
+export const CO_REF_LPM = 5.25; // SV_REF 70 mL × 75 bpm: CO ratio reference [ENG: numerics]
+export const CI_LPM_PER_KG = 0.075; // Q for gas exchange = CO ratio × 0.075 L/min/kg × effective weight [FIT: gas-exchange parameter without a source; brief research/44 L2-55]
 /**
  * Stage V.1 (E-V1-1): the CO-ratio reference is the PATIENT's own resting flow, CI_LPM_PER_KG × effective weight
  * (= CO_REF_LPM 5.25 at 70 kg). Dividing a 16 kg child's 1.3 L/min by the adult 5.25 read as a low-flow state.
@@ -129,7 +129,7 @@ export const GA_METABOLIC = 0.85;
 /**
  * Term pregnancy — progesterone lowers the chemoreflex set point to PaCO2 28–32 (≈ −9 mmHg) and VO2 rises 20–33 %
  * (Hegewald & Crapo 2011 Clin Chest Med 32:1; McClelland, Bogod & Hardman 2009 Anaesthesia 64:371). Both scale with the
- * `pregnancy` lung condition's severity (0.33 / 0.67 / 1 by trimester) [TXT sizes at term; linear ENG].
+ * `pregnancy` lung condition's severity (0.33 / 0.67 / 1 by trimester) [TXT sizes at term] [FIT: linear by trimester; brief research/44 X-02].
  */
 export const PREG_PACO2_SHIFT_MMHG = 9;
 export const PREG_VO2_TERM = 0.2;
@@ -138,7 +138,7 @@ export const FRC_AWAKE_ML_KG = 30;
 /**
  * Research 03 §8.9 (awake VO2 mL/kg/min, blood volume mL/kg) and FRC under GA (mL/kg): adult 20 (brief 20–25)
  * puts the healthy 70 kg adult at 90 % after 8.4 min (Benumof 8 min); children 8: Patel 2–5 y 160 ± 31 s
- * (prototype 158 s) [ENG, tuned].
+ * (prototype 158 s) [FIT: apnoea desaturation time (prototype 158 s); tuned; brief research/44 L2-55].
  */
 const BY_AGE: Record<AgeBand, { vo2: number; bv: number; frcGa: number; weight: number; height: number }> = {
   neonate: { vo2: 7, bv: 88, frcGa: 8, weight: 3.5, height: 50 },
@@ -156,7 +156,7 @@ export function defaultHeightCm(ageY = 40): number {
 export interface GasPatient {
   weightKg: number;
   ibwKg: number;
-  /** Adjusted body weight IBW + 0.4·(W − IBW) (obesity) for metabolism and blood volume [ENG]. */
+  /** Adjusted body weight IBW + 0.4·(W − IBW) (obesity) for metabolism and blood volume [FIT: metabolic weight of the obese (dosing convention); brief research/44 L2-55]. */
   effKg: number;
   frcMl: number; // awake supine
   frcGaMl: number; // under general anaesthesia
@@ -181,7 +181,7 @@ export interface GasPatient {
 /**
  * Patient scaling from PatientProfile (brief §7.4 patient.ageY/weightKg/heightCm/sex). Ideal body weight by
  * Devine (men 50, women 45.5 kg + 0.91 kg/cm above 152.4 cm). Obesity shrinks FRC by 3.5 % per BMI point above
- * 25, floor 40 %: Benumof's obese 127 kg adult to 90 % in 2.7 min (prototype 2.8 min) [ENG, tuned].
+ * 25, floor 40 %: Benumof's obese 127 kg adult to 90 % in 2.7 min (prototype 2.8 min) [FIT: Benumof's obese 127 kg adult to SpO2 90 % in 2.7 min; tuned; brief research/44 L2-55].
  */
 export function gasPatient(p: PatientProfile | undefined): GasPatient {
   const band = ageBand(p?.ageY ?? 40);
@@ -204,8 +204,8 @@ export function gasPatient(p: PatientProfile | undefined): GasPatient {
     paco2Rest: restingPaco2(p), // Pregnancy 31 not yet applied; a COPD retainer's own set point
     // anchored on the anaesthetised VCO2 (the apnoea data are from anaesthetised patients)
     cf: CO2_CF_PER_VCO2 * RQ * vo2 * GA_METABOLIC, cs: CO2_CS_PER_VCO2 * RQ * vo2 * GA_METABOLIC, kfs: CO2_KFS_PER_VCO2 * RQ * vo2 * GA_METABOLIC,
-    complianceMl: 50 * (ibw / 70), // 50 mL/cmH2O intubated adult [ENG]; scales with size
-    resistance: band === 'adult' || band === 'elderly' ? 10 : 25, // cmH2O/L/s incl. the tube [ENG]
+    complianceMl: 50 * (ibw / 70), // 50 mL/cmH2O intubated adult [FIT: gas-exchange parameter without a source; brief research/44 L2-55]; scales with size
+    resistance: band === 'adult' || band === 'elderly' ? 10 : 25, // cmH2O/L/s incl. the tube [FIT: gas-exchange parameter without a source; brief research/44 L2-55]
   };
 }
 

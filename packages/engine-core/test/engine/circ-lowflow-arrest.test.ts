@@ -101,7 +101,7 @@ describe('emergent low-flow arrest and ROSC', () => {
   // separately so the band stays a record (R45) while the ROSC side keeps its own assertion.
   const rosc = run('modeled', { bleedMl: 2500, cprAfterS: 60, endS: 1500 });
   // FU-4 F5 (ruling 7): an untreated PEA decays — the rate, then idioventricular, then asystole (hazard mean 420 s from
-  // the idioventricular phase [ENG]); effective CPR + volume suspends it.
+  // the idioventricular phase [FIT: idioventricular-phase rule; brief research/44 L2-05]); effective CPR + volume suspends it.
   it('untreated exsanguination PEA reaches asystole within 15 min of the arrest, through the idioventricular phase', async () => {
     const c = await run('modeled', { bleedMl: 3000, endS: 1800 });
     console.log(`circ-lowflow-arrest decay: arrest ${c.tArrest} (${c.rhythm}), agonal ${c.tAgonal}, asystole ${c.tAsystole}`);

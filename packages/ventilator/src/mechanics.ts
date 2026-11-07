@@ -55,7 +55,7 @@ export const PLEURAL_OPEN_ML = 150;
  * breath must first raise the alveolar pressure by E (the v1.9 opening shape over 150 mL) before tidal volume enters.
  * E = 0 for every reference scenario (pleural 0) and for an effusion or a haemothorax at their default size once
  * PEEP ≥ 3 (the lung only loses volume); a 3 L haemothorax (8.2 cmH2O) at ZEEP gives E 2.76 — the same physics, kept
- * [ENG]. The expiratory hold reads set PEEP: the collapsed units are closed off.
+ * [FIT: pleural opening shape (v1.9 shape over 150 mL); brief research/44 X-03]. The expiratory hold reads set PEEP: the collapsed units are closed off.
  */
 export function pleuralOpening(c: VentConfig, v: number): number {
   const e = c.pleural - PPL_REST_CMH2O - c.peep;

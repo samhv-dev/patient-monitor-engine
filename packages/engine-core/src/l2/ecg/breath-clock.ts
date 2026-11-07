@@ -25,7 +25,7 @@ export interface BreathCycleLike {
 
 /**
  * A clock driven by breath cycles: phase advances 2π per cycle (inspiration onset = +π/2, so the heart is slowest at
- * the start of inspiration and fastest half a cycle later [ENG]); after the last cycle ends the phase holds (apnoea:
+ * the start of inspiration and fastest half a cycle later [ENG: texture]); after the last cycle ends the phase holds (apnoea:
  * RR and wander stop swinging) and the rate reads 0. Before the first cycle the fallback clock is used.
  */
 export function cycleBreathClock(lastCycleBefore: (t: number) => BreathCycleLike | undefined, fallback: BreathClock): BreathClock {

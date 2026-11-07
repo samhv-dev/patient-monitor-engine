@@ -44,7 +44,7 @@ for (const fps of [60, 30] as const) {
     await page.waitForTimeout(60_000);
     const h = hist(await perf(page, (w) => w.__pmePerf.frames.slice()));
     record[`frames${fps}`] = h;
-    expect(h.p95).toBeLessThan((1000 / fps) * 1.5); // [ENG] p95 frame interval within 1.5× the target period
+    expect(h.p95).toBeLessThan((1000 / fps) * 1.5); // [ENG: test] p95 frame interval within 1.5× the target period
   });
 }
 

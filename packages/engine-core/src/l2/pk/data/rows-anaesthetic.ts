@@ -5,12 +5,12 @@ import { ELEVELD_CE50_AGE_K, FENT_VENT_REMI_EQ } from '../pd.ts';
 import type { DrugRow, PdEffect } from '../row.ts';
 
 /**
- * Opioid haemodynamic EC50s [ENG]: tables §6.3 give only the size (HR −10–20 %, SVR −5–15 %) with no concentration.
+ * Opioid haemodynamic EC50s [FIT: opioid haemodynamic EC50 sized to T6.3; brief research/44 X-10]: tables §6.3 give only the size (HR −10–20 %, SVR −5–15 %) with no concentration.
  * Each EC50 is the typical clinical Ce (remifentanil 3 ng/mL), scaled by the tables' §5d potency (fentanyl 1.6×
- * → 2 ng/mL; sufentanil 12× [ENG, Q59] → 0.25), so a usual dose gives half of Emax −0.25/−0.15: HR −12.5 %,
+ * → 2 ng/mL; sufentanil 12× [FIT: opioid haemodynamic EC50 sized to T6.3; Q59; brief research/44 X-10] → 0.25), so a usual dose gives half of Emax −0.25/−0.15: HR −12.5 %,
  * SVR −7.5 % — mid-band of T6.3. Calibration items for samhv-dev; no primary source.
  */
-const OPIOID_HEMO_SRC = 'haemodynamic EC50 [ENG]: typical clinical Ce ÷ T5d potency, sized to T6.3';
+const OPIOID_HEMO_SRC = 'haemodynamic EC50 [FIT: opioid haemodynamic EC50 sized to T6.3; brief research/44 X-10]: typical clinical Ce ÷ T5d potency, sized to T6.3';
 
 const gammaPk = (refDose: number, perKg: boolean, tpS: number, t10S: number, refRate?: number, tauOnS?: number, tauOffS?: number): DrugRow['pk'] => ({
   kind: 'gamma', refDose, perKg, tpS, t10S, ...(refRate !== undefined ? { refRate, tauOnS: tauOnS ?? 300, tauOffS: tauOffS ?? 600 } : {}),
@@ -20,7 +20,7 @@ const gammaPk = (refDose: number, perKg: boolean, tpS: number, t10S: number, ref
  * Volatile depression of the sympathetic HR arm of the baroreflex (the circulation's `gvHr`, the term propofol's row
  * carries), per MAC, linear: HR arm ×(1 − 1.0·MAC) → gone by 1 MAC (combine floor 0.05). Direction: Kotrly 1984
  * (isoflurane: pressor baroslope falls progressively to 1.0 and 1.5 MAC), Muzi & Ebert 1995 (cardiac baroslopes equally
- * diminished with isoflurane and desflurane). Size [ENG], fit target: Ebert, Muzi & Lopatka 1995 — sevoflurane
+ * diminished with isoflurane and desflurane). Size [FIT: volatile/propofol baroreflex and sympatholysis size; brief research/44 X-11], fit target: Ebert, Muzi & Lopatka 1995 — sevoflurane
  * 0.41–1.24 MAC lowers MAP with NO change in HR and lower sympathetic nerve activity (tables T6.3 "HR ~"); the rig's HR
  * at 0.96 MAC is 75 vs 73 awake (was 93.5 with `gv` alone). Cross-check: the phenylephrine reflex HR drop falls to ≈
  * 0.4× awake, Nagasaki 2001 (sevoflurane 2 % / isoflurane 1.3 %: pressor BRS −50–60 %).
@@ -36,9 +36,9 @@ const VOLATILE_HPV: PdEffect = { target: 'hpvInhibit', emax: 0.2, ec50: 1, linea
 /**
  * Central sympatholysis — × on the DELIVERED sympathetic output (the circulation's stepBaro `outF`, after the reflex
  * saturation). Propofol near-abolishes MSNA at induction and inhibits it dose-dependently (Ebert 1992, Anesthesiology
- * 76:725; Sellgren 1994, 80:534; Robinson 1997, 86:64; Ebert 2005, 103:20) [P direction]; size [ENG], fit targets:
+ * 76:725; Sellgren 1994, 80:534; Robinson 1997, 86:64; Ebert 2005, 103:20) [P direction]; size [FIT: volatile/propofol baroreflex and sympatholysis size; brief research/44 X-11], fit targets:
  * healthy 2 mg/kg MAP −25 to −40 % with HR ±10 (M10 ch. 21 p. 519) — Ce 3 µg/mL leaves 10 % of the output, Ce 1.5
- * leaves 31 %. The set point resets toward lower pressure with it (Sellgren 1994) [ENG size −15 % at full effect].
+ * leaves 31 %. The set point resets toward lower pressure with it (Sellgren 1994) [FIT: baroreflex set-point reset size; size −15 % at full effect; brief research/44 X-11].
  */
 export const PROPOFOL_SYMP: PdEffect = { target: 'symp', emax: -1, ec50: 1.0, hill: 2 };
 export const PROPOFOL_SETF: PdEffect = { target: 'setF', emax: -0.15, ec50: 1.0, hill: 2 };
@@ -46,7 +46,7 @@ export const PROPOFOL_SETF: PdEffect = { target: 'setF', emax: -0.15, ec50: 1.0,
  * Opioid VAGOTONIA. A large opioid bolus causes bradycardia through a central vagal (nucleus ambiguus/vagal nucleus)
  * mechanism, not through a negative chronotropic action on the node — which is why atropine or glycopyrrolate abolishes
  * it and why it is worse in a patient with high resting vagal tone (M10 ch. 22: opioids cause a centrally mediated
- * bradycardia; Reitan 1978 for fentanyl's vagal mechanism) [P direction, ENG size].
+ * bradycardia; Reitan 1978 for fentanyl's vagal mechanism) [P direction] [FIT: opioid vagal bradycardia size; brief research/44 X-10].
  * Units: `ec50` is the drug's own effect-site concentration in ng/mL, as the other opioid rows use; `emax` is
  * milliseconds added to the cycle length at full effect.
  * Fit target: fentanyl 10 µg/kg → HR into the 40s–50s without an anticholinergic.
@@ -54,7 +54,7 @@ export const PROPOFOL_SETF: PdEffect = { target: 'setF', emax: -0.15, ec50: 1.0,
 export const FENTANYL_VAGAL: PdEffect = { target: 'vagalMs', emax: 420, ec50: 4 };
 export const REMIFENTANIL_VAGAL: PdEffect = { target: 'vagalMs', emax: 420, ec50: 6 };
 export const SUFENTANIL_VAGAL: PdEffect = { target: 'vagalMs', emax: 420, ec50: 0.5 };
-/** Sevoflurane/isoflurane lower SNA with MAP and no HR change (Ebert, Muzi & Lopatka 1995, Anesthesiology 83:88) [ENG size, fit: 0.65 MAC MAP −10 to −20 %]. */
+/** Sevoflurane/isoflurane lower SNA with MAP and no HR change (Ebert, Muzi & Lopatka 1995, Anesthesiology 83:88) [FIT: size, fit: 0.65 MAC MAP −10 to −20 %; brief research/44 X-11]. */
 export const VOLATILE_SYMP: PdEffect = { target: 'symp', emax: -0.5, ec50: 1, linear: true };
 export const VOLATILE_SETF: PdEffect = { target: 'setF', emax: -0.1, ec50: 1, linear: true };
 
@@ -81,10 +81,10 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     elim: { hepatic: 0.9, t12S: 9540 }, // t½β 2.5–2.8 h (M10 ch. 21 Table 21.1)
     // Ketamine's pressor effect is INDIRECT (central sympathetic drive), so it is blunted by β-blockade and disappears
     // when catecholamines are depleted (M10 ch. 21: the direct myocardial depression is then unmasked); the DIRECT Ees
-    // −0.2 stays. [ENG size; fit target: MAP +15–25 % replete (T6.3) — prototype +8.7 % — and a FALL in the
-    // catecholamine-depleted phase — prototype −0.5 %]
+    // −0.2 stays. [FIT: size; fit target: MAP +15–25 % replete (T6.3) — prototype +8.7 % — and a FALL in the
+    // catecholamine-depleted phase — prototype −0.5 %; brief research/44 X-11]
     pd: [{ target: 'sympDrive', emax: 2.2, ec50: 1 }, { target: 'ees', emax: -0.2, ec50: 1 }, { target: 'bronchodilation', emax: 1, ec50: 1 }, { target: 'cbfVaso', emax: 0.4, ec50: 1 }],
-    // Ketamine joins the ONE hypnotic-potency output. hypC50 0.8 reference doses [ENG]: 1.5 mg/kg (c ≈ 1 at the peak)
+    // Ketamine joins the ONE hypnotic-potency output. hypC50 0.8 reference doses [FIT: hypnotic potency fitted to awakening time; brief research/44 X-11]: 1.5 mg/kg (c ≈ 1 at the peak)
     // is an induction dose (M10 ch. 21 p. 536: plasma 0.7–2.2 µg/mL for hypnosis), so the propofol-equivalent Ce at the
     // peak ≈ 3.8 µg/mL. `dissociative` keeps the EEG/BIS behaviour and the airway reflexes; `ventShare` 0.3 = minimal
     // respiratory depression (T6.3).
@@ -97,10 +97,10 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     id: 'etomidate', name: 'Etomidate', cls: 'hypnotic', amountUnit: 'mg', pk: gammaPk(0.3, true, 60, 480),
     elim: { hepatic: 0.8, t12S: 14760 }, // t½β 2.9–5.3 h (M10 ch. 21 Table 21.1)
     pd: [{ target: 'svr', emax: -0.1, ec50: 1 }],
-    // hypC50 0.55 reference doses [ENG], fitted to the awakening time (duration 3–5 min after
+    // hypC50 0.55 reference doses [FIT: hypnotic potency fitted to awakening time; brief research/44 X-11], fitted to the awakening time (duration 3–5 min after
     // 0.3 mg/kg, M10 ch. 21 p. 541); at hypC50 1 the prototype woke the patient at 90 s. ventShare 0.7
-    // [ENG; fit target: apnoea after 0.3 mg/kg is brief or absent, less than an equipotent thiopental/propofol dose —
-    // M10 ch. 21 p. 541]. No hypC50AgeK: the elderly dose reduction is PHARMACOKINETIC (Arden 1986).
+    // [FIT: apnoea after 0.3 mg/kg is brief or absent, less than an equipotent thiopental/propofol dose —
+    // M10 ch. 21 p. 541; brief research/44 X-11]. No hypC50AgeK: the elderly dose reduction is PHARMACOKINETIC (Arden 1986).
     cns: { hypC50: 0.55, cmro2: 0.4, ventShare: 0.7 },
     doses: 'induction 0.2–0.3 mg/kg (M10 ch. 21 p. 541)', onset: 'onset 30–60 s, duration 3–5 min; cortisol response ×0.5 for 24 h (T6.3)',
     ir: '?', src: 'T6.3 (MAP −0–10 %); M10 ch. 21 Table 21.1', tag: 'TXT',
@@ -109,7 +109,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     id: 'thiopental', name: 'Thiopental', cls: 'hypnotic', amountUnit: 'mg', pk: gammaPk(4, true, 45, 900),
     elim: { hepatic: 1, t12S: 43200 }, // t½β 7–17 h (M10 ch. 21 Table 21.1)
     pd: [{ target: 'svr', emax: -0.4, ec50: 1 }, { target: 'ees', emax: -0.3, ec50: 1 }, { target: 'hr', emax: 0.24, ec50: 1 }, { target: 'v0Frac', emax: 0.16, ec50: 1 }, { target: 'gv', emax: -0.8, ec50: 1 }],
-    // hypC50 0.55 reference doses [ENG], fitted to awakening 5–10 min after 4 mg/kg by
+    // hypC50 0.55 reference doses [FIT: hypnotic potency fitted to awakening time; brief research/44 X-11], fitted to awakening 5–10 min after 4 mg/kg by
     // redistribution (M10 ch. 21 Table 21.1); at hypC50 1 the prototype woke the patient at 140 s. No hypC50AgeK:
     // the elderly need less thiopental because of a smaller initial distribution volume, with UNCHANGED brain
     // sensitivity (Homer & Stanski 1985); the neuro model's LOC scale already gives ≈ 0.71 × the dose at 80 y.
@@ -124,8 +124,8 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     elim: { hepatic: 1, t12S: 7740 }, // t½β 1.7–2.6 h (M10 ch. 21 Table 21.1); cirrhosis halves CL (MacGilchrist 1986)
     pd: [{ target: 'svr', emax: -0.24, ec50: 1 }, { target: 'v0Frac', emax: 0.06, ec50: 1 }, { target: 'gv', emax: -0.4, ec50: 1 }],
     // Midazolam's age effect IS pharmacodynamic (increased brain sensitivity; M10 ch. 21: reduce the dose 20–50 % in
-    // the elderly). hypC50AgeK 0.008 [ENG; fit target: LOC dose at 80 y ≈ 0.5 × the 35-y dose through the neuro model's
-    // Schnider LOC scale].
+    // the elderly). hypC50AgeK 0.008 [FIT: LOC dose at 80 y ≈ 0.5 × the 35-y dose through the neuro model's
+    // Schnider LOC scale; brief research/44 X-11].
     cns: { midazEq: 1, hypC50: 4, hypC50AgeK: 0.008 },
     doses: 'sedation 0.02–0.05 mg/kg; induction 0.05–0.15 mg/kg (M10 ch. 21 Table 21.7)', onset: 'T½ke0 2–3 min (M10 ch. 21 p. 532); peak 3–5 min; duration 30–60 min',
     ir: '?', src: 'T6.3 (SVR −10–15 %, V0 +3 %, reflex ×0.8); M10 ch. 21', tag: 'TXT',
@@ -136,13 +136,13 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     pd: [{ target: 'hr', emax: -0.3, ec50: 1 }, { target: 'svr', emax: -0.3, ec50: 1 },
       // The BIPHASIC response — a fast load's peripheral α2B vasoconstriction (MAP and SVR rise for 5–10 min) before
       // the central sympatholysis dominates. EC50 0.35 reference doses = the concentration a 1 µg/kg load over 10 min
-      // passes through early [ENG; T6.3 "SVR +15 % during a fast load"]. The LATE fall is the `symp` row.
+      // passes through early [FIT: T6.3 "SVR +15 % during a fast load"; brief research/44 X-11]. The LATE fall is the `symp` row.
       { target: 'svr', emax: 0.18, ec50: 0.35 }],
     doses: 'load 1 µg/kg over 10 min, then 0.2–0.7 µg/kg/h', onset: 'peak 15 min after the load; t½ 2–3 h (M10 Table 21.1)',
     ir: '?', src: 'T6.3 (HR −10–20 %, SVR −10–20 % after the biphasic load; the transient rise of a fast load is not modelled in v1)', tag: 'TXT',
   },
   {
-    // vent site: tables give no fentanyl ventilatory ke0 → the brain ke0 [ENG] (deviations list)
+    // vent site: tables give no fentanyl ventilatory ke0 → the brain ke0 [FIT: ventilatory ke0 = brain ke0 (no source); brief research/44 X-10] (deviations list)
     id: 'fentanyl', name: 'Fentanyl', cls: 'opioid', amountUnit: 'mcg', pk: { kind: 'model', model: 'shafer', ventKe0: FENTANYL_KE0 },
     // Flow-dependent distribution, as propofol — haemorrhagic shock shrinks fentanyl's central volume and clearance and
     // ≈ doubles its concentrations (Egan 1999 Anesthesiology 91:156; research/13).
@@ -164,24 +164,24 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     ir: '?', src: `Minto 1997; Bouillon 2003 (ventilation C50 0.92, ke0 0.92); Kapila 1995; ${OPIOID_HEMO_SRC}`, tag: 'P',
   },
   {
-    id: 'sufentanil', name: 'Sufentanil', cls: 'opioid', amountUnit: 'mcg', pk: { kind: 'model', model: 'gepts', ventKe0: SUFENTANIL_KE0 }, // vent = brain ke0 [ENG]
+    id: 'sufentanil', name: 'Sufentanil', cls: 'opioid', amountUnit: 'mcg', pk: { kind: 'model', model: 'gepts', ventKe0: SUFENTANIL_KE0 }, // vent = brain ke0 [FIT: ventilatory ke0 = brain ke0 (no source); brief research/44 X-10]
     elim: { hepatic: 1, highExtraction: true },
     pd: [{ target: 'hr', emax: -0.25, ec50: 0.25 }, { target: 'svr', emax: -0.15, ec50: 0.25 }, SUFENTANIL_VAGAL],
-    // Ventilatory weight 5 [ENG; ≈ 9 × fentanyl's 0.55 — sufentanil's analgesic potency ratio to fentanyl, M10 ch. 22;
-    // no ventilatory C50 source]. MAC weight = remiEq (the neuro model's own scale, unchanged).
+    // Ventilatory weight 5 [FIT: ≈ 9 × fentanyl's 0.55 — sufentanil's analgesic potency ratio to fentanyl, M10 ch. 22;
+    // no ventilatory C50 source; brief research/44 X-10]. MAC weight = remiEq (the neuro model's own scale, unchanged).
     cns: { remiEq: 12, ventRemiEq: 5 }, syringePerMl: 5,
     doses: '0.1–0.5 µg/kg; plasma 5–10 ng/mL as sole agent (M10 Table 22.7)', onset: 'TTPE 5.6 min (Shafer & Varvel 1991)',
-    ir: '?', src: `Gepts 1995 PK [VERIFY]; potency ×12 remifentanil [ENG, Q59]; ${OPIOID_HEMO_SRC}`, tag: 'VERIFY',
+    ir: '?', src: `Gepts 1995 PK [VERIFY]; potency ×12 remifentanil [FIT: remifentanil potency ×12; Q59; brief research/44 X-10]; ${OPIOID_HEMO_SRC}`, tag: 'VERIFY',
   },
   {
     id: 'morphine', name: 'Morphine', cls: 'opioid', amountUnit: 'mg', pk: gammaPk(0.1, true, 1200, 14400),
     elim: { hepatic: 0.9, renal: 0.1, t12S: 9000 }, // t½β 1.7–3.3 h (M10 ch. 22 Table 22.6) [VERIFY]
     pd: [{ target: 'svr', emax: -0.2, ec50: 1 }, { target: 'histamine', emax: 0.6, ec50: 1 }],
-    // Ventilatory weight 0.8 per 0.1 mg/kg reference dose [ENG; the row is in reference-dose units, fit target:
-    // breathing depressed like the equianalgesic ≈ 1–1.5 µg/kg fentanyl (0.55 × ≈ 1.5 ng/mL), M10 ch. 22].
+    // Ventilatory weight 0.8 per 0.1 mg/kg reference dose [FIT: the row is in reference-dose units, fit target:
+    // breathing depressed like the equianalgesic ≈ 1–1.5 µg/kg fentanyl (0.55 × ≈ 1.5 ng/mL), M10 ch. 22; brief research/44 X-10].
     cns: { remiEq: 1.5, ventRemiEq: 0.8 },
     doses: '0.05–0.15 mg/kg IV', onset: 'peak 15–30 min, duration 3–4 h (R03 §8.6); CL 15–30 mL/kg/min (M10 Table 22.6)',
-    ir: '?', src: 'R03 §8.6; M10 ch. 22; remi-equivalent [ENG]', tag: 'TXT',
+    ir: '?', src: 'R03 §8.6; M10 ch. 22; remi-equivalent [FIT: remifentanil-equivalent ventilatory weight; brief research/44 X-10]', tag: 'TXT',
   },
   {
     id: 'sevoflurane', name: 'Sevoflurane', cls: 'volatile', amountUnit: 'mL', pk: { kind: 'volatile', agent: 'sevoflurane' },

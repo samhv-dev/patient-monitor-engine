@@ -29,7 +29,7 @@ describe('kidney through the engine', { timeout: 300_000 }, () => {
     expect(rest).toBeGreaterThan(0.8); // prototype 1.02 (the MANUAL default 120/80 site)
     expect(oliguric).toBeLessThan(0.3); // tables 17a
     expect(flag).toBe(true);
-    expect(recovered).toBeGreaterThan(0.5); // [ENG band] neurohumoral washout τ 45 min (Task 9)
+    expect(recovered).toBeGreaterThan(0.5); // [FIT: neurohumoral washout band; band; brief research/44 L2-07] neurohumoral washout τ 45 min (Task 9)
   });
   // Tables §7 check 20 premise: MAP 65, CVP 12, CO 3.5 (RPP 53). MODELED `hfref` severity 1 still does not reach it (MANUAL
   // reaches it since FU-2 item 7: next test). Plan text, pre-FU-2: MANUAL `contractility`/`svr` targets did not move 7a's CO, and MODELED `hfref` severity 1

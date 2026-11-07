@@ -23,7 +23,7 @@ describe('Figge/Stewart charge balance, bounded pH search (tables §5b.1)', () =
     expect(slope).toBeLessThanOrEqual(1.2);
     expect(Math.abs(hi.be - lo.be)).toBeLessThan(1);
   });
-  it('acute respiratory alkalosis: HCO3 falls 0.12–0.2 per mmHg PaCO2 fall (40 → 30; tables 0.2) — measured, [ENG] deviation', () => {
+  it('acute respiratory alkalosis: HCO3 falls 0.12–0.2 per mmHg PaCO2 fall (40 → 30; tables 0.2) — measured, [FIT: softened lower bound; brief research/44 X-16] deviation', () => {
     const slope = (solvePh(40, N).hco3 - solvePh(30, N).hco3) / 10;
     console.log(`falling-PaCO2 slope ${slope.toFixed(3)} mmol/L per mmHg (tables 0.2)`);
     expect(slope).toBeGreaterThanOrEqual(0.12);

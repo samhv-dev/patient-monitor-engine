@@ -4,19 +4,19 @@
 // (apnoea postponed, as on a real monitor). Also the pleth-derived RR estimator (brief §6.2 fallback source).
 import type { Measured } from '../../types.ts';
 
-export const RIPPLE_FRACTION = 0.1; // cardiogenic ripple = 10 % of a 500 mL breath (5–20 %) [ENG]
-export const IMP_HP_TAU_S = 4; // high-pass removing drift [ENG]
-export const IMP_THRESHOLD = 0.35; // fraction of the recent breath amplitude [ENG]
-export const IMP_FLOOR = 0.08; // absolute floor (ripple 0.1 exceeds it once breaths vanish) [ENG]
+export const RIPPLE_FRACTION = 0.1; // cardiogenic ripple = 10 % of a 500 mL breath (5–20 %) [ENG: device]
+export const IMP_HP_TAU_S = 4; // high-pass removing drift [ENG: device]
+export const IMP_THRESHOLD = 0.35; // fraction of the recent breath amplitude [ENG: device]
+export const IMP_FLOOR = 0.08; // absolute floor (ripple 0.1 exceeds it once breaths vanish) [ENG: device]
 export const IMP_APNOEA_S = 20; // impedance apnoea 20 s (Philips; saadat 10 s) (brief §4.4)
 export const IMP_INTERVALS = 6;
 /**
  * An impedance cycle whose period is within this fraction of the heart's RR is CARDIAC OVERLAY and is neither counted
  * nor allowed to reset the apnoea timer — the Philips Auto detection mode "adjusts the detection level … depending on
- * the presence of cardiac artifact" (research/05 §6 [S2] p. 111–113) [ENG fraction].
+ * the presence of cardiac artifact" (research/05 §6 [S2] p. 111–113) [ENG: device; fraction].
  */
 export const CARDIAC_MATCH = 0.1;
-/** A candidate cycle is counted as a breath when no cycle followed it within this many heart periods [ENG]. */
+/** A candidate cycle is counted as a breath when no cycle followed it within this many heart periods [ENG: device]. */
 export const CONFIRM_RR = 1.5;
 
 export interface ImpNum {

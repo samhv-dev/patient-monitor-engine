@@ -11,7 +11,7 @@ const ok = (x: Measured | undefined): x is Measured & { value: number } => !!x &
 /**
  * A module tile's readings and how long they stay current: the stimulator runs a train every 12–60 s (the neuro model's
  * tof-device), so NMT keeps its last train for 2 × 60 s; the depth monitor publishes at 1 Hz, so BFA goes after 5
- * missed seconds [ENG].
+ * missed seconds [ENG: display].
  */
 export const MODULE_TILES: Partial<Record<TileParam, { numerics: NumericId[]; staleS: number }>> = {
   NMT: { numerics: ['tofCount', 'ptc'], staleS: 120 },

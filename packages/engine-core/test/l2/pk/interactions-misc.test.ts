@@ -193,7 +193,7 @@ describe('inotrope / vasodilator sizes', () => {
     expect(x.left).toBeLessThanOrEqual(0.25 * x.ss);
   });
   // R45: the new row's steady state at 1 µg/kg/min is EXACTLY the band's lower edge (svr emax −0.6 × ½ at ec50 1), which the
-  // infusion approaches from below. Sizes as written (D13 row, [ENG]); the band is not moved.
+  // infusion approaches from below. Sizes as written (D13 row, [FIT: nitroprusside sizes as written; brief research/44 T-30]); the band is not moved.
   it.fails('nitroprusside 1 µg/kg/min lowers SVR 30–50 % — measured −29.9999 % at 10 min (the steady state is the band edge −30 %)', () => {
     const x = snp();
     expect(x.ss).toBeGreaterThanOrEqual(0.3);

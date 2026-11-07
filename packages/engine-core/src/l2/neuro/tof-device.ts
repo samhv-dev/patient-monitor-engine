@@ -1,6 +1,6 @@
 // TOF stimulator "device": a train of four every `intervalS` (default 15 s, 12–60 s) while running, a single train on
 // demand, and a post-tetanic count (50 Hz tetanus 5 s, 3 s pause, 15 twitches at 1 Hz: the result is reported 23 s
-// after the command). Readings are MEASURED: acceleromyography noise (SD 0.02 on the ratio [ENG]), the ratio shown only
+// after the command). Readings are MEASURED: acceleromyography noise (SD 0.02 on the ratio [ENG: device]), the ratio shown only
 // when all four twitches are present (count 4), and no TOF for 60 s after a tetanus (post-tetanic potentiation would
 // falsify it; devices lock it out) [TXT]. Each train emits a `tof` event time-stamped at the stimulus (the train
 // marker) and a `measurement` with tofCount/tofRatio/ptc.

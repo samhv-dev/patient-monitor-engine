@@ -4,7 +4,7 @@
 // old train's pending pulses and starts the new train at once. Silence cancels pending pulses for durationS; with
 // cancelOnNewAlarm (saadat) any NEW alarm ends the silence. Every pulse has a stable, never-reused id
 // `alarm:<alarmId>:<train>:<burst>:<pulse>` so a cancel reaches pulses already handed to Web Audio.
-// Sim time ↔ real time: pulse offsets are real seconds × clock.timeScale (bursts keep real-time patterns [ENG]).
+// Sim time ↔ real time: pulse offsets are real seconds × clock.timeScale (bursts keep real-time patterns [ENG: device]).
 import { burstPulses, dbToGain, levelSound, volumeGain } from './alarm-bursts.ts';
 import type { AlarmLevel, AlarmSoundProfile, ProfileOverrides } from './profiles/types.ts';
 import type { ToneRequest } from './scheduler.ts';
@@ -29,7 +29,7 @@ export interface AlarmSounderOptions {
   overrides?: ProfileOverrides;
   /** Volume step; default = the skin's (overrides.volume) or the profile's default. */
   volume?: number;
-  /** How far ahead (real seconds) bursts are enqueued. Default 1 s [ENG]: > the scheduler's 100 ms look-ahead. */
+  /** How far ahead (real seconds) bursts are enqueued. Default 1 s [ENG: device]: > the scheduler's 100 ms look-ahead. */
   horizonS?: number;
 }
 

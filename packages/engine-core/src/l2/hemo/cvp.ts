@@ -8,7 +8,7 @@
 //   v  near the end of the T wave                                → QRS onset + QT
 //   y  trough after tricuspid opening                            → v + 160 ms
 // AF has no P records, so no a wave. A P wave falling inside ventricular systole gives a cannon a wave.
-// Amplitudes a 2–4, v 1–3 mmHg (research 03 §2.9) [ENG within range].
+// Amplitudes a 2–4, v 1–3 mmHg (research 03 §2.9) (research 03 §2.9: a 2–4, v 1–3 mmHg; within range).
 import type { Pulse } from './ejection.ts';
 import { pressureAt } from './ejection.ts';
 import { breathU } from './params.ts';
@@ -26,8 +26,8 @@ export const CVP_WAVES = {
   v: { a: 2.5, s: 0.05 },
   y: { a: -2.5, s: 0.06, dt: 0.16 },
 } as const;
-export const CANNON_GAIN = 3; // cannon a wave ≈ 3× a [ENG]
-export const CVP_RESP_MMHG = 3; // positive-pressure insufflation raises CVP (research 03 §2.9) [ENG 2–5]
+export const CANNON_GAIN = 3; // cannon a wave ≈ 3× a [FIT: cannon a-wave size; brief research/44 L2-54]
+export const CVP_RESP_MMHG = 3; // positive-pressure insufflation raises CVP (research 03 §2.9) (research 03 §2.9: 2–5 mmHg; 2–5)
 const SQRT_2PI = Math.sqrt(2 * Math.PI);
 
 export interface CvpState {

@@ -372,7 +372,7 @@ describe('respiratory suite (RS1–RS15)', { timeout: 1_800_000 }, () => {
   // FU-8 B4 (E-FU8B-7): flipped — EtCO2 +5.98 → +6.1 with the tonic sympathetic share.
   // R45 (FU-7.1; OWNER RULING Q5, 2026-10-10): recorded as a known miss with its number, NOT widened. On the executed
   // branch it is FU-7.1 B3 (the alveolar-washout fall of the low-flow factor), not B1, that moves the rebreathing arm's
-  // EtCO2 rise from +6.1 to +5.99994 — red by 6 × 10⁻⁵ of an [ENG] band that read +5.98 before FU-8 B4 moved it just
+  // EtCO2 rise from +6.1 to +5.99994 — red by 6 × 10⁻⁵ of an [FIT: EtCO2-rise band; brief research/44 T-30] band that read +5.98 before FU-8 B4 moved it just
   // inside (B1 alone measured +6.1). The PaCO2 rise (+6.7) is unchanged; the twin row in resp-inspired-co2.test.ts is
   // recorded the same way.
   it.fails('RS14 rebreathing FiCO2 8 for 20 min at fixed VCV: PaCO2 and EtCO2 +6–10 — measured +6.7 / EtCO2 +5.99994 with the alveolar washout (+6.1 without it; +5.98 when propofol also does not remove the tonic sympathetic share)', async () => {

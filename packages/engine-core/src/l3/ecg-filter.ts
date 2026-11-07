@@ -4,7 +4,7 @@
 // Design function: 2nd-order sections from R. Bristow-Johnson, "Cookbook formulae for audio EQ biquad
 // filter coefficients" (bilinear transform with frequency pre-warping, so each Butterworth section is
 // exactly −3.01 dB at its corner). Band-pass = Butterworth high-pass (Q = 1/√2) cascaded with a
-// Butterworth low-pass (Q = 1/√2). Notch Q = 8 (≈6 Hz wide at 50 Hz) [ENG]. Transposed direct form II.
+// Butterworth low-pass (Q = 1/√2). Notch Q = 8 (≈6 Hz wide at 50 Hz) [ENG: device]. Transposed direct form II.
 import type { EcgFilterMode } from '../types.ts';
 
 /** Normalised biquad (a0 = 1): y = b0·x + b1·x₋₁ + b2·x₋₂ − a1·y₋₁ − a2·y₋₂. */
@@ -52,11 +52,11 @@ export const FILTER_BANDS: Readonly<Record<'monitor' | 'diagnostic', readonly [n
   diagnostic: [0.05, 150],
 };
 
-/** Band limits accepted for 'band:<lo>-<hi>': every skin band lies inside [ENG]. */
+/** Band limits accepted for 'band:<lo>-<hi>': every skin band lies inside [ENG: device]. */
 export const BAND_LO_RANGE = [0.01, 10] as const;
 export const BAND_HI_RANGE = [10, 200] as const;
 /** A band filter gets the mains notch when its upper corner is below this (research/05 §2.2: Mindray notches the
- * monitor, surgical and ST modes, not diagnostic) [ENG]. */
+ * monitor, surgical and ST modes, not diagnostic) [ENG: device]. */
 export const BAND_NOTCH_BELOW_HZ = 100;
 
 /** [lo, hi] Hz of a filter mode ('band:0.5-24' → [0.5, 24]), or null when the band is malformed or out of range. */

@@ -16,7 +16,7 @@ export const MAX_QRS_AFTER_R_S = 0.15;
 /** Output latency assumed when the browser reports none. */
 export const DEFAULT_OUTPUT_LATENCY_S = 0.02;
 const LOG_MAX = 500;
-const FORGET_AFTER_S = 2; // keep played ids this long after their voice ends, for dedupe [ENG]
+const FORGET_AFTER_S = 2; // keep played ids this long after their voice ends, for dedupe [ENG: device]
 
 export interface ToneRequest {
   t: number; // sim seconds

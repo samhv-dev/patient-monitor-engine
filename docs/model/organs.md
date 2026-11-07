@@ -58,12 +58,12 @@ an embedding developer reads it for the organ inputs it collects and the effects
 | [`flow.ts:36`](../../packages/engine-core/src/l2/brain/flow.ts#L36) | A with an autoregulation index ar (1 intact, 0 pressure-passive: CBF ∝ CPP/CPP_REF). TBI impairs it. |
 | [`flow.ts:42`](../../packages/engine-core/src/l2/brain/flow.ts#L42) | CO2 reactivity C(PaCO2) = 1 + k·(PaCO2 − ref), PaCO2 clamped to 20–80 (tables C()). ref adapts over hours. |
 | [`flow.ts:97`](../../packages/engine-core/src/l2/brain/flow.ts#L97) | Brain oxygen from the delivery/demand ratio r = (CBF·CaO2/CMRO2) relative to awake normal: PbtO2 = 25·r^0.75· |
-| [`flow.ts:98`](../../packages/engine-core/src/l2/brain/flow.ts#L98) | (1 + 0.004·(PaO2 − 100)+) [ENG]; SjvO2 = SaO2·(1 − OER), OER = 0.33/r capped at 0.75 [ENG] (params.ts). |
+| [`flow.ts:98`](../../packages/engine-core/src/l2/brain/flow.ts#L98) | (1 + 0.004·(PaO2 − 100)+) (tables PbtO2 formula; OER by Fick on the tables' values); SjvO2 = SaO2·(1 − OER), OER = 0.33/r capped at 0.75 (tables PbtO2 formula; OER by Fick on the tables' values) (params.ts). |
 | [`mechanics.ts:1`](../../packages/engine-core/src/l2/brain/mechanics.ts#L1) | Monro–Kellie craniospinal mechanics (tables §5.1): ICP = ICP0·10^(ΔV/PVI) over the change of intracranial volume |
-| [`params.ts:20`](../../packages/engine-core/src/l2/brain/params.ts#L20) | CPP of the reference state (MAP 90, ICP 10): pressure-passive CBF = CBF0·CPP/80 [ENG] |
+| [`params.ts:20`](../../packages/engine-core/src/l2/brain/params.ts#L20) | CPP of the reference state (MAP 90, ICP 10): pressure-passive CBF = CBF0·CPP/80 [ENG: numerics] |
 | [`params.ts:31`](../../packages/engine-core/src/l2/brain/params.ts#L31) | CBV ∝ CBF^0.38, tables `grubb` [VERIFY] |
-| [`params.ts:37`](../../packages/engine-core/src/l2/brain/params.ts#L37) | [ENG] PbtO2 ∝ (delivery/demand)^0.75, not the tables' linear form: linear gave 9.5 in check 18 (tables 10–15) |
-| [`params.ts:39`](../../packages/engine-core/src/l2/brain/params.ts#L39) | [ENG] resting cerebral O2 extraction, chosen so SjvO2 = 0.97·(1 − 0.33) ≈ 0.65 (textbook 55–75 %; tables have no row) |
+| [`params.ts:37`](../../packages/engine-core/src/l2/brain/params.ts#L37) | [FIT: intracranial volume–pressure fit; brief research/44 L2-11] PbtO2 ∝ (delivery/demand)^0.75, not the tables' linear form: linear gave 9.5 in check 18 (tables 10–15) |
+| [`params.ts:39`](../../packages/engine-core/src/l2/brain/params.ts#L39) | (Fick on tables [P] values: SjvO2 ≈ 0.65, textbook 55–75 %) resting cerebral O2 extraction, chosen so SjvO2 = 0.97·(1 − 0.33) ≈ 0.65 (textbook 55–75 %; tables have no row) |
 | [`params.ts:46`](../../packages/engine-core/src/l2/brain/params.ts#L46) | tables MAP_head = MAP − 0.74·h |
 | [`params.ts:59`](../../packages/engine-core/src/l2/brain/params.ts#L59) | OSM_VMAX_ML × the saturation of 1 g/kg mannitol (384 mOsm, 0.885) ÷ its ECF rise (384 mOsm / 14 L = +27.4 mOsm/kg) |
 | [`wave.ts:3`](../../packages/engine-core/src/l2/brain/wave.ts#L3) | AMP = elastance × arterial pulse volume (≈ 1.6 mL at PP 40), so AMP ≈ 0.1·ICP + 0.5 when compliant and rises |
@@ -74,10 +74,11 @@ an embedding developer reads it for the organ inputs it collects and the effects
 | [`kidney.ts:49`](../../packages/engine-core/src/l2/renal/kidney.ts#L49) | leaves it; its mean is π̄ = π_a·(1 + 1/(1 − FF))/2 with FF = GFR/RPF (Deen, Robertson & Brenner 1972 Am J Physiol |
 | [`kidney.ts:51`](../../packages/engine-core/src/l2/renal/kidney.ts#L51) | 125. GFR is the root of G = Kf·(P_gc − P_B − π̄(G/RPF)), found by bisection (monotone), so FF saturates near 0.3–0.35 |
 | [`model.ts:195`](../../packages/engine-core/src/l2/renal/model.ts#L195) | furosemide: depot → plasma (ka) → elimination (ke); effect E = Cp/(Cp + ED50-equivalent) |
-| [`params.ts:45`](../../packages/engine-core/src/l2/renal/params.ts#L45) | used here as the excreted FRACTION ∝ (Lp(Pref)/Lp(P))^1.74 — the exponent that makes UOP(150)/UOP(100) = 3 |
-| [`params.ts:74`](../../packages/engine-core/src/l2/renal/params.ts#L74) | Effective volume = min(BV, (CO/(CO0·demandRel))^EXP) [ENG]: fitted to tables check 20 (HFrEF UOP 0.1–0.15, dobutamine 0.2–0.3) |
-| [`params.ts:88`](../../packages/engine-core/src/l2/renal/params.ts#L88) | Own-depot path (no drug model): E = plasma mg/(mg + 20) |
-| [`params.ts:89`](../../packages/engine-core/src/l2/renal/params.ts#L89) | With the drug model: E = c/(c + 1), c = its furosemide level in reference doses (row `furosemide`: gamma, ref |
+| [`params.ts:46`](../../packages/engine-core/src/l2/renal/params.ts#L46) | used here as the excreted FRACTION ∝ (Lp(Pref)/Lp(P))^1.74 — the exponent that makes UOP(150)/UOP(100) = 3 |
+| [`params.ts:47`](../../packages/engine-core/src/l2/renal/params.ts#L47) | (tables U(): Guyton renal output curve); U(80) then equals the tables' 0.67 exactly [FIT: U(80) = the tables' 0.67; fit; brief research/44 L2-07]. |
+| [`params.ts:75`](../../packages/engine-core/src/l2/renal/params.ts#L75) | Effective volume = min(BV, (CO/(CO0·demandRel))^EXP) [FIT: renal neurohumoral fit; brief research/44 L2-07]: fitted to tables check 20 (HFrEF UOP 0.1–0.15, dobutamine 0.2–0.3) |
+| [`params.ts:89`](../../packages/engine-core/src/l2/renal/params.ts#L89) | Own-depot path (no drug model): E = plasma mg/(mg + 20) |
+| [`params.ts:90`](../../packages/engine-core/src/l2/renal/params.ts#L90) | With the drug model: E = c/(c + 1), c = its furosemide level in reference doses (row `furosemide`: gamma, ref |
 
 ## State
 
@@ -201,87 +202,87 @@ an embedding developer reads it for the organ inputs it collects and the effects
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `BRAIN_DT_S` | `0.1` | s | tables §5.1; tables §9.; brief §3.2; [ENG] | Brain constants (tables §5.1). Every number cites its tables row or is [ENG] with the prototype number it was tuned to. Q numbers point at tables §9. brain step 10 Hz, on the gas grid (brief §3.2) |
+| `BRAIN_DT_S` | `0.1` | s | tables §5.1; tables §9.; brief §3.2; [FIT: target; brief id]; [ENG: kind] | Brain constants (tables §5.1). Every number cites its tables row or carries `[FIT: target; brief id]` with the prototype number it was tuned to (`[ENG: kind]` when not physiology). Q numbers point at tables §9. brain step 10 Hz, on the gas grid (brief §3.2) |
 | `BRAIN_G` | `1400` | — | [TXT] | adult brain mass, g [TXT] (CBF0 50 mL/100 g/min ≈ 700 mL/min) |
 | `CBF0` | `50` | mL/100 | [P] | mL/100 g/min, tables `CBF0` [P] LITFL-CBF |
 | `CMRO2_0` | `3.3` | mL | [P] | mL O2/100 g/min, tables `cmro2_0` [P] |
 | `ICP0` | `10` | mmHg | [TXT] | mmHg, tables `ICP0` [TXT] |
 | `PVI` | `25` | mL | [P] | mL, tables `pvi` [P] Marmarou (normal 25–30; exhausted < 10–13) |
 | `CSF_PROD_ML_MIN` | `0.35` | mL/min | [TXT] | CSF formation ≈ 500 mL/day [TXT] |
-| `R_OUT` | `8` | — | [ENG] | Outflow resistance to CSF absorption, mmHg·min/mL (Marmarou; normal 6–10) — sets the CSF buffering τ ≈ Rout·PVI/(2.303·ICP) ≈ 8.7 min at ICP 10 (tables `tauCsf` 5 min [ENG], range 2–15: Q37). 8, not 10: with 10 the check-19 haematoma reached ICP 20 at 9.1 min (tables ~10–15); 8 gives 10.8 min and leaves ICP 40 at 23.7 min. |
+| `R_OUT` | `8` | — | — | Outflow resistance to CSF absorption, mmHg·min/mL (Marmarou; normal 6–10) — sets the CSF buffering τ ≈ Rout·PVI/(2.303·ICP) ≈ 8.7 min at ICP 10 (tables `tauCsf` 5 min (tables `tauCsf` range 2–15, Q37), range 2–15: Q37). 8, not 10: with 10 the check-19 haematoma reached ICP 20 at 9.1 min (tables ~10–15); 8 gives 10.8 min and leaves ICP 40 at 23.7 min. |
 | `CSF_RESERVE_ML` | `30` | mL | — | Displaceable CSF, mL (tables `csfReserve` 30, range 20–50; Q37): absorption of extra CSF fades as it is used. |
 | `CBF_LL` | `60` | — | [P] | autoregulation lower limit as CPP, mmHg, tables `cbfLL` [P] (Q13) |
 | `CBF_UL` | `150` | — | [P] | upper limit, tables `cbfUL` [P] |
-| `CPP_ZERO_FLOW` | `10` | — | [ENG shape] | below LL CBF falls linearly to 0 at CPP 10 (tables A(), [ENG shape]) |
+| `CPP_ZERO_FLOW` | `10` | — | research/44 L2; [FIT: pressure-passive CBF shape below the lower limit; shape; brief research/44 L2-28] | below LL CBF falls linearly to 0 at CPP 10 (tables A(), [FIT: pressure-passive CBF shape below the lower limit; shape; brief research/44 L2-28]) |
 | `BREAKTHROUGH_PER_MMHG` | `0.01` | mmHg | — | above UL CBF rises 1 %/mmHg (tables A()) |
-| `CPP_REF` | `80` | — | [ENG] | CPP of the reference state (MAP 90, ICP 10): pressure-passive CBF = CBF0·CPP/80 [ENG] |
+| `CPP_REF` | `80` | — | [ENG: numerics] | CPP of the reference state (MAP 90, ICP 10): pressure-passive CBF = CBF0·CPP/80 [ENG: numerics] |
 | `HTN_LL_SHIFT` | `15` | — | tables §1.5 | chronic HTN: LL +15–20, tables §1.5 `htn` (Q13) |
-| `HTN_UL_SHIFT` | `20` | UL | tables §5.1; [ENG] | UL shifts right in HTN (tables §5.1, no number) [ENG] |
+| `HTN_UL_SHIFT` | `20` | UL | tables §5.1; research/44 L2; [FIT: autoregulation limit or τ (no number in the tables); brief research/44 L2-28] | UL shifts right in HTN (tables §5.1, no number) [FIT: autoregulation limit or τ (no number in the tables); brief research/44 L2-28] |
 | `K_CO2` | `0.03` | — | [P] | CBF fraction per mmHg PaCO2, tables `kCO2` [P] (Q38: OpenAnesthesia ~0.04) |
 | `PACO2_MIN` | `20` | — | — | reactivity clamped (blunted) below 20 and above 80 mmHg (tables C()) |
 | `PACO2_MAX` | `80` | — | — | — |
 | `PACO2_ADAPT_TAU_S` | `8 * 3600` | s | tables §5.1 | Chronic hypocapnia: CSF pH buffering resets the CO2 reference over 6–24 h (tables §5.1 hyperventilation row). |
 | `PAO2_CBF_ONSET` | `60` | — | [P] | tables `paO2Cbf` [P] (range 50–60) |
 | `PAO2_CBF_DOUBLE` | `30` | — | — | ×2 at PaO2 30 (tables O()) |
-| `TAU_VASC_S` | `10` | s | [ENG] | dynamic autoregulation / CO2 response τ: CBF within 30 s (tables hyperventilation row) [ENG] |
+| `TAU_VASC_S` | `10` | s | research/44 L2; [FIT: autoregulation limit or τ (no number in the tables); brief research/44 L2-28] | dynamic autoregulation / CO2 response τ: CBF within 30 s (tables hyperventilation row) [FIT: autoregulation limit or τ (no number in the tables); brief research/44 L2-28] |
 | `GRUBB` | `0.38` | — | [VERIFY] | CBV ∝ CBF^0.38, tables `grubb` [VERIFY] |
 | `CBV0_ML` | `60` | mL | [TXT] | whole-brain CBV ≈ 4.3 mL/100 g [TXT] |
-| `CBV_EFF` | `0.4` | — | [ENG] | Fraction of the CBV change that reaches ICP (the rest is offset by venous re-expansion) [ENG]: with 0.4, PaCO2 40 → 30 lowers ICP by 27 % at ICP 25 / PVI 20 (tables: −25–30 %). |
+| `CBV_EFF` | `0.4` | — | research/44 L2; [FIT: intracranial volume–pressure fit; brief research/44 L2-11] | Fraction of the CBV change that reaches ICP (the rest is offset by venous re-expansion) [FIT: intracranial volume–pressure fit; brief research/44 L2-11]: with 0.4, PaCO2 40 → 30 lowers ICP by 27 % at ICP 25 / PVI 20 (tables: −25–30 %). |
 | `PBTO2_0` | `25` | mmHg | [P] | mmHg, tables `PbtO2_0` [P] |
-| `PBTO2_EXP` | `0.75` | — | [ENG] | [ENG] PbtO2 ∝ (delivery/demand)^0.75, not the tables' linear form: linear gave 9.5 in check 18 (tables 10–15) |
-| `PBTO2_HYPEROXIA` | `0.004` | — | [ENG] | tables PbtO2 formula (1 + 0.004·(PaO2 − 100)+) [ENG] |
-| `OER0` | `0.33` | — | [ENG] | [ENG] resting cerebral O2 extraction, chosen so SjvO2 = 0.97·(1 − 0.33) ≈ 0.65 (textbook 55–75 %; tables have no row) |
-| `OER_MAX` | `0.75` | — | tables §5.3; [ENG] | [ENG] extraction ceiling (tables §5.3 `erMax` range 0.6–0.75, top end: the brain extracts more than the body) |
+| `PBTO2_EXP` | `0.75` | — | research/44 L2; [FIT: intracranial volume–pressure fit; brief research/44 L2-11] | [FIT: intracranial volume–pressure fit; brief research/44 L2-11] PbtO2 ∝ (delivery/demand)^0.75, not the tables' linear form: linear gave 9.5 in check 18 (tables 10–15) |
+| `PBTO2_HYPEROXIA` | `0.004` | — | — | tables PbtO2 formula (1 + 0.004·(PaO2 − 100)+) (tables PbtO2 formula) |
+| `OER0` | `0.33` | — | [P] | (Fick on tables [P] values: SjvO2 ≈ 0.65, textbook 55–75 %) resting cerebral O2 extraction, chosen so SjvO2 = 0.97·(1 − 0.33) ≈ 0.65 (textbook 55–75 %; tables have no row) |
+| `OER_MAX` | `0.75` | — | tables §5.3 | (tables §5.3 `erMax` 0.6–0.75) extraction ceiling (tables §5.3 `erMax` range 0.6–0.75, top end: the brain extracts more than the body) |
 | `Q10_BRAIN` | `0.07` | — | [P] | CMRO2 −7 %/°C, tables `q10Brain` [P] |
 | `HB_DEFAULT` | `14` | g/dL | — | g/dL without the blood model (the gas model's HB_G_DL) |
-| `HEAD_HEIGHT_CM` | `25` | — | [ENG] | tragus above the heart at 90° head-up [ENG]; 30° → 12.5 cm → MAP_head −9.2 |
-| `HEADUP_VOL_ML_30` | `2.9` | — | [ENG] | Venous/CSF volume that leaves the skull at 30° head-up [ENG]: ICP 20 → 14.4 at PVI 20 (tables: −5.6 mmHg). |
+| `HEAD_HEIGHT_CM` | `25` | — | research/44 L2; [FIT: intracranial volume–pressure fit; brief research/44 L2-11] | tragus above the heart at 90° head-up [FIT: intracranial volume–pressure fit; brief research/44 L2-11]; 30° → 12.5 cm → MAP_head −9.2 |
+| `HEADUP_VOL_ML_30` | `2.9` | — | research/44 L2; [FIT: intracranial volume–pressure fit; brief research/44 L2-11] | Venous/CSF volume that leaves the skull at 30° head-up [FIT: intracranial volume–pressure fit; brief research/44 L2-11]: ICP 20 → 14.4 at PVI 20 (tables: −5.6 mmHg). |
 | `MMHG_PER_CM_BLOOD` | `0.74` | — | — | tables MAP_head = MAP − 0.74·h |
-| `OSM_K_MOSM` | `50` | — | tables §5.1; [TXT]; [ENG] | Osmotherapy (tables §5.1 mannitol/HTS rows [TXT]; shape [ENG]) saturation: 0.25 g/kg (96 mOsm) gives 66 % of 1 g/kg's 88 % (tables "0.25 ≈ 1 g/kg") |
-| `OSM_VMAX_ML` | `4.5` | mL | [ENG] | brain-water loss at the peak of a saturating dose [ENG]: see Prototype results |
+| `OSM_K_MOSM` | `50` | — | tables §5.1; research/44 L2; [TXT]; [FIT: intracranial volume–pressure fit; brief research/44 L2-11] | Osmotherapy (tables §5.1 mannitol/HTS rows [TXT]; shape [FIT: intracranial volume–pressure fit; brief research/44 L2-11]) saturation: 0.25 g/kg (96 mOsm) gives 66 % of 1 g/kg's 88 % (tables "0.25 ≈ 1 g/kg") |
+| `OSM_VMAX_ML` | `4.5` | mL | research/44 L2; [FIT: intracranial volume–pressure fit; brief research/44 L2-11] | brain-water loss at the peak of a saturating dose [FIT: intracranial volume–pressure fit; brief research/44 L2-11]: see Prototype results |
 | `MANNITOL_TAU_IN_MIN` | `15` | — | — | onset 10–15 min, peak ≈ 40 min (tables 20–60), duration 2–6 h |
 | `MANNITOL_TAU_OUT_MIN` | `180` | — | — | — |
 | `HTS_TAU_IN_MIN` | `7` | — | — | onset 5–10 min, longer than mannitol (tables) |
 | `HTS_TAU_OUT_MIN` | `240` | — | — | — |
 | `MANNITOL_MOSM_PER_G` | `1000 / 182.17` | — | — | 5.49 mOsm/g |
 | `NACL_MOSM_PER_G` | `2000 / 58.44` | — | — | 34.2 mOsm/g |
-| `CUSH_CPP` | `40` | — | tables §5.1; [TXT shape, ENG numbers] | Cushing (tables §5.1: CPP < 40 for > 30 s → MAP +30–50 over 30–60 s, HR −20–40 %, ataxic breathing [TXT shape, ENG numbers]) |
+| `CUSH_CPP` | `40` | — | tables §5.1; research/44 L2; [TXT shape]; [FIT: Cushing surge numbers; brief research/44 L2-12] | Cushing (tables §5.1: CPP < 40 for > 30 s → MAP +30–50 over 30–60 s, HR −20–40 %, ataxic breathing [TXT shape] [FIT: Cushing surge numbers; brief research/44 L2-12]) |
 | `CUSH_GAP` | `10` | — | tables §5.1 | second trigger: ICP within 10 mmHg of MAP_head (tables §5.1 Cushing row) |
 | `CUSH_DELAY_S` | `30` | s | — | — |
 | `CUSH_OFF_S` | `30` | s | — | CPP ≥ 40 this long (on the pre-surge MAP) ends the response |
 | `CUSH_TAU_ON_S` | `15` | s | — | — |
 | `CUSH_TAU_OFF_S` | `60` | s | — | — |
-| `CUSH_DMAP` | `40` | mmHg | [ENG] | mmHg at full drive: the centre of the tables' +30–50 [ENG]. With 50 the MANUAL engine read +54 (the circulation waveform's area MAP at HR 48 sits ≈ 0.45 of the pulse pressure above the diastolic, not the 1/3 the coupled split assumes). |
+| `CUSH_DMAP` | `40` | mmHg | research/44 L2; [FIT: scripted Cushing surge size; brief research/44 L2-12] | mmHg at full drive: the centre of the tables' +30–50 [FIT: scripted Cushing surge size; brief research/44 L2-12]. With 50 the MANUAL engine read +54 (the circulation waveform's area MAP at HR 48 sits ≈ 0.45 of the pulse pressure above the diastolic, not the 1/3 the coupled split assumes). |
 | `CUSH_HR_DROP` | `0.4` | — | — | HR × (1 − 0.4·drive): 80 → 48 |
 | `MAP_BASE_TAU_S` | `120` | s | — | pre-surge MAP reference (frozen while the surge is on) |
-| `HERNIATION_CPP` | `10` | — | [ENG] | CPP ≤ 10 for 60 s → herniation (irreversible in v1) [ENG] |
+| `HERNIATION_CPP` | `10` | — | research/44 L2; [FIT: herniation rule (no compartments); brief research/44 L2-60] | CPP ≤ 10 for 60 s → herniation (irreversible in v1) [FIT: herniation rule (no compartments); brief research/44 L2-60] |
 | `HERNIATION_S` | `60` | s | — | — |
 | `ICP_THRESHOLD` | `22` | — | — | BTF2016 treatment threshold (alarm default, tables) |
-| `TBI_PVI_DROP` | `5` | — | tables §7; [ENG, tables §7 check 19 uses PVI 20, ICP0 12] | TBI condition (severity s ∈ 0–1) [ENG, tables §7 check 19 uses PVI 20, ICP0 12] pvi 25 → 20 |
+| `TBI_PVI_DROP` | `5` | — | tables §7; research/44 L2; [FIT: intracranial volume–pressure fit; tables §7 check 19 uses PVI 20, ICP0 12; brief research/44 L2-11] | TBI condition (severity s ∈ 0–1) [FIT: intracranial volume–pressure fit; tables §7 check 19 uses PVI 20, ICP0 12; brief research/44 L2-11] pvi 25 → 20 |
 | `TBI_ICP0_RISE` | `2` | — | — | 10 → 12 |
 | `TBI_AR_LOSS` | `0.7` | — | — | autoregulation index 1 → 0.3 (impaired, not absent) |
-| `TBI_RESERVE_DROP` | `20` | — | [ENG, DEVIATION from the tables' normal-brain `csfReserve` 20–50] | Swollen brain: the displaceable CSF reserve shrinks 30 → 10 mL at severity 1 [ENG, DEVIATION from the tables' normal-brain `csfReserve` 20–50]: check 19's own timeline (12 → 20 by 10–15 min → 40 by 20–25 min at 1 mL/min, PVI 20) needs ≈ 11 mL of total compensation; with a reserve of 20 ICP never reached 40 in 30 min, with 12–14 it took 25.7–27.7 min. With 10 (and R_OUT 8): ICP 20 at 10.8 min, 40 at 23.7 min. Q37. |
+| `TBI_RESERVE_DROP` | `20` | — | research/44 L2; [FIT: intracranial volume–pressure fit; DEVIATION from the tables' normal-brain `csfReserve` 20–50; brief research/44 L2-11] | Swollen brain: the displaceable CSF reserve shrinks 30 → 10 mL at severity 1 [FIT: intracranial volume–pressure fit; DEVIATION from the tables' normal-brain `csfReserve` 20–50; brief research/44 L2-11]: check 19's own timeline (12 → 20 by 10–15 min → 40 by 20–25 min at 1 mL/min, PVI 20) needs ≈ 11 mL of total compensation; with a reserve of 20 ICP never reached 40 in 30 min, with 12–14 it took 25.7–27.7 min. With 10 (and R_OUT 8): ICP 20 at 10.8 min, 40 at 23.7 min. Q37. |
 
 ### [`l2/brain/wave.ts`](../../packages/engine-core/src/l2/brain/wave.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `PULSE_VOL_ML` | `1.6` | mL | [ENG] | arterial CBV pulse at PP 40 mmHg [ENG]: AMP 1.47 at ICP 10/PVI 25 |
-| `RESP_VOL_ML` | `0.6` | mL | [ENG] | venous volume swing of a reference breath (u swing 1.0) [ENG]: 1–3 mmHg at ICP 20 |
+| `PULSE_VOL_ML` | `1.6` | mL | research/44 L2; [FIT: ICP pulse-waveform shape; brief research/44 L2-60] | arterial CBV pulse at PP 40 mmHg [FIT: ICP pulse-waveform shape; brief research/44 L2-60]: AMP 1.47 at ICP 10/PVI 25 |
+| `RESP_VOL_ML` | `0.6` | mL | research/44 L2; [FIT: ICP pulse-waveform shape; brief research/44 L2-60] | venous volume swing of a reference breath (u swing 1.0) [FIT: ICP pulse-waveform shape; brief research/44 L2-60]: 1–3 mmHg at ICP 20 |
 | `P3_REL` | `0.55` | — | — | — |
 
 ### [`l2/liver/liver.ts`](../../packages/engine-core/src/l2/liver/liver.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `K_LAC0_PER_H` | `1.4` | /h | [ENG] | tables `kLac` [ENG] (t½ ≈ 30 min), Q41 |
+| `K_LAC0_PER_H` | `1.4` | /h | — | tables `kLac` (tables `kLac` (t½ ≈ 30 min), Q41) (t½ ≈ 30 min), Q41 |
 | `LAC_PROD0_MMOL_DAY` | `1400` | — | Pulse 1; [TXT] | tables `lacProd0` [TXT] (Pulse 1.3 mol/day) |
-| `V_LAC_L_KG` | `0.6` | kg | [ENG] | tables `vLac` [ENG] |
+| `V_LAC_L_KG` | `0.6` | kg | — | tables `vLac` (tables `vLac`; TBW ≈ 0.6 L/kg) |
 | `CLEAR_TEMP_PER_C` | `0.1` | — | [TXT] | tables `clearTemp` −10 %/°C below 37 [TXT] |
 | `HEPATIC_FAILURE_LOSS` | `0.7` | — | — | liver function × (1 − 0.7·severity): the LIVER share of lactate clearance ×0.3 at severity 1 [DEVIATION: tables `kLac` row says "×0.3 in liver failure" on the whole kLac, its clearance-split row scales by organ; the split row is applied so failure does not stop renal/other clearance: kLac 1.4 → 0.81/h, t½ 51 min (whole-kLac ×0.3 would be 99 min). Q41] |
 | `SPLANCHNIC_GAIN` | `0.4` | — | — | hbfFactor ×0.6 at full sympathetic splanchnic constriction (tables `hbfFactor`) |
 | `VOLATILE_HBF_PER_MAC` | `0.2` | — | — | ×0.8 at 1 MAC volatile (tables `hbfFactor`) |
-| `HEPATIC_OUTFLOW_PER_MMHG` | `0.02` | mmHg | [ENG] | [ENG] |
+| `HEPATIC_OUTFLOW_PER_MMHG` | `0.02` | mmHg | research/44 L2; [FIT: hepatic outflow loss per mmHg CVP; brief research/44 L2-42] | [FIT: hepatic outflow loss per mmHg CVP; brief research/44 L2-42] |
 | `DO2_CRIT` | `6` | mL/kg/min | — | mL/kg/min, tables `do2Crit` (Q42) — fallback lactate production only |
 | `K_ANAER` | `0.03` | mmol | — | mmol lactate per mL O2 deficit, tables `kAnaer` (Q41) — fallback only |
 
@@ -291,7 +292,7 @@ an embedding developer reads it for the organ inputs it collects and the effects
 |---|---|---|---|---|
 | `SBP_SHARE` | `1.3` | — | — | — |
 | `DBP_SHARE` | `0.85` | — | — | — |
-| `CUSH_SVR_GAIN` | `1.2` | — | [ENG, prototype on the circulation, lungs and drugs, TBI, massMl 28] | MODELED: SVR × (1 + 1.2·drive) [ENG, prototype on the circulation, lungs and drugs, TBI, massMl 28]: MAP 97 → 133 (+36) and HR 73 → 53 (−27 %) from the baroreflex alone (tables: MAP +30–50, HR −20–40 %). Gain 0.8 gave +27; adding a direct HR factor (ext.hrF = 0.6) on top gave HR 40 and cancelled most of the rise (+11), so the brain effects leave `ext.hrF` at 1. |
+| `CUSH_SVR_GAIN` | `1.2` | — | research/44 L2; [FIT: prototype on the circulation, lungs and drugs, TBI, massMl 28; brief research/44 L2-12] | MODELED: SVR × (1 + 1.2·drive) [FIT: prototype on the circulation, lungs and drugs, TBI, massMl 28; brief research/44 L2-12]: MAP 97 → 133 (+36) and HR 73 → 53 (−27 %) from the baroreflex alone (tables: MAP +30–50, HR −20–40 %). Gain 0.8 gave +27; adding a direct HR factor (ext.hrF = 0.6) on top gave HR 40 and cancelled most of the rise (+11), so the brain effects leave `ext.hrF` at 1. |
 
 ### [`l2/organs/inputs.ts`](../../packages/engine-core/src/l2/organs/inputs.ts)
 
@@ -300,13 +301,13 @@ an embedding developer reads it for the organ inputs it collects and the effects
 | `HB_DEFAULT` | `14` | — | — | the gas model's HB_G_DL without the blood |
 | `ALBUMIN_DEFAULT` | `42` | g/L | — | g/L (annex B2 oncotic reference) |
 | `PAW_REF_CMH2O` | `10` | cmH2O | research 03 §8.7 | Only mean Paw above 10 cmH2O acts (research 03 §8.7) |
-| `GA_PROP_CE` | `1.5` | — | [ENG] | Anaesthetised by drugs (kidney stress S, GA fallback) [ENG]: propofol Ce ≥ 1.5 µg/mL, ≥ 0.5 MAC, ketamine ≥ 0.5 × its reference dose, or a drug CMRO2 multiplier ≤ 0.85 (any other hypnotic). |
+| `GA_PROP_CE` | `1.5` | — | research/44 L2; [FIT: drug-threshold "anaesthetised" flag; brief research/44 L2-25] | Anaesthetised by drugs (kidney stress S, GA fallback) [FIT: drug-threshold "anaesthetised" flag; brief research/44 L2-25]: propofol Ce ≥ 1.5 µg/mL, ≥ 0.5 MAC, ketamine ≥ 0.5 × its reference dose, or a drug CMRO2 multiplier ≤ 0.85 (any other hypnotic). |
 | `GA_MAC` | `0.5` | — | — | — |
 | `GA_KETAMINE` | `0.5` | — | — | — |
 | `GA_CMRO2` | `0.85` | — | — | — |
-| `PE_NE_EQ` | `0.1` | — | [ENG] | α-agonist load as norepinephrine-equivalent µg/kg/min [ENG]: NE 1, epinephrine 1, phenylephrine 0.1 (≈ 1/10 potency). |
-| `ALPHA_E_FULL` | `0.3` | — | [ENG] | Splanchnic constriction 0–1 = NE-eq / 0.3 (tables `hbfFactor` ×0.6 "high-dose α-agonist") [ENG]. |
-| `ALPHA_NEED_MAP` | `75` | — | tables §5.2; [ENG] | "Above need" [ENG]: none of the α-agonist is excess at MAP ≤ 75, all of it at MAP ≥ 90 (tables §5.2 D row). |
+| `PE_NE_EQ` | `0.1` | — | research/44 L2; [FIT: splanchnic α-agonist constriction and "above need" ramp; brief research/44 L2-09] | α-agonist load as norepinephrine-equivalent µg/kg/min [FIT: splanchnic α-agonist constriction and "above need" ramp; brief research/44 L2-09]: NE 1, epinephrine 1, phenylephrine 0.1 (≈ 1/10 potency). |
+| `ALPHA_E_FULL` | `0.3` | — | research/44 L2; [FIT: splanchnic α-agonist constriction and "above need" ramp; brief research/44 L2-09] | Splanchnic constriction 0–1 = NE-eq / 0.3 (tables `hbfFactor` ×0.6 "high-dose α-agonist") [FIT: splanchnic α-agonist constriction and "above need" ramp; brief research/44 L2-09]. |
+| `ALPHA_NEED_MAP` | `75` | — | research/44 L2; tables §5.2; [FIT: splanchnic α-agonist constriction and "above need" ramp; brief research/44 L2-09] | "Above need" [FIT: splanchnic α-agonist constriction and "above need" ramp; brief research/44 L2-09]: none of the α-agonist is excess at MAP ≤ 75, all of it at MAP ≥ 90 (tables §5.2 D row). |
 | `ALPHA_EXCESS_MAP` | `90` | — | — | — |
 
 ### [`l2/organs/pipeline.ts`](../../packages/engine-core/src/l2/organs/pipeline.ts)
@@ -326,48 +327,48 @@ an embedding developer reads it for the organ inputs it collects and the effects
 | `R_EFF` | `0.0763 * 1.25` | — | — | efferent arteriole |
 | `R_PT` | `0.0167 * 1.25` | — | — | peritubular capillaries |
 | `R_RV` | `0.0066 * 1.25` | — | — | renal vein |
-| `R_AFF_MIN` | `2.2 / 60` | — | Pulse 2; Pulse lacks; tables §5.2; Pulse; [ENG ×MYOGENIC_MAX] | TGF range for R_aff: Pulse 2.2–11.2 mmHg·s/mL = 0.0367–0.187 mmHg·min/mL (CFG 608–609). The upper bound is raised by the MYOGENIC response Pulse lacks (afferent constriction to stretch, which with TGF holds RBF over RPP 80–180, tables §5.2 `rblLL/rblUL`) [ENG ×MYOGENIC_MAX]: with Pulse's 11.2 alone RBF rose 21 % and GFR doubled at MAP 180. |
+| `R_AFF_MIN` | `2.2 / 60` | — | Pulse 2; Pulse lacks; tables §5.2; research/44 L2; Pulse; [FIT: ×MYOGENIC_MAX; brief research/44 L2-26] | TGF range for R_aff: Pulse 2.2–11.2 mmHg·s/mL = 0.0367–0.187 mmHg·min/mL (CFG 608–609). The upper bound is raised by the MYOGENIC response Pulse lacks (afferent constriction to stretch, which with TGF holds RBF over RPP 80–180, tables §5.2 `rblLL/rblUL`) [FIT: ×MYOGENIC_MAX; brief research/44 L2-26]: with Pulse's 11.2 alone RBF rose 21 % and GFR doubled at MAP 180. |
 | `MYOGENIC_MAX` | `2` | — | — | — |
 | `TGF_TAU_S` | `60` | s | Pulse | TGF time constant: Pulse's 0.001-per-beat damping ≈ 60–90 s (annex B2 "Take") → 60 s. |
 | `KF_PER_KIDNEY` | `3.67647 * 2.0` | — | — | glomerular Lp·A, mL/min/mmHg (CFG 604–605) |
 | `PI_GLOM0` | `32` | — | — | Glomerular oncotic pressure, mmHg (SET 1386–1389) at albumin 42 g/L — its MEAN at FF_REF |
 | `HCT_REF` | `0.45` | — | — | The healthy reference's filtration fraction (GFR 125 ÷ RPF 952 × (1 − 0.45)) and haematocrit, where the mean glomerular oncotic pressure equals PI_GLOM0 (the calibrated resting GFR is unchanged). |
 | `ALBUMIN0_G_L` | `42` | — | — | — |
-| `P_BOWMAN` | `17.1` | — | Pulse gives 147; [ENG] | Bowman's space pressure [ENG]: calibrated so the resting GFR is 125 mL/min (tables/annex reference 180 L/day; Pulse gives 147.5 L/day, D12). UOP is calibrated separately (ef0), so this only sets GFR and the filtration fraction. |
+| `P_BOWMAN` | `17.1` | — | research/44 L2; Pulse gives 147; [FIT: Bowman's pressure calibrated to resting GFR 125 mL/min; brief research/44 L2-26] | Bowman's space pressure [FIT: Bowman's pressure calibrated to resting GFR 125 mL/min; brief research/44 L2-26]: calibrated so the resting GFR is 125 mL/min (tables/annex reference 180 L/day; Pulse gives 147.5 L/day, D12). UOP is calibrated separately (ef0), so this only sets GFR and the filtration fraction. |
 | `RENAL_REF_MAP` | `93` | — | — | The healthy reference the kidney is calibrated on (createRenal): MAP 93, CVP 5, CO 0.08 L/min/kg (5.6 L/min at 70 kg). |
 | `RENAL_REF_CVP` | `5` | — | — | — |
 | `RENAL_REF_CO_L_KG` | `0.08` | kg | — | — |
-| `LP_A` | `2.00943e-6` | — | Pulse; Renal 1983; Guyton renal output curve; [ENG fit] | Pressure natriuresis: Pulse's tubular reabsorption permeability vs renal arterial pressure (PH/Renal 1983–2071), used here as the excreted FRACTION ∝ (Lp(Pref)/Lp(P))^1.74 — the exponent that makes UOP(150)/UOP(100) = 3 (tables U(): Guyton renal output curve); U(80) then equals the tables' 0.67 exactly [ENG fit]. |
+| `LP_A` | `2.00943e-6` | — | Pulse; Renal 1983; Guyton renal output curve; research/44 L2; [FIT: U(80) = the tables' 0.67; fit; brief research/44 L2-07] | Pressure natriuresis: Pulse's tubular reabsorption permeability vs renal arterial pressure (PH/Renal 1983–2071), used here as the excreted FRACTION ∝ (Lp(Pref)/Lp(P))^1.74 — the exponent that makes UOP(150)/UOP(100) = 3 (tables U(): Guyton renal output curve); U(80) then equals the tables' 0.67 exactly [FIT: U(80) = the tables' 0.67; fit; brief research/44 L2-07]. |
 | `LP_B` | `-8.09933e-4` | — | — | — |
 | `LP_C` | `9.37727e-2` | — | — | — |
 | `NATRIURESIS_EXP` | `1.74` | — | — | — |
 | `UOP0_ML_KG_H` | `1.0` | — | [TXT] | awake, tables `UOP0` [TXT] |
 | `OLIGURIA_ML_KG_H` | `0.5` | — | — | KDIGO (tables alarm row, Q40) |
-| `ANURIA_ML_KG_H` | `0.05` | — | [ENG] | [ENG] |
-| `ANG_GAIN` | `3` | — | Pulse has no RAAS; [ENG; Pulse has no RAAS (annex B2 stated limits)] | Efferent (angiotensin II) tone in low-flow states [ENG; Pulse has no RAAS (annex B2 stated limits)]: R_eff × (1 + ANG_GAIN·a), a = 0–1 from RPP below 80 and blood volume loss — keeps GFR while RBF falls (filtration fraction ↑). |
-| `ANG_TAU_S` | `120` | s | [ENG] | Angiotensin/efferent response time constant, s [ENG]: an instantaneous term would follow the circulation's second-to-second CO wobble (CO 4.9–5.6 in MODELED HFrEF) and swing GFR 27–211 mL/min within seconds; AngII's efferent effect builds over minutes. |
-| `COLD_ONSET_C` | `35` | — | Polderman 2009; [ENG, the owner's Q] | Cold diuresis onset and gain per °C [ENG, the owner's Q] (Polderman 2009: direction). |
+| `ANURIA_ML_KG_H` | `0.05` | — | [ENG: numerics] | [ENG: numerics] |
+| `ANG_GAIN` | `3` | — | Pulse has no RAAS; research/44 L2; [FIT: renal neurohumoral fit; Pulse has no RAAS (annex B2 stated limits); brief research/44 L2-07] | Efferent (angiotensin II) tone in low-flow states [FIT: renal neurohumoral fit; Pulse has no RAAS (annex B2 stated limits); brief research/44 L2-07]: R_eff × (1 + ANG_GAIN·a), a = 0–1 from RPP below 80 and blood volume loss — keeps GFR while RBF falls (filtration fraction ↑). |
+| `ANG_TAU_S` | `120` | s | research/44 L2; [FIT: renal neurohumoral fit; brief research/44 L2-07] | Angiotensin/efferent response time constant, s [FIT: renal neurohumoral fit; brief research/44 L2-07]: an instantaneous term would follow the circulation's second-to-second CO wobble (CO 4.9–5.6 in MODELED HFrEF) and swing GFR 27–211 mL/min within seconds; AngII's efferent effect builds over minutes. |
+| `COLD_ONSET_C` | `35` | — | research/44 L2; Polderman 2009; [FIT: renal multiplier for a condition or stimulus; the owner's Q; brief research/44 L2-08] | Cold diuresis onset and gain per °C [FIT: renal multiplier for a condition or stimulus; the owner's Q; brief research/44 L2-08] (Polderman 2009: direction). |
 | `COLD_DIURESIS_PER_C` | `0.2` | — | — | — |
-| `S_GA` | `0.6` | — | [ENG] | surgical stress/ADH under GA, tables `S` [ENG] (0.4–0.8) |
+| `S_GA` | `0.6` | — | research/44 L2; [FIT: renal multiplier for a condition or stimulus; brief research/44 L2-08] | surgical stress/ADH under GA, tables `S` [FIT: renal multiplier for a condition or stimulus; brief research/44 L2-08] (0.4–0.8) |
 | `V_AT_15` | `0.5` | — | — | UOP factor at −15 % blood volume (tables V) |
 | `V_AT_30` | `0.2` | — | — | at −30 % |
-| `V_EXP_GAIN` | `90` | — | Hahn 2010; [ENG] | Excreted-fraction gain per unit blood-volume EXPANSION (ANP/ADH suppression) [ENG]: fitted so 1 L of Ringer's over 30 min, awake, is 20–30 % intravascular 30 min after the end (Hahn 2010; the blood model's own fallback t½ 30 min, tables `t12El`); capped at V_EXP_MAX × (≈ 15 mL/min peak diuresis, Hahn's volunteers). |
+| `V_EXP_GAIN` | `90` | — | research/44 L2; Hahn 2010; [FIT: renal neurohumoral fit; brief research/44 L2-07] | Excreted-fraction gain per unit blood-volume EXPANSION (ANP/ADH suppression) [FIT: renal neurohumoral fit; brief research/44 L2-07]: fitted so 1 L of Ringer's over 30 min, awake, is 20–30 % intravascular 30 min after the end (Hahn 2010; the blood model's own fallback t½ 30 min, tables `t12El`); capped at V_EXP_MAX × (≈ 15 mL/min peak diuresis, Hahn's volunteers). |
 | `V_EXP_MAX` | `12` | — | — | — |
-| `EABV_TAU_S` | `60` | s | research/13 H1; [ENG] | Symmetric low-pass of the effective volume before the neurohumoral lag, s [ENG] (research/13 H1: τ ≈ 60 s). |
-| `EABV_EXP` | `0.35` | — | [ENG] | Effective volume = min(BV, (CO/(CO0·demandRel))^EXP) [ENG]: fitted to tables check 20 (HFrEF UOP 0.1–0.15, dobutamine 0.2–0.3) |
-| `NH_TAU_ON_S` | `120` | s | [ENG] | Neurohumoral (ADH/aldosterone) lag on V [ENG]: onset τ 2 min (ADH release is fast), washout τ 45 min. With an instantaneous V, dobutamine in check 20 gave 0.338 mL/kg/h at 30 min (tables 0.2–0.3 within 30–60 min); with the washout: 0.233 at 30 min, 0.284 at 60 min. Recovery after fluids is correspondingly gradual (class III → 0.53 at 60 min). |
+| `EABV_TAU_S` | `60` | s | research/44 L2; research/13 H1; [FIT: renal neurohumoral fit; brief research/44 L2-07] | Symmetric low-pass of the effective volume before the neurohumoral lag, s [FIT: renal neurohumoral fit; brief research/44 L2-07] (research/13 H1: τ ≈ 60 s). |
+| `EABV_EXP` | `0.35` | — | research/44 L2; [FIT: renal neurohumoral fit; brief research/44 L2-07] | Effective volume = min(BV, (CO/(CO0·demandRel))^EXP) [FIT: renal neurohumoral fit; brief research/44 L2-07]: fitted to tables check 20 (HFrEF UOP 0.1–0.15, dobutamine 0.2–0.3) |
+| `NH_TAU_ON_S` | `120` | s | research/44 L2; [FIT: renal neurohumoral fit; brief research/44 L2-07] | Neurohumoral (ADH/aldosterone) lag on V [FIT: renal neurohumoral fit; brief research/44 L2-07]: onset τ 2 min (ADH release is fast), washout τ 45 min. With an instantaneous V, dobutamine in check 20 gave 0.338 mL/kg/h at 30 min (tables 0.2–0.3 within 30–60 min); with the washout: 0.233 at 30 min, 0.284 at 60 min. Recovery after fluids is correspondingly gradual (class III → 0.53 at 60 min). |
 | `NH_TAU_OFF_S` | `2700` | s | — | — |
-| `PEEP_PER_10` | `0.9` | — | [ENG] | × per 10 cmH2O mean-airway-pressure excess (tables PEEP row) [ENG] |
-| `NE_EXCESS_PER_01` | `0.9` | — | [ENG] | × per 0.1 µg/kg/min α-agonist above need (tables D row) [ENG] |
-| `SEPSIS_GFR_LOSS` | `0.5` | — | [ENG] | Kf × (1 − 0.5·sepsis) (efferent dilation / microvascular) [ENG]; sepsis is endo's |
-| `AKI_KF_LOSS` | `0.8` | — | [ENG] | Condition aki severity 1 → Kf × 0.2 [ENG]; also the nephron share TGF defends |
-| `AKI_AFF_TONE` | `1` | — | [ENG, the owner's Q] | Intrinsic AKI's afferent tone — the afferent floor rises × (1 + AKI_AFF_TONE·aki) [ENG, the owner's Q]. |
-| `FUROSEMIDE_EMAX` | `9` | — | tables §5.2; [TXT]; [ENG] | Diuretics (tables §5.2 has none; label-level [TXT], shape [ENG]) excreted fraction × (1 + 9·E): 40 mg → peak UOP ≈ 7× (≈ 8 mL/min) |
+| `PEEP_PER_10` | `0.9` | — | research/44 L2; [FIT: renal multiplier for a condition or stimulus; brief research/44 L2-08] | × per 10 cmH2O mean-airway-pressure excess (tables PEEP row) [FIT: renal multiplier for a condition or stimulus; brief research/44 L2-08] |
+| `NE_EXCESS_PER_01` | `0.9` | — | research/44 L2; [FIT: renal multiplier for a condition or stimulus; brief research/44 L2-08] | × per 0.1 µg/kg/min α-agonist above need (tables D row) [FIT: renal multiplier for a condition or stimulus; brief research/44 L2-08] |
+| `SEPSIS_GFR_LOSS` | `0.5` | — | research/44 L2; [FIT: renal multiplier for a condition or stimulus; brief research/44 L2-08] | Kf × (1 − 0.5·sepsis) (efferent dilation / microvascular) [FIT: renal multiplier for a condition or stimulus; brief research/44 L2-08]; sepsis is endo's |
+| `AKI_KF_LOSS` | `0.8` | — | research/44 L2; [FIT: renal multiplier for a condition or stimulus; brief research/44 L2-08] | Condition aki severity 1 → Kf × 0.2 [FIT: renal multiplier for a condition or stimulus; brief research/44 L2-08]; also the nephron share TGF defends |
+| `AKI_AFF_TONE` | `1` | — | research/44 L2; [FIT: renal multiplier for a condition or stimulus; the owner's Q; brief research/44 L2-08] | Intrinsic AKI's afferent tone — the afferent floor rises × (1 + AKI_AFF_TONE·aki) [FIT: renal multiplier for a condition or stimulus; the owner's Q; brief research/44 L2-08]. |
+| `FUROSEMIDE_EMAX` | `9` | — | tables §5.2; research/44 L2; [TXT]; [FIT: diuretic effect shape; brief research/44 L2-56] | Diuretics (tables §5.2 has none; label-level [TXT], shape [FIT: diuretic effect shape; brief research/44 L2-56]) excreted fraction × (1 + 9·E): 40 mg → peak UOP ≈ 7× (≈ 8 mL/min) |
 | `FUROSEMIDE_ED50_MG` | `20` | — | — | Own-depot path (no drug model): E = plasma mg/(mg + 20) |
 | `FUROSEMIDE_EC50_REF` | `1` | — | — | With the drug model: E = c/(c + 1), c = its furosemide level in reference doses (row `furosemide`: gamma, ref 20 mg, peak 15 min, 10 % at 2 h) — the same ED50 as 20 mg. 40 mg: peak 8.2 mL/min at 15 min, 0.92 L in 4 h. |
 | `FUROSEMIDE_KA_PER_MIN` | `0.2` | /min | — | IV: onset ≈ 5 min, peak ≈ 30 min |
 | `FUROSEMIDE_KE_PER_MIN` | `0.0115` | /min | — | t½ ≈ 1 h (duration ≈ 2 h) |
-| `MANNITOL_ML_PER_G` | `14` | — | [ENG] | obligate water per g excreted at urine osmolality ≈ 400 mOsm/kg [ENG] |
+| `MANNITOL_ML_PER_G` | `14` | — | — | obligate water per g excreted at urine osmolality ≈ 400 mOsm/kg (5.49 mOsm/g ÷ 400 mOsm/kg = 13.7 mL/g) |
 | `BLADDER_CAP_ML` | `400` | mL | Pulse PH | Pulse PH/Renal 1549 (no catheter: auto-void) |
 
 ## Functions
@@ -411,12 +412,12 @@ an embedding developer reads it for the organ inputs it collects and the effects
 | `renalHaemo` | [`l2/renal/kidney.ts`](../../packages/engine-core/src/l2/renal/kidney.ts) | One algebraic kidney (both kidneys in parallel, so resistances ÷ 2): |
 | `filtration` | [`l2/renal/kidney.ts`](../../packages/engine-core/src/l2/renal/kidney.ts) | Filtration equilibrium (research/13). |
 | `tgfTarget` | [`l2/renal/kidney.ts`](../../packages/engine-core/src/l2/renal/kidney.ts) | The R_aff (per kidney) that would restore GFR to gfrSet at these pressures — TGF's target — clamped to Pulse's range. |
-| `angiotensin` | [`l2/renal/kidney.ts`](../../packages/engine-core/src/l2/renal/kidney.ts) | Angiotensin/efferent activation 0–1 [ENG]: |
+| `angiotensin` | [`l2/renal/kidney.ts`](../../packages/engine-core/src/l2/renal/kidney.ts) | Angiotensin/efferent activation 0–1 [FIT: |
 | `volumeFactor` | [`l2/renal/model.ts`](../../packages/engine-core/src/l2/renal/model.ts) | Volume factor V (tables §5.2): |
 | `expansionFactor` | [`l2/renal/model.ts`](../../packages/engine-core/src/l2/renal/model.ts) | The expanded circulation is excreted. |
 | `coldDiuresis` | [`l2/renal/model.ts`](../../packages/engine-core/src/l2/renal/model.ts) | Cold diuresis (research/13) — below COLD_ONSET_C tubular Na reabsorption and ADH responsiveness fall and the excreted fraction rises (Polderman KH. |
 | `mannitolExcretionGMin` | [`l2/renal/model.ts`](../../packages/engine-core/src/l2/renal/model.ts) | Mannitol excreted, g/min: |
-| `eabv` | [`l2/renal/model.ts`](../../packages/engine-core/src/l2/renal/model.ts) | Effective arterial blood volume (0–1+) [ENG]: |
+| `eabv` | [`l2/renal/model.ts`](../../packages/engine-core/src/l2/renal/model.ts) | Effective arterial blood volume (0–1+) [FIT: |
 | `createRenal` | [`l2/renal/model.ts`](../../packages/engine-core/src/l2/renal/model.ts) | The kidney is calibrated on the HEALTHY reference (MAP 93, CVP 5, CO 0.08 L/min/kg: |
 | `uopOver` | [`l2/renal/model.ts`](../../packages/engine-core/src/l2/renal/model.ts) | Rolling urine output over the last `minutes` (≤ 1440), mL/kg/h. |
 

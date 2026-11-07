@@ -1,24 +1,25 @@
 // Haemodynamic constants and per-beat rules (brief §4.2, §4.8, §4.9 M1–M3; research 03 §2.1, §2.5, §2.8,
-// §8.2–8.3). Every number cites its source, or [ENG] when it is an engineering choice tuned by the prototype.
+// §8.2–8.3). Every number cites its source or carries a tag (docs/DESIGN-BRIEF.md): `[ENG: kind]` when it is not
+// physiology (numerics, device, display), `[FIT: target; brief id]` when the prototype fitted it to a physiological target.
 
 export const HEMO_RATE = 125; // ABP/CVP/PAP/pleth sample rate (brief §3.2)
-export const SUBSTEPS = 4; // RK4 at 2 ms substeps, four per 125 Hz sample (brief §4.2) [ENG]
+export const SUBSTEPS = 4; // RK4 at 2 ms substeps, four per 125 Hz sample (brief §4.2) [ENG: numerics]
 export const H_S = 1 / (HEMO_RATE * SUBSTEPS); // 0.002 s
 
 // 4-element Windkessel seeds, adult (brief §4.2 table; research 03 §2.8)
 export const WK_R0 = 1.05; // mmHg·s/mL, R 1.0–1.1
 export const WK_C = 1.5; // mL/mmHg, C 1.4 ± 0.7, at P0
-export const WK_P0 = 95; // mmHg, reference pressure of C0 [ENG]
-export const WK_CK = 0.01; // /mmHg, C(P) = C0·e^(−k(P−P0)) [ENG]
+export const WK_P0 = 95; // mmHg, reference pressure of C0 [FIT: Windkessel C(P) or PA impedance parameter without a source; brief research/44 L2-54]
+export const WK_CK = 0.01; // /mmHg, C(P) = C0·e^(−k(P−P0)) [FIT: Windkessel C(P) or PA impedance parameter without a source; brief research/44 L2-54]
 export const WK_ZC = 0.05; // mmHg·s/mL, Zc 0.03–0.06
 export const WK_L = 0.01; // mmHg·s²/mL, L 0.005–0.01 (upper end: gives the radial PP 40–55 at SV 70, prototype)
-export const SV_REF_ML = 70; // reference stroke volume (research 03 §2.8 PP check) [ENG]
+export const SV_REF_ML = 70; // reference stroke volume (research 03 §2.8 PP check) [ENG: numerics]
 
 // Ejection profile (brief §4.2 "Ejection"; research 03 §2.8)
 export const KAPPA = 1.2; // sin^κ, κ 1.0–1.3 normal
-/** Skew p in sin(π·u^p)^κ: peak flow at 25% of LVET, as in the aortic flow wave [ENG, prototype]. */
+/** Skew p in sin(π·u^p)^κ: peak flow at 25% of LVET, as in the aortic flow wave [FIT: aortic flow peak at 25 % of LVET; prototype; brief research/44 L2-54]. */
 export const EJECTION_SKEW = 0.5;
-export const BACKFLOW_FRAC = 0.04; // valve-closure backflow volume / SV → incisura [ENG]
+export const BACKFLOW_FRAC = 0.04; // valve-closure backflow volume / SV → incisura [ENG: unused]
 export const BACKFLOW_S = 0.02; // 15–25 ms backflow bump (brief §4.2)
 
 // Aorta → radial transfer (brief §4.2 "Site transfer"; research 03 §2.3, §2.8): a resonance at f_r 4–8 Hz,
@@ -27,7 +28,7 @@ export const BACKFLOW_S = 0.02; // 15–25 ms backflow bump (brief §4.2)
 export const RADIAL_FR_HZ = 5;
 export const RADIAL_ZETA = 0.3;
 export const RADIAL_GAIN = 1.5;
-/** Transport delay aortic root → radial on top of the filters' group delay [ENG]. */
+/** Transport delay aortic root → radial on top of the filters' group delay [FIT: fixed pulse transit delay independent of pressure and tone; brief research/44 L2-16]. */
 export const RADIAL_DELAY_S = 0.045;
 /**
  * Effective aortic-root → radial transit AS DISPLAYED (research 03 §2.1: radial PTT 60–110 ms) = transport
@@ -35,25 +36,25 @@ export const RADIAL_DELAY_S = 0.045;
  * at HR 60 / 90 / 120. Used by the notch-timing acceptance test.
  */
 export const RADIAL_PTT_S = 0.085;
-/** Finger PPG pulse origin after aortic valve opening (research 03 §2.1: PPG foot 200–300 ms after R) [ENG]. */
+/** Finger PPG pulse origin after aortic valve opening (research 03 §2.1: PPG foot 200–300 ms after R) [FIT: fixed pulse transit delay independent of pressure and tone; brief research/44 L2-16]. */
 export const FINGER_DELAY_S = 0.1;
-export const EAR_DELAY_S = 0.05; // ear / forehead probes are closer to the heart [ENG]
+export const EAR_DELAY_S = 0.05; // ear / forehead probes are closer to the heart [FIT: fixed pulse transit delay independent of pressure and tone; brief research/44 L2-16]
 
 // Pulmonary circulation (brief §4.2 PAP; research 03 §2.10): same Windkessel, R 0.08–0.12, C 3–5.
 export const PA_R0 = 0.1;
 export const PA_C = 4;
-export const PA_ZC = 0.02; // [ENG]
-export const RV_PEP_LEAD_S = 0.02; // RV ejects ≈20 ms before the LV [ENG] → PA upstroke leads radial 60–120 ms
-export const RV_LVET_EXTRA_S = 0.02; // RV ejection is slightly longer [ENG]
+export const PA_ZC = 0.02; // [FIT: Windkessel C(P) or PA impedance parameter without a source; brief research/44 L2-54]
+export const RV_PEP_LEAD_S = 0.02; // RV ejects ≈20 ms before the LV [ENG: unused] → PA upstroke leads radial 60–120 ms
+export const RV_LVET_EXTRA_S = 0.02; // RV ejection is slightly longer [ENG: unused]
 
 // Transducer and display (brief §4.2 "Transducer and line")
-export const TRANSDUCER_FN_HZ = 20; // default fn 20 Hz [ENG]
-export const TRANSDUCER_ZETA = 0.45; // default ζ 0.45 [ENG]
+export const TRANSDUCER_FN_HZ = 20; // default fn 20 Hz [ENG: device]
+export const TRANSDUCER_ZETA = 0.45; // default ζ 0.45 [ENG: device]
 export const DISPLAY_FILTER_HZ = 12; // 12 Hz display filter (Philips default)
 export const FLUSH_MMHG = 300; // flush bag level (brief §4.2)
 export const FLUSH_S = 1.0; // 0.5–2 s square wave
-export const ZERO_S = 3.0; // flat 0 line while zeroing [ENG]
-export const SAMPLE_S = 10; // blood sampling: stopcock off the patient [ENG]
+export const ZERO_S = 3.0; // flat 0 line while zeroing [ENG: device]
+export const SAMPLE_S = 10; // blood sampling: stopcock off the patient [ENG: device]
 export const MMHG_PER_CM = 0.74; // levelling (brief §4.2)
 export const DAMP_PRESETS = {
   normal: { fnHz: 20, zeta: 0.45 }, // brief default
@@ -62,9 +63,9 @@ export const DAMP_PRESETS = {
 } as const;
 
 // Arrest (brief §4.2 "Arrest and CPR"; research 03 §2.7)
-export const ARREST_AFTER_S = 3.0; // no ejection for this long (or 2.2 × last RR) = mechanical arrest [ENG]
+export const ARREST_AFTER_S = 3.0; // no ejection for this long (or 2.2 × last RR) = mechanical arrest [ENG: numerics]
 export const VENOUS_TAU_S = 3.0; // CVP moves toward its target / toward Pmsf with τ 3–6 s
-/** MANUAL Pmsf: 7–12 mmHg (brief §4.9 lumped model), scaled by volume status [ENG]. */
+/** MANUAL Pmsf: 7–12 mmHg (brief §4.9 lumped model), scaled by volume status [ENG: scenario]. */
 export function pmsf(volumeStatus: number): number {
   return 7 + 5 * Math.min(1, Math.max(0, volumeStatus));
 }
@@ -74,7 +75,7 @@ export function pmsf(volumeStatus: number): number {
 export const CPR_QUALITY_DEFAULT = 0.8;
 export const CPR_SV_FRAC = 0.2; // SV_cpr 15–30% of normal SV, × quality
 export const CPR_THORACIC_MMHG = 40; // thoracic-pump term 30–80 mmHg, × quality, on ABP and CVP
-export const CPR_DUTY = 0.5; // compression phase = half the cycle [ENG]
+export const CPR_DUTY = 0.5; // compression phase = half the cycle [ENG: scenario]
 
 /** Weissler PEP ≈ 131 − 0.4·HR ms (brief §4.2; research 03 §2.1, intercept 131/133 unverified by sex). */
 export function pepS(hr: number): number {
@@ -96,7 +97,7 @@ export function fFill(rr: number): number {
 }
 
 /**
- * Valve-opening map E(k) [ENG]: a beat ejects only when its contractile drive k (= beat.mech.kSV, the
+ * Valve-opening map E(k) [FIT: valve-opening map (also used in MODELED); brief research/44 L2-22]: a beat ejects only when its contractile drive k (= beat.mech.kSV, the
  * rhythm engine's k_rhythm × f_fill × PESP) exceeds K_OPEN, the fraction needed to lift LV pressure above
  * aortic diastolic pressure. Below it there is no upstroke → pulse deficit (brief §4.8 PVC "no ejection";
  * research 03 §2.4 AF "short RR → small or absent pulse"). E(1) = 1; PESP k = 1.2 → 1.27.
@@ -107,7 +108,7 @@ export function ejectionFactor(k: number): number {
 }
 
 /**
- * Frank–Starling carry-over [ENG]: the volume a beat fails to eject (vs a normal beat) stays in the ventricle
+ * Frank–Starling carry-over [ENG: unused]: the volume a beat fails to eject (vs a normal beat) stays in the ventricle
  * and raises the next beat's end-diastolic volume, so a fraction of it is ejected by the next beat. With the
  * rhythm engine's PESP k = 1.2 this gives the post-PVC SBP +8–15 mmHg (brief §4.8 "SBP about +12") that
  * potentiation alone cannot reach against the long compensatory-pause runoff (prototype: −28 mmHg without it;
@@ -116,14 +117,14 @@ export function ejectionFactor(k: number): number {
 export const FS_CARRY = 0.75;
 
 /** M3 stroke-volume ceiling as a tracker gain limit: SV plateaus and falls above ~150–180 bpm (brief §4.9 M3). */
-export const G_MAX = 2.0; // [ENG] SV ≤ 140 mL at HR ≤ 150
+export const G_MAX = 2.0; // [ENG: numerics] SV ≤ 140 mL at HR ≤ 150
 export function gainCeiling(rr: number): number {
   return G_MAX * Math.min(1, fFill(rr) / fFill(0.4));
 }
 
 /**
  * g_hyp from volumeStatus (brief §4.2 "Respiratory variation"): 0.03–0.06 normovolaemic → 0.15–0.25
- * hypovolaemic. volumeStatus 1 → 0.04, 0 → 0.25 [ENG, linear].
+ * hypovolaemic. volumeStatus 1 → 0.04, 0 → 0.25 [ENG: unused; linear].
  */
 export function gHyp(volumeStatus: number): number {
   return 0.04 + 0.21 * (1 - Math.min(1, Math.max(0, volumeStatus)));

@@ -14,9 +14,9 @@ type Store = { get(k: string): string | null; set(k: string, v: string): void };
 
 export const LAYOUT_KEY = 'roomLayout';
 export const WINDOWS_KEY = 'roomWindows';
-/** [ENG] a full room (the relay's `--max-peers` default is 60) and spares (§4 D8). */
+/** [ENG: ui] a full room (the relay's `--max-peers` default is 60) and spares (§4 D8). */
 export const MAX_DEVICES = 64;
-/** A name the instructor types is kept to this many characters [ENG: a table cell's width]. */
+/** A name the instructor types is kept to this many characters [ENG: ui; a table cell's width]. */
 export const MAX_NAME = 32;
 
 export type Layout = Record<string, KnownDevice>;

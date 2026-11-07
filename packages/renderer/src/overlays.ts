@@ -9,10 +9,10 @@ import type { SweepLane } from './sweep-lane.ts';
 /** A sim time as the app's session clock shows it (mm:ss), for the latched alarms. */
 export const simClock = (t: number): string => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
 
-/** Marks are drawn once the render time is this far past them [ENG]: ≥ 4 px behind the cursor at 25 mm/s. */
+/** Marks are drawn once the render time is this far past them [ENG: display]: ≥ 4 px behind the cursor at 25 mm/s. */
 export const DRAW_LAG_S = 0.05;
 const DASH_PX = 6;
-/** TCP marks are this much taller than the skin's implanted-pacer mark, and at least TCP_MIN_MM (R-51-1) [ENG]. */
+/** TCP marks are this much taller than the skin's implanted-pacer mark, and at least TCP_MIN_MM (R-51-1) [ENG: display]. */
 const TCP_SCALE = 2.5;
 const TCP_MIN_MM = 5;
 

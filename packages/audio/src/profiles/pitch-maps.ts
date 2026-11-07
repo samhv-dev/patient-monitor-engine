@@ -1,6 +1,6 @@
 // Pulse-tone pitch maps (brief §3.6; research 03 §3.6, 05 §2.5): f = baseHz · 2^(−(100 − SpO2)·s/12).
 // 'nellcor-like' s = 0.1 semitone/% (≈5 Hz per % near 100 %); 'enhanced' s = 0.4 (inside the brief's 0.25–0.5)
-// [ENG]; 'none' = a fixed pitch (saadat-like until the owner's recording settles it).
+// [ENG: device]; 'none' = a fixed pitch (saadat-like until the owner's recording settles it).
 export type PitchMapId = 'none' | 'nellcor-like' | 'enhanced';
 
 export const PITCH_MAPS: Readonly<Record<PitchMapId, { semitonesPerPct: number }>> = {
