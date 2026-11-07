@@ -8,3 +8,8 @@
   Western digits, left to right, and the charts keep their English labels. While any entry printed is not yet read by
   the clinical owner, "Persian draft: not yet read by the clinical owner" stands under the switch and on every printed
   page. Page 1 and the handout of the A3.1 tamponade run each print within one A4 page in Persian.
+- **The Case briefing in Persian for a card written in English (Debrief 2, D13b)**: a card's `briefing` may carry
+  `textFa`, the Persian as the clinical owner has read it (optional, additive in `pme-scenario/1` and `/2`). When the
+  host is set to Persian (the Debrief page's switch), the briefing goes to the host and every phone in Persian, right
+  to left, in the bundled Vazirmatn. A card without `textFa` shows its English, and nothing is translated at run time.
+  No showcase card carries `textFa` yet: it is added once the owner has read the drafts.
