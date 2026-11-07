@@ -960,6 +960,9 @@ class Engine implements MonitorEngine {
     const releasesHr = cmd.type === 'release' && (cmd.variable === 'hr' || cmd.variable === 'all');
     if (applyHemoCommand(ps.hemo, ps.l1, cmd, simT, setHr, ps.rng)) {
       if (modeled && releasesHr) holdRate(ps, ps.rhythm.pendingSwitch?.id ?? ps.rhythm.id, false); // E-S9-5: the reflex rate again
+      // FX-10: a rate set in MANUAL is not an instructor's hold (in MANUAL every value is set): entering MODELED hands a
+      // sinus-family rate to the reflex, as a rhythm set without a rate does. A focus keeps its own rate; a pin stays.
+      if (!modeled && cmd.type === 'setMode' && cmd.mode === 'modeled' && !ps.l1.pinned.includes('hr')) holdRate(ps, ps.rhythm.pendingSwitch?.id ?? ps.rhythm.id, false);
       this.syncHemoBuffers();
       return;
     }

@@ -36,6 +36,8 @@ export interface Host {
   /** The main-thread core, for a viewer monitor's synchronous clock (absent on the worker path). */
   readonly core?: MonitorCore;
   command(cmd: Command): Promise<DispatchResult>;
+  /** R15: several commands in one engine task, in order (a stage group's commands land on its one tick). */
+  commands(cmds: Command[]): Promise<DispatchResult[]>;
   control(msg: ControlMsg): void;
   /** Engine snapshot. */
   snapshot(): Promise<PatientSnapshot>;
@@ -84,6 +86,7 @@ function mainHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, onEv
     core,
     path: Promise.resolve('main'),
     command: (cmd) => Promise.resolve(core.command(cmd)),
+    commands: (cmds) => Promise.resolve(cmds.map((c) => core.command(c))),
     snapshot: () => Promise.resolve(core.engine.snapshot()),
     restore: async (s) => core.restore(s), // The lanes restart with the engine
     control: (m) => {
@@ -112,7 +115,7 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
   // ONE table of outstanding requests, each with its resolve AND reject. A terminal failure (the worker crashed after
   // ready, went silent, or the monitor was destroyed) rejects every one of them once and every later call at once — a
   // bookmark, a command or a capture cannot wait forever, nor block the host's command chain.
-  const requests = new Map<number, { resolve: (v: never) => void; reject: (e: Error) => void; command?: boolean }>();
+  const requests = new Map<number, { resolve: (v: never) => void; reject: (e: Error) => void; refused?: () => unknown }>();
   let failure: Error | null = null;
   // A COMMAND waiting at destroy (or sent after it) is refused like any refusal, not rejected — a fire-and-
   // forget dispatch (a remounting page, the ventilator link, mount's ECG-filter command) must not become an unhandled
@@ -214,11 +217,12 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
     // fresh worker (the probe answered). A starved machine starves the probe too, and the monitor waits.
     if ((probe?.answeredAt ?? null) !== null) dead();
   };
-  const request = <T>(make: (id: number) => ToWorker, command = false): Promise<T> => {
+  /** `refused`: a command request's answer when the monitor is destroyed before it (a refusal, not a rejection). */
+  const request = <T>(make: (id: number) => ToWorker, refused?: () => T): Promise<T> => {
     if (failure) return Promise.reject(failure);
     return new Promise<T>((resolve, reject) => {
       const id = ++reqId;
-      requests.set(id, { resolve: resolve as (v: never) => void, reject, command });
+      requests.set(id, { resolve: resolve as (v: never) => void, reject, ...(refused ? { refused } : {}) });
       if (watch === null) {
         lastWatch = performance.now();
         watch = setInterval(check, WATCH_MS);
@@ -246,6 +250,7 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
         }
       } else if (m.type === 'progress') return; // FX-11a: heard (above) — the worker is working
       else if (m.type === 'result') settle(m.reqId, (r) => r.resolve(m.result as never));
+      else if (m.type === 'results') settle(m.reqId, (r) => r.resolve(m.results as never));
       else if (m.type === 'snapshot') settle(m.reqId, (r) => r.resolve(m.snapshot as never));
       else if (m.type === 'restored') settle(m.reqId, (r) => (m.error === undefined ? r.resolve(undefined as never) : r.reject(new Error(m.error))));
       else if (m.type === 'advanced') settle(m.reqId, (r) => r.resolve({ tick: m.tick, simT: m.simT } as never));
@@ -290,7 +295,11 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
   return {
     canvas,
     path,
-    command: (cmd) => (destroyed ? Promise.resolve(refusedDestroyed()) : request<DispatchResult>((reqId) => ({ type: 'command', reqId, cmd }), true)),
+    command: (cmd) => (destroyed ? Promise.resolve(refusedDestroyed()) : request<DispatchResult>((reqId) => ({ type: 'command', reqId, cmd }), refusedDestroyed)),
+    commands: (cmds) => {
+      const refused = () => cmds.map(() => refusedDestroyed());
+      return destroyed ? Promise.resolve(refused()) : request<DispatchResult[]>((reqId) => ({ type: 'commands', reqId, cmds }), refused);
+    },
     snapshot: () => request<PatientSnapshot>((reqId) => ({ type: 'snapshot', reqId })),
     restore: (snapshot) => request<void>((reqId) => ({ type: 'restore', reqId, snapshot })),
     control: (m) => post(m),
@@ -299,9 +308,9 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
     destroy: () => {
       destroyed = true;
       for (const [id, r] of requests) {
-        if (!r.command) continue;
+        if (!r.refused) continue;
         requests.delete(id);
-        r.resolve(refusedDestroyed() as never);
+        r.resolve(r.refused() as never);
       }
       fail(new Error('the monitor was destroyed'), false);
       cancelAnimationFrame(raf);

@@ -106,7 +106,7 @@ are written in Persian script (اپی‌نفرین، دانترولن، سالب
 
 ## Review status
 
-**An entry is `reviewed: false` (an unreviewed machine translation) until the project's clinical owner reads it; 10 of the table's 726 entries are owner-approved (below).**
+**An entry is `reviewed: false` (an unreviewed machine translation) until the project's clinical owner reads it; 10 of the table's 728 entries are owner-approved (below), and none is without Persian.**
 While any entry printed in a PDF is unreviewed, the first page carries the line «ترجمه‌ی فارسی این گزارش هنوز به
 تأیید بالینی نرسیده است. متن مرجع، گزارش انگلیسی همین اجراست.»; it disappears by itself when every entry used is set
 to `reviewed: true`. To correct a term, edit its `fa` (keep the placeholders) and set `reviewed: true`; a `note` field
@@ -136,9 +136,17 @@ handout still carries the notice above.
 One existing entry was corrected, also `"reviewed": false`: the state "Midazolam 2 mg and fentanyl 100 µg given,
 breathing 100 % O₂ by face mask" had the Persian of the room-air state.
 
-The other 26 null entries stay null: earlier rulings (E132, E126, the rc.4 rulings) keep them for the owner to write,
-and the review file only suggests a draft for each. With these words in place, the script prints 6 strings in English
-on the D0 fixtures (it printed 46), and those 6 are reserved lines.
+**The owner's ruling of 7 November:** the 26 lines that E132, E126 and the rc.4 rulings had kept for him to write
+(objectives, states and five take-home lines of the MH and haemorrhage cards, the tranexamic acid name, the
+low-signal alarm and the E126 SpO₂ sentence) get drafts too, written with the same skill and `"reviewed": false`. Two
+earlier objective wordings that a committed E132 recording carries were added the same way. **No entry is without
+Persian now**:
+- the script prints 0 strings in English on the D0 fixtures and the q2 exports (it printed 46 before D12);
+- the in-app page prints 0 on the nine committed exports (it printed 182).
+
+The only text the page still prints in English is a card's own text that the table does not hold: the authors' hints
+and openers (D10) and the handout's card questions (D16). These are printed as written, in italic, until the owner
+writes or confirms their Persian.
 
 ## The Persian-writing pass (skill `persian-writing` 1.4.0)
 
