@@ -26,13 +26,18 @@ describe('the flipped matrix cells', { timeout: 3_600_000 }, () => {
       expect(s![0] - (T + 60)).toBeGreaterThanOrEqual(5);
       expect(s![0] - (T + 60)).toBeLessThanOrEqual(300);
     });
-    it('lipid emulsion lowers free bupivacaine to 0.4–0.75 × (ASRA 2020; earlier measured ×0.681), and bupivacaine 225 mg untreated arrests', async () => {
+    // Miller 10e ch. 25 p. 762 (Kuo & Akpa 2013 PBPK): lipid lowers CARDIAC bupivacaine by 11 % within 3 min. In the
+    // whole engine the two arms also differ in pH (the untreated arm is arresting; acidaemia raises the free fraction),
+    // so the ratio is the sink AND that difference: only the sink's bound is asserted here (≤ 0.92: at least the cited
+    // fall less its ±3-point tolerance); the sink alone, ±3 points, is asserted in pk-acceptance-scen.test.ts. The
+    // band was 0.4–0.75× ("ASRA 2020", which states no free-level reduction), against the row's own citation
+    // (research/44 X-06).
+    it('lipid emulsion lowers cardiac free bupivacaine at least by the cited sink at 3 min (≤ 0.92 ×; M10 p. 762: −11 %), and bupivacaine 225 mg untreated arrests', async () => {
       const i = await F7.runArm(V([d(T, 'bupivacaine', 225, 'mg'), d(T + 30, 'lipidEmulsion', 1.5, 'mL/kg'), inf(T + 30, 'lipidEmulsion', 0.25, 'mL/kg/min')]));
       const c = await F7.runArm(V([d(T, 'bupivacaine', 225, 'mg')]));
       const ratio = F7.mx(i.rows, 'c_bupivacaine', T + 200, T + 300) / F7.mx(c.rows, 'c_bupivacaine', T + 200, T + 300);
       console.log(`FU-7 T19 DI-24: lipid free-level ratio ${ratio.toFixed(2)}, untreated arrest ${F7.arrestIn(c.rows, T, T + 900)}`);
-      expect(ratio).toBeGreaterThanOrEqual(0.4);
-      expect(ratio).toBeLessThanOrEqual(0.75);
+      expect(ratio).toBeLessThanOrEqual(0.92);
       expect(F7.arrestIn(c.rows, T, T + 900)).toBe(true);
     });
     it('the K⁺ treatments at K 7.0 (DI-26; UK Renal Association 2023): calcium ±0.15 at 5 min, insulin–dextrose −0.6 to −1.1 at 60 min, salbutamol −0.4 to −1.0 at 30 min, the two additive', async () => {
