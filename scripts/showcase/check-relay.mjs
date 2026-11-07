@@ -12,7 +12,9 @@
 // answers; after the relay's first heartbeat sweep (10 s), a viewer that joins makes the host's `peers` frame list the
 // controller with its measured round trip (`devices`, plan room-and-instruments.md R2); a ventilator says hello with a
 // PIN, the host grants it, its `vent` `cmds` reach the host and the host's `vent` `clock` reaches it, byte for byte
-// (R8b); the relay is still running; then the relay is stopped and the port is free again.
+// (R8b); a defibrillator window says hello as `defib`, its charge reaches the host byte for byte and its
+// `selectEnergy` does not (`forbidden` to the window; its next shock is the host's next command) (R5c); the relay is
+// still running; then the relay is stopped and the port is free again.
 // Room plan R1b: each run gets a state directory of its own (relay.mjs --state-dir; the launchers' PME_STATE_DIR, which
 // stands in for the application-data folder they use): after the host hello /pme-relay.json answers lastRoom and
 // room.json in that directory holds the room code only. After every run the kit's own folder is as it was.
@@ -201,6 +203,30 @@ async function frames(port, proc, steps, state) {
   }
   if (downGot !== clock) throw new Error(`the host's clock differs at the ventilator: ${downGot}`);
   step(`ventilator granted; its vent cmds (${Buffer.byteLength(cmds)} bytes) reached the host and the host's vent clock reached it, byte for byte`);
+  // R5c: the learner defibrillator window. Its bare charge reaches the host as sent; its selectEnergy is refused
+  // `forbidden` and never reaches the host (the shock after it is the host's next command)
+  const DEFIB_ID = 'kit-check-defib';
+  const defib = socket(port, proc);
+  await defib.opened;
+  defib.ws.send(wire('hello', DEFIB_ID, 1, { role: 'defib', show: 'defib', device: 'kitdefib0123' }));
+  await hostNext('the defib hello', (f) => f.kind === 'hello' && f.from === DEFIB_ID && f.role === 'defib');
+  const defibCmd = (seq, id, event) => wire('command', DEFIB_ID, seq, { body: { id, issuedBy: 'defib', type: 'applyEvent', event: { kind: 'defib', ...event } } });
+  const charge = defibCmd(2, 'kit-defib-charge', { action: 'charge' });
+  defib.ws.send(charge);
+  const chargeGot = await hostNext('the defib charge', (f) => f.kind === 'command');
+  if (chargeGot !== charge) throw new Error(`the defib charge differs at the host: ${chargeGot}`);
+  defib.ws.send(defibCmd(3, 'kit-defib-select', { action: 'selectEnergy', energyJ: 360 }));
+  let refusal = null;
+  for (let i = 0; i < 4 && !refusal; i++) {
+    const f = JSON.parse(await defib.next('the refusal of the defib selectEnergy'));
+    if (f.relay === 'error') refusal = f;
+  }
+  if (refusal?.code !== 'forbidden') throw new Error(`the defib selectEnergy was not refused: ${JSON.stringify(refusal)}`);
+  defib.ws.send(defibCmd(4, 'kit-defib-shock', { action: 'shock' }));
+  const nextCmd = JSON.parse(await hostNext('the defib shock', (f) => f.kind === 'command'));
+  if (nextCmd.body?.id !== 'kit-defib-shock') throw new Error(`the host's next command after the refused selectEnergy: ${JSON.stringify(nextCmd)}`);
+  step(`defib window: its charge (${Buffer.byteLength(charge)} bytes) reached the host byte for byte; its selectEnergy was refused (${refusal.code}) and never reached the host`);
+  defib.ws.close();
   vent.ws.close();
   view.ws.close();
   host.ws.close();
