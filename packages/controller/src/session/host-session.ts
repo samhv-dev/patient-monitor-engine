@@ -606,8 +606,7 @@ export class HostSession {
     // of a drug given within SAME_DRUG_LOCK_S of sim time, from any device, is refused `recent` (drug-lock.ts): never
     // dispatched, so neither the engine nor the scenario driver's record sees it, and no commandApplied goes out
     const now = this.o.target.now();
-    const drugs = this.ff ? [] : cmd.type === 'scenario' ? (this.o.scenarioGives?.(cmd) ?? []) : [bolusDrugOf(cmd) ?? []].flat();
-    const lock = drugs.map((d) => this.gives.lock(d, now.simT)).find((l) => l !== null) ?? null;
+    const lock = this.ff ? null : this.lockOf(cmd, now.simT, this.gives);
     const refused = this.ff ? FF_REFUSAL : lock ? lockReason(lock) : null;
     // R15: a staged delivery's items (one stageGroup, `batch` of n) are held until all n are here, then go to the engine
     // in one dispatch: one tick, whatever the monitor's round trip. An item refused on arrival is answered at once and
@@ -638,16 +637,43 @@ export class HostSession {
     return this.answer(t, cmd, from, receivedAt, await this.apply(cmd));
   }
 
-  /** R15: apply a held staged delivery (complete, or as far as it got) in one dispatch, and answer each item. */
+  /** The drug lock a command meets at sim time `t` in `gives` (the first of the drugs it gives that is locked), or null. */
+  private lockOf(cmd: WireCommand, t: number, gives: RecentGives): DrugLock | null {
+    const drugs = cmd.type === 'scenario' ? (this.o.scenarioGives?.(cmd) ?? []) : [bolusDrugOf(cmd) ?? []].flat();
+    return drugs.map((d) => gives.lock(d, t)).find((l) => l !== null) ?? null;
+  }
+
+  /**
+   * R15: apply a held staged delivery (complete, or as far as it got) in one dispatch, and answer each item in the
+   * delivery's order. The drug lock is read here, item by item, as the delivery's own earlier items set it: an item was
+   * checked on arrival against the gives applied by then, but the items held before it were not yet given, so a
+   * delivery carrying the same bolus twice (or a bolus pressed elsewhere while its item was held) would apply both.
+   */
   private async release(id: string): Promise<void> {
     const h = this.held.get(id);
     if (!h) return;
     this.held.delete(id);
     if (h.timer !== null) clearTimeout(h.timer);
-    const outs = this.ff
-      ? h.items.map((i) => ({ result: { accepted: false, tick: this.o.target.now().tick, reason: FF_REFUSAL }, applied: i.cmd }))
-      : await this.applyTogether(h.items.map((i) => i.cmd));
-    h.items.forEach((i, k) => this.answer(i.t, i.cmd, i.from, i.receivedAt, outs[k] as { result: DispatchResult; applied: WireCommand }));
+    if (this.ff) {
+      const tick = this.o.target.now().tick;
+      for (const i of h.items) this.answer(i.t, i.cmd, i.from, i.receivedAt, { result: { accepted: false, tick, reason: FF_REFUSAL }, applied: i.cmd });
+      return;
+    }
+    const now = this.o.target.now();
+    const given = new RecentGives(); // the delivery's own gives so far: they all land on its one tick
+    const locks = h.items.map((i) => {
+      const lock = this.lockOf(i.cmd, now.simT, this.gives) ?? this.lockOf(i.cmd, now.simT, given);
+      if (!lock) given.note(i.cmd, now.simT);
+      return lock;
+    });
+    const go = h.items.filter((_, k) => !locks[k]);
+    const outs = await this.applyTogether(go.map((i) => i.cmd));
+    let k = 0;
+    h.items.forEach((i, j) => {
+      const lock = locks[j] ?? null;
+      if (lock) this.answer(i.t, i.cmd, i.from, i.receivedAt, { result: { accepted: false, tick: now.tick, reason: lockReason(lock) }, applied: i.cmd }, lock);
+      else this.answer(i.t, i.cmd, i.from, i.receivedAt, outs[k++] as { result: DispatchResult; applied: WireCommand });
+    });
   }
 
   /** Ack a controller's command and, applied, tell every peer; `lock`: the drug lock that refused it. */
