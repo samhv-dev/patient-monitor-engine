@@ -139,7 +139,7 @@ describe('Instructor v2 header: the same commands as the session bar', () => {
     expect(btns().every((b) => b.disabled)).toBe(true);
   });
 
-  it('the Sound switch and the Room code are the top bar\'s: the same toggle, the code and the phone count, the Remote link', async () => {
+  it('the Sound switch and the Room code are the top bar\'s: the same toggle, the code and the phone count, the Room page link', async () => {
     const f = fakeLink();
     let on = false;
     const toggled: boolean[] = [];
@@ -154,7 +154,9 @@ describe('Instructor v2 header: the same commands as the session bar', () => {
     expect([sound.getAttribute('aria-pressed'), sound.textContent]).toEqual(['true', 'Sound on']);
     const room = v2.el.querySelector('.ip2-room') as HTMLAnchorElement;
     expect(room.textContent).toBe('Room QFBAWA · 3 phones');
-    expect(room.getAttribute('href')).toBe('#/remote');
+    // the pill shows the room's code, so it opens the Room page, as the top bar's code pill does (main.ts)
+    expect(room.getAttribute('href')).toBe('#/room');
+    expect(room.getAttribute('aria-label')).toBe('Room code Q F B A W A, 3 phones: Room setup');
     expect(f.sent).toEqual([]);
     // the order of option G: patient line, MODELED, title, gap, pill, speed, divider, Sound, Room
     expect([...v2.el.children].map((c) => c.className.split(' ')[0])).toEqual(['ip2-who', 'ip2-mode', 'ip2-title', 'ip2-spacer', 'ip2-pill', 'ip2-fanwrap', 'ip2-head-div', 'ip2-topctl', 'ip2-topctl']);

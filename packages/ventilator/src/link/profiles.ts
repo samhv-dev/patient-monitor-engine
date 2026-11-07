@@ -65,7 +65,7 @@ export function lungConditionsOf(id: string): LungConditionSpec[] {
 }
 /**
  * INTERIM (deleted when the circulation's right heart consumes pvrMultiplier): stand-ins for the circulation and drug
- * models [ENG] — the haemodynamic picture each condition produces, set as MANUAL targets.
+ * models [FIT: MANUAL haemodynamic picture per lung condition (stand-in for circulation and drug models); brief research/44 DEV-08] — the haemodynamic picture each condition produces, set as MANUAL targets.
  */
 export const STAND_INS: Record<string, StandIn[]> = {
   'anaphylaxis-bronchospasm': shock(70, 35, 3, 125), // vasoplegia (drug model)

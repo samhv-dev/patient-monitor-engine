@@ -13,7 +13,7 @@ describe('pleural opening pressure', () => {
     expect(pleuralOpening(c, 150)).toBeCloseTo(27.2 - PPL_REST_CMH2O - 5, 6);
     expect(pleuralOpening({ ...c, peep: 15 }, 400)).toBeCloseTo(27.2 - PPL_REST_CMH2O - 15, 6);
     expect(pleuralOpening({ ...c, pleural: 4.1 }, 400)).toBe(0); // haemothorax 1.5 L: volume loss only
-    // a large haemothorax (severity 1, 3 L: pPtx 6 mmHg = 8.2 cmH2O) passes a LOW PEEP: 2.76 at ZEEP, 0.76 at PEEP 2 [ENG]
+    // a large haemothorax (severity 1, 3 L: pPtx 6 mmHg = 8.2 cmH2O) passes a LOW PEEP: 2.76 at ZEEP, 0.76 at PEEP 2 [FIT: pleural opening value; brief research/44 X-03]
     expect(pleuralOpening({ ...c, pleural: 8.2, peep: 0 }, 400)).toBeCloseTo(2.76, 2);
     expect(pleuralOpening({ ...c, pleural: 8.2, peep: 2 }, 400)).toBeCloseTo(0.76, 2);
     expect(pleuralOpening({ ...c, pleural: 0 }, 400)).toBe(0);
@@ -30,7 +30,7 @@ describe('pleural opening pressure', () => {
   });
 });
 
-// Orchestrator ruling (V.1 review 1): tables H6 "Ppeak +10–20" is [TXT] and governs over the catalogue §16 [ENG] tag.
+// Orchestrator ruling (V.1 review 1): tables H6 "Ppeak +10–20" is [TXT] and governs over the catalogue §16 `[ENG]` tag.
 // The opening pressure on top of 7b's tension crs ×0.5 (chosen before the ventilator saw the pleural pressure, as a
 // stand-in for this very Ppeak rise) overshoots by 1.6 → calibration-queue row "tension Ppeak vs crs ×0.5" (R45).
 describe('tension pneumothorax Ppeak rise (tables H6 [TXT], catalogue §16)', () => {

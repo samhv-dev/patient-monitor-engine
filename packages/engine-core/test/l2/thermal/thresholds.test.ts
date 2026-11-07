@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { shiverW, sweatW, thresholds, vasoDilation } from '../../../src/l2/thermal/thresholds.ts';
 
 describe('thermoregulatory thresholds', () => {
-  // FU-10 E5 (ruling R-4, E-FU10-10): the GA vasoconstriction centre is the tables' 34.5 °C (was the [ENG] 34.8)
+  // FU-10 E5 (ruling R-4, E-FU10-10): the GA vasoconstriction centre is the tables' 34.5 °C (was the earlier fitted 34.8)
   it('awake 37.2/36.9/36.0 and GA 38.0/34.5/33.5 (sweat/vaso/shiver); a fever shifts all three', () => {
     const a = thresholds(0, 0);
     expect([a.sweat, a.vaso, a.shiver]).toEqual([37.2, 36.9, 36.0]);

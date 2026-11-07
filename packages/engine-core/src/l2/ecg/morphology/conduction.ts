@@ -10,7 +10,7 @@ import { K_STRIDE } from '../kernels.ts';
 /**
  * LBBB: no septal q; two leftward R kernels 60 ms apart — LBBB_R1 (V1 −0.15, V6 +0.70) then LBBB_R2 (V1 −1.00, V6
  * +0.90, posterior) — so V6/I show a broad notched monophasic R and V1 a broad QS with a slurred downstroke (one
- * trough: the first kernel is only a shoulder there). Vectors solved on the Dower rows [ENG].
+ * trough: the first kernel is only a shoulder there). Vectors solved on the Dower rows [FIT: ECG morphology vector or amplitude without a source; brief research/44 L2-46].
  */
 export const LBBB_R1_VEC: Vec3 = [0.903, 0.25, -0.301];
 export const LBBB_R2_VEC: Vec3 = [0.893, 0.2, 0.623];
@@ -28,7 +28,7 @@ export const bbbStage: MorphStage = (k, info, mods) => {
       if (k[i + 6] === WAVE.S) for (let j = 3; j < 6; j++) k[i + j] = (k[i + j] as number) * RBBB_S_SCALE;
       if (k[i + 6] === WAVE.R) rScale = Math.hypot(k[i + 3] as number, k[i + 4] as number, k[i + 5] as number) / 1.68;
     }
-    // terminal R′ in V1 (rSR′), broad slurred S in I/V6; follows R amplitude (respiration, low voltage) [ENG]
+    // terminal R′ in V1 (rSR′), broad slurred S in I/V6; follows R amplitude (respiration, low voltage) [FIT: ECG morphology vector or amplitude without a source; brief research/44 L2-46]
     k.push(RBBB_RPRIME_TAU_S, RBBB_RPRIME_SIGMA_S[0], RBBB_RPRIME_SIGMA_S[1], ...RBBB_RPRIME_VEC.map((v) => v * rScale), WAVE.S);
     return k;
   }
@@ -93,7 +93,7 @@ export function solveAxisRad(k: readonly number[], target: number): number {
   return (((lo + hi) / 2) * Math.PI) / 180;
 }
 
-/** Default precordial transition of the base template (V3–V4) and the horizontal rotation per lead [ENG]. */
+/** Default precordial transition of the base template (V3–V4) and the horizontal rotation per lead [FIT: ECG morphology vector or amplitude without a source; brief research/44 L2-46]. */
 export const DEFAULT_TRANSITION = 3.5;
 const DEG_PER_LEAD = 14;
 export const transitionStage: MorphStage = (k, info, mods) => {
@@ -102,7 +102,7 @@ export const transitionStage: MorphStage = (k, info, mods) => {
   return rotateY(k, (-(mods.transitionLead - DEFAULT_TRANSITION) * DEG_PER_LEAD * Math.PI) / 180, QRS_T);
 };
 
-/** LVH: R leftward (X) ×1.7, S posterior (Z) ×2 → Sokolow–Lyon ≥ 3.5 mV; lateral strain T [ENG]. */
+/** LVH: R leftward (X) ×1.7, S posterior (Z) ×2 → Sokolow–Lyon ≥ 3.5 mV; lateral strain T [FIT: LVH vector meeting Sokolow–Lyon ≥ 3.5 mV; brief research/44 L2-46; src Sokolow–Lyon criterion]. */
 export const lvhStage: MorphStage = (k, info, mods) => {
   if (!mods.lvh || !info.supra) return k;
   for (let i = 0; i < k.length; i += K_STRIDE) {

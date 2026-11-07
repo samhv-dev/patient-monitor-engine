@@ -1,6 +1,6 @@
 // NMB time courses on 7g's PK (tables §6.1: rocuronium ke0 0.16/0.26, Vss 0.26 L/kg; succinylcholine hydrolysis CL
 // 0.2 L/kg/min) with 7f's PD. Bands: tables §5d label rows [P] unless marked; the rocuronium TOFR 0.9 band is R51
-// addendum 17's (Debaene 2003; label). EC50s other than rocuronium's are [ENG] fits (Step 5). R45: a missed band is
+// addendum 17's (Debaene 2003; label). EC50s other than rocuronium's are [FIT: NMB EC50 fits; brief research/44 L2-36] fits (Step 5). R45: a missed band is
 // fitted within the stated ranges or reported, never widened; succinylcholine is a declared 7g PK defect (FU-3 item 1).
 import { describe, expect, it } from 'vitest';
 import { give, rig } from '../../helpers/neuro.ts';

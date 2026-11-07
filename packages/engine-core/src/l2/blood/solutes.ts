@@ -16,7 +16,7 @@ export interface SoluteState {
   mannitol?: number; // mannitol, mmol — an effective ECF osmole (absent = 0); cleared by the kidney
   lac: number; // lactate amount in its distribution volume
   kIcf: number; // cellular K pool (mmol)
-  pi: number; // phosphate amount (mmol; dilutes with the ECF) [ENG]
+  pi: number; // phosphate amount (mmol; dilutes with the ECF) [ENG: numerics]
   set: { k: number; ca: number; mg: number; ph: number; kIcf: number }; // Homeostatic set points (mmol/L; pH of the K reference; the cellular K pool, mmol)
 }
 
@@ -64,7 +64,7 @@ export function addFluid(s: SoluteState, ml: number, c: Composition): void {
   s.na += c.na * l;
   s.k += c.k * l;
   s.cl += c.cl * l;
-  s.ca += 0.5 * c.ca * l; // half of a crystalloid's Ca is ionised once albumin binds it [ENG]
+  s.ca += 0.5 * c.ca * l; // half of a crystalloid's Ca is ionised once albumin binds it [FIT: half of administered Ca ionised; brief research/44 L2-40]
   s.mg += c.mg * l;
   s.lac += c.lactate * l;
   s.metab += c.metab * l;
@@ -87,14 +87,14 @@ export function calibrateXa(s: SoluteState, ecfMl: number, sidNow: number, sidTa
 }
 
 /** Homeostasis and first-order kinetics (per step): transcellular K, Ca and Mg buffering, citrate and metabolisable anions. */
-export const K_TAU_MIN = 43; // 50 % of a K load into cells in 30 min (tables `vK`) [ENG]
+export const K_TAU_MIN = 43; // 50 % of a K load into cells in 30 min (tables `vK`) (tables `vK`)
 /** Total-body K per mmol/L of plasma K — a 200–400 mmol deficit lowers plasma K ≈ 1 mmol/L (Sterns RH et al.
  *  Medicine 1981;60:339–354) [TXT, midpoint]; the Na/K-ATPase set point follows it (core.ts kSet). */
 export const K_TBK_MMOL = 300;
-export const CA_TAU_MIN = 15; // ionised Ca returns to its set point (bone/protein buffer, PTH) [ENG, Q46]
-export const MG_TAU_MIN = 60; // Mg load distributes into cells/bone [ENG]
+export const CA_TAU_MIN = 15; // ionised Ca returns to its set point (bone/protein buffer, PTH) [FIT: ion redistribution or metabolism τ; Q46; brief research/44 L2-40]
+export const MG_TAU_MIN = 60; // Mg load distributes into cells/bone [FIT: ion redistribution or metabolism τ; brief research/44 L2-40]
 export const CITRATE_TAU_MIN = 5; // hepatic citrate clearance at normal hepatic flow (tables `citrateUnit`) [TXT]
-export const METAB_TAU_MIN = 15; // acetate/gluconate metabolism to bicarbonate [ENG]
+export const METAB_TAU_MIN = 15; // acetate/gluconate metabolism to bicarbonate [FIT: ion redistribution or metabolism τ; brief research/44 L2-40]
 export const OSM_OTHER_T12_MIN = 85; // glycine metabolism [TXT]
 
 /**
@@ -117,7 +117,7 @@ export function stepSolutes(s: SoluteState, ecfMl: number, dtS: number, kSet: nu
 
 /**
  * Ionised calcium (mmol/L): the buffered ionised amount, shifted by pH (−0.05 per +0.1 pH) [TXT] and chelated by free
- * citrate (0.09 mmol/L per mmol/L citrate: 1 RBC unit per 5 min at steady state → −0.1, tables `citrateUnit`) [ENG, Q46].
+ * citrate (0.09 mmol/L per mmol/L citrate: 1 RBC unit per 5 min at steady state → −0.1, tables `citrateUnit`) (tables `citrateUnit`, Q46; Q46).
  */
 export const K_CIT = 0.09;
 export function ionisedCa(c: Conc, ph: number): number {

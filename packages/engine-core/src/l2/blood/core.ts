@@ -50,7 +50,7 @@ export interface BloodOut {
   dkaSeverity: number; // Ketoacid drive 0–1 (keto ÷ DKA_KETO_MMOL_L), applied here and read by the endocrine model
 }
 
-/** Established DKA: ketoacid anions 25 mmol/L at `condition dka` severity 1 [ENG]; the scale of `out.dkaSeverity`. */
+/** Established DKA: ketoacid anions 25 mmol/L at `condition dka` severity 1 [FIT: DKA ketoacid scale; brief research/44 L2-40]; the scale of `out.dkaSeverity`. */
 export const DKA_KETO_MMOL_L = 25;
 
 export interface BloodCore {
@@ -76,7 +76,7 @@ export interface BloodCore {
 
 /**
  * COHb washout — first order, t½ = 320 min × (95/PaO2)^0.8: 320 min on air, ≈ 74 min on FiO2 1 (Weaver 2009 NEJM
- * 360:1217) [ENG exponent fit to both anchors]. No ongoing exposure (the profile sets the load).
+ * 360:1217) [FIT: COHb washout exponent fitted to both anchors; exponent fit to both anchors; brief research/44 L2-40; src Weaver 2009]. No ongoing exposure (the profile sets the load).
  */
 export const COHB_T_HALF_AIR_MIN = 320;
 export function cohbWashout(cohb: number, pao2: number, dtS: number): number {
@@ -153,7 +153,7 @@ export function stepBloodCore(bc: BloodCore, x: BloodInputs, dtS: number): void 
     if (so.mannitol) so.mannitol = Math.max(0, so.mannitol - (rn.excretion.mannitol ?? 0) * dtH); // The kidney clears it
   } else if (r.elimMl > 0) {
     // eliminated volume leaves as ISOTONIC fluid at the ECF composition (a solute-free loss concentrates Na: the Pulse
-    // oracle O3b caught Na +2.0 vs Pulse +0.9 after 1 L saline) [ENG until 7d's urine composition]
+    // oracle O3b caught Na +2.0 vs Pulse +0.9 after 1 L saline) [FIT: fixed urine composition (Na balance after saline); until 7d's urine composition; brief research/44 L2-06]
     removePlasma(so, r.elimMl, ecfBefore, c0);
   }
   if (!rn && so.mannitol) so.mannitol *= Math.exp((-MANNITOL_KE_PER_MIN * dtS) / 60); // No organ model — the kidney's own t½ 2 h

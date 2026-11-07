@@ -90,7 +90,7 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 |---|---|---|---|---|
 | `LEAD_TICKS` | `5` | — | — | Frames are scheduled this many engine ticks ahead of the first measured arrival (jitter of one rAF frame). |
 | `MAX_AHEAD_TICKS` | `75` | — | — | The ventilator may run this far ahead of the newest engine event (events carry sim time; beats and 1 Hz state). |
-| `RUN_TIMEOUT_MS` | `2000` | ms | [ENG] | A cockpit that has not answered a `run` in this long is given up on (the engine's own drive timeout then takes over, as when the cockpit is closed), wall ms [ENG]. |
+| `RUN_TIMEOUT_MS` | `2000` | ms | [ENG: network] | A cockpit that has not answered a `run` in this long is given up on (the engine's own drive timeout then takes over, as when the cockpit is closed), wall ms [ENG: network]. |
 
 ### [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts)
 
@@ -111,7 +111,7 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `EFFORT_PMUS_CMH2O` | `8` | cmH2O | [ENG: the v1.9 default spontaneous effort is 6–8] | effort 1 → Pmus 8 cmH2O [ENG: the v1.9 default spontaneous effort is 6–8] |
+| `EFFORT_PMUS_CMH2O` | `8` | cmH2O | [ENG: control; the v1.9 default spontaneous effort is 6–8] | effort 1 → Pmus 8 cmH2O [ENG: control; the v1.9 default spontaneous effort is 6–8] |
 
 ### [`mechanics.ts`](../../packages/ventilator/src/mechanics.ts)
 

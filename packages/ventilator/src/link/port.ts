@@ -141,7 +141,7 @@ export const LEAD_TICKS = 5;
 /** The ventilator may run this far ahead of the newest engine event (events carry sim time; beats and 1 Hz state). */
 export const MAX_AHEAD_TICKS = 75;
 /** A cockpit that has not answered a `run` in this long is given up on (the engine's own drive timeout then
- *  takes over, as when the cockpit is closed), wall ms [ENG]. */
+ *  takes over, as when the cockpit is closed), wall ms [ENG: network]. */
 export const RUN_TIMEOUT_MS = 2000;
 
 /** The link's detach function; also `runTo`, the fast-forward's lockstep with the cockpit. */

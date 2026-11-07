@@ -124,12 +124,12 @@ export interface GradeInputs {
   readonly edges: readonly RuleEdge[];
 }
 
-/** Ventilated breaths "begin" after this long without one [ENG: longer than any set rate's interval, 6/min = 10 s]. */
+/** Ventilated breaths "begin" after this long without one [ENG: ui; longer than any set rate's interval, 6/min = 10 s]. */
 const VENT_GAP_S = 15;
-/** A state published this long before the newest row is a return's re-publish, not a new state [ENG: > the app's
+/** A state published this long before the newest row is a return's re-publish, not a new state [ENG: ui; > the app's
  *  poll lag of 0.8 s of sim at ×8]. */
 const RESYNC_S = 2;
-/** Samples kept: 4 h of a run [ENG]. ponytail: oldest dropped beyond it; a longer run needs a coarser trend. */
+/** Samples kept: 4 h of a run [ENG: ui]. ponytail: oldest dropped beyond it; a longer run needs a coarser trend. */
 const SAMPLES_MAX = 4 * 3600;
 const EPS = 1e-6;
 /** Consecutive PVCs that make a run of ventricular tachycardia (non-sustained VT: ≥ 3 beats; Katritsis 2012). */

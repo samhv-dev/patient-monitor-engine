@@ -3,11 +3,11 @@
 // is unit-tested without a browser. The second screen (same browser) meets only the last four rows.
 import type { TransportStatus, WireMessage } from '@pme/controller';
 
-/** No message from a RUNNING host for this long → "not answering" (it sends its state every second) [ENG]. */
+/** No message from a RUNNING host for this long → "not answering" (it sends its state every second) [ENG: ui]. */
 export const HOST_SILENT_MS = 5000;
-/** The phone has not reached the relay for this long: it is probably not on the classroom network [ENG]. */
+/** The phone has not reached the relay for this long: it is probably not on the classroom network [ENG: ui]. */
 export const UNREACHABLE_MS = 6000;
-/** The host's `cockpit` events come once a second; this long without one, the Ventilator view has closed [ENG]. */
+/** The host's `cockpit` events come once a second; this long without one, the Ventilator view has closed [ENG: ui]. */
 export const COCKPIT_QUIET_MS = 2500;
 
 export interface FollowerInput {

@@ -11,7 +11,7 @@
 // "Low Signal IQ" (p. 24, p. 113) — and the alarm layer shows that as a message, never as a valid desaturation.
 import type { Measured } from '../../types.ts';
 
-export const SPO2_LAG_TAU_S = 3; // brief §4.3 step 3 [ENG]
+export const SPO2_LAG_TAU_S = 3; // brief §4.3 step 3 [FIT: SpO2 sensor lag (stand-in for lung→finger transit dispersion); brief research/44 TIME-02]
 /**
  * Masimo-SET-like default of the first skin (saadat-like): average 8 s, update 1 s (brief §4.3, §6.1). A skin's
  * `spo2.avgDefault` / `updateHz` replace it through `Spo2State.avgS/updS` (philips-like 10 s / 2 s).
@@ -20,12 +20,12 @@ export const SPO2_PROFILE = { averagingS: 8, updateS: 1 } as const;
 export const SPO2_STEP_S = 0.1;
 /**
  * No completed pleth pulse for this long → no value (dashes, "pulse search"/"no pulse"). It was a 4 s hold with a
- * questionable "99?" and invalid only at 10 s (brief §4.3 "10–30 s"); E126 removed the held number [ENG: two missed
+ * questionable "99?" and invalid only at 10 s (brief §4.3 "10–30 s"); E126 removed the held number [ENG: device; two missed
  * beats at 30/min].
  */
 export const PULSE_LOST_S = 4;
 export const LOW_PERF_PI = 0.3; // "LOW PERF" below PI 0.3 % (brief §4.3)
-export const LOW_PERF_SLOWDOWN = 2; // low perfusion doubles the averaging window [ENG]
+export const LOW_PERF_SLOWDOWN = 2; // low perfusion doubles the averaging window [ENG: device]
 
 export interface Spo2Inputs {
   siteSa: number; // SaO2 at the probe site (0–1)

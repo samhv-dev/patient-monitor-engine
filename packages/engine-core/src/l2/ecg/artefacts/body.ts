@@ -5,21 +5,21 @@ import type { EcgGenInputs } from '../ecg-gen.ts';
 import type { Vec3 } from '../vcg.ts';
 import { WANDER_DIR } from '../templates.ts';
 
-/** EMG direction (II gain ≈ 1) and CPR direction (II gain ≈ 1.05) [ENG]. */
+/** EMG direction (II gain ≈ 1) and CPR direction (II gain ≈ 1.05) [ENG: device]. */
 const EMG_DIR: Vec3 = [0.5, 0.8, 0.4];
 export const CPR_DIR: Vec3 = [0.1, 0.9, -0.5];
 export const WANDER_MAX_MV = 0.3; // 0.05–0.3 mV at 0.1–0.5 Hz
 export const EMG_MAX_RMS_MV = 0.2; // 0.02–0.2 mV RMS
 const EMG_HP_HZ = 20; // 20–150 Hz band
 const EMG_LP_HZ = 150;
-/** Gain that makes the first-order 20–150 Hz band-pass of unit white noise unit-RMS at 500 Hz (measured) [ENG]. */
+/** Gain that makes the first-order 20–150 Hz band-pass of unit white noise unit-RMS at 500 Hz (measured) [ENG: device]. */
 const EMG_NORM = 1.63;
 const SHIVER_HZ = 6; // tremor envelope 4–8 Hz
 export const CPR_HARMONICS = 8; // Σ_{h=1..8} A_h·e^(−0.3(h−1))·sin(2πh·f_c·t + φ_h)
 const CPR_DECAY = 0.3;
 const CPR_JITTER = 0.05; // ±5%
-const CPR_STEP = 0.004; // per-compression random-walk step (fraction of f_c) [ENG]
-/** Σ_h e^(−0.6(h−1)): harmonic power, so that depth maps to the peak-to-peak-equivalent 2√2·RMS [ENG]. */
+const CPR_STEP = 0.004; // per-compression random-walk step (fraction of f_c) [ENG: device]
+/** Σ_h e^(−0.6(h−1)): harmonic power, so that depth maps to the peak-to-peak-equivalent 2√2·RMS [ENG: device]. */
 const CPR_POWER = Array.from({ length: CPR_HARMONICS }, (_, h) => Math.exp(-2 * CPR_DECAY * h)).reduce((a, b) => a + b, 0);
 
 export interface ArtState {
