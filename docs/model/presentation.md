@@ -375,6 +375,8 @@ No exported `…State` type in this module.
 | `announceHost` | [`apps/demo/src/app/host-guard.ts`](../../apps/demo/src/app/host-guard.ts) | This tab hosts `code`: |
 | `chooseHostSession` | [`apps/demo/src/app/host-guard.ts`](../../apps/demo/src/app/host-guard.ts) | Which session a starting instructor page runs. |
 | `askJoin` | [`apps/demo/src/app/host-guard.ts`](../../apps/demo/src/app/host-guard.ts) | The choice, put to the instructor (a modal dialog: |
+| `faText` | [`apps/demo/src/app/i18n/fa-dom.ts`](../../apps/demo/src/app/i18n/fa-dom.ts) | The Persian of `en`, or null (counted as missing). |
+| `translateTree` | [`apps/demo/src/app/i18n/fa-dom.ts`](../../apps/demo/src/app/i18n/fa-dom.ts) | Put every text node under `root` into Persian (in place); |
 | `defibReadout` | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | The window's readout: |
 | `scenarioStep` | [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | The step a scenario trigger presses: |
 | `logCsv` | [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | CSV of the clinical log (the debrief export). |
@@ -624,6 +626,8 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | The clinical glossary at run time: engine key → clinical label, long name, unit and adult normal range. |
 | [`apps/demo/src/app/hidden-tab.ts`](../../apps/demo/src/app/hidden-tab.ts) | FX-14 / FX-15: Safari suspends a hidden tab (≈ 4 min, the whole page and its engine worker), so the instructor's page sends nothing — the phones say "The instructor's monitor is not answering" — and on return the worker' |
 | [`apps/demo/src/app/host-guard.ts`](../../apps/demo/src/app/host-guard.ts) | Post-demo (4 November): one instructor tab per session. |
+| [`apps/demo/src/app/i18n/fa-dom.ts`](../../apps/demo/src/app/i18n/fa-dom.ts) | The Persian Debrief in the app (plan D13): the English page is built as it always is, then each text node of the report, the learner handout and the footer is put through THE matcher the handout script uses (fa-match.mjs |
+| [`apps/demo/src/app/i18n/lang.ts`](../../apps/demo/src/app/i18n/lang.ts) | The host's language for learner-facing text (plan Decision 15): the Debrief page's switch (D13) and the language a card's Briefing is sent in (D13b). |
 | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | Which skin an instrument wears, and what the defibrillator window reads out (Room plan R5, §4 D5). |
 | [`apps/demo/src/app/learner-actions.ts`](../../apps/demo/src/app/learner-actions.ts) | The learner action bar: what the team at the bedside does. |
 | [`apps/demo/src/app/learner.ts`](../../apps/demo/src/app/learner.ts) | Learner controls: the scenario runner's "Learner:" bar as a strip under the learner's monitor. |
@@ -998,6 +1002,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/ui.dom.test.ts`](../../apps/demo/src/app/ui.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-archive.dom.test.ts`](../../apps/demo/src/app/views/debrief-archive.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-course.test.ts`](../../apps/demo/src/app/views/debrief-course.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/debrief-fa.dom.test.ts`](../../apps/demo/src/app/views/debrief-fa.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-handout.dom.test.ts`](../../apps/demo/src/app/views/debrief-handout.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-handsoff.dom.test.ts`](../../apps/demo/src/app/views/debrief-handsoff.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-hints.dom.test.ts`](../../apps/demo/src/app/views/debrief-hints.dom.test.ts) | 0 | 0 |
