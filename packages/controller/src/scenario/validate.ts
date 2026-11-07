@@ -34,9 +34,22 @@ function validator(): ReturnType<Ajv['compile']> {
 }
 
 /** One readable line per ajv error: `<json path>: <what is wrong>`. */
+/** The longest card question the learner handout prints on one line (D16): measured, not chosen. In print media at the
+ *  182 mm content width, in the bundled print font (Inter Print 13.33 px), after its "mm:ss" label (10.3 mm), the
+ *  handout's question line (177.0 mm) held 92 to 100 characters of the drafted questions' own text, Chromium and
+ *  WebKit alike (6 November 2026, the D16 e2e probe on the MH card); the limit is the shortest of those, 92. A question
+ *  that wraps adds 4.7 mm, and the MH handout without questions is 266.9 mm of its 267 mm page (with two wrapped
+ *  questions: 276.4 mm). The e2e page fit stays the truth; this tells an author at validation time. The two scenario
+ *  schemas carry the same number (`maxLength`), a test keeps them equal. */
+export const HANDOUT_QUESTION_MAX = 92;
+const HANDOUT_Q_TEXT = /^\/debriefHints\/handoutQuestions\/\d+\/text$/;
+
 export function formatAjvError(e: ErrorObject): string {
   const at = e.instancePath || '/';
   const p = e.params as Record<string, unknown>;
+  if (HANDOUT_Q_TEXT.test(at) && e.keyword === 'maxLength') {
+    return `${at}: at most ${HANDOUT_QUESTION_MAX} characters, about 90 characters — one line of the A4 handout; a wrapped question pushes the MH handout over one page (measured 276.4 mm of 267)`;
+  }
   if (WHEN_PATH.test(at) && (e.keyword === 'maxProperties' || e.keyword === 'minProperties')) {
     return `${at}: a trigger must have exactly one of ${TRIGGER_KEYS}`;
   }
@@ -104,6 +117,9 @@ export function validateScenario(input: unknown, opts: ValidateOptions = {}): Va
   doc.bookmarks?.forEach((b, i) => {
     if (!stateIds.has(b.state)) errors.push(`/bookmarks/${i}/state: no state "${b.state}"`);
   });
+  (['openers', 'handoutQuestions'] as const).forEach((k) => doc.debriefHints?.[k]?.forEach((o, i) => {
+    if (o.at.startsWith('state:') && !stateIds.has(o.at.slice(6))) errors.push(`/debriefHints/${k}/${i}/at: no state "${o.at.slice(6)}"`);
+  }));
   return errors.length ? { ok: false, errors: errors.slice(0, MAX_ERRORS), warnings } : { ok: true, doc, warnings };
 }
 
@@ -127,8 +143,14 @@ function validatorV2(): ReturnType<Ajv['compile']> {
   return compiledV2;
 }
 
+/** Judged rows are retired (the owner's ruling of 5 November): every row is an automatic row or an action, and a team
+ *  act the instructor observes is a record action (the scenario `record` command, Q19), timed by its window when the card
+ *  times it, recorded-not-timed without one. A card that still declares `judged` gets this one line. */
+const JUDGED_RETIRED = '/judged: judged rows are retired (owner, 5 November): write each as a record action in "actions" (kind "communication" with no give; a window when the card times it, none when it is recorded, not timed)';
+
 function formatV2(e: ErrorObject): string {
   const at = e.instancePath || '/';
+  if (e.keyword === 'additionalProperties' && at === '/' && (e.params as { additionalProperty?: string }).additionalProperty === 'judged') return JUDGED_RETIRED;
   if (e.keyword === 'maxProperties' || e.keyword === 'minProperties') {
     if (e.parentSchema === DEFS.phaseRule) return `${at}: a phase rule must have exactly one of ${RULE_KEYS}`;
     if (e.parentSchema === DEFS.displayRule) return `${at}: a display rule must have exactly one of ${DISPLAY_KEYS}`;
@@ -163,7 +185,6 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
   const phases = unique(doc.phases, 'phases', 'phase');
   const actions = unique(doc.actions, 'actions', 'action');
   unique(doc.outcomes, 'outcomes', 'outcome');
-  unique(doc.judged, 'judged', 'judged');
   unique(doc.script, 'script', 'script');
   const phase = (id: string, path: string) => phases.has(id) || errors.push(`${path}: no phase "${id}"`);
   const action = (id: string, path: string) => actions.has(id) || errors.push(`${path}: no action "${id}"`);
@@ -191,7 +212,10 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
       if (c.type === 'applyEvent' && c.event.kind === 'drug') drug(c.event.drugId, `${path}/${k}/event/drugId`);
     });
 
+  /** Display-rule anchors of action windows (F9), checked below. */
+  const displayAnchors: Array<[DisplayRule, string]> = [];
   let initial: string | null = null;
+  let recognition: string | null = null;
   doc.phases.forEach((p, i) => {
     if (p.initial) {
       if (initial === null) initial = p.id;
@@ -216,7 +240,22 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
       const ids = [a.drug.id, ...(a.drug.alternatives ?? []).map((x) => x.id)].filter((id): id is string => id !== undefined && id in DRUGS);
       a.drug.route?.set.forEach((r, k) => ids.forEach((id) => routeHonoured(id, r) || warnings.push(`${at}/drug/route/set/${k}: ${id}: route ${r} is judged; the engine does not model it`)));
     }
-    if (a.window) anchor(a.window.anchor, `${at}/window/anchor`);
+    const wa = a.window?.anchor;
+    if (wa !== undefined && typeof wa !== 'string' && 'first' in wa) wa.first.forEach((x, k) => (typeof x !== 'string' && 'display' in x ? displayAnchors.push([x.display, `${at}/window/anchor/first/${k}/display`]) : anchor(x as Anchor, `${at}/window/anchor/first/${k}`)));
+    else if (wa !== undefined && typeof wa !== 'string' && 'display' in wa) displayAnchors.push([wa.display, `${at}/window/anchor/display`]);
+    else if (typeof wa === 'string' && wa.startsWith('each:action:')) {
+      action(wa.slice(12), `${at}/window/anchor`);
+      if (a.window?.failAfterS !== undefined) errors.push(`${at}/window/failAfterS: not with an each:action anchor`);
+    } else if (wa !== undefined) anchor(wa as Anchor, `${at}/window/anchor`);
+    if (a.window?.failAfterS !== undefined && a.window.failAfterS <= a.window.withinS) errors.push(`${at}/window/failAfterS: ${a.window.failAfterS} s must be greater than withinS ${a.window.withinS} s`);
+    if (a.recognition) {
+      if (recognition === null) recognition = a.id;
+      else errors.push(`${at}/recognition: a second recognition action (the first is "${recognition}"); a card has at most one`);
+    }
+    if (a.preparation && a.window) errors.push(`${at}/window: a preparation step is recorded, never graded: it has no window`);
+    if (a.repeat && a.repeatWhile) errors.push(`${at}/repeat: an action has repeat or repeatWhile, not both`);
+    const iv = a.repeat?.intervalS;
+    if (iv && (iv.min ?? iv.value) === undefined) errors.push(`${at}/repeat/intervalS: a repeat needs its shortest interval (min or value)`);
     a.order?.after?.forEach((x, k) => action(x, `${at}/order/after/${k}`));
     a.order?.before?.forEach((x, k) => action(x, `${at}/order/before/${k}`));
     rule(a.repeatWhile?.rule, `${at}/repeatWhile/rule`);
@@ -241,11 +280,12 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
     else if ('any' in r) r.any.forEach((c, k) => display(c, `${path}/any/${k}`));
     else if ('not' in r) display(r.not, `${path}/not`);
   };
-  doc.judged?.forEach((j, i) => display(j.display, `/judged/${i}/display`));
+  for (const [r, path] of displayAnchors) display(r, path);
   doc.outcomes?.forEach((o, i) => {
     rule(o.rule, `/outcomes/${i}/rule`);
     anchor(o.anchor, `/outcomes/${i}/anchor`);
   });
+  (['openers', 'handoutQuestions'] as const).forEach((k) => doc.debriefHints?.[k]?.forEach((o, i) => anchor(o.at, `/debriefHints/${k}/${i}/at`)));
   doc.script?.forEach((s, i) => {
     const m = typeof s.on === 'string' ? new RegExp(`^(phase|action):(${ID})`).exec(s.on) : null;
     if (m?.[1] === 'phase') phase(m[2] as string, `/script/${i}/on`);

@@ -1,8 +1,10 @@
 // Proof (c): which second windows stay in step with the instructor's session (one browser context, as when the
 // presenter opens a second window or tab of the same browser). Observation only: nothing here is fixed.
-//   A = instructor window (#/teach) running "Healthy induction" at ×4.
+//   A = instructor window (#/teach2, the Instructor view) running "Healthy induction" at ×4.
 //   B = a second window at #/monitor, C = at #/explore, D = at #/vent (each a fresh page load of the same address).
-//   R = the Remote opened from A's own "Open the remote in a new window" button (#/remote, the designed pairing).
+//   R = the Remote opened from A's own "Open the remote in a new window" button (#/remote, the designed pairing). The
+//   Remote keeps the first instructor panel (its tabs, Running scenario, session bar) until retire-instructor-v1's phase 2:
+//   R's steps below are that panel's, by design.
 // For each: session code, scenario, sim clock and numbers before and after A presses "Induce now".
 import { expect, test, type Page } from '@playwright/test';
 import { action, loadShowcase, openTeach, r1, record, save, shot, simNow, stateId, waitSim, watchConsole } from './showcase-support.ts';
@@ -19,7 +21,7 @@ async function look(p: Page): Promise<Record<string, unknown>> {
       route: location.hash, code: s?.code ?? null, simT: s ? Math.round(s.simNow() * 10) / 10 : null, speed: s?.timeScale ?? null,
       scenario: sc?.doc?.title ?? null, state: sc?.stateId ?? null,
       hr: v.hr ?? null, abp: v.abpSys == null ? null : `${Math.round(v.abpSys)}/${Math.round(v.abpDia ?? 0)} (${Math.round(v.abpMean ?? 0)})`, etco2: v.etco2 ?? null, rr: v.rr ?? null,
-      bar: (document.querySelector('.sessionbar') as HTMLElement | null)?.innerText.replace(/\s+/g, ' ').slice(0, 160) ?? null,
+      header: (document.querySelector('.ip2-head') as HTMLElement | null)?.offsetParent ? (document.querySelector('.ip2-head') as HTMLElement).innerText.replace(/\s+/g, ' ').slice(0, 160) : null,
     };
   });
 }

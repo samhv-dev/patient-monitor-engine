@@ -58,6 +58,31 @@ and **the presenting Mac's Node.js**. Until they are settled, tick every line:
   back ("Connection lost: reconnecting…" while it is away).
 - One session takes up to **60 phones**; the 61st is told "This session is full: please watch the main screen".
 
+## The instructor's phone
+
+You can run the case from your own phone as well as from the laptop. The laptop always commands; the phone is a
+second pair of hands, signed in with a PIN that only the laptop knows.
+
+- **The PIN** is on the Room page, card **Instructor's phone**: four digits, drawn by the laptop the first time and kept
+  on it. They show only while you **hold** "Hold to show the PIN" (mouse, finger or the space bar), so a laptop
+  mirrored to the projector never shows them. **Change the PIN** draws new digits and signs the phone out at once; it
+  signs in again with the new PIN.
+- **The phone's address**: open "The phone's QR code" on the same card and scan it with your phone (or type the
+  address under it). It opens the instructor remote with the session code filled in. The address carries no PIN.
+- **Signing in**: type the PIN on the phone's keypad and press **Sign in**. The phone says "Signing in…", then
+  "Signed in as the instructor's remote", and shows the instructor panel. The Room page's row says "Signed in since
+  hh:mm".
+- **One phone at a time.** Another phone that enters the PIN takes over: the first phone says "Taken over by another
+  phone at mm:ss" (the case clock) and the Room row says "another phone took over". A lost phone never blocks the case:
+  the row says "Lost", the case runs on, and any phone with the PIN signs in at once.
+- **What the phone says when it cannot sign in**: "Wrong PIN" (the Room page counts the wrong PINs of the last
+  minute); "Too many wrong PINs from this phone" (five in a minute: that phone waits a minute, the other phones are not
+  affected); "The PIN was changed on the instructor's computer"; "The instructor's computer restarted at mm:ss" (the
+  laptop reloaded: presses the phone was still waiting on were not given, and the phone signs in again by itself);
+  after 10 s with no answer, "This classroom kit does not take an instructor phone" (a kit from an older release:
+  use the kit from the same release as the app).
+- The PIN is kept in the phone's page only while it is open: a reload of the phone asks for it again.
+
 ## One instructor tab
 
 Run the session in **one** tab. The phones follow the tab that runs the session; a second tab that started its own
@@ -66,8 +91,26 @@ another tab of the same browser (or typed again without its `?session=` part) wh
 first: "A classroom session is already running in another tab (code ……)". **Open that tab's session here** moves the
 session to the new tab: the same code, the case where it was (as after a reload), and the phones and second screens
 follow it there; the old tab stops and says "This session moved to another tab". **Start a new session** gives the new
-tab its own code; the phones stay with the old tab. Only tabs of the same browser are asked, and a tab the browser has
-put to sleep (Safari, after about 4 minutes hidden) does not answer: then the new tab starts its own session as before.
+tab its own code; the phones stay with the old tab. The new tab learns of the running session from the browser itself,
+so a tab the browser has put to sleep in the background (Safari, after about 4 minutes hidden) is still found. Such a
+tab can only hand its case over once it runs again: the new tab then says "Waiting for the other tab to hand over its
+session"; click the old tab once and the session moves with its case, or press **Start here without its case** (same
+code, the phones come to the new tab, the case starts again). Only tabs of the same browser are found. An old browser
+(Safari before 15.4) or the instructor's page opened at the laptop's network address instead of `127.0.0.1` cannot
+ask the browser: there the tabs are asked directly, and a sleeping tab is missed as before (the new tab starts its own
+session).
+
+## The same drug twice (the laptop and a second device)
+
+When a drug is given as a bolus, the same drug is refused for the next **10 seconds of simulated time**, whoever
+presses it: the laptop, a Remote or the instructor's phone (the owner's ruling of 5 November 2026: two people entering
+the one dose the learners asked for would give the patient two). The device that pressed is told why, for example
+"… not given (given 4 s ago from the laptop)"; a Remote counts as "the phone". Meanwhile the drug's row on
+every Instructor view reads "given 0:04 ago · 6 s left", counting down, and is live again after 10 s. Infusions, TCI,
+the vaporiser, fluids, CPR, defibrillation and the airway are never locked, nor is anything the card gives by itself.
+A card step whose button gives a drug given in the last 10 seconds is refused the same way and the card does not move;
+press it again once the lock is over (the card's own doses are never changed).
+The refused press is not in the debrief; it shows only in the pressing device's log and the laptop's console.
 
 ## The day before (at the venue if at all possible)
 
@@ -84,7 +127,7 @@ put to sleep (Safari, after about 4 minutes hidden) does not answer: then the ne
 1. Mac and phones on the same Wi-Fi (the guest network usually isolates devices: ask for the staff network, or test as
    above).
 2. Double-click **Start Classroom**; leave its black window open.
-3. Load the case as usual (Instructor > Scenario > Showcase > Load).
+3. Load the case as usual (Scenarios > Open the library > Load, or the Instructor view's case list).
 4. **The QR moment** (below), then back to the case (**Instructor** in the rail); teach as usual.
 
 ## (b) A local network you bring (the Mac's own hotspot or a travel router)

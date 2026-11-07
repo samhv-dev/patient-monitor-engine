@@ -54,9 +54,10 @@ test('F28: the Saadat-like follower at 390 × 664 fits its short lanes and its t
   for (const e of all) if (e.ch === ch) seen.set(`${e.t}@${e.x},${e.y.toFixed(2)}`, e);
   const texts = [...seen.values()];
 
-  // 1. the IBP scale values (left, numeric) never ink over each other
+  // 1. the IBP scale values (left, numeric) never ink over each other. E130 (confirmed by the owner 5 November): the
+  //    ART lane's fixed scale is 0–200, so its bottom value is 0 (it was 40 of the photo-matched 40 / 120 / 200)
   const scale = texts.filter((e) => e.align !== 'right' && e.x <= 20 && /^-?\d+$/.test(e.t));
-  expect(scale.map((e) => e.t)).toEqual(expect.arrayContaining(['200', '40', '30', '-10']));
+  expect(scale.map((e) => e.t)).toEqual(expect.arrayContaining(['200', '0', '30', '-10']));
   for (const [i, a] of scale.entries())
     for (const b of scale.slice(i + 1)) expect.soft(inter([a.l, a.r], [b.l, b.r]) && inter([a.top, a.bot], [b.top, b.bot]), `${a.t} over ${b.t}`).toBe(false);
 

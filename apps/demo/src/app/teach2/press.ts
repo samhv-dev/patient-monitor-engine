@@ -21,8 +21,19 @@ export async function pressAction(link: Link, action: Action): Promise<void> {
     const { $comment: _drop, ...cmd } = c as typeof c & { $comment?: string };
     return { ...cmd, actionId: action.id } as unknown as CommandInput;
   });
-  if (!cmds.length) return void toast(`${action.label}: nothing to give from this row; use a sheet.`);
-  await link.sendBatch(cmds);
+  if (!cmds.length) {
+    // Q19 (plan F9): a procedure, sample or communication with nothing for the engine (call for help) is recorded, with
+    // its time, by the scenario `record` command on the host
+    if (action.kind === 'procedure' || action.kind === 'sample' || action.kind === 'communication') {
+      const r = await link.send({ type: 'scenario', action: 'record', target: action.id } as CommandInput);
+      if (!r.accepted) toast(`${action.label}: not recorded (${r.reason ?? 'refused'}).`);
+      return;
+    }
+    return void toast(`${action.label}: nothing to give from this row; use a sheet.`);
+  }
+  // a refused item is answered here, on the device that pressed (the host's same-drug lock among the reasons)
+  const no = (await link.sendBatch(cmds)).find((r) => !r.accepted);
+  if (no) toast(`${action.label}: not given (${no.reason ?? 'refused'})`);
 }
 
 /** Press the step labelled `label`: a copy of panel/scenario.ts `press`. */
@@ -33,6 +44,7 @@ export async function pressStep(link: Link, label: string): Promise<void> {
   if (!cmd) return moved();
   const r = await link.ctl.send(cmd); // not link.send: that logs a refused command too
   if (r.accepted) link.note(describeCommand(cmd as Record<string, unknown>), 'instructor');
+  else if (r.code === 'recent') toast(`${label}: not given (${r.reason ?? 'refused'}). Press again after the lock.`); // drug-lock.ts
   else moved();
 }
 

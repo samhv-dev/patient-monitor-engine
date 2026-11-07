@@ -12,7 +12,8 @@ export { WAVE_STYLE, scaleFor, autoRange, type WaveLaneId, type WaveStyle } from
 export { PressureTile, formatPressure, formatNibp, formatClock, type NibpView } from './numerics-hemo.ts';
 /** The five transport adapters of @pme/controller (brief §7.5). */
 export { transports } from '@pme/controller';
-export { renderPlan, legacyPlan, filterModeFor, ecgLabel, type RenderPlan, type PlanLane } from './skin-plan.ts';
+export { renderPlan, legacyPlan, filterModeFor, ecgLabel, type RenderPlan, type PlanLane, type PlanIbp } from './skin-plan.ts';
+export { autoIbpRange, ibpScaleError, normalIbpScales, IBP_AUTO_EVERY_S, IBP_AUTO_RANGES, IBP_SCALE_LIMITS, type IbpChannel, type IbpScale, type IbpScales } from './ibp-scale.ts';
 export { barView, tileAlarmView, visibleAlarms, type AlarmStatus, type BarView, type TileAlarmView } from './alarm-view.ts';
 export { AlarmAudioBridge } from './alarm-audio.ts';
 export { DeviceUI, flashCss } from './device-ui.ts';

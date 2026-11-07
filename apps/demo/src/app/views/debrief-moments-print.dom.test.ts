@@ -5,7 +5,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import haem from '../../../../../docs/showcase/kit-round-a/debrief-a4-haemorrhage-e120-course-kit-round-chromium.json';
 import mh from '../../../../../docs/showcase/kit-round-a/debrief-a4-mh-e119-induction-sequence-and-early-call-kit-round-chromium.json';
-import { drugWords } from '../glossary.ts';
 import type { Link } from '../link.ts';
 import { emptyRun, type RunData } from '../record.ts';
 import mhV2 from '../showcase/showcase-mh-v2.json';
@@ -59,19 +58,27 @@ describe('Debrief print: every key moment (#3) and recognition from the early si
     expect(tile?.querySelector('.db-tile-sub')?.textContent).toBe('08:38 early signs → 08:40 ticked');
   });
 
-  // the new-format card (pme-scenario/2): its clock is the Early signs phase's entry, named as the /1 card's; the times
-  // are the harness's on the demo path (the rule first held at 07:43.2, Early signs entered at 08:03.2, the call ticked
-  // at 08:12)
-  it('MH /2: "Recognition (instructor\'s tick)" reads 9 s, 08:03 early signs → 08:12 ticked', () => {
+  // the new-format card (pme-scenario/2): judged rows are retired (the owner's ruling of 5 November), so there is no
+  // "Judged by the instructor" section; "name MH" is a timed record action, a row of the action table: due from Early
+  // signs' entry (08:03.2, the harness's time on the demo path) + 2 min, given at the call (08:12). D5: the card marks it
+  // `recognition: true`, so the recognition tile reads it (its window and its grade) and the key moments have its press
+  it('MH /2: the recognition tile is the timed action (9 s, 08:03 early signs → 08:12, met); "name MH" is an action row, 08:03 + 2 min 00 s, given 08:12, met', () => {
     const v = open({
-      ...emptyRun('M 35 y 80 kg', 80, 0), doc: mhV2, format: 2, admin: [],
+      ...emptyRun('M 35 y 80 kg', 80, 0), doc: mhV2, format: 2,
+      admin: [{ seq: 1, t: 492, source: 'action', actionId: 'nameMh', kind: 'communication', result: { accepted: true } }],
       phases: [{ id: 'baseline', t: 0, exitT: 377, rule: 'initial' }, { id: 'latent', t: 377, exitT: 483.2, rule: 'enter:latent' }, { id: 'earlySigns', t: 483.2, rule: 'enter:earlySigns' }],
-      edges: [{ rule: 'phase:earlySigns', t: 463.2, value: true }, { rule: 'judged:nameMh', t: 483.2, value: true }],
-      rows: [{ t: 0, kind: 'scenario', text: 'Scenario loaded: MH' }, { t: 492, kind: 'note', text: `Objective met: ${drugWords(mhV2.judged[0]?.text ?? '')}` }],
+      edges: [{ rule: 'phase:earlySigns', t: 463.2, value: true }],
+      rows: [{ t: 0, kind: 'scenario', text: 'Scenario loaded: MH' }],
     });
     leave = v.leave;
     const tile = v.el.querySelector('#db-keytimes [data-key=recognition]');
+    expect(tile?.hasAttribute('data-recognised')).toBe(true);
+    expect(tile?.querySelector('.db-tile-cap')?.textContent).toBe('Recognition (timed action)');
     expect(tile?.querySelector('.db-tile-v')?.textContent).toBe('9 s');
-    expect(tile?.querySelector('.db-tile-sub')?.textContent).toBe('08:03 early signs → 08:12 ticked');
+    expect(tile?.querySelector('.db-tile-sub')?.textContent).toBe('08:03 early signs → 08:12 · asked ≤ 2 min 00 s · ✓ met');
+    expect(v.el.querySelector('#db-moments tbody tr[data-recognised]')?.textContent).toMatch(/^\d+08:12■ TeamRecognised \(timed action, recorded by the instructor\)/);
+    expect(v.el.textContent).not.toMatch(/Judged by the instructor/);
+    const row = [...v.el.querySelectorAll('.db-actions tr.db-act')].find((tr) => /^Name malignant hyperthermia/.test(tr.textContent ?? ''));
+    expect([...(row?.querySelectorAll('td') ?? [])].slice(1).map((td) => td.textContent)).toEqual(['08:03 + 2 min 00 s', '08:12', '✓ met']);
   });
 });

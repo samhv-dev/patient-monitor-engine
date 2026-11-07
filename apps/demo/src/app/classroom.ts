@@ -1,8 +1,8 @@
 // Learners' phones follow the instructor's session over the relay (`pme-relay --static`), which serves this app on the
 // laptop's network address (the classroom). No DOM here: the QR panel, the learner page and their tests read these. The
-// QR carries ONE short address, `http://<laptop>:<port>/?join=<CODE>` — the page's relay is the page's own host — so
-// the symbol stays small enough to scan from the back of a lecture room.
-import { normalizeSessionCode } from '@pme/controller';
+// QR carries ONE short address, `http://<laptop>:<port>/?join=<CODE>#/pick` (R4: the instrument picker) — the page's
+// relay is the page's own host — so the symbol stays small enough to scan from the back of a lecture room.
+import { normalizeSessionCode, type Instrument } from '@pme/controller';
 
 export interface PageLocation {
   protocol: string;
@@ -19,6 +19,8 @@ export interface RelayInfo {
   port: number;
   addresses: string[];
   serves: boolean;
+  /** Room plan R1b: the code of the last room a host opened on this relay, kept across its restarts (`--state-dir`). */
+  lastRoom?: string;
 }
 
 /** Loopback hosts: an address on them works on this computer only. */
@@ -45,26 +47,67 @@ export function learnerUrl(code: string, origin: string, pathname: string, relay
   return `${origin}${pathname}?join=${code}${relay && relay !== own ? `&relay=${encodeURIComponent(relay)}` : ''}`;
 }
 
+/**
+ * The follower page's hashes (plan room-and-instruments.md §4 D7): `#/pick` the instrument picker (the QR's address),
+ * `#/monitor` today's learner monitor (upright on a phone), `#/monitor/wide` the patient monitor (landscape), `#/defib`
+ * the defibrillator window (Room plan R5). Any other hash is today's learner monitor.
+ */
+export type FollowerHash = 'pick' | Extract<Instrument, 'learner' | 'monitor' | 'defib'>;
+/** What a follower page at `hash` shows (the picker, or an instrument); any hash it does not know is the learner monitor. */
+export function instrumentOf(hash: string): FollowerHash {
+  const path = hash.replace(/^#\/?/, '').replace(/\/$/, '');
+  return path === 'pick' ? 'pick' : path === 'monitor/wide' ? 'monitor' : path === 'defib' ? 'defib' : 'learner';
+}
+export const hashOf = (show: Exclude<FollowerHash, 'pick'>): string => (show === 'monitor' ? '#/monitor/wide' : show === 'defib' ? '#/defib' : '#/monitor');
+/** The QR's address ends here: the device that scans it opens the picker (Q1 ruled 5 November). */
+export const PICK_HASH = '#/pick';
+
 /** `others`: the learner address on this computer's other networks (shown under the code, for a phone the QR fails). */
 export type QrTarget = { ok: true; url: string; origin: string; others: string[] } | { ok: false; why: string };
 
 /**
- * Where phones open the learner monitor: the relay's network address when it serves the app (the instructor's page
- * may itself run on 127.0.0.1), else this page's own address if another device can reach it. A page on https cannot
- * hand phones a ws:// relay (browsers block it), and a loopback-only page is unreachable: both say why instead.
+ * The instructor phone's address (plan instructor-peer-role.md P7): `<origin><path>?relay#/remote?code=CODE` — the
+ * Remote's PIN form, its relay the page's own host (or named, when it is elsewhere). It takes no PIN and carries none:
+ * the phone's user types the PIN into the form, which never puts it in an address (views/remote.ts).
  */
-export function qrTarget(code: string, loc: PageLocation, relay: string | null, info: RelayInfo | null): QrTarget {
+export function instructorUrl(code: string, origin: string, pathname: string, relay: string | null): string {
+  const own = `${origin.replace(/^http/, 'ws')}/`;
+  return `${origin}${pathname}?relay${relay && relay !== own ? `=${encodeURIComponent(relay)}` : ''}#/remote?code=${code}`;
+}
+
+/** Where another device reaches this session: an origin, a path and the relay it names (null: the origin's own). */
+type Place = { ok: true; origin: string; pathname: string; relay: string | null; others: string[] } | { ok: false; why: string };
+
+/**
+ * Where phones open the app: the relay's network address when it serves the app (the instructor's page may itself run
+ * on 127.0.0.1), else this page's own address if another device can reach it. A page on https cannot hand phones a
+ * ws:// relay (browsers block it), and a loopback-only page is unreachable: both say why instead.
+ */
+function placeOf(loc: PageLocation, relay: string | null, info: RelayInfo | null): Place {
   if (!relay) return { ok: false, why: 'No relay is running: learners can follow on a second screen in this browser only.' };
   if (!info) return { ok: false, why: 'The relay does not answer: start the classroom (Start Classroom) and reload this page.' };
   if (info.serves) {
     const a = info.addresses[0];
     if (!a) return { ok: false, why: 'This computer is on no network: join the venue Wi-Fi or turn on the hotspot, then reload this page.' };
-    const origin = `http://${a}:${info.port}`;
-    return { ok: true, url: learnerUrl(code, origin, '/', null), origin, others: info.addresses.slice(1).map((x) => learnerUrl(code, `http://${x}:${info.port}`, '/', null)) };
+    return { ok: true, origin: `http://${a}:${info.port}`, pathname: '/', relay: null, others: info.addresses.slice(1).map((x) => `http://${x}:${info.port}`) };
   }
   if (LOOPBACK.test(loc.hostname)) return { ok: false, why: 'This address works on this computer only: start the relay with --static (Start Classroom).' };
   if (loc.protocol === 'https:' && relay.startsWith('ws:')) return { ok: false, why: 'A secure (https) page cannot send phones to a ws:// relay.' };
-  return { ok: true, url: learnerUrl(code, loc.origin, loc.pathname, relay), origin: loc.origin, others: [] };
+  return { ok: true, origin: loc.origin, pathname: loc.pathname, relay, others: [] };
+}
+
+const targetOf = (p: Place, build: (origin: string, pathname: string, relay: string | null) => string): QrTarget =>
+  p.ok ? { ok: true, url: build(p.origin, p.pathname, p.relay), origin: p.origin, others: p.others.map((o) => build(o, '/', null)) } : p;
+
+/** Where the learners' QR code sends phones: `?join=CODE#/pick`, the picker (the room sheet's addresses open it; a second
+ *  screen of this computer, `followUrl`, does not). */
+export function qrTarget(code: string, loc: PageLocation, relay: string | null, info: RelayInfo | null): QrTarget {
+  return targetOf(placeOf(loc, relay, info), (o, p, r) => learnerUrl(code, o, p, r) + PICK_HASH);
+}
+
+/** Where the instructor's QR code sends the instructor's phone: the Remote's PIN form (`?relay#/remote?code=CODE`). */
+export function instructorTarget(code: string, loc: PageLocation, relay: string | null, info: RelayInfo | null): QrTarget {
+  return targetOf(placeOf(loc, relay, info), (o, p, r) => instructorUrl(code, o, p, r));
 }
 
 /** The relay's own description, from its http side; null when it does not answer within `ms`. */

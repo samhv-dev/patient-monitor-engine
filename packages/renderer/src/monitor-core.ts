@@ -9,7 +9,8 @@ import type { Ctx2D } from './ctx.ts';
 import { AUTO_GAIN_WINDOW_S, beatAmplitude, judgeGain, newJudge, type GainJudge } from './ecg-gain.ts';
 import { drawLeadOffDashes, drawMark, Overlays, shows } from './overlays.ts';
 import type { ClockAnchor, CoreOptions, Size } from './protocol.ts';
-import { ecgLabel, formatSpeed, legacyPlan, type LaneTextPlan, type PlanLane, type RenderPlan } from './skin-plan.ts';
+import { autoIbpRange, IBP_AUTO_EVERY_S, ibpScaleError, type IbpScales } from './ibp-scale.ts';
+import { ecgLabel, formatSpeed, ibpBaseRange, legacyPlan, setIbpRange, type LaneTextPlan, type PlanLane, type RenderPlan } from './skin-plan.ts';
 import { SweepLane } from './sweep-lane.ts';
 import { autoRange, scaleFor } from './wave-lanes.ts';
 import { feedCo2Range, newCo2Range, restartCo2Range } from './co2-range.ts';
@@ -67,6 +68,12 @@ export interface CanvasTarget {
   height: number;
 }
 
+/** FX-11a: a long engine run reports progress at most this often (the frames' own posting cadence, ≤ 250 ms) [ENG]. */
+export const PROGRESS_MS = 250;
+/** …checking the time every this many ticks: 50 ticks (1 s of sim) cost ≈ 3 ms of the worker's time (measured: 10 000
+ *  ticks took 532–653 ms), so a report is never more than ≈ 3 ms late [ENG]. */
+export const PROGRESS_TICKS = 50;
+
 export class MonitorCore {
   readonly engine: MonitorEngine;
   readonly clock = new Clock();
@@ -74,6 +81,8 @@ export class MonitorCore {
   private plan: RenderPlan;
   private waveLive: boolean[] = []; // The channel had samples on the last frame
   private autoRangeT: number[] = []; // sim time of the last auto-scale, per lane
+  private ibpAutoB: number[] = []; // E130: the sim-time boundary an IBP lane's AUTO last judged (NaN = judge at the next frame)
+  private ibpScratch = new Float32Array(0); // two AUTO windows of one IBP channel, sized on first use
   private readonly plethScratch = new Float32Array(1250); // 10 s at 125 Hz
   private readonly gainScratch = new Float32Array(AUTO_GAIN_WINDOW_S * 500);
   private heldScratch = new Float32Array(0); // heldFrom's read, sized on first use
@@ -167,6 +176,21 @@ export class MonitorCore {
     this.layout();
   }
 
+  /**
+   * E130: the IBP1/IBP2 lane scales (a channel left out is the skin's fixed scale; a refused one is ignored). A fixed or
+   * typed range is drawn at once; AUTO is judged at the next frame from the windows before the last boundary.
+   */
+  setIbpScales(scales: IbpScales): void {
+    this.plan.lanes.forEach((pl, i) => {
+      if (!pl.ibp) return;
+      const want = scales[pl.ibp.channel] ?? { mode: 'fixed' as const };
+      if (ibpScaleError(want) !== null) return;
+      pl.ibp.scale = want.mode === 'custom' ? { mode: 'custom', lower: want.lower, upper: want.upper } : { mode: want.mode };
+      this.ibpAutoB[i] = Number.NaN;
+      if (want.mode !== 'auto') this.rescaleIbp(i, ibpBaseRange(pl.ibp));
+    });
+  }
+
   /** The 12-lead capture of the last 10 s (brief §6.6). */
   capture12(): Capture12 {
     return capture12(this.engine);
@@ -236,6 +260,29 @@ export class MonitorCore {
   }
 
   /**
+   * FX-11a: called during a long engine run (a fast-forward step, a hidden-tab catch-up) at most every PROGRESS_MS of
+   * work, so the worker can tell the page it is working (the watchdog judges the worker by its own progress). Unset on the
+   * main thread: nothing to tell.
+   */
+  onProgress: (() => void) | null = null;
+
+  /** The engine to `simT`, in slices of PROGRESS_TICKS with a progress report every PROGRESS_MS of wall time between
+   *  them. A slice boundary changes nothing in the run: the engine steps tick by tick either way. */
+  private runTo(simT: number): void {
+    const report = this.onProgress;
+    if (!report) return void this.engine.advanceTo(simT);
+    let at = performance.now();
+    while (this.engine.now().simT < simT - 1e-9) {
+      this.engine.advanceTo(Math.min(simT, this.engine.now().simT + PROGRESS_TICKS * 0.02));
+      const now = performance.now();
+      if (now - at >= PROGRESS_MS) {
+        report();
+        at = now;
+      }
+    }
+  }
+
+  /**
    * Hidden tab (brief §3.3): advance sim time by the FULL wall delta (no 250 ms clamp), without drawing.
    * The lanes restart cleanly on the next drawn frame because the jump exceeds one lane.
    */
@@ -243,7 +290,7 @@ export class MonitorCore {
     const dt = this.lastEpoch === null ? 0 : Math.max(0, epochMs - this.lastEpoch);
     this.lastEpoch = epochMs;
     if (this.clock.paused || dt === 0 || this.ffWasPaused !== null) return;
-    if (this.clock.advanceUnclamped(dt) > 0) this.engine.advanceTo(this.clock.simT); // Remainder carried
+    if (this.clock.advanceUnclamped(dt) > 0) this.runTo(this.clock.simT); // Remainder carried
     // Post what was generated while hidden, so the batch does not grow without frames.
     this.post({ simT: this.clock.renderT, epochMs, timeScale: this.clock.timeScale }, this.batch);
     this.batch = [];
@@ -262,7 +309,7 @@ export class MonitorCore {
       this.ffWasPaused = this.clock.paused;
       this.clock.pause();
     }
-    if (this.clock.step(ticks) > 0) this.engine.advanceTo(this.clock.simT);
+    if (this.clock.step(ticks) > 0) this.runTo(this.clock.simT);
     this.overlays.due(this.clock.renderT); // marks from the skipped span are not drawn
     if (last) {
       if (!this.ffWasPaused) this.clock.resume();
@@ -439,7 +486,42 @@ export class MonitorCore {
       const [lo, hi] = autoRange(this.plethScratch, n, ch === 'resp' ? RESP_MIN_SPAN : undefined);
       Object.assign(lane.cfg, scaleFor(lo, hi, lane.cfg.height, this.pxPerMm));
     }
+    if (pl.ibp?.scale.mode === 'auto') this.judgeIbp(pl, i, t, ch);
     lane.draw(this.ctx, t, (from, out) => this.engine.readSamples(ch, from, out), () => this.heldFrom(ch));
+  }
+
+  /**
+   * E130 AUTO: once per IBP_AUTO_EVERY_S boundary of sim time, the range for the two windows before it. It reads mmHg
+   * samples only, never the lane's height, so every window on the same engine build (the instructor's, a second screen,
+   * a phone) draws the same range from the same boundary. Under a second of signal: the skin's fixed scale.
+   */
+  private judgeIbp(pl: PlanLane, i: number, t: number, ch: ChannelId): void {
+    const b = Math.floor(t / IBP_AUTO_EVERY_S + 1e-9) * IBP_AUTO_EVERY_S;
+    if (b === this.ibpAutoB[i]) return;
+    this.ibpAutoB[i] = b;
+    const rate = this.engine.sampleRate(ch);
+    const end = Math.round(b * rate);
+    const from = Math.max(end - 2 * Math.round(IBP_AUTO_EVERY_S * rate), this.heldFrom(ch));
+    const n = Math.max(0, end - from);
+    if (this.ibpScratch.length < n) this.ibpScratch = new Float32Array(n);
+    const got = n > 0 ? this.engine.readSamples(ch, from, this.ibpScratch.subarray(0, n)) : 0;
+    const ibp = pl.ibp as NonNullable<PlanLane['ibp']>;
+    const r = autoIbpRange(this.ibpScratch, got, rate, ibp.channel) ?? ibpBaseRange(ibp);
+    if (r[0] !== pl.range?.[0] || r[1] !== pl.range?.[1]) this.rescaleIbp(i, r);
+  }
+
+  /** Redraw IBP lane i on a new range: its scale, its dotted lines, its printed values, the trace backfilled. */
+  private rescaleIbp(i: number, range: [number, number]): void {
+    const pl = this.plan.lanes[i] as PlanLane;
+    const same = pl.range?.[0] === range[0] && pl.range?.[1] === range[1];
+    setIbpRange(pl, range);
+    const lane = this.lanes[i];
+    if (!lane || same) return;
+    Object.assign(lane.cfg, scaleFor(range[0], range[1], lane.cfg.height, this.pxPerMm), {
+      hLines: pl.scaleLines ? { values: pl.scaleLines, color: this.plan.scaleLineColor ?? pl.color } : null,
+    });
+    lane.reset(this.ctx);
+    this.drawChrome([i]);
   }
 
   /**
@@ -488,6 +570,7 @@ export class MonitorCore {
     });
     this.waveLive = p.lanes.map(() => false);
     this.autoRangeT = p.lanes.map(() => -1);
+    this.ibpAutoB = p.lanes.map(() => Number.NaN);
     this.drawChrome(p.lanes.map((_, i) => i));
     this.rightGen = this.lanes.map((l) => l.generation);
   }

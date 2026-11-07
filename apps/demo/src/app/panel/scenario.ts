@@ -6,7 +6,7 @@ import { LIBRARY, cardOf, type ScenarioCard } from '../scenarios.ts';
 import { CATEGORIES } from '../scenario-meta.ts';
 import { drugWords } from '../glossary.ts';
 import { countdown, transitionText } from '../triggers.ts';
-import { button, clock, confirmDialog, h, setText, toast, toggle } from '../ui.ts';
+import { button, clock, confirmDialog, h, keepOrder, setText, toast } from '../ui.ts';
 import { scenarioCard } from '../cards.ts';
 import { bookmark } from '../commands.ts';
 import type { PanelCtx } from './ctx.ts';
@@ -46,16 +46,6 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
   const library = h('section', { 'aria-label': 'Scenario library' }, h('div', { class: 'scard-head' }, h('h3', {}, 'Scenario library'), back), chips, cards);
 
   // ---- run view ----
-  // Learner controls under the learner monitor: off by default, on for this run (host only)
-  const host = link.host;
-  const learnerToggle = host
-    ? toggle('Learner controls on the monitor', host.learner, (on) => {
-        host.setLearner(on);
-        link.note(on ? 'Learner controls shown on the monitor' : 'Learner controls hidden', 'system');
-      }, 'small')
-    : null;
-  host?.onLearner((on) => learnerToggle?.set(on));
-  const learnerRow = learnerToggle ? h('div', { class: 'row' }, learnerToggle, h('span', { class: 'hint' }, 'Charge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.')) : null;
   const title = h('h3', {});
   const story = h('p', { class: 'hint' });
   const strip = h('ol', { class: 'states', 'aria-label': 'Scenario states' });
@@ -68,7 +58,6 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
     h('div', { class: 'scard-head' }, title, button('Choose another scenario', () => ((choosing = true), (chosenV = sv.docVersion), (run.hidden = true), (library.hidden = false), (back.hidden = false)), 'ghost small')), story,
     strip,
     h('div', { class: 'row' }, h('span', {}, 'Time in state '), inState, hold, button('Bookmark', () => void bookmark(link), 'small')),
-    learnerRow,
     h('h3', {}, 'What happens next'), next,
     h('h3', {}, 'Objectives'), objectives,
     h('h3', {}, 'Bookmarks'), marks,
@@ -91,7 +80,23 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
     const cmd: CommandInput = { type: 'scenario', action: 'trigger', target: tr.id };
     const r = await link.ctl.send(cmd); // not link.send: that logs a refused command too
     if (r.accepted) link.note(describeCommand(cmd as Record<string, unknown>), 'instructor');
+    else if (r.code === 'recent') toast(`${label}: not given (${r.reason ?? 'refused'}). Press again after the lock.`); // drug-lock.ts
     else moved();
+  };
+
+  // The dropped press: the strip, "What happens next" and the bookmarks were rebuilt on every repaint, so a press whose
+  // down and up straddled one landed on a removed button and never happened (WebKit seen). Each item is kept by its key
+  // and updated in place; only an item whose place changed is moved (keepOrder).
+  const stateItems = new Map<string, { li: HTMLElement; cur: boolean | null }>();
+  const nextItems = new Map<string, { li: HTMLElement; text: HTMLElement; left: HTMLElement }>();
+  const markItems = new Map<string, HTMLElement>();
+  const keyed = <T>(m: Map<string, T>, keys: readonly string[], make: (k: string) => T): T[] => {
+    for (const k of [...m.keys()]) if (!keys.includes(k)) m.delete(k);
+    return keys.map((k) => {
+      let x = m.get(k);
+      if (x === undefined) m.set(k, (x = make(k)));
+      return x;
+    });
   };
 
   c.onRefresh(() => {
@@ -115,28 +120,45 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
         return h('li', {}, h('label', { class: 'check', for: id }, box, words));
       }));
     }
-    strip.replaceChildren(...(asV1(doc)?.states ?? []).map((s) => { // a pme-scenario/2 card: no states (F6, Q23)
+    const states = asV1(doc)?.states ?? []; // a pme-scenario/2 card: no states (F6, Q23)
+    const sItems = keyed(stateItems, states.map((s) => `${docV}|${s.id}`), () => ({ li: h('li', {}), cur: null }));
+    states.forEach((s, i) => {
+      const it = sItems[i] as { li: HTMLElement; cur: boolean | null };
       const label = s.label ?? 'State';
       const cur = s.id === sv.stateId;
-      return h('li', cur ? { 'aria-current': 'step' } : {}, cur ? label : h('button', { type: 'button', class: 'linkish', onclick: () => void jump(s.id, label), 'aria-label': `Jump to ${label}` }, label));
-    }));
+      if (it.cur === cur) return; // drawn as it is: the jump button stays the same node
+      it.cur = cur;
+      it.li.toggleAttribute('aria-current', cur);
+      if (cur) it.li.setAttribute('aria-current', 'step');
+      it.li.replaceChildren(cur ? label : h('button', { type: 'button', class: 'linkish', onclick: () => void jump(s.id, label), 'aria-label': `Jump to ${label}` }, label));
+    });
+    keepOrder(strip, sItems.map((x) => x.li));
     const t = sv.timeInState(link.simT);
     setText(inState, clock(t));
     hold.textContent = sv.paused ? 'Resume the timer' : 'Hold the timer';
     const cur = sv.current();
-    next.replaceChildren(...(cur?.transitions ?? []).map((tr) => {
+    const trs = cur?.transitions ?? [];
+    // keyed by the state, the transition and its button's label: the button is made once and pressed by that label
+    const nItems = keyed(nextItems, trs.map((tr) => `${sv.stateId}|${tr.id}|${manualOf(tr.when) ?? ''}`), (k) => {
+      const manual = k.slice(k.lastIndexOf('|') + 1);
+      const text = h('span', {});
+      const left = h('span', { class: 'num muted' });
+      return { li: h('li', {}, text, left, manual ? button(manual, () => void press(manual), 'small') : null), text, left };
+    });
+    trs.forEach((tr, i) => {
+      const it = nItems[i] as { text: HTMLElement; left: HTMLElement };
       const left = countdown(tr, t, link.simT);
-      const manual = manualOf(tr.when);
-      return h('li', {},
-        h('span', {}, transitionText(tr, doc)), left !== null ? h('span', { class: 'num muted' }, ` in ${clock(left)}`) : null,
-        manual ? button(manual, () => void press(manual), 'small') : null);
-    }));
+      setText(it.text, transitionText(tr, doc));
+      setText(it.left, left !== null ? ` in ${clock(left)}` : '');
+      it.left.hidden = left === null;
+    });
+    keepOrder(next, nItems.map((x) => x.li));
     // A restore rewinds the waveforms, trends, clocks and pending groups, so "Return here" is shown (it was
     // hidden while a restore left the screen on the discarded timeline)
-    marks.replaceChildren(...link.ctl.bookmarks.map((b) => h('li', {}, b, ' ', button('Return here', async () => {
+    const bms = link.ctl.bookmarks.length ? link.ctl.bookmarks : [''];
+    keepOrder(marks, keyed(markItems, bms, (b) => (b ? h('li', {}, b, ' ', button('Return here', async () => {
       if (await confirmDialog('Return to this bookmark?', `The patient goes back to "${b}". The clock goes back with it.`, 'Return', false, 'Stay here')) void link.send({ type: 'scenario', action: 'restoreBookmark', target: b });
-    }, 'ghost small'))));
-    if (!link.ctl.bookmarks.length) marks.replaceChildren(h('li', { class: 'muted' }, 'No bookmarks yet (Shift+B)'));
+    }, 'ghost small')) : h('li', { class: 'muted' }, 'No bookmarks yet (Shift+B)'))));
   });
 
   drawLib();

@@ -3,9 +3,10 @@
 // for the engine events the session does not keep (alarmStatus, deviceStatus), plus the clinical log. On the host
 // document `host` is the AppSession (patient restart, skin, sound); a Remote has none of those.
 import type { AlarmEntry, EngineEvent } from '@pme/engine-core';
-import { asV1, isV2, manualLabel, StageBuffer, type AckResult, type CommandInput, type ControllerSession, type ManagedTransport, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
+import { asV1, isV2, manualLabel, StageBuffer, WIRE_LIMITS, type AckResult, type CommandInput, type ControllerSession, type ManagedTransport, type NoteEvent, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
 import { describeCommand, spanText, timeText } from './describe.ts';
 import type { AppSession } from './session.ts';
+import type { ViewFeed } from './teach2/feed.ts';
 
 export type AlarmStatusEvent = Extract<EngineEvent, { type: 'alarmStatus' }>;
 export type DeviceStatusEvent = Extract<EngineEvent, { type: 'deviceStatus' }>;
@@ -16,6 +17,8 @@ export interface ClinicalLogEntry {
   text: string;
   /** Rejected by the engine: the reason, in the log only. */
   refused?: string;
+  /** The run event a note is, into the record with it (D5: 'recognised', the /1 Recognised press). */
+  ev?: NoteEvent;
 }
 
 export class Link {
@@ -28,6 +31,11 @@ export class Link {
   readonly ramps = new Map<string, { t0: number; dur: number; to: number }>();
   /** Acute events started from this panel (Task 26): id → severity. The engine does not report them, so a Remote sees only its own. */
   readonly conditions = new Map<string, number>();
+  /**
+   * The host's view feed (plan instructor-peer-role.md §6, teach2/feed.ts): the last `instructorView` body, on a remote
+   * only (the host reads its originals). Instructor v2 reads it through `viewNow()`.
+   */
+  view: ViewFeed | null = null;
   private readonly fns = new Set<() => void>();
   private readonly offs: Array<() => void>;
   private lastRaised = new Set<string>();
@@ -93,8 +101,26 @@ export class Link {
     }
   }
 
-  note(text: string, kind: ClinicalLogEntry['kind'] = 'note'): void {
-    this.add({ simT: this.simT, kind, text });
+  /**
+   * A line of the clinical log. A note or a marker (a judged objective) goes into the debrief: on the host into its
+   * record (`add`), and from a remote as the `note` command (plan §6), which the host files with this same call, at its
+   * own sim time `t`. `ev`: the run event the note is (D5: 'recognised', the /1 Recognised press), into the record
+   * with it; a remote's `note` command carries it (brief 52), so the host files the phone's press as the laptop's.
+   */
+  note(text: string, kind: ClinicalLogEntry['kind'] = 'note', t: number = this.simT, ev?: ClinicalLogEntry['ev']): void {
+    this.add({ simT: t, kind, text, ...(ev ? { ev } : {}) });
+    if (this.host || (kind !== 'note' && kind !== 'marker')) return;
+    // the guard's limit (guard.ts): a longer note would be dropped on the wire and re-sent until it timed out
+    if (text.length > WIRE_LIMITS.noteChars) return this.add({ simT: t, kind: 'system', text: `Not sent to the debrief: the note is longer than ${WIRE_LIMITS.noteChars} characters` });
+    void this.ctl.send({ type: 'note', kind, text, ...(ev ? { ev } : {}) });
+  }
+
+  /** The host's view feed for the state this remote's scenario view is in, else null (on the host, with no feed yet,
+   *  or while the state event has outrun the next feed): the reader then reads what it has, as before the feed. */
+  viewNow(): ViewFeed | null {
+    const v = this.view;
+    const sv = this.ctl.scenario;
+    return !this.host && v && v.stateId === sv.stateId && v.docId === (sv.doc?.id ?? null) ? v : null;
   }
 
   onChange(fn: () => void): () => void {
@@ -108,7 +134,7 @@ export class Link {
 
   /** The highest active alarm level (1 = high) and how many alarms are active. */
   get alarmSummary(): { level: 1 | 2 | 3 | null; n: number; top: AlarmEntry | null } {
-    const act = (this.alarms?.active ?? []).filter((a) => !a.acked || a.latched);
+    const act = (this.alarms?.active ?? []).filter((a) => (!a.acked || a.latched) && !a.prompt); // A prompt is not an alarm (MUI-7)
     const top = [...act].sort((a, b) => a.level - b.level)[0] ?? null;
     return { level: top ? top.level : null, n: act.length, top };
   }
@@ -120,6 +146,10 @@ export class Link {
       const now = new Set(a.active.map((x) => x.id));
       for (const x of a.active) if (!this.lastRaised.has(x.id)) this.add({ simT: a.t, kind: 'alarm', text: x.text });
       this.lastRaised = now;
+      this.changed();
+    } else if (e.type === 'instructorView') {
+      if (this.host) return; // the host reads its originals; the body is the host's own
+      this.view = e.body as ViewFeed;
       this.changed();
     } else if (e.type === 'deviceStatus') {
       this.device = e as unknown as DeviceStatusEvent;
@@ -145,7 +175,7 @@ export class Link {
   }
 
   private add(x: ClinicalLogEntry): void {
-    if (x.kind === 'note' || x.kind === 'marker') this.host?.record.note(x.simT ?? this.simT, x.text); // Into the debrief
+    if (x.kind === 'note' || x.kind === 'marker') this.host?.record.note(x.simT ?? this.simT, x.text, x.ev); // Into the debrief
     this.log.push(x);
     if (this.log.length > 1000) this.log.splice(0, this.log.length - 1000);
     this.changed();

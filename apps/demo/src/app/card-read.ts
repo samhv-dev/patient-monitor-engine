@@ -3,7 +3,8 @@
 // the command a step sends, the objectives that ride on a step, and reachability on the card graph. One module for the
 // panel and the debrief, so both read the card the same way. Pure: no DOM, no session; it reads `pme-scenario/1` as the
 // cards already carry it. A `pme-scenario/2` card has no states (plan F1): its stages are its PHASES and its rows its
-// open actions, its judged rows and the rules out of the phase (F6); every /1-only reader gives it the empty answer.
+// open actions and the rules out of the phase (F6; judged rows are retired on /2, the owner's ruling of 5 November: a
+// team act the instructor observes is a record action); every /1-only reader gives it the empty answer.
 import { isV2, manualLabel, type AnyScenarioDoc, type CommandInput, type ScenarioDoc, type ScenarioState, type Transition, type When } from '@pme/controller';
 import type { Action, PhaseRule, ScenarioDocV2 } from '@pme/controller/scenario';
 import { HOP_MAX_S, isHop, type ObjectiveRule, type RunEventId } from '@pme/controller/scenario';
@@ -268,23 +269,9 @@ export function untakenStatus(doc: AnyScenarioDoc, tr: Transition, at: { stateId
 /** A scenario history as ScenarioView keeps it: `{ t, stateId, transitionId? }`, oldest first. */
 export type History = ReadonlyArray<{ t: number; stateId: string; transitionId?: string }>;
 
-/**
- * The history with the card's start in front. A load publishes its first state before its own commandApplied, and
- * ScenarioView's history restarts on that commandApplied, so the history begins at the first transition and the
- * initial state's entry is missing (record.ts keeps it the same way: `held`). This puts it back at `startT` (the run
- * record's entry of the initial state on the host), so the strip gives the first stage its time and ACTION's Finished
- * its taken step. Unchanged when the history is empty or already begins at the start.
- */
-export function withStart(doc: AnyScenarioDoc, history: History, startT: number): History {
-  if (isV2(doc)) return history;
-  const h0 = history[0];
-  if (!h0 || (h0.stateId === doc.initialState && h0.transitionId === undefined) || h0.t < startT) return history;
-  return [{ t: startT, stateId: doc.initialState }, ...history];
-}
-
 // ---- a pme-scenario/2 card (plan F6) ----
 
-/** The open actions of phase `phaseId` (in the card's order), then its judged rows, then the rules out of the phase: the
+/** The open actions of phase `phaseId` (in the card's order), then the rules out of the phase: the
  *  /2 rows of the ACTION list. An action is open in the phases it names (design §5); the panel never refuses anything
  *  else, which the sheets give. */
 export function phaseRowsOf(doc: ScenarioDocV2, phaseId: string): Row[] {
@@ -292,31 +279,36 @@ export function phaseRowsOf(doc: ScenarioDocV2, phaseId: string): Row[] {
     kind: 'step', n: i + 1, index: doc.actions.indexOf(a), tr: { id: `action:${a.id}`, to: phaseId, when: { manual: { label: a.label } } },
     label: a.label, title: a.label, subtitle: actionWords(a), actionId: a.id,
   }));
-  const judged: Row[] = (doc.judged ?? []).map((j, i) => ({ kind: 'judged', n: steps.length + i + 1, objective: i, text: j.text, title: drugWords(j.text), subtitle: 'you judge it' }));
   const phase = doc.phases.find((p) => p.id === phaseId);
   const autos: Row[] = (phase?.next ?? []).flatMap((id, index) => {
     const p = doc.phases.find((x) => x.id === id);
     if (!p?.enter) return [];
     return [{ kind: 'auto', index, tr: { id: `enter:${id}`, to: id, when: { manual: { label: p.label } } }, trigger: 'other', title: p.label, subtitle: `${p.cue ? `${p.cue} · ` : ''}when ${phaseRuleWords(p.enter, doc)}${p.holdS ? `, held ${p.holdS} s` : ''}` } as Row];
   });
-  return [...steps, ...judged, ...autos];
+  return [...steps, ...autos];
 }
 
-/** A /2 action's prescription in words, for its row's subtitle ("not graded" for a setup action). */
+/** A /2 action's prescription in words, for its row's subtitle ("not graded" for a setup action; "preparation: recorded, no
+ *  verdict" for a preparation step, owner 5 November). */
 export function actionWords(a: Action): string {
   const parts: string[] = [];
   const d = a.drug?.dose;
   if (d?.min !== undefined && d.max !== undefined) parts.push(`${d.min}–${d.max} ${d.unit}`);
   if (a.drug?.route) parts.push(a.drug.route.set.map((r) => r.toUpperCase()).join('/'));
-  if (a.window) parts.push(`within ${Math.round(a.window.withinS / 60 * 10) / 10} min of ${anchorWords(a.window.anchor)}`);
+  const min = (x: number) => Math.round(x / 60 * 10) / 10;
+  if (a.window) parts.push(`within ${min(a.window.withinS)} min of ${anchorWords(a.window.anchor)}${a.window.failAfterS ? `, failed after ${min(a.window.failAfterS)} min` : ''}`);
   if (a.precondition) parts.push(`when ${phaseRuleWords(a.precondition)}`);
   if (a.repeatWhile) parts.push(`again every ${Math.round((a.repeatWhile.intervalS.min ?? 0) / 60)}–${Math.round((a.repeatWhile.intervalS.max ?? 0) / 60)} min while ${phaseRuleWords(a.repeatWhile.rule)}`);
-  if (a.graded === false) parts.push('not graded');
+  const iv = a.repeat?.intervalS;
+  if (iv) parts.push(iv.min !== undefined && iv.max !== undefined ? `again every ${min(iv.min)}–${min(iv.max)} min` : `again every ${min(iv.value ?? iv.min ?? 0)} min`);
+  if (a.preparation) parts.push('preparation: recorded, no verdict');
+  else if (a.graded === false) parts.push('not graded');
   return parts.join(' · ') || 'press to give';
 }
 
 function anchorWords(x: Action['window'] extends infer W ? (W extends { anchor: infer A } ? A : never) : never): string {
-  if (typeof x !== 'string') return phaseRuleWords(x.rule);
+  if (typeof x !== 'string') return 'first' in x ? `the first of ${x.first.map((y) => anchorWords(y)).join(' or ')}` : 'display' in x ? `the monitor showing ${phaseRuleWords(x.display as PhaseRule)}` : phaseRuleWords(x.rule);
+  if (x.startsWith('each:action:')) return `each "${x.slice(12)}"`;
   if (x === 'start') return 'the start';
   if (x === 'pulseLoss') return 'the pulse loss';
   if (x === 'rosc') return 'ROSC';
@@ -326,7 +318,7 @@ function anchorWords(x: Action['window'] extends infer W ? (W extends { anchor: 
 
 const VAR_WORDS: Record<string, string> = {
   etco2: 'EtCO₂', hr: 'HR', tempCore: 'core temperature', mhActivity: 'MH activity', mhExcess: 'MH metabolic excess', ph: 'pH', dantroleneE: 'dantrolene effect',
-  setMinuteVentilationLMin: 'set minute ventilation', k: 'K⁺', sbp: 'SBP', map: 'MAP', spo2: 'SpO₂', lactate: 'lactate',
+  setMinuteVentilationLMin: 'set minute ventilation', k: 'K⁺', sbp: 'SBP', abpSys: 'arterial systolic', nibpSys: 'cuff systolic', map: 'MAP', spo2: 'SpO₂', lactate: 'lactate',
 };
 const varWords = (v: string): string => VAR_WORDS[v] ?? v;
 

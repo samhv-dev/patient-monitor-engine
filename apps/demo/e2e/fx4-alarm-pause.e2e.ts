@@ -4,7 +4,7 @@
 // is enabled and pauses the alarms for the skin's time. Both browsers.
 import { expect, test } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
-import { openApp, startVite, tab } from './app-support.ts';
+import { openApp, sheet, startVite, TEACH2 } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -16,18 +16,18 @@ const REASON = 'This monitor has no alarm pause. Silence mutes for 120 s.';
 
 test('alarm pause follows the skin: disabled with a reason on Saadat-like, refusals shown, enabled on Philips-like', async ({ page }) => {
   test.setTimeout(90_000);
-  await openApp(page, base, '#/teach', { warmMs: 1000 });
-  await tab(page, 'devices');
+  await openApp(page, base, TEACH2, { warmMs: 1000 });
+  const panel = await sheet(page, 'devices'); // Instructor v2's Devices sheet: today's Devices & alarms body
   await expect.poll(() => page.evaluate(() => (window as unknown as W).__pmeApp.link.alarms?.skin ?? null), { timeout: 20_000 }).toBe('saadat-like');
 
-  const pause = page.getByRole('button', { name: 'Pause alarms' });
+  const pause = panel.getByRole('button', { name: 'Pause alarms' });
   await expect(pause).toBeVisible(); // shown, never hidden silently
   await expect(pause).toBeDisabled();
   await expect(pause).toHaveAccessibleDescription(REASON);
-  await expect(page.locator('.panel').getByText(REASON)).toBeVisible();
+  await expect(panel.getByText(REASON)).toBeVisible();
 
   // the keyboard shortcut still reaches the engine; its refusal is said, in clinical words, with no skin id
-  await page.locator('.panel h3', { hasText: 'Alarms' }).click();
+  await panel.locator('h3', { hasText: 'Alarms' }).click();
   await page.keyboard.press('Shift+P');
   await expect(page.locator('.toasts')).toContainText(`Not done: ${REASON}`);
   await expect(page.locator('.toasts')).not.toContainText('saadat-like');
@@ -35,8 +35,9 @@ test('alarm pause follows the skin: disabled with a reason on Saadat-like, refus
   // a monitor that has a pause: the control is offered and works
   await page.evaluate(() => (window as unknown as W).__pmeApp.session.setSkin('philips-like', ''));
   await expect(pause).toBeEnabled({ timeout: 20_000 });
-  await expect(page.locator('.panel').getByText(REASON)).toBeHidden();
+  await expect(panel.getByText(REASON)).toBeHidden();
   await pause.click();
   await expect(page.locator('.toasts')).toContainText('Alarms paused');
-  await expect(page.locator('.panel p[role=status]')).toContainText(/Alarms paused, 0[12]:\d\d left/, { timeout: 20_000 });
+  // the alarm-pause status line; the tab's other status lines are the IBP scale modes (E130, `data-ibp-now`)
+  await expect(panel.locator('p[role=status]:not([data-ibp-now])')).toContainText(/Alarms paused, 0[12]:\d\d left/, { timeout: 20_000 });
 });

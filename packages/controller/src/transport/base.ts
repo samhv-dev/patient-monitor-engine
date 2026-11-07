@@ -9,6 +9,7 @@ export abstract class TransportBase implements ManagedTransport {
   private readonly msgFns = new Set<(m: WireMessage) => void>();
   private readonly statusFns = new Set<(s: TransportStatus) => void>();
   private readonly presenceFns = new Set<(p: { hostOnline: boolean }) => void>();
+  private readonly peerLeftFns = new Set<(from: string) => void>();
   private readonly relayFns = new Set<(f: RelayFrame) => void>();
   private current: TransportStatus = 'connecting';
   protected closed = false;
@@ -73,6 +74,19 @@ export abstract class TransportBase implements ManagedTransport {
     if (this.closed && s !== 'closed') return;
     this.current = s;
     for (const fn of [...this.statusFns]) fn(s);
+  }
+
+  /** R29: a peer left the link's room (only a link to a relay calls peerLeft()). */
+  onPeerLeft(fn: (from: string) => void): () => void {
+    this.peerLeftFns.add(fn);
+    return () => {
+      this.peerLeftFns.delete(fn);
+    };
+  }
+
+  protected peerLeft(from: string): void {
+    if (this.closed) return;
+    for (const fn of [...this.peerLeftFns]) fn(from);
   }
 
   protected presence(p: { hostOnline: boolean }): void {

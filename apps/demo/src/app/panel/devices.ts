@@ -4,6 +4,8 @@
 // alarm-inhibit meaning in words with a countdown. Sensors attach and detach per channel (Laerdal: traces appear only
 // once attached). FX-4: the alarm keys follow the skin — a key the modelled monitor lacks (Saadat-like has no alarm
 // pause) is shown disabled with the reason, and every refused alarm action is said in a toast.
+// On the host, the "Learner controls on the monitor" switch (moved here from the Scenario tab when Instructor v2 became
+// the only instructor view, plan retire-instructor-v1 G1): one body, so v2's Devices sheet and today's tab both carry it.
 import type { SensorId } from '@pme/engine-core';
 import { alarmCaps, alarmRefusal, noPauseReason } from '../alarm-caps.ts';
 import { alarmLine } from '../alarms.ts';
@@ -12,6 +14,7 @@ import { nibpStartCommand } from '../patients.ts';
 import { LEVEL_MARK, LEVEL_NAME } from '../shell.ts';
 import { button, clock, h, select, setText, toast, toggle } from '../ui.ts';
 import type { PanelCtx } from './ctx.ts';
+import { ibpScalesControl } from './ibp-scales.ts';
 
 const CHANNELS: ReadonlyArray<[SensorId, 'on' | 'connected']> = [['ecg', 'on'], ['spo2', 'on'], ['nibp', 'on'], ['co2', 'on'], ['temp', 'on'], ['abp', 'connected'], ['cvp', 'connected'], ['pap', 'connected']];
 
@@ -92,7 +95,22 @@ export function devicesTab(c: PanelCtx): HTMLElement {
     void dev(Number(v) > 0 ? { device: 'nibp', action: 'auto', intervalMin: Number(v) } : { device: 'nibp', action: 'manual' }));
   const nibp = h('div', { class: 'row' }, button('Start NIBP now', () => void dev({ device: 'nibp', action: 'start' })), interval.el);
 
+  // ---- IBP lane scales (E130) ----
+  const scales = ibpScalesControl(host);
+
+  // ---- learner controls (moved here from the Scenario tab, retire-instructor-v1 G1) ----
+  // Learner controls under the learner monitor: off by default, on for this run (host only)
+  const learnerToggle = host
+    ? toggle('Learner controls on the monitor', host.learner, (on) => {
+        host.setLearner(on);
+        link.note(on ? 'Learner controls shown on the monitor' : 'Learner controls hidden', 'system');
+      }, 'small')
+    : null;
+  host?.onLearner((on) => learnerToggle?.set(on));
+  const learnerRow = learnerToggle ? h('div', { class: 'row' }, learnerToggle, h('span', { class: 'hint' }, 'Charge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.')) : null;
+
   c.onRefresh(() => {
+    scales.refresh();
     followSkin();
     followSensors();
     const a = link.alarms;
@@ -119,5 +137,6 @@ export function devicesTab(c: PanelCtx): HTMLElement {
   });
 
   return h('div', {}, h('h3', {}, 'Alarms'), status, list, live, actions, pauseWhy, h('h3', {}, 'Sensors'), h('p', { class: 'hint' }, 'A trace appears on the monitor only while its sensor is attached.'),
-    remoteHint, sensors, h('h3', {}, 'NIBP'), nibp);
+    remoteHint, sensors, h('h3', {}, 'NIBP'), nibp, h('h3', {}, 'Pressure scales'), scales.el,
+    learnerRow ? h('h3', {}, 'Learner controls') : null, learnerRow);
 }

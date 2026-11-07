@@ -28,8 +28,8 @@ import { rowsOf, stagesOf, type Stage } from '../card-read.ts';
 import type { Link } from '../link.ts';
 import { clock, h, setText, toast } from '../ui.ts';
 import { NO_CASE } from './begin.ts';
+import { entriesOf, firedOf } from './feed.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
-import { historyOf } from './course.ts';
 
 /** The chips in view (the owner's ruling for IP9): the KEEP_PAST stages before the current one, the current one and
  *  the KEEP_NEXT after it; the rest fold behind the arrows "‹ n earlier" and "n later ›". */
@@ -189,10 +189,11 @@ export function stripModel(doc: AnyScenarioDoc, stateId: string | null, entries:
  * each stage entry once the stage's onEnter is applied (ScenarioDriver.stageMarks(): kind `stage`, note = the stage's
  * state id), keeps only the marks of the current course (a restore drops the discarded course's) and one per entry, so
  * the stage's mark is the latest one with its note, however late it was placed (a fast-forward, a busy monitor). A
- * follower has no driver: null.
+ * follower has no driver: null. A remote reads the label from the host's view feed (feed.ts `marks`), so its return
+ * restores the host's mark; without a feed, null.
  */
 export const stageMarks: { of(link: Link, entry: StageEntry): string | null } = {
-  of: (link, entry) => (link.host?.driver.stageMarks() ?? []).filter((c) => c.note === entry.stage).at(-1)?.target ?? null,
+  of: (link, entry) => (link.host ? (link.host.driver.stageMarks().filter((c) => c.note === entry.stage).at(-1)?.target ?? null) : (link.viewNow?.()?.marks[entry.stage] ?? null)),
 };
 
 /** Today's jump, copied from panel/scenario.ts `jump` without its confirm (the strip's box is the confirmation): the
@@ -322,9 +323,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       return;
     }
     if (docV !== sv.docVersion) (docV = sv.docVersion), (offset = 0), (names = stageNames(stagesOf(doc))), closePop();
-    const history = historyOf(link);
-    const entries = stageEntries(doc, history, sv, link.simT);
-    const items = stripModel(doc, sv.stateId, entries, offset, firedInStage(history, entries.at(-1), link.simT));
+    const entries = entriesOf(link); // the host's on a remote with its view feed (feed.ts)
+    const items = stripModel(doc, sv.stateId, entries, offset, firedOf(link, entries));
     const key = JSON.stringify([docV, offset, items.map((x) => (x.kind === 'fold' || x.kind === 'later' ? [x.kind, x.n] : x.kind === 'future' ? x.stages.map((g) => g.id) : [x.stage.id, x.entry?.t, x.kind === 'current' ? x.open : 0]))]);
     if (key === drawn) return; // the strip changes with the state, not with the clock: no redraw at 1 Hz
     drawn = key;

@@ -4,15 +4,19 @@
 // from the glossary and the alarm table. Also the one-row-per-minute table, the card's steps with their status, the
 // instructor's judged objectives and the marks (Instructor v2, IP8), and the export's shape (written by
 // `debrief-export.ts`). A pme-scenario/2 run (plan F7) has no objectives and no steps: its report is the grade()
-// of the controller on the inputs the record copied (the panel's function), as actions, outcomes, violations and judged
-// rows (`pme-debrief/3`). No DOM.
+// of the controller on the inputs the record copied (the panel's function), as actions, outcomes and violations
+// (`pme-debrief/3`; a team act the instructor observes is a record action among the actions: judged rows are retired,
+// the owner's ruling of 5 November). No DOM.
 import { asV1, isV2, manualLabel, type MarkKind } from '@pme/controller';
-import { grade, ruleWords, type Anchor, type Grade, type Grades, type ObjectiveRule, type PhaseEntry, type RunEventId, type ScenarioDocV2 } from '@pme/controller/scenario';
+import { grade, ruleWords, type Anchor, type Grade, type Grades, type HintAnchor, type ObjectiveRule, type PhaseEntry, type RunEventId, type ScenarioDocV2 } from '@pme/controller/scenario';
 import { FIXED_ALARM_WORDS } from './alarms.ts';
 import { untakenStatus, type Evidence } from './card-read.ts';
 import { CONDITIONS } from './describe.ts';
 import { drugName, drugWords, labelOf, lookup, unitOf } from './glossary.ts';
-import { LAB_KEYS, LABS, TREND, TREND_KEYS, type LabKey, type Row, type RunData, type Sample, type TrendKey, type ValueKey } from './record.ts';
+import { LAB_KEYS, LABS, PRESSURES, TREND, TREND_KEYS, type LabKey, type PressureKey, type Row, type RunData, type Sample, type TrendKey, type ValueKey } from './record.ts';
+
+/** The pressures a record of Debrief 2 keeps (record.ts `PRESSURES`). */
+export const PRESSURE_KEYS = Object.keys(PRESSURES) as PressureKey[];
 import { objectiveText } from './scenarios.ts';
 
 export type Status = 'met' | 'not met' | 'not assessable';
@@ -21,6 +25,9 @@ export interface Verdict {
   why: string;
   /** An `eventWithin` verdict that found both events: the times its reason line prints, and the seconds asked. */
   measure?: { fromT: number; toT: number; askedS: number };
+  /** An `eventWithin` verdict whose anchor was found (Debrief 2, D7a): the window the swimlane draws, from the anchor
+   *  for the seconds asked, also when the act never came or the run ended inside it. */
+  window?: { fromT: number; askedS: number };
 }
 /** An objective's verdict in the report: `tickedT`, the instructor's tick (seconds), only on a rule-less objective. */
 export type ObjectiveVerdict = Verdict & { tickedT?: number };
@@ -39,7 +46,7 @@ export const isEvent = (id: string | undefined, want: RunEventId): boolean => !!
 const VALUE = /^value:(hr|map|spo2|etco2|rr|temp|k|lactate|ph|glucose|tcore)([<>])(\d+(?:\.\d+)?)$/;
 /** The first kept row of `want` (or of any of a list) at or after `from`, or null. 'start' is the run's first second; a
  *  'value:' event is the first sample past its limit. */
-function first(d: RunData, want: RunEventId | RunEventId[], from = -Infinity): Row | null {
+export function first(d: RunData, want: RunEventId | RunEventId[], from = -Infinity): Row | null {
   if (Array.isArray(want)) return want.map((w) => first(d, w, from)).filter((r): r is Row => r !== null).sort((a, b) => a.t - b.t)[0] ?? null;
   if (want === 'start') return { t: 0, kind: 'scenario', text: 'the start' };
   const v = VALUE.exec(want);
@@ -91,11 +98,13 @@ export function trendMeta(k: ValueKey): { label: string; unit: string; digits: n
   return { label: keys.map((key) => labelOf(key) ?? '').filter(Boolean).join(' / '), unit: l ? unitOf(l.e) : '', digits: DIGITS[k] ?? 0 };
 }
 /** The least span of a trend chart's axis, so a few-point wobble is not drawn at
- *  full height; RR has no floor (± 1 when flat, as before). */
-const AXIS_FLOOR: Partial<Record<TrendKey, number>> = { spo2: 20, hr: 40, map: 40, etco2: 20, temp: 2 };
+ *  full height; RR has no floor (± 1 when flat, as before). The Pressures panel's left axis (SBP and DBP together,
+ *  `sys`) keeps MAP's 40 mmHg; its right axis (CVP) 10 mmHg, about a quarter of CVP's 0–20 mmHg working range as 40 is
+ *  of MAP's. */
+const AXIS_FLOOR: Partial<Record<TrendKey | PressureKey, number>> = { spo2: 20, hr: 40, map: 40, etco2: 20, temp: 2, sys: 40, cvp: 10 };
 /** The axis of one trend chart: the data's own range, or the floor centred on the data (SpO₂ never above 100, and never
  *  below zero when the data are not). */
-export function axisRange(k: TrendKey, lo: number, hi: number): [number, number] {
+export function axisRange(k: TrendKey | PressureKey, lo: number, hi: number): [number, number] {
   const floor = AXIS_FLOOR[k];
   if (floor === undefined) return hi - lo < 2 ? [lo - 1, hi + 1] : [lo, hi];
   if (hi - lo >= floor) return [lo, hi];
@@ -134,10 +143,11 @@ export function verdict(rule: ObjectiveRule | undefined, d: RunData): Verdict {
     const b = first(d, rule.event, a.t);
     const aw = `${eventWords(rule.after, d)}${since}`;
     const bw = eventWords(rule.event, d);
-    if (!b && !measured(d, rule.event, a.t)) return no(unmeasured(rule.event, `after ${aw} at ${mmss(a.t)}`));
-    if (b) return { status: b.t - a.t <= rule.withinS ? 'met' : 'not met', why: `${cap(bw)} ${span(b.t - a.t)} after ${aw} (${mmss(a.t)} → ${mmss(b.t)}; within ${span(rule.withinS)} asked).`, measure: { fromT: a.t, toT: b.t, askedS: rule.withinS } };
-    if (end - a.t >= rule.withinS) return { status: 'not met', why: `No ${bw} within ${span(rule.withinS)} of ${aw} at ${mmss(a.t)}.` };
-    return no(`The run ended ${span(end - a.t)} after ${aw} at ${mmss(a.t)}, before ${span(rule.withinS)} had passed.`);
+    const window = { fromT: a.t, askedS: rule.withinS };
+    if (!b && !measured(d, rule.event, a.t)) return { ...no(unmeasured(rule.event, `after ${aw} at ${mmss(a.t)}`)), window };
+    if (b) return { status: b.t - a.t <= rule.withinS ? 'met' : 'not met', why: `${cap(bw)} ${span(b.t - a.t)} after ${aw} (${mmss(a.t)} → ${mmss(b.t)}; within ${span(rule.withinS)} asked).`, measure: { fromT: a.t, toT: b.t, askedS: rule.withinS }, window };
+    if (end - a.t >= rule.withinS) return { status: 'not met', why: `No ${bw} within ${span(rule.withinS)} of ${aw} at ${mmss(a.t)}.`, window };
+    return { ...no(`The run ended ${span(end - a.t)} after ${aw} at ${mmss(a.t)}, before ${span(rule.withinS)} had passed.`), window };
   }
   const m = trendMeta(rule.value);
   const limit = [rule.above !== undefined ? `above ${fmt(rule.value, rule.above)}` : '', rule.below !== undefined ? `below ${fmt(rule.value, rule.below)}` : ''].filter(Boolean).join(' and ');
@@ -324,8 +334,16 @@ export interface Report3 {
   /** `pending`: the run has not ended (D5) and the outcome's window is still open. */
   outcomes: Array<{ id: string; text: string; status: 'reached' | 'not reached' | 'pending'; t: number | null; why: string }>;
   violations: Array<{ t: number; seq: number; text: string; harm: 'modelled' | 'not modelled' }>;
-  /** The instructor's rows: `fromT` the display clock's start (the monitor showed it), `pressedT` the instructor's press. */
-  judged: Array<{ id: string; text: string; kind: 'recognition' | 'communication'; fromT: number | null; pressedT: number | null }>;
+}
+
+/** When a string anchor happened on a /2 run (grade()'s reading: 'start' is 0, a phase its first entry, an action its
+ *  graded dose, pulseLoss / rosc the first true edge), or undefined: it did not. The outcomes and the card's openers (D9)
+ *  read it. */
+export function stringAnchorAt(d: RunData, g: Grades, an: HintAnchor): number | undefined {
+  if (an === 'start') return 0;
+  if (an.startsWith('phase:')) return (d.phases ?? []).find((p: PhaseEntry) => p.id === an.slice(6))?.t;
+  if (an.startsWith('action:')) return g.actions.find((a) => a.id === an.slice(7))?.givenT;
+  return (d.edges ?? []).find((e) => e.rule === an && e.value)?.t;
 }
 
 /** The report of a /2 run (null: a /1 run, or no copied inputs). */
@@ -339,10 +357,7 @@ export function report3(d: RunData): Report3 | null {
     typeof an !== 'string' ? ruleWords(an.rule) : an.startsWith('phase:') ? `the phase "${doc.phases.find((p) => p.id === an.slice(6))?.label ?? an.slice(6)}"`
     : an.startsWith('action:') ? label(an.slice(7)) : ({ start: 'the start', pulseLoss: 'the pulse loss', rosc: 'the return of circulation' } as Record<string, string>)[an] ?? an;
   // when the outcome's anchor happened (grade()'s reading: the first entry, the action's graded dose, the first true edge)
-  const anchorAt = (id: string, an: Anchor): number | undefined =>
-    an === 'start' ? 0 : typeof an !== 'string' ? firstEdge(`outcome:${id}:anchor`) : an.startsWith('phase:') ? (d.phases ?? []).find((p: PhaseEntry) => p.id === an.slice(6))?.t
-    : an.startsWith('action:') ? g.actions.find((a) => a.id === an.slice(7))?.givenT : firstEdge(an);
-  const ticks = kept(d).filter((r) => r.kind === 'note');
+  const anchorAt = (id: string, an: Anchor): number | undefined => (typeof an !== 'string' ? firstEdge(`outcome:${id}:anchor`) : stringAnchorAt(d, g, an));
   return {
     actions: g.actions.map((a) => ({
       id: a.id, label: a.label, kind: doc.actions.find((x) => x.id === a.id)?.kind ?? '', grade: a.grade, firstGrade: a.firstGrade, lines: a.lines,
@@ -362,19 +377,8 @@ export function report3(d: RunData): Report3 | null {
       return { id: o.id, text: o.text, status: o.grade, t: o.t ?? null, why };
     }),
     violations: g.violations.map((v) => ({ t: v.t, seq: v.seq, text: v.text, harm: v.harm })),
-    judged: g.judged.map((j) => ({
-      id: j.id, text: j.text, kind: j.kind, fromT: j.fromT ?? null,
-      pressedT: ticks.find((r) => r.text === `Objective met: ${drugWords(j.text)}`)?.t ?? null, // teach2/press.ts judge()
-    })),
   };
 }
-/** A judged row's display rule in words ("etco2 > 45"; a phase's rule by the phase's name, "early signs"): what its
- *  clock starts on. */
-export const displayWords = (d: RunData, id: string): string | null => {
-  const doc = d.doc && isV2(d.doc) ? d.doc : undefined;
-  const r = doc?.judged?.find((j) => j.id === id)?.display;
-  return r && doc ? ruleWords(r, doc.phases) : null;
-};
 
 /** Every mark (bookmark) of the run in order, with its kind and note when it has them; an undone one says so. */
 export function marks(d: RunData): Array<{ t: number; label: string; kind?: Exclude<MarkKind, 'stage'>; note?: string; undone?: number }> {
@@ -461,13 +465,14 @@ export function facts(d: RunData): Fact[] {
   return out;
 }
 
-/** Q1: one row per simulated minute of the kept course — each value's first measurement in that minute (none: null). */
-export function perMinute(d: RunData): Array<{ t: number; values: Record<ValueKey, number | null> }> {
-  const out: Array<{ t: number; values: Record<ValueKey, number | null> }> = [];
-  const keys = [...TREND_KEYS, ...LAB_KEYS];
+/** Q1: one row per simulated minute of the kept course — each value's first measurement in that minute (none: null).
+ *  D6: and the systolic, diastolic and CVP in a record that keeps 'pressures' (absent keys: not recorded in this file). */
+export function perMinute(d: RunData): Array<{ t: number; values: Record<ValueKey, number | null> & Partial<Record<PressureKey, number | null>> }> {
+  const out: ReturnType<typeof perMinute> = [];
+  const keys: Array<ValueKey | PressureKey> = [...TREND_KEYS, ...LAB_KEYS, ...(d.keeps?.includes('pressures') ? PRESSURE_KEYS : [])];
   for (let m = 0; m * 60 <= endOf(d); m++) {
     const xs = d.samples.filter((x) => x.t >= m * 60 && x.t < (m + 1) * 60);
-    out.push({ t: m * 60, values: Object.fromEntries(keys.map((k) => [k, xs.find((x) => x[k] !== null)?.[k] ?? null])) as Record<ValueKey, number | null> });
+    out.push({ t: m * 60, values: Object.fromEntries(keys.map((k) => [k, xs.find((x) => x[k] !== null && x[k] !== undefined)?.[k] ?? null])) as Record<ValueKey, number | null> });
   }
   return out;
 }
@@ -484,23 +489,37 @@ export interface DebriefExport {
   objectives: ReturnType<typeof objectives>;
   facts: Fact[];
   keyTimes: Array<{
-    id: 'recognition' | 'firstTeam' | `objective:${number}` | 'pulseLostToCpr' | 'pulseless';
+    id: 'recognition' | 'firstTeam' | `objective:${number}` | 'pulseLostToCpr' | 'pulseless' | 'handsOff';
     label: string; fromT: number | null; toT: number | null; askedS?: number; totalS?: number;
+    /** Hands-off only (D3): the compression fraction, 1 − `totalS` / the time pulseless (0–1). */
+    fraction?: number;
     /** Recognition only: what `fromT` is ("early signs", the state the card's rules count from; "start" without one). */
     fromLabel?: string;
+    /** Recognition on a /2 run only (D5): the timed action's first grade (`report3`'s `firstGrade`); `askedS` its window. */
+    grade?: Grade;
     state: 'measured' | 'notTicked' | 'noneAfter';
   }>;
   /** Values as recorded, unrounded, except SpO₂: null while pulseless (`pulseless` says why). */
   keyMoments: Array<{
     n: number; t: number; who: 'team' | 'patient' | 'scenario'; text: string;
-    values: { hr: number | null; map: number | null; spo2: number | null; etco2: number | null };
+    /** D6: `sys`, `dia`, `cvp` only in a record that keeps 'pressures' (absent: not recorded in this file): the arterial
+     *  or CVP value of that second, or a cuff reading as `{ v, ageS }` (the last at or before the moment, and how long
+     *  before it); null when none. */
+    values: { hr: number | null; map: number | null; spo2: number | null; etco2: number | null; sys?: Pressure; dia?: Pressure; cvp?: number | null };
     pulseless: boolean; alarms: string[];
+    /** D6: beside `alarms`, in its order, only in a record that keeps 'alarmEnd': each raise's time, end and
+     *  acknowledgement (null: still on at the record's end / not acknowledged). */
+    alarmTimes?: Array<{ t: number; endT: number | null; ackT: number | null }>;
+    /** The recognition moment (D5, `recognitionAt`): the team named the problem. */
+    recognised?: true;
   }>;
   minutes: ReturnType<typeof perMinute>;
   steps: Step[];
   judged: ReturnType<typeof judged>;
   marks: ReturnType<typeof marks>;
 }
+/** A moment's systolic or diastolic (D6): the arterial line's value at that second, a cuff reading with its age, or none. */
+export type Pressure = number | { v: number; ageS: number } | null;
 /** A pme-scenario/2 run's export (plan F7, Q10): no objectives and no steps; the phases, then the graded sections of
  *  `Report3`, then the rest as `/2`. A reader of `/2` never receives a `/2` run (R8). */
 export type DebriefExport3 = { schema: 'pme-debrief/3'; version: string; build: string; record: RunData; phases: PhaseEntry[] } & Report3

@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import type { Administration, PhaseEntry, RuleEdge } from '@pme/controller/scenario';
 import induction from './showcase/showcase-induction.json';
 import mhV2 from './showcase/showcase-mh-v2.json';
-import { RunRecord } from './record.ts';
+import { emptyRun, RunRecord } from './record.ts';
 
 const applied = (tick: number, command: Record<string, unknown>, extra: Record<string, unknown> = {}): WireEvent =>
   ({ type: 'commandApplied', commandId: `c${tick}`, tick, resolved: { command: { id: `c${tick}`, issuedBy: 'instructor', ...command }, ...extra } }) as WireEvent;
@@ -18,6 +18,10 @@ const meas = (t: number, spo2: number): EngineEvent => ({ type: 'measurement', t
 const breath = (t: number, kind: string): EngineEvent => ({ type: 'breath', t, seq: 1, kind, tiS: 1, teS: 2, vtMl: 500, etco2True: 38 }) as unknown as EngineEvent;
 const labs = (t: number, k: number): EngineEvent => ({ type: 'labs', t, values: { k, lactate: 1.4, ph: 7.31 } }) as unknown as EngineEvent;
 const NO_LABS = { k: null, lactate: null, ph: null, glucose: null, tcore: null };
+/** D1: the pressures of a sample with no arterial line, no CVP and no cuff cycle in its second. */
+const NO_P = { sys: null, dia: null, cvp: null };
+/** A measurement event of the given numerics, each measured at `at` (default: the event's time), `null` invalid. */
+const numerics = (t: number, v: Record<string, number | null>, at = t): EngineEvent => ({ type: 'measurement', t, values: Object.fromEntries(Object.entries(v).map(([k, x]) => [k, { value: x, flag: x === null ? 'invalid' : 'valid', at }])) }) as unknown as EngineEvent;
 const fresh = () => new RunRecord(() => ({ patient: 'M 40 y 70 kg', weightKg: 70 }), () => 1_000);
 
 describe('the run record', () => {
@@ -104,6 +108,124 @@ describe('the run record', () => {
     expect(Object.keys(c as object).sort()).toEqual(['dose', 'ev', 'kind', 't', 'text']); // a row with nothing new is as before
   });
 
+  it('D2: an alarm raise row keeps when its condition cleared (endT) and when it was acknowledged (ackT)', () => {
+    const r = fresh();
+    const st = (t: number, a: Array<[string, { latched?: boolean; acked?: boolean }?]>) => r.engine({ type: 'alarmStatus', t, active: a.map(([id, f]) => ({ id, level: 1, text: id, acked: f?.acked ?? false, latched: f?.latched ?? false })) } as unknown as EngineEvent);
+    st(10, [['A'], ['B'], ['C'], ['D']]);
+    st(11, [['A'], ['B'], ['C'], ['D']]); // all four still active
+    st(12, [['A'], ['B'], ['C', { acked: true }], ['D']]); // C acknowledged at 12 while its condition lasts
+    st(13, [['A'], ['B'], ['C', { acked: true }], ['D']]);
+    st(20, [['A'], ['B', { latched: true }], ['C', { acked: true }], ['D']]); // B's condition gone, the alarm latched
+    st(25, [['B', { latched: true }], ['C', { acked: true }], ['D']]); // A left the active list
+    st(30, [['B', { latched: true, acked: true }], ['C', { acked: true }], ['D']]);
+    st(40, [['D']]); // B and C end; D is still active at the end of the record
+    st(50, [['A'], ['D']]); // A raised again after its end: its own row
+    const row = (id: string, i = 0) => r.data.rows.filter((x) => x.ev === `alarm:${id}`)[i];
+    expect(['A', 'B', 'C', 'D'].map((id) => [row(id)?.t, row(id)?.endT, row(id)?.ackT])).toEqual([[10, 25, undefined], [10, 20, 30], [10, 40, 12], [10, undefined, undefined]]);
+    expect([row('A', 1)?.t, row('A', 1)?.endT]).toEqual([50, undefined]);
+    expect(r.data.keeps).toEqual(expect.arrayContaining(['pressures', 'alarmEnd']));
+    // a row with nothing new is as before (no endT/ackT keys while open)
+    expect(Object.keys(row('D') as object).sort()).toEqual(['ev', 'kind', 't', 'text']);
+  });
+
+  it('D2: a latched alarm whose condition comes back is live again: its end is the later one (manager.ts: "the condition came back while latched")', () => {
+    const r = fresh();
+    const st = (t: number, latched: boolean | null) => r.engine({ type: 'alarmStatus', t, active: latched === null ? [] : [{ id: 'X', level: 1, text: 'X', acked: false, latched }] } as unknown as EngineEvent);
+    st(10, false); st(15, true); st(18, false); st(30, true); st(35, null);
+    expect(r.data.rows.map((x) => [x.t, x.endT])).toEqual([[10, 30]]);
+  });
+
+  it('D2: a return to a bookmark clears every end and acknowledgement later than the restore; the alarm active at the bookmark ends on the kept course', () => {
+    const r = fresh();
+    const st = (t: number, a: Array<[string, boolean?]>) => r.engine({ type: 'alarmStatus', t, active: a.map(([id, acked]) => ({ id, level: 1, text: id, acked: acked ?? false, latched: false })) } as unknown as EngineEvent);
+    st(5, [['E']]);
+    st(8, []); // E ended before the bookmark: kept
+    st(10, [['A']]);
+    r.wire(applied(750, { type: 'scenario', action: 'bookmark', target: 'Bookmark 1 at 00:15' })); // 15 s: A active
+    st(18, [['A', true]]);
+    st(22, [['B']]); // raised after the bookmark: undone with the course
+    st(25, [['B']]); // A ends at 25 on the discarded course
+    r.wire({ type: 'timeline', t: 15, tick: 750, cause: 'restore' } as WireEvent);
+    r.wire(applied(750, { type: 'scenario', action: 'restoreBookmark', target: 'Bookmark 1 at 00:15' }));
+    const a = () => r.data.rows.find((x) => x.ev === 'alarm:A');
+    expect([a()?.endT, a()?.ackT]).toEqual([undefined, undefined]);
+    expect(r.data.rows.find((x) => x.ev === 'alarm:E')?.endT).toBe(8);
+    expect(r.data.rows.find((x) => x.ev === 'alarm:B')?.undone).toBe(1);
+    st(16, [['A']]); // the restored engine: A still active, not raised again
+    st(31, []); // and it ends at 31 on the kept course
+    expect(r.data.rows.filter((x) => x.ev === 'alarm:A').map((x) => [x.t, x.endT, x.ackT])).toEqual([[10, 31, undefined]]);
+  });
+
+  it('D3: a CPR command that stops compressions is a row with ev "cprStop" (the instructor\'s, a Remote\'s or the card\'s)', () => {
+    const r = fresh();
+    r.wire(applied(500, { type: 'applyEvent', event: { kind: 'cpr', active: true, rate: 110 } }));
+    r.wire(applied(1000, { type: 'applyEvent', event: { kind: 'cpr', active: false } }));
+    r.wire(applied(1500, { type: 'applyEvent', event: { kind: 'cpr', active: true }, issuedBy: 'remote' }));
+    r.wire(applied(2000, { type: 'applyEvent', event: { kind: 'cpr', active: false }, issuedBy: 'scenario' }));
+    expect(r.data.rows.map((x) => [x.t, x.kind, x.text, x.ev])).toEqual([
+      [10, 'action', 'CPR started, 110 /min', 'cpr'], [20, 'action', 'CPR stopped', 'cprStop'],
+      [30, 'remote', 'CPR started', 'cpr'], [40, 'scenario', 'CPR stopped', 'cprStop'],
+    ]);
+    expect(r.data.keeps).toEqual(expect.arrayContaining(['pressures', 'alarmEnd', 'cprStop']));
+  });
+
+  it('D3 cross-check on a real host: the CPR rows\' on/off times are the edges of the engine\'s hemo.cpr.active, within one tick', async () => {
+    const v = validateScenario(BUILTIN_SCENARIOS['acls-pea-hypovolaemia']);
+    if (!v.ok) throw new Error(v.errors.join('; '));
+    const eo = engineOptionsOf(v.doc, 7);
+    const engine = createEngine({ ...eo, mode: 'modeled', truthHz: 1, patient: { ...eo.patient, ...(v.doc.patient?.sensors ? { sensors: v.doc.patient.sensors } : {}) } } as never);
+    // the engine's own CPR state (l2/hemo/pipeline.ts `hs.cpr.active`), read after every tick: the truth event carries
+    // it too (`tree.hemo.cpr.active`) but at most at 2 Hz, too coarse to place an edge within a tick
+    const cprActive = () => (engine as unknown as { st: { hemo: { cpr: { active: boolean } } } }).st.hemo.cpr.active;
+    const target: HostTarget = { dispatch: (c) => engine.dispatch(c), snapshot: () => engine.snapshot(), restore: (s) => engine.restore(s), on: (f) => engine.on(f), now: () => engine.now(), time: () => {} };
+    let hs: HostSession | null = null;
+    const driver = new ScenarioDriver({ target, submit: (c) => (hs as HostSession).submit(c), publish: (e) => hs?.publish(e) });
+    hs = new HostSession({ session: 'REC567', target: driver.host, scenario: driver.hook, stateIntervalMs: 0 });
+    const hub = createInProcessHub();
+    hs.addTransport(hub.connect());
+    const r = fresh();
+    hub.connect().onMessage((m) => m.kind === 'event' && m.body.forEach((e) => r.wire(e)));
+    const edges: Array<[number, 'cpr' | 'cprStop']> = [];
+    const truths: boolean[] = [];
+    engine.on((e) => {
+      r.engine(e);
+      if (e.type === 'truth') truths.push((e.tree.hemo as { cpr?: { active?: unknown } } | undefined)?.cpr?.active === true);
+    });
+    let was = cprActive();
+    const settle = () => new Promise((res) => setTimeout(res, 0));
+    const run = async (to: number) => {
+      while (engine.now().simT < to - 1e-9) {
+        for (let i = 0; i < 5; i++) {
+          engine.advanceTo((engine.now().tick + 1) * 0.02 + 1e-9);
+          const on = cprActive();
+          if (on !== was) edges.push([engine.now().tick * 0.02, on ? 'cpr' : 'cprStop']);
+          was = on;
+        }
+        driver.poll();
+        await settle();
+      }
+    };
+    const cmd = async (c: Record<string, unknown>) => expect((await hs.submit({ id: `x${Math.random()}`, issuedBy: 'instructor', ...c } as never)).accepted).toBe(true);
+    await cmd({ type: 'scenario', action: 'load', doc: v.doc });
+    await run(2);
+    await cmd({ type: 'scenario', action: 'trigger', target: 'losePulse' }); // PEA
+    for (const [t, active] of [[6, true], [16, false], [21, true], [33, false]] as const) {
+      await run(t);
+      await cmd({ type: 'applyEvent', event: { kind: 'cpr', active, rate: 110, quality: 0.8 } });
+    }
+    await run(40);
+    hs.close();
+    const loss = r.data.rows.find((x) => x.ev === 'pulseLoss');
+    expect(loss && loss.t < 6).toBe(true); // all four inside one pulseless span (no return of circulation)
+    expect(r.data.rows.some((x) => x.ev === 'rosc')).toBe(false);
+    const rows = r.data.rows.filter((x) => x.ev === 'cpr' || x.ev === 'cprStop').map((x): [number, string] => [x.t, x.ev as string]);
+    expect(rows.map((x) => x[1])).toEqual(['cpr', 'cprStop', 'cpr', 'cprStop']);
+    // every edge of the engine's own state has its row, and no edge comes without a command
+    expect(edges.map((x) => x[1])).toEqual(rows.map((x) => x[1]));
+    edges.forEach(([t], i) => expect(Math.abs(t - (rows[i] as [number, string])[0]), `edge ${i} at ${t}`).toBeLessThanOrEqual(0.02 + 1e-6));
+    expect(truths.filter((x, i) => i > 0 && x !== truths[i - 1])).toHaveLength(4); // the 1 Hz truth sees the same four
+  }, 60_000);
+
   it('E133: a run of ≥ 3 PVCs is one row at its first PVC, counting its beats; single PVCs and couplets are not', () => {
     const r = fresh();
     const beat = (t: number, pvc: boolean) => r.engine({ type: 'beat', t, seq: 0, origin: pvc ? 'ventricular' : 'sinus', template: pvc ? 'pvc' : 'normal', qrsMs: 90, qtMs: 380, mech: { perfused: true, kSV: 1, svMl: 70, lvetMs: 280 } } as EngineEvent);
@@ -123,10 +245,90 @@ describe('the run record', () => {
     r.engine(meas(0.7, 98)); // same second: the latest value
     r.engine(meas(1.1, 97));
     expect(r.data.samples).toEqual([
-      { t: 0, hr: 80, map: 75, spo2: 98, etco2: null, rr: null, temp: null, ...NO_LABS },
-      { t: 1, hr: 80, map: 75, spo2: 97, etco2: null, rr: null, temp: null, ...NO_LABS },
+      { t: 0, hr: 80, map: 75, spo2: 98, etco2: null, rr: null, temp: null, ...NO_LABS, ...NO_P },
+      { t: 1, hr: 80, map: 75, spo2: 97, etco2: null, rr: null, temp: null, ...NO_LABS, ...NO_P },
     ]);
   });
+
+  it('D1: systolic, diastolic and CVP join the sample: the arterial line first, else the cuff in the second of its cycle only', () => {
+    const r = fresh();
+    // ART before the cuff; each stored in whole mmHg, as the monitor prints it (the orchestrator's ruling on #282)
+    r.engine(numerics(10, { abpSys: 92.4, abpDia: 57.6, abpMean: 70.2, cvpMean: 16.5, nibpSys: 120, nibpDia: 80 }));
+    expect(r.data.samples.at(-1)).toMatchObject({ t: 10, sys: 92, dia: 58, cvp: 17, map: 70.2 }); // `map` (TREND) as before
+    // no arterial line reading; a cuff cycle reports 100/60 at 40.3 s (the hemo pipeline's one measurement of a cycle)
+    r.engine(numerics(40, { abpSys: null, abpDia: null, abpMean: null, cvpMean: 12 }));
+    r.engine(numerics(40.3, { nibpSys: 100, nibpDia: 60, nibpMean: 73 }));
+    r.engine(numerics(40.6, { hr: 88 })); // a later event of the same second keeps the cycle's value
+    for (let t = 41; t <= 45; t++) r.engine(numerics(t, { abpSys: null, abpDia: null, abpMean: null, cvpMean: 12, hr: 88 }));
+    // the same cycle's reading repeated, as a monitor's tile would hold it: it is still the cycle of 40 s, not a new one
+    r.engine(numerics(46, { nibpSys: 100, nibpDia: 60, nibpMean: 73 }, 40.3));
+    r.engine(numerics(100.2, { nibpSys: 104, nibpDia: 62, nibpMean: 76 })); // the next cycle
+    const at = (t: number) => r.data.samples.find((x) => x.t === t);
+    expect(at(40)).toMatchObject({ sys: 100, dia: 60, cvp: 12 });
+    expect([41, 42, 43, 44, 45, 46].map((t) => [at(t)?.sys, at(t)?.dia])).toEqual(Array(6).fill([null, null])); // the gap stays blank
+    expect(at(100)).toMatchObject({ sys: 104, dia: 62 });
+    // `map` (TREND, the first valid of abpMean then nibpMean) follows the same rule (research/41 row 53): the cuff's 73
+    // sits in its cycle's second and the seconds between cycles are null, never the cycle's value held
+    expect(at(40)?.map).toBe(73);
+    expect([41, 42, 43, 44, 45, 46].map((t) => at(t)?.map)).toEqual(Array(6).fill(null));
+    expect(at(100)?.map).toBe(76);
+    // an invalid value is null; a line that stops reporting is null in the seconds it is silent, never its last value
+    r.engine(numerics(101, { abpSys: null, abpDia: null, cvpMean: null }));
+    r.engine(numerics(102, { hr: 70 }));
+    expect([at(101), at(102)].map((x) => [x?.sys, x?.dia, x?.cvp])).toEqual([[null, null, null], [null, null, null]]);
+  });
+
+  it('D1: an arterial MAP is kept every second; a cuff MAP only in the second of its cycle, null between cycles', () => {
+    const r = fresh();
+    r.engine(numerics(40.3, { nibpSys: 100, nibpDia: 60, nibpMean: 73 })); // a cuff cycle, no arterial line
+    for (let t = 41; t <= 44; t++) r.engine(numerics(t, { abpMean: null, hr: 80 }));
+    for (let t = 45; t <= 48; t++) r.engine(numerics(t, { abpMean: 80 + t - 45 })); // the arterial line reads every second
+    const at = (t: number) => r.data.samples.find((x) => x.t === t)?.map;
+    expect([40, 41, 42, 43, 44].map(at)).toEqual([73, null, null, null, null]);
+    expect([45, 46, 47, 48].map(at)).toEqual([80, 81, 82, 83]);
+  });
+
+  it('D1: a record keeps `keeps` = the facts its build records; a new record and emptyRun() have "pressures"', () => {
+    expect(fresh().data.keeps).toEqual(expect.arrayContaining(['pressures']));
+    expect(emptyRun().keeps).toEqual(expect.arrayContaining(['pressures']));
+    const r = fresh();
+    r.wire({ type: 'timeline', t: 0, tick: 0, cause: 'restart' } as WireEvent);
+    expect(r.data.keeps).toEqual(expect.arrayContaining(['pressures']));
+  });
+
+  it('D5: note() takes an optional ev (the /1 Recognised press); `keeps` gains "recognised"; a return undoes a press after it', () => {
+    const r = fresh();
+    r.note(30, 'Recognised (instructor)', 'recognised');
+    r.note(40, 'a plain note');
+    expect(r.data.rows.slice(-2)).toEqual([{ t: 30, kind: 'note', text: 'Recognised (instructor)', ev: 'recognised' }, { t: 40, kind: 'note', text: 'a plain note' }]);
+    expect(r.data.keeps).toEqual(expect.arrayContaining(['recognised']));
+    expect(emptyRun().keeps).toEqual(expect.arrayContaining(['recognised']));
+  });
+
+  it('D1 on a real engine: a cuff with no arterial line gives sys/dia in the second of each cycle only', async () => {
+    const v = validateScenario(induction);
+    if (!v.ok) throw new Error(v.errors.join('; '));
+    const eo = engineOptionsOf(v.doc, 7);
+    const engine = createEngine({ ...eo, mode: 'modeled', truthHz: 1, patient: { ...eo.patient, sensors: { ...v.doc.patient?.sensors, abp: 'none' } } } as never);
+    const r = fresh();
+    const cycles: Array<{ t: number; sys: number }> = [];
+    let nibpEvents = 0;
+    engine.on((e) => {
+      r.engine(e);
+      if (e.type === 'nibp' && e.result) cycles.push({ t: e.t, sys: e.result.sys });
+      if (e.type === 'measurement' && 'nibpSys' in e.values) nibpEvents++;
+    });
+    engine.advanceTo(1);
+    engine.dispatch({ id: 'n1', issuedBy: 'instructor', type: 'device', action: { device: 'nibp', action: 'auto', intervalMin: 1 } } as never);
+    for (let t = 1; t < 200; t += 0.5) engine.advanceTo(t + 0.5);
+    expect(cycles.length).toBeGreaterThanOrEqual(3);
+    // the pipeline emits nibpSys once per cycle (pipeline.ts nibpEvents): as many measurement events as cycles
+    expect(nibpEvents).toBe(cycles.length);
+    const withSys = r.data.samples.filter((s) => s.sys !== null);
+    expect(withSys.map((s) => [s.t, s.sys])).toEqual(cycles.map((c) => [Math.floor(c.t), Math.round(c.sys)]));
+    expect(r.data.samples.every((s) => s.sys === null || Number.isInteger(s.sys))).toBe(true);
+    expect(r.data.samples.every((s) => s.cvp === null)).toBe(true); // the card has no CVP line
+  }, 60_000);
 
   it('Q7: the model’s K⁺, lactate, pH, glucose and core temperature join the 1 Hz sample', () => {
     const r = fresh();
@@ -136,8 +338,8 @@ describe('the run record', () => {
     r.engine({ type: 'truth', t: 1, tree: { hemo: { circ: { arrest: null } }, resp: { temp: { tc: 38.04 } } }, leaves: 2, dropped: 0, truncated: false } as unknown as EngineEvent);
     r.engine(meas(1.5, 97));
     expect(r.data.samples).toEqual([
-      { t: 0, hr: 80, map: 75, spo2: 99, etco2: null, rr: null, temp: null, ...NO_LABS },
-      { t: 1, hr: 80, map: 75, spo2: 97, etco2: null, rr: null, temp: null, k: 5.6, lactate: 1.4, ph: 7.31, glucose: 6.1, tcore: 38 },
+      { t: 0, hr: 80, map: 75, spo2: 99, etco2: null, rr: null, temp: null, ...NO_LABS, ...NO_P },
+      { t: 1, hr: 80, map: 75, spo2: 97, etco2: null, rr: null, temp: null, k: 5.6, lactate: 1.4, ph: 7.31, glucose: 6.1, tcore: 38, ...NO_P },
     ]);
   });
 
@@ -176,7 +378,7 @@ describe('the run record', () => {
     const copy = JSON.parse(JSON.stringify(r.data));
     expect(copy).toEqual(r.data);
     r.wire({ type: 'timeline', t: 0, tick: 0, cause: 'restart' } as WireEvent);
-    expect(r.data).toEqual({ startedAt: 1_000, lastWall: 1_000, patient: 'M 40 y 70 kg', weightKg: 70, doc: null, rows: [], samples: [], returns: 0 });
+    expect(r.data).toEqual({ startedAt: 1_000, lastWall: 1_000, patient: 'M 40 y 70 kg', weightKg: 70, doc: null, rows: [], samples: [], returns: 0, keeps: ['pressures', 'alarmEnd', 'cprStop', 'recognised'] });
   });
 
   it('on a real host: a bookmark restore keeps the course before it and marks the course after it undone', async () => {
@@ -309,7 +511,7 @@ describe('the run record', () => {
     pr.admin.push({ seq: 1, t: 30.5, source: 'action', actionId: 'premedicate', kind: 'drug', drugId: 'midazolam', dose: 2, unit: 'mg', route: 'iv', result: { accepted: true } });
     r.engine(meas(30.5, 99)); // the second's sample: the copy goes with it
     expect(r.data.admin).toHaveLength(1);
-    pr.edges.push({ rule: 'judged:nameMh', t: 40, value: true });
+    pr.edges.push({ rule: 'action:callCrisis:anchor', t: 40, value: true });
     r.engine(meas(40.2, 99));
     pr.phases[0]!.exitT = 60; // the runner closes the entry in place: the copy is not a reference to it
     pr.phases.push({ id: 'latent', t: 60, rule: 'enter:latent' });
@@ -334,6 +536,6 @@ describe('the run record', () => {
     one.wire(applied(0, { type: 'scenario', action: 'load', doc: induction }));
     one.wire({ type: 'scenario', t: 0, stateId: 'awake' } as WireEvent);
     one.engine(meas(1, 99));
-    expect(Object.keys(one.data)).toEqual(['startedAt', 'lastWall', 'patient', 'weightKg', 'doc', 'rows', 'samples', 'returns']);
+    expect(Object.keys(one.data)).toEqual(['startedAt', 'lastWall', 'patient', 'weightKg', 'doc', 'rows', 'samples', 'returns', 'keeps']);
   });
 });

@@ -5,8 +5,62 @@ on:
     branches: [main]
   pull_request:
 
+# A PR's run of an older head stops when the branch gets a newer push; main's runs never cancel (research/42 §1.4 d1).
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.head_ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  # What the PR changes (research/42 §1.4 a, d2): code at all (if not, the docs job alone runs) and the engine or the
+  # root config (if not, the engine's slow groups skip). On main every job runs.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.f.outputs.code }}
+      engine: ${{ steps.f.outputs.engine }}
+      e2e_matrix: ${{ steps.e2e.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # the PR's merge commit and its base parent
+      - id: f
+        run: |
+          if [ "${{ github.event_name }}" != pull_request ]; then echo "code=true" >> "$GITHUB_OUTPUT"; echo "engine=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          git diff --name-only HEAD^1 HEAD > "$RUNNER_TEMP/files.txt"; cat "$RUNNER_TEMP/files.txt"
+          code=false; grep -qvE '^(docs/|[^/]+\.md$|CITATION\.cff$)' "$RUNNER_TEMP/files.txt" && code=true
+          engine=false; grep -qE '^(packages/(engine-core|skins)/|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|package\.json$|tsconfig[^/]*\.json$|vitest\.workspace\.ts$|\.github/workflows/)' "$RUNNER_TEMP/files.txt" && engine=true
+          echo "code=$code engine=$engine"
+          echo "code=$code" >> "$GITHUB_OUTPUT"; echo "engine=$engine" >> "$GITHUB_OUTPUT"
+      # The e2e matrix, one row per shard, from scripts/ci/e2e-sets.mjs: the one place each set's shard count is set (the
+      # shard plan and e2e-count read it there too).
+      - id: e2e
+        run: |
+          m=$(node scripts/ci/e2e-sets.mjs matrix); echo "$m"
+          echo "matrix=$m" >> "$GITHUB_OUTPUT"
+
+  # Documents-only PRs (docs/, root *.md, CITATION.cff): every unit-test file that reads a document
+  # (scripts/ci/docs-tests.mjs; packages/validation/test/docs-readers.test.ts keeps that list complete) and the NOTICES
+  # and licence checks, nothing else. No e2e test reads docs/ (research/42 §1.4 a).
+  docs:
+    needs: changes
+    if: needs.changes.outputs.code == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/ci/docs-tests.mjs
+      - run: pnpm check-notices
+      - run: pnpm check-licences
+
   build:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,9 +81,16 @@ jobs:
           sort $(printf '%s.txt ' $groups) | uniq -d > both.txt
           if [ -s both.txt ]; then echo "in two slow groups:"; cat both.txt; exit 1; fi
           sort -u $(printf '%s.txt ' $groups) | diff slow.txt -
-      - run: pnpm test
-        env:
-          PME_TEST_SET: fast # the slow engine set runs in the test-slow job
+      - name: the showcase halves are disjoint, are together the showcase set, and are in the test-slow matrix
+        working-directory: apps/demo
+        run: |
+          for g in showcase showcase-a showcase-b; do PME_TEST_SET=$g pnpm exec vitest list --filesOnly | sort > "$RUNNER_TEMP/$g.txt"; echo "$g: $(wc -l < "$RUNNER_TEMP/$g.txt") files"; done
+          for g in showcase-a showcase-b; do grep -Eq "^ +group: \[.*\b$g\b" ../../.github/workflows/ci.yml || { echo "$g is not in the test-slow matrix"; exit 1; }; done
+          cd "$RUNNER_TEMP"
+          sort showcase-a.txt showcase-b.txt | uniq -d > both.txt
+          if [ -s both.txt ]; then echo "in both showcase halves:"; cat both.txt; exit 1; fi
+          sort -u showcase-a.txt showcase-b.txt | diff showcase.txt -
+      # The unit tests run in the `unit` job (three runners, no dependency order); this job keeps the checks.
       # The tick benchmark, alone on the runner (the fast set leaves it out): inside `pnpm test` the other suites' load
       # pushed its p50 over 6 ms with the engine unchanged. `vitest run` without --passWithNoTests, so a set that
       # matches no file fails instead of passing empty.
@@ -48,13 +109,49 @@ jobs:
       - name: kit classroom relay smoke test
         run: node scripts/showcase/make-bundle.mjs "$RUNNER_TEMP/kit" > "$RUNNER_TEMP/kit-build.log" && node scripts/showcase/check-relay.mjs "$RUNNER_TEMP/kit"
 
+  # The unit tests (the fast set; the slow engine set and the showcase cards are in test-slow), in three parallel jobs:
+  # `pnpm -r test` ran the packages in dependency order (engine-core → controller → validation → demo, ≈ 31–43 min),
+  # though every test runs from source and none needs another package's tests first (research/42 §1.2, §1.4 d3).
+  unit:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [controller, ventilator, rest]
+    name: unit (${{ matrix.part }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PME_TEST_SET: fast
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @pme/controller test
+        if: matrix.part == 'controller'
+      - run: pnpm --filter @pme/ventilator test
+        if: matrix.part == 'ventilator'
+      # audio, skins, engine-core, renderer, validation, demo: one package at a time (each Vitest run already uses every
+      # core; with pnpm's default of four at once, renderer's real-engine tests timed out at 30 s on the first run of
+      # this job), in no dependency order, and every package runs even after one fails, so each reports its counts.
+      - run: pnpm -r --no-sort --workspace-concurrency=1 --no-bail --filter '!@pme/controller' --filter '!@pme/ventilator' test
+        if: matrix.part == 'rest'
+
   # fix-ci-webkit-3: the renderer IIFE is built once, here, and shared: the e2e jobs need only it (iife-smoke.html loads
   # it from file://; every other e2e page runs on a Vite dev server from source), so they start without waiting for the
   # unit tests in the build job.
   renderer:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     outputs:
       playwright: ${{ steps.playwright.outputs.version }}
+      durations_run: ${{ steps.durations.outputs.run }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -71,6 +168,18 @@ jobs:
           v=$(pnpm exec playwright --version | awk '{print $2}')
           echo "$v" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error::unexpected Playwright version: '$v'"; exit 1; }
           echo "version=$v" >> "$GITHUB_OUTPUT"
+      # e2e shards by recorded duration: the latest green run of this workflow on main, whose e2e reports the e2e jobs
+      # read (scripts/ci/e2e-shard-plan.mjs). Any failure leaves the output empty, and the e2e jobs use Playwright's --shard.
+      - name: the last green main run (its e2e reports balance the e2e shards)
+        id: durations
+        continue-on-error: true
+        timeout-minutes: 2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          id=$(gh run list -R "$GITHUB_REPOSITORY" --workflow ci.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          echo "last green main run: ${id:-none}"
+          echo "run=$id" >> "$GITHUB_OUTPUT"
       - run: pnpm --filter "@pme/renderer^..." build # Stage 8b: the renderer's workspace dependencies first (its tsconfig.build.json reads their dist/types)
       - run: pnpm --filter @pme/renderer build
       - uses: actions/upload-artifact@v4
@@ -87,6 +196,19 @@ jobs:
 
   # fix-ci-webkit-3: one e2e job per browser (was one step running both on one 2-vCPU runner, so each browser's
   # wall-clock-sensitive tests ran beside the other's load). Retries stay at 2 (playwright.config.ts, CI).
+  # ci-faster: each gating suite runs in shards (Playwright --shard, by file; every e2e server binds port 0 and
+  # each shard is its own machine; WebKit keeps workers: 1 inside its shard). Each shard uploads its own report and runs
+  # the retry-only check on it; the e2e-count job proves the shards together ran every test (research/42 §1.4 b). The
+  # quarantine stays one job. Three shards then, not four: the shard that got teach2-fit.e2e.ts (≈ 18 min alone) set the
+  # floor, which three already reach. That file is now three (teach2-fit-stages, -panes, -strip); Playwright fills a
+  # shard with a contiguous run of files by test count, so the three adjacent files still shared one shard. So each
+  # shard's files now come from scripts/ci/e2e-shard-plan.mjs: per-file durations from the last green main run's
+  # reports of the same set, longest first onto the least-loaded shard; Playwright's --shard when there is no usable
+  # report. The e2e-count job's proof is unchanged (it sums the shard reports, however the files were split).
+  # ci-shard4: Chromium in four shards. Balanced by duration, its three still each held ≈ 34 recorded min over two workers,
+  # ≈ 17 min of tests plus set-up = 20.3–20.4 min wall; four put each near 13 min of tests. WebKit stays at three (≈ 16.4
+  # recorded min each). The matrix is built in the changes job from scripts/ci/e2e-sets.mjs, where each set's shard
+  # count is set once; e2e-shard-plan.mjs and e2e-count.mjs read the same count.
   # ci-stabilise (2026-10-24): the jobs run in the official Playwright image, which carries the browsers and their
   # system libraries, so no job runs `playwright install --with-deps` (its apt step stalled up to 40 min on the runner's
   # Ubuntu mirror). The @known-flaky tests run on WebKit in their own non-blocking job, e2e-quarantine (webkit); the
@@ -94,15 +216,13 @@ jobs:
   # (docs/gates/stage-14.md, "Temporary relaxation"; docs/guides/known-deviations.md, "Browser tests that passed only on
   # a retry").
   e2e:
-    needs: renderer
+    needs: [changes, renderer]
+    if: needs.changes.outputs.code == 'true'
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - { browser: chromium, set: all, grep: '', report: chromium }
-          - { browser: webkit, set: gating, grep: '--grep-invert @known-flaky', report: webkit }
-          - { browser: webkit, set: known-flaky, grep: '--grep @known-flaky', report: webkit-known-flaky }
-    name: ${{ matrix.set == 'known-flaky' && 'e2e-quarantine' || 'e2e' }} (${{ matrix.browser }})
+      # rows { browser, set, grep, report, shard, of }, one per shard of each set of scripts/ci/e2e-sets.mjs
+      matrix: ${{ fromJSON(needs.changes.outputs.e2e_matrix) }}
+    name: ${{ matrix.set == 'known-flaky' && 'e2e-quarantine' || 'e2e' }} (${{ matrix.browser }} ${{ matrix.shard }}/${{ matrix.of }})
     runs-on: ubuntu-latest
     timeout-minutes: 60
     continue-on-error: ${{ matrix.set == 'known-flaky' }} # the quarantine never fails the run
@@ -118,13 +238,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
         timeout-minutes: 5
-      # The image has no jq (the report steps below use it); a pinned, checksummed binary from the jq release, no apt
-      - name: jq 1.7.1
-        timeout-minutes: 2
-        run: |
-          curl -fsSL --retry 3 -o /usr/local/bin/jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64
-          echo "5942c9b0934e510ee61eb3e30273f1b3fe2590df93933a93d7c58b81d19c8ff5  /usr/local/bin/jq" | sha256sum -c -
-          chmod +x /usr/local/bin/jq
+      # No jq: the report steps below read the JSON with Node (scripts/ci/e2e-report.mjs), which the image has, so
+      # nothing is downloaded (the jq download from github.com failed three runs before any test ran; research/42 §1.5)
       - name: browsers come from the image (no download)
         run: |
           echo "PLAYWRIGHT_BROWSERS_PATH=$PLAYWRIGHT_BROWSERS_PATH"; ls "$PLAYWRIGHT_BROWSERS_PATH"
@@ -137,27 +252,59 @@ jobs:
         with:
           name: ventilator-monitor-embed
           path: apps/demo/dist/embed
-      - run: pnpm test:e2e --project=${{ matrix.browser }} ${{ matrix.grep }} --reporter=list,json
+      - uses: actions/download-artifact@v4 # this set's reports from the last green main run, for the shard plan
+        if: matrix.of > 1 && needs.renderer.outputs.durations_run != ''
+        continue-on-error: true
+        timeout-minutes: 3
+        with:
+          pattern: e2e-report-${{ matrix.report }}-[0-9]*
+          path: .e2e-main-reports
+          run-id: ${{ needs.renderer.outputs.durations_run }}
+          github-token: ${{ github.token }}
+      # This shard's files, balanced by recorded duration (the plan of every shard is printed here and in the summary),
+      # or Playwright's count-based --shard when the main run's reports are missing or unreadable or the plan fails.
+      - name: shard plan (by recorded duration; Playwright's --shard if none)
+        id: plan
+        run: |
+          d=.e2e-main-reports; [ -d "$d" ] || d=none
+          if [ ${{ matrix.of }} -gt 1 ] && node scripts/ci/e2e-shard-plan.mjs ${{ matrix.report }} ${{ matrix.shard }} "$d" > "$RUNNER_TEMP/shard-files.txt" 2> "$RUNNER_TEMP/plan.txt"; then
+            echo "args=--test-list $RUNNER_TEMP/shard-files.txt" >> "$GITHUB_OUTPUT"
+            echo "shard ${{ matrix.shard }}/${{ matrix.of }}: $(wc -l < "$RUNNER_TEMP/shard-files.txt") files by recorded duration" >> "$RUNNER_TEMP/plan.txt"
+          else
+            echo "args=--shard=${{ matrix.shard }}/${{ matrix.of }}" >> "$GITHUB_OUTPUT"
+            if [ ${{ matrix.of }} -gt 1 ]; then echo "::warning title=e2e shard plan::no usable duration report: Playwright's --shard=${{ matrix.shard }}/${{ matrix.of }}"; fi
+          fi
+          touch "$RUNNER_TEMP/plan.txt"; cat "$RUNNER_TEMP/plan.txt"
+          [ ${{ matrix.of }} -gt 1 ] || exit 0
+          { echo "### e2e shard plan (${{ matrix.report }} ${{ matrix.shard }}/${{ matrix.of }})"; echo; echo '```'; cat "$RUNNER_TEMP/plan.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - id: e2e
+        run: pnpm test:e2e --project=${{ matrix.browser }} ${{ matrix.grep }} ${{ steps.plan.outputs.args }} --reporter=list,json
         continue-on-error: ${{ matrix.set == 'known-flaky' }} # quarantine: its results are summarised below instead
         env:
           PLAYWRIGHT_JSON_OUTPUT_FILE: playwright-report-${{ matrix.report }}.json
       - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' }}
         with:
-          name: e2e-report-${{ matrix.report }}
+          name: e2e-report-${{ matrix.report }}-${{ matrix.shard }}of${{ matrix.of }}
           path: |
             playwright-report-${{ matrix.report }}.json
             test-results/
           if-no-files-found: warn
+      # A set-up step failed and no test ran: say so, as an infrastructure failure, and skip the report checks below (a
+      # red job here has no test result; re-running it discards no test outcome).
+      - name: no test ran (infrastructure)
+        if: ${{ failure() && steps.e2e.outcome == 'skipped' }}
+        run: |
+          echo "::error title=infrastructure::a set-up step failed before any test ran; this job has no test result (re-run the failed job)"
+          exit 1
       # ci-stabilise: the quarantine's own record. Per test: passed first time ("expected"), passed only on a retry
       # ("flaky"), failed every attempt ("unexpected"), skipped. Warnings only; a missing report is an error annotation.
       - name: quarantined @known-flaky tests (WebKit, non-blocking) - pass / retry / fail counts
-        if: ${{ !cancelled() && matrix.set == 'known-flaky' }}
+        if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' && matrix.set == 'known-flaky' }}
         run: |
           f=playwright-report-${{ matrix.report }}.json
           [ -f "$f" ] || { echo "::error title=e2e quarantine::no e2e JSON report ($f)"; exit 1; }
-          jq -r '.. | objects | select(has("specs")) | .specs[] | . as $s | .tests[]
-            | "\(.status)\t\($s.file):\($s.line) \($s.title)"' "$f" | sort > "$RUNNER_TEMP/q.tsv"
+          node scripts/ci/e2e-report.mjs quarantine "$f" | sort > "$RUNNER_TEMP/q.tsv"
           n() { grep -c "^$1$(printf "\t")" "$RUNNER_TEMP/q.tsv" || true; }
           {
             echo "### e2e-quarantine (webkit): the @known-flaky tests, non-blocking"
@@ -174,12 +321,11 @@ jobs:
       # Revert (make webkit exit 1 again) after the demo, when the calibration pass's Task 0 re-harvests the known-flaky
       # list (docs/gates/stage-14.md, "Temporary relaxation").
       - name: e2e tests that passed only on retry (fails unless the test is tagged @known-flaky; webkit warns, temporarily)
-        if: ${{ !cancelled() && matrix.set != 'known-flaky' }}
+        if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' && matrix.set != 'known-flaky' }}
         run: |
           f=playwright-report-${{ matrix.browser }}.json
           [ -f "$f" ] || { echo "::error title=e2e JSON report::no e2e JSON report ($f): the retry check cannot run"; exit 1; }
-          jq -r '.. | objects | select(has("specs")) | .specs[] | . as $s | .tests[] | select(.status == "flaky")
-            | "\(if ($s.tags | index("known-flaky")) then "known" else "new" end)\t\($s.file):\($s.line) [\(.projectName)] \($s.title)"' "$f" > "$RUNNER_TEMP/flaky.raw" \
+          node scripts/ci/e2e-report.mjs retry "$f" > "$RUNNER_TEMP/flaky.raw" \
             || { echo "::error title=e2e JSON report::$f could not be read: the retry check cannot run"; exit 1; }
           sort -u "$RUNNER_TEMP/flaky.raw" > "$RUNNER_TEMP/flaky.tsv"
           { echo "### e2e tests that passed only on retry: $(wc -l < "$RUNNER_TEMP/flaky.tsv")"; sed -e 's/^known\t/- (@known-flaky) /' -e 's/^new\t/- **NEW** /' "$RUNNER_TEMP/flaky.tsv"; } >> "$GITHUB_STEP_SUMMARY"
@@ -192,14 +338,40 @@ jobs:
             fi
           fi
 
+  # The shards together ran every test: per set, the summed totals of its shards' reports equal `playwright test --list`
+  # on the same tree (scripts/ci/e2e-count.mjs; a gating set that differs fails, the quarantine warns).
+  e2e-count:
+    needs: [changes, e2e]
+    if: ${{ !cancelled() && needs.changes.outputs.code == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: e2e-report-*
+          path: reports
+      - run: node scripts/ci/e2e-count.mjs reports
+
   test-slow:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     # Multi-sim-hour drift runs and long clinical scenarios of @pme/engine-core, one file at a time (see
     # packages/engine-core/vite.config.ts SLOW). Kept apart from the main job so their long synchronous stretches
     # cannot starve the Vitest worker RPC there. Nine file groups, one job each, packed on the per-file CI maximum (≤ 33 min of tests each on the slowest runner seen).
+    # On a PR the nine engine groups run only when the engine, the skins or the root config change (the changes job;
+    # engine-core's only workspace dependency is @pme/skins); main runs them all. The showcase cards, split in two
+    # halves (apps/demo/vite.config.ts), run on every code PR: they also run @pme/controller and the demo's debrief.
     strategy:
       fail-fast: false
       matrix:
-        group: [slow-a, slow-b, slow-c, slow-d, slow-e, slow-f, slow-g, slow-h, slow-i, showcase]
+        group: [slow-a, slow-b, slow-c, slow-d, slow-e, slow-f, slow-g, slow-h, slow-i, showcase-a, showcase-b]
     name: test-slow (${{ matrix.group }})
     runs-on: ubuntu-latest
     timeout-minutes: 90
@@ -212,12 +384,12 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @pme/engine-core test
-        if: matrix.group != 'showcase'
+        if: ${{ !startsWith(matrix.group, 'showcase') && needs.changes.outputs.engine == 'true' }}
         env:
           PME_TEST_SET: ${{ matrix.group }}
       # Stage 11: the showcase cards' scenario tests (apps/demo vite.config.ts); `vitest run` without the package
       # script's --passWithNoTests, so a set that matches no file fails instead of passing empty
       - run: pnpm --filter @pme/demo exec vitest run
-        if: matrix.group == 'showcase'
+        if: startsWith(matrix.group, 'showcase')
         env:
-          PME_TEST_SET: showcase
+          PME_TEST_SET: ${{ matrix.group }}

@@ -6,14 +6,19 @@ commit and creates the GitHub release with its assets.
 
 ## Before the tag (on the merged `main`)
 
-1. `ci` is green on the merge commit: `build`, `renderer`, `e2e (chromium)`, `e2e (webkit)` and all eight `test-slow` groups (`slow-a` … `slow-g`, `showcase`). Read the "e2e tests that passed only on retry" step of both e2e jobs (it never fails the job) and list any line in the release notes' browser-coverage section.
+1. `ci` is green on the merge commit (a push to `main` runs every job): `build`, the three `unit` jobs, `renderer`, the four shards of `e2e (chromium …)` and the three of `e2e (webkit …)`, `e2e-count`, and all eleven `test-slow` groups (`slow-a` … `slow-i`, `showcase-a`, `showcase-b`). Read the "e2e tests that passed only on retry" step of every e2e shard (on WebKit it never fails the job) and list any line in the release notes' browser-coverage section.
 2. `docs/guides/validation-summary.md` quotes the `docs/validation/report.md` of the release tree, or states that it
    is older and why (which physiology changes it predates). To refresh it: run `pnpm validate` on the tree (or the
    `validation` workflow, Actions → validation → Run workflow) and land the regenerated report in a PR before tagging.
 3. Versions: every library `package.json` and `version` constant say the release version
    (`pnpm --filter @pme/validation exec vitest run test/release-versions.test.ts`).
 4. `CHANGELOG.md` has a `## [x.y.z] - YYYY-MM-DD` section with today's date, and `CITATION.cff` the same
-   `version` and `date-released`.
+   `version` and `date-released`. The section is built from the fragments under `changes/unreleased/` (one per pull
+   request; CONTRIBUTING.md), in the release PR: run the assembler,
+   `node --experimental-strip-types scripts/changelog-assemble.ts x.y.z YYYY-MM-DD --dry-run` to see the section, then
+   without `--dry-run` to write it (it also moves the compare links and deletes the fragments); review the section,
+   add the release's summary paragraph by hand if it has one, and commit it with the version bump. The assembler
+   refuses while CHANGELOG.md's Unreleased section still has lines (`changelog-fragments.test.ts` keeps it empty).
 5. Locally: `pnpm install --frozen-lockfile && pnpm build && pnpm check-notices && pnpm check-licences && pnpm check-size
    && pnpm pack-smoke && pnpm docs:api` all pass.
 6. `NOTICES.md` is complete (every bundled template, derived file and runtime dependency) and every licence text it
@@ -69,7 +74,7 @@ gh run watch "$(gh run list --workflow release --limit 1 --json databaseId --jq 
 - DOI (Q5, deferred to 1.0.0): Ali enables the repository in Zenodo's GitHub integration BEFORE pushing the `v1.0.0`
   tag; Zenodo then mints a DOI for that release; add `doi:` to `CITATION.cff` in a small PR afterwards.
 - Versions: `node --experimental-strip-types scripts/release-manifests.ts 1.0.0`, the six constants and their tests,
-  CHANGELOG, CITATION — `release-versions.test.ts` checks they agree.
+  CHANGELOG (the assembler, step 4 above), CITATION — `release-versions.test.ts` checks they agree.
 
 ## If the workflow fails
 

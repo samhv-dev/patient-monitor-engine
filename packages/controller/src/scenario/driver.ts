@@ -15,10 +15,14 @@
 // The administration record (plan F3, §8.2): every clinical act a /2 card's run sees through `driver.host`, ACCEPTED OR
 // REFUSED, goes into the PhaseRunner's state (administrationOf), so grade() can grade a refused dose and a restore rewinds
 // the record with the course. The driver is the one place that sees them all: a Remote's refusal reaches only its ack.
+// A procedure, sample or communication action is recorded by its taking (Q19, plan F9): a press whose commands are not
+// clinical acts (source control: a bleed rate of 0) records one administration of the action's kind, stamped with its
+// id; one with no command at all (call for help) is the scenario `record` command, `target` = the action's id.
 import { DRUGS, RHYTHM_IDS, routeHonoured, type Command, type DispatchResult, type EngineEvent, type PatientSnapshot, type PkRoute } from '@pme/engine-core';
 import type { ClinicalEvent, ScenarioCommand, ScenarioEvent, WireCommand, WireEvent } from '../protocol.ts';
 import type { HostTarget, ScenarioHookResult } from '../session/host-session.ts';
 import { PhaseRunner, type PhaseRunnerEffect } from './phase-runner.ts';
+import { bolusDrugOf } from '../session/drug-lock.ts';
 import { ScenarioRunner, type RunnerEffect, type RunnerInput, type RunnerState, type VitalHold } from './runner.ts';
 import { BUILTIN_SCENARIOS } from './builtins.ts';
 import { resolveRhythm } from './standins.ts';
@@ -102,6 +106,8 @@ export class ScenarioDriver {
   private lastStage: string | null = null;
   /** The last press seen (actionId and stage group, or command id): its further commands are the same taking. */
   private lastTaking: string | null = null;
+  /** The taking (its key) whose procedure/sample/communication record is made: one record per taking. */
+  private recordedTaking: string | null = null;
   private readonly off: () => void;
 
   constructor(o: ScenarioDriverOptions) {
@@ -119,6 +125,19 @@ export class ScenarioDriver {
   set runner(r: ScenarioRunner | null) {
     this.cur = r;
   }
+  /**
+   * The drugs a /1 step press would give as a bolus: the onEnter of the state its transition (in the current state)
+   * leads to. The host refuses the press while one of them is locked (drug-lock.ts; the orchestrator's ruling of
+   * 5 November 2026, reversible by the owner): the card's script is never altered. Anything else gives nothing.
+   */
+  triggerGives(cmd: ScenarioCommand): string[] {
+    const r = this.runner;
+    if (!r || cmd.action !== 'trigger') return [];
+    const tr = r.doc.states.find((s) => s.id === r.stateId)?.transitions?.find((t) => t.id === cmd.target);
+    const to = tr ? r.doc.states.find((s) => s.id === tr.to) : undefined;
+    return (to?.onEnter ?? []).flatMap((c) => bolusDrugOf(c as never) ?? []);
+  }
+
   /** The /2 card's runner (null while a /1 card runs, or none). */
   get phaseRunner(): PhaseRunner | null {
     return this.cur instanceof PhaseRunner ? this.cur : null;
@@ -196,13 +215,24 @@ export class ScenarioDriver {
           this.lastStage = this.stageOf(r);
           this.o.publish?.({ type: 'scenario', t: r.enteredT, stateId: r.stateId });
         } else this.cur = null;
-        return yes(undefined, m.snapshot.tick);
+        // FX-12: the case the mark holds (null: none) travels with the restore, so every controller shows the case that
+        // now runs — after a restart its views had none, and the run came back with "No scenario" on every screen
+        return yes({ ...cmd, doc: m.doc && m.runner ? m.doc : null }, m.snapshot.tick);
       }
     }
     const r = this.cur;
     if (!r) return no('no scenario loaded');
     if (r instanceof PhaseRunner) {
       switch (cmd.action) {
+        case 'record': {
+          // Q19: a procedure, sample or communication without an engine command (call for help), taken and recorded
+          const act = r.doc.actions.find((a) => a.id === cmd.target);
+          if (!act) return no(`no action ${String(cmd.target)}`);
+          if (!RECORDED_KINDS.has(act.kind)) return no(`a ${act.kind} action is recorded by its own commands, not by record`);
+          this.exec(r.take(simT, act.id, cmd.stageGroup));
+          r.record({ t: simT, source: 'action', actionId: act.id, kind: act.kind as Administration['kind'], result: { accepted: true } });
+          return yes();
+        }
         // Q5: a phase is entered by its own rule, never by an action, and a goto or a trigger is one
         case 'goto':
           return no('a pme-scenario/2 phase is entered by its own rule, never by goto');
@@ -276,7 +306,7 @@ export class ScenarioDriver {
    * placed later stay unique. Returns how many were placed.
    */
   holdStageMarks(kept: readonly StageMarkPosition[]): number {
-    const doc = this.runner?.doc;
+    const doc = this.cur?.doc;
     if (!doc) return 0;
     const now = this.o.target.now().tick;
     const ok = kept.filter((k) => k.mark.kind === 'stage' && typeof k.mark.target === 'string' && k.run.runner.docId === doc.id && (k.mark.atTick ?? 0) <= now)
@@ -428,6 +458,7 @@ export class ScenarioDriver {
       if (w.type === 'applyEvent' && this.cur instanceof PhaseRunner) {
         const a = administrationOf(w, res, this.o.target.now().simT, this.cur.doc.patient?.weightKg);
         if (a) this.cur.record(a);
+        else this.recordTaking(c, res);
       }
       if (!res.accepted) return res;
       // Engine-core's event union adds `thermal` and ventilation fico2/effort, outside the brief's verbatim
@@ -442,6 +473,16 @@ export class ScenarioDriver {
         const r = inner.dispatch(c);
         return r instanceof Promise ? r.then((x) => observe(c, x)) : observe(c, r);
       },
+      // R15: a stage group in one dispatch, each command observed as dispatch() observes it
+      ...(inner.dispatchGroup
+        ? {
+            dispatchGroup: (cs: Command[]) => {
+              const r = (inner.dispatchGroup as NonNullable<HostTarget['dispatchGroup']>)(cs);
+              const each = (xs: DispatchResult[]) => xs.map((x, i) => observe(cs[i] as Command, x));
+              return r instanceof Promise ? r.then(each) : each(r);
+            },
+          }
+        : {}),
       snapshot: () => inner.snapshot(),
       restore: (s) => inner.restore(s),
       on: (fn) => inner.on(fn),
@@ -475,6 +516,20 @@ export class ScenarioDriver {
     this.exec(r.take(this.o.target.now().simT, actionId, c.stageGroup));
   }
 
+  /** A press's command that is not a clinical act (no administration of its own) records the taking of a procedure,
+   *  sample or communication action, once per taking. */
+  private recordTaking(c: Command, res: DispatchResult): void {
+    const r = this.cur;
+    const actionId = (c as { actionId?: unknown }).actionId;
+    if (!(r instanceof PhaseRunner) || typeof actionId !== 'string') return;
+    const act = r.doc.actions.find((a) => a.id === actionId);
+    const key = `${actionId}|${c.stageGroup ?? c.id}`;
+    if (!act || !RECORDED_KINDS.has(act.kind) || key === this.recordedTaking) return;
+    this.recordedTaking = key;
+    const result: Administration['result'] = res.accepted ? { accepted: true } : { accepted: false, reason: res.reason ?? '', routeNotModelled: false };
+    r.record({ t: this.o.target.now().simT, source: 'action', actionId, kind: act.kind as Administration['kind'], result });
+  }
+
   private onEngine(e: EngineEvent): void {
     const w = e as WireEvent;
     if (w.type === 'measurement') {
@@ -498,6 +553,8 @@ function v1Input(i: RunnerInputV2): i is RunnerInput {
 }
 
 const MASS = /^(mcg|mg|g)$/;
+/** The action kinds recorded by their taking (grade() matches them by the action's id). */
+const RECORDED_KINDS: ReadonlySet<string> = new Set(['procedure', 'sample', 'communication']);
 /** The fields administrationOf reads, of every clinical event kind at once (the union, flattened). */
 type FlatEvent = {
   kind: string; drugId: string; dose: number; unit: string; route: PkRoute; infusion?: boolean; overS?: number; rate: number;

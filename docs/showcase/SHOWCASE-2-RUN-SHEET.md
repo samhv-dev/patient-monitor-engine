@@ -1,5 +1,7 @@
 # Showcase 2: run sheet (30 minutes, the owner's slot)
 
+> **A record of the 3 November 2026 build:** the first Instructor view it describes (`#/teach`, its tabs and session bar) was retired on 6 November 2026 (retire-instructor-v1 PR 3; Instructor v2, `#/teach2`, is now the only Instructor view, and `#/teach` opens it). Nothing else in this record was changed.
+
 *Tuesday 3 November 2026 (12 Aban 1405), university deans and clinical staff. Presenter: the owner. **One case
 (owner, 29 October): malignant hyperthermia on the E119 card, with three pauses ("look-inside stops") in which the
 owner explains the physiology the engine is computing, on the Explore view, with the matching model page open behind it
@@ -1172,6 +1174,37 @@ panel, the report or the print.
 
 The handout and the report carry no fast-forward banner here (the haemorrhage has no span); after a span, print only
 once the banner has gone (≈ 8 s) [UIR #9].
+
+### Reserve R5b: the same case in phases (`showcase-haemorrhage-v2`, `pme-scenario/2`, plan F9, 5 November). Not in a programme; Instructor v2 only
+
+*Class IV haemorrhage, PEA and resuscitation (phases)*, beside the R5 card (which is unchanged). It runs in Instructor
+v2 (today's Instructor view says so). **What differs from R5, by the owner's rulings of 5 November:** no button moves
+the case: six phases follow the engine's truth (Bleeding → Decompensating at a systolic below 60 for 10 s, the card
+setting the junctional rhythm there as R5 does → Arrest: PEA at the model's pulse loss → Arrest: asystole → ROSC →
+Post-resuscitation after 120 s of ROSC). **No VF and no shock:** the card no longer sets VF at the rhythm checks, and
+measured on this course the engine draws none (untreated to 30:00, CPR into asystole, CPR in the PEA) [F9 slow test].
+The rhythm check stops the compressions and changes no rhythm; press **Start CPR** again to resume them.
+
+**The course on the demo's timing has no return of circulation.** On R5's presses (CPR 15 s into asystole at 15:46,
+the volume and TXA at 15:56, epinephrine 16:08 and 19:08, rhythm checks 17:46 and 19:58) the patient stays in asystole
+to the end: in this engine asystole never regains a pulse (R5's own note above), and on R5 it was the card's VF and the
+second shock that left an organised rhythm. The engine's course is R5's to the second up to the first rhythm check
+(17:46) [F9 slow test, O1]. **With CPR in the PEA** (the pulse lost at 11:00; CPR at 11:10, 12:00, 13:00 or 14:20 was
+measured) the pulse returns from the PEA (14:20 with CPR at 11:10; Post-resuscitation 16:20). The PEA turns
+idioventricular at 12:52 and to asystole at 15:25 untreated: CPR after that is too late on this course.
+
+**Rows and grades** (Instructor v2's ACTION, graded live): oxygen and intubate in Bleeding/Decompensating; **Recognise
+and announce the diagnosis** (press it when the team says it aloud; within 30 s of the systolic below 25 for 10 s, a
+placeholder window); **Start CPR** from Decompensating on (within 30 s of the pulse loss or of ERC's operating-room rule,
+the operating-room trigger on the monitor, arterial systolic below 40 for 30 s with EtCO₂ below 25 (10:39 on the
+A4 path), whichever is first, met; to 2 min overdue; later failed though started); in the
+arrest phases call for help, **Resume CPR after the rhythm check** (within 10 s of each check),
+bag 10/min, epinephrine 1 mg IV (again every 3–5 min from the previous dose), source control, massive transfusion, TXA
+1 g, rhythm check (every 2 min); in ROSC "Rhythm check: pulse back, stop CPR" (within 2 min of ROSC) and **Recognise the
+return of circulation** (press it when the team says so; within 2 min of ROSC's entry: a record action, as every row the
+instructor observes since judged rows were retired, 5 November). Epinephrine 1 mg
+IV or IO in ROSC prints as a violation. Each action's numbers carry their source in the card's `src` (Miller 10th ed.
+Ch82 for the bag, epinephrine and rhythm-check figures; a row whose sources state no window is recorded, not timed).
 
 ### Reserve R1: Induction after fentanyl and midazolam (the premed contrast). Round-B slot 4:00, ×4 throughout
 

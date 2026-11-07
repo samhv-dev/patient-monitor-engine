@@ -4,13 +4,12 @@
 // unchanged (the existing tests). F6 and F7 make them read phases and actions.
 import { afterEach, describe, expect, it } from 'vitest';
 import { ControllerSession, createInProcessHub, createStamper, ScenarioView, type AnyScenarioDoc, type CommandInput, type Transition, type WireEvent } from '@pme/controller';
-import { objectivesOf, reachable, rowsOf, stageOf, stagesOf, standingOf, untakenStatus, withStart, type Evidence } from './card-read.ts';
+import { objectivesOf, reachable, rowsOf, stageOf, stagesOf, standingOf, untakenStatus, type Evidence } from './card-read.ts';
 import { eventWords, judged, objectives, steps } from './debrief.ts';
 import { keyMoments, keyTimes, whoOf } from './debrief-moments.ts';
 import { emptyRun, RunRecord, type RunData } from './record.ts';
 import { cardOf, type ScenarioCard } from './scenarios.ts';
 import { transitionText } from './triggers.ts';
-import { historyOf } from './teach2/course.ts';
 import { stageEntries, stripModel } from './teach2/strip.ts';
 import { Link } from './link.ts';
 import { scenarioTab } from './panel/scenario.ts';
@@ -25,7 +24,8 @@ import type { Teach2Ctx } from './teach2/ctx.ts';
 import { debriefView } from './views/debrief.ts';
 import { scenariosView } from './views/scenarios.ts';
 
-/** A pme-scenario/2 card, as packages/controller/test/scenario/fixtures-v2.ts has it (two phases, one judged row). */
+/** A pme-scenario/2 card, as packages/controller/test/scenario/fixtures-v2.ts has it (two phases, two record actions: judged
+ *  rows are retired, the owner's ruling of 5 November). */
 const V2 = {
   schema: 'pme-scenario/2', id: 'showcase-mh', title: 'MH (format 2)', story: 'A 30-year-old for a knee arthroscopy.', durationMin: 40,
   patient: { ageY: 30, sex: 'M', weightKg: 80 },
@@ -33,8 +33,10 @@ const V2 = {
     { id: 'baseline', label: 'Baseline', initial: true, next: ['early'] },
     { id: 'early', label: 'Early signs', enter: { value: { var: 'etco2', op: '>', value: 45, forS: 20 } } },
   ],
-  actions: [{ id: 'callHelp', label: 'Call for help', kind: 'communication', phases: ['early'] }],
-  judged: [{ id: 'nameMh', text: 'Names MH from the monitor', kind: 'recognition' }],
+  actions: [
+    { id: 'callHelp', label: 'Call for help', kind: 'communication', phases: ['early'] },
+    { id: 'nameMh', label: 'Names MH from the monitor', kind: 'communication', phases: ['early'], window: { anchor: 'phase:early', withinS: 120 } },
+  ],
 } as unknown as AnyScenarioDoc;
 const TR = { id: 'go', to: 'early', when: { manual: { label: 'Go' } } } as Transition;
 const EV: Evidence = { first: () => 0, met: () => false };
@@ -47,16 +49,15 @@ const run = (): RunData => {
 };
 
 describe('card-read.ts and a pme-scenario/2 card', () => {
-  it('F6: the stages are the phases and the rows the open actions, the judged row and the rules out; no linked objectives, nothing reachable, no standing, the history as it is', () => {
+  it('F6: the stages are the phases and the rows the open actions (record actions among them, no judged row) and the rules out; no linked objectives, nothing reachable, no standing', () => {
     expect(stagesOf(V2).map((g) => [g.id, g.byRule])).toEqual([['baseline', false], ['early', true]]);
     expect(stageOf(V2, 'early')?.label).toBe('Early signs');
-    expect(rowsOf(V2, 'early').map((r) => [r.kind, r.title])).toEqual([['step', 'Call for help'], ['judged', 'Names MH from the monitor']]);
-    expect(rowsOf(V2, 'baseline').map((r) => [r.kind, r.title])).toEqual([['judged', 'Names MH from the monitor'], ['auto', 'Early signs']]);
+    expect(rowsOf(V2, 'early').map((r) => [r.kind, r.title])).toEqual([['step', 'Call for help'], ['step', 'Names MH from the monitor']]);
+    expect(rowsOf(V2, 'baseline').map((r) => [r.kind, r.title])).toEqual([['auto', 'Early signs']]); // a record action is open in its phases only
     expect(objectivesOf(V2, TR)).toEqual([]);
     expect(reachable(V2, 'baseline', 'early')).toBe(false);
     expect(standingOf(V2, TR, { dueT: 0, leftT: null, now: 60 }, EV)).toEqual({ asked: false, dueS: null });
     expect(untakenStatus(V2, TR, { stateId: 'baseline', current: 'early', dueT: 0, leftT: 30, now: 60 }, EV)).toBeNull();
-    expect(withStart(V2, HISTORY.slice(1), 0)).toEqual(HISTORY.slice(1));
   });
 });
 
@@ -84,15 +85,13 @@ describe('the run record, the Debrief and its key moments, and a pme-scenario/2 
 });
 
 describe('the library, the trigger words and Instructor v2\'s course and strip, and a pme-scenario/2 card', () => {
-  it('scenarios.ts cardOf: the header (title, story, minutes, patient); the case details are the judged rows and the graded actions (F6)', () => {
-    expect(cardOf(V2)).toMatchObject({ id: 'showcase-mh', title: 'MH (format 2)', story: 'A 30-year-old for a knee arthroscopy.', minutes: 40, patient: 'M 30 y 80 kg', objectives: ['Names MH from the monitor', 'Call for help'], doc: V2 });
+  it('scenarios.ts cardOf: the header (title, story, minutes, patient); the case details are the graded actions, in the card\'s order (F6)', () => {
+    expect(cardOf(V2)).toMatchObject({ id: 'showcase-mh', title: 'MH (format 2)', story: 'A 30-year-old for a knee arthroscopy.', minutes: 40, patient: 'M 30 y 80 kg', objectives: ['Call for help', 'Names MH from the monitor'], doc: V2 });
   });
   it('triggers.ts transitionText: the target has no state label ("next state")', () => {
     expect(transitionText(TR, V2)).toBe('You press "Go": next state');
   });
-  it('teach2 course.ts historyOf: the history as it is; strip.ts: no stage entries, no strip items', () => {
-    const link = { ctl: { scenario: { doc: V2, history: HISTORY } }, host: { record: { data: run() } } } as unknown as Link;
-    expect(historyOf(link)).toBe(HISTORY);
+  it('teach2 strip.ts: the phases are its stage entries and strip items', () => {
     // F6: the phases are the stages
     expect(stageEntries(V2, HISTORY, { stateId: 'early', enteredT: 30 }, 60).map((e) => [e.stage, e.t])).toEqual([['baseline', 0], ['early', 30]]);
     expect(stripModel(V2, 'early', [], 0).map((x) => x.kind)).toEqual(['past', 'current']);
@@ -130,7 +129,7 @@ describe('the instructor views and a pme-scenario/2 card', () => {
     expect(el.textContent).toContain('This card is pme-scenario/2: run it from Instructor v2.');
     expect(el.querySelectorAll('ul.next li').length).toBe(0);
   });
-  it('Instructor v2 (F6): the strip shows the phases, the cue box the phase, ACTION its action and judged row', () => {
+  it('Instructor v2 (F6): the strip shows the phases, the cue box the phase, ACTION its two actions (a record action drawn as any action)', () => {
     const link = fakeLink(view());
     const keys = { digit: () => undefined, letter: () => undefined, escape: () => () => undefined };
     const ctx = { link, keys, site: {}, weightKg: () => 70, dock: {}, openSheet: () => undefined } as unknown as Teach2Ctx;

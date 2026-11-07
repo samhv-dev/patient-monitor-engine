@@ -6,6 +6,8 @@
 // held-values dialog reads them, answer 14); and Swap, which opens the full-size Monitor view (answer 18). While the
 // host is paused the in-stage clock reads "frozen" (the owner's option G dropped v9's banner: the pill turns amber, the
 // monitor carries PAUSED, and the pill's tooltip says when a step pressed now is given).
+// With a case loaded, "Hold the stage timer" / "Resume the stage timer" sends `scenario pause` / `resume` (the stage's
+// rules and timers stop, the physiology runs on; retire-instructor-v1 G2).
 import './state.css';
 import type { StateVar } from '@pme/engine-core';
 import { asV1, isV2 } from '@pme/controller';
@@ -18,8 +20,8 @@ import { clock, h, setText } from '../ui.ts';
 import { showVital, vitalLabel, vitalOf } from '../vitals.ts';
 import { defaultPatient } from './begin.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
-import { stageEntries, stageNames, type StageEntry } from './strip.ts';
-import { historyOf } from './course.ts';
+import { entriesOf } from './feed.ts';
+import { stageNames, type StageEntry } from './strip.ts';
 
 /** The host's tick (s): a state row of the record and the scenario event it came from lie within one. */
 const TICK_S = 0.02;
@@ -33,9 +35,15 @@ export function enteredWords(by: string | undefined, t: number, rule: string | n
   return `entered ${at}`;
 }
 
-/** The record's `by` for the state row of `entry` (host only; absent on a follower and on a record made before the field existed). */
-function byOf(link: Link, entry: StageEntry): string | undefined {
-  const rows = link.host?.record.data.rows ?? [];
+/** The record's `by` for the state row of `entry`: the host's record, or on a remote the host's view feed for the
+ *  current entry (feed.ts); absent on a follower and on a record made before the field existed. */
+export function byOf(link: Link, entry: StageEntry): string | undefined {
+  if (!link.host) {
+    const fed = link.viewNow?.();
+    const cur = fed?.entries.at(-1);
+    return fed?.by != null && cur?.stage === entry.stage && cur.t === entry.t ? fed.by : undefined;
+  }
+  const rows = link.host.record.data.rows;
   const row = rows.filter((r) => r.kind === 'scenario' && r.undone === undefined && r.ev === `state:${entry.stateId}` && Math.abs(r.t - entry.t) <= TICK_S + 1e-6).at(-1);
   const by = (row as { by?: unknown } | undefined)?.by;
   return typeof by === 'string' ? by : undefined;
@@ -51,12 +59,15 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const name = h('span', { class: 'ip2-cue-name' });
   const inStage = h('span', { class: 'ip2-cue-clock' });
   const how = h('span', { class: 'ip2-cue-how' });
+  // Hold the stage timer (retire-instructor-v1 G2): the Scenario tab's "Hold the timer", the same commands. The case's
+  // rules and timers stop while the body runs on (both runners honour `scenario pause`); the clock above reads frozen.
+  const hold = h('button', { type: 'button', class: 'ip2-btn ip2-cue-hold', onclick: () => void link.send({ type: 'scenario', action: sv.paused ? 'resume' : 'pause' }) });
   const swap = h('a', { class: 'ip2-swap', href: hrefOf('monitor'), 'aria-label': 'Swap the monitor to full size' }, 'Swap ⤢');
   const line = h('div', { class: 'ip2-cue-line' });
   const say = h('p', { class: 'ip2-say', title: 'Show all of it' });
   say.addEventListener('click', () => say.classList.toggle('ip2-say-open'));
   const held = h('div', { class: 'ip2-held' });
-  const box = h('div', { class: 'ip2-cue-box', role: 'group', 'aria-label': 'Cue' }, h('div', { class: 'ip2-cue-head' }, name, inStage, how, h('span', { class: 'ip2-spacer' }), swap), line, say, held);
+  const box = h('div', { class: 'ip2-cue-box', role: 'group', 'aria-label': 'Cue' }, h('div', { class: 'ip2-cue-head' }, name, inStage, hold, how, h('span', { class: 'ip2-spacer' }), swap), line, say, held);
   el.replaceChildren(box);
 
   /** When each held value was first seen held (sim s), for "(2 min)"; a value let go leaves it. */
@@ -64,6 +75,8 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
 
   const draw = () => {
     const paused = link.ctl.hostPaused;
+    hold.hidden = !sv.doc; // no case: no stage timer to hold
+    setText(hold, sv.paused ? 'Resume the stage timer' : 'Hold the stage timer');
 
     // HELD (answer 14): the values held in MODELED mode, as the session bar's held-values dialog lists them
     const st = link.ctl.state;
@@ -81,7 +94,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     const phase = v2?.phases.find((p) => p.id === sv.stateId);
     box.classList.toggle('ip2-cue-none', !!v2 && !phase);
     if (v2 && phase) {
-      const entry = stageEntries(v2, historyOf(link), sv, link.simT).filter((e) => e.stage === phase.id).at(-1) ?? null;
+      const entry = entriesOf(link).filter((e) => e.stage === phase.id).at(-1) ?? null;
       setText(name, phase.label);
       const frozen = paused || sv.paused;
       setText(inStage, `${clock(sv.timeInState(link.simT))} in phase${frozen ? ' · frozen' : ''}`);
@@ -115,7 +128,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
       say.hidden = true;
       return;
     }
-    const entry = stageEntries(doc, historyOf(link), sv, link.simT).filter((e) => e.stage === stage.id).at(-1) ?? null;
+    const entry = entriesOf(link).filter((e) => e.stage === stage.id).at(-1) ?? null;
     setText(name, stageNames(stagesOf(doc)).get(stage.id) ?? stage.label);
     // time in the stage: the state's own clock (pauses excluded), plus the hops and returns before it since the stage began
     const t = sv.timeInState(link.simT) + (entry ? Math.max(0, sv.enteredT - entry.t) : 0);

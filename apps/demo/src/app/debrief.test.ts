@@ -25,21 +25,31 @@ describe('objective rules', () => {
   const within: ObjectiveRule = { kind: 'eventWithin', after: 'alarm:apnoea', event: 'ventilation', withinS: 90 };
 
   it('eventWithin: met, not met (late or never), not assessable (no trigger, or the run ended first)', () => {
-    expect(v(within, run([apnoea(66), vent(106)]))).toEqual({ status: 'met', why: 'Ventilated breaths 40 s after the alarm Apnoea (no CO₂ breaths) (01:06 → 01:46; within 1 min 30 s asked).', measure: { fromT: 66, toT: 106, askedS: 90 } });
+    expect(v(within, run([apnoea(66), vent(106)]))).toEqual({ status: 'met', why: 'Ventilated breaths 40 s after the alarm Apnoea (no CO₂ breaths) (01:06 → 01:46; within 1 min 30 s asked).', measure: { fromT: 66, toT: 106, askedS: 90 }, window: { fromT: 66, askedS: 90 } });
     expect(v(within, run([apnoea(66), vent(200)])).status).toBe('not met');
-    expect(v(within, run([apnoea(66)], [sample(200)]))).toEqual({ status: 'not met', why: 'No ventilated breaths within 1 min 30 s of the alarm Apnoea (no CO₂ breaths) at 01:06.' });
+    expect(v(within, run([apnoea(66)], [sample(200)]))).toEqual({ status: 'not met', why: 'No ventilated breaths within 1 min 30 s of the alarm Apnoea (no CO₂ breaths) at 01:06.', window: { fromT: 66, askedS: 90 } });
     expect(v(within, run([], [sample(300)]))).toEqual({ status: 'not assessable', why: 'The alarm Apnoea (no CO₂ breaths) did not happen.' });
     expect(v(within, run([apnoea(66)], [sample(100)])).why).toBe('The run ended 34 s after the alarm Apnoea (no CO₂ breaths) at 01:06, before 1 min 30 s had passed.');
   });
 
+  // D7a (Debrief 2): the window the swimlane draws, set whenever the anchor was found — also when the act never came
+  // or the run ended inside it — and the reason line unchanged
+  it('eventWithin keeps its window (anchor, seconds asked) whenever the anchor was found', () => {
+    const ended = v(within, run([apnoea(66)], [sample(100)]));
+    expect(ended).toEqual({ status: 'not assessable', why: 'The run ended 34 s after the alarm Apnoea (no CO₂ breaths) at 01:06, before 1 min 30 s had passed.', window: { fromT: 66, askedS: 90 } });
+    expect(v(within, run([apnoea(66), vent(200)]))).toMatchObject({ status: 'not met', measure: { fromT: 66, toT: 200, askedS: 90 }, window: { fromT: 66, askedS: 90 } });
+    expect(v(within, run([], [sample(300)]))).not.toHaveProperty('window'); // no anchor: no window
+    expect(v({ kind: 'occurred', event: 'ventilation' }, run([vent(10)]))).not.toHaveProperty('window'); // only eventWithin
+  });
+
   it('an event before the anchor does not count; a second anchor is not judged again (the first is)', () => {
-    expect(v(within, run([vent(30), apnoea(66)], [sample(200)]))).toEqual({ status: 'not met', why: 'No ventilated breaths within 1 min 30 s of the alarm Apnoea (no CO₂ breaths) at 01:06.' });
+    expect(v(within, run([vent(30), apnoea(66)], [sample(200)]))).toEqual({ status: 'not met', why: 'No ventilated breaths within 1 min 30 s of the alarm Apnoea (no CO₂ breaths) at 01:06.', window: { fromT: 66, askedS: 90 } });
     const cpr: ObjectiveRule = { kind: 'eventWithin', after: 'pulseLoss', event: 'cpr', withinS: 30 };
     const rows: Row[] = [
       { t: 100, kind: 'patient', text: 'Pulse lost (the model)', ev: 'pulseLoss' }, { t: 160, kind: 'patient', text: 'Circulation returned (the model)', ev: 'rosc' },
       { t: 300, kind: 'patient', text: 'Pulse lost (the model)', ev: 'pulseLoss' }, { t: 310, kind: 'action', text: 'CPR started', ev: 'cpr' },
     ];
-    expect(v(cpr, run(rows))).toEqual({ status: 'not met', why: 'CPR 3 min 30 s after the pulse loss (01:40 → 05:10; within 30 s asked).', measure: { fromT: 100, toT: 310, askedS: 30 } });
+    expect(v(cpr, run(rows))).toEqual({ status: 'not met', why: 'CPR 3 min 30 s after the pulse loss (01:40 → 05:10; within 30 s asked).', measure: { fromT: 100, toT: 310, askedS: 30 }, window: { fromT: 100, askedS: 30 } });
   });
 
   it('a value never measured is not assessable, never "did not happen"', () => {
@@ -48,7 +58,7 @@ describe('objective rules', () => {
     expect(v({ kind: 'never', event: 'value:spo2<90' }, run([], none)).status).toBe('not assessable');
     const pe: Row = { t: 60, kind: 'action', text: 'Phenylephrine 100 µg IV', ev: 'drug:phenylephrine' };
     expect(v({ kind: 'eventWithin', after: 'drug:phenylephrine', event: 'value:map>65', withinS: 120 }, run([pe], [sample(0, { map: 50 }), sample(61, { map: null }), sample(300, { map: null })])))
-      .toEqual({ status: 'not assessable', why: 'ART M / NIBP M was not measured after Phenylephrine at 01:00.' });
+      .toEqual({ status: 'not assessable', why: 'ART M / NIBP M was not measured after Phenylephrine at 01:00.', window: { fromT: 60, askedS: 120 } });
     expect(v({ kind: 'eventWithin', after: 'value:map<60', event: 'drug:phenylephrine', withinS: 60 }, run([pe], none)).why).toBe('ART M / NIBP M was not measured during the run.');
   });
 
@@ -57,7 +67,7 @@ describe('objective rules', () => {
     const off: Row = { t: 10, kind: 'scenario', text: 'x', ev: 'state:induced' };
     const back: Row = { t: 130, kind: 'scenario', text: 'y', ev: 'ventilation' };
     const rule: ObjectiveRule = { kind: 'eventWithin', from: 'state:induced', after: 'value:etco2<40', event: 'ventilation', withinS: 60 };
-    expect(v(rule, run([off, back], xs))).toEqual({ status: 'met', why: 'Ventilated breaths 30 s after EtCO₂ below 40 mmHg after the state "Induced" (01:40 → 02:10; within 1 min 00 s asked).', measure: { fromT: 100, toT: 130, askedS: 60 } });
+    expect(v(rule, run([off, back], xs))).toEqual({ status: 'met', why: 'Ventilated breaths 30 s after EtCO₂ below 40 mmHg after the state "Induced" (01:40 → 02:10; within 1 min 00 s asked).', measure: { fromT: 100, toT: 130, askedS: 60 }, window: { fromT: 100, askedS: 60 } });
     expect(v({ ...rule, from: undefined } as ObjectiveRule, run([off, back], xs)).status).toBe('not met'); // without it: the baseline at 00:00
     expect(v(rule, run([back], xs))).toEqual({ status: 'not assessable', why: 'The state "Induced" did not happen.' });
     expect(v({ kind: 'occurred', from: 'state:induced', event: 'value:etco2<40' }, run([off], xs))).toEqual({ status: 'met', why: 'EtCO₂ below 40 mmHg after the state "Induced" at 01:40' });
@@ -68,7 +78,7 @@ describe('objective rules', () => {
     const potassium: ObjectiveRule = { kind: 'eventWithin', after: 'value:k>5.5', event: ['drug:calciumChloride', 'drug:insulinDextrose'], withinS: 300 };
     const ca: Row = { t: 400, kind: 'scenario', text: 'Calcium chloride', ev: 'drug:calciumChloride' };
     const ks = [sample(0, { k: 4.2 }), sample(200, { k: 5.6 }), sample(400, { k: 6.1 })];
-    expect(v(potassium, run([ca], ks))).toEqual({ status: 'met', why: 'Calcium chloride 10 % or Insulin + dextrose 3 min 20 s after K⁺ above 5.5 mmol/L (03:20 → 06:40; within 5 min 00 s asked).', measure: { fromT: 200, toT: 400, askedS: 300 } });
+    expect(v(potassium, run([ca], ks))).toEqual({ status: 'met', why: 'Calcium chloride 10 % or Insulin + dextrose 3 min 20 s after K⁺ above 5.5 mmol/L (03:20 → 06:40; within 5 min 00 s asked).', measure: { fromT: 200, toT: 400, askedS: 300 }, window: { fromT: 200, askedS: 300 } });
     expect(v({ kind: 'stayed', value: 'k', below: 6, after: 'drug:calciumChloride', forS: 60 }, run([ca], ks)).status).toBe('not met');
   });
 
@@ -88,7 +98,7 @@ describe('objective rules', () => {
     const xs = [sample(0, { map: 80 }), sample(30, { map: 58 }), sample(50, { map: 59 }), sample(70, { map: 66 })];
     const pe: Row = { t: 60, kind: 'action', text: 'Phenylephrine 100 µg IV', ev: 'drug:phenylephrine' };
     const treat: ObjectiveRule = { kind: 'eventWithin', after: 'value:map<60', event: ['drug:phenylephrine', 'drug:ephedrine'], withinS: 60 };
-    expect(v(treat, run([pe], xs))).toEqual({ status: 'met', why: 'Phenylephrine or Ephedrine 30 s after ART M / NIBP M below 60 mmHg (00:30 → 01:00; within 1 min 00 s asked).', measure: { fromT: 30, toT: 60, askedS: 60 } });
+    expect(v(treat, run([pe], xs))).toEqual({ status: 'met', why: 'Phenylephrine or Ephedrine 30 s after ART M / NIBP M below 60 mmHg (00:30 → 01:00; within 1 min 00 s asked).', measure: { fromT: 30, toT: 60, askedS: 60 }, window: { fromT: 30, askedS: 60 } });
     expect(v({ kind: 'eventWithin', after: ['drug:ephedrine', 'drug:phenylephrine'], event: 'value:map>65', withinS: 120 }, run([pe], xs)).why).toBe('ART M / NIBP M above 65 mmHg 10 s after Ephedrine or Phenylephrine (01:00 → 01:10; within 2 min 00 s asked).');
     expect(v({ kind: 'occurred', event: 'value:spo2<90' }, run([], xs))).toEqual({ status: 'not met', why: 'SpO₂ below 90 %: did not happen' });
   });
@@ -148,7 +158,7 @@ describe('objective rules', () => {
     d.doc = { ...(DOC as never as ScenarioDoc), objectives: ['Anticipate the fall in arterial pressure after propofol', { text: 'Ventilate within 90 s of the apnoea alarm', rule: within }, { text: 'Confirm ventilation with the capnogram' }] };
     expect(objectives(d)).toEqual([
       { text: 'Anticipate the fall in arterial pressure after propofol', verdict: { status: 'not assessable', why: 'This objective has no rule: the instructor judges it.' } },
-      { text: 'Ventilate within 90 s of the apnoea alarm', verdict: { status: 'met', why: expect.stringContaining('34 s after'), measure: { fromT: 66, toT: 100, askedS: 90 } } },
+      { text: 'Ventilate within 90 s of the apnoea alarm', verdict: { status: 'met', why: expect.stringContaining('34 s after'), measure: { fromT: 66, toT: 100, askedS: 90 }, window: { fromT: 66, askedS: 90 } } },
       { text: 'Confirm ventilation with the capnogram', verdict: { status: 'not assessable', why: 'This objective has no rule: the instructor judges it. The instructor ticked it at 02:20.', tickedT: 140 } },
     ]);
   });
@@ -286,6 +296,9 @@ describe('the trend axes have a least span', () => {
     expect(axisRange('temp', 36.8, 36.8)).toEqual([35.8, 37.8]); // 2 °C
     expect(axisRange('hr', 70, 148)).toEqual([70, 148]); // a wide range is the data's own
     expect(axisRange('rr', 12, 12)).toEqual([11, 13]); // no floor ruled for RR: unchanged (± 1 when flat)
+    expect(axisRange('sys', 92, 100)).toEqual([76, 116]); // brief 63: the Pressures panel's SBP/DBP axis, MAP's 40 mmHg
+    expect(axisRange('cvp', 17, 17)).toEqual([12, 22]); // its CVP axis, 10 mmHg
+    expect(axisRange('cvp', 1, 2)).toEqual([0, 10]); // never below zero when the data are not
   });
 });
 
@@ -397,21 +410,23 @@ describe('IP8: the steps, the judged objectives and the marks', () => {
   });
 });
 
-describe('F7: a pme-scenario/2 run — the action table, outcomes, violations, judged rows and pme-debrief/3', () => {
+describe('F7: a pme-scenario/2 run — the action table (record actions among them), outcomes, violations and pme-debrief/3', () => {
   const MH2 = mhV2 as unknown as ScenarioDocV2;
   /** The MH /2 card with one outcome (the card has none yet), for the outcome rows. */
   const DOC2: ScenarioDocV2 = { ...MH2, outcomes: [{ id: 'etco2Down', text: 'EtCO₂ below 40 within 10 min of the first dantrolene', rule: { value: { var: 'etco2', op: '<', value: 40 } }, anchor: 'action:dantrolene', withinS: 600 }] };
-  const phases: PhaseEntry[] = [{ id: 'baseline', t: 0, exitT: 400, rule: 'start' }, { id: 'latent', t: 400, rule: 'enter:latent' }];
+  // Early signs entered at 410: the window of the record action "name MH" (judged rows are retired, owner 5 November)
+  const phases: PhaseEntry[] = [{ id: 'baseline', t: 0, exitT: 400, rule: 'start' }, { id: 'latent', t: 400, exitT: 410, rule: 'enter:latent' }, { id: 'earlySigns', t: 410, rule: 'enter:earlySigns' }];
   const admin: Administration[] = [
     { seq: 1, t: 470, source: 'action', actionId: 'callCrisis', kind: 'vaporiser', settings: { dialPct: 0, fgfLpm: 10 }, result: { accepted: true } },
     { seq: 2, t: 480, source: 'sheet', kind: 'drug', drugId: 'dantrolene', dose: 200, unit: 'mg', route: 'im', result: { accepted: true } },
     { seq: 3, t: 500, source: 'action', actionId: 'dantrolene', kind: 'drug', drugId: 'dantrolene', dose: 2.5, unit: 'mg/kg', perKg: 2.5, route: 'iv', result: { accepted: true } },
+    // the instructor's press of "name MH": the scenario record command, stamped with the action's id
+    { seq: 4, t: 450, source: 'action', actionId: 'nameMh', kind: 'communication', result: { accepted: true } },
   ];
-  const edges: RuleEdge[] = [{ rule: 'action:callCrisis:anchor', t: 420, value: true }, { rule: 'outcome:etco2Down', t: 800, value: true }, { rule: 'judged:nameMh', t: 410, value: true }];
-  const nameMh = drugWords(MH2.judged?.[0]?.text ?? '');
+  const edges: RuleEdge[] = [{ rule: 'action:callCrisis:anchor', t: 420, value: true }, { rule: 'outcome:etco2Down', t: 800, value: true }];
   const d2: RunData = {
     ...emptyRun('M 35 y 80 kg', 80, 0), doc: DOC2, format: 2, phases, admin, edges,
-    rows: [{ t: 0, kind: 'scenario', text: 'Scenario loaded: MH' }, { t: 450, kind: 'note', text: `Objective met: ${nameMh}` }],
+    rows: [{ t: 0, kind: 'scenario', text: 'Scenario loaded: MH' }],
     samples: [sample(0), sample(900)],
   };
 
@@ -419,23 +434,23 @@ describe('F7: a pme-scenario/2 run — the action table, outcomes, violations, j
   // = failed, an outcome not reached) only once the run has ended: an end phase, or "Finish the case"'s note
   const finished = (d: RunData): RunData => ({ ...d, rows: [...d.rows, { t: 900, kind: 'note', text: CASE_FINISHED }] });
   it('the grades are grade() on the copied inputs at the record’s end (the panel’s function); final once the run has ended (D5)', () => {
-    expect(runEnded(d2)).toBe(false); // in latent, which has a next, and not finished
+    expect(runEnded(d2)).toBe(false); // in Early signs, which has a next, and not finished
     expect(gradesOf(d2)).toEqual(grade(DOC2, phases, admin, edges, 900, { final: false }));
     expect(runEnded(finished(d2))).toBe(true);
     expect(gradesOf(finished(d2))).toEqual(grade(DOC2, phases, admin, edges, 900, { final: true }));
     // a return to an earlier mark undoes the note: the run is open again
     expect(runEnded({ ...d2, rows: [...d2.rows, { t: 900, kind: 'note', text: CASE_FINISHED, undone: 1 }] })).toBe(false);
     // an end phase (no next) ends it
-    const end: ScenarioDocV2 = { ...DOC2, phases: DOC2.phases.map((p) => (p.id === 'latent' ? { ...p, next: [] } : p)) };
+    const end: ScenarioDocV2 = { ...DOC2, phases: DOC2.phases.map((p) => (p.id === 'earlySigns' ? { ...p, next: [] } : p)) };
     expect(runEnded({ ...d2, doc: end })).toBe(true);
     expect(gradesOf(run([]))).toBeNull(); // a /1 run
     expect(gradesOf({ ...d2, format: undefined })).toBeNull(); // a /2 card without copied inputs (a record from before F7)
   });
 
-  it('pme-debrief/3: its keys in order; actions, outcomes, violations and judged rows in the plan’s shape', () => {
+  it('pme-debrief/3: its keys in order (no judged rows: retired, owner 5 November); actions, outcomes and violations in the plan’s shape', () => {
     const j = JSON.parse(debriefJson(d2, 'abc1234 2026-10-31'));
     expect(j.schema).toBe('pme-debrief/3');
-    expect(Object.keys(j)).toEqual(['schema', 'version', 'build', 'record', 'phases', 'actions', 'outcomes', 'violations', 'judged', 'facts', 'keyTimes', 'keyMoments', 'minutes', 'marks']);
+    expect(Object.keys(j)).toEqual(['schema', 'version', 'build', 'record', 'phases', 'actions', 'outcomes', 'violations', 'facts', 'keyTimes', 'keyMoments', 'minutes', 'marks']);
     expect(j.version).toBe(version);
     expect(j.record).toEqual(JSON.parse(JSON.stringify(d2)));
     expect(j.phases).toEqual(phases);
@@ -450,19 +465,22 @@ describe('F7: a pme-scenario/2 run — the action table, outcomes, violations, j
     expect(j.actions.find((a: { id: string }) => a.id === 'cpr')).toMatchObject({ grade: 'not applicable', dueT: null, givenT: null, windowS: null });
     expect(j.outcomes).toEqual([{ id: 'etco2Down', text: DOC2.outcomes?.[0]?.text, status: 'reached', t: 800, why: 'Reached at 13:20, 5 min 00 s after Dantrolene 2.5 mg/kg (within 10 min 00 s asked).' }]);
     expect(j.violations).toEqual([{ t: 480, seq: 2, text: 'Dantrolene IM: no effect on the MH, and the solution (pH about 9.5) injures the tissue', harm: 'not modelled' }]);
-    expect(j.judged).toEqual([{ id: 'nameMh', text: MH2.judged?.[0]?.text, kind: 'recognition', fromT: 410, pressedT: 450 }]);
+    // the former judged row: a timed record action, read as any action — its window from Early signs' entry, its press
+    const name = MH2.actions.find((a) => a.id === 'nameMh');
+    expect(j.actions.find((a: { id: string }) => a.id === 'nameMh')).toEqual({ id: 'nameMh', label: name?.label, kind: 'communication', grade: 'met', firstGrade: 'met', lines: [], dueT: 410, givenT: 450, windowS: 120, repeats: [], admin: [4] });
     expect(j.marks).toEqual([]);
   });
 
-  it('an outcome not reached says why; a judged row never pressed has pressedT null', () => {
-    const open: RunData = { ...d2, edges: edges.filter((e) => !e.rule.startsWith('outcome:')), rows: d2.rows.slice(0, 1) };
+  it('an outcome not reached says why; a record action never pressed is due mid-case and failed once the run has ended', () => {
+    const open: RunData = { ...d2, edges: edges.filter((e) => !e.rule.startsWith('outcome:')), admin: admin.slice(0, 3) };
     // mid-case (D5): the window (10 min from the dose at 08:20) is still open at 15:00
     expect(report3(open)?.outcomes[0]).toMatchObject({ status: 'pending', t: null, why: 'Pending: the run has not ended; the window runs 10 min 00 s from 08:20.' });
     expect(report3(open)?.actions.find((a) => a.id === 'ventilationBack')?.grade).not.toBe('failed');
     const late = finished(open);
     const r = report3(late);
     expect(r?.outcomes).toEqual([{ id: 'etco2Down', text: DOC2.outcomes?.[0]?.text, status: 'not reached', t: null, why: 'Not reached within 10 min 00 s of Dantrolene 2.5 mg/kg (from 08:20).' }]);
-    expect(r?.judged[0]).toMatchObject({ fromT: 410, pressedT: null });
+    expect(report3(open)?.actions.find((a) => a.id === 'nameMh')).toMatchObject({ grade: 'overdue', dueT: 410, givenT: null });
+    expect(r?.actions.find((a) => a.id === 'nameMh')).toMatchObject({ grade: 'failed', dueT: 410, givenT: null });
     const never: RunData = { ...late, admin: admin.slice(0, 1) };
     expect(report3(never)?.outcomes[0]?.why).toBe('Not reached: Dantrolene 2.5 mg/kg was never given.');
   });
@@ -475,10 +493,22 @@ describe('F7: a pme-scenario/2 run — the action table, outcomes, violations, j
     expect(report3(run([]))).toBeNull();
   });
 
-  it('keyTimes: "recognition" reads the judged row of kind recognition — from its display clock to the instructor’s press', () => {
-    // its display rule is the Early signs phase's rule: the clock is named as the /1 card's ("early signs")
-    expect(keyTimes(d2)[0]).toEqual({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: 410, fromLabel: 'early signs', toT: 450, state: 'measured' });
-    const unticked = keyTimes({ ...d2, rows: d2.rows.slice(0, 1), edges: [] })[0];
-    expect(unticked).toEqual({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: 0, fromLabel: 'start', toT: null, state: 'notTicked' });
+  it('keyTimes: a /2 run\'s recognition tile is the card\'s marked action (D5: nameMh), its window and press, never a note', () => {
+    const want = { id: 'recognition', label: 'Recognition (timed action)', fromT: 410, fromLabel: 'early signs', toT: 450, askedS: 120, grade: 'met', state: 'measured' };
+    expect(keyTimes(d2).find((k) => k.id === 'recognition')).toEqual(want);
+    // an old marker note (a judged tick from before the ruling) changes nothing: no note is read for a /2 run
+    expect(keyTimes({ ...d2, rows: [...d2.rows, { t: 300, kind: 'note', text: 'Objective met: Name malignant hyperthermia' }] }).find((k) => k.id === 'recognition')).toEqual(want);
+  });
+});
+
+// Debrief 2, D6: the minute table gains the three pressures, the first measured in each minute (a record of this build);
+// a pre-D record has none of the keys ("not recorded in this file").
+describe('D6: perMinute reads the pressures', () => {
+  it('sys, dia, cvp: the first measured in the minute; null when none was', () => {
+    const s = (t: number, p: Partial<Sample>): Sample => ({ t, hr: 80, map: 80, spo2: 98, etco2: 35, rr: 12, temp: 37, k: null, lactate: null, ph: null, glucose: null, tcore: null, sys: null, dia: null, cvp: null, ...p });
+    const d: RunData = { ...emptyRun('free', 70, 0), samples: [s(0, {}), s(30, { sys: 100, dia: 60 }), s(45, { sys: 98, dia: 59, cvp: 9 }), s(60, {}), s(119, {})] };
+    expect(perMinute(d).map((m) => [m.t, m.values.sys, m.values.dia, m.values.cvp])).toEqual([[0, 100, 60, 9], [60, null, null, null]]);
+    const { keeps: _, ...old } = d;
+    expect(perMinute(old).every((m) => !('sys' in m.values))).toBe(true);
   });
 });

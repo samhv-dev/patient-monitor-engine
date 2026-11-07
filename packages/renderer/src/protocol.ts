@@ -1,5 +1,6 @@
 // Messages between the main thread and the engine+renderer worker (brief §3.4). Raw samples never cross.
 import type { Capture12, Command, DispatchResult, EngineEvent, EngineOptions, LeadId, PatientSnapshot } from '@pme/engine-core';
+import type { IbpScales } from './ibp-scale.ts';
 import type { RenderPlan } from './skin-plan.ts';
 import type { WaveLaneId } from './wave-lanes.ts';
 
@@ -31,8 +32,12 @@ export interface ClockAnchor {
 export type ToWorker =
   | { type: 'init'; canvas: OffscreenCanvas; size: Size; opts: CoreOptions; mainPump: boolean }
   | { type: 'frame'; epochMs: number }
+  // the page has read the last event batch (one batch in flight, engine.worker.ts)
+  | { type: 'eventsAck' }
   | { type: 'catchUp'; epochMs: number }
   | { type: 'command'; reqId: number; cmd: Command }
+  // R15: several commands dispatched in one task (a stage group lands on its one tick)
+  | { type: 'commands'; reqId: number; cmds: Command[] }
   | { type: 'resize'; size: Size }
   | { type: 'timeScale'; k: number }
   | { type: 'pause' }
@@ -45,14 +50,21 @@ export type ToWorker =
   | { type: 'restore'; reqId: number; snapshot: PatientSnapshot }
   // Skin switch without restart, and the 12-lead capture
   | { type: 'plan'; plan: RenderPlan }
+  // E130: the IBP1/IBP2 lane scales
+  | { type: 'ibpScales'; scales: IbpScales }
   | { type: 'capture12'; reqId: number }
   // One fast-forward step (MonitorCore.advance)
   | { type: 'advance'; reqId: number; ticks: number; last: boolean };
 
 export type FromWorker =
   | { type: 'ready'; path: 'worker-raf' | 'worker-pump' }
+  // worker-pump: the posted frame is drawn; the page may post the next (one frame in flight)
+  | { type: 'framed' }
   | { type: 'events'; anchor: ClockAnchor; events: EngineEvent[] }
   | { type: 'result'; reqId: number; result: DispatchResult }
+  | { type: 'results'; reqId: number; results: DispatchResult[] }
+  // FX-11a: the worker is working through a long run (a fast-forward step, a catch-up)
+  | { type: 'progress' }
   | { type: 'error'; message: string; reqId?: number } // reqId when a request failed inside the worker
   | { type: 'snapshot'; reqId: number; snapshot: PatientSnapshot }
   | { type: 'restored'; reqId: number; error?: string }

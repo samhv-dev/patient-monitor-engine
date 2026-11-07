@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 // Persian (Farsi) handout of the Debrief report: reads the report's own JSON export ("Download the record (JSON)",
 // schema pme-debrief/1, /2 or /3, Stage 13 Q3; /2 adds `version` and the redesign's verdict words; /3, a pme-scenario/2
-// run's (plan F7), has the judged rows, the action table, the outcomes and the violations in place of the objectives) and prints a
+// run's (plan F7), has the action table, the outcomes and the violations in place of the objectives; judged rows only if made before 5 November) and prints a
 // right-to-left A4 PDF with the English report's sections in its order: the case, objectives with their verdicts,
 // measured facts (the labs row included), trends, drugs and fluids, the timeline (the undone course struck through),
 // bookmarks, the talking points (/2 only), the take-home points (the learner handout's section: the card's lines, else
 // ruled lines), notes and the one-row-per-minute appendix; the footer (the release wording of views/debrief.ts FOOT,
 // with the version and the build) and "page n of N" on every page. A handout
-// script, NOT an app feature: the app and its tests are untouched (the in-app translation is planned for a later
-// release). Words come from docs/showcase/i18n/fa-debrief.json; a string the table does not cover is printed in English
+// script; its table lookups and digit rules are the app's own (apps/demo/src/app/i18n/fa-match.mjs, plan D11), so the
+// handout and the in-app Persian print the same words. Words come from docs/showcase/i18n/fa-debrief.json; a string the table does not cover is printed in English
 // and listed at the end of the run. Clinical values (vital signs, doses, times) keep Western digits and their units;
 // prose counts and dates use Persian digits. Rendering: headless Chromium through Playwright, the path the
 // Stage 13 print checks already use (no new dependency); the Vazirmatn font (SIL OFL) is embedded from local TTFs.
@@ -22,130 +22,18 @@ import { existsSync, readdirSync, readFileSync, realpathSync, writeFileSync } fr
 import { homedir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { faMatcher, LTR_RUN, spanFa } from '../../apps/demo/src/app/i18n/fa-match.mjs';
 
 const REPO = resolve(import.meta.dirname, '../..');
 const TABLE_PATH = join(REPO, 'docs/showcase/i18n/fa-debrief.json');
 
 // ---------------------------------------------------------------------------------------------------- the table
+// the lookups and the digit rules live in the one matcher the app shares (plan D11)
 const TABLE = JSON.parse(readFileSync(TABLE_PATH, 'utf8'));
-const lcFirst = (s) => s.charAt(0).toLowerCase() + s.slice(1);
-const GROUPS = new Map(Object.entries(TABLE.groups).map(([g, es]) => [g, new Map(es.map((e) => [e.en, e]))]));
-const EXACT = new Map(TABLE.strings.map((e) => [e.en, e]));
-const parse = (en) => {
-  const parts = [];
-  let last = 0;
-  for (const m of en.matchAll(/\{(\w+)\}/g)) {
-    if (m.index > last) parts.push({ lit: en.slice(last, m.index) });
-    parts.push({ ph: m[1] });
-    last = m.index + m[0].length;
-  }
-  if (last < en.length) parts.push({ lit: en.slice(last) });
-  return parts;
-};
-// a template without its Persian yet (`fa: null`, e.g. the /3 words awaiting F7.6) is skipped: its line prints in English
-const TEMPLATES = TABLE.templates.filter((e) => e.fa).map((e) => ({ e, kind: e.kind ?? 'top', parts: parse(e.en) }));
-/** Placeholders read with a fixed pattern; every other placeholder is free text checked by its own lookup. */
-const TYPED = { t: /\d{2,}:\d{2}/y, span: /\d+ s|\d+ min \d{2} s/y, n: /-?\d+(?:\.\d+)?/y, c: /\d+/y, u: /\S+/y, code: /[A-Za-z0-9](?:[\w.+-]*[\w+-])?(?: \d(?:[\w.+-]*[\w+-])?)?/y };
-
-const FA_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
-const faDigits = (s) => String(s).replace(/\d/g, (d) => FA_DIGITS[Number(d)]);
-/** "12 s" → "12 ثانیه", "2 min 05 s" → "2 دقیقه و 05 ثانیه" (a duration is a clinical time: Western digits). */
-const spanFa = (s) => {
-  const m = /^(\d+) min (\d{2}) s$/.exec(s);
-  return m ? `${m[1]} دقیقه و ${m[2]} ثانیه` : s.replace(/^(\d+) s$/, '$1 ثانیه');
-};
-
-/** Every way the template's parts can cover `s` (a free placeholder tries each end, shortest first). */
-function* match(parts, i, s, pos, caps) {
-  if (i === parts.length) {
-    if (pos === s.length) yield caps;
-    return;
-  }
-  const p = parts[i];
-  if (p.lit !== undefined) {
-    if (s.startsWith(p.lit, pos)) yield* match(parts, i + 1, s, pos + p.lit.length, caps);
-    return;
-  }
-  const re = TYPED[p.ph];
-  if (re) {
-    re.lastIndex = pos;
-    const m = re.exec(s);
-    if (m) yield* match(parts, i + 1, s, pos + m[0].length, [...caps, [p.ph, m[0]]]);
-    return;
-  }
-  for (let end = pos + 1; end <= s.length; end++) yield* match(parts, i + 1, s, end, [...caps, [p.ph, s.slice(pos, end)]]);
-}
-
-/** A group's Persian for `en` (also with its first letter lowered: "The state" / "Salbutamol" at a sentence start). */
-function inGroup(g, en, used) {
-  const map = GROUPS.get(g);
-  const e = map?.get(en) ?? map?.get(lcFirst(en));
-  if (!e) return null;
-  used.push(e);
-  return e.fa;
-}
-const EV_GROUPS = ['ev', 'drug', 'condition'];
-/** One placeholder's Persian, or null (the template does not fit). */
-function fill(ph, val, used, missing) {
-  if (ph in TYPED) return ph === 'c' ? faDigits(val) : ph === 'span' ? spanFa(val) : val;
-  // a value with its unit ("95 %", "36.8 °C", "250 µg + 2 U"), never a phrase that merely holds a number
-  if (ph === 'v') return /^-?\d/.test(val) && !/[\u0600-\u06FF]/.test(val) && !/\b(?:at|in|all|first|lost|after|before|the|of|and|or|not|none|asked|within)\b/.test(val) ? val : null;
-  if (ph === 's') return tr(val, used, missing, 'top');
-  if (ph === 'ev') return EV_GROUPS.map((g) => inGroup(g, val, used)).find((x) => x !== null) ?? tr(val, used, missing, 'ev');
-  if (ph === 'limit') return tr(val, used, missing, 'limit');
-  if (ph === 'lab') return labs(val, used);
-  if (ph === 'mark') {
-    const x = tr(val, used, missing, 'top');
-    if (x !== null) return x;
-    missing.add(val); // a bookmark's own label (typed by the instructor) is printed as it is
-    return val;
-  }
-  return GROUPS.has(ph) ? inGroup(ph, val, used) : null;
-}
-/** "K⁺ 4.2 mmol/L (4.2–4.2) · Lactate 1.0 mmol/L (1.0–1.0) · …": each lab's label translated, its values kept. */
-function labs(val, used) {
-  const items = val.split(' · ').map((x) => /^(.+?) (-?\d.*)$/.exec(x));
-  if (items.some((m) => !m)) return null;
-  const out = items.map((m) => {
-    const l = inGroup('label', m[1], used);
-    return l === null ? null : `${l} ${m[2]}`;
-  });
-  return out.includes(null) ? null : out.join(' · ');
-}
-/** The Persian of `en` from the table (exact string, a group's word, a template), or null. */
-function tr(en, used, missing, kind = 'top') {
-  if (kind === 'top') {
-    const e = EXACT.get(en);
-    if (e) return used.push(e), e.fa;
-    for (const g of GROUPS.keys()) {
-      const x = inGroup(g, en, used);
-      if (x !== null) return x;
-    }
-  }
-  // a reason line capitalises its first event ("The state …"): an event phrase is also tried with a lower-case start
-  const forms = kind === 'ev' && en !== lcFirst(en) ? [en, lcFirst(en)] : [en];
-  for (const t of TEMPLATES) {
-    if (t.kind !== kind) continue;
-    for (const caps of forms.flatMap((f) => [...match(t.parts, 0, f, 0, [])])) {
-      const u = [];
-      const vals = caps.map(([ph, v]) => [ph, fill(ph, v, u, missing)]);
-      if (vals.some(([, v]) => v === null)) continue;
-      const seen = {};
-      const fa = t.e.fa.replace(/\{(\w+)\}/g, (_, ph) => {
-        const k = (seen[ph] = (seen[ph] ?? -1) + 1);
-        return vals.filter(([p]) => p === ph)[k]?.[1] ?? `{${ph}}`;
-      });
-      used.push(t.e, ...u);
-      return fa;
-    }
-  }
-  return null;
-}
+const { tr, inGroup } = faMatcher(TABLE);
 
 // ---------------------------------------------------------------------------------------------------- HTML
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-/** Latin and Western-digit runs ("250 µg", "RR 12 /min", "O₂ 100 %") kept whole and left-to-right inside the Persian line. */
-const LTR_RUN = /[A-Za-z0-9µ°×+][A-Za-z0-9µ°×₀-₉⁰-⁹⁺⁻%.,:/·–+\- ]*[A-Za-z0-9µ°₀-₉⁰-⁹⁺⁻%]|[A-Za-z0-9µ°]/g;
 const bidi = (s) => {
   let out = '';
   let last = 0;
@@ -215,7 +103,7 @@ const META = {
 };
 const TREND_KEYS = ['hr', 'map', 'spo2', 'etco2', 'rr', 'temp'];
 const LAB_KEYS = ['k', 'lactate', 'ph', 'glucose', 'tcore'];
-const AXIS_FLOOR = { spo2: 20, hr: 40, map: 40, etco2: 20, temp: 2 };
+const AXIS_FLOOR = { spo2: 20, hr: 40, map: 40, etco2: 20, temp: 2, sys: 40, cvp: 10 }; // sys: the Pressures panel's SBP/DBP axis
 function axisRange(k, lo, hi) {
   const floor = AXIS_FLOOR[k];
   if (floor === undefined) return hi - lo < 2 ? [lo - 1, hi + 1] : [lo, hi];
@@ -284,16 +172,24 @@ function chart(D, d, k, end) {
   const W = 640, H = 130, L = 44, R = 10, T = 8, B = 20;
   const x = (t) => L + (t / Math.max(end, 1)) * (W - L - R);
   const y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+  // as views/debrief-course.ts tracePath(): broken where nothing was measured; a lone reading (a cuff's, one second
+  // per cycle, research/41 row 53) is a dot, not a bare move that draws nothing
+  const DOT = 'm-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0';
   let path = '';
   let prev = null;
+  let n = 0;
   for (const s of d.samples) {
     if (s[k] === null) {
       prev = null;
       continue;
     }
-    path += `${prev === null || s.t - prev > 5 ? 'M' : 'L'}${x(s.t).toFixed(1)} ${y(s[k]).toFixed(1)}`;
+    const move = prev === null || s.t - prev > 5;
+    if (move && n === 1) path += DOT;
+    n = move ? 1 : n + 1;
+    path += `${move ? 'M' : 'L'}${x(s.t).toFixed(1)} ${y(s[k]).toFixed(1)}`;
     prev = s.t;
   }
+  if (n === 1) path += DOT;
   const step = [60, 120, 300, 600, 900, 1800, 3600].find((st) => end / st <= 8) ?? 3600;
   let ticks = '';
   for (let t = 0; t <= end; t += step) ticks += `<line x1="${x(t)}" x2="${x(t)}" y1="${H - B}" y2="${H - B + 4}"/><text x="${x(t)}" y="${H - 4}" text-anchor="middle">${mmss(t)}</text>`;
@@ -304,6 +200,53 @@ function chart(D, d, k, end) {
 <line class="grid" x1="${L}" x2="${W - R}" y1="${T}" y2="${T}"/>
 <text x="${L - 4}" y="${T + 4}" text-anchor="end">${f(hi)}</text><text x="${L - 4}" y="${H - B}" text-anchor="end">${f(lo)}</text>
 <g class="ticks">${ticks}</g>${rets}<path d="${path}"/></svg></figure>`;
+}
+
+/** The Pressures panel (views/debrief.ts pressuresChart, brief 63): SBP and DBP on the left axis, CVP dashed on its
+ *  own right-hand axis; a cuff reading (only in its cycle's second) a dot, an arterial run a line. A record made
+ *  before Debrief 2 (no 'pressures' in `keeps`) has none. */
+function pressuresChart(D, d, end) {
+  if (!d.keeps?.includes('pressures')) return '';
+  const cap = `<figcaption>${D.t('Pressures')} <span class="unit">${D.t('mmHg · SBP and DBP on the left axis, CVP (dashed) on the right')}</span></figcaption>`;
+  const vals = (k) => d.samples.map((s) => s[k]).filter((v) => typeof v === 'number');
+  const [sys, dia, cvp] = ['sys', 'dia', 'cvp'].map(vals);
+  if (!sys.length && !dia.length && !cvp.length) return `<figure class="chart">${cap}<p class="muted">${D.t('Not measured during the run.')}</p></figure>`;
+  const W = 640, H = 130, L = 44, R = 10, T = 8, B = 20;
+  const x = (t) => L + (t / Math.max(end, 1)) * (W - L - R);
+  const scale = ([lo, hi]) => (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+  const both = [...sys, ...dia];
+  const left = both.length ? axisRange('sys', Math.min(...both), Math.max(...both)) : null;
+  const right = cvp.length ? axisRange('cvp', Math.min(...cvp), Math.max(...cvp)) : null;
+  const DOT = 'm-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0';
+  const trace = (k, y) => {
+    let path = '';
+    let prev = null;
+    let n = 0;
+    for (const s of d.samples) {
+      const v = s[k];
+      if (v === null || v === undefined) {
+        prev = null;
+        continue;
+      }
+      const move = prev === null || s.t - prev > 5;
+      if (move && n === 1) path += DOT;
+      n = move ? 1 : n + 1;
+      path += `${move ? 'M' : 'L'}${x(s.t).toFixed(1)} ${y(v).toFixed(1)}`;
+      prev = s.t;
+    }
+    return n === 1 ? path + DOT : path;
+  };
+  const step = [60, 120, 300, 600, 900, 1800, 3600].find((st) => end / st <= 8) ?? 3600;
+  let ticks = '';
+  for (let t = 0; t <= end; t += step) ticks += `<line x1="${x(t)}" x2="${x(t)}" y1="${H - B}" y2="${H - B + 4}"/><text x="${x(t)}" y="${H - 4}" text-anchor="middle">${mmss(t)}</text>`;
+  const rets = d.rows.filter((r) => r.kind === 'restore' && r.undone === undefined).map((r) => `<line class="ret" x1="${x(r.t)}" x2="${x(r.t)}" y1="${T}" y2="${H - B}"/>`).join('');
+  const f = (v) => v.toFixed(0);
+  const values = (left ? `<text x="${L - 4}" y="${T + 4}" text-anchor="end">${f(left[1])}</text><text x="${L - 4}" y="${H - B}" text-anchor="end">${f(left[0])}</text>` : '')
+    + (right ? `<line class="axis" x1="${W - R}" x2="${W - R}" y1="${T}" y2="${H - B}"/><text x="${W - R - 3}" y="${T + 9}" text-anchor="end">CVP ${f(right[1])}</text><text x="${W - R - 3}" y="${H - B - 3}" text-anchor="end">CVP ${f(right[0])}</text>` : '');
+  return `<figure class="chart" data-trend="pressures">${cap}<svg dir="ltr" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img">
+<line class="axis" x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}"/><line class="axis" x1="${L}" x2="${L}" y1="${T}" y2="${H - B}"/>
+<line class="grid" x1="${L}" x2="${W - R}" y1="${T}" y2="${T}"/>
+${values}<g class="ticks">${ticks}</g>${rets}<path data-p="sys" d="${left ? trace('sys', scale(left)) : ''}"/><path data-p="dia" d="${left ? trace('dia', scale(left)) : ''}"/><path data-p="cvp" class="cvp" d="${right ? trace('cvp', scale(right)) : ''}"/></svg></figure>`;
 }
 
 const section = (id, title, body) => `<section id="${id}"><h2>${title}</h2>${body}</section>`;
@@ -358,6 +301,7 @@ li[data-status="not met"]:not([data-mark]) .mark { text-decoration: underline; }
 .chart .axis, .chart .ticks line { stroke: #555; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .chart .grid { stroke: #555; stroke-dasharray: 2 3; vector-effect: non-scaling-stroke; }
 .chart .ret { stroke: #000; stroke-dasharray: 5 3; vector-effect: non-scaling-stroke; }
+.chart path.cvp { stroke-dasharray: 4 2; }
 .chart text { font-size: 11px; fill: #000; font-family: "Vazirmatn", sans-serif; }
 table { border-collapse: collapse; width: 100%; font-size: 9pt; }
 thead { display: table-header-group; }
@@ -408,8 +352,10 @@ export function render(j, fontsCss, version) {
   const v3 = j.schema === 'pme-debrief/3';
   const at = (t) => (t === null || t === undefined ? '–' : mmss(t));
   const lines = (ls) => ls.map((l) => `<div class="why">${D.t(l)}</div>`).join('');
-  // /3 (views/debrief.ts): the judged rows on page 1, then the action table, the outcomes and the violations
-  const judged = v3 && (j.judged.length
+  // /3 (views/debrief.ts): the action table, the outcomes and the violations. Judged rows were retired on 5 November (the
+  // owner's ruling: a team act the instructor observes is a record action, in the action table); a /3 export made before
+  // then still carries them, and they print on page 1 as they did
+  const judged = v3 && j.judged?.length > 0 && (j.judged.length
     ? `<ol class="obj">${j.judged.map((x) => `<li><span class="mark">${x.pressedT === null ? ICON['not assessable'] + D.t('Not ticked') : ICON.met + D.t('Observed')}</span> ${D.t(x.text)}<div class="why">${x.pressedT === null ? D.t('The instructor did not tick it.') : D.t(`Observed by the instructor at ${mmss(x.pressedT)}.`)}</div></li>`).join('')}</ol>`
     : `<p class="muted">${D.t('This run has no rows for the instructor to judge.')}</p>`);
   const actions = v3 && `<table class="actions"><thead><tr><th>${D.t('Action')}</th><th>${D.t('Due')}</th><th>${D.t('Given')}</th><th>${D.t('Grade')}</th></tr></thead><tbody>${j.actions.map((a) =>
@@ -449,9 +395,9 @@ export function render(j, fontsCss, version) {
     : `<p>${D.t('Your take-home points')}</p>${'<div class="ruled"></div>'.repeat(3)}`;
 
   const body = [
-    v3 ? section('objectives', D.t('Judged by the instructor'), judged) : section('objectives', D.t('Objectives'), obj),
+    v3 ? (judged ? section('objectives', D.t('Judged by the instructor'), judged) : '') : section('objectives', D.t('Objectives'), obj),
     section('facts', D.t('Measured facts'), facts),
-    section('trends', D.t('Trends'), TREND_KEYS.map((k) => chart(D, d, k, end)).join('')),
+    section('trends', D.t('Trends'), TREND_KEYS.map((k) => chart(D, d, k, end) + (k === 'map' ? pressuresChart(D, d, end) : '')).join('')),
     section('drugs', D.t('Drugs and fluids'), drugs),
     v3 ? section('actions', D.t('Actions on the card'), actions) : '',
     outcomes ? section('outcomes', D.t('Outcomes'), outcomes) : '',

@@ -1,8 +1,30 @@
 // Control frames the relay sends besides WireMessages (they carry a `relay` key and never a `v` key).
+import type { Instrument, Role } from '../protocol.ts';
+
+/**
+ * One non-host socket of a room as the relay sees it, in the HOST's `peers` frame only (plan room-and-instruments.md R2,
+ * §4 D2). `show` and `device` are its last hello's (null when that hello had none: an older build, a controller);
+ * `rttMs` is the round trip of its answer to the relay's last heartbeat ping, null while that ping is unanswered (or
+ * none was sent to it yet); `sinceMs` is the time since its last pong (since it joined, before its first).
+ */
+export interface RelayDevice {
+  id: string;
+  role: Role;
+  show: Instrument | null;
+  device: string | null;
+  granted: boolean;
+  rttMs: number | null;
+  sinceMs: number;
+}
+
 export type RelayFrame =
   | { relay: 'hb'; t: number } // app-level heartbeat so browser clients can detect a dead relay
   // `instructors`: granted instructor phones, in the frame to the HOST only (plan instructor-peer-role.md §1)
-  | { relay: 'peers'; hostOnline: boolean; peers: number; instructors?: number }
+  // `devices`: every non-host socket with its measured ping, in the frame to the HOST only (R2)
+  | { relay: 'peers'; hostOnline: boolean; peers: number; instructors?: number; devices?: RelayDevice[] }
+  // R29: to the HOST only, when a non-host socket leaves the room: the host forgets that relay peer's sequence and role,
+  // so a hello forged under the id while its owner reconnects does not outlive the forger's socket (the gap of #183)
+  | { relay: 'peer-left'; id: string }
   | { relay: 'error'; code: 'bad-hello' | 'host-exists' | 'forbidden' | 'full' | 'bad-session' | 'denied' | 'too-many-tries'; message: string };
 
 /**

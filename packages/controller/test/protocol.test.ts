@@ -77,9 +77,12 @@ describe('what the instructor may send (plan instructor-peer-role.md §2; P2)', 
   ];
   const cmd = (c: CommandInput): WireCommand => ({ id: 'ctl-x-1', issuedBy: 'remote', ...c }) as WireCommand;
 
-  it('INSTRUCTOR_COMMANDS is the measured census plus note (the §2 table; only the phone sends note)', () => {
-    expect([...INSTRUCTOR_COMMANDS].sort()).toEqual([...CENSUS, 'note'].sort());
-    expect([...INSTRUCTOR_COMMANDS].filter((s) => s !== 'note').sort()).toEqual(CENSUS);
+  // plan F9 (Q19): Instructor v2's A press of an action with no engine command (call for help) sends `scenario record`;
+  // P6's census, crawling the pme-scenario/2 cards too, measured the MH card in phases' `give` shapes
+  const V2_CARDS = ['scenario record', 'applyEvent airwayDevice', 'applyEvent preoxygenate'];
+  it('INSTRUCTOR_COMMANDS is the measured census plus note (the §2 table; only the phone sends note) plus the /2 cards\' shapes (F9, P6)', () => {
+    expect([...INSTRUCTOR_COMMANDS].sort()).toEqual([...CENSUS, 'note', ...V2_CARDS].sort());
+    expect([...INSTRUCTOR_COMMANDS].filter((s) => s !== 'note' && !V2_CARDS.includes(s)).sort()).toEqual(CENSUS);
     expect(commandShape({ id: 'c', issuedBy: 'remote', type: 'note', kind: 'note', text: 'x' })).toBe('note');
   });
 
@@ -103,6 +106,11 @@ describe('what the instructor may send (plan instructor-peer-role.md §2; P2)', 
     expect(instructorMay(cmd({ type: 'setTarget', variable: 'hr', value: 80 }))).toBeNull();
     expect(instructorMay(cmd({ type: 'note', kind: 'note', text: 'Dantrolene drawn up' }))).toBeNull();
     expect(instructorMay(cmd({ type: 'note', kind: 'marker', text: 'Objective met: called for help' }))).toBeNull();
+    expect(instructorMay(cmd({ type: 'note', kind: 'marker', text: 'Recognised (instructor)', ev: 'recognised' }))).toBeNull(); // brief 52
+    expect(commandShape(cmd({ type: 'note', kind: 'marker', text: 'Recognised (instructor)', ev: 'recognised' }))).toBe('note'); // one shape, tag or not
+    // the MH card in phases' induction actions (measured by P6's census of the /2 cards)
+    expect(instructorMay(cmd({ type: 'applyEvent', event: { kind: 'preoxygenate', fio2: 1, durationS: 180 } }))).toBeNull();
+    expect(instructorMay(cmd({ type: 'applyEvent', event: { kind: 'airwayDevice', device: 'ett' } } as unknown as CommandInput))).toBeNull();
   });
 
   it("instructorMay answers §2's refusal reasons", () => {
@@ -114,7 +122,6 @@ describe('what the instructor may send (plan instructor-peer-role.md §2; P2)', 
     expect(instructorMay(cmd({ type: 'externalDrive', source: 'ventilator', frame: {} } as unknown as CommandInput))).toBe(none);
     expect(instructorMay(cmd({ type: 'time', action: 'step', value: 1 }))).toBe(none);
     // A shape outside the census is refused the same way (no view sends it).
-    expect(instructorMay(cmd({ type: 'applyEvent', event: { kind: 'preoxygenate', fio2: 1, durationS: 180 } }))).toBe(none);
     expect(instructorMay(cmd({ type: 'applyEvent', event: { kind: 'surgical', action: 'diathermy', on: true } }))).toBe(none);
   });
 

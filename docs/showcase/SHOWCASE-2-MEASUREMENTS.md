@@ -1,5 +1,7 @@
 # Showcase 2: kit-round measurements (part A)
 
+> **A record of the 3 November 2026 build:** the first Instructor view it describes (`#/teach`, its tabs and session bar) was retired on 6 November 2026 (retire-instructor-v1 PR 3; Instructor v2, `#/teach2`, is now the only Instructor view, and `#/teach` opens it). Nothing else in this record was changed.
+
 *Measured 2026-10-13 for part B, which folds these numbers into `SHOWCASE-2-RUN-SHEET.md` (that sheet is not edited
 here). Every number below was read through a BUILT kit, served by its own **Start Classroom** launcher, on Playwright's
 Chromium and macOS WebKit at 1440 × 900, one rehearsal at a time on a Mac shared with other agents.*

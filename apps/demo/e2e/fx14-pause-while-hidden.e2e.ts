@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { devices, expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
-import { openApp, startVite } from './app-support.ts';
+import { openApp, pillV2, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -40,7 +40,7 @@ test('a hidden instructor tab pauses the session (the phone shows "(paused)") an
   writeFileSync(join(dir, 'index.html'), '<!doctype html>'); // the pages come from Vite here
   relay = await startRelay({ port: 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer' });
   const ws = encodeURIComponent(`ws://127.0.0.1:${relay.port}/`);
-  await openApp(page, base, `?relay=${ws}#/teach`, { warmMs: 1500 });
+  await openApp(page, base, `?relay=${ws}#/teach2`, { warmMs: 1500 });
   const code = await page.evaluate(() => (window as unknown as W).__pmeApp.session.code);
 
   const { defaultBrowserType: _b, ...dev } = browserName === 'webkit' ? devices['iPhone 13'] : devices['Pixel 7'];
@@ -65,8 +65,8 @@ test('a hidden instructor tab pauses the session (the phone shows "(paused)") an
   await expect(page.locator('.toast').filter({ hasText: /^Paused while this tab was hidden \(0:0[3-9]\)$/ })).toBeVisible();
   await expect.poll(async () => (await host(page)).paused).toBe(false);
   await expect(pill).toHaveText(`Following session ${code}`, { timeout: 10_000 });
-  const pause = page.locator('.sessionbar').getByRole('button', { name: /^(Pause|Resume)$/ });
-  await expect(pause).toHaveText('Pause');
+  const pause = pillV2(page); // Instructor v2's clock pill: "running" is the session bar's "Pause"
+  await expect(pause).toHaveAttribute('data-state', 'running');
 
   // Paused by the instructor: hiding and returning leave it paused, with no toast
   await pause.click();

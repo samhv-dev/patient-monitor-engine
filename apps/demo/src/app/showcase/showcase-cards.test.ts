@@ -11,26 +11,26 @@ import { anyShowcaseDoc, SHOWCASE_IDS, showcaseDoc } from './harness.ts';
 /** The /1 cards (the /2 MH card, plan F8, has phases, not states: its own test below). */
 const V1_IDS = SHOWCASE_IDS.filter((id) => !isV2(anyShowcaseDoc(id)));
 
-const SHOWCASE = ['showcase-induction', 'showcase-induction-premed', 'showcase-anaphylaxis', 'showcase-mh', 'showcase-mh-v2', 'showcase-tamponade', 'showcase-haemorrhage'];
+const SHOWCASE = ['showcase-induction', 'showcase-induction-premed', 'showcase-anaphylaxis', 'showcase-mh', 'showcase-mh-v2', 'showcase-tamponade', 'showcase-haemorrhage', 'showcase-haemorrhage-v2'];
 const NEW = ['showcase-induction', 'showcase-induction-premed', 'showcase-mh', 'showcase-tamponade', 'showcase-haemorrhage'];
 
 describe('Showcase cards', () => {
-  it('the Showcase group is the seven cards (the /2 MH card after the /1 one), in the demonstration order, first in the library; bronchospasm stays in the library', () => {
+  it('the Showcase group is the eight cards (each /2 card after its /1 one), in the demonstration order, first in the library; bronchospasm stays in the library', () => {
     expect(SHOWCASE_ORDER).toEqual(SHOWCASE);
     expect(LIBRARY.filter((c) => c.category === 'Showcase').map((c) => c.id)).toEqual(SHOWCASE);
     expect(LIBRARY.slice(0, SHOWCASE.length).map((c) => c.id)).toEqual(SHOWCASE);
     expect(LIBRARY.find((c) => c.id === 'showcase-bronchospasm')?.category).toBe('Airway and breathing');
   });
 
-  it('showcase-mh-v2 (pme-scenario/2): valid, and every action\'s give and script command accepted by an engine of its own patient', () => {
-    const doc = anyShowcaseDoc('showcase-mh-v2');
+  it.each([['showcase-mh-v2', 20], ['showcase-haemorrhage-v2', 15]] as const)('%s (pme-scenario/2): valid, and every action\'s give and script command accepted by an engine of its own patient', (id, n) => {
+    const doc = anyShowcaseDoc(id);
     if (!isV2(doc)) throw new Error('not /2');
     const v = validateScenario(doc);
     expect(v.ok ? [] : v.errors).toEqual([]);
     const eo = engineOptionsOf(doc, 7);
     const e = createEngine({ ...eo, mode: doc.mode ?? 'modeled', patient: { ...eo.patient, ...(doc.patient?.sensors ? { sensors: doc.patient.sensors } : {}) } } as never);
     const cmds: DocCommand[] = [...doc.actions.flatMap((a) => a.give ?? []), ...(doc.script ?? []).flatMap((s) => s.commands)];
-    expect(cmds.length).toBeGreaterThan(20);
+    expect(cmds.length).toBeGreaterThan(n);
     for (const [i, c] of cmds.entries()) {
       const { $comment: _drop, ...cmd } = c as DocCommand & { $comment?: string };
       const r = e.dispatch({ id: `v2-${i}`, issuedBy: 'test', ...(cmd as object) } as Command);

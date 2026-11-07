@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/samhv-dev/patient-monitor-engine/packages/controller/scenarios/pme-scenario-2.schema.json",
   "title": "pme-scenario/2",
-  "description": "Teaching case with phases read from the engine's truth, actions that carry their acceptance criteria, outcomes, judged rows and a card-set script (docs/plans/scenario-format-v2.md §3). The header is pme-scenario/1's, whole; patient, device and the command definitions are /1's, by reference. `$comment` is allowed on the document and on every block entry and is never interpreted. The cross-references a schema cannot express (unique ids, one initial phase, existing targets, drug ids and classes) are validate.ts's.",
+  "description": "Teaching case with phases read from the engine's truth, actions that carry their acceptance criteria, outcomes and a card-set script (docs/plans/scenario-format-v2.md §3). There are no judged rows (retired by the owner's ruling of 5 November): a team act the instructor observes is a record action, timed by its window or recorded, not timed, without one. The header is pme-scenario/1's, whole; patient, device and the command definitions are /1's, by reference. `$comment` is allowed on the document and on every block entry and is never interpreted. The cross-references a schema cannot express (unique ids, one initial phase, existing targets, drug ids and classes) are validate.ts's.",
   "type": "object",
   "required": ["schema", "id", "title", "phases", "actions"],
   "additionalProperties": false,
@@ -17,6 +17,7 @@
     "story": { "type": "string" },
     "takeHome": { "type": "array", "maxItems": 4, "items": { "type": "string", "minLength": 1 } },
     "durationMin": { "type": "number", "exclusiveMinimum": 0 },
+    "debriefHints": { "$ref": "#/definitions/debriefHints" },
     "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
     "mode": { "enum": ["manual", "modeled"] },
     "patient": { "$ref": "pme-scenario-1.schema.json#/definitions/patient" },
@@ -24,7 +25,6 @@
     "phases": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/phase" }, "description": "The disease's course: one phase holds at a time; each tick the entry rules of the current phase's `next` are tested in document order and the first that holds wins (§4)." },
     "actions": { "type": "array", "items": { "$ref": "#/definitions/action" }, "description": "What the team should do: the prescription and its grading; the kind decides which criteria block applies (§5)." },
     "outcomes": { "type": "array", "items": { "$ref": "#/definitions/outcome" }, "description": "What the physiology should reach: reached / not reached, never an action's grade (§7)." },
-    "judged": { "type": "array", "items": { "$ref": "#/definitions/judged" }, "description": "Recognition and communication the instructor judges; the clock starts on a displayed (rank 2) rule (§7)." },
     "script": { "type": "array", "items": { "$ref": "#/definitions/scriptEntry" }, "description": "Events the card imposes, each card-set and never graded (§3)." },
     "briefing": {
       "type": "object",
@@ -35,11 +35,28 @@
         "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
         "estimatedMinutes": { "type": "number", "exclusiveMinimum": 0 },
         "durationS": { "type": "number", "exclusiveMinimum": 0, "maximum": 600 },
-        "lang": { "enum": ["en", "fa"] }
+        "lang": { "enum": ["en", "fa"] },
+        "textFa": { "type": "string", "minLength": 1, "maxLength": 4000, "description": "Optional (Debrief 2 D13b): as on /1, the owner-read Persian of an English text, sent when the host is set to Persian." }
       }
     }
   },
   "definitions": {
+    "debriefHints": {
+      "type": "object", "minProperties": 1, "additionalProperties": false,
+      "description": "Optional (Debrief 2 D8): /1's debriefHints, with each opener anchored on the string anchor forms the report reads: start, pulseLoss, rosc, phase:<id> (its first entry), action:<id> (its graded taking); the phase or action must be this card's.",
+      "properties": {
+        "show": { "type": "array", "minItems": 1, "maxItems": 4, "items": { "type": "string", "minLength": 1 } },
+        "openers": {
+          "type": "array", "minItems": 1, "maxItems": 4,
+          "items": { "type": "object", "required": ["at", "text"], "additionalProperties": false, "properties": { "at": { "type": "string", "pattern": "^(start|pulseLoss|rosc|(phase|action):[A-Za-z][A-Za-z0-9_.-]{0,63})$" }, "text": { "type": "string", "minLength": 1 } } }
+        },
+        "handoutQuestions": {
+          "type": "array", "minItems": 1, "maxItems": 3,
+          "description": "Optional (Debrief 2 D16): /1's handoutQuestions, each anchored as an opener is (start, pulseLoss, rosc, phase:<id>, action:<id> of this card).",
+          "items": { "type": "object", "required": ["at", "text"], "additionalProperties": false, "properties": { "at": { "type": "string", "pattern": "^(start|pulseLoss|rosc|(phase|action):[A-Za-z][A-Za-z0-9_.-]{0,63})$" }, "text": { "type": "string", "minLength": 1, "maxLength": 92, "description": "At most 92 characters, about 90: one printed line of the A4 handout after its mm:ss label (measured 6 November 2026 in print at the 182 mm content width, Inter Print, Chromium and WebKit: the line held 92 to 100 characters of the drafted questions; the shortest is the limit). A wrapped question pushes the MH handout over one page (measured 276.4 mm of 267)." } } }
+        }
+      }
+    },
     "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$" },
     "ids": { "type": "array", "items": { "$ref": "#/definitions/id" }, "uniqueItems": true },
     "op": { "enum": ["<", "<=", ">", ">=", "==", "!="] },
@@ -97,7 +114,7 @@
       }
     },
     "displayRule": {
-      "description": "A rule on the displayed numerics (rank 2), for a judged row's clock: what the learners could see (§7). A `phaseEntered` leaf is true once the named phase has been entered (its rule held through its hold): the clock starts at the phase's first entry, the moment the strip shows it, so a recognition clock is the phase it recognises, written once.",
+      "description": "A rule on the displayed numerics (rank 2), for an action window's `display` anchor: what the learners could see (§7). A `phaseEntered` leaf is true once the named phase has been entered (its rule held through its hold): the clock starts at the phase's first entry, the moment the strip shows it, so a recognition clock is the phase it recognises, written once.",
       "type": "object",
       "minProperties": 1,
       "maxProperties": 1,
@@ -118,6 +135,15 @@
       "anyOf": [
         { "type": "string", "pattern": "^(start|pulseLoss|rosc|(phase|action):[A-Za-z][A-Za-z0-9_.-]{0,63})$" },
         { "type": "object", "required": ["rule"], "additionalProperties": false, "properties": { "rule": { "$ref": "#/definitions/phaseRule" } } }
+      ]
+    },
+    "windowAnchor": {
+      "description": "Where an action's window starts: any anchor; or `each:action:<id>`, one window per taking of that action (resume CPR within 10 s of each rhythm check; plan F9, the owner's ruling of 5 November); or { display: rule }, the first second a rule on the displayed numerics holds; or { first: [anchors] }, the earliest of several (CPR from the model's pulse loss or ERC's operating-room rule, whichever comes first).",
+      "anyOf": [
+        { "$ref": "#/definitions/anchor" },
+        { "type": "string", "pattern": "^each:action:[A-Za-z][A-Za-z0-9_.-]{0,63}$" },
+        { "type": "object", "required": ["display"], "additionalProperties": false, "properties": { "display": { "$ref": "#/definitions/displayRule" } }, "description": "The first second a rule on the DISPLAYED numerics (rank 2) holds: what the monitor shows, such as the arterial or cuff systolic and the end-tidal CO2 (the operating-room CPR trigger, plan F9)." },
+        { "type": "object", "required": ["first"], "additionalProperties": false, "properties": { "first": { "type": "array", "minItems": 2, "items": { "anyOf": [{ "$ref": "#/definitions/anchor" }, { "type": "object", "required": ["display"], "additionalProperties": false, "properties": { "display": { "$ref": "#/definitions/displayRule" } } }] } } } }
       ]
     },
     "phase": {
@@ -221,6 +247,9 @@
         "kind": { "enum": ["drug", "device", "procedure", "fluid", "physical", "sample", "communication", "decision"] },
         "phases": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/definitions/id" }, "description": "The action opens when one of them is entered." },
         "graded": { "const": false, "description": "Offered and recorded, never graded (a setup action such as the induction sequence). Absent: graded." },
+        "src": { "type": "string", "minLength": 1, "description": "Provenance of the action's numbers: the source's own words quoted and cited (document, section or page). Read by people; never interpreted (plan F9, the owner's ruling of 5 November)." },
+        "preparation": { "const": true, "description": "A preparation step (monitoring, lines; the owner's ruling of 5 November): offered and recorded with its time, no verdict, never graded. Absent: graded (unless graded is false)." },
+        "recognition": { "const": true, "description": "The card's recognition (Debrief 2, D5; the owner's ruling of 5 November): the team announcing the diagnosis, as a timed action the instructor presses. The Debrief's recognition tile and key moment read this action's window, press and grade. At most one action per card." },
         "give": { "type": "array", "items": { "$ref": "pme-scenario-1.schema.json#/definitions/command" }, "description": "The commands an A press sends (/1 command definitions)." },
         "drug": { "$ref": "#/definitions/drugCriteria" },
         "device": {
@@ -242,13 +271,17 @@
         },
         "window": {
           "type": "object", "required": ["anchor", "withinS"], "additionalProperties": false,
-          "properties": { "anchor": { "$ref": "#/definitions/anchor" }, "withinS": { "type": "number", "exclusiveMinimum": 0 }, "notBeforeS": { "type": "number", "minimum": 0 } }
+          "properties": {
+            "anchor": { "$ref": "#/definitions/windowAnchor" }, "withinS": { "type": "number", "exclusiveMinimum": 0 }, "notBeforeS": { "type": "number", "minimum": 0 },
+            "failAfterS": { "type": "number", "exclusiveMinimum": 0, "description": "Seconds from the anchor after which the action is failed even if done (the owner's ruling of 5 November: CPR within 30 s met, 30 s to 2 min overdue, after 2 min failed though started). Greater than withinS." }
+          }
         },
         "order": {
           "type": "object", "minProperties": 1, "additionalProperties": false,
           "properties": { "after": { "$ref": "#/definitions/ids" }, "before": { "$ref": "#/definitions/ids" } }
         },
         "repeat": {
+          "description": "An unconditional repeat while one of the action's phases holds: each next dose is due intervalS (min–max) after the previous dose AS GIVEN (the owner's ruling of 5 November); sooner is a deviation, later overdue; none is due once the action's phases have ended before its deadline.",
           "type": "object", "required": ["intervalS"], "additionalProperties": false,
           "properties": { "intervalS": { "$ref": "#/definitions/amount" }, "maxCount": { "type": "integer", "minimum": 1 } }
         },
@@ -271,18 +304,6 @@
         "rule": { "$ref": "#/definitions/phaseRule" },
         "anchor": { "$ref": "#/definitions/anchor" },
         "withinS": { "type": "number", "exclusiveMinimum": 0 }
-      }
-    },
-    "judged": {
-      "type": "object",
-      "required": ["id", "text", "kind"],
-      "additionalProperties": false,
-      "properties": {
-        "id": { "$ref": "#/definitions/id" },
-        "text": { "type": "string", "minLength": 1 },
-        "$comment": { "type": "string" },
-        "kind": { "enum": ["recognition", "communication"] },
-        "display": { "$ref": "#/definitions/displayRule" }
       }
     },
     "scriptEntry": {

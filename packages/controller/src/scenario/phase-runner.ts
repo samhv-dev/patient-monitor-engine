@@ -240,7 +240,7 @@ export class PhaseRunner {
       const to = (this.state().next ?? []).find((id) => id !== this.s.stateId && now.get(`phase:${id}`) && held(id));
       if (to !== undefined) {
         out = this.enter(t, to, `enter:${to}`);
-        // a judged clock on a phase's entry (phaseEntered) reads the timeline: re-read it now, so it rises at the entry
+        // a display clock on a phase's entry (phaseEntered) reads the timeline: re-read it now, so it rises at the entry
         for (const nr of this.entryRules) {
           const v = holds(nr.rule, nr.name, nr.rank, this.ctx);
           if (v !== (this.s.ruleNow[nr.name] ?? false)) this.edge({ rule: nr.name, t, value: v });
@@ -349,8 +349,9 @@ export class PhaseRunner {
   private sync(t: number): number {
     const from = this.s.lastT;
     const dt = Math.max(0, t - from);
+    if (dt === 0) return 0; // FX-11b: a clock that steps back (the host's estimate after a stall) is not a new span
     this.s.lastT = t;
-    if (this.s.paused || dt === 0) return 0;
+    if (this.s.paused) return 0;
     this.s.stateT += dt;
     this.s.scenarioT += dt;
     this.track(dt);

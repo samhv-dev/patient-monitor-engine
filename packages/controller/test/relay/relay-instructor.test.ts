@@ -164,6 +164,20 @@ describe("the host's grant", () => {
     expect(errorOf(ins)).toBeUndefined();
   });
 
+  it("a granted phone's note with the event tag (brief 52) reaches the host byte for byte, tag included; one with an unknown tag is dropped by the guard and never reaches it", async () => {
+    const { host } = await room();
+    const ins = await join('ins-a.1', 'instructor');
+    await waitFor(() => host.got.some((m) => m.kind === 'hello' && m.from === 'ins-a.1'), 2000, 'hello at host');
+    answer(host, 'ins-a.1', true);
+    await waitFor(() => ins.got.some((m) => m.kind === 'snapshot'), 2000, 'snapshot');
+    const bad = ins.send({ kind: 'command', body: { id: 'n0', issuedBy: 'remote', type: 'note', kind: 'marker', text: 'Recognised (instructor)', ev: 'recognized' } });
+    const sent = ins.send({ kind: 'command', body: { id: 'n1', issuedBy: 'remote', type: 'note', kind: 'marker', text: 'Recognised (instructor)', ev: 'recognised' } });
+    await waitFor(() => host.raw.includes(sent), 2000, 'the note byte for byte at the host');
+    expect(host.got.find((m) => m.kind === 'command' && (m.body as { id: string }).id === 'n1')?.body).toMatchObject({ type: 'note', ev: 'recognised' });
+    expect(host.raw.includes(bad)).toBe(false);
+    expect(host.got.some((m) => m.kind === 'command' && (m.body as { id: string }).id === 'n0')).toBe(false);
+  });
+
   it('denied: the relay says `denied` with the reason and closes 4013 (fatal: the page asks again)', async () => {
     const { host } = await room();
     const ins = await join('ins-a.1', 'instructor', { pin: '0000' });
@@ -436,10 +450,10 @@ describe('the peers frame', () => {
     const ins = await join('ins-a.1', 'instructor');
     const last = () => host.got.filter((f) => f.relay === 'peers').at(-1);
     await waitFor(() => host.got.some((m) => m.kind === 'hello' && m.from === 'ins-a.1'), 2000, 'hello');
-    expect(last()).toEqual({ relay: 'peers', hostOnline: true, peers: 1, instructors: 0 });
+    expect(last()).toEqual({ relay: 'peers', hostOnline: true, peers: 1, instructors: 0, devices: expect.any(Array) }); // R2: the host's device table
     host.send({ kind: 'grant', to: 'ins-a.1', granted: true });
     await waitFor(() => (last() as { instructors?: number }).instructors === 1, 2000, 'instructors 1');
-    expect(last()).toEqual({ relay: 'peers', hostOnline: true, peers: 1, instructors: 1 });
+    expect(last()).toEqual({ relay: 'peers', hostOnline: true, peers: 1, instructors: 1, devices: expect.any(Array) }); // R2: the host's device table
     const v2 = await join('view-v2', 'viewer');
     ins.ws.close();
     await waitFor(() => (last() as { instructors?: number }).instructors === 0, 2000, 'instructors 0');

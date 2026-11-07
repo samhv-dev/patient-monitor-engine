@@ -88,20 +88,28 @@ export function panelScale(k: TrendKey, min: number, max: number): [number, numb
   return [min - lo < half ? Math.max(0, lo - 5) : lo, hi - max < half ? Math.min(k === 'spo2' ? 100 : Infinity, hi + 5) : hi];
 }
 
-/** A trend's line on a lane from y0 (its highest value) to y1 (its lowest): broken where nothing was measured. */
-function tracePath(d: RunData, k: TrendKey, x: (t: number) => number, y: (v: number) => number): string {
+/** A lone reading's mark: a dot of radius 1 around the point the path is at (two arcs; a bare `M` draws nothing). */
+const DOT = 'm-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0';
+/** A trend's line on a lane from y0 (its highest value) to y1 (its lowest): broken where nothing was measured (or over
+ *  more than 5 s between readings). A reading with no neighbour to join — a cuff's, one second per cycle (research/41
+ *  row 53) — is a dot. Shared by the report's per-trend charts. */
+export function tracePath(d: RunData, k: TrendKey, x: (t: number) => number, y: (v: number) => number): string {
   let path = '';
   let prev: number | null = null;
+  let n = 0; // the readings in the subpath being drawn
   for (const s of d.samples) {
     const v = s[k];
     if (v === null) {
       prev = null;
       continue;
     }
-    path += `${prev === null || s.t - prev > 5 ? 'M' : 'L'}${x(s.t).toFixed(1)} ${y(v).toFixed(1)}`;
+    const move = prev === null || s.t - prev > 5;
+    if (move && n === 1) path += DOT;
+    n = move ? 1 : n + 1;
+    path += `${move ? 'M' : 'L'}${x(s.t).toFixed(1)} ${y(v).toFixed(1)}`;
     prev = s.t;
   }
-  return path;
+  return n === 1 ? path + DOT : path;
 }
 
 /**

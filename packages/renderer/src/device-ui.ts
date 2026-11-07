@@ -433,7 +433,7 @@ export class DeviceUI {
   private page: string | undefined;
 
   /** The tiles in a grid UNDER the waveforms (a phone held upright), not in columns beside them. */
-  private readonly portrait: boolean;
+  private portrait: boolean;
   /** The note in the two-row header's free centre, or a phone's idle message area (setNote), '' for none. */
   private note = '';
   private readonly noteEl: HTMLSpanElement;
@@ -481,6 +481,12 @@ export class DeviceUI {
         })
       : null;
     this.setSkin(r, page);
+  }
+
+  /** The phone turned (mountMonitor's setPortrait): the tiles and the header are rebuilt for the new layout. */
+  setPortrait(portrait: boolean, page?: string): void {
+    this.portrait = portrait;
+    this.setSkin(this.r, page);
   }
 
   setSkin(r: ResolvedSkin, page?: string): void {
@@ -1025,12 +1031,15 @@ export class DeviceUI {
       el.classList.remove('unit-under');
       el.style.removeProperty('--pme-lim-k');
       el.style.removeProperty('--pme-val-k');
-      const width = (e: Element | null) => (e ? e.getBoundingClientRect().width : 0);
+      // the measured boxes are on screen, the part's width (partW) is a layout width: a monitor scaled as one unit
+      // (mountMonitor, layout.grid.screenPx) draws k layout px per screen px, so the boxes are read back in layout px
+      const k = el.offsetWidth > 0 ? el.getBoundingClientRect().width / el.offsetWidth || 1 : 1;
+      const width = (e: Element | null) => (e ? e.getBoundingClientRect().width / k : 0);
       const text = (e: HTMLElement) => {
         if (!e.firstChild) return 0;
         const range = e.ownerDocument.createRange();
         range.selectNodeContents(e);
-        return range.getBoundingClientRect().width;
+        return range.getBoundingClientRect().width / k;
       };
       const row = tile.spec.split === 'row';
       const parts = b.parts.map((p, k) => ({
