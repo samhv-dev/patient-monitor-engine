@@ -7,8 +7,15 @@
 // `ventilation` command with the cockpit's settings, after its last frame — and stops (paused, unlinked: it sends
 // nothing); the patient stays ventilated (FU-11 H6) and the phones follow it exactly. Back on the view the cockpit takes
 // over again from the engine's current ventilator settings.
+// R8c (plan room-and-instruments.md §7): ONE cockpit drives at a time — this view's, or a remote cockpit on another
+// device (a `ventilator` granted with the instructor's PIN, over the relay) — through one desk sharing link, unlink and
+// handOver: opening one hands the other over first. The remote drives exactly as the view does, and is handed over
+// with its last settings the moment its page is hidden, its socket closes, its grant is revoked, or it is silent 1 s.
 import type { Command } from '@pme/engine-core';
-import { attachMonitorToLink, createFramePort, type VentConfig, type VentDriver } from '@pme/ventilator';
+import type { VentLinkBody } from '@pme/controller';
+import {
+  attachMonitorToLink, createFramePort, createRelayPort, LEAD_TICKS, type CockpitSettings, type LinkPort, type RelayPort, type VentConfig, type VentDriver, type VentWireBody,
+} from '@pme/ventilator';
 import { parseRoute } from '../router.ts';
 import type { AppSession, VentSettings } from '../session.ts';
 import { h } from '../ui.ts';
@@ -46,34 +53,57 @@ export function cockpitPatch(s: VentSettings, cfg?: Pick<VentConfig, 'mode'>): P
   return p;
 }
 
-export function ventView(session: AppSession): View {
-  const frame = h('iframe', { class: 'iframe vent', title: 'Ventilator' });
-  const el = h('section', { 'aria-label': 'Ventilator' }, frame);
-  let started = false;
-  /** The view is on screen and its cockpit is linked to the monitor (it drives the patient). */
-  let linked = false;
-  let gen = 0; // Bumped on every enter and leave: a hand-over overtaken by a re-entry does nothing
-  let handing = false; // A hand-over has not reached the engine yet (the engine's settings are not the cockpit's)
-  let port: ReturnType<typeof createFramePort> | null = null;
+/** R8c: one cockpit that can drive the patient — this view's, or a remote cockpit over the relay. */
+export interface Cockpit {
+  /** The host's end of its link. */
+  readonly port: LinkPort;
+  /** A remote cockpit holds the phones wherever the laptop is; the view's only while it is on screen (UI-A #2). */
+  readonly remote: boolean;
+  /** Its settings now, for a hand-over (null: they cannot be read). */
+  settings(): CockpitSettings | null;
+  /** Called when the desk handed it over because another cockpit opened. */
+  displaced?(): void;
+}
+
+/** R8c: ONE cockpit drives at a time (plan §7 R8c: the view, the laptop window, the device), through link, unlink and handOver. */
+export interface CockpitDesk {
+  /** The cockpit driving the patient now (linked to the monitor), or null. */
+  readonly driving: Cockpit | null;
+  /** `c` drives: the one driving now is handed over first (to the engine's ventilator), and `c` starts from those settings. */
+  take(c: Cockpit, still: () => boolean): Promise<void>;
+  /** Stop the driving cockpit: paused (it computes and sends nothing) and unlinked (anything on its way is dropped). */
+  unlink(): void;
+  /**
+   * E128: the engine's own ventilator takes the patient from `c` with its settings, on the tick after its last frame; then
+   * (`release`) the phones are released (`cockpitOff`, UI-A #2) unless another cockpit drives. Resolves with that last
+   * frame's tick (−1: it never drove; undefined: overtaken, `still()` false). A fast-forward running now keeps the cockpit
+   * stepping with it and the hand-over waits for its end. Refused, the cockpit drives on, as before E128, rather than
+   * leave the patient without a ventilator (FU-11 H6).
+   */
+  handOver(c: Cockpit, still: () => boolean, release: boolean): Promise<number | undefined>;
+}
+
+const desks = new WeakMap<AppSession, CockpitDesk>();
+const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+/** The session's one desk. */
+export function cockpitDesk(session: AppSession): CockpitDesk {
+  const had = desks.get(session);
+  if (had) return had;
+  let driving: Cockpit | null = null;
   let detach: () => void = () => {};
   let offAttach: () => void = () => {};
-  const cockpit = (): VentDriver | null => {
-    try {
-      return (frame.contentWindow as unknown as { __vent?: VentDriver } | null)?.__vent ?? null;
-    } catch {
-      return null;
-    }
-  };
-
-  /** Link the cockpit to the monitor (and to every new monitor while it stays linked). */
-  const link = () => {
-    if (linked || !port) return;
-    linked = true;
-    const p = port;
+  /** Link `c` to the monitor (and to every new monitor while it stays linked). */
+  const link = (c: Cockpit) => {
+    if (driving === c) return;
+    if (driving) desk.unlink();
+    driving = c;
+    session.ventRemote = c.remote;
+    const p = c.port;
     session.ventTick = -1;
     offAttach = session.onMount((m) => {
       detach();
-      const l = attachMonitorToLink(session.linked(m), p, (c, r) => console.warn('vent link rejected', c.type, r));
+      const l = attachMonitorToLink(session.linked(m), p, (cmd, r) => console.warn('vent link rejected', cmd.type, r));
       detach = l;
       session.ventLink = l; // A fast-forward steps this cockpit with the engine
       // O4 (research/34 §8 O4): the patient starts without the CO2 line; the cockpit ventilating it attaches the line,
@@ -83,55 +113,221 @@ export function ventView(session: AppSession): View {
     });
     p.post({ v: 1, kind: 'time', action: 'resume' });
   };
-  /** Stop the cockpit: paused (it computes and sends nothing) and unlinked (anything still on its way is dropped). */
+  const desk: CockpitDesk = {
+    get driving() {
+      return driving;
+    },
+    async take(c, still) {
+      const other = driving !== null && driving !== c ? driving : null;
+      if (!other) return link(c);
+      const handed = other.settings();
+      const last = await desk.handOver(other, still, false);
+      other.displaced?.();
+      if (!still() || driving !== null) return; // overtaken, or the other drives on (its hand-over was refused)
+      // its frames run ahead of the engine: `c` starts after the last of them, so two cockpits never drive one tick
+      if (last !== undefined && last >= 0) while (Math.floor(session.simNow() / 0.02 + 1e-6) <= last) {
+        await sleep(20);
+        if (!still() || driving !== null) return;
+      }
+      const s = handed ? engineVentilation(handed.cfg, handed.measured) : session.ventSettings; // what the other handed over
+      if (s) c.port.post({ v: 1, kind: 'control', patch: cockpitPatch(s, c.settings()?.cfg) });
+      link(c);
+    },
+    unlink() {
+      const c = driving;
+      if (!c) return;
+      driving = null;
+      session.ventRemote = false;
+      c.port.post({ v: 1, kind: 'time', action: 'pause' });
+      offAttach();
+      detach();
+      detach = () => {};
+      session.ventLink = null;
+    },
+    async handOver(c, still, release) {
+      while (session.host.fastForwarding) {
+        await sleep(250);
+        if (!still()) return undefined;
+      }
+      if (driving !== c) return undefined;
+      const s = c.settings();
+      desk.unlink();
+      const last = await session.ventSettled();
+      if (!still()) return undefined;
+      const off = () => void (release && !driving?.remote && session.host.cockpitOff());
+      if (last < 0) return (off(), last); // It never drove the patient: nothing to hand over
+      if (!s) {
+        link(c); // Its settings cannot be read: it drives on (FU-11 H6), as before E128
+        return (off(), last);
+      }
+      const event = { kind: 'ventilation', source: 'ventilator', ...engineVentilation(s.cfg, s.measured) };
+      const r = await session.host.submit({ id: `vent-handover-${Date.now()}`, issuedBy: 'ventilator', type: 'applyEvent', event, atTick: last + 1 } as never);
+      if (!still()) return undefined;
+      if (!r.accepted) {
+        console.warn('ventilator hand-over refused:', r.reason);
+        link(c); // FU-11 H6: the patient stays ventilated
+      }
+      off();
+      return last;
+    },
+  };
+  desks.set(session, desk);
+  return desk;
+}
+
+/** R8c: a remote cockpit silent this long is handed over [ENG: it sends 50 link messages a second and its settings once a
+ *  second, so 1 s is 50 missed; the relay's heartbeat would take up to 20 s, too long for an unventilated patient]. */
+export const COCKPIT_SILENCE_MS = 1000;
+
+/**
+ * R8c: the host drives from the granted remote cockpit (HostSession onVent / onVentilator) exactly as the view does: its
+ * frames go through `attachMonitorToLink(session.linked(m), relayPort)` on the desk, so the engine stays the master
+ * clock, the frames are stamped on the host, mirrored to a same-browser viewer, and every network follower holds. It
+ * starts on its first message (from the engine's own settings); it is handed over with its last settings when its page
+ * says hidden, its grant ends (revoked, taken over, its socket closed) or it is silent COCKPIT_SILENCE_MS; it takes over
+ * again on its next message after a silence, or when its page is shown again (not while another cockpit displaced it).
+ */
+export function serveRemoteCockpit(session: AppSession): () => void {
+  const desk = cockpitDesk(session);
+  type Remote = {
+    from: string; port: RelayPort; cockpit: Cockpit; deliver: ((b: VentWireBody) => void) | null;
+    last: CockpitSettings | null; heardAt: number; hidden: boolean; displaced: boolean; starting: boolean;
+    /** The furthest ventilator tick it may have run to: its last frame heard, or the last clock limit it was sent. */
+    topTick: number;
+  };
+  let cur: Remote | null = null;
+  let gen = 0; // bumped on every change of grant: a hand-over or a start for an old one does nothing more
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const now = () => performance.now();
+  const lose = (r: Remote) => {
+    if (desk.driving !== r.cockpit) return;
+    const g = gen;
+    // refused, it drives on (FU-11 H6): the watchdog runs again for it
+    void desk.handOver(r.cockpit, () => g === gen, true).then(() => arm());
+  };
+  /** The silence watchdog: one timer, re-armed for what is left of the second since the last message. */
+  const arm = () => {
+    if (timer !== null || !cur || desk.driving !== cur.cockpit) return;
+    timer = setTimeout(() => {
+      timer = null;
+      if (!cur || desk.driving !== cur.cockpit) return;
+      if (now() - cur.heardAt >= COCKPIT_SILENCE_MS) return lose(cur);
+      arm();
+    }, Math.max(0, cur.heardAt + COCKPIT_SILENCE_MS - now()));
+  };
+  const start = (r: Remote) => {
+    r.starting = true;
+    const g = gen;
+    const s = session.ventSettings; // it takes over from the engine's own ventilator (what was handed over, or set since)
+    if (s) r.cockpit.port.post({ v: 1, kind: 'control', patch: cockpitPatch(s, r.last?.cfg) });
+    r.cockpit.port.post({ v: 1, kind: 'time', action: 'scale', value: session.timeScale });
+    const go = desk.take(r.cockpit, () => g === gen && !r.hidden);
+    void go.then(() => {
+      r.starting = false;
+      if (g !== gen || desk.driving !== r.cockpit) return;
+      // a cockpit at its clock limit sends no frame the new link could learn its offset from (cut off, it ran to the last
+      // limit it had; its frames on the way were lost): let it run past it, as the link does after a restore (FX-1)
+      if (r.topTick >= 0) r.cockpit.port.post({ v: 1, kind: 'clock', ventTick: r.topTick + 2 * LEAD_TICKS });
+      arm();
+    });
+  };
+  const offRemote = session.onRemoteVent({
+    ventilator(from) {
+      if (cur && cur.from === from) return;
+      gen++;
+      const old = cur;
+      cur = null;
+      if (old) {
+        if (desk.driving === old.cockpit) void desk.handOver(old.cockpit, () => true, true); // revoked, taken over, gone
+        old.port.close();
+      }
+      if (from === null) return;
+      const r: Remote = {
+        from, deliver: null, last: null, heardAt: now(), hidden: false, displaced: false, starting: false, topTick: -1,
+        port: null as unknown as RelayPort, cockpit: null as unknown as Cockpit,
+      };
+      r.port = createRelayPort({
+        send: (b) => void session.host.ventPost(b as VentLinkBody),
+        onBody: (fn) => ((r.deliver = fn), () => void (r.deliver = null)),
+      });
+      const port: LinkPort = {
+        post: (m) => {
+          if (m.kind === 'clock' || m.kind === 'run') r.topTick = Math.max(r.topTick, m.ventTick);
+          r.port.post(m);
+        },
+        onMessage: (fn) => r.port.onMessage(fn),
+        close: () => r.port.close(),
+      };
+      r.cockpit = { port, remote: true, settings: () => r.last, displaced: () => void (r.displaced = true) };
+      cur = r;
+    },
+    vent(from, body) {
+      const r = cur;
+      if (!r || r.from !== from) return;
+      const b = body as VentWireBody;
+      r.heardAt = now();
+      for (const m of b.kind === 'batch' ? b.msgs : b.kind === 'cmds' ? [b] : []) r.topTick = Math.max(r.topTick, m.tick);
+      if (b.kind === 'settings') {
+        r.last = { cfg: b.cfg, ...(b.measured ? { measured: b.measured } : {}) };
+        if (b.hidden && !r.hidden) {
+          r.hidden = true;
+          r.displaced = false; // shown again, it takes over
+          lose(r);
+        } else if (!b.hidden) r.hidden = false;
+      }
+      if (desk.driving !== r.cockpit && !r.starting && !r.hidden && !r.displaced) start(r);
+      r.deliver?.(b);
+      arm();
+    },
+  });
+  const offScale = session.onTimeScale((k) => cur?.port.post({ v: 1, kind: 'time', action: 'scale', value: k }));
+  return () => {
+    offRemote();
+    offScale();
+    if (timer !== null) clearTimeout(timer);
+    cur?.port.close();
+  };
+}
+
+export function ventView(session: AppSession): View {
+  const frame = h('iframe', { class: 'iframe vent', title: 'Ventilator' });
+  const el = h('section', { 'aria-label': 'Ventilator' }, frame);
+  const desk = cockpitDesk(session);
+  let started = false;
+  let gen = 0; // Bumped on every enter and leave: a hand-over overtaken by a re-entry does nothing
+  let handing = false; // A hand-over has not reached the engine yet (the engine's settings are not the cockpit's)
+  let port: ReturnType<typeof createFramePort> | null = null;
+  let mine: Cockpit | null = null; // this view's cockpit on the desk (one per loaded cockpit)
+  const cockpit = (): VentDriver | null => {
+    try {
+      return (frame.contentWindow as unknown as { __vent?: VentDriver } | null)?.__vent ?? null;
+    } catch {
+      return null;
+    }
+  };
+  /** The view's cockpit drives the patient (it is linked to the monitor). */
+  const linked = () => mine !== null && desk.driving === mine;
+  /** Link the cockpit to the monitor; a remote cockpit driving now is handed over first. */
+  const link = () => {
+    if (!mine || linked()) return;
+    const g = gen;
+    void desk.take(mine, () => g === gen);
+  };
   const unlink = () => {
-    if (!linked) return;
-    linked = false;
-    port?.post({ v: 1, kind: 'time', action: 'pause' });
-    offAttach();
-    detach();
-    detach = () => {};
-    session.ventLink = null;
+    if (linked()) desk.unlink();
   };
 
   /**
    * The view closed: the engine's own ventilator takes the patient over with the cockpit's settings, on the tick after
-   * the cockpit's last frame, then the phones are released (`cockpitOff`, UI-A #2). A fast-forward running now keeps the
-   * cockpit stepping with it (it supports the span) and the hand-over waits for its end. Refused, the cockpit drives on
-   * off screen, as before E128, rather than leave the patient without a ventilator.
+   * the cockpit's last frame, then the phones are released (CockpitDesk.handOver).
    */
   const handOver = async (g: number): Promise<void> => {
     handing = true;
     try {
-      await handOverNow(g);
+      if (mine) await desk.handOver(mine, () => g === gen, true);
     } finally {
       if (g === gen) handing = false;
     }
-  };
-  const handOverNow = async (g: number): Promise<void> => {
-    while (session.host.fastForwarding) {
-      await new Promise((res) => setTimeout(res, 250));
-      if (g !== gen) return;
-    }
-    const v = cockpit();
-    const cfg = v ? { ...v.vs.cfg } : null;
-    const measured = v ? { RR: v.vs.p.measured.RR, VTE: v.vs.p.measured.VTE } : undefined;
-    unlink();
-    const last = await session.ventSettled();
-    if (g !== gen) return;
-    if (last < 0) return session.host.cockpitOff(); // It never drove the patient: nothing to hand over
-    if (!cfg) {
-      link(); // Its settings cannot be read: it drives on off screen (FU-11 H6), as before E128
-      return session.host.cockpitOff();
-    }
-    const event = { kind: 'ventilation', source: 'ventilator', ...engineVentilation(cfg, measured) };
-    const r = await session.host.submit({ id: `vent-handover-${Date.now()}`, issuedBy: 'ventilator', type: 'applyEvent', event, atTick: last + 1 } as never);
-    if (g !== gen) return;
-    if (!r.accepted) {
-      console.warn('ventilator hand-over refused:', r.reason);
-      link(); // FU-11 H6: the patient stays ventilated
-    }
-    session.host.cockpitOff();
   };
 
   const view: View = {
@@ -143,7 +339,7 @@ export function ventView(session: AppSession): View {
         // Back on the view after a hand-over: the cockpit starts again from the engine's own ventilator settings (what it
         // handed over, or what the instructor or the case has set since). Back before it (a fast-forward was running),
         // the cockpit never stopped and keeps its own.
-        if (linked || !port) return;
+        if (linked() || !port) return;
         const s = handing ? null : session.ventSettings; // Back before the hand-over landed: it keeps its own
         handing = false;
         if (s) port.post({ v: 1, kind: 'control', patch: cockpitPatch(s, cockpit()?.vs.cfg) });
@@ -158,6 +354,13 @@ export function ventView(session: AppSession): View {
       // hidden: a speed change was lost, and without `clock` messages the cockpit stopped). `&via=parent` tells the cockpit.
       const p = createFramePort(name, () => frame.contentWindow);
       port = p;
+      mine = {
+        port: p, remote: false,
+        settings: () => {
+          const v = cockpit();
+          return v ? { cfg: { ...v.vs.cfg }, measured: { RR: v.vs.p.measured.RR, VTE: v.vs.p.measured.VTE } } : null;
+        },
+      };
       // A NEW patient (patient restart, scenario load) unloads the cockpit. It kept running with the last case's
       // settings and re-attached to every new monitor, so a case run after the Ventilator view had been opened was
       // ventilated by the old cockpit (haemorrhage: pulse lost 10:08 instead of 10:03). The next visit loads a fresh
@@ -170,6 +373,7 @@ export function ventView(session: AppSession): View {
         unlink();
         gen++; // a hand-over in progress is for the old patient
         port = null;
+        mine = null;
         p.close();
         frame.onload = null;
         frame.src = 'about:blank';
@@ -185,7 +389,7 @@ export function ventView(session: AppSession): View {
       frame.onload = () => {
         p.post({ v: 1, kind: 'control', patch: {} });
         p.post({ v: 1, kind: 'time', action: 'scale', value: session.timeScale });
-        if (!linked) p.post({ v: 1, kind: 'time', action: 'pause' });
+        if (!linked()) p.post({ v: 1, kind: 'time', action: 'pause' });
       };
       // The cockpit follows every later speed change too — opened at ×1 and then run at ×4 it ventilated at a quarter
       // of the patient's pace (RR 3–7, SpO2 85–89) while its own screen looked normal (presenter rehearsal)
@@ -197,7 +401,7 @@ export function ventView(session: AppSession): View {
     leave: () => {
       gen++;
       session.ventShown = false;
-      if (!linked) return session.host.cockpitOff();
+      if (!linked()) return void (desk.driving === null && session.host.cockpitOff()); // a remote cockpit holds them
       void handOver(gen);
     },
   };

@@ -6,7 +6,7 @@
 import type { Command, EngineEvent, PatientSnapshot } from '@pme/engine-core';
 import {
   ControllerSession, createBroadcastChannelTransport, createInProcessHub, createWebSocketTransport, epochNow, HostSession, newSessionCode, normalizeSessionCode,
-  type AppliedResolution, type BriefingNotice, type HostTarget, type ScenarioEvent, type WireEvent,
+  type AppliedResolution, type BriefingNotice, type HostTarget, type ScenarioEvent, type VentLinkBody, type WireEvent,
 } from '@pme/controller';
 import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type AnyScenarioDoc } from '@pme/controller/scenario';
 import type { ManagedTransport, NoteEvent } from '@pme/controller';
@@ -21,6 +21,11 @@ import { applySkinAlarmColours } from './shell.ts';
 export type Mode = 'modeled' | 'manual';
 /** The engine's own ventilator settings, in its `ventilation` event's units (FiO₂ 0.21–1), as far as they are known. */
 export interface VentSettings { rr?: number; vtMl?: number; peep?: number; fio2?: number; ie?: number; pmax?: number }
+/** R8c: what the Ventilator desk hears of a remote cockpit (HostSession onVent / onVentilator). */
+export interface RemoteVent {
+  vent(from: string, body: VentLinkBody): void;
+  ventilator(from: string | null): void;
+}
 export interface SessionStart {
   spec: PatientSpec;
   mode: Mode;
@@ -94,6 +99,9 @@ export class AppSession {
   ventLink: { runTo(engTick: number): Promise<void> } | null = null;
   /** The Ventilator view is on screen (it sets it): only then does its cockpit hold the phones (UI-A #2). */
   ventShown = false;
+  /** R8c: a remote cockpit drives the patient (views/vent.ts sets it): it holds the phones wherever the laptop is. */
+  ventRemote = false;
+  private readonly remoteFns = new Set<RemoteVent>();
   /**
    * The engine tick of the cockpit's last applied frame (−1: none since the view reset it). E128: when the Ventilator view
    * closes, its hand-over to the engine's own ventilator lands after it — frames run up to 1.5 s ahead of the engine, and
@@ -233,6 +241,13 @@ export class AppSession {
       ...(o.instructorPin ? { instructorPin: o.instructorPin } : {}),
       onNote: (t, text, kind, ev) => (this.serve ? this.serve.note(text, kind, t, ev) : this.record.note(t, text, ev)),
       onInstructors: (n) => this.setInstructors(n),
+      // R8c: the granted remote cockpit's link messages and its grant, for the Ventilator desk (views/vent.ts)
+      onVent: (from, body) => {
+        for (const f of [...this.remoteFns]) f.vent(from, body);
+      },
+      onVentilator: (from) => {
+        for (const f of [...this.remoteFns]) f.ventilator(from);
+      },
     });
     this.host = hs;
     const hub = createInProcessHub();
@@ -382,7 +397,7 @@ export class AppSession {
         // teach the link its clock and the cockpit would stall for good
         this.ventFrameAt = performance.now();
         const go = () => m.dispatch(c).then((r) => {
-          this.host.mirror(c, r, this.ventShown);
+          this.host.mirror(c, r, this.ventShown || this.ventRemote);
           if (r.accepted) this.ventTick = Math.max(this.ventTick, r.tick);
           return r;
         });
@@ -397,6 +412,12 @@ export class AppSession {
       resume: () => void this.panel.send({ type: 'time', action: 'resume' }),
       setTimeScale: (k) => void this.panel.send({ type: 'time', action: 'scale', value: k }),
     };
+  }
+
+  /** R8c: the granted remote cockpit's link messages and every change of its grant (views/vent.ts drives from them). */
+  onRemoteVent(f: RemoteVent): () => void {
+    this.remoteFns.add(f);
+    return () => void this.remoteFns.delete(f);
   }
 
   /** The cockpit's frames dispatched so far are applied (or refused): resolves with the last one's engine tick (E128). */

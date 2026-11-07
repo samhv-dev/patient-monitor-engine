@@ -77,13 +77,16 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
   the instructors' and outside `--max-peers`: while a cockpit's socket answers a ping a second one is refused `full`
   (close 4029); a half-open one is closed for the newcomer. Granted, it exchanges `vent {to?, body}` with the host
   alone — `body` is one of the ventilator link's messages (`cmds`, `lungState`, `clock`, `run`, `time`, `control`,
-  `settings`), checked by the guard: a `cmds` carries an integer `tick` and at most 6 commands, each an `externalDrive`
-  from `source: 'ventilator'`, an `applyEvent` of kind `airway` or a `setTarget`; a body is at most 4 KB. It follows
+  `settings`), or R8c's `batch` (1 to 16 `cmds`: the relay port's 20 ms of wall time), checked by the guard: a `cmds`
+  carries an integer `tick` and at most 6 commands, each an `externalDrive` from `source: 'ventilator'`, an
+  `applyEvent` of kind `airway` or a `setTarget`; `settings` may carry `measured {RR, VTE}` and `hidden`; a body is at
+  most 4 KB. It follows
   nothing: no event, no snapshot, no cached snapshot, and learners are neither counted it nor ever sent a `vent`.
 - **`vent` flood:** at most 120 `vent` a second through one socket each way — from a socket, and from the host to the
   ventilator, counted on the ventilator's socket. The next closes that socket (`too-many-tries`, close 4028; the
-  host's own socket is never closed for it). The cockpit sends one `cmds` a tick (50 a second at ×1; batched to one per
-  20 ms of wall time at any speed from R8c; unbatched, 400 a second at ×8 would close it), and the monitor's `clock`
+  host's own socket is never closed for it). The cockpit makes one `cmds` a tick (50 a second at ×1, 400 at ×8); the
+  relay port (`packages/ventilator` link/relay-port.ts, R8c) sends those of each 20 ms of wall time in one message,
+  measured on a fake clock at 30 a second at ×1 and 38.5 (peak 40) at ×8 with a 60 Hz cockpit, and the monitor's `clock`
   measured 5 a second at ×1 and 38 at ×8 (the engine advanced every 20 ms of wall time).
 - **Wrong PINs:** 5 denials of pending sockets from one address within 60 s, and that address may not say
   `instructor` for 60 s (`too-many-tries`, close 4028); it may still follow. A revoked grant is not a wrong PIN.

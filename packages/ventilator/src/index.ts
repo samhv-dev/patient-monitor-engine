@@ -12,4 +12,5 @@ export * from './link/profiles.ts';
 export * from './link/core.ts';
 export * from './link/in-process.ts';
 export * from './link/port.ts';
+export * from './link/relay-port.ts';
 export * from './link/vent-driver.ts';
