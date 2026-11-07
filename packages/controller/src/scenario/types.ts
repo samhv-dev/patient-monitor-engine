@@ -174,7 +174,8 @@ export interface ScenarioDoc extends C {
   takeHome?: string[];
   /** Optional: the author's hints and openers for the Debrief (D8). */
   debriefHints?: DebriefHints;
-  /** Seeds the runner's `scenario` PRNG stream (the engine keeps the host's own seed). */
+  /** Seeds the run: the runner's `scenario` PRNG stream, and the engine of a host that honours it (the app; the
+   *  validation runner). */
   seed?: number;
   mode?: 'manual' | 'modeled';
   patient?: ScenarioPatient;

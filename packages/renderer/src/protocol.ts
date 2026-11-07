@@ -36,6 +36,8 @@ export type ToWorker =
   | { type: 'eventsAck' }
   | { type: 'catchUp'; epochMs: number }
   | { type: 'command'; reqId: number; cmd: Command }
+  // R15: several commands dispatched in one task (a stage group lands on its one tick)
+  | { type: 'commands'; reqId: number; cmds: Command[] }
   | { type: 'resize'; size: Size }
   | { type: 'timeScale'; k: number }
   | { type: 'pause' }
@@ -60,6 +62,7 @@ export type FromWorker =
   | { type: 'framed' }
   | { type: 'events'; anchor: ClockAnchor; events: EngineEvent[] }
   | { type: 'result'; reqId: number; result: DispatchResult }
+  | { type: 'results'; reqId: number; results: DispatchResult[] }
   // FX-11a: the worker is working through a long run (a fast-forward step, a catch-up)
   | { type: 'progress' }
   | { type: 'error'; message: string; reqId?: number } // reqId when a request failed inside the worker

@@ -165,6 +165,7 @@ transports (`src/protocol.ts`).
 | `DENIAL_WINDOW_MS` | `60000` | ms | — | The span `instructorDenials()` counts over, ms (the Room page: "3 wrong PINs in the last minute"). |
 | `DENIAL_RECORD_MAX` | `100` | — | [ENG] | The most wrong PINs the host remembers; the oldest go first. A second wall behind the relay's limit (20 hello attempts per address per 60 s): a hello flood cannot grow host memory, and the Room page needs a count, not every try — above 100 in a minute it says the same thing (review G1) [ENG]. |
 | `STAGE_LEAD_TICKS` | `3` | — | [ENG] | Commands that share a stageGroup land on one tick this many ticks after the first arrives (60 ms) [ENG]. |
+| `BATCH_HOLD_MS` | `500` | ms | [ENG] | R15: how long the host holds the items of a staged delivery (`batch`, n items) that have arrived while it waits for the rest. The items leave the controller in one synchronous loop (StageBuffer.commit), so they arrive back to back; one still missing after this is lost in transit (the controller resends it on its own), and the ones held are applied without it rather than held longer. It bounds a delay only; no tick depends on it [ENG]. |
 | `MESSAGE_BUDGET_BYTES` | `128 * 1024` | — | [ENG: half the budget] | A hidden-tab catch-up arrives as ONE batch, and the app's 1 Hz truth events are up to 27 KB each (200 events reached 379 KB) — every wire message holds at most this much JSON and this many events, so it passes the receivers' 256 KB budget (guard.ts) [ENG: half the budget]. |
 | `EVENTS_PER_MESSAGE` | `200` | — | — | — |
 | `COCKPIT_EVENT_MS` | `1000` | ms | [ENG] | While the Ventilator view drives the patient, a `cockpit` event goes to the network at most this often [ENG]. |
@@ -330,6 +331,7 @@ None recorded.
 | [`scenario/profile.test.ts`](../../packages/controller/test/scenario/profile.test.ts) | 0 | 0 |
 | [`scenario/readers-v2.test.ts`](../../packages/controller/test/scenario/readers-v2.test.ts) | 0 | 0 |
 | [`scenario/replay.test.ts`](../../packages/controller/test/scenario/replay.test.ts) | 0 | 0 |
+| [`scenario/restore-brings-case.test.ts`](../../packages/controller/test/scenario/restore-brings-case.test.ts) | 0 | 0 |
 | [`scenario/runner-alternatives.test.ts`](../../packages/controller/test/scenario/runner-alternatives.test.ts) | 0 | 0 |
 | [`scenario/runner.test.ts`](../../packages/controller/test/scenario/runner.test.ts) | 0 | 0 |
 | [`scenario/schema-basal-insulin.test.ts`](../../packages/controller/test/scenario/schema-basal-insulin.test.ts) | 0 | 0 |
@@ -351,6 +353,7 @@ None recorded.
 | [`session/host-scenario-hook.test.ts`](../../packages/controller/test/session/host-scenario-hook.test.ts) | 0 | 0 |
 | [`session/host-session.test.ts`](../../packages/controller/test/session/host-session.test.ts) | 0 | 0 |
 | [`session/host-speed-range.test.ts`](../../packages/controller/test/session/host-speed-range.test.ts) | 0 | 0 |
+| [`session/host-stage-group.test.ts`](../../packages/controller/test/session/host-stage-group.test.ts) | 0 | 0 |
 | [`session/host-time.test.ts`](../../packages/controller/test/session/host-time.test.ts) | 0 | 0 |
 | [`session/host-ventilator.test.ts`](../../packages/controller/test/session/host-ventilator.test.ts) | 0 | 0 |
 | [`session/sessions.test.ts`](../../packages/controller/test/session/sessions.test.ts) | 0 | 0 |

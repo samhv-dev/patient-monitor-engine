@@ -181,6 +181,7 @@ export class AppSession {
     this.record = new RunRecord(() => ({ patient: oneLiner(this.spec), weightKg: this.spec.weightKg }), Date.now, () => this.driver?.phaseRunner ?? null);
     const target: HostTarget = {
       dispatch: (c) => this.need().dispatch(c),
+      dispatchGroup: (cs) => this.need().dispatchAll(cs), // R15: a stage group in one worker message, on one tick
       snapshot: () => this.need().snapshot(),
       restore: async (s: PatientSnapshot) => {
         await this.need().restore(s);
@@ -576,6 +577,28 @@ export class AppSession {
     this.panel.note(`Patient restarted: ${start.mode.toUpperCase()}`);
   }
 
+  /** The card running, of either format (null: a free run). */
+  caseDoc(): AnyScenarioDoc | null {
+    return this.driver.runner?.doc ?? this.driver.phaseRunner?.doc ?? null;
+  }
+
+  /**
+   * "Restart patient" (FX-12). A case running starts again from 0:00 on ITS patient — the card's body, probes and seed,
+   * as a Load gives them — and keeps the instructor's bookmarks, so "Return here" goes back into it; without a case, a
+   * new engine for the same body. (It restarted the free-run body built from the card's age and weight alone and ended
+   * the case: the bar read "No scenario" and the bookmarks were out of reach.)
+   */
+  restartPatient(): { ok: true; doc: AnyScenarioDoc | null } | { ok: false; reason: string } {
+    const doc = this.caseDoc();
+    if (!doc) {
+      this.restart({ spec: this.spec, mode: this.mode });
+      return { ok: true, doc: null };
+    }
+    const r = this.loadScenario(doc);
+    if (r.ok) this.panel.note('Patient restarted: the case starts again');
+    return r;
+  }
+
   /** "Save and close" (Instructor v2's Finish): the case ends; the page's default patient runs, no card (a reload then
    *  brings back no case: restart forgets the position). */
   endCase(): void {
@@ -600,7 +623,8 @@ export class AppSession {
     if (this.fastForwarding) return { ok: false, reason: 'the simulation is fast-forwarding; try again when it ends' };
     const v = validateScenario(raw);
     if (!v.ok) return { ok: false, reason: v.errors.join('; ') };
-    const eo = engineOptionsOf(v.doc, 7);
+    const seed = v.doc.seed ?? 7; // TCH-11: the card's seed seeds the run (the engine and the runner); 7 is the free run's
+    const eo = engineOptionsOf(v.doc, seed);
     const p = v.doc.patient ?? {};
     this.spec = { ageY: p.ageY ?? 40, sex: p.sex ?? 'M', weightKg: p.weightKg ?? 70, heightCm: p.heightCm ?? 175, comorbid: [], attached: true };
     this.mode = v.doc.mode ?? 'modeled';
@@ -612,7 +636,7 @@ export class AppSession {
     // UI review #14: a scenario's cuff cycles from Load as a free-play patient's does (the skin's default, Saadat AUTO
     // every 5 min); it showed "/" for the whole case. Not when the card's patient has no cuff on (nibp 'off'). A restart
     // keeps the cuff's cycling as the room had it.
-    if (sensors.nibp !== 'off' && room?.nibp !== null) this.startCuff(7, room?.nibp);
+    if (sensors.nibp !== 'off' && room?.nibp !== null) this.startCuff(seed, room?.nibp);
     this.lastLoad = this.panel.send({ type: 'scenario', action: 'load', doc: v.doc });
     // The card's Case briefing on every learner screen (owner's board Orientation 7b) — not again for the load that
     // brings a case back after the instructor's page reloaded (position.ts): that case is already under way
