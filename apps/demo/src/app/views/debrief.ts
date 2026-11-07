@@ -19,9 +19,9 @@ import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
 import { axisRange, drugTotals, endOf, facts, mmss, objectives, perMinute, PRESSURE_KEYS, report3, span, steps, trendMeta, type DebriefExport, type Pressure, type Report3, type Step, type StepStatus } from '../debrief.ts';
 import { debriefJson } from '../debrief-export.ts';
-import { keyMoments, keyTimes, openersAt, recognitionAt, RECOGNISED, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
+import { handoutQuestionsAt, keyMoments, keyTimes, openersAt, recognitionAt, RECOGNISED, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
 import { LAB_KEYS, TREND_KEYS, type PressureKey, type Row, type RunData, type TrendKey, type ValueKey } from '../record.ts';
-import { COURSE_W, courseSvg, type CourseMark } from './debrief-course.ts';
+import { COURSE_W, courseSvg, tracePath, type CourseMark } from './debrief-course.ts';
 import { GRADE_WORDS, swimlaneSvg, verdictMark, windowsOf } from './debrief-swimlane.ts';
 import { MARKS } from '../teach2/dock.ts';
 import { hrefOf } from '../router.ts';
@@ -157,17 +157,7 @@ function chart(d: RunData, k: TrendKey, end: number, marks: ReadonlyArray<{ t: n
   const { W, H, L, R, T, B } = BOX;
   const x = (t: number) => L + (t / Math.max(end, 1)) * (W - L - R);
   const y = (v: number) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
-  let path = '';
-  let prev: number | null = null;
-  for (const s of d.samples) {
-    const v = s[k];
-    if (v === null) {
-      prev = null;
-      continue;
-    }
-    path += `${prev === null || s.t - prev > 5 ? 'M' : 'L'}${x(s.t).toFixed(1)} ${y(v).toFixed(1)}`;
-    prev = s.t;
-  }
+  const path = tracePath(d, k, x, y);
   const f = (v: number) => v.toFixed(m.digits);
   const min = pts.reduce((b, s) => ((s[k] as number) < (b[k] as number) ? s : b));
   const max = pts.reduce((b, s) => ((s[k] as number) > (b[k] as number) ? s : b));
@@ -335,6 +325,17 @@ const HANDOUT = {
 const HANDOUT_ROWS = 12;
 const kids = (...xs: Array<Node | null>): Node[] => xs.filter((x): x is Node => x !== null);
 const ruled = (n: number): HTMLElement[] => Array.from({ length: n }, () => h('div', { class: 'db-ruled', 'aria-hidden': 'true' }));
+/** The handout's "Questions to think about" (D16, Decision 14): the card's reviewed questions whose anchor happened on
+ *  the kept course take the places of fixed prompts 1–2 (at most two, in the card's order), each labelled with its
+ *  anchor's mm:ss; a place no question fills keeps its fixed prompt; fixed prompt 3 always closes the list. Three ruled
+ *  lines under each, so the handout keeps its one-page shape. */
+export function handoutQuestions(d: RunData): HTMLElement {
+  const qs = handoutQuestionsAt(d).slice(0, 2);
+  const fixed = HANDOUT.prompts.slice(qs.length).map((q) => h('li', {}, q, ...ruled(3)));
+  return h('section', { class: 'db-hsec' }, h('h3', {}, 'Questions to think about'), h('ol', { class: 'db-qs' },
+    ...qs.map((q) => h('li', { class: 'db-q-card' }, h('span', { class: 'db-q-at' }, mmss(q.t)), ' ', h('span', { class: 'db-q-text' }, q.text), ...ruled(3))),
+    ...fixed));
+}
 /** The handout's take-home section: the card's `takeHome` lines as written (the owner's words), else blank lines to
  *  write on (Decision 6). */
 export const takeHomeSection = (take: readonly string[] = []): HTMLElement =>
@@ -581,7 +582,7 @@ export function debriefView(session: AppSession, link: Link): View {
       ms.length ? h('section', { class: 'db-hsec' }, h('h3', {}, 'Key moments'), h('table', { class: 'db-table db-hmoments' },
         h('thead', {}, h('tr', {}, ...['n', 'Time', 'Who', 'What happened'].map((c) => h('th', { scope: 'col' }, c)))),
         h('tbody', {}, ...ms.map((m) => h('tr', { 'data-n': String(m.n) }, h('td', { class: 'num' }, String(m.n)), h('td', { class: 'num' }, mmss(m.t)), whoCell(m.who), h('td', {}, m.text)))))) : null,
-      h('section', { class: 'db-hsec' }, h('h3', {}, 'Questions to think about'), h('ol', { class: 'db-qs' }, ...HANDOUT.prompts.map((q) => h('li', {}, q, ...ruled(3))))),
+      handoutQuestions(d),
       takeHomeSection(d.doc?.takeHome),
       h('p', { class: 'db-next' }, HANDOUT.next),
     ));

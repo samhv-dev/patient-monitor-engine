@@ -333,6 +333,7 @@ No exported `…State` type in this module.
 | `signStates` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The states whose entry makes a /1 card's sign recognisable: |
 | `keyTimes` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The key times, in order: |
 | `openersAt` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The card author's openers (D9) on this run: |
+| `handoutQuestionsAt` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The card's handout questions (D16) whose anchor happened on the kept course, in the card's order, each with its anchor's time; |
 | `first` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The first kept row of `want` (or of any of a list) at or after `from`, or null. |
 | `eventWords` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | An event in words, for a reason line ("the alarm Apnoea (no CO₂ breaths)", "epinephrine", "SpO₂ below 90 %"). |
 | `trendMeta` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | A trend's or a lab's label and unit from the glossary ("ART M / NIBP M", "mmHg"; |
@@ -484,11 +485,13 @@ No exported `…State` type in this module.
 | `archiveList` | [`apps/demo/src/app/views/archive-list.ts`](../../apps/demo/src/app/views/archive-list.ts) | The list, its classes `<p>-list`, `<p>-row`, …; |
 | `gridMajorS` | [`apps/demo/src/app/views/debrief-course.ts`](../../apps/demo/src/app/views/debrief-course.ts) | The grid's big square, in seconds of the time axis, which is also a panel's height (the owner, 2 November, his option 1): |
 | `panelScale` | [`apps/demo/src/app/views/debrief-course.ts`](../../apps/demo/src/app/views/debrief-course.ts) | A panel's scale (the owner, 2 November): |
+| `tracePath` | [`apps/demo/src/app/views/debrief-course.ts`](../../apps/demo/src/app/views/debrief-course.ts) | A trend's line on a lane from y0 (its highest value) to y1 (its lowest): |
 | `placeBadges` | [`apps/demo/src/app/views/debrief-course.ts`](../../apps/demo/src/app/views/debrief-course.ts) | UI review #19: |
 | `courseSvg` | [`apps/demo/src/app/views/debrief-course.ts`](../../apps/demo/src/app/views/debrief-course.ts) | The course strip of a run as an SVG string: |
 | `verdictMark` | [`apps/demo/src/app/views/debrief-swimlane.ts`](../../apps/demo/src/app/views/debrief-swimlane.ts) | A /1 verdict's ruled words with their glyph (E42, Decision 11) and its chip style. |
 | `windowsOf` | [`apps/demo/src/app/views/debrief-swimlane.ts`](../../apps/demo/src/app/views/debrief-swimlane.ts) | The expected windows of a run, one per timed action, read once: |
 | `swimlaneSvg` | [`apps/demo/src/app/views/debrief-swimlane.ts`](../../apps/demo/src/app/views/debrief-swimlane.ts) | The swimlane of a run as an SVG string: |
+| `handoutQuestions` | [`apps/demo/src/app/views/debrief.ts`](../../apps/demo/src/app/views/debrief.ts) | The handout's "Questions to think about" (D16, Decision 14): |
 | `hintsSection` | [`apps/demo/src/app/views/debrief.ts`](../../apps/demo/src/app/views/debrief.ts) | "From the card's author" (D9; |
 | `sectionRows` | [`apps/demo/src/app/views/explore.ts`](../../apps/demo/src/app/views/explore.ts) | The rows of one Explore section for the model's current state: |
 | `phoneStyle` | [`apps/demo/src/app/views/follower-status.ts`](../../apps/demo/src/app/views/follower-status.ts) | The style a PHONE wears — the instructor's (it comes in the follow stream), upright. |
@@ -1004,6 +1007,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/ui.dom.test.ts`](../../apps/demo/src/app/ui.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-archive.dom.test.ts`](../../apps/demo/src/app/views/debrief-archive.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-course.test.ts`](../../apps/demo/src/app/views/debrief-course.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/debrief-handout-questions.dom.test.ts`](../../apps/demo/src/app/views/debrief-handout-questions.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-handout.dom.test.ts`](../../apps/demo/src/app/views/debrief-handout.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-handsoff.dom.test.ts`](../../apps/demo/src/app/views/debrief-handsoff.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-hints.dom.test.ts`](../../apps/demo/src/app/views/debrief-hints.dom.test.ts) | 0 | 0 |
