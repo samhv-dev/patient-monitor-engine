@@ -17,9 +17,10 @@ pnpm build && pnpm check-notices && pnpm check-licences && pnpm check-size
 pnpm test:e2e                                      # Playwright; PW_SYSTEM_CHROME=1 uses your installed Chrome
 ```
 
-CI runs each browser's e2e suite in three shards, each given its files by `scripts/ci/e2e-shard-plan.mjs` from the
-per-file durations in the last green main run's reports (longest first onto the least-loaded shard), or by Playwright's
-own `--shard` when no such report can be read.
+CI runs the Chromium e2e suite in four shards and the WebKit one in three (each set's `shards` in
+`scripts/ci/e2e-sets.mjs`, which the e2e matrix is built from), each given its files by `scripts/ci/e2e-shard-plan.mjs`
+from the per-file durations in the last green main run's reports (longest first onto the least-loaded shard), or by
+Playwright's own `--shard` when no such report can be read.
 
 ## Rules that CI or review enforce
 

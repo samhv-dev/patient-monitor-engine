@@ -4,7 +4,9 @@
 // the bundle. Per variant: index.html, the entry JS chunk, the engine worker chunk and the CSS with their content
 // types; HEAD; 404; two traversal attempts; bound to 127.0.0.1 only; the launcher stops the server when it is
 // stopped; nothing is written into the bundle. Also run from a READ-ONLY disk image mounted at a path with spaces.
-//   node scripts/showcase/check-servers.mjs [BUNDLE_DIR] [--json OUT.json]
+//   node scripts/showcase/check-servers.mjs [BUNDLE_DIR] [--port 8642] [--json OUT.json]
+// --port N passes PME_PORT=N, the launcher's own first-port knob (default: the launcher's 8642), so a machine that runs
+// other servers can keep the check inside a port range of its own.
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { cpSync, existsSync, lstatSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { connect } from 'node:net';
@@ -14,7 +16,9 @@ import { join, resolve } from 'node:path';
 const args = process.argv.slice(2);
 const jsonAt = args.indexOf('--json');
 const jsonOut = jsonAt >= 0 ? resolve(args[jsonAt + 1]) : null;
-const bundle = resolve(args.find((a, i) => !a.startsWith('--') && (jsonAt < 0 || i !== jsonAt + 1)) ?? 'pme-showcase');
+const portAt = args.indexOf('--port');
+const firstPort = portAt >= 0 ? Number(args[portAt + 1]) : null;
+const bundle = resolve(args.find((a, i) => !a.startsWith('--') && (jsonAt < 0 || i !== jsonAt + 1) && (portAt < 0 || i !== portAt + 1)) ?? 'pme-showcase');
 const LAUNCHER = 'Start Simulator.command';
 if (!existsSync(join(bundle, LAUNCHER))) throw new Error(`no kit at ${bundle}`);
 const work = mkdtempSync(join(tmpdir(), 'pme-kit-check-'));
@@ -36,7 +40,7 @@ const snapshot = (dir) => {
 /** Start the launcher; resolve with {proc, port, server, out} once it prints ADDRESS, or reject after 25 s. */
 function launch(kit, only) {
   return new Promise((ok, no) => {
-    const proc = spawn('/usr/bin/env', ['-i', 'PATH=/usr/bin:/bin', `PME_ONLY=${only}`, 'PME_NO_OPEN=1', join(kit, LAUNCHER)], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const proc = spawn('/usr/bin/env', ['-i', 'PATH=/usr/bin:/bin', `PME_ONLY=${only}`, 'PME_NO_OPEN=1', ...(firstPort ? [`PME_PORT=${firstPort}`] : []), join(kit, LAUNCHER)], { stdio: ['ignore', 'pipe', 'pipe'] });
     let out = '';
     const timer = setTimeout(() => {
       proc.kill('SIGTERM');

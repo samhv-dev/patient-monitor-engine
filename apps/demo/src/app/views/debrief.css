@@ -53,6 +53,7 @@
 .debrief .db-svg .axis, .debrief .db-svg .ticks line { stroke: var(--text-muted); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .debrief .db-svg .grid { stroke: var(--line); stroke-dasharray: 2 3; vector-effect: non-scaling-stroke; }
 .debrief .db-svg .ret { stroke: var(--text-strong); stroke-dasharray: 5 3; vector-effect: non-scaling-stroke; }
+.debrief .db-svg path.cvp { stroke-dasharray: 4 2; } /* the Pressures panel: CVP dashed, on its own right-hand axis */
 .debrief .db-svg text { font-size: 11px; fill: var(--text-muted); }
 .debrief .db-legend { margin: var(--s-1) 0 var(--s-2); font-size: var(--t-13); }
 .debrief .db-legend .db-scen { color: #777; font-weight: 700; }
@@ -95,6 +96,9 @@
 .debrief .db-course .db-pulseless, .debrief .db-course .db-pulseless-l rect { fill: var(--line); }
 /* the swimlane (an SVG string from debrief-swimlane.ts, D7b): lanes on a faint ground, the minutes as faint lines */
 .debrief .db-swim svg { display: block; width: 100%; height: auto; max-width: 60rem; }
+.debrief .db-hint-block h3 { margin: var(--s-2) 0 var(--s-1); font-size: var(--t-13); }
+.debrief .db-hint-show, .debrief .db-hint-openers { margin: 0; padding-left: 1.4em; }
+.debrief .db-hint-at { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .debrief .db-swim text { font: 8px sans-serif; fill: var(--text-muted); }
 .debrief .db-swim .db-swim-l { font: 700 9px sans-serif; fill: var(--text-strong); }
 .debrief .db-swim .db-swim-wl, .debrief .db-swim .db-swim-v { fill: var(--text-strong); }
@@ -196,6 +200,9 @@
   .debrief #db-moments, .debrief #db-swimlane { break-before: page; }
   .debrief #db-swimlane + #db-moments { break-before: auto; } /* page 2 opens with the swimlane (DQ5, option A) */
   .debrief #db-swimlane { break-inside: avoid; }
+  .debrief #db-hints { break-inside: avoid; }
+  .debrief .db-hint-block h3 { font-size: 9pt; margin: 1.5mm 0 0.5mm; }
+  .debrief .db-hint-show, .debrief .db-hint-openers { font-size: 8.5pt; line-height: 1.3; }
   .debrief .db-swim svg { max-width: none; }
   .debrief .db-swim text, .debrief .db-swim .db-swim-l { fill: #000; }
   .debrief .db-swim .db-swim-bg { fill: #000; fill-opacity: 0.05; }

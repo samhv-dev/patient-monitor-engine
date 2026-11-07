@@ -16,7 +16,7 @@ const ICONS: Record<string, string> = {
   room: 'M3 5h12v9H3zM6.5 18h5M9 14v4M17.5 8.5H21V20h-3.5z',
   scenarios: 'M4 5h16v14H4zM8 9h8M8 13h5',
   patient: 'M12 4.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7zM5 20c.9-3.9 3.6-6 7-6s6.1 2.1 7 6',
-  teach: 'M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11M19 17h1M15 5v4M9 10v4M17 15v4',
+  teach2: 'M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11M19 17h1M15 5v4M9 10v4M17 15v4',
   monitor: 'M3 5h18v14H3zM5 13h3l1.5-4 3 7 1.5-3H19',
   vent: 'M3 9h10a3 3 0 1 0-3-3M3 13h14a3 3 0 1 1-3 3M3 17h6',
   debrief: 'M9 4h6v3H9zM7 5.5H5V21h14V5.5h-2M9 14l2 2 4-4',
@@ -42,7 +42,7 @@ type Entry = ['hr'] | [RouteId, string] | ['tools'];
 export const RAIL: readonly Entry[] = [
   ['home', 'Home'],
   ['hr'], ['room', 'Room'], ['scenarios', 'Scenarios'], ['patient', 'Patient'],
-  ['hr'], ['teach', 'Instructor'], ['monitor', 'Monitor'], ['vent', 'Ventilator'], // Instructor: the view chosen in Settings
+  ['hr'], ['teach2', 'Instructor'], ['monitor', 'Monitor'], ['vent', 'Ventilator'],
   ['hr'], ['debrief', 'Debrief'],
   ['hr'], ['explore', 'Explore physiology'], ['tools'], ['settings', 'Settings'],
 ];
@@ -54,8 +54,6 @@ export interface RailOptions {
   badges?: Partial<Record<RouteId, () => string>>;
   /** The site's screen theme: light or not, and the switch's action (it saves the site profile). */
   theme: { light(): boolean; set(light: boolean): void };
-  /** The Instructor view chosen in Settings: the one "Instructor" entry leads there (today's view without it). */
-  instructor?: () => 'teach' | 'teach2';
   /** For tests: the clock's time source. */
   now?: () => Date;
 }
@@ -119,18 +117,14 @@ export class Rail {
     this.timer = setInterval(() => this.refresh(), 15_000);
   }
 
-  /** Mark the current page (aria-current) — the Tools row is current on Validate and on Developer, Instructor on either
-   *  Instructor view (a deep link to the other one included). */
+  /** Mark the current page (aria-current) — the Tools row is current on Validate and on Developer. */
   mark(id: RouteId): void {
-    const at = id === 'teach2' ? 'teach' : id;
-    for (const [rid, as] of this.links) for (const a of as) (rid === at ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
+    for (const [rid, as] of this.links) for (const a of as) (rid === id ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
     this.el.querySelector('.rail-tools')?.classList.toggle('on', id === 'validate' || id === 'dev');
   }
 
   /** Redraw the badges, the switch and the clock. */
   refresh(): void {
-    const to = this.o.instructor?.() ?? 'teach';
-    for (const a of this.links.get('teach') ?? []) (a.setAttribute('href', hrefOf(to)), (a.dataset.route = to));
     for (const [id, el] of this.badgeEls) setText(el, this.o.badges?.[id]?.() ?? '');
     this.drawTheme();
     const c = railClock(this.o.now?.() ?? new Date());

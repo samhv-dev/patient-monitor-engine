@@ -1,0 +1,2967 @@
+{
+  "kit": "da364762",
+  "browser": "chromium",
+  "startedAt": "2026-11-06T13:31:40.979Z",
+  "reactS": 2,
+  "stopLookS": 3,
+  "segments": [
+    {
+      "tPlus": "00:54",
+      "segment": "0 opening on Home and the Room, the phones join",
+      "segmentWallS": 2.6,
+      "about": {
+        "start": "Version 1.0.0-rc.5 · pre-release · build da364762",
+        "footer": "no footer line",
+        "documentationLink": "https://github.com/samhv-dev/patient-monitor-engine/tree/main/docs"
+      },
+      "qr": {
+        "url": "http://192.168.1.100:9164/?join=CUNP2Z",
+        "code": "CUNP2Z",
+        "countBefore": "0 phones following",
+        "joinWallS": 2.5,
+        "countAfter": "3 phones following"
+      }
+    },
+    {
+      "tPlus": "02:09",
+      "segment": "1 MH to the early signs (×8 then ×4)",
+      "segmentWallS": 75.7,
+      "earlySignsAt": "08:19"
+    },
+    {
+      "tPlus": "04:09",
+      "segment": "stop 1 (machine part: Pause, Explore, model tab, back, tick, Resume)",
+      "segmentWallS": 120
+    },
+    {
+      "tPlus": "04:30",
+      "segment": "2 the call, hyperventilation, dantrolene; EtCO₂ falls (span 1)",
+      "segmentWallS": 20.5
+    },
+    {
+      "tPlus": "07:57",
+      "segment": "stop 2 (machine part)",
+      "segmentWallS": 207
+    },
+    {
+      "tPlus": "08:12",
+      "segment": "3 ventilation back, the climb (span 2)",
+      "segmentWallS": 15.2,
+      "stateAtNormo": "recovering"
+    },
+    {
+      "tPlus": "10:15",
+      "segment": "stop 3 (machine part)",
+      "segmentWallS": 123.4
+    },
+    {
+      "tPlus": "10:36",
+      "segment": "4 the end of the case and the MH Debrief, read on screen",
+      "segmentWallS": 20.2
+    },
+    {
+      "tPlus": "10:36",
+      "segment": "end",
+      "segmentWallS": 0.2
+    }
+  ],
+  "segmentWallS": {
+    "0 opening on Home and the Room, the phones join": 2.6,
+    "1 MH to the early signs (×8 then ×4)": 75.7,
+    "stop 1 (machine part: Pause, Explore, model tab, back, tick, Resume)": 120,
+    "2 the call, hyperventilation, dantrolene; EtCO₂ falls (span 1)": 20.5,
+    "stop 2 (machine part)": 207,
+    "3 ventilation back, the climb (span 2)": 15.2,
+    "stop 3 (machine part)": 123.4,
+    "4 the end of the case and the MH Debrief, read on screen": 20.2,
+    "end": 0.2
+  },
+  "stops": [
+    {
+      "stop": 1,
+      "clock": "08:19",
+      "pausedAtStart": true,
+      "phonesAtStart": [
+        "Following session CUNP2Z (paused)",
+        "Following session CUNP2Z (paused)",
+        "Following session CUNP2Z (paused)"
+      ],
+      "sessionBarOnExplore": false,
+      "pauseButtonOnExplore": null,
+      "sections": [
+        {
+          "id": "endocrine",
+          "shot": "stop1-endocrine-chromium.png",
+          "title": "Endocrine",
+          "stamp": "Sim time 08:19. Changes are from the baseline at 01:00.",
+          "vitals": "HR 78 bpm ART M 77 mmHg SpO₂ 99 % EtCO₂ 46 mmHg RR 12 /min T1 36.7 °C",
+          "rows": [
+            {
+              "label": "Age (endocrine)",
+              "now": "35.0",
+              "unit": "years",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Hypothermia stage",
+              "now": "0",
+              "unit": "",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Etomidate adrenal suppression",
+              "now": "0",
+              "unit": "0–1",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Catecholamine reserve",
+              "now": "0.932",
+              "unit": "fraction",
+              "normal": "1 (replete)",
+              "change": "−0.07",
+              "dir": "down"
+            },
+            {
+              "label": "Stimulus surge",
+              "now": "0",
+              "unit": "0–1",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ketogenic insulin deficit",
+              "now": "0",
+              "unit": "0–1",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Cortisol",
+              "now": "421",
+              "unit": "nmol/L",
+              "normal": "140–690 (morning)",
+              "change": "+21",
+              "dir": "up"
+            },
+            {
+              "label": "Epinephrine",
+              "now": "158",
+              "unit": "pg/mL",
+              "normal": "< 50–100 at rest",
+              "change": "+124",
+              "dir": "up"
+            },
+            {
+              "label": "Glucose",
+              "now": "5.7",
+              "unit": "mmol/L",
+              "normal": "3.9–7.8",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Insulin",
+              "now": "9.70",
+              "unit": "µU/mL",
+              "normal": "fasting 2–20",
+              "change": "−0.3",
+              "dir": "down"
+            },
+            {
+              "label": "MH activity",
+              "now": "0.280",
+              "unit": "0–1",
+              "normal": "0",
+              "change": "+0.280",
+              "dir": "up"
+            },
+            {
+              "label": "Norepinephrine",
+              "now": "703",
+              "unit": "pg/mL",
+              "normal": "100–400 at rest",
+              "change": "+428",
+              "dir": "up"
+            },
+            {
+              "label": "Shivering",
+              "now": "false",
+              "unit": "yes/no",
+              "normal": "thresholds shift under GA (Sessler)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Stress response",
+              "now": "88",
+              "unit": "0–100",
+              "normal": "0",
+              "change": "+88",
+              "dir": "up"
+            },
+            {
+              "label": "Sweating",
+              "now": "false",
+              "unit": "yes/no",
+              "normal": "thresholds shift under GA (Sessler)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Tperiph",
+              "now": "32.8",
+              "unit": "°C",
+              "normal": "30–35 (core–periph 2–4)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Vasoconstricted",
+              "now": "false",
+              "unit": "yes/no",
+              "normal": "thresholds shift under GA (Sessler)",
+              "change": "",
+              "dir": "diff"
+            }
+          ]
+        },
+        {
+          "id": "blood",
+          "shot": "stop1-blood-chromium.png",
+          "title": "Blood, acid–base and temperature",
+          "stamp": "Sim time 08:19. Changes are from the baseline at 01:00.",
+          "vitals": "HR 78 bpm ART M 77 mmHg SpO₂ 99 % EtCO₂ 46 mmHg RR 12 /min T1 36.7 °C",
+          "rows": [
+            {
+              "label": "Tcore",
+              "now": "36.66",
+              "unit": "°C",
+              "normal": "36.5–37.5",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ketone production",
+              "now": "0",
+              "unit": "mmol/min",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ketone utilisation",
+              "now": "0.000",
+              "unit": "/min",
+              "normal": "≈ 0.0004 at basal insulin",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Globulins",
+              "now": "71.1",
+              "unit": "g",
+              "normal": "≈ 65 at 70 kg (24 g/L)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "HBF factor",
+              "now": "0.897",
+              "unit": "× baseline",
+              "normal": "1",
+              "change": "−0.103",
+              "dir": "down"
+            },
+            {
+              "label": "AChR upregulation",
+              "now": "0",
+              "unit": "0–1",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "CaO₂",
+              "now": "20.9",
+              "unit": "mL/dL",
+              "normal": "18–21 mL/dL",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "O₂ debt",
+              "now": "56.6",
+              "unit": "mL",
+              "normal": "0",
+              "change": "+56.6",
+              "dir": "up"
+            },
+            {
+              "label": "DO₂",
+              "now": "1291",
+              "unit": "mL/min",
+              "normal": "950–1,150 (DO2I 500–600)",
+              "change": "−43",
+              "dir": "down"
+            },
+            {
+              "label": "O₂ER",
+              "now": "26.2",
+              "unit": "%",
+              "normal": "22–30",
+              "change": "+6.2",
+              "dir": "up"
+            },
+            {
+              "label": "SvO₂",
+              "now": "76.7",
+              "unit": "%",
+              "normal": "65–75",
+              "change": "−7.7",
+              "dir": "down"
+            },
+            {
+              "label": "VO₂",
+              "now": "338",
+              "unit": "mL/min",
+              "normal": "200–250 (3.5 mL/kg/min)",
+              "change": "+72",
+              "dir": "up"
+            },
+            {
+              "label": "2,3-DPG",
+              "now": "4.65",
+              "unit": "mmol/L",
+              "normal": "4–5",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Mannitol excretion",
+              "now": "0",
+              "unit": "mmol/h",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "EVLWI",
+              "now": "0",
+              "unit": "mL/kg",
+              "normal": "3–7 (oedema > 10)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "AG",
+              "now": "10.5",
+              "unit": "mmol/L",
+              "normal": "8–12 (without K); correct for albumin",
+              "change": "−0.9",
+              "dir": "down"
+            },
+            {
+              "label": "Alb",
+              "now": "40.0",
+              "unit": "g/L",
+              "normal": "35–50",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Cl⁻",
+              "now": "104",
+              "unit": "mmol/L",
+              "normal": "98–107",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "COP",
+              "now": "22.4",
+              "unit": "mmHg",
+              "normal": "22–28",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Hb",
+              "now": "15.0",
+              "unit": "g/dL",
+              "normal": "M 13.5–17.5; F 12–15.5",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "iCa²⁺",
+              "now": "1.24",
+              "unit": "mmol/L",
+              "normal": "1.15–1.30",
+              "change": "+0.03",
+              "dir": "up"
+            },
+            {
+              "label": "K⁺",
+              "now": "4.76",
+              "unit": "mmol/L",
+              "normal": "3.5–5.0",
+              "change": "+0.56",
+              "dir": "up"
+            },
+            {
+              "label": "Lactate",
+              "now": "1.06",
+              "unit": "mmol/L",
+              "normal": "0.5–2.0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Mg²⁺",
+              "now": "0.850",
+              "unit": "mmol/L",
+              "normal": "0.7–1.0 (MgSO4 therapeutic 2–3.5)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Na⁺",
+              "now": "140",
+              "unit": "mmol/L",
+              "normal": "135–145",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Osm",
+              "now": "290",
+              "unit": "mOsm/kg",
+              "normal": "275–295",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "BE",
+              "now": "-0.100",
+              "unit": "mmol/L",
+              "normal": "−2 to +2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "COHb",
+              "now": "0",
+              "unit": "%",
+              "normal": "< 1.5 (smokers up to 10)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Glucose",
+              "now": "102",
+              "unit": "mg/dL",
+              "normal": "3.9–7.8 (70–140 mg/dL)",
+              "change": "+2",
+              "dir": "up"
+            },
+            {
+              "label": "HCO₃⁻",
+              "now": "25.5",
+              "unit": "mmol/L",
+              "normal": "22–26",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "MetHb",
+              "now": "0",
+              "unit": "%",
+              "normal": "< 1.5",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "PCO₂",
+              "now": "50.0",
+              "unit": "mmHg",
+              "normal": "35–45",
+              "change": "+9.0",
+              "dir": "up"
+            },
+            {
+              "label": "pH",
+              "now": "7.32",
+              "unit": "",
+              "normal": "7.35–7.45 (venous ≈ 0.03 lower)",
+              "change": "−0.07",
+              "dir": "down"
+            },
+            {
+              "label": "PO₂",
+              "now": "273",
+              "unit": "mmHg",
+              "normal": "80–100 on air; venous 35–45",
+              "change": "−94",
+              "dir": "down"
+            },
+            {
+              "label": "FO₂Hb",
+              "now": "99.8",
+              "unit": "%",
+              "normal": "FO₂Hb 94–98; sO₂ 95–99",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Age (thermoregulation)",
+              "now": "35.0",
+              "unit": "years",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Taxil",
+              "now": "36.3",
+              "unit": "°C",
+              "normal": "axilla ≈ core − 0.5–1; rectal ≈ core + 0.2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Tblad",
+              "now": "36.7",
+              "unit": "°C",
+              "normal": "axilla ≈ core − 0.5–1; rectal ≈ core + 0.2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Tnaso",
+              "now": "36.7",
+              "unit": "°C",
+              "normal": "axilla ≈ core − 0.5–1; rectal ≈ core + 0.2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Toes",
+              "now": "36.7",
+              "unit": "°C",
+              "normal": "axilla ≈ core − 0.5–1; rectal ≈ core + 0.2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Trect",
+              "now": "36.8",
+              "unit": "°C",
+              "normal": "axilla ≈ core − 0.5–1; rectal ≈ core + 0.2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ttymp",
+              "now": "36.7",
+              "unit": "°C",
+              "normal": "axilla ≈ core − 0.5–1; rectal ≈ core + 0.2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Troom",
+              "now": "21.0",
+              "unit": "°C",
+              "normal": "20–24 (theatre)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Tperiph",
+              "now": "32.8",
+              "unit": "°C",
+              "normal": "30–35 (core–periph 2–4)",
+              "change": "+0.3",
+              "dir": "up"
+            }
+          ],
+          "scrolledTo": "BE",
+          "scrolledShot": "stop1-blood-scrolled-chromium.png"
+        }
+      ],
+      "presenterExploreWallS": 41.9,
+      "modelTab": [
+        {
+          "page": "endocrine-thermal",
+          "url": "https://github.com/samhv-dev/patient-monitor-engine/blob/main/docs/model/endocrine-thermal.md",
+          "status": "not loaded: page.goto: Timeout 20000ms exceeded.",
+          "shot": "stop1-model-endocrine-thermal-chromium.png",
+          "instructorVisibility": "visible",
+          "instructorPaused": true,
+          "phones": [
+            "Following session CUNP2Z (paused)",
+            "Following session CUNP2Z (paused)",
+            "Following session CUNP2Z (paused)"
+          ],
+          "wallS": 75.2
+        }
+      ],
+      "afterModelTab": {
+        "visibility": "visible",
+        "paused": true,
+        "toasts": ""
+      },
+      "simMovedS": 0,
+      "pausedAtEnd": true,
+      "phonesAtEnd": [
+        {
+          "hold": false,
+          "status": "synced",
+          "resyncs": 1
+        },
+        {
+          "hold": false,
+          "status": "synced",
+          "resyncs": 1
+        },
+        {
+          "hold": false,
+          "status": "synced",
+          "resyncs": 1
+        }
+      ],
+      "phoneLinesAtEnd": [
+        "Following session CUNP2Z (paused)",
+        "Following session CUNP2Z (paused)",
+        "Following session CUNP2Z (paused)"
+      ],
+      "stopWallS": 119.1
+    },
+    {
+      "stop": 2,
+      "clock": "14:02",
+      "pausedAtStart": true,
+      "phonesAtStart": [
+        "Following session CUNP2Z (paused)",
+        "Following session CUNP2Z (paused)",
+        "Following session CUNP2Z (paused)"
+      ],
+      "sessionBarOnExplore": false,
+      "pauseButtonOnExplore": null,
+      "sections": [
+        {
+          "id": "drugs",
+          "shot": "stop2-drugs-chromium.png",
+          "title": "Drugs",
+          "stamp": "Sim time 14:02. Changes are from the baseline at 01:00.",
+          "vitals": "HR 81 bpm ART M 75 mmHg SpO₂ 99 % EtCO₂ 41 mmHg RR 20 /min T1 36.7 °C",
+          "rows": [
+            {
+              "label": "Ce prop-eq",
+              "now": "3.21",
+              "unit": "µg/mL",
+              "normal": "0",
+              "change": "+3.21",
+              "dir": "up"
+            },
+            {
+              "label": "Ce fent-eq",
+              "now": "1.37",
+              "unit": "ng/mL",
+              "normal": "0",
+              "change": "+1.37",
+              "dir": "up"
+            },
+            {
+              "label": "Dissociative fraction",
+              "now": "0.00",
+              "unit": "fraction",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Antiarrhythmic occupancy",
+              "now": "0.00",
+              "unit": "fraction",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Drug sympathetic drive",
+              "now": "0.00",
+              "unit": "0–3",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce (Dantrolene)",
+              "now": "0.895",
+              "unit": "× ref dose",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Cp (Dantrolene)",
+              "now": "0.895",
+              "unit": "× ref dose",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "CSHT (Dantrolene)",
+              "now": "—",
+              "unit": "min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Total (Dantrolene)",
+              "now": "200",
+              "unit": "mg",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce (Fentanyl)",
+              "now": "1.37",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Cp (Fentanyl)",
+              "now": "0.926",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "CSHT (Fentanyl)",
+              "now": "—",
+              "unit": "min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Infusion rate (Fentanyl)",
+              "now": "—",
+              "unit": "µg/min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "TCI target (Fentanyl)",
+              "now": "—",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Total (Fentanyl)",
+              "now": "100",
+              "unit": "µg",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce (Midazolam)",
+              "now": "0.357",
+              "unit": "× ref dose",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Cp (Midazolam)",
+              "now": "0.357",
+              "unit": "× ref dose",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "CSHT (Midazolam)",
+              "now": "—",
+              "unit": "min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Infusion rate (Midazolam)",
+              "now": "—",
+              "unit": "mg/min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Total (Midazolam)",
+              "now": "2.00",
+              "unit": "mg",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce (Propofol)",
+              "now": "2.94",
+              "unit": "µg/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Cp (Propofol)",
+              "now": "2.78",
+              "unit": "µg/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "CSHT (Propofol)",
+              "now": "2.37",
+              "unit": "min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Infusion rate (Propofol)",
+              "now": "8.00",
+              "unit": "mg/min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "TCI target (Propofol)",
+              "now": "—",
+              "unit": "µg/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Total (Propofol)",
+              "now": "205",
+              "unit": "mg",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce (Rocuronium)",
+              "now": "3820",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Cp (Rocuronium)",
+              "now": "3302",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "CSHT (Rocuronium)",
+              "now": "—",
+              "unit": "min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Infusion rate (Rocuronium)",
+              "now": "—",
+              "unit": "µg/min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Total (Rocuronium)",
+              "now": "48000",
+              "unit": "µg",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce (Succinylcholine)",
+              "now": "1641",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Cp (Succinylcholine)",
+              "now": "2.60",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "CSHT (Succinylcholine)",
+              "now": "—",
+              "unit": "min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Infusion rate (Succinylcholine)",
+              "now": "—",
+              "unit": "µg/min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Total (Succinylcholine)",
+              "now": "120000",
+              "unit": "µg",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Dial",
+              "now": "0",
+              "unit": "%, L/min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Fet (agent)",
+              "now": "0.040",
+              "unit": "%",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "FGF",
+              "now": "10.0",
+              "unit": "%, L/min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Fi (agent)",
+              "now": "0.020",
+              "unit": "%",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "MAC (age)",
+              "now": "1.86",
+              "unit": "%",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce ventilatory (Fentanyl)",
+              "now": "1.37",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce diaphragm (Rocuronium)",
+              "now": "4323",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce NMJ (Rocuronium)",
+              "now": "3820",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce diaphragm (Succinylcholine)",
+              "now": "1219",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce NMJ (Succinylcholine)",
+              "now": "1641",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Adjuvant antinociception",
+              "now": "0",
+              "unit": "0–1",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Benzodiazepine share",
+              "now": "0.086",
+              "unit": "fraction",
+              "normal": "0",
+              "change": "+0.086",
+              "dir": "up"
+            },
+            {
+              "label": "Exogenous glucocorticoid",
+              "now": "0",
+              "unit": "nmol/L",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Drug QTc prolongation",
+              "now": "0",
+              "unit": "ms",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            }
+          ]
+        },
+        {
+          "id": "endocrine",
+          "shot": "stop2-endocrine-chromium.png",
+          "title": "Endocrine",
+          "stamp": "Sim time 14:02. Changes are from the baseline at 01:00.",
+          "vitals": "HR 81 bpm ART M 75 mmHg SpO₂ 99 % EtCO₂ 41 mmHg RR 20 /min T1 36.7 °C",
+          "rows": [
+            {
+              "label": "Age (endocrine)",
+              "now": "35.0",
+              "unit": "years",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Hypothermia stage",
+              "now": "0",
+              "unit": "",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Etomidate adrenal suppression",
+              "now": "0",
+              "unit": "0–1",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Catecholamine reserve",
+              "now": "0.810",
+              "unit": "fraction",
+              "normal": "1 (replete)",
+              "change": "−0.19",
+              "dir": "down"
+            },
+            {
+              "label": "Stimulus surge",
+              "now": "0",
+              "unit": "0–1",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ketogenic insulin deficit",
+              "now": "0",
+              "unit": "0–1",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Cortisol",
+              "now": "462",
+              "unit": "nmol/L",
+              "normal": "140–690 (morning)",
+              "change": "+62",
+              "dir": "up"
+            },
+            {
+              "label": "Epinephrine",
+              "now": "227",
+              "unit": "pg/mL",
+              "normal": "< 50–100 at rest",
+              "change": "+193",
+              "dir": "up"
+            },
+            {
+              "label": "Glucose",
+              "now": "6.0",
+              "unit": "mmol/L",
+              "normal": "3.9–7.8",
+              "change": "+0.4",
+              "dir": "up"
+            },
+            {
+              "label": "Insulin",
+              "now": "9.50",
+              "unit": "µU/mL",
+              "normal": "fasting 2–20",
+              "change": "−0.5",
+              "dir": "down"
+            },
+            {
+              "label": "MH activity",
+              "now": "0.520",
+              "unit": "0–1",
+              "normal": "0",
+              "change": "+0.520",
+              "dir": "up"
+            },
+            {
+              "label": "Norepinephrine",
+              "now": "1025",
+              "unit": "pg/mL",
+              "normal": "100–400 at rest",
+              "change": "+750",
+              "dir": "up"
+            },
+            {
+              "label": "Shivering",
+              "now": "false",
+              "unit": "yes/no",
+              "normal": "thresholds shift under GA (Sessler)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Stress response",
+              "now": "87",
+              "unit": "0–100",
+              "normal": "0",
+              "change": "+87",
+              "dir": "up"
+            },
+            {
+              "label": "Sweating",
+              "now": "false",
+              "unit": "yes/no",
+              "normal": "thresholds shift under GA (Sessler)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Tperiph",
+              "now": "32.9",
+              "unit": "°C",
+              "normal": "30–35 (core–periph 2–4)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Vasoconstricted",
+              "now": "false",
+              "unit": "yes/no",
+              "normal": "thresholds shift under GA (Sessler)",
+              "change": "",
+              "dir": "diff"
+            }
+          ]
+        },
+        {
+          "id": "gas",
+          "shot": "stop2-gas-chromium.png",
+          "title": "Gas exchange and oxygen delivery",
+          "stamp": "Sim time 14:02. Changes are from the baseline at 01:00.",
+          "vitals": "HR 81 bpm ART M 75 mmHg SpO₂ 99 % EtCO₂ 41 mmHg RR 20 /min T1 36.7 °C",
+          "rows": [
+            {
+              "label": "PaO₂",
+              "now": "628",
+              "unit": "mmHg",
+              "normal": "80–100 on air (≈ 100 − age/3)",
+              "change": "+261",
+              "dir": "up"
+            },
+            {
+              "label": "SaO₂",
+              "now": "100.0",
+              "unit": "%",
+              "normal": "95–99",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "FAO₂",
+              "now": "93.8",
+              "unit": "%",
+              "normal": "≈ 14 on air",
+              "change": "+41.1",
+              "dir": "up"
+            },
+            {
+              "label": "PaCO₂",
+              "now": "45.0",
+              "unit": "mmHg",
+              "normal": "35–45",
+              "change": "+3.6",
+              "dir": "up"
+            },
+            {
+              "label": "Qs/Qt",
+              "now": "0.0",
+              "unit": "%",
+              "normal": "2–5 awake; 8–10 under GA",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "EtCO₂ (true)",
+              "now": "41.2",
+              "unit": "mmHg",
+              "normal": "35–45",
+              "change": "+3.0",
+              "dir": "up"
+            },
+            {
+              "label": "CvO₂",
+              "now": "15",
+              "unit": "mL/dL",
+              "normal": "14–16",
+              "change": "−1",
+              "dir": "down"
+            },
+            {
+              "label": "PvCO₂",
+              "now": "64.3",
+              "unit": "mmHg",
+              "normal": "41–51 (PaCO2 + 4–6)",
+              "change": "+14.8",
+              "dir": "up"
+            },
+            {
+              "label": "EtCO₂/PaCO₂",
+              "now": "0.91",
+              "unit": "",
+              "normal": "0.9–1.0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "CO₂ elimination efficiency",
+              "now": "0.99",
+              "unit": "",
+              "normal": "1",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Phase III slope",
+              "now": "0.0",
+              "unit": "mmHg or mmHg/s",
+              "normal": "< 2–3 mmHg",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "FACO₂",
+              "now": "6.23",
+              "unit": "%",
+              "normal": "≈ 5.6",
+              "change": "+0.44",
+              "dir": "up"
+            },
+            {
+              "label": "PBW",
+              "now": "75",
+              "unit": "kg",
+              "normal": "Devine",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "L Venous admixture",
+              "now": "2.0",
+              "unit": "%",
+              "normal": "≈ 2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "R Venous admixture",
+              "now": "2.0",
+              "unit": "%",
+              "normal": "≈ 2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Te",
+              "now": "2.00",
+              "unit": "s",
+              "normal": "Ti 1–1.5; I:E 1:2",
+              "change": "−1.28",
+              "dir": "down"
+            },
+            {
+              "label": "Ti",
+              "now": "1.00",
+              "unit": "s",
+              "normal": "Ti 1–1.5; I:E 1:2",
+              "change": "−1.01",
+              "dir": "down"
+            },
+            {
+              "label": "VT",
+              "now": "593",
+              "unit": "mL",
+              "normal": "6–8 mL/kg PBW",
+              "change": "+152",
+              "dir": "up"
+            },
+            {
+              "label": "Venous admixture",
+              "now": "2.00",
+              "unit": "%",
+              "normal": "≈ 2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Airway state",
+              "now": "patent",
+              "unit": "",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "FiCO₂ (source)",
+              "now": "0",
+              "unit": "mmHg",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ventilation mode",
+              "now": "ventilator",
+              "unit": "",
+              "normal": "",
+              "change": "",
+              "dir": "diff"
+            },
+            {
+              "label": "VCO₂",
+              "now": "216",
+              "unit": "mL/min",
+              "normal": "≈ 200 (RQ 0.8)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "VO₂ at rest (awake)",
+              "now": "270",
+              "unit": "mL/min",
+              "normal": "200–250 (3.5 mL/kg/min)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Respiratory muscle fatigue",
+              "now": "1.00",
+              "unit": "0–1",
+              "normal": "1 (none)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "PaCO₂ set point",
+              "now": "40.0",
+              "unit": "mmHg",
+              "normal": "≈ 40",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "RR (spont)",
+              "now": "0",
+              "unit": "/min",
+              "normal": "12–20",
+              "change": "−12.6",
+              "dir": "down"
+            },
+            {
+              "label": "V̇E",
+              "now": "0",
+              "unit": "L/min",
+              "normal": "5–8",
+              "change": "−5.32",
+              "dir": "down"
+            },
+            {
+              "label": "V̇A",
+              "now": "9.11",
+              "unit": "L/min",
+              "normal": "4–5",
+              "change": "+6.49",
+              "dir": "up"
+            },
+            {
+              "label": "CaO₂",
+              "now": "22.0",
+              "unit": "mL/dL",
+              "normal": "18–21 mL/dL",
+              "change": "+0.8",
+              "dir": "up"
+            },
+            {
+              "label": "O₂ debt",
+              "now": "231",
+              "unit": "mL",
+              "normal": "0",
+              "change": "+231",
+              "dir": "up"
+            },
+            {
+              "label": "DO₂",
+              "now": "1308",
+              "unit": "mL/min",
+              "normal": "950–1,150 (DO2I 500–600)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "O₂ER",
+              "now": "33.3",
+              "unit": "%",
+              "normal": "22–30",
+              "change": "+13.4",
+              "dir": "up"
+            },
+            {
+              "label": "SvO₂",
+              "now": "72.9",
+              "unit": "%",
+              "normal": "65–75",
+              "change": "−11.4",
+              "dir": "down"
+            },
+            {
+              "label": "VO₂",
+              "now": "435",
+              "unit": "mL/min",
+              "normal": "200–250 (3.5 mL/kg/min)",
+              "change": "+170",
+              "dir": "up"
+            },
+            {
+              "label": "2,3-DPG",
+              "now": "4.65",
+              "unit": "mmol/L",
+              "normal": "4–5",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "EVLWI",
+              "now": "0",
+              "unit": "mL/kg",
+              "normal": "3–7 (oedema > 10)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Respiratory drive",
+              "now": "true",
+              "unit": "fraction",
+              "normal": "0 / 1",
+              "change": "",
+              "dir": "diff"
+            },
+            {
+              "label": "I:E",
+              "now": "2.00",
+              "unit": "/min, mL, cmH₂O, ratio",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "PEEP",
+              "now": "5.00",
+              "unit": "/min, mL, cmH₂O, ratio",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "f set",
+              "now": "20.0",
+              "unit": "/min, mL, cmH₂O, ratio",
+              "normal": "",
+              "change": "+8.0",
+              "dir": "up"
+            },
+            {
+              "label": "VT set",
+              "now": "600",
+              "unit": "/min, mL, cmH₂O, ratio",
+              "normal": "",
+              "change": "+74",
+              "dir": "up"
+            },
+            {
+              "label": "FiO₂",
+              "now": "100",
+              "unit": "%",
+              "normal": "21 % air",
+              "change": "",
+              "dir": null
+            }
+          ],
+          "scrolledTo": "V̇A",
+          "scrolledShot": "stop2-gas-scrolled-chromium.png"
+        },
+        {
+          "id": "blood",
+          "shot": "stop2-blood-chromium.png",
+          "title": "Blood, acid–base and temperature",
+          "stamp": "Sim time 14:02. Changes are from the baseline at 01:00.",
+          "vitals": "HR 81 bpm ART M 75 mmHg SpO₂ 99 % EtCO₂ 41 mmHg RR 20 /min T1 36.7 °C",
+          "rows": [
+            {
+              "label": "Tcore",
+              "now": "36.71",
+              "unit": "°C",
+              "normal": "36.5–37.5",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ketone production",
+              "now": "0",
+              "unit": "mmol/min",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ketone utilisation",
+              "now": "0.000",
+              "unit": "/min",
+              "normal": "≈ 0.0004 at basal insulin",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Globulins",
+              "now": "71.1",
+              "unit": "g",
+              "normal": "≈ 65 at 70 kg (24 g/L)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "HBF factor",
+              "now": "0.906",
+              "unit": "× baseline",
+              "normal": "1",
+              "change": "−0.094",
+              "dir": "down"
+            },
+            {
+              "label": "AChR upregulation",
+              "now": "0",
+              "unit": "0–1",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "CaO₂",
+              "now": "22.0",
+              "unit": "mL/dL",
+              "normal": "18–21 mL/dL",
+              "change": "+0.8",
+              "dir": "up"
+            },
+            {
+              "label": "O₂ debt",
+              "now": "231",
+              "unit": "mL",
+              "normal": "0",
+              "change": "+231",
+              "dir": "up"
+            },
+            {
+              "label": "DO₂",
+              "now": "1308",
+              "unit": "mL/min",
+              "normal": "950–1,150 (DO2I 500–600)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "O₂ER",
+              "now": "33.3",
+              "unit": "%",
+              "normal": "22–30",
+              "change": "+13.4",
+              "dir": "up"
+            },
+            {
+              "label": "SvO₂",
+              "now": "72.9",
+              "unit": "%",
+              "normal": "65–75",
+              "change": "−11.4",
+              "dir": "down"
+            },
+            {
+              "label": "VO₂",
+              "now": "435",
+              "unit": "mL/min",
+              "normal": "200–250 (3.5 mL/kg/min)",
+              "change": "+170",
+              "dir": "up"
+            },
+            {
+              "label": "2,3-DPG",
+              "now": "4.65",
+              "unit": "mmol/L",
+              "normal": "4–5",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Mannitol excretion",
+              "now": "0",
+              "unit": "mmol/h",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "EVLWI",
+              "now": "0",
+              "unit": "mL/kg",
+              "normal": "3–7 (oedema > 10)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "AG",
+              "now": "11.5",
+              "unit": "mmol/L",
+              "normal": "8–12 (without K); correct for albumin",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Alb",
+              "now": "40.0",
+              "unit": "g/L",
+              "normal": "35–50",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Cl⁻",
+              "now": "104",
+              "unit": "mmol/L",
+              "normal": "98–107",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "COP",
+              "now": "22.4",
+              "unit": "mmHg",
+              "normal": "22–28",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Hb",
+              "now": "15.0",
+              "unit": "g/dL",
+              "normal": "M 13.5–17.5; F 12–15.5",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "iCa²⁺",
+              "now": "1.23",
+              "unit": "mmol/L",
+              "normal": "1.15–1.30",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "K⁺",
+              "now": "4.62",
+              "unit": "mmol/L",
+              "normal": "3.5–5.0",
+              "change": "+0.42",
+              "dir": "up"
+            },
+            {
+              "label": "Lactate",
+              "now": "1.90",
+              "unit": "mmol/L",
+              "normal": "0.5–2.0",
+              "change": "+0.90",
+              "dir": "up"
+            },
+            {
+              "label": "Mg²⁺",
+              "now": "0.850",
+              "unit": "mmol/L",
+              "normal": "0.7–1.0 (MgSO4 therapeutic 2–3.5)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Na⁺",
+              "now": "140",
+              "unit": "mmol/L",
+              "normal": "135–145",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Osm",
+              "now": "290",
+              "unit": "mOsm/kg",
+              "normal": "275–295",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "BE",
+              "now": "-0.700",
+              "unit": "mmol/L",
+              "normal": "−2 to +2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "COHb",
+              "now": "0",
+              "unit": "%",
+              "normal": "< 1.5 (smokers up to 10)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Glucose",
+              "now": "109",
+              "unit": "mg/dL",
+              "normal": "3.9–7.8 (70–140 mg/dL)",
+              "change": "+9",
+              "dir": "up"
+            },
+            {
+              "label": "HCO₃⁻",
+              "now": "24.4",
+              "unit": "mmol/L",
+              "normal": "22–26",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "MetHb",
+              "now": "0",
+              "unit": "%",
+              "normal": "< 1.5",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "PCO₂",
+              "now": "45.0",
+              "unit": "mmHg",
+              "normal": "35–45",
+              "change": "+4.0",
+              "dir": "up"
+            },
+            {
+              "label": "pH",
+              "now": "7.35",
+              "unit": "",
+              "normal": "7.35–7.45 (venous ≈ 0.03 lower)",
+              "change": "−0.04",
+              "dir": "down"
+            },
+            {
+              "label": "PO₂",
+              "now": "628",
+              "unit": "mmHg",
+              "normal": "80–100 on air; venous 35–45",
+              "change": "+261",
+              "dir": "up"
+            },
+            {
+              "label": "FO₂Hb",
+              "now": "100",
+              "unit": "%",
+              "normal": "FO₂Hb 94–98; sO₂ 95–99",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Age (thermoregulation)",
+              "now": "35.0",
+              "unit": "years",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Taxil",
+              "now": "36.2",
+              "unit": "°C",
+              "normal": "axilla ≈ core − 0.5–1; rectal ≈ core + 0.2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Tblad",
+              "now": "36.7",
+              "unit": "°C",
+              "normal": "axilla ≈ core − 0.5–1; rectal ≈ core + 0.2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Tnaso",
+              "now": "36.7",
+              "unit": "°C",
+              "normal": "axilla ≈ core − 0.5–1; rectal ≈ core + 0.2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Toes",
+              "now": "36.7",
+              "unit": "°C",
+              "normal": "axilla ≈ core − 0.5–1; rectal ≈ core + 0.2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Trect",
+              "now": "36.8",
+              "unit": "°C",
+              "normal": "axilla ≈ core − 0.5–1; rectal ≈ core + 0.2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ttymp",
+              "now": "36.7",
+              "unit": "°C",
+              "normal": "axilla ≈ core − 0.5–1; rectal ≈ core + 0.2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Troom",
+              "now": "21.0",
+              "unit": "°C",
+              "normal": "20–24 (theatre)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Tperiph",
+              "now": "32.9",
+              "unit": "°C",
+              "normal": "30–35 (core–periph 2–4)",
+              "change": "+0.4",
+              "dir": "up"
+            }
+          ],
+          "scrolledTo": "BE",
+          "scrolledShot": "stop2-blood-scrolled-chromium.png"
+        }
+      ],
+      "presenterExploreWallS": 53.4,
+      "modelTab": [
+        {
+          "page": "pharmacology",
+          "url": "https://github.com/samhv-dev/patient-monitor-engine/blob/main/docs/model/pharmacology.md",
+          "status": "not loaded: page.goto: Timeout 20000ms exceeded.",
+          "shot": "stop2-model-pharmacology-chromium.png",
+          "instructorVisibility": "visible",
+          "instructorPaused": true,
+          "phones": [
+            "Following session CUNP2Z (paused)",
+            "Following session CUNP2Z (paused)",
+            "Following session CUNP2Z (paused)"
+          ],
+          "wallS": 75.2
+        },
+        {
+          "page": "blood",
+          "url": "https://github.com/samhv-dev/patient-monitor-engine/blob/main/docs/model/blood.md",
+          "status": "not loaded: page.goto: Timeout 20000ms exceeded.",
+          "shot": "stop2-model-blood-chromium.png",
+          "instructorVisibility": "visible",
+          "instructorPaused": true,
+          "phones": [
+            "Following session CUNP2Z (paused)",
+            "Following session CUNP2Z (paused)",
+            "Following session CUNP2Z (paused)"
+          ],
+          "wallS": 75.1
+        }
+      ],
+      "afterModelTab": {
+        "visibility": "visible",
+        "paused": true,
+        "toasts": ""
+      },
+      "simMovedS": 0,
+      "pausedAtEnd": true,
+      "phonesAtEnd": [
+        {
+          "hold": false,
+          "status": "synced",
+          "resyncs": 2
+        },
+        {
+          "hold": false,
+          "status": "synced",
+          "resyncs": 2
+        },
+        {
+          "hold": false,
+          "status": "synced",
+          "resyncs": 2
+        }
+      ],
+      "phoneLinesAtEnd": [
+        "Following session CUNP2Z (paused)",
+        "Following session CUNP2Z (paused)",
+        "Following session CUNP2Z (paused)"
+      ],
+      "stopWallS": 206.5
+    },
+    {
+      "stop": 3,
+      "clock": "19:22",
+      "pausedAtStart": true,
+      "phonesAtStart": [
+        "Following session CUNP2Z (paused)",
+        "Following session CUNP2Z (paused)",
+        "Following session CUNP2Z (paused)"
+      ],
+      "sessionBarOnExplore": false,
+      "pauseButtonOnExplore": null,
+      "sections": [
+        {
+          "id": "endocrine",
+          "shot": "stop3-endocrine-chromium.png",
+          "title": "Endocrine",
+          "stamp": "Sim time 19:22. Changes are from the baseline at 01:00.",
+          "vitals": "HR 89 bpm ART M 74 mmHg SpO₂ 99 % EtCO₂ 66 mmHg RR 12 /min T1 36.7 °C",
+          "rows": [
+            {
+              "label": "Age (endocrine)",
+              "now": "35.0",
+              "unit": "years",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Hypothermia stage",
+              "now": "0",
+              "unit": "",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Etomidate adrenal suppression",
+              "now": "0",
+              "unit": "0–1",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Catecholamine reserve",
+              "now": "0.781",
+              "unit": "fraction",
+              "normal": "1 (replete)",
+              "change": "−0.22",
+              "dir": "down"
+            },
+            {
+              "label": "Stimulus surge",
+              "now": "0",
+              "unit": "0–1",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ketogenic insulin deficit",
+              "now": "0",
+              "unit": "0–1",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Cortisol",
+              "now": "494",
+              "unit": "nmol/L",
+              "normal": "140–690 (morning)",
+              "change": "+94",
+              "dir": "up"
+            },
+            {
+              "label": "Epinephrine",
+              "now": "227",
+              "unit": "pg/mL",
+              "normal": "< 50–100 at rest",
+              "change": "+193",
+              "dir": "up"
+            },
+            {
+              "label": "Glucose",
+              "now": "6.4",
+              "unit": "mmol/L",
+              "normal": "3.9–7.8",
+              "change": "+0.8",
+              "dir": "up"
+            },
+            {
+              "label": "Insulin",
+              "now": "10.1",
+              "unit": "µU/mL",
+              "normal": "fasting 2–20",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "MH activity",
+              "now": "0.550",
+              "unit": "0–1",
+              "normal": "0",
+              "change": "+0.550",
+              "dir": "up"
+            },
+            {
+              "label": "Norepinephrine",
+              "now": "798",
+              "unit": "pg/mL",
+              "normal": "100–400 at rest",
+              "change": "+523",
+              "dir": "up"
+            },
+            {
+              "label": "Shivering",
+              "now": "false",
+              "unit": "yes/no",
+              "normal": "thresholds shift under GA (Sessler)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Stress response",
+              "now": "77",
+              "unit": "0–100",
+              "normal": "0",
+              "change": "+77",
+              "dir": "up"
+            },
+            {
+              "label": "Sweating",
+              "now": "false",
+              "unit": "yes/no",
+              "normal": "thresholds shift under GA (Sessler)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Tperiph",
+              "now": "33.1",
+              "unit": "°C",
+              "normal": "30–35 (core–periph 2–4)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Vasoconstricted",
+              "now": "false",
+              "unit": "yes/no",
+              "normal": "thresholds shift under GA (Sessler)",
+              "change": "",
+              "dir": "diff"
+            }
+          ]
+        },
+        {
+          "id": "drugs",
+          "shot": "stop3-drugs-chromium.png",
+          "title": "Drugs",
+          "stamp": "Sim time 19:22. Changes are from the baseline at 01:00.",
+          "vitals": "HR 89 bpm ART M 74 mmHg SpO₂ 99 % EtCO₂ 66 mmHg RR 12 /min T1 36.7 °C",
+          "rows": [
+            {
+              "label": "Ce prop-eq",
+              "now": "3.08",
+              "unit": "µg/mL",
+              "normal": "0",
+              "change": "+3.08",
+              "dir": "up"
+            },
+            {
+              "label": "Ce fent-eq",
+              "now": "1.12",
+              "unit": "ng/mL",
+              "normal": "0",
+              "change": "+1.12",
+              "dir": "up"
+            },
+            {
+              "label": "Dissociative fraction",
+              "now": "0.00",
+              "unit": "fraction",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Antiarrhythmic occupancy",
+              "now": "0.00",
+              "unit": "fraction",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Drug sympathetic drive",
+              "now": "0.00",
+              "unit": "0–3",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce (Dantrolene)",
+              "now": "0.999",
+              "unit": "× ref dose",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Cp (Dantrolene)",
+              "now": "0.999",
+              "unit": "× ref dose",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "CSHT (Dantrolene)",
+              "now": "—",
+              "unit": "min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Total (Dantrolene)",
+              "now": "200",
+              "unit": "mg",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce (Fentanyl)",
+              "now": "1.12",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Cp (Fentanyl)",
+              "now": "0.763",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "CSHT (Fentanyl)",
+              "now": "—",
+              "unit": "min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Infusion rate (Fentanyl)",
+              "now": "—",
+              "unit": "µg/min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "TCI target (Fentanyl)",
+              "now": "—",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Total (Fentanyl)",
+              "now": "100",
+              "unit": "µg",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce (Midazolam)",
+              "now": "0.286",
+              "unit": "× ref dose",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Cp (Midazolam)",
+              "now": "0.286",
+              "unit": "× ref dose",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "CSHT (Midazolam)",
+              "now": "—",
+              "unit": "min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Infusion rate (Midazolam)",
+              "now": "—",
+              "unit": "mg/min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Total (Midazolam)",
+              "now": "2.00",
+              "unit": "mg",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce (Propofol)",
+              "now": "2.86",
+              "unit": "µg/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Cp (Propofol)",
+              "now": "2.81",
+              "unit": "µg/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "CSHT (Propofol)",
+              "now": "2.37",
+              "unit": "min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Infusion rate (Propofol)",
+              "now": "8.00",
+              "unit": "mg/min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "TCI target (Propofol)",
+              "now": "—",
+              "unit": "µg/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Total (Propofol)",
+              "now": "248",
+              "unit": "mg",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce (Rocuronium)",
+              "now": "2990",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Cp (Rocuronium)",
+              "now": "1852",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "CSHT (Rocuronium)",
+              "now": "—",
+              "unit": "min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Infusion rate (Rocuronium)",
+              "now": "—",
+              "unit": "µg/min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Total (Rocuronium)",
+              "now": "48000",
+              "unit": "µg",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce (Succinylcholine)",
+              "now": "747",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Cp (Succinylcholine)",
+              "now": "0.015",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "CSHT (Succinylcholine)",
+              "now": "—",
+              "unit": "min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Infusion rate (Succinylcholine)",
+              "now": "—",
+              "unit": "µg/min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Total (Succinylcholine)",
+              "now": "120000",
+              "unit": "µg",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Dial",
+              "now": "0",
+              "unit": "%, L/min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Fet (agent)",
+              "now": "0.018",
+              "unit": "%",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "FGF",
+              "now": "10.0",
+              "unit": "%, L/min",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Fi (agent)",
+              "now": "0.005",
+              "unit": "%",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "MAC (age)",
+              "now": "1.86",
+              "unit": "%",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce ventilatory (Fentanyl)",
+              "now": "1.12",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce diaphragm (Rocuronium)",
+              "now": "2818",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce NMJ (Rocuronium)",
+              "now": "2990",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce diaphragm (Succinylcholine)",
+              "now": "347",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ce NMJ (Succinylcholine)",
+              "now": "747",
+              "unit": "ng/mL",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Adjuvant antinociception",
+              "now": "0",
+              "unit": "0–1",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Benzodiazepine share",
+              "now": "0.071",
+              "unit": "fraction",
+              "normal": "0",
+              "change": "+0.071",
+              "dir": "up"
+            },
+            {
+              "label": "Exogenous glucocorticoid",
+              "now": "0",
+              "unit": "nmol/L",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Drug QTc prolongation",
+              "now": "0",
+              "unit": "ms",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            }
+          ]
+        },
+        {
+          "id": "gas",
+          "shot": "stop3-gas-chromium.png",
+          "title": "Gas exchange and oxygen delivery",
+          "stamp": "Sim time 19:22. Changes are from the baseline at 01:00.",
+          "vitals": "HR 89 bpm ART M 74 mmHg SpO₂ 99 % EtCO₂ 66 mmHg RR 12 /min T1 36.7 °C",
+          "rows": [
+            {
+              "label": "PaO₂",
+              "now": "567",
+              "unit": "mmHg",
+              "normal": "80–100 on air (≈ 100 − age/3)",
+              "change": "+200",
+              "dir": "up"
+            },
+            {
+              "label": "SaO₂",
+              "now": "100.0",
+              "unit": "%",
+              "normal": "95–99",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "FAO₂",
+              "now": "87.3",
+              "unit": "%",
+              "normal": "≈ 14 on air",
+              "change": "+34.6",
+              "dir": "up"
+            },
+            {
+              "label": "PaCO₂",
+              "now": "71.7",
+              "unit": "mmHg",
+              "normal": "35–45",
+              "change": "+30.3",
+              "dir": "up"
+            },
+            {
+              "label": "Qs/Qt",
+              "now": "0.0",
+              "unit": "%",
+              "normal": "2–5 awake; 8–10 under GA",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "EtCO₂ (true)",
+              "now": "65.7",
+              "unit": "mmHg",
+              "normal": "35–45",
+              "change": "+27.6",
+              "dir": "up"
+            },
+            {
+              "label": "CvO₂",
+              "now": "14",
+              "unit": "mL/dL",
+              "normal": "14–16",
+              "change": "−2",
+              "dir": "down"
+            },
+            {
+              "label": "PvCO₂",
+              "now": "87.0",
+              "unit": "mmHg",
+              "normal": "41–51 (PaCO2 + 4–6)",
+              "change": "+37.5",
+              "dir": "up"
+            },
+            {
+              "label": "EtCO₂/PaCO₂",
+              "now": "0.92",
+              "unit": "",
+              "normal": "0.9–1.0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "CO₂ elimination efficiency",
+              "now": "0.99",
+              "unit": "",
+              "normal": "1",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Phase III slope",
+              "now": "0.0",
+              "unit": "mmHg or mmHg/s",
+              "normal": "< 2–3 mmHg",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "FACO₂",
+              "now": "10.00",
+              "unit": "%",
+              "normal": "≈ 5.6",
+              "change": "+4.21",
+              "dir": "up"
+            },
+            {
+              "label": "PBW",
+              "now": "75",
+              "unit": "kg",
+              "normal": "Devine",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "L Venous admixture",
+              "now": "2.0",
+              "unit": "%",
+              "normal": "≈ 2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "R Venous admixture",
+              "now": "2.0",
+              "unit": "%",
+              "normal": "≈ 2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Te",
+              "now": "3.33",
+              "unit": "s",
+              "normal": "Ti 1–1.5; I:E 1:2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ti",
+              "now": "1.67",
+              "unit": "s",
+              "normal": "Ti 1–1.5; I:E 1:2",
+              "change": "−0.34",
+              "dir": "down"
+            },
+            {
+              "label": "VT",
+              "now": "498",
+              "unit": "mL",
+              "normal": "6–8 mL/kg PBW",
+              "change": "+57",
+              "dir": "up"
+            },
+            {
+              "label": "Venous admixture",
+              "now": "2.00",
+              "unit": "%",
+              "normal": "≈ 2",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Airway state",
+              "now": "patent",
+              "unit": "",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "FiCO₂ (source)",
+              "now": "0",
+              "unit": "mmHg",
+              "normal": "0",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Ventilation mode",
+              "now": "ventilator",
+              "unit": "",
+              "normal": "",
+              "change": "",
+              "dir": "diff"
+            },
+            {
+              "label": "VCO₂",
+              "now": "216",
+              "unit": "mL/min",
+              "normal": "≈ 200 (RQ 0.8)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "VO₂ at rest (awake)",
+              "now": "270",
+              "unit": "mL/min",
+              "normal": "200–250 (3.5 mL/kg/min)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Respiratory muscle fatigue",
+              "now": "1.00",
+              "unit": "0–1",
+              "normal": "1 (none)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "PaCO₂ set point",
+              "now": "40.0",
+              "unit": "mmHg",
+              "normal": "≈ 40",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "RR (spont)",
+              "now": "0",
+              "unit": "/min",
+              "normal": "12–20",
+              "change": "−12.6",
+              "dir": "down"
+            },
+            {
+              "label": "V̇E",
+              "now": "0",
+              "unit": "L/min",
+              "normal": "5–8",
+              "change": "−5.32",
+              "dir": "down"
+            },
+            {
+              "label": "V̇A",
+              "now": "4.34",
+              "unit": "L/min",
+              "normal": "4–5",
+              "change": "+1.71",
+              "dir": "up"
+            },
+            {
+              "label": "CaO₂",
+              "now": "21.8",
+              "unit": "mL/dL",
+              "normal": "18–21 mL/dL",
+              "change": "+0.6",
+              "dir": "up"
+            },
+            {
+              "label": "O₂ debt",
+              "now": "221",
+              "unit": "mL",
+              "normal": "0",
+              "change": "+221",
+              "dir": "up"
+            },
+            {
+              "label": "DO₂",
+              "now": "1368",
+              "unit": "mL/min",
+              "normal": "950–1,150 (DO2I 500–600)",
+              "change": "+34",
+              "dir": "up"
+            },
+            {
+              "label": "O₂ER",
+              "now": "32.5",
+              "unit": "%",
+              "normal": "22–30",
+              "change": "+12.6",
+              "dir": "up"
+            },
+            {
+              "label": "SvO₂",
+              "now": "73.1",
+              "unit": "%",
+              "normal": "65–75",
+              "change": "−11.3",
+              "dir": "down"
+            },
+            {
+              "label": "VO₂",
+              "now": "445",
+              "unit": "mL/min",
+              "normal": "200–250 (3.5 mL/kg/min)",
+              "change": "+180",
+              "dir": "up"
+            },
+            {
+              "label": "2,3-DPG",
+              "now": "4.65",
+              "unit": "mmol/L",
+              "normal": "4–5",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "EVLWI",
+              "now": "0",
+              "unit": "mL/kg",
+              "normal": "3–7 (oedema > 10)",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "Respiratory drive",
+              "now": "true",
+              "unit": "fraction",
+              "normal": "0 / 1",
+              "change": "",
+              "dir": "diff"
+            },
+            {
+              "label": "I:E",
+              "now": "2.00",
+              "unit": "/min, mL, cmH₂O, ratio",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "PEEP",
+              "now": "5.00",
+              "unit": "/min, mL, cmH₂O, ratio",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "f set",
+              "now": "12.0",
+              "unit": "/min, mL, cmH₂O, ratio",
+              "normal": "",
+              "change": "",
+              "dir": null
+            },
+            {
+              "label": "VT set",
+              "now": "500",
+              "unit": "/min, mL, cmH₂O, ratio",
+              "normal": "",
+              "change": "−26",
+              "dir": "down"
+            },
+            {
+              "label": "FiO₂",
+              "now": "100",
+              "unit": "%",
+              "normal": "21 % air",
+              "change": "",
+              "dir": null
+            }
+          ],
+          "scrolledTo": "V̇A",
+          "scrolledShot": "stop3-gas-scrolled-chromium.png"
+        }
+      ],
+      "presenterExploreWallS": 45.7,
+      "modelTab": [
+        {
+          "page": "endocrine-thermal",
+          "url": "https://github.com/samhv-dev/patient-monitor-engine/blob/main/docs/model/endocrine-thermal.md",
+          "status": "not loaded: page.goto: Timeout 20000ms exceeded.",
+          "shot": "stop3-model-endocrine-thermal-chromium.png",
+          "instructorVisibility": "visible",
+          "instructorPaused": true,
+          "phones": [
+            "Following session CUNP2Z (paused)",
+            "Following session CUNP2Z (paused)",
+            "Following session CUNP2Z (paused)"
+          ],
+          "wallS": 75.2
+        }
+      ],
+      "afterModelTab": {
+        "visibility": "visible",
+        "paused": true,
+        "toasts": ""
+      },
+      "simMovedS": 0,
+      "pausedAtEnd": true,
+      "phonesAtEnd": [
+        {
+          "hold": false,
+          "status": "synced",
+          "resyncs": 3
+        },
+        {
+          "hold": false,
+          "status": "synced",
+          "resyncs": 3
+        },
+        {
+          "hold": false,
+          "status": "synced",
+          "resyncs": 3
+        }
+      ],
+      "phoneLinesAtEnd": [
+        "Following session CUNP2Z (paused)",
+        "Following session CUNP2Z (paused)",
+        "Following session CUNP2Z (paused)"
+      ],
+      "stopWallS": 122.9
+    }
+  ]
+}

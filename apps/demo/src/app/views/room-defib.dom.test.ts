@@ -23,7 +23,7 @@ describe("R5b: Room setup's defibrillator choice", () => {
     const sel = card.querySelector('select') as HTMLSelectElement;
     expect([...sel.options].map((o) => [o.value, o.textContent])).toEqual([
       ['', "Not chosen: the monitor style's own values"],
-      ['generic', 'Generic defibrillator: 120 J adult, 50 J paediatric'],
+      ['generic', 'Generic defibrillator: 120 J adult, 50 J paediatric; pacer 70 ppm, PAUSE at 0 mA'], // row 58: the pacer too
     ]);
     expect(sel.value).toBe('');
     expect(card.textContent).toContain("Your department's machine: not named yet");

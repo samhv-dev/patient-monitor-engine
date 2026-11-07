@@ -273,7 +273,8 @@ These failed all three attempts of the CI WebKit leg (Playwright Linux WebKit on
 product change between attempts, while CI Chromium passed every test on the same commits without a retry. They are not
 skipped: on CI WebKit only, the Debrief's two live runs go at ×2 instead of ×4 (S10-F5: the runner holds about ×5.3),
 their waits are on the page's own clock or scaled to the speed, and the Debrief opens only once the host has
-acknowledged a pause — the session bar's button reads "Resume" as soon as it is pressed, before the host answers; the
+acknowledged a pause — the Pause control reads paused as soon as it is pressed, before the host answers (the session
+bar's "Resume" then; Instructor v2's clock pill since retire-instructor-v1); the
 click is then checked to have been followed (`#/debrief`) and the heading to be drawn, each within 30 s. FX-25 judges its
 two times on the page's sim clock. Every assertion is kept; local WebKit and Chromium run as before. Read a run with
 `gh run view <id> --attempt <n> --log`; the failure lines are those of the tree the run tested.

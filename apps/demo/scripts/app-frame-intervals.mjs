@@ -1,4 +1,4 @@
-// Stage 9 gate: the Stage 8a frame-interval gate with the whole app shell mounted and the instructor panel open, on the
+// Stage 9 gate: the Stage 8a frame-interval gate with the whole app shell mounted and the Instructor view's Vitals sheet open, on the
 // brief's load — the 8-lane `validation-perf` layout (`?load=perf8`, review F6) — at p95 < 25 ms (60 fps) and < 50 ms
 // (30 fps). Same method as validation-perf.html: main-thread requestAnimationFrame intervals, 10 s warm-up, then a
 // window. The metric is the MAIN thread's frame intervals, as in 8a: the renderer draws the sweep in its worker and
@@ -22,9 +22,9 @@ for (const [w, h, fps] of runs) {
   const ctx = await b.newContext({ viewport: { width: w, height: h } });
   const p = await ctx.newPage();
   await p.addInitScript((fps) => localStorage.setItem('pme.site', JSON.stringify({ fps })), fps);
-  await p.goto(`${base}/?load=perf8#/teach`);
+  await p.goto(`${base}/?load=perf8#/teach2`);
   await p.waitForFunction(() => '__pmeApp' in window);
-  await p.evaluate(() => window.__pmeApp.teach.panel.select('vitals'));
+  await p.evaluate(() => window.__pmeApp.teach2.openSheet('vitals'));
   await p.waitForTimeout(10_000);
   await p.evaluate(() => window.__pmeApp.frames.splice(0));
   await p.waitForTimeout(secs * 1000);

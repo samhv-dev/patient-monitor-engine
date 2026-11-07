@@ -3,13 +3,14 @@
 // the previous green main run's Playwright JSON reports: per file, the sum of every test result's duration (retries
 // included). Files go longest first onto the least-loaded shard (LPT); a file with no recorded duration counts as the
 // median recorded file. Nothing is weighted or ordered by hand.
-//   node scripts/ci/e2e-shard-plan.mjs <set> <shard-index> <shard-count> <reports-dir|none>
-//     <set>: a report name of scripts/ci/e2e-sets.mjs (chromium, webkit, webkit-known-flaky)
+//   node scripts/ci/e2e-shard-plan.mjs <set> <shard-index> <reports-dir|none>
+//     <set>: a report name of scripts/ci/e2e-sets.mjs (chromium, webkit, webkit-known-flaky); its shard count is that
+//     set's `shards` there, the one the e2e matrix is built from
 //   stdout: the files of shard <shard-index>, one per line (relative to the Playwright testDir, for --test-list)
 //   stderr: the whole plan
 // Exit 3, printing nothing on stdout, when there is no usable report (`none`, no playwright-report-<set>.json under
 // the directory, one that cannot be read, no listed file recorded) or fewer files than shards: the e2e job then runs
-// Playwright's own --shard=<index>/<count>. Any other failure exits non-zero too, with the same fallback.
+// Playwright's own --shard=<index>/<shards>. Any other failure exits non-zero too, with the same fallback.
 import { spawnSync } from 'node:child_process';
 import { readdirSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
@@ -59,9 +60,10 @@ const exit3 = (why) => {
 };
 
 function main(argv) {
-  const [set, index, count, dir] = [argv[0], Number(argv[1]), Number(argv[2]), argv[3]];
-  if (!SETS[set] || !Number.isInteger(index) || !Number.isInteger(count) || index < 1 || index > count || !dir) {
-    console.error('usage: e2e-shard-plan.mjs <chromium|webkit|webkit-known-flaky> <shard-index> <shard-count> <reports-dir|none>');
+  const [set, index, dir] = [argv[0], Number(argv[1]), argv[2]];
+  const count = SETS[set]?.shards;
+  if (!SETS[set] || !Number.isInteger(index) || index < 1 || index > count || !dir) {
+    console.error('usage: e2e-shard-plan.mjs <chromium|webkit|webkit-known-flaky> <shard-index> <reports-dir|none>');
     process.exit(2);
   }
   if (dir === 'none') exit3('no reports directory');

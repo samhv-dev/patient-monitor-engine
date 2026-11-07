@@ -45,8 +45,10 @@ export type AlarmDeviceAction = {
 };
 
 /**
- * The room's defibrillator model (Room plan R5a, owner's Q6 ruling of 5 November): its spec (energies, charge times,
- * ladder) is the model's, apart from the monitor skin, until another model is set; `value` is a `DEFIB_MODELS` key.
+ * The room's defibrillator model (Room plan R5a, owner's Q6 ruling of 5 November; the pacer with it, research/41 row
+ * 58, ruling of 6 November): its spec (energies, charge times, ladder; the pacer's default rate and output, ranges, PAUSE
+ * behaviour and HR dashes while pacing) is the model's, apart from the monitor skin, until another model is set; `value`
+ * is a `DEFIB_MODELS` key.
  */
 export type DefibDeviceAction = { device: 'defib'; action: 'model'; value: string; lane?: never };
 

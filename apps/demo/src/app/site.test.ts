@@ -1,15 +1,20 @@
 import { describe, expect, it, vi } from 'vitest';
 import { MemoryStorage } from './memory-storage.ts';
-import { DEFAULT_SITE, DEFIB_CHOICES, defibDefaults, gas, loadSite, parseSite, saveSite } from './site.ts';
+import { DEFAULT_SITE, DEFIB_CHOICES, defibDefaults, gas, loadSite, pacerDefaults, parseSite, saveSite } from './site.ts';
 
 describe('site profile', () => {
   it('keeps known values and replaces anything else with the default', () => {
-    expect(parseSite({ skin: 'iran-icu-as-found', theme: 'projector-light', fps: 30, panel: 'drawer', gasUnit: 'kPa', sensorsOff: true, drugNames: 'uk', instructor: 'teach2', defibModel: 'generic' })).toEqual({
-      schema: 'pme-site/1', skin: 'iran-icu-as-found', theme: 'projector-light', fps: 30, panel: 'drawer', gasUnit: 'kPa', sensorsOff: true, drugNames: 'uk', instructor: 'teach2', defibModel: 'generic',
+    expect(parseSite({ skin: 'iran-icu-as-found', theme: 'projector-light', fps: 30, gasUnit: 'kPa', sensorsOff: true, drugNames: 'uk', defibModel: 'generic' })).toEqual({
+      schema: 'pme-site/1', skin: 'iran-icu-as-found', theme: 'projector-light', fps: 30, gasUnit: 'kPa', sensorsOff: true, drugNames: 'uk', defibModel: 'generic',
     });
     expect(DEFAULT_SITE.drugNames).toBe('us'); // "epinephrine / norepinephrine" unless the site chooses
-    expect(DEFAULT_SITE.instructor).toBe('teach'); // today's Instructor view unless the site chooses v2
-    expect(parseSite({ skin: 'nonsense', fps: 144, theme: 'neon', instructor: 'teach3', defibModel: 'lifepak-like' })).toEqual(DEFAULT_SITE);
+    expect(parseSite({ skin: 'nonsense', fps: 144, theme: 'neon', defibModel: 'lifepak-like' })).toEqual(DEFAULT_SITE);
+  });
+  it('a stored `instructor: \'teach\'` (or `panel`) is ignored: an older site file still imports, without the two-view keys (retire-instructor-v1 decision 5)', () => {
+    const older = { schema: 'pme-site/1', skin: 'philips-like', theme: '', fps: 60, panel: 'drawer', gasUnit: 'mmHg', sensorsOff: false, drugNames: 'us', instructor: 'teach', defibModel: null };
+    expect(parseSite(older)).toEqual({ ...DEFAULT_SITE, skin: 'philips-like' });
+    expect(parseSite(older)).not.toHaveProperty('instructor');
+    expect(parseSite(older)).not.toHaveProperty('panel');
     expect(parseSite(null)).toEqual(DEFAULT_SITE);
   });
   it('converts gas pressures for the tables', () => {
@@ -35,5 +40,9 @@ describe("the room's defibrillator model", () => {
     // no model: the panel's energy as before (200 J), so nothing a press sends changes
     expect(defibDefaults(null)).toEqual({ energyAdultJ: 200, energyPaedJ: null, ladderJ: [] });
     expect(defibDefaults('lifepak-like')).toEqual(defibDefaults(null));
+  });
+  it('the generic model\'s pacer, for the Room card (row 58): 70 ppm, PAUSE drops the output to 0 mA; no model: none named', () => {
+    expect(pacerDefaults('generic')).toEqual({ ratePpm: 70, pausePct: null });
+    expect(pacerDefaults(null)).toBeNull();
   });
 });
