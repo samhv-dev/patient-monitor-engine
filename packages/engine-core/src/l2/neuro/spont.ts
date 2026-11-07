@@ -27,22 +27,22 @@ const TI_FRAC = 0.38;
  * Bobrow BJ et al., Circulation 2008;118:2550–2554) [P]. The gate closes when the organ model's CBF is below
  * BRAINSTEM_CBF_MIN or there is no flow at all (pulseless / CO 0).
  */
-export const BRAINSTEM_CBF_MIN = 0.2; // CBF < 20 % of rest (the ruling's threshold) [ENG]
-export const GASP_ONSET_S = 30; // unperfused for > 30 s → gasps only [ENG, ruling]
-export const GASP_END_S = 120; // gasps fade to apnoea by 2 min [ENG, ruling]
-export const GASP_RR = 6; // gasp rate ceiling (/min) [ENG, ruling "RR ≤ 6"]
-export const GASP_VT_FRAC = 0.3; // gasp VT ceiling × the resting VT ("small VT") [ENG]
-export const GATE_REOPEN_S = 120; // the drive reopens linearly over 2 min once perfused [ENG, ruling "1–3 min"]
+export const BRAINSTEM_CBF_MIN = 0.2; // CBF < 20 % of rest (the ruling's threshold) (the ruling's threshold)
+export const GASP_ONSET_S = 30; // unperfused for > 30 s → gasps only (ruling)
+export const GASP_END_S = 120; // gasps fade to apnoea by 2 min (ruling)
+export const GASP_RR = 6; // gasp rate ceiling (/min) (ruling "RR ≤ 6")
+export const GASP_VT_FRAC = 0.3; // gasp VT ceiling × the resting VT ("small VT") [FIT: gasp VT ceiling; brief research/44 L2-38]
+export const GATE_REOPEN_S = 120; // the drive reopens linearly over 2 min once perfused (ruling "1–3 min")
 /**
  * The CO2 stimulus is partly CENTRAL (brain ECF PCO2, τ ≈ 60–150 s) and partly peripheral (carotid, fast): Dahan et al.
- * 1990 J Physiol 423:615 (dynamic end-tidal forcing: central τ ≈ 100 s, peripheral share ≈ 0.3) [TXT; τ 90 s ENG]. The
+ * 1990 J Physiol 423:615 (dynamic end-tidal forcing: central τ ≈ 100 s, peripheral share ≈ 0.3) [TXT] [FIT: chemoreflex τ 90 s; brief research/44 L2-31]. The
  * drive reads 0.3·PaCO2 + 0.7·Pc. At steady state Pc = PaCO2 (no change to any resting value).
  */
 export const CENTRAL_TAU_S = 90;
 export const PERIPH_SHARE = 0.3;
 /**
  * The tidal-volume ceiling of the chemical drive — VT plateaus at 50–60 % of the vital capacity (Hey et al. 1966 Respir
- * Physiol 1:193), VC ≈ 60–70 mL/kg IBW → 35 mL/kg IBW, × fatigue (weakness stays nmbVtMult's) [ENG size].
+ * Physiol 1:193), VC ≈ 60–70 mL/kg IBW → 35 mL/kg IBW, × fatigue (weakness stays nmbVtMult's) [FIT: vital-capacity-limited VT size; size; brief research/44 L2-38].
  */
 export const VT_MAX_ML_KG = 35;
 /** A resting tidal volume per kg IBW, the size the weak diaphragm's cap reaches at DIAPH_EFFECTIVE (6–8 mL/kg [TXT: the
@@ -93,7 +93,7 @@ export function winterPaco2(hco3: number): number {
  */
 export const ALK_SLOPE = 0.7;
 export const ALK_PACO2_MAX = 55;
-/** The branch opens only 0.1 mmol/L above the reference [ENG]: the blood model's resting HCO3 is 24.40045 at t = 0. */
+/** The branch opens only 0.1 mmol/L above the reference [ENG: numerics]: the blood model's resting HCO3 is 24.40045 at t = 0. */
 export const ALK_DEADBAND = 0.1;
 /**
  * Acute CO2 buffering, mmol/L HCO3 per mmHg PaCO2 (Brackett, Cohen & Schwartz 1965 NEJM 272:6; the blood model's own

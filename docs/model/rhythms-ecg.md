@@ -62,11 +62,11 @@ modifiers it accepts.
 | [`generator.ts:54`](../../packages/engine-core/src/l2/ecg/generator.ts#L54) | Respiratory clock for the wander; absent = the fixed 15/min clock. |
 | [`hrv.ts:2`](../../packages/engine-core/src/l2/ecg/hrv.ts#L2) | RR_n = RR_mean + A_RSA·sin(2π·f_resp·t_n + φ) + A_LF·sin(2π·0.1·t_n + ψ) + ε_n |
 | [`intervals.ts:3`](../../packages/engine-core/src/l2/ecg/intervals.ts#L3) | Fridericia: QT = QTc · RR^(1/3). QTc default 400 ms gives 458/400/363/317/295/268 ms at 40/60/80/120/150/200 bpm. |
-| [`intervals.ts:9`](../../packages/engine-core/src/l2/ecg/intervals.ts#L9) | PR = clamp(PR60 − 0.4·(HR − 60), 110, PR60) ms [03 §1.1, ENG]. |
+| [`intervals.ts:9`](../../packages/engine-core/src/l2/ecg/intervals.ts#L9) | PR = clamp(PR60 − 0.4·(HR − 60), 110, PR60) ms [03 §1.1] [FIT: PR–HR slope and clamp; brief research/44 V-04]. |
 | [`kernels.ts:2`](../../packages/engine-core/src/l2/ecg/kernels.ts#L2) | ECG_axis(t) = Σ_events Σ_waves a_w,axis · exp(−(t − t_event − τ_w)² / (2σ_w²)) |
 | [`mech.ts:11`](../../packages/engine-core/src/l2/ecg/mech.ts#L11) | f_fill(RR) = 1 − exp(−max(0, RR − t_sys)/τ_fill), t_sys = LVET + 0.08 s, τ_fill 0.18 s, |
 | [`st.ts:13`](../../packages/engine-core/src/l2/ecg/morphology/st.ts#L13) | over the index leads at J + 60 ms (1 mm = 0.1 mV at 10 mm/mV). Per unit (index \| reciprocal): |
-| [`rhythm-engine.ts:32`](../../packages/engine-core/src/l2/ecg/rhythm-engine.ts#L32) | refractoryUntil = t + QRS + 0.8·QT (brief §4.1) [ENG] |
+| [`rhythm-engine.ts:32`](../../packages/engine-core/src/l2/ecg/rhythm-engine.ts#L32) | refractoryUntil = t + QRS + 0.8·QT (brief §4.1) [ENG: numerics] |
 | [`rhythm-state.ts:101`](../../packages/engine-core/src/l2/ecg/rhythm-state.ts#L101) | engine's held rate); absent = hrAt. MODELED AAI/DDD run hr = max(lower rate, reflex rate) above it. |
 | [`rhythm-state.ts:106`](../../packages/engine-core/src/l2/ecg/rhythm-state.ts#L106) | Respiratory clock for RSA and QRS amplitude modulation; absent = fixed 15/min clock. |
 | [`rhythm-state.ts:146`](../../packages/engine-core/src/l2/ecg/rhythm-state.ts#L146) | activate / apply = rhythm-engine's activateVentricle / applyRhythm; onP runs after every sinus/ectopic P wave; |
@@ -179,7 +179,7 @@ modifiers it accepts.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `F_RMS_MV` | `0.03` | — | brief §4.1; [ENG] | f-waves 0.02–0.15 mV (brief §4.1): RMS 0.03 ≈ 0.08 mV peak-to-peak [ENG] |
+| `F_RMS_MV` | `0.03` | — | brief §4.1 | f-waves 0.02–0.15 mV (brief §4.1): RMS 0.03 ≈ 0.08 mV peak-to-peak (brief §4.1: f-waves 0.02–0.15 mV) |
 
 ### [`l2/ecg/arrest/vf.ts`](../../packages/engine-core/src/l2/ecg/arrest/vf.ts)
 
@@ -198,12 +198,12 @@ modifiers it accepts.
 | `FINE_MV` | `0.2` | — | — | coarse/fine split (fine VF ≤ 0.2 mV, very fine ≤ 0.1) |
 | `ASYSTOLE_MV` | `0.05` | — | — | — |
 | `HAZARD_PER_S` | `0.02 / 60` | /s | — | — |
-| `VF_B_WEIGHT` | `0.9` | — | [ENG; planning prototype, 40 seeds: V1/II 0.41–0.92, V5/II 0.50–0.96] | channel B RMS relative to channel A [ENG; planning prototype, 40 seeds: V1/II 0.41–0.92, V5/II 0.50–0.96] |
-| `VF_FREQ_JITTER` | `0.18` | — | [ENG] | Per-cycle jitter (Ornstein–Uhlenbeck, 500 Hz): log-speed SD and correlation time; log-gain SD and time [ENG]. |
+| `VF_B_WEIGHT` | `0.9` | — | [ENG: texture; planning prototype, 40 seeds: V1/II 0.41–0.92, V5/II 0.50–0.96] | channel B RMS relative to channel A [ENG: texture; planning prototype, 40 seeds: V1/II 0.41–0.92, V5/II 0.50–0.96] |
+| `VF_FREQ_JITTER` | `0.18` | — | [ENG: texture] | Per-cycle jitter (Ornstein–Uhlenbeck, 500 Hz): log-speed SD and correlation time; log-gain SD and time [ENG: texture]. |
 | `VF_FREQ_TAU_S` | `0.25` | s | — | — |
 | `VF_AMP_JITTER` | `0.35` | — | — | — |
 | `VF_AMP_TAU_S` | `0.4` | s | — | — |
-| `VF_FREQ_JITTER_BIAS` | `1 / 1.047` | — | [ENG, calibration] | The per-cycle speed jitter raises the measured spectral peak by ≈ 4.7 % over f_dom(t) (16 seeds × 0/2/4/6/10 min: +0.32/+0.12/+0.38/+0.08/+0.20 Hz against the same runs without jitter), so the jittered speed is scaled back to keep the measured dominant frequency on the 5.5 → 3.9 Hz course [ENG, calibration]. |
+| `VF_FREQ_JITTER_BIAS` | `1 / 1.047` | — | research/44 L2; [FIT: VF amplitude/frequency course driven by the clock; calibration; brief research/44 L2-13] | The per-cycle speed jitter raises the measured spectral peak by ≈ 4.7 % over f_dom(t) (16 seeds × 0/2/4/6/10 min: +0.32/+0.12/+0.38/+0.08/+0.20 Hz against the same runs without jitter), so the jittered speed is scaled back to keep the measured dominant frequency on the 5.5 → 3.9 Hz course [FIT: VF amplitude/frequency course driven by the clock; calibration; brief research/44 L2-13]. |
 
 ### [`l2/ecg/artefacts/body.ts`](../../packages/engine-core/src/l2/ecg/artefacts/body.ts)
 
@@ -217,7 +217,7 @@ modifiers it accepts.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `RAIL_MV` | `5` | — | [ENG] | amplifier saturation [ENG] |
+| `RAIL_MV` | `5` | — | [ENG: device] | amplifier saturation [ENG: device] |
 | `MAINS_MAX_MV` | `0.5` | — | — | 0.01–0.5 mV |
 | `MOTION_MAX_MV` | `3` | — | — | 0.5–5 mV |
 
@@ -225,8 +225,8 @@ modifiers it accepts.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `AVB1_DEFAULT_PR_MS` | `280` | ms | brief §5; [ENG value] | PR > 200 ms (brief §5) [ENG value] |
-| `AV_NODE_ERP_S` | `0.25` | s | [ENG] | AV-node effective refractory period, P to P (≈ 250–300 ms; the low end, so 1:1 conduction holds up to 240/min) [ENG]. Supraventricular impulses are filtered HERE, not by ventricular refractoriness. |
+| `AVB1_DEFAULT_PR_MS` | `280` | ms | brief §5; [ENG: scenario; value] | PR > 200 ms (brief §5) [ENG: scenario; value] |
+| `AV_NODE_ERP_S` | `0.25` | s | research/44 L2; [FIT: AV-node conduction in AF/flutter (calibration lookup); brief research/44 L2-14] | AV-node effective refractory period, P to P (≈ 250–300 ms; the low end, so 1:1 conduction holds up to 240/min) [FIT: AV-node conduction in AF/flutter (calibration lookup); brief research/44 L2-14]. Supraventricular impulses are filtered HERE, not by ventricular refractoriness. |
 
 ### [`l2/ecg/beat-templates.ts`](../../packages/engine-core/src/l2/ecg/beat-templates.ts)
 
@@ -239,7 +239,7 @@ modifiers it accepts.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `PVC_RUN_RATE_BPM` | `160` | /min | research 03 §1.5; [ENG value] | consecutive PVCs "at a VT rate" (research 03 §1.5) [ENG value] |
+| `PVC_RUN_RATE_BPM` | `160` | /min | research 03 §1.5; [ENG: scenario; value] | consecutive PVCs "at a VT rate" (research 03 §1.5) [ENG: scenario; value] |
 
 ### [`l2/ecg/foci-junctional.ts`](../../packages/engine-core/src/l2/ecg/foci-junctional.ts)
 
@@ -251,7 +251,7 @@ modifiers it accepts.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `VT_JITTER_S` | `0.004` | s | [ENG] | ±4 ms cycle-length jitter [ENG] |
+| `VT_JITTER_S` | `0.004` | s | [ENG: texture] | ±4 ms cycle-length jitter [ENG: texture] |
 
 ### [`l2/ecg/generator.ts`](../../packages/engine-core/src/l2/ecg/generator.ts)
 
@@ -260,36 +260,36 @@ modifiers it accepts.
 | `ECG_RATE` | `500` | — | — | — |
 | `NOISE_SD_MV` | `0.025` | — | brief §5; McSharry 2003 | additive white noise (brief §5; McSharry 2003 example) |
 | `WANDER_MV` | `0.08` | — | brief §4.1 | respiratory baseline wander 0.05–0.15 mV at f_resp (brief §4.1) |
-| `FWAVE_FADE_S` | `0.08` | s | [ENG] | Atrial waves (AF f-waves, flutter F-waves) fade in and out over this long, so a rhythm switch leaves no step (leaving AF cut the f-waves with a step of up to ~0.15 mV) [ENG]. |
+| `FWAVE_FADE_S` | `0.08` | s | [ENG: numerics] | Atrial waves (AF f-waves, flutter F-waves) fade in and out over this long, so a rhythm switch leaves no step (leaving AF cut the f-waves with a step of up to ~0.15 mV) [ENG: numerics]. |
 
 ### [`l2/ecg/hrv.ts`](../../packages/engine-core/src/l2/ecg/hrv.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `F_RESP_HZ` | `0.25` | Hz | [ENG, stand-in for the respiratory driver without a breath clock] | 15 breaths/min [ENG, stand-in for the respiratory driver without a breath clock] |
+| `F_RESP_HZ` | `0.25` | Hz | [ENG: scenario; stand-in for the respiratory driver without a breath clock] | 15 breaths/min [ENG: scenario; stand-in for the respiratory driver without a breath clock] |
 | `A_RSA_MAX_S` | `0.06` | s | — | rsa = 1 → 60 ms at RR 1 s |
 | `A_LF_S` | `0.03` | s | — | — |
 | `EPS_SD_S` | `0.012` | s | — | — |
-| `MIN_RR_S` | `0.2` | s | [ENG] | floor on a sinus RR (300/min), far above any sinus rate [ENG] |
+| `MIN_RR_S` | `0.2` | s | [ENG: numerics] | floor on a sinus RR (300/min), far above any sinus rate [ENG: numerics] |
 
 ### [`l2/ecg/intervals.ts`](../../packages/engine-core/src/l2/ecg/intervals.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `DEFAULT_PR60_MS` | `160` | ms | brief §4.1 | PR = clamp(PR60 − 0.4·(HR − 60), 110, PR60) ms [03 §1.1, ENG]. PR60 default 160 ms, the textbook resting adult. With the drawn T ending at QT, at 150–160 bpm the P ONSET (RR − PR after QRS onset: 276 ms at 150, 255 ms at 160) lands on the T downslope before its end (295 / 288 ms), so "P on T" emerges from timing alone (brief §4.1). |
+| `DEFAULT_PR60_MS` | `160` | ms | research/44 V; brief §4.1; [FIT: PR–HR slope and clamp; brief research/44 V-04] | PR = clamp(PR60 − 0.4·(HR − 60), 110, PR60) ms [03 §1.1] [FIT: PR–HR slope and clamp; brief research/44 V-04]. PR60 default 160 ms, the textbook resting adult. With the drawn T ending at QT, at 150–160 bpm the P ONSET (RR − PR after QRS onset: 276 ms at 150, 255 ms at 160) lands on the T downslope before its end (295 / 288 ms), so "P on T" emerges from timing alone (brief §4.1). |
 
 ### [`l2/ecg/kernels.ts`](../../packages/engine-core/src/l2/ecg/kernels.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `K_STRIDE` | `7` | — | brief §4.1; research 03 §1.3 | Gaussian wave kernels on a 3-axis VCG (brief §4.1 "Generator"; research 03 §1.3): ECG_axis(t) = Σ_events Σ_waves a_w,axis · exp(−(t − t_event − τ_w)² / (2σ_w²)) The T wave is two half-Gaussians (rising σ, falling σ) [03 §1.3, ENG]. Clean-room: written from the equations in the papers/brief, no ECGSYN code consulted. Flat kernel layout, 7 numbers per kernel: [tau, sigmaRise, sigmaFall, ax, ay, az, wave]. Seconds and mV. |
+| `K_STRIDE` | `7` | — | brief §4.1; research 03 §1.3; [ENG: numerics; half-Gaussian kernel form] | Gaussian wave kernels on a 3-axis VCG (brief §4.1 "Generator"; research 03 §1.3): ECG_axis(t) = Σ_events Σ_waves a_w,axis · exp(−(t − t_event − τ_w)² / (2σ_w²)) The T wave is two half-Gaussians (rising σ, falling σ) [03 §1.3] [ENG: numerics; half-Gaussian kernel form]. Clean-room: written from the equations in the papers/brief, no ECGSYN code consulted. Flat kernel layout, 7 numbers per kernel: [tau, sigmaRise, sigmaFall, ax, ay, az, wave]. Seconds and mV. |
 | `SUPPORT_SIGMAS` | `4` | — | — | Kernels contribute nothing beyond ±4σ (exp(−8) ≈ 3.4e-4). |
 
 ### [`l2/ecg/mech.ts`](../../packages/engine-core/src/l2/ecg/mech.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `BASE_SV_ML` | `70` | mL | [ENG] | placeholder SV (the haemodynamic core computes its own) [ENG] |
+| `BASE_SV_ML` | `70` | mL | [ENG: numerics] | placeholder SV (the haemodynamic core computes its own) [ENG: numerics] |
 
 ### [`l2/ecg/morphology/conduction.ts`](../../packages/engine-core/src/l2/ecg/morphology/conduction.ts)
 
@@ -297,7 +297,7 @@ modifiers it accepts.
 |---|---|---|---|---|
 | `RBBB_S_SCALE` | `0.5` | — | — | RBBB: the LV's S forces halve and a late broad R′ (τ 100 ms) points right-anterior. |
 | `RBBB_RPRIME_TAU_S` | `0.1` | s | — | — |
-| `DEFAULT_TRANSITION` | `3.5` | — | [ENG] | Default precordial transition of the base template (V3–V4) and the horizontal rotation per lead [ENG]. |
+| `DEFAULT_TRANSITION` | `3.5` | — | research/44 L2; [FIT: ECG morphology vector or amplitude without a source; brief research/44 L2-46] | Default precordial transition of the base template (V3–V4) and the horizontal rotation per lead [FIT: ECG morphology vector or amplitude without a source; brief research/44 L2-46]. |
 
 ### [`l2/ecg/morphology/individuality.ts`](../../packages/engine-core/src/l2/ecg/morphology/individuality.ts)
 
@@ -335,21 +335,21 @@ modifiers it accepts.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `TCP_SENSE_REFRACTORY_S` | `0.3` | s | [ENG] | After its own pulse the pacer ignores the ventricle for this long (so its own captured beat never inhibits it) [ENG]. |
+| `TCP_SENSE_REFRACTORY_S` | `0.3` | s | [ENG: device] | After its own pulse the pacer ignores the ventricle for this long (so its own captured beat never inhibits it) [ENG: device]. |
 
 ### [`l2/ecg/templates.ts`](../../packages/engine-core/src/l2/ecg/templates.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `FLUTTER_PP_MV` | `0.3` | — | research 03 §1.5 | F-wave peak-to-peak in lead II, mV: the top of research 03 §1.5's 0.1–0.3 mV (the Gate 1 trace was too faint). |
-| `FLUTTER_FALL_FRACTION` | `0.7` | — | [ENG, review §4] | Fraction of each flutter cycle spent on the slow descending ramp; the rest is the fast return [ENG, review §4]. |
-| `WIDE_QT_EXTRA_MS` | `60` | ms | [ENG] | Wide complexes: QT is longer by 60 ms [ENG]. |
+| `FLUTTER_FALL_FRACTION` | `0.7` | — | research/44 L2; [FIT: ECG morphology vector or timing without a source; review §4; brief research/44 L2-46] | Fraction of each flutter cycle spent on the slow descending ramp; the rest is the fast return [FIT: ECG morphology vector or timing without a source; review §4; brief research/44 L2-46]. |
+| `WIDE_QT_EXTRA_MS` | `60` | ms | research/44 L2; [FIT: ECG morphology vector or timing without a source; brief research/44 L2-46] | Wide complexes: QT is longer by 60 ms [FIT: ECG morphology vector or timing without a source; brief research/44 L2-46]. |
 
 ### [`l2/ecg/texture.ts`](../../packages/engine-core/src/l2/ecg/texture.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `XFADE_SAMPLES` | `250` | — | [ENG] | 0.5 s equal-power crossfade [ENG] |
+| `XFADE_SAMPLES` | `250` | — | [ENG: numerics] | 0.5 s equal-power crossfade [ENG: numerics] |
 | `AR_BANDWIDTH_HZ` | `1.5` | Hz | brief §4.1 | — |
 
 ### [`packages/engine-core/templates/af-mitdb.ts`](../../packages/engine-core/templates/af-mitdb.ts)

@@ -6,10 +6,10 @@
 import { ICRP89_FLOW_FRACTIONS_M } from '../circ/params.ts';
 
 export const HBF_FRAC = ICRP89_FLOW_FRACTIONS_M.liver; // 0.255 of CO (tables `hbfFrac` 0.25, range 0.2–0.3)
-export const K_LAC0_PER_H = 1.4; // tables `kLac` [ENG] (t½ ≈ 30 min), Q41
+export const K_LAC0_PER_H = 1.4; // tables `kLac` (tables `kLac` (t½ ≈ 30 min), Q41) (t½ ≈ 30 min), Q41
 export const LAC_SPLIT = { liver: 0.6, kidney: 0.3, other: 0.1 } as const; // tables clearance split [TXT]
 export const LAC_PROD0_MMOL_DAY = 1400; // tables `lacProd0` [TXT] (Pulse 1.3 mol/day)
-export const V_LAC_L_KG = 0.6; // tables `vLac` [ENG]
+export const V_LAC_L_KG = 0.6; // tables `vLac` (tables `vLac`; TBW ≈ 0.6 L/kg)
 export const CLEAR_TEMP_PER_C = 0.1; // tables `clearTemp` −10 %/°C below 37 [TXT]
 /** liver function × (1 − 0.7·severity): the LIVER share of lactate clearance ×0.3 at severity 1 [DEVIATION: tables
  *  `kLac` row says "×0.3 in liver failure" on the whole kLac, its clearance-split row scales by organ; the split row is
@@ -17,7 +17,7 @@ export const CLEAR_TEMP_PER_C = 0.1; // tables `clearTemp` −10 %/°C below 37 
 export const HEPATIC_FAILURE_LOSS = 0.7;
 export const SPLANCHNIC_GAIN = 0.4; // hbfFactor ×0.6 at full sympathetic splanchnic constriction (tables `hbfFactor`)
 export const VOLATILE_HBF_PER_MAC = 0.2; // ×0.8 at 1 MAC volatile (tables `hbfFactor`)
-export const HEPATIC_OUTFLOW_PER_MMHG = 0.02; // [ENG]
+export const HEPATIC_OUTFLOW_PER_MMHG = 0.02; // [FIT: hepatic outflow loss per mmHg CVP; brief research/44 L2-42]
 export const DO2_CRIT = 6; // mL/kg/min, tables `do2Crit` (Q42) — fallback lactate production only
 export const K_ANAER = 0.03; // mmol lactate per mL O2 deficit, tables `kAnaer` (Q41) — fallback only
 
@@ -56,7 +56,7 @@ export function createLiver(weightKg: number, inp: LiverInputs, failure = 0): Li
 /**
  * Splanchnic/hepatic flow factor: sympathetic constriction with volume loss (full at −30 %) or α-agonists, volatile
  * ×0.8/MAC, and the hepatic OUTFLOW pressure — CVP or intra-abdominal pressure above 5 mmHg lowers the portal and
- * hepatic-arterial flow 2 %/mmHg [ENG, research/13: PEEP 15 HBF −10–35 %; IAP 20 −30–40 %, Diebel 1992]. The blood
+ * hepatic-arterial flow 2 %/mmHg [FIT: research/13: PEEP 15 HBF −10–35 %; IAP 20 −30–40 %, Diebel 1992; brief research/44 L2-42]. The blood
  * model multiplies it with CO/CO0 (the organ model writes it into `blood.core.hbfFactor`).
  */
 export function hbfFactor(inp: LiverInputs): number {

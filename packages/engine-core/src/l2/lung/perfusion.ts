@@ -19,7 +19,7 @@ export function createHpv(): HpvState {
   return { a1: [0, 0], a2: [0, 0], stimS: [0, 0] };
 }
 
-/** Aerated-region hypoxic stimulus 0–1 from the side's alveolar PO2 [ENG]. */
+/** Aerated-region hypoxic stimulus 0–1 from the side's alveolar PO2 [FIT: aerated-region hypoxic stimulus shape; brief research/44 L2-34]. */
 export function hpvStimulus(pao2: number): number {
   return Math.min(1, Math.max(0, (HPV_PAO2_HI - pao2) / (HPV_PAO2_HI - HPV_PAO2_LO)));
 }

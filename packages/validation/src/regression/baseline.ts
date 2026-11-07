@@ -1,6 +1,6 @@
 // Waveform regression baselines (N-P02): fixed scenarios, 5 s windows per channel, compared sample by sample with a 2 %
 // limit. The limit's floor (5 % of the window's peak-to-peak) stops samples near zero from turning into huge relative
-// errors [ENG]. Baselines are our own engine output (MIT), JSON.
+// errors [ENG: measurement]. Baselines are our own engine output (MIT), JSON.
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { ChannelId, Command } from '@pme/engine-core';

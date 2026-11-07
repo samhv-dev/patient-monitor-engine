@@ -19,20 +19,20 @@ import { createSyncState, SYNC_RATE, syncStep, type SyncState } from './defib-pa
 export const VF_RHYTHMS: ReadonlySet<RhythmId> = new Set(['vfCoarse', 'vfFine']);
 /** Skin used when EngineOptions.device.skin is absent (the renderer's historical default, brief §3.8). */
 export const DEFAULT_SKIN = 'philips-like';
-/** Sync shock: delivered this long after the detected R (brief §6.5: on the next R within ≤ 60 ms) [ENG]. */
+/** Sync shock: delivered this long after the detected R (brief §6.5: on the next R within ≤ 60 ms) [ENG: device]. */
 export const SYNC_DELAY_S = 0.02;
-/** T peak ≈ R + 0.65 × QT (the kernel T peak sits ~⅔ into QT at normal rates) [ENG]. */
+/** T peak ≈ R + 0.65 × QT (the kernel T peak sits ~⅔ into QT at normal rates) [ENG: device]. */
 export const T_PEAK_QT_FRACTION = 0.65;
 /** After a terminating shock: 1–5 s isoelectric, then 30–60 bpm accelerating over 10–60 s to ROSC_HR; pressure
  * targets ramp from 50 % to 100 % over 30–120 s (brief §6.5 "After successful termination"; the k_SV 0.2 → 1 ramp is
- * expressed through the MANUAL-mode sbp/dbp targets, which the M2 tracker follows) [ENG where not cited]. */
+ * expressed through the MANUAL-mode sbp/dbp targets, which the M2 tracker follows) [FIT: scripted post-shock rate and pressure recovery; where not cited; brief research/44 TIME-12]. */
 export const ISO_S = [1, 5] as const;
 export const ROSC_START_BPM = [30, 60] as const;
 export const ROSC_RAMP_S = [10, 60] as const;
 export const ROSC_HR = 80;
 export const ROSC_BP_RAMP_S = [30, 120] as const;
 export const ROSC_BP_START = 0.5;
-/** Cardioversion to sinus: a 1–2 s pause, then sinus at 75 bpm [ENG]. */
+/** Cardioversion to sinus: a 1–2 s pause, then sinus at 75 bpm [FIT: scripted post-shock rate and pressure recovery; brief research/44 TIME-12]. */
 export const CARDIOVERSION_PAUSE_S = [1, 2] as const;
 export const CARDIOVERSION_HR = 75;
 const STATUS_EVERY_S = 1;
@@ -164,7 +164,7 @@ export function validateDeviceCommand(d: DeviceState, cmd: Command): string | un
 export function applyDeviceCommand(d: DeviceState, cmd: Command, host: DeviceHost, out: EngineEvent[]): boolean {
   const t = host.simT;
   if (cmd.type === 'attachSensor' && cmd.sensor === 'ecg') {
-    // brief §6.2: ecg off → flat dashed trace + LEADS OFF INOP (no asystole); motion → electrode motion artefact [ENG 0.5]
+    // brief §6.2: ecg off → flat dashed trace + LEADS OFF INOP (no asystole); motion → electrode motion artefact [ENG: device; 0.5]
     host.setModifiers({ artefact: { leadOff: cmd.state === 'off', motion: cmd.state === 'motion' ? 0.5 : 0 } });
     if (cmd.state !== 'off') d.inputs.ecgOnSince = t;
     return true;

@@ -131,13 +131,13 @@ transports (`src/protocol.ts`).
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `HOP_MAX_S` | `2` | s | [ENG] | A hop (answer 2): a state whose only exit is `afterS` ≤ HOP_MAX_S — it folds into the stage it leads to [ENG]. |
+| `HOP_MAX_S` | `2` | s | [ENG: scenario] | A hop (answer 2): a state whose only exit is `afterS` ≤ HOP_MAX_S — it folds into the stage it leads to [ENG: scenario]. |
 
 ### [`scenario/rules.ts`](../../packages/controller/src/scenario/rules.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `EPS` | `1e-6` | — | [ENG] | Comparison slack for clocks and windows (sim seconds), as the /1 runner's [ENG]. |
+| `EPS` | `1e-6` | — | [ENG: scenario] | Comparison slack for clocks and windows (sim seconds), as the /1 runner's [ENG: scenario]. |
 
 ### [`scenario/validate.ts`](../../packages/controller/src/scenario/validate.ts)
 
@@ -149,8 +149,8 @@ transports (`src/protocol.ts`).
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `COMMAND_RESEND_MS` | `2000` | ms | [ENG] | FX-2: an unanswered command goes again this often while the link is open; the host de-duplicates by id [ENG]. |
-| `COMMAND_ANSWER_TIMEOUT_MS` | `15000` | ms | [ENG: a restore under load takes ≤ 2 s] | FX-2: …and is refused ("no answer from the host") after this long open with no answer [ENG: a restore under load takes ≤ 2 s]. |
+| `COMMAND_RESEND_MS` | `2000` | ms | [ENG: network] | FX-2: an unanswered command goes again this often while the link is open; the host de-duplicates by id [ENG: network]. |
+| `COMMAND_ANSWER_TIMEOUT_MS` | `15000` | ms | [ENG: network; a restore under load takes ≤ 2 s] | FX-2: …and is refused ("no answer from the host") after this long open with no answer [ENG: network; a restore under load takes ≤ 2 s]. |
 
 ### [`session/drug-lock.ts`](../../packages/controller/src/session/drug-lock.ts)
 
@@ -163,14 +163,14 @@ transports (`src/protocol.ts`).
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `DENIAL_WINDOW_MS` | `60000` | ms | — | The span `instructorDenials()` counts over, ms (the Room page: "3 wrong PINs in the last minute"). |
-| `DENIAL_RECORD_MAX` | `100` | — | [ENG] | The most wrong PINs the host remembers; the oldest go first. A second wall behind the relay's limit (20 hello attempts per address per 60 s): a hello flood cannot grow host memory, and the Room page needs a count, not every try — above 100 in a minute it says the same thing (review G1) [ENG]. |
-| `STAGE_LEAD_TICKS` | `3` | — | [ENG] | Commands that share a stageGroup land on one tick this many ticks after the first arrives (60 ms) [ENG]. |
-| `BATCH_HOLD_MS` | `500` | ms | [ENG] | R15: how long the host holds the items of a staged delivery (`batch`, n items) that have arrived while it waits for the rest. The items leave the controller in one synchronous loop (StageBuffer.commit), so they arrive back to back; one still missing after this is lost in transit (the controller resends it on its own), and the ones held are applied without it rather than held longer. It bounds a delay only; no tick depends on it [ENG]. |
-| `MESSAGE_BUDGET_BYTES` | `128 * 1024` | — | [ENG: half the budget] | A hidden-tab catch-up arrives as ONE batch, and the app's 1 Hz truth events are up to 27 KB each (200 events reached 379 KB) — every wire message holds at most this much JSON and this many events, so it passes the receivers' 256 KB budget (guard.ts) [ENG: half the budget]. |
+| `DENIAL_RECORD_MAX` | `100` | — | [ENG: network] | The most wrong PINs the host remembers; the oldest go first. A second wall behind the relay's limit (20 hello attempts per address per 60 s): a hello flood cannot grow host memory, and the Room page needs a count, not every try — above 100 in a minute it says the same thing (review G1) [ENG: network]. |
+| `STAGE_LEAD_TICKS` | `3` | — | [ENG: network] | Commands that share a stageGroup land on one tick this many ticks after the first arrives (60 ms) [ENG: network]. |
+| `BATCH_HOLD_MS` | `500` | ms | [ENG: network] | R15: how long the host holds the items of a staged delivery (`batch`, n items) that have arrived while it waits for the rest. The items leave the controller in one synchronous loop (StageBuffer.commit), so they arrive back to back; one still missing after this is lost in transit (the controller resends it on its own), and the ones held are applied without it rather than held longer. It bounds a delay only; no tick depends on it [ENG: network]. |
+| `MESSAGE_BUDGET_BYTES` | `128 * 1024` | — | [ENG: network; half the budget] | A hidden-tab catch-up arrives as ONE batch, and the app's 1 Hz truth events are up to 27 KB each (200 events reached 379 KB) — every wire message holds at most this much JSON and this many events, so it passes the receivers' 256 KB budget (guard.ts) [ENG: network; half the budget]. |
 | `EVENTS_PER_MESSAGE` | `200` | — | — | — |
-| `COCKPIT_EVENT_MS` | `1000` | ms | [ENG] | While the Ventilator view drives the patient, a `cockpit` event goes to the network at most this often [ENG]. |
-| `FF_STEP_TICKS` | `25` | — | [ENG] | A fast-forward runs in steps of this many ticks (0.5 s of sim); the host's scenario is polled after each and its commands land before the next — finer than the app's own 100 ms wall poll at ×8 (0.8 s of sim) [ENG]. |
-| `FF_MAX_S` | `600` | s | [ENG] | The longest fast-forward the host accepts, s (the owner asked for 5 min) [ENG]. |
+| `COCKPIT_EVENT_MS` | `1000` | ms | [ENG: network] | While the Ventilator view drives the patient, a `cockpit` event goes to the network at most this often [ENG: network]. |
+| `FF_STEP_TICKS` | `25` | — | [ENG: network] | A fast-forward runs in steps of this many ticks (0.5 s of sim); the host's scenario is polled after each and its commands land before the next — finer than the app's own 100 ms wall poll at ×8 (0.8 s of sim) [ENG: network]. |
+| `FF_MAX_S` | `600` | s | [ENG: network] | The longest fast-forward the host accepts, s (the owner asked for 5 min) [ENG: network]. |
 
 ## Functions
 
@@ -271,7 +271,7 @@ Exported without a doc comment: `httpHandler`, `startRelay`, `clamp`, `targetCom
 | [`session/drug-lock.ts`](../../packages/controller/src/session/drug-lock.ts) | The same drug is not given twice within SAME_DRUG_LOCK_S of simulated time, from any device (the owner's ruling of 5 November 2026). |
 | [`session/host-session.ts`](../../packages/controller/src/session/host-session.ts) | The host end of every transport (brief §3.7, R7): it owns the engine. |
 | [`session/viewer-sync.ts`](../../packages/controller/src/session/viewer-sync.ts) | Viewer role (brief §3.7): a second monitor that runs its OWN engine and never receives samples. |
-| [`transport/backoff.ts`](../../packages/controller/src/transport/backoff.ts) | Reconnect delays: exponential with jitter, capped [ENG]. |
+| [`transport/backoff.ts`](../../packages/controller/src/transport/backoff.ts) | Reconnect delays: exponential with jitter, capped [ENG: network]. |
 | [`transport/base.ts`](../../packages/controller/src/transport/base.ts) | Shared plumbing for every transport: listener sets, status replay on subscribe, send-side sample guard, receive-side validation. |
 | [`transport/broadcast-channel.ts`](../../packages/controller/src/transport/broadcast-channel.ts) | BroadcastChannel transport (brief §3.7): same origin, same browser — e.g. |
 | [`transport/in-process.ts`](../../packages/controller/src/transport/in-process.ts) | Same-page transport (brief §3.7 `in-process`): a hub that fans each message out to every OTHER endpoint, asynchronously and as a structured clone, so code behaves exactly as it will over a real wire. |

@@ -30,7 +30,7 @@ export const AGENTS: Record<VolatileAgent, AgentRow> = {
 
 /** Tissue groups for 70 kg (volumes L, fraction of CO): Eger 1974 / Mapleson 1973 [TXT]; scaled by W/70. */
 export const GROUPS = { vrg: { v: 6, q: 0.75 }, muscle: { v: 33, q: 0.19 }, fat: { v: 14.5, q: 0.06 } } as const;
-export const CIRCUIT_L = 7; // circle system + bag + absorber gas volume [ENG]
+export const CIRCUIT_L = 7; // circle system + bag + absorber gas volume [ENG: device]
 export const MAC_AWAKE = 0.34; // × MAC for the potent agents (Miller 10e ch. 18 p. 406)
 
 export interface VolatileState {

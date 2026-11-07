@@ -5,7 +5,7 @@
 //     369:1726 — SvO2 falls with CO in haemorrhage before VO2 does)
 //   lactate deficit = max(global, regional)
 //     global   = demand·(1 − DO2/DO2crit)                        below DO2crit (6 mL/kg/min) [TXT, Q42]
-//     regional = demand·REGIONAL_FRAC·clamp((0.88 − q)/(0.88 − 0.40)),  q = (CO/CO0)/(demand/demand0)   [ENG, Q41/Q42]
+//     regional = demand·REGIONAL_FRAC·clamp((0.88 − q)/(0.88 − 0.40)),  q = (CO/CO0)/(demand/demand0)   [FIT: regional supply dependence ramp; Q41/Q42; brief research/44 L2-09]
 //       (flow relative to what the current metabolism needs: under GA flow and VO2 fall together without redistribution)
 //       — the regional term is heterogeneous splanchnic dysoxia: it makes lactate but does not lower the whole-body VO2
 //       (the other beds extract more), so it is not subtracted from VO2

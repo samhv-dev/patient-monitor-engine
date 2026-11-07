@@ -39,7 +39,7 @@
     "ecg.laneLeads": { "tag": "documented", "source": "research/05 §2.2 (channel 1 lead II)" },
     "nibp.modeDefault": { "tag": "documented", "source": "research/05 §2.4 (auto interval OFF by default)" },
     "nibp.autoIntervalMin": { "tag": "documented", "source": "research/05 §2.4" },
-    "nibp.initialInflation": { "tag": "documented", "source": "research/05 §2.4 (160 mmHg)", "note": "paed/neo [ENG]" },
+    "nibp.initialInflation": { "tag": "documented", "source": "research/05 §2.4 (160 mmHg)", "note": "paed/neo [ENG: device]" },
     "beep.defaultOn": { "tag": "documented", "source": "research/05 §2.5 (SpO2 tone Off); brief §3.6" },
     "syncMarker": { "tag": "documented", "source": "research/05 §2.6 (triangle near the middle of each QRS)" },
     "defib.energyAdultJ": { "tag": "documented", "source": "research/05 §2.6 (pads 200 J); brief §6.5" },

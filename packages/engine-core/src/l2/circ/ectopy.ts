@@ -17,23 +17,23 @@ import { G_ISCH, ST_DEFICIT_MIN } from './coronary.ts';
  * Hyperkalaemic ectopy starts at severe hyperkalaemia, K ≥ 6.5 mmol/L (the severe band of Durfey N et al., West J Emerg
  * Med 2017;18:963–971: 188 patients with K ≥ 6.5 (mean 7.1), adverse events within 6 h in 15 %, mostly symptomatic
  * bradycardia (22), VT in 2) and is full at the arrest hazard K_HAZARD. Hyperkalaemia is mainly a conduction and
- * bradyarrhythmic disorder, so its ectopic weight is the same as every other input's, never larger [ENG weight].
+ * bradyarrhythmic disorder, so its ectopic weight is the same as every other input's, never larger [FIT: ectopy hazard size (directions cited); weight; brief research/44 L2-15].
  */
 export const K_ECT = 6.5;
 /**
  * Hyperthermic ectopy from 40 °C core (the heat-stroke threshold; MH: arrhythmias are an early sign — Miller 10e Box
  * 31.1; VT/VF score in the MH clinical grading scale, Larach MG et al., Anesthesiology 1994;80:771–779), full at T_HOT 42.
  * Heat stroke without MH shows conduction and ischaemic changes rather than ectopy (Akhtar MJ et al., Chest
- * 1993;104:411–414: 46 patients, QT prolongation 61 %, conduction defects 22 %) [ENG weight].
+ * 1993;104:411–414: 46 patients, QT prolongation 61 %, conduction defects 22 %) [FIT: ectopy hazard size (directions cited); weight; brief research/44 L2-15].
  */
 export const T_ECT_HOT = 40;
 /** Hypothermic ectopy below 32 °C (ventricular dysrhythmias of moderate hypothermia: Mattu A et al., Am J Emerg Med
- * 2002;20:314–326), full at T_HAZARD 28 [ENG weight]. */
+ * 2002;20:314–326), full at T_HAZARD 28 [FIT: ectopy hazard size (directions cited); weight; brief research/44 L2-15]. */
 export const T_ECT_COLD = 32;
 /**
  * Acidaemic ectopy below pH 7.20 (severe acidaemia: Jung B et al., Crit Care 2011;15:R238), full at pH 7.00. Acidosis
  * provokes early and delayed afterdepolarisations and triggered activity (Orchard CH & Cingolani HE, Cardiovasc Res
- * 1994;28:1312–1319) [ENG thresholds].
+ * 1994;28:1312–1319) [FIT: ectopy hazard size (directions cited); thresholds; brief research/44 L2-15].
  */
 export const PH_ECT = 7.2;
 export const PH_FULL = 7.0;
@@ -46,7 +46,7 @@ export const PH_FULL = 7.0;
 export const ISCH_FULL_DEFICIT = (1 - K_ISCH_ARREST) / G_ISCH;
 /**
  * Catecholamines multiply the substrate: catecholamine inotropy +1 (riskOf `cat`: endogenous surge + drugs) doubles
- * it [ENG]. Mechanism: β-adrenergic calcium loading of the acidotic or ischaemic cell (Orchard & Cingolani 1994).
+ * it [FIT: ectopy hazard size (directions cited); brief research/44 L2-15]. Mechanism: β-adrenergic calcium loading of the acidotic or ischaemic cell (Orchard & Cingolani 1994).
  * MH-susceptible pigs have far higher plasma catecholamines and more severe ventricular arrhythmias than controls
  * under succinylcholine (Jönsson L et al., Zentralbl Veterinarmed A 1989;36:772–782); adrenaline during CPR raised the
  * number of shocks to ROSC 10 ± 8 vs 1.8 ± 0.4 with phenylephrine (rats, Tang W et al., Circulation 1995;92:3089–3093).
@@ -54,19 +54,19 @@ export const ISCH_FULL_DEFICIT = (1 - K_ISCH_ARREST) / G_ISCH;
 export const G_CAT = 1;
 /**
  * On their own catecholamines are ectopic only at exogenous-overdose levels: from inotropy +1 (above every endogenous
- * surge the model makes: MH to its arrest +0.73–0.87) to full at +2 [ENG]. IV-bolus adrenaline in anaphylaxis: CV
+ * surge the model makes: MH to its arrest +0.73–0.87) to full at +2 [FIT: ectopy hazard size (directions cited); brief research/44 L2-15]. IV-bolus adrenaline in anaphylaxis: CV
  * adverse events (arrhythmia among them) with 3 of 30 IV-bolus doses vs 4 of 316 IM (Campbell RL et al., J Allergy
  * Clin Immunol Pract 2015;3:76–80).
  */
 export const CAT_ALONE = 1;
 export const CAT_FULL = 2;
-/** Ectopic events per minute at drive 1 (one input at its arrest threshold) [ENG]. For scale: Lown's "frequent" PVCs
+/** Ectopic events per minute at drive 1 (one input at its arrest threshold) [FIT: ectopy hazard size (directions cited); brief research/44 L2-15]. For scale: Lown's "frequent" PVCs
  * are > 30/h (Lown & Wolf 1971); 6/min is a strip that shows them in every 10-s window. */
 export const LAMBDA_1 = 6;
-/** Ceiling on the event rate, per minute [ENG]. */
+/** Ceiling on the event rate, per minute [FIT: ectopy hazard size (directions cited); brief research/44 L2-15]. */
 export const LAMBDA_MAX = 30;
-/** The share of events that are couplets / runs rises with the drive, per unit, up to its maximum [ENG: the Lown
- * grading's progression single → couplet → run with the severity of the substrate]. */
+/** The share of events that are couplets / runs rises with the drive, per unit, up to its maximum [FIT: ectopy hazard size (directions cited); the Lown
+ * grading's progression single → couplet → run with the severity of the substrate; brief research/44 L2-15]. */
 export const P_COUPLET_PER_D = 0.15;
 export const P_COUPLET_MAX = 0.3;
 export const P_RUN_PER_D = 0.08;
@@ -74,7 +74,7 @@ export const P_RUN_MAX = 0.2;
 /**
  * Non-sustained VT: ≥ 3 consecutive ventricular beats at > 100/min lasting < 30 s (Katritsis DG et al., J Am Coll
  * Cardiol 2012;60:1993–2004); drawn as 3 + a geometric excess of mean RUN_EXTRA_MEAN beats, at most RUN_MAX (30 beats at
- * the planner's 160/min ≈ 11 s) [ENG lengths].
+ * the planner's 160/min ≈ 11 s) [FIT: ectopy hazard size (directions cited); lengths; brief research/44 L2-15].
  */
 export const RUN_EXTRA_MEAN = 2;
 export const RUN_MAX = 30;

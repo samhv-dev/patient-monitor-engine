@@ -36,7 +36,7 @@ export function bandpassZeroPhase(x: Float64Array, fs: number, flo: number, fhi:
   return lp(lp(hp).reverse()).reverse();
 }
 
-/** Resample fsIn → fsOut with a Hann-windowed sinc interpolator (±16 input samples, anti-aliased) [ENG]. */
+/** Resample fsIn → fsOut with a Hann-windowed sinc interpolator (±16 input samples, anti-aliased) [ENG: measurement]. */
 export function resample(x: Float64Array, fsIn: number, fsOut: number): Float64Array {
   const n = Math.floor((x.length * fsOut) / fsIn);
   const out = new Float64Array(n);

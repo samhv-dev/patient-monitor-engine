@@ -5,7 +5,7 @@
 // resuscitated patients read 15 ± 4 DURING compressions), not a no-flow value, and the owner ruled research 03 §4.4
 // ("< 5 mmHg within 30 s") governs. The no-CPR case below is re-targeted on Falk; the CPR cases keep R39-2's bands.
 // Rig: adult 40 y 70 kg MODELED, ETT + VCV 12 × 600 / PEEP 5 / FiO2 0.5 (the audit's rig), seed 7, commanded coarse VF at
-// 60 s. Bands (R45 targets, [ENG] fit of LOW_FLOW_TAU_S — l2/gas/params.ts): no CPR — EtCO2 at +60 s in 10–20 mmHg and
+// 60 s. Bands (R45 targets, [FIT: LOW_FLOW_TAU_S fit; brief research/44 TIME-01] fit of LOW_FLOW_TAU_S — l2/gas/params.ts): no CPR — EtCO2 at +60 s in 10–20 mmHg and
 // at +120 s in 3–10; CPR q 0.8 from +30 s at R39-2's 10 breaths/min × 500 mL — back to its steady 17–23 by +2 min. Asserted on the TRUE EtCO2
 // (Stage 3's `resp.etco2`), never the displayed numeric (D27). 4–11.5 sim-min per run (≈ 5 s wall), one yield per
 // sim-minute.

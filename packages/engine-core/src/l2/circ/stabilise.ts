@@ -15,7 +15,7 @@ export const STAB_WINDOW_S = 2;
 export const STAB_MAX_WINDOWS = 60;
 export const STAB_PR_S = 0.16;
 /** LVEDP tolerance for profiles whose conditions set an LVEDP (AS, HFrEF, HFpEF): ±2 mmHg = the tables' 15–20 / 16–20
- * bands [ENG]. */
+ * bands [ENG: numerics]. */
 export const STAB_LVEDP_TOL = 2;
 
 export interface LedgerRow {

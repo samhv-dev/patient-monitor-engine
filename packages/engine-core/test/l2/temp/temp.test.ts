@@ -36,7 +36,7 @@ describe('two-compartment heat model', () => {
     expect(Math.max(...last) - Math.min(...last)).toBeLessThan(0.1);
   });
 
-  // R45 (FU-10 E5, ruling R-4, E-FU10-3): with the tables' vasoconstriction threshold 34.5 °C (was the [ENG] 34.8 this
+  // R45 (FU-10 E5, ruling R-4, E-FU10-3): with the tables' vasoconstriction threshold 34.5 °C (was the earlier fitted 34.8 this
   // band was fitted with) the GA heat model plateaus just below it — measured 34.37 °C in hour 8. Not tuned (R44).
   // Band to its source (calibration-pass ruling, brief 88): the plateau is the vasoconstriction threshold (Kurz 1995, PMID
   // 7661349: core virtually constant after vasoconstriction), 35.1 ± 0.3 °C in patients 30–50 y (Kurz 1993, PMID 8363070),

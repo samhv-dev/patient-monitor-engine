@@ -7,9 +7,9 @@ import type { DeviceProfile } from '../alarms/profile.ts';
 
 export type DefibSpec = NonNullable<DeviceProfile['defib']>;
 /** Skins without a defibrillator (saadat-like, philips-like: bedside monitors) still accept shocks as patient
- * commands (brief §6.5 saadat-like note); they use these ZOLL-like values (research/05 §2.6) [ENG choice]. */
+ * commands (brief §6.5 saadat-like note); they use these ZOLL-like values (research/05 §2.6) [ENG: device; choice]. */
 export const FALLBACK_DEFIB: DefibSpec = { energyAdultJ: 120, energyPaedJ: 50, aedSequenceJ: null, chargeTimeS: null, readyTimeoutS: 60, toneSet: 'zoll-like' };
-/** Charge time when a skin publishes none: LIFEPAK-like 200 J ≤ 7 s scaled linearly (research/05 §2.6) [ENG]. */
+/** Charge time when a skin publishes none: LIFEPAK-like 200 J ≤ 7 s scaled linearly (research/05 §2.6) [ENG: device]. */
 export const CHARGE_S_PER_J = 7 / 200;
 export const ENERGY_RANGE_J = [1, 360] as const;
 
@@ -142,7 +142,7 @@ export function stepDefib(d: DefibState, t: number, spec: DefibSpec, out: Engine
   return false;
 }
 
-/** After a delivered shock (brief §6.5: LIFEPAK-like "Sync After Shock" off; applied to every skin [ENG]). */
+/** After a delivered shock (brief §6.5: LIFEPAK-like "Sync After Shock" off; applied to every skin [ENG: device]). */
 export function afterShock(d: DefibState, t: number, atS: number, synced: boolean, outcome: string, out: EngineEvent[]): void {
   endTones(d, t, out); // the ready tone stops at the shock; the shock tone below is new
   out.push({ type: 'marker', t, kind: 'shock', data: { energyJ: d.energyJ, sync: synced, atS } });

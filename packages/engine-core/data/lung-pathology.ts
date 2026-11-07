@@ -69,9 +69,9 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     sided: false,
     grades: [{ name: 'mild', severity: 0.33 }, { name: 'moderate', severity: 0.67 }, { name: 'severe', severity: 1 }],
     effects: [
-      { key: 'pvr', op: 'mul', v: [[0, 1], [0.33, 1.76], [0.67, 2.94], [1, 5.88]], src: "main §1.5 'ph': PVR 3/5/10 WU ÷ normal 1.7 WU (main §2.2 PVR row) [ENG conversion]; ESC/ERS 2022", tag: 'TXT', q: 'Q23' },
-      { key: 'vdAlv', op: 'add', v: [[0, 0], [0.33, 0.05], [1, 0.05]], src: "§1 row 'Alveolar dead space': group 1 +0.05 VD/VT (group 4 via peFrac); grade-independent from mild [ENG]", tag: 'ENG' },
-      { key: 'dlFactor', op: 'mul', v: [[0, 1], [0.33, 0.7], [1, 0.7]], src: "§1 row 'Diffusion factor': 0.7 PAH (0.5 SSc-PAH, §8); exercise/high-CO desaturation only [TXT]/[ENG]", tag: 'ENG' },
+      { key: 'pvr', op: 'mul', v: [[0, 1], [0.33, 1.76], [0.67, 2.94], [1, 5.88]], src: "main §1.5 'ph': PVR 3/5/10 WU ÷ normal 1.7 WU (main §2.2 PVR row) [ENG: conversion]; ESC/ERS 2022", tag: 'TXT', q: 'Q23' },
+      { key: 'vdAlv', op: 'add', v: [[0, 0], [0.33, 0.05], [1, 0.05]], src: "§1 row 'Alveolar dead space': group 1 +0.05 VD/VT (group 4 via peFrac); grade-independent from mild [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
+      { key: 'dlFactor', op: 'mul', v: [[0, 1], [0.33, 0.7], [1, 0.7]], src: "§1 row 'Diffusion factor': 0.7 PAH (0.5 SSc-PAH, §8); exercise/high-CO desaturation only [TXT]/[FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]", tag: 'ENG' },
     ],
     bands: {
       refSeverity: 0.67,
@@ -90,11 +90,11 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     sided: false,
     effects: [
       { key: 'raw', op: 'mul', v: [[0, 1], [0.3, 1.8], [0.5, 2.8], [0.8, 4.6], [1, 6]], src: "§2 row 'Inspiratory resistance': ×(1 + 5·sev^1.5) → R 18/28/46/60 incl. ETT (main §4.3; Arnal 2018 anchor)", tag: 'ENG', q: 'Q20' },
-      { key: 'rawExp', op: 'set', v: [[0, 1.2], [0.5, 1.55], [1, 1.8]], src: "§2 row 'Expiratory/inspiratory R ratio': 1.3 + 0.5·sev (1.8 at sev 1); knot 0 = healthy 1.2 [ENG]; Officer 1998 direction", tag: 'ENG', q: 'Q69' },
-      { key: 'fSlow', op: 'set', v: [[0, 0], [0.3, 0.29], [0.5, 0.35], [0.8, 0.44], [1, 0.5]], src: "§2 row 'Heterogeneity (slow compartment)': fSlow 0.2 + 0.3·sev (main §4.3); knot 0 = healthy 0 [ENG]", tag: 'ENG' },
-      { key: 'tauSlowS', op: 'set', v: [[0, 0.5], [0.5, 1.5], [0.8, 3], [1, 4]], src: "§2 row 'Expiratory time constant (overall)': 1.5/3/4 s at sev 0.5/0.8/1 used as τ_slow [ENG] (row 'Heterogeneity': τ_slow = 3×τ_fast)", tag: 'ENG' },
-      { key: 'vqLow', op: 'add', v: 0.15, src: "§2 row 'Low-V/Q admixture': +0.05·sev … +0.15 at sev 1, FiO2-responsive (Dellinger 5e ch. 37 p. 607) [TXT]/[ENG]", tag: 'ENG' },
-      { key: 'vdAlv', op: 'add', v: 0.2, src: "§2 row 'Dead space': +0.10·sev … +0.20 at sev 1 (Dellinger 5e ch. 37 p. 610) [TXT]/[ENG]", tag: 'ENG' },
+      { key: 'rawExp', op: 'set', v: [[0, 1.2], [0.5, 1.55], [1, 1.8]], src: "§2 row 'Expiratory/inspiratory R ratio': 1.3 + 0.5·sev (1.8 at sev 1); knot 0 = healthy 1.2 [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]; Officer 1998 direction", tag: 'ENG', q: 'Q69' },
+      { key: 'fSlow', op: 'set', v: [[0, 0], [0.3, 0.29], [0.5, 0.35], [0.8, 0.44], [1, 0.5]], src: "§2 row 'Heterogeneity (slow compartment)': fSlow 0.2 + 0.3·sev (main §4.3); knot 0 = healthy 0 [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
+      { key: 'tauSlowS', op: 'set', v: [[0, 0.5], [0.5, 1.5], [0.8, 3], [1, 4]], src: "§2 row 'Expiratory time constant (overall)': 1.5/3/4 s at sev 0.5/0.8/1 used as τ_slow [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02] (row 'Heterogeneity': τ_slow = 3×τ_fast)", tag: 'ENG' },
+      { key: 'vqLow', op: 'add', v: 0.15, src: "§2 row 'Low-V/Q admixture': +0.05·sev … +0.15 at sev 1, FiO2-responsive (Dellinger 5e ch. 37 p. 607) [TXT]/[FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
+      { key: 'vdAlv', op: 'add', v: 0.2, src: "§2 row 'Dead space': +0.10·sev … +0.20 at sev 1 (Dellinger 5e ch. 37 p. 610) [TXT]/[FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
     ],
     bands: {
       refSeverity: 0.8,
@@ -119,12 +119,12 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
       { name: 'severe', severity: 0.6 }, { name: 'acute severe (asthmaAcute)', severity: 1 },
     ],
     effects: [
-      { key: 'raw', op: 'mul', v: [[0, 1], [0.2, 1], [0.4, 1.3], [0.6, 1.6], [1, 4]], src: "main §1.5 'asthma' R ×1/1.3/1.6; §3 row 'Acute severe: inspiratory R' 30–50 → 40/10 = ×4 [ENG]; grade→severity map [ENG]", tag: 'ENG', q: 'Q20' },
-      { key: 'rawExp', op: 'set', v: [[0, 1.2], [0.6, 1.2], [1, 1.8]], src: "§3 row 'Acute severe: expiratory R, τ': rawExpMult ×1.8 (Tuxen & Lane 1987) [ENG]; chronic grades unchanged", tag: 'ENG' },
-      { key: 'fSlow', op: 'set', v: [[0, 0], [0.6, 0], [1, 0.5]], src: "§3 row 'Acute severe: expiratory R, τ': fSlow 0.5 [ENG]", tag: 'ENG' },
-      { key: 'tauSlowS', op: 'set', v: [[0, 0.5], [0.6, 0.5], [1, 4]], src: "§3 row 'Acute severe: expiratory R, τ': slow τ 3–5 s → midpoint 4 [ENG]", tag: 'ENG' },
-      { key: 'crs', op: 'mul', v: [[0, 1], [0.6, 1], [1, 0.75]], src: "§3 row 'Compliance': ×0.7–0.8 once hyperinflated → 0.75 [ENG]", tag: 'ENG' },
-      { key: 'vqLow', op: 'add', v: [[0, 0], [0.6, 0], [1, 0.13]], src: "§3 row 'Shunt / V/Q': low V/Q 0.10–0.20 → 0.15 total − healthy 0.02 [ENG conversion] (Dellinger 5e ch. 37 p. 607)", tag: 'TXT' },
+      { key: 'raw', op: 'mul', v: [[0, 1], [0.2, 1], [0.4, 1.3], [0.6, 1.6], [1, 4]], src: "main §1.5 'asthma' R ×1/1.3/1.6; §3 row 'Acute severe: inspiratory R' 30–50 → 40/10 = ×4 (a point inside the catalogue row's range); grade→severity map [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG', q: 'Q20' },
+      { key: 'rawExp', op: 'set', v: [[0, 1.2], [0.6, 1.2], [1, 1.8]], src: "§3 row 'Acute severe: expiratory R, τ': rawExpMult ×1.8 (Tuxen & Lane 1987) [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]; chronic grades unchanged", tag: 'ENG' },
+      { key: 'fSlow', op: 'set', v: [[0, 0], [0.6, 0], [1, 0.5]], src: "§3 row 'Acute severe: expiratory R, τ': fSlow 0.5 [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]", tag: 'ENG' },
+      { key: 'tauSlowS', op: 'set', v: [[0, 0.5], [0.6, 0.5], [1, 4]], src: "§3 row 'Acute severe: expiratory R, τ': slow τ 3–5 s → midpoint 4 (a point inside the catalogue row's range)", tag: 'ENG' },
+      { key: 'crs', op: 'mul', v: [[0, 1], [0.6, 1], [1, 0.75]], src: "§3 row 'Compliance': ×0.7–0.8 once hyperinflated → 0.75 (a point inside the catalogue row's range)", tag: 'ENG' },
+      { key: 'vqLow', op: 'add', v: [[0, 0], [0.6, 0], [1, 0.13]], src: "§3 row 'Shunt / V/Q': low V/Q 0.10–0.20 → 0.15 total − healthy 0.02 [ENG: conversion] (Dellinger 5e ch. 37 p. 607)", tag: 'TXT' },
     ],
     bands: {
       refSeverity: 1,
@@ -150,10 +150,10 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
       { name: 'IV', severity: 0.8 }, { name: 'V', severity: 1 },
     ],
     effects: [
-      { key: 'raw', op: 'mul', v: [[0, 1], [0.2, 1], [0.4, 1.82], [0.6, 3.32], [0.8, 5.27], [1, 6]], src: "§4 row 'Grade → respiratory severity': bronchospasm sev 0/0.3/0.6/0.9/1 (V=arrest→1 [ENG]) through §2 R ×(1+5·sev^1.5)", tag: 'TXT', q: 'Q71' },
-      { key: 'rawExp', op: 'set', v: [[0, 1.2], [0.2, 1.2], [0.4, 1.45], [0.6, 1.6], [0.8, 1.75], [1, 1.8]], src: "§4 grade→bronchospasm sev (§2 row 'Exp/insp R ratio' 1.3 + 0.5·sev) [ENG]", tag: 'ENG', q: 'Q71' },
-      { key: 'fSlow', op: 'set', v: [[0, 0], [0.2, 0], [0.4, 0.29], [0.6, 0.38], [0.8, 0.47], [1, 0.5]], src: "§4 grade→bronchospasm sev (§2 row 'Heterogeneity' fSlow 0.2 + 0.3·sev) [ENG]", tag: 'ENG', q: 'Q71' },
-      { key: 'vqLow', op: 'add', v: [[0, 0], [0.2, 0], [0.4, 0.045], [0.6, 0.09], [0.8, 0.135], [1, 0.15]], src: "§4 grade→bronchospasm sev (§2 row 'Low-V/Q admixture' 0.15·sev) [ENG]", tag: 'ENG', q: 'Q71' },
+      { key: 'raw', op: 'mul', v: [[0, 1], [0.2, 1], [0.4, 1.82], [0.6, 3.32], [0.8, 5.27], [1, 6]], src: "§4 row 'Grade → respiratory severity': bronchospasm sev 0/0.3/0.6/0.9/1 (V=arrest→1 [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]) through §2 R ×(1+5·sev^1.5)", tag: 'TXT', q: 'Q71' },
+      { key: 'rawExp', op: 'set', v: [[0, 1.2], [0.2, 1.2], [0.4, 1.45], [0.6, 1.6], [0.8, 1.75], [1, 1.8]], src: "§4 grade→bronchospasm sev (§2 row 'Exp/insp R ratio' 1.3 + 0.5·sev) [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG', q: 'Q71' },
+      { key: 'fSlow', op: 'set', v: [[0, 0], [0.2, 0], [0.4, 0.29], [0.6, 0.38], [0.8, 0.47], [1, 0.5]], src: "§4 grade→bronchospasm sev (§2 row 'Heterogeneity' fSlow 0.2 + 0.3·sev) [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG', q: 'Q71' },
+      { key: 'vqLow', op: 'add', v: [[0, 0], [0.2, 0], [0.4, 0.045], [0.6, 0.09], [0.8, 0.135], [1, 0.15]], src: "§4 grade→bronchospasm sev (§2 row 'Low-V/Q admixture' 0.15·sev) [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG', q: 'Q71' },
       { key: 'vdAlv', op: 'add', v: [[0, 0], [0.2, 0], [0.4, 0.06], [0.6, 0.12], [0.8, 0.18], [1, 0.2]], src: "§4 grade→bronchospasm sev (§2 row 'Dead space' 0.20·sev); low-CO dead space is emergent (§4 row 'Dead space from low CO')", tag: 'ENG', q: 'Q71' },
     ],
     bands: {
@@ -173,17 +173,17 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     grades: [{ name: 'GOLD 1', severity: 0.25 }, { name: 'GOLD 2', severity: 0.5 }, { name: 'GOLD 3', severity: 0.75 }, { name: 'GOLD 4', severity: 1 }],
     effects: [
       { key: 'raw', op: 'mul', v: [[0, 1], [0.25, 1.3], [0.5, 1.8], [0.75, 2.5], [1, 3.5]], src: "main §1.5 'copd' R ×1.3/1.8/2.5/3.5 (§5 row 'Inspiratory resistance' 13/18/25/35 incl. ETT; Arnal 22 [16–33])", tag: 'P', q: 'Q19' },
-      { key: 'rawExp', op: 'set', v: [[0, 1.2], [0.25, 1.5], [0.5, 1.5], [0.75, 1.55], [1, 1.7]], src: "§5 row 'Expiratory/inspiratory R ratio': 1.5 (Pulse; Officer 1998/Farah 2009); GOLD 3 1.55, GOLD 4 1.7 (range 1.3–2.0, 'worse in emphysema') for the auto-PEEP band [ENG]", tag: 'P' },
-      { key: 'fSlow', op: 'set', v: [[0, 0], [0.5, 0.4], [0.75, 0.5], [1, 0.6]], src: "main §4.3 'COPD slow compartment': GOLD 2/3/4 fSlow 0.4/0.5/0.6; GOLD 1 interpolated [ENG]", tag: 'ENG', q: 'Q19' },
-      { key: 'tauSlowS', op: 'set', v: [[0, 0.5], [0.5, 1.2], [0.75, 2], [1, 3]], src: "main §4.3 'COPD slow compartment': τ_slow 1.2/2.0/3.0 s at GOLD 2/3/4; GOLD 1 interpolated [ENG]; Arnal 2018", tag: 'ENG', q: 'Q19' },
-      { key: 'crs', op: 'mul', v: [[0, 1], [0.5, 1.09], [0.75, 1.24], [1, 1.36]], src: "§5 row 'Static compliance': Pulse targets 60/68/75 at GOLD 2/3/4 (Arnal 59 [43–75]); 7b prototype: 68 at GOLD 3 puts auto-PEEP in its band [ENG]", tag: 'P' },
-      { key: 'vdAlv', op: 'add', v: [[0, 0], [0.25, 0.05], [0.5, 0.1], [0.75, 0.2], [1, 0.3]], src: "main §1.5 'copd' VD/VT 0.35/0.40/0.50/0.60 − 0.3 normal [ENG conversion]; §5 row 'Dead space'", tag: 'TXT', q: 'Q19' },
-      { key: 'vqLow', op: 'add', v: [[0, 0], [0.25, 0.03], [0.5, 0.06], [0.75, 0.1], [1, 0.13]], src: "main §1.5 'copd' V/Q admixture 0.05/0.08/0.12/0.15 − healthy 0.02 [ENG conversion]; §5 row 'Shunt vs low V/Q'", tag: 'TXT' },
+      { key: 'rawExp', op: 'set', v: [[0, 1.2], [0.25, 1.5], [0.5, 1.5], [0.75, 1.55], [1, 1.7]], src: "§5 row 'Expiratory/inspiratory R ratio': 1.5 (Pulse; Officer 1998/Farah 2009); GOLD 3 1.55, GOLD 4 1.7 (range 1.3–2.0, 'worse in emphysema') for the auto-PEEP band [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'P' },
+      { key: 'fSlow', op: 'set', v: [[0, 0], [0.5, 0.4], [0.75, 0.5], [1, 0.6]], src: "main §4.3 'COPD slow compartment': GOLD 2/3/4 fSlow 0.4/0.5/0.6; GOLD 1 interpolated [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG', q: 'Q19' },
+      { key: 'tauSlowS', op: 'set', v: [[0, 0.5], [0.5, 1.2], [0.75, 2], [1, 3]], src: "main §4.3 'COPD slow compartment': τ_slow 1.2/2.0/3.0 s at GOLD 2/3/4; GOLD 1 interpolated [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]; Arnal 2018", tag: 'ENG', q: 'Q19' },
+      { key: 'crs', op: 'mul', v: [[0, 1], [0.5, 1.09], [0.75, 1.24], [1, 1.36]], src: "§5 row 'Static compliance': Pulse targets 60/68/75 at GOLD 2/3/4 (Arnal 59 [43–75]); 7b prototype: 68 at GOLD 3 puts auto-PEEP in its band [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'P' },
+      { key: 'vdAlv', op: 'add', v: [[0, 0], [0.25, 0.05], [0.5, 0.1], [0.75, 0.2], [1, 0.3]], src: "main §1.5 'copd' VD/VT 0.35/0.40/0.50/0.60 − 0.3 normal [ENG: conversion]; §5 row 'Dead space'", tag: 'TXT', q: 'Q19' },
+      { key: 'vqLow', op: 'add', v: [[0, 0], [0.25, 0.03], [0.5, 0.06], [0.75, 0.1], [1, 0.13]], src: "main §1.5 'copd' V/Q admixture 0.05/0.08/0.12/0.15 − healthy 0.02 [ENG: conversion]; §5 row 'Shunt vs low V/Q'", tag: 'TXT' },
       { key: 'co2Slope', op: 'mul', v: [[0, 1], [0.25, 1], [0.5, 0.8], [0.75, 0.6], [1, 0.4]], src: "main §1.5 'copd' CO2 slope ×1/0.8/0.6/0.4", tag: 'ENG' },
       { key: 'pvr', op: 'mul', v: [[0, 1], [0.5, 1], [0.75, 1.3], [1, 2]], src: "main §1.5 'copd' PVR ×1/1/1.3/2; §5 row 'PVR' (pvrReact 1.3, cor pulmonale GOLD 4)", tag: 'TXT' },
-      { key: 'frc', op: 'mul', v: [[0, 1], [0.75, 1.2], [1, 1.4]], src: "§5 row 'FRC': ×1.2 GOLD 3, ×1.4 GOLD 4 (Stoelting 8e ch. 2 p. 27); GOLD 1–2 interpolated [ENG]", tag: 'TXT' },
-      { key: 'tIt', op: 'set', v: [[0, 0.4], [0.25, 0.55], [1, 0.55]], src: "§5 row 'Airway → pleural transmission': 0.55 (Pepe & Marini 1982 direction / [ENG] number)", tag: 'ENG' },
-      { key: 'dlFactor', op: 'mul', v: 0.6, src: "§5 row 'Diffusion': emphysema 0.5–0.7 → 0.6 at GOLD 4 (bronchitic 0.9) [ENG]", tag: 'ENG' },
+      { key: 'frc', op: 'mul', v: [[0, 1], [0.75, 1.2], [1, 1.4]], src: "§5 row 'FRC': ×1.2 GOLD 3, ×1.4 GOLD 4 (Stoelting 8e ch. 2 p. 27); GOLD 1–2 interpolated [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'TXT' },
+      { key: 'tIt', op: 'set', v: [[0, 0.4], [0.25, 0.55], [1, 0.55]], src: "§5 row 'Airway → pleural transmission': 0.55 (Pepe & Marini 1982 direction / [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03] number)", tag: 'ENG' },
+      { key: 'dlFactor', op: 'mul', v: 0.6, src: "§5 row 'Diffusion': emphysema 0.5–0.7 → 0.6 at GOLD 4 (bronchitic 0.9) (a point inside the catalogue row's range)", tag: 'ENG' },
     ],
     bands: {
       refSeverity: 0.75,
@@ -207,16 +207,16 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     sided: false,
     grades: [{ name: 'mild', severity: 0.33 }, { name: 'moderate', severity: 0.67 }, { name: 'severe', severity: 1 }],
     effects: [
-      { key: 'crs', op: 'mul', v: [[0, 1], [0.33, 0.727], [0.67, 0.636], [1, 0.545]], src: "§6 row 'Static compliance': 40/35/30 mL/cmH2O ÷ 55 [ENG conversion] (Arnal 2018; Pulse 40/35/33, Maj 2023)", tag: 'P', q: 'Q73' },
+      { key: 'crs', op: 'mul', v: [[0, 1], [0.33, 0.727], [0.67, 0.636], [1, 0.545]], src: "§6 row 'Static compliance': 40/35/30 mL/cmH2O ÷ 55 [ENG: conversion] (Arnal 2018; Pulse 40/35/33, Maj 2023)", tag: 'P', q: 'Q73' },
       { key: 'raw', op: 'mul', v: [[0, 1], [0.33, 1.2], [1, 1.2]], src: "§6 row 'Inspiratory resistance': 12 (Arnal 12 [9–14]; Pulse 12) ÷ 10", tag: 'P' },
       { key: 'tIt', op: 'set', v: [[0, 0.4], [0.33, 0.2], [1, 0.2]], src: "§6 row 'Lung vs chest-wall elastance': pulmonary ARDS tIt 0.2 (extrapulmonary/abdominal 0.5) (Dellinger 5e ch. 11 p. 159)", tag: 'TXT' },
-      { key: 'atel', op: 'add', v: [[0, 0], [0.33, 0.0875], [0.67, 0.1225], [1, 0.1575]], src: "§6 'Non-aerated lung' 0.25/0.35/0.45 × recruitFrac 0.35 (pop. mean; high 0.5 → 0.125/0.175/0.225, low 0.15) [ENG split]", tag: 'P', q: 'Q73' },
-      { key: 'consol', op: 'add', v: [[0, 0], [0.33, 0.1625], [0.67, 0.2275], [1, 0.2925]], src: "§6 'Non-aerated lung' × (1 − 0.35) (high recruiter 0.5 → 0.125/0.175/0.225; low 0.15 → 0.2125/0.2975/0.3825) [ENG split]", tag: 'P', q: 'Q73' },
-      { key: 'vdAlv', op: 'add', v: [[0, 0], [0.33, 0.24], [0.67, 0.27], [1, 0.35]], src: "§6 row 'Dead space': VD/VT 0.54/0.57/0.65 − 0.3 normal [ENG conversion] (Nuckton 2002; Pulse/Maj 2023)", tag: 'P' },
+      { key: 'atel', op: 'add', v: [[0, 0], [0.33, 0.0875], [0.67, 0.1225], [1, 0.1575]], src: "§6 'Non-aerated lung' 0.25/0.35/0.45 × recruitFrac 0.35 (pop. mean; high 0.5 → 0.125/0.175/0.225, low 0.15) [ENG: conversion; split]", tag: 'P', q: 'Q73' },
+      { key: 'consol', op: 'add', v: [[0, 0], [0.33, 0.1625], [0.67, 0.2275], [1, 0.2925]], src: "§6 'Non-aerated lung' × (1 − 0.35) (high recruiter 0.5 → 0.125/0.175/0.225; low 0.15 → 0.2125/0.2975/0.3825) [ENG: conversion; split]", tag: 'P', q: 'Q73' },
+      { key: 'vdAlv', op: 'add', v: [[0, 0], [0.33, 0.24], [0.67, 0.27], [1, 0.35]], src: "§6 row 'Dead space': VD/VT 0.54/0.57/0.65 − 0.3 normal [ENG: conversion] (Nuckton 2002; Pulse/Maj 2023)", tag: 'P' },
       { key: 'hpv', op: 'set', v: [[0, 0.5], [0.33, 0.3], [1, 0.3]], src: "§6 row 'HPV': hpvRegional 0.3 (partly lost in inflammation/sepsis)", tag: 'VERIFY' },
-      { key: 'pvr', op: 'mul', v: [[0, 1], [0.33, 1.5], [0.67, 2], [1, 2.5]], src: "§6 row 'PVR / acute cor pulmonale': ×1.5/2/2.5 (Mekontso Dessap 2016 prevalence / [ENG] multipliers)", tag: 'ENG', q: 'Q74' },
-      { key: 'pOpen', op: 'set', v: 45, src: "§6 row 'Recruitment manoeuvre': P_open 40–45 cmH2O → 45 at severe [ENG] (Dellinger 5e ch. 11 p. 162)", tag: 'ENG', q: 'Q73' },
-      { key: 'tauRecS', op: 'set', v: 20, src: "§6 row 'Recruitment manoeuvre': τ_rec 10–30 s in ARDS → midpoint 20 at severe [ENG]", tag: 'ENG', q: 'Q73' },
+      { key: 'pvr', op: 'mul', v: [[0, 1], [0.33, 1.5], [0.67, 2], [1, 2.5]], src: "§6 row 'PVR / acute cor pulmonale': ×1.5/2/2.5 (Mekontso Dessap 2016 prevalence / [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03] multipliers)", tag: 'ENG', q: 'Q74' },
+      { key: 'pOpen', op: 'set', v: 45, src: "§6 row 'Recruitment manoeuvre': P_open 40–45 cmH2O → 45 at severe (a point inside the catalogue row's range) (Dellinger 5e ch. 11 p. 162)", tag: 'ENG', q: 'Q73' },
+      { key: 'tauRecS', op: 'set', v: 20, src: "§6 row 'Recruitment manoeuvre': τ_rec 10–30 s in ARDS → midpoint 20 at severe (a point inside the catalogue row's range)", tag: 'ENG', q: 'Q73' },
     ],
     bands: {
       refSeverity: 0.67,
@@ -229,7 +229,7 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
       gapPaEt: [10, 20],
       shunt: [0.3, 0.3],
       peep5to15: 'up',
-      src: "§6 Crs 32–50 (Arnal 2018, PMID 29042486: passive ARDS static compliance 39 [32–50] median [IQR], n 181, no difference between Berlin grades; the catalogue's 35 is Pulse's model target), R 12 [9–15], τ 0.45 s (little auto-PEEP), ΔP = 490/35 [ENG], shunt 0.30 (row 'Shunt'), alpha 105–110, gap 10–20; PEEP 'up' = high recruiter",
+      src: "§6 Crs 32–50 (Arnal 2018, PMID 29042486: passive ARDS static compliance 39 [32–50] median [IQR], n 181, no difference between Berlin grades; the catalogue's 35 is Pulse's model target), R 12 [9–15], τ 0.45 s (little auto-PEEP), ΔP = 490/35 [ENG: conversion], shunt 0.30 (row 'Shunt'), alpha 105–110, gap 10–20; PEEP 'up' = high recruiter",
     },
     needs: ['7a', '7b', '7f', 'V'],
     pitfall: 'P/F is not the lung: two patients with the same P/F can differ tenfold in recruitability, so PEEP 15 helps one and harms the other.',
@@ -242,13 +242,13 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     sided: false,
     grades: [{ name: 'mild (FVC 70–80 %)', severity: 0.3 }, { name: 'moderate (FVC 50–70 %)', severity: 0.6 }, { name: 'end-stage (FVC < 50 %)', severity: 0.9 }],
     effects: [
-      { key: 'crs', op: 'mul', v: [[0, 1], [0.3, 0.818], [0.6, 0.582], [0.9, 0.364], [1, 0.364]], src: "§7 row 'Static respiratory compliance': 45/32/20 ÷ 55 [ENG conversion; held flat 0.9→1] (Nava & Rubini 1999)", tag: 'P' },
+      { key: 'crs', op: 'mul', v: [[0, 1], [0.3, 0.818], [0.6, 0.582], [0.9, 0.364], [1, 0.364]], src: "§7 row 'Static respiratory compliance': 45/32/20 ÷ 55 [ENG: conversion; held flat 0.9→1] (Nava & Rubini 1999)", tag: 'P' },
       { key: 'raw', op: 'mul', v: [[0, 1], [0.3, 1.1], [0.6, 1.3], [0.9, 1.7], [1, 1.7]], src: "§7 row 'Resistance': 11/13/17 ÷ 10 (Nava & Rubini 1999, Rrs 16.7 end-stage)", tag: 'P' },
-      { key: 'tIt', op: 'set', v: [[0, 0.4], [0.9, 0.15], [1, 0.15]], src: "§7 row 'Lung vs chest wall': EL/Etot ≈ 0.9 → tIt 0.1–0.2 → 0.15 at end-stage [ENG knots] (Nava & Rubini; Dellinger ch. 11)", tag: 'P' },
-      { key: 'frc', op: 'mul', v: [[0, 1], [0.3, 0.85], [0.6, 0.7], [0.9, 0.55], [1, 0.55]], src: "§7 row 'FRC / TLC': 0.85/0.7/0.55 [TXT]/[ENG]", tag: 'ENG' },
+      { key: 'tIt', op: 'set', v: [[0, 0.4], [0.9, 0.15], [1, 0.15]], src: "§7 row 'Lung vs chest wall': EL/Etot ≈ 0.9 → tIt 0.1–0.2 → 0.15 at end-stage [FIT: severity knot between or beyond the catalogue's sourced grades; knots; brief research/44 X-02] (Nava & Rubini; Dellinger ch. 11)", tag: 'P' },
+      { key: 'frc', op: 'mul', v: [[0, 1], [0.3, 0.85], [0.6, 0.7], [0.9, 0.55], [1, 0.55]], src: "§7 row 'FRC / TLC': 0.85/0.7/0.55 [TXT]/[FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
       { key: 'dlFactor', op: 'mul', v: [[0, 1], [0.3, 0.7], [0.6, 0.45], [0.9, 0.25], [1, 0.25]], src: "§7 row 'Diffusion factor': 0.7/0.45/0.25 (Stoelting 8e ch. 3 p. 47; Pulse diffusion area ×0.5/0.2/0.1)", tag: 'TXT' },
-      { key: 'extraShunt', op: 'add', v: [[0, 0], [0.3, 0.02], [0.6, 0.05], [0.9, 0.1], [1, 0.1]], src: "§7 row 'Shunt / V/Q': shunt 0.02/0.05/0.10 [TXT]/[ENG]", tag: 'ENG' },
-      { key: 'vqLow', op: 'add', v: [[0, 0], [0.3, 0.03], [0.9, 0.08], [1, 0.08]], src: "§7 row 'Shunt / V/Q': low V/Q 0.05–0.10 total − healthy 0.02, spread mild→end-stage [ENG conversion]", tag: 'ENG' },
+      { key: 'extraShunt', op: 'add', v: [[0, 0], [0.3, 0.02], [0.6, 0.05], [0.9, 0.1], [1, 0.1]], src: "§7 row 'Shunt / V/Q': shunt 0.02/0.05/0.10 [TXT]/[FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
+      { key: 'vqLow', op: 'add', v: [[0, 0], [0.3, 0.03], [0.9, 0.08], [1, 0.08]], src: "§7 row 'Shunt / V/Q': low V/Q 0.05–0.10 total − healthy 0.02, spread mild→end-stage [ENG: conversion]", tag: 'ENG' },
       { key: 'vdAlv', op: 'add', v: [[0, 0], [0.3, 0.05], [0.6, 0.1], [0.9, 0.15], [1, 0.15]], src: "§7 row 'Dead space': +0.05/+0.10/+0.15 VD/VT", tag: 'ENG' },
       { key: 'pvr', op: 'mul', v: [[0, 1], [0.3, 1], [0.6, 1.3], [0.9, 2], [1, 2]], src: "§7 row 'PVR': ×1.0/1.3/2.0 (vessel loss, fixed; Stoelting 8e ch. 3 p. 47)", tag: 'TXT' },
     ],
@@ -261,7 +261,7 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
       alphaDeg: [100, 105],
       gapPaEt: [5, 10],
       peep5to15: 'none',
-      src: "§7 rows Crs 32, R 13, 'Time constant' (PEEPi negligible), 'Ventilator at 6 mL/kg' ΔP 13 (490/32 ≈ 15.3 at ref VT [ENG]), 'Monitor signature', 'PEEP response'",
+      src: "§7 rows Crs 32, R 13, 'Time constant' (PEEPi negligible), 'Ventilator at 6 mL/kg' ΔP 13 (490/32 ≈ 15.3 at ref VT [ENG: conversion]), 'Monitor signature', 'PEEP response'",
     },
     needs: ['7a', '7b', 'V'],
     pitfall: 'Driving pressure is already high at "protective" volumes: accept a smaller VT and a higher RR, since there is no auto-PEEP penalty.',
@@ -273,15 +273,15 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     section: 8,
     sided: false,
     effects: [
-      { key: 'crs', op: 'mul', v: 0.739, src: "§8 row 'ILD component': §7 at sev 0.4 → Crs ×0.739 (interp. 0.818→0.582) [ENG]; Launay 2007; Stoelting 8e ch. 24 p. 502", tag: 'ENG' },
-      { key: 'raw', op: 'mul', v: 1.167, src: "§8 'ILD component' §7 sev 0.4 → R ×1.167 (interp. 1.1→1.3) [ENG]", tag: 'ENG' },
-      { key: 'frc', op: 'mul', v: 0.8, src: "§8 'ILD component' §7 sev 0.4 → FRC ×0.80 (interp. 0.85→0.7) [ENG]", tag: 'ENG' },
-      { key: 'extraShunt', op: 'add', v: 0.03, src: "§8 'ILD component' §7 sev 0.4 → shunt 0.03 (interp. 0.02→0.05) [ENG]", tag: 'ENG' },
-      { key: 'vqLow', op: 'add', v: 0.038, src: "§8 'ILD component' §7 sev 0.4 → low V/Q +0.038 (interp.) [ENG]", tag: 'ENG' },
-      { key: 'vdAlv', op: 'add', v: 0.067, src: "§8 'ILD component' §7 sev 0.4 → +0.067 VD/VT (interp. 0.05→0.10) [ENG]", tag: 'ENG' },
+      { key: 'crs', op: 'mul', v: 0.739, src: "§8 row 'ILD component': §7 at sev 0.4 → Crs ×0.739 (interp. 0.818→0.582) [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]; Launay 2007; Stoelting 8e ch. 24 p. 502", tag: 'ENG' },
+      { key: 'raw', op: 'mul', v: 1.167, src: "§8 'ILD component' §7 sev 0.4 → R ×1.167 (interp. 1.1→1.3) [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
+      { key: 'frc', op: 'mul', v: 0.8, src: "§8 'ILD component' §7 sev 0.4 → FRC ×0.80 (interp. 0.85→0.7) [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
+      { key: 'extraShunt', op: 'add', v: 0.03, src: "§8 'ILD component' §7 sev 0.4 → shunt 0.03 (interp. 0.02→0.05) [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
+      { key: 'vqLow', op: 'add', v: 0.038, src: "§8 'ILD component' §7 sev 0.4 → low V/Q +0.038 (interp.) [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
+      { key: 'vdAlv', op: 'add', v: 0.067, src: "§8 'ILD component' §7 sev 0.4 → +0.067 VD/VT (interp. 0.05→0.10) [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
       { key: 'pvr', op: 'mul', v: 1.1, src: "§8 'ILD component' §7 sev 0.4 → PVR ×1.1; PH component off by default (row 'PH component', Q76)", tag: 'ENG', q: 'Q76' },
-      { key: 'ccw', op: 'mul', v: 0.6, src: "§8 row 'Chest-wall compliance (skin sclerosis)': 200 → 120 mL/cmH2O in diffuse cutaneous disease [TXT]/[ENG]", tag: 'ENG', q: 'Q76' },
-      { key: 'tIt', op: 'set', v: 0.5, src: "§8 row 'Chest-wall compliance': tIt ↑ 0.4 → 0.5 (chosen over §7 ILD's lower tIt) [ENG]", tag: 'ENG', q: 'Q76' },
+      { key: 'ccw', op: 'mul', v: 0.6, src: "§8 row 'Chest-wall compliance (skin sclerosis)': 200 → 120 mL/cmH2O in diffuse cutaneous disease [TXT]/[FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]", tag: 'ENG', q: 'Q76' },
+      { key: 'tIt', op: 'set', v: 0.5, src: "§8 row 'Chest-wall compliance': tIt ↑ 0.4 → 0.5 (chosen over §7 ILD's lower tIt) [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]", tag: 'ENG', q: 'Q76' },
       { key: 'dlFactor', op: 'mul', v: 0.5, src: "§8 row 'Diffusion': 0.5 (vasculopathy + ILD; Launay 2007)", tag: 'P' },
     ],
     bands: {
@@ -299,8 +299,8 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     sided: false,
     grades: [{ name: 'Cobb 60–70°', severity: 0.33 }, { name: 'Cobb 70–100°', severity: 0.67 }, { name: 'Cobb > 100°', severity: 1 }],
     effects: [
-      { key: 'ccw', op: 'mul', v: [[0, 1], [0.33, 0.6], [0.67, 0.35], [1, 0.2]], src: "§9 row 'Chest-wall compliance': 120/70/40 ÷ 200 [ENG conversion] (Stoelting 8e ch. 3 p. 48; Bergofsky not opened)", tag: 'VERIFY', q: 'Q77' },
-      { key: 'crs', op: 'mul', v: [[0, 1], [0.33, 1], [0.67, 0.887], [1, 0.763]], src: "§9 row 'Resulting Crs' ≈45/32/20: the row's LUNG part ×1/0.85/0.7 expressed on the healthy-chest-wall scale conditions.ts converts from (1/(1/(75.9·m) + 1/200) ÷ 55); the chest wall comes from `ccw`. Stage 7b executor fix: the extraction put the whole-system 45/32/20 here AND the stiff chest wall in `ccw`, counting the wall twice (measured Crs 24.6 vs 32) [ENG]", tag: 'ENG', q: 'Q77' },
+      { key: 'ccw', op: 'mul', v: [[0, 1], [0.33, 0.6], [0.67, 0.35], [1, 0.2]], src: "§9 row 'Chest-wall compliance': 120/70/40 ÷ 200 [ENG: conversion] (Stoelting 8e ch. 3 p. 48; Bergofsky not opened)", tag: 'VERIFY', q: 'Q77' },
+      { key: 'crs', op: 'mul', v: [[0, 1], [0.33, 1], [0.67, 0.887], [1, 0.763]], src: "§9 row 'Resulting Crs' ≈45/32/20: the row's LUNG part ×1/0.85/0.7 expressed on the healthy-chest-wall scale conditions.ts converts from (1/(1/(75.9·m) + 1/200) ÷ 55); the chest wall comes from `ccw`. Stage 7b executor fix: the extraction put the whole-system 45/32/20 here AND the stiff chest wall in `ccw`, counting the wall twice (measured Crs 24.6 vs 32) [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]", tag: 'ENG', q: 'Q77' },
       { key: 'tIt', op: 'set', v: [[0, 0.4], [0.33, 0.5], [0.67, 0.6], [1, 0.7]], src: "§9 row 'Airway → pleural transmission': 0.5/0.6/0.7 (main §2.2: 0.7 for a stiff chest wall)", tag: 'TXT' },
       { key: 'frc', op: 'mul', v: [[0, 1], [0.33, 0.85], [0.67, 0.7], [1, 0.5]], src: "§9 row 'FRC, VC': 0.85/0.7/0.5 (Stoelting 8e ch. 3 p. 48)", tag: 'TXT' },
       { key: 'extraShunt', op: 'add', v: [[0, 0], [0.33, 0.02], [0.67, 0.05], [1, 0.1]], src: "§9 row 'Shunt / A–a gradient': +0.02/+0.05/+0.10 (compressed concave-side lung; Stoelting 8e ch. 3 p. 48)", tag: 'TXT' },
@@ -328,11 +328,11 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     effects: [
       { key: 'crs', op: 'mul', v: [[0, 1], [0.25, 0.95], [0.5, 0.85], [0.75, 0.75], [1, 0.65]], src: "main §1.3 Crs ×0.95/0.85/0.75/0.65; §10 row 'Crs' 32 vs 53 at BMI 40 agrees (Behazin 2010)", tag: 'P' },
       { key: 'ccw', op: 'mul', v: 0.874, src: "§10 row 'Chest-wall compliance': 195 vs controls 223 → ×0.874, barely changed (Behazin 2010; Pelosi 1998)", tag: 'P', q: 'Q78' },
-      { key: 'tIt', op: 'set', v: 0.425, src: "§10 row 'Airway → pleural transmission': 0.35–0.5 → 0.425 (Behazin) chosen over main §2.2's 0.7 for obesity [ENG]", tag: 'P', q: 'Q78' },
+      { key: 'tIt', op: 'set', v: 0.425, src: "§10 row 'Airway → pleural transmission': 0.35–0.5 → 0.425 (Behazin) chosen over main §2.2's 0.7 for obesity (a point inside the catalogue row's range)", tag: 'P', q: 'Q78' },
       { key: 'raw', op: 'mul', v: 1.3, src: "§10 row 'Resistance': ×1.3 at BMI 40 (Pelosi 1998)", tag: 'P' },
       { key: 'frc', op: 'mul', v: [[0, 1], [0.25, 0.9], [0.5, 0.75], [0.75, 0.65], [1, 0.5]], src: "main §1.3 FRC factor 0.9/0.75/0.65/0.5; §10 row 'FRC / EELV' (Reinius 2009: EELV halves)", tag: 'P', q: 'Q8' },
-      { key: 'atel', op: 'add', v: [[0, 0], [0.25, 0.011], [0.5, 0.027], [0.75, 0.043], [1, 0.045]], src: "§10 'Atelectasis' 0.11 − healthy GA 0.06 (main §4.1) = 0.05 excess; lower BMI via main §1.3 ×1.2/1.5/1.8; ×recruitFrac 0.9 [ENG]", tag: 'P' },
-      { key: 'consol', op: 'add', v: [[0, 0], [0.25, 0.001], [0.5, 0.003], [0.75, 0.005], [1, 0.005]], src: "§10 'Atelectasis' excess × (1 − recruitFrac 0.9) (row 'Recruitability', Reinius 2009) [ENG split]", tag: 'P' },
+      { key: 'atel', op: 'add', v: [[0, 0], [0.25, 0.011], [0.5, 0.027], [0.75, 0.043], [1, 0.045]], src: "§10 'Atelectasis' 0.11 − healthy GA 0.06 (main §4.1) = 0.05 excess; lower BMI via main §1.3 ×1.2/1.5/1.8; ×recruitFrac 0.9 [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]", tag: 'P' },
+      { key: 'consol', op: 'add', v: [[0, 0], [0.25, 0.001], [0.5, 0.003], [0.75, 0.005], [1, 0.005]], src: "§10 'Atelectasis' excess × (1 − recruitFrac 0.9) (row 'Recruitability', Reinius 2009) [ENG: conversion; split]", tag: 'P' },
       { key: 'pOpen', op: 'set', v: 50, src: "§10 row 'Opening pressure': 45–55 → 50 cmH2O (Reinius 2009 used 55)", tag: 'P' },
     ],
     bands: {
@@ -349,20 +349,20 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
   },
   // ── §11 Pneumonia (lobar, unilateral) ────────────────────────────────────────────────────────
   // Severity = extent / 0.5 of total lung (range 0.1–0.5); default one lower lobe 0.2 → severity 0.4.
-  // Regional fractions are per AFFECTED lung: whole-lung fraction ÷ 0.5 (one lung = 0.5, §15) [ENG].
+  // Regional fractions are per AFFECTED lung: whole-lung fraction ÷ 0.5 (one lung = 0.5, §15) [ENG: conversion].
   {
     id: 'pneumonia',
     label: 'Pneumonia (lobar, unilateral)',
     section: 11,
     sided: true,
     effects: [
-      { key: 'consol', op: 'add', v: [[0, 0], [0.4, 0.36], [1, 0.9]], where: 'affected', src: "§11 'Consolidated fraction' 0.2 of lung → 0.4 of one lung × (1 − recruitFrac 0.1) [ENG split]; extent 0.5 at sev 1 [ENG]", tag: 'ENG', q: 'Q79' },
-      { key: 'atel', op: 'add', v: [[0, 0], [0.4, 0.04], [1, 0.1]], where: 'affected', src: "§11 'Consolidated fraction' (0.4 of one lung) × recruitFrac 0.1 (row 'Recruitability', Dellinger 5e ch. 40 p. 660) [ENG split]", tag: 'ENG', q: 'Q79' },
+      { key: 'consol', op: 'add', v: [[0, 0], [0.4, 0.36], [1, 0.9]], where: 'affected', src: "§11 'Consolidated fraction' 0.2 of lung → 0.4 of one lung × (1 − recruitFrac 0.1) [ENG: conversion; split]; extent 0.5 at sev 1 [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG', q: 'Q79' },
+      { key: 'atel', op: 'add', v: [[0, 0], [0.4, 0.04], [1, 0.1]], where: 'affected', src: "§11 'Consolidated fraction' (0.4 of one lung) × recruitFrac 0.1 (row 'Recruitability', Dellinger 5e ch. 40 p. 660) [ENG: conversion; split]", tag: 'ENG', q: 'Q79' },
       { key: 'hpv', op: 'set', v: [[0, 0.5], [0.2, 0.25], [1, 0.25]], where: 'affected', src: "§11 row 'HPV in the infected lobe': 0.25, half of normal (endotoxin/NO) (Dellinger 5e ch. 40 p. 660)", tag: 'TXT' },
       { key: 'crs', op: 'mul', v: [[0, 1], [0.4, 0.84], [1, 0.6]], src: "§11 row 'Compliance': ×(1 − 0.8·consol) with whole-lung consol 0.2 → 0.84 (0.5 → 0.6) (Dellinger 5e ch. 40 p. 660)", tag: 'TXT' },
       { key: 'raw', op: 'mul', v: [[0, 1], [0.4, 1.3], [1, 1.3]], src: "§11 row 'Resistance, secretions': ×1.3 (range 1–2); secretion noise events not encoded", tag: 'ENG' },
-      { key: 'vdAlv', op: 'add', v: [[0, 0], [0.4, 0.05], [1, 0.125]], src: "§11 row 'Dead space': +0.05 at default extent; linear with extent [ENG]", tag: 'ENG' },
-      { key: 'pvr', op: 'mul', v: [[0, 1], [0.4, 1.1], [1, 1.25]], src: "§11 row 'PVR': ×1.1 at default extent; linear with extent [ENG]", tag: 'ENG' },
+      { key: 'vdAlv', op: 'add', v: [[0, 0], [0.4, 0.05], [1, 0.125]], src: "§11 row 'Dead space': +0.05 at default extent; linear with extent [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
+      { key: 'pvr', op: 'mul', v: [[0, 1], [0.4, 1.1], [1, 1.25]], src: "§11 row 'PVR': ×1.1 at default extent; linear with extent [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
     ],
     bands: {
       refSeverity: 0.4,
@@ -384,7 +384,7 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     sided: true,
     defaultSide: 'R',
     effects: [
-      { key: 'consol', op: 'add', v: [[0, 0], [0.4, 0.4], [1, 1]], where: 'affected', src: "§12 'Lobar collapse: volume' RLL 0.2 of lung → 0.4 of right lung; plug recruitFrac 0 → all non-recruitable [ENG split]; whole lung 0.5", tag: 'TXT' },
+      { key: 'consol', op: 'add', v: [[0, 0], [0.4, 0.4], [1, 1]], where: 'affected', src: "§12 'Lobar collapse: volume' RLL 0.2 of lung → 0.4 of right lung; plug recruitFrac 0 → all non-recruitable [ENG: conversion; split]; whole lung 0.5", tag: 'TXT' },
       { key: 'crs', op: 'mul', v: [[0, 1], [0.4, 0.7], [1, 0.25]], src: "§12 row 'Compliance': ×(1 − 1.5·atel) main §4.1 rule, whole-lung atel 0.2 → 0.7 (0.5 → 0.25)", tag: 'TXT' },
     ],
     bands: {
@@ -404,9 +404,9 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     section: 13,
     sided: false,
     effects: [
-      { key: 'extraShunt', op: 'add', v: 0.175, src: "§13 row 'Shunt': cardiogenic 0.10–0.25 → 0.175 (non-cardiogenic 0.15–0.35); lung-water shunt, PEEP ×(1 − 0.04·PEEP) main §4.5 [ENG]", tag: 'ENG', q: 'Q25' },
-      { key: 'crs', op: 'mul', v: 0.75, src: "§13 row 'Compliance': cardiogenic ×0.7–0.8 → 0.75 (non-cardiogenic ×0.6–0.7) (main §4.5) [ENG]", tag: 'ENG' },
-      { key: 'raw', op: 'mul', v: 1.35, src: "§13 row 'Resistance (\"cardiac asthma\")': cardiogenic ×1.2–1.5 → 1.35 (non-cardiogenic ×1.1) (main §4.5) [ENG]", tag: 'ENG' },
+      { key: 'extraShunt', op: 'add', v: 0.175, src: "§13 row 'Shunt': cardiogenic 0.10–0.25 → 0.175 (non-cardiogenic 0.15–0.35); lung-water shunt, PEEP ×(1 − 0.04·PEEP) main §4.5 [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]", tag: 'ENG', q: 'Q25' },
+      { key: 'crs', op: 'mul', v: 0.75, src: "§13 row 'Compliance': cardiogenic ×0.7–0.8 → 0.75 (non-cardiogenic ×0.6–0.7) (main §4.5) (a point inside the catalogue row's range)", tag: 'ENG' },
+      { key: 'raw', op: 'mul', v: 1.35, src: "§13 row 'Resistance (\"cardiac asthma\")': cardiogenic ×1.2–1.5 → 1.35 (non-cardiogenic ×1.1) (main §4.5) (a point inside the catalogue row's range)", tag: 'ENG' },
     ],
     bands: {
       refSeverity: 1,
@@ -426,11 +426,11 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     section: 14,
     sided: true,
     effects: [
-      { key: 'atel', op: 'add', v: [[0, 0], [0.5, 0.072], [1, 0.144]], where: 'affected', src: "§14 'Compression atelectasis' +0.08/L whole lung → 0.24 of one lung at 1.5 L × recruitFrac 0.3 [ENG split]", tag: 'ENG', q: 'Q81' },
-      { key: 'consol', op: 'add', v: [[0, 0], [0.5, 0.168], [1, 0.336]], where: 'affected', src: "§14 'Compression atelectasis' (0.24 of one lung at 1.5 L) × (1 − recruitFrac 0.3, fluid present; 0.8 after drainage) [ENG split]", tag: 'ENG', q: 'Q81' },
-      { key: 'crs', op: 'mul', v: [[0, 1], [0.5, 0.82], [1, 0.64]], src: "§14 row 'Compliance': ×(1 − 0.12 per L) (Razazi 2014 direction / [ENG] size)", tag: 'ENG' },
-      { key: 'frc', op: 'mul', v: [[0, 1], [0.5, 0.643], [1, 0.286]], src: "§14 row 'EELV / FRC': −0.5 × effusion volume ÷ FRC 2100 mL (Stage 3 30 mL/kg × 70) [ENG conversion] (Razazi 2014)", tag: 'ENG', q: 'Q81' },
-      { key: 'pPtx', op: 'set', v: [[0, 0], [0.5, 1.1], [1, 2.2]], where: 'affected', src: "§14 row 'Pleural pressure': +1 cmH2O per L → 0.74 mmHg/L [ENG conversion]; small haemodynamic effect (Razazi 2014)", tag: 'ENG' },
+      { key: 'atel', op: 'add', v: [[0, 0], [0.5, 0.072], [1, 0.144]], where: 'affected', src: "§14 'Compression atelectasis' +0.08/L whole lung → 0.24 of one lung at 1.5 L × recruitFrac 0.3 [ENG: conversion; split]", tag: 'ENG', q: 'Q81' },
+      { key: 'consol', op: 'add', v: [[0, 0], [0.5, 0.168], [1, 0.336]], where: 'affected', src: "§14 'Compression atelectasis' (0.24 of one lung at 1.5 L) × (1 − recruitFrac 0.3, fluid present; 0.8 after drainage) [ENG: conversion; split]", tag: 'ENG', q: 'Q81' },
+      { key: 'crs', op: 'mul', v: [[0, 1], [0.5, 0.82], [1, 0.64]], src: "§14 row 'Compliance': ×(1 − 0.12 per L) (Razazi 2014 direction / [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03] size)", tag: 'ENG' },
+      { key: 'frc', op: 'mul', v: [[0, 1], [0.5, 0.643], [1, 0.286]], src: "§14 row 'EELV / FRC': −0.5 × effusion volume ÷ FRC 2100 mL (Stage 3 30 mL/kg × 70) [ENG: conversion] (Razazi 2014)", tag: 'ENG', q: 'Q81' },
+      { key: 'pPtx', op: 'set', v: [[0, 0], [0.5, 1.1], [1, 2.2]], where: 'affected', src: "§14 row 'Pleural pressure': +1 cmH2O per L → 0.74 mmHg/L [ENG: conversion]; small haemodynamic effect (Razazi 2014)", tag: 'ENG' },
     ],
     bands: {
       refSeverity: 0.5,
@@ -442,15 +442,15 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     pitfall: 'An effusion is not a tension pneumothorax: haemodynamics are usually preserved, so look for another cause before rushing a drain in an unstable patient.',
   },
   // ── §15 Pneumothorax: simple ─────────────────────────────────────────────────────────────────
-  // Severity = size (fraction of hemithorax); default 0.3; 1.0 = complete collapse, extrapolated [ENG].
+  // Severity = size (fraction of hemithorax); default 0.3; 1.0 = complete collapse, extrapolated [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02].
   {
     id: 'ptxSimple',
     label: 'Pneumothorax: simple',
     section: 15,
     sided: true,
     effects: [
-      { key: 'consol', op: 'add', v: [[0, 0], [0.3, 0.3], [1, 1]], where: 'affected', src: "§15 'Collapsed lung fraction' size × 0.5 of lung = size of one lung; recruitFrac 0 until drained → non-recruitable [ENG]", tag: 'ENG' },
-      { key: 'crs', op: 'mul', v: [[0, 1], [0.3, 0.82], [1, 0.4]], src: "§15 row 'Compliance': ×(1 − size·0.6) [ENG]; size 1 extrapolated [ENG]", tag: 'ENG' },
+      { key: 'consol', op: 'add', v: [[0, 0], [0.3, 0.3], [1, 1]], where: 'affected', src: "§15 'Collapsed lung fraction' size × 0.5 of lung = size of one lung; recruitFrac 0 until drained → non-recruitable [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]", tag: 'ENG' },
+      { key: 'crs', op: 'mul', v: [[0, 1], [0.3, 0.82], [1, 0.4]], src: "§15 row 'Compliance': ×(1 − size·0.6) [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]; size 1 extrapolated [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
     ],
     bands: {
       refSeverity: 0.3,
@@ -468,9 +468,9 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     section: 16,
     sided: true,
     effects: [
-      { key: 'pPtx', op: 'set', v: 25, where: 'affected', src: "§16 row 'Pleural pressure build-up': ventilated pPtx 15–25 mmHg within 2–5 min; 25 at sev 1 (PEA ≈ 20–25) [ENG]; main §2.2", tag: 'ENG', q: 'Q82' },
-      { key: 'consol', op: 'add', v: 1, where: 'affected', src: "§16 row 'Hypoxia': collapsed ipsilateral lung (non-recruitable until decompressed) [ENG]; compressed contralateral lung not encoded", tag: 'ENG' },
-      { key: 'crs', op: 'mul', v: 0.5, src: "§33 row 16: Crs ×0.5 (chosen over §16 'Airway pressure' Ppeak +10–20 at VT 490 ≈ ×0.31–0.47 and §15 formula at size 1 = 0.4) [ENG]", tag: 'ENG' },
+      { key: 'pPtx', op: 'set', v: 25, where: 'affected', src: "§16 row 'Pleural pressure build-up': ventilated pPtx 15–25 mmHg within 2–5 min; 25 at sev 1 (PEA ≈ 20–25) [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]; main §2.2", tag: 'ENG', q: 'Q82' },
+      { key: 'consol', op: 'add', v: 1, where: 'affected', src: "§16 row 'Hypoxia': collapsed ipsilateral lung (non-recruitable until decompressed) [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]; compressed contralateral lung not encoded", tag: 'ENG' },
+      { key: 'crs', op: 'mul', v: 0.5, src: "§33 row 16: Crs ×0.5 (chosen over §16 'Airway pressure' Ppeak +10–20 at VT 490 ≈ ×0.31–0.47 and §15 formula at size 1 = 0.4) [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]", tag: 'ENG' },
     ],
     bands: {
       refSeverity: 0.8,
@@ -489,11 +489,11 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     section: 17,
     sided: true,
     effects: [
-      { key: 'atel', op: 'add', v: [[0, 0], [0.5, 0.048], [1, 0.096]], where: 'affected', src: "§17 'Lung compression' as §14: atel +0.08/L → 0.24 of one lung at 1.5 L × recruitFrac 0.2 (row 'Recruitability') [ENG split]", tag: 'ENG' },
-      { key: 'consol', op: 'add', v: [[0, 0], [0.5, 0.192], [1, 0.384]], where: 'affected', src: "§17 'Lung compression' (0.24 of one lung at 1.5 L) × (1 − recruitFrac 0.2; clotted 0.3) [ENG split]", tag: 'ENG' },
-      { key: 'crs', op: 'mul', v: [[0, 1], [0.5, 0.82], [1, 0.64]], src: "§17 row 'Lung compression': Crs ×(1 − 0.12/L) as §14 [ENG]", tag: 'ENG' },
-      { key: 'frc', op: 'mul', v: [[0, 1], [0.5, 0.643], [1, 0.286]], src: "§17 row 'Lung compression': EELV −0.5 × volume ÷ FRC 2100 mL (Stage 3 30 mL/kg × 70) [ENG conversion]", tag: 'ENG' },
-      { key: 'pPtx', op: 'set', v: [[0, 0], [0.5, 3], [1, 6]], where: 'affected', src: "§17 row 'Pleural pressure': +1–3 mmHg per L → 2/L [ENG]; massive > 2.5 L tension-like shift not encoded", tag: 'ENG', q: 'Q83' },
+      { key: 'atel', op: 'add', v: [[0, 0], [0.5, 0.048], [1, 0.096]], where: 'affected', src: "§17 'Lung compression' as §14: atel +0.08/L → 0.24 of one lung at 1.5 L × recruitFrac 0.2 (row 'Recruitability') [ENG: conversion; split]", tag: 'ENG' },
+      { key: 'consol', op: 'add', v: [[0, 0], [0.5, 0.192], [1, 0.384]], where: 'affected', src: "§17 'Lung compression' (0.24 of one lung at 1.5 L) × (1 − recruitFrac 0.2; clotted 0.3) [ENG: conversion; split]", tag: 'ENG' },
+      { key: 'crs', op: 'mul', v: [[0, 1], [0.5, 0.82], [1, 0.64]], src: "§17 row 'Lung compression': Crs ×(1 − 0.12/L) as §14 [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]", tag: 'ENG' },
+      { key: 'frc', op: 'mul', v: [[0, 1], [0.5, 0.643], [1, 0.286]], src: "§17 row 'Lung compression': EELV −0.5 × volume ÷ FRC 2100 mL (Stage 3 30 mL/kg × 70) [ENG: conversion]", tag: 'ENG' },
+      { key: 'pPtx', op: 'set', v: [[0, 0], [0.5, 3], [1, 6]], where: 'affected', src: "§17 row 'Pleural pressure': +1–3 mmHg per L → 2/L [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]; massive > 2.5 L tension-like shift not encoded", tag: 'ENG', q: 'Q83' },
     ],
     bands: {
       refSeverity: 0.5,
@@ -503,7 +503,7 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     pitfall: 'CVP falls in haemothorax and rises in tension pneumothorax, although both give hypotension and a high Ppeak.',
   },
   // ── §18 Pulmonary thromboembolism ────────────────────────────────────────────────────────────
-  // peFrac φ 0.2/0.35/0.6 mapped through main §2.2: PVR × 1/(1 − φ) × (1 + peVaso 0.5·φ); VD_alv = φ·VA ≈ 0.7·φ·VT [ENG].
+  // peFrac φ 0.2/0.35/0.6 mapped through main §2.2: PVR × 1/(1 − φ) × (1 + peVaso 0.5·φ); VD_alv = φ·VA ≈ 0.7·φ·VT [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03].
   {
     id: 'pe',
     label: 'Pulmonary thromboembolism',
@@ -513,8 +513,8 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     effects: [
       // FU-4 G6 (Task 11, D9): the PE's PVR has ONE source — 7a's φ mapping (circ/conditions.ts, PE_VASO 1.0), applied by the
       // engine alias for either spelling of the PE event; this row keeps the gas-exchange and mechanics keys
-      { key: 'vdAlv', op: 'add', v: [[0, 0], [0.33, 0.14], [0.67, 0.245], [1, 0.42]], src: "§18 row 'Alveolar dead space': φ × VA, VA ≈ 0.7 VT → 0.7φ [ENG conversion]; gap 5/10/15–25 (main §4.4)", tag: 'TXT' },
-      { key: 'extraShunt', op: 'add', v: [[0, 0], [0.67, 0], [1, 0.1]], src: "§18 row 'Hypoxaemia mechanism': shunt +0.05–0.15 at φ ≥ 0.5 → 0.10 high risk (Dellinger 5e ch. 42 p. 673) [ENG]", tag: 'TXT' },
+      { key: 'vdAlv', op: 'add', v: [[0, 0], [0.33, 0.14], [0.67, 0.245], [1, 0.42]], src: "§18 row 'Alveolar dead space': φ × VA, VA ≈ 0.7 VT → 0.7φ [ENG: conversion]; gap 5/10/15–25 (main §4.4)", tag: 'TXT' },
+      { key: 'extraShunt', op: 'add', v: [[0, 0], [0.67, 0], [1, 0.1]], src: "§18 row 'Hypoxaemia mechanism': shunt +0.05–0.15 at φ ≥ 0.5 → 0.10 high risk (Dellinger 5e ch. 42 p. 673) (a point inside the catalogue row's range)", tag: 'TXT' },
       { key: 'raw', op: 'mul', v: [[0, 1], [0.67, 1], [1, 1.2]], src: "§18 row 'Mechanics': ≈ normal; serotonin bronchoconstriction R ×1.2 in massive", tag: 'ENG' },
     ],
     bands: {
@@ -535,8 +535,8 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     sided: false,
     grades: [{ name: 'BCIS 1', severity: 0.33 }, { name: 'BCIS 2', severity: 0.67 }, { name: 'BCIS 3', severity: 1 }],
     effects: [
-      { key: 'pvr', op: 'mul', v: [[0, 1], [0.33, 1.222], [0.67, 1.667], [1, 2.333]], src: "§19 'Microembolic obstruction' φ 0.1/0.25/0.4, peVaso 1.0 via main §2.2 PVR×1/(1−φ)×(1+φ) [ENG]; §33 ×1.5–3", tag: 'ENG', q: 'Q84' },
-      { key: 'vdAlv', op: 'add', v: [[0, 0], [0.33, 0.07], [0.67, 0.175], [1, 0.28]], src: "§19 'Microembolic obstruction' φ 0.1/0.25/0.4 as §18 dead space 0.7φ [ENG conversion]", tag: 'ENG', q: 'Q84' },
+      { key: 'pvr', op: 'mul', v: [[0, 1], [0.33, 1.222], [0.67, 1.667], [1, 2.333]], src: "§19 'Microembolic obstruction' φ 0.1/0.25/0.4, peVaso 1.0 via main §2.2 PVR×1/(1−φ)×(1+φ) [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]; §33 ×1.5–3", tag: 'ENG', q: 'Q84' },
+      { key: 'vdAlv', op: 'add', v: [[0, 0], [0.33, 0.07], [0.67, 0.175], [1, 0.28]], src: "§19 'Microembolic obstruction' φ 0.1/0.25/0.4 as §18 dead space 0.7φ [ENG: conversion]", tag: 'ENG', q: 'Q84' },
     ],
     bands: {
       refSeverity: 0.33,
@@ -546,15 +546,15 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     pitfall: 'Hypotension with an EtCO2 drop at cementing is BCIS until proven otherwise: tell the surgeon, give FiO2 1.0 and support the RV.',
   },
   // ── §20 Venous air embolism ──────────────────────────────────────────────────────────────────
-  // §20 gives no default entry rate; severity 1 := steady entry 4 mL/kg/min → peFrac 0.2 (row 'Air → obstruction' 0.05 per mL/kg/min) [ENG].
+  // §20 gives no default entry rate; severity 1 := steady entry 4 mL/kg/min → peFrac 0.2 (row 'Air → obstruction' 0.05 per mL/kg/min) [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03].
   {
     id: 'vae',
     label: 'Venous air embolism (continuous entry)',
     section: 20,
     sided: false,
     effects: [
-      { key: 'pvr', op: 'mul', v: 1.375, src: "§20 rows 'Air → obstruction' (φ 0.2 at sev 1 [ENG]) + 'Vasoconstrictor factor' 0.5 via main §2.2 PVR×1/(1−φ)×(1+0.5φ)", tag: 'ENG', q: 'Q85' },
-      { key: 'vdAlv', op: 'add', v: 0.14, src: "§20 'Air → obstruction' φ 0.2 → dead space 0.7φ as §18 [ENG]; gap ≈ 8 fits row 'EtCO2' fall 2–10 mmHg", tag: 'ENG', q: 'Q85' },
+      { key: 'pvr', op: 'mul', v: 1.375, src: "§20 rows 'Air → obstruction' (φ 0.2 at sev 1 [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]) + 'Vasoconstrictor factor' 0.5 via main §2.2 PVR×1/(1−φ)×(1+0.5φ)", tag: 'ENG', q: 'Q85' },
+      { key: 'vdAlv', op: 'add', v: 0.14, src: "§20 'Air → obstruction' φ 0.2 → dead space 0.7φ as §18 [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]; gap ≈ 8 fits row 'EtCO2' fall 2–10 mmHg", tag: 'ENG', q: 'Q85' },
     ],
     bands: {
       refSeverity: 1,
@@ -572,10 +572,10 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     sided: true,
     defaultSide: 'R',
     effects: [
-      { key: 'raw', op: 'mul', v: 2.51, src: "§21 'Immediate bronchospasm' §2 sev 0.3–0.6 → 0.45: ×(1+5·0.45^1.5) = 2.51 [ENG]; §33 R ×1.5–2.5 early", tag: 'ENG', q: 'Q86' },
-      { key: 'rawExp', op: 'set', v: 1.525, src: "§21 'Immediate bronchospasm' §2 sev 0.45: 1.3 + 0.5·0.45 [ENG]", tag: 'ENG' },
-      { key: 'crs', op: 'mul', v: 0.75, src: "§21 row 'Chemical pneumonitis': Crs ×0.7–0.8 → 0.75 [TXT]/[ENG]", tag: 'ENG' },
-      { key: 'extraShunt', op: 'add', v: 0.2, src: "§21 row 'Chemical pneumonitis': shunt 0.1–0.3 → 0.2 (lung-water shunt; recruitFrac 0.4 not encodable without atel) [ENG]", tag: 'ENG' },
+      { key: 'raw', op: 'mul', v: 2.51, src: "§21 'Immediate bronchospasm' §2 sev 0.3–0.6 → 0.45: ×(1+5·0.45^1.5) = 2.51 [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]; §33 R ×1.5–2.5 early", tag: 'ENG', q: 'Q86' },
+      { key: 'rawExp', op: 'set', v: 1.525, src: "§21 'Immediate bronchospasm' §2 sev 0.45: 1.3 + 0.5·0.45 [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
+      { key: 'crs', op: 'mul', v: 0.75, src: "§21 row 'Chemical pneumonitis': Crs ×0.7–0.8 → 0.75 [TXT]/(a point inside the catalogue row's range)", tag: 'ENG' },
+      { key: 'extraShunt', op: 'add', v: 0.2, src: "§21 row 'Chemical pneumonitis': shunt 0.1–0.3 → 0.2 (lung-water shunt; recruitFrac 0.4 not encodable without atel) [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]", tag: 'ENG' },
       { key: 'hpv', op: 'set', v: 0.3, where: 'affected', src: "§21 row 'HPV in injured lung': 0.3 (inflammation)", tag: 'VERIFY' },
     ],
     bands: {
@@ -598,8 +598,8 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     mainstem: 'blockAffected',
     effects: [
       { key: 'raw', op: 'mul', v: 1.5, src: "§33 row 22: R insp ×1.5 (DLT)", tag: 'ENG' },
-      { key: 'perfShare', op: 'mul', v: 0.89, where: 'affected', src: "§22 row 'Non-ventilated lung perfusion share': gravity 40 % in lateral ÷ normal 45 % [ENG conversion]; HPV then → 20–25 % (Miller 10e ch. 49 p. 1538)", tag: 'TXT', q: 'Q35' },
-      { key: 'pvr', op: 'mul', v: 1.35, src: "§22 row 'PVR / RV': OLV raises PVR ×1.2–1.5 → 1.35 (Stoelting 8e ch. 9 p. 200) [TXT]/[ENG]", tag: 'ENG' },
+      { key: 'perfShare', op: 'mul', v: 0.89, where: 'affected', src: "§22 row 'Non-ventilated lung perfusion share': gravity 40 % in lateral ÷ normal 45 % [ENG: conversion]; HPV then → 20–25 % (Miller 10e ch. 49 p. 1538)", tag: 'TXT', q: 'Q35' },
+      { key: 'pvr', op: 'mul', v: 1.35, src: "§22 row 'PVR / RV': OLV raises PVR ×1.2–1.5 → 1.35 (Stoelting 8e ch. 9 p. 200) [TXT]/(a point inside the catalogue row's range)", tag: 'ENG' },
     ],
     bands: {
       refSeverity: 1,
@@ -634,14 +634,14 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     pitfall: 'A rising Ppeak after pneumoperitoneum or head-down tilt can be the tube migrating into a bronchus, not the abdomen.',
   },
   // ── §24 Bronchopleural fistula ───────────────────────────────────────────────────────────────
-  // Severity: moderate default leak 0.2 of VT := 0.5; 1.0 = range top 0.8 [ENG]. Mechanics otherwise "as underlying".
+  // Severity: moderate default leak 0.2 of VT := 0.5; 1.0 = range top 0.8 [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]. Mechanics otherwise "as underlying".
   {
     id: 'bpf',
     label: 'Bronchopleural fistula (drain present)',
     section: 24,
     sided: true,
     effects: [
-      { key: 'leakFrac', op: 'add', v: [[0, 0], [0.5, 0.2], [1, 0.8]], where: 'affected', src: "§24 row 'Leak conductance': 0.2 of VT at Pplat 25 (moderate), range 0.05–0.8; pressure-driven, PEEP drives exp leak [ENG]", tag: 'ENG', q: 'Q87' },
+      { key: 'leakFrac', op: 'add', v: [[0, 0], [0.5, 0.2], [1, 0.8]], where: 'affected', src: "§24 row 'Leak conductance': 0.2 of VT at Pplat 25 (moderate), range 0.05–0.8; pressure-driven, PEEP drives exp leak [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]", tag: 'ENG', q: 'Q87' },
     ],
     bands: {
       refSeverity: 0.5,
@@ -658,7 +658,7 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     section: 25,
     sided: false,
     effects: [
-      { key: 'raw', op: 'mul', v: [[0, 1], [0.5, 5], [1, 20]], src: "§25 intro/main §4.3 'Tube kink / secretions': kink ×5–20 (flow-dependent; rawK2 20–100 not encodable) [ENG knots]", tag: 'ENG', q: 'Q87' },
+      { key: 'raw', op: 'mul', v: [[0, 1], [0.5, 5], [1, 20]], src: "§25 intro/main §4.3 'Tube kink / secretions': kink ×5–20 (flow-dependent; rawK2 20–100 not encodable) [FIT: severity knot between or beyond the catalogue's sourced grades; knots; brief research/44 X-02]", tag: 'ENG', q: 'Q87' },
       { key: 'rawExp', op: 'set', v: 1, src: "§25 row 'Inspiratory vs expiratory': fixed ETT lesion 1.0 symmetric (intrathoracic variable 2–4, extrathoracic 0.5)", tag: 'TXT' },
     ],
     bands: {
@@ -677,14 +677,14 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     sided: false,
     grades: [{ name: 'mild (FEV1 > 70 %)', severity: 0.33 }, { name: 'moderate (40–69 %)', severity: 0.67 }, { name: 'severe (< 40 %)', severity: 1 }],
     effects: [
-      { key: 'raw', op: 'mul', v: [[0, 1], [0.33, 1.3], [0.67, 2], [1, 3]], src: "§26 row 'Inspiratory R': ×1.3/2.0/3.0 [ENG on §5]", tag: 'ENG' },
-      { key: 'rawExp', op: 'set', v: [[0, 1.2], [0.33, 1.4], [1, 1.4]], src: "§26 row 'Expiratory ratio, τ': rawExpMult 1.4 [ENG]", tag: 'ENG' },
-      { key: 'fSlow', op: 'set', v: [[0, 0], [0.33, 0.3], [0.67, 0.45], [1, 0.55]], src: "§26 row 'Expiratory ratio, τ': slow compartment 0.3/0.45/0.55 (§5; main §4.3) [ENG]", tag: 'ENG' },
-      { key: 'tauSlowS', op: 'set', v: [[0, 0.5], [0.33, 1], [0.67, 1.5], [1, 2.5]], src: "§26 row 'Expiratory ratio, τ': τ_slow 1.0/1.5/2.5 s [ENG]", tag: 'ENG' },
-      { key: 'crs', op: 'mul', v: [[0, 1], [0.33, 1], [0.67, 0.9], [1, 0.8]], src: "§26 row 'Compliance': ×1.0/0.9/0.8 (fibrosis + hyperinflation) [ENG]", tag: 'ENG' },
-      { key: 'vqLow', op: 'add', v: [[0, 0], [0.33, 0.03], [0.67, 0.08], [1, 0.13]], src: "§26 row 'V/Q, shunt': low V/Q 0.05/0.10/0.15 − healthy 0.02 [ENG conversion]", tag: 'ENG' },
-      { key: 'extraShunt', op: 'add', v: [[0, 0], [0.33, 0], [0.67, 0.03], [1, 0.08]], src: "§26 row 'V/Q, shunt': plugged-segment shunt 0/0.03/0.08 [TXT]/[ENG]", tag: 'ENG' },
-      { key: 'vdAlv', op: 'add', v: [[0, 0], [0.33, 0.05], [0.67, 0.1], [1, 0.2]], src: "§26 row 'Dead space': +0.05/+0.10/+0.20 VD/VT [ENG]", tag: 'ENG' },
+      { key: 'raw', op: 'mul', v: [[0, 1], [0.33, 1.3], [0.67, 2], [1, 3]], src: "§26 row 'Inspiratory R': ×1.3/2.0/3.0 [FIT: severity knot between or beyond the catalogue's sourced grades; on §5; brief research/44 X-02]", tag: 'ENG' },
+      { key: 'rawExp', op: 'set', v: [[0, 1.2], [0.33, 1.4], [1, 1.4]], src: "§26 row 'Expiratory ratio, τ': rawExpMult 1.4 [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
+      { key: 'fSlow', op: 'set', v: [[0, 0], [0.33, 0.3], [0.67, 0.45], [1, 0.55]], src: "§26 row 'Expiratory ratio, τ': slow compartment 0.3/0.45/0.55 (§5; main §4.3) [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
+      { key: 'tauSlowS', op: 'set', v: [[0, 0.5], [0.33, 1], [0.67, 1.5], [1, 2.5]], src: "§26 row 'Expiratory ratio, τ': τ_slow 1.0/1.5/2.5 s [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
+      { key: 'crs', op: 'mul', v: [[0, 1], [0.33, 1], [0.67, 0.9], [1, 0.8]], src: "§26 row 'Compliance': ×1.0/0.9/0.8 (fibrosis + hyperinflation) [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
+      { key: 'vqLow', op: 'add', v: [[0, 0], [0.33, 0.03], [0.67, 0.08], [1, 0.13]], src: "§26 row 'V/Q, shunt': low V/Q 0.05/0.10/0.15 − healthy 0.02 [ENG: conversion]", tag: 'ENG' },
+      { key: 'extraShunt', op: 'add', v: [[0, 0], [0.33, 0], [0.67, 0.03], [1, 0.08]], src: "§26 row 'V/Q, shunt': plugged-segment shunt 0/0.03/0.08 [TXT]/[FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
+      { key: 'vdAlv', op: 'add', v: [[0, 0], [0.33, 0.05], [0.67, 0.1], [1, 0.2]], src: "§26 row 'Dead space': +0.05/+0.10/+0.20 VD/VT [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
       { key: 'pvr', op: 'mul', v: [[0, 1], [0.33, 1], [0.67, 1.2], [1, 2]], src: "§26 row 'PVR': ×1/1.2/2 (hypoxic PH, cor pulmonale; Miller 10e ch. 29 p. 883)", tag: 'TXT' },
     ],
     bands: {
@@ -705,10 +705,10 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     sided: false,
     grades: [{ name: 'VC 40 mL/kg', severity: 0.25 }, { name: 'VC 30 mL/kg', severity: 0.5 }, { name: 'VC 20 mL/kg', severity: 0.75 }, { name: 'VC 15 mL/kg', severity: 1 }],
     effects: [
-      { key: 'pMax', op: 'mul', v: [[0, 1], [0.25, 0.667], [0.5, 0.5], [0.75, 0.333], [1, 0.222]], src: "§27 row 'Maximal inspiratory pressure': 60/45/30/20 ÷ normal 90 (80–100) [ENG conversion] (Dellinger 5e ch. 61 p. 1027)", tag: 'TXT', q: 'Q88' },
+      { key: 'pMax', op: 'mul', v: [[0, 1], [0.25, 0.667], [0.5, 0.5], [0.75, 0.333], [1, 0.222]], src: "§27 row 'Maximal inspiratory pressure': 60/45/30/20 ÷ normal 90 (80–100) [ENG: conversion] (Dellinger 5e ch. 61 p. 1027)", tag: 'TXT', q: 'Q88' },
       { key: 'ccw', op: 'mul', v: [[0, 1], [0.25, 1], [0.5, 0.9], [0.75, 0.8], [1, 0.7]], src: "§27 row 'Chest-wall compliance': ×1/0.9/0.8/0.7 (Dellinger 5e ch. 61 p. 1027)", tag: 'TXT' },
-      { key: 'atel', op: 'add', v: [[0, 0], [0.25, 0.02], [1, 0.1]], src: "§27 row 'Cough effectiveness': retention → atel +0.02–0.10 over hours; recruitFrac 1.0 (§33) [ENG knots]", tag: 'TXT' },
-      { key: 'co2Slope', op: 'mul', v: [[0, 1], [0.25, 1], [0.5, 0.7], [1, 0.7]], src: "§27 row 'Opioid/sedative sensitivity': CO2 slope ×0.7 in moderate–severe weakness [ENG]", tag: 'ENG' },
+      { key: 'atel', op: 'add', v: [[0, 0], [0.25, 0.02], [1, 0.1]], src: "§27 row 'Cough effectiveness': retention → atel +0.02–0.10 over hours; recruitFrac 1.0 (§33) [FIT: severity knot between or beyond the catalogue's sourced grades; knots; brief research/44 X-02]", tag: 'TXT' },
+      { key: 'co2Slope', op: 'mul', v: [[0, 1], [0.25, 1], [0.5, 0.7], [1, 0.7]], src: "§27 row 'Opioid/sedative sensitivity': CO2 slope ×0.7 in moderate–severe weakness [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]", tag: 'ENG' },
     ],
     bands: {
       refSeverity: 0.75,
@@ -725,8 +725,8 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     sided: true,
     effects: [
       { key: 'pMax', op: 'mul', v: 0.73, src: "§28 row 'FVC / spontaneous VT capacity': unilateral ×0.73 (bilateral ×0.4–0.5 upright, supine ×0.7–0.8 more) (Urmey 1992)", tag: 'P' },
-      { key: 'atel', op: 'add', v: 0.08, where: 'affected', src: "§28 row 'Basal atelectasis': unilateral +0.03–0.05 whole lung → 0.04 ÷ 0.5 = 0.08 of one lung (bilateral 0.08–0.12) [ENG]", tag: 'ENG' },
-      { key: 'frc', op: 'mul', v: 0.9, src: "§28 row 'FRC': unilateral ×0.9 (bilateral ×0.75 supine) [TXT]/[ENG]", tag: 'ENG' },
+      { key: 'atel', op: 'add', v: 0.08, where: 'affected', src: "§28 row 'Basal atelectasis': unilateral +0.03–0.05 whole lung → 0.04 ÷ 0.5 = 0.08 of one lung (bilateral 0.08–0.12) [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]", tag: 'ENG' },
+      { key: 'frc', op: 'mul', v: 0.9, src: "§28 row 'FRC': unilateral ×0.9 (bilateral ×0.75 supine) [TXT]/[FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]", tag: 'ENG' },
     ],
     bands: {
       refSeverity: 1,
@@ -744,11 +744,11 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     grades: [{ name: 'T1 (≤ 13 wk)', severity: 0.33 }, { name: 'T2 (14–27 wk)', severity: 0.67 }, { name: 'term (38 wk)', severity: 1 }],
     effects: [
       { key: 'frc', op: 'mul', v: [[0, 1], [0.33, 1], [0.67, 0.9], [1, 0.8]], src: "main §1.4 FRC 1.0/0.9/0.80; §29 row 'FRC' ×0.8 at term (Stoelting 8e ch. 32 p. 698); supine ×0.9 not encoded", tag: 'TXT' },
-      { key: 'ccw', op: 'mul', v: 0.7, src: "§29 row 'Chest-wall compliance': ×0.7 at term, lung unchanged; linear by trimester [ENG]", tag: 'VERIFY', q: 'Q89' },
+      { key: 'ccw', op: 'mul', v: 0.7, src: "§29 row 'Chest-wall compliance': ×0.7 at term, lung unchanged; linear by trimester [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'VERIFY', q: 'Q89' },
       { key: 'crs', op: 'mul', v: 0.85, src: "§29 row 'Chest-wall compliance': Crs ×0.85 (system, from ccw ×0.7); §33 row 29", tag: 'VERIFY', q: 'Q89' },
       { key: 'tIt', op: 'set', v: 0.5, src: "§29 row 'Chest-wall compliance': tIt 0.5 (proposal; main §2.2 0.7 pending Q89)", tag: 'VERIFY', q: 'Q89' },
       { key: 'raw', op: 'mul', v: 1.2, src: "§29 row 'Airway': mucosal oedema, smaller ETT 6.0–7.0 → R ×1.2", tag: 'TXT' },
-      { key: 'atel', op: 'add', v: 0.03, src: "§29 row 'Atelectasis at induction': main §4.1 ×1.5 → excess 0.5 × atelInd 0.06 = 0.03 (recruitFrac 1.0, §33) [ENG]", tag: 'ENG' },
+      { key: 'atel', op: 'add', v: 0.03, src: "§29 row 'Atelectasis at induction': main §4.1 ×1.5 → excess 0.5 × atelInd 0.06 = 0.03 (recruitFrac 1.0, §33) [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]", tag: 'ENG' },
       { key: 'pvr', op: 'mul', v: 0.8, src: "§29 row 'PVR': ×0.8 (falls in normal pregnancy)", tag: 'VERIFY' },
     ],
     bands: {
@@ -765,10 +765,10 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     section: 30,
     sided: false,
     effects: [
-      { key: 'crs', op: 'mul', v: 0.32, src: "§30 row 'Crs (per kg)': 0.4 mL/cmH2O/kg vs normal term ≈1–1.5 (1.25) [ENG conversion] (Miller 10e ch. 75 p. 2436)", tag: 'VERIFY', q: 'Q90' },
+      { key: 'crs', op: 'mul', v: 0.32, src: "§30 row 'Crs (per kg)': 0.4 mL/cmH2O/kg vs normal term ≈1–1.5 (1.25) [ENG: conversion] (Miller 10e ch. 75 p. 2436)", tag: 'VERIFY', q: 'Q90' },
       { key: 'tIt', op: 'set', v: 0.15, src: "§30 row 'Chest-wall compliance': very compliant chest wall → tIt ≈ 0.1–0.2 (Miller 10e ch. 75 p. 2436)", tag: 'TXT' },
-      { key: 'atel', op: 'add', v: 0.36, src: "§30 row 'Atelectasis / recruitability': atel 0.3–0.5 → 0.4 × recruitFrac 0.9 [ENG split]; re-collapse in seconds", tag: 'ENG', q: 'Q90' },
-      { key: 'consol', op: 'add', v: 0.04, src: "§30 row 'Atelectasis / recruitability': 0.4 × (1 − 0.9) [ENG split]", tag: 'ENG', q: 'Q90' },
+      { key: 'atel', op: 'add', v: 0.36, src: "§30 row 'Atelectasis / recruitability': atel 0.3–0.5 → 0.4 × recruitFrac 0.9 [ENG: conversion; split]; re-collapse in seconds", tag: 'ENG', q: 'Q90' },
+      { key: 'consol', op: 'add', v: 0.04, src: "§30 row 'Atelectasis / recruitability': 0.4 × (1 − 0.9) [ENG: conversion; split]", tag: 'ENG', q: 'Q90' },
     ],
     bands: {
       refSeverity: 1,
@@ -787,11 +787,11 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     sided: false,
     grades: [{ name: 'L phenotype', severity: 0.5 }, { name: 'H phenotype', severity: 1 }],
     effects: [
-      { key: 'crs', op: 'mul', v: [[0, 1], [0.5, 0.909], [1, 0.636]], src: "§31 row 'Compliance': 50/35 ÷ 55 [ENG conversion] (Grasselli 2020: 41 [33–52])", tag: 'P' },
+      { key: 'crs', op: 'mul', v: [[0, 1], [0.5, 0.909], [1, 0.636]], src: "§31 row 'Compliance': 50/35 ÷ 55 [ENG: conversion] (Grasselli 2020: 41 [33–52])", tag: 'P' },
       { key: 'extraShunt', op: 'add', v: [[0, 0], [0.5, 0.3], [1, 0.35]], src: "§31 row 'Shunt': 0.3/0.35 (HPV loss, perfusion of non-aerated lung); recruitFrac 0.15/0.4 not split (no atel row)", tag: 'VERIFY', q: 'Q91' },
       { key: 'hpv', op: 'set', v: [[0, 0.5], [0.5, 0.1], [1, 0.3]], src: "§31 row 'HPV': 0.1/0.3 (dysregulated)", tag: 'VERIFY', q: 'Q91' },
-      { key: 'vdAlv', op: 'add', v: [[0, 0], [0.5, 0.14], [1, 0.14]], src: "§31 row 'Dead space (microthrombi)': peFrac 0.1–0.3 → 0.2 × 0.7 (as §18) [ENG conversion] (Grasselli 2020)", tag: 'P' },
-      { key: 'pvr', op: 'mul', v: [[0, 1], [0.5, 1.3], [1, 1.8]], src: "§31 row 'PVR': ×1.3/×1.8 (thrombosis + hypercapnia) [ENG]", tag: 'ENG' },
+      { key: 'vdAlv', op: 'add', v: [[0, 0], [0.5, 0.14], [1, 0.14]], src: "§31 row 'Dead space (microthrombi)': peFrac 0.1–0.3 → 0.2 × 0.7 (as §18) [ENG: conversion] (Grasselli 2020)", tag: 'P' },
+      { key: 'pvr', op: 'mul', v: [[0, 1], [0.5, 1.3], [1, 1.8]], src: "§31 row 'PVR': ×1.3/×1.8 (thrombosis + hypercapnia) [FIT: lung-pathology effect size (direction sourced); brief research/44 X-03]", tag: 'ENG' },
     ],
     bands: {
       refSeverity: 0.5,
@@ -811,11 +811,11 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     section: 32,
     sided: false,
     effects: [
-      { key: 'raw', op: 'mul', v: 2.51, src: "§32 'Lower-airway injury': §2 bronchospasm sev 0.3–0.6 → 0.45: ×(1+5·0.45^1.5) [ENG]; upper-airway ×5–20 not encoded (Q92)", tag: 'TXT', q: 'Q92' },
-      { key: 'rawExp', op: 'set', v: 1.525, src: "§32 'Lower-airway injury' via §2 sev 0.45: 1.3 + 0.5·0.45 [ENG]", tag: 'ENG' },
-      { key: 'fSlow', op: 'set', v: 0.335, src: "§32 'Lower-airway injury' via §2 sev 0.45: 0.2 + 0.3·0.45 [ENG]", tag: 'ENG' },
-      { key: 'vqLow', op: 'add', v: 0.068, src: "§32 'Lower-airway injury' via §2 'Low-V/Q admixture' 0.15·0.45 [ENG]", tag: 'ENG' },
-      { key: 'vdAlv', op: 'add', v: 0.09, src: "§32 'Lower-airway injury' via §2 'Dead space' 0.20·0.45 [ENG]", tag: 'ENG' },
+      { key: 'raw', op: 'mul', v: 2.51, src: "§32 'Lower-airway injury': §2 bronchospasm sev 0.3–0.6 → 0.45: ×(1+5·0.45^1.5) [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]; upper-airway ×5–20 not encoded (Q92)", tag: 'TXT', q: 'Q92' },
+      { key: 'rawExp', op: 'set', v: 1.525, src: "§32 'Lower-airway injury' via §2 sev 0.45: 1.3 + 0.5·0.45 [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
+      { key: 'fSlow', op: 'set', v: 0.335, src: "§32 'Lower-airway injury' via §2 sev 0.45: 0.2 + 0.3·0.45 [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
+      { key: 'vqLow', op: 'add', v: 0.068, src: "§32 'Lower-airway injury' via §2 'Low-V/Q admixture' 0.15·0.45 [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
+      { key: 'vdAlv', op: 'add', v: 0.09, src: "§32 'Lower-airway injury' via §2 'Dead space' 0.20·0.45 [FIT: severity knot between or beyond the catalogue's sourced grades; brief research/44 X-02]", tag: 'ENG' },
     ],
     bands: {
       refSeverity: 1,

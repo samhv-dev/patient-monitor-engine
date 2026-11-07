@@ -11,7 +11,7 @@ import { HOOKS, NEVER, pacerLowerRate, pushPending, type RhythmCtx, type RhythmS
 import type { PacerFault } from '../../types.ts';
 
 export const DEFAULT_AV_DELAY_MS = 160; // DDD AV delay 120–200 ms (brief §5)
-const PACED_P_DELAY_S = 0.01; // atrial capture latency [ENG]
+const PACED_P_DELAY_S = 0.01; // atrial capture latency [ENG: device]
 
 export interface PacerState {
   nextA: number;

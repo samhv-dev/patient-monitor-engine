@@ -5,7 +5,7 @@ export function defaultArtefact(): ArtefactSpec {
   return { noise: 1, wander: 0, mains: 0, emg: 0, shiver: 0, motion: 0, leadOff: false, electrosurgery: null, cpr: null, shock: null };
 }
 
-/** Default modifiers (brief §5 defaults; awake-adult HRV per §4.1; K 4.2 mmol/L and 37 °C are textbook normals [ENG]). */
+/** Default modifiers (brief §5 defaults; awake-adult HRV per §4.1; K 4.2 mmol/L and 37 °C are textbook normals [TXT]). */
 export function defaultModifiers(): Modifiers {
   return {
     pvc: null, pac: null, pjc: null,

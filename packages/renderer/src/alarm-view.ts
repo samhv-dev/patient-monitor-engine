@@ -5,7 +5,7 @@ import type { AlarmEntry, EngineEvent, NumericId } from '@pme/engine-core';
 import type { LampStyle, ResolvedSkin, TileParam } from '@pme/skins';
 
 export type AlarmStatus = Extract<EngineEvent, { type: 'alarmStatus' }>;
-/** Same-level messages rotate every this many seconds (brief §6.4.1 "messages rotate") [ENG]. */
+/** Same-level messages rotate every this many seconds (brief §6.4.1 "messages rotate") [ENG: display]. */
 export const ROTATE_S = 2;
 /** The skin's rotation period (saadat-like 6 s, research/34 §2), else ROTATE_S. */
 export function rotateS(r: ResolvedSkin): number {

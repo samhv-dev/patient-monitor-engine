@@ -7,7 +7,7 @@
 // §4.3 — the skins match their vendors). The MANUAL CVP tracker (l2/hemo/pipeline.ts, "cvpNow") holds the RA pressure
 // minus the WHOLE pleural rise at the instructor's CVP, so the displayed CVP rises by T_IT (0.65 since the R44 PPV
 // calibration) of the alveolar pressure, where the tables' Q28 default 0.4 is the brief's "30–50 % of the mean-airway-
-// pressure change" (brief §4.9; tables H10: PEEP 5 → 15 gives CVP +2–3 [ENG]). The mechanism (a MANUAL_CVP_PAW_FRACTION
+// pressure change" (brief §4.9; tables H10: PEEP 5 → 15 gives CVP +2–3 [FIT: tables H10 CVP +2–3 per PEEP 10; brief research/44 X-18]). The mechanism (a MANUAL_CVP_PAW_FRACTION
 // of 0.4) meets both bands below (step 2.99, soak max 8.76, 0 raises/h) but moves five calibrated bands (check 18's
 // MAP-65 premise 64.4 → 72.4 and hypocapnia 0.374 → 0.437; the 7c OLV re-check nadir 88.5 → 87.5; R36 PH-crisis EtCO2
 // +6.8 → +3.8; the 8a capture-match SBP 126.4 → 121.4) — a ruling, not an executor's call. Until then: it.fails.

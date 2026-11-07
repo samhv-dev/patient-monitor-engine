@@ -11,7 +11,7 @@ import { V0_RECRUIT_MAX_ML_KG } from './baroreflex.ts';
  * reservoir (≈ 1 L in an adult; Guyton, Magder 2016) — the same physiological bound as the reflexes' recruitment. */
 export const BETA_V0_MAX_ML_KG = V0_RECRUIT_MAX_ML_KG;
 /** β-agonists with a venous (β2) action and their EC50, in the bus's rate-equivalent unit (µg/kg/min): dobutamine's
- * inotropic EC50 from tables §6.2 [ENG: the same EC50 for the venous action]. */
+ * inotropic EC50 from tables §6.2 [FIT: the same EC50 for the venous action; brief research/44 L2-29]. */
 export const BETA_V0_AGENTS: Readonly<Record<string, number>> = { dobutamine: 7 };
 
 /** β venous potency units Σ Ce/EC50 over the listed agents on the drug bus. */

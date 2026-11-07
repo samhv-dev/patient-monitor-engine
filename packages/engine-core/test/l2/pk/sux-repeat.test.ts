@@ -1,5 +1,5 @@
 // FU-4 G7/F10 (Task 18f): the repeat-succinylcholine bradyarrhythmia is a seeded RISK on the `outcome` stream, not a
-// certainty — commoner in children (SUX_REPEAT_P_CHILD 0.7 vs SUX_REPEAT_P 0.35 [ENG]; Miller ch. 23), none when an
+// certainty — commoner in children (SUX_REPEAT_P_CHILD 0.7 vs SUX_REPEAT_P 0.35 [FIT: succinylcholine repeat-dose probability; brief research/44 L2-27]; Miller ch. 23), none when an
 // anticholinergic already occupies the muscarinic receptors, one draw per repeat dose. Three seeds (the scenario
 // suite) cannot tell 0.35 from 0.7, so the RATE is asserted here over 40 seeds.
 import { describe, expect, it } from 'vitest';
