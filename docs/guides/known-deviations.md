@@ -321,7 +321,8 @@ and uploaded the committed report as its artefact. The runs that measured, 2026-
 Pulse directory (the three oracle rows are skipped, so not red), the heart-rate harness fix of 2026-10-27 took four
 rows out of red (s4 class III and IV, t16 HR, t17a HR), and it put one in (t17b SBP). A local run on main `3f44820a`
 reproduces the 11 non-morphology rows of 2 November exactly. The waveform-regression rows are re-recorded (below);
-the other 16 wait on an owner ruling, written up in the brief-73 pull request with options:
+the other 16 wait on an owner ruling, written up in the brief-73 pull request with options (since brief 84 they are set
+to their sources or recorded as expected failures: "Validation gate: expected failures", below):
 - **s9 EtCO2 < 5 within 30 s (83 s):** no source gives the 30 s. research 03 §4.4 says "over a few breaths", §8.8
   gives a washout τ ≈ 0.5 min, and Falk 1988 found ≈ 3 ± 3 mmHg within one minute. The row passed (18 s) until PR #25
   (FU-4 G4, the 70-s lag: never below 5 in 120 s). Since PR #47 (FU-7.1 B3, the alveolar washout; owner ruling
@@ -452,6 +453,44 @@ Groups, in short:
 | 🟡 | segments | t20-low-flow-oliguria/on-dobutamine/map | 84.2 | 68.0–76.0 | tables §7 20: MAP 72 on dobutamine |
 | 🟡 | segments | t24-edmark-fio2-0.8/apnoea/t90 | 377 | 242–364 | tables §7 24: 303 s ±20 % |
 | 🟡 | segments | t24-edmark-fio2-0.6/apnoea/t90 | 261 | 170–256 | tables §7 24: 213 s ±20 % |
+
+## Validation gate: expected failures (brief 84, 2026-11-08)
+
+The validation workflow gates again. A red row that waits on a named mechanism carries an expected-failure mark in its
+suite (`expectedMiss`: the id below, the mechanism, the date, the value when marked); the report shows it as 🟣, in its
+own count, never as green, and its band is unchanged. `pnpm validate` fails on any red row without a mark and on any
+marked row that meets its band, so a landed mechanism forces its mark off. The ids live in
+`packages/validation/src/report/expected-ids.ts`; audit ids are those of `docs/review-inputs/research/44-physiology-compromise-audit.md`.
+Measured locally on this branch (all suites; PWDB refused with 403, so the pwdb-rise band is not graded).
+
+| Id | Mechanism | Rows (measured when marked, 2026-11-08) | Audit |
+|---|---|---|---|
+| A: electromechanical delay and transit time, wave reflection (stage) | sourced EMD and aorta → radial transit; radial incisura after valve closure (wave reflection in place of the 5 Hz resonator trough) | V1 · HR 50–70 (104 vs recorded 190, band 170–210); V1-lit · all / vitaldb / mghdb (102 / 104 / 95, band 150–220); V2 · HR 90–110 / 70–90 / 50–70 (270 / 282 / 284, bands 408–448 / 464–504 / 498–538) | V-01, V-02, DEV-04 |
+| B: pleth shape (mechanism) | the finger pulse shape | V3-shape · all / vitaldb / mghdb (r 0.41 / 0.40 / 0.48, band 0.80–1.00) | X-14, DEV-04 |
+| D: RV diastolic/pericardial mechanics (mechanism brief) | RV dilation under pericardial constraint, ventricular interdependence | t15 rest CVP 6.8 (14–18), PCWP 3.3 (8–12) | V-11 |
+| E: septic time course and fluid-refractory vasoplegia (mechanism brief) | onset over hours (the condition's τ 600 s is an [ENG] compression, kept for now); vasoplegia whose depth matches the source | t16-septic-shock-state MAP 17.4 (49–60) | V-12 |
+| F: preload-fixed stroke volume at low CVP (mechanism brief) | SV set by preload, so the slower β-blocked heart loses output | t17-bb-contrast SBP(17b)/SBP(17a) 1.063 (< 1), CO(17b)/CO(17a) 1.033 (< 1) | research 46 §F |
+| G: respiratory effort under controlled ventilation (mechanism brief) | drive and effort visible under the ventilator | t25 rr-back 0 s (60–240 s) | DEV-06 |
+| H: pleth reference SV₀ = the settled resting SV (PR #333) | PI reference SV₀ = the patient's settled resting SV | regression sinus-75/pleth (625/625 samples > 2 %, max 10.2 %) | T-17 |
+
+The three cells C, E and F were set to their sourced physiology (research 46):
+- **C, s9 EtCO2 after VF without CPR.** The 0–30 s row had no source and is replaced. True EtCO2 (`breath:etco2True`)
+  < 5 at 2τ ± one breath, τ = V_lung / V̇A from this rig's settings (12 × 500 mL, dead space 150 mL, V_lung 2.2–2.8 L:
+  τ 31–40 s, window 58–85 s): **75.1 s, green**. Displayed EtCO2 < 5 within a capnograph's response of the true value
+  (transport delay ≤ 5 s plus one 5-s breath, so ≤ true + 10 s): **83.0 s against < 85.1, green** (lag 7.9 s). The
+  brief expected the displayed row to fail by ≈ 11 s (PR #327 measured true 72, displayed 83 on `3f44820a`); on this
+  branch the true crossing is 75.1 s, so it passes and carries no mark (a mark on a passing row would fail the gate).
+- **E, t16 septic shock.** The MAP 55–60 row at 300–600 s had no source for its time and is deleted (the HR 115–130
+  row of that document is unchanged, still amber, 87.4). Two documents in its place, on the source's rig (Garcia 2023:
+  anaesthetised with sevoflurane 2 %, ventilated 12 × 560 mL PEEP 5, maintenance 2 mL/kg/h), read once the ramp is
+  complete (3000–3600 s, ≥ 5τ). Unresuscitated: MAP 88 → 66 at 15–20 min → 41 at 45–50 min, then circulatory arrest
+  from ≈ 3000 s (MAP 17.4 in the window): **red, marked E**. Awake (the old rig, for comparison) the same onset gives
+  MAP 55–60 at 50–65 min, inside 49–60. Resuscitated (2100 mL = 30 mL/kg from 1200 s over 30 min, no vasopressor):
+  MAP 51.8 < 65, **green**: fluid alone does not restore MAP in the engine, as Sepsis-3 requires.
+- **F, t17b β-blocked class III.** The SBP 65–80 band (no primary source) is deleted. Rows that compare 17b with 17a
+  at the same bleed, 900–1800 s: ΔHR(17b)/ΔHR(17a) = (64.4 − 59.3)/(94.2 − 67.6) = 0.19 < 0.6, **green**;
+  SBP 104.1/97.9 = 1.063 and CO 4.02/3.89 L/min = 1.033, both required < 1, **amber, marked F** (SV 62 vs 41 mL at
+  CVP 0.75 vs 0.86 mmHg).
 
 ## Clinical scenario suite results (FU-4)
 

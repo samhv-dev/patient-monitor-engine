@@ -4,7 +4,8 @@
 // MEASURABLE on a build without them (the engine refuses the command, decision 8) and become live as 7a–7g merge.
 // Default tolerance for a stated change is ±15 % (tables §7 header) [ENG]; stated ranges are used as Range targets.
 import type { DocCommand } from '@pme/controller/scenario';
-import type { Segment, Target, ValidationDoc } from '../../src/segments/types.ts';
+import { miss } from '../../src/report/expected-ids.ts';
+import type { CrossTarget, Ref, Segment, Target, ValidationDoc } from '../../src/segments/types.ts';
 
 type Ev = Record<string, unknown>;
 const ev = (event: Ev): DocCommand => ({ type: 'applyEvent', event } as DocCommand);
@@ -37,8 +38,22 @@ function doc(o: {
 const seg = (id: string, fromS: number, toS: number, ...targets: Target[]): Segment => ({ id, fromS, toS, targets });
 const rng = (id: string, series: string, reduce: Target['reduce'], min: number | { segment: string; factor?: number; offset?: number }, max: number | { segment: string; factor?: number; offset?: number }, source: string, extra: Partial<Target> = {}): Target => ({ id, series, reduce, type: 'Range', min, max, source, ...extra }) as Target;
 const gt = (id: string, series: string, reduce: Target['reduce'], value: number | { segment: string; factor?: number; offset?: number }, source: string): Target => ({ id, series, reduce, type: 'GreaterThan', value, source });
-const lt = (id: string, series: string, reduce: Target['reduce'], value: number | { segment: string; factor?: number; offset?: number }, source: string): Target => ({ id, series, reduce, type: 'LessThan', value, source });
+const lt = (id: string, series: string, reduce: Target['reduce'], value: Ref, source: string, extra: Partial<Target> = {}): Target => ({ id, series, reduce, type: 'LessThan', value, source, ...extra }) as Target;
 const base = (id = 'base', fromS = 30, toS = 60) => seg(id, fromS, toS, rng('steady-map', 'state:map', 'mean', 60, 110, 'baseline MAP physiological [ENG]'));
+
+// s9 (brief 84, research 46 §C). After VF with ventilation continued, alveolar CO2 washes out with τ = V_lung / V̇A. The
+// window is computed from this rig's ventilator settings and the sourced lung volume, never from the engine's output:
+// V_lung at end-expiration 2.2–2.8 L (anaesthetised supine adult, FRC 2.0–2.5 L plus 0.2–0.3 L at PEEP 5; Miller 10e
+// ch. 12 pp. 254–264), dead space ≈ 150 mL. From EtCO2 ≈ 37 the true value falls below 5 at ln(37/5) ≈ 2.0 τ.
+const S9_VENT = { rr: 12, vtMl: 500 };
+const S9_WASHOUT = (() => {
+  const va = (S9_VENT.rr * (S9_VENT.vtMl - 150)) / 60; // mL/s
+  const breath = 60 / S9_VENT.rr;
+  const [lo, hi] = [2200 / va, 2800 / va];
+  return { tau: `${lo.toFixed(0)}–${hi.toFixed(0)}`, min: Math.round(2 * lo - breath), max: Math.round(2 * hi + breath) };
+})();
+/** A capnograph's transport delay (2–5 s, sidestream; research 46 §C) at its upper end, plus one breath. */
+const S9_DISPLAY_LAG_S = 5 + 60 / S9_VENT.rr;
 
 const S = 'brief §4.9';
 const T7 = 'tables §7';
@@ -103,11 +118,13 @@ export const SANITY_DOCS: ValidationDoc[] = [
   }),
   doc({
     id: 's9-witnessed-vf', title: 'Witnessed VF, no CPR', source: `${S} check 9 (research 03 §8.8 A); Stage 3 gate`, durationS: 180,
-    actions: [at(0, ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 })), at(60, { type: 'setRhythm', rhythm: 'vfCoarse', when: 'now' } as DocCommand)],
+    actions: [at(0, ev({ kind: 'ventilation', source: 'ventilator', rr: S9_VENT.rr, vtMl: S9_VENT.vtMl, fio2: 0.5, peep: 5 })), at(60, { type: 'setRhythm', rhythm: 'vfCoarse', when: 'now' } as DocCommand)],
     segments: [seg('base', 30, 60, rng('et0', 'numeric:etco2', 'mean', 30, 45, 'normocapnia [ENG]')),
       seg('arrest', 60, 180,
         rng('abp-flat', 'numeric:abpSys', 'firstTBelow', 0, 20, 'Stage 2 acc. 6: pulseless → flat (displayed ABP < 20) within 20 s', { threshold: 20 }),
-        rng('etco2-gone', 'numeric:etco2', 'firstTBelow', 0, 30, 'Stage 3: EtCO2 < 5 within 30 s', { threshold: 5 }))],
+        // Brief 84 / research 46 §C: the 0–30 s row ("Stage 3") had no source and is replaced by the washout it implies.
+        rng('etco2-true-gone', 'breath:etco2True', 'firstTBelow', S9_WASHOUT.min, S9_WASHOUT.max, `research 46 §C: true EtCO2 < 5 at 2τ ± one breath, τ = V_lung / V̇A = ${S9_WASHOUT.tau} s on this rig (V_lung 2.2–2.8 L, Miller 10e ch. 12; V̇A = RR × (VT − 150 mL)); Falk 1988, Gudipati 1988`, { threshold: 5 }),
+        lt('etco2-shown-lag', 'numeric:etco2', 'firstTBelow', { segment: 'arrest', series: 'breath:etco2True', offset: S9_DISPLAY_LAG_S }, `research 46 §C: displayed EtCO2 < 5 within a capnograph's response of the true value: transport delay ≤ 5 s plus one breath (${60 / S9_VENT.rr} s); Miller 10e ch. 37 p. 1164, ISO 80601-2-55`, { threshold: 5 }))],
   }),
   // --- tables §7 checks 10–25 (Stage 7) -----------------------------------------------------------------------
   doc({
@@ -144,13 +161,31 @@ export const SANITY_DOCS: ValidationDoc[] = [
   doc({
     id: 't15-rv-infarct', title: 'RV infarct (inferior STEMI, Ees_RV ×0.35)', source: `${T7} 15`, durationS: 300, mode: 'modeled', requires: ['7a'],
     actions: [at(0, ev({ kind: 'condition', id: 'rvInfarct', severity: 1 }))],
-    segments: [seg('rest', 120, 300, rng('cvp', 'state:cvp', 'mean', 14, 18, `${T7} 15: CVP 14–18`), rng('pawp', 'state:pawp', 'mean', 8, 12, `${T7} 15: PCWP 8–12`), rng('map', 'state:map', 'mean', 60, 70, `${T7} 15: MAP 60–70`))],
+    segments: [seg('rest', 120, 300, rng('cvp', 'state:cvp', 'mean', 14, 18, `${T7} 15: CVP 14–18`, { expectedMiss: miss('D', '2026-11-08', 'CVP 6.8') }), rng('pawp', 'state:pawp', 'mean', 8, 12, `${T7} 15: PCWP 8–12`, { expectedMiss: miss('D', '2026-11-08', 'PCWP 3.3') }), rng('map', 'state:map', 'mean', 60, 70, `${T7} 15: MAP 60–70`))],
   }),
   doc({
     id: 't16-septic-shock-warm', title: 'Septic shock, warm phase', source: `${T7} 16`, durationS: 600, mode: 'modeled', requires: ['7f'],
     actions: [at(0, ev({ kind: 'condition', id: 'sepsis', severity: 1, phase: 'warm' }))],
-    segments: [seg('warm', 300, 600, rng('map', 'state:map', 'mean', 55, 60, `${T7} 16: MAP 55–60`), rng('hr', 'state:hr', 'mean', 115, 130, `${T7} 16: HR 115–130`))],
+    // Brief 84: the MAP 55–60 row at 300–600 s had no source for its time and is replaced by the state rows below; the HR
+    // row is kept as it was (its window has the same problem, audit V-12, outside brief 84).
+    segments: [seg('warm', 300, 600, rng('hr', 'state:hr', 'mean', 115, 130, `${T7} 16: HR 115–130`))],
   }),
+  // Brief 84 / research 46 §E: septic shock is a state. The rig follows the source (Garcia 2023): anaesthetised (sevoflurane),
+  // ventilated (8 mL/kg, PEEP 5), maintenance fluid 2 mL/kg/h only. The condition keeps its present onset (τ 600 s, an [ENG]
+  // compression of an onset the sources put at hours; expected deviation E), so the state is read once the ramp is complete
+  // (≥ 5 τ = 3000 s).
+  ...([['state', false], ['fluid', true]] as const).map(([k, fluid]) => doc({
+    id: `t16-septic-shock-${k}`, title: fluid ? 'Septic shock, 30 mL/kg crystalloid, no vasopressor' : 'Septic shock, established, unresuscitated', source: `${T7} 16; research 46 §E`, durationS: 3600, mode: 'modeled', requires: ['7f'],
+    actions: [at(0, ev({ kind: 'airwayDevice', device: 'ett' })), at(0, ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 560, fio2: 0.5, peep: 5 })),
+      at(0, ev({ kind: 'vaporiser', agent: 'sevoflurane', dialPct: 2 })), at(0, ev({ kind: 'thermal', anaesthesia: 'general' })),
+      at(0, ev({ kind: 'fluid', fluid: 'crystalloid', volumeMl: 140, overS: 3600 })), // 2 mL/kg/h × 70 kg for the hour
+      at(0, ev({ kind: 'condition', id: 'sepsis', severity: 1, phase: 'warm' })),
+      // 30 mL/kg (2100 mL) over 30 min once MAP is below 65 (≈ 1200 s here), the Sepsis-3 "volume repletion"
+      ...(fluid ? [at(1200, ev({ kind: 'fluid', fluid: 'crystalloid', volumeMl: 2100, overS: 1800 }))] : [])],
+    segments: [fluid
+      ? seg('after-fluid', 3000, 3600, lt('map', 'state:map', 'mean', 65, 'research 46 §E: after 30 mL/kg and no vasopressor MAP stays < 65 (Sepsis-3, Singer 2016)'))
+      : seg('established', 3000, 3600, rng('map', 'state:map', 'mean', 49, 60, 'research 46 §E: established septic shock, unresuscitated, anaesthetised, ventilated: MAP 49–60 (Garcia 2023, control IQR at 4 h)', { expectedMiss: miss('E', '2026-11-08', 'MAP 17.4 at 3000–3600 s: 40.9 at 2700–3000 s, then circulatory arrest from ≈ 3000 s') }))],
+  })),
   doc({
     id: 't17a-class3-no-bb', title: 'Class III haemorrhage (35 %), no β-blocker', source: `${T7} 17a`, durationS: 1800, mode: 'modeled', requires: ['7a', '7c'],
     actions: [at(60, ev({ kind: 'bleed', volumeMl: 1750, overS: 600 }))],
@@ -160,7 +195,9 @@ export const SANITY_DOCS: ValidationDoc[] = [
     id: 't17b-class3-bb', title: 'Class III haemorrhage, chronic β-blocker', source: `${T7} 17b`, durationS: 1800, mode: 'modeled', requires: ['7a', '7c', '7g'],
     patient: { profile: { conditions: [{ id: 'betaBlocked' }] } },
     actions: [at(60, ev({ kind: 'bleed', volumeMl: 1750, overS: 600 }))],
-    segments: [seg('late', 900, 1800, rng('hr', 'state:hr', 'mean', 80, 95, `${T7} 17b: HR 80–95`), rng('sbp', 'state:sbp', 'mean', 65, 80, `${T7} 17b: SBP 65–80`))],
+    // Brief 84 / research 46 §F: the SBP 65–80 band had no primary source and is deleted; the two rows that compare
+    // this run with t17a at the same bleed (SANITY_CROSS) take its place.
+    segments: [seg('late', 900, 1800, rng('hr', 'state:hr', 'mean', 80, 95, `${T7} 17b: HR 80–95`))],
   }),
   doc({
     id: 't18-htn-hypocapnia-cbf', title: 'Hypertensive 75 y at MAP 65, PaCO2 40 → 25', source: `${T7} 18`, durationS: 600, mode: 'modeled', requires: ['7d'],
@@ -207,7 +244,7 @@ export const SANITY_DOCS: ValidationDoc[] = [
     actions: [at(0, ev({ kind: 'airwayDevice', device: 'ett' })), at(0, ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 })),
       at(60, ev({ kind: 'drug', drugId: 'rocuronium', dose: 0.6, unit: 'mg/kg' })), at(1800, ev({ kind: 'drug', drugId: 'sugammadex', dose: 2, unit: 'mg/kg' })),
       at(1800, ev({ kind: 'ventilation', source: 'spontaneous' }))],
-    segments: [seg('recovery', 1800, 2400, rng('rr-back', 'state:rr', 'firstTAbove', 60, 240, `${T7} 25: spontaneous effort returns within ≈ 2.2 min of sugammadex [ENG]`, { threshold: 4 }))],
+    segments: [seg('recovery', 1800, 2400, rng('rr-back', 'state:rr', 'firstTAbove', 60, 240, `${T7} 25: spontaneous effort returns within ≈ 2.2 min of sugammadex [ENG]`, { threshold: 4, expectedMiss: miss('G', '2026-11-08', '0 s') }))],
   }),
   doc({
     // FU-4 (G-FU3 ruling 4): the stress document — the same paralysis NEVER ventilated must end in an arrest (FU-3 Task 5,
@@ -221,4 +258,28 @@ export const SANITY_DOCS: ValidationDoc[] = [
     actions: [at(60, ev({ kind: 'drug', drugId: 'rocuronium', dose: 0.6, unit: 'mg/kg' }))],
     segments: [seg('arrest', 60, 1800, rng('sbp-collapse', 'state:sbp', 'firstTBelow', 300, 1200, 'asphyxial arrest 5–20 min after the dose [P: DeBehnke 1995; Varvarousi 2011]', { threshold: 30 }))],
   }),
+];
+
+// t17a against t17b at the same bleed (brief 84, research 46 §F): each arm's own baseline is 30–60 s (the bleed starts
+// at 60 s), the late window 900–1800 s as in both documents.
+const T17 = ['t17a-class3-no-bb', 't17b-class3-bb'];
+const late = (m: Parameters<CrossTarget['measure']>[0], doc: string, series: string) => m(doc, series, 900, 1800);
+export const SANITY_CROSS: CrossTarget[] = [
+  {
+    doc: 't17-bb-contrast', segment: 'late', target: 'hr-response-ratio', docs: T17, type: 'LessThan', value: 0.6,
+    source: 'research 46 §F: β-blockade blunts the reflex tachycardia, ΔHR(17b) ≤ 0.6 × ΔHR(17a) from each arm\'s baseline (Bjurstedt 1977: 48 % of control; Kinsky 2008; Havens 2012)',
+    measure: (m) => (late(m, 't17b-class3-bb', 'state:hr') - m('t17b-class3-bb', 'state:hr', 30, 60)) / (late(m, 't17a-class3-no-bb', 'state:hr') - m('t17a-class3-no-bb', 'state:hr', 30, 60)),
+  },
+  {
+    doc: 't17-bb-contrast', segment: 'late', target: 'sbp-ratio', docs: T17, type: 'LessThan', value: 1,
+    source: 'research 46 §F: awake, SBP(17b) ≤ SBP(17a) at the same loss, direction only (Bjurstedt 1977; Convertino 2000)',
+    measure: (m) => late(m, 't17b-class3-bb', 'state:sbp') / late(m, 't17a-class3-no-bb', 'state:sbp'),
+    expectedMiss: miss('F', '2026-11-08', 'SBP 104.1 / 97.9 = 1.063'),
+  },
+  {
+    doc: 't17-bb-contrast', segment: 'late', target: 'co-ratio', docs: T17, type: 'LessThan', value: 1,
+    source: 'research 46 §F: awake, CO(17b) < CO(17a) at the same loss, SV unchanged (Convertino 2000)',
+    measure: (m) => late(m, 't17b-class3-bb', 'circ:co') / late(m, 't17a-class3-no-bb', 'circ:co'),
+    expectedMiss: miss('F', '2026-11-08', 'CO 4.02 / 3.89 L/min = 1.033 (SV 62 vs 41 mL at CVP 0.75 vs 0.86)'),
+  },
 ];

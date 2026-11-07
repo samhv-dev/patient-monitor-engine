@@ -153,7 +153,10 @@ No exported `…State` type in this module.
 | `overBudget` | [`perf/tick-bench.ts`](../../packages/validation/src/perf/tick-bench.ts) | The p99 gate of `perf:ticks --budget-ms` — a reason when the tail is over budget (or not a number), else null. |
 | `compareWave` | [`regression/baseline.ts`](../../packages/validation/src/regression/baseline.ts) | Per-sample 2 % comparison; |
 | `runRegression` | [`regression/baseline.ts`](../../packages/validation/src/regression/baseline.ts) | Compare every case with the committed baseline; |
+| `allRows` | [`report/write.ts`](../../packages/validation/src/report/write.ts) | Every graded row of every suite, in report order. |
+| `gatingFailures` | [`report/write.ts`](../../packages/validation/src/report/write.ts) | What fails the run: |
 | `toClip` | [`review/clips.ts`](../../packages/validation/src/review/clips.ts) | A 10 s clip from the middle of a window, at the engine rate, ECG band-passed like the monitor filter. |
+| `gradeCross` | [`segments/run.ts`](../../packages/validation/src/segments/run.ts) | Grade a row across documents from their runs; |
 | `quantile` | [`stats.ts`](../../packages/validation/src/stats.ts) | Distribution statistics for recorded-vs-generated comparisons (brief §9; |
 | `ksD` | [`stats.ts`](../../packages/validation/src/stats.ts) | Two-sample Kolmogorov–Smirnov statistic D (0 = identical empirical CDFs, 1 = disjoint). |
 | `wasserstein1` | [`stats.ts`](../../packages/validation/src/stats.ts) | 1-Wasserstein (earth mover's) distance between two empirical distributions, in the data's units. |
@@ -171,7 +174,7 @@ No exported `…State` type in this module.
 | `decode16` | [`templates/wfdb.ts`](../../packages/validation/src/templates/wfdb.ts) | Decode format 16 (16-bit little-endian two's complement), interleaved over nSignals. |
 | `parseAnnotations` | [`templates/wfdb.ts`](../../packages/validation/src/templates/wfdb.ts) | Parse an MIT-format annotation file (annot(5)). |
 
-Exported without a doc comment: `provenanceQueue`, `bedsideMarkdown`, `cacheDir`, `readCsv`, `fetchZenodo`, `readManifest`, `writeManifest`, `selectVitaldb`, `selectMghdb`, `parseVital`, `vitaldbSums`, `loadCase`, `capture`, `numericSeries`, `matchedRun`, `capnoAngles`, `hrAveragingError`, `nibpVsAbp`, `paEtGap`, `detectR`, `intervalsOf`, `ppgAbp`, `respVariation`, `computeWindowMetrics`, `ptbxlIntervals`, `engineIntervals`, `measurePairs`, `gradePairs`, `oursDoc`, `pulseDir`, `loadPulse`, `tickBench`, `generate`, `readBaseline`, `writeBaseline`, `hashRun`, `runDeterminism`, `writeGolden`, `calibrationQueue`, `gatingFailures`, `renderMarkdown`, `renderQueue`, `shuffle`, `buildBundle`, `scoreReview`, `scoreMarkdown`, `resolveRef`, `gradeTarget`, `runValidationDoc`, `pearson`, `medianBeat`, `comparePtbxl`, `extractAf`, `extractVf`, `fetchCached`, `sha256`, `fetchVerified`, `writeTemplateModule`.
+Exported without a doc comment: `provenanceQueue`, `bedsideMarkdown`, `cacheDir`, `readCsv`, `fetchZenodo`, `readManifest`, `writeManifest`, `selectVitaldb`, `selectMghdb`, `parseVital`, `vitaldbSums`, `loadCase`, `capture`, `numericSeries`, `matchedRun`, `capnoAngles`, `hrAveragingError`, `nibpVsAbp`, `paEtGap`, `detectR`, `intervalsOf`, `ppgAbp`, `respVariation`, `computeWindowMetrics`, `ptbxlIntervals`, `engineIntervals`, `measurePairs`, `gradePairs`, `oursDoc`, `pulseDir`, `loadPulse`, `tickBench`, `generate`, `readBaseline`, `writeBaseline`, `hashRun`, `runDeterminism`, `writeGolden`, `counts`, `calibrationQueue`, `renderMarkdown`, `renderQueue`, `shuffle`, `buildBundle`, `scoreReview`, `scoreMarkdown`, `resolveRef`, `gradeTarget`, `runValidationDoc`, `pearson`, `medianBeat`, `comparePtbxl`, `extractAf`, `extractVf`, `fetchCached`, `sha256`, `fetchVerified`, `writeTemplateModule`.
 
 ## Source files
 
@@ -217,6 +220,7 @@ Exported without a doc comment: `provenanceQueue`, `bedsideMarkdown`, `cacheDir`
 | [`perf/tick-bench.ts`](../../packages/validation/src/perf/tick-bench.ts) | Worker tick-time percentiles, measured in Node on the same engine code the worker runs (the worker has no timing hook and the validation harness may not add one). |
 | [`regression/baseline.ts`](../../packages/validation/src/regression/baseline.ts) | Waveform regression baselines (N-P02): fixed scenarios, 5 s windows per channel, compared sample by sample with a 2 % limit. |
 | [`regression/determinism.ts`](../../packages/validation/src/regression/determinism.ts) | V9 determinism (brief §9): SHA-256 of the sample buffers for rhythms × seeds × 60 s. |
+| [`report/expected-ids.ts`](../../packages/validation/src/report/expected-ids.ts) | The ids of the validation gate's expected failures (brief 84): one per missing mechanism, each the row of docs/guides/known-deviations.md "Validation gate: expected failures" that names it. |
 | [`report/types.ts`](../../packages/validation/src/report/types.ts) | The report of one `pnpm validate` run (docs/validation/report.json); report.md is rendered from it. |
 | [`report/write.ts`](../../packages/validation/src/report/write.ts) | report.md + report.json + calibration-queue.md (brief §9; the calibration queue lists every row that fell outside its band, for the calibration pass). |
 | [`review/cli-clips.ts`](../../packages/validation/src/review/cli-clips.ts) | Entry-only: pnpm --filter @pme/validation review:build [--per-channel 20] Writes <cache>/review/<session>/bundle.json (open it in validation-review.html) and key.json (keep it away from raters). |

@@ -5,15 +5,20 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { ChannelId, Command } from '@pme/engine-core';
 import { capture, clinical, cmd } from '../engine/capture.ts';
-import type { Grade } from '../segments/types.ts';
+import type { ExpectedMiss, Grade } from '../segments/types.ts';
+import { miss } from '../report/expected-ids.ts';
 
 export const REL_LIMIT = 0.02;
 export const FLOOR_FRAC_PP = 0.05;
 export const WINDOW: [number, number] = [40, 45];
 
-export interface BaselineCase { id: string; seed: number; patient: Record<string, unknown>; script: Array<{ t: number; cmd: Command }>; channels: ChannelId[] }
+export interface BaselineCase {
+  id: string; seed: number; patient: Record<string, unknown>; script: Array<{ t: number; cmd: Command }>; channels: ChannelId[];
+  /** Expected misses by channel (brief 84): the baseline is unchanged, the row is reported as an expected failure. */
+  expectedMiss?: Partial<Record<ChannelId, ExpectedMiss>>;
+}
 export const CASES: BaselineCase[] = [
-  { id: 'sinus-75', seed: 42, patient: { baseline: { hr: 75 }, sensors: { abp: 'connected', spo2: 'on', co2: 'on' } }, script: [{ t: 0, cmd: clinical({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 }) }], channels: ['ecgII', 'V5', 'abp', 'pleth', 'co2'] },
+  { id: 'sinus-75', seed: 42, patient: { baseline: { hr: 75 }, sensors: { abp: 'connected', spo2: 'on', co2: 'on' } }, script: [{ t: 0, cmd: clinical({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 }) }], channels: ['ecgII', 'V5', 'abp', 'pleth', 'co2'], expectedMiss: { pleth: miss('H', '2026-11-08', '625/625 samples > 2 %, max 10.2 %') } },
   { id: 'afib-110', seed: 42, patient: { baseline: { hr: 110 }, rhythm: { id: 'afib' }, sensors: { abp: 'connected', spo2: 'on' } }, script: [], channels: ['ecgII', 'abp', 'pleth'] },
   { id: 'vf-coarse', seed: 42, patient: { rhythm: { id: 'vfCoarse' }, sensors: { abp: 'connected' } }, script: [], channels: ['ecgII', 'abp'] },
   { id: 'bronchospasm', seed: 42, patient: { sensors: { co2: 'on' } }, script: [{ t: 0, cmd: clinical({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 }) }, { t: 5, cmd: clinical({ kind: 'airway', state: 'bronchospasm', severity: 0.8 }) }], channels: ['co2'] },
@@ -28,7 +33,7 @@ export async function generate(c: BaselineCase): Promise<Record<string, number[]
   return Object.fromEntries(c.channels.map((ch) => [ch, Array.from(cap.channels[ch]?.x ?? [], (v) => Math.round(v * 1e4) / 1e4)]));
 }
 
-export interface WaveCompare { case: string; channel: string; n: number; failed: number; maxRelErr: number; rms: number; grade: Grade }
+export interface WaveCompare { case: string; channel: string; n: number; failed: number; maxRelErr: number; rms: number; grade: Grade; expectedMiss?: ExpectedMiss }
 
 /** Per-sample 2 % comparison; green = every sample within, yellow ≤ 1 % of samples outside, else red. */
 export function compareWave(caseId: string, channel: string, base: number[], now: ArrayLike<number>): WaveCompare {
@@ -76,6 +81,12 @@ export async function runRegression(opts: { rebaseline?: boolean } = {}): Promis
     return [];
   }
   const out: WaveCompare[] = [];
-  for (const c of CASES) for (const ch of c.channels) out.push(compareWave(c.id, ch, base[c.id]?.[ch] ?? [], cur[c.id]?.[ch] ?? []));
+  for (const c of CASES) {
+    for (const ch of c.channels) {
+      const w = compareWave(c.id, ch, base[c.id]?.[ch] ?? [], cur[c.id]?.[ch] ?? []);
+      const x = c.expectedMiss?.[ch];
+      out.push(x ? { ...w, expectedMiss: x } : w);
+    }
+  }
   return out;
 }
