@@ -1,7 +1,11 @@
 # The mechanism tree: the coupling tree of any trigger, forward and backward, static and live — Implementation Plan
 
-**STATUS: DRAFT FOR REVIEW (2026-11-07). NOT READY TO BUILD.** Nothing here is ruled until the owner answers §10 (each
-question carries the option the plan proposes and uses as its default) and the orchestrator reviews the pieces. Written
+**STATUS: READY TO BUILD (2026-11-08).** The owner ruled on 8 November 2026: every proposal in §10 stands as written
+(Q1 a with b as the CI check · Q2 a · Q3 a · Q4 a · Q5 the defaults as placeholders · Q6 a · Q7 a · Q8 the six triggers ·
+Q9 a · Q10 as stated · Q11 a · Q12 `#/explore/mechanisms` · Q13 as stated · Q14 a · Q15 a), and the §10.1 placeholders keep
+their plan defaults until use sets them. Pieces build in the order of §8, small pieces first per the owner's ruling of
+7 November (R0 and R1 before the larger ones). Before the ruling this read: DRAFT FOR REVIEW (2026-11-07). Nothing here
+was ruled until the owner answered §10 (each question carried the option the plan proposed and used as its default). Written
 by a planning executor from brief 80 of the post-demo set, against `origin/main` **563e32d5** (Merge PR #331,
 `retire-v1-pr4-kit-suites`), read in the worktree `scratch/wt-plan-mechanism-tree` (branch `plan-mechanism-tree`).
 Every `file:line` below was read at that commit and is a starting point only: an executor finds the code by the name
