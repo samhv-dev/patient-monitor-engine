@@ -102,7 +102,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   const objectives = await view.locator('#db-objectives li').evaluateAll((li) => li.map((x) => [x.getAttribute('data-status'), x.querySelector('.db-mark')?.textContent]));
   expect(objectives).toEqual([['not assessable', '– Not assessable'], ['met', '✓ Observed'], ['not met', '✗ Not observed']]); // E42–E44
   await expect(view.locator('#db-objectives li').nth(1)).toContainText(/Epinephrine \d+ s after the state "Anaphylaxis" \(01:0\d → 01:\d\d; within 2 min 00 s asked\)/);
-  await expect(view.locator('.db-chart svg')).toHaveCount(6);
+  await expect(view.locator('.db-chart svg')).toHaveCount(7); // the six trends and the Pressures panel (brief 63): this run keeps the pressures
   // IP8: the card's steps — the button pressed on the kept course is a taken step (the undone first course is not read)
   await expect(view.locator('#db-steps tbody tr[data-status=taken]')).toHaveText([/^Anaphylaxis · 01:0\d\s*1\s*Give epinephrine 100 µg\s*01:\d\d \(1\)\s*✓ taken$/]);
   // redesign B (B6 b): key times and key moments on this run
@@ -244,6 +244,7 @@ test('a free run prints in at most four pages; its export is pme-debrief/2', { t
   await expect(view.locator('#db-pearls .db-pearl')).toHaveCount(4);
   await expect(view.locator('#db-moments')).toHaveCount(0); // B6 (d): no key moment, no page break for them
   await expect(view.locator('#db-steps')).toHaveCount(0); // IP8: no card, no steps section
+  await expect(view.locator('#db-trends figure[data-trend=pressures] path[data-p]'), 'brief 63: the Pressures panel, SBP, DBP and CVP').toHaveCount(3);
   const [dl] = await Promise.all([page.waitForEvent('download'), view.getByRole('button', { name: 'Download the record (JSON)' }).click()]);
   const json = readFileSync(await dl.path(), 'utf8');
   const j = JSON.parse(json) as { schema: string; keyTimes: unknown[]; keyMoments: unknown[] };
@@ -651,4 +652,63 @@ test('D5: Recognised pressed on a free run at ≈ 30 s: the Debrief shows the ti
   await expect(row).toHaveCount(1);
   await expect(row.locator('td').nth(1)).toHaveText(mmss);
   await expect(row.locator('td').nth(3)).toHaveText('Recognised (instructor)');
+});
+
+// D9 on the MH card's recorded run: "From the card's author" on page 2 after the key moments, whole on its page, the
+// card's strings printed as written; page 2 measured in print media at the 182 mm content width without and with the
+// block (the swimlane's top to the end of the measured facts), and the learner handout unchanged. Test strings of the
+// drafts' length (four lines, four openers), not card text: no card carries debriefHints until the owner has accepted
+// its lines (D10).
+test('D9: the card author\'s hints on page 2 of the MH run, whole, the handout unchanged', async ({ page, browserName }) => {
+  test.setTimeout(90_000);
+  await showRecorded(page, MH_RUN, MH);
+  const view = page.locator('[data-view=debrief]');
+  await expect(view.locator('#db-hints')).toHaveCount(0);
+  await page.emulateMedia({ media: 'print' });
+  await printFontLoaded(page);
+  const page2 = () => page.evaluate((mm) => {
+    const r = (s: string) => (document.querySelector(s) as Element).getBoundingClientRect();
+    const hints = document.querySelector('#db-hints');
+    return { page2: (r('#db-facts').bottom - r('#db-swimlane').top) / mm, hints: hints ? hints.getBoundingClientRect().height / mm : 0,
+      breakInside: hints ? getComputedStyle(hints).breakInside : '', labelFont: [...document.querySelectorAll('#db-hints .db-hint-at')].map((x) => getComputedStyle(x).fontFamily), prev: hints?.previousElementSibling?.id ?? '', handout: (document.querySelector('#db-handout') as HTMLElement).innerHTML };
+  }, MM);
+  const before = await page2();
+  const pagesBefore = browserName === 'chromium' ? pdfInfo(await page.pdf({ preferCSSPageSize: true, printBackground: false })).boxes.length : 0;
+  const show = [
+    'Line one of four, about as long as a drafted line: a sign on the monitor and what it should make the team think of early.',
+    'Line two: the first steps of the crisis in the order the card asks for them, with the window the record reads them against.',
+    'Line three: what to keep doing until the value stays down, and what to do again if it climbs back at normal ventilation.',
+    'Line four: the laboratory value to treat and the window the card gives for it, as the objective states them.',
+  ];
+  const openers = [
+    { at: 'drug:succinylcholine', text: 'Opener one: what did that sign mean to you, and what did you plan?' },
+    { at: 'state:earlySigns', text: 'Opener two: when did you first notice it, and what did you think it was?' },
+    { at: 'state:triggerOff', text: 'Opener three: who did what in the first minute?' },
+    { at: 'state:arrest', text: 'Opener four: an anchor this run never reaches.' },
+  ];
+  await page.evaluate((h) => {
+    const app = (window as unknown as { __pmeApp: { session: { record: { data: { doc: Record<string, unknown> } } } } }).__pmeApp;
+    app.session.record.data = { ...app.session.record.data, doc: { ...app.session.record.data.doc, debriefHints: h } };
+    location.hash = '#/teach';
+  }, { show, openers });
+  await page.waitForTimeout(300);
+  await page.evaluate(() => (location.hash = '#/debrief'));
+  await expect(view.locator('#db-hints')).toBeVisible();
+  await expect(view.locator('#db-hints .db-hint-show li')).toHaveText(show);
+  await expect(view.locator('#db-hints .db-hint-text')).toHaveText(openers.slice(0, 3).map((o) => o.text));
+  await expect(view.locator('#db-hints .db-hint-left')).toHaveText('1 opener not shown: its event did not happen in this run');
+  const after = await page2();
+  test.info().annotations.push({ type: 'D9 MH page 2 (mm)', description: `without hints ${before.page2.toFixed(1)}, with ${after.page2.toFixed(1)} (the block ${after.hints.toFixed(1)})` });
+  expect(after.prev, 'after the key moments').toBe('db-moments');
+  expect(after.breakInside, 'whole on its page').toBe('avoid');
+  // the opener's time label stays in the bundled print font (the app-wide .num class would set system-ui, taller on Linux)
+  expect(after.labelFont, "the labels' print font").toHaveLength(3);
+  for (const f of after.labelFont) expect(f.split(',')[0]?.replace(/["']/g, '').trim(), "a label's print font").toBe('Inter Print');
+  expect(after.handout, 'the learner handout unchanged').toBe(before.handout);
+  if (browserName === 'chromium') {
+    const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    mkdirSync(out, { recursive: true });
+    writeFileSync(`${out}/debrief-d9-mh-hints.pdf`, pdf);
+    test.info().annotations.push({ type: 'D9 MH pages', description: `without hints ${pagesBefore}, with ${pdfInfo(pdf).boxes.length}` });
+  }
 });
