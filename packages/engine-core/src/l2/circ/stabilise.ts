@@ -28,7 +28,9 @@ export interface Stabilised {
   params: CircParams;
   ledger: LedgerRow[];
   converged: boolean;
-  /** Resting per-beat reference values (for the coronary demand normalisation and the tests). */
+  /** Resting per-beat reference values (for the coronary demand normalisation and the tests). `sv` is the BARE circuit's
+   * at the profile's targets and a constant pleural pressure — NOT the patient's settled rest in the running engine,
+   * which the pleth's SV₀ is (engine.ts REST_AVG_S says why the two differ). */
   ref: { hr: number; sbp: number; dbp: number; map: number; cvp: number; lvedv: number; lvedp: number; lvsp: number; sv: number; co: number; pcwp: number };
 }
 
