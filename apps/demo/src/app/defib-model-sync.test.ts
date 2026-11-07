@@ -5,7 +5,10 @@
 // that skin's 200 J default. With the room's model set by the HOST (`device defib model generic`, which every follower
 // replays), the window's spec is the model's whatever its skin. Same rig as R0: the real engines and the real ViewerSync
 // over an in-process hub, VF, a charge, the shock, then demand pacing at the defaults. PME_R5A_OUT=<file> writes the
-// measurement (before = no model, after = the model) as JSON for the orchestrator's gate.
+// measurement (before = no model, after = the model) as JSON for the orchestrator's gate. Row 58 (research/41, owner's
+// ruling of 6 November): the PACER follows the model too, so R0's last divergence (the LIFEPAK-like window pacing at
+// 25 % of the rate through PAUSE where the host is at 0 mA, and its HR dashes) is an equality as well; PME_R58_OUT=<file>
+// writes the same measurement for that gate.
 import { writeFileSync } from 'node:fs';
 import { ControllerSession, createInProcessHub, HostSession, ViewerSync, type ViewerTarget } from '@pme/controller';
 import { createEngine, type Command, type EngineEvent, type MonitorEngine } from '@pme/engine-core';
@@ -102,7 +105,7 @@ async function measure(o: Run) {
   await r.run(8);
   const ecgPacing = ecgDiff(r.he, r.ve, 6);
   const pacer = { host: r.statuses.host.at(-1)?.pacer ?? null, window: r.statuses.window.at(-1)?.pacer ?? null };
-  // as R0: 80 mA (capture, so the beats compare), then PAUSE (the pacer's spec stays the skin's: not ruled)
+  // as R0: 80 mA (capture, so the beats compare), then PAUSE (the model's pause behaviour when one is set, row 58)
   await r.ctl.send({ type: 'applyEvent', event: { kind: 'pacer', action: 'set', mode: 'demand', mA: 80 } });
   await r.run(6);
   const ecgCapture = ecgDiff(r.he, r.ve, 4);
@@ -141,8 +144,9 @@ type M = Awaited<ReturnType<typeof measure>>;
 
 const results: M[] = [];
 afterAll(() => {
-  const file = process.env.PME_R5A_OUT;
-  if (file) writeFileSync(file, `${JSON.stringify({ hostSkin: HOST_SKIN, head: process.env.PME_R5A_HEAD ?? null, results }, null, 2)}\n`);
+  for (const file of [process.env.PME_R5A_OUT, process.env.PME_R58_OUT]) {
+    if (file) writeFileSync(file, `${JSON.stringify({ hostSkin: HOST_SKIN, head: process.env.PME_R5A_HEAD ?? null, results }, null, 2)}\n`);
+  }
 });
 
 /** The defibrillator agrees: energy, charge time, READY tick and the shock (time, energy, outcome). */
@@ -164,11 +168,15 @@ const identical = (m: M) => {
 };
 
 describe('R5a acceptance: the room\'s defibrillator model, set by the host, holds on a window of any skin', { timeout: 60_000 }, () => {
-  it('before (no model): a lifepak-like window at 360 J is READY 2.6 s early — R0\'s pinned divergence, reproduced', async () => {
+  it('before (no model): a lifepak-like window at 360 J is READY 2.6 s early, paces at 25 % through PAUSE and dashes HR — R0\'s pinned divergences, reproduced', async () => {
     const m = await measure({ windowSkin: 'lifepak-like', order: 'after', energyJ: 360, model: null });
     results.push(m);
     expect(m.chargeTimeS).toEqual({ host: 12.62, window: 10.02 });
     expect(m.readyTick.window).toBeLessThan(m.readyTick.host as number);
+    expect(m.ecgIIMaxDiff.pacingDefaultMa).toBe(0);
+    expect(m.ecgIIMaxDiff.pacing80Ma).toBe(0);
+    expect(m.ecgIIMaxDiff.pacerPaused).toBeGreaterThan(1);
+    expect(m.hrDashes).toEqual({ host: false, window: true });
   });
   for (const order of ['before', 'after'] as const) {
     for (const energyJ of [undefined, 360]) {
@@ -181,22 +189,16 @@ describe('R5a acceptance: the room\'s defibrillator model, set by the host, hold
       });
     }
   }
-  it('lifepak-like window, skin on after the snapshot, 360 J, model generic: the divergence is an EQUALITY (12.62 s on both, the same READY tick and shock)', async () => {
-    const m = await measure({ windowSkin: 'lifepak-like', order: 'after', energyJ: 360, model: 'generic' });
-    results.push(m);
-    defibEqual(m);
-    expect(m.chargeTimeS).toEqual({ host: 12.62, window: 12.62 });
-    expect(m.beatDriftMs).toBe(0);
-    expect(m.ecgIIMaxDiff.pacingDefaultMa).toBe(0);
-    expect(m.ecgIIMaxDiff.pacing80Ma).toBe(0);
-    // the pacer stays the skin's (not ruled, plan §9): lifepak-like still paces at 25 % during PAUSE and shows HR dashes
-    expect(m.ecgIIMaxDiff.pacerPaused).toBeGreaterThan(1);
-    expect(m.hrDashes).toEqual({ host: false, window: true });
-  });
-  it('lifepak-like window, skin on after the snapshot, the default energy, model generic: 120 J and 4.22 s on both', async () => {
-    const m = await measure({ windowSkin: 'lifepak-like', order: 'after', model: 'generic' });
-    results.push(m);
-    defibEqual(m);
-    expect(m.defibEnergyJ).toEqual({ host: 120, window: 120 });
-  });
+  for (const order of ['before', 'after'] as const) {
+    for (const energyJ of [undefined, 360]) {
+      it(`lifepak-like window, skin on ${order} the snapshot, ${energyJ ?? 'default'} J, model generic: the divergences are an EQUALITY (defibrillator, pacing at the defaults, at 80 mA and through PAUSE, HR)`, async () => {
+        const m = await measure({ windowSkin: 'lifepak-like', order, model: 'generic', ...(energyJ ? { energyJ } : {}) });
+        results.push(m);
+        identical(m);
+        expect(m.defibEnergyJ).toEqual({ host: energyJ ?? 120, window: energyJ ?? 120 });
+        expect(m.chargeTimeS).toEqual(energyJ ? { host: 12.62, window: 12.62 } : { host: 4.22, window: 4.22 });
+        expect(m.hrDashes).toEqual({ host: false, window: false });
+      });
+    }
+  }
 });

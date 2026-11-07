@@ -8,7 +8,7 @@ import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { shot8 } from './indexed-png.ts';
-import { openApp, startVite, tab } from './app-support.ts';
+import { openApp, sheet, startVite, TEACH2 } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -28,7 +28,7 @@ async function save(page: Page, name: string, browserName: string): Promise<void
 test('Saadat-style monitor: the default (non-ventilated) patient shows RESP and RR; attaching the line brings the capnogram and the CO2 tile; detaching brings RESP back', { tag: '@known-flaky' }, async ({ page, browserName }) => {
   test.setTimeout(90_000);
   await page.setViewportSize({ width: 1280, height: 800 });
-  await openApp(page, base, '#/teach', { warmMs: 2000 });
+  await openApp(page, base, TEACH2, { warmMs: 2000 });
   expect(await page.evaluate(() => (window as unknown as { __pmeApp: { session: { skin: string } } }).__pmeApp.session.skin)).toBe('saadat-like');
   const lanes = () => page.locator('.stage canvas[data-lanes]').getAttribute('data-lanes');
   const tileV = (p: string) => page.locator(`.pme-stile[data-param="${p}"] [data-pme="v"]`);
@@ -44,8 +44,7 @@ test('Saadat-style monitor: the default (non-ventilated) patient shows RESP and 
   await save(page, 'capnogram-detached-1280x800', browserName);
 
   // attach the CO2 sampling line: the capnogram lane in RESP's place, the split EtCo2 | FiCo2 | AWRR tile (IMG_8113)
-  await tab(page, 'devices');
-  const line = page.getByRole('button', { name: 'CO₂ sampling line' });
+  const line = (await sheet(page, 'devices')).getByRole('button', { name: 'CO₂ sampling line' }); // v2's Devices sheet
   await expect(line).toHaveAttribute('aria-pressed', 'false');
   await line.click();
   await expect.poll(lanes, { timeout: 10_000 }).toBe('ECG1 ECG2 CO2 IBP1 IBP2 PLETH');

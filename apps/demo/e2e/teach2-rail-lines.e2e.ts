@@ -2,13 +2,12 @@
 // the rail's upper divider at the line under the stage strip, the rail foot's border at the line on top of the dock —
 // at the laptop's 1440 × 900 and a 1920 × 1080 window, with no case (the 75-px strip, no status line since the owner's
 // ruling of 1 November) and with a case loaded: first during its Case briefing, then once the briefing is ended in the
-// strip's status line, live (the strip's 40-px status line goes: 115 px, then 75). Both are measured, so they follow the strip whatever height it takes. And the coupling stays on
-// teach2: today's Instructor view keeps its rail after a visit to v2. The owner, 1 November: the rail's Home is centred on
+// strip's status line, live (the strip's 40-px status line goes: 115 px, then 75). Both are measured, so they follow the strip whatever height it takes. The owner, 1 November: the rail's Home is centred on
 // the strip's row (the chips, or the "No case loaded" box), measured the same way, also at 1280 × 800 (it sat 9 px
 // under the row, 49 px during the briefing).
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
-import { go, openApp, startVite } from './app-support.ts';
+import { openApp, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -65,14 +64,3 @@ for (const [w, h] of [[1440, 900], [1280, 800], [1920, 1080]] as const) {
     });
   }
 }
-
-test("today's Instructor view keeps its rail after a visit to Instructor v2", async ({ page }) => {
-  test.setTimeout(60_000);
-  await page.setViewportSize({ width: 1440, height: 900 });
-  const rail = () => page.evaluate(() => [...document.querySelectorAll<HTMLElement>('.rail .rail-hr, .rail .rail-item, .rail .rail-foot, .rail .rail-brand')].map((e) => Math.round(e.getBoundingClientRect().top)));
-  await openApp(page, base, '#/teach', { warmMs: 1000 });
-  const before = await rail();
-  await go(page, '#/teach2', 1000);
-  await go(page, '#/teach', 1000);
-  expect(await rail()).toEqual(before);
-});
