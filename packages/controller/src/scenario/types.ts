@@ -148,6 +148,9 @@ export interface ScenarioBriefing {
   estimatedMinutes?: number;
   durationS?: number;
   lang?: 'en' | 'fa';
+  /** Debrief 2 D13b: the Persian of an English `text` as the clinical owner has read it; sent in its place (lang fa)
+   *  when the host is set to Persian. Never machine-translated at run time. */
+  textFa?: string;
 }
 
 export interface ScenarioDoc extends C {

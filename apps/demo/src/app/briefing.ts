@@ -10,9 +10,10 @@
 // ONE render function (`renderBriefing`) and one layer (`briefingLayer`) serve the host and the followers; the host
 // feeds it from its session, a follower from the wire (`followBriefing`: the start time and the message's `sentAt`
 // are both the host's clock, so a phone that joins late shows the remainder whatever its own clock says).
-// Persian (`lang: 'fa'`): dir="rtl", lang="fa", leading 1.8, the Vazirmatn stack (no font file in the kit: a machine
-// without it falls back to Segoe UI or Tahoma), Persian digits in the chrome's numbers, and the chrome strings as
-// written and checked with the project's Persian tooling (owner-review/instructor-ux/empty-finish/briefing-fa.md).
+// Persian (`lang: 'fa'`): dir="rtl", lang="fa", leading 1.8, in the bundled Vazirmatn (Debrief 2 D13b), Persian digits in
+// the chrome's numbers, and the chrome strings as written and checked with the project's Persian tooling
+// (owner-review/instructor-ux/empty-finish/briefing-fa.md). A card written in English may carry the owner-read Persian
+// as `briefing.textFa`: the host set to Persian (the Debrief's switch, i18n/lang.ts) sends it, lang fa (`briefingOf`).
 import './briefing.css';
 import { DEFAULT_REVEAL, epochNow, type BriefingNotice, type WireMessage } from '@pme/controller';
 import { EDUCATION_LINE } from './about.ts';

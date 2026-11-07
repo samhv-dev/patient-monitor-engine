@@ -28,7 +28,8 @@
         "text": { "type": "string", "minLength": 1, "maxLength": 4000, "description": "The briefing; paragraphs separated by blank lines." },
         "estimatedMinutes": { "type": "number", "exclusiveMinimum": 0, "description": "The \"Estimated scenario time about N minutes\" line (absent: no line)." },
         "durationS": { "type": "number", "exclusiveMinimum": 0, "maximum": 600, "description": "How long it shows, s (default 60); a tap or click ends it earlier on that screen." },
-        "lang": { "enum": ["en", "fa"], "description": "The language of the text and of the chrome around it (default en); fa is right-to-left with Persian digits." }
+        "lang": { "enum": ["en", "fa"], "description": "The language of the text and of the chrome around it (default en); fa is right-to-left with Persian digits." },
+        "textFa": { "type": "string", "minLength": 1, "maxLength": 4000, "description": "Optional (Debrief 2 D13b): the Persian of an English text, as the clinical owner has read it; sent in place of `text` (lang fa) when the host is set to Persian. Never machine-translated at run time." }
       }
     },
     "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },

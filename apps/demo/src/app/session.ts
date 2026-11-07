@@ -15,6 +15,7 @@ import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
 import { clearPosition } from './position.ts';
 import { RunRecord } from './record.ts';
+import { hostLang } from './i18n/lang.ts';
 import { applySkinAlarmColours } from './shell.ts';
 
 export type Mode = 'modeled' | 'manual';
@@ -585,7 +586,7 @@ export class AppSession {
     this.lastLoad = this.panel.send({ type: 'scenario', action: 'load', doc: v.doc });
     // The card's Case briefing on every learner screen (owner's board Orientation 7b) — not again for the load that
     // brings a case back after the instructor's page reloaded (position.ts): that case is already under way
-    this.setBriefing(this.restoring ? null : briefingOf(v.doc));
+    this.setBriefing(this.restoring ? null : briefingOf(v.doc, hostLang())); // D13b: the host's language (the Debrief's switch)
     this.live = true;
     return { ok: true, doc: v.doc };
   }
