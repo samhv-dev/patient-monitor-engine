@@ -17,7 +17,7 @@ test('the cockpit is unloaded by a new patient and reloads fresh on the next vis
   test.setTimeout(90_000);
   await openApp(page, base, '#/vent', { warmMs: 2000 });
   await expect.poll(() => cockpits(page), { timeout: 10_000 }).toBe(1);
-  await page.evaluate(() => (location.hash = '#/teach'));
+  await page.evaluate(() => (location.hash = '#/teach2'));
   await restart(page);
   await expect.poll(() => page.locator('iframe.vent').getAttribute('src'), { timeout: 5_000 }).toBe('about:blank');
   await expect.poll(() => cockpits(page), { timeout: 5_000 }).toBe(0);
@@ -46,7 +46,7 @@ test('a restart in the same task as leaving the Ventilator view still unloads th
   await openApp(page, base, '#/vent', { warmMs: 1500 });
   await expect.poll(() => cockpits(page), { timeout: 10_000 }).toBe(1);
   await page.evaluate(() => {
-    location.hash = '#/teach';
+    location.hash = '#/teach2';
     const s = (window as unknown as W).__pmeApp.session;
     s.restart({ spec: s.spec, mode: 'modeled' });
   });

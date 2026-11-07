@@ -11,7 +11,6 @@ import { hrefOf } from '../router.ts';
 import { cardOf, LIBRARY, type ScenarioCard } from '../scenarios.ts';
 import { CATEGORIES } from '../scenario-meta.ts';
 import type { AppSession } from '../session.ts';
-import type { InstructorRoute } from '../site.ts';
 import type { View } from '../shell.ts';
 import { REPO } from '../about.ts';
 import { button, confirmDialog, h, toast } from '../ui.ts';
@@ -25,8 +24,6 @@ export interface ScenariosDeps {
   session: Pick<AppSession, 'live'>;
   /** The app's one load (main.ts): replaces the patient, starts the case and notes it in Recent. */
   loadScenario(card: ScenarioCard): boolean;
-  /** The Instructor view chosen in Settings: a Load opens it. */
-  instructor(): InstructorRoute;
 }
 
 const WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen', 'Twenty'];
@@ -48,7 +45,7 @@ export function scenariosView(d: ScenariosDeps): View {
     if (!d.loadScenario(c)) return;
     toast(`Scenario loaded: ${c.title}`); // As the Instructor's library says it
     d.session.live = true;
-    location.hash = hrefOf(d.instructor());
+    location.hash = hrefOf('teach2'); // a Load opens the Instructor view
   };
   const loadBtn = (c: ScenarioCard, cls = '') => {
     const b = button('Load', () => void load(c), cls);

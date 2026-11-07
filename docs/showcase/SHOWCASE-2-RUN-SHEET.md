@@ -1,5 +1,7 @@
 # Showcase 2: run sheet (30 minutes, the owner's slot)
 
+> **A record of the 3 November 2026 build:** the first Instructor view it describes (`#/teach`, its tabs and session bar) was retired on 6 November 2026 (retire-instructor-v1 PR 3; Instructor v2, `#/teach2`, is now the only Instructor view, and `#/teach` opens it). Nothing else in this record was changed.
+
 *Tuesday 3 November 2026 (12 Aban 1405), university deans and clinical staff. Presenter: the owner. **One case
 (owner, 29 October): malignant hyperthermia on the E119 card, with three pauses ("look-inside stops") in which the
 owner explains the physiology the engine is computing, on the Explore view, with the matching model page open behind it

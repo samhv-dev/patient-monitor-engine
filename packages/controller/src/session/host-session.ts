@@ -10,6 +10,7 @@ import {
   type ControlFlag,
   type FastForwardAlarm,
   type ManagedTransport,
+  type NoteEvent,
   type Role,
   type ScenarioCommand,
   type StateEvent,
@@ -20,6 +21,7 @@ import {
   type WireEvent,
   type WireMessage,
 } from '../protocol.ts';
+import { bolusDrugOf, lockReason, RecentGives } from './drug-lock.ts';
 
 /** What a host needs from the monitor it owns. Sync or async (a worker-backed monitor returns promises). */
 export interface HostTarget {
@@ -72,10 +74,14 @@ export interface HostSessionOptions {
    * Absent or null (no PIN set, or an older app): every instructor is denied. Never logged, never sent.
    */
   instructorPin?: () => string | null;
-  /** A `note` command (plan §6): the remote's judged objective or note, at the host's sim time `t`. Absent: refused. */
-  onNote?: (t: SimSeconds, text: string, kind: 'note' | 'marker') => void;
+  /** A `note` command (plan §6): the remote's judged objective or note, at the host's sim time `t`, with the run event
+   *  it carries (`ev`, brief 52; undefined when none). Absent: refused. */
+  onNote?: (t: SimSeconds, text: string, kind: 'note' | 'marker', ev?: NoteEvent) => void;
   /** How many instructor phones are granted (0 or 1: the newest takes over), called at every grant and revocation. */
   onInstructors?: (n: number) => void;
+  /** The drugs a scenario command would give as a bolus (ScenarioDriver.triggerGives: a /1 step press's onEnter); a press
+   *  while one is locked is refused `recent`, as a bolus is (drug-lock.ts). Absent: a scenario command gives none. */
+  scenarioGives?: (cmd: ScenarioCommand) => string[];
 }
 
 /** What the host answers an instructor (the grant's reason, or the refused command's ack). */
@@ -139,6 +145,8 @@ export const FF_STEP_TICKS = 25;
 export const FF_MAX_S = 600;
 
 type AckBody = Extract<WireBody, { kind: 'ack' }>;
+/** The ack's words when a fast-forward runs: a controller's command waits for nothing. */
+const FF_REFUSAL = 'the simulation is fast-forwarding; try again when it ends';
 
 export class HostSession {
   readonly peerId: string;
@@ -177,6 +185,8 @@ export class HostSession {
   private ff: { fromTick: Tick; toTick: Tick; alarms: FastForwardAlarm[] } | null = null; // The fast-forward running
   private activeAlarms = new Set<string>(); // The alarm ids of the last alarmStatus (what is NEW during a span)
   private timelines = 0; // newTimeline() count — a fast-forward stops when its timeline ends
+  /** The last bolus of each drug (drug-lock.ts): a device's second one within SAME_DRUG_LOCK_S is refused. */
+  private readonly gives = new RecentGives();
   readonly stats = { applied: 0, rejected: 0, duplicates: 0, snapshotsSent: 0 };
 
   constructor(o: HostSessionOptions) {
@@ -340,6 +350,7 @@ export class HostSession {
     this.flush();
     this.groups.clear();
     this.targets.clear();
+    this.gives.clear(); // the lock's clock is the old engine's
     if (cause === 'restart') {
       this.sticky.delete('scenario.load');
       this.sticky.delete('scenario.run');
@@ -505,12 +516,21 @@ export class HostSession {
       t.send(this.stamp(prior)); // idempotent: same ack, no second application
       return;
     }
-    // While the host fast-forwards, a controller's command waits for nothing — it is refused with the reason
-    const { result, applied } = this.ff ? { result: { accepted: false, tick: this.o.target.now().tick, reason: 'the simulation is fast-forwarding; try again when it ends' }, applied: cmd } : await this.apply(cmd);
+    // While the host fast-forwards, a controller's command waits for nothing — it is refused with the reason. A bolus
+    // of a drug given within SAME_DRUG_LOCK_S of sim time, from any device, is refused `recent` (drug-lock.ts): never
+    // dispatched, so neither the engine nor the scenario driver's record sees it, and no commandApplied goes out
+    const now = this.o.target.now();
+    const drugs = this.ff ? [] : cmd.type === 'scenario' ? (this.o.scenarioGives?.(cmd) ?? []) : [bolusDrugOf(cmd) ?? []].flat();
+    const lock = drugs.map((d) => this.gives.lock(d, now.simT)).find((l) => l !== null) ?? null;
+    const refused = this.ff ? FF_REFUSAL : lock ? lockReason(lock) : null;
+    const { result, applied } = refused !== null ? { result: { accepted: false, tick: now.tick, reason: refused }, applied: cmd } : await this.apply(cmd);
     const ack: AckBody = {
       kind: 'ack', commandId: cmd.id, accepted: result.accepted, tick: result.tick,
       ...(result.reason !== undefined ? { reason: result.reason } : {}),
+      ...(lock ? { code: 'recent' as const, recent: { drugId: lock.drugId, agoS: Math.round(lock.agoS), by: lock.by } } : {}),
     };
+    // the host's log only: the pressing device is answered by the ack; the run record never sees it
+    if (lock) console.info(`[pme host] ${lock.drugId} not given from ${from}: ${result.reason}`);
     if (this.seen.size >= SEEN_MAX) this.seen.delete(this.seen.keys().next().value as string);
     this.seen.set(cmd.id, ack);
     t.send(this.stamp(ack));
@@ -546,7 +566,7 @@ export class HostSession {
     if (cmd.type === 'note') {
       // A remote's judged objective or note (plan §6), recorded by the host app at the host's sim time
       if (!this.o.onNote) return reject(INSTRUCTOR_REASONS.noNotes);
-      this.o.onNote(simT, cmd.text, cmd.kind);
+      this.o.onNote(simT, cmd.text, cmd.kind, cmd.ev);
       return { result: { accepted: true, tick }, applied: cmd };
     }
     // Pin, release and setMode go to the engine, which validates them. setFactor reaches the engine too and is refused
@@ -562,6 +582,7 @@ export class HostSession {
     const result = await this.o.target.dispatch(c);
     const applied: Command = { ...c, atTick: result.tick };
     if (result.accepted) {
+      this.gives.note(cmd, result.tick * TICK_S); // every device's bolus, and the card's own (a press after it is locked)
       if (c.type === 'setTarget') {
         const r = c.ramp;
         const untilT = result.tick * TICK_S + (r ? (r.delayS ?? 0) + r.durationS : 0);

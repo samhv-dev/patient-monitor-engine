@@ -10,7 +10,7 @@ import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { pdfInfo, pdfText, squash } from './pdf-text.ts';
-import { openApp, scanEngineIds, startVite } from './app-support.ts';
+import { debriefLinkV2, openApp, pillV2, scanEngineIds, sheet, closeSheets, speedV2, startVite } from './app-support.ts';
 import { END_S, openMhV2, PATH, pressPath, to } from './mh-v2-path.ts';
 
 const out = resolve(import.meta.dirname, process.env.PME_SHOTS === '1' ? '../../../docs/gates/stage-13' : '../../../test-results/gate-shots/stage-13'); // FU-11 K1: evidence only on request
@@ -32,17 +32,20 @@ const simT = (page: Page) => page.evaluate(() => (window as unknown as W).__pmeA
 // assertion is the same; local WebKit and Chromium keep ×4.
 const loadedWebKit = (browserName: string) => !!process.env.CI && browserName === 'webkit';
 
-/** Pause, and wait for the host to have paused: the button reads "Resume" as soon as it is pressed, before the host answers. */
+/** Pause, and wait for the host to have paused: Instructor v2's clock pill reads PAUSED (the session bar's "Resume") as
+ *  soon as it is pressed, before the host answers. */
 async function pauseHost(page: Page): Promise<void> {
-  const bar = page.locator('.sessionbar');
-  await bar.getByRole('button', { name: 'Pause' }).click();
-  await expect(bar.getByRole('button', { name: 'Resume' })).toBeVisible({ timeout: 10_000 });
+  const pill = pillV2(page);
+  await expect(pill).toHaveAttribute('data-state', 'running');
+  await pill.click();
+  await expect(pill).toHaveAttribute('data-state', 'paused', { timeout: 10_000 });
   await expect.poll(() => page.evaluate(() => (window as unknown as W).__pmeApp.link.ctl.hostPaused), { timeout: 20_000, message: 'the host has paused' }).toBe(true);
 }
 
-/** The session bar's Debrief link, clicked: the route first (was the click served?), then the view's heading (was it drawn?). */
+/** Instructor v2's dock Debrief link (the session bar's), clicked: the route first (was the click served?), then the
+ *  view's heading (was it drawn?). */
 async function openDebrief(page: Page, busy: boolean): Promise<void> {
-  await page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }).click();
+  await debriefLinkV2(page).click();
   const timeout = busy ? 30_000 : 5_000; // the loaded CI WebKit page only
   await expect.poll(() => page.evaluate(() => location.hash), { timeout, message: 'the Debrief link was followed' }).toBe('#/debrief');
   await expect(page.locator('[data-view=debrief]').getByRole('heading', { level: 1, name: 'Debrief' }), 'the Debrief is drawn').toBeVisible({ timeout });
@@ -52,22 +55,23 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   const busy = loadedWebKit(browserName);
   const k = busy ? 2 : 1; // wall time per sim second, against ×4
   test.setTimeout(busy ? 300_000 : 180_000);
-  await openApp(page, base, '?scenario=showcase-anaphylaxis', { warmMs: 1500 });
-  await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: busy ? '×2' : '×4' }).click();
-  await page.click('[role=tab][data-tab=scenario]');
-  await page.locator('.sessionbar').getByRole('button', { name: 'Bookmark' }).click();
+  await openApp(page, base, '?scenario=showcase-anaphylaxis#/teach2', { warmMs: 1500 });
+  await speedV2(page, busy ? 2 : 4);
+  // Instructor v2 saves the moment with the dock's mark: today's bookmark command, under the mark's label and kind
+  await page.locator('.ip2-dock').getByRole('button', { name: 'Mark: good' }).click();
   await expect.poll(() => simT(page), { timeout: 40_000 * k }).toBeGreaterThan(70); // the reaction starts at 60 s
-  await page.getByRole('button', { name: 'Return here' }).first().click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Return' }).click();
+  await (await sheet(page, 'log')).getByRole('button', { name: 'Return here' }).first().click(); // the Log sheet's marks
+  await page.locator('dialog[open]').getByRole('button', { name: 'Return', exact: true }).click();
   await expect.poll(() => simT(page), { timeout: busy ? 15_000 : 5_000 }).toBeLessThan(20);
-  const give = page.getByRole('button', { name: 'Give epinephrine 100 µg' });
+  await closeSheets(page); // ACTION, today's Scenario tab
+  const give = page.locator('.ip2-action .ip2-rows:not(.ip2-finished-list) button.ip2-row', { has: page.locator('.ip2-row-title').getByText('Give epinephrine 100 µg', { exact: true }) });
   await expect(give).toBeHidden({ timeout: busy ? 15_000 : 5_000 }); // the panel repaints at ≤ 2 Hz: the first reaction's button goes first
   await expect(give).toBeVisible({ timeout: 40_000 * k }); // the reaction again, 60 s after the bookmark's state began
   const tGive = await simT(page);
   await give.click();
 
-  // the end of the run: the session bar's Debrief is marked and a toast says so
-  const open = page.locator('.sessionbar').getByRole('link', { name: 'Debrief' });
+  // the end of the run: the dock's Debrief (the session bar's) is marked and a toast says so
+  const open = debriefLinkV2(page);
   await expect(open).toHaveAttribute('data-ready', 'true', { timeout: 10_000 * k });
   await expect(page.locator('.toast', { hasText: 'the debrief is ready' })).toBeVisible();
   await expect.poll(() => simT(page), { timeout: 30_000 * k }).toBeGreaterThan(tGive + 24); // ≈ 24 s of sim after the epinephrine: its effect reaches the trends
@@ -79,9 +83,9 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   const rows = timeline.map((r) => r.replace(/\s+/g, ' ').trim());
   const has = (re: RegExp) => rows.filter((r) => re.test(r));
   expect(has(/^\d\d:\d\d Scenario Scenario loaded: Anaphylaxis under anaesthesia$/)).toHaveLength(1);
-  expect(has(/^\d\d:\d\d Bookmark Bookmark: Bookmark \d+ at \d\d:\d\d$/)).toHaveLength(1);
+  expect(has(/^\d\d:\d\d Bookmark Bookmark: Mark \d+ at \d\d:\d\d$/)).toHaveLength(1); // v2's mark: "Mark n at" for "Bookmark n at"
   expect(has(/^01:0\d Scenario Scenario state: Anaphylaxis — undone by return 1$/)).toHaveLength(1); // DV-3: the 60 s state may land in a later second on a slow runner
-  expect(has(/^\d\d:\d\d Return Returned to bookmark Bookmark \d+ at \d\d:\d\d$/)).toHaveLength(1);
+  expect(has(/^\d\d:\d\d Return Returned to bookmark Mark \d+ at \d\d:\d\d$/)).toHaveLength(1);
   expect(has(/^01:0\d Scenario Scenario state: Anaphylaxis$/)).toHaveLength(1); // the retry (DV-3)
   expect(has(/^\d\d:\d\d Scenario Epinephrine 100 µg IV$/)).toHaveLength(1);
   expect(has(/^\d\d:\d\d Scenario Scenario state: Epinephrine given$/)).toHaveLength(1);
@@ -98,7 +102,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   const objectives = await view.locator('#db-objectives li').evaluateAll((li) => li.map((x) => [x.getAttribute('data-status'), x.querySelector('.db-mark')?.textContent]));
   expect(objectives).toEqual([['not assessable', '– Not assessable'], ['met', '✓ Observed'], ['not met', '✗ Not observed']]); // E42–E44
   await expect(view.locator('#db-objectives li').nth(1)).toContainText(/Epinephrine \d+ s after the state "Anaphylaxis" \(01:0\d → 01:\d\d; within 2 min 00 s asked\)/);
-  await expect(view.locator('.db-chart svg')).toHaveCount(6);
+  await expect(view.locator('.db-chart svg')).toHaveCount(7); // the six trends and the Pressures panel (brief 63): this run keeps the pressures
   // IP8: the card's steps — the button pressed on the kept course is a taken step (the undone first course is not read)
   await expect(view.locator('#db-steps tbody tr[data-status=taken]')).toHaveText([/^Anaphylaxis · 01:0\d\s*1\s*Give epinephrine 100 µg\s*01:\d\d \(1\)\s*✓ taken$/]);
   // redesign B (B6 b): key times and key moments on this run
@@ -108,10 +112,10 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   // list's words
   const mark = view.locator('#db-course g.db-bm');
   await expect(mark).toHaveCount(1);
-  await expect(mark).toHaveAttribute('data-kind', 'bookmark');
+  await expect(mark).toHaveAttribute('data-kind', 'good'); // the dock's "Mark: good" (today's Bookmark had no kind)
   await expect(mark.locator('path')).toBeVisible();
   const listed = (await view.locator('#db-bookmarks li').first().innerText()).trim();
-  expect(listed).toMatch(/^1 · 00:0\d Bookmark: Bookmark \d+ at 00:0\d$/); // numbered as on the strip (the owner, 2 November)
+  expect(listed).toMatch(/^1 · 00:0\d Bookmark: Mark \d+ at 00:0\d · good$/); // the mark's kind follows its words // numbered as on the strip (the owner, 2 November)
   expect(await mark.locator('title').textContent()).toBe(listed);
   expect(Number(await mark.getAttribute('data-t'))).toBeLessThan(10);
   const minuteRows = await view.locator('#db-minutes tbody tr').allInnerTexts(); // Q1: one row per minute
@@ -197,18 +201,18 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
 // has drawn nothing of is not a run whose notes are dropped; a scenario loaded later still starts the notes empty.
 test('FX-20: notes typed right after opening the app on the Debrief are kept; a new scenario still empties them', async ({ page }) => {
   test.setTimeout(90_000);
-  await openApp(page, base, '#/debrief');
+  await openApp(page, base, '#/debrief'); // a Load opens Instructor v2
   const notes = page.locator('[data-view=debrief] .db-notes');
   await notes.click({ timeout: 2_000 });
   await page.keyboard.type('kept');
   await page.waitForTimeout(7_000); // past the next 5 s refresh
   await expect(notes).toHaveText('kept');
 
-  await page.evaluate(() => (location.hash = '#/teach')); // the Monitor with the instructor panel
-  await page.click('[role=tab][data-tab=scenario]');
-  const library = page.getByRole('region', { name: 'Scenario library' });
-  await library.getByRole('article', { name: 'Anaphylaxis under anaesthesia' }).getByRole('button', { name: 'Load' }).click();
-  await expect(page.getByRole('region', { name: 'Running scenario' })).toBeVisible({ timeout: 10_000 }); // none was running: no confirmation
+  // Instructor v2 has no in-panel library: the Scenarios library's Load, which opens the Instructor view
+  await page.evaluate(() => (location.hash = '#/scenarios/library'));
+  await page.locator('[data-view=scenarios]').getByRole('button', { name: 'Load Anaphylaxis under anaesthesia', exact: true }).click();
+  await expect(page).toHaveURL(/#\/teach2$/);
+  await expect(page.locator('.ip2-head .ip2-title')).toHaveText('Anaphylaxis under anaesthesia', { timeout: 10_000 }); // none was running: no confirmation
   await page.waitForTimeout(6_000);
   await page.evaluate(() => (location.hash = '#/debrief'));
   await expect(notes).toBeVisible();
@@ -230,9 +234,8 @@ test('FX-20: notes typed right after opening the app on the Debrief are kept; a 
 test('a free run prints in at most four pages; its export is pme-debrief/2', { tag: '@known-flaky' }, async ({ page, browserName }) => {
   const busy = loadedWebKit(browserName);
   test.setTimeout(busy ? 240_000 : 120_000);
-  await openApp(page, base, '#/teach', { warmMs: 1500 }); // the Monitor with the session bar, no scenario
-  const bar = page.locator('.sessionbar');
-  await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: busy ? '×2' : '×4' }).click();
+  await openApp(page, base, '#/teach2', { warmMs: 1500 }); // Instructor v2, no scenario
+  await speedV2(page, busy ? 2 : 4);
   await expect.poll(() => simT(page), { timeout: busy ? 150_000 : 75_000 }).toBeGreaterThanOrEqual(180); // 3 sim-min
   await pauseHost(page);
   await openDebrief(page, busy);
@@ -241,6 +244,7 @@ test('a free run prints in at most four pages; its export is pme-debrief/2', { t
   await expect(view.locator('#db-pearls .db-pearl')).toHaveCount(4);
   await expect(view.locator('#db-moments')).toHaveCount(0); // B6 (d): no key moment, no page break for them
   await expect(view.locator('#db-steps')).toHaveCount(0); // IP8: no card, no steps section
+  await expect(view.locator('#db-trends figure[data-trend=pressures] path[data-p]'), 'brief 63: the Pressures panel, SBP, DBP and CVP').toHaveCount(3);
   const [dl] = await Promise.all([page.waitForEvent('download'), view.getByRole('button', { name: 'Download the record (JSON)' }).click()]);
   const json = readFileSync(await dl.path(), 'utf8');
   const j = JSON.parse(json) as { schema: string; keyTimes: unknown[]; keyMoments: unknown[] };
@@ -298,8 +302,8 @@ async function showRecorded(page: Page, run = A31, card = TAMPONADE, debriefHint
   rec.doc.takeHome = doc.takeHome; // rc.3: the owner's take-home lines (the recordings predate them)
   if (debriefHints !== undefined) rec.doc.debriefHints = debriefHints; // a TEST copy of the card (D16): no card carries them yet
   await page.setViewportSize({ width: Math.round(182 * MM), height: 1000 }); // the A4 content width (182 mm)
-  await openApp(page, base, '#/teach', { warmMs: 1000 });
-  await page.locator('.sessionbar').getByRole('button', { name: 'Pause' }).click();
+  await openApp(page, base, '#/teach2', { warmMs: 1000 });
+  await pillV2(page).click(); // Instructor v2's clock pill pauses
   await page.waitForTimeout(500);
   await page.evaluate((r) => ((window as unknown as { __pmeApp: { session: { record: { data: unknown } } } }).__pmeApp.session.record.data = r), rec);
   await page.evaluate(() => (location.hash = '#/debrief'));
@@ -681,11 +685,10 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
 test('D5: Recognised pressed on a free run at ≈ 30 s: the Debrief shows the tile and the key moment at the recorded time', async ({ page, browserName }) => {
   const busy = loadedWebKit(browserName);
   test.setTimeout(busy ? 180_000 : 90_000);
-  await openApp(page, base, '#/teach', { warmMs: 1500 });
-  const bar = page.locator('.sessionbar');
-  await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: busy ? '×2' : '×4' }).click();
+  await openApp(page, base, '#/teach2', { warmMs: 1500 });
+  await speedV2(page, busy ? 2 : 4);
   await expect.poll(() => simT(page), { timeout: busy ? 60_000 : 30_000 }).toBeGreaterThanOrEqual(30);
-  const button = bar.getByRole('button', { name: 'Recognised', exact: true });
+  const button = page.locator('.ip2-dock').getByRole('button', { name: 'Recognised', exact: true }); // the dock's copy
   await expect(button).not.toHaveAttribute('aria-keyshortcuts');
   await button.click();
   type R = { __pmeApp: { session: { record: { data: { rows: Array<{ t: number; ev?: string }> } } } } };

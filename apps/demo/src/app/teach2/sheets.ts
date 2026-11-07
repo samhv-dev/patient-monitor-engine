@@ -18,7 +18,7 @@ import { devicesTab } from '../panel/devices.ts';
 import { logTab } from '../panel/log.ts';
 import { patientTab } from '../panel/patient.ts';
 import { vitalsTab } from '../panel/vitals.ts';
-import { confirmDialog, h, setText, toast } from '../ui.ts';
+import { confirmDialog, h, select, setText, toast } from '../ui.ts';
 import { Cache } from './cache.ts';
 import type { Slot, Teach2Ctx } from './ctx.ts';
 import { MARK_KINDS } from './dock.ts';
@@ -35,6 +35,8 @@ export const SHEETS: ReadonlyArray<{ id: string; name: string; letter: string; g
   { id: 'patient', name: 'Patient', letter: '', group: 'Patient', body: patientTab },
   { id: 'log', name: 'Log', letter: '', group: 'Log', body: logTab },
 ];
+/** The onsets of a staged delivery, as today's staged-changes footer offers them (panel/panel.ts). */
+const ONSETS: Array<[string, string]> = [['0', 'Now'], ['30', 'Over 30 s'], ['60', 'Over 1 min'], ['120', 'Over 2 min'], ['300', 'Over 5 min']];
 /** Today's tab ids (a tab body's `goTab`) to the sheet that holds them; the Scenario tab is ACTION (the sheet closes). */
 const OF_TAB: Readonly<Record<string, string>> = { drugs: 'drug', airway: 'airway', defib: 'defib', vitals: 'vitals', devices: 'devices', patient: 'patient', log: 'log' };
 
@@ -58,6 +60,10 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
   const trayItems = h('span', { class: 'ip2-tray-items', role: 'list', 'aria-label': 'Staged items' });
   const trayNote = h('span', { class: 'ip2-sheet-note' }, 'delivered at one instant, one line in the log');
   const deliver = h('button', { type: 'button', class: 'ip2-deliver', onclick: () => void cache.commit() });
+  // the onset of the delivery (retire-instructor-v1 G3): today's footer's five values; a held value or a target arrives
+  // over it (Staging.withRamp: only setTarget and pin ramp), everything else at once. One choice for every sheet.
+  const onset = select('Onset', ONSETS, '0', (v) => (cache.transitionS = Number(v)));
+  onset.el.classList.add('ip2-onset');
 
   // ---- the dock: tools, Staged · n, the note field ----
   const tools = SHEETS.map((s) => h('button', {
@@ -175,7 +181,7 @@ export function mount(el: HTMLElement, ctx: Teach2Ctx): Slot {
     let b = built.get(id);
     if (!b) built.set(id, (b = build(id)));
     b.frame.tray.replaceChildren(trayCount, trayItems, h('span', { class: 'ip2-spacer' }), trayNote);
-    b.frame.deliverSlot.replaceChildren(deliver);
+    b.frame.deliverSlot.replaceChildren(onset.el, deliver);
     openId = lastId = id;
     b.frame.open();
     keys.letter('s', () => b?.stage?.());
