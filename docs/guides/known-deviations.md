@@ -373,7 +373,14 @@ Groups, in short:
   merged engine pull requests: pleth on PR #24 (FU-5, `16cdf79a`), PR #25 (FU-4, `e81e53fc`, afib-110 only) and
   PR #138 (E126, `fea0688c`); CO2 on PR #25 and PR #28 (FU-6 capnograph physics, `176f702e`, bronchospasm only).
   Main `3f44820a` reproduces the `fea0688c` pleth and the `176f702e` CO2 output (difference ≤ 0.0012). Only those
-  five arrays were re-recorded; the 2 % limit and the other eight channels are unchanged.
+  five arrays were re-recorded; the 2 % limit and the other eight channels are unchanged. **Physiology check (brief
+  76, [the note](../validation/regression-drift/45-regression-drift-physiology.md)):** four drifts are physiological
+  and keep their re-record (afib-110 and hypovolaemia-ppv pleth: the pulse falls with the stroke volume; sinus-75 and
+  bronchospasm CO2: the tube bypasses the 72-mL extrathoracic dead space, and one bronchospasm replaces fixed
+  constants). **sinus-75/pleth is withdrawn and stays red:** its pulses grew 6–9 % under ventilation because the PI
+  reference SV₀ (`circ.ref.sv`, 79.1 mL, the bare-circuit stabiliser) is not this patient's settled resting stroke
+  volume (88.9 mL in MANUAL). Against its own rest the ventilated pulse should be ≈ 0.96×, not 1.08×. The fix is a
+  mechanism: SV₀ = the patient's settled resting SV.
 - **Pulse oracle:** haemorrhage MAP fall 5 against 16 mmHg; MAP fall after propofol 19 against 28 mmHg.
 
 **Red (gating) rows**
