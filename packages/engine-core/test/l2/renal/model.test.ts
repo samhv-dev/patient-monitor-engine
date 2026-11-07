@@ -11,12 +11,14 @@ function hold(s: RenalState, inp: RenalInputs, secs: number): RenalState {
 }
 
 describe('kidney (Pulse-ported haemodynamics + tables §5.2 output)', () => {
-  it('rest: RBF 17 % of CO, P_gc ≈ 58, GFR ≈ 130, UOP 1.0 mL/kg/h awake, 0.6 under GA', () => {
+  it('rest: RBF 17 % of CO, P_gc ≈ 58, GFR 117, UOP 1.0 mL/kg/h awake, 0.6 under GA', () => {
     const s = createRenal(BASE, W);
     expect(s.rbf).toBeCloseTo(952, -1);
     expect(s.pgc).toBeGreaterThan(55);
     expect(s.pgc).toBeLessThan(60);
-    expect(s.gfr).toBeCloseTo(125, 0); // tables/annex 180 L/day
+    // research/44 L2-26: re-recorded with Bowman's pressure 18 (M10 Fig. 15.8; was 17.1, fitted to 125): the engine's
+    // own resting GFR (was 125); the sourced 125 (180 L/day) is the named miss in kidney.test.ts
+    expect(s.gfr).toBeCloseTo(117.1, 0);
     expect(mlKgH(hold(s, BASE, 600))).toBeCloseTo(1.0, 2);
     const ga = { ...BASE, anaesthesia: 'general' as const };
     expect(mlKgH(hold(createRenal(ga, W), ga, 600))).toBeCloseTo(0.6, 2);
@@ -74,7 +76,7 @@ describe('kidney (Pulse-ported haemodynamics + tables §5.2 output)', () => {
   });
   it('calibrated on the healthy reference, settled at the start: a patient who starts in shock is oliguric at t = 0 (no NaN)', () => {
     const s = createRenal({ ...BASE, map: 55, cvp: 12, coLpm: 3.5 }, W);
-    expect(s.p.gfrSet).toBeCloseTo(125, 0);
+    expect(s.p.gfrSet).toBeCloseTo(117.1, 0); // The healthy reference's GFR (research/44 L2-26: was 125 with Bowman 17.1)
     // FU-9 H2 (E-FU9-4): with filtration equilibrium the oncotic pressure at zero filtration is the AFFERENT one (27.7, the
     // mean 32 only at the resting FF), so a shocked kidney still filters a little: GFR 18 (was exactly 0), urine 0.03
     // mL/kg/h. The property — oliguric at t = 0, calibrated on the healthy reference — is asserted, not the zero.

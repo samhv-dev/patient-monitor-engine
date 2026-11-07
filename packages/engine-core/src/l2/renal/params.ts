@@ -29,14 +29,19 @@ export const R_AFF_MAX = (11.2 / 60) * MYOGENIC_MAX;
 export const TGF_TAU_S = 60;
 export const KF_PER_KIDNEY = 3.67647 * 2.0; // glomerular Lp·A, mL/min/mmHg (CFG 604–605)
 export const PI_GLOM0 = 32; // Glomerular oncotic pressure, mmHg (SET 1386–1389) at albumin 42 g/L — its MEAN at FF_REF
-/** The healthy reference's filtration fraction (GFR 125 ÷ RPF 952 × (1 − 0.45)) and haematocrit, where the mean
- *  glomerular oncotic pressure equals PI_GLOM0 (the calibrated resting GFR is unchanged). */
+/** The filtration fraction (GFR 125 ÷ RPF 952 × (1 − 0.45)) and haematocrit at which the mean glomerular oncotic
+ *  pressure equals PI_GLOM0. Since Bowman's pressure is the sourced 18 (research/44 L2-26), the resting FF is 0.224, not
+ *  this 0.239, so the resting mean oncotic pressure is 31.7 mmHg, not 32. */
 export const HCT_REF = 0.45;
 export const FF_REF = 125 / (952 * (1 - HCT_REF));
 export const ALBUMIN0_G_L = 42;
-/** Bowman's space pressure [FIT: Bowman's pressure calibrated to resting GFR 125 mL/min; brief research/44 L2-26]: calibrated so the resting GFR is 125 mL/min (tables/annex reference 180 L/day;
- *  Pulse gives 147.5 L/day, D12). UOP is calibrated separately (ef0), so this only sets GFR and the filtration fraction. */
-export const P_BOWMAN = 17.1;
+/** Bowman's capsule pressure, mmHg: Miller 10e ch. 15 Fig. 15.8 (p. 334, redrawn from Guyton & Hall 13e): 18 mmHg
+ *  against a glomerular hydrostatic 60 and oncotic 32 (net 10). It was 17.1, fitted so the resting GFR was 125
+ *  mL/min. With the sourced 18 the resting GFR is 117 mL/min (168 L/day): the Pulse divider gives P_gc 57.6 where
+ *  the figure has 60. The calibration was NOT moved onto Kf: holding 125 would need Kf 16.4 mL/min/mmHg, and the
+ *  sourced value is 12.5 (Guyton & Hall; the same figure's GFR 125 ÷ net 10). Pulse's 14.7 is kept (research/44
+ *  L2-26). UOP is calibrated separately (ef0), so this sets only GFR and the filtration fraction. */
+export const P_BOWMAN = 18;
 export const RENAL_FLOW_FRAC = ICRP89_FLOW_FRACTIONS_M.kidneys; // 0.17, both kidneys (ICRP-89 via Pulse SET 315, NOTICES N-P10) — audit borrow #7
 /** The healthy reference the kidney is calibrated on (createRenal): MAP 93, CVP 5, CO 0.08 L/min/kg (5.6 L/min at 70 kg). */
 export const RENAL_REF_MAP = 93;
