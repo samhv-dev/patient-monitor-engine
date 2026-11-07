@@ -9,12 +9,13 @@ import {
   type AppliedResolution, type BriefingNotice, type HostTarget, type ScenarioEvent, type WireEvent,
 } from '@pme/controller';
 import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type AnyScenarioDoc } from '@pme/controller/scenario';
-import type { ManagedTransport } from '@pme/controller';
+import type { ManagedTransport, NoteEvent } from '@pme/controller';
 import { mountMonitor, normalIbpScales, type IbpChannel, type IbpScales, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
 import { clearPosition } from './position.ts';
 import { RunRecord } from './record.ts';
+import { hostLang } from './i18n/lang.ts';
 import { applySkinAlarmColours } from './shell.ts';
 
 export type Mode = 'modeled' | 'manual';
@@ -54,6 +55,17 @@ export const PERF8 = {
 const EST_CAP_S = 1.5;
 /** The Ventilator view ventilates the patient while its last frame is this recent (it sends 50 a second) [ENG]. */
 const VENT_DRIVING_MS = 2000;
+/** The view feed's period (plan instructor-peer-role.md §6: at most once a second, and only on a change). */
+export const FEED_MS = 1000;
+
+/** What the host's own panel Link gives the instructor phone (main.ts `serveInstructors`, teach2/feed.ts). */
+export interface InstructorServe {
+  /** A remote's note or judged objective, filed as the laptop files its own (Link.note: the log and the record), at
+   *  the host's sim time `t`, with the run event the note command carries (`ev`, brief 52). */
+  note(text: string, kind: 'note' | 'marker', t: number, ev?: NoteEvent): void;
+  /** The view feed's body (teach2/feed.ts `feedOf`). */
+  feed(): unknown;
+}
 
 export class AppSession {
   readonly code: string;
@@ -118,6 +130,9 @@ export class AppSession {
   private offMon: (() => void) | null = null;
   private lastT = 0;
   private lastWall = performance.now();
+  /** The latest sim time `simNow` returned: the estimate never goes below it on one course (a restore or a new monitor
+   *  sets it back with the clock). */
+  private readT = 0;
   private readonly pollTimer: ReturnType<typeof setInterval>;
   /** The same-browser channel (a learner monitor window, a Remote window); the Room page lists who said hello on it. */
   readonly bc: ReturnType<typeof createBroadcastChannelTransport>;
@@ -128,14 +143,25 @@ export class AppSession {
   /** Peers on the relay besides this host (the phones following), from the relay's `peers` frames. */
   followers = 0;
   private readonly followerFns = new Set<(n: number) => void>();
+  /** Instructor phones granted now (HostSession onInstructors: 0 or 1, the newest takes over). */
+  instructors = 0;
+  private readonly instructorFns = new Set<(n: number) => void>();
+  private serve: InstructorServe | null = null;
+  private feedTimer: ReturnType<typeof setInterval> | null = null;
+  private feedLast = ''; // The last body sent (JSON): a body is sent only when it changed
+  private feedAt = -Infinity; // Wall ms of the last body sent
 
   /** `?load=perf8`: mount the validation harness's performance layout instead of the site's skin (the frame gate). */
   private readonly perf8: boolean;
+  /** The room's defibrillator model (R5b; a site.ts DEFIB_CHOICES id), sent to the engine at every patient mount, or
+   *  null: none sent (the monitor style's own defibrillator values). */
+  defibModel: string | null;
   /** The page's first patient (the default patient): "Save and close" ends a case on it (endCase). */
   private readonly first: SessionStart;
 
-  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null }) {
+  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null; instructorPin?: () => string | null; defibModel?: string | null }) {
     this.el = el;
+    this.defibModel = o.defibModel ?? null;
     this.perf8 = o.load === 'perf8';
     this.spec = start.spec;
     this.mode = start.mode;
@@ -153,6 +179,7 @@ export class AppSession {
         await this.need().restore(s);
         this.lastT = s.tick * TICK_S;
         this.lastWall = performance.now();
+        this.readT = this.lastT; // the course goes back to the bookmark
       },
       on: (fn) => {
         this.listeners.add(fn);
@@ -193,6 +220,7 @@ export class AppSession {
     this.driver = new ScenarioDriver({ target, submit: (c) => (hs as HostSession).submit(c), publish: (e: ScenarioEvent) => hs?.publish(e) });
     hs = new HostSession({
       session: this.code, target: this.driver.host, scenario: this.driver.hook,
+      scenarioGives: (c) => this.driver.triggerGives(c), // a step press is locked as its drug is (drug-lock.ts)
       // With a relay, every answer to a hello also carries the monitor style (a phone wears it)
       // and a running Case briefing, with its start time: a phone that joins or reloads shows the remainder
       welcomeEvents: () => [
@@ -200,6 +228,11 @@ export class AppSession {
         ...(this.briefing ? [{ type: 'briefing' as const, ...this.briefing, replay: true as const }] : []),
       ],
       fastForwardWallMs: FF_WALL_MS, // Paced so the room sees the clock run
+      // the instructor phone (plan instructor-peer-role.md P3, P6): its PIN, read at every hello (null or absent: no
+      // phone), its notes, and how many are granted (the stage marks and the view feed follow it)
+      ...(o.instructorPin ? { instructorPin: o.instructorPin } : {}),
+      onNote: (t, text, kind, ev) => (this.serve ? this.serve.note(text, kind, t, ev) : this.record.note(t, text, ev)),
+      onInstructors: (n) => this.setInstructors(n),
     });
     this.host = hs;
     const hub = createInProcessHub();
@@ -228,6 +261,57 @@ export class AppSession {
     this.mount(start.seed ?? 7);
     // the runner advances at the engine's sim time; 10 Hz is enough for triggers stated in seconds [ENG]
     this.pollTimer = setInterval(() => !this.fastForwarding && this.driver.poll(), 100); // A fast-forward polls per step
+  }
+
+  /**
+   * The host's own panel Link serves the instructor phone (main.ts): a remote's note goes into its log and so into the
+   * record as the laptop's own does, and the view feed is read from it.
+   */
+  serveInstructors(s: InstructorServe): void {
+    this.serve = s;
+  }
+
+  /**
+   * A phone granted or revoked (HostSession onInstructors). While one is granted: the driver places its stage marks (a
+   * phone returns to a stage's start with the laptop on any view; once on, they stay on, as Instructor v2's own `enter`
+   * leaves them, so a revoke never takes a return from the laptop), and the view feed runs: a body at once on a first
+   * grant, then at most once a FEED_MS, only when it changed. A phone that signs in again gets the next body whatever
+   * it is (its page may have reloaded).
+   */
+  private setInstructors(n: number): void {
+    this.instructors = n;
+    for (const fn of [...this.instructorFns]) fn(n);
+    this.feedLast = '';
+    if (n > 0) {
+      this.driver.markStages(true);
+      if (this.feedTimer === null) {
+        this.feedTimer = setInterval(() => this.sendFeed(), FEED_MS);
+        if (performance.now() - this.feedAt >= FEED_MS) this.sendFeed();
+      }
+    } else if (this.feedTimer !== null) {
+      clearInterval(this.feedTimer);
+      this.feedTimer = null;
+    }
+  }
+
+  /** One view feed body (plan §6): an instructor-only event, never in VIEWER_EVENTS (the relay sends it to a granted
+   *  phone only), sent when it differs from the last one. */
+  private sendFeed(): void {
+    if (this.instructors === 0 || !this.serve) return;
+    const body = this.serve.feed();
+    const s = JSON.stringify(body);
+    if (s === this.feedLast) return;
+    this.feedLast = s;
+    this.feedAt = performance.now();
+    // `t`: the sim time the body was read at, the host panel's clock (feed.ts reads the panel's Link), so the event never
+    // moves that clock on (the session's own estimate can run ahead of it: a pause taken between engine events)
+    this.host.publish({ type: 'instructorView', t: this.panel.simT ?? 0, body: JSON.parse(s) as unknown });
+  }
+
+  /** Every grant and revocation of the instructor phone (the Room page's row; a new phone taking over calls it too). */
+  onInstructors(fn: (n: number) => void): () => void {
+    this.instructorFns.add(fn);
+    return () => void this.instructorFns.delete(fn);
   }
 
   /** Every change in the number of phones following on the relay. */
@@ -350,11 +434,18 @@ export class AppSession {
     for (const res of this.ffWaiters.splice(0)) res();
   }
 
-  /** Sim time: the last engine event's time run forward on the wall clock at the current speed, capped [ENG]. */
+  /** Sim time: the last engine event's time run forward on the wall clock at the current speed, capped [ENG], and
+   *  never earlier than a time it has already given. An engine event can arrive with a time below the running estimate
+   *  (the engine a few ms behind the wall clock, its events late under load); the estimate then holds until the engine
+   *  passes it, rather than step back: two reads either side of that event (two quick gotos) kept their order, so the
+   *  scenario's history did too (the strip read an entry earlier than the one before it as a rewind and showed the stage
+   *  between as skipped; teach2-fit.e2e.ts :505, CI run 42113324793). It also keeps a worker stall's overshoot from
+   *  stepping back (FX-11b). */
   simNow(): number {
-    if (this.paused || this.fastForwarding) return this.lastT; // Exact between fast-forward steps
     const dt = ((performance.now() - this.lastWall) / 1000) * this.timeScale;
-    return this.lastT + Math.min(Math.max(0, dt), EST_CAP_S * this.timeScale);
+    const est = this.paused || this.fastForwarding ? this.lastT : this.lastT + Math.min(Math.max(0, dt), EST_CAP_S * this.timeScale); // exact between fast-forward steps
+    this.readT = Math.max(this.readT, est);
+    return this.readT;
   }
 
   send(c: Omit<Command, 'id' | 'issuedBy'> & Record<string, unknown>): Promise<{ accepted: boolean; reason?: string }> {
@@ -384,8 +475,8 @@ export class AppSession {
   }
 
   /** The monitor style a phone wears: the skin, the theme and the IBP scales (E130). */
-  private styleEvent(): { type: 'style'; skin: string; theme: string; ibp: IbpScales } {
-    return { type: 'style', skin: this.skin, theme: this.theme, ibp: this.ibp };
+  private styleEvent(): { type: 'style'; skin: string; theme: string; ibp: IbpScales; defib: string | null } {
+    return { type: 'style', skin: this.skin, theme: this.theme, ibp: this.ibp, defib: this.defibModel }; // R5: the window's look
   }
 
   private ibp: IbpScales = {};
@@ -425,6 +516,22 @@ export class AppSession {
     for (const f of this.skinFns) f(skin, theme); // The learner monitor follows the style
     applySkinAlarmColours(skin, theme);
     await this.monitor?.setSkin(skin, theme ? { theme } : {});
+  }
+
+  /**
+   * Room setup's defibrillator choice (R5b). A model is sent to the patient's engine now, through the host's command
+   * path (every follower replays it), and at every patient mount after; null sends nothing: the engine keeps the model
+   * it holds until the next patient start (it has no "no model" command, R5a).
+   */
+  setDefibModel(model: string | null): void {
+    this.defibModel = model;
+    this.sendDefibModel();
+    for (const f of this.skinFns) f(this.skin, this.theme); // the style says the model: a defibrillator window's look (R5)
+  }
+
+  private sendDefibModel(): void {
+    if (!this.defibModel || this.perf8) return; // the frame gate's layout is not a room's
+    void this.panel.send({ type: 'device', action: { device: 'defib', action: 'model', value: this.defibModel } } as never);
   }
 
   enableSound(): Promise<void> {
@@ -512,13 +619,14 @@ export class AppSession {
     this.lastLoad = this.panel.send({ type: 'scenario', action: 'load', doc: v.doc });
     // The card's Case briefing on every learner screen (owner's board Orientation 7b) — not again for the load that
     // brings a case back after the instructor's page reloaded (position.ts): that case is already under way
-    this.setBriefing(this.restoring ? null : briefingOf(v.doc));
+    this.setBriefing(this.restoring ? null : briefingOf(v.doc, hostLang())); // D13b: the host's language (the Debrief's switch)
     this.live = true;
     return { ok: true, doc: v.doc };
   }
 
   destroy(): void {
     clearInterval(this.pollTimer);
+    if (this.feedTimer !== null) clearInterval(this.feedTimer);
     if (this.briefingTimer !== null) clearTimeout(this.briefingTimer);
     this.offMon?.();
     this.monitor?.destroy();
@@ -564,6 +672,7 @@ export class AppSession {
     this.el.replaceChildren();
     this.lastT = 0;
     this.lastWall = performance.now();
+    this.readT = 0; // a new monitor is a new timeline
     this.last = {};
     this.fastForwarding = false; // A new monitor (the host stops a fast-forward on the old timeline)
     this.ffTick = null;
@@ -588,6 +697,7 @@ export class AppSession {
     m.setTimeScale(this.timeScale);
     if (this.paused) m.pause();
     if (this.soundOn) void m.enableSound();
+    this.sendDefibModel(); // a new engine starts with no model: the room's again (R5b)
     for (const fn of this.mountFns) fn(m);
   }
 }

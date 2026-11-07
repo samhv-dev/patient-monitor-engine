@@ -44,8 +44,19 @@ export type AlarmDeviceAction = {
   lane?: never;
 };
 
-/** The skin (and age band) the device layer follows; `setSkin` without an engine restart (brief §3.8). */
-export type MonitorDeviceAction = { device: 'monitor'; action: 'skin' | 'ageBand'; value: string; lane?: never };
+/**
+ * The room's defibrillator model (Room plan R5a, owner's Q6 ruling of 5 November; the pacer with it, research/41 row
+ * 58, ruling of 6 November): its spec (energies, charge times, ladder; the pacer's default rate and output, ranges, PAUSE
+ * behaviour and HR dashes while pacing) is the model's, apart from the monitor skin, until another model is set; `value`
+ * is a `DEFIB_MODELS` key.
+ */
+export type DefibDeviceAction = { device: 'defib'; action: 'model'; value: string; lane?: never };
+
+/**
+ * The skin (and age band) the device layer follows; `setSkin` without an engine restart (brief §3.8). The
+ * defibrillator model rides this union so `DeviceAction` (types.ts) carries it unchanged.
+ */
+export type MonitorDeviceAction = { device: 'monitor'; action: 'skin' | 'ageBand'; value: string; lane?: never } | DefibDeviceAction;
 
 /** One active (or latched) alarm as the renderer shows it. */
 export interface AlarmEntry {
@@ -64,6 +75,8 @@ export interface AlarmEntry {
    * (philips-like #H30: visual only). Absent in older events: read as `!acked`.
    */
   sounding?: boolean;
+  /** A technical PROMPT (MUI-7: saadat-like "IBP1 NO SENSOR"): shown in the message bar, with no tone and no lamp. */
+  prompt?: boolean;
 }
 
 /** Brief §6.4 alarm-limit table as the device layer uses it: parameter key → [low, high] (null = no limit). */

@@ -22,9 +22,11 @@ import type { RelayFrame } from './transport/relay-frames.ts';
 
 /**
  * `instructor` (plan instructor-peer-role.md §1): a peer from anywhere that proves the instructor's PIN in its hello;
- * the host grants it before it may command. A `controller` stays a peer its transport already trusts.
+ * the host grants it before it may command. A `controller` stays a peer its transport already trusts. `ventilator`
+ * (plan room-and-instruments.md R8a, §4 D9): the cockpit on another device, which proves the same PIN and, once granted,
+ * exchanges only `vent` messages with the host — it sends no `command`.
  */
-export type Role = 'host' | 'controller' | 'viewer' | 'instructor';
+export type Role = 'host' | 'controller' | 'viewer' | 'instructor' | 'ventilator';
 export type TransportKind = 'in-process' | 'postMessage' | 'broadcastChannel' | 'websocket' | 'webrtc';
 export type TransportStatus = 'connecting' | 'open' | 'closed' | 'error';
 export type ModelInput = 'hrFactor' | 'svrFactor' | 'contractilityFactor' | 'vo2Factor' | 'vco2Factor';
@@ -101,13 +103,20 @@ export type ExtraCommand = CommandBase &
     // `jump` = fast-forward `value` sim seconds (> 0, ≤ 600) as fast as the host's monitor runs; `step` is refused
     | { type: 'time'; action: 'pause' | 'resume' | 'scale' | 'step' | 'jump'; value?: number }
     | { type: 'applyEvent'; event: ClinicalEvent }
-    /** A judged objective (`marker`) or a note for the debrief, sent by a remote (plan §6); text ≤ WIRE_LIMITS.noteChars. */
-    | { type: 'note'; kind: 'note' | 'marker'; text: string }
+    /** A judged objective (`marker`) or a note for the debrief, sent by a remote (plan §6); text ≤ WIRE_LIMITS.noteChars.
+     *  `ev`: the run event the note is (one of NOTE_EVENTS), filed on the record's note row with it — the phone's
+     *  Recognised press is the laptop's (brief 52). */
+    | { type: 'note'; kind: 'note' | 'marker'; text: string; ev?: NoteEvent }
     | {
         type: 'attachSensor'; sensor: SensorId; state: string; site?: string; leadSet?: 3 | 5 | 12;
         sampling?: 'sidestream' | 'mainstream';
       }
   );
+/** The run events a `note` command may carry (the guard refuses any other): 'recognised', the /1 Recognised press
+ *  (the demo's record.ts KEEPS; brief 52). */
+export const NOTE_EVENTS = ['recognised'] as const;
+export type NoteEvent = (typeof NOTE_EVENTS)[number];
+
 /**
  * A mark's kind (Instructor v2): a good moment, a bad one, or one to discuss — or `stage`, the mark the host's scenario
  * driver places by itself at every stage entry (its note is the state id). Views keep `stage` marks out of the marks list.
@@ -178,7 +187,8 @@ export type ExtraEvent =
    * Presentation only. `ibp` (E130): the IBP1/IBP2 lane scales (a channel left out is the skin's fixed scale), so a
    * phone draws the instructor's range.
    */
-  | { type: 'style'; skin: string; theme: string; ibp?: StyleIbpScales; replay?: true }
+  // `defib` (Room plan R5): the room's defibrillator model, which a defibrillator window wears the look of (null: none)
+  | { type: 'style'; skin: string; theme: string; ibp?: StyleIbpScales; defib?: string | null; replay?: true }
   /**
    * The card's Case briefing, for every learner screen (owner's board Orientation 7b): sent when a card with one loads,
    * with every answer to a hello while it runs (`replay: true`, so a phone that joins or reloads shows the remainder:
@@ -250,13 +260,55 @@ export interface AppliedResolution {
   mirror?: boolean;
 }
 
+/**
+ * What a follower device shows, named on its hello (plan room-and-instruments.md §4 D1): the learner monitor (phone,
+ * upright), the monitor (landscape), the defibrillator window, the depth-of-anaesthesia slot. Legal with `role:
+ * 'viewer'` only (guard.ts); the ventilator is a role of its own (R8a), never an instrument here.
+ */
+export const INSTRUMENTS = ['learner', 'monitor', 'defib', 'depth'] as const;
+export type Instrument = (typeof INSTRUMENTS)[number];
+
+/**
+ * The commands a ventilator's `cmds` may carry (plan room-and-instruments.md R8a): what the link core builds
+ * (`packages/ventilator/src/link/core.ts` linkTick): one VentFrame a tick (`externalDrive`), the airway on a circuit
+ * change, the profile's stand-in targets once. guard.ts checks them at run time.
+ */
+export type VentCommand =
+  | Extract<Command, { type: 'externalDrive' } | { type: 'setTarget' }>
+  | (Extract<Command, { type: 'applyEvent' }> & { event: { kind: 'airway' } });
+/**
+ * A ventilator link message as it rides a `vent` (plan §4 D9): `packages/ventilator`'s `LinkMsg` (`link/port.ts`), typed
+ * structurally because this package does not depend on that one (test/types.test-d.ts holds the two together).
+ * The cockpit's configuration (`control`'s patch, `settings`) stays opaque here.
+ */
+export type VentLinkBody =
+  | { v: 1; kind: 'cmds'; tick: number; cmds: VentCommand[] }
+  | { v: 1; kind: 'lungState'; ev: Extract<EngineEvent, { type: 'lungState' }> }
+  | { v: 1; kind: 'clock'; ventTick: number }
+  | { v: 1; kind: 'run'; ventTick: number }
+  | { v: 1; kind: 'time'; action: 'pause' | 'resume' | 'scale'; value?: number }
+  | { v: 1; kind: 'control'; patch?: object; circuit?: 'connected' | 'disconnected'; profile?: string }
+  | { v: 1; kind: 'settings'; cfg: object };
+export type VentLinkKind = VentLinkBody['kind'];
+
 /** Brief §7.5, exactly. */
 export type WireMessage = { v: 1; session: string; from: string; seq: number; sentAt: number } & (
-  | { kind: 'hello'; role: Role; pin?: string } // `pin`: only with role 'instructor', 4 to 8 digits (guard.ts)
+  // `pin`: only with role 'instructor' or 'ventilator' (which must carry one), 4 to 8 digits; `show` and `device` (a key
+  // the device keeps, [a-z0-9]{8,16}): only with role 'viewer' (guard.ts; plan room-and-instruments.md §4 D1, R8a)
+  | { kind: 'hello'; role: Role; pin?: string; show?: Instrument; device?: string }
+  /**
+   * R8a: a ventilator link message between the host and ONE granted ventilator (the relay routes it, R8b): from the
+   * ventilator to the host, or from the host `to` the ventilator's id. Never to a viewer or an instructor, never cached.
+   */
+  | { kind: 'vent'; to?: string; body: VentLinkBody }
   | { kind: 'command'; body: WireCommand }
   /** The host's answer to an instructor hello, sent before its welcome (plan §1); `granted: false` also revokes. */
   | { kind: 'grant'; to: string; granted: boolean; reason?: string }
-  | { kind: 'ack'; commandId: string; accepted: boolean; tick: Tick; reason?: string }
+  /** `code: 'recent'` (drug-lock.ts): the same drug was given as a bolus within SAME_DRUG_LOCK_S, from `recent.by`. */
+  | {
+      kind: 'ack'; commandId: string; accepted: boolean; tick: Tick; reason?: string;
+      code?: 'recent'; recent?: { drugId: string; agoS: number; by: 'laptop' | 'phone' | 'card' };
+    }
   | { kind: 'event'; body: WireEvent[] } // batched per frame, never samples
   | { kind: 'snapshot'; body: PatientSnapshot }
 );
@@ -295,7 +347,8 @@ export interface ManagedTransport extends Transport {
   onRelayFrame?(fn: (f: RelayFrame) => void): () => void;
 }
 
-export type AckResult = DispatchResult & { commandId: string; rttMs: number };
+/** `code`: the host's refusal code when it gave one (`recent`: the same-drug lock, drug-lock.ts). */
+export type AckResult = DispatchResult & { commandId: string; rttMs: number; code?: 'recent' };
 export type MeasuredMap = Partial<Record<NumericId, import('@pme/engine-core').Measured>>;
 
 // --- what an instructor may send (plan instructor-peer-role.md §2) -------------------------------------------------
@@ -311,6 +364,9 @@ export const INSTRUCTOR_COMMANDS: ReadonlySet<string> = new Set([
   'applyEvent ventilation', 'attachSensor', 'device', 'pin', 'release', 'scenario bookmark', 'scenario goto',
   'scenario pause', 'scenario record', 'scenario restoreBookmark', 'scenario resume', 'scenario trigger', 'setMode', 'setRhythm', 'setTarget',
   'time jump', 'time pause', 'time resume', 'time scale', 'note',
+  // measured by the census once it crawled the pme-scenario/2 cards (P6): Instructor v2's A presses on the MH card in
+  // phases send its actions' `give`, which holds these two (the induction's airway device and preoxygenation)
+  'applyEvent airwayDevice', 'applyEvent preoxygenate',
 ]);
 
 /** The census key of a command (its `type`, plus its `action` when that is a word, plus `event.kind` for applyEvent). */

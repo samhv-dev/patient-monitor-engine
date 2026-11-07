@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { assertWireSafe, findSampleLeak, parseWireMessage, WIRE_LIMITS, WireSafetyError } from '../src/guard.ts';
-import { createStamper, type WireMessage } from '../src/protocol.ts';
+import { createStamper, INSTRUMENTS, NOTE_EVENTS, type WireMessage } from '../src/protocol.ts';
 import { createEngine } from '@pme/engine-core';
 
 const stamp = createStamper('ABC234', 'host-1');
@@ -88,5 +88,60 @@ describe('the instructor role on the wire (plan instructor-peer-role.md §1, §2
     expect(parseWireMessage(command({ type: 'note', kind: 'stage', text: 'x' }))).toBeNull();
     expect(parseWireMessage(command({ type: 'note', text: 'x' }))).toBeNull();
     expect(parseWireMessage(command({ type: 'note', kind: 'note' }))).toBeNull();
+  });
+
+  it("the note command's optional event tag (brief 52): a known tag accepted from the phone and a controller alike, an unknown or non-string tag refused, a note without one unchanged", () => {
+    for (const issuedBy of ['instructor', 'remote', 'ctl-abc.1']) {
+      for (const kind of ['note', 'marker'] as const) {
+        const m = parseWireMessage(command({ issuedBy, type: 'note', kind, text: 'Recognised (instructor)', ev: 'recognised' }));
+        expect(m, `${issuedBy} ${kind}`).toMatchObject({ kind: 'command', body: { type: 'note', kind, text: 'Recognised (instructor)', ev: 'recognised' } });
+      }
+    }
+    expect([...NOTE_EVENTS]).toEqual(['recognised']);
+    for (const ev of ['Recognised', 'recognized', 'cprStop', 'state:x', '', 1, true, null, ['recognised'], { recognised: true }])
+      expect(parseWireMessage(command({ type: 'note', kind: 'marker', text: 'x', ev })), JSON.stringify(ev)).toBeNull();
+    const plain = parseWireMessage(command({ type: 'note', kind: 'note', text: 'Dantrolene drawn up' }));
+    expect(plain).not.toBeNull();
+    expect(plain?.kind === 'command' && 'ev' in plain.body).toBe(false);
+    // the tag does not lift the text limit
+    expect(parseWireMessage(command({ type: 'note', kind: 'marker', text: 'x'.repeat(501), ev: 'recognised' }))).toBeNull();
+  });
+});
+
+describe("the hello's `show` and `device` (plan room-and-instruments.md §4 D1, R3)", () => {
+  const hello = (role: string, extra: Record<string, unknown> = {}) => ({ ...stamp({ kind: 'hello', role: 'viewer' }), role, ...extra });
+
+  it('accepts a viewer hello with show and device, each alone, and every instrument the list names', () => {
+    expect(parseWireMessage(hello('viewer', { show: 'defib', device: 'k3x9q2m7' }))).toMatchObject({ kind: 'hello', role: 'viewer', show: 'defib', device: 'k3x9q2m7' });
+    expect(parseWireMessage(JSON.stringify(hello('viewer', { show: 'learner' })))).not.toBeNull();
+    expect(parseWireMessage(hello('viewer', { device: '0123456789abcdef' }))).not.toBeNull();
+    expect([...INSTRUMENTS]).toEqual(['learner', 'monitor', 'defib', 'depth']);
+    for (const show of INSTRUMENTS) expect(parseWireMessage(hello('viewer', { show, device: 'abcd1234' })), show).not.toBeNull();
+  });
+
+  it('refuses show or device on any other role', () => {
+    for (const role of ['host', 'controller', 'instructor']) {
+      expect(parseWireMessage(hello(role, { show: 'learner' })), `${role} show`).toBeNull();
+      expect(parseWireMessage(hello(role, { device: 'k3x9q2m7' })), `${role} device`).toBeNull();
+    }
+    expect(parseWireMessage(hello('instructor', { pin: '4729', show: 'learner' }))).toBeNull();
+  });
+
+  it('refuses an unknown show', () => {
+    for (const show of ['vent', 'iabp', 'remote', 'pick', 'Learner', 'learner ', '', 1, null, ['learner'], { learner: true }])
+      expect(parseWireMessage(hello('viewer', { show })), JSON.stringify(show)).toBeNull();
+  });
+
+  it('refuses a device outside [a-z0-9]{8,16}', () => {
+    for (const device of ['k3x9q2m', '0123456789abcdef0', 'K3X9Q2M7', 'k3x9-q2m7', 'k3x9q2m7\n', 'k3x9q2m\u00e9', '', 12345678, null])
+      expect(parseWireMessage(hello('viewer', { device })), JSON.stringify(device)).toBeNull();
+  });
+
+  it('leaves a hello without them unchanged', () => {
+    for (const role of ['host', 'controller', 'viewer']) {
+      const m = hello(role);
+      expect(parseWireMessage(m), role).toEqual(m);
+    }
+    expect(parseWireMessage(hello('instructor', { pin: '4729' }))).toMatchObject({ role: 'instructor', pin: '4729' });
   });
 });

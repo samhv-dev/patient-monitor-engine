@@ -15,6 +15,12 @@ export interface RhythmDef {
   atria: AtrialMode;
   av: AvMode;
   focus: FocusMode;
+  /**
+   * The focus is a subsidiary pacemaker (an escape or accelerated junctional / idioventricular focus): on a switch its
+   * first beat waits one of its own cycles (60/rate) after the last ventricular beat, which had discharged it. Unset,
+   * the focus (re-entry, triggered VT) takes over at once.
+   */
+  focusWaitsForInterval: boolean;
   escape: EscapeMode;
   /** 'vf': the continuous VF generator runs (arrest/vf.ts). */
   continuous: 'none' | 'vf';
@@ -38,8 +44,8 @@ export interface RhythmDef {
 const BACKUP_JUNCTIONAL_BPM = 40; // [ENG] junctional escape 40–60 (brief §5); low end so Wenckebach pauses stay visible
 const DISSOCIATED_ATRIAL_BPM = 80; // [ENG] (default)
 
-type Row = Omit<RhythmDef, 'continuous' | 'pacing' | 'conductedTemplate' | 'atrialDefaultBpm' | 'escapeTemplate' | 'backupEscapeBpm'> &
-  Partial<Pick<RhythmDef, 'continuous' | 'pacing' | 'conductedTemplate' | 'atrialDefaultBpm' | 'escapeTemplate' | 'backupEscapeBpm'>>;
+type Row = Omit<RhythmDef, 'continuous' | 'pacing' | 'conductedTemplate' | 'atrialDefaultBpm' | 'escapeTemplate' | 'backupEscapeBpm' | 'focusWaitsForInterval'> &
+  Partial<Pick<RhythmDef, 'continuous' | 'pacing' | 'conductedTemplate' | 'atrialDefaultBpm' | 'escapeTemplate' | 'backupEscapeBpm' | 'focusWaitsForInterval'>>;
 function row(r: Row): RhythmDef {
   return {
     continuous: 'none',
@@ -48,6 +54,7 @@ function row(r: Row): RhythmDef {
     atrialDefaultBpm: DISSOCIATED_ATRIAL_BPM,
     escapeTemplate: 'narrow',
     backupEscapeBpm: 0,
+    focusWaitsForInterval: false,
     ...r,
   };
 }
@@ -72,8 +79,8 @@ export const RHYTHMS: Readonly<Record<RhythmId, RhythmDef>> = {
   svtAvrt: row({ group: 'svt', atria: 'none', av: 'dissociated', focus: 'avrt', escape: 'none', rateDrives: 'focus', rateRange: [150, 250], defaultRateBpm: 190 }),
   wpwSinus: row({ group: 'svt', atria: 'sinus', av: 'conducted', focus: 'none', escape: 'junctional', rateDrives: 'sinus', rateRange: [40, 150], defaultRateBpm: 75, conductedTemplate: 'wpw', backupEscapeBpm: J }),
   preexcitedAf: row({ group: 'svt', atria: 'fib', av: 'integrateFire', focus: 'none', escape: 'none', rateDrives: 'afResponse', rateRange: [120, 280], defaultRateBpm: 200, conductedTemplate: 'wpw' }),
-  junctionalEscape: row({ group: 'svt', atria: 'none', av: 'dissociated', focus: 'junctional', escape: 'none', rateDrives: 'focus', rateRange: [40, 60], defaultRateBpm: 50 }),
-  junctionalAccel: row({ group: 'svt', atria: 'none', av: 'dissociated', focus: 'junctional', escape: 'none', rateDrives: 'focus', rateRange: [61, 100], defaultRateBpm: 80 }),
+  junctionalEscape: row({ group: 'svt', atria: 'none', av: 'dissociated', focus: 'junctional', focusWaitsForInterval: true, escape: 'none', rateDrives: 'focus', rateRange: [40, 60], defaultRateBpm: 50 }),
+  junctionalAccel: row({ group: 'svt', atria: 'none', av: 'dissociated', focus: 'junctional', focusWaitsForInterval: true, escape: 'none', rateDrives: 'focus', rateRange: [61, 100], defaultRateBpm: 80 }),
   junctionalTachy: row({ group: 'svt', atria: 'none', av: 'dissociated', focus: 'junctional', escape: 'none', rateDrives: 'focus', rateRange: [101, 180], defaultRateBpm: 120 }),
   // --- AV blocks --------------------------------------------------------------------------------
   avb1: row({ group: 'avBlock', atria: 'sinus', av: 'conducted', focus: 'none', escape: 'junctional', rateDrives: 'sinus', rateRange: [30, 150], defaultRateBpm: 70, backupEscapeBpm: J }),
@@ -85,8 +92,8 @@ export const RHYTHMS: Readonly<Record<RhythmId, RhythmDef>> = {
   avb3Narrow: row({ group: 'avBlock', atria: 'sinus', av: 'dissociated', focus: 'none', escape: 'junctional', rateDrives: 'escape', rateRange: [40, 60], defaultRateBpm: 45 }),
   avb3Wide: row({ group: 'avBlock', atria: 'sinus', av: 'dissociated', focus: 'none', escape: 'ventricular', rateDrives: 'escape', rateRange: [20, 40], defaultRateBpm: 32, escapeTemplate: 'wide' }),
   // --- ventricular ------------------------------------------------------------------------------
-  idioventricular: row({ group: 'ventricular', atria: 'none', av: 'dissociated', focus: 'idioventricular', escape: 'none', rateDrives: 'focus', rateRange: [20, 40], defaultRateBpm: 35 }),
-  aivr: row({ group: 'ventricular', atria: 'sinus', av: 'dissociated', focus: 'idioventricular', escape: 'none', rateDrives: 'focus', rateRange: [41, 120], defaultRateBpm: 75, atrialDefaultBpm: 60 }),
+  idioventricular: row({ group: 'ventricular', atria: 'none', av: 'dissociated', focus: 'idioventricular', focusWaitsForInterval: true, escape: 'none', rateDrives: 'focus', rateRange: [20, 40], defaultRateBpm: 35 }),
+  aivr: row({ group: 'ventricular', atria: 'sinus', av: 'dissociated', focus: 'idioventricular', focusWaitsForInterval: true, escape: 'none', rateDrives: 'focus', rateRange: [41, 120], defaultRateBpm: 75, atrialDefaultBpm: 60 }),
   vtMono: row({ group: 'ventricular', atria: 'sinus', av: 'conducted', focus: 'vt', escape: 'none', rateDrives: 'focus', rateRange: [120, 250], defaultRateBpm: 170 }),
   vtPoly: row({ group: 'ventricular', atria: 'none', av: 'dissociated', focus: 'vtPoly', escape: 'none', rateDrives: 'focus', rateRange: [150, 300], defaultRateBpm: 220 }),
   torsades: row({ group: 'ventricular', atria: 'none', av: 'dissociated', focus: 'torsades', escape: 'none', rateDrives: 'focus', rateRange: [200, 250], defaultRateBpm: 230 }),

@@ -9,7 +9,7 @@ import type { LineSensorState } from '../types-hemo.ts';
 import type { Command, EngineEvent, ModifiersPatch, Ramp, RhythmId, RhythmOpts, StateVar } from '../types.ts';
 import { buildConditions, createInputs, observeEvent, observeQrs, type AlarmInputs } from './alarms/conditions.ts';
 import { applyAlarmAction, createAlarmMgr, setProfile, stepAlarms, validateAlarmAction, type AlarmMgrState } from './alarms/manager.ts';
-import { deviceProfile, skinBand } from './alarms/profile.ts';
+import { DEFIB_MODELS, deviceProfile, skinBand, type DefibModel } from './alarms/profile.ts';
 import { afterShock, applyDefib, createDefib, FALLBACK_DEFIB, stepDefib, validateDefib, type DefibSpec, type DefibState } from './defib-pacer/defib.ts';
 import { drawOutcome, shockClass, T_PEAK_WINDOW_S, type ShockOutcome } from './defib-pacer/outcome.ts';
 import { applyPacer, createPacer, FALLBACK_PACER, tcpSpec, validatePacer, type PacerSpec, type PacerState } from './defib-pacer/pacer.ts';
@@ -50,6 +50,10 @@ export interface DeviceState {
   inputs: AlarmInputs;
   defib: DefibState;
   pacer: PacerState;
+  /** The room's defibrillator model (a `DEFIB_MODELS` key, Room plan R5a; its pacer too, row 58), or null: the skin's
+   * defibrillator and pacer spec, else the fallback.
+   * Absent in older snapshots (read as null). */
+  defibModel: string | null;
   sync: SyncState;
   pending: PendingRhythm | null;
   lastBeat: { t: number; qtMs: number } | null;
@@ -88,8 +92,18 @@ export interface DeviceHost {
   shockState?: () => { antiarrhythmicU?: number; kEcg?: number; ph?: number; cppMmHg?: number; arrestS?: number; tempC?: number };
 }
 
-const defibSpec = (d: DeviceState): DefibSpec => d.alarms.profile.defib ?? FALLBACK_DEFIB;
-const pacerSpec = (d: DeviceState): PacerSpec => d.alarms.profile.pacer ?? FALLBACK_PACER;
+const modelOf = (d: DeviceState): DefibModel | undefined => (d.defibModel ? DEFIB_MODELS[d.defibModel] : undefined);
+const defibSpec = (d: DeviceState): DefibSpec => modelOf(d)?.defib ?? d.alarms.profile.defib ?? FALLBACK_DEFIB;
+const pacerSpec = (d: DeviceState): PacerSpec => modelOf(d)?.pacer ?? d.alarms.profile.pacer ?? FALLBACK_PACER;
+/**
+ * The model's HR-while-pacing rule onto the device profile (row 58): the alarm conditions (conditions.ts) and the
+ * deviceStatus read it from there. The profile is this device's own copy, rebuilt at every skin or age-band switch, so
+ * this runs after each and when the model is set; with no model the skin's rule stays.
+ */
+function fitModel(d: DeviceState): void {
+  const m = modelOf(d);
+  if (m) d.alarms.profile.hrDashesWhilePacing = m.hrDashesWhilePacing;
+}
 
 export function createDevice(skin: string | undefined, ageBand: 'adult' | 'paediatric' | 'neonatal' | undefined): DeviceState {
   const p = deviceProfile(skin ?? DEFAULT_SKIN, skinBand(ageBand));
@@ -98,6 +112,7 @@ export function createDevice(skin: string | undefined, ageBand: 'adult' | 'paedi
     inputs: createInputs(0),
     defib: createDefib(p.defib ?? FALLBACK_DEFIB),
     pacer: createPacer(p.pacer ?? FALLBACK_PACER),
+    defibModel: null,
     sync: createSyncState(0),
     pending: null,
     lastBeat: null,
@@ -138,6 +153,10 @@ export function validateDeviceCommand(d: DeviceState, cmd: Command): string | un
     if (a.action === 'ageBand') return ['adult', 'paed', 'neo', 'paediatric', 'neonatal'].includes(a.value) ? undefined : 'ageBand must be adult, paed or neo';
     return `unknown monitor action ${String((a as { action: string }).action)}`;
   }
+  if (a.device === 'defib') {
+    if (a.action !== 'model') return `unknown defib action ${String((a as { action: string }).action)}`;
+    return typeof a.value === 'string' && Object.hasOwn(DEFIB_MODELS, a.value) ? undefined : `unknown defibrillator model ${String(a.value)}`; // Own keys only
+  }
   return null;
 }
 
@@ -177,7 +196,22 @@ export function applyDeviceCommand(d: DeviceState, cmd: Command, host: DeviceHos
   if (a.device === 'monitor') {
     const band: AgeBand = a.action === 'ageBand' ? skinBand(a.value as 'adult') : d.alarms.profile.ageBand;
     const skin = a.action === 'skin' ? a.value : d.alarms.profile.skin;
-    setProfile(d.alarms, deviceProfile(skin, band), t, out);
+    setProfile(d.alarms, deviceProfile(skin, band), t, out); // the defibrillator model, if set, is kept (R5a, row 58)
+    fitModel(d);
+    return true;
+  }
+  if (a.device === 'defib') {
+    // The room's model: its spec from now on, and its adult energy selected, as the energy selector does (a charged
+    // device disarms, defib.ts selectEnergy)
+    d.defibModel = a.value;
+    applyDefib(d.defib, { kind: 'defib', action: 'selectEnergy', energyJ: defibSpec(d).energyAdultJ }, t, defibSpec(d), out);
+    // and its pacer (row 58): a pacer that is off takes the model's default rate and output, as a new device does
+    // (createPacer); a running pacer keeps what the clinician set
+    fitModel(d);
+    if (d.pacer.mode === 'off') {
+      d.pacer.ratePpm = pacerSpec(d).rateDefault;
+      d.pacer.mA = pacerSpec(d).mADefault;
+    }
     return true;
   }
   return false;

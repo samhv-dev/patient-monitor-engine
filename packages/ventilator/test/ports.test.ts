@@ -37,6 +37,31 @@ describe('link ports', () => {
     b.close();
   });
 
+  // Plan room-and-instruments.md R8a: `settings` (the cockpit's settings, for R8c's hand-over) is a link message of its
+  // own; additive: both ports carry it as any other, and neither side acts on it (nobody sends one before R8c)
+  it("`settings`: carried by the BroadcastChannel and frame ports alike; the ventilator and the monitor ignore it", () => {
+    const Impl = FakeChannel as unknown as new (n: string) => BroadcastChannel;
+    const a = createBroadcastPort('s2', Impl);
+    const b = createBroadcastPort('s2', Impl);
+    const got: LinkMsg[] = [];
+    b.onMessage((m) => got.push(m));
+    const d = createVentDriver(createLocalPortPair()[0], 'normal');
+    const msg: LinkMsg = { v: 1, kind: 'settings', cfg: structuredClone(d.vs.cfg) };
+    a.post(msg);
+    expect(got).toEqual([msg]);
+    a.close();
+    b.close();
+    const [ventPort, monPort] = createLocalPortPair();
+    const sent: Command[] = [];
+    attachMonitorToLink({ dispatch: (c: Command) => (sent.push(c), { accepted: true, tick: 1 }), on: () => () => {} }, monPort);
+    const v = createVentDriver(ventPort, 'normal');
+    const before = JSON.stringify(v.vs.cfg);
+    monPort.post({ v: 1, kind: 'settings', cfg: { ...v.vs.cfg, peep: 15 } });
+    ventPort.post(msg);
+    expect(JSON.stringify(v.vs.cfg)).toBe(before);
+    expect(sent).toEqual([]);
+  });
+
   it('monitor side: frames replay on their own engine ticks, lungState goes back, the ventilator never outruns the engine', { timeout: 30_000 }, async () => { // FU-11 K3: a real engine under CI load (CI amendment 3)
     const [ventPort, monPort] = createLocalPortPair();
     const e = createEngine({ seed: 7, patient: PROFILES.normal!.patient });

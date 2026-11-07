@@ -32,7 +32,7 @@ export interface Teach2View extends View {
 }
 
 /** The Instructor v2 view on `link`, for `shell.add`. */
-export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): number; top?: TopControls; loadScenario?(card: ScenarioCard): boolean; finish?: FinishHooks }): Teach2View {
+export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): number; top?: TopControls; loadScenario(card: ScenarioCard): boolean; finish?: FinishHooks }): Teach2View {
   const header = mountHeader(link, o.top);
   const dock = mountDock(link, { finish: () => ctx.finish?.start(), canFinish: () => !!ctx.finish?.can(), finishing: () => !!ctx.finish?.open });
   const strip = h('nav', { class: 'ip2-strip', 'aria-label': 'Stages' });
@@ -55,7 +55,7 @@ export function teach2View(link: Link, o: { site: SiteProfile; weightKg(): numbe
 
   const keys = mountKeys(el, { link, togglePause: header.togglePause });
   const begin = beginState(() => paintNow());
-  const ctx: Teach2Ctx = { link, site: o.site, weightKg: o.weightKg, keys, dock: { tools: dock.tools, note: dock.note }, openSheet: () => undefined, begin, ...(o.loadScenario ? { loadScenario: o.loadScenario } : {}) };
+  const ctx: Teach2Ctx = { link, site: o.site, weightKg: o.weightKg, keys, dock: { tools: dock.tools, note: dock.note }, openSheet: () => undefined, begin, loadScenario: o.loadScenario };
   // The sheets mount first: they set ctx.openSheet
   const slots: Slot[] = [mountSheets(sheets, ctx), mountStrip(strip, ctx), mountCue(cue, ctx), mountAction(actionBody, ctx)];
   openAlarms = () => ctx.openSheet('devices');

@@ -67,7 +67,8 @@ test.describe('the Room at 1920×1080', () => {
     expect(await symbol('dialog.room-big .room-big-qr svg')).toBe(await symbol('section.room-join .room-qr svg'));
     await expect(big.locator('.room-big-code')).toBeVisible();
     await expect(big.locator('.room-big-code')).toHaveText(code);
-    await expect(big.locator('.room-big-url')).toHaveText(new RegExp(`^http://\\d+\\.\\d+\\.\\d+\\.\\d+:${relay.port}/\\?join=${code}$`));
+    // R4: the address of the QR, which opens the instrument picker
+    await expect(big.locator('.room-big-url')).toHaveText(new RegExp(`^http://\\d+\\.\\d+\\.\\d+\\.\\d+:${relay.port}/\\?join=${code}#/pick$`));
     await expect(big.locator('.room-big-count')).toHaveText('0 phones following');
     const below = async (sel: string) => (await big.locator(sel).boundingBox())!.y >= box.y + box.height;
     expect(await below('.room-big-code')).toBe(true);

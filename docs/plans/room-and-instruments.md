@@ -1,7 +1,7 @@
 # Room and instruments (E124): room set-up on the start page, roles and PIN, one instrument per screen — Implementation Plan
 
-**STATUS: READY TO BUILD EXCEPT THE DEFIBRILLATOR MODEL (2026-11-05).** Every question in §10 is ruled; the one open
-line is the owner's department's actual defibrillator (Q6's second half), which only R5a's model list waits on.
+**STATUS: READY TO BUILD (2026-11-05).** Every question in §10 is ruled, Q6's second half included (5 November,
+evening): the defibrillator window is generic now, and the department's actual model is added later as a skin.
 Originally a draft for review. Written by a planning executor from brief 18 of the post-demo set. Nothing in
 it is ruled until the owner answers "Questions for the owner" (§10) and the orchestrator reviews the pieces. No product
 code, test, card or kit file was changed while writing it.
@@ -30,6 +30,16 @@ Q6 = B: the instructor picks the defibrillator model in Room setup, apart from t
 its energies: R5a decouples the defibrillator's device profile from the skin in the engine's device layer, and R5b
 puts the choice in Room setup; R0's drift measurement becomes R5a's acceptance. The pieces, hours, critical path and
 merge order are updated (§7, §9).
+
+**Amended a fifth time 2026-11-05 (evening):** Q6's second half is **ruled**: the defibrillator window is **generic**
+now (energy select, charge, shock, sync, pads/paddles in the owner's words; Zoll-like values, the plan's fallback),
+and the department's actual model is added later as a skin. R5a's model list ships with the generic model only, whose
+values are the fallback's (`FALLBACK_DEFIB`, `packages/engine-core/src/l3/defib-pacer/defib.ts:11`, equal to
+`zoll-like.json:27`); R5b's "Your department's machine: not named yet" line stays, as the hook for that later skin
+(roadmap: `docs/roadmap/v1.0-remaining.md`). Of the owner's list, the engine's defibrillator models energy select,
+charge, ready, shock and sync today (`defib.ts:1–2`, `:50–63`); it has no pads/paddles state, so the window does not draw
+one as a control (the plan's rule: nothing on screen that the product does not do). The learner window's own presses
+stay Charge and Shock only (Q5). No piece, hour or order changes.
 
 **Amended a fourth time 2026-11-05:** Q7 to Q10 are **ruled 5 November** (§10). Q7: the owner rejects a single
 "BIS-like" screen. Several depth-of-anaesthesia monitors exist, each with its own method, and each must work from its
@@ -212,8 +222,10 @@ Anti-goals (a piece that does one of these is rejected)
   engine holds the model's spec, whatever the monitor skin. The models the engine knows today are the two skins with
   a defibrillator block: **Zoll-style** (`zoll-like.json:27`: 120 J adult, 50 J paediatric, no AED ladder, charge time
   by the 7 s / 200 J rule, `defib.ts:12–13`) and **LIFEPAK-style** (`lifepak-like.json:27`: 200 J adult, 50 J
-  paediatric, AED ladder 200, 300, 360 J, charge 7 s at 200 J and 10 s at 360 J). The owner's department's actual
-  machine is named in Q6; it may need a new profile with sourced energies, not one of these two.
+  paediatric, AED ladder 200, 300, 360 J, charge 7 s at 200 J and 10 s at 360 J). **R5a ships the generic
+  model only** (Q6's second half, ruled 5 November evening): its values are the fallback's (`defib.ts:11`, the
+  Zoll-style numbers above). The department's actual machine is added later as a skin with its own sourced
+  defibrillator block, and one line in `DEFIB_MODELS` then (§9).
 - **D6. The defibrillator window is the one instrument that commands, and only Charge and Shock (Q5 ruled 5
   November).** The monitor screens have no controls. The window's two presses
   carry no energy: the energy is the room's (the device's selected energy, `defib.ts:76`: a charge without `energyJ`
@@ -470,18 +482,18 @@ it sends; `packages/renderer`. **Gate:** common, with `@pme/demo`, plus
 **Files:** `packages/engine-core/src/l3/device-layer.ts` (`DeviceState` gains `defibModel: string | null`;
 `defibSpec(d)` reads the model's spec, else today's skin profile, `:91`; the `monitor skin` branch, `:175–181`, keeps
 the model; the command's validation beside `:125–135`), `src/types-device.ts` (the `device: 'defib'` action
-`model`), `src/l3/alarms/profile.ts` (`DEFIB_MODELS`: the two models of §4 D5, their numbers taken from the skins'
-`defib` blocks, with the skins' own provenance), `src/l3/defib-pacer/defib.ts` (nothing in its arithmetic); tests in
+`model`), `src/l3/alarms/profile.ts` (`DEFIB_MODELS`: the generic model only, Q6's second half; its numbers are
+`FALLBACK_DEFIB`'s, `defib.ts:11`, equal to `zoll-like.json:27`, with that skin's provenance), `src/l3/defib-pacer/defib.ts` (nothing in its arithmetic); tests in
 `packages/engine-core/test/` beside the device-layer tests; the snapshot round trip; `docs/model/*` regenerated.
 **Tests first:**
 - with no model set, every device-layer and validation test is unchanged (today's skin-driven behaviour exactly);
-- `device defib model lifepak-like` on a `saadat-like` monitor: a charge with no energy charges 200 J in 7 s; at 360 J
-  in 10 s; a later `monitor skin` change keeps those;
-- `device defib model zoll-like`: 120 J, charge time by the 7 s / 200 J rule (`defib.ts:12–13`);
+- `device defib model generic` on a `saadat-like` monitor (no defibrillator block): a charge with no energy charges
+  120 J, charge time by the 7 s / 200 J rule (`defib.ts:12–13`); on a `lifepak-like` monitor the same model still
+  gives 120 J (the skin no longer sets it); a later `monitor skin` change keeps those;
 - an unknown model is refused with its reason; the pacer is untouched (it stays the skin's: not ruled);
 - snapshot then restore keeps the model; a follower that replays the command holds the same spec;
-- **R0's measurement as the acceptance:** a `saadat-like` host with model `lifepak-like` and a follower wearing the
-  `lifepak-like` skin agree on the default energy, the charge time, the READY tick and the shock's outcome through
+- **R0's measurement as the acceptance:** a `saadat-like` host with model `generic` and a follower wearing the
+  `zoll-like` skin (the generic model's look: its defibrillator block equals the fallback) agree on the default energy, the charge time, the READY tick and the shock's outcome through
   charge, shock and pacing at the defaults, with no beat drift beyond the learner monitor's (R0's pinned difference
   turns into an equality).
 **Acceptance:** the tests pass; the validation suites (`packages/validation`) and the slow showcase goldens are
@@ -494,8 +506,9 @@ workflow.
 
 **Depends on:** R5a, R7's Room page (or its base, if R7 is not yet in: the choice sits in its own card). **Files:**
 `apps/demo/src/app/site.ts` (the site profile gains `defibModel`, kept per room as the monitor style is, `:32–40`,
-`:54–62`), `views/room.ts` (a "Defibrillator in this room" choice: Zoll-style (120 J) · LIFEPAK-style (200, 300,
-360 J), and a line "Your department's machine: not named yet" until Q6's second half is answered),
+`:54–62`), `views/room.ts` (a "Defibrillator in this room" choice with one entry, the generic model (120 J adult, 50 J
+paediatric, the fallback's values; Q6's second half), and the line "Your department's machine: not named yet", kept as
+the hook for the department's model, added later as a skin),
 `session.ts` (the host sends `device defib model` at each patient mount and on a change, through the host's command
 path so followers replay it), `panel/defib.ts` (the energy stepper starts at the model's adult energy instead of the
 fixed 200, `:18`, and offers the model's AED ladder as presets when it has one); tests beside each; the census
@@ -798,9 +811,12 @@ R1 ─► R1b ─────────────────► R7 ──�
 - **Learners' phones that follow the ventilator's patient instead of holding:** the relay still drops the mirrored
   frames (`server.ts:251–253`), so a network follower holds while the cockpit drives (E128, kept by Q4's ruling).
   Sending the frames to every phone is another change, not ruled.
-- **The department's own defibrillator model**, if it is neither of the two the engine knows (Q6): a new profile
-  with sourced energies, charge times and ladder, then one line in R5a's `DEFIB_MODELS`.
-- **The pacer apart from the skin:** R5a decouples the defibrillator only; the pacer stays the skin's (not ruled).
+- **The department's own defibrillator model, as a skin** (Q6's second half, ruled 5 November evening): a skin with
+  its own sourced defibrillator block (energies, charge times, ladder), then one line in R5a's `DEFIB_MODELS`; on the
+  roadmap (`docs/roadmap/v1.0-remaining.md`).
+- **The pacer apart from the skin:** R5a decoupled the defibrillator only; the owner ruled on 6 November (research/41
+  row 58) that the pacer follows the model too: its default rate and output, ranges, PAUSE behaviour and HR dashes
+  while pacing are the model's (`DEFIB_MODELS`), and R0's last divergence is an equality (scratch/room-plan-gate/r58.json).
 - **The IABP (Q8 ruled 5 November: not in this stage)** is on the engine roadmap as above.
 - **Depth of anaesthesia (Q7 ruled 5 November):** an EEG model and the device algorithms, §9a.
 
@@ -882,10 +898,11 @@ published method or, where it is secret, stated as an approximation and labelled
    the device refusing a shock without a charge, every press recorded under the device for the Debrief. (Option A,
    display only, was not chosen.)
 6. **Which defibrillator does the room have? RULED 5 November: B.** The instructor picks the model in Room setup,
-   apart from the monitor skin, and the host adopts its energies (R5a, R5b). The engine knows two today: Zoll-style
-   (120 J) and LIFEPAK-style (200, 300, 360 J). **Still open, for you to name:** your department's actual machine
-   (maker and model) — ____________________. If it is neither, it needs its own profile with sourced energies and
-   charge times before it can be offered (§9).
+   apart from the monitor skin, and the host adopts its energies (R5a, R5b). **Second half RULED 5 November
+   (evening):** the window is generic now (energy select, charge, shock, sync; Zoll-like values, the plan's
+   fallback), and R5a's model list ships with the generic model only; your department's actual machine is added later
+   as a skin (§9, roadmap), and Room setup's line "Your department's machine: not named yet" stays as its hook. Pads
+   and paddles are not modelled by the engine today, so the window shows no such control.
 7. **Depth of anaesthesia. RULED 5 November.** No single "BIS-like" screen: each depth monitor (BIS, Entropy,
    Narcotrend, SedLine/PSI and others) must be selectable and work from its true mechanism, which needs a simulated
    EEG. R6 leaves this stage; the slot stays "Not available yet" (R4, R7); the EEG model and the device algorithms
@@ -897,7 +914,7 @@ published method or, where it is secret, stated as an approximation and labelled
 10. **Device names kept across days. RULED 5 November: A.** Under a random key each device keeps in its own browser
     (never leaves the room's network); "Forget the room" clears them.
 
-**The one open line:** the owner's department's defibrillator (Q6), which R5a's model list waits on.
+**No open line:** every question is ruled; the department's own defibrillator is a later skin (Q6, §9).
 
 ## 11. Self-review against the codebase (8d79f188)
 

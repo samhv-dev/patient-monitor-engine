@@ -434,7 +434,7 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
   const noBeat = pulseless || NO_BEAT_RHYTHMS.has(ctx.rhythm.id) || !lb0 || t - lb0.t > 3;
   const cppCont = c.cppAcc.n > 0 ? c.cppAcc.sum / c.cppAcc.n : 0;
   c.cppAcc = { sum: 0, n: 0 };
-  stepCoronary(c.cor, c.beats, c.prof.cfr, 1, 60 / Math.max(0.2, hs.lastRR), ctx.l1.mode === 'modeled' ? Math.min(1, c.chemo.sao2 / SAO2_REF) : 1, noBeat ? { cpp: cppCont, dtf: hs.cpr.active ? 1 - CPR_DUTY : 1, vf: VF_RHYTHMS.has(ctx.rhythm.id) } : undefined, ctx.l1.mode === 'modeled'); // O2 content in the supply (MODELED); the no-beat CPP, MODELED balance
+  stepCoronary(c.cor, c.beats, c.prof.cfr, 1, 60 / Math.max(0.2, hs.lastRR), ctx.l1.mode === 'modeled' ? Math.min(1, c.chemo.sao2 / SAO2_REF) : 1, noBeat ? { cpp: cppCont, dtf: hs.cpr.active ? 1 - CPR_DUTY : 1, vf: VF_RHYTHMS.has(ctx.rhythm.id) } : undefined, ctx.l1.mode === 'modeled', hs.cpr.active && !noBeat ? { cpp: cppCont, dtf: 1 - CPR_DUTY } : undefined); // O2 content in the supply (MODELED); the no-beat CPP, MODELED balance; under compressions the beating heart's supply is the relaxation-phase CPP
   // A pulseless heart is not reperfused, so its hypoxic depression (and the SA-node depression it drives) is held,
   // never unwound, while the rhythm is pulseless (unless CPR perfuses it)
   if (pulseless && !hs.cpr.active) c.cor.hyp = Math.max(hyp0, c.cor.hyp);

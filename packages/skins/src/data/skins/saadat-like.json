@@ -170,6 +170,7 @@
     "scaleLines": "dotted-upper-mid-lower",
     "scaleLineColor": "#8A8C92",
     "staticDisplay": "mean-only",
+    "noSensorMessage": true,
     "meanOnlyLabels": ["CVP", "LAP", "RAP"],
     "scales": {
       "ART": [0, 100, 200], "IBP": [-20, 90, 200], "PAP": [-10, 35, 80], "CVP": [-10, 10, 30],
@@ -346,6 +347,7 @@
     "ibp": { "tag": "documented", "source": "research/06 §3.2 (M p.304-305); research/06 §4.1 (M p.149-161)" },
     "ibp.scaleLines": { "tag": "measured", "source": "research/34 §3 row 11 (IMG_8113: dotted lines 130/80/30 and 100/70/40, middle value indented)" },
     "ibp.scaleLineColor": { "tag": "measured", "source": "research/34 §8 (owner-approved mock-up, scratch/skin-mockup/NOTES.md colours: dotted scale lines, 2026-10-20)" },
+    "ibp.noSensorMessage": { "tag": "documented", "source": "research/34 §2 IMG_8105, IMG_8113, IMG_8116 (message bar \"IBP1 NO SENSOR\" with no line; rotating with \"BFA LINK OFF\")" },
     "ibp.staticDisplay": { "tag": "documented", "source": "research/06 §4.1 (static pressure: SYS/DIA hidden, a larger mean shown)" },
     "co2.unit": { "tag": "documented", "source": "research/06 §4.1 (M p.270); research/00 R12" },
     "co2.scale": { "tag": "measured", "source": "owner's photos of a real unit, 2026-10-18, research/34 §3 row 2 (\"50mmHg\" scale label, IMG_8112–8116)", "note": "Tuesday set T2: was 10 %V (research/06 §3.2, M p.305). Values above 50 mmHg clipped at the lane top (owner E63, accepted 2026-10-18); revisited 2026-11-01: the lane widens to 80 and 100 when the plateau exceeds it (co2.autoScales), and clips only above 100; the EtCO2 number is unaffected" },

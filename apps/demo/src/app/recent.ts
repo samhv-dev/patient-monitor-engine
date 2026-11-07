@@ -1,6 +1,7 @@
 // The Scenarios page's "Recent" (E125): the last three library cards loaded in this browser, newest first. Every load
-// passes through the app's one loadScenario (main.ts), which notes it here; a card from an imported file is not kept
-// (it cannot be loaded again without its file).
+// passes through the app's one loadScenario (main.ts), which notes it here. A card imported in Instructor v2 (brief 22)
+// is kept while it stays in this browser's library (scenarioById finds it); the Scenarios page's own "Import a scenario
+// file" keeps nothing, so a card loaded from there is not noted (it cannot be loaded again without its file).
 import { scenarioById, type ScenarioCard } from './scenarios.ts';
 import { store } from './store.ts';
 

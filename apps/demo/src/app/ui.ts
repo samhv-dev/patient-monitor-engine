@@ -45,6 +45,42 @@ document.addEventListener('pointerdown', (e) => !(e.target as Element).closest?.
 
 /** "ⓘ" button that shows a glossary entry's long name, unit and normal range. `label` names the button after the row
  *  it sits in ("About Cp (Propofol)"), so two rows of one entry never share a button name. */
+/**
+ * Put `into`'s children in the order of `want`, keeping every node that stays (the dropped press: a press whose down
+ * and up straddle a repaint is lost when its button is replaced or moved under the pointer, WebKit seen). Children not
+ * in `want` go; the nodes on the longest run already in order stay put, and only the others are moved (one insertBefore
+ * each), so a row whose place did not change is never touched.
+ */
+export function keepOrder(into: Element, want: readonly Element[]): void {
+  const keep = new Set<Element>(want);
+  for (const c of [...into.children]) if (!keep.has(c)) c.remove();
+  const at = new Map<Element, number>(want.map((e, i) => [e, i]));
+  const cur = [...into.children].map((c) => at.get(c) as number); // positions in `want` of the children there now
+  // the longest increasing run of `cur` (patience sorting with back links): those children are already in order
+  const tails: number[] = [];
+  const prev = new Array<number>(cur.length).fill(-1);
+  cur.forEach((v, i) => {
+    let lo = 0;
+    let hi = tails.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if ((cur[tails[mid] as number] as number) < v) lo = mid + 1;
+      else hi = mid;
+    }
+    if (lo > 0) prev[i] = tails[lo - 1] as number;
+    tails[lo] = i;
+  });
+  const stay = new Set<number>();
+  for (let i = tails.length ? (tails[tails.length - 1] as number) : -1; i >= 0; i = prev[i] as number) stay.add(cur[i] as number);
+  // from the end: each node not staying goes just before the next one in `want`
+  for (let i = want.length - 1; i >= 0; i--) {
+    const e = want[i] as Element;
+    if (stay.has(i)) continue;
+    const next = want[i + 1] ?? null;
+    if (e.nextElementSibling !== next || e.parentElement !== into) into.insertBefore(e, next);
+  }
+}
+
 export function tip(e: GlossaryEntry, label = shortLabel(e)): HTMLButtonElement {
   const text = `${e.label}\n${describeEntry(e)}`;
   const b = h('button', { type: 'button', class: 'tip', 'aria-label': `About ${label}` }, 'ⓘ');
@@ -175,19 +211,14 @@ export function toast(text: string, kind: ToastKind = 'info'): void {
 }
 
 /**
- * UI-A #8/#9: the bottom edge of the page's bars (the nav, and the session bar where it shows) as `--chrome-bottom` on
- * the document, so the toasts and the fast-forward banner float just under them, never over the nav. Kept current as
- * the bars change size (a route change shows or hides the session bar; a narrow window wraps it onto two lines).
+ * UI-A #8/#9: the bottom edge of the route's own bars as `--chrome-bottom` on the document, so the fast-forward banner
+ * floats just under them, never over them: the top bar and the session bar where they show, and on Instructor v2 (whose
+ * route hides the top bar) its header and its stage strip — E128's rule on today's view, "under the tab strip", is the
+ * strip's on v2. A hidden bar (another route's) measures 0 and does not count. Kept current as the bars change size (a
+ * route change, a narrow window wrapping a bar onto two lines, the strip's taller briefing and finishing forms).
  */
 export function trackChromeBottom(root: HTMLElement): () => void {
-  const bars = [...root.querySelectorAll<HTMLElement>('.topbar, .sessionbar')];
-  // E128: the Instructor panel's tab strip too, as `--panel-tabs-bottom` (0 while the view is hidden): the fast-forward
-  // banner sits under it, never over it. It wraps onto more lines in a narrow panel; the observer follows. And the
-  // panel's staging bar, as `--panel-foot` (the height from its top to the window's bottom): the toasts on the Instructor
-  // view stack upwards from just above it, over the panel body — at its top the "Scenario loaded" toast covered the tab
-  // strip, then the case title and "Choose another scenario" (owner, 26 October).
-  const strip = root.querySelector<HTMLElement>('.view[data-view="teach"] [role="tablist"]');
-  const foot = root.querySelector<HTMLElement>('.view[data-view="teach"] .stagebar');
+  const bars = [...root.querySelectorAll<HTMLElement>('.topbar, .sessionbar, .ip2-head, .ip2-strip')];
   // Instructor v2's dock likewise, as `--dock-foot`: its toasts rest on the dock whatever is under it (the education line
   // or nothing) and whatever the strip above carries
   const dock = root.querySelector<HTMLElement>('.ip2-dock');
@@ -197,15 +228,11 @@ export function trackChromeBottom(root: HTMLElement): () => void {
       return r.height > 0 ? Math.max(m, r.bottom) : m;
     }, 0);
     document.documentElement.style.setProperty('--chrome-bottom', `${Math.round(bottom)}px`);
-    const s = strip?.getBoundingClientRect();
-    document.documentElement.style.setProperty('--panel-tabs-bottom', `${s && s.height > 0 ? Math.round(s.bottom) : 0}px`);
-    const f = foot?.getBoundingClientRect();
-    document.documentElement.style.setProperty('--panel-foot', `${f && f.height > 0 ? Math.max(0, Math.round(innerHeight - f.top)) : 0}px`);
     const d = dock?.getBoundingClientRect();
     document.documentElement.style.setProperty('--dock-foot', `${d && d.height > 0 ? Math.max(0, Math.round(innerHeight - d.top)) : 0}px`);
   };
   const ro = new ResizeObserver(set);
-  for (const e of [...bars, strip, foot, dock]) if (e) ro.observe(e);
+  for (const e of [...bars, dock]) if (e) ro.observe(e);
   addEventListener('resize', set);
   set();
   return () => {

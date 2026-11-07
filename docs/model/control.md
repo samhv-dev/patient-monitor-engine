@@ -139,12 +139,24 @@ transports (`src/protocol.ts`).
 |---|---|---|---|---|
 | `EPS` | `1e-6` | — | [ENG] | Comparison slack for clocks and windows (sim seconds), as the /1 runner's [ENG]. |
 
+### [`scenario/validate.ts`](../../packages/controller/src/scenario/validate.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `HANDOUT_QUESTION_MAX` | `92` | — | November 2026 | One readable line per ajv error: `<json path>: <what is wrong>`. The longest card question the learner handout prints on one line (D16): measured, not chosen. In print media at the 182 mm content width, in the bundled print font (Inter Print 13.33 px), after its "mm:ss" label (10.3 mm), the handout's question line (177.0 mm) held 92 to 100 characters of the drafted questions' own text, Chromium and WebKit alike (6 November 2026, the D16 e2e probe on the MH card); the limit is the shortest of those, 92. A question that wraps adds 4.7 mm, and the MH handout without questions is 266.9 mm of its 267 mm page (with two wrapped questions: 276.4 mm). The e2e page fit stays the truth; this tells an author at validation time. The two scenario schemas carry the same number (`maxLength`), a test keeps them equal. |
+
 ### [`session/controller-session.ts`](../../packages/controller/src/session/controller-session.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `COMMAND_RESEND_MS` | `2000` | ms | [ENG] | FX-2: an unanswered command goes again this often while the link is open; the host de-duplicates by id [ENG]. |
 | `COMMAND_ANSWER_TIMEOUT_MS` | `15000` | ms | [ENG: a restore under load takes ≤ 2 s] | FX-2: …and is refused ("no answer from the host") after this long open with no answer [ENG: a restore under load takes ≤ 2 s]. |
+
+### [`session/drug-lock.ts`](../../packages/controller/src/session/drug-lock.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `SAME_DRUG_LOCK_S` | `10` | s | — | How long a drug given as a bolus stays locked, s of simulated time: the owner's clinical choice (ruled 2026-11-05). |
 
 ### [`session/host-session.ts`](../../packages/controller/src/session/host-session.ts)
 
@@ -167,6 +179,7 @@ transports (`src/protocol.ts`).
 | `isInside` | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | `file` lies inside the folder `root` (both real paths). |
 | `lanAddresses` | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | This machine's IPv4 addresses another device can reach, best first (no loopback, no link-local 169.254/16). |
 | `isLocalAddress` | [`packages/controller/relay/http.ts`](../../packages/controller/relay/http.ts) | A socket from this machine itself (loopback, or one of its own interface addresses): |
+| `readLastRoom` | [`packages/controller/relay/server.ts`](../../packages/controller/relay/server.ts) | The last room's code kept in `dir`, or null when there is none or the file is not ours. |
 | `findSampleLeak` | [`guard.ts`](../../packages/controller/src/guard.ts) | Returns a description of the first sample-like payload in `m`, or null when the message is clean. |
 | `wireBudgetError` | [`guard.ts`](../../packages/controller/src/guard.ts) | The sample guard plus the size, depth and value budgets (every receiving transport applies it). |
 | `assertWireSafe` | [`guard.ts`](../../packages/controller/src/guard.ts) | Throws WireSafetyError when `m` carries samples. |
@@ -202,9 +215,11 @@ transports (`src/protocol.ts`).
 | `holds` | [`scenario/rules.ts`](../../packages/controller/src/scenario/rules.ts) | Does the rule hold now? `rank` is the store its value leaves read (3 truth, 2 displayed). |
 | `matches` | [`scenario/runner.ts`](../../packages/controller/src/scenario/runner.ts) | Does a clinical event satisfy an `event` trigger? kind equal, min* filters as lower bounds, the rest exact. |
 | `resolveRhythm` | [`scenario/standins.ts`](../../packages/controller/src/scenario/standins.ts) | The rhythm to send for `id` on an engine that knows `known`: |
-| `formatAjvError` | [`scenario/validate.ts`](../../packages/controller/src/scenario/validate.ts) | One readable line per ajv error: |
 | `validateScenario` | [`scenario/validate.ts`](../../packages/controller/src/scenario/validate.ts) | Validate an unknown value as a scenario document: |
 | `describe` | [`session/controller-session.ts`](../../packages/controller/src/session/controller-session.ts) | One-line human description of a command, for logs. |
+| `bolusDrugOf` | [`session/drug-lock.ts`](../../packages/controller/src/session/drug-lock.ts) | The drug a command gives as a bolus, else null. |
+| `givenByOf` | [`session/drug-lock.ts`](../../packages/controller/src/session/drug-lock.ts) | `issuedBy` as a device, read as the scenario driver reads it (driver.ts `administrationOf`). |
+| `lockReason` | [`session/drug-lock.ts`](../../packages/controller/src/session/drug-lock.ts) | The refused ack's words: |
 | `samePin` | [`session/host-session.ts`](../../packages/controller/src/session/host-session.ts) | The PIN comparison: |
 | `backoffDelay` | [`transport/backoff.ts`](../../packages/controller/src/transport/backoff.ts) | Delay before reconnect attempt `attempt` (0-based): |
 | `windowEndpoint` | [`transport/post-message.ts`](../../packages/controller/src/transport/post-message.ts) | Endpoint for talking to another window (an iframe's contentWindow, or window.parent from inside the iframe). |
@@ -214,7 +229,7 @@ transports (`src/protocol.ts`).
 | `stage1Vocabulary` | [`vocabulary.ts`](../../packages/controller/src/vocabulary.ts) | What the base engine accepts (engine.ts validate()). |
 | `vocabularyOf` | [`vocabulary.ts`](../../packages/controller/src/vocabulary.ts) | The engine's own vocabulary when it has one, else the base-engine description. |
 
-Exported without a doc comment: `httpHandler`, `startRelay`, `clamp`, `targetCommand`, `pinCommand`, `releaseCommand`, `rhythmCommand`, `deviceCommand`, `flagView`, `mountInstructorPanel`, `renderControls`, `mountScenarioTab`, `injectStyles`, `mountRemote`, `describeWhen`, `describeTransition`, `isHop`, `compare`, `hasManual`, `createBroadcastChannelTransport`, `createInProcessHub`, `createPostMessageTransport`, `isRelayFrame`, `createWebSocketTransport`.
+Exported without a doc comment: `httpHandler`, `startRelay`, `clamp`, `targetCommand`, `pinCommand`, `releaseCommand`, `rhythmCommand`, `deviceCommand`, `flagView`, `mountInstructorPanel`, `renderControls`, `mountScenarioTab`, `injectStyles`, `mountRemote`, `describeWhen`, `describeTransition`, `isHop`, `compare`, `hasManual`, `formatAjvError`, `createBroadcastChannelTransport`, `createInProcessHub`, `createPostMessageTransport`, `isRelayFrame`, `createWebSocketTransport`.
 
 ## Source files
 
@@ -252,6 +267,7 @@ Exported without a doc comment: `httpHandler`, `startRelay`, `clamp`, `targetCom
 | [`scenario/validate.ts`](../../packages/controller/src/scenario/validate.ts) | Scenario validation: the JSON Schema (ajv, MIT — NOTICES N-011) for shape, then the cross-references a schema cannot express (unique ids, `to`/`else`/bookmark targets exist). |
 | [`scenario/view.ts`](../../packages/controller/src/scenario/view.ts) | What a controller knows about the host's scenario, rebuilt from the wire alone (no ajv, no runner): the doc from the `scenario load` commandApplied (sticky, so late joiners get it), the current state from `scenario` even |
 | [`session/controller-session.ts`](../../packages/controller/src/session/controller-session.ts) | The controller end (same-screen panel over in-process, or a remote over BroadcastChannel/WebSocket/WebRTC). |
+| [`session/drug-lock.ts`](../../packages/controller/src/session/drug-lock.ts) | The same drug is not given twice within SAME_DRUG_LOCK_S of simulated time, from any device (the owner's ruling of 5 November 2026). |
 | [`session/host-session.ts`](../../packages/controller/src/session/host-session.ts) | The host end of every transport (brief §3.7, R7): it owns the engine. |
 | [`session/viewer-sync.ts`](../../packages/controller/src/session/viewer-sync.ts) | Viewer role (brief §3.7): a second monitor that runs its OWN engine and never receives samples. |
 | [`transport/backoff.ts`](../../packages/controller/src/transport/backoff.ts) | Reconnect delays: exponential with jitter, capped [ENG]. |
@@ -273,6 +289,7 @@ None recorded.
 | File | Expected failures | Skipped |
 |---|---|---|
 | [`briefing-wire.test.ts`](../../packages/controller/test/briefing-wire.test.ts) | 0 | 0 |
+| [`guard-vent.test.ts`](../../packages/controller/test/guard-vent.test.ts) | 0 | 0 |
 | [`guard.test.ts`](../../packages/controller/test/guard.test.ts) | 0 | 0 |
 | [`index.test.ts`](../../packages/controller/test/index.test.ts) | 0 | 0 |
 | [`panel/controls-follow-shock.dom.test.ts`](../../packages/controller/test/panel/controls-follow-shock.dom.test.ts) | 0 | 0 |
@@ -290,14 +307,18 @@ None recorded.
 | [`relay/peer-identity.test.ts`](../../packages/controller/test/relay/peer-identity.test.ts) | 0 | 0 |
 | [`relay/peer-left.test.ts`](../../packages/controller/test/relay/peer-left.test.ts) | 0 | 0 |
 | [`relay/relay-classroom.test.ts`](../../packages/controller/test/relay/relay-classroom.test.ts) | 0 | 0 |
+| [`relay/relay-devices.test.ts`](../../packages/controller/test/relay/relay-devices.test.ts) | 0 | 0 |
 | [`relay/relay-hostile.test.ts`](../../packages/controller/test/relay/relay-hostile.test.ts) | 0 | 0 |
 | [`relay/relay-instructor.test.ts`](../../packages/controller/test/relay/relay-instructor.test.ts) | 0 | 0 |
 | [`relay/relay-refuses-mirror.test.ts`](../../packages/controller/test/relay/relay-refuses-mirror.test.ts) | 0 | 0 |
+| [`relay/relay-state.test.ts`](../../packages/controller/test/relay/relay-state.test.ts) | 0 | 0 |
+| [`relay/relay-vent.test.ts`](../../packages/controller/test/relay/relay-vent.test.ts) | 0 | 0 |
 | [`relay/relay.test.ts`](../../packages/controller/test/relay/relay.test.ts) | 0 | 0 |
 | [`remote/remote-scenario.dom.test.ts`](../../packages/controller/test/remote/remote-scenario.dom.test.ts) | 0 | 0 |
 | [`remote/remote.dom.test.ts`](../../packages/controller/test/remote/remote.dom.test.ts) | 0 | 0 |
 | [`scenario/briefing.test.ts`](../../packages/controller/test/scenario/briefing.test.ts) | 0 | 0 |
 | [`scenario/builtins.test.ts`](../../packages/controller/test/scenario/builtins.test.ts) | 0 | 0 |
+| [`scenario/clock-step-back.test.ts`](../../packages/controller/test/scenario/clock-step-back.test.ts) | 0 | 0 |
 | [`scenario/driver.test.ts`](../../packages/controller/test/scenario/driver.test.ts) | 0 | 0 |
 | [`scenario/fast-forward-determinism.test.ts`](../../packages/controller/test/scenario/fast-forward-determinism.test.ts) | 0 | 0 |
 | [`scenario/grade.test.ts`](../../packages/controller/test/scenario/grade.test.ts) | 0 | 0 |
@@ -324,6 +345,7 @@ None recorded.
 | [`session/controller-session.test.ts`](../../packages/controller/test/session/controller-session.test.ts) | 0 | 0 |
 | [`session/fx2-no-silent-hang.test.ts`](../../packages/controller/test/session/fx2-no-silent-hang.test.ts) | 0 | 0 |
 | [`session/host-boundary.test.ts`](../../packages/controller/test/session/host-boundary.test.ts) | 0 | 0 |
+| [`session/host-drug-lock.test.ts`](../../packages/controller/test/session/host-drug-lock.test.ts) | 0 | 0 |
 | [`session/host-failed-target.test.ts`](../../packages/controller/test/session/host-failed-target.test.ts) | 0 | 0 |
 | [`session/host-fast-forward.test.ts`](../../packages/controller/test/session/host-fast-forward.test.ts) | 0 | 0 |
 | [`session/host-instructor.test.ts`](../../packages/controller/test/session/host-instructor.test.ts) | 0 | 0 |

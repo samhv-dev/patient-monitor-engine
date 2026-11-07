@@ -115,6 +115,30 @@ describe('R15: the host applies a stage group on one tick under load', () => {
     ctl.close();
   });
 
+  it('an item of a staged delivery refused on arrival (the drug lock) is answered at once; the rest does not wait for it', async () => {
+    const host = loaded();
+    host.engine.advanceTo(3);
+    const hs = new HostSession({ session: 'HSG238', target: host, stateIntervalMs: 0 });
+    const hub = createInProcessHub();
+    hs.addTransport(hub.connect());
+    const ctl = new ControllerSession({ session: 'HSG238', transport: hub.connect() });
+    await waitFor(() => ctl.hostOnline);
+    const EPI = { type: 'applyEvent', event: { kind: 'drug', drugId: 'epinephrine', dose: 1, unit: 'mg', route: 'iv' } };
+    expect((await ctl.send(EPI as never)).accepted).toBe(true);
+    const batch = { id: 'cache-3', n: 2 };
+    const t0 = Date.now();
+    const [ra, rb] = await Promise.all([
+      ctl.send({ ...EPI, stageGroup: 'cache-3', batch } as never), // the same drug again within 10 s: refused `recent`
+      ctl.send({ ...VF, stageGroup: 'cache-3', batch } as never),
+    ]);
+    expect(ra.accepted).toBe(false);
+    expect(ra.reason).toMatch(/^given \d+ s ago/);
+    expect(rb.accepted).toBe(true);
+    expect(Date.now() - t0, 'not held for the refused item').toBeLessThan(BATCH_HOLD_MS);
+    hs.close();
+    ctl.close();
+  });
+
   it('a target without dispatchGroup still applies every command of the group (one by one)', async () => {
     const host = manualHost({ seed: 7 });
     host.engine.advanceTo(3);

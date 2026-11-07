@@ -10,6 +10,7 @@ import {
   type ControlFlag,
   type FastForwardAlarm,
   type ManagedTransport,
+  type NoteEvent,
   type Role,
   type ScenarioCommand,
   type StateEvent,
@@ -20,6 +21,7 @@ import {
   type WireEvent,
   type WireMessage,
 } from '../protocol.ts';
+import { bolusDrugOf, type DrugLock, lockReason, RecentGives } from './drug-lock.ts';
 
 /** What a host needs from the monitor it owns. Sync or async (a worker-backed monitor returns promises). */
 export interface HostTarget {
@@ -78,10 +80,14 @@ export interface HostSessionOptions {
    * Absent or null (no PIN set, or an older app): every instructor is denied. Never logged, never sent.
    */
   instructorPin?: () => string | null;
-  /** A `note` command (plan §6): the remote's judged objective or note, at the host's sim time `t`. Absent: refused. */
-  onNote?: (t: SimSeconds, text: string, kind: 'note' | 'marker') => void;
+  /** A `note` command (plan §6): the remote's judged objective or note, at the host's sim time `t`, with the run event
+   *  it carries (`ev`, brief 52; undefined when none). Absent: refused. */
+  onNote?: (t: SimSeconds, text: string, kind: 'note' | 'marker', ev?: NoteEvent) => void;
   /** How many instructor phones are granted (0 or 1: the newest takes over), called at every grant and revocation. */
   onInstructors?: (n: number) => void;
+  /** The drugs a scenario command would give as a bolus (ScenarioDriver.triggerGives: a /1 step press's onEnter); a press
+   *  while one is locked is refused `recent`, as a bolus is (drug-lock.ts). Absent: a scenario command gives none. */
+  scenarioGives?: (cmd: ScenarioCommand) => string[];
 }
 
 /** What the host answers an instructor (the grant's reason, or the refused command's ack). */
@@ -132,6 +138,10 @@ const STAGE_GROUP_TTL_MS = 5000;
  */
 export const BATCH_HOLD_MS = 500;
 const SEEN_MAX = 500;
+/** The ack of a command from a relay peer whose role a peer-left forgot and that has not said hello again. */
+export const NO_HELLO = 'say hello first';
+/** The most departed peer ids a transport remembers for NO_HELLO (a long class of reconnecting phones) [ENG]. */
+const LEFT_MAX = 1000;
 /**
  * A hidden-tab catch-up arrives as ONE batch, and the app's 1 Hz truth events are up to 27 KB each (200 events reached
  * 379 KB) — every wire message holds at most this much JSON and this many events, so it passes the receivers' 256 KB
@@ -156,6 +166,8 @@ export const FF_STEP_TICKS = 25;
 export const FF_MAX_S = 600;
 
 type AckBody = Extract<WireBody, { kind: 'ack' }>;
+/** The ack's words when a fast-forward runs: a controller's command waits for nothing. */
+const FF_REFUSAL = 'the simulation is fast-forwarding; try again when it ends';
 
 export class HostSession {
   readonly peerId: string;
@@ -169,7 +181,7 @@ export class HostSession {
    * in-process panel). A detached transport's peers are forgotten with it (verification 2026-10-29), and one peer when
    * the relay says its socket left (R29), so a hello forged under its id dies with the forger's socket.
    */
-  private readonly peers = new WeakMap<ManagedTransport, { seqs: SeqFilter; roles: Map<string, Role> }>();
+  private readonly peers = new WeakMap<ManagedTransport, { seqs: SeqFilter; roles: Map<string, Role>; left: Set<string> }>();
   /**
    * The one granted instructor phone, by (transport, from), and the PIN it proved (plan §3 option B: the newest right
    * PIN takes over). The laptop's own panels are controllers: they need no grant and are never revoked.
@@ -198,6 +210,8 @@ export class HostSession {
   private ff: { fromTick: Tick; toTick: Tick; alarms: FastForwardAlarm[] } | null = null; // The fast-forward running
   private activeAlarms = new Set<string>(); // The alarm ids of the last alarmStatus (what is NEW during a span)
   private timelines = 0; // newTimeline() count — a fast-forward stops when its timeline ends
+  /** The last bolus of each drug (drug-lock.ts): a device's second one within SAME_DRUG_LOCK_S is refused. */
+  private readonly gives = new RecentGives();
   readonly stats = { applied: 0, rejected: 0, duplicates: 0, snapshotsSent: 0 };
 
   constructor(o: HostSessionOptions) {
@@ -373,6 +387,7 @@ export class HostSession {
     this.flush();
     this.groups.clear();
     this.targets.clear();
+    this.gives.clear(); // the lock's clock is the old engine's
     if (cause === 'restart') {
       this.sticky.delete('scenario.load');
       this.sticky.delete('scenario.run');
@@ -469,6 +484,8 @@ export class HostSession {
     const p = this.peers.get(t);
     p?.seqs.forget(from);
     p?.roles.delete(from);
+    p?.left.add(from);
+    if (p && p.left.size > LEFT_MAX) p.left.delete(p.left.values().next().value as string); // the oldest goes first
     if (this.holder?.t === t && this.holder.from === from) this.setHolder(null);
   }
 
@@ -489,12 +506,15 @@ export class HostSession {
     if (m.session !== this.o.session) return; // A message for another session is not ours, whatever channel it came on
     if (m.from === this.peerId) return;
     let p = this.peers.get(t);
-    if (!p) this.peers.set(t, (p = { seqs: new SeqFilter(), roles: new Map() }));
+    if (!p) this.peers.set(t, (p = { seqs: new SeqFilter(), roles: new Map(), left: new Set() }));
     if (p.seqs.check(m) === 'duplicate') return;
     // A peer that said hello as a viewer sends no commands — the relay already refuses them on a WebSocket; a
     // BroadcastChannel peer is held to the same rule (one trust model per role, whatever the transport). Only a hello
     // the sequence check accepted counts: a stale frame carrying a peer's id changes nothing
-    if (m.kind === 'hello') p.roles.set(m.from, m.role);
+    if (m.kind === 'hello') {
+      p.roles.set(m.from, m.role);
+      p.left.delete(m.from);
+    }
     if (m.kind === 'hello' && m.role === 'viewer') this.viewerSeenAt = this.now();
     if (m.kind === 'hello' && m.role === 'instructor') this.verify(t, m.from, m.pin);
     if (m.kind === 'hello' && m.role !== 'host') return this.welcome(t);
@@ -502,6 +522,8 @@ export class HostSession {
     const role = p.roles.get(m.from);
     const refuse = (reason: string) => t.send(this.stamp({ kind: 'ack', commandId: m.body.id, accepted: false, tick: this.o.target.now().tick, reason }));
     if (role === 'viewer') return refuse('a viewer cannot command');
+    // forgotten by a peer-left (R29) and no hello since: not the controller path (the relay refuses it too)
+    if (role === undefined && p.left.has(m.from)) return refuse(NO_HELLO);
     if (role !== 'instructor') return this.command(t, m.body, m.from);
     // An instructor phone: granted, on the allow-list, and filed as the Remote's rows whatever it wrote (record.ts)
     const why = this.instructorRefusal(t, m.from, m.body);
@@ -533,12 +555,29 @@ export class HostSession {
       t.send(this.stamp(prior)); // idempotent: same ack, no second application
       return;
     }
-    // While the host fast-forwards, a controller's command waits for nothing — it is refused with the reason
-    if (this.ff) return this.answer(t, cmd, from, receivedAt, { result: { accepted: false, tick: this.o.target.now().tick, reason: 'the simulation is fast-forwarding; try again when it ends' }, applied: cmd });
+    // While the host fast-forwards, a controller's command waits for nothing — it is refused with the reason. A bolus
+    // of a drug given within SAME_DRUG_LOCK_S of sim time, from any device, is refused `recent` (drug-lock.ts): never
+    // dispatched, so neither the engine nor the scenario driver's record sees it, and no commandApplied goes out
+    const now = this.o.target.now();
+    const drugs = this.ff ? [] : cmd.type === 'scenario' ? (this.o.scenarioGives?.(cmd) ?? []) : [bolusDrugOf(cmd) ?? []].flat();
+    const lock = drugs.map((d) => this.gives.lock(d, now.simT)).find((l) => l !== null) ?? null;
+    const refused = this.ff ? FF_REFUSAL : lock ? lockReason(lock) : null;
     // R15: a staged delivery's items (one stageGroup, `batch` of n) are held until all n are here, then go to the engine
-    // in one dispatch: one tick, whatever the monitor's round trip
+    // in one dispatch: one tick, whatever the monitor's round trip. An item refused on arrival is answered at once and
+    // the delivery waits for one item fewer
     const b = cmd.batch;
-    if (b && b.n > 1 && cmd.stageGroup && groupable(cmd) && this.o.target.dispatchGroup) {
+    const batched = !!(b && b.n > 1 && cmd.stageGroup && groupable(cmd) && this.o.target.dispatchGroup);
+    if (refused !== null) {
+      this.answer(t, cmd, from, receivedAt, { result: { accepted: false, tick: now.tick, reason: refused }, applied: cmd }, lock);
+      if (!batched || !b) return;
+      const h = this.held.get(b.id) ?? { n: b.n, items: [], timer: null };
+      h.n--;
+      this.held.set(b.id, h);
+      if (h.items.length > 0 && h.items.length >= h.n) return this.release(b.id);
+      if (h.n <= 0) this.held.delete(b.id);
+      return;
+    }
+    if (batched && b) {
       const h = this.held.get(b.id) ?? { n: b.n, items: [], timer: null };
       if (h.items.some((i) => i.cmd.id === cmd.id)) return void this.stats.duplicates++; // a resend of an item held: answered with the batch
       h.items.push({ t, cmd, from, receivedAt });
@@ -559,18 +598,21 @@ export class HostSession {
     this.held.delete(id);
     if (h.timer !== null) clearTimeout(h.timer);
     const outs = this.ff
-      ? h.items.map((i) => ({ result: { accepted: false, tick: this.o.target.now().tick, reason: 'the simulation is fast-forwarding; try again when it ends' }, applied: i.cmd }))
+      ? h.items.map((i) => ({ result: { accepted: false, tick: this.o.target.now().tick, reason: FF_REFUSAL }, applied: i.cmd }))
       : await this.applyTogether(h.items.map((i) => i.cmd));
     h.items.forEach((i, k) => this.answer(i.t, i.cmd, i.from, i.receivedAt, outs[k] as { result: DispatchResult; applied: WireCommand }));
   }
 
-  /** Ack a controller's command and, applied, tell every peer. */
-  private answer(t: ManagedTransport, cmd: WireCommand, from: string, receivedAt: number, out: { result: DispatchResult; applied: WireCommand }): void {
+  /** Ack a controller's command and, applied, tell every peer; `lock`: the drug lock that refused it. */
+  private answer(t: ManagedTransport, cmd: WireCommand, from: string, receivedAt: number, out: { result: DispatchResult; applied: WireCommand }, lock: DrugLock | null = null): void {
     const { result, applied } = out;
     const ack: AckBody = {
       kind: 'ack', commandId: cmd.id, accepted: result.accepted, tick: result.tick,
       ...(result.reason !== undefined ? { reason: result.reason } : {}),
+      ...(lock ? { code: 'recent' as const, recent: { drugId: lock.drugId, agoS: Math.round(lock.agoS), by: lock.by } } : {}),
     };
+    // the host's log only: the pressing device is answered by the ack; the run record never sees it
+    if (lock) console.info(`[pme host] ${lock.drugId} not given from ${from}: ${result.reason}`);
     if (this.seen.size >= SEEN_MAX) this.seen.delete(this.seen.keys().next().value as string);
     this.seen.set(cmd.id, ack);
     t.send(this.stamp(ack));
@@ -636,7 +678,7 @@ export class HostSession {
       // A remote's judged objective or note (plan §6), recorded by the host app at the host's sim time
       const { tick, simT } = this.o.target.now();
       if (!this.o.onNote) return { result: { accepted: false, tick, reason: INSTRUCTOR_REASONS.noNotes }, applied: cmd };
-      this.o.onNote(simT, cmd.text, cmd.kind);
+      this.o.onNote(simT, cmd.text, cmd.kind, cmd.ev);
       return { result: { accepted: true, tick }, applied: cmd };
     }
     // Pin, release and setMode go to the engine, which validates them. setFactor reaches the engine too and is refused
@@ -651,6 +693,7 @@ export class HostSession {
   private settled(c: Command, result: DispatchResult): Command {
     const applied: Command = { ...c, atTick: result.tick };
     if (result.accepted) {
+      this.gives.note(c, result.tick * TICK_S); // every device's bolus, and the card's own (a press after it is locked)
       if (c.type === 'setTarget') {
         const r = c.ramp;
         const untilT = result.tick * TICK_S + (r ? (r.delayS ?? 0) + r.durationS : 0);
