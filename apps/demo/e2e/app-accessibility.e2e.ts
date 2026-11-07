@@ -52,6 +52,11 @@ for (const [name, vp, touch] of [['laptop 1280×800', { width: 1280, height: 800
     for (const r of ['#/', '#/room', '#/scenarios', '#/scenarios/library', '#/scenarios/builder', '#/patient', '#/monitor', '#/teach2', '#/remote', '#/settings', '#/dev', '#/validate', ...EXPLORE.slice(0, 3).map((s) => `#/explore/${s}`)]) {
       await go(page, r);
       await run(page, r);
+      if (r !== '#/room') continue;
+      // Room plan R7: Room setup's own question, "New room code", open
+      await page.getByRole('button', { name: 'New room code' }).click();
+      await run(page, '#/room (New room code asked)');
+      await page.keyboard.press('Escape');
     }
     if (remote) {
       await remote.bringToFront();
