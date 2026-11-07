@@ -12,7 +12,7 @@ through this list.
 
 Regenerate the first two tables with `node --experimental-strip-types scripts/deviations.ts`. The `docs-honesty` test
 fails when a literal-titled expected failure or skip is missing from this page. It cannot see conditional forms such
-as `(cond ? it.fails : it)(…)`, nor the lung-signature `KNOWN` list; those are listed by hand below.
+as `(cond ? it.fails : it)(…)`; those are listed by hand below.
 
 On this tree there are **158 expected-failure calls**, all read by the lister: 157 `it.fails` (the bronchospasm row of
 `packages/ventilator/test/link-parity.test.ts` is a literal `it.fails`) and 1 `it.fails.each` with three cases
@@ -156,6 +156,16 @@ that records the miss with its number; the open questions it cites (Q…, R-…,
 | `packages/engine-core/test/l2/endo/cat-reserve.test.ts` | 30 min of sustained sympathetic drive (symp 2.5) lowers it below 0.45 — measured 0.485 (0.367 at 60 min) | `docs/gates/fu-7.md` §4 "`it.fails` list", #24 |
 | `packages/engine-core/test/l2/gas/co2.test.ts` | low flow: CPR-level output (CO 29 %) holds EtCO2 at 10–20 mmHg over 1–3 min (then the tissue build-up restores it, research 03 §4.4) — measured 26.0 / 21.8 / 20.4 at 1 / 2 / 3 min with τ 70 s | `docs/gates/fu-4.md` §4 "The `it.fails` list" (conflict with the orchestrator's update) |
 | `packages/engine-core/test/l2/gas/co2.test.ts` | low flow: arrest (CO 0) < 5 mmHg within 30 s — measured 24.2 at 30 s (4.8 at 150 s) with τ 70 s; superseded by the orchestrator's 2026-09-28 update | `docs/gates/fu-4.md` §4 "The `it.fails` list" (conflict with the orchestrator's update) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | asthma: PaCO2 − EtCO2 gap 20–50 mmHg (catalogue §3, acute severe) — measured 6.3; mechanism: the V/Q and dead-space heterogeneity of severe bronchospasm (the hypercapnia in the engine comes from hypoventilation at the reference VE) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-27 (the `KNOWN` allow-list, made `it.fails` by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | obesity: PaCO2 − EtCO2 gap 5–8 mmHg (catalogue §10) — measured 3.2; mechanism: induction atelectasis building over minutes (the rig starts with none) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-27 (the `KNOWN` allow-list, made `it.fails` by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | obesity: shunt 0.10–0.15 (catalogue §10) — measured 0.045; mechanism: induction atelectasis building over minutes (the rig starts with none) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-27 (the `KNOWN` allow-list, made `it.fails` by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | pneumonia: SpO2 88–93 % at FiO2 0.4 (catalogue §11) — measured 96.7; mechanism: HPV in the consolidated lobe (halved per Q79, not yet applied to consolidation) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-27 (the `KNOWN` allow-list, made `it.fails` by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | atelectasis: shunt 0.10–0.12 (catalogue §12) — measured 0.155; mechanism: the plugged lobe keeps its full perfusion (ATEL_PERF 1.0: no HPV diversion from the collapsed lobe) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-27 (the `KNOWN` allow-list, made `it.fails` by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | ptxSimple: shunt 0.07 (catalogue §15) — measured 0.119; mechanism: not yet identified | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-27 (the `KNOWN` allow-list, made `it.fails` by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | olv: Crs 25–30 mL/cmH2O (catalogue §22) — measured 33.9; mechanism: a separate hemithorax chest wall (both lungs share one chest wall, decision 1) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-27 (the `KNOWN` allow-list, made `it.fails` by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | olv: shunt 0.2–0.3 at FiO2 0.4 after 30 min (catalogue §22) — measured 0.140; mechanism: the non-ventilated lung collapses with τ ≈ 30 min at FiO2 0.4 and its HPV | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-27 (the `KNOWN` allow-list, made `it.fails` by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | endobronchial: Crs 27.5–30.25 mL/cmH2O (catalogue §23) — measured 34.0; mechanism: a separate hemithorax chest wall (both lungs share one chest wall, decision 1) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-27 (the `KNOWN` allow-list, made `it.fails` by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | neonatalRds: shunt 0.2–0.4 (catalogue §30) — measured 0.158; mechanism: a neonatal rig (the reference rig is an adult; the neonatal profile arrives with the R22 bands) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-27 (the `KNOWN` allow-list, made `it.fails` by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
 | `packages/engine-core/test/l2/lung/volumes.test.ts` | COPD GOLD 1 (severity 0.25): FEV1 ≥ 80 % pred with FEV1/FVC < 0.70 — measured 71 % (the catalogue's GOLD 1 rawExp 1.5) | `docs/gates/stage-7k.md` §5 "`it.fails` added by 7k (R45)" (Q-7k-2) |
 | `packages/engine-core/test/l2/neuro/depth-drive.test.ts` | synergy: propofol 1 + remifentanil 1 depresses more than the product of each — measured equal at α 0 (D15b: totalDep 0.735 both vs 0.735 independent; was met at SYNERGY 0.5 and at α 0.3) | `docs/gates/fu-7.md` §4 "`it.fails` list", #38 |
 | `packages/engine-core/test/l2/neuro/depth-drive.test.ts` | 1 MAC volatile lowers non-depolariser EC50 by ~33 % (0.62–0.72, tables §5d) — measured × 0.847, −15 % (VOL_NMB_K 0.18, was met at × 0.667) | `docs/gates/fu-7.md` §4 "`it.fails` list", #40 |
@@ -195,14 +205,12 @@ Behaviour that has a test title but no running test yet: each is a known gap, no
 | `packages/engine-core/test/l2/pk/route-models.test.ts` | epinephrine IM: route not modelled until a PK source states its bioavailability F and absorption rate ka | `docs/roadmap/v1.0-remaining.md`, the row "Routes other than IV beyond IM dantrolene (scenario format piece F5.2)"; `docs/plans/scenario-format-v2-plan.md`, "F5.2 the route models" |
 | `packages/engine-core/test/l2/pk/volatile.test.ts` | the activated charcoal filter on the circuit removes the agent from the inspired gas: not modelled, the agent washes out through the vaporiser at 0 % and the fresh gas only | `docs/roadmap/v1.0-remaining.md`, the row "Charcoal filter (E137)" (the owner's ruling of 2026-10-29 18:00); `docs/plans/scenario-format-v2-plan.md`, Q26 |
 
-## Lung-condition signatures outside their band (allow-list, not `it.fails`)
+## Lung-condition signatures outside their band
 
-`packages/engine-core/test/l2/lung/signatures.test.ts` keeps a `KNOWN` list of 11 bands the model misses; a new
-miss fails the test, a listed one does not. Measured vs band: asthma PaEt gap 6.3 vs 20–50; obesity PaEt gap 3.3
-vs 5–8 and shunt 0.05 vs 0.10–0.15; pneumonia SpO2 at FiO2 0.4 96.8 vs 88–93; atelectasis shunt 0.16 vs
-0.10–0.12; simple pneumothorax shunt 0.12 vs 0.07; one-lung ventilation Crs 33.9 vs 25–30 and shunt 0.14 vs
-0.2–0.3; endobronchial intubation Crs 34.0 vs 27.5–30.3; cystic fibrosis SpO2 at FiO2 0.21 95.4 vs 88–94; neonatal
-RDS shunt 0.16 vs 0.2–0.4. Tracked in: the file's own `KNOWN` comment (the calibration pass decides); no gate note.
+Until brief 87 (8 November 2026) `packages/engine-core/test/l2/lung/signatures.test.ts` kept a `KNOWN` allow-list of
+11 bands outside `it.fails`, which no lister counted (audit 44 row T-27). Each is now an `it.fails` in the first table,
+with its measured value and the mechanism it waits for. Cystic fibrosis SpO2 at FiO2 0.21 (95.4 then, 94.9 now, band
+88–94) is among them since the tolerance was removed (row T-26).
 
 ## Browser tests skipped on CI WebKit only
 

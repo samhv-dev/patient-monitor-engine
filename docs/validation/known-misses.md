@@ -8,7 +8,7 @@ and the test is marked as an expected failure with the measured value in its tit
 module that owns it, until the mechanism is fixed. The release-candidate view of the same list, with where each
 item is tracked, is [known deviations](../guides/known-deviations.md); each module is described in [docs/model](../model/README.md).
 
-**158 known misses.** Split from the test titles: a band recognised in the target of 149, a measured value in 147, a source in 60; "—" = not stated in a form the generator reads.
+**168 known misses.** Split from the test titles: a band recognised in the target of 158, a measured value in 157, a source in 70; "—" = not stated in a form the generator reads.
 
 **The bands themselves were audited** against the literature (target audit, 2026-10-11; the rows are in [target-audit.tsv](target-audit.tsv)): 148 of these misses carry an audit verdict — RIGHT 30, TOO NARROW 27, TOO WIDE 3, MIS-SPECIFIED 61, UNSUPPORTED 27 (a miss can carry several rows). RIGHT: the band matches its source; TOO NARROW / TOO WIDE: the source supports a wider / narrower band; MIS-SPECIFIED: the band measures something other than its source did; UNSUPPORTED: no source found for it. A proposed band is evidence for an owner ruling, not a change: until a ruling, the test keeps its band. The audit itself, row by row with its evidence, is [published here](target-audit/30-target-audit.md) with its CSV twin and synthesis; the numbered evidence notes it cites as "research/NN" live in the project's research folder outside the repository.
 
@@ -17,7 +17,7 @@ item is tracked, is [known deviations](../guides/known-deviations.md); each modu
 | [Rhythms and the ECG](#rhythms-ecg) | 3 |
 | [Circulation](#circulation) | 19 |
 | [Pressure waveforms and pleth](#pressure-waveforms) | 3 |
-| [Lungs: mechanics, ventilation–perfusion, pathology](#lungs) | 6 |
+| [Lungs: mechanics, ventilation–perfusion, pathology](#lungs) | 16 |
 | [Gas exchange and capnography](#gas-exchange) | 2 |
 | [Breathing, airway and the ventilator coupling](#breathing) | 20 |
 | [Blood, acid–base, electrolytes and fluids](#blood) | 10 |
@@ -91,6 +91,16 @@ Module page: [docs/model/lungs.md](../model/lungs.md)
 | CVP ≥ 15 mmHg | 11.5 | — | TOO NARROW ([audit row 51](../../docs/validation/target-audit/30-target-audit.md#row-51)) | CVP >= 10 mmHg (or >= baseline + 5) | [`obstructive-aliases.test.ts`](../../packages/engine-core/test/engine/obstructive-aliases.test.ts) |
 | MAP < 65 mmHg | 78.4 | — | MIS-SPECIFIED ([audit row 52](../../docs/validation/target-audit/30-target-audit.md#row-52)) | drop MAP < 65, or replace it with SBP < 90 (already present); add a PP plausibility check | [`obstructive-aliases.test.ts`](../../packages/engine-core/test/engine/obstructive-aliases.test.ts) |
 | PROPOSED band (Q15, Ali): SaO2 ≤ 92 % at FiO2 0.5 | 97.3 | — | MIS-SPECIFIED ([audit row 73](../../docs/validation/target-audit/30-target-audit.md#row-73)) | Same as row 1: SaO2 ≥ 92 % with a fall of 1–6 points at FiO2 0.5 without a PFO; SpO2 ≤ 92 on room air | [`obstructive-aliases.test.ts`](../../packages/engine-core/test/engine/obstructive-aliases.test.ts) |
+| asthma: PaCO2 − EtCO2 gap 20–50 mmHg | 6.3 | catalogue §3 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| obesity: PaCO2 − EtCO2 gap 5–8 mmHg | 3.2 | catalogue §10 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| obesity: shunt 0.10–0.15 | 0.045 | catalogue §10 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| pneumonia: SpO2 88–93 % at FiO2 0.4 | 96.7 | catalogue §11 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| atelectasis: shunt 0.10–0.12 | 0.155 | catalogue §12 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| ptxSimple: shunt 0.07 | 0.119 | catalogue §15 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| olv: Crs 25–30 mL/cmH2O | 33.9 | catalogue §22 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| olv: shunt 0.2–0.3 at FiO2 0.4 after 30 min | 0.140 | catalogue §22 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| endobronchial: Crs 27.5–30.25 mL/cmH2O | 34.0 | catalogue §23 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| neonatalRds: shunt 0.2–0.4 | 0.158 | catalogue §30 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
 | COPD GOLD 1 (severity 0.25): FEV1 ≥ 80 % pred with FEV1/FVC < 0.70 | 71 % | — | RIGHT ([audit row 109](../../docs/validation/target-audit/30-target-audit.md#row-109)) | keep | [`volumes.test.ts`](../../packages/engine-core/test/l2/lung/volumes.test.ts) |
 
 <a id="gas-exchange"></a>
