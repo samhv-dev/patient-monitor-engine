@@ -49,27 +49,40 @@ describe('ventilator settings move the monitor through the link', { timeout: 300
     expect(c.etco2).toBeLessThan(b.etco2 - 1);
   });
 
-  // NEEDS A RULING NR-3 (docs/gates/stage-7a.md): heart–lung interaction is emergent on the Stage 7a circulation
-  // (pleural input, T_IT 0.65) instead of Stage 3's MANUAL Paw coupling; measured: COPD auto-PEEP 9.9 → MAP −9.4 (CO −12 %);
-  // oedema (70 y, no HF condition in the profile) PEEP 5 → 12: SpO2 +3, CO 4.65 → 4.66. it.fails keeps CI green and flags it.
-  // Stage 7b: NR-3 closed per the orchestrator — auto-PEEP in R46's 6–12 band; the MAP fall is asserted by direction (> 3)
-  it('COPD GOLD 3–4 at RR 20 / VT 8 mL/kg: auto-PEEP 6–12 cmH2O and MAP falls; RR 10 reverses it', async () => {
-    const s = createLinkedSim({ profile: 'copd-gold-3-4', vent: { rate: 10, vt: 560, pmax: 60, pause: 0, flowPattern: 'decel' } });
-    await run(s, 180);
-    const a = snap(s, 150, 180);
-    s.set({ rate: 20 });
-    await run(s, 300);
-    const b = snap(s, 270, 300);
-    s.set({ rate: 10 });
-    await run(s, 420);
-    const c = snap(s, 390, 420);
-    log('copd rr10', a); log('copd rr20', b); log('copd back', c);
-    // R46: the GOLD 3 auto-PEEP band at RR 20 is 6–12 cmH2O (was > 8/10–15, an ENG guess); Stage 7b generates this
-    // row's mechanics from the engine data (measured 7.8)
-    expect(b.autoPeep).toBeGreaterThanOrEqual(6);
-    expect(b.autoPeep).toBeLessThanOrEqual(12);
-    expect(a.map - b.map).toBeGreaterThan(3);
-    expect(c.map).toBeGreaterThan(b.map + 2);
+  // COPD dynamic hyperinflation. History: NR-3 (docs/gates/stage-7a.md) kept "MAP falls > 15" as an it.fails; commit
+  // 1a1787eb (the Stage 7b closure of NR-3) made it a passing "> 3, by direction" and the RR-10 reversal "> b + 2".
+  // Neither 15 nor 3 had a source. Brief 87 searched for one: Pepe & Marini 1982 (Am Rev Respir Dis 126:166, the
+  // auto-PEEP effect), Tuxen & Lane 1987 (Am Rev Respir Dis 136:872; hypotension at the highest hyperinflation volumes),
+  // Dellinger 5e ch. 10 (Fig. 10.3: a 40-s disconnection raises BP and CO) and ch. 38, Hines & Jones (Coexisting
+  // Disease 8e) ch. 8 and the Miller chapters state the direction (auto-PEEP lowers venous return, CO and BP), none the
+  // size of the MAP fall at a given auto-PEEP. So the original 15 / +10 are kept, tagged [FIT: no source found], and
+  // never the softened 3 / +2: the fall is an expected failure until a source states its size. One run in beforeAll,
+  // so a crash fails the passing test instead of letting the it.fails pass silently.
+  describe('COPD GOLD 3–4 dynamic hyperinflation (RR 10 → 20 → 10, VT 8 mL/kg)', () => {
+    let a: ReturnType<typeof snap>;
+    let b: ReturnType<typeof snap>;
+    let c: ReturnType<typeof snap>;
+    beforeAll(async () => {
+      const s = createLinkedSim({ profile: 'copd-gold-3-4', vent: { rate: 10, vt: 560, pmax: 60, pause: 0, flowPattern: 'decel' } });
+      await run(s, 180);
+      a = snap(s, 150, 180);
+      s.set({ rate: 20 });
+      await run(s, 300);
+      b = snap(s, 270, 300);
+      s.set({ rate: 10 });
+      await run(s, 420);
+      c = snap(s, 390, 420);
+      log('copd rr10', a); log('copd rr20', b); log('copd back', c);
+    }, 300_000); // the describe's own timeout, as the oedema block's beforeAll
+    // R46: the GOLD 3 auto-PEEP band at RR 20 is 6–12 cmH2O (was > 8/10–15, an ENG guess); measured 7.7
+    it('RR 20: auto-PEEP 6–12 cmH2O (R46); RR 10 brings MAP back > 10 mmHg above the RR-20 level [FIT: no source found]', () => {
+      expect(b.autoPeep).toBeGreaterThanOrEqual(6);
+      expect(b.autoPeep).toBeLessThanOrEqual(12);
+      expect(c.map).toBeGreaterThan(b.map + 10);
+    });
+    it.fails('RR 10 → 20: MAP falls > 15 mmHg with the auto-PEEP [FIT: no source found: the auto-PEEP papers give the direction, not the size] — measured −12.5 (102.9 → 90.4) at auto-PEEP 7.7', () => {
+      expect(a.map - b.map).toBeGreaterThan(15);
+    });
   });
 
   // NEEDS A RULING (Stage 7b gate note): on main (7a) the SpO2 fall 60 s after PEEP 15 → 5 was 98 → 94.6 (−3.4); with 7b's

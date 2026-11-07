@@ -8,7 +8,7 @@ and the test is marked as an expected failure with the measured value in its tit
 module that owns it, until the mechanism is fixed. The release-candidate view of the same list, with where each
 item is tracked, is [known deviations](../guides/known-deviations.md); each module is described in [docs/model](../model/README.md).
 
-**157 known misses.** Split from the test titles: a band recognised in the target of 148, a measured value in 146, a source in 60; "—" = not stated in a form the generator reads.
+**158 known misses.** Split from the test titles: a band recognised in the target of 149, a measured value in 147, a source in 60; "—" = not stated in a form the generator reads.
 
 **The bands themselves were audited** against the literature (target audit, 2026-10-11; the rows are in [target-audit.tsv](target-audit.tsv)): 148 of these misses carry an audit verdict — RIGHT 30, TOO NARROW 27, TOO WIDE 3, MIS-SPECIFIED 61, UNSUPPORTED 27 (a miss can carry several rows). RIGHT: the band matches its source; TOO NARROW / TOO WIDE: the source supports a wider / narrower band; MIS-SPECIFIED: the band measures something other than its source did; UNSUPPORTED: no source found for it. A proposed band is evidence for an owner ruling, not a change: until a ruling, the test keeps its band. The audit itself, row by row with its evidence, is [published here](target-audit/30-target-audit.md) with its CSV twin and synthesis; the numbered evidence notes it cites as "research/NN" live in the project's research folder outside the repository.
 
@@ -26,7 +26,7 @@ item is tracked, is [known deviations](../guides/known-deviations.md); each modu
 | [Anaesthetic depth, ventilatory drive and neuromuscular block](#neuro) | 6 |
 | [Pharmacology: PK, PD and the drug rows](#pharmacology) | 34 |
 | [Monitor measurements (device layer)](#monitor) | 7 |
-| [Ventilator](#ventilator) | 5 |
+| [Ventilator](#ventilator) | 6 |
 | [Presentation: renderer, audio, skins, the app](#presentation) | 2 |
 | [Whole-patient scenario suites](#integration) | 10 |
 
@@ -274,6 +274,7 @@ Module page: [docs/model/ventilator.md](../model/ventilator.md)
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
 | bronchospasm 1 at 20 min | at 30 min PaCO2 59.2 vs 39.6, VT 238 vs 476 | — | MIS-SPECIFIED ([audit row 110](../../docs/validation/target-audit/30-target-audit.md#row-110)) | match the link's vcFlow/pause to the engine's Ti (the file's own V.1 TODO), then keep 3 / 3 / 2 % / 10 % | [`link-parity.test.ts`](../../packages/ventilator/test/link-parity.test.ts) |
+| RR 10 → 20: MAP falls > 15 mmHg with the auto-PEEP [FIT: no source found: the auto-PEEP papers give the direction, not the size] | −12.5 | — | not audited | — | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
 | ARDS moderate PEEP 5 → 15 (FiO2 0.6): SpO2 rises ≥ 5 over 1–4 min (recruitment), falls again within 60 s of PEEP 5 | +2.0 / 0.0 | — | MIS-SPECIFIED ([audit row 111](../../docs/validation/target-audit/30-target-audit.md#row-111)) | re-specify on shunt/PaO2: venous admixture −15–30 % (or SpO2 +1.5–3 from 95 % at FiO2 0.6) by 5–15 min of PEEP 15; SpO2 falls back within 5 min of PEEP 5; keep CO falls | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
 | FiO2 0.4: SpO2 rises ≥ 2 | SpO2 98 → 98, SaO2 98.7 → 99.1 | — | MIS-SPECIFIED ([audit row 112](../../docs/validation/target-audit/30-target-audit.md#row-112)) | drop the SpO2 band at FiO2 0.4 (keep the passing shunt/PCWP check), or assert PaO2/FiO2 +30–50 % at ≥ 10 min in a profile with P/F < 200 | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
 | room air (FiO2 0.21): SpO2 rises ≥ 2 | SpO2 94.0 → 95.0, SaO2 94.9 → 95.5 | — | MIS-SPECIFIED ([audit row 113](../../docs/validation/target-audit/30-target-audit.md#row-113)) | for shunt 0.15 → 0.10 on air: SaO2 +1–2 points; or re-base on a sicker profile (shunt ≥ 0.20) and assert P/F +30–50 % at ≥ 10 min | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
