@@ -56,7 +56,8 @@ export function roomView(d: RoomDeps): RoomView {
   const opened: Array<{ what: string; at: number }> = [];
   const listen = (t: ManagedTransport, via: PeerSeen['via']) => t.onMessage((m: WireMessage) => {
     if (m.from === d.hostPeerId) return;
-    if (m.kind === 'hello' && m.role !== 'host') log.heard(m.from, via, m.role, now());
+    // R8a's `ventilator` is not listed: no cockpit says it before R8d, which gives it its own row
+    if (m.kind === 'hello' && m.role !== 'host' && m.role !== 'ventilator') log.heard(m.from, via, m.role, now());
     else if (m.kind === 'command') log.heard(m.from, via, 'controller', now());
     else return;
     draw();

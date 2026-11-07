@@ -139,6 +139,12 @@ transports (`src/protocol.ts`).
 |---|---|---|---|---|
 | `EPS` | `1e-6` | — | [ENG] | Comparison slack for clocks and windows (sim seconds), as the /1 runner's [ENG]. |
 
+### [`scenario/validate.ts`](../../packages/controller/src/scenario/validate.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `HANDOUT_QUESTION_MAX` | `92` | — | November 2026 | One readable line per ajv error: `<json path>: <what is wrong>`. The longest card question the learner handout prints on one line (D16): measured, not chosen. In print media at the 182 mm content width, in the bundled print font (Inter Print 13.33 px), after its "mm:ss" label (10.3 mm), the handout's question line (177.0 mm) held 92 to 100 characters of the drafted questions' own text, Chromium and WebKit alike (6 November 2026, the D16 e2e probe on the MH card); the limit is the shortest of those, 92. A question that wraps adds 4.7 mm, and the MH handout without questions is 266.9 mm of its 267 mm page (with two wrapped questions: 276.4 mm). The e2e page fit stays the truth; this tells an author at validation time. The two scenario schemas carry the same number (`maxLength`), a test keeps them equal. |
+
 ### [`session/controller-session.ts`](../../packages/controller/src/session/controller-session.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -208,7 +214,6 @@ transports (`src/protocol.ts`).
 | `holds` | [`scenario/rules.ts`](../../packages/controller/src/scenario/rules.ts) | Does the rule hold now? `rank` is the store its value leaves read (3 truth, 2 displayed). |
 | `matches` | [`scenario/runner.ts`](../../packages/controller/src/scenario/runner.ts) | Does a clinical event satisfy an `event` trigger? kind equal, min* filters as lower bounds, the rest exact. |
 | `resolveRhythm` | [`scenario/standins.ts`](../../packages/controller/src/scenario/standins.ts) | The rhythm to send for `id` on an engine that knows `known`: |
-| `formatAjvError` | [`scenario/validate.ts`](../../packages/controller/src/scenario/validate.ts) | One readable line per ajv error: |
 | `validateScenario` | [`scenario/validate.ts`](../../packages/controller/src/scenario/validate.ts) | Validate an unknown value as a scenario document: |
 | `describe` | [`session/controller-session.ts`](../../packages/controller/src/session/controller-session.ts) | One-line human description of a command, for logs. |
 | `bolusDrugOf` | [`session/drug-lock.ts`](../../packages/controller/src/session/drug-lock.ts) | The drug a command gives as a bolus, else null. |
@@ -223,7 +228,7 @@ transports (`src/protocol.ts`).
 | `stage1Vocabulary` | [`vocabulary.ts`](../../packages/controller/src/vocabulary.ts) | What the base engine accepts (engine.ts validate()). |
 | `vocabularyOf` | [`vocabulary.ts`](../../packages/controller/src/vocabulary.ts) | The engine's own vocabulary when it has one, else the base-engine description. |
 
-Exported without a doc comment: `httpHandler`, `startRelay`, `clamp`, `targetCommand`, `pinCommand`, `releaseCommand`, `rhythmCommand`, `deviceCommand`, `flagView`, `mountInstructorPanel`, `renderControls`, `mountScenarioTab`, `injectStyles`, `mountRemote`, `describeWhen`, `describeTransition`, `isHop`, `compare`, `hasManual`, `createBroadcastChannelTransport`, `createInProcessHub`, `createPostMessageTransport`, `isRelayFrame`, `createWebSocketTransport`.
+Exported without a doc comment: `httpHandler`, `startRelay`, `clamp`, `targetCommand`, `pinCommand`, `releaseCommand`, `rhythmCommand`, `deviceCommand`, `flagView`, `mountInstructorPanel`, `renderControls`, `mountScenarioTab`, `injectStyles`, `mountRemote`, `describeWhen`, `describeTransition`, `isHop`, `compare`, `hasManual`, `formatAjvError`, `createBroadcastChannelTransport`, `createInProcessHub`, `createPostMessageTransport`, `isRelayFrame`, `createWebSocketTransport`.
 
 ## Source files
 
@@ -283,6 +288,7 @@ None recorded.
 | File | Expected failures | Skipped |
 |---|---|---|
 | [`briefing-wire.test.ts`](../../packages/controller/test/briefing-wire.test.ts) | 0 | 0 |
+| [`guard-vent.test.ts`](../../packages/controller/test/guard-vent.test.ts) | 0 | 0 |
 | [`guard.test.ts`](../../packages/controller/test/guard.test.ts) | 0 | 0 |
 | [`index.test.ts`](../../packages/controller/test/index.test.ts) | 0 | 0 |
 | [`panel/controls-follow-shock.dom.test.ts`](../../packages/controller/test/panel/controls-follow-shock.dom.test.ts) | 0 | 0 |
@@ -300,10 +306,12 @@ None recorded.
 | [`relay/peer-identity.test.ts`](../../packages/controller/test/relay/peer-identity.test.ts) | 0 | 0 |
 | [`relay/peer-left.test.ts`](../../packages/controller/test/relay/peer-left.test.ts) | 0 | 0 |
 | [`relay/relay-classroom.test.ts`](../../packages/controller/test/relay/relay-classroom.test.ts) | 0 | 0 |
+| [`relay/relay-devices.test.ts`](../../packages/controller/test/relay/relay-devices.test.ts) | 0 | 0 |
 | [`relay/relay-hostile.test.ts`](../../packages/controller/test/relay/relay-hostile.test.ts) | 0 | 0 |
 | [`relay/relay-instructor.test.ts`](../../packages/controller/test/relay/relay-instructor.test.ts) | 0 | 0 |
 | [`relay/relay-refuses-mirror.test.ts`](../../packages/controller/test/relay/relay-refuses-mirror.test.ts) | 0 | 0 |
 | [`relay/relay-state.test.ts`](../../packages/controller/test/relay/relay-state.test.ts) | 0 | 0 |
+| [`relay/relay-vent.test.ts`](../../packages/controller/test/relay/relay-vent.test.ts) | 0 | 0 |
 | [`relay/relay.test.ts`](../../packages/controller/test/relay/relay.test.ts) | 0 | 0 |
 | [`remote/remote-scenario.dom.test.ts`](../../packages/controller/test/remote/remote-scenario.dom.test.ts) | 0 | 0 |
 | [`remote/remote.dom.test.ts`](../../packages/controller/test/remote/remote.dom.test.ts) | 0 | 0 |
