@@ -3,7 +3,7 @@
 // for the engine events the session does not keep (alarmStatus, deviceStatus), plus the clinical log. On the host
 // document `host` is the AppSession (patient restart, skin, sound); a Remote has none of those.
 import type { AlarmEntry, EngineEvent } from '@pme/engine-core';
-import { asV1, isV2, manualLabel, StageBuffer, WIRE_LIMITS, type AckResult, type CommandInput, type ControllerSession, type ManagedTransport, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
+import { asV1, isV2, manualLabel, StageBuffer, WIRE_LIMITS, type AckResult, type CommandInput, type ControllerSession, type ManagedTransport, type NoteEvent, type ScenarioView, type WireEvent, type WireMessage } from '@pme/controller';
 import { describeCommand, spanText, timeText } from './describe.ts';
 import type { AppSession } from './session.ts';
 import type { ViewFeed } from './teach2/feed.ts';
@@ -18,7 +18,7 @@ export interface ClinicalLogEntry {
   /** Rejected by the engine: the reason, in the log only. */
   refused?: string;
   /** The run event a note is, into the record with it (D5: 'recognised', the /1 Recognised press). */
-  ev?: 'recognised';
+  ev?: NoteEvent;
 }
 
 export class Link {
@@ -105,15 +105,14 @@ export class Link {
    * A line of the clinical log. A note or a marker (a judged objective) goes into the debrief: on the host into its
    * record (`add`), and from a remote as the `note` command (plan §6), which the host files with this same call, at its
    * own sim time `t`. `ev`: the run event the note is (D5: 'recognised', the /1 Recognised press), into the record
-   * with it; the `note` command carries no event, so a remote's note arrives without one (recognised.ts shows the
-   * press that needs it on the host only).
+   * with it; a remote's `note` command carries it (brief 52), so the host files the phone's press as the laptop's.
    */
   note(text: string, kind: ClinicalLogEntry['kind'] = 'note', t: number = this.simT, ev?: ClinicalLogEntry['ev']): void {
     this.add({ simT: t, kind, text, ...(ev ? { ev } : {}) });
     if (this.host || (kind !== 'note' && kind !== 'marker')) return;
     // the guard's limit (guard.ts): a longer note would be dropped on the wire and re-sent until it timed out
     if (text.length > WIRE_LIMITS.noteChars) return this.add({ simT: t, kind: 'system', text: `Not sent to the debrief: the note is longer than ${WIRE_LIMITS.noteChars} characters` });
-    void this.ctl.send({ type: 'note', kind, text });
+    void this.ctl.send({ type: 'note', kind, text, ...(ev ? { ev } : {}) });
   }
 
   /** The host's view feed for the state this remote's scenario view is in, else null (on the host, with no feed yet,
@@ -135,7 +134,7 @@ export class Link {
 
   /** The highest active alarm level (1 = high) and how many alarms are active. */
   get alarmSummary(): { level: 1 | 2 | 3 | null; n: number; top: AlarmEntry | null } {
-    const act = (this.alarms?.active ?? []).filter((a) => !a.acked || a.latched);
+    const act = (this.alarms?.active ?? []).filter((a) => (!a.acked || a.latched) && !a.prompt); // A prompt is not an alarm (MUI-7)
     const top = [...act].sort((a, b) => a.level - b.level)[0] ?? null;
     return { level: top ? top.level : null, n: act.length, top };
   }

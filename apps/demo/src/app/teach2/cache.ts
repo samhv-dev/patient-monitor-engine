@@ -65,7 +65,8 @@ export class Cache extends Staging {
     this.notify();
   }
 
-  /** Deliver the staged cache: every item at one engine instant, one log line; empty, nothing is sent. */
+  /** Deliver the staged cache: every item at one engine instant (a target or a held value then moves over the chosen
+ *  onset, `transitionS`), one log line; empty, nothing is sent. */
   override async commit(): Promise<AckResult[]> {
     const items = this.items;
     if (!items.length || this.delivering) return [];
@@ -73,7 +74,8 @@ export class Cache extends Staging {
     this.held.clear();
     this.notify();
     try {
-      const rs = await this.link.sendBatch(items.map((x) => x.cmd));
+      // the chosen onset (G3): a setTarget or a pin carries it as its ramp, every other item none (Staging.withRamp)
+      const rs = await this.link.sendBatch(items.map((x) => this.withRamp(x.cmd)));
       const refused = rs.filter((r) => !r.accepted).length;
       const n = items.length;
       toast(refused ? `${n - refused} of ${n} staged items delivered; ${refused} refused (see the Log)` : `Staged cache delivered: ${n === 1 ? '1 item' : `${n} items`} at one instant`, refused ? 'alert' : 'info');

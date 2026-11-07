@@ -50,7 +50,7 @@ function rig() {
   root.append(layer, tools, note);
   document.body.append(root);
   const keys = mountKeys(root, { link, togglePause: () => undefined });
-  const ctx: Teach2Ctx = { link, site: DEFAULT_SITE, weightKg: () => 70, keys, dock: { tools, note }, openSheet: () => undefined };
+  const ctx: Teach2Ctx = { link, site: DEFAULT_SITE, weightKg: () => 70, keys, dock: { tools, note }, openSheet: () => undefined, loadScenario: () => true };
   const slot = mount(layer, ctx);
   done.push(() => (slot.destroy(), keys.destroy(), link.close(), ctl.close()));
   const open = () => [...layer.querySelectorAll<HTMLElement>('.ip2-sheet:not([hidden])')].map((s) => s.dataset.sheet);

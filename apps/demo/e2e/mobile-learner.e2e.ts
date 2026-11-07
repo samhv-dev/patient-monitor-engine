@@ -11,7 +11,7 @@ import { join } from 'node:path';
 import { devices, expect, test, type Browser, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle, type RelayOptions } from '../../../packages/controller/relay/server.ts';
-import { openApp, startVite } from './app-support.ts';
+import { ffV2, openApp, pillV2, speedV2, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -71,7 +71,7 @@ async function classroom(o: RelayOptions = {}): Promise<void> {
   relay = await startAnyRelay({ port: 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer', ...o });
 }
 async function instructor(page: Page, scenario: string, site?: Record<string, unknown>): Promise<string> {
-  await openApp(page, base, `?relay=${encodeURIComponent(ws())}&scenario=${scenario}`, { warmMs: 1500, ...(site ? { site } : {}) });
+  await openApp(page, base, `?relay=${encodeURIComponent(ws())}&scenario=${scenario}#/teach2`, { warmMs: 1500, ...(site ? { site } : {}) });
   return page.evaluate(() => (window as unknown as W).__pmeApp.session.code);
 }
 /** A phone (iPhone 13 on WebKit, Pixel 7 on Chromium) that opened the learner address. */
@@ -113,7 +113,7 @@ test("the Room page's QR, then a phone follows in the instructor's style through
   await synced(f);
   await expect(sheet.locator('.phones-count')).toHaveText('1 phone following');
   await expect(page.locator('.room-status')).toContainText(/Stable connection|Weak connection/);
-  await page.evaluate(() => (location.hash = '#/teach'));
+  await page.evaluate(() => (location.hash = '#/teach2'));
   await expect(status(f)).toHaveText(`Following session ${code}`);
   // one screen, portrait: the waveforms over the whole width, the tiles in a grid under them, nothing to scroll, no
   // instructor control, sound off until tapped
@@ -133,9 +133,9 @@ test("the Room page's QR, then a phone follows in the instructor's style through
   expect(await styleOf(f)).toBe('philips-like');
   await expect(f.locator('.follower-note')).toBeHidden();
 
-  const bar = page.locator('.sessionbar');
-  for (const k of ['×4', '×8']) {
-    await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: k }).click();
+  // Instructor v2's header (speed box, clock pill) and STATE's Fast forward box
+  for (const k of [4, 8] as const) {
+    await speedV2(page, k);
     await page.waitForTimeout(8000);
     // FX-2 (main run 38205878761, CI WebKit: 'waiting' 8 s after a speed change; lag 2.04 s of sim at ×8): a resync after
     // a ×4/×8 change is allowed on a loaded machine (orchestrator ruling), so the phone is awaited in state, not read once
@@ -143,20 +143,21 @@ test("the Room page's QR, then a phone follows in the instructor's style through
     expect((await sync(f)).lagS).toBeLessThan(0.5); // FX-2: WALL seconds behind the host (0.1 s at every speed by design)
     await same(f, page);
   }
-  await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×1' }).click();
+  await speedV2(page, 1);
   // the instructor changes the style: the phone follows it (upright)
   await page.evaluate(() => (window as unknown as W).__pmeApp.session.setSkin('saadat-like', ''));
   await expect.poll(() => styleOf(f), { timeout: 10_000 }).toBe('saadat-like');
   await expect(f.locator('.pme-portrait')).toBeVisible();
   await same(f, page);
-  await bar.getByRole('button', { name: 'Pause' }).click();
+  await expect(pillV2(page)).toHaveAttribute('data-state', 'running');
+  await pillV2(page).click();
   await expect(status(f)).toHaveText(`Following session ${code} (paused)`, { timeout: 5000 });
-  await bar.getByRole('button', { name: /Resume|Run/ }).click();
+  await pillV2(page).click();
   await expect(status(f)).toHaveText(`Following session ${code}`, { timeout: 5000 });
 
   // Stage 10's fast-forward: the phone shows the same panel, waits, and starts again from the host's snapshot
   const t0 = await page.evaluate(() => (window as unknown as W).__pmeApp.link.simT);
-  await bar.getByRole('group', { name: 'Fast-forward' }).getByRole('button', { name: 'Fast-forward 2 min' }).click();
+  await ffV2(page, 2);
   await expect(f.locator('.ff-veil.on')).toBeVisible({ timeout: 5000 });
   // R50 I6: a phone that joins DURING the span gets the host's answer (the jump among its replays) and the end
   const late = await phone(browser, browserName, code);
@@ -189,7 +190,7 @@ test('while the Ventilator view drives the patient the phone holds; it follows a
   // but the phone holds only while the Ventilator view is ON SCREEN — leaving it releases the phone at once (`cockpit
   // off`), well inside the 2.5 s the quiet timeout alone would take
   const left = Date.now();
-  await page.evaluate(() => (location.hash = '#/teach'));
+  await page.evaluate(() => (location.hash = '#/teach2'));
   await expect(f.locator('.learner-hold')).toBeHidden({ timeout: 2000 });
   const releasedMs = Date.now() - left;
   await synced(f);

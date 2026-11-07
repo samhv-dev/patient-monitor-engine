@@ -69,3 +69,65 @@ describe('D6: the key moments read the new facts', () => {
     expect(el.querySelectorAll('#db-minutes .db-norecord')).toHaveLength(1);
   });
 });
+
+// Brief 63 (the owner's ruling of 6 November, question 2 = B): a "Pressures" panel among the trend charts, after MAP,
+// in their style — systolic and diastolic on the left axis, CVP on its own right-hand axis (a shared 0–200 mmHg axis
+// would draw CVP as a flat line). A cuff reading is a dot at its cycle with gaps between, never a line to zero; an
+// arterial run is a line. A pre-D file draws no panel and says once that the pressures were not recorded.
+describe('the Pressures trend panel', () => {
+  const panel = (el: HTMLElement) => el.querySelector('#db-trends figure[data-trend="pressures"]');
+  const d = (el: Element | null | undefined, k: string) => el?.querySelector(`path[data-p="${k}"]`)?.getAttribute('d') ?? null;
+  const run = (f: (t: number) => Partial<Sample>, n = 300): RunData => ({ ...emptyRun('free', 70, 0), samples: Array.from({ length: n }, (_, t) => ({ ...base(t), ...f(t) })) });
+
+  it('a D-era arterial run: the panel after MAP, three traces, SBP and DBP lines on the left axis, CVP on the right', () => {
+    const el = open(run((t) => ({ sys: 100 + (t % 20), dia: 60, cvp: 8 + (t > 150 ? 6 : 0) })));
+    const fig = panel(el);
+    expect(fig).not.toBeNull();
+    expect(fig?.previousElementSibling?.getAttribute('data-trend')).toBe('map');
+    expect(fig?.querySelectorAll('path[data-p]')).toHaveLength(3);
+    expect(fig?.querySelector('figcaption')?.textContent).toBe('PressuresmmHg · SBP and DBP on the left axis, CVP (dashed) on the right');
+    for (const k of ['sys', 'dia', 'cvp']) {
+      expect(d(fig, k)?.match(/M/g), `${k}: one unbroken line`).toHaveLength(1);
+      expect(d(fig, k)).toMatch(/L/);
+    }
+    expect([...(fig?.querySelectorAll('text.l') ?? [])].map((t) => t.textContent)).toEqual(['119', '60']); // SBP/DBP: its own range
+    expect([...(fig?.querySelectorAll('text.r') ?? [])].map((t) => t.textContent)).toEqual(['CVP 16', 'CVP 6']); // 8–14 on its 10 mmHg least span
+    expect(fig?.querySelector('svg')?.getAttribute('aria-label')).toBe('Pressures, 00:00 to 04:59: SBP 100 to 119, DBP 60 to 60, CVP 8 to 14 mmHg');
+    expect(el.querySelector('#db-trends .db-norecord')).toBeNull();
+  });
+
+  it('a cuff run: a dot per cycle, gaps between, never joined and never at zero; no CVP drawn when none was measured', () => {
+    const cyc = (t: number) => t === 40 || t === 100 || t === 160;
+    const fig = panel(open(run((t) => ({ sys: cyc(t) ? 98 + t / 20 : null, dia: cyc(t) ? 60 : null, cvp: null }))));
+    for (const k of ['sys', 'dia']) {
+      const p = d(fig, k) ?? '';
+      expect(p.match(/M/g), `${k}: three readings, three subpaths`).toHaveLength(3);
+      expect(p, k).not.toMatch(/L/);
+      expect(p.match(/a/g), `${k}: each a visible dot`).toHaveLength(6);
+    }
+    expect(d(fig, 'cvp')).toBe('');
+    expect(fig?.querySelectorAll('text.r')).toHaveLength(0);
+    expect(fig?.querySelector('svg')?.getAttribute('aria-label')).toMatch(/CVP not measured/);
+  });
+
+  it('an arterial line taken down to the cuff: a line, then dots', () => {
+    const fig = panel(open(run((t) => (t < 100 ? { sys: 92, dia: 58 } : t === 150 || t === 250 ? { sys: 98, dia: 60 } : { sys: null, dia: null }))));
+    const p = d(fig, 'sys') ?? '';
+    expect(p.match(/M/g)).toHaveLength(3);
+    expect(p.match(/L/g)).toHaveLength(99); // seconds 1–99 joined to 0
+    expect(p.match(/a/g)).toHaveLength(4); // the two cuff cycles, each a dot
+  });
+
+  it('a D-era run with no pressure measured: the panel says so, as the other charts do', () => {
+    const fig = panel(open(run(() => ({ sys: null, dia: null, cvp: null }))));
+    expect(fig?.querySelector('p.muted')?.textContent).toBe('Not measured during the run.');
+    expect(fig?.querySelector('svg')).toBeNull();
+  });
+
+  it('a pre-D file (the A3.1 export): no panel, and "not recorded in this file" once among the trends', () => {
+    const el = open(a31.record as unknown as RunData);
+    expect(panel(el)).toBeNull();
+    expect(el.querySelectorAll('#db-trends figure.db-chart')).toHaveLength(6);
+    expect([...el.querySelectorAll('#db-trends .db-norecord')].map((p) => p.textContent)).toEqual(['SBP, DBP and CVP: not recorded in this file.']);
+  });
+});

@@ -12,24 +12,32 @@
 // The archive (board "Finish 2", archive.ts): a debrief "Finish the case" saved opens here (#/debrief/archive/<id>, and
 // …/print prints it), with the resident's name in the header band and the handout's; the view lists the archive in its
 // own section (screen only), exports it all as one JSON file and clears it behind a confirm.
+// Persian (Debrief 2, D13): a switch beside the print buttons (per browser, English by default; i18n/lang.ts, also the
+// Briefing's language) draws the two live containers, the handout and the footer through the one table and matcher the
+// handout script uses (i18n/fa-dom.ts), right to left in the bundled Vazirmatn; while an entry printed is unread by the
+// owner, "Persian draft: not yet read by the clinical owner" stands under the switch and on every printed page (DQ10).
 import { asV1, type MarkKind } from '@pme/controller';
 import { archive, hhmm, type ArchiveMeta } from '../archive.ts';
 import './debrief.css';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
 import { axisRange, drugTotals, endOf, facts, mmss, objectives, perMinute, PRESSURE_KEYS, report3, span, steps, trendMeta, type DebriefExport, type Pressure, type Report3, type Step, type StepStatus } from '../debrief.ts';
-import type { Grade } from '@pme/controller/scenario';
 import { debriefJson } from '../debrief-export.ts';
-import { keyMoments, keyTimes, RECOGNISED, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
+import { handoutQuestionsAt, keyMoments, keyTimes, openersAt, recognitionAt, RECOGNISED, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
 import { LAB_KEYS, TREND_KEYS, type PressureKey, type Row, type RunData, type TrendKey, type ValueKey } from '../record.ts';
-import { COURSE_W, courseSvg, type CourseMark } from './debrief-course.ts';
+import { COURSE_W, courseSvg, tracePath, type CourseMark } from './debrief-course.ts';
+import { GRADE_WORDS, swimlaneSvg, verdictMark, windowsOf } from './debrief-swimlane.ts';
 import { MARKS } from '../teach2/dock.ts';
 import { hrefOf } from '../router.ts';
 import { cardOf } from '../scenarios.ts';
 import type { AppSession } from '../session.ts';
 import { version } from '@pme/renderer';
 import type { View } from '../shell.ts';
-import { button, confirmDialog, download, h, toast } from '../ui.ts';
+import { button, confirmDialog, download, h, seg, toast } from '../ui.ts';
+import TABLE from '../../../../../docs/showcase/i18n/fa-debrief.json';
+import { DRAFT_LINE, faPass, translateTree, unreviewed, type FaPass } from '../i18n/fa-dom.ts';
+import { LTR_RUN } from '../i18n/fa-match.mjs';
+import { hostLang, setHostLang, type HostLang } from '../i18n/lang.ts';
 import { archiveHref, archiveList, downloadEntry, entryTitle, exportAll } from './archive-list.ts';
 
 /** The build this page was served from (vite.config.ts `define`: the git commit, "+" with uncommitted changes, the date). */
@@ -49,10 +57,8 @@ const KIND: Readonly<Record<Row['kind'], string>> = { action: 'Action', remote: 
  *  rule-less objective the instructor ticked reads Observed, with the tick's time as its reason. */
 function markOf(o: ReturnType<typeof objectives>[number]): { mark: 'observed' | 'not-observed' | 'not-assessable' | 'discuss'; words: string; why: string } {
   const v = o.verdict;
-  if (v.status === 'met') return { mark: 'observed', words: '✓ Observed', why: v.why };
-  if (v.status === 'not met') return o.discuss ? { mark: 'discuss', words: '◆ Discuss', why: v.why } : { mark: 'not-observed', words: '✗ Not observed', why: v.why };
-  if (v.tickedT !== undefined) return { mark: 'observed', words: '✓ Observed', why: `Observed by the instructor at ${mmss(v.tickedT)}.` };
-  return { mark: 'not-assessable', words: '– Not assessable', why: v.why };
+  if (v.status === 'not assessable' && v.tickedT !== undefined) return { mark: 'observed', words: '✓ Observed', why: `Observed by the instructor at ${mmss(v.tickedT)}.` };
+  return { ...verdictMark(v.status, o.discuss), why: v.why };
 }
 const esc = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const undoneText = (r: Row): string => (r.undone ? ` — undone by return ${r.undone}` : '');
@@ -78,8 +84,6 @@ function stepsTable(ss: Step[], d: RunData): HTMLElement {
       h('td', { class: 'num' }, x.takenT === null ? '–' : `${mmss(x.takenT)} (${x.order})`),
       h('td', {}, STEP_WORDS[x.status], x.ruleT !== undefined ? ` (its rule, ${mmss(x.ruleT)})` : '')))));
 }
-/** A /2 action's grade words (grade.ts `Grade`), each with a glyph so no colour is needed to read it. */
-const GRADE_WORDS: Readonly<Record<Grade, string>> = { met: '✓ met', deviation: '◆ deviation', overdue: '! overdue', failed: '✗ failed', due: '… due', 'not applicable': '– not applicable' };
 const at = (t: number | null): string => (t === null ? '–' : mmss(t));
 /** A /2 run's action table (plan F7): each graded action in the card's order with its first administration's grade,
  *  when it was due (the window's opening and length) and given, the criteria it was off on lines under it, then its
@@ -100,8 +104,8 @@ function actionsTable(r: Report3): HTMLElement {
 
 /** The timeline's rows, a staged delivery's items on one line (each item keeps its own row in the record). */
 function timelineRows(d: RunData): HTMLElement[] {
-  const line = (r: Row, text: string, isSetup: boolean) => h('tr', { 'data-kind': r.kind, ...(r.undone ? { class: 'undone' } : isSetup ? { class: 'db-setup' } : {}) },
-    h('td', { class: 'num' }, mmss(r.t)), h('td', {}, KIND[r.kind]), h('td', {}, text + undoneText(r)));
+  const line = (r: Row, text: string | string[], isSetup: boolean) => h('tr', { 'data-kind': r.kind, ...(r.undone ? { class: 'undone' } : isSetup ? { class: 'db-setup' } : {}) },
+    h('td', { class: 'num' }, mmss(r.t)), h('td', {}, KIND[r.kind]), h('td', {}, ...[text].flat(), undoneText(r))); // separate texts: the Persian page reads each (D13)
   const done = new Set<string>();
   return d.rows.flatMap((r) => {
     const b = r.batch?.id;
@@ -109,7 +113,7 @@ function timelineRows(d: RunData): HTMLElement[] {
     if (done.has(b)) return [];
     done.add(b);
     const items = d.rows.filter((x) => x.batch?.id === b);
-    return [line(r, `Delivered together: ${items.map((x) => x.text).join('; ')}`, items.every(setup))];
+    return [line(r, ['Delivered together: ', ...items.flatMap((x, i) => (i ? ['; ', x.text] : [x.text]))], items.every(setup))];
   });
 }
 /** A bookmark's line: its time and words, a mark's kind and note, and its undoing. */
@@ -158,39 +162,91 @@ function chart(d: RunData, k: TrendKey, end: number, marks: ReadonlyArray<{ t: n
   if (!pts.length) return fig.appendChild(h('p', { class: 'muted' }, 'Not measured during the run.')), fig;
   const vals = pts.map((s) => s[k] as number);
   const [lo, hi] = axisRange(k, Math.min(...vals), Math.max(...vals)); // DV-2: a least span per trend
-  const W = 640, H = 130, L = 44, R = 10, T = 8, B = 20;
+  const { W, H, L, R, T, B } = BOX;
   const x = (t: number) => L + (t / Math.max(end, 1)) * (W - L - R);
   const y = (v: number) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
-  let path = '';
-  let prev: number | null = null;
-  for (const s of d.samples) {
-    const v = s[k];
-    if (v === null) {
-      prev = null;
-      continue;
-    }
-    path += `${prev === null || s.t - prev > 5 ? 'M' : 'L'}${x(s.t).toFixed(1)} ${y(v).toFixed(1)}`;
-    prev = s.t;
-  }
+  const path = tracePath(d, k, x, y);
+  const f = (v: number) => v.toFixed(m.digits);
+  const min = pts.reduce((b, s) => ((s[k] as number) < (b[k] as number) ? s : b));
+  const max = pts.reduce((b, s) => ((s[k] as number) > (b[k] as number) ? s : b));
+  const label = `${m.label}, ${mmss(0)} to ${mmss(end)}: lowest ${f(min[k] as number)} at ${mmss(min.t)}, highest ${f(max[k] as number)} at ${mmss(max.t)} ${m.unit}`;
+  fig.append(frame(d, end, marks, label, `<text x="${L - 4}" y="${T + 4}" text-anchor="end">${f(hi)}</text><text x="${L - 4}" y="${H - B}" text-anchor="end">${f(lo)}</text>`, `<path d="${path}"/>`));
+  return fig;
+}
+
+/** A trend chart's frame (the axes, the top grid line, the minutes, the instructor's marks, a dashed line at each
+ *  return to a bookmark) around its value labels and traces, in the chart's viewBox. */
+function frame(d: RunData, end: number, marks: ReadonlyArray<{ t: number; who: Who; n: number }>, label: string, values: string, traces: string): HTMLElement {
+  const { W, H, L, R, T, B } = BOX;
+  const x = (t: number) => L + (t / Math.max(end, 1)) * (W - L - R);
   const step = [60, 120, 300, 600, 900, 1800, 3600].find((st) => end / st <= 8) ?? 3600;
   let ticks = '';
   for (let t = 0; t <= end; t += step) ticks += `<line x1="${x(t)}" x2="${x(t)}" y1="${H - B}" y2="${H - B + 4}"/><text x="${x(t)}" y="${H - 4}" text-anchor="middle">${mmss(t)}</text>`;
   const returns = d.rows.filter((r) => r.kind === 'restore' && r.undone === undefined)
     .map((r) => `<line class="ret" x1="${x(r.t)}" x2="${x(r.t)}" y1="${T}" y2="${H - B}"/><text x="${x(r.t) + 3}" y="${T + 9}">↺</text>`).join('');
   const mks = marks.map((mk) => `<g class="db-mk" data-who="${mk.who}"><line x1="${x(mk.t).toFixed(1)}" x2="${x(mk.t).toFixed(1)}" y1="${T}" y2="${H - B}" stroke="${MARK_INK[mk.who]}" stroke-width="1" stroke-dasharray="3 2" vector-effect="non-scaling-stroke"/>${MARK_SVG[mk.who](x(mk.t), T)}<text x="${(x(mk.t) + 5).toFixed(1)}" y="${T + 7}" class="db-mk-n">${mk.n}</text></g>`).join('');
-  const f = (v: number) => v.toFixed(m.digits);
-  const min = pts.reduce((b, s) => ((s[k] as number) < (b[k] as number) ? s : b));
-  const max = pts.reduce((b, s) => ((s[k] as number) > (b[k] as number) ? s : b));
-  const label = `${m.label}, ${mmss(0)} to ${mmss(end)}: lowest ${f(min[k] as number)} at ${mmss(min.t)}, highest ${f(max[k] as number)} at ${mmss(max.t)} ${m.unit}`;
   const svg = h('div', { class: 'db-svg' });
   svg.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}" preserveAspectRatio="none">
 <line class="axis" x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}"/><line class="axis" x1="${L}" x2="${L}" y1="${T}" y2="${H - B}"/>
 <line class="grid" x1="${L}" x2="${W - R}" y1="${T}" y2="${T}"/>
-<text x="${L - 4}" y="${T + 4}" text-anchor="end">${f(hi)}</text><text x="${L - 4}" y="${H - B}" text-anchor="end">${f(lo)}</text>
-<g class="ticks">${ticks}</g>${mks}${returns}<path d="${path}"/></svg>`;
-  fig.append(svg);
+${values}<g class="ticks">${ticks}</g>${mks}${returns}${traces}</svg>`;
+  return svg;
+}
+/** Every trend chart's viewBox and margins: the Pressures panel shares them, so its minutes line up with the others'. */
+const BOX = { W: 640, H: 130, L: 44, R: 10, T: 8, B: 20 } as const;
+
+/** A lone reading's mark: a dot of radius 1 around the point the path is at (two arcs; a bare `M` draws nothing). */
+const DOT = 'm-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0';
+/** One pressure's trace, as a trend's (broken where nothing was measured, or over more than 5 s between readings): a
+ *  cuff reading, kept only in its cycle's second (D1), has no neighbour to join and is a dot; an arterial run is a
+ *  line. The same rule as PR #294's (map-cuff-stale) shared `tracePath`, which takes the trends' keys only. */
+function pressurePath(d: RunData, k: PressureKey, x: (t: number) => number, y: (v: number) => number): string {
+  let path = '';
+  let prev: number | null = null;
+  let n = 0; // the readings in the subpath being drawn
+  for (const s of d.samples) {
+    const v = s[k];
+    if (v === null || v === undefined) {
+      prev = null;
+      continue;
+    }
+    const move = prev === null || s.t - prev > 5;
+    if (move && n === 1) path += DOT;
+    n = move ? 1 : n + 1;
+    path += `${move ? 'M' : 'L'}${x(s.t).toFixed(1)} ${y(v).toFixed(1)}`;
+    prev = s.t;
+  }
+  return n === 1 ? path + DOT : path;
+}
+
+/** The pressures' panel among the trend charts (the owner's ruling of 6 November, question 2 = B), in their style:
+ *  SBP and DBP as two lines on the left axis, CVP dashed on its own right-hand axis — a shared 0–200 mmHg axis would
+ *  draw a CVP of 5–20 mmHg as a flat line. A record made before Debrief 2 (no 'pressures' in `keeps`) has no panel. */
+function pressuresChart(d: RunData, end: number, marks: ReadonlyArray<{ t: number; who: Who; n: number }>): HTMLElement | null {
+  if (!d.keeps?.includes('pressures')) return null;
+  const fig = h('figure', { class: 'db-chart', 'data-trend': 'pressures' }, h('figcaption', {}, 'Pressures', h('span', { class: 'unit' }, PRESSURES_UNIT)));
+  const vals = (k: PressureKey) => d.samples.map((s) => s[k]).filter((v): v is number => typeof v === 'number');
+  const [sys, dia, cvp] = PRESSURE_KEYS.map(vals) as [number[], number[], number[]];
+  if (!sys.length && !dia.length && !cvp.length) return fig.appendChild(h('p', { class: 'muted' }, 'Not measured during the run.')), fig;
+  const { W, H, L, R, T, B } = BOX;
+  const x = (t: number) => L + (t / Math.max(end, 1)) * (W - L - R);
+  const scale = ([lo, hi]: [number, number]) => (v: number) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+  const both = [...sys, ...dia];
+  const left = both.length ? axisRange('sys', Math.min(...both), Math.max(...both)) : null;
+  const right = cvp.length ? axisRange('cvp', Math.min(...cvp), Math.max(...cvp)) : null;
+  const yl = left ? scale(left) : () => 0;
+  const yr = right ? scale(right) : () => 0;
+  const words = (name: string, v: number[]) => (v.length ? `${name} ${Math.min(...v)} to ${Math.max(...v)}` : `${name} not measured`);
+  const label = `Pressures, ${mmss(0)} to ${mmss(end)}: ${words('SBP', sys)}, ${words('DBP', dia)}, ${words('CVP', cvp)} mmHg`;
+  const f = (v: number) => v.toFixed(0);
+  const values = (left ? `<text class="l" x="${L - 4}" y="${T + 4}" text-anchor="end">${f(left[1])}</text><text class="l" x="${L - 4}" y="${H - B}" text-anchor="end">${f(left[0])}</text>` : '')
+    + (right ? `<line class="axis" x1="${W - R}" x2="${W - R}" y1="${T}" y2="${H - B}"/><text class="r" x="${W - R - 3}" y="${T + 9}" text-anchor="end">CVP ${f(right[1])}</text><text class="r" x="${W - R - 3}" y="${H - B - 3}" text-anchor="end">CVP ${f(right[0])}</text>` : '');
+  const traces = `<path data-p="sys" d="${pressurePath(d, 'sys', x, yl)}"/><path data-p="dia" d="${pressurePath(d, 'dia', x, yl)}"/><path data-p="cvp" class="cvp" d="${right ? pressurePath(d, 'cvp', x, yr) : ''}"/>`;
+  fig.append(frame(d, end, marks, label, values, traces));
   return fig;
 }
+/** The panel's unit and how to read its two axes (the one table the Persian handout reads holds these words too). */
+const PRESSURES_UNIT = 'mmHg · SBP and DBP on the left axis, CVP (dashed) on the right';
 
 const section = (id: string, title: string, ...kids: Array<Node | null>): HTMLElement =>
   h('section', { class: 'db-sec', id: `db-${id}`, 'aria-labelledby': `db-${id}-h` }, h('h2', { id: `db-${id}-h` }, title), ...kids);
@@ -203,8 +259,23 @@ const PAGE_CSS = `@page { @bottom-left { content: "${FOOT}"; font: 7pt 'Inter Pr
 
 /** The bundled print font (debrief.css @font-face): loaded on entering the view, and awaited before the print buttons
  *  print, so a print never lays out in a fallback font. A failed load still prints (in the system font). */
-const loadPrintFont = (): Promise<unknown> => (document.fonts?.load("1em 'Inter Print'") ?? Promise.resolve()).catch(() => undefined);
+const loadPrintFont = (): Promise<unknown> => Promise.all([document.fonts?.load("1em 'Inter Print'"), hostLang() === 'fa' ? document.fonts?.load('1em Vazirmatn') : undefined]).catch(() => undefined);
 const printWithFont = (): void => void loadPrintFont().then(() => window.print());
+
+/** D13: the Persian page's @page boxes: the footer (the table's footer entry, as the foot line printed it) right,
+ *  «صفحه‌ی n از N» left in Persian digits (the table's "Page {c} of {c}"), and, while an entry printed is unread by the
+ *  owner, DQ10's line at the top of every page. Each Latin run (the version, the build) is one left-to-right run. */
+function pageCssFa(foot: string, draft: boolean, p: FaPass): string {
+  const page = (TABLE.templates as Array<{ en: string; fa: string | null; reviewed: boolean }>).find((e) => e.en === 'Page {c} of {c}');
+  const [pa = '', pb = ''] = (page?.fa ?? 'صفحه‌ی {c} از {c}').split('{c}');
+  if (page) p.used.add(page as never);
+  const iso = (x: string) => x.replace(LTR_RUN, (m) => `\u2066${m.replace(/ /g, '\u00a0')}\u2069`);
+  const css = (x: string) => `"${x.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+  const box = "font: 7pt 'Vazirmatn', sans-serif; color: #000; vertical-align: top; padding-top: 2mm; border-top: 0.5pt solid #000;";
+  return `@page { @bottom-right { content: ${css(iso(foot))}; ${box} direction: rtl; text-align: right; }
+@bottom-left { content: ${css(pa)} counter(page, persian) ${css(pb)} counter(pages, persian); ${box} direction: rtl; white-space: nowrap; }${draft ? `
+@top-center { content: ${css(DRAFT_LINE)}; font: 7pt 'Inter Print', sans-serif; color: #000; vertical-align: bottom; }` : ''} }`;
+}
 
 /** The pressures' column heads (D6), each in whole mmHg as the record keeps it. */
 const PRESSURE_HEAD: Readonly<Record<PressureKey, string>> = { sys: 'SBP', dia: 'DBP', cvp: 'CVP' };
@@ -242,6 +313,12 @@ const legend = (shapes: keyof typeof SHAPES, tail = '', more: Array<Node | strin
   const [team, patient, scen] = SHAPES[shapes];
   return h('p', { class: 'db-legend' }, h('span', { class: 'db-team' }, team), ' team action · ', h('span', { class: 'db-patient' }, patient), ' patient event · ', h('span', { class: 'db-scen' }, scen), ` scenario state${tail}`, ...more);
 };
+/** The swimlane's legend line (D7b): each shape and what it is, the window band and its tick, the verdict glyphs. */
+const swimLegend = (r3: boolean): HTMLElement => h('p', { class: 'db-legend' },
+  h('span', { class: 'db-patient' }, '●'), ' patient event · ', h('span', { class: 'db-team' }, '■'), ' team action · ', h('span', { class: 'db-scen' }, '□'), ' scenario state · ',
+  h('span', { class: 'db-team' }, '◇'), ' recognised · ▭ expected window, │ the act, with its verdict ',
+  r3 ? '(✓ met · ◆ deviation · ! overdue · ✗ failed · … due)' : '(✓ Observed · ✗ Not observed · – Not assessable · ◆ Discuss)',
+  ' · ▬ alarm, raised to ended, ○ acknowledged · ▲ drug or fluid · numbers match Key moments');
 const WHO: Readonly<Record<Who, string>> = { team: 'Team', patient: 'Patient', scenario: 'Scenario' };
 const whoCell = (w: Who): HTMLElement => h('td', { class: 'db-whocell' }, w === 'scenario' ? null : h('span', { class: `db-${w}` }, w === 'team' ? '■ ' : '● '), WHO[w]);
 const TRENDS4: TrendKey[] = ['hr', 'map', 'spo2', 'etco2']; // E56: the same four for every case
@@ -271,6 +348,17 @@ const HANDOUT = {
 const HANDOUT_ROWS = 12;
 const kids = (...xs: Array<Node | null>): Node[] => xs.filter((x): x is Node => x !== null);
 const ruled = (n: number): HTMLElement[] => Array.from({ length: n }, () => h('div', { class: 'db-ruled', 'aria-hidden': 'true' }));
+/** The handout's "Questions to think about" (D16, Decision 14): the card's reviewed questions whose anchor happened on
+ *  the kept course take the places of fixed prompts 1–2 (at most two, in the card's order), each labelled with its
+ *  anchor's mm:ss; a place no question fills keeps its fixed prompt; fixed prompt 3 always closes the list. Three ruled
+ *  lines under each, so the handout keeps its one-page shape. */
+export function handoutQuestions(d: RunData): HTMLElement {
+  const qs = handoutQuestionsAt(d).slice(0, 2);
+  const fixed = HANDOUT.prompts.slice(qs.length).map((q) => h('li', {}, q, ...ruled(3)));
+  return h('section', { class: 'db-hsec' }, h('h3', {}, 'Questions to think about'), h('ol', { class: 'db-qs' },
+    ...qs.map((q) => h('li', { class: 'db-q-card' }, h('span', { class: 'db-q-at' }, mmss(q.t)), ' ', h('span', { class: 'db-q-text' }, q.text), ...ruled(3))),
+    ...fixed));
+}
 /** The handout's take-home section: the card's `takeHome` lines as written (the owner's words), else blank lines to
  *  write on (Decision 6). */
 export const takeHomeSection = (take: readonly string[] = []): HTMLElement =>
@@ -367,11 +455,27 @@ function momentsTable(ms: KeyMoment[], d: RunData): Node[] {
       h('tbody', {}, ...ms.flatMap((m) => [
         h('tr', { 'data-n': String(m.n), ...(m.pulseless ? { 'data-pulseless': 'true' } : {}), ...(m.recognised ? { 'data-recognised': '' } : {}) }, h('td', { class: 'num' }, String(m.n)), h('td', { class: 'num' }, mmss(m.t)), whoCell(m.who), h('td', {}, m.text),
           v(m.values.hr), h('td', { class: 'num db-bp' }, bpText(m)), v(m.values.map), v(m.values.cvp), v(m.values.spo2), v(m.values.etco2)),
-        ...(m.alarms.length ? [h('tr', { class: 'db-alarms' }, h('td', {}), h('td', { colspan: '9' }, `Alarms since the last row: ${m.alarms.map((_, i) => alarmText(m, i)).join(m.alarmTimes ? '; ' : ', ')}`))] : []),
+        ...(m.alarms.length ? [h('tr', { class: 'db-alarms' }, h('td', {}), h('td', { colspan: '9' }, 'Alarms since the last row: ', ...m.alarms.flatMap((_, i) => (i ? [m.alarmTimes ? '; ' : ', ', alarmText(m, i)] : [alarmText(m, i)]))))] : []),
       ]))),
     missing.length ? notRecorded(missing.join(', and ').replace(/^./, (c) => c.toUpperCase())) : null,
     ms.some((m) => m.pulseless) ? h('p', { class: 'db-note60' }, SPO2_DASH) : null,
   );
+}
+
+/** "From the card's author" (D9; the two blocks only, DQ6): the card's `show` lines and its openers, each printed as the
+ *  card writes it (Decision 8: never interpolated; the opener's time and key-moment number are a separate label), an
+ *  opener whose anchor did not happen on the kept course left out and counted. Null when the card has no debriefHints. */
+export function hintsSection(d: RunData, ms: KeyMoment[]): HTMLElement | null {
+  const show = d.doc?.debriefHints?.show ?? [];
+  const op = openersAt(d, ms);
+  if (!show.length && !op) return null;
+  const n = op?.left ?? 0;
+  return section('hints', "From the card's author",
+    show.length ? h('div', { class: 'db-hint-block' }, h('h3', {}, 'What this case is built to show'), h('ul', { class: 'db-hint-show' }, ...show.map((x) => h('li', {}, x)))) : null,
+    op ? h('div', { class: 'db-hint-block' }, h('h3', {}, 'Openers for the analysis'),
+      op.shown.length ? h('ol', { class: 'db-hint-openers' }, ...op.shown.map((o) => h('li', {},
+        h('span', { class: 'db-hint-at' }, o.n === null ? mmss(o.t) : `${mmss(o.t)} · moment ${o.n}`), ' ', h('span', { class: 'db-hint-text' }, o.text)))) : null,
+      n ? h('p', { class: 'db-hint-left muted' }, n === 1 ? '1 opener not shown: its event did not happen in this run' : `${n} openers not shown: their events did not happen in this run`) : null) : null);
 }
 
 export function debriefView(session: AppSession, link: Link): View {
@@ -384,6 +488,48 @@ export function debriefView(session: AppSession, link: Link): View {
   const pearls = section('pearls', 'Talking points', h('div', { class: 'db-pearls' },
     ...PEARLS.map(([phase, prompt]) => h('div', { class: 'db-pearl' }, h('b', {}, phase), h('p', {}, prompt)))));
   const handout = h('div', { class: 'db-handout-live' });
+  const HANDOUT_H = 'Learner handout (printed separately)';
+  const handoutH = h('h2', { id: 'db-handout-h' }, HANDOUT_H);
+  const handoutSec = h('section', { class: 'db-sec', id: 'db-handout', 'aria-labelledby': 'db-handout-h' }, handoutH, handout);
+  const foot = h('footer', { class: 'db-foot db-runfoot' }, FOOT);
+  // D13: the language of the report and the handout (per browser, English by default; Decision 15: the host's one
+  // setting, also the Briefing's language). Only the two live containers, the handout and the footer change with it.
+  const draft = h('p', { class: 'db-draft', lang: 'en', dir: 'ltr', hidden: true }, DRAFT_LINE);
+  const faMissing = h('details', { class: 'db-fa-missing', hidden: true }, h('summary', {}), h('ul', {}));
+  const langSwitch = seg<HostLang>('Language of the report', [['en', 'English'], ['fa', 'فارسی']], hostLang(), (l) => (setHostLang(l), render()));
+  langSwitch.lang = 'en'; // the Persian option names itself in Persian
+  const pageStyle = h('style', { id: 'db-page-style' }, PAGE_CSS);
+  /** The page in the host's language: Persian puts the containers right to left and through the table, counts what
+   *  the table lacks (listed on screen) and, while an entry printed is unread, shows DQ10's line. */
+  const applyLang = (): void => {
+    const fa = hostLang() === 'fa';
+    langSwitch.set(fa ? 'fa' : 'en');
+    handoutH.textContent = HANDOUT_H;
+    foot.textContent = FOOT;
+    for (const x of [live1, live2, handoutSec, foot]) {
+      if (fa) x.setAttribute('lang', 'fa'), x.setAttribute('dir', 'rtl');
+      else x.removeAttribute('lang'), x.removeAttribute('dir');
+    }
+    if (!fa) {
+      draft.hidden = faMissing.hidden = true;
+      pageStyle.textContent = PAGE_CSS;
+      return;
+    }
+    const p = faPass();
+    for (const x of [live1, live2, handoutSec, foot]) translateTree(x, p);
+    pageStyle.textContent = pageCssFa(foot.textContent ?? FOOT, false, p);
+    const unread = unreviewed(p);
+    draft.hidden = !unread;
+    if (unread) {
+      pageStyle.textContent = pageCssFa(foot.textContent ?? FOOT, true, p);
+      // where the browser prints no @page boxes (WebKit), the line goes with each footer line and heads the handout
+      for (const f of [...live1.querySelectorAll('.db-runfoot'), ...live2.querySelectorAll('.db-runfoot'), foot]) f.append(h('span', { class: 'db-draftline', lang: 'en', dir: 'ltr' }, DRAFT_LINE));
+      handout.prepend(h('p', { class: 'db-draftline', lang: 'en', dir: 'ltr' }, DRAFT_LINE));
+    }
+    faMissing.hidden = p.missing.size === 0;
+    (faMissing.firstElementChild as HTMLElement).textContent = `${p.missing.size} ${p.missing.size === 1 ? 'string prints' : 'strings print'} in English: not in the Persian table yet`;
+    (faMissing.lastElementChild as HTMLElement).replaceChildren(...[...p.missing].map(([en, n]) => h('li', {}, `${n}× ${en}`)));
+  };
   const runBy = (): void => {
     const s = live1.querySelector('.db-runby');
     if (s) s.textContent = who.value;
@@ -436,6 +582,9 @@ export function debriefView(session: AppSession, link: Link): View {
     const course = h('div', { class: 'db-course' });
     course.innerHTML = courseSvg(d, ms, { trends: TRENDS4, marks: cm });
     course.style.setProperty('--db-print-w', `${printWidth(course.innerHTML)}%`);
+    const swim = h('div', { class: 'db-swim' });
+    const rec = recognitionAt(d)?.t; // the one reading of the recognition (D5): drawn ◇ on the Team lane
+    swim.innerHTML = swimlaneSvg(d, ms, windowsOf(d), rec === null || rec === undefined ? {} : { recognisedT: rec });
     live1.replaceChildren(...kids(
       band,
       tiles.length ? section('keytimes', 'Key times', h('div', { class: 'db-tiles' }, ...tiles)) : null,
@@ -448,7 +597,9 @@ export function debriefView(session: AppSession, link: Link): View {
             o.verdict.measure ? bar(o.verdict.measure) : null, h('div', { class: 'db-why' }, m.why));
         }))
         : h('p', { class: 'muted' }, 'This run has no objectives.')),
-      ...(ms.length ? [runFoot(), section('moments', 'Key moments and what the monitor showed', ...momentsTable(ms, d))] : []),
+      // page 2 (DQ5, option A), which a run with key moments has: the swimlane at its head, then the key moments
+      ...(ms.length ? [runFoot(), section('swimlane', 'The run, lane by lane', swimLegend(r3 !== null), swim), section('moments', 'Key moments and what the monitor showed', ...momentsTable(ms, d))] : []),
+      hintsSection(d, ms),
       section('facts', 'Measured facts', fs.length
         ? h('dl', { class: 'db-facts' }, ...fs.flatMap((x) => [h('dt', {}, x.label), h('dd', {}, x.value)]))
         : h('p', { class: 'muted' }, 'Nothing was measured yet.')),
@@ -457,10 +608,11 @@ export function debriefView(session: AppSession, link: Link): View {
       runFoot(),
       section('trends', 'Trends',
         legend('charts'),
-        h('div', { class: 'db-charts' }, ...TREND_KEYS.map((k) => chart(d, k, end, ms)))),
+        h('div', { class: 'db-charts' }, ...kids(...TREND_KEYS.flatMap((k) => (k === 'map' ? [chart(d, k, end, ms), pressuresChart(d, end, ms)] : [chart(d, k, end, ms)])))),
+        d.keeps?.includes('pressures') ? null : notRecorded('SBP, DBP and CVP')),
       section('drugs', 'Drugs and fluids', meds.length
         ? h('table', { class: 'db-table' }, h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Time'), h('th', { scope: 'col' }, 'Given'))),
-          h('tbody', {}, ...meds.map((r) => h('tr', r.undone ? { class: 'undone' } : {}, h('td', { class: 'num' }, mmss(r.t)), h('td', {}, r.text + undoneText(r))))))
+          h('tbody', {}, ...meds.map((r) => h('tr', r.undone ? { class: 'undone' } : {}, h('td', { class: 'num' }, mmss(r.t)), h('td', {}, r.text, undoneText(r))))))
         : h('p', { class: 'muted' }, 'No drugs or fluids were given.'),
         totals.length ? h('ul', { class: 'db-totals' }, ...totals.map((x) => h('li', {}, `${drugName(x.drugId)}: ${x.total} in ${x.n} ${x.n === 1 ? 'bolus' : 'boluses'}`))) : null),
       ...(r3 ? [
@@ -495,10 +647,11 @@ export function debriefView(session: AppSession, link: Link): View {
       ms.length ? h('section', { class: 'db-hsec' }, h('h3', {}, 'Key moments'), h('table', { class: 'db-table db-hmoments' },
         h('thead', {}, h('tr', {}, ...['n', 'Time', 'Who', 'What happened'].map((c) => h('th', { scope: 'col' }, c)))),
         h('tbody', {}, ...ms.map((m) => h('tr', { 'data-n': String(m.n) }, h('td', { class: 'num' }, String(m.n)), h('td', { class: 'num' }, mmss(m.t)), whoCell(m.who), h('td', {}, m.text)))))) : null,
-      h('section', { class: 'db-hsec' }, h('h3', {}, 'Questions to think about'), h('ol', { class: 'db-qs' }, ...HANDOUT.prompts.map((q) => h('li', {}, q, ...ruled(3))))),
+      handoutQuestions(d),
       takeHomeSection(d.doc?.takeHome),
       h('p', { class: 'db-next' }, HANDOUT.next),
     ));
+    applyLang();
   };
 
   // a saved debrief on screen: which one, and the way back to the live run (screen only)
@@ -545,19 +698,21 @@ export function debriefView(session: AppSession, link: Link): View {
           }, { once: true });
           printWithFont();
         }, 'ghost'),
-        h('span', { class: 'hint' }, 'Choose "Save as PDF" as the printer. The report reads the run so far; it refreshes while open. The JSON holds the record, not the "Run by" line or the notes.')),
+        h('span', { class: 'hint' }, 'Choose "Save as PDF" as the printer. The report reads the run so far; it refreshes while open. The JSON holds the record, not the "Run by" line or the notes.'),
+        langSwitch),
+      draft,
+      faMissing,
       viewingBar,
       live1,
       h('div', { class: 'field db-who' }, h('label', { for: 'db-who' }, 'Run by'), who),
       pearls,
       section('notes', 'Notes', notes),
       live2,
-      h('section', { class: 'db-sec', id: 'db-handout', 'aria-labelledby': 'db-handout-h' }, h('h2', { id: 'db-handout-h' }, 'Learner handout (printed separately)'), handout),
+      handoutSec,
       archiveSec,
-      h('footer', { class: 'db-foot db-runfoot' }, FOOT)));
+      foot));
   // WebKit (Safari) prints no @page margin boxes: there the footer lines before each page break stand in
   el.classList.toggle('db-nomargin', typeof (window as { CSSMarginRule?: unknown }).CSSMarginRule !== 'function');
-  const pageStyle = h('style', { id: 'db-page-style' }, PAGE_CSS);
 
   // the end of a run: a state with no way out (the toast once per state reached)
   let ended = '';

@@ -10,7 +10,7 @@ import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { pdfInfo, pdfText, squash } from './pdf-text.ts';
-import { openApp, scanEngineIds, startVite } from './app-support.ts';
+import { debriefLinkV2, openApp, pillV2, scanEngineIds, sheet, closeSheets, speedV2, startVite } from './app-support.ts';
 import { END_S, openMhV2, PATH, pressPath, to } from './mh-v2-path.ts';
 
 const out = resolve(import.meta.dirname, process.env.PME_SHOTS === '1' ? '../../../docs/gates/stage-13' : '../../../test-results/gate-shots/stage-13'); // FU-11 K1: evidence only on request
@@ -32,17 +32,20 @@ const simT = (page: Page) => page.evaluate(() => (window as unknown as W).__pmeA
 // assertion is the same; local WebKit and Chromium keep ×4.
 const loadedWebKit = (browserName: string) => !!process.env.CI && browserName === 'webkit';
 
-/** Pause, and wait for the host to have paused: the button reads "Resume" as soon as it is pressed, before the host answers. */
+/** Pause, and wait for the host to have paused: Instructor v2's clock pill reads PAUSED (the session bar's "Resume") as
+ *  soon as it is pressed, before the host answers. */
 async function pauseHost(page: Page): Promise<void> {
-  const bar = page.locator('.sessionbar');
-  await bar.getByRole('button', { name: 'Pause' }).click();
-  await expect(bar.getByRole('button', { name: 'Resume' })).toBeVisible({ timeout: 10_000 });
+  const pill = pillV2(page);
+  await expect(pill).toHaveAttribute('data-state', 'running');
+  await pill.click();
+  await expect(pill).toHaveAttribute('data-state', 'paused', { timeout: 10_000 });
   await expect.poll(() => page.evaluate(() => (window as unknown as W).__pmeApp.link.ctl.hostPaused), { timeout: 20_000, message: 'the host has paused' }).toBe(true);
 }
 
-/** The session bar's Debrief link, clicked: the route first (was the click served?), then the view's heading (was it drawn?). */
+/** Instructor v2's dock Debrief link (the session bar's), clicked: the route first (was the click served?), then the
+ *  view's heading (was it drawn?). */
 async function openDebrief(page: Page, busy: boolean): Promise<void> {
-  await page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }).click();
+  await debriefLinkV2(page).click();
   const timeout = busy ? 30_000 : 5_000; // the loaded CI WebKit page only
   await expect.poll(() => page.evaluate(() => location.hash), { timeout, message: 'the Debrief link was followed' }).toBe('#/debrief');
   await expect(page.locator('[data-view=debrief]').getByRole('heading', { level: 1, name: 'Debrief' }), 'the Debrief is drawn').toBeVisible({ timeout });
@@ -52,22 +55,23 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   const busy = loadedWebKit(browserName);
   const k = busy ? 2 : 1; // wall time per sim second, against ×4
   test.setTimeout(busy ? 300_000 : 180_000);
-  await openApp(page, base, '?scenario=showcase-anaphylaxis', { warmMs: 1500 });
-  await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: busy ? '×2' : '×4' }).click();
-  await page.click('[role=tab][data-tab=scenario]');
-  await page.locator('.sessionbar').getByRole('button', { name: 'Bookmark' }).click();
+  await openApp(page, base, '?scenario=showcase-anaphylaxis#/teach2', { warmMs: 1500 });
+  await speedV2(page, busy ? 2 : 4);
+  // Instructor v2 saves the moment with the dock's mark: today's bookmark command, under the mark's label and kind
+  await page.locator('.ip2-dock').getByRole('button', { name: 'Mark: good' }).click();
   await expect.poll(() => simT(page), { timeout: 40_000 * k }).toBeGreaterThan(70); // the reaction starts at 60 s
-  await page.getByRole('button', { name: 'Return here' }).first().click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Return' }).click();
+  await (await sheet(page, 'log')).getByRole('button', { name: 'Return here' }).first().click(); // the Log sheet's marks
+  await page.locator('dialog[open]').getByRole('button', { name: 'Return', exact: true }).click();
   await expect.poll(() => simT(page), { timeout: busy ? 15_000 : 5_000 }).toBeLessThan(20);
-  const give = page.getByRole('button', { name: 'Give epinephrine 100 µg' });
+  await closeSheets(page); // ACTION, today's Scenario tab
+  const give = page.locator('.ip2-action .ip2-rows:not(.ip2-finished-list) button.ip2-row', { has: page.locator('.ip2-row-title').getByText('Give epinephrine 100 µg', { exact: true }) });
   await expect(give).toBeHidden({ timeout: busy ? 15_000 : 5_000 }); // the panel repaints at ≤ 2 Hz: the first reaction's button goes first
   await expect(give).toBeVisible({ timeout: 40_000 * k }); // the reaction again, 60 s after the bookmark's state began
   const tGive = await simT(page);
   await give.click();
 
-  // the end of the run: the session bar's Debrief is marked and a toast says so
-  const open = page.locator('.sessionbar').getByRole('link', { name: 'Debrief' });
+  // the end of the run: the dock's Debrief (the session bar's) is marked and a toast says so
+  const open = debriefLinkV2(page);
   await expect(open).toHaveAttribute('data-ready', 'true', { timeout: 10_000 * k });
   await expect(page.locator('.toast', { hasText: 'the debrief is ready' })).toBeVisible();
   await expect.poll(() => simT(page), { timeout: 30_000 * k }).toBeGreaterThan(tGive + 24); // ≈ 24 s of sim after the epinephrine: its effect reaches the trends
@@ -79,9 +83,9 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   const rows = timeline.map((r) => r.replace(/\s+/g, ' ').trim());
   const has = (re: RegExp) => rows.filter((r) => re.test(r));
   expect(has(/^\d\d:\d\d Scenario Scenario loaded: Anaphylaxis under anaesthesia$/)).toHaveLength(1);
-  expect(has(/^\d\d:\d\d Bookmark Bookmark: Bookmark \d+ at \d\d:\d\d$/)).toHaveLength(1);
+  expect(has(/^\d\d:\d\d Bookmark Bookmark: Mark \d+ at \d\d:\d\d$/)).toHaveLength(1); // v2's mark: "Mark n at" for "Bookmark n at"
   expect(has(/^01:0\d Scenario Scenario state: Anaphylaxis — undone by return 1$/)).toHaveLength(1); // DV-3: the 60 s state may land in a later second on a slow runner
-  expect(has(/^\d\d:\d\d Return Returned to bookmark Bookmark \d+ at \d\d:\d\d$/)).toHaveLength(1);
+  expect(has(/^\d\d:\d\d Return Returned to bookmark Mark \d+ at \d\d:\d\d$/)).toHaveLength(1);
   expect(has(/^01:0\d Scenario Scenario state: Anaphylaxis$/)).toHaveLength(1); // the retry (DV-3)
   expect(has(/^\d\d:\d\d Scenario Epinephrine 100 µg IV$/)).toHaveLength(1);
   expect(has(/^\d\d:\d\d Scenario Scenario state: Epinephrine given$/)).toHaveLength(1);
@@ -98,7 +102,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   const objectives = await view.locator('#db-objectives li').evaluateAll((li) => li.map((x) => [x.getAttribute('data-status'), x.querySelector('.db-mark')?.textContent]));
   expect(objectives).toEqual([['not assessable', '– Not assessable'], ['met', '✓ Observed'], ['not met', '✗ Not observed']]); // E42–E44
   await expect(view.locator('#db-objectives li').nth(1)).toContainText(/Epinephrine \d+ s after the state "Anaphylaxis" \(01:0\d → 01:\d\d; within 2 min 00 s asked\)/);
-  await expect(view.locator('.db-chart svg')).toHaveCount(6);
+  await expect(view.locator('.db-chart svg')).toHaveCount(7); // the six trends and the Pressures panel (brief 63): this run keeps the pressures
   // IP8: the card's steps — the button pressed on the kept course is a taken step (the undone first course is not read)
   await expect(view.locator('#db-steps tbody tr[data-status=taken]')).toHaveText([/^Anaphylaxis · 01:0\d\s*1\s*Give epinephrine 100 µg\s*01:\d\d \(1\)\s*✓ taken$/]);
   // redesign B (B6 b): key times and key moments on this run
@@ -108,10 +112,10 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   // list's words
   const mark = view.locator('#db-course g.db-bm');
   await expect(mark).toHaveCount(1);
-  await expect(mark).toHaveAttribute('data-kind', 'bookmark');
+  await expect(mark).toHaveAttribute('data-kind', 'good'); // the dock's "Mark: good" (today's Bookmark had no kind)
   await expect(mark.locator('path')).toBeVisible();
   const listed = (await view.locator('#db-bookmarks li').first().innerText()).trim();
-  expect(listed).toMatch(/^1 · 00:0\d Bookmark: Bookmark \d+ at 00:0\d$/); // numbered as on the strip (the owner, 2 November)
+  expect(listed).toMatch(/^1 · 00:0\d Bookmark: Mark \d+ at 00:0\d · good$/); // the mark's kind follows its words // numbered as on the strip (the owner, 2 November)
   expect(await mark.locator('title').textContent()).toBe(listed);
   expect(Number(await mark.getAttribute('data-t'))).toBeLessThan(10);
   const minuteRows = await view.locator('#db-minutes tbody tr').allInnerTexts(); // Q1: one row per minute
@@ -149,7 +153,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
     const css = (s: string, p: string) => getComputedStyle(document.querySelector(s) as Element).getPropertyValue(p);
     return {
       topbar: vis('.topbar'), stage: vis('.stage'), bar: vis('.sessionbar'), tools: vis('.db-tools'), report: vis('.debrief'),
-      trends: css('#db-trends', 'break-before'), timeline: css('#db-timeline', 'break-before'), minutes: css('#db-minutes', 'break-before'), moments: css('#db-moments', 'break-before'),
+      trends: css('#db-trends', 'break-before'), timeline: css('#db-timeline', 'break-before'), minutes: css('#db-minutes', 'break-before'), swimlane: css('#db-swimlane', 'break-before'), moments: css('#db-moments', 'break-before'),
       chart: css('.db-chart', 'break-inside'), ink: css('.db-svg path', 'stroke'), body: css('body', 'overflow'),
       undone: css('#db-timeline tbody tr.undone td', 'text-decoration-line'),
       // the footer on every page: @page margin boxes where the browser has them (Chromium), else a line before each break
@@ -158,7 +162,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
     };
   });
   const boxes = browserName === 'chromium';
-  expect(layout).toEqual({ topbar: false, stage: false, bar: false, tools: false, report: true, trends: 'page', timeline: 'auto', minutes: 'page', moments: 'page', chart: 'avoid', ink: 'rgb(0, 0, 0)', body: 'visible', undone: 'line-through', marginBoxes: boxes, runFeet: boxes ? 0 : 4 });
+  expect(layout).toEqual({ topbar: false, stage: false, bar: false, tools: false, report: true, trends: 'page', timeline: 'auto', minutes: 'page', swimlane: 'page', moments: 'auto', chart: 'avoid', ink: 'rgb(0, 0, 0)', body: 'visible', undone: 'line-through', marginBoxes: boxes, runFeet: boxes ? 0 : 4 });
   expect(await page.evaluate(() => getComputedStyle(document.querySelector('#db-course g.db-bm') as Element).display), 'the mark prints').not.toBe('none');
   expect(await page.evaluate(() => document.querySelector('#db-course g.db-bm .db-bm-n')?.textContent), 'its number inside').toBe('1');
   mkdirSync(out, { recursive: true });
@@ -197,18 +201,18 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
 // has drawn nothing of is not a run whose notes are dropped; a scenario loaded later still starts the notes empty.
 test('FX-20: notes typed right after opening the app on the Debrief are kept; a new scenario still empties them', async ({ page }) => {
   test.setTimeout(90_000);
-  await openApp(page, base, '#/debrief');
+  await openApp(page, base, '#/debrief'); // a Load opens Instructor v2
   const notes = page.locator('[data-view=debrief] .db-notes');
   await notes.click({ timeout: 2_000 });
   await page.keyboard.type('kept');
   await page.waitForTimeout(7_000); // past the next 5 s refresh
   await expect(notes).toHaveText('kept');
 
-  await page.evaluate(() => (location.hash = '#/teach')); // the Monitor with the instructor panel
-  await page.click('[role=tab][data-tab=scenario]');
-  const library = page.getByRole('region', { name: 'Scenario library' });
-  await library.getByRole('article', { name: 'Anaphylaxis under anaesthesia' }).getByRole('button', { name: 'Load' }).click();
-  await expect(page.getByRole('region', { name: 'Running scenario' })).toBeVisible({ timeout: 10_000 }); // none was running: no confirmation
+  // Instructor v2 has no in-panel library: the Scenarios library's Load, which opens the Instructor view
+  await page.evaluate(() => (location.hash = '#/scenarios/library'));
+  await page.locator('[data-view=scenarios]').getByRole('button', { name: 'Load Anaphylaxis under anaesthesia', exact: true }).click();
+  await expect(page).toHaveURL(/#\/teach2$/);
+  await expect(page.locator('.ip2-head .ip2-title')).toHaveText('Anaphylaxis under anaesthesia', { timeout: 10_000 }); // none was running: no confirmation
   await page.waitForTimeout(6_000);
   await page.evaluate(() => (location.hash = '#/debrief'));
   await expect(notes).toBeVisible();
@@ -230,9 +234,8 @@ test('FX-20: notes typed right after opening the app on the Debrief are kept; a 
 test('a free run prints in at most four pages; its export is pme-debrief/2', { tag: '@known-flaky' }, async ({ page, browserName }) => {
   const busy = loadedWebKit(browserName);
   test.setTimeout(busy ? 240_000 : 120_000);
-  await openApp(page, base, '#/teach', { warmMs: 1500 }); // the Monitor with the session bar, no scenario
-  const bar = page.locator('.sessionbar');
-  await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: busy ? '×2' : '×4' }).click();
+  await openApp(page, base, '#/teach2', { warmMs: 1500 }); // Instructor v2, no scenario
+  await speedV2(page, busy ? 2 : 4);
   await expect.poll(() => simT(page), { timeout: busy ? 150_000 : 75_000 }).toBeGreaterThanOrEqual(180); // 3 sim-min
   await pauseHost(page);
   await openDebrief(page, busy);
@@ -241,6 +244,7 @@ test('a free run prints in at most four pages; its export is pme-debrief/2', { t
   await expect(view.locator('#db-pearls .db-pearl')).toHaveCount(4);
   await expect(view.locator('#db-moments')).toHaveCount(0); // B6 (d): no key moment, no page break for them
   await expect(view.locator('#db-steps')).toHaveCount(0); // IP8: no card, no steps section
+  await expect(view.locator('#db-trends figure[data-trend=pressures] path[data-p]'), 'brief 63: the Pressures panel, SBP, DBP and CVP').toHaveCount(3);
   const [dl] = await Promise.all([page.waitForEvent('download'), view.getByRole('button', { name: 'Download the record (JSON)' }).click()]);
   const json = readFileSync(await dl.path(), 'utf8');
   const j = JSON.parse(json) as { schema: string; keyTimes: unknown[]; keyMoments: unknown[] };
@@ -290,15 +294,16 @@ function withSteps(rows: StateRow[], card: Card): void {
 }
 /** The view with a recorded run in place of the live one (its scenario's objectives as the card holds them now): the
  *  simulation paused first, so nothing is added to it; the Debrief opened by its route, not the session-bar link. */
-async function showRecorded(page: Page, run = A31, card = TAMPONADE): Promise<void> {
+async function showRecorded(page: Page, run = A31, card = TAMPONADE, debriefHints?: unknown): Promise<void> {
   const rec = JSON.parse(readFileSync(run, 'utf8')).record;
   const doc = JSON.parse(readFileSync(card, 'utf8'));
   withSteps(rec.rows, doc);
   rec.doc.objectives = doc.objectives;
   rec.doc.takeHome = doc.takeHome; // rc.3: the owner's take-home lines (the recordings predate them)
+  if (debriefHints !== undefined) rec.doc.debriefHints = debriefHints; // a TEST copy of the card (D16): no card carries them yet
   await page.setViewportSize({ width: Math.round(182 * MM), height: 1000 }); // the A4 content width (182 mm)
-  await openApp(page, base, '#/teach', { warmMs: 1000 });
-  await page.locator('.sessionbar').getByRole('button', { name: 'Pause' }).click();
+  await openApp(page, base, '#/teach2', { warmMs: 1000 });
+  await pillV2(page).click(); // Instructor v2's clock pill pauses
   await page.waitForTimeout(500);
   await page.evaluate((r) => ((window as unknown as { __pmeApp: { session: { record: { data: unknown } } } }).__pmeApp.session.record.data = r), rec);
   await page.evaluate(() => (location.hash = '#/debrief'));
@@ -324,6 +329,23 @@ const printHeights = (page: Page) => page.evaluate((mm) => {
   const end = document.querySelector('#db-objectives') ? '#db-objectives' : '#db-course';
   return { page1: (r(end).bottom - r('#db-live-1 > .db-band').top) / mm, handout: r('#db-handout').height / mm, printFont, stripPt };
 }, MM);
+
+/** D7b: the swimlane heads page 2, before the key moments, whole on its page; its printed height (mm) at the 182 mm
+ *  content width, and its window rows' labels and verdict words. Read in print media. */
+const swimPrint = (page: Page) => page.evaluate((mm) => {
+  const sec = document.querySelector('#db-swimlane') as HTMLElement;
+  const cs = getComputedStyle(sec);
+  return {
+    next: sec.nextElementSibling?.id ?? '', prev: (sec.previousElementSibling as HTMLElement | null)?.className ?? '',
+    breakBefore: cs.breakBefore, breakInside: cs.breakInside,
+    momentsBreak: getComputedStyle(document.querySelector('#db-moments') as Element).breakBefore,
+    heightMm: (sec.querySelector('svg') as SVGSVGElement).getBoundingClientRect().height / mm,
+    widthMm: (sec.querySelector('svg') as SVGSVGElement).getBoundingClientRect().width / mm,
+  };
+}, MM);
+const swimRows = (page: Page) => page.locator('#db-swimlane .db-swim-win').evaluateAll((gs) => gs.map((g) => ({
+  label: g.querySelector('title')?.textContent ?? '', words: [...g.querySelectorAll('.db-swim-tick .db-swim-v, .db-swim-missed .db-swim-v')].map((t) => t.textContent),
+})));
 
 test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, the learner handout', async ({ page, browserName }) => {
   test.setTimeout(90_000);
@@ -352,6 +374,12 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   await expect(view.locator('#db-moments .db-note60')).toHaveCount(1);
   await expect(view.locator('#db-moments .db-note60')).toHaveText('SpO₂ as the monitor showed it: – while pulseless without compressions (no pulsatile signal); a number during CPR reflects compression-generated flow and is unreliable.'); // the owner's ruling E126, 2026-10-26 (was E60, 2026-10-19)
   await expect(view.locator('#db-moments tr.db-alarms').first()).toHaveText(/Alarms since the last row: CVP high, SpO₂: low perfusion, ART S low/);
+
+  // D7b: page 2 opens with the swimlane — one window row per timed objective, each tick with its verdict words
+  await expect(view.locator('#db-swimlane h2')).toHaveText('The run, lane by lane');
+  await expect(view.locator('#db-swimlane .db-legend')).toContainText('▭ expected window, │ the act, with its verdict');
+  expect(await swimRows(page)).toEqual([{ label: 'Objective 2', words: ['✓ Observed'] }, { label: 'Objective 3', words: ['✓ Observed'] }, { label: 'Objective 4', words: ['✓ Observed'] }]);
+  await expect(view.locator('#db-swimlane svg')).toHaveAttribute('aria-label', /expected windows: Objective 2, 07:48 to 07:58: 07:51 ✓ Observed; Objective 3/);
 
   // (g) typing in Run by and Notes across a 5 s refresh: the text and the caret stay
   const who = view.locator('#db-who');
@@ -388,6 +416,10 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   const report = await printHeights(page);
   expect(report.printFont, 'the bundled print font is loaded').toBe(true);
   expect(report.page1, 'page 1 (mm)').toBeLessThanOrEqual(267);
+  const sw = await swimPrint(page);
+  expect(sw).toMatchObject({ next: 'db-moments', breakBefore: 'page', breakInside: 'avoid', momentsBreak: 'auto' });
+  expect(sw.heightMm, 'the swimlane (mm)').toBeLessThanOrEqual(90);
+  test.info().annotations.push({ type: 'A3.1 swimlane (mm)', description: `${sw.heightMm.toFixed(1)} high at ${sw.widthMm.toFixed(1)} wide` });
   await expect(view.locator('#db-handout')).toBeHidden(); // never with the report
   const foot = (await view.locator('.db-foot').textContent()) ?? '';
   let reportPdf: Buffer | null = null;
@@ -446,6 +478,7 @@ test('Debrief B on the MH card: page 1 and the handout within one A4 page', asyn
   const view = page.locator('[data-view=debrief]');
   await expect(view.locator('#db-objectives li')).toHaveCount(6);
   await expect(view.locator('#db-keytimes [data-key=recognition]')).toBeVisible(); // the MH recognition objective (E52)
+  expect((await swimRows(page)).map((r) => r.label)).toEqual(['Objective 2', 'Objective 3']); // the two eventWithin objectives whose anchor came
   expect(await view.locator('#db-steps tbody tr').count(), 'IP8: the steps section is in the report').toBeGreaterThan(0);
   await page.emulateMedia({ media: 'print' });
   await printFontLoaded(page);
@@ -489,6 +522,61 @@ test('Debrief B on the haemorrhage card: the learner handout within one A4 page'
     expect(pdfInfo(pdf).boxes).toHaveLength(1);
   }
 });
+
+// D16 (Decision 14): two card questions on the learner handout in place of fixed prompts 1–2 — each with its anchor's
+// mm:ss and three ruled lines, then fixed prompt 3 — on a TEST copy of the tamponade, MH and haemorrhage cards (no card
+// carries questions until the owner has reviewed them), each on its recorded run: the handout's visible text has no
+// verdict word and no objective text (the A/B DOM check, (e)), and it stays within one A4 page (≤ 267 mm at the 182 mm
+// content width), both engines; Chromium prints it on one page. The fit holds because a card question, label and all,
+// prints on one line as the fixed prompt it replaces does (measured: 18.3 mm an item with its ruled lines; a question
+// that wraps to two lines adds 4.7 mm, and the MH handout without questions is 266.9 mm): each question's item is
+// asserted no taller than a fixed prompt's. The test strings are as long as the longer drafts (about 90 characters).
+const Q_TEXT = [
+  'Test question one: what did you see on the monitor here, and what did you make of it?',
+  'Test question two: from this moment, what did the team do first, and who decided it?',
+] as const;
+const QS = (a: string, b: string) => ({ handoutQuestions: [{ at: a, text: Q_TEXT[0] }, { at: b, text: Q_TEXT[1] }] });
+for (const [name, run, card, hints] of [
+  ['tamponade', A31, TAMPONADE, QS('state:deteriorating', 'rosc')],
+  ['MH', MH_RUN, MH, QS('state:earlySigns', 'state:normoventilated')],
+  ['haemorrhage', HAEM_RUN, HAEM, QS('pulseLoss', 'rosc')],
+] as const) {
+  test(`D16 on the ${name} card: two card questions on the learner handout, within one A4 page`, async ({ page, browserName }) => {
+    test.setTimeout(90_000);
+    await showRecorded(page, run, card, hints);
+    const view = page.locator('[data-view=debrief]');
+    const qs = view.locator('#db-handout ol.db-qs > li');
+    await expect(qs).toHaveCount(3);
+    await expect(qs.nth(0).locator('.db-q-text')).toHaveText(Q_TEXT[0]);
+    await expect(qs.nth(1).locator('.db-q-text')).toHaveText(Q_TEXT[1]);
+    for (const i of [0, 1]) await expect(qs.nth(i).locator('.db-q-at')).toHaveText(/^\d\d:\d\d$/);
+    await expect(qs.nth(2)).toHaveText('One thing you will keep doing, and one thing you will do differently.');
+    for (const i of [0, 1, 2]) await expect(qs.nth(i).locator('.db-ruled')).toHaveCount(3);
+    await page.emulateMedia({ media: 'print' });
+    await printFontLoaded(page);
+    await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
+    const text = await page.evaluate(() => (document.querySelector('.debrief') as HTMLElement).innerText);
+    expect(text).toContain('Questions to think about');
+    for (const q of Q_TEXT) expect(text).toContain(q);
+    expect(text).not.toMatch(VERDICT);
+    for (const o of JSON.parse(readFileSync(card, 'utf8')).objectives as Array<string | { text: string }>) expect(text).not.toContain(typeof o === 'string' ? o : o.text);
+    // the label prints in the bundled print font like the rest of the handout (a system-ui label made the line taller
+    // on Linux WebKit: MH 267.1 mm, CI run 42233122004)
+    expect(await page.evaluate(() => getComputedStyle(document.querySelector('#db-handout .db-q-at') as Element).fontFamily)).toMatch(/^["']?Inter Print/);
+    const items = await page.evaluate((mm) => [...document.querySelectorAll('#db-handout ol.db-qs > li')].map((li) => li.getBoundingClientRect().height / mm), MM);
+    console.log(`D16 ${name} ${browserName}: items ${items.map((x) => x.toFixed(2)).join(' / ')} mm`);
+    for (const i of [0, 1]) expect(items[i] as number, `card question ${i + 1}: one line, as tall as the fixed prompt (mm)`).toBeLessThanOrEqual((items[2] as number) + 0.5);
+    const { handout } = await printHeights(page);
+    test.info().annotations.push({ type: `D16 ${name} handout (mm)`, description: handout.toFixed(1) });
+    expect(handout, 'handout (mm)').toBeLessThanOrEqual(267);
+    if (browserName === 'chromium') {
+      const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+      mkdirSync(out, { recursive: true });
+      writeFileSync(`${out}/debrief-d16-${name.toLowerCase()}-handout.pdf`, pdf);
+      expect(pdfInfo(pdf).boxes).toHaveLength(1);
+    }
+  });
+}
 
 // Plan F11 (F7's acceptance on a live /2 run): the MH card in pme-scenario/2 driven on the demo path from Instructor v2
 // to the talk's end, paused, then the Debrief: its JSON export is pme-debrief/3 (phases, graded actions, outcomes,
@@ -541,6 +629,14 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
   writeFileSync(`${results}/debrief-mh-v2-${browserName}.json`, JSON.stringify(j, null, 1));
   test.info().annotations.push({ type: 'MH /2 grades', description: j.actions.map((a) => `${a.id}:${a.grade}`).join(' ') });
 
+  // D7b: one window row per graded action with a window opened (report3's dueT), each act's grade words beside its tick
+  const timed = (j.actions as unknown as Array<{ label: string; dueT: number | null; givenT: number | null; firstGrade: string }>).filter((a) => a.dueT !== null);
+  const rows = await swimRows(page);
+  test.info().annotations.push({ type: 'MH /2 windows', description: `${rows.length}: ${rows.map((r) => `${r.label} ${r.words.join(' ')}`).join('; ')}` });
+  expect(rows.map((r) => r.label)).toEqual(timed.map((a) => a.label));
+  const GRADE: Record<string, string> = { met: '✓ met', deviation: '◆ deviation', overdue: '! overdue', failed: '✗ failed', due: '… due', 'not applicable': '– not applicable' };
+  timed.forEach((a, i) => expect(rows[i]?.words[0], a.label).toBe(GRADE[a.firstGrade]));
+
   await page.emulateMedia({ media: 'print' });
   await printFontLoaded(page);
   const { page1, printFont } = await printHeights(page);
@@ -562,6 +658,10 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
   expect(p2.whoLines, 'no Who cell wraps').toBe(1);
   expect(p2.table, 'the key-moments table within the content width (mm)').toBeLessThanOrEqual(p2.section + 0.5);
   expect(p2.bp.some((x) => /^\d+\/\d+/.test(x)), 'an SBP/DBP printed on this run (arterial, or the cuff with its age)').toBe(true);
+  const sw = await swimPrint(page);
+  test.info().annotations.push({ type: 'MH /2 swimlane (mm)', description: `${sw.heightMm.toFixed(1)} high at ${sw.widthMm.toFixed(1)} wide, ${rows.length} windows` });
+  expect(sw).toMatchObject({ next: 'db-moments', breakBefore: 'page', breakInside: 'avoid', momentsBreak: 'auto' });
+  if (rows.length <= 6) expect(sw.heightMm, 'the swimlane (mm)').toBeLessThanOrEqual(90);
   await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
   const { handout } = await printHeights(page);
   test.info().annotations.push({ type: 'MH /2 heights (mm)', description: `page 1 ${page1.toFixed(1)}, handout ${handout.toFixed(1)}` });
@@ -573,6 +673,10 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
     mkdirSync(out, { recursive: true });
     writeFileSync(`${out}/debrief-mh-v2-handout.pdf`, pdf);
     expect(pdfInfo(pdf).boxes).toHaveLength(1);
+    await page.evaluate(() => document.querySelector('.debrief')?.removeAttribute('data-print'));
+    const report = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    writeFileSync(`${out}/debrief-mh-v2.pdf`, report);
+    test.info().annotations.push({ type: 'MH /2 pages', description: String(pdfInfo(report).boxes.length) });
   }
 });
 
@@ -581,11 +685,10 @@ test('a /2 MH run: the Debrief exports pme-debrief/3, page 1 and the handout wit
 test('D5: Recognised pressed on a free run at ≈ 30 s: the Debrief shows the tile and the key moment at the recorded time', async ({ page, browserName }) => {
   const busy = loadedWebKit(browserName);
   test.setTimeout(busy ? 180_000 : 90_000);
-  await openApp(page, base, '#/teach', { warmMs: 1500 });
-  const bar = page.locator('.sessionbar');
-  await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: busy ? '×2' : '×4' }).click();
+  await openApp(page, base, '#/teach2', { warmMs: 1500 });
+  await speedV2(page, busy ? 2 : 4);
   await expect.poll(() => simT(page), { timeout: busy ? 60_000 : 30_000 }).toBeGreaterThanOrEqual(30);
-  const button = bar.getByRole('button', { name: 'Recognised', exact: true });
+  const button = page.locator('.ip2-dock').getByRole('button', { name: 'Recognised', exact: true }); // the dock's copy
   await expect(button).not.toHaveAttribute('aria-keyshortcuts');
   await button.click();
   type R = { __pmeApp: { session: { record: { data: { rows: Array<{ t: number; ev?: string }> } } } } };
@@ -605,4 +708,104 @@ test('D5: Recognised pressed on a free run at ≈ 30 s: the Debrief shows the ti
   await expect(row).toHaveCount(1);
   await expect(row.locator('td').nth(1)).toHaveText(mmss);
   await expect(row.locator('td').nth(3)).toHaveText('Recognised (instructor)');
+});
+
+// D9 on the MH card's recorded run: "From the card's author" on page 2 after the key moments, whole on its page, the
+// card's strings printed as written; page 2 measured in print media at the 182 mm content width without and with the
+// block (the swimlane's top to the end of the measured facts), and the learner handout unchanged. Test strings of the
+// drafts' length (four lines, four openers), not card text: no card carries debriefHints until the owner has accepted
+// its lines (D10).
+test('D9: the card author\'s hints on page 2 of the MH run, whole, the handout unchanged', async ({ page, browserName }) => {
+  test.setTimeout(90_000);
+  await showRecorded(page, MH_RUN, MH);
+  const view = page.locator('[data-view=debrief]');
+  await expect(view.locator('#db-hints')).toHaveCount(0);
+  await page.emulateMedia({ media: 'print' });
+  await printFontLoaded(page);
+  const page2 = () => page.evaluate((mm) => {
+    const r = (s: string) => (document.querySelector(s) as Element).getBoundingClientRect();
+    const hints = document.querySelector('#db-hints');
+    return { page2: (r('#db-facts').bottom - r('#db-swimlane').top) / mm, hints: hints ? hints.getBoundingClientRect().height / mm : 0,
+      breakInside: hints ? getComputedStyle(hints).breakInside : '', labelFont: [...document.querySelectorAll('#db-hints .db-hint-at')].map((x) => getComputedStyle(x).fontFamily), prev: hints?.previousElementSibling?.id ?? '', handout: (document.querySelector('#db-handout') as HTMLElement).innerHTML };
+  }, MM);
+  const before = await page2();
+  const pagesBefore = browserName === 'chromium' ? pdfInfo(await page.pdf({ preferCSSPageSize: true, printBackground: false })).boxes.length : 0;
+  const show = [
+    'Line one of four, about as long as a drafted line: a sign on the monitor and what it should make the team think of early.',
+    'Line two: the first steps of the crisis in the order the card asks for them, with the window the record reads them against.',
+    'Line three: what to keep doing until the value stays down, and what to do again if it climbs back at normal ventilation.',
+    'Line four: the laboratory value to treat and the window the card gives for it, as the objective states them.',
+  ];
+  const openers = [
+    { at: 'drug:succinylcholine', text: 'Opener one: what did that sign mean to you, and what did you plan?' },
+    { at: 'state:earlySigns', text: 'Opener two: when did you first notice it, and what did you think it was?' },
+    { at: 'state:triggerOff', text: 'Opener three: who did what in the first minute?' },
+    { at: 'state:arrest', text: 'Opener four: an anchor this run never reaches.' },
+  ];
+  await page.evaluate((h) => {
+    const app = (window as unknown as { __pmeApp: { session: { record: { data: { doc: Record<string, unknown> } } } } }).__pmeApp;
+    app.session.record.data = { ...app.session.record.data, doc: { ...app.session.record.data.doc, debriefHints: h } };
+    location.hash = '#/teach';
+  }, { show, openers });
+  await page.waitForTimeout(300);
+  await page.evaluate(() => (location.hash = '#/debrief'));
+  await expect(view.locator('#db-hints')).toBeVisible();
+  await expect(view.locator('#db-hints .db-hint-show li')).toHaveText(show);
+  await expect(view.locator('#db-hints .db-hint-text')).toHaveText(openers.slice(0, 3).map((o) => o.text));
+  await expect(view.locator('#db-hints .db-hint-left')).toHaveText('1 opener not shown: its event did not happen in this run');
+  const after = await page2();
+  test.info().annotations.push({ type: 'D9 MH page 2 (mm)', description: `without hints ${before.page2.toFixed(1)}, with ${after.page2.toFixed(1)} (the block ${after.hints.toFixed(1)})` });
+  expect(after.prev, 'after the key moments').toBe('db-moments');
+  expect(after.breakInside, 'whole on its page').toBe('avoid');
+  // the opener's time label stays in the bundled print font (the app-wide .num class would set system-ui, taller on Linux)
+  expect(after.labelFont, "the labels' print font").toHaveLength(3);
+  for (const f of after.labelFont) expect(f.split(',')[0]?.replace(/["']/g, '').trim(), "a label's print font").toBe('Inter Print');
+  expect(after.handout, 'the learner handout unchanged').toBe(before.handout);
+  if (browserName === 'chromium') {
+    const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    mkdirSync(out, { recursive: true });
+    writeFileSync(`${out}/debrief-d9-mh-hints.pdf`, pdf);
+    test.info().annotations.push({ type: 'D9 MH pages', description: `without hints ${pagesBefore}, with ${pdfInfo(pdf).boxes.length}` });
+  }
+});
+
+// D13: the Debrief in Persian on the A3.1 tamponade path, both engines: the switch puts page 1, page 2 and the handout
+// right to left in the bundled Vazirmatn; page 1 and the handout each within one A4 page in print; DQ10's line stands
+// while the entries printed are unread; Chromium prints the handout on one page with the line on it.
+test('D13: the A3.1 tamponade Debrief in Persian: page 1 and the handout within one A4 page, in Vazirmatn', async ({ page, browserName }) => {
+  test.setTimeout(90_000);
+  await showRecorded(page);
+  const view = page.locator('[data-view=debrief]');
+  await view.getByRole('button', { name: 'فارسی' }).click();
+  for (const id of ['#db-live-1', '#db-live-2', '#db-handout']) {
+    await expect(view.locator(id)).toHaveAttribute('lang', 'fa');
+    await expect(view.locator(id)).toHaveAttribute('dir', 'rtl');
+  }
+  await expect(view.locator('.db-draft')).toHaveText('Persian draft: not yet read by the clinical owner');
+  await expect(view.locator('#db-moments tbody tr[data-n]').first()).toBeVisible();
+  await page.emulateMedia({ media: 'print' });
+  await printFontLoaded(page);
+  await expect.poll(() => page.evaluate(() => [...document.fonts].some((f) => f.family.replace(/["']/g, '') === 'Vazirmatn' && f.status === 'loaded')),
+    { timeout: 10_000, message: 'the view has loaded the bundled Vazirmatn' }).toBe(true);
+  const family = await page.evaluate(() => getComputedStyle(document.querySelector('#db-live-1 h2') as Element).fontFamily);
+  expect(family).toMatch(/^"?Vazirmatn/);
+  const { page1 } = await printHeights(page);
+  await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
+  const { handout } = await printHeights(page);
+  test.info().annotations.push({ type: 'A3.1 Persian heights (mm)', description: `page 1 ${page1.toFixed(1)}, handout ${handout.toFixed(1)}` });
+  expect(page1, 'page 1 in Persian (mm)').toBeLessThanOrEqual(267);
+  expect(handout, 'handout in Persian (mm)').toBeLessThanOrEqual(267);
+  if (browserName === 'chromium') {
+    mkdirSync(out, { recursive: true });
+    const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    writeFileSync(`${out}/debrief-fa-a31-handout.pdf`, pdf);
+    expect(pdfInfo(pdf).boxes, 'the Persian handout prints on one page').toHaveLength(1);
+    await page.evaluate(() => document.querySelector('.debrief')?.removeAttribute('data-print'));
+    const report = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    writeFileSync(`${out}/debrief-fa-a31.pdf`, report);
+    test.info().annotations.push({ type: 'A3.1 Persian pages', description: String(pdfInfo(report).boxes.length) });
+  }
+  await page.emulateMedia({ media: 'screen' });
+  await view.getByRole('button', { name: 'English' }).click();
+  await expect(view.locator('#db-live-1')).not.toHaveAttribute('lang', 'fa');
 });

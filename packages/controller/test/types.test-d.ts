@@ -33,6 +33,10 @@ const frames: RelayFrame[] = [
   { relay: 'error', code: 'too-many-tries', message: 'wait a minute' },
 ];
 void frames;
+t.send({ ...header, kind: 'command', body: { id: 'c2', issuedBy: 'remote', type: 'note', kind: 'marker', text: 'Recognised (instructor)', ev: 'recognised' } });
+// @ts-expect-error — a note's event is one of NOTE_EVENTS.
+const otherEv: WireCommand = { id: 'c', issuedBy: 'remote', type: 'note', kind: 'marker', text: 'x', ev: 'cprStop' };
+void otherEv;
 // @ts-expect-error — a note is a note or a marker, never a stage mark.
 const stageNote: WireCommand = { id: 'c', issuedBy: 'remote', type: 'note', kind: 'stage', text: 'x' };
 void stageNote;

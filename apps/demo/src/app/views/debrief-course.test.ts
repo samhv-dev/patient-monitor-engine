@@ -58,6 +58,21 @@ describe('courseSvg on A3.1', () => {
     expect(svg).toContain('2 at 07:48, patient, Pulse lost (the model) · PEA');
   });
 
+  // research/41 row 53: a cuff MAP sits only in its cycle's second, null between cycles. Each cycle's reading is drawn
+  // on its own (a lone point is a dot, not an empty move); the seconds between are a gap, never a line to zero
+  it('a cuff MAP (one second per cycle, null between) is a dot per cycle, never joined and never drawn at zero', () => {
+    const blank = { hr: 80, map: null, spo2: 97, etco2: null, rr: null, temp: null, k: null, lactate: null, ph: null, glucose: null, tcore: null };
+    const samples = Array.from({ length: 200 }, (_, t) => ({ t, ...blank, map: t === 40 ? 73 : t === 100 ? 76 : t === 160 ? 70 : null }));
+    const e: RunData = { ...emptyRun('x', 70, 0), samples };
+    for (const learner of [false, true]) {
+      const s = courseSvg(e, [], { trends: [...TRENDS], learner });
+      const p = new RegExp('data-trend="map"[^]*?<path d="([^"]*)"').exec(s)?.[1] ?? '';
+      expect(p.match(/M/g)?.length).toBe(3); // three readings, three subpaths: none joined to another
+      expect(p).not.toMatch(/L/);
+      expect(p.match(/a/g)?.length).toBe(6); // each a visible dot (two arcs), not a bare move that draws nothing
+    }
+  });
+
   it('a trend never measured is left out; no moments, no badges', () => {
     const e: RunData = { ...emptyRun('x', 70, 0), samples: Array.from({ length: 60 }, (_, t) => ({ t, hr: 80, map: null, spo2: 97, etco2: null, rr: null, temp: null, k: null, lactate: null, ph: null, glucose: null, tcore: null })) };
     const s = courseSvg(e, [], { trends: [...TRENDS], learner: true });

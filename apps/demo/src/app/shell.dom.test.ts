@@ -25,16 +25,16 @@ describe('skin alarm mirror', () => {
 });
 
 describe('Instructor v2 (E127): its own session bar', () => {
-  it('the shell\'s session bar is hidden on #/teach2 and shown again on #/teach; the stage stays on both', () => {
+  it('the shell\'s session bar is hidden on #/teach2 (its own header) and the stage stays; the monitor shows both', () => {
     document.body.replaceChildren();
     const shell = new Shell(document.body, { hostless: false });
-    for (const id of ['home', 'teach', 'teach2'] as const) shell.add({ id, el: document.createElement('section') });
+    for (const id of ['home', 'monitor', 'teach2'] as const) shell.add({ id, el: document.createElement('section') });
     expect(OWN_BAR_ROUTES).toEqual(new Set(['teach2']));
     shell.show({ id: 'teach2', sub: '' });
     expect(shell.bar.hidden).toBe(true);
     expect(shell.stage.hidden).toBe(false);
-    expect(document.title).toBe('Instructor v2: patient monitor simulator');
-    shell.show({ id: 'teach', sub: '' });
+    expect(document.title).toBe('Instructor: patient monitor simulator');
+    shell.show({ id: 'monitor', sub: '' });
     expect(shell.bar.hidden).toBe(false);
     expect(shell.stage.hidden).toBe(false);
     shell.show({ id: 'teach2', sub: '' });
@@ -42,10 +42,8 @@ describe('Instructor v2 (E127): its own session bar', () => {
     expect(shell.bar.hidden).toBe(true);
     expect(shell.stage.hidden).toBe(true);
   });
-  it('the rail lists one "Instructor" (the view chosen in Settings, owner 30 October); #/teach2 keeps its title', () => {
-    const ids = RAIL.map((e) => e[0]);
-    expect(RAIL.filter((e) => e.length === 2 && e[1].startsWith('Instructor'))).toEqual([['teach', 'Instructor']]);
-    expect(ids).not.toContain('teach2');
-    expect(NAV).toContainEqual(['teach2', 'Instructor v2']);
+  it('the rail lists one "Instructor", #/teach2 (retire-instructor-v1); the document title says "Instructor"', () => {
+    expect(RAIL.filter((e) => e.length === 2 && e[1].startsWith('Instructor'))).toEqual([['teach2', 'Instructor']]);
+    expect(NAV.filter(([, n]) => n.startsWith('Instructor'))).toEqual([['teach2', 'Instructor']]);
   });
 });

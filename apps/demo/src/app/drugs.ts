@@ -3,6 +3,7 @@
 // below are DRAFTS from the drug library's ranges, for Ali's review as one table.
 import { DRUGS, type DoseUnit, type RateUnit } from '@pme/engine-core';
 import { drugName } from './glossary.ts';
+import type { Link } from './link.ts';
 
 export interface DrugPreset {
   bolus?: Array<[number, DoseUnit]>;
@@ -107,4 +108,16 @@ export function perKg(value: number, unit: string, weightKg: number): string {
   const abs = value * weightKg;
   const digits = abs < 10 ? 1 : 0;
   return `${value} ${unitText(unit)} = ${abs.toFixed(digits)} ${unitText(unit.replace('/kg', ''))} for ${weightKg} kg`;
+}
+
+/**
+ * A drug's lock as its rows read it (the owner's ruling of 5 November 2026: a bolus is locked for SAME_DRUG_LOCK_S of
+ * sim time on every device, the host refusing a second one): "given 0:04 ago · 6 s left", or null when not locked.
+ * The table is the host's applied commands as this device received them (ControllerSession.gives).
+ */
+export function lockLabel(link: Link, drugId: string): string | null {
+  const l = link.ctl.gives?.lock(drugId, link.simT); // `?.`: a DOM test's stand-in Link may have no table
+  if (!l) return null;
+  const ago = Math.floor(l.agoS); // floor and ceil: the two always add to 10 s as the countdown runs
+  return `given ${Math.floor(ago / 60)}:${String(ago % 60).padStart(2, '0')} ago · ${Math.ceil(l.leftS)} s left`;
 }
