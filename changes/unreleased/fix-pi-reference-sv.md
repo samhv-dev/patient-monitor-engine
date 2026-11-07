@@ -2,8 +2,8 @@
 
 - **The pleth pulse is measured against the patient's own resting stroke volume.** The pulse height is PI × SVᵢ/SV₀.
   SV₀ is now the stroke volume the running engine settles this patient at, at rest: breathing spontaneously, not
-  ventilated, in sinus rhythm, once the MANUAL trackers (or MODELED's reflexes) have settled. The engine measures it the
-  first time it steps; nothing is typed in. Before, SV₀ came from the stand-alone stabiliser: 79.1 mL for the default adult,
+  ventilated, in sinus rhythm, once the MANUAL trackers (or MODELED's reflexes) have settled. The engine measures it once
+  per patient when it is created; nothing is typed in. Before, SV₀ came from the stand-alone stabiliser: 79.1 mL for the default adult,
   against the 89.0 mL the same MANUAL patient settles at. That stabiliser solves the bare circuit for the profile's own
   targets (HR 70, CVP 5) at a constant pleural pressure of −4 mmHg. It leaves out three things: the instructor's numbers
   that the MANUAL trackers then impose (HR 75, CVP 6: about 400 mL more venous volume and LV Emax ×0.74), the

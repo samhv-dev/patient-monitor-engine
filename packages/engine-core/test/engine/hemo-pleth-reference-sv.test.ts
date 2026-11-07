@@ -52,18 +52,32 @@ describe('SV₀ is the patient’s own settled resting stroke volume', { timeout
     expect(r.sv / r.sv0).toBeGreaterThan(0.9);
   });
 
-  it('an AF patient’s SV₀ is its sinus rest: the same as the default sinus patient’s; it is measured at the first step, not at construction, and a restored snapshot carries it', () => {
+  it('an AF patient’s SV₀ is its sinus rest: the same as the default sinus patient’s; it is set at creation, for any seed, and a restored snapshot carries it', () => {
     const svOf = (patient: PatientProfile, seed: number) => {
       const e = createEngine({ seed, patient });
-      expect(circOf(e).svRest).toBeUndefined(); // nothing run yet
-      e.advanceTo(0.02);
       return { e, sv: circOf(e).svRest as number };
     };
     const af = svOf({ baseline: { hr: 110 }, rhythm: { id: 'afib' }, sensors: { abp: 'connected', spo2: 'on' } }, 42);
     const sinus = svOf({ sensors: { abp: 'connected', spo2: 'on' } }, 7); // another seed: a patient property, not the random stream
+    expect(af.sv).toBeGreaterThan(50);
     expect(Math.abs(af.sv / sinus.sv - 1)).toBeLessThanOrEqual(0.005);
     const viewer = createEngine({ seed: 3, patient: { ageY: 80 } });
     viewer.restore(af.e.snapshot());
     expect(circOf(viewer).svRest).toBe(af.sv);
+  });
+
+  it('MODELED at rest: the pulse equals the set PI × tone (mean SVᵢ/SV₀ within 2 % of 1)', async () => {
+    const e = createEngine({ seed: 42, mode: 'modeled', patient: SINUS_75 });
+    const seen = new Map<number, B>();
+    for (let t = 1; t <= 90; t++) {
+      e.advanceTo(t);
+      if (t > 60) for (const b of circOf(e).beats) if (b.t > 60) seen.set(b.t, b);
+    }
+    const bs = [...seen.values()].sort((a, b) => a.t - b.t);
+    let s = 0;
+    for (let i = 1; i < bs.length; i++) s += (bs[i] as B).lvedv - (bs[i - 1] as B).lvesv;
+    const sv0 = circOf(e).svRest as number;
+    console.log(`SV0 rest MODELED: svRest ${sv0.toFixed(2)} mL, settled 60–90 s ${(s / (bs.length - 1)).toFixed(2)} mL`);
+    expect(Math.abs(s / (bs.length - 1) / sv0 - 1)).toBeLessThanOrEqual(0.02);
   });
 });

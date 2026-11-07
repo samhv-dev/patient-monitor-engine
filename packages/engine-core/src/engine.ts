@@ -283,10 +283,13 @@ function startRate(id: RhythmId, opts: RhythmOpts): number {
  * when both MANUAL trackers have released (each releases by MANUAL_TRACK_MAX_S of its own run), or after
  * MANUAL_TRACK_MAX_S in MODELED; SV₀ is then the mean pleth stroke-volume estimate (EDV − the previous beat's ESV, the
  * numerator the pleth uses) over REST_AVG_S of beats. A patient property, not the scenario's random stream: the run uses
- * REST_SEED, so it is deterministic and cached per resting patient and mode. It runs when the engine first steps (or
- * is snapshotted), not at construction: an engine that restores a snapshot first takes the snapshot's SV₀ and never
- * pays for the run (the followers and viewers of a session). [ENG procedure: REST_AVG_S, five spontaneous breaths at
- * the default 15/min; REST_SEED, the engine's default seed.]
+ * REST_SEED, so it is deterministic and cached per resting patient and mode, and it runs ONCE, when the engine is
+ * created — never inside a step, whatever the time scale. The run steps only the three pipelines that set a resting
+ * stroke volume (`restAdvance`: the rhythm engine, the breath driver, the haemodynamics), tick by tick as the engine
+ * does; it reproduces the whole engine's resting value exactly (88.90 / 81.29 mL, MANUAL / MODELED) at ≈ 60 % of its
+ * cost (≈ 0.13–0.18 s in Node and Chromium; the whole engine took 0.23–0.29 s and, on CI, stalled the live monitor).
+ * A restored snapshot carries its own SV₀. [ENG procedure: REST_AVG_S, five spontaneous breaths at the default 15/min;
+ * REST_SEED, the engine's default seed.]
  */
 export const REST_AVG_S = 20;
 export const REST_SEED = 1;
@@ -326,12 +329,8 @@ class Engine implements MonitorEngine {
   private readonly devOpts: EngineOptions['device']; // For restoring older snapshots
   private readonly truthEvery: number; // Ticks between truth events, 0 = off
 
-  /** The options SV₀'s resting run is made from; null in the resting run itself (it keeps the stand-alone reference). */
-  private readonly restOf: EngineOptions | null;
-
   /** `rest`: this engine IS the resting run that measures SV₀ (no recursion). */
   constructor(opts: EngineOptions, rest = false) {
-    this.restOf = rest ? null : opts;
     // MODELED is accepted (the circulation's reflexes run)
     this.seed = (opts.seed ?? 1) >>> 0;
     const look = opts.lookaheadS ?? 0.1;
@@ -384,18 +383,13 @@ class Engine implements MonitorEngine {
       organs: createOrgansState(opts.patient, l1),
     };
     holdRate(this.st, rhythmId, rhythmOpts.rateBpm !== undefined);
+    if (!rest) this.st.hemo.circ.svRest = Engine.restingSv(opts); // SV₀, once per resting patient (REST_AVG_S)
     rebaselineOrgans(this.st.organs, this.organsCtx(this.st)); // Calibrate on the pipelines' t = 0 truths
     this.syncCo2Sampler();
     for (const ch of ['vcgX', 'vcgY', 'vcgZ', ...lanes] as ChannelId[]) this.bufs.set(ch, new RingBuffer(ECG_RATE, BUFFER_SECONDS));
     this.advance(this.st, 0);
     this.st.detections.length = 0;
     this.speculate();
-  }
-
-  /** SV₀ on the committed state, measured once (see REST_AVG_S); the look-ahead clones inherit it. */
-  private ensureSvRest(): void {
-    const c = this.st.hemo.circ;
-    if (c.svRest === undefined && this.restOf) c.svRest = Engine.restingSv(this.restOf);
   }
 
   /** SV₀: the settled resting stroke volume of this patient in the real engine (see REST_AVG_S). */
@@ -408,12 +402,17 @@ class Engine implements MonitorEngine {
     const manual = ro.mode !== 'modeled';
     const mh = () => e.st.hemo.manHold;
     let t = 0;
-    const STEP_S = 4; // ≤ the 16-beat buffer up to 240/min
-    while (manual ? (mh().active || mh().pActive) && t < 2 * MANUAL_TRACK_MAX_S : t < MANUAL_TRACK_MAX_S) e.advanceTo((t += STEP_S));
+    const STEP_S = 4; // read the beats every 4 s: ≤ the 16-beat buffer up to 240/min
+    const go = (to: number) => {
+      // tick by tick, as the engine couples its pipelines (in 4 s chunks the MODELED chemoreflex read the gas exchange
+      // late: 82.16 against the full engine's 81.29 mL)
+      for (let n = e.st.n - 1 + SAMPLES_PER_TICK; n <= Math.round(to * ECG_RATE); n += SAMPLES_PER_TICK) e.restAdvance(e.st, n);
+    };
+    while (manual ? (mh().active || mh().pActive) && t < 2 * MANUAL_TRACK_MAX_S : t < MANUAL_TRACK_MAX_S) go((t += STEP_S));
     const t0 = t;
     const seen = new Map<number, { t: number; lvedv: number; lvesv: number }>();
     while (t < t0 + REST_AVG_S) {
-      e.advanceTo((t += STEP_S));
+      go((t += STEP_S));
       for (const b of e.st.hemo.circ.beats) if (b.t > t0) seen.set(b.t, b);
     }
     const bs = [...seen.values()].sort((a, b) => a.t - b.t);
@@ -515,7 +514,6 @@ class Engine implements MonitorEngine {
 
   // --- snapshot --------------------------------------------------------------------------------
   snapshot(): PatientSnapshot {
-    this.ensureSvRest();
     return {
       schema: 'pme-snapshot/1',
       engineVersion: this.version,
@@ -577,7 +575,6 @@ class Engine implements MonitorEngine {
   }
 
   private runTicks(n: number): void {
-    if (n > 0) this.ensureSvRest();
     for (let i = 0; i < n; i++) this.tickOnce(i === n - 1);
   }
 
@@ -692,6 +689,34 @@ class Engine implements MonitorEngine {
   }
 
   /** Generate samples up to and including absolute ECG index `end` for pipeline state `ps`. */
+  /**
+   * The resting run's step (REST_AVG_S): the three pipelines that set a resting stroke volume, in `advance`'s own
+   * order and with its own contexts — the rhythm engine's beats, the breath driver (its pleural pressure) and the
+   * haemodynamics with the MANUAL trackers or MODELED's reflexes. No ECG synthesis, drug, neuro, blood, endocrine or
+   * organ step, and no samples written: at rest, unventilated and undrugged, those hold their t = 0 state (measured:
+   * adding the blood, endocrine, organ, drug, neuro steps and the ECG synthesis back moves SV₀ by < 0.01 mL).
+   */
+  private restAdvance(ps: PipelineState, end: number): void {
+    if (end < ps.n) return;
+    planUntil(ps.rhythm, end / ECG_RATE + PLAN_LEAD_S, rhythmCtx(ps));
+    ps.rhythm.events = pruneEvents(ps.rhythm.events, ps.n / ECG_RATE);
+    ps.rhythm.fwaves = ps.rhythm.fwaves.filter((f) => f.end >= ps.n / ECG_RATE);
+    const none = () => {};
+    advanceResp(ps.resp, {
+      l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view, neuro: ps.neuro.resp, hco3: ps.blood.core.ab.hco3, cbfRel: ps.organs.brain.cbfRel,
+      bronchoDil: ps.pk.bus.airway.bronchodilation, hpvInhibit: ps.pk.bus.hpvInhibit, anaphEndo: ps.endo.lungSev > 0, histamine: ps.pk.bus.airway.histamine,
+    }, Math.floor(end / 8), none);
+    const resp = ps.resp;
+    advanceHemo(ps.hemo, {
+      l1: ps.l1, hr: ps.hr, rhythm: ps.rhythm, rng: ps.rng, phi: ps.hrv.phi, u: (t) => respBreathU(resp, t), pIt: (t) => respPleural(resp, t),
+      requestHr: (bpm) => {
+        ps.hr = constantRamp(bpm);
+      },
+      ph: ps.blood.core.ab.ph,
+    }, Math.floor(end / 4), none);
+    ps.n = end + 1;
+  }
+
   private advance(ps: PipelineState, end: number): void {
     if (end < ps.n) return;
     const ctx = rhythmCtx(ps);
