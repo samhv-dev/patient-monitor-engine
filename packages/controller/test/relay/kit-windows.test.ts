@@ -111,7 +111,7 @@ describe('a file inside the app folder (the relay and serve.mjs)', () => {
     const root = 'C:\\Users\\samhv-dev\\Desktop\\PME kit (rc.3)\\app';
     expect(isInside(root, `${root}\\index.html`, w)).toBe(true);
     expect(isInside(root, `${root}\\assets\\index-abc.js`, w)).toBe(true);
-    expect(isInside(root, 'c:\\users\\owner\\desktop\\pme kit (rc.3)\\APP\\index.html', w)).toBe(true); // Windows ignores case
+    expect(isInside(root, 'c:\\users\\samhv-dev\\desktop\\pme kit (rc.3)\\APP\\index.html', w)).toBe(true); // Windows ignores case
     expect(isInside(root, `${root}\\..foo.js`, w)).toBe(true); // a name starting with '..' is still inside
     expect(isInside(root, root, w)).toBe(false);
     expect(isInside(root, 'C:\\Users\\samhv-dev\\Desktop\\PME kit (rc.3)\\app2\\index.html', w)).toBe(false);
