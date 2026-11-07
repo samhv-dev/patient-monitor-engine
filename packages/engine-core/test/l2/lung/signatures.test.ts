@@ -44,8 +44,9 @@ function outside(id: string, k: Key): string | undefined {
   const band = (c?.bands as Bands | undefined)?.[k] as readonly [number, number] | undefined;
   if (!band) throw new Error(`${id} has no catalogue band for ${k}`);
   const v = sig(id)[k];
-  const tol = k === 'shunt' ? 0.03 : k.startsWith('spo2') ? 1 : 0.1 * Math.max(1, Math.abs(band[1]));
-  return v < band[0] - tol || v > band[1] + tol ? `${k} ${v.toFixed(3)} ∉ [${band[0]}, ${band[1]}]` : undefined;
+  // The band as the catalogue publishes it (audit 44 row T-26: until brief 87 an unsourced tolerance sat on every band:
+  // shunt ± 0.03, SpO2 ± 1, all others ± 10 % of the band's upper value, so a shunt band 0.10–0.12 accepted 0.07–0.15).
+  return v < band[0] || v > band[1] ? `${k} ${v.toFixed(3)} ∉ [${band[0]}, ${band[1]}]` : undefined;
 }
 /** Condition id → the keys that have their own `it.fails` below; filled by `miss` while the tests are collected. */
 const EXPECTED = new Map<string, Set<Key>>();
@@ -79,4 +80,21 @@ describe('per-condition signatures within the catalogue bands', { timeout: 300_0
   it.fails('olv: shunt 0.2–0.3 at FiO2 0.4 after 30 min (catalogue §22) — measured 0.140; mechanism: the non-ventilated lung collapses with τ ≈ 30 min at FiO2 0.4 and its HPV', miss('olv', 'shunt'));
   it.fails('endobronchial: Crs 27.5–30.25 mL/cmH2O (catalogue §23) — measured 34.0; mechanism: a separate hemithorax chest wall (both lungs share one chest wall, decision 1)', miss('endobronchial', 'crs'));
   it.fails('neonatalRds: shunt 0.2–0.4 (catalogue §30) — measured 0.158; mechanism: a neonatal rig (the reference rig is an adult; the neonatal profile arrives with the R22 bands)', miss('neonatalRds', 'shunt'));
+  // Misses the tolerance had hidden (row T-26). Twelve are against a single catalogue value, which a continuous output meets
+  // only by chance; whether the catalogue should state those as ranges from their own sources is the calibration pass's.
+  it.fails('bronchospasm: inspiratory resistance 46 cmH2O·s/L (catalogue §2) — measured 46.005; the catalogue states one value; no mechanism identified (inside the removed tolerance)', miss('bronchospasm', 'rInsp'));
+  it.fails('bronchospasm: auto-PEEP 6–10 cmH2O (catalogue §2) — measured 10.6; no mechanism identified yet (inside the removed tolerance)', miss('bronchospasm', 'autoPeep'));
+  it.fails('ards: Crs 35 mL/cmH2O (catalogue §6) — measured 34.6; the catalogue states one value; no mechanism identified (inside the removed tolerance)', miss('ards', 'crs'));
+  it.fails('ards: plateau 19 cmH2O (catalogue §6) — measured 19.2; the catalogue states one value; no mechanism identified (inside the removed tolerance)', miss('ards', 'plateau'));
+  it.fails('ards: driving pressure 14 cmH2O (catalogue §6) — measured 14.2; the catalogue states one value; no mechanism identified (inside the removed tolerance)', miss('ards', 'drivingPressure'));
+  it.fails('ards: shunt 0.30 (catalogue §6) — measured 0.285; the catalogue states one value; no mechanism identified (inside the removed tolerance)', miss('ards', 'shunt'));
+  it.fails('ild: Crs 32 mL/cmH2O (catalogue §7) — measured 31.8; the catalogue states one value; no mechanism identified (inside the removed tolerance)', miss('ild', 'crs'));
+  it.fails('ild: inspiratory resistance 13 cmH2O·s/L (catalogue §7) — measured 12.9; the catalogue states one value; no mechanism identified (inside the removed tolerance)', miss('ild', 'rInsp'));
+  it.fails('chestWall: Crs 32 mL/cmH2O (catalogue §9) — measured 33.5; the catalogue states one value; no mechanism identified (inside the removed tolerance)', miss('chestWall', 'crs'));
+  it.fails('chestWall: inspiratory resistance 10 cmH2O·s/L (catalogue §9) — measured 9.88; the catalogue states one value; no mechanism identified (inside the removed tolerance)', miss('chestWall', 'rInsp'));
+  it.fails('pe: PaCO2 − EtCO2 gap 15–25 mmHg (catalogue §18) — measured 25.9; no mechanism identified yet (inside the removed tolerance)', miss('pe', 'gapPaEt'));
+  it.fails('cf: inspiratory resistance 20 cmH2O·s/L (catalogue §26) — measured 20.3; the catalogue states one value; no mechanism identified (inside the removed tolerance)', miss('cf', 'rInsp'));
+  it.fails('cf: SpO2 88–94 % at FiO2 0.21 (catalogue §26) — measured 94.9; no mechanism identified yet (inside the removed tolerance); one of the 11 KNOWN bands', miss('cf', 'spo2Fio2_021'));
+  it.fails('covidPneumonitis: Crs 50 mL/cmH2O (catalogue §31) — measured 49.8; the catalogue states one value; no mechanism identified (inside the removed tolerance)', miss('covidPneumonitis', 'crs'));
+  it.fails('covidPneumonitis: shunt 0.30 (catalogue §31) — measured 0.320; the catalogue states one value; no mechanism identified (inside the removed tolerance)', miss('covidPneumonitis', 'shunt'));
 });
