@@ -235,6 +235,7 @@ Bronchospasm ventilator numbers (both browsers): before salbutamol VTE 161–162
 after 367 mL, Ppeak 35, MinVol 5.1; 6 min after 379 mL, MinVol 5.3; "High pressure (Pmax)" banner stays.
 Sub-path: "Healthy induction" on WebKit at `http://127.0.0.1:8700/patient-monitor-engine/#/teach` — PASS (apnoea alarm
 53.5 s, MAP 94.7 → 71.8, CO2 tile 44 after 9.8 s, no error).
+> A record: this run was made on the first Instructor view (`#/teach`), retired on 6 November 2026 (retire-instructor-v1 PR 3; `#/teach` now opens Instructor v2, `#/teach2`). The kit suites run on `#/teach2` since retire-instructor-v1 PR 4.
 
 ## Early-CPR re-test (haemorrhage) — the VF finding still reproduces on this build
 | CPR pressed (sim clock) | Chromium | WebKit |

@@ -10,7 +10,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
-import { alarms, hist, latest, loadShowcase, minOf, openTeach, r1, record, REPO, simNow, stateId, waitSim, waitUntilSim, watchConsole } from './showcase-support.ts';
+import { alarms, cardRow, ffV2, hist, latest, loadShowcase, minOf, openTeach, r1, record, REPO, simNow, speedV2, stateId, waitSim, waitUntilSim, watchConsole } from './showcase-support.ts';
 
 const GATE = join(REPO, 'docs/gates/stage-10');
 type Hook = {
@@ -48,7 +48,7 @@ async function shot(page: Page, name: string): Promise<void> {
   spawnSync('/usr/bin/sips', ['-Z', '1280', path, '--out', path], { stdio: 'ignore' });
 }
 const speed = async (page: Page, k: '1' | '2' | '4' | '8') => {
-  await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: `×${k}` }).click();
+  await speedV2(page, Number(k) as 1 | 2 | 4 | 8);
   await page.waitForTimeout(300);
 };
 /**
@@ -59,7 +59,7 @@ const speed = async (page: Page, k: '1' | '2' | '4' | '8') => {
  */
 const presses: Array<Record<string, unknown>> = [];
 const pressCard = async (page: Page, label: string, expectState?: string): Promise<number> => {
-  const btn = page.locator('section[aria-label="Running scenario"]').getByRole('button', { name: label, exact: true });
+  const btn = cardRow(page, label);
   const before = await stateId(page);
   await btn.click();
   const t = await simNow(page);
@@ -83,15 +83,15 @@ const until = (page: Page, maxSimS: number, id: string) => waitSim(page, maxSimS
 const toneCount = (page: Page, from: number, kinds: string[]) => page.evaluate((a) => (window as unknown as Hook).__pmeApp.session.monitor.audioLog.filter((e) => e.simT > a.from && a.kinds.includes(e.kind)).length, { from, kinds });
 
 /**
- * Click "Fast-forward <min> min" in the session bar; `during(t)` runs ≈ `atMs` after the panel shows (screenshots);
+ * Click "Fast forward by <min> min" in the Instructor view's Fast forward box; `during(t)` runs ≈ `atMs` after the panel shows (screenshots);
  * waits for the panel to go and records the span (wall time, banner, the end event's alarms).
  */
 async function fastForward(r: Result, page: Page, min: 2 | 5, during?: () => Promise<void>, atMs = 3000, via: 'button' | 'command' = 'button'): Promise<Record<string, unknown>> {
   const w0 = Date.now();
   const t0 = await simNow(page);
-  // the session bar is on the instructor's views; on the full-screen Monitor and Ventilator views the same host command is
-  // sent through the app's link (what the bar's button sends)
-  if (via === 'button') await page.locator('.sessionbar').getByRole('group', { name: 'Fast-forward' }).getByRole('button', { name: `Fast-forward ${min} min` }).click();
+  // the Fast forward box is on the Instructor view; on the full-screen Monitor and Ventilator views the same host command
+  // is sent through the app's link (what the box's button sends)
+  if (via === 'button') await ffV2(page, min);
   else expect((await page.evaluate((v) => (window as unknown as Hook).__pmeApp.link.send({ type: 'time', action: 'jump', value: v }), min * 60)).accepted).toBe(true);
   const veil = page.locator('.ff-veil.on');
   await expect(veil).toBeVisible({ timeout: 5000 });
@@ -240,9 +240,9 @@ test('Tamponade: 2-minute fast-forwards during CPR, with a second screen and a R
     await R.waitForLoadState('load');
     const connected = await R.getByRole('status').filter({ hasText: /connected/i }).first().waitFor({ timeout: 30_000 }).then(() => true, () => false);
     check(r, 'the Remote pairs', 'connected', connected, connected);
-    await page.evaluate(() => (location.hash = '#/teach'));
+    await page.evaluate(() => (location.hash = '#/teach2'));
     await page.bringToFront();
-    await page.click('[role=tab][data-tab=scenario]');
+    await page.waitForTimeout(800);
     await speed(page, '8');
     const tPea = await until(page, 480, 'pea');
     await step(r, page, 'state pea (×8)');
@@ -327,7 +327,7 @@ test('Bronchospasm with the Ventilator view: a 2-minute fast-forward ventilated 
   const r = begin('Bronchospasm, Ventilator view through a 2-min span', browserName);
   r.errors = watchConsole(page);
   try {
-    await openTeach(page, '/?scenario=showcase-bronchospasm#/teach');
+    await openTeach(page, '/?scenario=showcase-bronchospasm#/teach2');
     await record(page);
     const code = await page.evaluate(() => (window as unknown as Hook).__pmeApp.session.code);
     await page.evaluate(() => (location.hash = '#/vent'));
