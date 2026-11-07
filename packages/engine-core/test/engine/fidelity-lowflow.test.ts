@@ -107,21 +107,17 @@ describe('PI of the normal patient and its direction', () => {
   // hemo-pleth-reference-sv.test.ts), yet the MEASURED PI reads 1.68 (0.84 × 2; the same at 60–178 s). The gap is the
   // waveform's peak-to-foot against the pulse's amplitude parameter (the previous pulse's tail lifts the foot; the
   // dicrotic share follows R_sys), a pleth-kernel/numerics question. Before this change the SV₀ bias (×1.124) hid it.
-  it('rest PI (30–58 s): MODELED spontaneous 1.80 (± 5 %); MANUAL spontaneous 1.67 (± 5 %); MANUAL ventilated 1.64 (± 5 %), below its own spontaneous rest', async () => {
+  it('rest PI (30–58 s): MODELED spontaneous 1.80 (± 5 %, within ± 10 % of the L1 target 2); MANUAL spontaneous 1.67 (± 5 %); MANUAL ventilated 1.64 (± 5 %), below its own spontaneous rest', async () => {
     const spont = await monitorRun({ mode: 'modeled', tEnd: 60, steps: [] });
     const manSpont = await monitorRun({ mode: 'manual', tEnd: 60, steps: [] });
     const man = await monitorRun({ mode: 'manual', tEnd: 60, steps: [...VENTED] });
     const [pS, pMs, pMv] = [piMean(spont.rows, 30, 58), piMean(manSpont.rows, 30, 58), piMean(man.rows, 30, 58)];
     console.log(`rest PI: MODELED spontaneous ${pS.toFixed(3)}, MANUAL spontaneous ${pMs.toFixed(3)}, MANUAL ventilated ${pMv.toFixed(3)}`);
     expect(Math.abs(pS / 1.8 - 1)).toBeLessThanOrEqual(0.05);
+    expect(Math.abs(pS / 2 - 1)).toBeLessThanOrEqual(0.1); // 1.806 (−9.7 %): the OPEN gap above takes most of the band
     expect(Math.abs(pMs / 1.67 - 1)).toBeLessThanOrEqual(0.05);
     expect(Math.abs(pMv / 1.64 - 1)).toBeLessThanOrEqual(0.05);
     expect(pMv).toBeLessThan(pMs);
-  }, 120_000);
-
-  it.fails('MODELED spontaneous rest PI (30–58 s) within ± 10 % of the L1 target 2 — measured 1.798 (−10.1 %; 1.82 while SV₀ was the stand-alone 79.1 mL): the pulse factor tone × SVᵢ/SV₀ is ≥ 1 at this rest, the measured peak-to-foot is ≈ 0.84 of the pulse amplitude (the OPEN pleth-kernel gap above)', async () => {
-    const { rows } = await monitorRun({ mode: 'modeled', tEnd: 60, steps: [] });
-    expect(Math.abs(piMean(rows, 30, 58) / 2 - 1)).toBeLessThanOrEqual(0.1);
   }, 120_000);
 
   it.fails('ventilated normal patient (MODELED, PPV from 1 s): rest PI within ± 5 % of 1.80 — measured 1.49 (−17 %): SV₀ is the spontaneous settle (80 mL) against 68 mL under PPV; PI follows SV only until the circulation publishes a cutaneous tone', async () => {

@@ -269,7 +269,7 @@ function startRate(id: RhythmId, opts: RhythmOpts): number {
  *  2. The breath driver: spontaneous breathing swings the pleural pressure from −4 to ≈ −7 mmHg (mean ≈ −5), which
  *     raises venous return, and the MANUAL CVP tracker holds the breath-AVERAGED right-atrial pressure, so it fills by
  *     a further ≈ 130 mL to lift the inspiratory dips (that residual 86 against 79 mL).
- *  3. MODELED: the same breathing, and the baroreflex settling at its own point (81.0 mL at rest: SV₀; 70.8 mL on IPPV).
+ *  3. MODELED: the same breathing, and the baroreflex settling at its own point (81.3 mL at rest: SV₀; 70.8 mL on IPPV).
  * The same fault — the trackers starting from a circulation that is not the instructor's patient and taking ≈ 40–60 s
  * to reach it — is behind the MANUAL PEEP 0 < PEEP 5 stroke volume (84.0 against 85.5 mL): a ventilator started at
  * t = 0 runs while the trackers are still converging. Under PEEP 5 the pressure tracker kept running to 38 s (LV Emax
@@ -282,10 +282,14 @@ function startRate(id: RhythmId, opts: RhythmOpts): number {
  * patient's sinus stroke volume, research/45), so a non-sinus `rhythm` drops with its `baseline.hr`. The settling ends
  * when both MANUAL trackers have released (each releases by MANUAL_TRACK_MAX_S of its own run), or after
  * MANUAL_TRACK_MAX_S in MODELED; SV₀ is then the mean pleth stroke-volume estimate (EDV − the previous beat's ESV, the
- * numerator the pleth uses) over REST_AVG_S of beats. Deterministic (the engine's own seed) and cached per resting
- * patient, mode and seed. [ENG procedure: REST_AVG_S, five spontaneous breaths at the default 15/min.]
+ * numerator the pleth uses) over REST_AVG_S of beats. A patient property, not the scenario's random stream: the run uses
+ * REST_SEED, so it is deterministic and cached per resting patient and mode. It runs when the engine first steps (or
+ * is snapshotted), not at construction: an engine that restores a snapshot first takes the snapshot's SV₀ and never
+ * pays for the run (the followers and viewers of a session). [ENG procedure: REST_AVG_S, five spontaneous breaths at
+ * the default 15/min; REST_SEED, the engine's default seed.]
  */
 export const REST_AVG_S = 20;
+export const REST_SEED = 1;
 const restSvCache = new Map<string, number>();
 
 /** The resting patient whose settled stroke volume is SV₀ (see REST_AVG_S). */
@@ -322,8 +326,12 @@ class Engine implements MonitorEngine {
   private readonly devOpts: EngineOptions['device']; // For restoring older snapshots
   private readonly truthEvery: number; // Ticks between truth events, 0 = off
 
-  /** `rest`: this engine IS the resting run that measures SV₀ (it keeps the stand-alone reference; no recursion). */
+  /** The options SV₀'s resting run is made from; null in the resting run itself (it keeps the stand-alone reference). */
+  private readonly restOf: EngineOptions | null;
+
+  /** `rest`: this engine IS the resting run that measures SV₀ (no recursion). */
   constructor(opts: EngineOptions, rest = false) {
+    this.restOf = rest ? null : opts;
     // MODELED is accepted (the circulation's reflexes run)
     this.seed = (opts.seed ?? 1) >>> 0;
     const look = opts.lookaheadS ?? 0.1;
@@ -376,7 +384,6 @@ class Engine implements MonitorEngine {
       organs: createOrgansState(opts.patient, l1),
     };
     holdRate(this.st, rhythmId, rhythmOpts.rateBpm !== undefined);
-    if (!rest) this.st.hemo.circ.svRest = Engine.restingSv(opts, this.seed);
     rebaselineOrgans(this.st.organs, this.organsCtx(this.st)); // Calibrate on the pipelines' t = 0 truths
     this.syncCo2Sampler();
     for (const ch of ['vcgX', 'vcgY', 'vcgZ', ...lanes] as ChannelId[]) this.bufs.set(ch, new RingBuffer(ECG_RATE, BUFFER_SECONDS));
@@ -385,9 +392,15 @@ class Engine implements MonitorEngine {
     this.speculate();
   }
 
+  /** SV₀ on the committed state, measured once (see REST_AVG_S); the look-ahead clones inherit it. */
+  private ensureSvRest(): void {
+    const c = this.st.hemo.circ;
+    if (c.svRest === undefined && this.restOf) c.svRest = Engine.restingSv(this.restOf);
+  }
+
   /** SV₀: the settled resting stroke volume of this patient in the real engine (see REST_AVG_S). */
-  private static restingSv(opts: EngineOptions, seed: number): number {
-    const ro: EngineOptions = { seed, mode: opts.mode ?? 'manual', ...(opts.patient ? { patient: restingPatient(opts.patient) as PatientProfile } : {}) };
+  private static restingSv(opts: EngineOptions): number {
+    const ro: EngineOptions = { seed: REST_SEED, mode: opts.mode ?? 'manual', ...(opts.patient ? { patient: restingPatient(opts.patient) as PatientProfile } : {}) };
     const key = JSON.stringify(ro);
     const hit = restSvCache.get(key);
     if (hit !== undefined) return hit;
@@ -395,11 +408,12 @@ class Engine implements MonitorEngine {
     const manual = ro.mode !== 'modeled';
     const mh = () => e.st.hemo.manHold;
     let t = 0;
-    while (manual ? (mh().active || mh().pActive) && t < 2 * MANUAL_TRACK_MAX_S : t < MANUAL_TRACK_MAX_S) e.advanceTo(++t);
+    const STEP_S = 4; // ≤ the 16-beat buffer up to 240/min
+    while (manual ? (mh().active || mh().pActive) && t < 2 * MANUAL_TRACK_MAX_S : t < MANUAL_TRACK_MAX_S) e.advanceTo((t += STEP_S));
     const t0 = t;
     const seen = new Map<number, { t: number; lvedv: number; lvesv: number }>();
     while (t < t0 + REST_AVG_S) {
-      e.advanceTo(++t);
+      e.advanceTo((t += STEP_S));
       for (const b of e.st.hemo.circ.beats) if (b.t > t0) seen.set(b.t, b);
     }
     const bs = [...seen.values()].sort((a, b) => a.t - b.t);
@@ -501,6 +515,7 @@ class Engine implements MonitorEngine {
 
   // --- snapshot --------------------------------------------------------------------------------
   snapshot(): PatientSnapshot {
+    this.ensureSvRest();
     return {
       schema: 'pme-snapshot/1',
       engineVersion: this.version,
@@ -531,6 +546,7 @@ class Engine implements MonitorEngine {
     if (data.mainsHz !== undefined && data.mainsHz !== this.mainsHz) {
       throw new Error(`snapshot was taken with ${data.mainsHz} Hz mains filtering, this engine uses ${this.mainsHz} Hz`);
     }
+    data.st.hemo.circ.svRest ??= data.st.hemo.circ.ref.sv; // a snapshot without SV₀ keeps the reference it was drawn with
     this.st = data.st;
     this.queue = data.queue;
     this.groupTicks = new Map(data.groups ?? []); // The bookmark's pending groups, never the discarded future's
@@ -561,6 +577,7 @@ class Engine implements MonitorEngine {
   }
 
   private runTicks(n: number): void {
+    if (n > 0) this.ensureSvRest();
     for (let i = 0; i < n; i++) this.tickOnce(i === n - 1);
   }
 

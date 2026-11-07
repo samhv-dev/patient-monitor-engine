@@ -52,9 +52,18 @@ describe('SV₀ is the patient’s own settled resting stroke volume', { timeout
     expect(r.sv / r.sv0).toBeGreaterThan(0.9);
   });
 
-  it('an AF patient’s SV₀ is its sinus rest: the same as the default sinus patient’s', () => {
-    const af = circOf(createEngine({ seed: 42, patient: { baseline: { hr: 110 }, rhythm: { id: 'afib' }, sensors: { abp: 'connected', spo2: 'on' } } })).svRest as number;
-    const sinus = circOf(createEngine({ seed: 42, patient: { sensors: { abp: 'connected', spo2: 'on' } } })).svRest as number;
-    expect(Math.abs(af / sinus - 1)).toBeLessThanOrEqual(0.005);
+  it('an AF patient’s SV₀ is its sinus rest: the same as the default sinus patient’s; it is measured at the first step, not at construction, and a restored snapshot carries it', () => {
+    const svOf = (patient: PatientProfile, seed: number) => {
+      const e = createEngine({ seed, patient });
+      expect(circOf(e).svRest).toBeUndefined(); // nothing run yet
+      e.advanceTo(0.02);
+      return { e, sv: circOf(e).svRest as number };
+    };
+    const af = svOf({ baseline: { hr: 110 }, rhythm: { id: 'afib' }, sensors: { abp: 'connected', spo2: 'on' } }, 42);
+    const sinus = svOf({ sensors: { abp: 'connected', spo2: 'on' } }, 7); // another seed: a patient property, not the random stream
+    expect(Math.abs(af.sv / sinus.sv - 1)).toBeLessThanOrEqual(0.005);
+    const viewer = createEngine({ seed: 3, patient: { ageY: 80 } });
+    viewer.restore(af.e.snapshot());
+    expect(circOf(viewer).svRest).toBe(af.sv);
   });
 });
