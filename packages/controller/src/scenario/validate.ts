@@ -34,9 +34,22 @@ function validator(): ReturnType<Ajv['compile']> {
 }
 
 /** One readable line per ajv error: `<json path>: <what is wrong>`. */
+/** The longest card question the learner handout prints on one line (D16): measured, not chosen. In print media at the
+ *  182 mm content width, in the bundled print font (Inter Print 13.33 px), after its "mm:ss" label (10.3 mm), the
+ *  handout's question line (177.0 mm) held 92 to 100 characters of the drafted questions' own text, Chromium and
+ *  WebKit alike (6 November 2026, the D16 e2e probe on the MH card); the limit is the shortest of those, 92. A question
+ *  that wraps adds 4.7 mm, and the MH handout without questions is 266.9 mm of its 267 mm page (with two wrapped
+ *  questions: 276.4 mm). The e2e page fit stays the truth; this tells an author at validation time. The two scenario
+ *  schemas carry the same number (`maxLength`), a test keeps them equal. */
+export const HANDOUT_QUESTION_MAX = 92;
+const HANDOUT_Q_TEXT = /^\/debriefHints\/handoutQuestions\/\d+\/text$/;
+
 export function formatAjvError(e: ErrorObject): string {
   const at = e.instancePath || '/';
   const p = e.params as Record<string, unknown>;
+  if (HANDOUT_Q_TEXT.test(at) && e.keyword === 'maxLength') {
+    return `${at}: at most ${HANDOUT_QUESTION_MAX} characters, about 90 characters — one line of the A4 handout; a wrapped question pushes the MH handout over one page (measured 276.4 mm of 267)`;
+  }
   if (WHEN_PATH.test(at) && (e.keyword === 'maxProperties' || e.keyword === 'minProperties')) {
     return `${at}: a trigger must have exactly one of ${TRIGGER_KEYS}`;
   }
@@ -104,9 +117,9 @@ export function validateScenario(input: unknown, opts: ValidateOptions = {}): Va
   doc.bookmarks?.forEach((b, i) => {
     if (!stateIds.has(b.state)) errors.push(`/bookmarks/${i}/state: no state "${b.state}"`);
   });
-  doc.debriefHints?.openers?.forEach((o, i) => {
-    if (o.at.startsWith('state:') && !stateIds.has(o.at.slice(6))) errors.push(`/debriefHints/openers/${i}/at: no state "${o.at.slice(6)}"`);
-  });
+  (['openers', 'handoutQuestions'] as const).forEach((k) => doc.debriefHints?.[k]?.forEach((o, i) => {
+    if (o.at.startsWith('state:') && !stateIds.has(o.at.slice(6))) errors.push(`/debriefHints/${k}/${i}/at: no state "${o.at.slice(6)}"`);
+  }));
   return errors.length ? { ok: false, errors: errors.slice(0, MAX_ERRORS), warnings } : { ok: true, doc, warnings };
 }
 
@@ -272,7 +285,7 @@ function validateV2(input: unknown, opts: ValidateOptions): ValidationResult {
     rule(o.rule, `/outcomes/${i}/rule`);
     anchor(o.anchor, `/outcomes/${i}/anchor`);
   });
-  doc.debriefHints?.openers?.forEach((o, i) => anchor(o.at, `/debriefHints/openers/${i}/at`));
+  (['openers', 'handoutQuestions'] as const).forEach((k) => doc.debriefHints?.[k]?.forEach((o, i) => anchor(o.at, `/debriefHints/${k}/${i}/at`)));
   doc.script?.forEach((s, i) => {
     const m = typeof s.on === 'string' ? new RegExp(`^(phase|action):(${ID})`).exec(s.on) : null;
     if (m?.[1] === 'phase') phase(m[2] as string, `/script/${i}/on`);
