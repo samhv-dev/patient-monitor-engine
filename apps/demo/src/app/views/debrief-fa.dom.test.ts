@@ -68,9 +68,9 @@ describe('the Debrief in Persian (D13)', () => {
     expect(v.el.querySelector('.db-notes')?.closest('[lang="fa"]')).toBeNull();
     // the footer is the table's footer entry
     expect(v.el.querySelector('footer.db-foot')?.getAttribute('lang')).toBe('fa');
-    // (until the table holds the app's footer wording it prints in English, marked and listed: D12 adds it)
     const foot = v.el.querySelector('footer.db-foot');
-    expect(foot?.querySelector('bdi.en') !== null || /فقط برای آموزش/.test(foot?.textContent ?? '')).toBe(true);
+    expect(foot?.querySelector('bdi.en')).toBeNull();
+    expect(foot?.textContent).toMatch(/^فقط برای آموزش؛ برای مراقبت از بیمار استفاده نشود\. نسخه‌ی /);
     // a second view in the same browser opens in Persian; English again restores the English page
     const w = open(exportOf(TAMPONADE).record);
     expect(w.el.querySelector('#db-live-1')?.getAttribute('lang')).toBe('fa');
@@ -137,7 +137,7 @@ describe('the Debrief in Persian (D13)', () => {
     }
     // the timeline's events, row by row (a staged delivery, which the page joins on one line, left out)
     const script = [...doc.querySelectorAll('table.timeline tbody tr td:nth-child(3)')].map((td) => norm(td.textContent ?? ''));
-    const page = [...v.el.querySelectorAll('#db-timeline tbody tr td:nth-child(3)')].map((td) => norm(td.textContent ?? '')).filter((t) => !t.includes('Delivered together'));
+    const page = [...v.el.querySelectorAll('#db-timeline tbody tr td:nth-child(3)')].map((td) => norm(td.textContent ?? '')).filter((t) => !/^(Delivered together|با هم اعمال شد)/.test(t));
     expect(page.length).toBeGreaterThan(5);
     for (const t of page) expect(script).toContain(t);
     // the take-home lines

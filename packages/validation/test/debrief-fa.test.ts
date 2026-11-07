@@ -110,7 +110,8 @@ describe('scripts/showcase/debrief-fa: an archived /3 export with judged rows', 
 });
 
 // Brief 63: the Persian handout draws the trend charts, so it draws the Pressures panel after MAP as the English report
-// does (views/debrief.ts pressuresChart): on a record that keeps the pressures only. Its two words await the Persian.
+// does (views/debrief.ts pressuresChart): on a record that keeps the pressures only. Its two words are drafted (D12),
+// unread by the owner.
 describe('scripts/showcase/debrief-fa: the Pressures panel', () => {
   const trends = (html: string): string => /<section id="trends">.*?<\/section>/s.exec(html)?.[0] ?? '';
   it('a record that keeps the pressures: the panel after MAP, an arterial line and the cuff dots, CVP dashed on its own axis', () => {
@@ -126,7 +127,9 @@ describe('scripts/showcase/debrief-fa: the Pressures panel', () => {
     expect(d('sys').match(/a/g)).toHaveLength(2); // that cycle a dot
     expect(d('cvp')).toMatch(/^M[^M]*$/);
     expect(sec).toContain('CVP 22</text>'); // 17 on its 10 mmHg least span
-    expect([...D.missing.keys()]).toEqual(expect.arrayContaining(['Pressures', 'mmHg · SBP and DBP on the left axis, CVP (dashed) on the right']));
+    const words = ['Pressures', 'mmHg · SBP and DBP on the left axis, CVP (dashed) on the right'];
+    expect([...D.missing.keys()].filter((k) => words.includes(k))).toEqual([]);
+    expect([...D.used].filter((e) => words.includes(e.en)).map((e) => e.reviewed)).toEqual([false, false]);
   });
   it('a record made before the pressures were kept: no panel', () => {
     expect(trends(render(withCard('tamponade'), '', 'test').html)).not.toContain('data-trend="pressures"');
