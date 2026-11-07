@@ -68,6 +68,20 @@ export class ScenarioView {
       this.history = this.stateId === null ? [] : [{ t: at, stateId: this.stateId }];
       return true;
     }
+    // FX-12: a restore brings the case its mark holds (the state comes with the `scenario` event before it): another
+    // card's, or this one's after a restart had ended it; a mark with none ends the run here too
+    if (c.action === 'restoreBookmark' && 'doc' in c) {
+      if (c.doc === null) {
+        if (!this.doc) return false;
+        this.reset();
+        return true;
+      }
+      const d = c.doc as AnyScenarioDoc | undefined;
+      if (!d || typeof d !== 'object' || this.doc?.id === d.id) return false;
+      this.doc = d;
+      this.docVersion++;
+      return true;
+    }
     if (c.action === 'pause' && !this.paused) {
       this.paused = true;
       this.pausedAt = t;
