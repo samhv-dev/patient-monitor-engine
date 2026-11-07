@@ -83,7 +83,13 @@ export function createVentDriver(port: LinkPort | null, profile: ProfileId = 'no
     }
     else if (m.kind === 'time') {
       if (m.action === 'pause') d.paused = true;
-      else if (m.action === 'resume') d.paused = false;
+      else if (m.action === 'resume') {
+        // A resume links the cockpit to a monitor again (CockpitDesk: after a hand-over, a new link that learns its tick
+        // offset from the next frame). Paused at its clock limit it would send none, so the new link could publish no
+        // clock: as before its first clock, it may run 2·LEAD_TICKS past its own tick, enough for that frame.
+        d.paused = false;
+        allowed = Math.max(allowed, k + 2 * LEAD_TICKS);
+      }
       else if (m.value !== undefined) d.scale = m.value;
     } else if (m.kind === 'control') {
       if (m.profile) d.setProfile(m.profile);

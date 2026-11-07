@@ -282,6 +282,10 @@ jobs:
         continue-on-error: ${{ matrix.set == 'known-flaky' }} # quarantine: its results are summarised below instead
         env:
           PLAYWRIGHT_JSON_OUTPUT_FILE: playwright-report-${{ matrix.report }}.json
+          # brief 90: WebKit's own stderr (Playwright's pw:browser log) so a "Target page, context or browser has been
+          # closed" attempt carries the browser's reason in its result's stderr in the JSON report (the F-FX1-1 trial of
+          # October read a ThreadedCompositor segfault there); Chromium unchanged
+          DEBUG: ${{ matrix.browser == 'webkit' && 'pw:browser' || '' }}
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' }}
         with:
