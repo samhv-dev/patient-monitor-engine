@@ -1,6 +1,7 @@
 // FU-11 Task A2 (external review F01, browser audit BA10): one malformed peer never takes the relay down — `null` on the
 // signalling socket, a frame over the payload cap, a deeply nested envelope; a healthy room keeps working after each.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { connect } from 'node:net';
 import { createStamper } from '../../src/protocol.ts';
 import { startRelay, type RelayHandle } from '../../relay/server.ts';
 import { waitFor } from '../helpers.ts';
@@ -122,5 +123,27 @@ describe('hostile relay input', () => {
     await waitFor(() => d.got.filter((m) => m.includes('"forbidden"')).length === 4, 3000, 'four forbidden');
     expect(h.got.some((m) => m.includes('"bad"') || m.includes('"kind":"ack"') || m.includes('"kind":"grant"'))).toBe(false);
     await healthy('HDB234');
+  });
+});
+
+// PR #306, CI run 42350190627: room-qr-tab-guard's afterEach waited 90 s in relay.close(). close() waited for every
+// HTTP connection to end, and Node stops its own request timeouts once a server closes, so a connection a client held
+// (here: a request whose headers it never finished) kept close() waiting for as long as the client kept it open.
+describe('close() ends every connection', () => {
+  it('resolves at once while a client holds a request it never finished, and while a WebSocket is open', async () => {
+    const r = await startRelay({ port: 0, host: '127.0.0.1', heartbeatMs: 60_000 });
+    const half = connect(r.port, '127.0.0.1');
+    await new Promise((ok) => half.once('connect', ok));
+    half.write('GET /pme-relay.json HTTP/1.1\r\nHost: 127.0.0.1\r\n'); // no blank line: the request is never complete
+    const ws = new WebSocket(`ws://127.0.0.1:${r.port}/`);
+    await waitFor(() => ws.readyState === WebSocket.OPEN, 3000, 'socket open');
+    await new Promise((ok) => setTimeout(ok, 100));
+    const ended = new Promise((ok) => half.once('close', ok));
+    const t0 = Date.now();
+    const closed = await Promise.race([r.close().then(() => true), new Promise((ok) => setTimeout(() => ok(false), 3000))]);
+    expect(closed, 'relay.close() resolved').toBe(true);
+    expect(Date.now() - t0).toBeLessThan(1000);
+    await ended; // the server ended the half-sent request's connection
+    half.destroy();
   });
 });
