@@ -1,23 +1,33 @@
-// Room (E125, owner's mockup f2-room): who follows this session and how to join it. Top right, the connection status
-// (room-status.ts: Stable / Weak / Disconnected, from the relay socket and the phones' hellos; no ping for rc.4). Left,
-// Join: the QR code (the app's only one), the code, and the two ways in — scan, or type the address the relay serves
-// (its network address and port; the code is in it, there being no code-entry page for phones). Right, Connected now:
-// this window, the windows of this browser and the phones that said hello, with their state and when they were last
-// heard; the openers for this computer; and the windows opened from here this session (nothing is remembered across a
-// reload, so nothing is claimed).
+// Room setup (E125, owner's mockup f2-room; Room plan R7, docs/plans/room-and-instruments.md §7, Q2 ruled 5 November:
+// today's Room page grown). Top right, the connection status (room-status.ts: Stable / Weak / Disconnected, from the
+// relay socket and the relay's ping table, R2; Q9's thresholds on the legend). Left, Join: the QR code (the app's only
+// one), the code, and the two ways in — scan, or type the address the relay serves. Right, Connected now: this window,
+// the windows of this browser (their hellos), and every device the relay lists, with what it shows, its ping and when
+// it was last heard; a device's name can be edited and is kept under its key (room-layout.ts, Q10), and a remembered
+// device that is not here is a grey row "expected, not connected". Under them, mock-up m5's host side with R4's card
+// component: the openers for this computer ("New window" per instrument; the Ventilator in this window), which window
+// shows each, the room code with "New room code" (Q3: the code lives until that press), "Forget the room", and the
+// remembered layout ("Last time in this room: … Reopen that layout"). `#room-instructor` is P7's slot (its PIN panel),
+// left empty here.
 // Post-demo (4 November): "Show large" (or Q on the Room) puts the same QR, drawn again as vector at the size of the
 // screen, with the code, the address and the live count beneath, for a hall to scan from the back; Escape or the same
 // control returns. At 1920×1080 the card's QR is 220 px (a fifth of the height): scannable from the front rows only.
 import { isTyping } from '@pme/controller';
-import type { ManagedTransport, WireMessage } from '@pme/controller';
-import { qrTarget, relayInfo, type RelayInfo } from '../classroom.ts';
+import { newSessionCode, type ManagedTransport, type RelayDevice, type WireMessage } from '@pme/controller';
+import { hashOf, qrTarget, relayInfo, type RelayInfo } from '../classroom.ts';
 import { qrSvg } from '../qr.ts';
-import { ago, PeerLog, RESYNC_MS, roomStatus, type PeerSeen, type RelayState, type RoomLevel } from '../room-status.ts';
+import { keepRoomCode } from '../room-code.ts';
+import { forgetRoom, lastTime, noteDevices, readLayout, readWindows, rename, windowsOf, writeLayout, writeWindows, type Windows } from '../room-layout.ts';
+import { deviceRows, HEARTBEAT_MS, PeerLog, roomStatus, WEAK_PING_MS, type DeviceRow, type PeerSeen, type RelayState, type RoomLevel } from '../room-status.ts';
 import { hrefOf } from '../router.ts';
-import type { InstructorRoomCard } from './room-instructor.ts';
 import type { View } from '../shell.ts';
 import { DEFIB_CHOICES, defibDefaults, pacerDefaults } from '../site.ts';
+import { store as appStore } from '../store.ts';
 import { button, h, select, setText } from '../ui.ts';
+import { instrumentCard, PICKER_WORDS, type CardShow } from './join.ts';
+import type { InstructorRoomCard } from './room-instructor.ts';
+
+type Store = { get(k: string): string | null; set(k: string, v: string): void };
 
 export interface RoomDeps {
   code: string;
@@ -29,15 +39,23 @@ export interface RoomDeps {
   local: ManagedTransport;
   /** This page's own peer id (its messages are not a device). */
   hostPeerId: string;
-  /** The relay's count of devices following, and its changes. */
+  /** The relay's count of devices following, and its changes (with its device table, R2: null from an older relay). */
   followers(): number;
-  onFollowers(fn: (n: number) => void): () => void;
-  /** The address of a second-screen learner monitor that follows this session. */
+  onFollowers(fn: (n: number, devices: RelayDevice[] | null) => void): () => void;
+  /** The relay's device table now (R2), or null (an older relay, none yet). */
+  devices?: () => RelayDevice[] | null;
+  /** The address of a second-screen learner monitor that follows this session (`#/monitor`; the patient monitor's is its `#/monitor/wide`). */
   learnerUrl: string;
   now?: () => number;
   /** For tests: the relay's description (default: ask the relay). */
   info?: (relay: string) => Promise<RelayInfo | null>;
-  /** The instructor phone's card (room-instructor.ts, plan instructor-peer-role.md P7): its own card on this page. */
+  /** For tests: where the remembered layout is kept (default: this browser's store). */
+  store?: Store;
+  /** For tests: a window opener (default: `window.open`). */
+  open?: (url: string) => void;
+  /** For tests: what "New room code" does once confirmed (default: store it and reload this page under it). */
+  renew?: (code: string) => void;
+  /** The instructor phone's card (room-instructor.ts, plan instructor-peer-role.md P7), in the `#room-instructor` slot. */
   instructor?: InstructorRoomCard;
   /** The room's defibrillator model (R5b): the site's choice, and the session's hand-over of a new one (it saves it and
    *  sends it to the patient's engine). Absent: no card. */
@@ -51,22 +69,48 @@ export interface RoomView extends View {
   draw(): void;
 }
 
-const SHOWING = (role: PeerSeen['role']) => (role === 'viewer' ? 'Learner monitor' : role === 'instructor' ? 'Instructor sign-in' : 'Remote');
-const LEVEL_TEXT: Record<RoomLevel, string> = { stable: 'stable', weak: 'weak', down: 'disconnected' };
+const LEVEL_TEXT: Record<RoomLevel | 'absent', string> = { stable: 'stable', weak: 'weak', down: 'disconnected', absent: 'expected, not connected' };
+
+/** The legend's line under the table (Q9 ruled 5 November: the numbers are an engineering choice, and say so). */
+export const ROOM_LEGEND = `Weak: a ping over ${WEAK_PING_MS} ms, or a device that missed one ${HEARTBEAT_MS / 1000} s heartbeat (an engineering choice, not a standard). The ping is the relay's round trip to the device: in the kit, the Wi-Fi.`;
+
+/** The host side of mock-up m5, on R4's cards: what each card says on this computer. */
+const OPENERS: Array<{ show: CardShow; title?: string; text: string; foot: string }> = [
+  { show: 'learner', text: 'A window that follows the patient monitor, as the phones do.', foot: 'A second screen or the projector' },
+  { show: 'monitor', text: "ECG, pressures, SpO₂, capnography and temperature in the room's monitor style, the whole screen.", foot: 'A second screen or the projector' },
+  { show: 'defib', title: 'Defibrillator', text: "The room's defibrillator: energy, charge, shock and sync, with the patient's rhythm.", foot: 'A second screen or a tablet' },
+  { show: 'vent', text: 'Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient.', foot: 'The Ventilator view, in this window' },
+  { show: 'depth', text: 'Needs a simulated EEG: planned as an engine stage of its own.', foot: '—' },
+  { show: 'iabp', text: "Timing, augmentation and the arterial trace with the balloon's effect.", foot: 'Not in this release' },
+];
+
+/** The address of a window of this computer that shows `show` (the learner monitor's address, its hash changed). */
+export const windowUrl = (learnerUrl: string, show: 'learner' | 'monitor' | 'defib'): string => learnerUrl.replace(/#.*$/, '') + hashOf(show);
 
 export function roomView(d: RoomDeps): RoomView {
   const now = d.now ?? Date.now;
+  const kept = d.store ?? appStore;
   const log = new PeerLog();
-  const opened: Array<{ what: string; at: number }> = [];
   const listen = (t: ManagedTransport, via: PeerSeen['via']) => t.onMessage((m: WireMessage) => {
     if (m.from === d.hostPeerId) return;
-    // R8a's `ventilator` is not listed: no cockpit says it before R8d, which gives it its own row
-    if (m.kind === 'hello' && m.role !== 'host' && m.role !== 'ventilator') log.heard(m.from, via, m.role, now());
+    // R8a's `ventilator` is not listed from a hello: the relay's table lists every socket (R2)
+    if (m.kind === 'hello' && m.role !== 'host' && m.role !== 'ventilator') log.heard(m.from, via, m.role, now(), m.role === 'viewer' ? (m.show ?? null) : null);
     else if (m.kind === 'command') log.heard(m.from, via, 'controller', now());
     else return;
+    if (via === 'local') writeWindows(kept, windowsOf(log.list()));
     draw();
   });
   const relayState = (): RelayState => (!d.relay || !d.relayLink ? 'none' : d.relayLink.status === 'open' ? 'open' : 'down');
+  const table = (): RelayDevice[] | null => d.devices?.() ?? null;
+  let tableAt = now(); // when the relay last sent its table (its `sinceMs` are as of then)
+  // The remembered layout (room-layout.ts): read once for "Last time", then kept up to date as devices come
+  let layout = readLayout(kept);
+  const before: { windows: Windows; line: string | null } = { windows: readWindows(kept), line: lastTime(layout, readWindows(kept)) };
+  const seen = (devices: RelayDevice[] | null) => {
+    if (!devices?.some((x) => x.device)) return;
+    layout = noteDevices(layout, devices, now());
+    writeLayout(kept, layout);
+  };
 
   // ------------------------------------------------------------------------------------------------------ status box
   const dot = h('i', { class: 'room-dot', 'aria-hidden': 'true' });
@@ -145,57 +189,127 @@ export function roomView(d: RoomDeps): RoomView {
 
   // ------------------------------------------------------------------------------------------------- connected now
   const rows = h('tbody', {});
-  const table = h('table', { class: 'room-table' },
-    h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, h('span', { class: 'sr-only' }, 'State')), h('th', { scope: 'col' }, 'Device'), h('th', { scope: 'col' }, 'Showing'), h('th', { scope: 'col' }, 'Sync'), h('th', { scope: 'col' }, 'Last heard'))),
+  const tableEl = h('table', { class: 'room-table' },
+    h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, h('span', { class: 'sr-only' }, 'State')), h('th', { scope: 'col' }, 'Device'), h('th', { scope: 'col' }, 'Showing'), h('th', { scope: 'col' }, 'Status'), h('th', { scope: 'col' }, 'Ping'), h('th', { scope: 'col' }, 'Last heard'))),
     rows);
-  const row = (level: RoomLevel, device: (Node | string)[], showing: string, sync: string, heard: string) =>
-    h('tr', { 'data-level': level }, h('td', { class: 's' }, h('i', { class: `room-dot ${level}`, role: 'img', 'aria-label': LEVEL_TEXT[level] })), h('td', {}, ...device), h('td', {}, showing), h('td', { class: 'm' }, sync), h('td', { class: 'm' }, heard));
-  const openedBox = h('p', { class: 'room-opened' });
-  const openLearner = button('Learner monitor in a new window', () => {
-    // `noopener` puts the window in its own process (an opener would share this page's main thread with its engine)
-    window.open(d.learnerUrl, '_blank', 'noopener,width=1280,height=800');
-    opened.push({ what: 'learner monitor window', at: now() });
-    draw();
-  });
+  const nameCell = (r: DeviceRow): Array<Node | string> => {
+    if (!r.named || !r.device) return [h('b', {}, r.name), ...(r.where ? [` · ${r.where}`] : [])];
+    const key = r.device;
+    const input = h('input', { type: 'text', class: 'room-name', value: layout[key]?.name ?? '', placeholder: r.name, maxlength: '32', 'aria-label': `Name of ${r.name}`, spellcheck: 'false' });
+    input.addEventListener('change', () => {
+      layout = rename(layout, key, input.value, now());
+      writeLayout(kept, layout);
+      draw();
+    });
+    return [input];
+  };
+  const row = (r: DeviceRow) =>
+    h('tr', { 'data-level': r.level, ...(r.show ? { 'data-show': r.show } : {}), ...(r.device ? { 'data-device': r.device } : {}) },
+      h('td', { class: 's' }, h('i', { class: `room-dot ${r.level}`, role: 'img', 'aria-label': LEVEL_TEXT[r.level] })),
+      h('td', {}, ...nameCell(r)), h('td', {}, r.showing), h('td', { class: 'm' }, r.state), h('td', { class: 'm room-ping' }, r.ping), h('td', { class: 'm' }, r.heard));
   const connected = h('section', { class: 'room-card room-connected', 'aria-labelledby': 'room-conn-h' },
     h('h2', { id: 'room-conn-h' }, 'Connected now'),
-    h('div', { class: 'room-scroll' }, table),
-    h('p', { class: 'room-legend' }, ...(['stable', 'weak', 'down'] as const).map((l) => h('span', {}, h('i', { class: `room-dot ${l}`, 'aria-hidden': 'true' }), LEVEL_TEXT[l]))),
-    h('p', { class: 'hint' }, 'A phone speaks to this computer when it joins or catches up; the relay counts the ones following. A window closed on this computer stays listed until this page reloads.'),
-    h('div', { class: 'room-open' }, h('span', {}, 'Open on this computer:'), openLearner, h('a', { class: 'btn', href: hrefOf('remote') }, 'Open a remote')),
-    openedBox);
+    h('div', { class: 'room-scroll' }, tableEl),
+    h('p', { class: 'room-legend' }, ...(['stable', 'weak', 'down', 'absent'] as const).map((l) => h('span', {}, h('i', { class: `room-dot ${l}`, 'aria-hidden': 'true' }), LEVEL_TEXT[l]))),
+    h('p', { class: 'hint room-rule' }, ROOM_LEGEND),
+    h('p', { class: 'hint' }, "Last heard: the device's last answer to the relay's ping, which the relay reports at each heartbeat. Type a name over a device to keep it for the next time in this room. A window closed on this computer stays listed until this page reloads."),
+    // P7's card (room-instructor.ts: the instructor phone's row, its PIN behind press-and-hold, its QR fold), unchanged
+    h('div', { id: 'room-instructor' }, ...(d.instructor ? [d.instructor.el] : [])));
 
-  const clock = (t: number) => new Date(t).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+  // ---------------------------------------------------------------------------------------------- on this computer
+  const cards = h('div', { class: 'join-grid room-openers' });
+  type Win = 'learner' | 'monitor' | 'defib';
+  const winOf = (show: DeviceRow['show']): Win => (show === 'monitor' || show === 'defib' ? show : 'learner');
+  const windowNames = (show: Win, rs: readonly DeviceRow[]) =>
+    rs.filter((r) => r.where === 'this computer' && winOf(r.show) === show && r.showing !== 'Remote' && r.showing !== 'Instructor remote').map((r) => r.name);
+  const openWindow = (show: Win) => {
+    const url = windowUrl(d.learnerUrl, show);
+    // `noopener` puts the window in its own process (an opener would share this page's main thread with its engine)
+    if (d.open) d.open(url);
+    else window.open(url, '_blank', 'noopener,width=1280,height=800');
+  };
+  const drawCards = (rs: readonly DeviceRow[]) => {
+    cards.replaceChildren(...OPENERS.map((o) => {
+      const w = PICKER_WORDS.cards.find((c) => c.show === o.show);
+      const title = o.title ?? w?.title ?? o.show;
+      if (o.show === 'learner' || o.show === 'monitor' || o.show === 'defib') {
+        const show = o.show;
+        const names = [...(show === 'monitor' ? ['This window'] : []), ...windowNames(show, rs)];
+        return instrumentCard({ show, title, chip: names.length ? names.join(' · ') : 'Not open', on: names.length > 0, text: o.text, foot: o.foot,
+          actions: [button('New window', () => openWindow(show), 'small', { 'aria-label': `${title} in a new window` })] });
+      }
+      if (o.show === 'vent')
+        return instrumentCard({ show: 'vent', title, chip: 'On this computer', text: o.text, foot: o.foot, actions: [h('a', { class: 'btn small', href: hrefOf('vent') }, 'Open here')] });
+      return instrumentCard({ show: o.show, title, chip: w?.chip ?? '', text: o.text, foot: o.foot, actions: [] });
+    }));
+  };
+  const lastLine = h('p', { class: 'room-last' });
+  const reopen = button('Reopen that layout', () => {
+    for (const show of ['monitor', 'defib', 'learner'] as const) for (let i = 0; i < (before.windows[show] ?? 0); i++) openWindow(show);
+    reopen.hidden = true;
+  }, 'small room-reopen');
+  const said = h('p', { class: 'hint room-said', role: 'status' });
+  const drawLast = () => {
+    setText(lastLine, before.line ?? 'Nothing was kept from an earlier time in this room: the names you give the devices and the windows you open are kept for the next time.');
+    reopen.hidden = !((before.windows.learner ?? 0) + (before.windows.monitor ?? 0) + (before.windows.defib ?? 0));
+  };
+  const forget = button('Forget the room', () => {
+    forgetRoom(kept);
+    layout = {};
+    before.windows = {};
+    before.line = null;
+    setText(said, `Forgotten: the device names and the windows. The room code ${d.code} stays.`);
+    drawLast();
+    draw();
+  }, 'small room-forget');
+
+  // ------------------------------------------------------------------------------------------------- the room code
+  const renewNo = button(`Keep ${d.code}`, () => ask.close(), 'small');
+  const renewYes = button('Make a new code', () => {
+    ask.close();
+    const code = newSessionCode();
+    (d.renew ?? ((c: string) => {
+      keepRoomCode(c);
+      const u = new URL(location.href);
+      u.searchParams.set('session', c);
+      location.replace(u);
+    }))(code);
+  }, 'primary small');
+  const ask = h('dialog', { class: 'room-renew', 'aria-labelledby': 'room-renew-h' },
+    h('h2', { id: 'room-renew-h' }, 'A new room code?'),
+    h('p', {}, `The phones and screens following ${d.code} will stay on it: they join the new code by scanning the new QR code. This page reloads under the new code, and a case running now is not carried over.`),
+    h('div', { class: 'room-renew-acts' }, renewNo, renewYes));
+  const roomCard = h('section', { class: 'room-card room-setup', 'aria-labelledby': 'room-setup-h' },
+    h('h2', { id: 'room-setup-h' }, 'This room'),
+    h('div', { class: 'room-code-row' },
+      h('span', {}, 'Room code ', h('b', { class: 'room-code-now', 'aria-label': `Code ${d.code.split('').join(' ')}` }, d.code), ' — it stays until you make a new one.'),
+      button('New room code', () => ask.showModal(), 'small room-renew-open')),
+    h('div', { class: 'room-code-row' }, lastLine, reopen),
+    h('div', { class: 'room-code-row' }, h('span', { class: 'hint' }, 'Forgetting the room clears the device names and the windows, not the code.'), forget),
+    said);
+  const computer = h('section', { class: 'room-card room-computer', 'aria-labelledby': 'room-pc-h' },
+    h('h2', { id: 'room-pc-h' }, 'Open on this computer'), cards,
+    h('p', { class: 'room-open' }, h('a', { class: 'btn small', href: hrefOf('remote') }, 'Open a remote')));
+
   function draw(): void {
     d.instructor?.draw();
     const t = now();
     const relay = relayState();
     const peers = log.list();
-    const s = roomStatus({ relay, phones: d.followers(), peers, now: t });
+    const devices = table();
+    const s = roomStatus({ relay, phones: d.followers(), peers, now: t, devices });
     status.dataset.level = s.level;
     setText(sTitle, s.title);
     setText(sSub, s.sub);
-    const list: HTMLElement[] = [row('stable', [h('b', {}, 'This window')], 'Instructor pages and the monitor', '—', 'now')];
-    let w = 0;
-    let p = 0;
-    for (const x of peers) {
-      if (x.via === 'local') list.push(row('stable', [h('b', {}, `Window ${++w + 1}`), ' · this computer'], SHOWING(x.role), 'synced', ago(t - x.lastAt)));
-      else {
-        const lvl: RoomLevel = relay !== 'open' ? 'down' : t - x.lastAt < RESYNC_MS ? 'weak' : 'stable';
-        list.push(row(lvl, [h('b', {}, `Phone ${++p}`)], SHOWING(x.role), lvl === 'down' ? 'relay down' : lvl === 'weak' ? 'catching up' : 'synced', ago(t - x.lastAt)));
-      }
-    }
-    // Devices the relay counts that said nothing since this page opened (they joined before a reload of it)
-    const quiet = relay === 'open' ? d.followers() - peers.filter((x) => x.via === 'relay').length : 0;
-    for (let i = 0; i < quiet; i++) list.push(row('stable', [h('b', {}, `Phone ${++p}`)], 'Learner monitor', 'following', 'before this page opened'));
-    rows.replaceChildren(...list);
-    openedBox.hidden = !opened.length;
-    setText(openedBox, opened.length ? `Opened from this page this session: ${opened.map((o) => `${o.what} at ${clock(o.at)}`).join(', ')}.` : '');
+    const rs = deviceRows({ relay, phones: d.followers(), peers, now: t, devices, known: layout, ageMs: t - tableAt });
+    // a name being typed is not redrawn under the instructor's fingers
+    if (!(document.activeElement instanceof HTMLInputElement && rows.contains(document.activeElement))) rows.replaceChildren(...rs.map(row));
+    drawCards(rs);
   }
 
   // ------------------------------------------------------------------------------------- defibrillator in this room
   // R5b (plan room-and-instruments.md §7; owner's Q6 ruling, 5 November): the room's defibrillator model, apart from the
-  // monitor style. In a card of its own until R7 builds Room setup proper
+  // monitor style, in a card of its own under the openers
   const defibCard = d.defib ? (() => {
     const choice = d.defib;
     const label = (id: string, l: string) => {
@@ -216,19 +330,22 @@ export function roomView(d: RoomDeps): RoomView {
   const el = h('section', { class: 'console room', 'aria-labelledby': 'room-h' },
     h('div', { class: 'console-page' },
       h('header', { class: 'console-head' },
-        h('div', {}, h('h1', { id: 'room-h' }, 'Room'), h('p', { class: 'console-sub' }, 'Every screen and phone that joins with this code follows the same patient.')),
+        h('div', {}, h('h1', { id: 'room-h' }, 'Room setup'), h('p', { class: 'console-sub' }, 'Every screen and phone that joins with this code follows the same patient.')),
         status),
-      h('div', { class: 'room-cols' }, join, connected, d.instructor?.el ?? null), ...(defibCard ? [defibCard] : [])), big);
+      h('div', { class: 'room-cols' }, join, connected),
+      computer, ...(defibCard ? [defibCard] : []), roomCard), big, ask);
   // Wired once everything above exists (a transport replays its status on subscribe)
   listen(d.local, 'local');
   if (d.relayLink) listen(d.relayLink, 'relay');
-  d.onFollowers((n) => (log.keepPhones(n), drawCount(n), draw()));
+  d.onFollowers((n, devices) => ((tableAt = now()), log.keepPhones(n), seen(devices), drawCount(n), draw()));
   d.relayLink?.onStatus(() => draw());
+  seen(table());
+  drawLast();
   draw();
   return {
     id: 'room',
     el,
-    devices: () => roomStatus({ relay: relayState(), phones: d.followers(), peers: log.list(), now: now() }).devices,
+    devices: () => roomStatus({ relay: relayState(), phones: d.followers(), peers: log.list(), now: now(), devices: table() }).devices,
     draw,
     enter() {
       if (!asked) void findAddress();
@@ -241,6 +358,7 @@ export function roomView(d: RoomDeps): RoomView {
       d.instructor?.leave();
       document.removeEventListener('keydown', onKey);
       if (big.open) big.close();
+      if (ask.open) ask.close();
       if (timer) clearInterval(timer);
       timer = null;
     },

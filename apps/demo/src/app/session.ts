@@ -9,7 +9,7 @@ import {
   type AppliedResolution, type BriefingNotice, type HostTarget, type ScenarioEvent, type VentLinkBody, type WireEvent,
 } from '@pme/controller';
 import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type AnyScenarioDoc } from '@pme/controller/scenario';
-import type { ManagedTransport, NoteEvent } from '@pme/controller';
+import type { ManagedTransport, NoteEvent, RelayDevice } from '@pme/controller';
 import { mountMonitor, normalIbpScales, type IbpChannel, type IbpScales, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
@@ -150,7 +150,9 @@ export class AppSession {
   readonly relay: ReturnType<typeof createWebSocketTransport> | null = null;
   /** Peers on the relay besides this host (the phones following), from the relay's `peers` frames. */
   followers = 0;
-  private readonly followerFns = new Set<(n: number) => void>();
+  /** R7: the relay's device table, from the same frames (R2: every device with its ping), or null from an older relay. */
+  devices: RelayDevice[] | null = null;
+  private readonly followerFns = new Set<(n: number, devices: RelayDevice[] | null) => void>();
   /** Instructor phones granted now (HostSession onInstructors: 0 or 1, the newest takes over). */
   instructors = 0;
   private readonly instructorFns = new Set<(n: number) => void>();
@@ -263,7 +265,8 @@ export class AppSession {
         onRelayFrame: (f) => {
           if (f.relay !== 'peers') return;
           this.followers = f.peers;
-          for (const fn of this.followerFns) fn(f.peers);
+          this.devices = f.devices ?? null;
+          for (const fn of this.followerFns) fn(f.peers, this.devices);
         },
       });
       hs.addTransport(this.relay);
@@ -329,8 +332,8 @@ export class AppSession {
     return () => void this.instructorFns.delete(fn);
   }
 
-  /** Every change in the number of phones following on the relay. */
-  onFollowers(fn: (n: number) => void): () => void {
+  /** Every `peers` frame of the relay: the number of phones following, and its device table (R7). */
+  onFollowers(fn: (n: number, devices: RelayDevice[] | null) => void): () => void {
     this.followerFns.add(fn);
     return () => void this.followerFns.delete(fn);
   }
