@@ -21,7 +21,7 @@ import { axisRange, drugTotals, endOf, facts, mmss, objectives, perMinute, PRESS
 import { debriefJson } from '../debrief-export.ts';
 import { handoutQuestionsAt, keyMoments, keyTimes, openersAt, recognitionAt, RECOGNISED, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
 import { LAB_KEYS, TREND_KEYS, type PressureKey, type Row, type RunData, type TrendKey, type ValueKey } from '../record.ts';
-import { COURSE_W, courseSvg, type CourseMark } from './debrief-course.ts';
+import { COURSE_W, courseSvg, tracePath, type CourseMark } from './debrief-course.ts';
 import { GRADE_WORDS, swimlaneSvg, verdictMark, windowsOf } from './debrief-swimlane.ts';
 import { MARKS } from '../teach2/dock.ts';
 import { hrefOf } from '../router.ts';
@@ -157,17 +157,7 @@ function chart(d: RunData, k: TrendKey, end: number, marks: ReadonlyArray<{ t: n
   const { W, H, L, R, T, B } = BOX;
   const x = (t: number) => L + (t / Math.max(end, 1)) * (W - L - R);
   const y = (v: number) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
-  let path = '';
-  let prev: number | null = null;
-  for (const s of d.samples) {
-    const v = s[k];
-    if (v === null) {
-      prev = null;
-      continue;
-    }
-    path += `${prev === null || s.t - prev > 5 ? 'M' : 'L'}${x(s.t).toFixed(1)} ${y(v).toFixed(1)}`;
-    prev = s.t;
-  }
+  const path = tracePath(d, k, x, y);
   const f = (v: number) => v.toFixed(m.digits);
   const min = pts.reduce((b, s) => ((s[k] as number) < (b[k] as number) ? s : b));
   const max = pts.reduce((b, s) => ((s[k] as number) > (b[k] as number) ? s : b));
