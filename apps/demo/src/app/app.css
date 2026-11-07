@@ -680,7 +680,27 @@ dialog.room-big[open] { display: flex; flex-direction: column; align-items: cent
 .room-legend .room-dot { width: 8px; height: 8px; margin-right: 5px; }
 .room-connected .hint { margin: 10px 0 0; }
 .room-open { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 18px; font-size: 13.5px; color: var(--text-muted); }
-.room-opened { margin: 18px 0 0; padding: 12px 14px; border: 1px dashed var(--line-strong); border-radius: 10px; font-size: 13.5px; color: var(--text-muted); }
+/* Room plan R7: Room setup — the table's names, the grey row of a remembered device not here, the openers on R4's
+   cards, the room's own card (code, layout, forget) and the "New room code" question */
+.room-dot.absent { background: transparent; box-shadow: inset 0 0 0 1.5px var(--text-muted); }
+.room-table tr[data-level='absent'] td { color: var(--text-muted); }
+.room-table td.room-ping { white-space: nowrap; }
+.room-name { width: 100%; min-width: 9em; max-width: 16em; min-height: 32px; box-sizing: border-box; padding: 2px 8px; border: 1px solid var(--line); border-radius: var(--r-control); background: transparent; color: var(--text-strong); font: inherit; font-weight: 500; }
+.room-name:hover, .room-name:focus { border-color: var(--line-strong); }
+.room-name::placeholder { color: var(--text-strong); opacity: 1; }
+.room-table tr[data-level='absent'] .room-name::placeholder { color: var(--text-muted); }
+.room-computer, .room-setup { margin-top: 20px; }
+.room-openers { margin-top: 0; }
+.join-acts { display: inline-flex; flex-wrap: wrap; gap: var(--s-2); }
+.room-code-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 10px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.room-code-row:first-of-type { border-top: 0; padding-top: 0; }
+.room-code-now { font-family: var(--font-plex-mono); font-weight: 500; letter-spacing: 0.1em; color: var(--text-strong); }
+.room-last { margin: 0; color: var(--text); }
+.room-said:empty { display: none; }
+dialog.room-renew { max-width: 480px; padding: 22px; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface); color: var(--text); }
+dialog.room-renew h2 { margin: 0 0 10px; font-size: var(--t-18); color: var(--text-strong); }
+dialog.room-renew p { margin: 0; font-size: 14px; line-height: 1.5; }
+.room-renew-acts { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
 @media (max-width: 1100px) { .room-cols { grid-template-columns: minmax(0, 1fr); } }
 
 /* Scenarios */
@@ -815,3 +835,4 @@ body:has(.app[data-route='teach2']) .toasts { bottom: calc(var(--dock-foot, 64px
 .join-card .st { flex: none; font-size: var(--t-13); padding: 3px 8px; border-radius: 99px; border: 1px solid var(--line-strong); color: var(--text-muted); white-space: nowrap; }
 .join-card .st.on { color: var(--ok); border-color: var(--ok); }
 .join-card .btn { min-height: 44px; min-width: 44px; } /* every card's action is a 44 px target (R4), with a mouse too */
+#room-instructor > .room-card { margin-top: 16px; box-shadow: none; } /* R7: P7's card in Room setup's instructor slot */

@@ -116,7 +116,8 @@ export function mountBeginPane(ctx: Teach2Ctx, host: HTMLElement): { el: HTMLEle
     [() => go('cases'), card('library', 2, 'Scenario library', `${LIBRARY.length} cards. Pick one and this pane becomes its stages and steps.`, 'Browse', () => go('cases'), true)],
     [openArchive, card('archive', 3, 'Debrief archive', 'Every saved run: resident, card, time, objectives and score. Open one, print it, or compare residents on the same card.', 'Open · 0', openArchive)],
   ];
-  // Room setup opens Settings until its own window exists; the builder comes with the pme-scenario/2 authoring guide
+  // Room setup opens the Room page (Room plan R7: it is the Room setup window); the builder comes with the pme-scenario/2
+  // authoring guide
   // "Open a card file…" (brief 22): the file dialog for one JSON file; what it came to shows under the buttons
   const file = h('input', { type: 'file', accept: 'application/json,.json', class: 'ip2-begin-file', hidden: true, onchange: () => void pick() });
   const note = h('div', { class: 'ip2-begin-note' });
@@ -139,7 +140,7 @@ export function mountBeginPane(ctx: Teach2Ctx, host: HTMLElement): { el: HTMLEle
     ctx.begin?.repaint();
   };
   const two = h('div', { class: 'ip2-begin-two' },
-    h('button', { type: 'button', class: 'ip2-begin-small', onclick: () => void (location.hash = hrefOf('settings')), title: 'Opens Settings until the room setup has its own window' }, 'Room setup'),
+    h('button', { type: 'button', class: 'ip2-begin-small', onclick: () => void (location.hash = hrefOf('room')), title: 'The devices, the windows of this computer and the room code' }, 'Room setup'),
     h('button', { type: 'button', class: 'ip2-begin-small', disabled: true, title: 'Comes with the pme-scenario/2 authoring guide' }, 'Scenario builder ', h('span', { class: 'ip2-begin-tag' }, 'after the demo')),
     h('button', { type: 'button', class: 'ip2-begin-small ip2-begin-open', onclick: () => file.click(), title: 'A pme-scenario/2 (or /1) card in JSON, checked before it is kept; it stays in this browser only' }, 'Open a card file…'));
   const menu = h('div', { class: 'ip2-begin-menu' }, h('div', { class: 'ip2-begin-cards' }, ...ways.map(([, el]) => el)), two, note);
