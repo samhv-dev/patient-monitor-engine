@@ -23,7 +23,6 @@ import { SCENARIO_META } from './scenario-meta.ts';
 import { archive } from './archive.ts';
 import { LIBRARY, scenarioById, type ScenarioCard } from './scenarios.ts';
 import { AppSession, type RoomKeep } from './session.ts';
-import { mountSessionBar } from './sessionbar.ts';
 import { applySkinAlarmColours, LEVEL_MARK, LEVEL_NAME, Shell, skinAlarmBar, skinAlwaysOn } from './shell.ts';
 import { loadSite, saveSite, setLightScreen } from './site.ts';
 import { button, clock, h, pausedMark, setText, throttle, toast, trackChromeBottom } from './ui.ts';
@@ -41,7 +40,6 @@ import { homeView } from './views/home.ts';
 import { patientView } from './views/patient.ts';
 import { roomView } from './views/room.ts';
 import { scenariosView } from './views/scenarios.ts';
-import { teachView } from './views/teach.ts';
 import { teach2View } from './views/teach2.ts';
 import { validateView } from './views/validate.ts';
 import { ventView } from './views/vent.ts';
@@ -168,13 +166,10 @@ if (follow && shows === 'pick') {
     else await session.enableSound();
     drawSound();
   };
-  // The alarm count, the reveal gestures, a Load and every other way to the instructor open the Instructor view chosen in
-  // Settings, today's or v2 (owner, 30 October; it replaced answer 19's "the view used last")
-  const instructor = () => site.instructor;
+  // The alarm count opens the Instructor view's Devices sheet
   const openAlarms = (): void => {
-    location.hash = hrefOf(instructor());
-    if (instructor() === 'teach') teach.panel.select('devices');
-    else teach2.openSheet('devices');
+    location.hash = hrefOf('teach2');
+    teach2.openSheet('devices');
   };
   // E125: the pages before a session — Home, Room (the QR code, who follows), Scenarios, Patient — and the rail
   shell.add(homeView());
@@ -185,11 +180,9 @@ if (follow && shows === 'pick') {
     defib: { model: () => site.defibModel, choose: (m) => ((site.defibModel = m), saveSite(site), session.setDefibModel(m)) },
   });
   shell.add(room);
-  shell.add(scenariosView({ session, loadScenario, instructor }));
+  shell.add(scenariosView({ session, loadScenario }));
   shell.add(patientView({ session, site }));
-  shell.add(monitorView({ session, link, learnerUrl: followUrl(session.code), phones: !!relay, instructor }));
-  const teach = teachView(link, { site, main: shell.main, stage: shell.stage, weightKg, loadScenario });
-  shell.add(teach);
+  shell.add(monitorView({ session, link, learnerUrl: followUrl(session.code), phones: !!relay }));
   // option G: the app's top bar is not shown on #/teach2; its header carries the top bar's Sound switch and Room code
   // "Finish the case" (board "Finish 2"): the same card again with the room kept (the probes, the cuff, the session code
   // and so the phones), or the case ended on the page's default patient, the deep link it was opened from spent so that
@@ -209,9 +202,8 @@ if (follow && shows === 'pick') {
   shell.add(ventView(session));
   shell.add(validateView());
   shell.add(devView());
-  shell.add(settingsView(site, session, { onInstructor: () => rail.refresh() }));
+  shell.add(settingsView(site, session));
   shell.add(debriefView(session, link));
-  mountSessionBar(shell.bar, link);
   // The rail's switch is the site profile's Screen theme (Settings' "Screen"): dark ↔ projector-light, saved as Settings
   // saves it, the monitor's look included
   const setTheme = (light: boolean): void => {
@@ -226,7 +218,6 @@ if (follow && shows === 'pick') {
       patient: () => (link.ctl.scenario.doc ? 'case running' : 'free run'),
     },
     theme: { light: () => site.theme === 'projector-light', set: setTheme },
-    instructor,
   });
   shell.setRail(rail);
   session.onFollowers(() => rail.refresh());
@@ -277,11 +268,11 @@ if (follow && shows === 'pick') {
 
   // Learner monitor ↔ instructor view: the hidden panel's reveal gestures
   attachReveal(window, new RevealGesture(() => {
-    const to = revealTarget(shell.route.id, instructor());
+    const to = revealTarget(shell.route.id);
     if (to) location.hash = hrefOf(to);
   }));
   shell.onRoute((r) => {
-    if (r.id === 'teach' || r.id === 'teach2' || r.id === 'monitor') session.live = true;
+    if (r.id === 'teach2' || r.id === 'monitor') session.live = true;
   });
   // "SIMULATION · not a clinical monitor" on the Monitor view only (the instructor's pages show the same monitor
   // without it): in a two-row header, else a strip above the monitor; again after a new monitor or a skin change
@@ -305,7 +296,7 @@ if (follow && shows === 'pick') {
     });
   } else if (card && loadScenario(card)) {
     session.live = true;
-    if (!location.hash) location.hash = hrefOf(instructor()); // a deep link to a card opens the chosen Instructor view
+    if (!location.hash) location.hash = hrefOf('teach2'); // a deep link to a card opens the Instructor view
   }
   keepPositions(session);
   // Another tab took this session (or started it anew): stop hosting it here, and say where it went
@@ -313,5 +304,5 @@ if (follow && shows === 'pick') {
   shell.start();
   // e2e hook: the engine ids the glossary test must never find in a clinical view
   const engineIds = [...RHYTHM_IDS, ...DRUG_IDS, ...LUNG_CONDITIONS.map((c) => c.id)];
-  Object.assign(window, { __pmeApp: { shell, session, link, frames, site, teach, teach2, engineIds, skinAlarmBar, room, rail, archive } });
+  Object.assign(window, { __pmeApp: { shell, session, link, frames, site, teach2, engineIds, skinAlarmBar, room, rail, archive } });
 });

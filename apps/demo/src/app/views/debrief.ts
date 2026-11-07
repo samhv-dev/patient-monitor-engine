@@ -19,7 +19,7 @@ import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
 import { axisRange, drugTotals, endOf, facts, mmss, objectives, perMinute, PRESSURE_KEYS, report3, span, steps, trendMeta, type DebriefExport, type Pressure, type Report3, type Step, type StepStatus } from '../debrief.ts';
 import { debriefJson } from '../debrief-export.ts';
-import { keyMoments, keyTimes, recognitionAt, RECOGNISED, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
+import { keyMoments, keyTimes, openersAt, recognitionAt, RECOGNISED, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
 import { LAB_KEYS, TREND_KEYS, type PressureKey, type Row, type RunData, type TrendKey, type ValueKey } from '../record.ts';
 import { COURSE_W, courseSvg, type CourseMark } from './debrief-course.ts';
 import { GRADE_WORDS, swimlaneSvg, verdictMark, windowsOf } from './debrief-swimlane.ts';
@@ -154,7 +154,7 @@ function chart(d: RunData, k: TrendKey, end: number, marks: ReadonlyArray<{ t: n
   if (!pts.length) return fig.appendChild(h('p', { class: 'muted' }, 'Not measured during the run.')), fig;
   const vals = pts.map((s) => s[k] as number);
   const [lo, hi] = axisRange(k, Math.min(...vals), Math.max(...vals)); // DV-2: a least span per trend
-  const W = 640, H = 130, L = 44, R = 10, T = 8, B = 20;
+  const { W, H, L, R, T, B } = BOX;
   const x = (t: number) => L + (t / Math.max(end, 1)) * (W - L - R);
   const y = (v: number) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
   let path = '';
@@ -168,25 +168,87 @@ function chart(d: RunData, k: TrendKey, end: number, marks: ReadonlyArray<{ t: n
     path += `${prev === null || s.t - prev > 5 ? 'M' : 'L'}${x(s.t).toFixed(1)} ${y(v).toFixed(1)}`;
     prev = s.t;
   }
+  const f = (v: number) => v.toFixed(m.digits);
+  const min = pts.reduce((b, s) => ((s[k] as number) < (b[k] as number) ? s : b));
+  const max = pts.reduce((b, s) => ((s[k] as number) > (b[k] as number) ? s : b));
+  const label = `${m.label}, ${mmss(0)} to ${mmss(end)}: lowest ${f(min[k] as number)} at ${mmss(min.t)}, highest ${f(max[k] as number)} at ${mmss(max.t)} ${m.unit}`;
+  fig.append(frame(d, end, marks, label, `<text x="${L - 4}" y="${T + 4}" text-anchor="end">${f(hi)}</text><text x="${L - 4}" y="${H - B}" text-anchor="end">${f(lo)}</text>`, `<path d="${path}"/>`));
+  return fig;
+}
+
+/** A trend chart's frame (the axes, the top grid line, the minutes, the instructor's marks, a dashed line at each
+ *  return to a bookmark) around its value labels and traces, in the chart's viewBox. */
+function frame(d: RunData, end: number, marks: ReadonlyArray<{ t: number; who: Who; n: number }>, label: string, values: string, traces: string): HTMLElement {
+  const { W, H, L, R, T, B } = BOX;
+  const x = (t: number) => L + (t / Math.max(end, 1)) * (W - L - R);
   const step = [60, 120, 300, 600, 900, 1800, 3600].find((st) => end / st <= 8) ?? 3600;
   let ticks = '';
   for (let t = 0; t <= end; t += step) ticks += `<line x1="${x(t)}" x2="${x(t)}" y1="${H - B}" y2="${H - B + 4}"/><text x="${x(t)}" y="${H - 4}" text-anchor="middle">${mmss(t)}</text>`;
   const returns = d.rows.filter((r) => r.kind === 'restore' && r.undone === undefined)
     .map((r) => `<line class="ret" x1="${x(r.t)}" x2="${x(r.t)}" y1="${T}" y2="${H - B}"/><text x="${x(r.t) + 3}" y="${T + 9}">↺</text>`).join('');
   const mks = marks.map((mk) => `<g class="db-mk" data-who="${mk.who}"><line x1="${x(mk.t).toFixed(1)}" x2="${x(mk.t).toFixed(1)}" y1="${T}" y2="${H - B}" stroke="${MARK_INK[mk.who]}" stroke-width="1" stroke-dasharray="3 2" vector-effect="non-scaling-stroke"/>${MARK_SVG[mk.who](x(mk.t), T)}<text x="${(x(mk.t) + 5).toFixed(1)}" y="${T + 7}" class="db-mk-n">${mk.n}</text></g>`).join('');
-  const f = (v: number) => v.toFixed(m.digits);
-  const min = pts.reduce((b, s) => ((s[k] as number) < (b[k] as number) ? s : b));
-  const max = pts.reduce((b, s) => ((s[k] as number) > (b[k] as number) ? s : b));
-  const label = `${m.label}, ${mmss(0)} to ${mmss(end)}: lowest ${f(min[k] as number)} at ${mmss(min.t)}, highest ${f(max[k] as number)} at ${mmss(max.t)} ${m.unit}`;
   const svg = h('div', { class: 'db-svg' });
   svg.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}" preserveAspectRatio="none">
 <line class="axis" x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}"/><line class="axis" x1="${L}" x2="${L}" y1="${T}" y2="${H - B}"/>
 <line class="grid" x1="${L}" x2="${W - R}" y1="${T}" y2="${T}"/>
-<text x="${L - 4}" y="${T + 4}" text-anchor="end">${f(hi)}</text><text x="${L - 4}" y="${H - B}" text-anchor="end">${f(lo)}</text>
-<g class="ticks">${ticks}</g>${mks}${returns}<path d="${path}"/></svg>`;
-  fig.append(svg);
+${values}<g class="ticks">${ticks}</g>${mks}${returns}${traces}</svg>`;
+  return svg;
+}
+/** Every trend chart's viewBox and margins: the Pressures panel shares them, so its minutes line up with the others'. */
+const BOX = { W: 640, H: 130, L: 44, R: 10, T: 8, B: 20 } as const;
+
+/** A lone reading's mark: a dot of radius 1 around the point the path is at (two arcs; a bare `M` draws nothing). */
+const DOT = 'm-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0';
+/** One pressure's trace, as a trend's (broken where nothing was measured, or over more than 5 s between readings): a
+ *  cuff reading, kept only in its cycle's second (D1), has no neighbour to join and is a dot; an arterial run is a
+ *  line. The same rule as PR #294's (map-cuff-stale) shared `tracePath`, which takes the trends' keys only. */
+function pressurePath(d: RunData, k: PressureKey, x: (t: number) => number, y: (v: number) => number): string {
+  let path = '';
+  let prev: number | null = null;
+  let n = 0; // the readings in the subpath being drawn
+  for (const s of d.samples) {
+    const v = s[k];
+    if (v === null || v === undefined) {
+      prev = null;
+      continue;
+    }
+    const move = prev === null || s.t - prev > 5;
+    if (move && n === 1) path += DOT;
+    n = move ? 1 : n + 1;
+    path += `${move ? 'M' : 'L'}${x(s.t).toFixed(1)} ${y(v).toFixed(1)}`;
+    prev = s.t;
+  }
+  return n === 1 ? path + DOT : path;
+}
+
+/** The pressures' panel among the trend charts (the owner's ruling of 6 November, question 2 = B), in their style:
+ *  SBP and DBP as two lines on the left axis, CVP dashed on its own right-hand axis — a shared 0–200 mmHg axis would
+ *  draw a CVP of 5–20 mmHg as a flat line. A record made before Debrief 2 (no 'pressures' in `keeps`) has no panel. */
+function pressuresChart(d: RunData, end: number, marks: ReadonlyArray<{ t: number; who: Who; n: number }>): HTMLElement | null {
+  if (!d.keeps?.includes('pressures')) return null;
+  const fig = h('figure', { class: 'db-chart', 'data-trend': 'pressures' }, h('figcaption', {}, 'Pressures', h('span', { class: 'unit' }, PRESSURES_UNIT)));
+  const vals = (k: PressureKey) => d.samples.map((s) => s[k]).filter((v): v is number => typeof v === 'number');
+  const [sys, dia, cvp] = PRESSURE_KEYS.map(vals) as [number[], number[], number[]];
+  if (!sys.length && !dia.length && !cvp.length) return fig.appendChild(h('p', { class: 'muted' }, 'Not measured during the run.')), fig;
+  const { W, H, L, R, T, B } = BOX;
+  const x = (t: number) => L + (t / Math.max(end, 1)) * (W - L - R);
+  const scale = ([lo, hi]: [number, number]) => (v: number) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+  const both = [...sys, ...dia];
+  const left = both.length ? axisRange('sys', Math.min(...both), Math.max(...both)) : null;
+  const right = cvp.length ? axisRange('cvp', Math.min(...cvp), Math.max(...cvp)) : null;
+  const yl = left ? scale(left) : () => 0;
+  const yr = right ? scale(right) : () => 0;
+  const words = (name: string, v: number[]) => (v.length ? `${name} ${Math.min(...v)} to ${Math.max(...v)}` : `${name} not measured`);
+  const label = `Pressures, ${mmss(0)} to ${mmss(end)}: ${words('SBP', sys)}, ${words('DBP', dia)}, ${words('CVP', cvp)} mmHg`;
+  const f = (v: number) => v.toFixed(0);
+  const values = (left ? `<text class="l" x="${L - 4}" y="${T + 4}" text-anchor="end">${f(left[1])}</text><text class="l" x="${L - 4}" y="${H - B}" text-anchor="end">${f(left[0])}</text>` : '')
+    + (right ? `<line class="axis" x1="${W - R}" x2="${W - R}" y1="${T}" y2="${H - B}"/><text class="r" x="${W - R - 3}" y="${T + 9}" text-anchor="end">CVP ${f(right[1])}</text><text class="r" x="${W - R - 3}" y="${H - B - 3}" text-anchor="end">CVP ${f(right[0])}</text>` : '');
+  const traces = `<path data-p="sys" d="${pressurePath(d, 'sys', x, yl)}"/><path data-p="dia" d="${pressurePath(d, 'dia', x, yl)}"/><path data-p="cvp" class="cvp" d="${right ? pressurePath(d, 'cvp', x, yr) : ''}"/>`;
+  fig.append(frame(d, end, marks, label, values, traces));
   return fig;
 }
+/** The panel's unit and how to read its two axes (the one table the Persian handout reads holds these words too). */
+const PRESSURES_UNIT = 'mmHg · SBP and DBP on the left axis, CVP (dashed) on the right';
 
 const section = (id: string, title: string, ...kids: Array<Node | null>): HTMLElement =>
   h('section', { class: 'db-sec', id: `db-${id}`, 'aria-labelledby': `db-${id}-h` }, h('h2', { id: `db-${id}-h` }, title), ...kids);
@@ -376,6 +438,22 @@ function momentsTable(ms: KeyMoment[], d: RunData): Node[] {
   );
 }
 
+/** "From the card's author" (D9; the two blocks only, DQ6): the card's `show` lines and its openers, each printed as the
+ *  card writes it (Decision 8: never interpolated; the opener's time and key-moment number are a separate label), an
+ *  opener whose anchor did not happen on the kept course left out and counted. Null when the card has no debriefHints. */
+export function hintsSection(d: RunData, ms: KeyMoment[]): HTMLElement | null {
+  const show = d.doc?.debriefHints?.show ?? [];
+  const op = openersAt(d, ms);
+  if (!show.length && !op) return null;
+  const n = op?.left ?? 0;
+  return section('hints', "From the card's author",
+    show.length ? h('div', { class: 'db-hint-block' }, h('h3', {}, 'What this case is built to show'), h('ul', { class: 'db-hint-show' }, ...show.map((x) => h('li', {}, x)))) : null,
+    op ? h('div', { class: 'db-hint-block' }, h('h3', {}, 'Openers for the analysis'),
+      op.shown.length ? h('ol', { class: 'db-hint-openers' }, ...op.shown.map((o) => h('li', {},
+        h('span', { class: 'db-hint-at' }, o.n === null ? mmss(o.t) : `${mmss(o.t)} · moment ${o.n}`), ' ', h('span', { class: 'db-hint-text' }, o.text)))) : null,
+      n ? h('p', { class: 'db-hint-left muted' }, n === 1 ? '1 opener not shown: its event did not happen in this run' : `${n} openers not shown: their events did not happen in this run`) : null) : null);
+}
+
 export function debriefView(session: AppSession, link: Link): View {
   const who = h('input', { class: 'input', id: 'db-who', autocomplete: 'off', placeholder: 'Instructor and learners' });
   const notes = h('div', { class: 'db-notes', contenteditable: 'true', role: 'textbox', 'aria-multiline': 'true', 'aria-labelledby': 'db-notes-h' });
@@ -455,6 +533,7 @@ export function debriefView(session: AppSession, link: Link): View {
         : h('p', { class: 'muted' }, 'This run has no objectives.')),
       // page 2 (DQ5, option A), which a run with key moments has: the swimlane at its head, then the key moments
       ...(ms.length ? [runFoot(), section('swimlane', 'The run, lane by lane', swimLegend(r3 !== null), swim), section('moments', 'Key moments and what the monitor showed', ...momentsTable(ms, d))] : []),
+      hintsSection(d, ms),
       section('facts', 'Measured facts', fs.length
         ? h('dl', { class: 'db-facts' }, ...fs.flatMap((x) => [h('dt', {}, x.label), h('dd', {}, x.value)]))
         : h('p', { class: 'muted' }, 'Nothing was measured yet.')),
@@ -463,7 +542,8 @@ export function debriefView(session: AppSession, link: Link): View {
       runFoot(),
       section('trends', 'Trends',
         legend('charts'),
-        h('div', { class: 'db-charts' }, ...TREND_KEYS.map((k) => chart(d, k, end, ms)))),
+        h('div', { class: 'db-charts' }, ...kids(...TREND_KEYS.flatMap((k) => (k === 'map' ? [chart(d, k, end, ms), pressuresChart(d, end, ms)] : [chart(d, k, end, ms)])))),
+        d.keeps?.includes('pressures') ? null : notRecorded('SBP, DBP and CVP')),
       section('drugs', 'Drugs and fluids', meds.length
         ? h('table', { class: 'db-table' }, h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Time'), h('th', { scope: 'col' }, 'Given'))),
           h('tbody', {}, ...meds.map((r) => h('tr', r.undone ? { class: 'undone' } : {}, h('td', { class: 'num' }, mmss(r.t)), h('td', {}, r.text + undoneText(r))))))

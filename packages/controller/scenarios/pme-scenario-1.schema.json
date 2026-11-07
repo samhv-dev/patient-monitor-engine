@@ -17,6 +17,7 @@
     "story": { "type": "string", "description": "FU-8 (R-S9-4): the learner-facing case text shown before the start (no engine words)." },
     "objectives": { "type": "array", "items": { "anyOf": [{ "type": "string", "minLength": 1 }, { "$ref": "#/definitions/objective" }] }, "description": "FU-8 (R-S9-4): learning objectives, one per line. Stage 13: an objective may carry a debrief rule, { text, rule }; one without a rule is listed as not assessable." },
     "takeHome": { "type": "array", "maxItems": 4, "items": { "type": "string", "minLength": 1 }, "description": "Optional: up to four take-home lines the learner handout prints, as written (the author's reviewed words)." },
+    "debriefHints": { "$ref": "#/definitions/debriefHints" },
     "durationMin": { "type": "number", "exclusiveMinimum": 0, "description": "FU-8 (R-S9-4): the expected run time in minutes." },
     "briefing": {
       "type": "object",
@@ -43,6 +44,17 @@
     "bookmarks": { "type": "array", "items": { "$ref": "#/definitions/bookmark" } }
   },
   "definitions": {
+    "debriefHints": {
+      "type": "object", "minProperties": 1, "additionalProperties": false,
+      "description": "Optional (Debrief 2 D8): the card author's words for the instructor's Debrief page 2, printed as written under \"From the card's author\" and never on the learner handout. `show`: up to four lines of what the case is built to show. `openers`: up to four sentences that open the analysis, each anchored on a run event (`at`, the forms a debrief rule names; a `state:` event must name a state of this card); an opener whose event did not happen on the kept course is not printed.",
+      "properties": {
+        "show": { "type": "array", "minItems": 1, "maxItems": 4, "items": { "type": "string", "minLength": 1 } },
+        "openers": {
+          "type": "array", "minItems": 1, "maxItems": 4,
+          "items": { "type": "object", "required": ["at", "text"], "additionalProperties": false, "properties": { "at": { "$ref": "#/definitions/runEvent" }, "text": { "type": "string", "minLength": 1 } } }
+        }
+      }
+    },
     "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$" },
     "runEvent": {
       "type": "string", "pattern": "^(start|fluid|cpr|shock|ventilation|pulseLoss|rosc|(state|alarm|drug|condition|airway):[A-Za-z0-9_.-]+|value:(hr|map|spo2|etco2|rr|temp|k|lactate|ph|glucose|tcore)[<>][0-9]+(\\.[0-9]+)?)$",

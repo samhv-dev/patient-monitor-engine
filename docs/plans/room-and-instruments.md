@@ -814,7 +814,9 @@ R1 ─► R1b ─────────────────► R7 ──�
 - **The department's own defibrillator model, as a skin** (Q6's second half, ruled 5 November evening): a skin with
   its own sourced defibrillator block (energies, charge times, ladder), then one line in R5a's `DEFIB_MODELS`; on the
   roadmap (`docs/roadmap/v1.0-remaining.md`).
-- **The pacer apart from the skin:** R5a decouples the defibrillator only; the pacer stays the skin's (not ruled).
+- **The pacer apart from the skin:** R5a decoupled the defibrillator only; the owner ruled on 6 November (research/41
+  row 58) that the pacer follows the model too: its default rate and output, ranges, PAUSE behaviour and HR dashes
+  while pacing are the model's (`DEFIB_MODELS`), and R0's last divergence is an equality (scratch/room-plan-gate/r58.json).
 - **The IABP (Q8 ruled 5 November: not in this stage)** is on the engine roadmap as above.
 - **Depth of anaesthesia (Q7 ruled 5 November):** an EEG model and the device algorithms, §9a.
 
