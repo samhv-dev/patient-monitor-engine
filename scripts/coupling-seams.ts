@@ -11,8 +11,9 @@
 //              own EndoState and the `ext` fields above; module = endocrine-thermal (the writer);
 //   bus-read   each DrugBus field (`bus.F`, `bus.F.sub`; types-pk.ts) read outside the pharmacology module; module = the reader.
 // Rows are de-duplicated on (module, kind, field), keeping the first site; `sites` counts every site.
-// Also measured, from the same reading: the EFFECTOR expressions — the right-hand side of an assignment or a const whose
-// top operator is a product (* /) or a sum (+ −), flattened over the same operator — with their factor counts, and per
+// Also measured, from the same reading: the EFFECTOR expressions — the right-hand side of an assignment, a const or a
+// return (a function's or an arrow's value) whose top operator is a product (* /) or a sum (+ −), flattened over the same
+// operator (parentheses dropped) — with their factor counts, and per
 // module the exported numeric constants (model-docs.ts's `extract()`) that sit inside one of the module's own effector
 // expressions: a lower bound on the intra-module rows the registry needs.
 //   node --experimental-strip-types scripts/coupling-seams.ts          → the census as Markdown on stdout
@@ -221,6 +222,16 @@ function operands(e: TS.Expression, ops: Set<TS.SyntaxKind>): TS.Expression[] {
   return ts.isBinaryExpression(b) && ops.has(b.operatorToken.kind) ? [...operands(b.left, ops), ...operands(b.right, ops)] : [b];
 }
 
+/** The name of the function a node returns from (its declaration, or the const or property an arrow is bound to). */
+function fnName(n: TS.Node): string {
+  for (let f: TS.Node | undefined = ts.isArrowFunction(n) ? n : n.parent; f; f = f.parent)
+    if (ts.isFunctionDeclaration(f) || ts.isMethodDeclaration(f) || ts.isArrowFunction(f) || ts.isFunctionExpression(f)) {
+      const named = 'name' in f && f.name ? f.name : (ts.isVariableDeclaration(f.parent) || ts.isPropertyAssignment(f.parent)) ? f.parent.name : undefined;
+      return named ? named.getText() : 'anonymous';
+    }
+  return 'anonymous';
+}
+
 /**
  * The effector expressions of one file and the exported numeric constants inside each, as `file#NAME`: an identifier
  * resolves to a constant exported by the same file or imported (relative) from the file that exports it.
@@ -247,6 +258,8 @@ export function effectors(file: string, text: string, constsByFile: Map<string, 
   visit(sf, (n) => {
     if (ts.isBinaryExpression(n) && n.operatorToken.kind === ts.SyntaxKind.EqualsToken) consider(n.left.getText(), n.right, n);
     else if (ts.isVariableDeclaration(n) && n.initializer) consider(n.name.getText(), n.initializer, n);
+    else if (ts.isReturnStatement(n) && n.expression) consider(`return (${fnName(n)})`, n.expression, n);
+    else if (ts.isArrowFunction(n) && !ts.isBlock(n.body)) consider(`return (${fnName(n)})`, n.body, n.body);
   });
   return out;
 }
@@ -283,7 +296,8 @@ export function renderCensus(c: Census): string {
   const cell = (s: string) => s.replace(/\|/g, '\\|').replace(/\s+/g, ' ');
   const mods = [...new Set(c.seams.map((s) => s.module))].sort();
   const n = (m: string | undefined, k: SeamKind | undefined) => c.seams.filter((s) => (!m || s.module === m) && (!k || s.kind === k)).length;
-  const top = [...c.effectors].sort((a, b) => b.factors - a.factors || a.file.localeCompare(b.file) || a.line - b.line).slice(0, 10);
+  const rank = (es: Effector[]) => [...es].sort((a, b) => b.factors - a.factors || a.file.localeCompare(b.file) || a.line - b.line).slice(0, 10);
+  const row = (e: Effector) => `| \`${short(e.file)}:${e.line}\` | \`${cell(e.lhs)}\` | ${e.op} | ${e.factors} |`;
   const short = (f: string) => f.replace('packages/engine-core/src/', '');
   return [
     '# Coupling seams: census',
@@ -303,7 +317,12 @@ export function renderCensus(c: Census): string {
     `## The ten effector expressions with the most factors (of ${c.effectors.length})`,
     '',
     '| Where | Assigned | Operator | Factors |', '|---|---|---|---:|',
-    ...top.map((e) => `| \`${short(e.file)}:${e.line}\` | \`${cell(e.lhs)}\` | ${e.op} | ${e.factors} |`),
+    ...rank(c.effectors).map(row),
+    '',
+    `## The ten products with the most factors (of ${c.effectors.filter((e) => e.op === 'product').length} products)`,
+    '',
+    '| Where | Assigned | Operator | Factors |', '|---|---|---|---:|',
+    ...rank(c.effectors.filter((e) => e.op === 'product')).map(row),
     '',
     '## Seams',
     '',
