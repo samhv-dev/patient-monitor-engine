@@ -22,7 +22,7 @@ export const F_TAU_S = 8 * 60;
 export const TAU_A_S = 7 * 60; // τ_A 6–8 min without CPR
 export const TAU_A_CPR_S = 17.5 * 60; // 15–20 min with CPR
 export const CPR_BOOST_HZ = 0.75; // CPR adds 0.5–1 Hz
-const CPR_BOOST_TAU_S = 30; // [ENG]
+const CPR_BOOST_TAU_S = 30; // [FIT: VF amplitude/frequency course driven by the clock; brief research/44 L2-13]
 export const EPI_A_GAIN = 0.3; // +20–40% A
 export const EPI_F_HZ = 0.5; // +0.5 Hz
 export const EPI_S = 180; // 2–4 min
@@ -30,16 +30,16 @@ export const A0_MV = 1.2; // Coarse VF onset (1.2 mV; 2 min 0.9, 4 min 0.7, 10 m
 export const FINE_MV = 0.2; // coarse/fine split (fine VF ≤ 0.2 mV, very fine ≤ 0.1)
 export const ASYSTOLE_MV = 0.05;
 export const HAZARD_PER_S = 0.02 / 60;
-const FINE_START_MV = 0.15; // vfFine starts here [ENG]
+const FINE_START_MV = 0.15; // vfFine starts here [FIT: VF amplitude/frequency course driven by the clock; brief research/44 L2-13]
 /**
  * Two independent texture channels along two VCG directions, so the VF vector wanders in 3-D and no lead is ever the
  * null lead of a single fixed direction (with one direction V1 was 24–36 % of II). DIR_A is inferior (II), DIR_B
- * anterior-leftward (V1–V5). Lead gains per unit (A, B): II 1.00/0.12, V1 0.28/0.58, V5 0.44/0.57 [ENG].
+ * anterior-leftward (V1–V5). Lead gains per unit (A, B): II 1.00/0.12, V1 0.28/0.58, V5 0.44/0.57 [ENG: texture].
  */
 export const VF_DIR_A = [0.25, 0.85, -0.3] as const;
 export const VF_DIR_B = [0.45, -0.1, -0.9] as const;
-export const VF_B_WEIGHT = 0.9; // channel B RMS relative to channel A [ENG; planning prototype, 40 seeds: V1/II 0.41–0.92, V5/II 0.50–0.96]
-/** Per-cycle jitter (Ornstein–Uhlenbeck, 500 Hz): log-speed SD and correlation time; log-gain SD and time [ENG]. */
+export const VF_B_WEIGHT = 0.9; // channel B RMS relative to channel A [ENG: texture; planning prototype, 40 seeds: V1/II 0.41–0.92, V5/II 0.50–0.96]
+/** Per-cycle jitter (Ornstein–Uhlenbeck, 500 Hz): log-speed SD and correlation time; log-gain SD and time [ENG: texture]. */
 export const VF_FREQ_JITTER = 0.18;
 export const VF_FREQ_TAU_S = 0.25;
 export const VF_AMP_JITTER = 0.35;
@@ -47,10 +47,10 @@ export const VF_AMP_TAU_S = 0.4;
 /**
  * The per-cycle speed jitter raises the measured spectral peak by ≈ 4.7 % over f_dom(t) (16 seeds × 0/2/4/6/10 min:
  * +0.32/+0.12/+0.38/+0.08/+0.20 Hz against the same runs without jitter), so the jittered speed is scaled back to keep
- * the measured dominant frequency on the 5.5 → 3.9 Hz course [ENG, calibration].
+ * the measured dominant frequency on the 5.5 → 3.9 Hz course [FIT: VF amplitude/frequency course driven by the clock; calibration; brief research/44 L2-13].
  */
 export const VF_FREQ_JITTER_BIAS = 1 / 1.047;
-/** Hop to another recorded window every 1–2.5 s (was: play each 8 s window to its end) [ENG]. */
+/** Hop to another recorded window every 1–2.5 s (was: play each 8 s window to its end) [ENG: texture]. */
 export const VF_HOP_S: readonly [number, number] = [1, 2.5];
 const TWO_SQRT2 = 2 * Math.SQRT2;
 const DT = 1 / 500;
@@ -80,7 +80,7 @@ export interface VfState {
   announcedFine: boolean;
 }
 
-/** Epinephrine bump b ∈ [0, 1]: sin² over EPI_S seconds, peak 1 at EPI_S/2 [ENG]. */
+/** Epinephrine bump b ∈ [0, 1]: sin² over EPI_S seconds, peak 1 at EPI_S/2 [FIT: VF amplitude/frequency course driven by the clock; brief research/44 L2-13]. */
 export function epiBump(mods: Modifiers, s: number): number {
   const e = mods.epinephrineAtS;
   if (e === null || s < e || s > e + EPI_S) return 0;

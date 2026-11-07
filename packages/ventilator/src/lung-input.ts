@@ -16,7 +16,7 @@ export const lungBaseOf = (c: VentConfig): LungBase => ({
   pleural: c.pleural, spont: c.spont, pmus: c.pmus,
 });
 
-export const EFFORT_PMUS_CMH2O = 8; // effort 1 → Pmus 8 cmH2O [ENG: the v1.9 default spontaneous effort is 6–8]
+export const EFFORT_PMUS_CMH2O = 8; // effort 1 → Pmus 8 cmH2O [ENG: control; the v1.9 default spontaneous effort is 6–8]
 
 /** One lung (C, R_insp, R_exp, pleural) → the ventilator's single compartment (catalogue rows and lungState alike). */
 export function lungMechanics(m: { compliance: number; rInsp: number; rExp: number; pleural: number }): Partial<VentConfig> {

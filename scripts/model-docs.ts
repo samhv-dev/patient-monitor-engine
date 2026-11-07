@@ -74,7 +74,7 @@ const UNIT_SUFFIX: [RegExp, string][] = [
   [/_PCT$/, '%'], [/_MMOL$/, 'mmol'], [/_G_DL$/, 'g/dL'], [/_KPA$/, 'kPa'],
 ]; // not _MIN, _C, _H: they also mean "minimum", "compliance/coefficient", "high" in this code
 const UNIT_WORD = /^(?:mmHg|cmH2O|mL|L|dL|s|ms|min|h|Hz|kg|g|mg|µg|ng|mmol|mEq|mOsm|°C|K|kPa|bpm|%|W|J|mV|µV|dyn|WU|cm²?|m²|U|IU|mU|µU|pmol|nmol|\/s|\/min|\/h|\/mL|\/mmHg|\/cmH2O)(?:[·\/^]?(?:mmHg|cmH2O|mL|L|dL|s|ms|min|h|kg|g|mg|µg|mmol|mEq|mOsm|cm|m²|cm⁵|\d|−\d|-\d))*\b/;
-const TAG_RE = /\[(?:ENG|P|TXT|VERIFY)[^\]]*\]/g;
+const TAG_RE = /\[(?:ENG|FIT|P|TXT|VERIFY)[^\]]*\]/g;
 const SOURCE_RE =
   /\b[A-Z][A-Za-z'’-]+(?:\s(?:&|and)\s[A-Z][A-Za-z'’-]+|\set al\.?)?,?\s(?:19|20)\d\d[a-z]?\b|\b(?:tables?|annex|catalogue|brief|research|B)\s?\/?\s?§\s?[\w.]+|\bresearch\/?\s?\d+[\w §.]*|\bPulse(?: CFG)?\b[\w –-]*|\b(?:M10|Miller|Guyton|Nunn|West|Kaplan|Braunwald)\b[^;,)]*|\bDI-\d+[a-z]?\b/g;
 

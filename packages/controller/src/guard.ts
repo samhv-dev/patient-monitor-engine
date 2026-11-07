@@ -3,15 +3,15 @@
 import { INSTRUMENTS, NOTE_EVENTS, type WireMessage } from './protocol.ts';
 
 export const WIRE_LIMITS = {
-  /** Largest serialised message accepted anywhere (an L1-only snapshot is ≈ 7 KB) [ENG]. */
+  /** Largest serialised message accepted anywhere (an L1-only snapshot is ≈ 7 KB) [ENG: network]. */
   maxBytes: 256 * 1024,
-  /** Longest all-numeric array allowed in commands and events (0.13 s of ECG at 500 Hz) [ENG]. */
+  /** Longest all-numeric array allowed in commands and events (0.13 s of ECG at 500 Hz) [ENG: network]. */
   eventNumericArray: 64,
-  /** Longest all-numeric array allowed in a snapshot (the QRS detector history is 128) [ENG]. */
+  /** Longest all-numeric array allowed in a snapshot (the QRS detector history is 128) [ENG: network]. */
   snapshotNumericArray: 1024,
-  /** Deepest nesting accepted (a real snapshot is 10 deep) [ENG]. */
+  /** Deepest nesting accepted (a real snapshot is 10 deep) [ENG: network]. */
   maxDepth: 32,
-  /** Most values in one message (a real snapshot holds ≈ 5 000) [ENG]. */
+  /** Most values in one message (a real snapshot holds ≈ 5 000) [ENG: network]. */
   maxNodes: 50_000,
   /** Longest `note` command text, in characters (plan instructor-peer-role.md §2). */
   noteChars: 500,
@@ -19,13 +19,13 @@ export const WIRE_LIMITS = {
 
 /**
  * A `vent` body's limits (plan room-and-instruments.md R8a). `cmds`: the most commands the ventilator link core builds on
- * one tick [ENG, measured on every profile by test/guard-vent.test.ts]: the profile's stand-in targets once (4 for the
+ * one tick [ENG: network; measured on every profile by test/guard-vent.test.ts]: the profile's stand-in targets once (4 for the
  * two shock profiles, `profiles.ts` STAND_INS), the airway on a circuit change and the tick's VentFrame — 6, not the
  * plan's 4 ("3 plus a spare" counted one stand-in), which would drop the first tick of anaphylaxis and air embolism.
- * `bytes`: a `vent` body's largest JSON [ENG: that 6-command first tick is 0.8 KB, a steady tick's `cmds` 0.25 KB].
+ * `bytes`: a `vent` body's largest JSON [ENG: network; that 6-command first tick is 0.8 KB, a steady tick's `cmds` 0.25 KB].
  */
 export const VENT_LIMITS = { cmds: 6, bytes: 4 * 1024, batch: 16 } as const;
-// `batch` (R8c): the most `cmds` one relay-port message packs [ENG: at ×8 the cockpit runs 8 ticks in 20 ms of wall time;
+// `batch` (R8c): the most `cmds` one relay-port message packs [ENG: network; at ×8 the cockpit runs 8 ticks in 20 ms of wall time;
 // 16 holds two windows, an animation frame that came late]; `bytes` bounds it too (a steady tick is 0.25 KB).
 
 /** An instructor's PIN on the wire: 4 to 8 ASCII digits (plan §1). */

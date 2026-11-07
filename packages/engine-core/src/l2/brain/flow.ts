@@ -95,7 +95,7 @@ export function caO2(hb: number, sao2: number, pao2: number): number {
 
 /**
  * Brain oxygen from the delivery/demand ratio r = (CBF·CaO2/CMRO2) relative to awake normal: PbtO2 = 25·r^0.75·
- * (1 + 0.004·(PaO2 − 100)+) [ENG]; SjvO2 = SaO2·(1 − OER), OER = 0.33/r capped at 0.75 [ENG] (params.ts).
+ * (1 + 0.004·(PaO2 − 100)+) (tables PbtO2 formula; OER by Fick on the tables' values); SjvO2 = SaO2·(1 − OER), OER = 0.33/r capped at 0.75 (tables PbtO2 formula; OER by Fick on the tables' values) (params.ts).
  */
 export function brainOxygen(r: number, sao2: number, pao2: number): { pbto2: number; sjvo2: number; oer: number } {
   const rr = Math.max(0, r);

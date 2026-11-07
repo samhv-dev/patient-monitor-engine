@@ -19,15 +19,15 @@ export const TAU_ISCH_UP_S = 60; // (Q32)
 export const ST_LAG_S = 45; // 30–60 s (tables §3 stLag)
 /** ST depression appears once the filtered flow deficit exceeds this (the old instantaneous δ > 0.1 rule). */
 export const ST_DEFICIT_MIN = 0.1;
-/** The MODELED coronary supply averages the beats that ended in this many seconds [ENG]. */
+/** The MODELED coronary supply averages the beats that ended in this many seconds [ENG: numerics]. */
 export const COR_WIN_BEATS_S = 2;
-export const IVR_S = 0.06; // isovolumic relaxation after aortic closure [ENG]
+export const IVR_S = 0.06; // isovolumic relaxation after aortic closure [FIT: unsourced circulation parameter; brief research/44 L2-29]
 /** The resting arterial saturation the O2-content ratio is taken against (the chemoreflex's resting 0.97). */
 export const SAO2_REF = 0.97;
 /**
- * Time constant of the hypoxic myocardial depression while the O2 supply deficit stands [ENG, fitted to the asphyxial
+ * Time constant of the hypoxic myocardial depression while the O2 supply deficit stands [FIT: the asphyxial
  * arrest window: loss of aortic pulsations 9.5 ± 1.4 min (swine, Varvarousi 2011) and 11.4 ± 2.4 min (dogs, DeBehnke
- * 1995) after the airway is occluded on room air]. Plateau over BOTH tests the constant moves (this file, rig 24 min,
+ * 1995) after the airway is occluded on room air; brief research/44 L2-05]. Plateau over BOTH tests the constant moves (this file, rig 24 min,
  * and the clinical suite's S8 tension PTX, PEA ≤ 10 min), with the coronary supply read beat by beat: 175–257 s
  * (220–250 s without the outflow limiter; the asphyxia file fails from 260: no arrest). 235 s, the middle of the range
  * that holds with and without the limiter → asphyxial PEA at +11.2 min after SaO2 < 60 % (margins 6.2 / 2.8 min to the
@@ -52,26 +52,26 @@ export const K_ISCH_MIN_MANUAL = 0.2;
 /**
  * Time constant of the contractile loss while the heart is NOT beating (pulseless rhythm or no ejection): the no-flow
  * myocardium keeps its capacity to resume through the "electrical phase" of VF, ≈ 4 min (Weisfeldt & Becker 2002,
- * three-phase model [P]), so the loss is slower than the beating ischaemic heart's τ_down 20 s [ENG: τ 120 s puts kIsch
- * at 0.13 after 4 min of no flow, below the arrest threshold — a shock then gives PEA, the circulatory phase].
+ * three-phase model [P]), so the loss is slower than the beating ischaemic heart's τ_down 20 s [FIT: hypoxic/ischaemic myocardial time course; τ 120 s puts kIsch
+ * at 0.13 after 4 min of no flow, below the arrest threshold — a shock then gives PEA, the circulatory phase; brief research/44 L2-05].
  */
 export const TAU_ISCH_ARREST_S = 120;
 /**
  * Myocardial O2 demand has a basal share (the arrested, non-beating heart: ≈ 15 % of the working MVO2) and an
  * excitation–contraction share paid per beat whatever the load (the unloaded-contraction MVO2 of the PVA–MVO2 relation:
- * Suga 1990, Physiol Rev 70:247; Gibbs 1978) [P ranges, ENG split]; only the rest scales with pressure work. Without
+ * Suga 1990, Physiol Rev 70:247; Gibbs 1978) [P ranges] [FIT: basal/excitation–contraction split of MVO2; brief research/44 L2-29]; only the rest scales with pressure work. Without
  * them a heart at HR 186 and LVSP 25 needed 40 % of its resting O2 and never became ischaemic.
  */
 export const D_BASAL = 0.15;
 export const D_EC = 0.2;
-/** Myocardial O2 demand of a non-ejecting heart relative to rest (basal + E–C: PEA, asystole under CPR) [ENG]. */
+/** Myocardial O2 demand of a non-ejecting heart relative to rest (basal + E–C: PEA, asystole under CPR) [FIT: unsourced circulation parameter; brief research/44 L2-29]. */
 export const DEMAND_ARREST = D_BASAL + D_EC;
 /**
  * FIBRILLATING myocardium is not an arrested one — every myofibril contracts continuously and asynchronously, so its
  * MVO2 stays near the working heart's rather than at the basal + E–C share. Measured: with `DEMAND_ARREST` for VF too,
  * CPR at CPP 22–29 repaid the whole debt and `kIsch` recovered 0.84 → 1.00 within 4 min, so a shock after 10 min of VF
- * found a pristine myocardium and the three-phase rationale did not hold [ENG size; VF MVO2 reported at roughly half to
- * all of the beating heart's: Suga 1990's PVA–MVO2 relation, the unloaded fibrillating preparations of Gibbs 1978].
+ * found a pristine myocardium and the three-phase rationale did not hold [FIT: hypoxic/ischaemic myocardial time course; size; VF MVO2 reported at roughly half to
+ * all of the beating heart's: Suga 1990's PVA–MVO2 relation, the unloaded fibrillating preparations of Gibbs 1978; brief research/44 L2-05].
  */
 export const DEMAND_VF = 0.75;
 /** Rhythms with no mechanical systole (the pulseless flag marks PEA on organised rhythms). */
@@ -223,7 +223,7 @@ export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: 
   if (c.kIsch > 0.9995) c.kIsch = 1;
   // The RV is perfused through systole AND diastole, driven by aortic mean − RV mean pressure; its demand follows RV
   // pressure work (massive PE, RV infarct, PH crisis: the RV ischaemia spiral) (MODELED). The stabilised reference has
-  // no RV pressures: the first beat read is the resting reference [ENG].
+  // no RV pressures: the first beat read is the resting reference [ENG: numerics].
   if (modeled && b && !noBeat && b.rvsp !== undefined && b.rvMean !== undefined && Number.isFinite(b.rvsp)) {
     const perf = b.map - b.rvMean;
     c.rv0 ??= { perf, rvsp: b.rvsp, ...(b.rvedv !== undefined && Number.isFinite(b.rvedv) ? { edv: b.rvedv } : {}) };

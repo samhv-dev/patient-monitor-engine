@@ -55,7 +55,7 @@ describe('ventilator settings move the monitor through the link', { timeout: 300
   // auto-PEEP effect), Tuxen & Lane 1987 (Am Rev Respir Dis 136:872; hypotension at the highest hyperinflation volumes),
   // Dellinger 5e ch. 10 (Fig. 10.3: a 40-s disconnection raises BP and CO) and ch. 38, Hines & Jones (Coexisting
   // Disease 8e) ch. 8 and the Miller chapters state the direction (auto-PEEP lowers venous return, CO and BP), none the
-  // size of the MAP fall at a given auto-PEEP. So the original 15 / +10 are kept, tagged [FIT: no source found], and
+  // size of the MAP fall at a given auto-PEEP. So the original 15 / +10 are kept, tagged [FIT: no source found; brief 87], and
   // never the softened 3 / +2: the fall is an expected failure until a source states its size. One run in beforeAll,
   // so a crash fails the passing test instead of letting the it.fails pass silently.
   describe('COPD GOLD 3–4 dynamic hyperinflation (RR 10 → 20 → 10, VT 8 mL/kg)', () => {
@@ -75,12 +75,12 @@ describe('ventilator settings move the monitor through the link', { timeout: 300
       log('copd rr10', a); log('copd rr20', b); log('copd back', c);
     }, 300_000); // the describe's own timeout, as the oedema block's beforeAll
     // R46: the GOLD 3 auto-PEEP band at RR 20 is 6–12 cmH2O (was > 8/10–15, an ENG guess); measured 7.7
-    it('RR 20: auto-PEEP 6–12 cmH2O (R46); RR 10 brings MAP back > 10 mmHg above the RR-20 level [FIT: no source found]', () => {
+    it('RR 20: auto-PEEP 6–12 cmH2O (R46); RR 10 brings MAP back > 10 mmHg above the RR-20 level [FIT: no source found; brief 87]', () => {
       expect(b.autoPeep).toBeGreaterThanOrEqual(6);
       expect(b.autoPeep).toBeLessThanOrEqual(12);
       expect(c.map).toBeGreaterThan(b.map + 10);
     });
-    it.fails('RR 10 → 20: MAP falls > 15 mmHg with the auto-PEEP [FIT: no source found: the auto-PEEP papers give the direction, not the size] — measured −12.5 (102.9 → 90.4) at auto-PEEP 7.7', () => {
+    it.fails('RR 10 → 20: MAP falls > 15 mmHg with the auto-PEEP [FIT: no source found; brief 87] (the auto-PEEP papers give the direction, not the size) — measured −12.5 (102.9 → 90.4) at auto-PEEP 7.7', () => {
       expect(a.map - b.map).toBeGreaterThan(15);
     });
   });

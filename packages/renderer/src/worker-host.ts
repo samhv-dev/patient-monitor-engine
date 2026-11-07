@@ -23,10 +23,10 @@ const HIDDEN_PUMP_MS = 1000;
  * messages, FX-11a): p99.9 270 ms idle, 267 ms with 16 CPU-bound processes, 436 ms with those and the browser at
  * background QoS (Chromium; WebKit ≤ 269 ms): 3 s is 7× the longest gap measured. It is DEAD when, past this, a probe
  * worker started at the warning has answered — the machine runs workers and this one makes no progress; a starved
- * machine starves the probe too, and the monitor waits (FX-11a) [ENG].
+ * machine starves the probe too, and the monitor waits (FX-11a) [ENG: display].
  */
 export const WORKER_SILENT_MS = 3000;
-/** …unless the page caught up a hidden stretch this recently (one catch-up can run several seconds) [ENG]. */
+/** …unless the page caught up a hidden stretch this recently (one catch-up can run several seconds) [ENG: display]. */
 const CATCHUP_GRACE_MS = 30_000;
 const WATCH_MS = 500;
 
