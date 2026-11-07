@@ -40,6 +40,27 @@ const gt = (id: string, series: string, reduce: Target['reduce'], value: number 
 const lt = (id: string, series: string, reduce: Target['reduce'], value: number | { segment: string; factor?: number; offset?: number }, source: string): Target => ({ id, series, reduce, type: 'LessThan', value, source });
 const base = (id = 'base', fromS = 30, toS = 60) => seg(id, fromS, toS, rng('steady-map', 'state:map', 'mean', 60, 110, 'baseline MAP physiological [ENG]'));
 
+// Haemorrhage heart rate and pressure (audit V-07; brief 88). The ATLS table's HR column (100–120 / 120–140 / > 140) is
+// contradicted by the registries: in the TraumaRegister DGU no class showed "a relevant tachycardia" (Mutschler 2013,
+// Crit Care 17:R42, PMID 23497602, n 16,305), and in TARN the median HR rose only from 82 (class 1) to 95 (class 4) by
+// estimated blood loss (Guly 2011, Resuscitation 82:556, PMID 21349628). Each band is the registry class's ED value,
+// mean ± 1 SD, from Mutschler 2013 Table 2 (classes by base deficit: I ≤ 2, II > 2–6, III > 6–10, IV > 10 mmol/L,
+// built as the counterpart of the ATLS classes I–IV; the rig's ATLS blood-loss class is read as the same-numbered class).
+// Guly's medians (by blood loss, the rig's own definition) lie inside every band. The engine's value plays no part.
+const sd1 = (mean: number, sd: number, what: string) => ({ lo: Math.round((mean - sd) * 10) / 10, hi: Math.round((mean + sd) * 10) / 10, text: `${what} ${mean} ± ${sd} → mean ± 1 SD ${(mean - sd).toFixed(1)}–${(mean + sd).toFixed(1)}` });
+const MUTSCHLER = {
+  II: sd1(89.8, 20.3, 'ED HR'),
+  III: sd1(95.9, 22.5, 'ED HR'),
+  IV: sd1(97.2, 32.4, 'ED HR'),
+} as const;
+const MUTSCHLER_SBP_III = sd1(112.7, 30.7, 'ED SBP');
+const MUTSCHLER_SRC = 'Mutschler 2013 (PMID 23497602) Table 2';
+const GULY_SRC = 'Guly 2011 (PMID 21349628): median HR 82 → 95 from class 1 to 4, inside';
+// t17b, chronic β-blockade: no registry gives class-III HR on a β-blocker. Havens 2012 (Int J Surg 10:518, n 380 trauma
+// patients) found a presenting HR 6 bpm lower on a pre-injury β-blocker (83 vs 89, p 0.007), with more bradycardia
+// (7.1 vs 2.3 %). The band is the class-III registry band shifted by that difference.
+const HAVENS_BB_III = { lo: Math.round((95.9 - 22.5 - 6) * 10) / 10, hi: Math.round((95.9 + 22.5 - 6) * 10) / 10, text: `${MUTSCHLER_SRC} class III ED HR 95.9 ± 22.5, shifted by Havens 2012's β-blocker difference (83 vs 89 bpm, −6): 67.4–112.4; an expected miss until the autonomic hub (v2.0 workstream 2, FU-12): measured 64.4 on 3bca4a61` };
+
 const S = 'brief §4.9';
 const T7 = 'tables §7';
 
@@ -57,7 +78,7 @@ export const SANITY_DOCS: ValidationDoc[] = [
     actions: [at(60, ev({ kind: 'bleed', volumeMl: 1000, overS: 600 }))],
     segments: [seg('base', 30, 60, rng('pp0', 'state:pp', 'mean', 30, 70, 'baseline PP [ENG]')),
       seg('class2', 660, 900,
-        rng('hr', 'state:hr', 'mean', 100, 120, `${S} 2: HR 100–120`),
+        rng('hr', 'state:hr', 'mean', MUTSCHLER.II.lo, MUTSCHLER.II.hi, `${MUTSCHLER_SRC} class II: ${MUTSCHLER.II.text}; ${GULY_SRC}`),
         rng('sbp-held', 'state:sbp', 'mean', { segment: 'base', factor: 0.9 }, { segment: 'base', factor: 1.05 }, `${S} 2: SBP near normal (R45 b)`),
         lt('pp-narrow', 'state:pp', 'mean', { segment: 'base', factor: 0.9 }, `${S} 2: PP narrowed`))],
   }),
@@ -68,11 +89,12 @@ export const SANITY_DOCS: ValidationDoc[] = [
       { id: 'map-70pct', series: 'state:map', reduce: 'mean', type: 'EqualTo', value: { segment: 'base', factor: 0.7 }, tolPct: 15, source: `${S} 3: MAP ≈ 70 % of baseline at 2 min` },
       lt('hr-little', 'state:hr', 'mean', { segment: 'base', factor: 1.1 }, `${S} 3: little HR rise`))],
   }),
-  ...([['I', 700, [60, 100], null], ['III', 1750, [120, 140], 90], ['IV', 2250, [140, 180], 90]] as const).map(([cls, ml, hr, sbpMax]) => doc({
+  // Class I keeps its band (not audited as mis-specified); classes III and IV take the registry HR (audit V-07).
+  ...([['I', 700, [60, 100], null], ['III', 1750, [MUTSCHLER.III.lo, MUTSCHLER.III.hi], 90], ['IV', 2250, [MUTSCHLER.IV.lo, MUTSCHLER.IV.hi], 90]] as const).map(([cls, ml, hr, sbpMax]) => doc({
     id: `s4-class-${cls.toLowerCase()}`, title: `ATLS class ${cls} haemorrhage (${ml} mL / 10 min)`, source: `${S} check 4`, durationS: 900, mode: 'modeled', requires: ['7a', '7c'],
     actions: [at(60, ev({ kind: 'bleed', volumeMl: ml, overS: 600 }))],
     segments: [seg('late', 660, 900,
-      rng('hr', 'state:hr', 'mean', hr[0], hr[1], `${S} 4 / ATLS class ${cls}: HR ${hr[0]}–${hr[1]}`),
+      rng('hr', 'state:hr', 'mean', hr[0], hr[1], cls === 'I' ? `${S} 4 / ATLS class ${cls}: HR ${hr[0]}–${hr[1]}` : `${MUTSCHLER_SRC} class ${cls}: ${MUTSCHLER[cls as 'III' | 'IV'].text}; ${GULY_SRC}`),
       ...(sbpMax !== null ? [lt('sbp', 'state:sbp', 'mean', sbpMax + (cls === 'III' ? 10 : 0), `${S} 4 / ATLS class ${cls}: SBP decreased`)] : []),
       ...(cls === 'IV' ? [lt('pp', 'state:pp', 'mean', 25, `${S} 4: class IV PP < 25`)] : []))],
   })),
@@ -154,13 +176,13 @@ export const SANITY_DOCS: ValidationDoc[] = [
   doc({
     id: 't17a-class3-no-bb', title: 'Class III haemorrhage (35 %), no β-blocker', source: `${T7} 17a`, durationS: 1800, mode: 'modeled', requires: ['7a', '7c'],
     actions: [at(60, ev({ kind: 'bleed', volumeMl: 1750, overS: 600 }))],
-    segments: [seg('late', 900, 1800, rng('hr', 'state:hr', 'mean', 120, 140, `${T7} 17a: HR 120–140`), rng('sbp', 'state:sbp', 'mean', 80, 90, `${T7} 17a: SBP 80–90`), rng('pp', 'state:pp', 'mean', 20, 25, `${T7} 17a: PP 20–25`))],
+    segments: [seg('late', 900, 1800, rng('hr', 'state:hr', 'mean', MUTSCHLER.III.lo, MUTSCHLER.III.hi, `${MUTSCHLER_SRC} class III: ${MUTSCHLER.III.text}; ${GULY_SRC}`), rng('sbp', 'state:sbp', 'mean', MUTSCHLER_SBP_III.lo, MUTSCHLER_SBP_III.hi, `${MUTSCHLER_SRC} class III: ${MUTSCHLER_SBP_III.text}`), rng('pp', 'state:pp', 'mean', 20, 25, `${T7} 17a: PP 20–25`))],
   }),
   doc({
     id: 't17b-class3-bb', title: 'Class III haemorrhage, chronic β-blocker', source: `${T7} 17b`, durationS: 1800, mode: 'modeled', requires: ['7a', '7c', '7g'],
     patient: { profile: { conditions: [{ id: 'betaBlocked' }] } },
     actions: [at(60, ev({ kind: 'bleed', volumeMl: 1750, overS: 600 }))],
-    segments: [seg('late', 900, 1800, rng('hr', 'state:hr', 'mean', 80, 95, `${T7} 17b: HR 80–95`), rng('sbp', 'state:sbp', 'mean', 65, 80, `${T7} 17b: SBP 65–80`))],
+    segments: [seg('late', 900, 1800, rng('hr', 'state:hr', 'mean', HAVENS_BB_III.lo, HAVENS_BB_III.hi, HAVENS_BB_III.text), rng('sbp', 'state:sbp', 'mean', 65, 80, `${T7} 17b: SBP 65–80`))],
   }),
   doc({
     id: 't18-htn-hypocapnia-cbf', title: 'Hypertensive 75 y at MAP 65, PaCO2 40 → 25', source: `${T7} 18`, durationS: 600, mode: 'modeled', requires: ['7d'],
