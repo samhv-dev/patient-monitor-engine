@@ -672,11 +672,18 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
       return r && { hostOnline: r.host !== null, peers: r.peers.size, hasSnapshot: r.snapshot !== null };
     },
     sweep,
+    // Stop accepting first (a WebSocket handshake that came in after wss.close removed its upgrade listener was served
+    // as a plain GET), then end every socket: the WebSockets, and every HTTP connection, idle or not. Waiting for the
+    // clients to drop theirs was unbounded: Node stops the server's own request timeouts once it closes, so a request a
+    // client never finished (or a connection it kept busy) held close() for as long as the client stayed (PR #306,
+    // CI run 42350190627: a test's afterEach waited 90 s on a page that was still open).
     close: () =>
       new Promise<void>((resolve) => {
         clearInterval(timer);
+        http.close(() => resolve());
         for (const ws of wss.clients) ws.terminate();
-        wss.close(() => http.close(() => resolve()));
+        wss.close();
+        http.closeAllConnections();
       }),
   };
 }
