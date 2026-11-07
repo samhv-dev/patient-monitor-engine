@@ -21,7 +21,7 @@ import {
   type WireEvent,
   type WireMessage,
 } from '../protocol.ts';
-import { bolusDrugOf, lockReason, RecentGives } from './drug-lock.ts';
+import { bolusDrugOf, type DrugLock, lockReason, RecentGives } from './drug-lock.ts';
 
 /** What a host needs from the monitor it owns. Sync or async (a worker-backed monitor returns promises). */
 export interface HostTarget {
@@ -37,6 +37,12 @@ export interface HostTarget {
    * monitor holds its clock from the first step to the `last`. Absent: this monitor cannot fast-forward.
    */
   fastForwardStep?(ticks: number, last: boolean): { tick: Tick; simT: SimSeconds } | Promise<{ tick: Tick; simT: SimSeconds }>;
+  /**
+   * R15: dispatch several commands in ONE engine task, in order (the worker-backed monitor: one message), so the engine
+   * cannot run a tick between them and a stage group's commands land on its one tick. Absent: the host dispatches them
+   * one by one, and a group can split when the engine passes its tick between two round trips.
+   */
+  dispatchGroup?(cmds: Command[]): DispatchResult[] | Promise<DispatchResult[]>;
 }
 
 /** What the scenario hook answers; `applied` replaces the command in commandApplied (e.g. a load with its doc). */
@@ -113,9 +119,24 @@ export function samePin(candidate: string, pin: string): boolean {
   return diff === 0;
 }
 
+/** A host-issued command waiting in a gathered stage group, with its caller's answer (R15). */
+interface Gathered {
+  cmd: WireCommand;
+  resolve: (r: DispatchResult) => void;
+}
+/** An engine command (time and scenario commands are the host's own, never part of a group's one dispatch). */
+const groupable = (c: WireCommand): boolean => c.type !== 'time' && c.type !== 'scenario';
+
 /** Commands that share a stageGroup land on one tick this many ticks after the first arrives (60 ms) [ENG]. */
 export const STAGE_LEAD_TICKS = 3;
 const STAGE_GROUP_TTL_MS = 5000;
+/**
+ * R15: how long the host holds the items of a staged delivery (`batch`, n items) that have arrived while it waits for the
+ * rest. The items leave the controller in one synchronous loop (StageBuffer.commit), so they arrive back to back; one
+ * still missing after this is lost in transit (the controller resends it on its own), and the ones held are applied
+ * without it rather than held longer. It bounds a delay only; no tick depends on it [ENG].
+ */
+export const BATCH_HOLD_MS = 500;
 const SEEN_MAX = 500;
 /** The ack of a command from a relay peer whose role a peer-left forgot and that has not said hello again. */
 export const NO_HELLO = 'say hello first';
@@ -175,6 +196,10 @@ export class HostSession {
   private batch: WireEvent[] = [];
   private flushQueued = false;
   private chain: Promise<void> = Promise.resolve();
+  /** R15: the host's own stage group being gathered (`submit` calls in one synchronous run), until its chain step runs. */
+  private gathering: { group: string; items: Gathered[] } | null = null;
+  /** R15: staged deliveries whose items are arriving (by batch id), held until all n are here. */
+  private readonly held = new Map<string, { n: number; items: Array<{ t: ManagedTransport; cmd: WireCommand; from: string; receivedAt: number }>; timer: ReturnType<typeof setTimeout> | null }>();
   private engineState = false;
   private readonly offEngine: () => void;
   private readonly timer: ReturnType<typeof setInterval> | null;
@@ -254,18 +279,30 @@ export class HostSession {
    * groups, sticky state, stats and a commandApplied that viewers mirror — minus the ack.
    */
   submit(cmd: WireCommand): Promise<DispatchResult> {
+    // R15: the commands of one stage group submitted together (the scenario runner sends a batch in one loop) go to the
+    // engine in one dispatch, so they land on one tick however long the monitor's round trip takes
+    const open = this.gathering;
+    if (open && open.group === cmd.stageGroup && groupable(cmd)) return new Promise((resolve) => open.items.push({ cmd, resolve }));
+    this.gathering = null; // another command: the group gathered so far is complete (order is kept)
+    let first!: Gathered;
+    const done = new Promise<DispatchResult>((resolve) => (first = { cmd, resolve }));
+    const g = { group: cmd.stageGroup ?? '', items: [first] };
+    if (cmd.stageGroup && groupable(cmd) && this.o.target.dispatchGroup) this.gathering = g;
     const run = this.chain.then(async () => {
-      const { result, applied } = await this.apply(cmd);
-      if (!result.accepted) {
-        this.stats.rejected++;
-        return result;
-      }
-      this.stats.applied++;
-      this.queue({ type: 'commandApplied', commandId: cmd.id, tick: result.tick, resolved: { command: applied } satisfies AppliedResolution });
-      return result;
+      if (this.gathering === g) this.gathering = null; // later commands of this group go on their own
+      const outs = await this.applyTogether(g.items.map((i) => i.cmd));
+      g.items.forEach((item, i) => {
+        const { result, applied } = outs[i] as { result: DispatchResult; applied: WireCommand };
+        if (!result.accepted) this.stats.rejected++;
+        else {
+          this.stats.applied++;
+          this.queue({ type: 'commandApplied', commandId: item.cmd.id, tick: result.tick, resolved: { command: applied } satisfies AppliedResolution });
+        }
+        item.resolve(result);
+      });
     });
     this.chain = run.then(() => undefined, (err) => console.error('[pme host]', err));
-    return run;
+    return done;
   }
 
   /**
@@ -378,6 +415,8 @@ export class HostSession {
 
   close(): void {
     if (this.timer !== null) clearInterval(this.timer);
+    for (const h of this.held.values()) if (h.timer !== null) clearTimeout(h.timer);
+    this.held.clear();
     this.offEngine();
     for (const t of [...this.transports.keys()]) this.detach(t);
   }
@@ -523,7 +562,50 @@ export class HostSession {
     const drugs = this.ff ? [] : cmd.type === 'scenario' ? (this.o.scenarioGives?.(cmd) ?? []) : [bolusDrugOf(cmd) ?? []].flat();
     const lock = drugs.map((d) => this.gives.lock(d, now.simT)).find((l) => l !== null) ?? null;
     const refused = this.ff ? FF_REFUSAL : lock ? lockReason(lock) : null;
-    const { result, applied } = refused !== null ? { result: { accepted: false, tick: now.tick, reason: refused }, applied: cmd } : await this.apply(cmd);
+    // R15: a staged delivery's items (one stageGroup, `batch` of n) are held until all n are here, then go to the engine
+    // in one dispatch: one tick, whatever the monitor's round trip. An item refused on arrival is answered at once and
+    // the delivery waits for one item fewer
+    const b = cmd.batch;
+    const batched = !!(b && b.n > 1 && cmd.stageGroup && groupable(cmd) && this.o.target.dispatchGroup);
+    if (refused !== null) {
+      this.answer(t, cmd, from, receivedAt, { result: { accepted: false, tick: now.tick, reason: refused }, applied: cmd }, lock);
+      if (!batched || !b) return;
+      const h = this.held.get(b.id) ?? { n: b.n, items: [], timer: null };
+      h.n--;
+      this.held.set(b.id, h);
+      if (h.items.length > 0 && h.items.length >= h.n) return this.release(b.id);
+      if (h.n <= 0) this.held.delete(b.id);
+      return;
+    }
+    if (batched && b) {
+      const h = this.held.get(b.id) ?? { n: b.n, items: [], timer: null };
+      if (h.items.some((i) => i.cmd.id === cmd.id)) return void this.stats.duplicates++; // a resend of an item held: answered with the batch
+      h.items.push({ t, cmd, from, receivedAt });
+      this.held.set(b.id, h);
+      if (h.items.length < h.n) {
+        h.timer ??= setTimeout(() => void (this.chain = this.chain.then(() => this.release(b.id)).catch((err) => console.error('[pme host]', err))), BATCH_HOLD_MS);
+        return;
+      }
+      return this.release(b.id);
+    }
+    return this.answer(t, cmd, from, receivedAt, await this.apply(cmd));
+  }
+
+  /** R15: apply a held staged delivery (complete, or as far as it got) in one dispatch, and answer each item. */
+  private async release(id: string): Promise<void> {
+    const h = this.held.get(id);
+    if (!h) return;
+    this.held.delete(id);
+    if (h.timer !== null) clearTimeout(h.timer);
+    const outs = this.ff
+      ? h.items.map((i) => ({ result: { accepted: false, tick: this.o.target.now().tick, reason: FF_REFUSAL }, applied: i.cmd }))
+      : await this.applyTogether(h.items.map((i) => i.cmd));
+    h.items.forEach((i, k) => this.answer(i.t, i.cmd, i.from, i.receivedAt, outs[k] as { result: DispatchResult; applied: WireCommand }));
+  }
+
+  /** Ack a controller's command and, applied, tell every peer; `lock`: the drug lock that refused it. */
+  private answer(t: ManagedTransport, cmd: WireCommand, from: string, receivedAt: number, out: { result: DispatchResult; applied: WireCommand }, lock: DrugLock | null = null): void {
+    const { result, applied } = out;
     const ack: AckBody = {
       kind: 'ack', commandId: cmd.id, accepted: result.accepted, tick: result.tick,
       ...(result.reason !== undefined ? { reason: result.reason } : {}),
@@ -557,32 +639,61 @@ export class HostSession {
     }
   }
 
+  /**
+   * R15: apply commands of one stage group together — in ONE dispatch when the target can (dispatchGroup), so the engine
+   * applies them in one task, on the group's tick; one by one otherwise (and for one command).
+   */
+  private async applyTogether(cmds: WireCommand[]): Promise<Array<{ result: DispatchResult; applied: WireCommand }>> {
+    const many = this.o.target.dispatchGroup;
+    if (cmds.length < 2 || !many) {
+      const outs: Array<{ result: DispatchResult; applied: WireCommand }> = [];
+      for (const c of cmds) outs.push(await this.apply(c));
+      return outs;
+    }
+    const cs = cmds.map((c) => this.stamped(c));
+    try {
+      const rs = await many(cs);
+      return cs.map((c, i) => ({ result: rs[i] as DispatchResult, applied: this.settled(c, rs[i] as DispatchResult) }));
+    } catch (err) {
+      const reason = `the monitor could not apply it: ${err instanceof Error ? err.message : String(err)}`;
+      return cmds.map((c) => ({ result: { accepted: false, tick: this.o.target.now().tick, reason }, applied: c }));
+    }
+  }
+
+  /** An engine command with its stage group's tick (the group's first command sets it, STAGE_LEAD_TICKS ahead). */
+  private stamped(cmd: WireCommand): Command {
+    const c = cmd as Command;
+    if (!cmd.stageGroup) return c;
+    const g = this.groups.get(cmd.stageGroup);
+    const at = g && this.now() - g.at < STAGE_GROUP_TTL_MS ? g.tick : this.o.target.now().tick + STAGE_LEAD_TICKS;
+    if (!g) this.groups.set(cmd.stageGroup, { tick: at, at: this.now() });
+    return { ...c, atTick: at };
+  }
+
   /** Dispatch one command; returns the result and the command as applied (with atTick). */
   private async applyOnce(cmd: WireCommand): Promise<{ result: DispatchResult; applied: WireCommand }> {
-    const { tick, simT } = this.o.target.now();
-    const reject = (reason: string) => ({ result: { accepted: false, tick, reason }, applied: cmd });
     if (cmd.type === 'time') return this.time(cmd);
     if (cmd.type === 'scenario') return this.scenario(cmd);
     if (cmd.type === 'note') {
       // A remote's judged objective or note (plan §6), recorded by the host app at the host's sim time
-      if (!this.o.onNote) return reject(INSTRUCTOR_REASONS.noNotes);
+      const { tick, simT } = this.o.target.now();
+      if (!this.o.onNote) return { result: { accepted: false, tick, reason: INSTRUCTOR_REASONS.noNotes }, applied: cmd };
       this.o.onNote(simT, cmd.text, cmd.kind, cmd.ev);
       return { result: { accepted: true, tick }, applied: cmd };
     }
     // Pin, release and setMode go to the engine, which validates them. setFactor reaches the engine too and is refused
     // there with its own reason until the engine models factors.
     // applyEvent/attachSensor are not in engine-core's Command union yet; the engine validates them at run time.
-    let c = cmd as Command;
-    if (cmd.stageGroup) {
-      const g = this.groups.get(cmd.stageGroup);
-      const at = g && this.now() - g.at < STAGE_GROUP_TTL_MS ? g.tick : tick + STAGE_LEAD_TICKS;
-      if (!g) this.groups.set(cmd.stageGroup, { tick: at, at: this.now() });
-      c = { ...c, atTick: at };
-    }
+    const c = this.stamped(cmd);
     const result = await this.o.target.dispatch(c);
+    return { result, applied: this.settled(c, result) };
+  }
+
+  /** The command as applied (with the tick it landed on), and the host state it sets. */
+  private settled(c: Command, result: DispatchResult): Command {
     const applied: Command = { ...c, atTick: result.tick };
     if (result.accepted) {
-      this.gives.note(cmd, result.tick * TICK_S); // every device's bolus, and the card's own (a press after it is locked)
+      this.gives.note(c, result.tick * TICK_S); // every device's bolus, and the card's own (a press after it is locked)
       if (c.type === 'setTarget') {
         const r = c.ramp;
         const untilT = result.tick * TICK_S + (r ? (r.delayS ?? 0) + r.durationS : 0);
@@ -592,7 +703,7 @@ export class HostSession {
       if (c.type === 'device' && c.action.device === 'ecg' && c.action.action === 'lead') this.sticky.set(`ecg.lead.${c.action.lane}`, applied);
     }
     this.pruneGroups();
-    return { result, applied };
+    return applied;
   }
 
   private time(cmd: TimeCommand): { result: DispatchResult; applied: WireCommand } {
@@ -707,6 +818,17 @@ export class HostSession {
     }
     if (c.action === 'pause' || c.action === 'resume') this.sticky.set('scenario.run', c);
     if (c.action === 'restoreBookmark') {
+      // FX-12: a mark taken in another case (or before a restart ended this one) brings that case back; a late joiner
+      // learns it from the sticky load as after any load. A mark with no case ends the run.
+      const doc = c.doc as { id?: unknown } | null | undefined;
+      const loaded = (this.sticky.get('scenario.load') as ScenarioCommand | undefined)?.doc as { id?: unknown } | undefined;
+      if (doc === null) {
+        this.sticky.delete('scenario.load');
+        this.sticky.delete('scenario.run');
+      } else if (doc && typeof doc.id === 'string' && loaded?.id !== doc.id) {
+        this.sticky.delete('scenario.run');
+        this.sticky.set('scenario.load', { id: c.id, issuedBy: c.issuedBy, type: 'scenario', action: 'load', target: doc.id, doc });
+      }
       this.newTimeline('restore');
       queueMicrotask(() => this.broadcast({ kind: 'hello', role: 'host' }));
     }

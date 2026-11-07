@@ -1,7 +1,7 @@
 // What a learner monitor says and does, from what it knows — one pure function, so every state a phone can be in (a
 // relay it cannot reach, a full session, a lost socket, a silent instructor, the Ventilator view driving the patient)
 // is unit-tested without a browser. The second screen (same browser) meets only the last four rows.
-import type { TransportStatus } from '@pme/controller';
+import type { TransportStatus, WireMessage } from '@pme/controller';
 
 /** No message from a RUNNING host for this long → "not answering" (it sends its state every second) [ENG]. */
 export const HOST_SILENT_MS = 5000;
@@ -51,6 +51,34 @@ export const NO_PHONE_LAYOUT = 'This monitor style has no phone layout: showing 
 export function phoneStyle(want: { skin: string; theme: string }, upright: ReadonlySet<string>, themes: ReadonlySet<string>, fallback: string): { skin: string; theme: string; note: string | null } {
   const theme = themes.has(want.theme) ? want.theme : '';
   return upright.has(want.skin) ? { skin: want.skin, theme, note: null } : { skin: fallback, theme, note: NO_PHONE_LAYOUT };
+}
+
+/**
+ * Whether the host is paused, as a follower learns it from the host's messages (FX-22): a live `time pause`/`resume`, or
+ * the host's own state when it welcomes a follower — the sticky replays, then the snapshot that ends every welcome. A
+ * host page that (re)announces itself (`hello`: a reload) has said nothing yet; its welcome without a replayed pause is
+ * a running host. (A page reloaded from a pause runs again without ever sending a resume, and the phone kept "(paused)".)
+ */
+export function hostPause(): { readonly paused: boolean; onMessage(m: WireMessage): void } {
+  let paused = false;
+  let said: boolean | null = null; // What this host page has said, live or replayed (null: nothing since its hello)
+  return {
+    get paused() {
+      return paused;
+    },
+    onMessage(m) {
+      if (m.kind === 'hello' && m.role === 'host') return void (said = null);
+      if (m.kind === 'snapshot') return void (paused = said ?? false); // The end of a welcome: the host's state as it said it
+      if (m.kind !== 'event') return;
+      for (const e of m.body) {
+        const r = e.type === 'commandApplied' ? (e.resolved as { command?: { type?: string; action?: string }; replay?: boolean } | undefined) : undefined;
+        const c = r?.command;
+        if (c?.type !== 'time' || (c.action !== 'pause' && c.action !== 'resume')) continue;
+        said = c.action === 'pause';
+        if (!r?.replay) paused = said; // A live command shows at once; a replay with the welcome's snapshot
+      }
+    },
+  };
 }
 
 export function followerStatus(i: FollowerInput): FollowerView {
