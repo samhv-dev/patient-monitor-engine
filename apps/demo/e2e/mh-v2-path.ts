@@ -47,6 +47,22 @@ export async function to(page: Page, s: number): Promise<void> {
   await page.waitForTimeout(400); // the skip's end reaches the panel; ACTION repaints (≤ 2 Hz)
 }
 
+/** Run the clock at ×8 (the clock's top rate) until the scenario is in `phase`, or `withinS` sim seconds have passed, then
+ *  back to ×1; returns the phase it stopped in. A phase that comes from the physiology is found this way, not by
+ *  fast-forwarding in steps: the host paces every fast-forward to FF_WALL_MS (10 s of wall time, however short the span;
+ *  host-session.ts), so 30-s steps cost 10.3–11.8 s each (98 measured locally, the same on both browsers; 20 steps to Arrest: PEA =
+ *  217 s) and the haemorrhage card's Arrest: asystole, 29 steps from 01:00, ran into its 360-s limit on CI (run
+ *  42279079387: 6.0 min, the retry 5.9 min). At ×8 the span costs its sim length / 8, and the run stops within one
+ *  scenario poll (100 ms of wall, 0.8 sim s) of the phase's entry instead of up to one step (30 s) after it. */
+export async function runToPhase(page: Page, phase: string, withinS: number): Promise<string | null> {
+  const scale = (v: number) => page.evaluate((x) => (window as unknown as W).__pmeApp.link.send({ type: 'time', action: 'scale', value: x }), v);
+  const until = (await app(page)).simT + withinS;
+  expect((await scale(8)).accepted).toBe(true);
+  await page.waitForFunction(([id, t]) => { const l = (window as unknown as W).__pmeApp.link; return l.ctl.scenario.stateId === id || l.simT >= t; }, [phase, until] as const, { timeout: 0, polling: 100 });
+  expect((await scale(1)).accepted).toBe(true);
+  return (await app(page)).stateId;
+}
+
 /** Open the /2 MH card on Instructor v2 at 1440 × 900. */
 export async function openMhV2(page: Page, open: (hash: string) => Promise<void>): Promise<void> {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -76,7 +92,13 @@ export async function pressPath(page: Page, go: (i: number) => boolean | Promise
     await expect(row, `${title} in ACTION at ${t} s (phase ${(await app(page)).stateId})`).toBeVisible();
     const at = (await app(page)).simT;
     await row.click();
-    await expect(row).toHaveAttribute('data-look', 'taken', { timeout: 10_000 });
+    // a press not taken in 10 s (CI WebKit, 6 Nov: Premedicate ×2, Start surgery ×3, the row "ready", "press to give";
+    // mechanism not found): say whether the host refused it, what the toasts said and where the clock was
+    await expect(row).toHaveAttribute('data-look', 'taken', { timeout: 10_000 }).catch(async (err: Error) => {
+      const a = await app(page);
+      const toasts = await page.locator('.toast').allTextContents();
+      throw new Error(`${title} pressed at ${at.toFixed(1)} s not taken; now ${a.simT.toFixed(1)} s, ff ${a.ff}, phase ${a.stateId}; refused ${JSON.stringify(a.refused.slice(-3))}; toasts ${JSON.stringify(toasts)}\n${err.message}`);
+    });
     if (opened && (await fold.count()) && (await fold.evaluate((d) => (d as HTMLDetailsElement).open))) await fold.locator('summary').click();
     pressed.push([at, title]);
   }
