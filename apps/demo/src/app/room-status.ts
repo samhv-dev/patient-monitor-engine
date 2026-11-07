@@ -96,6 +96,7 @@ export function roomStatus(o: { relay: RelayState; phones: number; peers: readon
 export function showingOf(role: Role, show: Instrument | null): string {
   if (role === 'instructor') return 'Instructor remote';
   if (role === 'ventilator') return 'Ventilator'; // R8b: the remote cockpit, granted with the PIN as the instructor is
+  if (role === 'defib') return 'Defibrillator'; // R5c: the learner defibrillator window, admitted by the room code
   if (role === 'controller') return 'Remote';
   return show === 'monitor' ? 'Monitor' : show === 'defib' ? 'Defibrillator' : show === 'depth' ? 'Depth of anaesthesia' : 'Learner monitor';
 }

@@ -112,7 +112,9 @@ export function assertWireSafe(m: WireMessage): void {
 }
 
 const KINDS = new Set(['hello', 'command', 'ack', 'event', 'snapshot', 'grant', 'vent']);
-const ROLES = new Set(['host', 'controller', 'viewer', 'instructor', 'ventilator']);
+const ROLES = new Set(['host', 'controller', 'viewer', 'instructor', 'ventilator', 'defib']);
+/** The roles a hello may name an instrument and a device key with: a learner's follower and the defibrillator window (R5c). */
+const SHOWS_WITH: ReadonlySet<unknown> = new Set(['viewer', 'defib']);
 
 const isObj = (x: unknown): x is Record<string, unknown> => x !== null && typeof x === 'object' && !Array.isArray(x);
 const TIME_ACTIONS: ReadonlySet<unknown> = new Set(['pause', 'resume', 'scale']);
@@ -184,8 +186,8 @@ export function parseWireMessage(data: unknown): WireMessage | null {
       if (!ROLES.has(m.role as string)) return null;
       if (m.pin !== undefined && ((m.role !== 'instructor' && m.role !== 'ventilator') || typeof m.pin !== 'string' || !PIN_RE.test(m.pin))) return null;
       if (m.role === 'ventilator' && m.pin === undefined) return null; // R8a: a device that drives the patient proves the PIN
-      if (m.show !== undefined && (m.role !== 'viewer' || !SHOWS.has(m.show))) return null;
-      if (m.device !== undefined && (m.role !== 'viewer' || typeof m.device !== 'string' || !DEVICE_RE.test(m.device))) return null;
+      if (m.show !== undefined && (!SHOWS_WITH.has(m.role) || !SHOWS.has(m.show))) return null;
+      if (m.device !== undefined && (!SHOWS_WITH.has(m.role) || typeof m.device !== 'string' || !DEVICE_RE.test(m.device))) return null;
       break;
     case 'command': {
       const b = m.body as Record<string, unknown> | null;

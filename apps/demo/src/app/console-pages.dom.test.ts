@@ -218,9 +218,10 @@ describe('Room', () => {
       dev('p5', { show: 'depth', device: 'depthkey0001', rttMs: null, sinceMs: 11_000 }),
       dev('p6', { role: 'controller', show: null, rttMs: 9, sinceMs: 1000 }),
       dev('p7', { show: 'defib', rttMs: 9, sinceMs: 1000 }),
+      dev('p8', { role: 'defib', show: null, rttMs: 11, sinceMs: 1000 }), // R5c's learner defibrillator role
     ];
     const known = { phonekey0001: { name: 'Bed 3', show: 'learner' as const, lastSeen: 1 }, tabletkey002: { name: 'Projector tablet', show: 'monitor' as const, lastSeen: 60_000 - 86_400_000 } };
-    const rows = deviceRows({ relay: 'open', phones: 7, peers: log.list(), now: 60_000, devices, known });
+    const rows = deviceRows({ relay: 'open', phones: 8, peers: log.list(), now: 60_000, devices, known });
     expect(rows.map((r) => [r.level, r.name, r.showing, r.state, r.ping, r.heard])).toEqual([
       ['stable', 'This window', 'Instructor pages and the monitor', '—', '—', 'now'],
       ['stable', 'Window 2', 'Monitor', 'connected', 'this computer', '2 s ago'],
@@ -231,6 +232,7 @@ describe('Room', () => {
       ['weak', 'Phone 4', 'Depth of anaesthesia', 'Not available yet', '—', '11 s ago'],
       ['stable', 'Phone 5', 'Remote', 'connected', '9 ms', 'now'],
       ['stable', 'Phone 6', 'Defibrillator', 'connected', '9 ms', 'now'],
+      ['stable', 'Phone 7', 'Defibrillator', 'connected', '11 ms', 'now'],
       ['absent', 'Projector tablet', 'Monitor', 'expected, not connected', '—', '24 h ago'],
     ]);
     // "last heard" ages from the relay's frame (it reports each heartbeat); the table's levels read the frame as sent
