@@ -151,7 +151,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       playwright: ${{ steps.playwright.outputs.version }}
-      durations_run: ${{ steps.durations.outputs.run }}
+      shard_plan: ${{ steps.plan.outputs.plan }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -168,8 +168,11 @@ jobs:
           v=$(pnpm exec playwright --version | awk '{print $2}')
           echo "$v" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error::unexpected Playwright version: '$v'"; exit 1; }
           echo "version=$v" >> "$GITHUB_OUTPUT"
-      # e2e shards by recorded duration: the latest green run of this workflow on main, whose e2e reports the e2e jobs
-      # read (scripts/ci/e2e-shard-plan.mjs). Any failure leaves the output empty, and the e2e jobs use Playwright's --shard.
+      # e2e shards by recorded duration: the latest green run of this workflow on main, whose e2e reports balance the
+      # shards (scripts/ci/e2e-shard-plan.mjs). The plan is made here, once, and every e2e shard reads it, so the shards
+      # of a set always split the same way (research/41 row 64: planned in each shard, one shard's failed download of
+      # one report gave it its own split, and 174 WebKit tests ran against 165 listed, run 42284321017). Any failure
+      # leaves the plan empty, and every shard uses Playwright's --shard.
       - name: the last green main run (its e2e reports balance the e2e shards)
         id: durations
         continue-on-error: true
@@ -180,6 +183,23 @@ jobs:
           id=$(gh run list -R "$GITHUB_REPOSITORY" --workflow ci.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
           echo "last green main run: ${id:-none}"
           echo "run=$id" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4 # every set's reports from that run
+        if: steps.durations.outputs.run != ''
+        continue-on-error: true
+        timeout-minutes: 3
+        with:
+          pattern: e2e-report-*
+          path: .e2e-main-reports
+          run-id: ${{ steps.durations.outputs.run }}
+          github-token: ${{ github.token }}
+      - name: the e2e shard plan (one per set, read by every shard)
+        id: plan
+        continue-on-error: true
+        timeout-minutes: 3
+        run: |
+          d=.e2e-main-reports; [ -d "$d" ] || d=none
+          plan=$(node scripts/ci/e2e-shard-plan.mjs plan "$d")
+          echo "plan=$plan" >> "$GITHUB_OUTPUT"
       - run: pnpm --filter "@pme/renderer^..." build # Stage 8b: the renderer's workspace dependencies first (its tsconfig.build.json reads their dist/types)
       - run: pnpm --filter @pme/renderer build
       - uses: actions/upload-artifact@v4
@@ -204,7 +224,8 @@ jobs:
   # shard with a contiguous run of files by test count, so the three adjacent files still shared one shard. So each
   # shard's files now come from scripts/ci/e2e-shard-plan.mjs: per-file durations from the last green main run's
   # reports of the same set, longest first onto the least-loaded shard; Playwright's --shard when there is no usable
-  # report. The e2e-count job's proof is unchanged (it sums the shard reports, however the files were split).
+  # report. The plan is made once, in the renderer job, and every shard reads it (research/41 row 64). The e2e-count
+  # job's proof is unchanged (it sums the shard reports, however the files were split).
   # ci-shard4: Chromium in four shards. Balanced by duration, its three still each held ≈ 34 recorded min over two workers,
   # ≈ 17 min of tests plus set-up = 20.3–20.4 min wall; four put each near 13 min of tests. WebKit stays at three (≈ 16.4
   # recorded min each). The matrix is built in the changes job from scripts/ci/e2e-sets.mjs, where each set's shard
@@ -252,22 +273,14 @@ jobs:
         with:
           name: ventilator-monitor-embed
           path: apps/demo/dist/embed
-      - uses: actions/download-artifact@v4 # this set's reports from the last green main run, for the shard plan
-        if: matrix.of > 1 && needs.renderer.outputs.durations_run != ''
-        continue-on-error: true
-        timeout-minutes: 3
-        with:
-          pattern: e2e-report-${{ matrix.report }}-[0-9]*
-          path: .e2e-main-reports
-          run-id: ${{ needs.renderer.outputs.durations_run }}
-          github-token: ${{ github.token }}
-      # This shard's files, balanced by recorded duration (the plan of every shard is printed here and in the summary),
-      # or Playwright's count-based --shard when the main run's reports are missing or unreadable or the plan fails.
+      # This shard's files from the run's one plan (the renderer job's, balanced by recorded duration; the whole plan is
+      # in that job's log), or Playwright's count-based --shard when the plan has none for this set, for every shard alike.
       - name: shard plan (by recorded duration; Playwright's --shard if none)
         id: plan
+        env:
+          E2E_SHARD_PLAN: ${{ needs.renderer.outputs.shard_plan }}
         run: |
-          d=.e2e-main-reports; [ -d "$d" ] || d=none
-          if [ ${{ matrix.of }} -gt 1 ] && node scripts/ci/e2e-shard-plan.mjs ${{ matrix.report }} ${{ matrix.shard }} "$d" > "$RUNNER_TEMP/shard-files.txt" 2> "$RUNNER_TEMP/plan.txt"; then
+          if [ ${{ matrix.of }} -gt 1 ] && node scripts/ci/e2e-shard-plan.mjs pick ${{ matrix.report }} ${{ matrix.shard }} > "$RUNNER_TEMP/shard-files.txt" 2> "$RUNNER_TEMP/plan.txt"; then
             echo "args=--test-list $RUNNER_TEMP/shard-files.txt" >> "$GITHUB_OUTPUT"
             echo "shard ${{ matrix.shard }}/${{ matrix.of }}: $(wc -l < "$RUNNER_TEMP/shard-files.txt") files by recorded duration" >> "$RUNNER_TEMP/plan.txt"
           else
