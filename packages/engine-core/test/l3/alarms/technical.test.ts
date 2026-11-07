@@ -20,10 +20,11 @@ describe('technical alarms', () => {
     expect(tech('philips-like', inp, 10)).toEqual([]); // still acquiring
     observeEvent(inp, meas(SPO2_SEARCH_S + 15, { spo2: { flag: 'invalid' } }));
     expect(tech('philips-like', inp, 30)).toEqual([['spo2NonPulsatile', 'SpO2 NON-PULSAT.', 'spo2']]);
-    expect(tech('saadat-like', inp, 30)).toEqual([['spo2NonPulsatile', 'SPO2 NO PULSE', 'spo2']]);
+    // saadat-like also says its IBP1 has no transducer (MUI-7): the inputs have no arterial line
+    expect(tech('saadat-like', inp, 30)).toEqual([['spo2NonPulsatile', 'SPO2 NO PULSE', 'spo2'], ['abpNoSensor', 'IBP1 NO SENSOR', null]]);
     observeEvent(inp, meas(30, { spo2: { value: 97, flag: 'questionable' }, pi: { value: 0.12 } }));
     expect(tech('philips-like', inp, 30)).toEqual([['spo2LowPerf', 'SpO2 LOW PERF', 'spo2']]);
-    expect(tech('saadat-like', inp, 30)).toEqual([['spo2LowPerf', 'SPO2 LOW PERFUSION', 'spo2']]);
+    expect(tech('saadat-like', inp, 30)).toEqual([['spo2LowPerf', 'SPO2 LOW PERFUSION', 'spo2'], ['abpNoSensor', 'IBP1 NO SENSOR', null]]);
   });
 
   it('ABP: a static pressure → NON-PULSATILE (philips-like keeps S/D/M and marks the pulse, saadat-like shows the mean only); mean < 10 → ***ABP DISCONNECT (red) and no ABP LOW where the skin has the disconnect alarm on (saadat-like OFF by default, research/06 §4.1); zeroing → ABP ZEROING', () => {

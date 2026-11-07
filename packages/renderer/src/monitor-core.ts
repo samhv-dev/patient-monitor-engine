@@ -68,6 +68,12 @@ export interface CanvasTarget {
   height: number;
 }
 
+/** FX-11a: a long engine run reports progress at most this often (the frames' own posting cadence, ≤ 250 ms) [ENG]. */
+export const PROGRESS_MS = 250;
+/** …checking the time every this many ticks: 50 ticks (1 s of sim) cost ≈ 3 ms of the worker's time (measured: 10 000
+ *  ticks took 532–653 ms), so a report is never more than ≈ 3 ms late [ENG]. */
+export const PROGRESS_TICKS = 50;
+
 export class MonitorCore {
   readonly engine: MonitorEngine;
   readonly clock = new Clock();
@@ -254,6 +260,29 @@ export class MonitorCore {
   }
 
   /**
+   * FX-11a: called during a long engine run (a fast-forward step, a hidden-tab catch-up) at most every PROGRESS_MS of
+   * work, so the worker can tell the page it is working (the watchdog judges the worker by its own progress). Unset on the
+   * main thread: nothing to tell.
+   */
+  onProgress: (() => void) | null = null;
+
+  /** The engine to `simT`, in slices of PROGRESS_TICKS with a progress report every PROGRESS_MS of wall time between
+   *  them. A slice boundary changes nothing in the run: the engine steps tick by tick either way. */
+  private runTo(simT: number): void {
+    const report = this.onProgress;
+    if (!report) return void this.engine.advanceTo(simT);
+    let at = performance.now();
+    while (this.engine.now().simT < simT - 1e-9) {
+      this.engine.advanceTo(Math.min(simT, this.engine.now().simT + PROGRESS_TICKS * 0.02));
+      const now = performance.now();
+      if (now - at >= PROGRESS_MS) {
+        report();
+        at = now;
+      }
+    }
+  }
+
+  /**
    * Hidden tab (brief §3.3): advance sim time by the FULL wall delta (no 250 ms clamp), without drawing.
    * The lanes restart cleanly on the next drawn frame because the jump exceeds one lane.
    */
@@ -261,7 +290,7 @@ export class MonitorCore {
     const dt = this.lastEpoch === null ? 0 : Math.max(0, epochMs - this.lastEpoch);
     this.lastEpoch = epochMs;
     if (this.clock.paused || dt === 0 || this.ffWasPaused !== null) return;
-    if (this.clock.advanceUnclamped(dt) > 0) this.engine.advanceTo(this.clock.simT); // Remainder carried
+    if (this.clock.advanceUnclamped(dt) > 0) this.runTo(this.clock.simT); // Remainder carried
     // Post what was generated while hidden, so the batch does not grow without frames.
     this.post({ simT: this.clock.renderT, epochMs, timeScale: this.clock.timeScale }, this.batch);
     this.batch = [];
@@ -280,7 +309,7 @@ export class MonitorCore {
       this.ffWasPaused = this.clock.paused;
       this.clock.pause();
     }
-    if (this.clock.step(ticks) > 0) this.engine.advanceTo(this.clock.simT);
+    if (this.clock.step(ticks) > 0) this.runTo(this.clock.simT);
     this.overlays.due(this.clock.renderT); // marks from the skipped span are not drawn
     if (last) {
       if (!this.ffWasPaused) this.clock.resume();

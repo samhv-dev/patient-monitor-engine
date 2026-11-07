@@ -58,6 +58,31 @@ and **the presenting Mac's Node.js**. Until they are settled, tick every line:
   back ("Connection lost: reconnecting…" while it is away).
 - One session takes up to **60 phones**; the 61st is told "This session is full: please watch the main screen".
 
+## The instructor's phone
+
+You can run the case from your own phone as well as from the laptop. The laptop always commands; the phone is a
+second pair of hands, signed in with a PIN that only the laptop knows.
+
+- **The PIN** is on the Room page, card **Instructor's phone**: four digits, drawn by the laptop the first time and kept
+  on it. They show only while you **hold** "Hold to show the PIN" (mouse, finger or the space bar), so a laptop
+  mirrored to the projector never shows them. **Change the PIN** draws new digits and signs the phone out at once; it
+  signs in again with the new PIN.
+- **The phone's address**: open "The phone's QR code" on the same card and scan it with your phone (or type the
+  address under it). It opens the instructor remote with the session code filled in. The address carries no PIN.
+- **Signing in**: type the PIN on the phone's keypad and press **Sign in**. The phone says "Signing in…", then
+  "Signed in as the instructor's remote", and shows the instructor panel. The Room page's row says "Signed in since
+  hh:mm".
+- **One phone at a time.** Another phone that enters the PIN takes over: the first phone says "Taken over by another
+  phone at mm:ss" (the case clock) and the Room row says "another phone took over". A lost phone never blocks the case:
+  the row says "Lost", the case runs on, and any phone with the PIN signs in at once.
+- **What the phone says when it cannot sign in**: "Wrong PIN" (the Room page counts the wrong PINs of the last
+  minute); "Too many wrong PINs from this phone" (five in a minute: that phone waits a minute, the other phones are not
+  affected); "The PIN was changed on the instructor's computer"; "The instructor's computer restarted at mm:ss" (the
+  laptop reloaded: presses the phone was still waiting on were not given, and the phone signs in again by itself);
+  after 10 s with no answer, "This classroom kit does not take an instructor phone" (a kit from an older release:
+  use the kit from the same release as the app).
+- The PIN is kept in the phone's page only while it is open: a reload of the phone asks for it again.
+
 ## One instructor tab
 
 Run the session in **one** tab. The phones follow the tab that runs the session; a second tab that started its own
@@ -102,7 +127,7 @@ The refused press is not in the debrief; it shows only in the pressing device's 
 1. Mac and phones on the same Wi-Fi (the guest network usually isolates devices: ask for the staff network, or test as
    above).
 2. Double-click **Start Classroom**; leave its black window open.
-3. Load the case as usual (Instructor > Scenario > Showcase > Load).
+3. Load the case as usual (Scenarios > Open the library > Load, or the Instructor view's case list).
 4. **The QR moment** (below), then back to the case (**Instructor** in the rail); teach as usual.
 
 ## (b) A local network you bring (the Mac's own hotspot or a travel router)

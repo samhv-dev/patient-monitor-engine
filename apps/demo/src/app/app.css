@@ -29,7 +29,6 @@
   --r-chip: 3px; --r-control: 6px; --r-card: 10px;
   --target: 44px;
   --bar-h: 52px;
-  --panel-w: 440px;
   --motion: 180ms;
   /* alarm mirror colours: replaced at run time from the active skin (shell.ts `applySkinAlarmColours`) */
   --alarm-high-bg: #d1001c; --alarm-high-fg: #fff;
@@ -112,45 +111,18 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .sessionbar { grid-area: bar; display: none; }
 .view { grid-area: view; min-width: 0; min-height: 0; overflow: auto; background: var(--bezel-0); }
 .view[hidden] { display: none; }
-.main:not([data-route='monitor']):not([data-route='teach']):not([data-route='vent']) > .stage { display: none; }
+.main:not([data-route='monitor']):not([data-route='vent']) > .stage { display: none; }
 .main[data-route='monitor'] > .view:not([data-view='monitor']) { display: none; }
 
 .main[data-route='monitor'] { grid-template: 'stage' minmax(0, 1fr) 'view' auto / minmax(0, 1fr); }
 .main[data-route='monitor'] > .view[data-view='monitor'] { overflow: visible; }
 /* the return strip's row reads as the monitor's own black (a follower's view, with its own bar, keeps its look) */
 .main[data-route='monitor'] > .view[data-view='monitor']:has(.reveal) { background: var(--screen); }
-.main[data-route='teach'] { grid-template: 'bar bar' auto 'stage view' minmax(0, 1fr) / minmax(0, 1fr) var(--panel-w); }
-.main[data-route='teach'] > .sessionbar, .main.hostless[data-route='remote'] > .sessionbar:not([hidden]) { display: flex; }
+.main.hostless[data-route='remote'] > .sessionbar:not([hidden]) { display: flex; }
 .main.hostless[data-route='remote'] { grid-template: 'bar' auto 'view' minmax(0, 1fr) / minmax(0, 1fr); }
 .main[data-route='vent'] { grid-template: 'view stage' minmax(0, 1fr) / minmax(0, 1fr) minmax(0, 1fr); }
-@media (min-width: 1800px) { :root { --panel-w: 560px; } }
-@media (max-width: 1439px) { :root { --panel-w: 420px; } }
-
-/* Drawer: the site chose it, or the screen is narrower than monitor 760 px + panel. The panel overlays the monitor's
-   cell from the right (the 6a pattern), opaque (no blur over a canvas that redraws every frame, brief §10). */
-.main[data-route='teach'][data-panel='drawer'] { grid-template: 'bar' auto 'stage' minmax(0, 1fr) / minmax(0, 1fr); }
-.main[data-route='teach'][data-panel='drawer'] > .view[data-view='teach'] {
-  grid-area: stage; justify-self: end; width: min(var(--panel-w), 92vw); z-index: 5; border-left: 1px solid var(--line-strong);
-  transform: translateX(100%); transition: transform var(--motion) ease-out; visibility: hidden;
-}
-.main[data-route='teach'][data-panel='drawer'][data-drawer='open'] > .view[data-view='teach'] { transform: none; visibility: visible; }
-.stage > .drawer-toggle { display: none; position: absolute; right: var(--s-2); bottom: var(--s-2); z-index: 6; }
-.main[data-route='teach'][data-panel='drawer'] .stage > .drawer-toggle { display: inline-flex; }
 @media (max-width: 1199px) {
-  .main[data-route='teach'] { grid-template: 'bar' auto 'stage' minmax(0, 1fr) / minmax(0, 1fr); }
-  .main[data-route='teach'] > .view[data-view='teach'] {
-    grid-area: stage; justify-self: end; width: min(var(--panel-w), 92vw); z-index: 5; border-left: 1px solid var(--line-strong);
-    transform: translateX(100%); transition: transform var(--motion) ease-out; visibility: hidden;
-  }
-  .main[data-route='teach'][data-drawer='open'] > .view[data-view='teach'] { transform: none; visibility: visible; }
-  .main[data-route='teach'] .stage > .drawer-toggle { display: inline-flex; }
   .main[data-route='vent'] { grid-template: 'view' minmax(0, 1fr) 'stage' 42% / minmax(0, 1fr); }
-}
-/* iPad portrait: monitor on top, the panel as a sheet under it */
-@media (max-width: 900px) and (orientation: portrait) {
-  .main[data-route='teach'] { grid-template: 'bar' auto 'stage' 42% 'view' minmax(0, 1fr) / minmax(0, 1fr); }
-  .main[data-route='teach'] > .view[data-view='teach'] { grid-area: view; width: auto; justify-self: stretch; transform: none; visibility: visible; border-left: 0; border-top: 1px solid var(--line-strong); }
-  .main[data-route='teach'] .stage > .drawer-toggle { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .view, .toast, dialog { transition: none !important; } }
 
@@ -214,7 +186,6 @@ input[type='checkbox'], input[type='radio'] { flex: none; width: 24px; height: 2
 .code-pill:hover { border-color: var(--text-muted); }
 
 /* ---------- instructor panel ---------- */
-.view[data-view='teach'] { overflow: hidden; }
 .panel { display: grid; grid-template-rows: minmax(0, 1fr) auto; height: 100%; background: var(--bezel-1); border-left: 1px solid var(--line); min-width: 0; }
 .tabs-wrap { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
 .tabpanels { min-height: 0; overflow: auto; overscroll-behavior: contain; }
@@ -326,20 +297,13 @@ dialog .actions { display: flex; justify-content: flex-end; gap: var(--s-2); mar
 .toasts { position: fixed; bottom: var(--s-4); left: 50%; transform: translateX(-50%); display: grid; gap: var(--s-2); z-index: 40; pointer-events: none; }
 /* UI-A #8 (demo review 24 Oct #8): after the cue card's Load · All alarms on · Bookmark · ×8 the toasts stacked over the
    monitor's bottom row, the first thing the audience saw of each case. Wherever the monitor stage shows, they keep off
-   it: on the Instructor view over the panel (E128: at its foot, above the staging bar). The Monitor view (the device alone, what
+   it: on the Instructor view they rest on the dock (--dock-foot, ui.ts trackChromeBottom). The Monitor view (the device alone, what
    the learners see) shows only the toasts that belong there (ui.ts ToastKind): alerts — "The monitor stopped", a
    refusal, a pause while hidden, which must be seen on every view — and the learner controls' own feedback; the
    instructor's feedback ("Speed ×8", "Bookmark … saved") stays off it. The starting page is a full page with no
    monitor (Home, Room, Scenarios, Patient): bottom-centre, as elsewhere. Moved rather than shortened: every toast, not only these three, stays readable for its 4 s. */
-/* E128: at the foot of the panel, just above its staging bar (--panel-foot, ui.ts trackChromeBottom), over the panel's
-   body: at its top "Scenario loaded" hid the Scenario tab, then the case title and "Choose another scenario". */
-body:has(.app[data-route='teach']) .toasts { top: auto; bottom: calc(var(--panel-foot, 0px) + var(--s-2)); left: auto; right: var(--s-3); transform: none; width: max-content; max-width: calc(var(--panel-w) - 2 * var(--s-3)); }
 body:has(.app[data-route='monitor']) .toast[data-kind='info'] { display: none; }
 .toast[data-kind='alert'] { border-left-color: var(--danger); }
-@media (max-width: 900px) and (orientation: portrait) {
-  /* the panel is a sheet under the monitor: the toasts at the foot of the window are over it */
-  body:has(.app[data-route='teach']) .toasts { top: auto; bottom: var(--s-4); left: 50%; right: auto; transform: translateX(-50%); }
-}
 .toast { background: var(--bezel-3); color: var(--text-strong); border: 1px solid var(--line-strong); border-left: 3px solid var(--accent); border-radius: var(--r-control); padding: var(--s-2) var(--s-4); box-shadow: 0 6px 24px rgb(0 0 0 / 0.35); }
 
 /* monitor-view reveal strip (auto-hiding; the learner sees only the device): a row of its own under the monitor, never
@@ -415,6 +379,32 @@ body:has(.app[data-route='monitor']) .toast[data-kind='info'] { display: none; }
 .status-pill { display: inline-block; margin: var(--s-2) var(--s-3); padding: 2px var(--s-3); border: 1px solid var(--line-strong); border-radius: 999px; font-size: var(--t-13); color: var(--text); }
 .remote-panel { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); }
 .remote-panel .panel { border-left: 0; }
+/* The instructor phone's way in (plan instructor-peer-role.md P7): the PIN form's keypad, thumb-sized (56 px keys,
+   above the 44 px touch target), and the Room page's instructor card */
+.ip-peer-form { max-width: 420px; margin: var(--s-4) auto; }
+.ip-peer-pin { font-family: var(--font-mono); font-size: 28px; letter-spacing: 0.3em; text-align: center; }
+.ip-peer-keypad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-2); }
+.ip-peer-key { min-height: 56px; font-size: 22px; justify-content: center; }
+.ip-peer-go { font-size: 17px; }
+.ip-peer-error:not(:empty) { margin: 0; }
+.ip-peer-notice { margin: 0 var(--s-3) var(--s-2); }
+.ip-peer-room { grid-column: 1; }
+.ip-peer-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 14px; }
+.ip-peer-row b { font-weight: 500; color: var(--text-strong); }
+.ip-peer-when { color: var(--text-muted); }
+.ip-peer-denials { margin: 8px 0 0; }
+.ip-peer-pinbox { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 16px 0 0; font-size: 14px; }
+.ip-peer-pinbox[hidden], .ip-peer-qr[hidden] { display: none; }
+.ip-peer-pin-label { color: var(--text-muted); }
+.ip-peer-pin-value { min-width: 4.5em; font-family: var(--font-plex-mono); font-size: 26px; letter-spacing: 0.14em; color: var(--text-strong); }
+.ip-peer-hold, .ip-peer-change { min-height: 44px; }
+.ip-peer-hold { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.ip-peer-qr { margin: 16px 0 0; font-size: 14px; }
+.ip-peer-qr summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; color: var(--text-strong); }
+.ip-peer-qr .room-qr { margin: 8px 0; }
+.ip-peer-qr .room-qr svg { width: 160px; height: 160px; }
+.ip-peer-url { display: block; word-break: break-all; color: var(--text-strong); }
+.ip-peer-room .hint { margin: 10px 0 0; }
 .page.narrow { max-width: 760px; }
 .page.wide { max-width: none; }
 .framed iframe { height: calc(100dvh - 220px); min-height: 480px; border: 1px solid var(--line); border-radius: var(--r-card); }
@@ -444,7 +434,6 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
 .menu-list { display: grid; gap: 2px; margin-bottom: var(--s-3); }
 .menu-list a { display: flex; align-items: center; min-height: var(--target); padding: 0 var(--s-3); border-radius: var(--r-control); color: var(--text-strong); text-decoration: none; }
 .menu-list a:hover { background: var(--bezel-2); }
-.stage > .drawer-toggle { right: auto; left: var(--s-2); }
 /* touch screens (iPad, phone remote): every control in the instructor's reach is 44 px (brief §6.4) */
 @media (pointer: coarse) {
   .btn.small, .seg.compact button, .linkish, .mode-badge, .code-pill, .alarm-count, .chip-btn { min-height: 44px; min-width: 44px; }
@@ -474,12 +463,9 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
 .ff-banner[hidden] { display: none; }
 /* UI-A #9 (demo review 24 Oct #9): the banner covered the nav and the session-bar title for 8 s, and on the Debrief the
    "Print the learner handout" button; printed within its 8 s it sat over the title of every page. It now sits under the
-   bars (--chrome-bottom) — on the Instructor view over the top of the panel, off the monitor — is not shown on the
+   bars (--chrome-bottom) — on the Instructor view under its header and stage strip, which that route shows in place of
+   the top bar (retire-instructor-v1 PR 3) — is not shown on the
    Debrief, and neither it nor a toast prints, from any view. */
-.app[data-route='teach'] .ff-banner { top: calc(max(var(--chrome-bottom, 0px), var(--panel-tabs-bottom, 0px)) + var(--s-2)); left: auto; /* E128: under the tab strip */ right: var(--s-3); transform: none; max-width: calc(var(--panel-w) - 2 * var(--s-3)); }
-@media (max-width: 900px) and (orientation: portrait) {
-  .app[data-route='teach'] .ff-banner { left: 50%; right: auto; transform: translateX(-50%); max-width: calc(100vw - 2 * var(--s-4)); }
-}
 .app[data-route='debrief'] .ff-banner { display: none; }
 @media print { .ff-banner, .toasts { display: none !important; } }
 .ff-group { display: inline-flex; align-items: center; gap: var(--s-1); }
@@ -564,7 +550,6 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
 .sim-strip { position: absolute; top: 0; left: 0; right: 0; z-index: 1; height: 16px; line-height: 16px; font-size: 11px; letter-spacing: 0.04em; text-align: center; white-space: nowrap; overflow: hidden; background: #000; color: #d6dde6; }
 .stage.sim-strip-on > .monitor-host { top: 16px; }
 .app.has-rail[data-route='monitor'] > .rail { display: none; }
-.app.has-rail[data-route='teach'] { --rail-w: var(--rail-strip); }
 @media (max-width: 900px) { .app.has-rail { --rail-w: var(--rail-strip); } }
 
 /* the rail */
@@ -596,17 +581,6 @@ a.rail-item:hover { color: var(--text-strong); background: color-mix(in srgb, va
 .rail-fa { font-family: var(--font-ui); unicode-bidi: isolate; }
 @media (prefers-reduced-motion: reduce) { .rail-knob::after { transition: none; } }
 /* the 56-px strip: icons, the names read by screen readers and shown as tooltips */
-.app[data-route='teach'] .rail { padding: var(--s-3) var(--s-2); }
-.app[data-route='teach'] .rail :is(.rail-text, .rail-badge) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.app[data-route='teach'] .rail :is(.rail-brand, .rail-item, .rail-subitem) { justify-content: center; padding: 0; }
-.app[data-route='teach'] .rail :is(.rail-item, .rail-subitem) { min-height: 40px; min-width: 40px; }
-.app[data-route='teach'] .rail-ico { display: block; }
-.app[data-route='teach'] .rail-tools { flex-direction: column; gap: 2px; background: none; box-shadow: none; }
-.app[data-route='teach'] .rail-sub { flex-direction: column; }
-.app[data-route='teach'] .rail-subitem { color: var(--text); }
-.app[data-route='teach'] .rail-subitem[aria-current='page'] { background: var(--surface); }
-.app[data-route='teach'] .rail-foot { padding: var(--s-3) 0 0; align-items: center; }
-.app[data-route='teach'] .rail-theme { align-self: center; }
 @media (max-width: 900px) {
   .rail { padding: var(--s-3) var(--s-2); }
   .rail :is(.rail-text, .rail-badge) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -819,3 +793,25 @@ body:has(.app[data-route='teach2']) .toasts { bottom: calc(var(--dock-foot, 64px
 /* host-guard.ts: the tab that handed its session to another tab */
 .host-moved { max-width: 560px; margin: 15vh auto 0; padding: 0 16px; }
 .host-moved h1 { font-size: var(--t-18); color: var(--text-strong); }
+/* R4 (plan room-and-instruments.md): the instrument picker at `?join=CODE#/pick`, after the owner's mock-up m5 — one card
+   per instrument, one column on a phone, three across on a laptop; the page scrolls itself (body does not) */
+.join-pick { height: 100%; overflow-y: auto; box-sizing: border-box; padding: var(--s-5) max(var(--s-4), calc((100% - 1120px) / 2)) var(--s-7); }
+.join-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: var(--s-3) var(--s-5); padding-bottom: var(--s-4); border-bottom: 1px solid var(--line); }
+.join-top h1 { margin: 0; font-size: var(--t-22); font-weight: 600; color: var(--text-strong); }
+.join-lead { margin: var(--s-1) 0 0; color: var(--text-muted); font-size: var(--t-15); }
+.join-code .small { font-size: var(--t-13); }
+.join-code .code { font-family: var(--font-mono); font-size: var(--t-26); letter-spacing: 0.14em; color: var(--text-strong); }
+.join-grid { display: grid; grid-template-columns: 1fr; gap: var(--s-4); margin-top: var(--s-5); }
+@media (min-width: 640px) { .join-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 960px) { .join-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.join-card { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-3) var(--s-4) var(--s-4); background: var(--bezel-1); border: 1px solid var(--line); border-radius: var(--r-card); }
+.join-card[data-selected='true'] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.join-card h2 { margin: 0; font-size: var(--t-18); font-weight: 600; color: var(--text-strong); }
+.join-card p { margin: 0; color: var(--text); font-size: var(--t-15); min-height: 2.7em; }
+.join-row { display: flex; justify-content: space-between; align-items: center; gap: var(--s-2); }
+.join-foot { font-size: var(--t-13); }
+.join-pic { height: 110px; border-radius: 8px; background: #0b0e12; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.join-pic svg { width: 92%; height: 90%; }
+.join-card .st { flex: none; font-size: var(--t-13); padding: 3px 8px; border-radius: 99px; border: 1px solid var(--line-strong); color: var(--text-muted); white-space: nowrap; }
+.join-card .st.on { color: var(--ok); border-color: var(--ok); }
+.join-card .btn { min-height: 44px; min-width: 44px; } /* every card's action is a 44 px target (R4), with a mouse too */

@@ -132,6 +132,18 @@ export interface DocBookmark {
   state: string;
 }
 
+/** The card author's words for the instructor's Debrief page 2 (Debrief 2 D8), printed as written, never on the learner
+ *  handout: up to four "what this case is built to show" lines, and up to four openers for the analysis, each anchored on
+ *  an event (`/1`: a run event, a `state:` one naming a state of the card; `/2`: a string anchor, `HintAnchor`). An opener
+ *  whose event did not happen on the kept course is not printed. */
+export interface DebriefHints<At extends string = RunEventId> {
+  show?: string[];
+  openers?: Array<{ at: At; text: string }>;
+  /** Up to three questions for the learner handout (D16), anchored as the openers are; printed with their anchor's time
+   *  in place of the first two fixed prompts, and only when the anchor happened. Only owner-reviewed questions enter a card. */
+  handoutQuestions?: Array<{ at: At; text: string }>;
+}
+
 /** A card's Case briefing: `text` (paragraphs separated by blank lines), the estimated scenario time, how long it shows
  *  (default 60 s) and its language (default 'en'; 'fa' is right-to-left with Persian digits in the chrome). */
 export interface ScenarioBriefing {
@@ -139,6 +151,9 @@ export interface ScenarioBriefing {
   estimatedMinutes?: number;
   durationS?: number;
   lang?: 'en' | 'fa';
+  /** Debrief 2 D13b: the Persian of an English `text` as the clinical owner has read it; sent in its place (lang fa)
+   *  when the host is set to Persian. Never machine-translated at run time. */
+  textFa?: string;
 }
 
 export interface ScenarioDoc extends C {
@@ -157,6 +172,8 @@ export interface ScenarioDoc extends C {
   briefing?: ScenarioBriefing;
   /** Optional: up to four take-home lines the learner handout prints, as written (the author's reviewed words). */
   takeHome?: string[];
+  /** Optional: the author's hints and openers for the Debrief (D8). */
+  debriefHints?: DebriefHints;
   /** Seeds the runner's `scenario` PRNG stream (the engine keeps the host's own seed). */
   seed?: number;
   mode?: 'manual' | 'modeled';

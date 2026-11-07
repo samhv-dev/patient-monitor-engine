@@ -4,7 +4,7 @@
 // Chromium only (a heavy evidence run, CI amendment rules).
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
-import { openApp, startVite, tab } from './app-support.ts';
+import { closeSheets, deliver, openApp, sheet, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -19,52 +19,55 @@ async function timed(name: string, fn: () => Promise<void>): Promise<void> {
   console.log(`[task] ${name}: ${s.toFixed(1)} s`);
   expect(s, name).toBeLessThan(30);
 }
-const logText = (p: Page) => p.locator('.log').innerText();
+const logText = (p: Page) => p.locator('.ip2-sheet[data-sheet=log] .log').innerText();
 
 test('five instructor tasks, each under 30 s', async ({ page, browserName }) => {
   test.skip(browserName === 'webkit', 'evidence run: Chromium only');
   test.setTimeout(240_000);
   await page.setViewportSize({ width: 1280, height: 800 });
-  await openApp(page, base, '#/patient', { warmMs: 3000 }); // E125: the free-run patient's page opens the Instructor view
+  // E125: the free-run patient's page opens the Instructor view (Instructor v2)
+  await openApp(page, base, '#/patient', { warmMs: 3000 });
 
   // Task 3 runs first: holding and returning a value needs MODELED physiology, and the ACLS case runs MANUAL.
   await timed('3. Hold SpO₂ at 85 %, then return it to the model', async () => {
     await page.click('text=Open the instructor view');
-    await tab(page, 'vitals');
-    const row = page.locator('[data-var=spo2]');
+    const vitals = await sheet(page, 'vitals');
+    const row = vitals.locator('[data-var=spo2]');
     await row.locator('input').fill('85');
     await row.locator('input').dispatchEvent('change');
     await row.locator('button', { hasText: 'Set' }).click();
-    await page.keyboard.press('Control+Enter');
+    await deliver(page); // v2's Deliver: the staged footer's Commit (Ctrl+Enter), which v2 gives no key
     await expect(row.locator('.chip')).toContainText(/Held|Model override/, { timeout: 10_000 });
     await row.locator('button', { hasText: 'Return to model' }).click();
-    await page.locator('.stagebar button.primary').click();
+    await deliver(page);
     await expect(row.locator('.chip')).toBeHidden({ timeout: 10_000 });
   });
 
   await timed('1. Load the ACLS VF case', async () => {
-    await tab(page, 'scenario');
-    await page.click('.chips >> text=Resuscitation');
-    await page.locator('.scard', { hasText: 'Witnessed VF in PACU' }).locator('button', { hasText: 'Load' }).click();
-    await expect(page.locator('.sessionbar .scen')).toContainText('Witnessed VF in PACU');
+    await closeSheets(page); // ACTION with no case: the three ways to begin
+    await page.locator('.ip2-action button.ip2-begin-card[data-way=library]').click();
+    await page.locator('.ip2-action .ip2-case-list button.ip2-case-row', { hasText: 'Load Witnessed VF in PACU' }).click();
+    await expect(page.locator('.ip2-head .ip2-title')).toContainText('Witnessed VF in PACU');
   });
 
   await timed('2. Give noradrenaline 0.1 µg/kg/min', async () => {
-    await tab(page, 'drugs');
-    await page.fill('input[type=search]', 'noradr');
+    const drug = await sheet(page, 'drug');
+    await drug.locator('input.ip2-drug-search').fill('noradr');
     await page.keyboard.press('Enter');
-    await page.locator('.card.dose .chips button', { hasText: '0.1 µg/kg/min' }).click();
-    await page.click('.card.dose >> text=Start infusion');
+    await drug.locator('.ip2-presets button.ip2-preset', { hasText: '0.1 µg/kg/min' }).click();
+    await drug.locator('button.ip2-give', { hasText: /^Start norepinephrine 0\.1 / }).click();
     await expect(page.locator('.toasts')).toContainText('Norepinephrine 0.1 µg/kg/min infusion started');
   });
 
   await timed('4. Silence the alarm and bookmark', async () => {
-    await page.locator('.panel').click({ position: { x: 5, y: 5 } }); // focus out of any field
+    await closeSheets(page);
+    await page.locator('.ip2-action').click({ position: { x: 5, y: 5 } }); // focus out of any field
     await page.keyboard.press('Shift+S');
-    await page.keyboard.press('Shift+B');
-    await tab(page, 'log');
+    // v2 has no Shift+B (retire-instructor-v1 G6): the dock's mark sends today's bookmark command, labelled "Mark n at"
+    await page.locator('.ip2-dock').getByRole('button', { name: 'Mark: good' }).click();
+    await sheet(page, 'log');
     await expect.poll(() => logText(page)).toContain('Alarm sound silenced');
-    await expect.poll(() => logText(page)).toMatch(/Bookmark 1 at \d\d:\d\d/);
+    await expect.poll(() => logText(page)).toMatch(/Mark 1 at \d\d:\d\d/);
   });
 
   await timed("5. Find the patient's compliance and driving pressure", async () => {

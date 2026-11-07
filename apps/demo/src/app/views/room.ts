@@ -14,8 +14,9 @@ import { qrTarget, relayInfo, type RelayInfo } from '../classroom.ts';
 import { qrSvg } from '../qr.ts';
 import { ago, PeerLog, RESYNC_MS, roomStatus, type PeerSeen, type RelayState, type RoomLevel } from '../room-status.ts';
 import { hrefOf } from '../router.ts';
+import type { InstructorRoomCard } from './room-instructor.ts';
 import type { View } from '../shell.ts';
-import { DEFIB_CHOICES, defibDefaults } from '../site.ts';
+import { DEFIB_CHOICES, defibDefaults, pacerDefaults } from '../site.ts';
 import { button, h, select, setText } from '../ui.ts';
 
 export interface RoomDeps {
@@ -36,6 +37,8 @@ export interface RoomDeps {
   now?: () => number;
   /** For tests: the relay's description (default: ask the relay). */
   info?: (relay: string) => Promise<RelayInfo | null>;
+  /** The instructor phone's card (room-instructor.ts, plan instructor-peer-role.md P7): its own card on this page. */
+  instructor?: InstructorRoomCard;
   /** The room's defibrillator model (R5b): the site's choice, and the session's hand-over of a new one (it saves it and
    *  sends it to the patient's engine). Absent: no card. */
   defib?: { model(): string | null; choose(model: string | null): void };
@@ -48,6 +51,7 @@ export interface RoomView extends View {
   draw(): void;
 }
 
+const SHOWING = (role: PeerSeen['role']) => (role === 'viewer' ? 'Learner monitor' : role === 'instructor' ? 'Instructor sign-in' : 'Remote');
 const LEVEL_TEXT: Record<RoomLevel, string> = { stable: 'stable', weak: 'weak', down: 'disconnected' };
 
 export function roomView(d: RoomDeps): RoomView {
@@ -56,7 +60,8 @@ export function roomView(d: RoomDeps): RoomView {
   const opened: Array<{ what: string; at: number }> = [];
   const listen = (t: ManagedTransport, via: PeerSeen['via']) => t.onMessage((m: WireMessage) => {
     if (m.from === d.hostPeerId) return;
-    if (m.kind === 'hello' && m.role !== 'host') log.heard(m.from, via, m.role, now());
+    // R8a's `ventilator` is not listed: no cockpit says it before R8d, which gives it its own row
+    if (m.kind === 'hello' && m.role !== 'host' && m.role !== 'ventilator') log.heard(m.from, via, m.role, now());
     else if (m.kind === 'command') log.heard(m.from, via, 'controller', now());
     else return;
     draw();
@@ -162,6 +167,7 @@ export function roomView(d: RoomDeps): RoomView {
 
   const clock = (t: number) => new Date(t).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
   function draw(): void {
+    d.instructor?.draw();
     const t = now();
     const relay = relayState();
     const peers = log.list();
@@ -173,10 +179,10 @@ export function roomView(d: RoomDeps): RoomView {
     let w = 0;
     let p = 0;
     for (const x of peers) {
-      if (x.via === 'local') list.push(row('stable', [h('b', {}, `Window ${++w + 1}`), ' · this computer'], x.role === 'viewer' ? 'Learner monitor' : 'Remote', 'synced', ago(t - x.lastAt)));
+      if (x.via === 'local') list.push(row('stable', [h('b', {}, `Window ${++w + 1}`), ' · this computer'], SHOWING(x.role), 'synced', ago(t - x.lastAt)));
       else {
         const lvl: RoomLevel = relay !== 'open' ? 'down' : t - x.lastAt < RESYNC_MS ? 'weak' : 'stable';
-        list.push(row(lvl, [h('b', {}, `Phone ${++p}`)], x.role === 'viewer' ? 'Learner monitor' : 'Remote', lvl === 'down' ? 'relay down' : lvl === 'weak' ? 'catching up' : 'synced', ago(t - x.lastAt)));
+        list.push(row(lvl, [h('b', {}, `Phone ${++p}`)], SHOWING(x.role), lvl === 'down' ? 'relay down' : lvl === 'weak' ? 'catching up' : 'synced', ago(t - x.lastAt)));
       }
     }
     // Devices the relay counts that said nothing since this page opened (they joined before a reload of it)
@@ -194,7 +200,9 @@ export function roomView(d: RoomDeps): RoomView {
     const choice = d.defib;
     const label = (id: string, l: string) => {
       const e = defibDefaults(id);
-      return `${l}: ${e.energyAdultJ} J adult${e.energyPaedJ === null ? '' : `, ${e.energyPaedJ} J paediatric`}`;
+      const p = pacerDefaults(id); // the pacer follows the model too (row 58)
+      const pacer = p ? `; pacer ${p.ratePpm} ppm, PAUSE at ${p.pausePct === null ? '0 mA' : `${p.pausePct} % of the rate`}` : '';
+      return `${l}: ${e.energyAdultJ} J adult${e.energyPaedJ === null ? '' : `, ${e.energyPaedJ} J paediatric`}${pacer}`;
     };
     const pick = select('Model', [['', "Not chosen: the monitor style's own values"], ...DEFIB_CHOICES.map((c): [string, string] => [c.id, label(c.id, c.label)])], choice.model() ?? '', (v) => choice.choose(v || null));
     return h('section', { class: 'room-card room-defib', 'aria-labelledby': 'room-defib-h' },
@@ -210,7 +218,7 @@ export function roomView(d: RoomDeps): RoomView {
       h('header', { class: 'console-head' },
         h('div', {}, h('h1', { id: 'room-h' }, 'Room'), h('p', { class: 'console-sub' }, 'Every screen and phone that joins with this code follows the same patient.')),
         status),
-      h('div', { class: 'room-cols' }, join, connected), ...(defibCard ? [defibCard] : [])), big);
+      h('div', { class: 'room-cols' }, join, connected, d.instructor?.el ?? null), ...(defibCard ? [defibCard] : [])), big);
   // Wired once everything above exists (a transport replays its status on subscribe)
   listen(d.local, 'local');
   if (d.relayLink) listen(d.relayLink, 'relay');
@@ -224,11 +232,13 @@ export function roomView(d: RoomDeps): RoomView {
     draw,
     enter() {
       if (!asked) void findAddress();
+      d.instructor?.enter();
       draw();
       timer ??= setInterval(draw, 1000);
       document.addEventListener('keydown', onKey);
     },
     leave() {
+      d.instructor?.leave();
       document.removeEventListener('keydown', onKey);
       if (big.open) big.close();
       if (timer) clearInterval(timer);

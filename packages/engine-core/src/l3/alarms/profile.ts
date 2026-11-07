@@ -4,6 +4,7 @@ import { resolveSkin, type LimitTable, type ResolvedSkin, type Skin } from '@pme
 import type { AgeBand, AlarmLevel } from '../../types-device.ts';
 import type { NumericId } from '../../types.ts';
 import { FALLBACK_DEFIB } from '../defib-pacer/defib.ts';
+import { FALLBACK_PACER } from '../defib-pacer/pacer.ts';
 
 /** Skin limit key → the measured numeric it watches and its display labels (IEC-style / Saadat-like). */
 export const LIMIT_KEYS: Readonly<Record<string, { numeric: NumericId; label: string; upper: string; gas?: boolean }>> = {
@@ -110,21 +111,36 @@ export interface DeviceProfile {
   ibpStaticDisplay: 'keep' | 'mean-only';
   /** The arterial-line disconnect alarm is on (skin `alarms.abpDisconnectDefault`; saadat-like off). */
   abpDisconnect: boolean;
+  /** No transducer on the IBP channel is said as a prompt (skin `ibp.noSensorMessage`; saadat-like "IBP1 NO SENSOR"). */
+  ibpNoSensor: boolean;
   /** The invasive-pressure display filter (skin `ibp.filterDefaultHz`), Hz. */
   ibpFilterHz: number;
   /** The cuff settings of the skin (and age band): NibpState.cfg. */
   nibp: { initial: number; nextAbove: number; statSpacingS: number; statCount: number; statWindowS: number };
 }
 
+/** A defibrillator model's spec: its defibrillator and pacer blocks and its HR-while-pacing rule (the same fields as a
+ * skin's, so a model is a skin's device half). */
+export interface DefibModel {
+  defib: NonNullable<DeviceProfile['defib']>;
+  pacer: NonNullable<DeviceProfile['pacer']>;
+  hrDashesWhilePacing: boolean;
+}
+
 /**
- * The defibrillator models a room can choose (Room plan R5a, §4 D5; owner's Q6 ruling of 5 November): the device
- * layer's defibrillator spec when one is set, whatever the monitor skin. Only the generic model ships (Q6's second
- * half): its values are the fallback's (defib.ts FALLBACK_DEFIB), equal to zoll-like.json's defibrillator block, whose
- * provenance they carry (energies and ready timeout documented, research/05 §2.6, brief §6.5; no published charge
- * time: the 7 s / 200 J rule, unverified). The department's own machine joins later as a skin with its own sourced
- * block, and one line here.
+ * The defibrillator models a room can choose (Room plan R5a, §4 D5; owner's Q6 ruling of 5 November; the pacer with it,
+ * research/41 row 58, ruling of 6 November): the device layer's defibrillator and pacer spec when one is set, whatever
+ * the monitor skin. Only the generic model ships (Q6's second half): its values are the fallback's (defib.ts
+ * FALLBACK_DEFIB, pacer.ts FALLBACK_PACER), equal to zoll-like.json's defibrillator and pacer blocks, whose provenance
+ * they carry (energies and ready timeout documented, research/05 §2.6, brief §6.5; no published charge time: the 7 s /
+ * 200 J rule, unverified; pacer ranges, 0 mA default, the +10/−5 mA step and demand mode documented, research/05 §2.6;
+ * the 70 ppm default assumed, no ZOLL default given; no pause rate given, so PAUSE drops the output to 0 mA; HR stays
+ * shown while pacing, PACING_HR_DASHES being the LIFEPAK-like skin's alone). The department's own machine joins later
+ * as a skin with its own sourced blocks, and one line here.
  */
-export const DEFIB_MODELS: Readonly<Record<string, NonNullable<DeviceProfile['defib']>>> = { generic: FALLBACK_DEFIB };
+export const DEFIB_MODELS: Readonly<Record<string, DefibModel>> = {
+  generic: { defib: FALLBACK_DEFIB, pacer: FALLBACK_PACER, hrDashesWhilePacing: false },
+};
 
 const numberOr = (v: unknown): number | null => (typeof v === 'number' ? v : null);
 
@@ -220,6 +236,7 @@ export function deviceProfile(id: string, band: AgeBand = 'adult'): DeviceProfil
     spo2: { averagingS: s.spo2.avgDefault, updateS: 1 / s.spo2.updateHz },
     ibpStaticDisplay: s.ibp.staticDisplay,
     abpDisconnect: a.abpDisconnectDefault,
+    ibpNoSensor: s.ibp.noSensorMessage,
     ibpFilterHz: s.ibp.filterDefaultHz,
     nibp: {
       initial: s.nibp.initialInflation[band],

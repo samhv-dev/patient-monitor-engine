@@ -83,6 +83,7 @@
     "gridDefault": false,
     "scaleLines": "none",
     "staticDisplay": "keep",
+    "noSensorMessage": false,
     "meanOnlyLabels": ["CVP"],
     "scales": { "ART": [0, 75, 150], "CVP": [0, 10, 20], "PAP": [0, 20, 40] }
   },
@@ -187,6 +188,7 @@
     "nibp.nextInflation": { "tag": "documented", "source": "brief §3.8" },
     "nibp.doneTone": { "tag": "documented", "source": "research/05 §2.4 (Philips 'Done Tone')" },
     "ibp": { "tag": "documented", "source": "research/05 §2.1-2.2 (ABP 150 scale, 12 Hz filter)", "note": "CVP/PAP scales and 40 Hz option [ENG]" },
+    "ibp.noSensorMessage": { "tag": "assumed", "source": "research/34 §2 shows the message on the Saadat only; no source shows one for an unused IBP channel on the IEC-default skins, so off" },
     "ibp.staticDisplay": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 57 (<Pressure> NON-PULSATILE: 'Pulse numeric is displayed with -?-'; systolic, diastolic and mean stay)" },
     "co2": { "tag": "documented", "source": "research/05 §2.2 (scale 40 mmHg); research/00 R12" },
     "alarms.levels": { "tag": "documented", "source": "brief §6.4" },

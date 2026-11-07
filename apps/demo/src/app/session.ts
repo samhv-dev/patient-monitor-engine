@@ -15,6 +15,7 @@ import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
 import { clearPosition } from './position.ts';
 import { RunRecord } from './record.ts';
+import { hostLang } from './i18n/lang.ts';
 import { applySkinAlarmColours } from './shell.ts';
 
 export type Mode = 'modeled' | 'manual';
@@ -144,6 +145,7 @@ export class AppSession {
   private readonly followerFns = new Set<(n: number) => void>();
   /** Instructor phones granted now (HostSession onInstructors: 0 or 1, the newest takes over). */
   instructors = 0;
+  private readonly instructorFns = new Set<(n: number) => void>();
   private serve: InstructorServe | null = null;
   private feedTimer: ReturnType<typeof setInterval> | null = null;
   private feedLast = ''; // The last body sent (JSON): a body is sent only when it changed
@@ -277,6 +279,7 @@ export class AppSession {
    */
   private setInstructors(n: number): void {
     this.instructors = n;
+    for (const fn of [...this.instructorFns]) fn(n);
     this.feedLast = '';
     if (n > 0) {
       this.driver.markStages(true);
@@ -302,6 +305,12 @@ export class AppSession {
     // `t`: the sim time the body was read at, the host panel's clock (feed.ts reads the panel's Link), so the event never
     // moves that clock on (the session's own estimate can run ahead of it: a pause taken between engine events)
     this.host.publish({ type: 'instructorView', t: this.panel.simT ?? 0, body: JSON.parse(s) as unknown });
+  }
+
+  /** Every grant and revocation of the instructor phone (the Room page's row; a new phone taking over calls it too). */
+  onInstructors(fn: (n: number) => void): () => void {
+    this.instructorFns.add(fn);
+    return () => void this.instructorFns.delete(fn);
   }
 
   /** Every change in the number of phones following on the relay. */
@@ -429,7 +438,8 @@ export class AppSession {
    *  (the engine a few ms behind the wall clock, its events late under load); the estimate then holds until the engine
    *  passes it, rather than step back: two reads either side of that event (two quick gotos) kept their order, so the
    *  scenario's history did too (the strip read an entry earlier than the one before it as a rewind and showed the stage
-   *  between as skipped; teach2-fit.e2e.ts :505, CI run 42113324793). */
+   *  between as skipped; teach2-fit.e2e.ts :505, CI run 42113324793). It also keeps a worker stall's overshoot from
+   *  stepping back (FX-11b). */
   simNow(): number {
     const dt = ((performance.now() - this.lastWall) / 1000) * this.timeScale;
     const est = this.paused || this.fastForwarding ? this.lastT : this.lastT + Math.min(Math.max(0, dt), EST_CAP_S * this.timeScale); // exact between fast-forward steps
@@ -585,7 +595,7 @@ export class AppSession {
     this.lastLoad = this.panel.send({ type: 'scenario', action: 'load', doc: v.doc });
     // The card's Case briefing on every learner screen (owner's board Orientation 7b) — not again for the load that
     // brings a case back after the instructor's page reloaded (position.ts): that case is already under way
-    this.setBriefing(this.restoring ? null : briefingOf(v.doc));
+    this.setBriefing(this.restoring ? null : briefingOf(v.doc, hostLang())); // D13b: the host's language (the Debrief's switch)
     this.live = true;
     return { ok: true, doc: v.doc };
   }
