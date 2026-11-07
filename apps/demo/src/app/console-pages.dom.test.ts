@@ -195,7 +195,7 @@ describe('Room', () => {
     });
     document.body.append(v.el);
     v.enter?.('');
-    await vi.waitFor(() => expect(v.el.querySelector('.phones-url')?.textContent).toBe('http://192.168.1.20:8787/?join=ABC234'));
+    await vi.waitFor(() => expect(v.el.querySelector('.phones-url')?.textContent).toBe('http://192.168.1.20:8787/?join=ABC234#/pick')); // R4: the QR opens the picker
     expect(v.el.querySelector('.room-qr svg')).not.toBeNull();
     const box = () => v.el.querySelector('.room-status') as HTMLElement;
     expect(box().dataset.level).toBe('stable');
