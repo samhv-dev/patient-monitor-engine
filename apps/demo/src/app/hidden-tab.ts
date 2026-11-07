@@ -26,9 +26,16 @@ export const hiddenFor = (ms: number): string => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
 
-export function watchHiddenTab(doc: Document, d: { role: 'host' | 'follower'; paused: () => boolean; send: (action: 'pause' | 'resume') => void; notify: (text: string) => void; policy?: HiddenTabPolicy; now?: () => number }): () => void {
+export function watchHiddenTab(doc: Document, d: {
+  role: 'host' | 'follower'; paused: () => boolean; send: (action: 'pause' | 'resume') => void; notify: (text: string) => void; policy?: HiddenTabPolicy; now?: () => number;
+  /** Every change of the host's pause, whoever made it (FX-22: a Remote may resume the session while this tab is hidden). */
+  onPaused?: (fn: (paused: boolean) => void) => () => void;
+}): () => void {
   const now = d.now ?? (() => performance.now());
   let since: number | null = null; // When this page paused the session (null: it did not)
+  // FX-22: a resume by anyone else while hidden ends OUR pause — the return then sends no second resume and does not
+  // toast the whole hidden span as paused; a pause made after it is theirs, and stays
+  const offPaused = d.onPaused?.((p) => void (!p && (since = null)));
   let leaving = false;
   const hide = () => (leaving = true);
   const show = () => (leaving = false); // Back from the back-forward cache
@@ -49,6 +56,7 @@ export function watchHiddenTab(doc: Document, d: { role: 'host' | 'follower'; pa
   doc.defaultView?.addEventListener('pagehide', hide);
   doc.defaultView?.addEventListener('pageshow', show);
   return () => {
+    offPaused?.();
     doc.removeEventListener('visibilitychange', on);
     doc.defaultView?.removeEventListener('pagehide', hide);
     doc.defaultView?.removeEventListener('pageshow', show);

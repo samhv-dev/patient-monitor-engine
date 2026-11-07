@@ -24,7 +24,9 @@ export const WIRE_LIMITS = {
  * plan's 4 ("3 plus a spare" counted one stand-in), which would drop the first tick of anaphylaxis and air embolism.
  * `bytes`: a `vent` body's largest JSON [ENG: that 6-command first tick is 0.8 KB, a steady tick's `cmds` 0.25 KB].
  */
-export const VENT_LIMITS = { cmds: 6, bytes: 4 * 1024 } as const;
+export const VENT_LIMITS = { cmds: 6, bytes: 4 * 1024, batch: 16 } as const;
+// `batch` (R8c): the most `cmds` one relay-port message packs [ENG: at ×8 the cockpit runs 8 ticks in 20 ms of wall time;
+// 16 holds two windows, an animation frame that came late]; `bytes` bounds it too (a steady tick is 0.25 KB).
 
 /** An instructor's PIN on the wire: 4 to 8 ASCII digits (plan §1). */
 export const PIN_RE = /^[0-9]{4,8}$/;
@@ -110,7 +112,9 @@ export function assertWireSafe(m: WireMessage): void {
 }
 
 const KINDS = new Set(['hello', 'command', 'ack', 'event', 'snapshot', 'grant', 'vent']);
-const ROLES = new Set(['host', 'controller', 'viewer', 'instructor', 'ventilator']);
+const ROLES = new Set(['host', 'controller', 'viewer', 'instructor', 'ventilator', 'defib']);
+/** The roles a hello may name an instrument and a device key with: a learner's follower and the defibrillator window (R5c). */
+const SHOWS_WITH: ReadonlySet<unknown> = new Set(['viewer', 'defib']);
 
 const isObj = (x: unknown): x is Record<string, unknown> => x !== null && typeof x === 'object' && !Array.isArray(x);
 const TIME_ACTIONS: ReadonlySet<unknown> = new Set(['pause', 'resume', 'scale']);
@@ -123,11 +127,17 @@ function ventCommandOk(c: unknown): boolean {
   return c.type === 'setTarget' && typeof c.variable === 'string' && typeof c.value === 'number';
 }
 /** Whether a `vent` body is one of the ventilator link's messages, within VENT_LIMITS (plan R8a). */
+const cmdsOk = (b: unknown): boolean =>
+  isObj(b) && b.v === 1 && b.kind === 'cmds' && Number.isInteger(b.tick) && Array.isArray(b.cmds) && b.cmds.length <= VENT_LIMITS.cmds && b.cmds.every(ventCommandOk);
+const isNum = (x: unknown) => typeof x === 'number' && Number.isFinite(x);
 function ventBodyOk(b: unknown): boolean {
   if (!isObj(b) || b.v !== 1) return false;
   switch (b.kind) {
     case 'cmds':
-      if (!Number.isInteger(b.tick) || !Array.isArray(b.cmds) || b.cmds.length > VENT_LIMITS.cmds || !b.cmds.every(ventCommandOk)) return false;
+      if (!cmdsOk(b)) return false;
+      break;
+    case 'batch': // R8c: the relay port's `cmds` of 20 ms, each one a valid `cmds`
+      if (!Array.isArray(b.msgs) || b.msgs.length === 0 || b.msgs.length > VENT_LIMITS.batch || !b.msgs.every(cmdsOk)) return false;
       break;
     case 'lungState':
       if (!isObj(b.ev) || b.ev.type !== 'lungState') return false;
@@ -143,7 +153,8 @@ function ventBodyOk(b: unknown): boolean {
       if ((b.patch !== undefined && !isObj(b.patch)) || (b.circuit !== undefined && !CIRCUITS.has(b.circuit)) || (b.profile !== undefined && typeof b.profile !== 'string')) return false;
       break;
     case 'settings':
-      if (!isObj(b.cfg)) return false;
+      if (!isObj(b.cfg) || (b.hidden !== undefined && typeof b.hidden !== 'boolean')) return false;
+      if (b.measured !== undefined && !(isObj(b.measured) && isNum(b.measured.RR) && isNum(b.measured.VTE))) return false;
       break;
     default:
       return false;
@@ -175,8 +186,8 @@ export function parseWireMessage(data: unknown): WireMessage | null {
       if (!ROLES.has(m.role as string)) return null;
       if (m.pin !== undefined && ((m.role !== 'instructor' && m.role !== 'ventilator') || typeof m.pin !== 'string' || !PIN_RE.test(m.pin))) return null;
       if (m.role === 'ventilator' && m.pin === undefined) return null; // R8a: a device that drives the patient proves the PIN
-      if (m.show !== undefined && (m.role !== 'viewer' || !SHOWS.has(m.show))) return null;
-      if (m.device !== undefined && (m.role !== 'viewer' || typeof m.device !== 'string' || !DEVICE_RE.test(m.device))) return null;
+      if (m.show !== undefined && (!SHOWS_WITH.has(m.role) || !SHOWS.has(m.show))) return null;
+      if (m.device !== undefined && (!SHOWS_WITH.has(m.role) || typeof m.device !== 'string' || !DEVICE_RE.test(m.device))) return null;
       break;
     case 'command': {
       const b = m.body as Record<string, unknown> | null;

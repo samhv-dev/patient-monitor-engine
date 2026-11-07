@@ -9,13 +9,17 @@
 // Plan room-and-instruments.md R8b: a `ventilator` socket (a cockpit on another device, with the same PIN) is pending
 // in the same way, in its own single place; granted, it exchanges `vent` messages with the host and nothing else: no
 // command, no event, no snapshot (it follows nothing), and no learner is ever sent a `vent` or counts it.
+// Plan room-and-instruments.md R5c: a `defib` socket (the learner defibrillator window) joins as a learner does, from
+// another device and with no PIN, in a learner's place, and receives what a viewer receives; of its commands only
+// LEARNER_DEFIB_COMMANDS (Charge and Shock, bare) go to the host, any other is `forbidden`, more than 4 a second close it.
+// A non-host socket keeps the role of its first hello: a hello as another role on it is `forbidden`.
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { createServer, type IncomingMessage } from 'node:http';
 import { join } from 'node:path';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { httpHandler, isLocalAddress, lanAddresses } from './http.ts';
 import { WIRE_LIMITS, parseWireMessage } from '../src/guard.ts';
-import { SESSION_CODE_RE, VIEWER_EVENTS, type Instrument, type Role, type WireEvent, type WireMessage } from '../src/protocol.ts';
+import { SESSION_CODE_RE, VIEWER_EVENTS, learnerDefibMay, type Instrument, type Role, type WireEvent, type WireMessage } from '../src/protocol.ts';
 import { RELAY_CLOSE, RELAY_RETRY_CLOSE, type RelayDevice, type RelayFrame } from '../src/transport/relay-frames.ts';
 
 export interface RelayOptions {
@@ -90,6 +94,8 @@ interface Peer {
   seenAt: number;
   /** R8b: the relay-clock times of the `vent` messages from it and to it within the last second (VENT_PER_S). */
   vent: { from: number[]; to: number[] };
+  /** R5c: the relay-clock times of a `defib` socket's commands within the last second (DEFIB_PER_S). */
+  cmds: number[];
 }
 
 interface Room {
@@ -149,6 +155,11 @@ const INSTRUCTOR_PLACES = 2;
  * on the monitor side: 5 a second at ×1, 38 at ×8, the engine advanced every 20 ms of wall time) and `settings`].
  */
 const VENT_PER_S = 120;
+/**
+ * R5c: commands a `defib` socket may send in any one second, refused ones included; one more closes it
+ * (`too-many-tries`) [ENG, plan R5c: a charge and a shock per cycle, with a margin for double taps].
+ */
+const DEFIB_PER_S = 4;
 /** The roles that sign in with the instructor's PIN: pending until the host's grant, under the per-address PIN limits. */
 const signsIn = (r: Role) => r === 'instructor' || r === 'ventilator';
 /** The sockets that follow the patient: learners count only these (an instructor and the cockpit are not told of). */
@@ -275,6 +286,12 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
       case 'hello':
         if (isHost) for (const p of room.peers) raw(p.ws, data);
         else {
+          // R5c: a socket keeps the role of its first hello (the relay routes it by that role, the host hears this one)
+          if (m.role !== peer.role) {
+            dropped++;
+            frame(peer.ws, { relay: 'error', code: 'forbidden', message: `this socket said hello as ${peer.role}` });
+            return;
+          }
           // A re-said instructor hello counts too: one open socket must not flood the host with PIN checks (G1)
           if (signsIn(peer.role) && (blocked(peer.address) || !mayHello(peer.address))) return tooMany(peer.ws);
           peer.show = m.show ?? null; // R2: what it shows is its LAST hello's
@@ -283,8 +300,17 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
           if (room.host) raw(room.host.ws, data);
         }
         return;
-      case 'command':
-        if (!peer.granted || peer.role === 'ventilator') { // R8b: the cockpit's commands ride `vent`, built by its link
+      case 'command': {
+        if (peer.role === 'defib') {
+          // R5c: counted before anything else (a flood is closed, not answered `forbidden` each time); then the allow-list
+          if (overRate(peer, peer.cmds, DEFIB_PER_S, 'commands')) return;
+          const why = learnerDefibMay(m.body);
+          if (why) {
+            dropped++;
+            frame(peer.ws, { relay: 'error', code: 'forbidden', message: why });
+            return;
+          }
+        } else if (!peer.granted || peer.role === 'ventilator') { // R8b: the cockpit's commands ride `vent`, built by its link
           dropped++;
           frame(peer.ws, { relay: 'error', code: 'forbidden', message: peer.role === 'instructor' ? 'the instructor phone is not signed in' : `${peer.role} may not send commands` });
           return;
@@ -294,6 +320,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
         if (room.host) raw(room.host.ws, data);
         else dropped++; // the controller re-sends unacked commands when the host's hello arrives
         return;
+      }
       case 'ack': {
         if (!isHost) return void dropped++;
         const to = room.ackRoutes.get(m.commandId);
@@ -366,7 +393,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
         // closed, not answered 120 times a second with `forbidden`.
         const sock = isHost ? [...room.peers].find((p) => p.role === 'ventilator' && p.granted && p.id === m.to) : peer;
         if (!sock) return void dropped++;
-        if (overVent(sock, isHost ? sock.vent.to : sock.vent.from)) return;
+        if (overRate(sock, isHost ? sock.vent.to : sock.vent.from, VENT_PER_S, 'ventilator messages')) return;
         if (isHost) return raw(sock.ws, data);
         if (peer.role !== 'ventilator' || !peer.granted) {
           dropped++;
@@ -379,17 +406,20 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
       }
     }
   };
-  /** R8b: counts one `vent` on `times` (one socket, one way); past VENT_PER_S in a second, closes that socket. */
-  const overVent = (p: Peer, times: number[]) => {
+  /**
+   * Counts one frame on `times` (one socket, one way: R8b's `vent`, R5c's `defib` commands); past `perS` in a sliding
+   * second, closes that socket (`too-many-tries`).
+   */
+  const overRate = (p: Peer, times: number[], perS: number, what: string) => {
     const t = clock();
     while (times.length > 0 && t - (times[0] as number) >= 1000) times.shift();
-    if (times.length < VENT_PER_S) {
+    if (times.length < perS) {
       times.push(t);
       return false;
     }
     dropped++;
-    log(`${p.role} ${p.id}: more than ${VENT_PER_S} ventilator messages a second: closed`);
-    refuse(p.ws, RELAY_CLOSE.tooManyTries, 'too-many-tries', `more than ${VENT_PER_S} ventilator messages a second`);
+    log(`${p.role} ${p.id}: more than ${perS} ${what} a second: closed`);
+    refuse(p.ws, RELAY_CLOSE.tooManyTries, 'too-many-tries', `more than ${perS} ${what} a second`);
     return true;
   };
 
@@ -433,7 +463,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
     let room: Room | null = null;
     let held: string[] | null = null; // This socket's frames while its hello waits on a liveness check
     const admit = (r: Room, m: Extract<WireMessage, { kind: 'hello' }>, data: string) => {
-      const p: Peer = (peer = { ws, id: m.from, role: m.role, alive: true, granted: m.role === 'controller', address, show: m.show ?? null, device: m.device ?? null, rttMs: null, answered: 0, seenAt: clock(), vent: { from: [], to: [] } });
+      const p: Peer = (peer = { ws, id: m.from, role: m.role, alive: true, granted: m.role === 'controller', address, show: m.show ?? null, device: m.device ?? null, rttMs: null, answered: 0, seenAt: clock(), vent: { from: [], to: [] }, cmds: [] });
       if (m.role === 'host') {
         const old = r.host;
         if (old && old.ws !== ws) old.ws.close(1000, 'replaced by reconnect');
@@ -506,8 +536,8 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
         if (!room) return refuse(ws, RELAY_CLOSE.full, 'full', 'relay is full');
         // Stage 12: another device follows; only this machine hosts or commands (the room has seen the code). P4: or it
         // says `instructor`, and commands once the host has granted its PIN.
-        // R8b: or `ventilator`, the cockpit on another device, with the same PIN
-        if (!local && opts.remoteRoles === 'viewer' && m.role !== 'viewer' && !signsIn(m.role)) return refuse(ws, RELAY_CLOSE.forbiddenRole, 'forbidden', `${m.role} only from the instructor's computer`);
+        // R8b: or `ventilator`, the cockpit on another device, with the same PIN. R5c: or `defib`, as a learner does
+        if (!local && opts.remoteRoles === 'viewer' && m.role !== 'viewer' && m.role !== 'defib' && !signsIn(m.role)) return refuse(ws, RELAY_CLOSE.forbiddenRole, 'forbidden', `${m.role} only from the instructor's computer`);
         if (signsIn(m.role)) {
           if (blocked(address)) return refuse(ws, RELAY_CLOSE.tooManyTries, 'too-many-tries', 'too many wrong PINs from this device: wait a minute');
           if (m.role === 'instructor' && count(room, (p) => p.role === 'instructor') >= INSTRUCTOR_PLACES) return refuse(ws, RELAY_CLOSE.full, 'full', `session ${m.session} has no instructor place free`);
@@ -642,11 +672,18 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
       return r && { hostOnline: r.host !== null, peers: r.peers.size, hasSnapshot: r.snapshot !== null };
     },
     sweep,
+    // Stop accepting first (a WebSocket handshake that came in after wss.close removed its upgrade listener was served
+    // as a plain GET), then end every socket: the WebSockets, and every HTTP connection, idle or not. Waiting for the
+    // clients to drop theirs was unbounded: Node stops the server's own request timeouts once it closes, so a request a
+    // client never finished (or a connection it kept busy) held close() for as long as the client stayed (PR #306,
+    // CI run 42350190627: a test's afterEach waited 90 s on a page that was still open).
     close: () =>
       new Promise<void>((resolve) => {
         clearInterval(timer);
+        http.close(() => resolve());
         for (const ws of wss.clients) ws.terminate();
-        wss.close(() => http.close(() => resolve()));
+        wss.close();
+        http.closeAllConnections();
       }),
   };
 }

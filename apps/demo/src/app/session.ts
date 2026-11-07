@@ -6,10 +6,10 @@
 import type { Command, EngineEvent, PatientSnapshot } from '@pme/engine-core';
 import {
   ControllerSession, createBroadcastChannelTransport, createInProcessHub, createWebSocketTransport, epochNow, HostSession, newSessionCode, normalizeSessionCode,
-  type AppliedResolution, type BriefingNotice, type HostTarget, type ScenarioEvent, type WireEvent,
+  type AppliedResolution, type BriefingNotice, type HostTarget, type ScenarioEvent, type VentLinkBody, type WireEvent,
 } from '@pme/controller';
 import { briefingOf, engineOptionsOf, ScenarioDriver, validateScenario, type AnyScenarioDoc } from '@pme/controller/scenario';
-import type { ManagedTransport, NoteEvent } from '@pme/controller';
+import type { ManagedTransport, NoteEvent, RelayDevice } from '@pme/controller';
 import { mountMonitor, normalIbpScales, type IbpChannel, type IbpScales, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
@@ -21,6 +21,11 @@ import { applySkinAlarmColours } from './shell.ts';
 export type Mode = 'modeled' | 'manual';
 /** The engine's own ventilator settings, in its `ventilation` event's units (FiO₂ 0.21–1), as far as they are known. */
 export interface VentSettings { rr?: number; vtMl?: number; peep?: number; fio2?: number; ie?: number; pmax?: number }
+/** R8c: what the Ventilator desk hears of a remote cockpit (HostSession onVent / onVentilator). */
+export interface RemoteVent {
+  vent(from: string, body: VentLinkBody): void;
+  ventilator(from: string | null): void;
+}
 export interface SessionStart {
   spec: PatientSpec;
   mode: Mode;
@@ -94,6 +99,9 @@ export class AppSession {
   ventLink: { runTo(engTick: number): Promise<void> } | null = null;
   /** The Ventilator view is on screen (it sets it): only then does its cockpit hold the phones (UI-A #2). */
   ventShown = false;
+  /** R8c: a remote cockpit drives the patient (views/vent.ts sets it): it holds the phones wherever the laptop is. */
+  ventRemote = false;
+  private readonly remoteFns = new Set<RemoteVent>();
   /**
    * The engine tick of the cockpit's last applied frame (−1: none since the view reset it). E128: when the Ventilator view
    * closes, its hand-over to the engine's own ventilator lands after it — frames run up to 1.5 s ahead of the engine, and
@@ -142,7 +150,9 @@ export class AppSession {
   readonly relay: ReturnType<typeof createWebSocketTransport> | null = null;
   /** Peers on the relay besides this host (the phones following), from the relay's `peers` frames. */
   followers = 0;
-  private readonly followerFns = new Set<(n: number) => void>();
+  /** R7: the relay's device table, from the same frames (R2: every device with its ping), or null from an older relay. */
+  devices: RelayDevice[] | null = null;
+  private readonly followerFns = new Set<(n: number, devices: RelayDevice[] | null) => void>();
   /** Instructor phones granted now (HostSession onInstructors: 0 or 1, the newest takes over). */
   instructors = 0;
   private readonly instructorFns = new Set<(n: number) => void>();
@@ -173,6 +183,7 @@ export class AppSession {
     this.record = new RunRecord(() => ({ patient: oneLiner(this.spec), weightKg: this.spec.weightKg }), Date.now, () => this.driver?.phaseRunner ?? null);
     const target: HostTarget = {
       dispatch: (c) => this.need().dispatch(c),
+      dispatchGroup: (cs) => this.need().dispatchAll(cs), // R15: a stage group in one worker message, on one tick
       snapshot: () => this.need().snapshot(),
       restore: async (s: PatientSnapshot) => {
         await this.need().restore(s);
@@ -232,6 +243,13 @@ export class AppSession {
       ...(o.instructorPin ? { instructorPin: o.instructorPin } : {}),
       onNote: (t, text, kind, ev) => (this.serve ? this.serve.note(text, kind, t, ev) : this.record.note(t, text, ev)),
       onInstructors: (n) => this.setInstructors(n),
+      // R8c: the granted remote cockpit's link messages and its grant, for the Ventilator desk (views/vent.ts)
+      onVent: (from, body) => {
+        for (const f of [...this.remoteFns]) f.vent(from, body);
+      },
+      onVentilator: (from) => {
+        for (const f of [...this.remoteFns]) f.ventilator(from);
+      },
     });
     this.host = hs;
     const hub = createInProcessHub();
@@ -247,7 +265,8 @@ export class AppSession {
         onRelayFrame: (f) => {
           if (f.relay !== 'peers') return;
           this.followers = f.peers;
-          for (const fn of this.followerFns) fn(f.peers);
+          this.devices = f.devices ?? null;
+          for (const fn of this.followerFns) fn(f.peers, this.devices);
         },
       });
       hs.addTransport(this.relay);
@@ -313,8 +332,8 @@ export class AppSession {
     return () => void this.instructorFns.delete(fn);
   }
 
-  /** Every change in the number of phones following on the relay. */
-  onFollowers(fn: (n: number) => void): () => void {
+  /** Every `peers` frame of the relay: the number of phones following, and its device table (R7). */
+  onFollowers(fn: (n: number, devices: RelayDevice[] | null) => void): () => void {
     this.followerFns.add(fn);
     return () => void this.followerFns.delete(fn);
   }
@@ -381,7 +400,7 @@ export class AppSession {
         // teach the link its clock and the cockpit would stall for good
         this.ventFrameAt = performance.now();
         const go = () => m.dispatch(c).then((r) => {
-          this.host.mirror(c, r, this.ventShown);
+          this.host.mirror(c, r, this.ventShown || this.ventRemote);
           if (r.accepted) this.ventTick = Math.max(this.ventTick, r.tick);
           return r;
         });
@@ -396,6 +415,12 @@ export class AppSession {
       resume: () => void this.panel.send({ type: 'time', action: 'resume' }),
       setTimeScale: (k) => void this.panel.send({ type: 'time', action: 'scale', value: k }),
     };
+  }
+
+  /** R8c: the granted remote cockpit's link messages and every change of its grant (views/vent.ts drives from them). */
+  onRemoteVent(f: RemoteVent): () => void {
+    this.remoteFns.add(f);
+    return () => void this.remoteFns.delete(f);
   }
 
   /** The cockpit's frames dispatched so far are applied (or refused): resolves with the last one's engine tick (E128). */
@@ -555,6 +580,28 @@ export class AppSession {
     this.panel.note(`Patient restarted: ${start.mode.toUpperCase()}`);
   }
 
+  /** The card running, of either format (null: a free run). */
+  caseDoc(): AnyScenarioDoc | null {
+    return this.driver.runner?.doc ?? this.driver.phaseRunner?.doc ?? null;
+  }
+
+  /**
+   * "Restart patient" (FX-12). A case running starts again from 0:00 on ITS patient — the card's body, probes and seed,
+   * as a Load gives them — and keeps the instructor's bookmarks, so "Return here" goes back into it; without a case, a
+   * new engine for the same body. (It restarted the free-run body built from the card's age and weight alone and ended
+   * the case: the bar read "No scenario" and the bookmarks were out of reach.)
+   */
+  restartPatient(): { ok: true; doc: AnyScenarioDoc | null } | { ok: false; reason: string } {
+    const doc = this.caseDoc();
+    if (!doc) {
+      this.restart({ spec: this.spec, mode: this.mode });
+      return { ok: true, doc: null };
+    }
+    const r = this.loadScenario(doc);
+    if (r.ok) this.panel.note('Patient restarted: the case starts again');
+    return r;
+  }
+
   /** "Save and close" (Instructor v2's Finish): the case ends; the page's default patient runs, no card (a reload then
    *  brings back no case: restart forgets the position). */
   endCase(): void {
@@ -579,7 +626,8 @@ export class AppSession {
     if (this.fastForwarding) return { ok: false, reason: 'the simulation is fast-forwarding; try again when it ends' };
     const v = validateScenario(raw);
     if (!v.ok) return { ok: false, reason: v.errors.join('; ') };
-    const eo = engineOptionsOf(v.doc, 7);
+    const seed = v.doc.seed ?? 7; // TCH-11: the card's seed seeds the run (the engine and the runner); 7 is the free run's
+    const eo = engineOptionsOf(v.doc, seed);
     const p = v.doc.patient ?? {};
     this.spec = { ageY: p.ageY ?? 40, sex: p.sex ?? 'M', weightKg: p.weightKg ?? 70, heightCm: p.heightCm ?? 175, comorbid: [], attached: true };
     this.mode = v.doc.mode ?? 'modeled';
@@ -591,7 +639,7 @@ export class AppSession {
     // UI review #14: a scenario's cuff cycles from Load as a free-play patient's does (the skin's default, Saadat AUTO
     // every 5 min); it showed "/" for the whole case. Not when the card's patient has no cuff on (nibp 'off'). A restart
     // keeps the cuff's cycling as the room had it.
-    if (sensors.nibp !== 'off' && room?.nibp !== null) this.startCuff(7, room?.nibp);
+    if (sensors.nibp !== 'off' && room?.nibp !== null) this.startCuff(seed, room?.nibp);
     this.lastLoad = this.panel.send({ type: 'scenario', action: 'load', doc: v.doc });
     // The card's Case briefing on every learner screen (owner's board Orientation 7b) — not again for the load that
     // brings a case back after the instructor's page reloaded (position.ts): that case is already under way

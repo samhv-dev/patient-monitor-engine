@@ -92,6 +92,15 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | `MAX_AHEAD_TICKS` | `75` | — | — | The ventilator may run this far ahead of the newest engine event (events carry sim time; beats and 1 Hz state). |
 | `RUN_TIMEOUT_MS` | `2000` | ms | [ENG] | A cockpit that has not answered a `run` in this long is given up on (the engine's own drive timeout then takes over, as when the cockpit is closed), wall ms [ENG]. |
 
+### [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `RELAY_BATCH_MS` | `20` | ms | — | One `batch` per this much wall time at most, ms (plan R8c: 50 a second at any speed). |
+| `RELAY_BATCH_MAX` | `16` | — | — | The most `cmds` one batch packs (@pme/controller guard.ts VENT_LIMITS.batch). |
+| `RELAY_BODY_BYTES` | `4 * 1024` | — | — | A `vent` body's largest JSON (guard.ts VENT_LIMITS.bytes): a burst over it goes in several batches. |
+| `SETTINGS_MS` | `1000` | ms | — | The cockpit's settings go at least this often, ms (plan R8c: "once a second"). |
+
 ### [`link/vent-driver.ts`](../../packages/ventilator/src/link/vent-driver.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
@@ -133,6 +142,8 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | `createLocalPortPair` | [`link/port.ts`](../../packages/ventilator/src/link/port.ts) | Two connected ports in one page (synchronous delivery). |
 | `attachMonitorToLink` | [`link/port.ts`](../../packages/ventilator/src/link/port.ts) | Monitor side: |
 | `lungConditionsOf` | [`link/profiles.ts`](../../packages/ventilator/src/link/profiles.ts) | The row's engine lung conditions (Stage V.1): |
+| `createRelayPort` | [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts) | `settings`: |
+| `ventWireOver` | [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts) | The cockpit's wire over its socket to the relay (a @pme/controller ManagedTransport and its stamper): |
 | `lungMechanics` | [`lung-input.ts`](../../packages/ventilator/src/lung-input.ts) | One lung (C, R_insp, R_exp, pleural) → the ventilator's single compartment (catalogue rows and lungState alike). |
 | `pbw` | [`mechanics.ts`](../../packages/ventilator/src/mechanics.ts) | Predicted body weight (kg) from height and sex (Devine; |
 | `recoilPressure` | [`mechanics.ts`](../../packages/ventilator/src/mechanics.ts) | Elastic recoil (cmH2O above PEEP) at volume v (mL above the PEEP volume). |
@@ -161,6 +172,7 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 | [`link/in-process.ts`](../../packages/ventilator/src/link/in-process.ts) | In-process link: the ventilator and the patient engine in ONE loop on ONE sim clock (lockstep, deterministic). |
 | [`link/port.ts`](../../packages/ventilator/src/link/port.ts) | The window link (the second transport): the ventilator in its own window/iframe, the monitor elsewhere in the same browser. |
 | [`link/profiles.ts`](../../packages/ventilator/src/link/profiles.ts) | Link profiles: one per lung-pathology row (pathology/catalogue.ts). |
+| [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts) | The window link over the relay (plan room-and-instruments.md R8c): a cockpit on another device and the host's monitor exchange the link's messages inside the controller's `vent` message (R8a), which the relay carries bet |
 | [`link/vent-driver.ts`](../../packages/ventilator/src/link/vent-driver.ts) | Ventilator side of the window link: runs the ventilator on real time × scale, but never past the tick the monitor's `clock` messages allow (the engine is the master clock; before the first clock message it may run 2·LEAD |
 | [`lung-input.ts`](../../packages/ventilator/src/lung-input.ts) | Engine → vent: the `lungState` event IS the patient's lung. |
 | [`mechanics.ts`](../../packages/ventilator/src/mechanics.ts) | Lung mechanics of the original simulator (ventilator-sim-hamilton.html v1.9, "ENGINE" block), ported line for line: single-compartment equation of motion Paw + Pmus = V/C + R·Q + PEEP with a non-linear recoil (airway clo |
@@ -203,6 +215,7 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 | [`pleural.test.ts`](../../packages/ventilator/test/pleural.test.ts) | 1 | 0 |
 | [`ports.test.ts`](../../packages/ventilator/test/ports.test.ts) | 0 | 0 |
 | [`reference.test.ts`](../../packages/ventilator/test/reference.test.ts) | 0 | 0 |
+| [`relay-port.test.ts`](../../packages/ventilator/test/relay-port.test.ts) | 0 | 0 |
 | [`vc-flow-parity.test.ts`](../../packages/ventilator/test/vc-flow-parity.test.ts) | 0 | 0 |
 | [`vent-basics.test.ts`](../../packages/ventilator/test/vent-basics.test.ts) | 0 | 0 |
 | [`vent-corrections.test.ts`](../../packages/ventilator/test/vent-corrections.test.ts) | 0 | 0 |

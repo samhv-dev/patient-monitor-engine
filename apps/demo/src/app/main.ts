@@ -44,7 +44,7 @@ import { instructorRoomCard } from './views/room-instructor.ts';
 import { scenariosView } from './views/scenarios.ts';
 import { teach2View } from './views/teach2.ts';
 import { validateView } from './views/validate.ts';
-import { ventView } from './views/vent.ts';
+import { serveRemoteCockpit, ventView } from './views/vent.ts';
 
 const site = loadSite();
 setDrugNames(site.drugNames); // One set of drug names on every screen
@@ -183,7 +183,7 @@ if (follow && shows === 'pick') {
   shell.add(homeView());
   const room = roomView({
     code: session.code, relay, relayLink: session.relay, local: session.bc, hostPeerId: session.host.peerId, learnerUrl: followUrl(session.code),
-    followers: () => session.followers, onFollowers: (f) => session.onFollowers(f),
+    followers: () => session.followers, onFollowers: (f) => session.onFollowers(f), devices: () => session.devices,
     instructor: instructorRoomCard({ code: session.code, relay, pin, host: session.host, instructors: () => session.instructors, onInstructors: (f) => session.onInstructors(f) }),
     // R5b: the room's defibrillator model, kept with the site profile (the monitor style's place) and sent to the patient
     defib: { model: () => site.defibModel, choose: (m) => ((site.defibModel = m), saveSite(site), session.setDefibModel(m)) },
@@ -209,6 +209,7 @@ if (follow && shows === 'pick') {
   shell.add(remoteView({ site, hostless: false, bar: shell.bar, code: session.code }));
   shell.add(exploreView(session, site));
   shell.add(ventView(session));
+  serveRemoteCockpit(session); // R8c: the host drives from a granted remote cockpit too, one cockpit at a time
   shell.add(validateView());
   shell.add(devView());
   shell.add(settingsView(site, session));
@@ -237,7 +238,13 @@ if (follow && shows === 'pick') {
   // FX-14/15: a hidden instructor tab pauses the session through the Pause button's own command, so the phones show
   // "(paused)" instead of "not answering", and resumes it on return (HIDDEN_TAB_POLICY, the owner's E82 switch). A
   // fast-forward refuses every command, the pause included: a hide then sends nothing and claims nothing.
-  watchHiddenTab(document, { role: 'host', paused: () => session.paused || session.host.fastForwarding, send: (action) => void link.send({ type: 'time', action }), notify: (text) => toast(text, 'alert') });
+  watchHiddenTab(document, {
+    role: 'host', paused: () => session.paused || session.host.fastForwarding, send: (action) => void link.send({ type: 'time', action }), notify: (text) => toast(text, 'alert'),
+    onPaused: (fn) => {
+      let was = link.ctl.hostPaused;
+      return link.onChange(() => link.ctl.hostPaused !== was && fn((was = link.ctl.hostPaused))); // The host's pause, as applied
+    },
+  });
   mountFastForward(shell.root, link.ctl, { simT: () => link.simT, font: () => session.monitor?.skin?.render.fontStack, latch: (a) => session.monitor?.latchAlarms(a) }); // Above every view
 
   // top-right: alarm count in the skin's colours (steady), sound, remote code
@@ -246,7 +253,8 @@ if (follow && shows === 'pick') {
   const drawSound = () => ((sound.textContent = session.soundOn ? 'Sound on' : 'Sound off'), sound.setAttribute('aria-pressed', String(session.soundOn)));
   const sound = button('Sound off', () => void toggleSound(), 'small sound');
   sound.setAttribute('aria-pressed', 'false');
-  const code = h('a', { class: 'code-pill', href: hrefOf('remote'), 'aria-label': `Remote pairing code ${session.code.split('').join(' ')}` }, h('span', { class: 'muted' }, 'Remote '), session.code);
+  // R7: the code pill opens Room setup (the one QR code: a remote pairs through its picker)
+  const code = h('a', { class: 'code-pill', href: hrefOf('room'), 'aria-label': `Room code ${session.code.split('').join(' ')}: Room setup` }, h('span', { class: 'muted' }, 'Room '), session.code);
   shell.right.append(alarm, sound, code);
   function alarmText(): string {
     const s = link.alarmSummary;

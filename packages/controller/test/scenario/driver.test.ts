@@ -158,7 +158,8 @@ describe('ScenarioDriver', () => {
     await run(3500);
     expect(driver.runner?.stateId).toBe('vf');
     const r = await driver.hook({ id: 'm3', issuedBy: 'panel', type: 'scenario', action: 'restoreBookmark', target: 'Bookmark 1' });
-    expect(r).toEqual({ accepted: true, tick: 250 });
+    expect(r).toMatchObject({ accepted: true, tick: 250 });
+    expect((r.applied?.doc as { id?: string } | undefined)?.id).toBe('acls-vf-witnessed'); // FX-12: the restore names the case it brings back
     expect(host.engine.now().tick).toBe(250);
     expect(driver.runner?.stateId).toBe('stable');
   });

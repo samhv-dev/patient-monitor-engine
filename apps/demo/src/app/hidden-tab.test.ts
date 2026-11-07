@@ -6,8 +6,9 @@ import { HIDDEN_TAB_POLICY, hiddenFor, hiddenTabAction, watchHiddenTab, type Hid
 /** A page whose visibility the test sets, and a session that takes the pause/resume commands it is sent. */
 function page(o: { role?: 'host' | 'follower'; policy?: HiddenTabPolicy; paused?: boolean; fastForwarding?: boolean } = {}) {
   const doc = Object.assign(new EventTarget(), { visibilityState: 'visible' as DocumentVisibilityState, defaultView: new EventTarget() });
-  const s = { paused: o.paused ?? false, ff: o.fastForwarding ?? false, sent: [] as string[], toasts: [] as string[], t: 0 };
+  const s = { paused: o.paused ?? false, ff: o.fastForwarding ?? false, sent: [] as string[], toasts: [] as string[], t: 0, hostSaid: (_p: boolean) => {} };
   watchHiddenTab(doc as unknown as Document, {
+    onPaused: (fn) => ((s.hostSaid = fn), () => {}),
     role: o.role ?? 'host',
     ...(o.policy ? { policy: o.policy } : {}),
     paused: () => s.paused || s.ff, // as main.ts: a fast-forward refuses every command, the pause included
@@ -16,10 +17,36 @@ function page(o: { role?: 'host' | 'follower'; policy?: HiddenTabPolicy; paused?
     now: () => s.t,
   });
   const show = (v: DocumentVisibilityState, atMs: number) => ((s.t = atMs), (doc.visibilityState = v), doc.dispatchEvent(new Event('visibilitychange')));
-  return { s, show, win: doc.defaultView };
+  /** Another controller (a Remote) pauses or resumes the session: the host applies it, as main.ts's link reports it. */
+  const remote = (a: 'pause' | 'resume') => ((s.paused = a === 'pause'), s.hostSaid(s.paused));
+  return { s, show, win: doc.defaultView, remote };
 }
 
 describe('pause while the instructor tab is hidden (FX-14/15, E82)', () => {
+  // FX-22 (#95 review): a Remote's resume while the tab was hidden left the pause "ours", so the return sent a second
+  // resume and toasted the whole hidden span as paused
+  it('a Remote that resumes while the tab is hidden: the return sends no second resume and says nothing', () => {
+    const { s, show, remote } = page();
+    show('hidden', 0);
+    expect(s.sent).toEqual(['pause']);
+    remote('resume');
+    show('visible', 4 * 60_000);
+    expect(s.sent).toEqual(['pause']);
+    expect(s.paused).toBe(false);
+    expect(s.toasts).toEqual([]);
+  });
+
+  it('a Remote that resumes and pauses again while hidden: its pause stands on return (not ours to resume)', () => {
+    const { s, show, remote } = page();
+    show('hidden', 0);
+    remote('resume');
+    remote('pause');
+    show('visible', 60_000);
+    expect(s.sent).toEqual(['pause']);
+    expect(s.paused).toBe(true);
+    expect(s.toasts).toEqual([]);
+  });
+
   it('defaults to pause (E82 unanswered)', () => expect(HIDDEN_TAB_POLICY).toBe('pause'));
 
   it('a running session pauses on hide and resumes on return, with the hidden time in the toast', () => {

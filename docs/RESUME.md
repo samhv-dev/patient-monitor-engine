@@ -1,7 +1,8 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-10-13 (kit round part A, part 2;
-main 62e521c3).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-10-29 (the rc.4 release day;
+the tag 0c4b396f; main has moved on to the rc.5 line: 1b274d5d on 30 October, with #177 Instructor v2, #178, #183 the
+relay fix, #186 and others). The sections below the newest state are history.*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -9,7 +10,26 @@ main 62e521c3).*
 - Spec: `docs/DESIGN-BRIEF.md`. Roadmap: `docs/roadmap/` (v1.0, v1.x, v2.0). Per-stage task plans: `docs/plans/stage-*.md`. Gate evidence: `docs/gates/*.md`.
 - Each executing stage works in its OWN git worktree: `../scratch/wt-<name>/` on its own branch; the ticked plan is committed in that branch.
 - pnpm is not installed: run every pnpm command as `npx -y pnpm@9.15.9 …`. No `timeout` on macOS. Playwright's own Chromium and WebKit are installed.
-- Showcase kits: built with `node scripts/showcase/make-bundle.mjs <dir>`; the current one from main is `_sandbox/pme-kit-main-62e521c3/` (also in `_sandbox/pme-classroom-dryrun/kit/` and `_sandbox/pme-debrief-dryrun/`); smoke-test a kit's classroom relay with `node scripts/showcase/check-relay.mjs <kit>`.
+- Showcase kits: built with `node scripts/showcase/make-bundle.mjs <dir>`; the current release kit is `_sandbox/pme-kit-release-0c4b396f/` (v1.0.0-rc.4, pre-release; also in `_sandbox/pme-classroom-dryrun/kit/` and `_sandbox/pme-debrief-dryrun/`); smoke-test a kit's classroom relay with `node scripts/showcase/check-relay.mjs <kit>`.
+
+## State on 2026-10-29 (tag v1.0.0-rc.4 = main 0c4b396f)
+
+- **`v1.0.0-rc.4` is tagged** (annotated) on main **0c4b396f** (#172), pushed 2026-10-29 11:36 UTC (15:06 +0330), by
+  the owner's ruling of 29 October as the **fallback build** (freeze and tag brought forward from 31 October and
+  1 November). Release run 40866665261 success; the GitHub release is a **Pre-release** with 8 assets,
+  `SHA256SUMS.txt` 7/7 OK. GitHub Pages serves the tag's build (`gh-pages` e1fbdc67; `gh-pages-rc3` ceac7b47 kept as
+  the rollback).
+- **The rc.4 kit** is `_sandbox/pme-kit-release-0c4b396f/` (also `pme-classroom-dryrun/kit` and
+  `pme-debrief-dryrun/pme-showcase-kit-0c4b396f`; a Windows zip beside it). **Its fallback** is the rc.3 kit
+  `_sandbox/pme-kit-release-fcf99b70/`. The rc.2 kit is retired (moved to `_to_delete/`). An rc.5 candidate kit from
+  main (with Instructor v2, #177) is rehearsed separately; the room dry run (Monday 2 November) decides which kit is in
+  the room.
+- Kit round **Q2 on rc.4** passed on both engines with no gate failure; the two Persian handouts (MH printed for the
+  day) were rendered with PR #161's unreviewed drafts (`docs/gates/rc4-release.md`; `SHOWCASE-2-MEASUREMENTS.md`
+  §"Q2 on rc.4").
+- **Open:** the owner's smoke check and live rehearsal (Sunday 1 November evening or Monday 2 November morning), the
+  Windows checklist, E13 and E14 at the room dry run (Monday 2 November); PR #161 (the Persian drafts, the owner's read);
+  the rest of the rc.4 docs PR (branch `docs-rc4-release`) after the smoke. The demo is Tuesday 3 November 2026.
 
 ## State on 2026-10-13 (main 62e521c3)
 

@@ -60,12 +60,21 @@ void vent;
 import type { LinkMsg } from '../../ventilator/src/link/port.ts';
 import type { VentLinkBody, VentLinkKind } from '../src/protocol.ts';
 type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
-const sameKinds: Same<LinkMsg['kind'], VentLinkKind> = true;
+const sameKinds: Same<LinkMsg['kind'] | 'batch', VentLinkKind> = true; // R8c: `batch` is the relay port's own
 declare const link: Exclude<LinkMsg, { kind: 'cmds' }>;
 const asBody: VentLinkBody = link;
 declare const guarded: Extract<VentLinkBody, { kind: 'cmds' }>;
 const asLink: LinkMsg = guarded;
 void sameKinds, asBody, asLink;
+// R8c: what the relay port sends (`batch` packs the cmds of 20 ms; settings say what the cockpit measured and whether its
+// page is hidden) is exactly a `vent` body: the same kinds, each assignable both ways.
+import type { VentWireBody } from '../../ventilator/src/link/relay-port.ts';
+const sameWireKinds: Same<VentWireBody['kind'], VentLinkKind> = true;
+declare const wire: Exclude<VentWireBody, { kind: 'cmds' | 'batch' }>;
+const wireAsBody: VentLinkBody = wire;
+declare const guardedBatch: Extract<VentLinkBody, { kind: 'batch' }>;
+const batchAsWire: VentWireBody = guardedBatch;
+void sameWireKinds, wireAsBody, batchAsWire;
 t.send({ ...header, kind: 'hello', role: 'ventilator', pin: '4729' });
 t.send({ ...header, kind: 'vent', body: { v: 1, kind: 'cmds', tick: 12, cmds: [{ id: 'v1', issuedBy: 'ventilator', type: 'externalDrive', source: 'ventilator', frame: { pawCmH2O: 5, flowLps: 0, volumeMl: 0, fio2: 0.4, peepCmH2O: 5 } }] } });
 t.send({ ...header, kind: 'vent', to: 'vent-a.1', body: { v: 1, kind: 'clock', ventTick: 80 } });
