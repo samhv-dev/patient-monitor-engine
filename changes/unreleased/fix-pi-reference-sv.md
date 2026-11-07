@@ -7,7 +7,7 @@
   against the 89.0 mL the same MANUAL patient settles at. That stabiliser solves the bare circuit for the profile's own
   targets (HR 70, CVP 5) at a constant pleural pressure of −4 mmHg. It leaves out three things: the instructor's numbers
   that the MANUAL trackers then impose (HR 75, CVP 6: about 400 mL more venous volume and LV Emax ×0.74), the
-  spontaneous-breathing pleural swing, and, in MODELED, the baroreflex (the MODELED rest is 81.3 mL). The result was a
+  spontaneous-breathing pleural swing, and, in MODELED, the baroreflex (the MODELED rest is 81.2 mL). The result was a
   sinus pulse under PEEP 5 drawn 8 % taller than the set PI, although ventilation lowers stroke volume (Michard,
   *Anesthesiology* 2005). It now sits at 0.96×.
 - The waveform-regression baselines of the three pleth rows are re-recorded for that cause, and only these rows. The

@@ -31,9 +31,9 @@ async function meanSv(vent: boolean, from: number, to: number): Promise<{ sv: nu
 }
 
 describe('SV₀ is the patient’s own settled resting stroke volume', { timeout: 120_000 }, () => {
-  it('the resting patient drops a scripted arrhythmia and its rate, and keeps everything else', () => {
-    expect(restingPatient(SINUS_75)).toBe(SINUS_75);
-    expect(restingPatient({ baseline: { hr: 110, cvp: 8 }, rhythm: { id: 'afib' }, ageY: 60 })).toEqual({ baseline: { cvp: 8 }, ageY: 60 });
+  it('the resting patient drops a scripted arrhythmia and its rate, and the monitor’s sensors; it keeps everything else', () => {
+    expect(restingPatient(SINUS_75)).toEqual({ baseline: { hr: 75 } });
+    expect(restingPatient({ baseline: { hr: 110, cvp: 8 }, rhythm: { id: 'afib' }, ageY: 60, sensors: { spo2: 'on' } })).toEqual({ baseline: { cvp: 8 }, ageY: 60 });
     expect(restingPatient({ baseline: { hr: 60 }, rhythm: { id: 'sinus' } })).toEqual({ baseline: { hr: 60 }, rhythm: { id: 'sinus' } });
     expect(restingPatient(undefined)).toBeUndefined();
   });

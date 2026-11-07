@@ -269,7 +269,7 @@ function startRate(id: RhythmId, opts: RhythmOpts): number {
  *  2. The breath driver: spontaneous breathing swings the pleural pressure from −4 to ≈ −7 mmHg (mean ≈ −5), which
  *     raises venous return, and the MANUAL CVP tracker holds the breath-AVERAGED right-atrial pressure, so it fills by
  *     a further ≈ 130 mL to lift the inspiratory dips (that residual 86 against 79 mL).
- *  3. MODELED: the same breathing, and the baroreflex settling at its own point (81.3 mL at rest: SV₀; 70.8 mL on IPPV).
+ *  3. MODELED: the same breathing, and the baroreflex settling at its own point (81.2 mL at rest: SV₀; 70.8 mL on IPPV).
  * The same fault — the trackers starting from a circulation that is not the instructor's patient and taking ≈ 40–60 s
  * to reach it — is behind the MANUAL PEEP 0 < PEEP 5 stroke volume (84.0 against 85.5 mL): a ventilator started at
  * t = 0 runs while the trackers are still converging. Under PEEP 5 the pressure tracker kept running to 38 s (LV Emax
@@ -279,26 +279,34 @@ function startRate(id: RhythmId, opts: RhythmOpts): number {
  *
  * The rest is the patient as configured at t = 0 (profile, conditions and the instructor's baseline values) with its
  * scripted arrhythmia removed: a rhythm and its rate are the scenario's (the AF pulse deficit must show against the
- * patient's sinus stroke volume, research/45), so a non-sinus `rhythm` drops with its `baseline.hr`. The settling ends
+ * patient's sinus stroke volume, research/45), so a non-sinus `rhythm` drops with its `baseline.hr`, and the monitor's
+ * `sensors` drop too. The settling ends
  * when both MANUAL trackers have released (each releases by MANUAL_TRACK_MAX_S of its own run), or after
- * MANUAL_TRACK_MAX_S in MODELED; SV₀ is then the mean pleth stroke-volume estimate (EDV − the previous beat's ESV, the
+ * REST_SETTLE_MODELED_S in MODELED; SV₀ is then the mean pleth stroke-volume estimate (EDV − the previous beat's ESV, the
  * numerator the pleth uses) over REST_AVG_S of beats. A patient property, not the scenario's random stream: the run uses
  * REST_SEED, so it is deterministic and cached per resting patient and mode, and it runs ONCE, when the engine is
  * created — never inside a step, whatever the time scale. The run steps only the three pipelines that set a resting
  * stroke volume (`restAdvance`: the rhythm engine, the breath driver, the haemodynamics), tick by tick as the engine
- * does; it reproduces the whole engine's resting value exactly (88.90 / 81.29 mL, MANUAL / MODELED) at ≈ 60 % of its
- * cost (≈ 0.13–0.18 s in Node and Chromium; the whole engine took 0.23–0.29 s and, on CI, stalled the live monitor).
+ * does; it reproduces the whole engine's resting value exactly (88.90 / 81.29 mL, MANUAL / MODELED, at a 60 s MODELED
+ * settle) at ≈ 60 % of its cost. The resting patient carries no sensors (their transducers are not physiology: SV₀ is
+ * the same with or without them) and MODELED settles REST_SETTLE_MODELED_S, so a run is ≈ 0.1–0.2 s in Node and
+ * Chromium; the whole engine's 80 s took 0.23–0.29 s and, on the CI runner, delayed a case's monitor by 1–2 s.
  * A restored snapshot carries its own SV₀. [ENG procedure: REST_AVG_S, five spontaneous breaths at the default 15/min;
  * REST_SEED, the engine's default seed.]
  */
 export const REST_AVG_S = 20;
 export const REST_SEED = 1;
+/** MODELED has no tracker to wait for: its resting SV is within ± 0.5 % (the breath-to-breath spread) from 16 s on. */
+export const REST_SETTLE_MODELED_S = 20;
 const restSvCache = new Map<string, number>();
 
 /** The resting patient whose settled stroke volume is SV₀ (see REST_AVG_S). */
 export function restingPatient(p: PatientProfile | undefined): PatientProfile | undefined {
-  if (!p?.rhythm || p.rhythm.id === 'sinus') return p;
-  const { rhythm: _rhythm, ...rest } = p;
+  if (!p) return p;
+  // the monitor's sensors are not the patient (and their transducers are most of a run's cost)
+  const { sensors: _sensors, ...q } = p;
+  if (!q.rhythm || q.rhythm.id === 'sinus') return q;
+  const { rhythm: _rhythm, ...rest } = q;
   if (!rest.baseline || rest.baseline.hr === undefined) return rest;
   const { hr: _hr, ...baseline } = rest.baseline;
   return { ...rest, baseline };
@@ -408,7 +416,7 @@ class Engine implements MonitorEngine {
       // late: 82.16 against the full engine's 81.29 mL)
       for (let n = e.st.n - 1 + SAMPLES_PER_TICK; n <= Math.round(to * ECG_RATE); n += SAMPLES_PER_TICK) e.restAdvance(e.st, n);
     };
-    while (manual ? (mh().active || mh().pActive) && t < 2 * MANUAL_TRACK_MAX_S : t < MANUAL_TRACK_MAX_S) go((t += STEP_S));
+    while (manual ? (mh().active || mh().pActive) && t < 2 * MANUAL_TRACK_MAX_S : t < REST_SETTLE_MODELED_S) go((t += STEP_S));
     const t0 = t;
     const seen = new Map<number, { t: number; lvedv: number; lvesv: number }>();
     while (t < t0 + REST_AVG_S) {
