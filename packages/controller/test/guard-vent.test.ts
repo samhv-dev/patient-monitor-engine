@@ -138,3 +138,45 @@ describe("the ventilator's hello (R8a: the PIN, as an instructor's)", () => {
     expect(parseWireMessage(hello('instructor', { pin: '4729' }))).toMatchObject({ role: 'instructor' });
   });
 });
+
+// R8c: the relay port packs the `cmds` of 20 ms of wall time into one `batch` (400 ticks a second at ×8 → ≤ 50 messages,
+// under the relay's 120), and the cockpit's settings carry what it measured and whether its page is hidden.
+describe('R8c: the relay port\'s bodies', () => {
+  const steady = () => structuredClone(cmds(normal.fromVent).at(-1)!);
+  it('every body a real cockpit sends through the relay port at ×8 passes the guard inside a `vent`, and leaks no sample', async () => {
+    const { createRelayPort, createVentDriver: drive } = await import('../../ventilator/src/index.ts');
+    const out: unknown[] = [];
+    let d: ReturnType<typeof drive> | null = null; // the cockpit's driver takes the port: its settings follow it
+    const port = createRelayPort({ send: (b) => void out.push(JSON.parse(JSON.stringify(b))), onBody: () => () => {} }, { settings: () => (d ? { cfg: d.vs.cfg, measured: { RR: 12, VTE: 480 } } : null) });
+    d = drive(port, 'anaphylaxis-bronchospasm');
+    d.scale = 8;
+    d.frame(0);
+    d.frame(100); // 40 ticks in one animation frame: one flush splits them
+    port.flush();
+    port.setHidden(true);
+    port.close();
+    expect(out.some((b) => (b as { kind: string }).kind === 'batch')).toBe(true);
+    expect(out.some((b) => (b as { kind: string; hidden?: boolean }).kind === 'settings' && (b as { hidden?: boolean }).hidden === true)).toBe(true);
+    for (const b of out) expect(parseWireMessage(JSON.stringify(vent(b))), JSON.stringify(b).slice(0, 80)).not.toBeNull();
+    for (const b of out) expect(findSampleLeak(vent(b))).toBeNull();
+  });
+  it(`a batch of at most ${VENT_LIMITS.batch} \`cmds\`, each one a valid \`cmds\`, within ${VENT_LIMITS.bytes} bytes`, () => {
+    const s = steady();
+    const at = (n: number, c = s.cmds) => Array.from({ length: n }, (_, i) => ({ ...s, tick: s.tick + i, cmds: c }));
+    expect(parseWireMessage(vent({ v: 1, kind: 'batch', msgs: at(8) }))).not.toBeNull(); // ×8: the ticks of 20 ms
+    expect(parseWireMessage(vent({ v: 1, kind: 'batch', msgs: at(VENT_LIMITS.batch, []) }))).not.toBeNull();
+    expect(parseWireMessage(vent({ v: 1, kind: 'batch', msgs: at(Math.ceil(VENT_LIMITS.bytes / bytes(s)) + 1).slice(0, VENT_LIMITS.batch) }))).toBeNull(); // over the bytes
+    for (const body of [
+      { v: 1, kind: 'batch', msgs: at(VENT_LIMITS.batch + 1, []) }, { v: 1, kind: 'batch', msgs: [] }, { v: 1, kind: 'batch' },
+      { v: 1, kind: 'batch', msgs: [{ v: 1, kind: 'clock', ventTick: 3 }] }, { v: 1, kind: 'batch', msgs: [{ ...s, tick: 1.5 }] },
+      { v: 1, kind: 'batch', msgs: [{ ...s, cmds: [{ id: 'x', issuedBy: 'ventilator', type: 'time', action: 'pause' }] }] },
+      { v: 1, kind: 'batch', msgs: [{ v: 1, kind: 'batch', msgs: at(1) }] },
+    ])
+      expect(parseWireMessage(vent(body)), JSON.stringify(body).slice(0, 120)).toBeNull();
+  });
+  it('settings may say what the cockpit measured and that its page is hidden; nothing else in those fields', () => {
+    expect(parseWireMessage(vent({ v: 1, kind: 'settings', cfg: normal.cfg, measured: { RR: 14, VTE: 452 }, hidden: true }))).not.toBeNull();
+    for (const extra of [{ measured: { RR: '14', VTE: 452 } }, { measured: [14, 452] }, { hidden: 'yes' }])
+      expect(parseWireMessage(vent({ v: 1, kind: 'settings', cfg: normal.cfg, ...extra })), JSON.stringify(extra)).toBeNull();
+  });
+});

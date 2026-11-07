@@ -16,6 +16,7 @@ import {
   type StateEvent,
   type TimeCommand,
   type TimelineCause,
+  type VentLinkBody,
   type WireBody,
   type WireCommand,
   type WireEvent,
@@ -85,6 +86,14 @@ export interface HostSessionOptions {
   onNote?: (t: SimSeconds, text: string, kind: 'note' | 'marker', ev?: NoteEvent) => void;
   /** How many instructor phones are granted (0 or 1: the newest takes over), called at every grant and revocation. */
   onInstructors?: (n: number) => void;
+  /**
+   * R8c (plan room-and-instruments.md): a link message from the GRANTED remote ventilator (a cockpit on another device,
+   * signed in with the instructor's PIN), with its peer id. Absent: this app drives from no remote cockpit, and every
+   * ventilator is denied. Nothing from an ungranted one ever reaches it.
+   */
+  onVent?: (from: string, body: VentLinkBody) => void;
+  /** R8c: the granted ventilator changed — its id, or null when it was revoked, taken over by none, or left. */
+  onVentilator?: (from: string | null) => void;
   /** The drugs a scenario command would give as a bolus (ScenarioDriver.triggerGives: a /1 step press's onEnter); a press
    *  while one is locked is refused `recent`, as a bolus is (drug-lock.ts). Absent: a scenario command gives none. */
   scenarioGives?: (cmd: ScenarioCommand) => string[];
@@ -98,6 +107,11 @@ export const INSTRUCTOR_REASONS = {
   pinChanged: 'the PIN was changed',
   notSignedIn: 'the instructor phone is not signed in',
   noNotes: 'this computer does not take notes from a remote',
+} as const;
+/** R8c: what the host answers a remote ventilator (with INSTRUCTOR_REASONS' wrong PIN, taken over, PIN changed). */
+export const VENTILATOR_REASONS = {
+  noVentilator: 'this computer does not take a remote ventilator',
+  noCommands: 'a ventilator drives through its link, not with commands',
 } as const;
 /** The span `instructorDenials()` counts over, ms (the Room page: "3 wrong PINs in the last minute"). */
 export const DENIAL_WINDOW_MS = 60_000;
@@ -166,6 +180,9 @@ export const FF_STEP_TICKS = 25;
 export const FF_MAX_S = 600;
 
 type AckBody = Extract<WireBody, { kind: 'ack' }>;
+/** The roles that sign in with the instructor's PIN, each in its own single place (P3; R8c). */
+type SignsIn = 'instructor' | 'ventilator';
+type Holder = { t: ManagedTransport; from: string; pin: string };
 /** The ack's words when a fast-forward runs: a controller's command waits for nothing. */
 const FF_REFUSAL = 'the simulation is fast-forwarding; try again when it ends';
 
@@ -185,8 +202,9 @@ export class HostSession {
   /**
    * The one granted instructor phone, by (transport, from), and the PIN it proved (plan §3 option B: the newest right
    * PIN takes over). The laptop's own panels are controllers: they need no grant and are never revoked.
+   * R8c: the one granted remote ventilator has its own single place beside it, option B within its own role only.
    */
-  private holder: { t: ManagedTransport; from: string; pin: string } | null = null;
+  private readonly signedIn: Record<SignsIn, Holder | null> = { instructor: null, ventilator: null };
   private denials: number[] = []; // Wall ms of the last DENIAL_RECORD_MAX wrong PINs within DENIAL_WINDOW_MS (no lockout)
   private readonly seen = new Map<string, AckBody>();
   private readonly groups = new Map<string, { tick: Tick; at: number }>();
@@ -264,9 +282,23 @@ export class HostSession {
     return this.denials.length;
   }
 
-  /** The instructor's PIN changed: every grant is revoked at once (the phone signs in again with the new PIN). */
+  /** The instructor's PIN changed: every grant is revoked at once (the phone and the ventilator sign in again). */
   instructorPinChanged(): void {
-    this.revoke(INSTRUCTOR_REASONS.pinChanged);
+    this.revoke('instructor', INSTRUCTOR_REASONS.pinChanged);
+    this.revoke('ventilator', INSTRUCTOR_REASONS.pinChanged);
+  }
+
+  /** R8c: the granted remote ventilator's peer id (null: none). */
+  get ventilator(): string | null {
+    return this.signedIn.ventilator?.from ?? null;
+  }
+
+  /** R8c: send a link message to the granted remote ventilator only (`to` its id). False: none is granted. */
+  ventPost(body: VentLinkBody): boolean {
+    const h = this.signedIn.ventilator;
+    if (!h) return false;
+    h.t.send(this.stamp({ kind: 'vent', to: h.from, body }));
+    return true;
   }
 
   /** A fast-forward is running (controllers' commands are refused until it ends). */
@@ -426,54 +458,65 @@ export class HostSession {
     this.transports.get(t)?.();
     this.transports.delete(t);
     this.peers.delete(t);
-    if (this.holder?.t === t) this.setHolder(null);
+    for (const r of ['instructor', 'ventilator'] as const) if (this.signedIn[r]?.t === t) this.setHolder(r, null);
   }
 
-  private setHolder(h: HostSession['holder']): void {
-    const was = this.holder;
-    this.holder = h;
-    if (was?.t !== h?.t || was?.from !== h?.from) this.o.onInstructors?.(h ? 1 : 0);
+  private setHolder(role: SignsIn, h: Holder | null): void {
+    const was = this.signedIn[role];
+    this.signedIn[role] = h;
+    if (was?.t === h?.t && was?.from === h?.from) return;
+    if (role === 'instructor') this.o.onInstructors?.(h ? 1 : 0);
+    else this.o.onVentilator?.(h ? h.from : null);
   }
 
   private grant(t: ManagedTransport, to: string, granted: boolean, reason?: string): void {
     t.send(this.stamp({ kind: 'grant', to, granted, ...(reason !== undefined ? { reason } : {}) }));
   }
 
-  /** Tell the holder it is no longer granted, and forget it. */
-  private revoke(reason: string): void {
-    const h = this.holder;
+  /** Tell the role's holder it is no longer granted, and forget it. */
+  private revoke(role: SignsIn, reason: string): void {
+    const h = this.signedIn[role];
     if (!h) return;
     this.grant(h.t, h.from, false, reason);
-    this.setHolder(null);
+    this.setHolder(role, null);
   }
 
-  /** An instructor hello: verify its PIN and answer with a grant, before the welcome (the relay routes by it). */
-  private verify(t: ManagedTransport, from: string, pin: string | undefined): void {
-    const want = this.o.instructorPin?.() ?? null;
-    const isHolder = this.holder?.t === t && this.holder.from === from;
+  /**
+   * An instructor or ventilator hello: verify its PIN and answer with a grant, before the welcome (the relay routes by
+   * it). Each role has its own single place (option B within it: the newest right PIN takes over that role only, R8c).
+   */
+  private verify(t: ManagedTransport, from: string, pin: string | undefined, role: SignsIn): void {
+    // R8c: an app that drives from no remote cockpit takes no ventilator, whatever the PIN
+    const want = role === 'ventilator' && !this.o.onVent ? null : (this.o.instructorPin?.() ?? null);
+    const h = this.signedIn[role];
+    const isHolder = h?.t === t && h.from === from;
     if (want === null || pin === undefined || !samePin(pin, want)) {
       if (want !== null) this.denials.push(this.now());
       if (this.denials.length > DENIAL_RECORD_MAX) this.denials.splice(0, this.denials.length - DENIAL_RECORD_MAX);
       this.instructorDenials(); // prunes the window
-      if (isHolder) this.setHolder(null); // its own hello no longer proves the PIN
-      this.grant(t, from, false, want === null ? INSTRUCTOR_REASONS.noPhone : INSTRUCTOR_REASONS.wrongPin);
+      if (isHolder) this.setHolder(role, null); // its own hello no longer proves the PIN
+      const none = role === 'instructor' ? INSTRUCTOR_REASONS.noPhone : VENTILATOR_REASONS.noVentilator;
+      this.grant(t, from, false, want === null ? none : INSTRUCTOR_REASONS.wrongPin);
       return;
     }
-    if (!isHolder && this.holder) this.grant(this.holder.t, this.holder.from, false, INSTRUCTOR_REASONS.takenOver); // option B
+    if (!isHolder && h) this.grant(h.t, h.from, false, INSTRUCTOR_REASONS.takenOver); // option B
     this.grant(t, from, true);
-    this.setHolder({ t, from, pin: want });
+    this.setHolder(role, { t, from, pin: want });
+  }
+
+  /** Whether (t, from) holds `role` with the PIN as it is now; a PIN changed unannounced revokes it here. */
+  private holds(role: SignsIn, t: ManagedTransport, from: string): boolean {
+    const h = this.signedIn[role];
+    if (h?.t !== t || h.from !== from) return false;
+    const pin = this.o.instructorPin?.() ?? null;
+    if (pin !== null && samePin(pin, h.pin)) return true;
+    this.revoke(role, INSTRUCTOR_REASONS.pinChanged); // changed without instructorPinChanged(): caught at the next message
+    return false;
   }
 
   /** Null when (t, from) is the granted phone and may send `cmd` (plan §2), else the reason its ack carries. */
   private instructorRefusal(t: ManagedTransport, from: string, cmd: WireCommand): string | null {
-    const h = this.holder;
-    if (h?.t !== t || h.from !== from) return INSTRUCTOR_REASONS.notSignedIn;
-    const pin = this.o.instructorPin?.() ?? null;
-    if (pin === null || !samePin(pin, h.pin)) {
-      this.revoke(INSTRUCTOR_REASONS.pinChanged); // changed without instructorPinChanged(): caught at the next command
-      return INSTRUCTOR_REASONS.notSignedIn;
-    }
-    return instructorMay(cmd);
+    return this.holds('instructor', t, from) ? instructorMay(cmd) : INSTRUCTOR_REASONS.notSignedIn;
   }
 
   /**
@@ -486,7 +529,7 @@ export class HostSession {
     p?.roles.delete(from);
     p?.left.add(from);
     if (p && p.left.size > LEFT_MAX) p.left.delete(p.left.values().next().value as string); // the oldest goes first
-    if (this.holder?.t === t && this.holder.from === from) this.setHolder(null);
+    for (const r of ['instructor', 'ventilator'] as const) if (this.signedIn[r]?.t === t && this.signedIn[r]?.from === from) this.setHolder(r, null);
   }
 
   private queue(e: WireEvent): void {
@@ -516,12 +559,16 @@ export class HostSession {
       p.left.delete(m.from);
     }
     if (m.kind === 'hello' && m.role === 'viewer') this.viewerSeenAt = this.now();
-    if (m.kind === 'hello' && m.role === 'instructor') this.verify(t, m.from, m.pin);
+    if (m.kind === 'hello' && (m.role === 'instructor' || m.role === 'ventilator')) this.verify(t, m.from, m.pin, m.role);
+    if (m.kind === 'hello' && m.role === 'ventilator') return; // R8c: it follows nothing (no welcome, no snapshot)
     if (m.kind === 'hello' && m.role !== 'host') return this.welcome(t);
+    // R8c: only the granted ventilator's link messages reach the app, while its PIN holds
+    if (m.kind === 'vent') return void (this.o.onVent && this.holds('ventilator', t, m.from) && this.o.onVent(m.from, m.body));
     if (m.kind !== 'command') return;
     const role = p.roles.get(m.from);
     const refuse = (reason: string) => t.send(this.stamp({ kind: 'ack', commandId: m.body.id, accepted: false, tick: this.o.target.now().tick, reason }));
     if (role === 'viewer') return refuse('a viewer cannot command');
+    if (role === 'ventilator') return refuse(VENTILATOR_REASONS.noCommands); // the relay refuses it too (R8b)
     // forgotten by a peer-left (R29) and no hello since: not the controller path (the relay refuses it too)
     if (role === undefined && p.left.has(m.from)) return refuse(NO_HELLO);
     if (role !== 'instructor') return this.command(t, m.body, m.from);

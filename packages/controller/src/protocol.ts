@@ -290,7 +290,13 @@ export type VentLinkBody =
   | { v: 1; kind: 'run'; ventTick: number }
   | { v: 1; kind: 'time'; action: 'pause' | 'resume' | 'scale'; value?: number }
   | { v: 1; kind: 'control'; patch?: object; circuit?: 'connected' | 'disconnected'; profile?: string }
-  | { v: 1; kind: 'settings'; cfg: object };
+  /** R8c: the cockpit's settings, what it last measured (a PSV hand-over takes its rate) and whether its page is hidden. */
+  | { v: 1; kind: 'settings'; cfg: object; measured?: { RR: number; VTE: number }; hidden?: boolean }
+  /**
+   * R8c: the `cmds` of 20 ms of the cockpit's wall time in one message (`packages/ventilator` link/relay-port.ts): 400 a
+   * second at ×8 would close its socket at the relay's 120. Never a link message of its own: the far port unpacks it.
+   */
+  | { v: 1; kind: 'batch'; msgs: Array<{ v: 1; kind: 'cmds'; tick: number; cmds: VentCommand[] }> };
 export type VentLinkKind = VentLinkBody['kind'];
 
 /** Brief §7.5, exactly. */
