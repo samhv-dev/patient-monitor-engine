@@ -263,10 +263,12 @@ describe('inert rows: dexamethasone glucose, ondansetron QTc, the TXA hook', () 
   });
   // R45 (Task 18 Step 4a, named in advance): 7e's glucose model (research/19 CM-09c) owns the remainder; the
   // glucocorticoid Emax (4000) is fit to the healthy DI-76 band only and is not raised for this arm.
-  it.fails('diabetic dexamethasone peak +2–4 mmol/L at 4–8 h (PADDI): measured +1.83; non-diabetic +1.02', () => {
+  // Band to its source (calibration-pass ruling, brief 88): PADDI, Bach 2026 (PMID 42303515, PMC table), diabetic patients,
+  // dexamethasone 8 mg minus control: maximum glucose difference over 24 h 1.86 (95 % CI 1.50–2.22) mmol/L.
+  it('diabetic dexamethasone 8 mg: maximum glucose rise over control +1.50–2.22 mmol/L (PADDI, Bach 2026: 1.86, 95 % CI 1.50–2.22): measured +1.83; non-diabetic +1.02', () => {
     const t2 = peak48('type2');
-    expect(t2).toBeGreaterThanOrEqual(2);
-    expect(t2).toBeLessThanOrEqual(4);
+    expect(t2).toBeGreaterThanOrEqual(1.5);
+    expect(t2).toBeLessThanOrEqual(2.22);
   });
 
   it('ondansetron 4 mg adds 10–20 ms of QTc (FDA 2012) through the blood model\'s ECG QTc delta; no rhythm or haemodynamic output', () => {

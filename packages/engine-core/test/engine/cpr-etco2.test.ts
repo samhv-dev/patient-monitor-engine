@@ -41,9 +41,13 @@ describe('CPR EtCO2 (research 09 §2)', { timeout: 300_000 }, () => {
   });
 
   // FU-8 (E-FU8-10): at the circulation's CPR flow the same +10 breaths/min lower EtCO2 by 4.8 (R45: it.fails)
-  it.fails('ventilation: +10 breaths/min lowers EtCO2 by ≈ 3 mmHg (−2 to −4.5) at the learner default — measured −4.8 at the circulation\'s CPR flow', async () => {
-    const d = (await cprEtco2(0.8, 20)) - (await cprEtco2(0.8, 10));
-    expect(d).toBeLessThanOrEqual(-2);
-    expect(d).toBeGreaterThanOrEqual(-4.5);
+  // Band to its sources (calibration-pass ruling, brief 88), relative: Sheak 2015 (PMID 25643651) −3.0 mmHg per +10/min
+  // against case means 34.5 / 23.1 (−8.7 % / −13.0 %); Murphy 2016 (PMID 26830353) −17.4 % per +10/min. Envelope −8.7 to −17.4 %.
+  it.fails('ventilation: +10 breaths/min lowers EtCO2 by 8.7–17.4 % (Sheak 2015; Murphy 2016) at the learner default — measured −19 % (−4.8 mmHg) at the circulation\'s CPR flow', async () => {
+    const lo = await cprEtco2(0.8, 10);
+    const d = ((await cprEtco2(0.8, 20)) - lo) / lo;
+    console.log(`cpr-etco2: +10/min ${(100 * d).toFixed(1)} %`);
+    expect(d).toBeLessThanOrEqual(-0.087);
+    expect(d).toBeGreaterThanOrEqual(-0.174);
   });
 });

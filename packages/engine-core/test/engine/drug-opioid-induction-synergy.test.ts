@@ -43,8 +43,11 @@ describe('the opioid deepens the induction hypotension', { timeout: 600_000 }, (
   // FU-6's sourced induction-apnoea band (fentanyl pair 60–240 s → 513 s) and FU-7 Task 10 case 2's blunting ratio
   // (0.2–0.7 → 0.19) out through FU-4 G10's flow-dependent distribution, so this plan ships the largest strength that
   // keeps both (HEMO_SYN_MAX 0.2) and records the miss here. Owner question Q2.
-  it.fails('the fall after fentanyl 2 µg/kg is 1.7–2.1 × the fall after propofol alone (Billard 1994: 53/28 = 1.89) — measured 1.16 at HEMO_SYN_MAX 0.2', async () => {
+  // Band to its source (calibration-pass ruling, brief 88): Billard 1994 (PMID 7992907) mean SBP fall 28 mmHg after propofol
+  // alone, 53 after fentanyl 2 µg/kg and 50 after 4 µg/kg: ratios 1.89 and 1.79, the only two the abstract supports.
+  it.fails('the fall after fentanyl 2 µg/kg is 1.79–1.89 × the fall after propofol alone (Billard 1994: 53/28, 50/28) — measured 1.16 at HEMO_SYN_MAX 0.2', async () => {
     const [p, f] = [await arm(false), await arm(true)];
-    expect(f.dSbp / p.dSbp).toBeGreaterThanOrEqual(1.7);
+    expect(f.dSbp / p.dSbp).toBeGreaterThanOrEqual(1.79);
+    expect(f.dSbp / p.dSbp).toBeLessThanOrEqual(1.89);
   });
 });

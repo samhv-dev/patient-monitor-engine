@@ -195,10 +195,12 @@ describe('clinical scenario suite (MODELED, audit rig)', { timeout: 600_000 }, (
   it.fails("S9 the same: SaO2 < 90 % at 5 min (truth, not the display; the proposed band SpO2 ≤ 92 at FiO2 0.5 is Ali's, item 15; measured 97.8 %)", async () => {
     expect(mean(win(await s9(), 360, 420), 'sao2')).toBeLessThan(0.9);
   });
-  it.fails('S9 the same: CVP ≥ 15 and MAP < 65 at 5 min (RV failure; Q15; measured CVP 9.3, MAP 82.1)', async () => {
+  // Band to its source (calibration-pass ruling, brief 88): massive PE is acute PE with hypotension, SBP < 90 (Dellinger 5e
+  // ch. 42 p. 682). The CVP ≥ 15 and MAP < 65 edges had no source (Miller & Sutton 1970: RVEDP 11.5 ± 4.9) and are removed.
+  it.fails('S9 the same: SBP < 90 at 5 min (massive PE = PE with hypotension, Dellinger 5e ch. 42; measured SBP 95.0, CVP 9.3, MAP 82.1)', async () => {
     const w = win(await s9(), 360, 420);
-    expect(mean(w, 'cvp')).toBeGreaterThanOrEqual(15);
-    expect(mean(w, 'map')).toBeLessThan(65);
+    console.log(`S9: SBP ${mean(w, 'sbp').toFixed(1)}`);
+    expect(mean(w, 'sbp')).toBeLessThan(90);
   });
   it('S9 the same: propofol 1 mg/kg at 7 min → PEA within 10 min (ACLS "T")', async () => {
     expect(arrestAt(await s9(), 420)).toBeDefined();
@@ -219,7 +221,9 @@ describe('clinical scenario suite (MODELED, audit rig)', { timeout: 600_000 }, (
   });
   // R45 (Task 18a): 23.8 at 70 s on the 18a rig, but the CoPP climbs as the CPR circulation settles — 25.1–28.8 over
   // 1–5 min of CPR alone here (the plan's quality-1 rig read 43–46 before 18a). Kept with the number (Q13's residual).
-  it.fails('S13 VF + standard-quality CPR (q 0.8, no adrenaline): the continuous coronary perfusion pressure (CoPP) 15–25 mmHg (Paradis 1990; measured 24.9–28.0 with the outflow limiter, 25.1–28.8 without)', async () => {
+  // Band to its source (calibration-pass ruling, brief 88): Paradis 1990 (PMID 2386557, n 100) initial CPP 13.4 ± 8.5 mmHg
+  // in the patients with ROSC (mean + 1 SD = 21.9) and no ROSC with an initial CPP below 0. 15 is the ROSC threshold, not a range edge.
+  it.fails('S13 VF + standard-quality CPR (q 0.8, no adrenaline): the continuous coronary perfusion pressure (CoPP) 0–21.9 mmHg (Paradis 1990: 13.4 ± 8.5 with ROSC, none below 0; measured 26.3–28.1)', async () => {
     // commanded VF is a setRhythm, not an applyEvent: its own engine
     const eng = createEngine({ seed: 7, mode: 'modeled', patient: { ageY: 40, sex: 'M', weightKg: 70, sensors: { abp: 'connected' } } });
     const cpp: number[] = [];
@@ -228,8 +232,8 @@ describe('clinical scenario suite (MODELED, audit rig)', { timeout: 600_000 }, (
     eng.dispatch({ id: `cs${++n}`, issuedBy: 'test', type: 'applyEvent', event: { kind: 'cpr', active: true, rate: 110, quality: 0.8 }, atTick: 120 * 50 } as unknown as Command);
     for (let t = 60; t <= 420; t += 60) { eng.advanceTo(t); await new Promise((res) => setImmediate(res)); }
     console.log(`S13: CPR CoPP ${Math.min(...cpp).toFixed(1)}–${Math.max(...cpp).toFixed(1)}`);
-    expect(Math.min(...cpp)).toBeGreaterThanOrEqual(15);
-    expect(Math.max(...cpp)).toBeLessThanOrEqual(25);
+    expect(Math.min(...cpp)).toBeGreaterThanOrEqual(0);
+    expect(Math.max(...cpp)).toBeLessThanOrEqual(21.9);
   });
   const s14 = memo(() => scenario([[300, drug('propofol', 2, 'mg/kg')]], 900, { patient: { ageY: 80, weightKg: 70, conditions: [{ id: 'htn' }] } as PatientProfile }));
   it('S14 80 y hypertensive, propofol 2 mg/kg: HR change ≤ +10 (Reich 2005; Miller geriatrics)', async () => {

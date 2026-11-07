@@ -36,7 +36,6 @@ const KNOWN: Record<string, string[]> = {
   ptxSimple: ['shunt'], // 0.12 vs 0.07
   olv: ['crs', 'shunt'], // 33.9 vs 25–30 (shared chest wall, decision 1); 0.14 vs 0.2–0.3 at FiO2 0.4 after 30 min (collapse τ ≈ 30 min at 0.4)
   endobronchial: ['crs'], // 34.0 vs 27.5–30.3 (shared chest wall)
-  cf: ['spo2Fio2_021'], // 95.4 vs 88–94
   neonatalRds: ['shunt'], // 0.16 vs 0.2–0.4 (adult rig; neonatal profile arrives with R22 bands)
 };
 const KEYS = ['crs', 'rInsp', 'autoPeep', 'plateau', 'drivingPressure', 'gapPaEt', 'shunt', 'spo2Fio2_021', 'spo2Fio2_04', 'spo2Fio2_10'] as const;
