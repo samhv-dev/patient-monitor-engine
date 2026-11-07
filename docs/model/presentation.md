@@ -340,6 +340,8 @@ No exported `…State` type in this module.
 | `keyMoments` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The key moments of the kept course in time order, numbered 1…n. |
 | `signStates` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The states whose entry makes a /1 card's sign recognisable: |
 | `keyTimes` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The key times, in order: |
+| `openersAt` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The card author's openers (D9) on this run: |
+| `first` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The first kept row of `want` (or of any of a list) at or after `from`, or null. |
 | `eventWords` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | An event in words, for a reason line ("the alarm Apnoea (no CO₂ breaths)", "epinephrine", "SpO₂ below 90 %"). |
 | `trendMeta` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | A trend's or a lab's label and unit from the glossary ("ART M / NIBP M", "mmHg"; |
 | `axisRange` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The axis of one trend chart: |
@@ -349,6 +351,7 @@ No exported `…State` type in this module.
 | `judged` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The objectives the instructor judges (no rule: |
 | `runEnded` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Has the /2 run of the record ended (decision D5; |
 | `gradesOf` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | A /2 run's grades: |
+| `stringAnchorAt` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | When a string anchor happened on a /2 run (grade()'s reading: |
 | `report3` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The report of a /2 run (null: |
 | `marks` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Every mark (bookmark) of the run in order, with its kind and note when it has them; |
 | `drugTotals` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Bolus totals per drug (mass doses in mg; |
@@ -490,11 +493,13 @@ No exported `…State` type in this module.
 | `archiveList` | [`apps/demo/src/app/views/archive-list.ts`](../../apps/demo/src/app/views/archive-list.ts) | The list, its classes `<p>-list`, `<p>-row`, …; |
 | `gridMajorS` | [`apps/demo/src/app/views/debrief-course.ts`](../../apps/demo/src/app/views/debrief-course.ts) | The grid's big square, in seconds of the time axis, which is also a panel's height (the owner, 2 November, his option 1): |
 | `panelScale` | [`apps/demo/src/app/views/debrief-course.ts`](../../apps/demo/src/app/views/debrief-course.ts) | A panel's scale (the owner, 2 November): |
+| `tracePath` | [`apps/demo/src/app/views/debrief-course.ts`](../../apps/demo/src/app/views/debrief-course.ts) | A trend's line on a lane from y0 (its highest value) to y1 (its lowest): |
 | `placeBadges` | [`apps/demo/src/app/views/debrief-course.ts`](../../apps/demo/src/app/views/debrief-course.ts) | UI review #19: |
 | `courseSvg` | [`apps/demo/src/app/views/debrief-course.ts`](../../apps/demo/src/app/views/debrief-course.ts) | The course strip of a run as an SVG string: |
 | `verdictMark` | [`apps/demo/src/app/views/debrief-swimlane.ts`](../../apps/demo/src/app/views/debrief-swimlane.ts) | A /1 verdict's ruled words with their glyph (E42, Decision 11) and its chip style. |
 | `windowsOf` | [`apps/demo/src/app/views/debrief-swimlane.ts`](../../apps/demo/src/app/views/debrief-swimlane.ts) | The expected windows of a run, one per timed action, read once: |
 | `swimlaneSvg` | [`apps/demo/src/app/views/debrief-swimlane.ts`](../../apps/demo/src/app/views/debrief-swimlane.ts) | The swimlane of a run as an SVG string: |
+| `hintsSection` | [`apps/demo/src/app/views/debrief.ts`](../../apps/demo/src/app/views/debrief.ts) | "From the card's author" (D9; |
 | `sectionRows` | [`apps/demo/src/app/views/explore.ts`](../../apps/demo/src/app/views/explore.ts) | The rows of one Explore section for the model's current state: |
 | `phoneStyle` | [`apps/demo/src/app/views/follower-status.ts`](../../apps/demo/src/app/views/follower-status.ts) | The style a PHONE wears — the instructor's (it comes in the follow stream), upright. |
 | `publishStyle` | [`apps/demo/src/app/views/follower.ts`](../../apps/demo/src/app/views/follower.ts) | The instructor's side: |
@@ -1011,6 +1016,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/views/debrief-course.test.ts`](../../apps/demo/src/app/views/debrief-course.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-handout.dom.test.ts`](../../apps/demo/src/app/views/debrief-handout.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-handsoff.dom.test.ts`](../../apps/demo/src/app/views/debrief-handsoff.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/debrief-hints.dom.test.ts`](../../apps/demo/src/app/views/debrief-hints.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-hub-steps.dom.test.ts`](../../apps/demo/src/app/views/debrief-hub-steps.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-marks-course.dom.test.ts`](../../apps/demo/src/app/views/debrief-marks-course.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-moments-print.dom.test.ts`](../../apps/demo/src/app/views/debrief-moments-print.dom.test.ts) | 0 | 0 |
@@ -1100,6 +1106,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`transports.test.ts`](../../packages/renderer/test/transports.test.ts) | 0 | 0 |
 | [`version.test.ts`](../../packages/renderer/test/version.test.ts) | 0 | 0 |
 | [`views.test.ts`](../../packages/renderer/test/views.test.ts) | 0 | 0 |
+| [`worker-event-backpressure.test.ts`](../../packages/renderer/test/worker-event-backpressure.test.ts) | 0 | 0 |
 | [`worker-pump-backpressure.test.ts`](../../packages/renderer/test/worker-pump-backpressure.test.ts) | 0 | 0 |
 | [`alarm-wording.test.ts`](../../packages/skins/test/alarm-wording.test.ts) | 0 | 0 |
 | [`co2-sampling.test.ts`](../../packages/skins/test/co2-sampling.test.ts) | 0 | 0 |

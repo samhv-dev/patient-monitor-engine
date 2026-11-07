@@ -89,4 +89,23 @@ describe('the Debrief fields (Debrief redesign A)', () => {
     expect(errs({ ...base(), takeHome: ['One.', 'Two.', 'Three.', 'Four.', 'Five.'] }).join()).toMatch(/takeHome/);
     expect(errs({ ...base(), takeHome: [''] }).join()).toMatch(/takeHome/);
   });
+  it('accepts debriefHints: up to four show lines and openers anchored on a run event (D8)', () => {
+    const d = { ...base(), debriefHints: { show: ['One.', 'Two.', 'Three.', 'Four.'], openers: [{ at: 'state:b', text: 'What did you see first?' }, { at: 'drug:phenylephrine', text: 'Why that drug?' }, { at: 'start', text: 'How did it begin?' }] } };
+    const r = validateScenario(d);
+    expect(r.ok ? [] : r.errors).toEqual([]);
+    expect(validateScenario({ ...base(), debriefHints: { show: ['Only show.'] } }).ok).toBe(true);
+    expect(validateScenario({ ...base(), debriefHints: { openers: [{ at: 'state:a', text: 'Only openers.' }] } }).ok).toBe(true);
+  });
+  it('refuses debriefHints with an opener on a state the card does not have, five show lines, five openers, empty or unknown keys (D8)', () => {
+    expect(errs({ ...base(), debriefHints: { openers: [{ at: 'state:deteriorating', text: 'What did you see?' }] } })).toEqual(['/debriefHints/openers/0/at: no state "deteriorating"']);
+    expect(errs({ ...base(), debriefHints: { show: ['1', '2', '3', '4', '5'] } }).join()).toMatch(/^\/debriefHints\/show: /);
+    const o = { at: 'start', text: 'x' };
+    expect(errs({ ...base(), debriefHints: { openers: [o, o, o, o, o] } }).join()).toMatch(/^\/debriefHints\/openers: /);
+    expect(errs({ ...base(), debriefHints: { show: [''] } }).join()).toMatch(/debriefHints\/show\/0/);
+    expect(errs({ ...base(), debriefHints: { openers: [{ at: 'state:b', text: '' }] } }).join()).toMatch(/debriefHints\/openers\/0\/text/);
+    expect(errs({ ...base(), debriefHints: { openers: [{ at: 'soon', text: 'x' }] } }).join()).toMatch(/debriefHints\/openers\/0\/at/);
+    expect(errs({ ...base(), debriefHints: { openers: [{ text: 'x' }] } }).join()).toMatch(/missing required property "at"/);
+    expect(errs({ ...base(), debriefHints: { pearls: [] } }).join()).toMatch(/unexpected property "pearls"/);
+    expect(errs({ ...base(), debriefHints: {} }).join()).toMatch(/debriefHints/);
+  });
 });

@@ -19,9 +19,9 @@ import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
 import { axisRange, drugTotals, endOf, facts, mmss, objectives, perMinute, PRESSURE_KEYS, report3, span, steps, trendMeta, type DebriefExport, type Pressure, type Report3, type Step, type StepStatus } from '../debrief.ts';
 import { debriefJson } from '../debrief-export.ts';
-import { keyMoments, keyTimes, recognitionAt, RECOGNISED, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
+import { keyMoments, keyTimes, openersAt, recognitionAt, RECOGNISED, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
 import { LAB_KEYS, TREND_KEYS, type PressureKey, type Row, type RunData, type TrendKey, type ValueKey } from '../record.ts';
-import { COURSE_W, courseSvg, type CourseMark } from './debrief-course.ts';
+import { COURSE_W, courseSvg, tracePath, type CourseMark } from './debrief-course.ts';
 import { GRADE_WORDS, swimlaneSvg, verdictMark, windowsOf } from './debrief-swimlane.ts';
 import { MARKS } from '../teach2/dock.ts';
 import { hrefOf } from '../router.ts';
@@ -157,17 +157,7 @@ function chart(d: RunData, k: TrendKey, end: number, marks: ReadonlyArray<{ t: n
   const { W, H, L, R, T, B } = BOX;
   const x = (t: number) => L + (t / Math.max(end, 1)) * (W - L - R);
   const y = (v: number) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
-  let path = '';
-  let prev: number | null = null;
-  for (const s of d.samples) {
-    const v = s[k];
-    if (v === null) {
-      prev = null;
-      continue;
-    }
-    path += `${prev === null || s.t - prev > 5 ? 'M' : 'L'}${x(s.t).toFixed(1)} ${y(v).toFixed(1)}`;
-    prev = s.t;
-  }
+  const path = tracePath(d, k, x, y);
   const f = (v: number) => v.toFixed(m.digits);
   const min = pts.reduce((b, s) => ((s[k] as number) < (b[k] as number) ? s : b));
   const max = pts.reduce((b, s) => ((s[k] as number) > (b[k] as number) ? s : b));
@@ -438,6 +428,22 @@ function momentsTable(ms: KeyMoment[], d: RunData): Node[] {
   );
 }
 
+/** "From the card's author" (D9; the two blocks only, DQ6): the card's `show` lines and its openers, each printed as the
+ *  card writes it (Decision 8: never interpolated; the opener's time and key-moment number are a separate label), an
+ *  opener whose anchor did not happen on the kept course left out and counted. Null when the card has no debriefHints. */
+export function hintsSection(d: RunData, ms: KeyMoment[]): HTMLElement | null {
+  const show = d.doc?.debriefHints?.show ?? [];
+  const op = openersAt(d, ms);
+  if (!show.length && !op) return null;
+  const n = op?.left ?? 0;
+  return section('hints', "From the card's author",
+    show.length ? h('div', { class: 'db-hint-block' }, h('h3', {}, 'What this case is built to show'), h('ul', { class: 'db-hint-show' }, ...show.map((x) => h('li', {}, x)))) : null,
+    op ? h('div', { class: 'db-hint-block' }, h('h3', {}, 'Openers for the analysis'),
+      op.shown.length ? h('ol', { class: 'db-hint-openers' }, ...op.shown.map((o) => h('li', {},
+        h('span', { class: 'db-hint-at' }, o.n === null ? mmss(o.t) : `${mmss(o.t)} · moment ${o.n}`), ' ', h('span', { class: 'db-hint-text' }, o.text)))) : null,
+      n ? h('p', { class: 'db-hint-left muted' }, n === 1 ? '1 opener not shown: its event did not happen in this run' : `${n} openers not shown: their events did not happen in this run`) : null) : null);
+}
+
 export function debriefView(session: AppSession, link: Link): View {
   const who = h('input', { class: 'input', id: 'db-who', autocomplete: 'off', placeholder: 'Instructor and learners' });
   const notes = h('div', { class: 'db-notes', contenteditable: 'true', role: 'textbox', 'aria-multiline': 'true', 'aria-labelledby': 'db-notes-h' });
@@ -517,6 +523,7 @@ export function debriefView(session: AppSession, link: Link): View {
         : h('p', { class: 'muted' }, 'This run has no objectives.')),
       // page 2 (DQ5, option A), which a run with key moments has: the swimlane at its head, then the key moments
       ...(ms.length ? [runFoot(), section('swimlane', 'The run, lane by lane', swimLegend(r3 !== null), swim), section('moments', 'Key moments and what the monitor showed', ...momentsTable(ms, d))] : []),
+      hintsSection(d, ms),
       section('facts', 'Measured facts', fs.length
         ? h('dl', { class: 'db-facts' }, ...fs.flatMap((x) => [h('dt', {}, x.label), h('dd', {}, x.value)]))
         : h('p', { class: 'muted' }, 'Nothing was measured yet.')),
