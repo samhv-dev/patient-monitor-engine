@@ -263,7 +263,7 @@ library rows and the outputs other modules consume.
 | `ropivacaine` | Ropivacaine | localAnaesthetic | perKg | M10 ch. 25; LAST_THRESHOLDS | TXT |
 | `lipidEmulsion` | Lipid emulsion 20 % | lipid | gamma | ASRA 2020; M10 ch. 25 p. 762 | ENG |
 | `tranexamicAcid` | Tranexamic acid | placeholder | gamma | CRASH-2; placeholder for 7i | TXT |
-| `ondansetron` | Ondansetron | placeholder | gamma | FDA 2012 label change; size [ENG] | ENG |
+| `ondansetron` | Ondansetron | placeholder | gamma | Ondansetron injection label §12.2 (thorough-QT trial); FDA Drug Safety Communication 2012 | TXT |
 | `dexamethasone` | Dexamethasone | placeholder | gamma | Hans 2006; M10 ch. 47; size [ENG] | ENG |
 
 ### Routes other than IV (`DrugRow.routeModels`; every other non-IV route is refused: "route X is not modelled")
