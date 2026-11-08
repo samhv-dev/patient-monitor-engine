@@ -86,7 +86,7 @@ drug model and before the respiratory pipeline (`l2/neuro/pipeline.ts`).
 
 ## Couplings
 
-Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 2 rows; SOURCED 0, FIT 0, ENG 0, UNTAGGED 2, ABSENT 0.
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 4 rows; SOURCED 1, FIT 1, ENG 0, UNTAGGED 2, ABSENT 0.
 The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
 constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
 
@@ -94,6 +94,8 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 |---|---|---|---|---|---|---|
 | `neuro.drive.hypnotic` | `pk.bus.cns.hypVentPropEq` (Propofol-equivalent at the ventilatory site (kept out of the truth tree)) → `neuro.resp.hypnoticDep` | + · factor | UNTAGGED | — | — | Hypnotic ventilatory depression from the propofol equivalent at the ventilatory site. |
 | `neuro.drive.total` | `neuro.resp.hypnoticDep`, `neuro.resp.opioidDep` → `neuro.resp.totalDep` | + · term | UNTAGGED | — | — | Hypnotic and opioid depression combined into the total the drive reads. |
+| `neuro.eeg.cortex.hypnotic` | `pk.bus.cns.hypByClass` → `eeg.cortex` (EEG cortical state (hyperpolarisation, loss of responsiveness, suppression)) | + · state | FIT | `DEEP_ONSET` = 1.7 / 1.8, `BS_ONSET_ISO_MAC` = 1.3, `BS_ONSET_SEVO_MAC` = 1.4, `BS_ONSET_DES_MAC` = 1.25, `BS_ESTABLISHED_MAC` = 1.5, `BS_NEAR_ISO_MAC` = 2.0, `SUPP_ESTABLISHED` = 0.5, `SUPP_NEAR_ISO` = 0.9, `BS_ISOELECTRIC_MAC` = 2.5, `BS_ONSET_PROP_NG_ML` = 4900 | — | Hyperpolarisation and loss of responsiveness from the GABA-ergic, barbiturate, etomidate and benzodiazepine classes (÷ the propofol Ce50 and LOC C50 at this age); burst suppression past the onset from the suppressing classes (not the benzodiazepines), added to the ether load in onset units. |
+| `neuro.eeg.cortex.alpha2` | `pk.bus.cns.alpha2Eq` → `eeg.cortex` (EEG cortical state (hyperpolarisation, loss of responsiveness, suppression)) | + · state | SOURCED | `DEXMED_EEG_C50_NG_ML` = 2.5, `DEXMED_LOR_NG_ML` = 2.09 | — | Dexmedetomidine's alpha-2 equivalent adds to hyperpolarisation, and to loss of responsiveness in units of its 2.09 ng/mL LOR anchor; it never drives burst suppression. |
 
 ## State
 
