@@ -4,7 +4,8 @@
 // landmark, and a visible focus indicator on the first 25 tab stops.
 // Since retire-instructor-v1 (PR 3) the laptop's Instructor view is Instructor v2: the laptop run audits ACTION and each
 // of its sheets at 1280 × 800 where it audited today's eight tabs. A tablet instructor uses the Remote (Q5): the iPad
-// portrait run pairs a Remote to the host by code and audits each of its tabs, with the 44-px touch targets.
+// portrait run pairs a Remote to the host by code and audits each of its tabs, with the 44-px touch targets. The
+// connected Remote's heading sits beside its status (research/41 row 62), so no rule is exempted there.
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { audit, closeSheets, EXPLORE, focusWalk, go, openApp, sheet, type SheetId, startVite, TABS, tab, TEACH2 } from './app-support.ts';
@@ -23,8 +24,7 @@ for (const [name, vp, touch] of [['laptop 1280×800', { width: 1280, height: 800
     const page = await ctx.newPage();
     await openApp(page, base, `?scenario=acls-vf-witnessed${touch ? '' : TEACH2}`, { warmMs: 3000 });
     const found: string[] = [];
-    const run = async (p: Page, where: string, skip: (rule: string, what: string) => boolean = () => false) =>
-      found.push(...(await audit(p, { touchPanel: touch })).filter((f) => !skip(f.rule, f.what)).map((f) => `${where} ${f.rule}: ${f.what}`));
+    const run = async (p: Page, where: string) => found.push(...(await audit(p, { touchPanel: touch })).map((f) => `${where} ${f.rule}: ${f.what}`));
     let remote: Page | null = null;
     if (!touch) {
       await run(page, 'teach2/action');
@@ -38,14 +38,9 @@ for (const [name, vp, touch] of [['laptop 1280×800', { width: 1280, height: 800
       remote = await ctx.newPage();
       await remote.goto(`${base}/#/remote?code=${code}`);
       await expect(remote.locator('.status-pill')).toHaveText(`Connected to ${code}`, { timeout: 15_000 });
-      // The audit's one exception, documented (retire-instructor-v1 PR 3, finding 2 of PR 2): a connected Remote hides
-      // its join form, and with it the page's only h1 ("Instructor remote"), so each tab shows 0 h1. The Remote keeps
-      // today's panel until the phone layout replaces it (phase 2, Q1; `views/remote.ts` is not touched in phase 1):
-      // its heading is that work's. Every other rule holds on the Remote, its 44-px targets included.
-      const noH1 = (rule: string, what: string) => rule === 'h1' && what === '0 h1 visible';
       for (const t of TABS) {
         await tab(remote, t);
-        await run(remote, `remote/${t}`, noH1);
+        await run(remote, `remote/${t}`);
       }
     }
     await page.bringToFront(); // a background tab draws no frames

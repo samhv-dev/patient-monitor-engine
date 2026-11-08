@@ -80,6 +80,8 @@ const host = (r: Relay, id = 'host-h1') => {
     clock: (t: number) => send({ kind: 'event', body: [{ type: 'state', t, tick: Math.round(t / 0.02), mode: 'manual', values: {}, control: {} } as never] }),
   };
 };
+/** The h1s a reader sees: none of their ancestors hidden (the audit's "one h1 visible", research/41 row 62). */
+const visibleH1s = (el: Element) => [...el.querySelectorAll('h1')].filter((x) => !x.closest('[hidden]')).map((x) => x.textContent);
 const hellos = (r: Relay) => r.sent.filter((m): m is Extract<WireMessage, { kind: 'hello' }> => m.kind === 'hello');
 
 beforeEach(() => {
@@ -166,6 +168,15 @@ describe('the states and their words', () => {
     expect(f.status()).toBe(PHONE_WORDS.signedIn(CODE));
     expect(bar().hidden).toBe(false);
     expect(r.status).toBe('open');
+  });
+
+  it('one visible h1 before and after sign-in: the heading stays when the form hides (research/41 row 62)', () => {
+    const { f, h } = signIn();
+    expect(visibleH1s(f.v.el)).toEqual(['Instructor remote']);
+    h.hello();
+    h.grant(true);
+    expect(f.q<HTMLElement>('.ip-peer-form').hidden).toBe(true);
+    expect(visibleH1s(f.v.el)).toEqual(['Instructor remote']);
   });
 
   it('wrong PIN: the form again, its words, the field empty and focused, the link closed', () => {
@@ -267,5 +278,16 @@ describe('without a relay', () => {
     const v = remoteView({ site: DEFAULT_SITE, hostless: true, bar: document.createElement('div') });
     expect(v.el.querySelector('.ip-peer-pin, .ip-peer-keypad')).toBeNull();
     expect(v.el.querySelector('h1')?.textContent).toBe('Instructor remote');
+  });
+
+  it('the same-browser Remote keeps one visible h1 once connected (its code form hides; research/41 row 62)', async () => {
+    history.replaceState(null, '', `/#/remote?code=${CODE}`);
+    const v = remoteView({ site: DEFAULT_SITE, hostless: true, bar: document.createElement('div') });
+    document.body.append(v.el);
+    expect(visibleH1s(v.el)).toEqual(['Instructor remote']);
+    await Promise.resolve(); // the code in the address connects in a microtask
+    expect(v.el.querySelector<HTMLElement>('form')?.hidden).toBe(true);
+    expect(v.el.querySelector('.status-pill')).not.toBeNull();
+    expect(visibleH1s(v.el)).toEqual(['Instructor remote']);
   });
 });

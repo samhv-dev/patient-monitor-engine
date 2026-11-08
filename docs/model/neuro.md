@@ -288,6 +288,7 @@ Exported without a doc comment: `readBus`, `ce50Propofol`, `opioidFentEq`, `dept
 
 | File | Expected failures | Skipped |
 |---|---|---|
+| [`engine/eeg-baseline.test.ts`](../../packages/engine-core/test/engine/eeg-baseline.test.ts) | 0 | 0 |
 | [`engine/neuro-acceptance.test.ts`](../../packages/engine-core/test/engine/neuro-acceptance.test.ts) | 1 | 0 |
 | [`engine/neuro-circ.test.ts`](../../packages/engine-core/test/engine/neuro-circ.test.ts) | 0 | 0 |
 | [`engine/neuro-engine.test.ts`](../../packages/engine-core/test/engine/neuro-engine.test.ts) | 0 | 0 |
