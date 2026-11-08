@@ -85,3 +85,8 @@ mechanism to find before the gate or a finding the gate records.
 - Local, after the overnight load dropped (load average 6): with the fix the link tests (`link-relink`, `link-restore`,
   `ports`, `fx1-frame-port`) pass 13/13; `link-relink.test.ts` against main's `vent-driver.ts` fails ("a clock from
   the new link: expected 50 to be greater than 50").
+- **42451915813 (head bed710a1, main merged): all jobs pass.** `teach2-fit-panes:21` ran PEA 1.4 / 1.4 min and asystole
+  2.0 / 2.0 min, and `time-control:31` passed first try in 41.3 s. The one retry-only pass was `sim-line:63` (WebKit), and
+  this PR's diagnostic named it: "Execution context was destroyed" **at `#/room`**. No second document load was recorded,
+  and the open pages were one, the host at `…&session=2HEZP5#/room`. So the host page itself navigated while it was on the
+  Room page. No code path that does so was found; the Room view is where to look next.
