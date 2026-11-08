@@ -6,7 +6,7 @@ import { createEngine, type Command, type EngineEvent } from '@pme/engine-core';
 import { BUILTIN_SCENARIOS, engineOptionsOf, ScenarioDriver, validateScenario } from '@pme/controller/scenario';
 import { gradeTarget } from './grade.ts';
 import { SeriesStore } from './series.ts';
-import type { TargetResult, Unsupported, ValidationDoc } from './types.ts';
+import type { CrossTarget, TargetResult, Unsupported, ValidationDoc } from './types.ts';
 
 /** The driver is polled every POLL_S of sim time (a 60 fps host polls every ≈ 17 ms; 100 ms keeps runs fast) [ENG: measurement]. */
 export const POLL_S = 0.1;
@@ -84,18 +84,31 @@ export async function runValidationDoc(doc: ValidationDoc): Promise<DocRun> {
   for (const s of doc.segments) {
     for (const tg of s.targets) {
       const measured = store.reduce(tg.series, tg.reduce, s.fromS, s.toS, tg.stateId, tg.threshold);
-      const segValue = (id: string) => {
+      const segValue = (id: string, series = tg.series) => {
         const o = segs.get(id);
         if (!o) throw new Error(`${doc.id}: no segment ${id}`);
-        return store.reduce(tg.series, tg.reduce, o.fromS, o.toS, tg.stateId, tg.threshold);
+        return store.reduce(series, tg.reduce, o.fromS, o.toS, tg.stateId, tg.threshold);
       };
       const span = s.toS - s.fromS;
       const firstMeasured = tg.type === 'TrendsTo' ? store.reduce(tg.series, 'mean', s.fromS, s.fromS + 0.1 * span) : undefined;
       const m = tg.type === 'TrendsTo' ? store.reduce(tg.series, 'mean', s.toS - 0.1 * span, s.toS) : measured;
       const g = gradeTarget(tg, m, { segValue, ...(firstMeasured !== undefined ? { firstMeasured } : {}) });
-      results.push({ doc: doc.id, segment: s.id, target: tg.id, type: tg.type, series: tg.series, source: tg.source, measured: m, ...g });
+      results.push({ doc: doc.id, segment: s.id, target: tg.id, type: tg.type, series: tg.series, source: tg.source, measured: m, ...g, ...(tg.expectedMiss ? { expectedMiss: tg.expectedMiss } : {}) });
     }
   }
   const measurable = unsupported.length === 0;
   return { doc, measurable, unsupported, results: measurable ? results : [], store, wallMs: performance.now() - t0, notes: [...driver.notes] };
+}
+
+/** Grade a row across documents from their runs; null when one of its documents was not run or is not measurable. */
+export function gradeCross(c: CrossTarget, runs: ReadonlyMap<string, DocRun>): TargetResult | null {
+  if (!c.docs.every((d) => runs.get(d)?.measurable)) return null;
+  const mean = (doc: string, series: string, fromS: number, toS: number) => {
+    const r = runs.get(doc);
+    if (!r || !c.docs.includes(doc)) throw new Error(`${c.doc}/${c.target}: reads ${doc}, which it does not declare`);
+    return r.store.reduce(series, 'mean', fromS, toS);
+  };
+  const measured = c.measure(mean);
+  const g = gradeTarget({ id: c.target, series: 'derived', reduce: 'mean', source: c.source, type: c.type, value: c.value }, measured, { segValue: () => Number.NaN });
+  return { doc: c.doc, segment: c.segment, target: c.target, type: c.type, series: `derived (${c.docs.join(', ')})`, source: c.source, measured, ...g, ...(c.expectedMiss ? { expectedMiss: c.expectedMiss } : {}) };
 }
