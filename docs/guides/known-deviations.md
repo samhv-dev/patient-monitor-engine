@@ -14,8 +14,7 @@ Regenerate the first two tables with `node --experimental-strip-types scripts/de
 fails when a literal-titled expected failure or skip is missing from this page. It cannot see conditional forms such
 as `(cond ? it.fails : it)(…)`; those are listed by hand below.
 
-On this tree there are **154 expected-failure calls**, all read by the lister: 153 `it.fails` (the bronchospasm row of
-On this tree there are **185 expected-failure calls**, all read by the lister: 184 `it.fails` (the bronchospasm row of
+On this tree there are **184 expected-failure calls**, all read by the lister: 183 `it.fails` (the bronchospasm row of
 `packages/ventilator/test/link-parity.test.ts` is a literal `it.fails`) and 1 `it.fails.each` with three cases
 (`packages/engine-core/test/engine/fidelity-arrest.test.ts`), and **6 skipped tests** (1 skipped test and 5 `.todo` entries: the harms and the device the scenario format declares "not modelled", and epinephrine IM). "Tracked in" names the gate note (and its section)
 that records the miss with its number; the open questions it cites (Q…, R-…, E-…) are listed in that note.
