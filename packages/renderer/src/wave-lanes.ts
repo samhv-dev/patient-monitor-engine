@@ -31,7 +31,7 @@ export function scaleFor(lo: number, hi: number, height: number, pxPerMm: number
   return { baseline: hi / (hi - lo), gainMmPerMv: height / ((hi - lo) * pxPerMm) };
 }
 
-/** Pleth auto-scale [ENG]: the last 4 s fill 80% of the lane, centred; flat traces keep a 0.1 % span. */
+/** Pleth auto-scale [ENG: display]: the last 4 s fill 80% of the lane, centred; flat traces keep a 0.1 % span. */
 export function autoRange(samples: ArrayLike<number>, count: number, minSpan = 0.1): [number, number] { // minSpan
   let lo = Infinity;
   let hi = -Infinity;

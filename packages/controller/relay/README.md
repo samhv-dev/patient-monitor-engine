@@ -92,7 +92,7 @@ run sheet: `docs/plans/stage-12-mobile-learner.md`, `docs/showcase/CLASSROOM.md`
   `energyJ`: the room's model sets the energy; no `outcome`; no `atTick`). Any other command is answered
   `{relay:'error', code:'forbidden'}` and never reaches the host; the socket stays open and follows. The host's ack of a
   passing command comes back to it, as to a controller. At most 4 commands a second through one `defib` socket,
-  refused ones included [ENG: a charge and a shock per cycle, with a margin for double taps]; the 5th within a sliding
+  refused ones included [ENG: network; a charge and a shock per cycle, with a margin for double taps]; the 5th within a sliding
   second closes it (`too-many-tries`, close 4028). The host checks the allow-list again itself (R5d).
 - **One role per socket:** a non-host socket that says `hello` again as another role than its first is answered
   `forbidden`; that hello never reaches the host, and the socket keeps its first role.

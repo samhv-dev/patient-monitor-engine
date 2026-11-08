@@ -419,7 +419,7 @@ export function learnerDefibMay(c: WireCommand | CommandInput): string | null {
 }
 
 // --- session codes ------------------------------------------------------------------------------------------
-/** 31 symbols: no 0/O, 1/I/L — unambiguous when read off a projector or typed on a phone [ENG]. */
+/** 31 symbols: no 0/O, 1/I/L — unambiguous when read off a projector or typed on a phone [ENG: network]. */
 export const SESSION_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 export const SESSION_CODE_RE = /^[A-HJKMNP-Z2-9]{6}$/;
 

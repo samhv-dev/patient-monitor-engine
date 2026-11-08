@@ -1,9 +1,9 @@
 // ECG intervals on a lead-II median beat (brief §9 V5), one method for PTB-XL and for the engine's 12-lead capture:
 // - the lead is band-passed 0.5–40 Hz (zero phase, as the rhythm library's PTB-XL comparison), then the median
 //   beat is taken 250 ms before to 450 ms after R (the rhythm library's medianBeat, R from detectR);
-// - baseline = median of the 250–200 ms pre-R segment (PR/TP region) [ENG];
+// - baseline = median of the 250–200 ms pre-R segment (PR/TP region) [ENG: measurement];
 // - QRS onset/offset: first/last sample within ±150 ms of R where |dV/dt| exceeds 15 % of its peak inside that
-//   window [ENG]; P onset: the same rule on the 250–60 ms pre-QRS window with 25 % of that window's slope peak;
+//   window [ENG: measurement]; P onset: the same rule on the 250–60 ms pre-QRS window with 25 % of that window's slope peak;
 //   T end: tangent at the steepest descent after the T peak (or ascent for negative T) meets the baseline
 //   (tangent method, Lepeschkin–Surawicz).
 // PR = QRS onset − P onset; QRS = offset − onset; QT = T end − QRS onset; QTc Fridericia = QT / RR^(1/3).

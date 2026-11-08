@@ -21,7 +21,7 @@ export const VEC: Readonly<Record<'P' | 'Q' | 'R' | 'S' | 'T' | 'U', Vec3>> = {
 };
 
 /**
- * Wide ventricular complex (PVC, VT, ventricular escape) [ENG]: LBBB-like, upright in II, discordant T.
+ * Wide ventricular complex (PVC, VT, ventricular escape) [FIT: ECG morphology vector or timing without a source; brief research/44 L2-46]: LBBB-like, upright in II, discordant T.
  * Scaled ×1.2 so R in II is 1.63× the normal beat (brief §5: 1.5–2× amplitude).
  */
 const WIDE_GAIN = 1.2;
@@ -31,20 +31,20 @@ export const WIDE_VEC: Readonly<Record<'R' | 'S' | 'T', Vec3>> = {
   T: [-0.4 * WIDE_GAIN, -0.45 * WIDE_GAIN, -0.3 * WIDE_GAIN],
 };
 
-/** Retrograde P (AVNRT), negative in II, buried at the end of the QRS [ENG, research 03 §1.5]. */
+/** Retrograde P (AVNRT), negative in II, buried at the end of the QRS (research 03 §1.5; research 03 §1.5). */
 export const RETRO_P_VEC: Vec3 = [-0.05, -0.12, 0.02];
 
 /**
- * Flutter F-wave direction (lead II gain 1): large in II/III/aVF, small in I, small upright in V1 [ENG, 03 §1.5].
+ * Flutter F-wave direction (lead II gain 1): large in II/III/aVF, small in I, small upright in V1 (research 03 §1.5; 03 §1.5).
  * Research 03 §1.5 (rhythm table): typical flutter shows a continuous negative "sawtooth" in II/III/aVF, ~0.1–0.3 mV,
  * with no isoelectric line.
  */
 export const FLUTTER_DIR: Vec3 = [0.1 / 0.996, 0.9 / 0.996, -0.1 / 0.996];
 /** F-wave peak-to-peak in lead II, mV: the top of research 03 §1.5's 0.1–0.3 mV (the Gate 1 trace was too faint). */
 export const FLUTTER_PP_MV = 0.3;
-/** Fraction of each flutter cycle spent on the slow descending ramp; the rest is the fast return [ENG, review §4]. */
+/** Fraction of each flutter cycle spent on the slow descending ramp; the rest is the fast return [FIT: ECG morphology vector or timing without a source; review §4; brief research/44 L2-46]. */
 export const FLUTTER_FALL_FRACTION = 0.7;
-const FLUTTER_HARMONICS = 4; // first 4 Fourier terms of the sawtooth (review §4) [ENG]
+const FLUTTER_HARMONICS = 4; // first 4 Fourier terms of the sawtooth (review §4) [ENG: numerics]
 
 /**
  * Fourier series of an asymmetric triangle (sawtooth) of period 1 that falls linearly from +1 at φ = 0 to −1 at
@@ -88,12 +88,12 @@ export function flutterHarmonics(anchor: number, atrialRateBpm: number): { f: nu
   return { f, ph, a };
 }
 
-/** AF f-wave VCG direction (lead II gain ≈ 1) [ENG]. */
+/** AF f-wave VCG direction (lead II gain ≈ 1) [FIT: ECG morphology vector or timing without a source; brief research/44 L2-46]. */
 export const FWAVE_DIR: Vec3 = [0.2, 0.9, -0.35];
-/** Respiratory baseline-wander direction (lead II gain ≈ 1) [ENG]. */
+/** Respiratory baseline-wander direction (lead II gain ≈ 1) [ENG: device]. */
 export const WANDER_DIR: Vec3 = [0.3, 0.9, 0.2];
 
-/** T wave half-Gaussian widths (brief §4.1 seed table: 45 ms rise / 30 ms fall; wide complexes 60 / 40 [ENG]). */
+/** T wave half-Gaussian widths (brief §4.1 seed table: 45 ms rise / 30 ms fall; wide complexes 60 / 40 [FIT: ECG morphology vector or timing without a source; brief research/44 L2-46]). */
 const T_SIGMA_RISE_S = 0.045;
 const T_SIGMA_FALL_S = 0.03;
 const WIDE_T_SIGMA_RISE_S = 0.06;
@@ -106,7 +106,7 @@ const WIDE_T_SIGMA_FALL_S = 0.04;
 export function tEndAfterPeakS(sigmaFall: number): number {
   return 2 * sigmaFall;
 }
-/** Wide complexes: QT is longer by 60 ms [ENG]. */
+/** Wide complexes: QT is longer by 60 ms [FIT: ECG morphology vector or timing without a source; brief research/44 L2-46]. */
 export const WIDE_QT_EXTRA_MS = 60;
 
 export type TemplateId = 'narrow' | 'wide' | 'narrowRetroP';
@@ -132,7 +132,7 @@ export function narrowKernels(qtMs: number, rScale = 1): number[] {
 export function wideKernels(qtMs: number, scale = 1): number[] {
   const qt = (qtMs + WIDE_QT_EXTRA_MS) / 1000;
   return [
-    // R τ 50 σ 22 ms and S τ 110 σ 20 ms: a slurred ~165 ms QRS, inside brief §5's 120–200 ms for PVC/VT [ENG]
+    // R τ 50 σ 22 ms and S τ 110 σ 20 ms: a slurred ~165 ms QRS, inside brief §5's 120–200 ms for PVC/VT (brief §5: PVC/VT QRS 120–200 ms)
     ...kernel(0.05, 0.022, 0.022, WIDE_VEC.R, WAVE.R, scale),
     ...kernel(0.11, 0.02, 0.02, WIDE_VEC.S, WAVE.S, scale),
     ...kernel(qt - tEndAfterPeakS(WIDE_T_SIGMA_FALL_S), WIDE_T_SIGMA_RISE_S, WIDE_T_SIGMA_FALL_S, WIDE_VEC.T, WAVE.T, scale),
@@ -143,7 +143,7 @@ export function templateKernels(id: TemplateId, qtMs: number, scale = 1): number
   if (id === 'wide') return wideKernels(qtMs, scale);
   const k = narrowKernels(qtMs, scale);
   // Retrograde P 70 ms after QRS onset (σ 20 ms): at the end of the QRS, the "pseudo-r'/pseudo-S" of typical AVNRT
-  // (research 03 §1.5) [ENG timing]
+  // (research 03 §1.5) [FIT: ECG morphology vector or timing without a source; timing; brief research/44 L2-46]
   if (id === 'narrowRetroP') k.push(...kernel(0.07, 0.02, 0.02, RETRO_P_VEC, WAVE.RETRO_P));
   return k;
 }

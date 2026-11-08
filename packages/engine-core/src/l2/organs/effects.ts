@@ -11,7 +11,7 @@ import { circExt } from './inputs.ts';
 
 export const SBP_SHARE = 1.3;
 export const DBP_SHARE = 0.85;
-/** MODELED: SVR × (1 + 1.2·drive) [ENG, prototype on the circulation, lungs and drugs, TBI, massMl 28]: MAP 97 → 133
+/** MODELED: SVR × (1 + 1.2·drive) [FIT: prototype on the circulation, lungs and drugs, TBI, massMl 28; brief research/44 L2-12]: MAP 97 → 133
  *  (+36) and HR 73 → 53 (−27 %) from the baroreflex alone (tables: MAP +30–50, HR −20–40 %). Gain 0.8 gave +27; adding
  *  a direct HR factor (ext.hrF = 0.6) on top gave HR 40 and cancelled most of the rise (+11), so the brain effects
  *  leave `ext.hrF` at 1. */

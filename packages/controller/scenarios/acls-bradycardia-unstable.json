@@ -1,5 +1,5 @@
 {
-  "$comment": "[draft] Clinical content awaits Ali's review. Atropine rarely helps a wide-complex complete heart block; pacing with capture at ≥ 70 mA (brief §6.5 default threshold) is the way out. pacedVVI is a Stage 5 id (stand-in until then). Probabilities are [ENG] placeholders.",
+  "$comment": "[draft] Clinical content awaits the owner's review. Atropine rarely helps a wide-complex complete heart block; pacing with capture at ≥ 70 mA (brief §6.5 default threshold) is the way out. pacedVVI is a Stage 5 id (stand-in until then). Probabilities are [FIT: draft card's teaching-outcome placeholder pending clinical review; brief research/44 X-24] placeholders.",
   "schema": "pme-scenario/1",
   "id": "acls-bradycardia-unstable",
   "title": "[draft] Unstable bradycardia — complete heart block",

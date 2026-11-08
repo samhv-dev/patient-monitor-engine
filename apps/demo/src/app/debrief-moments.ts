@@ -19,11 +19,11 @@ export type KeyTime = DebriefExport['keyTimes'][number];
 
 const kept = (d: RunData): Row[] => d.rows.filter((r) => r.undone === undefined);
 const STATE = 'Scenario state: ';
-/** Two patient moments this close (s) are one moment [ENG: the pulse loss and the state it causes come ≈ 1 s apart]. */
+/** Two patient moments this close (s) are one moment [ENG: ui; the pulse loss and the state it causes come ≈ 1 s apart]. */
 const MERGE_S = 3;
-/** A moment's value may come from this many seconds after it when its own second has none [ENG]. */
+/** A moment's value may come from this many seconds after it when its own second has none [ENG: ui]. */
 const LOOK_S = 3;
-/** An alarm counts for a moment when raised up to this long after it [ENG: the alarm table's 1 Hz evaluation]. */
+/** An alarm counts for a moment when raised up to this long after it [ENG: ui; the alarm table's 1 Hz evaluation]. */
 const ALARM_S = 0.5;
 const MAX_TILES = 6;
 

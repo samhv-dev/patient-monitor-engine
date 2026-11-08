@@ -68,7 +68,7 @@ export function latchCovers(mode: 'off' | 'lethal' | 'red' | 'redYellow', e: Pic
   if (mode === 'lethal') return LETHAL_ALARMS.has(e.id);
   return mode === 'red' ? e.level === 1 : e.level <= 2;
 }
-const STATUS_EVERY_S = 1; // alarmStatus at 1 Hz besides every change (brief §3.4 "alarm changes") [ENG]
+const STATUS_EVERY_S = 1; // alarmStatus at 1 Hz besides every change (brief §3.4 "alarm changes") [ENG: device]
 
 export function defaultConfig(p: DeviceProfile): AlarmConfig {
   const enabled: Record<string, boolean> = {};

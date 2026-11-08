@@ -66,7 +66,7 @@ export function shiverW(tc: number, thr: Thresholds, m0: number, effKg: number, 
   return Math.max(0, summit - m0) * Math.min(1, deficit / SHIVER_SPAN_C) * (1 - Math.min(1, Math.max(0, nmb))) * stop;
 }
 
-/** Sweat evaporative heat loss, W (Pulse PH/Energy 668–679 gain, capped for draped skin [ENG]). */
+/** Sweat evaporative heat loss, W (Pulse PH/Energy 668–679 gain, capped for draped skin [FIT: sweat heat-loss cap under drapes; brief research/44 L2-43]). */
 export function sweatW(tc: number, thr: Thresholds, effKg: number): number {
   const over = tc - thr.sweat;
   return over <= 0 ? 0 : Math.min(SWEAT_MAX_W_70 * (effKg / 70), SWEAT_W_PER_C * over);

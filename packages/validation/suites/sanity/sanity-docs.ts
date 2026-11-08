@@ -2,7 +2,7 @@
 // docs/physiology/parameter-tables.md §7 checks 10–25; R39 bands). Built by helpers so each row reads as
 // its source sentence. Checks that need Stage 7 modules (drugs, bleeding, conditions, MODELED mode) are NOT
 // MEASURABLE on a build without them (the engine refuses the command, decision 8) and become live as 7a–7g merge.
-// Default tolerance for a stated change is ±15 % (tables §7 header) [ENG]; stated ranges are used as Range targets.
+// Default tolerance for a stated change is ±15 % (tables §7 header) (as the tables state); stated ranges are used as Range targets.
 import type { DocCommand } from '@pme/controller/scenario';
 import { miss } from '../../src/report/expected-ids.ts';
 import type { CrossTarget, Ref, Segment, Target, ValidationDoc } from '../../src/segments/types.ts';
@@ -39,7 +39,7 @@ const seg = (id: string, fromS: number, toS: number, ...targets: Target[]): Segm
 const rng = (id: string, series: string, reduce: Target['reduce'], min: number | { segment: string; factor?: number; offset?: number }, max: number | { segment: string; factor?: number; offset?: number }, source: string, extra: Partial<Target> = {}): Target => ({ id, series, reduce, type: 'Range', min, max, source, ...extra }) as Target;
 const gt = (id: string, series: string, reduce: Target['reduce'], value: number | { segment: string; factor?: number; offset?: number }, source: string): Target => ({ id, series, reduce, type: 'GreaterThan', value, source });
 const lt = (id: string, series: string, reduce: Target['reduce'], value: Ref, source: string, extra: Partial<Target> = {}): Target => ({ id, series, reduce, type: 'LessThan', value, source, ...extra }) as Target;
-const base = (id = 'base', fromS = 30, toS = 60) => seg(id, fromS, toS, rng('steady-map', 'state:map', 'mean', 60, 110, 'baseline MAP physiological [ENG]'));
+const base = (id = 'base', fromS = 30, toS = 60) => seg(id, fromS, toS, rng('steady-map', 'state:map', 'mean', 60, 110, 'baseline MAP physiological [FIT: physiological normal range without a cited source; brief research/44 X-15]'));
 
 // s9 (brief 84, research 46 §C). After VF with ventilation continued, alveolar CO2 washes out with τ = V_lung / V̇A. The
 // window is computed from this rig's ventilator settings and the sourced lung volume, never from the engine's output:
@@ -70,7 +70,7 @@ export const SANITY_DOCS: ValidationDoc[] = [
   doc({
     id: 's2-class2-haemorrhage', title: 'ATLS class II haemorrhage (1000 mL / 10 min)', source: `${S} check 2; R45(b)`, durationS: 900, mode: 'modeled', requires: ['7a', '7c'],
     actions: [at(60, ev({ kind: 'bleed', volumeMl: 1000, overS: 600 }))],
-    segments: [seg('base', 30, 60, rng('pp0', 'state:pp', 'mean', 30, 70, 'baseline PP [ENG]')),
+    segments: [seg('base', 30, 60, rng('pp0', 'state:pp', 'mean', 30, 70, 'baseline PP [FIT: physiological normal range without a cited source; brief research/44 X-15]')),
       seg('class2', 660, 900,
         rng('hr', 'state:hr', 'mean', 100, 120, `${S} 2: HR 100–120`),
         rng('sbp-held', 'state:sbp', 'mean', { segment: 'base', factor: 0.9 }, { segment: 'base', factor: 1.05 }, `${S} 2: SBP near normal (R45 b)`),
@@ -113,13 +113,13 @@ export const SANITY_DOCS: ValidationDoc[] = [
     id: 's8-co2-apnoea-first-breath', title: 'First breath after 60 s disconnection', source: `${S} check 8; Stage 3 acceptance 4 (resp-airway.test.ts)`, durationS: 200,
     actions: [at(0, ev({ kind: 'thermal', anaesthesia: 'general' })), at(0, ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 })), at(1, { type: 'setTarget', variable: 'etco2', value: 37 } as DocCommand),
       at(120, ev({ kind: 'airway', state: 'disconnected' })), at(180, ev({ kind: 'airway', state: 'patent' }))],
-    segments: [seg('before', 100, 120, rng('et0', 'breath:etco2True', 'mean', 30, 45, 'normocapnia [ENG]')),
+    segments: [seg('before', 100, 120, rng('et0', 'breath:etco2True', 'mean', 30, 45, 'normocapnia [FIT: physiological normal range without a cited source; brief research/44 X-15]')),
       seg('after', 180, 192, rng('first', 'breath:etco2True', 'max', { segment: 'before', offset: 9 }, { segment: 'before', offset: 15 }, 'Stage 3 acc. 4: first breath +9 to +15 mmHg'))],
   }),
   doc({
     id: 's9-witnessed-vf', title: 'Witnessed VF, no CPR', source: `${S} check 9 (research 03 §8.8 A); Stage 3 gate`, durationS: 180,
     actions: [at(0, ev({ kind: 'ventilation', source: 'ventilator', rr: S9_VENT.rr, vtMl: S9_VENT.vtMl, fio2: 0.5, peep: 5 })), at(60, { type: 'setRhythm', rhythm: 'vfCoarse', when: 'now' } as DocCommand)],
-    segments: [seg('base', 30, 60, rng('et0', 'numeric:etco2', 'mean', 30, 45, 'normocapnia [ENG]')),
+    segments: [seg('base', 30, 60, rng('et0', 'numeric:etco2', 'mean', 30, 45, 'normocapnia [FIT: physiological normal range without a cited source; brief research/44 X-15]')),
       seg('arrest', 60, 180,
         rng('abp-flat', 'numeric:abpSys', 'firstTBelow', 0, 20, 'Stage 2 acc. 6: pulseless → flat (displayed ABP < 20) within 20 s', { threshold: 20 }),
         // Brief 84 / research 46 §C: the 0–30 s row ("Stage 3") had no source and is replaced by the washout it implies.
@@ -144,9 +144,9 @@ export const SANITY_DOCS: ValidationDoc[] = [
   doc({
     id: 't12-massive-pe', title: 'Massive PE (φ 0.6), ventilated', source: `${T7} 12`, durationS: 300, mode: 'modeled', requires: ['7a', '7b'],
     actions: [at(0, ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 1, peep: 5 })), at(120, ev({ kind: 'condition', id: 'pe', severity: 0.6 }))],
-    segments: [seg('base', 90, 120, rng('et0', 'numeric:etco2', 'mean', 30, 45, 'normocapnia [ENG]')),
+    segments: [seg('base', 90, 120, rng('et0', 'numeric:etco2', 'mean', 30, 45, 'normocapnia [FIT: physiological normal range without a cited source; brief research/44 X-15]')),
       seg('pe', 120, 140, rng('etco2', 'numeric:etco2', 'min', 20, 25, `${T7} 12: EtCO2 35 → 20–25 within 3 breaths`)),
-      seg('pe-late', 180, 300, rng('papm', 'state:papSys', 'max', 30, 45, `${T7} 12: mPAP 30–40, never > 45 (systolic proxy) [ENG]`), rng('spo2', 'state:spo2', 'min', 85, 92, `${T7} 12: SpO2 85–92 on FiO2 1`))],
+      seg('pe-late', 180, 300, rng('papm', 'state:papSys', 'max', 30, 45, `${T7} 12: mPAP 30–40, never > 45 (systolic proxy) [FIT: mPAP band as a systolic proxy; brief research/44 V-09]`), rng('spo2', 'state:spo2', 'min', 85, 92, `${T7} 12: SpO2 85–92 on FiO2 1`))],
   }),
   doc({
     id: 't13-tension-ptx', title: 'Tension pneumothorax, ventilated', source: `${T7} 13`, durationS: 480, mode: 'modeled', requires: ['7a', '7b'],
@@ -176,8 +176,8 @@ export const SANITY_DOCS: ValidationDoc[] = [
     segments: [seg('warm', 300, 600, rng('hr', 'state:hr', 'mean', 115, 130, `${T7} 16: HR 115–130`))],
   }),
   // Brief 84 / research 46 §E: septic shock is a state. The rig follows the source (Garcia 2023): anaesthetised (sevoflurane),
-  // ventilated (8 mL/kg, PEEP 5), maintenance fluid 2 mL/kg/h only. The condition keeps its present onset (τ 600 s, an [ENG]
-  // compression of an onset the sources put at hours; expected deviation E), so the state is read once the ramp is complete
+  // ventilated (8 mL/kg, PEEP 5), maintenance fluid 2 mL/kg/h only. The condition keeps its present onset (τ 600 s,
+  // [FIT: septic onset compressed to minutes; brief research/44 V-12], where the sources put hours; expected deviation E), so the state is read once the ramp is complete
   // (≥ 5 τ = 3000 s).
   ...([['state', false], ['fluid', true]] as const).map(([k, fluid]) => doc({
     id: `t16-septic-shock-${k}`, title: fluid ? 'Septic shock, 30 mL/kg crystalloid, no vasopressor' : 'Septic shock, established, unresuscitated', source: `${T7} 16; research 46 §E`, durationS: 3600, mode: 'modeled', requires: ['7f'],
@@ -207,7 +207,7 @@ export const SANITY_DOCS: ValidationDoc[] = [
   doc({
     id: 't18-htn-hypocapnia-cbf', title: 'Hypertensive 75 y at MAP 65, PaCO2 40 → 25', source: `${T7} 18`, durationS: 600, mode: 'modeled', requires: ['7d'],
     patient: { ageY: 75, profile: { conditions: [{ id: 'htn' }] } }, actions: [at(120, ev({ kind: 'ventilation', source: 'ventilator', rr: 24, vtMl: 600, fio2: 0.5, peep: 5 }))],
-    segments: [seg('hypocapnia', 400, 600, rng('etco2', 'numeric:etco2', 'mean', 20, 28, `${T7} 18: hyperventilation to PaCO2 ≈ 25 (EtCO2 proxy) [ENG]`))],
+    segments: [seg('hypocapnia', 400, 600, rng('etco2', 'numeric:etco2', 'mean', 20, 28, `${T7} 18: hyperventilation to PaCO2 ≈ 25 (EtCO2 proxy) [FIT: EtCO2 proxy for PaCO2 25; brief research/44 V-15]`))],
   }),
   doc({
     id: 't19-tbi-haematoma', title: 'TBI, expanding haematoma', source: `${T7} 19`, durationS: 1800, mode: 'modeled', requires: ['7d'],
@@ -222,7 +222,7 @@ export const SANITY_DOCS: ValidationDoc[] = [
   doc({
     id: 't21-mh', title: 'Malignant hyperthermia, fixed ventilation', source: `${T7} 21; Stage 3 gate (EtCO2 38 → 124 in 30 min)`, durationS: 1500,
     actions: [at(0, ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 })), at(300, ev({ kind: 'condition', id: 'mh', severity: 1 }))],
-    segments: [seg('base', 240, 300, rng('et0', 'numeric:etco2', 'mean', 30, 45, 'normocapnia [ENG]')),
+    segments: [seg('base', 240, 300, rng('et0', 'numeric:etco2', 'mean', 30, 45, 'normocapnia [FIT: physiological normal range without a cited source; brief research/44 X-15]')),
       seg('10min', 870, 930, rng('etco2', 'numeric:etco2', 'mean', 51, 69, `${T7} 21: EtCO2 40 → 60 by 10 min (±15 %)`)),
       seg('20min', 1400, 1500, gt('rising', 'numeric:etco2', 'mean', { segment: '10min', offset: 15 }, `${T7} 21: keeps rising 3–5 mmHg/min`))],
   }),
@@ -249,7 +249,7 @@ export const SANITY_DOCS: ValidationDoc[] = [
     actions: [at(0, ev({ kind: 'airwayDevice', device: 'ett' })), at(0, ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 })),
       at(60, ev({ kind: 'drug', drugId: 'rocuronium', dose: 0.6, unit: 'mg/kg' })), at(1800, ev({ kind: 'drug', drugId: 'sugammadex', dose: 2, unit: 'mg/kg' })),
       at(1800, ev({ kind: 'ventilation', source: 'spontaneous' }))],
-    segments: [seg('recovery', 1800, 2400, rng('rr-back', 'state:rr', 'firstTAbove', 60, 240, `${T7} 25: spontaneous effort returns within ≈ 2.2 min of sugammadex [ENG]`, { threshold: 4, expectedMiss: miss('G', '2026-11-08', '0 s') }))],
+    segments: [seg('recovery', 1800, 2400, rng('rr-back', 'state:rr', 'firstTAbove', 60, 240, `${T7} 25: spontaneous effort returns within ≈ 2.2 min of sugammadex [FIT: return of spontaneous effort after sugammadex; brief research/44 DEV-06]`, { threshold: 4, expectedMiss: miss('G', '2026-11-08', '0 s') }))],
   }),
   doc({
     // FU-4 (G-FU3 ruling 4): the stress document — the same paralysis NEVER ventilated must end in an arrest (FU-3 Task 5,

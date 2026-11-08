@@ -1,5 +1,5 @@
 // Scoring of one rater's blind review (brief §9 step 4): per channel, identification accuracy (chance 50 %; pass
-// ≤ 60 %), mean realism of synthetic clips (pass ≥ 4.0) and the real − synthetic gap (pass ≤ 0.5 [ENG]), with an
+// ≤ 60 %), mean realism of synthetic clips (pass ≥ 4.0) and the real − synthetic gap (pass ≤ 0.5 [ENG: measurement]), with an
 // exact two-sided binomial p for "accuracy ≠ 50 %". Entry: `pnpm --filter @pme/validation review:score --key K
 // --answers A [--out docs/validation/review]` writes <session>-<rater>.md/.json (derived numbers only).
 import type { ReviewAnswers, ReviewChannel, ReviewKey, ReviewBundle } from './types.ts';

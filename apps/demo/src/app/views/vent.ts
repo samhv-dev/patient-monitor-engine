@@ -175,7 +175,7 @@ export function cockpitDesk(session: AppSession): CockpitDesk {
   return desk;
 }
 
-/** R8c: a remote cockpit silent this long is handed over [ENG: it sends 50 link messages a second and its settings once a
+/** R8c: a remote cockpit silent this long is handed over [ENG: ui; it sends 50 link messages a second and its settings once a
  *  second, so 1 s is 50 missed; the relay's heartbeat would take up to 20 s, too long for an unventilated patient]. */
 export const COCKPIT_SILENCE_MS = 1000;
 
