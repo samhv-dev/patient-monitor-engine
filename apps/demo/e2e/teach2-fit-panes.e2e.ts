@@ -6,7 +6,7 @@ import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import { openApp } from './app-support.ts';
-import { app, runToPhase, to } from './mh-v2-path.ts';
+import { app, ffToPhase, to } from './mh-v2-path.ts';
 import { measure, send, serveApp, tileFindings, type W } from './teach2-fit-support.ts';
 import { laneTextOverlaps, recordLaneTexts } from './teach2-lane-texts.ts';
 
@@ -15,7 +15,7 @@ const srv = serveApp();
 // Plan F9: the haemorrhage card in pme-scenario/2 (showcase-haemorrhage-v2) at 1440 × 900, at its fan-out: the arrest
 // phases, where ten actions open at once (announce the diagnosis, call for help, CPR, bag, epinephrine, source control,
 // massive transfusion, TXA, rhythm check, resume CPR). The phases come from the physiology: oxygen at 0:30 and the ventilator
-// at 1:00 (the run sheet's presses), then the clock at ×8 until Arrest: PEA (the model's pulse loss, ≈ 11:00) and, with no
+// at 1:00 (the run sheet's presses), then fast-forward until Arrest: PEA (the model's pulse loss, ≈ 11:00) and, with no
 // CPR, Arrest: asystole (≈ 15:25). At each: no scroll, every open action a row, no row disabled, no phase name cut.
 for (const target of ['arrestPea', 'arrestAsystole'] as const) {
   test(`Instructor v2 fits 1440 × 900 on the /2 haemorrhage card at ${target}: no scroll, every open action a row, no row disabled`, async ({ page, browserName }, info) => {
@@ -29,7 +29,9 @@ for (const target of ['arrestPea', 'arrestAsystole'] as const) {
       await row.click();
       await expect(row).toHaveAttribute('data-look', 'taken', { timeout: 10_000 });
     }
-    expect(await runToPhase(page, target, 1200)).toBe(target); // at most 20 sim-min (the 40 steps of 30 s it had)
+    // at most 20 sim-min, in 120-s steps: Arrest: PEA lasts 4 min 20 s before asystole (entries 11:00–11:01 and 15:21–15:24,
+    // PR #324), two steps and more, so a step cannot pass it; asystole lasts to the end
+    expect(await ffToPhase(page, target, 1200, 120)).toBe(target);
     await page.waitForTimeout(1500);
     const running = await measure(page);
     const dir = process.env.TEACH2_SHOTS ?? info.outputPath();

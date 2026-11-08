@@ -61,6 +61,10 @@ export interface DrugBus {
     antinocAdd: number;
     /** Share of hypVentPropEq contributed by BENZODIAZEPINES, 0–1 — the drive's per-class α. */
     benzoShare: number;
+    /** EEG stage E1: `hypPropEq` split by EEG class (µg/mL propofol-equivalent); the five parts sum to it. */
+    hypByClass: { gabaIv: number; barbiturate: number; etomidate: number; benzo: number; dissociative: number };
+    /** EEG stage E1: dexmedetomidine effect-site Ce ÷ its EEG potency point (dimensionless; 1 = 2.5 ng/mL). */
+    alpha2Eq: number;
     uHyp: number; uOpioid: number; uSurface: number; seizure: boolean; cmro2Mult: number; cbfVaso: number;
   };
   nmb: { achGain: number }; // Neostigmine's acetylcholine gain (1 = none); the neuro model applies the ceiling
@@ -82,7 +86,7 @@ export const DRUG_BUS_NEUTRAL: DrugBus = {
   volatiles: {},
   doses: [],
   antagonist: { opioid: 1, benzodiazepine: 1 },
-  cns: { propCe: 0, opioidCeRemiEq: 0, macBrain: 0, ketamineCe: 0, benzoCeMidazEq: 0, dexmedCe: 0, hypPropEq: 0, hypVentPropEq: 0, opioidCeFentEq: 0, opioidVentFentEq: 0, benzoShare: 0, dissoc: 0, sympDrive: 0, antinocAdd: 0, uHyp: 0, uOpioid: 0, uSurface: 0, seizure: false, cmro2Mult: 1, cbfVaso: 1 },
+  cns: { propCe: 0, opioidCeRemiEq: 0, macBrain: 0, ketamineCe: 0, benzoCeMidazEq: 0, dexmedCe: 0, hypPropEq: 0, hypVentPropEq: 0, opioidCeFentEq: 0, opioidVentFentEq: 0, benzoShare: 0, hypByClass: { gabaIv: 0, barbiturate: 0, etomidate: 0, benzo: 0, dissociative: 0 }, alpha2Eq: 0, dissoc: 0, sympDrive: 0, antinocAdd: 0, uHyp: 0, uOpioid: 0, uSurface: 0, seizure: false, cmro2Mult: 1, cbfVaso: 1 },
   nmb: { achGain: 1 },
   airway: { bronchodilation: 0, histamine: 0 },
   hpvInhibit: 0,
