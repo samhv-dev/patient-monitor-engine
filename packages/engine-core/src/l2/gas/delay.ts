@@ -1,10 +1,10 @@
 // Circulatory delay lung → probe site (brief §4.3 device chain step 2; research 03 §3.6 item 1): a dead time of
-// 15 s at the finger and 5 s at the ear/forehead at normal CO [ENG within 10–20], scaled by CO_ref/CO and by
+// 15 s at the finger and 5 s at the ear/forehead at normal CO (research 03 §3.6: 10–20 s finger at normal CO; within 10–20), scaled by CO_ref/CO and by
 // vasoconstriction (low PI), reaching 30–60 s in low-output states. History of pulmonary SaO2 at 10 Hz.
 export const DELAY_FINGER_S = 15;
 export const DELAY_EAR_S = 5;
 export const DELAY_MAX_S = 60;
-export const DELAY_SMOOTH_S = 5; // the delay itself moves with τ 5 s so the read point never jumps [ENG]
+export const DELAY_SMOOTH_S = 5; // the delay itself moves with τ 5 s so the read point never jumps [ENG: numerics]
 const HIST = 72; // 71 s of whole-second points (1 Hz) — see DelayLine
 
 /**
@@ -23,7 +23,7 @@ export function createDelay(sa0: number): DelayLine {
   return { hist: new Array<number>(HIST).fill(sa0), k: 0, last: sa0, delay: DELAY_FINGER_S };
 }
 
-/** Target delay for a site, CO ratio and PI (vasoconstriction below PI 1 % lengthens it) [ENG]. */
+/** Target delay for a site, CO ratio and PI (vasoconstriction below PI 1 % lengthens it) [FIT: lung → probe dead time scaled by CO and PI; brief research/44 L2-16]. */
 export function siteDelay(site: string, coRatio: number, pi: number | null): number {
   const base = site === 'ear' || site === 'forehead' ? DELAY_EAR_S : DELAY_FINGER_S;
   const flow = 1 / Math.min(1, Math.max(0.25, coRatio));

@@ -55,7 +55,7 @@ describe('PK pipeline', () => {
     applyPkCommand(pk, ev({ kind: 'drug', drugId: 'fentanyl', dose: 100, unit: 'mcg', route: 'iv' }), 30);
     advancePk(pk, NEUTRAL_PK_CTX, 90);
     const f = pk.bus.agents.fentanyl!;
-    expect(f.vent).toBeCloseTo(f.brain, 12); // tables give no fentanyl ventilatory ke0: vent ke0 = brain ke0 [ENG]
+    expect(f.vent).toBeCloseTo(f.brain, 12); // tables give no fentanyl ventilatory ke0: vent ke0 = brain ke0 [FIT: ventilatory ke0 = brain ke0; brief research/44 X-10]
   });
   it('an infusion reaches steady state and dose 0 stops it; TCI holds a target; the vaporiser publishes Fet and MAC per agent', () => {
     const pk = createPkState();

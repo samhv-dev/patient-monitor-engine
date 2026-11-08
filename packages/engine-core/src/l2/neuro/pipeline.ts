@@ -24,17 +24,17 @@ import { neuroOutputs, type NeuroOutputs } from './outputs.ts';
 import { createTofDevice, tofAction, tofStep, validateTofAction, type TofDevice } from './tof-device.ts';
 
 export const NEURO_DT_S = 0.1;
-/** Fasciculations after succinylcholine: from 25 s to 45 s after the dose (block is complete at ~60 s) [TXT; ENG timing]. */
+/** Fasciculations after succinylcholine: from 25 s to 45 s after the dose (block is complete at ~60 s) [TXT] [FIT: fasciculation timing; brief research/44 L2-38]. */
 export const FASC_FROM_S = 25;
 export const FASC_TO_S = 45;
 /**
  * Potent-volatile brain MAC above which an MH-susceptible patient is exposed (mhTrigger mark; MH itself is the
- * endocrine model's) [ENG].
+ * endocrine model's) [ENG: conversion].
  */
 export const MH_VOLATILE_MAC = 0.1;
 /**
  * The endocrine model's stimulus intensity that is the neuro model's full (1.0) noxious stimulus: 1.5 =
- * laryngoscopy/sternotomy (the endocrine model's scale) [ENG].
+ * laryngoscopy/sternotomy (the endocrine model's scale) [ENG: conversion].
  */
 export const STIM_FULL = 1.5;
 

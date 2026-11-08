@@ -17,9 +17,9 @@ import { cardOf, scenarioById, type ScenarioCard } from './scenarios.ts';
 import type { AppSession } from './session.ts';
 
 /** How often the position is taken (wall ms): a reload comes back at most this much of the clock behind, × the speed.
- *  Taking one costs ≈ 1 ms (the snapshot is ≈ 80 KB of JSON, plus the Debrief record) [ENG, measured 2026-10-25]. */
+ *  Taking one costs ≈ 1 ms (the snapshot is ≈ 80 KB of JSON, plus the Debrief record) [ENG: ui; measured 2026-10-25]. */
 export const SAVE_MS = 1000;
-/** An older position is another day's run, not this one's [ENG]. */
+/** An older position is another day's run, not this one's [ENG: ui]. */
 export const MAX_AGE_MS = 6 * 3600_000;
 export { RELOAD_MARK };
 const KEY = 'pme.position';

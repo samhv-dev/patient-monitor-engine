@@ -7,7 +7,7 @@ import { decode212, parseHeader, type WfdbHeader } from '../templates/wfdb.ts';
 import { fillGaps, type Signals } from './signals.ts';
 
 export const MGHDB = 'mghdb/1.0.0';
-export const MGH_CO2_REF_MMHG = 38; // [ENG] decision 11
+export const MGH_CO2_REF_MMHG = 38; // [ENG: measurement] decision 11
 
 export interface MghMeta {
   record: string;

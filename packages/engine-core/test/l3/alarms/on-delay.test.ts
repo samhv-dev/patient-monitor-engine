@@ -9,7 +9,7 @@
 //     3 seconds" (p. 294); the trigger delay (averaging) is the engine's own numeric; SpO2 10 s ([S1] p. 66);
 //   mindray-like 6 s — BeneVision N [S4] §10.6.5 and §39.4.6 factory default "Alarm Delay 6 sec";
 //   saadat-like 1 s — research/06 §4.2 [M p.50] "less than 1 s";
-//   IEC default (zoll-, lifepak-, ge-like) 0 s [ENG] — no vendor on-delay found in research/05 (these skins carry no
+//   IEC default (zoll-, lifepak-, ge-like) 0 s [ENG: device] — no vendor on-delay found in research/05 (these skins carry no
 //     limit table, so no limit alarm is raised on them at all).
 import { describe, expect, it } from 'vitest';
 import { buildConditions, createInputs, observeEvent, observeQrs } from '../../../src/l3/alarms/conditions.ts';
@@ -54,7 +54,7 @@ function blips(ev: Alarm[], maxS = 3): number[] {
 const DIPS = [6, 7, 7.5, 6.5, 7, 8] as const; // each dip outlasts the 5 s extreme clear delay by 1–3 s
 
 describe('the vendor alarm on-delay for limit alarms', () => {
-  it('per-skin on-delay: philips-like 3 s ([S2] system delay < 3 s), mindray-like 6 s ([S4] factory), saadat-like 1 s (research/06 "< 1 s"), IEC default 0 s [ENG]; philips-like SpO2 10 s ([S1] p. 66)', () => {
+  it('per-skin on-delay: philips-like 3 s ([S2] system delay < 3 s), mindray-like 6 s ([S4] factory), saadat-like 1 s (research/06 "< 1 s"), IEC default 0 s [ENG: device]; philips-like SpO2 10 s ([S1] p. 66)', () => {
     expect(deviceProfile('philips-like').delayS).toBe(3);
     expect(deviceProfile('philips-like').spo2DelayS).toBe(10);
     expect(deviceProfile('mindray-like').delayS).toBe(6);
@@ -79,7 +79,7 @@ describe('the vendor alarm on-delay for limit alarms', () => {
     expect(hi[1]!.t).toBeLessThan(33.1);
   });
 
-  it('characterisation: the same philips-like profile with no on-delay (0 s [ENG]) shows the 1–3 s blips the delay removes', () => {
+  it('characterisation: the same philips-like profile with no on-delay (0 s [ENG: device]) shows the 1–3 s blips the delay removes', () => {
     expect(blips(hover({ ...deviceProfile('philips-like'), delayS: 0 }, DIPS))).toEqual([1, 2, 3, 1, 2, 3]);
   });
   it('mindray-like: the 6 s on-delay ([S4] §10.6.5) — HR 48 for 5.9 s raises nothing; HR 48 held raises `**HR 48<50` 6 s after the first displayed value below the limit; back at 50 within the delay resolves the pending (no hysteresis while pending)', () => {

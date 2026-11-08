@@ -23,9 +23,9 @@ import type { View } from '../shell.ts';
 
 const hashParam = (k: string): string | null => new URLSearchParams(location.hash.split('?')[1] ?? '').get(k);
 
-/** Plan §1: an older kit's relay drops the instructor's hello and an older host never answers; the phone gives up [ENG]. */
+/** Plan §1: an older kit's relay drops the instructor's hello and an older host never answers; the phone gives up [ENG: ui]. */
 export const GIVE_UP_MS = 10_000;
-/** Plan §5: the phone drops a socket that heard nothing for 12 s and opens a new one (as the learner's phone does) [ENG]. */
+/** Plan §5: the phone drops a socket that heard nothing for 12 s and opens a new one (as the learner's phone does) [ENG: ui]. */
 export const INSTRUCTOR_LIVENESS_MS = 12_000;
 
 /** The words of each state the instructor's phone can be in (plan P7). `at`: the case clock, mm:ss. */

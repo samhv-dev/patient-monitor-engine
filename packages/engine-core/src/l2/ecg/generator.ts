@@ -30,7 +30,7 @@ export function tableNormal(s: Sfc32State): number {
 }
 
 /** Atrial waves (AF f-waves, flutter F-waves) fade in and out over this long, so a rhythm switch leaves no step
- *  (leaving AF cut the f-waves with a step of up to ~0.15 mV) [ENG]. */
+ *  (leaving AF cut the f-waves with a step of up to ~0.15 mV) [ENG: numerics]. */
 export const FWAVE_FADE_S = 0.08;
 
 /** Add one continuous atrial wave (a sum of sinusoids along its VCG direction) at time s into acc[0..2]. */

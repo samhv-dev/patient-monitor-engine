@@ -23,10 +23,10 @@ export const PACER_SENSING: ReadonlySet<string> = new Set(IDS.filter((id) => RHY
 /** Rhythms whose ventricular response the reflex modulates through AV-nodal conduction. Flutter conducts at a
  * fixed ratio (a discrete 2:1 → 4:1 change is not a bounded modulation), so it is not listed. */
 export const AV_MODULATED: ReadonlySet<string> = new Set(['afib']);
-/** Largest fractional change of the AF ventricular response the reflex can cause [ENG, calibrated]. */
+/** Largest fractional change of the AF ventricular response the reflex can cause [FIT: AF ventricular-response rule (calibrated); calibrated; brief research/44 L2-14]. */
 export const AV_MOD_MAX = 0.1;
 /** AV-nodal share of the sinus node's autonomic rate change (the node's conduction is less tone-sensitive than the
- * sinus node's automaticity) [ENG, calibrated]. */
+ * sinus node's automaticity) [FIT: AF ventricular-response rule (calibrated); calibrated; brief research/44 L2-14]. */
 export const AV_GAIN = 0.25;
 
 /**

@@ -3,19 +3,19 @@
 import { normal, uniform } from '../../rng/sfc32.ts';
 import { pushPending, rhythmRate, type RhythmCtx, type RhythmState } from './rhythm-state.ts';
 
-const IVR_JITTER_S = 0.01; // [ENG]
-const POLY_RR_CV = 0.08; // polymorphic VT: irregular [ENG]
-const POLY_AXIS_STEP_RAD = 0.15; // beat-to-beat axis step, radians [ENG]
-const POLY_AXIS_KEEP = 0.7; // mean reversion per beat: stationary SD 0.15/√(1−0.49) = 0.21 rad (12°) [ENG]
-const TORSADES_RR_CV = 0.05; // [ENG]
-const TORSADES_AXIS_RAD = 0.35; // axis wobble ±20° over a twist [ENG]
+const IVR_JITTER_S = 0.01; // [ENG: texture]
+const POLY_RR_CV = 0.08; // polymorphic VT: irregular [ENG: texture]
+const POLY_AXIS_STEP_RAD = 0.15; // beat-to-beat axis step, radians [ENG: texture]
+const POLY_AXIS_KEEP = 0.7; // mean reversion per beat: stationary SD 0.15/√(1−0.49) = 0.21 rad (12°) [ENG: texture]
+const TORSADES_RR_CV = 0.05; // [ENG: texture]
+const TORSADES_AXIS_RAD = 0.35; // axis wobble ±20° over a twist [ENG: texture]
 const AGONAL_RR_MIN_S = 3; // agonal < 20/min, irregular (research 03 §1.5)
 /**
  * The agonal R–R is 60 / the rhythm's rate (rateBpm 4–20, default 12) ± this fraction, uniform — irregular, never
- * faster than AGONAL_RR_MIN_S [ENG].
+ * faster than AGONAL_RR_MIN_S [ENG: texture].
  */
 const AGONAL_RR_CV = 0.25;
-const AGONAL_DECAY_S = 120; // decaying amplitude [ENG]
+const AGONAL_DECAY_S = 120; // decaying amplitude [ENG: scenario]
 
 function jitter(ctx: RhythmCtx, s: number): number {
   return s * (2 * uniform(ctx.rng.ectopy) - 1);

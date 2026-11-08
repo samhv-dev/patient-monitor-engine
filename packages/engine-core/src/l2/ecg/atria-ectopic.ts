@@ -8,16 +8,16 @@ import { atrialRate, conductAt } from './atria.ts';
 import { HOOKS, pushPending, type RhythmCtx, type RhythmState } from './rhythm-state.ts';
 import type { Vec3 } from './vcg.ts';
 
-/** Focal AT P′: low-atrial origin, inverted in II (−0.13 mV) [ENG]. */
+/** Focal AT P′: low-atrial origin, inverted in II (−0.13 mV) [FIT: ECG morphology amplitude without a source; brief research/44 L2-46]. */
 export const ECTOPIC_P_VEC: Vec3 = [0.02, -0.12, 0.03];
-/** MAT foci: normal-axis, inverted and flat P′ (II +0.15 / −0.13 / +0.05 mV), each with its own PR offset [ENG]. */
+/** MAT foci: normal-axis, inverted and flat P′ (II +0.15 / −0.13 / +0.05 mV), each with its own PR offset [FIT: ECG morphology amplitude without a source; brief research/44 L2-46]. */
 export const MAT_FOCI: ReadonlyArray<{ vec: Vec3; prOffsetMs: number }> = [
   { vec: [0.165, 0.105, 0.007], prOffsetMs: 0 },
   { vec: [0.02, -0.12, 0.03], prOffsetMs: -25 },
   { vec: [0.2, 0.02, 0.1], prOffsetMs: 35 },
 ];
-const AT_JITTER_S = 0.003; // focal AT is regular [ENG]
-const MAT_RR_CV = 0.15; // "irregular" PP [ENG]
+const AT_JITTER_S = 0.003; // focal AT is regular [ENG: texture]
+const MAT_RR_CV = 0.15; // "irregular" PP [ENG: texture]
 
 function emitP(st: RhythmState, t: number, vec: Vec3, prOffsetMs: number, rate: number, ctx: RhythmCtx): void {
   const d = RHYTHMS[st.id];

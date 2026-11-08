@@ -10,7 +10,7 @@ describe('limit hygiene', () => {
   it('MANUAL CVP 10 and HR 50 on the philips-like limits for 3 min: no CVP alarm at the limit, no raise/clear cycle shorter than 5 s, texts beyond the limit', async () => {
     const run = await monitorRun({ mode: 'manual', tEnd: 200, steps: [...VENTED, [10, M.target('cvp', 10)], [10, M.target('hr', 50)]] });
     // FU-5 Task 9a (R45 re-measure): the start-up raise comes 3 s later with philips-like's alarm on-delay (17 s; was 14 s
-    // with the [ENG] 0 s), so the start window it is excluded by is 15 + 3 s
+    // with the [ENG: device] 0 s), so the start window it is excluded by is 15 + 3 s
     expect(raises(run, 'CVP_M_HIGH').filter((a) => a.t > 15 + 3)).toHaveLength(0);
     for (const id of ['HR_LOW', 'CVP_M_HIGH']) {
       const ev = run.alarms.filter((a) => a.id === id);

@@ -5,7 +5,7 @@ import { RHYTHMS } from './rhythms.ts';
 import type { PendingV, RhythmState } from './rhythm-state.ts';
 
 const PVC_NO_EJECTION_BELOW = 0.45; // no ejection at coupling < ~45% of RR (brief §4.8)
-export const BASE_SV_ML = 70; // placeholder SV (the haemodynamic core computes its own) [ENG]
+export const BASE_SV_ML = 70; // placeholder SV (the haemodynamic core computes its own) [ENG: numerics]
 
 export function fFill(rr: number): number {
   // f_fill(RR) = 1 − exp(−max(0, RR − t_sys)/τ_fill), t_sys = LVET + 0.08 s, τ_fill 0.18 s,
