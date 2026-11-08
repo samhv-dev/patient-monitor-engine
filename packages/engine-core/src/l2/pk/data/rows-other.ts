@@ -104,11 +104,15 @@ export const OTHER_ROWS: DrugRow[] = [
   // TXA stays INERT until a coagulation model lands. Its dose log (bus.doses) is what that model will read, so the
   // row must not be removed: the fibrinolysis target will be added to THIS row.
   { id: 'tranexamicAcid', name: 'Tranexamic acid', cls: 'placeholder', amountUnit: 'mg', pk: gammaPk(1000, false, 600, 10800), pd: [], doses: '1 g over 10 min, then 1 g over 8 h', onset: 'antifibrinolytic: no monitor effect until 7i models coagulation (R58; CRASH-2 acts through bleeding)', ir: '?', src: 'CRASH-2; placeholder for 7i', tag: 'TXT' },
-  // Ondansetron 4–8 mg IV prolongs the QTc ≈ 10–20 ms (FDA 2012 label change; the 32 mg IV dose was withdrawn for this
-  // reason). No arrhythmia hazard is added in v1: torsades needs the QT-dependent trigger the torsades rhythm provides
-  // by instruction. emax 30 → 15 ms at the 4 mg reference dose (the Hill is emax·c/(ec50 + c)) [FIT: ondansetron QTc emax (label gives +5.6 ms at 8 mg); within the label
-  // range; measured: +14 ms at 10–30 min, +8 at 2 h; emax 15 gave 7; brief research/44 X-05].
-  { id: 'ondansetron', name: 'Ondansetron', cls: 'placeholder', amountUnit: 'mg', pk: gammaPk(4, false, 600, 14400), pd: [{ target: 'qtc', emax: 30, ec50: 1 }], doses: '4 mg', onset: 'QTc +10–20 ms (FDA 2012); no arrhythmia hazard in v1', ir: '?', src: 'FDA 2012 label change; size [FIT: ondansetron QTc emax (label gives +5.6 ms at 8 mg); brief research/44 X-05]', tag: 'ENG' },
+  // Ondansetron prolongs the QTc in proportion to its concentration. The injection label §12.2 (thorough-QT trial, 58
+  // healthy subjects, single 15-min infusions; the FDA 2012 safety communication that withdrew the 32 mg dose) measured
+  // a placebo- and baseline-corrected ΔΔQTcF of 19.5 ms (95 % upper 21.8) at 32 mg and 5.6 (7.4) at 8 mg, and found "a
+  // significant exposure-response relationship" between concentration and ΔΔQTcF, from which it predicts 9.1 ms at
+  // 16 mg and 14.0 at 24 mg. Linear in concentration (the label's model), slope from its 32 mg mean: 19.5 ms per 32 mg
+  // = 0.61 ms/mg, so ec50 8 (the 32 mg dose in units of the 4 mg reference) and emax 19.5. Measured (0–30 min peak):
+  // 4 mg +2.4, 8 mg +4.9, 16 +9.8, 24 +14.6, 32 +19.5 ms — every label value within its own 95 % bound. No arrhythmia
+  // hazard is added in v1: torsades needs the QT-dependent trigger the torsades rhythm provides by instruction.
+  { id: 'ondansetron', name: 'Ondansetron', cls: 'placeholder', amountUnit: 'mg', pk: gammaPk(4, false, 600, 14400), pd: [{ target: 'qtc', emax: 19.5, ec50: 8, linear: true }], doses: '4 mg', onset: 'QTc +2–3 ms at 4 mg, +5.6 at 8 mg, +19.5 at 32 mg (label §12.2 TQT); no arrhythmia hazard in v1', ir: '?', src: 'Ondansetron injection label §12.2 (thorough-QT trial); FDA Drug Safety Communication 2012', tag: 'TXT' },
   // Dexamethasone 8 mg raises glucose ≈ 1–2 mmol/L (18–36 mg/dL) over the first hours and more in diabetics (Hans 2006;
   // M10 ch. 47) — a GLUCOCORTICOID acting on the endocrine model's cortisol metabolic term (insulin resistance,
   // gluconeogenesis). emax 4000 → 2000 nmol/L cortisol-equivalent above basal at the 8 mg reference dose (≈ 200 mg
