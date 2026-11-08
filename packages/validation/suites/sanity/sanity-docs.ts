@@ -158,10 +158,15 @@ export const SANITY_DOCS: ValidationDoc[] = [
     actions: [at(60, ev({ kind: 'condition', id: 'tamponade', severity: 1 }))],
     segments: [seg('equalised', 540, 720, rng('cvp', 'state:cvp', 'mean', 15, 20, `${T7} 14: CVP ≈ PAD ≈ PCWP 15–20`), rng('pawp', 'state:pawp', 'mean', 15, 20, `${T7} 14`))],
   }),
+  // Brief 94: the tables' two bands came from two volume states. Dell'Italia 1985 (Circulation 72:1327; 10 patients with
+  // predominant RV infarction, inferior MI, PCWP < 18) measured RA 11 ± 2 / PCWP 10 ± 4 / CI 1.9 ± 0.5 BEFORE volume
+  // loading and RA 15 ± 2 / PCWP 15 ± 2 / CI 2.1 ± 0.4 after it: the tables' CVP 14–18 is the loaded RA, their PCWP 8–12
+  // the unloaded wedge. This rig is the presenting patient (euvolaemic, no fluid, inferior wall involved), so both rows
+  // take the before-loading arm, mean ± 1 SD. The loaded arm needs the paper's loading protocol (not on file).
   doc({
-    id: 't15-rv-infarct', title: 'RV infarct (inferior STEMI, Ees_RV ×0.35)', source: `${T7} 15`, durationS: 300, mode: 'modeled', requires: ['7a'],
+    id: 't15-rv-infarct', title: 'RV infarct with inferior STEMI, presenting state (no volume loading)', source: `${T7} 15; Dell'Italia 1985`, durationS: 300, mode: 'modeled', requires: ['7a'],
     actions: [at(0, ev({ kind: 'condition', id: 'rvInfarct', severity: 1 }))],
-    segments: [seg('rest', 120, 300, rng('cvp', 'state:cvp', 'mean', 14, 18, `${T7} 15: CVP 14–18`, { expectedMiss: miss('D', '2026-11-08', 'CVP 6.8') }), rng('pawp', 'state:pawp', 'mean', 8, 12, `${T7} 15: PCWP 8–12`, { expectedMiss: miss('D', '2026-11-08', 'PCWP 3.3') }), rng('map', 'state:map', 'mean', 60, 70, `${T7} 15: MAP 60–70`))],
+    segments: [seg('rest', 120, 300, rng('cvp', 'state:cvp', 'mean', 9, 13, "Dell'Italia 1985 Circulation 72:1327: RA 11 ± 2 before volume loading", { expectedMiss: miss('D', '2026-11-08', 'CVP 8.2') }), rng('pawp', 'state:pawp', 'mean', 6, 14, "Dell'Italia 1985 Circulation 72:1327: PCWP 10 ± 4 before volume loading"), rng('map', 'state:map', 'mean', 60, 70, `${T7} 15: MAP 60–70`))],
   }),
   doc({
     id: 't16-septic-shock-warm', title: 'Septic shock, warm phase', source: `${T7} 16`, durationS: 600, mode: 'modeled', requires: ['7f'],
