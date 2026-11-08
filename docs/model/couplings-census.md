@@ -46,7 +46,7 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | engine-runtime | 6 | 2 |
 | **All** | 1121 | 424 |
 
-## The ten effector expressions with the most factors (of 1584)
+## The ten effector expressions with the most factors (of 1598)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -61,7 +61,7 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | `l2/circ/model.ts#control` | `p.pvrL` | product | 7 |
 | `l2/circ/model.ts#control` | `p.pvrR` | product | 7 |
 
-## The ten products with the most factors (of 870 products)
+## The ten products with the most factors (of 879 products)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|

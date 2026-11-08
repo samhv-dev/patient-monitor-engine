@@ -15,6 +15,8 @@ import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
 import { clearPosition } from './position.ts';
 import { RunRecord } from './record.ts';
+import { readLayout } from './room-layout.ts';
+import { store } from './store.ts';
 import { hostLang } from './i18n/lang.ts';
 import { applySkinAlarmColours } from './shell.ts';
 
@@ -180,7 +182,8 @@ export class AppSession {
     this.theme = o.theme;
     this.code = normalizeSessionCode(o.code ?? '') ?? newSessionCode();
     // the host's phase runner (a pme-scenario/2 card): the record copies its grade inputs (plan F7)
-    this.record = new RunRecord(() => ({ patient: oneLiner(this.spec), weightKg: this.spec.weightKg }), Date.now, () => this.driver?.phaseRunner ?? null);
+    // R5d: a learner defibrillator press names its device as Room setup keeps it (R7's remembered layout)
+    this.record = new RunRecord(() => ({ patient: oneLiner(this.spec), weightKg: this.spec.weightKg }), Date.now, () => this.driver?.phaseRunner ?? null, (key) => readLayout(store)[key]?.name ?? null);
     const target: HostTarget = {
       dispatch: (c) => this.need().dispatch(c),
       dispatchGroup: (cs) => this.need().dispatchAll(cs), // R15: a stage group in one worker message, on one tick
