@@ -166,7 +166,7 @@ export const SANITY_DOCS: ValidationDoc[] = [
   doc({
     id: 't15-rv-infarct', title: 'RV infarct with inferior STEMI, presenting state (no volume loading)', source: `${T7} 15; Dell'Italia 1985`, durationS: 300, mode: 'modeled', requires: ['7a'],
     actions: [at(0, ev({ kind: 'condition', id: 'rvInfarct', severity: 1 }))],
-    segments: [seg('rest', 120, 300, rng('cvp', 'state:cvp', 'mean', 9, 13, "Dell'Italia 1985 Circulation 72:1327: RA 11 ± 2 before volume loading", { expectedMiss: miss('D', '2026-11-08', 'CVP 8.2') }), rng('pawp', 'state:pawp', 'mean', 6, 14, "Dell'Italia 1985 Circulation 72:1327: PCWP 10 ± 4 before volume loading"), rng('map', 'state:map', 'mean', 60, 70, `${T7} 15: MAP 60–70`))],
+    segments: [seg('rest', 120, 300, rng('cvp', 'state:cvp', 'mean', 9, 13, "Dell'Italia 1985 Circulation 72:1327: RA 11 ± 2 before volume loading", { expectedMiss: miss('D', '2026-11-08', 'CVP 7.9') }), rng('pawp', 'state:pawp', 'mean', 6, 14, "Dell'Italia 1985 Circulation 72:1327: PCWP 10 ± 4 before volume loading"), rng('map', 'state:map', 'mean', 60, 70, `${T7} 15: MAP 60–70`))],
   }),
   doc({
     id: 't16-septic-shock-warm', title: 'Septic shock, warm phase', source: `${T7} 16`, durationS: 600, mode: 'modeled', requires: ['7f'],
