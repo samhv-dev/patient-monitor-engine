@@ -58,6 +58,8 @@ export const EFFECTORS: readonly EffectorDecl[] = [
   { path: 'blood.kChem', label: 'Blood-chemistry contractility factor (pH, ionised Ca, K)', at: 'l2/blood/circ-adapter.ts#chemistryContractility' },
   { path: 'endo.adrenalDrive', label: 'Adrenal medullary drive', at: 'l2/endo/hormones.ts#adrenalDrive' },
   { path: 'eeg.cortex', label: 'EEG cortical state (hyperpolarisation, loss of responsiveness, suppression)', at: 'l2/eeg/state.ts#cortexStep' },
+  { path: 'eeg.signal', label: 'The eeg channel\'s samples (brain signal plus artefacts)', at: 'l2/eeg/pipeline.ts#advanceEeg' },
+  { path: 'eeg.ctx.device', label: 'Mains frequency and the heart\'s aVF voltage handed to the EEG', at: 'engine.ts#eegCtx' },
   // The autonomic hub research/44 L2-01–L2-04 asks for: one sympathetic efferent state, the hormones as concentrations
   { path: 'absent.autonomic.sympatheticOutflow', label: 'Central sympathetic efferent state (cardiac and vasomotor)', absent: 'research/44 L2-02' },
   { path: 'absent.autonomic.chemoAfferent', label: 'Carotid and central chemoreceptor afferent', absent: 'research/44 L2-04' },
