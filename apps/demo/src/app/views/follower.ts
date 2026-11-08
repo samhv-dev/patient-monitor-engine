@@ -35,12 +35,12 @@
 //    phone HOLDS (its monitor still, "The ventilator is on the main screen") and takes a fresh snapshot when they stop.
 //    UI-A #2: only while the view is ON SCREEN — its close sends `cockpit {off: true}` and the phone follows at once.
 //    A page hidden for a while (a locked phone) also takes a fresh snapshot instead of computing the gap.
-import { createBroadcastChannelTransport, createWebSocketTransport, ViewerSync, type Instrument, type ManagedTransport, type RelayFrame, type WireMessage } from '@pme/controller';
+import { createBroadcastChannelTransport, createWebSocketTransport, epochNow, newPeerId, ViewerSync, type Instrument, type ManagedTransport, type RelayFrame, type WireMessage } from '@pme/controller';
 import { engineKey as engineVersion } from '@pme/engine-core'; // The snapshot key, version + build
 import { mountMonitor, type IbpScales, type MonitorHandle } from '@pme/renderer';
 import { briefingLayer, followBriefing } from '../briefing.ts';
 import { applySkinAlarmColours, type Shell } from '../shell.ts';
-import { defibReadout, defibSkin } from '../instrument.ts';
+import { defibReadout, defibSkin, defibWords } from '../instrument.ts';
 import { DEFAULT_SITE, MONITORS, THEMES, type SiteProfile } from '../site.ts';
 import { button, h, pausedMark, setText } from '../ui.ts';
 import { followerStatus, hostPause, phoneStyle } from './follower-status.ts';
@@ -121,9 +121,28 @@ export function withInstrument(t: ManagedTransport, i: FollowerInstrument): Mana
 }
 
 /**
+ * R5d: the defibrillator window's end of the wire. Every message it sends goes out under ONE id (the sync's) with one
+ * sequence, so its presses are the same peer as its `defib` hello (the host reads the role and device key of that
+ * hello; the relay checks the same socket). The sync's own stamps keep their id; the sequence is renumbered here.
+ */
+function asDefibWindow(t: ManagedTransport): ManagedTransport {
+  let seq = 0;
+  const send = (m: WireMessage) => t.send({ ...m, seq: ++seq, ...(m.kind === 'hello' ? { role: 'defib' as const } : {}) });
+  return new Proxy(t, {
+    get(target, key) {
+      if (key === 'send') return send;
+      const v: unknown = Reflect.get(target, key, target);
+      return typeof v === 'function' ? (v as (...a: unknown[]) => unknown).bind(target) : v;
+    },
+  });
+}
+
+/**
  * `defib` (Room plan R5): this window is the defibrillator (`#/defib`): it wears the room's defibrillator model's look
  * (instrument.ts defibSkin; the host's style changes its theme only), landscape, and reads out the energy and CHARGING /
- * READY from its own engine. Its Charge and Shock come with R5d.
+ * READY from its own engine. R5d: it has Charge and Shock (Q5 ruled 5 November: the window's only presses), sent bare
+ * under a `defib` hello; the host applies them as the instructor's own and answers a refusal in the ack, shown here in
+ * the device's words.
  */
 export interface FollowerOptions {
   defib?: boolean;
@@ -153,7 +172,9 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     if (fr.relay === 'peers') hostAway = !fr.hostOnline;
   };
   const link = net ? createWebSocketTransport({ url: net.relay, livenessMs: PHONE_LIVENESS_MS, onRelayFrame: onRelay }) : createBroadcastChannelTransport(code);
-  const transport = instrument ? withInstrument(link, instrument) : link;
+  const said = instrument ? withInstrument(link, instrument) : link;
+  const transport = defib ? asDefibWindow(said) : said;
+  const peerId = newPeerId('view'); // the sync's id, which the window's presses share (asDefibWindow)
   const status = h('span', { class: 'status-pill', role: 'status' }, `Waiting for the instructor's monitor ${code}…`);
   // On and off again, this window only
   const drawSound = () => ((sound.textContent = monitor.soundOn ? 'Sound on' : 'Sound off'), sound.setAttribute('aria-pressed', String(monitor.soundOn)), (hush.disabled = !monitor.soundOn));
@@ -187,6 +208,23 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   // R5: the defibrillator window's readout, from this window's own engine (its deviceStatus)
   const readout = defib ? h('p', { class: 'defib-readout', role: 'status', 'aria-label': 'Defibrillator' }) : null;
   if (readout) shell.stage.append(readout);
+  // R5d: Charge and Shock, always enabled — the host's device decides (a shock with no charge is refused there, and the
+  // ack's reason shows under them); a press goes once, a lost one is pressed again, as on the device
+  const pending = new Set<string>();
+  let pressN = 0;
+  const saidEl = defib ? h('p', { class: 'defib-said', role: 'status', 'aria-live': 'polite' }) : null;
+  const pressKey = (action: 'charge' | 'shock') => {
+    const id = `${peerId}-press-${++pressN}`;
+    pending.add(id);
+    if (saidEl) setText(saidEl, '');
+    transport.send({ v: 1, session: code, from: peerId, seq: 0, sentAt: epochNow(), kind: 'command', body: { id, issuedBy: 'learner', type: 'applyEvent', event: { kind: 'defib', action } } } as WireMessage);
+  };
+  const keys = defib ? h('div', { class: 'defib-keys', role: 'group', 'aria-label': 'Defibrillator' }, button('Charge', () => pressKey('charge')), button('Shock', () => pressKey('shock'), 'primary')) : null;
+  if (keys && saidEl) bar.append(keys, saidEl);
+  const offAcks = defib ? transport.onMessage((m) => {
+    if (m.kind !== 'ack' || !pending.delete(m.commandId)) return;
+    if (saidEl) setText(saidEl, m.accepted ? '' : defibWords(m.reason));
+  }) : () => {};
   /** Put on a style: the defibrillator window wears the room model's look whatever the monitor style. */
   const wear = (skin: string, theme: string) => {
     if (skin === f.style.skin && theme === f.style.theme) return;
@@ -211,7 +249,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   };
   style?.postMessage({ kind: 'ask' } satisfies StyleMsg);
   void monitor.viewerClock().then((clock) => {
-    const sync = new ViewerSync({ session: code, transport, target: clock, engineVersion });
+    const sync = new ViewerSync({ session: code, transport, target: clock, engineVersion, peerId });
     f.sync = sync;
     if (readout) offReadout = clock.on((e) => void (e.type === 'deviceStatus' && setText(readout, defibReadout(e.defib))), ['deviceStatus']);
     // The pill after every host message, once the sync has taken it (subscribed after it): the 500 ms poll alone showed
@@ -284,6 +322,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     upright?.removeEventListener('change', onTurn);
     offDraw();
     offReadout();
+    offAcks();
     readout?.remove();
     offHost();
     offOpen();

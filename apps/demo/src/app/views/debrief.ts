@@ -21,7 +21,7 @@ import { archive, hhmm, type ArchiveMeta } from '../archive.ts';
 import './debrief.css';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
-import { axisRange, drugTotals, endOf, facts, mmss, objectives, perMinute, PRESSURE_KEYS, report3, span, steps, trendMeta, type DebriefExport, type Pressure, type Report3, type Step, type StepStatus } from '../debrief.ts';
+import { axisRange, drugTotals, endOf, facts, learnerWho, mmss, objectives, perMinute, PRESSURE_KEYS, report3, span, steps, trendMeta, type DebriefExport, type Pressure, type Report3, type Step, type StepStatus } from '../debrief.ts';
 import { debriefJson } from '../debrief-export.ts';
 import { handoutQuestionsAt, keyMoments, keyTimes, openersAt, recognitionAt, RECOGNISED, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
 import { LAB_KEYS, TREND_KEYS, type PressureKey, type Row, type RunData, type TrendKey, type ValueKey } from '../record.ts';
@@ -39,6 +39,8 @@ import { DRAFT_LINE, faPass, translateTree, unreviewed, type FaPass } from '../i
 import { LTR_RUN } from '../i18n/fa-match.mjs';
 import { hostLang, setHostLang, type HostLang } from '../i18n/lang.ts';
 import { archiveHref, archiveList, downloadEntry, entryTitle, exportAll } from './archive-list.ts';
+import { readLayout } from '../room-layout.ts';
+import { store } from '../store.ts';
 
 /** The build this page was served from (vite.config.ts `define`: the git commit, "+" with uncommitted changes, the date). */
 declare const __PME_BUILD__: string;
@@ -52,7 +54,7 @@ const PEARLS: ReadonlyArray<readonly [string, string]> = [
   ['Analysis', 'Take one key moment: what did you see, what did you think, what did you do?'],
   ['Summary', 'One thing to keep doing, one thing to do differently next time.'],
 ];
-const KIND: Readonly<Record<Row['kind'], string>> = { action: 'Action', remote: 'Remote', scenario: 'Scenario', alarm: 'Alarm', bookmark: 'Bookmark', restore: 'Return', patient: 'Patient', note: 'Note' };
+const KIND: Readonly<Record<Row['kind'], string>> = { action: 'Action', remote: 'Remote', learner: 'Learner', scenario: 'Scenario', alarm: 'Alarm', bookmark: 'Bookmark', restore: 'Return', patient: 'Patient', note: 'Note' };
 /** The verdict words (E42–E44): the mark (`data-mark`), its words with a glyph, and the reason printed under it. A
  *  rule-less objective the instructor ticked reads Observed, with the tick's time as its reason. */
 function markOf(o: ReturnType<typeof objectives>[number]): { mark: 'observed' | 'not-observed' | 'not-assessable' | 'discuss'; words: string; why: string } {
@@ -102,13 +104,17 @@ function actionsTable(r: Report3): HTMLElement {
     ])));
 }
 
-/** The timeline's rows, a staged delivery's items on one line (each item keeps its own row in the record). */
+/** The name Room setup keeps for a device key on this computer (R7's remembered layout; R5d's who line). */
+const deviceName = (key: string): string | null => readLayout(store)[key]?.name ?? null;
+/** The timeline's rows, a staged delivery's items on one line (each item keeps its own row in the record); a learner
+ *  defibrillator press reads its who line (R5d). */
 function timelineRows(d: RunData): HTMLElement[] {
   const line = (r: Row, text: string | string[], isSetup: boolean) => h('tr', { 'data-kind': r.kind, ...(r.undone ? { class: 'undone' } : isSetup ? { class: 'db-setup' } : {}) },
     h('td', { class: 'num' }, mmss(r.t)), h('td', {}, KIND[r.kind]), h('td', {}, ...[text].flat(), undoneText(r))); // separate texts: the Persian page reads each (D13)
   const done = new Set<string>();
   return d.rows.flatMap((r) => {
     const b = r.batch?.id;
+    if (r.kind === 'learner') return [line(r, learnerWho(d.rows, r, deviceName), false)];
     if (b === undefined) return [line(r, r.text, setup(r))];
     if (done.has(b)) return [];
     done.add(b);
