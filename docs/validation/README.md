@@ -7,7 +7,7 @@ files here:
 |---|---|
 | `report.md` | Every graded row: morphology (recorded vs matched engine, brief §9 V1–V5), sanity and gate documents (segment validation), waveform regression (2 % per sample), determinism (V9), the Pulse oracle, datasets and attribution. |
 | `report.json` | The same, machine-readable (`pme-validation-report/1`). |
-| `calibration-queue.md` | Every yellow or red row — the input to Ali's calibration pass (R44), with an empty "decision" column. |
+| `calibration-queue.md` | Every yellow or red row — the input to the owner's calibration pass (R44), with an empty "decision" column. |
 
 Grades (R40, after Pulse's segment validation, method only): 🟢 inside the evidence band (or within 10 % of a point
 target); 🟡 misses by less than 30 %; 🔴 misses by 30 % or more, or was not measured. Red fails the run; yellow never

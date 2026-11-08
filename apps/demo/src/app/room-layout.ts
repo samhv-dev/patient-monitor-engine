@@ -50,10 +50,15 @@ export function readLayout(s: Store): Layout {
 /** The newest MAX_DEVICES entries (by lastSeen). */
 const trim = (l: Layout): Layout => Object.fromEntries(Object.entries(l).sort((a, b) => b[1].lastSeen - a[1].lastSeen).slice(0, MAX_DEVICES));
 
-/** The layout with every keyed viewer of the relay's table seen `now`, showing what it shows; names kept. */
+/** The layout with every keyed viewer of the relay's table seen `now`, showing what it shows; names kept. R5d: a
+ *  learner defibrillator window (role `defib`, which says its key as a viewer does) is kept as showing the defibrillator,
+ *  so the name given to it names its presses in the Debrief. */
 export function noteDevices(l: Layout, devices: readonly RelayDevice[], now: number): Layout {
   const out = { ...l };
-  for (const d of devices) if (d.role === 'viewer' && d.device && DEVICE_RE.test(d.device)) out[d.device] = { name: l[d.device]?.name ?? null, show: d.show, lastSeen: now };
+  for (const d of devices) {
+    if ((d.role !== 'viewer' && d.role !== 'defib') || !d.device || !DEVICE_RE.test(d.device)) continue;
+    out[d.device] = { name: l[d.device]?.name ?? null, show: d.role === 'defib' ? 'defib' : d.show, lastSeen: now };
+  }
   return trim(out);
 }
 

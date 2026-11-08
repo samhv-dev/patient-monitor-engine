@@ -3,7 +3,7 @@
   "version": "1.0.0-rc.5",
   "description": "Patient-monitor simulation engine core: rhythm engine, haemodynamics, gas exchange, device layer, MANUAL and MODELED physiology (no DOM).",
   "license": "MIT",
-  "author": "Ali Mahdavi",
+  "author": "samhv-dev",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/samhv-dev/patient-monitor-engine.git",

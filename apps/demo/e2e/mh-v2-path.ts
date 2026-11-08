@@ -47,19 +47,21 @@ export async function to(page: Page, s: number): Promise<void> {
   await page.waitForTimeout(400); // the skip's end reaches the panel; ACTION repaints (≤ 2 Hz)
 }
 
-/** Run the clock at ×8 (the clock's top rate) until the scenario is in `phase`, or `withinS` sim seconds have passed, then
- *  back to ×1; returns the phase it stopped in. A phase that comes from the physiology is found this way, not by
- *  fast-forwarding in steps: the host paces every fast-forward to FF_WALL_MS (10 s of wall time, however short the span;
- *  host-session.ts), so 30-s steps cost 10.3–11.8 s each (98 measured locally, the same on both browsers; 20 steps to Arrest: PEA =
- *  217 s) and the haemorrhage card's Arrest: asystole, 29 steps from 01:00, ran into its 360-s limit on CI (run
- *  42279079387: 6.0 min, the retry 5.9 min). At ×8 the span costs its sim length / 8, and the run stops within one
- *  scenario poll (100 ms of wall, 0.8 sim s) of the phase's entry instead of up to one step (30 s) after it. */
-export async function runToPhase(page: Page, phase: string, withinS: number): Promise<string | null> {
-  const scale = (v: number) => page.evaluate((x) => (window as unknown as W).__pmeApp.link.send({ type: 'time', action: 'scale', value: x }), v);
+/** Fast-forward in steps of `stepS` sim seconds until the scenario is in `phase`, or `withinS` sim seconds have passed;
+ *  returns the phase it stopped in. A phase that comes from the physiology is found this way. `stepS` must be shorter
+ *  than the phase lasts, so a step cannot pass over it: the caller states the bound. The host paces every fast-forward to
+ *  FF_WALL_MS (10 s of wall time, however long the span; host-session.ts), so the step is as long as the phase allows:
+ *  30-s steps cost 10.3–11.8 s each (PR #324: 98 measured, both browsers), and 29 of them to the haemorrhage card's
+ *  Arrest: asystole ran into the 360-s limit (CI run 42279079387).
+ *  Not ×8 (PR #324's runToPhase, brief 90): on CI's Linux WebKit the web process crashes ("Target page, context or
+ *  browser has been closed", the crash class of F-FX1-1), and in the 30 main runs of 6–7 Nov the three fit files crashed
+ *  0.015 times per test-minute while they searched in fast-forward steps and 0.091 with the ×8 run (13 runs; 18 of their
+ *  22 crashed attempts inside it; fit-panes:21 and fit-strip:17 failed all three attempts), while the other files stayed
+ *  at 0.04 before and after. Behind the fast-forward's panel the page draws little; at ×8 it draws a minute of the case
+ *  every 7.5 s of wall time. */
+export async function ffToPhase(page: Page, phase: string, withinS: number, stepS: number): Promise<string | null> {
   const until = (await app(page)).simT + withinS;
-  expect((await scale(8)).accepted).toBe(true);
-  await page.waitForFunction(([id, t]) => { const l = (window as unknown as W).__pmeApp.link; return l.ctl.scenario.stateId === id || l.simT >= t; }, [phase, until] as const, { timeout: 0, polling: 100 });
-  expect((await scale(1)).accepted).toBe(true);
+  for (let a = await app(page); a.stateId !== phase && a.simT < until; a = await app(page)) await to(page, Math.min(until, Math.floor(a.simT) + stepS));
   return (await app(page)).stateId;
 }
 

@@ -351,6 +351,7 @@ None recorded.
 | [`session/host-failed-target.test.ts`](../../packages/controller/test/session/host-failed-target.test.ts) | 0 | 0 |
 | [`session/host-fast-forward.test.ts`](../../packages/controller/test/session/host-fast-forward.test.ts) | 0 | 0 |
 | [`session/host-instructor.test.ts`](../../packages/controller/test/session/host-instructor.test.ts) | 0 | 0 |
+| [`session/host-learner-defib.test.ts`](../../packages/controller/test/session/host-learner-defib.test.ts) | 0 | 0 |
 | [`session/host-presence.test.ts`](../../packages/controller/test/session/host-presence.test.ts) | 0 | 0 |
 | [`session/host-scenario-hook.test.ts`](../../packages/controller/test/session/host-scenario-hook.test.ts) | 0 | 0 |
 | [`session/host-session.test.ts`](../../packages/controller/test/session/host-session.test.ts) | 0 | 0 |

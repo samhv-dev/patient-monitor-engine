@@ -1,7 +1,7 @@
 // showcase-tamponade: a stab wound filling the pericardium (250 mL + 15 mL/min) → PEA → CPR → pericardio-
 // centesis → ROSC, run through the card's buttons on the engine (drainage during good CPR restores the
 // circulation by itself; undrained, never).
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import type { EngineEvent } from '@pme/engine-core';
 import { bands, entered, first, near, range, runCard, type Act } from './harness.ts';
 
@@ -33,9 +33,13 @@ import { bands, entered, first, near, range, runCard, type Act } from './harness
  *  0.084 higher and recovers on τ_up 60 s) and sysMaxAtRosc 191 → 210.8 (191.07 → 210.80). Measurement and split:
  *  docs/validation/notes/tamponade-sysmax.md. Every timing and every other S2 number is unchanged. */
 const BANDS = {
-  'S2 happy': { refused: [0, 0], hrAt60: [94, 104], sysAt60: [101, 111], diaAt60: [82, 92], cvpAt60: [15, 19], etco2At60: [29, 35], pulsusMean: [0, 1.9], pulsusMax: [0, 2.6], deterioratingS: [336, 410], hrAtDeteriorating: [130, 140], cvpAtDeteriorating: [18, 22], pulseLossS: [424, 518], peaStateS: [425, 519], pea: [1, 1], drainS: [542, 662], roscAfterDrainS: [81, 111], sysPlus60: [118.1, 128.1], hrPlus60: [58, 68], cvpPlus60: [8, 12], etco2Plus60: [32, 38], sysMaxAtRosc: [205.8, 215.8], pulseHeld: [1, 1] },
-  // sysMaxAtRosc 191.07 → 210.8 = +8.9 mmHg from the corrected coronary reading (LV contractility +11 %, a corrected artefact)
-  // + 10.9 from the detector missing feet under compressions over a beating heart; a 2-second overshoot (706–707 s)
+  'S2 happy': { refused: [0, 0], hrAt60: [94, 104], sysAt60: [101, 111], diaAt60: [82, 92], cvpAt60: [15, 19], etco2At60: [29, 35], pulsusMean: [0, 1.9], pulsusMax: [0, 2.6], deterioratingS: [336, 410], hrAtDeteriorating: [130, 140], cvpAtDeteriorating: [18, 22], pulseLossS: [424, 518], peaStateS: [425, 519], pea: [1, 1], drainS: [542, 662], roscAfterDrainS: [81, 111], sysPlus60: [118.1, 128.1], hrPlus60: [58, 68], cvpPlus60: [8, 12], etco2Plus60: [32, 38], pulseHeld: [1, 1] },
+  // sysMaxAtRosc is pinned on the physiology alone, in its own it.fails below (brief 87, audit 44 rows T-22 / V-24): of
+  // the 191.07 → 210.8 move, +8.9 mmHg is the corrected coronary reading (LV contractility +11 %) and +10.9 is the
+  // arterial detector missing feet under compressions over a beating heart (research/41 row 50), a device defect the
+  // band must not carry. 191.07 + 8.9 = 210.8 − 10.9 = 199.9, the same ± 5. sysPlus60 (+60 s, no compressions; its move,
+  // 121.85 → 123.10, is the kIsch residue of the coronary reading, notes/tamponade-sysmax.md) has no detector part and stays.
+  'S2 happy, physiology alone': { sysMaxAtRosc: [194.9, 204.9] },
   'S2 epinephrine': { refused: [0, 0], roscAfterDrainS: [79, 109] },
   'S2 undrained': { refused: [0, 0], pulseBack: [0, 0], cvpMax: [30, 34], etco2Plus3: [6, 12] },
   'S2 at ×8 poll': { refused: [0, 0], pulseLossS: [424, 518], peaStateS: [426, 520], roscAfterDrainS: [80, 110] },
@@ -72,26 +76,36 @@ function pulsus(): { listen: (e: EngineEvent) => void; mean: () => number; max: 
 }
 
 describe('S2 stab wound: tamponade, PEA and pericardiocentesis (showcase-tamponade)', { timeout: 900_000 }, () => {
-  it('happy path: CPR 10 s after the PEA, drainage 2 min into CPR, ROSC, post-ROSC', async () => {
-    const p = pulsus();
-    const r = await runCard(ID, [CPR, DRAIN, STOP], 1080, p.listen);
-    const loss = first(r.rows, (s) => !s.pulse);
-    const drain = r.pressed[1] as number;
-    const rosc = first(r.rows, (s) => s.pulse, drain);
-    bands('S2 happy', {
-      refused: r.refused.length,
-      hrAt60: near(r.rows, 60).hr ?? Number.NaN, sysAt60: near(r.rows, 60).sys ?? Number.NaN, diaAt60: near(r.rows, 60).dia ?? Number.NaN,
-      cvpAt60: near(r.rows, 60).cvp ?? Number.NaN, etco2At60: near(r.rows, 60).etco2 ?? Number.NaN,
-      pulsusMean: p.mean(), pulsusMax: p.max(),
-      deterioratingS: entered(r, 'deteriorating'), hrAtDeteriorating: near(r.rows, entered(r, 'deteriorating')).hr ?? Number.NaN,
-      cvpAtDeteriorating: near(r.rows, entered(r, 'deteriorating')).cvp ?? Number.NaN,
-      pulseLossS: loss?.t ?? Number.NaN, peaStateS: entered(r, 'pea'), pea: loss && !/^vf|asystole/.test(near(r.rows, loss.t + 3).rhythm) ? 1 : 0,
-      drainS: drain, roscAfterDrainS: (rosc?.t ?? Number.NaN) - drain,
-      sysPlus60: near(r.rows, (rosc?.t ?? 0) + 60).sys ?? Number.NaN, hrPlus60: near(r.rows, (rosc?.t ?? 0) + 60).hr ?? Number.NaN,
-      cvpPlus60: near(r.rows, (rosc?.t ?? 0) + 60).cvp ?? Number.NaN, etco2Plus60: near(r.rows, (rosc?.t ?? 0) + 60).etco2 ?? Number.NaN,
-      sysMaxAtRosc: range(r.rows, 'sys', rosc?.t ?? 0, (rosc?.t ?? 0) + 30).max,
-      pulseHeld: r.rows.some((s) => s.t > (rosc?.t ?? 1e9) && !s.pulse) ? 0 : 1,
-    }, BANDS['S2 happy']);
+  describe('happy path: CPR 10 s after the PEA, drainage 2 min into CPR, ROSC, post-ROSC', () => {
+    // One run, shared: a crash fails the band test (and the hook) instead of letting the it.fails pass silently.
+    let got: Record<string, number> = {};
+    beforeAll(async () => {
+      const p = pulsus();
+      const r = await runCard(ID, [CPR, DRAIN, STOP], 1080, p.listen);
+      const loss = first(r.rows, (s) => !s.pulse);
+      const drain = r.pressed[1] as number;
+      const rosc = first(r.rows, (s) => s.pulse, drain);
+      got = {
+        refused: r.refused.length,
+        hrAt60: near(r.rows, 60).hr ?? Number.NaN, sysAt60: near(r.rows, 60).sys ?? Number.NaN, diaAt60: near(r.rows, 60).dia ?? Number.NaN,
+        cvpAt60: near(r.rows, 60).cvp ?? Number.NaN, etco2At60: near(r.rows, 60).etco2 ?? Number.NaN,
+        pulsusMean: p.mean(), pulsusMax: p.max(),
+        deterioratingS: entered(r, 'deteriorating'), hrAtDeteriorating: near(r.rows, entered(r, 'deteriorating')).hr ?? Number.NaN,
+        cvpAtDeteriorating: near(r.rows, entered(r, 'deteriorating')).cvp ?? Number.NaN,
+        pulseLossS: loss?.t ?? Number.NaN, peaStateS: entered(r, 'pea'), pea: loss && !/^vf|asystole/.test(near(r.rows, loss.t + 3).rhythm) ? 1 : 0,
+        drainS: drain, roscAfterDrainS: (rosc?.t ?? Number.NaN) - drain,
+        sysPlus60: near(r.rows, (rosc?.t ?? 0) + 60).sys ?? Number.NaN, hrPlus60: near(r.rows, (rosc?.t ?? 0) + 60).hr ?? Number.NaN,
+        cvpPlus60: near(r.rows, (rosc?.t ?? 0) + 60).cvp ?? Number.NaN, etco2Plus60: near(r.rows, (rosc?.t ?? 0) + 60).etco2 ?? Number.NaN,
+        sysMaxAtRosc: range(r.rows, 'sys', rosc?.t ?? 0, (rosc?.t ?? 0) + 30).max,
+        pulseHeld: r.rows.some((s) => s.t > (rosc?.t ?? 1e9) && !s.pulse) ? 0 : 1,
+      };
+    }, 900_000); // the describe's own timeout
+    it('every timing and number in its band', () => {
+      bands('S2 happy', got, BANDS['S2 happy']);
+    });
+    it.fails('sysMaxAtRosc 194.9–204.9 mmHg, the physiology alone (191.07 + 8.9 from the coronary reading) — measured 210.8: +10.9 is the arterial detector missing feet under compressions over a beating heart (research/41 row 50)', () => {
+      bands('S2 happy, physiology alone', got, BANDS['S2 happy, physiology alone']);
+    });
   });
 
   it('with epinephrine 1 mg 5 s after the drainage', async () => {

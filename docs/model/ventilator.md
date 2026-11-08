@@ -187,6 +187,7 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
 | bronchospasm 1 at 20 min | at 30 min PaCO2 59.2 vs 39.6, VT 238 vs 476 | — | MIS-SPECIFIED ([audit row 110](../../docs/validation/target-audit/30-target-audit.md#row-110)) | match the link's vcFlow/pause to the engine's Ti (the file's own V.1 TODO), then keep 3 / 3 / 2 % / 10 % | [`link-parity.test.ts`](../../packages/ventilator/test/link-parity.test.ts) |
+| RR 10 → 20: MAP falls > 15 mmHg with the auto-PEEP [FIT: no source found; brief 87] (the auto-PEEP papers give the direction, not the size) | −12.5 | brief 87 | not audited | — | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
 | ARDS moderate PEEP 5 → 15 (FiO2 0.6): SpO2 rises ≥ 5 over 1–4 min (recruitment), falls again within 60 s of PEEP 5 | +2.0 / 0.0 | — | MIS-SPECIFIED ([audit row 111](../../docs/validation/target-audit/30-target-audit.md#row-111)) | re-specify on shunt/PaO2: venous admixture −15–30 % (or SpO2 +1.5–3 from 95 % at FiO2 0.6) by 5–15 min of PEEP 15; SpO2 falls back within 5 min of PEEP 5; keep CO falls | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
 | FiO2 0.4: SpO2 rises ≥ 2 | SpO2 98 → 98, SaO2 98.7 → 99.1 | — | MIS-SPECIFIED ([audit row 112](../../docs/validation/target-audit/30-target-audit.md#row-112)) | drop the SpO2 band at FiO2 0.4 (keep the passing shunt/PCWP check), or assert PaO2/FiO2 +30–50 % at ≥ 10 min in a profile with P/F < 200 | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
 | room air (FiO2 0.21): SpO2 rises ≥ 2 | SpO2 94.0 → 95.0, SaO2 94.9 → 95.5 | — | MIS-SPECIFIED ([audit row 113](../../docs/validation/target-audit/30-target-audit.md#row-113)) | for shunt 0.15 → 0.10 on air: SaO2 +1–2 points; or re-base on a sicker profile (shunt ≥ 0.20) and assert P/F +30–50 % at ≥ 10 min | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
@@ -204,9 +205,10 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 | [`fx1-frame-port.test.ts`](../../packages/ventilator/test/fx1-frame-port.test.ts) | 0 | 0 |
 | [`link-core.test.ts`](../../packages/ventilator/test/link-core.test.ts) | 0 | 0 |
 | [`link-parity.test.ts`](../../packages/ventilator/test/link-parity.test.ts) | 1 | 0 |
-| [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) | 3 | 0 |
+| [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) | 4 | 0 |
 | [`link-r36.test.ts`](../../packages/ventilator/test/link-r36.test.ts) | 0 | 0 |
 | [`link-refused-probe.test.ts`](../../packages/ventilator/test/link-refused-probe.test.ts) | 0 | 0 |
+| [`link-relink.test.ts`](../../packages/ventilator/test/link-relink.test.ts) | 0 | 0 |
 | [`link-restore.test.ts`](../../packages/ventilator/test/link-restore.test.ts) | 0 | 0 |
 | [`lung-input.test.ts`](../../packages/ventilator/test/lung-input.test.ts) | 0 | 0 |
 | [`mechanics.test.ts`](../../packages/ventilator/test/mechanics.test.ts) | 0 | 0 |

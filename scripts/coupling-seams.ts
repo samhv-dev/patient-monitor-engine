@@ -28,6 +28,7 @@ import { dirname, join, posix, resolve } from 'node:path';
 import type * as TS from 'typescript';
 import { extract, sourceFiles } from './model-docs.ts';
 import { MODULES, moduleOfSource } from './model-modules.ts';
+import { COUPLINGS, UNREGISTERED } from '../packages/engine-core/src/couplings/index.ts';
 
 const ts: typeof TS = createRequire(import.meta.url)('typescript');
 
@@ -278,7 +279,9 @@ export function effectors(file: string, text: string, constsByFile: Map<string, 
 }
 
 // ---------- the census ----------
-export interface Census { seams: Seam[]; effectors: Effector[]; constants: { module: string; exported: number; inEffector: number }[] }
+/** `registry`: seams a coupling-registry row carries (packages/engine-core/src/couplings/, piece R1) and the length of the
+ *  committed unregistered list (scripts/couplings.ts keeps it: it may shrink and never grow), printed on the page. */
+export interface Census { seams: Seam[]; effectors: Effector[]; constants: { module: string; exported: number; inEffector: number }[]; registry: { carried: number; unregistered: readonly string[] } }
 
 export function census(root: string): Census {
   const read = (f: string) => readFileSync(join(root, f), 'utf8');
@@ -301,7 +304,9 @@ export function census(root: string): Census {
       return { module: m.id, exported: mine.size, inEffector: used.size };
     })
     .filter((c) => c.exported > 0);
-  return { seams, effectors: effs, constants };
+  const carried = new Set(COUPLINGS.flatMap((r) => [...r.from, r.to, ...(r.blockedBy ? [r.blockedBy] : [])].flatMap((x) => x.seams ?? [])));
+  const registry = { carried: seams.filter((s) => carried.has(`${s.module} ${s.kind} ${s.field}`)).length, unregistered: UNREGISTERED };
+  return { seams, effectors: effs, constants, registry };
 }
 
 const KINDS: SeamKind[] = ['ctx', 'ext', 'endo-write', 'bus-read'];
@@ -324,6 +329,9 @@ export function renderCensus(c: Census): string {
     '',
     `Seams (de-duplicated on module, kind and field): ${c.seams.length}; sites: ${c.seams.reduce((a, s) => a + s.sites, 0)}.`,
     '',
+    `Carried by a row of the coupling registry (\`packages/engine-core/src/couplings/\`): ${c.registry.carried}; unregistered: ${c.registry.unregistered.length}`,
+    '(the list in `packages/engine-core/src/couplings/unregistered.ts`, which may shrink and never grow: a new seam needs a row).',
+    '',
     `| Module | ${KINDS.join(' | ')} | All |`, `|---|${KINDS.map(() => '---:').join('|')}|---:|`,
     ...mods.map((m) => `| ${m} | ${KINDS.map((k) => n(m, k)).join(' | ')} | ${n(m, undefined)} |`),
     `| **All** | ${KINDS.map((k) => n(undefined, k)).join(' | ')} | ${c.seams.length} |`,
@@ -343,6 +351,12 @@ export function renderCensus(c: Census): string {
     '',
     '| Where | Assigned | Operator | Factors |', '|---|---|---|---:|',
     ...rank(c.effectors.filter((e) => e.op === 'product')).map(row),
+    '',
+    `## Unregistered seams (${c.registry.unregistered.length})`,
+    '',
+    'The seams no coupling-registry row carries yet (piece R2 registers the rest); the list may shrink and never grow.',
+    '',
+    ...c.registry.unregistered.map((k) => `- \`${cell(k)}\``),
     '',
     '## Seams',
     '',

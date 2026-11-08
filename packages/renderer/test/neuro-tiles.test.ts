@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import type { EngineEvent, Measured } from '@pme/engine-core';
 import { resolveSkin } from '@pme/skins';
 import { DeviceUI } from '../src/device-ui.ts';
-import { formatBfa, formatNmt, modulePresent } from '../src/numerics-neuro.ts';
+import { bfaReading, formatBfa, formatNmt, modulePresent } from '../src/numerics-neuro.ts';
 
 const m = (value: number | null, t: number, flag: Measured['flag'] = value === null ? 'invalid' : 'valid'): Measured => ({ value, flag, at: t });
 const meas = (t: number, values: Record<string, Measured>): EngineEvent => ({ type: 'measurement', t, values }) as EngineEvent;
@@ -82,5 +82,47 @@ describe('DeviceUI draws the NMT and BFA tiles (philips-like, saadat-like)', () 
     expect([...(ui.tiles.querySelectorAll('.pme-stile[data-param="BFA"] [data-part] .pl') as NodeListOf<HTMLElement>)].map((e) => e.textContent)).toEqual(['BFI%', 'BS%', 'SQI%', 'EMG%']);
     expect([...(ui.tiles.querySelectorAll('.pme-stile[data-param="BFA"] [data-part] .pv') as NodeListOf<HTMLElement>)].map((e) => e.textContent)).toEqual(['38', '2', '', '']);
     ui.destroy();
+  });
+});
+
+// EEG E6 (plan §7 E6; Q3): while an EEG device publishes, the BFA tile shows the chosen device's index and suppression
+// ratio — the generic reader's SEF and SR — and today's di/sr otherwise. The mapping is here, in the formatter, never in
+// a skin's JSON; the Saadat module's SQI% and EMG% stay blank (the generic reader computes neither).
+describe('BFA from the EEG device (E6)', () => {
+  it('the generic device: SEF (one decimal) under the label SEF, its SR on the sub-line; the depth index otherwise', () => {
+    expect(formatBfa({ sef: m(18.46, 10), eegSr: m(0, 10) }, 'SR', '---')).toEqual({ main: '18.5', sub: 'SR 0', label: 'SEF' });
+    expect(formatBfa({ di: m(45, 5), sr: m(0, 5) }, 'SR', '---')).toEqual({ main: '45', sub: 'SR 0' });
+    expect(formatBfa({ sef: m(null, 10), eegSr: m(null, 10) }, 'BS%', '---')).toEqual({ main: '---', sub: 'BS% ---', label: 'SEF' }); // invalid (diathermy)
+    expect(formatBfa({ sef: m(12.04, 10, 'questionable'), eegSr: m(40, 10, 'questionable') }, 'SR', '---')).toEqual({ main: '12.0', sub: 'SR 40', label: 'SEF' });
+  });
+  it('the EEG device wins while it publishes, even beside the depth monitor; once it is stale (5 s behind) the depth index returns', () => {
+    const both = { di: m(45, 100), sr: m(1, 100), sef: m(14, 100), eegSr: m(3, 100) };
+    expect(bfaReading(both).label).toBe('SEF');
+    expect(formatBfa(both, 'SR', '---').sub).toBe('SR 3');
+    const stale = { di: m(45, 100), sr: m(1, 100), sef: m(14, 94), eegSr: m(3, 94) };
+    expect(bfaReading(stale).label).toBeUndefined();
+    expect(formatBfa(stale, 'SR', '---')).toEqual({ main: '45', sub: 'SR 1' });
+  });
+  it('the module is present while the EEG device publishes (5 s)', () => {
+    expect(modulePresent('BFA', { sef: m(14, 100), eegSr: m(0, 100) }, 104)).toBe(true);
+    expect(modulePresent('BFA', { sef: m(14, 100), eegSr: m(0, 100) }, 106)).toBe(false);
+  });
+  it('philips-like draws SEF and SR; saadat-like relabels its first part SEF, BS% is the device SR, SQI% and EMG% stay blank', () => {
+    const wave = document.createElement('div');
+    const p = new DeviceUI(document, wave, resolveSkin('philips-like'));
+    p.onEvent(meas(61, { sef: m(18.46, 61), mf: m(9, 61), eegSr: m(0, 61), eegImp: m(2, 61) }));
+    p.paint(61);
+    const pt = p.tiles.querySelector('.pme-stile[data-param="BFA"]') as HTMLElement;
+    expect(pt.style.display).toBe('');
+    expect(pt.querySelector('[data-pme="v"]')?.textContent).toBe('18.5');
+    expect(pt.querySelector('[data-pme="s"]')?.textContent).toBe('SR 0');
+    expect(pt.textContent).toContain('SEF');
+    p.destroy();
+    const s = new DeviceUI(document, document.createElement('div'), resolveSkin('saadat-like'));
+    s.onEvent(meas(61, { sef: m(7.5, 61), mf: m(2, 61), eegSr: m(64, 61), eegImp: m(2, 61) }));
+    s.paint(61);
+    expect([...(s.tiles.querySelectorAll('.pme-stile[data-param="BFA"] [data-part] .pl') as NodeListOf<HTMLElement>)].map((e) => e.textContent)).toEqual(['SEF', 'BS%', 'SQI%', 'EMG%']);
+    expect([...(s.tiles.querySelectorAll('.pme-stile[data-param="BFA"] [data-part] .pv') as NodeListOf<HTMLElement>)].map((e) => e.textContent)).toEqual(['7.5', '64', '', '']);
+    s.destroy();
   });
 });

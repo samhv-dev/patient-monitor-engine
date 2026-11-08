@@ -68,6 +68,20 @@ pleth trace comes from; an embedding developer reads it for the per-tick order a
 | [`tracker.ts:14`](../../packages/engine-core/src/l2/hemo/tracker.ts#L14) | ff = measured form factor (MAP − DBP)/PP. Feeding back MAP itself would lag by R·C (≈ 2 beats) and |
 | [`pleth.ts:5`](../../packages/engine-core/src/l2/pleth/pleth.ts#L5) | Amplitude = PI × (SV_i/SV_0)^γ with γ = 1, carried in PI units so the L3 PI numeric is measured from |
 
+## Couplings
+
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 5 rows; SOURCED 0, FIT 0, ENG 0, UNTAGGED 5, ABSENT 0.
+The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
+constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
+
+| Id | From → to | Sign · form | Class | Constants | Timing, limits | Note |
+|---|---|---|---|---|---|---|
+| `pressure-waveforms.chemo.sao2` | `l1.coupled.spo2` → `hemo.circ.chemo.sao2` | + · state | UNTAGGED | — | — | The chemoreflex input: SpO2 truth / 100, written at 1 Hz. |
+| `pressure-waveforms.chemo.paco2` | `l1.coupled.etco2` → `hemo.circ.chemo.paco2` | + · term | UNTAGGED | — | — | The chemoreflex input: EtCO2 truth + 5 mmHg (inline), written at 1 Hz. |
+| `pressure-waveforms.coronary` | `hemo.circ.cor.kIsch` → `hemo.circ.ext.kIsch` | + · state | UNTAGGED | — | — | The coronary model's contractility loss handed to the control step. |
+| `pressure-waveforms.beats` | `hr.to`, `rhythm.id` → `hemo.circ.qFwd` | + · state | UNTAGGED | — | — | Each beat the rhythm engine plans at its rate triggers a mechanical activation (circOnBeat; a pulseless rhythm triggers none): output is rate × stroke volume. |
+| `pressure-waveforms.hrRequest` | `hemo.circ.hrModel` → `hr.to` | + · state | UNTAGGED | — | — | MODELED: the model HR drives the rhythm engine's rate (requestHr → a constant ramp). |
+
 ## State
 
 ### `CvpState` ([`l2/hemo/cvp.ts`](../../packages/engine-core/src/l2/hemo/cvp.ts))
@@ -323,13 +337,15 @@ Exported without a doc comment: `createCvpState`, `createLineState`, `ejectionFa
 
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
+| 1a. R→radial foot ≥ 150 ms at HR 60/90/120 | 127–148 ms | research 03 §2.1 | not audited | — | [`hemo-acceptance.test.ts`](../../packages/engine-core/test/engine/hemo-acceptance.test.ts) |
+| 1b. pleth foot ≥ 200 ms after R at HR 60/90/120 | 190–210 ms at HR 120 | research 03 §2.1 | not audited | — | [`hemo-acceptance.test.ts`](../../packages/engine-core/test/engine/hemo-acceptance.test.ts) |
 | 5c. post-PVC potentiation: the next beat SBP is +8–15 mmHg on average over isolated PVCs | −10.9 | — | MIS-SPECIFIED ([audit row 50](../../docs/validation/target-audit/30-target-audit.md#row-50)) | normal heart: post-PVC pulse-pressure ratio 1.0-1.2 (SBP change -5 to +5 mmHg); HFrEF profile: ratio >= 1.3 | [`hemo-acceptance.test.ts`](../../packages/engine-core/test/engine/hemo-acceptance.test.ts) |
 
 ## Tests
 
 | File | Expected failures | Skipped |
 |---|---|---|
-| [`engine/hemo-acceptance.test.ts`](../../packages/engine-core/test/engine/hemo-acceptance.test.ts) | 1 | 0 |
+| [`engine/hemo-acceptance.test.ts`](../../packages/engine-core/test/engine/hemo-acceptance.test.ts) | 3 | 0 |
 | [`engine/hemo-engine.test.ts`](../../packages/engine-core/test/engine/hemo-engine.test.ts) | 0 | 0 |
 | [`engine/hemo-longrun.test.ts`](../../packages/engine-core/test/engine/hemo-longrun.test.ts) | 0 | 0 |
 | [`engine/hemo-nibp-arrest.test.ts`](../../packages/engine-core/test/engine/hemo-nibp-arrest.test.ts) | 0 | 0 |
