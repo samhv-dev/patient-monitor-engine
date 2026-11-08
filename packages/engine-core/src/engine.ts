@@ -269,7 +269,7 @@ function startRate(id: RhythmId, opts: RhythmOpts): number {
  *  2. The breath driver: spontaneous breathing swings the pleural pressure from −4 to ≈ −7 mmHg (mean ≈ −5), which
  *     raises venous return, and the MANUAL CVP tracker holds the breath-AVERAGED right-atrial pressure, so it fills by
  *     a further ≈ 130 mL to lift the inspiratory dips (that residual 86 against 79 mL).
- *  3. MODELED: the same breathing, and the baroreflex settling at its own point (81.2 mL at rest: SV₀; 70.8 mL on IPPV).
+ *  3. MODELED: the same breathing, and the baroreflex settling at its own point (81.5 mL at rest: SV₀; 70.8 mL on IPPV).
  * The same fault — the trackers starting from a circulation that is not the instructor's patient and taking ≈ 40–60 s
  * to reach it — is behind the MANUAL PEEP 0 < PEEP 5 stroke volume (84.0 against 85.5 mL): a ventilator started at
  * t = 0 runs while the trackers are still converging. Under PEEP 5 the pressure tracker kept running to 38 s (LV Emax
@@ -287,17 +287,18 @@ function startRate(id: RhythmId, opts: RhythmOpts): number {
  * REST_SEED, so it is deterministic and cached per resting patient and mode, and it runs ONCE, when the engine is
  * created — never inside a step, whatever the time scale. The run steps only the three pipelines that set a resting
  * stroke volume (`restAdvance`: the rhythm engine, the breath driver, the haemodynamics), tick by tick as the engine
- * does; it reproduces the whole engine's resting value exactly (88.90 / 81.29 mL, MANUAL / MODELED, at a 60 s MODELED
- * settle) at ≈ 60 % of its cost. The resting patient carries no sensors (their transducers are not physiology: SV₀ is
- * the same with or without them) and MODELED settles REST_SETTLE_MODELED_S, so a run is ≈ 0.1–0.2 s in Node and
- * Chromium; the whole engine's 80 s took 0.23–0.29 s and, on the CI runner, delayed a case's monitor by 1–2 s.
- * A restored snapshot carries its own SV₀. [ENG: measurement; REST_AVG_S, five spontaneous breaths at the default
+ * does; it reproduces the whole engine's resting value exactly (88.90 / 81.29 mL, MANUAL / MODELED, measured with a
+ * 20-s mean after a 60-s MODELED settle) at ≈ 60 % of its cost. The resting patient carries no sensors (their transducers are not physiology: SV₀ is
+ * the same with or without them) and MODELED settles REST_SETTLE_MODELED_S, so a run is ≈ 0.03–0.17 s in Node and
+ * Chromium (SV₀ 88.59 / 81.45 mL); the whole engine's 80 s took 0.23–0.29 s and, on the CI runner, delayed a case's monitor by 1–2 s.
+ * A restored snapshot carries its own SV₀. [ENG: measurement; REST_AVG_S, two spontaneous breaths at the default
  * 15/min; REST_SEED, the engine's default seed; REST_SETTLE_MODELED_S, the measured settling]
  */
-export const REST_AVG_S = 20;
+export const REST_AVG_S = 8;
 export const REST_SEED = 1;
-/** MODELED has no tracker to wait for: its resting SV is within ± 0.5 % (the breath-to-breath spread) from 16 s on. */
-export const REST_SETTLE_MODELED_S = 20;
+/** MODELED has no tracker to wait for: its resting SV is within ± 0.5 % (the breath-to-breath spread) from 8 s on
+ * (8-s means 81.0, 81.9, 81.8, 81.5, 81.3, 81.8 mL from 8 to 56 s, seed 1). */
+export const REST_SETTLE_MODELED_S = 8;
 const restSvCache = new Map<string, number>();
 
 /** The resting patient whose settled stroke volume is SV₀ (see REST_AVG_S). */
