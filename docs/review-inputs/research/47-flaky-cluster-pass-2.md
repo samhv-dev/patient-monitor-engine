@@ -68,3 +68,20 @@ failed about 4 in 10 of main's runs on tests that have no mechanism, so the gate
 one-off sightings. What would move it: the next sighting of each with the diagnostics now in place (#324's press
 diagnostic, this PR's sim-line diagnostic, WebKit's stderr), and a decision whether a test seen once in 30 runs is a
 mechanism to find before the gate or a finding the gate records.
+
+## This PR's own CI runs
+
+- **42425121022 (head 82a7e206, `DEBUG=pw:browser` on):** every e2e job passed. The fit tests all passed on their first
+  attempt: `teach2-fit-panes:21`, and `time-control:31` on Chromium. One `unit (rest)` failure: `model-docs.test.ts`,
+  because the new test file was not yet listed in `docs/model` (regenerated in the next commit). One WebKit crash,
+  `mobile-learner:232`, with nothing about it on WebKit's stderr (above).
+- **42427744198 (head 60b83801): all jobs pass.** `teach2-fit-panes:21` ran PEA 1.4 / 1.6 min and asystole 2.0 / 2.0 min
+  (both cases, CI WebKit). `time-control:31` on Chromium passed first try in 39.0 s. Retry-only passes:
+  - crash class: `reload-keeps-case:191`, `saadat-instructor-tiles:143`;
+  - quarantine: `vent-embed:34` (awRR 15 where 14);
+  - **new, not crash**: `restart-keeps-case:19` (WebKit): the v2 header's title was "" where "Healthy induction" was
+    expected, on the first attempt at 29.4 s; the retry passed in 6.7 s. It was not seen on main in the 30 runs and it is in
+    a file this PR does not touch, so it is a finding.
+- Local, after the overnight load dropped (load average 6): with the fix the link tests (`link-relink`, `link-restore`,
+  `ports`, `fx1-frame-port`) pass 13/13; `link-relink.test.ts` against main's `vent-driver.ts` fails ("a clock from
+  the new link: expected 50 to be greater than 50").
