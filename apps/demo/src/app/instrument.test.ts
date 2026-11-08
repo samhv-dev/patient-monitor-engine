@@ -2,7 +2,7 @@
 // window wears the room's defibrillator model's own look (its skin's defibrillator block is the model's spec), whatever
 // the monitor style; with no model chosen it wears the monitor style (its engine then holds the host's own spec).
 import { describe, expect, it } from 'vitest';
-import { defibReadout, defibSkin } from './instrument.ts';
+import { defibReadout, defibSkin, defibWords } from './instrument.ts';
 import { DEFIB_CHOICES, MONITORS } from './site.ts';
 
 describe('R5: the defibrillator window\'s skin', () => {
@@ -23,5 +23,13 @@ describe('R5: the defibrillator window\'s readout', () => {
     expect(defibReadout(st(120, 'idle'))).toBe('120 J');
     expect(defibReadout(st(120, 'charging'))).toBe('120 J CHARGING');
     expect(defibReadout(st(360, 'ready', true))).toBe('360 J READY SYNC');
+  });
+});
+
+describe('R5d: a refused press in the device\'s words', () => {
+  it('the engine\'s "not charged" reads "Not charged"; another reason as the host wrote it, capitalised', () => {
+    expect(defibWords('defibrillator is not charged')).toBe('Not charged');
+    expect(defibWords('the simulation is fast-forwarding; try again when it ends')).toBe('The simulation is fast-forwarding; try again when it ends');
+    expect(defibWords(undefined)).toBe('Not taken');
   });
 });

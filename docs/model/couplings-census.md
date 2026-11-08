@@ -6,7 +6,10 @@
 The engine's cross-module coupling seams and its effector products and sums, read from the code
 (docs/plans/mechanism-tree.md, piece R0). Places are file#function; the line of each row is in the `--json` output.
 
-Seams (de-duplicated on module, kind and field): 137; sites: 176.
+Seams (de-duplicated on module, kind and field): 154; sites: 195.
+
+Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`): 57; unregistered: 97
+(the list in `packages/engine-core/src/couplings/unregistered.ts`, which may shrink and never grow: a new seam needs a row).
 
 | Module | ctx | ext | endo-write | bus-read | All |
 |---|---:|---:|---:|---:|---:|
@@ -15,12 +18,12 @@ Seams (de-duplicated on module, kind and field): 137; sites: 176.
 | endocrine-thermal | 4 | 7 | 9 | 4 | 24 |
 | engine-runtime | 0 | 6 | 0 | 6 | 12 |
 | lungs | 0 | 3 | 0 | 0 | 3 |
-| neuro | 8 | 0 | 0 | 16 | 24 |
+| neuro | 23 | 0 | 0 | 18 | 41 |
 | organs | 10 | 2 | 0 | 4 | 16 |
 | pharmacology | 18 | 0 | 0 | 0 | 18 |
 | pressure-waveforms | 11 | 1 | 0 | 0 | 12 |
 | rhythms-ecg | 7 | 0 | 0 | 0 | 7 |
-| **All** | 75 | 22 | 9 | 31 | 137 |
+| **All** | 90 | 22 | 9 | 33 | 154 |
 
 ## Exported numeric constants inside the module's own effector expressions
 
@@ -35,15 +38,15 @@ Seams (de-duplicated on module, kind and field): 137; sites: 176.
 | blood | 68 | 28 |
 | organs | 138 | 63 |
 | endocrine-thermal | 167 | 68 |
-| neuro | 76 | 42 |
-| pharmacology | 25 | 10 |
+| neuro | 187 | 91 |
+| pharmacology | 29 | 14 |
 | monitor | 46 | 5 |
 | alarms | 17 | 0 |
-| defib-pacer | 23 | 4 |
+| defib-pacer | 25 | 6 |
 | engine-runtime | 9 | 2 |
-| **All** | 1007 | 369 |
+| **All** | 1124 | 424 |
 
-## The ten effector expressions with the most factors (of 1488)
+## The ten effector expressions with the most factors (of 1601)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -58,7 +61,7 @@ Seams (de-duplicated on module, kind and field): 137; sites: 176.
 | `l2/circ/model.ts#control` | `p.pvrL` | product | 7 |
 | `l2/circ/model.ts#control` | `p.pvrR` | product | 7 |
 
-## The ten products with the most factors (of 819 products)
+## The ten products with the most factors (of 879 products)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -72,6 +75,108 @@ Seams (de-duplicated on module, kind and field): 137; sites: 176.
 | `l2/blood/pipeline.ts#advanceBlood` | `pf` | product | 6 |
 | `l2/blood/solutes.ts#stepSolutes` | `jk` | product | 5 |
 | `l2/brain/params.ts#(top level)` | `OSM_WATER_ML_PER_MOSM` | product | 5 |
+
+## Unregistered seams (97)
+
+The seams no coupling-registry row carries yet (piece R2 registers the rest); the list may shrink and never grow.
+
+- `rhythms-ecg ctx rhythmCtx.pacerLowerAt`
+- `rhythms-ecg ctx rhythmCtx.mods`
+- `rhythms-ecg ctx rhythmCtx.rng`
+- `rhythms-ecg ctx rhythmCtx.hrv`
+- `rhythms-ecg ctx rhythmCtx.breath`
+- `rhythms-ecg ctx ecgGenInputs.breath`
+- `pharmacology ctx pkCtx.vaLpm`
+- `pharmacology ctx pkCtx.frcL`
+- `pharmacology ctx pkCtx.tempC`
+- `pharmacology ctx pkCtx.hepFlow`
+- `pharmacology ctx pkCtx.hepFn`
+- `pharmacology ctx pkCtx.hepFnTemp`
+- `pharmacology ctx pkCtx.renal`
+- `pharmacology ctx pkCtx.betaBlockC`
+- `pharmacology ctx pkCtx.betaOcc`
+- `pharmacology ctx pkCtx.betaNonSel`
+- `pharmacology ctx pkCtx.endoCat`
+- `pharmacology ctx rhythmRequest.id`
+- `pharmacology ctx rhythmRequest.pinned`
+- `pharmacology ctx rhythmRequest.pulseless`
+- `neuro ctx stepNeuroTo.tempC`
+- `neuro ctx stepNeuroTo.mechanical`
+- `neuro ctx stepNeuroTo.neuroglycopenia`
+- `neuro ctx stepNeuroTo.macF`
+- `neuro ctx stepNeuroTo.spontRr`
+- `neuro ctx stepNeuroTo.mgMmolL`
+- `neuro ctx stepNeuroTo.iCaMmolL`
+- `neuro ctx stepNeuroTo.kMmolL`
+- `breathing ctx advanceResp.l1`
+- `breathing ctx advanceResp.rhythm`
+- `breathing ctx advanceResp.hr`
+- `breathing ctx advanceResp.blood`
+- `breathing ctx advanceResp.hco3`
+- `breathing ctx advanceResp.bronchoDil`
+- `breathing ctx advanceResp.hpvInhibit`
+- `breathing ctx advanceResp.anaphEndo`
+- `breathing ctx advanceResp.histamine`
+- `blood ctx advanceBlood.resp`
+- `blood ctx advanceBlood.l1`
+- `blood ctx advanceBlood.pk`
+- `blood ctx advanceBlood.neuroProfile`
+- `endocrine-thermal ctx endoCtx.l1`
+- `endocrine-thermal ctx endoCtx.ps`
+- `endocrine-thermal endo-write writeBlood: bloodOf(ps)?.core.endoKShift`
+- `endocrine-thermal endo-write writeBlood: bloodOf(ps)?.core.endoGlucoseMgDl`
+- `endocrine-thermal endo-write writeBlood: bloodOf(ps)?.core.endoKetoMmolMin`
+- `endocrine-thermal endo-write writeBlood: bloodOf(ps)?.core.endoKetoUtilPerMin`
+- `endocrine-thermal endo-write writeBlood: bloodOf(ps)?.core.fl.kfMult`
+- `endocrine-thermal endo-write writeBlood: bloodOf(ps)?.core.fl.sigma`
+- `endocrine-thermal endo-write writeCond: ps.cond`
+- `endocrine-thermal endo-write writeLung: rs.lungSpecs`
+- `organs ctx organsCtx.l1`
+- `organs ctx organsCtx.resp`
+- `organs ctx organsCtx.rhythm`
+- `organs ctx organsCtx.blood`
+- `organs ctx organsCtx.pk`
+- `organs ctx organsCtx.neuro`
+- `organs ctx organsCtx.endo`
+- `organs ctx organsCtx.hrNow`
+- `organs ctx organsCtx.setHr`
+- `pressure-waveforms ctx advanceHemo.rng`
+- `pressure-waveforms ctx advanceHemo.phi`
+- `pressure-waveforms ctx advanceHemo.u`
+- `pressure-waveforms ctx advanceHemo.requestRhythm`
+- `pressure-waveforms ctx advanceHemo.requestEctopy`
+- `pressure-waveforms ctx advanceHemo.ph`
+- `engine-runtime ext avNodeBlock`
+- `engine-runtime ext tempC`
+- `engine-runtime bus-read bus.metabolic.dantroleneE`
+- `engine-runtime bus-read bus.agents`
+- `engine-runtime bus-read bus.avNodeBlock`
+- `engine-runtime bus-read bus.airway.bronchodilation`
+- `engine-runtime bus-read bus.hpvInhibit`
+- `blood bus-read bus.doses`
+- `endocrine-thermal bus-read bus.agents`
+- `endocrine-thermal bus-read bus.airway.bronchodilation`
+- `endocrine-thermal bus-read bus.doses`
+- `endocrine-thermal bus-read bus.metabolic.dantroleneE`
+- `neuro bus-read bus.agents`
+- `neuro bus-read bus.antagonist.opioid`
+- `neuro bus-read bus.cns.opioidCeRemiEq`
+- `neuro bus-read bus.cns.propCe`
+- `neuro bus-read bus.cns.benzoCeMidazEq`
+- `neuro bus-read bus.cns.ketamineCe`
+- `neuro bus-read bus.volatiles`
+- `neuro bus-read bus.cns.hypPropEq`
+- `neuro bus-read bus.cns.opioidCeFentEq`
+- `neuro bus-read bus.cns.opioidVentFentEq`
+- `neuro bus-read bus.cns.dissoc`
+- `neuro bus-read bus.cns.antinocAdd`
+- `neuro bus-read bus.cns.benzoShare`
+- `neuro bus-read bus.nmb.achGain`
+- `neuro bus-read bus.doses`
+- `organs bus-read bus.cns`
+- `organs bus-read bus.volatiles`
+- `organs bus-read bus.agents`
+- `organs bus-read bus.doses`
 
 ## Seams
 
@@ -161,6 +266,21 @@ Seams (de-duplicated on module, kind and field): 137; sites: 176.
 | pressure-waveforms | ctx | `advanceHemo.requestRhythm` | `engine.ts#advance` | 1 |
 | pressure-waveforms | ctx | `advanceHemo.requestEctopy` | `engine.ts#advance` | 1 |
 | pressure-waveforms | ctx | `advanceHemo.ph` | `engine.ts#advance` | 1 |
+| neuro | ctx | `eegCtx.bus` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.ageY` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.stimulus` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.antinoc` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.t1` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.tube` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.cbfRel` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.hb` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.sao2` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.pao2` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.tempC` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.macF` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.art` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.mainsHz` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.ecgMvAt` | `engine.ts#eegCtx` | 1 |
 | engine-runtime | ext | `drug` | `engine.ts#advance` | 1 |
 | engine-runtime | ext | `betaBlockAdd` | `engine.ts#advance` | 1 |
 | engine-runtime | ext | `betaAgonistU` | `engine.ts#advance` | 1 |
@@ -190,6 +310,10 @@ Seams (de-duplicated on module, kind and field): 137; sites: 176.
 | engine-runtime | bus-read | `bus.agents` | `engine.ts#advance` | 1 |
 | engine-runtime | bus-read | `bus.avNodeBlock` | `engine.ts#advance` | 1 |
 | blood | bus-read | `bus.doses` | `l2/blood/pipeline.ts#advanceBlood` | 2 |
+| neuro | bus-read | `bus.cns.hypByClass` | `l2/eeg/state.ts#cortexInputsOf` | 1 |
+| neuro | bus-read | `bus.volatiles` | `l2/eeg/state.ts#mac` | 2 |
+| neuro | bus-read | `bus.cns.alpha2Eq` | `l2/eeg/state.ts#cortexInputsOf` | 1 |
+| neuro | bus-read | `bus.cns.opioidCeFentEq` | `l2/eeg/state.ts#cortexInputsOf` | 3 |
 | endocrine-thermal | bus-read | `bus.agents` | `l2/endo/adapters.ts#readEndoInputs` | 1 |
 | endocrine-thermal | bus-read | `bus.airway.bronchodilation` | `l2/endo/adapters.ts#readEndoInputs` | 1 |
 | endocrine-thermal | bus-read | `bus.doses` | `l2/endo/adapters.ts#observeDoses` | 1 |
@@ -200,10 +324,8 @@ Seams (de-duplicated on module, kind and field): 137; sites: 176.
 | neuro | bus-read | `bus.cns.propCe` | `l2/neuro/bus.ts#readBus` | 1 |
 | neuro | bus-read | `bus.cns.benzoCeMidazEq` | `l2/neuro/bus.ts#readBus` | 1 |
 | neuro | bus-read | `bus.cns.ketamineCe` | `l2/neuro/bus.ts#readBus` | 1 |
-| neuro | bus-read | `bus.volatiles` | `l2/neuro/bus.ts#readBus` | 1 |
 | neuro | bus-read | `bus.cns.hypPropEq` | `l2/neuro/bus.ts#readBus` | 2 |
 | neuro | bus-read | `bus.cns.hypVentPropEq` | `l2/neuro/bus.ts#readBus` | 2 |
-| neuro | bus-read | `bus.cns.opioidCeFentEq` | `l2/neuro/bus.ts#readBus` | 2 |
 | neuro | bus-read | `bus.cns.opioidVentFentEq` | `l2/neuro/bus.ts#readBus` | 4 |
 | neuro | bus-read | `bus.cns.dissoc` | `l2/neuro/bus.ts#readBus` | 2 |
 | neuro | bus-read | `bus.cns.antinocAdd` | `l2/neuro/bus.ts#readBus` | 2 |
