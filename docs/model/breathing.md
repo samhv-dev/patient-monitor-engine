@@ -51,8 +51,8 @@ reads it for the tick order, the ventilator link and the events it emits.
 | Where | Relation |
 |---|---|
 | [`driver.ts:17`](../../packages/engine-core/src/l2/resp/driver.ts#L17) | passive expiration τ = R·C (10 cmH2O/L/s × 0.05 L/cmH2O) |
-| [`driver.ts:78`](../../packages/engine-core/src/l2/resp/driver.ts#L78) | the respiratory system's equation of motion (Pvent + Pmus = VT/C_RS + Raw·V' + PEEP + PEEPi; Miller 10e ch. 12 p. |
-| [`driver.ts:421`](../../packages/engine-core/src/l2/resp/driver.ts#L421) | The haemodynamic breath signal for the haemodynamics' respFactor/cvpAt (seam): u(t) = 0.5 + swing, zero-mean over a |
+| [`driver.ts:77`](../../packages/engine-core/src/l2/resp/driver.ts#L77) | the respiratory system's equation of motion (Pvent + Pmus = VT/C_RS + Raw·V' + PEEP + PEEPi; Miller 10e ch. 12 p. |
+| [`driver.ts:442`](../../packages/engine-core/src/l2/resp/driver.ts#L442) | The haemodynamic breath signal for the haemodynamics' respFactor/cvpAt (seam): u(t) = 0.5 + swing, zero-mean over a |
 | [`pipeline.ts:422`](../../packages/engine-core/src/l2/resp/pipeline.ts#L422) | `mhO2Demand`: VO2 demand = basal + M_mh). Its CO2 is the ACHIEVED part (× the blood model's delivered share |
 | [`pipeline.ts:477`](../../packages/engine-core/src/l2/resp/pipeline.ts#L477) | The ratio is to THIS patient's normal output (the module's own convention, Q = coRatio × CI_LPM_PER_KG × effKg), |
 
@@ -145,6 +145,10 @@ reads it for the tick order, the ventilator link and the events it emits.
 | `EXP_TAU_S` | `0.5` | s | — | passive expiration τ = R·C (10 cmH2O/L/s × 0.05 L/cmH2O) |
 | `VCV_PMAX_DEFAULT` | `40` | — | [ENG: device] | The volume-control pressure limit (cmH2O) when the command sets none — the anaesthesia-ventilator factory default Pmax/Plimit 40 (Dräger Primus, GE Aisys operator manuals) [ENG: device]; above it the breath is pressure-limited. |
 | `NEVER` | `1e12` | — | — | JSON-safe 'never' (snapshots travel as JSON: Infinity would become null). |
+| `LINK_PMUS_RISE_S` | `0.3` | s | [ENG: device; the ventilator package's own DEFAULT_CONFIG pmusRise 0.30, pmusHold 0.05, pmusDecay 0.40 s, responsiveness 80 — pinned equal by packages/ventilator/test/effort-parity.test.ts] | The ONE effort waveform of the ventilator link (brief 93). The cockpit (packages/ventilator) shapes the same patient's Pmus as a smoothstep rise, a hold and a half-cosine decay (its `pmusValue`, ported bit-exact from the v1.9 prototype and checked on its ten reference scenarios), at an amplitude of pmus × (0.4 + 0.6 × responsiveness), responsiveness 80. The engine's own ventilator uses exactly that shape and gain, so a patient handed between the two ventilators makes the same effort on both — an engine-only waveform (it was a half-sine over the whole neural Ti) put a second, unvalidated expression of the patient's muscle pressure on the internal ventilator and the link's peak-pressure parity failed (17.2 on the cockpit, 11.6 after the hand-over). [ENG: device; the ventilator package's own DEFAULT_CONFIG pmusRise 0.30, pmusHold 0.05, pmusDecay 0.40 s, responsiveness 80 — pinned equal by packages/ventilator/test/effort-parity.test.ts] |
+| `LINK_PMUS_HOLD_S` | `0.05` | s | — | — |
+| `LINK_PMUS_DECAY_S` | `0.4` | s | — | — |
+| `LINK_PMUS_GAIN` | `0.4 + 0.6 * 0.8` | — | — | — |
 
 ### [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts)
 
@@ -162,6 +166,7 @@ reads it for the tick order, the ventilator link and the events it emits.
 | Function | File | Doc |
 |---|---|---|
 | `ownEffortPmus` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | The patient's own inspiratory muscle pressure at `t` during a mechanical breath, cmH2O (≥ 0; |
+| `linkEffortShape` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | The waveform's fraction of its peak `u` s after the effort's start: |
 | `alveolarFraction` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | The mixed-expirate share of a breath at the sampling site (Fowler 1948 single-breath washout; |
 | `cycleAt` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | The cycle containing t (last one starting at or before t), or undefined. |
 | `lastCycleBefore` | [`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts) | The last cycle that started at or before t (running or finished). |
@@ -220,6 +225,7 @@ Exported without a doc comment: `createDriver`, `preoxActive`, `frameAt`, `creat
 | RS8 laryngospasm after propofol 1 mg/kg on air: pleural swing ≤ −20 cmH2O with pulsus ≥ 10 mmHg | −30.7 cmH2O | — | UNSUPPORTED ([audit row 86](../../docs/validation/target-audit/30-target-audit.md#row-86)) | pulsus ≥ 5 mmHg and rising with effort [ENG]; keep ≥ 10 only for swings ≤ −30 to −40 cmH2O, and read it before SaO2 < 60 % (owner ruling) | [`resp-suite.test.ts`](../../packages/engine-core/test/engine/resp-suite.test.ts) |
 | RS10 a 30 s disconnection restores MAP to ≥ 85 % of the RR-10 value | 29.7 of 84.5 | — | UNSUPPORTED ([audit row 87](../../docs/validation/target-audit/30-target-audit.md#row-87)) | MAP rises clearly (e.g. ≥ 20 % above its hyperinflated value) within 30–60 s of disconnection while PEEPtot falls toward the set PEEP [ENG; owner ruling], with a guard that the patient is not arrested beforehand | [`resp-suite.test.ts`](../../packages/engine-core/test/engine/resp-suite.test.ts) |
 | RS13 massive PE (one command), awake then ventilated: RR ≥ 25 and PaCO2 ≤ 35 awake; EtCO2 falls ≥ 10 with Pa–Et ≥ 15 ventilated; mPAP 30–45 | awake 28.2 / 33.1 | — | RIGHT ([audit row 88](../../docs/validation/target-audit/30-target-audit.md#row-88)) | keep (optionally mPAP 30–40 at φ 0.6) | [`resp-suite.test.ts`](../../packages/engine-core/test/engine/resp-suite.test.ts) |
+| healthy breaths untouched: delivered VT within 5 mL of the set 500 | 494.3 | — | TOO NARROW ([audit row 190](../../docs/validation/target-audit/30-target-audit.md#row-190)) | delivered VT 465-535 mL (± 7 %), or relative: healthy VT with default Pmax ≥ 0.99 × VT with Pmax 80 | [`resp-vcv-pmax.test.ts`](../../packages/engine-core/test/engine/resp-vcv-pmax.test.ts) |
 
 ## Tests
 
@@ -250,7 +256,7 @@ Exported without a doc comment: `createDriver`, `preoxActive`, `frameAt`, `creat
 | [`engine/resp-rocuronium-apnoea.test.ts`](../../packages/engine-core/test/engine/resp-rocuronium-apnoea.test.ts) | 0 | 0 |
 | [`engine/resp-suite.test.ts`](../../packages/engine-core/test/engine/resp-suite.test.ts) | 9 | 0 |
 | [`engine/resp-trigger.test.ts`](../../packages/engine-core/test/engine/resp-trigger.test.ts) | 0 | 0 |
-| [`engine/resp-vcv-pmax.test.ts`](../../packages/engine-core/test/engine/resp-vcv-pmax.test.ts) | 0 | 0 |
+| [`engine/resp-vcv-pmax.test.ts`](../../packages/engine-core/test/engine/resp-vcv-pmax.test.ts) | 1 | 0 |
 | [`engine/vent-infant.test.ts`](../../packages/engine-core/test/engine/vent-infant.test.ts) | 0 | 0 |
 | [`l2/resp/blood-view.test.ts`](../../packages/engine-core/test/l2/resp/blood-view.test.ts) | 0 | 0 |
 | [`l2/resp/capno-deadspace.test.ts`](../../packages/engine-core/test/l2/resp/capno-deadspace.test.ts) | 0 | 0 |

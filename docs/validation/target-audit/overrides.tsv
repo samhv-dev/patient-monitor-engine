@@ -10,4 +10,3 @@
 41	packages/engine-core/test/engine/clinical-suite.test.ts	S4b severe tamponade, propofol 1 mg/kg: MAP < 55 within 3 min and CO −25 % (measured MAP 50.5, CO −21 % when propofol removes the tonic sympathetic share — 58.9 / −17 % when it does not; 57 / −15 % on the prototype)
 78	packages/engine-core/test/engine/resp-inspired-co2.test.ts	RS14: FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10 over control — measured PaCO2 +6.7 / EtCO2 +5.99994 with the alveolar washout (+6.1 without it; +5.98 when propofol also does not remove the tonic sympathetic share)
 89	packages/engine-core/test/engine/resp-suite.test.ts	RS14 rebreathing FiCO2 8 for 20 min at fixed VCV: PaCO2 and EtCO2 +6–10 — measured +6.7 / EtCO2 +5.99994 with the alveolar washout (+6.1 without it; +5.98 when propofol also does not remove the tonic sympathetic share)
-190	packages/engine-core/test/engine/resp-vcv-pmax.test.ts	healthy breaths untouched: delivered VT within 5 mL of the set 500 — measured 494.3 (band ±5)

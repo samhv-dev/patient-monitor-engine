@@ -5,7 +5,7 @@
 // The same rig hyperventilated (RR 16) has no effort at all: the drive, not the ventilator, decides. SLOW (≈ 30 s wall).
 import { describe, expect, it } from 'vitest';
 import { respPleural, TRIGGER_CMH2O } from '../../src/l2/resp/pipeline.ts';
-import { cycleAt, ownEffortPmus } from '../../src/l2/resp/driver.ts';
+import { cycleAt, LINK_PMUS_RISE_S, ownEffortPmus } from '../../src/l2/resp/driver.ts';
 import { rig6, runTo, send, st6 } from '../helpers/resp-modeled-rig.ts';
 
 async function course(rr: number, untilS: number, each?: (e: ReturnType<typeof rig6>, u: number) => void) {
@@ -30,12 +30,12 @@ describe('respiratory effort under controlled ventilation (brief 93)', { timeout
     const { e, efforts } = await course(9, 1800, (eng, u) => {
       const d = st6(eng).resp.driver;
       const c = cycleAt(d, u);
-      if (!c || !c.mech || c.pmusMech === undefined || c.pmusAt === undefined || c.pmusTi === undefined || !(c.pmusMech > 0)) return;
+      if (!c || !c.mech || c.pmusMech === undefined || c.pmusAt === undefined || !(c.pmusMech > 0)) return;
       if (c.cleft > 0) cleftSeen = true;
       if (u > 300 && c.pmusMech >= TRIGGER_CMH2O && triggeredAt < 0 && c.cleft === 0) triggeredAt = u; // after the block's onset (the awake, unparalysed patient triggers before it)
       // the effort's peak against the passive expiration 0.2 s before it starts
-      const peak = c.t0 + c.pmusAt;
-      const before = peak - c.pmusTi / 2 - 0.2;
+      const peak = c.t0 + c.pmusAt + LINK_PMUS_RISE_S; // the waveform reaches its peak at the end of its rise
+      const before = c.t0 + c.pmusAt - 0.2; // the passive expiration just before the effort starts
       if (!swingSeen && c.cleft > 0 && before > c.t0 + c.ti + 0.3) {
         eng.advanceTo(Math.max(eng.now().simT, before));
         const p0 = respPleural(st6(eng).resp, before);

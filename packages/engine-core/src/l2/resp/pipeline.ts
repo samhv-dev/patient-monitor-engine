@@ -46,7 +46,7 @@ import { actualVolumes, closingCapacity, pattern, predictedVolumes, type Actual,
 import { LUNG_CONDITION_IDS, type LungClinicalEvent, type LungConditionSpec } from '../../types-lung.ts';
 import {
   alveolarVentilation, breathSignal, chestVolume, checkDrive, createDriver, cycleAt, frameAt, nominalRate,
-  onVentFrame, ownEffortPmus, planCycles, preoxActive, pruneCycles, replan, SPONT_TI_FRACTION, VCV_PMAX_DEFAULT, alveolarFraction, type DriverCtx, type DriverState,
+  LINK_PMUS_GAIN, onVentFrame, ownEffortPmus, planCycles, preoxActive, pruneCycles, replan, VCV_PMAX_DEFAULT, alveolarFraction, type DriverCtx, type DriverState,
 } from './driver.ts';
 
 export const RESP_CHANNELS = ['co2', 'resp'] as const satisfies readonly ChannelId[];
@@ -196,13 +196,13 @@ export function createRespState(profile: PatientProfile | undefined, l1: L1State
  */
 export const TRIGGER_CMH2O = 2;
 /** The patient's own inspiratory effort under the machine (MODELED; brief 93), or undefined (none evaluated, MANUAL). */
-export function ownEffort(rs: RespState, l1: L1State, neuro?: NeuroResp): { muscle: number; pmus: number; ti: number; triggered: boolean } | undefined {
+export function ownEffort(rs: RespState, l1: L1State, neuro?: NeuroResp): { muscle: number; pmus: number; triggered: boolean } | undefined {
   if (l1.mode !== 'modeled' || (rs.driver.source !== 'ventilator' && rs.driver.source !== 'external') || rs.spont?.muscle === undefined) return undefined;
   const muscle = rs.spont.muscle;
   const cap = P_MAX_CMH2O * (neuro?.pMaxMult ?? 1) * rs.lung.lp.pMax * rs.spont.fatigue; // The force the muscle can make
-  const pmus = Math.min(cap, PMUS_REST_CMH2O * muscle);
+  const pmus = Math.min(cap, LINK_PMUS_GAIN * PMUS_REST_CMH2O * muscle); // the peak, at the link's own gain (driver.ts)
   const rr = rs.spont.effortRr ?? rs.spont.rr; // the efforts' own rhythm (a weak diaphragm efforts without a breath)
-  return { muscle, pmus, ti: rr > 0 ? (SPONT_TI_FRACTION * 60) / rr : 1, triggered: rs.driver.source === 'ventilator' && rr > 0 && pmus >= TRIGGER_CMH2O };
+  return { muscle, pmus, triggered: rs.driver.source === 'ventilator' && rr > 0 && pmus >= TRIGGER_CMH2O };
 }
 function driverCtx(rs: RespState, l1: L1State, t: number, neuro?: NeuroResp): DriverCtx {
   const n = neuro; // The instructor's rr/vt × the drug/NMB multipliers; apnoea → rr 0
@@ -218,7 +218,7 @@ function driverCtx(rs: RespState, l1: L1State, t: number, neuro?: NeuroResp): Dr
     vdSeriesMl: physicalDeadSpace(rs.pat, rs.driver.source !== 'spontaneous' && rs.driver.source !== 'none'), // ONE dead space — the physical VD, not a second expression
     // Assist-control and bucking — the MODELED drive runs on the ventilator too (gasStep)
     triggerRr: own?.triggered ? ((rs.spont as SpontDrive).effortRr ?? (rs.spont as SpontDrive).rr) : 0,
-    ...(own ? { effortPmus: own.pmus, effortTi: own.ti, triggered: own.triggered } : {}),
+    ...(own ? { effortPmus: own.pmus, triggered: own.triggered } : {}),
     buck: l1.mode === 'modeled' && rs.driver.source === 'ventilator' && !!n && n.pMaxMult > 0.5 && n.loc < 0.5 && n.pain > 0.2,
   };
 }

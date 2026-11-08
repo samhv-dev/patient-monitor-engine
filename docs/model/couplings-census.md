@@ -31,7 +31,7 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | pressure-waveforms | 60 | 26 |
 | lungs | 66 | 22 |
 | gas-exchange | 44 | 12 |
-| breathing | 16 | 5 |
+| breathing | 20 | 8 |
 | blood | 68 | 28 |
 | organs | 138 | 63 |
 | endocrine-thermal | 167 | 68 |
@@ -41,9 +41,9 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | alarms | 17 | 0 |
 | defib-pacer | 23 | 4 |
 | engine-runtime | 6 | 2 |
-| **All** | 1007 | 371 |
+| **All** | 1011 | 374 |
 
-## The ten effector expressions with the most factors (of 1498)
+## The ten effector expressions with the most factors (of 1504)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -58,7 +58,7 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | `l2/circ/model.ts#control` | `p.pvrL` | product | 7 |
 | `l2/circ/model.ts#control` | `p.pvrR` | product | 7 |
 
-## The ten products with the most factors (of 826 products)
+## The ten products with the most factors (of 830 products)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|

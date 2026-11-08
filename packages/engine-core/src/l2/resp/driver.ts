@@ -63,13 +63,12 @@ export interface Cycle {
   /** The patient coughs against this mechanical breath (bucking). */
   buck?: boolean;
   /**
-   * The patient's own inspiratory muscle pressure during a mechanical breath (cmH2O, brief 93): a half-sine of
-   * duration `pmusTi` centred `pmusAt` s after the cycle's start — at the breath's start when the effort triggered it,
-   * mid-exhalation when it did not (where it also notches the capnogram: the curare cleft).
+   * The patient's own inspiratory muscle pressure during a mechanical breath (cmH2O, brief 93): its PEAK, shaped by
+   * `ownEffortPmus` (the link's one effort waveform), starting `pmusAt` s after the cycle's start — at the breath's start
+   * when the effort triggered it, centred mid-exhalation when it did not (where it also notches the capnogram).
    */
   pmusMech?: number;
   pmusAt?: number;
-  pmusTi?: number;
 }
 
 /**
@@ -82,9 +81,34 @@ export interface Cycle {
 export function ownEffortPmus(d: DriverState, t: number): number {
   const c = cycleAt(d, t);
   if (!c || !c.mech || !((c.pmusMech ?? 0) > 0)) return 0;
-  const ti = c.pmusTi ?? 1;
-  const u = t - c.t0 - ((c.pmusAt ?? 0) - ti / 2);
-  return u >= 0 && u < ti ? (c.pmusMech as number) * Math.sin((Math.PI * u) / ti) : 0;
+  return (c.pmusMech as number) * linkEffortShape(t - c.t0 - (c.pmusAt ?? 0));
+}
+
+/**
+ * The ONE effort waveform of the ventilator link (brief 93). The cockpit (packages/ventilator) shapes the same patient's
+ * Pmus as a smoothstep rise, a hold and a half-cosine decay (its `pmusValue`, ported bit-exact from the v1.9 prototype and
+ * checked on its ten reference scenarios), at an amplitude of pmus × (0.4 + 0.6 × responsiveness), responsiveness 80. The
+ * engine's own ventilator uses exactly that shape and gain, so a patient handed between the two ventilators makes the
+ * same effort on both — an engine-only waveform (it was a half-sine over the whole neural Ti) put a second, unvalidated
+ * expression of the patient's muscle pressure on the internal ventilator and the link's peak-pressure parity failed
+ * (17.2 on the cockpit, 11.6 after the hand-over). [ENG: device; the ventilator package's own DEFAULT_CONFIG pmusRise
+ * 0.30, pmusHold 0.05, pmusDecay 0.40 s, responsiveness 80 — pinned equal by packages/ventilator/test/effort-parity.test.ts]
+ */
+export const LINK_PMUS_RISE_S = 0.3;
+export const LINK_PMUS_HOLD_S = 0.05;
+export const LINK_PMUS_DECAY_S = 0.4;
+export const LINK_PMUS_GAIN = 0.4 + 0.6 * 0.8;
+export const LINK_PMUS_TOTAL_S = LINK_PMUS_RISE_S + LINK_PMUS_HOLD_S + LINK_PMUS_DECAY_S;
+/** The waveform's fraction of its peak `u` s after the effort's start: smoothstep rise, hold, half-cosine decay. */
+export function linkEffortShape(u: number): number {
+  if (u < 0 || u >= LINK_PMUS_TOTAL_S) return 0;
+  if (u < LINK_PMUS_RISE_S) {
+    const x = u / LINK_PMUS_RISE_S;
+    return x * x * (3 - 2 * x);
+  }
+  if (u < LINK_PMUS_RISE_S + LINK_PMUS_HOLD_S) return 1;
+  const x = (u - LINK_PMUS_RISE_S - LINK_PMUS_HOLD_S) / LINK_PMUS_DECAY_S;
+  return 1 - (0.5 - 0.5 * Math.cos(Math.PI * x));
 }
 
 /**
@@ -149,10 +173,8 @@ export interface DriverCtx {
   triggerRr?: number;
   /** The patient bucks (light, unparalysed, stimulated). */
   buck?: boolean;
-  /** The patient's own inspiratory muscle pressure on the ventilator, cmH2O (MODELED; brief 93); absent/0 = none. */
+  /** The PEAK of the patient's own inspiratory muscle pressure on the ventilator, cmH2O (MODELED; brief 93). */
   effortPmus?: number;
-  /** Its inspiratory time, s (the patient's own rhythm). */
-  effortTi?: number;
   /** The effort reached the trigger: it starts the breath instead of falling mid-exhalation. */
   triggered?: boolean;
 }
@@ -228,8 +250,7 @@ function makeCycle(d: DriverState, ctx: DriverCtx, t: number): { c: Cycle | null
   if (mech && src === 'ventilator' && ctx.buck) c.buck = true;
   if (mech && src === 'ventilator' && (ctx.effortPmus ?? 0) > 0) { // The patient's own effort under the machine (brief 93)
     c.pmusMech = ctx.effortPmus as number;
-    c.pmusTi = Math.max(0.3, ctx.effortTi ?? 1);
-    c.pmusAt = ctx.triggered ? c.pmusTi / 2 : c.ti + 0.55 * c.te;
+    c.pmusAt = ctx.triggered ? 0 : c.ti + 0.55 * c.te - LINK_PMUS_TOTAL_S / 2; // its start; centred mid-exhalation
   }
   if (ctx.vdSeriesMl !== undefined) {
     const f = alveolarFraction(c.vt, ctx.vdSeriesMl);

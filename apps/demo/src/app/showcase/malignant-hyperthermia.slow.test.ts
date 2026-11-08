@@ -64,11 +64,12 @@ import { alarmAt, bands, entered, first, near, pvcEvents, range, runCard, type A
  * trigger (−2 cmH2O, the ventilator package's own `presTrig` default) instead of triggering on any committed rate, so an
  * effort too weak to open the trigger no longer adds a breath. On this card that costs the untreated MH run its
  * triggered hyperventilation, and ONE recorded value moved with that cause and is re-recorded at the same width:
- * etco2Max 106 → 117 (centre), measured 120, and etco2At20 91 → 113 (centre), measured 113. Not tuned; no clinical band touched (etco2At20, the core-rise rate and
+ * etco2Max 106 → 117 (centre), measured 120, etco2At20 91 → 113 and phAt20 7.04 → 6.96 (the same hypercapnia, as its
+ * own respiratory acidosis: pH 6.96 at 20 min). hrAt20 126, kAt20 6.1, kMax 6.9 and every timing held. Not tuned; no clinical band touched (etco2At20, the core-rise rate and
  * every timing held). The "Changed only" row's `monitor:awRR:up` is the same cause and is recorded below. */
 const BANDS = {
   'S1 untreated': { refused: [0, 0], earlyMin: [3.84, 5.22], hrMax: [185, 195], kMax: [6.1, 6.7], lossMin: [39.91, 48.79], tcAtLoss: [42.14, 42.54], kAtLoss: [6.1, 6.7], vf: [1, 1], arrestStateMin: [40.23, 49.17] },
-  'S1 untreated E131': { refused: [0, 0], earlyMin: [3.41, 4.79], etco2Max: [114, 120], etco2At20: [110, 116], hrAt20: [119, 129], phAt20: [7.01, 7.07], kAt20: [5.8, 6.4], lactateAt20: [4.7, 5.7], mapAt20: [79, 89], tcAt20: [37.08, 37.48], hrMax: [148, 158], hrMaxInRuns: [155, 165], kMax: [6.5, 7.1], tcAt51: [38.54, 38.94], pulseLost: [0, 0] },
+  'S1 untreated E131': { refused: [0, 0], earlyMin: [3.41, 4.79], etco2Max: [114, 120], etco2At20: [110, 116], hrAt20: [119, 129], phAt20: [6.93, 6.99], kAt20: [5.8, 6.4], lactateAt20: [4.7, 5.7], mapAt20: [79, 89], tcAt20: [37.08, 37.48], hrMax: [148, 158], hrMaxInRuns: [155, 165], kMax: [6.5, 7.1], tcAt51: [38.54, 38.94], pulseLost: [0, 0] },
   // E133 (ventricular ectopy from K, catecholamines, temperature, acidaemia and ischaemia). Measured first on the
   // pre-E131 course (to the hyperthermic VF at +44.5 min): first PVC +13.1 min, 256 events before the VF (36 runs).
   // Re-measured on the E131 course (rebase onto 5024f071, 2026-10-27; same tolerances, the reason: E131 moved the

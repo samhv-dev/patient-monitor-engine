@@ -862,6 +862,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
+| airway not secured: the first ineffective 31–41 mL breath comes before the pulse loss | none at all | — | not audited | — | [`healthy-induction.slow.test.ts`](../../apps/demo/src/app/showcase/healthy-induction.slow.test.ts) |
 | untreated: VF from hyperthermia | no VF in 51 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
 | treated late (the run-sheet path): crisis 1 min into the established crisis | the call comes at +46.6 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
 | sysMaxAtRosc 194.9–204.9 mmHg, the physiology alone (191.07 + 8.9 from the coronary reading) | 210.8 | — | not audited | — | [`stab-wound-tamponade.slow.test.ts`](../../apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts) |
@@ -1023,7 +1024,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/showcase/haemorrhage-anaphylaxis.slow.test.ts`](../../apps/demo/src/app/showcase/haemorrhage-anaphylaxis.slow.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/showcase/haemorrhage-v2-card.test.ts`](../../apps/demo/src/app/showcase/haemorrhage-v2-card.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/showcase/haemorrhage-v2.slow.test.ts`](../../apps/demo/src/app/showcase/haemorrhage-v2.slow.test.ts) | 0 | 0 |
-| [`apps/demo/src/app/showcase/healthy-induction.slow.test.ts`](../../apps/demo/src/app/showcase/healthy-induction.slow.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/showcase/healthy-induction.slow.test.ts`](../../apps/demo/src/app/showcase/healthy-induction.slow.test.ts) | 1 | 0 |
 | [`apps/demo/src/app/showcase/induction-after-premedication.slow.test.ts`](../../apps/demo/src/app/showcase/induction-after-premedication.slow.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/showcase/malignant-hyperthermia-v2.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia-v2.slow.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) | 2 | 0 |
