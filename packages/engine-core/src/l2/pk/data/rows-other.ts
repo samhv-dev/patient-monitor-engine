@@ -99,7 +99,7 @@ export const OTHER_ROWS: DrugRow[] = [
     maxDose: { amount: 3, perKg: true, scope: 'cumulative', src: 'M10 Table 25.6, plain' },
     doses: 'max 3 mg/kg (200 mg plain / 250 with epinephrine, M10 Table 25.6)', onset: 'as bupivacaine with a higher CV threshold', ir: '?', src: 'M10 ch. 25; LAST_THRESHOLDS', tag: 'TXT' },
   { id: 'lipidEmulsion', name: 'Lipid emulsion 20 %', cls: 'lipid', amountUnit: 'mL', pk: gammaPk(1.5, true, 60, 1800, 0.25), pd: [],
-    doses: '1.5 mL/kg over 1 min, then 0.25 mL/kg/min (ASRA 2020)', onset: 'lipid sink: free LA ↓ up to 50 % [FIT: lipid sink free local anaesthetic fall (contradicts its own Miller citation); brief research/44 X-06]; M10 p. 762: cardiac bupivacaine −11 % in 3 min', ir: '?', src: 'ASRA 2020; M10 ch. 25 p. 762', tag: 'ENG' },
+    doses: '1.5 mL/kg over 1 min, then 0.25 mL/kg/min (ASRA 2020)', onset: 'lipid sink (M10 ch. 25 p. 762): cardiac bupivacaine −11 % within 3 min, cerebral −18 % within 15 min (PBPK estimates; no significant sink in human volunteers, Litonius 2012)', ir: '?', src: 'ASRA 2020 (dose); M10 ch. 25 p. 762 (sink: LIPID_SINK_CARDIAC/CEREBRAL in pk/pipeline.ts)', tag: 'TXT' },
   // --- placeholders (panel only; no engine effect in v1) ---
   // TXA stays INERT until a coagulation model lands. Its dose log (bus.doses) is what that model will read, so the
   // row must not be removed: the fibrinolysis target will be added to THIS row.
