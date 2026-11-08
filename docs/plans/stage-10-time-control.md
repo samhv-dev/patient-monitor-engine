@@ -302,7 +302,7 @@ common (checked over the 37 files of `blocks.json`); the two plans merge in eith
 ## Owner's decisions (7 Oct 2026; all questions closed)
 
 The first pass asked eight questions (Q1–Q8); the owner answered them on 7 October (`research/00-orchestrator-rulings.md`
-"ALI'S ANSWERS", items C1–C8) and the orchestrator's brief for this review restated them. All are built in:
+"THE OWNER'S ANSWERS", items C1–C8) and the orchestrator's brief for this review restated them. All are built in:
 
 | # | Question | Decision | Where |
 |---|---|---|---|

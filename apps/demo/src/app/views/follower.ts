@@ -35,21 +35,22 @@
 //    phone HOLDS (its monitor still, "The ventilator is on the main screen") and takes a fresh snapshot when they stop.
 //    UI-A #2: only while the view is ON SCREEN — its close sends `cockpit {off: true}` and the phone follows at once.
 //    A page hidden for a while (a locked phone) also takes a fresh snapshot instead of computing the gap.
-import { createBroadcastChannelTransport, createWebSocketTransport, ViewerSync, type ManagedTransport, type RelayFrame } from '@pme/controller';
+import { createBroadcastChannelTransport, createWebSocketTransport, ViewerSync, type Instrument, type ManagedTransport, type RelayFrame, type WireMessage } from '@pme/controller';
 import { engineKey as engineVersion } from '@pme/engine-core'; // The snapshot key, version + build
 import { mountMonitor, type IbpScales, type MonitorHandle } from '@pme/renderer';
 import { briefingLayer, followBriefing } from '../briefing.ts';
 import { applySkinAlarmColours, type Shell } from '../shell.ts';
+import { defibReadout, defibSkin } from '../instrument.ts';
 import { DEFAULT_SITE, MONITORS, THEMES, type SiteProfile } from '../site.ts';
 import { button, h, pausedMark, setText } from '../ui.ts';
-import { followerStatus, phoneStyle } from './follower-status.ts';
+import { followerStatus, hostPause, phoneStyle } from './follower-status.ts';
 
 /**
  * A phone's socket is dropped and reopened when nothing (not even the relay's 10 s heartbeat) arrived for this long — a
- * phone that slept or moved to another access point often keeps a dead socket open [ENG: 1.2 heartbeats].
+ * phone that slept or moved to another access point often keeps a dead socket open [ENG: ui; 1.2 heartbeats].
  */
 const PHONE_LIVENESS_MS = 12_000;
-/** Hidden this long (a locked phone, another tab), the page starts again from a fresh snapshot [ENG]. */
+/** Hidden this long (a locked phone, another tab), the page starts again from a fresh snapshot [ENG: ui]. */
 const HIDDEN_RESYNC_MS = 2000;
 /** The styles a phone draws upright — every shipped one (measured at 375 px, both engines). */
 const UPRIGHT: ReadonlySet<string> = new Set(MONITORS.map((m) => m.id));
@@ -60,15 +61,15 @@ const PHONE_THEMES: ReadonlySet<string> = new Set(THEMES.map(([t]) => t));
  * the session's: the instructor's page answers `ask` and announces every change. Style is presentation, not the
  * patient, so it stays off the session wire (no protocol change).
  */
-type StyleMsg = { kind: 'ask' } | { kind: 'style'; skin: string; theme: string; ibp?: IbpScales };
+type StyleMsg = { kind: 'ask' } | { kind: 'style'; skin: string; theme: string; ibp?: IbpScales; defib?: string | null };
 const styleChannel = (code: string) => new BroadcastChannel(`pme-style:${code}`);
 
 /** The instructor's side: answer the learner monitor's `ask`, and announce every change. Returns a closer. */
-export function publishStyle(code: string, now: () => { skin: string; theme: string; ibp?: IbpScales }, onChange: (f: () => void) => () => void): () => void {
+export function publishStyle(code: string, now: () => { skin: string; theme: string; ibp?: IbpScales; defib?: string | null }, onChange: (f: () => void) => () => void): () => void {
   const ch = styleChannel(code);
   const send = () => {
     const s = now();
-    ch.postMessage({ kind: 'style', skin: s.skin, theme: s.theme, ...(s.ibp ? { ibp: s.ibp } : {}) } satisfies StyleMsg);
+    ch.postMessage({ kind: 'style', skin: s.skin, theme: s.theme, ...(s.ibp ? { ibp: s.ibp } : {}), ...(s.defib !== undefined ? { defib: s.defib } : {}) } satisfies StyleMsg);
   };
   ch.onmessage = (ev: MessageEvent<StyleMsg>) => {
     if (ev.data?.kind === 'ask') send();
@@ -98,12 +99,49 @@ export interface NetFollow {
   relay: string;
 }
 
-export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar: HTMLElement, net?: NetFollow): Follower {
+/** What this window shows and its device's key, said on every hello (plan room-and-instruments.md R4, §4 D1). */
+export interface FollowerInstrument {
+  show: Extract<Instrument, 'learner' | 'monitor' | 'defib'>;
+  device: string;
+}
+
+/**
+ * The transport with `show` and `device` on every hello it sends; everything else is the transport's own. The page
+ * adds them (viewer-sync.ts, which says the hello, is not changed: §4 D1).
+ */
+export function withInstrument(t: ManagedTransport, i: FollowerInstrument): ManagedTransport {
+  const send = (m: WireMessage) => t.send(m.kind === 'hello' ? { ...m, show: i.show, device: i.device } : m);
+  return new Proxy(t, {
+    get(target, key) {
+      if (key === 'send') return send;
+      const v: unknown = Reflect.get(target, key, target);
+      return typeof v === 'function' ? (v as (...a: unknown[]) => unknown).bind(target) : v;
+    },
+  });
+}
+
+/**
+ * `defib` (Room plan R5): this window is the defibrillator (`#/defib`): it wears the room's defibrillator model's look
+ * (instrument.ts defibSkin; the host's style changes its theme only), landscape, and reads out the energy and CHARGING /
+ * READY from its own engine. Its Charge and Shock come with R5d.
+ */
+export interface FollowerOptions {
+  defib?: boolean;
+}
+
+/**
+ * `o`: what this window shows and its device's key (R4: said on every hello, with "Change" under the monitor), and/or
+ * `defib` (R5). `show: 'defib'` is the defibrillator window too.
+ */
+export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar: HTMLElement, net?: NetFollow, o: Partial<FollowerInstrument> & FollowerOptions = {}): Follower {
+  const instrument: FollowerInstrument | undefined = o.show && o.device !== undefined ? { show: o.show, device: o.device } : undefined;
+  const defib = o.defib === true || o.show === 'defib';
   applySkinAlarmColours(site.skin, site.theme);
   // This window's alarm SOUND is its own (its Sound and Silence buttons); the alarms are the patient's
   // A phone held upright shows the monitor upright (tiles under the waveforms); turned sideways, the skin's own screen
   // (the whole Saadat-like screen scaled as one unit, the owner's mock-up m14 of 26 October), and it follows each turn
-  const upright = net ? matchMedia('(orientation: portrait)') : null;
+  // R4: the patient monitor (`#/monitor/wide`) stays landscape, held either way; so does the defibrillator (R5)
+  const upright = net && instrument?.show !== 'monitor' && !defib ? matchMedia('(orientation: portrait)') : null;
   const monitor = mountMonitor(shell.monitorHost, { skin: site.skin, ...(site.theme ? { theme: site.theme } : {}), role: 'viewer', worker: 'off', audioSilence: 'window', portrait: upright?.matches ?? false });
   const onTurn = () => monitor.setPortrait(upright?.matches ?? false);
   upright?.addEventListener('change', onTurn);
@@ -114,7 +152,8 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     if (fr.relay === 'error') refused = fr;
     if (fr.relay === 'peers') hostAway = !fr.hostOnline;
   };
-  const transport = net ? createWebSocketTransport({ url: net.relay, livenessMs: PHONE_LIVENESS_MS, onRelayFrame: onRelay }) : createBroadcastChannelTransport(code);
+  const link = net ? createWebSocketTransport({ url: net.relay, livenessMs: PHONE_LIVENESS_MS, onRelayFrame: onRelay }) : createBroadcastChannelTransport(code);
+  const transport = instrument ? withInstrument(link, instrument) : link;
   const status = h('span', { class: 'status-pill', role: 'status' }, `Waiting for the instructor's monitor ${code}…`);
   // On and off again, this window only
   const drawSound = () => ((sound.textContent = monitor.soundOn ? 'Sound on' : 'Sound off'), sound.setAttribute('aria-pressed', String(monitor.soundOn)), (hush.disabled = !monitor.soundOn));
@@ -130,6 +169,8 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   hush.title = "Silence this window's alarm sound";
   hush.disabled = true;
   bar.append(status, sound, hush);
+  // R4: back to the instrument picker (a link, not a control of the patient)
+  if (instrument) bar.append(h('a', { class: 'btn small follower-change', href: '#/pick' }, 'Change'));
   // Under a phone's monitor when the instructor's style has no phone layout
   const styleNote = h('p', { class: 'follower-note', hidden: true });
   if (net) bar.append(styleNote);
@@ -141,7 +182,18 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   let hold = false;
   let raf = 0;
   let offDraw = () => {}; // The pill's redraw on host messages (after the sync's own handler)
+  let offReadout = () => {}; // R5: the defibrillator readout's subscription to this window's engine
   const f: Follower = { monitor, transport, sync: null, destroy, style: { skin: site.skin, theme: site.theme } };
+  // R5: the defibrillator window's readout, from this window's own engine (its deviceStatus)
+  const readout = defib ? h('p', { class: 'defib-readout', role: 'status', 'aria-label': 'Defibrillator' }) : null;
+  if (readout) shell.stage.append(readout);
+  /** Put on a style: the defibrillator window wears the room model's look whatever the monitor style. */
+  const wear = (skin: string, theme: string) => {
+    if (skin === f.style.skin && theme === f.style.theme) return;
+    f.style = { skin, theme };
+    applySkinAlarmColours(skin, theme);
+    void monitor.setSkin(skin, theme ? { theme } : {}).then(() => f.onStyle?.(f.style));
+  };
   /** E130: the instructor's IBP lane scales on this monitor. */
   let ibpWorn = '{}';
   const wearIbp = (ibp: IbpScales | undefined) => {
@@ -153,16 +205,15 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   const style = net ? null : styleChannel(code); // Same-browser only
   if (style) style.onmessage = (ev: MessageEvent<StyleMsg>) => {
     const m = ev.data;
-    if (m?.kind === 'style') wearIbp(m.ibp);
-    if (m?.kind !== 'style' || (m.skin === f.style.skin && m.theme === f.style.theme)) return;
-    f.style = { skin: m.skin, theme: m.theme };
-    applySkinAlarmColours(m.skin, m.theme);
-    void monitor.setSkin(m.skin, m.theme ? { theme: m.theme } : {}).then(() => f.onStyle?.(f.style));
+    if (m?.kind !== 'style') return;
+    wearIbp(m.ibp);
+    wear(defib ? defibSkin(m.defib ?? null, m.skin) : m.skin, m.theme);
   };
   style?.postMessage({ kind: 'ask' } satisfies StyleMsg);
   void monitor.viewerClock().then((clock) => {
     const sync = new ViewerSync({ session: code, transport, target: clock, engineVersion });
     f.sync = sync;
+    if (readout) offReadout = clock.on((e) => void (e.type === 'deviceStatus' && setText(readout, defibReadout(e.defib))), ['deviceStatus']);
     // The pill after every host message, once the sync has taken it (subscribed after it): the 500 ms poll alone showed
     // what the phone knew during an instructor's reload for up to a poll after it was synced again (kit check 30 Oct)
     offDraw = transport.onMessage(drawStatus);
@@ -185,8 +236,9 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   // Host liveness — a running host sends at least its 1 Hz state; a paused one may be silent. Silence of more than 5 s
   // while running means the instructor's window is gone or reloading (it comes back under the same code).
   let heard = performance.now();
-  let paused = false;
+  const pause = hostPause();
   const offHost = transport.onMessage((m) => {
+    pause.onMessage(m);
     if (m.kind === 'hello' && m.role !== 'host') return;
     if (m.kind === 'command') return;
     heard = performance.now();
@@ -196,11 +248,10 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     for (const e of m.body) {
       if (e.type === 'cockpit') cockpitAt = e.off ? -Infinity : performance.now(); // `off`: the view closed (UI-A #2)
       if (e.type === 'style' && net) {
-        wearPhone(e.skin, e.theme);
+        if (defib) wear(defibSkin(e.defib ?? null, e.skin), e.theme); // landscape, the room model's look (R5)
+        else wearPhone(e.skin, e.theme);
         wearIbp(e.ibp);
       }
-      const c = e.type === 'commandApplied' ? (e.resolved as { command?: { type?: string; action?: string } } | undefined)?.command : undefined;
-      if (c?.type === 'time' && (c.action === 'pause' || c.action === 'resume')) paused = c.action === 'pause';
     }
   });
   /** The instructor's style, upright on this phone (or the default, said under the monitor). */
@@ -208,10 +259,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     const w = phoneStyle({ skin, theme }, UPRIGHT, PHONE_THEMES, DEFAULT_SITE.skin);
     styleNote.hidden = w.note === null;
     setText(styleNote, w.note ?? '');
-    if (w.skin === f.style.skin && w.theme === f.style.theme) return;
-    f.style = { skin: w.skin, theme: w.theme };
-    applySkinAlarmColours(w.skin, w.theme);
-    void monitor.setSkin(w.skin, w.theme ? { theme: w.theme } : {}).then(() => f.onStyle?.(f.style));
+    wear(w.skin, w.theme);
   }
   let opened = false; // The phone has reached the relay at least once
   const t0 = performance.now();
@@ -219,6 +267,7 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   const pausedEl = pausedMark(shell.stage); // UI review #32: the phone's monitor says PAUSED too
   function drawStatus(): void {
     const now = performance.now();
+    const paused = pause.paused;
     pausedEl.set(paused);
     const v = followerStatus({
       code, net: !!net, sync: f.sync?.status ?? 'waiting', transport: transport.status, opened, sinceStartMs: now - t0, refused, hostAway,
@@ -234,6 +283,8 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   function destroy(): void {
     upright?.removeEventListener('change', onTurn);
     offDraw();
+    offReadout();
+    readout?.remove();
     offHost();
     offOpen();
     document.removeEventListener('visibilitychange', onVisible);

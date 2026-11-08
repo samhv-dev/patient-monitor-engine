@@ -17,11 +17,11 @@ const WATER_SHUNT_IDS: readonly string[] = ['pulmOedema', 'aspiration'];
  * s·(1 − frac·B). frac = the largest reversible share of the condition's airway obstruction:
  *   bronchospasm 0.85, anaphylaxis 0.85: acute smooth-muscle spasm, near-complete reversal with β2 agonist/epinephrine
  *     and deepening with a volatile (Dewachter 2009 Anesthesiology 111:1141; Miller 10e bronchospasm management);
- *     the rest is mucosal oedema/secretions [ENG 0.85].
+ *     the rest is mucosal oedema/secretions [FIT: bronchodilator-reversible share (direction sourced); 0.85; brief research/44 X-03].
  *   asthma 0.7: acute severe asthma reverses partly within the hour (FEV1 +50–70 % of the deficit after β2 agonist;
- *     GINA 2023; Rodrigo 2002 Chest 122:160) [ENG 0.7].
+ *     GINA 2023; Rodrigo 2002 Chest 122:160) [FIT: bronchodilator-reversible share (direction sourced); 0.7; brief research/44 X-03].
  *   copd 0.2, raw only: bronchodilator response in ventilated COPD, inspiratory resistance −15–20 % (Dhand 1996 AJRCCM
- *     154:388) [ENG 0.2]; emphysema's compliance, dead space and diffusion do not reverse.
+ *     154:388) [FIT: bronchodilator-reversible share (direction sourced); 0.2; brief research/44 X-03]; emphysema's compliance, dead space and diffusion do not reverse.
  * `shark`: the condition draws the shark-fin capnogram (SHARK_TAU_II) at its equivalent bronchospasm severity (one
  * capnogram whatever command started the spasm).
  */
@@ -38,13 +38,13 @@ export const SMOOTH_MUSCLE: Readonly<Record<string, { frac: number; keys: readon
  * muscle:
  *   SEVERITY. In the near-fatal range (severity 1.0 → 1.25, reached through the airway `bronchospasm` alias) the
  *     lumen fills with mucosal oedema and mucus plugs rather than tone (extensive luminal plugging in fatal asthma:
- *     Kuyper et al. 2003 Am J Med 115:6), so the reversible share falls to (1 − REFRACT_SEV) of itself at 1.25 [ENG 0.6].
+ *     Kuyper et al. 2003 Am J Med 115:6), so the reversible share falls to (1 − REFRACT_SEV) of itself at 1.25 [FIT: bronchodilator-reversible share (direction sourced); 0.6; brief research/44 X-03].
  *   DURATION. A slow-onset attack — hours of inflammation, oedema and plugging — responds less and more slowly to a β2
  *     agonist than a sudden-onset, mostly bronchospastic one (McFadden 2003 AJRCCM 168:740; Rodrigo & Rodrigo 2000
  *     Chest 118:1547; Rodrigo, Rodrigo & Hall 2004 Chest 125:1081), so the share decays toward (1 − REFRACT_DUR_MAX) of
- *     itself with τ REFRACT_TAU_MIN [ENG 0.9 and 360 min (the 6 h slow-onset boundary); fit target: a non-responder —
+ *     itself with τ REFRACT_TAU_MIN [FIT: 0.9 and 360 min (the 6 h slow-onset boundary); fit target: a non-responder —
  *     a 12 h severe asthma improves < 15 % with a saturating β2 dose (measured −14 %) — and every fresh arm keeping
- *     ≥ 95 % of `frac` (0.963 at 15 min)].
+ *     ≥ 95 % of `frac` (0.963 at 15 min); brief research/44 X-03].
  * The age is sim time since the condition appeared plus the spec's `ageMin` (the attack's age when it was sent), so
  * status asthmaticus is one command: `lungCondition asthma 1, ageMin 720` keeps ≈ 0.7 · 0.22 ≈ 0.16 of its airway
  * obstruction reversible. This adds NO dose-response of its own — B is the drug model's; this function is the MAXIMUM
@@ -52,8 +52,8 @@ export const SMOOTH_MUSCLE: Readonly<Record<string, { frac: number; keys: readon
  */
 /** A drug-driven bronchospasm severity — histamine release (morphine, atracurium, mivacurium) and anaphylactic
  * mediators act on the SAME smooth muscle `relaxed()` relieves, so the drug's contribution is an added SEVERITY on the
- * `bronchospasm` spec, not a second state. 0.35 at full histamine [ENG; direction: M10 ch. 22 / ch. 24 (wheeze and
- * bronchospasm after a fast benzylisoquinolinium or morphine bolus), size has no source]. A plain scalable input: a
+ * `bronchospasm` spec, not a second state. 0.35 at full histamine [FIT: bronchodilator-reversible share (direction sourced); direction: M10 ch. 22 / ch. 24 (wheeze and
+ * bronchospasm after a fast benzylisoquinolinium or morphine bolus), size has no source; brief research/44 X-03]. A plain scalable input: a
  * future per-profile airway-reactivity gain (research/19) multiplies it in one place. */
 export const HIST_SPASM = 0.35;
 export const REFRACT_SEV = 0.6;

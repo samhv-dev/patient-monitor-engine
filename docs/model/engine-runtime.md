@@ -55,7 +55,7 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `TICK_MS` | `20` | ms | brief §3.3; [ENG] | Fixed-step simulation clock (brief §3.3; "Fix Your Timestep", Gaffer on Games). simT = tick × 20 ms. Frames feed wall time through an accumulator: acc += min(wallΔ, 250 ms) × timeScale; while (acc ≥ 20 ms) tick() The 250 ms clamp is [ENG]. timeScale is limited to 0.25–8 (brief §3.3 said 0.25–4; ×8 is the owner's request for the 22 Oct demonstration: at ×8 a 60 fps frame runs 6.7 ticks). |
+| `TICK_MS` | `20` | ms | brief §3.3; [ENG: numerics] | Fixed-step simulation clock (brief §3.3; "Fix Your Timestep", Gaffer on Games). simT = tick × 20 ms. Frames feed wall time through an accumulator: acc += min(wallΔ, 250 ms) × timeScale; while (acc ≥ 20 ms) tick() The 250 ms clamp is [ENG: numerics]. timeScale is limited to 0.25–8 (brief §3.3 said 0.25–4; ×8 is the owner's request for the 22 Oct demonstration: at ×8 a 60 fps frame runs 6.7 ticks). |
 | `MAX_FRAME_MS` | `250` | ms | — | — |
 | `MIN_TIME_SCALE` | `0.25` | — | — | — |
 | `MAX_TIME_SCALE` | `8` | — | — | — |
@@ -81,7 +81,7 @@ No exported `…State` type in this module.
 | `fft` | [`util/dsp.ts`](../../packages/engine-core/src/util/dsp.ts) | Small DSP helpers shared by engine tests and the template-extraction scripts (textbook definitions: |
 | `welch` | [`util/dsp.ts`](../../packages/engine-core/src/util/dsp.ts) | Welch PSD (Hann window, 50% overlap, per-segment mean removed). |
 | `dominantHz` | [`util/dsp.ts`](../../packages/engine-core/src/util/dsp.ts) | Frequency of the maximum of the 5-bin-smoothed Welch PSD within [lo, hi] Hz. |
-| `organisation` | [`util/dsp.ts`](../../packages/engine-core/src/util/dsp.ts) | Fraction of [lo, hi] Hz power within ±halfWidth Hz of the dominant frequency (organisation index) [ENG]. |
+| `organisation` | [`util/dsp.ts`](../../packages/engine-core/src/util/dsp.ts) | Fraction of [lo, hi] Hz power within ±halfWidth Hz of the dominant frequency (organisation index) [ENG: |
 | `lowFraction` | [`util/dsp.ts`](../../packages/engine-core/src/util/dsp.ts) | Fraction of [lo, hi] Hz power below `below` Hz. |
 | `hash53` | [`vendor/cyrb53.ts`](../../packages/engine-core/src/vendor/cyrb53.ts) | NOTICE-ID: N-006 cyrb53 (c) 2018 bryc (github.com/bryc), https://github.com/bryc/code/blob/master/jshash/experimental/cyrb53.js Upstream header: |
 

@@ -1,6 +1,6 @@
 // Gaussian wave kernels on a 3-axis VCG (brief §4.1 "Generator"; research 03 §1.3):
 //   ECG_axis(t) = Σ_events Σ_waves a_w,axis · exp(−(t − t_event − τ_w)² / (2σ_w²))
-// The T wave is two half-Gaussians (rising σ, falling σ) [03 §1.3, ENG].
+// The T wave is two half-Gaussians (rising σ, falling σ) [03 §1.3] [ENG: numerics; half-Gaussian kernel form].
 // Clean-room: written from the equations in the papers/brief, no ECGSYN code consulted.
 
 /** Flat kernel layout, 7 numbers per kernel: [tau, sigmaRise, sigmaFall, ax, ay, az, wave]. Seconds and mV. */
@@ -56,7 +56,7 @@ export function addEventAt(ev: EcgEvent, s: number, acc: Float64Array): void {
   }
 }
 
-/** QRS span of a kernel list: from the earliest Q/R/S/delta τ − 2.5σ to the latest τ + 2.5σ, in ms [ENG]. */
+/** QRS span of a kernel list: from the earliest Q/R/S/delta τ − 2.5σ to the latest τ + 2.5σ, in ms [ENG: numerics]. */
 export function qrsSpanMs(k: readonly number[]): number {
   let lo = Infinity;
   let hi = -Infinity;

@@ -47,6 +47,24 @@ export async function to(page: Page, s: number): Promise<void> {
   await page.waitForTimeout(400); // the skip's end reaches the panel; ACTION repaints (≤ 2 Hz)
 }
 
+/** Fast-forward in steps of `stepS` sim seconds until the scenario is in `phase`, or `withinS` sim seconds have passed;
+ *  returns the phase it stopped in. A phase that comes from the physiology is found this way. `stepS` must be shorter
+ *  than the phase lasts, so a step cannot pass over it: the caller states the bound. The host paces every fast-forward to
+ *  FF_WALL_MS (10 s of wall time, however long the span; host-session.ts), so the step is as long as the phase allows:
+ *  30-s steps cost 10.3–11.8 s each (PR #324: 98 measured, both browsers), and 29 of them to the haemorrhage card's
+ *  Arrest: asystole ran into the 360-s limit (CI run 42279079387).
+ *  Not ×8 (PR #324's runToPhase, brief 90): on CI's Linux WebKit the web process crashes ("Target page, context or
+ *  browser has been closed", the crash class of F-FX1-1), and in the 30 main runs of 6–7 Nov the three fit files crashed
+ *  0.015 times per test-minute while they searched in fast-forward steps and 0.091 with the ×8 run (13 runs; 18 of their
+ *  22 crashed attempts inside it; fit-panes:21 and fit-strip:17 failed all three attempts), while the other files stayed
+ *  at 0.04 before and after. Behind the fast-forward's panel the page draws little; at ×8 it draws a minute of the case
+ *  every 7.5 s of wall time. */
+export async function ffToPhase(page: Page, phase: string, withinS: number, stepS: number): Promise<string | null> {
+  const until = (await app(page)).simT + withinS;
+  for (let a = await app(page); a.stateId !== phase && a.simT < until; a = await app(page)) await to(page, Math.min(until, Math.floor(a.simT) + stepS));
+  return (await app(page)).stateId;
+}
+
 /** Open the /2 MH card on Instructor v2 at 1440 × 900. */
 export async function openMhV2(page: Page, open: (hash: string) => Promise<void>): Promise<void> {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -76,7 +94,13 @@ export async function pressPath(page: Page, go: (i: number) => boolean | Promise
     await expect(row, `${title} in ACTION at ${t} s (phase ${(await app(page)).stateId})`).toBeVisible();
     const at = (await app(page)).simT;
     await row.click();
-    await expect(row).toHaveAttribute('data-look', 'taken', { timeout: 10_000 });
+    // a press not taken in 10 s (CI WebKit, 6 Nov: Premedicate ×2, Start surgery ×3, the row "ready", "press to give";
+    // mechanism not found): say whether the host refused it, what the toasts said and where the clock was
+    await expect(row).toHaveAttribute('data-look', 'taken', { timeout: 10_000 }).catch(async (err: Error) => {
+      const a = await app(page);
+      const toasts = await page.locator('.toast').allTextContents();
+      throw new Error(`${title} pressed at ${at.toFixed(1)} s not taken; now ${a.simT.toFixed(1)} s, ff ${a.ff}, phase ${a.stateId}; refused ${JSON.stringify(a.refused.slice(-3))}; toasts ${JSON.stringify(toasts)}\n${err.message}`);
+    });
     if (opened && (await fold.count()) && (await fold.evaluate((d) => (d as HTMLDetailsElement).open))) await fold.locator('summary').click();
     pressed.push([at, title]);
   }

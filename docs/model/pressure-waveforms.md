@@ -61,10 +61,10 @@ pleth trace comes from; an embedding developer reads it for the per-tick order a
 | [`ejection.ts:3`](../../packages/engine-core/src/l2/hemo/ejection.ts#L3) | T_b = 20 ms (the incisura). Qpk is chosen so that the NET ejected volume ∫Q = SV. The skew p (params |
 | [`ejection.ts:6`](../../packages/engine-core/src/l2/hemo/ejection.ts#L6) | CPR: Q_cpr = SV_cpr·(π/(2T_c))·sin(πt/T_c) (κ = 1, no backflow) plus a thoracic pressure pulse. |
 | [`line.ts:2`](../../packages/engine-core/src/l2/hemo/line.ts#L2) | H(s) = ωn² / (s² + 2ζωn·s + ωn²)  (integrated with RK4 at 2 ms, input linearly interpolated inside a |
-| [`params.ts:12`](../../packages/engine-core/src/l2/hemo/params.ts#L12) | /mmHg, C(P) = C0·e^(−k(P−P0)) [ENG] |
-| [`params.ts:34`](../../packages/engine-core/src/l2/hemo/params.ts#L34) | delay + transfer/transducer/12 Hz display group delays. Prototype: notch − (R + PEP + LVET) = 87 / 89 / 83 ms |
-| [`params.ts:90`](../../packages/engine-core/src/l2/hemo/params.ts#L90) | f_fill(RR) = 1 − exp(−max(0, RR − t_sys)/τ_fill), t_sys = LVET + 0.08 s, τ_fill 0.18 s, normalised to 1 at |
-| [`params.ts:148`](../../packages/engine-core/src/l2/hemo/params.ts#L148) | Per-beat respiratory SV factor (research 03 §2.5): SV_i = SV_0·(1 − g_hyp·u(t_i − t_lag)) + in-phase |
+| [`params.ts:13`](../../packages/engine-core/src/l2/hemo/params.ts#L13) | /mmHg, C(P) = C0·e^(−k(P−P0)) [FIT: Windkessel C(P) or PA impedance parameter without a source; brief research/44 L2-54] |
+| [`params.ts:35`](../../packages/engine-core/src/l2/hemo/params.ts#L35) | delay + transfer/transducer/12 Hz display group delays. Prototype: notch − (R + PEP + LVET) = 87 / 89 / 83 ms |
+| [`params.ts:91`](../../packages/engine-core/src/l2/hemo/params.ts#L91) | f_fill(RR) = 1 − exp(−max(0, RR − t_sys)/τ_fill), t_sys = LVET + 0.08 s, τ_fill 0.18 s, normalised to 1 at |
+| [`params.ts:149`](../../packages/engine-core/src/l2/hemo/params.ts#L149) | Per-beat respiratory SV factor (research 03 §2.5): SV_i = SV_0·(1 − g_hyp·u(t_i − t_lag)) + in-phase |
 | [`tracker.ts:14`](../../packages/engine-core/src/l2/hemo/tracker.ts#L14) | ff = measured form factor (MAP − DBP)/PP. Feeding back MAP itself would lag by R·C (≈ 2 beats) and |
 | [`pleth.ts:5`](../../packages/engine-core/src/l2/pleth/pleth.ts#L5) | Amplitude = PI × (SV_i/SV_0)^γ with γ = 1, carried in PI units so the L3 PI numeric is measured from |
 
@@ -170,55 +170,55 @@ pleth trace comes from; an embedding developer reads it for the per-tick order a
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `CANNON_GAIN` | `3` | — | [ENG] | cannon a wave ≈ 3× a [ENG] |
-| `CVP_RESP_MMHG` | `3` | mmHg | research 03 §2.9; [ENG 2–5] | positive-pressure insufflation raises CVP (research 03 §2.9) [ENG 2–5] |
+| `CANNON_GAIN` | `3` | — | research/44 L2; [FIT: cannon a-wave size; brief research/44 L2-54] | cannon a wave ≈ 3× a [FIT: cannon a-wave size; brief research/44 L2-54] |
+| `CVP_RESP_MMHG` | `3` | mmHg | research 03 §2.9 | positive-pressure insufflation raises CVP (research 03 §2.9) (research 03 §2.9: 2–5 mmHg; 2–5) |
 
 ### [`l2/hemo/params.ts`](../../packages/engine-core/src/l2/hemo/params.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `HEMO_RATE` | `125` | — | brief §4.2; research 03 §2.1; brief §3.2; [ENG] | Haemodynamic constants and per-beat rules (brief §4.2, §4.8, §4.9 M1–M3; research 03 §2.1, §2.5, §2.8, §8.2–8.3). Every number cites its source, or [ENG] when it is an engineering choice tuned by the prototype. ABP/CVP/PAP/pleth sample rate (brief §3.2) |
-| `SUBSTEPS` | `4` | — | brief §4.2; [ENG] | RK4 at 2 ms substeps, four per 125 Hz sample (brief §4.2) [ENG] |
+| `HEMO_RATE` | `125` | — | brief §4.2; research 03 §2.1; brief §3.2; [ENG: kind]; [FIT: target; brief id] | Haemodynamic constants and per-beat rules (brief §4.2, §4.8, §4.9 M1–M3; research 03 §2.1, §2.5, §2.8, §8.2–8.3). Every number cites its source or carries a tag (docs/DESIGN-BRIEF.md): `[ENG: kind]` when it is not physiology (numerics, device, display), `[FIT: target; brief id]` when the prototype fitted it to a physiological target. ABP/CVP/PAP/pleth sample rate (brief §3.2) |
+| `SUBSTEPS` | `4` | — | brief §4.2; [ENG: numerics] | RK4 at 2 ms substeps, four per 125 Hz sample (brief §4.2) [ENG: numerics] |
 | `WK_R0` | `1.05` | mmHg·s/mL | brief §4.2; research 03 §2.8 | 4-element Windkessel seeds, adult (brief §4.2 table; research 03 §2.8) mmHg·s/mL, R 1.0–1.1 |
 | `WK_C` | `1.5` | mL/mmHg | — | mL/mmHg, C 1.4 ± 0.7, at P0 |
-| `WK_P0` | `95` | mmHg | [ENG] | mmHg, reference pressure of C0 [ENG] |
-| `WK_CK` | `0.01` | /mmHg | [ENG] | /mmHg, C(P) = C0·e^(−k(P−P0)) [ENG] |
+| `WK_P0` | `95` | mmHg | research/44 L2; [FIT: Windkessel C(P) or PA impedance parameter without a source; brief research/44 L2-54] | mmHg, reference pressure of C0 [FIT: Windkessel C(P) or PA impedance parameter without a source; brief research/44 L2-54] |
+| `WK_CK` | `0.01` | /mmHg | research/44 L2; [FIT: Windkessel C(P) or PA impedance parameter without a source; brief research/44 L2-54] | /mmHg, C(P) = C0·e^(−k(P−P0)) [FIT: Windkessel C(P) or PA impedance parameter without a source; brief research/44 L2-54] |
 | `WK_ZC` | `0.05` | mmHg·s/mL | — | mmHg·s/mL, Zc 0.03–0.06 |
 | `WK_L` | `0.01` | — | — | mmHg·s²/mL, L 0.005–0.01 (upper end: gives the radial PP 40–55 at SV 70, prototype) |
-| `SV_REF_ML` | `70` | mL | research 03 §2.8 PP check; [ENG] | reference stroke volume (research 03 §2.8 PP check) [ENG] |
+| `SV_REF_ML` | `70` | mL | research 03 §2.8 PP check; [ENG: numerics] | reference stroke volume (research 03 §2.8 PP check) [ENG: numerics] |
 | `KAPPA` | `1.2` | — | brief §4.2; research 03 §2.8 | Ejection profile (brief §4.2 "Ejection"; research 03 §2.8) sin^κ, κ 1.0–1.3 normal |
-| `EJECTION_SKEW` | `0.5` | — | [ENG, prototype] | Skew p in sin(π·u^p)^κ: peak flow at 25% of LVET, as in the aortic flow wave [ENG, prototype]. |
-| `BACKFLOW_FRAC` | `0.04` | — | [ENG] | valve-closure backflow volume / SV → incisura [ENG] |
+| `EJECTION_SKEW` | `0.5` | — | research/44 L2; [FIT: aortic flow peak at 25 % of LVET; prototype; brief research/44 L2-54] | Skew p in sin(π·u^p)^κ: peak flow at 25% of LVET, as in the aortic flow wave [FIT: aortic flow peak at 25 % of LVET; prototype; brief research/44 L2-54]. |
+| `BACKFLOW_FRAC` | `0.04` | — | [ENG: unused] | valve-closure backflow volume / SV → incisura [ENG: unused] |
 | `BACKFLOW_S` | `0.02` | s | brief §4.2 | 15–25 ms backflow bump (brief §4.2) |
 | `RADIAL_FR_HZ` | `5` | Hz | brief §4.2; research 03 §2.3 | Aorta → radial transfer (brief §4.2 "Site transfer"; research 03 §2.3, §2.8): a resonance at f_r 4–8 Hz, ζ_r 0.2–0.4, "its gain tuned so that radial SBP exceeds aortic SBP by 5–20 mmHg". Prototype at SV 70, C 1.5, HR 75: radial 122.7/78.4 vs aortic 113.0/79.7 → +9.7 mmHg, PP 44.3, PP amplification 1.33. |
 | `RADIAL_ZETA` | `0.3` | — | — | — |
 | `RADIAL_GAIN` | `1.5` | — | — | — |
-| `RADIAL_DELAY_S` | `0.045` | s | [ENG] | Transport delay aortic root → radial on top of the filters' group delay [ENG]. |
+| `RADIAL_DELAY_S` | `0.045` | s | research/44 L2; [FIT: fixed pulse transit delay independent of pressure and tone; brief research/44 L2-16] | Transport delay aortic root → radial on top of the filters' group delay [FIT: fixed pulse transit delay independent of pressure and tone; brief research/44 L2-16]. |
 | `RADIAL_PTT_S` | `0.085` | s | research 03 §2.1 | Effective aortic-root → radial transit AS DISPLAYED (research 03 §2.1: radial PTT 60–110 ms) = transport delay + transfer/transducer/12 Hz display group delays. Prototype: notch − (R + PEP + LVET) = 87 / 89 / 83 ms at HR 60 / 90 / 120. Used by the notch-timing acceptance test. |
-| `FINGER_DELAY_S` | `0.1` | s | research 03 §2.1; [ENG] | Finger PPG pulse origin after aortic valve opening (research 03 §2.1: PPG foot 200–300 ms after R) [ENG]. |
-| `EAR_DELAY_S` | `0.05` | s | [ENG] | ear / forehead probes are closer to the heart [ENG] |
+| `FINGER_DELAY_S` | `0.1` | s | research 03 §2.1; research/44 L2; [FIT: fixed pulse transit delay independent of pressure and tone; brief research/44 L2-16] | Finger PPG pulse origin after aortic valve opening (research 03 §2.1: PPG foot 200–300 ms after R) [FIT: fixed pulse transit delay independent of pressure and tone; brief research/44 L2-16]. |
+| `EAR_DELAY_S` | `0.05` | s | research/44 L2; [FIT: fixed pulse transit delay independent of pressure and tone; brief research/44 L2-16] | ear / forehead probes are closer to the heart [FIT: fixed pulse transit delay independent of pressure and tone; brief research/44 L2-16] |
 | `PA_R0` | `0.1` | — | brief §4.2; research 03 §2.10 | Pulmonary circulation (brief §4.2 PAP; research 03 §2.10): same Windkessel, R 0.08–0.12, C 3–5. |
 | `PA_C` | `4` | — | — | — |
-| `PA_ZC` | `0.02` | — | [ENG] | [ENG] |
-| `RV_PEP_LEAD_S` | `0.02` | s | [ENG] | RV ejects ≈20 ms before the LV [ENG] → PA upstroke leads radial 60–120 ms |
-| `RV_LVET_EXTRA_S` | `0.02` | s | [ENG] | RV ejection is slightly longer [ENG] |
-| `TRANSDUCER_FN_HZ` | `20` | Hz | brief §4.2; [ENG] | Transducer and display (brief §4.2 "Transducer and line") default fn 20 Hz [ENG] |
-| `TRANSDUCER_ZETA` | `0.45` | — | [ENG] | default ζ 0.45 [ENG] |
+| `PA_ZC` | `0.02` | — | research/44 L2; [FIT: Windkessel C(P) or PA impedance parameter without a source; brief research/44 L2-54] | [FIT: Windkessel C(P) or PA impedance parameter without a source; brief research/44 L2-54] |
+| `RV_PEP_LEAD_S` | `0.02` | s | [ENG: unused] | RV ejects ≈20 ms before the LV [ENG: unused] → PA upstroke leads radial 60–120 ms |
+| `RV_LVET_EXTRA_S` | `0.02` | s | [ENG: unused] | RV ejection is slightly longer [ENG: unused] |
+| `TRANSDUCER_FN_HZ` | `20` | Hz | brief §4.2; [ENG: device] | Transducer and display (brief §4.2 "Transducer and line") default fn 20 Hz [ENG: device] |
+| `TRANSDUCER_ZETA` | `0.45` | — | [ENG: device] | default ζ 0.45 [ENG: device] |
 | `DISPLAY_FILTER_HZ` | `12` | Hz | — | 12 Hz display filter (Philips default) |
 | `FLUSH_MMHG` | `300` | mmHg | brief §4.2 | flush bag level (brief §4.2) |
 | `FLUSH_S` | `1.0` | s | — | 0.5–2 s square wave |
-| `ZERO_S` | `3.0` | s | [ENG] | flat 0 line while zeroing [ENG] |
-| `SAMPLE_S` | `10` | s | [ENG] | blood sampling: stopcock off the patient [ENG] |
+| `ZERO_S` | `3.0` | s | [ENG: device] | flat 0 line while zeroing [ENG: device] |
+| `SAMPLE_S` | `10` | s | [ENG: device] | blood sampling: stopcock off the patient [ENG: device] |
 | `MMHG_PER_CM` | `0.74` | — | brief §4.2 | levelling (brief §4.2) |
-| `ARREST_AFTER_S` | `3.0` | s | brief §4.2; research 03 §2.7; [ENG] | Arrest (brief §4.2 "Arrest and CPR"; research 03 §2.7) no ejection for this long (or 2.2 × last RR) = mechanical arrest [ENG] |
+| `ARREST_AFTER_S` | `3.0` | s | brief §4.2; research 03 §2.7; [ENG: numerics] | Arrest (brief §4.2 "Arrest and CPR"; research 03 §2.7) no ejection for this long (or 2.2 × last RR) = mechanical arrest [ENG: numerics] |
 | `VENOUS_TAU_S` | `3.0` | s | — | CVP moves toward its target / toward Pmsf with τ 3–6 s |
 | `CPR_QUALITY_DEFAULT` | `0.8` | — | brief §4.2; research 03 §2.8; research 09 §2 | CPR pump (brief §4.2; research 03 §2.8 "CPR pump") Learner default `cpr.quality` when the event gives none: real manual CPR falls 10–20 % short (research 09 §2). |
 | `CPR_SV_FRAC` | `0.2` | — | — | SV_cpr 15–30% of normal SV, × quality |
 | `CPR_THORACIC_MMHG` | `40` | mmHg | — | thoracic-pump term 30–80 mmHg, × quality, on ABP and CVP |
-| `CPR_DUTY` | `0.5` | — | [ENG] | compression phase = half the cycle [ENG] |
-| `K_OPEN` | `0.25` | — | brief §4.8; research 03 §2.4 AF; [ENG] | Valve-opening map E(k) [ENG]: a beat ejects only when its contractile drive k (= beat.mech.kSV, the rhythm engine's k_rhythm × f_fill × PESP) exceeds K_OPEN, the fraction needed to lift LV pressure above aortic diastolic pressure. Below it there is no upstroke → pulse deficit (brief §4.8 PVC "no ejection"; research 03 §2.4 AF "short RR → small or absent pulse"). E(1) = 1; PESP k = 1.2 → 1.27. |
-| `FS_CARRY` | `0.75` | — | brief §4.8; [ENG] | Frank–Starling carry-over [ENG]: the volume a beat fails to eject (vs a normal beat) stays in the ventricle and raises the next beat's end-diastolic volume, so a fraction of it is ejected by the next beat. With the rhythm engine's PESP k = 1.2 this gives the post-PVC SBP +8–15 mmHg (brief §4.8 "SBP about +12") that potentiation alone cannot reach against the long compensatory-pause runoff (prototype: −28 mmHg without it; +7.8 / +10.7 / +14.0 mmHg at 0.7 / 0.75 / 0.8 over isolated PVCs). |
-| `G_MAX` | `2.0` | — | brief §4.9; [ENG] | M3 stroke-volume ceiling as a tracker gain limit: SV plateaus and falls above ~150–180 bpm (brief §4.9 M3). [ENG] SV ≤ 140 mL at HR ≤ 150 |
+| `CPR_DUTY` | `0.5` | — | [ENG: scenario] | compression phase = half the cycle [ENG: scenario] |
+| `K_OPEN` | `0.25` | — | research/44 L2; brief §4.8; research 03 §2.4 AF; [FIT: valve-opening map (also used in MODELED); brief research/44 L2-22] | Valve-opening map E(k) [FIT: valve-opening map (also used in MODELED); brief research/44 L2-22]: a beat ejects only when its contractile drive k (= beat.mech.kSV, the rhythm engine's k_rhythm × f_fill × PESP) exceeds K_OPEN, the fraction needed to lift LV pressure above aortic diastolic pressure. Below it there is no upstroke → pulse deficit (brief §4.8 PVC "no ejection"; research 03 §2.4 AF "short RR → small or absent pulse"). E(1) = 1; PESP k = 1.2 → 1.27. |
+| `FS_CARRY` | `0.75` | — | brief §4.8; [ENG: unused] | Frank–Starling carry-over [ENG: unused]: the volume a beat fails to eject (vs a normal beat) stays in the ventricle and raises the next beat's end-diastolic volume, so a fraction of it is ejected by the next beat. With the rhythm engine's PESP k = 1.2 this gives the post-PVC SBP +8–15 mmHg (brief §4.8 "SBP about +12") that potentiation alone cannot reach against the long compensatory-pause runoff (prototype: −28 mmHg without it; +7.8 / +10.7 / +14.0 mmHg at 0.7 / 0.75 / 0.8 over isolated PVCs). |
+| `G_MAX` | `2.0` | — | brief §4.9; [ENG: numerics] | M3 stroke-volume ceiling as a tracker gain limit: SV plateaus and falls above ~150–180 bpm (brief §4.9 M3). [ENG: numerics] SV ≤ 140 mL at HR ≤ 150 |
 | `INSUFFLATION_GAIN` | `0.03` | — | research 03 §2.5 | in-phase Δup term 0.02–0.04 (research 03 §2.5) |
 | `BREATH_HZ` | `0.25` | Hz | research 03 §2.5 | Fixed-rate breath clock without the respiratory driver: 15 breaths/min, phase shared with the ECG's RSA phase φ so RSA and PPV stay coherent. u ∈ [0, 1] is the normalised intrathoracic pressure of a positive-pressure breath (research 03 §2.5 `u(t)`). |
 
@@ -228,16 +228,16 @@ pleth trace comes from; an embedding developer reads it for the per-tick order a
 |---|---|---|---|---|
 | `RAD_DELAY_STEPS` | `22` | — | — | Aortic root → radial transport delay as a 2 ms delay line (RADIAL_DELAY_S 0.045 → 22 steps). |
 | `VT_K_REF` | `0.6` | — | — | The rhythm engine's k_rhythm of a VT ≤ 150/min — the reference for ventricular-rhythm efficiency. |
-| `MANUAL_CVP_GAIN` | `0.3` | — | [ENG] | dV0 −= gain·(CVP* − CVP)·cSv per second [ENG] |
-| `MANUAL_HOLD_S` | `8` | s | [ENG] | A MANUAL tracker stops after its target has held this long [ENG] |
-| `MANUAL_TRACK_MAX_S` | `60` | s | [ENG] | The volume tracker gives up after this long (a CVP the physiology cannot reach, e.g. under PEEP) [ENG]. |
-| `MANUAL_HOLD_MMHG` | `1` | mmHg | [ENG] | SBP/DBP hold tolerance of the per-beat pressure tracker [ENG] |
+| `MANUAL_CVP_GAIN` | `0.3` | — | [ENG: control] | dV0 −= gain·(CVP* − CVP)·cSv per second [ENG: control] |
+| `MANUAL_HOLD_S` | `8` | s | [ENG: control] | A MANUAL tracker stops after its target has held this long [ENG: control] |
+| `MANUAL_TRACK_MAX_S` | `60` | s | [ENG: control] | The volume tracker gives up after this long (a CVP the physiology cannot reach, e.g. under PEEP) [ENG: control]. |
+| `MANUAL_HOLD_MMHG` | `1` | mmHg | [ENG: control] | SBP/DBP hold tolerance of the per-beat pressure tracker [ENG: control] |
 
 ### [`l2/hemo/tracker.ts`](../../packages/engine-core/src/l2/hemo/tracker.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `TRACK_ALPHA` | `0.25` | — | brief §4.9; [ENG] | MANUAL pressure-target tracker (brief §4.9 coupling rule M2): "a per-beat PI tracker adjusts SV (pulse pressure) and R (mean) with τ ≈ 3 beats, so site SBP/DBP converge on the targets. AF, PVCs, CPR and line faults still act." Implementation [ENG]: - input: the TRUE site pressures of each completed beat (before the transducer, so damping and line faults still show on the display); - only REFERENCE beats enter it: supraventricular, ejection factor 0.4 ≤ E ≤ 1.05, carry-over ≤ 25% of a normal SV, and the previous beat also a reference beat. So PVCs, post-PVC potentiated beats, tiny AF beats and every ventricular rhythm (VT, idioventricular escape) neither drive nor get cancelled by the tracker, while ordinary AF beats still let the instructor move the pressure; - multiplicative updates per reference beat (time constant ≈ 3–4 beats): g ← g·(PP*/PP)^0.25 PP = mean of the last 4 reference beats R ← R·(R*/R)^0.5, R* = (MAP* − P_floor)/Q̄ the steady-state Windkessel inverse (MAP = P_floor + R·Q̄), with Q̄ = Σ SV / Σ beat duration over the last 4 reference beats, MAP* = DBP* + ff·PP*, and ff = measured form factor (MAP − DBP)/PP. Feeding back MAP itself would lag by R·C (≈ 2 beats) and oscillate; the inverse does not; - g is capped by the M3 ceiling (SV plateaus above ~150 bpm) and R by [rMin, rMax]; a binding cap sets `saturated`, which the pipeline reports as the 'override' flag on sbp/dbp. g: PP feedback (4-beat mean + one beat of intake delay → larger gains ring) |
+| `TRACK_ALPHA` | `0.25` | — | brief §4.9; [ENG: control] | MANUAL pressure-target tracker (brief §4.9 coupling rule M2): "a per-beat PI tracker adjusts SV (pulse pressure) and R (mean) with τ ≈ 3 beats, so site SBP/DBP converge on the targets. AF, PVCs, CPR and line faults still act." Implementation [ENG: control]: - input: the TRUE site pressures of each completed beat (before the transducer, so damping and line faults still show on the display); - only REFERENCE beats enter it: supraventricular, ejection factor 0.4 ≤ E ≤ 1.05, carry-over ≤ 25% of a normal SV, and the previous beat also a reference beat. So PVCs, post-PVC potentiated beats, tiny AF beats and every ventricular rhythm (VT, idioventricular escape) neither drive nor get cancelled by the tracker, while ordinary AF beats still let the instructor move the pressure; - multiplicative updates per reference beat (time constant ≈ 3–4 beats): g ← g·(PP*/PP)^0.25 PP = mean of the last 4 reference beats R ← R·(R*/R)^0.5, R* = (MAP* − P_floor)/Q̄ the steady-state Windkessel inverse (MAP = P_floor + R·Q̄), with Q̄ = Σ SV / Σ beat duration over the last 4 reference beats, MAP* = DBP* + ff·PP*, and ff = measured form factor (MAP − DBP)/PP. Feeding back MAP itself would lag by R·C (≈ 2 beats) and oscillate; the inverse does not; - g is capped by the M3 ceiling (SV plateaus above ~150 bpm) and R by [rMin, rMax]; a binding cap sets `saturated`, which the pipeline reports as the 'override' flag on sbp/dbp. g: PP feedback (4-beat mean + one beat of intake delay → larger gains ring) |
 | `TRACK_ALPHA_R` | `0.5` | — | — | R: steady-state inverse, no feedback lag |
 | `TRACK_BEATS` | `4` | — | — | — |
 | `REF_E_MIN` | `0.4` | — | — | — |
@@ -248,7 +248,7 @@ pleth trace comes from; an embedding developer reads it for the per-tick order a
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `PLETH_DET_FLOOR` | `0.03` | — | [ENG] | The pleth pulse detector's floor (minimum slope-sum threshold, PI units, l3/pulse/detector.ts) [ENG]: the oximeter's noise floor — a signal below it is not a pulse. |
+| `PLETH_DET_FLOOR` | `0.03` | — | [ENG: device] | The pleth pulse detector's floor (minimum slope-sum threshold, PI units, l3/pulse/detector.ts) [ENG: device]: the oximeter's noise floor — a signal below it is not a pulse. |
 
 ## Functions
 
@@ -323,13 +323,15 @@ Exported without a doc comment: `createCvpState`, `createLineState`, `ejectionFa
 
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
+| 1a. R→radial foot ≥ 150 ms at HR 60/90/120 | 127–148 ms | research 03 §2.1 | not audited | — | [`hemo-acceptance.test.ts`](../../packages/engine-core/test/engine/hemo-acceptance.test.ts) |
+| 1b. pleth foot ≥ 200 ms after R at HR 60/90/120 | 190–210 ms at HR 120 | research 03 §2.1 | not audited | — | [`hemo-acceptance.test.ts`](../../packages/engine-core/test/engine/hemo-acceptance.test.ts) |
 | 5c. post-PVC potentiation: the next beat SBP is +8–15 mmHg on average over isolated PVCs | −10.9 | — | MIS-SPECIFIED ([audit row 50](../../docs/validation/target-audit/30-target-audit.md#row-50)) | normal heart: post-PVC pulse-pressure ratio 1.0-1.2 (SBP change -5 to +5 mmHg); HFrEF profile: ratio >= 1.3 | [`hemo-acceptance.test.ts`](../../packages/engine-core/test/engine/hemo-acceptance.test.ts) |
 
 ## Tests
 
 | File | Expected failures | Skipped |
 |---|---|---|
-| [`engine/hemo-acceptance.test.ts`](../../packages/engine-core/test/engine/hemo-acceptance.test.ts) | 1 | 0 |
+| [`engine/hemo-acceptance.test.ts`](../../packages/engine-core/test/engine/hemo-acceptance.test.ts) | 3 | 0 |
 | [`engine/hemo-engine.test.ts`](../../packages/engine-core/test/engine/hemo-engine.test.ts) | 0 | 0 |
 | [`engine/hemo-longrun.test.ts`](../../packages/engine-core/test/engine/hemo-longrun.test.ts) | 0 | 0 |
 | [`engine/hemo-nibp-arrest.test.ts`](../../packages/engine-core/test/engine/hemo-nibp-arrest.test.ts) | 0 | 0 |

@@ -48,7 +48,7 @@ outcome; an embedding developer sees the device commands and state (`l3/defib-pa
 
 | Where | Relation |
 |---|---|
-| [`outcome.ts:106`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts#L106) | Synchronised cardioversion success by rhythm and biphasic energy, p = pMax / (1 + (E50/E)^2) [ENG fit] |
+| [`outcome.ts:106`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts#L106) | Synchronised cardioversion success by rhythm and biphasic energy, p = pMax / (1 + (E50/E)^2) [FIT: cardioversion success curve; fit; brief research/44 X-08] |
 
 ## State
 
@@ -94,19 +94,19 @@ outcome; an embedding developer sees the device commands and state (`l3/defib-pa
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `CHARGE_S_PER_J` | `7 / 200` | — | research/05 §2.6; [ENG] | Charge time when a skin publishes none: LIFEPAK-like 200 J ≤ 7 s scaled linearly (research/05 §2.6) [ENG]. |
+| `CHARGE_S_PER_J` | `7 / 200` | — | research/05 §2.6; [ENG: device] | Charge time when a skin publishes none: LIFEPAK-like 200 J ≤ 7 s scaled linearly (research/05 §2.6) [ENG: device]. |
 
 ### [`l3/defib-pacer/outcome.ts`](../../packages/engine-core/src/l3/defib-pacer/outcome.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `ASYSTOLE_SHARE` | `0.5` | — | [ENG] | Share of the asystole/PEA outcome that is asystole (the rest organised PEA) [ENG]. |
-| `LOW_ENERGY_FRACTION` | `0.5` | — | [ENG] | Energy below 50 % of the default halves the termination probability [ENG]. |
+| `ASYSTOLE_SHARE` | `0.5` | — | research/44 X; [FIT: asystole share of a non-VF outcome; brief research/44 X-08] | Share of the asystole/PEA outcome that is asystole (the rest organised PEA) [FIT: asystole share of a non-VF outcome; brief research/44 X-08]. |
+| `LOW_ENERGY_FRACTION` | `0.5` | — | research/44 X; [FIT: low-energy termination penalty; brief research/44 X-08] | Energy below 50 % of the default halves the termination probability [FIT: low-energy termination penalty; brief research/44 X-08]. |
 | `LOW_ENERGY_TERMINATION` | `0.5` | — | — | — |
-| `CARDIOVERSION_SINUS` | `0.8` | — | [ENG] | Synchronised cardioversion of an organised tachyarrhythmia with a pulse: sinus 0.8 [ENG]. |
-| `R_ON_T_VF` | `0.3` | — | [ENG] | Unsynchronised shock on the T peak ± 40 ms of a perfusing rhythm: VF 0.3 [ENG] (teaches sync). |
+| `CARDIOVERSION_SINUS` | `0.8` | — | research/44 X; [FIT: cardioversion success; brief research/44 X-08] | Synchronised cardioversion of an organised tachyarrhythmia with a pulse: sinus 0.8 [FIT: cardioversion success; brief research/44 X-08]. |
+| `R_ON_T_VF` | `0.3` | — | research/44 X; [FIT: R-on-T VF induction; brief research/44 X-08] | Unsynchronised shock on the T peak ± 40 ms of a perfusing rhythm: VF 0.3 [FIT: R-on-T VF induction; brief research/44 X-08] (teaches sync). |
 | `T_PEAK_WINDOW_S` | `0.04` | s | — | — |
-| `AA_ROSC_GAIN` | `0.3` | — | ARREST 1999; ALPS 2016; [ENG] | State factors on the ROSC share. Each is [ENG] with its sourced DIRECTION named. ARREST 1999 (survival to admission 44.3 % vs 34.6 %), ALPS 2016 |
+| `AA_ROSC_GAIN` | `0.3` | — | research/44 X; ARREST 1999; ALPS 2016; [FIT: ROSC state factor sizes (directions sourced); brief research/44 X-09] | State factors on the ROSC share. Each is [FIT: ROSC state factor sizes (directions sourced); brief research/44 X-09] with its sourced DIRECTION named. ARREST 1999 (survival to admission 44.3 % vs 34.6 %), ALPS 2016 |
 | `K_ROSC_PER_MMOL` | `0.25` | mmol | — | above 6 mmol/L (UK Renal Association: treat the K before expecting a shock to work) |
 | `K_ROSC_FLOOR` | `0.2` | — | — | — |
 | `PH_ROSC_PER_UNIT` | `1.5` | — | — | below pH 7.2 (ALS reversible causes) |
@@ -115,11 +115,11 @@ outcome; an embedding developer sees the device commands and state (`l3/defib-pa
 | `CPP_ROSC_MIN` | `0.2` | — | — | — |
 | `CPP_ROSC_MAX` | `1.3` | — | — | — |
 | `CIRCULATORY_PHASE_S` | `240` | s | Weisfeldt & Becker 2002; Cobb 1999; Wik 2003 | CoPP matters only in the circulatory phase — Weisfeldt & Becker 2002 (0–4 min electrical phase: shock at once), Cobb 1999 / Wik 2003 (CPR first helps only beyond 4–5 min). The same 240 s as VF_DURATION_FACTORS. |
-| `ARREST_ROSC_FULL_S` | `1800` | s | [ENG] | a non-VF arrest's own decay [ENG] |
-| `TEMP_SHOCK_C` | `30` | — | ERC 2021; Danzl & Pozos 1994; Brown 2012; research/20; [ENG magnitude] | VF below 30 °C is often shock-refractory (ERC 2021 special circumstances; Danzl & Pozos 1994; Brown 2012) — termination × (1 − 0.3 per °C below 30), floor 0.2 [ENG magnitude] (research/20). |
+| `ARREST_ROSC_FULL_S` | `1800` | s | research/44 X; [FIT: ROSC state factor sizes (directions sourced); brief research/44 X-09] | a non-VF arrest's own decay [FIT: ROSC state factor sizes (directions sourced); brief research/44 X-09] |
+| `TEMP_SHOCK_C` | `30` | — | ERC 2021; Danzl & Pozos 1994; Brown 2012; research/44 X; research/20; [FIT: ROSC state factor sizes (directions sourced); magnitude; brief research/44 X-09] | VF below 30 °C is often shock-refractory (ERC 2021 special circumstances; Danzl & Pozos 1994; Brown 2012) — termination × (1 − 0.3 per °C below 30), floor 0.2 [FIT: ROSC state factor sizes (directions sourced); magnitude; brief research/44 X-09] (research/20). |
 | `TEMP_TERM_PER_C` | `0.3` | — | — | — |
 | `TEMP_TERM_FLOOR` | `0.2` | — | — | — |
-| `CARDIOVERSION_HILL` | `2` | — | research/20; Page 2002; Mittal 2000; ERC 2021; Neumar 2010; [ENG fit]; [VERIFY] | Synchronised cardioversion success by rhythm and biphasic energy, p = pMax / (1 + (E50/E)^2) [ENG fit] (research/20). AF: Page 2002, Mittal 2000, ERC 2021 (120–150 J start); flutter and paroxysmal SVT: ERC 2021 (70–120 J), Neumar 2010 (50–100 J), > 90 %; monomorphic VT with a pulse: Neumar 2010 (100 J, > 90 %) [VERIFY]. Any other organised tachycardia, or no rhythm id, keeps the flat CARDIOVERSION_SINUS. |
+| `CARDIOVERSION_HILL` | `2` | — | research/44 X; research/20; Page 2002; Mittal 2000; ERC 2021; Neumar 2010; [FIT: cardioversion success curve; fit; brief research/44 X-08]; [VERIFY] | Synchronised cardioversion success by rhythm and biphasic energy, p = pMax / (1 + (E50/E)^2) [FIT: cardioversion success curve; fit; brief research/44 X-08] (research/20). AF: Page 2002, Mittal 2000, ERC 2021 (120–150 J start); flutter and paroxysmal SVT: ERC 2021 (70–120 J), Neumar 2010 (50–100 J), > 90 %; monomorphic VT with a pulse: Neumar 2010 (100 J, > 90 %) [VERIFY]. Any other organised tachycardia, or no rhythm id, keeps the flat CARDIOVERSION_SINUS. |
 
 ### [`l3/defib-pacer/pacer.ts`](../../packages/engine-core/src/l3/defib-pacer/pacer.ts)
 
@@ -169,6 +169,7 @@ None recorded.
 | File | Expected failures | Skipped |
 |---|---|---|
 | [`engine/defib-engine.test.ts`](../../packages/engine-core/test/engine/defib-engine.test.ts) | 0 | 0 |
+| [`engine/defib-model.test.ts`](../../packages/engine-core/test/engine/defib-model.test.ts) | 0 | 0 |
 | [`engine/defib-tones.test.ts`](../../packages/engine-core/test/engine/defib-tones.test.ts) | 0 | 0 |
 | [`engine/pacer-engine.test.ts`](../../packages/engine-core/test/engine/pacer-engine.test.ts) | 0 | 0 |
 | [`engine/pacer-sensing.test.ts`](../../packages/engine-core/test/engine/pacer-sensing.test.ts) | 0 | 0 |

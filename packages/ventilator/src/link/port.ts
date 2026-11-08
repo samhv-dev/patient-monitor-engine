@@ -13,6 +13,9 @@
 //                                         clock — the cockpit steps through the span with the engine
 //   either way:     { kind: 'time' }      pause / resume / scale, so both sides stay on one sim time base
 //   page → vent:    { kind: 'control' }   settings patch, circuit, profile (the combined page's scripted demos)
+//   vent → monitor: { kind: 'settings' }  the cockpit's settings, for a hand-over to the engine's own ventilator when a
+//                                         cockpit on another device goes (plan room-and-instruments.md §4 D9, R8a;
+//                                         sent from R8c on; over the relay, inside the controller's `vent` message)
 import type { Command, DispatchResult, EngineEvent } from '@pme/engine-core';
 import type { VentConfig } from '../types.ts';
 import type { LungStateEvent } from '../lung-input.ts';
@@ -24,7 +27,8 @@ export type LinkMsg =
   | { v: 1; kind: 'clock'; ventTick: number }
   | { v: 1; kind: 'run'; ventTick: number }
   | { v: 1; kind: 'time'; action: 'pause' | 'resume' | 'scale'; value?: number }
-  | { v: 1; kind: 'control'; patch?: Partial<VentConfig>; circuit?: 'connected' | 'disconnected'; profile?: ProfileId };
+  | { v: 1; kind: 'control'; patch?: Partial<VentConfig>; circuit?: 'connected' | 'disconnected'; profile?: ProfileId }
+  | { v: 1; kind: 'settings'; cfg: VentConfig };
 
 export interface LinkPort {
   post(m: LinkMsg): void;
@@ -137,7 +141,7 @@ export const LEAD_TICKS = 5;
 /** The ventilator may run this far ahead of the newest engine event (events carry sim time; beats and 1 Hz state). */
 export const MAX_AHEAD_TICKS = 75;
 /** A cockpit that has not answered a `run` in this long is given up on (the engine's own drive timeout then
- *  takes over, as when the cockpit is closed), wall ms [ENG]. */
+ *  takes over, as when the cockpit is closed), wall ms [ENG: network]. */
 export const RUN_TIMEOUT_MS = 2000;
 
 /** The link's detach function; also `runTo`, the fast-forward's lockstep with the cockpit. */

@@ -1,4 +1,4 @@
-// FU-10 (E11; research/14 ET-12, ET-13a; ruling R-3): Task A8 is WITHDRAWN pending Ali — the anaesthetised septic and
+// FU-10 (E11; research/14 ET-12, ET-13a; ruling R-3): Task A8 is WITHDRAWN pending samhv-dev — the anaesthetised septic and
 // thyrotoxic patients stay afebrile. Held here as `it.fails` with the measured numbers (GA flag, 21 °C, seed 7).
 import { describe, expect, it } from 'vitest';
 import { ev, FLAG, rows, st, VENTED } from '../helpers/endo-thermal-rigs.ts';

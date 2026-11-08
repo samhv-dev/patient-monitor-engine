@@ -54,7 +54,7 @@ Stages run strictly in order (R11). Stage 5 depends only on Stages 1 and 4, but 
 **In scope:**
 - Workspace config and the seven package skeletons.
 - CI: install, typecheck, test, build; upload the IIFE as an artefact.
-- `LICENSE` (MIT, pending Ali), `NOTICES.md`, `LICENSES/`, and a PR template with a "sources consulted" field (brief §8).
+- `LICENSE` (MIT, pending samhv-dev), `NOTICES.md`, `LICENSES/`, and a PR template with a "sources consulted" field (brief §8).
 - A `check-notices` script that fails CI when a `NOTICE-ID` is missing.
 - `clock/` (the accumulator and 20 ms ticks) and `rng/` (sfc32 with named streams).
 
@@ -127,7 +127,7 @@ Stages run strictly in order (R11). Stage 5 depends only on Stages 1 and 4, but 
 11. No drift: after `advanceTo(86400)`, `latestSampleIndex('ecgII') = 43,200,000 + look-ahead samples` exactly.
 12. Sweep maths: x-velocity is 94.5 ± 0.1 CSS px/s at 3.78 px/mm; the decimation keeps the R-peak maximum to within 1 sample.
 
-*Visual checklist (orchestrator + Ali):*
+*Visual checklist (orchestrator + samhv-dev):*
 - QRS crisp, no stair-stepping;
 - no gap or ghost trail at wrap or at the erase gap;
 - same sweep speed at 30 fps (stopwatch);
@@ -200,7 +200,7 @@ Stages run strictly in order (R11). Stage 5 depends only on Stages 1 and 4, but 
 10. **PPV:** g_hyp 0.05 gives 5–10%; g_hyp 0.2 gives 15–30%.
 11. **CVP:** the a wave peaks 80–100 ms after P onset; there is no a wave in AF.
 
-*Visual:* waveform shapes against Ali's memory of an OR monitor; the NIBP tile states.
+*Visual:* waveform shapes against the owner's memory of an OR monitor; the NIBP tile states.
 
 *Realism review* (brief §9) for ABP and pleth: a first pass, informative only.
 
@@ -276,9 +276,9 @@ Stages run strictly in order (R11). Stage 5 depends only on Stages 1 and 4, but 
   - the `saadat` profile (brief §6.4.1): factory-OFF parameter alarms with ASYSTOLE/VFIB/VTAC/APNEA always on, 3 levels named 1/2/3 with a steady-yellow L3 lamp and cyan bar, no latching, and a 120 s silence that also hides visual alarms, shows a header countdown and is cancelled by any new alarm;
   - INOPs, and arrhythmia-analysis on/off.
 - **`iec-bursts.ts`:** `PeriodicWave` pulses, priority patterns, inter-burst scheduling, Philips-like "Traditional" profile.
-- **`saadat-bursts.ts`:** the Saadat alarm sound profile (brief §6.4.1): L1 "DO-DO-DO--DO-DO" every 10 s, L2 3 pulses every 20 s, L3 1 pulse every 30 s; volume 1–7, default 1; pulse timing and pitch from the skin (**[assumed]** until Ali's recordings).
+- **`saadat-bursts.ts`:** the Saadat alarm sound profile (brief §6.4.1): L1 "DO-DO-DO--DO-DO" every 10 s, L2 3 pulses every 20 s, L3 1 pulse every 30 s; volume 1–7, default 1; pulse timing and pitch from the skin (**[assumed]** until the owner's recordings).
 - **Visual alarms:** CSS flash rates, message bar, flashing numerics.
-- **`@pme/skins`:** JSON schema (including the brief §3.8 `saadat-like` fields) plus the 6 skins and 2 themes (brief §6.8 tables); runtime `setSkin` without restarting the engine. Skins are built in the **recommended order `saadat-like` → `philips-like` → `zoll-like`** (pending Ali's confirmation, brief §10 question 7), then `ge-like`, `mindray-like` and `lifepak-like`.
+- **`@pme/skins`:** JSON schema (including the brief §3.8 `saadat-like` fields) plus the 6 skins and 2 themes (brief §6.8 tables); runtime `setSkin` without restarting the engine. Skins are built in the **recommended order `saadat-like` → `philips-like` → `zoll-like`** (pending the owner's confirmation, brief §10 question 7), then `ge-like`, `mindray-like` and `lifepak-like`.
 - **`saadat-like` behaviour** (brief §3.8, §6.1, §6.3, §6.8, §6.9): time-window HR averaging (4/8/16 s, default 8) updated at 1 Hz; HR source AUTO (ECG > IBP1–4 > SpO2) with the HR → PR relabel; ECG gain AUTO; filter-name map (NORMAL 0.5–40 default, MONITOR 0.5–24, EXTENDED 0.05–100); IBP colour by channel; NIBP MANUAL default, STAT 10 × 30 s, next inflation previous SYS + 30; red crossed-bell tiles; unavailable-value glyphs; Solar (Jalali) date; menus docked in the lower wave area; filled-area trends; the PUMP page; the `iran-icu-as-found` preset.
 - **Calibration UI** (card, 85.6 mm) with a stored per-device value.
 - **Display settings:** sweep, gain, filter and lead menus.
@@ -341,7 +341,7 @@ Stages run strictly in order (R11). Stage 5 depends only on Stages 1 and 4, but 
     - **8 s HR averaging:** a step of 80→120 bpm reaches the displayed 120 in 6 ± 1 s (4 s window: 5 s; 16 s window: 11 s), with 1 Hz updates; detaching ECG moves the AUTO source to IBP1, then SpO2, and relabels HR → PR.
     - **Asystole** is raised 10.0 ± 0.2 s after the last QRS (the skin value), and the Solar date renders a fixed test date as Jalali `YYYY/MM/DD` with Latin digits.
 
-**Verify before gate (Saadat).** Ali's bedside capture checklist (brief §10; research/06 §7: 8 photos, 3 alarm recordings, 2 stopwatch tests, about 30 min). Replace the **[assumed]** tone timing and pitch, lamp flash rates, erase gap, IBP3/IBP4 colours, paediatric/neonatal limits and the 5 s vs 10 s asystole value with the captured values. Anything not captured by the gate is listed in `docs/gates/stage-4.md` as still [assumed].
+**Verify before gate (Saadat).** the owner's bedside capture checklist (brief §10; research/06 §7: 8 photos, 3 alarm recordings, 2 stopwatch tests, about 30 min). Replace the **[assumed]** tone timing and pitch, lamp flash rates, erase gap, IBP3/IBP4 colours, paediatric/neonatal limits and the 5 s vs 10 s asystole value with the captured values. Anything not captured by the gate is listed in `docs/gates/stage-4.md` as still [assumed].
 
 **Gate question.** "Would a resident recognise these alarms, the pacer-capture behaviour and the defib/sync workflow as the device on their unit, and are the default limits and colours right for our OR? Does the `saadat-like` screen read as the B9 on an Iranian ward?"
 
@@ -384,9 +384,9 @@ Stages run strictly in order (R11). Stage 5 depends only on Stages 1 and 4, but 
 9. **Provenance:** every template file carries a `NOTICE-ID` present in `NOTICES.md` (CI).
 10. **Seeds:** the same `patientSeed` gives identical morphology across scenario steps; different seeds differ (median-beat r < 0.99).
 
-**Blind rhythm check:** Ali names 30 randomly drawn strips; ≥27/30 must match the intended rhythm. The **realism review** (brief §9) for ECG then runs.
+**Blind rhythm check:** samhv-dev names 30 randomly drawn strips; ≥27/30 must match the intended rhythm. The **realism review** (brief §9) for ECG then runs.
 
-**Gate question.** "Can Ali identify every rhythm as intended, and does VF/torsades texture look recorded rather than synthetic?"
+**Gate question.** "Can samhv-dev identify every rhythm as intended, and does VF/torsades texture look recorded rather than synthetic?"
 
 ---
 
@@ -421,7 +421,7 @@ Stages run strictly in order (R11). Stage 5 depends only on Stages 1 and 4, but 
    - restoring a bookmark resets the state exactly.
 6. **Schema:** an invalid scenario is rejected with a path-level error message.
 
-**Gate question.** "Can Ali run a 10-minute ACLS scenario from the laptop without touching the iPad monitor, and recover cleanly from a Wi-Fi drop?"
+**Gate question.** "Can samhv-dev run a 10-minute ACLS scenario from the laptop without touching the iPad monitor, and recover cleanly from a Wi-Fi drop?"
 
 ---
 
@@ -459,7 +459,7 @@ Stages run strictly in order (R11). Stage 5 depends only on Stages 1 and 4, but 
 9. **Pin/release:** release blends over 10 ± 0.5 s without overshoot.
 10. **Replay:** determinism holds with MODELED on.
 
-*Clinical review:* Ali runs the induction and haemorrhage scenarios twice each.
+*Clinical review:* samhv-dev runs the induction and haemorrhage scenarios twice each.
 
 **Gate question.** "Does induction, a bleed and a pressor push behave the way an anaesthetist expects, closely enough to teach from, and does pinning a vital behave predictably?"
 
@@ -477,7 +477,7 @@ Stages run strictly in order (R11). Stage 5 depends only on Stages 1 and 4, but 
   - HTML report;
   - golden files.
 - **The blind review tool** and the final realism review.
-- **Saadat screens as a capture source.** Ali films Saadat B9 screens (screens only, no identifiers; filming allowed, R12) for the device-behaviour review (brief §9 step 5): alarm sounds per level, Silence and its countdown, the NIBP cycle, and the sweep. The engine plays the matching scenario in the `saadat-like` skin side by side.
+- **Saadat screens as a capture source.** samhv-dev films Saadat B9 screens (screens only, no identifiers; filming allowed, R12) for the device-behaviour review (brief §9 step 5): alarm sounds per level, Silence and its countdown, the NIBP cycle, and the sweep. The engine plays the matching scenario in the `saadat-like` skin side by side.
 - **Performance:**
   - 8 lanes at 60 fps on an iPad (A14 or later);
   - worker ≤6 ms per frame, main thread ≤4 ms;
@@ -488,7 +488,7 @@ Stages run strictly in order (R11). Stage 5 depends only on Stages 1 and 4, but 
   - `NOTICES.md` complete;
   - npm packages `@pme/*` 1.0.0;
   - a GitHub release with `patient-monitor.iife.js`.
-- **Ventilator-sim embed.** A separate PR in the `ventilator-simulator` repo, following the PR workflow (one piece of work, Ali merges). It adds a monitor panel using the IIFE and `externalDrive` frames (brief §7.6), and shows SpO2 and EtCO2 responding to ventilator changes.
+- **Ventilator-sim embed.** A separate PR in the `ventilator-simulator` repo, following the PR workflow (one piece of work, samhv-dev merges). It adds a monitor panel using the IIFE and `externalDrive` frames (brief §7.6), and shows SpO2 and EtCO2 responding to ventilator changes.
 
 **Demo:**
 - `index.html`, the full monitor with scenario loader;
@@ -503,7 +503,7 @@ Stages run strictly in order (R11). Stage 5 depends only on Stages 1 and 4, but 
 5. **Embed:** the ventilator sim loads from `file://` in Safari and Chrome with no console errors. Cutting its FiO2 to 0.21 at shunt 30% visibly lowers SpO2 with the §4.3 lag. Setting RR 6 raises EtCO2 per the kinetics.
 6. **Licence:** the `check-notices` CI job passes, and every `LICENSES/` text is present.
 
-**Gate question (v1.0).** "Do the numbers say it's realistic, does Ali's blind review agree, and is it safe (licence-wise) and easy to embed?"
+**Gate question (v1.0).** "Do the numbers say it's realistic, does the owner's blind review agree, and is it safe (licence-wise) and easy to embed?"
 
 ---
 
@@ -517,7 +517,7 @@ Stages run strictly in order (R11). Stage 5 depends only on Stages 1 and 4, but 
 6. Six skins (`saadat-like`, `philips-like`, `zoll-like`, `ge-like`, `mindray-like`, `lifepak-like`) and two themes exist as validated JSON; `ge-like`, `mindray-like` and `lifepak-like` may move to v1.1 under R12, but `saadat-like`, `philips-like` and `zoll-like` may not. Calibration works on the iPad.
 7. The same-screen and remote controllers work over in-process, BroadcastChannel, WebSocket and WebRTC; the scenario runner passes the schema and trigger tests.
 8. Validation V1–V9 pass; the realism review passes; the golden-file regression runs in CI.
-9. ESM packages and the single-file IIFE are published; the ventilator-sim PR has been handed to Ali.
+9. ESM packages and the single-file IIFE are published; the ventilator-sim PR has been handed to samhv-dev.
 10. `NOTICES.md` is complete, the legal-review items are resolved or listed, and README, API docs and authoring guides exist.
 
 ## First 3 days (so the next agent can start immediately)
@@ -531,7 +531,7 @@ Stages run strictly in order (R11). Stage 5 depends only on Stages 1 and 4, but 
 - **S0.2** Create the 6 packages and `apps/demo` with `package.json` + `src/index.ts` (`export const version = '0.0.0'`). Set up Vite library config for each package, and give `@pme/renderer` an extra IIFE build named `PatientMonitor`.
 - **S0.3** `engine-core/src/rng/sfc32.ts`: `createRng(seed)` and `stream(name)` via a string hash (e.g. cyrb53). Tests: reproducibility and stream independence.
 - **S0.4** `engine-core/src/clock/clock.ts`: `Clock { tickMs: 20; timeScale; advance(wallDeltaMs): number /* ticks */ }` with a 250 ms clamp. Write the randomised accumulator test first (TDD).
-- **S0.5** Add `LICENSE` (MIT, copyright "Ali Mahdavi and contributors") and a `NOTICES.md` row for each build-only dependency.
+- **S0.5** Add `LICENSE` (MIT, copyright "samhv-dev and contributors") and a `NOTICES.md` row for each build-only dependency.
 - **S0.6** Write `scripts/check-notices.ts` plus the PR template (`.github/pull_request_template.md` with "Sources consulted", "NOTICES rows added").
 - **S0.7** CI (`.github/workflows/ci.yml`): Node 22, pnpm cache, typecheck/test/build/check-notices, Playwright IIFE smoke, IIFE uploaded as an artefact.
 - **S0.8** `apps/demo/stage0.html`: canvas cursor, `x = (simT·25·3.78) mod W`, scale and pause buttons, and the 30 fps toggle (rAF skip). Run the manual stopwatch check, then **Gate 0**.

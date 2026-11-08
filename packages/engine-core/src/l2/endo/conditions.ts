@@ -26,7 +26,7 @@ export interface ConditionEffects {
 export const NEUTRAL_CONDITIONS: ConditionEffects = { hrF: 1, svrF: 1, eesF: 1, dV0Frac: 0, kfMult: 1, vo2F: 1, vasoResp: 1, setShiftC: 0, siF: 1, extraSymp: 0 };
 
 type Row = Omit<ConditionEffects, never>;
-// tables §5e sepsis columns (HR + → × of 75 bpm; SVR, V0, kf, Ees, VO2, vasoResp, tempSet) [TXT/ENG]; erMax/shunt
+// tables §5e sepsis columns (HR + → × of 75 bpm; SVR, V0, kf, Ees, VO2, vasoResp, tempSet) [TXT] [FIT: sepsis column sizes; brief research/44 L2-59]; erMax/shunt
 // are not seams
 const SEPSIS: readonly Row[] = [
   NEUTRAL_CONDITIONS,
@@ -77,9 +77,9 @@ export interface ConditionState {
 }
 
 export const ANAPH_ON_TAU_S = 120; // onset 1–3 min (tables)
-export const ANAPH_OFF_TAU_S = 600; // mediators clear over ≈ 10 min once release stops [ENG]
-export const ANAPH_EPI_STABILISE = 0.8; // β2 mast-cell stabilisation at full β2 effect [ENG, Q56]
-export const COND_TAU_S = 600; // SIRS / hypermetabolic / storm smoothing [ENG]
+export const ANAPH_OFF_TAU_S = 600; // mediators clear over ≈ 10 min once release stops [FIT: endocrine condition time constant without a source; brief research/44 L2-59]
+export const ANAPH_EPI_STABILISE = 0.8; // β2 mast-cell stabilisation at full β2 effect [FIT: β2 mast-cell stabilisation at full β2 effect; Q56; brief research/44 L2-59]
+export const COND_TAU_S = 600; // SIRS / hypermetabolic / storm smoothing [FIT: endocrine condition time constant without a source; brief research/44 L2-59]
 
 export function createConditions(): ConditionState {
   return {

@@ -1,12 +1,12 @@
 # Releasing
 
-Who does what: the stage executor prepares the release in a pull request and stops. **The orchestrator (or Ali)
+Who does what: the stage executor prepares the release in a pull request and stops. **The orchestrator (or samhv-dev)
 merges the PR and pushes the tag.** Pushing a `v*` tag runs `.github/workflows/release.yml`, which rebuilds the tagged
 commit and creates the GitHub release with its assets.
 
 ## Before the tag (on the merged `main`)
 
-1. `ci` is green on the merge commit (a push to `main` runs every job): `build`, the three `unit` jobs, `renderer`, the three shards each of `e2e (chromium …)` and `e2e (webkit …)`, `e2e-count`, and all eleven `test-slow` groups (`slow-a` … `slow-i`, `showcase-a`, `showcase-b`). Read the "e2e tests that passed only on retry" step of every e2e shard (on WebKit it never fails the job) and list any line in the release notes' browser-coverage section.
+1. `ci` is green on the merge commit (a push to `main` runs every job): `build`, the three `unit` jobs, `renderer`, the four shards of `e2e (chromium …)` and the three of `e2e (webkit …)`, `e2e-count`, and all eleven `test-slow` groups (`slow-a` … `slow-i`, `showcase-a`, `showcase-b`). Read the "e2e tests that passed only on retry" step of every e2e shard (on WebKit it never fails the job) and list any line in the release notes' browser-coverage section.
 2. `docs/guides/validation-summary.md` quotes the `docs/validation/report.md` of the release tree, or states that it
    is older and why (which physiology changes it predates). To refresh it: run `pnpm validate` on the tree (or the
    `validation` workflow, Actions → validation → Run workflow) and land the regenerated report in a PR before tagging.
@@ -23,7 +23,7 @@ commit and creates the GitHub release with its assets.
    && pnpm pack-smoke && pnpm docs:api` all pass.
 6. `NOTICES.md` is complete (every bundled template, derived file and runtime dependency) and every licence text it
    points to is in `LICENSES/` (`pnpm check-licences` checks both for shipped packages).
-7. The version label is `1.0.0-rc.1` (Ali's ruling, Q8 of the Stage 8b plan): a pre-release until the calibration
+7. The version label is `1.0.0-rc.1` (the owner's ruling, Q8 of the Stage 8b plan): a pre-release until the calibration
    pass and the blind review have run. The workflow flags any `v*-*` tag as a GitHub pre-release; check the release
    page says "Pre-release".
 8. Tick-cost gate (FU-11 J5, F10). On an idle machine (nothing else running):
@@ -71,7 +71,7 @@ gh run watch "$(gh run list --workflow release --limit 1 --json databaseId --jq 
 
 ## Later: 1.0.0 (not at the release candidate)
 
-- DOI (Q5, deferred to 1.0.0): Ali enables the repository in Zenodo's GitHub integration BEFORE pushing the `v1.0.0`
+- DOI (Q5, deferred to 1.0.0): samhv-dev enables the repository in Zenodo's GitHub integration BEFORE pushing the `v1.0.0`
   tag; Zenodo then mints a DOI for that release; add `doi:` to `CITATION.cff` in a small PR afterwards.
 - Versions: `node --experimental-strip-types scripts/release-manifests.ts 1.0.0`, the six constants and their tests,
   CHANGELOG (the assembler, step 4 above), CITATION — `release-versions.test.ts` checks they agree.

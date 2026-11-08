@@ -25,7 +25,7 @@ export function stepCushing(c: CushingState, cppBase: number, gap: number, dt: n
   }
   if (!c.active && c.lowS >= CUSH_DELAY_S) c.active = true;
   if (c.active && c.okS >= CUSH_OFF_S) c.active = false;
-  // full surge at CPP ≤ 31; 70 % at the threshold (tables: MAP +30–50 once triggered) [ENG]
+  // full surge at CPP ≤ 31; 70 % at the threshold (tables: MAP +30–50 once triggered) [FIT: scripted Cushing surge size; brief research/44 L2-12]
   const target = c.active ? (gapLow ? 1 : Math.min(1, 0.7 + (CUSH_CPP - cppBase) / 30)) : 0;
   const tau = target > c.drive ? CUSH_TAU_ON_S : CUSH_TAU_OFF_S;
   c.drive += (target - c.drive) * (1 - Math.exp(-dt / tau));

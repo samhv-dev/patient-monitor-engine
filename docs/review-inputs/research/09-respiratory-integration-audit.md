@@ -585,10 +585,10 @@ they are expectations, not certainties.
 
 ---
 
-## 6. Proposed scripted respiratory scenario suite (a later stage; the orchestrator inspects these before Ali tests)
+## 6. Proposed scripted respiratory scenario suite (a later stage; the orchestrator inspects these before samhv-dev tests)
 
 All MODELED, adult 40 y 70 kg unless stated, the GA state derived (R4), no hand-sent thermal event. The bands are
-starting proposals for Ali (§7); the mechanism comes first (R45).
+starting proposals for samhv-dev (§7); the mechanism comes first (R45).
 
 | # | scenario | pass criteria |
 |---|---|---|
@@ -613,7 +613,7 @@ untreated control does not resolve. A MANUAL run of RS2 and RS9 asserts the same
 
 ---
 
-## 7. Open clinical questions for Ali (with the model's numbers)
+## 7. Open clinical questions for samhv-dev (with the model's numbers)
 
 1. **Default ventilation.** For a 70 kg man on 12 × 500 we show PaCO2 60 at 60 min (47 with GA); for a 60 kg woman
    on 12 × 400 (7 mL/kg IBW), PaCO2 103 at 40 min. Do you agree the intubated healthy adult's VD/VT should be about

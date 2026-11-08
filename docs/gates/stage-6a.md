@@ -1,6 +1,6 @@
 # Gate 6a — Controllers and transports (date: 2026-09-24; re-run 2026-09-25 after merging Stage 1.1 from `main`)
 
-Gate question (BUILD-PLAN Stage 6, first half): "Can Ali drive the monitor from a phone or laptop without touching it, see a second monitor follow it, and recover cleanly from a Wi-Fi drop?" (The 10-minute ACLS scenario is Stage 6b.)
+Gate question (BUILD-PLAN Stage 6, first half): "Can samhv-dev drive the monitor from a phone or laptop without touching it, see a second monitor follow it, and recover cleanly from a Wi-Fi drop?" (The 10-minute ACLS scenario is Stage 6b.)
 
 | Check | Result |
 |---|---|
@@ -12,8 +12,8 @@ Gate question (BUILD-PLAN Stage 6, first half): "Can Ali drive the monitor from 
 | Acceptance 3 — relay drop: applied exactly once; controller shows disconnected | pass. `sessions.test.ts` › "a controller drop never applies a command twice, and pending commands go through after reconnect" (a real relay; the controller's socket is dropped while a command is pending; the controller logs `link connecting`; the host applies it once) and › "a re-sent command (same id) is answered from the host cache, not re-applied" |
 | Stage then commit: one tick | pass. `sessions.test.ts` › "commands sharing a stageGroup land on one tick" and `host-session.test.ts` › "aligns a stageGroup on one tick STAGE_LEAD_TICKS ahead" (3 ticks = 60 ms) |
 | Latency (200 samples, localhost): ack / visible p50–p95 per path vs 70–140 ms budget; acceptance 1 (in-process ≤ 60, relay ≤ 150 p95) | pass, with a wide margin. Table below; raw numbers in `stage-6a/latency.json`. Worst visible p95 = **28.6 ms** (relay), against the 70–140 ms budget; in-process visible p95 27.5 ms (≤ 60), relay 28.6 ms (≤ 150). Before the merge: 30.1 / 26.5 ms |
-| LAN relay + WebRTC from a phone/iPad; Wi-Fi drop | **pending Ali** (no second device here). The drop behaviour is covered on localhost by acceptance 3 above and by the WebSocket/WebRTC reconnect tests |
-| iPad host: panel reveal by touch, sound | **pending Ali** (no iPad here). The gestures are unit-tested (`reveal.test.ts` 3/3: `i`, Ctrl+Shift+I, 5 taps in the 64 px corner within 3 s, a three-finger hold of 800 ms) |
+| LAN relay + WebRTC from a phone/iPad; Wi-Fi drop | **pending samhv-dev** (no second device here). The drop behaviour is covered on localhost by acceptance 3 above and by the WebSocket/WebRTC reconnect tests |
+| iPad host: panel reveal by touch, sound | **pending samhv-dev** (no iPad here). The gestures are unit-tested (`reveal.test.ts` 3/3: `i`, Ctrl+Shift+I, 5 taps in the 64 px corner within 3 s, a three-finger hold of 800 ms) |
 | Screenshots | `stage-6a/host-panel.png`, `stage-6a/remote.png`, `stage-6a/viewer.png` (headless Chrome, regenerated after the merge; 73 KB, 51 KB and 22 KB) |
 
 Pull request: https://github.com/samhv-dev/patient-monitor-engine/pull/1 (not merged; R20).
@@ -97,7 +97,7 @@ What remains outside the ruling:
 
 ## Not checked here
 
-- The LAN run with a phone or iPad as the remote, and a real Wi-Fi drop (pending Ali).
-- The iPad as host: touch reveal and sound after **Sound on** (pending Ali).
+- The LAN run with a phone or iPad as the remote, and a real Wi-Fi drop (pending samhv-dev).
+- The iPad as host: touch reveal and sound after **Sound on** (pending samhv-dev).
 - Compositor and display latency (≤ 1 frame, not part of *visible*).
 - Hearing the beep on the host (headless).

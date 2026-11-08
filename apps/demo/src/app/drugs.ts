@@ -1,8 +1,9 @@
 // The dose picker's data (research/13 brief §7 "Dose picker"). Drug names and classes come from the engine's own
 // library (the drug library's `DRUGS`), so a drug added to the library is listed without a code change. The presets
-// below are DRAFTS from the drug library's ranges, for Ali's review as one table.
+// below are DRAFTS from the drug library's ranges, for the owner's review as one table.
 import { DRUGS, type DoseUnit, type RateUnit } from '@pme/engine-core';
 import { drugName } from './glossary.ts';
+import type { Link } from './link.ts';
 
 export interface DrugPreset {
   bolus?: Array<[number, DoseUnit]>;
@@ -47,7 +48,7 @@ export const PRESETS: Readonly<Record<string, DrugPreset>> = {
   adenosine: { bolus: [[6, 'mg'], [12, 'mg']] },
   calciumChloride: { bolus: [[10, 'mg/kg'], [1, 'g']] },
   // Potassium chloride is INFUSED, never pushed — the picker opens on Infusion with the peripheral 10 mmol/h and the
-  // central 20 mmol/h (10 and 20 mmol over the hour), and offers no bolus preset (Ali 2026-10-10). The engine warns,
+  // central 20 mmol/h (10 and 20 mmol over the hour), and offers no bolus preset (samhv-dev 2026-10-10). The engine warns,
   // with its source, if a bolus or a faster rate is ordered anyway (l2/pk rows-other.ts maxRatePerH).
   potassiumChloride: { infusion: [[10, 'mmol/h'], [20, 'mmol/h']], aka: ['kcl', 'potassium'] },
   magnesium: { bolus: [[2, 'g']] },
@@ -107,4 +108,16 @@ export function perKg(value: number, unit: string, weightKg: number): string {
   const abs = value * weightKg;
   const digits = abs < 10 ? 1 : 0;
   return `${value} ${unitText(unit)} = ${abs.toFixed(digits)} ${unitText(unit.replace('/kg', ''))} for ${weightKg} kg`;
+}
+
+/**
+ * A drug's lock as its rows read it (the owner's ruling of 5 November 2026: a bolus is locked for SAME_DRUG_LOCK_S of
+ * sim time on every device, the host refusing a second one): "given 0:04 ago · 6 s left", or null when not locked.
+ * The table is the host's applied commands as this device received them (ControllerSession.gives).
+ */
+export function lockLabel(link: Link, drugId: string): string | null {
+  const l = link.ctl.gives?.lock(drugId, link.simT); // `?.`: a DOM test's stand-in Link may have no table
+  if (!l) return null;
+  const ago = Math.floor(l.agoS); // floor and ceil: the two always add to 10 s as the countdown runs
+  return `given ${Math.floor(ago / 60)}:${String(ago % 60).padStart(2, '0')} ago · ${Math.ceil(l.leftS)} s left`;
 }

@@ -1,5 +1,5 @@
 // Bedside results (the checklist page's download) → docs/validation/bedside/<date>.md with a verdict table and the
-// skin-provenance queue: every 'close'/'wrong' item lists the saadat-like skin fields to revisit, with Ali's
+// skin-provenance queue: every 'close'/'wrong' item lists the saadat-like skin fields to revisit, with the owner's
 // observation as the proposed source (tag "observed", research/06 §7).
 import { BEDSIDE, type BedsideResults } from './checklist.ts';
 

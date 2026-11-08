@@ -21,7 +21,7 @@ async function run(e: ReturnType<typeof createEngine>, toS: number): Promise<voi
 }
 const ADULT = { weightKg: 70, heightCm: 170, ageY: 40, sex: 'M' as const };
 const VENT = { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 };
-/** ≈ 1 MAC maintenance at 40 y on 7g's circle model [ENG input, not a model constant; 2.5 % measured on the merged
+/** ≈ 1 MAC maintenance at 40 y on 7g's circle model [ENG: test; input, not a model constant; 2.5 % measured on the merged
  * base]: if the measured end-tidal MAC is outside 0.9–1.1 in the depth test, change THIS dial (record it), never the DI band. */
 const SEVO_1MAC = { kind: 'vaporiser', agent: 'sevoflurane', dialPct: 2.5, fgfLpm: 6 };
 const mean = (a: number[]) => a.reduce((s, x) => s + x, 0) / Math.max(1, a.length);
@@ -48,7 +48,7 @@ describe('neuro acceptance (engine)', { timeout: 600_000 }, () => {
     expect(mean(control)).toBeGreaterThan(400);
     expect(mean(blocked)).toBeLessThan(0.75 * mean(control)); // 32–35 min on 7g's PK: TOF 3–4 with fade → weak + obstructed
   });
-  it('depth bands through the engine: sevoflurane ≈ 1 MAC → displayed DI 38–48; off → conscious within 5–12 min [ENG band]', async () => {
+  it('depth bands through the engine: sevoflurane ≈ 1 MAC → displayed DI 38–48; off → conscious within 5–12 min [FIT: depth and emergence band; band; brief research/44 L2-35]', async () => {
     const e = createEngine({ seed: 22, patient: ADULT });
     const di: number[] = [];
     const mac: number[] = [];

@@ -28,6 +28,8 @@ const winNode = (await import(pathToFileURL(join(showcase, 'win-node.mjs')).href
 };
 const launch = (await import(pathToFileURL(join(showcase, 'server/launch.mjs')).href)) as {
   openCommand: (url: string, platform?: string) => { cmd: string; args: string[]; opts: Record<string, unknown> };
+  stateDir: (platform: string, env: Record<string, string | undefined>) => string | null;
+  relayArgs: (relay: string, port: number, app: string, state: string | null) => string[];
 };
 
 describe('the kit gets the Windows launchers', () => {
@@ -106,15 +108,15 @@ describe('opening the browser', () => {
 describe('a file inside the app folder (the relay and serve.mjs)', () => {
   it('Windows paths (path.win32): the app\'s files are inside; a sibling folder, another drive, the parent are not', () => {
     const w = path.win32;
-    const root = 'C:\\Users\\Ali\\Desktop\\PME kit (rc.3)\\app';
+    const root = 'C:\\Users\\samhv-dev\\Desktop\\PME kit (rc.3)\\app';
     expect(isInside(root, `${root}\\index.html`, w)).toBe(true);
     expect(isInside(root, `${root}\\assets\\index-abc.js`, w)).toBe(true);
-    expect(isInside(root, 'c:\\users\\ali\\desktop\\pme kit (rc.3)\\APP\\index.html', w)).toBe(true); // Windows ignores case
+    expect(isInside(root, 'c:\\users\\samhv-dev\\desktop\\pme kit (rc.3)\\APP\\index.html', w)).toBe(true); // Windows ignores case
     expect(isInside(root, `${root}\\..foo.js`, w)).toBe(true); // a name starting with '..' is still inside
     expect(isInside(root, root, w)).toBe(false);
-    expect(isInside(root, 'C:\\Users\\Ali\\Desktop\\PME kit (rc.3)\\app2\\index.html', w)).toBe(false);
-    expect(isInside(root, 'C:\\Users\\Ali\\Desktop\\PME kit (rc.3)\\server\\relay.mjs', w)).toBe(false);
-    expect(isInside(root, 'D:\\Users\\Ali\\Desktop\\PME kit (rc.3)\\app\\index.html', w)).toBe(false);
+    expect(isInside(root, 'C:\\Users\\samhv-dev\\Desktop\\PME kit (rc.3)\\app2\\index.html', w)).toBe(false);
+    expect(isInside(root, 'C:\\Users\\samhv-dev\\Desktop\\PME kit (rc.3)\\server\\relay.mjs', w)).toBe(false);
+    expect(isInside(root, 'D:\\Users\\samhv-dev\\Desktop\\PME kit (rc.3)\\app\\index.html', w)).toBe(false);
     expect(isInside(root, '\\\\.\\CON', w)).toBe(false);
   });
   it('POSIX paths: unchanged', () => {
@@ -294,5 +296,30 @@ describe('make-bundle.mjs --win-node: the official Windows Node.js zip, verified
     expect(winNode.listedSum(`${sum}  node-v22.23.4-win-x64.zip\r\n`, 'node-v22.23.4-win-x64.zip')).toBe(sum.toLowerCase());
     expect(winNode.listedSum(`${sum} *node-v22.23.4-win-x64.zip`, 'node-v22.23.4-win-x64.zip')).toBe(sum.toLowerCase());
     expect(winNode.listedSum(`${sum}  node-v22.23.4-win-x64.zip.asc`, 'node-v22.23.4-win-x64.zip')).toBeNull();
+  });
+});
+
+// Room plan R1b: the room code survives the kit's move to the next port (a new origin, an empty store). The launchers
+// start the relay with --state-dir in this computer's own application-data folder; the kit's folder stays untouched.
+describe('the classroom keeps its last room code in the application-data folder (room plan R1b)', () => {
+  it('launch.mjs (what Start Classroom.cmd runs): %LOCALAPPDATA%\\PME Classroom on Windows, ~/Library/Application Support/PME Classroom on macOS', () => {
+    expect(launch.stateDir('win32', { LOCALAPPDATA: 'C:\\Users\\lab\\AppData\\Local' })).toBe('C:\\Users\\lab\\AppData\\Local\\PME Classroom');
+    expect(launch.stateDir('darwin', { HOME: '/Users/lab' })).toBe('/Users/lab/Library/Application Support/PME Classroom');
+    // no such folder known (a stripped environment, another system): no --state-dir, the relay writes nothing
+    expect(launch.stateDir('win32', {})).toBeNull();
+    expect(launch.stateDir('darwin', {})).toBeNull();
+    expect(launch.stateDir('linux', { HOME: '/home/lab' })).toBeNull();
+    // the kit's own tests (check-relay.mjs) point it at a folder of their own
+    for (const os of ['win32', 'darwin', 'linux']) expect(launch.stateDir(os, { PME_STATE_DIR: '/tmp/pme-state', HOME: '/Users/lab', LOCALAPPDATA: 'C:\\x' })).toBe('/tmp/pme-state');
+  });
+  it('launch.mjs passes --state-dir only when there is a folder', () => {
+    expect(launch.relayArgs('/kit/server/relay.mjs', 8650, '/kit/app', '/Users/lab/Library/Application Support/PME Classroom')).toEqual(['/kit/server/relay.mjs', '--port', '8650', '--static', '/kit/app', '--state-dir', '/Users/lab/Library/Application Support/PME Classroom']);
+    expect(launch.relayArgs('/kit/server/relay.mjs', 8650, '/kit/app', null)).toEqual(['/kit/server/relay.mjs', '--port', '8650', '--static', '/kit/app']);
+  });
+  it('Start Classroom.command: the same folder on macOS (PME_STATE_DIR first), passed to the relay; nothing in its own folder', () => {
+    const text = readFileSync(join(showcase, 'kit', 'start-classroom.command'), 'utf8');
+    expect(text).toContain('STATE="${PME_STATE_DIR:-${HOME:+$HOME/Library/Application Support/PME Classroom}}"');
+    expect(text).toContain('"$NODE" "$RELAY" --port "$p" --static "$APP" ${STATE:+--state-dir "$STATE"} >"$LOG" 2>&1 &');
+    expect(text).not.toMatch(/\$DIR\/[^"\s]*(room|state)/i);
   });
 });

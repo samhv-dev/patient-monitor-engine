@@ -7,17 +7,17 @@ import { normal, type Sfc32State } from '../../rng/sfc32.ts';
 import type { AirwayState, BreathKind, VentFrame, VentSource } from '../../types-resp.ts';
 import { framePressure } from '../../types-vent-link.ts'; // Stage V
 
-export const INSP_FLOW_LPS = 0.05; // externalDrive: inspiration starts at flow > +0.05 L/s (brief §7.6) [ENG]
-export const DRIVE_TIMEOUT_S = 5; // no VentFrame for 5 s → the external drive is gone (apnoea) [ENG]
+export const INSP_FLOW_LPS = 0.05; // externalDrive: inspiration starts at flow > +0.05 L/s (brief §7.6) [ENG: device]
+export const DRIVE_TIMEOUT_S = 5; // no VentFrame for 5 s → the external drive is gone (apnoea) [ENG: device]
 export const U_REF_CMH2O = 10; // Alveolar swing of the reference breath (VT 500 at C 50) → u swing 1.0
-export const SPONT_PPL_CMH2O = 4; // spontaneous pleural swing, 3–8 cmH2O negative [ENG]
-export const SPONT_TI_FRACTION = 0.38; // spontaneous I:E ≈ 1:1.6 [ENG]
-export const SPONT_JITTER = 0.05; // breath-to-breath SD of period and VT, spontaneous [ENG]
-export const GASTRIC_BREATHS = 5; // oesophageal: breaths with gastric CO2 before the trace is flat [ENG, < 6]
+export const SPONT_PPL_CMH2O = 4; // spontaneous pleural swing, 3–8 cmH2O negative [FIT: spontaneous pleural swing and I:E; brief research/44 L2-51]
+export const SPONT_TI_FRACTION = 0.38; // spontaneous I:E ≈ 1:1.6 [FIT: spontaneous pleural swing and I:E; brief research/44 L2-51]
+export const SPONT_JITTER = 0.05; // breath-to-breath SD of period and VT, spontaneous [ENG: numerics]
+export const GASTRIC_BREATHS = 5; // oesophageal: breaths with gastric CO2 before the trace is flat [FIT: gastric CO2 for < 6 breaths after oesophageal intubation; < 6; brief research/44 L2-51]
 export const EXP_TAU_S = 0.5; // passive expiration τ = R·C (10 cmH2O/L/s × 0.05 L/cmH2O)
 /**
  * The volume-control pressure limit (cmH2O) when the command sets none — the anaesthesia-ventilator factory default
- * Pmax/Plimit 40 (Dräger Primus, GE Aisys operator manuals) [ENG]; above it the breath is pressure-limited.
+ * Pmax/Plimit 40 (Dräger Primus, GE Aisys operator manuals) [ENG: device]; above it the breath is pressure-limited.
  */
 export const VCV_PMAX_DEFAULT = 40;
 /** JSON-safe 'never' (snapshots travel as JSON: Infinity would become null). */
@@ -67,8 +67,8 @@ export interface Cycle {
 /**
  * The mixed-expirate share of a breath at the sampling site (Fowler 1948 single-breath washout; Kodali 2013
  * Anesthesiology 118:192 — breaths below the dead space show a small or absent plateau). The first CO2 appears at 0.6
- * of the series dead space (axial mixing), a full plateau at 1.4× [ENG ramp; fit target RS3 and "normal breaths
- * unchanged"].
+ * of the series dead space (axial mixing), a full plateau at 1.4× [FIT: ramp; fit target RS3 and "normal breaths
+ * unchanged"; brief research/44 L2-51].
  */
 export function alveolarFraction(vtMl: number, vdSeriesMl: number): number {
   if (!(vdSeriesMl > 0)) return 1;
@@ -230,7 +230,7 @@ function makeCycle(d: DriverState, ctx: DriverCtx, t: number): { c: Cycle | null
       c.vt = 0;
       c.effort = 0.3;
       c.sampled = d.gastricN < GASTRIC_BREATHS ? 'gastric' : 'none';
-      c.gastric = ctx.etco2 * 0.45 * 0.6 ** d.gastricN; // [ENG] washout heights
+      c.gastric = ctx.etco2 * 0.45 * 0.6 ** d.gastricN; // [FIT: oesophageal capnogram washout heights; brief research/44 L2-51] washout heights
       d.gastricN++;
       break;
     // 'bronchospasm' has no cycle rule of its own any more — the lung condition it aliases carries the resistance (the

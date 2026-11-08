@@ -19,9 +19,9 @@ describe('alarm conditions', () => {
     const inp = createInputs();
     observeQrs(inp, 9.5);
     observeEvent(inp, meas(10, { hr: 170 }));
-    expect(ids(buildConditions(s, inp, 10))).toEqual([]);
+    expect(ids(buildConditions(s, inp, 10))).toEqual(['abpNoSensor']); // no arterial line: saadat's IBP1 prompt (MUI-7)
     applyAlarmAction(s, { device: 'alarm', action: 'enable', param: 'HR', value: true }, 10, []);
-    expect(ids(buildConditions(s, inp, 10))).toEqual(['HR_HIGH']);
+    expect(ids(buildConditions(s, inp, 10))).toEqual(['HR_HIGH', 'abpNoSensor']);
     expect(ids(buildConditions(s, inp, 19.5))).toContain('ASYSTOLE'); // saadat-like: 10 s without a QRS … and HR 170 is stale
     expect(ids(buildConditions(s, inp, 19.5))).not.toContain('HR_HIGH');
   });

@@ -2,7 +2,7 @@
 // answered — the 1 s redraw from the host's state must not flip it back (a quick second click then sent the wrong action).
 import { expect, test } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
-import { openApp, startVite } from './app-support.ts';
+import { openApp, pillV2, startVite, TEACH2 } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -13,21 +13,22 @@ type W = { __pmeApp: { link: { send(c: unknown): Promise<unknown> } } };
 
 test('Pause stays "Resume" while the host is slow to answer, and the host ends paused', async ({ page }) => {
   test.setTimeout(60_000);
-  await openApp(page, base, '#/teach', { warmMs: 1000 });
+  await openApp(page, base, TEACH2, { warmMs: 1000 });
   // a slow host: every command reaches it 1.5 s late (two 1 s redraws of the bar fall inside that window)
   await page.evaluate(() => {
     const l = (window as unknown as W).__pmeApp.link;
     const send = l.send.bind(l);
     l.send = (c: unknown) => new Promise((r) => setTimeout(r, 1500)).then(() => send(c));
   });
-  const pause = page.locator('.sessionbar').getByRole('button', { name: /^(Pause|Resume)$/ });
+  // Instructor v2's clock pill (its `asking` guard, teach2/header.ts): the session bar's "Resume" is the pill's paused state
+  const pause = pillV2(page);
   await pause.click();
   const seen: string[] = [];
   for (let i = 0; i < 25; i++) {
-    seen.push((await pause.textContent()) ?? '');
+    seen.push((await pause.getAttribute('data-state')) ?? '');
     await page.waitForTimeout(100);
   }
-  expect(seen.every((s) => s === 'Resume'), seen.join(',')).toBe(true);
-  await expect(pause).toHaveText('Resume');
-  await expect(pause).toHaveAttribute('aria-pressed', 'true');
+  expect(seen.every((s) => s === 'paused'), seen.join(',')).toBe(true);
+  await expect(pause.locator('.ip2-pill-word')).toHaveText('PAUSED');
+  await expect(pause).toHaveAttribute('data-state', 'paused');
 });

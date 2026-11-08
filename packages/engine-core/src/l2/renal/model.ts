@@ -89,7 +89,7 @@ function nephronTone(rAff: number, aki: number): number {
 
 /**
  * Cold diuresis (research/13) — below COLD_ONSET_C tubular Na reabsorption and ADH responsiveness fall and the excreted
- * fraction rises (Polderman KH. Crit Care Med 2009;37:S186–S202) × (1 + COLD_DIURESIS_PER_C·(onset − T)⁺) [ENG]: 33 °C
+ * fraction rises (Polderman KH. Crit Care Med 2009;37:S186–S202) × (1 + COLD_DIURESIS_PER_C·(onset − T)⁺) [FIT: cold diuresis gain; brief research/44 L2-08]: 33 °C
  * → × 1.4.
  */
 export function coldDiuresis(tempC = 37): number {
@@ -103,7 +103,7 @@ export function mannitolExcretionGMin(s: RenalState, inp: RenalInputs): number {
   return MANNITOL_KE_PER_MIN * g * Math.min(1, s.gfr / Math.max(1, s.p.gfrSet));
 }
 
-/** Effective arterial blood volume (0–1+) [ENG]: the smaller of the blood volume and (CO/CO0)^0.75 — a low-output state
+/** Effective arterial blood volume (0–1+) [FIT: effective arterial blood volume form; brief research/44 L2-07]: the smaller of the blood volume and (CO/CO0)^0.75 — a low-output state
  *  activates the same volume receptors as bleeding (tables §7 check 20: HFrEF oliguria at normal blood volume). The
  *  volume factor V acts through `vNh`, which follows V(eabv) with onset τ 2 min and washout τ 45 min (NH_TAU_*). The
  *  output is referenced to the body's DEMAND (CO0 × demandRel; research/13) — general anaesthesia, hypothermia and

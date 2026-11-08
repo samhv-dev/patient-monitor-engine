@@ -90,7 +90,7 @@ awake-laryngoscopy figure could not be opened and are marked UNVERIFIED.
 #### 6. `packages/engine-core/test/engine/neuro-acceptance.test.ts:35` — residual block at extubation (TOFR < 0.9, natural airway): smaller breaths than the unblocked control
 - **Band / stated source:** VT blocked < 0.75 x control at 32-35 min after rocuronium 0.6 mg/kg, no hypnotic (awake) — tables §4.6 uaCollapse (written for the SEDATED patient); FU-6 R3(d)
 - **Measured:** ratio 0.80 (402 vs 500 mL)
-- **Source verification:** research/27 rows 21, 23, 26 (verified there): Pavlin 1989 PMID 2923288 "At maximum neuromuscular blockade (MIP of -20 cm H2O), VC was 2.0 liters ... and PETCO2 was normal"; Ali 1975 PMID 1138775 "Respiratory frequency, tidal volume and peak expiratory flow rate were not altered". Cantineau JP et al. Anesthesiology 1994;81:585-590, PMID 8092503 (abstract): after 0.6 mg/kg, diaphragm 25/75/90 % twitch recovery at 23/33/35 min vs adductor 40/56/64 min.
+- **Source verification:** research/27 rows 21, 23, 26 (verified there): Pavlin 1989 PMID 2923288 "At maximum neuromuscular blockade (MIP of -20 cm H2O), VC was 2.0 liters ... and PETCO2 was normal"; samhv-dev 1975 PMID 1138775 "Respiratory frequency, tidal volume and peak expiratory flow rate were not altered". Cantineau JP et al. Anesthesiology 1994;81:585-590, PMID 8092503 (abstract): after 0.6 mg/kg, diaphragm 25/75/90 % twitch recovery at 23/33/35 min vs adductor 40/56/64 min.
 - **Band vs source:** No. The rig is the AWAKE patient (the file comment says so). Awake partly blocked volunteers keep resting VT; at 32-35 min after 0.6 mg/kg the diaphragm is already at ~75-90 % twitch (Cantineau) while the hand shows TOF 3-4 with fade. A < 0.75 VT ratio is the sedated row applied to the wrong arm.
 - **Better evidence:** Eikermann 2003 (research/27 row 26): upper-airway obstruction and inspiratory flow loss at TOF 0.5-0.8 are the impairments, not resting VT. (grade A)
 - **Verdict: MIS-SPECIFIED** · proposed: awake arm: VT ratio >= 0.8 (near-normal) with an obstruction/inspiratory-flow load present; keep < 0.75 only on a sedated (hypnotic) arm (research/27 rows 21, 23, 26; Cantineau 1994 PMID 8092503)
@@ -216,7 +216,7 @@ awake-laryngoscopy figure could not be opened and are marked UNVERIFIED.
    and the evidence (diaphragm ~16 min; research/26 T1, research/27 §1.8) put it before the 29-min dose, so the
    measured 0 s is correct. Dependents: none beyond the queue row. The 2.2-min sugammadex → TOFR 0.9 test in
    reversal.test.ts is right and already passes.
-3. **neuro-acceptance:35, residual-block VT < 0.75 on an awake rig.** The awake-volunteer data (Pavlin, Ali; research/27)
+3. **neuro-acceptance:35, residual-block VT < 0.75 on an awake rig.** The awake-volunteer data (Pavlin, samhv-dev; research/27)
    and Cantineau's diaphragm timing say VT should be near-normal. Dependents: Q-FU6-4 / D21 / E-FU6-10, and the
    tables §4.6 uaCollapse row (sedated arm only).
 4. **interactions:23 + depth-drive:142, EC50 × 0.67 at 1 MAC, and interactions:33 / DI-51 duration.** Bock 2000 and
@@ -543,7 +543,7 @@ abstracts through PubMed E-utilities, from Miller 10e ch. 82 and Coexist 8e ch. 
 4. **Exsanguination ROSC "within 4 min" (clinical-suite:286, E-FU4-19).** The test itself says it is unsourced. The
    one analogue found (Chalkias 2020, 61 % bleed-out → PEA, about 46 % of the shed volume back as crystalloid) gives
    ROSC in 10 of 10 at 6.1 ± 1.7 min. Proposed: within 10 min. The engine (no pulse in 10 min after G-FU4-1) is outside
-   even the wider band, so this is a real miss. Dependents: the measurement row for Ali's question A-new (volume
+   even the wider band, so this is a real miss. Dependents: the measurement row for the owner's question A-new (volume
    threshold), the viscosity term (FU-6 R11), and the circ-lowflow-arrest ROSC rows.
 5. **CPR cerebral flow 0.30–0.40 (fu8-cpr-brain:55; research/20 DV-02a).** The source is wrong: Meaney 2013's abstract has no
    flow figure (its text only repeats 30–40 % from canine work; fix-citations 2026-10-11), and the right one is Kern, Niemann and Steen 2007, "at best 30 % to 40 %". Proposed: 0.20–0.40, with 0.40
@@ -633,7 +633,7 @@ header comment.
 <a id="row-43"></a>
 
 #### 43. `packages/engine-core/test/engine/clinical-suite.test.ts:161` — S6a class III haemorrhage (1.5 L / 10 min) + propofol 2 mg/kg: MAP falls 40-60 % to a nadir of 30-50 over 1-3 min
-- **Band / stated source:** nadir 30-50 mmHg and fall 40-60 % within 180 s — the expected picture (Ali's Q1, item 19); test title cites Johnson 2003, ATLS for the sibling
+- **Band / stated source:** nadir 30-50 mmHg and fall 40-60 % within 180 s — the expected picture (the owner's Q1, item 19); test title cites Johnson 2003, ATLS for the sibling
 - **Measured:** nadir 2.7 (-97 %) with an arrest at +90 s
 - **Source verification:** Johnson KB et al. Anesthesiology 2003;99:409-420, PMID 12883414 (abstract): swine bled 30 mL/kg, propofol INFUSION 200 microg/kg/min; reports PK (slower intercompartmental clearance) and a 2.7-fold lower BIS Ce50; no MAP-after-bolus data. Miller 10e ch. 62 p. 2009: young patients "can lose up to 40% of their blood volume before experiencing a decrease in blood pressure, thereby leading to potentially catastrophic circulatory collapse with induction of anesthesia".
 - **Band vs source:** No source gives the magnitude. Johnson 2003 is a PK/PD swine infusion study, not a bolus haemodynamic one. Miller supports collapse as the expected direction but gives no numbers.
@@ -688,7 +688,7 @@ header comment.
 <a id="row-48"></a>
 
 #### 48. `packages/engine-core/test/engine/fu8-body-size.test.ts:46` — term neonate 3.5 kg: cardiac output >= 150 mL/kg/min (PALS ~ 200)
-- **Band / stated source:** CO >= 150 mL/kg/min at 600 s — PALS (no page); plan 'Waiting on Ali' (isometric §2.2 scaling)
+- **Band / stated source:** CO >= 150 mL/kg/min at 600 s — PALS (no page); plan 'Waiting on samhv-dev' (isometric §2.2 scaling)
 - **Measured:** 0.31 L/min = 89 mL/kg/min
 - **Source verification:** Popat H, Kluckow M. Neonatology 2012;101:166-171, PMID 22024714 (abstract, 21 healthy term infants, first 4 h): "LVO 193 ml/kg/min, RVO 216 ml/kg/min" (medians); Kluckow M, Evans N. Arch Dis Child 2000;82:F182, PMID 10794783: term SVC flow 76 -> 93 mL/kg/min day 1 -> 2 (upper-body return only). A PALS number was not located: UNVERIFIED attribution.
 - **Band vs source:** Yes (number) / No (attribution). >= 150 is below the term median LVO of 193 and is a reasonable floor. Early LVO includes ductal shunt, so systemic output may be somewhat lower. The 'PALS' citation should be replaced.
@@ -987,7 +987,7 @@ This section has 24 rows: 19 known-miss assertions in the gas-exchange, apnoea, 
 <a id="row-73"></a>
 
 #### 73. `packages/engine-core/test/engine/obstructive-aliases.test.ts:83` — massive PE at 3 min (ETT, VCV, FiO2 0.5): PROPOSED SaO2 ≤ 92 %
-- **Band / stated source:** SaO2 ≤ 92 % at 3 min after the PE event — "PROPOSED band (Q15, Ali)"; tables §18 PE shunt +0.10
+- **Band / stated source:** SaO2 ≤ 92 % at 3 min after the PE event — "PROPOSED band (Q15, samhv-dev)"; tables §18 PE shunt +0.10
 - **Measured:** SaO2 97.3 %
 - **Source verification:** Same as clinical-suite.test.ts:195 (Santolicandro 1995; Huet 1985; Manier 1985; Dellinger 5th ch. 42).
 - **Band vs source:** No: same reason as row 1. A room-air figure has been applied at FiO2 0.5.
@@ -1636,7 +1636,7 @@ Eight rows: eight known-miss assertions in the blood core, acid-base, anaemia, K
 <a id="row-118"></a>
 
 #### 118. `packages/engine-core/test/engine/fu9-potassium.test.ts:26` — furosemide 40 mg at K 7.5: K >= 0.1 lower than control at 3 h
-- **Band / stated source:** Delta K <= -0.1 mmol/L vs untreated at 3 h — research/22 BF-08d (dirOnly 'beyond 0.1'); UK Renal Association 2023; Young 1988; Good & Wright 1979; size = Ali's Open question 5
+- **Band / stated source:** Delta K <= -0.1 mmol/L vs untreated at 3 h — research/22 BF-08d (dirOnly 'beyond 0.1'); UK Renal Association 2023; Young 1988; Good & Wright 1979; size = the owner's Open question 5
 - **Measured:** -0.029 (diuresis +150 mL/h at peak under GA)
 - **Source verification:** UKKA Clinical Practice Guideline, Management of Hyperkalaemia in Adults (final, Dec 2023; PDF opened) Guideline 7.1 is headed "Use of diuretics for managing Hyperkalaemia in the community": "We suggest that loop diuretics may be a useful adjunct for the treatment of chronic hyperkalaemia"; "Loop diuretics (e.g. furosemide, bumetanide) are the most effective class that promote urinary K+ excretion". No acute magnitude is given. Young 1988 and Good & Wright 1979 were not opened: UNVERIFIED. Sterns RH et al. Medicine 1981;60:339-54, PMID 6268928 (abstract) is a qualitative review of internal K balance (the 300 mmol per mmol/L figure is not in the abstract).
 - **Band vs source:** Partly. The direction (kaliuresis lowers K) is supported. The 0.1 mmol/L size at 3 h has no source; the test comment itself calls it the owner's.
@@ -1854,7 +1854,7 @@ Ten rows: nine known-miss assertions in the MH, fever, thermoregulation, glucose
 <a id="row-134"></a>
 
 #### 134. `packages/engine-core/test/engine/fu10-fever.test.ts:9` — sepsis (phase sepsis) under GA: core 38.5-41 °C at 90 min (tables §5e)
-- **Band / stated source:** core >= 38.5 °C (title 38.5-41) at 90 min after sepsis onset; ventilated, GA flag, 21 °C — tables §5e sepsis `tempSet` 38.5-39.5 (warm shock 38.5-40) [TXT]; research/14 ET-12; ruling R-3 (A8 withdrawn pending Ali, Q7)
+- **Band / stated source:** core >= 38.5 °C (title 38.5-41) at 90 min after sepsis onset; ventilated, GA flag, 21 °C — tables §5e sepsis `tempSet` 38.5-39.5 (warm shock 38.5-40) [TXT]; research/14 ET-12; ruling R-3 (A8 withdrawn pending samhv-dev, Q7)
 - **Measured:** 36.60 °C (36.86 before Task A3); research/14 ET-12 GA-flag control at 90 min 35.42 (pre-A3)
 - **Source verification:** Negishi C et al. Anesthesiology 1998;88:1162-1169, PMID 9605674 (abstract, n = 8 volunteers, IL-2 pyrogen, desflurane started 3 h after the first dose): "Peak core temperature (elapsed time, 5-8 h) decreased in a dose-dependent fashion: 38.6 +/- 0.5 degrees C on the control day, 37.7 +/- 0.7 degrees C during 0.6 MAC and 37.2 +/- 1.0 degrees C during 1.0 MAC desflurane anesthesia"; "1.0 MAC essentially obliterating fever". Lenhardt R et al. Anesthesiology 1998;89:648-656, PMID 9743401 (abstract): fever during anaesthesia "is rare ... This low incidence results in part from dose-dependent inhibition of fever by volatile anesthetics." Sessler DI. Anesthesiology 2008;109:318-338, PMID 18648241 (abstract): "All general anesthetics produce a profound dose-dependent reduction in the core temperature".
 - **Band vs source:** No. The §5e values are set points, the presentation of sepsis on the ward. They do not describe the core of a ventilated patient under GA in a 21 °C room. Awake, pyrogen fever peaks at 5-8 h (38.6 ± 0.5), not at 90 min. At 1 MAC the peak is 37.2 ± 1.0 °C, even with the pyrogen given 3 h before induction. The 41 °C ceiling also exceeds §5e's own 39.5.
@@ -2511,7 +2511,7 @@ were the Miller ch. 24 pp. 728-731 sugammadex-bradycardia figure and any human m
 8. **interactions-misc:168, dexmedetomidine early SVR rise on a 10-min load.** The pressor phase is rate-dependent
    (Bloor: 2-min infusion, peak at 3 min, gone by 11; the label ties it to the loading rate and says slowing the load
    abates it). Asserting it for a 10-min load asks for an effect the sources do not predict. Dependents: DI-60's early
-   item (open to Ali), tables §6.3's unsourced "+15 % during a fast load", the alpha2B entry (+0.18 at 0.35).
+   item (open to samhv-dev), tables §6.3's unsourced "+15 % during a fast load", the alpha2B entry (+0.18 at 0.35).
 9. **antiarrhythmic:50, sub-therapeutic lidocaine "never converts" (exactly 0 of 200).** An absolute-zero band on a
    continuous occupancy-scaled hazard; 1.5 % over 20 min is inside the noise of spontaneous VT termination, and the
    lambda fit itself (Gorgels, ~20 % for a full 1.5 mg/kg dose) is correctly sourced. Dependents: L_LIDO_VT, the
@@ -2638,7 +2638,7 @@ acquisition alignment.
 
 <a id="row-183"></a>
 
-#### 183. `packages/engine-core/test/engine/fidelity-lowflow.test.ts:78` — Ali's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3
+#### 183. `packages/engine-core/test/engine/fidelity-lowflow.test.ts:78` — the owner's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3
 - **Band / stated source:** from 20 s after MAP < 30 holds for 20 s: zero valid SpO2 rows and max PI < 0.3 — brief §4.3 (LOW PERF below PI 0.3; no pulse -> invalid after 10-30 s); research/05 §6 [S2] p. 58-59
 - **Measured:** SpO2 99 valid at 760-765 s at MAP 19-20, PI 0.31-0.33 (6 s, just before pulse loss)
 - **Source verification:** Severinghaus JW, Spellman MJ. Anesthesiology 1990;73:532-537, PMID 2393137 (abstract): with hand elevation (normal pulse pressure) "right radial arterial systolic pressure (SP) was 25.3 +/- 12.4 mmHg at failure and 34.1 +/- 13.3 at recovery (mean of three oximeters, n = 189)"; with brachial clamp failure at 37.3 +/- 9.8 mmHg.

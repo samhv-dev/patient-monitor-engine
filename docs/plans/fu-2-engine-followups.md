@@ -194,7 +194,7 @@ plans (`blood.core.liver = liverFn·tempF`, `organs.liver`).
   Matta curve itself — no division by the metabolic share. 7d computes the NET CBF = direct × its CMRO2 coupling (7f's
   `cmro2Mult` when present), so at 1.5 MAC sevoflurane with no other agent 7d reads 1.17 × its coupling term. The two
   rows' linear `cbfVaso` PD entries are removed (they would count twice). Desflurane and N2O keep their rows (the
-  tables give no numbers). Whether the net should instead reproduce Matta's number is Q-FU2-CBF (Ali's calibration
+  tables give no numbers). Whether the net should instead reproduce Matta's number is Q-FU2-CBF (the owner's calibration
   pass; not blocking).
 - **D11 — temperature once.** `PkCtx.hepFnTemp` is true only when 7c's `blood.core.liver` exists AND 7d's
   `organs.liver` exists (7c alone initialises `core.liver` to 1 with no temperature in it, so "core.liver present" is
@@ -2194,7 +2194,7 @@ git push
 - Produces: `CnsSpec.cmro2PerMac?: number`, `CnsSpec.cbfDirect?: readonly [number, number]`, `volatileCbfDirect(mac:
   number, direct: readonly [number, number]): number`; `bus.cns.cmro2Mult` (the tables' per-MAC CMRO2) and
   `bus.cns.cbfVaso` = the tables' DIRECT CBF factor (Matta 1999, beyond coupling; 1.17 / 1.72 at 1.5 MAC). NET CBF is
-  7d's product: direct × its CMRO2 coupling (7f's `cmro2Mult` when present) — D10; Q-FU2-CBF is Ali's.
+  7d's product: direct × its CMRO2 coupling (7f's `cmro2Mult` when present) — D10; Q-FU2-CBF is the owner's.
 
 - [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/volatile-cbf.test.ts`:
 
@@ -2614,7 +2614,7 @@ machine once, and record the wall time).
      follows the rhythm).
   4. *Decisions* — D1–D13 one line each; *Deviations* — anything that differs from this plan and why, incl. any extra
      `holdRate` call for a sibling stage's `ps.hr` write.
-  5. *For the orchestrator / Ali* — the open questions below; the calibration items (dobutamine gap, NR-1 evidence,
+  5. *For the orchestrator / samhv-dev* — the open questions below; the calibration items (dobutamine gap, NR-1 evidence,
      `AV_GAIN`/`AV_MOD_MAX`, the AF rate-control Emax values and amiodarone's 14 %, the monitor's AF over-read, item
      6's two options); what 7d's executor can flip (check 20's premise through MANUAL contractility, the cbfVaso
      deviation — 7d now multiplies the DIRECT factor by its coupling, the temperature double count).
@@ -2697,13 +2697,13 @@ or rule on the two Stage 2 bands. The 7d `it.fails` stays.
 - **Q-FU2-4 (NR-1):** the ruled option (b) is refuted by measurement; the remaining lever is filling through the
   compensatory pause (EDPVR/diastasis of the elastance heart). Calibration pass.
 - **Q-FU2-6 (MANUAL `svr`):** kept derived (D9). If instructors must set SVR in MANUAL, one of SBP/DBP/CVP/contractility
-  has to become an output while it is set; which one is a teaching decision (Ali).
+  has to become an output while it is set; which one is a teaching decision (samhv-dev).
 - **Q-FU2-7 (item 6):** see "Item 6: deferred" — diagnose on the 7d branch with check 19 red, or rule on hemo-acceptance
   3 and 8 if a global α_R 0.15 is wanted anyway.
 - **Q-FU2-8 (desflurane, N2O CBF):** the tables give no numbers; their rows keep 7g's linear `cbfVaso` and CMRO2 hill.
 - **Q-FU2-CBF (volatile CBF net vs direct; ruled not blocking):** `cbfVaso` is Matta's DIRECT factor (D10), so 7d's
   NET at 1.5 MAC sevoflurane is 1.17 × its CMRO2 coupling, below Matta's 1.17 when coupling is below 1. Whether the
-  engine's net should reproduce the measured number is Ali's calibration-pass call.
+  engine's net should reproduce the measured number is the owner's calibration-pass call.
 - **Q-FU2-9 (amiodarone rate control):** its 7g `avNode` entry (Emax 0.3, EC50 1× the 150 mg load) gives −14.0 % on AF
   130; the 20–30 % band needs Emax ≈ 0.5–0.6 — a value change to a 7g row, outside E-FU2-6 (additive only). The
   `it.fails` carries the number.

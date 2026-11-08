@@ -3,7 +3,7 @@
   "version": "1.0.0-rc.5",
   "description": "Web Audio QRS beep and IEC-style / traditional / Saadat alarm tones for the patient-monitor engine.",
   "license": "MIT",
-  "author": "Ali Mahdavi",
+  "author": "samhv-dev",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/samhv-dev/patient-monitor-engine.git",

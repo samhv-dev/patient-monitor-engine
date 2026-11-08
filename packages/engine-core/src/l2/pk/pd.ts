@@ -13,23 +13,23 @@ export function competitiveEc50(ec50: number, occupancy: number): number {
   return ec50 * (1 + o / (1 - o));
 }
 
-/** Catecholamine efficacy under acidaemia (tables §5b.1/§6.2): ×(1 − 2.5·(7.4 − pH)), 0.4–1 [ENG, Q44]. */
+/** Catecholamine efficacy under acidaemia (tables §5b.1/§6.2): ×(1 − 2.5·(7.4 − pH)), 0.4–1 [FIT: catecholamine efficacy under acidaemia (Q44); Q44; brief research/44 X-12]. */
 export function acidosisFactor(ph: number): number {
   if (!(ph < 7.4)) return 1;
   return Math.max(0.4, 1 - 2.5 * (7.4 - ph));
 }
 
-/** Greco/Minto response surface, simplest form: U = Uh + Uo + α·Uh·Uo (α 1.5 [ENG within Bouillon 2004]). */
+/** Greco/Minto response surface, simplest form: U = Uh + Uo + α·Uh·Uo (α 1.5 (inside Bouillon 2004; within Bouillon 2004)). */
 export const SURFACE_ALPHA = 1.5;
 export const responseSurface = (uh: number, uo: number, alpha = SURFACE_ALPHA): number => uh + uo + alpha * uh * uo;
 
-/** Tachyphylaxis multiplier after n recent repeats (ephedrine 0.7 per repeat within 60 min, tables §6.2 [ENG]). */
+/** Tachyphylaxis multiplier after n recent repeats (ephedrine 0.7 per repeat within 60 min, tables §6.2 [FIT: ephedrine tachyphylaxis per repeat; brief research/44 L2-27]). */
 export const tachy = (nRecent: number, f: number): number => f ** Math.max(0, nRecent);
 
 /**
  * β-receptor occupancy by a β-blocker drug blunts the RISE of a catecholamine-driven multiplier (the endocrine model's
- * surge `endoHrF`/`endoEesF`): 1 + (f − 1)·(1 − occupancy) for f > 1; a fall passes unchanged [ENG: the same
- * competitive picture as the β-agonist EC50 shift, collapsed to the fraction of receptors left].
+ * surge `endoHrF`/`endoEesF`): 1 + (f − 1)·(1 − occupancy) for f > 1; a fall passes unchanged [FIT: β-occupancy blunting of the endogenous surge; the same
+ * competitive picture as the β-agonist EC50 shift, collapsed to the fraction of receptors left; brief research/44 X-12].
  */
 export function betaBlunt(f: number, occupancy: number): number {
   if (!(f > 1)) return f;

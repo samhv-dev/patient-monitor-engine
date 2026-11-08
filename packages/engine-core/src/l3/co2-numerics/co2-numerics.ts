@@ -4,10 +4,10 @@
 import type { Measured } from '../../types.ts';
 
 export const DETECT_FRACTION = 0.5; // 50 % of the recent peak (brief §4.4)
-export const RELEASE_FRACTION = 0.3; // hysteresis [ENG]
-export const DETECT_FLOOR_MMHG = 4; // [ENG]
-export const ETCO2_WINDOW_S = 10; // brief §4.4 [ENG]
-export const AWRR_INTERVALS = 6; // brief §4.4 [ENG 4–8]
+export const RELEASE_FRACTION = 0.3; // hysteresis [ENG: device]
+export const DETECT_FLOOR_MMHG = 4; // [ENG: device]
+export const ETCO2_WINDOW_S = 10; // brief §4.4 [ENG: device]
+export const AWRR_INTERVALS = 6; // brief §4.4 [ENG: device; 4–8]
 export const GAS_APNOEA_S = 20; // Philips default; saadat gas apnoea 20 s (brief §4.4)
 
 export interface Co2Num {
@@ -64,7 +64,7 @@ export function co2NumStep(st: Co2Num, t: number, x: number, dt: number): 'breat
 
 export function co2Numerics(st: Co2Num, t: number, shownNow: number): { etco2: Measured; imco2: Measured; awrr: Measured } {
   // Until two breaths are detected the capnograph has measured nothing whole — not a valid EtCO2 of 0 (which raised
-  // `**etCO2 0<30` at power-on on every run), nor the partly sampled first breath (`**etCO2 13<30`) [ENG]
+  // `**etCO2 0<30` at power-on on every run), nor the partly sampled first breath (`**etCO2 13<30`) [ENG: device]
   if (st.edges.length < 2 && !st.apnoea) return { etco2: { value: null, flag: 'invalid', at: t }, imco2: { value: null, flag: 'invalid', at: t }, awrr: { value: null, flag: 'invalid', at: t } };
   const recent = st.breaths.filter((b) => b.t >= t - ETCO2_WINDOW_S);
   const et = recent.length > 0 ? Math.max(...recent.map((b) => b.et)) : Math.max(0, shownNow);

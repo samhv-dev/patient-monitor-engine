@@ -14,7 +14,7 @@ Branch `stage-3-respiratory-gas`, based on `main` `f88175d` (Stage 2 merged, Sta
 | Acceptance 4 / M4: first breath after 60 s apnoea | EtCO2 36.0 before → first breath **45.3 mmHg (+9.3)** (band +9 to +15) |
 | EtCO2 kinetics (model, GA 70 kg) | Apnoea PaCO2 **+12.0 mmHg in minute 1, then 3.34 mmHg/min**. +33 % alveolar ventilation: **35.7 % at 2 min, 38.3 % at 2.5 min, 40.8 % at 3 min, 90 % at 24.4 min**. VA halved: 18.2 % of the rise at 2.5 min, PaCO2 79.6 after 2 h (target 80) — the halving is slower, as research 03 §4.4 says (plan decision 3, R29) |
 | Arrest / CPR EtCO2 (engine) | VF without CPR: EtCO2 < 5 mmHg at **+19 s** (limit 30 s). CPR quality 1 (CO ratio 0.31): EtCO2 **21.0, 22.9, 24.1 mmHg** in minutes 1–3 — slowly creeping up as the tissue store fills (prototype band 10–20 was a demo estimate, not an acceptance; see "Needs a ruling" 6) |
-| Acceptance 5: desaturation to SaO2 90 % (GA, apnoea) | Preoxygenated 70 kg adult **501 s (8.4 min)** (Benumof 8; band 6.5–9.5 min). Room air **41 s** (R29 band 40–90 s, pending Ali — see "Needs a ruling"). Child 4 y / 16 kg preoxygenated **158 s** (Patel 160 ± 31). Obese 127 kg / 175 cm **170 s (2.8 min)** (Benumof 2.7) |
+| Acceptance 5: desaturation to SaO2 90 % (GA, apnoea) | Preoxygenated 70 kg adult **501 s (8.4 min)** (Benumof 8; band 6.5–9.5 min). Room air **41 s** (R29 band 40–90 s, pending samhv-dev — see "Needs a ruling"). Child 4 y / 16 kg preoxygenated **158 s** (Patel 160 ± 31). Obese 127 kg / 175 cm **170 s (2.8 min)** (Benumof 2.7) |
 | Acceptance 6 / R8: the lag structure | 15 s after airway obstruction: EtCO2 **0**, displayed SpO2 **97**. SaO2 truth reached 85 at **41 s** of obstruction while the display still read **94**. After the BVM rescue (FiO2 1) the displayed SpO2 kept falling to **86**, lowest **+20 s** after the rescue (band 10–30), back ≥ 90 at +26 s |
 | SpO2 dead time at normal CO | SaO2 target step 96 → 85: first displayed move **+19 s** [18], 90 % of the change **+29 s** [28], i.e. 14 s after the site step (limit 20). The 1 s difference is the perf fix (see Notes) |
 | SpO2 validity | VF: SpO2 invalid **+11 s** after the rhythm change (band 10–30). PI 0.2 → `questionable` (LOW PERF). Same-limb NIBP cuff: SpO2 held valid 95–99 through the whole cycle |
@@ -45,9 +45,9 @@ Branch `stage-3-respiratory-gas`, based on `main` `f88175d` (Stage 2 merged, Sta
 - **r8-recovered** (3/3) — both lines back up.
 - **mh** — MH at fixed ventilation (×4, ≈ 8 sim-min): EtCO2 68 and rising (the trace clips at the 50 mmHg lane top), core temperature rising.
 
-## Needs a ruling (for Ali / the orchestrator)
+## Needs a ruling (for samhv-dev / the orchestrator)
 
-1. **Room-air apnoea to SaO2 90 % in 41 s** (plan decision 4; R29 set the band to 40–90 s pending Ali). The brief says 1–2 min; the literature says desaturation *begins* at ≈ 45–60 s. Lengthening it would need FRC ≥ 3.5 L and would break Benumof's 8 min.
+1. **Room-air apnoea to SaO2 90 % in 41 s** (plan decision 4; R29 set the band to 40–90 s pending samhv-dev). The brief says 1–2 min; the literature says desaturation *begins* at ≈ 45–60 s. Lengthening it would need FRC ≥ 3.5 L and would break Benumof's 8 min.
 2. **CO2 constants refitted** (decision 3, accepted in R29): the brief's §4.4 constants should be updated to C_f 6, C_s 55 mL/mmHg, k_fs 18 mL/min/mmHg; the "halve MV → 30–40 % in 2–3 min" acceptance is tested as a +33 % VA step.
 3. **Sidestream under-read at RR 60 ≈ 1 mmHg** (decision 5, accepted in R29).
 4. **MANUAL PEEP coupling only above mean airway pressure 10 cmH2O** (decision 7, accepted in R29; Stage 7 replaces it).

@@ -1,6 +1,6 @@
 // EEG E3 (plan §7 E3): the signal generator — the spectral description (spectra.ts) turned into microvolt samples.
 // Self-check: a Welch spectrum of 60 s of output reproduces spectrumOf's peaks within ±1 Hz and its slope within 10 %
-// [ENG tolerance]; the amplitudes Miller gives (awake 5–10 µV, alpha–delta ≈ 40 µV, suppression < 5 µV); the
+// [ENG: test; tolerance]; the amplitudes Miller gives (awake 5–10 µV, alpha–delta ≈ 40 µV, suppression < 5 µV); the
 // burst-suppression process (P-8); burstiness and the forme fruste; continuity across block edges; determinism (D3).
 // Acceptance cells C1–C4 and C12 at the signal level, by spectral analysis of generated samples (helpers/eeg-welch.ts).
 import { describe, expect, it } from 'vitest';

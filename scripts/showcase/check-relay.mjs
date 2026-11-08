@@ -9,12 +9,21 @@
 // Before the runs: the kit's Windows launchers (.cmd) exist, end every line with CRLF and hold only ASCII.
 // Per run: a 64-byte binary frame (the relay drops it), a host hello of >= 64 bytes (answer: the relay's `peers` frame),
 // a controller hello, a 1 KB host event that the relay forwards to the controller byte for byte, /pme-relay.json still
-// answers, the relay is still running; then the relay is stopped and the port is free again.
+// answers; after the relay's first heartbeat sweep (10 s), a viewer that joins makes the host's `peers` frame list the
+// controller with its measured round trip (`devices`, plan room-and-instruments.md R2); a ventilator says hello with a
+// PIN, the host grants it, its `vent` `cmds` reach the host and the host's `vent` `clock` reaches it, byte for byte
+// (R8b); a defibrillator window says hello as `defib`, its charge reaches the host byte for byte and its
+// `selectEnergy` does not (`forbidden` to the window; its next shock is the host's next command) (R5c); the relay is
+// still running; then the relay is stopped and the port is free again.
+// Room plan R1b: each run gets a state directory of its own (relay.mjs --state-dir; the launchers' PME_STATE_DIR, which
+// stands in for the application-data folder they use): after the host hello /pme-relay.json answers lastRoom and
+// room.json in that directory holds the room code only. After every run the kit's own folder is as it was.
 //   node scripts/showcase/check-relay.mjs [KIT_DIR] [--port 8690] [--json OUT.json]
 // Needs Node.js >= 22 (its built-in WebSocket client). Port 8690 (and the next 9) keeps clear of a classroom on 8650.
 import { spawn } from 'node:child_process';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { connect } from 'node:net';
+import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 const args = process.argv.slice(2);
@@ -88,14 +97,24 @@ function socket(port, proc) {
       if (!m.startsWith('{"relay":"hb"')) return m;
     }
   };
-  return { ws, opened: withTimeout(opened, 'socket open'), next: nextReal };
+  /** Resolves at the relay's next heartbeat frame (its sweep), within `ms`. */
+  const heartbeat = (ms) => new Promise((ok, no) => {
+    const t = setTimeout(() => no(new Error(`no heartbeat within ${ms / 1000} s`)), ms);
+    ws.addEventListener('message', function on(e) {
+      if (typeof e.data !== 'string' || !e.data.startsWith('{"relay":"hb"')) return;
+      clearTimeout(t);
+      ws.removeEventListener('message', on);
+      ok();
+    });
+  });
+  return { ws, opened: withTimeout(opened, 'socket open'), next: nextReal, heartbeat };
 }
 
 const SESSION = 'KRATST'; // a valid session code (SESSION_CODE_RE: no I, L, O, 0, 1)
 const wire = (kind, from, seq, extra) => JSON.stringify({ v: 1, session: SESSION, from, seq, sentAt: Date.now(), kind, ...extra });
 
 /** The frames. Returns the step list; throws at the first step that fails. */
-async function frames(port, proc, steps) {
+async function frames(port, proc, steps, state) {
   const step = (s) => (steps.push(s), console.log(`  ok  ${s}`));
   const host = socket(port, proc);
   await host.opened;
@@ -130,6 +149,86 @@ async function frames(port, proc, steps) {
   const info = await withTimeout(fetch(`http://127.0.0.1:${port}/pme-relay.json`).then((r) => r.json()), '/pme-relay.json');
   if (info.relay !== 'pme' || info.port !== port) throw new Error(`/pme-relay.json: ${JSON.stringify(info)}`);
   step(`/pme-relay.json still answers: ${JSON.stringify(info)}`);
+  // R1b: the host's hello is the last room; kept in the state directory, the room code only
+  if (info.lastRoom !== SESSION) throw new Error(`/pme-relay.json lastRoom ${JSON.stringify(info.lastRoom)}, not ${SESSION}`);
+  const kept = readFileSync(join(state, 'room.json'), 'utf8');
+  if (JSON.stringify(JSON.parse(kept)) !== JSON.stringify({ lastRoom: SESSION }) || readdirSync(state).join() !== 'room.json') throw new Error(`state directory: ${readdirSync(state).join()} ${kept}`);
+  step(`the last room kept in the state directory: room.json ${kept.trim()} (the room code only)`);
+
+  // R2: the sweep pings every socket (the kit's heartbeat is 10 s); the controller's socket answers, and the host's next
+  // peers frame (here: a viewer joining) lists it with that round trip
+  await host.heartbeat(12_000);
+  await new Promise((r) => setTimeout(r, 300)); // the pong of a loopback socket: well under a millisecond
+  const view = socket(port, proc);
+  await view.opened;
+  view.ws.send(wire('hello', 'kit-check-viewer', 1, { role: 'viewer', show: 'learner', device: 'kitcheck0123' }));
+  let table = null;
+  for (let i = 0; i < 4 && !table; i++) {
+    const f = JSON.parse(await host.next('the host told of the viewer, with its devices'));
+    // (the sweep's own frame comes first: sent before its ping, it cannot hold that ping's answer)
+    if (f.relay === 'peers' && Array.isArray(f.devices) && f.devices.some((d) => d.id === 'kit-check-viewer')) table = f.devices;
+  }
+  const ctlRow = table?.find((d) => d.id === 'kit-check-controller-0123456789');
+  const viewRow = table?.find((d) => d.id === 'kit-check-viewer');
+  if (!ctlRow || typeof ctlRow.rttMs !== 'number' || !viewRow || viewRow.show !== 'learner' || viewRow.device !== 'kitcheck0123')
+    throw new Error(`the host's device table after a sweep: ${JSON.stringify(table)}`);
+  step(`after one sweep the host's devices list the controller with rttMs ${ctlRow.rttMs} and the viewer showing ${viewRow.show}`);
+
+  // R8b: the ventilator's wire. A cockpit says hello with the PIN, the host grants it, and `vent` runs between them only
+  const hostNext = async (what, pred) => {
+    for (let i = 0; i < 6; i++) {
+      const raw = await host.next(what);
+      if (pred(JSON.parse(raw))) return raw;
+    }
+    throw new Error(`the host never got ${what}`);
+  };
+  const VENT_ID = 'kit-check-ventilator';
+  const vent = socket(port, proc);
+  await vent.opened;
+  vent.ws.send(wire('hello', VENT_ID, 1, { role: 'ventilator', pin: '4729' }));
+  await hostNext('the ventilator hello', (f) => f.kind === 'hello' && f.from === VENT_ID && f.role === 'ventilator');
+  host.ws.send(wire('grant', 'kit-check-host-0123456789abcdef', 3, { to: VENT_ID, granted: true }));
+  for (let f = null; f?.kind !== 'grant'; ) f = JSON.parse(await vent.next('the grant at the ventilator'));
+  const frame = { pawCmH2O: 5, flowLps: 0, volumeMl: 0, fio2: 0.4, peepCmH2O: 5 };
+  const cmds = wire('vent', VENT_ID, 2, { body: { v: 1, kind: 'cmds', tick: 1, cmds: [{ id: 'vent-1', issuedBy: 'ventilator', type: 'externalDrive', source: 'ventilator', frame }] } });
+  vent.ws.send(cmds);
+  const upGot = await hostNext('the ventilator cmds', (f) => f.kind === 'vent');
+  if (upGot !== cmds) throw new Error(`the ventilator's cmds differ at the host (${upGot.length} vs ${cmds.length} bytes)`);
+  const clock = wire('vent', 'kit-check-host-0123456789abcdef', 4, { to: VENT_ID, body: { v: 1, kind: 'clock', ventTick: 80 } });
+  host.ws.send(clock);
+  let downGot = null;
+  for (let i = 0; i < 4 && !downGot; i++) {
+    const r = await vent.next("the host's clock at the ventilator");
+    if (JSON.parse(r).kind === 'vent') downGot = r;
+  }
+  if (downGot !== clock) throw new Error(`the host's clock differs at the ventilator: ${downGot}`);
+  step(`ventilator granted; its vent cmds (${Buffer.byteLength(cmds)} bytes) reached the host and the host's vent clock reached it, byte for byte`);
+  // R5c: the learner defibrillator window. Its bare charge reaches the host as sent; its selectEnergy is refused
+  // `forbidden` and never reaches the host (the shock after it is the host's next command)
+  const DEFIB_ID = 'kit-check-defib';
+  const defib = socket(port, proc);
+  await defib.opened;
+  defib.ws.send(wire('hello', DEFIB_ID, 1, { role: 'defib', show: 'defib', device: 'kitdefib0123' }));
+  await hostNext('the defib hello', (f) => f.kind === 'hello' && f.from === DEFIB_ID && f.role === 'defib');
+  const defibCmd = (seq, id, event) => wire('command', DEFIB_ID, seq, { body: { id, issuedBy: 'defib', type: 'applyEvent', event: { kind: 'defib', ...event } } });
+  const charge = defibCmd(2, 'kit-defib-charge', { action: 'charge' });
+  defib.ws.send(charge);
+  const chargeGot = await hostNext('the defib charge', (f) => f.kind === 'command');
+  if (chargeGot !== charge) throw new Error(`the defib charge differs at the host: ${chargeGot}`);
+  defib.ws.send(defibCmd(3, 'kit-defib-select', { action: 'selectEnergy', energyJ: 360 }));
+  let refusal = null;
+  for (let i = 0; i < 4 && !refusal; i++) {
+    const f = JSON.parse(await defib.next('the refusal of the defib selectEnergy'));
+    if (f.relay === 'error') refusal = f;
+  }
+  if (refusal?.code !== 'forbidden') throw new Error(`the defib selectEnergy was not refused: ${JSON.stringify(refusal)}`);
+  defib.ws.send(defibCmd(4, 'kit-defib-shock', { action: 'shock' }));
+  const nextCmd = JSON.parse(await hostNext('the defib shock', (f) => f.kind === 'command'));
+  if (nextCmd.body?.id !== 'kit-defib-shock') throw new Error(`the host's next command after the refused selectEnergy: ${JSON.stringify(nextCmd)}`);
+  step(`defib window: its charge (${Buffer.byteLength(charge)} bytes) reached the host byte for byte; its selectEnergy was refused (${refusal.code}) and never reached the host`);
+  defib.ws.close();
+  vent.ws.close();
+  view.ws.close();
   host.ws.close();
   ctl.ws.close();
   await new Promise((r) => setTimeout(r, 300));
@@ -154,17 +253,20 @@ const cleanEnv = Object.fromEntries(Object.entries(process.env).filter(([k]) => 
 const runs = [
   {
     name: 'relay.mjs alone (the bundle)',
-    go: () => start(process.execPath, [RELAY, '--port', '0', '--host', '127.0.0.1', '--static', join(kit, 'app')], cleanEnv, /ready on ws:\/\/[^:]+:(\d+)\//),
+    go: (state) => start(process.execPath, [RELAY, '--port', '0', '--host', '127.0.0.1', '--static', join(kit, 'app'), '--state-dir', state], cleanEnv, /ready on ws:\/\/[^:]+:(\d+)\//),
   },
   {
     name: `Start Classroom.command (PME_PORT=${launcherPort}, stripped environment)`,
-    go: () => start('/usr/bin/env', ['-i', 'PATH=/usr/bin:/bin', 'PME_NO_OPEN=1', `PME_PORT=${launcherPort}`, `PME_NODE=${process.execPath}`, '/bin/bash', LAUNCHER], undefined, /ADDRESS: http:\/\/127\.0\.0\.1:(\d+)\//),
+    go: (state) => start('/usr/bin/env', ['-i', 'PATH=/usr/bin:/bin', 'PME_NO_OPEN=1', `PME_PORT=${launcherPort}`, `PME_NODE=${process.execPath}`, `PME_STATE_DIR=${state}`, '/bin/bash', LAUNCHER], undefined, /ADDRESS: http:\/\/127\.0\.0\.1:(\d+)\//),
   },
   {
     name: `server/launch.mjs classroom, as Start Classroom.cmd runs it (PME_PORT=${launcherPort}, stripped environment)`,
-    go: () => start(process.execPath, [WIN_LAUNCH, 'classroom'], { PATH: '/usr/bin:/bin', PME_NO_OPEN: '1', PME_PORT: String(launcherPort) }, /ADDRESS: http:\/\/127\.0\.0\.1:(\d+)\//),
+    go: (state) => start(process.execPath, [WIN_LAUNCH, 'classroom'], { PATH: '/usr/bin:/bin', PME_NO_OPEN: '1', PME_PORT: String(launcherPort), PME_STATE_DIR: state }, /ADDRESS: http:\/\/127\.0\.0\.1:(\d+)\//),
   },
 ];
+/** Every file of the kit (path and size): a run must leave its own folder as it was. */
+const listing = (dir, at = '') => readdirSync(join(dir, at), { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? listing(dir, join(at, e.name)) : [join(at, e.name)])).sort().join('\n');
+const kitBefore = listing(kit);
 const results = [];
 {
   // the Windows launchers: cmd.exe needs CRLF (an LF-only batch file loses its goto labels) and reads them in the OEM code page
@@ -187,11 +289,15 @@ for (const run of runs) {
   console.log(`\n== ${run.name}`);
   const steps = [];
   let r = null;
+  const state = join(mkdtempSync(join(tmpdir(), 'pme-check-state-')), 'PME Classroom'); // made by the relay, at its write
   try {
-    r = await run.go();
+    r = await run.go(state);
     console.log(`  ok  ready on port ${r.port}`);
-    await frames(r.port, r.proc, steps);
+    await frames(r.port, r.proc, steps, state);
     await stop(r.proc, r.port, steps);
+    if (listing(kit) !== kitBefore) throw new Error('the run changed the kit\'s own folder');
+    steps.push('the kit\'s own folder is as it was');
+    console.log('  ok  the kit\'s own folder is as it was');
     results.push({ run: run.name, pass: true, steps });
   } catch (err) {
     console.log(`  FAIL ${err.message}`);
@@ -206,6 +312,7 @@ for (const run of runs) {
     }
     results.push({ run: run.name, pass: false, steps, error: err.message, output: r?.log().split('\n').slice(-16) });
   }
+  rmSync(join(state, '..'), { recursive: true, force: true });
 }
 const pass = results.every((r) => r.pass);
 console.log(`\nclassroom relay smoke test: ${pass ? 'PASS' : 'FAIL'} (${results.filter((r) => r.pass).length} of ${results.length} runs; node ${process.version}; kit ${kit})`);

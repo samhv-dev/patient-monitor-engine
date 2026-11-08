@@ -31,7 +31,7 @@ describe('single-target rows', () => {
     expect(f16).toBeLessThanOrEqual(0.3);
   });
   // R45: with the plan's Hill of 1 on a linear PK no EC50 gives both bands — 4 mg/kg < 5 % needs c4 < 0.25·EC50 and
-  // 16 mg/kg ≥ 15 % needs c4 ≥ 0.375·EC50. The row (emax −0.25, ec50 12) is kept as written; Ali's calibration item.
+  // 16 mg/kg ≥ 15 % needs c4 ≥ 0.375·EC50. The row (emax −0.25, ec50 12) is kept as written; the owner's calibration item.
   it.fails('sugammadex (DI-45): 4 mg/kg gives < 5 % HR fall — measured 13.4 % (16 mg/kg 20.5 %)', () => {
     expect(hrFall('sugammadex', 4)).toBeLessThan(0.05);
   });
@@ -164,7 +164,7 @@ describe('inotrope / vasodilator sizes', () => {
     return out;
   }
   // R45 (Task 17 UNPROTOTYPED): the plan's α2B entry (+0.18 at 0.35) never outweighs the row's own SVR −0.3 at 1 reference
-  // dose during the load, so there is no net early rise. Sizes as written; DI-60's early item stays open (Q to Ali).
+  // dose during the load, so there is no net early rise. Sizes as written; DI-60's early item stays open (Q to samhv-dev).
   it.fails('dexmedetomidine, the α2B arm: a fast load raises SVR early (5–10 min) and the rise then decays (DI-60; T6.3) — measured SVR × 0.994 at most', () => {
     const svr = dexSvr();
     const early = Math.max(...svr.slice(300, 600));
@@ -193,7 +193,7 @@ describe('inotrope / vasodilator sizes', () => {
     expect(x.left).toBeLessThanOrEqual(0.25 * x.ss);
   });
   // R45: the new row's steady state at 1 µg/kg/min is EXACTLY the band's lower edge (svr emax −0.6 × ½ at ec50 1), which the
-  // infusion approaches from below. Sizes as written (D13 row, [ENG]); the band is not moved.
+  // infusion approaches from below. Sizes as written (D13 row, [FIT: nitroprusside sizes as written; brief research/44 T-30]); the band is not moved.
   it.fails('nitroprusside 1 µg/kg/min lowers SVR 30–50 % — measured −29.9999 % at 10 min (the steady state is the band edge −30 %)', () => {
     const x = snp();
     expect(x.ss).toBeGreaterThanOrEqual(0.3);
@@ -269,9 +269,11 @@ describe('inert rows: dexamethasone glucose, ondansetron QTc, the TXA hook', () 
     expect(t2).toBeLessThanOrEqual(4);
   });
 
-  it('ondansetron 4 mg adds 10–20 ms of QTc (FDA 2012) through the blood model\'s ECG QTc delta; no rhythm or haemodynamic output', () => {
+  /** Peak drug-added QTc (ms) over 0–30 min after an ondansetron bolus, through the blood model's ECG QTc delta; the
+   * rhythm and haemodynamic outputs stay neutral throughout. */
+  function ondansetronPeak(mg: number): number {
     const r = rig();
-    give(r, 'ondansetron', 4, 'mg');
+    give(r, 'ondansetron', mg, 'mg');
     let peak = 0;
     runTo(r, 30, (b) => {
       peak = Math.max(peak, b.qtcMsAdd);
@@ -279,10 +281,27 @@ describe('inert rows: dexamethasone glucose, ondansetron QTc, the TXA hook', () 
       expect(r.pk.fx).toEqual(NEUTRAL_FX);
     });
     const bs = { core: { out: { kEcg: NORMAL.k, iCa: NORMAL.iCa } } } as never;
-    const d = bloodEcgTargets(bs, peak).qtc - bloodEcgTargets(bs).qtc;
-    console.log(`FU-7 T18: ondansetron 4 mg QTc +${d.toFixed(1)} ms (peak 0–30 min)`);
-    expect(d).toBeGreaterThanOrEqual(10);
-    expect(d).toBeLessThanOrEqual(20);
+    return bloodEcgTargets(bs, peak).qtc - bloodEcgTargets(bs).qtc;
+  }
+  // Ondansetron injection label §12.2 (thorough-QT trial, 58 healthy subjects, 15-min infusions): ΔΔQTcF mean (95 %
+  // upper bound) 5.6 (7.4) ms at 8 mg and 19.5 (21.8) ms at 32 mg; the label's exposure-response model predicts 9.1
+  // (11.2) ms at 16 mg and 14.0 (16.3) at 24 mg. Each band is the label's mean ± its own upper-bound half-width.
+  it.each([
+    [8, 5.6, 7.4],
+    [16, 9.1, 11.2],
+    [24, 14.0, 16.3],
+    [32, 19.5, 21.8],
+  ])('ondansetron %i mg adds the label\'s ΔΔQTcF (mean %f ms, 95 %% upper %f) and no rhythm or haemodynamic output', (mg, mean, upper) => {
+    const d = ondansetronPeak(mg);
+    console.log(`research/44 X-05: ondansetron ${mg} mg QTc +${d.toFixed(1)} ms (peak 0–30 min; label mean ${mean}, upper ${upper})`);
+    expect(d).toBeGreaterThanOrEqual(2 * mean - upper);
+    expect(d).toBeLessThanOrEqual(upper);
+  });
+  it('ondansetron 4 mg, the usual anti-emetic dose, adds under 5 ms (below the label\'s 8 mg mean)', () => {
+    const d = ondansetronPeak(4);
+    console.log(`research/44 X-05: ondansetron 4 mg QTc +${d.toFixed(1)} ms (peak 0–30 min)`);
+    expect(d).toBeGreaterThan(0);
+    expect(d).toBeLessThan(5.6);
   });
 
   it('tranexamic acid 1 g is QUIET until a coagulation model exists: no drug output moves, and its dose is logged for that model to read', () => {

@@ -1,4 +1,4 @@
-// Showcase hotfix item 4 (rulings S1, Ali 2026-10-04): on the Saadat-style monitor the CO2 waveform takes the RESP lane's
+// Showcase hotfix item 4 (rulings S1, samhv-dev 2026-10-04): on the Saadat-style monitor the CO2 waveform takes the RESP lane's
 // place and the RR tile becomes the CO2 tile while the CO2 line is attached; detached, RESP and RR return. The rule is
 // skin data (layout.whenAttached) resolved in resolveSkin's `sensors` option; every other skin resolves byte-identically.
 import { describe, expect, it } from 'vitest';
