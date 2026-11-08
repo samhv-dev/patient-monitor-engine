@@ -46,7 +46,7 @@ import { actualVolumes, closingCapacity, pattern, predictedVolumes, type Actual,
 import { LUNG_CONDITION_IDS, type LungClinicalEvent, type LungConditionSpec } from '../../types-lung.ts';
 import {
   alveolarVentilation, breathSignal, chestVolume, checkDrive, createDriver, cycleAt, frameAt, nominalRate,
-  onVentFrame, planCycles, preoxActive, pruneCycles, replan, VCV_PMAX_DEFAULT, alveolarFraction, type DriverCtx, type DriverState,
+  onVentFrame, ownEffortPmus, planCycles, preoxActive, pruneCycles, replan, SPONT_TI_FRACTION, VCV_PMAX_DEFAULT, alveolarFraction, type DriverCtx, type DriverState,
 } from './driver.ts';
 
 export const RESP_CHANNELS = ['co2', 'resp'] as const satisfies readonly ChannelId[];
@@ -190,19 +190,35 @@ export function createRespState(profile: PatientProfile | undefined, l1: L1State
 }
 
 // --- helpers ----------------------------------------------------------------------------------------------
+/**
+ * A pressure trigger set at −2 cmH2O [ENG: device; the ventilator package's own presTrig default, −2 cmH2O]: an own
+ * effort whose muscle pressure reaches it starts the breath (assist-control); a weaker one falls mid-exhalation.
+ */
+export const TRIGGER_CMH2O = 2;
+/** The patient's own inspiratory effort under the machine (MODELED; brief 93), or undefined (none evaluated, MANUAL). */
+export function ownEffort(rs: RespState, l1: L1State, neuro?: NeuroResp): { muscle: number; pmus: number; ti: number; triggered: boolean } | undefined {
+  if (l1.mode !== 'modeled' || (rs.driver.source !== 'ventilator' && rs.driver.source !== 'external') || rs.spont?.muscle === undefined) return undefined;
+  const muscle = rs.spont.muscle;
+  const cap = P_MAX_CMH2O * (neuro?.pMaxMult ?? 1) * rs.lung.lp.pMax * rs.spont.fatigue; // The force the muscle can make
+  const pmus = Math.min(cap, PMUS_REST_CMH2O * muscle);
+  const rr = rs.spont.rr;
+  return { muscle, pmus, ti: rr > 0 ? (SPONT_TI_FRACTION * 60) / rr : 1, triggered: rs.driver.source === 'ventilator' && rr > 0 && pmus >= TRIGGER_CMH2O };
+}
 function driverCtx(rs: RespState, l1: L1State, t: number, neuro?: NeuroResp): DriverCtx {
   const n = neuro; // The instructor's rr/vt × the drug/NMB multipliers; apnoea → rr 0
+  const own = ownEffort(rs, l1, n); // MODELED, on the machine: drive × neuromuscular transmission
   const sp = modeledSpont(rs, l1) ? rs.spont : undefined; // MODELED — the chemoreflex drive's own rr/vt (spont.ts)
   return {
     rr: sp ? sp.rr : n ? (n.apnoea ? 0 : l1Target(l1, 'rr', t) * n.rrMult) : l1Target(l1, 'rr', t),
     vt: sp ? sp.vt : n ? l1Target(l1, 'vt', t) * n.vtMult : l1Target(l1, 'vt', t),
     fio2: l1Target(l1, 'fio2', t), etco2: rs.etco2, complianceMl: compliance(rs),
     obstructed: n ? n.obstruction >= 0.9 : false,
-    cleft: n && n.cleft > 0.15 ? n.cleft : 0,
+    cleft: own ? (own.triggered ? 0 : Math.min(1, own.muscle)) : n && n.cleft > 0.15 ? n.cleft : 0, // MODELED: the effort itself
     ...obstructedEffort(rs, n),
     vdSeriesMl: physicalDeadSpace(rs.pat, rs.driver.source !== 'spontaneous' && rs.driver.source !== 'none'), // ONE dead space — the physical VD, not a second expression
     // Assist-control and bucking — the MODELED drive runs on the ventilator too (gasStep)
-    triggerRr: l1.mode === 'modeled' && rs.driver.source === 'ventilator' && (rs.spont?.rr ?? 0) > 0 ? (rs.spont as SpontDrive).rr : 0,
+    triggerRr: own?.triggered ? (rs.spont as SpontDrive).rr : 0,
+    ...(own ? { effortPmus: own.pmus, effortTi: own.ti, triggered: own.triggered } : {}),
     buck: l1.mode === 'modeled' && rs.driver.source === 'ventilator' && !!n && n.pMaxMult > 0.5 && n.loc < 0.5 && n.pain > 0.2,
   };
 }
@@ -397,7 +413,7 @@ export function respPleural(rs: RespState, t: number): number {
   const base = pleuralPressureMmHg(d, t, compliance(rs));
   let p = P_PL0 + k * (base - P_PL0);
   if (d.source === 'ventilator') p += k * T_IT * Math.max(0, rs.lung.peepTot - d.vent.peep) * CMH2O_TO_MMHG;
-  return p + Math.max(0, lp.pPtx - rs.circPtx) + (rs.lung.mech.pMus ?? 0) * CMH2O_TO_MMHG; // A cough raises the intrathoracic pressure
+  return p + Math.max(0, lp.pPtx - rs.circPtx) + (rs.lung.mech.pMus ?? 0) * CMH2O_TO_MMHG; // A cough raises the intrathoracic pressure; an own inspiratory effort lowers it
 }
 
 /**
@@ -548,7 +564,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     rs.co2.ps = pf;
     (rs.spont ??= createSpontDrive()).paco2Rest = pf; // The resting PaCO2 is the MODELED drive's set point
   }
-  if (l1.mode === 'modeled' && (d.source === 'spontaneous' || d.source === 'ventilator')) { // The lung model's chemoreflex drive, 1 Hz (spont.ts); also on the ventilator (triggering)
+  if (l1.mode === 'modeled' && (d.source === 'spontaneous' || d.source === 'ventilator' || d.source === 'external')) { // The lung model's chemoreflex drive, 1 Hz (spont.ts); on a ventilator too: the drive exists whatever breathes (brief 93)
     const lp = rs.lung.lp;
     stepSpontDrive((rs.spont ??= createSpontDrive()), {
       t, paco2: rs.co2.pf, pao2: rs.o2.pao2, hco3: ctx.hco3 ?? 24, rr0: l1Target(l1, 'rr', t), vt0: l1Target(l1, 'vt', t),
@@ -633,7 +649,7 @@ function lungStateEvent(rs: RespState, t: number, l1?: L1State): void {
   const d = rs.driver;
   const ev = lungStatePayload(rs.lung, {
     deadSpaceMl: deadSpace(rs, l1), frcMl: frcNow(rs),
-    effort: d.source === 'spontaneous' ? 1 : d.cleft, peep: d.source === 'ventilator' ? d.vent.peep : d.ext ? d.ext.peep : 0,
+    effort: d.source === 'spontaneous' ? 1 : Math.max(d.cleft, l1 ? ownEffort(rs, l1)?.muscle ?? 0 : 0), peep: d.source === 'ventilator' ? d.vent.peep : d.ext ? d.ext.peep : 0,
     baseShunt: Math.min(0.9, rs.shunt + extraShunt(rs)), specs: rs.lungSpecs,
     pleuralMmHg: Math.max(rs.lung.lp.pPtx, rs.circPtx), // Stage V.1: as respPleural combines them
   }); // Absolute + per-lung fields
@@ -753,8 +769,8 @@ export function advanceResp(rs: RespState, ctx: RespCtx, mEnd: number, write: (c
     if (!rs.lung.inInsp && inspNext) breathStart(rs, t);
     else if (rs.lung.inInsp && !inspNext) breathEnd(rs, ctx.l1, t);
     const wasInsp = rs.lung.inInsp;
-    const pb = buckPressure(rs, t);
-    if (pb > 0) rs.lung.mech.pMus = pb;
+    const pb = buckPressure(rs, t) - ownEffortPmus(rs.driver, t); // A cough pushes; the patient's own breath pulls (brief 93)
+    if (pb !== 0) rs.lung.mech.pMus = pb;
     else delete rs.lung.mech.pMus;
     lungMechStep(rs.lung, ld.mode, ld.x, DT, ld.pLimit); // The VCV pressure limit
     if (rs.lung.inInsp && rs.lung.mech.paw > rs.brk.pk) rs.brk.pk = rs.lung.mech.paw; // Ppeak of the breath

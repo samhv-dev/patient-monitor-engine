@@ -9,12 +9,12 @@
 //     rules), capped at 55 mmHg.
 //   drive: the lung model's VE = [S·(PaCO2 − B)]₊·H(PaO2)·(1 − opioidDep)·(1 − hypnoticDep)·F with the neuro model's
 //     opioidDep/hypnoticDep (fixed-CO2 depression); the resting pattern rr0/vt0 is the instructor's rr/vt target.
-//   NMB: VT × nmbVtMult (diaphragm strength), apnoea below DIAPH_APNOEA strength; upper-airway obstruction × (1 − obs);
+//   NMB: VT × nmbVtMult (diaphragm strength), apnoea while the diaphragm has no force (its margin of safety); upper-airway obstruction × (1 − obs);
 //     pti's pMax × diaphragm strength × the lung model's condition pMax (fatigue comes sooner in a weak patient).
 import { CHRONIC_HCO3_PER_MMHG, NORMAL } from '../blood/params.ts'; // ONE reference (blood normal + chronic rule)
 import { drive, pti, stepFatigue } from '../lung/drive.ts';
 import { NO_FLOW_S } from '../circ/arrest.ts'; // The arrest declaration's no-flow window
-import { DIAPH_APNOEA, DIAPH_EFFECTIVE, VT_EFFORT_ML_KG, type NeuroResp } from './drive.ts';
+import { DIAPH_EFFECTIVE, VT_EFFORT_ML_KG, type NeuroResp } from './drive.ts';
 
 export const SPONT_DT_S = 1;
 export const WINTER_SLOPE = 1.5;
@@ -48,14 +48,14 @@ export const VT_MAX_ML_KG = 35;
 /** A resting tidal volume per kg IBW, the size the weak diaphragm's cap reaches at DIAPH_EFFECTIVE (6–8 mL/kg [TXT: the
  * lung-protective range gas/params.ts already quotes]). */
 export const VT_REST_ML_KG = 7;
-const FADE_K = Math.log(VT_REST_ML_KG / VT_MAX_ML_KG) / Math.log((DIAPH_EFFECTIVE - DIAPH_APNOEA) / (1 - DIAPH_APNOEA));
+const FADE_K = Math.log(VT_REST_ML_KG / VT_MAX_ML_KG) / Math.log(DIAPH_EFFECTIVE);
 /**
  * The tidal volume a partly blocked diaphragm can move in one SUSTAINED breath, mL — 35 mL (VT_EFFORT_ML_KG) at the
  * first effort, a resting VT at DIAPH_EFFECTIVE, the chemical ceiling at full strength (drive.ts DIAPH_EFFECTIVE). `nd`
  * (0–1, the non-depolarising share of the block) scales the exponent: no fade, no cap.
  */
 export function diaphragmVtCapMl(strength: number, nd: number, ibwKg: number): number {
-  const x = Math.min(1, Math.max(0, (strength - DIAPH_APNOEA) / (1 - DIAPH_APNOEA)));
+  const x = Math.min(1, Math.max(0, strength));
   return ibwKg * Math.max(VT_EFFORT_ML_KG, VT_MAX_ML_KG * x ** (FADE_K * Math.min(1, Math.max(0, nd))));
 }
 
@@ -72,6 +72,13 @@ export interface SpontDrive {
   pc?: number; // Central (brain) PCO2 the drive reads, mmHg (absent = PaCO2)
   plS?: number; // Seconds pulseless (absent while there is a pulse)
   effort?: number; // The neural inspiratory effort relative to rest (neural VT / resting VT); absent = 1
+  /**
+   * The inspiratory MUSCLE effort relative to a resting breath's (brief 93): the neural effort × the diaphragm's force
+   * (its margin of safety, nmb.ts), after the brainstem gates. It exists whether or not a ventilator breathes for the
+   * patient — under controlled ventilation it is what triggers, notches the capnogram and swings the pleural pressure.
+   * Absent until first evaluated.
+   */
+  muscle?: number;
 }
 
 export function createSpontDrive(): SpontDrive {
@@ -156,7 +163,7 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
   // The neural VT has a ceiling; the effort is what the patient MAKES, the delivered VT what gets through
   vt = Math.min(vt, VT_MAX_ML_KG * (x.ibwKg ?? 70) * s.fatigue); // weakness is nmbVtMult's (below), not counted twice
   s.effort = rr > 0 && x.vt0 > 0 ? vt / x.vt0 : 0;
-  if (strength < DIAPH_APNOEA) rr = vt = 0;
+  if (strength <= 0) rr = vt = 0; // the margin of safety not yet crossed: no force
   else if (n) {
     vt *= n.nmbVtMult * (1 - Math.min(0.9, n.obstruction));
     // A fading (non-depolarising) block lets the diaphragm make efforts long before it can move a breath
@@ -190,6 +197,7 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
   s.rr = rr;
   s.vt = vt;
   s.ve = (rr * vt) / 1000;
+  s.muscle = rr > 0 ? (s.effort ?? 0) * Math.max(0, Math.min(1, strength)) : 0; // Drive × neuromuscular transmission
   if (rr > 0) {
     const ttot = 60 / rr;
     s.fatigue = stepFatigue(s.fatigue, pti(vt, x.complianceMl, x.resistance, TI_FRAC * ttot, ttot, strength * x.pMaxMult), SPONT_DT_S);

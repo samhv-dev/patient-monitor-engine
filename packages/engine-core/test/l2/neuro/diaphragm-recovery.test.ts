@@ -31,7 +31,7 @@ function course(drugId: string, dose: number): { min: number; rr: number; vt: nu
 }
 
 describe('first diaphragmatic effort and effective ventilation are two events', { timeout: 120_000 }, () => {
-  it('rocuronium 0.6 mg/kg: first effort at 12–24 min with a VT of 10–50 mL; effective ventilation (VT ≥ 7 mL/kg) at 20–50 min (main: 15.8 min, VT 329 mL at once)', () => {
+  it('rocuronium 0.6 mg/kg: first effort at 12–24 min, its VT 10–50 mL over the first 2 min; effective ventilation (VT ≥ 7 mL/kg) at 20–50 min (main: 15.8 min, VT 329 mL at once)', () => {
     const c = course('rocuronium', 0.6);
     const first = c.find((p) => p.min > 5 && p.rr > 0)!;
     const effective = c.find((p) => p.min > 5 && p.vt >= 7 * 70)!;
@@ -40,8 +40,15 @@ describe('first diaphragmatic effort and effective ventilation are two events', 
     console.log(`FU-7.1 A4: first effort ${first.min.toFixed(1)} min (VT ${first.vt.toFixed(0)} mL); effective ventilation ${effective?.min.toFixed(1)} min; ${belowVd.toFixed(1)} min of efforts below the dead space`);
     expect(first.min).toBeGreaterThanOrEqual(12);
     expect(first.min).toBeLessThanOrEqual(24);
-    expect(first.vt).toBeGreaterThanOrEqual(10);
+    // Brief 93: the diaphragm's force now leaves 0 continuously at its margin of safety (nmb.ts diaphragmNdBlock), so the
+    // first second's VT is near 0 (was 35 mL: a 5 % step); the owner's 10–50 mL is read over the first two minutes
+    const early = c.filter((p) => p.min >= first.min && p.min < first.min + 2);
+    const earlyMax = Math.max(...early.map((p) => p.vt));
+    // eslint-disable-next-line no-console -- the PR's numbers
+    console.log(`brief 93: VT ${first.vt.toFixed(1)} mL at the first effort, ${earlyMax.toFixed(1)} mL at most over its first 2 min`);
     expect(first.vt).toBeLessThanOrEqual(50);
+    expect(earlyMax).toBeGreaterThanOrEqual(10);
+    expect(earlyMax).toBeLessThanOrEqual(50);
     expect(effective.min).toBeGreaterThanOrEqual(20);
     expect(effective.min).toBeLessThanOrEqual(50);
     expect(belowVd).toBeGreaterThanOrEqual(5); // the efforts stay ineffective for minutes, not seconds

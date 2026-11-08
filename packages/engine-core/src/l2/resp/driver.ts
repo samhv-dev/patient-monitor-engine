@@ -62,6 +62,29 @@ export interface Cycle {
   alvFrac?: number;
   /** The patient coughs against this mechanical breath (bucking). */
   buck?: boolean;
+  /**
+   * The patient's own inspiratory muscle pressure during a mechanical breath (cmH2O, brief 93): a half-sine of
+   * duration `pmusTi` centred `pmusAt` s after the cycle's start — at the breath's start when the effort triggered it,
+   * mid-exhalation when it did not (where it also notches the capnogram: the curare cleft).
+   */
+  pmusMech?: number;
+  pmusAt?: number;
+  pmusTi?: number;
+}
+
+/**
+ * The patient's own inspiratory muscle pressure at `t` during a mechanical breath, cmH2O (≥ 0; brief 93): the cycle's
+ * half-sine. The resp pipeline puts it on the chest wall of the lung mechanics (`mech.pMus`, negative = inspiratory):
+ * the respiratory system's equation of motion (Pvent + Pmus = VT/C_RS + Raw·V' + PEEP + PEEPi; Miller 10e ch. 12 p.
+ * 252) then lowers the alveolar and airway pressure of a flow-delivered breath, draws gas in when it falls in the
+ * expiration (the capnogram's cleft) and lowers the pleural pressure the heart sees.
+ */
+export function ownEffortPmus(d: DriverState, t: number): number {
+  const c = cycleAt(d, t);
+  if (!c || !c.mech || !((c.pmusMech ?? 0) > 0)) return 0;
+  const ti = c.pmusTi ?? 1;
+  const u = t - c.t0 - ((c.pmusAt ?? 0) - ti / 2);
+  return u >= 0 && u < ti ? (c.pmusMech as number) * Math.sin((Math.PI * u) / ti) : 0;
 }
 
 /**
@@ -126,6 +149,12 @@ export interface DriverCtx {
   triggerRr?: number;
   /** The patient bucks (light, unparalysed, stimulated). */
   buck?: boolean;
+  /** The patient's own inspiratory muscle pressure on the ventilator, cmH2O (MODELED; brief 93); absent/0 = none. */
+  effortPmus?: number;
+  /** Its inspiratory time, s (the patient's own rhythm). */
+  effortTi?: number;
+  /** The effort reached the trigger: it starts the breath instead of falling mid-exhalation. */
+  triggered?: boolean;
 }
 
 export function createDriver(rng: Sfc32State): DriverState {
@@ -197,6 +226,11 @@ function makeCycle(d: DriverState, ctx: DriverCtx, t: number): { c: Cycle | null
   };
   if (!mech && (ctx.pmusObs ?? 0) > 0) c.pmus = ctx.pmusObs;
   if (mech && src === 'ventilator' && ctx.buck) c.buck = true;
+  if (mech && src === 'ventilator' && (ctx.effortPmus ?? 0) > 0) { // The patient's own effort under the machine (brief 93)
+    c.pmusMech = ctx.effortPmus as number;
+    c.pmusTi = Math.max(0.3, ctx.effortTi ?? 1);
+    c.pmusAt = ctx.triggered ? c.pmusTi / 2 : c.ti + 0.55 * c.te;
+  }
   if (ctx.vdSeriesMl !== undefined) {
     const f = alveolarFraction(c.vt, ctx.vdSeriesMl);
     if (f < 1) c.alvFrac = f;

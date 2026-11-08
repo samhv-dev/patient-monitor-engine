@@ -239,12 +239,25 @@ export const SANITY_DOCS: ValidationDoc[] = [
     segments: [seg('apnoea', 180, 900, rng('t90', 'state:spo2', 'firstTBelow', Math.round(0.8 * s), Math.round(1.2 * s), `${T7} 24: ${s} s ±20 %`, { threshold: 90 }))],
   })),
   doc({
-    id: 't25-rocuronium-sugammadex', title: 'Rocuronium 0.6 mg/kg → sugammadex 2 mg/kg at T2', source: `${T7} 25`, durationS: 2400, mode: 'modeled', requires: ['7f', '7g'],
-    // FU-4 (G-FU3 ruling 4): ventilated from induction as clinically done; spontaneous breathing is allowed back with the reversal
-    actions: [at(0, ev({ kind: 'airwayDevice', device: 'ett' })), at(0, ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 })),
+    id: 't25-rocuronium-sugammadex', title: 'Rocuronium 0.6 mg/kg → sugammadex 2 mg/kg at T2', source: `${T7} 25; Moerer 2005; Cantineau 1994`, durationS: 2400, mode: 'modeled', requires: ['7f', '7g'],
+    // FU-4 (G-FU3 ruling 4): ventilated from induction as clinically done; spontaneous breathing is allowed back with the
+    // reversal. Brief 93 (audit DEV-06, target audit row 16): the cell had read the tables' 2.2 min, a TOFR-0.9 endpoint,
+    // as breathing. The sources' endpoint is the diaphragm's own recovery after 0.6 mg/kg — Moerer 2005 (PMID 15832241:
+    // airway pressure against an occluded tube on magnetic phrenic stimulation) onset 15.9 min young / 22.0 min over 65;
+    // Cantineau 1994 (PMID 8092503: phrenic twitch force, thiopental/fentanyl/N2O) 10 % recovery 17 ± 10 min, the
+    // adductor pollicis 34 ± 10. The patient's effort shows that recovery only while the brainstem asks for a breath, so
+    // the rig has no hypnotic and the ventilator is set to normocapnia (RR 9 × 500 mL: EtCO2 36–37 on this build)
+    // [ENG: scenario; a ventilation that holds the PaCO2 at the patient's set point, so the drive is present], and the
+    // effort is read under the ventilator from the lungState effort the ventilator link receives.
+    actions: [at(0, ev({ kind: 'airwayDevice', device: 'ett' })), at(0, ev({ kind: 'ventilation', source: 'ventilator', rr: 9, vtMl: 500, fio2: 0.5, peep: 5 })),
       at(60, ev({ kind: 'drug', drugId: 'rocuronium', dose: 0.6, unit: 'mg/kg' })), at(1800, ev({ kind: 'drug', drugId: 'sugammadex', dose: 2, unit: 'mg/kg' })),
       at(1800, ev({ kind: 'ventilation', source: 'spontaneous' }))],
-    segments: [seg('recovery', 1800, 2400, rng('rr-back', 'state:rr', 'firstTAbove', 60, 240, `${T7} 25: spontaneous effort returns within ≈ 2.2 min of sugammadex [ENG]`, { threshold: 4, expectedMiss: miss('G', '2026-11-08', '0 s') }))],
+    segments: [
+      // From 4 min after the dose (diaphragm onset 3.6 min, Moerer 2005; 120 ± 62 s, Cantineau 1994): seconds to the first own effort
+      seg('block', 300, 1800,
+        rng('first-effort', 'lung:effort', 'firstTAbove', 12 * 60 + 60 - 300, 24 * 60 + 60 - 300, 'first own effort under the ventilator 12–24 min after rocuronium 0.6 mg/kg: diaphragm recovery onset 15.9 min (young) / 22.0 min (> 65), Moerer 2005; diaphragm twitch 10 % recovery 17 ± 10 min, Cantineau 1994', { threshold: 0 }),
+        gt('effort-before-t2', 'lung:effort', 'last', 0, `${T7} 25: capnogram cleft and spontaneous effort return before TOF ≥ 2 (the effort is present when sugammadex is given at T2)`)),
+      seg('recovery', 1830, 1932, gt('rr-back', 'numeric:awrr', 'min', 4, `${T7} 25: off the ventilator after sugammadex 2 mg/kg the patient breathes throughout its onset (TOFR 0.9 in 2.2 min, the label; effort is back before TOF ≥ 2)`))],
   }),
   doc({
     // FU-4 (G-FU3 ruling 4): the stress document — the same paralysis NEVER ventilated must end in an arrest (FU-3 Task 5,

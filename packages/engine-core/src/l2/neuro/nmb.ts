@@ -66,10 +66,60 @@ export function siteBlock(ce: Record<NmbAgent, number>, site: 'thumb' | 'dia', e
     gW += ui;
   }
   const g = gW > 0 ? gSum / gW : 4.8;
-  const nd = u > 0 ? u ** g / (1 + u ** g) : 0;
+  // The thumb keeps the Hill form the TOF monitor's label fits stand on; the diaphragm's force is its margin of safety
+  const nd = site === 'dia' ? diaphragmNdBlock(ce, ec50Mult) : u > 0 ? u ** g / (1 + u ** g) : 0;
   const sp = NMB_PD.succinylcholine;
   const dep = hillBlock(ce.succinylcholine, (site === 'thumb' ? sp.ec50Thumb : sp.ec50Dia) * ec50Mult.succinylcholine, sp.gamma);
   return { b: 1 - (1 - nd) * (1 - dep), nd, dep };
+}
+
+/**
+ * The margin of safety of neuromuscular transmission (Paton & Waud, J Physiol 1967;191:59, PMID 4292958): a muscle
+ * fibre fails all-or-none when the FREE fraction of its end-plate receptors falls below 1/S, S its safety factor.
+ * Threshold block (the most sensitive fibres) at a fractional occupancy 0.76 ± 0.05, nearly complete block (the most
+ * resistant) at 0.917: safety factors 4.1 and 12 (the same paper). Miller 10e ch. 39 p. 1210 ("Safety margin"): block
+ * becomes evident at 70–80 % occupancy and is complete at 90–95 %. The whole muscle's force is the share of its
+ * fibres still transmitting (Miller 10e ch. 39 p. 1210: "the response decreases in parallel with the number of fibers
+ * blocked"); with the fibres' thresholds spread evenly over the free fraction between 1/12 and 1/4.1 the force is a
+ * linear ramp of the free fraction [FIT: the even spread of fibre thresholds between the two sourced edges; brief 93].
+ */
+export const MOS_OCC_THRESHOLD = 0.76;
+export const MOS_OCC_COMPLETE = 0.917;
+/** Free fraction at which the most resistant (lo) and the most sensitive (hi) fibres of the THUMB fail. */
+const MOS_FREE_LO = 1 - MOS_OCC_COMPLETE;
+const MOS_FREE_HI = 1 - MOS_OCC_THRESHOLD;
+/** u = Ce/Kd at the thumb's half force: the free fraction halfway between the edges, f50 = 1/(1 + u50). */
+const MOS_U50 = 1 / ((MOS_FREE_LO + MOS_FREE_HI) / 2) - 1;
+
+/** The force (0–1) of a muscle whose fibres fail between free fractions `lo` and `hi`. */
+export function marginForce(free: number, lo: number, hi: number): number {
+  return Math.max(0, Math.min(1, (free - lo) / (hi - lo)));
+}
+
+/**
+ * The DIAPHRAGM's non-depolarising force from its receptors' free fraction. Competitive occupancy p = u/(1 + u), u =
+ * Σ Ce_i/Kd_i (agents add as equipotent fractions, tables §5d). Kd is the RECEPTOR's (the same molecule at every
+ * muscle): it is placed so the thumb's force is halved at the thumb's EC50 (Kd = EC50_thumb/u50; rocuronium 823 ng/mL,
+ * Plaud 1995), a derived value, not a fit. The diaphragm is more resistant because its margin is larger, not because its
+ * receptors bind less: its fibres' free-fraction thresholds are the thumb's divided by m, m placed so its half force
+ * falls at its own EC50 (1424 ng/mL, Plaud 1995; Miller 10e ch. 39 p. 1213: the diaphragm needs 1.4–2.0× the dose).
+ * Force is exactly 0 while occupancy is above the most resistant fibre's threshold — the FIRST effort appears when the
+ * block's recovery crosses the margin, not at an arbitrary fraction of a Hill curve. Returns the BLOCK, 1 − force.
+ */
+export function diaphragmNdBlock(ce: Record<NmbAgent, number>, ec50Mult: Record<NmbAgent, number>): number {
+  let u = 0;
+  let ratioW = 0;
+  for (const id of ['rocuronium', 'vecuronium', 'cisatracurium'] as const) {
+    const pd = NMB_PD[id];
+    const kd = (pd.ec50Thumb * ec50Mult[id]) / MOS_U50;
+    const ui = ce[id] / kd;
+    u += ui;
+    ratioW += ui * (pd.ec50Dia / pd.ec50Thumb);
+  }
+  if (!(u > 0)) return 0;
+  const ratio = ratioW / u; // the diaphragm's potency ratio (1.73 for every agent)
+  const m = (1 + ratio * MOS_U50) / (1 + MOS_U50); // f50,thumb / f50,dia
+  return 1 - marginForce(1 / (1 + u), MOS_FREE_LO / m, MOS_FREE_HI / m);
 }
 
 export interface TofReading {
