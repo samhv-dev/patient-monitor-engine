@@ -52,12 +52,18 @@ drug model and before the respiratory pipeline (`l2/neuro/pipeline.ts`).
 
 | Where | Relation |
 |---|---|
+| [`artefacts.ts:3`](../../packages/engine-core/src/l2/eeg/artefacts.ts#L3) | brain signal sample by sample, in µV. Ch36 = Miller 10th ed. chapter 36, printed pages; research/43 = |
+| [`artefacts.ts:8`](../../packages/engine-core/src/l2/eeg/artefacts.ts#L8) | emg = t1 · clamp01(EMG_AWAKE·w + EMG_AROUSAL·arousal + EMG_TUBE·tube·w) · EMG_FULL_RMS_UV,  w = 1 − clamp01(lor) |
 | [`spectra.ts:4`](../../packages/engine-core/src/l2/eeg/spectra.ts#L4) | PSD(f) = 10^((offsetDb − 10·slope·log10 f)/10) + Σ 10^(powerDb/10)·exp(−(f − fHz)²/(2·widthHz²)) |
 | [`spectra.ts:107`](../../packages/engine-core/src/l2/eeg/spectra.ts#L107) | Opioids at low dose lose beta (Ch35 Table 35.1), at opioid = 1, dB [FIT: opioid beta loss; brief research/43 P-7]. |
 | [`spectra.ts:159`](../../packages/engine-core/src/l2/eeg/spectra.ts#L159) | The awake aperiodic offset that gives AWAKE_RMS_UV over RMS_LO_HZ–RMS_HI_HZ: ∫ A·f^−κ df = A·(hi^(1−κ) − lo^(1−κ))/(1 − κ). |
 | [`state.ts:5`](../../packages/engine-core/src/l2/eeg/state.ts#L5) | hyper = (gabaIv + barbiturate + etomidate + benzo)/Ce50prop(age) + (sevo + iso + des MAC) + alpha2Eq |
 | [`state.ts:7`](../../packages/engine-core/src/l2/eeg/state.ts#L7) | suppress = 1 − (1 − drug)·(1 − metabolic voltage loss)·(1 − hypothermic suppression) |
 | [`state.ts:75`](../../packages/engine-core/src/l2/eeg/state.ts#L75) | τ = 3 min. The amplitude of the transient is fitted (spectra.ts, research/43 P-2). |
+| [`synth.ts:10`](../../packages/engine-core/src/l2/eeg/synth.ts#L10) | x(t) = gBS(t) · (low(t) + gFF(t) · (bg(t) + Σ_p e_p(t) · peak_p(t))) |
+| [`synth.ts:65`](../../packages/engine-core/src/l2/eeg/synth.ts#L65) | Block length N and hop H = N/2, samples. |
+| [`synth.ts:156`](../../packages/engine-core/src/l2/eeg/synth.ts#L156) | Render the next block for `spec`; out = tail + its first half, tail = its second half. Returns the block's |
+| [`synth.ts:169`](../../packages/engine-core/src/l2/eeg/synth.ts#L169) | two real slots in one complex transform: Z = X_c + i·X_{c+1}, each X Hermitian |
 | [`bus.ts:8`](../../packages/engine-core/src/l2/neuro/bus.ts#L8) | bus.volatiles[agent]: BusVolatile = { fet, brain, macAge, macFrac } for sevoflurane/isoflurane/desflurane AND n2o: |
 | [`depth.ts:2`](../../packages/engine-core/src/l2/neuro/depth.ts#L2) | 7g's bus via bus.ts) and brain MAC fractions (age-adjusted by 7g: MAC(age) = MAC40·10^(−0.00269·(age − 40)), |
 | [`depth.ts:4`](../../packages/engine-core/src/l2/neuro/depth.ts#L4) | U = Ce_prop/Ce50_prop(age) + (MAC_potent + N2O_DI_W·MAC_N2O)/MAC_DI50 + OPIOID_W·Ce_opioidEEG/EEG_EC50 + Ce_midaz/MIDAZ_DI50 |
@@ -76,11 +82,11 @@ drug model and before the respiratory pipeline (`l2/neuro/pipeline.ts`).
 | [`spont.ts:6`](../../packages/engine-core/src/l2/neuro/spont.ts#L6) | Winter's expected PaCO2 = 1.5·HCO3 + 8 (Albert, Dell & Winters 1967; ±2) — HCO3 from the blood model's |
 | [`spont.ts:7`](../../packages/engine-core/src/l2/neuro/spont.ts#L7) | blood.core.ab.hco3 (24 without it → no shift): paco2Set = min(paco2Rest, 1.5·HCO3 + 8); raised in metabolic |
 | [`spont.ts:10`](../../packages/engine-core/src/l2/neuro/spont.ts#L10) | drive: the lung model's VE = [S·(PaCO2 − B)]₊·H(PaO2)·(1 − opioidDep)·(1 − hypnoticDep)·F with the neuro model's |
-| [`types-eeg.ts:93`](../../packages/engine-core/src/types-eeg.ts#L93) | Aperiodic 1/f^slope background: PSD(f) = offsetDb − 10·slope·log10(f / 1 Hz), dB re 1 µV²/Hz. |
+| [`types-eeg.ts:94`](../../packages/engine-core/src/types-eeg.ts#L94) | Aperiodic 1/f^slope background: PSD(f) = offsetDb − 10·slope·log10(f / 1 Hz), dB re 1 µV²/Hz. |
 
 ## Couplings
 
-Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 2 rows; SOURCED 0, FIT 0, ENG 0, UNTAGGED 2, ABSENT 0.
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 12 rows; SOURCED 2, FIT 5, ENG 1, UNTAGGED 4, ABSENT 0.
 The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
 constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
 
@@ -88,8 +94,57 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 |---|---|---|---|---|---|---|
 | `neuro.drive.hypnotic` | `pk.bus.cns.hypVentPropEq` (Propofol-equivalent at the ventilatory site (kept out of the truth tree)) → `neuro.resp.hypnoticDep` | + · factor | UNTAGGED | — | — | Hypnotic ventilatory depression from the propofol equivalent at the ventilatory site. |
 | `neuro.drive.total` | `neuro.resp.hypnoticDep`, `neuro.resp.opioidDep` → `neuro.resp.totalDep` | + · term | UNTAGGED | — | — | Hypnotic and opioid depression combined into the total the drive reads. |
+| `neuro.eeg.cortex.hypnotic` | `pk.bus.cns.hypByClass` → `eeg.cortex` (EEG cortical state (hyperpolarisation, loss of responsiveness, suppression)) | + · state | FIT | `DEEP_ONSET` = 1.7 / 1.8, `BS_ONSET_ISO_MAC` = 1.3, `BS_ONSET_SEVO_MAC` = 1.4, `BS_ONSET_DES_MAC` = 1.25, `BS_ESTABLISHED_MAC` = 1.5, `BS_NEAR_ISO_MAC` = 2.0, `SUPP_ESTABLISHED` = 0.5, `SUPP_NEAR_ISO` = 0.9, `BS_ISOELECTRIC_MAC` = 2.5, `BS_ONSET_PROP_NG_ML` = 4900 | — | Hyperpolarisation and loss of responsiveness from the GABA-ergic, barbiturate, etomidate and benzodiazepine classes (÷ the propofol Ce50 and LOC C50 at this age); burst suppression past the onset from the suppressing classes (not the benzodiazepines), added to the ether load in onset units. |
+| `neuro.eeg.cortex.alpha2` | `pk.bus.cns.alpha2Eq` → `eeg.cortex` (EEG cortical state (hyperpolarisation, loss of responsiveness, suppression)) | + · state | SOURCED | `DEXMED_EEG_C50_NG_ML` = 2.5, `DEXMED_LOR_NG_ML` = 2.09 | — | Dexmedetomidine's alpha-2 equivalent adds to hyperpolarisation, and to loss of responsiveness in units of its 2.09 ng/mL LOR anchor; it never drives burst suppression. |
+| `neuro.eeg.cortex.mac` | `endo.cascade.macF` → `eeg.cortex` (EEG cortical state (hyperpolarisation, loss of responsiveness, suppression)) | − · gain | UNTAGGED | — | — | Each ether MAC fraction ÷ the endocrine model's MAC factor (floored at 0.3, inline in cortexInputsOf). |
+| `neuro.eeg.cortex.age` | `neuro.ageY` → `eeg.cortex` (EEG cortical state (hyperpolarisation, loss of responsiveness, suppression)) | − · gain | FIT | `AGE_YOUNG_Y` = 18, `AGE_OLD_Y` = 90, `AGE_SLOPE_FLATTEN` = 0.2, `AGE_AMP_OLD` = 0.4 | — | Age flattens the aperiodic slope and lowers the amplitude, linear from 18 to 90 y. |
+| `neuro.eeg.cortex.arousal` | `neuro.stim.level`, `neuro.antinoc` → `eeg.cortex` (EEG cortical state (hyperpolarisation, loss of responsiveness, suppression)) | + · factor | UNTAGGED | — | — | Arousal = stimulus × (1 − antinociception), the engine's own terms (no constant). |
+| `neuro.eeg.cortex.metabolic` | `hemo.circ.ext.cbfRel`, `blood.out.hb` (Hb), `resp.o2.sa` (SaO₂), `resp.o2.pao2` (PaO₂) → `eeg.cortex` (EEG cortical state (hyperpolarisation, loss of responsiveness, suppression)) | − · threshold | FIT | `DO2_EEG_ABNORMAL` = 20 / 50, `DO2_EEG_LOST` = 12 / 50, `METABOLIC_SLOW_SHARE` = 0.5 | — | Cerebral O2 delivery (CBF/CBF0 × CaO2 ÷ the reference CaO2; the organ model's view of these four) below 20/50 slows the EEG, below 12/50 the voltage goes. |
+| `neuro.eeg.cortex.cold` | `resp.temp.tc` (Tcore) → `eeg.cortex` (EEG cortical state (hyperpolarisation, loss of responsiveness, suppression)) | − · threshold | FIT | `COLD_SLOW_FROM_C` = 37, `BS_TEMP_ONSET_C` = 24.4, `BS_TEMP_SILENT_C` = 17.8 | — | Hypothermic slowing from 37 °C, burst suppression from 24.4 °C, silence at 17.8 °C. |
+| `neuro.eeg.signal.cortex` | `eeg.cortex` (EEG cortical state (hyperpolarisation, loss of responsiveness, suppression)) → `eeg.signal` (The eeg channel's samples (brain signal plus artefacts)) | ± · state | SOURCED | `AWAKE_RMS_UV` = 7.5, `SLOPE_MAINT` = 0.9, `BS_BURST_S` = 3.58 | — | The spectrum each cortical state produces (spectra.ts), turned into microvolt samples (synth.ts). |
+| `neuro.eeg.signal.emg` | `neuro.last.tof.t1`, `neuro.airway` → `eeg.signal` (The eeg channel's samples (brain signal plus artefacts)) | + · term | FIT | `EMG_FULL_RMS_UV` = 200 / 6, `EMG_AWAKE` = 0.2, `EMG_AROUSAL` = 0.5, `EMG_TUBE` = 1, `EMG_PEAK_HZ` = 25, `EMG_Q` = 0.5 | — | Frontalis EMG = T1 × (awake tone, arousal, the tube as responsiveness returns) × the full-drive amplitude. |
+| `neuro.eeg.signal.artefacts` | `mods.artefact`, `eeg.ctx.device` (Mains frequency and the heart's aVF voltage handed to the EEG) → `eeg.signal` (The eeg channel's samples (brain signal plus artefacts)) | + · term | ENG | `DIATHERMY_RMS_UV` = 250, `EEG_MAINS_UV` = 20, `ECG_PICKUP_UV_PER_MV` = 8 | — | The ECG model's artefact state (diathermy, mains at the device mains frequency) and the heart's aVF projection (ECG pickup, off unless flagged) added to the trace. |
 
 ## State
+
+### `ArtState` ([`l2/eeg/artefacts.ts`](../../packages/engine-core/src/l2/eeg/artefacts.ts))
+
+| Field | Type | Meaning |
+|---|---|---|
+| `fs` | `number` | — |
+| `rng` | `Sfc32State` | — |
+| `bq` | `number[]` | EMG band-pass: coefficients [b0, b2, a1, a2] (b1 = 0), its state [x1, x2, y1, y2] and the gain to unit RMS. |
+| `z` | `number[]` | — |
+| `emgNorm` | `number` | — |
+| `blink` | `{ left: number; n: number; uv: number }` | The blink in progress: samples left, its length and peak (µV). |
+
+### `EegState` ([`l2/eeg/pipeline.ts`](../../packages/engine-core/src/l2/eeg/pipeline.ts))
+
+| Field | Type | Meaning |
+|---|---|---|
+| `m` | `number` | Next 125 Hz sample index to write. |
+| `cortex` | `CortexState` | — |
+| `synth` | `SynthState` | — |
+| `art` | `ArtState` | — |
+| `impedanceKOhm` | `number[]` | — |
+| `ecgPickup` | `boolean` | — |
+
+### `SynthState` ([`l2/eeg/synth.ts`](../../packages/engine-core/src/l2/eeg/synth.ts))
+
+| Field | Type | Meaning |
+|---|---|---|
+| `fs` | `number` | — |
+| `N` | `number` | Block length N and hop H = N/2, samples. |
+| `H` | `number` | — |
+| `i` | `number` | Next sample's index within the current hop (H: a new hop is due). |
+| `rng` | `Sfc32State` | — |
+| `out` | `number[][]` | The current hop's overlap-added samples per slot, and the rendered block's second halves (the next hop's start). |
+| `tail` | `number[][]` | — |
+| `hop` | `{ gBurst: number; gSupp: number; p: number; ff: number; d…` | The current hop's targets: burst/suppressed gains, suppressed fraction, forme fruste, per-peak duty. |
+| `g` | `{ burst: number; supp: number; amp: number[] }` | Smoothed gains (GAIN_TAU_S). |
+| `bs` | `Gate` | on = bursting |
+| `ffGate` | `Gate` | on = dropped |
+| `osc` | `Gate[]` | on = in a burst |
 
 ### `NeuroState` ([`l2/neuro/pipeline.ts`](../../packages/engine-core/src/l2/neuro/pipeline.ts))
 
@@ -138,6 +193,36 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `cold` | `number` | Hypothermic slowing, 0–1 (0 at 37 °C, 1 at the hypothermic burst-suppression temperature). |
 
 ## Parameters
+
+### [`l2/eeg/artefacts.ts`](../../packages/engine-core/src/l2/eeg/artefacts.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `EMG_FULL_RMS_UV` | `200 / 6` | — | research/43 P; Miller Fig. 36.10's emergence trace; [FIT: full-drive EMG amplitude; brief research/43 P-9; no published amplitude; the ceiling is Miller Fig. 36.10's emergence trace, ≈ 200 µV peak-to-peak [FIG] | --- EMG (research/43 P-9; Ch36 pp. 1142, 1148) --- EMG at full drive, RMS µV [FIT: full-drive EMG amplitude; brief research/43 P-9; no published amplitude; the ceiling is Miller Fig. 36.10's emergence trace, ≈ 200 µV peak-to-peak [FIG], read as ± 3σ, so 200/6]. |
+| `EMG_PEAK_HZ` | `25` | Hz | Goncharova 2003; research/43 P | The EMG spectrum's centre: frontalis EMG is broadband, largest at 20–30 Hz frontally (Goncharova 2003, research/43 P-9), the mid-point. |
+| `EMG_Q` | `0.5` | — | research/43 P; Goncharova 2003; [FIT: EMG band shape; brief research/43 P-9; broad — "broadband" (Goncharova 2003), so power reaches the top of the band] | The band-pass's quality factor [FIT: EMG band shape; brief research/43 P-9; broad — "broadband" (Goncharova 2003), so power reaches the top of the band]. |
+| `EMG_AWAKE` | `0.2` | — | research/43 P; Miller's 5–10 µV EEG (Ch36 p. 1138; [FIT: awake frontalis tone; brief research/43 P-9; small "fuzzy" waves (Ch36 p. 1142). Chosen so that awake the EMG carries more of the 30–60 Hz power than the brain does (≈ 24 vs 18 µV²), the condition for paralysis to change an awake frontal EEG at all (Ch36 p. 1148), while the raw awake trace stays ≈ 11 µV RMS beside Miller's 5–10 µV EEG (Ch36 p. 1138); 6.7 µV RMS] | Resting frontalis tone awake, a fraction of full drive [FIT: awake frontalis tone; brief research/43 P-9; small "fuzzy" waves (Ch36 p. 1142). Chosen so that awake the EMG carries more of the 30–60 Hz power than the brain does (≈ 24 vs 18 µV²), the condition for paralysis to change an awake frontal EEG at all (Ch36 p. 1148), while the raw awake trace stays ≈ 11 µV RMS beside Miller's 5–10 µV EEG (Ch36 p. 1138); 6.7 µV RMS]. |
+| `EMG_AROUSAL` | `0.5` | — | research/43 P; [FIT: grimacing EMG; brief research/43 P-9; Ch36 p. 1142 "a signal of grimacing"] | Grimacing under noxious arousal at arousal 1, fraction of full drive [FIT: grimacing EMG; brief research/43 P-9; Ch36 p. 1142 "a signal of grimacing"]. |
+| `EMG_TUBE` | `1` | — | research/43 P; [FIT: tube-irritation EMG; brief research/43 P-9; emergence with the tube in is the Fig. 36.10 ceiling; Ch36 p. 1133 key points] | The tube's irritation as responsiveness returns, fraction of full drive [FIT: tube-irritation EMG; brief research/43 P-9; emergence with the tube in is the Fig. 36.10 ceiling; Ch36 p. 1133 key points]. |
+| `BLINK_PER_MIN` | `17` | /min | research/43 P; Bentivoglio 1997 | --- eye blinks (research/43 P-10; Ch36 p. 1146) --- Blink rate while conscious: 17/min at rest (Bentivoglio 1997, 150 volunteers, research/43 P-10). |
+| `BLINK_UV_MIN` | `50` | — | research/43 P; Miller Fig. 36.10: ≈ 50–80 µV against the 75 µV bar; [FIT: smallest blink; brief research/43 P-10; anchored on Miller Fig. 36.10: ≈ 50–80 µV against the 75 µV bar, FIG] | Smallest blink, µV [FIT: smallest blink; brief research/43 P-10; anchored on Miller Fig. 36.10: ≈ 50–80 µV against the 75 µV bar, FIG]. |
+| `BLINK_UV_MAX` | `80` | — | research/43 P; Miller Fig. 36.10; [FIT: largest blink; brief research/43 P-10; Miller Fig. 36.10, FIG] | Largest blink, µV [FIT: largest blink; brief research/43 P-10; Miller Fig. 36.10, FIG]. |
+| `BLINK_S` | `0.3` | s | research/43 P; [FIT: blink length; brief research/43 P-10; a large frontal low-frequency deflection, "can be mistaken for delta", Ch36 p. 1146] | Blink deflection length, s [FIT: blink length; brief research/43 P-10; a large frontal low-frequency deflection, "can be mistaken for delta", Ch36 p. 1146]. |
+| `DIATHERMY_RMS_UV` | `250` | — | research/43 P; Miller Fig. 36.10 shows ≈ 250 µV peak-to-peak (FIG; [ENG: device; research/43 P-15: no published amplitude. Miller Fig. 36.10 shows ≈ 250 µV peak-to-peak (FIG), "probably clipped by the display" (research/43 P-15), so that is a floor. "Power raised at all frequencies" (Ch36 p. 1146) must hold over the alpha–delta's slow peak too (≈ 250 µV²/Hz at 0.8 Hz, spectra.ts): white noise of 250 µV RMS has 1000 µV²/Hz at 125 Hz sampling, 4× that peak] | --- electrocautery, mains, ECG pickup (research/43 P-15, P-11; Ch36 pp. 1145–1146) --- Diathermy on the EEG, RMS µV, white [ENG: device; research/43 P-15: no published amplitude. Miller Fig. 36.10 shows ≈ 250 µV peak-to-peak (FIG), "probably clipped by the display" (research/43 P-15), so that is a floor. "Power raised at all frequencies" (Ch36 p. 1146) must hold over the alpha–delta's slow peak too (≈ 250 µV²/Hz at 0.8 Hz, spectra.ts): white noise of 250 µV RMS has 1000 µV²/Hz at 125 Hz sampling, 4× that peak]. |
+| `EEG_MAINS_UV` | `20` | — | [ENG: device; no source gives it; "powerline signals", Ch36 p. 1145] | Mains pickup on the EEG at the ECG model's `mains` level 1, µV amplitude at the device mains frequency [ENG: device; no source gives it; "powerline signals", Ch36 p. 1145]. Its harmonics alias above 62.5 Hz and are left out. |
+| `ECG_PICKUP_UV_PER_MV` | `8` | — | research/43 P; [ENG: device; research/43 P-11: off unless the patient is flagged (plan default "0 unless flagged"; "thick, short necks", Ch36 p. 1146); when on, a 1 mV R wave gives 8 µV — above the 5 µV suppression criterion, so it shows in burst suppression, "most visible" there (same page)] | ECG pickup, µV per mV of the heart's aVF projection [ENG: device; research/43 P-11: off unless the patient is flagged (plan default "0 unless flagged"; "thick, short necks", Ch36 p. 1146); when on, a 1 mV R wave gives 8 µV — above the 5 µV suppression criterion, so it shows in burst suppression, "most visible" there (same page)]. |
+| `IMPEDANCE_LIMIT_KOHM` | `5` | — | research/43 has no P; Miller Ch36 p. 1145 gives "5 or 8 kΩ" by device | --- electrode impedance (research/43 has no P-13 entry: the plan's value; Ch36 p. 1145) --- Above this the signal is unreliable: Miller Ch36 p. 1145 gives "5 or 8 kΩ" by device; the plan's P-13 default 5. |
+| `IMPEDANCE_UNEQUAL_KOHM` | `2.5` | — | [ENG: device; half the limit] | Electrodes differing by more than this are "unequal" (Ch36 p. 1145 names inequality, not a number) [ENG: device; half the limit]. |
+| `IMPEDANCE_NOISE_UV_PER_KOHM` | `1` | — | [ENG: device; no source] | Added electrode noise, RMS µV per kΩ over the limit or over the inequality [ENG: device; no source]. |
+
+### [`l2/eeg/pipeline.ts`](../../packages/engine-core/src/l2/eeg/pipeline.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `EEG_RATE` | `125` | Hz | Miller's 0–50 Hz spectrograms (plan D2 | The channel's rate: one frontal channel at 125 Hz, an existing engine rate covering Miller's 0–50 Hz spectrograms (plan D2; Ch36 p. 1139, Fig. 36.3). Hz |
+| `EEG_ELECTRODES` | `3` | — | [ENG: device; the generic single-channel montage] | Electrodes on the frontal sensor: signal, reference, ground [ENG: device; the generic single-channel montage]. |
+| `EEG_IMPEDANCE_DEFAULT_KOHM` | `2` | — | [ENG: device; "default good" (plan E4), below the 5 kΩ limit] | Each electrode's impedance until the instructor changes it, kΩ [ENG: device; "default good" (plan E4), below the 5 kΩ limit]. |
+| `EEG_IMPEDANCE_MAX_KOHM` | `500` | — | [ENG: control; up to an electrode off the skin] | The range an impedance command accepts, kΩ [ENG: control; up to an electrode off the skin]. |
 
 ### [`l2/eeg/spectra.ts`](../../packages/engine-core/src/l2/eeg/spectra.ts)
 
@@ -226,6 +311,24 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `AGE_OLD_Y` | `90` | — | Purdon 2015 | The upper end of the age span: Purdon 2015's oldest patients, 90 y. |
 | `AGE_SLOPE_FLATTEN` | `0.2` | — | Miller Ch36 p. 1145; Kreuzer 2020; [INF] | The slope flattens by ≈ 20 % with age (Miller Ch36 p. 1145; Kreuzer 2020, Ch36 ref 95) — reached at AGE_OLD_Y [INF]. |
 | `AGE_AMP_OLD` | `0.4` | — | Purdon 2015; [INF] | Amplitude × 0.4 at AGE_OLD_Y (Purdon 2015, Ch36 ref 94: the elderly's oscillations "≈ 2–3-fold smaller", i.e. × 0.33–0.5; 0.4 inside it), linear in age [INF]. |
+
+### [`l2/eeg/synth.ts`](../../packages/engine-core/src/l2/eeg/synth.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `BLOCK_S` | `2` | s | Miller Ch35 p. 1106 | --- blocks (Ch35 p. 1106) --- The block the generator renders: the 2 s epoch many devices use (Miller Ch35 p. 1106), rounded to a power of two of samples for the FFT (256 at 125 Hz = 2.048 s). |
+| `FF_SPLIT_HZ` | `2` | Hz | Miller Ch36 pp. 1140–1141 | The split between the sustained slow activity and the power that drops out in the forme fruste: "brief drops of all power above ≈ 2 Hz with sustained 0.5–2 Hz" (Miller Ch36 pp. 1140–1141). |
+| `BS_BURST_S` | `3.58` | s | research/43 P; Jones 2023; [INF] | --- burst suppression (research/43 P-8; Ch36 pp. 1139–1141) --- Mean burst length, s: canonical broadband bursts 3.58 ± 1.01 s under propofol at suppression ratio 70–90 % (Jones 2023, research/43 P-8). Used for every agent: the volatile burst length in humans was not found [INF]. |
+| `BS_MIN_SUPP_S` | `0.5` | s | Rampil 1998; research/43 P | Minimum suppression, s: < 5 µV for > 0.5 s (Rampil 1998, Ch36 ref. 45, via secondary sources — research/43 P-8). |
+| `BS_RAMP_S` | `0.05` | s | [ENG: numerics; a few samples, so the trace has no step; bursts start abruptly, Ch36 Fig. 36.6] | Burst onset and offset ramp, s [ENG: numerics; a few samples, so the trace has no step; bursts start abruptly, Ch36 Fig. 36.6]. |
+| `BURST_UV_PER_SD` | `2.576` | — | Fleischmann 2018; Kratzer 2020; [INF] | The burst amplitude the spectrum gives (`suppression.burstUv`) is a 99th-percentile amplitude (Fleischmann 2018; Kratzer 2020 "max"): a Gaussian burst's 99th percentile of \|x\| is 2.576 σ [INF]. |
+| `OSC_BURST_S` | `1` | s | research/43 P; Jones 2023; [FIT: oscillation burst length; brief research/43 P-8; Jones 2023's spindle bursts 1.12 ± 0.30 s are of this order, research/43 P-8] | --- burstiness and the forme fruste (Ch36 pp. 1140–1141, 1144) --- Mean length of one burst of a bursty oscillation, s [FIT: oscillation burst length; brief research/43 P-8; Jones 2023's spindle bursts 1.12 ± 0.30 s are of this order, research/43 P-8]. |
+| `OSC_DUTY_MIN` | `0.2` | — | research/43 P; [FIT: duty cycle at full burstiness; brief research/43 P-7; fragmented into short bursts, "not continuous" (Ch36 p. 1144)] | The duty cycle at burstiness 1 [FIT: duty cycle at full burstiness; brief research/43 P-7; fragmented into short bursts, "not continuous" (Ch36 p. 1144)]; burstiness b gives duty 1 − b·(1 − OSC_DUTY_MIN). |
+| `OSC_RAMP_S` | `0.1` | s | research/43 P; [FIT: oscillation envelope ramp, smooth waxing and waning; brief research/43 P-7] | Envelope ramp of a bursty oscillation, s [FIT: oscillation envelope ramp, smooth waxing and waning; brief research/43 P-7]. |
+| `FF_DROP_MAX` | `0.5` | — | research/43 P; [FIT: forme fruste drop share; brief research/43 P-8; "brief drops", Ch36 p. 1141] | Fraction of time the power above FF_SPLIT_HZ is dropped at forme fruste 1 [FIT: forme fruste drop share; brief research/43 P-8; "brief drops", Ch36 p. 1141]. |
+| `FF_DROP_S` | `1` | s | research/43 P; [FIT: forme fruste drop length, brief; brief research/43 P-8] | Mean length of one drop-out, s [FIT: forme fruste drop length, brief; brief research/43 P-8]. |
+| `FF_FLOOR` | `0.1` | — | research/43 P; [FIT: forme fruste floor, −20 dB; brief research/43 P-8] | Amplitude left during a drop-out [FIT: forme fruste floor, −20 dB; brief research/43 P-8]. |
+| `GAIN_TAU_S` | `0.1` | s | [ENG: numerics; a new hop's gains reach the trace without a step] | Smoothing of the per-hop gains, s [ENG: numerics; a new hop's gains reach the trace without a step]. |
 
 ### [`l2/neuro/bus.ts`](../../packages/engine-core/src/l2/neuro/bus.ts)
 
@@ -352,6 +455,14 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 
 | Function | File | Doc |
 |---|---|---|
+| `emgLevel` | [`l2/eeg/artefacts.ts`](../../packages/engine-core/src/l2/eeg/artefacts.ts) | The EMG drive, 0–1 of EMG_FULL_RMS_UV: |
+| `impedanceUnreliable` | [`l2/eeg/artefacts.ts`](../../packages/engine-core/src/l2/eeg/artefacts.ts) | Electrodes above the limit or unequal: |
+| `impedanceNoiseUv` | [`l2/eeg/artefacts.ts`](../../packages/engine-core/src/l2/eeg/artefacts.ts) | Electrode noise RMS, µV. |
+| `artefactSample` | [`l2/eeg/artefacts.ts`](../../packages/engine-core/src/l2/eeg/artefacts.ts) | The artefacts' sum at one sample, µV. |
+| `createEegState` | [`l2/eeg/pipeline.ts`](../../packages/engine-core/src/l2/eeg/pipeline.ts) | The EEG switched on at 125 Hz sample `m0`. |
+| `validateEegCommand` | [`l2/eeg/pipeline.ts`](../../packages/engine-core/src/l2/eeg/pipeline.ts) | A reason, undefined (accepted) or null (not an EEG command). |
+| `applyEegSetting` | [`l2/eeg/pipeline.ts`](../../packages/engine-core/src/l2/eeg/pipeline.ts) | Apply an accepted impedance or ecgPickup command to a running EEG (on/off are the engine's: |
+| `advanceEeg` | [`l2/eeg/pipeline.ts`](../../packages/engine-core/src/l2/eeg/pipeline.ts) | Write the samples up to and including 125 Hz index `endM`. |
 | `spectrumOf` | [`l2/eeg/spectra.ts`](../../packages/engine-core/src/l2/eeg/spectra.ts) | The spectrum of a cortical state with its agent mix. |
 | `peakOf` | [`l2/eeg/spectra.ts`](../../packages/engine-core/src/l2/eeg/spectra.ts) | --- readers of a spectrum (the generator's and the tests' contract) --- |
 | `psdDb` | [`l2/eeg/spectra.ts`](../../packages/engine-core/src/l2/eeg/spectra.ts) | PSD at f, dB re 1 µV²/Hz. |
@@ -364,6 +475,8 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `cortexInputsOf` | [`l2/eeg/state.ts`](../../packages/engine-core/src/l2/eeg/state.ts) | The cortex's inputs from the drug bus and the physiology (read-only). |
 | `agentMixOf` | [`l2/eeg/state.ts`](../../packages/engine-core/src/l2/eeg/state.ts) | The shares of the hyperpolarising load per class (they sum to 1 when `hyper` > 0), N2O and age: |
 | `cortexStep` | [`l2/eeg/state.ts`](../../packages/engine-core/src/l2/eeg/state.ts) | One step of the cortical state. |
+| `createSynth` | [`l2/eeg/synth.ts`](../../packages/engine-core/src/l2/eeg/synth.ts) | A generator for `fs` drawing from `rng`, primed with `spec` (two blocks, so the first sample has full variance). |
+| `synthNext` | [`l2/eeg/synth.ts`](../../packages/engine-core/src/l2/eeg/synth.ts) | The next sample, µV. |
 | `newDoses` | [`l2/neuro/bus.ts`](../../packages/engine-core/src/l2/neuro/bus.ts) | Doses the drug model accepted after `seenT` (the neuro model observes, never consumes). |
 | `pcheOf` | [`l2/neuro/bus.ts`](../../packages/engine-core/src/l2/neuro/bus.ts) | Cholinesterase phenotype for the drug model's PK patient (`PkPatient.pche`; |
 | `locPropofol` | [`l2/neuro/depth.ts`](../../packages/engine-core/src/l2/neuro/depth.ts) | Schnider C50 for loss of consciousness: |
@@ -382,14 +495,17 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `paco2SetPoint` | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | The chemoreflex set point: |
 | `tofStep` | [`l2/neuro/tof-device.ts`](../../packages/engine-core/src/l2/neuro/tof-device.ts) | Called every neuro step (0.1 s) with the TRUE reading; |
 
-Exported without a doc comment: `readBus`, `ce50Propofol`, `opioidFentEq`, `depth`, `neuroResp`, `ec50Multipliers`, `hypokalaemiaMult`, `neuroOutputs`, `createNeuroState`, `createSpontDrive`, `stepSpontDrive`, `createTofDevice`, `validateTofAction`, `tofAction`.
+Exported without a doc comment: `createArtefacts`, `readBus`, `ce50Propofol`, `opioidFentEq`, `depth`, `neuroResp`, `ec50Multipliers`, `hypokalaemiaMult`, `neuroOutputs`, `createNeuroState`, `createSpontDrive`, `stepSpontDrive`, `createTofDevice`, `validateTofAction`, `tofAction`.
 
 ## Source files
 
 | File | Header |
 |---|---|
+| [`l2/eeg/artefacts.ts`](../../packages/engine-core/src/l2/eeg/artefacts.ts) | EEG stage E4: what a real frontal electrode sees besides the brain (docs/plans/stage-eeg-depth-of-anaesthesia.md §7 E4, D5): muscle (EMG), electrocautery, eye blinks, ECG pickup, electrode impedance and mains. |
+| [`l2/eeg/pipeline.ts`](../../packages/engine-core/src/l2/eeg/pipeline.ts) | EEG stage E3/E4 in the engine: the `eeg` channel (docs/plans/stage-eeg-depth-of-anaesthesia.md §7 E3, E4; D2–D5). |
 | [`l2/eeg/spectra.ts`](../../packages/engine-core/src/l2/eeg/spectra.ts) | EEG stage E2: the spectral description of a cortical state — an aperiodic 1/f background plus named oscillations, burst suppression and its forme fruste (docs/plans/stage-eeg-depth-of-anaesthesia.md §7 E2; research/43 P- |
 | [`l2/eeg/state.ts`](../../packages/engine-core/src/l2/eeg/state.ts) | EEG stage E1: the cortical state — the drug bus and the physiology mapped onto a handful of mechanism-named variables (docs/plans/stage-eeg-depth-of-anaesthesia.md §7 E1, D1; numbers from research/43-eeg-sources-review.m |
+| [`l2/eeg/synth.ts`](../../packages/engine-core/src/l2/eeg/synth.ts) | EEG stage E3: the signal generator — the spectral description of a cortical state (spectra.ts) turned into microvolt samples (docs/plans/stage-eeg-depth-of-anaesthesia.md §7 E3, D2, D3). |
 | [`l2/neuro/bus.ts`](../../packages/engine-core/src/l2/neuro/bus.ts) | The neuro model's READER of the drug model's DrugBus. |
 | [`l2/neuro/depth.ts`](../../packages/engine-core/src/l2/neuro/depth.ts) | Anaesthetic depth (tables §5d "Anaesthetic depth"). |
 | [`l2/neuro/drive.ts`](../../packages/engine-core/src/l2/neuro/drive.ts) | Respiratory-drive depression (tables §5d "Respiratory-drive depression" feeding §4.6) and the NMB ventilatory consequence. |
@@ -420,14 +536,17 @@ Exported without a doc comment: `readBus`, `ce50Propofol`, `opioidFentEq`, `dept
 |---|---|---|
 | [`engine/eeg-baseline.test.ts`](../../packages/engine-core/test/engine/eeg-baseline.test.ts) | 0 | 0 |
 | [`engine/eeg-cortex.test.ts`](../../packages/engine-core/test/engine/eeg-cortex.test.ts) | 0 | 0 |
+| [`engine/eeg-signal.test.ts`](../../packages/engine-core/test/engine/eeg-signal.test.ts) | 0 | 0 |
 | [`engine/neuro-acceptance.test.ts`](../../packages/engine-core/test/engine/neuro-acceptance.test.ts) | 1 | 0 |
 | [`engine/neuro-circ.test.ts`](../../packages/engine-core/test/engine/neuro-circ.test.ts) | 0 | 0 |
 | [`engine/neuro-engine.test.ts`](../../packages/engine-core/test/engine/neuro-engine.test.ts) | 0 | 0 |
 | [`engine/neuro-longrun.test.ts`](../../packages/engine-core/test/engine/neuro-longrun.test.ts) | 0 | 0 |
 | [`engine/neuro-spont.test.ts`](../../packages/engine-core/test/engine/neuro-spont.test.ts) | 0 | 0 |
+| [`l2/eeg/artefacts.test.ts`](../../packages/engine-core/test/l2/eeg/artefacts.test.ts) | 0 | 0 |
 | [`l2/eeg/bus-classes.test.ts`](../../packages/engine-core/test/l2/eeg/bus-classes.test.ts) | 0 | 0 |
 | [`l2/eeg/spectra.test.ts`](../../packages/engine-core/test/l2/eeg/spectra.test.ts) | 0 | 0 |
 | [`l2/eeg/state.test.ts`](../../packages/engine-core/test/l2/eeg/state.test.ts) | 0 | 0 |
+| [`l2/eeg/synth.test.ts`](../../packages/engine-core/test/l2/eeg/synth.test.ts) | 0 | 0 |
 | [`l2/neuro/alkalosis-setpoint.test.ts`](../../packages/engine-core/test/l2/neuro/alkalosis-setpoint.test.ts) | 0 | 0 |
 | [`l2/neuro/brainstem-gate.test.ts`](../../packages/engine-core/test/l2/neuro/brainstem-gate.test.ts) | 0 | 0 |
 | [`l2/neuro/bus.test.ts`](../../packages/engine-core/test/l2/neuro/bus.test.ts) | 0 | 0 |

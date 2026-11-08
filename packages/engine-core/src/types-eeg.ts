@@ -1,6 +1,7 @@
 // EEG stage public types (docs/plans/stage-eeg-depth-of-anaesthesia.md §7 E1, E2): the cortical state computed from the
 // drug bus and the physiology (l2/eeg/state.ts) and the spectral description each state produces (l2/eeg/spectra.ts).
-// No signal and no device here (E3, E5 on): nothing in this file is published on the wire.
+// The `eeg` channel's device commands (E3/E4: on/off and the electrodes; E6 adds the model choice). No EEG sample is
+// published on the wire (D3): a follower computes them from the commands.
 
 /** The drug model's hypnotic equivalent split by EEG class, propofol-equivalent brain Ce (bus: µg/mL; the cortex: ng/mL).
  * The five parts sum to `bus.cns.hypPropEq`. */
@@ -98,3 +99,12 @@ export interface EegSpectrum {
   /** The forme fruste before burst suppression, 0–1: brief drops of power above ≈ 2 Hz with sustained 0.5–2 Hz. */
   formeFruste: number;
 }
+
+/** The EEG device commands (plan §7 E3/E4; E6 adds `model`): switch the frontal EEG on or off (the `eeg` channel and
+ * its state exist only while on, D4); set the electrode impedances, kΩ, one value for all or one per electrode; flag
+ * the ECG pickup (plan P-11: a patient-profile property, default off, set here while the scenario format is not
+ * touched). */
+export type EegDeviceAction =
+  | { device: 'eeg'; action: 'on' | 'off' }
+  | { device: 'eeg'; action: 'impedance'; value: number | number[] }
+  | { device: 'eeg'; action: 'ecgPickup'; value: boolean };
