@@ -6,7 +6,7 @@ import type { EngineEvent, Measured, NumericId } from '@pme/engine-core';
 import { formatDate, type LayoutGrid, type ResolvedSkin, type StripField, type TileParam, type TileSpec } from '@pme/skins';
 import { barView, hrStatusLines, tileAlarmView, TILE_NUMERICS, type AlarmStatus } from './alarm-view.ts';
 import { formatNibp, formatWallTime, nibpModeLabel } from './numerics-hemo.ts';
-import { formatAgents, formatBfa, formatNmt, modulePresent } from './numerics-neuro.ts';
+import { bfaReading, formatAgents, formatBfa, formatNmt, modulePresent } from './numerics-neuro.ts';
 import { fitTile, type LimSide } from './tile-fit.ts';
 
 type NibpEvent = Extract<EngineEvent, { type: 'nibp' }>;
@@ -908,7 +908,7 @@ export class DeviceUI {
         const ok = a && b && a.value !== null && b.value !== null && a.flag !== 'invalid' && b.flag !== 'invalid';
         return { label: 'ΔT', value: ok ? Math.abs((a.value as number) - (b.value as number)).toFixed(1) : g.noValue, text: true };
       }
-      if (x === 'BS%' || x === 'SR') return { label: x, value: this.text(v.sr), text: false }; // the BFA formatter's sub-line
+      if (x === 'BS%' || x === 'SR') return { label: x, value: this.text(bfaReading(v).sr), text: false }; // the BFA formatter's sub-line (the chosen device's SR, E6)
       return { label: x, value: '', text: false };
     });
   }
@@ -932,11 +932,16 @@ export class DeviceUI {
       // NMT/BFA only while the module publishes, unless the skin shows the module always (blank, research/34 §8 O1)
       tile.el.style.display = modulePresent(p, v, t) || this.r.skin.layout.showAlways?.includes(p) ? '' : 'none';
       let source: string | null = null; // the HR tile's rate source (ECG, IBP1, SpO2)
+      let devLabel: string | null = null; // BFA: the EEG device's own label (E6)
       let parts3: string[] | null = null; // pass 3: an IBP value as its three spans
       let cuff = false; // UI review #15: the rc.3 NIBP value is the live cuff pressure (small), not a result
       if (p === 'HR') ({ main, label, source } = this.hrTile());
       else if (p === 'NMT') ({ main, sub } = formatNmt(v, g.noValue));
-      else if (p === 'BFA') ({ main, sub } = formatBfa(v, tile.spec.extras?.[0] ?? 'SR', g.noValue));
+      else if (p === 'BFA') {
+        const b = formatBfa(v, tile.spec.extras?.[0] ?? 'SR', g.noValue);
+        ({ main, sub } = b);
+        devLabel = b.label ?? null; // an EEG device's index (E6): SEF, not the depth index
+      }
       else if (p === 'AGENTS') {
         ({ main, sub } = formatAgents(v, g.noValue));
         label = 'EtAA';
@@ -985,6 +990,7 @@ export class DeviceUI {
         });
         label = tile.spec.parts?.[0]?.label ?? label;
       }
+      if (devLabel) label = devLabel; // E6: wins over the skin's label and its first part's
       tile.label.textContent = label;
       if (parts3) this.paintPressure(tile.value, parts3);
       else tile.value.textContent = main;

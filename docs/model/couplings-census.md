@@ -6,9 +6,9 @@
 The engine's cross-module coupling seams and its effector products and sums, read from the code
 (docs/plans/mechanism-tree.md, piece R0). Places are file#function; the line of each row is in the `--json` output.
 
-Seams (de-duplicated on module, kind and field): 139; sites: 177.
+Seams (de-duplicated on module, kind and field): 154; sites: 192.
 
-Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`): 40; unregistered: 97
+Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`): 57; unregistered: 97
 (the list in `packages/engine-core/src/couplings/unregistered.ts`, which may shrink and never grow: a new seam needs a row).
 
 | Module | ctx | ext | endo-write | bus-read | All |
@@ -18,12 +18,12 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | endocrine-thermal | 4 | 7 | 9 | 4 | 24 |
 | engine-runtime | 0 | 6 | 0 | 6 | 12 |
 | lungs | 0 | 3 | 0 | 0 | 3 |
-| neuro | 8 | 0 | 0 | 18 | 26 |
+| neuro | 23 | 0 | 0 | 18 | 41 |
 | organs | 10 | 2 | 0 | 4 | 16 |
 | pharmacology | 18 | 0 | 0 | 0 | 18 |
 | pressure-waveforms | 11 | 1 | 0 | 0 | 12 |
 | rhythms-ecg | 7 | 0 | 0 | 0 | 7 |
-| **All** | 75 | 22 | 9 | 33 | 139 |
+| **All** | 90 | 22 | 9 | 33 | 154 |
 
 ## Exported numeric constants inside the module's own effector expressions
 
@@ -38,15 +38,15 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | blood | 68 | 28 |
 | organs | 138 | 63 |
 | endocrine-thermal | 167 | 68 |
-| neuro | 154 | 76 |
+| neuro | 187 | 91 |
 | pharmacology | 29 | 14 |
 | monitor | 46 | 5 |
 | alarms | 17 | 0 |
-| defib-pacer | 23 | 4 |
+| defib-pacer | 25 | 6 |
 | engine-runtime | 6 | 2 |
-| **All** | 1086 | 407 |
+| **All** | 1121 | 424 |
 
-## The ten effector expressions with the most factors (of 1531)
+## The ten effector expressions with the most factors (of 1598)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -61,7 +61,7 @@ Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`
 | `l2/circ/model.ts#control` | `p.pvrL` | product | 7 |
 | `l2/circ/model.ts#control` | `p.pvrR` | product | 7 |
 
-## The ten products with the most factors (of 838 products)
+## The ten products with the most factors (of 879 products)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -266,6 +266,21 @@ The seams no coupling-registry row carries yet (piece R2 registers the rest); th
 | pressure-waveforms | ctx | `advanceHemo.requestRhythm` | `engine.ts#advance` | 1 |
 | pressure-waveforms | ctx | `advanceHemo.requestEctopy` | `engine.ts#advance` | 1 |
 | pressure-waveforms | ctx | `advanceHemo.ph` | `engine.ts#advance` | 1 |
+| neuro | ctx | `eegCtx.bus` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.ageY` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.stimulus` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.antinoc` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.t1` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.tube` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.cbfRel` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.hb` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.sao2` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.pao2` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.tempC` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.macF` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.art` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.mainsHz` | `engine.ts#eegCtx` | 1 |
+| neuro | ctx | `eegCtx.ecgMvAt` | `engine.ts#eegCtx` | 1 |
 | engine-runtime | ext | `drug` | `engine.ts#advance` | 1 |
 | engine-runtime | ext | `betaBlockAdd` | `engine.ts#advance` | 1 |
 | engine-runtime | ext | `betaAgonistU` | `engine.ts#advance` | 1 |
