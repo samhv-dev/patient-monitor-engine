@@ -33,11 +33,11 @@ export const FENT_EEG_POT = 1.6;
 /**
  * Fentanyl VENTILATORY potency relative to remifentanil — a deviation from the tables (Q54). The tables derive 1.6×
  * (C50 ≈ 0.6 ng/mL) from EEG potency; with it fentanyl 1.5 µg/kg alone (Ce ≈ 2.3 ng/mL) makes a healthy adult
- * apnoeic, against clinical experience (RR ~8–10). 0.55× (C50 ≈ 1.7 ng/mL) [ENG], flagged for Ali.
+ * apnoeic, against clinical experience (RR ~8–10). 0.55× (C50 ≈ 1.7 ng/mL) [FIT: opioid respiratory C50 × 0.55 against clinical experience; brief research/44 L2-37], flagged for the owner.
  */
 export const FENT_VENT_POT = FENT_VENT_REMI_EQ; // ONE source — the drug model's pd.ts carries the deviation value (0.55)
 /**
- * Gamma-row reference units → ng/mL-equivalents [ENG]: the drug model keeps midazolam and ketamine as gamma curves
+ * Gamma-row reference units → ng/mL-equivalents [ENG: conversion]: the drug model keeps midazolam and ketamine as gamma curves
  * (tables §6.1) whose "concentration" is in units of the reference dose; midazolam 0.05 mg/kg ≈ 100 ng/mL, ketamine 1.5
  * mg/kg ≈ 1500 ng/mL (M10 ch. 21 p. 536: 0.7–2.2 µg/mL for hypnosis).
  */
@@ -91,7 +91,7 @@ export function readBus(bus: DrugBus): NeuroInputs {
   const remiB = (ag.remifentanil?.brain ?? 0) / antag;
   const fentB = (ag.fentanyl?.brain ?? 0) / antag;
   // Opioids not named one by one here: the drug model's (already antagonised) remifentanil-equivalent total minus
-  // the two named here [ENG]
+  // the two named here [FIT: respiratory-depression C50; brief research/44 L2-37]
   const otherRemiEq = Math.max(0, bus.cns.opioidCeRemiEq - remiB - FENT_EEG_POT * fentB);
   const propofol = bus.cns.propCe * 1000;
   const midazolam = bus.cns.benzoCeMidazEq * MIDAZ_NG_PER_REF;
@@ -151,8 +151,8 @@ export function newDoses(bus: DrugBus, seenT: number): { doses: DrugBus['doses']
 
 /**
  * Cholinesterase phenotype for the drug model's PK patient (`PkPatient.pche`; its `pkPatientOf` does not map it). The
- * clearance multiplier is the drug model's single `PCHE_CL_MULT` (het 0.5 → 12 min, hom 0.003 → 5.2 h, [ENG, fitted to
- * tables §5d / Lee 2009 durations]); the neuro model uses the same value by construction.
+ * clearance multiplier is the drug model's single `PCHE_CL_MULT` (het 0.5 → 12 min, hom 0.003 → 5.2 h, [FIT: unnamed
+ * tables §5d / Lee 2009 durations; brief research/44 L2-27]); the neuro model uses the same value by construction.
  */
 export function pcheOf(p: PatientProfile | undefined): 'normal' | 'het' | 'hom' {
   const c = p?.neuro?.cholinesterase;

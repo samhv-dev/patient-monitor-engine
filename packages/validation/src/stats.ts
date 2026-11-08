@@ -35,7 +35,7 @@ export function wasserstein1(a: ArrayLike<number>, b: ArrayLike<number>): number
   const x = Array.from(a).filter(Number.isFinite).sort((p, q) => p - q);
   const y = Array.from(b).filter(Number.isFinite).sort((p, q) => p - q);
   if (!x.length || !y.length) return Number.NaN;
-  const n = 200; // quantile grid [ENG]
+  const n = 200; // quantile grid [ENG: measurement]
   let s = 0;
   for (let k = 0; k < n; k++) {
     const q = (k + 0.5) / n;

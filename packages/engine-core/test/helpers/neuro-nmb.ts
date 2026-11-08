@@ -40,7 +40,7 @@ export function t1Course(r: Rig, min: number, ec50: Record<NmbAgent, number> = O
 /**
  * Onset = time to MAXIMUM block as a stimulator sees it — the labels' "max block" (tables §5d: vecuronium 3–5 min,
  * cisatracurium 2–3 min): the first second with T1 < 10 % after which T1 falls by less than 1 point over the next
- * 45 s (three 15 s trains) [ENG operational rule: a one-compartment effect site keeps creeping toward its nadir for
+ * 45 s (three 15 s trains) [ENG: measurement; operational rule: a one-compartment effect site keeps creeping toward its nadir for
  * minutes, below the stimulator's resolution]. Minutes from the start of the course; NaN if never.
  */
 export function onsetMin(t1: number[]): number {

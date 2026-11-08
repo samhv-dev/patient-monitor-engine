@@ -55,7 +55,7 @@ export interface ResolvedProfile {
   /** The stabiliser anchors the LV EDPVR at the EDV the ventricle actually reaches (conditions that set an LVEDP). */
   tuneLvedp: boolean;
   /**
-   * The tonic SYMPATHETIC share of resting SVR (baroreflex.ts `tonic`); MSNA-graded [ENG]. A constant of the profile
+   * The tonic SYMPATHETIC share of resting SVR (baroreflex.ts `tonic`); MSNA-graded [FIT: disease-profile size; brief research/44 L2-30]. A constant of the profile
    * — never a function of the arrest or perfusion state (research/23 §6.3 note 4: those act through the delivered
    * output `outF × brainF`). A VAGAL twin (`tonicVagal`: the resting cardiac vagal level an antimuscarinic removes,
    * the resting BRS and its age decline) is expected from a planned autonomic hub; this number does not cover it.
@@ -90,17 +90,17 @@ const PH_EES_RV: Record<string, number> = { mild: 1.3, moderate: 1.6, severe: 2.
 const AS_BETA: Record<string, number> = { mild: 1.0, moderate: 1.3, severe: 1.6, critical: 2.0 };
 /**
  * Concentric LV hypertrophy in AS raises end-systolic elastance with the grade (the hypertrophied LV
- * normalises wall stress and keeps ESV near normal at LVSP 170–200) [ENG].
+ * normalises wall stress and keeps ESV near normal at LVSP 170–200) [FIT: disease-profile size; brief research/44 L2-30].
  */
 const AS_EES: Record<string, number> = { mild: 1.0, moderate: 1.3, severe: 1.7, critical: 2.0 };
-/** Tonic sympathetic share of resting SVR by profile [ENG; MSNA: Sundlöf & Wallin 1978, Grassi 1998]. */
+/** Tonic sympathetic share of resting SVR by profile (MSNA: Sundlöf & Wallin 1978, Grassi 1998; MSNA: Sundlöf & Wallin 1978, Grassi 1998). */
 export const TONIC_ADULT = 0.2;
 export const TONIC_ELDERLY = 0.3;
 export const TONIC_HTN = 0.1;
 export const TONIC_HFREF = 0.25;
 
 /** The stabiliser's resting MAP (radial) sits this far above the reflex set point — the adult default 120/80 (MAP
- * 93.3) against 90 [ENG: kept so no adult row moves]. */
+ * 93.3) against 90 [FIT: disease-profile size; kept so no adult row moves; brief research/44 L2-30]. */
 export const TARGET_MAP_ABOVE_SET = 10 / 3;
 
 const BAND = {
@@ -155,19 +155,19 @@ export function resolveProfile(pr: CircProfile = DEFAULT_PROFILE): ResolvedProfi
     ageY: pr.ageY,
     tuneLvedp: false,
     // Young adult ≈ 0.2 (the resting SVR fall under autonomic ganglionic blockade); MSNA doubles 25 → 65 y (Sundlöf &
-    // Wallin) — elderly 0.3; untreated HTN and HFrEF add below (Grassi 1998) [ENG sizes, Ali's review]
+    // Wallin) — elderly 0.3; untreated HTN and HFrEF add below (Grassi 1998) [FIT: disease-profile size; sizes, the owner's review; brief research/44 L2-30]
     tonicSymp: band === 'elderly' ? TONIC_ELDERLY : TONIC_ADULT,
   };
   // The elderly keep 140/80 (MAP 100 against the set point 95): the organ model's check 18 (75 y HTN CBF plateau) is
   // fitted to it, and the elderly resting pressure is an open question (research/19).
   if (band === 'elderly') r.targets = { sbp: 140, dbp: 80, hr: b.hr, cvp: 5 };
-  let edvRef = 120 * w * lvScale; // mL, the EDV at which the EDPVR passes through the profile's LVEDP [ENG anchor]
+  let edvRef = 120 * w * lvScale; // mL, the EDV at which the EDPVR passes through the profile's LVEDP [FIT: disease-profile size; anchor; brief research/44 L2-30]
   for (const c of pr.conditions) {
     applyCondition(r, c);
     if (c.id === 'hfref') edvRef *= 1 + 0.5 * sev(c); // eccentric dilatation (tables §1.5 HFrEF)
   }
   // Anchor the LV EDPVR: stiffness conditions steepen β, and A is refitted so P(EDV_ref) = LVEDP target. Without it
-  // β multipliers compound on the exponential (AS + HTN: LVEDP 67 at EDV 119 in the prototype) [ENG, plan decision 5].
+  // β multipliers compound on the exponential (AS + HTN: LVEDP 67 at EDV 119 in the prototype) [FIT: disease-profile size; plan decision 5; brief research/44 L2-30].
   p.aLv = r.lvedpTarget / (Math.exp(p.betaLv * (edvRef - p.v0Lv)) - 1);
   return r;
 }
@@ -209,7 +209,7 @@ function applyCondition(r: ResolvedProfile, c: CircCondition): void {
       p.av = { ...p.av, k: stenosisK(ava, GORLIN_AV, AVA_REF) };
       p.betaLv *= AS_BETA[g] ?? 1;
       p.eesLv *= AS_EES[g] ?? 1;
-      // A compensated severe AS rests at LVEDP ≈ 18 (tables §3 worked example; 15–20), milder grades lower [ENG]. The
+      // A compensated severe AS rests at LVEDP ≈ 18 (tables §3 worked example; 15–20), milder grades lower [FIT: disease-profile size; brief research/44 L2-30]. The
       // stabiliser anchors the EDPVR at the EDV the hypertrophied LV actually reaches (the analytic 120 mL anchor left
       // the prototype at LVEDP 40 at CVP 5, 30 at CVP 3), so the CVP target stays 5.
       r.lvedpTarget = Math.max(r.lvedpTarget, g === 'severe' || g === 'critical' ? 18 : 12);
@@ -223,7 +223,7 @@ function applyCondition(r: ResolvedProfile, c: CircCondition): void {
     }
     case 'mr':
       p.mv = { ...p.mv, eroa: GRADES.mr[(c.grade ?? 'severe') as keyof typeof GRADES.mr] };
-      if ((c.grade ?? 'severe') === 'severe' && c.severity !== undefined && c.severity < 0.5) p.emaxLa = p.eminLa = 0.1; // chronic big LA [ENG]
+      if ((c.grade ?? 'severe') === 'severe' && c.severity !== undefined && c.severity < 0.5) p.emaxLa = p.eminLa = 0.1; // chronic big LA [FIT: disease-profile size; brief research/44 L2-30]
       return;
     case 'ar':
       p.av = { ...p.av, eroa: GRADES.ar[(c.grade ?? 'severe') as keyof typeof GRADES.ar] };
@@ -238,11 +238,11 @@ function applyCondition(r: ResolvedProfile, c: CircCondition): void {
     case 'betaBlocked': // tables §1.5: HR 55–65, g_hs ×0.4 (range ×0.2–0.7), g_c ×0.5, β-agonist ×0.5
       // g_hs ×0.2 (low end of the tables' range): the circulation's reflex needs more sympathetic drive in class III
       // than the tables' linear sketch, and "HR stays < 100 in class III" (tables §1.5, §7 17b) holds only at ×0.2
-      // [ENG]
+      // [FIT: disease-profile size; brief research/44 L2-30]
       r.betaBlock = 0.8 * s;
       r.betaBlockC = 0.5 * s;
       // Chronic metoprolol/bisoprolol — occupancy 0.85 = a dose ratio of ≈ 6.7 on every β-agonist's EC50, which is
-      // tables §1.5's "β-agonist ×0.5" read as COMPETITIVE antagonism instead of a gain scale [ENG]. `betaNonSel` stays
+      // tables §1.5's "β-agonist ×0.5" read as COMPETITIVE antagonism instead of a gain scale [FIT: disease-profile size; brief research/44 L2-30]. `betaNonSel` stays
       // false (cardioselective is the common case; the scenario/profile may set it).
       r.betaOcc = 0.85 * s;
       r.hrRest = 60;

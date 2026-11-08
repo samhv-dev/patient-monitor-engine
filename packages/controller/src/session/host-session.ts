@@ -118,7 +118,7 @@ export const DENIAL_WINDOW_MS = 60_000;
 /**
  * The most wrong PINs the host remembers; the oldest go first. A second wall behind the relay's limit (20 hello
  * attempts per address per 60 s): a hello flood cannot grow host memory, and the Room page needs a count, not
- * every try — above 100 in a minute it says the same thing (review G1) [ENG].
+ * every try — above 100 in a minute it says the same thing (review G1) [ENG: network].
  */
 export const DENIAL_RECORD_MAX = 100;
 
@@ -141,25 +141,25 @@ interface Gathered {
 /** An engine command (time and scenario commands are the host's own, never part of a group's one dispatch). */
 const groupable = (c: WireCommand): boolean => c.type !== 'time' && c.type !== 'scenario';
 
-/** Commands that share a stageGroup land on one tick this many ticks after the first arrives (60 ms) [ENG]. */
+/** Commands that share a stageGroup land on one tick this many ticks after the first arrives (60 ms) [ENG: network]. */
 export const STAGE_LEAD_TICKS = 3;
 const STAGE_GROUP_TTL_MS = 5000;
 /**
  * R15: how long the host holds the items of a staged delivery (`batch`, n items) that have arrived while it waits for the
  * rest. The items leave the controller in one synchronous loop (StageBuffer.commit), so they arrive back to back; one
  * still missing after this is lost in transit (the controller resends it on its own), and the ones held are applied
- * without it rather than held longer. It bounds a delay only; no tick depends on it [ENG].
+ * without it rather than held longer. It bounds a delay only; no tick depends on it [ENG: network].
  */
 export const BATCH_HOLD_MS = 500;
 const SEEN_MAX = 500;
 /** The ack of a command from a relay peer whose role a peer-left forgot and that has not said hello again. */
 export const NO_HELLO = 'say hello first';
-/** The most departed peer ids a transport remembers for NO_HELLO (a long class of reconnecting phones) [ENG]. */
+/** The most departed peer ids a transport remembers for NO_HELLO (a long class of reconnecting phones) [ENG: network]. */
 const LEFT_MAX = 1000;
 /**
  * A hidden-tab catch-up arrives as ONE batch, and the app's 1 Hz truth events are up to 27 KB each (200 events reached
  * 379 KB) — every wire message holds at most this much JSON and this many events, so it passes the receivers' 256 KB
- * budget (guard.ts) [ENG: half the budget].
+ * budget (guard.ts) [ENG: network; half the budget].
  */
 export const MESSAGE_BUDGET_BYTES = 128 * 1024;
 export const EVENTS_PER_MESSAGE = 200;
@@ -167,16 +167,16 @@ export const EVENTS_PER_MESSAGE = 200;
 const LOCAL_ONLY = new Set<WireEvent['type']>(['tone', 'toneCancel']);
 const TICK_S = 0.02;
 /** A viewer that said hello this recently still gets the mirrored link commands (it re-hellos on every
- *  resync) [ENG]. */
+ *  resync) [ENG: network]. */
 const VIEWER_TTL_MS = 600_000;
-/** While the Ventilator view drives the patient, a `cockpit` event goes to the network at most this often [ENG]. */
+/** While the Ventilator view drives the patient, a `cockpit` event goes to the network at most this often [ENG: network]. */
 export const COCKPIT_EVENT_MS = 1000;
 /**
  * A fast-forward runs in steps of this many ticks (0.5 s of sim); the host's scenario is polled after each and its
- * commands land before the next — finer than the app's own 100 ms wall poll at ×8 (0.8 s of sim) [ENG].
+ * commands land before the next — finer than the app's own 100 ms wall poll at ×8 (0.8 s of sim) [ENG: network].
  */
 export const FF_STEP_TICKS = 25;
-/** The longest fast-forward the host accepts, s (the owner asked for 5 min) [ENG]. */
+/** The longest fast-forward the host accepts, s (the owner asked for 5 min) [ENG: network]. */
 export const FF_MAX_S = 600;
 
 type AckBody = Extract<WireBody, { kind: 'ack' }>;
@@ -340,7 +340,7 @@ export class HostSession {
   /**
    * A command the host's monitor applied OUTSIDE this session (the Ventilator view's link drives it directly,
    * up to 400 commands a second at ×8) — sent as a `mirror` commandApplied so a second-screen viewer applies it at the
-   * same tick, and only while a viewer has said hello (no traffic in a session without one) [ENG: 10 min].
+   * same tick, and only while a viewer has said hello (no traffic in a session without one) [ENG: network; 10 min].
    * A DECLARED deviation from brief §3.7: these are the ventilator's frames — pressure,
    * flow and volume every 20 ms of sim, i.e. samples — so they go ONLY to same-browser BroadcastChannel transports,
    * never to the relay, WebRTC or the in-process panel (and the relay refuses them, relay/server.ts). Mirroring the

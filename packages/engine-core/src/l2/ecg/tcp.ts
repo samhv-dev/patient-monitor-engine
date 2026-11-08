@@ -5,20 +5,20 @@ import { WAVE, kernel, makeEvent } from './kernels.ts';
 import { HOOKS, NEVER, type RhythmCtx, type RhythmState } from './rhythm-state.ts';
 import type { Vec3 } from './vcg.ts';
 
-/** Pad artefact direction: anterior–posterior pads, large in V leads and II [ENG]. */
+/** Pad artefact direction: anterior–posterior pads, large in V leads and II [ENG: device]. */
 export const TCP_ART_DIR: Vec3 = [0.25, 0.6, -0.9];
-/** Artefact amplitude (mV along TCP_ART_DIR): 3 + 3·mA/140, capped at 6 [ENG]. */
+/** Artefact amplitude (mV along TCP_ART_DIR): 3 + 3·mA/140, capped at 6 [ENG: device]. */
 export function tcpArtefactMv(mA: number): number {
   return Math.min(6, 3 + (3 * mA) / 140); // 3–6 mV so the spike towers over any QRS
 }
 /**
  * Artefact shape: a tall, short spike (rise σ 2.5 ms, fall σ 4 ms: FWHM ≈ 8 ms) plus a slow opposite-polarity
  * polarisation tail (−12 %, rise σ 10 ms, fall σ 90 ms). The spike reads as an artefact and never as a QRS; the pace
- * MARKER (below) is what monitors draw at the pulse [ENG, research 03 §1.7].
+ * MARKER (below) is what monitors draw at the pulse [ENG: device; research 03 §1.7].
  */
 export const TCP_SPIKE_SIGMA_S: readonly [number, number] = [0.0025, 0.004];
 export const TCP_TAIL: { tau: number; sigma: readonly [number, number]; frac: number } = { tau: 0.02, sigma: [0.01, 0.09], frac: -0.12 };
-/** After its own pulse the pacer ignores the ventricle for this long (so its own captured beat never inhibits it) [ENG]. */
+/** After its own pulse the pacer ignores the ventricle for this long (so its own captured beat never inhibits it) [ENG: device]. */
 export const TCP_SENSE_REFRACTORY_S = 0.3;
 
 export const tcpClock = {

@@ -56,9 +56,9 @@ export const PERF8 = {
     { type: 'device', action: { device: 'nibp', action: 'auto', intervalMin: 3 } },
   ],
 } as const;
-/** How far the sim clock estimate may run past the last engine event before it waits for the next one [ENG]. */
+/** How far the sim clock estimate may run past the last engine event before it waits for the next one [ENG: ui]. */
 const EST_CAP_S = 1.5;
-/** The Ventilator view ventilates the patient while its last frame is this recent (it sends 50 a second) [ENG]. */
+/** The Ventilator view ventilates the patient while its last frame is this recent (it sends 50 a second) [ENG: ui]. */
 const VENT_DRIVING_MS = 2000;
 /** The view feed's period (plan instructor-peer-role.md §6: at most once a second, and only on a change). */
 export const FEED_MS = 1000;
@@ -277,7 +277,7 @@ export class AppSession {
     this.panelTransport.onMessage((m) => void (m.kind === 'event' && m.body.forEach((e) => (this.record.wire(e), this.trackVent(e))))); // every source's commands, in order
     this.panel = new ControllerSession({ session: this.code, transport: this.panelTransport, issuedBy: 'instructor' });
     this.mount(start.seed ?? 7);
-    // the runner advances at the engine's sim time; 10 Hz is enough for triggers stated in seconds [ENG]
+    // the runner advances at the engine's sim time; 10 Hz is enough for triggers stated in seconds [ENG: ui]
     this.pollTimer = setInterval(() => !this.fastForwarding && this.driver.poll(), 100); // A fast-forward polls per step
   }
 
@@ -458,7 +458,7 @@ export class AppSession {
     for (const res of this.ffWaiters.splice(0)) res();
   }
 
-  /** Sim time: the last engine event's time run forward on the wall clock at the current speed, capped [ENG], and
+  /** Sim time: the last engine event's time run forward on the wall clock at the current speed, capped [ENG: ui], and
    *  never earlier than a time it has already given. An engine event can arrive with a time below the running estimate
    *  (the engine a few ms behind the wall clock, its events late under load); the estimate then holds until the engine
    *  passes it, rather than step back: two reads either side of that event (two quick gotos) kept their order, so the

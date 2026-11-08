@@ -1,5 +1,5 @@
 {
-  "$comment": "[draft] Clinical content awaits Ali's review. Adenosine: AV block for 3–10 s, 10–30 s after the push (brief §4.9 drug table). The transient block is shown with rhythms the engine has today: complete heart block with a 20/min escape (P waves march on, almost no QRS). Conversion probability 0.6 per dose ≥ 6 mg is an [ENG] placeholder.",
+  "$comment": "[draft] Clinical content awaits the owner's review. Adenosine: AV block for 3–10 s, 10–30 s after the push (brief §4.9 drug table). The transient block is shown with rhythms the engine has today: complete heart block with a 20/min escape (P waves march on, almost no QRS). Conversion probability 0.6 per dose ≥ 6 mg is an [FIT: draft card's teaching-outcome placeholder pending clinical review; brief research/44 X-24] placeholder.",
   "schema": "pme-scenario/1",
   "id": "svt-adenosine",
   "title": "[draft] SVT and adenosine",

@@ -7,13 +7,13 @@ import { atrialRate } from './atria.ts';
 import type { BeatTemplateId } from './beat-templates.ts';
 import { pushPending, rhythmRate, type PendingV, type RhythmCtx, type RhythmState } from './rhythm-state.ts';
 
-const PVC_COUPLING_MIN = 0.55; // PVC coupling 40–80% of RR (brief §5); drawn 55–65% [ENG]
+const PVC_COUPLING_MIN = 0.55; // PVC coupling 40–80% of RR (brief §5); drawn 55–65% [ENG: texture]
 const PVC_COUPLING_SPAN = 0.1;
-export const PVC_RUN_RATE_BPM = 160; // consecutive PVCs "at a VT rate" (research 03 §1.5) [ENG value]
+export const PVC_RUN_RATE_BPM = 160; // consecutive PVCs "at a VT rate" (research 03 §1.5) [ENG: scenario; value]
 const PVC_FOCI: readonly BeatTemplateId[] = ['wide', 'pvc2', 'pvc3'];
 const PAC_COUPLING_MIN = 0.6; // PAC coupling 60–85% of PP (brief §4.1)
 const PAC_COUPLING_SPAN = 0.25;
-const PJC_COUPLING_MIN = 0.7; // [ENG]
+const PJC_COUPLING_MIN = 0.7; // [ENG: texture]
 const PJC_COUPLING_SPAN = 0.15;
 
 /** The prevailing supraventricular RR (s) at time t. */

@@ -15,29 +15,29 @@ const REFRACTORY_N = 100; // 200 ms
 const LEARN_N = 1000; // 2 s learning period
 const LOOKBACK_N = 40; // R search starts 80 ms before the hump starts
 const HUMP_MAX_N = 100; // a hump longer than 200 ms is closed anyway
-const SILENCE_DECAY_N = 750; // after 1.5 s without a QRS, SPK halves each further 1.5 s (search-back stand-in) [ENG]
-const T_WINDOW_N = 300; // humps within 600 ms of the last R ... [ENG, after Pan–Tompkins' 360 ms T-wave rule]
+const SILENCE_DECAY_N = 750; // after 1.5 s without a QRS, SPK halves each further 1.5 s (search-back stand-in) [ENG: device]
+const T_WINDOW_N = 300; // humps within 600 ms of the last R ... [ENG: device; after Pan–Tompkins' 360 ms T-wave rule]
 const T_RATIO = 0.5; // ... and below half the last QRS hump are T waves, not QRS
 /**
  * A hump that starts within this many samples of the previous detection's close is the SAME wide complex rising again
  * (its MWI dipped below FINAL_FRACTION and re-crossed the threshold), not a new QRS. Measured: the agonal complex
  * (QRS ≈ 300 ms) closed and re-opened 2–56 ms later, a second detection 0.14–0.24 s after the first; in every other
  * library rhythm the next hump starts ≥ 136 ms after the previous close (vtPoly 220/min 136 ms; VT 250/min 146;
- * torsades 148; AF 180/min 166; sinus tachycardia 200/min 188) [ENG].
+ * torsades 148; AF 180/min 166; sinus tachycardia 200/min 188) [ENG: device].
  */
 const SAME_COMPLEX_N = 50; // 100 ms
-const FINAL_FRACTION = 0.6; // a hump is closed when the MWI falls below 60% of its maximum [ENG, latency]
+const FINAL_FRACTION = 0.6; // a hump is closed when the MWI falls below 60% of its maximum [ENG: device; latency]
 /**
  * Pace-pulse rejection (R-51-3): after a transcutaneous pacing pulse the detection lead is held at its pre-pulse
  * value for this long, so the pad spike and the start of its polarisation tail never reach the filters
- * (monitors blank their QRS detector after a detected pace pulse; research/03 §1.7) [ENG].
+ * (monitors blank their QRS detector after a detected pace pulse; research/03 §1.7) [ENG: device].
  */
 export const PACE_BLANK_N = 30; // 60 ms
-/** R-51-3: announce a pace pulse this many samples before its marker time (8 ms) [ENG]. */
+/** R-51-3: announce a pace pulse this many samples before its marker time (8 ms) [ENG: device]. */
 export const PACE_LEAD_N = 4;
-const PACE_TAIL_TAU_N = 50; // 100 ms [ENG]
+const PACE_TAIL_TAU_N = 50; // 100 ms [ENG: device]
 const PACE_TAIL_DECAY = Math.exp(-1 / PACE_TAIL_TAU_N);
-/** Absolute floor for SPK in (mV/sample)² units, far above the MWI of 0.025 mV noise [ENG, see Task 14]. */
+/** Absolute floor for SPK in (mV/sample)² units, far above the MWI of 0.025 mV noise [ENG: device; see Task 14]. */
 export const SPK_FLOOR = 2e-4;
 
 const BP: readonly Biquad[] = [highpass(5, QRS_RATE), lowpass(15, QRS_RATE)];
@@ -96,7 +96,7 @@ export function createQrsState(startIndex: number): QrsState {
 
 function findR(st: QrsState, from: number, to: number): number {
   // R = the largest |x − window mean| inside the hump window (robust to a sloping baseline or an
-  // overlapping T wave at high rates) [ENG].
+  // overlapping T wave at high rates) [ENG: device].
   const lo = Math.max(from, st.n - HIST_N + 1);
   let mean = 0;
   for (let i = lo; i <= to; i++) mean += st.hist[i % HIST_N] as number;

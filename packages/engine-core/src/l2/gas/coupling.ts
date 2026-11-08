@@ -8,12 +8,12 @@ import { circCardiacOutput } from '../circ/model.ts';
 import type { HemoState } from '../hemo/pipeline.ts';
 import { CMH2O_TO_MMHG } from './params.ts';
 
-/** Effective RAP rises by 30–50 % of the mean-airway-pressure change (brief §4.9) → 0.4 [ENG]. */
+/** Effective RAP rises by 30–50 % of the mean-airway-pressure change (brief §4.9) → 0.4 [FIT: MANUAL PEEP → RAP transmission and venous gradient; brief research/44 L2-23]. */
 export const RAP_FRACTION = 0.4;
 /** Only mean Paw above 10 cmH2O acts in MANUAL ("High PEEP (> 10–15) … lowers CO and MAP", research 03 §8.7). */
 export const PAW_REF_CMH2O = 10;
 /**
- * Venous-return driving pressure Pmsf − RAP by volume status [ENG]: 15 mmHg normovolaemic, 4 mmHg empty. PEEP
+ * Venous-return driving pressure Pmsf − RAP by volume status [FIT: MANUAL PEEP → RAP transmission and venous gradient; brief research/44 L2-23]: 15 mmHg normovolaemic, 4 mmHg empty. PEEP
  * 5 → 15 (mean Paw ≈ 8 → 18) gives f = 0.84 normovolaemic and 0.68 at volumeStatus 0.3 (prototype: CO −9 % and
  * −23 %, MAP 97 → 83 and 97 → 68 mmHg once the hemo tracker has met the coupled pressures).
  */

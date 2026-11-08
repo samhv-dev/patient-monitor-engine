@@ -64,7 +64,7 @@ type Pt = { x: number; y: number }; // x unwrapped CSS px relative to lane start
 type Rect = [number, number, number, number]; // canvas CSS px
 
 /** The backfill never reaches past the engine's 120 s buffer (`BUFFER_SECONDS`), where a read would start at the
- * oldest sample instead of the one asked for [ENG margin]. */
+ * oldest sample instead of the one asked for [ENG: display; margin]. */
 const BACKFILL_MAX_S = 100;
 /** Dotted scale lines: a 1.4 px dot every 14 px, as the approved mock-up draws them (NOTES.md; IMG_8113). */
 const DOT_PITCH_PX = 14;
@@ -382,7 +382,7 @@ export class SweepLane {
     const c = this.cfg;
     if (pts.length < 2) return;
     // Clip to the band just cleared (always inside the lane): half the line width and the round caps would
-    // otherwise spill past the lane edges and build up a ghost column at the wrap [ENG, Gate 1 check], and
+    // otherwise spill past the lane edges and build up a ghost column at the wrap [ENG: display; Gate 1 check], and
     // re-stroked points would thicken the antialiased trace left of the band.
     ctx.save();
     ctx.beginPath();

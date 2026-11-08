@@ -162,3 +162,14 @@ vs 215.3). That is about +9 of the +19.7. The other +10.9 is the arterial detect
 703–706 s compression-over-beat window, head's detector found its next foot only at 706.77 s, so at 706 s its average
 still holds only the six peak pulses, while main's detector had already let in two post-peak pulses of about 150. The
 reading is a 2-second overshoot (above 200 at 706–707 s only; 123 by 713 s; settles 122–124), not a sustained level.
+
+## The pin on the physiology alone (8 November 2026)
+
+The owner's ruling of 8 November 2026 (a band is never bent to meet the engine) and the physiology-compromise audit
+(`docs/review-inputs/research/44-physiology-compromise-audit.md`, rows T-22 and V-24) take the +10.9 mmHg detector
+part out of the band. The test now pins `sysMaxAtRosc` on the physiology alone: 191.07 + 8.9 = 210.8 − 10.9 =
+**199.9 ± 5 (194.9–204.9)**, the same ± 5 as every other S2 band. The engine's numeric reads 210.8, so the pin is an
+`it.fails` naming the detector defect (research/41 row 50: the arterial beat detector under compressions over a
+beating heart) until that mechanism is built and the miss closes on its own. `sysPlus60` (123.1 ± 5) stays: at
+ROSC + 60 s there are no compressions, and its +1.25 move is the kIsch residue of the coronary reading (§1–§4), a
+physiological change, not the detector.

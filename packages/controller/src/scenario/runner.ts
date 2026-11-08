@@ -83,7 +83,7 @@ export interface VitalHold {
 }
 
 const EPS = 1e-6;
-/** A lower-rank source takes over a variable once the higher one has been silent this long [ENG]. */
+/** A lower-rank source takes over a variable once the higher one has been silent this long [ENG: scenario]. */
 const STALE_S = 5;
 /** Lower-bound filters on `event` triggers → the ClinicalEvent field they bound. */
 const MIN_FILTERS: Record<string, string> = { minJ: 'energyJ', minDose: 'dose', minVolumeMl: 'volumeMl', minMa: 'mA' };

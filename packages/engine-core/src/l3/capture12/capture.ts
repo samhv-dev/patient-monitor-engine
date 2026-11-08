@@ -8,7 +8,7 @@ import { LEAD_IDS, type LeadId, type MonitorEngine } from '../../types.ts';
 
 export const CAPTURE_S = 10;
 export const CAPTURE_RATE = 500;
-/** Filter pre-roll: up to this much older signal settles the 0.05 Hz high-pass before the window [ENG]. */
+/** Filter pre-roll: up to this much older signal settles the 0.05 Hz high-pass before the window [ENG: device]. */
 export const PREROLL_S = 20;
 /** 3×4 layout (brief §6.6 default): columns of 2.5 s, rows I/II/III, aVR/aVL/aVF, V1–V3, V4–V6; lead II rhythm strip. */
 export const LAYOUT_3X4: readonly (readonly LeadId[])[] = [
@@ -27,7 +27,7 @@ export interface Capture12 {
   layout: { kind: '3x4'; rows: readonly (readonly LeadId[])[]; columnS: number; rhythmLead: LeadId };
   paper: { mmPerS: 25; mmPerMv: 10 };
   cal: { mV: 1; ms: 200 };
-  /** Heart rate from the rhythm strip's R peaks, and the frontal QRS axis from the net QRS area in I and aVF [ENG]. */
+  /** Heart rate from the rhythm strip's R peaks, and the frontal QRS axis from the net QRS area in I and aVF [ENG: device]. */
   measurements: { hr: number | null; axisDeg: number | null };
 }
 
@@ -85,7 +85,7 @@ function measure(leads: Record<LeadId, Float32Array>, r: readonly number[]): Cap
   let aF = 0;
   for (const p of r) {
     for (let i = Math.max(0, p - 40); i < Math.min(leads.ecgI.length, p + 40); i++) {
-      a1 += leads.ecgI[i] as number; // ±80 ms around R: the QRS [ENG]
+      a1 += leads.ecgI[i] as number; // ±80 ms around R: the QRS [ENG: device]
       aF += leads.aVF[i] as number;
     }
   }

@@ -6,7 +6,7 @@ import type { TcpSpec } from '../../types.ts';
 import type { DeviceProfile } from '../alarms/profile.ts';
 
 export type PacerSpec = NonNullable<DeviceProfile['pacer']>;
-/** Skins without a pacer take ZOLL-like values (research/05 §2.6) [ENG choice]. */
+/** Skins without a pacer take ZOLL-like values (research/05 §2.6) [ENG: device; choice]. */
 export const FALLBACK_PACER: PacerSpec = { rateDefault: 70, rateRange: [30, 180], mADefault: 0, mARange: [0, 140], mAStep: { up: 10, down: 5 }, modeDefault: 'demand', pausePct: null };
 /** failureToCapture: a threshold no output reaches. */
 export const NO_CAPTURE_MA = 1e6;
