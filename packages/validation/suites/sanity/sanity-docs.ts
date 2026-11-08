@@ -171,8 +171,8 @@ export const SANITY_DOCS: ValidationDoc[] = [
     segments: [seg('warm', 300, 600, rng('hr', 'state:hr', 'mean', 115, 130, `${T7} 16: HR 115–130`))],
   }),
   // Brief 84 / research 46 §E: septic shock is a state. The rig follows the source (Garcia 2023): anaesthetised (sevoflurane),
-  // ventilated (8 mL/kg, PEEP 5), maintenance fluid 2 mL/kg/h only. The condition keeps its present onset (τ 600 s, a [ENG: scenario]
-  // compression of an onset the sources put at hours; expected deviation E), so the state is read once the ramp is complete
+  // ventilated (8 mL/kg, PEEP 5), maintenance fluid 2 mL/kg/h only. The condition keeps its present onset (τ 600 s,
+  // [FIT: septic onset compressed to minutes; brief research/44 V-12], where the sources put hours; expected deviation E), so the state is read once the ramp is complete
   // (≥ 5 τ = 3000 s).
   ...([['state', false], ['fluid', true]] as const).map(([k, fluid]) => doc({
     id: `t16-septic-shock-${k}`, title: fluid ? 'Septic shock, 30 mL/kg crystalloid, no vasopressor' : 'Septic shock, established, unresuscitated', source: `${T7} 16; research 46 §E`, durationS: 3600, mode: 'modeled', requires: ['7f'],
