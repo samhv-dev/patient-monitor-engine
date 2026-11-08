@@ -216,7 +216,7 @@ NMT 120 s / BFA 5 s are [ENG] display choices (Q-FU3-11).
 - G8a "43 re-raises" of `CVP_M_HIGH`: the soak JSON holds 42; G8a "resting CVP 4.9–7.6": the soak patient reads
   8.85–10.17 (a different rig) (Task 8).
 
-## 6. For the orchestrator / Ali
+## 6. For the orchestrator / samhv-dev
 
 Still open (the plan's six):
 1. **CVP fix + five rig re-derivations** (Q-FU3-7a; plan "Item 7: the fix is deferred"): land
@@ -224,7 +224,7 @@ Still open (the plan's six):
    or keep T_IT and record brief §4.9 as a calibration row.
 2. **May MANUAL refuse part of an instructor pressure pair** (Q-FU3-4a; Task 4 defect 1, `it.fails` kIsch 0.200 /
    LVEDP 46.1) — re-specifies Stage 2 acceptance 1/3 and hemo-nibp 9.
-3. **Amiodarone AV-node strength** (item 13, Q-FU2-9): 13.4 % vs 20–30 % — Ali's calibration call; no change.
+3. **Amiodarone AV-node strength** (item 13, Q-FU2-9): 13.4 % vs 20–30 % — the owner's calibration call; no change.
 4. **Ventilate validation t25?** (Q-FU3-16a; Deviation (a)).
 5. **Oracle mode MODELED vs MANUAL** (Q-FU3-10): decides O2b's lactate verdict (+0.50 MODELED inside tol vs +1.10
    MANUAL outside).

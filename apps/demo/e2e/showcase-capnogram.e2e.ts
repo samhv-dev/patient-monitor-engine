@@ -1,4 +1,4 @@
-// Showcase hotfix item 4 (rulings S1, Ali 2026-10-04), revised by O4 (rc.3, research/34 §8 O4): the default patient
+// Showcase hotfix item 4 (rulings S1, samhv-dev 2026-10-04), revised by O4 (rc.3, research/34 §8 O4): the default patient
 // breathes on its own WITHOUT the CO2 sampling line, so the Saadat-style monitor shows RESP and RR; attaching the line in
 // Devices & alarms makes the CO2 waveform take the RESP lane's place and the RR tile become the split CO2 tile (EtCo2,
 // FiCo2, AWRR); detaching it brings RESP and RR back. With

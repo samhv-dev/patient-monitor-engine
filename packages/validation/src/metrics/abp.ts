@@ -1,11 +1,11 @@
 // Arterial (and pleth) beat fiducials, identical for recorded and generated pulses (brief §9 V1–V3):
 // - foot: intersecting tangent — the tangent at the maximum first derivative meets the horizontal through the
 //   pre-upstroke minimum (research 03 §2.1; the standard PWV foot);
-// - upstroke slope: that maximum dP/dt (mmHg/s, after a 15 Hz zero-phase low-pass) [ENG];
+// - upstroke slope: that maximum dP/dt (mmHg/s, after a 15 Hz zero-phase low-pass) [ENG: measurement];
 // - dicrotic notch: the first local minimum of the pressure after the systolic peak; when the notch is only an
 //   inflection (common at the radial site) the maximum of d²P/dt² in the same window is used — flagged `inflection`.
-//   Window: peak + 60 ms … peak + min(0.5·RR, 450 ms) [ENG];
-// - notch depth: (P_peak − P_notch)/(P_peak − P_dia), 0 = no notch, 1 = back to diastolic [ENG].
+//   Window: peak + 60 ms … peak + min(0.5·RR, 450 ms) [ENG: measurement];
+// - notch depth: (P_peak − P_notch)/(P_peak − P_dia), 0 = no notch, 1 = back to diastolic [ENG: measurement].
 
 export interface PulseBeat {
   r: number; // R index (s)

@@ -59,7 +59,7 @@ developer reads it for the gas truths and the capnogram the monitor draws.
 | [`params.ts:11`](../../packages/engine-core/src/l2/gas/params.ts#L11) | PaCO2 = 0.863·VCO2/VA (research 03 §4.4) |
 | [`params.ts:16`](../../packages/engine-core/src/l2/gas/params.ts#L16) | Two-compartment CO2 store (brief §4.4). The brief's C_f 15–20 / C_s 40–45 / k_fs = C_s/5 min give an apnoea |
 | [`params.ts:35`](../../packages/engine-core/src/l2/gas/params.ts#L35) | alveolar gas store, not a fixed lag: τ = V_alv/VA (an exponential dilution by the continuing breaths), bounded below |
-| [`params.ts:110`](../../packages/engine-core/src/l2/gas/params.ts#L110) | Q for gas exchange = CO ratio × 0.075 L/min/kg × effective weight [ENG] |
+| [`params.ts:110`](../../packages/engine-core/src/l2/gas/params.ts#L110) | Q for gas exchange = CO ratio × 0.075 L/min/kg × effective weight [FIT: gas-exchange parameter without a source; brief research/44 L2-55] |
 
 ## State
 
@@ -98,61 +98,61 @@ developer reads it for the gas truths and the capnogram the monitor draws.
 |---|---|---|---|---|
 | `CO2_RATE` | `62.5` | — | brief §3.2 | brief §3.2 |
 | `CO2_SUBSTEPS` | `4` | — | — | sampler LPF integrated at 250 Hz |
-| `APNOEA_DECAY_S` | `1.0` | s | [ENG] | after the last expiration the sampled gas returns to baseline [ENG] |
+| `APNOEA_DECAY_S` | `1.0` | s | [ENG: device] | after the last expiration the sampled gas returns to baseline [ENG: device] |
 | `CUT_DECAY_S` | `0.25` | s | research 03 §4.3 | disconnection: abrupt drop to 0 (research 03 §4.3) |
 | `CARDIO_MMHG` | `1.5` | mmHg | research 03 §4.3 | cardiogenic oscillation 1–3 mmHg at HR (research 03 §4.3) |
-| `CPR_OSC_MMHG` | `3` | mmHg | [ENG] | compression oscillations × quality [ENG] |
-| `SHARK_RISE_III` | `6` | — | [ENG, fitted with SHARK_TAU_II] | Phase III rise added per unit bronchospasm severity (mmHg) [ENG, fitted with SHARK_TAU_II]. |
+| `CPR_OSC_MMHG` | `3` | mmHg | research/44 L2; [FIT: capnogram shape parameter; brief research/44 L2-50] | compression oscillations × quality [FIT: capnogram shape parameter; brief research/44 L2-50] |
+| `SHARK_RISE_III` | `6` | — | research/44 L2; [FIT: capnogram shape parameter; fitted with SHARK_TAU_II; brief research/44 L2-50] | Phase III rise added per unit bronchospasm severity (mmHg) [FIT: capnogram shape parameter; fitted with SHARK_TAU_II; brief research/44 L2-50]. |
 
 ### [`l2/gas/coupling.ts`](../../packages/engine-core/src/l2/gas/coupling.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `RAP_FRACTION` | `0.4` | — | brief §4.9; [ENG] | Effective RAP rises by 30–50 % of the mean-airway-pressure change (brief §4.9) → 0.4 [ENG]. |
+| `RAP_FRACTION` | `0.4` | — | brief §4.9; research/44 L2; [FIT: MANUAL PEEP → RAP transmission and venous gradient; brief research/44 L2-23] | Effective RAP rises by 30–50 % of the mean-airway-pressure change (brief §4.9) → 0.4 [FIT: MANUAL PEEP → RAP transmission and venous gradient; brief research/44 L2-23]. |
 | `PAW_REF_CMH2O` | `10` | cmH2O | research 03 §8.7 | Only mean Paw above 10 cmH2O acts in MANUAL ("High PEEP (> 10–15) … lowers CO and MAP", research 03 §8.7). |
 
 ### [`l2/gas/delay.ts`](../../packages/engine-core/src/l2/gas/delay.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `DELAY_FINGER_S` | `15` | s | brief §4.3; research 03 §3.6 item 1; [ENG within 10–20] | Circulatory delay lung → probe site (brief §4.3 device chain step 2; research 03 §3.6 item 1): a dead time of 15 s at the finger and 5 s at the ear/forehead at normal CO [ENG within 10–20], scaled by CO_ref/CO and by vasoconstriction (low PI), reaching 30–60 s in low-output states. History of pulmonary SaO2 at 10 Hz. |
+| `DELAY_FINGER_S` | `15` | s | brief §4.3; research 03 §3.6 item 1; research 03 §3.6 | Circulatory delay lung → probe site (brief §4.3 device chain step 2; research 03 §3.6 item 1): a dead time of 15 s at the finger and 5 s at the ear/forehead at normal CO (research 03 §3.6: 10–20 s finger at normal CO; within 10–20), scaled by CO_ref/CO and by vasoconstriction (low PI), reaching 30–60 s in low-output states. History of pulmonary SaO2 at 10 Hz. |
 | `DELAY_EAR_S` | `5` | s | — | — |
 | `DELAY_MAX_S` | `60` | s | — | — |
-| `DELAY_SMOOTH_S` | `5` | s | [ENG] | the delay itself moves with τ 5 s so the read point never jumps [ENG] |
+| `DELAY_SMOOTH_S` | `5` | s | [ENG: numerics] | the delay itself moves with τ 5 s so the read point never jumps [ENG: numerics] |
 
 ### [`l2/gas/params.ts`](../../packages/engine-core/src/l2/gas/params.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `GAS_DT_S` | `0.1` | s | brief §3.2 | gas exchange at 10 Hz (brief §3.2) |
-| `PB_MMHG` | `760` | mmHg | brief §6.8; [ENG] | barometric pressure (brief §6.8 converts %V at 760) [ENG] |
+| `PB_MMHG` | `760` | mmHg | brief §6.8; [ENG: scenario] | barometric pressure (brief §6.8 converts %V at 760) [ENG: scenario] |
 | `PH2O_MMHG` | `47` | mmHg | — | alveolar water vapour |
 | `RQ` | `0.8` | — | research 03 §3.5 | respiratory quotient (research 03 §3.5) |
-| `HB_G_DL` | `14` | g/dL | [ENG; anaemia is the profile layer's] | Haemoglobin [ENG; anaemia is the profile layer's] |
+| `HB_G_DL` | `14` | g/dL | — | Haemoglobin (textbook adult normal; anaemia is the profile layer's) |
 | `K_CO2` | `0.863` | — | research 03 §4.4 | PaCO2 = 0.863·VCO2/VA (research 03 §4.4) |
 | `PA_ET_GRADIENT` | `3` | — | brief §4.4 | Pa − EtCO2, 2–5 mmHg normal (brief §4.4) |
 | `CMH2O_TO_MMHG` | `0.7356` | mmHg | — | — |
-| `CO2_CF_PER_VCO2` | `6 / 200` | mL/mmHg | brief §4.4; [ENG] | Two-compartment CO2 store (brief §4.4). The brief's C_f 15–20 / C_s 40–45 / k_fs = C_s/5 min give an apnoea rise of 9.5 then 4.8 mmHg/min, outside its own acceptance (12 then 3.4 ± 0.5). Fitted to the apnoea data (PubMed 2516732: +12 in the first minute, then 3.4/min) with C_f 6, C_s 55 mL/mmHg and k_fs 18 mL/min/mmHg at VCO2 200 mL/min, and expressed per mL/min of baseline VCO2 so any body size keeps the anchored rates [ENG]: prototype 12.0 then 3.34 mmHg/min; a +33 % alveolar-ventilation step moves 36 % of the way at 2 min and 90 % at 24.4 min (plan decision 3). (mL/mmHg) per (mL/min) |
+| `CO2_CF_PER_VCO2` | `6 / 200` | mL/mmHg | brief §4.4 | Two-compartment CO2 store (brief §4.4). The brief's C_f 15–20 / C_s 40–45 / k_fs = C_s/5 min give an apnoea rise of 9.5 then 4.8 mmHg/min, outside its own acceptance (12 then 3.4 ± 0.5). Fitted to the apnoea data (PubMed 2516732: +12 in the first minute, then 3.4/min) with C_f 6, C_s 55 mL/mmHg and k_fs 18 mL/min/mmHg at VCO2 200 mL/min, and expressed per mL/min of baseline VCO2 so any body size keeps the anchored rates (anchored on the apnoea data cited above): prototype 12.0 then 3.34 mmHg/min; a +33 % alveolar-ventilation step moves 36 % of the way at 2 min and 90 % at 24.4 min (plan decision 3). (mL/mmHg) per (mL/min) |
 | `CO2_CS_PER_VCO2` | `55 / 200` | — | — | — |
 | `CO2_KFS_PER_VCO2` | `18 / 200` | mL/min/mmHg | — | (mL/min/mmHg) per (mL/min) |
 | `LOW_FLOW_EXP` | `0.6` | — | brief §4.4 | Low-flow compression exponent: EtCO2 ≈ PaCO2·min(1, CO/CO_ref)^0.6 (brief §4.4). |
-| `LOW_FLOW_TAU_S` | `70` | s | [ENG, fit: 10–20 mmHg at 60 s and 3–10 at 120 s after VF without CPR on the ventilated audit rig; measured 14.5 / 6.6; a single exponential needs τ 51–101 s for both bands] | The arrest EtCO2 falls over 1–2 min to ≈ 5–10 mmHg, not within seconds — τ 70 s [ENG, fit: 10–20 mmHg at 60 s and 3–10 at 120 s after VF without CPR on the ventilated audit rig; measured 14.5 / 6.6; a single exponential needs τ 51–101 s for both bands]. This τ governs the RISE of φ only (the CO2 that must come back from the tissue stores at ROSC). The FALL is the alveolar gas store being washed out by the breaths that continue, LOW_FLOW_WASHOUT_* below. |
-| `LOW_FLOW_ALV_L` | `2.5` | — | research/24 P7; research 03 §4.4; [ENG bound] | Once pulmonary blood flow falls, no new CO2 reaches the alveoli, so the end-tidal value follows the WASHOUT of the alveolar gas store, not a fixed lag: τ = V_alv/VA (an exponential dilution by the continuing breaths), bounded below by one breath's worth of time [ENG bound] (research/24 P7; research 03 §4.4). V_alv is the lung's FRC when the resp pipeline passes it, else LOW_FLOW_ALV_L. |
+| `LOW_FLOW_TAU_S` | `70` | s | research/44 TIME; [FIT: 10–20 mmHg at 60 s and 3–10 at 120 s after VF without CPR on the ventilated audit rig; measured 14.5 / 6.6; a single exponential needs τ 51–101 s for both bands; brief research/44 TIME-01] | The arrest EtCO2 falls over 1–2 min to ≈ 5–10 mmHg, not within seconds — τ 70 s [FIT: 10–20 mmHg at 60 s and 3–10 at 120 s after VF without CPR on the ventilated audit rig; measured 14.5 / 6.6; a single exponential needs τ 51–101 s for both bands; brief research/44 TIME-01]. This τ governs the RISE of φ only (the CO2 that must come back from the tissue stores at ROSC). The FALL is the alveolar gas store being washed out by the breaths that continue, LOW_FLOW_WASHOUT_* below. |
+| `LOW_FLOW_ALV_L` | `2.5` | — | research/24 P7; research 03 §4.4; [ENG: numerics; bound] | Once pulmonary blood flow falls, no new CO2 reaches the alveoli, so the end-tidal value follows the WASHOUT of the alveolar gas store, not a fixed lag: τ = V_alv/VA (an exponential dilution by the continuing breaths), bounded below by one breath's worth of time [ENG: numerics; bound] (research/24 P7; research 03 §4.4). V_alv is the lung's FRC when the resp pipeline passes it, else LOW_FLOW_ALV_L. |
 | `LOW_FLOW_WASHOUT_MIN_S` | `5` | s | — | — |
 | `ANAT_DEAD_SPACE_ML_PER_KG` | `2.2` | kg | brief §4.4 | brief §4.4 |
 | `PACO2_REST_MMHG` | `40` | mmHg | — | The healthy resting PaCO2 every profile starts from (pregnancy: 31). |
-| `APPARATUS_ADULT_ML` | `50` | mL | [ENG] | Y-piece + HME on a ventilator or BVM: 50 mL adult [ENG]. |
-| `APPARATUS_PAED_ML_PER_KG` | `0.5` | kg | [TXT: device IFUs]; [ENG] | Below 33 kg the circuit is a PAEDIATRIC one — low-dead-space connectors and a paediatric/infant HME (manufacturers' stated internal volumes ≈ 1–3 mL infant, ≈ 6–10 mL paediatric [TXT: device IFUs]), so the apparatus scales ≈ 0.5 mL/kg [ENG]. The adult rule's 1.5 mL/kg would put 24 mL against a 4 y child's 112 mL breath (a third of it) and the child at PaCO2 62–76 on 7 mL/kg. |
+| `APPARATUS_ADULT_ML` | `50` | mL | [ENG: device] | Y-piece + HME on a ventilator or BVM: 50 mL adult [ENG: device]. |
+| `APPARATUS_PAED_ML_PER_KG` | `0.5` | kg | [TXT: device IFUs] | Below 33 kg the circuit is a PAEDIATRIC one — low-dead-space connectors and a paediatric/infant HME (manufacturers' stated internal volumes ≈ 1–3 mL infant, ≈ 6–10 mL paediatric [TXT: device IFUs]), so the apparatus scales ≈ 0.5 mL/kg (device IFUs: ≈ 1–3 mL infant, ≈ 6–10 mL paediatric). The adult rule's 1.5 mL/kg would put 24 mL against a 4 y child's 112 mL breath (a third of it) and the child at PaCO2 62–76 on 7 mL/kg. |
 | `PAED_CIRCUIT_BELOW_KG` | `33` | kg | — | — |
-| `VENT_VT_ML_PER_KG_IBW` | `7` | — | [TXT]; [ENG, fit: PaCO2 35–45 at 30 min, MODELED] | The ventilator's DEFAULT pattern for this patient (used when a `ventilation` command gives no rr/vtMl): lung-protective 7 mL/kg IBW (ARDSNet-era practice for every ventilated patient, 6–8 mL/kg PBW [TXT]) and an age-band rate chosen for normocapnia with the one physical dead space [ENG, fit: PaCO2 35–45 at 30 min, MODELED]. |
+| `VENT_VT_ML_PER_KG_IBW` | `7` | — | research/44 L2; [TXT]; [FIT: PaCO2 35–45 at 30 min, MODELED; brief research/44 L2-55] | The ventilator's DEFAULT pattern for this patient (used when a `ventilation` command gives no rr/vtMl): lung-protective 7 mL/kg IBW (ARDSNet-era practice for every ventilated patient, 6–8 mL/kg PBW [TXT]) and an age-band rate chosen for normocapnia with the one physical dead space [FIT: PaCO2 35–45 at 30 min, MODELED; brief research/44 L2-55]. |
 | `ETT_BYPASS_ML_PER_KG` | `1.1` | kg | Nunn's Applied Respiratory Physiology ch. 8; [TXT] | An ETT or SGA BYPASSES the extrathoracic airway, so the apparatus does not simply add to the anatomical dead space — it REPLACES the part of it the tube bypasses. Of the 2.2 mL/kg IBW anatomical dead space, about 1.0–1.2 mL/kg IBW is extrathoracic (mouth, pharynx, larynx: Nunn's Applied Respiratory Physiology ch. 8) [TXT]; an intubated patient loses that and gains the device's internal volume plus the Y-piece and HME. |
-| `ETT_BYPASS_FLOOR_FRAC` | `0.3` | — | [ENG] | Floor of the anatomical share left behind an artificial airway (fraction of the anatomical value) [ENG]. |
+| `ETT_BYPASS_FLOOR_FRAC` | `0.3` | — | research/44 L2; [FIT: gas-exchange parameter without a source; brief research/44 L2-55] | Floor of the anatomical share left behind an artificial airway (fraction of the anatomical value) [FIT: gas-exchange parameter without a source; brief research/44 L2-55]. |
 | `MASS_FLOW_DEFICIT_ML_MIN` | `20` | mL/min | research 03 §3.5 | apnoeic mass flow ≈ VO2 − ~20 mL/min (research 03 §3.5) |
-| `BLOOD_VENOUS_FRACTION` | `0.75` | — | [ENG] | venous share of blood volume, the O2 buffer [ENG] |
-| `CO_REF_LPM` | `5.25` | L/min | [ENG] | SV_REF 70 mL × 75 bpm: CO ratio reference [ENG] |
-| `CI_LPM_PER_KG` | `0.075` | kg | [ENG] | Q for gas exchange = CO ratio × 0.075 L/min/kg × effective weight [ENG] |
+| `BLOOD_VENOUS_FRACTION` | `0.75` | — | research/44 L2; [FIT: gas-exchange parameter without a source; brief research/44 L2-55] | venous share of blood volume, the O2 buffer [FIT: gas-exchange parameter without a source; brief research/44 L2-55] |
+| `CO_REF_LPM` | `5.25` | L/min | [ENG: numerics] | SV_REF 70 mL × 75 bpm: CO ratio reference [ENG: numerics] |
+| `CI_LPM_PER_KG` | `0.075` | kg | research/44 L2; [FIT: gas-exchange parameter without a source; brief research/44 L2-55] | Q for gas exchange = CO ratio × 0.075 L/min/kg × effective weight [FIT: gas-exchange parameter without a source; brief research/44 L2-55] |
 | `GA_METABOLIC` | `0.85` | — | brief §4.3; research 03 §4.4 | VO2 and CO2 production fall 15–20 % under GA (brief §4.3, research 03 §4.4). |
-| `PREG_PACO2_SHIFT_MMHG` | `9` | mmHg | Hegewald & Crapo 2011; Bogod & Hardman 2009; [TXT sizes at term; linear ENG] | Term pregnancy — progesterone lowers the chemoreflex set point to PaCO2 28–32 (≈ −9 mmHg) and VO2 rises 20–33 % (Hegewald & Crapo 2011 Clin Chest Med 32:1; McClelland, Bogod & Hardman 2009 Anaesthesia 64:371). Both scale with the `pregnancy` lung condition's severity (0.33 / 0.67 / 1 by trimester) [TXT sizes at term; linear ENG]. |
+| `PREG_PACO2_SHIFT_MMHG` | `9` | mmHg | Hegewald & Crapo 2011; Bogod & Hardman 2009; research/44 X; [TXT sizes at term]; [FIT: linear by trimester; brief research/44 X-02] | Term pregnancy — progesterone lowers the chemoreflex set point to PaCO2 28–32 (≈ −9 mmHg) and VO2 rises 20–33 % (Hegewald & Crapo 2011 Clin Chest Med 32:1; McClelland, Bogod & Hardman 2009 Anaesthesia 64:371). Both scale with the `pregnancy` lung condition's severity (0.33 / 0.67 / 1 by trimester) [TXT sizes at term] [FIT: linear by trimester; brief research/44 X-02]. |
 | `PREG_VO2_TERM` | `0.2` | — | — | — |
 | `FRC_AWAKE_ML_KG` | `30` | mL/kg | brief §4.3 | FRC awake supine 30 mL/kg (brief §4.3). |
 
@@ -167,10 +167,10 @@ developer reads it for the gas truths and the capnogram the monitor draws.
 | `etco2True` | [`l2/gas/co2.ts`](../../packages/engine-core/src/l2/gas/co2.ts) | True end-tidal PCO2 of an exchanging breath: |
 | `vaForPaco2` | [`l2/gas/co2.ts`](../../packages/engine-core/src/l2/gas/co2.ts) | Alveolar ventilation that holds PaCO2 at `paco2` for this VCO2 (steady state of the fast compartment). |
 | `etco2Mixed` | [`l2/gas/co2.ts`](../../packages/engine-core/src/l2/gas/co2.ts) | End-tidal PCO2 from the lung module's mixing point — g = EtCO2/PaCO2 of the unit mix (healthy 0.925 → PaCO2 − 3 at 40, tables §4.4), the bronchospasm term and the low-flow factor φ as etco2True. |
-| `venousGradient` | [`l2/gas/coupling.ts`](../../packages/engine-core/src/l2/gas/coupling.ts) | Venous-return driving pressure Pmsf − RAP by volume status [ENG]: |
+| `venousGradient` | [`l2/gas/coupling.ts`](../../packages/engine-core/src/l2/gas/coupling.ts) | Venous-return driving pressure Pmsf − RAP by volume status [FIT: |
 | `cardiacOutput` | [`l2/gas/coupling.ts`](../../packages/engine-core/src/l2/gas/coupling.ts) | CO (L/min) for the gas model, from the circulation (beats and CPR compressions eject through it). |
 | `applyPawCoupling` | [`l2/gas/coupling.ts`](../../packages/engine-core/src/l2/gas/coupling.ts) | Apply the mean-airway-pressure coupling to the L1 coupled truths at time t (MANUAL). |
-| `siteDelay` | [`l2/gas/delay.ts`](../../packages/engine-core/src/l2/gas/delay.ts) | Target delay for a site, CO ratio and PI (vasoconstriction below PI 1 % lengthens it) [ENG]. |
+| `siteDelay` | [`l2/gas/delay.ts`](../../packages/engine-core/src/l2/gas/delay.ts) | Target delay for a site, CO ratio and PI (vasoconstriction below PI 1 % lengthens it) [FIT: |
 | `delayStep` | [`l2/gas/delay.ts`](../../packages/engine-core/src/l2/gas/delay.ts) | Push this gas step's pulmonary SaO2 and return the SaO2 at the site (interpolated `delay` seconds back). |
 | `odc` | [`l2/gas/o2.ts`](../../packages/engine-core/src/l2/gas/o2.ts) | Severinghaus 1979 (research 03 §3.5, §11 #13 confirmed): |
 | `content` | [`l2/gas/o2.ts`](../../packages/engine-core/src/l2/gas/o2.ts) | O2 content, mL/L: |
@@ -193,7 +193,7 @@ Exported without a doc comment: `createSampler`, `createCo2State`, `createDelay`
 | [`l2/co2/capno.ts`](../../packages/engine-core/src/l2/co2/capno.ts) | Capnogram (brief §4.4; research 03 §4.1–4.3): the airway CO2 of each driver cycle built from phases — inspiration (phase 0, downstroke τ0 to the inspired baseline), phase I (dead-space gas), phase II (exponential upswing |
 | [`l2/gas/co2.ts`](../../packages/engine-core/src/l2/gas/co2.ts) | CO2 kinetics (brief §4.4 "Kinetics"; research 03 §4.4): two compartments (fast: lung gas + blood + well- perfused tissue; slow: muscle class), alveolar elimination limited by pulmonary blood flow (low-flow compression, s |
 | [`l2/gas/coupling.ts`](../../packages/engine-core/src/l2/gas/coupling.ts) | Couplings the respiratory model owns (brief §4.9 M4–M6; §4.9 "Ventilation → haemodynamics"; research 03 §8.7): • cardiac output READ from the haemodynamics state (never written): drives gas uptake, low-flow EtCO2, SpO2 d |
-| [`l2/gas/delay.ts`](../../packages/engine-core/src/l2/gas/delay.ts) | Circulatory delay lung → probe site (brief §4.3 device chain step 2; research 03 §3.6 item 1): a dead time of 15 s at the finger and 5 s at the ear/forehead at normal CO [ENG within 10–20], scaled by CO_ref/CO and by vas |
+| [`l2/gas/delay.ts`](../../packages/engine-core/src/l2/gas/delay.ts) | Circulatory delay lung → probe site (brief §4.3 device chain step 2; research 03 §3.6 item 1): a dead time of 15 s at the finger and 5 s at the ear/forehead at normal CO (research 03 §3.6: 10–20 s finger at normal CO; wi |
 | [`l2/gas/o2.ts`](../../packages/engine-core/src/l2/gas/o2.ts) | Oxygen truth (brief §4.3 "Oxygen truth"; research 03 §3.5): alveolar O2 store (FRC·F_AO2), pulmonary capillary equilibrium, shunt mixing, a mixed-venous blood buffer, apnoeic mass flow, and the Severinghaus dissociation |
 | [`l2/gas/params.ts`](../../packages/engine-core/src/l2/gas/params.ts) | Gas-exchange and respiratory constants scaled to the patient (brief §4.3 "Oxygen truth", §4.4 "Kinetics"; research 03 §3.5, §4.4, §8.9). |
 

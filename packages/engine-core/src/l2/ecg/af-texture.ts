@@ -9,8 +9,8 @@ import { FWAVE_DIR } from './templates.ts';
 import { FWAVE_FADE_S } from './generator.ts';
 import type { EcgGenInputs } from './ecg-gen.ts';
 
-export const F_RMS_MV = 0.03; // f-waves 0.02–0.15 mV (brief §4.1): RMS 0.03 ≈ 0.08 mV peak-to-peak [ENG]
-const BLOCK_S = 7.5; // shorter than an 8 s template so every block fits [ENG]
+export const F_RMS_MV = 0.03; // f-waves 0.02–0.15 mV (brief §4.1): RMS 0.03 ≈ 0.08 mV peak-to-peak (brief §4.1: f-waves 0.02–0.15 mV)
+const BLOCK_S = 7.5; // shorter than an 8 s template so every block fits [ENG: numerics]
 const XFADE_S = 0.5;
 const TEX = AF_TEMPLATES.length > 0 ? decodeTemplates({ scale: AF_SCALE, items: AF_TEMPLATES }) : [];
 const DIR_II = 0.235 * FWAVE_DIR[0] + 1.066 * FWAVE_DIR[1] - 0.132 * FWAVE_DIR[2];

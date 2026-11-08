@@ -23,7 +23,7 @@
 > exact code, bands are targets under R45 — a band the mechanism misses stays (or becomes) `it.fails` with the measured
 > number in its title.
 
-**Goal:** make the respiratory system LINKED to the rest of the body before Ali tests it (R53). Bronchospasm answers
+**Goal:** make the respiratory system LINKED to the rest of the body before samhv-dev tests it (R53). Bronchospasm answers
 β2 agonists, adrenaline, volatiles, ketamine and magnesium through ONE airway-smooth-muscle state fed by 7g's PD; the
 spontaneous drive loses its wakefulness component at loss of consciousness (induction apnoea, longer with an opioid),
 sees an obstruction as a load (effort, not rate) with a VT ceiling, and an obstructed effort pulls the pleural pressure
@@ -31,7 +31,7 @@ down (pulsus, negative-pressure oedema); "anaesthetised lungs" (FRC, VO2, induct
 state instead of a hidden instructor switch; the capnogram draws no plateau for a breath smaller than the dead space;
 one disease is one command; the engine's own ventilator and the ventilator link agree under pathology; inspired CO2,
 pregnancy, anaemia, CO poisoning, pain, HPV and hypercapnic PVR act; and a 15-scenario respiratory suite plus a
-screenshot set is what the orchestrator inspects before Ali tests again.
+screenshot set is what the orchestrator inspects before samhv-dev tests again.
 
 **Architecture:** No new module except the audit runner. Six mechanisms, each in its owner's file: (1) 7b's
 `resolveLung` takes a bronchodilation state B (0–1, 7g's `bus.airway.bronchodilation`) and relaxes the reversible
@@ -285,7 +285,7 @@ re-measures both where its numbers depend on them.
   pCap 16.2, EVLWI +0.00) against a Starling threshold of ≈ 23 mmHg — unreachable by construction in any scenario.
   NPPE needs the −40 to −100 cmH2O reflex efforts of a real Mueller manoeuvre; whether laryngospasm gets such a reflex
   effort term is Q-FU6-3. No `it.fails` is carried for it (an `it.fails` implies a mechanism that missed a band).
-- **D8 — Post-release PaCO2 (audit RS8 "falls ≤ 5 mmHg in 30 s") — decided by physics, confirm with Ali (Q-FU6-3).**
+- **D8 — Post-release PaCO2 (audit RS8 "falls ≤ 5 mmHg in 30 s") — decided by physics, confirm with samhv-dev (Q-FU6-3).**
   The post-release RATE is not banded (hyperpnoea after asphyxia is expected; on `4f4ce06` without FU-4's R1 it reaches
   the 45/min cap for ≈ 20 s, R1-emulated 23/min). At
   release the fall is limited by CO2 delivery from the venous blood, not by ventilation: with VA ≈ 9–16 L/min and CO
@@ -346,7 +346,7 @@ re-measures both where its numbers depend on them.
   1.5, 0.55 at 4.0** — a sedative dose leaves the hypoxic arm nearly intact while the CENTRAL arm is depressed (0.44 at
   1.0 µg/mL), and a full induction dose depresses it. [ENG size at an anaesthetic C50; the direction is sourced; fit
   target: Task 10's isocapnic unit rows — a new propofol row asserts exactly this split.] Recorded in the gate note §6 as
-  a ruling applied by intent, with the numbers; Q-FU6-5 asks Ali about the sizes with them in hand.
+  a ruling applied by intent, with the numbers; Q-FU6-5 asks samhv-dev about the sizes with them in hand.
   PE hyperventilation: the lung spec `pe`'s severity feeds an ADDED J-receptor drive (D17).
 - **D14b — Hypoxia drives breathing below the CO2 threshold (Orchestrator ruling (FU-6 review), 2026-09-28, F9).** 7b's
   hypoxic arm was purely multiplicative on the CO2 error (`chem = [S·(P − B)]₊ · H(PaO2)`), so a hypoxaemic patient whose
@@ -658,7 +658,7 @@ breath; the waveform, not FU-5's numeric; Pmax 80 for dynamic hyperinflation) an
   apnoea is PROBABILISTIC — one seeded draw per patient following the Diprivan label, ≈ 43 % apnoeic, modal 30–60 s, longer with an opioid (F7)), (c) the derived anaesthetised-lung state
   and the `thermal` override, (d) the internal VCV's Pmax and assist-control triggering, (e) `pnpm run
   audit:respiratory` as the respiratory integration check to rerun before a release.
-- **R44 calibration pass (Ali):** rows listed in the gate note §7 — WAKE_MMHG 8 and F7's WAKE_QUANTILES knots (2 /
+- **R44 calibration pass (samhv-dev):** rows listed in the gate note §7 — WAKE_MMHG 8 and F7's WAKE_QUANTILES knots (2 /
   6.6 / 8.4 / 11 / 14.5 mmHg at u 0 / 0.57 / 0.64 / 0.88 / 1), F9's HVR_INDEP_VE 0.5, CENTRAL_TAU_S 90, APNOEA_VE_IN/OUT
   0.10/0.15, GA_TAU_ON/OFF 20/300 s, PMUS_REST 8, the smooth-muscle fractions 0.85/0.85/0.7/0.2, the non-reversible
   share REFRACT_SEV 0.6 / REFRACT_DUR_MAX 0.9 / REFRACT_TAU_MIN 360 (F6), magnesium Emax 0.35,
@@ -2646,7 +2646,7 @@ replace with:
   30 / 50 / 115 s, remifentanil 160 s. If the bands are missed on the merged main: WAKE_MMHG is [ENG] and names these
   bands as its fit target, so it MAY be moved inside its sourced range 7–10 (R45 rule 3) — record the value and the
   numbers; outside that range, or if the opioid arm still does not prolong the apnoea, the missed rows become
-  `it.fails` with the numbers and Q-FU6-1 carries them to Ali.
+  `it.fails` with the numbers and Q-FU6-1 carries them to samhv-dev.
   **F7 re-fit (Orchestrator ruling (FU-6 review), 2026-09-28).** Since F7 the patient's shift is the DRAW
   (`WAKE_QUANTILES`), and `WAKE_MMHG` only serves where no draw exists. The knots were fitted on an R1 EMULATION (the
   sweep and the 20-seed numbers are in D5). On the merged main, re-run the sweep (a scratch copy of `resp-induction`'s
@@ -3398,7 +3398,7 @@ replace with:
   (1) Task 18 carries an explicit NOT-MODELLED row (`RS8 NPPE — NOT MODELLED (declared)`) that records these numbers and
   guards the declaration (it fails, and the declaration is re-opened, if a later stage makes oedema appear); (2) the
   gate note lists NPPE under §5 "not modelled" with the number and adds a §7 calibration row ("laryngospasm effort:
-  chemical drive only; NPPE unreachable"); (3) Q-FU6-3 asks Ali whether laryngospasm gets its own reflex effort term
+  chemical drive only; NPPE unreachable"); (3) Q-FU6-3 asks samhv-dev whether laryngospasm gets its own reflex effort term
   (a later stage) or NPPE stays out of v1. Run `test/engine/blood-*.test.ts` (7c's lung-water tests must not move:
   `palvObs` is absent in them).
 - [ ] **Step 6: Commit and push** — `feat(resp): obstructed efforts lower the pleural pressure (pulsus) and feed 7c's lung
@@ -4555,7 +4555,7 @@ export const LOC_HI = 1.0;
  * Anesthesiology 79:1177). [ENG] The C50 is therefore set at an ANAESTHETIC concentration — 3 × PROP_VENT_C50 ≈ 3.5 µg/mL
  * — so a sedative dose leaves the hypoxic arm nearly intact (hvrDep 0.13 at 1.0 µg/mL, 0.22 at 1.5, 0.55 at 4.0) while a
  * full induction dose depresses it; fit target: the isocapnic unit rows of Task 10.
- * Opioids and midazolam depress it as their CO2 depression [ENG sizes, directions sourced]. Sizes: Q-FU6-5 (Ali).
+ * Opioids and midazolam depress it as their CO2 depression [ENG sizes, directions sourced]. Sizes: Q-FU6-5 (samhv-dev).
  */
 export const HVR_VOL_C50 = 0.1;
 export const HVR_VOL_EMAX = 0.9;
@@ -6107,7 +6107,7 @@ Mechanism: PVR × (1 + 0.015·(PaCO2 − 40)₊) using 7a's own 1 Hz `chemo.paco
 range], only while the instructor has not pinned PVR (`man.pvr === null`). (2) ARDS recruitment (F1: P/F 88 → 154 but
 driving pressure 13.8 at every PEEP) and induction atelectasis (A3b: shunt 0.04 at FiO2 1 vs 8–10 % — Hedenstierna &
 Edmark 2010; Rothen 1998) have their mechanisms in 7b (unit compliance ∝ aeration, `side.ts:65`; `ATEL_IND`); the audit
-measured them weak. They are calibration rows for Ali (R44), written here as pre-declared `it.fails` with the audit's
+measured them weak. They are calibration rows for samhv-dev (R44), written here as pre-declared `it.fails` with the audit's
 numbers so the gate shows them; the executor flips any that FU-6's R4 (derived GA state) or FU-4's R1 now meets.
 
 **Measured (Tasks 1–16 on a clean `4f4ce06` tree):** VCV 300 vs 500 × 12 at FiO2 0.8: PaCO2 47.7 → 91.9 (R1's dead
@@ -6356,7 +6356,7 @@ replace with:
 
 - [ ] **Step 3: Commit and push** — `test(resp): the child respiratory baseline after V.1 and FU-4 (FU-6 R15)`.
 
-### Task 18: The respiratory scenario suite RS1–RS15 as SLOW tests — what the orchestrator inspects before Ali (tests; rows PROTOTYPED where stated)
+### Task 18: The respiratory scenario suite RS1–RS15 as SLOW tests — what the orchestrator inspects before samhv-dev (tests; rows PROTOTYPED where stated)
 
 **Files:**
 - Create: `packages/engine-core/test/engine/resp-suite.test.ts` (15 rows, ≤ 30 sim-min each → SLOW / `SLOW_B`)
@@ -6365,7 +6365,7 @@ replace with:
 **Why (audit §6; the FU-6 ruling: "the audit's 15-scenario respiratory suite as SLOW tests"):** the task tests check one
 mechanism each; the suite runs the audit's clinical scenarios end to end, all MODELED, adult 40 y 70 kg unless stated,
 the GA state DERIVED (no hand-sent thermal event), and prints one `RS-ROW` line per scenario that Task 20 copies into the
-gate note's suite table. Bands are the audit's §6 proposals (Ali decides them, §7); R45 applies row by row: a row the
+gate note's suite table. Bands are the audit's §6 proposals (samhv-dev decides them, §7); R45 applies row by row: a row the
 mechanism misses is `it.fails` with its number in the title. RS15 (link parity) is the ventilator package's
 `link-parity.test.ts` (Task 9) and is listed, not re-run, here.
 
@@ -6396,7 +6396,7 @@ ventilated EtCO₂ 40.2 → 27.8, Pa–Et 33.6, mPAP 31.7; RS14 +5.9 / +5.1 (`it
 ```ts
 // FU-6 Task 18: the respiratory scenario suite (research/09-respiratory-integration-audit.md §6, RS1–RS15). MODELED, adult
 // 40 y 70 kg unless stated, the GA state derived (no thermal event). One RS-ROW line per row → the gate note's table.
-// Bands are the audit's §6 proposals (Ali's §7 questions decide them); R45: a missed band is it.fails with its number.
+// Bands are the audit's §6 proposals (the owner's §7 questions decide them); R45: a missed band is it.fails with its number.
 import { describe, expect, it } from 'vitest';
 import type { PatientProfile } from '../../src/types.ts';
 import { cardiacOutput } from '../../src/l2/gas/coupling.ts';
@@ -6802,7 +6802,7 @@ replace with:
 - Create: `apps/demo/fu6.html`, `apps/demo/src/fu6.ts`, `apps/demo/e2e/fu6.e2e.ts`
 - Modify: `apps/demo/vite.config.ts` (one page)
 
-**Why:** the orchestrator inspects the screenshots before Ali tests (R53). Five demonstrations on the Philips-like
+**Why:** the orchestrator inspects the screenshots before samhv-dev tests (R53). Five demonstrations on the Philips-like
 monitor, MODELED, ×4 time scale: (1) severe bronchospasm on VCV (shark fin, peak/auto-PEEP in the ventilator strip) then
 salbutamol; (2) propofol 2 mg/kg + fentanyl 2 µg/kg on an SGA (induction apnoea: flat capnogram, falling SpO2);
 (3) laryngospasm after propofol 1 mg/kg on air (obstructed efforts, desaturation); (4) kinked ETT on VCV (Pmax, flat
@@ -7062,12 +7062,12 @@ replace with:
      row, each with the tables' band kept on the unconscious arm, the awake numbers (0.150 / 0.151 before the ruling,
      the merged tree's after it) and the reason (Eikermann 2003 governs the awake patient) — the truth-budget outcome (D16, Q-FU6-8),
      tick-bench numbers, and exceptions used/unused (E-FU6-5 withdrawn; list any declared exception no task used).
-  7. **Calibration-queue rows for Ali (R44):** WAKE_MMHG and F7's `WAKE_QUANTILES` knots (the Diprivan label fit, with
+  7. **Calibration-queue rows for samhv-dev (R44):** WAKE_MMHG and F7's `WAKE_QUANTILES` knots (the Diprivan label fit, with
      the merged main's 20-seed counts), CENTRAL_TAU_S, APNOEA_VE_IN/OUT, GA_TAU_ON/OFF, PMUS_REST,
      smooth-muscle fractions and F6's REFRACT_SEV/REFRACT_DUR_MAX/REFRACT_TAU_MIN (the non-responder row), magnesium
      Emax, the alveolar-fraction ramp, VCV_PMAX_DEFAULT, KINK_R_MULT, BUCK_CMH2O, **UA_AROUSAL 0.25 and HVR_NMB_EMAX 0.3
      / HVR_NMB_TOFR_LO 0.7** (D21, the Q-FU6-4 ruling: the awake share of a residual block's obstruction and the size of
-     its hypoxic blunting — Ali confirms both as teaching sizes),
+     its hypoxic blunting — samhv-dev confirms both as teaching sizes),
      J_PE_VE_FRAC/J_PE_RR, F9's HVR_INDEP_VE (the hypoxic drive below the CO2 threshold), VISC_EXP, the COHb exponent,
      K_PVR_CO2, ATEL_IND (induction shunt), the child GA FRC, **the adult GA FRC** (F10(3): `gaLvl` makes FRC 2100 → 1400
      mL, −0.7 L, on every anaesthetic; Hedenstierna's anaesthesia step is −0.4–0.5 L — the constant is the catalogue's,
@@ -7125,36 +7125,36 @@ gh pr create --base main --head fu-6-respiratory-integration \
 
   The PR body: the gate note's summary, the suite table, the `it.fails` list, the matrix-cell table, the deviations,
   and it ends with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`. **Never merge** (the orchestrator
-  and Ali decide; FU-6 has no merge authorization); report the PR URL and stop.
+  and samhv-dev decide; FU-6 has no merge authorization); report the PR URL and stop.
 
-## Open questions (for the orchestrator / Ali; the plan does not wait on them)
+## Open questions (for the orchestrator / samhv-dev; the plan does not wait on them)
 
 Numbers are the model's on `94040f7` + every FU-6 task (no FU-4, no V.1) unless marked "R1-emulated" (the prototype's
 stand-in for FU-4's dead-space root). "Decided" = the textbooks agree and the plan implements it; every decided row is
-still marked **confirm with Ali** because the teaching choice is his.
+still marked **confirm with samhv-dev** because the teaching choice is his.
 
 **The audit's twelve respiratory questions (`research/09` §7):**
 
 | # | question | the model after FU-6 | status |
 |---|---|---|---|
-| 1 | Default ventilation: VD/VT ≈ 0.3, PaCO₂ 35–42 at 7 mL/kg × 12? | RS1 on `94040f7`: man 12 × 490 → PaCO₂ 50.0, VD/VT 0.54 (the MANUAL fit's dead space); FU-4's R1 root is the fix and Task 0's precondition | FU-4 decides (G11); FU-6 re-measures RS1 — confirm with Ali |
-| 2 | Induction apnoea after propofol 2 mg/kg | PROBABILISTIC (F7): seeds 1–20 on FiO2 0.5 → 8/20 apnoeic, < 30 / 30–60 / > 60 s = 1 / 4 / 3 (room air: long apnoeas end at ≈ 45 s on F9's hypoxic drive); seed 7 (modal) 28 s / 42 s R1-emulated, 2.5 mg/kg 44 s, + fentanyl 2 µg/kg 62 s, + remifentanil 0.1 124 s; then shallow obstructed breathing | **ruled (F7): the Diprivan label's distribution, a seeded draw — Ali: whether to pin the draw (Q-FU6-1)** |
-| 3 | Bronchospasm: how fast and how far do the drugs act; what is "severe"? | severity 1 on VCV 12 × 500: Ppeak 44 / PEEPi 11.9 without a Pmax (40.0 / 11.5 at the default Pmax 40); salbutamol 250 µg: −42 % Ppeak at 2–3 min, PEEPi −80 %; adrenaline 50 µg −45 % at 3 min, gone by 10 min; sevoflurane −38 % at 0.8 MAC (10 min); ketamine −21 % then wears off; Mg 2 g −8 % | **decided (D1, D2) — the speeds: confirm with Ali (Q-FU6-2)** |
-| 4 | Laryngospasm condition, NPPE, release | `obstructed` on a natural airway = complete laryngospasm (no new condition); efforts pull Ppl to −14.6 cmH₂O below rest with pulsus 12.6 mmHg (RS8); release PaCO₂ 61 → 41 in 20 s, never < 38 (D8); NPPE DECLARED NOT MODELLED (F8: transmural +6.5 mmHg at the maximal chemical effort, EVLWI +0.00) | **decided by physics — confirm with Ali (Q-FU6-3: a reflex laryngospasm effort, or NPPE out of v1)** |
-| 5 | Pregnancy apnoea time and PaCO₂ 30 | awake term PaCO₂ 31.2 (was 41.7); preoxygenated apnoea to 90 % 4.83 min (band 2.5–4.5, `it.fails`) | **PaCO₂/V̇O₂ decided (Hegewald & Crapo, D12); the apnoea gap is 7j's (ODC, FRC supine) — confirm with Ali (Q-FU6-10)** |
-| 6 | Residual block: awake vs sedated at TOFR 0.6 | awake: obstruction 0.15 (a load), VT near-normal (`vtMult` 0.85), hypoxic response −30 %; unconscious: the tables' 0.60 with `vtMult` 0.40 (D21, Task 5 Step 5 + Task 10) | **RULED (Q-FU6-4, orchestrator 2026-09-28: Eikermann governs the awake patient) — confirm with Ali** |
-| 7 | The GA switch | derived from loss of consciousness and diaphragm block (τ 20 s on / 300 s off); `thermal 'general'` stays an override; adult 7.92 min, obese 2.83 without the switch | **decided (D9) — confirm with Ali** |
-| 8 | Anaemia: tachycardia and high CO first? | Hb 5 vs 15: HR 70 → 109, CO +24 % (band +30 %, `it.fails`), MAP 95 → 76, SvO₂ 49 %, lactate 1.02 | **decided (D13, Weiskopf) — the CO size: confirm with Ali** |
+| 1 | Default ventilation: VD/VT ≈ 0.3, PaCO₂ 35–42 at 7 mL/kg × 12? | RS1 on `94040f7`: man 12 × 490 → PaCO₂ 50.0, VD/VT 0.54 (the MANUAL fit's dead space); FU-4's R1 root is the fix and Task 0's precondition | FU-4 decides (G11); FU-6 re-measures RS1 — confirm with samhv-dev |
+| 2 | Induction apnoea after propofol 2 mg/kg | PROBABILISTIC (F7): seeds 1–20 on FiO2 0.5 → 8/20 apnoeic, < 30 / 30–60 / > 60 s = 1 / 4 / 3 (room air: long apnoeas end at ≈ 45 s on F9's hypoxic drive); seed 7 (modal) 28 s / 42 s R1-emulated, 2.5 mg/kg 44 s, + fentanyl 2 µg/kg 62 s, + remifentanil 0.1 124 s; then shallow obstructed breathing | **ruled (F7): the Diprivan label's distribution, a seeded draw — samhv-dev: whether to pin the draw (Q-FU6-1)** |
+| 3 | Bronchospasm: how fast and how far do the drugs act; what is "severe"? | severity 1 on VCV 12 × 500: Ppeak 44 / PEEPi 11.9 without a Pmax (40.0 / 11.5 at the default Pmax 40); salbutamol 250 µg: −42 % Ppeak at 2–3 min, PEEPi −80 %; adrenaline 50 µg −45 % at 3 min, gone by 10 min; sevoflurane −38 % at 0.8 MAC (10 min); ketamine −21 % then wears off; Mg 2 g −8 % | **decided (D1, D2) — the speeds: confirm with samhv-dev (Q-FU6-2)** |
+| 4 | Laryngospasm condition, NPPE, release | `obstructed` on a natural airway = complete laryngospasm (no new condition); efforts pull Ppl to −14.6 cmH₂O below rest with pulsus 12.6 mmHg (RS8); release PaCO₂ 61 → 41 in 20 s, never < 38 (D8); NPPE DECLARED NOT MODELLED (F8: transmural +6.5 mmHg at the maximal chemical effort, EVLWI +0.00) | **decided by physics — confirm with samhv-dev (Q-FU6-3: a reflex laryngospasm effort, or NPPE out of v1)** |
+| 5 | Pregnancy apnoea time and PaCO₂ 30 | awake term PaCO₂ 31.2 (was 41.7); preoxygenated apnoea to 90 % 4.83 min (band 2.5–4.5, `it.fails`) | **PaCO₂/V̇O₂ decided (Hegewald & Crapo, D12); the apnoea gap is 7j's (ODC, FRC supine) — confirm with samhv-dev (Q-FU6-10)** |
+| 6 | Residual block: awake vs sedated at TOFR 0.6 | awake: obstruction 0.15 (a load), VT near-normal (`vtMult` 0.85), hypoxic response −30 %; unconscious: the tables' 0.60 with `vtMult` 0.40 (D21, Task 5 Step 5 + Task 10) | **RULED (Q-FU6-4, orchestrator 2026-09-28: Eikermann governs the awake patient) — confirm with samhv-dev** |
+| 7 | The GA switch | derived from loss of consciousness and diaphragm block (τ 20 s on / 300 s off); `thermal 'general'` stays an override; adult 7.92 min, obese 2.83 without the switch | **decided (D9) — confirm with samhv-dev** |
+| 8 | Anaemia: tachycardia and high CO first? | Hb 5 vs 15: HR 70 → 109, CO +24 % (band +30 %, `it.fails`), MAP 95 → 76, SvO₂ 49 %, lactate 1.02 | **decided (D13, Weiskopf) — the CO size: confirm with samhv-dev** |
 | 9 | MANUAL apnoea / arrest | not FU-6's (FU-4 D6: MANUAL arrests only by no flow) | FU-4 |
-| 10 | ABG at patient temperature vs 37 °C | unchanged: the panel shows patient-temperature values (30 °C: PaCO₂ 34, PaO₂ 161) | open for Ali (a lab convention; 7i's panel) |
+| 10 | ABG at patient temperature vs 37 °C | unchanged: the panel shows patient-temperature values (30 °C: PaCO₂ 34, PaO₂ 161) | open for samhv-dev (a lab convention; 7i's panel) |
 | 11 | EtCO₂ numeric at slow rates | the waveform: no plateau below 0.6 × VD (Task 8); the numeric's hold until the apnoea timer is FU-5's | **decided (D10, vendor behaviour) — FU-5 implements** |
-| 12 | CO₂ washout speed after RR 12 → 24 | unchanged (two-compartment CO₂ store: PaCO₂ 44.8 → 37 in 90 s, 27 at 20 min ≈ 60 % of the new steady state). Nunn: the fast phase (lung + blood) is minutes, the tissue store τ ≈ 20–60 min, so a 15–20 min slow phase is physiological | **decided by the textbook (keep) — confirm with Ali** |
+| 12 | CO₂ washout speed after RR 12 → 24 | unchanged (two-compartment CO₂ store: PaCO₂ 44.8 → 37 in 90 s, 27 at 20 min ≈ 60 % of the new steady state). Nunn: the fast phase (lung + blood) is minutes, the tissue store τ ≈ 20–60 min, so a 15–20 min slow phase is physiological | **decided by the textbook (keep) — confirm with samhv-dev** |
 
 FU-6's own questions:
 
 - **Q-FU6-1 — induction apnoea by default (re-scoped by the Orchestrator ruling (FU-6 review), 2026-09-28, F7).** The
   model is now PROBABILISTIC per the Diprivan label (D5): one seeded draw per patient, ≈ 43 % apnoeic after 2–2.5 mg/kg,
-  modal 30–60 s; seed 7 is the modal patient (28 s on `94040f7`, 42 s R1-emulated). What remains for Ali is a teaching
+  modal 30–60 s; seed 7 is the modal patient (28 s on `94040f7`, 42 s R1-emulated). What remains for samhv-dev is a teaching
   choice only: should a scenario be able to PIN the draw ("this patient will be apnoeic") other than by choosing its
   seed — e.g. a later profile field? FU-6 adds none (a profile field is `types.ts`, outside its partition).
 - **Q-FU6-2 — bronchodilator time course.** Relative to the untreated Ppeak (44 without a Pmax; 40.0 at the default
@@ -7167,7 +7167,7 @@ FU-6's own questions:
   the fast fall is real; confirm. **NPPE (re-scoped by the Orchestrator ruling (FU-6 review), 2026-09-28, F8):** it is a
   DECLARED NOT-MODELLED item — the chemical-drive effort is capped, so the obstructed-effort transmural term adds only
   ≈ 6.5 mmHg at the maximal effort (measured `palvObs` −6.5 mmHg at effort 4.4, EVLWI +0.00) against a ≈ 23 mmHg
-  Starling threshold; a real Mueller manoeuvre generates −40 to −100 cmH2O. Ali: should laryngospasm get its OWN reflex
+  Starling threshold; a real Mueller manoeuvre generates −40 to −100 cmH2O. samhv-dev: should laryngospasm get its OWN reflex
   closure-effort term (independent of the chemical drive — a later stage; then NPPE, ≈ 0.1 % of laryngospasm, becomes
   reachable), or does NPPE stay out of v1?
 - **Q-FU6-4 — residual block in an AWAKE patient: RULED, CLOSED (orchestrator, 2026-09-28).** The parameter tables §4.6
@@ -7175,14 +7175,14 @@ FU-6's own questions:
   volunteers at TOFR 0.5–0.7 keep a near-normal VT. **Ruled: the tables' row is the SEDATED patient, Eikermann governs
   the AWAKE one (obstruction present but small, plus a reduced hypoxic response).** Applied: the arousal term
   (`UA_AROUSAL` 0.25, Task 5 Step 5), the NMB arm of `hvrDep` (`HVR_NMB_EMAX` 0.3, Task 10) and the two re-specified 7f
-  unit bands under E-FU6-10 — D21. Still Ali's to confirm as a teaching choice: the awake share (0.25) and whether the
+  unit bands under E-FU6-10 — D21. Still the owner's to confirm as a teaching choice: the awake share (0.25) and whether the
   30 % hypoxic blunting should show at extubation (the NN-08 scenario reports it).
 - **Q-FU6-5 — ventilatory arousal vs sympathetic blunting.** A noxious stimulus 1.5 under remifentanil 0.1 + propofol
   50 raises VE by +0.6 % (7f's antinociception 0.77 blunts it as it blunts the haemodynamic response); RS5 proposed
   ≥ +20 %. Should breathing be blunted less than the blood pressure? Also: the hypoxic arm's depression sizes (volatile
   C50 0.1 MAC, Emax 0.9; propofol C50 390 ng/mL) are [ENG] from Knill/Dahan directions.
 - **Q-FU6-6 — posture for OLV.** RS12's PaO2 150–250 and non-dependent flow ≤ 25 % need the lateral-decubitus gravity
-  shift (a new `position` field: patient-level state, touching 7a's perfusion split). A design change — FU-7 or Ali's
+  shift (a new `position` field: patient-level state, touching 7a's perfusion split). A design change — FU-7 or the owner's
   calibration pass?
 - **Q-FU6-7 — tachypnoea under volatiles.** Sevoflurane 1 MAC via SGA: RR 15 vs awake 12.3 (1.24×; audit D2: "RR up to
   25–35" and "RR ≥ 1.4×"). The drive's pattern split (hypnotic → rapid shallow) is 7b's; not changed by FU-6.
@@ -7215,7 +7215,7 @@ FU-6's own questions:
   (orchestrator, 2026-09-28, as part of Q-FU6-4 / D21).** Partial block (TOFR 0.7) depresses the carotid hypoxic
   ventilatory response by ≈ 30 % (Eriksson, Sato & Severinghaus 1993 *Anesthesiology* 78:693; the matrix's NN-08), so
   FU-6's `hvrDep` now carries ONE NMB arm (`HVR_NMB_EMAX` 0.3 ramped over TOFR 0.9 → 0.7, Task 10) instead of
-  anaesthetic and opioid arms only; FU-7 adds none. What is still open (a later stage, with Ali): whether the size is
+  anaesthetic and opioid arms only; FU-7 adds none. What is still open (a later stage, with samhv-dev): whether the size is
   dose- or agent-specific, and the same reflex's effect on the hypercapnic response (not modelled).
 - **Q-FU6-16 — PE ventilation size.** The added J-receptor drive gives the awake massive-PE patient V̇E 18 L/min (2.4 ×
   rest), RR 27, PaCO₂ 30 (D17). Is 2–3 × the resting V̇E the picture you teach?
@@ -7234,7 +7234,7 @@ UA_AROUSAL against E-FU6-10's awake rows (not moved), WAKE_MMHG inside 7–10, J
 inside 1.5–3, the capnogram ramp — none moved in this plan), R50 (reviewed: APPROVE WITH FIXES; findings 1–12 applied,
 every ruling marked in place), R51 + addenda (PD entries only in
 `l2/pk/data`; the lung reads 7g's bus outputs; `stimulus` keeps one shape; chain order unchanged), R53 (the suite runs
-before Ali), R54 (Task 20 §9's matrix table, Task 1's `M-*` scenarios), R56 (glossary labels in titles, rows, the page
+before samhv-dev), R54 (Task 20 §9's matrix table, Task 1's `M-*` scenarios), R56 (glossary labels in titles, rows, the page
 and the gate note; proposed labels for the new fields under Requests → Stage 9), R57 (no 7k readout pre-empted; seven
 hooks listed under Requests → 7k), R59 (Task 13 = set point + VO2 only; the rest listed under Requests → 7j).
 

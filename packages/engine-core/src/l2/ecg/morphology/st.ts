@@ -13,7 +13,7 @@ import { addShaped, jPointS, leadOf, mainT, scaleWaves } from './ops.ts';
  * over the index leads at J + 60 ms (1 mm = 0.1 mV at 10 mm/mV). Per unit (index | reciprocal):
  * inferior II 0.99 III 1.01 aVF 1.00 | aVL −0.52; anterior V2 0.96 V3 1.05 | III −0.37 aVF −0.30;
  * septal V1 0.99 V2 1.01 | V6 −0.62; lateral aVL 1.06 V6 1.04 | III −1.23; anterolateral V3 0.96 V5 0.93 (V4 1.10) |
- * III −0.33; posterior (depression) V1 −0.95 V2 −1.05 [ENG].
+ * III −0.33; posterior (depression) V1 −0.95 V2 −1.05 [FIT: ECG morphology vector or amplitude without a source; brief research/44 L2-46].
  */
 export const ST_TERRITORIES: Readonly<Record<StTerritory, { dir: Vec3; leads: readonly LeadId[]; recip: readonly LeadId[]; sign: 1 | -1 }>> = {
   inferior: { dir: [0.285, 0.86, -0.024], leads: ['ecgII', 'ecgIII', 'aVF'], recip: ['aVL'], sign: 1 },
@@ -23,9 +23,9 @@ export const ST_TERRITORIES: Readonly<Record<StTerritory, { dir: Vec3; leads: re
   anterolateral: { dir: [0.813, -0.034, -0.192], leads: ['V3', 'V5'], recip: ['ecgIII'], sign: 1 },
   posterior: { dir: [0.467, 0.023, 0.776], leads: ['V1', 'V2'], recip: [], sign: -1 },
 };
-/** Diffuse subendocardial ischaemia: depression in II/V5, elevation in aVR [ENG]. */
+/** Diffuse subendocardial ischaemia: depression in II/V5, elevation in aVR [FIT: ECG morphology vector or amplitude without a source; brief research/44 L2-46]. */
 export const ISCHAEMIA_DIR: Vec3 = [-0.6, -0.8, 0.25];
-/** Brugada: coved elevation in the right precordial leads (V1 0.98, V2 1.40, V3 1.20, V4 0.49, V5 −0.01, I −0.15 per unit) [ENG]. */
+/** Brugada: coved elevation in the right precordial leads (V1 0.98, V2 1.40, V3 1.20, V4 0.49, V5 −0.01, I −0.15 per unit) [FIT: ECG morphology vector or amplitude without a source; brief research/44 L2-46]. */
 export const BRUGADA_DIR: Vec3 = [-0.1, 0.1, -1];
 const MEASURE_AFTER_J_S = 0.06; // ST measured at J + 60 ms (research 03 §1.6)
 
@@ -79,7 +79,7 @@ export const brugadaStage: MorphStage = (k, _info, mods) => {
   return k;
 };
 
-/** Digoxin: scooped ST depression (kernel −0.12 mV in II), flat T (×0.5), T/U 15% earlier → short QT (research 03 §1.6) [ENG values]. */
+/** Digoxin: scooped ST depression (kernel −0.12 mV in II), flat T (×0.5), T/U 15% earlier → short QT (research 03 §1.6) [FIT: ECG morphology vector or amplitude without a source; values; brief research/44 L2-46]. */
 export const digoxinStage: MorphStage = (k, _info, mods) => {
   if (!mods.digoxin) return k;
   const t = mainT(k);

@@ -14,7 +14,7 @@ import {
 
 /** Pulse's tubular reabsorption permeability at renal arterial pressure p (annex B2; minimum at ≈ 200 mmHg). */
 export function lpReab(p: number): number {
-  const q = Math.min(160, Math.max(20, p)); // above 160 the curve is held (Guyton's plateau region) [ENG]
+  const q = Math.min(160, Math.max(20, p)); // above 160 the curve is held (Guyton's plateau region) [ENG: numerics]
   return LP_A * q * q + LP_B * q + LP_C;
 }
 
@@ -85,7 +85,7 @@ export function tgfTarget(pa: number, pv: number, k: number, effF: number, kfF: 
   return rAff;
 }
 
-/** Angiotensin/efferent activation 0–1 [ENG]: RPP below 80 (0 → 1 over 80 → 40) or effective volume loss (1 at −20 %);
+/** Angiotensin/efferent activation 0–1 [FIT: second angiotensin state; brief research/44 L2-07]: RPP below 80 (0 → 1 over 80 → 40) or effective volume loss (1 at −20 %);
  *  the volume term fades out between RPP 80 and 110 — high renal perfusion pressure suppresses renin release (without
  *  it a low-CO, high-MAP state kept the efferent tone on and GFR reached 550 mL/min at MAP 187 in the engine). */
 export function angiotensin(rpp: number, eabv: number): number {

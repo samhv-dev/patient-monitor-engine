@@ -1,6 +1,6 @@
 // R-peak detection for metric fiducials, identical for recorded and generated ECG (brief §9 V1–V3).
 // Band-pass 5–15 Hz (zero phase), rectify, threshold at 45 % of the 98th-percentile amplitude of each 10 s block,
-// 250 ms refractory, then refine to the extreme of the unfiltered signal within ±40 ms [ENG].
+// 250 ms refractory, then refine to the extreme of the unfiltered signal within ±40 ms [ENG: measurement].
 import { quantile } from '../stats.ts';
 import { bandpassZeroPhase } from '../templates/dsp.ts';
 

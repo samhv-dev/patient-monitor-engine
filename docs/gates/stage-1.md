@@ -10,9 +10,9 @@ Gate question: "At arm's length, do sinus, AF, flutter, CHB and VT look and soun
 | No gap/ghost at wrap or erase gap | pass **after a fix** (see "Deviations"). The first screenshots showed a faint vertical ghost column at each lane's left edge. After commit `9d3ff46` it is gone. The 16 px erase gap is clean and no ghost trail is visible over 3+ sweeps |
 | Stopwatch 10 s at 60 fps / at 30 fps (px) | 944.9 px / 944.9 px (sim time advanced 10.149 s in 10.149 s wall at 60 fps, 10.100 s in 10.100 s at 30 fps; target 945 ± 5%). Main rAF 59.6 fps |
 | Beep aligned by ear; beep − R min/mean/max (ms); dropped tones | By ear: NOT CHECKED (headless). **Logged sim-time beep − R** (the demo diagnostics line, sinus, last 20 beeps): 45 / 46 / 47 ms, dropped tones 0 → pass. **Audible beep − R** in sinus (oscillator start mapped through `getOutputTimestamp`), 37 beats: 45.4 / 51.6 / 67.3 ms, and **6 of 37 are over 60 ms**. Wide complexes are later still, and some are dropped: see "Beep timing finding" |
-| iPad Safari: render path; sound with silent switch on | **pending Ali** (no iPad here) |
+| iPad Safari: render path; sound with silent switch on | **pending samhv-dev** (no iPad here) |
 | 10-min soak heap growth (MB) | sinus + PVC bigeminy + sound, 11 min wall. After forced GC (CDP `HeapProfiler.collectGarbage` → `Runtime.getHeapUsage`), 1 min → 11 min: main thread 2.04 → 2.08 MB (**+0.04**); worker 0.99 → 0.92 MB (**−0.07**). The demo's "JS heap" read 2.8 → 3.1 MB (no GC). Pass (≤ 5 MB). The ring buffers are fixed-size ArrayBuffers, which are not counted in the JS heap |
-| Rhythm look (sinus, AF, flutter, CHB, VT) — laptop / iPad | laptop (headless Chrome screenshots, listed below): all look right, with one caveat on flutter. iPad: pending Ali. Human arm's-length review: pending the orchestrator and Ali |
+| Rhythm look (sinus, AF, flutter, CHB, VT) — laptop / iPad | laptop (headless Chrome screenshots, listed below): all look right, with one caveat on flutter. iPad: pending samhv-dev. Human arm's-length review: pending the orchestrator and samhv-dev |
 | HR tile response and update rate | Demo, sinus 75 → HR 120 with ramp 0: 75, 76, 82, 89, 97, 107, **118 at +6.4 s**, then 119–122. Updates were ≥ 1.0 s apart. VT: the tile read 170 within 5 s. Test 9 (engine): 80 → 120 reached 120 at +6.98 s; minimum update gap 1.000 s |
 
 ## Acceptance tests (measured)
@@ -40,7 +40,7 @@ No acceptance-test tolerance was changed.
 |---|---|
 | `stage-1/sinus.png` | Sinus 75: clear P-QRS-T in II and V5, with the erase gap. HR 75 |
 | `stage-1/afib.png` | AF: irregularly irregular narrow QRS, no P waves, fine f-wave baseline. HR 100 |
-| `stage-1/flutter-4to1.png` | Flutter 4:1: regular narrow QRS at 75. The flutter undulation shows in II, but at this gain the sawtooth is **low and not very distinct**. Ali should judge whether it is prominent enough |
+| `stage-1/flutter-4to1.png` | Flutter 4:1: regular narrow QRS at 75. The flutter undulation shows in II, but at this gain the sawtooth is **low and not very distinct**. samhv-dev should judge whether it is prominent enough |
 | `stage-1/chb-narrow.png` | avb3Narrow: P waves march through at 80, independent of narrow escape QRS at 45. HR 45 |
 | `stage-1/vt-mono.png` | Monomorphic VT: regular wide complexes. HR 171 |
 | `stage-1/pvc-bigeminy.png` | Sinus + PVC bigeminy: N-V-N-V; wide PVCs with discordant T and full compensatory pauses. HR 76 |
@@ -80,9 +80,9 @@ Also, the demo's diagnostics line reports sim-time beep − R, which leaves out 
 
 ## Not checked here
 
-- Safari on the laptop: automating it needs "Allow Remote Automation", a settings change, which was not made. Ali should open `/stage1.html` in Safari.
+- Safari on the laptop: automating it needs "Allow Remote Automation", a settings change, which was not made. samhv-dev should open `/stage1.html` in Safari.
 - By-ear beep alignment: this machine ran headless.
-- iPad Safari (render path, and sound with the silent switch on): **pending Ali**.
+- iPad Safari (render path, and sound with the silent switch on): **pending samhv-dev**.
 
 Decisions needing a ruling:
 - PR60 = 190 ms (test 3).

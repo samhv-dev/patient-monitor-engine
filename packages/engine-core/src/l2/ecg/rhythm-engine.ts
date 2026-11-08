@@ -27,9 +27,9 @@ import { afTemplatesAvailable } from './af-texture.ts';
 export { NEVER, type FWave, type PendingV, type RhythmCtx, type RhythmState } from './rhythm-state.ts';
 export { afCommandBpm, afRefractoryS, afThresholdMv } from './atria.ts';
 
-const ESCAPE_JITTER_SD_S = 0.01; // [ENG]
-const LONG_QT_QTC_MS = 520; // long QT: QTc 480–600 (research 03 §1.6) [ENG value]
-const REFRACTORY_QT_FRACTION = 0.8; // refractoryUntil = t + QRS + 0.8·QT (brief §4.1) [ENG]
+const ESCAPE_JITTER_SD_S = 0.01; // [ENG: texture]
+const LONG_QT_QTC_MS = 520; // long QT: QTc 480–600 (research 03 §1.6) (research 03 §1.6: QTc 480–600; value)
+const REFRACTORY_QT_FRACTION = 0.8; // refractoryUntil = t + QRS + 0.8·QT (brief §4.1) [ENG: numerics]
 const QRS_AMP_RESP_MOD = 0.08; // respiration modulates R by ±5–15% (brief §4.1)
 const WIDE_TEMPLATES: ReadonlySet<BeatTemplateId> = new Set(['wide', 'pacedV', 'pvc2', 'pvc3', 'agonal']);
 
@@ -76,7 +76,7 @@ export function escapeRate(st: RhythmState, d: RhythmDef, t: number, ctx: Rhythm
 function drawFWave(t0: number, s: Sfc32State): FWave {
   // Recorded MIT-BIH texture when templates are bundled (brief §11 C1) ...
   if (afTemplatesAvailable()) return { kind: 'fib', start: t0, end: NEVER, f: [], ph: [], a: [], dir: [...FWAVE_DIR], seed: sfc32Next(s) };
-  // ... else 3 random-phase sinusoids at 5–9 Hz, 0.03–0.05 mV each (brief §4.1: 2–4 at 5–9 Hz, 0.02–0.15 mV) [ENG]
+  // ... else 3 random-phase sinusoids at 5–9 Hz, 0.03–0.05 mV each (brief §4.1: 2–4 at 5–9 Hz, 0.02–0.15 mV) (brief §4.1: 2–4 sinusoids at 5–9 Hz, 0.02–0.15 mV)
   const f: number[] = [];
   const ph: number[] = [];
   const a: number[] = [];
@@ -107,7 +107,7 @@ export function applyRhythm(st: RhythmState, id: RhythmId, opts: RhythmOpts, at:
   st.respectRefractory = respectRefractory;
   st.pendingSwitch = null;
 
-  // Atria. A new sinus rhythm's first P comes 100 ms after the switch (so it is never inside the switch tick) [ENG];
+  // Atria. A new sinus rhythm's first P comes 100 ms after the switch (so it is never inside the switch tick) [ENG: numerics];
   // flutter/AF atria start at once.
   if (d.atria === 'none') st.atria.nextT = NEVER;
   else if (d.atria !== prev.atria || st.atria.nextT >= NEVER) st.atria.nextT = t0 + (d.atria === 'sinus' ? 0.1 : 0);
@@ -136,7 +136,7 @@ export function applyRhythm(st: RhythmState, id: RhythmId, opts: RhythmOpts, at:
   } else endFWaves(st, 'flutter', t0);
 
   // Ventricular / junctional focus. The first focus beat fires 50 ms after the switch, or 10 ms after the ventricle
-  // recovers [ENG]; an escape or accelerated focus (focusWaitsForInterval) not before one of its own cycles after the
+  // recovers [ENG: numerics]; an escape or accelerated focus (focusWaitsForInterval) not before one of its own cycles after the
   // last ventricular beat, which discharged it (Guyton & Hall ch. 10, "The Sinus Node as the Pacemaker of the Heart").
   const tFocus = Math.max(t0 + 0.05, st.refractoryUntil + 0.01);
   st.focusNextT = d.focus === 'none' ? NEVER : d.focusWaitsForInterval ? Math.max(tFocus, st.lastVT + 60 / rhythmRate(st, t0, ctx)) : tFocus;
@@ -163,7 +163,7 @@ function isConducted(p: PendingV): boolean {
 export function activateVentricle(st: RhythmState, p: PendingV, ctx: RhythmCtx): boolean {
   const t = p.t;
   // Concealed if the ventricle is refractory (brief §4.1). Primary pacemakers (p.bypass) are exempt: foci, the AF
-  // junction and PVC runs set their own cycle [ENG]. A conducted beat after a conducted beat is exempt too: the AV node
+  // junction and PVC runs set their own cycle [ENG: numerics]. A conducted beat after a conducted beat is exempt too: the AV node
   // (AV_NODE_ERP_S in atria.ts) limits supraventricular conduction.
   const afterConducted = isConducted(p) && st.lastConducted;
   if (st.respectRefractory && !p.bypass && !afterConducted && t < st.refractoryUntil) return false;
@@ -197,7 +197,7 @@ export function activateVentricle(st: RhythmState, p: PendingV, ctx: RhythmCtx):
   st.refractoryUntil = t + qrsMs / 1000 + (REFRACTORY_QT_FRACTION * qtDrawn) / 1000;
   st.lastVT = t;
   // A beat that is not the focus's own (a sinus capture during VT) depolarises the ventricle and resets the focus, so
-  // the focus cannot fire 15–40 ms later on top of it [ENG].
+  // the focus cannot fire 15–40 ms later on top of it [ENG: numerics].
   if (d.focus !== 'none' && !p.bypass) st.focusNextT = t + 60 / rate;
   const er = escapeRate(st, d, t, ctx);
   st.escapeNextT = er > 0 ? t + 60 / er + (d.rateDrives === 'escape' ? ESCAPE_JITTER_SD_S * ctx.mods.hrvScale * normal(ctx.rng.hrv) : 0) : NEVER;

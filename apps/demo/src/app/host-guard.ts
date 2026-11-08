@@ -32,9 +32,9 @@ export const HOSTS_CHANNEL = 'pme.hosts';
 /** The Web Lock a hosting tab holds, by code: `pme.host.QFBAWA`. */
 export const HOST_LOCK = 'pme.host.';
 /** How long a starting instructor page waits for the other tabs to answer, ms, on the fallback path (no Web Locks). A
- *  same-browser round trip takes a few ms [ENG]; this is the delay the check adds to every start of the page there. */
+ *  same-browser round trip takes a few ms [ENG: ui]; this is the delay the check adds to every start of the page there. */
 export const ASK_MS = 200;
-/** How long it waits for the chosen tab to hand its session over before it says that tab is asleep, ms [ENG]; without
+/** How long it waits for the chosen tab to hand its session over before it says that tab is asleep, ms [ENG: ui]; without
  *  Web Locks, how long before it gives up and starts with no case. */
 export const TAKE_MS = 2000;
 

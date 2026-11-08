@@ -71,7 +71,7 @@ export interface StageMarkPosition {
 }
 
 const NOT_IMPLEMENTED = /not implemented/;
-/** A hop (answer 2): a state whose only exit is `afterS` ≤ HOP_MAX_S — it folds into the stage it leads to [ENG]. */
+/** A hop (answer 2): a state whose only exit is `afterS` ≤ HOP_MAX_S — it folds into the stage it leads to [ENG: scenario]. */
 export const HOP_MAX_S = 2;
 export function isHop(s: ScenarioState): boolean {
   const t = s.transitions ?? [];

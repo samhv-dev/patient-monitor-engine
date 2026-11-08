@@ -7,11 +7,16 @@ files here:
 |---|---|
 | `report.md` | Every graded row: morphology (recorded vs matched engine, brief §9 V1–V5), sanity and gate documents (segment validation), waveform regression (2 % per sample), determinism (V9), the Pulse oracle, datasets and attribution. |
 | `report.json` | The same, machine-readable (`pme-validation-report/1`). |
-| `calibration-queue.md` | Every yellow or red row — the input to Ali's calibration pass (R44), with an empty "decision" column. |
+| `calibration-queue.md` | Every yellow or red row — the input to the owner's calibration pass (R44), with an empty "decision" column. |
 
 Grades (R40, after Pulse's segment validation, method only): 🟢 inside the evidence band (or within 10 % of a point
 target); 🟡 misses by less than 30 %; 🔴 misses by 30 % or more, or was not measured. Red fails the run; yellow never
 does. Documents whose commands the current engine refuses ("arrives in Stage 7") are listed as *not measurable*.
+
+**Expected failures (brief 84).** A red row that waits on a named, not yet built mechanism carries an expected-failure
+mark (its known-deviations id, the mechanism, the date, the value when marked) and is reported as 🟣, never as green,
+with its band unchanged. The gate fails on any red row without a mark and on any marked
+row that starts to meet its band, so a landed mechanism forces its row back to a real pass.
 
 ## Commands (from the repo root)
 

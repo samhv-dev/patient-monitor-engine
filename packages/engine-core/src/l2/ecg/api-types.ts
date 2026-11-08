@@ -24,7 +24,7 @@ export interface PacerOpts {
   avDelayMs?: number;
   /** Default 'none'. */
   fault?: PacerFault;
-  /** Fraction of pacing cycles the fault affects, 0–1. Default 1 for failureToSense, 0.3 otherwise [ENG]. */
+  /** Fraction of pacing cycles the fault affects, 0–1. Default 1 for failureToSense, 0.3 otherwise [ENG: scenario]. */
   faultRate?: number;
   /** What sits under a VVI/DDD pacemaker: 'none' = complete heart block (default); 'conducted' = sinus conducts. */
   intrinsic?: 'none' | 'conducted';
@@ -44,7 +44,7 @@ export interface RhythmOpts {
   rateBpm?: number;
   /** PEA: every beat has mech.perfused = false and kSV = 0 (brief §5 "PEA = pulseless: true on any organised rhythm"). */
   pulseless?: boolean;
-  /** sinusPause: pause length (default 3 s) and how often it happens (default every 12 s) [ENG]. */
+  /** sinusPause: pause length (default 3 s) and how often it happens (default every 12 s) [ENG: scenario]. */
   pauseS?: number;
   pauseEveryS?: number;
   /** Junctional rhythms: where the retrograde P sits (default 'before'). */

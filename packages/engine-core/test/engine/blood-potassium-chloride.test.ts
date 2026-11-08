@@ -1,4 +1,4 @@
-// FU-7.1 A5 (Ali 2026-10-10 "there is no KCl as drug"): potassium chloride as an iv INFUSION in mmol, raising plasma K
+// FU-7.1 A5 (samhv-dev 2026-10-10 "there is no KCl as drug"): potassium chloride as an iv INFUSION in mmol, raising plasma K
 // through 7c's own potassium pool (the pool insulin–dextrose shifts K into: ECF K + ICF K with τ K_TAU_MIN 43 min, the
 // Na/K-ATPase set point following total-body K, K_TBK_MMOL 300). What the engine OWES the clinician is the shape: the
 // plasma K rises while the infusion runs, in proportion to the rate, peaks at its end and then falls back toward a
@@ -46,7 +46,7 @@ describe('potassium chloride', { timeout: 600_000 }, () => {
   });
 
   // R45 (FU-7.1 A5): the SIZE (Kruse 1990) is missed in both directions — the end-of-infusion rise overshoots it and the
-  // settled rise undershoots it. Both constants are 7c's (`K_TAU_MIN` 43 min [ENG, tables `vK`]; `K_TBK_MMOL` 300
+  // settled rise undershoots it. Both constants are 7c's (`K_TAU_MIN` 43 min (tables `vK`); `K_TBK_MMOL` 300
   // [TXT, Sterns 1981]) and live in l2/blood, which this plan does not touch. Recorded with the numbers for the
   // calibration queue; the band is NOT widened.
   // Title left for Stage 14 (fix-citations): its "Miller 10e ch. 46" is wrong (ch. 46 is coagulation); the ≈ 0.25 is

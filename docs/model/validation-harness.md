@@ -55,7 +55,7 @@ bands it misses are in `../validation/known-misses.md`; for an embedding develop
 | [`vital.ts:8`](../../packages/validation/src/datasets/vital.ts#L8) | samples, (number) one sample. Integer formats are scaled: value = raw·gain + offset. |
 | [`vitaldb.ts:32`](../../packages/validation/src/datasets/vitaldb.ts#L32) | surgery ≥ 60 min. Strata = site × age band × sex × (pre-op ECG not sinus); round-robin over strata |
 | [`capno.ts:3`](../../packages/validation/src/metrics/capno.ts#L3) | crossing + 0.2 s to the plateau end, α = 180° − atan(s_II/25) + atan(s_III/25) on the 25 mmHg/s axis scale. Input |
-| [`intervals.ts:4`](../../packages/validation/src/metrics/intervals.ts#L4) | - baseline = median of the 250–200 ms pre-R segment (PR/TP region) [ENG]; |
+| [`intervals.ts:4`](../../packages/validation/src/metrics/intervals.ts#L4) | - baseline = median of the 250–200 ms pre-R segment (PR/TP region) [ENG: measurement]; |
 | [`intervals.ts:9`](../../packages/validation/src/metrics/intervals.ts#L9) | PR = QRS onset − P onset; QRS = offset − onset; QT = T end − QRS onset; QTc Fridericia = QT / RR^(1/3). |
 | [`resp-variation.ts:2`](../../packages/validation/src/metrics/resp-variation.ts#L2) | per breath (inspiration onset to the next), PPV = (PPmax − PPmin) / mean(PPmax, PPmin) · 100 and SPV = SBPmax − |
 | [`resp-variation.ts:3`](../../packages/validation/src/metrics/resp-variation.ts#L3) | SBPmin; phase = (time of the PPmax beat − inspiration onset) / breath length, 0…1. Positive-pressure ventilation puts |
@@ -72,7 +72,7 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `MGH_CO2_REF_MMHG` | `38` | mmHg | [ENG] | [ENG] decision 11 |
+| `MGH_CO2_REF_MMHG` | `38` | mmHg | [ENG: measurement] | [ENG: measurement] decision 11 |
 
 ### [`datasets/select.ts`](../../packages/validation/src/datasets/select.ts)
 
@@ -85,7 +85,7 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `HYPO_MAP` | `65` | — | [ENG; the usual IOH definition is MAP < 65] | Minimum seconds of ART_MBP < 65 that tag a window `hypotension` [ENG; the usual IOH definition is MAP < 65]. |
+| `HYPO_MAP` | `65` | — | [ENG: measurement; the usual IOH definition is MAP < 65] | Minimum seconds of ART_MBP < 65 that tag a window `hypotension` [ENG: measurement; the usual IOH definition is MAP < 65]. |
 | `HYPO_MIN_S` | `60` | s | — | — |
 
 ### [`engine/match.ts`](../../packages/validation/src/engine/match.ts)
@@ -124,7 +124,7 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `POLL_S` | `0.1` | s | [ENG] | The driver is polled every POLL_S of sim time (a 60 fps host polls every ≈ 17 ms; 100 ms keeps runs fast) [ENG]. |
+| `POLL_S` | `0.1` | s | [ENG: measurement] | The driver is polled every POLL_S of sim time (a 60 fps host polls every ≈ 17 ms; 100 ms keeps runs fast) [ENG: measurement]. |
 
 ## Functions
 
@@ -153,7 +153,10 @@ No exported `…State` type in this module.
 | `overBudget` | [`perf/tick-bench.ts`](../../packages/validation/src/perf/tick-bench.ts) | The p99 gate of `perf:ticks --budget-ms` — a reason when the tail is over budget (or not a number), else null. |
 | `compareWave` | [`regression/baseline.ts`](../../packages/validation/src/regression/baseline.ts) | Per-sample 2 % comparison; |
 | `runRegression` | [`regression/baseline.ts`](../../packages/validation/src/regression/baseline.ts) | Compare every case with the committed baseline; |
+| `allRows` | [`report/write.ts`](../../packages/validation/src/report/write.ts) | Every graded row of every suite, in report order. |
+| `gatingFailures` | [`report/write.ts`](../../packages/validation/src/report/write.ts) | What fails the run: |
 | `toClip` | [`review/clips.ts`](../../packages/validation/src/review/clips.ts) | A 10 s clip from the middle of a window, at the engine rate, ECG band-passed like the monitor filter. |
+| `gradeCross` | [`segments/run.ts`](../../packages/validation/src/segments/run.ts) | Grade a row across documents from their runs; |
 | `quantile` | [`stats.ts`](../../packages/validation/src/stats.ts) | Distribution statistics for recorded-vs-generated comparisons (brief §9; |
 | `ksD` | [`stats.ts`](../../packages/validation/src/stats.ts) | Two-sample Kolmogorov–Smirnov statistic D (0 = identical empirical CDFs, 1 = disjoint). |
 | `wasserstein1` | [`stats.ts`](../../packages/validation/src/stats.ts) | 1-Wasserstein (earth mover's) distance between two empirical distributions, in the data's units. |
@@ -163,7 +166,7 @@ No exported `…State` type in this module.
 | `engineBeat` | [`templates/compare-ptbxl.ts`](../../packages/validation/src/templates/compare-ptbxl.ts) | The engine's 12-lead normal beat around R (R = kernel τ 40 ms), for a given QT. |
 | `highpassZeroPhase` | [`templates/dsp.ts`](../../packages/validation/src/templates/dsp.ts) | Zero-phase first-order high-pass (forward + backward), cut-off fc. |
 | `bandpassZeroPhase` | [`templates/dsp.ts`](../../packages/validation/src/templates/dsp.ts) | Zero-phase band-pass: |
-| `resample` | [`templates/dsp.ts`](../../packages/validation/src/templates/dsp.ts) | Resample fsIn → fsOut with a Hann-windowed sinc interpolator (±16 input samples, anti-aliased) [ENG]. |
+| `resample` | [`templates/dsp.ts`](../../packages/validation/src/templates/dsp.ts) | Resample fsIn → fsOut with a Hann-windowed sinc interpolator (±16 input samples, anti-aliased) [ENG: |
 | `toInt16Base64` | [`templates/dsp.ts`](../../packages/validation/src/templates/dsp.ts) | Quantise a unit-RMS signal to Int16 (× scale) and base64-encode it little-endian. |
 | `parseSums` | [`templates/fetch.ts`](../../packages/validation/src/templates/fetch.ts) | Parse SHA256SUMS.txt ("<hex> <path>" per line). |
 | `parseHeader` | [`templates/wfdb.ts`](../../packages/validation/src/templates/wfdb.ts) | Parse a .hea text (record line + one line per signal). |
@@ -171,13 +174,13 @@ No exported `…State` type in this module.
 | `decode16` | [`templates/wfdb.ts`](../../packages/validation/src/templates/wfdb.ts) | Decode format 16 (16-bit little-endian two's complement), interleaved over nSignals. |
 | `parseAnnotations` | [`templates/wfdb.ts`](../../packages/validation/src/templates/wfdb.ts) | Parse an MIT-format annotation file (annot(5)). |
 
-Exported without a doc comment: `provenanceQueue`, `bedsideMarkdown`, `cacheDir`, `readCsv`, `fetchZenodo`, `readManifest`, `writeManifest`, `selectVitaldb`, `selectMghdb`, `parseVital`, `vitaldbSums`, `loadCase`, `capture`, `numericSeries`, `matchedRun`, `capnoAngles`, `hrAveragingError`, `nibpVsAbp`, `paEtGap`, `detectR`, `intervalsOf`, `ppgAbp`, `respVariation`, `computeWindowMetrics`, `ptbxlIntervals`, `engineIntervals`, `measurePairs`, `gradePairs`, `oursDoc`, `pulseDir`, `loadPulse`, `tickBench`, `generate`, `readBaseline`, `writeBaseline`, `hashRun`, `runDeterminism`, `writeGolden`, `calibrationQueue`, `gatingFailures`, `renderMarkdown`, `renderQueue`, `shuffle`, `buildBundle`, `scoreReview`, `scoreMarkdown`, `resolveRef`, `gradeTarget`, `runValidationDoc`, `pearson`, `medianBeat`, `comparePtbxl`, `extractAf`, `extractVf`, `fetchCached`, `sha256`, `fetchVerified`, `writeTemplateModule`.
+Exported without a doc comment: `provenanceQueue`, `bedsideMarkdown`, `cacheDir`, `readCsv`, `fetchZenodo`, `readManifest`, `writeManifest`, `selectVitaldb`, `selectMghdb`, `parseVital`, `vitaldbSums`, `loadCase`, `capture`, `numericSeries`, `matchedRun`, `capnoAngles`, `hrAveragingError`, `nibpVsAbp`, `paEtGap`, `detectR`, `intervalsOf`, `ppgAbp`, `respVariation`, `computeWindowMetrics`, `ptbxlIntervals`, `engineIntervals`, `measurePairs`, `gradePairs`, `oursDoc`, `pulseDir`, `loadPulse`, `tickBench`, `generate`, `readBaseline`, `writeBaseline`, `hashRun`, `runDeterminism`, `writeGolden`, `counts`, `calibrationQueue`, `renderMarkdown`, `renderQueue`, `shuffle`, `buildBundle`, `scoreReview`, `scoreMarkdown`, `resolveRef`, `gradeTarget`, `runValidationDoc`, `pearson`, `medianBeat`, `comparePtbxl`, `extractAf`, `extractVf`, `fetchCached`, `sha256`, `fetchVerified`, `writeTemplateModule`.
 
 ## Source files
 
 | File | Header |
 |---|---|
-| [`bedside/apply.ts`](../../packages/validation/src/bedside/apply.ts) | Bedside results (the checklist page's download) → docs/validation/bedside/<date>.md with a verdict table and the skin-provenance queue: every 'close'/'wrong' item lists the saadat-like skin fields to revisit, with Ali's |
+| [`bedside/apply.ts`](../../packages/validation/src/bedside/apply.ts) | Bedside results (the checklist page's download) → docs/validation/bedside/<date>.md with a verdict table and the skin-provenance queue: every 'close'/'wrong' item lists the saadat-like skin fields to revisit, with the ow |
 | [`bedside/checklist.ts`](../../packages/validation/src/bedside/checklist.ts) | The Saadat Alborz B9 bedside checklist (research/06 §7 "Photo checklist", "Audio", "Behaviour stopwatch") as data: each item says what to do at the real monitor, how the engine page demonstrates the same behaviour on the |
 | [`bedside/cli-apply.ts`](../../packages/validation/src/bedside/cli-apply.ts) | Entry-only: pnpm --filter @pme/validation bedside:apply --results <bedside-results.json> |
 | [`cli/validate.ts`](../../packages/validation/src/cli/validate.ts) | `pnpm validate` (root) → docs/validation/report.md, report.json, calibration-queue.md. |
@@ -217,12 +220,13 @@ Exported without a doc comment: `provenanceQueue`, `bedsideMarkdown`, `cacheDir`
 | [`perf/tick-bench.ts`](../../packages/validation/src/perf/tick-bench.ts) | Worker tick-time percentiles, measured in Node on the same engine code the worker runs (the worker has no timing hook and the validation harness may not add one). |
 | [`regression/baseline.ts`](../../packages/validation/src/regression/baseline.ts) | Waveform regression baselines (N-P02): fixed scenarios, 5 s windows per channel, compared sample by sample with a 2 % limit. |
 | [`regression/determinism.ts`](../../packages/validation/src/regression/determinism.ts) | V9 determinism (brief §9): SHA-256 of the sample buffers for rhythms × seeds × 60 s. |
+| [`report/expected-ids.ts`](../../packages/validation/src/report/expected-ids.ts) | The ids of the validation gate's expected failures (brief 84): one per missing mechanism, each the row of docs/guides/known-deviations.md "Validation gate: expected failures" that names it. |
 | [`report/types.ts`](../../packages/validation/src/report/types.ts) | The report of one `pnpm validate` run (docs/validation/report.json); report.md is rendered from it. |
 | [`report/write.ts`](../../packages/validation/src/report/write.ts) | report.md + report.json + calibration-queue.md (brief §9; the calibration queue lists every row that fell outside its band, for the calibration pass). |
 | [`review/cli-clips.ts`](../../packages/validation/src/review/cli-clips.ts) | Entry-only: pnpm --filter @pme/validation review:build [--per-channel 20] Writes <cache>/review/<session>/bundle.json (open it in validation-review.html) and key.json (keep it away from raters). |
 | [`review/cli-score.ts`](../../packages/validation/src/review/cli-score.ts) | Entry-only: pnpm --filter @pme/validation review:score --bundle B --key K --answers A [--out dir] |
 | [`review/clips.ts`](../../packages/validation/src/review/clips.ts) | Build a blind-review bundle (brief §9 step 1–2): per channel N real 10 s segments (VitalDB, MGH/MF manifest windows) and N synthetic ones from engine runs matched to the same windows, all resampled to the engine's rates |
-| [`review/score.ts`](../../packages/validation/src/review/score.ts) | Scoring of one rater's blind review (brief §9 step 4): per channel, identification accuracy (chance 50 %; pass ≤ 60 %), mean realism of synthetic clips (pass ≥ 4.0) and the real − synthetic gap (pass ≤ 0.5 [ENG]), with a |
+| [`review/score.ts`](../../packages/validation/src/review/score.ts) | Scoring of one rater's blind review (brief §9 step 4): per channel, identification accuracy (chance 50 %; pass ≤ 60 %), mean realism of synthetic clips (pass ≥ 4.0) and the real − synthetic gap (pass ≤ 0.5 [ENG: measurem |
 | [`review/types.ts`](../../packages/validation/src/review/types.ts) | Blind realism review (brief §9 "Realism review protocol"): bundle → page → answers → score. |
 | [`segments/grade.ts`](../../packages/validation/src/segments/grade.ts) | Target grading. errPct = 0 when the target holds, else the distance to the nearest satisfying value as a percentage of that value's magnitude. |
 | [`segments/run.ts`](../../packages/validation/src/segments/run.ts) | Headless runner: one pme-validation/1 document → the scenario driven through the ScenarioDriver on a bare engine (no renderer), the series recorded, every target graded. |
@@ -268,6 +272,7 @@ None recorded.
 | [`invalid-results/detect-r.test.ts`](../../packages/validation/test/invalid-results/detect-r.test.ts) | 0 | 0 |
 | [`invalid-results/run-refused.test.ts`](../../packages/validation/test/invalid-results/run-refused.test.ts) | 0 | 0 |
 | [`invalid-results/tick-gate.test.ts`](../../packages/validation/test/invalid-results/tick-gate.test.ts) | 0 | 0 |
+| [`markers-rule.test.ts`](../../packages/validation/test/markers-rule.test.ts) | 0 | 0 |
 | [`metrics/abp.test.ts`](../../packages/validation/test/metrics/abp.test.ts) | 0 | 0 |
 | [`metrics/capno.test.ts`](../../packages/validation/test/metrics/capno.test.ts) | 0 | 0 |
 | [`metrics/intervals.test.ts`](../../packages/validation/test/metrics/intervals.test.ts) | 0 | 0 |

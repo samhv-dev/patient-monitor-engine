@@ -66,7 +66,7 @@
 > Part B); **Task 0 Step 6b** is a new precondition check for FU-8 Part A's fast-AF fix (CM-15c) with AF-rig guards in
 > **Tasks 11, 12 and 19** if it has not landed; **Task 18** gains a diabetic dexamethasone arm (ET-19); **Tasks 16 and 6**
 > carry notes naming the asthma-reactivity (CM-11a) and OSA opioid-sensitivity (CM-12a) seams — notes, not tasks; and
-> **Requests → FU-8** states that the resting-sympathetic-tone gap (C1) is FU-8 Part B's with Ali reviewing first, that
+> **Requests → FU-8** states that the resting-sympathetic-tone gap (C1) is FU-8 Part B's with samhv-dev reviewing first, that
 > Task 9 adds no resting tone and that **E-FU7-3 is not widened**. The amendment adds no `ts` find block; the code strings
 > it touches were re-verified unique on 66e3052 (the dobutamine row's quoted form corrected to the merged tree's).
 >
@@ -115,8 +115,8 @@
    note (TXA keeps a hook for 7i's coagulation).
 
 Plus: `pnpm run audit:drugs` in the repo (research/14's scripts adopted as the regression harness), the flipped matrix
-cells as engine tests (SLOW set, yields per sim-MINUTE), Chromium-only e2e screenshots ≤ 60 KB for the gate, and Ali's
-nine questions decided wherever the textbooks are clear (the rest marked "confirm with Ali").
+cells as engine tests (SLOW set, yields per sim-MINUTE), Chromium-only e2e screenshots ≤ 60 KB for the gate, and the owner's
+nine questions decided wherever the textbooks are clear (the rest marked "confirm with samhv-dev").
 
 **Architecture:** no new module crosses a stage boundary. 7g keeps every drug's PK and PD (R51 §1–2): the onset chain,
 the two potency outputs, the β-occupancy input, the indirect-sympathomimetic drive, the antiarrhythmic hooks, the
@@ -132,7 +132,7 @@ dependencies.
 **R51 + addenda 8–24** (drug-layer contract; addenda 19–24 are this plan's scope), **R25** (partition, own worktree),
 **R50** (review before execution), **R53** (integration polish), **R54** (the coverage matrix is the standing
 definition of linked physiology; each gate shows its part), **CI amendments 1–4**. Evidence:
-`research/14-audit-drug-interactions.md` (§2 cells, §3 gaps D1–D15, §4 the owners' acceptance cells, §5 Ali's nine
+`research/14-audit-drug-interactions.md` (§2 cells, §3 gaps D1–D15, §4 the owners' acceptance cells, §5 the owner's nine
 questions), `research/12-coverage-matrix.md` §4.4 (the ledger this plan flips), `research/11-capability-inventory-and-glossary.md`
 §5 (the clinical labels used in tests and the console), `docs/gates/stage-7g.md`, `docs/plans/stage-7g-pkpd.md`,
 `docs/plans/fu-4-integration-polish.md` (sympathetic output + set-point reset, humoral arm, arrest machine, potassium,
@@ -149,9 +149,9 @@ the relative apnoea threshold, hvrDep). Parameter tables: `docs/physiology/stage
   `it.fails` whose band is now met is flipped to `it` (keeping the old number in a trailing "was …" clause). Every
   changed parameter is sourced or `[ENG]` with its fit target named in the code comment. In this plan the pre-declared
   and expected `it.fails` are listed in "Expected `it.fails` after FU-7" and repeated in each task; the known ones are
-  the ephedrine β-blocked ratio (Task 8/9, measured 0.99 against 0.3–0.7 — Ali's Q1), the fentanyl 5 µg/kg apnoea
+  the ephedrine β-blocked ratio (Task 8/9, measured 0.99 against 0.3–0.7 — the owner's Q1), the fentanyl 5 µg/kg apnoea
   duration (Task 7, FU-6-dependent) and the DI-01c haemodynamic synergy (Task 9, FU-4's `symp` rows).
-  **A cell of research/14 is NEVER "fixed" by editing the audit's band** — the audit's bands are proposals for Ali; the
+  **A cell of research/14 is NEVER "fixed" by editing the audit's band** — the audit's bands are proposals for samhv-dev; the
   harness adopted in Task 1 keeps them byte for byte, and a cell that stays non-PL is reported in the gate note.
 - **R51 + addenda 19–24 (binding).** 7g owns all PK and PD and every drug event (`l2/pk/**`); others read published
   outputs. Canonical names introduced by this plan (the R51 name list for the next stages):
@@ -369,7 +369,7 @@ scaling applies, and (c) the new `catReserve` weakens it when catecholamines are
 cold sepsis **+1.8 % → −0.5 %** (sign correct: the direct depression is unmasked); ephedrine MAP rise **7.8 → 13.4**
 (band 8–25, now PL) and the repeat ratio **0.37 → 0.54** (band 0.4–0.95, now PL). The β-blocked ephedrine RATIO stays
 0.99 against 0.3–0.7: with α intact and the reflex buffering the β1 loss, the engine cannot halve the response by a
-mechanism — it stays `it.fails` with the number and goes to Ali as Q1 (see "Open questions").
+mechanism — it stays `it.fails` with the number and goes to samhv-dev as Q1 (see "Open questions").
 
 **D7 — the apnoea flag has ONE truth: the chemoreflex's own zero rate (addendum 20).** `drive.ts` computes `apnoea`
 from drug depression alone, so DI-89 shows the flag set for 255 s (380 s on the prototype) while spontaneous VE is
@@ -425,12 +425,12 @@ arrhythmia hazard in v1). Tranexamic acid KEEPS its row and gains a documented h
 (`// 7i: fibrinolysis target — TXA becomes active with R58's coagulation model`), with a quiet test asserting it stays
 inert until then: R58 explicitly gives coagulation to 7i, so removing the row would lose the dose log 7i needs.
 
-**D13 — new library rows: glucagon and verapamil only (Ali's Q9).** Glucagon is required by addendum 21 (β-blocked
+**D13 — new library rows: glucagon and verapamil only (the owner's Q9).** Glucagon is required by addendum 21 (β-blocked
 anaphylaxis / β-blocker overdose rescue: it raises cAMP past the blocked receptor, so it is the ONE drug that restores
 inotropy at full β-occupancy) and verapamil by DI-15 (the pre-excited-AF teaching hazard). Nitroprusside is added
 because addendum 24 names it in the vasodilator re-fit. Hydrocortisone, heparin and protamine are NOT added: hydro-
 cortisone needs 7e's cortisol replacement semantics and heparin/protamine need 7i's coagulation (R58) — both recorded
-as requests. Iranian-practice priorities stay Ali's question. (ET amendment: hydrocortisone also waits for a BASAL
+as requests. Iranian-practice priorities stay the owner's question. (ET amendment: hydrocortisone also waits for a BASAL
 adrenal deficit to replace. research/14-coverage E13 measured the `adrenalInsufficiency` profile as nearly inert, and
 ET-15b is NE. The row lands with FU-10 — Requests → FU-10 item 1.)
 
@@ -526,7 +526,7 @@ carry `bronchodilation` Emax 1 at EC50 0.5 MAC, which FU-6's `relaxed()` turns i
 0.8 MAC. FU-7 re-fits the EC50 ONLY (one number for the three rows, Emax and Hill unchanged) against "airway resistance
 −20–40 % at 1 MAC" (FU-6's item 5), with FU-6's own acceptance case "Ppeak −30 % at 0.79 MAC" as a co-constraint that
 FU-7 may not break. UNPROTOTYPED (FU-6's consumer is not on any tree FU-7 can prototype on); if no EC50 meets both, the
-rows stay as they are and the item is Ali's (Q12).
+rows stay as they are and the item is the owner's (Q12).
 
 ---
 
@@ -610,7 +610,7 @@ ratio (0.93 → 0.95). Reading: the unopposed-α pressure rise is there, but the
 missing because `prof.betaBlock` 0.8 has already flattened the sympathetic HR arm while the VAGAL limb's withdrawal /
 activation caps (`SYMP_WITHDRAW_HR` 0.1, `VAGAL_WITHDRAW_MS` 200 in `l2/circ/baroreflex.ts`, 7a/FU-4's file) bound the
 response. Task 8 Step 6 measures the vagal limb directly and, if the band needs a baroreflex change, **reports instead
-of editing `baroreflex.ts`** (FU-4 owns it) — the test stays `it.fails` with the number and the item goes to Ali as Q1.
+of editing `baroreflex.ts`** (FU-4 owns it) — the test stays `it.fails` with the number and the item goes to samhv-dev as Q1.
 
 ### What the prototype did NOT move (and why)
 
@@ -854,13 +854,13 @@ a drug's sympathetic activity.
      2026-09-29 10:25). FU-7 does not fix it and does not work around it: **Task 0 Step 6b** checks it on the base
      (CM-15c: a healthy 40 y in AF 150 keeps `kIsch` ≥ 0.9 for 20 min and does not arrest) and, if it has not landed,
      Tasks 11, 12 and 19 guard their AF rigs (window under 5 min + a control-arm `kIsch` ≥ 0.9 precondition).
-  2. **Part B — the resting sympathetic tone (C1) is NOT FU-7's; FU-8 owns it, and Ali reviews the mechanism first.**
+  2. **Part B — the resting sympathetic tone (C1) is NOT FU-7's; FU-8 owns it, and samhv-dev reviews the mechanism first.**
      research/19 §3 C1: nothing in a chronic-disease profile changes the induction fall, because every sympathetic
      effector is `1 + o·gain·error` and at rest the error is zero — so there is no resting tone for an induction agent to
      remove, and the fall is ≈ −20 % in the healthy adult, the 80 y, untreated hypertension, AS + CAD, HFrEF and severe
      PH alike (CM-01b/03b/05a/06b/13a; FU-4's own S14 `it.fails` is the same gap). research/19 §4 item 6 named FU-7
      **Task 9** as a possible home because Task 9 already builds 7e's central drive with a `catReserve`. **The
-     orchestrator has placed it in FU-8 Part B instead, with Ali reviewing the mechanism (a profile-dependent tonic
+     orchestrator has placed it in FU-8 Part B instead, with samhv-dev reviewing the mechanism (a profile-dependent tonic
      share τ of resting SVR, venous tone and contractility) before it is built** — it moves the four-patient induction
      table and FU-4's calibrated rows, which is a bigger blast radius than a drug-layer plan should carry.
      Consequences, binding on this plan:
@@ -887,7 +887,7 @@ a drug's sympathetic activity.
   4. **The missing-profile family and the notes FU-7 leaves for it:** the `asthma` bronchial-reactivity gain (CM-11a,
      Task 16's note) and an `osa` opioid-sensitivity factor (CM-12a, Task 6's note) have no owner; FU-7 only keeps the
      two seams scalable by one per-profile number each. The profiles themselves (OSA, CKD, diabetic autonomic
-     neuropathy, cirrhosis) are with Ali as a v1.0-vs-v1.1 decision (research/19 §3 C10, §8).
+     neuropathy, cirrhosis) are with samhv-dev as a v1.0-vs-v1.1 decision (research/19 §3 C10, §8).
 - **FU-10 "endocrine and thermal integration" (RH/ET amendment, 2026-09-30).** This plan is not yet written; it will
   be written after the 2026-10-03 reset, off the critical path, and owns research/14-coverage E1–E13. Two items:
   1. **Hydrocortisone waits for FU-10's basal adrenal deficit (ET-15b; D13).** Today the `adrenalInsufficiency` profile
@@ -914,7 +914,7 @@ a drug's sympathetic activity.
        hypoglycaemic response, arm (f)'s `h.symp` falls, and arm (f)'s `surgeF`/`surgeCat` must stay exactly neutral.
      - FU-10 edits `hormones.ts`/`core.ts` after FU-7 merges. It re-anchors on FU-7's `h.surge`/`catReserve` lines and
        does not reorder them.
-- **The R44 calibration pass (Ali):** every row this plan re-fits carries `[ENG]` with its fit target; the calibration
+- **The R44 calibration pass (samhv-dev):** every row this plan re-fits carries `[ENG]` with its fit target; the calibration
   queue additions are listed in the gate task (Task 20 Step 6).
 
 ---
@@ -1143,7 +1143,7 @@ mkdir -p scripts/audit-drugs
 cp ../research/14-audit-scripts/*.ts ../research/14-audit-scripts/hooks.mjs scripts/audit-drugs/
 ```
 Do NOT copy `out/` (the run store). Do NOT edit any band, any `expect` entry, any `hand` verdict or any `known` field:
-the bands are Ali's proposals (R45). The only edits allowed in this task are Steps 2–3.
+the bands are the owner's proposals (R45). The only edits allowed in this task are Steps 2–3.
 - [x] **Step 2 — the engine path and the output folder.** In `scripts/audit-drugs/runner.ts`, find:
 
 ```ts
@@ -1426,7 +1426,7 @@ Rows deliberately left without `t12S`:
 Two limits are recorded in the gate note. First, a gamma INFUSION's steady state does not rise as 1/f: `infC` relaxes
 toward a target that ignores clearance. That is a known v1 limit, listed for the calibration queue and not built.
 Second, CKD's "renal drug clearance ×0.3" (tables §1.5 `ckd`) reaches these rows through `PkCtx.renal` (= 7d's
-`gfrRel`) as soon as a `ckd` profile sets it. The profile itself is FU-8 Part B / Ali's (research/19 C10). Today's
+`gfrRel`) as soon as a `ckd` profile sets it. The profile itself is FU-8 Part B / the owner's (research/19 C10). Today's
 `aki` 1 proxy keeps `gfrRel` at 0.61 (research/13 H6, RH-10a).
 
 In `packages/engine-core/src/l2/pk/row.ts`, find:
@@ -1791,13 +1791,13 @@ stale anchors hand-re-anchored. "Plan + 2c–2d" is this amendment.
 | RH-15a propofol, class III | peak ×1.5–2.0 [Johnson 2003] | ×1.73 | — | **×1.73** | PL (guard) |
 | RH-15b fentanyl, class III, 30 min | ×1.3–2.0 [Egan 1999] | ×1.19 | ×1.19 | **×1.40** (10 min ×1.51) | PL |
 | RH-07a furosemide 40 mg: onset / peak | 120–600 s / 15–45 min | 30 s / 2.5 min | **90 s / 8.5 min** | 90 s / 8.5 min | TW; label ✓ (Step 2e) |
-| RH-10a rocuronium, CKD proxy | ×1.3–1.5 | ×1.14 | — | **×1.14** | TW — H6 + missing `ckd` profile (FU-8 B / Ali) |
+| RH-10a rocuronium, CKD proxy | ×1.3–1.5 | ×1.14 | — | **×1.14** | TW — H6 + missing `ckd` profile (FU-8 B / samhv-dev) |
 
 **RH-12d is reported, not tuned.** The chain's decline for a 0.05 mg/kg bolus is mostly redistribution: its tail t½
 is 16.6 min against t½β 2.15 h. So halving or thirding clearance moves the 60-min EFFECT level only ×1.17.
 MacGilchrist's "clearance halved, t½ doubled" is a plasma elimination-phase statement. RH's 60-min band is RH's own
 reading of it. φ comes from the sourced t½β and is not an adjustable gain. Reaching 1.3 would mean replacing midazolam's
-sourced half-life with a fitted one (R45). Recorded in "Expected `it.fails`" as a cell gap and put to Ali (Q15).
+sourced half-life with a fitted one (R45). Recorded in "Expected `it.fails`" as a cell gap and put to samhv-dev (Q15).
 - [x] **Step 5 — commit.** `feat(7g): zero-slope onset for the fallback effect curve (R51 addendum 19)`, push.
 
 ---
@@ -2747,7 +2747,7 @@ opioid potency output (`CnsSpec.ventRemiEq` → `opioidVentFentEq`, D16) is the 
 opioid-sensitivity factor would multiply: obstructive sleep apnoea is taught as an exaggerated ventilatory depression to
 the same opioid dose (research/19 CM-12a proposes the `osa` profile's opioid ventilatory C50 ×0.6; DI-43 is the healthy
 cell). There is no `osa` profile in the engine today, so CM-12a is NE and FU-7 adds nothing for it — the missing-profile
-family (OSA, CKD, diabetic autonomic neuropathy, cirrhosis) is with Ali as a v1.0-vs-v1.1 decision. What matters here is
+family (OSA, CKD, diabetic autonomic neuropathy, cirrhosis) is with samhv-dev as a v1.0-vs-v1.1 decision. What matters here is
 that the potency stay ONE named output that a profile factor can scale, rather than being folded into per-row C50s: keep
 `ventRemiEq` per row and the summation in `combine.ts` as D16 defines them, so a later profile multiplies one number in
 one place. Recorded in the gate note §5 in one line; listed under Requests → profile follow-up.
@@ -3151,7 +3151,7 @@ Replace with:
       r.betaBlockC = 0.5 * s;
       // FU-7 (addendum 21): chronic metoprolol/bisoprolol — occupancy 0.85 = a dose ratio of ≈ 6.7 on every β-agonist's
       // EC50, which is tables §1.5's "β-agonist ×0.5" read as COMPETITIVE antagonism instead of a gain scale [ENG, Q1].
-      // `betaNonSel` stays false (cardioselective is the common case; the scenario/profile may set it — Q1 asks Ali
+      // `betaNonSel` stays false (cardioselective is the common case; the scenario/profile may set it — Q1 asks samhv-dev
       // whether the unopposed-α picture should need propranolol).
       r.betaOcc = 0.85 * s;
 ```
@@ -4469,7 +4469,7 @@ a band is met there, the case is written as `it`:**
 
      Assertions:
      - **no opioid: ΔMAP 20–30 mmHg.** The source is ET-16a's band: Shribman 1987 via R51 addendum 25. Shribman
-       measured laryngoscopy, and the incision-specific magnitude is put to Ali (Q17). Under R45 the band is asserted
+       measured laryngoscopy, and the incision-specific magnitude is put to samhv-dev (Q17). Under R45 the band is asserted
        as written.
      - **fentanyl 2 and 5 µg/kg: ΔMAP smaller in dose order** (direction: Desborough 2000).
 
@@ -4947,9 +4947,9 @@ shocks as well as a fresh one.
 
   The re-sourced table is therefore `{ persistent: 0.1, asystolePea: 0.8, rosc: 0.1 }`: 90 % termination, the
   midpoint of the sourced range. The ROSC share stays at the brief §6.5 value 0.1, and the extra 0.2 of termination
-  goes to asystole/PEA. The 50/50 asystole/PEA split (`ASYSTOLE_SHARE`) is unchanged; research/20 §8 Q2 asks Ali
+  goes to asystole/PEA. The 50/50 asystole/PEA split (`ASYSTOLE_SHARE`) is unchanged; research/20 §8 Q2 asks samhv-dev
   whether more should land in PEA. This supersedes brief §6.5's `persistent 0.3` row. The gate note §5 names it for
-  Ali (research/20 §8 Q2), and Stage 4's test follows it (Step 0).
+  samhv-dev (research/20 §8 Q2), and Stage 4's test follows it (Step 0).
 - **temperature (DV amendment (b), DV-24a/b).** VF below 30 °C is often refractory to shocks:
   - ERC 2021 special circumstances (Lott C et al., Resuscitation 2021;161:152): if three shocks fail below 30 °C,
     delay further attempts until the core is > 30 °C;
@@ -4959,7 +4959,7 @@ shocks as well as a fresh one.
   `× clamp(1 − 0.3·(30 − tempC)⁺, 0.2, 1)`.
   - It gives 1 at ≥ 30 °C, 0.55 at 28.5 °C (termination 90 → 49.5 %) and the floor 0.2 below ≈ 27.3 °C.
   - The magnitude is [ENG]: the sources give the direction and the 30 °C threshold, not a rate. It is one named
-    constant pair for Ali's calibration pass.
+    constant pair for the owner's calibration pass.
   - The improved defibrillation at 33 °C in swine (Boddicker KA et al., Circulation 2005;111:3195) is NOT modelled.
     The factor is 1 at ≥ 30 °C, and the gate note records the omission.
 - **cardioversion by rhythm and energy (DV amendment (d), DV-06a–c).** The flat `CARDIOVERSION_SINUS` 0.8 becomes a
@@ -4977,10 +4977,10 @@ shocks as well as a fresh one.
     re-fitted: raising 120 J would put 50 J above the sourced 20–30 %.
   - `atrialTach`, `junctionalTachy` and `mat` keep the flat 0.8. For an automatic focus (MAT, focal AT, junctional
     tachycardia) cardioversion is known to be ineffective (2015 ACC/AHA/HRS SVT guideline). That is a new question for
-    Ali (Open questions), not a DV finding.
+    samhv-dev (Open questions), not a DV finding.
   - The R-on-T branch (`R_ON_T_VF`) is unchanged.
 All factors are `[ENG]` COMBINATIONS of sourced directions; each is one named constant with its citation, and the gate
-note lists them for Ali's calibration pass.
+note lists them for the owner's calibration pass.
 
 - [x] **Step 0 — the re-sourced base table (DV amendment (a)).** In `packages/engine-core/src/l3/defib-pacer/outcome.ts`,
 find:
@@ -6083,7 +6083,7 @@ factor belongs: the asthmatic airway constricts MORE to the same stimulus than t
 bronchospasm on instrumentation 0.02 / 0.1 / 0.2 by reactivity). research/19's CM-11a is **MI** today — the asthma
 profile has no reactivity gain, so a histamine releaser and an instrumentation stimulus act on an asthmatic exactly as on
 a healthy patient. FU-7 does **not** add that gain (it is the `asthma` profile's, i.e. 7a/7b profile territory, and the
-CM run routed the missing-profile family to Ali's v1.0-vs-v1.1 decision). What FU-7 owes it is that the seam be shaped so
+CM run routed the missing-profile family to the owner's v1.0-vs-v1.1 decision). What FU-7 owes it is that the seam be shaped so
 a single per-profile factor can scale the constrictor input later without touching any drug row: keep the constrictor
 input a **plain scalable input to the condition's reversible share** (`conditions.ts`), not a hard-coded per-drug airway
 effect. The gate note §5 records this in one line ("CM-11a: the reactivity gain has no owner; the seam accepts one") and
@@ -6118,7 +6118,7 @@ compartments, and mivacurium's plasma-cholinesterase sensitivity comes along cor
   - a guard test (Task 19 case 6): **"atracurium 0.5 mg/kg leaves the TOF unchanged (declared v1 limitation)"**;
   - one line in the gate note §5 AND in the instructor label / row `onset` text, so the rows cannot be mistaken for
     paralysing agents: `onset: '… v1: histamine release only — NO neuromuscular block (7f models four NMB agents)'`;
-  - Ali's Q11 (below) asks whether the two rows should instead be DEFERRED until 7f can give them a block.
+  - The owner's Q11 (below) asks whether the two rows should instead be DEFERRED until 7f can give them a block.
 Verify that `bus.agents` still typechecks and that `nmb.test.ts` is green.
 - [x] **Step 2 — 7a consumes it (E-FU7-3).** In `packages/engine-core/src/l2/circ/model.ts`, in `control()`, after the
 `d7` merge, add:
@@ -6242,7 +6242,7 @@ HFrEF) and flipped only if that rig meets +20 % — CM-06d does not license the 
     artefact of finding 4). Lowering the EC50 to 150 makes the 1 mg/kg dose STRONGER, so CM-04d can leave its band
     from the other side. Step 5 therefore re-measures **CM-04d, CM-14c and CM-15b** after the refit and the gate note
     carries the before/after pair for each; if CM-04d leaves −30 to −10, the EC50 is moved back toward 250 until both
-    the 0.5 mg/kg band and the 1 mg/kg band hold, and if no single value does, both numbers go to Ali (Q12) with the
+    the 0.5 mg/kg band and the 1 mg/kg band hold, and if no single value does, both numbers go to samhv-dev (Q12) with the
     rows left at the value that keeps the SOURCED 0.5 mg/kg band and CM-04d's own band is reported as the cost.
   - **hydralazine / labetalol:** unchanged (DI-59, the healthy onset/offset cell, is PL) — listed here so the gate note
     can say they were checked. **CM amendment (finding 2):** DI-59 is a HEALTHY rig; in HFrEF the same dose raises SV
@@ -6254,7 +6254,7 @@ HFrEF) and flipped only if that rig meets +20 % — CM-06d does not license the 
   - **nitroprusside (new row, D13):**
 ```ts
   // FU-7 (addendum 24): sodium nitroprusside — the balanced arterial+venous dilator addendum 24 names. Rate-equivalent
-  // Ce as the other vasoactives (decision 4). Cyanide toxicity is NOT modelled in v1 (a note for 7i/Ali).
+  // Ce as the other vasoactives (decision 4). Cyanide toxicity is NOT modelled in v1 (a note for 7i/samhv-dev).
   { id: 'nitroprusside', name: 'Sodium nitroprusside', cls: 'vasodilator', amountUnit: 'mcg', pk: vaso(0.05, 0.3, 1.2),
     pd: [{ target: 'svr', emax: -0.6, ec50: 1 }, { target: 'v0Frac', emax: 0.12, ec50: 1 }, { target: 'pvr', emax: -0.3, ec50: 1 }, { target: 'hpvInhibit', emax: 0.8, ec50: 1 }],
     syringePerMl: 200, doses: '0.3–3 µg/kg/min (max 10 for < 10 min)', onset: 'onset < 30 s, offset 1–2 min (label)',
@@ -6280,7 +6280,7 @@ HFrEF) and flipped only if that rig meets +20 % — CM-06d does not license the 
     candidate is `ec50: 1.0` (B 0.44 at 0.8 MAC, 0.5 at 1 MAC); (3) the CO-CONSTRAINT is FU-6's own acceptance case
     "sevoflurane toward 1 MAC bronchodilates: Ppeak −30 % by 10 min (MAC 0.79, 40.0 → 25.0)" — FU-7 must not break a
     FU-6 band (R45), so if no EC50 meets BOTH, the rows stay at `ec50: 0.5`, both numbers go to the gate note §5 and
-    the item goes to Ali (Q12 below); the executor does NOT edit FU-6's test. Comment on each re-fitted entry:
+    the item goes to samhv-dev (Q12 below); the executor does NOT edit FU-6's test. Comment on each re-fitted entry:
 ```ts
       // FU-7 (FU-6 seam item 5; D23): volatile bronchodilation re-fitted — EC50 <value> MAC [ENG; fit target: airway
       // resistance −20–40 % at 1 MAC in FU-6's bronchospasm rig, with FU-6's "Ppeak −30 % at 0.79 MAC" case kept green]
@@ -6627,7 +6627,7 @@ MAP moves 0 in both arms at 1 h. So case (1) is `it`, and in Step 4a the compari
 1.02). The absolute band is **`it.fails` "diabetic dexamethasone peak +2–4 mmol/L at 4–8 h (PADDI): measured +1.83;
 non-diabetic +1.02"**, 0.17 short, with 7e's glucose model (CM-09c) as the owner of the remainder. The Emax stays at 4000.
 ET-19's own band carries [VERIFY magnitude] in research/14-coverage. So the gate note also puts the PADDI magnitude to
-Ali (Q16) before anyone treats 0.17 mmol/L as a defect.
+samhv-dev (Q16) before anyone treats 0.17 mmol/L as a defect.
 - [x] **Step 5 — the cells.** Also run the CM diabetic cell as a regression guard (CM amendment, finding 8):
 `cd research/19-audit-scripts && CM_OUT=<scratchpad>/fu-7-task18/cells.json PME_ENGINE=<wt>/packages/engine-core/src/index.ts ./run.sh cli.ts CM-09c`
 — it is PL today (diabetic peak 11.1 vs healthy 7.6 mmol/L under surgical stress, no dexamethasone) and must stay PL:
@@ -6777,12 +6777,12 @@ fact recorded):
   review F12), `uHyp` antagonist-corrected (a behaviour change for 7d under flumazenil, review F8), the volatile
   bronchodilation re-fit and whether FU-6's co-constraint held (D23), the dexmedetomidine half-model (Task 17), and every
   `[ENG]` probability of Tasks 11–12;
-  §6 the calibration-queue additions for Ali's R44 pass;
+  §6 the calibration-queue additions for the owner's R44 pass;
   §7 CI: the three test-set counts, the tick-bench p50, the PNG sizes, the SLOW_B group membership;
   §8 the re-anchorings of Task 0 Step 3 and Task 20 Step 1;
   §9 the exceptions used (E-FU7-1…10, all APPROVED by Orchestrator ruling (FU-7 review) 6) with file:line, and the ones
   declared but unused;
-  §10 the open questions (below), marked "confirm with Ali" where the plan decided them from the textbooks.
+  §10 the open questions (below), marked "confirm with samhv-dev" where the plan decided them from the textbooks.
 - [x] **Step 4 — the matrix ledger.** Update `research/12`'s §4.4 ledger? **No** — `research/**` is outside this repo and
 outside the partition. Instead the gate note §3 carries the new verdict column and states that the orchestrator folds it
 into research/12 (the audit's own convention: "for each gate the owner pastes the report rows into its gate note").
@@ -6792,8 +6792,8 @@ gh pr create --title "FU-7: drug-layer integration — onset, hypnotic/opioid po
 ```
 The body: the goal, the task list with its numbers, the acceptance table, the `it.fails` list, the deviations, the open
 questions, the CI counts, and the last line `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
-**Never merge** (R51/R25; PR-review workflow: Ali speaks the merge).
-- [x] **Step 6 — the calibration queue for the gate note §6.** The rows this plan knowingly leaves for Ali:
+**Never merge** (R51/R25; PR-review workflow: samhv-dev speaks the merge).
+- [x] **Step 6 — the calibration queue for the gate note §6.** The rows this plan knowingly leaves for samhv-dev:
 ephedrine's β-blocked ratio (0.99 vs 0.3–0.7, Q1); the unopposed-α reflex bradycardia; ketamine's LOC at 20 s (D20);
 the catecholamine reserve's τ and floor; the five shock-state factors of Task 12; the conversion hazards'
 trial-to-hazard mapping; atracurium/mivacurium PK (and whether they get a block, Q11); the histamine sizes (`HIST_SVR`,
@@ -6829,45 +6829,45 @@ Cell gaps with no repo test (research runners only, reported in the gate note §
 
 (The midazolam nadir row of the first draft is GONE: Task 2 Step 2b's `tpS` 240 puts DI-88 at 190 s, inside 120–420.)
 
-## Open questions (for the orchestrator / Ali; the plan does not wait on them)
+## Open questions (for the orchestrator / samhv-dev; the plan does not wait on them)
 
 Decided from the textbooks where they were clear; each says what it decided and what to confirm.
 
 1. **Q1 — chronic β-blockade and vasopressors (audit Q1).** DECIDED: occupancy 0.85 (dose ratio ≈ 6.7) for the
    `betaBlocked` profile, β1-selective by default, with `betaNonSel` available for propranolol-like blockade. The
-   tables' "ephedrine ×0.5" is NOT reachable as a pressor RATIO by this mechanism (measured 0.99) — **confirm with Ali**
+   tables' "ephedrine ×0.5" is NOT reachable as a pressor RATIO by this mechanism (measured 0.99) — **confirm with samhv-dev**
    whether the teaching target is the ×0.5 pressor ratio (which needs a new coupling) or the loss of the chronotropic
-   response (which the engine now shows: HR +1 vs +5). Also **confirm with Ali** whether unopposed-α hypertension with
+   response (which the engine now shows: HR +1 vs +5). Also **confirm with samhv-dev** whether unopposed-α hypertension with
    reflex bradycardia should need NON-SELECTIVE blockade (the plan assumes yes: Miller ch. 14).
 2. **Q-FU7-2 — the opioid ventilatory potency. DECIDED (Orchestrator ruling (FU-7 review) 4; D16):** `CnsSpec.ventRemiEq`
    per row with remifentanil PINNED at 1.0 (FU-6's single-agent calibration cannot move), fentanyl 0.55 (D-7f-3, one
    source `FENT_VENT_REMI_EQ`), sufentanil 5 and morphine 0.8 [ENG]; the drive reads 7g's `opioidVentFentEq` and 7f's own
    sum is only the duck-typed fallback. No FU-6 band is re-fitted (none exists for sufentanil/morphine). **Confirm with
-   Ali** the two [ENG] weights.
+   samhv-dev** the two [ENG] weights.
 3. **Q3 — laryngoscopy after propofol alone (audit Q3).** DECIDED: +20–30 mmHg and HR +12–30 for 2–5 min (Shribman 1987;
    M10 ch. 44; tables §5.3), reached by R51 addendum 25's mechanism — the nociceptive set-point reset
    (`SURGE_SET_PER_NOX` 0.25, cap 0.25) PLUS the circulating catecholamine release (`SURGE_NE_GAIN` 0.6 [ENG]): measured
-   +27.2 / +17 (D22). **Confirm with Ali** (a) whether the elderly response should be smaller (the same factor at every
-   age; the tables have no age row) and (b) the AWAKE band: the plan uses the task's M10 +20–40 (measured +36.9); if Ali
+   +27.2 / +17 (D22). **Confirm with samhv-dev** (a) whether the elderly response should be smaller (the same factor at every
+   age; the tables have no age row) and (b) the AWAKE band: the plan uses the task's M10 +20–40 (measured +36.9); if samhv-dev
    wants 20–30 awake as well, that arm becomes `it.fails`.
 4. **Q4 — the onset targets (audit Q4).** DECIDED from the labels: naloxone and flumazenil 1–2 min, midazolam peak
    3–5 min, ketamine LOC 30–60 s. The chain reproduces each row's `tpS`/`t10S`; THREE rows got better-sourced data
    (review F7, ruling 6: atropine `tpS` 150, midazolam `tpS` 240, ketamine `t10S` 2700 — D19b, D20). Left: ketamine LOC
    20 s (the pinned `it.fails`, D20) and DI-72's 5 s consciousness recovery (a rig artefact — "Prototype — second fixer").
 5. **Q5 — propofol CSHT (audit Q5).** DECIDED: keep Eleveld (it gives the right emergence times, 7.2 / 8.7 min) and
-   teach the short CSHT from it; the 1.15–1.8 band of DI-44 was read off a Marsh-era figure. **Confirm with Ali** (the
+   teach the short CSHT from it; the 1.15–1.8 band of DI-44 was read off a Marsh-era figure. **Confirm with samhv-dev** (the
    audit already recommends this; no code changes).
 6. **Q6 — volatile potentiation of rocuronium (audit Q6).** DECIDED: re-size the divisor to 25–80 % of duration
-   (0.18 [ENG], Task 14), because 127 % is outside every source. **Confirm with Ali** that +30–50 % at 1 MAC matches his
+   (0.18 [ENG], Task 14), because 127 % is outside every source. **Confirm with samhv-dev** that +30–50 % at 1 MAC matches his
    experience.
 7. **Q7 — MANUAL and drugs (audit Q7/Q9).** NOT decided: DI-M4 shows esmolol, atropine and ephedrine moving the
-   displayed HR by 0 in MANUAL. This plan does not touch MANUAL (it is Ali's Q9 and FU-4's G9 area). If Ali says drugs
+   displayed HR by 0 in MANUAL. This plan does not touch MANUAL (it is the owner's Q9 and FU-4's G9 area). If samhv-dev says drugs
    should move the instructor's HR, that is a new task in FU-4's or FU-5's area, not here.
 8. **Q8 — sepsis catecholamine responsiveness (audit Q8).** NOT decided (FU-4's G8). FU-7's `catReserve` is a SEPARATE
    mechanism (depletion, not receptor responsiveness) and is sized to the direction only.
 9. **Q9 — which missing drugs (audit Q9).** DECIDED: glucagon (addendum 21 needs it), verapamil (DI-15) and
    nitroprusside (addendum 24 names it). NOT added: hydrocortisone (needs 7e's cortisol replacement semantics),
-   heparin and protamine (need 7i's coagulation, R58). **Confirm with Ali** the Iranian-practice priorities and whether
+   heparin and protamine (need 7i's coagulation, R58). **Confirm with samhv-dev** the Iranian-practice priorities and whether
    diltiazem should join verapamil.
 10. **Q10 — the [ENG] probabilities.** The pre-excited-AF VF probability (0.2 per event) and the shock-state factors of
     Task 12 (the five of addendum 23, plus the DV amendment's temperature factor, the 240 s circulatory-phase gate and
@@ -6876,16 +6876,16 @@ Decided from the textbooks where they were clear; each says what it decided and 
     (25 % as written; 38 % per the reviewer's recollection — Task 11 Step 3, ruling 6g).
 11. **Q11 — atracurium and mivacurium.** Added for their histamine release ONLY: they produce **NO neuromuscular block**
     in v1 (review F12, D19f — 7f models four NMB agents; the rows borrow cisatracurium's and succinylcholine's PK sets
-    for their plasma course). A guard test and the row text say so. **Confirm with Ali** whether they should be DEFERRED
+    for their plasma course). A guard test and the row text say so. **Confirm with samhv-dev** whether they should be DEFERRED
     until 7f can give them a block (a 7f task with tables §5d), or kept as histamine teaching rows.
 12. **Q12 — the volatile bronchodilation size (FU-6 seam item 5; D23).** FU-7 re-fits the EC50 against "resistance
     −20–40 % at 1 MAC" while keeping FU-6's "Ppeak −30 % at 0.79 MAC" case green. If both cannot hold, the rows stay
-    and **Ali decides** which teaching target governs.
+    and **samhv-dev decides** which teaching target governs.
 13. **Q13 — chronic β-blockade as a post-induction hypotension risk (audit Q2, missing from the first draft; review).**
-    DECIDED: no separate term — the extra fall, if Ali teaches it, comes from FU-4's output suppression and the
-    occupancy of Task 8 (Reich 2005 does not list chronic β-blockade among the predictors). **Confirm with Ali.**
+    DECIDED: no separate term — the extra fall, if samhv-dev teaches it, comes from FU-4's output suppression and the
+    occupancy of Task 8 (Reich 2005 does not list chronic β-blockade among the predictors). **Confirm with samhv-dev.**
 14. **Q14 — shock outcome after the DV run (research/20 §8 Q2 and Q9; Task 12 DV amendment).** DECIDED for
-    execution, with four points to **confirm with Ali**:
+    execution, with four points to **confirm with samhv-dev**:
     (a) **Termination.** The first biphasic shock terminates VF in **90 %** (`VF_TABLE.persistent` 0.1, the midpoint
         of the sourced 85–98 %). This supersedes brief §6.5's 0.3. ROSC stays 10 %, so termination ≠ ROSC.
     (b) **The post-shock split.** The terminated share is split asystole/PEA 50/50 as before (40/40/10 of all shocks).
@@ -6902,18 +6902,18 @@ Decided from the textbooks where they were clear; each says what it decided and 
       t½β;
     - morphine's M6G is NOT MODELLED (no parent → metabolite mechanism).
 
-    **Confirm with Ali:**
+    **Confirm with samhv-dev:**
     (a) midazolam in `hepaticFailure` 0.8 gives ×1.17 at 60 min against RH's ×1.3–2.5. Is a single-dose 60-min
         sedation difference of that size what he teaches? MacGilchrist's halved clearance governs the elimination
         phase.
     (b) should M6G accumulation in CKD be a teaching point worth a metabolite mechanism in v1.1?
     (c) the t½β of morphine and the glycopyrrolate renal data are [VERIFY].
 16. **Q16 — dexamethasone in type 2 diabetes (ET amendment; Task 18 Step 4a).** Measured: +1.83 mmol/L at 4–8 h
-    against ET-19's +2–4 (PADDI, [VERIFY magnitude]); non-diabetic +1.02. **Confirm with Ali** the teaching magnitude.
+    against ET-19's +2–4 (PADDI, [VERIFY magnitude]); non-diabetic +1.02. **Confirm with samhv-dev** the teaching magnitude.
     The Emax stays fitted to the healthy DI-76 band.
 17. **Q17 — the incision pressor response (ET amendment; Task 10 case 1c).** Under sevoflurane without opioid,
     incision gives ΔMAP +19.1 against ET-16a's +20–30. That band is sourced to Shribman 1987 via addendum 25, and
-    Shribman measured LARYNGOSCOPY. **Confirm with Ali** the incision-specific band. MAC-BAR literature is a candidate
+    Shribman measured LARYNGOSCOPY. **Confirm with samhv-dev** the incision-specific band. MAC-BAR literature is a candidate
     source.
 
 ## Self-review
@@ -6967,7 +6967,7 @@ Decided from the textbooks where they were clear; each says what it decided and 
 | 8 diabetic steroid arm | Task 18 Step 4a + Step 5 | CM-09c diabetic 11.1 vs healthy 7.6 mmol/L under stress (PL) | a second dexamethasone arm (ET-19, +2–4 mmol/L), CM-09c a regression guard |
 | 9 asthma reactivity (CM-11a) | Task 16 NOTE | MI (no reactivity gain exists) | a note: keep the constrictor seam scalable by one per-profile factor; no task |
 | 10 OSA opioid sensitivity (CM-12a) | Task 6 NOTE | NE (no `osa` profile) | a note: keep `ventRemiEq` ONE named output a profile can scale; no task |
-| 6 resting sympathetic tone (C1) | **Requests → FU-8** item 2 | CM-01b/03b/05a/06b/13a all ≈ −20 % on induction | FU-8 Part B owns it, Ali reviews the mechanism first; Task 9 adds no resting tone |
+| 6 resting sympathetic tone (C1) | **Requests → FU-8** item 2 | CM-01b/03b/05a/06b/13a all ≈ −20 % on induction | FU-8 Part B owns it, samhv-dev reviews the mechanism first; Task 9 adds no resting tone |
 | 7 `circ/profile.ts` exception | **Requests → FU-8** item 2 | — | **E-FU7-3 is NOT widened**; C1/C4/C5 are FU-8's and open no second exception |
 
   The amendment introduced **no new `ts` find/replace pair**, so the third fixer's 195 pairs (193 unique + 2 declared
@@ -6984,7 +6984,7 @@ Decided from the textbooks where they were clear; each says what it decided and 
 
 | finding (research/20 §4 / this run's item) | where it landed | measured (prototype vs DV baseline) | effect on the plan |
 |---|---|---|---|
-| 2 / (1) base termination | Task 12 Step 0 (`VF_TABLE` + Stage 4 test), Sources, Requests → FU-5 | DV-01a term150/200 **95 / 95** (exact 90) vs 65 / 65 (exact 70); ROSC share 10 unchanged | termination re-sourced to the biphasic literature; ROSC ≠ termination kept; Ali Q14(a–b) |
+| 2 / (1) base termination | Task 12 Step 0 (`VF_TABLE` + Stage 4 test), Sources, Requests → FU-5 | DV-01a term150/200 **95 / 95** (exact 90) vs 65 / 65 (exact 70); ROSC share 10 unchanged | termination re-sourced to the biphasic literature; ROSC ≠ termination kept; samhv-dev Q14(a–b) |
 | 1 / (2) temperature | Task 12 Sources + Step 1 `temperatureTermination` + Step 2 | DV-24a diff **55** (87.5 vs 32.5); DV-24b gain **55**; both 0 before | new [ENG] factor below 30 °C, sourced direction; Q14(c) |
 | — / (2) CPR × ischaemia time | Task 12 Sources (CoPP bullet) + Step 1 `CIRCULATORY_PHASE_S` | end to end: effective ROSC early / late no CPR / late CPR **7.5 / 0 / 7.5** | the duration term already existed (`VF_DURATION_FACTORS`, `arrestS`); the CoPP factor is gated to ≥ 240 s so an electrical-phase shock is not penalised |
 | 3 / (3) cardioversion | Task 12 Sources table + Step 1 curve + Step 2 + Step 3 `rhythmId` | DV-06a 200 J **87.5**, 20 J **12.5**, dependence **75** (was 0); DV-06b 50 J **95**; DV-06c **95** | flat 0.8 → per-rhythm energy curve; other organised rhythms keep 0.8; Q14(d) |
@@ -7014,7 +7014,7 @@ Decided from the textbooks where they were clear; each says what it decided and 
 | (1) furosemide onset/peak | Task 2 **Step 2e** (no row change) | RH-07a onset 30 s → **90 s**, peak 2.5 → **8.5 min** (Step 1's chain); `tpS` 1800 would give 120 s / 15.5 min | label verified (≤ 5 min, ≤ 30 min, ≈ 2 h); `tpS` kept for the sourced venodilation; remainder H1 (FU-9) |
 | (2) fentanyl flow-dependent distribution | Task 2 **Step 2d** | RH-15b ×**1.19 → 1.40** at 30 min (PL); RH-12e ×1.00 kept; healthy GA +1 % | FU-4 G10's `flowDist` on fentanyl (Egan 1999); A28 does not cover it |
 | (3) morphine metabolites | Task 2 Step 2c note; Q15(b) | RH-10c NE | **NOT MODELLED**: 7g has no parent → metabolite source |
-| (4) CKD renal clearance ×0.3 | Task 2 Step 2c (renal term) + Step 3b test | glycopyrrolate g 0.44, neostigmine and morphine < 1 at `renal` 0.3; RH-10a ×1.14 unchanged | renal rows follow `PkCtx.renal`; the `ckd` profile is FU-8 B / Ali |
+| (4) CKD renal clearance ×0.3 | Task 2 Step 2c (renal term) + Step 3b test | glycopyrrolate g 0.44, neostigmine and morphine < 1 at `renal` 0.3; RH-10a ×1.14 unchanged | renal rows follow `PkCtx.renal`; the `ckd` profile is FU-8 B / samhv-dev |
 | (5) dexamethasone in type 2 | Task 18 Step 4a + Step 5 | ET-19 **0.00 → +1.83** mmol/L (band 2–4); non-diabetic +1.02 | main's 0 = the placeholder row, fixed by Steps 1–1c; comparison `it`, band `it.fails`; Q16 |
 | (6) incision pressor | Task 10 **case 1c** + Step 6 | ET-16a ΔMAP **+7.7 → +19.1** (band 20–30); fentanyl 2/5: +6.7 / −6.8 | `it.fails` "measured +19.1"; no gain raised; Q17 |
 | (7) hydrocortisone | D13 note + **Requests → FU-10** item 1 | ET-15b NE; adrenal-insufficiency profile inert (E13) | waits for FU-10's basal deficit; no row |

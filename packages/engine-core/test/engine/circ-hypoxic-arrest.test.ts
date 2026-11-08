@@ -245,13 +245,13 @@ describe('MODELED hypoxaemic bradycardia and asphyxial arrest', { timeout: 300_0
     expect(c.tArrest).toBeUndefined();
     expect(c.hrAfter.at(-1)?.[1] ?? 0).toBeGreaterThanOrEqual(60);
   });
-  // R45 (executor, FU-3 Task 15, after merging Stage 7e): the [ENG] "no runaway rebound" bound was met before 7e
+  // R45 (executor, FU-3 Task 15, after merging Stage 7e): the [FIT: no-runaway-rebound HR bound; brief research/44 X-17] "no runaway rebound" bound was met before 7e
   // (final HR 126) and missed on main + 7e (132.1). FU-4 (Tasks 4–6): met again — 74.4. The criterion is unchanged;
   // it is kept apart so the reversal time, the no-arrest and the HR ≥ 60 assertions above stay enforced (R-5).
-  it('after the FiO2 1 reversal the final HR is ≤ 130 [ENG]', async () => {
+  it('after the FiO2 1 reversal the final HR is ≤ 130 [FIT: no-runaway-rebound HR bound; brief research/44 X-17]', async () => {
     const c = await reversalCourse();
     console.log(`reversal: HR at the end ${c.hrAfter.at(-1)?.[1].toFixed(1)}`);
-    expect(c.hrAfter.at(-1)?.[1] ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(130); // [ENG] sanity: no runaway rebound
+    expect(c.hrAfter.at(-1)?.[1] ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(130); // [FIT: no-runaway-rebound HR bound; brief research/44 X-17] sanity: no runaway rebound
   });
   it('MANUAL: the same apnoea never switches the rhythm (the instructor owns it)', async () => {
     const c = await asphyxia('manual', false, 15 * 60);

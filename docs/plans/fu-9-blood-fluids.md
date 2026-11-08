@@ -65,7 +65,7 @@ and `.github/workflows/ci.yml`: CI amendment 5, Task A0b), and in Part B one eng
 **Tech Stack:** TypeScript 5.9 strict, Vitest 3.2, Playwright 1.63 (its own Chromium and WebKit are installed
 locally), pnpm 9.15.9 via `npx`. No new dependencies.
 
-**Spec:** `../research/00-orchestrator-rulings.md` (workspace, outside this repo): **R44** (Ali's calibration pass is
+**Spec:** `../research/00-orchestrator-rulings.md` (workspace, outside this repo): **R44** (the owner's calibration pass is
 non-blocking; executors do not tune), **R45** (mechanisms, never band changes; unreachable targets `it.fails` with
 numbers), **R51** + addenda 14 and 15 (canonical names: `blood.out.{albuminGL, bvRel, hbfRel, lactate}`, the renal seam
 `blood.core.renal`, the engine chain order), **R53/R54** (linked physiology; the coverage matrix is the standing
@@ -73,7 +73,7 @@ definition), **R58/R60** (7i labs and coagulation are v1.1: the 17 coagulation N
 (FU-4's arrest behaviour — must not move), the **CM comorbidity run** (research/19: C7 COPD normocapnic, C11 COP at
 albumin 25), **FU-8** (it owns ONE obese-patient definition, I-51, and profile/set-point consistency, I-52 — FU-9
 does not redefine them; Part C adopts its A13 rule). Sources: `research/22-coverage-blood-fluids.md` (§2 cells, §3
-F1–F13, §5 acceptance, §6 Ali's questions), `research/13-coverage-renal-hepatic.md` (RH cells, §3 H1–H12 — the RH
+F1–F13, §5 acceptance, §6 the owner's questions), `research/13-coverage-renal-hepatic.md` (RH cells, §3 H1–H12 — the RH
 amendment), `research/21-coverage-stimuli-positioning.md` (SP-08 laparoscopy arms), `research/12-coverage-matrix.md`
 §5.10, `research/19-coverage-comorbidity.md`. Plans read for scope (so
 nothing here duplicates them): FU-6 (`fu-6-respiratory-integration.md`, untracked: owns audit 09 R11 — anaemia → CO,
@@ -88,14 +88,14 @@ untracked: mechanics and volumes only).
   mechanism cannot reach stays (or becomes) `it.fails` with the measured number in its title. A pre-declared `it.fails`
   that a task flips to `it` is named in that task with its before/after numbers. Constants that are not sourced are
   `[ENG]` with the fit target named in the code comment; no executor tunes a constant to pass a band (R44: that is
-  Ali's pass). An existing test whose NUMBER moves because the physiology it pinned was the defect is re-pinned only
+  The owner's pass). An existing test whose NUMBER moves because the physiology it pinned was the defect is re-pinned only
   where the task names it, with the old and new number and the reason in the test's comment.
 - **R51:** canonical names (addendum 14); the engine chain order (validate/apply device → pk (7g) → neuro (7f) → organs
   (7d) → blood (7c) → endo (7e) → Stage 3 → hemo; advance: pk → resp/lung → blood → endo → organs → hemo) is not
   changed. 7c stays the only owner of `hbfRel`; 7d the only writer of `blood.core.renal`; 7e the only writer of
   `blood.core.fl.kfMult` (and, after Task 4, `fl.sigma`).
 - **FU-4 arrest behaviour must not move.** The Gate task re-runs `npx -y pnpm@9.15.9 run audit:physiology` (research/08's
-  four-patient propofol table, Ali's tamponade case, class III + propofol, the CPR rigs) and the FU-4 engine files
+  four-patient propofol table, the owner's tamponade case, class III + propofol, the CPR rigs) and the FU-4 engine files
   `test/engine/{circ-lowflow-arrest,clinical-suite,blood-k-rhythm}.test.ts`; every task that touches the blood volume,
   O₂ extraction or K⁺ names its measured effect on them (the "FU-4 check" line in each task).
 - **Base and branch:** branch `fu-9-blood-fluids` from `origin/main` (at least `2473f0b`). Worktree
@@ -160,7 +160,7 @@ untracked: mechanics and volumes only).
 ## Finding inventory (every BF gap, and what happens to it)
 
 Decision codes: **task** (a task in this plan), **handed** (to a named plan or owner, reason given), **closed** (already
-done on main; the evidence named), **Ali** (waiting on Ali — his decision, the model's numbers given), **7i v1.1**
+done on main; the evidence named), **samhv-dev** (waiting on samhv-dev — his decision, the model's numbers given), **7i v1.1**
 (R58/R60), **recorded** (a measurement kept for the orchestrator, no action here). "Main" numbers are this writer's
 BF-runner measurements on `76c952e` (seed 7; the report's own run was on `776ebb5`, BEFORE FU-4 merged — FU-4 moved
 several cells, listed in the second table). Re-measured on `2473f0b` (all 74 cells): identical except BF-14 dBE −3.29 →
@@ -176,18 +176,18 @@ several cells, listed in the second table). Re-measured on `2473f0b` (all 74 cel
 | F3 | Low flow cuts VO₂ instead of raising extraction: SvO₂ rises in haemorrhage | BF-29b (WR) | 2 L bleed, CO 1.57: SvO₂ 77.8 % (VBG), lactate 3.0; normal-flow arm 85.6 % | **task A2** (7c `oxygen.ts`) |
 | F4 | Septic capillary leak makes no lung water | BF-20a (WR), 20b (TS, with F1) | septic (kfMult 2.59) 30 mL/kg: extra EVLWI 0 vs healthy +3.34 mL/kg; PaO₂ +10 (healthy −8); ISF +1.30 L; MAP gain kept 109 % at 60 min | **task A4** (7e `adapters.ts` `writeBlood` writes σ; 7c `fluids.ts` `leakSigma`) |
 | F5 | Citrate not an anion in the SID; clearance ∝ (CO/CO₀)²; stored-product acid | BF-05a (TS), 05d (TW) | class IV + 4 L ongoing loss + 10 RBC + 10 FFP in 40 min: iCa nadir **0.30** (the solver's floor) at 1940 s, citrate 10.7 mmol/L; BE nadir −5.6 at lactate **21**, MAP 7, **ARREST at 2430 s** (the iCa floor takes contractility to (0.3/1.1)^1.5 = 0.14) | **task A3** (7c `solutes.ts` `sidOf` net of the Ca complex; `core.ts` citrate clearance; R1: electroneutral products from sourced CPD/ACD-A/SAGM compositions, stored lactate) |
-| F6 | Renal K⁺ excretion blind to plasma K⁺ and to diuretics | BF-08d (TW) | furosemide 40 mg at K 7.5: urine +159 mL/h, K −0.002 at 3 h (the seam's K is refilled from 7c's unlimited cellular store) | **task A6** (7d `organs/pipeline.ts` `renalSeam`; 7c `core.ts` K set point on total-body K); the profile-vs-normal K reference is **Ali's** (R8, OQ5) |
+| F6 | Renal K⁺ excretion blind to plasma K⁺ and to diuretics | BF-08d (TW) | furosemide 40 mg at K 7.5: urine +159 mL/h, K −0.002 at 3 h (the seam's K is refilled from 7c's unlimited cellular store) | **task A6** (7d `organs/pipeline.ts` `renalSeam`; 7c `core.ts` K set point on total-body K); the profile-vs-normal K reference is **the owner's** (R8, OQ5) |
 | F7 | Chronic hypercapnia is built as acute; on main COPD GOLD 3 is now NORMOCAPNIC | BF-16b (TW); CM-07a (research/19 C7) | COPD 0.75 awake: PaCO₂ **39.7** (the report's 45.1 was before FU-4 F4 made `paco2Rest` a fixed 40), HCO₃ 24.35, pH 7.40 | **task B2** (Part B: `l2/gas/params.ts` `paco2Rest` from the COPD grade — tables §1.5 40/40/45/55 — and 7c's chronic HCO₃ at that PaCO₂, tables §5b.1 "+0.35 per mmHg, set by the profile"). CM routed C7 to FU-6, whose plan does not carry it; it lands after FU-6/FU-7 because `l2/gas` is theirs while in flight |
 | F8 | COP from 1.6 × albumin; profile albumin hides its anion | BF-22a (TS), 22b (IN); CM-10c (TW) | albumin 20: COP 8.66, oedema threshold PAWP 6.7; AG −0.16 vs normal, BE +0.2 (profile) while dilution to the same albumin lowers AG 3.95 (BF-01a); CM-10c albumin 25: COP 11.5 | **task A5** (7c `fluids.ts` scaled Nitta COP — R2; `core.ts` calibration at normal albumin, branched on the profile fields — R50 F8) |
 | F9 | Metabolic alkalosis not compensated | BF-15b (WR) | profile HCO₃ 34: PaCO₂ 38.9, pH 7.55 | **task A7** (7f `spont.ts` `paco2SetPoint`; 7c's `NORMAL` and ONE `CHRONIC_HCO3_PER_MMHG`; a 0.1 mmol/L deadband — R5/R50 F6) |
 | F10 | Hypokalaemia does not potentiate rocuronium | BF-09b (MI) | T1 25 % at 35.7 min at K 2.5 and 4.2 | **task B1** (Part B, R6: `kMmolL` joins FU-7's `InteractionCtx` beside Mg/iCa and acts inside `ec50Multipliers`; FU-7 adds no K term — checked) |
 | F11 | The brain ignores plasma osmolality | BF-11b (MI) | glycine 3 L: Na 119.5, osm 290 → 275; ΔICP max +0.07 | **task A8** (7d `brain/model.ts` + the organ view's `osm`) |
 | F12a | Anaemia → CO; COHb kinetics (audit 09 R11) | BF-18a (WR), 18b (TW), 19 (WR), 32b (MI) | Hb 6.7 awake: HR −2, CO +2.3 %; ANH CO +6.6 %; COHb 30 → 30 % in 60 min on FiO₂ 1 | **handed: FU-6 Task 14** (viscosity → SVR, reflex HR/CO; `cohbWashout`) |
-| F12b | K⁺ 8.5 → arrhythmia/arrest (FU-4 G3) | BF-07c (WR), BF-M2 | profile and acute K 8.5 (QRS 260/248): sinus for 15 min, no VF/asystole/block (seed 7) | **Ali** (FU-4 merged; its K hazard fired at 9.5 in 65 s and at burns + sux; whether 8.5 should arrest within 15 min is a calibration question — R-2) |
+| F12b | K⁺ 8.5 → arrhythmia/arrest (FU-4 G3) | BF-07c (WR), BF-M2 | profile and acute K 8.5 (QRS 260/248): sinus for 15 min, no VF/asystole/block (seed 7) | **samhv-dev** (FU-4 merged; its K hazard fired at 9.5 in 65 s and at burns + sux; whether 8.5 should arrest within 15 min is a calibration question — R-2) |
 | F13a | HFrEF + 1.5 L: SpO₂ 96 → 94 (tables 89–92) — lung water → shunt coupling weak | BF-21c (TW) | extra EVLWI +5.6 mL/kg, PAWP 14 → 29, SpO₂ min 94 (MR 90) | **handed: 7b owner** (`l2/lung`, in flight under FU-6/7k; FU-9 never touches `l2/lung`) — for the orchestrator to route |
-| F13b | No protein binding: hypoalbuminaemia leaves propofol unchanged | BF-22c (MI) | propofol Ce 3.18 vs 3.18 | **Ali** (7g PK scope; v1.0 vs v1.1) |
-| F13c | No alkali-loss (vomiting/NG) event | BF-15a (NE) | the state exists only as a profile HCO₃ | **Ali/orchestrator** (the report routed it to FU-7; FU-7's plan does not carry it — see Open question 6: a one-field extension of 7c's `metabolic` event, if wanted) |
-| F13d | Methylene blue absent; MetHb static | BF-23 (NE) | SpO₂ 84 at MetHb 30 % | **Ali** (FU-7 library scope; v1.1) |
+| F13b | No protein binding: hypoalbuminaemia leaves propofol unchanged | BF-22c (MI) | propofol Ce 3.18 vs 3.18 | **samhv-dev** (7g PK scope; v1.0 vs v1.1) |
+| F13c | No alkali-loss (vomiting/NG) event | BF-15a (NE) | the state exists only as a profile HCO₃ | **samhv-dev/orchestrator** (the report routed it to FU-7; FU-7's plan does not carry it — see Open question 6: a one-field extension of 7c's `metabolic` event, if wanted) |
+| F13d | Methylene blue absent; MetHb static | BF-23 (NE) | SpO₂ 84 at MetHb 30 % | **samhv-dev** (FU-7 library scope; v1.1) |
 | — | Coagulation, TEG/ROTEM, heparin/protamine, TXA PD, DIC, temperature-corrected gases | BF-05e, 24, 25a–e, 26a–d, 27a–c, 28a–b, 31 (NE) | INR 1.00 after ≈ 1.5 BV dilution (7d liver INR only) | **7i v1.1** (R58/R60) |
 
 ### RH amendment (research/13 §3 H1–H12; research/21 SP-08) — measured with the RH runner on `2473f0b` → the prototype
@@ -209,7 +209,7 @@ in "Prototype results".
 | H9 | Gamma-curve drugs ignore organ function | RH-12d (MI) | — | **handed** (research/13 routes it to FU-7 Task 2) |
 | H10 | No cold diuresis | RH-20c WR → PL | 33 °C urine −26.5 % → **+29 %** | **task A11** (× (1 + 0.2·(35 − T)⁺), [ENG], Open question 13) |
 | H11 | Two lactate clearances | RH-12a | — | **recorded** (not in the ruling; small, 7c + 7d) |
-| H12 | Autoregulation ceiling weak | RH-27a TS → PL | RBF +17.6 → +14.9 % (a side effect of H2) | **Ali** (calibration, R44) |
+| H12 | Autoregulation ceiling weak | RH-27a TS → PL | RBF +17.6 → +14.9 % (a side effect of H2) | **samhv-dev** (calibration, R44) |
 | — | CKD and cirrhosis profiles | RH-10, 14 (proxies) | — | **handed** (research/13 §5: profile work, not FU-9's) |
 | I-51 | ONE body size (FU-8) | 7c BV 4 807 vs circulation 4 900 mL at 70 kg / 175 cm | — | **Part C** (R3, after FU-8 A13) |
 
@@ -218,7 +218,7 @@ in "Prototype results".
 | ID | Cell | Report → main | Note |
 |---|---|---|---|
 | R-1 | BF-05d / BF-13a class IV rigs | no arrest → **asystole** at 2430 s (BF-05d), 2200/2420 s (BF-13a arms) | FU-4's low-flow arrest now ends the class IV + ongoing-loss rigs; for BF-05d the proximate cause is F5's iCa floor (0.30 → contractility × 0.14): Task A3 removes the arrest (prototype below) |
-| R-2 | BF-07c K 8.5 | no arrhythmia (FU-4 pending) → still none in 15 min | FU-4 G3's hazard — Ali question (Open question 7) |
+| R-2 | BF-07c K 8.5 | no arrhythmia (FU-4 pending) → still none in 15 min | FU-4 G3's hazard — samhv-dev question (Open question 7) |
 | R-3 | BF-08a calcium QRS | −9 → −5 ms (acute arm, K 7.05 at the dose, QRS 98) | the acute arm's K has fallen from its 7.5 peak by the dose time, so there is little widening to reverse; the profile arm is the discriminating one — measured (`bf/probe-ca.ts`): K 7.5, QRS 124 → **93 ms within 60 s** of CaCl₂ 1 g (kEcg 7.47 → 6.71; control stays 124) — calcium works as taught; no mechanism change, the Gate quotes it |
 | R-4 | BF-10a hypomagnesaemia + torsades → MgSO₄ | sinus at 470 s → **asystole at 495 s** | after 165 s of pulseless torsades, 25 s after Mg converted it; reported to the orchestrator (FU-4 arrest/ROSC path), not a blood finding |
 | R-5 | BF-16a / 17a / 17c ventilation rigs | PaCO₂ 60 → 45.8 (RR 6), 23.5 → 17.0 (18 × 600) | FU-4's dead-space change moved the rigs' PaCO₂; BF-17c CBF −22 % at PaCO₂ 17 (TW) follows from the brain's PaCO₂ floor, not from blood; recorded |
@@ -328,11 +328,11 @@ in "Prototype results".
   mmol/L [TXT, midpoint]); a first prototype used the ECF/ICF ratio (≈ 930 mmol per mmol/L, −0.036). Transcellular drug
   shifts leave the total unchanged, so insulin, salbutamol, succinylcholine and pH shifts are bit-identical in shape.
   Considered and dropped: a loop-diuretic chloride term (urine SID → 0) — it did not change the sign under GA and 7d's
-  urine composition is Ali's (Open question 10).
+  urine composition is the owner's (Open question 10).
   - **What the reference does for a profile K (R50 F7, R8).** `kRel = K ÷ set.k`, and `set.k` is the PROFILE K: a
     profile K 7.5 starts at kRel 1, so its kidney excretes as at 4.2 and BF-08d's −0.030 comes from √flow and the
     finite pool alone. That is right for a chronic state in balance (CKD) and wrong for acute hyperkalaemia with
-    working kidneys (maximal kaliuresis). The choice is Ali's (Open question 5, with numbers).
+    working kidneys (maximal kaliuresis). The choice is the owner's (Open question 5, with numbers).
   - **The asymmetric intake.** An oliguric seam retains the intake as K and Cl (`cl = 0.9·(na + k)` with k < 0) but not
     as Na: harmless (the SID moves by +0.1·|k|) and declared.
 - **D7 — F9: `paco2Set = paco2Rest + 0.7·(HCO₃met − ref)` above ref, cap 55; ref = 7c's `NORMAL.hco3` + 7c's
@@ -354,7 +354,7 @@ in "Prototype results".
   no private term" was measured and REJECTED for now: 7c's plasma osmolality after 1 g/kg is +8.7 mOsm/kg at 15 min
   (the water it draws from the cells dilutes it), a third of the +27 the osmotherapy calibration assumes, so reading both
   directions from 7c would halve the mannitol ICP effect (`organs-tbi-treatment`: mannitol −25 %, HTS −20–40 %). The
-  two stay one-directional each until Ali decides the distribution (Open question 12). The kidney, in contrast, reads
+  two stay one-directional each until samhv-dev decides the distribution (Open question 12). The kidney, in contrast, reads
   7c's pool (ONE mannitol state for the osmoles and the diuresis).
 - **D9 — F7 (Part B): the COPD grade sets `gasPatient().paco2Rest` (tables §1.5: 40/40/45/55) and 7c builds the chronic
   compensation on it (tables §5b.1 "+0.35–0.4 per mmHg … set by the profile").** The tables already decided the
@@ -389,7 +389,7 @@ in "Prototype results".
   - **Inside the envelope (chaotic, noise):** D0 1775 → 1770, D2 1350 → 1305, K-ptx 670 → 675 (and the propofol
     matrix's tension-PTX row asystole t+10 → t+15 s, HR 130 → 131). With R5's deadband A7 contributes nothing at rest
     (a resting patient's set point is exactly 40), so these moves come from the other tasks' second-decimal changes.
-  - **Physiology, declared (NOT chaotic — stable under the ensemble; bisected):** Ali's tamponade case B2/B7 PEA **830 →
+  - **Physiology, declared (NOT chaotic — stable under the ensemble; bisected):** the owner's tamponade case B2/B7 PEA **830 →
     825 s** (first MAP < 30 810 → 805), B6 1130 → 1125, C1's first MAP < 30 1000 → 1005 (no arrest in either), I1 apnoea
     910 → 920 s (A1 alone: B2 825, I1 895). Cause: Task A1's H1 — the anaesthetised, ventilated kidney no longer reads
     GA's CO fall as hypovolaemia, so over the 13 min before the arrest it makes ≈ 0.57 instead of 0.35 mL/kg/h (≈ 10 mL
@@ -419,7 +419,7 @@ in "Prototype results".
 - **D15 — H6 (Task A10): `aki` severity is nephron loss.** TGF defends only the surviving nephrons' share,
   `gfrSet·(1 − AKI_KF_LOSS·aki)`, and intrinsic AKI's afferent vasoconstriction floors R_aff at R_AFF_MIN·(1 +
   AKI_AFF_TONE·aki), so RBF falls instead of rising. `AKI_AFF_TONE` 1 [ENG]: tone 3 gave GFR 0 at aki 1; at 1, aki 0.5 →
-  GFR 75, aki 1 → 22 (KDIGO G4–5 by name, research/13's ≈ 25 — Ali's Q, Open question 14).
+  GFR 75, aki 1 → 22 (KDIGO G4–5 by name, research/13's ≈ 25 — the owner's Q, Open question 14).
 - **D16 — H10 (Task A11): cold diuresis × (1 + 0.2·(35 − T)⁺) on the excreted fraction** (Polderman 2009 Crit Care Med
   37:S186, direction; the size [ENG], Open question 13): 33 °C → × 1.4; RH-20c −26.5 % → +29 %.
 - **D17 — H3 (Task A12): ONE hepatic flow.** With 7d present 7c's `hbfRel = CO/CO₀ × hbfFactor`, the factor 7d already
@@ -445,7 +445,7 @@ in "Prototype results".
   175 cm) holds 4 900 mL (was 4 807 in 7c and 4 900 in the circulation): 7c and 7a hold ONE volume for every adult
   50–160 kg with or without a height (the new test). Moved, declared: `fluids.test.ts`/`core.test.ts`/`params.test.ts`
   pins 4 807 → 4 900, plasma 2 644 → 2 695, ISF 11 356 → 11 305 (the definition moved, not the physiology). The elderly
-  band's per-kg values differ (7c 65/60 mL/kg M/F vs the circulation's 62/65) — handed to FU-8/Ali (R-FU9-10).
+  band's per-kg values differ (7c 65/60 mL/kg M/F vs the circulation's 62/65) — handed to FU-8/samhv-dev (R-FU9-10).
 ---
 ## Prototype results (seed 7: main `2473f0b` → the prototype with Parts A + B; Part C on main + FU-8 A13)
 
@@ -552,7 +552,7 @@ changes elsewhere (the 4 807 → 4 900 mL blood volume); no verdict moves except
 - **E-FU9-3** (B2): `l2/gas/params.ts`'s `paco2Rest` from the COPD grade (Part B, after FU-6).
 - **E-FU9-4** (A9, new): 7d's `model.test.ts` shock-start test pinned GFR `toBe(0)`; with filtration equilibrium the
   shocked kidney filters 18 mL/min (0.03 mL/kg/h): the test asserts GFR < 0.2·gfrSet and urine < 0.05 (D14).
-- **E-FU9-5** (A1, new, for the orchestrator — G-FU4): Ali's tamponade case B2/B7 PEA 830 → 825 s, I1 910 → 920 s, B6
+- **E-FU9-5** (A1, new, for the orchestrator — G-FU4): the owner's tamponade case B2/B7 PEA 830 → 825 s, I1 910 → 920 s, B6
   1130 → 1125 s — stable under the perturbation ensemble, caused by H1 (D13). No band or test moves; the FU-4 engine
   files pass.
 ## Part A — independent (executes now)
@@ -954,7 +954,7 @@ describe('FU-9 H1: an anaesthetised kidney is not oliguric at a normal MAP (rese
   });
   // R45 (research/13 RH-03a): ATLS's end point read as the 30–60 min mean. The joint calibration (D1) caps it: the GA
   // ceiling is S_GA × V(bvRel 0.97) ≈ 0.57 × 0.9, and vNh washes out with 7d's τ 45 min (tables check 20's own fit;
-  // τ 10–20 min gives 0.45–0.46 and breaks check 20). Measured 0.37 (RH-03a 0.38; main 0.23) — Ali's question (OQ11).
+  // τ 10–20 min gives 0.45–0.46 and breaks check 20). Measured 0.37 (RH-03a 0.38; main 0.23) — the owner's question (OQ11).
   it.fails('class III, then RL 2 L: urine 30–60 min after the end ≥ 0.5 mL/kg/h — measured 0.37 (main 0.23)', async () => {
     const u = await recovery();
     expect((((u[6] as number) - (u[3] as number)) / kg) * 2).toBeGreaterThanOrEqual(0.5);
@@ -1503,7 +1503,7 @@ describe('FU-9 F5: massive transfusion — the citrate load (Driscoll 1987; Gian
   });
   // R45 (research/22 BF-05a/05d; R50 ruling R1): with electroneutral, sourced product rows the class IV + MTP picture
   // is BE −0.1 (the dilution of albumin, a weak acid, offsets the shock lactate — the same Stewart offset as the saline
-  // cells, Open question 10) and iCa 0.955 (K_CIT, Q46, fitted to the old citrate-rich rows). Ali may overrule (OQ2).
+  // cells, Open question 10) and iCa 0.955 (K_CIT, Q46, fitted to the old citrate-rich rows). samhv-dev may overrule (OQ2).
   it.fails('iCa nadir 0.6–0.95 and BE ≤ −10 (ATLS class IV) — measured iCa 0.955, BE −0.1 (FU-9 F5)', async () => {
     const r = await rows();
     expect(Math.min(...r.slice(t0 / 30).map((x) => x.iCa))).toBeLessThanOrEqual(0.95);
@@ -1820,7 +1820,7 @@ describe('FU-9 F4: a septic leak makes lung water at a normal PAWP (Sakka 2002; 
   // R45 (research/22 §5 acceptance for 7e → 7c: "EVLWI ↑ and PaO2 ↓ more than healthy"): the septic lung makes water now,
   // but less than the healthy lung under the same load (0.87 vs 1.85 mL/kg: the vasodilated septic patient's PAWP stays
   // lower, and σ 0.70 still leaves a threshold of ≈ 15 mmHg), and PaO2 still RISES +11 (7b's lung-water → shunt coupling,
-  // F13a, is weak and the load raises CO/SvO2). Kept visible for Ali (Open question 3: the septic σ).
+  // F13a, is weak and the load raises CO/SvO2). Kept visible for samhv-dev (Open question 3: the septic σ).
   it.fails('warm septic shock + 30 mL/kg: extra EVLWI more than healthy and PaO2 falls — measured +0.87 vs +1.85 mL/kg, PaO2 +11 (FU-9 F4)', async () => {
     const { i, c } = await septic();
     const [hi] = await arm([...GA_VENT, LOAD], [4860], read);
@@ -2275,7 +2275,7 @@ describe('FU-9 F6: kaliuresis (Young 1988; Good & Wright 1979; UK Renal Associat
     expect(f.k).toBeLessThan(c.k - 0.02);
     expect(f.kIcf).toBeLessThan(c.kIcf);
   });
-  // R45 (research/22 BF-08d, dirOnly "beyond 0.1"): the band's size is Ali's (Open question 5). Under GA the diuresis is
+  // R45 (research/22 BF-08d, dirOnly "beyond 0.1"): the band's size is the owner's (Open question 5). Under GA the diuresis is
   // small (+150 mL/h at the peak), the kaliuresis ≈ 10 mmol against the untreated patient's retention, and 300 mmol of
   // total-body K per mmol/L (Sterns 1981) turns that into −0.03; the alkalotic rig (pH 7.57) also holds K in the cells.
   it.fails('furosemide 40 mg at K 7.5: K ≥ 0.1 lower at 3 h — measured −0.030 (FU-9 F6; −0.042 before H1–H10)', async () => {
@@ -3265,7 +3265,7 @@ replace with:
 
 ```ts
 export const AKI_KF_LOSS = 0.8; // condition aki severity 1 → Kf × 0.2 [ENG]; FU-9 H6: also the nephron share TGF defends
-/** FU-9 H6: intrinsic AKI's afferent tone — the afferent floor rises × (1 + AKI_AFF_TONE·aki) [ENG, Ali's Q]. */
+/** FU-9 H6: intrinsic AKI's afferent tone — the afferent floor rises × (1 + AKI_AFF_TONE·aki) [ENG, the owner's Q]. */
 export const AKI_AFF_TONE = 1;
 ```
 
@@ -3308,7 +3308,7 @@ replace with:
 
 /**
  * FU-9 H6 (research/13): `aki` severity is NEPHRON LOSS. The surviving nephrons' TGF defends only their own share of the
- * filtration (target gfrSet × (1 − AKI_KF_LOSS·aki): at severity 1 GFR ≈ 25 mL/min, KDIGO G4–5 — Ali's Q), and intrinsic
+ * filtration (target gfrSet × (1 − AKI_KF_LOSS·aki): at severity 1 GFR ≈ 25 mL/min, KDIGO G4–5 — the owner's Q), and intrinsic
  * AKI's afferent vasoconstriction floors the afferent resistance at R_AFF_MIN × (1 + AKI_AFF_TONE·aki), so RBF falls
  * instead of rising (the TGF of a single nephron no longer restores the kidney's GFR by dilating it). Kf × (1 − loss) as before.
  */
@@ -3395,7 +3395,7 @@ export const S_GA = 0.6; // surgical stress/ADH under GA, tables `S` [ENG] (0.4�
 replace with:
 
 ```ts
-/** FU-9 H10: cold diuresis onset and gain per °C [ENG, Ali's Q] (Polderman 2009: direction). */
+/** FU-9 H10: cold diuresis onset and gain per °C [ENG, the owner's Q] (Polderman 2009: direction). */
 export const COLD_ONSET_C = 35;
 export const COLD_DIURESIS_PER_C = 0.2;
 export const S_GA = 0.6; // surgical stress/ADH under GA, tables `S` [ENG] (0.4–0.8)
@@ -3429,7 +3429,7 @@ replace with:
 /**
  * FU-9 H10 (research/13): cold diuresis — below COLD_ONSET_C tubular Na reabsorption and ADH responsiveness fall and the
  * excreted fraction rises (Polderman KH. Crit Care Med 2009;37:S186–S202) × (1 + COLD_DIURESIS_PER_C·(onset − T)⁺)
- * [ENG, Ali's Q]: 33 °C → × 1.4.
+ * [ENG, the owner's Q]: 33 °C → × 1.4.
  */
 export function coldDiuresis(tempC = 37): number {
   return 1 + COLD_DIURESIS_PER_C * Math.max(0, COLD_ONSET_C - tempC);
@@ -3778,7 +3778,7 @@ describe('FU-9 H8: mannitol is a plasma osmole (research/13 RH-08)', { timeout: 
     expect(r.dOsm).toBeGreaterThanOrEqual(5);
   });
   // R45 (RH-08c): measured osmolality +20–30 mOsm/kg after 1 g/kg (the osmolal gap). 7c's pool is the whole ECF (≈ 14 L:
-  // 385 mOsm → +27 at once), and the water it draws from the cells dilutes it within minutes; measured +8.7 — Ali's
+  // 385 mOsm → +27 at once), and the water it draws from the cells dilutes it within minutes; measured +8.7 — the owner's
   // question (OQ12: the distribution volume in the first minutes, or the band read as a peak).
   it.fails('1 g/kg: osmolality +20–30 mOsm/kg at 15 min (RH-08c) — measured +8.7', async () => {
     expect((await read()).dOsm).toBeGreaterThanOrEqual(20);
@@ -4816,7 +4816,7 @@ gh pr create --base main --head fu-9-blood-fluids --title "FU-9: blood, fluids a
 
 ---
 
-## Open questions for Ali (the model's numbers and the plan's recommendation; the plan does not wait on them)
+## Open questions for samhv-dev (the model's numbers and the plan's recommendation; the plan does not wait on them)
 
 1. **SvO₂ at normal flow under GA on FiO₂ 0.5 (BF-29b's normal arm).** 85.7 % against research/12's 70–85 % "under GA".
    The high value is GA's VO₂ (−15 %) plus dissolved O₂ at PaO₂ ≈ 250; F3 does not change it.
@@ -4826,7 +4826,7 @@ gh pr create --base main --head fu-9-blood-fluids --title "FU-9: blood, fluids a
    26.8, platelets 24.8, a day-14 SAGM unit's supernatant 0 with lactate 19.6), and their citrate becomes bicarbonate
    within the hour, so the class IV + MTP rig reads BE −0.1 and iCa 0.955 (`it.fails`: bands ≤ −10 and 0.6–0.95), with no
    arrest and lactate ≥ 4. *Recommendation:* the teaching case's acidosis should come from the SHOCK (lactate 4–12 in
-   the tables: the rig's lactate peak is the lever — Ali's calibration of the low-flow lactate production), and the iCa
+   the tables: the rig's lactate peak is the lever — the owner's calibration of the low-flow lactate production), and the iCa
    band from FFP/platelet citrate at MTP rates; keep the rows as sourced.
 3. **Septic capillary leak (F4) and the transient MAP gain (BF-20b).** The septic lung makes water (+0.87 mL/kg (healthy +1.85)) but less
    than a healthy lung under the same 30 mL/kg; PaO₂ still rises (+12 vs +6 healthy, R50 F11). *Recommendation:* keep the
@@ -4892,9 +4892,9 @@ gh pr create --base main --head fu-9-blood-fluids --title "FU-9: blood, fluids a
   half, H4, is A9). FU-9's `it.fails` in `fu9-iap.test.ts` and `fu9-filtration.test.ts` are its acceptance arms.
 - **R-FU9-9 → the 7d follow-up owner (orchestrator to route):** H7 (a hypertensive shift of renal autoregulation, tables
   §1.5 `renalLowerLimit` +10), H11 (one lactate clearance with the tables' split), and the CKD and cirrhosis profiles
-  (research/13 §5); H9 (gamma-curve drugs and organ function) → FU-7 Task 2; H12 (autoregulation ceiling) → Ali's
+  (research/13 §5); H9 (gamma-curve drugs and organ function) → FU-7 Task 2; H12 (autoregulation ceiling) → the owner's
   calibration.
-- **R-FU9-10 → FU-8 / Ali:** the elderly band's blood volume per kg differs between 7c (65/60 mL/kg M/F) and the
+- **R-FU9-10 → FU-8 / samhv-dev:** the elderly band's blood volume per kg differs between 7c (65/60 mL/kg M/F) and the
   circulation (62/65): Part C makes both read one size weight, not one per-kg table.
 
 ## Self-review (fixer, 2026-09-30, on `2473f0b`)

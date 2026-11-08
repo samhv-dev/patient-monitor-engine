@@ -7,29 +7,29 @@
 //   PTI = (P_breath/P_max)·(Ti/Ttot); PTI > 0.15 → fatigue F falls (≈ 45 min to failure), RR ↑, VT ↓
 export const CO2_SLOPE = 1.5; // L/min/mmHg (Q36; 1.60 ± 0.19)
 export const APNOEA_OFFSET = 4; // mmHg below resting PaCO2 (Q36)
-export const HVR_A = 25; // mmHg (Weil form constant, [ENG] Q36)
+export const HVR_A = 25; // mmHg (Weil form constant, (tables `hvrA` 25 (range 10–50), Weil 1970 form, Q36) Q36)
 export const PTI_CRIT = 0.15; // Bellemare & Grassino 1982 (Q36)
 export const P_MAX_CMH2O = 90; // 80–100
 export const FATIGUE_TAU_S = 45 * 60;
-export const PAIN_GAIN = 0.3; // +20–40 % at noxious 1, not anaesthetised [ENG]
-export const J_RR_PER_EVLWI = 1.5; // RR +4–10 at EVLWI > 10 → +1.5/min per mL/kg above 10 [ENG]
+export const PAIN_GAIN = 0.3; // +20–40 % at noxious 1, not anaesthetised [FIT: ventilatory control gain; brief research/44 L2-31]
+export const J_RR_PER_EVLWI = 1.5; // RR +4–10 at EVLWI > 10 → +1.5/min per mL/kg above 10 [FIT: ventilatory control gain; brief research/44 L2-31]
 /**
  * The wakefulness drive. Awake, breathing continues below the resting PaCO2 (Fink 1961 J Appl Physiol 16:15);
  * unconscious it stops a few mmHg below the ANAESTHETISED resting PaCO2 (Nunn 9e ch. 5: apnoeic threshold 0.3–0.5 kPa
  * below it; anaesthetised resting PaCO2 45–50). Loss of consciousness therefore raises the threshold B by WAKE_MMHG (B
- * = set − VE0/S = set − 5 awake → set + 3 unconscious) [ENG size, directions sourced; sourced range 7–10 (threshold 2–5
- * mmHg above the awake resting PaCO2); fit target: test/engine/resp-induction.test.ts bands].
+ * = set − VE0/S = set − 5 awake → set + 3 unconscious) [FIT: size, directions sourced; sourced range 7–10 (threshold 2–5
+ * mmHg above the awake resting PaCO2); fit target: test/engine/resp-induction.test.ts bands; brief research/44 L2-31].
  */
 export const WAKE_MMHG = 8;
 /**
  * A neural drive below 10 % of the resting VE produces no breath (apnoea); breathing resumes above 15 % (hysteresis, as
- * the neuro model's MANUAL APNOEA_IN/OUT 0.42/0.5 of resting VE) [ENG]. Was an absolute 0.2 L/min, which a depressed
+ * the neuro model's MANUAL APNOEA_IN/OUT 0.42/0.5 of resting VE) [FIT: ventilatory control gain; brief research/44 L2-31]. Was an absolute 0.2 L/min, which a depressed
  * drive never reached: the RR floor of 4/min kept VE at 0.4–0.9 L/min after propofol + opioid.
  */
 export const APNOEA_VE_IN = 0.1;
 export const APNOEA_VE_OUT = 0.15;
 /**
- * Inspiratory muscle pressure of a resting breath, cmH2O (VT/Crs + R·V' ≈ 500/100 + 2 ≈ 7–8 [ENG]). Against a closed
+ * Inspiratory muscle pressure of a resting breath, cmH2O (VT/Crs + R·V' ≈ 500/100 + 2 ≈ 7–8 [FIT: ventilatory control gain; brief research/44 L2-31]). Against a closed
  * airway the whole effort shows in the pleural space: effort × 8, up to P_MAX (Mueller; laryngospasm −20 to −50).
  */
 export const PMUS_REST_CMH2O = 8;
@@ -39,9 +39,9 @@ export const PMUS_REST_CMH2O = 8;
  * guideline; West, pathophysiology), with a rapid shallow pattern (J-receptor tachypnoea, like EVLWI's). A MULTIPLIER
  * on the chemical drive cannot do it: measured while writing (×1.8) RR 19.2 / PaCO2 38.2, and analytically S(1+J)(P −
  * B) = k/P keeps P above the threshold B ≈ 35 for any J. Massive PE doubles to triples the minute ventilation (its
- * alveolar dead space ≈ 0.5 halves the CO2 elimination). [ENG J_PE_VE_FRAC 2.4 of the resting VE and J_PE_RR 4/min at
+ * alveolar dead space ≈ 0.5 halves the CO2 elimination). [FIT: J_PE_VE_FRAC 2.4 of the resting VE and J_PE_RR 4/min at
  * severity 1; fit target RS13 "RR ≥ 25, PaCO2 ≤ 35 on air" — measured 27.2 / 30.0, VE 18 L/min; 2.0/6 gave 27.6 / 34.8
- * (no margin), 0.8/8 gave 28.7 / 39.1 (rapid shallow breaths feed the dead space)]
+ * (no margin), 0.8/8 gave 28.7 / 39.1 (rapid shallow breaths feed the dead space); brief research/44 L2-31]
  */
 export const J_PE_VE_FRAC = 2.4;
 export const J_PE_RR = 4;
@@ -53,8 +53,8 @@ export const J_PE_RR = 4;
  * threshold still breathes. The plateau is HVR_INDEP_VE × resting VE × (H(PaO2) − 1), depressed by hvrDep exactly like
  * the multiplicative arm, and the chemical drive is max(fan, plateau): above the threshold the fan is larger, so every
  * existing hypoxic-response band is unchanged; at normoxia the plateau is < 0.02 × resting VE (below the apnoea
- * threshold). [ENG 0.5; fit target: the unit row "PaO2 50 / PaCO2 30 breathes, ≈ 0.5 × resting VE awake" and the engine
- * row (a post-induction apnoea on air ends on hypoxia, not on CO2)]
+ * threshold). [FIT: 0.5; fit target: the unit row "PaO2 50 / PaCO2 30 breathes, ≈ 0.5 × resting VE awake" and the engine
+ * row (a post-induction apnoea on air ends on hypoxia, not on CO2); brief research/44 L2-31]
  */
 export const HVR_INDEP_VE = 0.5;
 /**
@@ -62,8 +62,8 @@ export const HVR_INDEP_VE = 0.5;
  * apnoea < 30 s in 7 %, 30–60 s in 24 %, > 60 s in 12 % — 43 % overall, the modal apnoea 30–60 s. The
  * patient-to-patient spread of the wakefulness shift (and of the CO2 sensitivity and hypnotic sensitivity it stands in
  * for) is ONE seeded draw per patient: u ~ U(0, 1) from the engine's own 'resp-wake' stream (resp pipeline,
- * `createRespState`) → this quantile table → the patient's shift in mmHg [ENG knots; fit target: the label's bands,
- * measured on the 20-seed row of test/engine/resp-induction.test.ts]. u < 0.57 → no apnoea (the drive stays above its
+ * `createRespState`) → this quantile table → the patient's shift in mmHg [FIT: knots; fit target: the label's bands,
+ * measured on the 20-seed row of test/engine/resp-induction.test.ts; brief research/44 L2-31]. u < 0.57 → no apnoea (the drive stays above its
  * raised threshold); 0.57–0.64 → < 30 s; 0.64–0.88 → 30–60 s (the mode, ≈ 45 s at its middle); 0.88–1 → > 60 s. Without
  * a draw (unit tests, older snapshots) WAKE_MMHG applies. Knots from the sweep on the 20-seed row's rig (SGA, FiO2 0.5,
  * propofol 2 mg/kg, seed 7 with the shift pinned): 0 s up to 7.3 mmHg, 30 s at 8.2, 60 s at 10.0, 110 s at 13.3.
@@ -95,7 +95,7 @@ export interface DriveInputs {
 export interface DriveOut { ve: number; rr: number; vt: number }
 
 export function hypoxicFactor(pao2: number): number {
-  return Math.min(4, 1 + HVR_A / Math.max(1, pao2 - 32) - HVR_A / 68); // capped ×4 near PaO2 40 [ENG]
+  return Math.min(4, 1 + HVR_A / Math.max(1, pao2 - 32) - HVR_A / 68); // capped ×4 near PaO2 40 [FIT: ventilatory control gain; brief research/44 L2-31]
 }
 
 /** Minute ventilation and its split. Returns rr 0 (apnoea) when the CO2 drive is below threshold. */

@@ -32,11 +32,11 @@ apps/demo/src/app/describe.ts	104	a	// Stage 10
 apps/demo/src/app/describe.ts	131	b	/** Stage 10: a sim time as the session clock shows it ("13:20"; ui.ts's `clock`, which the log cannot import in Node). */
 apps/demo/src/app/describe.ts	134	b	/** Stage 10: a fast-forward's span in words ("5 min", "90 s"). */
 apps/demo/src/app/drugs.test.ts	1	b	// FU-7.1 A1 (research/24 P1): the dose picker gives every neuromuscular blocker its intubating dose in mg/kg, and that
-apps/demo/src/app/drugs.ts	2	b	// (7g `DRUGS`), so a drug a later stage adds is listed without a code change. The presets below are DRAFTS for Ali's
-apps/demo/src/app/drugs.ts	3	b	// review (brief Q6: "start from the 7g library's ranges; Ali reviews one table before Stage 9 code").
+apps/demo/src/app/drugs.ts	2	b	// (7g `DRUGS`), so a drug a later stage adds is listed without a code change. The presets below are DRAFTS for the owner's
+apps/demo/src/app/drugs.ts	3	b	// review (brief Q6: "start from the 7g library's ranges; samhv-dev reviews one table before Stage 9 code").
 apps/demo/src/app/drugs.ts	26	b	// FU-7.1 A1 (research/24 P1): every neuromuscular blocker opens on its intubating dose in mg/kg — without a preset
 apps/demo/src/app/drugs.ts	28	b	// vecuronium 0.08–0.1; atracurium 0.4–0.5; Mivacron 0.15–0.2 mg/kg, 0.2 over 30 s) as the 7g rows quote them.
-apps/demo/src/app/drugs.ts	49	b	// FU-7.1 A5 (Ali 2026-10-10): potassium chloride is INFUSED, never pushed — the picker opens on Infusion with the
+apps/demo/src/app/drugs.ts	49	b	// FU-7.1 A5 (samhv-dev 2026-10-10): potassium chloride is INFUSED, never pushed — the picker opens on Infusion with the
 apps/demo/src/app/drugs.ts	61	b	/** The display name in the site's set (glossary `DRUG_NAMES`, orchestrator ruling 5): read at use, not stored. */
 apps/demo/src/app/drugs.ts	72	b	/** Dose units offered for a drug: its own unit and per kg, plus g for drugs dosed in mg (FU-7.1 A1: mg/kg for the
 apps/demo/src/app/drugs.ts	88	b	// FU-7.1 A5: potassium chloride (10–20 mmol/h)
@@ -45,17 +45,17 @@ apps/demo/src/app/fast-forward.ts	1	b	// Stage 10 (the owner's fast-forward, 22 
 apps/demo/src/app/fu11-link-timeline.test.ts	1	b	// FU-11 Task E6 (F05, F09; showcase-hotfix notes): the panel's Link follows a new timeline — onsets in progress end on
 apps/demo/src/app/glossary-data.ts	1	m	// R56 clinical glossary: engine key → clinical label, full name, unit, adult normal range (research/11-capability-inventory-
 apps/demo/src/app/glossary-data.ts	2	m	// and-glossary.md §5, 294 entries, generated 2026-09-28 by the Stage 9 plan writer from the workspace research file; edits
-apps/demo/src/app/glossary-data.ts	3	m	// go HERE and are reviewed by Ali). `keys` are console truth paths; `#` = side index (0 L, 1 R), `*`/`<id>` = any segment.
+apps/demo/src/app/glossary-data.ts	3	m	// go HERE and are reviewed by samhv-dev). `keys` are console truth paths; `#` = side index (0 L, 1 R), `*`/`<id>` = any segment.
 apps/demo/src/app/glossary-data.ts	4	m	// Entries without keys are planned labels (R57/R58/R59) that the UI already uses for placeholders.
-apps/demo/src/app/glossary-data.ts	317	m	* Stage 9 additions (Ali reviews them with the glossary, R56): labels the instructor controls need that research/11 does
+apps/demo/src/app/glossary-data.ts	317	m	* Stage 9 additions (samhv-dev reviews them with the glossary, R56): labels the instructor controls need that research/11 does
 apps/demo/src/app/glossary-data.ts	319	m	* leaves FU-4, V.1, FU-6, FU-7 and 7k add) start at 300. research/11's numbers 1–294 never change.
-apps/demo/src/app/glossary-data.ts	327	m	// Task 0/2 (R-S9-7): truth leaves V.1 and FU-6 added, with the labels their plans proposed (for Ali's review)
-apps/demo/src/app/glossary-data.ts	333	b	// Stage 7k's new truth leaves (its plan's N1–N7, numbered after 304; for Ali's review)
-apps/demo/src/app/glossary-data.ts	342	b	// FU-9's new truth leaves (blood, fluids, acid–base and kidney integration; numbered after 312, for Ali's review)
+apps/demo/src/app/glossary-data.ts	327	m	// Task 0/2 (R-S9-7): truth leaves V.1 and FU-6 added, with the labels their plans proposed (for the owner's review)
+apps/demo/src/app/glossary-data.ts	333	b	// Stage 7k's new truth leaves (its plan's N1–N7, numbered after 304; for the owner's review)
+apps/demo/src/app/glossary-data.ts	342	b	// FU-9's new truth leaves (blood, fluids, acid–base and kidney integration; numbered after 312, for the owner's review)
 apps/demo/src/app/glossary-data.ts	354	m	// FU-7's new truth leaves (drug-layer integration; numbered after FU-9's 323; labels from research/11 §5 where it has them —
-apps/demo/src/app/glossary-data.ts	355	m	// the FU-7 plan's Task 19 console rows — and clinical wording for the rest; for Ali's review). Copies of these values
+apps/demo/src/app/glossary-data.ts	355	m	// the FU-7 plan's Task 19 console rows — and clinical wording for the rest; for the owner's review). Copies of these values
 apps/demo/src/app/glossary-data.ts	356	m	// in 7f's input cache (`neuro.last.*`), 7c's copy of the profile magnesium (`blood.mgSeen`) and the hooks' clock
-apps/demo/src/app/glossary-data.ts	373	b	// FU-10's new truth leaves (endocrine and thermal integration, Part A; numbered after FU-7's 338, for Ali's review)
+apps/demo/src/app/glossary-data.ts	373	b	// FU-10's new truth leaves (endocrine and thermal integration, Part A; numbered after FU-7's 338, for the owner's review)
 apps/demo/src/app/glossary-data.ts	383	m	// FU-8 Part B's new truth leaf (numbered after FU-10's 347)
 apps/demo/src/app/glossary-data.ts	388	b	* Stage 9: the per-key label where one research/11 entry names several quantities ("NIBP S/D/M", "Dial / FGF"): each
 apps/demo/src/app/glossary-data.ts	389	b	* truth path gets its own part (research/11 §5.16 rule 3: collisions resolved by the label). Reviewed with the glossary.
@@ -63,11 +63,11 @@ apps/demo/src/app/glossary-data.ts	392	b	// Stage 7k (its plan's Requests → St
 apps/demo/src/app/glossary-data.ts	395	b	// FU-10: entry 346 names two readings
 apps/demo/src/app/glossary-data.ts	421	b	// a '*' key names several quantities under one label: only the paths named here get a clinical label (review F1)
 apps/demo/src/app/glossary-data.ts	427	b	* Stage 9 (review F1): the screen label where research/11's label, shortened, would name two different quantities.
-apps/demo/src/app/glossary-data.ts	429	b	* mL/kg/h (245). Reviewed by Ali with the glossary.
+apps/demo/src/app/glossary-data.ts	429	b	* mL/kg/h (245). Reviewed by samhv-dev with the glossary.
 apps/demo/src/app/glossary-data.ts	434	b	* Stage 9 (review F1): entries that are the same quantity as another entry (the truth copy of a monitor value), so a
 apps/demo/src/app/glossary-data.ts	440	b	* Drug display names (orchestrator ruling 5 on the R50 review: drug names join the glossary, R56). One row per drug of
 apps/demo/src/app/glossary-data.ts	441	b	* the 7g library (placeholders without PD excluded), generated once from its `DRUGS` names and edited by hand from now
-apps/demo/src/app/glossary-data.ts	443	b	* "epinephrine / norepinephrine" (Ali's open question Q13). A drug a later stage adds shows its library name until it
+apps/demo/src/app/glossary-data.ts	443	b	* "epinephrine / norepinephrine" (the owner's open question Q13). A drug a later stage adds shows its library name until it
 apps/demo/src/app/glossary-data.ts	461	a	// FU-7.1 A5
 apps/demo/src/app/glossary-data.ts	467	b	// FU-7's new library rows
 apps/demo/src/app/glossary-data.ts	473	b	* Task 26: short screen names for the 7b lung catalogue (the catalogue's full text, with its grading notes, goes in the
@@ -140,7 +140,7 @@ apps/demo/src/app/router.ts	1	k	// Hash routing without a router dependency (res
 apps/demo/src/app/s10-fast-forward.dom.test.ts	2	b	// Stage 10 Task 5 (owner's decision 1): the fast-forward panel — the page dimmed and blurred behind it, "FAST FORWARD ·
 apps/demo/src/app/s10-fast-forward.test.ts	1	b	// Stage 10 Task 5 (the owner's fast-forward): the clinical log says where a fast-forward began and ended and lists the
 apps/demo/src/app/s10-ff-cockpit.test.ts	1	b	// Stage 10 Task 5 (owner's decision 6: the Ventilator view supports the fast-forward): the bronchospasm showcase case on
-apps/demo/src/app/scenario-meta.ts	5	k	// Every built-in is a draft until Ali's clinical review.
+apps/demo/src/app/scenario-meta.ts	5	k	// Every built-in is a draft until the owner's clinical review.
 apps/demo/src/app/scenario-meta.ts	14	b	/** Show the learner controls under the monitor when this scenario loads (orchestrator ruling 4). Default off; no
 apps/demo/src/app/scenario-meta.ts	77	k	/** Card fallback for a document without meta: its notes without author references (stage and ruling numbers). */
 apps/demo/src/app/scenarios.ts	2	b	// and the depth and neuromuscular cases 7f added), so a case a later stage adds appears without a code change.
@@ -217,7 +217,7 @@ apps/demo/src/app/showcase/s5-kept.slow.test.ts	7	m	/** R45 bands: the measured 
 apps/demo/src/app/showcase/showcase-cards.test.ts	1	b	// Stage 11: the Showcase cards as content — every document is valid, every button's commands are accepted by an engine
 apps/demo/src/app/showcase/showcase-cards.test.ts	48	b	// Stage 13: { text, rule }
 apps/demo/src/app/site.test.ts	9	b	// "epinephrine / norepinephrine" unless the site chooses (ruling 5)
-apps/demo/src/app/site.ts	20	b	/** Drug names on every screen (orchestrator ruling 5; Ali's open question Q13): 'us' "epinephrine / norepinephrine"
+apps/demo/src/app/site.ts	20	b	/** Drug names on every screen (orchestrator ruling 5; the owner's open question Q13): 'us' "epinephrine / norepinephrine"
 apps/demo/src/app/site.ts	35	b	/** The drug-name sets, in the words the Settings screen uses (orchestrator ruling 5). */
 apps/demo/src/app/staging.ts	4	b	// group (Stage 6a StageBuffer: the host applies them on one tick) with the batch transition as the ramp of every
 apps/demo/src/app/staging.ts	69	b	// sent, so the log, the toast and the progress bar never promise a slow change that happens at once (external review F13).
@@ -306,7 +306,7 @@ apps/demo/src/app/views/vent.ts	50	b	// Stage 10 (owner's decision 6): a fast-fo
 apps/demo/src/app/views/vent.ts	58	b	// FU-11 (D3, presenter rehearsal): the cockpit follows every later speed change too — opened at ×1 and then run at
 apps/demo/src/app/vitals.ts	9	b	/** Glossary entry number (research/11 §5 or the Stage 9 additions). */
 apps/demo/src/fu4.ts	1	m	// FU-4 evidence page (plan Task 23): seven scripted scenarios on the philips-like skin — the orchestrator inspects them
-apps/demo/src/fu4.ts	2	m	// before Ali tests again (R53). MODELED circulation, ETT + VCV 12 × 600 / PEEP 5 / FiO2 0.5 (the audit rig). The side
+apps/demo/src/fu4.ts	2	m	// before samhv-dev tests again (R53). MODELED circulation, ETT + VCV 12 × 600 / PEEP 5 / FiO2 0.5 (the audit rig). The side
 apps/demo/src/fu4.ts	5	m	// perfusion is FU-5's. Pattern: stage7e.ts (mountMonitor, send() with atTick, a window hook).
 apps/demo/src/fu6.ts	1	m	// FU-6 evidence page: five respiratory demonstrations on the Philips-like monitor (MODELED, ×4). The ground truth the
 apps/demo/src/fu7.ts	1	m	// FU-7 evidence page (plan Task 20 Step 2): four panels, each one gate screenshot, drawn from the engine. Panel 1 plots
@@ -436,7 +436,7 @@ apps/demo/src/stage7f.ts	17	b	/** FU-8 (F4): when the induction script starts ba
 apps/demo/src/stage7f.ts	92	m	// FU-8 (F4): the bag starts at +180 s (unchanged) unless `?bvmAt=` says later — the FU-5 latched-APNEA e2e waits for
 apps/demo/src/stage7f.ts	93	m	// the induction apnoea to alarm (after FU-4 the apnoea starts ≈ 4 s later and the capnograph's 20 s never elapsed)
 apps/demo/src/stage7f.ts	95	b	// `stimulus` is Stage 7e's event (intensity 0–2, held until the next one; 7f observes it: R51 addenda 12, 17)
-apps/demo/src/stage7f.ts	101	b	// 7g's vaporiser (R51 §4). Maintenance dial 2 % (FU-3 item 12, Ali's call): 3 % on top of the propofol read DI 30
+apps/demo/src/stage7f.ts	101	b	// 7g's vaporiser (R51 §4). Maintenance dial 2 % (FU-3 item 12, the owner's call): 3 % on top of the propofol read DI 30
 apps/demo/src/stage7f.ts	102	b	// at 13 min (gate 7f); 2 % reads DI 38 at 13 min and 41–42 at 25–30 min once the propofol has worn off
 apps/demo/src/stage7g.ts	1	m	// Stage 7g demo: the monitor plus the drug panel (Cp/Ce, pump/TCI, decrement time, volatile line) and a depth tile
 apps/demo/src/stage7g.ts	2	m	// that shows 7g's summaries until 7f's depth index exists. The shadow engine is deterministic, so it IS the
@@ -541,7 +541,7 @@ packages/controller/src/remote/remote-app.ts	67	b	// FU-11 (F18, BA07): the remo
 packages/controller/src/remote/remote-app.ts	75	b	// FU-11 (F18, BA07): a rejoin closes the previous link (session.close() never owned it)
 packages/controller/src/remote/remote-app.ts	109	b	/** Stage 6b: the scenario's current state and its manual-trigger buttons. */
 packages/controller/src/remote/remote-app.ts	171	b	// FU-11 (F18, BA07): no socket or reconnect timer outlives the remote
-packages/controller/src/scenario/builtins.ts	1	k	// Built-in scenarios (JSON under packages/controller/scenarios/). All are [draft] until Ali's clinical review.
+packages/controller/src/scenario/builtins.ts	1	k	// Built-in scenarios (JSON under packages/controller/scenarios/). All are [draft] until the owner's clinical review.
 packages/controller/src/scenario/builtins.ts	7	b	// FU-8 (Stage 9 R-S9-2): the six Stage 7f documents join the list — the driver loaded only the first five by id
 packages/controller/src/scenario/describe.ts	8	b	* FU-8 (Stage 9 R-S9-2): the words a host prints for engine ids — a vital (`etco2`), an event value (a drug id), a
 packages/controller/src/scenario/describe.ts	9	b	* sensor and a scenario state. The controller owns no glossary (R56: the app's glossary is the one label source), so
@@ -1051,7 +1051,7 @@ packages/engine-core/src/l2/blood/pipeline.ts	105	m	* `ref.co` and latches at 12
 packages/engine-core/src/l2/blood/pipeline.ts	110	b	/** Hypertonic saline runs in over this time when 7g's log gives no duration [ENG]. */
 packages/engine-core/src/l2/blood/pipeline.ts	114	m	* Turn 7g's accepted boluses into 7c's mass balance and effect curves, in 7g's library units (sux mcg; calcium salts
 packages/engine-core/src/l2/blood/pipeline.ts	116	m	* NOT read here: their K shift arrives once, as `bus.metabolic.kShift` (R50 F2). Each entry is listed for exactly one
-packages/engine-core/src/l2/blood/pipeline.ts	137	b	// FU-7.1 A5 (Ali 2026-10-10): infused potassium chloride is a K AND Cl load on 7c's own pool — no new curve. The
+packages/engine-core/src/l2/blood/pipeline.ts	137	b	// FU-7.1 A5 (samhv-dev 2026-10-10): infused potassium chloride is a K AND Cl load on 7c's own pool — no new curve. The
 packages/engine-core/src/l2/blood/pipeline.ts	140	b	// its anion would alkalinise the patient). 7g logs the infused amount once per advance pass (A5, pipeline.ts).
 packages/engine-core/src/l2/blood/pipeline.ts	156	m	// FU-9 H8: an effective ECF osmole in 7c's pool; 7d's kidney clears it from here
 packages/engine-core/src/l2/blood/pipeline.ts	174	b	// FU-7 (addendum 24 / audit D12, D6): ONE Mg state — a CHANGED neuro-profile Mg re-baselines 7c's set point and amount
@@ -1164,7 +1164,7 @@ packages/engine-core/src/l2/circ/baroreflex.ts	84	b	// R45(b): transmural RA set
 packages/engine-core/src/l2/circ/baroreflex.ts	96	b	/** FU-4 G2: × on the delivered sympathetic output (both limbs), after saturation — central sympatholysis (1 = none). */
 packages/engine-core/src/l2/circ/baroreflex.ts	98	b	/** FU-4 G2: × on the set point the error is taken against (anaesthetic resetting; 1 = none). */
 packages/engine-core/src/l2/circ/baroreflex.ts	101	b	* FU-4 F1(b): × on the delivered sympathetic output from BRAINSTEM PERFUSION. The vasomotor centre is itself
-packages/engine-core/src/l2/circ/baroreflex.ts	107	m	* FU-8 (C1, research/19; Part B, for Ali's review): the TONIC sympathetic share of resting SVR and contractility
+packages/engine-core/src/l2/circ/baroreflex.ts	107	m	* FU-8 (C1, research/19; Part B, for the owner's review): the TONIC sympathetic share of resting SVR and contractility
 packages/engine-core/src/l2/circ/baroreflex.ts	111	m	* Removed in proportion to the ANAESTHETIC's delivered-output factor `outF` only (plan D15's formula) — NOT `brainF`:
 packages/engine-core/src/l2/circ/baroreflex.ts	113	m	* the GA flow–metabolism coupling lowers at a normal MAP (FU-9 H1 and F5 moved when `o = outF × brainF` was used, the
 packages/engine-core/src/l2/circ/baroreflex.ts	115	m	* DECISION (research/23 §6.3 note 3): the venous effectors (`dV0`, `cSvF`) carry NO tonic share in FU-8 — only SVR and
@@ -1418,7 +1418,7 @@ packages/engine-core/src/l2/circ/profile.ts	85	b	/** FU-8 (C8): the resting circ
 packages/engine-core/src/l2/circ/profile.ts	87	b	/** FU-8 (C8): RV Ees multiplier by PH grade (tables §1.5: × 1.3 / 1.6 / 2.0, adapted hypertrophy). */
 packages/engine-core/src/l2/circ/profile.ts	89	k	/** LV stiffness multiplier by AS grade (tables §1.5 Q15: β ×1.0 / 1.3 / 1.6 / 2.0). */
 packages/engine-core/src/l2/circ/profile.ts	92	m	* R45(c): concentric LV hypertrophy in AS raises end-systolic elastance with the grade (the hypertrophied LV
-packages/engine-core/src/l2/circ/profile.ts	93	m	* normalises wall stress and keeps ESV near normal at LVSP 170–200) [ENG, magnitude for Ali's R44 calibration pass].
+packages/engine-core/src/l2/circ/profile.ts	93	m	* normalises wall stress and keeps ESV near normal at LVSP 170–200) [ENG, magnitude for the owner's R44 calibration pass].
 packages/engine-core/src/l2/circ/profile.ts	96	b	/** FU-8 (C1, Part B): tonic sympathetic share of resting SVR by profile [ENG; MSNA: Sundlöf & Wallin 1978, Grassi 1998]. */
 packages/engine-core/src/l2/circ/profile.ts	102	b	/** FU-8 (C5): the stabiliser's resting MAP (radial) sits this far above the reflex set point — the adult default
 packages/engine-core/src/l2/circ/profile.ts	108	m	// pp: FU-8 (C5) the resting pulse pressure the stabiliser targets [TXT: PALS normal ranges — neonate 60–75/30–45,
@@ -1426,9 +1426,9 @@ packages/engine-core/src/l2/circ/profile.ts	125	b	// FU-8 (C4, research/19; R50 
 packages/engine-core/src/l2/circ/profile.ts	143	a	// FU-4 F1(a)
 packages/engine-core/src/l2/circ/profile.ts	144	b	// FU-8 (F6): the outflow limiter scales with the heart (0.25 mL in a 3.5 kg neonate)
 packages/engine-core/src/l2/circ/profile.ts	148	b	// FU-8 (C5, research/19): the band's resting pressure is centred on the band's reflex set point, with the band's
-packages/engine-core/src/l2/circ/profile.ts	151	b	// (120/80 ↔ 90) is unchanged; conditions then apply their deltas as before (HTN, HFrEF: Waiting on Ali, plan D13).
+packages/engine-core/src/l2/circ/profile.ts	151	b	// (120/80 ↔ 90) is unchanged; conditions then apply their deltas as before (HTN, HFrEF: Waiting on samhv-dev, plan D13).
 packages/engine-core/src/l2/circ/profile.ts	157	b	// FU-8 (C1): young adult ≈ 0.2 (the resting SVR fall under autonomic ganglionic blockade); MSNA doubles 25 → 65 y
-packages/engine-core/src/l2/circ/profile.ts	158	b	// (Sundlöf & Wallin) — elderly 0.3; untreated HTN and HFrEF add below (Grassi 1998) [ENG sizes, Ali's review]
+packages/engine-core/src/l2/circ/profile.ts	158	b	// (Sundlöf & Wallin) — elderly 0.3; untreated HTN and HFrEF add below (Grassi 1998) [ENG sizes, the owner's review]
 packages/engine-core/src/l2/circ/profile.ts	161	b	// the elderly keep 140/80 (MAP 100 against the set point 95): 7d's check 18 (75 y HTN CBF plateau) is fitted to it,
 packages/engine-core/src/l2/circ/profile.ts	181	a	// FU-8 (C1)
 packages/engine-core/src/l2/circ/profile.ts	198	a	// FU-8 (C1)
@@ -1437,7 +1437,7 @@ packages/engine-core/src/l2/circ/profile.ts	239	m	// g_hs ×0.2 (low end of the 
 packages/engine-core/src/l2/circ/profile.ts	240	m	// tables' linear sketch, and "HR stays < 100 in class III" (tables §1.5, §7 17b) holds only at ×0.2 [ENG, R44]
 packages/engine-core/src/l2/circ/profile.ts	243	b	// FU-7 (addendum 21): chronic metoprolol/bisoprolol — occupancy 0.85 = a dose ratio of ≈ 6.7 on every β-agonist's
 packages/engine-core/src/l2/circ/profile.ts	244	b	// EC50, which is tables §1.5's "β-agonist ×0.5" read as COMPETITIVE antagonism instead of a gain scale [ENG, Q1].
-packages/engine-core/src/l2/circ/profile.ts	245	b	// `betaNonSel` stays false (cardioselective is the common case; the scenario/profile may set it — Q1 asks Ali
+packages/engine-core/src/l2/circ/profile.ts	245	b	// `betaNonSel` stays false (cardioselective is the common case; the scenario/profile may set it — Q1 asks samhv-dev
 packages/engine-core/src/l2/circ/profile.ts	255	b	// PVR 3/5/10 WU by grade (tables §1.5), RV Ees ×1.3–2. FU-8 (research/19 C8): the grade was ignored — PVR × 3 and
 packages/engine-core/src/l2/circ/rate-rule.ts	1	b	// FU-2 (NR-7g-5, G7g): who owns the ventricular rate in MODELED mode. Only the sinus node answers to the
 packages/engine-core/src/l2/circ/rate-rule.ts	26	m	/** Largest fractional change of the AF ventricular response the reflex can cause [ENG, calibration pass R44]. */
@@ -1889,7 +1889,7 @@ packages/engine-core/src/l2/hemo/pipeline.ts	339	m	/** Stage 7a MANUAL M2: the S
 packages/engine-core/src/l2/hemo/pipeline.ts	343	b	// FU-2 item 7: an instructor contractility (≠ 1) IS both ventricles' Emax factor; the tracker then holds MAP with the
 packages/engine-core/src/l2/hemo/pipeline.ts	349	b	// FU-3 item 4: while the tracker owns LV Emax it is set against the current ischaemia; the hold keeps that reference
 packages/engine-core/src/l2/hemo/pipeline.ts	364	a	// FU-2 item 7
-packages/engine-core/src/l2/hemo/pipeline.ts	374	b	// FU-7.1 B8 (Ali 2026-10-10): a cuff that found no envelope must stop SHOWING the last pressure. The device
+packages/engine-core/src/l2/hemo/pipeline.ts	374	b	// FU-7.1 B8 (samhv-dev 2026-10-10): a cuff that found no envelope must stop SHOWING the last pressure. The device
 packages/engine-core/src/l2/hemo/pipeline.ts	421	b	// Stage 7a (R23): coronary supply/demand at 1 Hz → contractility (ext.kIsch) and the ST patch
 packages/engine-core/src/l2/hemo/pipeline.ts	425	a	// FU-3 item 16
 packages/engine-core/src/l2/hemo/pipeline.ts	427	b	// FU-4 G4: with no beat to read (pulseless rhythm, or no beat for 3 s) the coronary step reads the arrest's own
@@ -2476,7 +2476,7 @@ packages/engine-core/src/l2/pk/data/drugs.ts	1	b	// THE drug library (Stage 7g):
 packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts	1	b	// Drug library I (Stage 7g Task 12): hypnotics, opioids, benzodiazepines, α2 agonist, volatiles. DATA only.
 packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts	2	b	// Sources: tables §6.1/§6.3 (T6.x), research 03 §8.6 (R03), Miller 10e (M10 ch. N p. M), labels, papers as named.
 packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts	10	b	* → 2 ng/mL; sufentanil 12× [ENG, Q59] → 0.25), so a usual dose gives half of Emax −0.25/−0.15: HR −12.5 %,
-packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts	11	b	* SVR −7.5 % — mid-band of T6.3. Calibration items for Ali (R44); no primary source.
+packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts	11	b	* SVR −7.5 % — mid-band of T6.3. Calibration items for samhv-dev (R44); no primary source.
 packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts	20	b	* Volatile depression of the sympathetic HR arm of the baroreflex (7a `gvHr`, the term propofol's row carries), per MAC,
 packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts	26	b	* Nagasaki 2001 (sevoflurane 2 % / isoflurane 1.3 %: pressor BRS −50–60 %). FU-3 item 3 (R-7f-9).
 packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts	31	b	* FU-6 R13 (E-FU6-1): volatile inhibition of hypoxic pulmonary vasoconstriction, 0.2 per MAC, linear — the sevoflurane
@@ -2537,7 +2537,7 @@ packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts	70	m	// FU-7 (addendu
 packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts	83	m	// FU-7 (addendum 24 / DI-11): ees ec50 0.5 → 0.4 and pvr −0.5 @ 0.5 → −0.6 @ 0.4 [ENG; fit target: label SVR −17/−21/−37 %
 packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts	91	m	// FU-7 (addendum 24 / DI-33): v0Frac emax 0.25 → 0.32 [ENG; fit target: label + T6.2 venous capacitance +10–15 % of the
 packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts	95	m	// FU-7 (addendum 24): sodium nitroprusside — the balanced arterial+venous dilator addendum 24 names. Rate-equivalent
-packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts	96	m	// Ce as the other vasoactives (decision 4). Cyanide toxicity is NOT modelled in v1 (a note for 7i/Ali).
+packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts	96	m	// Ce as the other vasoactives (decision 4). Cyanide toxicity is NOT modelled in v1 (a note for 7i/samhv-dev).
 packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts	111	m	// FU-7 (addendum 24 / DI-07): hr ec50 250 → 150 [label: 0.5 mg/kg over 1 min peaks within 2 min; T6.2 HR −10–20 %;
 packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts	113	b	// FU-2 E-FU2-6: AV-nodal block (AF rate control) [ENG]
 packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts	116	m	// FU-2 E-FU2-6 [ENG]
@@ -2548,9 +2548,9 @@ packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts	132	b	// FU-7 (addend
 packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts	139	b	// FU-7 (D13, DI-15): verapamil — AV-nodal block with vasodilation; in PRE-EXCITED AF it is the classic hazard
 packages/engine-core/src/l2/pk/data/rows-other.ts	1	b	// Drug library III (Stage 7g Task 14). DATA only.
 packages/engine-core/src/l2/pk/data/rows-other.ts	5	a	// FU-8 (B1)
-packages/engine-core/src/l2/pk/data/rows-other.ts	13	m	* Q-7g-2 for Ali]. Acidosis/hypercapnia raise the free fraction (M10 ch. 25 p. 761) — applied in Task 16.
+packages/engine-core/src/l2/pk/data/rows-other.ts	13	m	* Q-7g-2 for samhv-dev]. Acidosis/hypercapnia raise the free fraction (M10 ch. 25 p. 761) — applied in Task 16.
 packages/engine-core/src/l2/pk/data/rows-other.ts	22	m	// --- chemistry owned by 7c (decision 10): 7g lists them; the blood module acts ---
-packages/engine-core/src/l2/pk/data/rows-other.ts	25	b	// FU-7.1 A5 (Ali 2026-10-10 "there is no KCl as drug"): potassium chloride. 7c owns the kinetics, as for every
+packages/engine-core/src/l2/pk/data/rows-other.ts	25	b	// FU-7.1 A5 (samhv-dev 2026-10-10 "there is no KCl as drug"): potassium chloride. 7c owns the kinetics, as for every
 packages/engine-core/src/l2/pk/data/rows-other.ts	41	m	// FU-10 E-FU10-14 (orchestrator ruling; reverses FU-10 plan D6): the row's insulin is the plain insulin row's insulin —
 packages/engine-core/src/l2/pk/data/rows-other.ts	42	m	// the same PK and the same K⁺ pharmacodynamics (`kShift` → bus.metabolic.kShift → 7c), so 7c's empirical whole-effect
 packages/engine-core/src/l2/pk/data/rows-other.ts	43	m	// curve is retired whenever 7g is present (as salbutamol's is); 7c still reads the dose (shared) and keeps its curve in
@@ -2705,7 +2705,7 @@ packages/engine-core/src/l2/pk/row.ts	99	b	// 7c also acts on this id, reading i
 packages/engine-core/src/l2/pk/row.ts	100	b	/** FU-8 (B1): the routes this row honours — the engine's kinetics are intravenous; absent = IV_ROUTES. A dose by any
 packages/engine-core/src/l2/pk/row.ts	101	b	* other route is refused with a reason (no absorption model is built; review pack "every dose behaves as IV"). */
 packages/engine-core/src/l2/pk/row.ts	103	b	/** FU-8 (B1): a documented maximum — exceeding it raises a `drugWarning` event, never a clamp. `perKg`: × actual
-packages/engine-core/src/l2/pk/row.ts	105	b	* the rest wait on Ali's dosing-preset table (review pack DP-01…DP-64). */
+packages/engine-core/src/l2/pk/row.ts	105	b	* the rest wait on the owner's dosing-preset table (review pack DP-01…DP-64). */
 packages/engine-core/src/l2/pk/row.ts	106	b	/** FU-7.1 A5: the documented maximum INFUSION rate (amount per hour); a faster rate or a bolus order is warned about. */
 packages/engine-core/src/l2/pk/row.ts	109	b	/** FU-8 (B1): another stage reads this row's ordered RATE and acts on it (7e reads dextrose, E-7e-4), so an infusion
 packages/engine-core/src/l2/pk/tci.ts	1	b	// Target-controlled infusion (Stage 7g). Every TCI_DT_S the controller chooses ONE rate for the next interval:
@@ -2748,14 +2748,14 @@ packages/engine-core/src/l2/renal/params.ts	37	m	*  Pulse gives 147.5 L/day, D12
 packages/engine-core/src/l2/renal/params.ts	39	k	// 0.17, both kidneys (ICRP-89 via Pulse SET 315, NOTICES N-P10) — audit borrow #7
 packages/engine-core/src/l2/renal/params.ts	52	k	// KDIGO (tables alarm row, Q40)
 packages/engine-core/src/l2/renal/params.ts	57	b	/** Angiotensin/efferent response time constant, s [ENG]: an instantaneous term followed 7a's second-to-second CO wobble
-packages/engine-core/src/l2/renal/params.ts	60	b	/** FU-9 H10: cold diuresis onset and gain per °C [ENG, Ali's Q] (Polderman 2009: direction). */
+packages/engine-core/src/l2/renal/params.ts	60	b	/** FU-9 H10: cold diuresis onset and gain per °C [ENG, the owner's Q] (Polderman 2009: direction). */
 packages/engine-core/src/l2/renal/params.ts	66	b	/** FU-9 F1: excreted-fraction gain per unit blood-volume EXPANSION (ANP/ADH suppression) [ENG]: fitted so 1 L of
 packages/engine-core/src/l2/renal/params.ts	67	b	*  Ringer's over 30 min, awake, is 20–30 % intravascular 30 min after the end (Hahn 2010; 7c's own fallback t½ 30 min,
 packages/engine-core/src/l2/renal/params.ts	71	b	/** FU-9 H1: symmetric low-pass of the effective volume before the neurohumoral lag, s [ENG] (research/13 H1: τ ≈ 60 s). */
 packages/engine-core/src/l2/renal/params.ts	73	b	// effective volume = min(BV, (CO/(CO0·demandRel))^EXP) [ENG]: re-fitted (FU-9 H2/H4) to its own target, tables check 20 (HFrEF UOP 0.1–0.15, dobutamine 0.2–0.3): 0.75 → 0.35
 packages/engine-core/src/l2/renal/params.ts	81	b	// Kf × (1 − 0.5·sepsis) (efferent dilation / microvascular) [ENG]; 7f writes sepsis
 packages/engine-core/src/l2/renal/params.ts	82	b	// condition aki severity 1 → Kf × 0.2 [ENG]; FU-9 H6: also the nephron share TGF defends
-packages/engine-core/src/l2/renal/params.ts	83	b	/** FU-9 H6: intrinsic AKI's afferent tone — the afferent floor rises × (1 + AKI_AFF_TONE·aki) [ENG, Ali's Q]. */
+packages/engine-core/src/l2/renal/params.ts	83	b	/** FU-9 H6: intrinsic AKI's afferent tone — the afferent floor rises × (1 + AKI_AFF_TONE·aki) [ENG, the owner's Q]. */
 packages/engine-core/src/l2/renal/params.ts	87	b	// own-depot path (no 7g): E = plasma mg/(mg + 20)
 packages/engine-core/src/l2/renal/params.ts	88	b	/** With 7g: E = c/(c + 1), c = 7g's furosemide level in reference doses (row `furosemide`: gamma, ref 20 mg, peak
 packages/engine-core/src/l2/resp/driver.ts	3	b	// seam that replaces Stage 2's fixed 15/min clock) and the `breath` events. Sources: spontaneous (rr/vt from
@@ -3082,7 +3082,7 @@ packages/engine-core/src/l2/thermal/params.ts	91	b	* Dantrolene's PK and effect 
 packages/engine-core/src/l2/thermal/params.ts	92	b	* in 2.5 mg/kg reference doses (a gamma curve, 90 % of its peak within 1 min, t10 6 h). 7e maps that effect onto the
 packages/engine-core/src/l2/thermal/params.ts	98	b	* FU-10 E1 — MH from its triggers in a susceptible patient (7f publishes the exposure times; the MH state is 7e's).
 packages/engine-core/src/l2/thermal/params.ts	99	b	* Onset latency after each trigger: succinylcholine starts the hypermetabolism at once (the Stage 3 ramp then reaches
-packages/engine-core/src/l2/thermal/params.ts	105	b	* fulminant course of the instructor's `condition mh 1` (Ali Q2, open: fixed vs a seeded draw; fulminant vs abortive).
+packages/engine-core/src/l2/thermal/params.ts	105	b	* fulminant course of the instructor's `condition mh 1` (samhv-dev Q2, open: fixed vs a seeded draw; fulminant vs abortive).
 packages/engine-core/src/l2/thermal/params.ts	108	b	/** FU-10 E1 (orchestrator ruling R-8): the volatile-alone latency is agent-specific and deterministic — the registry's
 packages/engine-core/src/l2/thermal/thresholds.ts	10	k	// general anaesthesia; > 1 deeper; 7f supplies it, else the `thermal` event), the set-point shift (fever/MANUAL
 packages/engine-core/src/l2/thermal/thresholds.ts	30	b	/** FU-10 E6: the age shift of the cold-defence thresholds, °C (0 up to 60 y, THR_AGE_SHIFT_C from 80 y; linear). */
@@ -3124,7 +3124,7 @@ packages/engine-core/src/l3/alarms/conditions.ts	225	m	// when arrhythmia analys
 packages/engine-core/src/l3/alarms/conditions.ts	235	b	// one bpm of hysteresis (the limit alarms get the same rule in FU-5 Task 9), the event hold (≥ 5 s once raised) and
 packages/engine-core/src/l3/alarms/conditions.ts	236	b	// a clear delay: a live extreme alarm ends only after EXTREME_CLEAR_S back inside its threshold (review F9 [ENG]) —
 packages/engine-core/src/l3/alarms/conditions.ts	253	b	// FU-5 (Orchestrator ruling (FU-5 review), 2026-09-28, ruling 6): once ASYSTOLE stands, an agonal beat (R–R ≥
-packages/engine-core/src/l3/alarms/conditions.ts	256	b	// raises in Ali's case after FU-4's arrest; mindray-like, which does not latch, re-raised ASYSTOLE 15 times in 4 min)
+packages/engine-core/src/l3/alarms/conditions.ts	256	b	// raises in the owner's case after FU-4's arrest; mindray-like, which does not latch, re-raised ASYSTOLE 15 times in 4 min)
 packages/engine-core/src/l3/alarms/conditions.ts	277	b	// APNEA (brief §6.4 "apnoea (20 s)"; §6.4.1 always on, level 1): what the monitor's own detectors see — Stage 3's
 packages/engine-core/src/l3/alarms/conditions.ts	280	b	// FU-5 (audit M2): ONE apnoea, ONE alarm — from the active respiratory source only: the capnograph while it measures,
 packages/engine-core/src/l3/alarms/conditions.ts	287	b	// FU-5 (audit M8): the technical alarms real monitors raise from the signals themselves ([S2] IFU p. 44, 53–61;
@@ -3233,7 +3233,7 @@ packages/engine-core/src/l3/pressure-numerics/numerics.ts	5	b	// FU-5 (audit M5)
 packages/engine-core/src/l3/pressure-numerics/numerics.ts	16	b	/** FU-5: pulse rate < 25/min or amplitude < 3 mmHg is non-pulsatile (research/05 §6 [S2] p. 57). */
 packages/engine-core/src/l3/pressure-numerics/numerics.ts	18	b	/** FU-5: a line that started sampling searches this long before it calls itself static (Saadat "IBP1 SEARCH") [ENG]. */
 packages/engine-core/src/l3/pressure-numerics/numerics.ts	21	b	* FU-5: a static line is pulsatile again only after this long of pulsatile beats — at MAP 13 / PP 3 one ventilator
-packages/engine-core/src/l3/pressure-numerics/numerics.ts	26	b	* FU-5: amplitude hysteresis on the 3 mmHg rule — a static line is pulsatile again only at this amplitude (Ali's case at
+packages/engine-core/src/l3/pressure-numerics/numerics.ts	26	b	* FU-5: amplitude hysteresis on the 3 mmHg rule — a static line is pulsatile again only at this amplitude (the owner's case at
 packages/engine-core/src/l3/pressure-numerics/numerics.ts	46	b	/** FU-5: absolute index of the first sample of this sampling run (absent in pre-FU-5 snapshots). */
 packages/engine-core/src/l3/pressure-numerics/numerics.ts	48	b	/** FU-5: the line has shown a static pressure; since when its beats are pulsatile again (REPULSE_S). */
 packages/engine-core/src/l3/pressure-numerics/numerics.ts	52	b	* FU-5: how a static pressure is shown (skin `ibp.staticDisplay`, set by the engine): 'keep' = S/D/M stay, only the
@@ -3538,7 +3538,7 @@ packages/renderer/src/device-ui.ts	102	b	/** Stage 12: the tiles in a grid UNDER
 packages/renderer/src/device-ui.ts	125	b	// Stage 12: portrait — the skin's tile columns flow into a 3-column grid, in the skin's order
 packages/renderer/src/device-ui.ts	151	a	// Stage 12
 packages/renderer/src/device-ui.ts	154	m	// the HR tile keeps the Stage 1 class `pme-tile`, which the IIFE smoke test (and embedders) look up
-packages/renderer/src/device-ui.ts	175	b	// FU-7.1 B8 (Ali 2026-10-10): a failed cuff cycle blanks the numerics (`invalid`, null) — the last result must go
+packages/renderer/src/device-ui.ts	175	b	// FU-7.1 B8 (samhv-dev 2026-10-10): a failed cuff cycle blanks the numerics (`invalid`, null) — the last result must go
 packages/renderer/src/device-ui.ts	190	b	* FU-11 (F05, BA01): the timeline went back (a bookmark restore, or a viewer's resync). The numerics, the NIBP result
 packages/renderer/src/device-ui.ts	211	b	* A numeric as the tile prints it. FU-5 (audit M1, M8): a questionable value carries the skin's mark ("97?", brief
 packages/renderer/src/device-ui.ts	222	b	* FU-5 (audit M3): the HR tile. The ECG rate; with the leads off an AUTO skin that relabels shows the first valid pulse
@@ -3852,7 +3852,7 @@ packages/ventilator/src/lung-input.ts	2	m	// (7b plan decision 15) and Stage V.1
 packages/ventilator/src/mechanics.ts	45	b	/** 7a's resting pleural pressure P_PL0 −4 mmHg (Smith 2004) in cmH2O: the lung stays open while Ppl < PEEP. */
 packages/ventilator/src/mechanics.ts	50	b	* Stage V.1 (G7b ruling 5): with the pleural space above normal by `c.pleural`, the end-expiratory pleural pressure
 packages/ventilator/src/pathology/catalogue.ts	1	m	// Lung pathology catalogue (rulings R36/R37): one row per condition, weight-of-evidence defaults (`value`) and the
-packages/ventilator/src/pathology/catalogue.ts	8	m	// ENG number is a row for Ali's review in docs/physiology/stage-7-parameter-tables.md §4b.
+packages/ventilator/src/pathology/catalogue.ts	8	m	// ENG number is a row for the owner's review in docs/physiology/stage-7-parameter-tables.md §4b.
 packages/ventilator/src/pathology/catalogue.ts	9	m	// `wired`: what acts on the field TODAY — 'vent' (ventilator mechanics), 'engine-now' (Stage 3 shunt input),
 packages/ventilator/src/pathology/catalogue.ts	11	a	// Stage 7b (Task 27)
 packages/ventilator/src/pathology/catalogue.ts	188	b	// Stage 7b (Task 27): signature widened to the engine-generated mechanics (gate note)

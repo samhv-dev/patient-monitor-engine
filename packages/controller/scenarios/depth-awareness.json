@@ -1,5 +1,5 @@
 {
-  "$comment": "[draft] Stage 7f scenario; clinical content awaits Ali's review (R44).",
+  "$comment": "[draft] Stage 7f scenario; clinical content awaits the owner's review (R44).",
   "schema": "pme-scenario/1",
   "id": "depth-awareness",
   "title": "[draft] Awareness under neuromuscular block",

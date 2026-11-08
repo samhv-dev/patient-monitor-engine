@@ -86,8 +86,8 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `ASK_MS` | `200` | ms | [ENG] | How long a starting instructor page waits for the other tabs to answer, ms, on the fallback path (no Web Locks). A same-browser round trip takes a few ms [ENG]; this is the delay the check adds to every start of the page there. |
-| `TAKE_MS` | `2000` | ms | [ENG] | How long it waits for the chosen tab to hand its session over before it says that tab is asleep, ms [ENG]; without Web Locks, how long before it gives up and starts with no case. |
+| `ASK_MS` | `200` | ms | [ENG: ui] | How long a starting instructor page waits for the other tabs to answer, ms, on the fallback path (no Web Locks). A same-browser round trip takes a few ms [ENG: ui]; this is the delay the check adds to every start of the page there. |
+| `TAKE_MS` | `2000` | ms | [ENG: ui] | How long it waits for the chosen tab to hand its session over before it says that tab is asleep, ms [ENG: ui]; without Web Locks, how long before it gives up and starts with no case. |
 
 ### [`apps/demo/src/app/meters.ts`](../../apps/demo/src/app/meters.ts)
 
@@ -99,23 +99,23 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `SAVE_MS` | `1000` | ms | [ENG, measured 2026-10-25] | How often the position is taken (wall ms): a reload comes back at most this much of the clock behind, × the speed. Taking one costs ≈ 1 ms (the snapshot is ≈ 80 KB of JSON, plus the Debrief record) [ENG, measured 2026-10-25]. |
-| `MAX_AGE_MS` | `6 * 3600000` | ms | [ENG] | An older position is another day's run, not this one's [ENG]. |
+| `SAVE_MS` | `1000` | ms | [ENG: ui; measured 2026-10-25] | How often the position is taken (wall ms): a reload comes back at most this much of the clock behind, × the speed. Taking one costs ≈ 1 ms (the snapshot is ≈ 80 KB of JSON, plus the Debrief record) [ENG: ui; measured 2026-10-25]. |
+| `MAX_AGE_MS` | `6 * 3600000` | ms | [ENG: ui] | An older position is another day's run, not this one's [ENG: ui]. |
 
 ### [`apps/demo/src/app/room-layout.ts`](../../apps/demo/src/app/room-layout.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `MAX_DEVICES` | `64` | — | [ENG] | [ENG] a full room (the relay's `--max-peers` default is 60) and spares (§4 D8). |
-| `MAX_NAME` | `32` | — | [ENG: a table cell's width] | A name the instructor types is kept to this many characters [ENG: a table cell's width]. |
+| `MAX_DEVICES` | `64` | — | [ENG: ui] | [ENG: ui] a full room (the relay's `--max-peers` default is 60) and spares (§4 D8). |
+| `MAX_NAME` | `32` | — | [ENG: ui; a table cell's width] | A name the instructor types is kept to this many characters [ENG: ui; a table cell's width]. |
 
 ### [`apps/demo/src/app/room-status.ts`](../../apps/demo/src/app/room-status.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `WEAK_PING_MS` | `300` | ms | [ENG: an engineering choice, stated on the legend] | Q9 ruled 5 November = A: a ping over this is Weak [ENG: an engineering choice, stated on the legend]. |
+| `WEAK_PING_MS` | `300` | ms | [ENG: ui; an engineering choice, stated on the legend] | Q9 ruled 5 November = A: a ping over this is Weak [ENG: ui; an engineering choice, stated on the legend]. |
 | `HEARTBEAT_MS` | `10000` | ms | — | The relay's heartbeat (the kit's and the relay's default, 10 s): a device silent longer than one has missed it. |
-| `RESYNC_MS` | `2000` | ms | [ENG: the owner's 2 s] | A hello this recent means the device is joining or catching up [ENG: the owner's 2 s]. |
+| `RESYNC_MS` | `2000` | ms | [ENG: ui; the owner's 2 s] | A hello this recent means the device is joining or catching up [ENG: ui; the owner's 2 s]. |
 
 ### [`apps/demo/src/app/session.ts`](../../apps/demo/src/app/session.ts)
 
@@ -153,22 +153,22 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `HOST_SILENT_MS` | `5000` | ms | [ENG] | No message from a RUNNING host for this long → "not answering" (it sends its state every second) [ENG]. |
-| `UNREACHABLE_MS` | `6000` | ms | [ENG] | The phone has not reached the relay for this long: it is probably not on the classroom network [ENG]. |
-| `COCKPIT_QUIET_MS` | `2500` | ms | [ENG] | The host's `cockpit` events come once a second; this long without one, the Ventilator view has closed [ENG]. |
+| `HOST_SILENT_MS` | `5000` | ms | [ENG: ui] | No message from a RUNNING host for this long → "not answering" (it sends its state every second) [ENG: ui]. |
+| `UNREACHABLE_MS` | `6000` | ms | [ENG: ui] | The phone has not reached the relay for this long: it is probably not on the classroom network [ENG: ui]. |
+| `COCKPIT_QUIET_MS` | `2500` | ms | [ENG: ui] | The host's `cockpit` events come once a second; this long without one, the Ventilator view has closed [ENG: ui]. |
 
 ### [`apps/demo/src/app/views/remote.ts`](../../apps/demo/src/app/views/remote.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `GIVE_UP_MS` | `10000` | ms | [ENG] | Plan §1: an older kit's relay drops the instructor's hello and an older host never answers; the phone gives up [ENG]. |
-| `INSTRUCTOR_LIVENESS_MS` | `12000` | ms | [ENG] | Plan §5: the phone drops a socket that heard nothing for 12 s and opens a new one (as the learner's phone does) [ENG]. |
+| `GIVE_UP_MS` | `10000` | ms | [ENG: ui] | Plan §1: an older kit's relay drops the instructor's hello and an older host never answers; the phone gives up [ENG: ui]. |
+| `INSTRUCTOR_LIVENESS_MS` | `12000` | ms | [ENG: ui] | Plan §5: the phone drops a socket that heard nothing for 12 s and opens a new one (as the learner's phone does) [ENG: ui]. |
 
 ### [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `COCKPIT_SILENCE_MS` | `1000` | ms | [ENG: it sends 50 link messages a second and its settings once a second, so 1 s is 50 missed; the relay's heartbeat would take up to 20 s, too long for an unventilated patient] | R8c: a remote cockpit silent this long is handed over [ENG: it sends 50 link messages a second and its settings once a second, so 1 s is 50 missed; the relay's heartbeat would take up to 20 s, too long for an unventilated patient]. |
+| `COCKPIT_SILENCE_MS` | `1000` | ms | [ENG: ui; it sends 50 link messages a second and its settings once a second, so 1 s is 50 missed; the relay's heartbeat would take up to 20 s, too long for an unventilated patient] | R8c: a remote cockpit silent this long is handed over [ENG: ui; it sends 50 link messages a second and its settings once a second, so 1 s is 50 missed; the relay's heartbeat would take up to 20 s, too long for an unventilated patient]. |
 
 ### [`apps/demo/src/dev/rhythm-strip.ts`](../../apps/demo/src/dev/rhythm-strip.ts)
 
@@ -186,7 +186,7 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `CHANGE_REL` | `0.02` | — | [ENG] | Relative change that counts as a change [ENG]: HR 70 → 71 (1.4 %) is jitter, phenylephrine's SVR +30–40 % is not. |
+| `CHANGE_REL` | `0.02` | — | [ENG: ui] | Relative change that counts as a change [ENG: ui]: HR 70 → 71 (1.4 %) is jitter, phenylephrine's SVR +30–40 % is not. |
 
 ### [`apps/demo/src/physiology-console/sparkline.ts`](../../apps/demo/src/physiology-console/sparkline.ts)
 
@@ -207,17 +207,17 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `BEEP_MS` | `100` | ms | brief §3.6; research/34 row 6; [ENG] | QRS / pulse beep (brief §3.6): 100 ms, fundamental plus 2nd and 3rd harmonics, 5 ms attack and release [ENG]. The pitch comes with the tone (the engine's spo2PitchHz: 1245 Hz at SpO2 100 %). Duration and the 3rd harmonic follow the measured Saadat beep (research/34 row 6: ≈ 1245 Hz, square-like with a strong 3rd harmonic, 100–150 ms). |
+| `BEEP_MS` | `100` | ms | brief §3.6; research/34 row 6; [ENG: device] | QRS / pulse beep (brief §3.6): 100 ms, fundamental plus 2nd and 3rd harmonics, 5 ms attack and release [ENG: device]. The pitch comes with the tone (the engine's spo2PitchHz: 1245 Hz at SpO2 100 %). Duration and the 3rd harmonic follow the measured Saadat beep (research/34 row 6: ≈ 1245 Hz, square-like with a strong 3rd harmonic, 100–150 ms). |
 | `BEEP_RAMP_MS` | `5` | ms | — | — |
-| `BEEP_HARMONIC2` | `0.3` | — | [ENG] | relative amplitude of the 2nd harmonic [ENG] |
-| `BEEP_HARMONIC3` | `1 / 3` | — | [ENG] | relative amplitude of the 3rd harmonic, a square wave's [ENG] |
-| `BEEP_MAX_BEAT_FRACTION` | `0.6` | — | [ENG] | At most this share of the wall-clock beat interval is beep, so fast beats (tachycardia at ×4) never run together into one tone (owner's ruling on the 100 ms beep) [ENG]. |
+| `BEEP_HARMONIC2` | `0.3` | — | [ENG: device] | relative amplitude of the 2nd harmonic [ENG: device] |
+| `BEEP_HARMONIC3` | `1 / 3` | — | [ENG: device] | relative amplitude of the 3rd harmonic, a square wave's [ENG: device] |
+| `BEEP_MAX_BEAT_FRACTION` | `0.6` | — | [ENG: device] | At most this share of the wall-clock beat interval is beep, so fast beats (tachycardia at ×4) never run together into one tone (owner's ruling on the 100 ms beep) [ENG: device]. |
 
 ### [`alarm-view.ts`](../../packages/renderer/src/alarm-view.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `ROTATE_S` | `2` | s | brief §6.4.1; [ENG] | Same-level messages rotate every this many seconds (brief §6.4.1 "messages rotate") [ENG]. |
+| `ROTATE_S` | `2` | s | brief §6.4.1; [ENG: display] | Same-level messages rotate every this many seconds (brief §6.4.1 "messages rotate") [ENG: display]. |
 
 ### [`calibration.ts`](../../packages/renderer/src/calibration.ts)
 
@@ -229,9 +229,9 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `CO2_WIDEN_BREATHS` | `2` | — | Nov 2026; research/06 §3.2; [ENG] | The capnogram lane's auto-range (skin `co2.autoScales`; owner ruling of 1 Nov 2026, E63 revisited): the lane widens its scale when the plateau exceeds it and narrows back when it falls, with hysteresis, as real units do. Vendor behaviour: the Saadat B9 offers a CO2 scale AUTO beside its fixed ones (research/06 §3.2, M p.304–305); capnographs in auto-scale pick the scale from the measured EtCO2, i.e. from breath peaks, and offer steps such as 0–60/0–80/0–100 mmHg. None states a breath count or a margin, so these are [ENG]: - the judged value is each breath's peak as the engine's EtCO2 detector finds it (engine-core co2-numerics.ts: a breath rises above 50 % of a decaying recent peak and ends below 30 %), read from the same displayed samples, never a single sample; - WIDEN one step after CO2_WIDEN_BREATHS consecutive breaths whose peak EXCEEDS the current top (over 50 on the 50 lane, over 80 on the 80 lane: the plateau would be clipped), so a plateau of 49.5 stays on the 0–50 scale (orchestrator's ruling on #250, 2 Nov: the MH card's early-signs stop stays on 0–50, as in every rehearsal); - NARROW one step after CO2_NARROW_BREATHS consecutive breaths whose peak stays under CO2_NARROW_UNDER of the next-lower top (40 of 50, 64 of 80). The band between (40–50 on the 50/80 step) is the hysteresis: a lane at 80 with peaks of 45 stays at 80, a lane at 50 with peaks of 45 stays at 50, so it never flaps at 50; - nothing above the widest top widens further: the trace clips at the lane top there (E63 at the top range); - no breath (apnoea, a detached line) changes nothing. The judgement runs over the engine's samples in index order, never over frames, so every window drawing the same timeline (the instructor's screen, a learner monitor, a phone: sample-identical engines) takes the same steps at the same breaths, as the pleth auto-scale and the ECG auto-gain are computed in each window from the same samples. Consecutive breaths at the roof before the lane widens (two, as the EtCO2 number needs two breaths and the ECG auto-gain two windows: one spike never widens) [ENG]. |
-| `CO2_NARROW_BREATHS` | `6` | — | [ENG] | Consecutive breaths well under the lower scale before the lane narrows (three times as long: ≈ 30 s at RR 12) [ENG]. |
-| `CO2_NARROW_UNDER` | `0.8` | — | [ENG] | A breath peak under this fraction of the next-lower top counts towards narrowing [ENG]. |
+| `CO2_WIDEN_BREATHS` | `2` | — | Nov 2026; research/06 §3.2; [ENG: display] | The capnogram lane's auto-range (skin `co2.autoScales`; owner ruling of 1 Nov 2026, E63 revisited): the lane widens its scale when the plateau exceeds it and narrows back when it falls, with hysteresis, as real units do. Vendor behaviour: the Saadat B9 offers a CO2 scale AUTO beside its fixed ones (research/06 §3.2, M p.304–305); capnographs in auto-scale pick the scale from the measured EtCO2, i.e. from breath peaks, and offer steps such as 0–60/0–80/0–100 mmHg. None states a breath count or a margin, so these are [ENG: display]: - the judged value is each breath's peak as the engine's EtCO2 detector finds it (engine-core co2-numerics.ts: a breath rises above 50 % of a decaying recent peak and ends below 30 %), read from the same displayed samples, never a single sample; - WIDEN one step after CO2_WIDEN_BREATHS consecutive breaths whose peak EXCEEDS the current top (over 50 on the 50 lane, over 80 on the 80 lane: the plateau would be clipped), so a plateau of 49.5 stays on the 0–50 scale (orchestrator's ruling on #250, 2 Nov: the MH card's early-signs stop stays on 0–50, as in every rehearsal); - NARROW one step after CO2_NARROW_BREATHS consecutive breaths whose peak stays under CO2_NARROW_UNDER of the next-lower top (40 of 50, 64 of 80). The band between (40–50 on the 50/80 step) is the hysteresis: a lane at 80 with peaks of 45 stays at 80, a lane at 50 with peaks of 45 stays at 50, so it never flaps at 50; - nothing above the widest top widens further: the trace clips at the lane top there (E63 at the top range); - no breath (apnoea, a detached line) changes nothing. The judgement runs over the engine's samples in index order, never over frames, so every window drawing the same timeline (the instructor's screen, a learner monitor, a phone: sample-identical engines) takes the same steps at the same breaths, as the pleth auto-scale and the ECG auto-gain are computed in each window from the same samples. Consecutive breaths at the roof before the lane widens (two, as the EtCO2 number needs two breaths and the ECG auto-gain two windows: one spike never widens) [ENG: display]. |
+| `CO2_NARROW_BREATHS` | `6` | — | [ENG: display] | Consecutive breaths well under the lower scale before the lane narrows (three times as long: ≈ 30 s at RR 12) [ENG: display]. |
+| `CO2_NARROW_UNDER` | `0.8` | — | [ENG: display] | A breath peak under this fraction of the next-lower top counts towards narrowing [ENG: display]. |
 
 ### [`device-ui.ts`](../../packages/renderer/src/device-ui.ts)
 
@@ -243,34 +243,34 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `AUTO_GAIN_WINDOW_S` | `4` | s | [ENG] | The ECG auto-gain's judgement (Saadat-like `ecg.gainDefault: "AUTO"`): which of the skin's discrete sizes a lane shows. Vendor behaviour: Philips IntelliVue "Auto Size" lets the monitor choose the adjustment factor from the size set for each displayed ECG wave (MP20–MP90 IFU M8000-9001K §"Changing the Size of the ECG Wave"; MX400–MX800 IFU 453564443141); Mindray "Auto" adjusts the wave size (BeneView T5/T8/T9 manual 6800-20-50657 §9.5.11). Neither states a cadence, a hysteresis or a beat rule, so these are [ENG]: the size is judged per 4-s window on the beats' median amplitude, and a new size is taken only when it has been asked for by two consecutive windows and the amplitude has left a band around the current size's threshold (US 6,510,339 B2 likewise waits for agreement among several measurements). Every judgement looks at one window of this length, on the sim clock's grid (windows [kW − W, kW]) [ENG]. |
-| `AUTO_GAIN_FILL` | `0.6` | — | [ENG] | The window's amplitude should fill at most this share of the lane's nominal height (RR-2) [ENG]. |
-| `AUTO_GAIN_HOLD` | `2` | — | [ENG; brief rule, no manual states one] | Consecutive windows that must ask for the same new size before it is shown [ENG; brief rule, no manual states one]. |
-| `AUTO_GAIN_BAND` | `0.2` | — | [ENG] | Hysteresis: a smaller size needs the amplitude this fraction over the current size's threshold, a larger one this fraction under its own threshold. The sizes step ×2, so the bands never overlap [ENG]. |
-| `NOMINAL_ECG_LANE_MM` | `30` | — | [ENG] | The nominal ECG lane (mm) of a skin with no measured screen (layout.grid with sweep.pxPerMm) [ENG]. |
+| `AUTO_GAIN_WINDOW_S` | `4` | s | [ENG: display] | The ECG auto-gain's judgement (Saadat-like `ecg.gainDefault: "AUTO"`): which of the skin's discrete sizes a lane shows. Vendor behaviour: Philips IntelliVue "Auto Size" lets the monitor choose the adjustment factor from the size set for each displayed ECG wave (MP20–MP90 IFU M8000-9001K §"Changing the Size of the ECG Wave"; MX400–MX800 IFU 453564443141); Mindray "Auto" adjusts the wave size (BeneView T5/T8/T9 manual 6800-20-50657 §9.5.11). Neither states a cadence, a hysteresis or a beat rule, so these are [ENG: display]: the size is judged per 4-s window on the beats' median amplitude, and a new size is taken only when it has been asked for by two consecutive windows and the amplitude has left a band around the current size's threshold (US 6,510,339 B2 likewise waits for agreement among several measurements). Every judgement looks at one window of this length, on the sim clock's grid (windows [kW − W, kW]) [ENG: display]. |
+| `AUTO_GAIN_FILL` | `0.6` | — | [ENG: display] | The window's amplitude should fill at most this share of the lane's nominal height (RR-2) [ENG: display]. |
+| `AUTO_GAIN_HOLD` | `2` | — | [ENG: display; brief rule, no manual states one] | Consecutive windows that must ask for the same new size before it is shown [ENG: display; brief rule, no manual states one]. |
+| `AUTO_GAIN_BAND` | `0.2` | — | [ENG: display] | Hysteresis: a smaller size needs the amplitude this fraction over the current size's threshold, a larger one this fraction under its own threshold. The sizes step ×2, so the bands never overlap [ENG: display]. |
+| `NOMINAL_ECG_LANE_MM` | `30` | — | [ENG: display] | The nominal ECG lane (mm) of a skin with no measured screen (layout.grid with sweep.pxPerMm) [ENG: display]. |
 
 ### [`ibp-scale.ts`](../../packages/renderer/src/ibp-scale.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `IBP_AUTO_EVERY_S` | `30` | s | — | AUTO is judged at every multiple of this many sim seconds, over the two windows before it [DOC: see the header]. |
-| `IBP_AUTO_HEADROOM` | `0.1` | — | [ENG] | The window's peak stays this share of the range's span under its top [ENG]. |
-| `IBP_AUTO_OUTLIER_BLOCKS` | `2` | — | [ENG] | Up to this many one-second blocks of a window above (or below) the rest are outliers, a flush or an odd beat [ENG]. |
+| `IBP_AUTO_HEADROOM` | `0.1` | — | [ENG: display] | The window's peak stays this share of the range's span under its top [ENG: display]. |
+| `IBP_AUTO_OUTLIER_BLOCKS` | `2` | — | [ENG: display] | Up to this many one-second blocks of a window above (or below) the rest are outliers, a flush or an odd beat [ENG: display]. |
 
 ### [`monitor-core.ts`](../../packages/renderer/src/monitor-core.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `LABEL_W` | `56` | — | — | CSS px reserved at the left of each lane for chrome |
-| `STALL_MS` | `1000` | ms | [ENG] | FX-15: a frame gap longer than this is a stall (a suspended tab or worker), not a slow frame — frames post every ≤ 250 ms. It is credited in full like a hidden stretch (catchUp) instead of being clamped to 250 ms, so the hidden minutes are not lost when the worker's rAF wakes before the page's visibility catch-up. [ENG] |
-| `PROGRESS_MS` | `250` | ms | [ENG] | FX-11a: a long engine run reports progress at most this often (the frames' own posting cadence, ≤ 250 ms) [ENG]. |
-| `PROGRESS_TICKS` | `50` | — | [ENG] | …checking the time every this many ticks: 50 ticks (1 s of sim) cost ≈ 3 ms of the worker's time (measured: 10 000 ticks took 532–653 ms), so a report is never more than ≈ 3 ms late [ENG]. |
+| `STALL_MS` | `1000` | ms | [ENG: display] | FX-15: a frame gap longer than this is a stall (a suspended tab or worker), not a slow frame — frames post every ≤ 250 ms. It is credited in full like a hidden stretch (catchUp) instead of being clamped to 250 ms, so the hidden minutes are not lost when the worker's rAF wakes before the page's visibility catch-up. [ENG: display] |
+| `PROGRESS_MS` | `250` | ms | [ENG: display] | FX-11a: a long engine run reports progress at most this often (the frames' own posting cadence, ≤ 250 ms) [ENG: display]. |
+| `PROGRESS_TICKS` | `50` | — | [ENG: display] | …checking the time every this many ticks: 50 ticks (1 s of sim) cost ≈ 3 ms of the worker's time (measured: 10 000 ticks took 532–653 ms), so a report is never more than ≈ 3 ms late [ENG: display]. |
 
 ### [`mount.ts`](../../packages/renderer/src/mount.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `BEAT_TONE_MAX_SCALE` | `4` | — | [ENG] | Above this speed the beat tones (QRS beep, pulse tone) are off — at ×8 a heart rate of 80 beeps 10.7 times a second; alarms and device tones still sound [ENG]. |
+| `BEAT_TONE_MAX_SCALE` | `4` | — | [ENG: display] | Above this speed the beat tones (QRS beep, pulse tone) are off — at ×8 a heart rate of 80 beeps 10.7 times a second; alarms and device tones still sound [ENG: display]. |
 
 ### [`numerics-organs.ts`](../../packages/renderer/src/numerics-organs.ts)
 
@@ -284,7 +284,7 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `DRAW_LAG_S` | `0.05` | s | [ENG] | Marks are drawn once the render time is this far past them [ENG]: ≥ 4 px behind the cursor at 25 mm/s. |
+| `DRAW_LAG_S` | `0.05` | s | [ENG: display] | Marks are drawn once the render time is this far past them [ENG: display]: ≥ 4 px behind the cursor at 25 mm/s. |
 
 ### [`skin-plan.ts`](../../packages/renderer/src/skin-plan.ts)
 
@@ -305,7 +305,7 @@ No exported `…State` type in this module.
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `READY_TIMEOUT_MS` | `2000` | ms | — | The fallback keeps a monitor alive when its worker never loads (no 'ready', no error): the page then runs the engine on the main thread. A built page's worker is one inline bundle and is ready well inside it; the Vite dev server loads the worker one module per request and can exceed it (278–1875 ms on an idle Mac, more on a loaded runner). |
-| `WORKER_SILENT_MS` | `3000` | ms | [ENG] | A worker silent this long with requests waiting is SLOW (warned: `pme-monitor-slow`). It posts every ≤ 250 ms — its frames, and from inside a long run its progress (MonitorCore.onProgress) — measured on a Mac (gaps between its messages, FX-11a): p99.9 270 ms idle, 267 ms with 16 CPU-bound processes, 436 ms with those and the browser at background QoS (Chromium; WebKit ≤ 269 ms): 3 s is 7× the longest gap measured. It is DEAD when, past this, a probe worker started at the warning has answered — the machine runs workers and this one makes no progress; a starved machine starves the probe too, and the monitor waits (FX-11a) [ENG]. |
+| `WORKER_SILENT_MS` | `3000` | ms | [ENG: display] | A worker silent this long with requests waiting is SLOW (warned: `pme-monitor-slow`). It posts every ≤ 250 ms — its frames, and from inside a long run its progress (MonitorCore.onProgress) — measured on a Mac (gaps between its messages, FX-11a): p99.9 270 ms idle, 267 ms with 16 CPU-bound processes, 436 ms with those and the browser at background QoS (Chromium; WebKit ≤ 269 ms): 3 s is 7× the longest gap measured. It is DEAD when, past this, a probe worker started at the warning has answered — the machine runs workers and this one makes no progress; a starved machine starves the probe too, and the monitor waits (FX-11a) [ENG: display]. |
 
 ### [`resolve.ts`](../../packages/skins/src/resolve.ts)
 
@@ -633,7 +633,7 @@ No exported `…State` type in this module.
 | `draw12Lead` | [`views.ts`](../../packages/renderer/src/views.ts) | Draw the 12-lead report. |
 | `drawTrend` | [`views.ts`](../../packages/renderer/src/views.ts) | Graphic trend of [fromS, toS] in a w×h box: |
 | `scaleFor` | [`wave-lanes.ts`](../../packages/renderer/src/wave-lanes.ts) | SweepLane baseline and gain that map [lo, hi] onto a lane of `height` CSS px. |
-| `autoRange` | [`wave-lanes.ts`](../../packages/renderer/src/wave-lanes.ts) | Pleth auto-scale [ENG]: |
+| `autoRange` | [`wave-lanes.ts`](../../packages/renderer/src/wave-lanes.ts) | Pleth auto-scale [ENG: |
 | `createHost` | [`worker-host.ts`](../../packages/renderer/src/worker-host.ts) | Create the host. |
 | `parseHex` | [`color.ts`](../../packages/skins/src/color.ts) | Colour helpers: |
 | `luminance` | [`color.ts`](../../packages/skins/src/color.ts) | WCAG relative luminance of an sRGB colour. |
@@ -816,7 +816,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`profiles/traditional.ts`](../../packages/audio/src/profiles/traditional.ts) | `traditional` profile, Philips-like (research 05 §2.5 [S2]): high = a high-pitched sound once a second, medium = a lower-pitched sound every 2 s, INOP tone every 2 s. |
 | [`profiles/types.ts`](../../packages/audio/src/profiles/types.ts) | Alarm sound profiles as DATA (brief §3.6, §6.4, §6.4.1). |
 | [`scheduler.ts`](../../packages/audio/src/scheduler.ts) | Look-ahead tone scheduler (brief §3.6): a 25 ms timer schedules every tone due in the next 100 ms on the audio clock. |
-| [`tones.ts`](../../packages/audio/src/tones.ts) | QRS / pulse beep (brief §3.6): 100 ms, fundamental plus 2nd and 3rd harmonics, 5 ms attack and release [ENG]. |
+| [`tones.ts`](../../packages/audio/src/tones.ts) | QRS / pulse beep (brief §3.6): 100 ms, fundamental plus 2nd and 3rd harmonics, 5 ms attack and release [ENG: device]. |
 | [`alarm-audio.ts`](../../packages/renderer/src/alarm-audio.ts) | Engine alarm state → alarm sound (brief §6.4, §6.4.1): the `alarmStatus` event is the single source; the bridge raises and clears alarms on the audio AlarmSounder (which sounds only the highest priority, ties first raise |
 | [`alarm-view.ts`](../../packages/renderer/src/alarm-view.ts) | What the alarm header and tiles show (brief §6.4 visual table, §6.4.1 Saadat-like, §6.9 PUMP page) as PURE functions of the engine's `alarmStatus` event and the resolved skin, so they are unit-tested in Node; the DOM in |
 | [`calibration.ts`](../../packages/renderer/src/calibration.ts) | Sweep geometry (brief §3.5). |
@@ -864,6 +864,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 |---|---|---|---|---|---|
 | untreated: VF from hyperthermia | no VF in 51 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
 | treated late (the run-sheet path): crisis 1 min into the established crisis | the call comes at +46.6 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
+| sysMaxAtRosc 194.9–204.9 mmHg, the physiology alone (191.07 + 8.9 from the coronary reading) | 210.8 | — | not audited | — | [`stab-wound-tamponade.slow.test.ts`](../../apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts) |
 
 ## Tests
 
@@ -1029,7 +1030,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/showcase/mh-v1-v2-table.slow.test.ts`](../../apps/demo/src/app/showcase/mh-v1-v2-table.slow.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/showcase/mh-v2-card.test.ts`](../../apps/demo/src/app/showcase/mh-v2-card.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/showcase/showcase-cards.test.ts`](../../apps/demo/src/app/showcase/showcase-cards.test.ts) | 0 | 0 |
-| [`apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts`](../../apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts`](../../apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts) | 1 | 0 |
 | [`apps/demo/src/app/sim-clock-monotonic.dom.test.ts`](../../apps/demo/src/app/sim-clock-monotonic.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/sim-clock.dom.test.ts`](../../apps/demo/src/app/sim-clock.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/site.test.ts`](../../apps/demo/src/app/site.test.ts) | 0 | 0 |
