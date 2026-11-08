@@ -37,7 +37,6 @@ jobs:
         run: |
           m=$(node scripts/ci/e2e-sets.mjs matrix); echo "$m"
           echo "matrix=$m" >> "$GITHUB_OUTPUT"
-      - run: node scripts/ci/markers.mjs # [ENG: kind] / [FIT: target; src | brief] markers and their counts (docs/DESIGN-BRIEF.md)
 
   # Documents-only PRs (docs/, root *.md, CITATION.cff): every unit-test file that reads a document
   # (scripts/ci/docs-tests.mjs; packages/validation/test/docs-readers.test.ts keeps that list complete) and the NOTICES
