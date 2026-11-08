@@ -6,11 +6,28 @@ import type { EngineEvent, PatientProfile } from '../../src/types.ts';
 import { cmd } from '../helpers/hemo.ts';
 
 const yieldNow = () => new Promise((r) => setImmediate(r));
-async function run(patient: PatientProfile, events: [number, Record<string, unknown>][], tEnd: number) {
+/**
+ * The rig follows the conditions of each band's source (brief 93: the patient's drive now exists on the ventilator, so a
+ * patient with no anaesthetic and no blocker breathes against it). 'ventilated' is the original rig (VCV 12 × 500).
+ * 'spontaneous': no ventilation — the ATLS haemorrhage classes and the tables' §7 17a/17b rows describe awake patients
+ * breathing on their own (17a lists a spontaneous RR 28–35). 'passive': controlled ventilation of a patient who makes no
+ * effort, VT 560 mL = 8 mL/kg — Miller 10e ch. 32 p. 1037: PPV/SVV are valid only under controlled mechanical
+ * ventilation with VT ≥ 8 mL/kg and a regular rhythm, not in a spontaneously breathing patient (Michard 2000's 13 %
+ * threshold is from mechanically ventilated ICU patients); the passive patient is the project's GA rig (propofol
+ * 100 µg/kg/min, rocuronium 1.2 mg/kg + 0.6 mg/kg/h, test/helpers/resp-modeled-rig.ts ventRig).
+ */
+type Rig = 'ventilated' | 'spontaneous' | 'passive';
+async function run(patient: PatientProfile, events: [number, Record<string, unknown>][], tEnd: number, rig: Rig = 'ventilated') {
   const e = createEngine({ seed: 11, mode: 'modeled', patient: { ...patient, sensors: { abp: 'connected' } } });
   const ev: EngineEvent[] = [];
   e.on((x) => ev.push(x));
-  e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, peep: 5 } }));
+  if (rig !== 'spontaneous') e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: rig === 'passive' ? 560 : 500, peep: 5 } }));
+  if (rig === 'passive') {
+    for (const event of [{ kind: 'infusion', drugId: 'propofol', rate: 100, unit: 'mcg/kg/min' }, { kind: 'drug', drugId: 'rocuronium', dose: 1.2, unit: 'mg/kg', route: 'iv' }, { kind: 'infusion', drugId: 'rocuronium', rate: 0.6, unit: 'mg/kg/h' }]) {
+      const r = e.dispatch(cmd({ type: 'applyEvent', event }));
+      if (!r.accepted) throw new Error(`rejected ${JSON.stringify(event)}: ${r.reason}`);
+    }
+  }
   for (const [t, event] of events) e.dispatch(cmd({ type: 'applyEvent', event, atTick: Math.round(t * 50) }));
   for (let t = 60; t <= tEnd; t += 60) {
     e.advanceTo(Math.min(t, tEnd));
@@ -35,14 +52,26 @@ describe('sanity scenarios I (MODELED)', () => {
     expect(dHr).toBeLessThanOrEqual(-5);
     expect(dHr).toBeGreaterThanOrEqual(-16); // prototype −15.0 at 60 s (band −15; 1 bpm tolerance)
   }, 300_000);
-  it('class II haemorrhage (25 % over 10 min, ventilated): HR 100–125, SBP ≥ 85 % of baseline, PP narrowed ≥ 30 %, PPV > 13 %', async () => {
-    const r = await run({}, [[120, { kind: 'bleed', volumeMl: 1225, overS: 600 }]], 780);
+  // Brief 93: the ATLS rows on the awake, spontaneously breathing patient they describe; the PPV row on its own passive rig
+  // R45 (brief 93): on the source's own rig — awake and breathing — the reflex tachycardia falls short of the ATLS band:
+  // HR 95.4 against 100–125 (it read 106 while the rig ventilated an awake patient, whose PPV-driven swing added rate).
+  // That shortfall is the known missing autonomic hub (audit T-01 / DEV-05; the validation gate's class III and IV HR rows
+  // are red for the same reason). Band kept, number recorded; the SBP and PP halves pass and are asserted below.
+  it.fails('class II haemorrhage (25 % over 10 min, awake, breathing — ATLS): HR 100–125 — measured 95.4 (the autonomic hub, audit T-01)', async () => {
+    const r = await run({}, [[120, { kind: 'bleed', volumeMl: 1225, overS: 600 }]], 780, 'spontaneous');
     expect(r.st(740, 780, 'hr')).toBeGreaterThanOrEqual(100);
     expect(r.st(740, 780, 'hr')).toBeLessThanOrEqual(125);
+  }, 300_000);
+  it('class II haemorrhage (25 % over 10 min, awake, breathing — ATLS): SBP ≥ 85 % of baseline, PP narrowed ≥ 30 %', async () => {
+    const r = await run({}, [[120, { kind: 'bleed', volumeMl: 1225, overS: 600 }]], 780, 'spontaneous');
     const pp0 = r.st(100, 120, 'sbp') - r.st(100, 120, 'dbp');
     const pp1 = r.st(740, 780, 'sbp') - r.st(740, 780, 'dbp');
+    console.log(`class II awake: SBP ${r.st(100, 120, 'sbp').toFixed(1)} → ${r.st(740, 780, 'sbp').toFixed(1)}, HR ${r.st(740, 780, 'hr').toFixed(1)}, PP ${pp0.toFixed(1)} → ${pp1.toFixed(1)}`);
     expect(pp1).toBeLessThanOrEqual(0.7 * pp0);
     expect(r.st(740, 780, 'sbp')).toBeGreaterThanOrEqual(0.85 * r.st(100, 120, 'sbp'));
+  }, 300_000);
+  it('class II haemorrhage (25 % over 10 min) on controlled ventilation, passive (GA, VT 8 mL/kg — Miller 10e ch. 32 p. 1037): PPV > 13 % (Michard 2000)', async () => {
+    const r = await run({}, [[120, { kind: 'bleed', volumeMl: 1225, overS: 600 }]], 780, 'passive');
     const ppv = (a: number, b: number) => {
       const w = new Float32Array(Math.round((b - a) * 125));
       r.e.readSamples('abp', Math.round(a * 125), w);
@@ -58,7 +87,7 @@ describe('sanity scenarios I (MODELED)', () => {
       }
       return out.reduce((x, y) => x + y, 0) / out.length;
     };
-    console.log(`class II: SBP ${r.st(100, 120, 'sbp').toFixed(0)} → ${r.st(740, 780, 'sbp').toFixed(0)}, HR ${r.st(740, 780, 'hr').toFixed(0)}, PP ${pp0.toFixed(0)} → ${pp1.toFixed(0)}, PPV ${ppv(100, 118).toFixed(1)} → ${ppv(750, 778).toFixed(1)} %`);
+    console.log(`class II passive: PPV ${ppv(100, 118).toFixed(1)} → ${ppv(750, 778).toFixed(1)} %`);
     expect(ppv(750, 778)).toBeGreaterThan(13);
   }, 300_000);
   // Stage 7g Task 20 measured MAP ratio 0.913, HR +16.6 (it.fails, Q57): T6.3's terms only scaled the baroreflex gain.
@@ -86,8 +115,12 @@ describe('sanity scenarios I (MODELED)', () => {
     expect(ratio).toBeGreaterThanOrEqual(0.6);
     expect(ratio).toBeLessThanOrEqual(0.8);
   }, 300_000);
-  it('β-blocked 35 % haemorrhage: HR 75–95 (tables §7 17b; prototype 79)', async () => {
-    const r = await run({ conditions: [{ id: 'betaBlocked' }] }, [[120, { kind: 'bleed', volumeMl: 1715, overS: 600 }]], 780);
+  // Brief 93: the tables' §7 17b patient is awake and breathing (17a: spontaneous RR 28–35), so the rig does not ventilate.
+  // R45: on that rig the β-blocked bleed reaches HR 66.3 against the tables' 75–95 (72.2 ventilated, 79 on the prototype) —
+  // the same missing autonomic hub (audit T-01 / DEV-05). Band kept as the tables state it, number recorded.
+  it.fails('β-blocked 35 % haemorrhage, awake, breathing: HR 75–95 (tables §7 17b; prototype 79) — measured 66.3 (the autonomic hub, audit T-01)', async () => {
+    const r = await run({ conditions: [{ id: 'betaBlocked' }] }, [[120, { kind: 'bleed', volumeMl: 1715, overS: 600 }]], 780, 'spontaneous');
+    console.log(`17b awake: HR ${r.st(740, 780, 'hr').toFixed(1)}`);
     expect(r.st(740, 780, 'hr')).toBeGreaterThanOrEqual(75);
     expect(r.st(740, 780, 'hr')).toBeLessThanOrEqual(95);
   }, 300_000);

@@ -9,11 +9,12 @@ export const yieldNow = () => new Promise((r) => setImmediate(r));
  * addendum 15): `opts.rr` overrides the ventilator rate (normocapnic PD rigs); `opts.setup` runs before the first advance
  * (the hbfRel test seam).
  */
-export async function runPk(patient: PatientProfile, events: [number, Record<string, unknown>][], tEnd: number, seed = 11, opts: { rr?: number; setup?: (e: MonitorEngine) => void } = {}) {
+export async function runPk(patient: PatientProfile, events: [number, Record<string, unknown>][], tEnd: number, seed = 11, opts: { rr?: number; spontaneous?: boolean; setup?: (e: MonitorEngine) => void } = {}) {
   const e = createEngine({ seed, mode: 'modeled', patient: { ...patient, sensors: { abp: 'connected' } } });
   const ev: EngineEvent[] = [];
   e.on((x) => ev.push(x));
-  e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: opts.rr ?? 12, vtMl: 500, peep: 5 } }));
+  // `spontaneous`: no ventilator — an awake patient breathing on his own (brief 93: the drive exists on the machine)
+  if (!opts.spontaneous) e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: opts.rr ?? 12, vtMl: 500, peep: 5 } }));
   opts.setup?.(e);
   const rejected: string[] = [];
   for (const [t, event] of events) {

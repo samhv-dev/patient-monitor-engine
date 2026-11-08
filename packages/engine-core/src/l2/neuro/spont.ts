@@ -177,14 +177,19 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
     delete s.anoxS;
   }
   const anox = s.anoxS ?? 0;
+  // The brainstem's output (brief 93): the muscle effort below is the neural effort × what the perfusion gates let out
+  let brainstem = 1;
   if (anox > GASP_ONSET_S) {
     const fade = Math.max(0, 1 - (anox - GASP_ONSET_S) / (GASP_END_S - GASP_ONSET_S));
+    const vtNeural = vt;
     rr = Math.min(rr, GASP_RR * fade);
     vt = Math.min(vt, GASP_VT_FRAC * x.vt0 * fade);
     if (fade <= 0) rr = vt = 0;
+    brainstem = vtNeural > 0 ? vt / vtNeural : 0; // a gasp is a small effort, fading
   } else if (s.gate !== undefined) {
     if (!unperfused) s.gate = Math.min(1, s.gate + SPONT_DT_S / GATE_REOPEN_S);
     rr *= s.gate;
+    brainstem = s.gate;
     if (s.gate >= 1) delete s.gate;
   }
   // The patient's inspiratory effort — spontaneous and ventilator-triggering — is withdrawn while the circulation is
@@ -193,11 +198,16 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
   // restored when the circulation returns.
   if (x.pulseless) s.plS = (s.plS ?? 0) + SPONT_DT_S;
   else if (s.plS !== undefined) delete s.plS;
-  if (s.plS !== undefined) rr *= Math.max(0, 1 - s.plS / NO_FLOW_S);
+  if (s.plS !== undefined) {
+    rr *= Math.max(0, 1 - s.plS / NO_FLOW_S);
+    brainstem *= Math.max(0, 1 - s.plS / NO_FLOW_S);
+  }
   s.rr = rr;
   s.vt = vt;
   s.ve = (rr * vt) / 1000;
-  s.muscle = rr > 0 ? (s.effort ?? 0) * Math.max(0, Math.min(1, strength)) : 0; // Drive × neuromuscular transmission
+  // Drive × the brainstem's perfusion gates × neuromuscular transmission: an unperfused brainstem makes no effort
+  // (Clark 1992, Bobrow 2008: agonal gasps for ≈ 2 min, then apnoea; the drive returns over minutes once perfused)
+  s.muscle = rr > 0 ? (s.effort ?? 0) * brainstem * Math.max(0, Math.min(1, strength)) : 0;
   if (rr > 0) {
     const ttot = 60 / rr;
     s.fatigue = stepFatigue(s.fatigue, pti(vt, x.complianceMl, x.resistance, TI_FRAC * ttot, ttot, strength * x.pMaxMult), SPONT_DT_S);

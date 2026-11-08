@@ -121,7 +121,7 @@ describe('clinical scenario suite (MODELED, audit rig)', { timeout: 600_000 }, (
     expect(a).toBeDefined();
     expect((a as number) - 660).toBeLessThanOrEqual(600);
   });
-  it.fails('S4b severe tamponade, propofol 1 mg/kg: MAP < 55 within 3 min and CO −25 % (measured MAP 50.5, CO −21 % when propofol removes the tonic sympathetic share — 58.9 / −17 % when it does not; 57 / −15 % on the prototype)', async () => {
+  it('S4b severe tamponade, propofol 1 mg/kg: MAP < 55 within 3 min and CO −25 % (measured MAP 50.5, CO −21 % when propofol removes the tonic sympathetic share — 58.9 / −17 % when it does not; 57 / −15 % on the prototype)', async () => {
     const r = await scenario([[60, TAMP], [660, drug('propofol', 1, 'mg/kg')]], 1260);
     const co0 = mean(win(r, 630, 660), 'co');
     const w = win(r, 660, 840);

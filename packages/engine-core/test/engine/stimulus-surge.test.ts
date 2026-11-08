@@ -82,7 +82,7 @@ describe('the stimulus sympathetic surge', { timeout: 3_600_000 }, () => {
   // washout the opioid-free arm's cardiac-output dip lowers the low-flow factor faster, so its PaCO2 rises further and
   // the hypercapnic pressor response adds to the laryngoscopy surge: ΔMAP 38.4 → 40.3 against the sourced 20–40 band.
   // The HR half (13.1) is inside its band and is asserted below; the ΔMAP ceiling is the record (FU-7.1 Q9's neighbour).
-  it.fails('awake laryngoscopy raises MAP 20–40 mmHg and HR 12–30 (M10; the sourced awake band) — ΔMAP measured 40.3 with the alveolar washout (38.4 without it)', async () => {
+  it('awake laryngoscopy raises MAP 20–40 mmHg and HR 12–30 (M10; the sourced awake band) — ΔMAP measured 40.3 with the alveolar washout (38.4 without it)', async () => {
     const i = await run('awake:stim', LARYNX, STIM_T + 600);
     const c = await run('awake:ctrl', [], STIM_T + 600);
     const dMap = dPeak(i, c, 'map', STIM_T);

@@ -24,9 +24,11 @@ describe('rebreathing acts on PaCO2', { timeout: 600_000 }, () => {
   // FU-8 B4 (E-FU8B-7): flipped — the anaesthetised rig's output moves with the tonic sympathetic share; EtCO2 +5.98 → +6.1
   // R45 (FU-7.1 B3; OWNER RULING Q5, 2026-10-10, the same assertion as resp-suite RS14): recorded with its number, NOT
   // widened — the alveolar-washout fall moves the EtCO2 rise to +5.99994, red by 6 × 10⁻⁵. PaCO2 +6.7 unchanged.
-  it.fails('RS14: FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10 over control — measured PaCO2 +6.7 / EtCO2 +5.99994 with the alveolar washout (+6.1 without it; +5.98 when propofol also does not remove the tonic sympathetic share)', async () => {
+  it('RS14: FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10 over control — measured PaCO2 +6.7 / EtCO2 +5.99994 with the alveolar washout (+6.1 without it; +5.98 when propofol also does not remove the tonic sympathetic share)', async () => {
     const c = await run(0);
     const r = await run(8);
+    // eslint-disable-next-line no-console -- the PR's numbers
+    console.log(`brief 93 RS14: PaCO2 +${(r.pa - c.pa).toFixed(3)}, EtCO2 +${(r.et - c.et).toFixed(5)}`);
     expect(r.pa - c.pa).toBeGreaterThanOrEqual(6);
     expect(r.pa - c.pa).toBeLessThanOrEqual(10);
     expect(r.et - c.et).toBeGreaterThanOrEqual(6);

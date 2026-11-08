@@ -361,6 +361,27 @@ Groups, in short:
   stopped as the airway rate. Measured on the branch: first effort **13.07 min** after the dose (band 12–24), effort
   present when sugammadex is given at T2 (0.75 of a resting breath), airway rate ≥ 4 throughout the reversal's onset —
   all green, and the expected-failure mark G is removed.
+- **Test rigs matched to their sources' conditions (brief 93, the owner's ruling of 8 Nov):** once the engine gives a
+  ventilated patient the drive he has, a MODELED rig that ventilates an **awake, unparalysed** patient makes him breathe
+  against the machine, and the pleural swing changes the haemodynamics such a rig measured on a passive patient. Thirteen
+  rigs were therefore set to the conditions of the source each band came from; **no band was moved, widened or
+  re-recorded**. Awake and breathing (no ventilator): the ATLS class II haemorrhage rows and the tables' §7 17b
+  β-blocked bleed (17a lists a spontaneous RR 28–35), the dobutamine dose–response pair (decision 7), the high-risk-PE
+  SBP < 90 row (ESC 2019's presenting patient, oxygen by mask). Passive on controlled ventilation: the PPV row, on its own
+  rig at VT 8 mL/kg under propofol + rocuronium — Miller 10e ch. 32 p. 1037 states PPV/SVV are valid only under
+  controlled ventilation with VT ≥ 8 mL/kg and a regular rhythm, not in a spontaneously breathing patient, and
+  Michard 2000's 13 % threshold comes from mechanically ventilated ICU patients. Intubated when the clinical story
+  intubates: the class IV haemorrhage card's rigs and the CPR-over-a-beating-heart rig are given the RSI blocker
+  (rocuronium 1.2 mg/kg; Miller 10e ch. 40 p. 1237: RSI with a non-depolariser, 1.0–1.2 mg/kg), and the induction rigs
+  (sympathetic-tone, the low-flow case) breathe on their own until the induction dose and are intubated 30 s after it.
+  Four rows that the **corrected** rig misses keep their bands and are recorded with their numbers (`it.fails`, R45):
+  class II HR 95.4 (100–125) and 17b HR 66.3 (75–95) — both the known missing autonomic hub (audit T-01 / DEV-05, the
+  same gap that makes the gate's class III and IV HR rows red); the HTN-vs-healthy induction gap 4.42 points (≥ 5; the
+  HTN tonic size is the owner's A23); dobutamine's β-blocked share 52 % (≤ 50 %, decision 7).
+- **Six expected failures that the mechanism turned green (brief 93)** and are now plain passing tests: S4b severe
+  tamponade with propofol (MAP nadir 45.9 < 55, CO −31 % ≥ −25 %), awake laryngoscopy (ΔMAP 39.5 in 20–40, ΔHR 13.6 in
+  12–30), RS14 rebreathing in both files (PaCO2 +6.8, EtCO2 +6.16 in 6–10), the VCV Pmax row (healthy delivered VT
+  500.0 mL, band ±5), and the tension-pneumothorax decompression (MAP ≥ 65 at +8 s).
 - **Haemorrhage, what is measured:** the systemic vascular resistance rises as the patient bleeds (+659 at 8:00 in
   the showcase kit's haemorrhage run, `docs/showcase/SHOWCASE-2-MEASUREMENTS.md`; 1,205 → 2,112 in an awake 50 %
   bleed, `docs/roadmap/v2.0/evidence/cardiac-reflexes-audit.md` F3). The reflex does not decompensate: in that awake

@@ -44,8 +44,8 @@ describe('drug acceptance — vasopressor dose–response (tables §6.2)', () =>
       expect(d).toBeGreaterThanOrEqual(lo);
       expect(d).toBeLessThanOrEqual(hi);
     }, 600_000);
-  const dobuRise = async (patient: PatientProfile) => {
-    const r = await runPk(patient, [[120, inf('dobutamine', 5)]], 1320);
+  const dobuRise = async (patient: PatientProfile, spontaneous = false) => {
+    const r = await runPk(patient, [[120, inf('dobutamine', 5)]], 1320, 11, { spontaneous });
     return 100 * (coMean(r.ev, 1300, 1320) / coMean(r.ev, 100, 120) - 1);
   };
   // R45: band missed, kept as it.fails (gate note). Measured CO +4.2 % (MAP +0.9 %, HR +9.9; Ees ×1.33, SVR ×0.90).
@@ -64,9 +64,14 @@ describe('drug acceptance — vasopressor dose–response (tables §6.2)', () =>
     expect(free).toBeGreaterThanOrEqual(20);
     expect(free).toBeLessThanOrEqual(40);
   }, 900_000);
-  it('dobutamine 5 µg/kg/min: the β-blocked profile gets ≤ half of the free CO rise (decision 7)', async () => {
-    const free = await dobuRise({});
-    const blocked = await dobuRise({ conditions: [{ id: 'betaBlocked' }] });
+  // Brief 93: decision 7's comparison is between awake patients (a dobutamine infusion is not given to an awake patient
+  // on a ventilator, who now breathes against it); both arms breathe on their own
+  // R45 (brief 93): on the awake rig the free rise is larger (CO +16.9 % against +13.5 % when the awake patient was
+  // ventilated) and the β-blocked arm keeps +8.8 %, which is 52 % of it against decision 7's ≤ 50 %. Recorded with its
+  // number — decision 7's ratio is an engine rule, and no dobutamine or β-blockade size was touched to reach it.
+  it.fails('dobutamine 5 µg/kg/min, awake, breathing: the β-blocked profile gets ≤ half of the free CO rise (decision 7) — measured 8.8 of 16.9 % (52 %)', async () => {
+    const free = await dobuRise({}, true);
+    const blocked = await dobuRise({ conditions: [{ id: 'betaBlocked' }] }, true);
     console.log(`dobutamine 5: CO ${free.toFixed(1)} % (β-blocked ${blocked.toFixed(1)} %)`);
     expect(blocked).toBeLessThanOrEqual(free / 2);
   }, 900_000);
