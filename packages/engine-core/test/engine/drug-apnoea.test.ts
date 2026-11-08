@@ -97,7 +97,7 @@ describe('the apnoea flag is the chemoreflex\'s own state; the drug layer reache
   });
 
   // R45: VENT_ALPHA_BENZO 1.5 (D15, Bailey fit on the pre-FU-6 drive: 77 %) overshoots on FU-6's drive — deeper
-  // hypoxaemia WITHOUT apnoea (VE −79.6 %; audit DI-03). Not re-fitted (D15 is not revisited); gate note §9 / Ali.
+  // hypoxaemia WITHOUT apnoea (VE −79.6 %; audit DI-03). Not re-fitted (D15 is not revisited); gate note §9 / samhv-dev.
   it.fails('the Bailey pair (DI-03): fentanyl 2 µg/kg + midazolam 0.05 mg/kg on room air — SpO2 nadir 70–89 % on seed 7; the singles ≥ 93 % — measured pair 46 %, fentanyl 94 %, midazolam 95 %', async () => {
     const pair = await spontRig([drug('fentanyl', 2, 'mcg/kg'), drug('midazolam', 0.05, 'mg/kg')], T + 1200);
     const f = await spontRig([drug('fentanyl', 2, 'mcg/kg')], T + 1200);

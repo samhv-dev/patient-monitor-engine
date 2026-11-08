@@ -1,0 +1,230 @@
+{
+  "case": "Stab wound: tamponade, PEA and pericardiocentesis",
+  "browser": "webkit",
+  "server": "perl (through the launcher)",
+  "base": "http://127.0.0.1:8700",
+  "t0": 3.492773660887479,
+  "steps": [
+    {
+      "simT": 3.5,
+      "what": "loaded \"Stab wound: tamponade, PEA and pericardiocentesis\" at ×4",
+      "state": "arrival",
+      "hr": null,
+      "art": "null/null (null)",
+      "spo2": null,
+      "etco2": null,
+      "rr": null
+    },
+    {
+      "simT": 91.8,
+      "what": "1:00",
+      "state": "arrival",
+      "hr": 101,
+      "art": "104.7/85.7 (91.7)",
+      "spo2": 99,
+      "etco2": 31,
+      "rr": 14
+    },
+    {
+      "simT": 184.9,
+      "what": "3:00",
+      "state": "arrival",
+      "hr": 111,
+      "art": "99.3/83.3 (88)",
+      "spo2": 99,
+      "etco2": 29,
+      "rr": 14
+    },
+    {
+      "simT": 364.8,
+      "what": "6:00",
+      "state": "arrival",
+      "hr": 134,
+      "art": "79.8/68.5 (72)",
+      "spo2": 99,
+      "etco2": 24,
+      "rr": 15
+    },
+    {
+      "simT": 469.8,
+      "what": "state \"PEA\" (sinus on the ECG, no pulse)",
+      "state": "pea",
+      "hr": 45,
+      "art": "null/null (20.7)",
+      "spo2": 99,
+      "etco2": 14,
+      "rr": 16
+    },
+    {
+      "simT": 483.4,
+      "what": "press **Start CPR, intubate, FiO₂ 1.0**",
+      "state": "cpr",
+      "hr": 68,
+      "art": "null/null (34.3)",
+      "spo2": null,
+      "etco2": 8,
+      "rr": 18
+    },
+    {
+      "simT": 603.5,
+      "what": "press **Pericardiocentesis during CPR**",
+      "state": "cprDrained",
+      "hr": 106,
+      "art": "46.8/20 (29.7)",
+      "spo2": 99,
+      "etco2": 9,
+      "rr": 12
+    },
+    {
+      "simT": 724.3,
+      "what": "press **Pulse back: stop CPR**",
+      "state": "rosc",
+      "hr": 104,
+      "art": "null/null (69.9)",
+      "spo2": 99,
+      "etco2": 26,
+      "rr": 12
+    },
+    {
+      "simT": 752.7,
+      "what": "30 s after stopping CPR",
+      "state": "rosc",
+      "hr": 63,
+      "art": "119.9/78.9 (92.7)",
+      "spo2": 99,
+      "etco2": 33,
+      "rr": 12,
+      "minSys10to30": 115.1
+    },
+    {
+      "simT": 756.1,
+      "what": "press **Crystalloid 500 mL**",
+      "state": "roscFluid",
+      "hr": 62,
+      "art": "118.4/77.4 (90.9)",
+      "spo2": 99,
+      "etco2": 34,
+      "rr": 12
+    },
+    {
+      "simT": 903.5,
+      "what": "end (15:00)",
+      "state": "roscFluid",
+      "hr": 61,
+      "art": "118.7/75.7 (89.4)",
+      "spo2": 99,
+      "etco2": 39,
+      "rr": 20
+    },
+    {
+      "alarmsRaised": [
+        "18.5 s CVP MEAN TOO HIGH",
+        "142.5 s ETCO2 TOO LOW",
+        "355.5 s SPO2 LOW PERFUSION",
+        "405.5 s ART SYS TOO LOW",
+        "419.5 s ART MEAN TOO LOW",
+        "427.5 s HR TOO HIGH",
+        "447.5 s IBP1 STATIC PRESSURE",
+        "461.5 s HR TOO LOW",
+        "474.5 s SPO2 NO PULSE",
+        "482.5 s ART SYS TOO LOW",
+        "482.5 s ART DIA TOO LOW",
+        "492.5 s SPO2 LOW PERFUSION",
+        "720.5 s IBP1 STATIC PRESSURE"
+      ]
+    }
+  ],
+  "sheet": [
+    {
+      "clock": "0:00",
+      "monitor": "HR –, ART –/– (–), SpO2 –, EtCO2 –, RR – · state arrival",
+      "presenter": "loaded \"Stab wound: tamponade, PEA and pericardiocentesis\" at ×4"
+    },
+    {
+      "clock": "1:28",
+      "monitor": "HR 101, ART 105/86 (92), SpO2 99, EtCO2 31, RR 14 · state arrival",
+      "presenter": "1:00"
+    },
+    {
+      "clock": "3:01",
+      "monitor": "HR 111, ART 99/83 (88), SpO2 99, EtCO2 29, RR 14 · state arrival",
+      "presenter": "3:00"
+    },
+    {
+      "clock": "6:01",
+      "monitor": "HR 134, ART 80/69 (72), SpO2 99, EtCO2 24, RR 15 · state arrival",
+      "presenter": "6:00"
+    },
+    {
+      "clock": "7:46",
+      "monitor": "HR 45, ART –/– (21), SpO2 99, EtCO2 14, RR 16 · state pea",
+      "presenter": "state \"PEA\" (sinus on the ECG, no pulse)"
+    },
+    {
+      "clock": "7:59",
+      "monitor": "HR 68, ART –/– (34), SpO2 –, EtCO2 8, RR 18 · state cpr",
+      "presenter": "press **Start CPR, intubate, FiO₂ 1.0**"
+    },
+    {
+      "clock": "10:00",
+      "monitor": "HR 106, ART 47/20 (30), SpO2 99, EtCO2 9, RR 12 · state cprDrained",
+      "presenter": "press **Pericardiocentesis during CPR**"
+    },
+    {
+      "clock": "12:00",
+      "monitor": "HR 104, ART –/– (70), SpO2 99, EtCO2 26, RR 12 · state rosc",
+      "presenter": "press **Pulse back: stop CPR**"
+    },
+    {
+      "clock": "12:29",
+      "monitor": "HR 63, ART 120/79 (93), SpO2 99, EtCO2 33, RR 12 · state rosc",
+      "presenter": "30 s after stopping CPR"
+    },
+    {
+      "clock": "12:32",
+      "monitor": "HR 62, ART 118/77 (91), SpO2 99, EtCO2 34, RR 12 · state roscFluid",
+      "presenter": "press **Crystalloid 500 mL**"
+    },
+    {
+      "clock": "15:00",
+      "monitor": "HR 61, ART 119/76 (89), SpO2 99, EtCO2 39, RR 20 · state roscFluid",
+      "presenter": "end (15:00)"
+    }
+  ],
+  "labels": {
+    "alarmButtonAtOpen": "No alarms",
+    "tab": "Scenario",
+    "showcaseCards": "Healthy induction | Induction after fentanyl and midazolam | Anaphylaxis under anaesthesia | Malignant hyperthermia | Stab wound: tamponade, PEA and pericardiocentesis | Class IV haemorrhage, PEA and resuscitation",
+    "toast": "Scenario loaded: Stab wound: tamponade, PEA and pericardiocentesis",
+    "speed": "×4 (session bar) → toast \"Speed ×4\"",
+    "running": "Stab wound: tamponade, PEA and pericardiocentesis\nChoose another scenario\nA 30-year-old man with a stab wound to the left chest. He arrives tachycardic, with a narrow pulse pressure and a raised CVP; blood is collecting in the pericardium. Without drainage he loses his pulse (PEA) about 8 minutes after arrival. CPR alone cannot bring him back; pericardiocentesis during good CPR brings the pulse back about a minute and a half later.\nArrival: tachycardic, narrow pulse pressure, raised CVP\nDeteriorating: systolic below 80\nPropofol 2 mg/kg given: compensation lost\nPEA: organised rhythm, no pulse; the pericardium holds about 370 mL\nPEA after propofol: organised rhythm, no pulse\nCPR, ventilated with FiO₂ 1.0\nCPR: epinephrine 1 mg given\nCPR: epinephrine 1 mg repeated\nCPR: pericardium drained, catheter left in\nCPR, drained: epinephrine 1 mg given\nReturn of circulation: ventilated, catheter in the pericardium\nPost-ROSC: 500 mL crystalloid running\nPost-ROSC: catheter aspirated\nPericardium drained before the arrest, catheter left in\nCatheter aspirated again\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Pericardiocentesis\": Pericardium drained before the arrest, catheter left in\nPericardiocentesis\nYou press \"Induce for intubation: propofol 2 mg/kg\": Propofol 2 mg/kg given: compensation lost\nInduce for intubation: propofol 2 mg/kg\nART S < 80 mmHg for 5 s: Deteriorating: systolic below 80\nObjectives\nName the tamponade within 180 s of arrival from the monitor: tachycardia, narrow pulse pressure, CVP above 15 mmHg (instructor-assessed)\nStart CPR within 10 s of the pulse loss\nPericardiocentesis within 120 s of starting CPR\nStop CPR (“Pulse back”) within 30 s of the pulse returning on the arterial line and the capnogram\nBetter: pericardiocentesis before the pulse loss, while the systolic pressure is above 60 mmHg — then no PEA follows\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "alarmButtonAfterLoad": "No alarms",
+    "sessionBar": "M 30 y 80 kg MODELED Stab wound: tamponade, PEA and pericardiocentesis: Arrival: tachycardic, narrow pulse pressure, raised CVP 00:01 00:01 ×1 ×2 ×4 ×8 Pause 2 min 5 min Bookmark Debrief",
+    "after Start CPR, intubate, FiO₂ 1.0": "Stab wound: tamponade, PEA and pericardiocentesis\nChoose another scenario\nA 30-year-old man with a stab wound to the left chest. He arrives tachycardic, with a narrow pulse pressure and a raised CVP; blood is collecting in the pericardium. Without drainage he loses his pulse (PEA) about 8 minutes after arrival. CPR alone cannot bring him back; pericardiocentesis during good CPR brings the pulse back about a minute and a half later.\nArrival: tachycardic, narrow pulse pressure, raised CVP\nDeteriorating: systolic below 80\nPropofol 2 mg/kg given: compensation lost\nPEA: organised rhythm, no pulse; the pericardium holds about 370 mL\nPEA after propofol: organised rhythm, no pulse\nCPR, ventilated with FiO₂ 1.0\nCPR: epinephrine 1 mg given\nCPR: epinephrine 1 mg repeated\nCPR: pericardium drained, catheter left in\nCPR, drained: epinephrine 1 mg given\nReturn of circulation: ventilated, catheter in the pericardium\nPost-ROSC: 500 mL crystalloid running\nPost-ROSC: catheter aspirated\nPericardium drained before the arrest, catheter left in\nCatheter aspirated again\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Pericardiocentesis during CPR\": CPR: pericardium drained, catheter left in\nPericardiocentesis during CPR\nYou press \"Epinephrine 1 mg\": CPR: epinephrine 1 mg given\nEpinephrine 1 mg\nObjectives\nName the tamponade within 180 s of arrival from the monitor: tachycardia, narrow pulse pressure, CVP above 15 mmHg (instructor-assessed)\nStart CPR within 10 s of the pulse loss\nPericardiocentesis within 120 s of starting CPR\nStop CPR (“Pulse back”) within 30 s of the pulse returning on the arterial line and the capnogram\nBetter: pericardiocentesis before the pulse loss, while the systolic pressure is above 60 mmHg — then no PEA follows\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "after Pericardiocentesis during CPR": "Stab wound: tamponade, PEA and pericardiocentesis\nChoose another scenario\nA 30-year-old man with a stab wound to the left chest. He arrives tachycardic, with a narrow pulse pressure and a raised CVP; blood is collecting in the pericardium. Without drainage he loses his pulse (PEA) about 8 minutes after arrival. CPR alone cannot bring him back; pericardiocentesis during good CPR brings the pulse back about a minute and a half later.\nArrival: tachycardic, narrow pulse pressure, raised CVP\nDeteriorating: systolic below 80\nPropofol 2 mg/kg given: compensation lost\nPEA: organised rhythm, no pulse; the pericardium holds about 370 mL\nPEA after propofol: organised rhythm, no pulse\nCPR, ventilated with FiO₂ 1.0\nCPR: epinephrine 1 mg given\nCPR: epinephrine 1 mg repeated\nCPR: pericardium drained, catheter left in\nCPR, drained: epinephrine 1 mg given\nReturn of circulation: ventilated, catheter in the pericardium\nPost-ROSC: 500 mL crystalloid running\nPost-ROSC: catheter aspirated\nPericardium drained before the arrest, catheter left in\nCatheter aspirated again\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Epinephrine 1 mg\": CPR, drained: epinephrine 1 mg given\nEpinephrine 1 mg\nYou press \"Pulse back: stop CPR\": Return of circulation: ventilated, catheter in the pericardium\nPulse back: stop CPR\nObjectives\nName the tamponade within 180 s of arrival from the monitor: tachycardia, narrow pulse pressure, CVP above 15 mmHg (instructor-assessed)\nStart CPR within 10 s of the pulse loss\nPericardiocentesis within 120 s of starting CPR\nStop CPR (“Pulse back”) within 30 s of the pulse returning on the arterial line and the capnogram\nBetter: pericardiocentesis before the pulse loss, while the systolic pressure is above 60 mmHg — then no PEA follows\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "after Pulse back: stop CPR": "Stab wound: tamponade, PEA and pericardiocentesis\nChoose another scenario\nA 30-year-old man with a stab wound to the left chest. He arrives tachycardic, with a narrow pulse pressure and a raised CVP; blood is collecting in the pericardium. Without drainage he loses his pulse (PEA) about 8 minutes after arrival. CPR alone cannot bring him back; pericardiocentesis during good CPR brings the pulse back about a minute and a half later.\nArrival: tachycardic, narrow pulse pressure, raised CVP\nDeteriorating: systolic below 80\nPropofol 2 mg/kg given: compensation lost\nPEA: organised rhythm, no pulse; the pericardium holds about 370 mL\nPEA after propofol: organised rhythm, no pulse\nCPR, ventilated with FiO₂ 1.0\nCPR: epinephrine 1 mg given\nCPR: epinephrine 1 mg repeated\nCPR: pericardium drained, catheter left in\nCPR, drained: epinephrine 1 mg given\nReturn of circulation: ventilated, catheter in the pericardium\nPost-ROSC: 500 mL crystalloid running\nPost-ROSC: catheter aspirated\nPericardium drained before the arrest, catheter left in\nCatheter aspirated again\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Crystalloid 500 mL\": Post-ROSC: 500 mL crystalloid running\nCrystalloid 500 mL\nYou press \"Aspirate the catheter again\": Post-ROSC: catheter aspirated\nAspirate the catheter again\nObjectives\nName the tamponade within 180 s of arrival from the monitor: tachycardia, narrow pulse pressure, CVP above 15 mmHg (instructor-assessed)\nStart CPR within 10 s of the pulse loss\nPericardiocentesis within 120 s of starting CPR\nStop CPR (“Pulse back”) within 30 s of the pulse returning on the arterial line and the capnogram\nBetter: pericardiocentesis before the pulse loss, while the systolic pressure is above 60 mmHg — then no PEA follows\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "after Crystalloid 500 mL": "Stab wound: tamponade, PEA and pericardiocentesis\nChoose another scenario\nA 30-year-old man with a stab wound to the left chest. He arrives tachycardic, with a narrow pulse pressure and a raised CVP; blood is collecting in the pericardium. Without drainage he loses his pulse (PEA) about 8 minutes after arrival. CPR alone cannot bring him back; pericardiocentesis during good CPR brings the pulse back about a minute and a half later.\nArrival: tachycardic, narrow pulse pressure, raised CVP\nDeteriorating: systolic below 80\nPropofol 2 mg/kg given: compensation lost\nPEA: organised rhythm, no pulse; the pericardium holds about 370 mL\nPEA after propofol: organised rhythm, no pulse\nCPR, ventilated with FiO₂ 1.0\nCPR: epinephrine 1 mg given\nCPR: epinephrine 1 mg repeated\nCPR: pericardium drained, catheter left in\nCPR, drained: epinephrine 1 mg given\nReturn of circulation: ventilated, catheter in the pericardium\nPost-ROSC: 500 mL crystalloid running\nPost-ROSC: catheter aspirated\nPericardium drained before the arrest, catheter left in\nCatheter aspirated again\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Aspirate the catheter again\": Post-ROSC: catheter aspirated\nAspirate the catheter again\nObjectives\nName the tamponade within 180 s of arrival from the monitor: tachycardia, narrow pulse pressure, CVP above 15 mmHg (instructor-assessed)\nStart CPR within 10 s of the pulse loss\nPericardiocentesis within 120 s of starting CPR\nStop CPR (“Pulse back”) within 30 s of the pulse returning on the arterial line and the capnogram\nBetter: pericardiocentesis before the pulse loss, while the systolic pressure is above 60 mmHg — then no PEA follows\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "finalRun": "Stab wound: tamponade, PEA and pericardiocentesis\nChoose another scenario\nA 30-year-old man with a stab wound to the left chest. He arrives tachycardic, with a narrow pulse pressure and a raised CVP; blood is collecting in the pericardium. Without drainage he loses his pulse (PEA) about 8 minutes after arrival. CPR alone cannot bring him back; pericardiocentesis during good CPR brings the pulse back about a minute and a half later.\nArrival: tachycardic, narrow pulse pressure, raised CVP\nDeteriorating: systolic below 80\nPropofol 2 mg/kg given: compensation lost\nPEA: organised rhythm, no pulse; the pericardium holds about 370 mL\nPEA after propofol: organised rhythm, no pulse\nCPR, ventilated with FiO₂ 1.0\nCPR: epinephrine 1 mg given\nCPR: epinephrine 1 mg repeated\nCPR: pericardium drained, catheter left in\nCPR, drained: epinephrine 1 mg given\nReturn of circulation: ventilated, catheter in the pericardium\nPost-ROSC: 500 mL crystalloid running\nPost-ROSC: catheter aspirated\nPericardium drained before the arrest, catheter left in\nCatheter aspirated again\nTime in state\n02:29\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Aspirate the catheter again\": Post-ROSC: catheter aspirated\nAspirate the catheter again\nObjectives\nName the tamponade within 180 s of arrival from the monitor: tachycardia, narrow pulse pressure, CVP above 15 mmHg (instructor-assessed)\nStart CPR within 10 s of the pulse loss\nPericardiocentesis within 120 s of starting CPR\nStop CPR (“Pulse back”) within 30 s of the pulse returning on the arterial line and the capnogram\nBetter: pericardiocentesis before the pulse loss, while the systolic pressure is above 60 mmHg — then no PEA follows\nBookmarks\nNo bookmarks yet (Shift+B)"
+  },
+  "checks": [
+    {
+      "what": "PEA without drainage",
+      "expected": "state pea 5–11 min after load",
+      "observed": "7.8 min",
+      "pass": true
+    },
+    {
+      "what": "the pulse holds after CPR stops (drained)",
+      "expected": "arterial systolic > 90 from 10 to 30 s after stopping",
+      "observed": 115.1,
+      "pass": true
+    },
+    {
+      "what": "no console error or page error",
+      "expected": "none",
+      "observed": [],
+      "pass": true
+    }
+  ],
+  "errors": []
+}

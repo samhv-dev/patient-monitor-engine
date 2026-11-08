@@ -115,7 +115,7 @@ architecture.md` §1–3 (comparison only). House style: `docs/plans/stage-3-res
   infusion-rate equivalent `µg/kg/min` = Ce·CL/W (decision 4). Doses at the API keep the brief's units.
 - **Evidence (R37):** every number in the library carries `src` and a tag `P` (primary paper/label), `TXT`
   (textbook — "Miller 10e ch. N p. M"), `ENG` (fitted here, with the prototype number) or `VERIFY`. The Iranian
-  availability column is a QUESTION for Ali (`ir: '?'`) on every row — nothing is asserted.
+  availability column is a QUESTION for samhv-dev (`ir: '?'`) on every row — nothing is asserted.
 
 ## Decisions this plan makes where the spec was silent, inconsistent or physically unreachable
 
@@ -130,7 +130,7 @@ architecture.md` §1–3 (comparison only). House style: `docs/plans/stage-3-res
    a ke0 belongs to the PK it was fitted with (tables §6 rule), and with the Shafer 1990 PK 0.147 gives a
    time-to-peak-effect (TTPE) of 3.17 min, not the published 3.6. The TTPE method (Minto 2003; Shafer & Varvel's
    own) with Shafer PK gives **ke0 0.117/min → TTPE 3.60 min** (0.114 → 3.66); the library uses 0.117 and cites both. Sufentanil (Gepts PK [VERIFY]) is treated the same way: its published TTPE 5.6 min gives ke0 0.176 (0.112 would give 7.05 min). Q58 stays
-   open for Ali.
+   open for samhv-dev.
 3. **Propofol CSHT is model-specific; the "20–25 min at 3 h" band is Hughes 1992's (older PK).** Computed CSHT at
    1 / 3 / 8 h: Eleveld 2.7 / 4.5 / 12.1 min, Schnider 2.2 / 3.5 / 9.3, Marsh 6.7 / 8.6 / 12.1. Miller 10e does not
    tabulate a number (ch. 21 p. 514 gives only t½ 4–7 h, CL 20–30 mL/kg/min, Vdss 2–10 L/kg). The acceptance test
@@ -237,7 +237,7 @@ architecture.md` §1–3 (comparison only). House style: `docs/plans/stage-3-res
     E = Ce/(Ce + 3.5); the 7a fit (E 0.9 at the peak of 2 mg/kg) is re-fitted on the Ce model in Task 20 (target:
     MAP 60–80 % at 2 min, HR rise < 15).
 
-## Deviations from the tables (for Ali's calibration pass, R44)
+## Deviations from the tables (for the owner's calibration pass, R44)
 
 - D1 phenylephrine infusion EC50 0.25 µg/kg/min (tables 0.5 [ENG]) — the only value that makes the 100 µg bolus
   and the infusion one receptor model (decision 4).
@@ -251,7 +251,7 @@ architecture.md` §1–3 (comparison only). House style: `docs/plans/stage-3-res
   washout via rocuronium ke0" (0.16/0.26): with rocuronium's own ke0 the effect-site binding reverses too fast (fixer
   prototype: 2 mg/kg at T2 → TOFR 0.9 in 1.43 min, 4 mg/kg at 1–2 PTC 1.46 min, label 2.2 / 2.7 with IQR 2.1–4.3).
   0.095 gives 2.11 / 2.22 min and, for 16 mg/kg 3 min after rocuronium 1.2, T1 10 % at 1.80 min (label 1.2; tables
-  §5d) — the residual 16 mg/kg lag is flagged for Ali (Q51). (0.10 gave 2.04 / 2.13 / 1.73: too close to the IQR edge.)
+  §5d) — the residual 16 mg/kg lag is flagged for samhv-dev (Q51). (0.10 gave 2.04 / 2.13 / 1.73: too close to the IQR edge.)
 - Vent effect-site ke0 for fentanyl and sufentanil = their brain ke0 [ENG]: tables §6.1/§5d give a ventilatory ke0
   only for remifentanil (0.92/min, Bouillon 2003); the separate `vent` site exists for every opioid (R51 §2).
 
@@ -1964,7 +1964,7 @@ export interface DrugRow {
   shared?: 'blood'; // 7c also acts on this id, reading it from bus.doses (decision 10; 7g still consumes the event)
   doses: string; // typical adult doses, text
   onset: string; // onset / peak / duration, text (research 03 §8.6)
-  ir: '?'; // Iranian availability — a question for Ali on every row
+  ir: '?'; // Iranian availability — a question for samhv-dev on every row
   src: string;
   tag: 'P' | 'TXT' | 'ENG' | 'VERIFY';
 }
@@ -2176,7 +2176,7 @@ export function combine(actives: readonly Active[], ctx: PdContext): { fx: DrugE
 Conventions (binding for all three library tasks): for `gamma` rows the PD concentration is in REFERENCE-DOSE units, so
 an effect "X at the reference dose" is written `emax: 2·X, ec50: 1` (a Hill of 1 gives X at c = 1). For `volatile`
 rows the concentration is the agent's own brain MAC fraction and effects are `linear` per MAC (tables §6.3). For
-`perKg … rateEq` rows EC50s are in µg/kg/min (decision 4). Every row: `ir: '?'` (Q for Ali), `src`, `tag`.
+`perKg … rateEq` rows EC50s are in µg/kg/min (decision 4). Every row: `ir: '?'` (Q for samhv-dev), `src`, `tag`.
 
 - [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/library.test.ts`:
 
@@ -2222,7 +2222,7 @@ import type { DrugRow } from '../row.ts';
  * Opioid haemodynamic EC50s [ENG]: tables §6.3 give only the size (HR −10–20 %, SVR −5–15 %) with no concentration.
  * Each EC50 is the typical clinical Ce (remifentanil 3 ng/mL), scaled by the tables' §5d potency (fentanyl 1.6×
  * → 2 ng/mL; sufentanil 12× [ENG, Q59] → 0.25), so a usual dose gives half of Emax −0.25/−0.15: HR −12.5 %,
- * SVR −7.5 % — mid-band of T6.3. Calibration items for Ali (R44); no primary source.
+ * SVR −7.5 % — mid-band of T6.3. Calibration items for samhv-dev (R44); no primary source.
  */
 const OPIOID_HEMO_SRC = 'haemodynamic EC50 [ENG]: typical clinical Ce ÷ T5d potency, sized to T6.3';
 
@@ -2537,7 +2537,7 @@ const LA = (v1: number, v2: number, cl1: number, cl2: number): DrugRow['pk'] => 
 /**
  * Total plasma concentration (µg/mL) at which CNS symptoms start (`cns`, E = 0.5 of the CNS Hill), seizures
  * (`seizure`) and cardiovascular collapse (`cv`, E_cv = 0.5) [TXT: ASRA 2020 practice advisory; Stoelting 8e;
- * Q-7g-2 for Ali]. Acidosis/hypercapnia raise the free fraction (M10 ch. 25 p. 761) — applied in Task 16.
+ * Q-7g-2 for samhv-dev]. Acidosis/hypercapnia raise the free fraction (M10 ch. 25 p. 761) — applied in Task 16.
  */
 export const LAST_THRESHOLDS: Record<string, { cns: number; seizure: number; cv: number }> = {
   lidocaine: { cns: 5, seizure: 10, cv: 20 },
@@ -4525,13 +4525,13 @@ process.exit(r.status ?? 1);
   it with the journal's article URL you opened. Run `npx -y pnpm@9.15.9 check-notices`.
 - [x] **Step 2: Tables cross-reference** — under `## 6. Drug PK/PD extensions (sub-stage 7g)` add ONE paragraph:
   "Implementation (7g): values as coded live in `packages/engine-core/src/l2/pk/data/*.ts` and `l2/pk/nmb.ts`;
-  deviations D1–D5, D7 and the fentanyl/sufentanil vent-ke0 item are in `docs/plans/stage-7g-pkpd.md`." Do not move or edit any row (R40: amendments land after Ali's review in one edit).
+  deviations D1–D5, D7 and the fentanyl/sufentanil vent-ke0 item are in `docs/plans/stage-7g-pkpd.md`." Do not move or edit any row (R40: amendments land after the owner's review in one edit).
 - [x] **Step 3: Gate note** `docs/gates/stage-7g.md` — the numbers every acceptance test printed (TTPE, TCI, CSHT,
   FA/FI, MAC, vasopressor bands, reversal times, adenosine timing, LAST, CPU µs/tick, 24 h), the calibrations made
   (SGX capture, vec/cis/sux ke0, any vasoactive EC50, propofol re-fit) with before/after, the screenshots, the
   deviations D1–D5, D7 and the fentanyl/sufentanil vent-ke0 item and "needs a ruling" items (incl. the 16 mg/kg sugammadex T1-10 % lag, D7), the [ENG]
   values the fixer pass introduced (sugammadex site ke0, cholinesterase multipliers, opioid haemodynamic EC50s,
-  β-occupancy, esmolol PK set), and the Q list for Ali (Q-7g-1 CSHT band, Q-7g-2 LAST thresholds, Q51,
+  β-occupancy, esmolol PK set), and the Q list for samhv-dev (Q-7g-1 CSHT band, Q-7g-2 LAST thresholds, Q51,
   Q57/Q58/Q60, the `ir` availability column for all 58 rows).
 - [x] **Step 4: Commit and push** — `git add -A && git commit -m "docs(pk): NOTICES rows for the published parameter sets; tables cross-reference; Stage 7g gate note" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
@@ -4545,7 +4545,7 @@ process.exit(r.status ?? 1);
 ```bash
 git push
 gh pr create --base main --head stage-7g-pkpd --title "Stage 7g: drug PK/PD engine (compartment PK + effect site, TCI, volatiles, PD combination, 58-drug library)" --body "$(cat <<'BODY'
-Implements docs/plans/stage-7g-pkpd.md. Gate note: docs/gates/stage-7g.md (numbers, calibrations, screenshots, deviations D1–D5, D7 and the fentanyl/sufentanil vent-ke0 item, questions for Ali).
+Implements docs/plans/stage-7g-pkpd.md. Gate note: docs/gates/stage-7g.md (numbers, calibrations, screenshots, deviations D1–D5, D7 and the fentanyl/sufentanil vent-ke0 item, questions for samhv-dev).
 
 - Exact ZOH compartment PK with effect sites; Eleveld/Schnider/Marsh, Minto, Shafer, Gepts; NMBA + sugammadex binding
 - Plasma and effect-site TCI; context-sensitive half-time and decrement-from-now on a 1 Hz `drugs` panel event
@@ -4594,7 +4594,7 @@ BODY
   gamma rows in 7g v1: their `brain` is in "× ref dose" units (`unit` says so) — map them to your potency scale
   [ENG] and record it; (d) apply `bus.antagonist.opioid`/`benzodiazepine` as your EC50 multipliers.
 - **6b (scenarios):** `svt-adenosine.json` scripts its own AV block; with 7g the engine blocks natively — drop the
-  scripted `block` state (keep the conversion question for Ali) once 7g merges.
+  scripted `block` state (keep the conversion question for samhv-dev) once 7g merges.
 - **Orchestrator:** Q-7g-1 (propofol CSHT band: 20–25 min at 3 h is Hughes 1992's older PK; Eleveld/Schnider/Marsh
   compute 4.5/3.5/8.6 min), Q-7g-2 (LAST thresholds), Q51 (16 mg/kg sugammadex T1 10 % 1.8 vs 1.2 min, D7), and the
-  Iranian availability column (58 rows) go to Ali's calibration pass (R44).
+  Iranian availability column (58 rows) go to the owner's calibration pass (R44).

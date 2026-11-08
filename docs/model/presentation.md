@@ -58,8 +58,8 @@ renderer, audio and skin contracts.
 | [`calibration.ts:3`](../../packages/renderer/src/calibration.ts#L3) | Default calibration: 96 CSS px per inch = 3.78 CSS px/mm [05 §3.1] until the user calibrates. |
 | [`decimate.ts:6`](../../packages/renderer/src/decimate.ts#L6) | Unwrapped device-pixel column index: floor(x_css · dpr), x_css = n / rate · pxPerS. |
 | [`device-ui.ts:891`](../../packages/renderer/src/device-ui.ts#L891) | extras are drawn by their formatters; a split tile shows them as its parts (part k = entry k − 1), where an extra |
-| [`mount.ts:187`](../../packages/renderer/src/mount.ts#L187) | font — is scaled by one factor k = min(width / w, height / h) into the space it is given, centred, the rest in the |
-| [`mount.ts:406`](../../packages/renderer/src/mount.ts#L406) | Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia). |
+| [`mount.ts:190`](../../packages/renderer/src/mount.ts#L190) | font — is scaled by one factor k = min(width / w, height / h) into the space it is given, centred, the rest in the |
+| [`mount.ts:409`](../../packages/renderer/src/mount.ts#L409) | Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia). |
 | [`protocol.ts:25`](../../packages/renderer/src/protocol.ts#L25) | Wall/sim clock anchor sent with every event batch (brief §3.4). epochMs = timeOrigin + now. |
 | [`wave-lanes.ts:3`](../../packages/renderer/src/wave-lanes.ts#L3) | mmHg instead, so the scale range [lo, hi] becomes baseline = hi/(hi − lo) and gain = height/((hi − lo)·pxPerMm). |
 
@@ -86,27 +86,36 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `ASK_MS` | `200` | ms | [ENG] | How long a starting instructor page waits for the other tabs to answer, ms, on the fallback path (no Web Locks). A same-browser round trip takes a few ms [ENG]; this is the delay the check adds to every start of the page there. |
-| `TAKE_MS` | `2000` | ms | [ENG] | How long it waits for the chosen tab to hand its session over before it says that tab is asleep, ms [ENG]; without Web Locks, how long before it gives up and starts with no case. |
+| `ASK_MS` | `200` | ms | [ENG: ui] | How long a starting instructor page waits for the other tabs to answer, ms, on the fallback path (no Web Locks). A same-browser round trip takes a few ms [ENG: ui]; this is the delay the check adds to every start of the page there. |
+| `TAKE_MS` | `2000` | ms | [ENG: ui] | How long it waits for the chosen tab to hand its session over before it says that tab is asleep, ms [ENG: ui]; without Web Locks, how long before it gives up and starts with no case. |
 
 ### [`apps/demo/src/app/meters.ts`](../../apps/demo/src/app/meters.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `CPU_WINDOW_MS` | `5000` | ms | — | Home's three live tiles (E125): Engine (ms per tick), Memory (MB used) and "CPU, this app" (% of one core). They run only while Home is on screen. What each one measures, exactly: - Engine: the median time of one 20-ms engine tick, measured by engine-bench.worker.ts on the same engine build in a background thread of this page (the monitor's own worker has no timing hook). Updated every 5 s. - Memory: `performance.memory.usedJSHeapSize` of this page (Chromium only); elsewhere "—" with a tooltip. The workers' heaps (the monitor's engine among them) are not in it. - CPU, this app: the MAIN THREAD's busy fraction over the last 5 s, in % of one core. Busy time = the long tasks a `PerformanceObserver` reports (`longtask`, every task of 50 ms or more, exact) + the frame overruns seen by requestAnimationFrame (an interval longer than 1.5 frames counts its excess over one frame as busy) that no long task already covers. Short tasks that delay no frame are not seen, and the monitor's engine and drawing run in their own worker thread, so this is the instructor page's own load, not the whole browser's. |
+| `CPU_WINDOW_MS` | `2000` | ms | — | Home's three live tiles (E125): Engine (ms per tick), Memory (MB used) and "CPU, this app" (% of one core). They run only while Home is on screen. What each one measures, exactly: - Engine: the median time of one 20-ms engine tick, measured by engine-bench.worker.ts on the same engine build in a background thread of this page (the monitor's own worker has no timing hook). Updated every 5 s. - Memory: `performance.memory.usedJSHeapSize` of this page (Chromium only); a browser without it (Safari, Firefox) has no Memory tile (MUI-17). The workers' heaps (the monitor's engine among them) are not in it. - CPU, this app: the MAIN THREAD's busy fraction over the last 2 s, in % of one core. Busy time = the long tasks a `PerformanceObserver` reports (`longtask`, every task of 50 ms or more, exact) + the frame overruns seen by requestAnimationFrame (an interval longer than 1.5 frames counts its excess over one frame as busy) that no long task already covers. Short tasks that delay no frame are not seen, and the monitor's engine and drawing run in their own worker thread, so this is the instructor page's own load, not the whole browser's. MUI-17: the owner's 2 s (it was 5 s: a change of load took 5 s to show). 2 s holds 120 frames at 60 Hz, so one frame's overrun (16.7 ms) moves the tile by 0.8 % — finer than the whole-percent it prints. |
 
 ### [`apps/demo/src/app/position.ts`](../../apps/demo/src/app/position.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `SAVE_MS` | `1000` | ms | [ENG, measured 2026-10-25] | How often the position is taken (wall ms): a reload comes back at most this much of the clock behind, × the speed. Taking one costs ≈ 1 ms (the snapshot is ≈ 80 KB of JSON, plus the Debrief record) [ENG, measured 2026-10-25]. |
-| `MAX_AGE_MS` | `6 * 3600000` | ms | [ENG] | An older position is another day's run, not this one's [ENG]. |
+| `SAVE_MS` | `1000` | ms | [ENG: ui; measured 2026-10-25] | How often the position is taken (wall ms): a reload comes back at most this much of the clock behind, × the speed. Taking one costs ≈ 1 ms (the snapshot is ≈ 80 KB of JSON, plus the Debrief record) [ENG: ui; measured 2026-10-25]. |
+| `MAX_AGE_MS` | `6 * 3600000` | ms | [ENG: ui] | An older position is another day's run, not this one's [ENG: ui]. |
+
+### [`apps/demo/src/app/room-layout.ts`](../../apps/demo/src/app/room-layout.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `MAX_DEVICES` | `64` | — | [ENG: ui] | [ENG: ui] a full room (the relay's `--max-peers` default is 60) and spares (§4 D8). |
+| `MAX_NAME` | `32` | — | [ENG: ui; a table cell's width] | A name the instructor types is kept to this many characters [ENG: ui; a table cell's width]. |
 
 ### [`apps/demo/src/app/room-status.ts`](../../apps/demo/src/app/room-status.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `RESYNC_MS` | `2000` | ms | [ENG: the owner's 2 s] | A hello this recent means the device is joining or catching up [ENG: the owner's 2 s]. |
+| `WEAK_PING_MS` | `300` | ms | [ENG: ui; an engineering choice, stated on the legend] | Q9 ruled 5 November = A: a ping over this is Weak [ENG: ui; an engineering choice, stated on the legend]. |
+| `HEARTBEAT_MS` | `10000` | ms | — | The relay's heartbeat (the kit's and the relay's default, 10 s): a device silent longer than one has missed it. |
+| `RESYNC_MS` | `2000` | ms | [ENG: ui; the owner's 2 s] | A hello this recent means the device is joining or catching up [ENG: ui; the owner's 2 s]. |
 
 ### [`apps/demo/src/app/session.ts`](../../apps/demo/src/app/session.ts)
 
@@ -144,9 +153,22 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `HOST_SILENT_MS` | `5000` | ms | [ENG] | No message from a RUNNING host for this long → "not answering" (it sends its state every second) [ENG]. |
-| `UNREACHABLE_MS` | `6000` | ms | [ENG] | The phone has not reached the relay for this long: it is probably not on the classroom network [ENG]. |
-| `COCKPIT_QUIET_MS` | `2500` | ms | [ENG] | The host's `cockpit` events come once a second; this long without one, the Ventilator view has closed [ENG]. |
+| `HOST_SILENT_MS` | `5000` | ms | [ENG: ui] | No message from a RUNNING host for this long → "not answering" (it sends its state every second) [ENG: ui]. |
+| `UNREACHABLE_MS` | `6000` | ms | [ENG: ui] | The phone has not reached the relay for this long: it is probably not on the classroom network [ENG: ui]. |
+| `COCKPIT_QUIET_MS` | `2500` | ms | [ENG: ui] | The host's `cockpit` events come once a second; this long without one, the Ventilator view has closed [ENG: ui]. |
+
+### [`apps/demo/src/app/views/remote.ts`](../../apps/demo/src/app/views/remote.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `GIVE_UP_MS` | `10000` | ms | [ENG: ui] | Plan §1: an older kit's relay drops the instructor's hello and an older host never answers; the phone gives up [ENG: ui]. |
+| `INSTRUCTOR_LIVENESS_MS` | `12000` | ms | [ENG: ui] | Plan §5: the phone drops a socket that heard nothing for 12 s and opens a new one (as the learner's phone does) [ENG: ui]. |
+
+### [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `COCKPIT_SILENCE_MS` | `1000` | ms | [ENG: ui; it sends 50 link messages a second and its settings once a second, so 1 s is 50 missed; the relay's heartbeat would take up to 20 s, too long for an unventilated patient] | R8c: a remote cockpit silent this long is handed over [ENG: ui; it sends 50 link messages a second and its settings once a second, so 1 s is 50 missed; the relay's heartbeat would take up to 20 s, too long for an unventilated patient]. |
 
 ### [`apps/demo/src/dev/rhythm-strip.ts`](../../apps/demo/src/dev/rhythm-strip.ts)
 
@@ -164,7 +186,7 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `CHANGE_REL` | `0.02` | — | [ENG] | Relative change that counts as a change [ENG]: HR 70 → 71 (1.4 %) is jitter, phenylephrine's SVR +30–40 % is not. |
+| `CHANGE_REL` | `0.02` | — | [ENG: ui] | Relative change that counts as a change [ENG: ui]: HR 70 → 71 (1.4 %) is jitter, phenylephrine's SVR +30–40 % is not. |
 
 ### [`apps/demo/src/physiology-console/sparkline.ts`](../../apps/demo/src/physiology-console/sparkline.ts)
 
@@ -185,17 +207,17 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `BEEP_MS` | `100` | ms | brief §3.6; research/34 row 6; [ENG] | QRS / pulse beep (brief §3.6): 100 ms, fundamental plus 2nd and 3rd harmonics, 5 ms attack and release [ENG]. The pitch comes with the tone (the engine's spo2PitchHz: 1245 Hz at SpO2 100 %). Duration and the 3rd harmonic follow the measured Saadat beep (research/34 row 6: ≈ 1245 Hz, square-like with a strong 3rd harmonic, 100–150 ms). |
+| `BEEP_MS` | `100` | ms | brief §3.6; research/34 row 6; [ENG: device] | QRS / pulse beep (brief §3.6): 100 ms, fundamental plus 2nd and 3rd harmonics, 5 ms attack and release [ENG: device]. The pitch comes with the tone (the engine's spo2PitchHz: 1245 Hz at SpO2 100 %). Duration and the 3rd harmonic follow the measured Saadat beep (research/34 row 6: ≈ 1245 Hz, square-like with a strong 3rd harmonic, 100–150 ms). |
 | `BEEP_RAMP_MS` | `5` | ms | — | — |
-| `BEEP_HARMONIC2` | `0.3` | — | [ENG] | relative amplitude of the 2nd harmonic [ENG] |
-| `BEEP_HARMONIC3` | `1 / 3` | — | [ENG] | relative amplitude of the 3rd harmonic, a square wave's [ENG] |
-| `BEEP_MAX_BEAT_FRACTION` | `0.6` | — | [ENG] | At most this share of the wall-clock beat interval is beep, so fast beats (tachycardia at ×4) never run together into one tone (owner's ruling on the 100 ms beep) [ENG]. |
+| `BEEP_HARMONIC2` | `0.3` | — | [ENG: device] | relative amplitude of the 2nd harmonic [ENG: device] |
+| `BEEP_HARMONIC3` | `1 / 3` | — | [ENG: device] | relative amplitude of the 3rd harmonic, a square wave's [ENG: device] |
+| `BEEP_MAX_BEAT_FRACTION` | `0.6` | — | [ENG: device] | At most this share of the wall-clock beat interval is beep, so fast beats (tachycardia at ×4) never run together into one tone (owner's ruling on the 100 ms beep) [ENG: device]. |
 
 ### [`alarm-view.ts`](../../packages/renderer/src/alarm-view.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `ROTATE_S` | `2` | s | brief §6.4.1; [ENG] | Same-level messages rotate every this many seconds (brief §6.4.1 "messages rotate") [ENG]. |
+| `ROTATE_S` | `2` | s | brief §6.4.1; [ENG: display] | Same-level messages rotate every this many seconds (brief §6.4.1 "messages rotate") [ENG: display]. |
 
 ### [`calibration.ts`](../../packages/renderer/src/calibration.ts)
 
@@ -207,9 +229,9 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `CO2_WIDEN_BREATHS` | `2` | — | Nov 2026; research/06 §3.2; [ENG] | The capnogram lane's auto-range (skin `co2.autoScales`; owner ruling of 1 Nov 2026, E63 revisited): the lane widens its scale when the plateau exceeds it and narrows back when it falls, with hysteresis, as real units do. Vendor behaviour: the Saadat B9 offers a CO2 scale AUTO beside its fixed ones (research/06 §3.2, M p.304–305); capnographs in auto-scale pick the scale from the measured EtCO2, i.e. from breath peaks, and offer steps such as 0–60/0–80/0–100 mmHg. None states a breath count or a margin, so these are [ENG]: - the judged value is each breath's peak as the engine's EtCO2 detector finds it (engine-core co2-numerics.ts: a breath rises above 50 % of a decaying recent peak and ends below 30 %), read from the same displayed samples, never a single sample; - WIDEN one step after CO2_WIDEN_BREATHS consecutive breaths whose peak EXCEEDS the current top (over 50 on the 50 lane, over 80 on the 80 lane: the plateau would be clipped), so a plateau of 49.5 stays on the 0–50 scale (orchestrator's ruling on #250, 2 Nov: the MH card's early-signs stop stays on 0–50, as in every rehearsal); - NARROW one step after CO2_NARROW_BREATHS consecutive breaths whose peak stays under CO2_NARROW_UNDER of the next-lower top (40 of 50, 64 of 80). The band between (40–50 on the 50/80 step) is the hysteresis: a lane at 80 with peaks of 45 stays at 80, a lane at 50 with peaks of 45 stays at 50, so it never flaps at 50; - nothing above the widest top widens further: the trace clips at the lane top there (E63 at the top range); - no breath (apnoea, a detached line) changes nothing. The judgement runs over the engine's samples in index order, never over frames, so every window drawing the same timeline (the instructor's screen, a learner monitor, a phone: sample-identical engines) takes the same steps at the same breaths, as the pleth auto-scale and the ECG auto-gain are computed in each window from the same samples. Consecutive breaths at the roof before the lane widens (two, as the EtCO2 number needs two breaths and the ECG auto-gain two windows: one spike never widens) [ENG]. |
-| `CO2_NARROW_BREATHS` | `6` | — | [ENG] | Consecutive breaths well under the lower scale before the lane narrows (three times as long: ≈ 30 s at RR 12) [ENG]. |
-| `CO2_NARROW_UNDER` | `0.8` | — | [ENG] | A breath peak under this fraction of the next-lower top counts towards narrowing [ENG]. |
+| `CO2_WIDEN_BREATHS` | `2` | — | Nov 2026; research/06 §3.2; [ENG: display] | The capnogram lane's auto-range (skin `co2.autoScales`; owner ruling of 1 Nov 2026, E63 revisited): the lane widens its scale when the plateau exceeds it and narrows back when it falls, with hysteresis, as real units do. Vendor behaviour: the Saadat B9 offers a CO2 scale AUTO beside its fixed ones (research/06 §3.2, M p.304–305); capnographs in auto-scale pick the scale from the measured EtCO2, i.e. from breath peaks, and offer steps such as 0–60/0–80/0–100 mmHg. None states a breath count or a margin, so these are [ENG: display]: - the judged value is each breath's peak as the engine's EtCO2 detector finds it (engine-core co2-numerics.ts: a breath rises above 50 % of a decaying recent peak and ends below 30 %), read from the same displayed samples, never a single sample; - WIDEN one step after CO2_WIDEN_BREATHS consecutive breaths whose peak EXCEEDS the current top (over 50 on the 50 lane, over 80 on the 80 lane: the plateau would be clipped), so a plateau of 49.5 stays on the 0–50 scale (orchestrator's ruling on #250, 2 Nov: the MH card's early-signs stop stays on 0–50, as in every rehearsal); - NARROW one step after CO2_NARROW_BREATHS consecutive breaths whose peak stays under CO2_NARROW_UNDER of the next-lower top (40 of 50, 64 of 80). The band between (40–50 on the 50/80 step) is the hysteresis: a lane at 80 with peaks of 45 stays at 80, a lane at 50 with peaks of 45 stays at 50, so it never flaps at 50; - nothing above the widest top widens further: the trace clips at the lane top there (E63 at the top range); - no breath (apnoea, a detached line) changes nothing. The judgement runs over the engine's samples in index order, never over frames, so every window drawing the same timeline (the instructor's screen, a learner monitor, a phone: sample-identical engines) takes the same steps at the same breaths, as the pleth auto-scale and the ECG auto-gain are computed in each window from the same samples. Consecutive breaths at the roof before the lane widens (two, as the EtCO2 number needs two breaths and the ECG auto-gain two windows: one spike never widens) [ENG: display]. |
+| `CO2_NARROW_BREATHS` | `6` | — | [ENG: display] | Consecutive breaths well under the lower scale before the lane narrows (three times as long: ≈ 30 s at RR 12) [ENG: display]. |
+| `CO2_NARROW_UNDER` | `0.8` | — | [ENG: display] | A breath peak under this fraction of the next-lower top counts towards narrowing [ENG: display]. |
 
 ### [`device-ui.ts`](../../packages/renderer/src/device-ui.ts)
 
@@ -221,32 +243,34 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `AUTO_GAIN_WINDOW_S` | `4` | s | [ENG] | The ECG auto-gain's judgement (Saadat-like `ecg.gainDefault: "AUTO"`): which of the skin's discrete sizes a lane shows. Vendor behaviour: Philips IntelliVue "Auto Size" lets the monitor choose the adjustment factor from the size set for each displayed ECG wave (MP20–MP90 IFU M8000-9001K §"Changing the Size of the ECG Wave"; MX400–MX800 IFU 453564443141); Mindray "Auto" adjusts the wave size (BeneView T5/T8/T9 manual 6800-20-50657 §9.5.11). Neither states a cadence, a hysteresis or a beat rule, so these are [ENG]: the size is judged per 4-s window on the beats' median amplitude, and a new size is taken only when it has been asked for by two consecutive windows and the amplitude has left a band around the current size's threshold (US 6,510,339 B2 likewise waits for agreement among several measurements). Every judgement looks at one window of this length, on the sim clock's grid (windows [kW − W, kW]) [ENG]. |
-| `AUTO_GAIN_FILL` | `0.6` | — | [ENG] | The window's amplitude should fill at most this share of the lane's nominal height (RR-2) [ENG]. |
-| `AUTO_GAIN_HOLD` | `2` | — | [ENG; brief rule, no manual states one] | Consecutive windows that must ask for the same new size before it is shown [ENG; brief rule, no manual states one]. |
-| `AUTO_GAIN_BAND` | `0.2` | — | [ENG] | Hysteresis: a smaller size needs the amplitude this fraction over the current size's threshold, a larger one this fraction under its own threshold. The sizes step ×2, so the bands never overlap [ENG]. |
-| `NOMINAL_ECG_LANE_MM` | `30` | — | [ENG] | The nominal ECG lane (mm) of a skin with no measured screen (layout.grid with sweep.pxPerMm) [ENG]. |
+| `AUTO_GAIN_WINDOW_S` | `4` | s | [ENG: display] | The ECG auto-gain's judgement (Saadat-like `ecg.gainDefault: "AUTO"`): which of the skin's discrete sizes a lane shows. Vendor behaviour: Philips IntelliVue "Auto Size" lets the monitor choose the adjustment factor from the size set for each displayed ECG wave (MP20–MP90 IFU M8000-9001K §"Changing the Size of the ECG Wave"; MX400–MX800 IFU 453564443141); Mindray "Auto" adjusts the wave size (BeneView T5/T8/T9 manual 6800-20-50657 §9.5.11). Neither states a cadence, a hysteresis or a beat rule, so these are [ENG: display]: the size is judged per 4-s window on the beats' median amplitude, and a new size is taken only when it has been asked for by two consecutive windows and the amplitude has left a band around the current size's threshold (US 6,510,339 B2 likewise waits for agreement among several measurements). Every judgement looks at one window of this length, on the sim clock's grid (windows [kW − W, kW]) [ENG: display]. |
+| `AUTO_GAIN_FILL` | `0.6` | — | [ENG: display] | The window's amplitude should fill at most this share of the lane's nominal height (RR-2) [ENG: display]. |
+| `AUTO_GAIN_HOLD` | `2` | — | [ENG: display; brief rule, no manual states one] | Consecutive windows that must ask for the same new size before it is shown [ENG: display; brief rule, no manual states one]. |
+| `AUTO_GAIN_BAND` | `0.2` | — | [ENG: display] | Hysteresis: a smaller size needs the amplitude this fraction over the current size's threshold, a larger one this fraction under its own threshold. The sizes step ×2, so the bands never overlap [ENG: display]. |
+| `NOMINAL_ECG_LANE_MM` | `30` | — | [ENG: display] | The nominal ECG lane (mm) of a skin with no measured screen (layout.grid with sweep.pxPerMm) [ENG: display]. |
 
 ### [`ibp-scale.ts`](../../packages/renderer/src/ibp-scale.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `IBP_AUTO_EVERY_S` | `30` | s | — | AUTO is judged at every multiple of this many sim seconds, over the two windows before it [DOC: see the header]. |
-| `IBP_AUTO_HEADROOM` | `0.1` | — | [ENG] | The window's peak stays this share of the range's span under its top [ENG]. |
-| `IBP_AUTO_OUTLIER_BLOCKS` | `2` | — | [ENG] | Up to this many one-second blocks of a window above (or below) the rest are outliers, a flush or an odd beat [ENG]. |
+| `IBP_AUTO_HEADROOM` | `0.1` | — | [ENG: display] | The window's peak stays this share of the range's span under its top [ENG: display]. |
+| `IBP_AUTO_OUTLIER_BLOCKS` | `2` | — | [ENG: display] | Up to this many one-second blocks of a window above (or below) the rest are outliers, a flush or an odd beat [ENG: display]. |
 
 ### [`monitor-core.ts`](../../packages/renderer/src/monitor-core.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `LABEL_W` | `56` | — | — | CSS px reserved at the left of each lane for chrome |
-| `STALL_MS` | `1000` | ms | [ENG] | FX-15: a frame gap longer than this is a stall (a suspended tab or worker), not a slow frame — frames post every ≤ 250 ms. It is credited in full like a hidden stretch (catchUp) instead of being clamped to 250 ms, so the hidden minutes are not lost when the worker's rAF wakes before the page's visibility catch-up. [ENG] |
+| `STALL_MS` | `1000` | ms | [ENG: display] | FX-15: a frame gap longer than this is a stall (a suspended tab or worker), not a slow frame — frames post every ≤ 250 ms. It is credited in full like a hidden stretch (catchUp) instead of being clamped to 250 ms, so the hidden minutes are not lost when the worker's rAF wakes before the page's visibility catch-up. [ENG: display] |
+| `PROGRESS_MS` | `250` | ms | [ENG: display] | FX-11a: a long engine run reports progress at most this often (the frames' own posting cadence, ≤ 250 ms) [ENG: display]. |
+| `PROGRESS_TICKS` | `50` | — | [ENG: display] | …checking the time every this many ticks: 50 ticks (1 s of sim) cost ≈ 3 ms of the worker's time (measured: 10 000 ticks took 532–653 ms), so a report is never more than ≈ 3 ms late [ENG: display]. |
 
 ### [`mount.ts`](../../packages/renderer/src/mount.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `BEAT_TONE_MAX_SCALE` | `4` | — | [ENG] | Above this speed the beat tones (QRS beep, pulse tone) are off — at ×8 a heart rate of 80 beeps 10.7 times a second; alarms and device tones still sound [ENG]. |
+| `BEAT_TONE_MAX_SCALE` | `4` | — | [ENG: display] | Above this speed the beat tones (QRS beep, pulse tone) are off — at ×8 a heart rate of 80 beeps 10.7 times a second; alarms and device tones still sound [ENG: display]. |
 
 ### [`numerics-organs.ts`](../../packages/renderer/src/numerics-organs.ts)
 
@@ -260,7 +284,7 @@ No exported `…State` type in this module.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `DRAW_LAG_S` | `0.05` | s | [ENG] | Marks are drawn once the render time is this far past them [ENG]: ≥ 4 px behind the cursor at 25 mm/s. |
+| `DRAW_LAG_S` | `0.05` | s | [ENG: display] | Marks are drawn once the render time is this far past them [ENG: display]: ≥ 4 px behind the cursor at 25 mm/s. |
 
 ### [`skin-plan.ts`](../../packages/renderer/src/skin-plan.ts)
 
@@ -281,7 +305,7 @@ No exported `…State` type in this module.
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `READY_TIMEOUT_MS` | `2000` | ms | — | The fallback keeps a monitor alive when its worker never loads (no 'ready', no error): the page then runs the engine on the main thread. A built page's worker is one inline bundle and is ready well inside it; the Vite dev server loads the worker one module per request and can exceed it (278–1875 ms on an idle Mac, more on a loaded runner). |
-| `WORKER_SILENT_MS` | `3000` | ms | [ENG] | A worker silent this long with requests waiting is dead (its frames post every ≤ 250 ms) [ENG]. |
+| `WORKER_SILENT_MS` | `3000` | ms | [ENG: display] | A worker silent this long with requests waiting is SLOW (warned: `pme-monitor-slow`). It posts every ≤ 250 ms — its frames, and from inside a long run its progress (MonitorCore.onProgress) — measured on a Mac (gaps between its messages, FX-11a): p99.9 270 ms idle, 267 ms with 16 CPU-bound processes, 436 ms with those and the browser at background QoS (Chromium; WebKit ≤ 269 ms): 3 s is 7× the longest gap measured. It is DEAD when, past this, a probe worker started at the warning has answered — the machine runs workers and this one makes no progress; a starved machine starves the probe too, and the monitor waits (FX-11a) [ENG: display]. |
 
 ### [`resolve.ts`](../../packages/skins/src/resolve.ts)
 
@@ -321,7 +345,10 @@ No exported `…State` type in this module.
 | `scenarioCard` | [`apps/demo/src/app/cards.ts`](../../apps/demo/src/app/cards.ts) | Scenario card: |
 | `relayOf` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | The relay this page talks to: |
 | `learnerUrl` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | The learner's address for the QR code: |
-| `qrTarget` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | Where phones open the learner monitor: |
+| `instrumentOf` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | What a follower page at `hash` shows (the picker, or an instrument); |
+| `instructorUrl` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | The instructor phone's address (plan instructor-peer-role.md P7): |
+| `qrTarget` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | Where the learners' QR code sends phones: |
+| `instructorTarget` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | Where the instructor's QR code sends the instructor's phone: |
 | `relayInfo` | [`apps/demo/src/app/classroom.ts`](../../apps/demo/src/app/classroom.ts) | The relay's own description, from its http side; |
 | `contrast` | [`apps/demo/src/app/color.ts`](../../apps/demo/src/app/color.ts) | Colour arithmetic for the shell (no DOM): |
 | `whoOf` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | Who moved the scenario from state `prev` into `id`: |
@@ -331,6 +358,9 @@ No exported `…State` type in this module.
 | `keyMoments` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The key moments of the kept course in time order, numbered 1…n. |
 | `signStates` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The states whose entry makes a /1 card's sign recognisable: |
 | `keyTimes` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The key times, in order: |
+| `openersAt` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The card author's openers (D9) on this run: |
+| `handoutQuestionsAt` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The card's handout questions (D16) whose anchor happened on the kept course, in the card's order, each with its anchor's time; |
+| `first` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The first kept row of `want` (or of any of a list) at or after `from`, or null. |
 | `eventWords` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | An event in words, for a reason line ("the alarm Apnoea (no CO₂ breaths)", "epinephrine", "SpO₂ below 90 %"). |
 | `trendMeta` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | A trend's or a lab's label and unit from the glossary ("ART M / NIBP M", "mmHg"; |
 | `axisRange` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The axis of one trend chart: |
@@ -340,6 +370,7 @@ No exported `…State` type in this module.
 | `judged` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The objectives the instructor judges (no rule: |
 | `runEnded` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Has the /2 run of the record ended (decision D5; |
 | `gradesOf` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | A /2 run's grades: |
+| `stringAnchorAt` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | When a string anchor happened on a /2 run (grade()'s reading: |
 | `report3` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The report of a /2 run (null: |
 | `marks` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Every mark (bookmark) of the run in order, with its kind and note when it has them; |
 | `drugTotals` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | Bolus totals per drug (mass doses in mg; |
@@ -372,6 +403,9 @@ No exported `…State` type in this module.
 | `announceHost` | [`apps/demo/src/app/host-guard.ts`](../../apps/demo/src/app/host-guard.ts) | This tab hosts `code`: |
 | `chooseHostSession` | [`apps/demo/src/app/host-guard.ts`](../../apps/demo/src/app/host-guard.ts) | Which session a starting instructor page runs. |
 | `askJoin` | [`apps/demo/src/app/host-guard.ts`](../../apps/demo/src/app/host-guard.ts) | The choice, put to the instructor (a modal dialog: |
+| `faText` | [`apps/demo/src/app/i18n/fa-dom.ts`](../../apps/demo/src/app/i18n/fa-dom.ts) | The Persian of `en`, or null (counted as missing). |
+| `translateTree` | [`apps/demo/src/app/i18n/fa-dom.ts`](../../apps/demo/src/app/i18n/fa-dom.ts) | Put every text node under `root` into Persian (in place); |
+| `drawPin` | [`apps/demo/src/app/instructor-pin.ts`](../../apps/demo/src/app/instructor-pin.ts) | Four random digits from the platform's cryptographic source. |
 | `defibReadout` | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | The window's readout: |
 | `scenarioStep` | [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | The step a scenario trigger presses: |
 | `logCsv` | [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | CSV of the clinical log (the debrief export). |
@@ -401,7 +435,16 @@ No exported `…State` type in this module.
 | `rhythmGroups` | [`apps/demo/src/app/rhythms.ts`](../../apps/demo/src/app/rhythms.ts) | Groups with every library id placed once ("Other" collects ids the map does not name). |
 | `startCode` | [`apps/demo/src/app/room-code.ts`](../../apps/demo/src/app/room-code.ts) | The code a starting instructor's page runs under, or null when it has none and draws a new one. |
 | `keepsRoomCode` | [`apps/demo/src/app/room-code.ts`](../../apps/demo/src/app/room-code.ts) | Whether the code this page runs becomes the room's, which it does when started without `?session=` and not after "Start a new session". |
+| `readLayout` | [`apps/demo/src/app/room-layout.ts`](../../apps/demo/src/app/room-layout.ts) | The layout kept in `s`; |
+| `noteDevices` | [`apps/demo/src/app/room-layout.ts`](../../apps/demo/src/app/room-layout.ts) | The layout with every keyed viewer of the relay's table seen `now`, showing what it shows; |
+| `rename` | [`apps/demo/src/app/room-layout.ts`](../../apps/demo/src/app/room-layout.ts) | The layout with the device `key` named `name` (trimmed; |
+| `windowsOf` | [`apps/demo/src/app/room-layout.ts`](../../apps/demo/src/app/room-layout.ts) | This computer's windows heard since this page opened, by what they show (a window of an older build: |
+| `writeWindows` | [`apps/demo/src/app/room-layout.ts`](../../apps/demo/src/app/room-layout.ts) | Kept only when a window is open: |
+| `forgetRoom` | [`apps/demo/src/app/room-layout.ts`](../../apps/demo/src/app/room-layout.ts) | "Forget the room": |
+| `lastTime` | [`apps/demo/src/app/room-layout.ts`](../../apps/demo/src/app/room-layout.ts) | m5's foot line, from what was kept: |
 | `roomStatus` | [`apps/demo/src/app/room-status.ts`](../../apps/demo/src/app/room-status.ts) | The status box. |
+| `showingOf` | [`apps/demo/src/app/room-status.ts`](../../apps/demo/src/app/room-status.ts) | What a device shows, in the table's words (a viewer that never said `show` is a learner monitor, as before R4). |
+| `deviceRows` | [`apps/demo/src/app/room-status.ts`](../../apps/demo/src/app/room-status.ts) | The device table (R7): |
 | `ago` | [`apps/demo/src/app/room-status.ts`](../../apps/demo/src/app/room-status.ts) | "now", "12 s ago", "3 min ago", "1 h ago". |
 | `onRoute` | [`apps/demo/src/app/router.ts`](../../apps/demo/src/app/router.ts) | Calls `fn` now and on every hash change; |
 | `storyOf` | [`apps/demo/src/app/scenario-meta.ts`](../../apps/demo/src/app/scenario-meta.ts) | Card fallback for a document without meta: |
@@ -417,6 +460,7 @@ No exported `…State` type in this module.
 | `headerHasRoom` | [`apps/demo/src/app/sim-line.ts`](../../apps/demo/src/app/sim-line.ts) | Whether this skin's header carries the line (the two-row header; |
 | `simLine` | [`apps/demo/src/app/sim-line.ts`](../../apps/demo/src/app/sim-line.ts) | The line for the monitor in `stage` (its strip is placed in the stage, above the monitor). |
 | `defibDefaults` | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | A model's energies as the panel offers them; |
+| `pacerDefaults` | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | The Room card's view of a model's pacer (row 58, the pacer following the model too), null with no model chosen. |
 | `parseSite` | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | A stored or imported profile; |
 | `setLightScreen` | [`apps/demo/src/app/site.ts`](../../apps/demo/src/app/site.ts) | The rail's light/dark switch (E125): |
 | `mount` | [`apps/demo/src/app/teach2/action.ts`](../../apps/demo/src/app/teach2/action.ts) | Mount this slot into `el` (the fixed slot signature, teach2/ctx.ts). |
@@ -479,19 +523,32 @@ No exported `…State` type in this module.
 | `archiveList` | [`apps/demo/src/app/views/archive-list.ts`](../../apps/demo/src/app/views/archive-list.ts) | The list, its classes `<p>-list`, `<p>-row`, …; |
 | `gridMajorS` | [`apps/demo/src/app/views/debrief-course.ts`](../../apps/demo/src/app/views/debrief-course.ts) | The grid's big square, in seconds of the time axis, which is also a panel's height (the owner, 2 November, his option 1): |
 | `panelScale` | [`apps/demo/src/app/views/debrief-course.ts`](../../apps/demo/src/app/views/debrief-course.ts) | A panel's scale (the owner, 2 November): |
+| `tracePath` | [`apps/demo/src/app/views/debrief-course.ts`](../../apps/demo/src/app/views/debrief-course.ts) | A trend's line on a lane from y0 (its highest value) to y1 (its lowest): |
 | `placeBadges` | [`apps/demo/src/app/views/debrief-course.ts`](../../apps/demo/src/app/views/debrief-course.ts) | UI review #19: |
 | `courseSvg` | [`apps/demo/src/app/views/debrief-course.ts`](../../apps/demo/src/app/views/debrief-course.ts) | The course strip of a run as an SVG string: |
 | `verdictMark` | [`apps/demo/src/app/views/debrief-swimlane.ts`](../../apps/demo/src/app/views/debrief-swimlane.ts) | A /1 verdict's ruled words with their glyph (E42, Decision 11) and its chip style. |
 | `windowsOf` | [`apps/demo/src/app/views/debrief-swimlane.ts`](../../apps/demo/src/app/views/debrief-swimlane.ts) | The expected windows of a run, one per timed action, read once: |
 | `swimlaneSvg` | [`apps/demo/src/app/views/debrief-swimlane.ts`](../../apps/demo/src/app/views/debrief-swimlane.ts) | The swimlane of a run as an SVG string: |
+| `handoutQuestions` | [`apps/demo/src/app/views/debrief.ts`](../../apps/demo/src/app/views/debrief.ts) | The handout's "Questions to think about" (D16, Decision 14): |
+| `hintsSection` | [`apps/demo/src/app/views/debrief.ts`](../../apps/demo/src/app/views/debrief.ts) | "From the card's author" (D9; |
 | `sectionRows` | [`apps/demo/src/app/views/explore.ts`](../../apps/demo/src/app/views/explore.ts) | The rows of one Explore section for the model's current state: |
 | `phoneStyle` | [`apps/demo/src/app/views/follower-status.ts`](../../apps/demo/src/app/views/follower-status.ts) | The style a PHONE wears — the instructor's (it comes in the follow stream), upright. |
+| `hostPause` | [`apps/demo/src/app/views/follower-status.ts`](../../apps/demo/src/app/views/follower-status.ts) | Whether the host is paused, as a follower learns it from the host's messages (FX-22): |
 | `publishStyle` | [`apps/demo/src/app/views/follower.ts`](../../apps/demo/src/app/views/follower.ts) | The instructor's side: |
 | `followUrl` | [`apps/demo/src/app/views/follower.ts`](../../apps/demo/src/app/views/follower.ts) | The address of the learner monitor that follows session `code` (this page, same browser). |
+| `withInstrument` | [`apps/demo/src/app/views/follower.ts`](../../apps/demo/src/app/views/follower.ts) | The transport with `show` and `device` on every hello it sends; |
+| `mountFollower` | [`apps/demo/src/app/views/follower.ts`](../../apps/demo/src/app/views/follower.ts) | `o`: what this window shows and its device's key (R4: |
+| `deviceKey` | [`apps/demo/src/app/views/join.ts`](../../apps/demo/src/app/views/join.ts) | This device's own key (§4 D1, for the remembered layout): |
+| `instrumentCard` | [`apps/demo/src/app/views/join.ts`](../../apps/demo/src/app/views/join.ts) | One instrument card (m5): |
+| `pickerView` | [`apps/demo/src/app/views/join.ts`](../../apps/demo/src/app/views/join.ts) | The picker's page for room `code`: |
+| `refusalWords` | [`apps/demo/src/app/views/remote.ts`](../../apps/demo/src/app/views/remote.ts) | What the phone says for a refusal (`denied` or `revoked`): |
+| `rowWords` | [`apps/demo/src/app/views/room-instructor.ts`](../../apps/demo/src/app/views/room-instructor.ts) | The row's words (plan P7: |
 | `settingsView` | [`apps/demo/src/app/views/settings.ts`](../../apps/demo/src/app/views/settings.ts) | The Settings view on the site profile. |
 | `teach2View` | [`apps/demo/src/app/views/teach2.ts`](../../apps/demo/src/app/views/teach2.ts) | The Instructor v2 view on `link`, for `shell.add`. |
 | `engineVentilation` | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | The cockpit's settings as the engine's `ventilation` event takes them (its own ventilator is volume control). |
 | `cockpitPatch` | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | The engine's ventilator settings as a cockpit settings patch (volume control; |
+| `cockpitDesk` | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | The session's one desk. |
+| `serveRemoteCockpit` | [`apps/demo/src/app/views/vent.ts`](../../apps/demo/src/app/views/vent.ts) | R8c: the host drives from the granted remote cockpit (HostSession onVent / onVentilator) exactly as the view does: |
 | `describe` | [`apps/demo/src/physiology-console/actions.ts`](../../apps/demo/src/physiology-console/actions.ts) | One line for the change log. |
 | `foldEvent` | [`apps/demo/src/physiology-console/flatten.ts`](../../apps/demo/src/physiology-console/flatten.ts) | Fold one engine event into `out`. |
 | `autoDigits` | [`apps/demo/src/physiology-console/format.ts`](../../apps/demo/src/physiology-console/format.ts) | Decimals by magnitude when the metadata has none: |
@@ -576,7 +633,7 @@ No exported `…State` type in this module.
 | `draw12Lead` | [`views.ts`](../../packages/renderer/src/views.ts) | Draw the 12-lead report. |
 | `drawTrend` | [`views.ts`](../../packages/renderer/src/views.ts) | Graphic trend of [fromS, toS] in a w×h box: |
 | `scaleFor` | [`wave-lanes.ts`](../../packages/renderer/src/wave-lanes.ts) | SweepLane baseline and gain that map [lo, hi] onto a lane of `height` CSS px. |
-| `autoRange` | [`wave-lanes.ts`](../../packages/renderer/src/wave-lanes.ts) | Pleth auto-scale [ENG]: |
+| `autoRange` | [`wave-lanes.ts`](../../packages/renderer/src/wave-lanes.ts) | Pleth auto-scale [ENG: |
 | `createHost` | [`worker-host.ts`](../../packages/renderer/src/worker-host.ts) | Create the host. |
 | `parseHex` | [`color.ts`](../../packages/skins/src/color.ts) | Colour helpers: |
 | `luminance` | [`color.ts`](../../packages/skins/src/color.ts) | WCAG relative luminance of an sRGB colour. |
@@ -591,7 +648,7 @@ No exported `…State` type in this module.
 | `resolveSkin` | [`resolve.ts`](../../packages/skins/src/resolve.ts) | Resolve a skin or preset id (optionally with a theme) into the complete skin plus the renderer/audio contract. |
 | `partialOf` | [`schema.ts`](../../packages/skins/src/schema.ts) | The same schema with every `required` removed (recursively): |
 
-Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `learnerStrip`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `mountFollower`, `homeView`, `monitorView`, `patientView`, `remoteView`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
+Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, `rateUnits`, `mountFastForward`, `watchHiddenTab`, `instructorPin`, `learnerStrip`, `median`, `pairingUrl`, `pairingOf`, `airwayTab`, `defibTab`, `devicesTab`, `drugsTab`, `logTab`, `mountPanel`, `patientTab`, `scenarioTab`, `vitalsTab`, `profileOf`, `clearPosition`, `onRecent`, `readWindows`, `parseRoute`, `cardOf`, `mountSessionBar`, `loadSite`, `saveSite`, `mountAlarmLine`, `beginState`, `baseOf`, `mountFastForward`, `whenText`, `tip`, `button`, `debriefView`, `devView`, `exploreView`, `followerStatus`, `homeView`, `monitorView`, `patientView`, `remoteView`, `instructorRoomCard`, `roomView`, `scenariosView`, `validateView`, `ventView`, `connect`, `mountSimMonitor`, `renderStrip`, `pulseShape`, `respShape`, `co2Shape`, `shapeFor`, `renderScreen`, `measureOnsets`, `flatten`, `fmtValue`, `metaOf`, `groupOf`, `isInternal`, `isPhase`, `pushHist`, `drawSpark`, `mountConsole`, `mountEmbed`, `mountHamiltonUi`, `burstPulses`, `getAlarmProfile`, `tileAlarmView`, `newCo2Range`, `createDrugPanel`, `newJudge`, `mountEndoPanel`, `labFlag`, `mountMonitor`, `formatIcp`, `formatPbto2`, `leadOf`, `renderPlan`, `canUseWorker`, `formatDate`, `toHex`, `deepMerge`, `laneColor`, `validate`.
 
 ## Source files
 
@@ -619,6 +676,9 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/glossary.ts`](../../apps/demo/src/app/glossary.ts) | The clinical glossary at run time: engine key → clinical label, long name, unit and adult normal range. |
 | [`apps/demo/src/app/hidden-tab.ts`](../../apps/demo/src/app/hidden-tab.ts) | FX-14 / FX-15: Safari suspends a hidden tab (≈ 4 min, the whole page and its engine worker), so the instructor's page sends nothing — the phones say "The instructor's monitor is not answering" — and on return the worker' |
 | [`apps/demo/src/app/host-guard.ts`](../../apps/demo/src/app/host-guard.ts) | Post-demo (4 November): one instructor tab per session. |
+| [`apps/demo/src/app/i18n/fa-dom.ts`](../../apps/demo/src/app/i18n/fa-dom.ts) | The Persian Debrief in the app (plan D13): the English page is built as it always is, then each text node of the report, the learner handout and the footer is put through THE matcher the handout script uses (fa-match.mjs |
+| [`apps/demo/src/app/i18n/lang.ts`](../../apps/demo/src/app/i18n/lang.ts) | The host's language for learner-facing text (plan Decision 15): the Debrief page's switch (D13) and the language a card's Briefing is sent in (D13b). |
+| [`apps/demo/src/app/instructor-pin.ts`](../../apps/demo/src/app/instructor-pin.ts) | The instructor phone's PIN (plan instructor-peer-role.md §1, Q2): kept on the laptop only, in the app's store (localStorage `pme.instructorPin`), four random digits drawn at first use, changed on the Room page. |
 | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | Which skin an instrument wears, and what the defibrillator window reads out (Room plan R5, §4 D5). |
 | [`apps/demo/src/app/learner-actions.ts`](../../apps/demo/src/app/learner-actions.ts) | The learner action bar: what the team at the bedside does. |
 | [`apps/demo/src/app/learner.ts`](../../apps/demo/src/app/learner.ts) | Learner controls: the scenario runner's "Learner:" bar as a strip under the learner's monitor. |
@@ -636,7 +696,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/panel/ibp-scales.ts`](../../apps/demo/src/app/panel/ibp-scales.ts) | E130: the IBP1 (arterial) and IBP2 (venous) lane scales, per channel: Fixed (the skin's own), a Range the instructor types within 0–200 mmHg, or Auto (judged every 30 s of sim time from discrete ranges, renderer ibp-scal |
 | [`apps/demo/src/app/panel/log.ts`](../../apps/demo/src/app/panel/log.ts) | Log (research/13 §4.3 item 8): the debrief view — every instructor, learner, scenario and alarm event with the sim time, filters, notes and bookmarks, and CSV/JSON export. |
 | [`apps/demo/src/app/panel/panel.ts`](../../apps/demo/src/app/panel/panel.ts) | The instructor panel (research/13 §4.3, brief §7): eight tabs in the order they are used, the staged-changes footer (the controller pages' stage bar grown up: Gaumard UNI's Apply list, SimPad's "Set transition time"), ke |
-| [`apps/demo/src/app/panel/patient.ts`](../../apps/demo/src/app/panel/patient.ts) | Patient (research/13 §4.9): the one patient card — who the patient is, MODELED or MANUAL, and "Restart patient", which asks first and says what resets (drugs, fluids, ventilation, the scenario) and what carries on (the s |
+| [`apps/demo/src/app/panel/patient.ts`](../../apps/demo/src/app/panel/patient.ts) | Patient (research/13 §4.9): the one patient card — who the patient is, MODELED or MANUAL, and "Restart patient", which asks first and says what resets (drugs, fluids, ventilation; a running case starts again from 0:00, F |
 | [`apps/demo/src/app/panel/scenario.ts`](../../apps/demo/src/app/panel/scenario.ts) | Scenario (research/13 §4.3 item 1; the simulator sweep's top patterns 4 and 5): before a run, the library as cards (story, patient, duration, objectives) filtered by category; during a run, the state strip with the curre |
 | [`apps/demo/src/app/panel/vitals.ts`](../../apps/demo/src/app/panel/vitals.ts) | Vitals & rhythm (research/13 §4.3 item 2): one row per target — glossary label with its tooltip, the live value, a stepper in clinical units, and the model state as a chip (CAE Maestro's flags): MODELED (wave), held by t |
 | [`apps/demo/src/app/patients.ts`](../../apps/demo/src/app/patients.ts) | Patient profiles for the Start screen and the Patient tab (brief §4.9 "one Patient card"). |
@@ -648,6 +708,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/record.ts`](../../apps/demo/src/app/record.ts) | The debrief's record of one run — what happened, in order, at the simulated time the monitor showed: every command applied (from the panel, a Remote or the scenario), the scenario's states, the alarms raised (each with w |
 | [`apps/demo/src/app/rhythms.ts`](../../apps/demo/src/app/rhythms.ts) | The rhythm picker's groups (research/13 brief §7 "Rhythm picker"): the 36 library rhythms in the order a clinician looks for them. |
 | [`apps/demo/src/app/room-code.ts`](../../apps/demo/src/app/room-code.ts) | Room plan R1 (docs/plans/room-and-instruments.md §7; Q3 ruled 5 November = A): the room code lives until the instructor asks for a new one, through reloads, restarts and the next day. |
+| [`apps/demo/src/app/room-layout.ts`](../../apps/demo/src/app/room-layout.ts) | The remembered layout of the room (plan room-and-instruments.md R7, §4 D8; Q10 ruled 5 November = A: device names are kept across days, until "Forget the room"). |
 | [`apps/demo/src/app/room-status.ts`](../../apps/demo/src/app/room-status.ts) | What the Room page knows about who follows the session (E125), without a DOM. |
 | [`apps/demo/src/app/router.ts`](../../apps/demo/src/app/router.ts) | Hash routing without a router dependency (research/13 brief §5): `#/teach2`, `#/explore/respiratory`, `#/validate/review`. |
 | [`apps/demo/src/app/scenario-meta.ts`](../../apps/demo/src/app/scenario-meta.ts) | What a scenario card shows before a case is loaded (research/13 §4.3; TrainingMonitor's categorised catalogue; CAE and REALITi objectives checklists). |
@@ -689,10 +750,12 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/views/follower-status.ts`](../../apps/demo/src/app/views/follower-status.ts) | What a learner monitor says and does, from what it knows — one pure function, so every state a phone can be in (a relay it cannot reach, a full session, a lost socket, a silent instructor, the Ventilator view driving the |
 | [`apps/demo/src/app/views/follower.ts`](../../apps/demo/src/app/views/follower.ts) | The learner monitor on a SECOND screen. |
 | [`apps/demo/src/app/views/home.ts`](../../apps/demo/src/app/views/home.ts) | Home (E125, owner's mockup f1-home): the page the app opens on (`#/`, `#/home`). |
+| [`apps/demo/src/app/views/join.ts`](../../apps/demo/src/app/views/join.ts) | The instrument picker (plan room-and-instruments.md R4; Q1 ruled 5 November): the device that scans the room's QR (`?join=CODE#/pick`) chooses what this screen shows. |
 | [`apps/demo/src/app/views/monitor.ts`](../../apps/demo/src/app/views/monitor.ts) | Monitor (research/13 §4.2): the learner's full-screen monitor, with the learner controls strip under it only when the instructor has switched it on for this scenario. |
 | [`apps/demo/src/app/views/patient.ts`](../../apps/demo/src/app/views/patient.ts) | Patient (E125): the free-run patient, the E123 start page's controls on their own page, unchanged in function — the presets, age, sex, weight, height and conditions, MODELED or MANUAL, and "start with the sensors off". |
 | [`apps/demo/src/app/views/remote.ts`](../../apps/demo/src/app/views/remote.ts) | Remote (research/13 §4.4): on the host screen, how to pair (the code, "open here", and a QR code only where another device can use it); in a window opened at #/remote, the instructor panel alone, joined by the 6-letter c |
-| [`apps/demo/src/app/views/room.ts`](../../apps/demo/src/app/views/room.ts) | Room (E125, owner's mockup f2-room): who follows this session and how to join it. |
+| [`apps/demo/src/app/views/room-instructor.ts`](../../apps/demo/src/app/views/room-instructor.ts) | The Room page's instructor phone (plan instructor-peer-role.md P7, §1, §3, §5): one card, self-contained so that the Room set-up page (R7) can move it into its `#room-instructor` slot with no change here. |
+| [`apps/demo/src/app/views/room.ts`](../../apps/demo/src/app/views/room.ts) | Room setup (E125, owner's mockup f2-room; Room plan R7, docs/plans/room-and-instruments.md §7, Q2 ruled 5 November: today's Room page grown). |
 | [`apps/demo/src/app/views/scenarios.ts`](../../apps/demo/src/app/views/scenarios.ts) | Scenarios (E125, owner's mockup f3-scenarios): two cards — the Scenario library and the Scenario builder — and the three cases loaded last. |
 | [`apps/demo/src/app/views/settings.ts`](../../apps/demo/src/app/views/settings.ts) | Settings (research/13 §4.8, P11): the room's site profile — monitor, screen, frame rate, gas units, sensors-off start — exportable as one file for the next room, plus the shortcut sheet. |
 | [`apps/demo/src/app/views/teach2.ts`](../../apps/demo/src/app/views/teach2.ts) | Instructor v2 (design `docs/plans/instructor-panel-redesign.md` §3, board "Proposal v6"; plan IP4): a second Instructor view beside today's, on the route `teach2`. |
@@ -753,7 +816,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`profiles/traditional.ts`](../../packages/audio/src/profiles/traditional.ts) | `traditional` profile, Philips-like (research 05 §2.5 [S2]): high = a high-pitched sound once a second, medium = a lower-pitched sound every 2 s, INOP tone every 2 s. |
 | [`profiles/types.ts`](../../packages/audio/src/profiles/types.ts) | Alarm sound profiles as DATA (brief §3.6, §6.4, §6.4.1). |
 | [`scheduler.ts`](../../packages/audio/src/scheduler.ts) | Look-ahead tone scheduler (brief §3.6): a 25 ms timer schedules every tone due in the next 100 ms on the audio clock. |
-| [`tones.ts`](../../packages/audio/src/tones.ts) | QRS / pulse beep (brief §3.6): 100 ms, fundamental plus 2nd and 3rd harmonics, 5 ms attack and release [ENG]. |
+| [`tones.ts`](../../packages/audio/src/tones.ts) | QRS / pulse beep (brief §3.6): 100 ms, fundamental plus 2nd and 3rd harmonics, 5 ms attack and release [ENG: device]. |
 | [`alarm-audio.ts`](../../packages/renderer/src/alarm-audio.ts) | Engine alarm state → alarm sound (brief §6.4, §6.4.1): the `alarmStatus` event is the single source; the bridge raises and clears alarms on the audio AlarmSounder (which sounds only the highest priority, ties first raise |
 | [`alarm-view.ts`](../../packages/renderer/src/alarm-view.ts) | What the alarm header and tiles show (brief §6.4 visual table, §6.4.1 Saadat-like, §6.9 PUMP page) as PURE functions of the engine's `alarmStatus` event and the resolved skin, so they are unit-tested in Node; the DOM in |
 | [`calibration.ts`](../../packages/renderer/src/calibration.ts) | Sweep geometry (brief §3.5). |
@@ -801,6 +864,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 |---|---|---|---|---|---|
 | untreated: VF from hyperthermia | no VF in 51 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
 | treated late (the run-sheet path): crisis 1 min into the established crisis | the call comes at +46.6 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
+| sysMaxAtRosc 194.9–204.9 mmHg, the physiology alone (191.07 + 8.9 from the coronary reading) | 210.8 | — | not audited | — | [`stab-wound-tamponade.slow.test.ts`](../../apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts) |
 
 ## Tests
 
@@ -854,6 +918,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/e2e/monitor-destroy-refuses.e2e.ts`](../../apps/demo/e2e/monitor-destroy-refuses.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/monitor-fidelity.e2e.ts`](../../apps/demo/e2e/monitor-fidelity.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/monitor-return-controls.e2e.ts`](../../apps/demo/e2e/monitor-return-controls.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/monitor-worker-busy.e2e.ts`](../../apps/demo/e2e/monitor-worker-busy.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/monitor-worker-stopped.e2e.ts`](../../apps/demo/e2e/monitor-worker-stopped.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/organs-page.e2e.ts`](../../apps/demo/e2e/organs-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/oxygen-by-mask.e2e.ts`](../../apps/demo/e2e/oxygen-by-mask.e2e.ts) | 0 | 0 |
@@ -864,6 +929,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/e2e/reload-keeps-case.e2e.ts`](../../apps/demo/e2e/reload-keeps-case.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/resolution-fit.e2e.ts`](../../apps/demo/e2e/resolution-fit.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/respiratory-evidence-page.e2e.ts`](../../apps/demo/e2e/respiratory-evidence-page.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/restart-keeps-case.e2e.ts`](../../apps/demo/e2e/restart-keeps-case.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/return-here-restore.e2e.ts`](../../apps/demo/e2e/return-here-restore.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/room-code.e2e.ts`](../../apps/demo/e2e/room-code.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/room-qr-tab-guard.e2e.ts`](../../apps/demo/e2e/room-qr-tab-guard.e2e.ts) | 0 | 0 |
@@ -879,6 +945,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/e2e/sim-line.e2e.ts`](../../apps/demo/e2e/sim-line.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/skins-page.e2e.ts`](../../apps/demo/e2e/skins-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/sound-toggle.e2e.ts`](../../apps/demo/e2e/sound-toggle.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/stage-group-one-tick.e2e.ts`](../../apps/demo/e2e/stage-group-one-tick.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-fit-panes.e2e.ts`](../../apps/demo/e2e/teach2-fit-panes.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-fit-stages.e2e.ts`](../../apps/demo/e2e/teach2-fit-stages.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/teach2-fit-strip.e2e.ts`](../../apps/demo/e2e/teach2-fit-strip.e2e.ts) | 0 | 0 |
@@ -902,6 +969,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/alarms.test.ts`](../../apps/demo/src/app/alarms.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/archive.test.ts`](../../apps/demo/src/app/archive.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/card-read.test.ts`](../../apps/demo/src/app/card-read.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/card-seed.dom.test.ts`](../../apps/demo/src/app/card-seed.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/case-briefing.dom.test.ts`](../../apps/demo/src/app/case-briefing.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/classroom.test.ts`](../../apps/demo/src/app/classroom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/console-pages.dom.test.ts`](../../apps/demo/src/app/console-pages.dom.test.ts) | 0 | 0 |
@@ -926,6 +994,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/host-guard.dom.test.ts`](../../apps/demo/src/app/host-guard.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/imported.dom.test.ts`](../../apps/demo/src/app/imported.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/instructor-choice.dom.test.ts`](../../apps/demo/src/app/instructor-choice.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/instructor-pin.test.ts`](../../apps/demo/src/app/instructor-pin.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/instrument-sync.dom.test.ts`](../../apps/demo/src/app/instrument-sync.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/instrument.test.ts`](../../apps/demo/src/app/instrument.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/link-timeline.test.ts`](../../apps/demo/src/app/link-timeline.test.ts) | 0 | 0 |
@@ -946,6 +1015,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/record-attribution.test.ts`](../../apps/demo/src/app/record-attribution.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record.test.ts`](../../apps/demo/src/app/record.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/room-code.test.ts`](../../apps/demo/src/app/room-code.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/room-layout.test.ts`](../../apps/demo/src/app/room-layout.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/router.test.ts`](../../apps/demo/src/app/router.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/scenario-step-log.test.ts`](../../apps/demo/src/app/scenario-step-log.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/shell.dom.test.ts`](../../apps/demo/src/app/shell.dom.test.ts) | 0 | 0 |
@@ -960,8 +1030,9 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/showcase/mh-v1-v2-table.slow.test.ts`](../../apps/demo/src/app/showcase/mh-v1-v2-table.slow.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/showcase/mh-v2-card.test.ts`](../../apps/demo/src/app/showcase/mh-v2-card.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/showcase/showcase-cards.test.ts`](../../apps/demo/src/app/showcase/showcase-cards.test.ts) | 0 | 0 |
-| [`apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts`](../../apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts`](../../apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts) | 1 | 0 |
 | [`apps/demo/src/app/sim-clock-monotonic.dom.test.ts`](../../apps/demo/src/app/sim-clock-monotonic.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/sim-clock.dom.test.ts`](../../apps/demo/src/app/sim-clock.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/site.test.ts`](../../apps/demo/src/app/site.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/staging.test.ts`](../../apps/demo/src/app/staging.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/teach2/action-parity.dom.test.ts`](../../apps/demo/src/app/teach2/action-parity.dom.test.ts) | 0 | 0 |
@@ -993,8 +1064,11 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/ui.dom.test.ts`](../../apps/demo/src/app/ui.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-archive.dom.test.ts`](../../apps/demo/src/app/views/debrief-archive.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-course.test.ts`](../../apps/demo/src/app/views/debrief-course.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/debrief-fa.dom.test.ts`](../../apps/demo/src/app/views/debrief-fa.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/debrief-handout-questions.dom.test.ts`](../../apps/demo/src/app/views/debrief-handout-questions.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-handout.dom.test.ts`](../../apps/demo/src/app/views/debrief-handout.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-handsoff.dom.test.ts`](../../apps/demo/src/app/views/debrief-handsoff.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/debrief-hints.dom.test.ts`](../../apps/demo/src/app/views/debrief-hints.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-hub-steps.dom.test.ts`](../../apps/demo/src/app/views/debrief-hub-steps.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-marks-course.dom.test.ts`](../../apps/demo/src/app/views/debrief-marks-course.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-moments-print.dom.test.ts`](../../apps/demo/src/app/views/debrief-moments-print.dom.test.ts) | 0 | 0 |
@@ -1006,12 +1080,18 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/views/defib-window.dom.test.ts`](../../apps/demo/src/app/views/defib-window.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/explore-drugs.dom.test.ts`](../../apps/demo/src/app/views/explore-drugs.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/explore.dom.test.ts`](../../apps/demo/src/app/views/explore.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/follower-pause.test.ts`](../../apps/demo/src/app/views/follower-pause.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/follower-pill.dom.test.ts`](../../apps/demo/src/app/views/follower-pill.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/follower-status.test.ts`](../../apps/demo/src/app/views/follower-status.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/home-tiles.dom.test.ts`](../../apps/demo/src/app/views/home-tiles.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/join.dom.test.ts`](../../apps/demo/src/app/views/join.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/monitor.dom.test.ts`](../../apps/demo/src/app/views/monitor.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/remote-pin.dom.test.ts`](../../apps/demo/src/app/views/remote-pin.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/room-defib.dom.test.ts`](../../apps/demo/src/app/views/room-defib.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/room-instructor.dom.test.ts`](../../apps/demo/src/app/views/room-instructor.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/teach2.dom.test.ts`](../../apps/demo/src/app/views/teach2.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/vent-handover.dom.test.ts`](../../apps/demo/src/app/views/vent-handover.dom.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/vent-remote.dom.test.ts`](../../apps/demo/src/app/views/vent-remote.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/physiology-console/actions.test.ts`](../../apps/demo/src/physiology-console/actions.test.ts) | 0 | 0 |
 | [`apps/demo/src/physiology-console/flatten.test.ts`](../../apps/demo/src/physiology-console/flatten.test.ts) | 0 | 0 |
 | [`apps/demo/src/physiology-console/format.test.ts`](../../apps/demo/src/physiology-console/format.test.ts) | 0 | 0 |
@@ -1082,6 +1162,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`transports.test.ts`](../../packages/renderer/test/transports.test.ts) | 0 | 0 |
 | [`version.test.ts`](../../packages/renderer/test/version.test.ts) | 0 | 0 |
 | [`views.test.ts`](../../packages/renderer/test/views.test.ts) | 0 | 0 |
+| [`worker-event-backpressure.test.ts`](../../packages/renderer/test/worker-event-backpressure.test.ts) | 0 | 0 |
 | [`worker-pump-backpressure.test.ts`](../../packages/renderer/test/worker-pump-backpressure.test.ts) | 0 | 0 |
 | [`alarm-wording.test.ts`](../../packages/skins/test/alarm-wording.test.ts) | 0 | 0 |
 | [`co2-sampling.test.ts`](../../packages/skins/test/co2-sampling.test.ts) | 0 | 0 |

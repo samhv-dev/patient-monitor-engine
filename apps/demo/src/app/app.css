@@ -1,7 +1,7 @@
 /* Stage 9 app shell: "bezel and screen" (research/13 brief §6). The monitor is the screen — true black, the skin's own
    colours, untouched. Everything else is the bezel: graphite, quiet, colour only for state. One instructor accent
    (periwinkle) marks what the instructor controls; alarm colours are never shell tokens (they come from the skin).
-   System fonts by default (the OFL fonts wait for Ali's ruling, Open question Q7). No UI library. */
+   System fonts by default (the OFL fonts wait for the owner's ruling, Open question Q7). No UI library. */
 
 :root {
   color-scheme: dark;
@@ -379,6 +379,34 @@ body:has(.app[data-route='monitor']) .toast[data-kind='info'] { display: none; }
 .status-pill { display: inline-block; margin: var(--s-2) var(--s-3); padding: 2px var(--s-3); border: 1px solid var(--line-strong); border-radius: 999px; font-size: var(--t-13); color: var(--text); }
 .remote-panel { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); }
 .remote-panel .panel { border-left: 0; }
+.remote-head { display: flex; flex-wrap: wrap; align-items: center; }
+.remote-title { margin: var(--s-2) 0 var(--s-2) var(--s-3); font-size: var(--t-15); color: var(--text-strong); }
+/* The instructor phone's way in (plan instructor-peer-role.md P7): the PIN form's keypad, thumb-sized (56 px keys,
+   above the 44 px touch target), and the Room page's instructor card */
+.ip-peer-form { max-width: 420px; margin: var(--s-4) auto; }
+.ip-peer-pin { font-family: var(--font-mono); font-size: 28px; letter-spacing: 0.3em; text-align: center; }
+.ip-peer-keypad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-2); }
+.ip-peer-key { min-height: 56px; font-size: 22px; justify-content: center; }
+.ip-peer-go { font-size: 17px; }
+.ip-peer-error:not(:empty) { margin: 0; }
+.ip-peer-notice { margin: 0 var(--s-3) var(--s-2); }
+.ip-peer-room { grid-column: 1; }
+.ip-peer-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 14px; }
+.ip-peer-row b { font-weight: 500; color: var(--text-strong); }
+.ip-peer-when { color: var(--text-muted); }
+.ip-peer-denials { margin: 8px 0 0; }
+.ip-peer-pinbox { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 16px 0 0; font-size: 14px; }
+.ip-peer-pinbox[hidden], .ip-peer-qr[hidden] { display: none; }
+.ip-peer-pin-label { color: var(--text-muted); }
+.ip-peer-pin-value { min-width: 4.5em; font-family: var(--font-plex-mono); font-size: 26px; letter-spacing: 0.14em; color: var(--text-strong); }
+.ip-peer-hold, .ip-peer-change { min-height: 44px; }
+.ip-peer-hold { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.ip-peer-qr { margin: 16px 0 0; font-size: 14px; }
+.ip-peer-qr summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; color: var(--text-strong); }
+.ip-peer-qr .room-qr { margin: 8px 0; }
+.ip-peer-qr .room-qr svg { width: 160px; height: 160px; }
+.ip-peer-url { display: block; word-break: break-all; color: var(--text-strong); }
+.ip-peer-room .hint { margin: 10px 0 0; }
 .page.narrow { max-width: 760px; }
 .page.wide { max-width: none; }
 .framed iframe { height: calc(100dvh - 220px); min-height: 480px; border: 1px solid var(--line); border-radius: var(--r-card); }
@@ -654,7 +682,27 @@ dialog.room-big[open] { display: flex; flex-direction: column; align-items: cent
 .room-legend .room-dot { width: 8px; height: 8px; margin-right: 5px; }
 .room-connected .hint { margin: 10px 0 0; }
 .room-open { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 18px; font-size: 13.5px; color: var(--text-muted); }
-.room-opened { margin: 18px 0 0; padding: 12px 14px; border: 1px dashed var(--line-strong); border-radius: 10px; font-size: 13.5px; color: var(--text-muted); }
+/* Room plan R7: Room setup — the table's names, the grey row of a remembered device not here, the openers on R4's
+   cards, the room's own card (code, layout, forget) and the "New room code" question */
+.room-dot.absent { background: transparent; box-shadow: inset 0 0 0 1.5px var(--text-muted); }
+.room-table tr[data-level='absent'] td { color: var(--text-muted); }
+.room-table td.room-ping { white-space: nowrap; }
+.room-name { width: 100%; min-width: 9em; max-width: 16em; min-height: 32px; box-sizing: border-box; padding: 2px 8px; border: 1px solid var(--line); border-radius: var(--r-control); background: transparent; color: var(--text-strong); font: inherit; font-weight: 500; }
+.room-name:hover, .room-name:focus { border-color: var(--line-strong); }
+.room-name::placeholder { color: var(--text-strong); opacity: 1; }
+.room-table tr[data-level='absent'] .room-name::placeholder { color: var(--text-muted); }
+.room-computer, .room-setup { margin-top: 20px; }
+.room-openers { margin-top: 0; }
+.join-acts { display: inline-flex; flex-wrap: wrap; gap: var(--s-2); }
+.room-code-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 10px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.room-code-row:first-of-type { border-top: 0; padding-top: 0; }
+.room-code-now { font-family: var(--font-plex-mono); font-weight: 500; letter-spacing: 0.1em; color: var(--text-strong); }
+.room-last { margin: 0; color: var(--text); }
+.room-said:empty { display: none; }
+dialog.room-renew { max-width: 480px; padding: 22px; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface); color: var(--text); }
+dialog.room-renew h2 { margin: 0 0 10px; font-size: var(--t-18); color: var(--text-strong); }
+dialog.room-renew p { margin: 0; font-size: 14px; line-height: 1.5; }
+.room-renew-acts { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
 @media (max-width: 1100px) { .room-cols { grid-template-columns: minmax(0, 1fr); } }
 
 /* Scenarios */
@@ -767,3 +815,26 @@ body:has(.app[data-route='teach2']) .toasts { bottom: calc(var(--dock-foot, 64px
 /* host-guard.ts: the tab that handed its session to another tab */
 .host-moved { max-width: 560px; margin: 15vh auto 0; padding: 0 16px; }
 .host-moved h1 { font-size: var(--t-18); color: var(--text-strong); }
+/* R4 (plan room-and-instruments.md): the instrument picker at `?join=CODE#/pick`, after the owner's mock-up m5 — one card
+   per instrument, one column on a phone, three across on a laptop; the page scrolls itself (body does not) */
+.join-pick { height: 100%; overflow-y: auto; box-sizing: border-box; padding: var(--s-5) max(var(--s-4), calc((100% - 1120px) / 2)) var(--s-7); }
+.join-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: var(--s-3) var(--s-5); padding-bottom: var(--s-4); border-bottom: 1px solid var(--line); }
+.join-top h1 { margin: 0; font-size: var(--t-22); font-weight: 600; color: var(--text-strong); }
+.join-lead { margin: var(--s-1) 0 0; color: var(--text-muted); font-size: var(--t-15); }
+.join-code .small { font-size: var(--t-13); }
+.join-code .code { font-family: var(--font-mono); font-size: var(--t-26); letter-spacing: 0.14em; color: var(--text-strong); }
+.join-grid { display: grid; grid-template-columns: 1fr; gap: var(--s-4); margin-top: var(--s-5); }
+@media (min-width: 640px) { .join-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 960px) { .join-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.join-card { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-3) var(--s-4) var(--s-4); background: var(--bezel-1); border: 1px solid var(--line); border-radius: var(--r-card); }
+.join-card[data-selected='true'] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.join-card h2 { margin: 0; font-size: var(--t-18); font-weight: 600; color: var(--text-strong); }
+.join-card p { margin: 0; color: var(--text); font-size: var(--t-15); min-height: 2.7em; }
+.join-row { display: flex; justify-content: space-between; align-items: center; gap: var(--s-2); }
+.join-foot { font-size: var(--t-13); }
+.join-pic { height: 110px; border-radius: 8px; background: #0b0e12; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.join-pic svg { width: 92%; height: 90%; }
+.join-card .st { flex: none; font-size: var(--t-13); padding: 3px 8px; border-radius: 99px; border: 1px solid var(--line-strong); color: var(--text-muted); white-space: nowrap; }
+.join-card .st.on { color: var(--ok); border-color: var(--ok); }
+.join-card .btn { min-height: 44px; min-width: 44px; } /* every card's action is a 44 px target (R4), with a mouse too */
+#room-instructor > .room-card { margin-top: 16px; box-shadow: none; } /* R7: P7's card in Room setup's instructor slot */

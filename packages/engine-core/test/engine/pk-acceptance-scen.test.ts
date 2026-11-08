@@ -25,17 +25,29 @@ describe('drug scenarios', () => {
     const hr = ev.filter((x) => x.type === 'state' && x.t > 100) as Extract<EngineEvent, { type: 'state' }>[];
     expect(hr.at(-1)!.values.hr).toBeLessThan(110);
   }, 300_000);
-  it('LAST: bupivacaine 225 mg IV → bradycardia then VF; lipid given at the first sign lowers the free level ≥ 30 %', () => {
+  // Miller 10e ch. 25 p. 762: lipid lowers cardiac bupivacaine 11 % within 3 min and cerebral bupivacaine 18 % within
+  // 15 min (Kuo & Akpa 2013 PBPK) — research/44 X-06; it was "≥ 30 %" against that citation. The bands are the cited
+  // values ± 3 points [FIT: lipid sink test tolerance; brief 89] (no source states a tolerance).
+  it('LAST: bupivacaine 225 mg IV; lipid at 30 s lowers cardiac free bupivacaine ≈ 11 % at 3 min and the cerebral toxicity drive ≈ 18 % at 15 min (M10 p. 762)', () => {
     const ev2 = (event: Record<string, unknown>) => ({ type: 'applyEvent', event }) as unknown as Command;
     const a = createPkState();
     const b = createPkState();
     for (const pk of [a, b]) applyPkCommand(pk, ev2({ kind: 'drug', drugId: 'bupivacaine', dose: 225, unit: 'mg', route: 'iv' }), 0);
     applyPkCommand(b, ev2({ kind: 'drug', drugId: 'lipidEmulsion', dose: 1.5, unit: 'mL/kg', route: 'iv' }), 30);
     applyPkCommand(b, ev2({ kind: 'infusion', drugId: 'lipidEmulsion', rate: 0.25, unit: 'mL/kg/min' }), 30);
-    advancePk(a, NEUTRAL_PK_CTX, 240);
-    advancePk(b, NEUTRAL_PK_CTX, 240);
-    expect(b.lastC.bupivacaine!).toBeLessThan(0.7 * a.lastC.bupivacaine!);
+    advancePk(a, NEUTRAL_PK_CTX, 210);
+    advancePk(b, NEUTRAL_PK_CTX, 210);
+    const card = b.lastC.bupivacaine! / a.lastC.bupivacaine!;
+    expect(card).toBeGreaterThanOrEqual(0.86);
+    expect(card).toBeLessThanOrEqual(0.92);
     expect(a.bus.last.cvE).toBeGreaterThan(b.bus.last.cvE);
+    advancePk(a, NEUTRAL_PK_CTX, 930);
+    advancePk(b, NEUTRAL_PK_CTX, 930);
+    const u = (e: number) => (e / (1 - e)) ** (1 / 3); // The fractional CNS sum from cnsE = hill(u, 1, 1, 3)
+    const cereb = u(b.bus.last.cnsE) / u(a.bus.last.cnsE);
+    console.log(`research/44 X-06: lipid cardiac free ratio ${card.toFixed(3)} at 3 min, cerebral drive ratio ${cereb.toFixed(3)} at 15 min`);
+    expect(cereb).toBeGreaterThanOrEqual(0.79);
+    expect(cereb).toBeLessThanOrEqual(0.85);
   });
   it('determinism: same seed + script → identical ABP hash and drugs events; another seed differs', async () => {
     const run = async (seed: number) => {

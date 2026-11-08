@@ -55,7 +55,7 @@ export const RESP_RATE = CO2_RATE; // 62.5 Hz
 const DT = 1 / RESP_RATE;
 const PLAN_AHEAD_S = 0.6; // Cycles exist this far ahead: the haemodynamics plans beats ≈ 0.25 s ahead and reads u(t)
 const KEEP_S = 15; // history kept for the sidestream delay, u(t − 2·RR) and the 10 s EtCO2 window
-const CO2_WARMUP_S = 10; // brief §6.2 [ENG]
+const CO2_WARMUP_S = 10; // brief §6.2 [ENG: device]
 const AIRWAYS: readonly AirwayState[] = ['patent', 'obstructed', 'apnoea', 'disconnected', 'oesophageal', 'endobronchial', 'bronchospasm'];
 const SOURCES: readonly VentSource[] = ['spontaneous', 'bvm', 'ventilator', 'none'];
 const TEMP_SITES: readonly TempSite[] = ['oesophageal', 'nasopharyngeal', 'tympanic', 'bladder', 'rectal', 'axilla'];
@@ -173,7 +173,7 @@ export function createRespState(profile: PatientProfile | undefined, l1: L1State
     tempSensor: sens.temp === 'off' ? 'off' : 'on', tempSite: 'axilla',
     num: {
       co2: createCo2Num(), imp: createImpNum(),
-      spo2: createSpo2(l1Target(l1, 'spo2', 0) / 100, Math.max(-2, Math.min(2, normal(rng)))), // bias ±2–3 % RMS [ENG]
+      spo2: createSpo2(l1Target(l1, 'spo2', 0) / 100, Math.max(-2, Math.min(2, normal(rng)))), // bias ±2–3 % RMS [ENG: device]
       temp: createTempNum(t0),
     },
     beats: [], beatSeq: -1, shownCo2: 0, lungKey: '', lungCore: '', lungT: -1e12, out: [],
@@ -232,10 +232,10 @@ function deadSpace(rs: RespState, l1?: L1State): number {
 }
 /**
  * A kinked tube multiplies the tube resistance by 1 + (KINK_R_MULT − 1)·severity — a complete kink (severity 1) × 150,
- * so a 40 cmH2O Pmax moves ≤ 20 % of the set VT [ENG, fit target RS9 "VT ≤ 20 % delivered"; partial kinks scale].
+ * so a 40 cmH2O Pmax moves ≤ 20 % of the set VT [ENG: device; fit target RS9 "VT ≤ 20 % delivered"; partial kinks scale].
  */
 export const KINK_R_MULT = 150;
-/** Bucking — an expiratory muscle pressure (cmH2O) over the first BUCK_S of a mechanical inspiration [ENG; McCool 2006 Chest 129:48S]. */
+/** Bucking — an expiratory muscle pressure (cmH2O) over the first BUCK_S of a mechanical inspiration [FIT: bucking expiratory muscle pressure; McCool 2006 Chest 129:48S; brief research/44 L2-51; src McCool 2006]. */
 export const BUCK_CMH2O = 30;
 export const BUCK_S = 0.5;
 /** The cough pressure of a bucking breath at time t (cmH2O, ≥ 0). */
@@ -324,7 +324,7 @@ export function applyLungSpecs(rs: RespState): void {
   ls.mp = mechParams(r.lp, ls.aer, blockedSides(ls.mainstem));
 }
 
-/** Induction-atelectasis factor by body size (catalogue §10: atel 0.11 at BMI 40 vs 0.06 lean) [ENG]. */
+/** Induction-atelectasis factor by body size (catalogue §10: atel 0.11 at BMI 40 vs 0.06 lean) (catalogue §10: atel 0.11 at BMI 40 vs 0.06 lean). */
 export function inductionFactor(pat: GasPatient): number {
   const bmi = pat.weightKg / (pat.ibwKg > 0 ? (pat.ibwKg / 22) : 1); // ≈ BMI from IBW at BMI 22
   return Math.min(3, 1 + 0.05 * Math.max(0, bmi - 25));
@@ -423,7 +423,7 @@ export function pregnancy(rs: RespState): number {
  * of inspiratory muscle tone within minutes of induction (Hedenstierna & Edmark, BJA 2010;104:16 — FRC −0.4–0.5 L,
  * atelectasis within 5 min; Westbrook 1973 J Appl Physiol 34:81), and VO2 falls ~15 %. The `thermal` event's
  * `anaesthesia: 'general'` stays an explicit override (1). τ 20 s on (FRC falls within the first minute), 300 s off
- * [ENG].
+ * [FIT: anaesthetic FRC loss on/off τ; brief research/44 L2-51].
  */
 export const GA_TAU_ON_S = 20;
 export const GA_TAU_OFF_S = 300;

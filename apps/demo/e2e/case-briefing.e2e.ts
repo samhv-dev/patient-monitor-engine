@@ -185,3 +185,43 @@ test('the Case briefing: over the running monitor on the host and the phones, a 
   await expect(f.locator('.stage > .case-briefing')).toHaveCount(0, { timeout: 5_000 });
   await expect(g.locator('.stage > .case-briefing')).toHaveCount(0, { timeout: 5_000 });
 });
+
+// Debrief 2, D13b: a card written in English with the owner-read Persian (`briefing.textFa`), the host set to Persian
+// (the Debrief's switch, pme.lang): the host and one phone both show the Persian briefing right to left in the bundled
+// Vazirmatn. The texts are a rendering fixture, not a card's words: no card carries textFa until the owner has read it.
+test('D13b: the host in Persian sends a card\'s textFa; the host and one phone show it right to left in Vazirmatn', async ({ page, browser, browserName }) => {
+  test.setTimeout(120_000);
+  const dir = mkdtempSync(join(tmpdir(), 'briefing-fa-'));
+  writeFileSync(join(dir, 'index.html'), '<!doctype html>');
+  relay = await startRelay({ port: 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer' });
+  const ws = `ws://127.0.0.1:${relay.port}/`;
+  await page.addInitScript(() => localStorage.setItem('pme.lang', 'fa'));
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await openApp(page, base, `?relay=${encodeURIComponent(ws)}#/monitor`);
+  const code = await page.evaluate(() => (window as unknown as W).__pmeApp.session.code);
+  const { defaultBrowserType: _b, ...dev } = browserName === 'webkit' ? devices['iPhone 13'] : devices['Pixel 7'];
+  const f = await (await browser.newContext(dev)).newPage();
+  await f.goto(`${base}/?join=${code}&relay=${encodeURIComponent(ws)}`);
+  await page.bringToFront();
+  await f.waitForFunction(() => (window as unknown as W).__pmeFollower?.sync?.status === 'synced', null, { timeout: 30_000, polling: 250 });
+  const brief = MH.briefing as { text: string };
+  const card = { ...MH, id: 'showcase-mh-textfa-e2e', briefing: { ...brief, lang: 'en', textFa: FA_TEXT, durationS: 60 } };
+  expect(await page.evaluate((d) => (window as unknown as W).__pmeApp.session.loadScenario(d).ok, card)).toBe(true);
+  for (const p of [page, f]) {
+    if (p === f) await f.bringToFront();
+    await expect(layer(p)).toBeVisible({ timeout: 10_000 });
+    await expect(layer(p)).toHaveAttribute('dir', 'rtl');
+    await expect(layer(p)).toHaveAttribute('lang', 'fa');
+    await expect(layer(p).locator('.cb-title')).toHaveText('معرفی سناریو');
+    await expect(layer(p).locator('.cb-p').first()).toHaveText(FA_TEXT.split('\n\n')[0] as string);
+    await expect.poll(() => p.evaluate(() => [...document.fonts].some((x) => x.family.replace(/["']/g, '') === 'Vazirmatn' && x.status === 'loaded')),
+      { timeout: 10_000, message: 'the bundled Vazirmatn is loaded' }).toBe(true);
+    expect(await layer(p).locator('.cb-p').first().evaluate((el) => getComputedStyle(el).fontFamily)).toMatch(/^"?Vazirmatn/);
+  }
+  // the host set to English: the same card sends its English text
+  await page.bringToFront();
+  await page.evaluate(() => localStorage.setItem('pme.lang', 'en'));
+  expect(await page.evaluate((d) => (window as unknown as W).__pmeApp.session.loadScenario(d).ok, { ...card, id: 'showcase-mh-textfa-e2e-en' })).toBe(true);
+  await expect(layer(page)).toHaveAttribute('lang', 'en', { timeout: 10_000 });
+  await expect(layer(page).locator('.cb-p').first()).toHaveText(brief.text.split('\n\n')[0] as string);
+});

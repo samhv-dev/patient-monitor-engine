@@ -27,15 +27,17 @@ const withCard = (k: keyof typeof EXPORTS, takeHome?: string[]): any => {
 const section = (html: string): string => /<section id="takehome">.*?<\/section>/s.exec(html)?.[0] ?? '';
 
 describe('scripts/showcase/debrief-fa: the take-home section', () => {
-  it('the nine translated take-home lines are owner-approved; the five E132 lines await the owner\'s Persian', () => {
+  it('the nine owner-approved take-home lines; the five E132 lines drafted (owner, 7 November) and unread', () => {
     const lines = TABLE.groups.takeHome as Array<{ en: string; fa: string | null; reviewed: boolean }>;
     expect(lines).toHaveLength(14);
-    expect(lines.filter((e) => e.fa !== null)).toHaveLength(9);
-    expect(lines.filter((e) => e.fa !== null).every((e) => e.reviewed)).toBe(true);
-    // E132 (2026-10-26): English only, for the owner to write the Persian (never machine-written)
-    expect(lines.filter((e) => e.fa === null).every((e) => !e.reviewed)).toBe(true);
+    expect(lines.every((e) => e.fa !== null)).toBe(true);
+    expect(lines.filter((e) => e.reviewed)).toHaveLength(9);
+    // E132 (2026-10-26) kept these five for the owner; his ruling of 7 November: drafted with the persian-writing skill,
+    // reviewed: false until he reads them
+    const unread = lines.filter((e) => !e.reviewed);
+    expect(unread).toHaveLength(5);
     const cards = ['mh', 'haemorrhage'].flatMap((k) => read(`apps/demo/src/app/showcase/showcase-${k}.json`).takeHome as string[]);
-    for (const e of lines.filter((x) => x.fa === null)) expect(cards).toContain(e.en);
+    for (const e of unread) expect(cards).toContain(e.en);
   });
 
   it('the tamponade record prints its three lines in Persian, the approved first line exactly', () => {
@@ -51,14 +53,15 @@ describe('scripts/showcase/debrief-fa: the take-home section', () => {
     expect(html.indexOf('id="takehome"')).toBeLessThan(html.indexOf('id="notes"'));
   });
 
-  it('the bronchospasm record prints its three lines in Persian; MH prints its four, the two E132 lines in English until translated', () => {
+  it('the bronchospasm record prints its three lines in Persian; MH prints its four, the two E132 lines as drafted', () => {
     const b = render(withCard('bronchospasm'), '', '1.0.0-rc.5');
     expect(section(b.html).match(/<li>/g)).toHaveLength(3);
     expect(b.D.missing.size).toBe(0);
     const mh = read('apps/demo/src/app/showcase/showcase-mh.json').takeHome as string[];
     const m = render(withCard('mh'), '', '1.0.0-rc.5');
     expect(section(m.html).match(/<li>/g)).toHaveLength(4);
-    expect([...m.D.missing.keys()].filter((k) => mh.includes(k))).toEqual(mh.slice(2));
+    expect([...m.D.missing.keys()].filter((k) => mh.includes(k))).toEqual([]);
+    expect([...m.D.used].filter((e) => mh.slice(2).includes(e.en)).map((e) => e.reviewed)).toEqual([false, false]);
   });
 
   it('a line the table does not hold prints in English and is listed', () => {
@@ -75,6 +78,28 @@ describe('scripts/showcase/debrief-fa: the take-home section', () => {
   });
 });
 
+// Plan D11: the script's lookups are the shared module the app imports (apps/demo/src/app/i18n/fa-match.mjs); the script
+// keeps no matcher of its own, so the handout and the in-app Persian cannot drift apart.
+describe('scripts/showcase/debrief-fa: one Persian matcher, shared with the app', () => {
+  const MODULE = 'apps/demo/src/app/i18n/fa-match.mjs';
+  const script = readFileSync(join(REPO, 'scripts/showcase/debrief-fa.mjs'), 'utf8');
+  it('the script imports the shared module and defines none of its functions itself', async () => {
+    expect(script).toContain(`from '../../${MODULE}'`);
+    for (const def of [/function\*\s*match\(/, /const TYPED\s*=/, /function tr\(/, /function inGroup\(/, /const faDigits\s*=/, /const spanFa\s*=/]) expect(script).not.toMatch(def);
+  });
+  it('the module reads the table as the script prints it: exact strings, templates, durations, Persian counts', async () => {
+    const { faMatcher, spanFa, faDigits } = (await import(pathToFileURL(join(REPO, MODULE)).href)) as typeof import('../../../apps/demo/src/app/i18n/fa-match.mjs');
+    const { tr } = faMatcher(TABLE);
+    const used: Array<{ en: string }> = [];
+    expect(tr('Debrief', used as never, new Set())).toBe('گزارش دبریفینگ');
+    expect(tr('Page 2 of 7', used as never, new Set())).toBe('صفحه‌ی ۲ از ۷');
+    expect(used.map((e) => e.en)).toEqual(['Debrief', 'Page {c} of {c}']);
+    expect(tr('A line nobody translated.', [], new Set())).toBeNull();
+    expect(spanFa('2 min 05 s')).toBe('2 دقیقه و 05 ثانیه');
+    expect(faDigits(2026)).toBe('۲۰۲۶');
+  });
+});
+
 // Debrief 2, D5: recognition on a /2 card is now the card's timed action (`recognition: true`); a /3 export made before
 // judged rows were retired (5 November) still carries them, and the Persian handout prints them from the file as it did.
 describe('scripts/showcase/debrief-fa: an archived /3 export with judged rows', () => {
@@ -84,5 +109,32 @@ describe('scripts/showcase/debrief-fa: an archived /3 export with judged rows', 
     expect(j.judged.map((x: { id: string }) => x.id)).toEqual(['recogniseRosc']);
     const { html } = render(j, '', 'test');
     expect(/<section id="objectives">.*?<\/section>/s.exec(html)?.[0] ?? '').toMatch(/<ol class="obj"><li>/);
+  });
+});
+
+// Brief 63: the Persian handout draws the trend charts, so it draws the Pressures panel after MAP as the English report
+// does (views/debrief.ts pressuresChart): on a record that keeps the pressures only. Its two words are drafted (D12),
+// unread by the owner.
+describe('scripts/showcase/debrief-fa: the Pressures panel', () => {
+  const trends = (html: string): string => /<section id="trends">.*?<\/section>/s.exec(html)?.[0] ?? '';
+  it('a record that keeps the pressures: the panel after MAP, an arterial line and the cuff dots, CVP dashed on its own axis', () => {
+    const j = withCard('tamponade');
+    j.record.keeps = ['pressures'];
+    j.record.samples = j.record.samples.map((s: { t: number }) => ({ ...s, ...(s.t < 100 ? { sys: 92, dia: 58 } : s.t === 150 ? { sys: 98, dia: 60 } : { sys: null, dia: null }), cvp: 17 }));
+    const { html, D } = render(j, '', 'test');
+    const sec = trends(html);
+    const figs = [...sec.matchAll(/<figure class="chart"( data-trend="pressures")?>/g)].map((m) => !!m[1]);
+    expect(figs).toEqual([false, false, true, false, false, false, false]);
+    const d = (k: string) => new RegExp(`data-p="${k}"[^>]*d="([^"]*)"`).exec(sec)?.[1] ?? '';
+    expect(d('sys').match(/M/g)).toHaveLength(2); // the arterial line, then the one cuff cycle
+    expect(d('sys').match(/a/g)).toHaveLength(2); // that cycle a dot
+    expect(d('cvp')).toMatch(/^M[^M]*$/);
+    expect(sec).toContain('CVP 22</text>'); // 17 on its 10 mmHg least span
+    const words = ['Pressures', 'mmHg · SBP and DBP on the left axis, CVP (dashed) on the right'];
+    expect([...D.missing.keys()].filter((k) => words.includes(k))).toEqual([]);
+    expect([...D.used].filter((e) => words.includes(e.en)).map((e) => e.reviewed)).toEqual([false, false]);
+  });
+  it('a record made before the pressures were kept: no panel', () => {
+    expect(trends(render(withCard('tamponade'), '', 'test').html)).not.toContain('data-trend="pressures"');
   });
 });

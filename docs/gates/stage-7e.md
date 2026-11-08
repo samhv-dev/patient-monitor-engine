@@ -147,7 +147,7 @@ The 7d ↔ 7e seam names check out: 7d publishes `organs.liver.glucoseF` and 7e 
   within-table dV0Frac/extraSymp pairs, in `stage-7e-notes.md`) only trades HR against MAP, and none reaches CO 7–9
   or SVR 500–700. Addendum 18 confirmed these stay; they are in the calibration queue. The warm CO needs a
   vasoplegia-with-high-output mechanism: 7a's baroreflex restores the SVR the vasoplegia removed, and nothing raises
-  venous return. Question for Ali.
+  venous return. Question for samhv-dev.
 - **Q-7e-8, Stage 3 child desaturation: 128 s against 130–190; main gives exactly 130.** Probed on the merged tree:
   - About 1 s comes from 7e's heat model. It cools this 16 kg child 0.01–0.04 °C less than Stage 3's model in the
     first 3–6 min. The desaturation time moves about 1.5 s per 0.1 °C through `tempFactor`: 126 s with the core
@@ -167,7 +167,7 @@ The 7d ↔ 7e seam names check out: 7d publishes `organs.liver.glucoseF` and 7e 
   - The N-P17/N-P18 rows sit at the end of the Pulse table.
   - The six planned 7e `it.fails` titles now carry the measured numbers, not the prototype's.
 
-## Calibration items for Ali (R44)
+## Calibration items for samhv-dev (R44)
 
 - Q-7e-1: no Q10 on the heat balance.
 - Q-7e-2: neuraxial uses sedated thresholds.

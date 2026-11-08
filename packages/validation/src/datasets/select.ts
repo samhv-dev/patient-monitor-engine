@@ -10,7 +10,7 @@ import { findWindows, loadCase, selectCandidates, VITALDB, vitaldbSums } from '.
 
 export const VITALDB_TARGET = 40;
 export const MGH_TARGET = 16;
-/** MGH/MF window: 600–900 s (after set-up artefacts, inside every record's ≥ 40 min) [ENG]. */
+/** MGH/MF window: 600–900 s (after set-up artefacts, inside every record's ≥ 40 min) [ENG: measurement]. */
 export const MGH_WINDOW: [number, number] = [600, 900];
 
 export async function selectVitaldb(cache: string, limit: number): Promise<Manifest> {
@@ -53,7 +53,7 @@ export async function selectMghdb(cache: string, limit: number): Promise<Manifes
       rejected.push({ record: rec, reason: 'no ART, CO2 or ECG II channel' });
       continue;
     }
-    if ((seenRhythm.get(kind) ?? 0) >= 3) continue; // at most 3 per underlying rhythm → diversity [ENG]
+    if ((seenRhythm.get(kind) ?? 0) >= 3) continue; // at most 3 per underlying rhythm → diversity [ENG: measurement]
     const h = parseHeader(heaText);
     const dat = await fetchVerified(cache, MGHDB, `${rec}.dat`, sums);
     const [a, b] = MGH_WINDOW;

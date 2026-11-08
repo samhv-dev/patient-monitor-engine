@@ -42,7 +42,7 @@ const L_valveFlow = valveFlow;
  * pressures bottom out (EDPVR → −A, linear atria/pulmonary compliances) while the downstream pressure keeps falling, and
  * a ≈ 3 mL/s forward leak ran the RV, LV and pulmonary bed to NEGATIVE volumes after an exsanguination arrest (VRV −273,
  * VLV −62, VPA −1, VPV −6 mL; CVP −1 to −3.5 on the monitor). `vEmpty` is SIZE-SCALED (profile: 5 mL × W/70, i.e.
- * 0.25 mL in a 3.5 kg neonate): an absolute 5 mL throttled small hearts (neonate CO 0.31 → 0.165 L/min) [ENG: V0_LV,
+ * 0.25 mL in a 3.5 kg neonate): an absolute 5 mL throttled small hearts (neonate CO 0.31 → 0.165 L/min) [ENG: numerics; V0_LV,
  * the smallest volume a chamber can still eject from].
  */
 export const V_EMPTY_ML = 5;
@@ -165,7 +165,7 @@ export function evaluate(s: readonly number[], t: number, p: CircParams, d: Circ
   const qVad = d.qVad(pLv, pc);
   // aortic valve against the Windkessel's characteristic impedance: P_ao = PC + Zc·(Q_av − QL) + ct. A balloon (IABP)
   // displaces volume in the descending aorta, i.e. into the compliance, not through the root's Zc (which turned a
-  // 60 ms deflation into a −35 mmHg spike at the valve) [ENG]
+  // 60 ms deflation into a −35 mmHg spike at the valve) [ENG: numerics]
   const pX = pc - L_ZC_AO * ql + ct;
   const qAv = L_valveFlow(p.av, pLv - pX, L_ZC_AO);
   const pAo = pX + L_ZC_AO * qAv;

@@ -2,7 +2,7 @@
 // apnoea is PROBABILISTIC — one seeded draw per patient (lung/drive.ts `wakeShiftMmHg`) — and follows the Diprivan
 // label (2–2.5 mg/kg: apnoea < 30 s 7 %, 30–60 s 24 %, > 60 s 12 %; 43 % overall), more often and longer after an
 // opioid (Miller 10e, intravenous anaesthetics). Seed 7 (every other row) is the label's MODAL patient (u 0.737 →
-// 30–60 s). Bands [ENG, D5; Q-FU6-1]: seed 7 alone 10–90 s; + fentanyl 2 µg/kg 60–240 s; + remifentanil 0.1 ≥ 90 s;
+// 30–60 s). Bands [FIT: apnoea-duration bands; D5; Q-FU6-1; brief research/44 T-08]: seed 7 alone 10–90 s; + fentanyl 2 µg/kg 60–240 s; + remifentanil 0.1 ≥ 90 s;
 // 2.5 mg/kg longer than 2 mg/kg; seeds 1–20: the label's shape. SGA (no obstruction), room air.
 import { describe, expect, it } from 'vitest';
 import { rig6, runTo, send, st6 } from '../helpers/resp-modeled-rig.ts';

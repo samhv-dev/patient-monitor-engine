@@ -1,6 +1,6 @@
 // FU-8 Task A1 (F1, G-FU4 2026-09-29): an active limit alarm's message follows the displayed value (research/05 §2.4:
 // "the message shows **SpO2 94<96 (deviation and limit)", [S2]); a latched entry keeps the text it had when its
-// condition ended. Before FU-8 the text was frozen at the raise (`**ABPm 66<70` at a mean of 19 in Ali's PEA).
+// condition ended. Before FU-8 the text was frozen at the raise (`**ABPm 66<70` at a mean of 19 in the owner's PEA).
 import { describe, expect, it } from 'vitest';
 import { buildConditions, createInputs } from '../../../src/l3/alarms/conditions.ts';
 import { applyAlarmAction, createAlarmMgr, stepAlarms, type AlarmMgrState, type Condition } from '../../../src/l3/alarms/manager.ts';

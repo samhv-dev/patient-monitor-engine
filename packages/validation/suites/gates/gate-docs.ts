@@ -39,7 +39,7 @@ export const GATE_DOCS: ValidationDoc[] = [
   gate({
     id: 'g3-peep-map', title: 'Stage 3: PEEP 5 → 15 lowers MAP by ≈ 14 mmHg (MANUAL coupling)', durationS: 240, baseline: { sbp: 130, dbp: 80 },
     actions: [{ t: 0, command: ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 }) }, { t: 120, command: ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 15 }) }],
-    segments: [seg('peep5', 90, 120, range('map', 'numeric:abpMean', 'mean', 94, 104, 'gate 3: MAP ≈ 97 at PEEP 5 (displayed radial mean) [ENG band]')),
+    segments: [seg('peep5', 90, 120, range('map', 'numeric:abpMean', 'mean', 94, 104, 'gate 3: MAP ≈ 97 at PEEP 5 (displayed radial mean) [FIT: gate band; band; brief research/44 X-15]')),
       seg('peep15', 200, 240, { id: 'drop', series: 'numeric:abpMean', reduce: 'mean', type: 'Range', min: { segment: 'peep5', offset: -17 }, max: { segment: 'peep5', offset: -11 }, source: 'gate 3: PEEP 5 → 15 drops MAP by 14 (97 → 83) ± 3' })],
   }),
   gate({

@@ -76,9 +76,9 @@ export const HOST_RESTARTED_REASON = "Not given: the instructor's computer resta
 /** Plan §4: the instructor's timeout. The host may have applied the command and lost the ack, so never "not given". */
 export const NOT_CONFIRMED_REASON = "Not confirmed: no answer from the instructor's computer. Check the Finished list before pressing again.";
 
-/** FX-2: an unanswered command goes again this often while the link is open; the host de-duplicates by id [ENG]. */
+/** FX-2: an unanswered command goes again this often while the link is open; the host de-duplicates by id [ENG: network]. */
 export const COMMAND_RESEND_MS = 2000;
-/** FX-2: …and is refused ("no answer from the host") after this long open with no answer [ENG: a restore under load takes ≤ 2 s]. */
+/** FX-2: …and is refused ("no answer from the host") after this long open with no answer [ENG: network; a restore under load takes ≤ 2 s]. */
 export const COMMAND_ANSWER_TIMEOUT_MS = 15_000;
 
 interface Pending {

@@ -69,7 +69,7 @@
   "provenance": {
     "co2.sidestreamDelayS": { "tag": "documented", "source": "research/09 §5 (Philips Microstream, adult; R39-5)" },
     "co2.riseTimeMs": { "tag": "documented", "source": "research/09 §5 (Philips Microstream, adult; R39-5)" },
-    "colors": { "tag": "documented", "source": "research/05 §2.1 (IntelliVue factory colour names); brief §6.8", "note": "hex values are [ENG] renderings of the colour names; NBP red (magenta in some profiles)" },
+    "colors": { "tag": "documented", "source": "research/05 §2.1 (IntelliVue factory colour names); brief §6.8", "note": "hex values are [ENG: display] renderings of the colour names; NBP red (magenta in some profiles)" },
     "colors.NMT": { "tag": "eng", "source": "ENG", "note": "FU-3 item 11: research/05 §2.1 has no NMT row; the Stage 7f demo's tile colour (apps/demo/src/dev/depth-neuromuscular.ts) kept" },
     "colors.BFA": { "tag": "eng", "source": "ENG", "note": "FU-3 item 11: research/05 §2.1 has no BIS/depth row; the Stage 7f demo's tile colour (apps/demo/src/dev/depth-neuromuscular.ts) kept" },
     "colors.AGENTS": { "tag": "documented", "source": "research/05 §2.1 [S1] GM/AGM tables", "note": "FU-8 (A10-E5): SEV yellow; the IntelliVue colours each agent (HAL red, ISO magenta, ENF orange, SEV yellow, DES cyan) — one tile colour until the engine publishes the agent id" },
@@ -77,7 +77,7 @@
     "ecg.filters": { "tag": "documented", "source": "research/05 §2.2 (Philips Monitor/Ext. Monitor/Filter/Diag)" },
     "ecg.filterDefault": { "tag": "documented", "source": "research/05 §2.2; brief §6.8" },
     "hr.method": { "tag": "documented", "source": "brief §3.8 (Philips-like mean-12rr)" },
-    "hr.source": { "tag": "documented", "source": "research/05 §6 [S1] Philips IntelliVue Configuration Guide Rel. J p. 50–51 (Alarms Source default Auto, all profiles)", "note": "FU-5: no valid ECG heart rate and a pulse source present → the pulse becomes the ALARM source (IFU [S2] p. 108: HR/Pulse limits shared, arrhythmia and ECG HR alarms off; Configuration Guide [S1] p. 50 Alarms Source default Auto); the HR numeric keeps -?- (IFU p. 55 LEADS OFF) and the pulse stays in its own tile (relabelNonEcgAs null, inherited) — audit Q4, confirm with Ali" },
+    "hr.source": { "tag": "documented", "source": "research/05 §6 [S1] Philips IntelliVue Configuration Guide Rel. J p. 50–51 (Alarms Source default Auto, all profiles)", "note": "FU-5: no valid ECG heart rate and a pulse source present → the pulse becomes the ALARM source (IFU [S2] p. 108: HR/Pulse limits shared, arrhythmia and ECG HR alarms off; Configuration Guide [S1] p. 50 Alarms Source default Auto); the HR numeric keeps -?- (IFU p. 55 LEADS OFF) and the pulse stays in its own tile (relabelNonEcgAs null, inherited) — audit Q4, confirm with samhv-dev" },
     "spo2": { "tag": "documented", "source": "research/05 §6 [S1] Philips Configuration Guide p. 66 (average 10 s); IFU [S2] p. 301 (display update typically 2 s); brief §4.3 (options 5/10/20)" },
     "nibp.initialInflation": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 303 (initial inflation 165 / 130 / 100 ± 15 mmHg)" },
     "alarms.silence": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 11, 32 (Silence acknowledges all active alarms and INOPs; new alarms are new)", "note": "replaces the ZOLL 90 s mute inherited from iec-defaults (audit M9, research/06 §6)" },

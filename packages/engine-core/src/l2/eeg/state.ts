@@ -5,7 +5,7 @@
 //   hyper = (gabaIv + barbiturate + etomidate + benzo)/Ce50prop(age) + (sevo + iso + des MAC) + alpha2Eq
 //   lor   = (the same IV load)/LOCprop(age) + ether MAC/MAC_awake + dexmedetomidine ng/mL ÷ DEXMED_LOR_NG_ML
 //   suppress = 1 − (1 − drug)·(1 − metabolic voltage loss)·(1 − hypothermic suppression)
-// Neural inertia (Ch36 p. 1142, P-4): none beyond the drug layer's effect sites [ENG, plan default 0; for propofol
+// Neural inertia (Ch36 p. 1142, P-4): none beyond the drug layer's effect sites [FIT: neural inertia none, the plan default; brief research/43 P-4; for propofol
 // supported by Kuizenga 2018 — induction and recovery C50 not different]; sevoflurane's hysteresis exists (same paper)
 // but its size was not retrieved, so it is not modelled.
 import type { DrugBus } from '../../types-pk.ts';
@@ -39,12 +39,12 @@ export const BS_ESTABLISHED_MAC = 1.5;
 /** NEAR-ISOELECTRIC at ≈ 2.0 MAC, every ether (Miller Ch10 p. 205 "1.5 to 2 MAC", maximal CMR fall; Kaisti 1999 still
  * bursting at 2 MAC sevoflurane, so full silence is at or above it [INF]). */
 export const BS_NEAR_ISO_MAC = 2.0;
-/** Suppression (fraction of time suppressed) at the established point [ENG: the mid-point of the curve; the shape
+/** Suppression (fraction of time suppressed) at the established point [FIT: the mid-point of the curve; brief research/43 P-1; the shape
  * between the anchors is not in the sources — research/43 "INF on the shape"]. */
 export const SUPP_ESTABLISHED = 0.5;
-/** Suppression at the near-isoelectric point [ENG: "near" silence read as 90 % of the time suppressed]. */
+/** Suppression at the near-isoelectric point [FIT: "near" silence read as 90 % of the time suppressed; brief research/43 P-1]. */
 export const SUPP_NEAR_ISO = 0.9;
-/** Full suppression (isoelectric), MAC [ENG: the 2.0 → 1 slope continued, 0.5 MAC past the near-isoelectric point]. */
+/** Full suppression (isoelectric), MAC [FIT: the 2.0 → 1 slope continued, 0.5 MAC past the near-isoelectric point; brief research/43 P-1]. */
 export const BS_ISOELECTRIC_MAC = 2.5;
 /** Propofol(-equivalent) onset, ng/mL: CP50_BS 4.9 µg/mL (Pilge 2014; Miller Ch36 p. 1141 "about 5 mcg/mL"). Thiopental
  * and etomidate at the same propofol-equivalent [INF]; not age-adjusted (the source gives a concentration). */
@@ -57,13 +57,13 @@ export const DO2_EEG_ABNORMAL = 20 / 50;
 /** Cellular survival threatened at CBF 12 mL/100 g/min (Miller Ch35 p. 1122): the voltage is gone. */
 export const DO2_EEG_LOST = 12 / 50;
 /** The share of `metabolic` that only slows (voltage preserved) before the voltage goes (Ch35 p. 1105: "first slowing
- * with preserved voltage, then loss of voltage") [ENG: half]. */
+ * with preserved voltage, then loss of voltage") [FIT: half; src Miller Ch35 p. 1105 gives the order, not the share]. */
 export const METABOLIC_SLOW_SHARE = 0.5;
 /** Hypothermic burst suppression appears at 24.4 °C (Stecker 2001, 109 patients, mean nasopharyngeal ± 4 °C). */
 export const BS_TEMP_ONSET_C = 24.4; // °C
 /** Electrocerebral silence at 17.8 °C (Stecker 2001; Miller Ch35 p. 1127 "complete suppression usually at 15–18 °C"). */
 export const BS_TEMP_SILENT_C = 17.8; // °C
-/** Hypothermic slowing starts at normothermia [ENG: linear from 37 °C to the burst-suppression temperature; Ch35 p. 1127
+/** Hypothermic slowing starts at normothermia [FIT: linear from 37 °C to the burst-suppression temperature; src Miller Ch35 p. 1127
  * gives a close correlation with temperature, no shape]. */
 export const COLD_SLOW_FROM_C = 37; // °C
 
@@ -72,14 +72,14 @@ export const COLD_SLOW_FROM_C = 37; // °C
  * A step of this size saturates the transient. */
 export const N2O_TRIGGER_MAC = 0.5;
 /** Its duration: the slow-delta lasted median 3 min (2–12) (Pavone 2016) — the cortex adapts to the new N2O level with
- * τ = 3 min. The amplitude of the transient is [ENG] (spectra.ts). */
+ * τ = 3 min. The amplitude of the transient is fitted (spectra.ts, research/43 P-2). */
 export const N2O_TRANSIENT_TAU_S = 180;
 /** Opioid alone above 8 ng/mL fentanyl-eq raises delta and lowers the median frequency (Miller Ch36 p. 1144). */
 export const OPIOID_EEG_FENT_NG_ML = 8; // ng/mL
 
 // --- age (Ch36 p. 1145; research/43 P-7) ---
 /** The age span the age terms run over: Purdon 2015's cohort, 18–90 y. Below 18 the adult value (P-3: children's
- * amplitude factor × 1 [ENG] — Miller says "much higher", with no number). */
+ * amplitude factor × 1 [FIT: children's amplitude factor; brief research/43 P-3] — Miller says "much higher", with no number). */
 export const AGE_YOUNG_Y = 18;
 /** The upper end of the age span: Purdon 2015's oldest patients, 90 y. */
 export const AGE_OLD_Y = 90;
@@ -99,7 +99,7 @@ const ETHERS = ['sevoflurane', 'isoflurane', 'desflurane'] as const;
 const ONSET: Record<(typeof ETHERS)[number], number> = { sevoflurane: BS_ONSET_SEVO_MAC, isoflurane: BS_ONSET_ISO_MAC, desflurane: BS_ONSET_DES_MAC };
 
 /** Suppression (0–1) at a suppressing load `m` in MAC-equivalents, onset `o`: 0 → o, linear to the established and the
- * near-isoelectric anchors, 1 at BS_ISOELECTRIC_MAC [ENG piecewise-linear shape between sourced anchors]. */
+ * near-isoelectric anchors, 1 at BS_ISOELECTRIC_MAC [FIT: piecewise-linear shape between sourced anchors; brief research/43 P-1]. */
 export function suppressionCurve(m: number, o: number): number {
   if (m <= o) return 0;
   if (m <= BS_ESTABLISHED_MAC) return (SUPP_ESTABLISHED * (m - o)) / (BS_ESTABLISHED_MAC - o);
@@ -159,9 +159,9 @@ export function cortexStep(prev: CortexState | undefined, x: CortexInputs, dtS: 
   const lor = ivGaba / loc + vol / MAC_AWAKE + (a2 * DEXMED_EEG_C50_NG_ML) / DEXMED_LOR_NG_ML;
   const deep = Math.max(0, hyper - DEEP_ONSET);
   // Burst suppression from the GABA-ergic IV agents that suppress (not the benzodiazepines, Ch35 p. 1106) and the
-  // ethers, the two loads added in onset units [ENG: isobolic]; the ether mix's own onset weights the agents by MAC
+  // ethers, the two loads added in onset units [FIT: isobolic, the IV and ether loads added; brief research/43 P-1]; the ether mix's own onset weights the agents by MAC
   const ivSupp = (Math.max(0, x.hyp.gabaIv) + Math.max(0, x.hyp.barbiturate) + Math.max(0, x.hyp.etomidate)) / BS_ONSET_PROP_NG_ML;
-  const onset = vol > 0 ? ETHERS.reduce((a, k) => a + Math.max(0, x.mac[k]) * ONSET[k], 0) / vol : BS_ONSET_ISO_MAC; // IV alone: isoflurane's anchors [ENG]
+  const onset = vol > 0 ? ETHERS.reduce((a, k) => a + Math.max(0, x.mac[k]) * ONSET[k], 0) / vol : BS_ONSET_ISO_MAC; // IV alone: isoflurane's anchors [FIT: IV alone on the isoflurane curve; brief research/43 P-1]
   const mEq = vol + ivSupp * onset;
   const drugSupp = suppressionCurve(mEq, onset);
   // Ischaemia / hypoxia: delivery below the abnormal level slows, then the voltage goes

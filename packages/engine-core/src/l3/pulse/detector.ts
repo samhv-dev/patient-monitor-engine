@@ -12,7 +12,7 @@
 //    interval), the interval is searched for SSF peaks above the second threshold, half the first (PT's THRESHOLD I2 =
 //    0.5 × THRESHOLD I1); they are the candidate pulses, largest first. A pulse found splits the interval, and each part
 //    still over the limit is searched again, so two or more missed pulses in a row are recovered.
-//    A retrospective variant [ENG]: Pan & Tompkins search in real time, when the missed limit expires; here the search
+//    A retrospective variant [ENG: device]: Pan & Tompkins search in real time, when the missed limit expires; here the search
 //    runs when the next foot is found, over the closed interval (lastFoot, f), so both feet are known and a candidate is
 //    judged by its whole shape, its run-off included. The cost is latency: the beat that ends at a recovered foot
 //    reaches the numerics at f, not at its own end. With one missed pulse f comes about 2 intervals after the last foot
@@ -40,7 +40,7 @@ const W = 16; // 128 ms at 125 Hz (Zong 2003: w = 128 ms)
 /** History kept for the foot search and the search-back: 3.2 s, the longest beat the numerics measure (HR ≥ 19). */
 const HIST = 400;
 /**
- * The foot is the minimum of the signal in the 128 ms before the crossing [ENG: the SSF window w, which holds the
+ * The foot is the minimum of the signal in the 128 ms before the crossing [ENG: device; the SSF window w, which holds the
  * upstroke that made the crossing; wabp.c searches EyeClosing/2 = 125 ms back, for the sample where the SSF stops
  * rising rather than for the minimum].
  */
@@ -48,11 +48,11 @@ const FOOT_N = 16;
 /**
  * 250 ms eye-closing after a foot: no second pulse starts inside it. wabp.c (Zong's published code of the 2003 paper,
  * PhysioNet WFDB) uses EYE_CLS 0.25 s; the paper's text gives 300 ms. The code's value is kept: a 300 ms lock-out would
- * hide every pulse of a rhythm above 200/min [ENG: of the two published values, the one that keeps HR ≤ 240].
+ * hide every pulse of a rhythm above 200/min [ENG: device; of the two published values, the one that keeps HR ≤ 240].
  */
 const REFRACTORY_N = 31;
 /**
- * A pulse's SSF peak is taken over the 160 ms after its crossing [ENG: longer than the 128 ms SSF window, so the whole
+ * A pulse's SSF peak is taken over the 160 ms after its crossing [ENG: device; longer than the 128 ms SSF window, so the whole
  * upstroke is in it; wabp.c takes it over EyeClosing/2 = 125 ms].
  */
 const PEAK_TRACK_N = 20;
@@ -65,24 +65,24 @@ const PEAK_TRACK_N = 20;
  */
 const THR_FRACTION = 0.6;
 /**
- * Re-arm: after a pulse the SSF must fall below half the threshold before the next crossing counts [ENG]. Neither
+ * Re-arm: after a pulse the SSF must fall below half the threshold before the next crossing counts [ENG: device]. Neither
  * Zong's paper nor wabp.c has a re-arm level (wabp.c confirms a candidate by a fixed rise of the SSF, in ADC counts);
  * without one, an upstroke slower than the eye-closing period would be counted twice. Zong's paper confirms a crossing by
  * the rise of the SSF in the 150 ms around it ("exceeds a certain value", not given) instead. A pulse this rule hides
  * has an SSF peak above the threshold, so it is a search-back candidate when its interval is over the missed limit.
  */
 const REARM_FRACTION = 0.5;
-const SILENCE_N = 375; // after 3 s without a pulse the peak average decays (τ 2 s) [ENG]
+const SILENCE_N = 375; // after 3 s without a pulse the peak average decays (τ 2 s) [ENG: device]
 const DECAY = Math.exp(-1 / (2 * DET_RATE));
 /**
  * The RR MISSED LIMIT: an interval longer than 166 % of the recent interval holds a missed pulse (Pan & Tompkins 1985).
- * The recent interval is the median of the last ≤ 8 intervals [ENG: the median rather than Pan–Tompkins' range-limited
+ * The recent interval is the median of the last ≤ 8 intervals [ENG: device; the median rather than Pan–Tompkins' range-limited
  * mean of 8, so that one merged interval does not lengthen it].
  */
 export const MISSED_LIMIT = 1.66;
 /**
  * The recent interval is taken over the last 8 intervals (Pan & Tompkins 1985: RR AVERAGE1 and RR AVERAGE2 average the
- * eight most recent beats); the recent amplitude of Li's test over the same 8 pulses [ENG].
+ * eight most recent beats); the recent amplitude of Li's test over the same 8 pulses [ENG: device].
  */
 export const MISSED_AVG_N = 8;
 /**
@@ -99,7 +99,7 @@ const SEARCH_FRACTION = 0.5;
 /**
  * A beat's rise must lie between 0.4 × and 2 × the amplitude of the beats around it (Li 2010's code: 0.4 × abpMaxTH <
  * max − min < 2 × abpMaxTH). Li learns abpMaxTH from the max − min of 1 s windows spread over the record, off-line;
- * a monitor has only the past, so the amplitude here is the median rise of the last ≤ 8 pulses [ENG].
+ * a monitor has only the past, so the amplitude here is the median rise of the last ≤ 8 pulses [ENG: device].
  */
 const AMP_FRACTION = 0.4;
 const AMP_MAX_FRACTION = 2;
@@ -134,7 +134,7 @@ export interface PulseDetState {
   pending?: number[];
 }
 
-/** `floor`: minimum SSF threshold in signal units (ABP 3 mmHg, PAP 1.5 mmHg, pleth 0.03 %) [ENG]. */
+/** `floor`: minimum SSF threshold in signal units (ABP 3 mmHg, PAP 1.5 mmHg, pleth 0.03 %) [ENG: device]. */
 export function createPulseDet(floor: number, startIndex = 0): PulseDetState {
   return {
     n: startIndex,
@@ -259,7 +259,7 @@ function searchBackInterval(st: PulseDetState, f: number, n: number, thr: number
       // peak, where the signal stops rising after it; Li's onset, back from the steepest point to where the upstroke
       // starts: the zero crossing of the derivative (a local minimum of the signal), refined to the minimum within
       // ±2 samples (Li l.131–132). When the derivative has no zero crossing there, the onset is the inflection point,
-      // the smallest slope between the previous foot and the steepest point [ENG: not in Li's delineator.m, whose
+      // the smallest slope between the previous foot and the steepest point [ENG: device; not in Li's delineator.m, whose
       // onsets are zero crossings only. A missed pulse can start while the signal is still rising (on the previous
       // beat's dicrotic wave, or before its run-off has turned), so there is no zero crossing and Li's code would find no onset; the new upstroke starts
       // where the slope stops falling and rises again. On the diagnosis run set's replay, 57 of the 620 recovered

@@ -1,4 +1,4 @@
-// Task 26 (showcase additions): Ali's headline case through the visible panel (Instructor v2's sheets) — start a severe cardiac tamponade
+// Task 26 (showcase additions): the owner's headline case through the visible panel (Instructor v2's sheets) — start a severe cardiac tamponade
 // from the Patient sheet's acute events, give propofol 2 mg/kg from the Drug sheet, and the patient loses cardiac output
 // (pulseless: stroke volume under 6 mL for 5 s — the fu4 page's rule is < 5 mL, but in the app's default adult the
 // stroke volume settles on its 5.2 mL floor, i.e. no output, measured) within 5 simulated minutes at ×4 (the host's top speed).

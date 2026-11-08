@@ -1,6 +1,6 @@
 // MANUAL pressure-target tracker (brief §4.9 coupling rule M2): "a per-beat PI tracker adjusts SV (pulse
 // pressure) and R (mean) with τ ≈ 3 beats, so site SBP/DBP converge on the targets. AF, PVCs, CPR and line
-// faults still act." Implementation [ENG]:
+// faults still act." Implementation [ENG: control]:
 //   - input: the TRUE site pressures of each completed beat (before the transducer, so damping and line
 //     faults still show on the display);
 //   - only REFERENCE beats enter it: supraventricular, ejection factor 0.4 ≤ E ≤ 1.05, carry-over ≤ 25% of a

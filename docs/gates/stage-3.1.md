@@ -33,7 +33,7 @@ This is the scale on which the capno.ts comment gets 105° for normal (research 
   - `packages/skins/test/provenance.test.ts` now accepts `research/NN` for any report number, not only 00–06, so research/09 can be cited.
 - **Item 5 touches l2/resp.** It is a one-line change in `validateRespCommand` (`packages/engine-core/src/l2/resp/pipeline.ts`): the bronchospasm severity bound goes 1 → 1.25. Stage V's diff to that file (the import and the `externalDrive` frame check) does not overlap it.
   - Item 4's sampler change lives in `l2/co2/capno.ts` and `engine.ts`. No resp driver file was edited.
-- **Item 6, warmed case.** −0.68 °C is inside the band, but at its warm edge; research 09's default is −0.9. The constants were kept per R39-7. Moving toward −0.9 would mean weaker warming, and that conflicts with Stage 3's "+0.5–1 °C/h" warming-gain test. This is left for Ali/Stage 7.
+- **Item 6, warmed case.** −0.68 °C is inside the band, but at its warm edge; research 09's default is −0.9. The constants were kept per R39-7. Moving toward −0.9 would mean weaker warming, and that conflicts with Stage 3's "+0.5–1 °C/h" warming-gain test. This is left for samhv-dev/Stage 7.
 - **Stage 5.1 area.** l2/ecg/** was not touched.
 
 ## Gate

@@ -15,13 +15,13 @@ import type { CircModelState } from './model.ts';
 
 /**
  * The hypoxic myocardial depression (cor.hyp) at which the heart no longer ejects and the arrest is declared:
- * contractility ≤ 10 % of rest (kHyp = 1 − hyp) — electromechanical dissociation [ENG]. The timing is TAU_HYP_S's fit.
+ * contractility ≤ 10 % of rest (kHyp = 1 − hyp) — electromechanical dissociation [FIT: hypoxic arrest rule size; brief research/44 L2-05]. The timing is TAU_HYP_S's fit.
  */
 export const HYP_ARREST = 0.9;
 /**
  * Rhythm at the onset of an asphyxial arrest. Swine (Varvarousi 2015, n = 30): PEA 21, VF 7, asystole 2 [P]; humans
  * with airway-obstruction arrest (Tokyo 2017–2019, n = 1,352): 1.7 % shockable at EMS contact [P]. VF 0.1 lies between
- * the two [ENG: the swine onset rate is for a VF-prone species, the human rate is minutes after the onset]; asystole
+ * the two [FIT: hypoxic arrest rule size; the swine onset rate is for a VF-prone species, the human rate is minutes after the onset; brief research/44 L2-05]; asystole
  * 2/30 [P, swine]; the rest is a bradycardic PEA (the organised rhythm continues, pulseless).
  */
 export const P_VF_ONSET = 0.1;

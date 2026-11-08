@@ -3,7 +3,7 @@
   "version": "1.0.0-rc.5",
   "description": "Canvas2D sweep renderer, numerics and mountMonitor() for the patient-monitor engine; also ships the single-file IIFE (window.PatientMonitor).",
   "license": "MIT",
-  "author": "Ali Mahdavi",
+  "author": "samhv-dev",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/samhv-dev/patient-monitor-engine.git",

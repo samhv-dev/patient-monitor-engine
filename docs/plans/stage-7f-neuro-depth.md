@@ -21,7 +21,7 @@
 - Every code block from Task 1 on was prototyped on the merged base (see "Prototype"); the time-course bands are still TARGETS (R45): add the mechanism or fit the [ENG] constant this plan names, never widen a band; stop and report if a wiring task moves a Stage 3/7a/7b/7c/7g acceptance number out of its band. Tests this plan PRE-DECLARES as `it.fails` (a 7g PK/PD gap with its measured numbers and a request id) stay `it.fails`; if one starts passing on your branch, report it rather than editing it.
 - **Branch and PR (R20/R21):** push the branch after EVERY task commit (`git push origin stage-7f-neuro-depth`); never push to `main`, never merge. The last task opens the PR with `gh pr create`.
 - **CI rule:** the CI runner has 2 vCPUs. Any test that runs the engine for more than ~1 sim-minute yields to the event loop once per sim-minute (`await new Promise((r) => setImmediate(r))`, the pattern of `packages/engine-core/test/engine/engine-pipeline.test.ts`) and sets an explicit `{ timeout }`.
-- **Partition (R25 spirit).** This stage OWNS `packages/engine-core/src/l2/neuro/**` (incl. `spont.ts`), `src/types-neuro.ts`, `test/l2/neuro/**`, `test/helpers/neuro.ts`, `test/helpers/neuro-bus.ts`, `test/helpers/neuro-nmb.ts`, `test/engine/neuro-*.test.ts`, `test/types-neuro.test.ts`, `packages/skins/test/neuro-tiles.test.ts`, `packages/controller/scenarios/nmb-*.json` + `depth-*.json` (six files), `packages/controller/test/scenario/neuro-scenarios.test.ts`, `apps/demo/{stage7f.html,src/stage7f.ts,scripts/stage7f-shots.mjs}`, `apps/demo/src/physiology-console/organs-neuro.test.ts`, `docs/gates/stage-7f.md`, `docs/gates/stage-7f/*.png`. It MODIFIES, additively and marked `// Stage 7f`: `packages/engine-core/src/types.ts` (import + one line appended after the LAST member of each of `NumericId`, `DeviceAction`, `Command`, `EngineEvent`, and one `PatientProfile` field), `src/engine.ts` (state field, constructor incl. the cholinesterase phenotype for 7g's PK patient, validate/apply after 7g's pk hooks, one call in `advance()` after 7g's block, `neuro`/`hco3` in the `advanceResp` context, flush, restore, fasciculation EMG on the committed state), `src/l2/resp/pipeline.ts` (imports, `RespCtx.neuro?`/`hco3?`, `RespState.spont?`, `driverCtx`, `modeledSpont`, one line in the MANUAL etco2 calibration, the 1 Hz MODELED drive call in `gasStep` — Tasks 12–13), `src/l2/resp/driver.ts` (two optional `DriverCtx` fields, the obstruction/cleft lines in `makeCycle`), `src/index.ts` (one export), `packages/engine-core/vite.config.ts` (one SLOW line), `packages/skins/src/types.ts` (two tile params, one colour key), `packages/skins/src/resolve.ts` (two `TILE_COLOR_KEY` entries), `packages/renderer/src/alarm-view.ts` (two `TILE_NUMERICS` entries), `apps/demo/src/stage4a/screen.ts` (two `SAMPLE` entries), `packages/controller/scenarios/pme-scenario-1.schema.json` (event kinds, device enum, `patient.neuro`, `patient.blood`), `apps/demo/vite.config.ts` (one input), `apps/demo/index.html` (one link), `apps/demo/src/physiology-console/organs.ts` (7x's `INTERNAL_PREFIXES`: one block of neuro machinery paths, its own commit — G7x). **Declared exceptions:** **E-7f-1** (Task 12) — one line in `packages/controller/src/session/controller-session.ts` (the log formatter's `device` case; without it the grown `DeviceAction` union fails the controller typecheck); **E-7f-2** (Task 18) — 7a's `test/engine/circ-sanity-2.test.ts`: its two R23 runs get a supraglottic airway at t = 0 (propofol now obstructs an unprotected natural airway; measured reason in Task 18). It READS, never writes, `ps.pk` (7g), `ps.blood.core.ab.hco3` (7c) and, duck-typed, 7e's `ps.endo` (decision 19). It IMPORTS 7b's pure `l2/lung/drive.ts` (`drive`, `pti`, `stepFatigue`) without editing it. **Never edit** `src/l2/pk/**` and `src/types-pk.ts` (7g's: a missing or differently named bus field is STOP-and-report, R51), `src/l2/lung/**` (7b), `src/l2/blood/**` (7c), `src/l2/circ/**` (7a; the anaesthetic baroreflex blunting is 7g's circulation PD, R51 addendum 8), `src/l2/ecg/**`, `src/l3/alarms/**`, `src/l3/defib-pacer/**`, `docs/physiology/**` (Ali's review documents).
+- **Partition (R25 spirit).** This stage OWNS `packages/engine-core/src/l2/neuro/**` (incl. `spont.ts`), `src/types-neuro.ts`, `test/l2/neuro/**`, `test/helpers/neuro.ts`, `test/helpers/neuro-bus.ts`, `test/helpers/neuro-nmb.ts`, `test/engine/neuro-*.test.ts`, `test/types-neuro.test.ts`, `packages/skins/test/neuro-tiles.test.ts`, `packages/controller/scenarios/nmb-*.json` + `depth-*.json` (six files), `packages/controller/test/scenario/neuro-scenarios.test.ts`, `apps/demo/{stage7f.html,src/stage7f.ts,scripts/stage7f-shots.mjs}`, `apps/demo/src/physiology-console/organs-neuro.test.ts`, `docs/gates/stage-7f.md`, `docs/gates/stage-7f/*.png`. It MODIFIES, additively and marked `// Stage 7f`: `packages/engine-core/src/types.ts` (import + one line appended after the LAST member of each of `NumericId`, `DeviceAction`, `Command`, `EngineEvent`, and one `PatientProfile` field), `src/engine.ts` (state field, constructor incl. the cholinesterase phenotype for 7g's PK patient, validate/apply after 7g's pk hooks, one call in `advance()` after 7g's block, `neuro`/`hco3` in the `advanceResp` context, flush, restore, fasciculation EMG on the committed state), `src/l2/resp/pipeline.ts` (imports, `RespCtx.neuro?`/`hco3?`, `RespState.spont?`, `driverCtx`, `modeledSpont`, one line in the MANUAL etco2 calibration, the 1 Hz MODELED drive call in `gasStep` — Tasks 12–13), `src/l2/resp/driver.ts` (two optional `DriverCtx` fields, the obstruction/cleft lines in `makeCycle`), `src/index.ts` (one export), `packages/engine-core/vite.config.ts` (one SLOW line), `packages/skins/src/types.ts` (two tile params, one colour key), `packages/skins/src/resolve.ts` (two `TILE_COLOR_KEY` entries), `packages/renderer/src/alarm-view.ts` (two `TILE_NUMERICS` entries), `apps/demo/src/stage4a/screen.ts` (two `SAMPLE` entries), `packages/controller/scenarios/pme-scenario-1.schema.json` (event kinds, device enum, `patient.neuro`, `patient.blood`), `apps/demo/vite.config.ts` (one input), `apps/demo/index.html` (one link), `apps/demo/src/physiology-console/organs.ts` (7x's `INTERNAL_PREFIXES`: one block of neuro machinery paths, its own commit — G7x). **Declared exceptions:** **E-7f-1** (Task 12) — one line in `packages/controller/src/session/controller-session.ts` (the log formatter's `device` case; without it the grown `DeviceAction` union fails the controller typecheck); **E-7f-2** (Task 18) — 7a's `test/engine/circ-sanity-2.test.ts`: its two R23 runs get a supraglottic airway at t = 0 (propofol now obstructs an unprotected natural airway; measured reason in Task 18). It READS, never writes, `ps.pk` (7g), `ps.blood.core.ab.hco3` (7c) and, duck-typed, 7e's `ps.endo` (decision 19). It IMPORTS 7b's pure `l2/lung/drive.ts` (`drive`, `pti`, `stepFatigue`) without editing it. **Never edit** `src/l2/pk/**` and `src/types-pk.ts` (7g's: a missing or differently named bus field is STOP-and-report, R51), `src/l2/lung/**` (7b), `src/l2/blood/**` (7c), `src/l2/circ/**` (7a; the anaesthetic baroreflex blunting is 7g's circulation PD, R51 addendum 8), `src/l2/ecg/**`, `src/l3/alarms/**`, `src/l3/defib-pacer/**`, `docs/physiology/**` (the owner's review documents).
 - Strict TS with `noUncheckedIndexedAccess` and `erasableSyntaxOnly` (no enums, no parameter properties); `.ts` import extensions; conventional commits; clean-room: every equation cites the tables row / paper it comes from or `[ENG]` with the number it was fitted to. Nothing is borrowed from Pulse (only its PD *defects* are named, as things we do not do) → **no NOTICES rows**.
 - Commit messages end with `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>` (every commit block below carries it).
 - pnpm is not on PATH: `npx -y pnpm@9.15.9`. Unit tests: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run <path>`. Full gate: `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test && npx -y pnpm@9.15.9 build && npx -y pnpm@9.15.9 check-notices && PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 test:e2e`.
@@ -59,10 +59,10 @@
 3. **7f owns the NMB PD; its EC50s are fitted against 7g's PK (R51 §2, §5).** The PK sets are 7g's (`src/l2/pk/nmb.ts`): rocuronium ke0 0.16 (thumb) / 0.26 (diaphragm), Vss 0.26 L/kg; vecuronium ke0 0.10/0.16; cisatracurium 0.08/0.128; succinylcholine hydrolysis CL 0.2 L/kg/min, ke0 0.15/0.24 [ENG, 7g]; cholinesterase `PCHE_CL_MULT` het 0.5 / hom 0.003. EC50/γ: rocuronium 823 / 1424 ng/mL, γ 4.8 (tables §5d, Plaud 1995 [P]); vecuronium **158 / γ 4** [ENG, fitted on 7g's PK: max block 3.03 / T1 25 % 25.2 min]; cisatracurium **230 / γ 6.9** (7g's starting value, meets 2.48 / 42.4 min); succinylcholine 200 / γ 4 (7g's effect-site value). Targets (tables §5d labels): rocuronium 0.6 mg/kg TOF 0 ~1.8 min, T1 25 % ~31 min, **spontaneous TOFR 0.9 55–95 min** (R51 addendum 17: Debaene 2003; label — the old 40–60 caller band was unsourced and wrong); 1.2 mg/kg 1.0 / 67 min (range 38–150); vecuronium max block 3–5, T1 25 % 25–30; cisatracurium max block 2–3, ≈ 45; succinylcholine block ~1 min, T1 10 % 7.1, 90 % 10.9 min; cholinesterase heterozygous ×2, homozygous 4–8 h (Lee 2009). **"Max block" (the labels' onset) = the first second with T1 < 10 % after which T1 falls < 1 point over the next 45 s (three 15 s trains)** [ENG operational rule: a one-compartment effect site keeps creeping toward its nadir for minutes below the stimulator's resolution; T1 ≤ 5 % would put vecuronium at 1.95 min]. **Succinylcholine onset is a 7g PK defect (FU-3 item 1, R51 addendum 17):** 7g's ke0 0.15 puts T1 ≤ 5 % at 0.17 min and T1 10 % at 5.4 min; 7f pre-declares that test `it.fails` with the numbers and never compensates in its EC50. Diaphragm EC50 = thumb × 1.73 (Plaud's 1424/823) for every agent. D-7f-1 (interim rocuronium Vss 0.45) is RETIRED.
 4. **TOF count thresholds and the fade law are the tables' rows** (T1 > 3 / 10 / 20 / 25 % for 1–4 twitches [TXT, VERIFY]; TOFR = T1^2.5 [ENG]); succinylcholine phase I has no fade; phase II grows linearly from 3 to 7 mg/kg cumulative [ENG: onset at the brief §4.9 "> 3–5 mg/kg or infusion"; full at 7 mg/kg]; **PTC** follows the tables' "PTC appears when T1 = 0 and B < 0.99 [ENG]": PTC 0 until T1 exceeds 1 % (B < 0.99), then 1–15 linearly up to T1 3 % (the first TOF twitch) [ENG].
 5. **Neostigmine** is an EC50 multiplier on the non-depolarisers driven by 7g's acetylcholine gain: `m = 1 + 0.7·x/(x + NEO_G50)`, `x = achGain − 1` [ENG]. The bounded maximum makes the ceiling structural (tables §5d: no reversal from TOF < 2). **NEO_G50 = 0.3** [ENG, fitted on 7g's gain curve within the permitted 0.3–1.2: 0.05 mg/kg at TOF 2 → TOFR 0.9 in 18.3 min (band 8–20, Kirkegaard 2002 median 10–15; 0.6 gave 22.0), ceiling 0.07 mg/kg at PTC → TOFR 0.35 at 10 min]; `NEO_SMAX` 0.7 IS the ceiling and is not fitted. The fade law stays the tables' T1^2.5 (TOFR 0.9 at T1 0.96, 0.7 at 0.87 — both tables rows). Its time course and muscarinic effects are 7g's gamma row (**R-7f-2**).
-6. **Fentanyl ventilatory potency (deviation D-7f-3, Q54).** The tables derive fentanyl's ventilatory C50 ≈ 0.6 ng/mL (1.6× remifentanil by EEG potency). With it, fentanyl 1.5 µg/kg alone (Ce 2.3 ng/mL) makes a healthy adult apnoeic, against clinical experience (RR ~8–10). The plan uses 0.55× remifentanil (C50 ≈ 1.7 ng/mL) [ENG] on fentanyl's `vent` site and flags Q54 for Ali. Remifentanil keeps Bouillon's C50 0.92 ng/mL, h 1.25 (on 7g's separate `vent` site, ke0 0.92/min).
+6. **Fentanyl ventilatory potency (deviation D-7f-3, Q54).** The tables derive fentanyl's ventilatory C50 ≈ 0.6 ng/mL (1.6× remifentanil by EEG potency). With it, fentanyl 1.5 µg/kg alone (Ce 2.3 ng/mL) makes a healthy adult apnoeic, against clinical experience (RR ~8–10). The plan uses 0.55× remifentanil (C50 ≈ 1.7 ng/mL) [ENG] on fentanyl's `vent` site and flags Q54 for samhv-dev. Remifentanil keeps Bouillon's C50 0.92 ng/mL, h 1.25 (on 7g's separate `vent` site, ke0 0.92/min).
 7. **Two depression measures, one source.** `opioidDep`/`hypnoticDep` are depression of ventilation at a FIXED PaCO2 (what Stage 7b's chemoreflex equation multiplies: tables §4.6). Stage 3's MANUAL spontaneous breathing has no chemical loop, so it uses the RESTING multiplier `veRest = (1 − dOp²)(1 − dHyp^2.48)(1 − 0.5·dOp·dHyp)`, whose exponents make remifentanil 1 ng/mL −28 % and propofol 1 µg/mL −13 % (Nieuwenhuijs 2003 resting values) while the fixed-CO2 values are −53 % / −44 % (−58 / −44 measured). Pattern: opioid lowers RR, hypnotics lower VT and raise RR (tables §5d). Apnoea when `veRest` < 0.42 (resumes > 0.5) [ENG]. In MODELED mode the chemoreflex loop exists (decision 18): the fixed-CO2 values multiply 7b's drive and the resting fall EMERGES from the rise in PaCO2.
 8. **Depth index = the tables' formula, with MAC_DI50 0.876** so 1.0 MAC reads 42 (tables 40–45); N2O weighs 0.1 on the index [TXT "N2O ~0"]; consciousness is a separate hypnotic level (propofol Schnider LOC C50, MAC-awake 0.33 reduced by opioids, midazolam, ketamine) because the index is not consciousness (ketamine: DI 98 while unconscious; awareness under NMB). The displayed index is smoothed (τ 20 s) and shown only when the `depth` device is on. MAC(age) (Mapleson) is 7g's; 7f uses 7g's age-adjusted BRAIN fractions (`bus.volatiles[agent].macFrac`), divided by 7e's hypothermic `macF` when 7e is present (decision 19).
-9. **Outputs to other systems.** 7a: NOTHING — the propofol/volatile baroreflex-gain depression lives in 7g's circulation PD only (R51 addendum 8); 7f's former `baroGainMult`/`neuroBaroGain` and its `circ/model.ts` edit are deleted. `mapSetShiftMmHg` is PUBLISHED ONLY (audit A11 forbids drugs moving the baroreflex set point; **Q-7f-1** for Ali). 7d reads `cmro2Mult` (**R-7f-3**). 7e reads `ps.neuro.{antinoc, nmb, thermoDepth}` (R51 §6; the 7e plan's Requests): antinociception 0–1 (the opioid and hypnotic blunting of the noxious response), the peripheral NMB fraction (thumb block; abolishes shivering), and the thermoregulatory depth 0–1.5 (hypnotic MAC-equivalents; Sessler: thresholds fall linearly with concentration [ENG scale]).
+9. **Outputs to other systems.** 7a: NOTHING — the propofol/volatile baroreflex-gain depression lives in 7g's circulation PD only (R51 addendum 8); 7f's former `baroGainMult`/`neuroBaroGain` and its `circ/model.ts` edit are deleted. `mapSetShiftMmHg` is PUBLISHED ONLY (audit A11 forbids drugs moving the baroreflex set point; **Q-7f-1** for samhv-dev). 7d reads `cmro2Mult` (**R-7f-3**). 7e reads `ps.neuro.{antinoc, nmb, thermoDepth}` (R51 §6; the 7e plan's Requests): antinociception 0–1 (the opioid and hypnotic blunting of the noxious response), the peripheral NMB fraction (thumb block; abolishes shivering), and the thermoregulatory depth 0–1.5 (hypnotic MAC-equivalents; Sessler: thresholds fall linearly with concentration [ENG scale]).
 10. **Potassium is 7c's (R51 §3, §6).** 7f publishes no potassium and never writes `mods.k` (if it ever needed to, it would push DELTAS, 7c's pattern). The only ECG modifier 7f touches is the fasciculation EMG artefact, saved and restored on the committed state.
 11. **MH is 7e's (R51 §6).** 7f detects the exposure — succinylcholine on `bus.doses` or a potent volatile above 0.1 MAC in a profile with `neuro.mhSusceptible` — and emits the `mhTrigger` mark once; it publishes `ps.neuro.thermoDepth` for 7e and issues no condition. The MH crisis is Stage 3's `condition mh`, modelled by 7e; the MH scenario scripts it.
 12. **Airway device.** Stage 3 has no tube concept; 7f adds a neuro event `{ kind: 'airwayDevice', device: 'none' | 'ett' | 'sga' }` (default `'auto'`: a tube when the ventilation source is ventilator/external/bvm, else none). Upper-airway obstruction from sedation or residual block acts only with a natural airway: partial obstruction scales VT; ≥ 0.9 makes the cycle an obstructed effort (no flow, chest moves) — the Stage 3 airway command still wins when the instructor sets it.
@@ -446,7 +446,7 @@ export const FENT_EEG_POT = 1.6;
 /**
  * Fentanyl VENTILATORY potency relative to remifentanil — deviation D-7f-3 (Q54). The tables derive 1.6× (C50 ≈ 0.6
  * ng/mL) from EEG potency; with it fentanyl 1.5 µg/kg alone (Ce ≈ 2.3 ng/mL) makes a healthy adult apnoeic, against
- * clinical experience (RR ~8–10). 0.55× (C50 ≈ 1.7 ng/mL) [ENG], flagged for Ali.
+ * clinical experience (RR ~8–10). 0.55× (C50 ≈ 1.7 ng/mL) [ENG], flagged for samhv-dev.
  */
 export const FENT_VENT_POT = 0.55;
 /**
@@ -3152,7 +3152,7 @@ git push
 
 **Interfaces:**
 - Consumes: 7f's event kinds (`airwayDevice`, `neuroProfile`) and 7e's `stimulus` (`{ kind: 'stimulus', intensity }`, decision 17; accepted through 7f's temporary-owner validator or 7e's) and devices (`tof`, `depth`); 7g's `drug` and `vaporiser` events (`{ kind: 'vaporiser', agent, dialPct, fgfLpm }`, R51 §4 — 7f's former `volatile` event no longer exists); 7c's `patient.blood` profile (`burns`, the succinylcholine potassium sensitivity); Stage 3's `condition mh` (MH is 7e's model, R51 §6).
-- Produces: six `[draft]` scenario files for Ali's review; the schema accepts them.
+- Produces: six `[draft]` scenario files for the owner's review; the schema accepts them.
 
 - [x] **Step 1: Write the failing test** `packages/controller/test/scenario/neuro-scenarios.test.ts` (exact):
 
@@ -3206,12 +3206,12 @@ describe('Stage 7f scenarios', () => {
 
 (`blood` is 7c's `BloodProfile` — every field a number; only `burns`, which the succinylcholine scenario sets, is range-checked here.)
 
-- [x] **Step 4: The six scenarios** (exact files; all `[draft]` for Ali's review):
+- [x] **Step 4: The six scenarios** (exact files; all `[draft]` for the owner's review):
 
 `packages/controller/scenarios/nmb-residual-block.json`
 ```json
 {
-  "$comment": "[draft] Stage 7f scenario; clinical content awaits Ali's review (R44).",
+  "$comment": "[draft] Stage 7f scenario; clinical content awaits the owner's review (R44).",
   "schema": "pme-scenario/1",
   "id": "nmb-residual-block",
   "title": "[draft] Residual block at extubation",
@@ -3365,7 +3365,7 @@ describe('Stage 7f scenarios', () => {
 `packages/controller/scenarios/nmb-sux-burn.json`
 ```json
 {
-  "$comment": "[draft] Stage 7f scenario; clinical content awaits Ali's review (R44).",
+  "$comment": "[draft] Stage 7f scenario; clinical content awaits the owner's review (R44).",
   "schema": "pme-scenario/1",
   "id": "nmb-sux-burn",
   "title": "[draft] Succinylcholine in a burn patient",
@@ -3458,7 +3458,7 @@ describe('Stage 7f scenarios', () => {
 `packages/controller/scenarios/depth-light-anaesthesia.json`
 ```json
 {
-  "$comment": "[draft] Stage 7f scenario; clinical content awaits Ali's review (R44).",
+  "$comment": "[draft] Stage 7f scenario; clinical content awaits the owner's review (R44).",
   "schema": "pme-scenario/1",
   "id": "depth-light-anaesthesia",
   "title": "[draft] Light anaesthesia at incision",
@@ -3564,7 +3564,7 @@ describe('Stage 7f scenarios', () => {
 `packages/controller/scenarios/depth-awareness.json`
 ```json
 {
-  "$comment": "[draft] Stage 7f scenario; clinical content awaits Ali's review (R44).",
+  "$comment": "[draft] Stage 7f scenario; clinical content awaits the owner's review (R44).",
   "schema": "pme-scenario/1",
   "id": "depth-awareness",
   "title": "[draft] Awareness under neuromuscular block",
@@ -3726,7 +3726,7 @@ describe('Stage 7f scenarios', () => {
 `packages/controller/scenarios/depth-opioid-apnoea.json`
 ```json
 {
-  "$comment": "[draft] Stage 7f scenario; clinical content awaits Ali's review (R44).",
+  "$comment": "[draft] Stage 7f scenario; clinical content awaits the owner's review (R44).",
   "schema": "pme-scenario/1",
   "id": "depth-opioid-apnoea",
   "title": "[draft] Opioid apnoea at emergence",
@@ -3835,7 +3835,7 @@ describe('Stage 7f scenarios', () => {
 `packages/controller/scenarios/nmb-mh-trigger.json`
 ```json
 {
-  "$comment": "[draft] Stage 7f scenario; clinical content awaits Ali's review (R44).",
+  "$comment": "[draft] Stage 7f scenario; clinical content awaits the owner's review (R44).",
   "schema": "pme-scenario/1",
   "id": "nmb-mh-trigger",
   "title": "[draft] Malignant hyperthermia after succinylcholine and sevoflurane",
@@ -3968,7 +3968,7 @@ describe('Stage 7f scenarios', () => {
 }
 ```
 
-They are NOT added to `BUILTIN_SCENARIOS` (its test pins Stage 6b's five); adding them to the catalogue is the orchestrator's call after Ali's review.
+They are NOT added to `BUILTIN_SCENARIOS` (its test pins Stage 6b's five); adding them to the catalogue is the orchestrator's call after the owner's review.
 
 - [x] **Step 5: Run; expect PASS** (6): `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/neuro-scenarios.test.ts`, then `npx -y pnpm@9.15.9 --filter @pme/controller test` (all green). The vaporiser dials are [ENG] inputs measured on 7g's circle model at FGF 6 L/min (2.5 % → end-tidal 1.00 MAC at 30 min, 40 y; 1.25 % ≈ 0.5 MAC, 0.9 % ≈ 0.35 MAC at 40–45 y); adjust a dial, not the scenario text, if the demo shows otherwise. `stimulus` is 7e's shape (intensity 1 = incision, held until the next stimulus event). The succinylcholine-in-a-burn scenario sets `patient.blood.burns` 0.4 so 7c's potassium rise runs (R-7f-5). Prototype: 6 passed; `--filter @pme/controller test` 203 passed.
 
@@ -4528,7 +4528,7 @@ git push
 - NMB_PD as committed: vecuronium <EC50/γ>, cisatracurium <EC50/γ>, succinylcholine 200/4 (not fitted: FU-3) — each with the fit it met; rocuronium 823/1424 γ <x> [P]. "Max block" rule (decision 3).
 - NEO_G50 <x> (NEO_SMAX 0.7); STIM_FULL 1.5; GLYCO_U 1.2; SEVO_1MAC dial <x> %; any [ENG, band missed] rows — NEEDS A RULING.
 
-## Deviations, exceptions and questions for Ali
+## Deviations, exceptions and questions for samhv-dev
 - D-7f-2: sugammadex binding (plasma + effect site, ke0 0.095/0.152) is 7g's; 7f's reversal bands measured on it: <pass/fail>; R-7f-7 (underdose) open.
 - D-7f-3: fentanyl ventilatory potency 0.55× remifentanil (tables 1.6×), Q54.
 - D-7f-1 (interim rocuronium Vss 0.45) RETIRED with the interim PK (R51).
@@ -4557,7 +4557,7 @@ Stage 7f (R32) per docs/plans/stage-7f-neuro-depth.md, on the R51 drug-layer con
 - Scenarios (6, [draft]), the stage7f demo, the physiology console's neuro machinery map.
 - Pre-declared it.fails: FU-3 item 1 (succinylcholine onset), R-7f-7 (sugammadex underdose), R-7f-9 (sevoflurane reflex blunting). Exceptions E-7f-1, E-7f-2.
 
-Deviations and questions for Ali: D-7f-2, D-7f-3, Q-7f-1, Q-7f-2 (see the gate note).
+Deviations and questions for samhv-dev: D-7f-2, D-7f-3, Q-7f-1, Q-7f-2 (see the gate note).
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 BODY

@@ -80,6 +80,9 @@ export interface ViewerClock {
 
 export interface MonitorHandle {
   dispatch(cmd: Command): Promise<DispatchResult>;
+  /** R15: dispatch several commands in ONE engine task, in order: the engine runs no tick between them, so the commands
+   *  of a stage group land on the group's one tick however long the round trip to the worker takes. */
+  dispatchAll(cmds: Command[]): Promise<DispatchResult[]>;
   on(fn: (e: EngineEvent) => void): () => void;
   /** Screen CSS px per mm, measured on this screen; a monitor scaled as one unit converts it into its own px. */
   calibrate(pxPerMm: number): void;
@@ -158,14 +161,14 @@ export interface MonitorHandle {
 }
 
 const TILE_W = 190;
-const SOUNDER_PUMP_MS = 100; // alarm bursts are enqueued ≥ 1 s ahead, so 100 ms is plenty [ENG]
+const SOUNDER_PUMP_MS = 100; // alarm bursts are enqueued ≥ 1 s ahead, so 100 ms is plenty [ENG: display]
 /** Above this speed the beat tones (QRS beep, pulse tone) are off — at ×8 a heart rate of
- *  80 beeps 10.7 times a second; alarms and device tones still sound [ENG]. */
+ *  80 beeps 10.7 times a second; alarms and device tones still sound [ENG: display]. */
 export const BEAT_TONE_MAX_SCALE = 4;
 /** Whether a tone of this kind plays at this speed. A follower passes the session's `nominal` speed: its own clock is
  *  steered up to ±10 % around it, and a gate on the steered rate dropped about half the beats at ×4. */
 export const beatToneAt = (kind: string, timeScale: number, nominal?: number): boolean => (kind !== 'qrs' && kind !== 'pulse') || (nominal ?? timeScale) <= BEAT_TONE_MAX_SCALE;
-/** The two-tone cue at the end of a fast-forward (none at its start), Hz [ENG]. */
+/** The two-tone cue at the end of a fast-forward (none at its start), Hz [ENG: display]. */
 const FF_CUE_HZ = [660, 990] as const;
 
 export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorHandle {
@@ -509,8 +512,15 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       if (res.accepted) accepted(cmd, h);
       return res;
     });
+  const dispatchAll = (cmds: Command[]) =>
+    hostP.then(async (h) => {
+      const rs = await h.commands(cmds);
+      rs.forEach((res, i) => res.accepted && accepted(cmds[i] as Command, h));
+      return rs;
+    });
   return {
     dispatch,
+    dispatchAll,
     on(fn) {
       listeners.add(fn);
       return () => {

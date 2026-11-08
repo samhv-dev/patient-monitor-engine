@@ -16,7 +16,7 @@ export interface SiteProfile {
   gasUnit: 'mmHg' | 'kPa';
   /** New patients start with the sensors off: the learner attaches them and traces appear only then (Laerdal). */
   sensorsOff: boolean;
-  /** Drug names on every screen (Ali's open question Q13): 'us' "epinephrine / norepinephrine"
+  /** Drug names on every screen (the owner's open question Q13): 'us' "epinephrine / norepinephrine"
    *  (default), 'uk' "adrenaline / noradrenaline". */
   drugNames: 'us' | 'uk';
   /** The room's defibrillator model (Room plan R5b; owner's Q6 ruling of 5 November), apart from the monitor style: a
@@ -49,6 +49,12 @@ export function defibDefaults(model: string | null): { energyAdultJ: number; ene
   const look = DEFIB_CHOICES.find((c) => c.id === model)?.look;
   const d: Skin['defib'] = look ? resolveSkin(look).skin.defib : null;
   return d ? { energyAdultJ: d.energyAdultJ, energyPaedJ: d.energyPaedJ, ladderJ: [...(d.aedSequenceJ ?? [])] } : { energyAdultJ: NO_MODEL_ENERGY_J, energyPaedJ: null, ladderJ: [] };
+}
+/** The Room card's view of a model's pacer (row 58, the pacer following the model too), null with no model chosen. */
+export function pacerDefaults(model: string | null): { ratePpm: number; pausePct: number | null } | null {
+  const look = DEFIB_CHOICES.find((c) => c.id === model)?.look;
+  const p: Skin['pacer'] = look ? resolveSkin(look).skin.pacer : null;
+  return p ? { ratePpm: p.rateDefault, pausePct: p.pausePct } : null;
 }
 /** The drug-name sets, in the words the Settings screen uses. */
 export const DRUG_NAME_SETS: ReadonlyArray<[SiteProfile['drugNames'], string]> = [['us', 'Epinephrine, norepinephrine'], ['uk', 'Adrenaline, noradrenaline']];

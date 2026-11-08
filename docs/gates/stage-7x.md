@@ -166,7 +166,7 @@ The other clips (`*-organs-bottom.jpg`, `phenylephrine-changed-only-left.jpg`) a
 the truth tree); the same happens in the prototype on 7a-only main, so it predates this stage — worth a look by the
 owner of the capnography path.
 
-## 6. For Ali
+## 6. For samhv-dev
 
 Open `physiology-console.html` (demo dev server or `dist/`). Try: pick a preset under "Rhythm / mode / patient" and
 Restart; wait for "baseline @ 1:00"; give phenylephrine (the Drug row's defaults) or apply a lung condition; watch the

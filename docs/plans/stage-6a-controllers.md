@@ -6267,23 +6267,23 @@ S=/private/tmp/pme-6a-ci; rm -rf $S && git clone "$(pwd)" $S && cd $S && git che
 ```
 Expected: `exit 0`. Record per-package test totals (controller 97 in 20 files; the other packages unchanged from Stage 1).
 
-- [ ] **Step 3: LAN run with the relay (laptop + a second device)** — **pending Ali** (no second device available to the executor; recorded in the gate note)
+- [ ] **Step 3: LAN run with the relay (laptop + a second device)** — **pending samhv-dev** (no second device available to the executor; recorded in the gate note)
 
 ```bash
 npx -y pnpm@9.15.9 relay & RELAY_PID=$!
 npx -y pnpm@9.15.9 --filter @pme/demo dev --host --port 5173 --strictPort & DEV_PID=$!
 ipconfig getifaddr en0   # the laptop's LAN address, e.g. 192.168.1.20
 ```
-On the laptop open `http://<ip>:5173/stage6a.html?relay=ws://<ip>:8787/`. On a phone or the iPad open `http://<ip>:5173/stage6a-remote.html`, type the session code, choose **Relay (WebSocket)**, **Join**. Check and record: commands apply; turning Wi-Fi off on the phone shows `disconnected — retrying` while the laptop monitor keeps running; turning it back on reconnects and a command queued meanwhile is applied exactly once (host diagnostics `applied` rises by 1, `duplicates` may rise). Repeat with **Direct (WebRTC)**. Then open the viewer on the iPad (`/stage6a-viewer.html?session=CODE&via=relay&relay=ws://<ip>:8787/`) and record `lag` and `beat drift`. `kill $RELAY_PID $DEV_PID`. If no second device is at hand, write "pending Ali" in the note.
+On the laptop open `http://<ip>:5173/stage6a.html?relay=ws://<ip>:8787/`. On a phone or the iPad open `http://<ip>:5173/stage6a-remote.html`, type the session code, choose **Relay (WebSocket)**, **Join**. Check and record: commands apply; turning Wi-Fi off on the phone shows `disconnected — retrying` while the laptop monitor keeps running; turning it back on reconnects and a command queued meanwhile is applied exactly once (host diagnostics `applied` rises by 1, `duplicates` may rise). Repeat with **Direct (WebRTC)**. Then open the viewer on the iPad (`/stage6a-viewer.html?session=CODE&via=relay&relay=ws://<ip>:8787/`) and record `lag` and `beat drift`. `kill $RELAY_PID $DEV_PID`. If no second device is at hand, write "pending samhv-dev" in the note.
 
-- [ ] **Step 4: iPad as the host (panel by touch)** — open `stage6a.html` on the iPad; the drawer must open with a 5-tap in the top-left corner and with a three-finger long-press, the controls must be usable by touch, and sound must play after **Sound on** in the drawer. Record, or "pending Ali". — **pending Ali** (no second device / iPad available to the executor; recorded in the gate note)
+- [ ] **Step 4: iPad as the host (panel by touch)** — open `stage6a.html` on the iPad; the drawer must open with a 5-tap in the top-left corner and with a three-finger long-press, the controls must be usable by touch, and sound must play after **Sound on** in the drawer. Record, or "pending samhv-dev". — **pending samhv-dev** (no second device / iPad available to the executor; recorded in the gate note)
 
 - [x] **Step 5: Write `docs/gates/stage-6a.md`**
 
 ```markdown
 # Gate 6a — Controllers and transports (date: YYYY-MM-DD)
 
-Gate question (BUILD-PLAN Stage 6, first half): "Can Ali drive the monitor from a phone or laptop without touching it, see a second monitor follow it, and recover cleanly from a Wi-Fi drop?" (The 10-minute ACLS scenario is Stage 6b.)
+Gate question (BUILD-PLAN Stage 6, first half): "Can samhv-dev drive the monitor from a phone or laptop without touching it, see a second monitor follow it, and recover cleanly from a Wi-Fi drop?" (The 10-minute ACLS scenario is Stage 6b.)
 
 | Check | Result |
 |---|---|
@@ -6324,7 +6324,7 @@ git commit -m "docs(gates): stage 6a gate evidence — latency, screenshots, cle
 
 **Interfaces:**
 - Consumes: the finished branch.
-- Produces: a PR against `main` (R20); Ali speaks the merge.
+- Produces: a PR against `main` (R20); samhv-dev speaks the merge.
 
 - [x] **Step 1: Rebase check** — `git fetch origin && git log --oneline origin/main -5`. If `main` moved, `git rebase origin/main`, resolve conflicts only in files this stage owns (likely `pnpm-lock.yaml`: re-run `npx -y pnpm@9.15.9 install` and take its result; `NOTICES.md`: renumber this stage's rows after the last ID on `main`), then re-run `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test`.
 

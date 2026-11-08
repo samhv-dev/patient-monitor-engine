@@ -20,7 +20,7 @@ describe('kaliuresis (Young 1988; Good & Wright 1979; UK Renal Association 2023)
     expect(f.k).toBeLessThan(c.k - 0.02);
     expect(f.kIcf).toBeLessThan(c.kIcf);
   });
-  // R45 (research/22 BF-08d, dirOnly "beyond 0.1"): the band's size is Ali's (Open question 5). Under GA the diuresis is
+  // R45 (research/22 BF-08d, dirOnly "beyond 0.1"): the band's size is the owner's (Open question 5). Under GA the diuresis is
   // small (+150 mL/h at the peak), the kaliuresis ≈ 10 mmol against the untreated patient's retention, and 300 mmol of
   // total-body K per mmol/L (Sterns 1981) turns that into −0.03 (−0.029); the alkalotic rig (pH 7.57) also holds K in the cells.
   it.fails('furosemide 40 mg at K 7.5: K ≥ 0.1 lower at 3 h — measured −0.029', async () => {

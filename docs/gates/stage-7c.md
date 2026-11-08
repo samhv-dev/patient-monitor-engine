@@ -92,13 +92,13 @@ tests' own computations.
 | Test | Band | Measured | Needs |
 |---|---|---|---|
 | 7b `lung-circ` OLV qL share (sibling) | ≤ 0.30 | 0.307 (RR 40 rig) | 7b calibration: HPV potentiation by hypercapnia/acidosis; mixed-venous PO2 term |
-| 7c saline 2 L, engine (`blood-sanity-acid`) | Cl +6–8, BE −3 to −5 (D3) | Cl +5, BE −2.0 | albumin dilution offsets the chloride acidosis; Ali's R44 pass |
+| 7c saline 2 L, engine (`blood-sanity-acid`) | Cl +6–8, BE −3 to −5 (D3) | Cl +5, BE −2.0 | albumin dilution offsets the chloride acidosis; the owner's R44 pass |
 | 7c saline 2 L, core (`l2/blood/core`) | same | Cl +5.4, BE −2.1 | same |
 | 7c acute respiratory alkalosis (`l2/blood/acid-base`) | 0.2 mmol/L per mmHg | 0.127 | cellular H+ release / alkalosis-stimulated glycolysis; R44 |
 
 The other five sibling records from the plan's Task 15 no longer exist: 7a ×1 and the 7g rows were re-specified or fixed by rulings 1, 3 and 4, and `lung-unilateral` passes after ruling 2.
 
-## 6. Deviations (open ones for Ali's R44 pass)
+## 6. Deviations (open ones for the owner's R44 pass)
 
 - The plan's own list of deviations stands. Still open: Q25 (lung-water τ and threshold), Q41/Q42 (regional supply dependence: `REGIONAL_FRAC` 0.6, `kAnaer` 0.05, hepatic flow (CO/CO0)²), Q44/Q46 (iCa contractility and QTc slopes), Q45 (initial offsets), Q47 (Hahn fit). Also open:
   - **Class III BE** −2.3 vs ATLS "−6 to −10". Not asserted; candidate mechanisms are shock-related unmeasured anions and phosphate release.

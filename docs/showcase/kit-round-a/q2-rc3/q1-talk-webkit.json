@@ -1,0 +1,102 @@
+{
+  "kit": "fcf99b70",
+  "browser": "webkit",
+  "startedAt": "2026-10-23T10:40:17.213Z",
+  "segments": [
+    {
+      "tPlus": "00:06",
+      "what": "opening + QR done",
+      "about": {
+        "start": "Version 1.0.0-rc.3 (pre-release). For education only. Not a medical device and not clinically validated: never use it for patient care.",
+        "settings": "Version 1.0.0-rc.3 (pre-release). For education only. Not a medical device and not clinically validated: never use it for patient care.",
+        "preRelease": false,
+        "notMedicalDevice": true
+      },
+      "qr": {
+        "url": "http://192.168.1.100:8760/?join=B5F79T",
+        "code": "B5F79T",
+        "countBefore": "0 phones following",
+        "joinWallS": 2.9,
+        "countAfter": "3 phones following"
+      }
+    },
+    {
+      "tPlus": "00:06",
+      "what": "1 bronchospasm: Load"
+    },
+    {
+      "tPlus": "02:29",
+      "what": "1 bronchospasm: end (reload next)",
+      "wallS": 137.5
+    },
+    {
+      "tPlus": "02:45",
+      "what": "reload done",
+      "afterReload": {
+        "code": "B5F79T",
+        "scenario": "No scenario",
+        "phones": [
+          {
+            "hold": false,
+            "status": "synced",
+            "resyncs": 8
+          },
+          {
+            "hold": false,
+            "status": "synced",
+            "resyncs": 9
+          },
+          {
+            "hold": false,
+            "status": "synced",
+            "resyncs": 8
+          }
+        ],
+        "phones15s": [
+          {
+            "hold": false,
+            "status": "synced",
+            "resyncs": 8
+          },
+          {
+            "hold": false,
+            "status": "synced",
+            "resyncs": 9
+          },
+          {
+            "hold": false,
+            "status": "synced",
+            "resyncs": 8
+          }
+        ],
+        "wallS": 15.2
+      }
+    },
+    {
+      "tPlus": "02:45",
+      "what": "2 tamponade: Load"
+    },
+    {
+      "tPlus": "06:31",
+      "what": "2 tamponade: crystalloid; 3 Debrief",
+      "wallS": 221.6
+    },
+    {
+      "tPlus": "06:35",
+      "what": "4 MH: Load"
+    },
+    {
+      "tPlus": "08:38",
+      "what": "4 MH: end",
+      "wallS": 119.8
+    },
+    {
+      "tPlus": "09:37",
+      "what": "close: S12-F2 and FX-12 done"
+    },
+    {
+      "tPlus": "09:38",
+      "what": "end"
+    }
+  ]
+}

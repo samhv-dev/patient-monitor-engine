@@ -13,28 +13,28 @@ import { onEctopic, onMultifocal } from './atria-ectopic.ts';
 // --- constants (sources in comments) -------------------------------------------------------------
 const MOBITZ1_DELTA_S = 0.1; // Δ 60–120 ms [03 §1.5]
 const MOBITZ1_R = 0.5; // r = 0.5 [03 §1.5]
-export const AVB1_DEFAULT_PR_MS = 280; // PR > 200 ms (brief §5) [ENG value]
-const FLUTTER_FR_S = 0.26; // F-wave → QRS conduction time [ENG]
+export const AVB1_DEFAULT_PR_MS = 280; // PR > 200 ms (brief §5) [ENG: scenario; value]
+const FLUTTER_FR_S = 0.26; // F-wave → QRS conduction time [FIT: AV-node conduction in AF/flutter (calibration lookup); brief research/44 L2-14]
 const AF_IMPULSE_MEAN_S = 0.2; // atrial impulses, Poisson at 5/s [03 §1.5, Lian 2007]
-const AF_IMPULSE_MIN_S = 0.05; // truncation of the Poisson process [ENG]
+const AF_IMPULSE_MIN_S = 0.05; // truncation of the Poisson process [ENG: numerics]
 const AF_DV_MV = 15; // each impulse raises the junction potential by 15 mV [03 §1.5]
 const AF_SLOPE_MV_S = 30; // phase-4 depolarisation 30 mV/s [03 §1.5]
 /**
- * Rate control [ENG, calibrated by simulation]. For a target ventricular rate hr (RR = 60/hr):
+ * Rate control [FIT: AV-node conduction in AF/flutter (calibration lookup); calibrated by simulation; brief research/44 L2-14]. For a target ventricular rate hr (RR = 60/hr):
  *   threshold θ = AF_THETA_K · RR²; mean wait W ≈ θ / (slope + ΔV·impulseRate); refractory τ_R = RR − W.
  */
 const AF_THETA_K = 80;
 const AF_DRIVE_MV_S = AF_SLOPE_MV_S + AF_DV_MV / AF_IMPULSE_MEAN_S;
 const AF_RATE_CORRECTION = 0.95;
-const AF_AV_S = 0.06; // junction → QRS onset [ENG]
-const AF_MIN_REFRACTORY_S = 0.25; // RR_min 0.25–0.30 s (brief §4.1 AF fallback) [ENG]
+const AF_AV_S = 0.06; // junction → QRS onset [FIT: AV-node conduction in AF/flutter (calibration lookup); brief research/44 L2-14]
+const AF_MIN_REFRACTORY_S = 0.25; // RR_min 0.25–0.30 s (brief §4.1 AF fallback) (brief §4.1 AF fallback: RR_min 0.25–0.30 s)
 /**
  * AV-node effective refractory period, P to P (≈ 250–300 ms; the low end, so 1:1 conduction holds up to 240/min)
- * [ENG]. Supraventricular impulses are filtered HERE, not by ventricular refractoriness.
+ * [FIT: AV-node conduction in AF/flutter (calibration lookup); brief research/44 L2-14]. Supraventricular impulses are filtered HERE, not by ventricular refractoriness.
  */
 export const AV_NODE_ERP_S = 0.25;
 /**
- * AF rate calibration [ENG]: pairs [target bpm, command bpm] — the command fed to the threshold/refractory formulas
+ * AF rate calibration [FIT: AV-node conduction in AF/flutter (calibration lookup); brief research/44 L2-14]: pairs [target bpm, command bpm] — the command fed to the threshold/refractory formulas
  * that yields the target mean ventricular rate (simulated, 600 s × seeds 11–13). The 135 and 145 knots are fitted too:
  * interpolated between the 130 and 140 knots, 135 read +1.0 % (+2.1 % on seed 21).
  */
@@ -94,12 +94,12 @@ export function junctionSpontT(st: RhythmState, ctx: RhythmCtx): number {
   return Math.max(j.vT, j.refUntil) + (afThresholdMv(rhythmRate(st, j.vT, ctx)) - j.v) / AF_SLOPE_MV_S;
 }
 
-const PREEXCITED_MIN_REFRACTORY_S = 0.2; // accessory pathway: very short RR (research 03 §1.5 "Pre-excited AF") [ENG]
+const PREEXCITED_MIN_REFRACTORY_S = 0.2; // accessory pathway: very short RR (research 03 §1.5 "Pre-excited AF") (research 03 §1.5)
 
 export function fireJunction(st: RhythmState, t: number, ctx: RhythmCtx): void {
   const d = RHYTHMS[st.id];
   const pre = d.conductedTemplate === 'wpw';
-  // Pre-excited AF: every beat is a different fusion of pathway and node conduction → varying QRS width [ENG].
+  // Pre-excited AF: every beat is a different fusion of pathway and node conduction → varying QRS width [FIT: AV-node conduction in AF/flutter (calibration lookup); brief research/44 L2-14].
   const p = pre ? 0.4 + 1.4 * uniform(ctx.rng.conduction) : 1;
   pushPending(st, { t: t + AF_AV_S, origin: 'atrial', template: d.conductedTemplate, prMs: null, pvc: false, coupling: 0, bypass: true, pre: p });
   const ref = t + afRefractoryS(rhythmRate(st, t, ctx), pre ? PREEXCITED_MIN_REFRACTORY_S : AF_MIN_REFRACTORY_S);
@@ -193,7 +193,7 @@ export function conductAt(st: RhythmState, t: number, rate: number, ctx: RhythmC
   return pr;
 }
 
-/** sinusArrhythmia: RSA depth at least 2.5 (A_RSA 150 ms at RR 1 s → phasic PP swing > 120 ms, research 03 §1.5) [ENG]. */
+/** sinusArrhythmia: RSA depth at least 2.5 (A_RSA 150 ms at RR 1 s → phasic PP swing > 120 ms, research 03 §1.5) [ENG: texture]. */
 const SINUS_ARRHYTHMIA_RSA = 2.5;
 
 /** Next sinus P time after a P at t (HRV, sinus arrhythmia, sinus pause). */
@@ -203,7 +203,7 @@ function nextSinusT(st: RhythmState, t: number, rate: number, ctx: RhythmCtx): n
     : ctx.mods;
   const next = t + sinusRR(60 / rate, t, ctx.hrv, m, ctx.rng.hrv, ctx.breath);
   if (st.id === 'sinusPause') {
-    const every = st.opts.pauseEveryS ?? 12; // [ENG]
+    const every = st.opts.pauseEveryS ?? 12; // [ENG: scenario]
     const k0 = Math.floor((t - st.startT) / every);
     const k1 = Math.floor((next - st.startT) / every);
     if (k1 > k0 && k0 >= 0) return t + (st.opts.pauseS ?? 3); // sinus arrest: not a multiple of PP
@@ -211,8 +211,8 @@ function nextSinusT(st: RhythmState, t: number, rate: number, ctx: RhythmCtx): n
   return next;
 }
 
-const PAC_P_VEC: readonly [number, number, number] = [0.02, -0.12, 0.03]; // P′ of a different (low-atrial) shape, II −0.13 mV [ENG]
-const PAC_EXTRA_PR_MS = 20; // PR′ ≥ normal PR (research 03 §1.5) [ENG value]
+const PAC_P_VEC: readonly [number, number, number] = [0.02, -0.12, 0.03]; // P′ of a different (low-atrial) shape, II −0.13 mV [FIT: ECG morphology amplitude without a source; brief research/44 L2-46]
+const PAC_EXTRA_PR_MS = 20; // PR′ ≥ normal PR (research 03 §1.5) (meets research 03 §1.5's PR′ ≥ PR; value)
 
 function onSinus(st: RhythmState, t: number, ctx: RhythmCtx): void {
   const d = RHYTHMS[st.id];

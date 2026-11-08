@@ -1,13 +1,13 @@
-// QRS / pulse beep (brief §3.6): 100 ms, fundamental plus 2nd and 3rd harmonics, 5 ms attack and release [ENG]. The
+// QRS / pulse beep (brief §3.6): 100 ms, fundamental plus 2nd and 3rd harmonics, 5 ms attack and release [ENG: device]. The
 // pitch comes with the tone (the engine's spo2PitchHz: 1245 Hz at SpO2 100 %). Duration and the 3rd harmonic follow the
 // measured Saadat beep (research/34 row 6: ≈ 1245 Hz, square-like with a strong 3rd harmonic, 100–150 ms).
 
 export const BEEP_MS = 100;
 export const BEEP_RAMP_MS = 5;
-export const BEEP_HARMONIC2 = 0.3; // relative amplitude of the 2nd harmonic [ENG]
-export const BEEP_HARMONIC3 = 1 / 3; // relative amplitude of the 3rd harmonic, a square wave's [ENG]
+export const BEEP_HARMONIC2 = 0.3; // relative amplitude of the 2nd harmonic [ENG: device]
+export const BEEP_HARMONIC3 = 1 / 3; // relative amplitude of the 3rd harmonic, a square wave's [ENG: device]
 /** At most this share of the wall-clock beat interval is beep, so fast beats (tachycardia at ×4) never run together
- *  into one tone (owner's ruling on the 100 ms beep) [ENG]. */
+ *  into one tone (owner's ruling on the 100 ms beep) [ENG: device]. */
 export const BEEP_MAX_BEAT_FRACTION = 0.6;
 
 /** The beep's length, ms, at this heart rate and simulation speed: BEEP_MS, shortened to BEEP_MAX_BEAT_FRACTION of the

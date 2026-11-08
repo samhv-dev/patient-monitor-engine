@@ -267,13 +267,25 @@ describe('the run record', () => {
     expect(at(40)).toMatchObject({ sys: 100, dia: 60, cvp: 12 });
     expect([41, 42, 43, 44, 45, 46].map((t) => [at(t)?.sys, at(t)?.dia])).toEqual(Array(6).fill([null, null])); // the gap stays blank
     expect(at(100)).toMatchObject({ sys: 104, dia: 62 });
-    // the finding D1 reports and does not change: `map` (TREND, the first valid of abpMean then nibpMean) holds the
-    // cycle's 73 in every second until the next cycle
-    expect([41, 46].map((t) => at(t)?.map)).toEqual([73, 73]);
+    // `map` (TREND, the first valid of abpMean then nibpMean) follows the same rule (research/41 row 53): the cuff's 73
+    // sits in its cycle's second and the seconds between cycles are null, never the cycle's value held
+    expect(at(40)?.map).toBe(73);
+    expect([41, 42, 43, 44, 45, 46].map((t) => at(t)?.map)).toEqual(Array(6).fill(null));
+    expect(at(100)?.map).toBe(76);
     // an invalid value is null; a line that stops reporting is null in the seconds it is silent, never its last value
     r.engine(numerics(101, { abpSys: null, abpDia: null, cvpMean: null }));
     r.engine(numerics(102, { hr: 70 }));
     expect([at(101), at(102)].map((x) => [x?.sys, x?.dia, x?.cvp])).toEqual([[null, null, null], [null, null, null]]);
+  });
+
+  it('D1: an arterial MAP is kept every second; a cuff MAP only in the second of its cycle, null between cycles', () => {
+    const r = fresh();
+    r.engine(numerics(40.3, { nibpSys: 100, nibpDia: 60, nibpMean: 73 })); // a cuff cycle, no arterial line
+    for (let t = 41; t <= 44; t++) r.engine(numerics(t, { abpMean: null, hr: 80 }));
+    for (let t = 45; t <= 48; t++) r.engine(numerics(t, { abpMean: 80 + t - 45 })); // the arterial line reads every second
+    const at = (t: number) => r.data.samples.find((x) => x.t === t)?.map;
+    expect([40, 41, 42, 43, 44].map(at)).toEqual([73, null, null, null, null]);
+    expect([45, 46, 47, 48].map(at)).toEqual([80, 81, 82, 83]);
   });
 
   it('D1: a record keeps `keeps` = the facts its build records; a new record and emptyRun() have "pressures"', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calibrationQueue, gatingFailures, renderMarkdown } from '../../src/report/write.ts';
+import { calibrationQueue, counts, gatingFailures, renderMarkdown } from '../../src/report/write.ts';
 import type { Report } from '../../src/report/types.ts';
 
 const R: Report = {
@@ -8,7 +8,7 @@ const R: Report = {
   datasets: [{ id: 'vitaldb', title: 'VitalDB (PhysioNet copy)', licence: 'CC BY 4.0', attribution: 'Lee HC et al. Sci Data 9:279 (2022).', windows: 2 }],
   morphology: [
     { band: 'V1', metric: 'rToFootMs', group: 'HR 70–90', recorded: { n: 400, median: 160, p25: 155, p75: 165 }, engine: { n: 400, median: 158, p25: 157, p75: 159 }, ks: 0.42, w1: 9.7, engineStat: 158, expected: '140–180', grade: 'green', errPct: 0, source: 'brief §9 V1' },
-    { band: 'PPV', metric: 'ppvPct', group: 'all', recorded: { n: 6, median: 8.8, p25: 5, p75: 10 }, engine: { n: 6, median: 16, p25: 14, p75: 18 }, ks: 0.67, w1: 7, engineStat: 16, expected: '5.8–11.8', grade: 'red', errPct: 35, source: '[ENG]' },
+    { band: 'PPV', metric: 'ppvPct', group: 'all', recorded: { n: 6, median: 8.8, p25: 5, p75: 10 }, engine: { n: 6, median: 16, p25: 14, p75: 18 }, ks: 0.67, w1: 7, engineStat: 16, expected: '5.8–11.8', grade: 'red', errPct: 35, source: '[ENG: test]' },
   ],
   intervals: { ptbxl: 100, engine: 12 },
   segments: {
@@ -31,10 +31,44 @@ describe('report writer', () => {
   });
   it('renders every section, attribution and the not-measurable list', () => {
     const md = renderMarkdown(R);
-    for (const s of ['# Validation report', '## Datasets and attribution', 'Lee HC et al.', '## Morphology', '| 🔴 | PPV | all |', '### Not measurable on this build', 'MODELED mode arrives in Stage 7', '## Waveform regression', '## Determinism (V9)', '## Pulse oracle', 'known Pulse disagreement D1', '## Calibration queue (R44)', 'Ali: decision']) expect(md).toContain(s);
+    for (const s of ['# Validation report', '## Datasets and attribution', 'Lee HC et al.', '## Morphology', '| 🔴 | PPV | all |', '### Not measurable on this build', 'MODELED mode arrives in Stage 7', '## Waveform regression', '## Determinism (V9)', '## Pulse oracle', 'known Pulse disagreement D1', '## Calibration queue (R44)', 'samhv-dev: decision']) expect(md).toContain(s);
   });
   it('says when a dataset could not be fetched (the run goes on without it)', () => {
     const d = { id: 'pwdb' as const, title: 'PWDB', licence: 'PDDL 1.0', attribution: 'Charlton PH et al.', windows: 0, unavailable: 'GET … → 403' };
     expect(renderMarkdown({ ...R, datasets: [...R.datasets, d] })).toContain('| PWDB | PDDL 1.0 | 0 (not fetched: GET … → 403) |');
+  });
+  describe('expected failures (brief 84)', () => {
+    const X = { id: 'X: a named mechanism (mechanism brief)', mechanism: 'the mechanism', since: '2026-11-08', measured: '35' };
+    const morph = R.morphology[1] as Report['morphology'][number];
+    const marked: Report = { ...R, morphology: [R.morphology[0] as Report['morphology'][number], { ...morph, expectedMiss: X }] };
+    it('a marked row that misses its band is its own class: counted, coloured, listed, not gating, never green', () => {
+      expect(counts(R)).toEqual({ green: 3, yellow: 1, expected: 0, red: 1 });
+      expect(counts(marked)).toEqual({ green: 3, yellow: 1, expected: 1, red: 0 });
+      expect(gatingFailures(marked)).toEqual([]);
+      const md = renderMarkdown(marked);
+      expect(md).toContain('🟢 3 · 🟡 1 · 🟣 1 expected · 🔴 0 graded rows');
+      expect(md).toContain('| 🟣 | PPV | all |');
+      expect(md).toContain('## Expected failures (brief 84)');
+      expect(md).toContain(`| 🟣 | morphology | PPV · all | engine 16.0 vs recorded 8.8 | 5.8–11.8 | ${X.id} | the mechanism | 2026-11-08 | 35 |`);
+      expect(calibrationQueue(marked).map((q) => [q.grade, q.expectedMiss?.id ?? null])).toEqual([['red', X.id], ['yellow', null]]);
+    });
+    it('a yellow row with a mark stays an expected failure (it still misses its band)', () => {
+      const y: Report = { ...marked, morphology: [{ ...morph, grade: 'yellow', expectedMiss: X }] };
+      expect(counts(y).expected).toBe(1);
+      expect(gatingFailures(y)).toEqual([]);
+    });
+    it('a marked row that meets its band turns red and gates until the mark comes off', () => {
+      const healed: Report = { ...R, morphology: [{ ...morph, grade: 'green', errPct: 0, expectedMiss: X }] };
+      expect(counts(healed)).toEqual({ green: 2, yellow: 1, expected: 0, red: 1 });
+      expect(gatingFailures(healed)).toEqual([`morphology PPV · all: expected failure "${X.id}" now meets its band; take the mark off`]);
+      expect(renderMarkdown(healed)).toContain('| 🔴 | PPV | all |');
+    });
+    it('segment and regression rows carry their mark the same way', () => {
+      const seg = { ...(R.segments.results[0] as Report['segments']['results'][number]), grade: 'red' as const, pass: false, expectedMiss: X };
+      const wave = { case: 'sinus-75', channel: 'pleth', n: 625, failed: 625, maxRelErr: 0.1, rms: 0.05, grade: 'red' as const, expectedMiss: X };
+      const r2: Report = { ...R, morphology: [], segments: { ...R.segments, results: [seg] }, regression: [wave] };
+      expect(counts(r2)).toEqual({ green: 1, yellow: 0, expected: 2, red: 0 }); // the green one is the oracle row
+      expect(gatingFailures(r2)).toEqual([]);
+    });
   });
 });
