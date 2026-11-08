@@ -61,7 +61,7 @@ Contents: 1 what shipped · 2 the clinical scenario table · 3 the audit before 
 | S1b same, 15 min | ≥ 85 % of baseline | **0.920** (prototype 0.84) | **flipped** `it.fails` → `it` | |
 | S2 sevoflurane 3 % 20 min | MAP −15…−30 %, ΔHR ≤ 10, no arrest (Ebert 1995) | **−14.3 %**, ΔHR −2, none | HR/no-arrest pass; **MAP side `it.fails`** (18e; −21 % on the prototype) | |
 | S3 tamponade pulsus | ≥ 10 mmHg (Spodick) | 3.1 (swing 8: 4.9; 12: 6.9) | `it.fails` (circ-pulsus) | |
-| S4a tamponade + propofol 2 mg/kg | PEA ≤ 10 min, compensated MAP ≥ 75 (Ali, R53) | MAP 90, HR 104 → **PEA +165 s** | pass | 2 |
+| S4a tamponade + propofol 2 mg/kg | PEA ≤ 10 min, compensated MAP ≥ 75 (samhv-dev, R53) | MAP 90, HR 104 → **PEA +165 s** | pass | 2 |
 | S4b tamponade + propofol 1 mg/kg | MAP < 55 in 3 min, CO −25 % | MAP **59.7**, CO **−15 %** | `it.fails` (Q2) | |
 | S5 tamponade PEEP 5 → 10 | CO −20 %, ΔMAP ≥ healthy + 10 | ΔMAP **4.1 vs 1.5**, CO **×0.88** | `it.fails` (Q2) | |
 | S6a class III + propofol: MAP < 50 | Johnson 2003; ATLS | 83.5 → **26.6** | pass | |
@@ -70,7 +70,7 @@ Contents: 1 what shipped · 2 the clinical scenario table · 3 the audit before 
 | S6b propofol peak Ce ratio | ≥ 1.3× healthy (Task 14) | **1.83** | pass | |
 | S8 tension PTX, one command | PEA 3–10 min | **+9.75 min** (+10.67 with the withdrawn BJ term) | **flipped** → `it` | 4 |
 | S9 massive PE: EtCO2 | falls ≥ 10 | 33 → **17** | pass | |
-| S9 SaO2 (truth) | < 90 % at 5 min | **97.8 %** (shown SpO2 97) | `it.fails` (item 15, Ali's band) | |
+| S9 SaO2 (truth) | < 90 % at 5 min | **97.8 %** (shown SpO2 97) | `it.fails` (item 15, the owner's band) | |
 | S9 CVP / MAP | ≥ 15 / < 65 at 5 min | **9.3 / 82.1** | `it.fails` (Q15) | |
 | S9 + propofol 1 mg/kg | PEA ≤ 10 min | PEA **+95 s** | pass | 7 (2 mg/kg) |
 | S10 anaphylaxis sev 1 | arrest ≤ 10 min (Ring & Messmer IV) | **+235 s** | pass | |
@@ -99,7 +99,7 @@ produced the new ones — every one carries its number.
 
 `audit-before.md` = `origin/main` before FU-4; `audit-after.md` = this head (`pnpm run audit:physiology`, 79 scenarios).
 
-**Four-patient propofol 2 mg/kg (Ali's state-dependence table, audit §K):**
+**Four-patient propofol 2 mg/kg (the owner's state-dependence table, audit §K):**
 
 | state | before ΔMAP / ΔHR / arrest | after ΔMAP (min MAP) / ΔHR / arrest |
 |---|---|---|
@@ -116,10 +116,10 @@ produced the new ones — every one carries its number.
 The healthy row misses the −25 to −40 % band (Miller) at −21…−23 % because of 18e's humoral arm (D23: the two
 sourced targets pull against each other — item 19).
 
-**Ali's tamponade timeline (B7):** compensated at 660 s (MAP 90, HR 105, CVP 17, CO 3.18, CoPP 61) → propofol 2 mg/kg
+**The owner's tamponade timeline (B7):** compensated at 660 s (MAP 90, HR 105, CVP 17, CO 3.18, CoPP 61) → propofol 2 mg/kg
 → +60 s MAP 50, HR 86, CO 2.53 → +120 s MAP 45, CoPP 25, kIsch 0.74 → **PEA at 830 s (+170 s)** (first MAP < 30 at
 810 s) → +180 s MAP 19, CO 0, EtCO2 16 → `agonal` at 960 s → **asystole by 1200 s**; lactate 12.1, pH 6.75 later. The
-later steps of Ali's chain are never reached alive (R53).
+later steps of the owner's chain are never reached alive (R53).
 
 **Class III + propofol (C1):** bleed 1.5 L over 600 s → compensated at 960 s (MAP 83, HR 119, CO 3.17, lactate 2.2) →
 propofol 2 mg/kg → **nadir MAP 26.6 at ≈ +60 s** (CO 1.60, kIsch min 0.81) → 32 at +120 s, 40 at +240 s, 45 at +9 min;
@@ -256,7 +256,7 @@ ICP drop 30.5 %; tension-ptx +10.45 min; truth-event
 | A08-J2/J3 elderly HTN, A08-K-as AS+CAD, A08-K-hf HFrEF | larger falls (CM-01 −30…−45 %) | TW (−11 %) | −21 % each | **TW** (18e) |
 | A08-C1 class III + propofol | profound hypotension, arrest not the rule | TW (−25 %) then PEA +80 s on the applied tree | nadir 26.6, no arrest | **PL** (nadir 3 mmHg under 30) |
 | A08-B1/B2/B9/B8 tamponade + propofol | collapse / PEA | WR (−16 %) | 2 mg/kg PEA +170 s; 1 mg/kg MAP 59.7 | **PL** (2), **TW** (1 mg/kg, Q2) |
-| A08-B6/B7 Ali's chain | never reached alive | WR (no arrest) | PEA 830 s | **PL** |
+| A08-B6/B7 the owner's chain | never reached alive | WR (no arrest) | PEA 830 s | **PL** |
 | A08-B0s pulsus | ≥ 10 mmHg | WR | 3.1 | **TW** (Q2) |
 | A08-B3/B3b tamponade PEEP | CO −20 % | TW | ×0.88 | **TW** |
 | A08-C4 class IV / L-C4 MANUAL | arrest | WR | PEA 645 s / 640 s | **PL** |
@@ -265,12 +265,12 @@ ICP drop 30.5 %; tension-ptx +10.45 min; truth-event
 | A08-I1 apnoea | hypoxic arrest | WR | asystole 910 s | **PL** |
 | A08-X VF + CPR | CoPP CPR-level | WR (79) | 25–29 (q 0.8), 33–34 with adrenaline | **PL** (slightly high; S13 `it.fails`) |
 | DV-02 CPR quality | CoPP 15–25 | NM | 25.1–28.8 | **TS** (small) |
-| DV-03 exsanguination, CPR alone | no pulse without volume | NM | no pulse, CoPP 2.9–3.5 (18e-fix); with volume: 3 L → +180 s | **PL** (threshold: Ali A-new) |
+| DV-03 exsanguination, CPR alone | no pulse without volume | NM | no pulse, CoPP 2.9–3.5 (18e-fix); with volume: 3 L → +180 s | **PL** (threshold: samhv-dev A-new) |
 | DV-26 asphyxial arrest | oxygenation reverses bradycardia | NM | reversal 7.0 s (FU-3 rig) | PL |
 | A10-D6 VF EtCO2 | gradual decay | WR (37 → 1 in 20 s) | 14.5 / 6.6 at +60/+120 s | **PL** (CPR "by +2 min" `it.fails`) |
 | A10-B1 sinus 30 + escape | 40 QRS/min | WR | 60 | **WR** (Stage 5 AV concealment — not FU-4's) |
 | A10-B3 AF pulse deficit | 10–20 % | IN (44 %) | 14.1 % MODELED / 11.4 % MANUAL | **PL** |
-| A08-D0 / A09-G1a massive PE | SpO2 < 90, CVP ≥ 15, MAP < 65 | WR | SaO2 97.8, CVP 9.3, MAP 82.1; PEA 1775 s | **TW** (Q15; Ali's band) |
+| A08-D0 / A09-G1a massive PE | SpO2 < 90, CVP ≥ 15, MAP < 65 | WR | SaO2 97.8, CVP 9.3, MAP 82.1; PEA 1775 s | **TW** (Q15; the owner's band) |
 | A08-E1 / A09-F4 tension PTX | PEA 3–10 min PPV | WR (no PEA) | +9.75–10.45 min; spontaneous none in 15 min | **PL** (edge) |
 | A08-G1 / BF-07 hyper-K | sine wave → VF/asystole ≥ 8–9 | WR | K 9.5 VF 65 s; 7.5/8.5 no arrest | **PL** (no AV block / rate of rise — item 20) |
 | A08-G3b / DI-37a burns + sux | K +3–7 → arrhythmia | WR | VF +225 s | **PL** |
@@ -285,11 +285,11 @@ ICP drop 30.5 %; tension-ptx +10.45 min; truth-event
 | A09-A1/A2/A2f/A2g/VD×6 dead space | PaCO2 35–45 at 7 mL/kg | WR (PaCO2 60, woman 103) | man 39.4, woman 41.3, child 39.2, infant 39.1, elderly 38.3 | **PL** |
 | A09-B5g / PD-11 child | PaCO2 35–42 | WR (55) | 39.2 at 17 × 112 | **PL** |
 | PD-12 infant (FU-6 Request 3) | no crash | crash at 240 s | PaCO2 39.1, no non-finite | **PL** |
-| A09-B7 MANUAL apnoea | — | MI | unchanged by design (D6) | Ali (Q9) |
+| A09-B7 MANUAL apnoea | — | MI | unchanged by design (D6) | samhv-dev (Q9) |
 | A08-L-B6 / L-B0 MANUAL tamponade | — | WR | no engine arrest, MAP ≥ 49.6 (D6) | **visible, by design** (Q9) |
 
 Cells the audits marked wrong that FU-4 does NOT fix, named: A10-B1 (Stage 5 AV concealment), A08-D0/A09-G1a/c (the
-massive PE's hypoxaemia and RV failure — Ali's band, Q15; A09-G1d hyperventilation is FU-6's), A09-B7 and the MANUAL tracker floor (Q9, Q-FU3-4a), DI-13a/DI-25 (amiodarone and calcium have no shock /
+massive PE's hypoxaemia and RV failure — the owner's band, Q15; A09-G1d hyperventilation is FU-6's), A09-B7 and the MANUAL tracker floor (Q9, Q-FU3-4a), DI-13a/DI-25 (amiodarone and calcium have no shock /
 NMB path — DV/FU-7), DI-21 ketamine in sepsis (7g), A10 monitor cells (FU-5).
 
 ## 8. Glossary labels (research/11, R56)
@@ -304,7 +304,7 @@ rows for them (proposed additions for S9's relabel).
 
 ## 9. Open questions (the plan's list, updated)
 
-1–12 (Ali's twelve) stand as written in the plan with these numbers: Q1 healthy −23 % (item 19); Q2 tamponade 1 mg/kg
+1–12 (the owner's twelve) stand as written in the plan with these numbers: Q1 healthy −23 % (item 19); Q2 tamponade 1 mg/kg
 MAP 59.7, CO −15 %; PEEP 10 CO ×0.88; Q3 onset proportions (unchanged); Q4 class IV HR 169 → min 53 before the arrest;
 Q5 (+ item 20); Q6 MH VF 44.4 min at 42.3 °C; Q7 grade IV arrest 235 s, adrenaline MAP 108; Q8 unchanged; Q9 MANUAL
 (+ item 21); **Q10 RULED** (18d: man 39.4, woman 41.3); Q11 unchanged; Q12 Ce ratio 1.83 (suite) / 1.29 (unit rig), the
@@ -313,7 +313,7 @@ papers' numbers still not extracted.
 **14 RULED → 18c** (PEA +8.65 → +10.45 with 18e; S8 +9.75). **15** massive PE — S9 SaO2 97.8, CVP 9.3, MAP 82.1.
 **16** `TAU_HYP_S` re-scanned at the gate: 300 s, margins 1.35 / 7.65 (§6). **17 RULED → 18b** (exsanguination PEA 484
 → agonal +107 → asystole +260 s). **18 RULED → 17** (AF 14.1 %). **19** the two propofol targets (−23 % healthy vs
-class III nadir 26.6): Ali. **20** hyperkalaemia gaps (rate of rise, AV block, calcium generosity): Ali/Q5. **21** MANUAL
+class III nadir 26.6): samhv-dev. **20** hyperkalaemia gaps (rate of rise, AV block, calcium generosity): samhv-dev/Q5. **21** MANUAL
 18/10 → 65/30 (MAP 38): a test now. **22** the infant: fixed (18d) and guarded (18g).
 New:
 23. **The humoral arm vs ruling 3 — gate finding G-FU4-1, RESOLVED by the third mechanism (Task 18e-fix, `70207d0`).** 18e's
@@ -347,7 +347,7 @@ New:
     expectation from ruling 3, not a sourced band, and clinically optimistic. Landed as Task 18e-fix: CPR alone now
     gives no pulse (CoPP 2.9–3.5; `it.fails` → `it`); the 2 L row is an `it.fails` under **E-FU4-19** with its number;
     the volume threshold is a measurement (A-new below). Patches (1) and (2) stay in the executor's scratch.
-29. **A-new (Ali): after a complete 3 L bleed-out under CPR, how much volume plus adrenaline should regain a pulse, and
+29. **A-new (samhv-dev): after a complete 3 L bleed-out under CPR, how much volume plus adrenaline should regain a pulse, and
     in how long?** Measured (seed 7, CPR q 0.8 and adrenaline 1 mg from 720 s, balanced fluid over 300 s):
 
     | volume | pulse |
@@ -366,9 +366,9 @@ New:
     documents send HR targets, and should FU-3's hypoxic arrest act through a held rate? **Ruled: accepted —
     `t25-apnoea` carries no heart-rate target.**
 26. **TCI under low output** (pk-longrun) — **WITHDRAWN at CI:** the "over-delivery" (Ce 2.5065) was macOS-only; Linux CI
-    measures 2.4987 (in band). The earlier ruling (a feature, Ali's list) no longer has a finding behind it.
+    measures 2.4987 (in band). The earlier ruling (a feature, the owner's list) no longer has a finding behind it.
 27. **7c water balance:** the resting 24 h drift (bvRel −0.5 %, Hb +0.08) behind the soak lactate (and the 24 h local UOP drift 2.68 %). **Ruled: calibration queue.**
-28. **Stage 3's low-flow unit bands vs the orchestrator's arrest-EtCO2 update** (Task 17): two `it.fails` until ruled. **Ruled: they stay pinned as `it.fails` with numbers (R45).** Ali's Q1 conflict (healthy −23 %
+28. **Stage 3's low-flow unit bands vs the orchestrator's arrest-EtCO2 update** (Task 17): two `it.fails` until ruled. **Ruled: they stay pinned as `it.fails` with numbers (R45).** the owner's Q1 conflict (healthy −23 %
     vs class III) is his — neither moves.
 
 ## 9b. FU-5 (PR #24) — merged in, and its cross-branch items (orchestrator rulings at the gate, 2026-09-29)
@@ -381,7 +381,7 @@ the FU-5 executor had measured — and were then handled as ruled (`7975074`, **
 
 | FU-5 test | measured on the merged tree | ruling | now |
 |---|---|---|---|
-| fidelity-lowflow, Ali's case: no red cycle < 5 s | EXTREME BRADY ×3 (948 s +3.3, 989 s +3.1, 1000 s +3.6) — the decaying PEA at ≈ 18/min (R–R 3.3 s) | small L3 fix or pin | **pinned** `it.fails` (FU-5 follow-up) |
+| fidelity-lowflow, the owner's case: no red cycle < 5 s | EXTREME BRADY ×3 (948 s +3.3, 989 s +3.1, 1000 s +3.6) — the decaying PEA at ≈ 18/min (R–R 3.3 s) | small L3 fix or pin | **pinned** `it.fails` (FU-5 follow-up) |
 | fidelity-lowflow, 3 L bleed: no technical cycle < 5 s | SpO2 LOW PERF ×1 (601 s, 1.0 s) | small L2/L3 fix or pin | **pinned** `it.fails` (FU-5 follow-up) |
 | fidelity-lowflow, 3 L bleed: no red cycle < 5 s (masked before by the technical one) | EXTREME BRADY ×1 (956 s, 3.6 s) | as above | **pinned** `it.fails` (FU-5 follow-up) |
 | fidelity-arrest PEA: HR = the electrical rate ± 3 | HR 94.3 vs the commanded 90 (4.3 off); the ELECTRICAL rate is 94.7 — FU-4's continuous MAP reaches 7e, whose stress response scales the MANUAL sinus clock (endoHrF 1.085), rate 91 → 98 | R45 re-statement | asserted against the measured electrical rate (the title's own criterion) |
@@ -400,12 +400,12 @@ elapse before the stage7f script's BVM at +180 s) — pinned with `test.fail` un
 timing or the alarm (FU-5's). And truth-event's leaf-cap `it.fails` flipped (2 041 leaves with FU-5's SKIP_PATH).
 
 **`pnpm audit:monitor` on the merged tree (43 scenarios, EXIT 0):** low flow — A1m SpO2 "99?" PI 0.20 LOW PERF, A2
-(Ali) "99?" PI 0.14; PEA HR mean 93 (all three skins), PR invalid +7 s, SpO2 +12 s; VF → CPR PR 110, EtCO2 14–20;
+(samhv-dev) "99?" PI 0.14; PEA HR mean 93 (all three skins), PR invalid +7 s, SpO2 +12 s; VF → CPR PR 110, EtCO2 14–20;
 asystole alarm +4.1/+5.1/+10.1 s (philips/mindray/saadat), no HR_LOW/EXTREME_BRADY; desaturation lag finger 23 s,
-ear 13 s; chatter: nibp-failed ×13 (A1m) and ×5 (Ali, no pressure to measure), CVP_M_HIGH ×4 (rhythm tours),
+ear 13 s; chatter: nibp-failed ×13 (A1m) and ×5 (samhv-dev, no pressure to measure), CVP_M_HIGH ×4 (rhythm tours),
 EXTREME_TACHY ×4 (mindray tour), PAUSE ×7 (arrhythmia on), HR_HIGH ×5 (step).
 **Calibration queue (recorded, not fixed):** FU-5's low-flow screenshot shows a yellow **"**CVP -1<0"** during the 3 L
-bleed, and the audit's Ali rig shows CVP −2 to −4 mmHg after the arrest — the negative chamber volumes of the
+bleed, and the audit's samhv-dev rig shows CVP −2 to −4 mmHg after the arrest — the negative chamber volumes of the
 exsanguination rig noted in 18a (RA −37 mL in VF, RV to −676 mL on the empty-thorax CPR rig): the circuit's linear
 compliances allow negative volume/pressure where a collapsed vein would hold ≈ 0.
 
@@ -445,7 +445,7 @@ At `d1656ab` (merge `b13837c` + FU-5 items `7975074` + truth flip `aa1f755` + e2
 | shot | moment | truth at the shot (panel) | size |
 |---|---|---|---|
 | `1-induction-3min.png` | healthy, propofol 2 mg/kg at 300 s, +3 min | sinus, MAP 78, CO 4.85, CoPP 64, kIsch 1.00 | 52 KB |
-| `2-ali-tamponade-pea.png` | Ali's case: tamponade 1 at 60 s, propofol 2 mg/kg at 660 s | PEA (sinus, pulseless) at 829 s; MAP 19, CO 0, CoPP 2, kIsch 0.09 — organised ECG, flat ABP | 44 KB |
+| `2-owner-tamponade-pea.png` | the owner's case: tamponade 1 at 60 s, propofol 2 mg/kg at 660 s | PEA (sinus, pulseless) at 829 s; MAP 19, CO 0, CoPP 2, kIsch 0.09 — organised ECG, flat ABP | 44 KB |
 | `3a-classIV-pea.png` | class IV (2.5 L / 10 min), 60 s after the arrest | arrest 748 s; `agonal`, MAP 4, kIsch 0.02 | 42 KB |
 | `3b-classIV-rosc.png` | CPR + 2 L + adrenaline 1 mg | pulse back at 926 s: sinus, MAP 121, CO 5.06, CoPP 78, kIsch 0.78 | 58 KB |
 | `4-tension-ptx-pea.png` | tension PTX (one command) at 60 s | asystole at 772 s (+11.9 min on the page's ×4 run; the suite's +9.75 is the engine's own pulseless flag); MAP 36, kIsch 0.32 | 45 KB |

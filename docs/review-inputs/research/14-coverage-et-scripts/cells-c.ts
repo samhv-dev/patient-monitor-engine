@@ -125,8 +125,8 @@ add({ id: 'ET-21b', tier: 'P2', ctx: 'X-A awake and under GA', state: 'glucose �
 add({ id: 'ET-22', tier: 'P2', ctx: 'X-A awake, non-diabetic', state: 'normoglycaemia', intv: 'dextrose 50 % 50 mL (25 g) IV: glucose rise and its course', sys: 'END',
   arms: { i: SP([d(T, 'dextrose', 25000, 'mg')], T + 2 * H, XA, { dt: 10 }), c: SP([], T + 2 * H, XA, { dt: 10 }) },
   measure: (R) => { const g = (s: number) => r2(((at(R.i!.rows, 'glu', T + s) as number) - (at(R.c!.rows, 'glu', T + s) as number)) / MG); return m({ dGlu5: g(300), dGlu15: g(900), dGlu30: g(1800), dGlu60: g(3600), dGlu120: g(7200), dGluPeak: r2((mx(R.i!.rows, 'glu', T, T + 600) - (at(R.c!.rows, 'glu', T) as number)) / MG) }); },
-  expect: [{ m: 'dGlu5', lo: 3, hi: 5, src: 'research/12 ET-22 (+3–5 mmol/L transiently). Balentine JR et al., J Emerg Med 1998;16:763: D50 25 g raised glucose by a mean 166 mg/dL (9.2 mmol/L, range 2–20) [VERIFY] — the sources disagree; Q for Ali' }],
-  hand: { verdict: 'PL', why: "+10.2 mmol/L at 5 min, +3.5 at 30, back to baseline by 60 min: the 25 g enters a 1.7 dL/kg glucose space at once (glucose.ts:88–90). research/12's +3–5 has no citation; the primary paper (Balentine 1998: mean +9.2, range 2–20 mmol/L) contains the model — graded on the primary source, Q for Ali" },
+  expect: [{ m: 'dGlu5', lo: 3, hi: 5, src: 'research/12 ET-22 (+3–5 mmol/L transiently). Balentine JR et al., J Emerg Med 1998;16:763: D50 25 g raised glucose by a mean 166 mg/dL (9.2 mmol/L, range 2–20) [VERIFY] — the sources disagree; Q for samhv-dev' }],
+  hand: { verdict: 'PL', why: "+10.2 mmol/L at 5 min, +3.5 at 30, back to baseline by 60 min: the 25 g enters a 1.7 dL/kg glucose space at once (glucose.ts:88–90). research/12's +3–5 has no citation; the primary paper (Balentine 1998: mean +9.2, range 2–20 mmol/L) contains the model — graded on the primary source, Q for samhv-dev" },
   owner: '7e glucose.ts dextroseBolus (VG 1.7 dL/kg)' });
 
 // ---- ET-23 DKA and RSI -----------------------------------------------------------------------------------------------

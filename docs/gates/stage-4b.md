@@ -173,7 +173,7 @@ Things seen in the screenshots that belong to other stages (not changed here):
 | R-4b-4 | 6a | Panel tab registration plus vocabulary entries for the device commands |
 | R-4b-5 | orchestrator | E-4a-2: HR moving-average-seconds and the AUTO source chain |
 | R-4b-6 | validation | 12-lead PR/QRS/QT/QTc fiducials and the ProSim limb ratios on `capture12` |
-| R-4b-7 | Ali | VF recognition delay, the real sync-marker look, and the flashing numeric during Saadat-like silence |
+| R-4b-7 | samhv-dev | VF recognition delay, the real sync-marker look, and the flashing numeric during Saadat-like silence |
 | R-4b-9 | Stage 3 / 5.1 | Let the apnoea detectors take the skin's apnoea time (`DeviceProfile.apneaS`: saadat-like RESP 10 s, gas 20 s; IEC-style 20 s) instead of a fixed 20 s |
 | R-4b-8 | 6b | While a scenario owns the post-shock path, the driver should `preselect` the scenario's outcome (or `'unchanged'`) before forwarding a learner's shock. Otherwise the engine's §6.5 table and the scenario's transition both act on the same shock |
 

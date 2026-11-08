@@ -176,7 +176,7 @@ and one to **R11's viscosity term** (the class IV resuscitation, below). The TBI
 `pmax: 80` (F2) with re-measured titles. Truth budget (D16): today's tree 1317 leaves; the 12-drug future tree 2041 of
 2100. Exceptions used: E-FU6-1, -2, -3, -4, -6, -7, -8, -9 (Task 2's `ageMin`), -10; **E-FU6-5 unused (withdrawn)**.
 
-## 7. Calibration-queue rows for Ali (R44)
+## 7. Calibration-queue rows for samhv-dev (R44)
 
 WAKE_QUANTILES knots (above; seeds 1–20 on FiO₂ 0.5: 11/20 apnoeic, < 30 / 30–60 / > 60 s = 2 / 5 / 4, max 114 s;
 label 43 %, 7/24/12 %) and WAKE_MMHG 8; CENTRAL_TAU_S 90; APNOEA_VE_IN/OUT 0.10/0.15; the opioid arms (fentanyl
@@ -217,7 +217,7 @@ depression (RS5b, 7f/7g).
   under propofol lowers VCO₂ by 15 % (GA_METABOLIC). Same rig with `gaLvl` held at 0: PaCO₂ **37.4** (V̇A 4.36 L/min
   either way) vs **32.2** with it. The ruled 38.5 default (FU-4 Q10) was set without an anaesthetic VCO₂ reduction;
   whether 12 × 7 mL/kg should now be the default under GA, or GA_METABOLIC's size (0.85, applied by FU-6 to every
-  anaesthetic) should change, is Ali's (§7 calibration row).
+  anaesthetic) should change, is the owner's (§7 calibration row).
 - **Rigs with an awake, unparalysed patient on the internal ventilator** (TBI Cushing, tension PTX) still breathe over it
   before any arrest — physiologically right; the rigs' premise is FU-4's/7d's to restate.
 - **NEW — pre-existing on origin/main, surfaced by the suite:** severe COPD at RR 30 arrests (PEEPtot 23.2, CO 0) and a
@@ -225,7 +225,7 @@ depression (RS5b, 7f/7g).
   Owners FU-4/V.1.
 - **C4 / C8 depth of desaturation.** An unassisted propofol induction on a natural airway now reaches SaO₂ 1 % (C4) and
   remifentanil + propofol via SGA 6 % (C8) — no rescue in those scripts; the direction is the teaching point (D14b), the
-  depth is Ali's to confirm.
+  depth is the owner's to confirm.
 - Q-FU6-1 … Q-FU6-16 stand as the plan writes them, with these merged-tree numbers: Q1 seed 7 38 s, 2.5 mg/kg 48 s,
   fentanyl 110 s, remifentanil 190 s; Q2 salbutamol 44.3 → 24.0 (−46 %), adrenaline 22.4 at 3 min → 40.2 at 10, sevo
   24.7 at MAC 0.88, ketamine 31.5, Mg 36.4; Q3 release PaCO₂ min 40.0; NPPE as §5; Q5 V̇E +3.4 %; **Q6 (posture for

@@ -92,8 +92,8 @@
   "after": "MH severity 1 at fixed ventilation (tables §7 check 21): EtCO2 ≥ 60 by 10 min — measured 54 with the corrected dead space"
  },
  {
-  "before": "MODELED Ali's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 99 valid at 760–765 s (MAP 19–20, PI 0.31–0.33) after FU-7.1 B3",
-  "after": "MODELED Ali's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 99 valid at 760–765 s (MAP 19–20, PI 0.31–0.33) with the alveolar washout"
+  "before": "MODELED the owner's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 99 valid at 760–765 s (MAP 19–20, PI 0.31–0.33) after FU-7.1 B3",
+  "after": "MODELED the owner's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 99 valid at 760–765 s (MAP 19–20, PI 0.31–0.33) with the alveolar washout"
  },
  {
   "before": "R23: AS + CAD propofol → hypotension → ischaemia (kIsch falls, ST ↓) → phenylephrine reverses it",
@@ -204,7 +204,7 @@
   "after": "glycine 3 L: ICP ≥ 1 mmHg above the control — measured +0.26"
  },
  {
-  "before": "healthy 40 y, AF 150/min: kIsch ≥ 0.9 throughout (research/19 CM-15c quiet band) — measured 0.89 in this rig after FU-8, a MODEL LIMITATION (sinus 150 holds 1.00; the residual is beat-to-beat variance, R50 F9 — Ali Q8)",
+  "before": "healthy 40 y, AF 150/min: kIsch ≥ 0.9 throughout (research/19 CM-15c quiet band) — measured 0.89 in this rig after FU-8, a MODEL LIMITATION (sinus 150 holds 1.00; the residual is beat-to-beat variance, R50 F9 — samhv-dev Q8)",
   "after": "healthy 40 y, AF 150/min: kIsch ≥ 0.9 throughout (research/19 quiet band) — measured 0.89 in this rig, a MODEL LIMITATION (sinus 150 holds 1.00; the residual is beat-to-beat variance)"
  },
  {
@@ -280,7 +280,7 @@
   "after": "second gas (Epstein 1964, M10 ch. 19): 66 % N2O raises sevoflurane 2 %\\'s FA/FI at 5 min by ≥ +0.03 — measured +0.014 in the engine (+0.021 in the standalone drug rig)"
  },
  {
-  "before": "term neonate 3.5 kg: cardiac output ≥ 150 mL/kg/min (PALS ≈ 200) — measured 0.31 L/min = 89 mL/kg/min after FU-8 (isometric §2.2 scaling: Ali, plan \"Waiting on Ali\")",
+  "before": "term neonate 3.5 kg: cardiac output ≥ 150 mL/kg/min (PALS ≈ 200) — measured 0.31 L/min = 89 mL/kg/min after FU-8 (isometric §2.2 scaling: samhv-dev, plan \"Waiting on samhv-dev\")",
   "after": "term neonate 3.5 kg: cardiac output ≥ 150 mL/kg/min (PALS ≈ 200) — measured 0.31 L/min = 89 mL/kg/min (isometric §2.2 scaling)"
  },
  {

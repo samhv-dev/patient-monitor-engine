@@ -10,7 +10,7 @@ Branch `stage-5.1-rhythm-polish` (worktree `scratch/wt-stage-5.1`), plan `docs/p
 | Baseline before any change (`d3027d0`) | engine-core 369, controller 185, skins 155, audio 58, renderer 35, validation 16 — all green |
 | Stage 5.1 acceptance (tests below) | all pass; every number is measured on the generated waveform |
 | Before/after strips | 22 pairs in `stage-5.1/` (`<key>-before.png` = Stage 5 strip, `<key>-after.png` = this branch), each ≤ 50 KB (largest `cpr-after.png` 50 238 B); strips now carry a faint 1 mm grid |
-| Ali's list (Task 14) | none received by 2026-09-26 (PR #3: 0 comments, 0 reviews; no Ali strip items in the rulings after G5-obs) |
+| The owner's list (Task 14) | none received by 2026-09-26 (PR #3: 0 comments, 0 reviews; no samhv-dev strip items in the rulings after G5-obs) |
 
 ## Acceptance tests and measured numbers
 
@@ -55,7 +55,7 @@ Left: Stage 5 (`docs/gates/stage-5/<key>.png`). Right: this branch. 25 mm/s, 10 
 
 ![vfEpinephrine before](stage-5.1/vfEpinephrine-before.png) ![vfEpinephrine after](stage-5.1/vfEpinephrine-after.png)
 
-**cpr** — VF plus compression artefact. **For Ali:** the 110/min artefact is less conspicuous than on the Stage 5 strip, because VF is now 1.5× larger (1.2 mV vs the artefact's 1.28 mV at depth 0.6) and irregular; the catalogue's depth 0.6 → 1.0 would restore the Stage 5 look (not changed).
+**cpr** — VF plus compression artefact. **For samhv-dev:** the 110/min artefact is less conspicuous than on the Stage 5 strip, because VF is now 1.5× larger (1.2 mV vs the artefact's 1.28 mV at depth 0.6) and irregular; the catalogue's depth 0.6 → 1.0 would restore the Stage 5 look (not changed).
 
 ![cpr before](stage-5.1/cpr-before.png) ![cpr after](stage-5.1/cpr-after.png)
 
@@ -143,11 +143,11 @@ Left: Stage 5 (`docs/gates/stage-5/<key>.png`). Right: this branch. 25 mm/s, 10 
 8. **Strip rendering port:** the shots script's Vite port 5205 was swapped to 5213 for the runs only and reverted (concurrent stages).
 9. No anchor misses: every "replace this block" in Tasks 2–13 matched exactly once on `d3027d0`.
 
-Not changed (listed for Ali, as the plan decided): `qrsOverrideStage` — a 140 ms kernel span reads 128 ms by the tangent method; the CPR strip's artefact is now visually dominated by the larger VF (gallery note).
+Not changed (listed for samhv-dev, as the plan decided): `qrsOverrideStage` — a 140 ms kernel span reads 128 ms by the tangent method; the CPR strip's artefact is now visually dominated by the larger VF (gallery note).
 
-## Ali's list
+## The owner's list
 
-None received by 2026-09-26 (PR #3 has no comments or reviews; the rulings have no Ali strip items after G5-obs). Executor's own items for Ali: the `cpr` strip look (above), the `qrsOverrideStage` width, and whether the subtler ±10 %/±15° fingerprint is enough individuality for teaching.
+None received by 2026-09-26 (PR #3 has no comments or reviews; the rulings have no samhv-dev strip items after G5-obs). Executor's own items for samhv-dev: the `cpr` strip look (above), the `qrsOverrideStage` width, and whether the subtler ±10 %/±15° fingerprint is enough individuality for teaching.
 
 ## Requests to other stages
 

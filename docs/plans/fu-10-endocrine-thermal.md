@@ -10,7 +10,7 @@
 > `scratch/plans-backup/fu-10-prototype.patch`, which is now **Part A only** (review F5).
 >
 > What changed in this pass: A5 (insulin nadir) **dropped** (R-1, nadir held as `it.fails`); A8 (fever) **withdrawn**
-> to a proposal pending Ali (R-3, ET-12/13a held as `it.fails`); A7's ketones are a **net** rate that insulin clears
+> to a proposal pending samhv-dev (R-3, ET-12/13a held as `it.fails`); A7's ketones are a **net** rate that insulin clears
 > (R-2); A1 honours D3 (an instructor-cleared MH never restarts) and uses agent-specific volatile latencies (R-8); A2
 > lowers both neuraxial cold-defence thresholds (R-7); A3 takes the tables' 34.5 °C (R-4), grades Sessler's bands on a
 > surgical arm (R-5) and weights age by depth (R-6); A6 records the Absalom caveat and routes the exogenous
@@ -38,9 +38,9 @@ ET runner before and after:
   glycosuric volume deficit (B4), **E9** the AF hazard (B5), **E13b** hypothyroid drug clearance (B6), the exogenous
   glucocorticoid in the permissive term and the hydrocortisone row (B7, after FU-7);
 - recorded, not changed: **E12a** the insulin nadir (`it.fails`, Requests → FU-8 Part B), **E11a** fever under GA
-  (`it.fails`, Ali), the hypoglycaemic sweating flag (NOT MODELLED, inventory).
+  (`it.fails`, samhv-dev), the hypoglycaemic sweating flag (NOT MODELLED, inventory).
 
-**Spec:** `../research/00-orchestrator-rulings.md` (workspace, outside this repo): **R44** (Ali's calibration pass is
+**Spec:** `../research/00-orchestrator-rulings.md` (workspace, outside this repo): **R44** (the owner's calibration pass is
 non-blocking; executors do not tune), **R45** (mechanisms, never band changes; unreachable targets `it.fails` with
 numbers), **R51** + addenda 12, 14, 16, 18, 25 (7e owns MH, the thermal model and the endocrine seams; 7f publishes;
 7c owns the ketoacid pool and K⁺; the engine chain order), **R53/R54**, **G-FU4** (the hypothermia/shivering cut-off,
@@ -63,7 +63,7 @@ locally), pnpm 9.15.9 via `npx`. No new dependencies.
   mechanism cannot reach stays (or becomes) `it.fails` with the measured number in its title. A pre-declared `it.fails`
   that a task flips to `it` is named in that task with its before/after numbers. Constants that are not sourced are
   `[ENG]` with the fit target named in the code comment; `[VERIFY]` marks a paper figure quoted from memory (the ET
-  report's convention) — it is Ali's to confirm before the R44 pass, and the executor never tunes a constant to pass a
+  report's convention) — it is the owner's to confirm before the R44 pass, and the executor never tunes a constant to pass a
   band (R44). An existing test whose NUMBER moves because the physiology it pinned was the defect is re-pinned only where
   the task names it, with the old and new number and the reason in the test's comment.
 - **R51:** canonical names (addendum 14); the engine chain order (validate/apply device → pk (7g) → neuro (7f) → organs
@@ -137,7 +137,7 @@ locally), pnpm 9.15.9 via `npx`. No new dependencies.
 ## Finding inventory (every ET gap, and what happens to it)
 
 Decision codes: **task** (a task in this plan), **dropped**/**withdrawn** (by an orchestrator ruling; the cell is held by
-an `it.fails`), **handed** (to a named plan or owner), **Ali** (his decision; the model's numbers), **7i v1.1**,
+an `it.fails`), **handed** (to a named plan or owner), **samhv-dev** (his decision; the model's numbers), **7i v1.1**,
 **recorded**, **NOT MODELLED**. Task ids are the task headers below (A5 and A8 keep their numbers as dropped/withdrawn).
 "Main" numbers are the ET report's, which the reviewer and this fixer re-measured on the current base (unchanged except
 where the Prototype results say so).
@@ -154,7 +154,7 @@ where the Prototype results say so).
 | E8 | Insulin–dextrose invisible to glucose | ET-31 (IN) | glucose 0.00 for 3 h | **task A4** |
 | E9 | No AF in hypothermia or storm | ET-09b (MI), 13b (MI) | sinus at 28 °C and in storm | **task B5** (after FU-7 Task 12; FU-8 Part A's arrest state is now merged) |
 | E10 | Etomidate does not suppress cortisol; shivering-threshold drugs | ET-34 (MI), ET-33 (NE) | cortisol at 4 h 1582 vs 1575 | **task A6** (etomidate); ET-33 **handed** (pethidine/clonidine: FU-7 library) |
-| E11a | Fever under GA (sepsis, storm) | ET-12 (TW), 13a (TW) | 36.86 / 36.58 °C | **withdrawn** (ruling R-3) → `it.fails` in Task A8's test file + **Ali** Q7 |
+| E11a | Fever under GA (sepsis, storm) | ET-12 (TW), 13a (TW) | 36.86 / 36.58 °C | **withdrawn** (ruling R-3) → `it.fails` in Task A8's test file + **samhv-dev** Q7 |
 | E11b/c | Septic lactate; SIRS not vasoplegic | ET-26a (TW), 28 (TW) | lactate 1.0; `sirs 1` MAP 88.6 | **task B3** (after FU-9 A2) |
 | E12a | Insulin nadir too early | ET-20a (TS) | 13.3 min / 2.92 mmol/L | **dropped** (ruling R-1) → `it.fails` in Task A4's engine file; **Requests → FU-8 Part B** (the insulin disposition) |
 | E12b | GA does not mask the hypoglycaemic signs | ET-21a (WR) | HR +26 under GA vs +16 awake | **task B1** (FU-7's seam; arm (f) neutral; the adrenal counter-regulation guarded) |
@@ -189,7 +189,7 @@ where the Prototype results say so).
   time to the first sign (Visoiu M, Young MC, Wieland K, Brandom BW, Anesth Analg 2014;118:388–396 — sevoflurane ≈ 45
   min, desflurane ≈ 114 min as quoted in secondary sources [VERIFY against the paper]; isoflurane has no quoted median
   and takes desflurane's value, flagged [VERIFY]). The anaesthetic labels give no onset times. Severity 1 (fulminant);
-  Ali's Q2 (draw vs fixed; fulminant vs abortive) stays open.
+  The owner's Q2 (draw vs fixed; fulminant vs abortive) stays open.
 - **D3 — the exposure is consumed once (review F4).** `mhOwner` (`'auto' | 'instructor'`): if the instructor's MH exists
   when the exposure is first seen, the owner is `'instructor'` and the triggers never create MH afterwards — a
   `condition mh 0` stays cleared; an exposure-made onset may be brought forward by a faster trigger while latent.
@@ -203,7 +203,7 @@ where the Prototype results say so).
 - **D6 — the insulin–dextrose row is expanded for GLUCOSE only; K⁺ stays 7c's.** On the fixed tree the combined row's
   K⁺ fall at 60 min is −0.96 (band −1.0 to −0.6, now held by a test; the first draft's −1.18 included a hyperosmolar
   efflux that F17's gating removes). The two-row arm's −0.68 differs because 7c's curve and 7g's insulin `kShift` are
-  two pre-existing K⁺ sources — Ali Q4, not changed here.
+  two pre-existing K⁺ sources — samhv-dev Q4, not changed here.
 - **D7 — insulin deficiency is one state (ruling R-2).** (a) `endo.basalInsulin: false`; (b) a NET ketone rate through
   the E-FU10-2 seam pair (production from the current deficit, τ 30 min; insulin-dependent utilisation of 7c's pool —
   the instructor's `dka` pool included, which is therefore treatable; `condition dka 0` clears it as today);
@@ -211,7 +211,7 @@ where the Prototype results say so).
   insulin-deficient patient only; (d) the glycosuric volume loss is Part B (B4).
 - **D8 — etomidate suppresses the cortisol RESPONSE (ruling R-9).** t½ 8 h for a single induction dose in an elective
   patient (Wagner 1984); Absalom A, Pledger D, Kong A, Anaesthesia 1999;54:861–867 found ≥ 24 h in the critically ill
-  (Vinclair 2008: resolution by 48 h) — recorded as a caveat and an Ali calibration row, not modelled.
+  (Vinclair 2008: resolution by 48 h) — recorded as a caveat and an samhv-dev calibration row, not modelled.
 - **D9 — adrenal insufficiency is a BASAL deficit with a permissive vascular effect.** Basal cortisol ×0.5; cortisol
   below basal costs resting SVR (`CORT_SVR_PERMISSIVE` 0.25 [ENG], below basal only). The exogenous glucocorticoid JOINS
   that term (ruling R-9, review F16) — Task B7, once FU-7's `cortExo` exists.
@@ -240,7 +240,7 @@ moved number is listed per task below (review F11) — nothing else moved.
 |---|---|
 | A1 (E1) | suxamethonium + sevoflurane at 300 s with the ventilation held fixed (rocuronium after the suxamethonium — FU-6's merged patient-triggered breaths would otherwise raise it): EtCO₂ doubles at **+18.2 min** (band 10–30; main: never); sevoflurane alone: MH activity from **+48.5 min** (median 45 min + the ramp to a detectable activity); not susceptible: 0. ET-10a `mhDevelops` **true** (WR → PL), EtCO₂ max 52.6 (main 28.4). The instructor-MH rows (ET-10b–g, ET-11, ET-M2) move by ≤ 0.01 °C (tcMax 47.77 → 47.76) and the untreated comparison arm of ET-11 by +0.9 mmHg EtCO₂ at 30 min (18.23 → 19.15). D3: the instructor-cleared case is a unit test. **FU-4 check:** the arrest table of `audit:physiology` is identical in every arrest time. |
 | A2 (E3) | ET-04: hour 1 **−0.84 °C** (main −1.07; GA −1.19), ratio **0.71** (accepted, R-7), core **35.30 °C** at 3 h (main 34.41), shivering from **35.48 °C** (main: never), depth **0** (main 1). Heat model alone: −0.86 vs GA −1.25 °C, shivering from 35.49 °C. Stage 3's neuraxial test re-stated (E-FU10-3a). |
-| A3 (E5/E6) | Surgical arm (open wound from +15 min): hour 1 **−1.44 °C**, hours 2–3 **−0.492 °C/h**, vasoconstriction at **34.50 °C**, plateau **−0.087 °C/h** — all in Sessler's bands; onset **2.27 h** (band 3–4 → `it.fails`, the `PREP_EVAP_W_70` calibration knob, R-5). Draped demonstration: −1.18 / −0.300 °C/h / 6.30 h at 34.50 °C (main 6.17 h at 34.555). 80 y vs 40 y on the surgical arm: onset **33.50 vs 34.50 °C**, core at 4 h **33.43 vs 34.28** (Kurz 1993's −1 °C). ET-03a's draped rig: the elderly hour-1 fall is unchanged (−1.19, review F8's −0.98 is gone with the depth weighting), `d4h` −0.04 and no elderly onset inside 7 h (MI kept, measured on the surgical arm instead). The Stage 3 GA heat model now plateaus at **34.37 °C** in hour 8 (`it.fails`, E-FU10-3b). **Rows this moves (R-4's lower threshold keeps an anaesthetised patient vasodilated 0.3 °C longer):** ET-07 cold blood core −0.89 → **−1.02 °C** (band −0.5 to −1.0: TW → **TS by 0.02**; reported, not tuned — Ali Q12), ET-02 cold arms 34.54 → 34.30 / 34.79 → 34.61 (the warmed arms unchanged, PL), ET-03b child at 3 h 34.69 → 34.43 (direction PL), ET-05a–d emergence core 34.49 → 34.26 with shivering VO₂ +47.5 → +69.6 % and shivering 56 → 79 W (verdicts unchanged), ET-29 −0.50 → −0.53, ET-09a CO at 28 °C 3.44 → 4.33 L/min (HR 47 and Osborn unchanged), ET-08c CO 5.17 → 5.30, ET-12/13a cores 36.86 → 36.60 and 36.58 → 36.34 °C. |
+| A3 (E5/E6) | Surgical arm (open wound from +15 min): hour 1 **−1.44 °C**, hours 2–3 **−0.492 °C/h**, vasoconstriction at **34.50 °C**, plateau **−0.087 °C/h** — all in Sessler's bands; onset **2.27 h** (band 3–4 → `it.fails`, the `PREP_EVAP_W_70` calibration knob, R-5). Draped demonstration: −1.18 / −0.300 °C/h / 6.30 h at 34.50 °C (main 6.17 h at 34.555). 80 y vs 40 y on the surgical arm: onset **33.50 vs 34.50 °C**, core at 4 h **33.43 vs 34.28** (Kurz 1993's −1 °C). ET-03a's draped rig: the elderly hour-1 fall is unchanged (−1.19, review F8's −0.98 is gone with the depth weighting), `d4h` −0.04 and no elderly onset inside 7 h (MI kept, measured on the surgical arm instead). The Stage 3 GA heat model now plateaus at **34.37 °C** in hour 8 (`it.fails`, E-FU10-3b). **Rows this moves (R-4's lower threshold keeps an anaesthetised patient vasodilated 0.3 °C longer):** ET-07 cold blood core −0.89 → **−1.02 °C** (band −0.5 to −1.0: TW → **TS by 0.02**; reported, not tuned — samhv-dev Q12), ET-02 cold arms 34.54 → 34.30 / 34.79 → 34.61 (the warmed arms unchanged, PL), ET-03b child at 3 h 34.69 → 34.43 (direction PL), ET-05a–d emergence core 34.49 → 34.26 with shivering VO₂ +47.5 → +69.6 % and shivering 56 → 79 W (verdicts unchanged), ET-29 −0.50 → −0.53, ET-09a CO at 28 °C 3.44 → 4.33 L/min (HR 47 and Osborn unchanged), ET-08c CO 5.17 → 5.30, ET-12/13a cores 36.86 → 36.60 and 36.58 → 36.34 °C. |
 | A4 (E8) | ET-31 combined row **+6.93 / −2.42 mmol/L**, identical to the two-row arm (IN → PL); K⁺ at 60 min **−0.96** (band −1.0 to −0.6, held by the engine test; two-row arm −0.68). Engine test: max +11.17, min −2.68 mmol/L, K⁺ −0.96. ET-20a/b's insulin-alone K⁺ at 60 min −0.78 → −0.62 (its graded minimum −0.87 → −0.86, PL). The insulin-nadir `it.fails` (13.3 min) is in this task's engine file (A5 dropped). |
 | A6 (E10/E13) | ET-34 cortisol at 4 h **1031 vs 1575 nmol/L = 0.655** (TS → PL; engine test 0.653). ET-15a: post-induction MAP **70.02 vs 73.51**, surgical **−4.1** mmHg (engine test −4.2; band beyond 5 → `it.fails`), phenylephrine **0.68** of normal (PL), cortisol **233 vs 532**. Healthy patients bit-identical in every stress row (ET-16a–c within 0.4 nmol/L of cortisol). |
 | A7 (E7) | Engine test, type 1 with the basal insulin omitted 6 h: glucose **35.5 mmol/L**, ketones **11.5 mmol/L**, pH **7.31**, K⁺ **6.05** (on basal insulin: 7.2 / 0 / 4.17). Insulin 0.1 units/kg/h from 6 h: ketones **11.53 → 8.88 in 3 h (0.88 mmol/L/h, JBDS ≥ 0.5)**, glucose 5.1 mmol/L, K⁺ **3.25** (the expected fall on insulin). ET-23c (instructor `dka 1`): K⁺ **4.48 vs healthy 4.18** (main 3.68), after intubation +0.38 (main −0.01); WR → TW (auto; the report's §7 item 'K⁺ ≥ healthy' is met). ET-23a–d otherwise within 0.3 (HCO₃ 4.30 → 4.63: the instructor pool is now utilised at the insulin the patient has). Non-diabetic rows unchanged. |
@@ -460,7 +460,7 @@ export const DANT_GAIN = 1.6;
  * is shorter after succinylcholine with every volatile; without succinylcholine sevoflurane is faster than isoflurane or
  * desflurane); Larach MG et al., Anesth Analg 2010;110:498–507 (clinical presentation) [VERIFY the medians]. Magnitudes
  * [ENG]: 0 s with succinylcholine; for a volatile alone the agent's registry median (below). Severity 1 = the
- * fulminant course of the instructor's `condition mh 1` (Ali Q2, open: fixed vs a seeded draw; fulminant vs abortive).
+ * fulminant course of the instructor's `condition mh 1` (samhv-dev Q2, open: fixed vs a seeded draw; fulminant vs abortive).
  */
 export const MH_SUX_LATENCY_S = 0;
 /** FU-10 E1 (orchestrator ruling R-8): the volatile-alone latency is agent-specific and deterministic — the registry's
@@ -1006,7 +1006,7 @@ vasoconstriction, Vassilieff 1995 for shivering) weighted by the thermoregulator
 unchanged (R-6); (4) Sessler's bands are graded on a SURGICAL arm — the existing open-wound `prep` exposure from
 incision — and the draped no-wound arm is a recorded demonstration (R-5). No new wound term (the review's E5 section).
 
-**Measured:** Surgical arm (open wound from +15 min): hour 1 **−1.44 °C**, hours 2–3 **−0.492 °C/h**, vasoconstriction at **34.50 °C**, plateau **−0.087 °C/h** — all in Sessler's bands; onset **2.27 h** (band 3–4 → `it.fails`, the `PREP_EVAP_W_70` calibration knob, R-5). Draped demonstration: −1.18 / −0.300 °C/h / 6.30 h at 34.50 °C (main 6.17 h at 34.555). 80 y vs 40 y on the surgical arm: onset **33.50 vs 34.50 °C**, core at 4 h **33.43 vs 34.28** (Kurz 1993's −1 °C). ET-03a's draped rig: the elderly hour-1 fall is unchanged (−1.19, review F8's −0.98 is gone with the depth weighting), `d4h` −0.04 and no elderly onset inside 7 h (MI kept, measured on the surgical arm instead). The Stage 3 GA heat model now plateaus at **34.37 °C** in hour 8 (`it.fails`, E-FU10-3b). **Rows this moves (R-4's lower threshold keeps an anaesthetised patient vasodilated 0.3 °C longer):** ET-07 cold blood core −0.89 → **−1.02 °C** (band −0.5 to −1.0: TW → **TS by 0.02**; reported, not tuned — Ali Q12), ET-02 cold arms 34.54 → 34.30 / 34.79 → 34.61 (the warmed arms unchanged, PL), ET-03b child at 3 h 34.69 → 34.43 (direction PL), ET-05a–d emergence core 34.49 → 34.26 with shivering VO₂ +47.5 → +69.6 % and shivering 56 → 79 W (verdicts unchanged), ET-29 −0.50 → −0.53, ET-09a CO at 28 °C 3.44 → 4.33 L/min (HR 47 and Osborn unchanged), ET-08c CO 5.17 → 5.30, ET-12/13a cores 36.86 → 36.60 and 36.58 → 36.34 °C.
+**Measured:** Surgical arm (open wound from +15 min): hour 1 **−1.44 °C**, hours 2–3 **−0.492 °C/h**, vasoconstriction at **34.50 °C**, plateau **−0.087 °C/h** — all in Sessler's bands; onset **2.27 h** (band 3–4 → `it.fails`, the `PREP_EVAP_W_70` calibration knob, R-5). Draped demonstration: −1.18 / −0.300 °C/h / 6.30 h at 34.50 °C (main 6.17 h at 34.555). 80 y vs 40 y on the surgical arm: onset **33.50 vs 34.50 °C**, core at 4 h **33.43 vs 34.28** (Kurz 1993's −1 °C). ET-03a's draped rig: the elderly hour-1 fall is unchanged (−1.19, review F8's −0.98 is gone with the depth weighting), `d4h` −0.04 and no elderly onset inside 7 h (MI kept, measured on the surgical arm instead). The Stage 3 GA heat model now plateaus at **34.37 °C** in hour 8 (`it.fails`, E-FU10-3b). **Rows this moves (R-4's lower threshold keeps an anaesthetised patient vasodilated 0.3 °C longer):** ET-07 cold blood core −0.89 → **−1.02 °C** (band −0.5 to −1.0: TW → **TS by 0.02**; reported, not tuned — samhv-dev Q12), ET-02 cold arms 34.54 → 34.30 / 34.79 → 34.61 (the warmed arms unchanged, PL), ET-03b child at 3 h 34.69 → 34.43 (direction PL), ET-05a–d emergence core 34.49 → 34.26 with shivering VO₂ +47.5 → +69.6 % and shivering 56 → 79 W (verdicts unchanged), ET-29 −0.50 → −0.53, ET-09a CO at 28 °C 3.44 → 4.33 L/min (HR 47 and Osborn unchanged), ET-08c CO 5.17 → 5.30, ET-12/13a cores 36.86 → 36.60 and 36.58 → 36.34 °C.
 
 **E-FU10-10:** the Stage 7e thresholds test pins the GA centre 34.8 → 34.5 (the re-sourced constant) and checks full
 constriction 0.7 °C below the centre (33.8 instead of 34.0 — the same property). **E-FU10-3 (Stage 3 GA test):** the
@@ -2256,10 +2256,10 @@ describe('FU-10 E7: patient.endo.basalInsulin', () => {
 
 ---
 
-### Task A8: (WITHDRAWN from Part A — orchestrator ruling R-3, pending Ali) E11(a), fever under general anaesthesia
+### Task A8: (WITHDRAWN from Part A — orchestrator ruling R-3, pending samhv-dev) E11(a), fever under general anaesthesia
 
 Only the `it.fails` file below lands: ET-12 and ET-13a stay afebrile (36.86 / 36.58 °C) and are held by it. The design
-stays a PROPOSAL for Ali's decision (Open question 7): either (a) a PRESENTATION state — the condition's onset moves the
+stays a PROPOSAL for the owner's decision (Open question 7): either (a) a PRESENTATION state — the condition's onset moves the
 core to its raised set point while the awake defences act, and anaesthesia then acts on a febrile patient; or (b) an
 ONGOING heat source that anaesthesia does not suppress, raised through `vo2F`/`extraX` so that VO₂, VCO₂ and EtCO₂ carry
 its cost (10–13 %/°C, the ET cell's own grade). The writer's first draft — a 120 W heat source with no O₂ cost — is
@@ -2271,7 +2271,7 @@ withdrawn (review F2: nearly twice the anaesthetised metabolic heat of 64 W, and
 Create `packages/engine-core/test/engine/fu10-fever.test.ts`:
 
 ```ts
-// FU-10 (E11; research/14 ET-12, ET-13a; ruling R-3): Task A8 is WITHDRAWN pending Ali — the anaesthetised septic and
+// FU-10 (E11; research/14 ET-12, ET-13a; ruling R-3): Task A8 is WITHDRAWN pending samhv-dev — the anaesthetised septic and
 // thyrotoxic patients stay afebrile. Held here as `it.fails` with the measured numbers (GA flag, 21 °C, seed 7).
 import { describe, expect, it } from 'vitest';
 import { ev, FLAG, rows, st, VENTED } from '../helpers/fu10.ts';
@@ -2291,7 +2291,7 @@ describe('FU-10 E11: fever under general anaesthesia (withdrawn, ruling R-3)', {
 ```
 
 - [x] **Step — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu10-fever.test.ts` → both `it.fails` hold.
-- [x] **Commit and push.** `git add -A packages/engine-core && git commit -m "test(7e): fever under anaesthesia recorded as it.fails pending Ali (FU-10 E11, ruling R-3)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push`
+- [x] **Commit and push.** `git add -A packages/engine-core && git commit -m "test(7e): fever under anaesthesia recorded as it.fails pending samhv-dev (FU-10 E11, ruling R-3)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push`
 
 ---
 
@@ -2549,7 +2549,7 @@ scales HR/Ees/SVR/VO₂ (`thyroid.ts:19`) and reaches neither the drug dispositi
 **Mechanism (the report's E13):** the thyroid state publishes a metabolic-clearance factor (hypothyroid < 1, hyperthyroid
 > 1) that 7g's `clFactor` reads beside its temperature and hepatic terms (**E-FU10-6**), and 7e keeps its existing
 `cascade.macF` path for the anaesthetic requirement. The baroreflex-gain half is NOT taken here: FU-8 Part B owns the
-resting sympathetic tone (C1) and Ali reviews it first — recorded as a Request.
+resting sympathetic tone (C1) and samhv-dev reviews it first — recorded as a Request.
 **R45 procedure:** the delayed emergence and the exaggerated induction fall are the acceptance directions; measure both
 and keep what the mechanism cannot reach as `it.fails` with its number.
 **Tests (UNWRITTEN):** `test/l2/pk/fu10-thyroid-clearance.test.ts`, `test/engine/fu10-hypothyroid.test.ts` (the `fu10-*` slow glob).
@@ -2592,7 +2592,7 @@ the adrenal-insufficient patient's refractory hypotension reverses within 30–6
 - [ ] **Step 4 — the `it.fails` ledger** (`docs/gates/fu-10/it-fails.md`), each with its file and number: `temp.test.ts` GA plateau ≥ 34.5 °C — 34.37; `fu10-thresholds` surgical onset 3–4 h — 2.27 h; `fu10-insulin-dextrose` nadir 20–30 min — 13.3 min; `fu10-adrenal` surgical MAP ≥ 5 mmHg below normal — −4.2; `fu10-fever` sepsis core ≥ 38.5 °C — 36.86 on main / 36.60 with Part A, storm — 36.58 / 36.34
   plus anything Part B adds.
 - [ ] **Step 5 — the gate note `docs/gates/fu-10.md`**: the task-by-task table, the matrix, the ledger, the calibration
-  rows for Ali's R44 pass (`NEURAXIAL_BLOCK_FRAC`/`NEURAXIAL_H`; `PREP_EVAP_W_70` as the onset-time knob; the GA plateau
+  rows for the owner's R44 pass (`NEURAXIAL_BLOCK_FRAC`/`NEURAXIAL_H`; `PREP_EVAP_W_70` as the onset-time knob; the GA plateau
   at 34.37 °C after R-4; the ketone production/utilisation sizes; `KETO_K_EFFLUX`; `CORT_SVR_PERMISSIVE`; the etomidate
   t½ against Absalom; the MH volatile medians), the open questions, the skipped Part B tasks, and the exceptions
   E-FU10-1 … 11 for approval.
@@ -2601,7 +2601,7 @@ the adrenal-insufficient patient's refractory hypotension reverses within 30–6
   `🤖 Generated with [Claude Code](https://claude.com/claude-code)`. **Never self-merged.**
 
 ---
-## Open questions for Ali (the ET report's §8 and the fixer rulings, with the model's numbers and this plan's recommendation)
+## Open questions for samhv-dev (the ET report's §8 and the fixer rulings, with the model's numbers and this plan's recommendation)
 
 1. **Shivering VO₂ (§8.1).** A 34.5 °C emergence raises VO₂ **+59 %**; research/12 and Miller quote +200–400 %, measured
    postoperative shivering is +40–100 % (Ciofolo 1989; Frank 1995). **Recommendation:** teach +40–100 %; no change here.
@@ -2653,7 +2653,7 @@ the adrenal-insufficient patient's refractory hypotension reverses within 30–6
 find/replace and Create blocks and applies them in document order to the current `origin/main`): **Part A: 71 find/replace blocks + 14 creates, 0 problems, 6 chained blocks (all marked "(chained on …)"); the whole document incl. B2: 78 blocks + 14 creates, 0 problems, 9 chained (all marked)**, on `origin/main` `1b8bdd3` (Stage 7k merged; its one `vite.config.ts` line sits beside FU-10's anchor and does not disturb it). Part A applied there is **byte-identical** to the prototype tree, whose diff is `scratch/plans-backup/fu-10-prototype.patch` (Part A only, 33 files).
 
 **The review's findings, one by one.** F1 → A5 dropped (R-1), OGTT green. F2 → A8 withdrawn (R-3), its design a proposal
-carrying VO₂/VCO₂, ET-12/13a `it.fails`, Ali Q7. F3 → net ketone rate (R-2) with the JBDS fall test (0.88 mmol/L/h).
+carrying VO₂/VCO₂, ET-12/13a `it.fails`, samhv-dev Q7. F3 → net ketone rate (R-2) with the JBDS fall test (0.88 mmol/L/h).
 F4 → `mhOwner` consumes the exposure; the instructor-cleared case is a unit test. F5 → the patch is Part A only; B2
 re-anchored without A8 and gated. F6 → the schema option is FU-10's (E-FU10-9, R-10); A0/B5 preconditions updated.
 F7 → B1 states FU-7's four rules, names `antinoc`, guards the adrenal counter-regulation and arm (f). F8 → 34.5 °C (R-4),

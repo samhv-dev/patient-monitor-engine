@@ -87,7 +87,7 @@ function start(s: Scenario): void {
   } else if (s === 'tamponade') {
     void event({ kind: 'condition', id: 'tamponade', severity: 1 }, 60);
     void drug('propofol', 2, 'mg/kg', 660);
-    note("Ali's case: tamponade 1 at 60 s, propofol 2 mg/kg at 11 min");
+    note("the owner's case: tamponade 1 at 60 s, propofol 2 mg/kg at 11 min");
   } else if (s === 'bleed') {
     void event({ kind: 'bleed', volumeMl: 2500, overS: 600 }, 60);
     note('class IV haemorrhage: 2.5 L over 10 min from 60 s — then "CPR + 2 L + adrenaline"');

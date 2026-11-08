@@ -48,7 +48,7 @@
 18. **Auto gain (RR-2):** every 2 s the last 4 s of the lead must fit 60 % of the lane; the largest skin gain option that fits wins, and the lane label shows it (`II  X0.5  NORMAL`) [ENG].
 19. **Gate G4a follow-ups:** the `ecg-grid` major line is dimmed to `#F4C4C4` so every trace of every skin keeps ≥ 3:1 against it (tested); `mindray-like` gets the documented boxed alarm numeric (`alarms.numericStyle: 'flash-box'`, research/05 §2.4); `ge-like` and `mindray-like` carry a visible `LAYOUT UNVERIFIED` header badge, because research 05 §2 has no lane/tile layout data for either.
 20. **Pages:** the Saadat-like PUMP page (P10) shows the `PUMP` watermark, hides IBP scale numbers and keeps ASYSTOLE on the bar through silence (brief §6.9). No skin documents a big-number page, so none is drawn.
-21. **E-4a-2 (HR moving-average-seconds and the AUTO source chain) is deferred** (request R-4b-5): it is not in this stage's acceptance list, it changes Stage 1's `l3/hr.ts`, and the manual's 5 / 6 / 11 s response times do not come out of a plain windowed mean — Ali's stopwatch capture should settle the algorithm first.
+21. **E-4a-2 (HR moving-average-seconds and the AUTO source chain) is deferred** (request R-4b-5): it is not in this stage's acceptance list, it changes Stage 1's `l3/hr.ts`, and the manual's 5 / 6 / 11 s response times do not come out of a plain windowed mean — the owner's stopwatch capture should settle the algorithm first.
 
 ## Requests to other stages (not implemented here; repeated in the gate note)
 
@@ -60,7 +60,7 @@
 | R-4b-4 | 6a controller | Panel tabs are hard-coded in `panel/panel.ts`; a tab-registration API (and `vocabulary()` entries for `applyEvent defib/pacer`, `device alarm/monitor`) so a Device tab can drop in | The demo page carries the device controls |
 | R-4b-5 | orchestrator / Stage 4c | E-4a-2: HR `moving-average-seconds` (4/8/16 s) and the HR-source AUTO chain with the PR relabel | HR uses the Stage 1 averager on every skin |
 | R-4b-6 | validation | 12-lead fiducial measurements (PR, QRS, QT, QTc; BUILD-PLAN acceptance 7) and the ProSim limb-ratio check on `capture12` output | `capture12` reports HR and axis |
-| R-4b-7 | Ali (bedside) | VF recognition delay; the look of sync markers on a real ZOLL/LIFEPAK; what a flashing numeric does during Saadat-like silence (checklist photo 5) | [ENG] values above |
+| R-4b-7 | samhv-dev (bedside) | VF recognition delay; the look of sync markers on a real ZOLL/LIFEPAK; what a flashing numeric does during Saadat-like silence (checklist photo 5) | [ENG] values above |
 
 ## File map
 
@@ -7647,7 +7647,7 @@ Screenshots (`docs/gates/stage-4b/`): `saadat-like--{idle,raised,silenced}.png`,
 | R-4b-4 | 6a | panel tab registration + vocabulary entries for the device commands |
 | R-4b-5 | orchestrator | E-4a-2 HR moving-average-seconds and the AUTO source chain |
 | R-4b-6 | validation | 12-lead PR/QRS/QT/QTc fiducials and the ProSim limb ratios on `capture12` |
-| R-4b-7 | Ali | VF recognition delay, real sync-marker look, flashing numeric during Saadat-like silence |
+| R-4b-7 | samhv-dev | VF recognition delay, real sync-marker look, flashing numeric during Saadat-like silence |
 
 ## Deviations from the plan
 

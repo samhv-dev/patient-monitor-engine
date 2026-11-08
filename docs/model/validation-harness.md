@@ -180,7 +180,7 @@ Exported without a doc comment: `provenanceQueue`, `bedsideMarkdown`, `cacheDir`
 
 | File | Header |
 |---|---|
-| [`bedside/apply.ts`](../../packages/validation/src/bedside/apply.ts) | Bedside results (the checklist page's download) → docs/validation/bedside/<date>.md with a verdict table and the skin-provenance queue: every 'close'/'wrong' item lists the saadat-like skin fields to revisit, with Ali's |
+| [`bedside/apply.ts`](../../packages/validation/src/bedside/apply.ts) | Bedside results (the checklist page's download) → docs/validation/bedside/<date>.md with a verdict table and the skin-provenance queue: every 'close'/'wrong' item lists the saadat-like skin fields to revisit, with the ow |
 | [`bedside/checklist.ts`](../../packages/validation/src/bedside/checklist.ts) | The Saadat Alborz B9 bedside checklist (research/06 §7 "Photo checklist", "Audio", "Behaviour stopwatch") as data: each item says what to do at the real monitor, how the engine page demonstrates the same behaviour on the |
 | [`bedside/cli-apply.ts`](../../packages/validation/src/bedside/cli-apply.ts) | Entry-only: pnpm --filter @pme/validation bedside:apply --results <bedside-results.json> |
 | [`cli/validate.ts`](../../packages/validation/src/cli/validate.ts) | `pnpm validate` (root) → docs/validation/report.md, report.json, calibration-queue.md. |

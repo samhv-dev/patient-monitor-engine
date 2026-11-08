@@ -348,7 +348,7 @@ IBW = 2.10 L) is 1.3 L lower (textbook seated → supine −0.5 to −1.0 L) and
 is below the ECSC RV (1.94 L) — though consistent with the lung model's own internal P–V floor (16 mL/kg = 1.12 L,
 D17): ERV against the bedside FRC and the clinical RV would read 0.16 L awake and −0.54 L under GA. D6
 publishes ERV/IC against the seated PFT FRC, as a lab does, so the panel is right; the O2-store FRC itself is left to
-Ali. Measured: re-basing the O2-store FRC to ECSC-derived values (awake supine 2.61 L, GA 2.09 L) moves the
+samhv-dev. Measured: re-basing the O2-store FRC to ECSC-derived values (awake supine 2.61 L, GA 2.09 L) moves the
 preoxygenated apnoea to SaO2 90 % from **8.1 to 11.8 min** (band 6.5–9.5, Benumof ≈ 8; GA 1.80 L alone: 10.2 min) —
 so the engine's lower FRC is compensating for something else in the O2 budget, and 7k does not touch it (R45).
 
@@ -420,7 +420,7 @@ Stage 9 Explore (later) re-presents the group; the 7h PFT device (later) draws V
   DLCO (the lung's `dl` factor exists), an inspiratory limb (the F–V loop's inspiratory half: flow limited by
   inspiratory muscle strength `lp.pMax`, not modelled by 7k), and a bronchodilator-response report (7k's reversibility
   already emerges through FU-6's smooth-muscle state — prototype asthma +33 %). A REAL hold on the engine's internal
-  VCV (D2) belongs there too if Ali wants hold waveforms.
+  VCV (D2) belongs there too if samhv-dev wants hold waveforms.
 - **V.1 (executing).** (1) 7k does not duplicate the link's `Measured` readouts (PIP, PLAT, autoPEEP, Pmean, VTE, MV,
   Cstat, Raw, P0.1); the engine's truth is the patient's lungs, the link's are the ventilator's measurements of its own
   single compartment — when both are shown, the glossary labels the link's as "(ventilator)". (2) The console's
@@ -450,7 +450,7 @@ Stage 9 Explore (later) re-presents the group; the 7h PFT device (later) draws V
 - **Stage 8b (release).** The physiology overview describes the per-breath hold measurement on a copy, the Pes
   ESTIMATE and its formula, Enghoff VD/VT, the two FRCs (bedside vs seated PFT), ECSC/Zapletal predicted values and
   the forced-expiration model (τf,u = τf,ref·(RC ratio)^0.6).
-- **R44 calibration pass (Ali):** Q-7k-1, -2, -5, -6 below and the constants PES_FRC_CMH2O 6.9, PES_BMI_SLOPE 0.22,
+- **R44 calibration pass (samhv-dev):** Q-7k-1, -2, -5, -6 below and the constants PES_FRC_CMH2O 6.9, PES_BMI_SLOPE 0.22,
   FORCED_TAU_EXP 0.6, PEAK_TAU_EXP 0.3 (F3), the VOLUME_EFFECTS knots, the weakness terms (TLC 60 %, RV 150 % at no strength), HOLD_INSP_S 0.3,
   HOLD_EXP_S 2, the children's FVC 0.95·VC and FEV1/FVC 0.90.
 
@@ -2018,9 +2018,9 @@ Not duplicated: the ventilator link's `Measured.PIP/PLAT/autoPEEP/Cstat/Raw` (V.
 - `resp-mechanics.test.ts` — healthy GA Enghoff VD/VT 0.30–0.45: measured TBD (prototype 0.28; Q-7k-5).
 - `resp-mechanics.test.ts` — COPD GOLD 3 PEEPi 4–8 at RR 14: measured TBD (prototype 3.6; the 7b lung's own value, R46 calibration row).
 
-## 6. Calibration queue (R44, Ali)
+## 6. Calibration queue (R44, samhv-dev)
 
-Ali's: Q-7k-1 (bedside FRC scale vs ECSC), Q-7k-2 (COPD GOLD 1), Q-7k-5 (VD/VT under GA), Q-7k-6 (re-base the model's P–V range on
+the owner's: Q-7k-1 (bedside FRC scale vs ECSC), Q-7k-2 (COPD GOLD 1), Q-7k-5 (VD/VT under GA), Q-7k-6 (re-base the model's P–V range on
 ECSC, v1.1) — numbers in the plan's "Open questions". Ruled by the orchestrator: ECSC + fixed ratio in v1.0, GLI + LLN in v1.1;
 closing capacity a readout in v1.0, a mechanism in v1.1. The obese FRC double count is FU-8's (not listed here).
 
@@ -2041,10 +2041,10 @@ TBD — every block that did not match exactly once on the merged main, its caus
 ```
 
 - [ ] **Step 4: PR.** `gh pr create --title "Stage 7k: respiratory mechanics and lung volumes" --body …` — the body lists
-  what 7k adds (the gate note §2 table), the prototype-vs-branch table, the three `it.fails`, E-7k-1..3, Ali's open
+  what 7k adds (the gate note §2 table), the prototype-vs-branch table, the three `it.fails`, E-7k-1..3, the owner's open
   questions Q-7k-1, -2, -5, -6, and ends with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`. Never merge.
 
-## Open questions for Ali (the plan does not wait on them; each with the model's numbers and a recommendation)
+## Open questions for samhv-dev (the plan does not wait on them; each with the model's numbers and a recommendation)
 
 - **Q-7k-1 — The bedside FRC is ~20–35 % below textbook.** Healthy 70 kg man 40 y 175 cm: engine awake supine FRC 2.10 L
   (30 mL/kg IBW), anaesthetised 1.40 L (20 mL/kg), vs ECSC seated 3.41 L − the supine fall 0.5–1.0 L ≈ 2.4–2.9 L awake
@@ -2063,7 +2063,7 @@ TBD — every block that did not match exactly once on the merged main, its caus
   where GOLD 1 is rarely a teaching case).
 - **Q-7k-3 and Q-7k-4 — RULED by the orchestrator (7k R50 review):** ECSC with the fixed FEV1/FVC ratio for v1.0,
   GLI with the lower limit of normal in v1.1 (D7, D11); closing capacity a published readout in v1.0, airway closure as
-  a mechanism in v1.1 (D10). Not Ali's questions any more; listed so the numbering stays stable.
+  a mechanism in v1.1 (D10). Not the owner's questions any more; listed so the numbering stays stable.
 - **Q-7k-5 — VD/VT under GA is at the low edge.** Healthy anaesthetised adult on ETT: Enghoff VD/VT 0.28 (VD phys
   140 mL = VD anat 77 + app 50 + alv 13), band 0.30–0.45 (Nunn 8e; the glossary's "0.3–0.45 ventilated"). Awake 0.33
   (in). The low value comes from FU-4's ETT bypass (−1.1 mL/kg) with a 50 mL apparatus and the healthy alveolar dead
