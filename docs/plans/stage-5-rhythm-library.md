@@ -44,7 +44,7 @@ Stages 2 (haemodynamics) and 6a (controllers) run at the same time on their own 
 9. **Shock recovery:** rail ±5 mV for 50–500 ms (energy-scaled), then a 1–3 mV offset decaying with τ 0.5–1.0 s per lead (hash of lead and shock time), so the baseline is back within 5 s (brief §6.5) and every lead differs.
 10. **Individuality** defaults to `morphologyVariation = 0`, so textbook morphology and every Stage 1 test value stay unchanged unless a scenario asks for variation.
 11. **Engine-level `vocabulary()` and `commandApplied`** (BUILD-PLAN Stage 5 bullets) need engine.ts/MonitorEngine changes that belong to Stage 6's owner; this stage ships `ecgVocabulary()` for it.
-12. **Blind rhythm check** is supported by the demo (30 random unlabelled strips with a reveal); Ali performs it at the gate.
+12. **Blind rhythm check** is supported by the demo (30 random unlabelled strips with a reveal); samhv-dev performs it at the gate.
 
 ## Prototype results (while planning, 2026-09-24; all in the planning scratchpad, nothing committed)
 
@@ -7950,7 +7950,7 @@ Create or replace `docs/gates/stage-5.md` with exactly:
 ```md
 # Gate 5 — Full rhythm library, templates and artefacts (date: YYYY-MM-DD of the run)
 
-Gate question: "Can Ali identify every rhythm as intended, and does VF/torsades texture look recorded rather than synthetic?"
+Gate question: "Can samhv-dev identify every rhythm as intended, and does VF/torsades texture look recorded rather than synthetic?"
 
 Stage 1.x baseline this branch started from: `<commit>`, `DEFAULT_PR60_MS = <value>` (from Task 1 Step 2).
 
@@ -7960,8 +7960,8 @@ Stage 1.x baseline this branch started from: `<commit>`, `DEFAULT_PR60_MS = <val
 | Acceptance 1–10 | table below |
 | Strip screenshots (70, each ≤ 50 KB) | `stage-5/*.png`, largest `<name, bytes>` (Task 27 output) |
 | PTB-XL comparison (report only, R17) | `stage-5/ptbxl-normal-comparison.json`: mean r per lead `<paste>` |
-| Blind rhythm check (Ali, 30 strips, ≥ 27/30) | pending Ali — `stage5.html` → "Blind check (30 strips)" |
-| Realism review of VF/torsades texture | pending Ali/orchestrator — strips `vfCoarse.png`, `vfFine.png`, `torsades.png`, `cpr.png` |
+| Blind rhythm check (samhv-dev, 30 strips, ≥ 27/30) | pending samhv-dev — `stage5.html` → "Blind check (30 strips)" |
+| Realism review of VF/torsades texture | pending samhv-dev/orchestrator — strips `vfCoarse.png`, `vfFine.png`, `torsades.png`, `cpr.png` |
 
 ## Acceptance tests (BUILD-PLAN Stage 5)
 
@@ -8002,7 +8002,7 @@ git commit -m "docs(gates): stage 5 strip screenshots and gate evidence"
 
 ### Task 28: Verify before the gate, then open the pull request
 
-Clean-clone rehearsal, clean-room check, push, PR (ruling R20: every stage lands on its own branch and PR; Ali speaks the merge — do not merge).
+Clean-clone rehearsal, clean-room check, push, PR (ruling R20: every stage lands on its own branch and PR; samhv-dev speaks the merge — do not merge).
 
 **Files:**
 - No source changes unless a check fails.
@@ -8038,7 +8038,7 @@ git push -u origin stage-5-rhythm-library
 gh pr create --base main --head stage-5-rhythm-library --title "Stage 5: full rhythm library, recorded VF/AF templates, artefacts" --body-file docs/gates/stage-5.md
 ```
 
-- [x] **Step 6: If your session instructions require an attribution line in PR descriptions, append it to the body with `gh pr edit --body-file`. Report the PR URL. Leave the worktree in place until Ali merges; afterwards `git worktree remove ../scratch/wt-stage-5`.**
+- [x] **Step 6: If your session instructions require an attribution line in PR descriptions, append it to the body with `gh pr edit --body-file`. Report the PR URL. Leave the worktree in place until samhv-dev merges; afterwards `git worktree remove ../scratch/wt-stage-5`.**
 
 ---
 

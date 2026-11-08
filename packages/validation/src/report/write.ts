@@ -84,13 +84,13 @@ export function renderMarkdown(r: Report): string {
     const m = x.expectedMiss as ExpectedMiss;
     L.push(`| ${dot[cls(x)]} | ${x.suite} | ${x.id} | ${x.measured} | ${x.expected} | ${m.id} | ${m.mechanism} | ${m.since} | ${m.measured} |`);
   }
-  L.push('', '## Calibration queue (R44)', '', `${q.length} rows outside their band — the input to Ali's calibration pass. Also written to \`calibration-queue.md\`.`, '');
+  L.push('', '## Calibration queue (R44)', '', `${q.length} rows outside their band — the input to the owner's calibration pass. Also written to \`calibration-queue.md\`.`, '');
   L.push(...renderQueue(q));
   return `${L.join('\n')}\n`;
 }
 
 export function renderQueue(q: QueueItem[]): string[] {
-  const L = ['| | Suite | Row | Measured | Expected | Source | Expected failure | Ali: decision |', '|---|---|---|---|---|---|---|---|'];
+  const L = ['| | Suite | Row | Measured | Expected | Source | Expected failure | samhv-dev: decision |', '|---|---|---|---|---|---|---|---|'];
   for (const x of q) L.push(`| ${dot[cls(x)]} | ${x.suite} | ${x.id} | ${x.measured} | ${x.expected} | ${x.source} | ${x.expectedMiss?.id ?? ''} | |`);
   return L;
 }

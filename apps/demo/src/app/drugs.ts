@@ -1,6 +1,6 @@
 // The dose picker's data (research/13 brief §7 "Dose picker"). Drug names and classes come from the engine's own
 // library (the drug library's `DRUGS`), so a drug added to the library is listed without a code change. The presets
-// below are DRAFTS from the drug library's ranges, for Ali's review as one table.
+// below are DRAFTS from the drug library's ranges, for the owner's review as one table.
 import { DRUGS, type DoseUnit, type RateUnit } from '@pme/engine-core';
 import { drugName } from './glossary.ts';
 import type { Link } from './link.ts';
@@ -48,7 +48,7 @@ export const PRESETS: Readonly<Record<string, DrugPreset>> = {
   adenosine: { bolus: [[6, 'mg'], [12, 'mg']] },
   calciumChloride: { bolus: [[10, 'mg/kg'], [1, 'g']] },
   // Potassium chloride is INFUSED, never pushed — the picker opens on Infusion with the peripheral 10 mmol/h and the
-  // central 20 mmol/h (10 and 20 mmol over the hour), and offers no bolus preset (Ali 2026-10-10). The engine warns,
+  // central 20 mmol/h (10 and 20 mmol over the hour), and offers no bolus preset (samhv-dev 2026-10-10). The engine warns,
   // with its source, if a bolus or a faster rate is ordered anyway (l2/pk rows-other.ts maxRatePerH).
   potassiumChloride: { infusion: [[10, 'mmol/h'], [20, 'mmol/h']], aka: ['kcl', 'potassium'] },
   magnesium: { bolus: [[2, 'g']] },

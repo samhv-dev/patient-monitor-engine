@@ -2,7 +2,7 @@
 
 **STATUS: REBASE-CHECKED 2026-10-13 against `origin/main` 56f3761f** (read-only check before the freeze; the 43 refreshed find blocks still match, 0 problems; with this check's two new `ci.yml` blocks the plan has **45 find blocks, 0 problems** on 56f3761f; the textual fixes are listed under "Rebase check 2026-10-13" below and in `scratch/plans-backup/stage-8b-rebase-check-2026-10-13.md`; pre-check text: `scratch/plans-backup/stage-8b-release.pre-rebase-2026-10-13.md`). Previous status: **REFRESHED 2026-10-10 against `origin/main` 48864439 (and a simulated freeze tree: 48864439 + the FU-11, FU-7.1 and Stage 10 prototype patches), reviewed and fixed the same day (`scratch/plans-backup/stage-8b-review-2026-10.md`); 3904 lines. Executes AFTER the freeze (Mon 2026-10-19) once FU-11, FU-7.1 and Stage 10 have merged (Task 1 launch gate). Version label `1.0.0-rc.1` (Q8 ruled). The 2026-09-27 text is kept at `scratch/plans-backup/stage-8b-release.2026-09-27.md`.**
 
-The release is a PRE-RELEASE (release candidate), never "v1.0 released" (`docs/roadmap/`; Ali, 2026-10-06: "we should not advertise what we are not"). Wherever this plan says "the release", read "the release candidate `1.0.0-rc.1`".
+The release is a PRE-RELEASE (release candidate), never "v1.0 released" (`docs/roadmap/`; samhv-dev, 2026-10-06: "we should not advertise what we are not"). Wherever this plan says "the release", read "the release candidate `1.0.0-rc.1`".
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -21,7 +21,7 @@ The release is a PRE-RELEASE (release candidate), never "v1.0 released" (`docs/r
 - Paths are relative to `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo`. Work ONLY in the worktree `../scratch/wt-stage-8b` on branch `stage-8b-release`.
 - **Launch gate (R53 + the SHOWCASE 2 / release-candidate ruling of 2026-10-06, binding):** FU-3, FU-4 and V.1 are on `main` (PRs #26 for V.1; their gate notes `docs/gates/fu-3.md`, `fu-4.md`, `stage-v1.md` are on 48864439). This plan's executor launches only after the **freeze (Mon 2026-10-19)** and only once these have ALL merged to `main`: **FU-11** hardening (branches `fu-11-a`, `fu-11-b`, `fu-11-c`, `fu-11-d`; plan `docs/plans/fu-11-hardening.md`), **FU-7.1** drug and physiology leftovers (branches `fu-7.1-a`, `fu-7.1-b`, and `fu-7.1-c` only if the optional pulsus-paradoxus branch went ahead; plan `docs/plans/fu-7.1-drug-physiology-leftovers.md`) and **Stage 10** time control (plan `docs/plans/stage-10-time-control.md`). Any other stage the orchestrator merges before the freeze is merged by then too; the orchestrator's launch message lists them. **Rebase check 2026-10-13:** the orchestrator ruled (2026-10-10) that the scenarios stage is REQUIRED; on `main` 56f3761f all of these are already merged — FU-11 a–d (#43, #45, #44, #49), FU-7.1 a+b (#46, #47; `fu-7.1-c` was never started, so pulsus paradoxus stays a known limitation), Stage 10 (#54), Stage 11 showcase cards (#48), Stage 12 learners' phones (#57, gate step 4 PENDING-OWNER), Stage 13 debrief (#60, print check PENDING-OWNER), the CI reshape (#55) and the fixer round (FX-1 #58, FX-2 #61, FX-4 #59, FX-7 #56). Stage 14 (clean-up) runs AFTER the rc (its Task 0 needs 8b), so it is NOT a launch-gate item. Task 1 checks this and stops if any is missing. Because those stages land after this plan was refreshed, **Task 1 re-verifies every find block of this plan against `main` at launch** (Step 3) **and once more as the last act before the first commit** (Step 3b) (the script in Task 1 Step 3); a block that no longer matches is re-anchored on its neighbouring comment and the same change applied — never re-type a line you are not changing — and the re-anchoring is listed in the gate note. JSON has no comments: the six library manifests are therefore NOT edited by find blocks but by the field-setting script `scripts/release-manifests.ts` (Task 4 Step 4), which keeps every key a sibling stage added; the remaining one-line `package.json` blocks are reported by the check as informational, and a miss is applied as the same one-line edit on the current line.
 - **Before every task:** `git fetch origin && git merge --no-edit origin/main` in the worktree (nothing should be moving after the launch gate; if something did, re-run the task's tests after the merge).
-- **Version label (Q8, RULED by Ali 2026-10-06/10: `1.0.0-rc.1`).** This plan writes `1.0.0-rc.1` everywhere it writes the release version (manifests via `scripts/release-manifests.ts`, whose default is `1.0.0-rc.1`, the version constants and their tests, the IIFE smoke and the embed e2e, the CHANGELOG heading, CITATION `version`, `RELEASE.md`'s tag commands and asset names); the tag is `v1.0.0-rc.1` and the GitHub release is flagged pre-release. A later `1.0.0` is a separate, small release PR (re-run `scripts/release-manifests.ts 1.0.0`, the constants, CHANGELOG, CITATION, plus the Zenodo/DOI step that Q5 deferred to it). Never write "v1.0 released" or "first stable release" anywhere.
+- **Version label (Q8, RULED by samhv-dev 2026-10-06/10: `1.0.0-rc.1`).** This plan writes `1.0.0-rc.1` everywhere it writes the release version (manifests via `scripts/release-manifests.ts`, whose default is `1.0.0-rc.1`, the version constants and their tests, the IIFE smoke and the embed e2e, the CHANGELOG heading, CITATION `version`, `RELEASE.md`'s tag commands and asset names); the tag is `v1.0.0-rc.1` and the GitHub release is flagged pre-release. A later `1.0.0` is a separate, small release PR (re-run `scripts/release-manifests.ts 1.0.0`, the constants, CHANGELOG, CITATION, plus the Zenodo/DOI step that Q5 deferred to it). Never write "v1.0 released" or "first stable release" anywhere.
 - **Nothing here changes physiology or a test band (R45).** No file under `packages/engine-core/src/l1/**`, `src/l2/**`, `src/l3/**`, `packages/engine-core/data/**`, `packages/ventilator/src/**` or any existing test's assertions is edited, except the six `version.test.ts` files (0.0.0 → 1.0.0-rc.1) and the IIFE smoke. If a test on `main` fails in the worktree before any 8b change, record it in the gate note and report — do not fix it here.
 - **Partition:** this stage OWNS `scripts/{finish-dist,check-size,check-licences,deviations,release-manifests}.ts`, `scripts/pack-smoke.mjs`, the new licence texts `LICENSES/{ajv-8.20.0,fast-deep-equal-3.1.3,json-schema-traverse-1.0.0,require-from-string-2.0.2,lunr-<version>}.txt`, `packages/*/tsconfig.build.json`, `packages/*/typedoc.json`, `typedoc.json`, `packages/renderer/src/iife-worker.ts`, `apps/demo/src/vent/embed.ts`, `apps/demo/vite.embed.config.ts`, `apps/demo/scripts/{build-embed,readme-shots}.mjs`, `apps/demo/e2e/vent-embed.e2e.ts`, `packages/validation/test/{release-versions,release-manifests,finish-dist,check-size,check-licences,docs-examples,docs-honesty}.test.ts`, `.github/workflows/release.yml`, `.github/ISSUE_TEMPLATE/**`, `docs/guides/**`, `docs/images/**`, `docs/gates/stage-8b.md`, `docs/gates/stage-8b/**`, `README.md`, `CHANGELOG.md`, `RELEASE.md`, `CONTRIBUTING.md`, `SECURITY.md`, `CITATION.cff`. It MODIFIES: `packages/renderer/src/engine.worker.ts` (worker entry → guarded `startWorker`), `packages/renderer/src/worker-host.ts` (one line: the ESM worker's name), `packages/renderer/vite.config.ts`, the `package.json` and `vite.config.ts` of `engine-core`, `renderer`, `audio`, `controller`, `skins`, `ventilator`; `packages/validation/package.json` (version only); the six version constants and their `version.test.ts`; `apps/demo/e2e/iife-smoke.e2e.ts`; `apps/demo/package.json` (build script) and `apps/demo/tsconfig.json` (include); root `package.json`, `pnpm-lock.yaml`, `.gitignore`; `.github/workflows/ci.yml` (additive steps only: four in `build`, three in `renderer`, one in `e2e`; rebase check 2026-10-13); `NOTICES.md` (row N-015 — N-014 is the QR code generator since Stage 12 —, and the licence cells of N-010–N-013); `docs/validation/{report.md,report.json,calibration-queue.md}` (ONLY as regenerated by `pnpm validate` in Task 12 Step 0 — never edited by hand; orchestrator ruling Q9). **Never edit** `.github/workflows/validation.yml`, the `test-slow` job, `PME_TEST_SET` handling, `vitest.workspace.ts`, `playwright*.config.ts`, anything under `docs/physiology/**`, any other file under `docs/validation/**`, other stages' gate notes or plans. **Refresh 2026-10-10 additions:** the FU-11 hand-overs also let this stage MODIFY `packages/engine-core/src/version.ts` (the `build` constant) and the engine's snapshot/restore version check (Task 5, FU-11 A1), the renderer and engine-core `vite.config.ts` `define` for the build id (Task 5), the Developer view's page list `apps/demo/src/app/views/dev.ts` and the pages it retires (Task 13b Step 2), and — only as Task 13b Step 6 records — the glossary data file and the iec-defaults skins' `alwaysOn` with a provenance row.
 - **CI rules (binding):** the fast/slow split and the `validate` workflow stay exactly as they are (CI amendment 3), and so do the seven slow groups (`slow-a` … `slow-g`), the build job's "slow groups are disjoint and cover SLOW" step and the `test-slow` matrix (CI amendments 5 and 6, FU-9/FU-7/FU-10 gates) — Task 9's two `ci.yml` blocks only ADD steps after `pnpm check-notices` and after the IIFE upload, and the executor diffs `ci.yml` to prove it (Task 9 Step 1); any new test that runs the engine for more than one sim-minute yields per sim-minute (CI amendment 4; none in this plan: the only engine run is the browser e2e); the tick-bench p50 < 6 ms on CI is untouched; heavy e2e is Chromium-only (`test.skip(browserName === 'webkit', …)`, the G7g/FU-1 rule); every committed PNG/JPEG is ≤ 60 KB.
@@ -41,30 +41,30 @@ The release is a PRE-RELEASE (release candidate), never "v1.0 released" (`docs/r
 3. **ESM packaging keeps the workspace on `src/`.** Every package's `exports` stays `./src/*.ts` in the repo, so typecheck, Vitest and the demo keep working without a build; `publishConfig.exports`/`publishConfig.types` (applied by `pnpm pack`/`pnpm publish`) point consumers at `dist/*.js` and `dist/types/src/*.d.ts`. Declarations come from `tsc -p tsconfig.build.json` (`emitDeclarationOnly`; `paths` map sibling `@pme/*` imports to the siblings' emitted declarations, built first by `pnpm -r build`'s topological order); `scripts/finish-dist.ts` rewrites relative `./x.ts` specifiers in `.d.ts` to `./x.js` (tsc 5.9 does not rewrite declaration specifiers even with `rewriteRelativeImportExtensions`) and copies `LICENSE`, `NOTICES.md` and the whole `LICENSES/` directory into every `dist/` (the engine bundles ODC-By templates and Apache-2.0-derived modules; controller and skins bundle ajv and its MIT/BSD-3 dependencies — every licence text and attribution must travel with every copy, orchestrator ruling 1 of the 8b review). ESM builds externalise sibling `@pme/*` imports (one copy of each package in a consumer's bundle); third-party code (ajv and its dependencies) stays bundled exactly as NOTICES N-010–N-013 describe. Proved by `pnpm pack-smoke`: the six tarballs install into a fresh npm project, a consumer file type-checks under `moduleResolution` **Bundler and NodeNext with `skipLibCheck: false`**, Node imports the packed `@pme/engine-core` and runs it, and Vite bundles the consumer (the Chrome run of that bundle on the `worker-raf` path was a one-off prototype check, not part of the script). `pack-smoke` and `docs:api` also run in CI's build job (Task 9), so a PR that breaks the published shape or TypeDoc fails before merge, not at the tag.
 4. **Published set:** `@pme/engine-core`, `@pme/renderer`, `@pme/audio`, `@pme/controller`, `@pme/skins`, `@pme/ventilator` lose `"private": true`; `@pme/validation` (dataset harness) and `@pme/demo` stay private. `@pme/skins` gains a built `./validate` entry (its `exports` already names it; the build had only `index`). `"sideEffects": false` on skins and ventilator, and on engine-core the explicit list `["./src/l2/ecg/pacing.ts", "./src/l2/ecg/arrest/vf.ts"]` — the two modules that register `HOOKS.onApply/onP/onBeat` at top level (`pacing.ts:117–119` (116–118 on 48864439), `vf.ts:184`); with a bare `false` they survive in workspace builds only because `rhythm-engine.ts` happens to import `pacerClock`/`vfClock`, and pacing and VF would vanish silently from the IIFE if either import became type-only (8b review finding 10). Measured with `false`: the embed bundle falls from 261 KB to 122 KB because Rollup can then drop the unused VF/AF templates and PK tables; the embed does not import the rhythm engine, so the list form should keep ≈ 122 KB (re-measured in Task 8). The published engine-core `dist/index.js` is one file, so npm consumers are unaffected. Nothing is published to npm by this stage (Q1, ruled: GitHub release only).
 5. **The relay is not published in 1.0.0-rc.1.** `pme-relay` is a `.ts` bin run with `--experimental-strip-types`, and Node refuses to strip types under `node_modules`; the published `@pme/controller` therefore gets `"bin": {}` via `publishConfig`, and `ws` moves to `devDependencies` (the relay keeps working in the repo: `pnpm relay`). A built relay bin is a later-release item (`docs/roadmap/`: there is no v1.1 feature release).
-6. **The embed lives in this repo, not in `projects/ventilator-simulator`.** BUILD-PLAN Stage 8 asked for "a separate PR in the ventilator-simulator repo"; R35 later forked the ventilator into `packages/ventilator` (+ the demo's Hamilton UI) and ruled that the old project stays as-is. So the embed is `apps/demo/dist/embed/ventilator-monitor.html` + `patient-monitor.iife.js` + `pme-ventilator-embed.iife.js` (40 KB gzip), generated from `vent-hamilton.html` so the markup has one source, linked in-page by `createLocalPortPair()` (the Stage V message set: frames in, lungState out, the engine as master clock). It is attached to the GitHub release as `ventilator-monitor-embed-v1.0.0-rc.1.zip`. No PR into the old project (Q4, RULED 2026-09-27 22:29: no monitor panel for `projects/ventilator-simulator`); BUILD-PLAN Definition of done 9's "the ventilator-sim PR has been handed to Ali" is superseded by R35 and that ruling, and the gate note says so.
+6. **The embed lives in this repo, not in `projects/ventilator-simulator`.** BUILD-PLAN Stage 8 asked for "a separate PR in the ventilator-simulator repo"; R35 later forked the ventilator into `packages/ventilator` (+ the demo's Hamilton UI) and ruled that the old project stays as-is. So the embed is `apps/demo/dist/embed/ventilator-monitor.html` + `patient-monitor.iife.js` + `pme-ventilator-embed.iife.js` (40 KB gzip), generated from `vent-hamilton.html` so the markup has one source, linked in-page by `createLocalPortPair()` (the Stage V message set: frames in, lungState out, the engine as master clock). It is attached to the GitHub release as `ventilator-monitor-embed-v1.0.0-rc.1.zip`. No PR into the old project (Q4, RULED 2026-09-27 22:29: no monitor panel for `projects/ventilator-simulator`); BUILD-PLAN Definition of done 9's "the ventilator-sim PR has been handed to samhv-dev" is superseded by R35 and that ruling, and the gate note says so.
 7. **Docs derived from the code, checked by tests.** The physiology overview and the known-deviations page are REGENERATED at execution time (R53) from `main`: `scripts/deviations.ts` lists every `it.fails`/`test.fails` (package tests AND the Playwright e2e) and every literal-titled `it.skip`/`test.skip`/`.todo`; `docs-honesty.test.ts` fails when an `it.fails` or skipped title is missing from `docs/guides/known-deviations.md`, when a `.fails(` has a title it cannot read (a variable or a `${…}` template), when a "Tracked in" cell is empty, when a rhythm, drug or condition id (condition ids read from the code and the scenario schema, not a hand-kept list) has no table row with a mode label (`both`, `MODELED only`, `MANUAL only`, `INTERIM`) in the physiology overview, when a line mentions clinical validation, IEC 60601, FDA, CE marking or diagnosis without a negation, or when a `FILL:` marker is left. The guides' JSON examples are validated by `docs-examples.test.ts` against the real schemas.
 8. **TypeDoc output is git-ignored** (`docs/api/`, ≈ 8 MB, 612 pages) and attached to the release as `api-reference-v1.0.0-rc.1.zip`; **Q3 RULED: the zip only, no GitHub Pages deploy at this release** (refresh: 663 pages, 9.3 MB on 48864439). TypeDoc runs in the `packages` strategy with per-package entry points so `@pme/controller/scenario` and `@pme/skins/validate` are documented.
 9. **Licence audit without a new dependency:** `pnpm licenses list --json` (all) and `--prod` (shipped). Shipped packages must be MIT/ISC/BSD-2/BSD-3/Apache-2.0/0BSD AND be named with their exact version in `NOTICES.md`; build/test tools may also be BlueOak-1.0.0, Python-2.0 or CC0-1.0. Anything else (GPL, LGPL, AGPL, MPL, SSPL, CC-BY-SA, "Unknown") fails CI.
 10. **Versions stay literals** (`export const version = '1.0.0-rc.1'` in six packages), guarded by `release-versions.test.ts` (each constant equals its `package.json`; all library packages share one version). `@pme/demo` stays 0.0.0 (private app).
 11. **Release mechanics:** the executor opens the PR and stops. After merge the ORCHESTRATOR follows `RELEASE.md` and pushes the annotated tag `v1.0.0-rc.1`; `.github/workflows/release.yml` rebuilds the tagged commit, re-runs typecheck/build/notices/licences/size, the IIFE and embed e2e (Chromium + WebKit, heavy test Chromium-only), `pack-smoke`, TypeDoc, and creates the GitHub release with the IIFE (+ map), the embed zip (which carries `LICENSE`, `NOTICES.md` and `LICENSES/`), the API zip (with `NOTICES.md` and the TypeDoc/lunr licence texts), `LICENSES.zip`, `SHA256SUMS.txt` covering every other asset, `LICENSE`, `NOTICES.md`, and the CHANGELOG section as notes. The workflow checks the tag equals `v` + the renderer's version, and marks the release **pre-release** whenever the version has a `-` suffix (`gh release create --prerelease`; Q8). Nothing is published to npm (Q1).
-12. **CITATION.cff names Ali Mahdavi without an e-mail** (no author e-mail appears anywhere in the repo; the brief says to add one only if present). **Q5 RULED: no DOI at the release candidate**; enabling Zenodo and adding `doi:` is a documented follow-up for the 1.0.0 release (`RELEASE.md` "Later: 1.0.0").
+12. **CITATION.cff names samhv-dev without an e-mail** (no author e-mail appears anywhere in the repo; the brief says to add one only if present). **Q5 RULED: no DOI at the release candidate**; enabling Zenodo and adding `doi:` is a documented follow-up for the 1.0.0 release (`RELEASE.md` "Later: 1.0.0").
 
 **Rulings from the R50 review of this plan** (review 2026-09-27 22:50, APPROVE WITH FIXES; each recorded as "Orchestrator ruling (8b review), 2026-09-27"):
 
-13. **Licence texts travel with every distribution.** Orchestrator ruling (8b review), 2026-09-27. Every distribution — the IIFE, the embed zip, every npm `dist/`, the release assets — carries `LICENSE`, `NOTICES.md` AND the full `LICENSES/` texts: Apache-2.0 for the N-P Pulse-derived rows, BSD-3-Clause for fast-uri, the MIT notices (with copyright lines) of ajv, fast-deep-equal, json-schema-traverse and require-from-string, and lunr's MIT text for the API zip. `check-licences` requires a text for every shipped package and every `LICENSES/…` path NOTICES names (BUILD-PLAN Stage 8 acceptance 6). The brief §10 "licence items for legal review before the v1.0 tag" get their own section in the gate note (Task 14), rows needing a lawyer marked "open, for Ali" (DoD 10: "resolved or listed").
+13. **Licence texts travel with every distribution.** Orchestrator ruling (8b review), 2026-09-27. Every distribution — the IIFE, the embed zip, every npm `dist/`, the release assets — carries `LICENSE`, `NOTICES.md` AND the full `LICENSES/` texts: Apache-2.0 for the N-P Pulse-derived rows, BSD-3-Clause for fast-uri, the MIT notices (with copyright lines) of ajv, fast-deep-equal, json-schema-traverse and require-from-string, and lunr's MIT text for the API zip. `check-licences` requires a text for every shipped package and every `LICENSES/…` path NOTICES names (BUILD-PLAN Stage 8 acceptance 6). The brief §10 "licence items for legal review before the v1.0 tag" get their own section in the gate note (Task 14), rows needing a lawyer marked "open, for samhv-dev" (DoD 10: "resolved or listed").
 14. **Validation honesty.** Orchestrator ruling (8b review), 2026-09-27. The report on `main` was generated at `7bcf992` ("engine 0.0.0", 16 red rows, before 7c). Task 12 runs `pnpm validate` on the executor's own tree and commits the fresh `docs/validation/report.{md,json}` and `calibration-queue.md` (Q9: YES, in 8b, not in a separate PR). The validation summary names the report's commit and lists any physiology merged after it; the gate note must not present BUILD-PLAN Stage 8 acceptance 1–2 (or DoD 1 and 8) as met.
-15. **Version label is Ali's (Q8).** Orchestrator ruling (8b review), 2026-09-27. The orchestrator recommends tagging `1.0.0-rc.1` until Ali's calibration pass and the blind review have run (R53); Ali decides. The plan writes `1.0.0-rc.1` and switches only on an explicit launch instruction (Global Constraints).
+15. **Version label is the owner's (Q8).** Orchestrator ruling (8b review), 2026-09-27. The orchestrator recommends tagging `1.0.0-rc.1` until the owner's calibration pass and the blind review have run (R53); samhv-dev decides. The plan writes `1.0.0-rc.1` and switches only on an explicit launch instruction (Global Constraints).
 16. **Draft PR right after Task 2.** Orchestrator ruling (8b review), 2026-09-27. WebKit is not installed locally, so the self-source worker is first exercised on WebKit by CI: the PR is opened as a draft after Task 2, CI is checked after Tasks 2, 4 and 8, and Task 14 marks it ready. The executor still never merges.
 17. **Embed e2e budgets from the sim span.** Orchestrator ruling (8b review), 2026-09-27. Each wait's timeout is the span in sim-seconds at ×1 real time plus 60 s, the heavy test's timeout is 900 s, and the achieved sim/wall ratio is logged; no band changes (R45).
 18. **`docs-honesty` closes every gap** of review finding 5 (e2e expected failures — Playwright's `test.fail(title, …)`, the e2e form of `test.fails` —, literal `it.skip`/`.todo`, unparsable `.fails(` titles, empty "Tracked in", MODELED-only labels, condition ids read from the code, a line-based clinical-claim rule). Orchestrator ruling (8b review), 2026-09-27.
 19. **The six library manifests are edited by one field-setting script** (`scripts/release-manifests.ts`, Node strip-types, with a unit test), not by six head-of-file find blocks that break on any key a sibling stage adds. Orchestrator ruling (8b review), 2026-09-27.
 20. **The worker start guard keys on the worker name `pme-engine`.** Orchestrator ruling (8b review), 2026-09-27.
-21. **Open questions:** Q4, Q6 and Q7 are closed as ruled on 2026-09-27 22:29; Q9 is ruled YES; Q1, Q2, Q3, Q5 and the new Q8 stay open for Ali. *(Superseded 2026-10-10: Ali ruled Q1, Q2, Q3, Q5 and Q8 — Decision 23.)* Orchestrator ruling (8b review), 2026-09-27.
+21. **Open questions:** Q4, Q6 and Q7 are closed as ruled on 2026-09-27 22:29; Q9 is ruled YES; Q1, Q2, Q3, Q5 and the new Q8 stay open for samhv-dev. *(Superseded 2026-10-10: samhv-dev ruled Q1, Q2, Q3, Q5 and Q8 — Decision 23.)* Orchestrator ruling (8b review), 2026-09-27.
 22. **Smaller fixes adopted from the review** (findings 8–16): `pack-smoke` (with a Node runtime import) and `docs:api` in CI; `*.wasm` git-ignored and refused by `check-size`; engine-core's `sideEffects` list; the renderer tarball without its orphan worker map; the embed carries its IIFE's source map; `SHA256SUMS.txt` covers every asset; `release-versions.test.ts` also checks `CITATION.cff`; N-014's date is a `FILL:` marker; the screenshot size caps are asserted; the embedding guide's two corrections; public pages cite only files in the repo. `stage1Vocabulary(engineVersion = '0.0.0')` (`packages/controller/src/vocabulary.ts:79`) is left as it is (its default is data asserted by controller fixtures; review marked it optional) and listed in the gate note as a later-release item.
 
 **Refresh 2026-10-10** (owner decisions closing the open questions, and what re-prototyping on 48864439 changed):
 
-23. **Owner decisions (Ali, recorded by the orchestrator, 2026-10-10).** **Q8** = `1.0.0-rc.1` everywhere (tag `v1.0.0-rc.1`, GitHub pre-release flag ON). **Q1** = GitHub release only: no npm publish; the packages stay publishable and `pack-smoke` stays in CI. **Q2** = not applicable (no publish, so the `@pme` scope question does not arise; the CHANGELOG says the npm names are provisional). **Q3** = the API reference is attached as a zip; no GitHub Pages deploy at this release. **Q5** = no DOI at the release candidate; the Zenodo step is a documented follow-up for 1.0.0. The documentation-honesty rule stays binding.
+23. **Owner decisions (samhv-dev, recorded by the orchestrator, 2026-10-10).** **Q8** = `1.0.0-rc.1` everywhere (tag `v1.0.0-rc.1`, GitHub pre-release flag ON). **Q1** = GitHub release only: no npm publish; the packages stay publishable and `pack-smoke` stays in CI. **Q2** = not applicable (no publish, so the `@pme` scope question does not arise; the CHANGELOG says the npm names are provisional). **Q3** = the API reference is attached as a zip; no GitHub Pages deploy at this release. **Q5** = no DOI at the release candidate; the Zenodo step is a documented follow-up for 1.0.0. The documentation-honesty rule stays binding.
 24. **Known limitations the owner wants stated out loud** (CHANGELOG "Known limitations", the release notes, the README's "What it is not", Task 13): during compensated haemorrhage the systemic vascular resistance FALLS instead of rising; there is no decompensation / reflex-collapse model; there is no sepsis model fit for teaching (the `sepsis` condition id exists from Stage 7e but its course is incomplete — e.g. no fever under general anaesthesia, a recorded known miss — and no sepsis scenario ships); pulsus paradoxus is absent unless FU-7.1 lands it (the executor checks `main`: if the optional `fu-7.1-c` merged with its tests green, drop this line and cite the gate note; otherwise keep it); adults only; for education only, not a medical device.
 25. **"v1.1" in this plan means "a later release".** `docs/roadmap/README.md` (2026-10-05): there is no v1.1 feature release — 1.x is maintenance only and new features go to v2.0. The relay bin (Q7), the `stage1Vocabulary` default and the other items this plan once called "v1.1" are listed in the gate note as later-release items without promising a version. (Text quoted verbatim from FU-11's appendix keeps its own "v1.1" wording.)
 26. **Declarations build with the workspace's types** (refresh finding): the six `tsconfig.build.json` use `"types": ["node", "vite/client"]`, not `["vite/client"]` alone. Since FU-7 engine-core reads `globalThis.process?.env` (the vagal tuning knobs in `src/l2/pk/data/rows-anaesthetic.ts`), and `tsc -p tsconfig.build.json` failed with TS7017 without the node types. No `/// <reference types="node" />` reaches the emitted `.d.ts` (checked: none), and `pack-smoke` (consumer with `types: []`, `skipLibCheck: false`) passes.
@@ -408,7 +408,7 @@ import { defineConfig, type Plugin } from 'vite';
 // IIFE's worker is the file's OWN source (src/iife-worker.ts), so the engine ships once (544 → 285 KB gzip on 48864439).
 const { version } = JSON.parse(readFileSync(resolve(import.meta.dirname, 'package.json'), 'utf8')) as { version: string };
 const BANNER =
-  `/*! patient-monitor-engine ${version} (@pme/renderer IIFE) | MIT, (c) Ali Mahdavi and contributors | ` +
+  `/*! patient-monitor-engine ${version} (@pme/renderer IIFE) | MIT, (c) samhv-dev and contributors | ` +
   'https://github.com/samhv-dev/patient-monitor-engine | bundles ODC-By 1.0 ECG templates (PhysioNet CUDB, MIT-BIH) ' +
   'and code derived from Apache-2.0 sources: see NOTICES.md */';
 
@@ -978,7 +978,7 @@ export function releaseManifest(dir: string, m: Json, version: string): Json {
     version,
     description: r.description,
     license: 'MIT',
-    author: 'Ali Mahdavi',
+    author: 'samhv-dev',
     repository: { type: 'git', url: 'git+https://github.com/samhv-dev/patient-monitor-engine.git', directory: `packages/${dir}` },
     ...(r.sideEffects === undefined ? {} : { sideEffects: r.sideEffects }),
     files: r.files ?? ['dist'],
@@ -1038,7 +1038,7 @@ Expected head of `packages/engine-core/package.json`:
   "version": "1.0.0-rc.1",
   "description": "Patient-monitor simulation engine core: rhythm engine, haemodynamics, gas exchange, device layer, MANUAL and MODELED physiology (no DOM).",
   "license": "MIT",
-  "author": "Ali Mahdavi",
+  "author": "samhv-dev",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/samhv-dev/patient-monitor-engine.git",
@@ -1078,7 +1078,7 @@ Expected head of `packages/renderer/package.json` (its `build` got the `--mode i
   "version": "1.0.0-rc.1",
   "description": "Canvas2D sweep renderer, numerics and mountMonitor() for the patient-monitor engine; also ships the single-file IIFE (window.PatientMonitor).",
   "license": "MIT",
-  "author": "Ali Mahdavi",
+  "author": "samhv-dev",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/samhv-dev/patient-monitor-engine.git",
@@ -1116,7 +1116,7 @@ Expected `packages/audio/package.json` body (it has no dependencies):
   "version": "1.0.0-rc.1",
   "description": "Web Audio QRS beep and IEC-style / traditional / Saadat alarm tones for the patient-monitor engine.",
   "license": "MIT",
-  "author": "Ali Mahdavi",
+  "author": "samhv-dev",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/samhv-dev/patient-monitor-engine.git",
@@ -1152,7 +1152,7 @@ Expected head of `packages/controller/package.json` (down to `devDependencies`; 
   "version": "1.0.0-rc.1",
   "description": "Command protocol, transports (in-process, postMessage, BroadcastChannel, WebSocket, WebRTC), instructor panel and the pme-scenario/1 runner for the patient-monitor engine.",
   "license": "MIT",
-  "author": "Ali Mahdavi",
+  "author": "samhv-dev",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/samhv-dev/patient-monitor-engine.git",
@@ -1204,7 +1204,7 @@ Expected head of `packages/skins/package.json`:
   "version": "1.0.0-rc.1",
   "description": "Data-only monitor skins and themes (saadat-like, philips-like, zoll-like, ge-like, mindray-like, lifepak-like) with JSON Schemas and provenance.",
   "license": "MIT",
-  "author": "Ali Mahdavi",
+  "author": "samhv-dev",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/samhv-dev/patient-monitor-engine.git",
@@ -1246,7 +1246,7 @@ Expected head of `packages/ventilator/package.json`:
   "version": "1.0.0-rc.1",
   "description": "Hamilton-style mechanical ventilator simulation (forked from the author's ventilator simulator) and its two-way link (VentFrame in, lungState out) to the patient-monitor engine.",
   "license": "MIT",
-  "author": "Ali Mahdavi",
+  "author": "samhv-dev",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/samhv-dev/patient-monitor-engine.git",
@@ -2607,7 +2607,7 @@ pnpm validate                        # the validation harness (30–60 min; down
 
 ## Licence, data and citation
 
-The code is [MIT](LICENSE) (© Ali Mahdavi and contributors). The engine bundles short ECG templates derived from
+The code is [MIT](LICENSE) (© samhv-dev and contributors). The engine bundles short ECG templates derived from
 PhysioNet databases under ODC-By 1.0, and some modules are derived from Apache-2.0 sources; every third-party item and
 its attribution is listed in [NOTICES.md](NOTICES.md), and the full third-party licence texts are in
 [LICENSES/](LICENSES/); both travel with every build and release asset. Validation datasets are
@@ -2625,8 +2625,8 @@ message: "If you use this software, please cite it as below."
 title: "patient-monitor-engine: an open-source simulated patient monitor for teaching simulators"
 type: software
 authors:
-  - family-names: Mahdavi
-    given-names: Ali
+  - family-names: samhv-dev
+    given-names: samhv-dev
 version: 1.0.0-rc.1
 license: MIT
 repository-code: "https://github.com/samhv-dev/patient-monitor-engine"
@@ -3755,7 +3755,7 @@ date-released: "2026-10-01"
 ````markdown
 # Releasing
 
-Who does what: the stage executor prepares the release in a pull request and stops. **The orchestrator (or Ali)
+Who does what: the stage executor prepares the release in a pull request and stops. **The orchestrator (or samhv-dev)
 merges the PR and pushes the tag.** Pushing a `v*` tag runs `.github/workflows/release.yml`, which rebuilds the tagged
 commit and creates the GitHub release with its assets.
 
@@ -3773,7 +3773,7 @@ commit and creates the GitHub release with its assets.
    && pnpm pack-smoke && pnpm docs:api` all pass.
 6. `NOTICES.md` is complete (every bundled template, derived file and runtime dependency) and every licence text it
    points to is in `LICENSES/` (`pnpm check-licences` checks both for shipped packages).
-7. The version label is `1.0.0-rc.1` (Ali's ruling, Q8 of the Stage 8b plan): a pre-release until the calibration
+7. The version label is `1.0.0-rc.1` (the owner's ruling, Q8 of the Stage 8b plan): a pre-release until the calibration
    pass and the blind review have run. The workflow flags any `v*-*` tag as a GitHub pre-release; check the release
    page says "Pre-release".
 
@@ -3801,7 +3801,7 @@ gh run watch "$(gh run list --workflow release --limit 1 --json databaseId --jq 
 
 ## Later: 1.0.0 (not at the release candidate)
 
-- DOI (Q5, deferred to 1.0.0): Ali enables the repository in Zenodo's GitHub integration BEFORE pushing the `v1.0.0`
+- DOI (Q5, deferred to 1.0.0): samhv-dev enables the repository in Zenodo's GitHub integration BEFORE pushing the `v1.0.0`
   tag; Zenodo then mints a DOI for that release; add `doi:` to `CITATION.cff` in a small PR afterwards.
 - Versions: `node --experimental-strip-types scripts/release-manifests.ts 1.0.0`, the six constants and their tests,
   CHANGELOG, CITATION — `release-versions.test.ts` checks they agree.
@@ -3860,7 +3860,7 @@ base); Create `docs/gates/stage-8b/developer-pages.md`.
   it by then: a `expect: { refused: true }` step field in `pme-validation/*` documents that makes a refusal the
   expected outcome; otherwise record "not needed" in the gate note.
 - [x] **Step 6 — R56 data gaps found by FU-11 H3.** (a) The fixed alarm words (`apps/demo/src/app/alarms.ts`
-  `FIXED_ALARM_WORDS`) are not glossary data: move them into the glossary file (with Ali's review) or record why not;
+  `FIXED_ALARM_WORDS`) are not glossary data: move them into the glossary file (with the owner's review) or record why not;
   (b) the iec-defaults skins list `alwaysOn: []` while VF, VT and asystole still alarm on them: give them the
   documented list (with a provenance row) or record the gap.
 - [x] **Step 7 — commit:** `git add RELEASE.md CHANGELOG.md docs/gates/stage-8b/developer-pages.md …` and
@@ -3923,22 +3923,22 @@ Expected: typecheck clean; fast and slow sets as on `main` plus this stage's val
 
 - [x] **Step 3: Gate note** `docs/gates/stage-8b.md` with: the launch-gate evidence (FU-3, FU-4, V.1, every FU-11, FU-7.1 and Stage 10 branch, and any other pre-freeze stage: PR numbers and merge commits) and the Step 3b block re-check result; the validation report found on `main` at launch (commit, Summary line, the physiology merges it predated — Task 1 Step 1) and the one regenerated in Task 12 Step 0 (commit, Summary line, wall time); any re-anchored find blocks and informational `package.json` lines; the `release-manifests` diffs (nothing but the publish fields and controller's `ws`); the IIFE before/after (raw, gzip -9, brotli) and the `check-size` line; the IIFE smoke paths (Chrome here; WebKit from CI on the draft PR, with the run links of the checks after Tasks 2, 4 and 8); the ESM package list with `dist` sizes and the `pack-smoke` line; `check-licences` output (package and shipped counts, licence list, the `LICENSES/` files); TypeDoc (time, pages, warnings); the embed sizes (with engine-core's `sideEffects` list), the e2e numbers (`vent-embed {…}` line with `simPerWall`, locally AND from CI's run) and the Safari double-click result with the Safari version; test counts (fast, slow, e2e) with wall times; the two gate JPEGs and the README JPEGs (all ≤ 60 KB); deviations from this plan; the FU-11 hand-overs (Task 5 amendment: the build key and its test; Task 13b: the tick-gate budget, the developer-pages record, the trust-limit text, the soak numbers, Steps 5–6 outcomes); later-release items (a built relay bin, Q7; the exported default `stage1Vocabulary(engineVersion = '0.0.0')`, Decision 22); a short "honesty" paragraph: how many expected failures and skipped tests the known-deviations page lists and that no page claims clinical validation.
 
-  It also carries a section **"Licence items for legal review before the v1.0 tag (brief §10)"** (orchestrator ruling, 8b review; BUILD-PLAN Stage 8 "licence review items (brief §10) closed or documented", Definition of done 10 "resolved or listed") — one row per §10 item with its status and evidence, from the files in this repo (NOTICES.md, the brief §8/§11, the gate notes); rows that need a lawyer say **"open, for Ali"**:
+  It also carries a section **"Licence items for legal review before the v1.0 tag (brief §10)"** (orchestrator ruling, 8b review; BUILD-PLAN Stage 8 "licence review items (brief §10) closed or documented", Definition of done 10 "resolved or listed") — one row per §10 item with its status and evidence, from the files in this repo (NOTICES.md, the brief §8/§11, the gate notes); rows that need a lawyer say **"open, for samhv-dev"**:
 
   | §10 item | Status at this release |
   |---|---|
   | ECGSYN-derived "MIT" ports | not used: ECGSYN is a forbidden source (brief §8; R6); no file derives from it |
-  | ODC-By templates bundled in an MIT package (N-050, N-051) | bundled with attribution in NOTICES.md, the IIFE banner and every distribution's `NOTICES.md`; whether ODC-By attribution-by-NOTICES suffices: open, for Ali |
+  | ODC-By templates bundled in an MIT package (N-050, N-051) | bundled with attribution in NOTICES.md, the IIFE banner and every distribution's `NOTICES.md`; whether ODC-By attribution-by-NOTICES suffices: open, for samhv-dev |
   | VitalDB DUA (vitaldb.net) vs the PhysioNet CC BY copy | validation only, the PhysioNet CC BY 4.0 copy; nothing bundled |
   | PWDB PDDL on Zenodo | validation only (not fetched in 8a: 403); nothing bundled |
   | CapnoBase | excluded (brief §8) |
   | MIMIC ODbL share-alike | excluded (brief §8) |
   | Apache NOTICE obligations (N-P rows, TypeDoc assets) | `LICENSES/Apache-2.0.txt` and the NOTICES excerpt ship with every artefact (npm `dist/`, embed zip, `LICENSES.zip`, API zip); statement of changes per N-P row |
-  | PTB-XL licence mismatch (§11 C5) | report-only comparison (N-052), nothing bundled; FILL: the mismatch as §11 C5 states it and whether it is resolved, or "open, for Ali" |
+  | PTB-XL licence mismatch (§11 C5) | report-only comparison (N-052), nothing bundled; FILL: the mismatch as §11 C5 states it and whether it is resolved, or "open, for samhv-dev" |
 
   (Fill the table from the repo's documents; add PulseDB/other rows if NOTICES or the brief name more. No `FILL:` may remain in the committed gate note.)
 
-  BUILD-PLAN Stage 8 acceptance, as delivered by 8a + 8b — never present an unmet item as met (orchestrator ruling, 8b review): **(1) and (2) NOT MET at this release**: <red count> gating rows in the regenerated report (list the gating ones) and the blind realism review not run; (3) partly (8a's perf numbers; the iPad not measured); (4) size ✓ with the number; (5) embed ✓ with the numbers (Chrome by e2e, Safari by hand); (6) licence ✓ — `check-notices`, the extended `check-licences` (every shipped text in `LICENSES/`, every `LICENSES/` path NOTICES names present) and the legal-review section above. Definition of done: 1 and 8 not met (as acceptance 1–2); 9 — the IIFE and ESM packages are built and publishable (publishing = Q1), and "the ventilator-sim PR has been handed to Ali" is superseded by R35 and the Q4 ruling (the embed ships in this repo); 10 per the legal-review section. Open questions: none open — Q1, Q2, Q3, Q5, Q8 ruled by Ali (2026-10-10, Decision 23); Q4, Q6, Q7 ruled 2026-09-27; Q9 ruled yes.
+  BUILD-PLAN Stage 8 acceptance, as delivered by 8a + 8b — never present an unmet item as met (orchestrator ruling, 8b review): **(1) and (2) NOT MET at this release**: <red count> gating rows in the regenerated report (list the gating ones) and the blind realism review not run; (3) partly (8a's perf numbers; the iPad not measured); (4) size ✓ with the number; (5) embed ✓ with the numbers (Chrome by e2e, Safari by hand); (6) licence ✓ — `check-notices`, the extended `check-licences` (every shipped text in `LICENSES/`, every `LICENSES/` path NOTICES names present) and the legal-review section above. Definition of done: 1 and 8 not met (as acceptance 1–2); 9 — the IIFE and ESM packages are built and publishable (publishing = Q1), and "the ventilator-sim PR has been handed to samhv-dev" is superseded by R35 and the Q4 ruling (the embed ships in this repo); 10 per the legal-review section. Open questions: none open — Q1, Q2, Q3, Q5, Q8 ruled by samhv-dev (2026-10-10, Decision 23); Q4, Q6, Q7 ruled 2026-09-27; Q9 ruled yes.
 
 - [x] **Step 4: Commit, push, PR.**
 
@@ -3972,18 +3972,18 @@ release only. The steps are `RELEASE.md` "After the workflow" item 5:
 
 ---
 
-## Open questions for the orchestrator / Ali
+## Open questions for the orchestrator / samhv-dev
 
-**Status after the refresh (2026-10-10): ALL CLOSED.** Q1, Q2, Q3, Q5 and Q8 ruled by Ali (Decision 23); Q4, Q6 and Q7 ruled 2026-09-27 22:29; Q9 ruled yes (8b review). Each entry keeps its history.
+**Status after the refresh (2026-10-10): ALL CLOSED.** Q1, Q2, Q3, Q5 and Q8 ruled by samhv-dev (Decision 23); Q4, Q6 and Q7 ruled 2026-09-27 22:29; Q9 ruled yes (8b review). Each entry keeps its history.
 
-- **Q1 — npm or GitHub-only?** **RULED (Ali, 2026-10-10): GitHub release only.** No npm publish at the release candidate; the packages stay publishable (`publishConfig`, declarations) and `pack-smoke` stays in CI, so publishing later needs no code change. The README and CHANGELOG say "build from source"; `RELEASE.md` "After the workflow" step 3 says so. (History: the reviewer had recommended exactly this.)
+- **Q1 — npm or GitHub-only?** **RULED (samhv-dev, 2026-10-10): GitHub release only.** No npm publish at the release candidate; the packages stay publishable (`publishConfig`, declarations) and `pack-smoke` stays in CI, so publishing later needs no code change. The README and CHANGELOG say "build from source"; `RELEASE.md` "After the workflow" step 3 says so. (History: the reviewer had recommended exactly this.)
 - **Q2 — Package scope name.** **RULED: not applicable** (follows from Q1: nothing is published). `@pme/*` stays the workspace name; the CHANGELOG says the npm names are provisional, so a rename before a first publish is not a semver break.
 - **Q3 — API reference hosting.** **RULED: attached as a zip** (`api-reference-v1.0.0-rc.1.zip`); no GitHub Pages deploy at this release.
-- **Q4 — The old `projects/ventilator-simulator`.** **RULED 2026-09-27 22:29: no** monitor panel for the old project (R35 forked the ventilator into this repo and the old project stays as-is; the embed ships here). The gate note records BUILD-PLAN Definition of done 9's "the ventilator-sim PR has been handed to Ali" as superseded by R35 and this ruling.
+- **Q4 — The old `projects/ventilator-simulator`.** **RULED 2026-09-27 22:29: no** monitor panel for the old project (R35 forked the ventilator into this repo and the old project stays as-is; the embed ships here). The gate note records BUILD-PLAN Definition of done 9's "the ventilator-sim PR has been handed to samhv-dev" as superseded by R35 and this ruling.
 - **Q5 — DOI.** **RULED: no DOI at the release candidate.** The Zenodo step is a documented follow-up for 1.0.0 (`RELEASE.md` "Later: 1.0.0": enable the repository in Zenodo before the `v1.0.0` tag, then add `doi:` to `CITATION.cff`).
 - **Q6 — IIFE budget going forward.** **RULED 2026-09-27 22:29: keep 400 KB gzip** as the CI limit. Refresh: 277.9 KiB on 48864439, headroom 122 KiB. If a later stage needs more, raise it by ruling, not by editing `check-size.ts` in that stage.
 - **Q7 — The relay bin.** **RULED 2026-09-27 22:29: not in this release** (the ruling said "v1.1"; per `docs/roadmap/` there is no v1.1 feature release, so: a later release). Not published in 1.0.0-rc.1 (`publishConfig.bin: {}`, `ws` → devDependencies).
-- **Q8 — Version label.** **RULED (Ali, 2026-10-06/10): `1.0.0-rc.1`**, tag `v1.0.0-rc.1`, GitHub pre-release flag ON; the unmet BUILD-PLAN Stage 8 acceptance 1–2 (and Definition of done 1/8) is stated in the CHANGELOG's "Known limitations" and the gate note. Never "v1.0 released".
+- **Q8 — Version label.** **RULED (samhv-dev, 2026-10-06/10): `1.0.0-rc.1`**, tag `v1.0.0-rc.1`, GitHub pre-release flag ON; the unmet BUILD-PLAN Stage 8 acceptance 1–2 (and Definition of done 1/8) is stated in the CHANGELOG's "Known limitations" and the gate note. Never "v1.0 released".
 - **Q9 — A validation report of the release tree.** **RULED YES (8b review, 2026-09-27): in 8b, not in a separate PR** — Task 12 Step 0 runs `pnpm validate` on the executor's own tree and commits the regenerated `docs/validation/report.{md,json}` and `calibration-queue.md`; the validation summary names the report's commit and any physiology merged after it.
 
 **Left for the orchestrator (not blocking the plan; decide before or at launch):**

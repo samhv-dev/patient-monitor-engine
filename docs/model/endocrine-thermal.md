@@ -164,6 +164,37 @@ embedding developer can see which commands (`stimulus`, `meal`, the thermal and 
 | [`params.ts:147`](../../packages/engine-core/src/l2/thermal/params.ts#L147) | k_min = (TISSUE_K_W_M2_C + BLOOD_HEAT_WH_L_C·SKBF_MIN_L_H_M2)·BSA = 5.86 W/m²/°C·BSA (10.8 W/°C at 70 kg, 175 cm) |
 | [`params.ts:156`](../../packages/engine-core/src/l2/thermal/params.ts#L156) | ≈ 20 × catecholamines): k = k_v − drive·max(0, k_v − k_min) [FIT: vasomotor core–periphery conductance fit; shape: linear between the two sourced ends; no |
 
+## Couplings
+
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 22 rows; SOURCED 2, FIT 11, ENG 0, UNTAGGED 3, ABSENT 6.
+The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
+constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
+
+| Id | From → to | Sign · form | Class | Constants | Timing, limits | Note |
+|---|---|---|---|---|---|---|
+| `endocrine-thermal.humoral.drive` | `hemo.circ.mapNow`, `hemo.circ.baro.set` (Baroreflex set point) → `endo.core.hormones.hum` | ± · state | FIT | `HUM_EC50_MMHG` = 30, `HUM_MAX` = 1, `HUM_DEADBAND_MMHG` = 3, `HUM_ON_TAU_S` = 150, `HUM_OFF_TAU_S` = 600 | τ `HUM_ON_TAU_S`; saturates at `HUM_MAX` | Baroreceptor unloading u = set − MAP − deadband; target HUM_MAX·u/(u + EC50), first order, not suppressed by an anaesthetic. |
+| `endocrine-thermal.humoral.svr` | `endo.core.hormones.hum` → `hemo.circ.ext.endoHumSvrF` | + · factor | FIT | `HUM_SVR` = 0.32 | — | The humoral share 1 + HUM_SVR·hum, reported apart so the circulation can withdraw it under arrest. |
+| `endocrine-thermal.humoral.svrTotal` | `endo.core.hormones.hum` → `hemo.circ.ext.endoSvrF` | + · factor | FIT | `HUM_SVR` = 0.32 | — | The same factor inside endoSvrF (outside the catecholamine-responsiveness scaling). |
+| `endocrine-thermal.humoral.venous` | `endo.core.hormones.hum` → `hemo.circ.ext.endoHumDV0Frac` | − · term | FIT | `HUM_V0` = 0.30 | — | −HUM_V0·hum of blood volume held in the shared unstressed reservoir. |
+| `endocrine-thermal.adrenal.hypotension` | `hemo.circ.mapNow` → `endo.adrenalDrive` (Adrenal medullary drive) | − · threshold | FIT | `DRIVE_HYPOTENSION_PER_MMHG` = 0.1 | — | Adrenal drive + DRIVE_HYPOTENSION_PER_MMHG per mmHg below MAP 65 (the 65 is inline). |
+| `endocrine-thermal.adrenal.hypoxia` | `resp.o2.sa` (SaO₂) → `endo.adrenalDrive` (Adrenal medullary drive) | − · threshold | SOURCED | `DRIVE_HYPOXIA_PER_SAT` = 10 | — | + DRIVE_HYPOXIA_PER_SAT per unit of SaO2 below 0.85 (inline). |
+| `endocrine-thermal.adrenal.hypercapnia` | `resp.co2.pf` (PaCO₂) → `endo.adrenalDrive` (Adrenal medullary drive) | + · threshold | SOURCED | `DRIVE_HYPERCAPNIA_PER_MMHG` = 0.05 | — | + DRIVE_HYPERCAPNIA_PER_MMHG per mmHg of PaCO2 above 50 (inline). |
+| `endocrine-thermal.adrenal.sympathetic` | `endo.core.hormones.symp` → `endo.adrenalDrive` (Adrenal medullary drive) | + · term | UNTAGGED | — | — | The adrenal drive starts from the sympathetic stress activity itself. |
+| `endocrine-thermal.adrenal.epinephrine` | `endo.adrenalDrive` (Adrenal medullary drive) → `endo.core.hormones.epi` | + · state | UNTAGGED | `EPI_ADRENAL_GAIN` = 3 | — | Steady-state epinephrine = basal × (1 + EPI_ADRENAL_GAIN·drive), reached with its clearance time constant. |
+| `endocrine-thermal.sympathetic.hypercapnia` | `resp.co2.pf` (PaCO₂), `hemo.circ.ext.cbfRel` → `endo.core.hormones.symp` | + · threshold | FIT | `SYMP_HYPERCAPNIA_FROM_MMHG` = 45, `SYMP_HYPERCAPNIA_PER_MMHG` = 0.03, `SYMP_HYPERCAPNIA_MAX` = 0.3 | τ `SYMP_ON_TAU_S`; saturates at `SYMP_HYPERCAPNIA_MAX` | The central chemoreflex share of the sympathetic stress target, × brainstem perfusion and the drug model's delivered-output factor. |
+| `endocrine-thermal.stress.svr` | `endo.core.hormones.symp`, `endo.core.hormones.epi` → `hemo.circ.ext.endoSvrF` | + · factor | FIT | `G_SYMP_SVR` = 0.2, `EPI_BETA2_SVR` = -0.15, `EPI_EC50_BETA2` = 300, `EPI_ALPHA_SVR` = 1.2, `EPI_EC50_ALPHA` = 3000, `CORT_SVR_PERMISSIVE` = 0.25 | — | (1 + G_SYMP_SVR·symp)·(1 + β2 dilation)·(1 + α constriction)·cortisol permissive term. |
+| `endocrine-thermal.stress.hr` | `endo.core.hormones.symp`, `endo.core.hormones.epi` → `hemo.circ.ext.endoHrF` | + · factor | FIT | `G_SYMP_HR` = 0.18, `EPI_BETA1_HR` = 0.5, `EPI_EC50_BETA1` = 800 | — | (1 + G_SYMP_HR·symp·kHr)·(1 + EPI_BETA1_HR·β1·kHr), kHr = 1 − profile β-block; pre-blunted for the drug β-block. |
+| `endocrine-thermal.stress.ees` | `endo.core.hormones.symp`, `endo.core.hormones.epi` → `hemo.circ.ext.endoEesF` | + · factor | FIT | `G_SYMP_EES` = 0.15, `EPI_BETA1_EES` = 0.5, `EPI_EC50_BETA1` = 800 | — | (1 + G_SYMP_EES·symp·kC)·(1 + EPI_BETA1_EES·β1·kC). |
+| `endocrine-thermal.stress.venous` | `endo.core.hormones.symp` → `hemo.circ.ext.endoDV0Frac` | + · term | FIT | `G_SYMP_V0` = 0.03 | — | G_SYMP_V0·symp of blood volume, written as a fraction of the venous unstressed volume. |
+| `endocrine-thermal.surge.setPoint` | `endo.core.hormones.surge` (Stimulus surge) → `hemo.circ.ext.surgeF` (Baroreflex set-point shift (surge)) | + · factor | FIT | `SURGE_SET_PER_NOX` = 0.25, `SURGE_SET_MAX` = 0.25 | saturates at `SURGE_SET_MAX` | The nociceptive surge raises the baroreflex set point, 1 + min(SURGE_SET_MAX, SURGE_SET_PER_NOX·surge). |
+| `endocrine-thermal.cortisol.responsiveness` | `endo.core.hormones.cort` → `cond.vasoResp` | + · factor | UNTAGGED | `CORT_VASO_RESP` = 0.3 | — | Catecholamine responsiveness (1 − CORT_VASO_RESP) + CORT_VASO_RESP·min(1.5, cortResponse·cort/basal), handed to the drug model. |
+| `endocrine-thermal.absent.avp` | `hemo.circ.mapNow`, `blood.out.osm` (Osm) → `absent.endo.avp` (Vasopressin concentration) | ± · state | ABSENT (research/44 L2-01) | — | — | AVP secreted from baroreceptor unloading and osmolality, with its own clearance. |
+| `endocrine-thermal.absent.avpVessels` | `absent.endo.avp` (Vasopressin concentration) → `hemo.circ.p.rSys` (SVR (model)) | + · factor | ABSENT (research/44 L2-01) | — | — | V1 receptor dose–response on SVR. |
+| `endocrine-thermal.absent.avpVeins` | `absent.endo.avp` (Vasopressin concentration) → `hemo.circ.p.v0Sv` (Vu) | − · term | ABSENT (research/44 L2-01) | — | — | Venous capacitance from AVP, in place of 30 % of blood volume held by a fitted fraction. |
+| `endocrine-thermal.absent.renin` | `hemo.circ.mapNow`, `absent.autonomic.sympatheticOutflow` (Central sympathetic efferent state (cardiac and vasomotor)) → `absent.endo.angiotensin` (Angiotensin II concentration (one RAAS)) | ± · state | ABSENT (research/44 L2-01) | — | — | Renin/angiotensin II from renal perfusion pressure and sympathetic β1, shared with the kidney (research/44 L2-07: one RAAS). |
+| `endocrine-thermal.absent.angiotensinVessels` | `absent.endo.angiotensin` (Angiotensin II concentration (one RAAS)) → `hemo.circ.p.rSys` (SVR (model)) | + · factor | ABSENT (research/44 L2-01) | — | — | AT1 receptor dose–response on SVR. |
+| `endocrine-thermal.absent.adrenalMedulla` | `absent.autonomic.sympatheticOutflow` (Central sympathetic efferent state (cardiac and vasomotor)) → `endo.core.hormones.epi` | + · state | ABSENT (research/44 L2-02) | — | — | The adrenal medulla fed by the one sympathetic state, in place of a parallel adrenal drive. |
+
 ## State
 
 ### `ConditionState` ([`l2/endo/conditions.ts`](../../packages/engine-core/src/l2/endo/conditions.ts))

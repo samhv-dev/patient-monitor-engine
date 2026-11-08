@@ -106,7 +106,7 @@ per cell, no raw rows). Report format follows research/14 (run DI).*
   - CM-03d's "MAP 65" is set by the instructor in MANUAL, because only the brain's autoregulation is graded.
 - **Grading** (research/12 §2.2): automatic, then every non-PL confirmed by hand. `invert` marks bands where a lower
   value is the stronger effect (a minimum MAP, a time to desaturation). HAND lines record where the auditor changed the
-  automatic verdict and why. Bands are proposals for Ali with their source; none was widened (R45). Direction-only
+  automatic verdict and why. Bands are proposals for samhv-dev with their source; none was widened (R45). Direction-only
   cells are listed in §8.
 - **MANUAL.** Q9 is open, so CM-M1…M3 are direction-only beside their MODELED twins.
 - **Runtime.** The clean full run took ≈ 18 min wall time for 69 cells.
@@ -301,7 +301,7 @@ Gap ids **C1–C12** (research/12 §2.1 "gap"). Engine file paths are under `pac
   condition adds shunt (0.04 → 0.07) and Crs ×0.65 on top of the profile's Benumof-tuned FRC (`gas/params.ts:142–143`).
 - **Smallest mechanism:** one body-size resolver for all stages (tables §1.3: Lemmens BV, CO ×1.35 from VO2 and BV,
   circulation scaled on lean/adjusted weight), and either the profile or the lung condition carries obesity's lung
-  effects, not both (Ali, Q3).
+  effects, not both (samhv-dev, Q3).
 - **Owner:** new (7a/7c/Stage 3 profile); FU-6 R14 keeps the atelectasis half.
 
 ### C5 — the profile's stabiliser targets and its set point disagree (new)
@@ -445,7 +445,7 @@ Unblocked since research/12: CM-16 (pacemaker-dependent as the profile rhythm `p
 Each owner runs `./run.sh cli.ts <ids>` against its branch's worktree (PME_ENGINE) and pastes `report.ts` rows next
 to this run's column in its gate note (research/12 §7).
 
-## 8. Questions for Ali (with the model's numbers)
+## 8. Questions for samhv-dev (with the model's numbers)
 
 1. **Induction in chronic disease (C1).** Propofol lowers MAP −20 % in every profile (80 y −19.7 %, untreated HTN
    −22 %, AS + CAD + HTN −18 %, HFrEF −21 %, healthy −20 to −23 %). Do you teach a larger fall in the elderly and

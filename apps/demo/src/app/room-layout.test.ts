@@ -25,6 +25,13 @@ describe('the remembered layout', () => {
     expect(rename(l, 'phonekey0001', 'x'.repeat(50), 4000).phonekey0001?.name).toHaveLength(32);
   });
 
+  it('R5d: keeps a keyed learner defibrillator window (role defib) as showing the defibrillator, its name across sightings', () => {
+    let l = noteDevices({}, [dev('w', { role: 'defib', show: null, device: 'defibkey0001' })], 1000);
+    expect(l).toEqual({ defibkey0001: { name: null, show: 'defib', lastSeen: 1000 } });
+    l = noteDevices(rename(l, 'defibkey0001', 'bed 2', 1500), [dev('w2', { role: 'defib', show: 'defib', device: 'defibkey0001' })], 2000);
+    expect(l.defibkey0001).toEqual({ name: 'bed 2', show: 'defib', lastSeen: 2000 });
+  });
+
   it('round-trips through the store and drops what is not its own; at most 64 devices, the newest kept', () => {
     const s = mem();
     writeLayout(s, noteDevices({}, [dev('a', { device: 'phonekey0001' })], 5));

@@ -41,7 +41,7 @@ describe('drug long run', () => {
   // sevoflurane × 0.8/MAC) propofol's flow-limited clearance falls under this rig, and the open-loop TCI (7g's own model)
   // leaves the effect site 0.4 % above its target after 6 h. Measured 2.5098 on CI (run 37135534941) and on the Mac;
   // main 2.5 (within ± 0.005). The TCI band is unchanged (orchestrator ruling at G-FU9): an open-loop TCI pump does not
-  // know the patient's liver flow — real pumps do not either; whether the pump's model should see it is Ali's question.
+  // know the patient's liver flow — real pumps do not either; whether the pump's model should see it is the owner's question.
   // FU-9 → FU-10 Gate (E-FU10-13) → FU-8 B4 (E-FU8B-3): the declared FU-9 `it.fails` (2.5098) is back inside the unchanged
   // band — FU-10 Part A measured 2.4995, FU-8 Part B alone 2.5021; the merged tree's value is in the title.
   it(`${LONGRUN_HOURS} h: TCI propofol effect site held at 2.5 ± 0.005 — measured 2.5033`, { timeout: 1_800_000 }, async () => {
