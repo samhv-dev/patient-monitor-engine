@@ -13,6 +13,11 @@ Grades (R40, after Pulse's segment validation, method only): 🟢 inside the evi
 target); 🟡 misses by less than 30 %; 🔴 misses by 30 % or more, or was not measured. Red fails the run; yellow never
 does. Documents whose commands the current engine refuses ("arrives in Stage 7") are listed as *not measurable*.
 
+**Expected failures (brief 84).** A red row that waits on a named, not yet built mechanism carries an expected-failure
+mark (its known-deviations id, the mechanism, the date, the value when marked) and is reported as 🟣, never as green,
+with its band unchanged. The gate fails on any red row without a mark and on any marked
+row that starts to meet its band, so a landed mechanism forces its row back to a real pass.
+
 ## Commands (from the repo root)
 
 ```bash

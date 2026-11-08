@@ -12,30 +12,49 @@ import type { EngineEvent } from '../../src/types.ts';
 import { beatsOf, cmd, footAfter, mean, numeric, read, riseAfter, rig, rmssd } from '../helpers/hemo.ts';
 
 describe('haemodynamic acceptance (engine level)', () => {
-  // Stage 7a re-specification (plan Task 23, decision 1): PEP and LVET are EMERGENT from the elastance heart. The aortic
-  // valve opens 59–72 ms after the R peak (Weissler's PEP is measured from Q onset, ≈ 40 ms earlier), so R→radial foot
-  // is 119–150 ms (was 150–220 with PEP taken from R: 59 ms + 44 ms transport + the transducer) and the pleth foot 175–245 ms (opening + the 100 ms finger delay + the pulse kernel's foot). The valve closure is asserted on
-  // the model's own truth (avClose vs Weissler PEP + LVET ± 25 ms); the radial incisura of an elastance heart without
-  // valve-closing backflow is too shallow for notchAfter to find reliably (gate note).
-  it('1. timing at HR 60/90/120: R→radial foot 110–220 ms, pleth foot 170–300 ms after R and 20–100 ms after the radial foot, aortic closure at R + PEP + LVET ± 25 ms', () => {
-    for (const hr of [60, 90, 120]) {
+  // Stage 7a re-specification (plan Task 23, decision 1): PEP and LVET are EMERGENT from the elastance heart; the valve
+  // closure is asserted on the model's own truth (avClose vs Weissler PEP + LVET ± 25 ms); the radial incisura of an
+  // elastance heart without valve-closing backflow is too shallow for notchAfter to find reliably (gate note).
+  // The two floors are the published ones again (research 03 §2.1: R → radial upstroke foot ~150–220 ms, finger PPG
+  // foot ~200–300 ms; the validation morphology rows record 145–172 ms on VitalDB / MGH-MF). Commit 048700c4 had lowered
+  // them to 110 / 170 ms to fit the engine; they are expected failures (1a, 1b) until the arterial-timing stage (audit 44
+  // item 2: a sourced electromechanical delay — EMD_S is 0 — and the aorta → radial transit) lands.
+  type Timing = { hr: number; fa: number[]; fp: number[]; avErr: number[] };
+  let timingMemo: Timing[] | undefined;
+  /** R → radial foot and R → pleth foot of every beat 25–38 s at HR 60/90/120, run once and shared by 1, 1a and 1b. */
+  const timing = (): Timing[] =>
+    (timingMemo ??= [60, 90, 120].map((hr) => {
       const { e, ev } = rig({ hr, hrv: false, seed: 3 });
       e.advanceTo(40);
       const abp = read(e, 'abp', 20, 40);
       const pl = read(e, 'pleth', 20, 40);
-      for (const b of beatsOf(ev, 25, 38)) {
-        const fa = footAfter(abp, 20, b.t) - b.t;
-        const fp = footAfter(pl, 20, b.t) - b.t;
-        expect(fa).toBeGreaterThanOrEqual(0.11);
-        expect(fa).toBeLessThanOrEqual(0.22);
-        expect(fp).toBeGreaterThanOrEqual(0.17);
-        expect(fp).toBeLessThanOrEqual(0.3);
-        expect(fp - fa).toBeGreaterThanOrEqual(0.02);
-        expect(fp - fa).toBeLessThanOrEqual(0.1);
-      }
+      const bs = beatsOf(ev, 25, 38);
       const cb = (e.snapshot().state as { st: { hemo: { circ: { beats: { avClose: number }[] } } } }).st.hemo.circ.beats.slice(-4);
-      for (const b of cb) expect(Math.abs(b.avClose - (pepS(hr) + lvetS(hr)))).toBeLessThanOrEqual(0.025);
+      return {
+        hr,
+        fa: bs.map((b) => footAfter(abp, 20, b.t) - b.t),
+        fp: bs.map((b) => footAfter(pl, 20, b.t) - b.t),
+        avErr: cb.map((b) => Math.abs(b.avClose - (pepS(hr) + lvetS(hr)))),
+      };
+    }));
+  it('1. timing at HR 60/90/120: R→radial foot ≤ 220 ms, pleth foot ≤ 300 ms after R and 20–100 ms after the radial foot, aortic closure at R + PEP + LVET ± 25 ms', () => {
+    for (const { fa, fp, avErr } of timing()) {
+      expect(fa.length).toBeGreaterThan(5);
+      fa.forEach((a, i) => {
+        const p = fp[i]!;
+        expect(a).toBeLessThanOrEqual(0.22);
+        expect(p).toBeLessThanOrEqual(0.3);
+        expect(p - a).toBeGreaterThanOrEqual(0.02);
+        expect(p - a).toBeLessThanOrEqual(0.1);
+      });
+      for (const d of avErr) expect(d).toBeLessThanOrEqual(0.025);
     }
+  });
+  it.fails('1a. R→radial foot ≥ 150 ms at HR 60/90/120 (research 03 §2.1, 150–220 ms) — measured 127–148 ms (HR 60 144–148, HR 90 142–146, HR 120 127–130): no electromechanical delay and no aorta → radial transit (audit 44 item 2, the arterial-timing stage)', () => {
+    for (const { fa } of timing()) for (const a of fa) expect(a).toBeGreaterThanOrEqual(0.15);
+  });
+  it.fails('1b. pleth foot ≥ 200 ms after R at HR 60/90/120 (research 03 §2.1, 200–300 ms) — measured 190–210 ms at HR 120 (234–244 ms at HR 60 and 90): the same missing delay and transit (audit 44 item 2, the arterial-timing stage)', () => {
+    for (const { fp } of timing()) for (const p of fp) expect(p).toBeGreaterThanOrEqual(0.2);
   });
 
   it('2. MAP by integral: the displayed mean agrees with the time-average of the displayed waveform (±1 mmHg)', () => {
