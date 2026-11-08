@@ -2208,7 +2208,7 @@ Expected: FAIL — cannot load `ecg-filter.ts`.
 `packages/engine-core/src/l3/ecg-filter.ts`:
 ```ts
 // Monitor ECG filters (brief §4.1 "Measurement chain"; research 03 §1.11, Philips MP2 datasheet):
-//   Monitor    0.5–40 Hz  + automatic mains notch (50 Hz default, brief §5 / Ali's decision)
+//   Monitor    0.5–40 Hz  + automatic mains notch (50 Hz default, brief §5 / the owner's decision)
 //   Diagnostic 0.05–150 Hz, no notch
 // Design function: 2nd-order sections from R. Bristow-Johnson, "Cookbook formulae for audio EQ biquad
 // filter coefficients" (bilinear transform with frequency pre-warping, so each Butterworth section is

@@ -2,7 +2,7 @@
 // Induction agents in sepsis / β-blockade / hypovolaemia / AS (the grid's missing rows), inotropes × β-blockade × sepsis,
 // TCI in low output, true context-sensitive decrements after 1 h and 3 h infusions, volatile emergence, opioid and
 // benzodiazepine onset (time to peak effect), rocuronium dose–onset, and the MANUAL subset research/12 §2.2 requires
-// for P1 haemodynamic cells (graded direction-only: Ali's Q9 on MANUAL physiology is open).
+// for P1 haemodynamic cells (graded direction-only: the owner's Q9 on MANUAL physiology is open).
 import { A, type Row } from './runner.ts';
 import { add, apnoeic, anyR, arrestIn, ASx, BB, CL3, d, dMax, dMin, HF, hemo, inf, m, mn, mx, pctMax, pctMin, pctWin, SEPW, SP, T, TB, TS, V, vap, XA, type Expect } from './spec.ts';
 

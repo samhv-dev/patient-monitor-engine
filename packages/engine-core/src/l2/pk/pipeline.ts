@@ -28,6 +28,16 @@ export const NEVER = 1e12;
 /** Normothermia = the engine's own resting core (L1 tempCore default 36.8 °C): hypothermia is measured from it, so a
  * normothermic patient keeps its published clearance (Task 21: engine PK = standalone model). */
 const NORMOTHERMIA_C = STATE_SCHEMA.tempCore.def;
+/** The lipid sink (research/44 X-06). Miller 10e ch. 25 p. 762, from Kuo & Akpa's PBPK model (Anesthesiology 2013;118:
+ * 1350): Intralipid lowers CARDIAC bupivacaine by 11 % within 3 minutes and CEREBRAL bupivacaine by 18 % within 15
+ * minutes ("theoretical"; Litonius 2012 found no significant sink in human volunteers). The sink is a Hill on the
+ * emulsion's concentration (ec50 1 = the ASRA regimen's reference). Each emax is sized so the ASRA 2020 regimen (1.5
+ * mL/kg, then 0.25 mL/kg/min) gives the cited fall at the cited time: lipid concentration 1.64 at 3 min → 0.11 ÷
+ * (1.64/2.64) = 0.177; 1.33 at 15 min → 0.18 ÷ (1.33/2.33) = 0.315 [FIT: M10 p. 762 −11 % cardiac at 3 min, −18 %
+ * cerebral at 15 min; brief research/44 X-06; src M10 ch. 25 p. 762]. It replaces one sink of up to 50 %, an engineered value that contradicted the row's own citation.
+ * The time course is the emulsion's, not the PBPK's (that mechanism is the audit's later step). */
+export const LIPID_SINK_CARDIAC = 0.177;
+export const LIPID_SINK_CEREBRAL = 0.315;
 
 export interface DrugInst {
   id: string;
@@ -436,7 +446,6 @@ function siteConc(pk: PkState, row: DrugRow, d: DrugInst, p: PkParams | null, t:
 function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
   // The surge's circulating catecholamines join the adrenergic rows' PD (never `agents`/`doses`)
   const actives: Active[] = endoCatActives(ctx.endoCat);
-  let lipid = 0;
   for (const d of Object.values(pk.drugs)) {
     const row = DRUGS[d.id] as DrugRow;
     if (row.pk.kind === 'gamma') {
@@ -508,8 +517,10 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
   }
   // concentrations → actives and per-agent bus entries (LAST: free-fraction factor; lipid sink)
   const lip = pk.drugs.lipidEmulsion;
-  if (lip) lipid = hill(siteConc(pk, DRUGS.lipidEmulsion as DrugRow, lip, null, t).c, 1, 0.5);
-  const freeF = (1 + 2 * Math.max(0, 7.4 - ctx.ph)) * (1 - lipid);
+  const lipC = lip ? siteConc(pk, DRUGS.lipidEmulsion as DrugRow, lip, null, t).c : 0;
+  const acidF = 1 + 2 * Math.max(0, 7.4 - ctx.ph);
+  const freeF = acidF * (1 - hill(lipC, 1, LIPID_SINK_CARDIAC)); // The heart: PD, the bus concentration and cvE
+  const freeCns = acidF * (1 - hill(lipC, 1, LIPID_SINK_CEREBRAL)); // The brain: cnsE and the seizure drive
   // Potency-weighted fractional sums over the local anaesthetics present (ASRA 2020 additivity)
   let uCns = 0;
   let uCv = 0;
@@ -521,15 +532,16 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
     const sc = siteConc(pk, row, d, p, t);
     let c = sc.c;
     if (row.cls === 'localAnaesthetic') {
+      const cCns = c * freeCns;
       c *= freeF;
       const th = LAST_THRESHOLDS[row.id];
       if (th) {
         // Local-anaesthetic toxicity is ADDITIVE between agents (ASRA 2020 practice advisory; M10 ch. 25: the doses
         // share one maximum). The fractional sums replace the per-agent maximum, and each is fed to the SAME Hill as
         // before, so a sole agent at its threshold gives exactly the per-agent-maximum effect.
-        uCns += c / th.cns;
+        uCns += cCns / th.cns;
         uCv += c / th.cv;
-        uSeiz += c / th.seizure;
+        uSeiz += cCns / th.seizure;
       }
     }
     pk.lastC[d.id] = c;

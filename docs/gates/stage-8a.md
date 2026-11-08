@@ -1,8 +1,8 @@
 # Gate 8a — Validation harness (date: 2026-09-27)
 
-Gate question: "Does the harness measure what the brief §9 asks, identically on recorded and generated signals, and does its report hand Ali a calibration queue he can act on?"
+Gate question: "Does the harness measure what the brief §9 asks, identically on recorded and generated signals, and does its report hand samhv-dev a calibration queue he can act on?"
 
-**Answer.** Yes, with the gaps listed here. One metric implementation measures the recorded windows (VitalDB 80 windows, MGH/MF 16) and the matched engine runs. The sanity and gate documents, waveform regression, V9 determinism and the Pulse oracle all report into `docs/validation/report.md` / `report.json`. The **43-row calibration queue** (`docs/validation/calibration-queue.md`, 16 red / 27 yellow) is the input to Ali's R44 pass. Red rows are measurement findings, not harness faults: no band was loosened and nothing in the engine was tuned (R45). The first full run did find three harness faults, and each was fixed before the numbers below were taken (see Deviations 1–3).
+**Answer.** Yes, with the gaps listed here. One metric implementation measures the recorded windows (VitalDB 80 windows, MGH/MF 16) and the matched engine runs. The sanity and gate documents, waveform regression, V9 determinism and the Pulse oracle all report into `docs/validation/report.md` / `report.json`. The **43-row calibration queue** (`docs/validation/calibration-queue.md`, 16 red / 27 yellow) is the input to the owner's R44 pass. Red rows are measurement findings, not harness faults: no band was loosened and nothing in the engine was tuned (R45). The first full run did find three harness faults, and each was fixed before the numbers below were taken (see Deviations 1–3).
 
 Branch `stage-8a-validation` (worktree `scratch/wt-stage-8a`), plan `docs/plans/stage-8a-validation.md` (24 tasks, every step ticked). Numbers are from `pnpm validate --seeds 11,12` with `PME_PULSE_DIR` set, commit `7bcf992`, 653 s wall; soak and ticks from the same code; clean-state checks after the final `git merge origin/main`.
 
@@ -226,7 +226,7 @@ Build SHA-256 `a3be71adfd49bd53eaec7c5e9c7e74ec0878ad0509e545b73ca927478ff6ff74`
 | Frame intervals, worker path, `?fps=60` | n 3,601: p50 **16.7**, p95 **16.7**, p99 **16.8** ms; all < 17 ms | p95 < 25 ms |
 | Frame intervals, worker path, `?fps=30` | n 3,600: p50 16.7, p95 16.7, p99 16.8 ms; all < 17 ms | p95 < 50 ms |
 | Worker tick (Node, 600 s, 30,000 ticks) | p50 **0.42**, p95 **0.45**, p99 **0.53**, max 1.63 ms; heap +25.7 MB over the bench (no forced GC between ticks) | p99 ≪ 6 ms |
-| iPad (A14+), projector PC | not run: a manual step for Ali (`docs/validation/perf/README.md`) | |
+| iPad (A14+), projector PC | not run: a manual step for samhv-dev (`docs/validation/perf/README.md`) | |
 
 Soak alarms (steady ventilated adult):
 - `ART_D_LOW` and `EtCO2_LOW` at 1 s (start-up).
@@ -248,11 +248,11 @@ The 30 fps histogram records `requestAnimationFrame` intervals, so it reads 16.7
 
 ## 9. Human steps for the gate (not executor steps)
 
-- **Blind realism review: ready; Ali to run at the gate.**
+- **Blind realism review: ready; samhv-dev to run at the gate.**
   - `review:build --per-channel 20` built a 160-clip bundle (session `r20260927-bdfb`, in the git-ignored cache; `key.json` is kept apart).
   - The page loads it and draws clips through the monitor's SweepLane (screenshot `review-clip`).
   - A second clinician repeats the review with the same bundle.
-- **Saadat bedside checklist: ready; Ali to run at the gate.** The page lists 10 items. The engine demo for the asystole delay reads **ASYSTOLE after 10.0 s** on the saadat-like skin (gate 4b: 10 s). Results go to `bedside:apply` → skin provenance.
+- **Saadat bedside checklist: ready; samhv-dev to run at the gate.** The page lists 10 items. The engine demo for the asystole delay reads **ASYSTOLE after 10.0 s** on the saadat-like skin (gate 4b: 10 s). Results go to `bedside:apply` → skin provenance.
 - **iPad / projector frame readings**: manual (section 7).
 
 ## 10. Deviations from the plan
@@ -276,7 +276,7 @@ The 30 fps histogram records `requestAnimationFrame` intervals, so it reads 16.7
 - **bedside-asystole** (45 KB): the bedside checklist after the asystole engine demo: "ASYSTOLE after 10.0 s".
 - **perf-60fps** (56 KB): `validation-perf.html?fps=60`, the 8-lane load used for the frame histograms and the soak.
 
-## Needs a ruling (for Ali / the orchestrator)
+## Needs a ruling (for samhv-dev / the orchestrator)
 
 1. **Calibration queue**: the 16 red / 27 yellow rows (section 8) are the R44 input. The biggest morphology gaps are timing: R→upstroke about 65 ms short and notch about 200 ms early. The PPG↔ABP shape correlation is 0.4 against 0.9.
 2. **Profile documents** (Deviation 3): wire the ten documents to the 7a/7b profile API through a pme-scenario/1 extension (R22), or keep them not measurable until 7c–7f land.

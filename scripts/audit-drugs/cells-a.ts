@@ -115,7 +115,7 @@ add({ id: 'DI-44', tier: 'P2', ctx: 'X-E 80 y HTN', state: 'GA maintenance', int
     ceRatio: Math.round((mx(R.i!.rows, 'c_propofol', 3600, 3660) / mx(R.i!.rows, 'c_propofol', 600, 660)) * 100) / 100 }),
   expect: [{ m: 'ceRatio', lo: 1.15, hi: 1.8, src: 'a fixed-rate propofol infusion keeps accumulating over the first hour (Eleveld 2018 / Miller ch. 21 Fig. 21-8)' },
     { m: 'mapPct60', dir: -1, tol: 5, src: 'the hypotension deepens as Ce rises in an elderly hypertensive (Miller ch. 21)' }],
-  owner: '7g PK', hand: { verdict: 'PL', why: 'the engine reproduces the published Eleveld model to 1e-9 (7g gate); Eleveld itself gives Ce(60 min)/Ce(10 min) = 2.0 at a fixed 100 µg/kg/min in an 80-y patient. The 1.15–1.8 band was read off a Marsh-era figure, so the band, not the model, is off — recorded for Ali (Q-7g-1 family)' } });
+  owner: '7g PK', hand: { verdict: 'PL', why: 'the engine reproduces the published Eleveld model to 1e-9 (7g gate); Eleveld itself gives Ce(60 min)/Ce(10 min) = 2.0 at a fixed 100 µg/kg/min in an 80-y patient. The 1.15–1.8 band was read off a Marsh-era figure, so the band, not the model, is off — recorded for samhv-dev (Q-7g-1 family)' } });
 add({ id: 'DI-36', tier: 'P1', ctx: 'COPD GOLD 3', state: 'COPD GOLD 3, RR 20, PEEP 10', intv: 'propofol 2 mg/kg + PEEP 10 at RR 20 (auto-PEEP stacking)', sys: 'CIRC LUNG',
   arms: { i: V([[T, A.vent({ rr: 20, peep: 10 }), 'RR 20 PEEP 10'], pro(T + 60)], T + 900, COPD3), v: V([[T, A.vent({ rr: 20, peep: 10 }), 'RR 20 PEEP 10']], T + 900, COPD3), c: V([], T + 900, COPD3) },
   measure: (R) => m({ mapPctVentOnly: pctMin(R.v!.rows, R.c!.rows, 'map', T, T + 600), mapPctBoth: pctMin(R.i!.rows, R.c!.rows, 'map', T, T + 600),

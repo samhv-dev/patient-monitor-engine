@@ -1,6 +1,6 @@
 // Coverage run DV (devices, pacing, defibrillation, CPR; research/12 §5.8): the cell type, the shared rigs and the
 // measure helpers, copied from run CM/BF and adapted. A cell names its arms, a `measure` over the arms' results and
-// `expect` items the grader turns into a verdict. Bands are PROPOSALS for Ali with their source (research/12 §2.2) and
+// `expect` items the grader turns into a verdict. Bands are PROPOSALS for samhv-dev with their source (research/12 §2.2) and
 // are never widened to fit (R45). Stochastic cells (shock outcomes) run many seeds and report proportions (§6).
 import { A, VENTED, mean, maxOf, minOf, r1, r2, type Arm, type ArmResult, type FineRow, type Row, type Step } from './runner.ts';
 

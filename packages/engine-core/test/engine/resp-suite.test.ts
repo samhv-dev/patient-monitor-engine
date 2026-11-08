@@ -1,6 +1,6 @@
 // FU-6 Task 18: the respiratory scenario suite (research/09-respiratory-integration-audit.md §6, RS1–RS15). MODELED, adult
 // 40 y 70 kg unless stated, the GA state derived (no thermal event). One RS-ROW line per row → the gate note's table.
-// Bands are the audit's §6 proposals (Ali's §7 questions decide them); R45: a missed band is it.fails with its number.
+// Bands are the audit's §6 proposals (the owner's §7 questions decide them); R45: a missed band is it.fails with its number.
 import { describe, expect, it } from 'vitest';
 import type { PatientProfile } from '../../src/types.ts';
 import { cardiacOutput } from '../../src/l2/gas/coupling.ts';
@@ -31,7 +31,7 @@ async function apnoea90(p: PatientProfile): Promise<number> {
 describe('respiratory suite (RS1–RS15)', { timeout: 1_800_000 }, () => {
   // R45 (merged main): VD/VT is now met (FU-4's ONE physical dead space) but both patients are HYPOcapnic — FU-4's R1 root
   // plus FU-6 R4's anaesthetised VCO2 (−15 %) on a 7 mL/kg × 12 VCV. Calibration row (GA_METABOLIC via gaLvl; the default
-  // ventilator setting), owner FU-6/FU-4 with Ali (§7 question 1).
+  // ventilator setting), owner FU-6/FU-4 with samhv-dev (§7 question 1).
   it.fails('RS1 healthy intubated, VCV 12 × 7 mL/kg IBW, man and woman: PaCO2 35–42 at 30 min, VD/VT 0.25–0.4 — measured PaCO2 32.2 / 33.7, VD/VT 0.26 / 0.28', async () => {
     const got: Array<{ pa: number; vdvt: number }> = [];
     for (const [p, vt] of [[ADULT6, 490], [WOMAN, 400]] as Array<[PatientProfile, number]>) {

@@ -4284,7 +4284,7 @@ E1 (temp shim), E2 (resp pipeline: import, metabolic body, O2 argument, ventilat
 ## Deviations (R45) and rulings requested
 Q-7e-5 MH HR after dantrolene; Q-7e-7 MODELED septic shock (5 bands; the 7a requests); Q-7e-8 Stage 3 child desaturation 128 s (7c edge 130); every other deviation the executor made, with its before/after numbers.
 
-## Calibration items for Ali (R44)
+## Calibration items for samhv-dev (R44)
 Q-7e-1 heat Q10; Q-7e-2 awake neuraxial shivering; Q-7e-3 forced-air warm-up lag; Q-7e-4 MH heat × 9, sweat cap 150 W, K efflux 2.2; Q-7e-6 antinociception fallback 0.6; the [ENG] rows of decisions 8, 13 and 17; active cooling for MH (not modelled).
 
 ## Screenshots

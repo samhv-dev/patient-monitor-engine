@@ -346,7 +346,7 @@ The scan ran on the merged tree, seed 7, with the resp-induction rig.
 - Fentanyl 5 µg/kg: 0 s, unchanged.
 
 **Knock-on:** 7f's tables §5d "synergy" unit band becomes `it.fails` #38. **Q21** puts the propofol–opioid synergy size
-to Ali.
+to samhv-dev.
 
 **The 6 h `pk-longrun` propofol line.**
 - **Bisect:** on a 1 h rig of the same TCI (seed 4), b004289 through 50f168c read Ce 2.4998, while ba840c3 (Task 6)
@@ -423,7 +423,7 @@ Ephedrine 10 mg, healthy vs β-blocked (Q1):
   is false. The hk arm refibrillates through the K⁺ hazard. Both penalties are kept, and neither is re-fitted against
   the drawn share alone.
 - **VF_TABLE re-sourcing** (biphasic first-shock termination 70 → 90 %, ROSC kept at 10 %; Schneider 2000, van Alem
-  2003) is flagged for Ali as research/20 §8 Q2 (Q14).
+  2003) is flagged for samhv-dev as research/20 §8 Q2 (Q14).
 - **The 33 °C Boddicker factor is omitted.** Only the < 30 °C direction is sourced.
 - **DV-01a** is graded from the seeded arm: 95 % termination.
 
@@ -538,7 +538,7 @@ green at 0.5. Resistance fall at 1 MAC, and FU-6's Ppeak fall at 0.88 MAC:
 
 So every AF arm ran at its natural length.
 
-## §6 Calibration queue (R44, Ali)
+## §6 Calibration queue (R44, samhv-dev)
 
 **Task 20 Step 6's list:**
 - ephedrine's β-blocked ratio (0.99 against 0.3–0.7, Q1);
@@ -746,4 +746,4 @@ New questions:
 - DI-30 opioid tolerance, DI-35 HOCM, DI-38 active metabolites, DI-43 OSA;
 - **morphine's M6G in CKD 4–5** (beside DI-38). 7g has no parent → metabolite source term.
 
-Each of these is marked "confirm with Ali".
+Each of these is marked "confirm with samhv-dev".
