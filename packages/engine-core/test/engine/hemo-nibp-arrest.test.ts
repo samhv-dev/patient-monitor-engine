@@ -1,4 +1,4 @@
-// FU-7.1 B8 (Ali 2026-10-10): a cuff cycle in a pulseless patient must not leave a normal pressure on the monitor.
+// FU-7.1 B8 (samhv-dev 2026-10-10): a cuff cycle in a pulseless patient must not leave a normal pressure on the monitor.
 // The oscillometric device already finds no envelope without a pulse (l3/nibp: an envelope peak < 0.3 mmHg or an
 // SBP < 50 fails the attempt; CPR corrupts every pulse, so the cycle runs to the 170 s safety deflation and fails) —
 // what was missing is that a FAILED attempt left the previous result on display. Rig: 58 y 80 kg man with the cuff on,

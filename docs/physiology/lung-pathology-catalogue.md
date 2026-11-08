@@ -1,6 +1,6 @@
 # Stage 7 §4b: Lung pathology catalogue (clinical review draft)
 
-*Draft 1, 2026-09-25, for Ali's clinical review (R36, R37). Companion to `parameter-tables.md` (the "main document"); this file is its §4b and will be merged into it at review. All 32 condition sections, the summary (§33), questions Q65–Q95 (§34) and sources (§35) are complete (finished 2026-09-26 after an interruption).*
+*Draft 1, 2026-09-25, for the owner's clinical review (R36, R37). Companion to `parameter-tables.md` (the "main document"); this file is its §4b and will be merged into it at review. All 32 condition sections, the summary (§33), questions Q65–Q95 (§34) and sources (§35) are complete (finished 2026-09-26 after an interruption).*
 
 **What this is.** One table per lung (and chest-wall, airway, pulmonary-vascular) condition in R36's binding list, 32 conditions in all. Each table says what the condition does to the numbers the engine already has. It adds no new physiology. Every condition is a **preset**: a condition id (`lungCondition`, e.g. `ards`, `copd`) with a grade or a 0–1 severity. The preset writes **multipliers and offsets** onto the §2 circulation symbols (`pvr`, `eesRv`, `tIt`, `pPtx`, `peFrac`, `evlwi`) and the §4 lung-module symbols (`crs`, `raw`, `fSlow`, `tauSlowS`, `atel`, `hpvRegional`, `extraShunt`, `dlFactor`, the §4.4 dead-space terms). The §4 equations then produce SpO2, EtCO2, PAP, CVP and ABP. Nothing in a row is a displayed value: it is an input, or a test band on an output. Conditions stack; §33 gives the stacking rule.
 
@@ -896,7 +896,7 @@ Condition id `smokeInhalation`, with components that can be switched separately:
 
 **Scale of the catalogue.** 32 conditions and 413 parameter rows across the 32 tables, plus the lead's 9 new-symbol rows and this 32-row summary. Tag cells: [P] 112, [TXT] 158, [ENG] 146, [VERIFY] 50 (a row can carry two tags, e.g. [P]/[ENG] when the direction is sourced and the number is engineered).
 
-## 34. Questions for Ali (continued from main §9, Q65 onward)
+## 34. Questions for samhv-dev (continued from main §9, Q65 onward)
 
 ★ marks questions that change a default the 7b/Stage V code would otherwise use. "Default" is what the engine does if you do not answer. Questions 1–64 are in the main document §9.
 

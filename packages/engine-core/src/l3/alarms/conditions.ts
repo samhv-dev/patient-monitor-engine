@@ -258,7 +258,7 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
     const since = Math.max(inp.lastQrsT ?? -Infinity, inp.ecgOnSince);
     // Once ASYSTOLE stands, an agonal beat (R–R ≥ AGONAL_RR_S, < 20/min, research/03 §1.5) does not end it — the arrest
     // alarm governs; two beats closer than that (a rhythm returning) do. Without it each agonal beat cleared ASYSTOLE
-    // and let EXTREME BRADY re-raise (11 red raises in Ali's case after the arrest; mindray-like, which does not latch,
+    // and let EXTREME BRADY re-raise (11 red raises in the owner's case after the arrest; mindray-like, which does not latch,
     // re-raised ASYSTOLE 15 times in 4 min)
     const lastRR = inp.lastQrsT !== null && inp.prevQrsT != null ? inp.lastQrsT - inp.prevQrsT : Infinity;
     const agonal = holdingId(s, 'ASYSTOLE') && lastRR >= AGONAL_RR_S;
@@ -302,7 +302,7 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
     const piV = pi && pi.value !== null && pi.flag !== 'invalid' ? pi.value : null;
     // A raised LOW PERF stays the message while the oximeter still finds pulses (PI or PR valid) though its value has gone
     // (E126: the value goes at PULSE_LOST_S, PI and PR at their own 6 s staleness; PI blinks invalid between sparse
-    // beats): NON-PULSAT. takes over when both go — not a 1–2 s LOW PERF superseded at once (757 → 758 s in Ali's case
+    // beats): NON-PULSAT. takes over when both go — not a 1–2 s LOW PERF superseded at once (757 → 758 s in the owner's case
     // once the "99?" hold was removed)
     const prOk = inp.measured.pr !== undefined && inp.measured.pr.value !== null && inp.measured.pr.flag !== 'invalid';
     const fadingPerf = (piV !== null || prOk) && raisedLiveId(s, 'spo2LowPerf');
@@ -344,7 +344,7 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
  * previous tick — "lower priority alarms in the same chain will not be announced while an alarm is active" ([S2] IFU
  * p. 99; p. 97: indications are inhibited "if a more serious alarm condition is active"). The previous-tick case closes
  * the one tick in which a parent's condition has ended but its entry is not yet latched or cleared (22 zero-length
- * `**HR 140>120` raise/clear pairs in Ali's case). A LATCHED entry never suppresses: its condition has ended, so a
+ * `**HR 140>120` raise/clear pairs in the owner's case). A LATCHED entry never suppresses: its condition has ended, so a
  * post-ROSC bradycardia under a latched ASYSTOLE alarms, and a VT after a latched VF raises VTAC. Rank is the chain
  * position, not the level: a parent suppresses every member it lists (ASYSTOLE and EXTREME BRADY are both red).
  */

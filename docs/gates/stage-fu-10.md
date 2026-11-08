@@ -76,7 +76,7 @@ insulin-omission to slow-d; adrenal and mh-trigger to slow-a; insulin-dextrose a
 | ET-04 | WR → **TS** | hour 1 −1.07 → −0.85; ratio to GA 0.90 → 0.71 (accepted, R-7); 3 h 34.41 → 35.30; shivers from 35.48; depth 1 → 0 |
 | ET-01b | WR → WR | linear phase −0.293 → −0.301 °C/h; onset 6.18 → 6.28 h at 34.549 → 34.50 (draped rig: no wound) |
 | ET-02, ET-03a/b, ET-29 | unchanged verdicts | cold arms 34.51 / 34.77 → 34.30 / 34.61; child at 3 h 34.68 → 34.43; elderly `d4h` −0.09 → −0.04 (MI kept); exposure −0.51 → −0.53 |
-| ET-07 | TW → **TS** | cold blood core −0.89 → −1.02 °C (band −0.5 to −1.0; the R-4 consequence the plan reports; Ali Q12) |
+| ET-07 | TW → **TS** | cold blood core −0.89 → −1.02 °C (band −0.5 to −1.0; the R-4 consequence the plan reports; samhv-dev Q12) |
 | ET-31 | WR → **PL** | combined row glucose +6.93 / −2.42 (= the two-row arm); K⁺ combined −0.86 → −1.15, two-row −0.80 |
 | ET-20a–c | unchanged | K⁺ at 60 min −0.75 → −0.75 (the pre-fix −0.59 came from review finding I1, now gone); nadir 13.3 min |
 | ET-34 | TS → **PL** | etomidate cortisol 1582.6 → 1030.9 nmol/L, ratio 1.005 → 0.655 |
@@ -93,7 +93,7 @@ insulin-omission to slow-d; adrenal and mh-trigger to slow-a; insulin-dextrose a
 - **E-FU10-12** (`test/engine/fu10-insulin-dextrose.test.ts`): the combined-row K⁺ band is held as `it.fails` "measured
   −1.15". The plan measured −0.96 with all of Part A applied, but the final review found that number depended on an
   artefact (I1, below). Without the artefact the fall is the two pre-existing K⁺ sources the plan's D6 names (7c's curve
-  and the insulin secreted for the row's 25 g of dextrose; Ali Q4). Not tuned (R44/R45).
+  and the insulin secreted for the row's 25 g of dextrose; samhv-dev Q4). Not tuned (R44/R45).
 - **E-FU10-13** (7g test files, outside the plan's partition):
   - `pk-longrun`: FU-9's declared `it.fails` (TCI propofol Ce 2.5 ± 0.005, measured 2.5098) now measures **2.4995**
     (base 2.5097), back inside the unchanged band. It flips to `it`.
@@ -155,7 +155,7 @@ The plan's "Base drift" section is the record. In short:
 ## 9. Not done / open
 
 - **Part B (B0–B7)** waits for FU-7 (PR #32): B1, B5, B6 and B7 need FU-7's files; B2, B3 and B4 need FU-9, which has merged.
-- **Ali:** Q2 (MH severity draw), Q4 (the two insulin K⁺ sources, now E-FU10-12), Q7 (fever, A8), Q12 (ET-07).
+- **samhv-dev:** Q2 (MH severity draw), Q4 (the two insulin K⁺ sources, now E-FU10-12), Q7 (fever, A8), Q12 (ET-07).
 - **Requests:** the ET runner owner (ET-10a/b rigs after FU-6, and ET-04's wrong Kurz reference); the insulin disposition
   (FU-8 Part B).
 
@@ -325,7 +325,7 @@ holds at −0.73. A4's own rig gives the same picture (ET-31): combined row −1
 - The instructor DKA K⁺: 4.48 vs healthy 4.18 (ET-23c on the merged tree).
 - The plain insulin row (ET-20 −0.73).
 
-**Recommendation:** option 1 (Ali Q4). It is the only single source in which the two rows that give the same insulin
+**Recommendation:** option 1 (samhv-dev Q4). It is the only single source in which the two rows that give the same insulin
 give the same K, and it meets both bands without a constant. Executing it needs approval for the two out-of-partition
 files (7g `rows-other.ts`, 7c `blood/core.ts` or `treatments.ts`) and for reversing D6.
 

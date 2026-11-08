@@ -2,7 +2,7 @@
 // PVR — the one PE PVR source — plus 7b's dead space, shunt and resistance); `condition tensionPtx` and
 // `lungCondition ptxTension` (side R) give identical state (7b's `lp.pPtx`, the one pleural source; 7a's `ext.pPtx`
 // stays 0). Then the one-command massive-PE picture at 3 min (S9's sides; review ruling 2): SBP < 90 and an EtCO2 fall
-// are asserted; CVP ≥ 15, MAP < 65 and the PROPOSED SpO2 band (SaO2 ≤ 92 at FiO2 0.5 — Ali's question, Q15) are
+// are asserted; CVP ≥ 15, MAP < 65 and the PROPOSED SpO2 band (SaO2 ≤ 92 at FiO2 0.5 — the owner's question, Q15) are
 // it.fails with the measured numbers. Physiology reads TRUTH (resp.o2.sa), never the displayed SpO2 (D27).
 // Rig: adult 40 y 70 kg, ETT + VCV 12 × 600 / PEEP 5 / FiO2 0.5, event at 60 s, seed 7; 4 runs of 4 sim-min (fast set).
 import { describe, expect, it } from 'vitest';
@@ -80,7 +80,7 @@ describe('the one-command massive-PE picture at 3 min (S9 sides, truth values)',
   it.fails('MAP < 65 mmHg — measured 78.4 (reached only at +15 min, PEA at +15.6 min)', async () => {
     expect((await pe()).map).toBeLessThan(65);
   }, 120_000);
-  it.fails('PROPOSED band (Q15, Ali): SaO2 ≤ 92 % at FiO2 0.5 — measured 97.3 (the PE row shunt +0.10 is sourced, tables §18)', async () => {
+  it.fails('PROPOSED band (Q15, samhv-dev): SaO2 ≤ 92 % at FiO2 0.5 — measured 97.3 (the PE row shunt +0.10 is sourced, tables §18)', async () => {
     expect((await pe()).sao2 * 100).toBeLessThanOrEqual(92);
   }, 120_000);
 });
