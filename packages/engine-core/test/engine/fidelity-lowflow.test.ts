@@ -1,6 +1,6 @@
 // FU-5 monitor-fidelity suite item 1 (research/10 §13): the oximeter in low flow. Before FU-5 a 3 L bleed to MAP 2 /
 // SV 0.6 mL showed SpO2 98 valid, PI 2.5, a pleth larger than at rest (the pulse was scaled to the last 16 beats), and
-// Ali's tamponade case showed SpO2 98–99 / PI 1.9–2.3 at MAP 13–16 (audit §2, M1). Sources: brief §4.3 (amplitude
+// The owner's tamponade case showed SpO2 98–99 / PI 1.9–2.3 at MAP 13–16 (audit §2, M1). Sources: brief §4.3 (amplitude
 // PI × SV_i/SV_0, LOW PERF below PI 0.3, no pulse → invalid after 10–30 s); research/05 §6 [S2] p. 58–59 (LOW PERF
 // keeps the value with "?", NON-PULSAT. replaces it).
 import { describe, expect, it } from 'vitest';
@@ -9,7 +9,7 @@ import { M, monitorRun, VENTED, validShown, type Alarm, type MonRow } from '../h
 const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
 /**
  * Raise→clear cycles shorter than `minS` of the alarms at `level` (review rulings 5 and 6, F7/F9: a technical INOP or a
- * red alarm must not flicker; after FU-4's arrests the agonal rhythm re-raised EXTREME BRADY 11 times in Ali's case).
+ * red alarm must not flicker; after FU-4's arrests the agonal rhythm re-raised EXTREME BRADY 11 times in the owner's case).
  */
 const shortCycles = (alarms: Alarm[], level: number, minS: number) => {
   const open: Record<string, number> = {};
@@ -33,10 +33,10 @@ describe('SpO2, PI and pleth follow the perfusion', () => {
   // under "FU-5 follow-up" in docs/gates/fu-4.md — every other assertion of both tests is unchanged.
   let bleed: ReturnType<typeof monitorRun> | undefined;
   const bleedRun = () => (bleed ??= monitorRun({ mode: 'modeled', tEnd: 1100, steps: [...VENTED, [60, M.bleed(3000, 900)]] }));
-  let ali: ReturnType<typeof monitorRun> | undefined;
-  const aliRun = () => (ali ??= monitorRun({ mode: 'modeled', tEnd: 2700, steps: [
-    // Brief 93: the case's patient is intubated and ventilated after the induction, not awake on a ventilator for 11 min
-    // (whose drive now makes him breathe against it): tube and ventilator 30 s after propofol
+  let owner: ReturnType<typeof monitorRun> | undefined;
+  const ownerRun = () => (owner ??= monitorRun({ mode: 'modeled', tEnd: 2700, steps: [
+    // Brief 93: the case intubates AFTER the induction, not 11 min before it (an awake patient on a ventilator now
+    // breathes against it, as the drive exists there): tube and ventilator 30 s after the propofol
     [60, M.cond('tamponade', 1)], [660, M.drug('propofol', 2, 'mg/kg')], [690, M.ett()], [690, M.vent()], [900, M.drug('propofol', 1, 'mg/kg')],
     [1200, M.vent(15, 0.5)], [1500, M.vap('sevoflurane', 2)], [2100, M.bleed(2000, 300)],
   ] }));
@@ -64,9 +64,9 @@ describe('SpO2, PI and pleth follow the perfusion', () => {
     expect(shortCycles((await bleedRun()).alarms, 1, 5)).toEqual([]);
   }, 120_000);
 
-  it("MODELED Ali's case (tamponade, propofol 2 + 1, PEEP 15, sevoflurane 2 %, bleed 2 L): no technical raise/clear cycle shorter than 5 s", async () => {
-    const { rows, alarms } = await aliRun();
-    console.log(`fidelity-lowflow Ali short cycles: technical ${JSON.stringify(shortCycles(alarms, 3, 5))}, red ${JSON.stringify(shortCycles(alarms, 1, 5))}`);
+  it("MODELED the owner's case (tamponade, propofol 2 + 1, PEEP 15, sevoflurane 2 %, bleed 2 L): no technical raise/clear cycle shorter than 5 s", async () => {
+    const { rows, alarms } = await ownerRun();
+    console.log(`fidelity-lowflow samhv-dev short cycles: technical ${JSON.stringify(shortCycles(alarms, 3, 5))}, red ${JSON.stringify(shortCycles(alarms, 1, 5))}`);
     expect(lowFlowOnset(rows)).toBeDefined();
     expect(shortCycles(alarms, 3, 5)).toEqual([]);
   }, 120_000);
@@ -79,16 +79,16 @@ describe('SpO2, PI and pleth follow the perfusion', () => {
   // goes back to the owner with these numbers (FU-7.1 Q10) rather than being hidden by a wider bound.
   // E126 (2026-10-26): flipped — the oximeter's value goes 4 s after its last completed pulse and its pleth carries the
   // sensor's noise floor; measured: SpO2 blank from 758 s, PI ≤ 0.25 after MAP < 30 for 20 s (LOW PERF 757 → NO PULSE 770)
-  it("MODELED Ali's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 blank from 758 s, PI ≤ 0.25 (E126; was SpO2 99 valid at 760–765 s, PI 0.31–0.33)", async () => {
-    const { rows } = await aliRun();
+  it("MODELED the owner's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 blank from 758 s, PI ≤ 0.25 (E126; was SpO2 99 valid at 760–765 s, PI 0.31–0.33)", async () => {
+    const { rows } = await ownerRun();
     const on = lowFlowOnset(rows);
     const after = rows.filter((r) => r.t >= (on as MonRow).t + 20);
     expect(after.filter((r) => validShown(r.m.spo2)).map((r) => r.t)).toEqual([]);
     expect(Math.max(...after.map((r) => r.m.pi?.value ?? 0))).toBeLessThan(0.3);
   }, 120_000);
   // FU-8 (Task A2, E-FU8-1): flipped — the detector counted every agonal complex twice (0.14–0.24 s apart)
-  it("MODELED Ali's case: no red raise/clear cycle shorter than 5 s — measured 0", async () => {
-    expect(shortCycles((await aliRun()).alarms, 1, 5)).toEqual([]); // after FU-4's arrest this is the agonal EXTREME BRADY guard (Task 18)
+  it("MODELED the owner's case: no red raise/clear cycle shorter than 5 s — measured 0", async () => {
+    expect(shortCycles((await ownerRun()).alarms, 1, 5)).toEqual([]); // after FU-4's arrest this is the agonal EXTREME BRADY guard (Task 18)
   }, 120_000);
 });
 

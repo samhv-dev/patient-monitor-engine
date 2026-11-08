@@ -1,4 +1,4 @@
-// Built-in scenarios (JSON under packages/controller/scenarios/). All are [draft] until Ali's clinical review.
+// Built-in scenarios (JSON under packages/controller/scenarios/). All are [draft] until the owner's clinical review.
 import aclsVf from '../../scenarios/acls-vf-witnessed.json';
 import aclsPea from '../../scenarios/acls-pea-hypovolaemia.json';
 import aclsBrady from '../../scenarios/acls-bradycardia-unstable.json';

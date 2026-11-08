@@ -136,7 +136,7 @@ full run reproduced the development runs exactly. The report follows research/19
   No pokes. Arms yield once per simulated minute.
 - **Grading** (research/12 §2.2): automatic first, then every non-PL confirmed by hand. `HAND` lines give the code
   reason.
-  - Bands are proposals for Ali with their source; none was widened (R45).
+  - Bands are proposals for samhv-dev with their source; none was widened (R45).
   - `[VERIFY]` marks a vendor or trial figure quoted from memory of the source, to be checked before the band becomes a
     test.
   - Direction-only cells are listed in §8.
@@ -418,7 +418,7 @@ Gap ids **V1–V12**. Engine paths are under `packages/engine-core/src/` on 3fee
 - **zoll-like accepts 360 J** (DV-21a: a 12.6 s charge). The ZOLL R Series biphasic maximum is 200 J [VERIFY]; the skin
   should carry its own energy range (`defib.ts` has ENERGY_RANGE_J 1–360 for every skin). Owner: skins/4b.
 - **Hypothermic ROSC re-arrests** (DV-24a, seeds 18/27 at 28.5 °C: pulseless at +55 s, while the same seeds sustain at
-  37 °C). This is the cold heart's arrest hazard acting after ROSC — plausible, reported for Ali.
+  37 °C). This is the cold heart's arrest hazard acting after ROSC — plausible, reported for samhv-dev.
 - **Diathermy bursts read as HR 128** on a paced patient (DV-10c probe) — plausible monitor behaviour, recorded.
 
 ## 4. Findings for FU-7 (READY, not executed) — → FU-7 before execution
@@ -509,7 +509,7 @@ Changed since research/12: DV-19 was listed "Y" but has no thrombosis input (gra
 Each owner runs `./run.sh cli.ts <ids>` against its branch's worktree (`PME_ENGINE`) and pastes the `report.ts` rows
 next to this run's column in its gate note (research/12 §7).
 
-## 8. Questions for Ali (with the model's numbers)
+## 8. Questions for samhv-dev (with the model's numbers)
 
 1. **Asystole after a shock (the Q3 ruling).** A shock at 1 min of VF produces asystole in 30 % of seeds (46 % of the
    terminations). Under 8 min of good CPR, on a myocardium at 1.00, it never becomes anything else. Should a fresh

@@ -8,7 +8,7 @@
 
 **Tech Stack:** TypeScript 5.9 strict, Vitest 3.2, Vite 6.4, Node ≥ 22.12 (`--experimental-strip-types` for scripts), Playwright 1.63 with system Chrome for strips. No new dependencies.
 
-**Spec:** `../research/00-orchestrator-rulings.md` — G5-obs (the defect list), R17 (lead ratios: V-lead ratios are not a target), R18, R21 (orchestrator merges), R25 (partition, worktrees), R29 item R-S3-3 (ECG RSA reads the breath driver), R30 (demand pacing 68.4 vs 70 ppm, Stage 5.1 fix). `docs/gates/stage-5.md` (per-rhythm numbers; "Observations for Ali"). `docs/DESIGN-BRIEF.md` §3.5 (pace marks are overlays), §4.1, §5, §6.5. `../research/03-waveform-physiology-reference.md` §1.6 (ST, hyperkalaemia, Osborn), §1.7 (pacing), §1.8 (VF). `../research/04-squiggler-and-web-sims.md` §5 (fingerprint). `docs/gates/stage-1.1.md` (tangent-method measurement; CI yielding rule). `docs/plans/stage-5-rhythm-library.md` (house style, Stage 5 decisions).
+**Spec:** `../research/00-orchestrator-rulings.md` — G5-obs (the defect list), R17 (lead ratios: V-lead ratios are not a target), R18, R21 (orchestrator merges), R25 (partition, worktrees), R29 item R-S3-3 (ECG RSA reads the breath driver), R30 (demand pacing 68.4 vs 70 ppm, Stage 5.1 fix). `docs/gates/stage-5.md` (per-rhythm numbers; "Observations for samhv-dev"). `docs/DESIGN-BRIEF.md` §3.5 (pace marks are overlays), §4.1, §5, §6.5. `../research/03-waveform-physiology-reference.md` §1.6 (ST, hyperkalaemia, Osborn), §1.7 (pacing), §1.8 (VF). `../research/04-squiggler-and-web-sims.md` §5 (fingerprint). `docs/gates/stage-1.1.md` (tangent-method measurement; CI yielding rule). `docs/plans/stage-5-rhythm-library.md` (house style, Stage 5 decisions).
 
 ## Global Constraints
 
@@ -37,7 +37,7 @@
 5. **TCP artefact = a tall short spike + polarisation tail**, not the brief §6.5 "wide blunt 20–40 ms" deflection (G5-obs asked for a large spike; research 03 §1.7 says monitors blank/filter the long pulse). Recorded as a brief deviation.
 6. **`pacedV` stays one template** for implanted VVI/DDD and TCP capture (Stage 4b's tests assert `template === 'pacedV'`); it gets broader and lower-slope.
 7. **Fingerprint default stays off** (`morphologyVariation = 0`), as Stage 5 decided: Stage 1's fitted amplitudes and textbook tests depend on it.
-8. **No changes to `qrsOverrideStage`.** The Stage 5 note "QRS 140 override looks narrower" is real (tangent 128 ms for a 140 ms kernel span) but outside G5-obs; it is listed for Ali (Task 14) rather than changed silently.
+8. **No changes to `qrsOverrideStage`.** The Stage 5 note "QRS 140 override looks narrower" is real (tangent 128 ms for a 140 ms kernel span) but outside G5-obs; it is listed for samhv-dev (Task 14) rather than changed silently.
 
 ## Prototype results (planning scratchpad, 2026-09-25; nothing committed)
 
@@ -2777,7 +2777,7 @@ ONLY=vfCoarse,vfFine,vfEpinephrine,cpr,shock,vtPoly,torsades,rbbb,lbbb,pacAberra
 ls docs/gates/stage-5.1/*-after.png | wc -l   # expected: 22
 ```
 
-- [x] **Step 5: Look at every pair (open both PNGs of each key). Check, and write one line per key for the gate note: vfCoarse irregular from the first second, visible in V1; vtPoly V1 never flat; rbbb V1 r–S–tall R′, V6 broad S; lbbb V1 one broad trough, V6 notched R; STEMI ST plateau ≈ 3 small boxes in II/III/aVF (inferior) and V3 (anterior) with reciprocal depression in aVL / III; hyperKsine R–deep S–T oscillation with no flat ST; osborn visible J hump in II/V3 at 28 °C; tcpCapture/tcpNoCapture tall narrow spike + tail + white marker, capture complex broad; paced strips broader paced QRS. If a strip does not show what its label says, fix the cause (not the label) or record it for Ali's list (Task 14)**
+- [x] **Step 5: Look at every pair (open both PNGs of each key). Check, and write one line per key for the gate note: vfCoarse irregular from the first second, visible in V1; vtPoly V1 never flat; rbbb V1 r–S–tall R′, V6 broad S; lbbb V1 one broad trough, V6 notched R; STEMI ST plateau ≈ 3 small boxes in II/III/aVF (inferior) and V3 (anterior) with reciprocal depression in aVL / III; hyperKsine R–deep S–T oscillation with no flat ST; osborn visible J hump in II/V3 at 28 °C; tcpCapture/tcpNoCapture tall narrow spike + tail + white marker, capture complex broad; paced strips broader paced QRS. If a strip does not show what its label says, fix the cause (not the label) or record it for the owner's list (Task 14)**
 
 - [x] **Step 6: Commit and push**
 
@@ -2789,27 +2789,27 @@ git push
 
 ---
 
-### Task 14: Ali's list — apply Ali's strip corrections
+### Task 14: the owner's list — apply the owner's strip corrections
 
-- [x] *Executed 2026-09-26: Ali's list is empty — PR #3 has 0 comments and 0 reviews, and `research/00-orchestrator-rulings.md` has no Ali strip items after G5-obs. Gate note says "none received by 2026-09-26"; the executor's own strip observations for Ali are in the gate note.*
+- [x] *Executed 2026-09-26: the owner's list is empty — PR #3 has 0 comments and 0 reviews, and `research/00-orchestrator-rulings.md` has no samhv-dev strip items after G5-obs. Gate note says "none received by 2026-09-26"; the executor's own strip observations for samhv-dev are in the gate note.*
 
-**Clearly marked slot.** G5-obs asks Ali to page through the 85 Stage 5 strips on PR #3 and add to the polish list; his review is pending. Before starting this task, read the latest `research/00-orchestrator-rulings.md` (G5-obs and anything after it) and the PR #3 conversation (`gh pr view 3 --comments --repo samhv-dev/patient-monitor-engine`). If Ali's list is still empty, write "Ali's list: none received by <date>" in the gate note and skip to Task 15.
+**Clearly marked slot.** G5-obs asks samhv-dev to page through the 85 Stage 5 strips on PR #3 and add to the polish list; his review is pending. Before starting this task, read the latest `research/00-orchestrator-rulings.md` (G5-obs and anything after it) and the PR #3 conversation (`gh pr view 3 --comments --repo samhv-dev/patient-monitor-engine`). If the owner's list is still empty, write "the owner's list: none received by <date>" in the gate note and skip to Task 15.
 
 Each item becomes one sub-task, TDD as above, in this template (copy it once per item):
 
 ```markdown
-#### Item A<n>: <strip key> — <Ali's words, verbatim, in quotes>
+#### Item A<n>: <strip key> — <the owner's words, verbatim, in quotes>
 
 **Defect as measured:** <the number on the current strip that shows the defect, measured with test/helpers/s51.ts or a new helper — e.g. "V1 R′ 0.50 mV", "QRS 121 ms by tangent">
-**Target:** <the measurable acceptance, e.g. "R′ ≥ 0.6 mV and ≥ 2 r"; cite research 03 § or Ali>
+**Target:** <the measurable acceptance, e.g. "R′ ≥ 0.6 mV and ≥ 2 r"; cite research 03 § or samhv-dev>
 **Files:** <exact paths, all inside packages/engine-core/src/l2/ecg/**, templates/**, apps/demo/src/{stage5,strip,stage5-catalogue}.ts, apps/demo/stage5.html, docs/gates/stage-5.1/** — anything else is another stage's (R25): write a request instead>
 
-- [ ] Step 1: Write the failing test in packages/engine-core/test/l2/ecg/s51/ali-<n>.test.ts (measure the waveform; never read a constant back)
-- [ ] Step 2: Run it: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/ali-<n>.test.ts` — expected FAIL with <message>
-- [ ] Step 3: Implement (smallest change; comment cites Ali + date, [ENG] for chosen constants)
+- [ ] Step 1: Write the failing test in packages/engine-core/test/l2/ecg/s51/owner-<n>.test.ts (measure the waveform; never read a constant back)
+- [ ] Step 2: Run it: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/owner-<n>.test.ts` — expected FAIL with <message>
+- [ ] Step 3: Implement (smallest change; comment cites samhv-dev + date, [ENG] for chosen constants)
 - [ ] Step 4: Run it and `test/l2/ecg` — expected PASS
 - [ ] Step 5: `cp docs/gates/stage-5/<key>.png docs/gates/stage-5.1/<key>-before.png` (if not already there) and `ONLY=<key> SUFFIX=-after node --experimental-strip-types apps/demo/scripts/stage5-shots.ts docs/gates/stage-5.1`; look at the pair
-- [ ] Step 6: Commit `fix(ecg): <item> (Ali, PR #3 review)` and push
+- [ ] Step 6: Commit `fix(ecg): <item> (samhv-dev, PR #3 review)` and push
 ```
 
 Items that are not morphology (a label, a catalogue seed, a missing strip) skip Steps 1–4. Items outside this stage's partition (renderer, alarms, pacer device, skins) go into the gate note's "Requests" table with the owner and a one-line reproduction.
@@ -2840,7 +2840,7 @@ Expected: exit 0. Any long engine run added to a test must yield per sim-minute 
   2. Check table: clean-clone command result; each acceptance item (1–8 of the brief) → test file › name → measured number.
   3. Before/after gallery: for each of the 22 keys, the before and after image side by side (`![before](stage-5.1/<key>-before.png) ![after](stage-5.1/<key>-after.png)`) and the one-line observation from Task 13 Step 5.
   4. Deviations: every anchor that needed adapting (Task 1 Step 2), the TCP artefact vs brief §6.5 wording ("wide, blunt 20–40 ms" → spike + tail), STEMI strips on the diagnostic filter, the bandwidth estimator floor (1.47 Hz), whether Task 11 Step 7 ran.
-  5. Ali's list: the items applied (Task 14) or "none received".
+  5. The owner's list: the items applied (Task 14) or "none received".
   6. Requests to other stages (copy the table from this plan, with status).
   7. Sources consulted and the clean-room statement (no ECGSYN or GPL code opened).
 

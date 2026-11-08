@@ -36,7 +36,7 @@ async function start(id) {
   await p.waitForTimeout(500);
 }
 if (want('1')) { await start('induction'); await waitSim(300 + 180); await shot('1-induction-3min'); }
-if (want('2')) { await start('tamponade'); await waitPulseless(18 * 60); await p.waitForTimeout(1500); await shot('2-ali-tamponade-pea'); }
+if (want('2')) { await start('tamponade'); await waitPulseless(18 * 60); await p.waitForTimeout(1500); await shot('2-owner-tamponade-pea'); }
 if (want('3')) {
   await start('bleed'); await waitPulseless(25 * 60); const tA = await simT(); await waitSim(tA + 60); await shot('3a-classIV-pea');
   await p.click('#resus'); await waitPulse(tA + 60 + 600); await waitSim((await simT()) + 20); await shot('3b-classIV-rosc');

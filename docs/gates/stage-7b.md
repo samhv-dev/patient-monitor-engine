@@ -157,7 +157,7 @@ PPV falls ~10 % because the lung-module compliance is 55 (Stage 3's fixed 50): s
 - **Task 29**: NOTICES ids **N-090/N-091/N-092** (N-062 is 7a's, N-070–077 are reserved by the 7c/7g plans, N-080–084 by 8a); screenshots are JPEG (PNG exceeded 60 KB), port 5216, ×4 instead of ×10.
 - Commit trailer: the harness's attribution line (`Claude Opus 5.5 (1M context)`) was used, as the plan's Global Constraints allow.
 
-## 9. Needs a ruling (for the orchestrator / Ali's R44 calibration pass)
+## 9. Needs a ruling (for the orchestrator / the owner's R44 calibration pass)
 
 1. **Nine catalogue signature misses** (§1): pneumonia SpO2 at FiO2 0.4 (catalogue rows inconsistent), OLV/endobronchial Crs (shared chest wall), CF SpO2 on air (point values), neonatal RDS shunt (adult frame), asthma gap, obesity gap and shunt, atelectasis shunt, simple-pneumothorax shunt, OLV shunt at FiO2 0.4 after 30 min. No in-range tune exists for the < 25 % ones; the chest-wall one was a data error and is fixed.
 2. **Pa−EtCO2 bands and PaCO2**: the gap now scales with PaCO2 (g = EtCO2/PaCO2). The catalogue's 5–15 (COPD GOLD 3) and 10–20 (ARDS moderate) bands are met at PaCO2 40 (11.6 / 14.9) but the engine's default MANUAL etco2 target 36 puts a GOLD 3 patient at PaCO2 52 (gap 16.5) and moderate ARDS at 70 (gap 27.5). Rule: bands at PaCO2 40, or change the MANUAL default for patients with lung conditions?

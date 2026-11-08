@@ -1,6 +1,6 @@
 # Stage 7 parameter tables: whole-body modeled physiology (clinical review draft)
 
-*Draft 1, 2026-09-25, for Ali's clinical review before any Stage 7 code is written (R22, R24, R28, R31, R32).*
+*Draft 1, 2026-09-25, for the owner's clinical review before any Stage 7 code is written (R22, R24, R28, R31, R32).*
 *Scope: R22 profiles and comorbidities · R23 coronary supply/demand · R24 + R31 two-sided heart and pulmonary circuit · R31 lung physiology · R26 brain, kidney, liver · R32 blood/acid–base/electrolytes/fluids, endocrine/metabolism/thermoregulation, neuromuscular block and anaesthetic depth, system-level conditions · drug PK/PD (7g) · R28 device modules (7h, summary rows only).*
 
 **What already exists and is not re-specified here.** Stage 2 (brief §4.2–4.3, `l2/hemo/params.ts`) owns the arterial 4-element Windkessel (`WK_R0` 1.05 mmHg·s/mL, `WK_C` 1.5 mL/mmHg, `WK_ZC`, `WK_L`), the pulmonary Windkessel (`PA_R0` 0.1, `PA_C` 4), ejection shape, site transfer, transducer, CVP a/c/v generator, pleth and NIBP. Stage 3 (brief §4.3–4.4, `l2/gas/params.ts`, `l2/resp/pipeline.ts`) owns the O2 store and ODC, two-compartment CO2 (C_f 6, C_s 55 mL/mmHg per 200 mL/min VCO2), the SpO2 device chain, the respiratory driver, the heat model, `gasPatient(profile)` and the `lungState` event (`complianceMlPerCmH2O`, `resistanceCmH2OPerLps`, `effort`, `autoPeepTendency`, `shunt`, `deadSpaceMl`, `frcMl`). Brief §4.9 owns `PatientState`, the pin/release semantics and the single-pump Guyton core that §2 below replaces. Every parameter in this document names the existing variable it drives, or a new Stage 7 variable, in the **Symbol** column (new variables are in `camelCase` and listed in §2.1).
@@ -821,7 +821,7 @@ These rows are for framing, not a full specification. Every device reads the §2
 
 ---
 
-## 9. Open questions for Ali
+## 9. Open questions for samhv-dev
 
 ★ marks the questions that block coding of the first sub-stages (7a circulation, 7b lungs). The rest can be answered at their sub-stage's gate. "Default" is what the engine does if you do not answer.
 

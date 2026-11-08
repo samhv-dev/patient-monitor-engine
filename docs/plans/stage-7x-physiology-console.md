@@ -20,7 +20,7 @@
 **Goal:** A developer page, `apps/demo/physiology-console.html`, that shows the live monitor beside EVERY physiologic
 truth value the engine holds, grouped by organ system, each with current value, baseline, delta and a 60 s sparkline,
 plus an actions rail that sends the same commands the instructor panel and scenarios send, a change log, reset to
-baseline, and JSON/CSV export — so Ali can see how each change moves every physiologic value, and every later Stage 7
+baseline, and JSON/CSV export — so samhv-dev can see how each change moves every physiologic value, and every later Stage 7
 sub-stage's fields appear on it without editing the page.
 
 **Architecture:** The engine gets ONE additive, read-only accessor: an opt-in `truth` event (`EngineOptions.truthHz`,
@@ -2937,7 +2937,7 @@ machinery to a SKIP list — Requests).
   4. *Screenshots* — embed `rest-left.jpg`, `rest-organs-top.jpg`, `phenylephrine-40s-organs-top.jpg`,
      `phenylephrine-40s-left.jpg`, `phenylephrine-changed-only-organs-top.jpg` with one sentence each.
   5. *Decisions* — D1–D12 one line each; *Deviations* — anything that differs from this plan and why.
-  6. *For Ali* — what to try first (open `physiology-console.html`, pick a preset, give a drug, watch the amber/cyan
+  6. *For samhv-dev* — what to try first (open `physiology-console.html`, pick a preset, give a drug, watch the amber/cyan
      rows, "changed only", export CSV), and the open questions below.
 
 - [x] **Step 3: Commit, push, open the PR**
@@ -2978,8 +2978,8 @@ BODY
    if the truth tree approaches 50 KB (the busy 58-drug case already sits at 48.7 KB, truncated).
 3. **Absolute tolerances for highlighting:** DONE here (R50 F2, D9): pH 0.02, temperature 0.2 °C, saturation one
    point, PaCO2/EtCO2 2 mmHg, K 0.2, lactate 0.3 [ENG]. Base excess and HCO3 still use 2 % (BE near 0 falls back
-   to one displayed digit); Ali may add rows to `TOLERANCES` in `meta.ts` during calibration.
-4. **Baseline timing:** auto-baseline at sim 60 s is [ENG] (R50 F8; was 15 s); Ali may prefer 30 s or "on first
+   to one displayed digit); samhv-dev may add rows to `TOLERANCES` in `meta.ts` during calibration.
+4. **Baseline timing:** auto-baseline at sim 60 s is [ENG] (R50 F8; was 15 s); samhv-dev may prefer 30 s or "on first
    command". One constant (`autoBaselineS`).
 5. **ECMO** has no owning stage yet; its paths will land in "other" until mapped.
 6. **happy-dom** resolves from `apps/demo` only through Vitest's peer link. If the orchestrator prefers an explicit

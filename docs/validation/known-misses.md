@@ -8,7 +8,7 @@ and the test is marked as an expected failure with the measured value in its tit
 module that owns it, until the mechanism is fixed. The release-candidate view of the same list, with where each
 item is tracked, is [known deviations](../guides/known-deviations.md); each module is described in [docs/model](../model/README.md).
 
-**155 known misses.** Split from the test titles: a band recognised in the target of 146, a measured value in 144, a source in 58; "—" = not stated in a form the generator reads.
+**184 known misses.** Split from the test titles: a band recognised in the target of 162, a measured value in 173, a source in 86; "—" = not stated in a form the generator reads.
 
 **The bands themselves were audited** against the literature (target audit, 2026-10-11; the rows are in [target-audit.tsv](target-audit.tsv)): 148 of these misses carry an audit verdict — RIGHT 30, TOO NARROW 27, TOO WIDE 3, MIS-SPECIFIED 61, UNSUPPORTED 27 (a miss can carry several rows). RIGHT: the band matches its source; TOO NARROW / TOO WIDE: the source supports a wider / narrower band; MIS-SPECIFIED: the band measures something other than its source did; UNSUPPORTED: no source found for it. A proposed band is evidence for an owner ruling, not a change: until a ruling, the test keeps its band. The audit itself, row by row with its evidence, is [published here](target-audit/30-target-audit.md) with its CSV twin and synthesis; the numbered evidence notes it cites as "research/NN" live in the project's research folder outside the repository.
 
@@ -16,8 +16,8 @@ item is tracked, is [known deviations](../guides/known-deviations.md); each modu
 |---|---|
 | [Rhythms and the ECG](#rhythms-ecg) | 3 |
 | [Circulation](#circulation) | 19 |
-| [Pressure waveforms and pleth](#pressure-waveforms) | 1 |
-| [Lungs: mechanics, ventilation–perfusion, pathology](#lungs) | 6 |
+| [Pressure waveforms and pleth](#pressure-waveforms) | 3 |
+| [Lungs: mechanics, ventilation–perfusion, pathology](#lungs) | 31 |
 | [Gas exchange and capnography](#gas-exchange) | 2 |
 | [Breathing, airway and the ventilator coupling](#breathing) | 20 |
 | [Blood, acid–base, electrolytes and fluids](#blood) | 10 |
@@ -26,8 +26,8 @@ item is tracked, is [known deviations](../guides/known-deviations.md); each modu
 | [Anaesthetic depth, ventilatory drive and neuromuscular block](#neuro) | 6 |
 | [Pharmacology: PK, PD and the drug rows](#pharmacology) | 34 |
 | [Monitor measurements (device layer)](#monitor) | 7 |
-| [Ventilator](#ventilator) | 5 |
-| [Presentation: renderer, audio, skins, the app](#presentation) | 2 |
+| [Ventilator](#ventilator) | 6 |
+| [Presentation: renderer, audio, skins, the app](#presentation) | 3 |
 | [Whole-patient scenario suites](#integration) | 10 |
 
 <a id="rhythms-ecg"></a>
@@ -75,6 +75,8 @@ Module page: [docs/model/pressure-waveforms.md](../model/pressure-waveforms.md)
 
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
+| 1a. R→radial foot ≥ 150 ms at HR 60/90/120 | 127–148 ms | research 03 §2.1 | not audited | — | [`hemo-acceptance.test.ts`](../../packages/engine-core/test/engine/hemo-acceptance.test.ts) |
+| 1b. pleth foot ≥ 200 ms after R at HR 60/90/120 | 190–210 ms at HR 120 | research 03 §2.1 | not audited | — | [`hemo-acceptance.test.ts`](../../packages/engine-core/test/engine/hemo-acceptance.test.ts) |
 | 5c. post-PVC potentiation: the next beat SBP is +8–15 mmHg on average over isolated PVCs | −10.9 | — | MIS-SPECIFIED ([audit row 50](../../docs/validation/target-audit/30-target-audit.md#row-50)) | normal heart: post-PVC pulse-pressure ratio 1.0-1.2 (SBP change -5 to +5 mmHg); HFrEF profile: ratio >= 1.3 | [`hemo-acceptance.test.ts`](../../packages/engine-core/test/engine/hemo-acceptance.test.ts) |
 
 <a id="lungs"></a>
@@ -88,7 +90,32 @@ Module page: [docs/model/lungs.md](../model/lungs.md)
 | induction at FiO2 1.0 (no thermal switch): Qs/Qt ≥ 0.07 by 20 min | 0.015 | — | TOO NARROW ([audit row 72](../../docs/validation/target-audit/30-target-audit.md#row-72)) | Qs/Qt 0.04–0.12 at 20 min (FiO2 1.0, PEEP 5); ≥ 0.06 if the test is re-specified at ZEEP | [`lung-r14.test.ts`](../../packages/engine-core/test/engine/lung-r14.test.ts) |
 | CVP ≥ 15 mmHg | 11.5 | — | TOO NARROW ([audit row 51](../../docs/validation/target-audit/30-target-audit.md#row-51)) | CVP >= 10 mmHg (or >= baseline + 5) | [`obstructive-aliases.test.ts`](../../packages/engine-core/test/engine/obstructive-aliases.test.ts) |
 | MAP < 65 mmHg | 78.4 | — | MIS-SPECIFIED ([audit row 52](../../docs/validation/target-audit/30-target-audit.md#row-52)) | drop MAP < 65, or replace it with SBP < 90 (already present); add a PP plausibility check | [`obstructive-aliases.test.ts`](../../packages/engine-core/test/engine/obstructive-aliases.test.ts) |
-| PROPOSED band (Q15, Ali): SaO2 ≤ 92 % at FiO2 0.5 | 97.3 | — | MIS-SPECIFIED ([audit row 73](../../docs/validation/target-audit/30-target-audit.md#row-73)) | Same as row 1: SaO2 ≥ 92 % with a fall of 1–6 points at FiO2 0.5 without a PFO; SpO2 ≤ 92 on room air | [`obstructive-aliases.test.ts`](../../packages/engine-core/test/engine/obstructive-aliases.test.ts) |
+| PROPOSED band (Q15, samhv-dev): SaO2 ≤ 92 % at FiO2 0.5 | 97.3 | — | MIS-SPECIFIED ([audit row 73](../../docs/validation/target-audit/30-target-audit.md#row-73)) | Same as row 1: SaO2 ≥ 92 % with a fall of 1–6 points at FiO2 0.5 without a PFO; SpO2 ≤ 92 on room air | [`obstructive-aliases.test.ts`](../../packages/engine-core/test/engine/obstructive-aliases.test.ts) |
+| asthma: PaCO2 − EtCO2 gap 20–50 mmHg | 6.3 | catalogue §3 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| obesity: PaCO2 − EtCO2 gap 5–8 mmHg | 3.2 | catalogue §10 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| obesity: shunt 0.10–0.15 | 0.045 | catalogue §10 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| pneumonia: SpO2 88–93 % at FiO2 0.4 | 96.7 | catalogue §11 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| atelectasis: shunt 0.10–0.12 | 0.155 | catalogue §12 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| ptxSimple: shunt 0.07 | 0.119 | catalogue §15 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| olv: Crs 25–30 mL/cmH2O | 33.9 | catalogue §22 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| olv: shunt 0.2–0.3 at FiO2 0.4 after 30 min | 0.140 | catalogue §22 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| endobronchial: Crs 27.5–30.25 mL/cmH2O | 34.0 | catalogue §23 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| neonatalRds: shunt 0.2–0.4 | 0.158 | catalogue §30 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| bronchospasm: inspiratory resistance 46 cmH2O·s/L | 46.005 | catalogue §2 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| bronchospasm: auto-PEEP 6–10 cmH2O | 10.6 | catalogue §2 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| ards: Crs 35 mL/cmH2O | 34.6 | catalogue §6 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| ards: plateau 19 cmH2O | 19.2 | catalogue §6 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| ards: driving pressure 14 cmH2O | 14.2 | catalogue §6 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| ards: shunt 0.30 | 0.285 | catalogue §6 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| ild: Crs 32 mL/cmH2O | 31.8 | catalogue §7 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| ild: inspiratory resistance 13 cmH2O·s/L | 12.9 | catalogue §7 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| chestWall: Crs 32 mL/cmH2O | 33.5 | catalogue §9 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| chestWall: inspiratory resistance 10 cmH2O·s/L | 9.88 | catalogue §9 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| pe: PaCO2 − EtCO2 gap 15–25 mmHg | 25.9 | catalogue §18 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| cf: inspiratory resistance 20 cmH2O·s/L | 20.3 | catalogue §26 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| cf: SpO2 88–94 % at FiO2 0.21 | 94.9 | catalogue §26 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| covidPneumonitis: Crs 50 mL/cmH2O | 49.8 | catalogue §31 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
+| covidPneumonitis: shunt 0.30 | 0.320 | catalogue §31 | not audited | — | [`signatures.test.ts`](../../packages/engine-core/test/l2/lung/signatures.test.ts) |
 | COPD GOLD 1 (severity 0.25): FEV1 ≥ 80 % pred with FEV1/FVC < 0.70 | 71 % | — | RIGHT ([audit row 109](../../docs/validation/target-audit/30-target-audit.md#row-109)) | keep | [`volumes.test.ts`](../../packages/engine-core/test/l2/lung/volumes.test.ts) |
 
 <a id="gas-exchange"></a>
@@ -272,6 +299,7 @@ Module page: [docs/model/ventilator.md](../model/ventilator.md)
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
 | bronchospasm 1 at 20 min | at 30 min PaCO2 59.2 vs 39.6, VT 238 vs 476 | — | MIS-SPECIFIED ([audit row 110](../../docs/validation/target-audit/30-target-audit.md#row-110)) | match the link's vcFlow/pause to the engine's Ti (the file's own V.1 TODO), then keep 3 / 3 / 2 % / 10 % | [`link-parity.test.ts`](../../packages/ventilator/test/link-parity.test.ts) |
+| RR 10 → 20: MAP falls > 15 mmHg with the auto-PEEP [FIT: no source found; brief 87] (the auto-PEEP papers give the direction, not the size) | −12.5 | brief 87 | not audited | — | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
 | ARDS moderate PEEP 5 → 15 (FiO2 0.6): SpO2 rises ≥ 5 over 1–4 min (recruitment), falls again within 60 s of PEEP 5 | +2.0 / 0.0 | — | MIS-SPECIFIED ([audit row 111](../../docs/validation/target-audit/30-target-audit.md#row-111)) | re-specify on shunt/PaO2: venous admixture −15–30 % (or SpO2 +1.5–3 from 95 % at FiO2 0.6) by 5–15 min of PEEP 15; SpO2 falls back within 5 min of PEEP 5; keep CO falls | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
 | FiO2 0.4: SpO2 rises ≥ 2 | SpO2 98 → 98, SaO2 98.7 → 99.1 | — | MIS-SPECIFIED ([audit row 112](../../docs/validation/target-audit/30-target-audit.md#row-112)) | drop the SpO2 band at FiO2 0.4 (keep the passing shunt/PCWP check), or assert PaO2/FiO2 +30–50 % at ≥ 10 min in a profile with P/F < 200 | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
 | room air (FiO2 0.21): SpO2 rises ≥ 2 | SpO2 94.0 → 95.0, SaO2 94.9 → 95.5 | — | MIS-SPECIFIED ([audit row 113](../../docs/validation/target-audit/30-target-audit.md#row-113)) | for shunt 0.15 → 0.10 on air: SaO2 +1–2 points; or re-base on a sicker profile (shunt ≥ 0.20) and assert P/F +30–50 % at ≥ 10 min | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
@@ -286,6 +314,7 @@ Module page: [docs/model/presentation.md](../model/presentation.md)
 |---|---|---|---|---|---|
 | untreated: VF from hyperthermia | no VF in 51 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
 | treated late (the run-sheet path): crisis 1 min into the established crisis | the call comes at +46.6 min | — | not audited | — | [`malignant-hyperthermia.slow.test.ts`](../../apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts) |
+| sysMaxAtRosc 194.9–204.9 mmHg, the physiology alone (191.07 + 8.9 from the coronary reading) | 210.8 | — | not audited | — | [`stab-wound-tamponade.slow.test.ts`](../../apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts) |
 
 <a id="integration"></a>
 ## Whole-patient scenario suites
@@ -297,7 +326,7 @@ Module page: [docs/model/integration.md](../model/integration.md)
 | S4b severe tamponade, propofol 1 mg/kg: MAP < 55 within 3 min and CO −25 % | MAP 50.5, CO −21 % when propofol removes the tonic sympathetic share | — | UNSUPPORTED ([audit row 41](../../docs/validation/target-audit/30-target-audit.md#row-41)) | keep MAP < 55 as a teaching floor (owner ruling); CO fall: direction-only (CO falls more than in the same dose without tamponade) unless a source is found | [`clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) |
 | S5 severe tamponade, PEEP 5 → 10: CO −20 % and MAP ≥ 10 mmHg more than the same PEEP in a healthy patient (Barash | ΔMAP 4.1 vs 1.5, CO ×0.88 | — | UNSUPPORTED ([audit row 42](../../docs/validation/target-audit/30-target-audit.md#row-42)) | direction-only: tamponade CO fall >= 2 x the healthy CO fall and MAP fall > healthy MAP fall for the same PEEP step; magnitude to the owner | [`clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) |
 | S6a the same: MAP falls 40–60 % to a nadir of 30–50 over 1–3 min (the expected picture | nadir 2.7, −97 % with an arrest when propofol removes the tonic sympathetic share | — | UNSUPPORTED ([audit row 43](../../docs/validation/target-audit/30-target-audit.md#row-43)) | keep as the owner's teaching picture (R45), tagged [ENG/owner]; no evidence to narrow or widen it | [`clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) |
-| S9 the same: SaO2 < 90 % at 5 min (truth, not the display; the proposed band SpO2 ≤ 92 at FiO2 0.5 is Ali's, item 15 | 97.8 % | — | MIS-SPECIFIED ([audit row 71](../../docs/validation/target-audit/30-target-audit.md#row-71)) | Ventilated at FiO2 0.5 without a PFO: SaO2 stays ≥ 92 %, with a fall of 1–6 points by 5 min. Move "SpO2 ≤ 92" to the awake room-air arm (RS13). If on-O2 desaturation is wanted, add a PFO (right-to-left shunt) variant | [`clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) |
+| S9 the same: SaO2 < 90 % at 5 min (truth, not the display; the proposed band SpO2 ≤ 92 at FiO2 0.5 is the owner's, item 15 | 97.8 % | — | MIS-SPECIFIED ([audit row 71](../../docs/validation/target-audit/30-target-audit.md#row-71)) | Ventilated at FiO2 0.5 without a PFO: SaO2 stays ≥ 92 %, with a fall of 1–6 points by 5 min. Move "SpO2 ≤ 92" to the awake room-air arm (RS13). If on-O2 desaturation is wanted, add a PFO (right-to-left shunt) variant | [`clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) |
 | S9 the same: CVP ≥ 15 and MAP < 65 at 5 min (RV failure; Q15 | CVP 9.3, MAP 82.1 | — | TOO NARROW ([audit row 44](../../docs/validation/target-audit/30-target-audit.md#row-44)) | CVP >= 10 mmHg (or >= baseline + 5) and SBP < 90 (MAP < 65 optional) | [`clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) |
 | S13 VF + standard-quality CPR (q 0.8, no adrenaline): the continuous coronary perfusion pressure (CoPP) 15–25 mmHg (Paradis 1990 | 24.9–28.0 | Paradis 1990 | MIS-SPECIFIED ([audit row 25](../../docs/validation/target-audit/30-target-audit.md#row-25)) | 10-30 mmHg for a salvageable patient on CPR without a vasopressor (>= 15 kept as the ROSC threshold, not as a range edge) | [`clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) |
 | S16 untreated MH under sevoflurane: arrest (VF/asystole) before 60 min, core ≤ 44 °C at the arrest (MHAUS; Miller, MH; Q6) | no arrest in 60 min, core 37.6 °C at 60 min | Miller, MH | not audited | — | [`clinical-suite.test.ts`](../../packages/engine-core/test/engine/clinical-suite.test.ts) |
@@ -354,7 +383,7 @@ expected failures that are no longer one (the test now passes) or that the liste
 | [141](target-audit/30-target-audit.md#row-141) | calibration queue: `docs/validation/calibration-queue.md` | t21-mh/10min/etco2 | MIS-SPECIFIED | delta EtCO2 +15 to +30 mmHg above the 240-300 s baseline segment at 10 min (57-72 from 42.3). Regenerate the queue on the post-FU-4 tree before calibrating |
 | [168](target-audit/30-target-audit.md#row-168) | a passing test (a hidden miss): `packages/engine-core/test/l2/pk/interactions-misc.test.ts` | sugammadex (DI-45): 16 mg/kg gives a 15-30 % HR fall (MHRA/EMA; M10 ch. 24) | UNSUPPORTED | mean HR fall 0-5 % at 2/4/16 mg/kg; a separate low-probability marked-bradycardia event (HR fall >= 20 %, order 1-10 % of administrations, risk rising with dose) |
 | [177](target-audit/30-target-audit.md#row-177) | no longer an expected failure: `apps/demo/e2e/app-instructor-tasks.e2e.ts` | five instructor tasks, each under 30 s | RIGHT | keep; remove the test.fail line now that entry 148 carries its key |
-| [183](target-audit/30-target-audit.md#row-183) | no longer an expected failure: `packages/engine-core/test/engine/fidelity-lowflow.test.ts` | MODELED Ali's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 blank from 758 s, PI ≤ 0.25 (E126; was SpO2 99 valid at 760–765 s, PI 0.31–0.33) | TOO NARROW | Assert the device rule: SpO2 shown "?"/LOW PERF whenever PI < 0.3, and invalid ≤ 30 s after pulse loss. Allow a valid reading at MAP 20-30 while PI ≥ 0.3. Keep the MAP-based criterion only below systolic ~20 mmHg |
+| [183](target-audit/30-target-audit.md#row-183) | no longer an expected failure: `packages/engine-core/test/engine/fidelity-lowflow.test.ts` | MODELED the owner's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 blank from 758 s, PI ≤ 0.25 (E126; was SpO2 99 valid at 760–765 s, PI 0.31–0.33) | TOO NARROW | Assert the device rule: SpO2 shown "?"/LOW PERF whenever PI < 0.3, and invalid ≤ 30 s after pulse loss. Allow a valid reading at MAP 20-30 while PI ≥ 0.3. Keep the MAP-based criterion only below systolic ~20 mmHg |
 | [191](target-audit/30-target-audit.md#row-191) | calibration queue: `docs/validation/calibration-queue.md` | V1 · HR 50–70 | RIGHT | keep ± 20 ms of the paired recording median |
 | [192](target-audit/30-target-audit.md#row-192) | calibration queue: `docs/validation/calibration-queue.md` | V1-lit · all | TOO NARROW | 120-220 ms (R peak -> radial tangent foot), with the per-bin V1 rows doing the fine fit |
 | [193](target-audit/30-target-audit.md#row-193) | calibration queue: `docs/validation/calibration-queue.md` | V1-lit · vitaldb | TOO NARROW | 120-220 ms (R peak -> radial tangent foot), with the per-bin V1 rows doing the fine fit |
