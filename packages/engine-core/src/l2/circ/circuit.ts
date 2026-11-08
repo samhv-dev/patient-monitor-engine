@@ -67,6 +67,9 @@ export interface CircParams {
   vCprRef: number;
   /** The volume below which a compartment's outflow is throttled, mL (absent = V_EMPTY_ML; profile ×W/70). */
   vEmpty?: number;
+  /** Rightward shifts of the RV and LV end-systolic P–V relations by a regional (infarcted) segment, mL (absent = 0). */
+  dV0RvIsch?: number;
+  dV0LvIsch?: number;
 }
 
 /** Time-dependent inputs for one integration interval (built per tick by the model; not stored). */
@@ -144,9 +147,15 @@ export function evaluate(s: readonly number[], t: number, p: CircParams, d: Circ
   const ext = pit + ct + peri; // external pressure on the chambers (thoracic pump acts on everything intrathoracic)
   const extV = ext + cr; // venous/right-heart side: + the retained release pressure
   const dl = vlv - p.v0Lv;
+  // A regional infarct shifts a ventricle's ESPVR rightward (the ischaemic segment does not shorten): the active term
+  // acts on the volume above V0 + dV0, never below it (a passive segment bulges, it does not suck) — conditions.ts
   const dr = vrv - p.v0Rv;
-  const pLv = a * p.eesLv * d.kLv * dl + (1 - a) * p.aLv * (Math.exp(p.betaLv * dl) - 1) + ext + cc;
-  const pRv = a * p.eesRv * d.kRv * dr + (1 - a) * p.aRv * (Math.exp(p.betaRv * dr) - 1) + ext + cc;
+  const shL = p.dV0LvIsch ?? 0;
+  const dlA = shL > 0 ? Math.max(0, dl - shL) : dl;
+  const pLv = a * p.eesLv * d.kLv * dlA + (1 - a) * p.aLv * (Math.exp(p.betaLv * dl) - 1) + ext + cc;
+  const sh = p.dV0RvIsch ?? 0;
+  const drA = sh > 0 ? Math.max(0, dr - sh) : dr;
+  const pRv = a * p.eesRv * d.kRv * drA + (1 - a) * p.aRv * (Math.exp(p.betaRv * dr) - 1) + ext + cc;
   // While the chest is being compressed the thin-walled right heart and great veins are a Starling resistor — they
   // collapse rather than hold a negative transmural pressure, so the MEASURED atrial pressure tracks the intrathoracic
   // pressure (which is what a catheter reads: Paradis 1990's RA relaxation pressure of 15–25, not the ≈ 4 an

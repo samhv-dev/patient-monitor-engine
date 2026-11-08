@@ -83,14 +83,29 @@ describe('sanity scenarios II', () => {
     r.trace('', [55, 170]);
     expect(r.avg(150, 180, 'co')).toBeLessThan(0.9 * r.avg(30, 60, 'co'));
   }, 300_000);
-  // H8 CVP 12–20 is not reached (CVP +1.8; the circ-level test and the gate note carry it): the RV-over-LV signature is asserted
-  it('H8 RV infarct: CVP rises ≥ 1 above a non-rising PCWP (CVP/PCWP ≥ 0.8), CO falls', async () => {
-    const r = await run({}, [[60, { kind: 'condition', id: 'rvInfarct', severity: 1 }]], 180);
-    r.trace('', [55, 170]);
-    expect(r.st(150, 180, 'cvp')).toBeGreaterThan(r.st(30, 60, 'cvp') + 1);
-    expect(r.st(150, 180, 'cvp') / r.st(150, 180, 'pawp')).toBeGreaterThanOrEqual(0.8);
-    expect(r.avg(150, 180, 'co')).toBeLessThan(r.avg(30, 60, 'co'));
-    expect(r.st(150, 180, 'pawp')).toBeLessThanOrEqual(r.st(30, 60, 'pawp') + 1);
+  // Brief 94 (t15's own source, the presenting state before volume loading): Dell'Italia 1985 Circulation 72:1327, 10
+  // patients with predominant RV infarction and PCWP < 18: mean RA 11 ± 2, PCWP 10 ± 4, CI 1.9 ± 0.5 L/min/m² (× BSA
+  // 1.85 m², Du Bois 70 kg / 175 cm); RA/PCWP ≥ 0.8 (Dell'Italia 1984 JACC 4:931). Bands = mean ± 1 SD.
+  const rvi = () => run({}, [[60, { kind: 'condition', id: 'rvInfarct', severity: 1 }]], 300);
+  it('RV infarct, presenting state: CVP rises ≥ 3, PAWP 6–14, CO 2.6–4.4 L/min, CVP/PAWP ≥ 0.8, no reflex tachycardia', async () => {
+    const r = await rvi();
+    r.trace('RVI', [55, 170, 290]);
+    const cvp = r.st(180, 300, 'cvp');
+    const pawp = r.st(180, 300, 'pawp');
+    expect(cvp).toBeGreaterThan(r.st(30, 60, 'cvp') + 3);
+    expect(pawp).toBeGreaterThanOrEqual(6);
+    expect(pawp).toBeLessThanOrEqual(14);
+    expect(cvp / pawp).toBeGreaterThanOrEqual(0.8);
+    expect(r.avg(180, 300, 'co')).toBeGreaterThanOrEqual(2.6);
+    expect(r.avg(180, 300, 'co')).toBeLessThanOrEqual(4.4);
+    expect(r.st(180, 300, 'hr')).toBeLessThanOrEqual(r.st(30, 60, 'hr') + 5); // Bezold–Jarisch (Mark 1983)
+  }, 300_000);
+  // Known miss D (validation t15): the CVP reaches 8.2, below Dell'Italia's 11 ± 2 — every constant is set by its own
+  // target (RVEF 30 %, HR 66, the pericardium's two Freeman & LeWinter points), none by this band.
+  it.fails('RV infarct, presenting state: CVP 9–13 (Dell\'Italia 1985: RA 11 ± 2)', async () => {
+    const cvp = (await rvi()).st(180, 300, 'cvp');
+    expect(cvp).toBeGreaterThanOrEqual(9);
+    expect(cvp).toBeLessThanOrEqual(13);
   }, 300_000);
   it('H2 severe MR: regurgitant volume ≥ 50 mL/beat equivalent (forward SV < total), PCWP ≥ 15', async () => {
     const r = await run({ conditions: [{ id: 'mr', grade: 'severe' }] }, [], 120);
