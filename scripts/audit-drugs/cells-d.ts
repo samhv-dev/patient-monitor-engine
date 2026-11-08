@@ -93,7 +93,7 @@ add({ id: 'DI-24', tier: 'P2', ctx: 'X-A vent', state: 'LAST: bupivacaine 225 mg
     ratio: Math.round((mx(R.i!.rows, 'c_bupivacaine', T + 200, T + 300) / mx(R.c!.rows, 'c_bupivacaine', T + 200, T + 300)) * 100) / 100,
     cvNoLipid: Math.round(mx(R.c!.rows, 'lastCv', T, T + 900) * 100) / 100, cvLipid: Math.round(mx(R.i!.rows, 'lastCv', T, T + 900) * 100) / 100,
     rhythmsNoLipid: rh(R.c!), rhythmsLipid: rh(R.i!), arrestNoLipid: arrestIn(R.c!.rows, T, T + 900), arrestLipid: arrestIn(R.i!.rows, T, T + 900) }),
-  expect: [{ m: 'ratio', lo: 0, hi: 0.92, src: 'M10 ch. 25 p. 762: lipid lowers cardiac bupivacaine 11 % within 3 min (the arms also differ in pH; the sink alone is in pk-acceptance-scen.test.ts) (research/44 X-06; was 0.4–0.75, "ASRA 2020", which states no free-level reduction)' },
+  expect: [{ m: 'ratio', lo: 0, hi: 0.92, src: 'M10 ch. 25 p. 762: lipid lowers cardiac bupivacaine 11 % within 3 min (the arms also differ in pH; the sink alone is in pk-acceptance-scen.test.ts); hi 0.92 = 0.89 + 3 points [FIT: lipid sink tolerance; brief 89] (research/44 X-06; was 0.4–0.75, "ASRA 2020", which states no free-level reduction)' },
     { m: 'arrestNoLipid', event: true, src: '7g decision 12: bupivacaine 225 mg → seizure, bradycardia, then VF at 78 s (untreated)' }],
   owner: '7g LAST (NR-7g-4: the engine rig at 70 kg reaches VF; the demo at 80 kg did not)' });
 

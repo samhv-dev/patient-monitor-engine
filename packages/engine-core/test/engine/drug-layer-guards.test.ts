@@ -28,8 +28,8 @@ describe('the flipped matrix cells', { timeout: 3_600_000 }, () => {
     });
     // Miller 10e ch. 25 p. 762 (Kuo & Akpa 2013 PBPK): lipid lowers CARDIAC bupivacaine by 11 % within 3 min. In the
     // whole engine the two arms also differ in pH (the untreated arm is arresting; acidaemia raises the free fraction),
-    // so the ratio is the sink AND that difference: only the sink's bound is asserted here (≤ 0.92: at least the cited
-    // fall less its ±3-point tolerance); the sink alone, ±3 points, is asserted in pk-acceptance-scen.test.ts. The
+    // so the ratio is the sink AND that difference: only the sink's bound is asserted here, ≤ 0.92 [FIT: lipid sink upper
+    // bound = M10 p. 762's −11 % (0.89) plus a 3-point tolerance; brief 89] — no source states the 3 points; the sink alone, ±3 points, is asserted in pk-acceptance-scen.test.ts. The
     // band was 0.4–0.75× ("ASRA 2020", which states no free-level reduction), against the row's own citation
     // (research/44 X-06).
     it('lipid emulsion lowers cardiac free bupivacaine at least by the cited sink at 3 min (≤ 0.92 ×; M10 p. 762: −11 %), and bupivacaine 225 mg untreated arrests', async () => {

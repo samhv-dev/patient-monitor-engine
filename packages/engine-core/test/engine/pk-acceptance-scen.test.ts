@@ -26,7 +26,8 @@ describe('drug scenarios', () => {
     expect(hr.at(-1)!.values.hr).toBeLessThan(110);
   }, 300_000);
   // Miller 10e ch. 25 p. 762: lipid lowers cardiac bupivacaine 11 % within 3 min and cerebral bupivacaine 18 % within
-  // 15 min (Kuo & Akpa 2013 PBPK) — research/44 X-06; it was "≥ 30 %" against that citation.
+  // 15 min (Kuo & Akpa 2013 PBPK) — research/44 X-06; it was "≥ 30 %" against that citation. The bands are the cited
+  // values ± 3 points [FIT: lipid sink test tolerance; brief 89] (no source states a tolerance).
   it('LAST: bupivacaine 225 mg IV; lipid at 30 s lowers cardiac free bupivacaine ≈ 11 % at 3 min and the cerebral toxicity drive ≈ 18 % at 15 min (M10 p. 762)', () => {
     const ev2 = (event: Record<string, unknown>) => ({ type: 'applyEvent', event }) as unknown as Command;
     const a = createPkState();
