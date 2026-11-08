@@ -8,14 +8,14 @@ import type { Grade, Ref, Target } from './types.ts';
 export const YELLOW_PCT = 30;
 export const GREEN_PCT = 10;
 
-export function resolveRef(r: Ref, segValue: (segment: string) => number): number {
+export function resolveRef(r: Ref, segValue: (segment: string, series?: string) => number): number {
   if (typeof r === 'number') return r;
-  return segValue(r.segment) * (r.factor ?? 1) + (r.offset ?? 0);
+  return segValue(r.segment, r.series) * (r.factor ?? 1) + (r.offset ?? 0);
 }
 
 const rel = (d: number, ref: number) => (100 * Math.abs(d)) / Math.max(Math.abs(ref), 1e-9);
 
-export function gradeTarget(t: Target, measured: number, ctx: { segValue: (segment: string) => number; firstMeasured?: number }): { errPct: number; grade: Grade; pass: boolean; expected: string } {
+export function gradeTarget(t: Target, measured: number, ctx: { segValue: (segment: string, series?: string) => number; firstMeasured?: number }): { errPct: number; grade: Grade; pass: boolean; expected: string } {
   const R = (r: Ref) => resolveRef(r, ctx.segValue);
   let err: number;
   let holds: boolean;

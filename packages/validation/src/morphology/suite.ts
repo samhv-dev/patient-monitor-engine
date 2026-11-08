@@ -12,7 +12,7 @@ import { loadCase, vitaldbSignals, vitaldbSums } from '../datasets/vitaldb.ts';
 import type { VitalFile } from '../datasets/vital.ts';
 import { computeWindowMetrics, type WindowMetrics } from '../metrics/window-metrics.ts';
 import { gradeTarget } from '../segments/grade.ts';
-import type { Grade } from '../segments/types.ts';
+import type { ExpectedMiss, Grade } from '../segments/types.ts';
 import { ksD, median, quantile, wasserstein1 } from '../stats.ts';
 import { BANDS, hrBin, type MetricBand } from './bands.ts';
 
@@ -30,6 +30,7 @@ export interface MorphRow {
   grade: Grade;
   errPct: number;
   source: string;
+  expectedMiss?: ExpectedMiss;
 }
 export interface WindowPair { window: AnalysisWindow; recorded: WindowMetrics; engine: WindowMetrics; wallMs: number }
 
@@ -67,6 +68,7 @@ export function gradeBand(band: MetricBand, pairs: WindowPair[], group: string):
   return {
     band: band.id, metric: band.metric, group, recorded: rec.length ? dist(rec) : null, engine: dist(eng), ks: ksD(rec, eng), w1: wasserstein1(rec, eng),
     engineStat: stat, expected: g.expected, grade: g.grade, errPct: g.errPct, source: band.source,
+    ...(band.expectedMiss?.[group] ? { expectedMiss: band.expectedMiss[group] } : {}),
   };
 }
 
