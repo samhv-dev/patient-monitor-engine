@@ -117,7 +117,7 @@ describe('the stimulus sympathetic surge', { timeout: 3_600_000 }, () => {
       return Math.max(...i.filter((r) => r.t >= TI).map((r) => r.map)) - at(c, TI).map;
     };
     // R45 (ET amendment): SURGE_NE_GAIN / SURGE_SET_PER_NOX are fitted to case 1 and not raised; the stimulus scale is 7e's
-    // one shape (R51 addendum 12). The 0.7 mmHg remainder goes to the gate note §5 and Ali (Q17).
+    // one shape (R51 addendum 12). The 0.7 mmHg remainder goes to the gate note §5 and samhv-dev (Q17).
     it.fails('no opioid: ΔMAP 20–30 mmHg (Shribman 1987) — measured +19.1 (+19.3 before the blood/fluids merge)', async () => {
       const x = await d(0);
       console.log(`FU-7 case 1c: incision, no opioid ΔMAP ${f1(x)}`);

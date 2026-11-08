@@ -213,9 +213,9 @@ Backlog: O3 crystalloid 1 L; O5 norepinephrine 0.1 µg/kg/min; O6 apnoea after F
 
 ## Calibration queue (R44)
 
-60 rows outside their band — the input to Ali's calibration pass. Also written to `calibration-queue.md`.
+60 rows outside their band — the input to the owner's calibration pass. Also written to `calibration-queue.md`.
 
-| | Suite | Row | Measured | Expected | Source | Ali: decision |
+| | Suite | Row | Measured | Expected | Source | samhv-dev: decision |
 |---|---|---|---|---|---|---|
 | 🔴 | morphology | V1 · HR 50–70 | engine 104 vs recorded 190 | 170–210 | brief §9 V1: median within ±20 ms of the VitalDB median per HR bin [ENG] | |
 | 🔴 | morphology | V1-lit · all | engine 102 vs recorded 167 | 150–220 | research 03 §2.1: R → radial upstroke 150–220 ms | |

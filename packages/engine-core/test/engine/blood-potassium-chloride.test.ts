@@ -1,4 +1,4 @@
-// FU-7.1 A5 (Ali 2026-10-10 "there is no KCl as drug"): potassium chloride as an iv INFUSION in mmol, raising plasma K
+// FU-7.1 A5 (samhv-dev 2026-10-10 "there is no KCl as drug"): potassium chloride as an iv INFUSION in mmol, raising plasma K
 // through 7c's own potassium pool (the pool insulin–dextrose shifts K into: ECF K + ICF K with τ K_TAU_MIN 43 min, the
 // Na/K-ATPase set point following total-body K, K_TBK_MMOL 300). What the engine OWES the clinician is the shape: the
 // plasma K rises while the infusion runs, in proportion to the rate, peaks at its end and then falls back toward a

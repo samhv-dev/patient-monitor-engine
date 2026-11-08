@@ -1,7 +1,7 @@
 ## Fidelity report (research/10 §13 suite items)
  1 low flow:
   A1m-map-ladder: MAP < 30 from 788 s; +20 s SpO2 "99" PI 2.16 PR 162 INOP none; pleth ptp 140 % of baseline; SpO2 plain-valid 96 % of rows after; SpO2-valid-with-PR/PI-invalid rows 58
-  A2-ali-b7: MAP < 30 from 2348 s; +20 s SpO2 "99" PI 2.03 PR 145 INOP none; pleth ptp 133 % of baseline; SpO2 plain-valid 100 % of rows after; SpO2-valid-with-PR/PI-invalid rows 0
+  A2-owner-b7: MAP < 30 from 2348 s; +20 s SpO2 "99" PI 2.03 PR 145 INOP none; pleth ptp 133 % of baseline; SpO2 plain-valid 100 % of rows after; SpO2-valid-with-PR/PI-invalid rows 0
  2 PEA:
   A5-pea: HR mean 90; PR invalid at +7 s, SpO2 at +12 s; ART shown valid in 10 of 87 rows; ART INOP no; ART low alarms cleared during PEA 3
   A5-pea-mr: HR mean 90; PR invalid at +7 s, SpO2 at +12 s; ART shown valid in 10 of 87 rows; ART INOP no; ART low alarms cleared during PEA 0
@@ -37,12 +37,12 @@
   A1-map-ladder: NIBP 2 results [133/89(99) 75/47(60)], 3 failed
   A1m-map-ladder: NIBP 1 results [105/81(91)], 19 failed
   C2-af-nibp: NIBP 2 results [110/73(89) 111/75(89)], 0 failed
-  A2-ali-b7: NIBP 0 results [], 5 failed
+  A2-owner-b7: NIBP 0 results [], 5 failed
 11 limit hygiene:
   G1-hover: CVP_M_HIGH raised 0×, HR_LOW 11× in 180 s; texts **CVP 10>10 | **HR 49<50
   A1-map-ladder        chatter ART_D_LOW×12 CVP_M_HIGH×100 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
   A1m-map-ladder       chatter nibp-failed×19 CVP_M_LOW×86 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
-  A2-ali-b7            chatter CVP_M_HIGH×4 ART_S_LOW×5 ART_M_LOW×71 nibp-failed×5 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  A2-owner-b7            chatter CVP_M_HIGH×4 ART_S_LOW×5 ART_M_LOW×71 nibp-failed×5 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
   A4-vf                chatter CVP_M_HIGH×39 HR_HIGH×18 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
   A5-pea               chatter ART_D_LOW×4 CVP_M_HIGH×37 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
   A6-asystole          chatter CVP_M_HIGH×39 | startup (t < 15 s) ART_D_LOW EtCO2_LOW

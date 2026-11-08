@@ -59,9 +59,9 @@ Parameter tables: `docs/physiology/stage-7-parameter-tables.md` §2 (Q28 `tIt`),
 **Item numbering.** This plan numbers items as the orchestrator's FU-3 brief does (1–13). The rulings file numbers the
 same items differently; the map: brief 1 = rulings FU-3 (1) sux; 2 = (6) R-7f-7; 3 = (7) R-7f-9; 4 = (14) MANUAL
 check 18; 5 = (3) Q-FU2-10; 6 = (4) Q-FU2-11; 7 = (8) CVP; 8 = (15) rename; 9 = (9) `patient.profile`; 10 = G7c item
-11 (oracle files); 11 = (12) R-7f-6; 12 = 7x.1 + (13) the 7f dial; 13 = (5) Q-FU2-9 amiodarone (Ali; no task); 16 = rulings FU-3 item 16 (G7d follow-through 4, added to this plan by the
+11 (oracle files); 11 = (12) R-7f-6; 12 = 7x.1 + (13) the 7f dial; 13 = (5) Q-FU2-9 amiodarone (samhv-dev; no task); 16 = rulings FU-3 item 16 (G7d follow-through 4, added to this plan by the
 orchestrator after the first draft; placed after item 4 in priority, Task 5). The
-rulings' (2) neostigmine tail is closed (7f gate: 18.3 min inside 8–20) and (10) PWDB fetch is Ali's by hand.
+rulings' (2) neostigmine tail is closed (7f gate: 18.3 min inside 8–20) and (10) PWDB fetch is the owner's by hand.
 
 ## Global Constraints
 
@@ -212,7 +212,7 @@ rulings' (2) neostigmine tail is closed (7f gate: 18.3 min inside 8–20) and (1
 - **D2 — sugammadex underdose (Task 2):** no mechanism change. The pair (rocuronium 1.2, sugammadex 0.5 at PTC 1) is
   capacity-limited (16.1 µmol sugammadex vs 63.5 µmol rocuronium in the body); an ideal binder peaks at TOFR 0.834 and
   7g reaches 0.833; reversible binding at Ka 1.79·10⁷ M⁻¹ reverses LESS. The mechanism reproduces its source at the
-  source's pair (Eleveld 2007, roc 0.6 + sgx 0.5: peak 0.998 → 0.952). Retargeting the test is Ali's band call (Q-FU3-2).
+  source's pair (Eleveld 2007, roc 0.6 + sgx 0.5: peak 0.998 → 0.952). Retargeting the test is the owner's band call (Q-FU3-2).
 - **D3 — volatile reflex (Task 3):** 7g's volatile `gv` already reached 7a; the anaesthetised drop was larger because
   the sevoflurane hypotension held the reflex on its steep activation side (HR 93.5 vs 73 awake, tables T6.3 "HR ~").
   The volatile rows gain propofol's `gvHr` term (sympathetic HR arm × (1 − 1.0·MAC)) [ENG, fit: Ebert 1995 HR
@@ -325,7 +325,7 @@ rulings' (2) neostigmine tail is closed (7f gate: 18.3 min inside 8–20) and (1
 - **Q-FU3-11 (stale windows) — decided: keep NMT 120 s / BFA 5 s [ENG]:** they are the plan's own display choices
   (D10), recorded in the gate note as [ENG]; SQI/EMG and the Philips NMT/BIS conventions remain research items, not
   FU-3 work.
-- **Q-FU3-12 — decided: 2 %:** Ali ruled "2 %" at G7f; the plan only notes DI 37–38 at 13 min.
+- **Q-FU3-12 — decided: 2 %:** samhv-dev ruled "2 %" at G7f; the plan only notes DI 37–38 at 13 min.
 - **Q-FU3-16a — decided as a deviation, not a change:** validation t25 now arrests at ≈ 650 s; its row is unchanged and
   listed in the gate note's Deviations; ventilating the document is the orchestrator's call ("ventilate t25?").
 - **Q-FU3-16e — decided: SaO2-only O2 supply [ENG] is a scope statement:** a CaO2 ratio needs a 7c → 7a read that is
@@ -337,7 +337,7 @@ The orchestrator left only six questions open (see "Open questions"); the rest a
 never waits on them. None changes a band.
 
 - **Q-FU3-2 — keep R-7f-7 `it.fails`:** the pair is capacity-limited (numbers in the title); retargeting a band is
-  not an executor's act — calibration queue row for Ali's R44 pass.
+  not an executor's act — calibration queue row for the owner's R44 pass.
 - **Q-FU3-3 (isoflurane +14 %) — calibration row:** Task 3 met its own band; the residual is a tables T6.3 row.
 - **Q-FU3-4b — follow-up row (7a):** `manHoldInit`'s always-on volume tracker is the same over-filling Item 7's
   deferred fix removes; decided with question 1 of "Still open".
@@ -365,7 +365,7 @@ never waits on them. None changes a band.
   `runOracle` is an 8b item; a relative `PME_PULSE_DIR` stays a docs note** (no code).
 - **Q-FU3-11 (SQI/EMG, Philips conventions) — research follow-ups** (research/05 addendum; 7f publishing SQI/EMG is a
   7f item).
-- **Q-FU3-12 (2.2 %) — not tried; 2 % stands (Ali's G7f ruling).** 7x.1's real-Safari check stays with Ali's LAN
+- **Q-FU3-12 (2.2 %) — not tried; 2 % stands (the owner's G7f ruling).** 7x.1's real-Safari check stays with the owner's LAN
   tests.
 
 ## Prototype results (before → after; seeds as in each task)
@@ -693,7 +693,7 @@ exhausted by +4.6 min; the redistribution limb already exists (TOFR 0.506 at +10
 **0.834**; 7g gives **0.833**. Reversible binding at Ka 1.79·10⁷ M⁻¹ (Eleveld 2007 / Ploeger 2009 class) leaves 34–226
 ng/mL free rocuronium, i.e. reverses LESS (and would push the 4 mg/kg band, 2.23 vs its 2.1 floor). At the source's own
 pair (Eleveld DJ et al., Anesth Analg 2007;104:582: rocuronium 0.6 + sugammadex 0.5) 7g already gives peak 0.998 at
-+15.4 min then 0.952 (fall 0.045). Retargeting the dose pair is Ali's band call (Q-FU3-2), not the executor's (R45).
++15.4 min then 0.952 (fall 0.045). Retargeting the dose pair is the owner's band call (Q-FU3-2), not the executor's (R45).
 
 **Prototype numbers:** the test's pair: peak 0.833 at +90 min, no fall (unchanged) · roc 0.6 + sgx 0.5: 0.998 → 0.952 ·
 roc 1.2 + sgx 0.75: 0.997 → 0.419 · roc 1.2 + sgx 1.0: 1.000 → 0.695 · sugammadex 2 / 4 / 16 mg/kg reversal 2.12 / 2.23
@@ -725,7 +725,7 @@ Replace with:
   // sugammadex 0.5 mg/kg after rocuronium 0.6 mg/kg): 7g gives peak TOFR 0.998 at +15.4 min then a fall to 0.952
   // (0.045 ≥ 0.04). After rocuronium 1.2, 0.75 mg/kg peaks 0.997 at +13.1 min and falls to 0.419, 1 mg/kg to 0.695.
   // R45: the criteria are untouched and this stays `it.fails` with the measured numbers; retargeting it to the source's
-  // dose pair (or to 0.75 mg/kg after 1.2) is a band decision for Ali/the orchestrator, not the executor's.
+  // dose pair (or to 0.75 mg/kg after 1.2) is a band decision for samhv-dev/the orchestrator, not the executor's.
   it.fails('[R-7f-7] underdosed sugammadex (0.5 mg/kg at PTC after rocuronium 1.2) → recovery then recurarisation (TOFR falls ≥ 0.04) — capacity-limited: measured peak 0.833 at +90 min (ideal-binder ceiling 0.834), no fall', () => {
 ```
 
@@ -3069,7 +3069,7 @@ hypocapnia 0.374 → 0.437 (≤ 0.40), the 7c OLV re-check nadir 88.7 → 87.5 (
 the 8a capture-match SBP 126.4 → 121.4 (130 ± 8) — while flipping three `it.fails` to pass (7c OLV flow share 0.307 →
 0.293; link-r27 ARDS recruitment and cardiogenic oedema). Under R45 and the FU-2 item-6 precedent the executor does not
 land a mechanism that breaks calibrated bands: the evidence is pinned here, the fix is in "Item 7: the fix is
-deferred" for the orchestrator/Ali (Q-FU3-7a). Hysteresis/latching (Philips factory "Visual/Audible Latching =
+deferred" for the orchestrator/samhv-dev (Q-FU3-7a). Hysteresis/latching (Philips factory "Visual/Audible Latching =
 Red&Yell", *Configuration Guide* p. 96) would change the count, not the level (Q-FU3-7b).
 
 **Prototype numbers (d525eed):** PEEP 5 → 15 step 4.82 (band 2.2–3.7) `it.fails` · soak CVP 30–120 s 9.00–10.17,
@@ -4919,7 +4919,7 @@ and replace with:
 const DIR = pulseDir();
 // Per-row verdicts of the FU-3 item 10 local Pulse run (2026-09-27, MODELED, base d525eed = main + 7d + 7f), pinned
 // row by row (R50 review finding 4). Two expected-disagreement rows our engine has moved INTO Pulse's tolerance since
-// 7c's gate run read `fail` — R45: rows and tolerances unchanged; each is a finding for Ali (annex §C):
+// 7c's gate run read `fail` — R45: rows and tolerances unchanged; each is a finding for samhv-dev (annex §C):
 //   O2b lactate Δ +0.50 vs Pulse +0.06, inside tol 0.5 (expect-differ D2; MANUAL gives +1.10; 7c's gate run +1.00);
 //   O3b Hb Δ −1.50 vs Pulse −2.48, inside tol 0.5 × 2.48 (expect-differ D10; 7c alone −0.50: 7d's kidney keeps more
 //   of the litre).
@@ -4967,7 +4967,7 @@ git push
 - Pinned as `fail` in the per-row verdict map (ordinary `it`, R50 finding 4): O2b lactate (+0.50 vs +0.06, tol 0.5)
   and O3b Hb (−1.50 vs −2.48, tol 1.24). No tolerance or row changed.
 
-**Open questions (for Ali / orchestrator).**
+**Open questions (for samhv-dev / orchestrator).**
 1. *O2b mode.* The verdict depends on the engine mode: MANUAL (7c's run) lactate +1.10 → `expect-differ-ok`; MODELED
    (8a's convention for Stage 7 physiology) +0.50 → inside tol 0.5 of Pulse's +0.06. Keep MODELED (this draft) and
    the `it.fails`, or rule that the D2 row's absolute tolerance is too coarse for a 20 % bleed (a band decision, R45 —
@@ -5498,7 +5498,7 @@ string; `resp.lungT`; `resp.lung.nGas`; `tInsp`; `tExp0`). (b) `organs.ts` `GROU
 `organs.iap` or `organs.conds.*` → "Other". (c) `TOLERANCES` has no BE/HCO3 rule → the 2 % default: BE's baseline ≈ 0
 makes its tolerance 0 (any 0.001 move highlights). (d) `actions.ts` `SENSORS` leaves `co2` out → the console's CO2 tile
 reads `---` at rest. (e) the 7f demo dials sevoflurane 3 % at 330 s and 2.5 % at 1200 s: DI 30 at 13 min, deeper than
-maintenance (G7f: Ali's call, 2 %). BE/HCO3 tolerance 1 mmol/L [ENG]: half the ±2 mmol/L normal BE range and a quarter
+maintenance (G7f: the owner's call, 2 %). BE/HCO3 tolerance 1 mmol/L [ENG]: half the ±2 mmol/L normal BE range and a quarter
 of 22–26 mmol/L HCO3, the size of the existing K 0.2 / pH 0.02 rules; 0.1 steps are analyser noise.
 
 **Prototype numbers:** console unit tests 27 failing before (114 passing) → 141/141; 0 raw lung rows (69-row curated
@@ -5860,7 +5860,7 @@ In `apps/demo/src/stage7f.ts`, find:
 and replace with:
 
 ```ts
-    // 7g's vaporiser (R51 §4). Maintenance dial 2 % (FU-3 item 12, Ali's call): 3 % on top of the propofol read DI 30
+    // 7g's vaporiser (R51 §4). Maintenance dial 2 % (FU-3 item 12, the owner's call): 3 % on top of the propofol read DI 30
     // at 13 min (gate 7f); 2 % reads DI 38 at 13 min and 41–42 at 25–30 min once the propofol has worn off
     void ev({ kind: 'vaporiser', agent: 'sevoflurane', dialPct: 2, fgfLpm: 6 });
     log('ventilator, sevoflurane dial 2 % (FGF 6 L/min)');
@@ -5968,7 +5968,7 @@ the renderer (not the demo's DOM panel).
   5. *Corrections to earlier notes* — G7f's "7g's volatile reflex blunting does not reach the circulation" (it did reach
      `stepBaro`; the operating point hid it, Task 3); G8a's "43 re-raises" (the soak JSON holds 42) and "resting CVP
      4.9–7.6" (the soak patient reads 8.85–10.17, Task 8).
-  6. *For the orchestrator / Ali* — the open questions below, the "Item 7: the fix is deferred" ruling request, item 13
+  6. *For the orchestrator / samhv-dev* — the open questions below, the "Item 7: the fix is deferred" ruling request, item 13
      (amiodarone), and the calibration rows the profile documents produced.
   7. *Test counts* — per package, fast/slow split, e2e list.
 
@@ -5982,7 +5982,7 @@ gh pr create --base main --head fu-3-followups --title "FU-3: follow-ups (sux PK
 Implements docs/plans/fu-3-followups.md. Gate note: docs/gates/fu-3.md.
 
 - Item 1 (7g, E-FU3-1): succinylcholine onto Roy 2002's CL/V1 (0.037 L/kg/min, 0.038 L/kg), ke0 0.1475/0.236 [ENG], effect-site EC50 1160 γ 6: onset 0.17 → 0.73 min, T1 10 % 5.37 → 6.98, T1 90 % 12.68 → 11.97 (label bands); homozygous PChE 0.003 → 0.011 keeps 4–8 h. 7f's sux it.fails flipped.
-- Item 2: R-7f-7 stays it.fails — capacity-limited (sugammadex 16.1 µmol vs 63.5 µmol rocuronium; ideal-binder ceiling 0.834, 7g 0.833); the mechanism reproduces Eleveld 2007 at its own dose pair. Band retarget = Ali.
+- Item 2: R-7f-7 stays it.fails — capacity-limited (sugammadex 16.1 µmol vs 63.5 µmol rocuronium; ideal-binder ceiling 0.834, 7g 0.833); the mechanism reproduces Eleveld 2007 at its own dose pair. Band retarget = samhv-dev.
 - Item 3 (7g data): volatile rows gain propofol's sympathetic-HR-arm term (gvHr −1.0/MAC): reflex drop under ≈ 1 MAC sevoflurane 25.5 → 5.0 bpm vs 12.0 awake; sevoflurane HR 93.5 → 75.0 (Ebert 1995: unchanged). R-7f-9 flipped.
 - Item 4 (7a MANUAL): the held LV Emax is held against the kIsch it was set against — check 18 recovery MAP 125.3 → 81.1, CBF 0.837; flipped. Defect 1 (kIsch floor, LVEDP 46 at MAP 65) stays it.fails: every guard breaks Stage 2 bands (ruling requested).
 - Item 16 (7a MODELED, E-FU3-8/9/10): asphyxial sequence — arterial O2 content in the coronary supply, hypoxic SA-node and myocardial depression (held while pulseless), seeded arrest (PEA / asystole 2/30 / VF 0.1): apnoeic paralysed adult HR < 40 at +2.55 min and PEA at +7.77 min after SaO2 < 60 % (DeBehnke 1995, Varvarousi 2011/2015); the arrest stays one — 6–10 min later SaO2 0.33 %, SpO2/PR invalid, ABP flat (PP ≤ 0.33 mmHg), rate 30 (no arterial re-oxygenation at zero output, 7b E-FU3-9; brainstem-perfusion gate on the MODELED drive, 7f E-FU3-10: <measured RR/VA>); FiO2 1 at the bradycardia recovers HR ≥ 60 in 7.0 s (floor 5 s = lung-to-ear delay); MANUAL and the Stage 3 desaturation times unchanged; validation t25 now arrests at ≈ 650 s (deviation, "ventilate t25?").
@@ -5994,7 +5994,7 @@ Implements docs/plans/fu-3-followups.md. Gate note: docs/gates/fu-3.md.
 - Item 10: 7c's Pulse blood oracle adopted; one loader, one variable (PME_PULSE_DIR); O13b baseline read before the dose (Na 143 → 140); per-row verdicts pinned; the O2b lactate / O3b Hb expect-differ rows now inside Pulse's tolerance recorded as fail with numbers.
 - Item 11: renderer NMT/BFA module tiles on philips-like and saadat-like (R-7f-6).
 - Item 12: console 7x.1 (lung labels, organs.iap/conds grouping, BE/HCO3 tolerances, CO2 line attached); 7f demo maintenance dial 2 %.
-- Item 13 (amiodarone AV-node strength, Q-FU2-9): Ali's calibration call — no change.
+- Item 13 (amiodarone AV-node strength, Q-FU2-9): the owner's calibration call — no change.
 - No band widened.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
@@ -6205,25 +6205,25 @@ and replace with:
 
 ---
 
-## Item 13: amiodarone AV-node strength (Q-FU2-9) — Ali's question, no task
+## Item 13: amiodarone AV-node strength (Q-FU2-9) — the owner's question, no task
 
 `af-rate-control` keeps its `it.fails` ("amiodarone 150 mg over 10 min: AF 130 slows by 20–30 % … (measured 14.0)";
 after Task 7's HR-numeric change it reads 131.9 → 113.5 = 14.0 %, before 14.6 %): 7g's amiodarone `avNode` entry
-(Emax 0.3, EC50 1× the 150 mg load) needs Emax ≈ 0.5–0.6 for the band — a value change to a 7g row that only Ali's
+(Emax 0.3, EC50 1× the 150 mg load) needs Emax ≈ 0.5–0.6 for the band — a value change to a 7g row that only the owner's
 calibration pass may make. FU-3 does not touch it.
 
 ---
 
-## Open questions (for the orchestrator / Ali; the plan does not wait on them)
+## Open questions (for the orchestrator / samhv-dev; the plan does not wait on them)
 
-**Still open after the R50 review (2026-09-27) — ONLY these six go to the orchestrator / Ali:**
+**Still open after the R50 review (2026-09-27) — ONLY these six go to the orchestrator / samhv-dev:**
 
 1. **CVP fix + five rig re-derivations** (Q-FU3-7a; Task 8, "Item 7: the fix is deferred"; R45): land
    `MANUAL_CVP_PAW_FRACTION` 0.4 and re-derive check 18 ×2, 7c's OLV re-check, R36 PH crisis and 8a capture-match
    SBP, or keep `T_IT` and record brief §4.9 as a calibration row.
 2. **May MANUAL refuse part of an instructor pressure pair** (Q-FU3-4a; Task 4 defect 1) — re-specifies Stage 2
    acceptance 1/3 and hemo-nibp 9.
-3. **Amiodarone AV-node strength** (Item 13, Q-FU2-9) — Ali's calibration call.
+3. **Amiodarone AV-node strength** (Item 13, Q-FU2-9) — the owner's calibration call.
 4. **Ventilate validation t25?** (Q-FU3-16a; the document now arrests at ≈ 650 s — listed as a gate deviation).
 5. **Oracle mode MODELED vs MANUAL** (Q-FU3-10, first half; decides O2b's lactate verdict).
 6. **AF +4.8 % on the trimmed-mean skins as disclosed device behaviour** (Q-FU3-6, first half).
@@ -6236,13 +6236,13 @@ questions — the plan's disposition". The entries are kept as the record of wha
   clearance). Task 0 carries the fix (ventilate the rig: TOFR 0.9 at 78.5 min) in case the 7d merge does not.
 - **Q-FU3-1 (Task 1):** keep 7f's γ 4 with EC50 1040 / ke0 0.1925 (1.2 s of onset slack) instead of γ 6? And may the
   tables §6.1 succinylcholine source cell name Roy 2002 (docs edit)?
-- **Q-FU3-2 (Task 2, Ali — band):** R-7f-7's pair is unreachable by mass action (25 % molar capacity). Leave it
+- **Q-FU3-2 (Task 2, samhv-dev — band):** R-7f-7's pair is unreachable by mass action (25 % molar capacity). Leave it
   `it.fails`; retarget to the source's pair (rocuronium 0.6 + sugammadex 0.5: 0.998 → 0.952, 0.005 of slack); or to
   0.75 mg/kg after rocuronium 1.2 (0.997 → 0.419, robust)?
 - **Q-FU3-3 (Task 3):** isoflurane at 0.67 MAC still reads HR +14 % over awake (T6.3 +5–10 %) — vagal-arm depression or
   the tables §1.1 "GA resets MAP_set by −10–20 %" as a later item? Tables §6.3's G_v cells could name the new `gvHr`
-  term (docs, Ali).
-- **Q-FU3-4a (Task 4, Ali — MANUAL semantics):** may MANUAL refuse part of an instructor pressure pair to keep the
+  term (docs, samhv-dev).
+- **Q-FU3-4a (Task 4, samhv-dev — MANUAL semantics):** may MANUAL refuse part of an instructor pressure pair to keep the
   ventricle perfused? That is the only route to defect 1 and re-specifies Stage 2 acceptance 1 and 3 and hemo-nibp 9
   (best candidate: the latched LVEDP + coronary-reserve guard in the prototyper's scratch `manual/guard-latched.patch`).
 - **Q-FU3-4b (Task 4):** `manHoldInit` always starts the volume tracker (contradicting the comment in
@@ -6254,7 +6254,7 @@ questions — the plan's disposition". The entries are kept as the record of wha
   rig defect as G7d follow-through 4) now arrests at ≈ 650 s; its graded `state:rr` row reads 1 s before and after
   (apparently `rr` is not the spontaneous rate while apnoeic — a separate defect). Ventilate the document (RR 18 / VT
   500 / FiO2 0.5 / PEEP 5 at 0 s, addendum 15 item 2) and re-define its return-of-breathing metric? Not changed here.
-  **Q-FU3-16b (Ali):** `P_VF_ONSET` 0.1 [ENG] — keep, take the human 0.02, or the swine 0.23? **Q-FU3-16c:** no PEA →
+  **Q-FU3-16b (samhv-dev):** `P_VF_ONSET` 0.1 [ENG] — keep, take the human 0.02, or the swine 0.23? **Q-FU3-16c:** no PEA →
   asystole progression (DeBehnke: PEA up to 20 min) — add an [ENG] "PEA → asystole after N min" for teaching?
   **Q-FU3-16d (pre-existing):** `chemoFactors` flips sign at SaO2 60 % (HR 97 → 40 within 30 s); after reoxygenation
   R23's kIsch stays at its 0.2 floor (HR 126, MAP ≈ 78) — the same floor as Task 4's defect 1; BUILD-PLAN 7a check 7
@@ -6264,7 +6264,7 @@ questions — the plan's disposition". The entries are kept as the record of wha
 - **Q-FU3-5 (Task 6):** DDD upper tracking rate / pacemaker Wenckebach is not modelled (1:1 tracking to 180). Add
   `PacerOpts.upperRatePpm` later? Also 7d's `organsCtx.setHr` → `holdRate(…, false)` makes an organ-initiated rate the
   new held (lower) rate on a paced row (pre-existing).
-- **Q-FU3-6 (Task 7, Ali):** accept the trimmed-mean skins' AF over-read (+4.8 % at AF 130) as the disclosed device
+- **Q-FU3-6 (Task 7, samhv-dev):** accept the trimmed-mean skins' AF over-read (+4.8 % at AF 130) as the disclosed device
   behaviour? AF 100's realised rate is −2.4 % on a 300 s window (FU-2 gated the AF map at 130–150 only) — a later
   `AF_RATE_CAL` knot check? The FU-2 note "AF 100 reads ≈ 105" does not reproduce (98.8 on a true 97.6).
 - **Q-FU3-7a (Task 8 / Item 7, ruling):** land the MANUAL CVP fix and re-derive the five rigs, or keep T_IT and record
@@ -6285,4 +6285,4 @@ questions — the plan's disposition". The entries are kept as the record of wha
 - **Q-FU3-11 (Task 13):** should 7f publish SQI/EMG (research/06 lists both for the Saadat BFA module)? Philips NMT/BIS
   conventions are undocumented in research/05 (an addendum would let the gate retag `eng`). Stale windows 120 s / 5 s OK?
 - **Q-FU3-12 (Task 14):** the 2 % dial reads DI 37–38 at 13 min (just under 40 while propofol is on board); ≈ 2.2 %
-  would reach 40 (not tried; Ali's call). 7x.1's WebKit ack check on real Safari stays with Ali's LAN/iPad tests.
+  would reach 40 (not tried; the owner's call). 7x.1's WebKit ack check on real Safari stays with the owner's LAN/iPad tests.

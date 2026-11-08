@@ -133,9 +133,9 @@ VD anat + VD app equals lungState's series dead space in every rig (127 = 77 + 5
 
 No existing test, band or `it.fails` changed except the two console label tests of E-7k-2.
 
-## 6. Calibration queue (R44, Ali)
+## 6. Calibration queue (R44, samhv-dev)
 
-Ali's: Q-7k-1 (bedside FRC scale vs ECSC), Q-7k-2 (COPD GOLD 1), Q-7k-5 (VD/VT under GA), Q-7k-6 (re-base the model's P–V
+the owner's: Q-7k-1 (bedside FRC scale vs ECSC), Q-7k-2 (COPD GOLD 1), Q-7k-5 (VD/VT under GA), Q-7k-6 (re-base the model's P–V
 range on ECSC, v1.1) — numbers in the plan's "Open questions". Ruled by the orchestrator: ECSC + fixed ratio in v1.0, GLI +
 LLN in v1.1; closing capacity a readout in v1.0, a mechanism in v1.1. The obese FRC double count is FU-8's (not listed here).
 

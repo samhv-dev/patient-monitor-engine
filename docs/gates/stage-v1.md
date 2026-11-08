@@ -329,7 +329,7 @@ Decisions 16–30 (orchestrator rulings, V.1 review) are applied as the plan wro
 ground, the application is in §8: 21 (PE rig re-measured on FU-4's alias); 24 (the `waterShunt` label landed here,
 because FU-4 predates the field); 25 (the CPR guard, measured 0.293 / 0.293); 27 (re-anchoring).
 
-**Calibration queue (Ali, R44):** CLOSE "tension-ptx ventilator plateau (until V.1)" (reference 18.8 → 35.6, profile
+**Calibration queue (samhv-dev, R44):** CLOSE "tension-ptx ventilator plateau (until V.1)" (reference 18.8 → 35.6, profile
 26.0 at 90 s on FU-4's build-up). ADD: "tension Ppeak vs crs ×0.5" (+21.6 vs +10–20); "tension peak − plateau: 7b's
 widened 9.7 vs authored 10"; "ARDS link band: re-derive from 7b's recruitment" (+2.0 / 0.0; catalogue:226 [P] high
 recruiter shunt −30–50 %); "cardiogenic-oedema PEEP response: 0.04/cmH2O [ENG] and the oedema shunt size" (SpO2 +0.0
