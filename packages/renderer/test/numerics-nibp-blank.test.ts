@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-// FU-7.1 B8 (Ali 2026-10-10), the display half: after a failed cuff cycle the engine sends the three NIBP numerics as
+// FU-7.1 B8 (samhv-dev 2026-10-10), the display half: after a failed cuff cycle the engine sends the three NIBP numerics as
 // `invalid` with a null value. The tile showed the failure glyph only until the device's next `idle` event (≈ 0.6 s
 // later) and then went back to the pre-arrest result — the "normal pressure in an arrested patient" the owner saw.
 // A blanked numeric now clears the last result, so the tile reads the skin's no-value glyph until a new measurement.

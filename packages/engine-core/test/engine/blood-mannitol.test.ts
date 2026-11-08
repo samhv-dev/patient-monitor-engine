@@ -22,7 +22,7 @@ describe('mannitol is a plasma osmole (research/13)', { timeout: 600_000 }, () =
     expect(r.dOsm).toBeGreaterThanOrEqual(5);
   });
   // R45 (RH-08c): measured osmolality +20–30 mOsm/kg after 1 g/kg (the osmolal gap). 7c's pool is the whole ECF (≈ 14 L:
-  // 385 mOsm → +27 at once), and the water it draws from the cells dilutes it within minutes; measured +8.7 — Ali's
+  // 385 mOsm → +27 at once), and the water it draws from the cells dilutes it within minutes; measured +8.7 — the owner's
   // question (OQ12: the distribution volume in the first minutes, or the band read as a peak).
   it.fails('1 g/kg: osmolality +20–30 mOsm/kg at 15 min (RH-08c) — measured +8.7', async () => {
     expect((await read()).dOsm).toBeGreaterThanOrEqual(20);

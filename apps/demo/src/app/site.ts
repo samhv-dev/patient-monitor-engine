@@ -16,7 +16,7 @@ export interface SiteProfile {
   gasUnit: 'mmHg' | 'kPa';
   /** New patients start with the sensors off: the learner attaches them and traces appear only then (Laerdal). */
   sensorsOff: boolean;
-  /** Drug names on every screen (Ali's open question Q13): 'us' "epinephrine / norepinephrine"
+  /** Drug names on every screen (the owner's open question Q13): 'us' "epinephrine / norepinephrine"
    *  (default), 'uk' "adrenaline / noradrenaline". */
   drugNames: 'us' | 'uk';
   /** The room's defibrillator model (Room plan R5b; owner's Q6 ruling of 5 November), apart from the monitor style: a

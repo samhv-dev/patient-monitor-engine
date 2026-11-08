@@ -180,7 +180,7 @@ function probes(name: string): string {
 export function report(): string {
   return [
     '## Fidelity report (research/10 §13 suite items)',
-    ' 1 low flow:', '  ' + lowFlow('A1m-map-ladder'), '  ' + lowFlow('A2-ali-b7'),
+    ' 1 low flow:', '  ' + lowFlow('A1m-map-ladder'), '  ' + lowFlow('A2-owner-b7'),
     ' 2 PEA:', ...['A5-pea', 'A5-pea-mr', 'A5-pea-sa'].map((n) => '  ' + pea(n)),
     ' 3 VF → CPR → ROSC:', ...['A4-vf', 'A4-vf-mr', 'A4-vf-sa'].map((n) => '  ' + vf(n)),
     ' 4 asystole:', ...['A6-asystole', 'A6-asystole-mr', 'A6-asystole-sa'].map((n) => '  ' + asystole(n)),
@@ -189,7 +189,7 @@ export function report(): string {
     ' 7 impedance-only apnoea:', '  ' + impOnly('D4-apnoea-imp'),
     ' 8 disconnect / oesophageal:', '  ' + disconnect('D2-disconnect'), '  ' + probes('G2-probes'),
     ' 9 desaturation lag:', '  ' + desat('A8-desat-finger'), '  ' + desat('A8e-desat-ear'),
-    '10 NIBP:', ...['C3-lowpp', 'A1-map-ladder', 'A1m-map-ladder', 'C2-af-nibp', 'A2-ali-b7'].map((n) => '  ' + nibp(n)),
+    '10 NIBP:', ...['C3-lowpp', 'A1-map-ladder', 'A1m-map-ladder', 'C2-af-nibp', 'A2-owner-b7'].map((n) => '  ' + nibp(n)),
     '11 limit hygiene:', '  ' + hover('G1-hover'), chatter(),
     '12 HR response:', ...['B2-step', 'B2-step-mr', 'B2-step-sa'].map((n) => '  ' + hrStep(n)),
     '13 rhythm tour:', ...['B1-rhythms', 'B1a-rhythms-arrOn', 'B1-rhythms-mr', 'B1-rhythms-sa'].map((n) => '  ' + tour(n)),

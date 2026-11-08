@@ -1,4 +1,4 @@
-// FU-11 Task H4 (Ali, live at the first showcase): the top bar's Sound button turns sound OFF again — before, it only
+// FU-11 Task H4 (samhv-dev, live at the first showcase): the top bar's Sound button turns sound OFF again — before, it only
 // unlocked audio and relabelled itself. Per window (owner ruling Q3): the learner monitor's own button does the same for
 // its window only.
 import { expect, test } from '@playwright/test';

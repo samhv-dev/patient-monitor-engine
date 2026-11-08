@@ -155,7 +155,7 @@ FU-8 and FU-6, which moved these rows.)
 
 | row | main → FU-9 (merged tree) | status |
 |---|---|---|
-| B2-tamp-prop2 / B7-ali (Ali's tamponade, PEA) | **830 → 830 s** (first MAP < 30 810 → 810) | **E-FU9-5 does NOT reproduce here**: the declared 830 → 825 s was on 2473f0b |
+| B2-tamp-prop2 / B7-owner (the owner's tamponade, PEA) | **830 → 830 s** (first MAP < 30 810 → 810) | **E-FU9-5 does NOT reproduce here**: the declared 830 → 825 s was on 2473f0b |
 | B6-chain | 1135 → 1135 s | unchanged (plan: 1130 → 1125 on 2473f0b) |
 | I1-apnoea | **1220 → 1220 s**; first MAP < 30 "–" → **1215 s** | arrest unchanged (plan: 910 → 920 on 2473f0b; FU-6/FU-8 had moved it to 1220). Bisected: A1 alone 1205, A2–A8 1220, A9–A11 1210, A12 on 1220 — a 5 s-sample row; the final first-MAP < 30 sample appears one sample before the arrest |
 | C1-bleed-prop2 | no arrest; first MAP < 30 1005 → 1005 s | unchanged |
@@ -209,7 +209,7 @@ with `resolveProfile().bloodVolumeMl` holds for every adult 50–160 kg, M/F, wi
   site 0.4 % above target). The test now shares one memoised 6 h run between an `it` (sample clocks, remifentanil,
   sevoflurane, finiteness) and an `it.fails` for the propofol line with the number; the band is unchanged. Ruled at G-FU9: the
   line stays `it.fails` (an open-loop TCI pump does not know the patient's liver flow — real pumps do not either);
-  whether the pump's model should see hepatic flow goes to Ali.
+  whether the pump's model should see hepatic flow goes to samhv-dev.
 - **Intermediate commits.** `blood-sanity-acid` ("saline Cl up > 4") reads Cl 106.8 (+2.8) at A1 alone (the expansion
   urine carries chloride) and 108.5 (+4.5 → lab 109) from A13 on; it is green on the gate head (slow-b). Probed only at
   main (109.4), A1 and A13.

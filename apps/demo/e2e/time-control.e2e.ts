@@ -28,7 +28,7 @@ type Win = {
   __bar: Array<{ text: string; latched: boolean; simT: number }>;
 };
 
-test('×8 and a 5-minute fast-forward from the instructor view: paced panel everywhere, sound muted, cue, banner, log, trends', { tag: '@known-flaky' }, async ({ page, context, browserName }) => {
+test('×8 and a 5-minute fast-forward from the instructor view: paced panel everywhere, sound muted, cue, banner, log, trends', async ({ page, context, browserName }) => {
   test.setTimeout(300_000);
   // every oscillator the page starts (the end cue is 660 + 990 Hz)
   await page.addInitScript(() => {
@@ -181,6 +181,10 @@ test('×8 and a 5-minute fast-forward from the instructor view: paced panel ever
   expect(await page.evaluate(() => (window as unknown as Win).__pmeApp.link.ctl.lastFastForward?.endT)).toBeGreaterThan(endT + 119);
   const ticks = await page.evaluate(() => (window as unknown as { __cmds: number[] }).__cmds);
   const span = new Set(ticks);
+  // no frame at all was CI's repeat failure (Chromium, 7 runs of 6–7 Nov: Math.max() of nothing = −Infinity): the cockpit,
+  // paused at its clock limit by the hand-over when the view was left, sent none to its new link (brief 90; vent-driver.ts
+  // resume, packages/ventilator/test/link-relink.test.ts)
+  expect(span.size, 'cockpit frames during the 2-minute fast-forward').toBeGreaterThan(0);
   // one frame per tick, without a gap, from before the span to its end (the cockpit runs ≤ 75 ticks ahead: those were
   // sent before the listener)
   expect(Math.max(...span) - Math.min(...span) + 1).toBe(span.size);

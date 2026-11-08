@@ -27,7 +27,7 @@ const arrest = (rhythm: string, opts: Record<string, unknown> = {}): Step[] => [
 export const SCENARIOS: Scenario[] = [
   S('A1-map-ladder', 'MANUAL: MAP 100 → 60 → 40 → 25 → 13 (2 min each), NIBP 40 s into each step', 'manual', ladder, 660),
   S('A1m-map-ladder', 'MODELED start, MANUAL targets are ignored → use bleed ladder instead: bleed 3 L over 15 min', 'modeled', [...VENTED, [60, A.bleed(3000, 900), 'bleed 3 L/15 min'], [300, A.nibp('auto', 1), 'NIBP auto 1 min']], 1500, { printEvery: 30 }),
-  S('A2-ali-b7', "MODELED Ali's case (08 audit B7): tamponade, propofol 2+1, PEEP 15, sevo 2 %, bleed 2 L", 'modeled', [
+  S('A2-owner-b7', "MODELED the owner's case (08 audit B7): tamponade, propofol 2+1, PEEP 15, sevo 2 %, bleed 2 L", 'modeled', [
     ...VENTED, [60, A.cond('tamponade', 1), 'tamponade 1'], [660, A.drug('propofol', 2, 'mg/kg'), 'propofol 2'], [900, A.drug('propofol', 1, 'mg/kg'), 'propofol 1'],
     [1200, A.vent(15, 0.5), 'PEEP 15'], [1500, A.vap('sevoflurane', 2), 'sevo 2 %'], [2100, A.bleed(2000, 300), 'bleed 2 L'], [2400, A.nibp('auto', 2), 'NIBP auto 2 min'],
   ], 3000, { printEvery: 60 }),

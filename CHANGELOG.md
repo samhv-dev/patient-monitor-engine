@@ -623,7 +623,7 @@ except where this section says otherwise.
   VFIB alarm) the HR field is empty — no left-over 8 s average, no count of fibrillation waves or compressions — while
   ECG VFIB stays; the SpO₂ field is blank when pulseless; and a pulseless pleth is not a flat line but the sensor's own
   noise, unorganised and small (half the pulse detector's floor, so it is never counted as a pulse). With these, the
-  low-flow guard "at MAP < 30 the SpO₂ is never shown valid" in Ali's case now passes (was SpO₂ 99 at 760–765 s).
+  low-flow guard "at MAP < 30 the SpO₂ is never shown valid" in the owner's case now passes (was SpO₂ 99 at 760–765 s).
   (Persian entries for the new footnote and alarm words added untranslated, `reviewed: false`.)
 - Engine (E131): malignant hyperthermia runs on ONE skeletal-muscle metabolic rate, and the heat model follows the
   blood flow. The hypermetabolic muscle adds an oxygen demand of activity × 1.5 × the resting VO2 (whole-body VO2 × 2.5
@@ -847,7 +847,7 @@ except where this section says otherwise.
   interval held two pulses and its max − min was neither's. An interval longer than 166 % of the median of the recent
   intervals now holds a missed pulse (the RR-missed limit of Pan & Tompkins, IEEE Trans Biomed Eng 1985), and the
   pulse is measured over one median period from its own foot, PI as AC/DC per pulse (Lima et al., Crit Care Med 2002);
-  the median rather than Pan & Tompkins' range-limited mean is [ENG]. In Ali's low-flow case the highest PI after the
+  the median rather than Pan & Tompkins' range-limited mean is [ENG]. In the owner's low-flow case the highest PI after the
   onset is 0.232 (the row asks < 0.3; it read 0.336, a merged pulse). Across the fidelity and SpO₂ runs, 17 of 56 runs
   changed some 1-Hz PI rows (at most by 0.20), no PI or SpO₂ flag or pulse rate changed, and no band moved. The
   pressure lines (ABP, PAP) keep their foot-to-foot beat.

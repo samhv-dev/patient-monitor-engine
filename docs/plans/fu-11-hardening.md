@@ -79,7 +79,7 @@ No new dependencies.
 engineering review FILED", 2026-10-03; "External browser-integration audit received", 2026-10-04 10:40; the
 "Showcase rehearsal results" S1–S6; "Showcase hotfix PR #33 received" not-fixed notes; "Showcase kit PR #34 received"
 K1–K6; "Presenter documents DELIVERED" D1–D5; the FU-11 list in "STATE SNAPSHOT before compaction"; the CI and flake
-notes after the 13:30 cap reset; the Ali rulings of 2026-10-04 11:50/12:25), `../research/16-external-review-chatgpt.md`
+notes after the 13:30 cap reset; the samhv-dev rulings of 2026-10-04 11:50/12:25), `../research/16-external-review-chatgpt.md`
 (F01–F26), `../research/17-external-browser-audit-chatgpt.md` + `17-external-browser-audit-case-matrix.md` (BA01–BA12,
 cases R01–RF01, HI01–HI03, AL01, LC01) and the audit's regression tests
 (`/Users/samhv/Desktop/ChatGPT/patient-monitor-browser-audit/regressions/`), `docs/RESUME.md` (process, R45, R50, R51,
@@ -264,7 +264,7 @@ is handed to a plan that does not contain it).
 | R50 F10 / F9 | CI amendment 6 (a seventh slow group) | on main via FU-10 (662f8a1b) | **task K4** (verify; ET-19 into SLOW) |
 | R50 Minor M1–M16 | see "Review fixes" | — | tasks A3, B1, C1, F3, H2, H3, I2, I3, J3, J6, K3; D-4; setup tasks |
 | Owner ruling Q3 | Same monitor style on the learner screen; sound per window | — | **task G2** |
-| First showcase (Ali, live) | Sound cannot be turned off again | reproduced (main.ts only enables) | **task H4** |
+| First showcase (samhv-dev, live) | Sound cannot be turned off again | reproduced (main.ts only enables) | **task H4** |
 | First showcase (measured) | The Ventilator view delivers far less than the internal ventilator (VTE 160 vs 403, severe bronchospasm) | diagnosed on 48864439: same lungs, different inspiratory flow (60 L/min + pause vs VT/Ti at I:E 1:2) | **task H5** |
 | Coordinator 2026-10-06 | A later plan adds a QR-paired mobile learner monitor on top of G2 | — | **G0/G2**: the wire contract is written at the top of `follower.ts` |
 
@@ -5160,7 +5160,7 @@ git push
 
 ### Task H4: The Sound button turns sound OFF again (first showcase)
 
-**Branch** `fu-11-b` · **Findings** Ali, live at the first showcase (6 Oct): no way to turn sound off; owner ruling Q3 (sound per window) · **Files** Modify `apps/demo/src/app/main.ts`, `apps/demo/src/app/session.ts`, `packages/renderer/src/mount.ts`; Create `apps/demo/e2e/fu11-sound-toggle.e2e.ts`
+**Branch** `fu-11-b` · **Findings** samhv-dev, live at the first showcase (6 Oct): no way to turn sound off; owner ruling Q3 (sound per window) · **Files** Modify `apps/demo/src/app/main.ts`, `apps/demo/src/app/session.ts`, `packages/renderer/src/mount.ts`; Create `apps/demo/e2e/fu11-sound-toggle.e2e.ts`
 
 **Why:** `main.ts` (top bar) only called `session.enableSound()` and relabelled the button: once on, sound could not be turned
 off (a reload was the only way). The button is now a toggle drawn from the session's state (`aria-pressed` with it).
@@ -5177,7 +5177,7 @@ learner monitor's own Sound (Part G) uses the same pair.
 Create `apps/demo/e2e/fu11-sound-toggle.e2e.ts`:
 
 ```ts
-// FU-11 Task H4 (Ali, live at the first showcase): the top bar's Sound button turns sound OFF again — before, it only
+// FU-11 Task H4 (samhv-dev, live at the first showcase): the top bar's Sound button turns sound OFF again — before, it only
 // unlocked audio and relabelled itself. Per window (owner ruling Q3): the learner monitor's own button does the same for
 // its window only.
 import { expect, test } from '@playwright/test';
@@ -8906,7 +8906,7 @@ base); Create `docs/gates/stage-8b/developer-pages.md`.
   it by then: a `expect: { refused: true }` step field in `pme-validation/*` documents that makes a refusal the
   expected outcome; otherwise record "not needed" in the gate note.
 - [ ] **Step 6 — R56 data gaps found by FU-11 H3.** (a) The fixed alarm words (`apps/demo/src/app/alarms.ts`
-  `FIXED_ALARM_WORDS`) are not glossary data: move them into the glossary file (with Ali's review) or record why not;
+  `FIXED_ALARM_WORDS`) are not glossary data: move them into the glossary file (with the owner's review) or record why not;
   (b) the iec-defaults skins list `alwaysOn: []` while VF, VT and asystole still alarm on them: give them the
   documented list (with a provenance row) or record the gap.
 - [ ] **Step 7 — commit:** `git add RELEASE.md CHANGELOG.md docs/gates/stage-8b/developer-pages.md …` and

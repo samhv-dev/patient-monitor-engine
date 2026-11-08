@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - All paths in this plan are relative to the repo root `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo`. Run every command from there unless a step says otherwise.
-- Licence: **MIT**, copyright line exactly `Copyright (c) 2026 Ali Mahdavi and contributors` (README decision, R12).
+- Licence: **MIT**, copyright line exactly `Copyright (c) 2026 samhv-dev and contributors` (README decision, R12).
 - Package names exactly: `@pme/engine-core`, `@pme/renderer`, `@pme/audio`, `@pme/controller`, `@pme/skins`, `@pme/validation`, and the demo app `@pme/demo` in `apps/demo/`. IIFE global exactly `PatientMonitor`; file exactly `packages/renderer/dist/patient-monitor.iife.js`.
 - TypeScript `strict` + `noUncheckedIndexedAccess`, target ES2022. `erasableSyntaxOnly` is on: **no `enum`, no `namespace`, no constructor parameter properties** (write fields explicitly).
 - Imports between local files use the explicit `.ts` extension (`import { Clock } from './clock/clock.ts'`).
@@ -910,7 +910,7 @@ git commit -m "feat(engine-core): fixed-step clock with 250 ms clamp, time scale
 ```text
 MIT License
 
-Copyright (c) 2026 Ali Mahdavi and contributors
+Copyright (c) 2026 samhv-dev and contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -986,7 +986,7 @@ Replace `**Status: design phase (2026-09-24).** There is no code yet.` with:
 - [x] **Step 5: Verify**
 
 Run: `grep -c '^| N-00' NOTICES.md && head -3 LICENSE`
-Expected: `5`, then `MIT License`, blank line, `Copyright (c) 2026 Ali Mahdavi and contributors`.
+Expected: `5`, then `MIT License`, blank line, `Copyright (c) 2026 samhv-dev and contributors`.
 
 - [x] **Step 6: Commit**
 
