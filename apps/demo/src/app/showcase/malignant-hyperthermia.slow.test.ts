@@ -60,9 +60,15 @@ import { alarmAt, bands, entered, first, near, pvcEvents, range, runCard, type A
  *  1.3–1.6 °C per 15 min from the trigger (≈ 300 W net, whole-body VO₂ × 4–5: measured × 1.8–2.7 in swine, × 2–3 in
  *  reviews of man). The established crisis moves to its own row in the passing untreated arm, re-centred on this build
  *  with the old tolerances; the hyperthermic VF stays an expected failure. No engine change. */
+/* Brief 93 (the owner's ruling of 8 Nov): the patient's effort now reaches the ventilator through a real pressure
+ * trigger (−2 cmH2O, the ventilator package's own `presTrig` default) instead of triggering on any committed rate, so an
+ * effort too weak to open the trigger no longer adds a breath. On this card that costs the untreated MH run its
+ * triggered hyperventilation, and ONE recorded value moved with that cause and is re-recorded at the same width:
+ * etco2Max 106 → 117 (centre), measured 120, and etco2At20 91 → 113 (centre), measured 113. Not tuned; no clinical band touched (etco2At20, the core-rise rate and
+ * every timing held). The "Changed only" row's `monitor:awRR:up` is the same cause and is recorded below. */
 const BANDS = {
   'S1 untreated': { refused: [0, 0], earlyMin: [3.84, 5.22], hrMax: [185, 195], kMax: [6.1, 6.7], lossMin: [39.91, 48.79], tcAtLoss: [42.14, 42.54], kAtLoss: [6.1, 6.7], vf: [1, 1], arrestStateMin: [40.23, 49.17] },
-  'S1 untreated E131': { refused: [0, 0], earlyMin: [3.41, 4.79], etco2Max: [103, 109], etco2At20: [88, 94], hrAt20: [119, 129], phAt20: [7.01, 7.07], kAt20: [5.8, 6.4], lactateAt20: [4.7, 5.7], mapAt20: [79, 89], tcAt20: [37.08, 37.48], hrMax: [148, 158], hrMaxInRuns: [155, 165], kMax: [6.5, 7.1], tcAt51: [38.54, 38.94], pulseLost: [0, 0] },
+  'S1 untreated E131': { refused: [0, 0], earlyMin: [3.41, 4.79], etco2Max: [114, 120], etco2At20: [110, 116], hrAt20: [119, 129], phAt20: [7.01, 7.07], kAt20: [5.8, 6.4], lactateAt20: [4.7, 5.7], mapAt20: [79, 89], tcAt20: [37.08, 37.48], hrMax: [148, 158], hrMaxInRuns: [155, 165], kMax: [6.5, 7.1], tcAt51: [38.54, 38.94], pulseLost: [0, 0] },
   // E133 (ventricular ectopy from K, catecholamines, temperature, acidaemia and ischaemia). Measured first on the
   // pre-E131 course (to the hyperthermic VF at +44.5 min): first PVC +13.1 min, 256 events before the VF (36 runs).
   // Re-measured on the E131 course (rebase onto 5024f071, 2026-10-27; same tolerances, the reason: E131 moved the
@@ -117,9 +123,13 @@ const CALL_S = 1440;
  *  face mask, the premedication given that second and not yet acting: CO no longer reads UP against it (it did against
  *  the premedicated baseline) and is dropped from the list (22 → 21 rows); the oxygen rows (FiO₂, PaO₂, PO₂, CaO₂, DO₂)
  *  now read DOWN (FiO₂ 1.0 on the mask then, 0.5 on the ventilator at 24:00), and SpO₂ and SaO₂ no longer read UP:
- *  none of them is in the list. */
+ *  none of them is in the list.
+ *  Brief 93 (the owner's ruling of 8 Nov): the patient's effort reaches the ventilator through a real pressure trigger
+ *  (−2 cmH2O), so the untreated MH patient's efforts under 2 % sevoflurane no longer add triggered breaths at 24:00 and
+ *  the airway rate stays the set rate: `monitor:awRR:up` leaves the list (21 → 20 rows), recorded with that cause. The
+ *  EtCO₂ row still reads UP — higher than before, which is the re-recorded etco2Max above. */
 const EXPLORE_AT_CALL = [
-  'monitor:HR:up', 'monitor:ART M:down', 'monitor:EtCO₂:up', 'monitor:awRR:up', 'monitor:T1:up',
+  'monitor:HR:up', 'monitor:ART M:down', 'monitor:EtCO₂:up', 'monitor:T1:up',
   'circulation:SV:down', 'circulation:SVR:down', 'circulation:LVEF:down', 'circulation:Myocardial O2 supply/demand:down',
   'blood:pH:down', 'blood:PCO₂:up', 'blood:BE:down', 'blood:Lactate:up', 'blood:K⁺:up', 'blood:Tcore:up', 'blood:VO₂:up', 'blood:SvO₂:down',
   'endocrine:MH activity:up', 'endocrine:Epinephrine:up', 'endocrine:Norepinephrine:up', 'brain:CMRO₂:down',
