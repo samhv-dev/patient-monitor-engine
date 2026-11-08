@@ -8,7 +8,7 @@ The engine's cross-module coupling seams and its effector products and sums, rea
 
 Seams (de-duplicated on module, kind and field): 139; sites: 177.
 
-Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`): 40; unregistered: 97
+Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`): 42; unregistered: 97
 (the list in `packages/engine-core/src/couplings/unregistered.ts`, which may shrink and never grow: a new seam needs a row).
 
 | Module | ctx | ext | endo-write | bus-read | All |
