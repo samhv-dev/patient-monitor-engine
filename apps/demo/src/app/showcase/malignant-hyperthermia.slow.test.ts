@@ -65,7 +65,8 @@ import { alarmAt, bands, entered, first, near, pvcEvents, range, runCard, type A
  * effort too weak to open the trigger no longer adds a breath. On this card that costs the untreated MH run its
  * triggered hyperventilation, and ONE recorded value moved with that cause and is re-recorded at the same width:
  * etco2Max 106 → 117 (centre), measured 120, etco2At20 91 → 113 and phAt20 7.04 → 6.96 (the same hypercapnia, as its
- * own respiratory acidosis: pH 6.96 at 20 min). hrAt20 126, kAt20 6.1, kMax 6.9 and every timing held. Not tuned; no clinical band touched (etco2At20, the core-rise rate and
+ * own respiratory acidosis: pH 6.96 at 20 min), and the established group's hrAtEstablished 139 → 146 (the same
+ * hypercapnia's sympathetic drive). hrAt20 126, kAt20 6.1, kMax 6.9 and every timing held. Not tuned; no clinical band touched (etco2At20, the core-rise rate and
  * every timing held). The "Changed only" row's `monitor:awRR:up` is the same cause and is recorded below. */
 const BANDS = {
   'S1 untreated': { refused: [0, 0], earlyMin: [3.84, 5.22], hrMax: [185, 195], kMax: [6.1, 6.7], lossMin: [39.91, 48.79], tcAtLoss: [42.14, 42.54], kAtLoss: [6.1, 6.7], vf: [1, 1], arrestStateMin: [40.23, 49.17] },
@@ -89,7 +90,7 @@ const BANDS = {
   // entry sits inside the ectopy runs on both orders (HR read 116–157 within ± 60 s of the entry on the old order, 122–160
   // on the new, almost every sample within 10 s after a PVC), and the entry moved 18 s earlier (45.6 → 45.3 min): the
   // averaging of the ectopic beats, not a different tachycardia. Reported; not tuned.
-  'S1 untreated established (E131-2)': { establishedMin: [41.04, 50.16], etco2AtEstablished: [70, 76], hrAtEstablished: [134, 144], phAtEstablished: [7.0, 7.06], kAtEstablished: [6.5, 7.1], lactateAtEstablished: [11.7, 12.7], mapAtEstablished: [82.93, 92.93] },
+  'S1 untreated established (E131-2)': { establishedMin: [41.04, 50.16], etco2AtEstablished: [70, 76], hrAtEstablished: [141, 151], phAtEstablished: [7.0, 7.06], kAtEstablished: [6.5, 7.1], lactateAtEstablished: [11.7, 12.7], mapAtEstablished: [82.93, 92.93] },
   'S1 untreated ectopy (E133)': { firstPvcMin: [8.95, 12.95], events51Min: [270, 420], runs51Min: [19, 54] },
   'S1 early': { refused: [0, 0], crisisMin: [5.65, 7.42], pulseLost: [0, 0], recoveringMin: [18.67, 22.07], established: [0, 0], tcMax: [36.6, 37.0], hrMax: [87, 97], kMax: [4.5, 5.1], etco2Plus5: [47, 53], hrPlus15: [63, 73] },
   'S1 preoxygenation (E121)': { withSpo2AtInduction: [98, 100], withSpo2Min: [97, 100], withoutSpo2AtInduction: [87, 93], withoutSpo2Min: [55, 71], withoutDesatAlarmAfterInductionS: [56, 96] },
