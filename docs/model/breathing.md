@@ -55,6 +55,23 @@ reads it for the tick order, the ventilator link and the events it emits.
 | [`pipeline.ts:406`](../../packages/engine-core/src/l2/resp/pipeline.ts#L406) | `mhO2Demand`: VO2 demand = basal + M_mh). Its CO2 is the ACHIEVED part (× the blood model's delivered share |
 | [`pipeline.ts:461`](../../packages/engine-core/src/l2/resp/pipeline.ts#L461) | The ratio is to THIS patient's normal output (the module's own convention, Q = coRatio × CI_LPM_PER_KG × effKg), |
 
+## Couplings
+
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 8 rows; SOURCED 1, FIT 0, ENG 0, UNTAGGED 7, ABSENT 0.
+The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
+constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
+
+| Id | From → to | Sign · form | Class | Constants | Timing, limits | Note |
+|---|---|---|---|---|---|---|
+| `breathing.peep.set` | `trigger.ventilation.peep` (PEEP change on the ventilator) → `resp.driver.vent.peep` (PEEP) | + · state | UNTAGGED | — | — | The ventilation event sets the ventilator's PEEP. |
+| `breathing.pleural.peep` | `resp.driver.vent.peep` (PEEP), `resp.lung.peepTot` → `resp.pleural` (Pleural pressure handed to the circulation) | + · term | SOURCED | `T_IT` = 0.65, `CMH2O_TO_MMHG` = 0.7356, `P_PL0` = -4 | — | pIt = P_PL0 + T_IT·(PEEP + ΔV/C)·CMH2O_TO_MMHG on a mechanical breath, plus the trapped-gas pressure (total − set PEEP). |
+| `breathing.pleural.transmission` | `resp.lung.lp.tIt` → `resp.pleural` (Pleural pressure handed to the circulation) | + · gain | UNTAGGED | — | — | The condition's own airway-to-pleura transmission, relative to the healthy one. |
+| `breathing.pleural.pneumothorax` | `resp.lung.lp.pPtx` → `resp.pleural` (Pleural pressure handed to the circulation) | + · term | UNTAGGED | — | — | + max(0, lp.pPtx − circ ext.pPtx): the lungs' pleural pressure, max-combined so two commands do not count it twice. |
+| `breathing.drive.depression` | `neuro.resp.totalDep` → `resp.spont.ve` (V̇E (MV)) | − · factor | UNTAGGED | — | — | The neuro model's ventilatory depression scales the spontaneous drive (apnoea below its threshold). |
+| `breathing.drive.rate` | `neuro.resp.totalDep` → `resp.spont.rr` (RR (spont)) | − · factor | UNTAGGED | — | — | The same depression on the rate. |
+| `breathing.drive.co2` | `resp.co2.pf` (PaCO₂) → `resp.spont.ve` (V̇E (MV)) | + · gain | UNTAGGED | `CO2_SLOPE` = 1.5, `APNOEA_OFFSET` = 4 | — | The hypercapnic ventilatory response, CO2_SLOPE L/min/mmHg above the apnoeic threshold. |
+| `breathing.drive.brainstem` | `organs.brain.cbfRel` → `resp.spont.ve` (V̇E (MV)) | + · threshold | UNTAGGED | — | — | The respiratory gate closes as brainstem flow falls (the organs' CBF, one step late). |
+
 ## State
 
 ### `DriverState` ([`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts))

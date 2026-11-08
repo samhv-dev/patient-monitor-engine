@@ -72,6 +72,21 @@ device layer the engine keeps beside its physiology (`l3/device-layer.ts`).
 | [`qrs.ts:178`](../../packages/engine-core/src/l3/qrs.ts#L178) | Learning phase (Pan–Tompkins): SPK = 1/3 of the max, NPK = 1/2 of the mean. |
 | [`spo2.ts:100`](../../packages/engine-core/src/l3/spo2/spo2.ts#L100) | QRS/pulse tone pitch from the displayed SpO2 (research 03 §3.6 item 6): f = BEEP_BASE_HZ·2^(−(100 − SpO2)·s/12) with |
 
+## Couplings
+
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 6 rows; SOURCED 0, FIT 0, ENG 0, UNTAGGED 6, ABSENT 0.
+The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
+constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
+
+| Id | From → to | Sign · form | Class | Constants | Timing, limits | Note |
+|---|---|---|---|---|---|---|
+| `monitor.abpMean` | `hemo.circOut.pRad` (Radial pressure) → `mon.abpMean` (ART M (MAP)) | + · state | UNTAGGED | — | — | The radial transducer's beat-averaged mean. |
+| `monitor.abpSys` | `hemo.circOut.pRad` (Radial pressure) → `mon.abpSys` (ART S) | + · state | UNTAGGED | — | — | The radial transducer's systolic. |
+| `monitor.hr` | `hr.to` → `mon.hr` (HR) | + · state | UNTAGGED | — | — | The rhythm engine beats at the requested rate; the monitor counts the detected QRS complexes. |
+| `monitor.spo2` | `l1.coupled.spo2` → `mon.spo2` (SpO₂) | + · state | UNTAGGED | — | — | The oximeter's averaged saturation. |
+| `monitor.etco2` | `l1.coupled.etco2` → `mon.etco2` (EtCO₂) | + · state | UNTAGGED | — | — | The capnograph's end-tidal value. |
+| `monitor.rr` | `resp.spont.rr` (RR (spont)) → `mon.rr` (RR) | + · state | UNTAGGED | — | — | The respiratory rate the monitor counts. |
+
 ## State
 
 ### `DeviceState` ([`l3/device-layer.ts`](../../packages/engine-core/src/l3/device-layer.ts))

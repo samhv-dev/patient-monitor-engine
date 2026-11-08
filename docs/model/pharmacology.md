@@ -83,6 +83,33 @@ library rows and the outputs other modules consume.
 | [`tci.ts:5`](../../packages/engine-core/src/l2/pk/tci.ts#L5) | Ce(k) = Ce_free(k) + r·Ce_unit(k), so r = min_k (target − Ce_free(k)) / Ce_unit(k) over k with Ce_unit(k) > 0 — |
 | [`volatile.ts:5`](../../packages/engine-core/src/l2/pk/volatile.ts#L5) | alveoli : VL·dFA/dt = VA·(FI − FA) − U,  U = Q·λb/g·(FA − Fv),  Fv = Σ q_i·F_i |
 
+## Couplings
+
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 18 rows; SOURCED 6, FIT 9, ENG 0, UNTAGGED 3, ABSENT 0.
+The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
+constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
+
+| Id | From → to | Sign · form | Class | Constants | Timing, limits | Note |
+|---|---|---|---|---|---|---|
+| `pharmacology.propofol.ce` | `trigger.drug.propofol` (Propofol bolus), `hemo.circ.qFwd`, `blood.core.co0` → `pk.bus.cns.propCe` | + · state | SOURCED | `ANAESTHETIC_ROWS.propofol` | — | Eleveld PK to the effect site; the row is flow-dependent (flowDist), so CO / the settled resting CO scales V1 and the intercompartmental clearances. |
+| `pharmacology.propofol.svr` | `pk.bus.cns.propCe` → `pk.fx.svr` | − · factor | FIT | `ANAESTHETIC_ROWS.propofol`, `HEMO_SYN_MAX` = 0.2, `HEMO_SYN_U50` = 1.2 | — | SVR × (1 − 0.45·E), E = Ce/(Ce + 3.5); an opioid on board deepens it (the haemodynamic synergy). |
+| `pharmacology.propofol.ees` | `pk.bus.cns.propCe` → `pk.fx.ees` | − · factor | SOURCED | `ANAESTHETIC_ROWS.propofol` | — | Contractility × (1 − 0.2·E). |
+| `pharmacology.propofol.venous` | `pk.bus.cns.propCe` → `pk.fx.v0Frac` | + · term | FIT | `ANAESTHETIC_ROWS.propofol`, `HEMO_SYN_MAX` = 0.2, `HEMO_SYN_U50` = 1.2 | — | Venodilation + 8 %·E of blood volume into the unstressed pool. |
+| `pharmacology.propofol.reflex` | `pk.bus.cns.propCe` → `pk.fx.gv` | − · factor | SOURCED | `ANAESTHETIC_ROWS.propofol` | — | Baroreflex gains × (1 − 0.6·E). |
+| `pharmacology.propofol.reflexHr` | `pk.bus.cns.propCe` → `pk.fx.gvHr` | − · factor | SOURCED | `ANAESTHETIC_ROWS.propofol` | — | The chronotropic reflex arm × (1 − 0.7·E). |
+| `pharmacology.propofol.sympatholysis` | `pk.bus.cns.propCe` → `pk.fx.symp` | − · factor | FIT | `PROPOFOL_SYMP` | — | Delivered sympathetic output × (1 − E), EC50 1 µg/mL, Hill 2. |
+| `pharmacology.propofol.setPoint` | `pk.bus.cns.propCe` → `pk.fx.setF` | − · factor | UNTAGGED | `PROPOFOL_SETF` | — | Baroreflex set point × (1 − 0.15·E). The comment that sizes it sits above PROPOFOL_SYMP, so this constant reads as untagged. |
+| `pharmacology.propofol.hypnotic` | `pk.bus.cns.propCe` → `pk.bus.cns.hypPropEq` (Ce prop-eq) | + · state | SOURCED | `PROP_HYP_C50_REF` = 3.08 | — | The one hypnotic-potency output: the propofol Ce with the same hypnotic effect at this age. |
+| `pharmacology.propofol.ventilatory` | `pk.bus.cns.propCe` → `pk.bus.cns.hypVentPropEq` (Propofol-equivalent at the ventilatory site (kept out of the truth tree)) | + · state | SOURCED | `PROP_HYP_C50_REF` = 3.08 | — | The propofol equivalent at the ventilatory site (ventShare-weighted), read by the neuro model's drive. |
+| `pharmacology.phenylephrine.svr` | `trigger.drug.phenylephrine` (Phenylephrine bolus) → `pk.fx.svr` | + · factor | FIT | `CARDIOVASCULAR_ROWS.phenylephrine` | — | α1 vasoconstriction, Emax +100 % at the rate-equivalent EC50; a catecholamine row (× acidosis factor × responsiveness). |
+| `pharmacology.phenylephrine.pvr` | `trigger.drug.phenylephrine` (Phenylephrine bolus) → `pk.fx.pvr` | + · factor | FIT | `CARDIOVASCULAR_ROWS.phenylephrine` | — | PVR Emax +15 %. |
+| `pharmacology.phenylephrine.venous` | `trigger.drug.phenylephrine` (Phenylephrine bolus) → `pk.fx.v0Frac` | − · term | FIT | `CARDIOVASCULAR_ROWS.phenylephrine` | — | Venoconstriction −4.5 % of blood volume at Emax. |
+| `pharmacology.catecholamine.acidosis` | `blood.core.ab.ph` → `pk.fx.svr` | + · gain | UNTAGGED | — | — | A catecholamine row's effect × acidosisFactor(pH) = max(0.4, 1 − 2.5·(7.4 − pH)); the numbers are inline in l2/pk/pd.ts. |
+| `pharmacology.catecholamine.responsiveness` | `cond.vasoResp` → `pk.fx.svr` | + · gain | UNTAGGED | — | — | A catecholamine row's effect × vasoResp (the endocrine model's cortisol permissive effect). |
+| `pharmacology.esmolol.occupancy` | `trigger.drug.esmolol` (Esmolol bolus) → `pk.betaBlockAdd` | + · state | FIT | `CARDIOVASCULAR_ROWS.esmolol` | — | β-receptor occupancy Emax 0.9, EC50 100 (rate-equivalent); combined competitively with the profile's own. |
+| `pharmacology.esmolol.hr` | `trigger.drug.esmolol` (Esmolol bolus) → `pk.fx.hr` | − · factor | FIT | `CARDIOVASCULAR_ROWS.esmolol` | — | Direct HR × (1 − 0.35·E). |
+| `pharmacology.esmolol.ees` | `trigger.drug.esmolol` (Esmolol bolus) → `pk.fx.ees` | − · factor | FIT | `CARDIOVASCULAR_ROWS.esmolol` | — | Contractility × (1 − 0.2·E). |
+
 ## State
 
 ### `RhythmHookState` ([`l2/pk/hooks.ts`](../../packages/engine-core/src/l2/pk/hooks.ts))
