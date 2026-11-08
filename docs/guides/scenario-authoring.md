@@ -448,8 +448,8 @@ From the card, the Debrief prints:
 - `debriefHints` (the show lines and openers on page 2, the questions on the handout), as for `/1`
   ([Debrief hints](#debrief-hints-debriefhints-both-formats)).
 
-**The recognition is an action.** Mark at most one action `"recognition": true`: the team announcing the diagnosis,
-a timed action the instructor presses (a record action with a `window`). The Debrief's recognition tile, its key
+**The recognition is an action.** Mark at most one action `"recognition": true`: the moment the team names the
+problem aloud, a timed action the instructor presses (a record action with a `window`). The Debrief's recognition tile, its key
 moment and the ◇ on the swimlane's Team lane read that action's window, press and grade; a card that marks none has no
 recognition tile. Every timed action's window is drawn on the swimlane's "Expected windows" lane, from its anchor to
 its deadline, with the act as a tick and the grade's words beside it.
