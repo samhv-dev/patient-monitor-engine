@@ -836,3 +836,53 @@ body:has(.app[data-route='teach2']) .toasts { bottom: calc(var(--dock-foot, 64px
 .join-card .st.on { color: var(--ok); border-color: var(--ok); }
 .join-card .btn { min-height: 44px; min-width: 44px; } /* every card's action is a 44 px target (R4), with a mouse too */
 #room-instructor > .room-card { margin-top: 16px; box-shadow: none; } /* R7: P7's card in Room setup's instructor slot */
+
+/* The mechanism tree (#/explore/mechanisms; docs/plans/mechanism-tree.md D7). No colour without a dash or a shape (the
+   swimlane's rule E45): every class has its own stroke pattern; the two accents only ride on a pattern. */
+.mt-page { --mt-ink: var(--text); --mt-fit: #b4461a; --mt-eng: #5a4fc8; --mt-faint: var(--text-muted); display: grid; gap: var(--s-3); }
+.mt-tools { gap: var(--s-2); align-items: center; }
+.mt-tools select { min-height: 36px; }
+.mt-nolive { margin: 0; font-weight: 600; }
+.mt-counts { margin: 0; }
+.mt-draft { margin: 0; font-weight: 600; }
+.mt-fig { overflow: auto; max-height: 72vh; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--bezel-0); }
+.mt-fig > .mt-svg { display: block; }
+.mt-detail { margin: 0; min-height: 3em; white-space: pre-line; font-size: var(--t-13); padding: var(--s-2) var(--s-3); border-left: 3px solid var(--line-strong); }
+.mt-legend { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--s-1) var(--s-4); font-size: var(--t-13); }
+.mt-legend li { display: flex; gap: var(--s-2); align-items: center; }
+.mt-legend-box h2 { font-size: var(--t-15); margin: 0 0 var(--s-2); }
+.mt-sw { flex: none; }
+.mt-svg .mt-line { fill: none; stroke: var(--mt-ink); stroke-width: 2.2; }
+.mt-svg .mt-hit { fill: none; stroke: transparent; stroke-width: 10; pointer-events: stroke; }
+.mt-svg .mt-head { fill: var(--mt-ink); }
+.mt-svg .mt-e[data-class='FIT'] .mt-line { stroke: var(--mt-fit); stroke-width: 2.8; stroke-dasharray: 0.1 4.5; stroke-linecap: round; }
+.mt-svg .mt-e[data-class='ENG'] .mt-line { stroke: var(--mt-eng); stroke-dasharray: 9 3 2 3; }
+.mt-svg .mt-e[data-class='NONE'] .mt-line { stroke: var(--mt-faint); stroke-width: 1.1; }
+.mt-svg .mt-e[data-class='ABSENT'] .mt-line { stroke: var(--mt-faint); stroke-width: 1.4; stroke-dasharray: 7 5; }
+.mt-svg .mt-e.mt-fb .mt-line { stroke-opacity: 0.85; }
+.mt-svg .mt-e:is(:hover, :focus) .mt-line { stroke-width: 3.4; stroke-opacity: 1; }
+.mt-svg .mt-e:focus, .mt-svg .mt-n:focus { outline: none; }
+.mt-svg .mt-n:focus .mt-box { stroke: var(--accent); stroke-width: 3; }
+.mt-svg .mt-q { font: 700 11px var(--font-ui, sans-serif); fill: var(--mt-ink); paint-order: stroke; stroke: var(--bezel-0); stroke-width: 3px; }
+.mt-svg .mt-audit { font: 600 9px var(--font-ui, sans-serif); fill: var(--mt-ink); paint-order: stroke; stroke: var(--bezel-0); stroke-width: 3px; }
+.mt-svg .mt-box { fill: var(--bezel-1); stroke: var(--line-strong); stroke-width: 1.2; }
+.mt-svg .mt-box2 { fill: none; stroke: var(--line-strong); stroke-width: 0.9; }
+.mt-svg .mt-n[data-kind='trigger'] .mt-box { stroke: var(--text-strong); stroke-width: 2.4; }
+.mt-svg .mt-n[data-kind='observable'] .mt-box { stroke: var(--text-strong); stroke-width: 3.2; }
+.mt-svg .mt-n[data-kind='loop'] .mt-box { stroke: var(--text-strong); stroke-width: 1.8; fill: color-mix(in srgb, var(--accent) 10%, var(--bezel-1)); }
+.mt-svg .mt-n[data-absent] .mt-box { fill: var(--bezel-0); stroke-dasharray: 5 4; }
+.mt-svg .mt-l { font: 600 11px var(--font-ui, sans-serif); fill: var(--text-strong); }
+.mt-svg .mt-k { font: 9.5px var(--font-mono, ui-monospace, monospace); fill: var(--text-muted); }
+.mt-page [lang='fa'] h2 { letter-spacing: 0; }
+@media print {
+  .app[data-route='explore']:has(.mt-main:not([hidden])) :is(.topbar, .sessionbar, .stage, .skip, .rail, .xnav, .mt-tools, .seg, .mt-detail, .mt-draft) { display: none !important; }
+  html:has(.mt-main:not([hidden])), body:has(.mt-main:not([hidden])) { height: auto; overflow: visible; background: #fff; color-scheme: light; }
+  .app[data-route='explore']:has(.mt-main:not([hidden])) { display: block; height: auto; } /* a grid ignores named pages */
+  .app[data-route='explore']:has(.mt-main:not([hidden])) :is(.main, .view, .page, .xgrid) { display: block; overflow: visible; height: auto; padding: 0; margin: 0; max-width: none; }
+  .mt-main .mt-page { --mt-ink: #000; --mt-faint: #444; gap: 2mm; }
+  .mt-main h1 { font-size: 14pt; margin: 0; }
+  .mt-main :is(.lede, .mt-nolive, .mt-counts, .mt-legend) { font-size: 7.5pt; color: #000; }
+  .mt-fig { overflow: visible; max-height: none; border: 0; }
+  .mt-fig > .mt-svg { width: 100%; height: auto; }
+  .mt-legend { grid-template-columns: repeat(3, 1fr); }
+}
