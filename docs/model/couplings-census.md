@@ -6,7 +6,7 @@
 The engine's cross-module coupling seams and its effector products and sums, read from the code
 (docs/plans/mechanism-tree.md, piece R0). Places are file#function; the line of each row is in the `--json` output.
 
-Seams (de-duplicated on module, kind and field): 137; sites: 173.
+Seams (de-duplicated on module, kind and field): 137; sites: 176.
 
 | Module | ctx | ext | endo-write | bus-read | All |
 |---|---:|---:|---:|---:|---:|
@@ -40,10 +40,10 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | monitor | 46 | 5 |
 | alarms | 17 | 0 |
 | defib-pacer | 23 | 4 |
-| engine-runtime | 6 | 2 |
-| **All** | 1004 | 369 |
+| engine-runtime | 9 | 2 |
+| **All** | 1007 | 369 |
 
-## The ten effector expressions with the most factors (of 1485)
+## The ten effector expressions with the most factors (of 1488)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -184,11 +184,11 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | organs | ext | `rSysF` | `l2/organs/effects.ts#applyOrganEffects` | 1 |
 | organs | ext | `cbfRel` | `l2/organs/effects.ts#applyOrganEffects` | 1 |
 | engine-runtime | bus-read | `bus.metabolic.dantroleneE` | `engine.ts#stateSignals` | 1 |
+| engine-runtime | bus-read | `bus.airway.bronchodilation` | `engine.ts#restAdvance` | 2 |
+| engine-runtime | bus-read | `bus.hpvInhibit` | `engine.ts#restAdvance` | 2 |
+| engine-runtime | bus-read | `bus.airway.histamine` | `engine.ts#restAdvance` | 3 |
 | engine-runtime | bus-read | `bus.agents` | `engine.ts#advance` | 1 |
 | engine-runtime | bus-read | `bus.avNodeBlock` | `engine.ts#advance` | 1 |
-| engine-runtime | bus-read | `bus.airway.histamine` | `engine.ts#advance` | 2 |
-| engine-runtime | bus-read | `bus.airway.bronchodilation` | `engine.ts#advance` | 1 |
-| engine-runtime | bus-read | `bus.hpvInhibit` | `engine.ts#advance` | 1 |
 | blood | bus-read | `bus.doses` | `l2/blood/pipeline.ts#advanceBlood` | 2 |
 | endocrine-thermal | bus-read | `bus.agents` | `l2/endo/adapters.ts#readEndoInputs` | 1 |
 | endocrine-thermal | bus-read | `bus.airway.bronchodilation` | `l2/endo/adapters.ts#readEndoInputs` | 1 |

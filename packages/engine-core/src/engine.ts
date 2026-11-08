@@ -291,8 +291,8 @@ function startRate(id: RhythmId, opts: RhythmOpts): number {
  * settle) at ≈ 60 % of its cost. The resting patient carries no sensors (their transducers are not physiology: SV₀ is
  * the same with or without them) and MODELED settles REST_SETTLE_MODELED_S, so a run is ≈ 0.1–0.2 s in Node and
  * Chromium; the whole engine's 80 s took 0.23–0.29 s and, on the CI runner, delayed a case's monitor by 1–2 s.
- * A restored snapshot carries its own SV₀. [ENG procedure: REST_AVG_S, five spontaneous breaths at the default 15/min;
- * REST_SEED, the engine's default seed.]
+ * A restored snapshot carries its own SV₀. [ENG: measurement; REST_AVG_S, five spontaneous breaths at the default
+ * 15/min; REST_SEED, the engine's default seed; REST_SETTLE_MODELED_S, the measured settling]
  */
 export const REST_AVG_S = 20;
 export const REST_SEED = 1;
