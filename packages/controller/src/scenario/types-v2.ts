@@ -4,7 +4,7 @@
 // grade() are F3's. The shared types at the end are fixed here so F2 and F3 can be built in parallel.
 import type { PkRoute } from '@pme/engine-core';
 import type { RunnerInput } from './runner.ts';
-import type { DocCommand, Op, ScenarioDoc, VitalVar } from './types.ts';
+import type { DebriefHints, DocCommand, Op, ScenarioDoc, VitalVar } from './types.ts';
 
 type C = { $comment?: string };
 
@@ -44,6 +44,9 @@ export type AnyRule = PhaseRule | DisplayRule;
 /** Where a window starts: 'start', 'pulseLoss', 'rosc', `phase:<id>` (its entry), `action:<id>` (its first taking), or
  *  the first second a rule holds. */
 export type Anchor = 'start' | 'pulseLoss' | 'rosc' | `phase:${string}` | `action:${string}` | { rule: PhaseRule };
+
+/** An opener's anchor (Debrief 2 D8): the string forms of `Anchor` the report reads. */
+export type HintAnchor = Exclude<Anchor, { rule: PhaseRule }>;
 
 /** An action window's anchor (plan F9): any Anchor; `each:action:<id>`, one window per taking of that action; or the
  *  first second a rule on the displayed numerics (rank 2) holds; or the earliest of several anchors. */
@@ -147,8 +150,10 @@ export interface ScenarioDocV2 extends Header {
   actions: Action[];
   outcomes?: Outcome[];
   script?: ScriptEntry[];
+  /** Optional: the author's hints and openers for the Debrief (D8), each opener on a string anchor. */
+  debriefHints?: DebriefHints<HintAnchor>;
   /** #211's learner-facing Case briefing (the same shape as on /1; `briefingOf` reads either). */
-  briefing?: { text: string; estimatedMinutes?: number; durationS?: number; lang?: 'en' | 'fa' };
+  briefing?: { text: string; estimatedMinutes?: number; durationS?: number; lang?: 'en' | 'fa'; textFa?: string };
 }
 
 // --- shared by F2 (the phase runner) and F3 (the record and grade()) ---------------------------------------------

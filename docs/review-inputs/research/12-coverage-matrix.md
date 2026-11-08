@@ -209,7 +209,7 @@ fills several cells: for example, a timeline that gives propofol, then PEEP, the
 
 ### 2.2 Grading rules
 
-- **Bands are proposals for Ali** until he rules. The auditor quotes the source and never invents a band. A cell with
+- **Bands are proposals for samhv-dev** until he rules. The auditor quotes the source and never invents a band. A cell with
   no source is graded "direction only" and listed in the run's open questions.
 - **Control arms are mandatory** for drug and ventilation cells. State-dependence (R53) is measured as the difference
   between the intervention in the state and the same intervention in the healthy reference context, the audit 08 §K
@@ -219,7 +219,7 @@ fills several cells: for example, a timeline that gives propofol, then PEEP, the
 - **The monitor is graded separately from the truth.** A cell whose truth is right but whose display is wrong gets two
   verdicts (truth, DEV), as audit 10 did.
 - **MANUAL:** every arrest cell and every P1 haemodynamic cell also runs in MANUAL. There the expected response is the
-  instructor's target plus the non-reflex physiology (Q9 of audit 08; Ali's ruling pending).
+  instructor's target plus the non-reflex physiology (Q9 of audit 08; the owner's ruling pending).
 
 ---
 
@@ -281,7 +281,7 @@ PEEP 5, FiO2 0.5 (audit 08) or 12 × 500 (09/10), MODELED.
 | A08-B4 | P1 | X-A | severe tamponade | sevoflurane 2 % | CIRC | TW | G2 | FU-4 |
 | A08-B5 | P1 | X-A | severe tamponade | bleed 1 L | CIRC, RHY | TW | G1 | FU-4 |
 | A08-B6 | P1 | X-A | severe tamponade | chain propofol → PEEP → sevo → bleed | CIRC, RHY | WR | G1, G2 | FU-4 |
-| A08-B7 | P1 | X-A | severe tamponade | Ali's chain (propofol 3 mg/kg, PEEP 15, sevo, bleed 2 L) | CIRC, RHY, DEV | WR | G1, G2, G14 | FU-4/5 |
+| A08-B7 | P1 | X-A | severe tamponade | the owner's chain (propofol 3 mg/kg, PEEP 15, sevo, bleed 2 L) | CIRC, RHY, DEV | WR | G1, G2, G14 | FU-4/5 |
 | A08-B8 | P1 | X-A | tamponade 0.8 | propofol 2 mg/kg | CIRC | WR | G2 | FU-4 |
 | A08-C0 | P1 | X-A | class III | bleed 1.5 L (compensation) | CIRC, BLD | PL | — | — |
 | A08-C1 | P1 | X-A | class III | propofol 2 mg/kg | CIRC, PK | TW | G2, G10 | FU-4 |
@@ -316,11 +316,11 @@ PEEP 5, FiO2 0.5 (audit 08) or 12 × 500 (09/10), MODELED.
 | A08-K-as | P1 | AS + CAD + HTN 75 y | compensated | propofol 2 mg/kg | CIRC | TW (behaves as healthy) | G2, G5 | FU-4 |
 | A08-K-hf | P1 | HFrEF 60 y | compensated | propofol 2 mg/kg | CIRC | TW | G2 | FU-4 |
 | A08-K-ptx | P1 | X-A | tension PTX | propofol 2 mg/kg | CIRC | TW | G1, G2 | FU-4 |
-| A08-K-man | P1 | X-A MANUAL | GA baseline | propofol 2 mg/kg | CIRC | PL (no reflex, as designed) | G9 (Q9) | Ali |
-| A08-K-manhv | P1 | X-A MANUAL | class III | propofol 2 mg/kg | CIRC | TW | G9 | Ali |
-| A08-L-B0 | P1 | X-A MANUAL | severe tamponade | none | CIRC | WR (tracker set-and-hold) | G9 | Ali/FU-4 |
+| A08-K-man | P1 | X-A MANUAL | GA baseline | propofol 2 mg/kg | CIRC | PL (no reflex, as designed) | G9 (Q9) | samhv-dev |
+| A08-K-manhv | P1 | X-A MANUAL | class III | propofol 2 mg/kg | CIRC | TW | G9 | samhv-dev |
+| A08-L-B0 | P1 | X-A MANUAL | severe tamponade | none | CIRC | WR (tracker set-and-hold) | G9 | samhv-dev/FU-4 |
 | A08-L-B6 | P1 | X-A MANUAL | severe tamponade | chain | CIRC, RHY | WR (no arrest) | G1, G9 | FU-4 |
-| A08-L-C0 | P1 | X-A MANUAL | class III | bleed 1.5 L | CIRC | PL (instructor HR, as designed) | G9 | Ali |
+| A08-L-C0 | P1 | X-A MANUAL | class III | bleed 1.5 L | CIRC | PL (instructor HR, as designed) | G9 | samhv-dev |
 | A08-L-C4 | P1 | X-A MANUAL | class IV | bleed 2.5 L | CIRC, RHY | WR (MAP 10 for 35 min) | G1, G9 | FU-4 |
 | A08-X | P1 | X-A | VF | CPR + adrenaline | CIRC, BRN, KID, END | WR (last-beat state: CoPP 79, CBF 1.0) | G4 | FU-4 |
 
@@ -347,7 +347,7 @@ PEEP 5, FiO2 0.5 (audit 08) or 12 × 500 (09/10), MODELED.
 | A09-B4g | P1 | X-P | induced apnoea, preox | GA switch | LUNG | TW (5.6 min) | R10 | 7j |
 | A09-B5 | P1 | X-C | induced apnoea, preox | no switch | LUNG | TW (7.8 min) | R4, R15 | FU-6/V.1 |
 | A09-B5g | P1 | X-C | induced apnoea, preox | GA switch | LUNG, DEV | WR (PaCO2 55 at rest; display lag 60 s) | R15 | V.1/FU-6 |
-| A09-B7 | P1 | X-A MANUAL | induced apnoea | none | RHY, CIRC | MI (no hypoxic brady/arrest) | Q9 | Ali |
+| A09-B7 | P1 | X-A MANUAL | induced apnoea | none | RHY, CIRC | MI (no hypoxic brady/arrest) | Q9 | samhv-dev |
 | A09-C1a | P1 | X-A | induction | propofol 2 + rocuronium | LUNG, AIR | PL (direction) | R3 | FU-6 |
 | A09-C1b | P1 | X-A | induction | small obstructed breaths | DEV (capnogram) | WR (full plateau below VD) | R5 | FU-6 |
 | A09-C1c | P1 | X-A | induced apnoea 3 min | none | LUNG | PL | — | — |
@@ -420,7 +420,7 @@ PEEP 5, FiO2 0.5 (audit 08) or 12 × 500 (09/10), MODELED.
 | A10-A1 | P1 | X-A MANUAL | MAP 100 → 44 | PI with vasoconstriction | DEV | WR (PI −15 % only) | M1 | FU-5 |
 | A10-A1t | P1 | X-A MANUAL | target 18/10 | tracker floor | CIRC, DEV | IN (valid SpO2, PI "--") | M1, T-issues | FU-5/FU-4 |
 | A10-A1m | P1 | X-A | bleed 3 L (MAP 2) | SpO2 at low flow | DEV | WR (SpO2 98 valid) | M1 | FU-5 |
-| A10-A2 | P1 | X-A | Ali's B7 chain | SpO2 at low flow | DEV | WR | M1 | FU-5 |
+| A10-A2 | P1 | X-A | the owner's B7 chain | SpO2 at low flow | DEV | WR | M1 | FU-5 |
 | A10-A4 | P1 | X-A | VF / asystole / PEA | SpO2 validity, INOP | DEV | MI (no NO PULSE INOP) | M8 | FU-5 |
 | A10-A4c | P1 | X-A | CPR | SpO2 "?" | DEV | WR (tile drops "?") | M1 | FU-5 |
 | A10-A5 | P2 | X-A MANUAL | ROSC | SpO2 recovery | DEV | PL (minor) | — | — |
@@ -1035,9 +1035,9 @@ five blunting arms a–e, and added:
 | PL | 12 | — |
 | TW | 9 | 5 (FU-7 Task 10: SP-01a, 01d, 02a, 03, 26) |
 | TS | 3 | 3 (FU-7 Task 10: SP-01b; FU-6 Q-FU6-6: SP-14b/c) |
-| WR | 6 | 2 (A08 G13 / Ali Q8: SP-19a/b) |
+| WR | 6 | 2 (A08 G13 / samhv-dev Q8: SP-19a/b) |
 | IN | 0 | — |
-| MI | 10 | 4 (FU-9 amendment H5: SP-08a/b; FU-6: SP-08c; Ali W17 posture: SP-12b, 22) |
+| MI | 10 | 4 (FU-9 amendment H5: SP-08a/b; FU-6: SP-08c; samhv-dev W17 posture: SP-12b, 22) |
 | NE | 25 | — (posture ×10, surgical events ×11, 7h ×2, CO2 load ×1, N2O ×1) |
 
 - **By tier:** P1 33, P2 29, P3 3.
@@ -1054,7 +1054,7 @@ five blunting arms a–e, and added:
   - S12: diathermy counted as HR, flagged valid;
   - S13: tourniquet, cross-clamp, carotid and PA clamp events are absent.
 - **Pending elsewhere:**
-  - S7 = A08 G13 (1 L under GA: MAP 63.5 → 48.3 over 50 min, `baro.set` 95 → 57; Ali Q8);
+  - S7 = A08 G13 (1 L under GA: MAP 63.5 → 48.3 over 50 min, `baro.set` 95 → 57; samhv-dev Q8);
   - S3 and SP-01 = FU-7 Task 10, which needs remifentanil, fentanyl 2 µg/kg, maintenance-phase incision/sternotomy/
     closure arms and an adult-site guard;
   - S4(a–c) = FU-9 amendment (RH H4/H5) and FU-6 (chest wall);
@@ -1095,7 +1095,7 @@ five blunting arms a–e, and added:
 | SP-12a | P1 | beach-chair (head-up 70°) at 20 min: arm MAP minus MAP at the head (hydrostatic gradient) | **PL** | 7d brain/model.ts headUp() (HEAD_HEIGHT_CM 25 × sin θ, 0.74 mmHg/cm) |
 | SP-12b | P1 | beach-chair 70°: systemic MAP and CO (venous pooling) at +10 min vs supine | **MI** | new: 7a posture term (gravitational venous pooling: unstressed volume  |
 | SP-12c | P1 | beach-chair 70°: cerebral perfusion pressure (and ICP, CBF) at head level vs supine | **PL** | 7d brain/model.ts (CPP at head; autoregulation keeps CBF) / DEV: the m |
-| SP-13a | P2 | prone position: PaO2 ↑ (V/Q, dorsal recruitment; PROSEVA physiology) | **NE** | new: posture state → 7b regional V/Q (FU-7+ / Ali) |
+| SP-13a | P2 | prone position: PaO2 ↑ (V/Q, dorsal recruitment; PROSEVA physiology) | **NE** | new: posture state → 7b regional V/Q (FU-7+ / samhv-dev) |
 | SP-13b | P2 | prone: Crs ~ (chest-wall compliance ↓, lung ↑) | **NE** | new: posture state → 7b |
 | SP-13c | P2 | prone with the abdomen compressed: IAP ↑, venous return ↓ | **NE** | new: posture state → 7a/7d |
 | SP-14a | P2 | lateral decubitus (two-lung): non-dependent ventilation, dependent perfusion (V/Q mismatch | **NE** | new: posture state → 7b perfusion split (FU-6 Q-FU6-6) |
@@ -1113,7 +1113,7 @@ five blunting arms a–e, and added:
 | SP-17d | P2 | unclamping: acidosis, K⁺ ↑, lactate washout, EtCO2 ↑ | **NE** | new: declamping → 7c washout |
 | SP-18a | P2 | cementing: BCIS grade 1 (`lungCondition fatEmbolism 0.33`) at 20 min: EtCO2, SpO2, MAP, PA | **TW** | 7b lung-pathology.ts fatEmbolism (add shunt/low-V/Q and a systemic vas |
 | SP-18b | P2 | BCIS grade 2 and 3 (`fatEmbolism 0.67 / 1.0`): SpO2 < 88 % or SBP fall > 40 % (grade 2); c | **WR** | 7b fatEmbolism → 7a RV failure / FU-4 arrest (the elderly RV and the m |
-| SP-19a | P1 | sudden surgical haemorrhage 1 L in 1 min at 20 min (no fluids): MAP nadir and HR over 10 m | **WR** | 7a circ/baroreflex.ts RESET_HOLD_S/RESET_GAIN (A08 G13; FU-4 D18; Ali  |
+| SP-19a | P1 | sudden surgical haemorrhage 1 L in 1 min at 20 min (no fluids): MAP nadir and HR over 10 m | **WR** | 7a circ/baroreflex.ts RESET_HOLD_S/RESET_GAIN (A08 G13; FU-4 D18; samhv-dev  |
 | SP-19b | P1 | the same 1 L as a 20 mL/min ooze over 50 min vs the sudden loss: MAP course and Hb at 60 m | **WR** | 7a circ/baroreflex.ts resetting (A08 G13) / 7c transcapillary refill |
 | SP-20a | P2 | venous air entry (`lungCondition vae 1`) at 20 min: EtCO2 within 1–3 breaths and at 5 min | **PL** | 7b lung-pathology.ts vae (dead space) |
 | SP-20b | P2 | VAE: PAP, SpO2 and MAP/CO over 10 min | **TW** | 7b vae (PVR × 1.375 only) → 7a RV afterload |
@@ -1223,7 +1223,7 @@ Each run is one read-only audit agent, the audit 08/09/10 pattern. The agent:
 - writes the smallest mechanism for each gap, with file:line;
 - lists the calibrated tests each fix would move;
 - proposes the scripted suite that becomes the owning stage's acceptance cells;
-- asks Ali the clinical questions, with the model's numbers.
+- asks samhv-dev the clinical questions, with the model's numbers.
 
 Budget per run: ≤ 90 min of engine time, 45–85 cells, and one report `research/<nn>-coverage-<run>.md` with
 `<nn>-audit-scripts/`.
@@ -1690,7 +1690,7 @@ into each run's `audit-scripts/`, so each run stays reproducible on its own comm
 4. Grade. For every WR/MI/TW/TS/IN, find the code path (file:line) and write the smallest physiological mechanism
    (R45: no widened bands, no multipliers without a mechanism).
 5. Write the report in the 08/09/10 structure: headline; method and rig; results by family; ranked gaps; mechanism per
-   gap; calibrated tests moved; proposed scripted suite (the owner's acceptance cells); questions for Ali.
+   gap; calibrated tests moved; proposed scripted suite (the owner's acceptance cells); questions for samhv-dev.
 6. Append the run's rows to `12-coverage-matrix.md` §4 (the orchestrator merges them) and flip the cells' verdicts from
    NM.
 
@@ -1717,7 +1717,7 @@ into each run's `audit-scripts/`, so each run stays reproducible on its own comm
 
 ---
 
-## 8. Questions for Ali (the matrix's own)
+## 8. Questions for samhv-dev (the matrix's own)
 
 1. **Scope of "human".** Should the matrix grade the P3 exam-critical states (phaeochromocytoma, carcinoid, AFE,
    HOCM, CPB) now, or park them until 7j/7h? The design keeps them as designed-but-NE cells so the owning plan has its

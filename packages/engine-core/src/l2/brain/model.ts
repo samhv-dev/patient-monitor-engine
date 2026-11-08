@@ -147,7 +147,7 @@ export function stepBrain(b: BrainState, inp: BrainInputs, dt: number): void {
   const hu = headUp(b.headUpDeg);
   // Cushing is the response to INTRACRANIAL hypertension (tables §5.1 Cushing row): with the ICP at or below the
   // treatment threshold neither trigger counts — a low CPP from systemic hypotension alone (a MANUAL SBP 45 shock) is
-  // the circulation's business, not a brainstem-compression surge [ENG].
+  // the circulation's business, not a brainstem-compression surge [FIT: scripted Cushing surge size; brief research/44 L2-12].
   const raised = b.icp > ICP_THRESHOLD;
   stepCushing(b.cush, raised ? b.mapBase - MMHG_PER_CM_BLOOD * hu.hCm - b.icp : Infinity, raised ? b.mapHead - b.icp : Infinity, dt);
   b.lowCppS = b.cpp <= HERNIATION_CPP ? b.lowCppS + dt : 0;

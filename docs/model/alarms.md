@@ -67,27 +67,27 @@ waits or stays quiet; an embedding developer gets one `alarmStatus` summary for 
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `VF_CONFIRM_S` | `3` | s | [ENG] | VF is recognised this long after it starts (a monitor needs a few seconds of analysis) [ENG]. |
+| `VF_CONFIRM_S` | `3` | s | [ENG: device] | VF is recognised this long after it starts (a monitor needs a few seconds of analysis) [ENG: device]. |
 | `DESAT_DELAY_S` | `20` | s | brief §6.4 | Desaturation alarm delay (brief §6.4: "desaturation (<80%, 20 s)"). |
-| `STALE_S` | `5` | s | [ENG] | A displayed numeric older than this is stale and raises nothing (NIBP excepted: it is episodic) [ENG]. |
-| `VT_GAP_S` | `2` | s | [ENG] | A ventricular run ends when no ventricular beat came for this long [ENG]. |
+| `STALE_S` | `5` | s | [ENG: device] | A displayed numeric older than this is stale and raises nothing (NIBP excepted: it is episodic) [ENG: device]. |
+| `VT_GAP_S` | `2` | s | [ENG: device] | A ventricular run ends when no ventricular beat came for this long [ENG: device]. |
 | `EXTREME_OFFSET` | `20` | — | brief §6.4 | Extreme brady/tachy: the HR limit ∓ 20 bpm, clamped at 40/200 (adult) or 50/240 (neonatal) (brief §6.4). |
-| `EVENT_HOLD_S` | `5` | s | [ENG] | An event arrhythmia alarm (PAUSE) stays at least this long once raised [ENG]. |
-| `SPO2_SEARCH_S` | `15` | s | [ENG] | The oximeter is still acquiring (averaging window + update) this long after its probe went on [ENG]. |
-| `LOW_PERF_DELAY_S` | `5` | s | research/05 §6; [ENG] | LOW PERF is raised once PI < 0.3 (LOW_PERF_PI: "below 0.3 is marginal", research/05 §6 [S2] IFU p. 120) has held this long, and cleared at PI ≥ LOW_PERF_CLEAR_PI or after this long at PI ≥ 0.3 (PI hovering at 0.3 flickered the INOP 7 times in the 3 L bleed) [ENG]. |
+| `EVENT_HOLD_S` | `5` | s | [ENG: device] | An event arrhythmia alarm (PAUSE) stays at least this long once raised [ENG: device]. |
+| `SPO2_SEARCH_S` | `15` | s | [ENG: device] | The oximeter is still acquiring (averaging window + update) this long after its probe went on [ENG: device]. |
+| `LOW_PERF_DELAY_S` | `5` | s | research/05 §6; [ENG: device] | LOW PERF is raised once PI < 0.3 (LOW_PERF_PI: "below 0.3 is marginal", research/05 §6 [S2] IFU p. 120) has held this long, and cleared at PI ≥ LOW_PERF_CLEAR_PI or after this long at PI ≥ 0.3 (PI hovering at 0.3 flickered the INOP 7 times in the 3 L bleed) [ENG: device]. |
 | `LOW_PERF_CLEAR_PI` | `0.4` | — | — | — |
-| `NONPULS_CLEAR_S` | `2` | s | [ENG] | SpO2 NON-PULSAT. clears only after a valid SpO2 for this long [ENG]. |
+| `NONPULS_CLEAR_S` | `2` | s | [ENG: device] | SpO2 NON-PULSAT. clears only after a valid SpO2 for this long [ENG: device]. |
 | `DISCONNECT_MMHG` | `10` | mmHg | — | An arterial pressure non-pulsatile with a mean below this is a disconnection ([S2] IFU p. 44: 10 mmHg). |
-| `DISCONNECT_DELAY_S` | `5` | s | [ENG] | "continuously less than 10 mmHg" ([S2] p. 44) — for this long [ENG]. |
-| `AGONAL_RR_S` | `2.5` | s | research/03 §1.5; [ENG] | An R–R at least this long keeps a standing ASYSTOLE — agonal is < 20/min (R–R ≥ 3 s, research/03 §1.5), less half a second for the detector's timing of a wide complex (2.9 s measured between agonal beats generated 3 s apart) [ENG]. |
-| `SAME_COMPLEX_S` | `0.35` | s | [ENG] | Two detections closer than this are one wide complex for the agonal hold (agonal QRS ≈ 300 ms) [ENG]. |
-| `EXTREME_CLEAR_S` | `5` | s | [ENG] | A live extreme-rate alarm ends only after this long back inside its threshold [ENG]. |
+| `DISCONNECT_DELAY_S` | `5` | s | [ENG: device] | "continuously less than 10 mmHg" ([S2] p. 44) — for this long [ENG: device]. |
+| `AGONAL_RR_S` | `2.5` | s | research/03 §1.5; [ENG: device] | An R–R at least this long keeps a standing ASYSTOLE — agonal is < 20/min (R–R ≥ 3 s, research/03 §1.5), less half a second for the detector's timing of a wide complex (2.9 s measured between agonal beats generated 3 s apart) [ENG: device]. |
+| `SAME_COMPLEX_S` | `0.35` | s | [ENG: device] | Two detections closer than this are one wide complex for the agonal hold (agonal QRS ≈ 300 ms) [ENG: device]. |
+| `EXTREME_CLEAR_S` | `5` | s | [ENG: device] | A live extreme-rate alarm ends only after this long back inside its threshold [ENG: device]. |
 
 ### [`l3/alarms/profile.ts`](../../packages/engine-core/src/l3/alarms/profile.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `BAROMETRIC_MMHG` | `760` | mmHg | brief §6.8; [ENG 760 mmHg] | %V → mmHg at the simulated barometric pressure (brief §6.8: the engine shows CO2 in mmHg) [ENG 760 mmHg]. |
+| `BAROMETRIC_MMHG` | `760` | mmHg | brief §6.8; [ENG: conversion; 760 mmHg] | %V → mmHg at the simulated barometric pressure (brief §6.8: the engine shows CO2 in mmHg) [ENG: conversion; 760 mmHg]. |
 | `APNEA_DEFAULT_S` | `20` | s | brief §6.4 | Apnoea time when the skin's limit table has none (brief §6.4 "apnoea (20 s)"). |
 
 ## Functions
@@ -134,6 +134,8 @@ None recorded.
 | [`l3/alarms/apnoea-hooks.test.ts`](../../packages/engine-core/test/l3/alarms/apnoea-hooks.test.ts) | 0 | 0 |
 | [`l3/alarms/conditions-chaining.test.ts`](../../packages/engine-core/test/l3/alarms/conditions-chaining.test.ts) | 0 | 0 |
 | [`l3/alarms/conditions.test.ts`](../../packages/engine-core/test/l3/alarms/conditions.test.ts) | 0 | 0 |
+| [`l3/alarms/event-completeness.test.ts`](../../packages/engine-core/test/l3/alarms/event-completeness.test.ts) | 0 | 0 |
+| [`l3/alarms/ibp-no-sensor.test.ts`](../../packages/engine-core/test/l3/alarms/ibp-no-sensor.test.ts) | 0 | 0 |
 | [`l3/alarms/latching.test.ts`](../../packages/engine-core/test/l3/alarms/latching.test.ts) | 0 | 0 |
 | [`l3/alarms/limit-hygiene.test.ts`](../../packages/engine-core/test/l3/alarms/limit-hygiene.test.ts) | 0 | 0 |
 | [`l3/alarms/limit-text.test.ts`](../../packages/engine-core/test/l3/alarms/limit-text.test.ts) | 0 | 0 |

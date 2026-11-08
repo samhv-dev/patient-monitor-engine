@@ -62,7 +62,7 @@ describe('spectral.ts: the shared periodogram', () => {
 });
 
 describe('the generic reader: the spec row (D8)', () => {
-  it('every constant carries its tag ([TXT …], [ENG …], [P-n …] or [INF …]) and a unit; the label says what it is', () => {
+  it('every constant carries its tag ([TXT …], [ENG: device], [P-n …] or [INF …]) and a unit; the label says what it is', () => {
     expect(GENERIC_SPEC.id).toBe('generic');
     expect(GENERIC_SPEC.label).toBe('Processed EEG (generic)');
     expect(Object.keys(C).length).toBeGreaterThanOrEqual(15);
@@ -76,7 +76,7 @@ describe('the generic reader: the spec row (D8)', () => {
     expect(C.suppressionUv.value).toBe(5); // Ch36 p. 1139
     expect(C.suppressionMinS.value).toBe(0.5); // P-8, research/43
     expect(C.impedanceLimitKOhm.value).toBe(5); // P-13 plan default
-    expect(GENERIC_SPEC.updateS).toBe(1); // plan E6: the generic reader 1 s [ENG]
+    expect(GENERIC_SPEC.updateS).toBe(1); // plan E6: the generic reader 1 s [ENG: device]
   });
 });
 

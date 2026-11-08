@@ -12,9 +12,9 @@ through this list.
 
 Regenerate the first two tables with `node --experimental-strip-types scripts/deviations.ts`. The `docs-honesty` test
 fails when a literal-titled expected failure or skip is missing from this page. It cannot see conditional forms such
-as `(cond ? it.fails : it)(…)`, nor the lung-signature `KNOWN` list; those are listed by hand below.
+as `(cond ? it.fails : it)(…)`; those are listed by hand below.
 
-On this tree there are **158 expected-failure calls**, all read by the lister: 157 `it.fails` (the bronchospasm row of
+On this tree there are **185 expected-failure calls**, all read by the lister: 184 `it.fails` (the bronchospasm row of
 `packages/ventilator/test/link-parity.test.ts` is a literal `it.fails`) and 1 `it.fails.each` with three cases
 (`packages/engine-core/test/engine/fidelity-arrest.test.ts`), and **6 skipped tests** (1 skipped test and 5 `.todo` entries: the harms and the device the scenario format declares "not modelled", and epinephrine IM). "Tracked in" names the gate note (and its section)
 that records the miss with its number; the open questions it cites (Q…, R-…, E-…) are listed in that note.
@@ -25,6 +25,7 @@ that records the miss with its number; the open questions it cites (Q…, R-…,
 |---|---|---|
 | `apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts` | untreated: VF from hyperthermia — measured: no VF in 51 min (core 38.7 °C at +51 min); the band (VF at 42.3 °C, 40–49 min after the sux) needs ≈ 2.3 °C per 15 min, above the registry maximum rates of 0.50–1.00 (E131-2) | `CHANGELOG.md` [Unreleased] E131 (the PR "one muscle metabolic rate for MH … (E131)"); "Malignant hyperthermia now warms the core" (the PR "the MH sympathetic surge constricts the skin … (E131)"); "The untreated MH core rises at the registry median rate" (the PR "E131-2 …") |
 | `apps/demo/src/app/showcase/malignant-hyperthermia.slow.test.ts` | treated late (the run-sheet path): crisis 1 min into the established crisis — measured: the call comes at +46.6 min (band 17.8–21.8) and Recovering is not reached by 60 min (E131) | `CHANGELOG.md` [Unreleased] E131 (the PR "one muscle metabolic rate for MH … (E131)"); "Malignant hyperthermia now warms the core" (the PR "the MH sympathetic surge constricts the skin … (E131)") |
+| `apps/demo/src/app/showcase/stab-wound-tamponade.slow.test.ts` | sysMaxAtRosc 194.9–204.9 mmHg, the physiology alone (191.07 + 8.9 from the coronary reading) — measured 210.8: +10.9 is the arterial detector missing feet under compressions over a beating heart (research/41 row 50) | `docs/validation/notes/tamponade-sysmax.md` "The pin on the physiology alone"; `docs/review-inputs/research/44-physiology-compromise-audit.md` rows T-22 / V-24; the detector defect is research/41 row 50 |
 | `packages/engine-core/test/engine/af-rate-control.test.ts` | amiodarone 150 mg over 10 min: AF 130 slows by 20–30 % at its peak (10–13 min) (measured 14.0) | `docs/gates/stage-7e.md` "Expected failures (`it.fails`)"; `docs/gates/fu-3.md` §2 "Numbers vs bands", row 7 (13.4 %) |
 | `packages/engine-core/test/engine/arrest-etco2.test.ts` | VF without CPR: EtCO2 < 5 mmHg already at +30 s (research 03 §4.4 / respiratory acceptance 4) — measured 9.3 with the alveolar washout (24.2 before it) | `docs/gates/fu-7.1-b.md` §5 "Records this branch creates" (+30 s: 9.3); §1 "Tasks, before and after", B3 |
 | `packages/engine-core/test/engine/arrest-etco2.test.ts` | VF with CPR q 0.8 from +30 s: EtCO2 ≥ 17 already at +2 min of CPR — measured 15.9 with the alveolar washout | `docs/gates/fu-7.1-b.md` §5 "Records this branch creates" (CPR +2 min: 15.9); history in `docs/gates/fu-8-part-a.md` §4 "The rows FU-8 moves" |
@@ -42,7 +43,7 @@ that records the miss with its number; the open questions it cites (Q…, R-…,
 | `packages/engine-core/test/engine/clinical-suite.test.ts` | S4b severe tamponade, propofol 1 mg/kg: MAP < 55 within 3 min and CO −25 % (measured MAP 50.5, CO −21 % when propofol removes the tonic sympathetic share — 58.9 / −17 % when it does not; 57 / −15 % on the prototype) | `docs/gates/fu-4.md` §2 "The clinical scenario table", row S4b (Q2); moved by FU-8 B4: `docs/gates/stage-fu-8b.md` §5 "Rows that moved (final)" |
 | `packages/engine-core/test/engine/clinical-suite.test.ts` | S5 severe tamponade, PEEP 5 → 10: CO −20 % and MAP ≥ 10 mmHg more than the same PEEP in a healthy patient (Barash; measured ΔMAP 4.1 vs 1.5, CO ×0.88 — 4 vs 1, ×0.89 on the prototype; Q2) | `docs/gates/fu-4.md` §2 "The clinical scenario table", row S5 (Q2) |
 | `packages/engine-core/test/engine/clinical-suite.test.ts` | S6a the same: MAP falls 40–60 % to a nadir of 30–50 over 1–3 min (the expected picture; measured nadir 2.7, −97 % with an arrest when propofol removes the tonic sympathetic share — 26.5, −68 % when it does not, 28.7 on the prototype) | `docs/gates/fu-4.md` §2 "The clinical scenario table", row "S6a nadir 30–50" (Q1, item 19); the arrest is a record: `docs/gates/stage-fu-8b.md` §4 "Class III haemorrhage + propofol 2 mg/kg" (E-FU8B-2) |
-| `packages/engine-core/test/engine/clinical-suite.test.ts` | S9 the same: SaO2 < 90 % at 5 min (truth, not the display; the proposed band SpO2 ≤ 92 at FiO2 0.5 is Ali's, item 15; measured 97.8 %) | `docs/gates/fu-4.md` §2 "The clinical scenario table", row "S9 SaO2 (truth)" (item 15, Ali's proposed band) |
+| `packages/engine-core/test/engine/clinical-suite.test.ts` | S9 the same: SaO2 < 90 % at 5 min (truth, not the display; the proposed band SpO2 ≤ 92 at FiO2 0.5 is the owner's, item 15; measured 97.8 %) | `docs/gates/fu-4.md` §2 "The clinical scenario table", row "S9 SaO2 (truth)" (item 15, the owner's proposed band) |
 | `packages/engine-core/test/engine/clinical-suite.test.ts` | S9 the same: CVP ≥ 15 and MAP < 65 at 5 min (RV failure; Q15; measured CVP 9.3, MAP 82.1) | `docs/gates/fu-4.md` §2 "The clinical scenario table", row "S9 CVP / MAP" (Q15) |
 | `packages/engine-core/test/engine/clinical-suite.test.ts` | S13 VF + standard-quality CPR (q 0.8, no adrenaline): the continuous coronary perfusion pressure (CoPP) 15–25 mmHg (Paradis 1990; measured 24.9–28.0 with the outflow limiter, 25.1–28.8 without) | `docs/gates/fu-8-part-a.md` §4 "The rows FU-8 moves", row S13 (E-FU8-9); `docs/gates/fu-4.md` §2 "The clinical scenario table", row S13 |
 | `packages/engine-core/test/engine/clinical-suite.test.ts` | CPR + 2 L + adrenaline 1 mg after full exsanguination: a pulse within 4 min of the first compression — measured none in 10 min with the humoral fade (+105 s without it) | `docs/gates/fu-4.md` §2 "The clinical scenario table", row "CPR + 2 L + adrenaline after full exsanguination"; §5 "Exceptions", E-FU4-19 |
@@ -104,12 +105,14 @@ that records the miss with its number; the open questions it cites (Q…, R-…,
 | `packages/engine-core/test/engine/organs-renal-kaliuresis.test.ts` | furosemide 40 mg at K 7.5: K ≥ 0.1 lower at 3 h — measured −0.029 | `docs/gates/fu-9.md` §4 "`it.fails` (all with the merged-tree numbers in their titles)" |
 | `packages/engine-core/test/engine/blood-massive-transfusion.test.ts` | iCa nadir 0.6–0.95 and BE ≤ −10 (ATLS class IV) — measured iCa 0.958, BE −0.2 | `docs/gates/fu-9.md` §4 "`it.fails` (all with the merged-tree numbers in their titles)" |
 | `packages/engine-core/test/engine/hemo-acceptance.test.ts` | 5c. post-PVC potentiation: the next beat SBP is +8–15 mmHg on average over isolated PVCs (measured −10.9) | `docs/gates/fu-2.md` §2 "Numbers vs bands", row 3 (Q-FU2-4); origin: `docs/gates/stage-7a.md` "NR-1 — Stage 2 acceptance 5c" |
+| `packages/engine-core/test/engine/hemo-acceptance.test.ts` | 1a. R→radial foot ≥ 150 ms at HR 60/90/120 (research 03 §2.1, 150–220 ms) — measured 127–148 ms (HR 60 144–148, HR 90 142–146, HR 120 127–130): no electromechanical delay and no aorta → radial transit (audit 44 item 2, the arterial-timing stage) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-19 (band restored by brief 87); the mechanism is the arterial-timing stage, audit 44 item 2 (no brief yet) |
+| `packages/engine-core/test/engine/hemo-acceptance.test.ts` | 1b. pleth foot ≥ 200 ms after R at HR 60/90/120 (research 03 §2.1, 200–300 ms) — measured 190–210 ms at HR 120 (234–244 ms at HR 60 and 90): the same missing delay and transit (audit 44 item 2, the arterial-timing stage) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-19 (band restored by brief 87); the mechanism is the arterial-timing stage, audit 44 item 2 (no brief yet) |
 | `packages/engine-core/test/engine/lung-r14.test.ts` | permissive hypercapnia raises mean PAP ≥ 2 mmHg — measured 18.1 → 19.2 (+1.1) at PaCO2 32.3 → 55.0 (band ≥ +2) | `docs/gates/fu-6.md` §5 "`it.fails` list with numbers (merged tree) and flips" |
 | `packages/engine-core/test/engine/lung-r14.test.ts` | induction at FiO2 1.0 (no thermal switch): Qs/Qt ≥ 0.07 by 20 min — measured 0.015 (calibration row) | `docs/gates/fu-6.md` §5 "`it.fails` list with numbers (merged tree) and flips" |
 | `packages/engine-core/test/engine/neuro-acceptance.test.ts` | residual block at extubation (TOFR < 0.9, natural airway): smaller breaths than the unblocked control — measured ratio 0.80 (band < 0.75) | `docs/gates/fu-6.md` §5 "`it.fails` list with numbers (merged tree) and flips" ("Other files, R45 applied by the executor") |
 | `packages/engine-core/test/engine/obstructive-aliases.test.ts` | CVP ≥ 15 mmHg — measured 11.5 (RV wall-stress demand added, Task 11 Step 1b) | `docs/gates/fu-4.md` §4 "The `it.fails` list" |
 | `packages/engine-core/test/engine/obstructive-aliases.test.ts` | MAP < 65 mmHg — measured 78.4 (reached only at +15 min, PEA at +15.6 min) | `docs/gates/fu-4.md` §4 "The `it.fails` list" |
-| `packages/engine-core/test/engine/obstructive-aliases.test.ts` | PROPOSED band (Q15, Ali): SaO2 ≤ 92 % at FiO2 0.5 — measured 97.3 (the PE row shunt +0.10 is sourced, tables §18) | `docs/gates/fu-4.md` §4 "The `it.fails` list" |
+| `packages/engine-core/test/engine/obstructive-aliases.test.ts` | PROPOSED band (Q15, samhv-dev): SaO2 ≤ 92 % at FiO2 0.5 — measured 97.3 (the PE row shunt +0.10 is sourced, tables §18) | `docs/gates/fu-4.md` §4 "The `it.fails` list" |
 | `packages/engine-core/test/engine/organs-curves.test.ts` | UOP mid-curve (tables U linear 40 → 100): U(RPP 75) = 0.58 ± 15 % (prototype 0.76, decision 8) | `docs/gates/stage-7d.md` §3 "`it.fails` (R45: no band widened)", row "UOP mid-curve" (Decision 8) |
 | `packages/engine-core/test/engine/organs-htn.test.ts` | hypocapnia PaCO2 25: CBF ≤ 40 % of the anaesthetised baseline — measured 0.4019 with the alveolar washout (0.394 without it) | `docs/gates/fu-7.1-b.md` §6 "Orchestrator rulings (2026-10-11)", item 3 (ratified as a known miss); `docs/gates/fu-7.1-b.md` §5 "Records this branch creates" |
 | `packages/engine-core/test/engine/organs-htn.test.ts` | restoring PaCO2 35 and MAP ≈ 80: CBF > 80 % — measured MAP 86.6 (premise 77–84 missed), CBF 0.891 | `docs/gates/fu-3.md` §4 "Decisions, rulings, deviations" (E-FU3-2) and §7 "Test counts (final head)"; `docs/gates/stage-7d.md` §3 "`it.fails` (R45: no band widened)" |
@@ -154,6 +157,31 @@ that records the miss with its number; the open questions it cites (Q…, R-…,
 | `packages/engine-core/test/l2/endo/cat-reserve.test.ts` | 30 min of sustained sympathetic drive (symp 2.5) lowers it below 0.45 — measured 0.485 (0.367 at 60 min) | `docs/gates/fu-7.md` §4 "`it.fails` list", #24 |
 | `packages/engine-core/test/l2/gas/co2.test.ts` | low flow: CPR-level output (CO 29 %) holds EtCO2 at 10–20 mmHg over 1–3 min (then the tissue build-up restores it, research 03 §4.4) — measured 26.0 / 21.8 / 20.4 at 1 / 2 / 3 min with τ 70 s | `docs/gates/fu-4.md` §4 "The `it.fails` list" (conflict with the orchestrator's update) |
 | `packages/engine-core/test/l2/gas/co2.test.ts` | low flow: arrest (CO 0) < 5 mmHg within 30 s — measured 24.2 at 30 s (4.8 at 150 s) with τ 70 s; superseded by the orchestrator's 2026-09-28 update | `docs/gates/fu-4.md` §4 "The `it.fails` list" (conflict with the orchestrator's update) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | asthma: PaCO2 − EtCO2 gap 20–50 mmHg (catalogue §3, acute severe) — measured 6.3; mechanism: the V/Q and dead-space heterogeneity of severe bronchospasm (the hypercapnia in the engine comes from hypoventilation at the reference VE) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-27 (the `KNOWN` allow-list, made `it.fails` by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | obesity: PaCO2 − EtCO2 gap 5–8 mmHg (catalogue §10) — measured 3.2; mechanism: induction atelectasis building over minutes (the rig starts with none) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-27 (the `KNOWN` allow-list, made `it.fails` by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | obesity: shunt 0.10–0.15 (catalogue §10) — measured 0.045; mechanism: induction atelectasis building over minutes (the rig starts with none) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-27 (the `KNOWN` allow-list, made `it.fails` by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | pneumonia: SpO2 88–93 % at FiO2 0.4 (catalogue §11) — measured 96.7; mechanism: HPV in the consolidated lobe (halved per Q79, not yet applied to consolidation) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-27 (the `KNOWN` allow-list, made `it.fails` by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | atelectasis: shunt 0.10–0.12 (catalogue §12) — measured 0.155; mechanism: the plugged lobe keeps its full perfusion (ATEL_PERF 1.0: no HPV diversion from the collapsed lobe) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-27 (the `KNOWN` allow-list, made `it.fails` by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | ptxSimple: shunt 0.07 (catalogue §15) — measured 0.119; mechanism: not yet identified | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-27 (the `KNOWN` allow-list, made `it.fails` by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | olv: Crs 25–30 mL/cmH2O (catalogue §22) — measured 33.9; mechanism: a separate hemithorax chest wall (both lungs share one chest wall, decision 1) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-27 (the `KNOWN` allow-list, made `it.fails` by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | olv: shunt 0.2–0.3 at FiO2 0.4 after 30 min (catalogue §22) — measured 0.140; mechanism: the non-ventilated lung collapses with τ ≈ 30 min at FiO2 0.4 and its HPV | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-27 (the `KNOWN` allow-list, made `it.fails` by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | endobronchial: Crs 27.5–30.25 mL/cmH2O (catalogue §23) — measured 34.0; mechanism: a separate hemithorax chest wall (both lungs share one chest wall, decision 1) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-27 (the `KNOWN` allow-list, made `it.fails` by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | neonatalRds: shunt 0.2–0.4 (catalogue §30) — measured 0.158; mechanism: a neonatal rig (the reference rig is an adult; the neonatal profile arrives with the R22 bands) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-27 (the `KNOWN` allow-list, made `it.fails` by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | bronchospasm: inspiratory resistance 46 cmH2O·s/L (catalogue §2) — measured 46.005; the catalogue states one value; no mechanism identified (inside the removed tolerance) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-26 (the unsourced tolerance removed by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | bronchospasm: auto-PEEP 6–10 cmH2O (catalogue §2) — measured 10.6; no mechanism identified yet (inside the removed tolerance) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-26 (the unsourced tolerance removed by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | ards: Crs 35 mL/cmH2O (catalogue §6) — measured 34.6; the catalogue states one value; no mechanism identified (inside the removed tolerance) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-26 (the unsourced tolerance removed by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | ards: plateau 19 cmH2O (catalogue §6) — measured 19.2; the catalogue states one value; no mechanism identified (inside the removed tolerance) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-26 (the unsourced tolerance removed by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | ards: driving pressure 14 cmH2O (catalogue §6) — measured 14.2; the catalogue states one value; no mechanism identified (inside the removed tolerance) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-26 (the unsourced tolerance removed by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | ards: shunt 0.30 (catalogue §6) — measured 0.285; the catalogue states one value; no mechanism identified (inside the removed tolerance) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-26 (the unsourced tolerance removed by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | ild: Crs 32 mL/cmH2O (catalogue §7) — measured 31.8; the catalogue states one value; no mechanism identified (inside the removed tolerance) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-26 (the unsourced tolerance removed by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | ild: inspiratory resistance 13 cmH2O·s/L (catalogue §7) — measured 12.9; the catalogue states one value; no mechanism identified (inside the removed tolerance) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-26 (the unsourced tolerance removed by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | chestWall: Crs 32 mL/cmH2O (catalogue §9) — measured 33.5; the catalogue states one value; no mechanism identified (inside the removed tolerance) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-26 (the unsourced tolerance removed by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | chestWall: inspiratory resistance 10 cmH2O·s/L (catalogue §9) — measured 9.88; the catalogue states one value; no mechanism identified (inside the removed tolerance) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-26 (the unsourced tolerance removed by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | pe: PaCO2 − EtCO2 gap 15–25 mmHg (catalogue §18) — measured 25.9; no mechanism identified yet (inside the removed tolerance) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-26 (the unsourced tolerance removed by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | cf: inspiratory resistance 20 cmH2O·s/L (catalogue §26) — measured 20.3; the catalogue states one value; no mechanism identified (inside the removed tolerance) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-26 (the unsourced tolerance removed by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | cf: SpO2 88–94 % at FiO2 0.21 (catalogue §26) — measured 94.9; no mechanism identified yet (inside the removed tolerance); one of the 11 KNOWN bands | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-26 (the unsourced tolerance removed by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | covidPneumonitis: Crs 50 mL/cmH2O (catalogue §31) — measured 49.8; the catalogue states one value; no mechanism identified (inside the removed tolerance) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-26 (the unsourced tolerance removed by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
+| `packages/engine-core/test/l2/lung/signatures.test.ts` | covidPneumonitis: shunt 0.30 (catalogue §31) — measured 0.320; the catalogue states one value; no mechanism identified (inside the removed tolerance) | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-26 (the unsourced tolerance removed by brief 87); catalogue band: `packages/engine-core/data/lung-pathology.ts` (R36/R37) |
 | `packages/engine-core/test/l2/lung/volumes.test.ts` | COPD GOLD 1 (severity 0.25): FEV1 ≥ 80 % pred with FEV1/FVC < 0.70 — measured 71 % (the catalogue's GOLD 1 rawExp 1.5) | `docs/gates/stage-7k.md` §5 "`it.fails` added by 7k (R45)" (Q-7k-2) |
 | `packages/engine-core/test/l2/neuro/depth-drive.test.ts` | synergy: propofol 1 + remifentanil 1 depresses more than the product of each — measured equal at α 0 (D15b: totalDep 0.735 both vs 0.735 independent; was met at SYNERGY 0.5 and at α 0.3) | `docs/gates/fu-7.md` §4 "`it.fails` list", #38 |
 | `packages/engine-core/test/l2/neuro/depth-drive.test.ts` | 1 MAC volatile lowers non-depolariser EC50 by ~33 % (0.62–0.72, tables §5d) — measured × 0.847, −15 % (VOL_NMB_K 0.18, was met at × 0.667) | `docs/gates/fu-7.md` §4 "`it.fails` list", #40 |
@@ -161,7 +189,7 @@ that records the miss with its number; the open questions it cites (Q…, R-…,
 | `packages/engine-core/test/l2/neuro/interactions.test.ts` | 1 MAC volatile: rocuronium duration +20–45 % (this rig +13.4 %; engine cell DI-51 +48.4 % on the gate tree — the plan's third fixer measured +52.2 % — band 25–80 %) | `docs/gates/fu-7.md` §4 "`it.fails` list", #25 |
 | `packages/engine-core/test/l2/neuro/reversal.test.ts` | underdosed sugammadex (0.5 mg/kg at PTC after rocuronium 1.2) → recovery then recurarisation (TOFR falls ≥ 0.04) — capacity-limited: measured peak 0.833 at +90 min (ideal-binder ceiling 0.834), no fall | `docs/gates/fu-3.md` §1 "What shipped", item 2 (capacity-limited) and §7 "Test counts"; `docs/gates/stage-7e.md` "Expected failures (`it.fails`)" |
 | `packages/engine-core/test/l2/pk/antiarrhythmic.test.ts` | a sub-therapeutic lidocaine level (0.3 µg/mL) never converts VT in 200 seeded runs of its 20 min window — measured 3/200 (1.5 %; u 0.09 × λ_lido) | `docs/gates/fu-7.md` §4 "`it.fails` list", #26 |
-| `packages/engine-core/test/l2/pk/flow-distribution.test.ts` | S6b: 30 % haemorrhage (CO 3.1 vs 5.25) → propofol 2 mg/kg peak Ce ≥ 1.3× healthy — measured 1.29 (q 0.6, V1 share 0.5 [ENG]) | `docs/gates/fu-4.md` §4 "The `it.fails` list" |
+| `packages/engine-core/test/l2/pk/flow-distribution.test.ts` | S6b: 30 % haemorrhage (CO 3.1 vs 5.25) → propofol 2 mg/kg peak Ce ≥ 1.3× healthy — measured 1.29 (q 0.6, V1 share 0.5 [FIT: propofol V1 share; brief research/44 X-17]) | `docs/gates/fu-4.md` §4 "The `it.fails` list" |
 | `packages/engine-core/test/l2/pk/interactions-misc.test.ts` | sugammadex (DI-45): 4 mg/kg gives < 5 % HR fall — measured 13.4 % (16 mg/kg 20.5 %) | `docs/gates/fu-7.md` §4 "`it.fails` list", #27 |
 | `packages/engine-core/test/l2/pk/interactions-misc.test.ts` | second gas: 66 % N2O raises sevoflurane 2 %'s FA/FI at 5 min by +0.03 to +0.15 (Epstein 1964; M10 ch. 19); N2O's own FA/FI is unchanged (a one-way term) — measured +0.021 (0.713 → 0.733), N2O unchanged | `docs/gates/fu-7.md` §4 "`it.fails` list", #28 |
 | `packages/engine-core/test/l2/pk/interactions-misc.test.ts` | concentration effect: 66 % N2O reaches a higher FA/FI at 5 min than 30 % N2O — measured 0.810 both (not modelled in v1) | `docs/gates/fu-7.md` §4 "`it.fails` list", #29 |
@@ -173,10 +201,12 @@ that records the miss with its number; the open questions it cites (Q…, R-…,
 | `packages/engine-core/test/l2/pk/interactions-misc.test.ts` | diabetic dexamethasone peak +2–4 mmol/L at 4–8 h (PADDI): measured +1.83; non-diabetic +1.02 | `docs/gates/fu-7.md` §4 "`it.fails` list", #35 |
 | `packages/engine-core/test/l2/renal/filtration.test.ts` | IAP 25: UOP < 0.1 mL/kg/h (WSACS) — measured 0.69 (the circulation half is left to the circulation) | `docs/gates/fu-9.md` §4 "`it.fails` (all with the merged-tree numbers in their titles)" |
 | `packages/engine-core/test/l2/temp/temp.test.ts` | GA: the hour-8 plateau stays at or above 34.5 °C — measured 34.37 | `docs/gates/stage-fu-10.md` §3 "Acceptance numbers, before (base) → after", row A3 "hour-8 plateau" (E-FU10-3b) |
+| `packages/engine-core/test/l3/shock-state.test.ts` | AF cumulative success over Mittal's 70/120/150/170 J escalation is 94 % (83/88) | research/44 X-08 (`docs/review-inputs/research/44-physiology-compromise-audit.md`); brief 89 PR fix-cardioversion-success: independent per-shock draws give 99.9 %; no patient-level non-responder state (Mittal: impedance, AF duration) |
 | `packages/ventilator/test/link-r27.test.ts` | ARDS moderate PEEP 5 → 15 (FiO2 0.6): SpO2 rises ≥ 5 over 1–4 min (recruitment), falls again within 60 s of PEEP 5 (measured +2.0 / 0.0 on the lungs) | `docs/gates/stage-v1.md` §7 "`it.fails`" (Decision 18) |
 | `packages/ventilator/test/link-r27.test.ts` | FiO2 0.4: SpO2 rises ≥ 2 (measured SpO2 98 → 98, SaO2 98.7 → 99.1: the lung oedema shunt does not desaturate) | `docs/gates/stage-v1.md` §7 "`it.fails`" (Decision 18) |
 | `packages/ventilator/test/link-parity.test.ts` | bronchospasm 1 at 20 min — measured at 30 min PaCO2 59.2 vs 39.6, VT 238 vs 476 (band 3 mmHg / 10 %): gas within 3 mmHg / 3 mmHg / 2 %, Pplat and delivered VT within 10 % (Ppeak logged — the two paths' inspiratory flows differ) | `docs/gates/fu-6.md` §2, row RS15 link parity; target audit row 110 (docs/validation/target-audit/30-target-audit.md#row-110) |
 | `packages/ventilator/test/link-r27.test.ts` | room air (FiO2 0.21): SpO2 rises ≥ 2 (measured SpO2 94.0 → 95.0, SaO2 94.9 → 95.5: shunt 0.15 → 0.10 moves SpO2 by 1) | `docs/gates/stage-v1.md` §7 "`it.fails`" (Decision 18) |
+| `packages/ventilator/test/link-r27.test.ts` | RR 10 → 20: MAP falls > 15 mmHg with the auto-PEEP [FIT: no source found; brief 87] (the auto-PEEP papers give the direction, not the size) — measured −12.5 (102.9 → 90.4) at auto-PEEP 7.7 | `docs/review-inputs/research/44-physiology-compromise-audit.md` row T-18 (brief 87 restored the it.fails at the original, unsourced 15 mmHg); history `docs/gates/stage-7a.md` NR-3; no source states the size (searched: Pepe & Marini 1982, Tuxen & Lane 1987, Dellinger 5e ch. 10 and 38, Coexisting Disease 8e ch. 8, Miller) |
 | `packages/ventilator/test/pleural.test.ts` | reference run: Ppeak rises 10–20 cmH2O over the normal row (measured +21.6: 45.4 vs 23.8) | `docs/gates/stage-v1.md` §7 "`it.fails`" (Decision 16) |
 
 ## Tests not run (`it.skip`, `test.skip`, `.todo`)
@@ -192,14 +222,12 @@ Behaviour that has a test title but no running test yet: each is a known gap, no
 | `packages/engine-core/test/l2/pk/route-models.test.ts` | epinephrine IM: route not modelled until a PK source states its bioavailability F and absorption rate ka | `docs/roadmap/v1.0-remaining.md`, the row "Routes other than IV beyond IM dantrolene (scenario format piece F5.2)"; `docs/plans/scenario-format-v2-plan.md`, "F5.2 the route models" |
 | `packages/engine-core/test/l2/pk/volatile.test.ts` | the activated charcoal filter on the circuit removes the agent from the inspired gas: not modelled, the agent washes out through the vaporiser at 0 % and the fresh gas only | `docs/roadmap/v1.0-remaining.md`, the row "Charcoal filter (E137)" (the owner's ruling of 2026-10-29 18:00); `docs/plans/scenario-format-v2-plan.md`, Q26 |
 
-## Lung-condition signatures outside their band (allow-list, not `it.fails`)
+## Lung-condition signatures outside their band
 
-`packages/engine-core/test/l2/lung/signatures.test.ts` keeps a `KNOWN` list of 11 bands the model misses; a new
-miss fails the test, a listed one does not. Measured vs band: asthma PaEt gap 6.3 vs 20–50; obesity PaEt gap 3.3
-vs 5–8 and shunt 0.05 vs 0.10–0.15; pneumonia SpO2 at FiO2 0.4 96.8 vs 88–93; atelectasis shunt 0.16 vs
-0.10–0.12; simple pneumothorax shunt 0.12 vs 0.07; one-lung ventilation Crs 33.9 vs 25–30 and shunt 0.14 vs
-0.2–0.3; endobronchial intubation Crs 34.0 vs 27.5–30.3; cystic fibrosis SpO2 at FiO2 0.21 95.4 vs 88–94; neonatal
-RDS shunt 0.16 vs 0.2–0.4. Tracked in: the file's own `KNOWN` comment (the calibration pass decides); no gate note.
+Until brief 87 (8 November 2026) `packages/engine-core/test/l2/lung/signatures.test.ts` kept a `KNOWN` allow-list of
+11 bands outside `it.fails`, which no lister counted (audit 44 row T-27). Each is now an `it.fails` in the first table,
+with its measured value and the mechanism it waits for. Cystic fibrosis SpO2 at FiO2 0.21 (95.4 then, 94.9 now, band
+88–94) is among them since the tolerance was removed (row T-26).
 
 ## Browser tests skipped on CI WebKit only
 
@@ -253,7 +281,7 @@ retries filled the hour: run 39980675959 hit the 60-min timeout with seven of th
 | `iife-transports-snapshot.e2e.ts:24` | MonitorHandle snapshot/restore/role (worker: auto) | WebKit | 6 | 2 | 76 | capacity | 38100631999 / 38182829101 | none after 2026-10-11 |
 | `debrief.e2e.ts:48` | a showcase run ends in a debrief that prints (timeline, facts, objectives) | WebKit | 5 | 1 | 35 | timing | 38208532262 / 39082572086 | 3/3 in 38208532262; at :24 before the 2026-10-21 change below |
 | `debrief.e2e.ts:24` | a showcase run ends in a debrief that prints (timeline, facts, objectives) | Chromium | 1 |  | 33 | unknown | 38386662185 / 38386662185 |  |
-| `time-control.e2e.ts:30` | ×8 and a 5-minute fast-forward from the instructor view: paced panel everywhere, sound muted, cue, banner, log, trends | Chromium | 4 |  | 46 | capacity | 38193355147 / 38212119356 | the file is skipped on CI WebKit (above) |
+| `time-control.e2e.ts:30` | ×8 and a 5-minute fast-forward from the instructor view: paced panel everywhere, sound muted, cue, banner, log, trends | Chromium | 4 |  | 46 | capacity | 38193355147 / 38212119356 | the file is skipped on CI WebKit (above). **Untagged 2026-11-08 (brief 90):** its repeat failure since 6 Nov (no cockpit frame in the 2-minute fast-forward, −Infinity, 7 main runs) was a product defect, the re-linked cockpit paused at its clock limit (`vent-driver.ts`, the resume), not capacity |
 | `app-accessibility.e2e.ts:15` | accessibility: iPad portrait 820×1180 | WebKit | 4 |  | 76 | crash | 38145499655 / 39067888843 | the laptop case never failed |
 | `app-one-session.e2e.ts:53` | learner controls: off by default, switched on per scenario, logged as learner actions | WebKit | 4 |  | 76 | timing | 38135947061 / 39067635795 | CI reported :43 before the file moved |
 | `validation-bedside.e2e.ts:19` | asystole demo measures the saadat-like delay; results download | WebKit | 3 |  | 76 | timing | 38161262512 / 38381261724 |  |
@@ -273,7 +301,8 @@ These failed all three attempts of the CI WebKit leg (Playwright Linux WebKit on
 product change between attempts, while CI Chromium passed every test on the same commits without a retry. They are not
 skipped: on CI WebKit only, the Debrief's two live runs go at ×2 instead of ×4 (S10-F5: the runner holds about ×5.3),
 their waits are on the page's own clock or scaled to the speed, and the Debrief opens only once the host has
-acknowledged a pause — the session bar's button reads "Resume" as soon as it is pressed, before the host answers; the
+acknowledged a pause — the Pause control reads paused as soon as it is pressed, before the host answers (the session
+bar's "Resume" then; Instructor v2's clock pill since retire-instructor-v1); the
 click is then checked to have been followed (`#/debrief`) and the heading to be drawn, each within 30 s. FX-25 judges its
 two times on the page's sim clock. Every assertion is kept; local WebKit and Chromium run as before. Read a run with
 `gh run view <id> --attempt <n> --log`; the failure lines are those of the tree the run tested.
@@ -313,6 +342,27 @@ commit `3db25a3b`, the v1.0.0-rc.1 tag (engine 1.0.0-rc.1; the 2026-10-17 run on
 [calibration queue](../validation/calibration-queue.md) (60 rows) for the calibration pass (R44); no band was changed
 to make a row pass (R45). The numbers below are copied from the queue.
 
+**Live state, 2026-11-07 (brief 73).** The committed report is the 2026-10-18 local run (27 red). The scheduled CI
+runs of 12, 19 and 26 October never measured: each stopped in `datasets:fetch` (socket closed, HTTP 502, ETIMEDOUT)
+and uploaded the committed report as its artefact. The runs that measured, 2026-09-28 (`df0639f`) and 2026-11-02
+(`079d485`), each found 21 red rows, a different 21. The 2 November set differs from the committed 27 because CI has no
+Pulse directory (the three oracle rows are skipped, so not red), the heart-rate harness fix of 2026-10-27 took four
+rows out of red (s4 class III and IV, t16 HR, t17a HR), and it put one in (t17b SBP). A local run on main `3f44820a`
+reproduces the 11 non-morphology rows of 2 November exactly. The waveform-regression rows are re-recorded (below);
+the other 16 wait on an owner ruling, written up in the brief-73 pull request with options (since brief 84 they are set
+to their sources or recorded as expected failures: "Validation gate: expected failures", below):
+- **s9 EtCO2 < 5 within 30 s (83 s):** no source gives the 30 s. research 03 §4.4 says "over a few breaths", §8.8
+  gives a washout τ ≈ 0.5 min, and Falk 1988 found ≈ 3 ± 3 mmHg within one minute. The row passed (18 s) until PR #25
+  (FU-4 G4, the 70-s lag: never below 5 in 120 s). Since PR #47 (FU-7.1 B3, the alveolar washout; owner ruling
+  2026-10-07) it reads 83 s. On this rig (12 × 500 mL) τ ≈ 35 s: true
+  EtCO2 6.9 at +60 s, below 5 at +72 s; displayed 9 at +60 s, below 5 at +83 s.
+- **t16 warm sepsis MAP 87.7 (55–60):** the condition's default onset τ (600 s) puts the 300–600 s window at stage
+  1.2–1.9 (SIRS to sepsis), not warm shock. With a 30-s onset the reflex holds MAP 74 at HR 138 at 5–10 min, and
+  the leak alone brings MAP to 55–60 only at 50–65 min, unresuscitated. The band is a resuscitated value (target
+  audit row 46).
+- **t17b β-blocked class III SBP 104 (65–80):** β-blocked HR 64 against 94, SBP 104 against 98 and MAP 85 against 83
+  without the blocker. Both arms are preload-limited (CVP 0.8–0.9), so the blunted tachycardia costs no output.
+
 Groups, in short:
 - **Arterial timing and shape** (morphology): R → radial upstroke ≈ 100 ms against 145–190 ms recorded; dicrotic notch
   270–284 ms against 428–518 ms; PPG ↔ ABP shape correlation 0.4 against 0.9.
@@ -346,8 +396,20 @@ Groups, in short:
   targets ([its report](../validation/target-audit/30-target-audit.md)) found them mis-specified: registry data give
   heart rates of about 86–97 across classes I–IV, and a relative bradycardia appears beyond about 30 % loss. The
   bands stay unchanged until they are re-based with their sources (no band is loosened to pass).
-- **Waveform regression:** pleth and CO2 shapes moved from the Stage 8a baselines with the later physiology; the
-  baselines were not re-recorded for this release.
+- **Waveform regression (re-recorded 2026-11-07):** the five red rows (sinus-75 pleth and CO2, afib-110 pleth,
+  bronchospasm CO2, hypovolaemia-ppv pleth) compared the engine with its own output of 2026-09-27 (`978b6538`). A
+  first-parent bisect of main, re-baselined at each first bad commit until main matched, puts all of the drift on four
+  merged engine pull requests: pleth on PR #24 (FU-5, `16cdf79a`), PR #25 (FU-4, `e81e53fc`, afib-110 only) and
+  PR #138 (E126, `fea0688c`); CO2 on PR #25 and PR #28 (FU-6 capnograph physics, `176f702e`, bronchospasm only).
+  Main `3f44820a` reproduces the `fea0688c` pleth and the `176f702e` CO2 output (difference ≤ 0.0012). Only those
+  five arrays were re-recorded; the 2 % limit and the other eight channels are unchanged. **Physiology check (brief
+  76, [the note](../validation/regression-drift/45-regression-drift-physiology.md)):** four drifts are physiological
+  and keep their re-record (afib-110 and hypovolaemia-ppv pleth: the pulse falls with the stroke volume; sinus-75 and
+  bronchospasm CO2: the tube bypasses the 72-mL extrathoracic dead space, and one bronchospasm replaces fixed
+  constants). **sinus-75/pleth is withdrawn and stays red:** its pulses grew 6–9 % under ventilation because the PI
+  reference SV₀ (`circ.ref.sv`, 79.1 mL, the bare-circuit stabiliser) is not this patient's settled resting stroke
+  volume (88.9 mL in MANUAL). Against its own rest the ventilated pulse should be ≈ 0.96×, not 1.08×. The fix is a
+  mechanism: SV₀ = the patient's settled resting SV.
 - **Pulse oracle:** haemorrhage MAP fall 5 against 16 mmHg; MAP fall after propofol 19 against 28 mmHg.
 
 **Red (gating) rows**
@@ -420,6 +482,44 @@ Groups, in short:
 | 🟡 | segments | t24-edmark-fio2-0.8/apnoea/t90 | 377 | 242–364 | tables §7 24: 303 s ±20 % |
 | 🟡 | segments | t24-edmark-fio2-0.6/apnoea/t90 | 261 | 170–256 | tables §7 24: 213 s ±20 % |
 
+## Validation gate: expected failures (brief 84, 2026-11-08)
+
+The validation workflow gates again. A red row that waits on a named mechanism carries an expected-failure mark in its
+suite (`expectedMiss`: the id below, the mechanism, the date, the value when marked); the report shows it as 🟣, in its
+own count, never as green, and its band is unchanged. `pnpm validate` fails on any red row without a mark and on any
+marked row that meets its band, so a landed mechanism forces its mark off. The ids live in
+`packages/validation/src/report/expected-ids.ts`; audit ids are those of `docs/review-inputs/research/44-physiology-compromise-audit.md`.
+Measured locally on this branch (all suites; PWDB refused with 403, so the pwdb-rise band is not graded).
+
+| Id | Mechanism | Rows (measured when marked, 2026-11-08) | Audit |
+|---|---|---|---|
+| A: electromechanical delay and transit time, wave reflection (stage) | sourced EMD and aorta → radial transit; radial incisura after valve closure (wave reflection in place of the 5 Hz resonator trough) | V1 · HR 50–70 (104 vs recorded 190, band 170–210); V1-lit · all / vitaldb / mghdb (102 / 104 / 95, band 150–220); V2 · HR 90–110 / 70–90 / 50–70 (270 / 282 / 284, bands 408–448 / 464–504 / 498–538) | V-01, V-02, DEV-04 |
+| B: pleth shape (mechanism) | the finger pulse shape | V3-shape · all / vitaldb / mghdb (r 0.41 / 0.40 / 0.48, band 0.80–1.00) | X-14, DEV-04 |
+| D: RV diastolic/pericardial mechanics (mechanism brief) | RV dilation under pericardial constraint, ventricular interdependence | t15 rest CVP 6.8 (14–18), PCWP 3.3 (8–12) | V-11 |
+| E: septic time course and fluid-refractory vasoplegia (mechanism brief) | onset over hours (the condition's τ 600 s compresses those hours into minutes, kept for now); vasoplegia whose depth matches the source | t16-septic-shock-state MAP 17.4 (49–60) | V-12 |
+| F: preload-fixed stroke volume at low CVP (mechanism brief) | SV set by preload, so the slower β-blocked heart loses output | t17-bb-contrast SBP(17b)/SBP(17a) 1.063 (< 1), CO(17b)/CO(17a) 1.033 (< 1) | research 46 §F |
+| G: respiratory effort under controlled ventilation (mechanism brief) | drive and effort visible under the ventilator | t25 rr-back 0 s (60–240 s) | DEV-06 |
+| H: pleth reference SV₀ = the settled resting SV (PR #333) | PI reference SV₀ = the patient's settled resting SV | regression sinus-75/pleth (625/625 samples > 2 %, max 10.2 %) | T-17 |
+
+The three cells C, E and F were set to their sourced physiology (research 46):
+- **C, s9 EtCO2 after VF without CPR.** The 0–30 s row had no source and is replaced. True EtCO2 (`breath:etco2True`)
+  < 5 at 2τ ± one breath, τ = V_lung / V̇A from this rig's settings (12 × 500 mL, dead space 150 mL, V_lung 2.2–2.8 L:
+  τ 31–40 s, window 58–85 s): **75.1 s, green**. Displayed EtCO2 < 5 within a capnograph's response of the true value
+  (transport delay ≤ 5 s plus one 5-s breath, so ≤ true + 10 s): **83.0 s against < 85.1, green** (lag 7.9 s). The
+  brief expected the displayed row to fail by ≈ 11 s (PR #327 measured true 72, displayed 83 on `3f44820a`); on this
+  branch the true crossing is 75.1 s, so it passes and carries no mark (a mark on a passing row would fail the gate).
+- **E, t16 septic shock.** The MAP 55–60 row at 300–600 s had no source for its time and is deleted (the HR 115–130
+  row of that document is unchanged, still amber, 87.4). Two documents in its place, on the source's rig (Garcia 2023:
+  anaesthetised with sevoflurane 2 %, ventilated 12 × 560 mL PEEP 5, maintenance 2 mL/kg/h), read once the ramp is
+  complete (3000–3600 s, ≥ 5τ). Unresuscitated: MAP 88 → 66 at 15–20 min → 41 at 45–50 min, then circulatory arrest
+  from ≈ 3000 s (MAP 17.4 in the window): **red, marked E**. Awake (the old rig, for comparison) the same onset gives
+  MAP 55–60 at 50–65 min, inside 49–60. Resuscitated (2100 mL = 30 mL/kg from 1200 s over 30 min, no vasopressor):
+  MAP 51.8 < 65, **green**: fluid alone does not restore MAP in the engine, as Sepsis-3 requires.
+- **F, t17b β-blocked class III.** The SBP 65–80 band (no primary source) is deleted. Rows that compare 17b with 17a
+  at the same bleed, 900–1800 s: ΔHR(17b)/ΔHR(17a) = (64.4 − 59.3)/(94.2 − 67.6) = 0.19 < 0.6, **green**;
+  SBP 104.1/97.9 = 1.063 and CO 4.02/3.89 L/min = 1.033, both required < 1, **amber, marked F** (SV 62 vs 41 mL at
+  CVP 0.75 vs 0.86 mmHg).
+
 ## Clinical scenario suite results (FU-4)
 
 Source: `docs/gates/fu-4.md` §2 "The clinical scenario table" (Task 22), with the later moves from
@@ -477,3 +577,24 @@ From `grep -rn "INTERIM" packages/*/src` (three hits, two stand-ins):
 - **Used, with known gaps** (`docs/gates/stage-8a.md` §2): VitalDB (N-080) and PTB-XL (N-052) as listed; MGH/MF
   (N-081) has no PPG channel, so the V3 pleth-shape rows have no recorded MGH/MF side, and its CO2 is uncalibrated
   (report-only).
+
+## The rc.4 tag (2026-10-29)
+
+### The rc.4 tag's release date
+
+The tag commit `0c4b396f` (`v1.0.0-rc.4`, pre-release) carries **2026-10-30** in `CHANGELOG.md` and `CITATION.cff`: the bump PR (#166) was written for a planned 30 October tag, and the tag was cut a day early, on 2026-10-29 (11:36 UTC). Main's `CHANGELOG.md` heading is corrected to 2026-10-29 by the rc.4 docs PR (#225; main's `CITATION.cff` has since moved to rc.5); the tag's text is not rewritten.
+
+### Retry-only passes on the rc.4 tag commit
+
+Main **0c4b396f**, the `v1.0.0-rc.4` (pre-release) tag commit, push run **40860980902**: every job passed. These tests
+passed only on a retry in it (`gh run view 40860980902 --log`). No test was changed. The macOS WebKit set run on the
+release day from the tag worktree (FX-16 three times, FX-24, FX-25, FX-14, `saadat-instructor-tiles`) passed with
+none skipped and no retry (`docs/gates/rc4-release.md`).
+
+| Test (file:line, this tree) | Test title | Job | Note |
+|---|---|---|---|
+| `saadat-grid-layout.e2e.ts:55` | a Settings switch saadat-like → philips-like → saadat-like | `e2e (webkit)`, gating | **new**: not tagged `@known-flaky`; passed on its retry; WebKit warns, not fails, until the demo of 3 November. Watch it on the next main runs |
+| `time-control.e2e.ts:30` | ×8 and a 5-minute fast-forward from the instructor view: paced panel everywhere, sound muted, cue, banner, log, trends | `e2e (chromium)` | tagged `@known-flaky` (row in the table above), so the enforced Chromium job stays green |
+| `debrief.e2e.ts:48` | a showcase run ends in a debrief that prints (timeline, facts, objectives) | `e2e-quarantine (webkit)` | tagged; recorded above |
+| `return-here-restore.e2e.ts:15` | Return here: the clock, the trends and the waveforms go back with the patient | `e2e-quarantine (webkit)` | tagged; recorded above |
+| `vent-view-new-patient.e2e.ts:16` | the cockpit is unloaded by a new patient and reloads fresh on the next visit (or at once when shown) | `e2e-quarantine (webkit)` | tagged; recorded above |

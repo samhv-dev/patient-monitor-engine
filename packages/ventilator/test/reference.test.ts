@@ -11,6 +11,6 @@ describe('ventilator-simulator reference copy', () => {
   it('is v1.9 exactly (sha256) and has its licence', () => {
     const sha = createHash('sha256').update(readFileSync(ref('ventilator-sim-hamilton.v1.9.html'))).digest('hex');
     expect(sha).toBe('47b31a2304b94c1e93142c822c10dd405c0fd5f8588821c26d144997de347472');
-    expect(readFileSync(ref('LICENSE'), 'utf8')).toMatch(/MIT License\s+Copyright \(c\) 2026 Ali Mahdavi/);
+    expect(readFileSync(ref('LICENSE'), 'utf8')).toMatch(/MIT License\s+Copyright \(c\) 2026 samhv-dev/);
   });
 });

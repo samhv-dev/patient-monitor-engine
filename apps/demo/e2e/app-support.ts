@@ -75,8 +75,8 @@ export interface A11yFinding {
 }
 
 /**
- * WCAG 2.2 AA checks that need no dependency (axe is Ali's question Q8): target size (2.5.8, 24 px; 44 px in the
- * instructor panel on a touch screen), accessible names (1.3.1/4.1.2), text contrast (1.4.3) from the rendered
+ * WCAG 2.2 AA checks that need no dependency (axe is the owner's question Q8): target size (2.5.8, 24 px; 44 px in the
+ * instructor panel and the instructor phone's PIN form and Room card on a touch screen), accessible names (1.3.1/4.1.2), text contrast (1.4.3) from the rendered
  * colours, horizontal scroll (1.4.10) and clipped labels (brief §11.2), one h1 per view and a main landmark.
  */
 export function audit(page: Page, o: { touchPanel: boolean }): Promise<A11yFinding[]> {
@@ -108,7 +108,7 @@ export function audit(page: Page, o: { touchPanel: boolean }): Promise<A11yFindi
       const box = el.matches('input[type=checkbox], input[type=radio]') ? el.closest('label') ?? document.querySelector(`label[for="${CSS.escape(el.id)}"]`) ?? el : el;
       const r = box.getBoundingClientRect();
       const inline = el.tagName === 'A' && !!el.closest('p, li') && !el.classList.contains('btn');
-      const min = touchPanel && el.closest('.panel, .sessionbar') && !el.classList.contains('tip') ? 44 : 24;
+      const min = touchPanel && el.closest('.panel, .sessionbar, .ip-peer-form, .ip-peer-room') && !el.classList.contains('tip') ? 44 : 24; // the instructor phone's way in (P7) too
       if (!inline && (r.width < min - 0.5 || r.height < min - 0.5)) out.push({ rule: 'target', what: `${el.tagName.toLowerCase()} "${(el.textContent ?? el.getAttribute('aria-label') ?? '').trim().slice(0, 30)}" ${Math.round(r.width)}×${Math.round(r.height)} < ${min}` });
       if (!name(el).trim() && el.getAttribute('type') !== 'file') out.push({ rule: 'name', what: `${el.tagName.toLowerCase()}#${el.id} has no accessible name` });
       if ((el.tagName === 'BUTTON' || el.getAttribute('role') === 'tab') && el.scrollWidth > el.clientWidth + 1) out.push({ rule: 'clipped', what: `"${el.textContent?.trim().slice(0, 30)}" clipped` });
@@ -175,3 +175,55 @@ export async function focusWalk(page: Page, n = 25): Promise<string[]> {
   }
   return bad;
 }
+
+// ---- Instructor v2 (#/teach2): the old view's session bar, tabs and staged footer, reached through v2's own controls
+// (retire-instructor-v1 PR 2; lifted from the kit round's dual paths, scripts/showcase/kit-round-a.kitround.ts). ----
+
+/** Instructor v2's route (the only Instructor view; the old `#/teach` resolves to it). */
+export const TEACH2 = '#/teach2';
+
+/** The header's speed box: open it and choose ×k (what the session bar's speed buttons sent). */
+export async function speedV2(page: Page, k: 1 | 2 | 4 | 8): Promise<void> {
+  const head = page.locator('.ip2-head');
+  await head.locator('button.ip2-speed').click();
+  await head.getByRole('button', { name: `Speed ×${k}`, exact: true }).click();
+}
+
+/** The header's clock pill (the session bar's Pause / Resume): data-state "running" or "paused". */
+export const pillV2 = (page: Page) => page.locator('.ip2-head button.ip2-pill');
+
+/** Press the clock pill once (pause when running, resume when paused). */
+export async function pauseV2(page: Page): Promise<void> {
+  await pillV2(page).click();
+}
+
+/** STATE's Fast forward box: +2 or +5 min (the session bar's "Fast-forward n min"). */
+export async function ffV2(page: Page, min: 2 | 5): Promise<void> {
+  await page.locator('.ip2-ff').getByRole('button', { name: `Fast forward by ${min} min`, exact: true }).click();
+}
+
+export type SheetId = 'drug' | 'airway' | 'defib' | 'vitals' | 'devices' | 'patient' | 'log';
+
+/** Open the dock's sheet `id` (today's tab of the same body) if it is not open; the open sheet's locator. */
+export async function sheet(page: Page, id: SheetId) {
+  const tool = page.locator(`.ip2-dock-tools button.ip2-tool[data-sheet=${id}]`);
+  if ((await tool.getAttribute('aria-pressed')) !== 'true') await tool.click();
+  const s = page.locator(`.ip2-sheets .ip2-sheet[data-sheet=${id}]`);
+  await s.waitFor();
+  return s;
+}
+
+/** Close the open sheet (ACTION, today's Scenario tab, is then in view). */
+export async function closeSheets(page: Page): Promise<void> {
+  for (const b of await page.locator('.ip2-sheets .ip2-sheet:not([hidden]) .ip2-sheet-close').all()) await b.click();
+}
+
+/** Deliver the staged cache from the open sheet (the old footer's Commit), with the tray's Onset `onsetS` when given. */
+export async function deliver(page: Page, onsetS?: 0 | 30 | 60 | 120 | 300): Promise<void> {
+  const open = page.locator('.ip2-sheets .ip2-sheet:not([hidden])');
+  if (onsetS !== undefined) await open.locator('.ip2-onset select').selectOption(String(onsetS));
+  await open.locator('button.ip2-deliver').click();
+}
+
+/** The dock's Debrief link (the session bar's "Debrief"); data-ready "true" once the case has ended. */
+export const debriefLinkV2 = (page: Page) => page.locator('.ip2-dock a.ip2-debrief');

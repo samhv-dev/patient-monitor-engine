@@ -1,8 +1,8 @@
 // FU-2 (AF rate control, E-FU2-6): the AV-nodal block of the β-blocker rows (esmolol, metoprolol, labetalol) and of
 // amiodarone reaches the drug bus's `avNodeBlock`, and MODELED AF's ventricular response is the set response × the
 // reflex's AV drive × (1 − avNodeBlock). Band: a clinical esmolol infusion or an amiodarone load slows AF by 20–30 %
-// [ENG: the tables give no AF rate-control number (§6 T6.2 gives esmolol's sinus HR fall only); the acute rate-control
-// response the ACLS/AF-guideline drugs are chosen for; calibration pass R44].
+// [FIT: AF rate-control band; the tables give no AF rate-control number (§6 T6.2 gives esmolol's sinus HR fall only); the acute rate-control
+// response the ACLS/AF-guideline drugs are chosen for; calibration pass R44; brief research/44 T-13].
 import { describe, expect, it } from 'vitest';
 import { createEngine } from '../../src/engine.ts';
 import type { EngineEvent } from '../../src/types.ts';

@@ -17,16 +17,16 @@ import { feedCo2Range, newCo2Range, restartCo2Range } from './co2-range.ts';
 
 export const THEME = { background: '#000', ecg: '#00ff66', label: '#00ff66', grid: '#222' } as const; // legacy look (legacyPlan)
 export const LABEL_W = 56; // CSS px reserved at the left of each lane for chrome
-const LABEL_CHAR_W = 8.5; // CSS px per character of the 14 px label font, generous estimate (Ctx2D has no measureText) [ENG]
+const LABEL_CHAR_W = 8.5; // CSS px per character of the 14 px label font, generous estimate (Ctx2D has no measureText) [ENG: display]
 /** A width per character that holds capitals and "m" ("NORMAL" ≈ 60 px, "50mmHg" ≈ 57 px at 14 px): lane-text boxes are clipped. */
 const WIDE_CHAR_W = 10.5;
-const LABEL_STRIP_H = 18; // CSS px: the 14 px label row [ENG]
+const LABEL_STRIP_H = 18; // CSS px: the 14 px label row [ENG: display]
 /** F28: how far below its top a 14 px capital or digit inks (≈ 10 px, one to spare). A phone in portrait gives the
- *  Saadat-like lanes ≈ 30–41 px (390 × 664) or ≈ 55–75 px (390 × 844); landscape lanes are ≥ 77 px [ENG]. */
+ *  Saadat-like lanes ≈ 30–41 px (390 × 664) or ≈ 55–75 px (390 × 844); landscape lanes are ≥ 77 px [ENG: display]. */
 const INK_H = 11;
 /** Display smoothing of a capnogram (skin `co2.displaySmoothMs`, owner correction M2): a window whose range is under
  *  1.5 mmHg (the cardiogenic ripple, ≈ 1 mmHg peak to peak) is averaged in full; one over 3 mmHg (an upstroke, a curare
- *  cleft of 3–15 mmHg) is drawn as it is [ENG]. */
+ *  cleft of 3–15 mmHg) is drawn as it is [ENG: display]. */
 const SMOOTH_GATE_MMHG = [1.5, 3] as const;
 /** The middle IBP scale value is indented and sits just above its dotted line (IMG_8113; the mock-up's "80"/"70"). */
 const MID_LABEL_X = 20;
@@ -47,26 +47,32 @@ const sameText = (a: OverText, b: OverText) => a.text === b.text && a.color === 
 const OVER_ECG_Y = 14;
 const OVER_TOP_Y = 6;
 const OVER_RIGHT_Y = 12;
-const LABEL_REPAINT_SLACK_PX = 24; // keep repainting the label tail a few frames after the erase bar passed [ENG]
+const LABEL_REPAINT_SLACK_PX = 24; // keep repainting the label tail a few frames after the erase bar passed [ENG: display]
 // Impedance auto-scale never spans less than 0.5 units (a 250 mL breath), so the cardiogenic ripple (0.1) stays small
 // in apnoea instead of being gained up to a full-height trace that reads as tachypnoea.
 const RESP_MIN_SPAN = 0.5;
 const EVENT_POST_MS = 250; // post the clock anchor at least this often even without events
 /** FX-15: a frame gap longer than this is a stall (a suspended tab or worker), not a slow frame — frames post every
  *  ≤ 250 ms. It is credited in full like a hidden stretch (catchUp) instead of being clamped to 250 ms, so the hidden
- *  minutes are not lost when the worker's rAF wakes before the page's visibility catch-up. [ENG] */
+ *  minutes are not lost when the worker's rAF wakes before the page's visibility catch-up. [ENG: display] */
 export const STALL_MS = 1000;
-/** The R times the auto-gain keeps for its per-beat amplitude: a 4-s window's beats at any rate, with room [ENG]. */
+/** The R times the auto-gain keeps for its per-beat amplitude: a 4-s window's beats at any rate, with room [ENG: display]. */
 const GAIN_BEATS_KEPT = 64;
-/** FX-25: how far back heldFrom looks — past the lanes' 100-s backfill, inside the engine's 120-s buffer [ENG]. */
+/** FX-25: how far back heldFrom looks — past the lanes' 100-s backfill, inside the engine's 120-s buffer [ENG: display]. */
 const HELD_PROBE_S = 110;
-/** The CO2 auto-range judges at most this far back after a start or a gap (the lanes' backfill, inside the buffer) [ENG]. */
+/** The CO2 auto-range judges at most this far back after a start or a gap (the lanes' backfill, inside the buffer) [ENG: display]. */
 const CO2_RANGE_BACK_S = 100;
 
 export interface CanvasTarget {
   width: number;
   height: number;
 }
+
+/** FX-11a: a long engine run reports progress at most this often (the frames' own posting cadence, ≤ 250 ms) [ENG: display]. */
+export const PROGRESS_MS = 250;
+/** …checking the time every this many ticks: 50 ticks (1 s of sim) cost ≈ 3 ms of the worker's time (measured: 10 000
+ *  ticks took 532–653 ms), so a report is never more than ≈ 3 ms late [ENG: display]. */
+export const PROGRESS_TICKS = 50;
 
 export class MonitorCore {
   readonly engine: MonitorEngine;
@@ -254,6 +260,29 @@ export class MonitorCore {
   }
 
   /**
+   * FX-11a: called during a long engine run (a fast-forward step, a hidden-tab catch-up) at most every PROGRESS_MS of
+   * work, so the worker can tell the page it is working (the watchdog judges the worker by its own progress). Unset on the
+   * main thread: nothing to tell.
+   */
+  onProgress: (() => void) | null = null;
+
+  /** The engine to `simT`, in slices of PROGRESS_TICKS with a progress report every PROGRESS_MS of wall time between
+   *  them. A slice boundary changes nothing in the run: the engine steps tick by tick either way. */
+  private runTo(simT: number): void {
+    const report = this.onProgress;
+    if (!report) return void this.engine.advanceTo(simT);
+    let at = performance.now();
+    while (this.engine.now().simT < simT - 1e-9) {
+      this.engine.advanceTo(Math.min(simT, this.engine.now().simT + PROGRESS_TICKS * 0.02));
+      const now = performance.now();
+      if (now - at >= PROGRESS_MS) {
+        report();
+        at = now;
+      }
+    }
+  }
+
+  /**
    * Hidden tab (brief §3.3): advance sim time by the FULL wall delta (no 250 ms clamp), without drawing.
    * The lanes restart cleanly on the next drawn frame because the jump exceeds one lane.
    */
@@ -261,7 +290,7 @@ export class MonitorCore {
     const dt = this.lastEpoch === null ? 0 : Math.max(0, epochMs - this.lastEpoch);
     this.lastEpoch = epochMs;
     if (this.clock.paused || dt === 0 || this.ffWasPaused !== null) return;
-    if (this.clock.advanceUnclamped(dt) > 0) this.engine.advanceTo(this.clock.simT); // Remainder carried
+    if (this.clock.advanceUnclamped(dt) > 0) this.runTo(this.clock.simT); // Remainder carried
     // Post what was generated while hidden, so the batch does not grow without frames.
     this.post({ simT: this.clock.renderT, epochMs, timeScale: this.clock.timeScale }, this.batch);
     this.batch = [];
@@ -280,7 +309,7 @@ export class MonitorCore {
       this.ffWasPaused = this.clock.paused;
       this.clock.pause();
     }
-    if (this.clock.step(ticks) > 0) this.engine.advanceTo(this.clock.simT);
+    if (this.clock.step(ticks) > 0) this.runTo(this.clock.simT);
     this.overlays.due(this.clock.renderT); // marks from the skipped span are not drawn
     if (last) {
       if (!this.ffWasPaused) this.clock.resume();

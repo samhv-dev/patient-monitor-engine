@@ -3,7 +3,8 @@
 //        --quick (4 recorded windows, 30 PTB-XL records, 1 determinism seed)  --seeds 11,12  --max-windows N
 //        --full (40 seeds)  --rebaseline (rewrite waveform baselines + golden hashes)
 //        --out <dir> (default docs/validation)
-// Exit 1 when any red row or a non-deterministic run exists (yellow never fails the run).
+// Exit 1 when any red row or a non-deterministic run exists (yellow never fails the run). A row marked as an expected
+// miss (brief 84) does not fail the run while it misses its band, and fails it once it meets the band.
 import { execSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -20,12 +21,12 @@ import { loadPulse, pulseDir } from '../oracle/pulse-node.ts';
 import { ORACLE, ORACLE_BACKLOG, runOracle, type OracleRow } from '../oracle/oracle.ts';
 import { runRegression } from '../regression/baseline.ts';
 import { runDeterminism, writeGolden } from '../regression/determinism.ts';
-import { runValidationDoc } from '../segments/run.ts';
+import { gradeCross, runValidationDoc, type DocRun } from '../segments/run.ts';
 import type { ValidationDoc } from '../segments/types.ts';
-import { calibrationQueue, gatingFailures, renderMarkdown, renderQueue } from '../report/write.ts';
+import { calibrationQueue, counts, gatingFailures, renderMarkdown, renderQueue } from '../report/write.ts';
 import type { DocSummary, Report } from '../report/types.ts';
 import { GATE_DOCS } from '../../suites/gates/gate-docs.ts';
-import { SANITY_DOCS } from '../../suites/sanity/sanity-docs.ts';
+import { SANITY_CROSS, SANITY_DOCS } from '../../suites/sanity/sanity-docs.ts';
 import induction from '../../suites/sanity/or-induction-hypotension.json';
 
 const ALL = ['morphology', 'intervals', 'sanity', 'gates', 'regression', 'determinism', 'oracle'];
@@ -84,11 +85,18 @@ const docs: Array<{ suite: 'sanity' | 'gates'; doc: ValidationDoc }> = [
 ];
 const summaries: DocSummary[] = [];
 const results: Report['segments']['results'] = [];
+const runs = new Map<string, DocRun>();
+const crossDocs = new Set(SANITY_CROSS.flatMap((c) => c.docs));
 for (const { suite, doc } of docs) {
   const r = await runValidationDoc(doc);
+  if (crossDocs.has(doc.id)) runs.set(doc.id, r); // kept for the rows that compare two documents
   summaries.push({ id: doc.id, title: doc.title, suite, measurable: r.measurable, unsupported: r.unsupported, requires: doc.requires ?? [], wallMs: r.wallMs });
   results.push(...r.results);
   log(`${suite} ${doc.id}: ${r.measurable ? `${r.results.length} targets` : 'not measurable'} (${(r.wallMs / 1000).toFixed(1)} s)`);
+}
+for (const c of SANITY_CROSS) {
+  const g = gradeCross(c, runs);
+  if (g) results.push(g);
 }
 
 const regression = on('regression') ? await runRegression({ rebaseline: has('--rebaseline') }) : [];
@@ -133,5 +141,7 @@ writeFileSync(join(outDir, 'report.json'), `${JSON.stringify(report, (_k, v) => 
 writeFileSync(join(outDir, 'report.md'), renderMarkdown(report));
 writeFileSync(join(outDir, 'calibration-queue.md'), `# Calibration queue (R44)\n\nFrom \`pnpm validate\` at ${report.createdAt}, commit \`${commit}\`. Every row outside its band; fill the last column during the calibration pass.\n\n${renderQueue(calibrationQueue(report)).join('\n')}\n`);
 const fail = gatingFailures(report);
-log(`report: ${join(outDir, 'report.md')} — ${calibrationQueue(report).length} queued, ${fail.length} gating`);
+const c = counts(report);
+log(`report: ${join(outDir, 'report.md')} — green ${c.green} · amber ${c.yellow} · expected ${c.expected} · red ${c.red}; ${calibrationQueue(report).length} queued, ${fail.length} gating`);
+for (const x of fail) log(`gating: ${x}`);
 process.exit(fail.length ? 1 : 0);

@@ -4,36 +4,36 @@
 // rise in PaCO2 partly compensates), the NMB strength (pMax) and the airway flags. Concentrations come from the drug
 // model's bus (bus.ts): the opioid input is the remifentanil-equivalent at its SEPARATE ventilatory site.
 //   opioid:   dOp = x^1.25/(1 + x^1.25), x = Ce_vent,remi-eq/0.92 ng/mL (Bouillon 2003; fentanyl 0.55× in bus.ts, Q54)
-//   hypnotic: propofol C50 1.17 µg/mL, h 1.5 [ENG: Nieuwenhuijs 2003 −44 % at 1 µg/mL]; volatile C50 0.8 MAC, h 2 [ENG:
+//   hypnotic: propofol C50 1.17 µg/mL, h 1.5 [FIT: Nieuwenhuijs 2003 −44 % at 1 µg/mL; src Nieuwenhuijs 2003; brief research/44 L2-37]; volatile C50 0.8 MAC, h 2 [FIT: brief research/44 L2-37;
 //             co2Slope ×0.4 at 1 MAC]; midazolam C50 150 ng/mL [VERIFY]; ketamine ≤ 0.3 [TXT: minimal]
-//   synergy:  1 − (1 − dOp)(1 − dHyp)(1 − 0.5·dOp·dHyp) (Nieuwenhuijs 2003 "opioid–propofol synergy") [ENG size]
+//   synergy:  1 − (1 − dOp)(1 − dHyp)(1 − 0.5·dOp·dHyp) (Nieuwenhuijs 2003 "opioid–propofol synergy") [FIT: opioid–hypnotic ventilatory synergy size; size; brief research/44 L2-37; src Nieuwenhuijs 2003]
 //   resting VE (MANUAL): (1 − dOp²)(1 − dHyp^2.48)(1 − 0.5·dOp·dHyp): remi 1 ng/mL −28 %, propofol 1 µg/mL −13 %
 //             (Nieuwenhuijs 2003 resting values); pattern: opioid → RR falls, VT kept (slow, deep); hypnotic → VT
 //             falls, RR rises (rapid, shallow) (tables §5d); apnoea when resting VE < 0.42 (resumes > 0.5)
-//             [ENG: propofol 2.5 mg/kg → brief apnoea].
+//             [FIT: propofol 2.5 mg/kg → brief apnoea; brief research/44 L2-37].
 export const REMI_VENT_C50 = 0.92;
 export const REMI_VENT_H = 1.25;
 export const PROP_VENT_C50 = 1170;
 export const VOL_VENT_C50 = 0.8;
 export const MIDAZ_VENT_C50 = 150;
 /** The VENTILATORY response-surface α is PER CLASS. Opioid + benzodiazepine is strongly synergistic for breathing —
- * VENT_ALPHA_BENZO [ENG; fit target Bailey 1990: fentanyl 2 µg/kg + midazolam 0.05 mg/kg → SpO2 < 90 % in 11/12,
- * apnoea in 6/12 (nadir 70–89 %)]. Opioid + propofol (and the other non-benzodiazepine hypnotics and the volatiles) is
- * close to ADDITIVE for breathing although the BIS interaction is synergistic — VENT_ALPHA_HYP [ENG, low; Nieuwenhuijs
- * 2003]. pd.ts's SURFACE_ALPHA is the EEG surface's [ENG] constant and is NOT reused here. (Replaces SYNERGY 0.5,
+ * VENT_ALPHA_BENZO [FIT: target Bailey 1990: fentanyl 2 µg/kg + midazolam 0.05 mg/kg → SpO2 < 90 % in 11/12,
+ * apnoea in 6/12 (nadir 70–89 %); brief research/44 L2-37; src Bailey 1990]. Opioid + propofol (and the other non-benzodiazepine hypnotics and the volatiles) is
+ * close to ADDITIVE for breathing although the BIS interaction is synergistic — VENT_ALPHA_HYP [FIT: hypnotic–opioid ventilatory interaction, low; low; Nieuwenhuijs
+ * 2003; brief research/44 L2-37]. pd.ts's SURFACE_ALPHA is the EEG surface's [FIT: EEG-surface interaction constant; brief research/44 L2-37] constant and is NOT reused here. (Replaces SYNERGY 0.5,
  * whose only reader was the old product term.) */
 export const VENT_ALPHA_BENZO = 1.5;
 // An α of 0.3, stacked on the wakefulness-drive calibration, took the sourced induction-apnoea band out (fentanyl
 // 2 µg/kg + propofol 394 s vs 60–240 s; remifentanil pair 567 s). Scan (resp-induction rig, seed 7): α 0.3 → 394 /
 // 567 s; 0.2 → 316 / 504; 0.1 → 232 / 364; 0 → 120 / 190. The largest α keeping fentanyl ≥ 20 s inside 60–240 and
 // remifentanil in 90–300 s is 0 — ADDITIVE, the bottom of the review's "additive to mildly synergistic" range.
-// [ENG; fit target: the resp-induction bands.] VENT_ALPHA_BENZO is untouched, and a single agent is bit-identical (the
+// [FIT: the resp-induction bands.; brief research/44 L2-37] VENT_ALPHA_BENZO is untouched, and a single agent is bit-identical (the
 // α multiplies the OTHER class's units, zero when it is alone).
 export const VENT_ALPHA_HYP = 0;
 export const APNOEA_IN = 0.42;
 export const APNOEA_OUT = 0.5;
-export const DIAPH_WEAK = 0.3; // diaphragm strength below which VT falls (reserve) [ENG]
-export const DIAPH_APNOEA = 0.05; // No effective breath below 5 % strength [ENG]; the FIRST diaphragmatic effort
+export const DIAPH_WEAK = 0.3; // diaphragm strength below which VT falls (reserve) [FIT: respiratory-depression size or diaphragm threshold; brief research/44 L2-37]
+export const DIAPH_APNOEA = 0.05; // No effective breath below 5 % strength [FIT: respiratory-depression size or diaphragm threshold; brief research/44 L2-37]; the FIRST diaphragmatic effort
 /**
  * The return of diaphragm ACTIVITY is not the return of BREATHING (research/26 T1). After a non-depolarising blocker
  * the first efforts (strength DIAPH_APNOEA, ≈ 16 min after rocuronium 0.6 mg/kg — Moerer 2005 [P, PMID 15832241, read
@@ -45,17 +45,17 @@ export const DIAPH_APNOEA = 0.05; // No effective breath below 5 % strength [ENG
  * volume (VT_REST_ML_KG) at DIAPH_EFFECTIVE (spont.ts). Fit targets: first effort ≈ 16 min (band 12–24) with an
  * ineffective VT (owner's hypothesis 10–50 mL, below the dead space: no alveolar ventilation, no CO2 plateau, no awRR;
  * NOT yet checked against the literature — research/26 T1b follow-up); effective ventilation ≈ 30 min (band 20–50;
- * label clinical duration 31 min, Adamus 2007 31.3 min [S], Miller 9e Table 27.2 20–50 min [T]). [ENG sizes:
+ * label clinical duration 31 min, Adamus 2007 31.3 min [S], Miller 9e Table 27.2 20–50 min [T]). [FIT: diaphragm-block sizes; sizes:
  * DIAPH_EFFECTIVE 0.8 is the strength the rocuronium 0.6 mg/kg course reaches at ≈ 30 min; VT_EFFORT 0.5 mL/kg = 35 mL
- * at 70 kg, the middle of the owner's 10–50 mL.] A depolarising (phase I) block has no fade: the cap scales with the
+ * at 70 kg, the middle of the owner's 10–50 mL.; brief research/44 L2-37] A depolarising (phase I) block has no fade: the cap scales with the
  * non-depolarising share of the diaphragm's block (`diaNd`), and succinylcholine recovery is unchanged.
  */
 export const DIAPH_EFFECTIVE = 0.8;
 export const VT_EFFORT_ML_KG = 0.5;
 /**
  * Loss of consciousness (depth.ts `hypnotic` level, ≥ 1 unconscious) as a 0–1 ramp over 0.6–1.0 (fully 'unconscious'
- * from the LOC C50 up) — what removes the wakefulness drive and makes the lungs "anaesthetised". [ENG ramp
- * around depth.ts's LOC = 1]
+ * from the LOC C50 up) — what removes the wakefulness drive and makes the lungs "anaesthetised". [FIT: wakefulness-drive ramp; ramp
+ * around depth.ts's LOC = 1; brief research/44 L2-37]
  */
 export const LOC_LO = 0.6;
 export const LOC_HI = 1.0;
@@ -66,10 +66,10 @@ export const LOC_HI = 1.0;
  * PROPOFOL: contested at SEDATIVE doses — Nieuwenhuijs et al. 2001 (Anesthesiology 95:889, "absence of depression of
  * the peripheral chemoreflex loop by low-dose propofol") found NO peripheral (hypoxic) depression at 0.75–1.5 µg/mL
  * while the CENTRAL loop was depressed; reduced hypoxic responses appear at higher, anaesthetic concentrations (Blouin
- * et al. 1993, Anesthesiology 79:1177). [ENG] The C50 is therefore set at an ANAESTHETIC concentration —
+ * et al. 1993, Anesthesiology 79:1177). [FIT: respiratory-depression size or diaphragm threshold; brief research/44 L2-37] The C50 is therefore set at an ANAESTHETIC concentration —
  * 3 × PROP_VENT_C50 ≈ 3.5 µg/mL — so a sedative dose leaves the hypoxic arm nearly intact (hvrDep 0.13 at 1.0 µg/mL,
  * 0.22 at 1.5, 0.55 at 4.0) while a full induction dose depresses it; fit target: the isocapnic unit rows.
- * Opioids and midazolam depress it as their CO2 depression [ENG sizes, directions sourced].
+ * Opioids and midazolam depress it as their CO2 depression [FIT: respiratory-depression size or diaphragm threshold; sizes, directions sourced; brief research/44 L2-37].
  */
 export const HVR_VOL_C50 = 0.1;
 export const HVR_VOL_EMAX = 0.9;
@@ -78,7 +78,7 @@ export const HVR_PROP_C50 = 3 * PROP_VENT_C50; // An ANAESTHETIC C50 ≈ 3.5 µg
  * A PARTIAL neuromuscular block depresses the CAROTID hypoxic ventilatory response by ≈ 30 % at TOFR 0.7 (Eriksson,
  * Sato & Severinghaus 1993 Anesthesiology 78:693 — nicotinic receptors in the carotid body; the coverage matrix's
  * NN-08). It is a chemoreceptor effect, so unlike the obstruction arm it acts with a tube in place too. Ramp over TOFR
- * 0.9 → HVR_NMB_TOFR_LO, Emax 0.3 [ENG ramp, size sourced]. This is the ONLY NMB arm of `hvrDep`.
+ * 0.9 → HVR_NMB_TOFR_LO, Emax 0.3 [FIT: respiratory-depression size or diaphragm threshold; ramp, size sourced; brief research/44 L2-37]. This is the ONLY NMB arm of `hvrDep`.
  */
 export const HVR_NMB_EMAX = 0.3;
 export const HVR_NMB_TOFR_LO = 0.7;
@@ -87,7 +87,7 @@ export const HVR_NMB_TOFR_LO = 0.7;
  * his airway with phasic dilator (genioglossus) tone, so the same TOFR obstructs him far less than the sedated patient
  * of the parameter tables §4.6 `uaCollapse` row: Eikermann et al. 2003 AJRCCM 167:1024 — awake volunteers at TOFR
  * 0.5–0.7 keep a near-normal VT while upper-airway dilator function is measurably impaired (so the load is small, not
- * absent). [ENG 0.25; fit target: the awake rows.]
+ * absent). [FIT: 0.25; fit target: the awake rows.; brief research/44 L2-37]
  */
 export const UA_AROUSAL = 0.25;
 

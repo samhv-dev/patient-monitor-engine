@@ -5,6 +5,10 @@
 // (2) A second instructor tab of the same browser no longer starts a new session silently: it offers the live one
 //     (host-guard.ts). "Open that tab's session here" runs the same code with the running case and the first tab
 //     stops; "Start a new session" gives a new code and the other tab carries on.
+// (4) Room plan R7: Room setup on a relay — a device that picked the Monitor is a row of the table with the relay's ping
+//     and what it shows; its name, typed over it, is kept under its key; "New room code" asks first, then reloads the
+//     page under the new code and stores it, and the device stays on the old code (a grey "expected, not connected"
+//     row under its kept name).
 // (3) The first tab asleep (5 November: on WebKit in CI the first tab, now in the background, did not answer the 200 ms
 //     ask, so no dialog and a new code): the browser's lock manager says the session exists, so the dialog appears; the
 //     hand-over waits for the tab and completes when it runs again. Playwright cannot hide or suspend a page, so the
@@ -21,7 +25,7 @@ import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { devices, expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
 import { openApp, startVite } from './app-support.ts';
@@ -67,7 +71,8 @@ test.describe('the Room at 1920×1080', () => {
     expect(await symbol('dialog.room-big .room-big-qr svg')).toBe(await symbol('section.room-join .room-qr svg'));
     await expect(big.locator('.room-big-code')).toBeVisible();
     await expect(big.locator('.room-big-code')).toHaveText(code);
-    await expect(big.locator('.room-big-url')).toHaveText(new RegExp(`^http://\\d+\\.\\d+\\.\\d+\\.\\d+:${relay.port}/\\?join=${code}$`));
+    // R4: the address of the QR, which opens the instrument picker
+    await expect(big.locator('.room-big-url')).toHaveText(new RegExp(`^http://\\d+\\.\\d+\\.\\d+\\.\\d+:${relay.port}/\\?join=${code}#/pick$`));
     await expect(big.locator('.room-big-count')).toHaveText('0 phones following');
     const below = async (sel: string) => (await big.locator(sel).boundingBox())!.y >= box.y + box.height;
     expect(await below('.room-big-code')).toBe(true);
@@ -86,6 +91,65 @@ test.describe('the Room at 1920×1080', () => {
     await page.keyboard.press('q');
     await expect(big).toBeHidden();
   });
+});
+
+test('R7 Room setup on a relay: the Monitor device with its ping, its name kept; "New room code" asks, reloads under the new code and stores it', async ({ page, browser, browserName }) => {
+  test.setTimeout(120_000);
+  const dir = mkdtempSync(join(tmpdir(), 'room-setup-'));
+  writeFileSync(join(dir, 'index.html'), '<!doctype html>');
+  // a 2 s heartbeat (the kit's is 10 s) so the first ping is measured within the test; port in this suite's range (9250–9259)
+  relay = await startRelay({ port: 9251, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer', heartbeatMs: 2000 });
+  const ws = `ws://127.0.0.1:${relay.port}/`;
+  await openApp(page, base, `?relay=${encodeURIComponent(ws)}#/room`, { warmMs: 500 });
+  const code = await codeOf(page);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Room setup');
+
+  // a device that chose "Patient monitor" on the picker
+  const { defaultBrowserType: _b, ...dev } = browserName === 'webkit' ? devices['iPhone 13'] : devices['Pixel 7'];
+  const tablet = await (await browser.newContext(dev)).newPage();
+  await tablet.goto(`${base}/?join=${code}&relay=${encodeURIComponent(ws)}#/monitor/wide`);
+  await expect(tablet.locator('.follower-bar .status-pill')).toHaveText(`Following session ${code}`, { timeout: 30_000 });
+  const row = page.locator('.room-table tbody tr[data-show="monitor"]');
+  await expect(row.locator('td').nth(2)).toHaveText('Monitor');
+  await expect(row.locator('.room-ping')).toHaveText(/^\d+ ms$/, { timeout: 15_000 });
+  await expect(page.locator('.room-status')).toHaveAttribute('data-level', 'stable');
+  await expect(page.locator('.room-status small')).toHaveText(/^2 devices · worst ping \d+ ms$/);
+  console.log(`[room-setup] ${browserName}: ${JSON.stringify(await page.locator('.room-table tbody tr').evaluateAll((trs) => trs.map((tr) => [...(tr as HTMLTableRowElement).cells].slice(1).map((td) => td.querySelector('input')?.placeholder ?? td.textContent))))}; box "${await page.locator('.room-status').innerText()}"`);
+  if (process.env.ROOM_SETUP_SHOT) {
+    await page.screenshot({ path: `${process.env.ROOM_SETUP_SHOT}-top.png` });
+    await page.locator('section.room-setup').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `${process.env.ROOM_SETUP_SHOT}-foot.png` });
+  }
+  const key = await row.getAttribute('data-device');
+  expect(key).toMatch(/^[a-z0-9]{8,16}$/);
+  await row.locator('input.room-name').fill('Projector tablet');
+  await row.locator('input.room-name').press('Enter');
+  await expect.poll(() => page.evaluate((k) => JSON.parse(localStorage.getItem('pme.roomLayout') ?? '{}')[k!]?.name, key)).toBe('Projector tablet');
+
+  // "New room code": asked first; Keep changes nothing
+  await page.getByRole('button', { name: 'New room code' }).click();
+  const ask = page.locator('dialog.room-renew');
+  await expect(ask).toBeVisible();
+  await expect(ask).toContainText(`The phones and screens following ${code} will stay on it`);
+  await ask.getByRole('button', { name: `Keep ${code}` }).click();
+  await expect(ask).toBeHidden();
+  expect(await codeOf(page)).toBe(code);
+  await page.getByRole('button', { name: 'New room code' }).click();
+  await ask.getByRole('button', { name: 'Make a new code' }).click();
+  await page.waitForURL((u) => u.searchParams.get('session') !== code, { timeout: 30_000 });
+  await page.waitForFunction(() => '__pmeApp' in window, null, { timeout: 30_000 });
+  const fresh = await codeOf(page);
+  expect(fresh).toMatch(/^[A-Z0-9]{6}$/);
+  expect(new URL(page.url()).searchParams.get('session')).toBe(fresh);
+  expect(await page.evaluate(() => localStorage.getItem('pme.roomCode'))).toBe(fresh);
+  await expect(page.locator('.room-code-now')).toHaveText(fresh);
+  // the tablet stays on the old code; its kept name is a grey row of the new room
+  expect(new URL(tablet.url()).searchParams.get('join')).toBe(code);
+  const grey = page.locator(`.room-table tbody tr[data-device="${key}"]`);
+  await expect(grey).toHaveAttribute('data-level', 'absent');
+  await expect(grey.locator('input.room-name')).toHaveValue('Projector tablet');
+  await expect(grey.locator('td').nth(3)).toHaveText('expected, not connected');
+  await tablet.context().close();
 });
 
 test('a second instructor tab is asked: "open that session here" takes the code and the case; "start a new session" does not', async ({ context }) => {

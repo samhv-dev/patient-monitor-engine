@@ -1,11 +1,11 @@
 // ICP waveform (tables §5.1 "ICP waveform", Q39): three Gaussians per perfused beat — P1 percussion (arterial),
 // P2 tidal (brain compliance), P3 dicrotic — plus a respiratory component, around the ICP mean. Pulse amplitude
 // AMP = elastance × arterial pulse volume (≈ 1.6 mL at PP 40), so AMP ≈ 0.1·ICP + 0.5 when compliant and rises
-// steeply as compliance is used; P2/P1 = 0.8 compliant → 1.0 at elastance of ICP 20/PVI 25 → 1.4 exhausted [ENG].
-export const P_DELAY_S = [0.15, 0.27, 0.4] as const; // after the R wave: upstroke + 30–60 ms, tidal, post-incisura [ENG]
+// steeply as compliance is used; P2/P1 = 0.8 compliant → 1.0 at elastance of ICP 20/PVI 25 → 1.4 exhausted [FIT: ICP pulse-waveform shape; brief research/44 L2-60].
+export const P_DELAY_S = [0.15, 0.27, 0.4] as const; // after the R wave: upstroke + 30–60 ms, tidal, post-incisura [FIT: ICP pulse-waveform shape; brief research/44 L2-60]
 export const P_SIGMA_S = [0.025, 0.035, 0.04] as const;
-export const PULSE_VOL_ML = 1.6; // arterial CBV pulse at PP 40 mmHg [ENG]: AMP 1.47 at ICP 10/PVI 25
-export const RESP_VOL_ML = 0.6; // venous volume swing of a reference breath (u swing 1.0) [ENG]: 1–3 mmHg at ICP 20
+export const PULSE_VOL_ML = 1.6; // arterial CBV pulse at PP 40 mmHg [FIT: ICP pulse-waveform shape; brief research/44 L2-60]: AMP 1.47 at ICP 10/PVI 25
+export const RESP_VOL_ML = 0.6; // venous volume swing of a reference breath (u swing 1.0) [FIT: ICP pulse-waveform shape; brief research/44 L2-60]: 1–3 mmHg at ICP 20
 export const P3_REL = 0.55;
 
 /** P2/P1 ratio vs elastance (mmHg/mL): 0.8 up to 0.92 (ICP 10/PVI 25), 1.0 at 1.84 (ICP 20), 1.4 at ≥ 4. */

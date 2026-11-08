@@ -1,6 +1,6 @@
 # Gate 5 — Full rhythm library, templates and artefacts (date: 2026-09-25)
 
-Gate question: "Can Ali identify every rhythm as intended, and does VF/torsades texture look recorded rather than synthetic?"
+Gate question: "Can samhv-dev identify every rhythm as intended, and does VF/torsades texture look recorded rather than synthetic?"
 
 Stage 1.x baseline this branch started from: `e8f00f9` (main, merge of PR #2 — contains the plan's verified base `d0ebed2`, checked with `git merge-base --is-ancestor d0ebed2 main`), `DEFAULT_PR60_MS = 160` (from Task 1 Step 2).
 
@@ -10,8 +10,8 @@ Stage 1.x baseline this branch started from: `e8f00f9` (main, merge of PR #2 —
 | Acceptance 1–10 | table below — all pass |
 | Strip screenshots (85, each ≤ 50 KB) | `stage-5/*.png` (70 from the plan + 15 coverage additions, see Deviations), largest `diathermy.png` 29085 B; gallery at the end of this document |
 | PTB-XL comparison (report only, R17) | `stage-5/ptbxl-normal-comparison.json` (20 NORM 100 records): mean r I 0.74, II 0.89, III 0.48, AVR 0.87, AVL 0.11, AVF 0.80, V1 0.73, V2 0.69, V3 0.71, V4 0.85, V5 0.90, V6 0.91 |
-| Blind rhythm check (Ali, 30 strips, ≥ 27/30) | pending Ali — `stage5.html` → "Blind check (30 strips)" |
-| Realism review of VF/torsades texture | pending Ali/orchestrator — strips `vfCoarse.png`, `vfFine.png`, `torsades.png`, `cpr.png`, `vfEpinephrine.png` |
+| Blind rhythm check (samhv-dev, 30 strips, ≥ 27/30) | pending samhv-dev — `stage5.html` → "Blind check (30 strips)" |
+| Realism review of VF/torsades texture | pending samhv-dev/orchestrator — strips `vfCoarse.png`, `vfFine.png`, `torsades.png`, `cpr.png`, `vfEpinephrine.png` |
 | Determinism (`s5/library.test.ts`, 60 s ecgII through VT → VF → CPR → 200 J shock → DDD → STEMI + mains/EMG) | seed 42: `2938a7850696d8929bb0b82cfedf30d87928ab44d428149603204b909e7b9784` (identical on re-run); seed 43: `3e53316091449fdbac6995c9bc6f087b921b4ecdde43b472f718709f0d0bcc47` |
 
 ## Acceptance tests (BUILD-PLAN Stage 5)
@@ -130,7 +130,7 @@ Every plan step was applied verbatim with a script that writes each "Create or r
 7. **Task 26 Step 3** was checked in headless Chrome against a Vite server on port 5207 (not 5173, which other agents may use). The monitor sweeps II/V1; the "paced" gallery group shows spike ticks; "Run ACLS strip" walked sinus → VT → VF coarse → CPR → shock → asystole → ROSC in 50 s. The only console error is the browser's `/favicon.ico` 404.
 8. **Plan steps whose command runs only `vitest` although the step title says "and the type check"** also got `pnpm -r typecheck` after each task (all clean).
 
-## Observations for Ali (from the strip review; not changed)
+## Observations for samhv-dev (from the strip review; not changed)
 
 - **VF coarse** (`vfCoarse.png`): the first ~3 s look regular and near-sinusoidal (ventricular-flutter-like) before the texture turns irregular. Please judge realism, especially for the blind check.
 - **Polymorphic VT** (`vtPoly.png`): V1 is nearly flat for ~2 s while the axis sweeps perpendicular to V1, and the first 2 s in II are low-amplitude.

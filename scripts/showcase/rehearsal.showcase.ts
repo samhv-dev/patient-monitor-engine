@@ -1,6 +1,6 @@
 // Proof (b): the six-card rehearsal (Stage 11) against the BUILT kit served by its PERL server, on WebKit and Chromium
-// at 1440×900. Each case: a fresh page load at #/teach → Scenario tab → Showcase filter → Load → ×4 → the card's own
-// buttons at the run sheet's clock times (docs/plans/stage-11-scenarios.md, "Run sheets"). Assertions are smoke checks
+// at 1440×900. Each case: a fresh page load at #/teach2 → the Scenarios library → Load (it opens the Instructor view) →
+// ×4 from its header → the card's own ACTION rows at the run sheet's clock times (docs/plans/stage-11-scenarios.md, "Run sheets"). Assertions are smoke checks
 // with generous windows (directions and floors, never calibration bands: those are the Vitest scenario tests in
 // apps/demo/src/app/showcase/*.slow.test.ts). Every observed number and every visible label is written to
 // docs/showcase/results/ — the JSON as before, and one run-sheet table per case and browser (clock, monitor, presenter
@@ -9,7 +9,7 @@
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
-import { alarms, barClock, co2Tile, hist, latest, loadShowcase, maxOf, meanOf, minOf, openTeach, OUT, r1, record, runText, save, shot, simNow, stateId, waitSim, waitUntilSim, watchConsole } from './showcase-support.ts';
+import { alarms, barClock, cardRow, co2Tile, hist, latest, loadShowcase, maxOf, meanOf, minOf, openTeach, OUT, r1, record, runText, save, shot, simNow, stateId, waitSim, waitUntilSim, watchConsole } from './showcase-support.ts';
 
 type Row = { clock: string; monitor: string; presenter: string };
 type Result = { case: string; browser: string; server: string; base: string; t0: number; steps: Array<Record<string, unknown>>; sheet: Row[]; labels: Record<string, string>; checks: Array<{ what: string; expected: string; observed: unknown; pass: boolean }>; errors: string[] };
@@ -32,11 +32,11 @@ async function step(r: Result, page: Page, what: string, extra: Record<string, u
   r.sheet.push({ clock: mmss(simT - r.t0), monitor: `HR ${n(v.hr)}, ART ${n(v.abpSys)}/${n(v.abpDia)} (${n(v.abpMean)}), SpO2 ${n(v.spo2)}, EtCO2 ${n(v.etco2)}, RR ${n(v.rr)} · state ${state}`, presenter: what });
 }
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-/** Press a card button and record the row (the presenter column is the button's label). The name is matched EXACTLY:
- *  the panel's state list renders every other state as a "Jump to <label>" button, and a state label can contain a
- *  button's label ("Ephedrine 10 mg given", "Dantrolene 2.5 mg/kg given"), which a substring match would click. */
+/** Press a card button (the Instructor view's open ACTION row) and record the row (the presenter column is the button's
+ *  label). The title is matched EXACTLY: a state label can contain a button's label ("Ephedrine 10 mg given",
+ *  "Dantrolene 2.5 mg/kg given"), which a substring match would take. */
 async function press(r: Result, page: Page, label: string): Promise<number> {
-  await page.locator('section[aria-label="Running scenario"]').getByRole('button', { name: label, exact: true }).click();
+  await cardRow(page, label).first().click();
   const t = await simNow(page);
   await page.waitForTimeout(800);
   r.labels[`after ${label}`] = await runText(page);
@@ -307,16 +307,17 @@ test('A second scenario in the same page restarts the clock', async ({ page }) =
     await waitUntilSim(page, t0 + 120);
     const c1 = await barClock(page);
     await step(r, page, 'first case running 2 min', { clock: c1.text });
-    await page.locator('section[aria-label="Running scenario"] button', { hasText: 'Choose another scenario' }).click();
+    // the Instructor view has no library while a case runs: the Scenarios library is the rail's (its Load asks first)
+    await page.evaluate(() => (location.hash = '#/scenarios/library'));
     await page.waitForTimeout(600);
-    r.labels.libraryDuringRun = (await page.locator('section[aria-label="Scenario library"]').innerText()).split('\n').slice(0, 4).join(' | ');
-    r.labels.backButton = (await page.getByRole('button', { name: 'Back to the running case' }).count()) ? 'Back to the running case' : 'not shown';
+    r.labels.libraryDuringRun = (await page.locator('[data-view=scenarios]').innerText()).split('\n').slice(0, 4).join(' | ');
+    r.labels.backButton = (await page.locator('nav.rail a[href="#/teach2"]').count()) ? "the rail's Instructor (#/teach2)" : 'not shown';
     Object.assign(r.labels, Object.fromEntries(Object.entries(await loadShowcase(page, 'Stab wound: tamponade, PEA and pericardiocentesis', { speed: false })).map(([k, v]) => [`second_${k}`, v])));
     await page.waitForTimeout(1500);
     const c2 = await barClock(page);
-    const inState = (await page.locator('section[aria-label="Running scenario"]').innerText()).match(/Time in state\s+(\d+:\d+)/)?.[1] ?? '?';
+    const inState = (await page.locator('.ip2-cue .ip2-cue-clock').innerText()).match(/^(\d+:\d+)/)?.[1] ?? '?'; // "02:13 in stage"
     await step(r, page, 'second case loaded', { clock: c2.text, timeInState: inState });
-    check(r, 'the clock restarts on the second load', 'session-bar clock < 00:20 just after loading', `${c1.text} → ${c2.text} (time in state ${inState})`, c2.s < 20);
+    check(r, 'the clock restarts on the second load', 'header clock < 00:20 just after loading', `${c1.text} → ${c2.text} (time in state ${inState})`, c2.s < 20);
     await page.waitForTimeout(8000);
     const c3 = await barClock(page);
     await step(r, page, '8 s (wall) later', { clock: c3.text });

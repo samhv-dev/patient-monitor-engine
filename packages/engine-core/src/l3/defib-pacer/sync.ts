@@ -1,17 +1,17 @@
 // Defibrillator sync detector (brief §6.5 "Sync": a marker on every detected R; the shock on the next R within
 // ≤ 60 ms). A low-latency R detector of its own, separate from the HR detector (which reports 60–120 ms late):
 // lead II from the unfiltered VCG, a slow baseline, a peak envelope, and the R reported at the local maximum of
-// |lead II − baseline| once the signal has fallen from it. Written from the description above [ENG]; plain data.
+// |lead II − baseline| once the signal has fallen from it. Written from the description above [ENG: device]; plain data.
 import { projectLead } from '../../l2/ecg/vcg.ts';
 
 export const SYNC_RATE = 500;
-const BASE_TAU_S = 0.5; // baseline EMA [ENG]
-const ENV_TAU_S = 2; // peak-envelope decay [ENG]
-const ARM_FRACTION = 0.5; // arm when |v| exceeds half the envelope [ENG]
-const FALL_FRACTION = 0.7; // report when |v| has fallen below 70 % of the running maximum [ENG]
+const BASE_TAU_S = 0.5; // baseline EMA [ENG: device]
+const ENV_TAU_S = 2; // peak-envelope decay [ENG: device]
+const ARM_FRACTION = 0.5; // arm when |v| exceeds half the envelope [ENG: device]
+const FALL_FRACTION = 0.7; // report when |v| has fallen below 70 % of the running maximum [ENG: device]
 const MAX_WAIT_N = 20; // or 40 ms after the maximum at the latest
 const REFRACTORY_N = 125; // 250 ms
-const ENV_FLOOR_MV = 0.3; // no R below this envelope: the unfiltered VCG carries ±0.17 mV of noise and wander in asystole [ENG]
+const ENV_FLOOR_MV = 0.3; // no R below this envelope: the unfiltered VCG carries ±0.17 mV of noise and wander in asystole [ENG: device]
 const kBase = 1 - Math.exp(-1 / (SYNC_RATE * BASE_TAU_S));
 const kEnv = Math.exp(-1 / (SYNC_RATE * ENV_TAU_S));
 

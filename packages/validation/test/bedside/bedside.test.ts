@@ -3,7 +3,7 @@ import { bedsideMarkdown, provenanceQueue } from '../../src/bedside/apply.ts';
 import { BEDSIDE, type BedsideResults } from '../../src/bedside/checklist.ts';
 
 const R: BedsideResults = {
-  schema: 'pme-bedside-results/1', device: 'Saadat Alborz B9', firmware: '', observer: 'Ali', date: '2026-10-01', skin: 'saadat-like',
+  schema: 'pme-bedside-results/1', device: 'Saadat Alborz B9', firmware: '', observer: 'samhv-dev', date: '2026-10-01', skin: 'saadat-like',
   results: [
     { id: 'asystole-delay', verdict: 'wrong', observed: '5 s', engineMeasured: '9.7 s', note: 'OR default' },
     { id: 'nibp-cycle', verdict: 'matches', observed: '31 s', engineMeasured: '33.9 s', note: '' },

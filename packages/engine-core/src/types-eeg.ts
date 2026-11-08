@@ -148,7 +148,7 @@ export interface EegReadingEvent {
   display: EegReading['display'];
 }
 
-/** One device constant in its spec row (plan D8): its value, unit, source tag ([TXT …], [P-n …], [ENG …], [INF …]) and
+/** One device constant in its spec row (plan D8): its value, unit, source tag (`[TXT …]`, `[P-n …]`, `[ENG: kind]`, `[INF …]`) and
  * what it is — so the model page lists every number a device uses. */
 export interface EegDeviceConstant { value: number; unit: string; tag: string; what: string }
 

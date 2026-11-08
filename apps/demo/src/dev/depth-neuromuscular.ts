@@ -100,7 +100,7 @@ function drawEeg(e: Extract<EngineEvent, { type: 'eegReading' }>): void {
   const dc = dsa.getContext('2d');
   if (dc && e.display.dsa) {
     const img = dc.createImageData(dsa.width, dsa.height);
-    paintDsa(img, eegView.cols, { minDb: -20, maxDb: 25 }); // dB re 1 µV²/Hz [ENG: the generator's suppression floor to its slow-wave peak]
+    paintDsa(img, eegView.cols, { minDb: -20, maxDb: 25 }); // dB re 1 µV²/Hz [ENG: display; the generator's suppression floor to its slow-wave peak]
     dc.putImageData(img, 0, 0);
   }
   (window as unknown as { __eeg: unknown }).__eeg = { raw: eegView.raw.length, cols: eegView.cols.length, label: e.label };

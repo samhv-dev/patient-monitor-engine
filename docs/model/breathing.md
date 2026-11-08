@@ -55,6 +55,23 @@ reads it for the tick order, the ventilator link and the events it emits.
 | [`pipeline.ts:406`](../../packages/engine-core/src/l2/resp/pipeline.ts#L406) | `mhO2Demand`: VO2 demand = basal + M_mh). Its CO2 is the ACHIEVED part (× the blood model's delivered share |
 | [`pipeline.ts:461`](../../packages/engine-core/src/l2/resp/pipeline.ts#L461) | The ratio is to THIS patient's normal output (the module's own convention, Q = coRatio × CI_LPM_PER_KG × effKg), |
 
+## Couplings
+
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 8 rows; SOURCED 1, FIT 0, ENG 0, UNTAGGED 7, ABSENT 0.
+The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
+constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
+
+| Id | From → to | Sign · form | Class | Constants | Timing, limits | Note |
+|---|---|---|---|---|---|---|
+| `breathing.peep.set` | `trigger.ventilation.peep` (PEEP change on the ventilator) → `resp.driver.vent.peep` (PEEP) | + · state | UNTAGGED | — | — | The ventilation event sets the ventilator's PEEP. |
+| `breathing.pleural.peep` | `resp.driver.vent.peep` (PEEP), `resp.lung.peepTot` → `resp.pleural` (Pleural pressure handed to the circulation) | + · term | SOURCED | `T_IT` = 0.65, `CMH2O_TO_MMHG` = 0.7356, `P_PL0` = -4 | — | pIt = P_PL0 + T_IT·(PEEP + ΔV/C)·CMH2O_TO_MMHG on a mechanical breath, plus the trapped-gas pressure (total − set PEEP). |
+| `breathing.pleural.transmission` | `resp.lung.lp.tIt` → `resp.pleural` (Pleural pressure handed to the circulation) | + · gain | UNTAGGED | — | — | The condition's own airway-to-pleura transmission, relative to the healthy one. |
+| `breathing.pleural.pneumothorax` | `resp.lung.lp.pPtx` → `resp.pleural` (Pleural pressure handed to the circulation) | + · term | UNTAGGED | — | — | + max(0, lp.pPtx − circ ext.pPtx): the lungs' pleural pressure, max-combined so two commands do not count it twice. |
+| `breathing.drive.depression` | `neuro.resp.totalDep` → `resp.spont.ve` (V̇E (MV)) | − · factor | UNTAGGED | — | — | The neuro model's ventilatory depression scales the spontaneous drive (apnoea below its threshold). |
+| `breathing.drive.rate` | `neuro.resp.totalDep` → `resp.spont.rr` (RR (spont)) | − · factor | UNTAGGED | — | — | The same depression on the rate. |
+| `breathing.drive.co2` | `resp.co2.pf` (PaCO₂) → `resp.spont.ve` (V̇E (MV)) | + · gain | UNTAGGED | `CO2_SLOPE` = 1.5, `APNOEA_OFFSET` = 4 | — | The hypercapnic ventilatory response, CO2_SLOPE L/min/mmHg above the apnoeic threshold. |
+| `breathing.drive.brainstem` | `organs.brain.cbfRel` → `resp.spont.ve` (V̇E (MV)) | + · threshold | UNTAGGED | — | — | The respiratory gate closes as brainstem flow falls (the organs' CBF, one step late). |
+
 ## State
 
 ### `DriverState` ([`l2/resp/driver.ts`](../../packages/engine-core/src/l2/resp/driver.ts))
@@ -134,25 +151,25 @@ reads it for the tick order, the ventilator link and the events it emits.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `INSP_FLOW_LPS` | `0.05` | — | brief §7.6; [ENG] | externalDrive: inspiration starts at flow > +0.05 L/s (brief §7.6) [ENG] |
-| `DRIVE_TIMEOUT_S` | `5` | s | [ENG] | no VentFrame for 5 s → the external drive is gone (apnoea) [ENG] |
+| `INSP_FLOW_LPS` | `0.05` | — | brief §7.6; [ENG: device] | externalDrive: inspiration starts at flow > +0.05 L/s (brief §7.6) [ENG: device] |
+| `DRIVE_TIMEOUT_S` | `5` | s | [ENG: device] | no VentFrame for 5 s → the external drive is gone (apnoea) [ENG: device] |
 | `U_REF_CMH2O` | `10` | cmH2O | — | Alveolar swing of the reference breath (VT 500 at C 50) → u swing 1.0 |
-| `SPONT_PPL_CMH2O` | `4` | cmH2O | [ENG] | spontaneous pleural swing, 3–8 cmH2O negative [ENG] |
-| `SPONT_TI_FRACTION` | `0.38` | — | [ENG] | spontaneous I:E ≈ 1:1.6 [ENG] |
-| `SPONT_JITTER` | `0.05` | — | [ENG] | breath-to-breath SD of period and VT, spontaneous [ENG] |
-| `GASTRIC_BREATHS` | `5` | — | [ENG, < 6] | oesophageal: breaths with gastric CO2 before the trace is flat [ENG, < 6] |
+| `SPONT_PPL_CMH2O` | `4` | cmH2O | research/44 L2; [FIT: spontaneous pleural swing and I:E; brief research/44 L2-51] | spontaneous pleural swing, 3–8 cmH2O negative [FIT: spontaneous pleural swing and I:E; brief research/44 L2-51] |
+| `SPONT_TI_FRACTION` | `0.38` | — | research/44 L2; [FIT: spontaneous pleural swing and I:E; brief research/44 L2-51] | spontaneous I:E ≈ 1:1.6 [FIT: spontaneous pleural swing and I:E; brief research/44 L2-51] |
+| `SPONT_JITTER` | `0.05` | — | [ENG: numerics] | breath-to-breath SD of period and VT, spontaneous [ENG: numerics] |
+| `GASTRIC_BREATHS` | `5` | — | research/44 L2; [FIT: gastric CO2 for < 6 breaths after oesophageal intubation; < 6; brief research/44 L2-51] | oesophageal: breaths with gastric CO2 before the trace is flat [FIT: gastric CO2 for < 6 breaths after oesophageal intubation; < 6; brief research/44 L2-51] |
 | `EXP_TAU_S` | `0.5` | s | — | passive expiration τ = R·C (10 cmH2O/L/s × 0.05 L/cmH2O) |
-| `VCV_PMAX_DEFAULT` | `40` | — | [ENG] | The volume-control pressure limit (cmH2O) when the command sets none — the anaesthesia-ventilator factory default Pmax/Plimit 40 (Dräger Primus, GE Aisys operator manuals) [ENG]; above it the breath is pressure-limited. |
+| `VCV_PMAX_DEFAULT` | `40` | — | [ENG: device] | The volume-control pressure limit (cmH2O) when the command sets none — the anaesthesia-ventilator factory default Pmax/Plimit 40 (Dräger Primus, GE Aisys operator manuals) [ENG: device]; above it the breath is pressure-limited. |
 | `NEVER` | `1e12` | — | — | JSON-safe 'never' (snapshots travel as JSON: Infinity would become null). |
 
 ### [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `KINK_R_MULT` | `150` | — | [ENG, fit target RS9 "VT ≤ 20 % delivered"; partial kinks scale] | A kinked tube multiplies the tube resistance by 1 + (KINK_R_MULT − 1)·severity — a complete kink (severity 1) × 150, so a 40 cmH2O Pmax moves ≤ 20 % of the set VT [ENG, fit target RS9 "VT ≤ 20 % delivered"; partial kinks scale]. |
-| `BUCK_CMH2O` | `30` | cmH2O | McCool 2006; [ENG; McCool 2006 Chest 129:48S] | Bucking — an expiratory muscle pressure (cmH2O) over the first BUCK_S of a mechanical inspiration [ENG; McCool 2006 Chest 129:48S]. |
+| `KINK_R_MULT` | `150` | — | [ENG: device; fit target RS9 "VT ≤ 20 % delivered"; partial kinks scale] | A kinked tube multiplies the tube resistance by 1 + (KINK_R_MULT − 1)·severity — a complete kink (severity 1) × 150, so a 40 cmH2O Pmax moves ≤ 20 % of the set VT [ENG: device; fit target RS9 "VT ≤ 20 % delivered"; partial kinks scale]. |
+| `BUCK_CMH2O` | `30` | cmH2O | McCool 2006; research/44 L2; [FIT: bucking expiratory muscle pressure; McCool 2006 Chest 129:48S; brief research/44 L2-51; src McCool 2006] | Bucking — an expiratory muscle pressure (cmH2O) over the first BUCK_S of a mechanical inspiration [FIT: bucking expiratory muscle pressure; McCool 2006 Chest 129:48S; brief research/44 L2-51; src McCool 2006]. |
 | `BUCK_S` | `0.5` | s | — | — |
-| `GA_TAU_ON_S` | `20` | s | BJA 2010; Westbrook 1973; [ENG] | "Anaesthetised lungs" follow the anaesthetic state. Loss of consciousness or a paralysed diaphragm drops FRC by loss of inspiratory muscle tone within minutes of induction (Hedenstierna & Edmark, BJA 2010;104:16 — FRC −0.4–0.5 L, atelectasis within 5 min; Westbrook 1973 J Appl Physiol 34:81), and VO2 falls ~15 %. The `thermal` event's `anaesthesia: 'general'` stays an explicit override (1). τ 20 s on (FRC falls within the first minute), 300 s off [ENG]. |
+| `GA_TAU_ON_S` | `20` | s | BJA 2010; Westbrook 1973; research/44 L2; [FIT: anaesthetic FRC loss on/off τ; brief research/44 L2-51] | "Anaesthetised lungs" follow the anaesthetic state. Loss of consciousness or a paralysed diaphragm drops FRC by loss of inspiratory muscle tone within minutes of induction (Hedenstierna & Edmark, BJA 2010;104:16 — FRC −0.4–0.5 L, atelectasis within 5 min; Westbrook 1973 J Appl Physiol 34:81), and VO2 falls ~15 %. The `thermal` event's `anaesthesia: 'general'` stays an explicit override (1). τ 20 s on (FRC falls within the first minute), 300 s off [FIT: anaesthetic FRC loss on/off τ; brief research/44 L2-51]. |
 | `GA_TAU_OFF_S` | `300` | s | — | — |
 
 ## Functions

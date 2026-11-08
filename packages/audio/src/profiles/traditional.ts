@@ -33,7 +33,7 @@ export const TRADITIONAL: AlarmSoundProfile = {
     'levels.L3.levelDb': { tag: 'eng', source: 'brief §6.4' },
     harmonicsDb: { tag: 'eng', source: 'brief §6.4' },
     rampMs: { tag: 'eng', source: 'brief §6.4' },
-    volume: { tag: 'documented', source: 'brief §6.4 (0–10)', note: 'curve [ENG]' },
+    volume: { tag: 'documented', source: 'brief §6.4 (0–10)', note: 'curve [ENG: device]' },
     silence: { tag: 'documented', source: 'brief §6.4' },
   },
 };

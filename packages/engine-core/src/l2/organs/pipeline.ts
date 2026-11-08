@@ -24,18 +24,18 @@ import { ALPHA_E_FULL, alphaExcess, bloodCore, readDrugView, readOrganView, type
 export const ICP_RATE = 125;
 export const ORGAN_CHANNELS = ['icp'] as const;
 export type OrganChannel = (typeof ORGAN_CHANNELS)[number];
-const ICP_MEAN_WINDOW_S = 4; // displayed ICP mean over 4 s [ENG]
-const PBTO2_PROBE_TAU_S = 60; // Clark-type probe response [ENG]
-/** MAP and CVP the organs see: a 4 s mean [ENG]. The circulation's `hemo.pv` is the instantaneous RA pressure (0–9
+const ICP_MEAN_WINDOW_S = 4; // displayed ICP mean over 4 s [ENG: device]
+const PBTO2_PROBE_TAU_S = 60; // Clark-type probe response [ENG: device]
+/** MAP and CVP the organs see: a 4 s mean [ENG: device]. The circulation's `hemo.pv` is the instantaneous RA pressure (0–9
  *  mmHg within a cycle in the prototype) and `lastSite.map` one beat, so a 1 Hz kidney would sample noise (GFR 49–187
  *  in MODELED HFrEF). */
 const ORGAN_LP_TAU_S = 4;
 /** The `thermal` general anaesthesia with no hypnotic on the drug model's bus ≈ propofol E 0.6 (CMRO2 ×0.7). */
 const GA_FALLBACK: BrainDrugs = drugsOf({ ...NO_ANAESTHESIA, propofolE: 0.6 });
-const URINE_NA = 100; // mmol/L [ENG] — blood-model seam only
-const URINE_K = 50; // mmol/L [ENG]
-const FUROSEMIDE_NA_BOOST = 0.5; // urine Na × (1 + 0.5·E) [ENG]
-const GLUCONATE_EXCRETED = 0.9; // fraction of the filtered gluconate excreted (renal clearance ≈ 0.9·GFR) [ENG]
+const URINE_NA = 100; // mmol/L [FIT: fixed urine composition; brief research/44 L2-06] — blood-model seam only
+const URINE_K = 50; // mmol/L [FIT: fixed urine composition; brief research/44 L2-06]
+const FUROSEMIDE_NA_BOOST = 0.5; // urine Na × (1 + 0.5·E) [FIT: fixed urine composition; brief research/44 L2-06]
+const GLUCONATE_EXCRETED = 0.9; // fraction of the filtered gluconate excreted (renal clearance ≈ 0.9·GFR) [FIT: fixed urine composition; brief research/44 L2-06]
 const MG_PER_G: Record<string, number> = { mg: 1000, g: 1 };
 const OWN_CONDITIONS: readonly string[] = ['tbi', 'hepaticFailure', 'aki'];
 const OWN_SENSORS: readonly string[] = ['icp', 'pbto2', 'urometer'];
@@ -164,7 +164,7 @@ function icpAt(os: OrgansState, rs: RespState, ts: number): number {
 }
 
 /** The blood model's renal seam: the water (mL/h) and solutes (mmol/h) the urine takes out of its body water. Na,
- *  K, Cl from fixed urine concentrations [ENG]; gluconate filtered at GFR × the plasma gluconate, 90 % excreted [ENG].
+ *  K, Cl from fixed urine concentrations [FIT: fixed urine composition; brief research/44 L2-06]; gluconate filtered at GFR × the plasma gluconate, 90 % excreted [FIT: fixed urine composition; brief research/44 L2-06].
  *  The blood model's water and electrolyte balance has no intake term — its own fallback eliminates only blood
  *  volume ABOVE BV0, i.e. it assumes the basal urine is replaced by a basal intake. So the seam carries the urine
  *  ABOVE that basal turnover (the reference flow UOP0 = 1 mL/kg/h at the kidney's urine composition); below it the
@@ -174,7 +174,7 @@ function icpAt(os: OrgansState, rs: RespState, ts: number): number {
 function renalSeam(s: RenalState, gluconate: number, natriuresis = { share: 0, naMmolL: URINE_NA }, kRel = 1, mannitolMmolH = 0): RenalSeam {
   const lH = Math.max(0, s.uopMlMin * 60 - UOP0_ML_KG_H * s.p.weightKg) / 1000;
   // The expansion diuresis is NATRIURETIC (ANP): its share of the urine leaves at the plasma Na, not the basal urine's
-  // URINE_NA [ENG] — otherwise excreting a load concentrates the plasma (hypertonic saline Na +7.08)
+  // URINE_NA [FIT: fixed urine composition; brief research/44 L2-06] — otherwise excreting a load concentrates the plasma (hypertonic saline Na +7.08)
   const naUrine = natriuresis.share * natriuresis.naMmolL + (1 - natriuresis.share) * URINE_NA;
   const na = lH * naUrine * (1 + FUROSEMIDE_NA_BOOST * s.furoE);
   // Distal K secretion follows the plasma K (÷ the patient's own set point: at rest the basal excretion balances the
@@ -330,7 +330,7 @@ export function applyOrgansCommand(os: OrgansState, cmd: Command, _t: number): b
   if (cmd.type === 'attachSensor') {
     const s = cmd.sensor as keyof OrgansState['sensors'];
     os.sensors[s] = cmd.state as 'on' | 'off';
-    if (s === 'pbto2') os.num.pbto2 = os.brain.pbto2; // teaching: the probe reads at once (a real one needs a run-in) [ENG]
+    if (s === 'pbto2') os.num.pbto2 = os.brain.pbto2; // teaching: the probe reads at once (a real one needs a run-in) [ENG: device]
     return true;
   }
   if (cmd.type !== 'applyEvent') return false;

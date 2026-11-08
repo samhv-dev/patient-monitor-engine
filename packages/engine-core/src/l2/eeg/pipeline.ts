@@ -21,11 +21,11 @@ import { createSynth, synthNext, type SynthState } from './synth.ts';
 /** The channel's rate: one frontal channel at 125 Hz, an existing engine rate covering Miller's 0–50 Hz spectrograms
  * (plan D2; Ch36 p. 1139, Fig. 36.3). */
 export const EEG_RATE = 125; // Hz
-/** Electrodes on the frontal sensor: signal, reference, ground [ENG: the generic single-channel montage]. */
+/** Electrodes on the frontal sensor: signal, reference, ground [ENG: device; the generic single-channel montage]. */
 export const EEG_ELECTRODES = 3;
-/** Each electrode's impedance until the instructor changes it, kΩ [ENG: "default good" (plan E4), below the 5 kΩ limit]. */
+/** Each electrode's impedance until the instructor changes it, kΩ [ENG: device; "default good" (plan E4), below the 5 kΩ limit]. */
 export const EEG_IMPEDANCE_DEFAULT_KOHM = 2;
-/** The range an impedance command accepts, kΩ [ENG: up to an electrode off the skin]. */
+/** The range an impedance command accepts, kΩ [ENG: control; up to an electrode off the skin]. */
 export const EEG_IMPEDANCE_MAX_KOHM = 500;
 
 /** What one EEG step reads, as last published by the other models (engine.ts builds it). */

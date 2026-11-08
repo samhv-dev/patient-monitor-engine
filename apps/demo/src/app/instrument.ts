@@ -1,7 +1,7 @@
 // Which skin an instrument wears, and what the defibrillator window reads out (Room plan R5, §4 D5). Pure: no DOM.
 // The defibrillator window wears the room's defibrillator model's own look — that skin's defibrillator block is the
 // model's spec (site.ts DEFIB_CHOICES, the engine's DEFIB_MODELS) — whatever the monitor style; with no model chosen it
-// wears the monitor style, so its engine holds the host's own spec. The pacer stays the skin's (not ruled, plan §9).
+// wears the monitor style, so its engine holds the host's own spec. The pacer's spec is the model's too (row 58, plan §9).
 import type { DeviceEvent } from '@pme/engine-core';
 import { DEFIB_CHOICES } from './site.ts';
 

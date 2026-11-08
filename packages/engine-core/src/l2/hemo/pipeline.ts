@@ -215,7 +215,7 @@ function sameLimb(a: AbpSite | Spo2Site, cuff: NibpSite): boolean {
   return ((a === 'leftRadial' || a === 'leftFinger') && cuff === 'leftArm') || ((a === 'rightRadial' || a === 'rightFinger') && cuff === 'rightArm');
 }
 
-/** Fraction of the pulse that passes a cuff at pressure `cuff` (1 = no occlusion) [ENG]. */
+/** Fraction of the pulse that passes a cuff at pressure `cuff` (1 = no occlusion) [ENG: device]. */
 function passFraction(hs: HemoState, cuff: number): number {
   const s = hs.lastSite;
   return Math.min(1, Math.max(0, (s.sbp - cuff) / Math.max(1, s.sbp - s.dbp)));
@@ -324,11 +324,11 @@ function onCircBeat(hs: HemoState, ctx: HemoCtx, cb: CircBeat, t: number): void 
   nibpOnPulse(hs.nibp, t, beat, hs.cpr.active || beat.cpr, ctx.rng.measurement);
 }
 
-export const MANUAL_CVP_GAIN = 0.3; // dV0 −= gain·(CVP* − CVP)·cSv per second [ENG]
-export const MANUAL_HOLD_S = 8; // A MANUAL tracker stops after its target has held this long [ENG]
-/** The volume tracker gives up after this long (a CVP the physiology cannot reach, e.g. under PEEP) [ENG]. */
+export const MANUAL_CVP_GAIN = 0.3; // dV0 −= gain·(CVP* − CVP)·cSv per second [ENG: control]
+export const MANUAL_HOLD_S = 8; // A MANUAL tracker stops after its target has held this long [ENG: control]
+/** The volume tracker gives up after this long (a CVP the physiology cannot reach, e.g. under PEEP) [ENG: control]. */
 export const MANUAL_TRACK_MAX_S = 60;
-export const MANUAL_HOLD_MMHG = 1; // SBP/DBP hold tolerance of the per-beat pressure tracker [ENG]
+export const MANUAL_HOLD_MMHG = 1; // SBP/DBP hold tolerance of the per-beat pressure tracker [ENG: control]
 /** Decision 9: hypovolaemia (volumeStatus < 1) lowers the CVP the tracker aims for, so stressed volume falls. */
 export function volumeStatusCvp(cvpTarget: number, vs: number): number {
   return cvpTarget - 0.8 * cvpTarget * (1 - Math.min(1, Math.max(0, vs)));
@@ -630,7 +630,7 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
       // beats (which drew a 0.6 mL beat as a normal pulse: SpO2 98 / PI 2.5 at MAP 2).
       // In MODELED the factor reads the circulation's CUTANEOUS tone (`circ.skinTone`: vasomotor factors only, no
       // MANUAL tracker, no viscosity): vasoconstriction lowers PI and a dilated finger (an anaesthetic's
-      // sympatholysis) raises it [ENG exponent 0.5; bounded 0.25–2 ENG]. MANUAL keeps 1 (a factor there made PI rise
+      // sympatholysis) raises it [FIT: finger PI from cutaneous tone; exponent 0.5; bounded 0.25–2 ENG; brief research/44 L2-16]. MANUAL keeps 1 (a factor there made PI rise
       // as the MANUAL tracker lowered SVR, and fall after propofol).
       const svRef = Math.max(1, c.ref.sv || 70);
       const tone = ctx.l1.mode === 'modeled' ? Math.min(2, Math.max(0.25, 1 / Math.sqrt(c.skinTone ?? 1))) : 1;
@@ -719,7 +719,7 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
     if (cv.sensor !== 'none') {
       const v = displaySample(cv);
       write('cvp', m, v);
-      hs.num.cvpAvg += (v - hs.num.cvpAvg) * (1 - Math.exp(-DT / 2)); // 2 s mean [ENG]
+      hs.num.cvpAvg += (v - hs.num.cvpAvg) * (1 - Math.exp(-DT / 2)); // 2 s mean [ENG: device]
     }
     const plethPass = cuff > 0 && sameLimb(hs.pleth.site, hs.nibp.site) ? passFraction(hs, cuff) : 1;
     const pl = plethAt(hs.pleth, t1, plethPass, l1Value(ctx.l1, 'pi', t1));

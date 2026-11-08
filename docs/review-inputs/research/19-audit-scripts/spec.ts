@@ -1,6 +1,6 @@
 // Coverage run CM (comorbidity profiles; copied from run DI): the cell type, the shared rigs and the measure helpers.
 // A cell names its arms (`i` = intervention, `c` = its control at the same sim time, plus reference arms), a `measure`
-// over the arms' rows, and `expect` items the grader turns into a verdict. Bands are PROPOSALS for Ali with their
+// over the arms' rows, and `expect` items the grader turns into a verdict. Bands are PROPOSALS for samhv-dev with their
 // source (research/12 §2.2) and are never widened to fit (R45).
 import { A, VENTED, diffExtreme, maxOf, mean, minOf, r1, r2, type Arm, type ArmResult, type Row, type Step } from './runner.ts';
 

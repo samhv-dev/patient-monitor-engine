@@ -1,9 +1,15 @@
 // scripts/ci/e2e-shard-plan.mjs: the CI e2e shards are balanced by the durations recorded in the last green main run's
 // Playwright JSON reports. Checks the per-file sums, the longest-first assignment, the median for an unrecorded file,
-// and that every file lands in exactly one shard.
+// that every file lands in exactly one shard, and that one plan, computed once in the renderer job, is what every shard
+// of a set reads (research/41 row 64: on main run 42284321017 shard 1/3 of WebKit downloaded 2 of the 3 reports and
+// planned its own split, so 174 tests ran against 165 listed).
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error -- a plain .mjs script without type declarations
-import { assignShards, fileDurations } from '../../../scripts/ci/e2e-shard-plan.mjs';
+import { assignShards, fileDurations, pickShard, setPlan } from '../../../scripts/ci/e2e-shard-plan.mjs';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+// @ts-expect-error -- a plain .mjs script without type declarations
+import { e2eMatrix, SETS } from '../../../scripts/ci/e2e-sets.mjs';
 
 type Plan = { median: number; shards: { ms: number; files: { file: string; ms: number; recorded: boolean }[] }[] };
 const plan = (files: string[], d: Record<string, number>, n: number) => assignShards(files, new Map(Object.entries(d)), n) as Plan | null;
@@ -48,5 +54,40 @@ describe('e2e shard plan (scripts/ci/e2e-shard-plan.mjs)', () => {
     const d = { a: 5, b: 5, c: 5, d: 5 };
     expect(names(plan(['d', 'c', 'b', 'a'], d, 2)!)).toEqual(names(plan(['a', 'b', 'c', 'd'], d, 2)!));
     expect(plan(['a', 'b'], { other: 1 }, 2)).toBeNull();
+  });
+
+  it("builds ci.yml's e2e matrix from each set's shard count in scripts/ci/e2e-sets.mjs: one row per shard, in order", () => {
+    type Row = { browser: string; set: string; grep: string; report: string; shard: number; of: number };
+    const sets = SETS as Record<string, { args: string[]; set: string; shards: number }>;
+    const rows = (e2eMatrix() as { include: Row[] }).include;
+    for (const [report, s] of Object.entries(sets)) {
+      const mine = rows.filter((r) => r.report === report);
+      expect(mine.map((r) => `${r.shard}/${r.of}`)).toEqual(Array.from({ length: s.shards }, (_, i) => `${i + 1}/${s.shards}`));
+      for (const r of mine) expect([`--project=${r.browser}`, ...(r.grep ? r.grep.split(' ') : [])]).toEqual(s.args);
+      expect(new Set(mine.map((r) => r.set))).toEqual(new Set([s.set]));
+    }
+    expect(rows.length).toBe(Object.values(sets).reduce((n, s) => n + s.shards, 0));
+    expect(sets['webkit-known-flaky']?.shards).toBe(1); // the quarantine stays one job
+  });
+
+  it('every shard of a set reads the one plan: a shard index picks its files, and a set without a plan falls back whole', () => {
+    const files = ['a', 'b', 'c', 'd', 'e', 'f'];
+    const plans = { webkit: setPlan(files, new Map(Object.entries({ a: 9, b: 7, c: 5, d: 3, e: 2, f: 1 })), 3), chromium: null };
+    const json = JSON.stringify(plans);
+    const picked = [1, 2, 3].map((i) => pickShard(json, 'webkit', i));
+    expect(picked.flat().sort()).toEqual(files); // each file once, across the shards that read the same plan
+    expect(pickShard(json, 'chromium', 1)).toBeNull(); // no plan: every shard of the set uses Playwright's --shard
+    expect(pickShard('', 'webkit', 1)).toBeNull(); // the renderer job's plan step failed: likewise, for every shard
+    expect(pickShard(json, 'webkit', 4)).toBeNull();
+  });
+
+  it("ci.yml: the shard plan is computed once (the renderer job) and no e2e shard downloads reports to plan its own", () => {
+    const yml = readFileSync(resolve(import.meta.dirname, '../../../.github/workflows/ci.yml'), 'utf8');
+    const e2e = yml.slice(yml.indexOf('\n  e2e:\n'), yml.indexOf('\n  e2e-count:\n'));
+    const renderer = yml.slice(yml.indexOf('\n  renderer:\n'), yml.indexOf('\n  e2e:\n'));
+    expect(e2e).not.toMatch(/run-id:/); // no shard reads another run's reports
+    expect(e2e).toMatch(/e2e-shard-plan\.mjs pick /);
+    expect(renderer).toMatch(/e2e-shard-plan\.mjs plan /);
+    expect(renderer).toMatch(/shard_plan:/);
   });
 });

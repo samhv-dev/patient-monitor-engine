@@ -9,7 +9,7 @@ import type { LineSensorState } from '../types-hemo.ts';
 import type { Command, EngineEvent, ModifiersPatch, Ramp, RhythmId, RhythmOpts, StateVar } from '../types.ts';
 import { buildConditions, createInputs, observeEvent, observeQrs, type AlarmInputs } from './alarms/conditions.ts';
 import { applyAlarmAction, createAlarmMgr, setProfile, stepAlarms, validateAlarmAction, type AlarmMgrState } from './alarms/manager.ts';
-import { DEFIB_MODELS, deviceProfile, skinBand } from './alarms/profile.ts';
+import { DEFIB_MODELS, deviceProfile, skinBand, type DefibModel } from './alarms/profile.ts';
 import { afterShock, applyDefib, createDefib, FALLBACK_DEFIB, stepDefib, validateDefib, type DefibSpec, type DefibState } from './defib-pacer/defib.ts';
 import { drawOutcome, shockClass, T_PEAK_WINDOW_S, type ShockOutcome } from './defib-pacer/outcome.ts';
 import { applyPacer, createPacer, FALLBACK_PACER, tcpSpec, validatePacer, type PacerSpec, type PacerState } from './defib-pacer/pacer.ts';
@@ -19,20 +19,20 @@ import { createSyncState, SYNC_RATE, syncStep, type SyncState } from './defib-pa
 export const VF_RHYTHMS: ReadonlySet<RhythmId> = new Set(['vfCoarse', 'vfFine']);
 /** Skin used when EngineOptions.device.skin is absent (the renderer's historical default, brief §3.8). */
 export const DEFAULT_SKIN = 'philips-like';
-/** Sync shock: delivered this long after the detected R (brief §6.5: on the next R within ≤ 60 ms) [ENG]. */
+/** Sync shock: delivered this long after the detected R (brief §6.5: on the next R within ≤ 60 ms) [ENG: device]. */
 export const SYNC_DELAY_S = 0.02;
-/** T peak ≈ R + 0.65 × QT (the kernel T peak sits ~⅔ into QT at normal rates) [ENG]. */
+/** T peak ≈ R + 0.65 × QT (the kernel T peak sits ~⅔ into QT at normal rates) [ENG: device]. */
 export const T_PEAK_QT_FRACTION = 0.65;
 /** After a terminating shock: 1–5 s isoelectric, then 30–60 bpm accelerating over 10–60 s to ROSC_HR; pressure
  * targets ramp from 50 % to 100 % over 30–120 s (brief §6.5 "After successful termination"; the k_SV 0.2 → 1 ramp is
- * expressed through the MANUAL-mode sbp/dbp targets, which the M2 tracker follows) [ENG where not cited]. */
+ * expressed through the MANUAL-mode sbp/dbp targets, which the M2 tracker follows) [FIT: scripted post-shock rate and pressure recovery; where not cited; brief research/44 TIME-12]. */
 export const ISO_S = [1, 5] as const;
 export const ROSC_START_BPM = [30, 60] as const;
 export const ROSC_RAMP_S = [10, 60] as const;
 export const ROSC_HR = 80;
 export const ROSC_BP_RAMP_S = [30, 120] as const;
 export const ROSC_BP_START = 0.5;
-/** Cardioversion to sinus: a 1–2 s pause, then sinus at 75 bpm [ENG]. */
+/** Cardioversion to sinus: a 1–2 s pause, then sinus at 75 bpm [FIT: scripted post-shock rate and pressure recovery; brief research/44 TIME-12]. */
 export const CARDIOVERSION_PAUSE_S = [1, 2] as const;
 export const CARDIOVERSION_HR = 75;
 const STATUS_EVERY_S = 1;
@@ -50,7 +50,8 @@ export interface DeviceState {
   inputs: AlarmInputs;
   defib: DefibState;
   pacer: PacerState;
-  /** The room's defibrillator model (a `DEFIB_MODELS` key, Room plan R5a), or null: the skin's spec, else the fallback.
+  /** The room's defibrillator model (a `DEFIB_MODELS` key, Room plan R5a; its pacer too, row 58), or null: the skin's
+   * defibrillator and pacer spec, else the fallback.
    * Absent in older snapshots (read as null). */
   defibModel: string | null;
   sync: SyncState;
@@ -91,8 +92,18 @@ export interface DeviceHost {
   shockState?: () => { antiarrhythmicU?: number; kEcg?: number; ph?: number; cppMmHg?: number; arrestS?: number; tempC?: number };
 }
 
-const defibSpec = (d: DeviceState): DefibSpec => (d.defibModel ? DEFIB_MODELS[d.defibModel] : undefined) ?? d.alarms.profile.defib ?? FALLBACK_DEFIB;
-const pacerSpec = (d: DeviceState): PacerSpec => d.alarms.profile.pacer ?? FALLBACK_PACER;
+const modelOf = (d: DeviceState): DefibModel | undefined => (d.defibModel ? DEFIB_MODELS[d.defibModel] : undefined);
+const defibSpec = (d: DeviceState): DefibSpec => modelOf(d)?.defib ?? d.alarms.profile.defib ?? FALLBACK_DEFIB;
+const pacerSpec = (d: DeviceState): PacerSpec => modelOf(d)?.pacer ?? d.alarms.profile.pacer ?? FALLBACK_PACER;
+/**
+ * The model's HR-while-pacing rule onto the device profile (row 58): the alarm conditions (conditions.ts) and the
+ * deviceStatus read it from there. The profile is this device's own copy, rebuilt at every skin or age-band switch, so
+ * this runs after each and when the model is set; with no model the skin's rule stays.
+ */
+function fitModel(d: DeviceState): void {
+  const m = modelOf(d);
+  if (m) d.alarms.profile.hrDashesWhilePacing = m.hrDashesWhilePacing;
+}
 
 export function createDevice(skin: string | undefined, ageBand: 'adult' | 'paediatric' | 'neonatal' | undefined): DeviceState {
   const p = deviceProfile(skin ?? DEFAULT_SKIN, skinBand(ageBand));
@@ -153,7 +164,7 @@ export function validateDeviceCommand(d: DeviceState, cmd: Command): string | un
 export function applyDeviceCommand(d: DeviceState, cmd: Command, host: DeviceHost, out: EngineEvent[]): boolean {
   const t = host.simT;
   if (cmd.type === 'attachSensor' && cmd.sensor === 'ecg') {
-    // brief §6.2: ecg off → flat dashed trace + LEADS OFF INOP (no asystole); motion → electrode motion artefact [ENG 0.5]
+    // brief §6.2: ecg off → flat dashed trace + LEADS OFF INOP (no asystole); motion → electrode motion artefact [ENG: device; 0.5]
     host.setModifiers({ artefact: { leadOff: cmd.state === 'off', motion: cmd.state === 'motion' ? 0.5 : 0 } });
     if (cmd.state !== 'off') d.inputs.ecgOnSince = t;
     return true;
@@ -185,7 +196,8 @@ export function applyDeviceCommand(d: DeviceState, cmd: Command, host: DeviceHos
   if (a.device === 'monitor') {
     const band: AgeBand = a.action === 'ageBand' ? skinBand(a.value as 'adult') : d.alarms.profile.ageBand;
     const skin = a.action === 'skin' ? a.value : d.alarms.profile.skin;
-    setProfile(d.alarms, deviceProfile(skin, band), t, out); // the defibrillator model, if set, is kept (R5a)
+    setProfile(d.alarms, deviceProfile(skin, band), t, out); // the defibrillator model, if set, is kept (R5a, row 58)
+    fitModel(d);
     return true;
   }
   if (a.device === 'defib') {
@@ -193,6 +205,13 @@ export function applyDeviceCommand(d: DeviceState, cmd: Command, host: DeviceHos
     // device disarms, defib.ts selectEnergy)
     d.defibModel = a.value;
     applyDefib(d.defib, { kind: 'defib', action: 'selectEnergy', energyJ: defibSpec(d).energyAdultJ }, t, defibSpec(d), out);
+    // and its pacer (row 58): a pacer that is off takes the model's default rate and output, as a new device does
+    // (createPacer); a running pacer keeps what the clinician set
+    fitModel(d);
+    if (d.pacer.mode === 'off') {
+      d.pacer.ratePpm = pacerSpec(d).rateDefault;
+      d.pacer.mA = pacerSpec(d).mADefault;
+    }
     return true;
   }
   return false;

@@ -1,0 +1,46 @@
+### A4 MH phases card induction sequence and early call (kit round) (chromium, kit 0919cc66, load avg 7.86–12.37)
+
+Script: scripts/showcase/kit-round-a.kitround.ts · server: Start Classroom.command (relay + static app, node, as built) · reaction 2 s · 3 phones · setup: {"sessionCode":"R3XKGZ","alarmButtonAtOpen":"No alarms IBP1 NO SENSOR opens the list","alarmButtonAfterAllOn":"No alarms IBP1 NO SENSOR opens the list","soundButton":"Sound on","loadConfirm":"dialog \"Load this scenario?\" → Load scenario","panel":"teach2","card":"pme-scenario/2","alarmButtonAfterLoad":"No alarms opens the list","limitsAfterLoad":"limit alarms on after Load","alarmButtonRightAfterLoad":"No alarms opens the list","bookmarkAt":"00:03","alarmButtonAtEnd":"No alarms opens the list"}
+
+| Wall | Clock | × | State | HR | ART | SpO2 | EtCO2 | RR | Load | What |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 00:03 | 8 | baseline | – | –/– (–) | – | – | – | 10.69 | Load "Malignant hyperthermia (phases)" at ×8, Bookmark |
+| 5.9 | 00:42 | 8 | baseline | 70 | 123/81 (94) | 96 | 37 | 14 | 10.32 | press **Preoxygenate: 100 % O₂ by face mask** |
+| 9.5 | 01:11 | 8 | baseline | 69 | 122/80 (93) | 99 | 39 | 13 | 10.32 | press **Premedicate: midazolam 2 mg, fentanyl 100 µg** |
+| 31.8 | 04:10 | 8 | baseline | 64 | 120/75 (89) | 99 | 46 | 0 | 10.26 | press **Induce: propofol 2 mg/kg, then succinylcholine 1.5 mg/kg** |
+| 39.3 | 05:10 | 8 | baseline | 68 | 96/59 (69) | 99 | 48 | 4 | 9.92 | press **Intubate: ventilator 12 × 500, PEEP 5, FiO₂ 0.5; sevoflurane 2 %** |
+| 47.1 | 06:12 | 8 | baseline | 71 | 96/59 (69) | 99 | 42 | 12 | 10.03 | press **Start surgery: rocuronium 0.6 mg/kg** |
+| 58 | 07:38 | 4 | latent | 75 | 105/64 (75) | 99 | 45 | 12 | 10.84 | 7:30 ×4: watch the CO₂ tile |
+| 68.1 | 08:18 | 4 | earlySigns | 78 | 107/66 (77) | 99 | 46 | 12 | 10.85 | state Early signs |
+| 68.5 | 08:20 | 4 | earlySigns | 79 | 107/67 (78) | 99 | 46 | 12 | 10.85 | objective ticked: ^Name malignant hyperthermia |
+| 69.3 | 08:23 | 4 | earlySigns | 78 | 107/66 (77) | 99 | 46 | 14 | 10.85 | press **MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate** |
+| 74.6 | 08:44 | 4 | earlySigns | 79 | 108/67 (78) | 99 | 40 | 20 | 11.34 | press **Dantrolene 2.5 mg/kg** |
+| 75.1 | 08:46 | 4 | earlySigns | 78 | 108/67 (78) | 99 | 39 | 20 | 11.34 | EtCO₂ below 40 |
+| 88.7 | 14:01 | 4 | recovering | 81 | 103/65 (75) | 99 | 41 | 20 | 10.49 | after the 5-min fast-forward |
+| 89.5 | 14:04 | 4 | recovering | 80 | 103/65 (75) | 99 | 43 | 21 | 10.49 | press **EtCO₂ normal: ventilation back to 12 × 500** |
+| 102.8 | 19:17 | 4 | recrudescence | 89 | 98/66 (75) | 99 | 66 | 12 | 9.28 | after the 5-min fast-forward |
+| 102.8 | 19:17 | 4 | recrudescence | 89 | 98/66 (75) | 99 | 66 | 12 | 9.28 | after span 2: the EtCO₂ climbing back at normal ventilation |
+| 103.6 | 19:20 | 4 | recrudescence | 89 | 99/66 (75) | 99 | 66 | 14 | 9.28 | press **Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600, O₂ 100 %)** |
+| 117.2 | 24:34 | 4 | recovering | 70 | 94/57 (67) | 99 | 42 | 20 | 7.86 | after the 5-min fast-forward |
+| 117.7 | 24:35 | 4 | recovering | 69 | 94/57 (67) | 99 | 42 | 20 | 7.86 | end: paused |
+| 118.2 | 24:36 | 4 | recovering | 69 | 94/57 (67) | 99 | 42 | 20 | 7.86 | Finish the case (dock) → Debrief now (#/debrief/archive/mw6n04h55ng6) |
+
+States: 00:00 baseline · 06:21 latent · 08:18 earlySigns · 10:08 treated · 11:08 recovering · 15:09 recrudescence · 21:04 treated · 24:04 recovering
+
+Alarms raised: 03:33 RR TOO LOW · 04:11 RR TOO LOW · 04:21 RR TOO LOW · 04:32 RR TOO LOW · 04:44 ETCO2 TOO LOW · 04:45 CO2 APNEA · 05:09 RR TOO LOW · 05:09 AWRR TOO LOW · 05:35 NIBP SYS TOO LOW · 14:30 ETCO2 TOO HIGH
+
+Spans: {"min":5,"via":"button","clockBefore":"08:46","fromT":527.2,"endT":827.2,"wallS":10.5,"speedBefore":4,"speedAfter":4,"rateAfter3s":4.1,"banner":"Fast-forwarded 5 min No alarms","alarms":[],"load1":10.49}
+
+{"min":5,"via":"button","clockBefore":"14:04","fromT":844.5,"endT":1144.5,"wallS":10.3,"speedBefore":4,"speedAfter":4,"rateAfter3s":4,"banner":"Fast-forwarded 5 min ETCO2 TOO HIGH 14:30","alarms":["14:30 ETCO2 TOO HIGH"],"load1":9.28}
+
+{"min":5,"via":"button","clockBefore":"19:20","fromT":1160.8,"endT":1460.8,"wallS":10.6,"speedBefore":4,"speedAfter":4,"rateAfter3s":4,"banner":"Fast-forwarded 5 min No alarms","alarms":[],"load1":7.86}
+
+Measures: {"a4mh":{"states":[{"t":0.3,"id":"baseline"},{"t":381.6,"id":"latent"},{"t":498,"id":"earlySigns"},{"t":608.2,"id":"treated"},{"t":668,"id":"recovering"},{"t":909,"id":"recrudescence"},{"t":1264.1,"id":"treated"},{"t":1444.1,"id":"recovering"}],"inducedAt":"04:03","intubatedAt":"05:03","earlySignsAt":"08:18","earlyAfterSuxS":255,"callAt":"08:20","callAfterEarlyS":1.6,"etco2Below40At":"08:46","normoAt":"14:01","spo2MinInductionToTube":99,"etco2Above45AfterNormoAt":"14:09","dose2At":"19:17","dose2AfterAbove45S":308.4,"etco2AtDose2":66,"etco2PeakAfterNormo":"66 at 19:09","etco2PerMinuteAfterNormo":"+0 41 · +1 54 · +2 57 · +3 60 · +4 63 · +5 65 · +6 52 · +7 50 · +8 47 · +9 45 · +10 43","etco2Below40AfterDose2At":null,"held2At":null,"normo2At":null,"etco2PerMinuteAfterDose2":"+0 66 · +1 51 · +2 49 · +3 47 · +4 45 · +5 42","awrrEnd":20,"phases":[{"t":0,"id":"baseline"},{"t":381.2,"id":"latent"},{"t":498,"id":"earlySigns"},{"t":607.2,"id":"treated"},{"t":667.2,"id":"recovering"},{"t":908,"id":"recrudescence"},{"t":1263.3,"id":"treated"},{"t":1443.3,"id":"recovering"}],"recoveringSeenAt":"14:01","recrudescenceAt":"15:08"},"pdf":{"pages":8,"a4":true,"title":"Debrief Malignant hyperthermia (phases) 2026-11-07"},"handoutPdf":{"pages":1}}
+
+Debrief: {"objectives":[],"actions":[{"row":"action","grade":"met","label":"MH crisis: stop sevoflurane, charcoal filters, propofol infusion, O₂ 100 % at 10 L/min, hyperventilate","due":"08:18 + 2 min 00 s","given":"08:20","why":[]},{"row":"action","grade":"met","label":"Hyperventilate: ventilator 20 × 600, FiO₂ 1.0","due":"08:18 + 2 min 00 s","given":"08:20","why":[]},{"row":"action","grade":"met","label":"Propofol infusion 100–150 µg/kg/min in place of the sevoflurane","due":"08:18 + 2 min 00 s","given":"08:20","why":[]},{"row":"action","grade":"met","label":"Dantrolene 2.5 mg/kg","due":"08:20 + 5 min 00 s","given":"08:41","why":[]},{"row":"repeat","grade":"met","label":"repeat 2","due":"","given":"19:17","why":[]},{"row":"action","grade":"met","label":"Dantrolene 2.5 mg/kg; hyperventilate again (20 × 600, O₂ 100 %)","due":"15:08 + 5 min 00 s","given":"19:17","why":[]},{"row":"action","grade":"met","label":"EtCO₂ normal: ventilation back to 12 × 500","due":"–","given":"14:01","why":[]},{"row":"action","grade":"not applicable","label":"Potassium: calcium chloride 10 mg/kg","due":"–","given":"–","why":["anchor never happened: k > 5.5 never held"]},{"row":"action","grade":"not applicable","label":"Potassium: insulin 10 U with dextrose","due":"–","given":"–","why":["anchor never happened: k > 5.5 never held"]},{"row":"action","grade":"not applicable","label":"Start CPR","due":"–","given":"–","why":["anchor never happened: pulseLoss never happened"]},{"row":"action","grade":"met","label":"Name malignant hyperthermia from the monitor: EtCO₂ rising at unchanged ventilation when it should be falling (42 → 45; without MH it settles 36–39) with a rising heart rate (64 → 80, blunted by fentanyl) (instructor-assessed)","due":"08:18 + 2 min 00 s","given":"08:20","why":[]}],"facts":{"Lowest SpO₂":"96 % at 00:10","Lowest ART M / NIBP M":"62 mmHg at 05:25","Highest EtCO₂":"66 mmHg at 19:09","Highest T1 / T2":"36.8 °C at 00:01","Apnoea alarm to ventilated breaths":"18 s (04:45 → 05:03)","Labs (the model): last (lowest–highest)":"K⁺ 5.0 mmol/L (4.2–5.0) · Lactate 3.8 mmol/L (1.0–3.8) · pH 7.32 (7.17–7.41) · Glucose 6.6 mmol/L (5.6–6.6) · Tcore 36.6 °C (36.6–36.8)"},"timelineRows":41,"minuteRows":25}
+
+Phones: {"rule":"a parameter whose NUMBER differs (> 1 unit, or a number vs a blank; a trailing quality mark such as \"?\" ignored and counted apart) for more than 2 s while comparable = S12-F2 seen","s12f2Seen":true,"marks":[],"perPhone":[{"maxMismatchS":3,"worst":{"param":"NIBP","forS":3,"instructorFirst":"8","phoneFirst":"120 / 80","instructorNow":"70","phoneNow":"78","atWallS":40.2},"samples":243,"compared":152,"commonTiles":10,"sameNumberOtherMarkSamples":139,"holdSamples":0,"status":{"synced":243},"resyncs":4,"lagS":0.1},{"maxMismatchS":4,"worst":{"param":"NIBP","forS":4,"instructorFirst":"8","phoneFirst":"120 / 80","instructorNow":"38","phoneNow":"46","atWallS":41.2},"samples":243,"compared":152,"commonTiles":10,"sameNumberOtherMarkSamples":138,"holdSamples":0,"status":{"synced":243},"resyncs":4,"lagS":0.1},{"maxMismatchS":4,"worst":{"param":"NIBP","forS":4,"instructorFirst":"8","phoneFirst":"120 / 80","instructorNow":"38","phoneNow":"46","atWallS":41.2},"samples":243,"compared":152,"commonTiles":10,"sameNumberOtherMarkSamples":146,"holdSamples":0,"status":{"synced":243},"resyncs":4,"lagS":0.1}]}
+
+Notes: phone 0 (Pixel 7 emulation) synced before Load · phone 1 (Pixel 7 emulation) synced before Load · phone 2 (Pixel 7 emulation) synced before Load · after span 3 (24:34) the phase was recovering and EtCO₂ had not yet stayed below 40 for 2 min since the second dose: ventilation back again NOT pressed (its rule not met)
+
+Errors: none

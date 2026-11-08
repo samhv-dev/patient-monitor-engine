@@ -630,7 +630,7 @@ key	kind	file	verdict	reason
 6bd31636c9d3	C	packages/engine-core/src/l2/pk/data/rows-other.ts	ok	
 6c32770109ef	C	packages/engine-core/vite.config.ts	fixed	dropped the tables §7 check 19 locator (a parameter-table check, not a plan id)
 6c5438984bae	T	packages/engine-core/test/l2/pk/pipeline.test.ts	ok	
-6c63b24a5444	C	packages/engine-core/src/l2/pk/row.ts	fixed	dropped the fact that the remaining maxima are pending Ali's dosing-preset table
+6c63b24a5444	C	packages/engine-core/src/l2/pk/row.ts	fixed	dropped the fact that the remaining maxima are pending the owner's dosing-preset table
 6c6f54164317	C	packages/engine-core/src/l2/endo/core.ts	ok	
 6ca1c6788295	C	packages/engine-core/src/l2/neuro/spont.ts	ok	
 6d15d4b43e0e	T	packages/engine-core/test/engine/blood-sanity-acid.test.ts	ok	
@@ -1210,7 +1210,7 @@ c43ed508487a	C	packages/engine-core/src/l3/alarms/manager.ts	ok
 c44f826b427c	C	packages/engine-core/src/l2/lung/perfusion.ts	ok	
 c4c52d19ef3f	T	packages/engine-core/test/engine/blood-ecg.test.ts	ok	
 c4c5368de17e	C	packages/engine-core/src/types-circ.ts	ok	
-c4d180596b73	C	apps/demo/src/app/drugs.ts	fixed	'brief Q6' is the clinical-app plan's open question 6 (dose presets), not a brief locator: removed, its answer (drafts from the library's ranges, one table for Ali's review) kept; 'a later stage adds' recast
+c4d180596b73	C	apps/demo/src/app/drugs.ts	fixed	'brief Q6' is the clinical-app plan's open question 6 (dose presets), not a brief locator: removed, its answer (drafts from the library's ranges, one table for the owner's review) kept; 'a later stage adds' recast
 c504f22f6e93	C	packages/engine-core/src/l2/organs/effects.ts	ok	
 c5129ff20c2f	C	apps/demo/src/stage7d.ts	ok	
 c5704a79b325	T	packages/engine-core/test/engine/organs-wiring.test.ts	ok	

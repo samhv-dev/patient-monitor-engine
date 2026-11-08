@@ -12,19 +12,19 @@ export type ShockOutcome = 'unchanged' | 'vf' | 'asystole' | 'pea' | 'rosc' | 's
  * Termination is not ROSC: the ROSC share stays 0.1 (van Alem 2003: higher termination, no more ROSC); the rest of
  * the termination lands in asystole/PEA, where CPR resumes (ERC 2021 ALS). */
 export const VF_TABLE = { persistent: 0.1, asystolePea: 0.8, rosc: 0.1 } as const;
-/** Share of the asystole/PEA outcome that is asystole (the rest organised PEA) [ENG]. */
+/** Share of the asystole/PEA outcome that is asystole (the rest organised PEA) [FIT: asystole share of a non-VF outcome; brief research/44 X-08]. */
 export const ASYSTOLE_SHARE = 0.5;
 /** Three-phase VF model: ROSC share × 0.5 at 4–10 min and × 0.2 beyond 10 min; the rest goes to asystole/PEA. */
 export const VF_DURATION_FACTORS = [
   { fromS: 600, rosc: 0.2 },
   { fromS: 240, rosc: 0.5 },
 ] as const;
-/** Energy below 50 % of the default halves the termination probability [ENG]. */
+/** Energy below 50 % of the default halves the termination probability [FIT: low-energy termination penalty; brief research/44 X-08]. */
 export const LOW_ENERGY_FRACTION = 0.5;
 export const LOW_ENERGY_TERMINATION = 0.5;
-/** Synchronised cardioversion of an organised tachyarrhythmia with a pulse: sinus 0.8 [ENG]. */
+/** Synchronised cardioversion of an organised tachyarrhythmia with a pulse: sinus 0.8 [FIT: cardioversion success; brief research/44 X-08]. */
 export const CARDIOVERSION_SINUS = 0.8;
-/** Unsynchronised shock on the T peak ± 40 ms of a perfusing rhythm: VF 0.3 [ENG] (teaches sync). */
+/** Unsynchronised shock on the T peak ± 40 ms of a perfusing rhythm: VF 0.3 [FIT: R-on-T VF induction; brief research/44 X-08] (teaches sync). */
 export const R_ON_T_VF = 0.3;
 export const T_PEAK_WINDOW_S = 0.04;
 
@@ -34,7 +34,7 @@ const ORGANISED_TACHY: ReadonlySet<RhythmId> = new Set([
   'svtAvnrt', 'svtAvrt', 'aflutter', 'afib', 'preexcitedAf', 'atrialTach', 'junctionalTachy', 'mat', 'vtMono',
 ]);
 
-/** What is being shocked (vtPoly/torsades count as pulseless VT: their k_rhythm is ≤ 0.2, brief §4.8) [ENG]. */
+/** What is being shocked (vtPoly/torsades count as pulseless VT: their k_rhythm is ≤ 0.2, brief §4.8) [ENG: scenario]. */
 export function shockClass(id: RhythmId, pulseless: boolean): ShockClass {
   if (VF_CLASS.has(id) || (pulseless && (id === 'vtMono' || id === 'idioventricular'))) return 'vf';
   if (ARREST.has(id) || pulseless) return 'arrest';
@@ -67,7 +67,7 @@ export interface ShockContext {
   rhythmId?: RhythmId;
 }
 
-/** State factors on the ROSC share. Each is [ENG] with its sourced DIRECTION named. */
+/** State factors on the ROSC share. Each is [FIT: ROSC state factor sizes (directions sourced); brief research/44 X-09] with its sourced DIRECTION named. */
 export const AA_ROSC_GAIN = 0.3; // ARREST 1999 (survival to admission 44.3 % vs 34.6 %), ALPS 2016
 export const K_ROSC_PER_MMOL = 0.25; // above 6 mmol/L (UK Renal Association: treat the K before expecting a shock to work)
 export const K_ROSC_FLOOR = 0.2;
@@ -79,9 +79,9 @@ export const CPP_ROSC_MAX = 1.3;
 /** CoPP matters only in the circulatory phase — Weisfeldt & Becker 2002 (0–4 min electrical phase: shock at once),
  * Cobb 1999 / Wik 2003 (CPR first helps only beyond 4–5 min). The same 240 s as VF_DURATION_FACTORS. */
 export const CIRCULATORY_PHASE_S = 240;
-export const ARREST_ROSC_FULL_S = 1800; // a non-VF arrest's own decay [ENG]
+export const ARREST_ROSC_FULL_S = 1800; // a non-VF arrest's own decay [FIT: ROSC state factor sizes (directions sourced); brief research/44 X-09]
 /** VF below 30 °C is often shock-refractory (ERC 2021 special circumstances; Danzl & Pozos 1994; Brown 2012) —
- * termination × (1 − 0.3 per °C below 30), floor 0.2 [ENG magnitude] (research/20). */
+ * termination × (1 − 0.3 per °C below 30), floor 0.2 [FIT: ROSC state factor sizes (directions sourced); magnitude; brief research/44 X-09] (research/20). */
 export const TEMP_SHOCK_C = 30;
 export const TEMP_TERM_PER_C = 0.3;
 export const TEMP_TERM_FLOOR = 0.2;
@@ -103,13 +103,23 @@ export function temperatureTermination(tempC: number | undefined): number {
   return tempC === undefined ? 1 : clamp(1 - TEMP_TERM_PER_C * Math.max(0, TEMP_SHOCK_C - tempC), TEMP_TERM_FLOOR, 1);
 }
 
-/** Synchronised cardioversion success by rhythm and biphasic energy, p = pMax / (1 + (E50/E)^2) [ENG fit]
- * (research/20). AF: Page 2002, Mittal 2000, ERC 2021 (120–150 J start); flutter and paroxysmal SVT:
- * ERC 2021 (70–120 J), Neumar 2010 (50–100 J), > 90 %; monomorphic VT with a pulse: Neumar 2010 (100 J, > 90 %)
- * [VERIFY]. Any other organised tachycardia, or no rhythm id, keeps the flat CARDIOVERSION_SINUS. */
+/** Synchronised cardioversion success by rhythm and biphasic energy (the FIRST-shock probability at that energy),
+ * p = pMax / (1 + (E50/E)^2); the Hill exponent 2 is [FIT: cardioversion curve steepness; brief research/44 X-08] (research/20).
+ * AF (and pre-excited AF): Mittal S et al., Circulation 2000;101:1282 (randomised, n = 88 biphasic): RECTILINEAR
+ * biphasic shocks escalating 70 → 120 → 150 → 170 J converted 60/88 = 68 % at the first 70 J shock and 83/88 = 94 %
+ * cumulatively. pMax is the cumulative 0.94 (the curve's ceiling: no energy converts more than the whole escalation
+ * did) and E50 puts the curve through 0.68 at 70 J: E50 = 70·√(0.94/0.68 − 1) = 43.3 J. The engine's energy is the
+ * selected biphasic energy, read as Mittal's delivered rectilinear-biphasic joules (the skins model no waveform).
+ * Flutter and paroxysmal SVT: ERC 2021 (70–120 J), Neumar 2010 (50–100 J), > 90 %; monomorphic VT with a pulse:
+ * Neumar 2010 (100 J, > 90 %) [VERIFY]; their pMax/E50 stay [FIT: cardioversion success curve; brief research/44 X-08].
+ * Any other organised tachycardia, or no rhythm id, keeps the flat CARDIOVERSION_SINUS. */
 export const CARDIOVERSION_HILL = 2;
+/** Mittal 2000: 68 % at the first 70 J rectilinear-biphasic shock, 94 % cumulative over 70/120/150/170 J. */
+export const AF_FIRST_SHOCK_70J = 0.68;
+export const AF_CUMULATIVE = 0.94;
+export const AF_E50_J = 70 * Math.sqrt(AF_CUMULATIVE / AF_FIRST_SHOCK_70J - 1);
 export const CARDIOVERSION_CURVES: Partial<Record<RhythmId, { pMax: number; e50J: number }>> = {
-  afib: { pMax: 0.95, e50J: 70 }, preexcitedAf: { pMax: 0.95, e50J: 70 },
+  afib: { pMax: AF_CUMULATIVE, e50J: AF_E50_J }, preexcitedAf: { pMax: AF_CUMULATIVE, e50J: AF_E50_J },
   aflutter: { pMax: 0.97, e50J: 12 }, svtAvnrt: { pMax: 0.97, e50J: 12 }, svtAvrt: { pMax: 0.97, e50J: 12 },
   vtMono: { pMax: 0.97, e50J: 20 },
 };

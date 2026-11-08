@@ -9,6 +9,7 @@
 // conditions, rhythms, …), its known misses (scripts/known-misses.ts) and its test files (expected failures and skips per file).
 // No repository-wide or per-file totals (file, line or test counts) on the pages: every PR changed them, so any two PRs
 // conflicted on the generated pages (research/42 §1.4 c). The index keeps its per-module table.
+// and, for a module with rows in the coupling registry, its Couplings (scripts/couplings.ts).
 // Hand-written: purpose, equations in words, related documents.
 //   node --experimental-strip-types scripts/model-docs.ts          → writes docs/model/*.md
 //   node --experimental-strip-types scripts/model-docs.ts --check  → exit 1 if a committed page is stale
@@ -18,6 +19,7 @@ import { createRequire } from 'node:module';
 import { join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type * as TS from 'typescript';
+import { couplingsSection } from './couplings.ts'; // A cycle (it reads extract()): safe, neither module calls the other at load
 import { failsTitles, skippedTitles, testFiles } from './deviations.ts';
 import { listMisses, missRows } from './known-misses.ts';
 import { MODULES, type ModelModule, moduleOfSource, ownerOfTest } from './model-modules.ts';
@@ -48,10 +50,10 @@ const clean = (c: string) =>
     .join(' ')
     .replace(/\s+/g, ' ')
     .trim();
-function leading(text: string, node: TS.Node): string {
+export function leading(text: string, node: TS.Node): string {
   return (ts.getLeadingCommentRanges(text, node.getFullStart()) ?? []).map((r) => clean(text.slice(r.pos, r.end))).join(' ');
 }
-function trailing(text: string, node: TS.Node): string {
+export function trailing(text: string, node: TS.Node): string {
   const lineEnd = text.indexOf('\n', node.getEnd());
   const rest = text.slice(node.getEnd(), lineEnd < 0 ? undefined : lineEnd);
   const i = rest.indexOf('//');
@@ -74,7 +76,7 @@ const UNIT_SUFFIX: [RegExp, string][] = [
   [/_PCT$/, '%'], [/_MMOL$/, 'mmol'], [/_G_DL$/, 'g/dL'], [/_KPA$/, 'kPa'],
 ]; // not _MIN, _C, _H: they also mean "minimum", "compliance/coefficient", "high" in this code
 const UNIT_WORD = /^(?:mmHg|cmH2O|mL|L|dL|s|ms|min|h|Hz|kg|g|mg|µg|ng|mmol|mEq|mOsm|°C|K|kPa|bpm|%|W|J|mV|µV|dyn|WU|cm²?|m²|U|IU|mU|µU|pmol|nmol|\/s|\/min|\/h|\/mL|\/mmHg|\/cmH2O)(?:[·\/^]?(?:mmHg|cmH2O|mL|L|dL|s|ms|min|h|kg|g|mg|µg|mmol|mEq|mOsm|cm|m²|cm⁵|\d|−\d|-\d))*\b/;
-const TAG_RE = /\[(?:ENG|P|TXT|VERIFY|INF)[^\]]*\]/g;
+const TAG_RE = /\[(?:ENG|FIT|P|TXT|VERIFY|INF)[^\]]*\]/g;
 const SOURCE_RE =
   /\b[A-Z][A-Za-z'’-]+(?:\s(?:&|and)\s[A-Z][A-Za-z'’-]+|\set al\.?)?,?\s(?:19|20)\d\d[a-z]?\b|\b(?:tables?|annex|catalogue|brief|research|B)\s?\/?\s?§\s?[\w.]+|\bresearch\/?\s?\d+[\w §.]*|\bPulse(?: CFG)?\b[\w –-]*|\b(?:M10|Miller|Guyton|Nunn|West|Kaplan|Braunwald)\b[^;,)]*|\bDI-\d+[a-z]?\b/g;
 
@@ -85,7 +87,7 @@ function unitOf(name: string, comment: string): string {
   for (const [re, u] of UNIT_SUFFIX) if (re.test(name)) return u;
   return NONE;
 }
-function sourcesOf(text: string): string {
+export function sourcesOf(text: string): string {
   const tags = [...new Set(text.match(TAG_RE) ?? [])];
   const srcs = [...new Set((text.match(SOURCE_RE) ?? []).map((s) => s.trim()))];
   return [...srcs, ...tags].join('; ') || NONE;
@@ -239,6 +241,7 @@ export async function renderPage(root: string, m: ModelModule, old: string): Pro
     '',
   ];
   if (relations.length) out.push('### Relations written in the code comments', '', ...table(['Where', 'Relation'], relations.map((r) => [`[\`${r.file.split('/').pop()}:${r.line}\`](../../${r.file}#L${r.line})`, r.text])), '');
+  out.push(...couplingsSection(root, m.id)); // The coupling registry's rows for this module
   out.push('## State', '');
   if (fields.length) {
     for (const type of [...new Set(fields.map((x) => x.type))]) {

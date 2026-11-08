@@ -29,10 +29,10 @@ export const createHookState = (): RhythmHookState => ({ aden: { active: false, 
  * children (M10 ch. 23 "succinylcholine: bradycardia … especially after a second dose and in children"). It is a RISK,
  * not a certainty, so it is a seeded draw on the `outcome` stream, not a deterministic response.
  */
-export const SUX_REPEAT_P = 0.35; // adult probability per repeat dose [ENG]
-export const SUX_REPEAT_P_CHILD = 0.7; // < 12 y [ENG: "much commoner in children"]
+export const SUX_REPEAT_P = 0.35; // adult probability per repeat dose [FIT: succinylcholine repeat-dose bradycardia probability or window; brief research/44 L2-27]
+export const SUX_REPEAT_P_CHILD = 0.7; // < 12 y [FIT: succinylcholine repeat-dose bradycardia probability or window; "much commoner in children"; brief research/44 L2-27]
 export const SUX_REPEAT_MIN_GAP_S = 90; // a second dose inside the same rapid sequence is one dose
-export const SUX_REPEAT_MAX_GAP_S = 1200; // beyond 20 min the sensitisation has gone [ENG]
+export const SUX_REPEAT_MAX_GAP_S = 1200; // beyond 20 min the sensitisation has gone [FIT: succinylcholine repeat-dose bradycardia probability or window; brief research/44 L2-27]
 export const SUX_BRADY_RATE_BPM = 45;
 export const SUX_BRADY_S = 60;
 export const SUX_MUSC_BLOCK_PROTECT = 0.5; // atropine/glycopyrrolate occupancy that abolishes it
@@ -55,7 +55,7 @@ export const L_AMIO_VT = -Math.log(0.62) / 2400;
 export const L_PROC_VT = -Math.log(0.33) / 2400;
 export const L_LIDO_VT = -Math.log(0.8) / 1200;
 export const L_AMIO_AF = -Math.log(0.75) / 3600;
-/** VF on an AV-nodal block of pre-excited AF, per event [ENG, for the calibration pass]. */
+/** VF on an AV-nodal block of pre-excited AF, per event [FIT: VF on AV-nodal block of pre-excited AF (teaching hazard); for the calibration pass; brief research/44 L2-14]. */
 export const PREEXCITED_VF_P = 0.2;
 const VT_RHYTHMS: readonly string[] = ['vtMono'];
 
@@ -106,8 +106,8 @@ export function rhythmRequest(pk: PkState, hs: RhythmHookState, current: { id: R
     return null;
   }
   // AV-nodal block in PRE-EXCITED AF favours the accessory pathway — the rate RISES and VF may follow (ALS; M10 ch.
-  // 25). The teaching hazard adenosine, verapamil and diltiazem carry. One VF draw per event at PREEXCITED_VF_P [ENG:
-  // the direction is the ALS warning; the size has no source — Q10].
+  // 25). The teaching hazard adenosine, verapamil and diltiazem carry. One VF draw per event at PREEXCITED_VF_P [FIT: VF on AV-nodal block of pre-excited AF (teaching hazard)
+  // the direction is the ALS warning; the size has no source — Q10; brief research/44 L2-14].
   if (hs.preexcited && pk.bus.avNodeBlock < 0.3) hs.preexcited = false;
   if (current.id === 'preexcitedAf' && pk.bus.avNodeBlock >= 0.5 && !hs.preexcited) {
     hs.preexcited = true;

@@ -2,14 +2,16 @@
 // only while Home is on screen. What each one measures, exactly:
 //  - Engine: the median time of one 20-ms engine tick, measured by engine-bench.worker.ts on the same engine build in a
 //    background thread of this page (the monitor's own worker has no timing hook). Updated every 5 s.
-//  - Memory: `performance.memory.usedJSHeapSize` of this page (Chromium only); elsewhere "—" with a tooltip. The
-//    workers' heaps (the monitor's engine among them) are not in it.
-//  - CPU, this app: the MAIN THREAD's busy fraction over the last 5 s, in % of one core. Busy time = the long tasks a
+//  - Memory: `performance.memory.usedJSHeapSize` of this page (Chromium only); a browser without it (Safari, Firefox)
+//    has no Memory tile (MUI-17). The workers' heaps (the monitor's engine among them) are not in it.
+//  - CPU, this app: the MAIN THREAD's busy fraction over the last 2 s, in % of one core. Busy time = the long tasks a
 //    `PerformanceObserver` reports (`longtask`, every task of 50 ms or more, exact) + the frame overruns seen by
 //    requestAnimationFrame (an interval longer than 1.5 frames counts its excess over one frame as busy) that no long
 //    task already covers. Short tasks that delay no frame are not seen, and the monitor's engine and drawing run in
 //    their own worker thread, so this is the instructor page's own load, not the whole browser's.
-export const CPU_WINDOW_MS = 5000;
+/** MUI-17: the owner's 2 s (it was 5 s: a change of load took 5 s to show). 2 s holds 120 frames at 60 Hz, so one
+ *  frame's overrun (16.7 ms) moves the tile by 0.8 % — finer than the whole-percent it prints. */
+export const CPU_WINDOW_MS = 2000;
 
 export interface Span {
   start: number;
@@ -122,7 +124,7 @@ export class Meters {
 
   /** How the CPU tile measures here (its tooltip). */
   cpuMethod(): string {
-    return `The main thread's busy share over the last 5 s: ${this.longTaskSupported ? 'long tasks plus frame overruns' : 'frame overruns (this browser reports no long tasks)'}. The monitor's engine and drawing run in their own thread and are not counted.`;
+    return `The main thread's busy share over the last ${CPU_WINDOW_MS / 1000} s: ${this.longTaskSupported ? 'long tasks plus frame overruns' : 'frame overruns (this browser reports no long tasks)'}. The monitor's engine and drawing run in their own thread and are not counted.`;
   }
 
   private stopBench(): void {

@@ -1,5 +1,5 @@
 // Tables §7 / brief §4.9 sanity checks on the whole engine (MODELED). Bands marked "prototype" are the 7a
-// prototype's measured bands where the tables' targets are not yet met (Deviations; Ali's R44 calibration pass).
+// prototype's measured bands where the tables' targets are not yet met (Deviations; the owner's R44 calibration pass).
 import { describe, expect, it } from 'vitest';
 import { createEngine } from '../../src/engine.ts';
 import type { EngineEvent, PatientProfile } from '../../src/types.ts';
@@ -67,7 +67,7 @@ describe('sanity scenarios I (MODELED)', () => {
   // FU-4 F2 (Task 18e, ruling 2 / D23): the humoral arm of haemorrhage compensation (AVP/angiotensin, which propofol does
   // not suppress) answers the induction's own unloading, so the healthy fall is now 0.801 — 0.1 % above the band's
   // upper edge. The two sourced targets (this band and "class III + 2 mg/kg does not arrest") pull against each other;
-  // the MAP side is split out as a record (Ali's Q1), the HR side is unchanged.
+  // the MAP side is split out as a record (the owner's Q1), the HR side is unchanged.
   const propofol = (() => {
     let p: Promise<{ ratio: number; dHr: number }> | undefined;
     return () => (p ??= run({}, [[120, { kind: 'drug', drugId: 'propofol', dose: 2, unit: 'mg/kg', route: 'iv' }]], 300).then((r) => {

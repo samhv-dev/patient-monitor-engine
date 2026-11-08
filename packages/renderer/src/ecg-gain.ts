@@ -2,22 +2,22 @@
 // Vendor behaviour: Philips IntelliVue "Auto Size" lets the monitor choose the adjustment factor from the size set for
 // each displayed ECG wave (MP20–MP90 IFU M8000-9001K §"Changing the Size of the ECG Wave"; MX400–MX800 IFU 453564443141);
 // Mindray "Auto" adjusts the wave size (BeneView T5/T8/T9 manual 6800-20-50657 §9.5.11). Neither states a cadence, a
-// hysteresis or a beat rule, so these are [ENG]: the size is judged per 4-s window on the beats' median amplitude, and a
+// hysteresis or a beat rule, so these are [ENG: display]: the size is judged per 4-s window on the beats' median amplitude, and a
 // new size is taken only when it has been asked for by two consecutive windows and the amplitude has left a band around
 // the current size's threshold (US 6,510,339 B2 likewise waits for agreement among several measurements).
 
-/** Every judgement looks at one window of this length, on the sim clock's grid (windows [kW − W, kW]) [ENG]. */
+/** Every judgement looks at one window of this length, on the sim clock's grid (windows [kW − W, kW]) [ENG: display]. */
 export const AUTO_GAIN_WINDOW_S = 4;
-/** The window's amplitude should fill at most this share of the lane's nominal height (RR-2) [ENG]. */
+/** The window's amplitude should fill at most this share of the lane's nominal height (RR-2) [ENG: display]. */
 export const AUTO_GAIN_FILL = 0.6;
-/** Consecutive windows that must ask for the same new size before it is shown [ENG; brief rule, no manual states one]. */
+/** Consecutive windows that must ask for the same new size before it is shown [ENG: display; brief rule, no manual states one]. */
 export const AUTO_GAIN_HOLD = 2;
 /** Hysteresis: a smaller size needs the amplitude this fraction over the current size's threshold, a larger one this
- *  fraction under its own threshold. The sizes step ×2, so the bands never overlap [ENG]. */
+ *  fraction under its own threshold. The sizes step ×2, so the bands never overlap [ENG: display]. */
 export const AUTO_GAIN_BAND = 0.2;
-/** The nominal ECG lane (mm) of a skin with no measured screen (layout.grid with sweep.pxPerMm) [ENG]. */
+/** The nominal ECG lane (mm) of a skin with no measured screen (layout.grid with sweep.pxPerMm) [ENG: display]. */
 export const NOMINAL_ECG_LANE_MM = 30;
-/** A beat closer than this to a window edge is not whole in the window and is left out (s) [ENG]. */
+/** A beat closer than this to a window edge is not whole in the window and is left out (s) [ENG: display]. */
 const EDGE_S = 0.1;
 const BASE_MM_PER_MV = 10; // ×1 = 10 mm/mV (brief §3.5)
 

@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { startRelay } from '../../../packages/controller/relay/server.ts';
-import { openApp, startVite } from './app-support.ts';
+import { openApp, speedV2, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -60,8 +60,8 @@ async function follow(page: Page, scenario: string, browserName: string): Promis
   const ctx = page.context();
   ctx.on('console', (m) => m.page() !== page && logs.length < 40 && logs.push(`${m.type()}: ${m.text()}`));
   ctx.on('weberror', (e) => logs.length < 40 && logs.push(`error: ${e.error().message}`));
-  await openApp(page, base, `?scenario=${scenario}`, { warmMs: 1500 });
-  await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×4' }).click();
+  await openApp(page, base, `?scenario=${scenario}#/teach2`, { warmMs: 1500 });
+  await speedV2(page, 4); // Instructor v2's header
   await page.evaluate(() => (location.hash = '#/monitor'));
   const button = page.getByRole('button', { name: 'Open on a second screen', includeHidden: true });
   let f: Page;

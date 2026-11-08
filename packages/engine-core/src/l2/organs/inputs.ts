@@ -13,17 +13,17 @@ import { metabolic, type RespState } from '../resp/pipeline.ts';
 export const HB_DEFAULT = 14; // the gas model's HB_G_DL without the blood
 export const ALBUMIN_DEFAULT = 42; // g/L (annex B2 oncotic reference)
 export const PAW_REF_CMH2O = 10; // Only mean Paw above 10 cmH2O acts (research 03 §8.7)
-/** Anaesthetised by drugs (kidney stress S, GA fallback) [ENG]: propofol Ce ≥ 1.5 µg/mL, ≥ 0.5 MAC, ketamine ≥ 0.5 ×
+/** Anaesthetised by drugs (kidney stress S, GA fallback) [FIT: drug-threshold "anaesthetised" flag; brief research/44 L2-25]: propofol Ce ≥ 1.5 µg/mL, ≥ 0.5 MAC, ketamine ≥ 0.5 ×
  *  its reference dose, or a drug CMRO2 multiplier ≤ 0.85 (any other hypnotic). */
 export const GA_PROP_CE = 1.5;
 export const GA_MAC = 0.5;
 export const GA_KETAMINE = 0.5;
 export const GA_CMRO2 = 0.85;
-/** α-agonist load as norepinephrine-equivalent µg/kg/min [ENG]: NE 1, epinephrine 1, phenylephrine 0.1 (≈ 1/10 potency). */
+/** α-agonist load as norepinephrine-equivalent µg/kg/min [FIT: splanchnic α-agonist constriction and "above need" ramp; brief research/44 L2-09]: NE 1, epinephrine 1, phenylephrine 0.1 (≈ 1/10 potency). */
 export const PE_NE_EQ = 0.1;
-/** Splanchnic constriction 0–1 = NE-eq / 0.3 (tables `hbfFactor` ×0.6 "high-dose α-agonist") [ENG]. */
+/** Splanchnic constriction 0–1 = NE-eq / 0.3 (tables `hbfFactor` ×0.6 "high-dose α-agonist") [FIT: splanchnic α-agonist constriction and "above need" ramp; brief research/44 L2-09]. */
 export const ALPHA_E_FULL = 0.3;
-/** "Above need" [ENG]: none of the α-agonist is excess at MAP ≤ 75, all of it at MAP ≥ 90 (tables §5.2 D row). */
+/** "Above need" [FIT: splanchnic α-agonist constriction and "above need" ramp; brief research/44 L2-09]: none of the α-agonist is excess at MAP ≤ 75, all of it at MAP ≥ 90 (tables §5.2 D row). */
 export const ALPHA_NEED_MAP = 75;
 export const ALPHA_EXCESS_MAP = 90;
 
@@ -126,7 +126,7 @@ export function readDrugView(src: { pk?: unknown; neuro?: unknown; endo?: unknow
   };
 }
 
-/** The α-agonist that is "above need" (tables §5.2 D row: renal cost of over-pressing) [ENG]. */
+/** The α-agonist that is "above need" (tables §5.2 D row: renal cost of over-pressing) [FIT: splanchnic α-agonist constriction and "above need" ramp; brief research/44 L2-09]. */
 export function alphaExcess(v: OrganView): number {
   return v.drugs.alphaNe * Math.min(1, Math.max(0, (v.map - ALPHA_NEED_MAP) / (ALPHA_EXCESS_MAP - ALPHA_NEED_MAP)));
 }
@@ -139,7 +139,7 @@ export function readOrganView(ctx: OrganSources, t: number): OrganView {
   const b = bloodOf(ctx.blood);
   const site = hs.lastSite;
   // Without the blood: MODELED reads the circulation's circulating volume (its `bleed` or `fluid` changes it); MANUAL
-  // maps the instructor's volumeStatus 1 → normovolaemic, 0 → −40 % (brief §4.9 "severe hypovolaemia") [ENG]
+  // maps the instructor's volumeStatus 1 → normovolaemic, 0 → −40 % (brief §4.9 "severe hypovolaemia") [ENG: control]
   const circ = ctx.l1.mode === 'modeled' ? (hs as unknown as { circ?: CircModelState }).circ : undefined;
   const bvFallback = circ
     ? totalVolume(circ.s, circ.p) / circ.prof.bloodVolumeMl

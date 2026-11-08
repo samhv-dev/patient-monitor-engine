@@ -78,7 +78,7 @@ Every number below was measured on this branch (Node 26, macOS, shared machine);
 - `NEO_G50` **0.3** (`NEO_SMAX` 0.7 = the ceiling); `STIM_FULL` 1.5; `GLYCO_U` 1.2; engine sevoflurane dial **2.5 %** for
   1 MAC (measured end-tidal 1.00). No `[ENG, band missed]` row.
 
-## Deviations, exceptions and questions for Ali
+## Deviations, exceptions and questions for samhv-dev
 - **D-7f-2:** sugammadex binding (plasma + effect site, ke0 0.095/0.152) is 7g's; 7f's reversal bands on it: 2/4/16 mg/kg
   pass; **R-7f-7** (underdose recurarisation) open, `it.fails`.
 - **D-7f-3:** fentanyl ventilatory potency 0.55× remifentanil (tables 1.6×), Q54.

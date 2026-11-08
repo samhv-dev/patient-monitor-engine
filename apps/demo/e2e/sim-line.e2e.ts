@@ -67,7 +67,7 @@ test('the line is on the Monitor view and the learner window, never on the instr
   onLoad(page);
   context.on('page', onLoad);
   const ws = await classroom();
-  await openApp(page, base, `?relay=${encodeURIComponent(ws)}#/teach`, { warmMs: 1500, site: { skin: 'saadat-like' } });
+  await openApp(page, base, `?relay=${encodeURIComponent(ws)}#/teach2`, { warmMs: 1500, site: { skin: 'saadat-like' } });
   // the Instructor view: the same monitor, no line, no footer line under it
   expect(await where(page)).toEqual({ at: 'none', footer: false });
   const teachHeader = await page.locator('.stage .pme-hdr').boundingBox();
@@ -75,12 +75,17 @@ test('the line is on the Monitor view and the learner window, never on the instr
   const before = await hostBox(page);
   await go(page, '#/monitor');
   await expect.poll(() => where(page), { timeout: 15_000 }).toEqual({ at: 'header', footer: false });
-  await go(page, '#/teach');
+  await go(page, '#/teach2');
   await expect.poll(() => where(page), { timeout: 15_000 }).toEqual({ at: 'none', footer: false });
   expect(await page.locator('.stage .pme-hdr').boundingBox()).toEqual(teachHeader);
   expect(await hostBox(page)).toEqual(before);
   for (const r of ['#/', '#/room', '#/scenarios', '#/patient', '#/debrief', '#/explore', '#/settings']) {
-    await go(page, r);
+    // CI WebKit, run 42412485202: "Execution context was destroyed, most likely because of a navigation" in go()'s frame
+    // wait, and its error context showed a follower's page ("Waiting for the instructor: …"); no code path
+    // that navigates the host page was found (brief 90). A sighting names the documents each window loaded and the pages open.
+    await go(page, r).catch((e: Error) => {
+      throw new Error(`${e.message}\nat ${r}; loads ${JSON.stringify(loads)}; pages ${JSON.stringify(context.pages().map((p) => p.url()))}`);
+    });
     await expect.poll(() => page.evaluate((line) => document.body.innerText.includes(line), LINE), { message: r }).toBe(false);
   }
   // another skin (a one-row header): a strip above the monitor on the Monitor view only
@@ -115,7 +120,7 @@ test("the line is on a learner's phone held upright: the idle message area, whol
   test.skip(browserName === 'webkit' && !!process.env.CI, 'FX-2: the 2-vCPU CI WebKit runner cannot hold an instructor, a phone and the relay in step (run 40320503647); macOS WebKit and CI Chromium run it');
   test.setTimeout(150_000);
   const ws = await classroom();
-  await openApp(page, base, `?relay=${encodeURIComponent(ws)}#/teach`, { warmMs: 1500, site: { skin: 'saadat-like' } });
+  await openApp(page, base, `?relay=${encodeURIComponent(ws)}#/teach2`, { warmMs: 1500, site: { skin: 'saadat-like' } });
   const code = await page.evaluate(() => (window as unknown as W).__pmeApp.session.code);
   const { defaultBrowserType: _b, ...dev } = devices['iPhone 13']; // 390 px wide, the narrowest phone measured
   const ph = await (await browser.newContext(dev)).newPage();

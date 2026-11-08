@@ -75,6 +75,21 @@ device layer the engine keeps beside its physiology (`l3/device-layer.ts`).
 | [`qrs.ts:178`](../../packages/engine-core/src/l3/qrs.ts#L178) | Learning phase (Pan–Tompkins): SPK = 1/3 of the max, NPK = 1/2 of the mean. |
 | [`spo2.ts:100`](../../packages/engine-core/src/l3/spo2/spo2.ts#L100) | QRS/pulse tone pitch from the displayed SpO2 (research 03 §3.6 item 6): f = BEEP_BASE_HZ·2^(−(100 − SpO2)·s/12) with |
 
+## Couplings
+
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 6 rows; SOURCED 0, FIT 0, ENG 0, UNTAGGED 6, ABSENT 0.
+The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
+constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
+
+| Id | From → to | Sign · form | Class | Constants | Timing, limits | Note |
+|---|---|---|---|---|---|---|
+| `monitor.abpMean` | `hemo.circOut.pRad` (Radial pressure) → `mon.abpMean` (ART M (MAP)) | + · state | UNTAGGED | — | — | The radial transducer's beat-averaged mean. |
+| `monitor.abpSys` | `hemo.circOut.pRad` (Radial pressure) → `mon.abpSys` (ART S) | + · state | UNTAGGED | — | — | The radial transducer's systolic. |
+| `monitor.hr` | `hr.to` → `mon.hr` (HR) | + · state | UNTAGGED | — | — | The rhythm engine beats at the requested rate; the monitor counts the detected QRS complexes. |
+| `monitor.spo2` | `l1.coupled.spo2` → `mon.spo2` (SpO₂) | + · state | UNTAGGED | — | — | The oximeter's averaged saturation. |
+| `monitor.etco2` | `l1.coupled.etco2` → `mon.etco2` (EtCO₂) | + · state | UNTAGGED | — | — | The capnograph's end-tidal value. |
+| `monitor.rr` | `resp.spont.rr` (RR (spont)) → `mon.rr` (RR) | + · state | UNTAGGED | — | — | The respiratory rate the monitor counts. |
+
 ## State
 
 ### `DeviceState` ([`l3/device-layer.ts`](../../packages/engine-core/src/l3/device-layer.ts))
@@ -85,7 +100,7 @@ device layer the engine keeps beside its physiology (`l3/device-layer.ts`).
 | `inputs` | `AlarmInputs` | — |
 | `defib` | `DefibState` | — |
 | `pacer` | `PacerState` | — |
-| `defibModel` | `string \| null` | The room's defibrillator model (a `DEFIB_MODELS` key, Room plan R5a), or null: the skin's spec, else the fallback. Absent in older snapshots (read as null). |
+| `defibModel` | `string \| null` | The room's defibrillator model (a `DEFIB_MODELS` key, Room plan R5a; its pacer too, row 58), or null: the skin's defibrillator and pacer spec, else the fallback. Absent in older snapshots (read as null). |
 | `sync` | `SyncState` | — |
 | `pending` | `PendingRhythm \| null` | — |
 | `lastBeat` | `{ t: number; qtMs: number } \| null` | — |
@@ -228,25 +243,25 @@ device layer the engine keeps beside its physiology (`l3/device-layer.ts`).
 |---|---|---|---|---|
 | `CAPTURE_S` | `10` | s | — | — |
 | `CAPTURE_RATE` | `500` | — | — | — |
-| `PREROLL_S` | `20` | s | [ENG] | Filter pre-roll: up to this much older signal settles the 0.05 Hz high-pass before the window [ENG]. |
+| `PREROLL_S` | `20` | s | [ENG: device] | Filter pre-roll: up to this much older signal settles the 0.05 Hz high-pass before the window [ENG: device]. |
 
 ### [`l3/co2-numerics/co2-numerics.ts`](../../packages/engine-core/src/l3/co2-numerics/co2-numerics.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `DETECT_FRACTION` | `0.5` | — | brief §4.4 | 50 % of the recent peak (brief §4.4) |
-| `RELEASE_FRACTION` | `0.3` | — | [ENG] | hysteresis [ENG] |
-| `DETECT_FLOOR_MMHG` | `4` | mmHg | [ENG] | [ENG] |
-| `ETCO2_WINDOW_S` | `10` | s | brief §4.4; [ENG] | brief §4.4 [ENG] |
-| `AWRR_INTERVALS` | `6` | — | brief §4.4; [ENG 4–8] | brief §4.4 [ENG 4–8] |
+| `RELEASE_FRACTION` | `0.3` | — | [ENG: device] | hysteresis [ENG: device] |
+| `DETECT_FLOOR_MMHG` | `4` | mmHg | [ENG: device] | [ENG: device] |
+| `ETCO2_WINDOW_S` | `10` | s | brief §4.4; [ENG: device] | brief §4.4 [ENG: device] |
+| `AWRR_INTERVALS` | `6` | — | brief §4.4; [ENG: device; 4–8] | brief §4.4 [ENG: device; 4–8] |
 | `GAS_APNOEA_S` | `20` | s | brief §4.4 | Philips default; saadat gas apnoea 20 s (brief §4.4) |
 
 ### [`l3/device-layer.ts`](../../packages/engine-core/src/l3/device-layer.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `SYNC_DELAY_S` | `0.02` | s | brief §6.5; [ENG] | Sync shock: delivered this long after the detected R (brief §6.5: on the next R within ≤ 60 ms) [ENG]. |
-| `T_PEAK_QT_FRACTION` | `0.65` | — | [ENG] | T peak ≈ R + 0.65 × QT (the kernel T peak sits ~⅔ into QT at normal rates) [ENG]. |
+| `SYNC_DELAY_S` | `0.02` | s | brief §6.5; [ENG: device] | Sync shock: delivered this long after the detected R (brief §6.5: on the next R within ≤ 60 ms) [ENG: device]. |
+| `T_PEAK_QT_FRACTION` | `0.65` | — | [ENG: device] | T peak ≈ R + 0.65 × QT (the kernel T peak sits ~⅔ into QT at normal rates) [ENG: device]. |
 | `ROSC_HR` | `80` | — | — | — |
 | `ROSC_BP_START` | `0.5` | — | — | — |
 | `CARDIOVERSION_HR` | `75` | — | — | — |
@@ -256,7 +271,7 @@ device layer the engine keeps beside its physiology (`l3/device-layer.ts`).
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `NOTCH_Q` | `8` | — | — | — |
-| `BAND_NOTCH_BELOW_HZ` | `100` | Hz | research/05 §2.2; [ENG] | A band filter gets the mains notch when its upper corner is below this (research/05 §2.2: Mindray notches the monitor, surgical and ST modes, not diagnostic) [ENG]. |
+| `BAND_NOTCH_BELOW_HZ` | `100` | Hz | research/05 §2.2; [ENG: device] | A band filter gets the mains notch when its upper corner is below this (research/05 §2.2: Mindray notches the monitor, surgical and ST modes, not diagnostic) [ENG: device]. |
 
 ### [`l3/hr.ts`](../../packages/engine-core/src/l3/hr.ts)
 
@@ -264,63 +279,63 @@ device layer the engine keeps beside its physiology (`l3/device-layer.ts`).
 |---|---|---|---|---|
 | `HR_WINDOW` | `12` | — | — | — |
 | `MOVING_AVERAGE_DEFAULT_S` | `8` | s | — | Window a skin declaring `method: 'moving-average-seconds'` uses when it names no `windowDefault` (s). |
-| `RESET_RR_S` | `6` | s | [ENG, 10 bpm] | An R–R longer than this is a gap (asystole, leads off), not a rate: the history restarts, so the first beats after it are not averaged with it (the HR read "3" for a second after an asystole) [ENG, 10 bpm]. |
+| `RESET_RR_S` | `6` | s | [ENG: device; 10 bpm] | An R–R longer than this is a gap (asystole, leads off), not a rate: the history restarts, so the first beats after it are not averaged with it (the HR read "3" for a second after an asystole) [ENG: device; 10 bpm]. |
 
 ### [`l3/pressure-numerics/numerics.ts`](../../packages/engine-core/src/l3/pressure-numerics/numerics.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `AVG_BEATS` | `6` | — | brief §4.2; [ENG] | 4–8 beats (brief §4.2) [ENG] |
-| `SEARCH_S` | `10` | s | [ENG] | A line that started sampling searches this long before it calls itself static (Saadat "IBP1 SEARCH") [ENG]. |
-| `REPULSE_S` | `3` | s | [ENG] | A static line is pulsatile again only after this long of pulsatile beats — at MAP 13 / PP 3 one ventilator swing taken for a beat flipped ABP NON-PULSATILE off for 1 s every 5 s [ENG]. |
-| `REPULSE_AMP_MMHG` | `4` | mmHg | [ENG] | Amplitude hysteresis on the 3 mmHg rule — a static line is pulsatile again only at this amplitude (a case at PP 3–4 mmHg flipped pulsatile ↔ static ≈ 10 times in 11 min on the single 3 mmHg threshold) [ENG]. |
+| `AVG_BEATS` | `6` | — | brief §4.2; [ENG: device] | 4–8 beats (brief §4.2) [ENG: device] |
+| `SEARCH_S` | `10` | s | [ENG: device] | A line that started sampling searches this long before it calls itself static (Saadat "IBP1 SEARCH") [ENG: device]. |
+| `REPULSE_S` | `3` | s | [ENG: device] | A static line is pulsatile again only after this long of pulsatile beats — at MAP 13 / PP 3 one ventilator swing taken for a beat flipped ABP NON-PULSATILE off for 1 s every 5 s [ENG: device]. |
+| `REPULSE_AMP_MMHG` | `4` | mmHg | [ENG: device] | Amplitude hysteresis on the 3 mmHg rule — a static line is pulsatile again only at this amplitude (a case at PP 3–4 mmHg flipped pulsatile ↔ static ≈ 10 times in 11 min on the single 3 mmHg threshold) [ENG: device]. |
 
 ### [`l3/pulse/detector.ts`](../../packages/engine-core/src/l3/pulse/detector.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `DET_RATE` | `125` | — | Pulse; brief §4.2; research 03 §2.2; Cardiology 2003; Eng 1985; Control 2010; [ENG] | Pulse (upstroke) detector for ABP, PAP and pleth (brief §4.2 "PR from the ABP uses slope-sum upstroke detection"; research 03 §2.2). One foot path for the three lines. Scale-free, so it works on mmHg (ABP/PAP) and on PI units (pleth). All state is plain data.  1. Detection (Zong W, Heldt T, Moody GB, Mark RG, "An open-source algorithm to detect onset of arterial blood pressure pulses", Computers in Cardiology 2003;30:259–262). Slope-sum function SSF(n) = Σ_{k=n−w+1..n} max(0, x_k − x_{k−1}), w = 128 ms (the paper's w). A pulse is an upward crossing of THR_FRACTION × the running average of the SSF peaks of the detected pulses (never below a per-channel floor), outside the eye-closing period after the last foot; its foot is the minimum of the signal in the 128 ms before the crossing. 2. Search-back (Pan J, Tompkins WJ, "A real-time QRS detection algorithm", IEEE Trans Biomed Eng 1985;32:230–236). When the interval from the last foot to the one just found exceeds the RR MISSED LIMIT (166 % of the recent interval), the interval is searched for SSF peaks above the second threshold, half the first (PT's THRESHOLD I2 = 0.5 × THRESHOLD I1); they are the candidate pulses, largest first. A pulse found splits the interval, and each part still over the limit is searched again, so two or more missed pulses in a row are recovered. A retrospective variant [ENG]: Pan & Tompkins search in real time, when the missed limit expires; here the search runs when the next foot is found, over the closed interval (lastFoot, f), so both feet are known and a candidate is judged by its whole shape, its run-off included. The cost is latency: the beat that ends at a recovered foot reaches the numerics at f, not at its own end. With one missed pulse f comes about 2 intervals after the last foot and Pan & Tompkins' trigger at 1.66, so it is about a third of a beat later than theirs, and at most one beat late in all (one 1-Hz update of a 6-beat average). Taking the candidates largest first and trying the next when one fails mixes the two sources: Pan & Tompkins take the largest peak; Li's delineator tests every candidate, in time order. 3. Acceptance of a candidate by its shape (Li BN, Dong MC, Vai MI, "On an automatic delineator for arterial blood pressure waveforms", Biomed Signal Process Control 2010;5:76–81, and its published code delineator.m, rev. 2.0.5): a beat is an onset (where the upstroke starts) paired with the systolic peak it rises to, after which the signal runs off; it is accepted only if its rise is more than 0.4 × and less than 2 × the amplitude of the beats around it (l.147–148), and an onset less than 3 × closeWin (288 ms) after the previous beat's systolic peak is not a pulse (l.164, the delineator's eye-closing: the dicrotic notch and wave of the previous beat lie there). Li's onset is a zero crossing of the smoothed derivative from − to +, refined to the signal's minimum before the peak; Li's systolic peak is a zero crossing from + to − (l.105, 129–158), so a rise still rising at the next foot has no peak and is not a pulse (the run-off rule). The onset must also lie outside the eye-closing period of both feet, so each beat it makes is at least 250 ms long. Pan & Tompkins judge a candidate close to the previous complex by its slope instead (their T-wave rule: kept if its maximal slope is at least half the previous complex's); applied inside Li's eye-closing it added 5 feet that are not beats on the diagnosis run set (research/ibp-missed-foot-diag, 2026-10-28), so Li's rule is kept. The search-back runs on the systemic arterial line only (`pulseStep`'s `searchBack`). |
-| `MISSED_LIMIT` | `1.66` | — | Pan & Tompkins 1985; [ENG: the median rather than Pan–Tompkins' range-limited mean of 8, so that one merged interval does not lengthen it] | The RR MISSED LIMIT: an interval longer than 166 % of the recent interval holds a missed pulse (Pan & Tompkins 1985). The recent interval is the median of the last ≤ 8 intervals [ENG: the median rather than Pan–Tompkins' range-limited mean of 8, so that one merged interval does not lengthen it]. |
-| `MISSED_AVG_N` | `8` | — | Pan & Tompkins 1985; [ENG] | The recent interval is taken over the last 8 intervals (Pan & Tompkins 1985: RR AVERAGE1 and RR AVERAGE2 average the eight most recent beats); the recent amplitude of Li's test over the same 8 pulses [ENG]. |
+| `DET_RATE` | `125` | — | Pulse; brief §4.2; research 03 §2.2; Cardiology 2003; Eng 1985; Control 2010; [ENG: device] | Pulse (upstroke) detector for ABP, PAP and pleth (brief §4.2 "PR from the ABP uses slope-sum upstroke detection"; research 03 §2.2). One foot path for the three lines. Scale-free, so it works on mmHg (ABP/PAP) and on PI units (pleth). All state is plain data.  1. Detection (Zong W, Heldt T, Moody GB, Mark RG, "An open-source algorithm to detect onset of arterial blood pressure pulses", Computers in Cardiology 2003;30:259–262). Slope-sum function SSF(n) = Σ_{k=n−w+1..n} max(0, x_k − x_{k−1}), w = 128 ms (the paper's w). A pulse is an upward crossing of THR_FRACTION × the running average of the SSF peaks of the detected pulses (never below a per-channel floor), outside the eye-closing period after the last foot; its foot is the minimum of the signal in the 128 ms before the crossing. 2. Search-back (Pan J, Tompkins WJ, "A real-time QRS detection algorithm", IEEE Trans Biomed Eng 1985;32:230–236). When the interval from the last foot to the one just found exceeds the RR MISSED LIMIT (166 % of the recent interval), the interval is searched for SSF peaks above the second threshold, half the first (PT's THRESHOLD I2 = 0.5 × THRESHOLD I1); they are the candidate pulses, largest first. A pulse found splits the interval, and each part still over the limit is searched again, so two or more missed pulses in a row are recovered. A retrospective variant [ENG: device]: Pan & Tompkins search in real time, when the missed limit expires; here the search runs when the next foot is found, over the closed interval (lastFoot, f), so both feet are known and a candidate is judged by its whole shape, its run-off included. The cost is latency: the beat that ends at a recovered foot reaches the numerics at f, not at its own end. With one missed pulse f comes about 2 intervals after the last foot and Pan & Tompkins' trigger at 1.66, so it is about a third of a beat later than theirs, and at most one beat late in all (one 1-Hz update of a 6-beat average). Taking the candidates largest first and trying the next when one fails mixes the two sources: Pan & Tompkins take the largest peak; Li's delineator tests every candidate, in time order. 3. Acceptance of a candidate by its shape (Li BN, Dong MC, Vai MI, "On an automatic delineator for arterial blood pressure waveforms", Biomed Signal Process Control 2010;5:76–81, and its published code delineator.m, rev. 2.0.5): a beat is an onset (where the upstroke starts) paired with the systolic peak it rises to, after which the signal runs off; it is accepted only if its rise is more than 0.4 × and less than 2 × the amplitude of the beats around it (l.147–148), and an onset less than 3 × closeWin (288 ms) after the previous beat's systolic peak is not a pulse (l.164, the delineator's eye-closing: the dicrotic notch and wave of the previous beat lie there). Li's onset is a zero crossing of the smoothed derivative from − to +, refined to the signal's minimum before the peak; Li's systolic peak is a zero crossing from + to − (l.105, 129–158), so a rise still rising at the next foot has no peak and is not a pulse (the run-off rule). The onset must also lie outside the eye-closing period of both feet, so each beat it makes is at least 250 ms long. Pan & Tompkins judge a candidate close to the previous complex by its slope instead (their T-wave rule: kept if its maximal slope is at least half the previous complex's); applied inside Li's eye-closing it added 5 feet that are not beats on the diagnosis run set (research/ibp-missed-foot-diag, 2026-10-28), so Li's rule is kept. The search-back runs on the systemic arterial line only (`pulseStep`'s `searchBack`). |
+| `MISSED_LIMIT` | `1.66` | — | Pan & Tompkins 1985; [ENG: device; the median rather than Pan–Tompkins' range-limited mean of 8, so that one merged interval does not lengthen it] | The RR MISSED LIMIT: an interval longer than 166 % of the recent interval holds a missed pulse (Pan & Tompkins 1985). The recent interval is the median of the last ≤ 8 intervals [ENG: device; the median rather than Pan–Tompkins' range-limited mean of 8, so that one merged interval does not lengthen it]. |
+| `MISSED_AVG_N` | `8` | — | Pan & Tompkins 1985; [ENG: device] | The recent interval is taken over the last 8 intervals (Pan & Tompkins 1985: RR AVERAGE1 and RR AVERAGE2 average the eight most recent beats); the recent amplitude of Li's test over the same 8 pulses [ENG: device]. |
 
 ### [`l3/qrs.ts`](../../packages/engine-core/src/l3/qrs.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
 | `QRS_RATE` | `500` | — | — | — |
-| `PACE_BLANK_N` | `30` | — | research/03 §1.7; [ENG] | Pace-pulse rejection (R-51-3): after a transcutaneous pacing pulse the detection lead is held at its pre-pulse value for this long, so the pad spike and the start of its polarisation tail never reach the filters (monitors blank their QRS detector after a detected pace pulse; research/03 §1.7) [ENG]. 60 ms |
-| `PACE_LEAD_N` | `4` | — | [ENG] | R-51-3: announce a pace pulse this many samples before its marker time (8 ms) [ENG]. |
-| `SPK_FLOOR` | `2e-4` | — | [ENG, see Task 14] | Absolute floor for SPK in (mV/sample)² units, far above the MWI of 0.025 mV noise [ENG, see Task 14]. |
+| `PACE_BLANK_N` | `30` | — | research/03 §1.7; [ENG: device] | Pace-pulse rejection (R-51-3): after a transcutaneous pacing pulse the detection lead is held at its pre-pulse value for this long, so the pad spike and the start of its polarisation tail never reach the filters (monitors blank their QRS detector after a detected pace pulse; research/03 §1.7) [ENG: device]. 60 ms |
+| `PACE_LEAD_N` | `4` | — | [ENG: device] | R-51-3: announce a pace pulse this many samples before its marker time (8 ms) [ENG: device]. |
+| `SPK_FLOOR` | `2e-4` | — | [ENG: device; see Task 14] | Absolute floor for SPK in (mV/sample)² units, far above the MWI of 0.025 mV noise [ENG: device; see Task 14]. |
 
 ### [`l3/resp/impedance.ts`](../../packages/engine-core/src/l3/resp/impedance.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `RIPPLE_FRACTION` | `0.1` | — | [ENG] | cardiogenic ripple = 10 % of a 500 mL breath (5–20 %) [ENG] |
-| `IMP_HP_TAU_S` | `4` | s | [ENG] | high-pass removing drift [ENG] |
-| `IMP_THRESHOLD` | `0.35` | — | [ENG] | fraction of the recent breath amplitude [ENG] |
-| `IMP_FLOOR` | `0.08` | — | [ENG] | absolute floor (ripple 0.1 exceeds it once breaths vanish) [ENG] |
+| `RIPPLE_FRACTION` | `0.1` | — | [ENG: device] | cardiogenic ripple = 10 % of a 500 mL breath (5–20 %) [ENG: device] |
+| `IMP_HP_TAU_S` | `4` | s | [ENG: device] | high-pass removing drift [ENG: device] |
+| `IMP_THRESHOLD` | `0.35` | — | [ENG: device] | fraction of the recent breath amplitude [ENG: device] |
+| `IMP_FLOOR` | `0.08` | — | [ENG: device] | absolute floor (ripple 0.1 exceeds it once breaths vanish) [ENG: device] |
 | `IMP_APNOEA_S` | `20` | s | brief §4.4 | impedance apnoea 20 s (Philips; saadat 10 s) (brief §4.4) |
 | `IMP_INTERVALS` | `6` | — | — | — |
-| `CARDIAC_MATCH` | `0.1` | — | research/05 §6; [ENG fraction] | An impedance cycle whose period is within this fraction of the heart's RR is CARDIAC OVERLAY and is neither counted nor allowed to reset the apnoea timer — the Philips Auto detection mode "adjusts the detection level … depending on the presence of cardiac artifact" (research/05 §6 [S2] p. 111–113) [ENG fraction]. |
-| `CONFIRM_RR` | `1.5` | — | [ENG] | A candidate cycle is counted as a breath when no cycle followed it within this many heart periods [ENG]. |
+| `CARDIAC_MATCH` | `0.1` | — | research/05 §6; [ENG: device; fraction] | An impedance cycle whose period is within this fraction of the heart's RR is CARDIAC OVERLAY and is neither counted nor allowed to reset the apnoea timer — the Philips Auto detection mode "adjusts the detection level … depending on the presence of cardiac artifact" (research/05 §6 [S2] p. 111–113) [ENG: device; fraction]. |
+| `CONFIRM_RR` | `1.5` | — | [ENG: device] | A candidate cycle is counted as a breath when no cycle followed it within this many heart periods [ENG: device]. |
 
 ### [`l3/spo2/spo2.ts`](../../packages/engine-core/src/l3/spo2/spo2.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `SPO2_LAG_TAU_S` | `3` | s | brief §4.3; [ENG] | brief §4.3 step 3 [ENG] |
+| `SPO2_LAG_TAU_S` | `3` | s | brief §4.3; research/44 TIME; [FIT: SpO2 sensor lag (stand-in for lung→finger transit dispersion); brief research/44 TIME-02] | brief §4.3 step 3 [FIT: SpO2 sensor lag (stand-in for lung→finger transit dispersion); brief research/44 TIME-02] |
 | `SPO2_STEP_S` | `0.1` | s | — | — |
-| `PULSE_LOST_S` | `4` | s | brief §4.3; [ENG: two missed beats at 30/min] | No completed pleth pulse for this long → no value (dashes, "pulse search"/"no pulse"). It was a 4 s hold with a questionable "99?" and invalid only at 10 s (brief §4.3 "10–30 s"); E126 removed the held number [ENG: two missed beats at 30/min]. |
+| `PULSE_LOST_S` | `4` | s | brief §4.3; [ENG: device; two missed beats at 30/min] | No completed pleth pulse for this long → no value (dashes, "pulse search"/"no pulse"). It was a 4 s hold with a questionable "99?" and invalid only at 10 s (brief §4.3 "10–30 s"); E126 removed the held number [ENG: device; two missed beats at 30/min]. |
 | `LOW_PERF_PI` | `0.3` | — | brief §4.3 | "LOW PERF" below PI 0.3 % (brief §4.3) |
-| `LOW_PERF_SLOWDOWN` | `2` | — | [ENG] | low perfusion doubles the averaging window [ENG] |
+| `LOW_PERF_SLOWDOWN` | `2` | — | [ENG: device] | low perfusion doubles the averaging window [ENG: device] |
 | `BEEP_BASE_HZ` | `1245` | Hz | research/34 row 6 | The beep's pitch at SpO2 100 %, Hz: measured on the Saadat unit (research/34 row 6, the owner's ruling). It was 880 Hz, the pitch of the alarm pulses, which made a beep and an alarm hard to tell apart. |
 
 ### [`l3/trends/event-log.ts`](../../packages/engine-core/src/l3/trends/event-log.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `LOG_MAX` | `20000` | — | [ENG] | Entries kept (oldest dropped first) [ENG]: 8 h of a busy scenario is a few thousand. |
+| `LOG_MAX` | `20000` | — | [ENG: numerics] | Entries kept (oldest dropped first) [ENG: numerics]: 8 h of a busy scenario is a few thousand. |
 
 ### [`l3/trends/trend-store.ts`](../../packages/engine-core/src/l3/trends/trend-store.ts)
 
@@ -332,22 +347,22 @@ device layer the engine keeps beside its physiology (`l3/device-layer.ts`).
 
 | Device | Label | Constant | Value | Unit | Source / tag | What |
 |---|---|---|---|---|---|---|
-| `generic` | Processed EEG (generic) | `updateS` | 1 | s | [ENG: plan E6 "the generic reader 1 s"] | how often the numerics are published; each update reads the last epoch |
+| `generic` | Processed EEG (generic) | `updateS` | 1 | s | [ENG: device; plan E6 "the generic reader 1 s"] | how often the numerics are published; each update reads the last epoch |
 | `generic` | Processed EEG (generic) | `epochS` | 2 | s | [TXT Ch35 p. 1106: 2-s epochs] | the epoch each spectrum is computed from |
-| `generic` | Processed EEG (generic) | `rawWindowS` | 8 | s | [TXT Ch36 p. 1137: the raw EEG over 5–10 s; ENG: 8 inside it] | the raw trace the display keeps |
+| `generic` | Processed EEG (generic) | `rawWindowS` | 8 | s | [TXT Ch36 p. 1137: the raw EEG over 5–10 s] [ENG: display; 8 inside it] | the raw trace the display keeps |
 | `generic` | Processed EEG (generic) | `dsaHistoryS` | 3600 | s | [TXT Ch36 pp. 1138–1139: the spectrogram of about the last hour] | the spectrogram the display keeps |
 | `generic` | Processed EEG (generic) | `dsaMaxHz` | 50 | Hz | [TXT Ch36 p. 1139, Fig. 36.3: 0–50 Hz] | the spectrogram's top frequency |
-| `generic` | Processed EEG (generic) | `spectrumLoHz` | 0.5 | Hz | [ENG: the lowest frequency a 2-s epoch resolves] | the lower edge of the SEF and median frequency |
-| `generic` | Processed EEG (generic) | `spectrumHiHz` | 30 | Hz | [ENG: the top of beta (Ch36 Table 36.1); above it EMG dominates (Ch36 p. 1142)] | the upper edge of the SEF and median frequency |
+| `generic` | Processed EEG (generic) | `spectrumLoHz` | 0.5 | Hz | [ENG: device; the lowest frequency a 2-s epoch resolves] | the lower edge of the SEF and median frequency |
+| `generic` | Processed EEG (generic) | `spectrumHiHz` | 30 | Hz | [ENG: device; the top of beta (Ch36 Table 36.1); above it EMG dominates (Ch36 p. 1142)] | the upper edge of the SEF and median frequency |
 | `generic` | Processed EEG (generic) | `sefFraction` | 0.95 | fraction | [P-14, the owner's placeholder: 95 %, the SEF95 of Bruhn 2003 (Miller Ch23 ref. 147, full book); Ch36 gives no percentile] | the spectral edge: the fraction of the power below it |
-| `generic` | Processed EEG (generic) | `smoothingS` | 5 | s | [ENG: no source; a single 2-s periodogram scatters the edge by several Hz] | the time constant of the spectrum the numerics read |
+| `generic` | Processed EEG (generic) | `smoothingS` | 5 | s | [ENG: device; no source, a single 2-s periodogram scatters the edge by several Hz] | the time constant of the spectrum the numerics read |
 | `generic` | Processed EEG (generic) | `suppressionUv` | 5 | µV | [TXT Ch36 p. 1139, Fig. 36.6: suppressed stretches < 5 µV] | the suppression threshold, \|x\| |
 | `generic` | Processed EEG (generic) | `suppressionMinS` | 0.5 | s | [P-8: > 0.5 s, Rampil 1998 (Ch36 ref. 45) via secondary sources, research/43] | the shortest stretch counted as suppression |
-| `generic` | Processed EEG (generic) | `srWindowS` | 60 | s | [ENG: Miller's 30–60 s (Ch36 p. 1140), the upper bound, the steadier (plan E5)] | the suppression ratio's window |
+| `generic` | Processed EEG (generic) | `srWindowS` | 60 | s | [ENG: device; Miller's 30–60 s (Ch36 p. 1140), the upper bound, the steadier (plan E5)] | the suppression ratio's window |
 | `generic` | Processed EEG (generic) | `impedanceLimitKOhm` | 5 | kΩ | [P-13, the plan default: Ch36 p. 1145 gives 5 or 8 kΩ] | above it the signal is questionable |
-| `generic` | Processed EEG (generic) | `impedanceUnequalKOhm` | 2.5 | kΩ | [ENG: half the limit; Ch36 p. 1145 names inequality without a number] | electrodes differing by more are unequal: questionable |
-| `generic` | Processed EEG (generic) | `cauteryLoHz` | 40 | Hz | [ENG: above the EEG and most of the scalp EMG (peak 20–30 Hz, research/43 P-9)] | the band the cautery detector reads |
-| `generic` | Processed EEG (generic) | `cauteryUv2` | 2000 | µV² | [ENG: ≈ 7 × the most the scalp EMG puts above 40 Hz, ≈ 1/11 of one diathermy burst (Ch36 p. 1146: power raised at all frequencies)] | above it in the cautery band, the epoch is invalid |
+| `generic` | Processed EEG (generic) | `impedanceUnequalKOhm` | 2.5 | kΩ | [ENG: device; half the limit, Ch36 p. 1145 names inequality without a number] | electrodes differing by more are unequal: questionable |
+| `generic` | Processed EEG (generic) | `cauteryLoHz` | 40 | Hz | [ENG: device; above the EEG and most of the scalp EMG (peak 20–30 Hz, research/43 P-9)] | the band the cautery detector reads |
+| `generic` | Processed EEG (generic) | `cauteryUv2` | 2000 | µV² | [ENG: device; ≈ 7 × the most the scalp EMG puts above 40 Hz, ≈ 1/11 of one diathermy burst (Ch36 p. 1146: power raised at all frequencies)] | above it in the cautery band, the epoch is invalid |
 | `generic` | Processed EEG (generic) | `slowLoHz` | 0.1 | Hz | [TXT Ch36 Table 36.1] | slow oscillation, lower edge (read from the first bin, 0.5 Hz) |
 | `generic` | Processed EEG (generic) | `slowHiHz` | 2 | Hz | [TXT Ch36 Table 36.1] | slow oscillation, upper edge |
 | `generic` | Processed EEG (generic) | `deltaLoHz` | 0.5 | Hz | [TXT Ch36 Table 36.1] | delta, lower edge |
@@ -359,7 +374,7 @@ device layer the engine keeps beside its physiology (`l3/device-layer.ts`).
 | `generic` | Processed EEG (generic) | `betaLoHz` | 12 | Hz | [TXT Ch36 Table 36.1] | beta, lower edge |
 | `generic` | Processed EEG (generic) | `betaHiHz` | 30 | Hz | [TXT Ch36 Table 36.1] | beta, upper edge |
 | `generic` | Processed EEG (generic) | `gammaLoHz` | 30 | Hz | [TXT Ch36 Table 36.1: gamma > 30 Hz] | gamma, lower edge |
-| `generic` | Processed EEG (generic) | `gammaHiHz` | 45 | Hz | [ENG: below the 50 Hz mains line] | gamma, upper edge |
+| `generic` | Processed EEG (generic) | `gammaHiHz` | 45 | Hz | [ENG: device; below the 50 Hz mains line] | gamma, upper edge |
 
 ## Functions
 
@@ -394,7 +409,7 @@ device layer the engine keeps beside its physiology (`l3/device-layer.ts`).
 | `pressureNumerics` | [`l3/pressure-numerics/numerics.ts`](../../packages/engine-core/src/l3/pressure-numerics/numerics.ts) | Sys/dia/mean at time t (call once per second) and whether the line is pulsatile: |
 | `piNumeric` | [`l3/pressure-numerics/numerics.ts`](../../packages/engine-core/src/l3/pressure-numerics/numerics.ts) | PI: mean peak-to-trough of the last beats of a pleth WaveNumerics. |
 | `prNumeric` | [`l3/pressure-numerics/numerics.ts`](../../packages/engine-core/src/l3/pressure-numerics/numerics.ts) | Pulse rate from a WaveNumerics' feet (brief §6.1 PR: |
-| `createPulseDet` | [`l3/pulse/detector.ts`](../../packages/engine-core/src/l3/pulse/detector.ts) | `floor`: minimum SSF threshold in signal units (ABP 3 mmHg, PAP 1.5 mmHg, pleth 0.03 %) [ENG]. |
+| `createPulseDet` | [`l3/pulse/detector.ts`](../../packages/engine-core/src/l3/pulse/detector.ts) | `floor`: minimum SSF threshold in signal units (ABP 3 mmHg, PAP 1.5 mmHg, pleth 0.03 %) [ENG: |
 | `pulseStep` | [`l3/pulse/detector.ts`](../../packages/engine-core/src/l3/pulse/detector.ts) | Feed one sample. |
 | `pulseRate` | [`l3/pulse/detector.ts`](../../packages/engine-core/src/l3/pulse/detector.ts) | Pulse rate from foot times (s): |
 | `qrsPacePulse` | [`l3/qrs.ts`](../../packages/engine-core/src/l3/qrs.ts) | R-51-3: a transcutaneous pacing pulse (paceSpike marker) is at absolute sample `n`. |
@@ -415,7 +430,7 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | [`l3/capture12/capture.ts`](../../packages/engine-core/src/l3/capture12/capture.ts) | 12-lead capture (brief §6.6): the last 10 s from the VCG ring buffer, projected to 12 leads with the DIAGNOSTIC 0.05–150 Hz filter whatever the monitor filter is (LIFEPAK prints this way, research/05 §2.6), laid out 3×4 |
 | [`l3/co2-numerics/co2-numerics.ts`](../../packages/engine-core/src/l3/co2-numerics/co2-numerics.ts) | CO2 numerics (brief §4.4 "Numerics (L3)"; research 03 §4.5) measured from the DISPLAYED capnogram: breath detection on a rising edge above 50 % of the recent peak with hysteresis, EtCO2 = maximum breath peak of the last |
 | [`l3/device-layer.ts`](../../packages/engine-core/src/l3/device-layer.ts) | The device layer (brief §3.2 L3 "alarm engine, pacer and defibrillator"): one JSON-safe state object the engine keeps beside its pipeline state. |
-| [`l3/ecg-filter.ts`](../../packages/engine-core/src/l3/ecg-filter.ts) | Monitor ECG filters (brief §4.1 "Measurement chain"; research 03 §1.11, Philips MP2 datasheet): Monitor 0.5–40 Hz + automatic mains notch (50 Hz default, brief §5 / Ali's decision) Diagnostic 0.05–150 Hz, no notch Design |
+| [`l3/ecg-filter.ts`](../../packages/engine-core/src/l3/ecg-filter.ts) | Monitor ECG filters (brief §4.1 "Measurement chain"; research 03 §1.11, Philips MP2 datasheet): Monitor 0.5–40 Hz + automatic mains notch (50 Hz default, brief §5 / the owner's decision) Diagnostic 0.05–150 Hz, no notch |
 | [`l3/eeg-devices/generic.ts`](../../packages/engine-core/src/l3/eeg-devices/generic.ts) | EEG E5 (plan §7 E5; D8): the generic processed-EEG reader — everything Miller says a monitor shows, computed from the samples, the sample rate and the electrode impedance only (the device boundary, plan §5). |
 | [`l3/eeg-devices/registry.ts`](../../packages/engine-core/src/l3/eeg-devices/registry.ts) | EEG plan D8: the registry of EEG devices, one spec row each (like the room's defibrillator models): the device's label, update interval and every constant with its tag (docs/model/monitor.md lists them), and its reader — |
 | [`l3/eeg-devices/spectral.ts`](../../packages/engine-core/src/l3/eeg-devices/spectral.ts) | EEG devices (plan §7 E5): the spectral analysis every reader shares — the periodogram of one epoch, band power and the edge frequency below which a fraction of the power lies (the spectral edge and the median frequency). |
@@ -442,6 +457,7 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | ventilated normal patient (MODELED, PPV from 1 s): rest PI within ± 5 % of 1.80 | 1.49 | — | UNSUPPORTED ([audit row 184](../../docs/validation/target-audit/30-target-audit.md#row-184)) | PI 1.0-3.0 for a normal ventilated adult; PI(PPV) ≤ PI(spontaneous) and ≥ 0.75 × it (the SV ratio) | [`fidelity-lowflow.test.ts`](../../packages/engine-core/test/engine/fidelity-lowflow.test.ts) |
 | MANUAL pulse pressure 10 (77/67): the cuff shows the narrow pulse pressure — S/D within ± 8 of the instructor's 77/67 | 80/56 | — | MIS-SPECIFIED ([audit row 185](../../docs/validation/target-audit/30-target-audit.md#row-185)) | Reference = the arterial line at the reading (already passing, ± 8); add cuff PP ≤ line PP + 3 (no widening); the tracker's reach of 77/67 is a separate MANUAL-tracker test | [`fidelity-nibp.test.ts`](../../packages/engine-core/test/engine/fidelity-nibp.test.ts) |
 | MANUAL AF 150, 11 cycles: \|SBP bias\| ≤ 6 mmHg against the TRUE radial pressure (the audit's AF criterion) | +10.8 | — | MIS-SPECIFIED ([audit row 186](../../docs/validation/target-audit/30-target-audit.md#row-186)) | \|mean bias\| ≤ 5 mmHg vs the displayed arterial line (beat-detected), SD ≤ 8, with the first reading after AF onset excluded or 3-reading averages | [`fidelity-nibp.test.ts`](../../packages/engine-core/test/engine/fidelity-nibp.test.ts) |
+| AF cumulative success over Mittal's 70/120/150/170 J escalation is 94 % (83/88) | — | — | not audited | — | [`shock-state.test.ts`](../../packages/engine-core/test/l3/shock-state.test.ts) |
 
 ## Tests
 
@@ -474,7 +490,7 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | [`l3/qrs-pacing.test.ts`](../../packages/engine-core/test/l3/qrs-pacing.test.ts) | 0 | 0 |
 | [`l3/qrs.test.ts`](../../packages/engine-core/test/l3/qrs.test.ts) | 0 | 0 |
 | [`l3/resp/impedance.test.ts`](../../packages/engine-core/test/l3/resp/impedance.test.ts) | 0 | 0 |
-| [`l3/shock-state.test.ts`](../../packages/engine-core/test/l3/shock-state.test.ts) | 0 | 0 |
+| [`l3/shock-state.test.ts`](../../packages/engine-core/test/l3/shock-state.test.ts) | 1 | 0 |
 | [`l3/spo2/spo2-skin.test.ts`](../../packages/engine-core/test/l3/spo2/spo2-skin.test.ts) | 0 | 0 |
 | [`l3/spo2/spo2.test.ts`](../../packages/engine-core/test/l3/spo2/spo2.test.ts) | 0 | 0 |
 | [`l3/trends/rewind.test.ts`](../../packages/engine-core/test/l3/trends/rewind.test.ts) | 0 | 0 |

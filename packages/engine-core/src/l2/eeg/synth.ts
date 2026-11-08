@@ -30,28 +30,28 @@ export const FF_SPLIT_HZ = 2;
 export const BS_BURST_S = 3.58;
 /** Minimum suppression, s: < 5 µV for > 0.5 s (Rampil 1998, Ch36 ref. 45, via secondary sources — research/43 P-8). */
 export const BS_MIN_SUPP_S = 0.5;
-/** Burst onset and offset ramp, s [ENG: a few samples, so the trace has no step; bursts start abruptly, Ch36 Fig. 36.6]. */
+/** Burst onset and offset ramp, s [ENG: numerics; a few samples, so the trace has no step; bursts start abruptly, Ch36 Fig. 36.6]. */
 export const BS_RAMP_S = 0.05;
 /** The burst amplitude the spectrum gives (`suppression.burstUv`) is a 99th-percentile amplitude (Fleischmann 2018;
  * Kratzer 2020 "max"): a Gaussian burst's 99th percentile of |x| is 2.576 σ [INF]. */
 export const BURST_UV_PER_SD = 2.576;
 
 // --- burstiness and the forme fruste (Ch36 pp. 1140–1141, 1144) ---
-/** Mean length of one burst of a bursty oscillation, s [ENG; Jones 2023's spindle bursts 1.12 ± 0.30 s are of this
+/** Mean length of one burst of a bursty oscillation, s [FIT: oscillation burst length; brief research/43 P-8; Jones 2023's spindle bursts 1.12 ± 0.30 s are of this
  * order, research/43 P-8]. */
 export const OSC_BURST_S = 1;
-/** The duty cycle at burstiness 1 [ENG: fragmented into short bursts, "not continuous" (Ch36 p. 1144)]; burstiness b gives
+/** The duty cycle at burstiness 1 [FIT: duty cycle at full burstiness; brief research/43 P-7; fragmented into short bursts, "not continuous" (Ch36 p. 1144)]; burstiness b gives
  * duty 1 − b·(1 − OSC_DUTY_MIN). */
 export const OSC_DUTY_MIN = 0.2;
-/** Envelope ramp of a bursty oscillation, s [ENG: smooth waxing and waning]. */
+/** Envelope ramp of a bursty oscillation, s [FIT: oscillation envelope ramp, smooth waxing and waning; brief research/43 P-7]. */
 export const OSC_RAMP_S = 0.1;
-/** Fraction of time the power above FF_SPLIT_HZ is dropped at forme fruste 1 [ENG: "brief drops", Ch36 p. 1141]. */
+/** Fraction of time the power above FF_SPLIT_HZ is dropped at forme fruste 1 [FIT: forme fruste drop share; brief research/43 P-8; "brief drops", Ch36 p. 1141]. */
 export const FF_DROP_MAX = 0.5;
-/** Mean length of one drop-out, s [ENG: brief]. */
+/** Mean length of one drop-out, s [FIT: forme fruste drop length, brief; brief research/43 P-8]. */
 export const FF_DROP_S = 1;
-/** Amplitude left during a drop-out [ENG: −20 dB]. */
+/** Amplitude left during a drop-out [FIT: forme fruste floor, −20 dB; brief research/43 P-8]. */
 export const FF_FLOOR = 0.1;
-/** Smoothing of the per-hop gains, s [ENG: a new hop's gains reach the trace without a step]. */
+/** Smoothing of the per-hop gains, s [ENG: numerics; a new hop's gains reach the trace without a step]. */
 export const GAIN_TAU_S = 0.1;
 
 const PEAKS: readonly EegPeakName[] = ['slow', 'theta', 'alpha', 'spindle', 'beta', 'gamma'];
@@ -202,7 +202,7 @@ function newHop(s: SynthState, spec: EegSpectrum): void {
   const p = clamp01(spec.suppression.p);
   const burstSd = spec.suppression.burstUv / BURST_UV_PER_SD;
   s.hop = {
-    // bursts take the spectrum's burst amplitude as the suppression becomes established [ENG blend: no step at onset]
+    // bursts take the spectrum's burst amplitude as the suppression becomes established [ENG: numerics; blend, no step at onset]
     gBurst: 1 + (burstSd / cont - 1) * Math.min(1, p / SUPP_ESTABLISHED),
     gSupp: spec.suppression.suppressedUv / cont,
     p,

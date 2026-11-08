@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
-import { app, openMhV2, pressPath, to } from './mh-v2-path.ts';
+import { app, ffToPhase, openMhV2, pressPath } from './mh-v2-path.ts';
 
 /** Each file's own Vite server, started in its beforeAll (port 0), or PME_KIT_BASE=<url>: a server already running (as
  *  teach2-mh-v2.e2e.ts). Read `.base` inside a test. */
@@ -163,11 +163,9 @@ export function popFit(page: Page) {
 export async function mhV2Fit(page: Page, base: string, browserName: string, info: TestInfo, target: string, presses: number, tag: string): Promise<void> {
   await openMhV2(page, (h) => openApp(page, base, h, { warmMs: 2000 }));
   await pressPath(page, (i) => i < presses);
-  // the phase comes from the physiology: fast-forward in 30 s steps until it is entered (at most 15 sim-min; every phase
-  // targeted here lasts at least 60 s on this path, two steps, so a step cannot pass one; 10 s steps ran the second
-  // Recovering, 4:40 after the second dose, out of the test's time)
-  for (let n = 0; (await app(page)).stateId !== target && n < 30; n++) await to(page, Math.floor((await app(page)).simT) + 30);
-  expect((await app(page)).stateId).toBe(target);
+  // the phase comes from the physiology: fast-forward in 30-s steps until it is entered (at most 15 sim-min; every phase
+  // targeted here lasts at least 60 s on this path, two steps, so a step cannot pass one; ffToPhase says why not ×8)
+  expect(await ffToPhase(page, target, 900, 30)).toBe(target);
   await page.waitForTimeout(1500); // the view repaints (≤ 2 Hz)
   const running = await measure(page);
   const dir = process.env.TEACH2_SHOTS ?? info.outputPath();

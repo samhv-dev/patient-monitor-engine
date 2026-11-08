@@ -59,6 +59,8 @@ library rows and the outputs other modules consume.
 | [`compartment.ts:26`](../../packages/engine-core/src/l2/pk/compartment.ts#L26) | Microconstants from volumes (L) and clearances (L/min): k10 = CL1/V1, k12 = CL2/V1, k21 = CL2/V2, … |
 | [`rows-anaesthetic.ts:65`](../../packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts#L65) | T6.3: E = Ce/(Ce + 3.5): SVR ×(1 − 0.45E), Ees ×(1 − 0.2E), V0 +8 %·E, reflex ×(1 − 0.6E); gvHr −0.7 (circulation fit, Cullen 1987) |
 | [`rows-anaesthetic.ts:138`](../../packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts#L138) | the central sympatholysis dominates. EC50 0.35 reference doses = the concentration a 1 µg/kg load over 10 min |
+| [`rows-anaesthetic.ts:145`](../../packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts#L145) | vent site: tables give no fentanyl ventilatory ke0 → the brain ke0 [FIT: ventilatory ke0 = brain ke0 (no source); brief research/44 X-10] (deviations list) |
+| [`rows-anaesthetic.ts:167`](../../packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts#L167) | vent = brain ke0 [FIT: ventilatory ke0 = brain ke0 (no source); brief research/44 X-10] |
 | [`rows-cardiovascular.ts:109`](../../packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts#L109) | unique V1 2.71, V2 0.69 L/kg, Q 0.175 L/kg/min (closed form: λ1 = ln2/2, λ2 = ln2/9 per min) [P-derived]; |
 | [`gamma.ts:2`](../../packages/engine-core/src/l2/pk/gamma.ts#L2) | as gamma effect curves"): E(t) = (t/tp)^n·e^{n(1 − t/tp)}, 1 at t = tp. A dose contributes scale·E(t − tGiven), |
 | [`gamma.ts:3`](../../packages/engine-core/src/l2/pk/gamma.ts#L3) | where scale = dose/refDose (× tachyphylaxis); the sum is a normalised effect-site "concentration" in reference-dose |
@@ -73,13 +75,40 @@ library rows and the outputs other modules consume.
 | [`nmb.ts:28`](../../packages/engine-core/src/l2/pk/nmb.ts#L28) | CL 0.037 L/kg/min and V1 = CL/k = 0.037/0.97 = 0.038 L/kg [P, derived]. |
 | [`nmb.ts:61`](../../packages/engine-core/src/l2/pk/nmb.ts#L61) | The neuro model's block formula (tables §5d): T1 = 1 − Ce^γ/(Ce^γ + EC50^γ). |
 | [`pd.ts:10`](../../packages/engine-core/src/l2/pk/pd.ts#L10) | Competitive antagonism: EC50·(1 + Cant/Ki), written with receptor occupancy o = Cant/(Cant + Ki) (capped 0.95). |
-| [`pd.ts:22`](../../packages/engine-core/src/l2/pk/pd.ts#L22) | Greco/Minto response surface, simplest form: U = Uh + Uo + α·Uh·Uo (α 1.5 [ENG within Bouillon 2004]). |
+| [`pd.ts:22`](../../packages/engine-core/src/l2/pk/pd.ts#L22) | Greco/Minto response surface, simplest form: U = Uh + Uo + α·Uh·Uo (α 1.5 (inside Bouillon 2004; within Bouillon 2004)). |
 | [`pd.ts:39`](../../packages/engine-core/src/l2/pk/pd.ts#L39) | Eleveld BIS Ce50 age slope: Ce50(age) = Ce50(35)·e^(−0.00635·(age − 35)) (tables §5d). |
-| [`pipeline.ts:190`](../../packages/engine-core/src/l2/pk/pipeline.ts#L190) | share of the chain's decline (ke); f = clFactor (research/13 H9). 1 without `elim.t12S` or a chain. |
-| [`pipeline.ts:602`](../../packages/engine-core/src/l2/pk/pipeline.ts#L602) | Step to tEnd on the absolute grid t_k = k·PK_DT_S. First, the boluses accepted since the previous call become |
+| [`pipeline.ts:200`](../../packages/engine-core/src/l2/pk/pipeline.ts#L200) | share of the chain's decline (ke); f = clFactor (research/13 H9). 1 without `elim.t12S` or a chain. |
+| [`pipeline.ts:614`](../../packages/engine-core/src/l2/pk/pipeline.ts#L614) | Step to tEnd on the absolute grid t_k = k·PK_DT_S. First, the boluses accepted since the previous call become |
 | [`row.ts:41`](../../packages/engine-core/src/l2/pk/row.ts#L41) | E = emax·c/ec50 (per-MAC effects of the volatiles, tables §6.3), clamped to ±\|emax\|·3 |
 | [`tci.ts:5`](../../packages/engine-core/src/l2/pk/tci.ts#L5) | Ce(k) = Ce_free(k) + r·Ce_unit(k), so r = min_k (target − Ce_free(k)) / Ce_unit(k) over k with Ce_unit(k) > 0 — |
 | [`volatile.ts:5`](../../packages/engine-core/src/l2/pk/volatile.ts#L5) | alveoli : VL·dFA/dt = VA·(FI − FA) − U,  U = Q·λb/g·(FA − Fv),  Fv = Σ q_i·F_i |
+
+## Couplings
+
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 18 rows; SOURCED 6, FIT 9, ENG 0, UNTAGGED 3, ABSENT 0.
+The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
+constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
+
+| Id | From → to | Sign · form | Class | Constants | Timing, limits | Note |
+|---|---|---|---|---|---|---|
+| `pharmacology.propofol.ce` | `trigger.drug.propofol` (Propofol bolus), `hemo.circ.qFwd`, `blood.core.co0` → `pk.bus.cns.propCe` | + · state | SOURCED | `ANAESTHETIC_ROWS.propofol` | — | Eleveld PK to the effect site; the row is flow-dependent (flowDist), so CO / the settled resting CO scales V1 and the intercompartmental clearances. |
+| `pharmacology.propofol.svr` | `pk.bus.cns.propCe` → `pk.fx.svr` | − · factor | FIT | `ANAESTHETIC_ROWS.propofol`, `HEMO_SYN_MAX` = 0.2, `HEMO_SYN_U50` = 1.2 | — | SVR × (1 − 0.45·E), E = Ce/(Ce + 3.5); an opioid on board deepens it (the haemodynamic synergy). |
+| `pharmacology.propofol.ees` | `pk.bus.cns.propCe` → `pk.fx.ees` | − · factor | SOURCED | `ANAESTHETIC_ROWS.propofol` | — | Contractility × (1 − 0.2·E). |
+| `pharmacology.propofol.venous` | `pk.bus.cns.propCe` → `pk.fx.v0Frac` | + · term | FIT | `ANAESTHETIC_ROWS.propofol`, `HEMO_SYN_MAX` = 0.2, `HEMO_SYN_U50` = 1.2 | — | Venodilation + 8 %·E of blood volume into the unstressed pool. |
+| `pharmacology.propofol.reflex` | `pk.bus.cns.propCe` → `pk.fx.gv` | − · factor | SOURCED | `ANAESTHETIC_ROWS.propofol` | — | Baroreflex gains × (1 − 0.6·E). |
+| `pharmacology.propofol.reflexHr` | `pk.bus.cns.propCe` → `pk.fx.gvHr` | − · factor | SOURCED | `ANAESTHETIC_ROWS.propofol` | — | The chronotropic reflex arm × (1 − 0.7·E). |
+| `pharmacology.propofol.sympatholysis` | `pk.bus.cns.propCe` → `pk.fx.symp` | − · factor | FIT | `PROPOFOL_SYMP` | — | Delivered sympathetic output × (1 − E), EC50 1 µg/mL, Hill 2. |
+| `pharmacology.propofol.setPoint` | `pk.bus.cns.propCe` → `pk.fx.setF` | − · factor | UNTAGGED | `PROPOFOL_SETF` | — | Baroreflex set point × (1 − 0.15·E). The comment that sizes it sits above PROPOFOL_SYMP, so this constant reads as untagged. |
+| `pharmacology.propofol.hypnotic` | `pk.bus.cns.propCe` → `pk.bus.cns.hypPropEq` (Ce prop-eq) | + · state | SOURCED | `PROP_HYP_C50_REF` = 3.08 | — | The one hypnotic-potency output: the propofol Ce with the same hypnotic effect at this age. |
+| `pharmacology.propofol.ventilatory` | `pk.bus.cns.propCe` → `pk.bus.cns.hypVentPropEq` (Propofol-equivalent at the ventilatory site (kept out of the truth tree)) | + · state | SOURCED | `PROP_HYP_C50_REF` = 3.08 | — | The propofol equivalent at the ventilatory site (ventShare-weighted), read by the neuro model's drive. |
+| `pharmacology.phenylephrine.svr` | `trigger.drug.phenylephrine` (Phenylephrine bolus) → `pk.fx.svr` | + · factor | FIT | `CARDIOVASCULAR_ROWS.phenylephrine` | — | α1 vasoconstriction, Emax +100 % at the rate-equivalent EC50; a catecholamine row (× acidosis factor × responsiveness). |
+| `pharmacology.phenylephrine.pvr` | `trigger.drug.phenylephrine` (Phenylephrine bolus) → `pk.fx.pvr` | + · factor | FIT | `CARDIOVASCULAR_ROWS.phenylephrine` | — | PVR Emax +15 %. |
+| `pharmacology.phenylephrine.venous` | `trigger.drug.phenylephrine` (Phenylephrine bolus) → `pk.fx.v0Frac` | − · term | FIT | `CARDIOVASCULAR_ROWS.phenylephrine` | — | Venoconstriction −4.5 % of blood volume at Emax. |
+| `pharmacology.catecholamine.acidosis` | `blood.core.ab.ph` → `pk.fx.svr` | + · gain | UNTAGGED | — | — | A catecholamine row's effect × acidosisFactor(pH) = max(0.4, 1 − 2.5·(7.4 − pH)); the numbers are inline in l2/pk/pd.ts. |
+| `pharmacology.catecholamine.responsiveness` | `cond.vasoResp` → `pk.fx.svr` | + · gain | UNTAGGED | — | — | A catecholamine row's effect × vasoResp (the endocrine model's cortisol permissive effect). |
+| `pharmacology.esmolol.occupancy` | `trigger.drug.esmolol` (Esmolol bolus) → `pk.betaBlockAdd` | + · state | FIT | `CARDIOVASCULAR_ROWS.esmolol` | — | β-receptor occupancy Emax 0.9, EC50 100 (rate-equivalent); combined competitively with the profile's own. |
+| `pharmacology.esmolol.hr` | `trigger.drug.esmolol` (Esmolol bolus) → `pk.fx.hr` | − · factor | FIT | `CARDIOVASCULAR_ROWS.esmolol` | — | Direct HR × (1 − 0.35·E). |
+| `pharmacology.esmolol.ees` | `trigger.drug.esmolol` (Esmolol bolus) → `pk.fx.ees` | − · factor | FIT | `CARDIOVASCULAR_ROWS.esmolol` | — | Contractility × (1 − 0.2·E). |
 
 ## State
 
@@ -135,12 +164,12 @@ library rows and the outputs other modules consume.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `HEMO_SYN_MAX` | `0.2` | — | Billard 1994; research/14; [ENG sizes; fit target [P] | An opioid on board deepens a HYPNOTIC's vasodilation and venodilation beyond the independent product — the hypnotic class's `svr` and `v0Frac` effects × (1 + HEMO_SYN_MAX·u/(u + HEMO_SYN_U50)), u = `uOpioid`. [ENG sizes; fit target [P]: Billard 1994 Anesthesiology 81:1384 (n = 120, ASA 1–2), propofol 2–3.5 mg/kg, systolic fall 28 mmHg alone vs 53 mmHg after fentanyl 2 µg/kg 5 min earlier (ratio 1.9) and 50 mmHg after 4 µg/kg — the same within the study, hence the saturating form (fentanyl 2 µg/kg is u ≈ 3.5 at 5 min, 4 µg/kg ≈ 7).] Hypnotic class only: midazolam co-induction is additive for pressure (research/14). SIZE: 0.2 is the LARGEST that keeps the two sourced bands this interaction feeds back into through the flow-dependent distribution — the induction apnoea (fentanyl pair 60–240 s: 108 s at 0.2, 513 s at 2) and the laryngoscopy-response blunting ratio (0.2–0.7: 0.22 at 0.2, 0.19 at 0.6). It reaches a Billard ratio of 1.16 against the paper's 1.9 — a known miss. |
+| `HEMO_SYN_MAX` | `0.2` | — | Billard 1994; research/44 X; research/14; [FIT: opioid–hypnotic haemodynamic synergy sizes; src Billard 1994; brief research/44 X-11]; [P] | An opioid on board deepens a HYPNOTIC's vasodilation and venodilation beyond the independent product — the hypnotic class's `svr` and `v0Frac` effects × (1 + HEMO_SYN_MAX·u/(u + HEMO_SYN_U50)), u = `uOpioid`. [FIT: opioid–hypnotic haemodynamic synergy sizes; src Billard 1994; brief research/44 X-11]. Fit target [P]: Billard 1994 Anesthesiology 81:1384 (n = 120, ASA 1–2), propofol 2–3.5 mg/kg, systolic fall 28 mmHg alone vs 53 mmHg after fentanyl 2 µg/kg 5 min earlier (ratio 1.9) and 50 mmHg after 4 µg/kg — the same within the study, hence the saturating form (fentanyl 2 µg/kg is u ≈ 3.5 at 5 min, 4 µg/kg ≈ 7). Hypnotic class only: midazolam co-induction is additive for pressure (research/14). SIZE: 0.2 is the LARGEST that keeps the two sourced bands this interaction feeds back into through the flow-dependent distribution — the induction apnoea (fentanyl pair 60–240 s: 108 s at 0.2, 513 s at 2) and the laryngoscopy-response blunting ratio (0.2–0.7: 0.22 at 0.2, 0.19 at 0.6). It reaches a Billard ratio of 1.16 against the paper's 1.9 — a known miss. |
 | `HEMO_SYN_U50` | `1.2` | — | — | — |
 | `PROP_HYP_C50_REF` | `3.08` | — | BIS 2024 | Propofol's hypnotic C50 at 35 y, µg/mL (Eleveld BIS 2024; the propofol-equivalent unit). |
 | `FENT_PER_REMI` | `1.25` | — | tables §5d | Remifentanil → fentanyl equivalence for the potency output (tables §5d: remi 1.2 ≈ fentanyl 1.5 ng/mL). |
 | `DEXMED_EEG_C50_NG_ML` | `2.5` | ng/mL | Colin 2017; Miller Ch23 Fig. 23.34 p. 663: the BIS-50 Ce; research/43 P; Miller Ch23 Table 23.6 p. 660; [INF] | Dexmedetomidine's EEG potency point, effect-site ng/mL: 2.5 ng/mL [Colin 2017, via Miller Ch23 Fig. 23.34 p. 663: the BIS-50 Ce; research/43 P-12]. The potency is borrowed from a processed index (BIS 50), not a cortical-state C50 [INF]. Its BIS ke0 0.120 /min (Miller Ch23 Table 23.6 p. 660) is NOT applied a second time here: the drug row is already an EFFECT curve (a gamma row peaking 15 min after the load, rows-anaesthetic.ts), with no plasma to lag. ng/mL |
-| `DEXMED_NG_PER_REF` | `0.5 / 60 / 0.01` | ng/mL | Miller Ch21 Table 21.1 gives clearance 10–30 mL/kg/min; Miller Ch21's "rousable sedation at 0.2–0.3 ng/mL" at the low end of the 0.2–0.7 µg/kg/h sedation infusion (0.33 ng/mL at 0.2 µg/kg/h; [ENG, derived: Miller Ch21 Table 21.1 gives clearance 10–30 mL/kg/min; the low end is the one that puts Miller Ch21's "rousable sedation at 0.2–0.3 ng/mL" at the low end of the 0.2–0.7 µg/kg/h sedation infusion (0.33 ng/mL at 0.2 µg/kg/h); the high end gives 0.28] | ng/mL per reference unit of the dexmedetomidine gamma row (c = 1 at the 0.5 µg/kg/h steady state, and at the peak of 1 µg/kg): 0.5 µg/kg/h ÷ clearance 10 mL/kg/min = 0.83 ng/mL [ENG, derived: Miller Ch21 Table 21.1 gives clearance 10–30 mL/kg/min; the low end is the one that puts Miller Ch21's "rousable sedation at 0.2–0.3 ng/mL" at the low end of the 0.2–0.7 µg/kg/h sedation infusion (0.33 ng/mL at 0.2 µg/kg/h); the high end gives 0.28]. The row itself is unchanged. ng/mL per reference unit |
+| `DEXMED_NG_PER_REF` | `0.5 / 60 / 0.01` | ng/mL | Miller Ch21 Table 21.1 (research/41 row 65; Miller Ch21's "rousable sedation at 0.2–0.3 ng/mL" at the low end of the 0.2–0.7 µg/kg/h sedation infusion (0.33 ng/mL at 0.2 µg/kg/h; [FIT: ng/mL per reference unit, derived; src Miller Ch21 Table 21.1 (research/41 row 65) gives clearance 10–30 mL/kg/min; the low end is the one that puts Miller Ch21's "rousable sedation at 0.2–0.3 ng/mL" at the low end of the 0.2–0.7 µg/kg/h sedation infusion (0.33 ng/mL at 0.2 µg/kg/h); the high end gives 0.28] | ng/mL per reference unit of the dexmedetomidine gamma row (c = 1 at the 0.5 µg/kg/h steady state, and at the peak of 1 µg/kg): 0.5 µg/kg/h ÷ clearance 10 mL/kg/min = 0.83 ng/mL [FIT: ng/mL per reference unit, derived; src Miller Ch21 Table 21.1 (research/41 row 65) gives clearance 10–30 mL/kg/min; the low end is the one that puts Miller Ch21's "rousable sedation at 0.2–0.3 ng/mL" at the low end of the 0.2–0.7 µg/kg/h sedation infusion (0.33 ng/mL at 0.2 µg/kg/h); the high end gives 0.28]. The row itself is unchanged. ng/mL per reference unit |
 
 ### [`l2/pk/gamma.ts`](../../packages/engine-core/src/l2/pk/gamma.ts)
 
@@ -152,14 +181,14 @@ library rows and the outputs other modules consume.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `SUX_REPEAT_P` | `0.35` | — | M10 ch. 23 "succinylcholine: bradycardia … especially after a second dose and in children"; [ENG] | A SECOND succinylcholine dose given a few minutes after the first, without an anticholinergic, can cause a profound muscarinic bradyarrhythmia — junctional escape, sinus arrest or (reported) asystole. Succinylcholine and its metabolite succinylmonocholine sensitise cardiac muscarinic receptors, which is why the first dose usually does nothing and the second one does, why atropine or glycopyrrolate given first prevents it, and why it is commonest in children (M10 ch. 23 "succinylcholine: bradycardia … especially after a second dose and in children"). It is a RISK, not a certainty, so it is a seeded draw on the `outcome` stream, not a deterministic response. adult probability per repeat dose [ENG] |
-| `SUX_REPEAT_P_CHILD` | `0.7` | — | [ENG: "much commoner in children"] | < 12 y [ENG: "much commoner in children"] |
+| `SUX_REPEAT_P` | `0.35` | — | M10 ch. 23 "succinylcholine: bradycardia … especially after a second dose and in children"; research/44 L2; [FIT: succinylcholine repeat-dose bradycardia probability or window; brief research/44 L2-27] | A SECOND succinylcholine dose given a few minutes after the first, without an anticholinergic, can cause a profound muscarinic bradyarrhythmia — junctional escape, sinus arrest or (reported) asystole. Succinylcholine and its metabolite succinylmonocholine sensitise cardiac muscarinic receptors, which is why the first dose usually does nothing and the second one does, why atropine or glycopyrrolate given first prevents it, and why it is commonest in children (M10 ch. 23 "succinylcholine: bradycardia … especially after a second dose and in children"). It is a RISK, not a certainty, so it is a seeded draw on the `outcome` stream, not a deterministic response. adult probability per repeat dose [FIT: succinylcholine repeat-dose bradycardia probability or window; brief research/44 L2-27] |
+| `SUX_REPEAT_P_CHILD` | `0.7` | — | research/44 L2; [FIT: succinylcholine repeat-dose bradycardia probability or window; "much commoner in children"; brief research/44 L2-27] | < 12 y [FIT: succinylcholine repeat-dose bradycardia probability or window; "much commoner in children"; brief research/44 L2-27] |
 | `SUX_REPEAT_MIN_GAP_S` | `90` | s | — | a second dose inside the same rapid sequence is one dose |
-| `SUX_REPEAT_MAX_GAP_S` | `1200` | s | [ENG] | beyond 20 min the sensitisation has gone [ENG] |
+| `SUX_REPEAT_MAX_GAP_S` | `1200` | s | research/44 L2; [FIT: succinylcholine repeat-dose bradycardia probability or window; brief research/44 L2-27] | beyond 20 min the sensitisation has gone [FIT: succinylcholine repeat-dose bradycardia probability or window; brief research/44 L2-27] |
 | `SUX_BRADY_RATE_BPM` | `45` | /min | — | — |
 | `SUX_BRADY_S` | `60` | s | — | — |
 | `SUX_MUSC_BLOCK_PROTECT` | `0.5` | — | — | atropine/glycopyrrolate occupancy that abolishes it |
-| `PREEXCITED_VF_P` | `0.2` | — | [ENG, for the calibration pass] | VF on an AV-nodal block of pre-excited AF, per event [ENG, for the calibration pass]. |
+| `PREEXCITED_VF_P` | `0.2` | — | research/44 L2; [FIT: VF on AV-nodal block of pre-excited AF (teaching hazard); for the calibration pass; brief research/44 L2-14] | VF on an AV-nodal block of pre-excited AF, per event [FIT: VF on AV-nodal block of pre-excited AF (teaching hazard); for the calibration pass; brief research/44 L2-14]. |
 
 ### [`l2/pk/models.ts`](../../packages/engine-core/src/l2/pk/models.ts)
 
@@ -172,7 +201,7 @@ library rows and the outputs other modules consume.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `SURFACE_ALPHA` | `1.5` | — | Bouillon 2004; [ENG within Bouillon 2004] | Greco/Minto response surface, simplest form: U = Uh + Uo + α·Uh·Uo (α 1.5 [ENG within Bouillon 2004]). |
+| `SURFACE_ALPHA` | `1.5` | — | Bouillon 2004 | Greco/Minto response surface, simplest form: U = Uh + Uo + α·Uh·Uo (α 1.5 (inside Bouillon 2004; within Bouillon 2004)). |
 | `ELEVELD_CE50_AGE_K` | `0.00635` | — | tables §5d | Eleveld BIS Ce50 age slope: Ce50(age) = Ce50(35)·e^(−0.00635·(age − 35)) (tables §5d). |
 | `FENT_VENT_REMI_EQ` | `0.55` | — | — | Fentanyl's VENTILATORY potency relative to remifentanil — a deviation from the tables (Q54: 0.55×, C50 ≈ 1.7 ng/mL; the tables' EEG-derived 1.6× made 1.5 µg/kg apnoeic). ONE source: the fentanyl row's `ventRemiEq`, `combine`'s fentanyl-equivalent and the neuro model's `FENT_VENT_POT` all read this. |
 
@@ -182,7 +211,9 @@ library rows and the outputs other modules consume.
 |---|---|---|---|---|
 | `PK_DT_S` | `0.1` | s | — | — |
 | `NEVER` | `1e12` | — | — | "Never" / "long ago" as finite numbers: snapshots travel as JSON, which turns ±Infinity into null. |
-| `ARM_BRAIN_S` | `12` | s | Guyton & Hall [TXT]; [TXT]; [ENG value] | Cardiac output ÷ the patient's own resting output (the circulation's stabilised reference; else 0.075 L/min/kg), quantised to 5 % in 0.3–1.5 (cache hits) — exactly 1 at rest, so a resting engine keeps the unscaled model. Resting arm-to-brain circulation time, s (10–15 s: the classic dye/decholin circulation times, Guyton & Hall [TXT]) [ENG value]; the lag at output ratio q is ARM_BRAIN_S·(1/q − 1). |
+| `LIPID_SINK_CARDIAC` | `0.177` | — | research/44 X; Miller 10e ch. 25 p. 762; Anesthesiology 2013; Litonius 2012; ASRA 2020; M10 p. 762 −11 % cardiac at 3 min; M10 ch. 25 p. 762]. It replaces one sink of up to 50 %; [FIT: M10 p. 762 −11 % cardiac at 3 min, −18 % cerebral at 15 min; brief research/44 X-06; src M10 ch. 25 p. 762] | The lipid sink (research/44 X-06). Miller 10e ch. 25 p. 762, from Kuo & Akpa's PBPK model (Anesthesiology 2013;118: 1350): Intralipid lowers CARDIAC bupivacaine by 11 % within 3 minutes and CEREBRAL bupivacaine by 18 % within 15 minutes ("theoretical"; Litonius 2012 found no significant sink in human volunteers). The sink is a Hill on the emulsion's concentration (ec50 1 = the ASRA regimen's reference). Each emax is sized so the ASRA 2020 regimen (1.5 mL/kg, then 0.25 mL/kg/min) gives the cited fall at the cited time: lipid concentration 1.64 at 3 min → 0.11 ÷ (1.64/2.64) = 0.177; 1.33 at 15 min → 0.18 ÷ (1.33/2.33) = 0.315 [FIT: M10 p. 762 −11 % cardiac at 3 min, −18 % cerebral at 15 min; brief research/44 X-06; src M10 ch. 25 p. 762]. It replaces one sink of up to 50 %, an engineered value that contradicted the row's own citation. The time course is the emulsion's, not the PBPK's (that mechanism is the audit's later step). |
+| `LIPID_SINK_CEREBRAL` | `0.315` | — | — | — |
+| `ARM_BRAIN_S` | `12` | s | Guyton & Hall [TXT]; Guyton & Hall's 10–15 s; [TXT] | Cardiac output ÷ the patient's own resting output (the circulation's stabilised reference; else 0.075 L/min/kg), quantised to 5 % in 0.3–1.5 (cache hits) — exactly 1 at rest, so a resting engine keeps the unscaled model. Resting arm-to-brain circulation time, s (10–15 s: the classic dye/decholin circulation times, Guyton & Hall [TXT]) (a point in Guyton & Hall's 10–15 s; value); the lag at output ratio q is ARM_BRAIN_S·(1/q − 1). |
 
 ### [`l2/pk/tci.ts`](../../packages/engine-core/src/l2/pk/tci.ts)
 
@@ -195,7 +226,7 @@ library rows and the outputs other modules consume.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `CIRCUIT_L` | `7` | — | [ENG] | circle system + bag + absorber gas volume [ENG] |
+| `CIRCUIT_L` | `7` | — | [ENG: device] | circle system + bag + absorber gas volume [ENG: device] |
 | `MAC_AWAKE` | `0.34` | — | Miller 10e ch. 18 p. 406 | × MAC for the potent agents (Miller 10e ch. 18 p. 406) |
 
 ### Drug rows (65; `packages/engine-core/src/l2/pk/data/`)
@@ -208,10 +239,10 @@ library rows and the outputs other modules consume.
 | `thiopental` | Thiopental | hypnotic | gamma | T6.3 (SVR −20 %, Ees −15 %, HR +10–15 %, V0 +8 %, reflex ×0.6) | TXT |
 | `midazolam` | Midazolam | benzodiazepine | gamma | T6.3 (SVR −10–15 %, V0 +3 %, reflex ×0.8); M10 ch. 21 | TXT |
 | `dexmedetomidine` | Dexmedetomidine | alpha2 | gamma | T6.3 (HR −10–20 %, SVR −10–20 % after the biphasic load; the transient rise of a fast load is not modelled in v1) | TXT |
-| `fentanyl` | Fentanyl | opioid | shafer | Shafer 1990 PK; ke0 by TTPE (decision 2); T5d potency 1.6× remifentanil; haemodynamic EC50 [ENG]: typical clinical Ce ÷ T5d potency, sized to T6.3 | VERIFY |
-| `remifentanil` | Remifentanil | opioid | minto | Minto 1997; Bouillon 2003 (ventilation C50 0.92, ke0 0.92); Kapila 1995; haemodynamic EC50 [ENG]: typical clinical Ce ÷ T5d potency, sized to T6.3 | P |
-| `sufentanil` | Sufentanil | opioid | gepts | Gepts 1995 PK [VERIFY]; potency ×12 remifentanil [ENG, Q59]; haemodynamic EC50 [ENG]: typical clinical Ce ÷ T5d potency, sized to T6.3 | VERIFY |
-| `morphine` | Morphine | opioid | gamma | R03 §8.6; M10 ch. 22; remi-equivalent [ENG] | TXT |
+| `fentanyl` | Fentanyl | opioid | shafer | Shafer 1990 PK; ke0 by TTPE (decision 2); T5d potency 1.6× remifentanil; haemodynamic EC50 [FIT: opioid haemodynamic EC50 sized to T6.3; brief research/44 X-10]: typical clinical Ce ÷ T5d potency, sized to T6.3 | VERIFY |
+| `remifentanil` | Remifentanil | opioid | minto | Minto 1997; Bouillon 2003 (ventilation C50 0.92, ke0 0.92); Kapila 1995; haemodynamic EC50 [FIT: opioid haemodynamic EC50 sized to T6.3; brief research/44 X-10]: typical clinical Ce ÷ T5d potency, sized to T6.3 | P |
+| `sufentanil` | Sufentanil | opioid | gepts | Gepts 1995 PK [VERIFY]; potency ×12 remifentanil [FIT: remifentanil potency ×12; Q59; brief research/44 X-10]; haemodynamic EC50 [FIT: opioid haemodynamic EC50 sized to T6.3; brief research/44 X-10]: typical clinical Ce ÷ T5d potency, sized to T6.3 | VERIFY |
+| `morphine` | Morphine | opioid | gamma | R03 §8.6; M10 ch. 22; remi-equivalent [FIT: remifentanil-equivalent ventilatory weight; brief research/44 X-10] | TXT |
 | `sevoflurane` | Sevoflurane | volatile | volatile | T6.3 (Malan 1995); T5d | P |
 | `isoflurane` | Isoflurane | volatile | volatile | T6.3; Mapleson 1996; M10 ch. 19 p. 427 | TXT |
 | `desflurane` | Desflurane | volatile | volatile | T6.3; Mapleson 1996 | TXT |
@@ -219,14 +250,14 @@ library rows and the outputs other modules consume.
 | `rocuronium` | Rocuronium | nmb | nmb | Roc label; Plaud 1995; 0.0042 L/kg/min | P |
 | `vecuronium` | Vecuronium | nmb | nmb | Vec label; 0.0045 L/kg/min | P |
 | `cisatracurium` | Cisatracurium | nmb | nmb | Cis label; 0.0052 L/kg/min | P |
-| `atracurium` | Atracurium | nmb | nmb | label; M10 ch. 24 (histamine release); PK shared with cisatracurium [ENG, Q: its own set] | ENG |
-| `mivacurium` | Mivacurium | nmb | nmb | label; M10 ch. 24; PK shared with succinylcholine [ENG, Q: its own set] | ENG |
+| `atracurium` | Atracurium | nmb | nmb | label; M10 ch. 24 (histamine release); PK shared with cisatracurium [FIT: PK borrowed from another drug; Q: its own set; brief research/44 X-12] | ENG |
+| `mivacurium` | Mivacurium | nmb | nmb | label; M10 ch. 24; PK shared with succinylcholine [FIT: PK borrowed from another drug; Q: its own set; brief research/44 X-12] | ENG |
 | `succinylcholine` | Succinylcholine | depolariser | nmb | Sux label; Lee 2009; Roy 2002 CL 0.037 L/kg/min | P |
 | `sugammadex` | Sugammadex | nmbReversal | nmb | Sgx label; V 0.17 L/kg | P |
 | `neostigmine` | Neostigmine | anticholinesterase | gamma | Neo label; BJAEd 2020; T5d | P |
 | `glycopyrrolate` | Glycopyrrolate | anticholinergic | gamma | T6.2; brief §4.9 | TXT |
 | `atropine` | Atropine | anticholinergic | gamma | T6.2; R03 §8.6 | TXT |
-| `phenylephrine` | Phenylephrine | alpha1 | perKg | Phe label; Hengstmann 1982 (CL ≈ 2.1 L/min); T6.2 (Emax +100 %); EC50 0.25 [ENG, D1] | ENG |
+| `phenylephrine` | Phenylephrine | alpha1 | perKg | Phe label; Hengstmann 1982 (CL ≈ 2.1 L/min); T6.2 (Emax +100 %); EC50 0.25 [FIT: phenylephrine EC50; D1; brief research/44 X-12] | ENG |
 | `ephedrine` | Ephedrine | mixedAdrenergic | gamma | Eph label; T6.2 | ENG |
 | `norepinephrine` | Norepinephrine | alpha1 | perKg | NE label; T6.2 | ENG |
 | `epinephrine` | Epinephrine | mixedAdrenergic | perKg | Epi label; T6.2; T5e | ENG |
@@ -235,19 +266,19 @@ library rows and the outputs other modules consume.
 | `milrinone` | Milrinone | pde3 | perKg | Mil label; T6.2 | P |
 | `dopamine` | Dopamine | mixedAdrenergic | perKg | T6.2 [TXT], Q59 | TXT |
 | `nitroglycerin` | Nitroglycerin | vasodilator | perKg | NTG label; T6.2 (V +10–15 % at 1 µg/kg/min, SVR ×0.85, PVR ×0.8) | ENG |
-| `nitroprusside` | Sodium nitroprusside | vasodilator | perKg | SNP label (immediate onset, MAP falls 30–40 % at 1–3 µg/kg/min); T6.2 [TXT]; sizes [ENG] | ENG |
+| `nitroprusside` | Sodium nitroprusside | vasodilator | perKg | SNP label (immediate onset, MAP falls 30–40 % at 1–3 µg/kg/min); T6.2 [TXT]; sizes [FIT: drug effect sizes from T6.2 ranges; brief research/44 X-12] | ENG |
 | `hydralazine` | Hydralazine | vasodilator | gamma | label [TXT] | TXT |
-| `esmolol` | Esmolol | betaBlocker | perKg | Esmolol label (CL 285 mL/kg/min, Vss 3.4 L/kg, t½ 2/9 min); T6.2; β occupancy [ENG] | ENG |
-| `labetalol` | Labetalol | betaBlocker | gamma | T6.2 [TXT], Q59; β occupancy [ENG] | TXT |
-| `metoprolol` | Metoprolol | betaBlocker | gamma | T6.2 [TXT], Q59; β occupancy [ENG] | TXT |
-| `glucagon` | Glucagon | metabolic | gamma | ACMT β-blocker-toxicity guidance; AHA 2010 toxicology (glucagon 3–10 mg); T6.2 sizes [ENG] | ENG |
+| `esmolol` | Esmolol | betaBlocker | perKg | Esmolol label (CL 285 mL/kg/min, Vss 3.4 L/kg, t½ 2/9 min); T6.2; β occupancy [FIT: AV-nodal block size; brief research/44 X-12] | ENG |
+| `labetalol` | Labetalol | betaBlocker | gamma | T6.2 [TXT], Q59; β occupancy [FIT: β-receptor occupancy vs dose (no source); brief research/44 X-12] | TXT |
+| `metoprolol` | Metoprolol | betaBlocker | gamma | T6.2 [TXT], Q59; β occupancy [FIT: β-receptor occupancy vs dose (no source); brief research/44 X-12] | TXT |
+| `glucagon` | Glucagon | metabolic | gamma | ACMT β-blocker-toxicity guidance; AHA 2010 toxicology (glucagon 3–10 mg); T6.2 sizes [FIT: drug effect sizes from T6.2 ranges; brief research/44 X-12] | ENG |
 | `amiodarone` | Amiodarone | antiarrhythmic | gamma | T6.2 antiarrhythmic paragraph | TXT |
-| `procainamide` | Procainamide | antiarrhythmic | gamma | PROCAMIO (Ortiz 2017); label; sizes [ENG] | ENG |
-| `verapamil` | Verapamil | antiarrhythmic | gamma | label; T6.2 [TXT]; sizes [ENG] | ENG |
+| `procainamide` | Procainamide | antiarrhythmic | gamma | PROCAMIO (Ortiz 2017); label; sizes [FIT: drug effect sizes from T6.2 ranges; brief research/44 X-12] | ENG |
+| `verapamil` | Verapamil | antiarrhythmic | gamma | label; T6.2 [TXT]; sizes [FIT: drug effect sizes from T6.2 ranges; brief research/44 X-12] | ENG |
 | `adenosine` | Adenosine | adenosine | gamma | R03 §8.6; decision 11 (E 0.85 at 6 mg / 70 kg, 0.59 at 3 mg, 0.96 at 12 mg) | ENG |
 | `calciumChloride` | Calcium chloride 10 % | electrolyte | blood | 7c plan decision 8 | TXT |
 | `calciumGluconate` | Calcium gluconate 10 % | electrolyte | blood | 7c plan decision 8 | TXT |
-| `potassiumChloride` | Potassium chloride | electrolyte | blood | Ali 2026-10-10; Miller 10e ch. 43 p. 1355; Co-Existing 8e ch. 20 p. 404; Kruse 1990 (PMID 2310280) | TXT |
+| `potassiumChloride` | Potassium chloride | electrolyte | blood | samhv-dev 2026-10-10; Miller 10e ch. 43 p. 1355; Co-Existing 8e ch. 20 p. 404; Kruse 1990 (PMID 2310280) | TXT |
 | `sodiumBicarbonate` | Sodium bicarbonate 8.4 % | electrolyte | blood | 7c plan decision 14 | TXT |
 | `insulinDextrose` | Insulin + dextrose | metabolic | gamma | 7c plan decision 7; FU-10 E-FU10-14 | TXT |
 | `magnesium` | Magnesium sulfate | electrolyte | perKg | T6.2; M10 ch. 24 | TXT |
@@ -263,10 +294,10 @@ library rows and the outputs other modules consume.
 | `lidocaine` | Lidocaine | localAnaesthetic | perKg | M10 ch. 25; LAST_THRESHOLDS | TXT |
 | `bupivacaine` | Bupivacaine | localAnaesthetic | perKg | M10 ch. 25; LAST_THRESHOLDS | TXT |
 | `ropivacaine` | Ropivacaine | localAnaesthetic | perKg | M10 ch. 25; LAST_THRESHOLDS | TXT |
-| `lipidEmulsion` | Lipid emulsion 20 % | lipid | gamma | ASRA 2020; M10 ch. 25 p. 762 | ENG |
+| `lipidEmulsion` | Lipid emulsion 20 % | lipid | gamma | ASRA 2020 (dose); M10 ch. 25 p. 762 (sink: LIPID_SINK_CARDIAC/CEREBRAL in pk/pipeline.ts) | TXT |
 | `tranexamicAcid` | Tranexamic acid | placeholder | gamma | CRASH-2; placeholder for 7i | TXT |
-| `ondansetron` | Ondansetron | placeholder | gamma | FDA 2012 label change; size [ENG] | ENG |
-| `dexamethasone` | Dexamethasone | placeholder | gamma | Hans 2006; M10 ch. 47; size [ENG] | ENG |
+| `ondansetron` | Ondansetron | placeholder | gamma | Ondansetron injection label §12.2 (thorough-QT trial); FDA Drug Safety Communication 2012 | TXT |
+| `dexamethasone` | Dexamethasone | placeholder | gamma | Hans 2006; M10 ch. 47; size [FIT: dexamethasone glucocorticoid emax fitted to glucose +10–60 mg/dL within 1 h; brief research/44 X-13] | ENG |
 
 ### Routes other than IV (`DrugRow.routeModels`; every other non-IV route is refused: "route X is not modelled")
 

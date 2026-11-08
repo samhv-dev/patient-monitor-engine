@@ -177,7 +177,7 @@ describe('P6: the view feed and the note path', () => {
     expect(boardOf(again.link)).toEqual(boardOf(hostLink));
     expect(boardOf(again.link)?.list.map((r) => (r.row.kind === 'step' ? r.row.label : r.row.kind))).not.toContain('Dantrolene 2.5 mg/kg');
 
-    // the feed's size at that moment (plan §6: ≤ 16 KB) [ENG]
+    // the feed's size at that moment (plan §6: ≤ 16 KB) [ENG: test]
     const sizes = feeds().map((x) => JSON.stringify(x.e).length);
     const last = sizes.at(-1) as number;
     console.log(`[P6] instructorView at the MH fan-out: ${last} bytes (largest so far ${Math.max(...sizes)}; board ${JSON.stringify(feedOf(hostLink).board).length} bytes)`);
@@ -291,7 +291,7 @@ describe('P6: the view feed and the note path', () => {
     await hostLink.send({ type: 'time', action: 'pause' });
     s.endBriefing(); // its countdown runs on the wall clock
     await run(10, 1500);
-    const v = teach2View(hostLink, { site: DEFAULT_SITE, weightKg: () => 80 });
+    const v = teach2View(hostLink, { site: DEFAULT_SITE, weightKg: () => 80, loadScenario: () => true });
     document.body.append(v.el);
     closers.push(() => v.destroy());
     v.enter?.('');

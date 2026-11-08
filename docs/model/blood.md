@@ -60,16 +60,16 @@ lactate; an embedding developer reads it for the blood state and lab outputs the
 |---|---|
 | [`acid-base.ts:12`](../../packages/engine-core/src/l2/blood/acid-base.ts#L12) | f(pH) = SID − HCO3(pH, PCO2) − Alb·(0.123·pH − 0.631) − Pi·(0.309·pH − 0.469) − βHb·(pH − 7.4) = 0 |
 | [`circ-adapter.ts:69`](../../packages/engine-core/src/l2/blood/circ-adapter.ts#L69) | The circulation model ABSENT (unit rigs): the `volumeStatus` coupled truth = min(current, target × volume factor), |
-| [`circ-adapter.ts:70`](../../packages/engine-core/src/l2/blood/circ-adapter.ts#L70) | factor 1 at BV0 and 0 at 35 % loss [ENG]; `contractility` coupled truth = target × chemistry factor (cleared at 1). |
+| [`circ-adapter.ts:70`](../../packages/engine-core/src/l2/blood/circ-adapter.ts#L70) | factor 1 at BV0 and 0 at 35 % loss [ENG: test]; `contractility` coupled truth = target × chemistry factor (cleared at 1). |
 | [`circ-adapter.ts:108`](../../packages/engine-core/src/l2/blood/circ-adapter.ts#L108) | One step of the extra lung water W (mL/kg above the conditions' EVLWI). Threshold = tables §2 `pOedema` (COP − 2, |
 | [`core.ts:35`](../../packages/engine-core/src/l2/blood/core.ts#L35) | (the default) = the fixed elimination (K_EL_AWAKE, GA ×0.2). The balance has no intake term, so the seam carries only |
 | [`core.ts:162`](../../packages/engine-core/src/l2/blood/core.ts#L162) | With the organ model, hepatic flow = CO/CO0 × the organ model's splanchnic/outflow factor (sympathetic, α-agonist, |
 | [`fluids.ts:12`](../../packages/engine-core/src/l2/blood/fluids.ts#L12) | J = Kf·kfMult·[ΔPc − Pisf − σ·((πp − πp0) − (πisf − πisf0))]      ΔPc = PC_PER_ML·(V_blood − V_blood0) |
 | [`fluids.ts:13`](../../packages/engine-core/src/l2/blood/fluids.ts#L13) | πp = scaled Nitta(albumin + colloid, globulins) (FU-9 F8)   Pisf = ΔVisf/(C·Visf0)   πisf = πisf0·Visf0/Visf |
 | [`fluids.ts:14`](../../packages/engine-core/src/l2/blood/fluids.ts#L14) | lymph (extra) = LYMPH_GAIN·max(−2, Pisf)                          elimination = kEl·max(0, V_blood − V_blood0) |
-| [`fluids.ts:89`](../../packages/engine-core/src/l2/blood/fluids.ts#L89) | [ENG]: σ = 1 − (1 − σ0)·kfMult, floor SIGMA_LEAK_FLOOR [ENG]. Normal (kfMult 1) → 0.9; warm septic shock (kfMult 2.6) |
+| [`fluids.ts:89`](../../packages/engine-core/src/l2/blood/fluids.ts#L89) | [FIT: Starling reflection coefficient under capillary leak; brief research/44 L2-39]: σ = 1 − (1 − σ0)·kfMult, floor SIGMA_LEAK_FLOOR [FIT: Starling reflection coefficient under capillary leak; brief research/44 L2-39]. Normal (kfMult 1) → 0.9; warm septic shock (kfMult 2.6) |
 | [`fluids.ts:98`](../../packages/engine-core/src/l2/blood/fluids.ts#L98) | Plasma ↔ interstitium exchange J (mL/min, positive = filtration out of plasma) and extra lymph (mL/min). |
-| [`labs.ts:29`](../../packages/engine-core/src/l2/blood/labs.ts#L29) | PvCO2 − PaCO2 = VCO2/(Q·S), S 4.5 mL/L/mmHg [ENG]; venous PO2 from SvO2 by inverting the curve (bisection) |
+| [`labs.ts:29`](../../packages/engine-core/src/l2/blood/labs.ts#L29) | PvCO2 − PaCO2 = VCO2/(Q·S), S 4.5 mL/L/mmHg [FIT: fixed CO2-content slope for venous PCO2; brief research/44 L2-41]; venous PO2 from SvO2 by inverting the curve (bisection) |
 | [`odc.ts:9`](../../packages/engine-core/src/l2/blood/odc.ts#L9) | Oxygen dissociation (tables §5b.3 P50 row; audit #6, A14): SHbO2 = x^n/(1 + x^n), x = PO2/P50, with |
 | [`odc.ts:11`](../../packages/engine-core/src/l2/blood/odc.ts#L11) | P50 = (26.8 − 20·S_CO) · Π_k (P50_k / 26.8)            (independent shifts, multiplicative) |
 | [`odc.ts:12`](../../packages/engine-core/src/l2/blood/odc.ts#L12) | P50_pH   = 26.765 − 21.279·ΔpH + 8.872·ΔpH²            ΔpH = pH − 7.4 |
@@ -78,11 +78,28 @@ lactate; an embedding developer reads it for the blood state and lab outputs the
 | [`odc.ts:15`](../../packages/engine-core/src/l2/blood/odc.ts#L15) | P50_T    = 26.8 + 1.4945·ΔT + 0.04335·ΔT² + 0.0007·ΔT³ ΔT = T − 37 |
 | [`oxygen.ts:2`](../../packages/engine-core/src/l2/blood/oxygen.ts#L2) | CaO2 = 13.4·Hb·SaO2·(1 − COHb − MetHb) + 0.03·PaO2   (mL/L)       DO2 = CO·CaO2 (mL/min) |
 | [`oxygen.ts:3`](../../packages/engine-core/src/l2/blood/oxygen.ts#L3) | VO2 = demand − global: extraction rises first, VO2 becomes supply-dependent only below DO2crit |
-| [`oxygen.ts:8`](../../packages/engine-core/src/l2/blood/oxygen.ts#L8) | regional = demand·REGIONAL_FRAC·clamp((0.88 − q)/(0.88 − 0.40)),  q = (CO/CO0)/(demand/demand0)   [ENG, Q41/Q42] |
-| [`params.ts:26`](../../packages/engine-core/src/l2/blood/params.ts#L26) | Red cells: Hct = Hb·3/100, i.e. MCHC 33.3 g/dL [TXT]. |
-| [`params.ts:86`](../../packages/engine-core/src/l2/blood/params.ts#L86) | Splanchnic flow falls faster than CO: hbfRel = (CO/CO0)^2 (tables §5.3 `hbfFactor` ×0.6 on top of CO −40 % in class III) [ENG]. |
-| [`params.ts:122`](../../packages/engine-core/src/l2/blood/params.ts#L122) | 70 kg / 175 cm. TBW 0.6 (M) / 0.5 (F) L/kg of the ACTUAL weight; ICF 2/3; ECF 1/3; plasma = BV·(1 − Hct). |
-| [`params.ts:179`](../../packages/engine-core/src/l2/blood/params.ts#L179) | - SAGM (D'Amici 2012 Table I): NaCl 0.877 g/100 mL = 150 mmol/L, no buffer [TXT]; |
+| [`oxygen.ts:8`](../../packages/engine-core/src/l2/blood/oxygen.ts#L8) | regional = demand·REGIONAL_FRAC·clamp((0.88 − q)/(0.88 − 0.40)),  q = (CO/CO0)/(demand/demand0)   [FIT: regional supply dependence ramp; Q41/Q42; brief research/44 L2-09] |
+| [`params.ts:27`](../../packages/engine-core/src/l2/blood/params.ts#L27) | Red cells: Hct = Hb·3/100, i.e. MCHC 33.3 g/dL [TXT]. |
+| [`params.ts:87`](../../packages/engine-core/src/l2/blood/params.ts#L87) | Splanchnic flow falls faster than CO: hbfRel = (CO/CO0)^2 (tables §5.3 `hbfFactor` ×0.6 on top of CO −40 % in class III) [FIT: regional supply dependence and hepatic flow, tuned to tables §7 17a class III lactate; brief research/44 L2-09]. |
+| [`params.ts:123`](../../packages/engine-core/src/l2/blood/params.ts#L123) | 70 kg / 175 cm. TBW 0.6 (M) / 0.5 (F) L/kg of the ACTUAL weight; ICF 2/3; ECF 1/3; plasma = BV·(1 − Hct). |
+| [`params.ts:180`](../../packages/engine-core/src/l2/blood/params.ts#L180) | - SAGM (D'Amici 2012 Table I): NaCl 0.877 g/100 mL = 150 mmol/L, no buffer [TXT]; |
+
+## Couplings
+
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 8 rows; SOURCED 0, FIT 2, ENG 0, UNTAGGED 6, ABSENT 0.
+The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
+constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
+
+| Id | From → to | Sign · form | Class | Constants | Timing, limits | Note |
+|---|---|---|---|---|---|---|
+| `blood.bleed` | `trigger.bleed` (Haemorrhage) → `blood.core.fl.vp` | − · state | UNTAGGED | — | — | The blood model takes the bleed command first (engine.ts: before the haemodynamics): whole blood leaves its plasma and red-cell pools at the ordered rate. |
+| `blood.circulation` | `blood.core.fl.vp`, `blood.core.fl.visf` → `hemo.circ.vol` | + · state | UNTAGGED | — | — | Each step's blood-volume change (the bleed, and the transcapillary refill from the interstitium) enters the circulation's volume queue (pushCircVolume). |
+| `blood.dilution` | `blood.core.fl.hbG`, `blood.core.fl.vp` → `blood.core.odc.hb` | ± · state | UNTAGGED | — | — | Haemoglobin concentration = the red-cell mass over the blood volume: refill dilutes it after a bleed. |
+| `blood.viscosity` | `blood.core.odc.hb`, `hemo.circ.qFwd` → `hemo.circ.ext.viscF` | + · factor | FIT | `VISC_EXP` = 0.6, `VISC_FLOW_FULL` = 1.0, `VISC_FLOW_NONE` = 0.3 | — | SVR × (Hb/Hb_ref)^VISC_EXP, faded out as flow falls from VISC_FLOW_FULL to VISC_FLOW_NONE of normal (MODELED only). |
+| `blood.lactate` | `hemo.circ.qFwd` → `blood.out.lactate` (Lactate) | − · state | UNTAGGED | — | — | Supply-dependent oxygen consumption below the critical delivery makes lactate. |
+| `blood.acidosis` | `blood.out.lactate` (Lactate) → `blood.core.ab.ph` | − · state | UNTAGGED | — | — | The strong-ion acid–base solution: lactate lowers the SID and the pH. |
+| `blood.chemistry` | `blood.core.ab.ph`, `blood.out.iCa` (iCa²⁺), `blood.out.kEcg` → `blood.kChem` (Blood-chemistry contractility factor (pH, ionised Ca, K)) | ± · factor | FIT | `K_CONTRACT` = 8, `K_CONTRACT_SLOPE` = 0.2 | — | acid (below pH 7.2: × max(0.3, 1 − 1.5·Δ), inline) × (iCa/1.1)^1.5 capped at 1 (inline) × the hyperkalaemic loss above K_CONTRACT. |
+| `blood.chemistryToCirc` | `blood.kChem` (Blood-chemistry contractility factor (pH, ionised Ca, K)) → `hemo.circ.ext.kChem` | + · state | UNTAGGED | — | — | Handed to the circulation's four chambers. |
 
 ## State
 
@@ -141,7 +158,7 @@ lactate; an embedding developer reads it for the blood state and lab outputs the
 | `mannitol` | `number` | mannitol, mmol — an effective ECF osmole (absent = 0); cleared by the kidney |
 | `lac` | `number` | lactate amount in its distribution volume |
 | `kIcf` | `number` | cellular K pool (mmol) |
-| `pi` | `number` | phosphate amount (mmol; dilutes with the ECF) [ENG] |
+| `pi` | `number` | phosphate amount (mmol; dilutes with the ECF) [ENG: numerics] |
 | `set` | `{ k: number; ca: number; mg: number; ph: number; kIcf: nu…` | Homeostatic set points (mmol/L; pH of the K reference; the cellular K pool, mmol) |
 
 ## Parameters
@@ -160,32 +177,32 @@ lactate; an embedding developer reads it for the blood state and lab outputs the
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `VISC_EXP` | `0.6` | — | Weiskopf 1998; [ENG exponent] | Blood viscosity follows the haematocrit, so the systemic resistance does: SVR × (Hb/Hb_ref)^0.6 (Weiskopf 1998 JAMA 279:217, acute isovolaemic Hb 14 → 5: SVR −47 %) [ENG exponent]; the circulation model's optional `ext.viscF`. |
+| `VISC_EXP` | `0.6` | — | Weiskopf 1998; research/44 L2; [FIT: viscosity → SVR exponent; exponent; brief research/44 L2-39] | Blood viscosity follows the haematocrit, so the systemic resistance does: SVR × (Hb/Hb_ref)^0.6 (Weiskopf 1998 JAMA 279:217, acute isovolaemic Hb 14 → 5: SVR −47 %) [FIT: viscosity → SVR exponent; exponent; brief research/44 L2-39]; the circulation model's optional `ext.viscF`. |
 | `VISC_FLOW_FULL` | `1.0` | — | Science 1970; Rev 1969 | Blood is SHEAR-THINNING — at the very low shear rates of CPR and no-flow states its apparent viscosity rises (Chien S, Science 1970;168:977–979; Merrill EW, Physiol Rev 1969;49:863), so haemodilution's resistance reduction does not hold there. The factor fades with the patient's own flow ratio (the resp pipeline's `coRatio`, the one the low-flow CO2 code reads): full effect at the resting output (1.0), none at CPR-level flow (0.3 — CPR delivers 25–33 % of normal output, the CPR coRatio band). Two anchors, no other constant. |
 | `VISC_FLOW_NONE` | `0.3` | — | — | — |
-| `K_CONTRACT` | `8` | — | [ENG, Q5] | Severe hyperkalaemia depresses contractility above K_CONTRACT (membrane-effective), −20 %/mmol/L [ENG, Q5]. |
+| `K_CONTRACT` | `8` | — | research/44 L2; [FIT: hyperkalaemic contractility loss (Q5); Q5; brief research/44 L2-05] | Severe hyperkalaemia depresses contractility above K_CONTRACT (membrane-effective), −20 %/mmol/L [FIT: hyperkalaemic contractility loss (Q5); Q5; brief research/44 L2-05]. |
 | `K_CONTRACT_SLOPE` | `0.2` | — | — | — |
-| `LW_GAIN` | `1 / 60` | — | [ENG, Q25] | Lung-water filtration, mL/kg/min per mmHg above the oedema threshold [ENG, Q25]: EVLWI +10 mL/kg at steady state for 10 mmHg. |
-| `LW_TAU_MIN` | `60` | — | [ENG, Q25] | Lung lymph clearance time constant, min [ENG, Q25]. |
+| `LW_GAIN` | `1 / 60` | — | research/44 L2; [FIT: lung-water filtration and lymph clearance (Q25); Q25; brief research/44 L2-39] | Lung-water filtration, mL/kg/min per mmHg above the oedema threshold [FIT: lung-water filtration and lymph clearance (Q25); Q25; brief research/44 L2-39]: EVLWI +10 mL/kg at steady state for 10 mmHg. |
+| `LW_TAU_MIN` | `60` | — | research/44 L2; [FIT: lung-water filtration and lymph clearance (Q25); Q25; brief research/44 L2-39] | Lung lymph clearance time constant, min [FIT: lung-water filtration and lymph clearance (Q25); Q25; brief research/44 L2-39]. |
 
 ### [`l2/blood/core.ts`](../../packages/engine-core/src/l2/blood/core.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `DKA_KETO_MMOL_L` | `25` | — | [ENG] | Established DKA: ketoacid anions 25 mmol/L at `condition dka` severity 1 [ENG]; the scale of `out.dkaSeverity`. |
-| `COHB_T_HALF_AIR_MIN` | `320` | — | Weaver 2009; [ENG exponent fit to both anchors] | COHb washout — first order, t½ = 320 min × (95/PaO2)^0.8: 320 min on air, ≈ 74 min on FiO2 1 (Weaver 2009 NEJM 360:1217) [ENG exponent fit to both anchors]. No ongoing exposure (the profile sets the load). |
+| `DKA_KETO_MMOL_L` | `25` | — | research/44 L2; [FIT: DKA ketoacid scale; brief research/44 L2-40] | Established DKA: ketoacid anions 25 mmol/L at `condition dka` severity 1 [FIT: DKA ketoacid scale; brief research/44 L2-40]; the scale of `out.dkaSeverity`. |
+| `COHB_T_HALF_AIR_MIN` | `320` | — | Weaver 2009; research/44 L2; [FIT: COHb washout exponent fitted to both anchors; exponent fit to both anchors; brief research/44 L2-40; src Weaver 2009] | COHb washout — first order, t½ = 320 min × (95/PaO2)^0.8: 320 min on air, ≈ 74 min on FiO2 1 (Weaver 2009 NEJM 360:1217) [FIT: COHb washout exponent fitted to both anchors; exponent fit to both anchors; brief research/44 L2-40; src Weaver 2009]. No ongoing exposure (the profile sets the load). |
 
 ### [`l2/blood/fluids.ts`](../../packages/engine-core/src/l2/blood/fluids.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `SIGMA_LEAK_FLOOR` | `0.3` | — | Rippe & Haraldsson 1994; [ENG] | The protein reflection coefficient of a leaky endothelium. Inflammation opens LARGE pores, which carry most of the extra hydraulic conductance and most of the protein flux (two-pore theory, the DIRECTION: Rippe & Haraldsson 1994 Physiol Rev 74:163). That the non-reflected share (1 − σ) grows with the same factor as the whole Kf is an assumption [ENG]: σ = 1 − (1 − σ0)·kfMult, floor SIGMA_LEAK_FLOOR [ENG]. Normal (kfMult 1) → 0.9; warm septic shock (kfMult 2.6) → 0.74; kfMult 3 → 0.7. It applies to every writer of `fl.kfMult` — the endocrine model's sepsis, anaphylaxis and burns alike. |
+| `SIGMA_LEAK_FLOOR` | `0.3` | — | Rippe & Haraldsson 1994; research/44 L2; [FIT: Starling reflection coefficient under capillary leak; brief research/44 L2-39] | The protein reflection coefficient of a leaky endothelium. Inflammation opens LARGE pores, which carry most of the extra hydraulic conductance and most of the protein flux (two-pore theory, the DIRECTION: Rippe & Haraldsson 1994 Physiol Rev 74:163). That the non-reflected share (1 − σ) grows with the same factor as the whole Kf is an assumption [FIT: Starling reflection coefficient under capillary leak; brief research/44 L2-39]: σ = 1 − (1 − σ0)·kfMult, floor SIGMA_LEAK_FLOOR [FIT: Starling reflection coefficient under capillary leak; brief research/44 L2-39]. Normal (kfMult 1) → 0.9; warm septic shock (kfMult 2.6) → 0.74; kfMult 3 → 0.7. It applies to every writer of `fl.kfMult` — the endocrine model's sepsis, anaphylaxis and burns alike. |
 
 ### [`l2/blood/labs.ts`](../../packages/engine-core/src/l2/blood/labs.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `LAB_TURNAROUND_S` | `120` | s | [ENG] | point-of-care analyser ≈ 60–90 s + the walk [ENG] |
+| `LAB_TURNAROUND_S` | `120` | s | [ENG: device] | point-of-care analyser ≈ 60–90 s + the walk [ENG: device] |
 
 ### [`l2/blood/params.ts`](../../packages/engine-core/src/l2/blood/params.ts)
 
@@ -196,29 +213,29 @@ lactate; an embedding developer reads it for the blood state and lab outputs the
 | `GLOBULIN_GL` | `24` | — | — | Plasma globulins at the normal albumin, g/L — their own mass (fluids.ts `copPlasma`), carried by plasma products. |
 | `MG_ION_FRAC` | `0.6` | — | [TXT] | Ionised share of total Mg for the SID (≈ 0.6 of 0.85 mmol/L) [TXT]. |
 | `MCHC_G_PER_ML` | `1 / 3` | mL | [TXT] | Red cells: Hct = Hb·3/100, i.e. MCHC 33.3 g/dL [TXT]. |
-| `KF_ML_MIN_MMHG` | `2.0` | mmHg | tables §5b.4; [ENG, Q47] | --- fluid kinetics (tables §5b.4; annex B1 "tissue fluid branch": vascular → R_t → ECF(C) → lymph) ------------- Capillary filtration coefficient, whole body, mL/min/mmHg [ENG, Q47]. Fitted with CISF_PER_ML and K_EL_AWAKE (prototype sweep) to tables §5b.4: 1 L crystalloid over 30 min awake → 51 % intravascular at the end, 16 % 30 min later, total excess halved 30 min after the end; haemorrhage refill 0.16 mL/kg/min early (band 0.1–0.5). |
+| `KF_ML_MIN_MMHG` | `2.0` | mmHg | tables §5b.4; research/44 L2; [FIT: Starling/lymph/osmotic parameter; Q47; brief research/44 L2-39] | --- fluid kinetics (tables §5b.4; annex B1 "tissue fluid branch": vascular → R_t → ECF(C) → lymph) ------------- Capillary filtration coefficient, whole body, mL/min/mmHg [FIT: Starling/lymph/osmotic parameter; Q47; brief research/44 L2-39]. Fitted with CISF_PER_ML and K_EL_AWAKE (prototype sweep) to tables §5b.4: 1 L crystalloid over 30 min awake → 51 % intravascular at the end, 16 % 30 min later, total excess halved 30 min after the end; haemorrhage refill 0.16 mL/kg/min early (band 0.1–0.5). |
 | `SIGMA_PROTEIN` | `0.9` | — | [TXT] | Reflection coefficient to plasma protein [TXT]. |
-| `PC_PER_ML` | `0.5 / 110` | mL | [ENG] | Capillary hydrostatic change per mL of blood-volume change: half the venous change (C_sys 110 mL/mmHg) [ENG]. |
-| `CISF_PER_ML` | `0.02` | mL | [ENG, fitted with Kf] | Interstitial compliance, mL/mmHg per mL of baseline ISF volume (≈ 230 mL/mmHg at 11.4 L) [ENG, fitted with Kf]. |
-| `LYMPH_GAIN` | `2` | — | [ENG] | Extra lymph flow per mmHg of interstitial pressure rise, mL/min/mmHg [ENG]. |
+| `PC_PER_ML` | `0.5 / 110` | mL | research/44 L2; [FIT: Starling/lymph/osmotic parameter; brief research/44 L2-39] | Capillary hydrostatic change per mL of blood-volume change: half the venous change (C_sys 110 mL/mmHg) [FIT: Starling/lymph/osmotic parameter; brief research/44 L2-39]. |
+| `CISF_PER_ML` | `0.02` | mL | research/44 L2; [FIT: Starling/lymph/osmotic parameter; fitted with Kf; brief research/44 L2-39] | Interstitial compliance, mL/mmHg per mL of baseline ISF volume (≈ 230 mL/mmHg at 11.4 L) [FIT: Starling/lymph/osmotic parameter; fitted with Kf; brief research/44 L2-39]. |
+| `LYMPH_GAIN` | `2` | — | research/44 L2; [FIT: Starling/lymph/osmotic parameter; brief research/44 L2-39] | Extra lymph flow per mmHg of interstitial pressure rise, mL/min/mmHg [FIT: Starling/lymph/osmotic parameter; brief research/44 L2-39]. |
 | `PI_ISF0` | `8` | — | [TXT] | Interstitial colloid osmotic pressure at baseline, mmHg [TXT]. |
 | `K_EL_AWAKE` | `0.03` | — | [TXT, Q47] | Renal elimination of excess volume, 1/min on the BLOOD-volume excess (plasma is shed): awake 0.03 (total excess t½ ≈ 30 min, fitted), general anaesthesia ×0.2 (t½ ≈ 150 min) — tables `t12El` 30 / 150 [TXT, Q47]. The organ model replaces this with its UOP. |
 | `K_EL_GA_FACTOR` | `0.2` | — | tables §5b.4 | — |
-| `ALB_RESTORE_TAU_MIN` | `120` | — | [ENG] | Plasma albumin below its baseline concentration is replenished from the interstitial pool, τ 120 min [ENG]. |
-| `OSM_TAU_MIN` | `10` | — | [ENG] | Water moves between ISF and cells toward osmotic equilibrium, τ 10 min [ENG]. |
+| `ALB_RESTORE_TAU_MIN` | `120` | — | research/44 L2; [FIT: Starling/lymph/osmotic parameter; brief research/44 L2-39] | Plasma albumin below its baseline concentration is replenished from the interstitial pool, τ 120 min [FIT: Starling/lymph/osmotic parameter; brief research/44 L2-39]. |
+| `OSM_TAU_MIN` | `10` | — | research/44 L2; [FIT: Starling/lymph/osmotic parameter; brief research/44 L2-39] | Water moves between ISF and cells toward osmotic equilibrium, τ 10 min [FIT: Starling/lymph/osmotic parameter; brief research/44 L2-39]. |
 | `OSM0` | `290` | — | [TXT] | ICF effective osmolality at baseline ≈ 2·Na 140 + 10 (glucose, urea) mOsm/kg [TXT]. |
-| `LACTATE_V_L_PER_KG` | `0.6` | kg | tables §5.3; [ENG] | --- lactate and oxygen (tables §5.3) ------------------------------------------------------------------------------ `vLac` [ENG] |
-| `K_LAC_PER_H` | `1.389` | /h | [ENG, Q41] | `kLac` 1400 mmol/day ÷ (1.0 mmol/L · 0.6 L/kg · 70 kg) — t½ 30 min [ENG, Q41] |
-| `K_ANAER` | `0.05` | mmol | [ENG, Q41] | mmol lactate per mL O2 deficit `kAnaer` (range 0.015–0.06): untreated VF 30 min → 9–10 mmol/L (annex D1 8–12) [ENG, Q41] |
+| `LACTATE_V_L_PER_KG` | `0.6` | kg | tables §5.3 | --- lactate and oxygen (tables §5.3) ------------------------------------------------------------------------------ `vLac` (tables `vLac`) |
+| `K_LAC_PER_H` | `1.389` | /h | tables §5.3 | `kLac` 1400 mmol/day ÷ (1.0 mmol/L · 0.6 L/kg · 70 kg) — t½ 30 min (tables `kLac`, Q41; Q41) |
+| `K_ANAER` | `0.05` | mmol | tables §5.3 | mmol lactate per mL O2 deficit `kAnaer` (range 0.015–0.06): untreated VF 30 min → 9–10 mmol/L (annex D1 8–12) (tables `kAnaer` range 0.015–0.06; annex D1 8–12 mmol/L after 30 min of VF; Q41) |
 | `LACTATE_CO2_ML_PER_MMOL` | `22` | mmol | Physiol 1986; [P abstracts] | E131: CO2 released when bicarbonate buffers lactic acid, mL per mmol: "22 ml for each meq of lactic acid" (Beaver WL, Wasserman K, Whipp BJ, J Appl Physiol 1986;60:2020–2027); beyond the first ≈ 0.4 mmol/L the acid is buffered almost entirely by bicarbonate (Beaver, Wasserman & Whipp, J Appl Physiol 1986;60:472–478) [P abstracts]. Applied to the MH muscle's anaerobic share (pipeline.ts). |
 | `SAO2_NORMAL` | `0.97` | — | tables §5b.3; [TXT] | Normal arterial saturation for the heat model's skin-perfusion reference flow (E131; tables §5b.3 SvO2 row's SaO2 ≈ 0.97 [TXT]). |
 | `DO2_CRIT_ML_KG_MIN` | `6` | mL/kg/min | [TXT, Q42] | `do2Crit` (4.9–8.2) [TXT, Q42] |
 | `ER_MAX` | `0.7` | — | [TXT] | `erMax` [TXT] |
-| `REGIONAL_FRAC` | `0.6` | — | tables §7; [ENG, Q41/Q42] | Regional supply dependence [ENG, Q41/Q42]: splanchnic, skin and muscle beds (≈ 60 % of VO2) lose flow first when CARDIAC OUTPUT falls (sympathetic redistribution), so they become supply-dependent as CO/CO0 falls from 0.88 to 0.40 — a FLOW criterion, so chronic anaemia at normal flow does not make lactate (its limit is the global DO2crit). Tuned so tables §7 17a (class III: lactate 3–5 by 30 min) holds. |
+| `REGIONAL_FRAC` | `0.6` | — | tables §7; research/44 L2; [FIT: regional supply dependence and hepatic flow, tuned to tables §7 17a class III lactate; Q41/Q42; brief research/44 L2-09] | Regional supply dependence [FIT: regional supply dependence and hepatic flow, tuned to tables §7 17a class III lactate; Q41/Q42; brief research/44 L2-09]: splanchnic, skin and muscle beds (≈ 60 % of VO2) lose flow first when CARDIAC OUTPUT falls (sympathetic redistribution), so they become supply-dependent as CO/CO0 falls from 0.88 to 0.40 — a FLOW criterion, so chronic anaemia at normal flow does not make lactate (its limit is the global DO2crit). Tuned so tables §7 17a (class III: lactate 3–5 by 30 min) holds. |
 | `REGIONAL_FLOW_ON` | `0.88` | — | tables §5.3 | — |
 | `REGIONAL_FLOW_FULL` | `0.55` | — | tables §5.3 | — |
 | `HBF_FRAC` | `0.255` | — | annex §5.3 | Hepatic blood flow share of CO: ICRP-89 male 0.255 (N-P10; annex §5.3 `hbfFrac` "same"). |
-| `HBF_EXP` | `2` | — | tables §5.3; [ENG] | Splanchnic flow falls faster than CO: hbfRel = (CO/CO0)^2 (tables §5.3 `hbfFactor` ×0.6 on top of CO −40 % in class III) [ENG]. |
+| `HBF_EXP` | `2` | — | tables §5.3; tables §7; research/44 L2; [FIT: regional supply dependence and hepatic flow, tuned to tables §7 17a class III lactate; brief research/44 L2-09] | Splanchnic flow falls faster than CO: hbfRel = (CO/CO0)^2 (tables §5.3 `hbfFactor` ×0.6 on top of CO −40 % in class III) [FIT: regional supply dependence and hepatic flow, tuned to tables §7 17a class III lactate; brief research/44 L2-09]. |
 | `MG_MMOL_PER_G` | `4.06` | — | [TXT] | Magnesium sulfate heptahydrate (246.5 g/mol): mmol Mg per gram [TXT]. |
 | `CITRATE_CHARGE` | `3` | — | tables §5.3 | Citrate³⁻ is a strong anion until it is metabolised; `sidOf` (solutes.ts) counts it once, net of the Ca it complexes. |
 | `CPD_SHARE` | `63 / (63 + 450 * 0.6)` | — | tables §5.3 | — |
@@ -232,31 +249,31 @@ lactate; an embedding developer reads it for the blood state and lab outputs the
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `CO0_SETTLE_S` | `120` | s | [ENG] | Resting-CO reference [ENG]: the circuit's running resting CO sits −13…+25 % from the circulation's stabilised `ref.co` depending on the rig (ventilation, PEEP, anaesthesia), which would move hbfRel and the regional lactate threshold at rest. The reference low-passes the CO (τ 20 s: over breathing and the baroreflex swings) from `ref.co` and latches at 120 s, or at the first perturbation (a volume/chemistry command or a drug). |
+| `CO0_SETTLE_S` | `120` | s | [ENG: numerics] | Resting-CO reference [ENG: numerics]: the circuit's running resting CO sits −13…+25 % from the circulation's stabilised `ref.co` depending on the rig (ventilation, PEEP, anaesthesia), which would move hbfRel and the regional lactate threshold at rest. The reference low-passes the CO (τ 20 s: over breathing and the baroreflex swings) from `ref.co` and latches at 120 s, or at the first perturbation (a volume/chemistry command or a drug). |
 | `CO0_TAU_S` | `20` | s | — | — |
-| `HTS_OVER_MIN` | `15` | — | [ENG] | Hypertonic saline runs in over this time when the drug model's log gives no duration [ENG]. |
+| `HTS_OVER_MIN` | `15` | — | [ENG: scenario] | Hypertonic saline runs in over this time when the drug model's log gives no duration [ENG: scenario]. |
 
 ### [`l2/blood/solutes.ts`](../../packages/engine-core/src/l2/blood/solutes.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `K_TAU_MIN` | `43` | — | [ENG] | Homeostasis and first-order kinetics (per step): transcellular K, Ca and Mg buffering, citrate and metabolisable anions. 50 % of a K load into cells in 30 min (tables `vK`) [ENG] |
+| `K_TAU_MIN` | `43` | — | — | Homeostasis and first-order kinetics (per step): transcellular K, Ca and Mg buffering, citrate and metabolisable anions. 50 % of a K load into cells in 30 min (tables `vK`) (tables `vK`) |
 | `K_TBK_MMOL` | `300` | mmol | Medicine 1981; [TXT, midpoint] | Total-body K per mmol/L of plasma K — a 200–400 mmol deficit lowers plasma K ≈ 1 mmol/L (Sterns RH et al. Medicine 1981;60:339–354) [TXT, midpoint]; the Na/K-ATPase set point follows it (core.ts kSet). |
-| `CA_TAU_MIN` | `15` | — | [ENG, Q46] | ionised Ca returns to its set point (bone/protein buffer, PTH) [ENG, Q46] |
-| `MG_TAU_MIN` | `60` | — | [ENG] | Mg load distributes into cells/bone [ENG] |
+| `CA_TAU_MIN` | `15` | — | research/44 L2; [FIT: ion redistribution or metabolism τ; Q46; brief research/44 L2-40] | ionised Ca returns to its set point (bone/protein buffer, PTH) [FIT: ion redistribution or metabolism τ; Q46; brief research/44 L2-40] |
+| `MG_TAU_MIN` | `60` | — | research/44 L2; [FIT: ion redistribution or metabolism τ; brief research/44 L2-40] | Mg load distributes into cells/bone [FIT: ion redistribution or metabolism τ; brief research/44 L2-40] |
 | `CITRATE_TAU_MIN` | `5` | — | [TXT] | hepatic citrate clearance at normal hepatic flow (tables `citrateUnit`) [TXT] |
-| `METAB_TAU_MIN` | `15` | — | [ENG] | acetate/gluconate metabolism to bicarbonate [ENG] |
+| `METAB_TAU_MIN` | `15` | — | research/44 L2; [FIT: ion redistribution or metabolism τ; brief research/44 L2-40] | acetate/gluconate metabolism to bicarbonate [FIT: ion redistribution or metabolism τ; brief research/44 L2-40] |
 | `OSM_OTHER_T12_MIN` | `85` | — | [TXT] | glycine metabolism [TXT] |
-| `K_CIT` | `0.09` | — | [TXT]; [ENG, Q46] | Ionised calcium (mmol/L): the buffered ionised amount, shifted by pH (−0.05 per +0.1 pH) [TXT] and chelated by free citrate (0.09 mmol/L per mmol/L citrate: 1 RBC unit per 5 min at steady state → −0.1, tables `citrateUnit`) [ENG, Q46]. |
+| `K_CIT` | `0.09` | — | [TXT] | Ionised calcium (mmol/L): the buffered ionised amount, shifted by pH (−0.05 per +0.1 pH) [TXT] and chelated by free citrate (0.09 mmol/L per mmol/L citrate: 1 RBC unit per 5 min at steady state → −0.1, tables `citrateUnit`) (tables `citrateUnit`, Q46; Q46). |
 
 ### [`l2/blood/treatments.ts`](../../packages/engine-core/src/l2/blood/treatments.ts)
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `INSULIN_K_SHIFT` | `-1.0` | K | [ENG] | K set-point shifts at full effect (mmol/L) [ENG]: with the pump term below, insulin–dextrose gives K −0.54 at 30 min and −0.87 at 60 min (tables −0.6 to −1.0 over 30–60 min); the blood model's own salbutamol (fallback without the drug model) −0.7 at 30 min (tables −0.5 to −1.0). |
+| `INSULIN_K_SHIFT` | `-1.0` | K | research/44 L2; [FIT: K set-point shift by insulin and β2 agonists; brief research/44 L2-17] | K set-point shifts at full effect (mmol/L) [FIT: K set-point shift by insulin and β2 agonists; brief research/44 L2-17]: with the pump term below, insulin–dextrose gives K −0.54 at 30 min and −0.87 at 60 min (tables −0.6 to −1.0 over 30–60 min); the blood model's own salbutamol (fallback without the drug model) −0.7 at 30 min (tables −0.5 to −1.0). |
 | `SALBUTAMOL_K_SHIFT` | `-1.0` | — | — | — |
-| `K_PUMP_GAIN` | `1.5` | — | [ENG, fitted] | Insulin and β2 agonists drive K into cells through Na/K-ATPase: the uptake rate rises by K_PUMP_GAIN per mmol/L of drug-driven set-point shift, so the tables' drug time courses (−0.5 to −1.0 within 30 min) hold, which the passive redistribution τ of a K load (43 min, `vK`) alone cannot reach [ENG, fitted]. The drug model's salbutamol kShift −0.8 → K −0.55 at 30 min. |
-| `BICARB_CO2_FRAC` | `0.25` | — | [ENG, tuned: 50 mmol under constant ventilation → EtCO2 +5–8 mmHg peak within 1–3 min, back within ~10 min] | Sodium bicarbonate: Na enters the ECF at once (SID ↑); a fraction of the dose appears as extra CO2 to exhale, delivered as a Bateman pulse (peak ≈ 1 min) into the CO2 production [ENG, tuned: 50 mmol under constant ventilation → EtCO2 +5–8 mmHg peak within 1–3 min, back within ~10 min]. |
+| `K_PUMP_GAIN` | `1.5` | — | research/44 L2; [FIT: K set-point shift by insulin and β2 agonists; fitted; brief research/44 L2-17] | Insulin and β2 agonists drive K into cells through Na/K-ATPase: the uptake rate rises by K_PUMP_GAIN per mmol/L of drug-driven set-point shift, so the tables' drug time courses (−0.5 to −1.0 within 30 min) hold, which the passive redistribution τ of a K load (43 min, `vK`) alone cannot reach [FIT: K set-point shift by insulin and β2 agonists; fitted; brief research/44 L2-17]. The drug model's salbutamol kShift −0.8 → K −0.55 at 30 min. |
+| `BICARB_CO2_FRAC` | `0.25` | — | research/44 L2; [FIT: bicarbonate CO2 load (50 mmol under constant ventilation); tuned: 50 mmol under constant ventilation → EtCO2 +5–8 mmHg peak within 1–3 min, back within ~10 min; brief research/44 L2-55] | Sodium bicarbonate: Na enters the ECF at once (SID ↑); a fraction of the dose appears as extra CO2 to exhale, delivered as a Bateman pulse (peak ≈ 1 min) into the CO2 production [FIT: bicarbonate CO2 load (50 mmol under constant ventilation); tuned: 50 mmol under constant ventilation → EtCO2 +5–8 mmHg peak within 1–3 min, back within ~10 min; brief research/44 L2-55]. |
 | `MMOL_CO2_ML` | `22.4` | mL | — | — |
 
 ### Fluids (`FLUIDS`, mmol/L unless the key says otherwise)

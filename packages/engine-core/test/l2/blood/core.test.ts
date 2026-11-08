@@ -54,7 +54,7 @@ describe('blood core step (tables §5b, §7)', { timeout: 300_000 }, () => {
     run(bc, 0, 1800);
     return bc;
   };
-  const rule = 1.2 - 0.1 * (10 / 30) * 5; // 1.67 units per 5 min → −0.17 (the rule read as a steady-state RATE effect [ENG])
+  const rule = 1.2 - 0.1 * (10 / 30) * 5; // 1.67 units per 5 min → −0.17 (the rule read as a steady-state RATE effect [FIT: the rule read as a steady-state rate effect; brief research/44 T-11])
   it('massive transfusion, 10 units of 35-day blood in 30 min against a matched bleed: K ≥ 5.5 (tables kUnit)', () => {
     const bc = massive();
     console.log(`core massive: K ${bc.out.k.toFixed(2)} iCa ${bc.out.iCa.toFixed(3)} (rule ${rule.toFixed(3)})`);
@@ -82,7 +82,7 @@ describe('blood core step (tables §5b, §7)', { timeout: 300_000 }, () => {
     expect(b.ab.be).toBeGreaterThanOrEqual(0);
   });
   // R45: annex D3 wants Cl +6–8 and BE −3 to −5 at 60 min; albumin dilution (Stewart) offsets the chloride acidosis in
-  // this model (plan deviation list). Kept visible for Ali's calibration pass rather than widened.
+  // this model (plan deviation list). Kept visible for the owner's calibration pass rather than widened.
   it.fails('2 L 0.9 % saline in 30 min (GA): Cl +6–8 and BE −3 to −5 at 60 min (annex D3)', () => {
     const s = crystalloid2L('saline');
     expect(s.out.cl - 104).toBeGreaterThanOrEqual(6);

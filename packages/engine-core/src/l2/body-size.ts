@@ -20,7 +20,7 @@ export const DEFAULT_HEIGHT_CM = { adult: 175, elderly: 170 } as const;
 
 /**
  * The weight (kg) the adult circulation is sized on: (height / default height) × √(70 × weight). Children and
- * adolescents are sized on their weight as given (Lemmens is an adult rule; the paediatric scaling is W12, Ali's).
+ * adolescents are sized on their weight as given (Lemmens is an adult rule; the paediatric scaling is W12, the owner's).
  */
 export function sizeWeightKg(band: string, weightKg: number, heightCm?: number): number {
   if (band !== 'adult' && band !== 'elderly') return weightKg;

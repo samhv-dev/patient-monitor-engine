@@ -5,11 +5,18 @@ import type { DocCommand } from '@pme/controller/scenario';
 
 /** `state:<StateVar>` (1 Hz truth; derived `state:map`, `state:pp`), `numeric:<NumericId>` (displayed, valid only),
  *  `breath:etco2True` (per breath), `alarm:<id>` (1 raised / 0 otherwise), `scenario` (entry into `stateId`),
- *  `event:<type>` (one point per event). */
+ *  `circ:<field>` (the circulation event: co, sv, lvedv, …), `event:<type>` (one point per event). */
 export type SeriesRef = string;
 /** firstTBelow/firstTAbove: seconds after the segment start until the series first crosses `threshold`. */
 export type Reduce = 'mean' | 'min' | 'max' | 'first' | 'last' | 'firstT' | 'count' | 'firstTBelow' | 'firstTAbove';
-export type Ref = number | { segment: string; factor?: number; offset?: number };
+/** A segment's value of the same series, or of `series` when given (same reduction and threshold), × factor + offset. */
+export type Ref = number | { segment: string; series?: SeriesRef; factor?: number; offset?: number };
+
+/** A row whose band a named mechanism, not yet built, is expected to miss (brief 84). The band itself is never changed.
+ *  The report counts the row in its own class, never as green, and the gate fails if the row starts to pass, so a landed
+ *  mechanism forces the mark off and the row back to a real pass. `id` is the row's entry in
+ *  docs/guides/known-deviations.md ("Validation gate: expected failures"); `measured` is the value when it was marked. */
+export interface ExpectedMiss { id: string; mechanism: string; since: string; measured: string }
 
 export type Target = {
   id: string;
@@ -21,6 +28,7 @@ export type Target = {
   stateId?: string;
   /** For firstTBelow / firstTAbove. */
   threshold?: number;
+  expectedMiss?: ExpectedMiss;
 } & (
   | { type: 'EqualTo'; value: Ref; tolPct?: number }
   | { type: 'GreaterThan'; value: Ref }
@@ -66,6 +74,22 @@ export interface TargetResult {
   errPct: number;
   grade: Grade;
   pass: boolean;
+  expectedMiss?: ExpectedMiss;
+}
+
+/** A row that compares two documents' runs (e.g. the β-blocked against the unblocked bleed). `measure` reads any series of
+ *  either run, reduced by mean over [fromS, toS); the row is graded like a segment target and is skipped when one of
+ *  its documents is not measurable or was not run. */
+export interface CrossTarget {
+  doc: string;
+  segment: string;
+  target: string;
+  docs: string[];
+  source: string;
+  measure: (mean: (doc: string, series: SeriesRef, fromS: number, toS: number) => number) => number;
+  type: 'LessThan';
+  value: number;
+  expectedMiss?: ExpectedMiss;
 }
 
 /** A command the engine refused because a later stage owns it: the whole document is "not measurable" (decision 8). */

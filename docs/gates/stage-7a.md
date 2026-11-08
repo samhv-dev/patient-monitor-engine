@@ -37,7 +37,7 @@ forward-flow blip through the Windkessel inertance after closure (> 20 ms later)
 
 ## 2. Deviations and adjustments (every number changed from the plan, and why)
 
-R45 binding mechanisms (all [ENG] magnitudes, for Ali's R44 calibration pass):
+R45 binding mechanisms (all [ENG] magnitudes, for the owner's R44 calibration pass):
 - **R45(c) AS + CAD LVEDP**: the stabiliser anchors the LV EDPVR scale A at the EDV actually reached (profiles with an LVEDP
   target: AS, HFrEF, HFpEF; ±2 mmHg; only once CVP settles), severe AS Ees × 1.7 (concentric LVH), AS LVEDP target 18 (tables
   §3). Result 19.2 (was 40; plan's CVP-3 work-around removed). HFrEF 19.6.
@@ -159,7 +159,7 @@ Emax × 2.5). The arterial run-off through the compensatory pause (radial DBP 80
 +5 %, and SV ≤ EDV − V0. Stage 2 reached the band only with FS_CARRY 0.75 (an [ENG] volume carry-over). The test is
 `it.fails` with this explanation so CI stays green and flags the gap. Options: (a) re-specify to "post-PVC PP rises,
 SBP within −15…+15"; (b) a pressure-dependent arterial compliance / critical-closing-pressure run-off (slows the pause
-decay); (c) accept an [ENG] carry-over term. Needs Ali/orchestrator.
+decay); (c) accept an [ENG] carry-over term. Needs samhv-dev/orchestrator.
 
 ### NR-2 — R23 AS + CAD propofol ischaemia trajectory (tables §3 worked example, §7 check 10)
 Engine, MODELED, 75 y AS (0.7) + 3-vessel CAD + HTN, propofol 1.5 mg/kg at 60 s. Two tables-sourced mechanisms were

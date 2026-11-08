@@ -115,7 +115,7 @@ not committed. (b) `fu2.e2e.ts` skips WebKit (the plan's conditional G7g rule): 
 (36294420648) Chromium passed it (47.6 s) but headless WebKit wrote a JPEG over 60 KB (its font rendering) and then
 closed the page on the retries; the plan's `test.skip(... 'webkit' ...)` line was added after `let base = '';`.
 
-## 5. For the orchestrator / Ali
+## 5. For the orchestrator / samhv-dev
 
 Open questions (from the plan; none blocks): Q-FU2-2 (should a later drug move a held sinus rate?), Q-FU2-3
 (dobutamine +11.8 % vs +20–40 %: the reflexes return about half of the mobilised volume; circ level +17 %), Q-FU2-4

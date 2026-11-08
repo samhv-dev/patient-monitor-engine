@@ -1,4 +1,4 @@
-// Stress hormone → effect multipliers (tables §5c; Clutter 1980 thresholds [TXT]; slopes [ENG], Q48). Pure.
+// Stress hormone → effect multipliers (tables §5c; Clutter 1980 thresholds [TXT]; slopes [FIT: stress-hormone effect slopes; brief research/44 L2-02], Q48). Pure.
 // Haemodynamic outputs are MULTIPLIERS on the circulation's set points, combined multiplicatively with the baroreflex
 // and drugs there. They come from the NEURAL stress path and the ENDOGENOUS epinephrine only: exogenous epinephrine's
 // HR/SVR/contractility belong to the drug model, never applied twice. Exogenous epinephrine (the drug model's

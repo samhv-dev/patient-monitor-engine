@@ -91,7 +91,7 @@ describe('alarm conditions: chaining', () => {
     }
     const hh = out.filter((e) => e.type === 'alarm' && e.id === 'HR_HIGH') as Array<Extract<EngineEvent, { type: 'alarm' }>>;
     expect(out.some((e) => e.type === 'alarm' && e.id === 'EXTREME_TACHY' && e.state === 'raised')).toBe(true);
-    for (let i = 0; i + 1 < hh.length; i++) if (hh[i]?.state === 'raised' && hh[i + 1]?.state === 'cleared') expect((hh[i + 1] as { t: number }).t).toBeGreaterThan((hh[i] as { t: number }).t); // 22 zero-length pairs in Ali's case before
+    for (let i = 0; i + 1 < hh.length; i++) if (hh[i]?.state === 'raised' && hh[i + 1]?.state === 'cleared') expect((hh[i + 1] as { t: number }).t).toBeGreaterThan((hh[i] as { t: number }).t); // 22 zero-length pairs in the owner's case before
   });
 
   it('a LATCHED alarm suppresses nothing ([S2] IFU p. 97, 99): after a latched ASYSTOLE (philips-like), a post-ROSC HR 45 raises HR LOW', () => {

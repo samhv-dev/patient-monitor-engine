@@ -33,9 +33,9 @@ const OPIOID_U1 = 1.2;
 /**
  * An opioid on board deepens a HYPNOTIC's vasodilation and venodilation beyond the independent product — the hypnotic
  * class's `svr` and `v0Frac` effects × (1 + HEMO_SYN_MAX·u/(u + HEMO_SYN_U50)), u = `uOpioid`.
- * [ENG sizes; fit target [P]: Billard 1994 Anesthesiology 81:1384 (n = 120, ASA 1–2), propofol 2–3.5 mg/kg, systolic
+ * [FIT: opioid–hypnotic haemodynamic synergy sizes; src Billard 1994; brief research/44 X-11]. Fit target [P]: Billard 1994 Anesthesiology 81:1384 (n = 120, ASA 1–2), propofol 2–3.5 mg/kg, systolic
  * fall 28 mmHg alone vs 53 mmHg after fentanyl 2 µg/kg 5 min earlier (ratio 1.9) and 50 mmHg after 4 µg/kg — the same
- * within the study, hence the saturating form (fentanyl 2 µg/kg is u ≈ 3.5 at 5 min, 4 µg/kg ≈ 7).]
+ * within the study, hence the saturating form (fentanyl 2 µg/kg is u ≈ 3.5 at 5 min, 4 µg/kg ≈ 7).
  * Hypnotic class only: midazolam co-induction is additive for pressure (research/14).
  * SIZE: 0.2 is the LARGEST that keeps the two sourced bands this interaction feeds back into through the flow-dependent
  * distribution — the induction apnoea (fentanyl pair 60–240 s: 108 s at 0.2, 513 s at 2) and the laryngoscopy-response
@@ -69,7 +69,7 @@ export function eegClassOf(r: DrugRow): keyof DrugBus['cns']['hypByClass'] {
 export const DEXMED_EEG_C50_NG_ML = 2.5; // ng/mL
 /**
  * ng/mL per reference unit of the dexmedetomidine gamma row (c = 1 at the 0.5 µg/kg/h steady state, and at the peak
- * of 1 µg/kg): 0.5 µg/kg/h ÷ clearance 10 mL/kg/min = 0.83 ng/mL [ENG, derived: Miller Ch21 Table 21.1 gives
+ * of 1 µg/kg): 0.5 µg/kg/h ÷ clearance 10 mL/kg/min = 0.83 ng/mL [FIT: ng/mL per reference unit, derived; src Miller Ch21 Table 21.1 (research/41 row 65) gives
  * clearance 10–30 mL/kg/min; the low end is the one that puts Miller Ch21's "rousable sedation at 0.2–0.3 ng/mL" at the
  * low end of the 0.2–0.7 µg/kg/h sedation infusion (0.33 ng/mL at 0.2 µg/kg/h); the high end gives 0.28]. The row
  * itself is unchanged.

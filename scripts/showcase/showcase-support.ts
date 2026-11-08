@@ -26,8 +26,8 @@ export function watchConsole(page: Page): string[] {
   return errs;
 }
 
-/** Open #/teach on a FRESH page load and wait for the app hook. */
-export async function openTeach(page: Page, path = '/#/teach'): Promise<void> {
+/** Open the Instructor view (#/teach2, the only one since 6 November 2026) on a FRESH page load and wait for the app hook. */
+export async function openTeach(page: Page, path = '/#/teach2'): Promise<void> {
   await page.goto(base() + path);
   await page.waitForFunction(() => '__pmeApp' in window, null, { timeout: 30_000 });
   await page.waitForTimeout(1500);
@@ -78,43 +78,71 @@ export async function waitSim(page: Page, maxSimS: number, ok: (now: number, v: 
 }
 export const waitUntilSim = async (page: Page, t: number): Promise<number | null> => waitSim(page, Math.max(0, t - (await simNow(page))) + 5, (now) => now >= t);
 
-/** Scenario tab → Showcase filter → Load the card titled `title`; then ×4. Returns the visible labels on the way. */
-export async function loadShowcase(page: Page, title: string, o: { speed?: boolean } = {}): Promise<Record<string, string>> {
+/** The Instructor view's header speed box: open it and choose ×k (the toast "Speed ×k" follows the host's answer). */
+export async function speedV2(page: Page, k: 1 | 2 | 4 | 8): Promise<void> {
+  const head = page.locator('.ip2-head');
+  await head.locator('button.ip2-speed').click();
+  await head.getByRole('button', { name: `Speed ×${k}`, exact: true }).click();
+}
+
+/** STATE's Fast forward box on the Instructor view: "Fast forward by n min" (what the old session bar's button sent). */
+export async function ffV2(page: Page, min: 2 | 5): Promise<void> {
+  await page.locator('.ip2-ff').getByRole('button', { name: `Fast forward by ${min} min`, exact: true }).click();
+}
+
+/** The Instructor view's open ACTION row whose title is exactly `label` (a card button of the old panel). */
+export const cardRow = (page: Page, label: string) =>
+  page.locator('.ip2-action .ip2-rows:not(.ip2-finished-list) button.ip2-row', { has: page.locator('.ip2-row-title').getByText(label, { exact: true }) });
+
+/** The Scenarios library (#/scenarios/library) → the card titled exactly `title` → Load (a running case asks first:
+ *  "Load scenario"); the Load opens the Instructor view. The Instructor view has no library of its own once a case runs. */
+export async function loadFromLibrary(page: Page, title: string): Promise<Record<string, string>> {
   const seen: Record<string, string> = {};
-  seen.alarmButtonAtOpen = await page.locator('.alarm-count').innerText();
-  await page.click('[role=tab][data-tab=scenario]');
-  seen.tab = (await page.locator('[role=tab][data-tab=scenario]').innerText()).trim();
-  await page.locator('.chip-btn', { hasText: 'Showcase' }).click();
-  const cards = page.locator('section[aria-label="Scenario library"] article.scard');
-  seen.showcaseCards = (await cards.locator('h3').allInnerTexts()).join(' | ');
-  const card = cards.filter({ has: page.locator('h3', { hasText: title }) });
-  await card.locator('button', { hasText: 'Load' }).click();
-  // a case already running asks first ("Load this scenario?"): confirm with "Load scenario"
-  const confirm = page.getByRole('button', { name: 'Load scenario', exact: true });
+  await page.evaluate(() => (location.hash = '#/scenarios/library'));
+  const lib = page.locator('[data-view=scenarios]');
+  const item = lib.locator('.scen-item.lib').filter({ has: page.locator('h3').getByText(title, { exact: true }) });
+  await item.first().waitFor({ timeout: 10_000 });
+  seen.library = '#/scenarios/library';
+  await item.first().getByRole('button', { name: /^Load / }).click();
+  const confirm = page.getByRole('dialog').getByRole('button', { name: 'Load scenario', exact: true });
   if (await confirm.waitFor({ timeout: 1500 }).then(() => true, () => false)) {
     seen.confirm = 'dialog "Load this scenario?" → Load scenario';
     await confirm.click();
   }
   await page.locator('.toasts').getByText(`Scenario loaded: ${title}`).waitFor({ timeout: 15_000 });
+  await page.waitForFunction(() => location.hash === '#/teach2', null, { timeout: 10_000 });
   seen.toast = `Scenario loaded: ${title}`;
-  if (o.speed === false) return seen;
-  await page.locator('.sessionbar button', { hasText: '×4' }).click();
-  await page.locator('.toasts').getByText('Speed ×4').waitFor({ timeout: 10_000 });
-  seen.speed = '×4 (session bar) → toast "Speed ×4"';
-  await page.waitForTimeout(500);
-  seen.running = await runText(page);
-  seen.alarmButtonAfterLoad = await page.locator('.alarm-count').innerText();
-  seen.sessionBar = (await page.locator('.sessionbar').innerText()).replace(/\s+/g, ' ');
   return seen;
 }
 
-/** The visible text of the running-scenario section (title, states, next steps and buttons). */
-export const runText = (page: Page): Promise<string> => page.locator('section[aria-label="Running scenario"]').innerText().then((s) => s.replace(/\n{2,}/g, '\n').trim());
+/** The Scenarios library → Load the card titled `title`; then ×4 from the header. Returns the visible labels on the way. */
+export async function loadShowcase(page: Page, title: string, o: { speed?: boolean } = {}): Promise<Record<string, string>> {
+  const seen: Record<string, string> = {};
+  seen.alarmButtonAtOpen = await alarmLine(page);
+  await page.evaluate(() => (location.hash = '#/scenarios/library'));
+  seen.showcaseCards = (await page.locator('[data-view=scenarios] section.scen-group').filter({ has: page.locator('h2', { hasText: /^(Today's demonstrations|Showcase)$/ }) }).locator('h3').allInnerTexts()).join(' | ');
+  Object.assign(seen, await loadFromLibrary(page, title));
+  if (o.speed === false) return seen;
+  await speedV2(page, 4);
+  await page.locator('.toasts').getByText('Speed ×4').waitFor({ timeout: 10_000 });
+  seen.speed = '×4 (header speed box) → toast "Speed ×4"';
+  await page.waitForTimeout(500);
+  seen.running = await runText(page);
+  seen.alarmButtonAfterLoad = await alarmLine(page);
+  seen.header = (await page.locator('.ip2-head').innerText()).replace(/\s+/g, ' ');
+  return seen;
+}
 
-/** Press an on-panel scenario action button by its exact visible label. */
+/** The Instructor view's alarm line under the monitor (the count and the sounding alarms; the top bar's count is not
+ *  shown on #/teach2). */
+export const alarmLine = (page: Page): Promise<string> => page.locator('.ip2-alarmline').innerText().then((s) => s.replace(/\s+/g, ' ').trim());
+
+/** The visible text of the Instructor view's ACTION list (the card's open rows, Not due now, Finished). */
+export const runText = (page: Page): Promise<string> => page.locator('.ip2-action').innerText().then((s) => s.replace(/\n{2,}/g, '\n').trim());
+
+/** Press an open ACTION row by its exact title. */
 export async function action(page: Page, label: string): Promise<number> {
-  const b = page.locator('section[aria-label="Running scenario"] button', { hasText: label });
-  await b.first().click();
+  await cardRow(page, label).first().click();
   return simNow(page);
 }
 
@@ -153,9 +181,9 @@ export async function co2Tile(page: Page): Promise<{ value: number | null; text:
   return { value: /^\d+$/.test(v) ? Number(v) : null, text: (await t.innerText()).replace(/\s+/g, ' ').trim() };
 }
 
-/** The session-bar clock as seconds ("mm:ss" or "h:mm:ss"). */
+/** The Instructor view's header clock (the clock pill: "mm:ss" or "h:mm:ss") as seconds. */
 export async function barClock(page: Page): Promise<{ s: number; text: string }> {
-  const text = (await page.locator('.sessionbar [aria-label="Simulation time"]').first().innerText()).trim();
+  const text = (await page.locator('.ip2-head .ip2-pill-time').first().innerText()).trim();
   const s = text.split(':').map(Number).reduce((a, b) => a * 60 + b, 0);
   return { s, text };
 }

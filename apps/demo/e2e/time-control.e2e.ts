@@ -6,7 +6,7 @@
 // acknowledge; the Ventilator view's cockpit ventilates the patient through a span.
 import { expect, test } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
-import { openApp, startVite } from './app-support.ts';
+import { ffV2, openApp, speedV2, startVite } from './app-support.ts';
 
 // CI WebKit (PR #54, run 38172603508), three attempts: line 48 held ×5.3 against > ×6; line 103 scheduled no QRS/pulse
 // tone within 10 s back at ×1; line 121 the fast-forward sent from the Ventilator view went unanswered to the 300 s
@@ -28,7 +28,7 @@ type Win = {
   __bar: Array<{ text: string; latched: boolean; simT: number }>;
 };
 
-test('×8 and a 5-minute fast-forward from the instructor view: paced panel everywhere, sound muted, cue, banner, log, trends', { tag: '@known-flaky' }, async ({ page, context, browserName }) => {
+test('×8 and a 5-minute fast-forward from the instructor view: paced panel everywhere, sound muted, cue, banner, log, trends', async ({ page, context, browserName }) => {
   test.setTimeout(300_000);
   // every oscillator the page starts (the end cue is 660 + 990 Hz)
   await page.addInitScript(() => {
@@ -39,15 +39,16 @@ test('×8 and a 5-minute fast-forward from the instructor view: paced panel ever
       return start.apply(this, a);
     };
   });
-  await openApp(page, base, '?scenario=showcase-anaphylaxis', { warmMs: 1500 });
-  await expect(page).toHaveURL(/#\/teach$/);
-  await page.getByRole('button', { name: 'Sound off' }).click();
-  await expect(page.getByRole('button', { name: 'Sound on' })).toBeVisible();
-  const bar = page.locator('.sessionbar');
+  await openApp(page, base, '?scenario=showcase-anaphylaxis#/teach2', { warmMs: 1500 });
+  await expect(page).toHaveURL(/#\/teach2$/);
+  // Instructor v2's header: the top bar's Sound switch, the speed box; STATE's Fast forward box
+  const head = page.locator('.ip2-head');
+  await head.getByRole('button', { name: 'Sound off' }).click();
+  await expect(head.getByRole('button', { name: 'Sound on' })).toBeVisible();
   const simT = () => page.evaluate(() => (window as unknown as Win).__pmeApp.link.simT);
   const tones = (from: number, to: number, kinds?: string[]) => page.evaluate((r) => (window as unknown as Win).__pmeApp.session.monitor.audioLog.filter((e) => e.simT > r.from && e.simT < r.to && (!r.kinds || r.kinds.includes(e.kind))).length, { from, to, kinds });
   await expect.poll(() => tones(0, 1e9, ['qrs', 'pulse']), { timeout: 10_000 }).toBeGreaterThan(0); // ×1: the beat tone sounds
-  await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×8' }).click();
+  await speedV2(page, 8);
   const a = await simT();
   await page.waitForTimeout(4000);
   const b = await simT();
@@ -62,9 +63,17 @@ test('×8 and a 5-minute fast-forward from the instructor view: paced panel ever
 
   const w0 = Date.now();
   const p0 = await page.evaluate(() => performance.now());
-  await bar.getByRole('group', { name: 'Fast-forward' }).getByRole('button', { name: 'Fast-forward 5 min' }).click();
+  await ffV2(page, 5);
   const veil = page.locator('.ff-veil.on');
-  await expect(veil).toBeVisible({ timeout: 5000 });
+  // What the host says about its fast-forward (the panel shows while one runs): a failure below names how it ended — a
+  // `stopped` reason (the monitor failed, a new timeline) — instead of only "not visible" or a 300 s hang
+  const ffState = () => page.evaluate(() => {
+    const l = (window as unknown as Win).__pmeApp.link as unknown as { ctl: { fastForward: unknown; lastFastForward: unknown }; log: Array<{ text: string }> };
+    return JSON.stringify({ running: l.ctl.fastForward, last: l.ctl.lastFastForward, log: l.log.map((e) => e.text).filter((t) => /fast-forward|monitor|stopped/i.test(t)).slice(-4) });
+  });
+  await expect(veil, "the panel shows").toBeVisible({ timeout: 5000 }).catch(async (e: Error) => {
+    throw new Error(`${e.message}\nhost: ${await ffState()}`);
+  });
   await expect(veil.locator('.ff-title')).toHaveText('FAST FORWARD · 5 MIN');
   await expect(veil.locator('.ff-mute svg')).toBeVisible(); // FX-23: the icon, no words on screen
   expect(await veil.innerText()).not.toMatch(/\d\d:\d\d/); // no clock, no start or end time
@@ -77,12 +86,16 @@ test('×8 and a 5-minute fast-forward from the instructor view: paced panel ever
   });
   expect(Math.abs(air.gap - air.line), JSON.stringify(air)).toBeLessThanOrEqual(1);
   // the bar fills visibly
-  const fillW = () => veil.locator('.ff-fill').evaluate((el) => (el as HTMLElement).style.width);
+  // bounded: a fast-forward that ended early leaves no panel to read (the wait hung to the 300 s test timeout in CI run
+  // 41987299802, hiding why); the failure carries the host's account of it
+  const fillW = () => veil.locator('.ff-fill').evaluate((el) => (el as HTMLElement).style.width, undefined, { timeout: 10_000 }).catch(async (e: Error) => {
+    throw new Error(`${e.message}\nthe panel went before the bar was read; host: ${await ffState()}`);
+  });
   const c0 = await fillW();
   await page.waitForTimeout(1500);
   expect(await fillW()).not.toBe(c0);
   // the panel is above every view: instructor, monitor, Explore, Ventilator (opened here for the first time)
-  for (const r of ['monitor', 'explore', 'vent', 'teach']) {
+  for (const r of ['monitor', 'explore', 'vent', 'teach2']) {
     await page.evaluate((h) => (location.hash = h), `#/${r}`);
     await expect(veil, `panel on #/${r}`).toBeVisible();
   }
@@ -114,7 +127,7 @@ test('×8 and a 5-minute fast-forward from the instructor view: paced panel ever
   // the second screen follows the instructor's monitor again
   await second.waitForFunction(() => (window as unknown as Win).__pmeFollower?.sync?.status === 'synced', undefined, { timeout: 20_000 });
   // back at ×1 the beat tone sounds again
-  await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×1' }).click();
+  await speedV2(page, 1);
   const d = await simT();
   await expect.poll(() => tones(d + 0.5, 1e9, ['qrs', 'pulse']), { timeout: 10_000 }).toBeGreaterThan(0);
 
@@ -168,6 +181,10 @@ test('×8 and a 5-minute fast-forward from the instructor view: paced panel ever
   expect(await page.evaluate(() => (window as unknown as Win).__pmeApp.link.ctl.lastFastForward?.endT)).toBeGreaterThan(endT + 119);
   const ticks = await page.evaluate(() => (window as unknown as { __cmds: number[] }).__cmds);
   const span = new Set(ticks);
+  // no frame at all was CI's repeat failure (Chromium, 7 runs of 6–7 Nov: Math.max() of nothing = −Infinity): the cockpit,
+  // paused at its clock limit by the hand-over when the view was left, sent none to its new link (brief 90; vent-driver.ts
+  // resume, packages/ventilator/test/link-relink.test.ts)
+  expect(span.size, 'cockpit frames during the 2-minute fast-forward').toBeGreaterThan(0);
   // one frame per tick, without a gap, from before the span to its end (the cockpit runs ≤ 75 ticks ahead: those were
   // sent before the listener)
   expect(Math.max(...span) - Math.min(...span) + 1).toBe(span.size);
@@ -180,8 +197,8 @@ test('measure: ×8 rate, frame time, fast-forward pace', async ({ page, browserN
   test.setTimeout(300_000);
   const q = (a: number[], p: number) => [...a].sort((x, y) => x - y)[Math.min(a.length - 1, Math.floor(p * a.length))] ?? Number.NaN;
   for (const [id, vent] of [['showcase-anaphylaxis', false], ['showcase-bronchospasm', true]] as const) {
-    await openApp(page, base, `?scenario=${id}`, { warmMs: 2000 });
-    await page.getByRole('button', { name: 'Sound off' }).click();
+    await openApp(page, base, `?scenario=${id}#/teach2`, { warmMs: 2000 });
+    await page.locator('.ip2-head').getByRole('button', { name: 'Sound off' }).click();
     if (vent) {
       await page.evaluate(() => (location.hash = '#/vent'));
       await page.waitForTimeout(4000);

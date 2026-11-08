@@ -18,31 +18,31 @@ import { NO_BEAT_RHYTHMS, P_ZF, TAU_ISCH_DOWN_S } from './coronary.ts';
 import { P_ASYSTOLE_ONSET, P_VF_ONSET } from './hypoxic-arrest.ts';
 import type { CircModelState } from './model.ts';
 
-/** Contractility (flow share) at which the ischaemic heart no longer ejects: ≤ 10 % of rest — the HYP_ARREST analogue [ENG]. */
+/** Contractility (flow share) at which the ischaemic heart no longer ejects: ≤ 10 % of rest — the HYP_ARREST analogue [FIT: arrest/ROSC rule size (hazard, hold or threshold standing in for an electrophysiological substrate); brief research/44 L2-05]. */
 export const K_ISCH_ARREST = 0.1;
 /**
  * No flow: a continuous MAP below this for NO_FLOW_S declares the arrest whatever the myocardial state says — the
- * diastolic pressure is then below the coronary zero-flow pressure P_ZF 15 (coronary.ts) [ENG: P_ZF + 10].
+ * diastolic pressure is then below the coronary zero-flow pressure P_ZF 15 (coronary.ts) [FIT: arrest/ROSC rule size (hazard, hold or threshold standing in for an electrophysiological substrate); P_ZF + 10; brief research/44 L2-05].
  */
 export const MAP_NO_FLOW = 25;
 export const NO_FLOW_S = 60;
-/** Myocardial state kIsch·(1 − hyp) a resuscitated heart needs before an organised rhythm regains a pulse [ENG]. */
+/** Myocardial state kIsch·(1 − hyp) a resuscitated heart needs before an organised rhythm regains a pulse [FIT: arrest/ROSC rule size (hazard, hold or threshold standing in for an electrophysiological substrate); brief research/44 L2-05]. */
 export const M_ROSC = 0.4;
 /** Paradis 1990 (JAMA 263:1106): no ROSC below a CPR coronary perfusion pressure of 15 mmHg [P]. */
 export const CPP_ROSC = 15;
-/** How long the ROSC conditions must hold [ENG]. */
+/** How long the ROSC conditions must hold [FIT: arrest/ROSC rule size (hazard, hold or threshold standing in for an electrophysiological substrate); brief research/44 L2-05]. */
 export const ROSC_HOLD_S = 60;
-/** Hyperkalaemic arrest hazard above this membrane-effective K, per mmol/L above it: 1/K_HAZARD_S per second [ENG; Q5]. */
+/** Hyperkalaemic arrest hazard above this membrane-effective K, per mmol/L above it: 1/K_HAZARD_S per second [FIT: arrest/ROSC rule size (hazard, hold or threshold standing in for an electrophysiological substrate); Q5; brief research/44 L2-05]. */
 export const K_HAZARD = 8.5;
 export const K_HAZARD_S = 120;
-/** Hypothermic VF hazard below this core temperature, per °C below it: 1/T_HAZARD_S per second (ERC 2021: VF risk < 28 °C) [ENG]. */
+/** Hypothermic VF hazard below this core temperature, per °C below it: 1/T_HAZARD_S per second (ERC 2021: VF risk < 28 °C) [FIT: arrest/ROSC rule size (hazard, hold or threshold standing in for an electrophysiological substrate); brief research/44 L2-05]. */
 export const T_HAZARD = 28;
 export const T_HAZARD_S = 600;
 /** Hyperthermic VF hazard above this core temperature, per °C above it: 1/T_HOT_S per second (untreated MH: VF with
- * hyperkalaemia and hyperthermia — Miller, MH chapter [TXT]) [ENG; Q6]. */
+ * hyperkalaemia and hyperthermia — Miller, MH chapter [TXT]) [FIT: arrest/ROSC rule size (hazard, hold or threshold standing in for an electrophysiological substrate); Q6; brief research/44 L2-05]. */
 export const T_HOT = 42;
 export const T_HOT_S = 300;
-/** VF share multipliers at an arrest's onset: per unit catecholamine inotropy, per mmol/L K above 6, per °C below 32 [ENG]. */
+/** VF share multipliers at an arrest's onset: per unit catecholamine inotropy, per mmol/L K above 6, per °C below 32 [FIT: arrest/ROSC rule size (hazard, hold or threshold standing in for an electrophysiological substrate); brief research/44 L2-05]. */
 export const VF_CAT = 2;
 export const VF_K = 0.5;
 export const VF_T = 0.25;
@@ -96,14 +96,14 @@ export function arrestStep(m: CircModelState, rhythmId: string, pulseless: boole
  * suspends the whole decay, which is what makes good CPR worth doing. Sources: the three-phase model of cardiac arrest
  * (Weisfeldt ML & Becker LB, JAMA 2002;288:3035–3038); the asphyxial PEA → asystole course (DeBehnke DJ et al. 1995;
  * Varvarousi G et al. 2011/2015); ERC 2021 ALS (untreated PEA deteriorates to asystole). Thresholds and the hazard mean
- * are [ENG].
+ * are [FIT: arrest/ROSC rule size (hazard, hold or threshold standing in for an electrophysiological substrate); brief research/44 L2-05].
  */
 export const PEA_RATE_M_FULL = 0.4; // myocardial state at or above which the PEA keeps its onset rate
 export const PEA_RATE_MIN = 18; // slowest organised rate the decay drives the PEA to before the idioventricular phase
 export const PEA_IDIO_M = 0.04; // myocardial state below which the rhythm becomes a slow wide idioventricular one (BELOW
 // K_ISCH_ARREST 0.1, so the PEA has a rate-decay phase of its own before the idioventricular one)
 export const PEA_IDIO_RATE = 24;
-export const PEA_ASYSTOLE_MEAN_S = 420; // mean time from the idioventricular phase to asystole, untreated [ENG: 5–10 min]
+export const PEA_ASYSTOLE_MEAN_S = 420; // mean time from the idioventricular phase to asystole, untreated [FIT: arrest/ROSC rule size (hazard, hold or threshold standing in for an electrophysiological substrate); 5–10 min; brief research/44 L2-05]
 
 /**
  * One 1 Hz step of the decay of an engine-declared organised PEA. Returns a rhythm request (a slower rate, the

@@ -18,5 +18,5 @@ export const EEG_DEVICES: { generic: EegDevice<GenericState> } = {
 
 export type EegModelId = keyof typeof EEG_DEVICES;
 export const EEG_MODEL_IDS = Object.keys(EEG_DEVICES) as EegModelId[];
-/** The device an EEG switched on reads with until another is chosen [ENG: the only one built]. */
+/** The device an EEG switched on reads with until another is chosen [ENG: device; the only one built]. */
 export const EEG_DEFAULT_MODEL: EegModelId = 'generic';

@@ -132,7 +132,7 @@ describe('respiratory acceptance: coupling, RR, ventilator link', { timeout: 300
     await run(e, 1);
     const ls = ev.filter((x): x is Extract<EngineEvent, { type: 'lungState' }> => x.type === 'lungState');
     // Stage 7b (plan decision 15): compliance comes from the lung module (healthy Crs 55, Pulse healthy 54 ± 10 %),
-    // no longer Stage 3's fixed 50 [ENG]; re-specified from the exact 50 to the module's healthy band.
+    // no longer Stage 3's fixed 50 (an earlier fitted value); re-specified from the exact 50 to the module's healthy band.
     expect(ls[0]).toMatchObject({ t: 0, resistanceCmH2OPerLps: 10, effort: 1, autoPeepTendency: 0 });
     expect(ls[0]!.complianceMlPerCmH2O).toBeGreaterThanOrEqual(48);
     expect(ls[0]!.complianceMlPerCmH2O).toBeLessThanOrEqual(60);

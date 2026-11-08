@@ -5,7 +5,7 @@ import type { AlarmEntry, EngineEvent, NumericId } from '@pme/engine-core';
 import type { LampStyle, ResolvedSkin, TileParam } from '@pme/skins';
 
 export type AlarmStatus = Extract<EngineEvent, { type: 'alarmStatus' }>;
-/** Same-level messages rotate every this many seconds (brief §6.4.1 "messages rotate") [ENG]. */
+/** Same-level messages rotate every this many seconds (brief §6.4.1 "messages rotate") [ENG: display]. */
 export const ROTATE_S = 2;
 /** The skin's rotation period (saadat-like 6 s, research/34 §2), else ROTATE_S. */
 export function rotateS(r: ResolvedSkin): number {
@@ -74,12 +74,13 @@ export function barView(st: AlarmStatus | null, r: ResolvedSkin, t: number, pump
   const base = { countdownS, countdownKind, allOffBell: st?.allOff === true, inop: inopE ? { text: inopE.text, ...style(inopE) } : null } as const;
   const phys = split ? shown.filter((e) => e.category !== 'technical') : shown;
   if (phys.length === 0) return { ...base, text: '', bg: a.messageBar.idle.bg, fg: a.messageBar.idle.fg, lamp: 'off', flashHz: 0, duty: a.lamp.duty, latched: false };
-  const live = phys.filter((e) => !e.acked && !e.latched);
+  const live = phys.filter((e) => !e.acked && !e.latched && !e.prompt); // A prompt (MUI-7) lights no lamp
   const unacked = phys.filter((e) => !e.acked); // live ∪ latched
   const pool = (unacked.length > 0 ? unacked : phys).slice().sort((x, y) => x.level - y.level || x.since - y.since);
   const lvl = (pool[0] as AlarmEntry).level;
   const same = a.messageBar.rotateAll ? pool : pool.filter((x) => x.level === lvl);
-  if (!a.messageBar.rotateAll && !split && lvl < 3) for (const x of techs) if (!x.acked && !same.includes(x)) same.push(x); // an acknowledged INOP stays in the review, not the bar
+  // an acknowledged INOP stays in the review, not the bar; a prompt (MUI-7) is no INOP: it takes no turn from an alarm
+  if (!a.messageBar.rotateAll && !split && lvl < 3) for (const x of techs) if (!x.acked && !x.prompt && !same.includes(x)) same.push(x);
   const e = pick(same);
   const top = live.length > 0 ? Math.min(...live.map((x) => x.level)) : 3;
   const key = `L${top}` as 'L1' | 'L2' | 'L3';
