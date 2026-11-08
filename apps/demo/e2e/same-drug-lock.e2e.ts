@@ -1,6 +1,8 @@
 // The same drug is not given twice within 10 s of simulated time, from any device (the owner's ruling of 5 November
-// 2026: a guard against two hands entering one event). The laptop runs the session on a relay; a second device joins
-// it over the relay as a Remote (today's instructor panel alone; the host files it as the phone). The laptop gives
+// 2026: a guard against two hands entering one event). The laptop runs the session on a relay (on Instructor v2, the
+// only laptop view since retire-instructor-v1 PR 3); a second device joins
+// it over the relay as the instructor's phone (plan instructor-peer-role.md P7: a Remote over the relay signs in with the
+// laptop's PIN on its keypad, then shows today's instructor panel alone; the host files it as the phone). The laptop gives
 // atropine; 3 s of sim later the phone's Drugs tab shows the lock and its Give is refused, said on the phone; the
 // laptop's run record holds the one dose only.
 import { expect, test, type Page } from '@playwright/test';
@@ -22,19 +24,24 @@ test('the laptop gives atropine; the phone presses it 3 s later and reads the re
   test.setTimeout(90_000);
   relay = await startRelay({ port: 0, host: '127.0.0.1' });
   const ws = `ws://127.0.0.1:${relay.port}/`;
-  await openApp(page, base, `?relay=${encodeURIComponent(ws)}#/teach`, { warmMs: 1500 });
+  await openApp(page, base, `?relay=${encodeURIComponent(ws)}#/teach2`, { warmMs: 1500 });
   const code = await page.evaluate(() => (window as unknown as W).__pmeApp.session.code);
 
   const phone = await context.newPage();
   await phone.goto(`${base}/?relay=${encodeURIComponent(ws)}#/remote?code=${code}`);
-  await expect(phone.locator('.status-pill')).toHaveText(`Connected to ${code}`, { timeout: 15_000 });
+  // P7: the instructor's phone signs in with the PIN the laptop drew and keeps (its Room page shows it behind a hold)
+  const pin = (await page.evaluate(() => localStorage.getItem('pme.instructorPin'))) as string;
+  expect(pin).toMatch(/^[0-9]{4}$/);
+  for (const d of pin) await phone.locator('.ip-peer-key', { hasText: new RegExp(`^${d}$`) }).click();
+  await phone.locator('.ip-peer-go').click();
+  await expect(phone.locator('.ip-peer-status')).toHaveText(`Signed in as the instructor's remote · ${code}`, { timeout: 15_000 });
   await phone.click('[role=tab][data-tab=drugs]');
   const search = phone.getByLabel('Find a drug');
   await search.fill('atropine');
   await search.press('Enter');
   await expect(phone.locator('.card.dose h4')).toHaveText('Atropine');
 
-  // the laptop gives it (its own panel, as its Drugs tab's Give now sends it)
+  // the laptop gives it (the command its Drug sheet's Give sends)
   const ok = await page.evaluate(() => (window as unknown as W).__pmeApp.link.send({ type: 'applyEvent', event: { kind: 'drug', drugId: 'atropine', dose: 0.5, unit: 'mg', route: 'iv' } }));
   expect(ok.accepted).toBe(true);
   const t0 = await simT(page);

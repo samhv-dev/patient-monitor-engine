@@ -37,6 +37,10 @@ vi.mock('@pme/renderer', async () => {
           if (c.type === 'device' && c.action?.device === 'nibp') net.cuffs++;
           return Promise.resolve({ accepted: true, tick: ++tick });
         },
+        dispatchAll: (cs: Array<{ type: string; action?: { device?: string } }>) => {
+          for (const c of cs) if (c.type === 'device' && c.action?.device === 'nibp') net.cuffs++;
+          return Promise.resolve(cs.map(() => ({ accepted: true, tick: ++tick })));
+        },
         on: () => () => {},
         snapshot: () => Promise.resolve({}),
         restore: () => Promise.resolve(),

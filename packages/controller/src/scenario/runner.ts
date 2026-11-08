@@ -83,7 +83,7 @@ export interface VitalHold {
 }
 
 const EPS = 1e-6;
-/** A lower-rank source takes over a variable once the higher one has been silent this long [ENG]. */
+/** A lower-rank source takes over a variable once the higher one has been silent this long [ENG: scenario]. */
 const STALE_S = 5;
 /** Lower-bound filters on `event` triggers → the ClinicalEvent field they bound. */
 const MIN_FILTERS: Record<string, string> = { minJ: 'energyJ', minDose: 'dose', minVolumeMl: 'volumeMl', minMa: 'mA' };
@@ -241,8 +241,11 @@ export class ScenarioRunner {
   /** Credit the time since the last call to the timers (not while paused), using the values held so far. */
   private sync(t: number): void {
     const dt = Math.max(0, t - this.s.lastT);
+    // FX-11b: a clock that steps back (the host's estimate after a stall) is not a new span: the span up to the high
+    // water was counted once already, so the last time stays there
+    if (dt === 0) return;
     this.s.lastT = t;
-    if (this.s.paused || dt === 0) return;
+    if (this.s.paused) return;
     this.s.stateT += dt;
     this.s.scenarioT += dt;
     this.trackVitals(dt);

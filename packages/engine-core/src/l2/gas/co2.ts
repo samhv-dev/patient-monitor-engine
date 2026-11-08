@@ -48,7 +48,7 @@ export function stepCo2(st: Co2State, x: Co2Inputs, dtS: number): void {
   const dt = dtS / 60;
   const elim = (st.flow * x.vaLpm * (st.pf - (x.pico2 ?? 0))) / K_CO2; // VA·(PACO2 − PICO2)/0.863 (Nunn ch. 7)
   const ex = x.kfs * (st.pf - st.ps);
-  // low flow: CO2 the blood does not carry away stays in the tissues (slow compartment) → ROSC washout [ENG]
+  // low flow: CO2 the blood does not carry away stays in the tissues (slow compartment) → ROSC washout [FIT: low-flow CO2 retained in a slow tissue compartment; brief research/44 L2-19]
   st.pf = Math.max(0, st.pf + ((st.flow * x.vco2 - elim - ex) / x.cf) * dt);
   st.ps = Math.max(0, st.ps + ((ex + (1 - st.flow) * x.vco2) / x.cs) * dt);
 }

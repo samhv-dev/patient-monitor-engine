@@ -71,7 +71,7 @@ export interface StageMarkPosition {
 }
 
 const NOT_IMPLEMENTED = /not implemented/;
-/** A hop (answer 2): a state whose only exit is `afterS` ≤ HOP_MAX_S — it folds into the stage it leads to [ENG]. */
+/** A hop (answer 2): a state whose only exit is `afterS` ≤ HOP_MAX_S — it folds into the stage it leads to [ENG: scenario]. */
 export const HOP_MAX_S = 2;
 export function isHop(s: ScenarioState): boolean {
   const t = s.transitions ?? [];
@@ -215,7 +215,9 @@ export class ScenarioDriver {
           this.lastStage = this.stageOf(r);
           this.o.publish?.({ type: 'scenario', t: r.enteredT, stateId: r.stateId });
         } else this.cur = null;
-        return yes(undefined, m.snapshot.tick);
+        // FX-12: the case the mark holds (null: none) travels with the restore, so every controller shows the case that
+        // now runs — after a restart its views had none, and the run came back with "No scenario" on every screen
+        return yes({ ...cmd, doc: m.doc && m.runner ? m.doc : null }, m.snapshot.tick);
       }
     }
     const r = this.cur;
@@ -471,6 +473,16 @@ export class ScenarioDriver {
         const r = inner.dispatch(c);
         return r instanceof Promise ? r.then((x) => observe(c, x)) : observe(c, r);
       },
+      // R15: a stage group in one dispatch, each command observed as dispatch() observes it
+      ...(inner.dispatchGroup
+        ? {
+            dispatchGroup: (cs: Command[]) => {
+              const r = (inner.dispatchGroup as NonNullable<HostTarget['dispatchGroup']>)(cs);
+              const each = (xs: DispatchResult[]) => xs.map((x, i) => observe(cs[i] as Command, x));
+              return r instanceof Promise ? r.then(each) : each(r);
+            },
+          }
+        : {}),
       snapshot: () => inner.snapshot(),
       restore: (s) => inner.restore(s),
       on: (fn) => inner.on(fn),

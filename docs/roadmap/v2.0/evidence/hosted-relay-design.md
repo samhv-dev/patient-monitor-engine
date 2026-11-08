@@ -498,7 +498,7 @@ In each case, the kit over a hotspot remains the path, and it already works.
 > file. The cost is $0 on a free tier (with about a minute of wake-up before class) or roughly $2–5 a month for an
 > always-on instance.
 >
-> **Ali, please choose one:**
+> **samhv-dev, please choose one:**
 >
 > - **(a) You, personally, on a free tier.**
 > - **(b) You, personally, always on, at about $2–5 a month.**

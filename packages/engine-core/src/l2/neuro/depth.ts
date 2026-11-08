@@ -11,14 +11,14 @@ import { PROP_HYP_C50_REF } from '../pk/combine.ts'; // The fallback weights der
 import { DRUGS } from '../pk/data/drugs.ts';
 
 export const DI_E0 = 93;
-export const MAC_DI50 = 0.876; // [ENG] → DI 42 at 1.0 MAC (tables: 40–45)
+export const MAC_DI50 = 0.876; // (tables: DI 40–45 at 1 MAC) → DI 42 at 1.0 MAC (tables: 40–45)
 export const N2O_DI_W = 0.1; // N2O ≈ 0 on the index [TXT]
 export const OPIOID_W = 0.2; // tables §5d: opioids alone barely move the index
 export const REMI_EEG_EC50 = 11.2; // ng/mL (Minto 1997); fentanyl FENT_EEG_POT × remifentanil (tables §5d)
 export const MIDAZ_DI50 = 300; // ng/mL [VERIFY]
 /** The dissociative flag: a dissociative agent's weight on the processed-EEG index — ketamine's BIS
  * stays 60–90 at anaesthetic doses (Hirota & Lambert 2001; M10 ch. 21), so its share of the hypnotic equivalent counts
- * ×0.1 on the INDEX while counting in full for CONSCIOUSNESS [ENG]. */
+ * ×0.1 on the INDEX while counting in full for CONSCIOUSNESS [FIT: ketamine's index paradox size; brief research/44 L2-35]. */
 export const KET_EEG_W = 0.1;
 /** Fallback weights when the drug model publishes no equivalent (fixtures, an old snapshot) — DERIVED from the
  * rows (ONE source): propofol-equivalent ng/mL per ng/mL of the neuro model's per-agent Ce = propofol's C50 (ng/mL) ÷
@@ -26,15 +26,15 @@ export const KET_EEG_W = 0.1;
  * ketamine 3080/(0.8·1500) ≈ 2.57. */
 export const MIDAZ_EQ_PROP = (1000 * PROP_HYP_C50_REF) / ((DRUGS.midazolam?.cns?.hypC50 ?? 4) * MIDAZ_NG_PER_REF);
 export const KET_EQ_PROP = (1000 * PROP_HYP_C50_REF) / ((DRUGS.ketamine?.cns?.hypC50 ?? 0.8) * KET_NG_PER_REF);
-export const KET_DI_RISE = 15; // index points at full ketamine effect [ENG: "ketamine ↑ DI (paradox)"]
+export const KET_DI_RISE = 15; // index points at full ketamine effect [FIT: ketamine's index paradox size; "ketamine ↑ DI (paradox)"; brief research/44 L2-35]
 export const KET_C50 = 800; // ng/mL (hypnotic C50, [VERIFY])
-export const EMG_RISE = 15; // tables §5d: +10–20 when unparalysed and stimulated [ENG]
+export const EMG_RISE = 15; // tables §5d: +10–20 when unparalysed and stimulated (tables §5d: +10–20)
 export const MAC_AWAKE = 0.33; // Katoh 1993
 export const MAC_BAR = 1.6; // MAC blocking adrenergic response (1.5–1.7) [TXT]
 export const OPIOID_MAC_RMAX = 0.7; // MAC reduction ceiling [TXT]
 export const OPIOID_MAC_K = 0.6; // fentanyl-eq ng/mL: −50 % at 1.5 ng/mL (tables §5d, remi 1.2)
 export const REMI_MAC_POT = 1.25; // remifentanil 1.2 ng/mL ≈ fentanyl 1.5 for MAC reduction
-/** Neuroglycopenia (0–1: glucose 60 → 30 mg/dL) as a hypnotic: 1 = unconscious, index ≈ 45 [ENG: coma below ~30 mg/dL]. */
+/** Neuroglycopenia (0–1: glucose 60 → 30 mg/dL) as a hypnotic: 1 = unconscious, index ≈ 45 [FIT: coma below ~30 mg/dL; brief research/44 L2-35]. */
 export const GLYCO_U = 1.2;
 
 export interface DepthInputs {
@@ -113,13 +113,13 @@ export function depth(x: DepthInputs): DepthOut {
   // nociception: stimulus blunted by opioid (fentanyl-eq C50 2 ng/mL) and by the hypnotic depth (MAC-BAR scale)
   const bOp = fe / (fe + 2);
   const hypEq = macEff + hyp / ce50Propofol(x.ageY) / (1 - red); // MAC-equivalents (the hypnotic equivalent)
-  const bHyp = hypEq ** 3 / (hypEq ** 3 + 1); // 50 % blunting at 1 MAC-eq, 80 % at MAC-BAR 1.6 [ENG]
+  const bHyp = hypEq ** 3 / (hypEq ** 3 + 1); // 50 % blunting at 1 MAC-eq, 80 % at MAC-BAR 1.6 (tables MAC-BAR 1.6 [TXT])
   // The OPIOID + lidocaine share alone — the catecholamine RELEASE reads this, because a hypnotic does not abolish the
   // humoral stress response (Desborough 2000) while opioids and IV lidocaine blunt it.
   const antinocOp = 1 - (1 - bOp) * (1 - Math.min(0.6, Math.max(0, x.antinocAdd ?? 0)));
   const antinoc = 1 - (1 - antinocOp) * (1 - bHyp); // the TOTAL blunting, unchanged in value and in every consumer
   const stress = Math.max(0, Math.min(1, x.stimulus * (1 - antinoc)));
-  const movement = x.stimulus >= 0.3 && x.t1 > 0.25 && hypEq < 1; // MAC = 50 % move to incision: below 1 MAC-eq they move [ENG]
+  const movement = x.stimulus >= 0.3 && x.t1 > 0.25 && hypEq < 1; // MAC = 50 % move to incision: below 1 MAC-eq they move (the definition of MAC)
   return { diRaw, sr, macFrac, macEff, hypnotic, conscious: hypnotic < 1, stress, antinoc, antinocOp, hypEq, movement };
 }
 

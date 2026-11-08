@@ -6,7 +6,7 @@ import { albGL } from './fluids.ts';
 import { satDB } from './odc.ts';
 import { NORMAL } from './params.ts';
 
-export const LAB_TURNAROUND_S = 120; // point-of-care analyser ≈ 60–90 s + the walk [ENG]
+export const LAB_TURNAROUND_S = 120; // point-of-care analyser ≈ 60–90 s + the walk [ENG: device]
 const r = (x: number, d: number) => Math.round(x * 10 ** d) / 10 ** d;
 
 export interface LabInputs {
@@ -26,7 +26,7 @@ export function labPanel(bc: BloodCore, x: LabInputs, panel: 'abg' | 'vbg'): Lab
   let po2 = x.pao2;
   let sFunc = satDB(x.pao2, x.paco2, x.tempC, bc.odc);
   if (panel === 'vbg') {
-    // PvCO2 − PaCO2 = VCO2/(Q·S), S 4.5 mL/L/mmHg [ENG]; venous PO2 from SvO2 by inverting the curve (bisection)
+    // PvCO2 − PaCO2 = VCO2/(Q·S), S 4.5 mL/L/mmHg [FIT: fixed CO2-content slope for venous PCO2; brief research/44 L2-41]; venous PO2 from SvO2 by inverting the curve (bisection)
     pco2 = x.paco2 + x.vco2 / (Math.max(0.3, x.coLpm) * 4.5);
     const a = solvePh(pco2, { sid: bc.ab.hco3 + bc.ab.atot, albGL: albGL(bc.fl), piMmolL: NORMAL.piMmolL, hb: bc.odc.hb });
     ph = a.ph;

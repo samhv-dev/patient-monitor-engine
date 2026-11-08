@@ -8,18 +8,18 @@ import { cycleAt, lastCycleBefore, type Cycle, type DriverState } from '../resp/
 
 export const CO2_RATE = 62.5; // brief §3.2
 export const CO2_SUBSTEPS = 4; // sampler LPF integrated at 250 Hz
-export const PHASE_I_S = { mech: 0.1, spont: 0.15 } as const; // dead-space washout at the start of expiration [ENG]
+export const PHASE_I_S = { mech: 0.1, spont: 0.15 } as const; // dead-space washout at the start of expiration [FIT: capnogram shape parameter; brief research/44 L2-50]
 /** Shape constants per family (brief §4.4: τ_II 0.05–0.10 s normal, 0.2–0.5 obstructive; phase III +1–3 mmHg). τ_II 0.09: α 105° sidestream, 100° mainstream (prototype). */
 export const SHAPES = {
   mech: { tauII: 0.09, tau0: 0.03, riseIII: 2 },
   spont: { tauII: 0.12, tau0: 0.12, riseIII: 1 }, // rounded (research 03 §4.3)
   shark: { tauII: 0.09, tau0: 0.03, riseIII: 2 }, // τ_II from SHARK_TAU_II and phase III + SHARK_RISE_III per unit severity
-  bifid: { tauII: 0.09, tau0: 0.03, riseIII: 2 }, // endobronchial: second, slow half (τ 0.6 s) [ENG]
+  bifid: { tauII: 0.09, tau0: 0.03, riseIII: 2 }, // endobronchial: second, slow half (τ 0.6 s) [FIT: capnogram shape parameter; brief research/44 L2-50]
 } as const;
-export const APNOEA_DECAY_S = 1.0; // after the last expiration the sampled gas returns to baseline [ENG]
+export const APNOEA_DECAY_S = 1.0; // after the last expiration the sampled gas returns to baseline [ENG: device]
 export const CUT_DECAY_S = 0.25; // disconnection: abrupt drop to 0 (research 03 §4.3)
 export const CARDIO_MMHG = 1.5; // cardiogenic oscillation 1–3 mmHg at HR (research 03 §4.3)
-export const CPR_OSC_MMHG = 3; // compression oscillations × quality [ENG]
+export const CPR_OSC_MMHG = 3; // compression oscillations × quality [FIT: capnogram shape parameter; brief research/44 L2-50]
 /** Sampling (brief §4.4; research 03 §4.2, Philips M3015A / M3014A). */
 export const SAMPLING = {
   sidestream: { delayS: 2.3, riseS: 0.24, riseNeoS: 0.19 },
@@ -39,7 +39,7 @@ export interface CapnoCtx {
  */
 export const SHARK_TAU_II: ReadonlyArray<readonly [number, number]> = [[0, 0.09], [0.5, 0.26], [0.8, 0.315], [1, 0.4], [1.25, 0.6]];
 
-/** Phase III rise added per unit bronchospasm severity (mmHg) [ENG, fitted with SHARK_TAU_II]. */
+/** Phase III rise added per unit bronchospasm severity (mmHg) [FIT: capnogram shape parameter; fitted with SHARK_TAU_II; brief research/44 L2-50]. */
 export const SHARK_RISE_III = 6;
 
 function sharkTauII(sev: number): number {

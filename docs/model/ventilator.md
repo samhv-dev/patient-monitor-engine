@@ -90,7 +90,16 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 |---|---|---|---|---|
 | `LEAD_TICKS` | `5` | — | — | Frames are scheduled this many engine ticks ahead of the first measured arrival (jitter of one rAF frame). |
 | `MAX_AHEAD_TICKS` | `75` | — | — | The ventilator may run this far ahead of the newest engine event (events carry sim time; beats and 1 Hz state). |
-| `RUN_TIMEOUT_MS` | `2000` | ms | [ENG] | A cockpit that has not answered a `run` in this long is given up on (the engine's own drive timeout then takes over, as when the cockpit is closed), wall ms [ENG]. |
+| `RUN_TIMEOUT_MS` | `2000` | ms | [ENG: network] | A cockpit that has not answered a `run` in this long is given up on (the engine's own drive timeout then takes over, as when the cockpit is closed), wall ms [ENG: network]. |
+
+### [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `RELAY_BATCH_MS` | `20` | ms | — | One `batch` per this much wall time at most, ms (plan R8c: 50 a second at any speed). |
+| `RELAY_BATCH_MAX` | `16` | — | — | The most `cmds` one batch packs (@pme/controller guard.ts VENT_LIMITS.batch). |
+| `RELAY_BODY_BYTES` | `4 * 1024` | — | — | A `vent` body's largest JSON (guard.ts VENT_LIMITS.bytes): a burst over it goes in several batches. |
+| `SETTINGS_MS` | `1000` | ms | — | The cockpit's settings go at least this often, ms (plan R8c: "once a second"). |
 
 ### [`link/vent-driver.ts`](../../packages/ventilator/src/link/vent-driver.ts)
 
@@ -102,7 +111,7 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `EFFORT_PMUS_CMH2O` | `8` | cmH2O | [ENG: the v1.9 default spontaneous effort is 6–8] | effort 1 → Pmus 8 cmH2O [ENG: the v1.9 default spontaneous effort is 6–8] |
+| `EFFORT_PMUS_CMH2O` | `8` | cmH2O | [ENG: control; the v1.9 default spontaneous effort is 6–8] | effort 1 → Pmus 8 cmH2O [ENG: control; the v1.9 default spontaneous effort is 6–8] |
 
 ### [`mechanics.ts`](../../packages/ventilator/src/mechanics.ts)
 
@@ -133,6 +142,8 @@ and flow picture of each lung pathology; an embedding developer gets the in-proc
 | `createLocalPortPair` | [`link/port.ts`](../../packages/ventilator/src/link/port.ts) | Two connected ports in one page (synchronous delivery). |
 | `attachMonitorToLink` | [`link/port.ts`](../../packages/ventilator/src/link/port.ts) | Monitor side: |
 | `lungConditionsOf` | [`link/profiles.ts`](../../packages/ventilator/src/link/profiles.ts) | The row's engine lung conditions (Stage V.1): |
+| `createRelayPort` | [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts) | `settings`: |
+| `ventWireOver` | [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts) | The cockpit's wire over its socket to the relay (a @pme/controller ManagedTransport and its stamper): |
 | `lungMechanics` | [`lung-input.ts`](../../packages/ventilator/src/lung-input.ts) | One lung (C, R_insp, R_exp, pleural) → the ventilator's single compartment (catalogue rows and lungState alike). |
 | `pbw` | [`mechanics.ts`](../../packages/ventilator/src/mechanics.ts) | Predicted body weight (kg) from height and sex (Devine; |
 | `recoilPressure` | [`mechanics.ts`](../../packages/ventilator/src/mechanics.ts) | Elastic recoil (cmH2O above PEEP) at volume v (mL above the PEEP volume). |
@@ -161,6 +172,7 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 | [`link/in-process.ts`](../../packages/ventilator/src/link/in-process.ts) | In-process link: the ventilator and the patient engine in ONE loop on ONE sim clock (lockstep, deterministic). |
 | [`link/port.ts`](../../packages/ventilator/src/link/port.ts) | The window link (the second transport): the ventilator in its own window/iframe, the monitor elsewhere in the same browser. |
 | [`link/profiles.ts`](../../packages/ventilator/src/link/profiles.ts) | Link profiles: one per lung-pathology row (pathology/catalogue.ts). |
+| [`link/relay-port.ts`](../../packages/ventilator/src/link/relay-port.ts) | The window link over the relay (plan room-and-instruments.md R8c): a cockpit on another device and the host's monitor exchange the link's messages inside the controller's `vent` message (R8a), which the relay carries bet |
 | [`link/vent-driver.ts`](../../packages/ventilator/src/link/vent-driver.ts) | Ventilator side of the window link: runs the ventilator on real time × scale, but never past the tick the monitor's `clock` messages allow (the engine is the master clock; before the first clock message it may run 2·LEAD |
 | [`lung-input.ts`](../../packages/ventilator/src/lung-input.ts) | Engine → vent: the `lungState` event IS the patient's lung. |
 | [`mechanics.ts`](../../packages/ventilator/src/mechanics.ts) | Lung mechanics of the original simulator (ventilator-sim-hamilton.html v1.9, "ENGINE" block), ported line for line: single-compartment equation of motion Paw + Pmus = V/C + R·Q + PEEP with a non-linear recoil (airway clo |
@@ -175,6 +187,7 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
 | bronchospasm 1 at 20 min | at 30 min PaCO2 59.2 vs 39.6, VT 238 vs 476 | — | MIS-SPECIFIED ([audit row 110](../../docs/validation/target-audit/30-target-audit.md#row-110)) | match the link's vcFlow/pause to the engine's Ti (the file's own V.1 TODO), then keep 3 / 3 / 2 % / 10 % | [`link-parity.test.ts`](../../packages/ventilator/test/link-parity.test.ts) |
+| RR 10 → 20: MAP falls > 15 mmHg with the auto-PEEP [FIT: no source found; brief 87] (the auto-PEEP papers give the direction, not the size) | −12.5 | brief 87 | not audited | — | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
 | ARDS moderate PEEP 5 → 15 (FiO2 0.6): SpO2 rises ≥ 5 over 1–4 min (recruitment), falls again within 60 s of PEEP 5 | +2.0 / 0.0 | — | MIS-SPECIFIED ([audit row 111](../../docs/validation/target-audit/30-target-audit.md#row-111)) | re-specify on shunt/PaO2: venous admixture −15–30 % (or SpO2 +1.5–3 from 95 % at FiO2 0.6) by 5–15 min of PEEP 15; SpO2 falls back within 5 min of PEEP 5; keep CO falls | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
 | FiO2 0.4: SpO2 rises ≥ 2 | SpO2 98 → 98, SaO2 98.7 → 99.1 | — | MIS-SPECIFIED ([audit row 112](../../docs/validation/target-audit/30-target-audit.md#row-112)) | drop the SpO2 band at FiO2 0.4 (keep the passing shunt/PCWP check), or assert PaO2/FiO2 +30–50 % at ≥ 10 min in a profile with P/F < 200 | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
 | room air (FiO2 0.21): SpO2 rises ≥ 2 | SpO2 94.0 → 95.0, SaO2 94.9 → 95.5 | — | MIS-SPECIFIED ([audit row 113](../../docs/validation/target-audit/30-target-audit.md#row-113)) | for shunt 0.15 → 0.10 on air: SaO2 +1–2 points; or re-base on a sicker profile (shunt ≥ 0.20) and assert P/F +30–50 % at ≥ 10 min | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) |
@@ -192,7 +205,7 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 | [`fx1-frame-port.test.ts`](../../packages/ventilator/test/fx1-frame-port.test.ts) | 0 | 0 |
 | [`link-core.test.ts`](../../packages/ventilator/test/link-core.test.ts) | 0 | 0 |
 | [`link-parity.test.ts`](../../packages/ventilator/test/link-parity.test.ts) | 1 | 0 |
-| [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) | 3 | 0 |
+| [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) | 4 | 0 |
 | [`link-r36.test.ts`](../../packages/ventilator/test/link-r36.test.ts) | 0 | 0 |
 | [`link-refused-probe.test.ts`](../../packages/ventilator/test/link-refused-probe.test.ts) | 0 | 0 |
 | [`link-restore.test.ts`](../../packages/ventilator/test/link-restore.test.ts) | 0 | 0 |
@@ -203,6 +216,7 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 | [`pleural.test.ts`](../../packages/ventilator/test/pleural.test.ts) | 1 | 0 |
 | [`ports.test.ts`](../../packages/ventilator/test/ports.test.ts) | 0 | 0 |
 | [`reference.test.ts`](../../packages/ventilator/test/reference.test.ts) | 0 | 0 |
+| [`relay-port.test.ts`](../../packages/ventilator/test/relay-port.test.ts) | 0 | 0 |
 | [`vc-flow-parity.test.ts`](../../packages/ventilator/test/vc-flow-parity.test.ts) | 0 | 0 |
 | [`vent-basics.test.ts`](../../packages/ventilator/test/vent-basics.test.ts) | 0 | 0 |
 | [`vent-corrections.test.ts`](../../packages/ventilator/test/vent-corrections.test.ts) | 0 | 0 |

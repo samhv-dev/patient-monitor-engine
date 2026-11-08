@@ -17,9 +17,16 @@ export type ControlMsg = Extract<ToWorker, { type: 'resize' | 'timeScale' | 'pau
  *  worker one module per request and can exceed it (278–1875 ms on an idle Mac, more on a loaded runner). */
 export const READY_TIMEOUT_MS = 2000;
 const HIDDEN_PUMP_MS = 1000;
-/** A worker silent this long with requests waiting is dead (its frames post every ≤ 250 ms) [ENG]. */
+/**
+ * A worker silent this long with requests waiting is SLOW (warned: `pme-monitor-slow`). It posts every ≤ 250 ms — its
+ * frames, and from inside a long run its progress (MonitorCore.onProgress) — measured on a Mac (gaps between its
+ * messages, FX-11a): p99.9 270 ms idle, 267 ms with 16 CPU-bound processes, 436 ms with those and the browser at
+ * background QoS (Chromium; WebKit ≤ 269 ms): 3 s is 7× the longest gap measured. It is DEAD when, past this, a probe
+ * worker started at the warning has answered — the machine runs workers and this one makes no progress; a starved
+ * machine starves the probe too, and the monitor waits (FX-11a) [ENG: display].
+ */
 export const WORKER_SILENT_MS = 3000;
-/** …unless the page caught up a hidden stretch this recently (one catch-up can run several seconds) [ENG]. */
+/** …unless the page caught up a hidden stretch this recently (one catch-up can run several seconds) [ENG: display]. */
 const CATCHUP_GRACE_MS = 30_000;
 const WATCH_MS = 500;
 
@@ -29,6 +36,8 @@ export interface Host {
   /** The main-thread core, for a viewer monitor's synchronous clock (absent on the worker path). */
   readonly core?: MonitorCore;
   command(cmd: Command): Promise<DispatchResult>;
+  /** R15: several commands in one engine task, in order (a stage group's commands land on its one tick). */
+  commands(cmds: Command[]): Promise<DispatchResult[]>;
   control(msg: ControlMsg): void;
   /** Engine snapshot. */
   snapshot(): Promise<PatientSnapshot>;
@@ -77,6 +86,7 @@ function mainHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, onEv
     core,
     path: Promise.resolve('main'),
     command: (cmd) => Promise.resolve(core.command(cmd)),
+    commands: (cmds) => Promise.resolve(cmds.map((c) => core.command(c))),
     snapshot: () => Promise.resolve(core.engine.snapshot()),
     restore: async (s) => core.restore(s), // The lanes restart with the engine
     control: (m) => {
@@ -105,7 +115,7 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
   // ONE table of outstanding requests, each with its resolve AND reject. A terminal failure (the worker crashed after
   // ready, went silent, or the monitor was destroyed) rejects every one of them once and every later call at once — a
   // bookmark, a command or a capture cannot wait forever, nor block the host's command chain.
-  const requests = new Map<number, { resolve: (v: never) => void; reject: (e: Error) => void; command?: boolean }>();
+  const requests = new Map<number, { resolve: (v: never) => void; reject: (e: Error) => void; refused?: () => unknown }>();
   let failure: Error | null = null;
   // A COMMAND waiting at destroy (or sent after it) is refused like any refusal, not rejected — a fire-and-
   // forget dispatch (a remounting page, the ventilator link, mount's ECG-filter command) must not become an unhandled
@@ -125,6 +135,44 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
   let lastCatchUp = -Infinity;
   let watch: ReturnType<typeof setInterval> | null = null;
   let lastWatch = 0;
+  // FX-11a: the warning and its probe — a fresh worker's answer says the machine runs workers; this one's silence after
+  // that is its own (no progress), not the machine's load
+  let warnedAt: number | null = null;
+  let probe: { w: Worker | null; answeredAt: number | null } | null = null;
+  const stopProbe = () => {
+    probe?.w?.terminate();
+    probe = null;
+  };
+  const startProbe = () => {
+    probe = { w: null, answeredAt: null };
+    const p = probe;
+    try {
+      const url = URL.createObjectURL(new Blob(['onmessage=()=>postMessage(0)'], { type: 'text/javascript' }));
+      p.w = new Worker(url);
+      URL.revokeObjectURL(url);
+      p.w.onmessage = () => {
+        p.answeredAt = performance.now();
+        if (warnedAt !== null) dead(); // Still silent when the machine has run a fresh worker: no need to wait a watch tick
+      };
+      p.w.postMessage(0);
+    } catch {
+      p.answeredAt = performance.now(); // No probe possible (a CSP): judged on this worker's silence alone, as before
+    }
+    if (p.answeredAt !== null) dead();
+  };
+  /** The verdict: this worker is dead (FX-11a: silent past the threshold while a fresh worker answers). */
+  function dead(): void {
+    fail(new Error("the monitor's worker stopped responding"));
+    worker.terminate();
+  }
+  /** The worker spoke: a warning raised is over. */
+  const heard = () => {
+    lastHeard = performance.now();
+    if (warnedAt === null) return;
+    warnedAt = null;
+    stopProbe();
+    canvas.dispatchEvent(new CustomEvent('pme-monitor-recovered', { bubbles: true }));
+  };
   const post = (m: ToWorker, transfer: Transferable[] = []) => {
     if (m.type === 'catchUp') lastCatchUp = performance.now();
     if (!failure) worker.postMessage(m, transfer);
@@ -132,6 +180,7 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
   const stopWatch = () => {
     if (watch !== null) clearInterval(watch);
     watch = null;
+    stopProbe();
   };
   const fail = (err: Error, report = true) => {
     if (failure) return;
@@ -156,16 +205,24 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
     if (requests.size === 0) return stopWatch();
     if (late) return void (lastHeard = Math.max(lastHeard, now - WATCH_MS));
     if (document.visibilityState !== 'visible' || now - lastCatchUp < CATCHUP_GRACE_MS) return; // a long catch-up runs silently
-    if (now - lastHeard > WORKER_SILENT_MS) {
-      fail(new Error("the monitor's worker stopped responding"));
-      worker.terminate();
+    if (now - lastHeard <= WORKER_SILENT_MS) return;
+    if (warnedAt === null) {
+      // Warn first (FX-11a): slow is not dead
+      warnedAt = now;
+      canvas.dispatchEvent(new CustomEvent('pme-monitor-slow', { bubbles: true, detail: { silentMs: Math.round(now - lastHeard) } }));
+      startProbe();
+      return;
     }
+    // Dead: silent past the threshold — no frame, no answer, no progress from a long run — while the machine runs a
+    // fresh worker (the probe answered). A starved machine starves the probe too, and the monitor waits.
+    if ((probe?.answeredAt ?? null) !== null) dead();
   };
-  const request = <T>(make: (id: number) => ToWorker, command = false): Promise<T> => {
+  /** `refused`: a command request's answer when the monitor is destroyed before it (a refusal, not a rejection). */
+  const request = <T>(make: (id: number) => ToWorker, refused?: () => T): Promise<T> => {
     if (failure) return Promise.reject(failure);
     return new Promise<T>((resolve, reject) => {
       const id = ++reqId;
-      requests.set(id, { resolve: resolve as (v: never) => void, reject, command });
+      requests.set(id, { resolve: resolve as (v: never) => void, reject, ...(refused ? { refused } : {}) });
       if (watch === null) {
         lastWatch = performance.now();
         watch = setInterval(check, WATCH_MS);
@@ -176,7 +233,7 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
   const path = new Promise<RenderPath>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('worker did not become ready')), READY_TIMEOUT_MS);
     worker.onmessage = (ev: MessageEvent<FromWorker>) => {
-      lastHeard = performance.now();
+      heard();
       const m = ev.data;
       if (m.type === 'ready') {
         clearTimeout(timer);
@@ -184,8 +241,16 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
         pumping = m.path === 'worker-pump';
         resolve(m.path);
       } else if (m.type === 'framed') inFlight = false;
-      else if (m.type === 'events') onEvents(m.anchor, m.events);
+      else if (m.type === 'events') {
+        // read, then acknowledged: the worker sends the next batch only now, so a slow page holds one batch, not a queue
+        try {
+          onEvents(m.anchor, m.events);
+        } finally {
+          post({ type: 'eventsAck' });
+        }
+      } else if (m.type === 'progress') return; // FX-11a: heard (above) — the worker is working
       else if (m.type === 'result') settle(m.reqId, (r) => r.resolve(m.result as never));
+      else if (m.type === 'results') settle(m.reqId, (r) => r.resolve(m.results as never));
       else if (m.type === 'snapshot') settle(m.reqId, (r) => r.resolve(m.snapshot as never));
       else if (m.type === 'restored') settle(m.reqId, (r) => (m.error === undefined ? r.resolve(undefined as never) : r.reject(new Error(m.error))));
       else if (m.type === 'advanced') settle(m.reqId, (r) => r.resolve({ tick: m.tick, simT: m.simT } as never));
@@ -230,7 +295,11 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
   return {
     canvas,
     path,
-    command: (cmd) => (destroyed ? Promise.resolve(refusedDestroyed()) : request<DispatchResult>((reqId) => ({ type: 'command', reqId, cmd }), true)),
+    command: (cmd) => (destroyed ? Promise.resolve(refusedDestroyed()) : request<DispatchResult>((reqId) => ({ type: 'command', reqId, cmd }), refusedDestroyed)),
+    commands: (cmds) => {
+      const refused = () => cmds.map(() => refusedDestroyed());
+      return destroyed ? Promise.resolve(refused()) : request<DispatchResult[]>((reqId) => ({ type: 'commands', reqId, cmds }), refused);
+    },
     snapshot: () => request<PatientSnapshot>((reqId) => ({ type: 'snapshot', reqId })),
     restore: (snapshot) => request<void>((reqId) => ({ type: 'restore', reqId, snapshot })),
     control: (m) => post(m),
@@ -239,9 +308,9 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
     destroy: () => {
       destroyed = true;
       for (const [id, r] of requests) {
-        if (!r.command) continue;
+        if (!r.refused) continue;
         requests.delete(id);
-        r.resolve(refusedDestroyed() as never);
+        r.resolve(r.refused() as never);
       }
       fail(new Error('the monitor was destroyed'), false);
       cancelAnimationFrame(raf);

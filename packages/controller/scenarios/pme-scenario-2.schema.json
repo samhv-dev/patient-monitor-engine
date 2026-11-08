@@ -17,6 +17,7 @@
     "story": { "type": "string" },
     "takeHome": { "type": "array", "maxItems": 4, "items": { "type": "string", "minLength": 1 } },
     "durationMin": { "type": "number", "exclusiveMinimum": 0 },
+    "debriefHints": { "$ref": "#/definitions/debriefHints" },
     "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
     "mode": { "enum": ["manual", "modeled"] },
     "patient": { "$ref": "pme-scenario-1.schema.json#/definitions/patient" },
@@ -34,11 +35,28 @@
         "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
         "estimatedMinutes": { "type": "number", "exclusiveMinimum": 0 },
         "durationS": { "type": "number", "exclusiveMinimum": 0, "maximum": 600 },
-        "lang": { "enum": ["en", "fa"] }
+        "lang": { "enum": ["en", "fa"] },
+        "textFa": { "type": "string", "minLength": 1, "maxLength": 4000, "description": "Optional (Debrief 2 D13b): as on /1, the owner-read Persian of an English text, sent when the host is set to Persian." }
       }
     }
   },
   "definitions": {
+    "debriefHints": {
+      "type": "object", "minProperties": 1, "additionalProperties": false,
+      "description": "Optional (Debrief 2 D8): /1's debriefHints, with each opener anchored on the string anchor forms the report reads: start, pulseLoss, rosc, phase:<id> (its first entry), action:<id> (its graded taking); the phase or action must be this card's.",
+      "properties": {
+        "show": { "type": "array", "minItems": 1, "maxItems": 4, "items": { "type": "string", "minLength": 1 } },
+        "openers": {
+          "type": "array", "minItems": 1, "maxItems": 4,
+          "items": { "type": "object", "required": ["at", "text"], "additionalProperties": false, "properties": { "at": { "type": "string", "pattern": "^(start|pulseLoss|rosc|(phase|action):[A-Za-z][A-Za-z0-9_.-]{0,63})$" }, "text": { "type": "string", "minLength": 1 } } }
+        },
+        "handoutQuestions": {
+          "type": "array", "minItems": 1, "maxItems": 3,
+          "description": "Optional (Debrief 2 D16): /1's handoutQuestions, each anchored as an opener is (start, pulseLoss, rosc, phase:<id>, action:<id> of this card).",
+          "items": { "type": "object", "required": ["at", "text"], "additionalProperties": false, "properties": { "at": { "type": "string", "pattern": "^(start|pulseLoss|rosc|(phase|action):[A-Za-z][A-Za-z0-9_.-]{0,63})$" }, "text": { "type": "string", "minLength": 1, "maxLength": 92, "description": "At most 92 characters, about 90: one printed line of the A4 handout after its mm:ss label (measured 6 November 2026 in print at the 182 mm content width, Inter Print, Chromium and WebKit: the line held 92 to 100 characters of the drafted questions; the shortest is the limit). A wrapped question pushes the MH handout over one page (measured 276.4 mm of 267)." } } }
+        }
+      }
+    },
     "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$" },
     "ids": { "type": "array", "items": { "$ref": "#/definitions/id" }, "uniqueItems": true },
     "op": { "enum": ["<", "<=", ">", ">=", "==", "!="] },

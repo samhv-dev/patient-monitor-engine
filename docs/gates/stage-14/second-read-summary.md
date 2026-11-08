@@ -40,5 +40,5 @@ The other m block on main that had no decision, 5a5bb41f0680 (apps/demo/src/app/
 - The two replacement blocks b2cdec2f1dbd and d5335acc79f6 now have decisions (see the table above).
 - Three bare Q-numbers that the first pass had left as ok are now fixed. Each one is a plan open question, not a brief or parameter-table locator, so it is removed:
   - c62128cdd008: "brief Q12" is question 12 of the clinical-app plan, decided by orchestrator ruling 4.
-  - c4d180596b73: "brief Q6" is question 6 of the clinical-app plan, on the dose presets. Its answer (drafts from the drug library's ranges, one table for Ali's review) stays.
+  - c4d180596b73: "brief Q6" is question 6 of the clinical-app plan, on the dose presets. Its answer (drafts from the drug library's ranges, one table for the owner's review) stays.
   - ec37bcab018f: "Q10" is question 10 of the drug-layer plan, on the [ENG] probabilities. The decision's "calibrated" also misstated "R44 calibration": the value is queued for the calibration pass. It now reads "[ENG, for the calibration pass]".

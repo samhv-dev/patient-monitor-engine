@@ -7,8 +7,8 @@
 > and the DV amendment applied; OQ2 (A22 lands; "CPR flow vs compression quality" to the calibration queue, W22) and OQ3
 > (A21 is PEA-only) ruled and applied; V.1's gate-note requests folded in (A28, A29, the A22 addendum, one calibration
 > item). Base `origin/main` `fea51fa` (code-identical to `0fd5397`: FU-3 + FU-4 `e81e53f` +
-> FU-5 `16cdf79`; docs-only since; V.1 not yet merged). Part A = Tasks A0–A29 (A5 moved to A19; A25 GATED on Ali's W18; A26/A27
-> UNPROTOTYPED), Part B = Tasks B0–B5 (after FU-7; B4 after Ali; B2, B3, B5 UNPROTOTYPED), Task G. Two PRs (ruling 8).
+> FU-5 `16cdf79`; docs-only since; V.1 not yet merged). Part A = Tasks A0–A29 (A5 moved to A19; A25 GATED on the owner's W18; A26/A27
+> UNPROTOTYPED), Part B = Tasks B0–B5 (after FU-7; B4 after samhv-dev; B2, B3, B5 UNPROTOTYPED), Task G. Two PRs (ruling 8).
 > Every prototyped Part A task was run in `<scratchpad>/fu-8/wt` and its blocks generated mechanically from that tree;
 > every intermediate commit's tree was rebuilt from THIS document (`--upto`) and tested (Self-review). Mechanical check:
 > Part A 146 find blocks (1 CHAINED on an earlier FU-8 block) + 24 creates; Part A + B 174 + 27; 0 problems; Part A
@@ -18,10 +18,10 @@
 **Goal:** collect every loose end that no stage owns and turn it into one executable plan, so nothing is lost. The
 sources are (1) the FU-5 follow-up list F1–F6 of the G-FU4 ruling (2026-09-29 14:10); (2) the G-FU5 rulings and
 FU-5's own Requests (A10-E5, R-FU5-9); (3) the Stage 9 R50 review and the Stage 9 plan's Requests R-S9-1/2/4/6/8;
-(4) the review-pack writer's defect list ("Ali's review pack DELIVERED", 2026-09-28 22:20); (5) the calibration-queue
+(4) the review-pack writer's defect list ("the owner's review pack DELIVERED", 2026-09-28 22:20); (5) the calibration-queue
 entries that are MECHANISM defects rather than constants; (6) the CM comorbidity audit (research/19) and the DV device
 audit (research/20) items the orchestrator routed here; (7) the R50 review's findings F1–F12. Every item is either a task here, handed to a named in-flight
-plan (with the reason), waiting on Ali (with the model's numbers), or left for the R44 calibration pass. The item
+plan (with the reason), waiting on samhv-dev (with the model's numbers), or left for the R44 calibration pass. The item
 inventory below is the index; nothing in it is silently dropped.
 
 **Architecture:** no new module crosses a stage boundary (the one new module, `l2/body-size.ts`, is a pure shared size
@@ -40,8 +40,8 @@ pnpm 9.15.9 via `npx`. No new dependencies.
 
 **Spec:** `../research/00-orchestrator-rulings.md` (workspace, outside this repo): **G-FU4 (2026-09-29 14:10)** (the
 FU-5 follow-up list F1–F6), **G-FU5 (2026-09-29 01:50)** and the **FU-5 R50 review** rulings, **Stage 9 R50 review
-(2026-09-29 14:40)** rulings 1–6, **"Ali's review pack DELIVERED" (2026-09-28 22:20)**, the **calibration queue
-headline** (43 rows, after G8a), **R44** (Ali's calibration pass is non-blocking; executors do not tune), **R45**
+(2026-09-29 14:40)** rulings 1–6, **"the owner's review pack DELIVERED" (2026-09-28 22:20)**, the **calibration queue
+headline** (43 rows, after G8a), **R44** (the owner's calibration pass is non-blocking; executors do not tune), **R45**
 (mechanisms, never band changes), **R51** (+ addenda; canonical names, the engine chain order, only 7g touches PK),
 **R56** (glossary labels), **CI amendments 1–4**. Plans read for scope (so nothing here duplicates them): FU-5
 (`docs/plans/fu-5-monitor-fidelity.md`, tracked), FU-6 (`fu-6-respiratory-integration.md`, untracked), FU-7
@@ -57,7 +57,7 @@ headline** (43 rows, after G8a), **R44** (Ali's calibration pass is non-blocking
 - **R45:** mechanisms, never band changes. No existing acceptance band is widened, removed or re-worded to pass. A band a
   mechanism cannot reach stays (or becomes) `it.fails` with the measured number in its title. A pre-declared `it.fails`
   that a task flips to `it` is named in that task, with its before/after numbers. Constants that are not sourced are
-  `[ENG]` with the fit target named in the code comment; no executor tunes a constant to pass (R44: that is Ali's pass).
+  `[ENG]` with the fit target named in the code comment; no executor tunes a constant to pass (R44: that is the owner's pass).
 - **R51:** canonical names (R51 addendum 14); the engine chain order (validate/apply device → pk (7g) → neuro (7f) →
   organs (7d) → blood (7c) → endo (7e) → Stage 3 → hemo) is not changed; **only 7g's modules (`l2/pk/**`) touch PK** —
   every Part B drug-library item is written inside `l2/pk/**` as 7g's owner and reads nothing new outside the bus.
@@ -68,7 +68,7 @@ headline** (43 rows, after G8a), **R44** (Ali's calibration pass is non-blocking
   `projects/patient-monitor-engine/scratch/wt-fu-8` (R25: never the shared checkout). Push after every task's commit
   (`git push -u origin fu-8-followups` the first time, `git push` after). Never push to `main`; never merge (the Gate
   task opens the PR and stops); the PR is never self-merged.
-- **Part A / Part B:** execute Part A (Tasks A0–A29, in order; A5 is a pointer to A19; A25 only with Ali's W18 answer) now. Part B (Tasks B0–B4) starts only when FU-7 has merged to main:
+- **Part A / Part B:** execute Part A (Tasks A0–A29, in order; A5 is a pointer to A19; A25 only with the owner's W18 answer) now. Part B (Tasks B0–B4) starts only when FU-7 has merged to main:
   Task B0 is `git fetch origin && git merge origin/main` and re-verifies every Part B find block on the merged tree
   (FU-7 rewrites `l2/pk/**`; a block that no longer matches is re-anchored by its quoted comment, never re-typed).
   If FU-7 has not merged when Part A is done, the executor runs the Gate for Part A alone (PR title suffix "(Part A)")
@@ -114,7 +114,7 @@ headline** (43 rows, after G8a), **R44** (Ali's calibration pass is non-blocking
 ## Item inventory (every loose end, and what happens to it)
 
 Decision codes: **task** (a task in this plan: Part A or Part B), **handed** (to a named in-flight plan, reason given),
-**Ali** (waiting on Ali — his decision, the model's numbers given), **cal** (left for the R44 calibration pass: a
+**samhv-dev** (waiting on samhv-dev — his decision, the model's numbers given), **cal** (left for the R44 calibration pass: a
 constant, not a mechanism), **closed** (already done on main; the evidence named), **recorded** (kept as a record, no
 action). Numbers in the "measured" column are this writer's measurements on `0fd5397` (seed 7) unless stated.
 
@@ -122,9 +122,9 @@ action). Numbers in the "measured" column are this writer's measurements on `0fd
 
 | ID | Item | Source | Measured on `0fd5397` | Decision |
 |---|---|---|---|---|
-| I-01 | F1: in Ali's tamponade PEA the bar keeps a yellow `**ABPm 68<70` while the mean is 19; no red pressure alarm | G-FU4 F1 | `audit:monitor A2-ali-b7`: `ART_M_LOW` raised at 687 s as `**ABPm 66<70`; MAP falls to 19 and the entry's text never changes (`stepAlarms` never rewrites an active entry's `text`). No red pressure alarm: correct per the IntelliVue IFU — the only red pressure alarm is `***<Press> DISCONNECT` (non-pulsatile AND mean < 10 mmHg, [S2] p. 44); at MAP 19 the line shows `ABP NON-PULSATILE` (813 s) | **task A1** (live value in the text; the red half is vendor-correct, no change) |
+| I-01 | F1: in the owner's tamponade PEA the bar keeps a yellow `**ABPm 68<70` while the mean is 19; no red pressure alarm | G-FU4 F1 | `audit:monitor A2-owner-b7`: `ART_M_LOW` raised at 687 s as `**ABPm 66<70`; MAP falls to 19 and the entry's text never changes (`stepAlarms` never rewrites an active entry's `text`). No red pressure alarm: correct per the IntelliVue IFU — the only red pressure alarm is `***<Press> DISCONNECT` (non-pulsatile AND mean < 10 mmHg, [S2] p. 44); at MAP 19 the line shows `ABP NON-PULSATILE` (813 s) | **task A1** (live value in the text; the red half is vendor-correct, no change) |
 | I-02 | F2: a filled red `***APNEA` after ROSC in the class IV rig, ventilated, EtCO2 15, lamp dark | G-FU4 F2; `docs/gates/fu-4/3b-classIV-rosc.png` | engine: `apnoea-co2` raised in the arrest (EtCO2 → 0), LATCHED from the first CPR breaths (820 s, awRR 12) and still latched, unacknowledged, at ROSC and 300 s after it — the latched presentation, not a live apnoea. The screenshot predates FU-5's latched style (D2); on `0fd5397` the FU-4 page draws it black with red text, `data-latched="true"` | **closed** (D2); the Gate re-takes 3b |
-| I-03 | F3: EXTREME BRADY raise/clear cycles of 3.1–3.6 s in the decaying PEA (Ali's case 948/989/1000 s; the 3 L bleed 956 s) | G-FU4 F3; E-FU4-20 (`fidelity-lowflow` 2 × `it.fails`) | cause found: the QRS detector fires TWICE on every agonal complex (second hump starts 2–4 ms after the first closes, 0.19–0.24 s after R); `observeQrs` skips only doubles < 0.2 s, so the agonal ASYSTOLE hold sees R–R 0.2 s, ASYSTOLE drops to latched, the HR reads 16–25 and EXTREME BRADY raises until the 4 s gap re-lives ASYSTOLE | **task A2** (detector: same-complex merge) — flips both `it.fails` |
+| I-03 | F3: EXTREME BRADY raise/clear cycles of 3.1–3.6 s in the decaying PEA (the owner's case 948/989/1000 s; the 3 L bleed 956 s) | G-FU4 F3; E-FU4-20 (`fidelity-lowflow` 2 × `it.fails`) | cause found: the QRS detector fires TWICE on every agonal complex (second hump starts 2–4 ms after the first closes, 0.19–0.24 s after R); `observeQrs` skips only doubles < 0.2 s, so the agonal ASYSTOLE hold sees R–R 0.2 s, ASYSTOLE drops to latched, the HR reads 16–25 and EXTREME BRADY raises until the 4 s gap re-lives ASYSTOLE | **task A2** (detector: same-complex merge) — flips both `it.fails` |
 | I-04 | F3 (second half): SpO2 LOW PERF 1.0 s cycle at 601 s in the 3 L bleed | E-FU4-20 (`fidelity-lowflow` `it.fails`) | one PI dip to 0.30 at 596 s started a PENDING INOP that the clear hysteresis (0.3–0.4) held for the 5 s delay: raised 601 s, cleared 602 s | **task A2** (the on-delay rule; flips the `it.fails`) |
 | I-05 | F4: `fu5-latched` e2e — no induction APNEA because the apnoea now starts 4 s later and the script's BVM at +180 s comes first | G-FU4 F4; E-FU4-20 (`test.fail`) | reproduced (`test.fail` holds on `0fd5397`) | **task A4** |
 | I-06 | F5: PI spike when motion ends | G-FU4 F5; G-FU5 ruling 2 (FU-5 open question 22, sent to the calibration queue) | `audit:monitor A7-probe`: motion 120–180 s; at 181–185 s PI 8.21/8.21/8.18/8.23 and PR 81 (rest PI 1.84, PR 75). Not a constant: the motion-artefact "beats" stay in the 5 s PI/PR average, and the restarted detector's first foot lies before the restart | **task A3** (mechanism, so taken out of the calibration queue) |
@@ -136,10 +136,10 @@ action). Numbers in the "measured" column are this writer's measurements on `0fd
 
 | ID | Item | Source | Measured | Decision |
 |---|---|---|---|---|
-| I-10 | A10-E5: computed-but-untiled numerics `imco2` (FiCO₂/imCO₂), `mac`, `etAa`, `qtc`, and the agent tile | FU-5 R-FU5-6/R-FU5-7; Stage 9 ruling 1 (R-S9-8) | `mac`/`etAa` published by 7f at 1 Hz with no tile (the AGENTS colour key exists); `imco2` drawn only by the legacy pre-skin tiles | **task A7** (AGENTS module tile + imCO2/FiCO2 extra); a `qtc` tile → **Ali** (a layout choice) |
+| I-10 | A10-E5: computed-but-untiled numerics `imco2` (FiCO₂/imCO₂), `mac`, `etAa`, `qtc`, and the agent tile | FU-5 R-FU5-6/R-FU5-7; Stage 9 ruling 1 (R-S9-8) | `mac`/`etAa` published by 7f at 1 Hz with no tile (the AGENTS colour key exists); `imco2` drawn only by the legacy pre-skin tiles | **task A7** (AGENTS module tile + imCO2/FiCO2 extra); a `qtc` tile → **samhv-dev** (a layout choice) |
 | I-11 | "PR" as the HR-alarm label when the pulse is the HR source (a run-time choice, not a static alias) | R-S9-8 (Stage 9 ruling 1) | `conditions.ts` hard-codes `label: 'Pulse', upper: 'PR'` for every IEC-text skin | **handed to Stage 9** — its E-S9-4 adds the per-skin `alarms.wording` table this needs (one more key); FU-8 does not add a second wording mechanism to the same schema |
 | I-12 | R-FU5-9: PI after propofol should RISE (cutaneous vasodilation); the FU-5 `it.fails` "PI after propofol 1.49 → 1.17" and the ventilated rest PI 1.49 vs 1.80 | FU-5 R-FU5-9; Stage 9 declined it (ruling 1) | reproduced: `fidelity-lowflow` 1.49 → 1.17 (−21 %) at 180–240 s; FU-4 did not publish a skin-vessel tone (`grep skinTone` on main: none) | **task B3** (Part B: `circ/model.ts` is FU-6's and FU-7's file too; UNPROTOTYPED, R45 procedure) |
-| I-13 | HR numeric alternates "0" (valid) and "-?-" every 3–7 s under a standing ASYSTOLE with agonal beats | new (found while measuring I-03) | Ali's case 936–1100 s; MANUAL agonal 270 s: 125 invalid samples / 56 flips on main, 34 / 16 after Tasks A2 + A6 | **task A25**, GATED on **Ali**'s W18 (orchestrator Q5: a Part A task that executes with his answer) |
+| I-13 | HR numeric alternates "0" (valid) and "-?-" every 3–7 s under a standing ASYSTOLE with agonal beats | new (found while measuring I-03) | the owner's case 936–1100 s; MANUAL agonal 270 s: 125 invalid samples / 56 flips on main, 34 / 16 after Tasks A2 + A6 | **task A25**, GATED on **samhv-dev**'s W18 (orchestrator Q5: a Part A task that executes with his answer) |
 
 ### C. Stage 9's requests (R50-fixed plan on `origin/review/stage-9-plan` a01263b)
 
@@ -147,7 +147,7 @@ action). Numbers in the "measured" column are this writer's measurements on `0fd
 |---|---|---|---|
 | I-14 | R-S9-1(a): the sweep restarts when a view change resizes the monitor | Stage 9 R-S9-1; ruling 3 accepted it for v1.0 | **task A17** (backfill one lane-width) |
 | I-15 | R-S9-1(b): an `aria-label` hook on the monitor canvas and a "read vitals" summary string | Stage 9 R-S9-1 | **handed to Stage 9** — the app already labels its host element and holds the glossary the summary must use (R56); the renderer's `measurement` events carry every value |
-| I-16 | R-S9-1(c): the saadat-like idle message bar (#E0E0E0 slab, the brightest object on a quiet screen) and the projector-light NIBP grey (3.45:1) | Stage 9 R-S9-1 ("skin data, Ali's call") | **Ali** (the saadat bar is vendor fidelity; see "Waiting on Ali"); the projector-light NIBP grey (3.45:1 → ≥ #6B7482 proposed) is a theme choice Stage 9 also called "Ali's call" |
+| I-16 | R-S9-1(c): the saadat-like idle message bar (#E0E0E0 slab, the brightest object on a quiet screen) and the projector-light NIBP grey (3.45:1) | Stage 9 R-S9-1 ("skin data, the owner's call") | **samhv-dev** (the saadat bar is vendor fidelity; see "Waiting on samhv-dev"); the projector-light NIBP grey (3.45:1 → ≥ #6B7482 proposed) is a theme choice Stage 9 also called "the owner's call" |
 | I-17 | R-S9-2(a): `describe`/`describeTransition` print engine ids (`etco2 ≥ 20 → rosc`) | Stage 9 R-S9-2 | **task A15** |
 | I-18 | R-S9-2(b): `BUILTIN_SCENARIOS` registers 5 of the 11 scenario documents | Stage 9 R-S9-2 | **task A15** |
 | I-19 | R-S9-2(c): the 6a drawer disables Pin/Release outside MODELED with the stale tooltip "Pin and release need MODELED mode (Stage 7)"; `vocabulary.ts:18` says the same | Stage 9 R-S9-2 (R50 review F9) | **task A15** (the wording; the MODELED gating stays 6a's choice) |
@@ -157,21 +157,21 @@ action). Numbers in the "measured" column are this writer's measurements on `0fd
 | I-23 | R-S9-5: the user guide follows the app's views | Stage 9 R-S9-5 | **handed to 8b** (release docs) |
 | I-24 | R-S9-7: glossary entries for the FU-4/V.1/FU-6/FU-7 truth leaves | Stage 9 R-S9-7 | **handed to Stage 9** (its own Task 0 does it; `GLOSSARY_S9` is Stage 9's file) |
 
-### D. The review-pack writer's defect list ("Ali's review pack DELIVERED", 2026-09-28 22:20)
+### D. The review-pack writer's defect list ("the owner's review pack DELIVERED", 2026-09-28 22:20)
 
 | ID | Item | Measured | Decision |
 |---|---|---|---|
 | I-25 | Insulin infusion reference possibly units/h vs units/kg/h (pack DR-44/DP-44) | row `insulin`: `gammaPk(10, false, 1800, 14400, 0.1 / 60)` with `perKg` false: 0.1 units/kg/h (7 units/h at 70 kg) = 70 reference rates → glucose −118 mg/dL (the E_max) and K 4.18 → 2.88 in 60 min | **task B1** |
 | I-26 | Every dose behaves as IV; the route is ignored | `PkRoute` has 8 values; `validatePkCommand` never reads `route` (116 `iv` and one `neb` dose in the repo; nebulised salbutamol 10 mg = 40 IV reference doses) | **task B1** (route explicit; non-IV routes the PK cannot model are refused or flagged — no new absorption model) |
-| I-27 | No per-drug maximum anywhere | the review pack's dosing-preset table (DP-01…DP-64) proposes caps; the engine has none | **task B1** (a documented maximum-dose WARNING field, no silent clamp); the VALUES are Ali's (DP table) |
+| I-27 | No per-drug maximum anywhere | the review pack's dosing-preset table (DP-01…DP-64) proposes caps; the engine has none | **task B1** (a documented maximum-dose WARNING field, no silent clamp); the VALUES are the owner's (DP table) |
 | I-28 | An infusion of a curve-based drug without an infusion reference is accepted and has no effect (21 of 26 curve rows) | pack "Dosing presets" preamble; e.g. an amiodarone infusion is accepted (`infTarget` 0) and does nothing | **task B1** (refused with a reason, not silently ignored) |
 | I-29 | The amiodarone row claims AF → sinus conversion; no rhythm hook exists (DR-36) | `hooks.ts` converts for adenosine, LAST and magnesium only | **handed to FU-7** Task 11 (wires the amiodarone/procainamide/lidocaine conversion hazards; Task 11 also corrects the row's `onset` text so it claims only what the hook does — `λ_amio_vf = 0`) |
 | I-30 | FU-7 says 19 instant-onset drugs; its own analysis gives 25 | plan text | **handed to FU-7** (a plan-text fix before its executor starts; no code) |
-| I-31 | Monomorphic VT 170/min keeps a pulse with a higher pressure (142/98) than sinus (124/79) | MODELED 40 y, 90 s after the switch: sinus MAP 96 (123/81), SV 81, CO 5.9; VT 170 MAP 97 (114/87), SV 33, CO 5.4 (−8 %); VT 150 MAP 104, CO 6.5 (+10 %); sinus tachycardia 170 MAP 104, CO 6.3; VT 200 no ejection. MANUAL VT 170: MAP 89 → 44 at 90 s | **cal** + **Ali** (D10) |
+| I-31 | Monomorphic VT 170/min keeps a pulse with a higher pressure (142/98) than sinus (124/79) | MODELED 40 y, 90 s after the switch: sinus MAP 96 (123/81), SV 81, CO 5.9; VT 170 MAP 97 (114/87), SV 33, CO 5.4 (−8 %); VT 150 MAP 104, CO 6.5 (+10 %); sinus tachycardia 170 MAP 104, CO 6.3; VT 200 no ejection. MANUAL VT 170: MAP 89 → 44 at 90 s | **cal** + **samhv-dev** (D10) |
 | I-32 | The agonal rhythm ignores its rate setting | `onAgonal`: R–R = 3 + 4.5·U s whatever the rate — 11.4/min at every `rateBpm` 4…24 (8/min on the pack's strip) | **task A6** |
 | I-33 | The 12-lead printout's HR and axis are unreliable in arrest ("asystole reads HR 120") | `capture12` R peaks = local maxima above 60 % of the strip's maximum: asystole HR 93 / axis 90°, P-wave asystole HR 25, coarse VF 49, fine VF 65, agonal 20 | **task A9** |
 | I-34 | The oliguria flag has no owner (fires too early) | `organs` event `kidney.oliguria` = `uopOver(60 min) < 0.5` on a window that is not yet full: 1.75 L bleed from 60 s → flag at 508 s (the INSTANTANEOUS rate 0.50), off at 600 s (one 10-min bin, 0.83), on again at 1200 s (two bins) | **task A8** (the flag needs one completed 10-min bin; D8) |
-| I-35 | The neonatal profile is broken; no owner | MODELED spontaneous, 600 s (the `fu8-body-size` harness; R50 F7 corrected the first draft's neonate CO 0.15 / SV 1.1): term neonate 3.5 kg MAP 98 (set point 45), SV 2.15 mL, HR 137–142, CO 0.30 L/min (≈ 86 mL/kg/min vs ≈ 200); ventilated neonate HR 199–214; infant 7 kg MAP 97 (set 55), CO 0.58 (≈ 83 mL/kg/min vs ≈ 150); child 20 kg MAP 105 (set 68), CO 1.62 (81 mL/kg/min vs ≈ 150). Cause: `profile.ts` scales every circuit parameter ISOMETRICALLY (×W/70, the tables' §2.2 rule), so a child gets an adult per-kg cardiac output against adult-sized resistances ×70/W — the whole paediatric circulation, not only the neonate | **task A12** (each band rests at its own set point: MAP 64 / 62 / 79; the per-kg output pinned `it.fails` with its number) + **Ali** W12 (the §2.2 scaling rule is a parameter-table decision: allometric, W^0.75) |
+| I-35 | The neonatal profile is broken; no owner | MODELED spontaneous, 600 s (the `fu8-body-size` harness; R50 F7 corrected the first draft's neonate CO 0.15 / SV 1.1): term neonate 3.5 kg MAP 98 (set point 45), SV 2.15 mL, HR 137–142, CO 0.30 L/min (≈ 86 mL/kg/min vs ≈ 200); ventilated neonate HR 199–214; infant 7 kg MAP 97 (set 55), CO 0.58 (≈ 83 mL/kg/min vs ≈ 150); child 20 kg MAP 105 (set 68), CO 1.62 (81 mL/kg/min vs ≈ 150). Cause: `profile.ts` scales every circuit parameter ISOMETRICALLY (×W/70, the tables' §2.2 rule), so a child gets an adult per-kg cardiac output against adult-sized resistances ×70/W — the whole paediatric circulation, not only the neonate | **task A12** (each band rests at its own set point: MAP 64 / 62 / 79; the per-kg output pinned `it.fails` with its number) + **samhv-dev** W12 (the §2.2 scaling rule is a parameter-table decision: allometric, W^0.75) |
 | I-36 | "The library has 58 drugs, not 52" (a count in the docs) | docs text | **handed to 8b** (release docs; `docs/physiology/**` is the orchestrator's) |
 | I-37 | 7g gate questions Q51/57/60 collide with the tables' §9 numbering | docs text | **handed to the orchestrator** (docs renumbering; no code) |
 
@@ -182,10 +182,10 @@ action). Numbers in the "measured" column are this writer's measurements on `0fd
 | I-38 | R → radial upstroke 95–106 vs 145–190 ms; dicrotic notch 258–284 vs 360–518 ms (7a elastance activation T_a, transport delay) | **cal** (constants of a correct mechanism) |
 | I-39 | PPG ↔ ABP shape r 0.4–0.5 vs 0.9 | **cal** (pleth kernel shape parameters) |
 | I-40 | Haemorrhage reflex under-response in the 8a scenarios (class II/III/IV HR 82/107/134) | **closed by FU-4** (class IV HR 184 → 91 before PEA, humoral arm, review pack A6); the 8a rows are re-measured by 8b's validation report |
-| I-41 | Propofol MAP 85 vs 64 (NR-7g-1) | **closed by FU-4** (S1 −23 %; S1b/S6a Ali's Q1) |
-| I-42 | Massive PE scenario EtCO2 38 vs 20–25, PAP 24, SpO2 100 ("the scenario likely sends only the circ condition — check the document") | **closed by FU-4** — t12's `condition pe` reaches 7b through `circ/aliases.ts` (circ + lungCondition); the residual rows are 8b's validation report and A20's factor (Ali) |
+| I-41 | Propofol MAP 85 vs 64 (NR-7g-1) | **closed by FU-4** (S1 −23 %; S1b/S6a the owner's Q1) |
+| I-42 | Massive PE scenario EtCO2 38 vs 20–25, PAP 24, SpO2 100 ("the scenario likely sends only the circ condition — check the document") | **closed by FU-4** — t12's `condition pe` reaches 7b through `circ/aliases.ts` (circ + lungCondition); the residual rows are 8b's validation report and A20's factor (samhv-dev) |
 | I-43 | PR interval 217 ms, MH EtCO2 73.5, Edmark apnoea ≈ 20 % long, tamponade PAWP 22.4, CPR EtCO2 16.3, O1 vs Pulse | **cal** |
-| I-44 | CVP alarm default; `patient.profile` in `pme-scenario/1`; PWDB fetch | **closed by FU-3** (Tasks 8, 10–11); PWDB is Ali's by hand |
+| I-44 | CVP alarm default; `patient.profile` in `pme-scenario/1`; PWDB fetch | **closed by FU-3** (Tasks 8, 10–11); PWDB is the owner's by hand |
 | I-45 | 7c water-balance drift behind the 24 h soak failure (urine 2.68 % vs ±2 %) | **cal** (G-FU4 ruling on item 27) |
 | I-46 | Bezold–Jarisch reflex (not modelled) | **recorded** (G-FU4: withdrawn, not modelled; v1.1) |
 | I-47 | HPV potentiation by acidosis and a mixed-venous PO2 term | **handed to 7k** if its scope takes lung vascular terms, else **cal** (a new lung term, not a defect of an existing one) |
@@ -197,14 +197,14 @@ action). Numbers in the "measured" column are this writer's measurements on `0fd
 |---|---|---|---|
 | I-49 | C3 (P1): fast AF 150/min kills a healthy 40 y heart (kIsch → 0, agonal +15.5 min, asystole +18 min; sinus 150 is fine) — LVEDP is sampled while the ventricle is still contracting on short beats (`circ/model.ts:396` → `coronary.ts:142`) | research/19 §3 C3; orchestrator: Part A, FU-7 needs it first | **task A10** (Part A; `coronary.ts` only; + Q4's demand averaging: kIsch 0.89, the quiet band an `it.fails` as a model limitation) |
 | I-50 | C2 (P1): the ST-depression timer never fires in 3-vessel CAD at HR 110 (needs 45 unbroken s above δ 0.1; resets on any dip; longest run 3 s) (`coronary.ts:180–181`) | research/19 C2 | **task A11** (Part A) |
-| I-51 | C4 (P1): obesity sized twice — circulation BV 8.89 L (70 mL/kg total weight, CO ×1.85) vs blood/gas 6.5 L; the lung `obesity` condition on top of the profile halves the Benumof apnoea time (2.7 → 1.43 min) | research/19 C4 | **task A13** (Part A: ONE continuous body-size rule, `l2/body-size.ts`, Lemmens-indexed and anchored on the default adult — R50 F1, ruling 1; FU-9 inherits it); the lung half → **handed to FU-6** (R4 re-tunes the obese apnoea on the one definition; Ali Q3 decides profile vs condition) |
+| I-51 | C4 (P1): obesity sized twice — circulation BV 8.89 L (70 mL/kg total weight, CO ×1.85) vs blood/gas 6.5 L; the lung `obesity` condition on top of the profile halves the Benumof apnoea time (2.7 → 1.43 min) | research/19 C4 | **task A13** (Part A: ONE continuous body-size rule, `l2/body-size.ts`, Lemmens-indexed and anchored on the default adult — R50 F1, ruling 1; FU-9 inherits it); the lung half → **handed to FU-6** (R4 re-tunes the obese apnoea on the one definition; samhv-dev Q3 decides profile vs condition) |
 | I-52 | C5: profile targets disagree with the reflex set point (untreated HTN MAP +13 vs +20; HFrEF MAP 87 / LVEDP 14 vs 75 / 15–20; 80 y MAP 110.6 vs 90–100) | research/19 C5 | **task A12** (Part A: each age band's targets derive from its set point; the condition deltas and the elderly 140/80 kept, D13) |
 | I-53 | C12: `setRhythm` silently accepts and drops unknown `opts` keys (a pacemaker fault works only under `opts.pacer`) | research/19 C12 | **task A14** (Part A: validate `RhythmOpts`, reject unknown keys with a reason) |
-| I-54 | C1: chronic disease does not change the propofol fall (≈ −20 % in healthy, 80 y, HTN, AS+CAD, HFrEF, PH) — no disease-dependent resting sympathetic tone for propofol to remove (`baroreflex.ts:151–158`); the mechanism behind Ali's Q1 conflict and FU-4's S14 `it.fails` | research/19 C1 | **task B4** (Part B, prototyped with numbers; flagged for Ali's review BEFORE execution) |
-| I-55 | C8: PH too mild (PVR 5.9 vs 10 WU "severe"; ×3 whatever the grade), no RV ischaemia at induction, noradrenaline and phenylephrine give the same PAP/SAP ratio | research/19 C8 | the grade IS ignored (`profile.ts` `ph`: PVR × 3 at every grade) — a data defect: **task A18** (the tables' 3/5/10 WU; PROTOTYPED: 2.9 / 4.7 / 9.6 WU; `profile.ts` is FU-7's E-FU7-3 file, other lines); RV ischaemia on induction follows C1 (task B4); the pressor rows' pulmonary arms → **handed to FU-7** (Task 17 re-fits those rows); iNO → **Ali** (a new drug) |
-| I-56 | C9: HFrEF's weak response to hydralazine (SV +3.5 %, SVR −15 %) and to fluid (no flooding) | research/19 C9 | hydralazine size → **handed to FU-7** (Task 17 takes CM-06e as its check, research/19 §4 item 2); lung water reaching gas exchange → **handed to 7k** (7b diffusion/shunt from EVLWI); the SV-per-SVR sensitivity → **cal** + Ali Q10 |
-| I-57 | C10: missing profiles (CKD, diabetic autonomic neuropathy, OSA, cirrhosis; the liver-failure stand-in leaves CO/SVR unchanged) | research/19 C10 | **Ali** (v1.0 vs v1.1 scope; not built) |
-| I-58 | Stage 9 items: the scenario schema has no `endo` block; there is no posture input | research/19 §5 Stage 9 | `endo` → folded into **task A16** (R-S9-4 schema); posture → **Ali** (a new input: v1.0 or v1.1; CM-02e) |
+| I-54 | C1: chronic disease does not change the propofol fall (≈ −20 % in healthy, 80 y, HTN, AS+CAD, HFrEF, PH) — no disease-dependent resting sympathetic tone for propofol to remove (`baroreflex.ts:151–158`); the mechanism behind the owner's Q1 conflict and FU-4's S14 `it.fails` | research/19 C1 | **task B4** (Part B, prototyped with numbers; flagged for the owner's review BEFORE execution) |
+| I-55 | C8: PH too mild (PVR 5.9 vs 10 WU "severe"; ×3 whatever the grade), no RV ischaemia at induction, noradrenaline and phenylephrine give the same PAP/SAP ratio | research/19 C8 | the grade IS ignored (`profile.ts` `ph`: PVR × 3 at every grade) — a data defect: **task A18** (the tables' 3/5/10 WU; PROTOTYPED: 2.9 / 4.7 / 9.6 WU; `profile.ts` is FU-7's E-FU7-3 file, other lines); RV ischaemia on induction follows C1 (task B4); the pressor rows' pulmonary arms → **handed to FU-7** (Task 17 re-fits those rows); iNO → **samhv-dev** (a new drug) |
+| I-56 | C9: HFrEF's weak response to hydralazine (SV +3.5 %, SVR −15 %) and to fluid (no flooding) | research/19 C9 | hydralazine size → **handed to FU-7** (Task 17 takes CM-06e as its check, research/19 §4 item 2); lung water reaching gas exchange → **handed to 7k** (7b diffusion/shunt from EVLWI); the SV-per-SVR sensitivity → **cal** + samhv-dev Q10 |
+| I-57 | C10: missing profiles (CKD, diabetic autonomic neuropathy, OSA, cirrhosis; the liver-failure stand-in leaves CO/SVR unchanged) | research/19 C10 | **samhv-dev** (v1.0 vs v1.1 scope; not built) |
+| I-58 | Stage 9 items: the scenario schema has no `endo` block; there is no posture input | research/19 §5 Stage 9 | `endo` → folded into **task A16** (R-S9-4 schema); posture → **samhv-dev** (a new input: v1.0 or v1.1; CM-02e) |
 | I-59 | C6 elderly closing capacity; C7 COPD normocapnic; C11 smaller gaps (COP at albumin 25, IAP renal, cirrhotic glucose, CKD diuresis, elderly bleed tachycardia, INR) | research/19 C6, C7, C11 | **handed**: C6 → 7b/FU-6 (apnoea work), C7 → FU-6 (the drive's `paco2Set`), C11 → their owners (7c COP, RH-06 IAP, 7e glucose, 7d CKD, 7a baroreflex, 7i INR) as listed in research/19 §3 |
 | I-60 | research/19 §4 findings for FU-7 (dobutamine measure-first, hydralazine HFrEF cell, esmolol re-measure, the surge's hypertensive arm, AF rigs after C3, Task 9 as C1's home, E-FU7-3 widening, diabetic dexamethasone arm, bronchial reactivity, `ventRemiEq` for OSA) | research/19 §4 | **handed to FU-7** (its fixer/executor reads §4; C3 lands in FU-8 Part A first, as the orchestrator ruled) |
 
@@ -221,14 +221,14 @@ unless a file overlaps FU-6/FU-7 (then Part B).
 | I-64 | (d) EtCO2 under CPR from a quality fit, blind to the circulation (a bled-out patient reads 17.4); V.1's "CPR flow scaling" | V4; DV-03, DV-04a | bled-out 17.4 → 7.2; tamponade 15.9 → 12.8; VF CPR 18.8 → 16.5; R39-2's quality map missed (20.4 / 25.2 / 26.6 / 26.6) | **task A22** (E-FU8-10/11; the quality map an `it.fails`; W22) |
 | I-65 | (e) Cerebral flow under CPR 0.71 of normal (consensus 30–40 %) | V8; DV-02a | 0.71 → 0.45 (A19) | **task A24** (the fall asserted; the consensus an `it.fails` at 0.45; W22) |
 | I-66 | (f) Transcutaneous pacing is painless (ΔNE 0 at 80 mA awake) | V6; DV-08c | ΔNE 0, MAP awake 98.5 vs GA 95.7 | **task B5** (Part B: `l3/device-layer.ts` is FU-7 Task 12's file, the stimulus path is `engine.ts` + `l2/endo`; UNPROTOTYPED) |
-| I-67 | (g) The LVAD has no preload physiology (1.5 L bleed: flow 3.99 → 3.70, no suction; PI 6.7 vs HM3 3–4) | V9; DV-17, DV-16d, DV-18b | flow 3.96 → 3.70 min, PI 6.77, power 3.61 W (Part A prototype) | **task A26** (UNPROTOTYPED); the NIBP half (10 of 10 valid at PP 20, DV-16b) → **Ali** W27 |
+| I-67 | (g) The LVAD has no preload physiology (1.5 L bleed: flow 3.99 → 3.70, no suction; PI 6.7 vs HM3 3–4) | V9; DV-17, DV-16d, DV-18b | flow 3.96 → 3.70 min, PI 6.77, power 3.61 W (Part A prototype) | **task A26** (UNPROTOTYPED); the NIBP half (10 of 10 valid at PP 20, DV-16b) → **samhv-dev** W27 |
 | I-68 | (h) Starting CPR does not put the compression artefact on the ECG | V7; DV-23a | `artefact.cpr` null under CPR → {rate, depth = quality} | **task A23** |
 | I-69 | (i) The MANUAL post-ROSC pressure ramp is invisible (SBP 90 % at 10 s) | V12; DV-M3 | fracAt10s 0.9 (0.4–0.8) | **task A27** (UNPROTOTYPED) |
 | I-70 | The shock outcome ignores the state it lands in (termination 70 %, ROSC share blind to CoPP, temperature, K, rhythm class, energy) | V5; research/20 §4 | — | **handed to FU-7** Task 12 (the orchestrator's FU-7 amendment carries research/20 §4 items 1–7) |
 | I-71 | IABP trigger in arrest, trigger-loss alarms, LVAD thrombosis | V10; DV-15b, DV-19 | — | **handed to 7h** |
 | I-72 | Hyperkalaemic contractility read from plasma K, not the calcium-stabilised value | V11; DV-25b | — | **handed to FU-9** (beside its F2) |
-| I-73 | Pericardiocentesis, ICD, pacemaker magnet, ECMO, a MODELED cardiogenic-shock state, EMI → pacemaker sensing | research/20 §6 (NE cells) | — | **Ali** W24 (v1.0 vs v1.1; the device items are 7h's) |
-| I-74 | research/20 §8's nine questions | research/20 §8 | numbers in W25 | **Ali** W25 |
+| I-73 | Pericardiocentesis, ICD, pacemaker magnet, ECMO, a MODELED cardiogenic-shock state, EMI → pacemaker sensing | research/20 §6 (NE cells) | — | **samhv-dev** W24 (v1.0 vs v1.1; the device items are 7h's) |
+| I-74 | research/20 §8's nine questions | research/20 §8 | numbers in W25 | **samhv-dev** W25 |
 | I-75 | DV-26b's asphyxia rig assumed the arrest at ≈ 410 s (τ 300); after Task A10 it comes ≈ 13 min after the occlusion | DV-26b on the prototype: no organised arrest in the 450 s window | — | **recorded** (research/20's re-run moves the cell's CPR start; not a defect) |
 
 ### I. V.1's gate note (`origin/stage-v1-ventilator-followup` `docs/gates/stage-v1.md` §10 "Requests / open items"; the orchestrator's amendment)
@@ -247,7 +247,7 @@ unless a file overlaps FU-6/FU-7 (then Part B).
 |---|---|---|
 | F1 (MAJOR) A13's "one rule" was a third, discontinuous one | 1: ONE continuous rule, anchored at 4 900 mL, curve 50–160 kg, FU-9 inherits | Task A13 (new `l2/body-size.ts`, the curve table); "Handed to" FU-9 |
 | F2 (MAJOR) τ re-fit not at the joint plateau's middle; S8 on its band edge | 2: the middle of the joint plateau, margins against both files, same start | Task A10 (τ 235, the joint scan, the source comparison corrected); E-FU8-4 |
-| F3 (MAJOR) moved FU-3/FU-4 rows not declared; the EXTREME BRADY display in Ali's case | 4: declare every moved row; the display → Ali | Task G's moved-rows table; W20 |
+| F3 (MAJOR) moved FU-3/FU-4 rows not declared; the EXTREME BRADY display in the owner's case | 4: declare every moved row; the display → samhv-dev | Task G's moved-rows table; W20 |
 | F4 (MAJOR) Open question 1's premise wrong; absolute 5 mL breaks children | 3: land Option D size-scaled; ROSC re-stated; kIsch re-measured | Task A19; D5 rewritten; E-FU8-9 |
 | F5 (MAJOR) the A2 test passed on main | 5: it must fail on main | Task A2 Step 1 (flips/invalid count: 56 on main, 16 after) |
 | F6 false inequalities during the clear hysteresis | 9 | Task A1 (`held`) |
@@ -259,7 +259,7 @@ unless a file overlaps FU-6/FU-7 (then Part B).
 | F12 info (full slow-a never run; e2e spans) | 9 | Self-review (slow-a and slow-b run in full on the prototype); Task G |
 | Q5 the HR "0"/"-?-" flicker | 7: a Part A task gated on W18 | Task A25 |
 | Q7 two PRs | 8: confirmed | Global Constraints; Task G |
-| OQ2 EtCO2 loses its quality slope | A22 lands; the R39-2 map an `it.fails`; "CPR flow vs compression quality" to the calibration queue, flagged for Ali | Task A22; "Handed to" (calibration); W22 |
+| OQ2 EtCO2 loses its quality slope | A22 lands; the R39-2 map an `it.fails`; "CPR flow vs compression quality" to the calibration queue, flagged for samhv-dev | Task A22; "Handed to" (calibration); W22 |
 | OQ3 the instructor's VF in the arrest state | PEA-only in v1.0; S13 and DV-22a stay unmoved; the instructor-VF case recorded for the calibration pass | Task A21; D20; "Handed to" (calibration) |
 
 ---
@@ -314,39 +314,39 @@ unless a file overlaps FU-6/FU-7 (then Part B).
 - **D7 — the 12-lead printout counts QRS complexes with the monitor's own detector (I-33).** `capture12` runs
   `l3/qrs.ts` over the 20 s pre-roll and the window on lead II (both 500 Hz): asystole and P-wave asystole print "HR --,
   axis --"; sinus, VT, AF and CHB are unchanged within 1/min. VF prints the detector's count (coarse 191, fine 51): what a
-  printout shows in VF is Ali's D3 question ("HR numeric during VF"), not changed here.
+  printout shows in VF is the owner's D3 question ("HR numeric during VF"), not changed here.
 - **D8 — the oliguria flag needs measured urine (I-34).** The flag requires at least one completed 10-min urine bin; the
   first 10 min no longer fall back to the instantaneous rate. A full-hour window (the KDIGO wording) was prototyped and
   REJECTED: it breaks 7d's `organs-renal` acceptance (tables 17a: the flag 30 min into a MANUAL haemorrhage). The window
-  length for teaching is Ali's TQ40.
+  length for teaching is the owner's TQ40.
 - **D9 — the paediatric circulation is pinned, not refitted (I-35).** The measured cause is the tables' §2.2 isometric
-  scaling rule (volumes ×W/70, resistances and elastances ×70/W), a parameter-table decision (R44, Ali). Task A12 centres
+  scaling rule (volumes ×W/70, resistances and elastances ×70/W), a parameter-table decision (R44, samhv-dev). Task A12 centres
   each band on its set point (neonate MAP 98 → 64; CO 0.30 → 0.31 L/min, SV 2.15 → 2.2 mL — R50 F7: the first draft's
   "CO 0.15 → 0.31" was misreported; A12 changes the pressure, not the output) and adds the per-kg output target as an
-  `it.fails` with its number; the refit waits on Ali's scaling decision (allometric W^0.75 or a per-band parameter set).
+  `it.fails` with its number; the refit waits on the owner's scaling decision (allometric W^0.75 or a per-band parameter set).
   The neonate then rests 16–19 mmHg above its own stabiliser target (68/38, MAP 48) and set point (45): W12 carries it.
 - **D10 — VT haemodynamics are a calibration item (I-31).** Every mechanism the review pack names is present: loss of AV
   synchrony (the dissociated atria contract at their own rate, `circOnAtrial`), rate-dependent filling (the time-varying
   elastance fills for the diastole it gets) and dyssynchrony (`Emax × 0.85` and the `k_rhythm` efficiency 0.6 → 0.2 over
   150–200/min). The sizes are [ENG] constants. Measured on `0fd5397` the pack's "142/98 above sinus" is gone after FU-4
-  (VT 170: MAP 97 vs 96, CO −8 %), but VT 150 still RAISES the output (+10 %). The target size is Ali's; the constants are
-  the R44 pass's (listed under "Waiting on Ali").
+  (VT 170: MAP 97 vs 96, CO −8 %), but VT 150 still RAISES the output (+10 %). The target size is the owner's; the constants are
+  the R44 pass's (listed under "Waiting on samhv-dev").
 - **D11 — the drug-library items are Part B.** FU-7 rewrites `l2/pk/row.ts`, `pipeline.ts`, `combine.ts` and every
   `data/rows-*.ts`; each Part B task is written against `0fd5397` and re-anchored in Task B0 on the merged tree. Route:
   no absorption model is built; a row declares the routes the engine can honour (`iv`, `io`, `central` for every
   injectable; `neb` for salbutamol, where 7c's K-shift acceptance uses it) and every other route is REFUSED with a
   reason. Maximum dose: a documented `maxDose` field and a `drugWarning` event — never a clamp; values only where the
-  row's own `doses` text states a sourced maximum, the rest wait on Ali's dosing-preset table (DP-01…DP-64).
+  row's own `doses` text states a sourced maximum, the rest wait on the owner's dosing-preset table (DP-01…DP-64).
 - **D12 — who owns the Stage 9 requests.** Stage 9's R50-fixed plan keeps R-S9-1(a) as a v1.0 limit (ruling 3) and
   declines R-FU5-9 and R-S9-8 to FU-5's follow-up. FU-8 takes R-S9-2 (controller), R-S9-4 (schema) and R-S9-6 (the
   sensor map, Part B: `engine.ts`); the scenario TEXT for `category`/`story`/`objectives` is Stage 9's (its
-  `scenario-meta.ts` drafts move into the documents when Stage 9 executes; Ali's Q15 approves them).
+  `scenario-meta.ts` drafts move into the documents when Stage 9 executes; the owner's Q15 approves them).
 
 - **D13 — C5 is taken for the age bands only (I-52).** Centring every profile's targets on its set point was prototyped
   first: it broke 7d's check-18 rig (75 y HTN, MANUAL baseline 140/80: CBF at MAP 65 71.8 % vs < 68 %, hypocapnia
   0.432 vs ≤ 0.40) and moved the elderly 140/80 to 138/78. The landed rule centres the BAND (neonate … adult; the adult
   is bit-identical) and keeps the elderly 140/80 and the conditions' deltas (HTN +15/+5, HFrEF 105/65). The HTN
-  (+13.4 vs +20), elderly (110.6 vs 90–100) and HFrEF (86.6 vs 75) rest pressures go to Ali with those numbers.
+  (+13.4 vs +20), elderly (110.6 vs 90–100) and HFrEF (86.6 vs 75) rest pressures go to samhv-dev with those numbers.
 - **D14 — a state label is recommended, not required (I-20).** Requiring it in the schema failed 10 controller tests and
   would refuse external documents without labels (8a's sanity documents). The validator warns; the eleven built-in
   documents already label every state.
@@ -354,8 +354,8 @@ unless a file overlaps FU-6/FU-7 (then Part B).
   (adult 0.2, elderly 0.3, + 0.1 untreated HTN, + 0.25 HFrEF) that an anaesthetic's delivered-output factor removes:
   `svrF = 1 − τ·(1 − outF) + outF·(reflex)`, bit-identical at rest. Propofol 2 mg/kg nadir: healthy −22.5 → −29.9 %,
   80 y −23.4 → −37.2, HTN 60 y −22.5 → −35.0, 80 y HTN −21.9 → −42.9, HFrEF −21.6 → −42.7. It is the mechanism behind
-  Ali's Q1 conflict and FU-4's S14 `it.fails`, it moves every propofol row, and the τ sizes are [ENG]: Task B4 carries it,
-  flagged for Ali's review BEFORE execution (orchestrator's instruction).
+  The owner's Q1 conflict and FU-4's S14 `it.fails`, it moves every propofol row, and the τ sizes are [ENG]: Task B4 carries it,
+  flagged for the owner's review BEFORE execution (orchestrator's instruction).
 
 - **D16 — ONE continuous body size (I-51; ruling 1; R50 F1).** `l2/body-size.ts`: size = (height / the band's default
   height) × √(70 × weight) for adults (Lemmens' BV ∝ height·√weight), blood volume = the band's per-kg value × size,
@@ -380,7 +380,7 @@ unless a file overlaps FU-6/FU-7 (then Part B).
   "holds after 3 min of CPR"); recorded for the calibration pass. MANUAL keeps the instructor's rhythm (Q9: W21).
 - **D21 — EtCO2 under CPR from the circulation (I-64).** The ruling's mechanism, not a fit: the price is R39-2's quality map
   (the circulation's CPR flow is filling-limited above quality 0.8), pinned `it.fails` with its numbers; how steeply CPR
-  flow follows quality is FU-4's CPR-model constants and Ali's teaching choice (W22).
+  flow follows quality is FU-4's CPR-model constants and the owner's teaching choice (W22).
 - **D22 — the CPR artefact through the ST seam (I-68).** `engine.ts` already merges `hemo.stPatch` into the committed
   modifiers; widening that patch to a `ModifiersPatch` puts the artefact on the ECG without an `engine.ts` edit (FU-6 and
   FU-7 both edit `engine.ts`).
@@ -389,7 +389,7 @@ unless a file overlaps FU-6/FU-7 (then Part B).
 - **D24 — chained blocks.** One block (A20's `aoDiaOf` on A10's window loop) edits a line an earlier FU-8 task wrote; it
   matches once at its place in the sequence and is marked. Every other block
   matches once on `origin/main` too.
-- **D25 — unprototyped Part A tasks.** A25 waits on Ali (W18); A26 (LVAD preload) and A27 (MANUAL post-ROSC ramp) are
+- **D25 — unprototyped Part A tasks.** A25 waits on samhv-dev (W18); A26 (LVAD preload) and A27 (MANUAL post-ROSC ramp) are
   written as measure-first designs with acceptance cells: each needs a mechanism choice the executor measures (the
   LVAD's collapse volume; the tracker's re-arm), and neither blocks another task.
 
@@ -400,7 +400,7 @@ unless a file overlaps FU-6/FU-7 (then Part B).
 | I-01 F1 (A1) | MANUAL MAP ladder 100 → 13 (A1-map-ladder) | `**ABPm 60<70` frozen from the raise | text follows the tile on every one of 470 rows (gap 0 mmHg); one `raised` event |
 | I-01 F1 (A1) | FU-4 page, class IV + CPR + 2 L + adrenaline | `**ABPm 252>110` shown 13 s after the mean was back near 120; `**etCO2 4<30` at EtCO2 15 | (same fix) |
 | R50 F6 (A1) | ABPs low 90: 85 → 90 → 92 | (first draft) `**ABPs 90<90`, `**ABPd 90>90`, `**CVP 10>10` through the hysteresis | the last violating text is kept (`**ABPs 85<90`) |
-| I-03 F3 (A2) | `fidelity-lowflow` Ali's case / 3 L bleed | EXTREME BRADY 3 cycles (3.1–3.6 s) / 1 cycle (3.6 s) | 0 / 0 — both `it.fails` pass |
+| I-03 F3 (A2) | `fidelity-lowflow` the owner's case / 3 L bleed | EXTREME BRADY 3 cycles (3.1–3.6 s) / 1 cycle (3.6 s) | 0 / 0 — both `it.fails` pass |
 | I-03 F3 (A2, A6) | MANUAL agonal 30–300 s (`fu8-agonal-qrs`) | HR invalid 125 of 269 samples, 56 valid↔invalid flips (the test FAILS on main — R50 F5) | 34 invalid, 16 flips; no reading > 25/min |
 | I-04 (A2) | `fidelity-lowflow` 3 L bleed, technical | LOW PERF raised 601 s, cleared 602 s | none — the `it.fails` passes |
 | I-06 F5 (A3) | MANUAL motion 120–180 s | PI 8.21/8.21/8.18/8.23 and PR 81 at 181–185 s | PI -- at 181, then 1.95/1.99/2.00/1.91 (rest 1.85); PR 75 |
@@ -408,7 +408,7 @@ unless a file overlaps FU-6/FU-7 (then Part B).
 | I-32 (A6) | MANUAL, 300 s | 11.4/min at every rateBpm (4, 8, 12, 20, 24) | 4 → 3.8, 8 → 8.0, 12 → 12.0, 20 → 18.8, 24 (clamped 20) → 18.8/min |
 | I-10 (A7) | renderer | no agent tile; imCO2 undrawn | AGENTS module tile (EtAA 2.0 %, MAC 1.0) while 7f publishes; CO2 tile "awRR 12  imCO2 0"; skins 179, renderer 89 tests |
 | I-34 (A8) | MODELED 1.75 L / 10 min from 60 s | flag 508 s (instantaneous 0.50), off 600 s, on 1200 s | first flag 1200 s (hourly 0.49); never before 600 s; `organs-renal` (7d) unchanged |
-| I-33 (A9) | MANUAL, capture 40 s after the switch | asystole HR 93 / axis 90°; P-wave asystole 25; agonal 20; coarse VF 49; fine VF 65 | asystole and P-wave asystole HR --/axis --; sinus 76, VT 170, AF 99 unchanged; VF 191 / 51 (Ali D3) |
+| I-33 (A9) | MANUAL, capture 40 s after the switch | asystole HR 93 / axis 90°; P-wave asystole 25; agonal 20; coarse VF 49; fine VF 65 | asystole and P-wave asystole HR --/axis --; sinus 76, VT 170, AF 99 unchanged; VF 191 / 51 (samhv-dev D3) |
 | I-49 C3 (A10) | research/19 CM-15c / CM-15b; `fu8-coronary` | kIschMin40 0, agonal +15.5 min; CM-15b agonal +10 min | supply only (first draft): 0.80–0.84; + the demand over the window (Q4): **0.89**, no arrest in either arm |
 | I-49 τ (A10) | `circ-hypoxic-arrest` + clinical suite S8, joint scan | τ 300: asphyxial PEA +6.35 min (on the last-beat artefact); τ 300 after C3: no arrest | **τ 235**: PEA +11.2 min after SaO2 < 60 %, S8 +9.92 min (+9.75 after A19), reversal 7 s (table in Task A10) |
 | I-50 C2 (A11) | 3-vessel CAD (CFR 1.4), 65 y, 80 kg, HR 130, 10 min | kIsch 0.65, ST 0.00 mV | kIsch 0.67, ST −0.214 mV (0.69 / −0.200 once A13 sizes the rig); healthy 65 y: no ST |
@@ -434,7 +434,7 @@ unless a file overlaps FU-6/FU-7 (then Part B).
 | I-25 (B1) | insulin 0.1 units/kg/h, 60 min | infTarget 70, glucose −118, K −1.3 (2.88) | infTarget 1.0, glucose −60, K −0.6 (3.47) |
 | I-26/28 (B1) | dose events | every route accepted as IV; amiodarone infusion accepted, no effect | IM adrenaline refused with the reason; IO/central accepted; nebulised salbutamol accepted (declared); amiodarone infusion refused |
 | I-27 (B1) | lidocaine 3 + 2 mg/kg | nothing | one `drugWarning` "cumulative 350 mg exceeds the maximum 315 mg"; both doses given |
-| I-54 C1 (B4) | propofol 2 mg/kg nadir (5 profiles) | −22.5 / −23.4 / −22.5 / −21.9 / −21.6 % | −29.9 / −37.2 / −35.0 / −42.9 / −42.7 % (healthy / 80 y / HTN 60 y / 80 y HTN / HFrEF) — Part B, Ali first |
+| I-54 C1 (B4) | propofol 2 mg/kg nadir (5 profiles) | −22.5 / −23.4 / −22.5 / −21.9 / −21.6 % | −29.9 / −37.2 / −35.0 / −42.9 / −42.7 % (healthy / 80 y / HTN 60 y / 80 y HTN / HFrEF) — Part B, samhv-dev first |
 
 ## Exceptions (edits outside a task's own partition; each needs the orchestrator's approval at review)
 
@@ -454,7 +454,7 @@ unless a file overlaps FU-6/FU-7 (then Part B).
   `apps/demo/e2e/fu5-latched.e2e.ts` (FU-5: `test.fail` removed, the page opened with `&bvmAt=210`).
 - **E-FU8-6** (Task A6): `packages/engine-core/test/l2/ecg/nan-guard.test.ts` (FU-4) — the `agonal` entry of the pre-guard
   schedule fixture re-recorded (6142c308 → d9075744 on darwin); every other rhythm's hash untouched.
-- **E-FU8-7** (Task B4, only if Ali accepts C1): `packages/engine-core/src/l2/circ/baroreflex.ts` (FU-4's file; FU-7's
+- **E-FU8-7** (Task B4, only if samhv-dev accepts C1): `packages/engine-core/src/l2/circ/baroreflex.ts` (FU-4's file; FU-7's
   Request 2 keeps it FU-4's) — the `tonic` gain and two effector lines.
 - **E-FU8-8** (Task G): `apps/demo/scripts/fu4-shots.mjs` (FU-4) — scenario 5's first shot waits for the sine-wave rhythm
   instead of a fixed +200 s, for the re-take of `5a-burns-sux-sine.png` (I-08).
@@ -502,17 +502,17 @@ unless a file overlaps FU-6/FU-7 (then Part B).
 | To | Items | Reason / what they need to do |
 |---|---|---|
 | **FU-7** (plan untracked, executes after FU-6) | I-29 amiodarone's row claims a conversion hook; I-30 the onset count 19 vs 25; I-55 the pressor rows' pulmonary arms; I-56 hydralazine in HFrEF (CM-06e); I-60 research/19 §4 items 1–10 | Task 11 wires the amiodarone/procainamide/lidocaine conversion hazards (and should reword the row's `onset` to what the hook does, `λ_amio_vf = 0`); the onset count is a plan-text fix; Task 17 re-fits the pressor and vasodilator rows. **FU-7 Task 0 must also re-anchor on FU-8 Part A:** `profile.ts` (Tasks A12, A13, A18, A19 — FU-7 Task 8 edits it under E-FU7-3), `engine.ts` (A14) and `vite.config.ts` (A0); FU-8's C3 (A10) lands first, as the orchestrator ruled, so FU-7's AF rigs run on a heart that does not fail — **but the AF quiet band stays an `it.fails` at 0.89 (D18), so Task 0 Step 6b takes its guard path**. **Task 0 Step 6c** (the arrest-state precondition) passes once A21 is in (DV-01b: `peaRegains`, `peaArrestDeclared` true). **Task 17**'s PH pressor rows sit on A18's baseline (severe PH 5.9 → 9.6 WU; R50 F10). **Task 12** (V5, research/20 §4 items 1–7: temperature, the base termination rate, cardioversion by class and energy, which CoPP, end-to-end measurement, `arrestS` for undeclared arrests) — the orchestrator's FU-7 amendment; FU-8 A20 makes the IABP CoPP honest and A19 the tamponade CPR CoPP (8.3, was −12.9), so the two rigs FU-7 was told not to fit on are sound after FU-8. `l3/device-layer.ts` stays FU-7's (E-FU7-6): FU-8's pacing pain (B5) waits for it, and A27 does not edit it |
-| **FU-6** (READY, after V.1) | I-51's lung half (the obese apnoea: profile FRC alone 2.7 min vs + the lung `obesity` condition 1.43 min); research/19 C6 (elderly closing capacity), C7 (COPD `paco2Set`) and the §5 FU-6 list | R4 re-tunes the obese apnoea on ONE obese patient — FU-8 Task A13 defines the circulation's (ONE continuous Lemmens-indexed size, `l2/body-size.ts`, anchored on the default adult); which of profile or condition carries the lung is Ali's Q3. FU-8 A22 changes `gas/coupling.ts`'s `cardiacOutput` during CPR only (E-FU8-11): FU-6's tests that import it call it off CPR. **V.1's CPR guard** (`l2/resp/pipeline.ts`, `h.cpr.active ? CO_REF_LPM : coRefLpm(rs.pat)` — the line FU-6's T2 anchors on): after A22 the CPR flow is the patient's own, so the guard should read `coRefLpm(rs.pat)` in both cases (a 16 kg child's CPR coRatio would otherwise be ≈ 0.06; I-78) — FU-6 makes it when it edits that line. `vite.config.ts`: both plans add SLOW entries — keep both |
+| **FU-6** (READY, after V.1) | I-51's lung half (the obese apnoea: profile FRC alone 2.7 min vs + the lung `obesity` condition 1.43 min); research/19 C6 (elderly closing capacity), C7 (COPD `paco2Set`) and the §5 FU-6 list | R4 re-tunes the obese apnoea on ONE obese patient — FU-8 Task A13 defines the circulation's (ONE continuous Lemmens-indexed size, `l2/body-size.ts`, anchored on the default adult); which of profile or condition carries the lung is the owner's Q3. FU-8 A22 changes `gas/coupling.ts`'s `cardiacOutput` during CPR only (E-FU8-11): FU-6's tests that import it call it off CPR. **V.1's CPR guard** (`l2/resp/pipeline.ts`, `h.cpr.active ? CO_REF_LPM : coRefLpm(rs.pat)` — the line FU-6's T2 anchors on): after A22 the CPR flow is the patient's own, so the guard should read `coRefLpm(rs.pat)` in both cases (a 16 kg child's CPR coRatio would otherwise be ≈ 0.06; I-78) — FU-6 makes it when it edits that line. `vite.config.ts`: both plans add SLOW entries — keep both |
 | **7k** (READY) | I-22 (R-S9-3 mechanics truth paths); I-47 HPV acidosis/mixed-venous term if its lung-vascular scope takes it (else calibration); I-56 lung water reaching gas exchange (research/19 C9); **its two `vite.config.ts` find blocks (7k plan lines ≈ 1634, 1649) no longer match after FU-8 A0** (R50 F10) | its R57 scope; FU-8 changes no lung file. 7k's executor re-anchors the two SLOW/SLOW_A edits on FU-8's `fu8-*` glob line (keep both) |
 | **FU-9** (being written) | the body-size definition (A13, `l2/body-size.ts`: size = (height/default) × √(70 × weight), anchored 4 900 mL; ruling 1); I-72 hyperkalaemic contractility from plasma K (research/20 V11) | 7c's `bloodPatient` uses Lemmens capped at the band value below BMI 22 and anchored at BMI 22 (4 807 mL at 70/175): FU-9 adopts `sizeWeightKg` so blood and circulation hold ONE volume (the circulation already does after A13). FU-9 edits no FU-8 file (`brain/model.ts`, `organs/pipeline.ts` lines differ: FU-8 A8 edits the oliguria line only) — re-anchor if A8 lands first |
 | **V.1** (merging) | its E-V1-1 CPR guard (coRatio during CPR on the adult `CO_REF_LPM`) and Decision 25 ("CPR flow should scale with the patient") | after FU-8 A22 the CPR flow IS the circulation's (size-scaled: a 16 kg child 19 mL/kg/min, was an adult-absolute 63): the guard should use the patient's own reference (`coRefLpm(pat)`) — the edit is FU-6's (the line is its anchor); FU-8's gate records the child's CPR coRatio on the merged tree. V.1's link-profile rows re-measure after A28/A29 (the child's propofol nadir, the massive-PE profile) |
-| **7h** (devices, v1.1) | I-71 (IABP trigger in arrest, trigger-loss alarms, LVAD thrombosis); the device NE cells of research/20 §6 (pericardiocentesis, ICD, magnet, ECMO) once Ali places them (W24) | research/20 §7's 7h row is its acceptance list |
+| **7h** (devices, v1.1) | I-71 (IABP trigger in arrest, trigger-loss alarms, LVAD thrombosis); the device NE cells of research/20 §6 (pericardiocentesis, ICD, magnet, ECMO) once samhv-dev places them (W24) | research/20 §7's 7h row is its acceptance list |
 | **Stage 9** (R50-fixed plan on `origin/review/stage-9-plan`) | I-11 "PR" as the pulse-sourced HR-alarm label; I-15 the aria/read-vitals summary; I-24 (R-S9-7 labels); the card TEXT for `category`/`story`/`objectives` (its `scenario-meta.ts` drafts move into the eleven documents); glossary entries for FU-8's new visible keys | I-11 needs exactly the per-skin `alarms.wording` table Stage 9's E-S9-4 adds (one more key); the app owns its a11y strings and the glossary (R56). After FU-8: delete `app/describe.ts`/`triggers.ts` copies and pass a `Labeller` (A15); the "sweep restarts on a view change" limit in its gate note and user guide is gone (A17); show `drugWarning` events in the drug panel (B1); new labels: EtAA tile, `drugWarning`, the `sensors` map (B2), ST |
 | **8b** (release) | I-23 (R-S9-5 user guide); I-36 "58 drugs, not 52"; I-80 (the `port.ts` link race was on main too); release notes | the notes list: `setRhythm` refuses unknown option keys (A14), drug routes other than IV/IO/central refused and curve-row infusions refused (B1), the `drugWarning` event, `pme-scenario/1` card fields and `patient.endo` (A16), the AGENTS tile (A7) |
 | **Orchestrator** | I-37 the 7g gate Q51/57/60 numbering collision with the tables' §9 | docs renumbering |
-| **Calibration pass (R44, Ali)** | I-38 R → radial timing; I-39 PPG ↔ ABP shape; I-43 PR interval, MH EtCO2, Edmark, tamponade PAWP, CPR EtCO2, O1; I-45 7c water balance; I-31 VT sizes; the C2 ST threshold at HR 110; I-56 the SV-per-SVR sensitivity; **"CPR flow vs compression quality"** (ruling OQ2: the circulation's CPR flow saturates above quality ≈ 0.8 once chambers cannot empty below zero — 1.08 / 1.64 / 1.80 / 1.75 L/min at 0.5 / 0.8 / 1.0 / 1.2 — so EtCO2 reads 20.4 / 25.2 / 26.6 / 26.6; FLAGGED FOR ALI, W22); **the instructor-selected VF's arrest state** (ruling OQ3: with it, VF CPR CoPP 23.1–26.4, kIsch 0.66, and a sinus selected after 4 min of VF CPR re-arrested at +10 s); the IABP assisted systole (W26); CPR cerebral flow 0.45 vs the consensus 0.30–0.40; **anaphylaxis in MANUAL link profiles — `writeLung` must not remove a profile-owned spec** (V.1 Decision 23; the vasoplegia stand-in stays; I-79) | constants of existing mechanisms; numbers in the inventory |
+| **Calibration pass (R44, samhv-dev)** | I-38 R → radial timing; I-39 PPG ↔ ABP shape; I-43 PR interval, MH EtCO2, Edmark, tamponade PAWP, CPR EtCO2, O1; I-45 7c water balance; I-31 VT sizes; the C2 ST threshold at HR 110; I-56 the SV-per-SVR sensitivity; **"CPR flow vs compression quality"** (ruling OQ2: the circulation's CPR flow saturates above quality ≈ 0.8 once chambers cannot empty below zero — 1.08 / 1.64 / 1.80 / 1.75 L/min at 0.5 / 0.8 / 1.0 / 1.2 — so EtCO2 reads 20.4 / 25.2 / 26.6 / 26.6; FLAGGED FOR THE OWNER, W22); **the instructor-selected VF's arrest state** (ruling OQ3: with it, VF CPR CoPP 23.1–26.4, kIsch 0.66, and a sinus selected after 4 min of VF CPR re-arrested at +10 s); the IABP assisted systole (W26); CPR cerebral flow 0.45 vs the consensus 0.30–0.40; **anaphylaxis in MANUAL link profiles — `writeLung` must not remove a profile-owned spec** (V.1 Decision 23; the vasoplegia stand-in stays; I-79) | constants of existing mechanisms; numbers in the inventory |
 
-## Waiting on Ali (his decision; the model's numbers)
+## Waiting on samhv-dev (his decision; the model's numbers)
 
 | # | Question | The model now (seed 7) |
 |---|---|---|
@@ -535,7 +535,7 @@ unless a file overlaps FU-6/FU-7 (then Part B).
 | W17 | Missing profiles — v1.0 or v1.1 (research/19 C10) | CKD, diabetic autonomic neuropathy, OSA, cirrhosis (the liver-failure stand-in leaves CO/SVR unchanged), bronchial reactivity; posture has no input (CM-02e) |
 | W18 | The HR numeric in an agonal rhythm (I-13) — Task A25 executes with the answer | alternates "0" (valid) and "-?-" every 3–7 s under a standing ASYSTOLE (MANUAL agonal 270 s: 34 invalid samples, 16 flips after A2 + A6; 125 / 56 on main); what does his IntelliVue show — the averaged agonal rate, "0", or "-?-"? |
 | W19 | A QTc tile; iNO as a drug | not built |
-| W20 | The alarm in the idioventricular phase of his tamponade case (R50 F3) | after A6 the agonal rhythm runs at its requested 18.8/min, so every R–R stays under the IntelliVue's 4.0 s asystole threshold (research/05 line 116): `***EXTREME BRADY` stands from **947 s** and `***ASYSTOLE` raises only at **1097 s** (true asystole; the prototype's `audit:monitor A2-ali-b7`, the review measured 945 / 1095); on main `***ASYSTOLE` raised at **936 s** in the agonal phase with EXTREME BRADY cycling. Device-correct for a 19/min rhythm — is it what he wants the learner to see for those 2.5 min? |
+| W20 | The alarm in the idioventricular phase of his tamponade case (R50 F3) | after A6 the agonal rhythm runs at its requested 18.8/min, so every R–R stays under the IntelliVue's 4.0 s asystole threshold (research/05 line 116): `***EXTREME BRADY` stands from **947 s** and `***ASYSTOLE` raises only at **1097 s** (true asystole; the prototype's `audit:monitor A2-owner-b7`, the review measured 945 / 1095); on main `***ASYSTOLE` raised at **936 s** in the agonal phase with EXTREME BRADY cycling. Device-correct for a 19/min rhythm — is it what he wants the learner to see for those 2.5 min? |
 | W21 | MANUAL: should an instructor-set PEA carry the arrest state (decay, ROSC under CPR)? (Q9) | Task A21 applies it in MODELED only; in MANUAL the instructor's rhythm holds (MANUAL kIsch keeps its 0.2 floor) |
 | W22 | **FLAGGED — "CPR flow vs compression quality"** (calibration queue, ruling OQ2): EtCO2 as CPR-quality feedback is core ALS teaching | after A22 EtCO2 follows the pulmonary blood flow (a bled-out patient 7.2, was 17.4), but at quality 0.5 / 0.8 / 1.0 / 1.2 (the MANUAL R39-2 rig) it reads **20.4 / 25.2 / 26.6 / 26.6** (the fit gave 13.2 / 20.3 / 24.8 / 27.4; R39-2's bands 8–15 / 17–23 / 22–28 / 26–32, now an `it.fails`): CPR flow saturates above quality ≈ 0.8 (1.08 / 1.64 / 1.80 / 1.75 L/min) once the chambers cannot empty below zero (A19); poor CPR (0.4) reads 0.83 of good CPR's EtCO2 (research/20 DV-02c band 0.3–0.7); +10 breaths/min lowers it 4.8. What slope should compression quality give EtCO2 (the constant: how compression depth moves volume)? Cerebral flow under good CPR: 0.45 of normal (consensus 0.30–0.40; was 0.71) |
 | W23 | (recorded, not a question in v1.0 — ruling OQ3) the instructor-selected VF's arrest state | not applied: S13 and DV-22a stay unmoved; the case is in the calibration queue with its numbers ("Handed to") |
@@ -581,13 +581,13 @@ V.1 and the R50-fixed Stage 9 plan). "—" = no in-flight plan edits the file.
 | B1 | `src/l2/pk/{row,pipeline}.ts`, `src/l2/pk/data/rows-other.ts`, `src/types-pk.ts`, `src/types.ts` + 2 tests | FU-7 rewrites all of `l2/pk/**` | B |
 | B2 | `src/engine.ts`, `src/types-hemo.ts` + 1 test | FU-7 `engine.ts` (13 blocks) | B |
 | B3 | `src/l2/circ/model.ts`, `src/l2/hemo/pipeline.ts`, `test/engine/fidelity-lowflow.test.ts` | FU-6, FU-7 edit `circ/model.ts` | B |
-| B4 | `src/l2/circ/{baroreflex,model,profile}.ts` + 1 test | FU-7 `model.ts`, `profile.ts`; FU-4's `baroreflex.ts` | B (and Ali first) |
+| B4 | `src/l2/circ/{baroreflex,model,profile}.ts` + 1 test | FU-7 `model.ts`, `profile.ts`; FU-4's `baroreflex.ts` | B (and samhv-dev first) |
 | B5 | `src/l3/device-layer.ts` or `src/engine.ts` (the TCP nociceptive input), `l2/endo` read only + 1 test (UNPROTOTYPED) | FU-7 Task 12 (`device-layer.ts`, E-FU7-6), FU-6/FU-7 (`engine.ts`), FU-7 (`l2/endo/**`) | B |
 | G | `docs/gates/fu-8.md`, `docs/gates/fu-8/**`, `apps/demo/scripts/fu4-shots.mjs` (E-FU8-8), `docs/gates/fu-4/{3b-classIV-rosc,5a-burns-sux-sine}.png` | — | after A (and B) |
 
 **Order.** Part A executes now, in task order (A0 → A27; A5 is a pointer; A10 before A11 and A20 (coronary.ts); A12
 before A13, A18 and A19 (profile.ts); A19 after A18 so the rows it moves are the ones measured; A20 before A21–A23 (the
-pipeline state they share); A25 only with Ali's W18 answer; A28/A29 last). Part B starts at B0 once FU-7 has merged; if FU-7 is not merged when Part A's gate is done, Part A goes out
+pipeline state they share); A25 only with the owner's W18 answer; A28/A29 last). Part B starts at B0 once FU-7 has merged; if FU-7 is not merged when Part A's gate is done, Part A goes out
 as its own PR ("… (Part A)") and Part B is a second PR from this plan.
 
 ## Part A — independent of FU-6/FU-7 (executes now)
@@ -619,7 +619,7 @@ git log --oneline -1   # expect 0fd5397 or later; record it in the gate note
 
 ```bash
 mkdir -p <scratchpad>/fu-8-followups
-PME_AUDIT_OUT=<scratchpad>/fu-8-followups/audit-before npx -y pnpm@9.15.9 run audit:monitor A1-map-ladder A2-ali-b7 A7-probe > <scratchpad>/fu-8-followups/audit-before.log 2>&1
+PME_AUDIT_OUT=<scratchpad>/fu-8-followups/audit-before npx -y pnpm@9.15.9 run audit:monitor A1-map-ladder A2-owner-b7 A7-probe > <scratchpad>/fu-8-followups/audit-before.log 2>&1
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fidelity-lowflow.test.ts test/engine/circ-hypoxic-arrest.test.ts > <scratchpad>/fu-8-followups/before-slow.log 2>&1
 ```
 
@@ -674,7 +674,7 @@ git push
 `packages/engine-core/src/l3/alarms/conditions.ts` (the `dd` line and the two raise lines of the limit loop). Create `packages/engine-core/test/l3/alarms/fu8-live-text.test.ts`, `packages/engine-core/test/engine/fu8-alarm-text.test.ts`.
 
 **Why (D1):** research/05 §2.4 ([S2]): "the message shows **SpO2 94<96 (deviation and limit)". `stepAlarms` froze the
-text at the raise — `**ABPm 66<70` stood while the mean fell to 19 in Ali's tamponade PEA, `**ABPm 252>110` 13 s after
+text at the raise — `**ABPm 66<70` stood while the mean fell to 19 in the owner's tamponade PEA, `**ABPm 252>110` 13 s after
 ROSC with the mean back near 120 — and `limitText` printed the SKIN DEFAULT limit after a `setLimit` (the comparison
 used the edited limit). No red pressure alarm at MAP 19 is vendor-correct (IFU p. 44: only DISCONNECT, mean < 10).
 R50 review F6: a live text must never print a false inequality — the clear hysteresis holds a limit alarm for one display
@@ -688,7 +688,7 @@ Create `packages/engine-core/test/l3/alarms/fu8-live-text.test.ts`:
 ```ts
 // FU-8 Task A1 (F1, G-FU4 2026-09-29): an active limit alarm's message follows the displayed value (research/05 §2.4:
 // "the message shows **SpO2 94<96 (deviation and limit)", [S2]); a latched entry keeps the text it had when its
-// condition ended. Before FU-8 the text was frozen at the raise (`**ABPm 66<70` at a mean of 19 in Ali's PEA).
+// condition ended. Before FU-8 the text was frozen at the raise (`**ABPm 66<70` at a mean of 19 in the owner's PEA).
 import { describe, expect, it } from 'vitest';
 import { buildConditions, createInputs } from '../../../src/l3/alarms/conditions.ts';
 import { applyAlarmAction, createAlarmMgr, stepAlarms, type AlarmMgrState, type Condition } from '../../../src/l3/alarms/manager.ts';
@@ -815,7 +815,7 @@ Replace with:
       }
       // FU-8 (F1, G-FU4 2026-09-29): the message carries the value NOW — "the message shows **SpO2 94<96 (deviation
       // and limit)" (research/05 §2.4, [S2]). The text was frozen at the raise: `**ABPm 66<70` stood while the mean
-      // fell to 19 in Ali's tamponade PEA, and `**ABPm 252>110` 13 s after ROSC while the mean was back near 120. A
+      // fell to 19 in the owner's tamponade PEA, and `**ABPm 252>110` 13 s after ROSC while the mean was back near 120. A
       // condition only the clear hysteresis holds keeps the last violating text (R50 F6: no `**ABPs 90<90`)
       if (e.text !== c.text && c.held !== true) {
         e.text = c.text;
@@ -859,7 +859,7 @@ Replace with:
 
 - [x] **Step 3 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/alarms test/engine/fu8-alarm-text.test.ts` → all pass (prototype: 12 files, 60
 tests); the engine test logs `470 rows with ART_M_LOW; worst text/tile gap 0 mmHg` and exactly one `raised` event. Then
-`npx -y pnpm@9.15.9 run audit:monitor A2-ali-b7`: no `cleared` text of the form `X<X` / `X>X` (the review's
+`npx -y pnpm@9.15.9 run audit:monitor A2-owner-b7`: no `cleared` text of the form `X<X` / `X>X` (the review's
 `**ABPs 90<90`, `**ABPd 90>90`, `**CVP 10>10`).
 
 - [x] **Commit and push.**
@@ -1079,14 +1079,14 @@ Replace with:
 In `packages/engine-core/test/engine/fidelity-lowflow.test.ts`, find:
 
 ```ts
-  it.fails("MODELED Ali's case: no red raise/clear cycle shorter than 5 s — measured 3 EXTREME BRADY cycles (948 s +3.3, 989 s +3.1, 1000 s +3.6: the decaying PEA at ≈ 18/min) after FU-4 (FU-5 follow-up)", async () => {
+  it.fails("MODELED the owner's case: no red raise/clear cycle shorter than 5 s — measured 3 EXTREME BRADY cycles (948 s +3.3, 989 s +3.1, 1000 s +3.6: the decaying PEA at ≈ 18/min) after FU-4 (FU-5 follow-up)", async () => {
 ```
 
 Replace with:
 
 ```ts
   // FU-8 (Task A2, E-FU8-1): flipped — the detector counted every agonal complex twice (0.14–0.24 s apart)
-  it("MODELED Ali's case: no red raise/clear cycle shorter than 5 s — measured 0 after FU-8 (3 EXTREME BRADY cycles after FU-4: 948 s +3.3, 989 s +3.1, 1000 s +3.6)", async () => {
+  it("MODELED the owner's case: no red raise/clear cycle shorter than 5 s — measured 0 after FU-8 (3 EXTREME BRADY cycles after FU-4: 948 s +3.3, 989 s +3.1, 1000 s +3.6)", async () => {
 ```
 
 - [x] **Step 5 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3 test/engine/fidelity-lowflow.test.ts test/engine/fidelity-arrest.test.ts test/engine/fidelity-ecg.test.ts test/engine/fidelity-alarms.test.ts test/engine/fu8-agonal-qrs.test.ts`
@@ -1442,7 +1442,7 @@ CO2 extra `IMCO2`), `packages/skins/src/data/skins/saadat-like.json` (AGENTS til
 `imco2` is computed by Stage 3 and drawn nowhere on the skins. Stage 9 declined them (R-S9-8). The engine does not
 publish WHICH agent, so the tile label is the glossary's generic EtAA (#30) and one colour (Philips SEV yellow, [S1]);
 per-agent labels/colours wait for an agent-id output (listed for Stage 9's glossary work). `qtc` and `tempSite` (T2)
-are left: T2 is already an extra, and a QTc tile is a layout choice (Waiting on Ali).
+are left: T2 is already an extra, and a QTc tile is a layout choice (Waiting on samhv-dev).
 
 - [x] **Step 1 — skins.**
 
@@ -1752,7 +1752,7 @@ git push
 **Why (D8):** with no completed 10-min bin `uopOver` returns the INSTANTANEOUS rate, so a 1.75 L bleed flagged OLIGURIA at
 508 s, cleared it at 600 s (first bin 0.83 mL/kg/h) and flagged it again at 1200 s. One completed bin is required; the
 full hour was prototyped and rejected (it breaks 7d's `organs-renal` "flag 30 min into a MANUAL haemorrhage", tables
-17a). The teaching window is Ali's TQ40.
+17a). The teaching window is the owner's TQ40.
 
 Create `packages/engine-core/test/engine/fu8-oliguria.test.ts`:
 
@@ -1819,7 +1819,7 @@ git push
 
 **Why (D7):** R peaks were local maxima above 60 % of the strip's maximum — noise in asystole (HR 93, axis 90°), P waves in
 P-wave asystole (HR 25). The monitor's own detector (`l3/qrs.ts`, 500 Hz = the capture rate) over the 20 s pre-roll and
-the window prints "HR --, axis --" in both; sinus/VT/AF/CHB unchanged within 1/min. VF prints the detector's count (Ali D3).
+the window prints "HR --, axis --" in both; sinus/VT/AF/CHB unchanged within 1/min. VF prints the detector's count (samhv-dev D3).
 
 Create `packages/engine-core/test/l3/fu8-capture12-arrest.test.ts`:
 
@@ -2049,7 +2049,7 @@ describe('FU-8 A10 (C3): AF 150 does not make a normal heart fail', () => {
     expect(r.arrest).toBe(false);
     expect(r.kMin).toBeGreaterThanOrEqual(0.75);
   }, 120_000);
-  it.fails('healthy 40 y, AF 150/min: kIsch ≥ 0.9 throughout (research/19 CM-15c quiet band) — measured 0.89 in this rig after FU-8, a MODEL LIMITATION (sinus 150 holds 1.00; the residual is beat-to-beat variance, R50 F9 — Ali Q8)', async () => {
+  it.fails('healthy 40 y, AF 150/min: kIsch ≥ 0.9 throughout (research/19 CM-15c quiet band) — measured 0.89 in this rig after FU-8, a MODEL LIMITATION (sinus 150 holds 1.00; the residual is beat-to-beat variance, R50 F9 — samhv-dev Q8)', async () => {
     expect((await held({}, { type: 'setRhythm', rhythm: 'afib', opts: { rateBpm: 150 } }, 120 + 1200)).kMin).toBeGreaterThanOrEqual(0.9);
   }, 120_000);
 });
@@ -2298,7 +2298,7 @@ Replace with:
 
 - [x] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-coronary.test.ts test/l2/circ` → pass: `fu8 A11: CAD HR 130 kIsch min 0.67, ST min
 -0.214 mV` at this commit (0.69 / −0.200 once Task A13 sizes the 80 kg rig on 74.8 kg; before: 0.65 / 0.00); healthy 65 y at 130: no ST. At HR 110 the filtered deficit is 0.10 — on the threshold,
-no ST (research/19 CM-04a stays WR: the size is Ali's Q6).
+no ST (research/19 CM-04a stays WR: the size is the owner's Q6).
 
 - [x] **Commit and push.**
 
@@ -2321,8 +2321,8 @@ re-anchors.
 the reflex then fought (82–89 at 600 s, SV 1.1 mL, CO 0.15 L/min; ventilated HR 199–214). The band targets are now
 centred on the band set point with a PALS pulse pressure; the adult (120/80 ↔ 90) and HFrEF (105/65 ↔ 75) are unchanged;
 the ELDERLY keep 140/80 (moving it to 138/78 broke 7d's check-18 CBF rig, measured) and HTN keeps its +15/+5 (centring
-it on the +20 set point moved check 18 by 3–7 %: both are research/19 C5 rows for Ali). The per-kg cardiac output of
-children stays low — the tables' §2.2 ISOMETRIC scaling — pinned `it.fails` for Ali's scaling decision.
+it on the +20 set point moved check 18 by 3–7 %: both are research/19 C5 rows for samhv-dev). The per-kg cardiac output of
+children stays low — the tables' §2.2 ISOMETRIC scaling — pinned `it.fails` for the owner's scaling decision.
 
 Create `packages/engine-core/test/engine/fu8-body-size.test.ts`:
 
@@ -2362,7 +2362,7 @@ describe('FU-8 A12 (C5): the resting pressure follows the band set point', () =>
     expect(r.map).toBeGreaterThanOrEqual(lo);
     expect(r.map).toBeLessThanOrEqual(hi);
   }, 120_000);
-  it.fails('term neonate 3.5 kg: cardiac output ≥ 150 mL/kg/min (PALS ≈ 200) — measured 0.31 L/min = 89 mL/kg/min after FU-8 (isometric §2.2 scaling: Ali, plan "Waiting on Ali")', async () => {
+  it.fails('term neonate 3.5 kg: cardiac output ≥ 150 mL/kg/min (PALS ≈ 200) — measured 0.31 L/min = 89 mL/kg/min after FU-8 (isometric §2.2 scaling: samhv-dev, plan "Waiting on samhv-dev")', async () => {
     expect((await rest({ ageY: 0.01, weightKg: 3.5 }, 600)).co / 3.5).toBeGreaterThanOrEqual(0.15);
   }, 120_000);
 });
@@ -2454,7 +2454,7 @@ Replace with:
     // FU-8 (C5, research/19): the band's resting pressure is centred on the band's reflex set point, with the band's
     // pulse pressure — ONE number per age band. Before, every band was tuned to 120/80 whatever its set point: a term
     // neonate (set point 45) stabilised at MAP 93 and sat at 82–89 at 600 s (SV 1.1 mL, CO 0.15 L/min). The adult
-    // (120/80 ↔ 90) is unchanged; conditions then apply their deltas as before (HTN, HFrEF: Waiting on Ali, plan D13).
+    // (120/80 ↔ 90) is unchanged; conditions then apply their deltas as before (HTN, HFrEF: Waiting on samhv-dev, plan D13).
     targets: { sbp: b.map + TARGET_MAP_ABOVE_SET + (2 * b.pp) / 3, dbp: b.map + TARGET_MAP_ABOVE_SET - b.pp / 3, hr: b.hr, cvp: 5 }, mapSet: b.map, hrRest: b.hr,
 ```
 
@@ -2470,7 +2470,7 @@ Replace with:
 ```ts
   };
   // the elderly keep 140/80 (MAP 100 against the set point 95): 7d's check 18 (75 y HTN CBF plateau) is fitted to it,
-  // and the elderly resting pressure is research/19 C5's Ali question (plan "Waiting on Ali")
+  // and the elderly resting pressure is research/19 C5's samhv-dev question (plan "Waiting on samhv-dev")
   if (band === 'elderly') r.targets = { sbp: 140, dbp: 80, hr: b.hr, cvp: 5 };
 ```
 
@@ -2524,7 +2524,7 @@ Largest step per 0.5 kg anywhere in 50–160 kg: 20.7 mL (no discontinuity). F 1
 80), 5 238 mL (was 5 600) — Task G's moved-rows table lists the rigs (HFrEF 80 kg, CAD 80 kg, the DV IABP rigs).
 
 The LUNG half (profile FRC vs the `obesity` lung condition, 2.7 vs 1.43 min) is FU-6's R4 re-tune on this definition and
-Ali's Q3 — handed (see "Handed to"). Stage 3's `effKg` (IBW + 0.4·excess) stays Stage 3's metabolic rule (VO2): 90 kg /
+the owner's Q3 — handed (see "Handed to"). Stage 3's `effKg` (IBW + 0.4·excess) stays Stage 3's metabolic rule (VO2): 90 kg /
 175 cm is sized 79.4 kg here against Stage 3's 78.3.
 
 Create `packages/engine-core/src/l2/body-size.ts`:
@@ -2548,7 +2548,7 @@ export const DEFAULT_HEIGHT_CM = { adult: 175, elderly: 170 } as const;
 
 /**
  * The weight (kg) the adult circulation is sized on: (height / default height) × √(70 × weight). Children and
- * adolescents are sized on their weight as given (Lemmens is an adult rule; the paediatric scaling is W12, Ali's).
+ * adolescents are sized on their weight as given (Lemmens is an adult rule; the paediatric scaling is W12, the owner's).
  */
 export function sizeWeightKg(band: string, weightKg: number, heightCm?: number): number {
   if (band !== 'adult' && band !== 'elderly') return weightKg;
@@ -2998,8 +2998,8 @@ engine's `PatientProfile.endo`), `packages/controller/src/scenario/validate.ts` 
 **Why:** R-S9-4 (Stage 9's `app/scenario-meta.ts` holds the card text only because the schema cannot); research/19 §5: a
 diabetic patient (CM-09c) cannot be authored. **Decision:** a state label is RECOMMENDED, not required — making it
 required failed 10 controller tests and would refuse every external document without labels (8a's sanity documents);
-the validator warns instead. Posture has no engine input: Ali (v1.0 or v1.1). The TEXT of story/objectives for the
-eleven documents is Stage 9's (its drafts move in; Ali's Q15).
+the validator warns instead. Posture has no engine input: samhv-dev (v1.0 or v1.1). The TEXT of story/objectives for the
+eleven documents is Stage 9's (its drafts move in; the owner's Q15).
 
 In `packages/controller/scenarios/pme-scenario-1.schema.json`, find:
 
@@ -3318,7 +3318,7 @@ git push
 **Why:** the `ph` condition applied PVR × 3 and RV Ees × 1.6 whatever its grade (research/19 CM-13a: 5.9 WU for "severe");
 the tables give 3 / 5 / 10 WU and × 1.3 / 1.6 / 2.0. The multipliers are the grade's WU over the resting circuit's PVR
 (0.1 mmHg·s/mL = 1.67 WU); no grade = moderate = exactly the old × 3. The pressor rows' pulmonary arms and iNO are not here
-(FU-7 Task 17; Ali).
+(FU-7 Task 17; samhv-dev).
 
 Create `packages/engine-core/test/engine/fu8-ph-grade.test.ts`:
 
@@ -3444,7 +3444,7 @@ only below the unstressed volume).
 - **7b "CPR trough ≤ 30" — the pin FLIPS** (30.6 → 25.2 mmHg).
 - **S13 CoPP 25.1–28.8 → 24.9–28.0** (still an `it.fails` against Paradis 15–25; the title re-stated).
 - **S8 +9.92 → +9.75 min** (the value FU-4 recorded); **exsanguination thresholds** (E-FU4-19 measurements, not bands):
-  3 L +180 s and 3.5 L +170 s → no pulse up to 3.5 L (W7 to Ali with these numbers).
+  3 L +180 s and 3.5 L +170 s → no pulse up to 3.5 L (W7 to samhv-dev with these numbers).
 - **research/20 DV-04a (the DV amendment (c)) — FIXED here:** CPR on a tamponaded heart 181/124, MAP 154, forward flow
   11.9 L/min, CVP 60, CoPP −12.9 → 38/17, MAP 20.1 (VF CPR 31.6–41.8), 0.57 L/min, CVP 15.7, CoPP 8.3. The chambers had
   pumped the to-and-fro volume against a tense pericardium from negative volumes.
@@ -3777,7 +3777,7 @@ Replace with:
 → pass. Prototype (the A19 commit's tree): `fu8 A19: min chamber volume 11 mL, min displayed CVP -0.1 mmHg`, neonate CO
 0.311 L/min; `circ-lowflow-arrest ROSC: CoPP 0.2–22.6, pulse at +260 s`; `VF + CPR 10 min: kIsch max 0.89`; S13
 24.9–28.0; S8 +9.75 min; S4a +170 s; DV-04a `tamponade CPR MAP 20, forward 0.57 L/min`. Then the whole fast set
-(prototype: green) and `npx -y pnpm@9.15.9 run audit:monitor A2-ali-b7` (no `**CVP -…<0`).
+(prototype: green) and `npx -y pnpm@9.15.9 run audit:monitor A2-owner-b7` (no `**CVP -…<0`).
 
 - [x] **Commit and push.**
 
@@ -3814,7 +3814,7 @@ CHAINED on a line Task A10 wrote). Create `packages/engine-core/test/engine/fu8-
 
 **Measured (research/20 cells on the prototype, before → after):** DV-13d arrest at +11.0 min → none in 18 min, CoPP IABP
 vs control 43.1 vs 55.1 → 66.2 vs 55.1; DV-M5 deflation +283 → −113 ms; DV-13b assisted EDP −16.5 → −18.6 (band −25…−10),
-assisted systole −15.4 → −19.1 (TS: the tables' ≈ −5, W26 to Ali), MANUAL assisted EDP +9.2 → −6.0; DV-13c ΔCO 0.20 →
+assisted systole −15.4 → −19.1 (TS: the tables' ≈ −5, W26 to samhv-dev), MANUAL assisted EDP +9.2 → −6.0; DV-13c ΔCO 0.20 →
 0.05 L/min (TW), PAWP −8.7 → −21.3 % (in band); DV-14d late-deflation EDP +4.1 → +16.6. The IABP trigger in arrest, its
 alarms and the console in arrest are 7h's (research/20 V10).
 
@@ -4407,7 +4407,7 @@ FLIPS). **R39-2's quality map is MISSED** (the MANUAL default rig: quality 0.5 /
 FILLING-limited above quality 0.8 since Task A19 (1.08 / 1.64 / 1.80 / 1.75 L/min; the fit gave 0.41 / 1.01 / 1.54 /
 1.85), and "+10 breaths/min" lowers EtCO2 by 4.8 (band −2 to −4.5). R45: both rows become `it.fails` with these numbers;
 DV-02c's "poor CPR halves EtCO2" moves 0.43 → 0.83 (TS). **Orchestrator ruling OQ2: A22 lands**; the cause goes to the
-calibration queue as the named item **"CPR flow vs compression quality"**, flagged for Ali (W22) because EtCO2 as CPR-quality
+calibration queue as the named item **"CPR flow vs compression quality"**, flagged for samhv-dev (W22) because EtCO2 as CPR-quality
 feedback is core ALS teaching.
 
 **Addendum (V.1 gate note §10 item 3; V.1 Decision 25): the CPR flow scales with the patient.** The interim fit was
@@ -4611,7 +4611,7 @@ Replace with:
   // FU-8 (E-FU8-10, A22; research/20 DV-03): the gas exchange now reads the circulation's CPR pulmonary flow, not the
   // interim quality^1.9 fit this map was calibrated on. The circulation's CPR flow is filling-limited above quality 0.8
   // (0.87 / 1.08 / 1.64 / 1.80 / 1.75 L/min at 0.4 / 0.5 / 0.8 / 1.0 / 1.2), so the map is missed: R45, an it.fails with
-  // its numbers; the CPR flow's quality dependence is the R44 calibration pass's (plan "Waiting on Ali" W22)
+  // its numbers; the CPR flow's quality dependence is the R44 calibration pass's (plan "Waiting on samhv-dev" W22)
   it.fails('quality map at 10 breaths/min: 0.5 → 12 (8–15), default 0.8 → 20 (17–23), 1.0 → 25 (22–28), 1.2 mechanical-grade → 29 (26–32) — measured 20.4 / 25.2 / 26.6 / 26.6 after FU-8', async () => {
 ```
 
@@ -4865,9 +4865,9 @@ git commit -m "test(brain): cerebral blood flow under CPR recorded against the c
 git push
 ```
 
-### Task A25: The HR numeric in an agonal rhythm — GATED on Ali’s W18 answer (orchestrator Q5; R50 review Q5) — UNPROTOTYPED
+### Task A25: The HR numeric in an agonal rhythm — GATED on the owner’s W18 answer (orchestrator Q5; R50 review Q5) — UNPROTOTYPED
 
-**Executes only with Ali's answer to W18; the Part A PR does not wait for it** (if it arrives after the Part A gate, this
+**Executes only with the owner's answer to W18; the Part A PR does not wait for it** (if it arrives after the Part A gate, this
 task is a small follow-up commit on the same branch before merge, or the first commit of Part B's PR).
 
 **Files (expected):** `packages/engine-core/src/l3/hr.ts` (FU-5's HR measurement; no in-flight plan edits it), a new
@@ -4878,12 +4878,12 @@ samples, 56 valid↔invalid flips, readings up to 18/min. After Tasks A2 + A6: 3
 numeric still alternates "0" (valid) and "-?-" every 3–7 s under a standing `***ASYSTOLE` (`hrMeasure` returns 0 when
 no R arrives within the asystole threshold, and invalid when the R–R history is too short to average).
 
-**The two behaviours Ali chooses between (W18):** (a) the IntelliVue shows the averaged agonal rate while complexes
+**The two behaviours samhv-dev chooses between (W18):** (a) the IntelliVue shows the averaged agonal rate while complexes
 arrive, and "0"/asystole only after its asystole threshold (4 s) without one; (b) "-?-" (invalid) whenever fewer than
 N R–R intervals fit the averaging window. Step 1 writes the test for the chosen behaviour (it fails on the A2/A6 tree
 with 16 flips); Step 2 changes `hrMeasure`'s rule for the empty/short history only (the regular-rhythm averaging is
 unchanged — the FU-1/FU-5 HR tests stay green); Step 3 verifies `test/l3/hr*.test.ts`, `fidelity-arrest`,
-`fidelity-lowflow`, `fu8-agonal-qrs` and `audit:monitor A2-ali-b7`. R45: if the chosen behaviour cannot be met, the
+`fidelity-lowflow`, `fu8-agonal-qrs` and `audit:monitor A2-owner-b7`. R45: if the chosen behaviour cannot be met, the
 test becomes `it.fails` with its number.
 
 ### Task A26: The LVAD depends on filling (research/20 DV-17, DV-16d, gap V9; the DV amendment (g)) — UNPROTOTYPED
@@ -5221,7 +5221,7 @@ salbutamol is kept (7c's K-shift acceptance uses it; the same curve, a documente
 route (scenario and oracle JSON) is IV as before, every other route is refused with a reason. (c) 21 curve rows accepted
 an infusion and did nothing: refused, except dextrose (7e reads its rate). (d) No row had a maximum: a `drugWarning`
 event, the dose given as ordered (no clamp); only maxima the rows' own `doses` text sources are set; the dosing-preset caps
-are Ali's (W8). If FU-7's transit chain replaced `infTarget`, apply the per-kg rule where it converts the ordered rate.
+are the owner's (W8). If FU-7's transit chain replaced `infTarget`, apply the per-kg rule where it converts the ordered rate.
 
 Create `packages/engine-core/test/l2/pk/fu8-insulin-ref.test.ts`:
 
@@ -5329,7 +5329,7 @@ Replace with:
   routes?: readonly PkRoute[];
   /** FU-8 (B1): a documented maximum — exceeding it raises a `drugWarning` event, never a clamp. `perKg`: × actual
    * weight; `scope` 'cumulative' sums every bolus of the row. Only maxima the row's own `doses` text sources are set;
-   * the rest wait on Ali's dosing-preset table (review pack DP-01…DP-64). */
+   * the rest wait on the owner's dosing-preset table (review pack DP-01…DP-64). */
   maxDose?: { amount: number; perKg: boolean; scope: 'dose' | 'cumulative'; src: string };
   /** FU-8 (B1): another stage reads this row's ordered RATE and acts on it (7e reads dextrose, E-7e-4), so an infusion
    * is meaningful although the row's own curve has no infusion reference. */
@@ -5672,10 +5672,10 @@ git commit -m "feat(circ,pleth): a cutaneous tone output drives the pleth amplit
 git push
 ```
 
-### Task B4: The tonic sympathetic share an anaesthetic removes (C1, I-54) — PROTOTYPED; Ali reviews BEFORE execution
+### Task B4: The tonic sympathetic share an anaesthetic removes (C1, I-54) — PROTOTYPED; samhv-dev reviews BEFORE execution
 
-**Gate:** do not execute until Ali has answered research/19 §8 Q1 (and the review pack's A1/Q1 conflict): the orchestrator
-records the ruling in the gate note. If Ali rejects the mechanism, skip this task (the S14 `it.fails` stays).
+**Gate:** do not execute until samhv-dev has answered research/19 §8 Q1 (and the review pack's A1/Q1 conflict): the orchestrator
+records the ruling in the gate note. If samhv-dev rejects the mechanism, skip this task (the S14 `it.fails` stays).
 
 **Files:** Modify `packages/engine-core/src/l2/circ/baroreflex.ts` (`BaroGains.tonic`, `TONIC_EES_SHARE`, `svrF`/`eesF`),
 `packages/engine-core/src/l2/circ/model.ts` (the `stepBaro(` gains: `tonic`), `packages/engine-core/src/l2/circ/profile.ts` (`ResolvedProfile.tonicSymp`, the
@@ -5692,7 +5692,7 @@ DI-46/47/48/79 and CM-01b/03b/05a/06b to move: re-measure each and list before �
 Create `packages/engine-core/test/engine/fu8-tonic.test.ts`:
 
 ```ts
-// FU-8 Task B4 (research/19 C1; plan D15; for Ali's review BEFORE execution): an anaesthetic removes the TONIC
+// FU-8 Task B4 (research/19 C1; plan D15; for the owner's review BEFORE execution): an anaesthetic removes the TONIC
 // sympathetic share of resting SVR, so the patients whose rest depends on it fall more. Propofol 2 mg/kg, ventilated,
 // seed 7; nadir 60–360 s after the dose against the 60 s before it. Before (origin/main 0fd5397): every profile −21.6 to
 // −23.4 %. Prototype: healthy −29.9, 80 y −37.2, HTN 60 y −35.0, 80 y HTN −42.9, HFrEF −42.7 %.
@@ -5741,7 +5741,7 @@ Replace with:
 ```ts
   brainF?: number;
   /**
-   * FU-8 (C1, research/19; Part B, for Ali's review): the TONIC sympathetic share of resting SVR and contractility
+   * FU-8 (C1, research/19; Part B, for the owner's review): the TONIC sympathetic share of resting SVR and contractility
    * (0–1). At rest the delivered output is 1 and nothing changes; when an anaesthetic lowers the delivered output
    * (`outF` < 1) it removes this share of the RESTING tone too, not only the reflex response — so a patient whose
    * resting pressure depends on sympathetic tone (elderly, hypertensive, heart failure: MSNA rises with each) falls more.
@@ -5835,7 +5835,7 @@ Replace with:
 ```ts
     tuneLvedp: false,
     // FU-8 (C1): young adult ≈ 0.2 (the resting SVR fall under autonomic ganglionic blockade); MSNA doubles 25 → 65 y
-    // (Sundlöf & Wallin) — elderly 0.3; untreated HTN and HFrEF add below (Grassi 1998) [ENG sizes, Ali's review]
+    // (Sundlöf & Wallin) — elderly 0.3; untreated HTN and HFrEF add below (Grassi 1998) [ENG sizes, the owner's review]
     tonicSymp: band === 'elderly' ? TONIC_ELDERLY : TONIC_ADULT,
   };
 ```
@@ -5939,7 +5939,7 @@ by the output (e.g. 0 at 40 mA → 1.5 "laryngoscopy-grade" at ≥ 100 mA [ENG, 
 instructor's stimulus through the ONE `stimulus` shape (R51 addenda 12/17), so 7e's catecholamines and 7f's arousal
 respond and sedation/analgesia (7f's antinociception) remove the response. No new effector. **Acceptance:** DV-08c ΔNE > 0
 and ΔHR > 0 awake; the same pacing under GA (propofol + remifentanil) within ± 10 % of the unpaced reflex; DV-08a/08b
-and every pacing test unchanged. Ali's W25 (8): whether the patient also moves (a movement flag) and whether the capture
+and every pacing test unchanged. The owner's W25 (8): whether the patient also moves (a movement flag) and whether the capture
 threshold rises with thoracic impedance.
 
 - [x] **Executed (executor, UNPROTOTYPED → R45 procedure).** `engine.ts` only (no `device-layer.ts`, no `l2/endo`/`l2/neuro`
@@ -5953,7 +5953,7 @@ threshold rises with thoracic impedance.
   unchanged; DV-08b mapPaced 96 → 137.1 (its ventilated X-A rig has no sedation: the paced patient now feels 100 mA; the
   dead-heart half unchanged); DV-08c dNeAwake 0 → 221.9, dEpi −0.1 → 62.5, mapAwake 98.5 → 130.7, mapGa 95.7 → 105.2 (that
   rig's GA is the drug-free `thermal` flag: 7e's 60 % fallback blunting). The awake size (MAP 142 at 100 mA) is an [ENG]
-  first size for Ali's W25 (8) with the movement flag and the impedance-dependent threshold. Pacing tests (37 files / 183)
+  first size for the owner's W25 (8) with the movement flag and the impedance-dependent threshold. Pacing tests (37 files / 183)
   green.
 
 
@@ -5969,7 +5969,7 @@ threshold rises with thoracic impedance.
   `PME_TEST_SET=slow-a` and `PME_TEST_SET=slow-b` separately — record both wall times (slow-b must stay under 40 min:
   FU-8 adds nothing to it — prototype 45 files / 251 passed, 16.4 min locally; slow-a gains the `fu8-*` files — prototype
   22 files / 88 passed + the known macOS `pk-longrun` red, 13.4 min); `pnpm build && CI=1 pnpm test:e2e`
-  (both projects; Chromium for the heavy evidence files); `npx -y pnpm@9.15.9 run audit:monitor A1-map-ladder A2-ali-b7 A7-probe B1-rhythms`
+  (both projects; Chromium for the heavy evidence files); `npx -y pnpm@9.15.9 run audit:monitor A1-map-ladder A2-owner-b7 A7-probe B1-rhythms`
   (after-report beside Task A0's before-report); the CM cells CM-15c, CM-15b, CM-05b, CM-04a, CM-01b, CM-03b, CM-06b,
   CM-13a, CM-02a (research/19 §9, `CM_OUT` in the scratch dir — never the research folder); the DV cells DV-01b, 01c,
   02a–c, 03, 04a, 08c, 13a–d, 14a–d, 15a, 16d, 17, 22a, 23a, M3, M5 (research/20 §9, `DV_OUT` in the scratch dir); the tick bench
@@ -5978,21 +5978,21 @@ threshold rises with thoracic impedance.
   first shot waits until sim 300 + 215 s (10 s before the measured VF at +225 s, when K has passed 8.5 and the ECG is a
   sine wave) instead of 300 + 200; run `node apps/demo/scripts/fu4-shots.mjs http://localhost:4818 docs/gates/fu-4 3,5` (vite
   on 4818 from your own shell) and inspect: 3b shows the latched APNEA as red text on the black bar (D2), 5a a sine wave.
-  (b) New shots under `docs/gates/fu-8/`: the Ali tamponade case at MAP < 30 with `**ABPm <value><70` live (A1); the
+  (b) New shots under `docs/gates/fu-8/`: the samhv-dev tamponade case at MAP < 30 with `**ABPm <value><70` live (A1); the
   AGENTS tile under sevoflurane on philips-like and saadat-like (A7); the fu5-latched pair (A4, from the e2e); CPR in VF
   with the compression artefact on lead II (A23); tamponade CPR's arterial line (A19, DV-04a).
 - [ ] **Step 4 — the gate note `docs/gates/fu-8.md`:** base and head; per task the before → after rows (this plan's
   "Prototype results" as the expected column); every `it.fails` added (A10 ×1, A12 ×1, A22 ×2, A24 ×1) and flipped (A2 ×3,
   A19 ×2, A22 ×1; B4's S14 if executed) with numbers; the exceptions E-FU8-1…11 as applied; the τ scan table (A10); the CM
   and DV rows beside research/19's and research/20's columns (research/12 §7); slow-a/slow-b times; the "Handed to" and
-  "Waiting on Ali" tables copied with any number that moved; deviations from this plan and why; and **the rows that move**
+  "Waiting on samhv-dev" tables copied with any number that moved; deviations from this plan and why; and **the rows that move**
   (R50 F3, ruling 4) — every existing FU-3/FU-4/FU-5 row this plan moves, with the expected column below (the prototype's
   numbers; the executor's measurement beside them):
 
   | Row (test / rig) | origin/main | after FU-8 | Task | Kind |
   |---|---|---|---|---|
   | S8 tension PTX, PEA ≤ 10 min (`clinical-suite`) | +9.75 min | +9.92 at A10 (τ 235), +9.75 from A19 | A10, A19 | passing, band unchanged |
-  | S4a Ali's tamponade, PEA (`clinical-suite`) | +165 s | +170 s | A2–A10 | passing |
+  | S4a the owner's tamponade, PEA (`clinical-suite`) | +165 s | +170 s | A2–A10 | passing |
   | S13 VF CPR CoPP (`clinical-suite`, `it.fails` 15–25) | 25.1–28.8 | 24.9–28.0 | A19 | pin holds; title re-stated (E-FU8-9) |
   | 10-min VF CPR kIsch < 0.9 (`clinical-suite`) | `it.fails`, max 0.91 | max 0.89 | A19 | pin FLIPS (E-FU8-9) |
   | class IV ROSC with CPR + 2 L + adrenaline (`circ-lowflow-arrest`) | +119 s (band ≤ 180) | +260 s | A19 | RE-STATED ≤ 300 s (E-FU8-9, ruling 3) |
@@ -6002,7 +6002,7 @@ threshold rises with thoracic impedance.
   | asphyxia: FiO2 1 reversal, HR ≥ 60 | 7 s | 7 s (τ 235; 34–36 s only at τ 220/230, a threshold effect) | A10 | passing |
   | asphyxial PEA decay: agonal / asystole after the arrest | +2 / +75 s | +76 / +149 s | A6, A10 | passing |
   | af-pulse-deficit non-ejecting beats | 14.4 % | ≈ 16.9 % (review) | A6/A10 | passing (10–20 %) |
-  | Ali's tamponade on the monitor (`audit:monitor A2-ali-b7`) | `***ASYSTOLE` raised 936 s in the agonal phase, EXTREME BRADY cycling | `***EXTREME BRADY` from 947 s, `***ASYSTOLE` at 1097 s | A2, A6 | display (W20) |
+  | The owner's tamponade on the monitor (`audit:monitor A2-owner-b7`) | `***ASYSTOLE` raised 936 s in the agonal phase, EXTREME BRADY cycling | `***EXTREME BRADY` from 947 s, `***ASYSTOLE` at 1097 s | A2, A6 | display (W20) |
   | arrest-etco2 "≥ 17 at +2 min of CPR" | `it.fails`, 16.5 | 18.0 | A22 | pin FLIPS (E-FU8-10) |
   | R39-2 quality map; +10 breaths/min (`cpr-etco2`) | 13.2 / 20.3 / 24.8 / 27.4; −3 | 20.4 / 25.2 / 26.6 / 26.6; −4.8 | A22 | become `it.fails` (E-FU8-10, W22) |
   | AF 150 quiet band kIsch ≥ 0.9 (`fu8-coronary`) | 0 (arrest) | 0.89 | A10 | new `it.fails` (limitation) |
@@ -6023,15 +6023,15 @@ The body: goal, the Part A / Part B status, the headline rows, the exceptions an
 line `🤖 Generated with [Claude Code](https://claude.com/claude-code)`. Commits carry the trailer
 `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>` (or the executor's own model name). Stop after opening the PR.
 
-## Open questions (for the orchestrator / Ali; the plan does not wait on them except where marked)
+## Open questions (for the orchestrator / samhv-dev; the plan does not wait on them except where marked)
 
 Resolved by the R50 rulings (kept as a record): **Q1** Option D lands, size-scaled (Task A19); **Q2** `TAU_HYP_S` 235, the
 joint plateau's middle (Task A10, E-FU8-4); **Q4** one more mechanism step, then a pinned limitation (0.89; D18); **Q5** the
 HR flicker is Task A25, gated on W18; **Q7** two PRs — Part A now, Part B after FU-7.
 
-1. **C1 (Task B4)** — E-FU8-7 on FU-4's `baroreflex.ts`, and Ali's answer to W15 before execution. (Unchanged.)
+1. **C1 (Task B4)** — E-FU8-7 on FU-4's `baroreflex.ts`, and the owner's answer to W15 before execution. (Unchanged.)
 2. (Resolved — OQ2) EtCO2 under CPR: A22 lands; the R39-2 map is an `it.fails`; "CPR flow vs compression quality" is in
-   the calibration queue, flagged for Ali (W22).
+   the calibration queue, flagged for samhv-dev (W22).
 3. (Resolved — OQ3) the arrest state is PEA-only in v1.0; the instructor-VF case is in the calibration queue.
 4. **The unprototyped Part A tasks (A26 LVAD, A27 MANUAL ramp)** — executed as measure-first designs by the executor, or
    prototyped by a second writer pass before the Part A PR? Neither blocks another task.
@@ -6043,7 +6043,7 @@ HR flicker is Task A25, gated on W18; **Q7** two PRs — Part A now, Part B afte
 
 **Coverage — every loose end has a decision (75 inventory rows + the review's findings).** Sections A–F as written by the
 plan writer (60 rows; decisions renumbered to the current tasks — R50 F8), G the DV audit (15 rows: tasks A19–A24, A26,
-A27, B5; handed to FU-7, FU-9, 7h; Ali W24/W25/W27; one recorded), H the R50 review (F1–F12 and Q5/Q7, each with its
+A27, B5; handed to FU-7, FU-9, 7h; samhv-dev W24/W25/W27; one recorded), H the R50 review (F1–F12 and Q5/Q7, each with its
 ruling and the section that carries it). Every orchestrator ruling is applied: (1) A13's ONE continuous rule, anchored,
 the curve shown, FU-9 handed; (2) τ 235 from the joint plateau with both margins and the same-start comparison; (3)
 Option D lands size-scaled as A19, the ROSC row re-stated under E-FU8-9, the negative CVP gone (≥ −0.1), the VF kIsch row
@@ -6100,12 +6100,12 @@ byte-identical to the prototype's (the B1 comments renumbered, R50 F8); B4's thr
 **Prototype provenance.** Tasks A1–A24 (A5 → A19) and B1 were run in `<scratchpad>/fu-8/wt` on `origin/main` (code of
 `0fd5397`); every Part A block was generated mechanically from that tree (`gen/hunks3.py`: main → final, and main → a
 stage → final for the two files two tasks edit in one place: `coronary.ts` (A10/A11 → A20) and the clinical suite (A19 →
-A21)). B4 (C1) was prototyped earlier and removed (Ali first). A25 (gated), A26, A27, B2, B3, B5 are UNPROTOTYPED and say
+A21)). B4 (C1) was prototyped earlier and removed (samhv-dev first). A25 (gated), A26, A27, B2, B3, B5 are UNPROTOTYPED and say
 so; Task G is procedure. Backups: `scratch/plans-backup/fu-8-followups.md`, `fu-8-prototype.patch` (refreshed),
 `fu-8-gen-tasks_a.py`, `fu-8-check-blocks.py`, `fu-8-writer-notes.md`, `fu-8-c1/`.
 
 **Known limits.** The HR numeric in an agonal rhythm still alternates "0"/"-?-" (A25, W18). AF 150 leaves kIsch 0.89
 (a pinned model limitation). EtCO2 no longer follows compression quality above 0.8 (the calibration item "CPR flow vs
 compression quality", W22). CPR cerebral flow sits above the consensus (0.45). The IABP's assisted systole is too deep (W26). The paediatric per-kg output and the
-HTN/elderly/HFrEF rest pressures wait on Ali (W12, W14). The LVAD preload and the MANUAL post-ROSC ramp are designed, not
+HTN/elderly/HFrEF rest pressures wait on samhv-dev (W12, W14). The LVAD preload and the MANUAL post-ROSC ramp are designed, not
 prototyped (A26, A27).

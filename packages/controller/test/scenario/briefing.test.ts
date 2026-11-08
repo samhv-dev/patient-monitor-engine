@@ -50,3 +50,30 @@ describe('the card field `briefing`', () => {
     expect(briefingOf(doc())).toBeNull();
   });
 });
+
+// Debrief 2, D13b (DQ9, ruled 5 November): a card written in English may carry `textFa`, the Persian as the clinical
+// owner has read it; the host set to Persian sends it (lang fa) in place of the English. A card written in Persian and a
+// card without `textFa` send their own text in either setting: nothing is translated at run time.
+describe('the card field `briefing.textFa` (D13b)', () => {
+  const doc = (b: unknown) => ({ ...base(), briefing: b }) as unknown as ScenarioDoc;
+  it('is accepted on /1 and on /2; empty or over 4000 characters is refused', () => {
+    expect(validateScenario({ ...base(), briefing: { text: 'Watch.', textFa: 'نگاه کنید.' } }).ok).toBe(true);
+    const v2 = { schema: 'pme-scenario/2', id: 'y', title: 'Y', patient: {}, phases: [{ id: 'p', label: 'P' }], actions: [], briefing: { text: 'Watch.', textFa: 'نگاه کنید.' } };
+    const r2 = validateScenario(v2);
+    expect(r2.ok ? [] : r2.errors.filter((e) => e.includes('briefing'))).toEqual([]);
+    expect(errs({ ...base(), briefing: { text: 'x', textFa: '' } }).some((x) => x.startsWith('/briefing/textFa: must NOT have fewer than 1 characters'))).toBe(true);
+    expect(errs({ ...base(), briefing: { text: 'x', textFa: 'ا'.repeat(4001) } }).some((x) => x.startsWith('/briefing/textFa: must NOT have more than 4000 characters'))).toBe(true);
+  });
+  it('the host in Persian sends textFa with lang fa; in English the English', () => {
+    const b = { text: 'Watch the monitor.', textFa: 'به مانیتور نگاه کنید.', estimatedMinutes: 25 };
+    expect(briefingOf(doc(b), 'fa')).toEqual({ text: 'به مانیتور نگاه کنید.', estimatedMinutes: 25, durationS: 60, lang: 'fa' });
+    expect(briefingOf(doc(b), 'en')).toEqual({ text: 'Watch the monitor.', estimatedMinutes: 25, durationS: 60, lang: 'en' });
+    expect(briefingOf(doc(b))).toEqual({ text: 'Watch the monitor.', estimatedMinutes: 25, durationS: 60, lang: 'en' });
+  });
+  it('a card written in Persian shows as today in both settings; a card without textFa sends its English in Persian', () => {
+    const fa = { text: 'شما رزیدنت بیهوشی هستید.', lang: 'fa' };
+    expect(briefingOf(doc(fa), 'fa')).toEqual({ text: fa.text, durationS: 60, lang: 'fa' });
+    expect(briefingOf(doc(fa), 'en')).toEqual({ text: fa.text, durationS: 60, lang: 'fa' });
+    expect(briefingOf(doc({ text: 'Watch.' }), 'fa')).toEqual({ text: 'Watch.', durationS: 60, lang: 'en' });
+  });
+});

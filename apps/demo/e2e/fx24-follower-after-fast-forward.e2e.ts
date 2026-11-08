@@ -14,7 +14,7 @@ import { join } from 'node:path';
 import { devices, expect, test, type Browser, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
-import { openApp, startVite } from './app-support.ts';
+import { ffV2, openApp, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -112,7 +112,11 @@ async function offCursor(p: Page, from: number, pxPerS: number, ms: number): Pro
   let k = 1; // the largest sim-time step between two frames (a re-anchoring jump of the follower's clock), for the log
   for (let i = 2; i < pts.length; i++) if ((pts[i] as { t: number }).t - (pts[i - 1] as { t: number }).t > (pts[k] as { t: number }).t - (pts[k - 1] as { t: number }).t) k = i;
   const step = pts.length > 1 ? `${((pts[k] as { t: number }).t - (pts[k - 1] as { t: number }).t).toFixed(2)} s at +${((pts[k] as { at: number }).at - from).toFixed(0)} ms` : '';
-  return { step, off: off.length, frames: pts.length, worst: Math.max(0, ...dev), at: off.slice(0, 8).map((i) => `+${((pts[i] as { at: number }).at - from).toFixed(0)} ms`) };
+  // each off frame with its own clock step (s) and offset (px): CI's off frames sat at the window's largest clock step (the
+  // follower's catch-up jump, 1.17–1.48 s) on a starved runner, but a jump forced locally drew no frame off — the next
+  // sighting says whether every off frame is a jump's
+  const why = (i: number) => (i > 0 ? `, step ${((pts[i] as { t: number }).t - (pts[i - 1] as { t: number }).t).toFixed(2)} s, ${(dev[i] as number).toFixed(0)} px` : '');
+  return { step, off: off.length, frames: pts.length, worst: Math.max(0, ...dev), at: off.slice(0, 8).map((i) => `+${((pts[i] as { at: number }).at - from).toFixed(0)} ms${why(i)}`) };
 }
 
 const labelsSince = (p: Page, from: number) => p.evaluate((t) => (window as unknown as Win).__fx24.labels.filter((l) => l.at >= t).map((l) => l.text), from);
@@ -142,7 +146,9 @@ test('a following phone sweeps at the cursor and keeps its ECG gain after a fast
   writeFileSync(join(dir, 'index.html'), '<!doctype html>'); // the pages come from Vite here
   relay = await startRelay({ port: 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer' });
   const ws = encodeURIComponent(`ws://127.0.0.1:${relay.port}/`);
-  await openApp(page, base, `?relay=${ws}#/teach`, { warmMs: 1500 });
+  await openApp(page, base, `?relay=${ws}#/teach2`, { warmMs: 1500 });
+  // Instructor v2 with no case shows the Fast forward box once Free roam is chosen (board "Empty 5"; the default patient)
+  await page.locator('.ip2-begin-card[data-way="free"]').click();
   const code = await page.evaluate(() => (window as unknown as { __pmeApp: { session: { code: string } } }).__pmeApp.session.code);
   const url = `${base}/?join=${code}&relay=${ws}`;
 
@@ -156,7 +162,7 @@ test('a following phone sweeps at the cursor and keeps its ECG gain after a fast
   expect(gain).toMatch(/^II\s+X/);
 
   // 1. a 2-min fast-forward: the phone holds, then restores the host's snapshot at the end
-  await page.locator('.sessionbar').getByRole('group', { name: 'Fast-forward' }).getByRole('button', { name: 'Fast-forward 2 min' }).click();
+  await ffV2(page, 2); // STATE's Fast forward box
   await expect(a.locator('.ff-veil.on')).toBeVisible({ timeout: 10_000 });
   await expect(a.locator('.ff-veil.on')).toHaveCount(0, { timeout: 60_000 });
   await synced(a);

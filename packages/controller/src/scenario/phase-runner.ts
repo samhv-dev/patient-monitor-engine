@@ -349,8 +349,9 @@ export class PhaseRunner {
   private sync(t: number): number {
     const from = this.s.lastT;
     const dt = Math.max(0, t - from);
+    if (dt === 0) return 0; // FX-11b: a clock that steps back (the host's estimate after a stall) is not a new span
     this.s.lastT = t;
-    if (this.s.paused || dt === 0) return 0;
+    if (this.s.paused) return 0;
     this.s.stateT += dt;
     this.s.scenarioT += dt;
     this.track(dt);

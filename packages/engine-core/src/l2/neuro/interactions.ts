@@ -1,10 +1,10 @@
-// NMB interactions and neuromuscular profiles (tables §5d, §1.5 [TXT]; sizes [ENG] unless cited). The neuro
+// NMB interactions and neuromuscular profiles (tables §5d, §1.5 [TXT]; sizes `[FIT]` (brief research/44 L2-36) unless cited). The neuro
 // model owns these multipliers (the drug model has no `bus.nmb.ec50Mult`):
 //   potent volatiles potentiate non-depolarisers: EC50 ÷ (1 + 0.5·MAC) (≈ −33 % at 1 MAC; sevoflurane > isoflurane in
-//     trials, one factor here) [TXT direction; ENG size];
-//   magnesium potentiates both classes: EC50 ÷ (1 + 0.3·(Mg − 1.0)) above 1.0 mmol/L (therapeutic 2–3.5) [TXT; ENG];
+//     trials, one factor here) [TXT direction] [FIT: interaction size; brief research/44 L2-36];
+//   magnesium potentiates both classes: EC50 ÷ (1 + 0.3·(Mg − 1.0)) above 1.0 mmol/L (therapeutic 2–3.5) [TXT] [FIT: magnesium potentiation size; brief research/44 L2-36];
 //   hypothermia: non-depolariser EC50 × max(0.6, 1 − 0.12 per °C below 37) (M10 ch. 24 p. 698: twitch force −10–16 %
-//     per °C) [TXT; ENG size]; the slower clearance is the drug model's PK (−5 %/°C);
+//     per °C) [TXT] [FIT: hypothermic potentiation size; brief research/44 L2-36]; the slower clearance is the drug model's PK (−5 %/°C);
 //   myasthenia gravis: non-depolarisers ×0.3 EC50 (very sensitive), succinylcholine resistant (ED95 ×2.6) [TXT];
 //   Lambert–Eaton: sensitive to both (×0.3 / ×0.5) [TXT];
 //   burns (> 48 h, > 20 % TBSA) and denervation/immobilisation: non-depolariser resistance ×2.5 EC50 [TXT]. Their
@@ -34,7 +34,7 @@ export const VOL_NMB_K = 0.18;
 
 export function ec50Multipliers(x: InteractionCtx): Record<NmbAgent, number> {
   // The volatile divisor is sized against a POTENTIATION-OF-DURATION source instead of an EC50 guess. VOL_NMB_K 0.18
-  // [ENG, fit target: band 25–80 %, M10 ch. 24 "30–50 % at ≈ 1 MAC"] — MEASURED in the engine: +52.2 % (t25 46.7 vs
+  // [FIT: band 25–80 %, M10 ch. 24 "30–50 % at ≈ 1 MAC"; brief research/44 L2-36] — MEASURED in the engine: +52.2 % (t25 46.7 vs
   // 30.7 min at 1.1 MAC) → PL. The neuro-only unit rig of `interactions.test.ts` reads only +13.4 % for the same
   // constant, because it applies a FIXED EC50 multiplier without the volatile's own PK; the engine measurement is the
   // acceptance property and the unit rig's +20–45 % band is carried as an `it.fails` with both numbers.
@@ -67,7 +67,7 @@ export function ec50Multipliers(x: InteractionCtx): Record<NmbAgent, number> {
 /**
  * Hypokalaemia potentiates a non-depolarising block — the hyperpolarised end-plate needs less antagonist to fail
  * (Miller 10e ch. 27, "hypokalaemia enhances non-depolarising block"; Feldman 1963).
- * EC50 × (1 − HYPOK_SLOPE·(HYPOK_K − K)⁺), floor HYPOK_FLOOR [ENG size]; 1 at K ≥ 3.5 and without the blood model.
+ * EC50 × (1 − HYPOK_SLOPE·(HYPOK_K − K)⁺), floor HYPOK_FLOOR [FIT: hypokalaemic NMB potentiation size; size; brief research/44 L2-36]; 1 at K ≥ 3.5 and without the blood model.
  */
 export const HYPOK_K = 3.5;
 export const HYPOK_SLOPE = 0.15;

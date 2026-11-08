@@ -18,8 +18,8 @@ function rec25(ec50: number, tempC = 37): number {
 
 describe('NMB interactions', { timeout: 120_000 }, () => {
   // R45 (FU-7 gate review, condition 2): the ORIGINAL assertion against the tables' size (× 0.67, i.e. 1/(1 + 0.5)) is
-  // kept as it was written. FU-7 Task 14 (E-FU7-10 a) re-sized the divisor to VOL_NMB_K 0.18 [ENG; fit target DI-51's
-  // engine duration +25–80 %], so the multiplier is now × 0.847 and this size is a measured miss.
+  // kept as it was written. FU-7 Task 14 (E-FU7-10 a) re-sized the divisor to VOL_NMB_K 0.18 [FIT: target DI-51's
+  // engine duration +25–80 %; brief research/44 L2-37], so the multiplier is now × 0.847 and this size is a measured miss.
   it.fails('1 MAC volatile: EC50 × 0.67 (tables §5d) — measured × 0.847 (VOL_NMB_K 0.18, was met at × 0.667)', () => {
     const m = ec50Multipliers({ ...N, volatileMac: 1 }).rocuronium;
     expect(m).toBeCloseTo(1 / 1.5, 6);

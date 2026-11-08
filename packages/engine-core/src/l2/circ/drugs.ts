@@ -39,10 +39,10 @@ interface DrugRow {
   tachyphylaxis?: number;
 }
 
-/** Peak effects at the reference dose (tables §6.2/§6.3; [ENG] where marked there). */
+/** Peak effects at the reference dose (tables §6.2/§6.3; fitted where the tables mark it). */
 export const DRUGS: Record<DrugId, DrugRow> = {
-  // phenylephrine 100 µg: SVR ×1.7 at peak [ENG, refitted to MAP +15–25 against the emergent reflex; tables said
-  // ×1.35], V −3 %, PVR ×1.1; onset 30–60 s, peak 1–2 min
+  // phenylephrine 100 µg: SVR ×1.7 at peak [FIT: phenylephrine MAP +15–25 against the emergent reflex; refitted to MAP +15–25 against the emergent reflex; tables said
+  // ×1.35; brief research/44 X-11], V −3 %, PVR ×1.1; onset 30–60 s, peak 1–2 min
   phenylephrine: { refDose: 0.1, unit: 'mg', tauOn: 30, tauOff: 300, peak: { hr: 0, ees: 0, svr: 0.7, v0Frac: -0.03, pvr: 0.1 } },
   // ephedrine 10 mg: HR +12 %, contractility +18 %, SVR +12 %, V −3 %; peak 4–5 min, ~1 h; tachyphylaxis ×0.7
   ephedrine: { refDose: 10, unit: 'mg', tauOn: 90, tauOff: 1800, peak: { hr: 0.12, ees: 0.18, svr: 0.12, v0Frac: -0.03, pvr: 0 }, betaMediated: true, tachyphylaxis: 0.7 },
@@ -52,8 +52,8 @@ export const DRUGS: Record<DrugId, DrugRow> = {
   esmolol: { refDose: 0.5, unit: 'mg/kg', tauOn: 30, tauOff: 540, peak: { hr: -0.2, ees: -0.15, svr: 0, v0Frac: 0, pvr: 0 } },
   // propofol 2 mg/kg: tables §6.3 row at E = 0.9 (the upper end of E = Ce/(Ce + 3.5) after 2 mg/kg): SVR ×(1 − 0.45E),
   // Ees ×(1 − 0.2E), V0 +8 %·E, reflex ×(1 − 0.6E); plus the sympathetic HR arm ×0.3 at peak (tables "HR ~/↓";
-  // propofol depresses the baroreflex HR response most, Cullen 1987) [ENG, fitted to brief sanity check 3:
-  // the prototype's E 0.6 row gave MAP 88 % and HR +33 against the reflexes]
+  // propofol depresses the baroreflex HR response most, Cullen 1987) [FIT: brief sanity check 3:
+  // the prototype's E 0.6 row gave MAP 88 % and HR +33 against the reflexes; brief research/44 X-11]
   propofol: { refDose: 2, unit: 'mg/kg', tauOn: 40, tauOff: 420, peak: { hr: 0, ees: -0.18, svr: -0.405, v0Frac: 0.072, pvr: 0, gv: -0.54, gvHr: -0.7 } },
 };
 

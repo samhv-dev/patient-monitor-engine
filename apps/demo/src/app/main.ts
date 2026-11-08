@@ -5,7 +5,8 @@ import { attachReveal, normalizeSessionCode, RevealGesture } from '@pme/controll
 import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 import { alarmLine, limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
 import { mountHostBriefing } from './briefing.ts';
-import { joinCode, relayInfo, relayOf } from './classroom.ts';
+import { instrumentOf, joinCode, relayInfo, relayOf } from './classroom.ts';
+import { instructorPin } from './instructor-pin.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
 import { feedOf } from './teach2/feed.ts';
@@ -23,7 +24,6 @@ import { SCENARIO_META } from './scenario-meta.ts';
 import { archive } from './archive.ts';
 import { LIBRARY, scenarioById, type ScenarioCard } from './scenarios.ts';
 import { AppSession, type RoomKeep } from './session.ts';
-import { mountSessionBar } from './sessionbar.ts';
 import { applySkinAlarmColours, LEVEL_MARK, LEVEL_NAME, Shell, skinAlarmBar, skinAlwaysOn } from './shell.ts';
 import { loadSite, saveSite, setLightScreen } from './site.ts';
 import { button, clock, h, pausedMark, setText, throttle, toast, trackChromeBottom } from './ui.ts';
@@ -33,17 +33,18 @@ import { exploreView } from './views/explore.ts';
 import { mountFastForward } from './fast-forward.ts';
 import { watchHiddenTab } from './hidden-tab.ts';
 import { followUrl, mountFollower, publishStyle } from './views/follower.ts';
+import { deviceKey, pickerView } from './views/join.ts';
 import { monitorView } from './views/monitor.ts';
 import { remoteView } from './views/remote.ts';
 import { settingsView } from './views/settings.ts';
 import { homeView } from './views/home.ts';
 import { patientView } from './views/patient.ts';
 import { roomView } from './views/room.ts';
+import { instructorRoomCard } from './views/room-instructor.ts';
 import { scenariosView } from './views/scenarios.ts';
-import { teachView } from './views/teach.ts';
 import { teach2View } from './views/teach2.ts';
 import { validateView } from './views/validate.ts';
-import { ventView } from './views/vent.ts';
+import { serveRemoteCockpit, ventView } from './views/vent.ts';
 
 const site = loadSite();
 setDrugNames(site.drugNames); // One set of drug names on every screen
@@ -55,9 +56,12 @@ const follow = join ?? normalizeSessionCode(q.get('follow') ?? '');
 const relay = relayOf(location);
 // `?moved=<code>`: this tab handed its session to another tab of this browser (host-guard.ts)
 const moved = normalizeSessionCode(q.get('moved') ?? '');
-// Room plan R5: `#/defib` on a follower page is the defibrillator window (landscape, the room model's look)
-const defibWindow = !!follow && location.hash.replace(/^#\/?/, '').replace(/\/$/, '') === 'defib';
-if (join && !defibWindow) document.documentElement.dataset.learner = 'phone'; // the portrait learner layout (app.css)
+// R4 (plan room-and-instruments.md §4 D7): what a follower page shows, from its hash — `#/pick` the instrument picker
+// (the QR's address), `#/monitor/wide` the patient monitor, `#/defib` the defibrillator window (Room plan R5:
+// landscape, the room model's look), anything else today's learner monitor
+const shows = follow ? instrumentOf(location.hash) : null;
+const defibWindow = shows === 'defib';
+if (join && shows === 'learner') document.documentElement.dataset.learner = 'phone'; // the portrait learner layout (app.css)
 const hostless = !follow && parseRoute(location.hash).id === 'remote';
 const shell = new Shell(document.getElementById('app') as HTMLElement, { hostless, follower: !!follow });
 if (site.theme === 'projector-light') document.documentElement.dataset.theme = 'bench';
@@ -73,15 +77,22 @@ const onFrame = (t: number) => {
 };
 requestAnimationFrame(onFrame);
 
-if (follow) {
+// A follower page is one instrument: choosing another (the picker's tap, "Change", Back) opens the page again on its hash
+if (follow) addEventListener('hashchange', () => instrumentOf(location.hash) !== shows && location.reload());
+
+if (follow && shows === 'pick') {
+  document.body.replaceChildren(); // a page of its own, as `?moved=` below: no shell, no monitor, no session
+  pickerView({ code: follow, parent: document.body });
+  document.title = 'Choose an instrument: patient monitor simulator';
+} else if (follow && shows && shows !== 'pick') {
   if (parseRoute(location.hash).id !== 'monitor') history.replaceState(null, '', `${location.pathname}${location.search}${hrefOf('monitor')}`);
   // Its status and its own Sound / Silence sit under the monitor: the monitor route hides the top bar
   const what = defibWindow ? 'Defibrillator' : 'Learner monitor';
   const bar = h('div', { class: 'follower-bar', role: 'toolbar', 'aria-label': what });
   shell.add({ id: 'monitor', el: h('section', { 'aria-labelledby': 'fol-h' }, h('h1', { id: 'fol-h', class: 'sr-only' }, what), bar) });
-  const follower = mountFollower(shell, site, follow, bar, join && relay ? { relay } : undefined, { defib: defibWindow });
+  const follower = mountFollower(shell, site, follow, bar, join && relay ? { relay } : undefined, { show: shows, device: deviceKey() });
   // "SIMULATION · not a clinical monitor" at the top of this monitor (in a two-row header, else a strip above it)
-  const line = simLine(shell.stage, !!join && !defibWindow);
+  const line = simLine(shell.stage, !!join && shows === 'learner');
   line.set(follower.monitor, follower.style, true);
   follower.onStyle = (s) => line.set(follower.monitor, s, true);
   // The second screen shows the same fast-forward panel and latches the alarms that came and went
@@ -112,7 +123,10 @@ if (follow) {
   if (handed) putKeptItems(handed);
   const base = PATIENT_PRESETS[0]?.spec;
   if (!base) throw new Error('no patient presets');
-  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, defibModel: site.defibModel });
+  // The instructor phone's PIN (plan instructor-peer-role.md P7): this computer's store only; the host reads it at every
+  // instructor hello. Never in an address, a QR code or the tab's state (instructor-pin.ts)
+  const pin = instructorPin();
+  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: start, load: q.get('load') === 'perf8' ? 'perf8' : null, relay, defibModel: site.defibModel, instructorPin: () => pin.get() });
   // The session code survives a reload of this window, so a learner monitor and a Remote that follow it find it again
   // (a reload made a new code and left them on a frozen screen)
   publishStyle(session.code, () => ({ skin: session.skin, theme: session.theme, ibp: session.ibpScales, defib: session.defibModel }), (f) => {
@@ -138,6 +152,9 @@ if (follow) {
     console.error('monitor failed:', (e as CustomEvent<{ reason: string }>).detail.reason);
     toast('The monitor stopped — Restart the patient', 'alert');
   });
+  // FX-11a: the watchdog warns first — a busy or starved worker is slow, not dead, and catches up by itself
+  shell.monitorHost.addEventListener('pme-monitor-slow', () => toast('The monitor is slow to answer: the computer is busy. It catches up by itself.'));
+  shell.monitorHost.addEventListener('pme-monitor-recovered', () => toast('The monitor has caught up'));
 
   const loadScenario = (c: ScenarioCard, room?: RoomKeep): boolean => {
     const r = session.loadScenario(c.doc, room);
@@ -157,28 +174,24 @@ if (follow) {
     else await session.enableSound();
     drawSound();
   };
-  // The alarm count, the reveal gestures, a Load and every other way to the instructor open the Instructor view chosen in
-  // Settings, today's or v2 (owner, 30 October; it replaced answer 19's "the view used last")
-  const instructor = () => site.instructor;
+  // The alarm count opens the Instructor view's Devices sheet
   const openAlarms = (): void => {
-    location.hash = hrefOf(instructor());
-    if (instructor() === 'teach') teach.panel.select('devices');
-    else teach2.openSheet('devices');
+    location.hash = hrefOf('teach2');
+    teach2.openSheet('devices');
   };
   // E125: the pages before a session — Home, Room (the QR code, who follows), Scenarios, Patient — and the rail
   shell.add(homeView());
   const room = roomView({
     code: session.code, relay, relayLink: session.relay, local: session.bc, hostPeerId: session.host.peerId, learnerUrl: followUrl(session.code),
-    followers: () => session.followers, onFollowers: (f) => session.onFollowers(f),
+    followers: () => session.followers, onFollowers: (f) => session.onFollowers(f), devices: () => session.devices,
+    instructor: instructorRoomCard({ code: session.code, relay, pin, host: session.host, instructors: () => session.instructors, onInstructors: (f) => session.onInstructors(f) }),
     // R5b: the room's defibrillator model, kept with the site profile (the monitor style's place) and sent to the patient
     defib: { model: () => site.defibModel, choose: (m) => ((site.defibModel = m), saveSite(site), session.setDefibModel(m)) },
   });
   shell.add(room);
-  shell.add(scenariosView({ session, loadScenario, instructor }));
+  shell.add(scenariosView({ session, loadScenario }));
   shell.add(patientView({ session, site }));
-  shell.add(monitorView({ session, link, learnerUrl: followUrl(session.code), phones: !!relay, instructor }));
-  const teach = teachView(link, { site, main: shell.main, stage: shell.stage, weightKg, loadScenario });
-  shell.add(teach);
+  shell.add(monitorView({ session, link, learnerUrl: followUrl(session.code), phones: !!relay }));
   // option G: the app's top bar is not shown on #/teach2; its header carries the top bar's Sound switch and Room code
   // "Finish the case" (board "Finish 2"): the same card again with the room kept (the probes, the cuff, the session code
   // and so the phones), or the case ended on the page's default patient, the deep link it was opened from spent so that
@@ -196,11 +209,11 @@ if (follow) {
   shell.add(remoteView({ site, hostless: false, bar: shell.bar, code: session.code }));
   shell.add(exploreView(session, site));
   shell.add(ventView(session));
+  serveRemoteCockpit(session); // R8c: the host drives from a granted remote cockpit too, one cockpit at a time
   shell.add(validateView());
   shell.add(devView());
-  shell.add(settingsView(site, session, { onInstructor: () => rail.refresh() }));
+  shell.add(settingsView(site, session));
   shell.add(debriefView(session, link));
-  mountSessionBar(shell.bar, link);
   // The rail's switch is the site profile's Screen theme (Settings' "Screen"): dark ↔ projector-light, saved as Settings
   // saves it, the monitor's look included
   const setTheme = (light: boolean): void => {
@@ -215,7 +228,6 @@ if (follow) {
       patient: () => (link.ctl.scenario.doc ? 'case running' : 'free run'),
     },
     theme: { light: () => site.theme === 'projector-light', set: setTheme },
-    instructor,
   });
   shell.setRail(rail);
   session.onFollowers(() => rail.refresh());
@@ -226,7 +238,13 @@ if (follow) {
   // FX-14/15: a hidden instructor tab pauses the session through the Pause button's own command, so the phones show
   // "(paused)" instead of "not answering", and resumes it on return (HIDDEN_TAB_POLICY, the owner's E82 switch). A
   // fast-forward refuses every command, the pause included: a hide then sends nothing and claims nothing.
-  watchHiddenTab(document, { role: 'host', paused: () => session.paused || session.host.fastForwarding, send: (action) => void link.send({ type: 'time', action }), notify: (text) => toast(text, 'alert') });
+  watchHiddenTab(document, {
+    role: 'host', paused: () => session.paused || session.host.fastForwarding, send: (action) => void link.send({ type: 'time', action }), notify: (text) => toast(text, 'alert'),
+    onPaused: (fn) => {
+      let was = link.ctl.hostPaused;
+      return link.onChange(() => link.ctl.hostPaused !== was && fn((was = link.ctl.hostPaused))); // The host's pause, as applied
+    },
+  });
   mountFastForward(shell.root, link.ctl, { simT: () => link.simT, font: () => session.monitor?.skin?.render.fontStack, latch: (a) => session.monitor?.latchAlarms(a) }); // Above every view
 
   // top-right: alarm count in the skin's colours (steady), sound, remote code
@@ -235,7 +253,8 @@ if (follow) {
   const drawSound = () => ((sound.textContent = session.soundOn ? 'Sound on' : 'Sound off'), sound.setAttribute('aria-pressed', String(session.soundOn)));
   const sound = button('Sound off', () => void toggleSound(), 'small sound');
   sound.setAttribute('aria-pressed', 'false');
-  const code = h('a', { class: 'code-pill', href: hrefOf('remote'), 'aria-label': `Remote pairing code ${session.code.split('').join(' ')}` }, h('span', { class: 'muted' }, 'Remote '), session.code);
+  // R7: the code pill opens Room setup (the one QR code: a remote pairs through its picker)
+  const code = h('a', { class: 'code-pill', href: hrefOf('room'), 'aria-label': `Room code ${session.code.split('').join(' ')}: Room setup` }, h('span', { class: 'muted' }, 'Room '), session.code);
   shell.right.append(alarm, sound, code);
   function alarmText(): string {
     const s = link.alarmSummary;
@@ -266,11 +285,11 @@ if (follow) {
 
   // Learner monitor ↔ instructor view: the hidden panel's reveal gestures
   attachReveal(window, new RevealGesture(() => {
-    const to = revealTarget(shell.route.id, instructor());
+    const to = revealTarget(shell.route.id);
     if (to) location.hash = hrefOf(to);
   }));
   shell.onRoute((r) => {
-    if (r.id === 'teach' || r.id === 'teach2' || r.id === 'monitor') session.live = true;
+    if (r.id === 'teach2' || r.id === 'monitor') session.live = true;
   });
   // "SIMULATION · not a clinical monitor" on the Monitor view only (the instructor's pages show the same monitor
   // without it): in a two-row header, else a strip above the monitor; again after a new monitor or a skin change
@@ -294,7 +313,7 @@ if (follow) {
     });
   } else if (card && loadScenario(card)) {
     session.live = true;
-    if (!location.hash) location.hash = hrefOf(instructor()); // a deep link to a card opens the chosen Instructor view
+    if (!location.hash) location.hash = hrefOf('teach2'); // a deep link to a card opens the Instructor view
   }
   keepPositions(session);
   // Another tab took this session (or started it anew): stop hosting it here, and say where it went
@@ -302,5 +321,5 @@ if (follow) {
   shell.start();
   // e2e hook: the engine ids the glossary test must never find in a clinical view
   const engineIds = [...RHYTHM_IDS, ...DRUG_IDS, ...LUNG_CONDITIONS.map((c) => c.id)];
-  Object.assign(window, { __pmeApp: { shell, session, link, frames, site, teach, teach2, engineIds, skinAlarmBar, room, rail, archive } });
+  Object.assign(window, { __pmeApp: { shell, session, link, frames, site, teach2, engineIds, skinAlarmBar, room, rail, archive } });
 });

@@ -6,7 +6,7 @@ import { pushPending, rhythmRate, type RhythmCtx, type RhythmState } from './rhy
 import { onAvrt, onJunctional } from './foci-junctional.ts';
 import { onAgonal, onIdioventricular, onTorsades, onVtPoly } from './foci-ventricular.ts';
 
-export const VT_JITTER_S = 0.004; // ±4 ms cycle-length jitter [ENG]
+export const VT_JITTER_S = 0.004; // ±4 ms cycle-length jitter [ENG: texture]
 
 function onVt(st: RhythmState, t: number, ctx: RhythmCtx): void {
   pushPending(st, { t, origin: 'ventricular', template: 'wide', prMs: null, pvc: false, coupling: 0, bypass: true, scale: 0.9 });

@@ -8,7 +8,7 @@
 
 **Tech Stack:** TypeScript 5.9 strict, Vitest 3.2, Vite 6.4, Canvas 2D; Playwright (system Chrome) for screenshots; Node ≥ 22.12 (the Pulse oracle loads `pulse.wasm` in Node). No runtime dependencies.
 
-**Spec:** `../research/00-orchestrator-rulings.md` R32 (7c scope), R34 (port, don't plug; Apache headers; one NOTICES row per ported module; the wasm oracle), R37 (weight of evidence), R39, R40 (borrows #5 Figge/Stewart with dynamic SID and a bounded 1-D pH search, #6 Dash–Bassingthwaighte with pH/CO terms, #7 ICRP-89 flow fractions; the never-copy defects), R44 (defaults now, Ali calibrates later), R45 (the "add the mechanism, don't loosen the test" rule), R50 (this plan's review, fixes F1–F13), **R51 §1–§7 and addenda 8–14** (7g owns drug events and PK; 7c observes `bus.doses`; chain order; canonical names `blood.out.*`, `blood.core.renal`/`liver`; NOTICES `N-P##` scheme), G7a (7a's calibration queue, `ext` initialiser), G7b (ruling 8: 7c writes the lung EVLWI key; Winter's goes to 7f); `docs/physiology/stage-7-parameter-tables.md` §1.1–1.5 (Hb, blood volume, anaemia, smoker, CKD rows), §2 (`pOedema`), §4.5 (lung water), §5.3 (lactate, critical DO2 rows), §5b.1–5b.4 (every row), §7 checks 16, 17a (and the 7c sanity list in this plan), §9 Q10, Q21, Q22, Q25, Q41, Q42, Q44, Q45, Q46, Q47; `docs/physiology/pulse-parameter-annex.md` §5b.1–§5b.4, §5.3, B1 (the porting brief), C (D1–D3, D10, D14, D18, D20, D22), D (O2, O3, O10 and the comparator rules), E (licence text); `../research/pulse-audit/03-respiratory-gas.md` §4; `../research/pulse-audit/01-cardiovascular-nervous.md` §4, §7; `../research/08-pulse-design-audit.md` §1.1 items 5–7, §2.6, §3 N-P08, N-P09, N-P10, N-P14, §5 A13, A14; `docs/plans/stage-7a-circulation.md` (`hs.circ` `CircModelState`: `t`, `vol[]` of `VolumeEvent {rate mL/s, until}`, `ext` with the optional `kChem`, `ref.co`; `hs.circOut.pPv`), `docs/plans/stage-7b-lungs.md` (`lungGasStep`, `O2LungInputs`, `resolveLung`, the `evlwi` key), `docs/plans/stage-7g-pkpd.md` (`DrugBus`: `doses` `{agent, mgPerKg, amount, amountUnit, t}` listed for one pass, `metabolic.kShift`; library units in `l2/pk/data/rows-*.ts`); house style `docs/plans/stage-3-respiratory-gas.md`; runbook `docs/RESUME.md`.
+**Spec:** `../research/00-orchestrator-rulings.md` R32 (7c scope), R34 (port, don't plug; Apache headers; one NOTICES row per ported module; the wasm oracle), R37 (weight of evidence), R39, R40 (borrows #5 Figge/Stewart with dynamic SID and a bounded 1-D pH search, #6 Dash–Bassingthwaighte with pH/CO terms, #7 ICRP-89 flow fractions; the never-copy defects), R44 (defaults now, samhv-dev calibrates later), R45 (the "add the mechanism, don't loosen the test" rule), R50 (this plan's review, fixes F1–F13), **R51 §1–§7 and addenda 8–14** (7g owns drug events and PK; 7c observes `bus.doses`; chain order; canonical names `blood.out.*`, `blood.core.renal`/`liver`; NOTICES `N-P##` scheme), G7a (7a's calibration queue, `ext` initialiser), G7b (ruling 8: 7c writes the lung EVLWI key; Winter's goes to 7f); `docs/physiology/stage-7-parameter-tables.md` §1.1–1.5 (Hb, blood volume, anaemia, smoker, CKD rows), §2 (`pOedema`), §4.5 (lung water), §5.3 (lactate, critical DO2 rows), §5b.1–5b.4 (every row), §7 checks 16, 17a (and the 7c sanity list in this plan), §9 Q10, Q21, Q22, Q25, Q41, Q42, Q44, Q45, Q46, Q47; `docs/physiology/pulse-parameter-annex.md` §5b.1–§5b.4, §5.3, B1 (the porting brief), C (D1–D3, D10, D14, D18, D20, D22), D (O2, O3, O10 and the comparator rules), E (licence text); `../research/pulse-audit/03-respiratory-gas.md` §4; `../research/pulse-audit/01-cardiovascular-nervous.md` §4, §7; `../research/08-pulse-design-audit.md` §1.1 items 5–7, §2.6, §3 N-P08, N-P09, N-P10, N-P14, §5 A13, A14; `docs/plans/stage-7a-circulation.md` (`hs.circ` `CircModelState`: `t`, `vol[]` of `VolumeEvent {rate mL/s, until}`, `ext` with the optional `kChem`, `ref.co`; `hs.circOut.pPv`), `docs/plans/stage-7b-lungs.md` (`lungGasStep`, `O2LungInputs`, `resolveLung`, the `evlwi` key), `docs/plans/stage-7g-pkpd.md` (`DrugBus`: `doses` `{agent, mgPerKg, amount, amountUnit, t}` listed for one pass, `metabolic.kShift`; library units in `l2/pk/data/rows-*.ts`); house style `docs/plans/stage-3-respiratory-gas.md`; runbook `docs/RESUME.md`.
 
 ## Global Constraints
 
@@ -89,7 +89,7 @@ Prototyped twice. First on `main` `9e39b29` (module fits, 108-point fluid sweep,
 | CPU | blood step 0.0005–0.0013 ms per 20 ms tick (budget 0.1); determinism: identical `labs` hash for the same seed and script |
 | Pulse oracle in Node (first prototype) | the spike's web build loads in Node through the Task 22 shim; StandardMale pH 7.417, BE +1.55, lactate 1.65 mmol/L (D18), K 4.0 true mmol/L (reported 5.0 by Pulse, D14), Hb 14.96, BV 5491 mL; 60 s simulated ≈ 21 s wall |
 
-### Deviations from the tables and the annex (for the orchestrator and Ali's R44 calibration pass)
+### Deviations from the tables and the annex (for the orchestrator and the owner's R44 calibration pass)
 
 - **Room-air apnoea, true SaO2 90 % at 41.0 s** (R39-1 band 35–60); preoxygenated 485 s (Stage 3: 501); **child 130.0 s sits on the band's lower edge** (7b alone: 133) — Q34 calibration item already open.
 - **Lactate needs a regional-hypoperfusion term** (decision 6): `REGIONAL_FRAC` 0.6 between q = 0.88 and 0.55, q normalised by the VO2 demand, `kAnaer` 0.05 (tables default 0.03), hepatic flow (CO/CO0)² — all [ENG], Q41/Q42.
@@ -771,7 +771,7 @@ describe('Figge/Stewart charge balance, bounded pH search (tables §5b.1; audit 
     expect(slope).toBeLessThanOrEqual(0.2);
   });
   // R45: the tables' 0.2 per mmHg needs cellular H+ release/alkalosis-driven lactate, which the one-pool Figge
-  // balance does not have (plan deviation list). Kept visible until Ali's calibration pass decides the mechanism.
+  // balance does not have (plan deviation list). Kept visible until the owner's calibration pass decides the mechanism.
   it.fails('acute respiratory alkalosis reaches the tables’ 0.2 mmol/L per mmHg (40 → 30)', () => {
     expect((solvePh(40, N).hco3 - solvePh(30, N).hco3) / 10).toBeGreaterThanOrEqual(0.18);
   });
@@ -1725,7 +1725,7 @@ describe('blood core step (tables §5b, §7)', { timeout: 300_000 }, () => {
     expect(b.ab.be).toBeGreaterThanOrEqual(0);
   });
   // R45: annex D3 wants Cl +6–8 and BE −3 to −5 at 60 min; albumin dilution (Stewart) offsets the chloride acidosis in
-  // this model (plan deviation list). Kept visible for Ali's calibration pass rather than widened.
+  // this model (plan deviation list). Kept visible for the owner's calibration pass rather than widened.
   it.fails('2 L 0.9 % saline in 30 min (GA): Cl +6–8 and BE −3 to −5 at 60 min (annex D3)', () => {
     const s = crystalloid2L('saline');
     expect(s.out.cl - 104).toBeGreaterThanOrEqual(6);
@@ -3971,7 +3971,7 @@ describe('7c sanity II — acid–base', { timeout: 300_000 }, () => {
     expect(b.be).toBeGreaterThanOrEqual(0);
   });
   // R45: annex D3 (Cl +6–8, BE −3 to −5 at 60 min) is not reached — albumin dilution offsets the chloride acidosis
-  // (plan deviation list; prototype Cl +5, BE −2.0). Visible until Ali's calibration pass.
+  // (plan deviation list; prototype Cl +5, BE −2.0). Visible until the owner's calibration pass.
   it.fails('2 L 0.9 % saline in 30 min under GA: Cl +6–8 and BE −3 to −5 at 60 min (annex D3)', async () => {
     const s = await twoLitres('saline');
     expect(s.cl - 104).toBeGreaterThanOrEqual(6);
@@ -4944,7 +4944,7 @@ git push origin stage-7c-blood
 
 - [x] **Step 2: Write `docs/gates/stage-7c.md`**
 
-Same shape as `docs/gates/stage-3.md`: the gate question ("Does the blood reproduce the tables' acid–base, electrolyte, fluid and O2-delivery behaviour — dynamic SID, bounded pH, lactate in shock, hyperchloraemia, hyperkalaemia with its ECG and treatments — observing 7g's drug doses with one K-shift source, feeding the ODC to 7b's mixing point — without moving any Stage 3/7a/7b/7g acceptance number out of its band except the six recorded ones, within 0.1 ms per tick?"); a Check | Result table with every number printed by Tasks 9, 12, 15, 17–23 (ODC points, solver iterations, respiratory compensation slopes, 1 L crystalloid retention, class III lactate/BE/Hb, transfusion, massive transfusion K/iCa/core temperature, saline vs balanced Cl/BE, DKA AG, hyperventilation pH, bicarbonate ΔEtCO2 curve, untreated VF lactate/pH/BE, hyperkalaemia K/QRS/Ca/insulin, salbutamol K at 30 min, COHb/MetHb SpO2 vs SO2, anaemia DO2, Stage 3/7b desaturation and OLV re-check, CPU per tick, determinism hash, 24 h drift, oracle rows with their D-numbers); a "Sibling tests recorded as `it.fails` (R45)" table (Task 15's six, with the numbers you measured and the ruling each needs); the Deviations list from this plan (still-open ones marked for Ali's R44 pass: Q25, Q41, Q42, Q44, Q45, Q46, Q47, the D3/ATLS/D1 BE items and the 0.2 per mmHg alkalosis slope); the screenshots; "Requests to other stages" (copy the plan's list, updated with what 7d/7e/7f expose if they merged meanwhile).
+Same shape as `docs/gates/stage-3.md`: the gate question ("Does the blood reproduce the tables' acid–base, electrolyte, fluid and O2-delivery behaviour — dynamic SID, bounded pH, lactate in shock, hyperchloraemia, hyperkalaemia with its ECG and treatments — observing 7g's drug doses with one K-shift source, feeding the ODC to 7b's mixing point — without moving any Stage 3/7a/7b/7g acceptance number out of its band except the six recorded ones, within 0.1 ms per tick?"); a Check | Result table with every number printed by Tasks 9, 12, 15, 17–23 (ODC points, solver iterations, respiratory compensation slopes, 1 L crystalloid retention, class III lactate/BE/Hb, transfusion, massive transfusion K/iCa/core temperature, saline vs balanced Cl/BE, DKA AG, hyperventilation pH, bicarbonate ΔEtCO2 curve, untreated VF lactate/pH/BE, hyperkalaemia K/QRS/Ca/insulin, salbutamol K at 30 min, COHb/MetHb SpO2 vs SO2, anaemia DO2, Stage 3/7b desaturation and OLV re-check, CPU per tick, determinism hash, 24 h drift, oracle rows with their D-numbers); a "Sibling tests recorded as `it.fails` (R45)" table (Task 15's six, with the numbers you measured and the ruling each needs); the Deviations list from this plan (still-open ones marked for the owner's R44 pass: Q25, Q41, Q42, Q44, Q45, Q46, Q47, the D3/ATLS/D1 BE items and the 0.2 per mmHg alkalosis slope); the screenshots; "Requests to other stages" (copy the plan's list, updated with what 7d/7e/7f expose if they merged meanwhile).
 
 - [x] **Step 3: Tick the plan, commit, push, open the PR**
 

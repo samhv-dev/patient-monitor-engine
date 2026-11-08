@@ -28,6 +28,16 @@ export const NEVER = 1e12;
 /** Normothermia = the engine's own resting core (L1 tempCore default 36.8 °C): hypothermia is measured from it, so a
  * normothermic patient keeps its published clearance (Task 21: engine PK = standalone model). */
 const NORMOTHERMIA_C = STATE_SCHEMA.tempCore.def;
+/** The lipid sink (research/44 X-06). Miller 10e ch. 25 p. 762, from Kuo & Akpa's PBPK model (Anesthesiology 2013;118:
+ * 1350): Intralipid lowers CARDIAC bupivacaine by 11 % within 3 minutes and CEREBRAL bupivacaine by 18 % within 15
+ * minutes ("theoretical"; Litonius 2012 found no significant sink in human volunteers). The sink is a Hill on the
+ * emulsion's concentration (ec50 1 = the ASRA regimen's reference). Each emax is sized so the ASRA 2020 regimen (1.5
+ * mL/kg, then 0.25 mL/kg/min) gives the cited fall at the cited time: lipid concentration 1.64 at 3 min → 0.11 ÷
+ * (1.64/2.64) = 0.177; 1.33 at 15 min → 0.18 ÷ (1.33/2.33) = 0.315 [FIT: M10 p. 762 −11 % cardiac at 3 min, −18 %
+ * cerebral at 15 min; brief research/44 X-06; src M10 ch. 25 p. 762]. It replaces one sink of up to 50 %, an engineered value that contradicted the row's own citation.
+ * The time course is the emulsion's, not the PBPK's (that mechanism is the audit's later step). */
+export const LIPID_SINK_CARDIAC = 0.177;
+export const LIPID_SINK_CEREBRAL = 0.315;
 
 export interface DrugInst {
   id: string;
@@ -180,7 +190,7 @@ function baseParams(pk: PkState, row: DrugRow, inst: DrugInst): PkParams | null 
 export function clFactor(row: DrugRow, ctx: PkCtx): number {
   const h = row.elim?.hepatic ?? 0;
   const r = row.elim?.renal ?? 0;
-  const temp = Math.max(0.5, 1 - 0.05 * Math.max(0, NORMOTHERMIA_C - ctx.tempC)); // [ENG] ≈ −5 %/°C below normothermia (M10 ch. 24 p. 698 direction)
+  const temp = Math.max(0.5, 1 - 0.05 * Math.max(0, NORMOTHERMIA_C - ctx.tempC)); // [FIT: hypothermic clearance −5 %/°C; brief research/44 L2-27; src M10 ch. 24 p. 698 (direction)] ≈ −5 %/°C below normothermia (M10 ch. 24 p. 698 direction)
   const hep = row.elim?.highExtraction ? ctx.hepFlow * temp : ctx.hepFn * (ctx.hepFnTemp ? 1 : temp);
   const organ = h * hep + (r * ctx.renal + Math.max(0, 1 - h - r)) * temp;
   return Math.round(organ * 100) / 100;
@@ -198,7 +208,7 @@ export function gammaDeclineRate(row: DrugRow, f: number): number {
 /** Cardiac output ÷ the patient's own resting output (the circulation's stabilised reference; else 0.075 L/min/kg),
  * quantised to 5 % in 0.3–1.5 (cache hits) — exactly 1 at rest, so a resting engine keeps the unscaled model. */
 /** Resting arm-to-brain circulation time, s (10–15 s: the classic dye/decholin circulation times, Guyton & Hall
- * [TXT]) [ENG value]; the lag at output ratio q is ARM_BRAIN_S·(1/q − 1). */
+ * [TXT]) (a point in Guyton & Hall's 10–15 s; value); the lag at output ratio q is ARM_BRAIN_S·(1/q − 1). */
 export const ARM_BRAIN_S = 12;
 export function distFactor(ctx: PkCtx, weightKg: number): number {
   const q = ctx.coLpm / (ctx.coRefLpm ?? 0.075 * weightKg);
@@ -436,7 +446,6 @@ function siteConc(pk: PkState, row: DrugRow, d: DrugInst, p: PkParams | null, t:
 function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
   // The surge's circulating catecholamines join the adrenergic rows' PD (never `agents`/`doses`)
   const actives: Active[] = endoCatActives(ctx.endoCat);
-  let lipid = 0;
   for (const d of Object.values(pk.drugs)) {
     const row = DRUGS[d.id] as DrugRow;
     if (row.pk.kind === 'gamma') {
@@ -444,7 +453,7 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
       d.infC += (d.infTarget - d.infC) * (1 - Math.exp(-PK_DT_S / tau));
       const tpS = row.pk.tpS;
       const n = gammaN(tpS, row.pk.t10S);
-      d.doses = d.doses.filter((x) => t - x.t < tpS * (4 + 12 / Math.sqrt(n))); // pruned when < 1e-4 of peak [ENG bound]
+      d.doses = d.doses.filter((x) => t - x.t < tpS * (4 + 12 / Math.sqrt(n))); // pruned when < 1e-4 of peak [ENG: numerics; bound]
       // Organ function slows the ELIMINATION share of the decline — each dose past its peak ages at rate g (dose time
       // moved forward by dt·(1 − g)); before the peak nothing changes (onset is distribution) (research/13 H9).
       d.factor = clFactor(row, ctx);
@@ -508,8 +517,10 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
   }
   // concentrations → actives and per-agent bus entries (LAST: free-fraction factor; lipid sink)
   const lip = pk.drugs.lipidEmulsion;
-  if (lip) lipid = hill(siteConc(pk, DRUGS.lipidEmulsion as DrugRow, lip, null, t).c, 1, 0.5);
-  const freeF = (1 + 2 * Math.max(0, 7.4 - ctx.ph)) * (1 - lipid);
+  const lipC = lip ? siteConc(pk, DRUGS.lipidEmulsion as DrugRow, lip, null, t).c : 0;
+  const acidF = 1 + 2 * Math.max(0, 7.4 - ctx.ph);
+  const freeF = acidF * (1 - hill(lipC, 1, LIPID_SINK_CARDIAC)); // The heart: PD, the bus concentration and cvE
+  const freeCns = acidF * (1 - hill(lipC, 1, LIPID_SINK_CEREBRAL)); // The brain: cnsE and the seizure drive
   // Potency-weighted fractional sums over the local anaesthetics present (ASRA 2020 additivity)
   let uCns = 0;
   let uCv = 0;
@@ -521,15 +532,16 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
     const sc = siteConc(pk, row, d, p, t);
     let c = sc.c;
     if (row.cls === 'localAnaesthetic') {
+      const cCns = c * freeCns;
       c *= freeF;
       const th = LAST_THRESHOLDS[row.id];
       if (th) {
         // Local-anaesthetic toxicity is ADDITIVE between agents (ASRA 2020 practice advisory; M10 ch. 25: the doses
         // share one maximum). The fractional sums replace the per-agent maximum, and each is fed to the SAME Hill as
         // before, so a sole agent at its threshold gives exactly the per-agent-maximum effect.
-        uCns += c / th.cns;
+        uCns += cCns / th.cns;
         uCv += c / th.cv;
-        uSeiz += c / th.seizure;
+        uSeiz += cCns / th.seizure;
       }
     }
     pk.lastC[d.id] = c;

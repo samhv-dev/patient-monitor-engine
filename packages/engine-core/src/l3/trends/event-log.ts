@@ -11,7 +11,7 @@ export interface LogEntry {
   issuedBy?: string;
 }
 
-/** Entries kept (oldest dropped first) [ENG]: 8 h of a busy scenario is a few thousand. */
+/** Entries kept (oldest dropped first) [ENG: numerics]: 8 h of a busy scenario is a few thousand. */
 export const LOG_MAX = 20_000;
 
 function describe(c: Command): string {

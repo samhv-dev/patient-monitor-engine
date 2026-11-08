@@ -29,7 +29,7 @@ describe('kidney through the engine', { timeout: 300_000 }, () => {
     expect(rest).toBeGreaterThan(0.8); // prototype 1.02 (the MANUAL default 120/80 site)
     expect(oliguric).toBeLessThan(0.3); // tables 17a
     expect(flag).toBe(true);
-    expect(recovered).toBeGreaterThan(0.5); // [ENG band] neurohumoral washout τ 45 min (Task 9)
+    expect(recovered).toBeGreaterThan(0.5); // [FIT: neurohumoral washout band; band; brief research/44 L2-07] neurohumoral washout τ 45 min (Task 9)
   });
   // Tables §7 check 20 premise: MAP 65, CVP 12, CO 3.5 (RPP 53). MODELED `hfref` severity 1 still does not reach it (MANUAL
   // reaches it since FU-2 item 7: next test). Plan text, pre-FU-2: MANUAL `contractility`/`svr` targets did not move 7a's CO, and MODELED `hfref` severity 1
@@ -60,7 +60,7 @@ describe('kidney through the engine', { timeout: 300_000 }, () => {
   // in band), UOP 0.244 at 30 min (in band) and 0.342 at 60 min (MISS, high). Diagnosis: the kidney's effective-volume
   // reference is max(0.08 L/min/kg, the start CO) and the MANUAL adult starts at a higher CO than the model-level
   // reference 5.6, so CO 3.35 reads as a deeper low-output state (V at its floor) than the model's CO 3.5/5.6. R45: not
-  // re-tuned here — calibration item (Q-7D-c20: the effective-volume reference CO, decision 10) for Ali's pass.
+  // re-tuned here — calibration item (Q-7D-c20: the effective-volume reference CO, decision 10) for the owner's pass.
   it.fails('check 20 (MANUAL contractility): premise UOP 0.1–0.15; dobutamine → CO +20–40 %, UOP 0.2–0.3 in 30–60 min', async () => {
     const r = organsRig({ seed: 7, patient: { weightKg: 70, baseline: { hr: 80 }, sensors: { abp: 'connected', cvp: 'connected' } } });
     await r.run(20);

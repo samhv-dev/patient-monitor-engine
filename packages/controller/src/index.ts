@@ -16,10 +16,10 @@ export {
   type WebRtcOptions,
 } from './transport/webrtc.ts';
 export { backoffDelay, DEFAULT_BACKOFF, type BackoffOptions } from './transport/backoff.ts';
-export type { RelayFrame } from './transport/relay-frames.ts';
-export { HostSession, STAGE_LEAD_TICKS, type HostSessionOptions, type HostTarget, type ScenarioHook, type ScenarioHookResult } from './session/host-session.ts';
+export type { RelayDevice, RelayFrame } from './transport/relay-frames.ts';
+export { HostSession, INSTRUCTOR_REASONS, STAGE_LEAD_TICKS, type HostSessionOptions, type HostTarget, type ScenarioHook, type ScenarioHookResult } from './session/host-session.ts';
 export { bolusDrugOf, givenByOf, lockReason, RecentGives, SAME_DRUG_LOCK_S, type DrugLock, type GivenBy } from './session/drug-lock.ts';
-export { ControllerSession, describe, type ControllerSessionOptions, type LogEntry } from './session/controller-session.ts';
+export { ControllerSession, describe, HOST_RESTARTED_REASON, NOT_CONFIRMED_REASON, type ControllerSessionOptions, type InstructorAccess, type LogEntry } from './session/controller-session.ts';
 export { ViewerSync, type ViewerSyncOptions, type ViewerStatus, type ViewerTarget } from './session/viewer-sync.ts';
 export * from './panel/controls.ts';
 export { StageBuffer } from './panel/staging.ts';

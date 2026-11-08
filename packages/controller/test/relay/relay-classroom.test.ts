@@ -118,6 +118,20 @@ describe('the classroom relay', () => {
     v1.ws.close();
     await waitFor(() => (h.got.filter((f) => f.relay === 'peers').at(-1) as { peers: number }).peers === 1);
   });
+
+  it("R2: the learners' peers frame is byte for byte today's (hostOnline, peers), while the host's carries the devices", async () => {
+    const r = await start();
+    const h = await client(r, 'h', 'host');
+    await client(r, 'v1', 'viewer');
+    const v2 = await client(r, 'v2', 'viewer');
+    r.sweep();
+    await waitFor(() => v2.got.some((f) => f.relay === 'hb'));
+    // JSON.parse keeps the key order, so re-serialising a parsed frame gives back the bytes the relay sent
+    const learner = v2.got.filter((f) => f.relay === 'peers').map((f) => JSON.stringify(f));
+    expect(learner).toEqual(['{"relay":"peers","hostOnline":true,"peers":2}']);
+    await waitFor(() => h.got.filter((f) => f.relay === 'peers').length >= 4); // three joins and the sweep
+    expect(h.got.filter((f) => f.relay === 'peers').at(-1)).toMatchObject({ peers: 2, devices: [{ id: 'v1' }, { id: 'v2' }] });
+  });
 });
 
 describe('the addresses the QR code may use', () => {

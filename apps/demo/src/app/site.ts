@@ -2,11 +2,7 @@
 // alarm defaults, and the shell's units and speed. It belongs to the room, not to a case, so loading a scenario never
 // changes it. Stored per browser (a convenience, research/13 brief §5) and exportable as one JSON file.
 import { resolveSkin, type Skin } from '@pme/skins';
-import type { RouteId } from './router.ts';
 import { store } from './store.ts';
-
-/** The two Instructor views: today's (#/teach) and Instructor v2 (#/teach2). */
-export type InstructorRoute = Extract<RouteId, 'teach' | 'teach2'>;
 
 export interface SiteProfile {
   schema: 'pme-site/1';
@@ -16,17 +12,13 @@ export interface SiteProfile {
   theme: '' | 'projector-light' | 'ecg-grid';
   /** Frame rate cap: 30 for projectors and tablets on battery. */
   fps: 60 | 30;
-  /** Where the instructor works by default on a wide screen: beside the monitor or in a drawer over it. */
-  panel: 'split' | 'drawer';
   /** Gas partial pressures in the shell's tables (the monitor keeps its skin's unit). */
   gasUnit: 'mmHg' | 'kPa';
   /** New patients start with the sensors off: the learner attaches them and traces appear only then (Laerdal). */
   sensorsOff: boolean;
-  /** Drug names on every screen (Ali's open question Q13): 'us' "epinephrine / norepinephrine"
+  /** Drug names on every screen (the owner's open question Q13): 'us' "epinephrine / norepinephrine"
    *  (default), 'uk' "adrenaline / noradrenaline". */
   drugNames: 'us' | 'uk';
-  /** The Instructor view the rail's one "Instructor" entry and every route to the instructor open (owner, 30 October). */
-  instructor: InstructorRoute;
   /** The room's defibrillator model (Room plan R5b; owner's Q6 ruling of 5 November), apart from the monitor style: a
    *  `DEFIB_CHOICES` id, which the host sends to the engine at every patient mount, or null (not chosen: the monitor
    *  style's own defibrillator values, as before). */
@@ -58,14 +50,20 @@ export function defibDefaults(model: string | null): { energyAdultJ: number; ene
   const d: Skin['defib'] = look ? resolveSkin(look).skin.defib : null;
   return d ? { energyAdultJ: d.energyAdultJ, energyPaedJ: d.energyPaedJ, ladderJ: [...(d.aedSequenceJ ?? [])] } : { energyAdultJ: NO_MODEL_ENERGY_J, energyPaedJ: null, ladderJ: [] };
 }
+/** The Room card's view of a model's pacer (row 58, the pacer following the model too), null with no model chosen. */
+export function pacerDefaults(model: string | null): { ratePpm: number; pausePct: number | null } | null {
+  const look = DEFIB_CHOICES.find((c) => c.id === model)?.look;
+  const p: Skin['pacer'] = look ? resolveSkin(look).skin.pacer : null;
+  return p ? { ratePpm: p.rateDefault, pausePct: p.pausePct } : null;
+}
 /** The drug-name sets, in the words the Settings screen uses. */
 export const DRUG_NAME_SETS: ReadonlyArray<[SiteProfile['drugNames'], string]> = [['us', 'Epinephrine, norepinephrine'], ['uk', 'Adrenaline, noradrenaline']];
-/** The Instructor views, in the words the Settings screen uses. */
-export const INSTRUCTOR_VIEWS: ReadonlyArray<[InstructorRoute, string]> = [['teach', "Today's view"], ['teach2', 'Instructor v2']];
 export const THEMES: ReadonlyArray<[SiteProfile['theme'], string]> = [['', 'Dark'], ['projector-light', 'Projector (light)'], ['ecg-grid', 'ECG paper grid']];
 
-export const DEFAULT_SITE: SiteProfile = { schema: 'pme-site/1', skin: 'saadat-like', theme: '', fps: 60, panel: 'split', gasUnit: 'mmHg', sensorsOff: false, drugNames: 'us', instructor: 'teach', defibModel: null }; // today's view: the 3 November demo's
+export const DEFAULT_SITE: SiteProfile = { schema: 'pme-site/1', skin: 'saadat-like', theme: '', fps: 60, gasUnit: 'mmHg', sensorsOff: false, drugNames: 'us', defibModel: null };
 
+/** A stored or imported profile; the keys the profile no longer has (`instructor` and `panel`, the two-view choices
+ *  retired on 6 November 2026) are ignored, so an older site file still imports. */
 export function parseSite(raw: unknown): SiteProfile {
   const o = (raw && typeof raw === 'object' ? raw : {}) as Partial<SiteProfile>;
   const d = DEFAULT_SITE;
@@ -74,11 +72,9 @@ export function parseSite(raw: unknown): SiteProfile {
     skin: MONITORS.some((m) => m.id === o.skin) ? (o.skin as string) : d.skin,
     theme: THEMES.some(([t]) => t === o.theme) ? (o.theme as SiteProfile['theme']) : d.theme,
     fps: o.fps === 30 ? 30 : 60,
-    panel: o.panel === 'drawer' ? 'drawer' : 'split',
     gasUnit: o.gasUnit === 'kPa' ? 'kPa' : 'mmHg',
     sensorsOff: o.sensorsOff === true,
     drugNames: o.drugNames === 'uk' ? 'uk' : 'us',
-    instructor: INSTRUCTOR_VIEWS.some(([v]) => v === o.instructor) ? (o.instructor as InstructorRoute) : d.instructor,
     defibModel: DEFIB_CHOICES.some((c) => c.id === o.defibModel) ? (o.defibModel as string) : d.defibModel,
   };
 }

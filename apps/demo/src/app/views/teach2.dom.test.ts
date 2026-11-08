@@ -24,7 +24,7 @@ function rig() {
     send: async (c: CommandInput) => (sent.push(structuredClone(c)), reply),
     onChange: (fn: () => void) => (fns.add(fn), () => void fns.delete(fn)),
   } as unknown as Link;
-  const v = teach2View(link, { site: DEFAULT_SITE, weightKg: () => 70 });
+  const v = teach2View(link, { site: DEFAULT_SITE, weightKg: () => 70, loadScenario: () => true });
   document.body.append(v.el);
   return { v, sent, link };
 }
