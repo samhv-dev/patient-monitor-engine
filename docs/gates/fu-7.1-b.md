@@ -108,7 +108,7 @@ row in Section 2.
 
 `resp-suite` RS14 + `resp-inspired-co2` RS14 (EtCO2 +5.99994; Q5) · `arrest-etco2` +30 s (9.3) and CPR +2 min (15.9;
 Q9) · `stimulus-surge` case 1 awake ΔMAP (40.3) · `fidelity-arrest` fidelity-3 EtCO2 floor × 3 skins (7; Q9) ·
-`fidelity-lowflow` Ali case (SpO2 valid 6 s at MAP 19–20; Q10) · **`organs-htn` hypocapnia CBF ceiling (0.4019; not
+`fidelity-lowflow` samhv-dev case (SpO2 valid 6 s at MAP 19–20; Q10) · **`organs-htn` hypocapnia CBF ceiling (0.4019; not
 owner-ruled)**. Flipped: `fu8-tonic` HTN row (5.14 points). `arrest-etco2`'s re-targeted no-CPR case PASSES.
 
 B4 matrix (re-run here; prototype in brackets): drained q 1.0/110 ROSC +146 s (+146) · q 0.8 +200 s (+200) · q 0.6

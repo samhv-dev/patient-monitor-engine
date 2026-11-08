@@ -36,7 +36,7 @@ export const OTHER_ROWS: DrugRow[] = [
   { id: 'potassiumChloride', name: 'Potassium chloride', cls: 'electrolyte', amountUnit: 'mmol', pk: blood, shared: 'blood', pd: [],
     rateActsVia: '7c potassium pool (ECF K + Cl, solutes.ts)',
     maxRatePerH: { amount: 20, src: 'peripheral line 10 mmol/h [chapter not verified], central up to 20 mmol/h with ECG monitoring [TXT: Miller 10e ch. 43 p. 1355; Stoelting Co-Existing 8e ch. 20 p. 404]' },
-    doses: '10 mmol/h peripherally, up to 20 mmol/h centrally with monitoring; never an iv bolus', onset: 'plasma K ≈ +0.25 mmol/L per 20 mmol in hypokalaemic ICU patients (Kruse 1990, PMID 2310280; grade C)', ir: '?', src: 'Ali 2026-10-10; Miller 10e ch. 43 p. 1355; Co-Existing 8e ch. 20 p. 404; Kruse 1990 (PMID 2310280)', tag: 'TXT' },
+    doses: '10 mmol/h peripherally, up to 20 mmol/h centrally with monitoring; never an iv bolus', onset: 'plasma K ≈ +0.25 mmol/L per 20 mmol in hypokalaemic ICU patients (Kruse 1990, PMID 2310280; grade C)', ir: '?', src: 'samhv-dev 2026-10-10; Miller 10e ch. 43 p. 1355; Co-Existing 8e ch. 20 p. 404; Kruse 1990 (PMID 2310280)', tag: 'TXT' },
   { id: 'sodiumBicarbonate', name: 'Sodium bicarbonate 8.4 %', cls: 'electrolyte', amountUnit: 'mmol', pk: blood, pd: [], doses: '1 mmol/kg (1 mL/kg of 8.4 %)', onset: 'pH ↑ at once; EtCO2 +5 mmHg at 90 s (7c decision 14)', ir: '?', src: '7c plan decision 14', tag: 'TXT' },
   // The row's insulin is the plain insulin row's insulin — the same PK and the same K⁺ pharmacodynamics (`kShift` →
   // bus.metabolic.kShift → the blood model), so the blood model's empirical whole-effect curve is retired whenever the

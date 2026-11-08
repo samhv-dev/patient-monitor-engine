@@ -76,7 +76,7 @@ owner's hand checks before the freeze.
 First try `SendMessage` to each stopped agent's id ("the cap has reset; continue exactly where you stopped; confirm the worktree state first") — the harness resumes it with its context intact (worked 2026-09-29 01:25). Only if that fails, relaunch a fresh agent from the pushed state with the brief below.
 
 ## The resume rule (for a human or a scheduled session)
-A stage is STALLED if all three hold: (a) its plan on its branch has unticked `- [ ]` tasks, (b) the branch's last commit is older than 2 hours (`git log -1 --format=%cI origin/<branch>`), (c) its PR is not merged. A stalled stage is resumed by dispatching ONE fresh Opus executor with the brief template below, pointed at the first unticked task. Never run two executors on the same stage. Never merge a PR from a resumed session: open/update the PR, write the gate note, and stop — the orchestrator (or Ali) inspects the gate and merges (R21).
+A stage is STALLED if all three hold: (a) its plan on its branch has unticked `- [ ]` tasks, (b) the branch's last commit is older than 2 hours (`git log -1 --format=%cI origin/<branch>`), (c) its PR is not merged. A stalled stage is resumed by dispatching ONE fresh Opus executor with the brief template below, pointed at the first unticked task. Never run two executors on the same stage. Never merge a PR from a resumed session: open/update the PR, write the gate note, and stop — the orchestrator (or samhv-dev) inspects the gate and merges (R21).
 
 ## Executor brief template
 
@@ -97,4 +97,4 @@ A stage is STALLED if all three hold: (a) its plan on its branch has unticked `-
 4. Update the table above. Launch the next stage whose dependencies are now on main.
 
 ## Wave map
-Wave B = Stage 3 ∥ Stage 4b (∥ Stage 5.1 once Ali's list exists). Wave C = Stage 7 (needs 3 + 6b; ships comorbidity, ischaemia, left-heart, brain/kidney, IABP/LVAD/ICD/ECMO parameter tables reviewed by Ali) ∥ ventilator-link demo (R27). Wave D = Stage 8 validation against VitalDB/MGH, Saadat bedside checklist, IIFE embed into the ventilator sim, v1.0.
+Wave B = Stage 3 ∥ Stage 4b (∥ Stage 5.1 once the owner's list exists). Wave C = Stage 7 (needs 3 + 6b; ships comorbidity, ischaemia, left-heart, brain/kidney, IABP/LVAD/ICD/ECMO parameter tables reviewed by samhv-dev) ∥ ventilator-link demo (R27). Wave D = Stage 8 validation against VitalDB/MGH, Saadat bedside checklist, IIFE embed into the ventilator sim, v1.0.

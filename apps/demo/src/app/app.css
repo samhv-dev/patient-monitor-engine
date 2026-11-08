@@ -1,7 +1,7 @@
 /* Stage 9 app shell: "bezel and screen" (research/13 brief §6). The monitor is the screen — true black, the skin's own
    colours, untouched. Everything else is the bezel: graphite, quiet, colour only for state. One instructor accent
    (periwinkle) marks what the instructor controls; alarm colours are never shell tokens (they come from the skin).
-   System fonts by default (the OFL fonts wait for Ali's ruling, Open question Q7). No UI library. */
+   System fonts by default (the OFL fonts wait for the owner's ruling, Open question Q7). No UI library. */
 
 :root {
   color-scheme: dark;
@@ -379,6 +379,8 @@ body:has(.app[data-route='monitor']) .toast[data-kind='info'] { display: none; }
 .status-pill { display: inline-block; margin: var(--s-2) var(--s-3); padding: 2px var(--s-3); border: 1px solid var(--line-strong); border-radius: 999px; font-size: var(--t-13); color: var(--text); }
 .remote-panel { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); }
 .remote-panel .panel { border-left: 0; }
+.remote-head { display: flex; flex-wrap: wrap; align-items: center; }
+.remote-title { margin: var(--s-2) 0 var(--s-2) var(--s-3); font-size: var(--t-15); color: var(--text-strong); }
 /* The instructor phone's way in (plan instructor-peer-role.md P7): the PIN form's keypad, thumb-sized (56 px keys,
    above the 44 px touch target), and the Room page's instructor card */
 .ip-peer-form { max-width: 420px; margin: var(--s-4) auto; }

@@ -8,7 +8,7 @@ This file has three jobs.
 1. **Inventory** (§2): every truth/state/measurement parameter the engine has, grouped by system, with its engine key,
    unit, where it is surfaced, who owns it (MODELED physiology, MANUAL instructor target, or an input), and which stage
    built it.
-2. **Gap table** (§3): Ali's R54–R59 list (respiratory mechanics and lung volumes, labs and coagulation, pregnancy,
+2. **Gap table** (§3): the owner's R54–R59 list (respiratory mechanics and lung volumes, labs and coagulation, pregnancy,
    and what the list implies) marked **present / internal-only / missing**.
 3. **Glossary** (§5): for every surfaced parameter, the clinical abbreviation, full name, unit, adult normal range
    (child and pregnancy where they differ), the vendor/textbook convention, and the current label. **R56 makes this
@@ -31,7 +31,7 @@ This file has three jobs.
 
   | group | present | internal-only | missing | total |
   |---|---|---|---|---|
-  | A. Respiratory mechanics and lung volumes (Ali's 24 items) | 4 | 10 | 10 | 24 |
+  | A. Respiratory mechanics and lung volumes (the owner's 24 items) | 4 | 10 | 10 | 24 |
   | A′. Mechanics extras the list implies (P0.1, RCexp, loops, Pes…) | 6 | 4 | 3 | 13 |
   | B. Labs: ABG/VBG, CBC, chemistry, LFTs, glucose, coagulation, TEG/ROTEM | 18 | 8 | 32 | 58 |
   | C. Pregnancy (R59) | 1 | 7 | 27 | 35 |
@@ -352,14 +352,14 @@ engine's. Where the console rescales (SVR ×1333.22 to dyn·s·cm⁻⁵, fractio
 
 ---
 
-## 3. Gap table against Ali's list (R54–R59)
+## 3. Gap table against the owner's list (R54–R59)
 
 **P** = present (a clinical display shows it), **I** = internal-only (truth/console/event/code, no clinical display),
 **M** = missing (no code computes it). "Derivable" means one line from existing internals. The **owner** column names
 the stage the revised order (R54–R59) gives it: **7k** respiratory mechanics (R57, after FU-6), **7i** blood chemistry
 and coagulation (R58), **7j** obstetric (R59), **S9** clinical UI and naming (R55/R56), **7h** devices (v1.1).
 
-### A. Respiratory mechanics and lung volumes (Ali's 24 items; R57)
+### A. Respiratory mechanics and lung volumes (the owner's 24 items; R57)
 
 | # | item | status | where it is / what is missing | owner |
 |---|---|---|---|---|
@@ -979,7 +979,7 @@ Current keys are `ev.labs.values.<k>` / `ev.labResult.values.<k>` (LAB panel lab
 | 294 | neuraxial level | Block height | Sensory block level (dermatome) | T-level | T4 for caesarean | obstetric anaesthesia | — | new |
 
 
-### 5.16 Rules for the glossary's use (proposed for Ali's review, R56)
+### 5.16 Rules for the glossary's use (proposed for the owner's review, R56)
 
 1. **One label per quantity, everywhere.** The console's `meta.ts` CURATED map, the renderer tile headers, the lab
    panel rows, the ventilator page, the scenario editor and the docs all read this table (Stage 9 generates a

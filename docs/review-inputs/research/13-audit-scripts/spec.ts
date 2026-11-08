@@ -1,7 +1,7 @@
 // Coverage run RH (renal and hepatic; research/12 §5.1): the cell type, the rigs, the contexts and the measure helpers,
 // copied from research/22-audit-scripts/spec.ts (BF) and adapted. A cell names its arms (`i` = intervention, `c` = its
 // control at the same sim time, plus reference arms), a `measure` over the arms' rows, and `expect` items the grader
-// turns into a verdict. Bands are PROPOSALS for Ali with their source (research/12 §2.2) and are never widened to fit
+// turns into a verdict. Bands are PROPOSALS for samhv-dev with their source (research/12 §2.2) and are never widened to fit
 // (R45).
 import { A, VENTED, VENTED_GA, at, diffExtreme, maxOf, mean, minOf, r1, r2, r3, type Arm, type ArmResult, type Row, type Step } from './runner.ts';
 

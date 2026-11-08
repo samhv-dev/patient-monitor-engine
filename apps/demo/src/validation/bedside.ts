@@ -1,5 +1,5 @@
 // Saadat bedside checklist page (research/06 §7). The engine runs the saadat-like skin; each item restores the start
-// snapshot, plays its demo and measures what the engine did; Ali records the real monitor's behaviour and a verdict;
+// snapshot, plays its demo and measures what the engine did; samhv-dev records the real monitor's behaviour and a verdict;
 // the results JSON feeds `bedside:apply` (skin provenance).
 import type { Command, EngineEvent } from '@pme/engine-core';
 import { mountMonitor } from '@pme/renderer';

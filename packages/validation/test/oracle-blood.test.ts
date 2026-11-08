@@ -34,7 +34,7 @@ describe('blood oracle rules (always run)', () => {
 const DIR = pulseDir();
 // Per-row verdicts of the FU-3 item 10 local Pulse run (2026-09-27, MODELED, base d525eed = main + 7d + 7f), pinned
 // row by row (R50 review finding 4). Two expected-disagreement rows our engine has moved INTO Pulse's tolerance since
-// 7c's gate run read `fail` — R45: rows and tolerances unchanged; each is a finding for Ali (annex §C):
+// 7c's gate run read `fail` — R45: rows and tolerances unchanged; each is a finding for samhv-dev (annex §C):
 //   O2b lactate Δ +0.50 vs Pulse +0.06, inside tol 0.5 (expect-differ D2; MANUAL gives +1.10; 7c's gate run +1.00);
 //   O3b Hb Δ −1.50 vs Pulse −2.48, inside tol 0.5 × 2.48 (expect-differ D10; 7c alone −0.50: 7d's kidney keeps more
 //   of the litre).

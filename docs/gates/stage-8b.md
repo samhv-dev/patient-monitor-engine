@@ -209,7 +209,7 @@ The items as they were set out before the release:
 - Step 5 (`expect: { refused: true }` in `pme-validation` documents): **not needed** — no document on this branch
   expects a refusal.
 - Step 6: (a) `FIXED_ALARM_WORDS` (`apps/demo/src/app/alarms.ts`) stays in code: moving it into the glossary needs
-  Ali's review of the wording — gap recorded; (b) the `iec-defaults` base skin lists `alwaysOn: []` with provenance
+  The owner's review of the wording — gap recorded; (b) the `iec-defaults` base skin lists `alwaysOn: []` with provenance
   "brief §3.8" while VF, VT and asystole still alarm on skins that inherit it — the documented list needs a source;
   gap recorded, no data changed.
 
@@ -249,20 +249,20 @@ Stage 14); a DOI (Q5, at 1.0.0).
 
 ## 15. Licence items for legal review before the v1.0 tag (brief §10)
 
-Which tag the two "open, for Ali" rows must precede — `v1.0.0-rc.1` or `v1.0.0` — was the owner's choice, open.
+Which tag the two "open, for samhv-dev" rows must precede — `v1.0.0-rc.1` or `v1.0.0` — was the owner's choice, open.
 **Closed by the owner on 2026-10-18:** both rows are closed (dated in the table), so neither holds a tag. No lawyer
 review is sought.
 
 | §10 item | Status at this release |
 |---|---|
 | ECGSYN-derived "MIT" ports | not used: ECGSYN is a forbidden source (brief §8; R6); no file derives from it |
-| ODC-By templates bundled in an MIT package (N-050, N-051) | bundled with attribution in NOTICES.md, the IIFE banner and every distribution's `NOTICES.md`; whether ODC-By attribution-by-NOTICES suffices: open, for Ali — **closed by the owner 2026-10-18**: attribution by NOTICES is sufficient ("Enough, close the item") |
+| ODC-By templates bundled in an MIT package (N-050, N-051) | bundled with attribution in NOTICES.md, the IIFE banner and every distribution's `NOTICES.md`; whether ODC-By attribution-by-NOTICES suffices: open, for samhv-dev — **closed by the owner 2026-10-18**: attribution by NOTICES is sufficient ("Enough, close the item") |
 | VitalDB DUA (vitaldb.net) vs the PhysioNet CC BY copy | validation only, the PhysioNet CC BY 4.0 copy; nothing bundled |
 | PWDB PDDL on Zenodo | validation only (not fetched: Zenodo 403 in 8a and on 2026-10-17); nothing bundled |
 | CapnoBase | excluded (brief §8) |
 | MIMIC ODbL share-alike | excluded (brief §8) |
 | Apache NOTICE obligations (N-P rows, TypeDoc assets) | `LICENSES/Apache-2.0.txt` and the NOTICES excerpt ship with every artefact (npm `dist/`, embed zip, `LICENSES.zip`, API zip); statement of changes per N-P row |
-| PTB-XL licence mismatch (§11 C5) | R6 listed PTB-XL as ODC-By, the PhysioNet page says CC BY 4.0; both allow the use; NOTICES N-052 records CC BY 4.0; report-only comparison, nothing bundled — resolved in the repository's records; a lawyer's confirmation: open, for Ali — **closed by the owner 2026-10-18**: resolved (CC BY 4.0 on record; report-only; nothing bundled); no lawyer review is sought |
+| PTB-XL licence mismatch (§11 C5) | R6 listed PTB-XL as ODC-By, the PhysioNet page says CC BY 4.0; both allow the use; NOTICES N-052 records CC BY 4.0; report-only comparison, nothing bundled — resolved in the repository's records; a lawyer's confirmation: open, for samhv-dev — **closed by the owner 2026-10-18**: resolved (CC BY 4.0 on record; report-only; nothing bundled); no lawyer review is sought |
 
 ## 16. BUILD-PLAN Stage 8 acceptance (8a + 8b) — never an unmet item as met
 
@@ -276,8 +276,8 @@ review is sought.
 6. Licence ✓ — `check-notices`, the extended `check-licences` and §15.
 
 Definition of done: 1 and 8 not met (as acceptance 1–2); 9 — the IIFE and the ESM packages are built and publishable
-(publishing: Q1, GitHub release only), and "the ventilator-sim PR has been handed to Ali" is superseded by R35 and the
-Q4 ruling (the embed ships in this repository); 10 per §15. Open questions: none — Q1, Q2, Q3, Q5, Q8 ruled by Ali
+(publishing: Q1, GitHub release only), and "the ventilator-sim PR has been handed to samhv-dev" is superseded by R35 and the
+Q4 ruling (the embed ships in this repository); 10 per §15. Open questions: none — Q1, Q2, Q3, Q5, Q8 ruled by samhv-dev
 (2026-10-10), Q4, Q6, Q7 ruled 2026-09-27, Q9 yes; Q3 superseded for Pages after the tag (deviation 7).
 
 ## 17. Honesty
@@ -320,7 +320,7 @@ the eight `test-slow` groups (`slow-a` … `slow-g`, `showcase`).
   rule kind `heldThen`; PR #69, merging before the tag). CHANGELOG and CITATION dated 2026-10-18.
 - GitHub Pages (plan Task 15): run by the executor only after the orchestrator reports the `v1.0.0-rc.1` tag.
 - Open for the owner, unchanged: the hand checks (H17–H22, the Stage 13 print check, `RELEASE.md` items 8–9) and the
-  licence rows marked "open, for Ali" (section 15). **Since then (owner, 2026-10-18):** H17–H22 and the print check
+  licence rows marked "open, for samhv-dev" (section 15). **Since then (owner, 2026-10-18):** H17–H22 and the print check
   are run (section 11; H19 failed: FX-14, FX-15) and both licence rows are closed (section 15); `RELEASE.md` items 8–9
   were not part of those checks.
 

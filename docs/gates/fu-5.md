@@ -31,7 +31,7 @@ Skins: philips-like unless marked mr (mindray-like) / sa (saadat-like). Before/a
 | # | Item | Source | Before | After | Asserted by |
 |---|---|---|---|---|---|
 | 1 | Low flow, 3 L bleed (A1m), +20 s after MAP < 30 | brief §4.3; [S2] p. 58–59, 120 | SpO2 "99" valid, PI 2.16, INOP none; pleth 140 % of rest; 96 % of rows plain-valid; 58 rows valid SpO2 with PR/PI invalid | "99?", PI 0.11, SpO2 LOW PERF; pleth 8 %; 0 % plain-valid; 0 rows | `fidelity-lowflow` 1; `fu5-fidelity.e2e` suite 1 (📷) |
-| 1 | Low flow, Ali's case (A2) | same | "99" valid, PI 2.03; pleth 133 %; 100 % plain-valid | "99?", PI 0.14, LOW PERF; pleth 7 %; 0 % | `fidelity-lowflow` 1 |
+| 1 | Low flow, the owner's case (A2) | same | "99" valid, PI 2.03; pleth 133 %; 100 % plain-valid | "99?", PI 0.14, LOW PERF; pleth 7 %; 0 % | `fidelity-lowflow` 1 |
 | 2 | PEA (A5 ×3) | [S2] p. 57 (review ruling 3) | ART valid in 10 of 87 rows (the 118/79 glitch); ART INOP no; ART low alarms cleared during PEA 3 / 0 / 0 | 87 / 87 / 3 of 87 — philips-/mindray-like keep S/D/M of the flat line ("24/21 (22)"), saadat-like the mean; ABP NON-PULSATILE on every skin; `prAbp` invalid from +6 s; ART lows cleared during PEA 0 | `fidelity-arrest` 2, `numerics.test`, `fu5-technical` |
 | 3 | VF → CPR → ROSC (A4 ×3) | [S2] p. 97, 99 | VFIB +3.0 s; HR_HIGH ×10 during VF; at 420 s mr EXTREME TACHY latched | VFIB +3.0 s; 0 other rate alarms; at 420 s philips-like VFIB + APNEA latched (silent), mr/sa none latched | `fidelity-arrest` 3 |
 | 4 | Asystole (A6 ×3) | [S1] p. 50; [S4] | +4.1 / +4.1 / +10.1 s; HR LOW beside it (philips-like ×1) | +4.1 / +5.1 ([S4] 5 s) / +10.1 s; 0 | `fidelity-arrest` 4, 4b |
@@ -97,7 +97,7 @@ philips-like is `data-latched="true"` and never with the red lamp, and one is se
 |---|---|---|---|
 | `fidelity-lowflow` 1b | ventilated normal patient (MODELED, PPV from 1 s): rest PI within ± 5 % of `origin/main` 1.80 | 1.49 (−17 %) | SV₀ is the spontaneous settle (80 mL) against 68 mL under PPV; PI follows SV only — R-FU5-9 (FU-4 cutaneous tone), ruling 1 |
 | `fidelity-lowflow` 1b | propofol 2 mg/kg (ventilated): PI RISES after induction | 1.49 → 1.17 (−21 %) at 180–240 s (MAP 96 → 86, SV 68 → 55) | same — R-FU5-9 |
-| `fidelity-ecg` 12 | saadat-like HR 80 → 120 within 8 s (B9 M p. 65–66: 6 s ± 2) | 9 s | ruling 5; Open question 12 (Ali's stopwatch) |
+| `fidelity-ecg` 12 | saadat-like HR 80 → 120 within 8 s (B9 M p. 65–66: 6 s ± 2) | 9 s | ruling 5; Open question 12 (the owner's stopwatch) |
 | `fidelity-nibp` 10 | PP 10: cuff S/D within ± 8 of the instructor's 77/67 | 80/56 (PP 24); the truth reaches only 81/62 (the MANUAL tracker) | ruling 5; Open question 5 |
 | `fidelity-nibp` 10 | AF 150, 11 cycles: \|SBP bias\| ≤ 6 against the TRUE radial pressure | +10.8 (first two readings +24, +13; DBP +2.7) | the truth beat-mean counts AF's non-ejecting beats (FU-4 T2); against the displayed line: SBP +0.1, DBP +3.6 (passes) |
 | `fidelity-alarms` 11 | CVP_M_HIGH ≤ 2 raises in the 11-min MANUAL rhythm tour | 4 philips-like, 4 mindray-like (11 / 9 before Task 9a's on-delays) | the displayed CVP swings 9–11 across the limit 10 with ventilation and rhythm, wider than D9's one-unit hysteresis — ruling 5 |
@@ -149,12 +149,12 @@ The trial merge with FU-4 (§6 (c)) flips none of these.
 - **(c) FU-4 has not merged**, so Task 15 Step 3 / Task 18's merged-tree re-measure ran on a TRIAL merge of
   `origin/fu-4-integration-polish` `e3eeb56` (FU-4's Tasks 0–18d; 18e uncommitted there) in the executor's scratch —
   one conflict, `truth.ts` `SKIP_PATH`, resolved as the union (R-FU5-2); typecheck clean. On that tree:
-  - `audit:monitor` A2 (Ali's case): ASYSTOLE ×1 at 937 s, then EXTREME BRADY ×3 (948–951, 989–992, 1000–1004 s)
+  - `audit:monitor` A2 (the owner's case): ASYSTOLE ×1 at 937 s, then EXTREME BRADY ×3 (948–951, 989–992, 1000–1004 s)
     — each a 3–4 s cycle raised when two beats closer than 2.5 s end the ASYSTOLE condition (the entry stays latched)
     and cleared by the chain when the asystole returns; A1m: ASYSTOLE ×1 (893 s), EXTREME BRADY ×1 (956–960 s). The
     review's merged tree had A2 ×11, A1m ×7 before the agonal hold.
   - The six `fidelity-*` files: 51 of 55 pass; **4 fail on FU-4's truth** — (1) `fidelity-lowflow` 3 L bleed:
-    `spo2LowPerf` raise/clear cycle 1.0 s at 601 s (the no-technical-flicker guard); (2) `fidelity-lowflow` Ali's case:
+    `spo2LowPerf` raise/clear cycle 1.0 s at 601 s (the no-technical-flicker guard); (2) `fidelity-lowflow` the owner's case:
     EXTREME_BRADY 3.3 s cycle at 948 s (+2 more) — the guard ruling 6 asked for (review F9); (3) `fidelity-arrest` 2
     PEA: HR − electrical rate 4.3 > 3 (FU-4's PEA now decays to asystole, `f0e6908`); (4) `fidelity-resp` 9 ear lag
     13 s > 12. No `it.fails` flips. These are for whichever branch merges second (Global Constraints, R-FU5-2): the
@@ -172,7 +172,7 @@ The trial merge with FU-4 (§6 (c)) flips none of these.
 
 ## 7. Open questions
 
-The plan's list stands (for Ali: 1 his IntelliVue option, 2, 3, 4, 5 the cuff failure rate, 9, 11, 12, 14, 16;
+The plan's list stands (for samhv-dev: 1 his IntelliVue option, 2, 3, 4, 5 the cuff failure rate, 9, 11, 12, 14, 16;
 decided: 1 presentation, 6, 7, 8, 13, 15, 19; FU-4: 10; Stage 9 or a later FU: 17, 18). Updates:
 - **8 (chatter)** — with Task 9a's on-delay philips-like and mindray-like raise NOTHING for an HR wandering 49–51 on
   a limit of 50 (was 4 in 3 min each); the CVP tour chatter is 4/4 (`it.fails`).
@@ -198,7 +198,7 @@ TW truth-wrong, PL plausible, IN inconclusive.
 | A10-A1 PI with vasoconstriction | M1 | A1-map-ladder, D3-induction | WR | ladder PL (PI 1.84 → 1.53 → 1.18 → 0.03 as MAP 106 → 38); vasomotor direction **TW (PI follows SV only)** — propofol PI 1.49 → 1.17 (`it.fails`, R-FU5-9) | fidelity-lowflow 1b |
 | A10-A1t tracker floor | M1 / T4 | A1-map-ladder | IN | device PL (LOW PERF 569 s → NON-PULSAT. 574 s at the 13 step); the MAP floor stays FU-4's (T4) | fidelity-lowflow |
 | A10-A1m bleed 3 L, SpO2 at low flow | M1 | A1m-map-ladder | WR | PL ("99?", PI 0.11, LOW PERF; 0 % plain-valid) | fidelity-lowflow, fu5-fidelity e2e 1 |
-| A10-A2 Ali's chain | M1 | A2-ali-b7 | WR | PL ("99?", PI 0.14; 0 % plain-valid) | fidelity-lowflow |
+| A10-A2 the owner's chain | M1 | A2-owner-b7 | WR | PL ("99?", PI 0.14; 0 % plain-valid) | fidelity-lowflow |
 | A10-A4 VF/asystole/PEA SpO2 INOP | M8 | A4-vf, A5-pea | MI | PL (SpO2 NON-PULSAT. on every skin) | fu5-technical, fidelity-arrest |
 | A10-A4c CPR "?" | M1 | A4-vf | WR | PL ("99?" drawn) | fu5-tiles, fidelity-arrest |
 | A10-A7a probe off, PR source | M12 | A7-probe | WR | PL (`pr` "--", `prAbp` 74–77 valid, 61–90 s) | hemo-engine (R45), fu5-tiles |
