@@ -18,7 +18,9 @@ test.beforeAll(async () => {
 test.afterAll(async () => vite?.close());
 
 const SIX = ['trigger.bleed', 'trigger.drug.propofol', 'trigger.drug.phenylephrine', 'trigger.drug.esmolol', 'trigger.lungCondition.ptxTension', 'trigger.ventilation.peep'];
-const NODES: Record<string, number> = { 'trigger.bleed': 77, 'trigger.drug.propofol': 72, 'trigger.drug.phenylephrine': 73, 'trigger.drug.esmolol': 74, 'trigger.lungCondition.ptxTension': 91, 'trigger.ventilation.peep': 91 };
+// the node counts of src/app/mechanisms/graph.test.ts PINS, re-recorded at 182 rows (main 8119ecd0): the EEG rows add
+// eeg.cortex and eeg.signal to every trigger's tree (+2 each; the cause per trigger is written beside PINS)
+const NODES: Record<string, number> = { 'trigger.bleed': 79, 'trigger.drug.propofol': 74, 'trigger.drug.phenylephrine': 75, 'trigger.drug.esmolol': 76, 'trigger.lungCondition.ptxTension': 93, 'trigger.ventilation.peep': 93 };
 
 test('the mechanism tree draws each of the six triggers without a console error', async ({ page }) => {
   test.setTimeout(90_000);
@@ -32,7 +34,7 @@ test('the mechanism tree draws each of the six triggers without a console error'
   await expect(page).toHaveURL(/#\/explore\/mechanisms$/);
   const fig = page.locator('.mt-fig');
   await expect(fig.locator('.mt-n[data-key="loop.baroreflex"]')).toBeVisible();
-  await expect(fig.locator('.mt-n')).toHaveCount(72); // propofol, the default
+  await expect(fig.locator('.mt-n')).toHaveCount(NODES['trigger.drug.propofol'] as number); // propofol, the default
   await expect(page.locator('#mt-trigger option')).toHaveCount(6);
   for (const t of SIX) {
     await page.selectOption('#mt-trigger', t);
@@ -45,7 +47,7 @@ test('the mechanism tree draws each of the six triggers without a console error'
 test('the propofol tree prints on one A4 page', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium', 'page.pdf is Chromium only');
   await openApp(page, base, '#/explore/mechanisms');
-  await expect(page.locator('.mt-fig .mt-n')).toHaveCount(72);
+  await expect(page.locator('.mt-fig .mt-n')).toHaveCount(NODES['trigger.drug.propofol'] as number);
   await page.emulateMedia({ media: 'print' });
   const pdf = (await page.pdf({ preferCSSPageSize: true, printBackground: true })).toString('latin1');
   expect(pdf.match(/\/Type\s*\/Page[^s]/g)?.length).toBe(1);

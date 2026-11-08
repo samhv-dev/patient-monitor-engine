@@ -69,14 +69,19 @@ describe('mechanismTree(): loop boxes, merged edges, classes, feedback', () => {
   });
 });
 
-/** Pinned per trigger (the picture the registry of R1 draws; a row added or reclassed moves these, deliberately). */
+/** Pinned per trigger (the picture the registry of R1 draws; a row added or reclassed moves these, deliberately).
+ *  Re-recorded at 182 rows (main 8119ecd0, the EEG stack's ten rows neuro.eeg.*; it was 172): every trigger gains the
+ *  two nodes eeg.cortex and eeg.signal and the edges cbfRel → eeg.cortex (neuro.eeg.cortex.metabolic) and
+ *  eeg.cortex → eeg.signal (neuro.eeg.signal.cortex), +2 nodes +2 edges; ptxTension and peep also reach resp.o2.sa,
+ *  so they gain resp.o2.sa → eeg.cortex (the same metabolic row), +2 nodes +3 edges. Feedback, absent, columns and the
+ *  loop are unchanged (the EEG nodes lie after the loop and feed nothing back). */
 const PINS = {
-  'trigger.bleed': { nodes: 77, edges: 127, feedback: 4, absent: 17, columns: 20, loop: 53 },
-  'trigger.drug.propofol': { nodes: 72, edges: 121, feedback: 14, absent: 17, columns: 23, loop: 53 },
-  'trigger.drug.phenylephrine': { nodes: 73, edges: 125, feedback: 22, absent: 17, columns: 21, loop: 53 },
-  'trigger.drug.esmolol': { nodes: 74, edges: 125, feedback: 13, absent: 17, columns: 20, loop: 53 },
-  'trigger.lungCondition.ptxTension': { nodes: 91, edges: 150, feedback: 4, absent: 19, columns: 23, loop: 55 },
-  'trigger.ventilation.peep': { nodes: 91, edges: 150, feedback: 27, absent: 19, columns: 32, loop: 55 },
+  'trigger.bleed': { nodes: 79, edges: 129, feedback: 4, absent: 17, columns: 20, loop: 53 },
+  'trigger.drug.propofol': { nodes: 74, edges: 123, feedback: 14, absent: 17, columns: 23, loop: 53 },
+  'trigger.drug.phenylephrine': { nodes: 75, edges: 127, feedback: 22, absent: 17, columns: 21, loop: 53 },
+  'trigger.drug.esmolol': { nodes: 76, edges: 127, feedback: 13, absent: 17, columns: 20, loop: 53 },
+  'trigger.lungCondition.ptxTension': { nodes: 93, edges: 153, feedback: 4, absent: 19, columns: 23, loop: 55 },
+  'trigger.ventilation.peep': { nodes: 93, edges: 153, feedback: 27, absent: 19, columns: 32, loop: 55 },
 } as const;
 
 describe('the registry the page draws', () => {

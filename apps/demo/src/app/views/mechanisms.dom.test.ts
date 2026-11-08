@@ -42,8 +42,8 @@ describe('the mechanism tree page, propofol', () => {
     expect(words(baro)).toBe('⟲ Baroreflex | 5 states · 3 edges');
     expect(baro?.querySelector('title')?.textContent).toContain('hemo.circ.baro.es');
     expect(words(node(svg, 'mon.abpMean'))).toContain('ART M');
-    expect(svg.querySelectorAll('.mt-n')).toHaveLength(72);
-    expect(svg.querySelectorAll('.mt-e')).toHaveLength(121);
+    expect(svg.querySelectorAll('.mt-n')).toHaveLength(74); // 182 rows: + eeg.cortex, eeg.signal (graph.test.ts PINS)
+    expect(svg.querySelectorAll('.mt-e')).toHaveLength(123); // + cbfRel → eeg.cortex, eeg.cortex → eeg.signal
   });
 
   it('the G_HS edge is drawn fitted, its tag on hover (<title>) and on focus (the detail line)', () => {
@@ -74,7 +74,7 @@ describe('the mechanism tree page, propofol', () => {
     for (const w of ['absent: the engine does not have this mechanism', 'fitted: the size is fitted, not sourced', 'solid: sourced', 'dotted', 'dash-dot', 'dashed', 'thin: no constant', 'feedback: the edge closes a loop'])
       expect(legend, w).toContain(w);
     expect(p.el.textContent).toContain(NO_LIVE);
-    expect(p.el.querySelector('.mt-counts')?.textContent).toBe('72 nodes, 121 edges: 14 feedback, 17 absent. 53 of the nodes lie on one feedback system (each reaches every other).');
+    expect(p.el.querySelector('.mt-counts')?.textContent).toBe('74 nodes, 123 edges: 14 feedback, 17 absent. 53 of the nodes lie on one feedback system (each reaches every other).');
   });
 
   it('the picker lists the six triggers and draws the one chosen', () => {
@@ -83,7 +83,7 @@ describe('the mechanism tree page, propofol', () => {
     sel.value = 'trigger.bleed';
     sel.dispatchEvent(new Event('change'));
     expect(node(p.el, 'trigger.bleed')).not.toBeNull();
-    expect(p.el.querySelectorAll('.mt-fig .mt-n')).toHaveLength(77);
+    expect(p.el.querySelectorAll('.mt-fig .mt-n')).toHaveLength(79); // bleed, 182 rows (graph.test.ts PINS)
     sel.value = 'trigger.drug.propofol';
     sel.dispatchEvent(new Event('change'));
   });
@@ -99,7 +99,7 @@ describe('the mechanism tree in Persian (Q13)', () => {
     expect(words(node(svg, 'hemo.circ.p.rSys'))).toContain('hemo.circ.p.rSys'); // an engine key is never translated
     expect(p.el.querySelector('.mt-legend')?.textContent).toContain('غایب: موتور این سازوکار را ندارد');
     expect(p.el.querySelector('.mt-text')?.getAttribute('dir')).toBe('rtl');
-    expect(p.el.querySelector('.mt-counts')?.textContent).toMatch(/^۷۲ گره و ۱۲۱ یال/); // the counts template, Persian digits
+    expect(p.el.querySelector('.mt-counts')?.textContent).toMatch(/^۷۴ گره و ۱۲۳ یال/); // the counts template, Persian digits
     const draft = p.el.querySelector('.mt-draft') as HTMLElement;
     expect(draft.hidden).toBe(false);
     expect(draft.textContent).toBe(DRAFT_LINE);
@@ -119,7 +119,7 @@ describe('Explore: the last entry of the left nav (Q12)', () => {
     view.enter?.('mechanisms');
     const box = view.el.querySelector('.mt-main') as HTMLElement;
     expect(box.hidden).toBe(false);
-    expect(box.querySelectorAll('.mt-fig .mt-n')).toHaveLength(72);
+    expect(box.querySelectorAll('.mt-fig .mt-n')).toHaveLength(74); // propofol, 182 rows (graph.test.ts PINS)
     expect(links.at(-1)?.getAttribute('aria-current')).toBe('true');
     view.enter?.('overview');
     expect(box.hidden).toBe(true);
