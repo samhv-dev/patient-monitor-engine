@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** One command (`pnpm validate`) that measures the engine against recorded patients (VitalDB, MGH/MF, PWDB, PTB-XL, CUDB/MIT-BIH), runs every sanity, gate and oracle scenario headless as graded segment-validation documents, and writes `docs/validation/report.md` + `report.json` with a calibration queue for Ali's pass (R44). Stage 8a also ships the blind realism-review kit, the Saadat bedside checklist page and the performance gate.
+**Goal:** One command (`pnpm validate`) that measures the engine against recorded patients (VitalDB, MGH/MF, PWDB, PTB-XL, CUDB/MIT-BIH), runs every sanity, gate and oracle scenario headless as graded segment-validation documents, and writes `docs/validation/report.md` + `report.json` with a calibration queue for the owner's pass (R44). Stage 8a also ships the blind realism-review kit, the Saadat bedside checklist page and the performance gate.
 
 **Architecture:** Everything lives in `@pme/validation` (dev-only, never shipped). Four layers: (1) **datasets** — checksum-verified fetchers into the git-ignored cache, a `.vital` reader, committed manifests that hold only record ids, times and hashes; (2) **metrics** — ONE implementation of every fiducial/metric, applied identically to recorded and generated signals (a `Signals` bundle in, per-beat/per-breath arrays out); (3) **suites** — the morphology suite (recorded window ↔ matched engine run), segment-validation documents (`pme-validation/1`: Stage 6b scenarios + typed targets EqualTo/GreaterThan/LessThan/TrendsTo/Range + 10/30 % grading), waveform regression baselines (2 % per-sample), determinism hashes and the Pulse differential oracle; (4) **reports** — markdown + JSON writer, calibration queue. Browser pieces (review page, bedside checklist, perf page) live in `apps/demo/validation-*.html` and reuse the renderer's `SweepLane` so recorded and synthetic clips go through the same drawing code.
 
@@ -64,7 +64,7 @@ Real vs engine, 5-minute windows, identical metric code (Tasks 7–8 as written)
 | Max upstroke dP/dt, mmHg/s | 877 | 1410 | 303 | 344 |
 | Capnogram α (25 mmHg/s axis) | **115.7°** (113.1–117.2, n 49) at EtCO2 30 | **109.1°** (109.0–109.2, n 49) at EtCO2 30.5 | 97.0° (CO2 normalised, report-only) | 111.6° at EtCO2 27 (not matched) |
 
-Reading: the R→upstroke delay already agrees (Δ −1 ms VitalDB, +4 ms MGH; V1 ±20 ms). The engine's dicrotic notch is **44 ms early** vs VitalDB and 75 ms late vs a hypovolaemic MGH patient, always a deep true minimum where the radial recordings show a shallow inflection, and the upstroke is 1.6× steeper at matched pressures; recorded beat-to-beat spread (IQR 12–30 ms) is 3–6× the engine's. The VitalDB α (115.7°) lies ABOVE the R39 normal band 100–110°, the engine's (109.1°) inside it: sidestream sampling and the ≈ 25 Hz update smear phase II in the recording — a band-vs-recording question for Ali's calibration pass, not an engine bug. These rows are the first entries of the calibration queue. Other planning measurements: engine α at EtCO2 38 = 105.9°; bronchospasm severity 0.8 = 150.3° on `6eeb6d1` (Stage 3.1's remap to 135° was not merged yet).
+Reading: the R→upstroke delay already agrees (Δ −1 ms VitalDB, +4 ms MGH; V1 ±20 ms). The engine's dicrotic notch is **44 ms early** vs VitalDB and 75 ms late vs a hypovolaemic MGH patient, always a deep true minimum where the radial recordings show a shallow inflection, and the upstroke is 1.6× steeper at matched pressures; recorded beat-to-beat spread (IQR 12–30 ms) is 3–6× the engine's. The VitalDB α (115.7°) lies ABOVE the R39 normal band 100–110°, the engine's (109.1°) inside it: sidestream sampling and the ≈ 25 Hz update smear phase II in the recording — a band-vs-recording question for the owner's calibration pass, not an engine bug. These rows are the first entries of the calibration queue. Other planning measurements: engine α at EtCO2 38 = 105.9°; bronchospasm severity 0.8 = 150.3° on `6eeb6d1` (Stage 3.1's remap to 135° was not merged yet).
 
 - Segment runner on `or-induction-hypotension` (Stage 6b built-in, 420 s, poll 100 ms): states preInduction → induction (30 s, manual trigger) → hypotension (90 s) → profound (161 s); 7 targets, all green; 1.5 s wall.
 - The first graded morphology suite (9 windows: VitalDB 1885, 3101, 1341 × 2 + MGH/MF 001–003) is in Task 11; the sanity set in Task 13; gate numbers in Task 14; the Pulse oracle in Task 16; performance in Task 23.
@@ -2789,7 +2789,7 @@ const fmt = (v: number) => (Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 1
 ```ts
 // Pass criteria for the recorded-vs-engine morphology suite. Evidence bands first (R37/R39: the band IS the test);
 // where the brief gives a rule relative to the recording (V1/V2 "±20 ms of the VitalDB median"), the band is built
-// around the recorded statistic at run time. [ENG] rows are engineering tolerances awaiting Ali's calibration pass.
+// around the recorded statistic at run time. [ENG] rows are engineering tolerances awaiting the owner's calibration pass.
 export type BandKind = 'absolute' | 'deltaToRecorded' | 'ratioToRecorded';
 
 export interface MetricBand {
@@ -4264,7 +4264,7 @@ describe('report writer', () => {
   });
   it('renders every section, attribution and the not-measurable list', () => {
     const md = renderMarkdown(R);
-    for (const s of ['# Validation report', '## Datasets and attribution', 'Lee HC et al.', '## Morphology', '| 🔴 | PPV | all |', '### Not measurable on this build', 'MODELED mode arrives in Stage 7', '## Waveform regression', '## Determinism (V9)', '## Pulse oracle', 'known Pulse disagreement D1', '## Calibration queue (R44)', 'Ali: decision']) expect(md).toContain(s);
+    for (const s of ['# Validation report', '## Datasets and attribution', 'Lee HC et al.', '## Morphology', '| 🔴 | PPV | all |', '### Not measurable on this build', 'MODELED mode arrives in Stage 7', '## Waveform regression', '## Determinism (V9)', '## Pulse oracle', 'known Pulse disagreement D1', '## Calibration queue (R44)', 'samhv-dev: decision']) expect(md).toContain(s);
   });
 });
 ```
@@ -4310,7 +4310,7 @@ export interface QueueItem { suite: string; id: string; measured: string; expect
 
 ```ts
 // report.md + report.json + calibration-queue.md (brief §9; R40 grades; R44: the calibration queue lists every row
-// that fell outside its band, for Ali's calibration pass). Pure functions of the Report; the CLI writes the files.
+// that fell outside its band, for the owner's calibration pass). Pure functions of the Report; the CLI writes the files.
 import type { Grade } from '../segments/types.ts';
 import type { QueueItem, Report } from './types.ts';
 
@@ -4364,13 +4364,13 @@ export function renderMarkdown(r: Report): string {
   L.push('', '## Pulse oracle (R34; annex §C/§D)', '', `Build: ${r.oracle.buildHash ? `\`${r.oracle.buildHash.slice(0, 16)}…\`` : 'not run (set PME_PULSE_DIR)'}.`, '', '| | Scenario / check | Ours | Pulse | Expected | Note |', '|---|---|---|---|---|---|');
   for (const o of r.oracle.rows) L.push(`| ${dot[o.grade]} | ${o.scenario} / ${o.id} | ${f(o.ours, 2)} | ${f(o.pulse, 2)} | ${o.expected} | ${o.note} |`);
   L.push('', `Backlog: ${r.oracle.backlog.join('; ')}.`);
-  L.push('', '## Calibration queue (R44)', '', `${q.length} rows outside their band — the input to Ali's calibration pass. Also written to \`calibration-queue.md\`.`, '');
+  L.push('', '## Calibration queue (R44)', '', `${q.length} rows outside their band — the input to the owner's calibration pass. Also written to \`calibration-queue.md\`.`, '');
   L.push(...renderQueue(q));
   return `${L.join('\n')}\n`;
 }
 
 export function renderQueue(q: QueueItem[]): string[] {
-  const L = ['| | Suite | Row | Measured | Expected | Source | Ali: decision |', '|---|---|---|---|---|---|---|'];
+  const L = ['| | Suite | Row | Measured | Expected | Source | samhv-dev: decision |', '|---|---|---|---|---|---|---|'];
   for (const x of q) L.push(`| ${dot[x.grade]} | ${x.suite} | ${x.id} | ${x.measured} | ${x.expected} | ${x.source} | |`);
   return L;
 }
@@ -4554,7 +4554,7 @@ files here:
 |---|---|
 | `report.md` | Every graded row: morphology (recorded vs matched engine, brief §9 V1–V5), sanity and gate documents (segment validation), waveform regression (2 % per sample), determinism (V9), the Pulse oracle, datasets and attribution. |
 | `report.json` | The same, machine-readable (`pme-validation-report/1`). |
-| `calibration-queue.md` | Every yellow or red row — the input to Ali's calibration pass (R44), with an empty "decision" column. |
+| `calibration-queue.md` | Every yellow or red row — the input to the owner's calibration pass (R44), with an empty "decision" column. |
 
 Grades (R40, after Pulse's segment validation, method only): 🟢 inside the evidence band (or within 10 % of a point
 target); 🟡 misses by less than 30 %; 🔴 misses by 30 % or more, or was not measured. Red fails the run; yellow never
@@ -4733,14 +4733,14 @@ describe('scoring (brief §9 step 4)', () => {
   const bundle: ReviewBundle = { schema: 'pme-review-bundle/1', session: 's1', createdAt: '', clips: ids.map((id) => ({ id, channel: 'abp', fs: 125, unit: 'mmHg', range: [0, 150], x: [] })) };
   const key: ReviewKey = { schema: 'pme-review-key/1', session: 's1', entries: Object.fromEntries(ids.map((id, i) => [id, { kind: i % 2 ? 'synthetic' : 'real', source: 'vitaldb', record: 'x', fromS: 0 }])) };
   it('chance-level guessing with high synthetic ratings passes', () => {
-    const ans: ReviewAnswers = { schema: 'pme-review-answers/1', session: 's1', rater: 'Ali', startedAt: 'a', finishedAt: 'b', answers: ids.map((id, i) => ({ id, guess: i % 4 < 2 ? 'real' : 'synthetic', realism: 4, comment: i === 3 ? 'notch too deep' : '', order: i })) };
+    const ans: ReviewAnswers = { schema: 'pme-review-answers/1', session: 's1', rater: 'samhv-dev', startedAt: 'a', finishedAt: 'b', answers: ids.map((id, i) => ({ id, guess: i % 4 < 2 ? 'real' : 'synthetic', realism: 4, comment: i === 3 ? 'notch too deep' : '', order: i })) };
     const [s] = scoreReview(bundle, key, ans);
     expect(s).toMatchObject({ channel: 'abp', n: 20, accuracy: 0.5, realismReal: 4, realismSynthetic: 4, gap: 0, pass: { accuracy: true, synthetic: true, gap: true } });
     expect(s?.pBinomial).toBeCloseTo(1, 5);
     expect(scoreMarkdown(ans, [s!])).toContain('`c3`: notch too deep');
   });
   it('perfect identification fails and is significant', () => {
-    const ans: ReviewAnswers = { schema: 'pme-review-answers/1', session: 's1', rater: 'Ali', startedAt: 'a', finishedAt: 'b', answers: ids.map((id, i) => ({ id, guess: i % 2 ? 'synthetic' : 'real', realism: i % 2 ? 2 : 5, comment: '', order: i })) };
+    const ans: ReviewAnswers = { schema: 'pme-review-answers/1', session: 's1', rater: 'samhv-dev', startedAt: 'a', finishedAt: 'b', answers: ids.map((id, i) => ({ id, guess: i % 2 ? 'synthetic' : 'real', realism: i % 2 ? 2 : 5, comment: '', order: i })) };
     const [s] = scoreReview(bundle, key, ans);
     expect(s).toMatchObject({ accuracy: 1, realismSynthetic: 2, gap: 3, pass: { accuracy: false, synthetic: false, gap: false } });
     expect(s?.pBinomial).toBeLessThan(0.001);
@@ -5271,7 +5271,7 @@ import { bedsideMarkdown, provenanceQueue } from '../../src/bedside/apply.ts';
 import { BEDSIDE, type BedsideResults } from '../../src/bedside/checklist.ts';
 
 const R: BedsideResults = {
-  schema: 'pme-bedside-results/1', device: 'Saadat Alborz B9', firmware: '', observer: 'Ali', date: '2026-10-01', skin: 'saadat-like',
+  schema: 'pme-bedside-results/1', device: 'Saadat Alborz B9', firmware: '', observer: 'samhv-dev', date: '2026-10-01', skin: 'saadat-like',
   results: [
     { id: 'asystole-delay', verdict: 'wrong', observed: '5 s', engineMeasured: '9.7 s', note: 'OR default' },
     { id: 'nibp-cycle', verdict: 'matches', observed: '31 s', engineMeasured: '33.9 s', note: '' },
@@ -5341,7 +5341,7 @@ export interface BedsideResults { schema: 'pme-bedside-results/1'; device: strin
 
 ```ts
 // Bedside results (the checklist page's download) → docs/validation/bedside/<date>.md with a verdict table and the
-// skin-provenance queue: every 'close'/'wrong' item lists the saadat-like skin fields to revisit, with Ali's
+// skin-provenance queue: every 'close'/'wrong' item lists the saadat-like skin fields to revisit, with the owner's
 // observation as the proposed source (tag "observed", research/06 §7).
 import { BEDSIDE, type BedsideResults } from './checklist.ts';
 
@@ -5493,7 +5493,7 @@ test('asystole demo measures the saadat-like delay; results download', async ({ 
 ```ts
 // Saadat bedside checklist page (research/06 §7; BUILD-PLAN Stage 8 "Saadat screens as a capture source"). The engine
 // runs the saadat-like skin; each item restores the start snapshot, plays its demo and measures what the engine did;
-// Ali records the real monitor's behaviour and a verdict; the results JSON feeds `bedside:apply` (skin provenance).
+// samhv-dev records the real monitor's behaviour and a verdict; the results JSON feeds `bedside:apply` (skin provenance).
 import type { Command, EngineEvent } from '@pme/engine-core';
 import { mountMonitor } from '@pme/renderer';
 import { BEDSIDE, type BedsideItem, type BedsideResult, type BedsideResults, type Verdict } from '../../../../packages/validation/src/bedside/checklist.ts';
@@ -5985,7 +5985,7 @@ npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test && npx -y pnpm@9.15.9 bu
 PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 test:e2e
 ```
 
-- [x] **Step 6: Write `docs/gates/stage-8a.md`** — the gate note, in the house format of `docs/gates/stage-3.md`: gate question ("Does the harness measure what the brief §9 asks, identically on recorded and generated signals, and does its report hand Ali a calibration queue he can act on?"); a table with every number: dataset counts (VitalDB cases/windows, MGH/MF records, PWDB subjects, PTB-XL records), each morphology row (recorded vs engine median, KS, W1, grade), the sanity and gate documents (graded / not measurable, with the refusing command), regression (channels red after the merge and why), determinism runs, oracle rows with the wasm hash, soak (heap per minute, growth, sim-time ratio, alarms), frame histograms, tick percentiles; the calibration-queue count by suite; the review kit and bedside page status ("ready; Ali to run at the gate" — the blind review and bedside check are HUMAN steps, not executor steps); deviations from this plan; partition statement (no file under `packages/engine-core`, `packages/renderer/src`, `packages/controller/src`, `packages/skins` changed: `git diff --stat origin/main -- packages/engine-core packages/renderer/src packages/controller/src packages/skins` prints nothing); licence statement (no raw record committed: `git ls-files | grep -Ei '\.(vital|dat|hea|atr)$'` prints nothing).
+- [x] **Step 6: Write `docs/gates/stage-8a.md`** — the gate note, in the house format of `docs/gates/stage-3.md`: gate question ("Does the harness measure what the brief §9 asks, identically on recorded and generated signals, and does its report hand samhv-dev a calibration queue he can act on?"); a table with every number: dataset counts (VitalDB cases/windows, MGH/MF records, PWDB subjects, PTB-XL records), each morphology row (recorded vs engine median, KS, W1, grade), the sanity and gate documents (graded / not measurable, with the refusing command), regression (channels red after the merge and why), determinism runs, oracle rows with the wasm hash, soak (heap per minute, growth, sim-time ratio, alarms), frame histograms, tick percentiles; the calibration-queue count by suite; the review kit and bedside page status ("ready; samhv-dev to run at the gate" — the blind review and bedside check are HUMAN steps, not executor steps); deviations from this plan; partition statement (no file under `packages/engine-core`, `packages/renderer/src`, `packages/controller/src`, `packages/skins` changed: `git diff --stat origin/main -- packages/engine-core packages/renderer/src packages/controller/src packages/skins` prints nothing); licence statement (no raw record committed: `git ls-files | grep -Ei '\.(vital|dat|hea|atr)$'` prints nothing).
 
 - [x] **Step 7: Commit the report, gate note and plan ticks; push**
 
@@ -5995,7 +5995,7 @@ git commit -m "docs(validation): first full validation report, calibration queue
 git push
 ```
 
-- [x] **Step 8: Open the PR (do not merge). The body lists the gate numbers' headline, the calibration-queue size, the human steps left for Ali (blind review, bedside check, iPad perf) and ends with the attribution line**
+- [x] **Step 8: Open the PR (do not merge). The body lists the gate numbers' headline, the calibration-queue size, the human steps left for samhv-dev (blind review, bedside check, iPad perf) and ends with the attribution line**
 
 ```bash
 gh pr create --base main --head stage-8a-validation --title "Stage 8a: validation harness (datasets, morphology metrics, segment validation, Pulse oracle, review kit, bedside checklist, perf gate)" --body "$(cat <<'BODY'

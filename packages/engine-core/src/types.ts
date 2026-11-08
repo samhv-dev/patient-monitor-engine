@@ -11,6 +11,7 @@ import type { LungCommandBody, LungConditionSpec } from './types-lung.ts';
 import type { DrugLocalEffectEvent, DrugsEvent, DrugWarningEvent, PkClinicalEvent } from './types-pk.ts';
 import type { TruthEvent } from './types-truth.ts';
 import type { NeuroCommandBody, NeuroDeviceAction, NeuroEvent, NeuroNumericId, NeuroProfile } from './types-neuro.ts';
+import type { EegDeviceAction, EegNumericId, EegReadingEvent } from './types-eeg.ts';
 
 export type Tick = number; // integer; 1 tick = 20 ms of sim time
 export type SimSeconds = number;
@@ -18,11 +19,13 @@ export type ChannelId =
   | 'ecgI' | 'ecgII' | 'ecgIII' | 'aVR' | 'aVL' | 'aVF' | 'V1' | 'V2' | 'V3' | 'V4' | 'V5' | 'V6'
   | 'vcgX' | 'vcgY' | 'vcgZ' | 'abp' | 'cvp' | 'pap' | 'pleth' | 'co2' | 'resp'
   | TeachingChannel
-  | 'icp';
+  | 'icp'
+  | 'eeg'; // frontal EEG, µV, 125 Hz, only while an EEG device is on (types-eeg.ts)
 export type NumericId =
   | 'hr' | 'pr' | 'prAbp' | 'spo2' | 'pi' | 'abpSys' | 'abpDia' | 'abpMean' | 'cvpMean' | 'papSys' | 'papDia' | 'papMean'
   | 'nibpSys' | 'nibpDia' | 'nibpMean' | 'etco2' | 'imco2' | 'awrr' | 'rr' | 'tempCore' | 'tempSite' | 'stII' | 'qtc'
   | NeuroNumericId
+  | EegNumericId
   | OrganNumericId;
 export type StateVar =
   | 'hr' | 'sbp' | 'dbp' | 'cvp' | 'papSys' | 'papDia' | 'pawp' | 'spo2' | 'pi' | 'rr' | 'vt' | 'etco2' | 'fio2'
@@ -85,7 +88,8 @@ export type DeviceAction =
   | AlarmDeviceAction
   | MonitorDeviceAction
   | CircDeviceAction
-  | NeuroDeviceAction;
+  | NeuroDeviceAction
+  | EegDeviceAction;
 
 /** 'monitor' 0.5–40 Hz + notch, 'diagnostic' 0.05–150 Hz, or any skin band 'band:<lo>-<hi>'. */
 export type EcgFilterMode = 'monitor' | 'diagnostic' | `band:${number}-${number}`;
@@ -156,7 +160,8 @@ export type EngineEvent =
   | BloodEvent // types-blood.ts
   | NeuroEvent // types-neuro.ts
   | EndoEvent // types-endo.ts
-  | OrgansEvent; // types-organs.ts
+  | OrgansEvent // types-organs.ts
+  | EegReadingEvent; // types-eeg.ts
 
 export type EngineEventType = EngineEvent['type'];
 

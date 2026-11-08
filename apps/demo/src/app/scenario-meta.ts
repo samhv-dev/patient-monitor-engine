@@ -2,7 +2,7 @@
 // REALITi objectives checklists). `pme-scenario/1` carries the title, the notes and the patient; the category, the
 // learner-facing story, the expected duration and the objectives live here until the schema gains them (request to
 // 8b/v1.1). The document notes are written for authors (they name build stages); cards show `story` instead.
-// Every built-in is a draft until Ali's clinical review.
+// Every built-in is a draft until the owner's clinical review.
 export type Category = 'Showcase' | 'Resuscitation' | 'Haemodynamic crisis' | 'Anaesthesia depth and drugs' | 'Airway and breathing' | 'Metabolic and thermal';
 export const CATEGORIES: readonly Category[] = ['Showcase', 'Resuscitation', 'Haemodynamic crisis', 'Anaesthesia depth and drugs', 'Airway and breathing', 'Metabolic and thermal'];
 

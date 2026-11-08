@@ -25,7 +25,7 @@ describe('massive transfusion — the citrate load (Driscoll 1987; Giancarelli 2
   });
   // R45 (research/22 BF-05a/05d; R50 ruling R1): with electroneutral, sourced product rows the class IV + MTP picture
   // is BE −0.2 (the dilution of albumin, a weak acid, offsets the shock lactate — the same Stewart offset as the saline
-  // cells, Open question 10) and iCa 0.958 (K_CIT, Q46, fitted to the old citrate-rich rows). Ali may overrule (OQ2).
+  // cells, Open question 10) and iCa 0.958 (K_CIT, Q46, fitted to the old citrate-rich rows). samhv-dev may overrule (OQ2).
   // iCa band to its source (calibration-pass ruling, brief 88): Ho & Leonard 2011 (PMID 21375089, 352 massively transfused
   // patients) lowest iCa 0.77 ± 0.19 mmol/L → mean ± 1 SD 0.58–0.96. The BE edge is not ruled (no sourced nadir).
   it.fails('iCa nadir 0.58–0.96 (Ho & Leonard 2011: 0.77 ± 0.19) and BE ≤ −10 (ATLS class IV) — measured iCa 0.956, BE −0.2', async () => {

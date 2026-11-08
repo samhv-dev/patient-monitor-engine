@@ -8,7 +8,7 @@ import { defineConfig, type Plugin } from 'vite';
 // worker is the file's OWN source (src/iife-worker.ts), so the engine ships once (544 → 285 KB gzip on 48864439).
 const { version } = JSON.parse(readFileSync(resolve(import.meta.dirname, 'package.json'), 'utf8')) as { version: string };
 const BANNER =
-  `/*! patient-monitor-engine ${version} (@pme/renderer IIFE) | MIT, (c) Ali Mahdavi and contributors | ` +
+  `/*! patient-monitor-engine ${version} (@pme/renderer IIFE) | MIT, (c) samhv-dev and contributors | ` +
   'https://github.com/samhv-dev/patient-monitor-engine | bundles ODC-By 1.0 ECG templates (PhysioNet CUDB, MIT-BIH) ' +
   'and code derived from Apache-2.0 sources: see NOTICES.md */';
 

@@ -18,7 +18,7 @@
 > `origin/main` checkout and reproduced the prototype tree byte for byte (see "Self-review"). Tasks marked
 > UNPROTOTYPED would carry exact code that was not run (none remain). Added on the second resumption: the research/11
 > glossary labels (D19, Task 11), the research/12 coverage cells (Task 18 §8, R-FU5-7), a chain fix found by the
-> after-report (D6: 22 zero-length HR HIGH flickers in Ali's case), the e2e numbers and "Prototype results".
+> after-report (D6: 22 zero-length HR HIGH flickers in the owner's case), the e2e numbers and "Prototype results".
 > FU-4 ("integration polish", physiology) runs IN PARALLEL on its own branch: every block here was checked against
 > `origin/main` only. A block that no longer matches after `git merge origin/main` means FU-4 (or V.1) moved a line:
 > re-anchor by the quoted comment or statement, keep both sides, never "fix" a test by loosening it (R45).
@@ -131,7 +131,7 @@ and-glossary.md` §5 is the single label source (D19; its §4 item 7 is this pla
   - `packages/engine-core/test/engine/circ-hypoxic-arrest.test.ts`, `resp-oxygen.test.ts`: FU-4 re-measures them for
     its arrest; FU-5 only if its SpO2/PR validity moves a timing (Task 15 lists what it measured on `origin/main`).
   - After FU-4 merges, the fidelity tests that depend on the truth (research/10 §9: the arrest now happens in the
-    bleed and in Ali's case) are re-run; a device criterion still holds on the new truth or the executor reports.
+    bleed and in the owner's case) are re-run; a device criterion still holds on the new truth or the executor reports.
 - **CI rules:** CI amendment 4 — any `advanceTo` loop longer than one sim-hour yields per sim-MINUTE with
   `setImmediate` (the fidelity rig `test/helpers/monitor.ts` advances 1 sim-s per step and yields every 60 sim-s; no
   FU-5 run exceeds 45 sim-min). Long-run horizons (none in FU-5) use `test/helpers/longrun.ts`. New engine scenario
@@ -145,7 +145,7 @@ and-glossary.md` §5 is the single label source (D19; its §4 item 7 is this pla
   for the gate, their PNGs committed) and CI keeps one smoke per skin (suite 6 on philips-like and saadat-like). The tick bench (`packages/validation/test/perf/tick-bench.test.ts`) must still pass (p50 < 6 ms on
   CI, < 2 ms local): FU-5 adds per-tick work in `buildConditions`/`stepAlarms` only (measured in Task 15).
 - **Pull request:** title `FU-5: monitor fidelity — signal quality, alarm semantics, technical alarms, NIBP, skins`;
-  never self-merged (Ali speaks the merge). Every commit ends with the attribution trailer from the EXECUTOR'S OWN
+  never self-merged (samhv-dev speaks the merge). Every commit ends with the attribution trailer from the EXECUTOR'S OWN
   session instructions, with its own model name — written `<the Co-Authored-By trailer line from the executor's own
   session instructions>` in the commit steps below, never hard-coded (Orchestrator ruling (FU-5 review), 2026-09-28,
   ruling 9; the orchestrator's guidance names Fable); the PR body ends with
@@ -237,7 +237,7 @@ DESIGN-BRIEF, **[ruling]** research/00 "FU-5 opened" (IEC 60601-1-8 conventions 
   "chained alarms suppressed by priority"). A suppressed alarm is CLEARED, never latched. **A suppressor is a parent
   whose CONDITION is present this tick, or whose entry was LIVE (raised, not latched) at the previous tick** — the
   latter closes the one tick in which a parent's condition has ended before its entry latches (22 zero-length
-  `**HR 140>120` raise/clear pairs in Ali's case). **A LATCHED entry never suppresses** (Orchestrator ruling (FU-5
+  `**HR 140>120` raise/clear pairs in the owner's case). **A LATCHED entry never suppresses** (Orchestrator ruling (FU-5
   review), 2026-09-28, ruling 2): a latched alarm's condition has ended, and Philips inhibits lower alarms only "if a
   more serious alarm condition is active" ([S2] p. 97, 99) — so a post-ROSC bradycardia under a latched ASYSTOLE
   alarms (and sounds), and a VT after a latched VF raises VTAC. The first version let an unacknowledged latched entry
@@ -248,7 +248,7 @@ DESIGN-BRIEF, **[ruling]** research/00 "FU-5 opened" (IEC 60601-1-8 conventions 
   **Agonal / PEA (Orchestrator ruling (FU-5 review), 2026-09-28, ruling 6):** once ASYSTOLE stands, an agonal beat
   (an R–R ≥ 2.5 s: agonal < 20/min, research/03 §1.5, less the detector's timing of a wide complex [ENG]) does not end
   it; two beats closer than that (a rhythm returning) do. So an agonal rhythm shows ONE arrest alarm: the merged
-  FU-4 tree raised EXTREME BRADY 11 times in Ali's case (each agonal beat ended ASYSTOLE and let EXTREME BRADY
+  FU-4 tree raised EXTREME BRADY 11 times in the owner's case (each agonal beat ended ASYSTOLE and let EXTREME BRADY
   re-raise), and on this base a MANUAL agonal rhythm re-raised ASYSTOLE 15 times in 4 min on mindray-like (no
   latching; the first prototype: philips-like ASYSTOLE ×1 + EXTREME BRADY ×3, mindray-like ×15 + ×3); prototype after: ASYSTOLE ×1 on philips-, mindray- and saadat-like, EXTREME BRADY and HR LOW ×0; a
   pulseless idioventricular 15/min (R–R 4 s, no asystole) raises EXTREME BRADY once. The QRS detector fires twice
@@ -305,13 +305,13 @@ DESIGN-BRIEF, **[ruling]** research/00 "FU-5 opened" (IEC 60601-1-8 conventions 
   line reads "20/19 (20)") and only the pulse numeric goes "-?-" ([S2] p. 57, pdf 75: "Pulse numeric is displayed with
   -?-"; the limit alarms continue on S/D/M); **`'mean-only'`** — saadat-like — S/D invalid, the 2 s mean shown
   ("static pressure", research/06 §4.1). The first version hid S/D on every skin, so each flip to static cleared and
-  re-raised the S/D LOW alarms (Ali's case: `ART_S_LOW ×12, ART_M_LOW ×12, ART_D_LOW ×10, abpNonPulsatile ×10`). ABP
+  re-raised the S/D LOW alarms (the owner's case: `ART_S_LOW ×12, ART_M_LOW ×12, ART_D_LOW ×10, abpNonPulsatile ×10`). ABP
   NON-PULSATILE is raised on every skin whenever the line is static — an IntelliVue raises it only for the pressure
   selected as the pulse source [ENG choice, tagged in the code]; on `'keep'` it marks `prAbp`. A starting line searches
   10 s before calling itself static (no `ABPd 0<50` at power-on). Leaving static needs amplitude AND time hysteresis
   [ENG]: 3 s (REPULSE_S) of beats with an amplitude ≥ 4 mmHg (REPULSE_AMP_MMHG; static below 3 mmHg) — one ventilator
   swing flipped the INOP every 5 s at MAP 13, and PP 3–4 mmHg flipped ≈ 10 times in 11 min on the single 3 mmHg
-  threshold. Re-measured in Ali's case (A2, prototype): `ART_S_LOW ×3, ART_M_LOW ×12, ART_D_LOW ×1,
+  threshold. Re-measured in the owner's case (A2, prototype): `ART_S_LOW ×3, ART_M_LOW ×12, ART_D_LOW ×1,
   abpNonPulsatile ×1` (was ×12/×12/×10/×10; origin/main ×5/×71/×3/–): the static-flip chatter is gone and the
   static line reads e.g. "16/13 (14)" with S/M/D LOW standing. The remaining ART_M_LOW raises are NOT flips: the
   displayed mean hovers 69–71 on its limit of 70 under PEEP 15 (1 462–1 500 s and 1 677–1 757 s, raise/clear cycles of
@@ -375,7 +375,7 @@ DESIGN-BRIEF, **[ruling]** research/00 "FU-5 opened" (IEC 60601-1-8 conventions 
   — acceptable under R-FU5-6 (the per-skin aliases are Stage 9's). **Open question 19 DECIDED (Orchestrator ruling
   (FU-5 review), 2026-09-28, ruling 8): labels follow the vendor** — "ABP" on philips-like (the IFU's own label, as
   the IEC table already prints), "Art" on mindray-like ([S4] App. C.1.6), saadat-like per research/06 ("IBP1", "PR
-  TOO HIGH" — its own table already); Ali may override in the glossary review. FU-5 does not move the IEC table's
+  TOO HIGH" — its own table already); samhv-dev may override in the glossary review. FU-5 does not move the IEC table's
   aliases into per-skin data (mindray-like still prints "ABP" until then): that application is Stage 9's (R-FU5-6),
   which now has the decided target labels.
 - **D20 — the R50 review and the orchestrator's rulings (Orchestrator ruling (FU-5 review), 2026-09-28; review
@@ -390,7 +390,7 @@ DESIGN-BRIEF, **[ruling]** research/00 "FU-5 opened" (IEC 60601-1-8 conventions 
   Tasks 2, 8, 10, 13, 14); (6) the agonal/PEA rule: ONE arrest alarm (D6, Task 8, fidelity-arrest 4b); (7) the R45
   re-statements confirmed — flash-rate 150 → 130 and age-band 140 → 135 legitimate, the age-band acknowledge removed;
   (8) decided now: the latched presentation (D3, D15), the Philips Alarm Reminder (factory On, 3 min — recorded as the
-  vendor default, not modelled), Q7, Q8, Q13, Q19 (labels per vendor, above); Ali keeps Q1 (his option), Q2, Q3, Q4,
+  vendor default, not modelled), Q7, Q8, Q13, Q19 (labels per vendor, above); samhv-dev keeps Q1 (his option), Q2, Q3, Q4,
   Q5 (rate), Q9, Q11, Q12, Q14, Q16 with the numbers; Q10 → FU-4; Q17/Q18 → Stage 9 or a later FU; (9) the commit
   trailer is the executor's own (Global Constraints); (10) the CI budget for the 8 new e2e tests (Global Constraints,
   Task 18). Exceptions: **E-FU5-1 accepted conditional on ruling 1** (applied); **E-FU5-2…7 accepted** as written
@@ -424,7 +424,7 @@ DESIGN-BRIEF, **[ruling]** research/00 "FU-5 opened" (IEC 60601-1-8 conventions 
   `alarms.silence.mode` exists and `durationS` may be null, `nibp.modeDefault`/`autoIntervalMin` and
   `glyphs.outOfRange`/`ibpPrUnavailable` are gone (`packages/skins/CONTRACT.md` "FU-5"), the new numeric `prAbp`;
   (c) `pnpm audit:monitor` is the monitor-fidelity check to re-run before a release.
-- **R-FU5-5 → Ali (bench checks, research/06 §7 style):** the photo/stopwatch items that would move FU-5's [ENG] or
+- **R-FU5-5 → samhv-dev (bench checks, research/06 §7 style):** the photo/stopwatch items that would move FU-5's [ENG] or
   [inferred] values to documented — see Open questions 1–13.
 
 - **R-FU5-6 → Stage 9 "clinical UI" (R55/R56, the glossary's application):** FU-5 keeps the IEC alarm-text table's
@@ -558,7 +558,7 @@ Skins: philips-like unless marked mr (mindray-like) / sa (saadat-like).
 | # | Suite item (research/10 §13) | Before | After |
 |---|---|---|---|
 | 1 | Low flow, 3 L bleed (A1m), +20 s after MAP < 30 | SpO2 "99" valid, PI 2.16, INOP none; pleth 140 % of resting ptp; 96 % of rows plain-valid; 58 rows valid SpO2 with PR/PI invalid | "99?", PI 0.11, SpO2 LOW PERF; pleth 8 %; 0 % plain-valid; 0 rows |
-| 1 | Low flow, Ali's case (A2) | "99" valid, PI 2.03; pleth 133 %; 100 % plain-valid | "99?", PI 0.14, LOW PERF; pleth 7 %; 0 % |
+| 1 | Low flow, the owner's case (A2) | "99" valid, PI 2.03; pleth 133 %; 100 % plain-valid | "99?", PI 0.14, LOW PERF; pleth 7 %; 0 % |
 | 2 | PEA (A5 ×3) | ART valid in 10 of 87 rows (the 118/79 glitch); ART INOP no | 3 of 87 (the first 3 s); ART NON-PULSATILE yes (×3 skins) |
 | 3 | VF → CPR → ROSC (A4 ×3) | VFIB +3.0 s; HR_HIGH ×10 during VF; mindray EXTREME TACHY latched at 420 s | VFIB +3.0 s; 0 other rate alarms; at 420 s philips-like VFIB and APNEA latched, mindray-/saadat-like none latched |
 | 4 | Asystole (A6 ×3) | +4.1 / +4.1 / +10.1 s; HR LOW beside it on philips-like (1) | +4.1 / +5.1 ([S4] 5 s) / +10.1 s; 0 |
@@ -568,7 +568,7 @@ Skins: philips-like unless marked mr (mindray-like) / sa (saadat-like).
 | 8 | Disconnect / oesophageal (D2); probes (G2) | +20.3 s / +24 s; G2 {-} {ART_D_HIGH} {3 ART LOW} {-} | +20.3 s / +24 s (unchanged); G2 {tempProbeOff} {abpZero} {abpDisconnect abpNonPulsatile} {co2Line} |
 | 9 | Desaturation lag (A8, A8e) | finger 22 s, ear 12 s; DESAT 216.0 / 206.0 | 22 s / 12 s; DESAT 218.0 / 208.0 (+2 s: philips-like's 10 s average and 2 s update, D2) |
 | 10 | NIBP | PP 10 (C3) FAILED; bleed (A1m) 1 result / 19 failed; ladder 2 / 3; AF 110/73, 111/75 | C3 80/56 (69); A1m 8 results down to 53/40 (38) / 12 failed; ladder 3 / 2 (67/37 at MAP 43); AF 125/78, 117/67 |
-| 11 | Limit hygiene (G1, E1, chatter) | CVP 10>10 ×100 (A1), HR_LOW 11× in 180 s, "**CVP 10>10", Ali's case ART_M_LOW ×71 | CVP at the limit 0 raises, HR_LOW 4×, "**CVP 11>10", "**Temp 35.9<36.0"; Ali's case ART S/M/D LOW ×10–12 with ABP NON-PULSATILE ×10 (residual, see Self-review) |
+| 11 | Limit hygiene (G1, E1, chatter) | CVP 10>10 ×100 (A1), HR_LOW 11× in 180 s, "**CVP 10>10", the owner's case ART_M_LOW ×71 | CVP at the limit 0 raises, HR_LOW 4×, "**CVP 11>10", "**Temp 35.9<36.0"; the owner's case ART S/M/D LOW ×10–12 with ABP NON-PULSATILE ×10 (residual, see Self-review) |
 | 12 | HR response (B2 ×3) | 8/7/11, 7/7/10, 10/9/10 s | unchanged |
 | 13 | Rhythm tour (B1 ×3, B1a) | VTAC +1.6 s; PAUSE 10× shortest 0.0 s (mr, arrhythmia on) | VTAC +1.6 s; PAUSE 7× shortest 5.0 s |
 | 14 | Silence then a new red alarm (F4 ×3) | philips-/mindray-like: the new VFIB muted under a 90 s silence; saadat-like sounds (silence ended) | all three: the new VFIB sounds, silence not running; philips-/mindray-like the earlier alarms acknowledged (A) |
@@ -594,7 +594,7 @@ reports). Task 15's after-report must match the table above AMENDED by this one.
 | PI ladder (A10-A1, ruling 1) | A1-map-ladder MANUAL, windows at MAP 106 / 99 / 61 / 45 / 44 / 38 | 1.70 / 1.58 / 1.38 / 1.26 / 1.32 / 0.14 | 1.94 / 2.05 / 2.30 / 2.06 / 2.04 / 0.05 (rises as MAP falls) | 1.84 / 1.82 / 1.53 / 1.18 / 1.16 / 0.03 (falls with MAP) |
 | Rest PI (ruling 1) | MODELED spontaneous (D3 30–58 s) / MANUAL ventilated (A1) / MODELED ventilated (A1m) | 1.79 / 1.70 / 1.80 | 1.83 / 1.94 / 1.49 | 1.82 / 1.84 / 1.49 (ventilated MODELED −17 %: `it.fails`) |
 | Propofol PI (ruling 1) | D3-induction (spontaneous → propofol + rocuronium 60 s → ETT + PPV 150 s): 30–58 / 100–140 / 220–260 s | 1.79 / 1.67 / 1.67 | 1.83 / 1.48 / 1.18 | 1.82 / 1.43 / 1.16 (SV 80 → 67 → 55; the clinical rise waits for FU-4's skin tone — `it.fails` in fidelity-lowflow on a ventilated rig: 1.49 → 1.17) |
-| ART chatter, Ali's case (ruling 3) | A2-ali-b7 raises: ART_S_LOW / ART_M_LOW / ART_D_LOW / ABP NON-PULSATILE | 5 / 71 / 3 / – | 12 / 12 / 10 / 10 | 3 / 12 / 1 / 1 (the static line keeps "16/13 (14)"; the 12 ART_M_LOW are the mean hovering 69–71 on its limit 70 under PEEP 15, 1 462–1 757 s — limit-hover chatter, not flips) |
+| ART chatter, the owner's case (ruling 3) | A2-owner-b7 raises: ART_S_LOW / ART_M_LOW / ART_D_LOW / ABP NON-PULSATILE | 5 / 71 / 3 / – | 12 / 12 / 10 / 10 | 3 / 12 / 1 / 1 (the static line keeps "16/13 (14)"; the 12 ART_M_LOW are the mean hovering 69–71 on its limit 70 under PEEP 15, 1 462–1 757 s — limit-hover chatter, not flips) |
 | PEA ART (item 2, ruling 3) | A5-pea ×3: rows with ART shown valid | 10 of 87 | 3 / 3 / 3 of 87 | 87 / 87 / 3 of 87 — philips-/mindray-like keep S/D/M of the flat line ('keep'), saadat-like the mean only; `prAbp` invalid from +6 s on every skin |
 | EXTREME BRADY in an agonal rhythm (ruling 6) | fidelity-arrest 4b: MANUAL pulseless agonal 60–300 s (not a harness scenario) | – | philips-like ASYSTOLE ×1 + EXTREME BRADY ×3; mindray-like ASYSTOLE ×15 + EXTREME BRADY ×3; saadat-like ASYSTOLE ×1 (the first prototype's conditions, measured by the fixer); the review's merged FU-4 tree: A2 EXTREME BRADY ×11, A1m ×7 | ASYSTOLE ×1, EXTREME BRADY ×0, HR LOW ×0 on philips-, mindray- and saadat-like; harness A2/A1m EXTREME BRADY ×0 on this base (no FU-4 arrest) — re-measured after the FU-4 merge (Task 15 Step 3) |
 | Latched APNEA visibility (ruling 4) | D1-apnoea philips-like, harness rows through the renderer's `barView`; the FU-3 sequence on the 7f page (e2e) | two live alarms, no latching shown | latched APNEA on the bar only until a live alarm took it (the 7f run: 188–195 s) | harness: latched APNEA on the bar in 101 of the 116 rows in which it is active, to the end of the run (300 s), in the 2 s rotation with the live `**RR 4<8` / `**etCO2 0<30`; e2e (fixer's re-run): latched 188–457 s, i.e. to the end of the run |
@@ -841,7 +841,7 @@ const arrest = (rhythm: string, opts: Record<string, unknown> = {}): Step[] => [
 export const SCENARIOS: Scenario[] = [
   S('A1-map-ladder', 'MANUAL: MAP 100 → 60 → 40 → 25 → 13 (2 min each), NIBP 40 s into each step', 'manual', ladder, 660),
   S('A1m-map-ladder', 'MODELED start, MANUAL targets are ignored → use bleed ladder instead: bleed 3 L over 15 min', 'modeled', [...VENTED, [60, A.bleed(3000, 900), 'bleed 3 L/15 min'], [300, A.nibp('auto', 1), 'NIBP auto 1 min']], 1500, { printEvery: 30 }),
-  S('A2-ali-b7', "MODELED Ali's case (08 audit B7): tamponade, propofol 2+1, PEEP 15, sevo 2 %, bleed 2 L", 'modeled', [
+  S('A2-owner-b7', "MODELED the owner's case (08 audit B7): tamponade, propofol 2+1, PEEP 15, sevo 2 %, bleed 2 L", 'modeled', [
     ...VENTED, [60, A.cond('tamponade', 1), 'tamponade 1'], [660, A.drug('propofol', 2, 'mg/kg'), 'propofol 2'], [900, A.drug('propofol', 1, 'mg/kg'), 'propofol 1'],
     [1200, A.vent(15, 0.5), 'PEEP 15'], [1500, A.vap('sevoflurane', 2), 'sevo 2 %'], [2100, A.bleed(2000, 300), 'bleed 2 L'], [2400, A.nibp('auto', 2), 'NIBP auto 2 min'],
   ], 3000, { printEvery: 60 }),
@@ -1123,7 +1123,7 @@ function probes(name: string): string {
 export function report(): string {
   return [
     '## Fidelity report (research/10 §13 suite items)',
-    ' 1 low flow:', '  ' + lowFlow('A1m-map-ladder'), '  ' + lowFlow('A2-ali-b7'),
+    ' 1 low flow:', '  ' + lowFlow('A1m-map-ladder'), '  ' + lowFlow('A2-owner-b7'),
     ' 2 PEA:', ...['A5-pea', 'A5-pea-mr', 'A5-pea-sa'].map((n) => '  ' + pea(n)),
     ' 3 VF → CPR → ROSC:', ...['A4-vf', 'A4-vf-mr', 'A4-vf-sa'].map((n) => '  ' + vf(n)),
     ' 4 asystole:', ...['A6-asystole', 'A6-asystole-mr', 'A6-asystole-sa'].map((n) => '  ' + asystole(n)),
@@ -1132,7 +1132,7 @@ export function report(): string {
     ' 7 impedance-only apnoea:', '  ' + impOnly('D4-apnoea-imp'),
     ' 8 disconnect / oesophageal:', '  ' + disconnect('D2-disconnect'), '  ' + probes('G2-probes'),
     ' 9 desaturation lag:', '  ' + desat('A8-desat-finger'), '  ' + desat('A8e-desat-ear'),
-    '10 NIBP:', ...['C3-lowpp', 'A1-map-ladder', 'A1m-map-ladder', 'C2-af-nibp', 'A2-ali-b7'].map((n) => '  ' + nibp(n)),
+    '10 NIBP:', ...['C3-lowpp', 'A1-map-ladder', 'A1m-map-ladder', 'C2-af-nibp', 'A2-owner-b7'].map((n) => '  ' + nibp(n)),
     '11 limit hygiene:', '  ' + hover('G1-hover'), chatter(),
     '12 HR response:', ...['B2-step', 'B2-step-mr', 'B2-step-sa'].map((n) => '  ' + hrStep(n)),
     '13 rhythm tour:', ...['B1-rhythms', 'B1a-rhythms-arrOn', 'B1-rhythms-mr', 'B1-rhythms-sa'].map((n) => '  ' + tour(n)),
@@ -1452,7 +1452,7 @@ replace with:
 
 ```json
     "hr.method": { "tag": "documented", "source": "brief §3.8 (Philips-like mean-12rr)" },
-    "hr.source": { "tag": "documented", "source": "research/05 §6 [S1] Philips IntelliVue Configuration Guide Rel. J p. 50–51 (Alarms Source default Auto, all profiles)", "note": "FU-5: no valid ECG heart rate and a pulse source present → the pulse becomes the ALARM source (IFU [S2] p. 108: HR/Pulse limits shared, arrhythmia and ECG HR alarms off; Configuration Guide [S1] p. 50 Alarms Source default Auto); the HR numeric keeps -?- (IFU p. 55 LEADS OFF) and the pulse stays in its own tile (relabelNonEcgAs null, inherited) — audit Q4, confirm with Ali" },
+    "hr.source": { "tag": "documented", "source": "research/05 §6 [S1] Philips IntelliVue Configuration Guide Rel. J p. 50–51 (Alarms Source default Auto, all profiles)", "note": "FU-5: no valid ECG heart rate and a pulse source present → the pulse becomes the ALARM source (IFU [S2] p. 108: HR/Pulse limits shared, arrhythmia and ECG HR alarms off; Configuration Guide [S1] p. 50 Alarms Source default Auto); the HR numeric keeps -?- (IFU p. 55 LEADS OFF) and the pulse stays in its own tile (relabelNonEcgAs null, inherited) — audit Q4, confirm with samhv-dev" },
     "spo2": { "tag": "documented", "source": "research/05 §6 [S1] Philips Configuration Guide p. 66 (average 10 s); IFU [S2] p. 301 (display update typically 2 s); brief §4.3 (options 5/10/20)" },
     "nibp.initialInflation": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 303 (initial inflation 165 / 130 / 100 ± 15 mmHg)" },
     "alarms.silence": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 11, 32 (Silence acknowledges all active alarms and INOPs; new alarms are new)", "note": "replaces the ZOLL 90 s mute inherited from iec-defaults (audit M9, research/06 §6)" },
@@ -2820,7 +2820,7 @@ replace with:
 ```ts
 // FU-5 monitor-fidelity suite item 1 (research/10 §13): the oximeter in low flow. Before FU-5 a 3 L bleed to MAP 2 /
 // SV 0.6 mL showed SpO2 98 valid, PI 2.5, a pleth larger than at rest (the pulse was scaled to the last 16 beats), and
-// Ali's tamponade case showed SpO2 98–99 / PI 1.9–2.3 at MAP 13–16 (audit §2, M1). Sources: brief §4.3 (amplitude
+// The owner's tamponade case showed SpO2 98–99 / PI 1.9–2.3 at MAP 13–16 (audit §2, M1). Sources: brief §4.3 (amplitude
 // PI × SV_i/SV_0, LOW PERF below PI 0.3, no pulse → invalid after 10–30 s); research/05 §6 [S2] p. 58–59 (LOW PERF
 // keeps the value with "?", NON-PULSAT. replaces it).
 import { describe, expect, it } from 'vitest';
@@ -2829,7 +2829,7 @@ import { M, monitorRun, VENTED, validShown, type Alarm, type MonRow } from '../h
 const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
 /**
  * Raise→clear cycles shorter than `minS` of the alarms at `level` (review rulings 5 and 6, F7/F9: a technical INOP or a
- * red alarm must not flicker; after FU-4's arrests the agonal rhythm re-raised EXTREME BRADY 11 times in Ali's case).
+ * red alarm must not flicker; after FU-4's arrests the agonal rhythm re-raised EXTREME BRADY 11 times in the owner's case).
  */
 const shortCycles = (alarms: Alarm[], level: number, minS: number) => {
   const open: Record<string, number> = {};
@@ -2865,7 +2865,7 @@ describe('FU-5 fidelity 1: SpO2, PI and pleth follow the perfusion', () => {
     expect(shortCycles(alarms, 1, 5)).toEqual([]); // no red one either
   }, 120_000);
 
-  it("MODELED Ali's case (tamponade, propofol 2 + 1, PEEP 15, sevoflurane 2 %, bleed 2 L): at MAP < 30 the SpO2 is never shown valid; no technical or red raise/clear cycle shorter than 5 s", async () => {
+  it("MODELED the owner's case (tamponade, propofol 2 + 1, PEEP 15, sevoflurane 2 %, bleed 2 L): at MAP < 30 the SpO2 is never shown valid; no technical or red raise/clear cycle shorter than 5 s", async () => {
     const { rows, alarms } = await monitorRun({ mode: 'modeled', tEnd: 2700, steps: [
       ...VENTED, [60, M.cond('tamponade', 1)], [660, M.drug('propofol', 2, 'mg/kg')], [900, M.drug('propofol', 1, 'mg/kg')],
       [1200, M.vent(15, 0.5)], [1500, M.vap('sevoflurane', 2)], [2100, M.bleed(2000, 300)],
@@ -2990,7 +2990,7 @@ npx vitest run test/engine/resp-oxygen.test.ts test/engine/hemo-engine.test.ts
 
 Expected: all pass. fidelity-lowflow (≈ 17 s): the 3 L bleed reaches MAP < 30 for 20 s at 788 s; from +20 s the SpO2
 is never valid ("99?" with PI 0.11, then invalid), the pleth is 8 % of its resting peak-to-peak (was 140 %), and no
-row shows a valid SpO2 with PR or PI invalid (was 58 rows); Ali's case (MAP < 30 from 2 348 s) never shows a valid
+row shows a valid SpO2 with PR or PI invalid (was 58 rows); the owner's case (MAP < 30 from 2 348 s) never shows a valid
 SpO2 after +20 s, PI ≤ 0.14 (was 99 / PI 2.03); neither run has a technical or red raise/clear cycle shorter than 5 s
 (the SpO2 INOP hysteresis is Task 10's, so run this file again after Task 10; before it the bleed showed LOW PERF ×7
 in 1–2 s cycles). Suite 1b (review ruling 1): rest PI MODELED spontaneous 1.82, MANUAL ventilated 1.84 (± 5 % and
@@ -3077,7 +3077,7 @@ export const SEARCH_S = 10;
  */
 export const REPULSE_S = 3;
 /**
- * FU-5: amplitude hysteresis on the 3 mmHg rule — a static line is pulsatile again only at this amplitude (Ali's case at
+ * FU-5: amplitude hysteresis on the 3 mmHg rule — a static line is pulsatile again only at this amplitude (the owner's case at
  * PP 3–4 mmHg flipped pulsatile ↔ static ≈ 10 times in 11 min on the single 3 mmHg threshold) [ENG].
  */
 export const REPULSE_AMP_MMHG = 4;
@@ -4786,7 +4786,7 @@ replace with:
     // FU-5 (Orchestrator ruling (FU-5 review), 2026-09-28, ruling 6): once ASYSTOLE stands, an agonal beat (R–R ≥
     // AGONAL_RR_S, < 20/min, research/03 §1.5) does not end it — the arrest alarm governs; two beats closer than that
     // (a rhythm returning) do. Without it each agonal beat cleared ASYSTOLE and let EXTREME BRADY re-raise (11 red
-    // raises in Ali's case after FU-4's arrest; mindray-like, which does not latch, re-raised ASYSTOLE 15 times in 4 min)
+    // raises in the owner's case after FU-4's arrest; mindray-like, which does not latch, re-raised ASYSTOLE 15 times in 4 min)
     const lastRR = inp.lastQrsT !== null && inp.prevQrsT != null ? inp.lastQrsT - inp.prevQrsT : Infinity;
     const agonal = holdingId(s, 'ASYSTOLE') && lastRR >= AGONAL_RR_S;
     if (!vf && (t - since >= p.arrhythmia.asystoleS || agonal)) out.push(fixed('ASYSTOLE', 1, 'physiological'));
@@ -4873,7 +4873,7 @@ replace with:
  * previous tick — "lower priority alarms in the same chain will not be announced while an alarm is active" ([S2] IFU
  * p. 99; p. 97: indications are inhibited "if a more serious alarm condition is active"). The previous-tick case closes
  * the one tick in which a parent's condition has ended but its entry is not yet latched or cleared (22 zero-length
- * `**HR 140>120` raise/clear pairs in Ali's case). A LATCHED entry never suppresses: its condition has ended, so a
+ * `**HR 140>120` raise/clear pairs in the owner's case). A LATCHED entry never suppresses: its condition has ended, so a
  * post-ROSC bradycardia under a latched ASYSTOLE alarms, and a VT after a latched VF raises VTAC (Orchestrator ruling
  * (FU-5 review), 2026-09-28, ruling 2). Rank is the chain position, not the level: a parent suppresses every member it
  * lists (ASYSTOLE and EXTREME BRADY are both red).
@@ -5294,7 +5294,7 @@ describe('FU-5 conditions: chaining (audit M7)', () => {
     }
     const hh = out.filter((e) => e.type === 'alarm' && e.id === 'HR_HIGH') as Array<Extract<EngineEvent, { type: 'alarm' }>>;
     expect(out.some((e) => e.type === 'alarm' && e.id === 'EXTREME_TACHY' && e.state === 'raised')).toBe(true);
-    for (let i = 0; i + 1 < hh.length; i++) if (hh[i]?.state === 'raised' && hh[i + 1]?.state === 'cleared') expect((hh[i + 1] as { t: number }).t).toBeGreaterThan((hh[i] as { t: number }).t); // 22 zero-length pairs in Ali's case before
+    for (let i = 0; i + 1 < hh.length; i++) if (hh[i]?.state === 'raised' && hh[i + 1]?.state === 'cleared') expect((hh[i + 1] as { t: number }).t).toBeGreaterThan((hh[i] as { t: number }).t); // 22 zero-length pairs in the owner's case before
   });
 
   it('a LATCHED alarm suppresses nothing (review ruling 2, [S2] IFU p. 97, 99): after a latched ASYSTOLE (philips-like), a post-ROSC HR 45 raises HR LOW', () => {
@@ -5412,7 +5412,7 @@ git push
 ### Task 9: Limit hygiene — the displayed value, one unit of hysteresis, the tile's decimals, no alarm on a questionable value (L3 + mindray-like delay; PROTOTYPED)
 
 Decision D9 (audit M6, M14, Q8). The limit alarms compared the float with the limit and printed the rounded value:
-`**CVP 10>10` raised 100 times in 11 min, `**ABPm 70<70`, `**Temp 36<36`, `ART_M_LOW` × 71 in Ali's case. Now the
+`**CVP 10>10` raised 100 times in 11 min, `**ABPm 70<70`, `**Temp 36<36`, `ART_M_LOW` × 71 in the owner's case. Now the
 DISPLAYED value (rounded to the tile's decimals) is compared, an active limit alarm holds until the value is back
 inside by one display unit, the text uses the tile's decimals, and a questionable value ("97?") raises no limit
 alarm. mindray-like gets its documented 6 s alarm delay ([S4] §10.6.5).
@@ -7137,7 +7137,7 @@ git push
 ### Task 13: Fidelity suite, engine level (1) — arrest and ECG items 2, 3, 4, 5, 12, 13 (tests only; PROTOTYPED)
 
 research/10 §13 items as device-level Vitest scenarios on the Task 3 rig (MANUAL unless stated, seed 7, adult 40 y
-70 kg). Each criterion names its source; [ENG] criteria are the audit's until Ali answers §14. Both files are in the
+70 kg). Each criterion names its source; [ENG] criteria are the audit's until samhv-dev answers §14. Both files are in the
 SLOW set (`test/engine/fidelity-*.test.ts`).
 
 **Files:**
@@ -7148,7 +7148,7 @@ SLOW set (`test/engine/fidelity-*.test.ts`).
 | 2 PEA | sinus 90 pulseless at 60 s | HR 90 ± 3; PR and SpO2 invalid ≤ 15 s; the ART pulse (`prAbp`) valid only ≤ 6 s after onset, then static: philips-like keeps S/D/M of the flat line (S − D ≤ 5 mmHg from 70 s; review ruling 3); ABP NON-PULSATILE from 80 s; ABPm LOW never clears before CPR | HR 90; PR +7 s, SpO2 +12 s; `prAbp` invalid from 66 s, static "25/21 (22)"-type values (was 10 valid rows incl. the 118/79 glitch); INOP yes (was no) |
 | 3 VF → CPR → ROSC ×3 skins | VF 60 s, NIBP 70/160, CPR 150–300, sinus 80 at 302 | VFIB ≤ 5 s; no HR/EXTREME/VTAC raised after VFIB; CPR SpO2 never valid, PR 110 ± 5, EtCO2 10–25; NIBP FAILED ≤ 240 s; after ROSC VFIB latched + silent on philips-like, cleared on mindray-/saadat-like | VFIB +3.0 s; 0 chained raises (was HR_HIGH ×10 philips, EXTREME TACHY latched mindray); CPR "99?", PR 110, EtCO2 21–23 |
 | 4 asystole ×3 | asystole 60 s | ASYSTOLE at 4 / 5 / 10 s ± 1.5 (philips / mindray [S4] C.1.1.2 / saadat [06]); no HR LOW or EXTREME BRADY after it | +4.1 / +5.1 / +10.1 s; 0 (was HR 0<50 on philips-like) |
-| 4b agonal ×3 (review ruling 6) | pulseless agonal rhythm 60–300 s | ASYSTOLE raised ≤ once; no EXTREME BRADY / HR LOW; no red raise/clear cycle < 5 s | ASYSTOLE ×1 on each skin, EXTREME BRADY/HR LOW ×0 (before the agonal hold: mindray-like ASYSTOLE ×15; after FU-4's arrest Ali's case raised EXTREME BRADY ×11) |
+| 4b agonal ×3 (review ruling 6) | pulseless agonal rhythm 60–300 s | ASYSTOLE raised ≤ once; no EXTREME BRADY / HR LOW; no red raise/clear cycle < 5 s | ASYSTOLE ×1 on each skin, EXTREME BRADY/HR LOW ×0 (before the agonal hold: mindray-like ASYSTOLE ×15; after FU-4's arrest the owner's case raised EXTREME BRADY ×11) |
 | 5 leads off ×3 | leads off 60–120 s | HR invalid, never "0"; LEADS OFF active; no HR alarm ≤ 15 s after reconnection; (philips) LEADS OFF active beside a red APNEA; (mindray, review ruling 5) the pulse is the alarm source, "**Pulse 130>120" | "0" in 0 rows (was 56); 0 alarms (was HR 0<50); mindray-like "**Pulse 130>120" at 82 s (was "---" and no rate alarm) |
 | 12 HR response ×3 | HR 80 → 120 → 40 → 80 | every step ≤ 11 s (IEC 60601-2-27); philips-like 80 → 120 ≤ 8.8 s (6.8 ± 2, [S1]/brief §6.1); `it.fails` saadat-like 80 → 120 ≤ 8 s (B9 M p. 65–66: 6 s) | philips 8 / 7 / 11 s, mindray 7 / 7 / 10, saadat 10 / 9 / 10; saadat 80 → 120 settles in 9 s (the `it.fails`) |
 | 13 rhythm tour ×4 | 10 rhythms × 60 s, arrhythmia off/on | VTAC ≤ 3 s; ≤ 1 live lethal/extreme alarm at a time; PAUSE held ≥ 5 s | VTAC +1.6 s; max 1; PAUSE shortest 5.0 s (was 0.0 s ×10) |
@@ -7156,7 +7156,7 @@ SLOW set (`test/engine/fidelity-*.test.ts`).
 Kept as `it.fails` with the number (Orchestrator ruling (FU-5 review), 2026-09-28, ruling 5; Open question 12):
 saadat-like's rise 80 → 120 takes 9 s to the ± 5 % settle rule (the review measured 10 s to its own rule) against the
 B9 manual's 6 s at the 8 s window (research/06 §4.1) — the 8 s moving average plus the MANUAL rate ramp; FU-5 does not
-change the Saadat averaging without Ali's stopwatch check. mindray-like's V-Tach run is now 6 PVCs ([S4] C.1.1.2):
+change the Saadat averaging without the owner's stopwatch check. mindray-like's V-Tach run is now 6 PVCs ([S4] C.1.1.2):
 the tour's VTAC comes +1.94 s after VT 180 (philips-like +1.6 s).
 
 - [x] **Step 1: Create the tests**
@@ -7238,7 +7238,7 @@ describe('FU-5 fidelity 4: asystole, per skin', () => {
 
 describe('FU-5 fidelity 4b: an agonal rhythm shows ONE arrest alarm (Orchestrator ruling (FU-5 review), 2026-09-28, ruling 6)', () => {
   it.each(['philips-like', 'mindray-like', 'saadat-like'])(
-    '%s: pulseless agonal rhythm 60–300 s: ASYSTOLE raised once, no EXTREME BRADY or HR LOW (was 11 EXTREME BRADY raises in Ali\'s case after FU-4, 15 ASYSTOLE raises on mindray-like)',
+    '%s: pulseless agonal rhythm 60–300 s: ASYSTOLE raised once, no EXTREME BRADY or HR LOW (was 11 EXTREME BRADY raises in the owner\'s case after FU-4, 15 ASYSTOLE raises on mindray-like)',
     async (skin) => {
       const run = await monitorRun({ mode: 'manual', skin, tEnd: 300, steps: [...VENTED, [60, M.rhythm('agonal', { pulseless: true })]] });
       expect(raisedAt(run, 'ASYSTOLE').length).toBeLessThanOrEqual(1);
@@ -7673,7 +7673,7 @@ report sections into `docs/gates/fu-5/audit-report-before.txt` / `-after.txt` fo
 
 - [x] **Step 3: If FU-4 has merged meanwhile** (`git fetch origin && git log --oneline origin/main | grep -i "fu-4"`):
   merge now (`git merge origin/main`, keep both sides in the shared files listed in Global Constraints), re-run Steps 1–2,
-  and record in the gate note which fidelity numbers moved with the new truth (the bleed and Ali's case arrest in FU-4;
+  and record in the gate note which fidelity numbers moved with the new truth (the bleed and the owner's case arrest in FU-4;
   the device criteria must still hold — they are about what the monitor shows, whatever the truth). Name these checks
   (review F9, Orchestrator ruling (FU-5 review), 2026-09-28, ruling 6): (a) fidelity-lowflow's two runs assert "no red
   and no technical raise/clear cycle shorter than 5 s" — on the merged tree this is the guard against the agonal
@@ -8037,7 +8037,7 @@ skin on CI (suite 6), and record it as a deviation.
      re-statements of FU-5's own new tests (fu5-conditions hover case, fu5-technical ABP case, alarm-view latched
      case, fidelity-arrest PEA, the two latched-APNEA e2e assertions — each with its ruling).
   6. **Deviations** — anything that differs from this plan (re-anchored blocks after the FU-4 merge, numbers that moved).
-  7. **Open questions** — this plan's list with any answers Ali gave.
+  7. **Open questions** — this plan's list with any answers samhv-dev gave.
   8. **Coverage matrix (R54; research/12 §4.3 and §7 "Gate rule")** — one row per audit-10 cell FU-5 owns, re-measured
      on the merged branch by `pnpm audit:monitor` (the audit's own scenarios; the scenario that measures each cell is
      in brackets) with the verdict before (research/12's column) → after, and the test that now asserts it:
@@ -8047,7 +8047,7 @@ skin on CI (suite 6), and record it as a deviation.
      | A10-A1 PI with vasoconstriction | M1 | A1-map-ladder, D3-induction | WR | the first plan's "PL (PI follows SV/SV₀ × tone)" is WITHDRAWN (review ruling 1: PI rose 1.92 → 2.18 as MAP fell). Re-measured after the fix: the MANUAL ladder PI falls with MAP (1.84 → 1.53 → 1.18 → 0.03) → PL for the ladder; the vasomotor direction (PI rises after propofol, falls with catecholamines/cold) is TW — PI follows SV only until FU-4's skin tone (R-FU5-9); write "TW (PI follows SV only)" unless FU-4's output has landed | fidelity-lowflow 1b (ladder; propofol `it.fails`) |
      | A10-A1t tracker floor | M1 / T4 | A1-map-ladder (the 18/10 step) | IN | device PL (SpO2 "?"/invalid with PI < 0.3); the MAP floor stays FU-4's (T4) | fidelity-lowflow |
      | A10-A1m bleed 3 L, SpO2 at low flow | M1 | A1m-map-ladder | WR | PL | fidelity-lowflow, fu5-fidelity e2e item 1 |
-     | A10-A2 Ali's chain | M1 | A2-ali-b7 | WR | PL | fidelity-lowflow |
+     | A10-A2 the owner's chain | M1 | A2-owner-b7 | WR | PL | fidelity-lowflow |
      | A10-A4 VF/asystole/PEA SpO2 INOP | M8 | A4-vf, A5-pea | MI | PL (SpO2 NON-PULSAT.) | fu5-technical, fidelity-arrest |
      | A10-A4c CPR "?" | M1 | A4-vf | WR | PL ("99?" drawn) | fu5-tiles, fidelity-arrest |
      | A10-A7a probe off, PR source | M12 | A7-probe | WR | PL (`pr` invalid, `prAbp` valid) | hemo-engine (R45), fu5-tiles |
@@ -8097,13 +8097,13 @@ The PR body: the goal paragraph, the task list with one line each, the suite tab
 (low-flow SpO2, one apnoea, leads off, NIBP narrow PP, ART in PEA, limit chatter), the R45 re-statement list, the open
 questions, a link to `docs/gates/fu-5.md`, and it ENDS with the line
 `🤖 Generated with [Claude Code](https://claude.com/claude-code)`. Stop there: the orchestrator inspects the gate and
-Ali speaks the merge.
+samhv-dev speaks the merge.
 
-## Open questions (for Ali / the orchestrator; the plan does not wait on them)
+## Open questions (for samhv-dev / the orchestrator; the plan does not wait on them)
 
 The audit's 13 questions (research/10 §14) with what the plan decided. "Decided by the manual" = a vendor document
-answers it; "confirm with Ali" = the plan chose from the manual or the ruling, and Ali's bench check can change DATA
-(skin JSON), never code. After the R50 review (Orchestrator ruling (FU-5 review), 2026-09-28, ruling 8): **for Ali** —
+answers it; "confirm with samhv-dev" = the plan chose from the manual or the ruling, and the owner's bench check can change DATA
+(skin JSON), never code. After the R50 review (Orchestrator ruling (FU-5 review), 2026-09-28, ruling 8): **for samhv-dev** —
 1 (which IntelliVue option his unit runs), 2, 3, 4, 5 (the failure rate), 9, 11 (the Saadat text), 12, 14, 16;
 **decided** — 1 (presentation), 6, 7, 8, 13, 15, 19; **FU-4** — 10; **Stage 9 or a later FU** — 17, 18; **new for the
 orchestrator** — 20.
@@ -8112,56 +8112,56 @@ orchestrator** — 20.
    audible Off ([S1] p. 135–136); Mindray's default is non-latching ([S4] §39.4.3); Saadat: non-latching (research/06,
    unverified); the other skins follow the ruling (lethal arrhythmias latch visually). #H30 is the anaesthesia option;
    the ICU/neonatal/cardiac options (#H10/H20/H40) latch Red&Yellow visually and audibly ([S1] p. 42). **Confirm with
-   Ali:** is his IntelliVue on the #H30 defaults (or an ICU option), and does his B9 latch anything? **The presentation
+   samhv-dev:** is his IntelliVue on the #H30 defaults (or an ICU option), and does his B9 latch anything? **The presentation
    is DECIDED (Orchestrator ruling (FU-5 review), 2026-09-28, rulings 4 and 8):** the latched style is [ruling]; a
    latched red stays in philips-like's 2 s rotation of every active message beside a live yellow ([S2] p. 29–30, 40),
    never below or hidden (D15); the lamp and the tone come from live entries.
 2. **Low flow** (Q2). Decided by the manual for Philips: LOW PERF keeps the value with "?" ([S2] p. 58, "Label is
    displayed with -?-" — questionable), NON-PULSAT. replaces it with "-?-"; the PI falls with the pulse (D1). **Confirm
-   with Ali:** at MAP < 30 with an organised ECG, which message does his monitor show first, and how fast?
+   with samhv-dev:** at MAP < 30 with an organised ECG, which message does his monitor show first, and how fast?
 3. **VF and asystole** (Q3). Decided by the manual: one announced alarm per chain ([S2] p. 99), so no HR HIGH/LOW beside
    VFIB/ASYSTOLE. Not decided: what the HR numeric shows in VF (the plan leaves the detector's reading) — **confirm with
-   Ali** ("-?-" or a jumping number).
+   samhv-dev** ("-?-" or a jumping number).
 4. **Leads off** (Q4). Decided by the manual for Philips: HR "-?-" ([S2] p. 55), the pulse becomes the alarm source
    ([S1] p. 50 Alarms Source Auto; [S2] p. 108), the HR tile keeps its label; Saadat relabels "PR" (research/06 §4.1).
    Single bar: LEADS OFF rotates in (D15), per the B.0 IFU ([S2] p. 29–30); later IntelliVue releases draw separate
-   alarm and INOP fields [unverified]. **Confirm with Ali:** does his IntelliVue show INOPs in a separate area? (A
+   alarm and INOP fields [unverified]. **Confirm with samhv-dev:** does his IntelliVue show INOPs in a separate area? (A
    photo decides whether philips-like gets `split`.) mindray-like's HR/PR source is now Auto ([S4] C.1.1.1/C.1.3).
 5. **NIBP at a narrow PP** (Q5). The plan's model measures 85/70 (PP 15) and fails at MAP 13 / PP 3. The S/D accuracy
    is DECIDED as a measured `it.fails` (Orchestrator ruling (FU-5 review), 2026-09-28, ruling 5): at the instructor's
-   77/67 the cuff reads 80/56 (the truth reaches only 81/62) — Task 14. **Confirm with Ali** only the failure RATE:
+   77/67 the cuff reads 80/56 (the truth reaches only 81/62) — Task 14. **Confirm with samhv-dev** only the failure RATE:
    how often his cuff fails at 85/70.
 6. **Silence and ReAlarm** (Q6) — DECIDED (Orchestrator ruling (FU-5 review), 2026-09-28, ruling 8). Philips Silence
    acknowledges, new alarms sound at once, no countdown ([S2] p. 11, 32); Mindray Alarm Reset the same ([S4] §10.8).
    The Philips Alarm Reminder's factory default is ON, 3 min (a tone repeat for an acknowledged alarm still present,
    [S1] p. 135, 141) — the vendor default, recorded; not modelled in FU-5 (Q17 → Stage 9 or a later FU).
 7. **Apnoea sources** (Q7) — DECIDED (ruling 8): one "***APNEA" from the active source ([S2] p. 41; Saadat's
-   CAPNO/RESP selects one source); cardiac overlay rejected at the heart period ([S2] p. 112–113, D13). Ali's bench
+   CAPNO/RESP selects one source); cardiac overlay rejected at the heart period ([S2] p. 112–113, D13). The owner's bench
    observation (RR on impedance only in a paralysed apnoeic patient) would only refine D13's [ENG] fractions.
 8. **Chatter** (Q8) — DECIDED (ruling 8): the displayed value with one display unit of hysteresis [ENG]; philips-like
    has delay 0 (Philips publishes none), so an HR wandering 49–51 on a limit of 50 re-alarms 4 times in 3 min — a
    characterisation row (Task 14); mindray-like applies its documented 6 s delay (asserted as a mechanism; 4 raises
    too, each dip > 6 s). The CVP limit chatter outside the hover scenario is an `it.fails` (11 in the rhythm tour).
 9. **SpO2 settings** (Q9). Decided by the manuals for Philips: average 10 s ([S1] p. 66), display update 2 s ([S2]
-   p. 301). **Confirm with Ali:** the SpO2 technology of his monitors (FAST, Masimo, Nellcor).
+   p. 301). **Confirm with samhv-dev:** the SpO2 technology of his monitors (FAST, Masimo, Nellcor).
 10. **EtCO2 in VF** (Q10) → FU-4 (ruling 8): truth (FU-4 Task 17), not FU-5; Task 17's merged-tree run records it
     (the review's merge showed EtCO2 11–21 under CPR).
 11. **Temperature probe off** (Q11). Decided by the manual for Philips: "<Temp label> NO TRANSDUCER" ([S2] p. 62);
-    Saadat "TEMP NO CABLE" is [inferred] — **confirm with Ali** (photo).
+    Saadat "TEMP NO CABLE" is [inferred] — **confirm with samhv-dev** (photo).
 12. **Saadat asystole 5 s or 10 s; RESP APNEA 10 s** (Q12). The skin keeps 10 s (research/06's ECG chapter) and RESP 10
     s. The HR rise 80 → 120 is now an `it.fails` with its number (ruling 5): 9 s to the settle rule (the review: 10 s)
-    against the B9 manual's 6 s at the 8 s window — **confirm with Ali** (stopwatch) before the Saadat averaging is
+    against the B9 manual's 6 s at the 8 s window — **confirm with samhv-dev** (stopwatch) before the Saadat averaging is
     touched.
 13. **Philips OR, arrhythmia analysis off** (Q13) — DECIDED and CLOSED (ruling 8): EXTREME BRADY/TACHY still alarm
     (red) with arrhythmia analysis off ([S2] p. 89) — implemented (D7).
 14. **SpO2 at SaO2 1–10 % with a pulse** (audit M15; FU-4's G14 hand-over). Philips' measurement range is 0–100 %
-    ([S2]), so the plan leaves the display; with no pulse the value is `--` (D2). **Confirm with Ali:** does his
+    ([S2]), so the plan leaves the display; with no pulse the value is `--` (D2). **Confirm with samhv-dev:** does his
     oximeter show single digits or "<20"/dashes in extreme hypoxaemia?
 15. **Latched alarms and the chain — DECIDED (Orchestrator ruling (FU-5 review), 2026-09-28, ruling 2), removed from
-    Ali's list.** Latched alarms do not suppress: Philips inhibits lower alarms only "if a more serious alarm condition
+    The owner's list.** Latched alarms do not suppress: Philips inhibits lower alarms only "if a more serious alarm condition
     is active" ([S2] p. 97, 99), and a latched alarm's condition has ended — a post-ROSC bradycardia under a latched
     ASYSTOLE alarms and sounds (D6; fu5-conditions asserts it).
-16. **Texts marked [inferred]** (Saadat "SPO2 NO PULSE", "IBP1 ZEROING", "TEMP NO CABLE"; IEC "ABP ZEROING") — Ali's
+16. **Texts marked [inferred]** (Saadat "SPO2 NO PULSE", "IBP1 ZEROING", "TEMP NO CABLE"; IEC "ABP ZEROING") — the owner's
     B9 photos (research/06 §7) would replace them.
 17. **Not modelled, recorded** → Stage 9 or a later FU (ruling 8): the Philips Alarm Reminder (factory On, 3 min), the
     Saadat alarm recall and Alarm Freeze, yellow arrhythmia timeouts (brief §6.4: 3 and 10 min), SVT, "up to 8 R–R
@@ -8174,14 +8174,14 @@ orchestrator** — 20.
     the dicrotic notch. The damping is the L2 transducer model (`l2/hemo/line.ts`), which the FU-5 boundary leaves
     untouched (E-FU5-4 is the display filter only). → Stage 9 or a later FU (ruling 8): a DEVICE-SIGNAL item, not
     physiology (not FU-4): a follow-up exception on `l2/hemo/line.ts`'s damping preset — clinical over-damping lowers
-    fn as well as raising ζ, so the "damped" preset should lower fn — or Stage 9's teaching presets; Ali's
+    fn as well as raising ζ, so the "damped" preset should lower fn — or Stage 9's teaching presets; the owner's
     "square-wave test" photo is optional.
 19. **Labels under the IEC text table** (D19, R56) — DECIDED (ruling 8): labels follow the vendor — "ABP" on
     philips-like, "Art" on mindray-like ([S4] C.1.6), saadat-like per research/06; Stage 9 applies them (R-FU5-6);
-    Ali may override in the glossary review.
+    samhv-dev may override in the glossary review.
 20. **NEW (fixer, for the orchestrator): a bounded chain timeout?** With latched alarms suppressing nothing (ruling 2),
     an HR hovering 136–141 on philips-like's extreme-tachy threshold alternates EXTREME TACHY live/latched with 1–3 s
-    `**HR` HIGH blips (Ali's case A2 ×7 at 2 937–2 999 s; A8/A8e ×4), and a flickering impedance APNEA lets RR LOW
+    `**HR` HIGH blips (the owner's case A2 ×7 at 2 937–2 999 s; A8/A8e ×4), and a flickering impedance APNEA lets RR LOW
     through while it is latched (D4 ×2). The 5 s extreme clear delay removed the AF 150 case (13 → 3). Philips' p. 99
     also inhibits lower alarms "during the configured timeout period"; a 5 s hold for YELLOW chain members after a red
     parent stops being live would remove these blips, but it would let a just-latched alarm suppress for 5 s, against
@@ -8196,7 +8196,7 @@ orchestrator** — 20.
   M13 (Task 8; D17), M14 (Tasks 6, 9; D17), M15 (not changed — Open question 14), M16 (Task 7). The 15 suite items:
   Task 3 (1), Task 13 (2–5, 12, 13), Task 14 (6–11, 14, 15), Task 16 (1, 5, 6 on the live monitor), Task 17 (the
   FU-3 screenshot, G-FU3 ruling 7); the harness is Task 1 (D18). The audit's 13 questions are Open questions 1–13
-  (decided by a manual where one answers, "confirm with Ali" otherwise); T1–T8 (truth) are R-FU5-1 to FU-4.
+  (decided by a manual where one answers, "confirm with samhv-dev" otherwise); T1–T8 (truth) are R-FU5-1 to FU-4.
 - **The rulings:** "FU-5 opened" (latching per vendor, IEC lethal-visual default, one condition one alarm, chained
   suppression, technical alarms) → D3–D10; the FU-4 boundary → E-FU5-1…7, nothing in `l1/**` or other `l2/**` lines;
   G15 (SpO2 at MAP 13, dropped by FU-4 to FU-5) → Task 3; FU-4's G14 hand-over → Open question 14; R54's gate rule →
@@ -8215,7 +8215,7 @@ orchestrator** — 20.
   tick bench: p50 0.62–0.66 ms, p95 0.87–1.13 ms over three runs (local bound 2 ms; the test notes 0.4 ms on an idle machine — this one was loaded); e2e (fu5-fidelity, fu5-latched, stage4b-device; Chromium, one worker): 14 passed in 11.0 min,
   every PNG ≤ 55 KB; `pnpm audit:monitor`: the "after" column of "Prototype results".
 - **Changed on this (second) resumption, all re-run:** (1) D6's suppressor counts an unacknowledged LIVE entry too,
-  not only a latched one — the after-report showed 22 zero-length `HR_HIGH` raise/clear pairs in Ali's case (one per
+  not only a latched one — the after-report showed 22 zero-length `HR_HIGH` raise/clear pairs in the owner's case (one per
   tick in which EXTREME TACHY's condition ended before its entry latched), and HR_HIGH/HR_LOW/RR flickers in A8, C2,
   B1 and D4 went with it; a new fu5-conditions case fails on the old rule (15 raises) and passes on the new; the
   alarms-engine age-band test then needed an acknowledge (its first HR average reads 144, Task 8) — both superseded
@@ -8250,8 +8250,8 @@ orchestrator** — 20.
 - **Partition:** the 71 files the blocks touch (plus the regenerated snapshot) are exactly the Global Constraints list
   (lifepak-like left the list with the review fix); each task's Files block names the files its blocks touch. The e2e
   rewrites `docs/gates/stage-4b/*.png`; Tasks 12 and 18 restore them.
-- **Residual behaviour the executor will see (not defects of the plan, recorded for Ali and the orchestrator):** the
-  arterial line's pulsatile/static flip in Ali's case is gone (ABP NON-PULSATILE 10 → 1 with the amplitude
+- **Residual behaviour the executor will see (not defects of the plan, recorded for samhv-dev and the orchestrator):** the
+  arterial line's pulsatile/static flip in the owner's case is gone (ABP NON-PULSATILE 10 → 1 with the amplitude
   hysteresis, the static line keeps its S/D on philips-like), but ART_M_LOW still raises 12 times there as the
   displayed mean hovers 69–71 on its limit 70 under PEEP 15, and CVP_M_HIGH chatters 5–11 times per run outside the
   hover scenario (the ventilatory swing is wider than D9's one-unit hysteresis — `it.fails` in Task 14); an HR

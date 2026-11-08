@@ -208,6 +208,7 @@ Exported without a doc comment: `ventAlarms`, `toVentFrame`, `createLinkCore`, `
 | [`link-r27.test.ts`](../../packages/ventilator/test/link-r27.test.ts) | 4 | 0 |
 | [`link-r36.test.ts`](../../packages/ventilator/test/link-r36.test.ts) | 0 | 0 |
 | [`link-refused-probe.test.ts`](../../packages/ventilator/test/link-refused-probe.test.ts) | 0 | 0 |
+| [`link-relink.test.ts`](../../packages/ventilator/test/link-relink.test.ts) | 0 | 0 |
 | [`link-restore.test.ts`](../../packages/ventilator/test/link-restore.test.ts) | 0 | 0 |
 | [`lung-input.test.ts`](../../packages/ventilator/test/lung-input.test.ts) | 0 | 0 |
 | [`mechanics.test.ts`](../../packages/ventilator/test/mechanics.test.ts) | 0 | 0 |

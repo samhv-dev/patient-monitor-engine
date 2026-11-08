@@ -124,7 +124,7 @@ merge ed530d5: FU-3, FU-4, FU-5 and V.1 merged), in a detached throwaway worktre
 - **Urine** is read from the cumulative counter (mL/kg/h over a stated window), the way a urometer is read. The
   OLIGURIA flag and KDIGO stage come from the 7d `organs` event and state.
 - **Grading** (research/12 §2.2): automatic first, then every non-PL is confirmed by hand. `HAND` in the tables gives
-  the code reason. Bands are **proposals for Ali** with their source; none was widened (R45). Cells without a sourced
+  the code reason. Bands are **proposals for samhv-dev** with their source; none was widened (R45). Cells without a sourced
   magnitude are `dirOnly` and listed in §6.
 
 ## 2. Results
@@ -144,7 +144,7 @@ Family by family:
   - Awake class II/III urine, HBF and lactate are right.
   - GFR never falls (H2).
   - Recovery after resuscitation is too slow (H1).
-  - The MANUAL kidney keeps its volume arm (Q for Ali).
+  - The MANUAL kidney keeps its volume arm (Q for samhv-dev).
 - **2.3 Pressure and output.** Pressure natriuresis and GFR autoregulation are right. The hypertensive shift is
   missing (H7). HFrEF cannot be made low-output (→ FU-8).
 - **2.4 Drug disposition.** Propofol is right in shock; fentanyl is weak (→ FU-7). HBF under sevoflurane is right
@@ -173,7 +173,7 @@ Family by family:
 | cell | tier | context · state → intervention | measured (control-subtracted unless named) | graded items: value vs expected [source] | verdict | gap · owner |
 |---|---|---|---|---|---|---|
 | RH-01a | P1 | X-A GA vent vs X-A awake · GA maintained (Stage 3 GA flag), normovolaemic, MAP ≈ 93 → GA 4 h, VCV 12 × 600, no surgery: hourly urine output | uoGA1 0.38; uoGA2 0.35; uoGA3 0.35; uoGA4 0.35; uoGAmin 0.35; uoAw1 0.94; uoAw4 0.94; mapGA 93.67; coGA 4.91; coAw 5.7; vNhGA 0.58; vNhAw 0.88; angGA 0.37 | TS: uoGAmin = 0.35 below [0.5, 1] (lower = stronger/faster) [tables §5.2 `S` row ("intra-op UOP 0.5–1 despite normal MAP"); Miller 10e ch. 17 (renal physiology: GA lowers UO through ADH/sympathetic tone, not to oliguria at a normal MAP); KDIGO 2012 (oliguria < 0.5 mL/kg/h)]<br>PL: uoAw4 = 0.94 in [0.5, 1.5] [tables §5.2 `UOP0` 1.0 (0.5–1.5) mL/kg/h awake]<br>HAND TS (automatic TS): H1: at MAP 93 the GA patient makes 0.35 mL/kg/h — the GA stress factor S 0.6 (renal/params.ts:56) is stacked on a neurohumoral factor vNh 0.58 and angiotensin 0.37 that `eabv` (renal/model.ts:59–61) derives from GA's normal ≈ 15 % fall in CO against a fixed 0.08 L/min/kg reference; the MANUAL twin (CO held, vNh 1.00) makes 0.8 | **TS** | H1 · 7d renal/model.ts eabv + S_GA |
-| RH-01b | P1 | X-A GA vent · GA maintained, normovolaemic → GA 4 h: OLIGURIA flag and KDIGO stage | flagFirstS 360; flagAny true; flagMinutesOn 225; akiStage4h 0; flagAwake false | WR: flagAny = true (expected false) [KDIGO 2012: oliguria = UO < 0.5 mL/kg/h for ≥ 6 h (stage 1); a healthy anaesthetised patient at a normal MAP is not oliguric (tables §5.2 alarm row, Q40)]<br>PL: flagAwake = false (expected false) [as above (awake reference)]<br>HAND WR (automatic WR): the flag is on from 360 s and for 225 of 240 min in a healthy patient: the hourly UO itself is < 0.5 (H1); FU-8 A8 only defers the first flag to a completed 10-min bin (≈ 20 min), so the flag still fires; KDIGO's 6-h window is Ali's W9 | **WR** | H1, FU-8 · 7d organs/pipeline.ts oliguria flag (FU-8 A8) + RH-01a cause |
+| RH-01b | P1 | X-A GA vent · GA maintained, normovolaemic → GA 4 h: OLIGURIA flag and KDIGO stage | flagFirstS 360; flagAny true; flagMinutesOn 225; akiStage4h 0; flagAwake false | WR: flagAny = true (expected false) [KDIGO 2012: oliguria = UO < 0.5 mL/kg/h for ≥ 6 h (stage 1); a healthy anaesthetised patient at a normal MAP is not oliguric (tables §5.2 alarm row, Q40)]<br>PL: flagAwake = false (expected false) [as above (awake reference)]<br>HAND WR (automatic WR): the flag is on from 360 s and for 225 of 240 min in a healthy patient: the hourly UO itself is < 0.5 (H1); FU-8 A8 only defers the first flag to a completed 10-min bin (≈ 20 min), so the flag still fires; KDIGO's 6-h window is the owner's W9 | **WR** | H1, FU-8 · 7d organs/pipeline.ts oliguria flag (FU-8 A8) + RH-01a cause |
 | RH-01c | P1 | X-A awake vs GA vent · resting, normovolaemic → resting renal haemodynamics: RBF, GFR, filtration fraction | rbfAw 873; rbfGA 476; rbfPctCoAw 15.31; gfrAw 126; gfrGA 126; ffAw 0.26; ffGA 0.48; rbfGAvsAwPct -45.4 | PL: rbfPctCoAw = 15.31 in [15, 25] [Guyton & Hall 14e ch. 27: RBF ≈ 1100 mL/min ≈ 20–22 % of CO; tables §5.2 / ICRP-89 17 %]<br>TS: ffAw = 0.26 above [0.15, 0.25] [Guyton & Hall 14e ch. 27: filtration fraction ≈ 0.2 (GFR 125 / RPF 650)]<br>TS: ffGA = 0.48 above [0.15, 0.3] [Guyton & Hall: FF rises with efferent (AngII) tone but filtration equilibrium caps it (≈ 0.3); Miller 10e ch. 17]<br>TS: rbfGAvsAwPct = -45.4 below [-30, 0] [Miller 10e ch. 17: anaesthetics lower RBF modestly through MAP/CO; RBF autoregulated over RPP 80–180 (tables §5.2 rblLL) — at MAP ≈ 93 the fall should be small]<br>HAND TS (automatic TS): H2 + H1: under GA RBF 476 mL/min (−45 % vs awake at the same MAP) while TGF holds GFR at 126 → filtration fraction 0.48; π_gc is a constant (kidney.ts:44), so nothing stops the filtration fraction (filtration equilibrium caps it near 0.3) | **TS** | H1, H2 · 7d renal/kidney.ts (filtration equilibrium) + model.ts eabv |
 | RH-M1 | P1 | X-A MANUAL, GA vent (MODELED twin RH-01a) · GA, normovolaemic → GA 2 h: hourly urine output and the flag | uo1 0.79; uo2 0.81; flagAny false; vNh 1; map 107.42 | PL: uo2 = 0.81 in [0.5, 1] [as RH-01a (tables §5.2 S row); Q9 open] | **PL** | — · Q9 / 7d renal |
 
@@ -186,7 +186,7 @@ Family by family:
 | RH-02c | P1 | X-A GA vent · class III (1500 mL / 10 min) → hepatic blood flow and lactate clearance vs cardiac output | coRel 0.62; hbfRel 0.37; hbfOverCo 0.6; kLacPct -35.5; dLact30 2.24; hbfRel2 0.56; coRel2 0.75 | PL: hbfOverCo = 0.6 in [0.5, 0.75] [tables §5.3 `hbfFactor` ×0.6 in class III (splanchnic vasoconstriction: HBF falls more than CO; Guyton ch. 16 splanchnic reservoir)]<br>PL: kLacPct = -35.5 (sign -1, beyond 15) [tables §5.3 kLac ×HBF_rel; research/12 RH-02 (lactate clearance falls with HBF)]<br>PL: dLact30 = 2.24 in [2, 4] [tables §7 check 17a: class III lactate 3–5 by 30 min (from 1.0)] | **PL** | — · 7c blood/core.ts hbfRel (HBF_EXP) / 7d liver hbfFactor |
 | RH-03a | P1 | X-A GA vent · class III (1500 mL / 10 min) → Ringer's lactate 2 L over 30 min at 960 s: urine recovery | uoPre 0.4; uoBleed 0.05; uo0to30 0.21; uo30to60 0.23; uoCtl30to60 0.04; uoNormGA30to60 0.35; mapEnd 91.68; mapNorm 93.45; coEnd 5.27; coNorm 4.8; vNh60 0.46; bvRel60 0.97 | TW: uo30to60 = 0.23 below [0.5, 1.5] [ATLS 10e ch. 3: UO ≥ 0.5 mL/kg/h is the adult resuscitation end point; it recovers within 30–60 min of restoring MAP/CO (research/12 RH-03)]<br>MI: tUo05: not a finite number (null) [ATLS 10e: urine recovers within 30–60 min of MAP/CO restoration (a 10-min bin ≥ 0.5 mL/kg/h)]<br>HAND TW (automatic MI): MAP 92 and CO 5.3 (above the normovolaemic 4.8) are restored at 1860 s, but UO is 0.21 then 0.23 mL/kg/h and no 10-min bin reaches 0.5 in 2 h: vNh is still 0.46 at +60 min (fast-on/slow-off lag on a noisy CO, renal/model.ts:124–125, plus H1's CO reference); the GA ceiling is 0.35 anyway (RH-01a) | **TW** | H1 · 7d renal/model.ts (vNh washout τ 45 min, eabv) |
 | RH-03b | P1 | X-A GA vent · class III (1500 mL / 10 min) → 2 u RBC over 20 min at 960 s: urine recovery | uoPre 0.4; uoBleed 0.05; uo0to30 0.07; uo30to60 0.08; uoCtl30to60 0.04; uoNormGA30to60 0.35; mapEnd 79.06; mapNorm 93.64; coEnd 3.89; coNorm 4.64; vNh60 0.21; bvRel60 0.83 | PL: uo30to60 = 0.08 (sign 1, beyond 0) [direction: 2 u (≈ 600 mL) replace 40 % of the loss — partial recovery; the band belongs to full restoration (RH-03a)]<br>TW: uo30to60 = 0.08 below [0.3, 1.5] [ATLS 10e (as RH-03a) — partial replacement: above the class III 5–15 mL/h (0.07–0.2 mL/kg/h), below the target] | **TW** | H1 · 7d renal/model.ts |
-| RH-21 | P1 | X-A MANUAL, GA vent · class III (1500 mL / 10 min), instructor targets unchanged → urine output vs the MANUAL control | dMap -49.02; uoI 0.03; uoC 0.8; uoPct -96.25; vNhI 0.16; vNhC 0.99; coPct -45.6 | WR: uoPct = -96.25 (quiet, tol ±25) [research/12 RH-21 design check (audit 08 Q9): in MANUAL, UO follows the (held) MAP only — no neurohumoral arm; Q9 open]<br>HAND PL (automatic WR): direction-only (Q9 open): the MANUAL bleed is not "held" — MAP falls 49 mmHg and UO falls 96 % with it. The cell's premise ("no neurohumoral arm in MANUAL") is false: vNh 0.16 vs 0.99 — the kidney's volume arm runs in MANUAL (question for Ali) | **PL** | — · Q9 (MANUAL physiology) / 7d renal eabv |
+| RH-21 | P1 | X-A MANUAL, GA vent · class III (1500 mL / 10 min), instructor targets unchanged → urine output vs the MANUAL control | dMap -49.02; uoI 0.03; uoC 0.8; uoPct -96.25; vNhI 0.16; vNhC 0.99; coPct -45.6 | WR: uoPct = -96.25 (quiet, tol ±25) [research/12 RH-21 design check (audit 08 Q9): in MANUAL, UO follows the (held) MAP only — no neurohumoral arm; Q9 open]<br>HAND PL (automatic WR): direction-only (Q9 open): the MANUAL bleed is not "held" — MAP falls 49 mmHg and UO falls 96 % with it. The cell's premise ("no neurohumoral arm in MANUAL") is false: vNh 0.16 vs 0.99 — the kidney's volume arm runs in MANUAL (question for samhv-dev) | **PL** | — · Q9 (MANUAL physiology) / 7d renal eabv |
 | RH-M2 | P1 | X-A MANUAL, GA vent (MODELED twin RH-03a) · class III → Ringer's lactate 2 L over 30 min: urine output 30–60 min after | uoI 0.55; uoC 0.07; dUo 0.48; dMap 41.38 | PL: dUo = 0.48 (sign 1, beyond 0.05) [direction (Q9 open): a 2 L load after class III raises urine output] | **PL** | — · Q9 / 7d renal |
 
 ### 2.3 Pressure, output and the kidney (P1; RH-27 P2)
@@ -378,7 +378,7 @@ pattern).
 - **Smallest mechanism:**
   - **7a:** IAP as the external pressure on the abdominal venous compartment (venous return falls once IAP > CVP) and
     a splanchnic arterial resistance term.
-  - **7b:** chest-wall elastance and FRC from IAP (Ecw × (1 + k·(IAP − 5))), [ENG] k for Ali; research/12 RH-06
+  - **7b:** chest-wall elastance and FRC from IAP (Ecw × (1 + k·(IAP − 5))), [ENG] k for samhv-dev; research/12 RH-06
     expects compliance −30–50 %.
   - **7c/7d:** HBF through H3's outflow term.
 
@@ -405,7 +405,7 @@ pattern).
   - so does the tubular capacity (the urine of the remaining nephrons);
   - an afferent tone term (R_AFF_MIN × (1 + k·aki)) lets RBF fall.
 
-  At aki 1 GFR ≈ 25 mL/min (KDIGO G4–5 by name, Q for Ali). Rocuronium alone then reaches ≈ ×1.2; the tables' CKD
+  At aki 1 GFR ≈ 25 mL/min (KDIGO G4–5 by name, Q for samhv-dev). Rocuronium alone then reaches ≈ ×1.2; the tables' CKD
   row (renal drug clearance ×0.3) belongs to the missing `ckd` profile (§5).
 - **Tests moved:** `test/l2/renal/model.test.ts` (aki), `test/l2/organs/pipeline.test.ts`, the CM-08 cells,
   `test/l2/pk/nmb.test.ts` (renal share).
@@ -456,7 +456,7 @@ pattern).
 - **Cell:** RH-20c (WR). At 33 °C, urine 0.25 vs 0.34 (−27 %), following the CO −6.5 % through H1.
 - **Code:** `RenalInputs` (`renal/model.ts:16–29`) has no temperature. The liver has `tempF`; the kidney does not.
 - **Smallest mechanism:** a cold-diuresis factor on the excreted fraction below ≈ 35 °C (tubular Na reabsorption
-  and ADH responsiveness fall; Polderman 2009). Magnitude [ENG], a question for Ali.
+  and ADH responsiveness fall; Polderman 2009). Magnitude [ENG], a question for samhv-dev.
 - **Tests moved:** `test/l2/renal/model.test.ts`; ET's hypothermia cells.
 
 ### H11 — Two lactate clearances (new, small; owner 7c + 7d)
@@ -488,8 +488,8 @@ pattern).
 | **FU-7** Task 2 (owned) | furosemide's fallback curve (n 0.47) | RH-07a | onset 30 s, peak diuresis 2.5 min (label ≤ 5 min / ≈ 30 min) | already in Task 2's list; the magnitude part is H1 |
 | **FU-7** (before execution) | morphine metabolites; CKD renal clearance ×0.3 | RH-10c (NE); RH-10a | — | DI-38; tables §1.5 `ckd` `clearRenal` ×0.3 comes with the profile (research/19 C10) |
 | **FU-8** | HFrEF never low-output (I-52 remainder) | RH-05a/b | hfref awake: CO 6.3, MAP 87, CVP 4.5 → UO 0.65; dobutamine CO +23.5 %, UO 0.71 | A12 keeps HFrEF targets bit-identical, so `organs-renal.test.ts:39/64` (`it.fails`, check 20) stay failing; the kidney is right for the circulation it sees |
-| **FU-8** | OLIGURIA flag (I-34, A8) | RH-01b | flag from 360 s, on 225 of 240 min at GA | A8 defers the first flag to a completed 10-min bin, but the hourly UO is truly 0.35, so the flag still fires until H1 is fixed; KDIGO's 6 h is W9 (Ali) |
-| **FU-8** | missing CKD / cirrhosis profiles (I-57, W17) | RH-14a/b, RH-19, CM-08e | Child C proxy: CO −0.1 %, SVR 0.0 %, propofol MAP −23.3 % in both arms | Ali's v1.0/v1.1 decision |
+| **FU-8** | OLIGURIA flag (I-34, A8) | RH-01b | flag from 360 s, on 225 of 240 min at GA | A8 defers the first flag to a completed 10-min bin, but the hourly UO is truly 0.35, so the flag still fires until H1 is fixed; KDIGO's 6 h is W9 (samhv-dev) |
+| **FU-8** | missing CKD / cirrhosis profiles (I-57, W17) | RH-14a/b, RH-19, CM-08e | Child C proxy: CO −0.1 %, SVR 0.0 %, propofol MAP −23.3 % in both arms | the owner's v1.0/v1.1 decision |
 | **FU-9 A1** | volume excretion (F1) | RH-23c, RH-25b | glycine 3 L: +31 mL urine in 1 h (CVP +12.5); 3 % saline 250 mL: +13 mL in 2 h, 330 mL retained | **sequencing:** A1's GA retention (0.36 at 30 min) is calibrated on today's GA urine 0.35 mL/kg/h, which H1 says is too low — whichever of A1 / an H1 fix lands second re-measures BF-02 and RH-01 |
 | **FU-9 A6** | renal K⁺ excretion (F6) | RH-07b, RH-09b | furosemide 40 mg: K⁺ −0.004 at 3 h; 4 u stored RBC: ΔK at 3 h −0.015 in AKI and in health | A6 makes the cellular pool finite; H6 still leaves the AKI kidney excreting |
 | **FU-9 A8** | brain follows plasma osmolality (F11) | (RH-08) | — | H8 hands A8 mannitol as a plasma osmole, so osmotherapy becomes one mechanism |
@@ -502,7 +502,7 @@ pattern).
 | blocker | cells | what is missing | probe numbers | owner |
 |---|---|---|---|---|
 | **7i labs** (R58; **v1.1** by R60) | RH-12c, RH-24a, RH-24b | creatinine, urea, the KDIGO creatinine criterion and its lag; a coagulation INR | the liver INR placeholder reads 2.6 at failure 0.8 and nothing reads it; KDIGO stage is the UO criterion only | 7i |
-| **missing profiles** (research/19 C10; FU-8 I-57 / W17, Ali) | RH-14a, RH-14b, RH-19 (+ CM-08e) | `cirrhosis` (hyperdynamic circulation, low SVR, protein binding, hepatorenal state) and `ckd` (tables §1.5: β ×1.3, renal drug clearance ×0.3, fistula, post-dialysis volume) | Child C proxy = health in CO, SVR and the propofol fall | FU-7 profiles |
+| **missing profiles** (research/19 C10; FU-8 I-57 / W17, samhv-dev) | RH-14a, RH-14b, RH-19 (+ CM-08e) | `cirrhosis` (hyperdynamic circulation, low SVR, protein binding, hepatorenal state) and `ckd` (tables §1.5: β ×1.3, renal drug clearance ×0.3, fistula, post-dialysis volume) | Child C proxy = health in CO, SVR and the propofol fall | FU-7 profiles |
 | missing state | RH-18 | rhabdomyolysis / crush (K⁺, myoglobin, AKI) — `condition rhabdomyolysis` rejected | — | 7i / FU-7 |
 | missing mechanism | RH-10c | morphine active metabolites (M6G) — DI-38 | — | FU-7 |
 
@@ -513,7 +513,7 @@ its INR cells.
 
 `13-audit-scripts/run.sh cli.ts all` re-runs every cell in ≈ 25 min of wall time; `report.ts` prints the tables.
 
-| owner | cells to re-measure at its gate | acceptance items (bands are Ali's proposals) |
+| owner | cells to re-measure at its gate | acceptance items (bands are the owner's proposals) |
 |---|---|---|
 | **7d** (H1, H2, H4, H6, H7, H10, H12) | RH-01a/b/c, 02b, 03a, 04a/b, 06a, 07a, 10a, 17a, 20c, 26b, 27a | GA 4 h: hourly UO 0.5–1, no OLIGURIA flag, control never reaches a KDIGO stage; awake and GA filtration fraction ≤ 0.3; class III GFR falls (FF ≤ 0.35); class III + 2 L RL: UO ≥ 0.5 within 60 min; IAP 15 UO ↓, IAP 25 < 0.1; aki 1 GFR ≤ 25 and RBF ↓; HTN kidney loses GFR at a higher MAP with CO matched; 33 °C UO ↑; PEEP 15 UO −10–40 % with GFR ↓ |
 | **7c + 7d** (H3, H8, H11) | RH-16, 26a, 06d, 02c, 08a/c, 12a | sevoflurane HBF −20–0 %; PEEP 15 HBF −10–35 % with a venous term; class III HBF/CO 0.5–0.75 (must stay PL); mannitol osmolality +20–30, transient expansion, Na ↓ then ↑; one lactate clearance published |
@@ -526,7 +526,7 @@ its INR cells.
 For each gate the owner runs `PME_ENGINE=<wt>/packages/engine-core/src/index.ts ./run.sh cli.ts <ids>` and puts the
 `report.ts` rows in its gate note beside this run's column (research/12 §7).
 
-## 7. Questions for Ali (with the model's numbers)
+## 7. Questions for samhv-dev (with the model's numbers)
 
 1. **Urine under GA (H1).** At MAP 93 with normal volume, the model makes 0.35 mL/kg/h under GA for 4 h, so the
    OLIGURIA flag is on almost throughout and, at KDIGO time-scale 3, a healthy patient reaches "AKI stage 1" by 3 h.

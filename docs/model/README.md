@@ -18,14 +18,14 @@ regenerations. The list of known misses across modules is [known-misses.md](../v
 | [Blood, acid–base, electrolytes and fluids](blood.md) | 12 | 41 | 10 |
 | [Brain, kidney and liver](organs.md) | 14 | 30 | 12 |
 | [Endocrine, metabolism and temperature](endocrine-thermal.md) | 17 | 40 | 17 |
-| [Anaesthetic depth, ventilatory drive and neuromuscular block](neuro.md) | 11 | 23 | 7 |
+| [Anaesthetic depth, ventilatory drive and neuromuscular block](neuro.md) | 17 | 31 | 7 |
 | [Pharmacology: PK, PD and the drug rows](pharmacology.md) | 20 | 47 | 32 |
-| [Monitor measurements (device layer)](monitor.md) | 15 | 30 | 6 |
+| [Monitor measurements (device layer)](monitor.md) | 18 | 33 | 7 |
 | [Alarms](alarms.md) | 4 | 17 | 0 |
 | [Defibrillator and pacer](defib-pacer.md) | 4 | 9 | 0 |
-| [Ventilator](ventilator.md) | 16 | 23 | 6 |
-| [Engine runtime: loop, clock, commands, snapshots](engine-runtime.md) | 10 | 16 | 0 |
-| [Control: commands, transports, scenarios](control.md) | 44 | 85 | 0 |
-| [Presentation: renderer, audio, skins, the app](presentation.md) | 203 | 317 | 3 |
-| [Validation harness](validation-harness.md) | 60 | 50 | 0 |
+| [Ventilator](ventilator.md) | 16 | 24 | 6 |
+| [Engine runtime: loop, clock, commands, snapshots](engine-runtime.md) | 25 | 17 | 0 |
+| [Control: commands, transports, scenarios](control.md) | 44 | 86 | 0 |
+| [Presentation: renderer, audio, skins, the app](presentation.md) | 204 | 322 | 3 |
+| [Validation harness](validation-harness.md) | 60 | 51 | 0 |
 | [Whole-patient scenario suites](integration.md) | 0 | 1 | 10 |

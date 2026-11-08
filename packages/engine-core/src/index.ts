@@ -33,4 +33,6 @@ export { gammaConc, gammaN, gammaShape } from './l2/pk/gamma.ts'; // Evidence pa
 export { shockStateFactor } from './l3/defib-pacer/outcome.ts'; // Evidence page: the shock-state factor
 export type * from './types-truth.ts';
 export type * from './types-neuro.ts';
+export type * from './types-eeg.ts';
+export { EEG_DEVICES, EEG_MODEL_IDS, type EegModelId } from './l3/eeg-devices/registry.ts'; // the EEG devices' spec rows (the developer page, the renderer's strip)
 export { pruneTruth, TRUTH_LIMITS } from './truth.ts';

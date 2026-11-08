@@ -1,4 +1,4 @@
-// FU-8 Task B4 (research/19 C1; plan D15; for Ali's review BEFORE execution): an anaesthetic removes the TONIC
+// FU-8 Task B4 (research/19 C1; plan D15; for the owner's review BEFORE execution): an anaesthetic removes the TONIC
 // sympathetic share of resting SVR, so the patients whose rest depends on it fall more. Propofol 2 mg/kg, ventilated,
 // seed 7; nadir 60–360 s after the dose against the 60 s before it. Before (origin/main 0fd5397): every profile −21.6 to
 // −23.4 %. Prototype: healthy −29.9, 80 y −37.2, HTN 60 y −35.0, 80 y HTN −42.9, HFrEF −42.7 %.

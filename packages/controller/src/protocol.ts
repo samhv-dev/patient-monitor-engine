@@ -42,7 +42,7 @@ export type ControlFlag = 'modeled' | 'pinned' | 'ramping' | 'override';
 export type BatchMeta = { batch?: { id: string; n: number } };
 /** `actionId` (plan F3): the /2 card's action an A press sends the command for. Metadata, as `batch`: the host and the
  *  engine ignore it; the scenario driver reads it (a taking, and the administration record's source). */
-type CommandBase = { id: string; issuedBy: string; atTick?: Tick; stageGroup?: string; actionId?: string } & BatchMeta;
+type CommandBase = { id: string; issuedBy: string; atTick?: Tick; stageGroup?: string; actionId?: string; by?: string } & BatchMeta;
 
 /**
  * Brief §7.2 `ClinicalEvent` (drug ids stay strings), widened to the engine's shapes (plan F1; the schema checks `kind`
@@ -402,6 +402,12 @@ export function instructorMay(c: WireCommand | CommandInput): string | null {
  * post-shock rhythm), no `atTick` (the host applies it on its own tick).
  */
 export const LEARNER_DEFIB_COMMANDS: ReadonlySet<string> = new Set(['applyEvent defib charge', 'applyEvent defib shock']);
+/**
+ * R5d: what the host writes as `issuedBy` on a `defib` peer's applied command, whatever the window wrote (as P3 writes
+ * `remote` on an instructor phone's); the device key of the window's hello rides as the command's `by` (CommandBase),
+ * so the record names the device that pressed (apps/demo record.ts, a `learner` row).
+ */
+export const LEARNER_ISSUED_BY = 'learner';
 /** The only fields a learner's Charge or Shock carries, on the command and on its event. */
 const DEFIB_COMMAND_KEYS: ReadonlySet<string> = new Set(['id', 'issuedBy', 'type', 'event']);
 const DEFIB_EVENT_KEYS: ReadonlySet<string> = new Set(['kind', 'action']);

@@ -4,6 +4,8 @@ import { MAX_TIME_SCALE, MIN_TIME_SCALE, type Command, type DispatchResult, type
 import {
   createStamper,
   instructorMay,
+  LEARNER_ISSUED_BY,
+  learnerDefibMay,
   newPeerId,
   SeqFilter,
   type AppliedResolution,
@@ -196,9 +198,10 @@ export class HostSession {
    * Per transport, each peer's sequence filter and the role its last hello said — keyed by (transport, from), so a
    * frame on one transport (a phone on the relay claiming the panel's id) never touches a peer on another (the
    * in-process panel). A detached transport's peers are forgotten with it (verification 2026-10-29), and one peer when
-   * the relay says its socket left (R29), so a hello forged under its id dies with the forger's socket.
+   * the relay says its socket left (R29), so a hello forged under its id dies with the forger's socket. `devices`: the
+   * device key a `defib` peer's last hello said (R5d), carried as `by` on its applied presses.
    */
-  private readonly peers = new WeakMap<ManagedTransport, { seqs: SeqFilter; roles: Map<string, Role>; left: Set<string> }>();
+  private readonly peers = new WeakMap<ManagedTransport, { seqs: SeqFilter; roles: Map<string, Role>; left: Set<string>; devices: Map<string, string> }>();
   /**
    * The one granted instructor phone, by (transport, from), and the PIN it proved (plan §3 option B: the newest right
    * PIN takes over). The laptop's own panels are controllers: they need no grant and are never revoked.
@@ -527,6 +530,7 @@ export class HostSession {
     const p = this.peers.get(t);
     p?.seqs.forget(from);
     p?.roles.delete(from);
+    p?.devices.delete(from);
     p?.left.add(from);
     if (p && p.left.size > LEFT_MAX) p.left.delete(p.left.values().next().value as string); // the oldest goes first
     for (const r of ['instructor', 'ventilator'] as const) if (this.signedIn[r]?.t === t && this.signedIn[r]?.from === from) this.setHolder(r, null);
@@ -549,7 +553,7 @@ export class HostSession {
     if (m.session !== this.o.session) return; // A message for another session is not ours, whatever channel it came on
     if (m.from === this.peerId) return;
     let p = this.peers.get(t);
-    if (!p) this.peers.set(t, (p = { seqs: new SeqFilter(), roles: new Map(), left: new Set() }));
+    if (!p) this.peers.set(t, (p = { seqs: new SeqFilter(), roles: new Map(), left: new Set(), devices: new Map() }));
     if (p.seqs.check(m) === 'duplicate') return;
     // A peer that said hello as a viewer sends no commands — the relay already refuses them on a WebSocket; a
     // BroadcastChannel peer is held to the same rule (one trust model per role, whatever the transport). Only a hello
@@ -557,8 +561,11 @@ export class HostSession {
     if (m.kind === 'hello') {
       p.roles.set(m.from, m.role);
       p.left.delete(m.from);
+      if (m.role === 'defib' && m.device !== undefined) p.devices.set(m.from, m.device);
+      else p.devices.delete(m.from);
     }
-    if (m.kind === 'hello' && m.role === 'viewer') this.viewerSeenAt = this.now();
+    // R5d: the defibrillator window follows as a viewer does (a second screen of this computer gets the cockpit's frames)
+    if (m.kind === 'hello' && (m.role === 'viewer' || m.role === 'defib')) this.viewerSeenAt = this.now();
     if (m.kind === 'hello' && (m.role === 'instructor' || m.role === 'ventilator')) this.verify(t, m.from, m.pin, m.role);
     if (m.kind === 'hello' && m.role === 'ventilator') return; // R8c: it follows nothing (no welcome, no snapshot)
     if (m.kind === 'hello' && m.role !== 'host') return this.welcome(t);
@@ -571,6 +578,14 @@ export class HostSession {
     if (role === 'ventilator') return refuse(VENTILATOR_REASONS.noCommands); // the relay refuses it too (R8b)
     // forgotten by a peer-left (R29) and no hello since: not the controller path (the relay refuses it too)
     if (role === undefined && p.left.has(m.from)) return refuse(NO_HELLO);
+    // R5d: the learner defibrillator window — Charge and Shock only, bare, checked here whatever the relay did (a
+    // same-browser window has no relay), then the instructor's own path; filed as the learner's, with its device key
+    if (role === 'defib') {
+      const no = learnerDefibMay(m.body);
+      if (no !== null) return refuse(no);
+      const by = p.devices.get(m.from);
+      return this.command(t, { ...m.body, issuedBy: LEARNER_ISSUED_BY, ...(by !== undefined ? { by } : {}) }, m.from);
+    }
     if (role !== 'instructor') return this.command(t, m.body, m.from);
     // An instructor phone: granted, on the allow-list, and filed as the Remote's rows whatever it wrote (record.ts)
     const why = this.instructorRefusal(t, m.from, m.body);

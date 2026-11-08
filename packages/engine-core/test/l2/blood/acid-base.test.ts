@@ -30,7 +30,7 @@ describe('Figge/Stewart charge balance, bounded pH search (tables §5b.1)', () =
     expect(slope).toBeLessThanOrEqual(0.2);
   });
   // R45: the tables' 0.2 per mmHg needs cellular H+ release/alkalosis-driven lactate, which the one-pool Figge
-  // balance does not have (plan deviation list). Kept visible until Ali's calibration pass decides the mechanism.
+  // balance does not have (plan deviation list). Kept visible until the owner's calibration pass decides the mechanism.
   // Band to its source (calibration-pass ruling, brief 88): Miller 10e ch. 44 p. 1378, acute ΔHCO3 = 0.2 × ΔPaCO2 (Boston
   // rule, the upper edge); Table 44.3, acute respiratory alkalosis ΔSBE = 0, which by Van Slyke and Henderson–Hasselbalch
   // gives HCO3 24.30 → 22.85 for PaCO2 40 → 30, i.e. 0.145 per mmHg (the lower edge).

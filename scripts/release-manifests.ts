@@ -65,7 +65,7 @@ export function releaseManifest(dir: string, m: Json, version: string): Json {
     version,
     description: r.description,
     license: 'MIT',
-    author: 'Ali Mahdavi',
+    author: 'samhv-dev',
     repository: { type: 'git', url: 'git+https://github.com/samhv-dev/patient-monitor-engine.git', directory: `packages/${dir}` },
     ...(r.sideEffects === undefined ? {} : { sideEffects: r.sideEffects }),
     files: r.files ?? ['dist'],

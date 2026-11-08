@@ -19,7 +19,7 @@
 - **Engine surface on `main` today** (what the scenarios may use): `setTarget` for `hr` only; `setRhythm` with the 12 Stage 1 rhythms (`sinus sinusBrady sinusTachy afib aflutter svtAvnrt avb1 avb2Mobitz1 avb3Narrow avb3Wide vtMono asystole`); `setModifiers` (`pvc`, `rsa`, `hrvScale`, `qtc`, `artefact.noise`); `device ecg filter|lead`. Everything else (`applyEvent`, `attachSensor`, `device nibp`, other `setTarget` variables) is rejected with "… not implemented …". The scenarios therefore (a) name Stage 5 rhythm ids that the driver replaces with stand-ins at run time until the engine has them (see Decision 9), and (b) keep every blood-pressure step as the exact command text inside `$comment`, to be moved into `onEnter` when Stage 2 lands.
 - **Strict TS as in Stages 0–6a:** `strict`, `noUncheckedIndexedAccess`, `erasableSyntaxOnly` (no enums, parameter properties or namespaces), `verbatimModuleSyntax` (`import type` for types), `.ts` extensions in relative imports. No framework: plain TypeScript + DOM.
 - **Runtime dependency:** `ajv` 8.20.0 (MIT) in `@pme/controller`, imported ONLY by `src/scenario/validate.ts`, reachable ONLY through the `@pme/controller/scenario` entry. Its bundled dependencies get NOTICES rows too (fast-uri is BSD-3-Clause: its licence text goes to `LICENSES/`). NOTICE IDs: **N-010, N-011, N-012** (next free after N-009; Stage 5 uses N-050–N-059). If `main` already has N-010+ when you open the PR, renumber to the next free IDs.
-- **Clinical content** in `packages/controller/scenarios/*.json` is [draft]: every title starts with `[draft]`, every file has a `$comment` saying it awaits Ali's review, and every probability or timing without a source is marked `[ENG]` in that comment. Do not "improve" the clinical content; Ali reviews it at the gate.
+- **Clinical content** in `packages/controller/scenarios/*.json` is [draft]: every title starts with `[draft]`, every file has a `$comment` saying it awaits the owner's review, and every probability or timing without a source is marked `[ENG]` in that comment. Do not "improve" the clinical content; samhv-dev reviews it at the gate.
 - **Commits:** conventional commits, one per task, ending with the attribution trailer your session's instructions give (Stage 6a used `Co-Authored-By: …`). Never push to `main`; the last task opens a PR and does not merge (R20/R21: the orchestrator merges after inspecting the gate).
 - Every engineering constant carries `[ENG]` or a brief/research citation.
 - **Test timing.** The driver tests step a real engine tick by tick for 1–10 sim-minutes; each takes 0.2–3 s and they carry a 30 s timeout (`SLOW`). The whole controller suite takes ≈ 15 s.
@@ -2352,7 +2352,7 @@ git commit -m "feat(controller): HostSession routes all scenario actions to the 
 
 **Interfaces:**
 - Produces: `BUILTIN_SCENARIOS: Record<string, unknown>` (id → raw doc), `BUILTIN_CATALOGUE: Array<{ id; title }>` (order: VF, PEA, bradycardia, SVT, OR); `RHYTHM_STAND_INS`, `resolveRhythm(id, opts, known) → { rhythm, opts?, note? }`, `type StandIn`.
-- Clinical content summary (all [draft], for Ali's review at the gate):
+- Clinical content summary (all [draft], for the owner's review at the gate):
   - **acls-vf-witnessed** (brief §7.4 example, expanded; seed 42): stable (60 s or "Start VF now") → coarse VF: shock ≥ 150 J → ROSC p 0.3 else stay; epinephrine + EtCO2 ≥ 20 for 30 s → ROSC (live when Stage 2 reports EtCO2); 240 s → fine VF (shock p 0.15; 300 s → asystole); manual "ROSC now". ROSC: sinus tachycardia 105 → HR 118 over 45 s (sigmoid); SBP 95 and the EtCO2 jump are in `$comment` for Stage 2. Jump points "Before the arrest", "VF onset".
   - **acls-pea-hypovolaemia** (seed 7): compensating haemorrhage (HR 118 → 142 over 120 s; early 1 L fluid → stabilised) → PEA at 150 s (sinus tachycardia 128, `pulseless: true`) → fluid ≥ 500 mL AND epinephrine → ROSC p 0.6 else stay; 300 s → slow PEA (wide escape 32) → 180 s → asystole.
   - **acls-bradycardia-unstable** (seed 11): CHB with a wide escape at 32/min → atropine ≥ 0.5 mg: partial response p 0.2 (HR 42, fades after 300 s); pacing with ≥ 70 mA (brief §6.5 default threshold) → paced (pacedVVI 70, stand-in until Stage 5); epinephrine infusion → HR 48; 420 s → asystole.
@@ -2402,7 +2402,7 @@ Expected: FAIL — `Failed to resolve import "../../src/scenario/builtins.ts"`.
 `packages/controller/scenarios/acls-vf-witnessed.json`:
 ```json
 {
-  "$comment": "[draft] Clinical content awaits Ali's review (Stage 6b gate). Brief §7.4 example, expanded. Probabilities are [ENG] placeholders: shock ROSC 0.3 in coarse VF (brief §6.5 'organised with pulse' raised for teaching), 0.15 in fine VF; decay to fine VF at 4 min and asystole 5 min later follow the three-phase model (research 03 §1.8). vfCoarse/vfFine are Stage 5 ids; until Stage 5 merges the host shows stand-ins (standins.ts).",
+  "$comment": "[draft] Clinical content awaits the owner's review (Stage 6b gate). Brief §7.4 example, expanded. Probabilities are [ENG] placeholders: shock ROSC 0.3 in coarse VF (brief §6.5 'organised with pulse' raised for teaching), 0.15 in fine VF; decay to fine VF at 4 min and asystole 5 min later follow the three-phase model (research 03 §1.8). vfCoarse/vfFine are Stage 5 ids; until Stage 5 merges the host shows stand-ins (standins.ts).",
   "schema": "pme-scenario/1",
   "id": "acls-vf-witnessed",
   "title": "[draft] Witnessed VF in PACU",
@@ -2475,7 +2475,7 @@ Expected: FAIL — `Failed to resolve import "../../src/scenario/builtins.ts"`.
 `packages/controller/scenarios/acls-pea-hypovolaemia.json`:
 ```json
 {
-  "$comment": "[draft] Clinical content awaits Ali's review. PEA = `pulseless: true` on an organised rhythm (brief §5; Stage 5 honours the flag, earlier engines ignore it and show the rhythm). Probabilities are [ENG] placeholders.",
+  "$comment": "[draft] Clinical content awaits the owner's review. PEA = `pulseless: true` on an organised rhythm (brief §5; Stage 5 honours the flag, earlier engines ignore it and show the rhythm). Probabilities are [ENG] placeholders.",
   "schema": "pme-scenario/1",
   "id": "acls-pea-hypovolaemia",
   "title": "[draft] PEA from haemorrhage",
@@ -2532,7 +2532,7 @@ Expected: FAIL — `Failed to resolve import "../../src/scenario/builtins.ts"`.
 `packages/controller/scenarios/acls-bradycardia-unstable.json`:
 ```json
 {
-  "$comment": "[draft] Clinical content awaits Ali's review. Atropine rarely helps a wide-complex complete heart block; pacing with capture at ≥ 70 mA (brief §6.5 default threshold) is the way out. pacedVVI is a Stage 5 id (stand-in until then). Probabilities are [ENG] placeholders.",
+  "$comment": "[draft] Clinical content awaits the owner's review. Atropine rarely helps a wide-complex complete heart block; pacing with capture at ≥ 70 mA (brief §6.5 default threshold) is the way out. pacedVVI is a Stage 5 id (stand-in until then). Probabilities are [ENG] placeholders.",
   "schema": "pme-scenario/1",
   "id": "acls-bradycardia-unstable",
   "title": "[draft] Unstable bradycardia — complete heart block",
@@ -2586,7 +2586,7 @@ Expected: FAIL — `Failed to resolve import "../../src/scenario/builtins.ts"`.
 `packages/controller/scenarios/svt-adenosine.json`:
 ```json
 {
-  "$comment": "[draft] Clinical content awaits Ali's review. Adenosine: AV block for 3–10 s, 10–30 s after the push (brief §4.9 drug table). The transient block is shown with rhythms the engine has today: complete heart block with a 20/min escape (P waves march on, almost no QRS). Conversion probability 0.6 per dose ≥ 6 mg is an [ENG] placeholder.",
+  "$comment": "[draft] Clinical content awaits the owner's review. Adenosine: AV block for 3–10 s, 10–30 s after the push (brief §4.9 drug table). The transient block is shown with rhythms the engine has today: complete heart block with a 20/min escape (P waves march on, almost no QRS). Conversion probability 0.6 per dose ≥ 6 mg is an [ENG] placeholder.",
   "schema": "pme-scenario/1",
   "id": "svt-adenosine",
   "title": "[draft] SVT and adenosine",
@@ -2625,7 +2625,7 @@ Expected: FAIL — `Failed to resolve import "../../src/scenario/builtins.ts"`.
 `packages/controller/scenarios/or-induction-hypotension.json`:
 ```json
 {
-  "$comment": "[draft] Clinical content awaits Ali's review. Blood pressure arrives with Stage 2: every BP step is written in `$comment` as the exact command to move into onEnter then. Until then the story is carried by HR (reflex tachycardia) and the notes. Stage 7 (MODELED) will make the propofol response emerge instead of being scripted.",
+  "$comment": "[draft] Clinical content awaits the owner's review. Blood pressure arrives with Stage 2: every BP step is written in `$comment` as the exact command to move into onEnter then. Until then the story is carried by HR (reflex tachycardia) and the notes. Stage 7 (MODELED) will make the propofol response emerge instead of being scripted.",
   "schema": "pme-scenario/1",
   "id": "or-induction-hypotension",
   "title": "[draft] Post-induction hypotension",
@@ -2727,7 +2727,7 @@ export function resolveRhythm(id: string, opts: Record<string, unknown> | undefi
 
 `packages/controller/src/scenario/builtins.ts`:
 ```ts
-// Built-in scenarios (JSON under packages/controller/scenarios/). All are [draft] until Ali's clinical review.
+// Built-in scenarios (JSON under packages/controller/scenarios/). All are [draft] until the owner's clinical review.
 import aclsVf from '../../scenarios/acls-vf-witnessed.json';
 import aclsPea from '../../scenarios/acls-pea-hypovolaemia.json';
 import aclsBrady from '../../scenarios/acls-bradycardia-unstable.json';
@@ -4330,7 +4330,7 @@ With Task 16's server running, open `stage6b-acls.html?session=GATE6B&scenario=a
 **Files:**
 - Create: `docs/gates/stage-6b.md`
 
-- [x] **Step 1: Write the note** in the house style of `docs/gates/stage-6a.md`: title with date; the gate question from BUILD-PLAN Stage 6 ("Can Ali run a 10-minute ACLS scenario from the laptop without touching the iPad monitor, and recover cleanly from a Wi-Fi drop?" — the drop half was Gate 6a); then a **check table** with measured numbers:
+- [x] **Step 1: Write the note** in the house style of `docs/gates/stage-6a.md`: title with date; the gate question from BUILD-PLAN Stage 6 ("Can samhv-dev run a 10-minute ACLS scenario from the laptop without touching the iPad monitor, and recover cleanly from a Wi-Fi drop?" — the drop half was Gate 6a); then a **check table** with measured numbers:
 
 | Check | Where the number comes from |
 |---|---|
@@ -4345,9 +4345,9 @@ With Task 16's server running, open `stage6b-acls.html?session=GATE6B&scenario=a
 | Panel and remote | the DOM tests (7) + `stage6b.e2e.ts` |
 | ajv containment | Task 13 sizes and grep counts |
 | Viewer follows the scenario | Task 18 Step 3 line |
-| iPad host / phone remote on the LAN | **pending Ali** |
+| iPad host / phone remote on the LAN | **pending samhv-dev** |
 
-Then: **Screenshots** (`stage-6b/host-vf.png`, `host-rosc.png`, `remote-vf.png`, one line each on what they show); **Scenario run log** — paste the three `lines` from `stage-6b/run-log.json` and the `roll` entry, and link the file; **Clinical review for Ali** — the five scenario summaries from Task 10 with every [ENG] probability/timing listed as a question (e.g. "ROSC per shock in coarse VF 0.3?", "fine VF after 4 min?", "adenosine conversion 0.6 per dose?", "atropine partial response 0.2 in wide CHB?", "PEA: fluid ≥ 500 mL AND epinephrine, p 0.6?"); **Stand-ins in force** (the table from Decision 9, and that they vanish when Stage 5 merges); **Not done / deferred** (`time step|jump`; BP/EtCO2 steps waiting for Stage 2 in `$comment`; the physiology of shocks/drugs/CPR — Stages 4/7; LAN/iPad runs); **Deviations from the plan** (anything you changed and why; NOTICE ID renumbering if any; merge conflicts with Stage 5 in `apps/demo/vite.config.ts`/`index.html` if `main` moved); **Notes for other stages** (the three bullets of "Requests for the orchestrator" above).
+Then: **Screenshots** (`stage-6b/host-vf.png`, `host-rosc.png`, `remote-vf.png`, one line each on what they show); **Scenario run log** — paste the three `lines` from `stage-6b/run-log.json` and the `roll` entry, and link the file; **Clinical review for samhv-dev** — the five scenario summaries from Task 10 with every [ENG] probability/timing listed as a question (e.g. "ROSC per shock in coarse VF 0.3?", "fine VF after 4 min?", "adenosine conversion 0.6 per dose?", "atropine partial response 0.2 in wide CHB?", "PEA: fluid ≥ 500 mL AND epinephrine, p 0.6?"); **Stand-ins in force** (the table from Decision 9, and that they vanish when Stage 5 merges); **Not done / deferred** (`time step|jump`; BP/EtCO2 steps waiting for Stage 2 in `$comment`; the physiology of shocks/drugs/CPR — Stages 4/7; LAN/iPad runs); **Deviations from the plan** (anything you changed and why; NOTICE ID renumbering if any; merge conflicts with Stage 5 in `apps/demo/vite.config.ts`/`index.html` if `main` moved); **Notes for other stages** (the three bullets of "Requests for the orchestrator" above).
 
 - [x] **Step 2: Commit**
 
@@ -4381,7 +4381,7 @@ atScenarioS, vital…forS, event filters, sensor, manual, all/any, probability/e
 stream); host-side driver (scenario hook, bookmarks = engine snapshot + runner state, replay log, rhythm
 stand-ins until Stage 5, scenario-only acceptance of applyEvent/attachSensor); panel Scenario tab; remote
 manual-trigger buttons; five built-in [draft] scenarios; `stage6b-acls.html` with a learner action bar.
-Gate evidence: `docs/gates/stage-6b.md`. The clinical content awaits Ali's review.
+Gate evidence: `docs/gates/stage-6b.md`. The clinical content awaits the owner's review.
 
 ## Sources consulted
 

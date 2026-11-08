@@ -80,6 +80,21 @@ an embedding developer reads it for the organ inputs it collects and the effects
 | [`params.ts:89`](../../packages/engine-core/src/l2/renal/params.ts#L89) | Own-depot path (no drug model): E = plasma mg/(mg + 20) |
 | [`params.ts:90`](../../packages/engine-core/src/l2/renal/params.ts#L90) | With the drug model: E = c/(c + 1), c = its furosemide level in reference doses (row `furosemide`: gamma, ref |
 
+## Couplings
+
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 6 rows; SOURCED 0, FIT 2, ENG 0, UNTAGGED 3, ABSENT 1.
+The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
+constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
+
+| Id | From → to | Sign · form | Class | Constants | Timing, limits | Note |
+|---|---|---|---|---|---|---|
+| `organs.brain.cpp` | `hemo.circ.mapNow`, `organs.brain.icp` → `organs.brain.cpp` | ± · state | UNTAGGED | — | — | CPP = MAP at head height − max(ICP, cerebral venous pressure). |
+| `organs.brain.flow` | `organs.brain.cpp` → `organs.brain.cbfRel` | + · state | UNTAGGED | — | — | Cerebral flow = autoregulated conductance × CPP (flat inside the autoregulation limits, pressure-passive outside). |
+| `organs.brain.vasomotor` | `organs.brain.cbfRel` → `hemo.circ.ext.cbfRel` | + · state | UNTAGGED | — | — | Brainstem perfusion handed to the circulation (the vasomotor centre's own supply). |
+| `organs.cushing.drive` | `organs.brain.cpp` → `organs.brain.cush.drive` | − · threshold | FIT | `CUSH_CPP` = 40, `CUSH_DELAY_S` = 30, `CUSH_TAU_ON_S` = 15, `CUSH_TAU_OFF_S` = 60 | delay `CUSH_DELAY_S`; τ `CUSH_TAU_ON_S` | CPP below CUSH_CPP for CUSH_DELAY_S starts the surge drive. |
+| `organs.cushing.svr` | `organs.brain.cush.drive` → `hemo.circ.ext.rSysF` | + · factor | FIT | `CUSH_SVR_GAIN` = 1.2 | — | SVR × (1 + CUSH_SVR_GAIN·drive); the bradycardia is the baroreflex's answer (no hrF). |
+| `organs.absent.brainstemToHub` | `organs.brain.cbfRel` → `absent.autonomic.sympatheticOutflow` (Central sympathetic efferent state (cardiac and vasomotor)) | − · factor | ABSENT (research/44 L2-12) | — | — | Medullary ischaemia driving the one sympathetic state, in place of a scripted surge. |
+
 ## State
 
 ### `CushingState` ([`l2/brain/cushing.ts`](../../packages/engine-core/src/l2/brain/cushing.ts))
