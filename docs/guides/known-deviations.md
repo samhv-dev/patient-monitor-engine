@@ -14,7 +14,7 @@ Regenerate the first two tables with `node --experimental-strip-types scripts/de
 fails when a literal-titled expected failure or skip is missing from this page. It cannot see conditional forms such
 as `(cond ? it.fails : it)(…)`, nor the lung-signature `KNOWN` list; those are listed by hand below.
 
-On this tree there are **155 expected-failure calls**, all read by the lister: 154 `it.fails` (the bronchospasm row of
+On this tree there are **156 expected-failure calls**, all read by the lister: 155 `it.fails` (the bronchospasm row of
 `packages/ventilator/test/link-parity.test.ts` is a literal `it.fails`) and 1 `it.fails.each` with three cases
 (`packages/engine-core/test/engine/fidelity-arrest.test.ts`), and **6 skipped tests** (1 skipped test and 5 `.todo` entries: the harms and the device the scenario format declares "not modelled", and epinephrine IM). "Tracked in" names the gate note (and its section)
 that records the miss with its number; the open questions it cites (Q…, R-…, E-…) are listed in that note.
@@ -173,6 +173,7 @@ that records the miss with its number; the open questions it cites (Q…, R-…,
 | `packages/engine-core/test/l2/pk/interactions-misc.test.ts` | diabetic dexamethasone peak +2–4 mmol/L at 4–8 h (PADDI): measured +1.83; non-diabetic +1.02 | `docs/gates/fu-7.md` §4 "`it.fails` list", #35 |
 | `packages/engine-core/test/l2/renal/filtration.test.ts` | IAP 25: UOP < 0.1 mL/kg/h (WSACS) — measured 0.69 (the circulation half is left to the circulation) | `docs/gates/fu-9.md` §4 "`it.fails` (all with the merged-tree numbers in their titles)" |
 | `packages/engine-core/test/l2/temp/temp.test.ts` | GA: the hour-8 plateau stays at or above 34.5 °C — measured 34.37 | `docs/gates/stage-fu-10.md` §3 "Acceptance numbers, before (base) → after", row A3 "hour-8 plateau" (E-FU10-3b) |
+| `packages/engine-core/test/l3/shock-state.test.ts` | AF cumulative success over Mittal's 70/120/150/170 J escalation is 94 % (83/88) | research/44 X-08 (`docs/review-inputs/research/44-physiology-compromise-audit.md`); brief 89 PR fix-cardioversion-success: independent per-shock draws give 99.9 %; no patient-level non-responder state (Mittal: impedance, AF duration) |
 | `packages/ventilator/test/link-r27.test.ts` | ARDS moderate PEEP 5 → 15 (FiO2 0.6): SpO2 rises ≥ 5 over 1–4 min (recruitment), falls again within 60 s of PEEP 5 (measured +2.0 / 0.0 on the lungs) | `docs/gates/stage-v1.md` §7 "`it.fails`" (Decision 18) |
 | `packages/ventilator/test/link-r27.test.ts` | FiO2 0.4: SpO2 rises ≥ 2 (measured SpO2 98 → 98, SaO2 98.7 → 99.1: the lung oedema shunt does not desaturate) | `docs/gates/stage-v1.md` §7 "`it.fails`" (Decision 18) |
 | `packages/ventilator/test/link-parity.test.ts` | bronchospasm 1 at 20 min — measured at 30 min PaCO2 59.2 vs 39.6, VT 238 vs 476 (band 3 mmHg / 10 %): gas within 3 mmHg / 3 mmHg / 2 %, Pplat and delivered VT within 10 % (Ppeak logged — the two paths' inspiratory flows differ) | `docs/gates/fu-6.md` §2, row RS15 link parity; target audit row 110 (docs/validation/target-audit/30-target-audit.md#row-110) |
