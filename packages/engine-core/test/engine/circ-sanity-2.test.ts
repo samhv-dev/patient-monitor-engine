@@ -100,8 +100,8 @@ describe('sanity scenarios II', () => {
     expect(r.avg(180, 300, 'co')).toBeLessThanOrEqual(4.4);
     expect(r.st(180, 300, 'hr')).toBeLessThanOrEqual(r.st(30, 60, 'hr') + 5); // Bezold–Jarisch (Mark 1983)
   }, 300_000);
-  // Known miss D (validation t15): the CVP reaches 8.2, below Dell'Italia's 11 ± 2 — every constant is set by its own
-  // target (RVEF 30 %, HR 66, the pericardium's two Freeman & LeWinter points), none by this band.
+  // Known miss D (validation t15): the CVP reaches 8.3, below Dell'Italia's 11 ± 2 — every constant is set by its own
+  // target (RVEF 30 %, HR 66, the RCA territory), none by this band.
   it.fails('RV infarct, presenting state: CVP 9–13 (Dell\'Italia 1985: RA 11 ± 2)', async () => {
     const cvp = (await rvi()).st(180, 300, 'cvp');
     expect(cvp).toBeGreaterThanOrEqual(9);

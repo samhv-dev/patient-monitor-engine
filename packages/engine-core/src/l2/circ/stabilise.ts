@@ -8,7 +8,7 @@
 // (state + tuned params + ledger) is cached by profile hash: the solve is deterministic, so the cache is too.
 import { activationPeriodS, pruneActivations, type Activation } from './activation.ts';
 import { arterialVolume, createOut, evaluate, N_STATE, S, stepCirc, type CircDrive, type CircParams } from './circuit.ts';
-import { ATRIAL_DELAY_S, ATRIAL_T_S, H_S, P_PL0, PERI_REST_MEAN_MMHG, V0_ART } from './params.ts';
+import { ATRIAL_DELAY_S, ATRIAL_T_S, H_S, P_PL0, PERI_EXTRA_ML, PERI_RESERVE, V0_ART } from './params.ts';
 import type { ResolvedProfile } from './profile.ts';
 
 export const STAB_WINDOW_S = 2;
@@ -73,7 +73,7 @@ export function stabilise(r: ResolvedProfile): Stabilised {
 function solve(r: ResolvedProfile): Stabilised {
   const p: CircParams = structuredClone(r.params);
   const s = initialState(p, r.bloodVolumeMl, r.stressedFrac);
-  p.v0Peri = 1e4; // pericardium slack through the warm-up windows; tuned to PERI_REST_MEAN_MMHG from window 2 on
+  p.v0Peri = 1e4; // pericardium slack while tuning; set from the tuned EDVs at the end
   const hr = r.targets.hr;
   const rr = 60 / hr;
   const T = activationPeriodS(hr);
@@ -97,7 +97,7 @@ function solve(r: ResolvedProfile): Stabilised {
   const ref = { hr, sbp: 0, dbp: 0, map: 0, cvp: 0, lvedv: 0, rvedv: 0, lvedp: 0, lvsp: 0, sv: 0, co: 0, pcwp: 0 };
   for (let w = 0; w < STAB_MAX_WINDOWS; w++) {
     const tEnd = t + win;
-    let sbp = -1e9, dbp = 1e9, map = 0, cvp = 0, pcwp = 0, peri = 0, n = 0, lvsp = -1e9, qav = 0, lvedp = 0, nEd = 0;
+    let sbp = -1e9, dbp = 1e9, map = 0, cvp = 0, pcwp = 0, n = 0, lvsp = -1e9, qav = 0, lvedp = 0, nEd = 0;
     edvMax = 0;
     edvRv = 0;
     // warm-up windows are not measured: the first 4 s settle the analytic guess
@@ -115,7 +115,6 @@ function solve(r: ResolvedProfile): Stabilised {
       map += o.pRad;
       cvp += o.pRa;
       pcwp += o.pPv;
-      peri += o.pPeri;
       n++;
       if (o.pLv > lvsp) lvsp = o.pLv;
       qav += o.qAv * H_S;
@@ -134,18 +133,12 @@ function solve(r: ResolvedProfile): Stabilised {
     map /= n;
     cvp /= n;
     pcwp /= n;
-    peri /= n;
     const edp = lvedp / Math.max(1, nEd);
     ledger.push({ w, sbp, dbp, cvp, rSys: p.rSys, cArt: p.cArt, v0Sv: p.v0Sv, lvedp: edp, aLv: p.aLv });
     if (w < 2) continue;
-    // The resting pericardium (params.ts PERI_REST_MEAN_MMHG): from the reserve-free point (sac volume = the EDVs), a
-    // damped Newton step on the cycle-mean pericardial pressure (dP̄/dv0 ≈ −λ·(P̄ + A))
-    if (w === 2) p.v0Peri = edvMax + edvRv;
-    else p.v0Peri += (0.7 * (peri - PERI_REST_MEAN_MMHG)) / (p.periLambda * (peri + p.periA));
-    const periOk = Math.abs(peri - PERI_REST_MEAN_MMHG) <= 0.1;
     const { sbp: sT, dbp: dT, cvp: cT } = r.targets;
     const edpOk = !r.tuneLvedp || Math.abs(edp - r.lvedpTarget) <= STAB_LVEDP_TOL;
-    const inTol = Math.abs(sbp - sT) <= 0.01 * sT && Math.abs(dbp - dT) <= 0.01 * dT && Math.abs(cvp - cT) <= 0.3 && edpOk && periOk;
+    const inTol = Math.abs(sbp - sT) <= 0.01 * sT && Math.abs(dbp - dT) <= 0.01 * dT && Math.abs(cvp - cT) <= 0.3 && edpOk;
     ok = inTol ? ok + 1 : 0;
     ref.sbp = sbp; ref.dbp = dbp; ref.map = map; ref.cvp = cvp; ref.lvedv = edvMax; ref.rvedv = edvRv; ref.lvsp = lvsp; ref.pcwp = pcwp;
     ref.lvedp = edp;
@@ -166,5 +159,7 @@ function solve(r: ResolvedProfile): Stabilised {
     if (!edpOk && Math.abs(cvp - cT) <= 1) p.aLv = clamp(p.aLv * (r.lvedpTarget / Math.max(1, edp)) ** 0.4, start.aLv, 0.1, 10);
     p.v0Sv = Math.min(start.v0Sv + 0.5 * r.bloodVolumeMl, Math.max(start.v0Sv - 0.5 * r.bloodVolumeMl, p.v0Sv - 0.6 * (cT - cvp) * p.cSv * 0.5));
   }
+  p.v0Peri = PERI_RESERVE * (edvMax + edvRv) + PERI_EXTRA_ML;
+  // the pericardial reserve was not active during tuning; it is set so the resting pericardial pressure is 0
   return { s, params: p, ledger, converged, ref };
 }

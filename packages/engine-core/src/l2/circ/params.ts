@@ -79,28 +79,13 @@ export const R_PVLA = 0.01; // pulmonary veins → LA [FIT: unsourced circulatio
 
 // --- pericardium and thorax (tables §2.2) ---
 export const PERI_A = 0.5; // mmHg (Smith)
+export const PERI_LAMBDA = 0.03; // /mL (Smith)
 /**
- * Pericardial stiffness, /mL. Smith 2004 (Med Eng Phys 26:131) gives 0.03 for a sac with a free space; on the
- * resting-engaged sac below that slope made the pericardium five times too stiff for its own source: volume expansion
- * raising the LA transmural pressure by 7 mmHg took the mean pericardial pressure 1.6 → 11.3 mmHg, against Freeman &
- * LeWinter 1986's 1.1 → 3.0 ± 1.6 (open chest, LA transmural 9.5 → 16.4). 0.012 gives 1.3 → 3.8
- * [FIT: mean pericardial pressure 3.0 ± 1.6 after expansion; src Freeman & LeWinter 1986; brief 94]
- * (test/l2/circ/pericardium.test.ts). A stays Smith's 0.5 mmHg: with v0Peri set from the resting pressure, A and
- * v0Peri are one degree of freedom.
+ * v0Peri = 1.0 × (baseline LVEDV + RVEDV) + 0, set by stabilisation. Tables (Q29) propose 1.15 × … + 20; with that
+ * reserve 200 mL of fluid raised CVP by only 1.2 mmHg in the prototype, so the reserve is removed [FIT: CPR pressure or pericardial reserve fitted to the prototype/Paradis bands; flagged; brief research/44 L2-20].
  */
-export const PERI_LAMBDA = 0.012;
-/**
- * The pericardium is engaged at rest: stabilisation sets v0Peri so that the cycle-mean pericardial pressure of the
- * resting heart (the elastic pericardium alone, over the pleural pressure) is 1.1 mmHg — Freeman & LeWinter 1986
- * (J Appl Physiol 60:758, open chest, the elastic pericardium alone): mean intrapericardial pressure 1.1 ± 0.9 mmHg
- * at a LA transmural pressure of 9.5, 3.0 ± 1.6 after volume expansion to 16.4 (the curve check in
- * test/l2/circ/pericardium.test.ts). Until brief 94 the reserve was 1.0 × (LVEDV + RVEDV) + 0 (flagged in research/44 L2-20): the
- * resting heart sat exactly at the sac's zero-pressure volume, so no dilation short of a tamponade met the pericardium
- * (an RV infarct read CVP 6.8 / PCWP 3.3). Tyberg 1986 (Circulation 73:428) measured the pericardial SURFACE pressure in
- * humans at ≈ the RA pressure (slope 1.16, intercept 0.7 mmHg) — the contact pressure, larger than the liquid one the
- * engine's term models.
- */
-export const PERI_REST_MEAN_MMHG = 1.1;
+export const PERI_RESERVE = 1.0;
+export const PERI_EXTRA_ML = 0;
 export const P_PL0 = -4; // mmHg supine resting pleural (Smith 2004 P_th)
 /**
  * Fraction of alveolar pressure reaching the pleura. Tables tIt 0.4 (Q28 default; range 0.2–0.7). Raised to

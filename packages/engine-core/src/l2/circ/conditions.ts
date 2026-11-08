@@ -6,9 +6,8 @@
 //               one pleural source; `ext.pPtx` is not written (it stays 0 unless a test pokes it)
 //   rvInfarct   right-ventricular infarction with inferior STEMI (brief 94): a REGIONAL infarct of RV_INFARCT_RM of the
 //               RV myocardium (and LV_INFARCT_RM of the LV, the inferior wall) shifts the ESPVR rightward (Sunagawa
-//               1983) — the RV dilates, and inside the shared,
-//               resting-engaged pericardium (params.ts PERI_REST_MEAN_MMHG) the dilated RV raises the pericardial
-//               pressure on both ventricles (interdependence: Goldstein 1982, 1983); the inferior wall adds the
+//               1983) — the RV dilates past the shared pericardium's free volume and raises the pericardial pressure on
+//               both ventricles (interdependence: Goldstein 1982, 1983); the inferior wall adds the
 //               Bezold–Jarisch vagal drive (Mark 1983), which keeps the rate from the baroreflex tachycardia
 import type { CircModelState } from './model.ts';
 
@@ -32,7 +31,7 @@ export const PTX_MMHG = 20;
  * brief 94 was that global form, and it shrank the heart instead of dilating it). The engine takes ΔV0 = Rm × the
  * resting EDV of the chamber (the ischaemic segment keeps its share of the cavity; the canine 50.7 mL is that LV's
  * operating volume) [ENG: conversion; the canine slope read as size-free]. Rm 0.65, the tables-H8 65 %
- * [FIT: RVEF 30 ± 8 % before volume loading, the engine reads 30 %; src Dell'Italia 1985 Circulation 72:1327; brief 94]
+ * [FIT: RVEF 30 ± 8 % before volume loading, the engine reads 31 %; src Dell'Italia 1985 Circulation 72:1327; brief 94]
  * (n 10, PCWP < 18; RVEF 27 ± 7 % in Dell'Italia 1984 JACC 4:931).
  */
 export const RV_INFARCT_RM = 0.65;
