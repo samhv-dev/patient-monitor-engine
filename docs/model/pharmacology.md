@@ -52,8 +52,8 @@ library rows and the outputs other modules consume.
 
 | Where | Relation |
 |---|---|
-| [`combine.ts:129`](../../packages/engine-core/src/l2/pk/combine.ts#L129) | Eleveld Ce50 age term (tables §5d): C50(age) = C50(35)·e^(−k(age − 35)) |
-| [`combine.ts:158`](../../packages/engine-core/src/l2/pk/combine.ts#L158) | CMRO2 per MAC, and the DIRECT vasodilation beyond coupling (the organ model's NET CBF = direct × coupling) (tables §5.1) |
+| [`combine.ts:157`](../../packages/engine-core/src/l2/pk/combine.ts#L157) | Eleveld Ce50 age term (tables §5d): C50(age) = C50(35)·e^(−k(age − 35)) |
+| [`combine.ts:187`](../../packages/engine-core/src/l2/pk/combine.ts#L187) | CMRO2 per MAC, and the DIRECT vasodilation beyond coupling (the organ model's NET CBF = direct × coupling) (tables §5.1) |
 | [`compartment.ts:21`](../../packages/engine-core/src/l2/pk/compartment.ts#L21) | states = 3 + ke0.length |
 | [`compartment.ts:23`](../../packages/engine-core/src/l2/pk/compartment.ts#L23) | n: response to R = 1 amount/min over dt |
 | [`compartment.ts:26`](../../packages/engine-core/src/l2/pk/compartment.ts#L26) | Microconstants from volumes (L) and clearances (L/min): k10 = CL1/V1, k12 = CL2/V1, k21 = CL2/V2, … |
@@ -141,6 +141,8 @@ library rows and the outputs other modules consume.
 | `HEMO_SYN_U50` | `1.2` | — | — | — |
 | `PROP_HYP_C50_REF` | `3.08` | — | BIS 2024 | Propofol's hypnotic C50 at 35 y, µg/mL (Eleveld BIS 2024; the propofol-equivalent unit). |
 | `FENT_PER_REMI` | `1.25` | — | tables §5d | Remifentanil → fentanyl equivalence for the potency output (tables §5d: remi 1.2 ≈ fentanyl 1.5 ng/mL). |
+| `DEXMED_EEG_C50_NG_ML` | `2.5` | ng/mL | Colin 2017; Miller Ch23 Fig. 23.34 p. 663: the BIS-50 Ce; research/43 P; Miller Ch23 Table 23.6 p. 660; [INF] | Dexmedetomidine's EEG potency point, effect-site ng/mL: 2.5 ng/mL [Colin 2017, via Miller Ch23 Fig. 23.34 p. 663: the BIS-50 Ce; research/43 P-12]. The potency is borrowed from a processed index (BIS 50), not a cortical-state C50 [INF]. Its BIS ke0 0.120 /min (Miller Ch23 Table 23.6 p. 660) is NOT applied a second time here: the drug row is already an EFFECT curve (a gamma row peaking 15 min after the load, rows-anaesthetic.ts), with no plasma to lag. ng/mL |
+| `DEXMED_NG_PER_REF` | `0.5 / 60 / 0.01` | ng/mL | Miller Ch21 Table 21.1 (research/41 row 65; Miller Ch21's "rousable sedation at 0.2–0.3 ng/mL" at the low end of the 0.2–0.7 µg/kg/h sedation infusion (0.33 ng/mL at 0.2 µg/kg/h; [FIT: ng/mL per reference unit, derived; src Miller Ch21 Table 21.1 (research/41 row 65) gives clearance 10–30 mL/kg/min; the low end is the one that puts Miller Ch21's "rousable sedation at 0.2–0.3 ng/mL" at the low end of the 0.2–0.7 µg/kg/h sedation infusion (0.33 ng/mL at 0.2 µg/kg/h); the high end gives 0.28] | ng/mL per reference unit of the dexmedetomidine gamma row (c = 1 at the 0.5 µg/kg/h steady state, and at the peak of 1 µg/kg): 0.5 µg/kg/h ÷ clearance 10 mL/kg/min = 0.83 ng/mL [FIT: ng/mL per reference unit, derived; src Miller Ch21 Table 21.1 (research/41 row 65) gives clearance 10–30 mL/kg/min; the low end is the one that puts Miller Ch21's "rousable sedation at 0.2–0.3 ng/mL" at the low end of the 0.2–0.7 µg/kg/h sedation infusion (0.33 ng/mL at 0.2 µg/kg/h); the high end gives 0.28]. The row itself is unchanged. ng/mL per reference unit |
 
 ### [`l2/pk/gamma.ts`](../../packages/engine-core/src/l2/pk/gamma.ts)
 
@@ -267,7 +269,7 @@ library rows and the outputs other modules consume.
 | `ropivacaine` | Ropivacaine | localAnaesthetic | perKg | M10 ch. 25; LAST_THRESHOLDS | TXT |
 | `lipidEmulsion` | Lipid emulsion 20 % | lipid | gamma | ASRA 2020 (dose); M10 ch. 25 p. 762 (sink: LIPID_SINK_CARDIAC/CEREBRAL in pk/pipeline.ts) | TXT |
 | `tranexamicAcid` | Tranexamic acid | placeholder | gamma | CRASH-2; placeholder for 7i | TXT |
-| `ondansetron` | Ondansetron | placeholder | gamma | FDA 2012 label change; size [FIT: ondansetron QTc emax (label gives +5.6 ms at 8 mg); brief research/44 X-05] | ENG |
+| `ondansetron` | Ondansetron | placeholder | gamma | Ondansetron injection label §12.2 (thorough-QT trial); FDA Drug Safety Communication 2012 | TXT |
 | `dexamethasone` | Dexamethasone | placeholder | gamma | Hans 2006; M10 ch. 47; size [FIT: dexamethasone glucocorticoid emax fitted to glucose +10–60 mg/dL within 1 h; brief research/44 X-13] | ENG |
 
 ### Routes other than IV (`DrugRow.routeModels`; every other non-IV route is refused: "route X is not modelled")
@@ -280,6 +282,7 @@ library rows and the outputs other modules consume.
 
 | Function | File | Doc |
 |---|---|---|
+| `eegClassOf` | [`l2/pk/combine.ts`](../../packages/engine-core/src/l2/pk/combine.ts) | --- EEG stage E1: |
 | `volatileCbfDirect` | [`l2/pk/combine.ts`](../../packages/engine-core/src/l2/pk/combine.ts) | Direct CBF factor of a volatile at `mac` — the vasodilation beyond flow–metabolism coupling (Matta 1999 MCA velocity under an isoelectric EEG, tables §5.1) — piecewise linear through (0, 1), (0.5, 1 + |
 | `fromClearances` | [`l2/pk/compartment.ts`](../../packages/engine-core/src/l2/pk/compartment.ts) | Microconstants from volumes (L) and clearances (L/min): |
 | `pkSystem` | [`l2/pk/compartment.ts`](../../packages/engine-core/src/l2/pk/compartment.ts) | The exact discrete system for step dtS seconds (cached by value: |

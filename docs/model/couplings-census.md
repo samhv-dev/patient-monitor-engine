@@ -6,7 +6,7 @@
 The engine's cross-module coupling seams and its effector products and sums, read from the code
 (docs/plans/mechanism-tree.md, piece R0). Places are file#function; the line of each row is in the `--json` output.
 
-Seams (de-duplicated on module, kind and field): 137; sites: 173.
+Seams (de-duplicated on module, kind and field): 139; sites: 177.
 
 | Module | ctx | ext | endo-write | bus-read | All |
 |---|---:|---:|---:|---:|---:|
@@ -15,12 +15,12 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | endocrine-thermal | 4 | 7 | 9 | 4 | 24 |
 | engine-runtime | 0 | 6 | 0 | 6 | 12 |
 | lungs | 0 | 3 | 0 | 0 | 3 |
-| neuro | 8 | 0 | 0 | 16 | 24 |
+| neuro | 8 | 0 | 0 | 18 | 26 |
 | organs | 10 | 2 | 0 | 4 | 16 |
 | pharmacology | 18 | 0 | 0 | 0 | 18 |
 | pressure-waveforms | 11 | 1 | 0 | 0 | 12 |
 | rhythms-ecg | 7 | 0 | 0 | 0 | 7 |
-| **All** | 75 | 22 | 9 | 31 | 137 |
+| **All** | 75 | 22 | 9 | 33 | 139 |
 
 ## Exported numeric constants inside the module's own effector expressions
 
@@ -35,15 +35,15 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | blood | 68 | 28 |
 | organs | 138 | 63 |
 | endocrine-thermal | 167 | 68 |
-| neuro | 76 | 42 |
-| pharmacology | 27 | 12 |
+| neuro | 154 | 76 |
+| pharmacology | 29 | 14 |
 | monitor | 46 | 5 |
 | alarms | 17 | 0 |
 | defib-pacer | 25 | 6 |
 | engine-runtime | 6 | 2 |
-| **All** | 1008 | 373 |
+| **All** | 1088 | 409 |
 
-## The ten effector expressions with the most factors (of 1489)
+## The ten effector expressions with the most factors (of 1532)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -58,7 +58,7 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | `l2/circ/model.ts#control` | `p.pvrL` | product | 7 |
 | `l2/circ/model.ts#control` | `p.pvrR` | product | 7 |
 
-## The ten products with the most factors (of 822 products)
+## The ten products with the most factors (of 839 products)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -190,6 +190,10 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | engine-runtime | bus-read | `bus.airway.bronchodilation` | `engine.ts#advance` | 1 |
 | engine-runtime | bus-read | `bus.hpvInhibit` | `engine.ts#advance` | 1 |
 | blood | bus-read | `bus.doses` | `l2/blood/pipeline.ts#advanceBlood` | 2 |
+| neuro | bus-read | `bus.cns.hypByClass` | `l2/eeg/state.ts#cortexInputsOf` | 1 |
+| neuro | bus-read | `bus.volatiles` | `l2/eeg/state.ts#mac` | 2 |
+| neuro | bus-read | `bus.cns.alpha2Eq` | `l2/eeg/state.ts#cortexInputsOf` | 1 |
+| neuro | bus-read | `bus.cns.opioidCeFentEq` | `l2/eeg/state.ts#cortexInputsOf` | 3 |
 | endocrine-thermal | bus-read | `bus.agents` | `l2/endo/adapters.ts#readEndoInputs` | 1 |
 | endocrine-thermal | bus-read | `bus.airway.bronchodilation` | `l2/endo/adapters.ts#readEndoInputs` | 1 |
 | endocrine-thermal | bus-read | `bus.doses` | `l2/endo/adapters.ts#observeDoses` | 1 |
@@ -200,10 +204,8 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | neuro | bus-read | `bus.cns.propCe` | `l2/neuro/bus.ts#readBus` | 1 |
 | neuro | bus-read | `bus.cns.benzoCeMidazEq` | `l2/neuro/bus.ts#readBus` | 1 |
 | neuro | bus-read | `bus.cns.ketamineCe` | `l2/neuro/bus.ts#readBus` | 1 |
-| neuro | bus-read | `bus.volatiles` | `l2/neuro/bus.ts#readBus` | 1 |
 | neuro | bus-read | `bus.cns.hypPropEq` | `l2/neuro/bus.ts#readBus` | 2 |
 | neuro | bus-read | `bus.cns.hypVentPropEq` | `l2/neuro/bus.ts#readBus` | 2 |
-| neuro | bus-read | `bus.cns.opioidCeFentEq` | `l2/neuro/bus.ts#readBus` | 2 |
 | neuro | bus-read | `bus.cns.opioidVentFentEq` | `l2/neuro/bus.ts#readBus` | 4 |
 | neuro | bus-read | `bus.cns.dissoc` | `l2/neuro/bus.ts#readBus` | 2 |
 | neuro | bus-read | `bus.cns.antinocAdd` | `l2/neuro/bus.ts#readBus` | 2 |
