@@ -145,7 +145,7 @@ generated from the code, so they match the release they ship with; a test fails 
 
 ## Licence, data and citation
 
-The code is [MIT](LICENSE) (© Ali Mahdavi and contributors). The engine bundles short ECG templates derived from
+The code is [MIT](LICENSE) (© samhv-dev and contributors). The engine bundles short ECG templates derived from
 PhysioNet databases under ODC-By 1.0, and some modules are derived from Apache-2.0 sources; every third-party item and
 its attribution is listed in [NOTICES.md](NOTICES.md), and the full third-party licence texts are in
 [LICENSES/](LICENSES/); they are inside every zip, package and kit, and attached beside the single-file IIFE on each

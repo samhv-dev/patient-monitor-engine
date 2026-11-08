@@ -323,13 +323,15 @@ Exported without a doc comment: `createCvpState`, `createLineState`, `ejectionFa
 
 | Target (band) | Measured | Source | Audit verdict | Audit's proposed band | Test |
 |---|---|---|---|---|---|
+| 1a. R→radial foot ≥ 150 ms at HR 60/90/120 | 127–148 ms | research 03 §2.1 | not audited | — | [`hemo-acceptance.test.ts`](../../packages/engine-core/test/engine/hemo-acceptance.test.ts) |
+| 1b. pleth foot ≥ 200 ms after R at HR 60/90/120 | 190–210 ms at HR 120 | research 03 §2.1 | not audited | — | [`hemo-acceptance.test.ts`](../../packages/engine-core/test/engine/hemo-acceptance.test.ts) |
 | 5c. post-PVC potentiation: the next beat SBP is +8–15 mmHg on average over isolated PVCs | −10.9 | — | MIS-SPECIFIED ([audit row 50](../../docs/validation/target-audit/30-target-audit.md#row-50)) | normal heart: post-PVC pulse-pressure ratio 1.0-1.2 (SBP change -5 to +5 mmHg); HFrEF profile: ratio >= 1.3 | [`hemo-acceptance.test.ts`](../../packages/engine-core/test/engine/hemo-acceptance.test.ts) |
 
 ## Tests
 
 | File | Expected failures | Skipped |
 |---|---|---|
-| [`engine/hemo-acceptance.test.ts`](../../packages/engine-core/test/engine/hemo-acceptance.test.ts) | 1 | 0 |
+| [`engine/hemo-acceptance.test.ts`](../../packages/engine-core/test/engine/hemo-acceptance.test.ts) | 3 | 0 |
 | [`engine/hemo-engine.test.ts`](../../packages/engine-core/test/engine/hemo-engine.test.ts) | 0 | 0 |
 | [`engine/hemo-longrun.test.ts`](../../packages/engine-core/test/engine/hemo-longrun.test.ts) | 0 | 0 |
 | [`engine/hemo-nibp-arrest.test.ts`](../../packages/engine-core/test/engine/hemo-nibp-arrest.test.ts) | 0 | 0 |

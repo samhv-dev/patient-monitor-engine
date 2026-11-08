@@ -43,7 +43,7 @@ export const SCENARIOS: Scenario[] = [
   S('B5-tamp-bleed1000', 'Tamponade 1, +10 min bleed 1 L over 5 min', [tamp(60), bleed(660, 1000, 300)], 1800),
   S('B6-chain', 'Tamponade 1 → propofol 1 → propofol 1 more (2 total) → PEEP 10 → sevo 2 % → bleed 1 L', [
     tamp(60), prop(660, 1), prop(960, 1), peep(1260, 10), sevo(1560), bleed(2160, 1000, 300)], 3060),
-  S('B7-ali', "Ali's playground case: tamponade 1, propofol 2 + 1 mg/kg, PEEP 15, sevo 2 %, bleed 2 L", [
+  S('B7-owner', "the owner's playground case: tamponade 1, propofol 2 + 1 mg/kg, PEEP 15, sevo 2 %, bleed 2 L", [
     tamp(60), prop(660, 2), prop(900, 1), peep(1200, 15), sevo(1500), bleed(2100, 2000, 300)], 3000),
   S('B8-tamp08-prop2', 'Tamponade 0.8 (H7 volume, 200 mL), +10 min propofol 2 mg/kg', [tamp(60, 0.8), prop(660, 2)], 1500),
 
@@ -117,7 +117,7 @@ export const SCENARIOS: Scenario[] = [
 
 // ---- extra probes (added after the first pass) ------------------------------------------------------------------------
 SCENARIOS.push(
-  // Ali's case exactly as B7 but with the propofol boluses doubled (does ANY dose collapse tamponade?)
+  // The owner's case exactly as B7 but with the propofol boluses doubled (does ANY dose collapse tamponade?)
   S('B9-tamp-prop4', 'Tamponade 1, +10 min propofol 4 mg/kg', [tamp(60), prop(660, 4)], 1500),
   // Commanded arrest + CPR: CPP and EtCO2 with CPR, adrenaline; is ROSC emergent?
   S('X1-vf-cpr', 'Commanded VF at 300 s, CPR from 330 s, adrenaline 1 mg at 450 s', [

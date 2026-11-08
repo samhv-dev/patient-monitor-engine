@@ -216,7 +216,7 @@ dose or patient. Neither was changed.
 `svtAvnrt` set at 180/min runs at 69/min, and the LAST `sinusBrady` 40 shows 60. 7g's adenosine path avoids this with a
 rate-free rhythm; drug-induced brady/tachy rhythms will need a 7a rule for which rhythms the reflex may drive.
 
-### Questions for Ali (carried)
+### Questions for samhv-dev (carried)
 
 - **Q-7g-1:** propofol CSHT band. 20–25 min at 3 h is Hughes 1992's; Eleveld / Schnider / Marsh give 4.5 / 3.5 / 8.6.
 - **Q-7g-2:** LAST thresholds.

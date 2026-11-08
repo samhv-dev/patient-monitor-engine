@@ -1,6 +1,6 @@
 // The brief's five timed instructor tasks (research/13 brief §11.6), driven through the visible UI only — clicks, typing
 // and keys, never the app hook — so a broken path shows as a failure. Each must finish in < 30 s; the times are
-// written to the test annotations for the gate note. The same five tasks are the script for Ali's timed usability run.
+// written to the test annotations for the gate note. The same five tasks are the script for the owner's timed usability run.
 // Chromium only (a heavy evidence run, CI amendment rules).
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';

@@ -15,12 +15,12 @@
 > R45 — the executor prototypes first, and a band the mechanism misses stays (or becomes) `it.fails` with the measured
 > number in its title.
 
-**Goal:** make the organ stages physically LINKED before Ali tests again (R53). An anaesthetic suppresses the
+**Goal:** make the organ stages physically LINKED before samhv-dev tests again (R53). An anaesthetic suppresses the
 sympathetic OUTPUT that holds preload-dependent patients up (tamponade, hypovolaemia, PE: collapse, not a −10 % dip);
 low flow, hypoxia, potassium and cold end in an emergent arrest (PEA, VF or asystole) through ONE myocardial state
 that FU-3's asphyxial path joins; the arrest and CPR read their own pressures (no last-beat values); hyperkalaemia
 acts on the pump and the rhythm; obstructive shock has one command per disease and a shape; vagal events exist; and a
-16-scenario clinical suite plus a screenshot set is what the orchestrator inspects before Ali is asked to test.
+16-scenario clinical suite plus a screenshot set is what the orchestrator inspects before samhv-dev is asked to test.
 
 **Architecture:** Two new mechanisms and one new module, the rest are edits in their owners' files. (1) 7g's PD gains
 two circulation targets — `symp` (× on the delivered central sympathetic output, applied AFTER the baroreflex
@@ -40,7 +40,7 @@ and the AF pulse deficit, a settable forced-air temperature, the CI split and th
 for the audit script (`module.registerHooks`). No new dependencies.
 
 **Spec:** `../research/00-orchestrator-rulings.md` (workspace): **R45**, **R51** + addenda 8, 12, 13, 14, 18, **R53**,
-"FU-4 list opened", "Ali's first playground finding", "Integration audit delivered", **CI amendments 1–4**, **E-FU3-9**,
+"FU-4 list opened", "the owner's first playground finding", "Integration audit delivered", **CI amendments 1–4**, **E-FU3-9**,
 **E-FU3-10**, the G7e rulings (q2, q4, the 60-min split note) and the orchestrator's V.1-review note to this plan
 (2026-09-27, see "Requests to other stages") and the G-FU3 rulings on FU-4's scope (2026-09-27: the monitor must show
 the hypoxic bradycardia, the post-arrest monitor-HR mean with a 1 bpm tolerance, 7d's CBF after a PEA, t25 ventilated
@@ -281,7 +281,7 @@ R44 calibration pass except the opioid vagal part (Task 12).
   depression −0.12 per mmol/L above 7 [ENG]; an arrest hazard (kEcg − 8.5)⁺/120 s⁻¹, VF or asystole 50:50 [ENG]. Calcium
   (via `caMem`), insulin–dextrose, salbutamol and bicarbonate (via 7c's K shift) reverse it through the same variable.
   Thresholds follow the morphology Stage 5.1 already draws (sine wave complete at 8.5) and ERC 2021 "hyperkalaemia
-  ≥ 6.5 severe; arrhythmias and arrest" [TXT]; confirm with Ali (Q5).
+  ≥ 6.5 severe; arrhythmias and arrest" [TXT]; confirm with samhv-dev (Q5).
 - **D8 — G4, the arrest reads its own state (Task 3).** A continuous MAP (`circ.mapNow`, τ 2 s at the 10 Hz control
   step, both modes) replaces the last beat for 7d (`organs/inputs.ts`) and 7e (`endo/adapters.ts`); a 2 ms
   accumulation of the relaxation-phase aortic − RA pressure (`circ.cppAcc`, Paradis's CPP) feeds the coronary no-beat
@@ -317,7 +317,7 @@ R44 calibration pass except the opioid vagal part (Task 12).
   re-derived under **E-FU4-8** (organs-tbi check 19, MODELED: RR 18 → the RR that restores its PaCO2 38–42 premise).
 - **D14 — G12 hypothermia (Task 16).** Shivering fades between 32 and 30 °C core (Danzl DF, Pozos RS, NEJM
   1994;331:1756–1760 [TXT]: shivering stops in moderate hypothermia) [ENG span]; VF hazard below 28 °C
-  (28 − T)⁺/600 s⁻¹ (ERC 2021 hypothermia: VF risk below 28–30 °C, handling) [ENG]; AF below 32 °C is left to Ali (Q11).
+  (28 − T)⁺/600 s⁻¹ (ERC 2021 hypothermia: VF risk below 28–30 °C, handling) [ENG]; AF below 32 °C is left to samhv-dev (Q11).
 - **D15 — G4 (b) arrest EtCO2 kinetics (Task 17, UNPROTOTYPED; orchestrator update 2026-09-28).** `LOW_FLOW_TAU_S`
   5 → 40 s: after VF the EtCO2 falls over 1–2 min to ≈ 5–10 mmHg, not within 20 s [ENG fit]. The AF pulse deficit (44 %
   non-ejecting beats at 150/min vs ≈ 10–20 %) is investigated before any change. The audit's G14 (pulse-oximeter
@@ -330,8 +330,8 @@ R44 calibration pass except the opioid vagal part (Task 12).
   matrix. Local wall (this prototype): 1 242 s for the whole slow set → ≈ 620 s each before the suite is added.
 - **D18 — G13 baroreflex resetting is not changed.** Acute resetting in 7 min (Pulse-derived, N-P16) erodes shock
   compensation; there is no textbook number that overrides it and the arrest machinery now bounds the shock states
-  that exposed it. Q8 for Ali.
-- **Decided from Ali's twelve questions where the textbook answer is unambiguous (each "confirm with Ali"):** Q1 healthy
+  that exposed it. Q8 for samhv-dev.
+- **Decided from the owner's twelve questions where the textbook answer is unambiguous (each "confirm with samhv-dev"):** Q1 healthy
   induction target MAP −25 to −40 %, HR unchanged (Miller ch. 21 p. 519) — prototype −31 %, +3/min; Q3 (part) CPP
   ≥ 15 mmHg is necessary for ROSC (Paradis 1990) and exsanguination/obstruction arrests are predominantly PEA
   (onset draw: VF 0.1 base); Q7 Ring–Messmer grade IV IS arrest — severity 1 is profound shock that arrests
@@ -368,7 +368,7 @@ number beside each is the prototype's measurement, not a target to tune towards.
   (ruling 2, Task 18e).** `h.hum` from baroreceptor unloading (hyperbolic, EC50 30 mmHg, τ on 150 s / off 600 s) drives
   `humSvrF` (0.32) and `humDV0Frac` (0.30) **outside `alpha()`** and into 7a's ONE shared unstressed reservoir. Class III
   + 2 mg/kg: **nadir 28.7, no arrest** (was PEA +80 s); the cost is the healthy band at **−24 %** (target −25 to −40),
-  which stays `it.fails` with its number because the two sourced targets pull against each other (Ali's Q1). The cause
+  which stays `it.fails` with its number because the two sourced targets pull against each other (the owner's Q1). The cause
   of the old collapse is named: `outF` × `dV0` returned the reflex's whole ≈ 840 mL recruitment at induction.
 - **D24 — the vagal events failed because a field was DROPPED, not because a dose was small (review F10, Task 18f).**
   `model.ts`'s 7g → 7a merge did not copy `vagalMs`; `bolusTimes` was recorded for gamma rows only; an
@@ -421,7 +421,7 @@ all green.
 Sevoflurane 2 % dial (0.65 MAC at 20 min): −6 % / HR +16 → −12.5 % / +2; 3 % dial (≈ 1 MAC): −21 % / −1 (S2).
 Propofol 1 mg/kg healthy: −6 % → −19 %. Tamponade + 1 mg/kg: MAP 79 → 57, no arrest (S4b).
 
-**G1 — Ali's case (audit B7: tamponade 1 at 60 s → propofol 2 mg/kg at 660 s → 1 mg/kg at 900 → PEEP 15 at 1 200 →
+**G1 — the owner's case (audit B7: tamponade 1 at 60 s → propofol 2 mg/kg at 660 s → 1 mg/kg at 900 → PEEP 15 at 1 200 →
 sevoflurane 2 % at 1 500 → bleed 2 L at 2 100):** before — MAP 89 → 76 → 70 → 69 → 67 → 13, HR 187 sinus, SpO2 98–99 %
 for 15 min, never pulseless. After (Tasks 2–7):
 
@@ -435,7 +435,7 @@ for 15 min, never pulseless. After (Tasks 2–7):
 | 840 | +3 min — pre-arrest bradycardia | 64 | 21 | 0.54 | 5 | 0.17 / 0.15 | sinus |
 | **≈ 850** | **PEA — 3.2 min after the first dose** (organised sinus 49 → 46/min, no ejection; SpO2 99 → `--`) | 49 | 15 | 0 | 2 | 0.10 / 0.10 | sinus, pulseless |
 
-The later steps (second propofol dose, PEEP, sevoflurane, the bleed) are never reached alive — Ali's R53 statement
+The later steps (second propofol dose, PEEP, sevoflurane, the bleed) are never reached alive — the owner's R53 statement
 ("even a moderate propofol dose can cause collapse and arrest") is what the model now does. Without Task 5 (RV balance)
 the same run fell to MAP 44 and arrested only at the second dose (PEA at 1 055 s, 2.6 min after it).
 
@@ -550,7 +550,7 @@ is never reached: it is an upper clamp, not the delivered value.
 room to spare (4.5 L/min at 12 × 500).
 
 **18e — the four-patient propofol table and the shock rows:** see Task 18e (healthy −24 %, 80 y HTN −22 %, AS + CAD
-−22 %, HFrEF −22 %, no arrests; severe tamponade −81 % with PEA at 780 s; Ali's B7 arrest at 780 s with lactate 12.3;
+−22 %, HFrEF −22 %, no arrests; severe tamponade −81 % with PEA at 780 s; the owner's B7 arrest at 780 s with lactate 12.3;
 class III control MAP 81.3; **class III + propofol nadir 28.7, NO arrest** where it was PEA at +80 s; MANUAL class III +
 propofol MAP 35.5).
 
@@ -572,10 +572,10 @@ every mechanism is now in at once (Task 14's distribution included):
 | MANUAL healthy | 107 | −20 % | 195 s | 0 | 85 | no |
 | MANUAL hypovolaemia | 53 | −35 % | 210 s | +4 | 36 | no |
 
-**Ali's tamponade timeline (B7), after:** 660 s propofol 2 mg/kg into the compensated tamponade (MAP 90, HR 102, CVP 17,
+**The owner's tamponade timeline (B7), after:** 660 s propofol 2 mg/kg into the compensated tamponade (MAP 90, HR 102, CVP 17,
 CO 3.19) → +60 s **MAP 46**, HR 81, CO 2.49, CoPP 28, kIsch 0.90 → +120 s **MAP 20, CO 0.23, CoPP 3, kIsch 0.11,
 pulseless** → **PEA at 780 s (2 min after the dose)** → +60 s MAP 19, CO 0, EtCO2 4 → **+120 s the rhythm is `agonal`**
-(the new decay, EtCO2 1, pH 7.33, lactate 1.9). The later steps are never reached alive, which is Ali's R53 statement.
+(the new decay, EtCO2 1, pH 7.33, lactate 1.9). The later steps are never reached alive, which is the owner's R53 statement.
 
 **The class III + propofol course (C1), after:** bleed 1 500 mL over 600 s → compensated at 900 s (MAP 84, HR 116,
 CO 3.00, lactate 2.1) → propofol 2 mg/kg at 960 s → **nadir MAP 30.3 at ≈ +60 s** (CO 2.00, kIsch 0.96) → **recovers to
@@ -634,7 +634,7 @@ neostigmine 0.05 mg/kg at **1.0**; the 4 y child reaches only **3.06** for the s
      scheduled time is loud in tests, clamped with one warning in the demo — E-FU4-18). FU-6 inherits the guard and
      should report any clamp it sees.
   3. **Anaphylaxis in MANUAL:** FU-4 does NOT make 7e's haemodynamics act in MANUAL (Q9 open), so V.1's anaphylaxis
-     stand-in stays; if Ali rules for MANUAL physiology later, that is a request V.1 can take up.
+     stand-in stays; if samhv-dev rules for MANUAL physiology later, that is a request V.1 can take up.
   4. The 7x console labels (Task 19) are unit rules by field suffix, so V.1's new `pleuralCmH2O` fields get cmH₂O
      without another console edit.
 - **FU-6 (respiratory integration) — ONE dead-space function (orchestrator ruling from the FU-6 review, 2026-09-28,
@@ -655,17 +655,17 @@ neostigmine 0.05 mg/kg at **1.0**; the 4 y child reaches only **3.06** for the s
   line — SpO2 validity and PI). FU-4 therefore does NOT touch `l3/spo2/**`: the audit's G14 (SpO2 98–99 % at MAP 13;
   "0 %" instead of `--` at SaO2 0) and the latched "APNEA (RESP)" alarm on philips-like while the ventilator breathes
   (G-FU3 ruling 5) are FU-5's. What FU-4 hands over: the arrest now happens (pulseless → no pleth feet), so the
-  near-arrest window where the oximeter must drop out is short but real (Ali's case: MAP 21 at 840 s, SpO2 still 99).
+  near-arrest window where the oximeter must drop out is short but real (the owner's case: MAP 21 at 840 s, SpO2 still 99).
   FU-4 and FU-5 both edit `l2/hemo/pipeline.ts` — different lines (FU-4: `emitSecond`'s coronary/arrest block, the
   state event, the tamponade condition fields); whichever lands second re-merges main.
 - **Stage 8b (release):** the physiology overview must describe (a) the sympathetic-output model (`symp`, `setF`),
   (b) the arrest state machine (triggers, onset draw, ROSC, MANUAL no-flow), (c) `pnpm run audit:physiology` as the
   integration check to rerun before a release; the CI matrix split (Task 20) is what the release workflow inherits.
-- **R44 calibration pass (Ali):** ~~CPR relaxation-phase CPP 42–52 mmHg at quality 1 against Paradis's 15–25 — a
+- **R44 calibration pass (samhv-dev):** ~~CPR relaxation-phase CPP 42–52 mmHg at quality 1 against Paradis's 15–25 — a
   calibration item (Q13)~~ **— withdrawn: Orchestrator ruling (FU-4 review), 2026-09-28 (ruling 3) made this a
   MECHANISM task (Task 18a), not a calibration item. `CPR_CARDIAC_MMHG`/`CPR_THORACIC_MMHG` are 24, the compression acts
   on volume, the reflex withdraws with brainstem perfusion, and the measured CPP is 23.8 with RA relaxation 18.0.** What
-  remains for Ali on CPR: whether adrenaline should push CPP to 30 (above the band — Paradis's own finding), and the
+  remains for samhv-dev on CPR: whether adrenaline should push CPP to 30 (above the band — Paradis's own finding), and the
   asystole-under-CPR proportions (Q3). Still calibration items: the warm-sepsis CO row
   (Q-7e-7); ephedrine/adrenaline HR sizes (G15); the S-suite bands marked "proposal".
 - **FU-3 (executing):** if FU-3's branch changes `TAU_HYP_S`, `hypoxicArrestRequest` or the `emitSecond` coronary block
@@ -1025,7 +1025,7 @@ export const SCENARIOS: Scenario[] = [
   S('B5-tamp-bleed1000', 'Tamponade 1, +10 min bleed 1 L over 5 min', [tamp(60), bleed(660, 1000, 300)], 1800),
   S('B6-chain', 'Tamponade 1 → propofol 1 → propofol 1 more (2 total) → PEEP 10 → sevo 2 % → bleed 1 L', [
     tamp(60), prop(660, 1), prop(960, 1), peep(1260, 10), sevo(1560), bleed(2160, 1000, 300)], 3060),
-  S('B7-ali', "Ali's playground case: tamponade 1, propofol 2 + 1 mg/kg, PEEP 15, sevo 2 %, bleed 2 L", [
+  S('B7-owner', "the owner's playground case: tamponade 1, propofol 2 + 1 mg/kg, PEEP 15, sevo 2 %, bleed 2 L", [
     tamp(60), prop(660, 2), prop(900, 1), peep(1200, 15), sevo(1500), bleed(2100, 2000, 300)], 3000),
   S('B8-tamp08-prop2', 'Tamponade 0.8 (H7 volume, 200 mL), +10 min propofol 2 mg/kg', [tamp(60, 0.8), prop(660, 2)], 1500),
 
@@ -1099,7 +1099,7 @@ export const SCENARIOS: Scenario[] = [
 
 // ---- extra probes (added after the first pass) ------------------------------------------------------------------------
 SCENARIOS.push(
-  // Ali's case exactly as B7 but with the propofol boluses doubled (does ANY dose collapse tamponade?)
+  // The owner's case exactly as B7 but with the propofol boluses doubled (does ANY dose collapse tamponade?)
   S('B9-tamp-prop4', 'Tamponade 1, +10 min propofol 4 mg/kg', [tamp(60), prop(660, 4)], 1500),
   // Commanded arrest + CPR: CPP and EtCO2 with CPR, adrenaline; is ROSC emergent?
   S('X1-vf-cpr', 'Commanded VF at 300 s, CPR from 330 s, adrenaline 1 mg at 450 s', [
@@ -2708,7 +2708,7 @@ optional `ext.kEcg` (written by 7c in Task 7) and `ext.tempC` (written by the en
 **Why (audit G1, G7 pre-arrest bradycardia, G9, headline 1):** nothing arrests on main — only commanded rhythms and 7g's
 hooks change the rhythm; MANUAL insults run unopposed at MAP 10–16 for 35 min (L-C4). Mechanism: D5, D6.
 
-**Prototype (seed 7; `pnpm run audit:physiology`; the arrest table in "Prototype results"):** Ali's case B7 PEA at
+**Prototype (seed 7; `pnpm run audit:physiology`; the arrest table in "Prototype results"):** the owner's case B7 PEA at
 850 s — 3.2 min after propofol 2 mg/kg, HR 105 → 57 before it, the bleed never needed · class IV haemorrhage PEA at
 695 s (MAP < 30 at 645 s; HR peak 184 → 91) · MANUAL bleed 2.5 L PEA at 640 s (no-flow route) · tension PTX (7b) PEA
 at 120 s, (7a) at 695 s · anaphylaxis 1 PEA at 300 s · FU-3's asphyxia +5.62 min (with Task 4's re-fit) · healthy,
@@ -3789,7 +3789,7 @@ a larger, dyspnoeic breath never swings more. Step 1 measures which half is shor
 - [x] **Step 1: Measure** (a probe, not committed): B0s (`pnpm run audit:physiology B0s`) plus the same run with the
   swing poked to 8 and 12 cmH2O (edit `SPONT_SWING_CMH2O` locally, revert). Record the SBP swing (`dSbp` column), the
   RV and LV end-diastolic volume swing. If 8 cmH2O already gives ≥ 10 mmHg, the interdependence is right and the swing
-  is the defect → Step 2. If not, the interdependence is short: stop, record, and leave S3 as `it.fails` (Q2 for Ali).
+  is the defect → Step 2. If not, the interdependence is short: stop, record, and leave S3 as `it.fails` (Q2 for samhv-dev).
 
 **Orchestrator ruling (FU-4 review), 2026-09-28 (review F11): the probe's two outcomes now have named destinations, and
 S3 is counted.** The review measured the applied tree: tamponade, spontaneous breathing, **SBP swing 3–4 mmHg,
@@ -3894,16 +3894,16 @@ MAP 80, HR 131**, EtCO2 34 → 17 ✓, and PEA only at 23 min. Massive PE is by 
   - (b) RV dilatation raising CVP: the RV EDPVR and interdependence. Check that `kIschRv`'s demand uses RV WALL STRESS
     (RVSP × RVEDV^⅓, as the LV does) rather than RVSP alone — Task 5's spiral takes 23 min, which is the symptom;
   - (c) the hypotension: severity 1 must reach SBP < 90 sustained.
-- **The SpO2 band goes to Ali, and is not assumed here:** "SpO2 < 90 at FiO2 0.5" needs a ≈ 30 % shunt and may be
+- **The SpO2 band goes to samhv-dev, and is not assumed here:** "SpO2 < 90 at FiO2 0.5" needs a ≈ 30 % shunt and may be
   stricter than the clinic. The plan proposes **"SpO2 ≤ 92 at FiO2 0.5 (≤ 88 on air)"** as a NEW band (not a widened
-  existing one — R45) and records it as Ali's question; **CVP ≥ 15 and MAP < 65 stand unchanged**. Until Ali answers, S9
+  existing one — R45) and records it as the owner's question; **CVP ≥ 15 and MAP < 65 stand unchanged**. Until samhv-dev answers, S9
   asserts the CVP, MAP and EtCO2 sides as `it` and the SpO2 side as `it.fails` with the measured number.
 - **S9 asserts physiology on TRUTH, not on the display** (review F9): read `resp.o2.sao2` (or `blood.out`), never
   `num.spo2.shown`, because once FU-5 makes SpO2 invalid at low perfusion a `null → −1` would satisfy "SpO2 < 90" and
   the assertion would pass on a monitor dropout. Keep a separate displayed-value column for the screenshots only.
 
 **Targets (R45, UNPROTOTYPED):** `condition pe 1` and `lungCondition pe 1` give identical state (PVR, VD_alv, shunt) and
-S9's picture (the bands above, with the SpO2 side per Ali); `condition tensionPtx 1` and
+S9's picture (the bands above, with the SpO2 side per samhv-dev); `condition tensionPtx 1` and
 `lungCondition ptxTension 1` (side R) give identical state (pleural 25 mmHg on the right, collapse); circ-sanity-2 H5
 (`condition pe 0.75`: mPAP 30–45, CO −10 %) and the lung-circ PE/PTX tests stay green; 8a's sanity document t12 (PE)
 is re-run and reported (its EtCO2 row may move — dead space now joins it).
@@ -4894,7 +4894,7 @@ export const LOW_FLOW_TAU_S = 40;
   compare the non-ejecting share with the pulse-deficit literature (≈ 10–20 % at 150); change the mechanism only with a
   source (e.g. the restitution of contractility after a short RR — the post-extrasystolic `PESP` machinery already in
   `model.ts`), otherwise record it as an `it.fails` ("AF 150: non-ejecting beats ≤ 20 % — measured 44 %") and a
-  question for Ali.
+  question for samhv-dev.
 
 **Orchestrator ruling (FU-4 review), 2026-09-28 (ruling 5 / review F14): "investigate, then `it.fails`" is not enough —
 this is a task with a target, and `it.fails` needs TWO recorded attempts.**
@@ -6500,7 +6500,7 @@ ARB/ACE-inhibitor post-induction hypotension literature (Brabant SM et al., Anes
 **The re-fit, and what it cost (recorded, not fitted away).** `PROPOFOL_SYMP` is **unchanged** (emax −1, ec50 1.0,
 hill 2): the re-fit's answer is that the suppression was never the error; the missing compensation was. Fitted:
 `HUM_EC50_MMHG` 30, `HUM_SVR` 0.32, `HUM_V0` 0.30, τ on 150 s / off 600 s. `HUM_SVR` 0.55 (the first try) **blunted
-Ali's tamponade collapse away** (tamponade + 2 mg/kg −53 %, no arrest, B7 pushed out to 2 235 s); 0.32 keeps it.
+the owner's tamponade collapse away** (tamponade + 2 mg/kg −53 %, no arrest, B7 pushed out to 2 235 s); 0.32 keeps it.
 
 **Prototype results — the four-patient table and the shock rows, re-measured (control-subtracted, `mapMin` after the dose):**
 
@@ -6511,7 +6511,7 @@ Ali's tamponade collapse away** (tamponade + 2 mg/kg −53 %, no arrest, B7 push
 | AS + CAD | −31 % | MAP 91.8 (base 117.4) **−22 %** | no arrest |
 | HFrEF | −29 % | MAP 67.9 (base 86.8) **−22 %** | no arrest |
 | severe tamponade | −84 %, PEA +135 s | MAP 17.8 (base 95.9) **−81 %** | **PEA 780 s** (the collapse is kept) |
-| **Ali's case (B7)** | PEA 795 s | MAP 6.1 | **arrest 780 s**, lactate 12.3 |
+| **The owner's case (B7)** | PEA 795 s | MAP 6.1 | **arrest 780 s**, lactate 12.3 |
 | class III control (C0) | MAP 82 | MAP 81.3 | no arrest (ATLS picture kept) |
 | **class III + propofol (C1)** | **MAP 14 at +60 s, PEA +80 s** | **MAP nadir 28.7, NO ARREST** | survives ≥ 5 min |
 | MANUAL class III + propofol | — | MAP 35.5 | no arrest |
@@ -6522,7 +6522,7 @@ Ali's tamponade collapse away** (tamponade + 2 mg/kg −53 %, no arrest, B7 push
   healthy-ish rows sit at −22 %. Making the suppression more potent does not recover it (ec50 1.0 → 0.85 → 0.75 moved
   healthy by < 1 point: the term saturates); the nadir is set by the humoral compensation. A stronger arm (`HUM_SVR`
   0.35 / `HUM_V0` 0.34) puts the class III nadir inside 30–50 (32.1) and takes healthy to −23 %. **The two sourced
-  targets pull against each other**, so S1b and S6a's percentage side stay `it.fails` with these numbers and go to Ali
+  targets pull against each other**, so S1b and S6a's percentage side stay `it.fails` with these numbers and go to samhv-dev
   as Q1. Do not fit one by breaking the other, and do not widen either band (R45).
 
 - [x] **Step 1: the arm.**
@@ -6564,7 +6564,7 @@ export const HUM_OFF_TAU_S = 600; // decay τ — AVP and angiotensin outlast th
  */
 export const HUM_EC50_MMHG = 30; // half-maximal humoral drive [ENG, fit: class III keeps its ATLS picture and does not arrest on 2 mg/kg]
 export const HUM_MAX = 1; // saturation of the arm
-export const HUM_SVR = 0.32; // × systemic resistance at full effect (AVP V1 + AT1) [ENG; 0.55 blunted Ali's tamponade collapse away]
+export const HUM_SVR = 0.32; // × systemic resistance at full effect (AVP V1 + AT1) [ENG; 0.55 blunted the owner's tamponade collapse away]
 export const HUM_V0 = 0.30; // fraction of blood volume held in the SHARED unstressed reservoir at full effect [ENG; the term that keeps the bleeding patient alive through induction]
 ```
 
@@ -6947,7 +6947,7 @@ const NO_BB = { hr: 0, c: 0 };
   2 mg/kg: no PEA within 5 min"** as `it` (met), while its percentage side stays `it.fails` with the measured −24 % /
   nadir 28.7 and a pointer to Q1. Add the MANUAL counterpart row (`MAP 35.5, no arrest`). S1b stays `it.fails` with
   −24 %.
-- [x] **Step 4: re-measure after Task 14 (mandatory ordering).** Re-run the whole propofol matrix, Ali's B7 timeline, the
+- [x] **Step 4: re-measure after Task 14 (mandatory ordering).** Re-run the whole propofol matrix, the owner's B7 timeline, the
   class III course, the tamponade rows and the sepsis rows, with Task 14's `distFactor` in. Re-run `test/l2/endo`,
   `test/engine/endo-*`, `test/engine/circ-sanity-1.test.ts`, `test/engine/circ-sanity-2.test.ts`. Record the before/after
   matrix in the gate note. Commit and push
@@ -7652,7 +7652,7 @@ replace with:
 
 **What:** the audit's §6 suite as scripted engine tests with sources, on the audit rig (ETT, VCV 12 × 600, PEEP 5, FiO2
 0.5), each yielding per sim-minute. Scenarios with their own files are mapped in the header (S3 Task 10, S7 Task 6, S11
-Task 7, S12 FU-3 + Task 13, S15 Task 12). Adjustments to the audit's list: S4 is split (2 mg/kg must arrest — Ali's R53
+Task 7, S12 FU-3 + Task 13, S15 Task 12). Adjustments to the audit's list: S4 is split (2 mg/kg must arrest — the owner's R53
 statement; 1 mg/kg the audit's MAP/CO proposal), S6 is split (MAP; Ce after Task 14), S10 gains the treated arm (adrenaline
 50 µg repeated), S13 asserts the CPR CPP band.
 
@@ -7673,7 +7673,7 @@ findings (F15, F16, F9, F11) are landed in it:**
 - **The `it.fails` list changes and must be re-counted.** **S8 flips to `it`** (Task 18c: PEA at 8.9 min) and **S13 flips
   to `it`** (Task 18a: CPP 23.8 in Paradis's 15–25, RA relaxation 18.0). **S3 JOINS the list with its number** (review
   F11: the tamponade SBP swing is 3–4 mmHg, unchanged — it was missing from the "six `it.fails`" count). S9's SpO2 side
-  stays `it.fails` pending Ali's band (item 15). So the landed list is **S1b (0.84 / −24 %), S3 (swing 3–4 mmHg), S4b
+  stays `it.fails` pending the owner's band (item 15). So the landed list is **S1b (0.84 / −24 %), S3 (swing 3–4 mmHg), S4b
   (MAP 57, CO −15 %), S5 (ΔMAP 4 vs 1, CO × 0.89), S6a's percentage side (−24 %), S9's SpO2 side** — state the count in
   the file header and in the gate note, and never state a count the file does not match.
 - **S9 (and every physiological assertion) reads TRUTH, not the display** (D27 / review F9): `resp.o2.sao2` or
@@ -7703,10 +7703,10 @@ findings (F15, F16, F9, F11) are landed in it:**
 #### Create `packages/engine-core/test/engine/clinical-suite.test.ts`
 
 ```ts
-// FU-4 clinical scenario suite (plan Task 22; audit §6 S1–S16, adjusted). What the orchestrator inspects BEFORE Ali is
+// FU-4 clinical scenario suite (plan Task 22; audit §6 S1–S16, adjusted). What the orchestrator inspects BEFORE samhv-dev is
 // asked to test again (R53). Rig (audit §1): adult 40 y 70 kg male, seed 7, MODELED unless stated, intubated (ETT) on
 // VCV 12 × 600 mL / PEEP 5 / FiO2 0.5 from t = 1 s (removes 7f's propofol airway obstruction as a confounder).
-// Bands are the audit's proposals with their sources (Q1–Q12 are Ali's to confirm); R45: a band the mechanism misses is
+// Bands are the audit's proposals with their sources (Q1–Q12 are the owner's to confirm); R45: a band the mechanism misses is
 // `it.fails` with the measured number in its title. Scenarios living in their own files: S3 → circ-pulsus (Task 10),
 // S7 → circ-lowflow-arrest (Task 6), S11 → blood-k-rhythm (Task 7), S12 → circ-hypoxic-arrest (FU-3/Task 13),
 // S15 → vagal-events (Task 12). Every run yields once per sim-minute (CI amendment 4); SLOW_A.
@@ -7782,7 +7782,7 @@ describe('FU-4 clinical scenario suite (MODELED, audit rig)', { timeout: 600_000
     expect(end / base - 1).toBeGreaterThanOrEqual(-0.3);
     expect(dHr).toBeLessThanOrEqual(10);
   });
-  it("S4a severe tamponade (compensated), propofol 2 mg/kg: collapse and PEA within 10 min (Ali, R53; Barash, pericardial disease)", async () => {
+  it("S4a severe tamponade (compensated), propofol 2 mg/kg: collapse and PEA within 10 min (samhv-dev, R53; Barash, pericardial disease)", async () => {
     const r = await scenario([[60, TAMP], [660, drug('propofol', 2, 'mg/kg')]], 1260);
     const pre = mean(win(r, 630, 660), 'map');
     const a = arrestAt(r, 660);
@@ -7908,7 +7908,7 @@ modify `apps/demo/vite.config.ts` (one page).
 event log; ×4 speed), following `stage7e.ts`'s pattern (`mountMonitor`, `send()` with `atTick`, a `window.__pmeFu4` hook
 with `start`, `simT`, `state()` → `{ rhythm, pulseless, map, cpp, kIsch }` read from the `circ`/`state` events):
 1. healthy induction, propofol 2 mg/kg (shot at +3 min: MAP ≈ 66, HR ≈ 76);
-2. Ali's case — tamponade 1 → propofol 2 mg/kg at 11 min → (shot at the PEA, ≈ 14 min: organised ECG, flat ABP, no pleth,
+2. The owner's case — tamponade 1 → propofol 2 mg/kg at 11 min → (shot at the PEA, ≈ 14 min: organised ECG, flat ABP, no pleth,
    the pulse-oximeter dropout is FU-5's);
 3. class IV haemorrhage → PEA (shot 60 s after the arrest), then CPR + 2 L + adrenaline → ROSC (shot);
 4. tension pneumothorax (one command) → PEA;
@@ -7999,10 +7999,10 @@ sed -n '/^## Propofol/,$p' <scratchpad>/fu-4-integration-polish/audit-after.txt 
   at the end. **Never merge.** Report the PR URL.
 
 
-## Open questions (for the orchestrator / Ali; the plan does not wait on them — numbers are the prototype's)
+## Open questions (for the orchestrator / samhv-dev; the plan does not wait on them — numbers are the prototype's)
 
-Ali's twelve (audit §7), with the model's numbers after FU-4 and what the plan decided ("confirm with Ali" = decided in
-Decisions from a textbook, Ali may overrule):
+the owner's twelve (audit §7), with the model's numbers after FU-4 and what the plan decided ("confirm with samhv-dev" = decided in
+Decisions from a textbook, samhv-dev may overrule):
 
 1. **Healthy induction** — decided (Miller ch. 21): MAP −25 to −40 %, HR unchanged. After: 2 mg/kg MAP 96 → 66
    (−31 %), HR +3; 1 mg/kg −19 %; recovery to 84 % at 15 min (the audit's ≥ 85 % proposal is `it.fails`, S1b). Confirm.
@@ -8039,8 +8039,8 @@ Decisions from a textbook, Ali may overrule):
 12. **Hypovolaemia PK** — after (without Task 14): propofol peak Ce 1.17× healthy at CO 3.1; target 1.3× (S6b) from
     Johnson 2003 — the executor extracts the paper's numbers into Task 14's test header.
 
-**Status of Ali's twelve after the review (Orchestrator ruling (FU-4 review), 2026-09-28):** Q1, Q2, Q3 (the
-proportions), Q4, Q5, Q6, Q7, Q8, Q9 (the semantics), Q11 and Q12's paper numbers are **Ali's and are kept as written**
+**Status of the owner's twelve after the review (Orchestrator ruling (FU-4 review), 2026-09-28):** Q1, Q2, Q3 (the
+proportions), Q4, Q5, Q6, Q7, Q8, Q9 (the semantics), Q11 and Q12's paper numbers are **the owner's and are kept as written**
 — no mechanism moves on them before he answers. **Q10 is no longer V.1's and is no longer open:** it is FU-4's, ruled,
 and landed in Task 18d (the measured table replaces the "12 × 500 PaCO2 48.5" line above: 38.5 with the root fix).
 **Q5 gains F17's three gaps** (below). **Q9 gains the MANUAL tracker floor as a test, not a question** (below).
@@ -8050,14 +8050,14 @@ number, its measurement and a pointer to the task, so nothing is silently droppe
 
 13. **CPR coronary perfusion — RULED (ruling 3) → Task 18a.** Was: CPR CPP 43–57 at quality 1 against Paradis's 15–25,
     and CPR alone restored a pulse after exsanguination. Now a mechanism task, **not** a calibration item: measured after,
-    **CPP 23.8, RA relaxation 18.0, no pulse from CPR alone in 10 min**. **S13 flips to `it`.** What is still Ali's: the
+    **CPP 23.8, RA relaxation 18.0, no pulse from CPR alone in 10 min**. **S13 flips to `it`.** What is still the owner's: the
     CPP 30 that adrenaline produces (above the band — Paradis's own finding) and Q3's asystole-under-CPR proportions.
 14. **Tension pneumothorax build-up — RULED (ruling 1) → Task 18c.** Was: 25 mmHg at once and PEA in ≈ 60 s, deferred to
     "V.1's lungs". Now FU-4's, with a one-way valve: **PEA at 8.9 min on PPV**, none in 24 min spontaneously,
     decompression restoring MAP ≥ 65 in 10 s. **S8 flips to `it`.** New exception E-FU4-16; `lp.pPtx` keeps its name.
 15. **Massive PE — RULED (ruling 2) → Task 11's measure-then-mechanism step.** Was: SpO2 96.5, CVP 9, MAP 79 at 5 min —
     not a massive PE. Now a task with a measurement first (PVR, RVEDV/RVEF, CVP, shunt, SvO2, `kIschRv` at 1/5/10 min)
-    and only the mechanism it names. **One band question stays Ali's and is NOT assumed:** "SpO2 < 90 at FiO2 0.5" needs
+    and only the mechanism it names. **One band question stays the owner's and is NOT assumed:** "SpO2 < 90 at FiO2 0.5" needs
     a ≈ 30 % shunt and may be stricter than the clinic — the plan proposes **SpO2 ≤ 92 at FiO2 0.5 (≤ 88 on air)** as a
     NEW band; CVP ≥ 15 and MAP < 65 stand. S9's SpO2 side stays `it.fails` until he answers.
 16. **FU-3's asphyxia / `TAU_HYP_S` 150 → 260 s — accepted by the orchestrator as a sourced [ENG] re-fit, WITH
@@ -8067,32 +8067,32 @@ number, its measurement and a pointer to the task, so nothing is silently droppe
     margin in the gate note.** Q-FU3 rulings stand.
 17. **The PEA's rate — RULED (ruling 7) → Task 18b.** Was: flat at 30/min for 20 min, no asystole. Now it decays to an
     idioventricular rhythm and then asystole (measured: **+110 s and +260 s** after the rate floor), and effective CPR
-    suspends the decay. Ali still owns Q3's onset proportions.
+    suspends the decay. samhv-dev still owns Q3's onset proportions.
 18. **AF pulse deficit — RULED (ruling 5) → Task 17 Step 3 with a target.** 44 % of beats at AF 150 do not eject against
     ≈ 10–20 %. `it.fails` is allowed **only after two sourced mechanism attempts, each recorded with its number**, and
     the measurement must include the non-ejecting beats' preceding RR, EDV and LV vs aortic diastolic pressure.
 
 New questions and items the review added:
 
-19. **The two sourced propofol targets pull against each other (Ali's Q1, from Task 18e).** With the humoral arm,
+19. **The two sourced propofol targets pull against each other (the owner's Q1, from Task 18e).** With the humoral arm,
     class III + 2 mg/kg no longer arrests (nadir 28.7, target 30–50) but healthy induction is **−24 %** against the
     −25 to −40 % band; a stronger arm puts class III in band (32.1) and healthy at −23 %. Making the suppression more
     potent does not help (the term saturates). **S1b and S6a's percentage side stay `it.fails` with these numbers.**
-    Q for Ali: which target wins, or is −24 % acceptable for a healthy induction?
+    Q for samhv-dev: which target wins, or is −24 % acceptable for a healthy induction?
 20. **Hyperkalaemia, three gaps recorded under Q5 (review F17).** The hazard ignores the **RATE of rise** (acute rises
     are far more arrhythmogenic; renal patients tolerate 7–8); there is **no AV block or slow wide-complex rhythm**
     (`l2/ecg/**` is out of scope); and **one prophylactic 1 g CaCl2 abolishing arrest for 15 min at K 10.7 is
     generous**. Direction and the reversal path are right (burns + sux VF at +3.7 min matches Martyn & Richtsfeld,
-    Anesthesiology 2006;104:158–169's 2–5 min). No task now; Ali confirms with Q5.
+    Anesthesiology 2006;104:158–169's 2–5 min). No task now; samhv-dev confirms with Q5.
 21. **The MANUAL tracker's MAP ≈ 40 floor (ruling 6) — now a TEST, not only a question.** Task 22 adds, as `it.fails`
     with the numbers: **"MANUAL target 18/10 → displayed ≥ 60/25 (MAP ≈ 38)"** (monitor audit T4: 65/30),
     cross-referenced to Q-FU3-4a. The better fix — lowering the tracker's `CIRC_LIMITS` floors, or adding venous volume
     as a tracker control so a peri-arrest target is reachable and the no-flow rule can fire from an instructor setting —
-    depends on Ali's MANUAL semantics (Q9) and is not done here.
+    depends on the owner's MANUAL semantics (Q9) and is not done here.
 22. **A 7 kg infant crashed the engine (FU-6's Request 3, 2026-09-28).** On today's main, an infant on an ETT with volume
     control dies at 240 s with `"rhythm sinus: next event time is NaN"` because the MANUAL calibration gave it ≈ 400 mL
     of dead space. Answered by Task 18d Step 2b (a named infant test) and Task 18g (the guard, E-FU4-18). Not a question
-    for Ali — a defect with a test.
+    for samhv-dev — a defect with a test.
 
 ## Self-review
 
@@ -8108,7 +8108,7 @@ New questions and items the review added:
   events, review F10), 18g (the NaN guard, Request 3), plus Task 11's PE measure-then-mechanism step (ruling 2), Task 13's
   split (ruling 5), Task 17's AF target (ruling 5), Task 20's disjointness gate (review F8) and Task 22's MANUAL floor
   row (ruling 6)**;
-  FU-4 items 1–3 (Tasks 18, 19, 20); item 10 (Tasks 1, 22, 23); Ali's twelve questions (above); the G-FU3 rulings
+  FU-4 items 1–3 (Tasks 18, 19, 20); item 10 (Tasks 1, 22, 23); the owner's twelve questions (above); the G-FU3 rulings
   (1 → Task 13, 2 → re-measured: the reversal HR passes and flips in Task 6, check 18's recovery MAP stays `it.fails` at
   86.85, 3 → Task 13 Step 3 and Task 3, 4 → Task 21, 5 → Task 19; oracle mode MODELED — no change needed); the
   orchestrator's V.1 note (Requests; D9; Task 19 Step 2).

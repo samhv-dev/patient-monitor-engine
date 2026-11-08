@@ -39,9 +39,9 @@
  | B4-tamp-sevo | – | – |  | – | – | 60 s tamponade 1; 660 s sevoflurane 2 % |
  | B5-tamp-bleed1000 | – | – |  | – | – | 60 s tamponade 1; 660 s bleed 1000 mL / 300 s |
 -| B6-chain | 1135 s | sinus (PEA) | lowFlow | 1115 s | 48 | 60 s tamponade 1; 660 s propofol 1 mg/kg; 960 s propofol 1 mg/kg; 1260 s PEEP 10; 1560 s sevoflurane 2 %; 2160 s bleed 1000 mL / 300 s |
--| B7-ali | 830 s | sinus (PEA) | lowFlow | 810 s | 47 | 60 s tamponade 1; 660 s propofol 2 mg/kg; 900 s propofol 1 mg/kg; 1200 s PEEP 15; 1500 s sevoflurane 2 %; 2100 s bleed 2000 mL / 300 s |
+-| B7-owner | 830 s | sinus (PEA) | lowFlow | 810 s | 47 | 60 s tamponade 1; 660 s propofol 2 mg/kg; 900 s propofol 1 mg/kg; 1200 s PEEP 15; 1500 s sevoflurane 2 %; 2100 s bleed 2000 mL / 300 s |
 +| B6-chain | 1135 s | sinus (PEA) | lowFlow | 1115 s | 47 | 60 s tamponade 1; 660 s propofol 1 mg/kg; 960 s propofol 1 mg/kg; 1260 s PEEP 10; 1560 s sevoflurane 2 %; 2160 s bleed 1000 mL / 300 s |
-+| B7-ali | 830 s | sinus (PEA) | lowFlow | 810 s | 46 | 60 s tamponade 1; 660 s propofol 2 mg/kg; 900 s propofol 1 mg/kg; 1200 s PEEP 15; 1500 s sevoflurane 2 %; 2100 s bleed 2000 mL / 300 s |
++| B7-owner | 830 s | sinus (PEA) | lowFlow | 810 s | 46 | 60 s tamponade 1; 660 s propofol 2 mg/kg; 900 s propofol 1 mg/kg; 1200 s PEEP 15; 1500 s sevoflurane 2 %; 2100 s bleed 2000 mL / 300 s |
  | B8-tamp08-prop2 | – | – |  | – | – | 60 s tamponade 0.8; 660 s propofol 2 mg/kg |
 -| B9-tamp-prop4 | 760 s | sinus (PEA) | lowFlow | 740 s | 47 | 60 s tamponade 1; 660 s propofol 4 mg/kg |
 +| B9-tamp-prop4 | 760 s | sinus (PEA) | lowFlow | 735 s | 46 | 60 s tamponade 1; 660 s propofol 4 mg/kg |
