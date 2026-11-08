@@ -8,6 +8,9 @@ The engine's cross-module coupling seams and its effector products and sums, rea
 
 Seams (de-duplicated on module, kind and field): 137; sites: 173.
 
+Carried by a row of the coupling registry (`packages/engine-core/src/couplings/`): 40; unregistered: 97
+(the list in `packages/engine-core/src/couplings/unregistered.ts`, which may shrink and never grow: a new seam needs a row).
+
 | Module | ctx | ext | endo-write | bus-read | All |
 |---|---:|---:|---:|---:|---:|
 | blood | 5 | 3 | 0 | 1 | 9 |
@@ -72,6 +75,108 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | `l2/blood/pipeline.ts#advanceBlood` | `pf` | product | 6 |
 | `l2/blood/solutes.ts#stepSolutes` | `jk` | product | 5 |
 | `l2/brain/params.ts#(top level)` | `OSM_WATER_ML_PER_MOSM` | product | 5 |
+
+## Unregistered seams (97)
+
+The seams no coupling-registry row carries yet (piece R2 registers the rest); the list may shrink and never grow.
+
+- `rhythms-ecg ctx rhythmCtx.pacerLowerAt`
+- `rhythms-ecg ctx rhythmCtx.mods`
+- `rhythms-ecg ctx rhythmCtx.rng`
+- `rhythms-ecg ctx rhythmCtx.hrv`
+- `rhythms-ecg ctx rhythmCtx.breath`
+- `rhythms-ecg ctx ecgGenInputs.breath`
+- `pharmacology ctx pkCtx.vaLpm`
+- `pharmacology ctx pkCtx.frcL`
+- `pharmacology ctx pkCtx.tempC`
+- `pharmacology ctx pkCtx.hepFlow`
+- `pharmacology ctx pkCtx.hepFn`
+- `pharmacology ctx pkCtx.hepFnTemp`
+- `pharmacology ctx pkCtx.renal`
+- `pharmacology ctx pkCtx.betaBlockC`
+- `pharmacology ctx pkCtx.betaOcc`
+- `pharmacology ctx pkCtx.betaNonSel`
+- `pharmacology ctx pkCtx.endoCat`
+- `pharmacology ctx rhythmRequest.id`
+- `pharmacology ctx rhythmRequest.pinned`
+- `pharmacology ctx rhythmRequest.pulseless`
+- `neuro ctx stepNeuroTo.tempC`
+- `neuro ctx stepNeuroTo.mechanical`
+- `neuro ctx stepNeuroTo.neuroglycopenia`
+- `neuro ctx stepNeuroTo.macF`
+- `neuro ctx stepNeuroTo.spontRr`
+- `neuro ctx stepNeuroTo.mgMmolL`
+- `neuro ctx stepNeuroTo.iCaMmolL`
+- `neuro ctx stepNeuroTo.kMmolL`
+- `breathing ctx advanceResp.l1`
+- `breathing ctx advanceResp.rhythm`
+- `breathing ctx advanceResp.hr`
+- `breathing ctx advanceResp.blood`
+- `breathing ctx advanceResp.hco3`
+- `breathing ctx advanceResp.bronchoDil`
+- `breathing ctx advanceResp.hpvInhibit`
+- `breathing ctx advanceResp.anaphEndo`
+- `breathing ctx advanceResp.histamine`
+- `blood ctx advanceBlood.resp`
+- `blood ctx advanceBlood.l1`
+- `blood ctx advanceBlood.pk`
+- `blood ctx advanceBlood.neuroProfile`
+- `endocrine-thermal ctx endoCtx.l1`
+- `endocrine-thermal ctx endoCtx.ps`
+- `endocrine-thermal endo-write writeBlood: bloodOf(ps)?.core.endoKShift`
+- `endocrine-thermal endo-write writeBlood: bloodOf(ps)?.core.endoGlucoseMgDl`
+- `endocrine-thermal endo-write writeBlood: bloodOf(ps)?.core.endoKetoMmolMin`
+- `endocrine-thermal endo-write writeBlood: bloodOf(ps)?.core.endoKetoUtilPerMin`
+- `endocrine-thermal endo-write writeBlood: bloodOf(ps)?.core.fl.kfMult`
+- `endocrine-thermal endo-write writeBlood: bloodOf(ps)?.core.fl.sigma`
+- `endocrine-thermal endo-write writeCond: ps.cond`
+- `endocrine-thermal endo-write writeLung: rs.lungSpecs`
+- `organs ctx organsCtx.l1`
+- `organs ctx organsCtx.resp`
+- `organs ctx organsCtx.rhythm`
+- `organs ctx organsCtx.blood`
+- `organs ctx organsCtx.pk`
+- `organs ctx organsCtx.neuro`
+- `organs ctx organsCtx.endo`
+- `organs ctx organsCtx.hrNow`
+- `organs ctx organsCtx.setHr`
+- `pressure-waveforms ctx advanceHemo.rng`
+- `pressure-waveforms ctx advanceHemo.phi`
+- `pressure-waveforms ctx advanceHemo.u`
+- `pressure-waveforms ctx advanceHemo.requestRhythm`
+- `pressure-waveforms ctx advanceHemo.requestEctopy`
+- `pressure-waveforms ctx advanceHemo.ph`
+- `engine-runtime ext avNodeBlock`
+- `engine-runtime ext tempC`
+- `engine-runtime bus-read bus.metabolic.dantroleneE`
+- `engine-runtime bus-read bus.agents`
+- `engine-runtime bus-read bus.avNodeBlock`
+- `engine-runtime bus-read bus.airway.bronchodilation`
+- `engine-runtime bus-read bus.hpvInhibit`
+- `blood bus-read bus.doses`
+- `endocrine-thermal bus-read bus.agents`
+- `endocrine-thermal bus-read bus.airway.bronchodilation`
+- `endocrine-thermal bus-read bus.doses`
+- `endocrine-thermal bus-read bus.metabolic.dantroleneE`
+- `neuro bus-read bus.agents`
+- `neuro bus-read bus.antagonist.opioid`
+- `neuro bus-read bus.cns.opioidCeRemiEq`
+- `neuro bus-read bus.cns.propCe`
+- `neuro bus-read bus.cns.benzoCeMidazEq`
+- `neuro bus-read bus.cns.ketamineCe`
+- `neuro bus-read bus.volatiles`
+- `neuro bus-read bus.cns.hypPropEq`
+- `neuro bus-read bus.cns.opioidCeFentEq`
+- `neuro bus-read bus.cns.opioidVentFentEq`
+- `neuro bus-read bus.cns.dissoc`
+- `neuro bus-read bus.cns.antinocAdd`
+- `neuro bus-read bus.cns.benzoShare`
+- `neuro bus-read bus.nmb.achGain`
+- `neuro bus-read bus.doses`
+- `organs bus-read bus.cns`
+- `organs bus-read bus.volatiles`
+- `organs bus-read bus.agents`
+- `organs bus-read bus.doses`
 
 ## Seams
 

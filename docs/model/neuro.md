@@ -71,6 +71,17 @@ drug model and before the respiratory pipeline (`l2/neuro/pipeline.ts`).
 | [`spont.ts:7`](../../packages/engine-core/src/l2/neuro/spont.ts#L7) | blood.core.ab.hco3 (24 without it → no shift): paco2Set = min(paco2Rest, 1.5·HCO3 + 8); raised in metabolic |
 | [`spont.ts:10`](../../packages/engine-core/src/l2/neuro/spont.ts#L10) | drive: the lung model's VE = [S·(PaCO2 − B)]₊·H(PaO2)·(1 − opioidDep)·(1 − hypnoticDep)·F with the neuro model's |
 
+## Couplings
+
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 2 rows; SOURCED 0, FIT 0, ENG 0, UNTAGGED 2, ABSENT 0.
+The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
+constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
+
+| Id | From → to | Sign · form | Class | Constants | Timing, limits | Note |
+|---|---|---|---|---|---|---|
+| `neuro.drive.hypnotic` | `pk.bus.cns.hypVentPropEq` (Propofol-equivalent at the ventilatory site (kept out of the truth tree)) → `neuro.resp.hypnoticDep` | + · factor | UNTAGGED | — | — | Hypnotic ventilatory depression from the propofol equivalent at the ventilatory site. |
+| `neuro.drive.total` | `neuro.resp.hypnoticDep`, `neuro.resp.opioidDep` → `neuro.resp.totalDep` | + · term | UNTAGGED | — | — | Hypnotic and opioid depression combined into the total the drive reads. |
+
 ## State
 
 ### `NeuroState` ([`l2/neuro/pipeline.ts`](../../packages/engine-core/src/l2/neuro/pipeline.ts))

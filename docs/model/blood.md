@@ -84,6 +84,23 @@ lactate; an embedding developer reads it for the blood state and lab outputs the
 | [`params.ts:123`](../../packages/engine-core/src/l2/blood/params.ts#L123) | 70 kg / 175 cm. TBW 0.6 (M) / 0.5 (F) L/kg of the ACTUAL weight; ICF 2/3; ECF 1/3; plasma = BV·(1 − Hct). |
 | [`params.ts:180`](../../packages/engine-core/src/l2/blood/params.ts#L180) | - SAGM (D'Amici 2012 Table I): NaCl 0.877 g/100 mL = 150 mmol/L, no buffer [TXT]; |
 
+## Couplings
+
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 8 rows; SOURCED 0, FIT 2, ENG 0, UNTAGGED 6, ABSENT 0.
+The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
+constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
+
+| Id | From → to | Sign · form | Class | Constants | Timing, limits | Note |
+|---|---|---|---|---|---|---|
+| `blood.bleed` | `trigger.bleed` (Haemorrhage) → `blood.core.fl.vp` | − · state | UNTAGGED | — | — | The blood model takes the bleed command first (engine.ts: before the haemodynamics): whole blood leaves its plasma and red-cell pools at the ordered rate. |
+| `blood.circulation` | `blood.core.fl.vp`, `blood.core.fl.visf` → `hemo.circ.vol` | + · state | UNTAGGED | — | — | Each step's blood-volume change (the bleed, and the transcapillary refill from the interstitium) enters the circulation's volume queue (pushCircVolume). |
+| `blood.dilution` | `blood.core.fl.hbG`, `blood.core.fl.vp` → `blood.core.odc.hb` | ± · state | UNTAGGED | — | — | Haemoglobin concentration = the red-cell mass over the blood volume: refill dilutes it after a bleed. |
+| `blood.viscosity` | `blood.core.odc.hb`, `hemo.circ.qFwd` → `hemo.circ.ext.viscF` | + · factor | FIT | `VISC_EXP` = 0.6, `VISC_FLOW_FULL` = 1.0, `VISC_FLOW_NONE` = 0.3 | — | SVR × (Hb/Hb_ref)^VISC_EXP, faded out as flow falls from VISC_FLOW_FULL to VISC_FLOW_NONE of normal (MODELED only). |
+| `blood.lactate` | `hemo.circ.qFwd` → `blood.out.lactate` (Lactate) | − · state | UNTAGGED | — | — | Supply-dependent oxygen consumption below the critical delivery makes lactate. |
+| `blood.acidosis` | `blood.out.lactate` (Lactate) → `blood.core.ab.ph` | − · state | UNTAGGED | — | — | The strong-ion acid–base solution: lactate lowers the SID and the pH. |
+| `blood.chemistry` | `blood.core.ab.ph`, `blood.out.iCa` (iCa²⁺), `blood.out.kEcg` → `blood.kChem` (Blood-chemistry contractility factor (pH, ionised Ca, K)) | ± · factor | FIT | `K_CONTRACT` = 8, `K_CONTRACT_SLOPE` = 0.2 | — | acid (below pH 7.2: × max(0.3, 1 − 1.5·Δ), inline) × (iCa/1.1)^1.5 capped at 1 (inline) × the hyperkalaemic loss above K_CONTRACT. |
+| `blood.chemistryToCirc` | `blood.kChem` (Blood-chemistry contractility factor (pH, ionised Ca, K)) → `hemo.circ.ext.kChem` | + · state | UNTAGGED | — | — | Handed to the circulation's four chambers. |
+
 ## State
 
 ### `FluidState` ([`l2/blood/fluids.ts`](../../packages/engine-core/src/l2/blood/fluids.ts))
