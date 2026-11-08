@@ -360,6 +360,7 @@ No exported `…State` type in this module.
 | `keyTimes` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The key times, in order: |
 | `openersAt` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The card author's openers (D9) on this run: |
 | `handoutQuestionsAt` | [`apps/demo/src/app/debrief-moments.ts`](../../apps/demo/src/app/debrief-moments.ts) | The card's handout questions (D16) whose anchor happened on the kept course, in the card's order, each with its anchor's time; |
+| `learnerWho` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The who line of a learner defibrillator press (Room plan R5d): |
 | `first` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | The first kept row of `want` (or of any of a list) at or after `from`, or null. |
 | `eventWords` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | An event in words, for a reason line ("the alarm Apnoea (no CO₂ breaths)", "epinephrine", "SpO₂ below 90 %"). |
 | `trendMeta` | [`apps/demo/src/app/debrief.ts`](../../apps/demo/src/app/debrief.ts) | A trend's or a lab's label and unit from the glossary ("ART M / NIBP M", "mmHg"; |
@@ -407,6 +408,7 @@ No exported `…State` type in this module.
 | `translateTree` | [`apps/demo/src/app/i18n/fa-dom.ts`](../../apps/demo/src/app/i18n/fa-dom.ts) | Put every text node under `root` into Persian (in place); |
 | `drawPin` | [`apps/demo/src/app/instructor-pin.ts`](../../apps/demo/src/app/instructor-pin.ts) | Four random digits from the platform's cryptographic source. |
 | `defibReadout` | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | The window's readout: |
+| `defibWords` | [`apps/demo/src/app/instrument.ts`](../../apps/demo/src/app/instrument.ts) | R5d: a refusal of the window's press, in the device's words. |
 | `scenarioStep` | [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | The step a scenario trigger presses: |
 | `logCsv` | [`apps/demo/src/app/link.ts`](../../apps/demo/src/app/link.ts) | CSV of the clinical log (the debrief export). |
 | `busyFraction` | [`apps/demo/src/app/meters.ts`](../../apps/demo/src/app/meters.ts) | The busy fraction (0–1) of the main thread over [now − windowMs, now] (method above). |
@@ -913,6 +915,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/e2e/ibp-scales.e2e.ts`](../../apps/demo/e2e/ibp-scales.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/iife-smoke.e2e.ts`](../../apps/demo/e2e/iife-smoke.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/iife-transports-snapshot.e2e.ts`](../../apps/demo/e2e/iife-transports-snapshot.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/learner-defib.e2e.ts`](../../apps/demo/e2e/learner-defib.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/learner-monitor-follows.e2e.ts`](../../apps/demo/e2e/learner-monitor-follows.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/mobile-learner.e2e.ts`](../../apps/demo/e2e/mobile-learner.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/monitor-destroy-refuses.e2e.ts`](../../apps/demo/e2e/monitor-destroy-refuses.e2e.ts) | 0 | 0 |
@@ -1013,6 +1016,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/readers-v2.dom.test.ts`](../../apps/demo/src/app/readers-v2.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/recognised.dom.test.ts`](../../apps/demo/src/app/recognised.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record-attribution.test.ts`](../../apps/demo/src/app/record-attribution.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/record-learner.test.ts`](../../apps/demo/src/app/record-learner.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/record.test.ts`](../../apps/demo/src/app/record.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/room-code.test.ts`](../../apps/demo/src/app/room-code.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/room-layout.test.ts`](../../apps/demo/src/app/room-layout.test.ts) | 0 | 0 |
@@ -1077,6 +1081,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/views/debrief-recognised.dom.test.ts`](../../apps/demo/src/app/views/debrief-recognised.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-steps.dom.test.ts`](../../apps/demo/src/app/views/debrief-steps.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/debrief-swimlane.test.ts`](../../apps/demo/src/app/views/debrief-swimlane.test.ts) | 0 | 0 |
+| [`apps/demo/src/app/views/defib-window-press.dom.test.ts`](../../apps/demo/src/app/views/defib-window-press.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/defib-window.dom.test.ts`](../../apps/demo/src/app/views/defib-window.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/explore-drugs.dom.test.ts`](../../apps/demo/src/app/views/explore-drugs.dom.test.ts) | 0 | 0 |
 | [`apps/demo/src/app/views/explore.dom.test.ts`](../../apps/demo/src/app/views/explore.dom.test.ts) | 0 | 0 |
