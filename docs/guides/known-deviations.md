@@ -353,12 +353,14 @@ Groups, in short:
   26.9 against 27.9 (green; it was red). Outside the harness the reflex raises the rate further (HR 139 at 8:00 in the
   showcase haemorrhage run; 69.6 → 149 in an awake 50 % bleed, `cardiac-reflexes-audit.md` §5.1). The tables below
   are the report's until it is regenerated.
-- **Breathing back after sugammadex (t25, 0 s against 60–240 s):** the document has been ventilated from induction
-  since FU-4, and the ventilator is stopped at the moment of sugammadex. Measured on main `458903cc`: the first
-  spontaneous breath comes at that moment (221 mL; effort 1.0 within 0.1 s, 311 mL at +8.6 s), so the 0 s means the
-  effort was already back under the ventilator, 29 min after rocuronium 0.6 mg/kg. The evidence audit predicts exactly
-  that and judges the band mis-specified (target audit row 16: the first effort returns 12–24 min after rocuronium,
-  before any reversal); the row stays as it is until the owner rules on the restated target.
+- **Breathing back after sugammadex (t25):** settled by brief 93 (PR for `feat-respiratory-drive-effort`). The cell had
+  read the tables' 2.2 min — a TOFR-0.9 endpoint — as breathing. It now reads what its sources state about the
+  diaphragm after rocuronium 0.6 mg/kg (Moerer 2005, PMID 15832241: onset of diaphragm recovery 15.9 min young /
+  22.0 min over 65; Cantineau 1994, PMID 8092503: diaphragm twitch 10 % recovery 17 ± 10 min, adductor pollicis
+  34 ± 10), measured under the ventilator through the effort the engine now produces there, and after the ventilator is
+  stopped as the airway rate. Measured on the branch: first effort **13.07 min** after the dose (band 12–24), effort
+  present when sugammadex is given at T2 (0.75 of a resting breath), airway rate ≥ 4 throughout the reversal's onset —
+  all green, and the expected-failure mark G is removed.
 - **Haemorrhage, what is measured:** the systemic vascular resistance rises as the patient bleeds (+659 at 8:00 in
   the showcase kit's haemorrhage run, `docs/showcase/SHOWCASE-2-MEASUREMENTS.md`; 1,205 → 2,112 in an awake 50 %
   bleed, `docs/roadmap/v2.0/evidence/cardiac-reflexes-audit.md` F3). The reflex does not decompensate: in that awake
@@ -414,7 +416,6 @@ Groups, in short:
 | 🔴 | segments | t16-septic-shock-warm/warm/map | 86.7 | 55.0–60.0 | tables §7 16: MAP 55–60 |
 | 🔴 | segments | t16-septic-shock-warm/warm/hr | 75.0 | 115–130 | tables §7 16: HR 115–130 |
 | 🔴 | segments | t17a-class3-no-bb/late/hr | 75.0 | 120–140 | tables §7 17a: HR 120–140 |
-| 🔴 | segments | t25-rocuronium-sugammadex/recovery/rr-back | 0.0 | 60.0–240 | tables §7 25: spontaneous effort returns within ≈ 2.2 min of sugammadex [ENG] |
 
 **Yellow rows**
 
@@ -470,7 +471,6 @@ Measured locally on this branch (all suites; PWDB refused with 403, so the pwdb-
 | D: RV diastolic/pericardial mechanics (mechanism brief) | RV dilation under pericardial constraint, ventricular interdependence | t15 rest CVP 6.8 (14–18), PCWP 3.3 (8–12) | V-11 |
 | E: septic time course and fluid-refractory vasoplegia (mechanism brief) | onset over hours (the condition's τ 600 s compresses those hours into minutes, kept for now); vasoplegia whose depth matches the source | t16-septic-shock-state MAP 17.4 (49–60) | V-12 |
 | F: preload-fixed stroke volume at low CVP (mechanism brief) | SV set by preload, so the slower β-blocked heart loses output | t17-bb-contrast SBP(17b)/SBP(17a) 1.063 (< 1), CO(17b)/CO(17a) 1.033 (< 1) | research 46 §F |
-| G: respiratory effort under controlled ventilation (mechanism brief) | drive and effort visible under the ventilator | t25 rr-back 0 s (60–240 s) | DEV-06 |
 | H: pleth reference SV₀ = the settled resting SV (PR #333) | PI reference SV₀ = the patient's settled resting SV | regression sinus-75/pleth (625/625 samples > 2 %, max 10.2 %) | T-17 |
 
 The three cells C, E and F were set to their sourced physiology (research 46):
