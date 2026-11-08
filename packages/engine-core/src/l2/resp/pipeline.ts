@@ -190,11 +190,25 @@ export function createRespState(profile: PatientProfile | undefined, l1: L1State
 }
 
 // --- helpers ----------------------------------------------------------------------------------------------
+/** Airway resistance the patient's effort works against, cmH2O/(L/s): the tube plus the two lungs in parallel. */
+export const airwayResistance = (rs: RespState): number => rs.lung.lp.rTube + 1 / rs.lung.lp.side.reduce((g, sd) => g + 1 / Math.max(0.1, sd.rLung), 0);
+/** Intrinsic PEEP (cmH2O, ≥ 0): the trapped-gas pressure the effort must undo before any flow begins. */
+export const autoPeepCmH2O = (rs: RespState): number => (rs.driver.source === 'ventilator' ? Math.max(0, rs.lung.peepTot - rs.driver.vent.peep) : 0);
 /**
- * A pressure trigger set at −2 cmH2O [ENG: device; the ventilator package's own presTrig default, −2 cmH2O]: an own
- * effort whose muscle pressure reaches it starts the breath (assist-control); a weaker one falls mid-exhalation.
+ * The ventilator's trigger, as the cockpit's own `patientTriggers` computes it (packages/ventilator/src/vent.ts, ported
+ * bit-exact from the v1.9 prototype): the effort first has to undo the trapped-gas pressure — net = max(0, Pmus −
+ * autoPEEP), which is why a trapping patient makes INEFFECTIVE efforts — and what remains is read by the set trigger.
+ * The package's DEFAULT_CONFIG triggers on FLOW at 2.0 L/min, so the test is net/max(2, R) × 60 ≥ 2.0; its pressure
+ * trigger (`presTrig` −2 cmH2O) is the alternative. Mirrored here so the same patient triggers the engine's ventilator
+ * and the cockpit alike [ENG: device; the ventilator package's own DEFAULT_CONFIG — pinned by
+ * packages/ventilator/test/effort-parity.test.ts].
  */
+export const TRIGGER_FLOW_LPM = 2;
 export const TRIGGER_CMH2O = 2;
+export function effortTriggers(pmus: number, autoPeep: number, resistance: number): boolean {
+  const net = Math.max(0, pmus - autoPeep);
+  return (net / Math.max(2, resistance)) * 60 >= TRIGGER_FLOW_LPM;
+}
 /** The patient's own inspiratory effort under the machine (MODELED; brief 93), or undefined (none evaluated, MANUAL). */
 export function ownEffort(rs: RespState, l1: L1State, neuro?: NeuroResp): { muscle: number; pmus: number; triggered: boolean } | undefined {
   if (l1.mode !== 'modeled' || (rs.driver.source !== 'ventilator' && rs.driver.source !== 'external') || rs.spont?.muscle === undefined) return undefined;
@@ -202,7 +216,8 @@ export function ownEffort(rs: RespState, l1: L1State, neuro?: NeuroResp): { musc
   const cap = P_MAX_CMH2O * (neuro?.pMaxMult ?? 1) * rs.lung.lp.pMax * rs.spont.fatigue; // The force the muscle can make
   const pmus = Math.min(cap, LINK_PMUS_GAIN * PMUS_REST_CMH2O * muscle); // the peak, at the link's own gain (driver.ts)
   const rr = rs.spont.effortRr ?? rs.spont.rr; // the efforts' own rhythm (a weak diaphragm efforts without a breath)
-  return { muscle, pmus, triggered: rs.driver.source === 'ventilator' && rr > 0 && pmus >= TRIGGER_CMH2O };
+  const triggered = rs.driver.source === 'ventilator' && rr > 0 && effortTriggers(pmus, autoPeepCmH2O(rs), airwayResistance(rs));
+  return { muscle, pmus, triggered };
 }
 function driverCtx(rs: RespState, l1: L1State, t: number, neuro?: NeuroResp): DriverCtx {
   const n = neuro; // The instructor's rr/vt × the drug/NMB multipliers; apnoea → rr 0
@@ -570,7 +585,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
       t, paco2: rs.co2.pf, pao2: rs.o2.pao2, hco3: ctx.hco3 ?? 24, rr0: l1Target(l1, 'rr', t), vt0: l1Target(l1, 'vt', t),
       wakeMmHg: rs.wakeMmHg,
       co2SlopeMult: lp.co2Slope, pMaxMult: lp.pMax, evlwi: 7 + (rs.evlwiExtra ?? 0), complianceMl: compliance(rs),
-      resistance: lp.rTube + 1 / lp.side.reduce((g, sd) => g + 1 / Math.max(0.1, sd.rLung), 0), neuro: ctx.neuro,
+      resistance: airwayResistance(rs), neuro: ctx.neuro,
       noFlow: ctx.rhythm.opts?.pulseless === true || rs.coRatio <= 0, cbfRel: ctx.cbfRel,
       pulseless: ctx.rhythm.opts?.pulseless === true || NO_BEAT_RHYTHMS.has(ctx.rhythm.id),
       ibwKg: rs.pat.ibwKg, airwayObs: d.airway === 'obstructed' ? 1 : 0,

@@ -53,8 +53,8 @@ reads it for the tick order, the ventilator link and the events it emits.
 | [`driver.ts:17`](../../packages/engine-core/src/l2/resp/driver.ts#L17) | passive expiration τ = R·C (10 cmH2O/L/s × 0.05 L/cmH2O) |
 | [`driver.ts:77`](../../packages/engine-core/src/l2/resp/driver.ts#L77) | the respiratory system's equation of motion (Pvent + Pmus = VT/C_RS + Raw·V' + PEEP + PEEPi; Miller 10e ch. 12 p. |
 | [`driver.ts:442`](../../packages/engine-core/src/l2/resp/driver.ts#L442) | The haemodynamic breath signal for the haemodynamics' respFactor/cvpAt (seam): u(t) = 0.5 + swing, zero-mean over a |
-| [`pipeline.ts:422`](../../packages/engine-core/src/l2/resp/pipeline.ts#L422) | `mhO2Demand`: VO2 demand = basal + M_mh). Its CO2 is the ACHIEVED part (× the blood model's delivered share |
-| [`pipeline.ts:477`](../../packages/engine-core/src/l2/resp/pipeline.ts#L477) | The ratio is to THIS patient's normal output (the module's own convention, Q = coRatio × CI_LPM_PER_KG × effKg), |
+| [`pipeline.ts:437`](../../packages/engine-core/src/l2/resp/pipeline.ts#L437) | `mhO2Demand`: VO2 demand = basal + M_mh). Its CO2 is the ACHIEVED part (× the blood model's delivered share |
+| [`pipeline.ts:492`](../../packages/engine-core/src/l2/resp/pipeline.ts#L492) | The ratio is to THIS patient's normal output (the module's own convention, Q = coRatio × CI_LPM_PER_KG × effKg), |
 
 ## State
 
@@ -154,7 +154,8 @@ reads it for the tick order, the ventilator link and the events it emits.
 
 | Name | Value | Unit | Source / tag | Comment |
 |---|---|---|---|---|
-| `TRIGGER_CMH2O` | `2` | cmH2O | [ENG: device; the ventilator package's own presTrig default, −2 cmH2O] | --- helpers ---------------------------------------------------------------------------------------------- A pressure trigger set at −2 cmH2O [ENG: device; the ventilator package's own presTrig default, −2 cmH2O]: an own effort whose muscle pressure reaches it starts the breath (assist-control); a weaker one falls mid-exhalation. |
+| `TRIGGER_FLOW_LPM` | `2` | L/min | [ENG: device; the ventilator package's own DEFAULT_CONFIG — pinned by packages/ventilator/test/effort-parity.test.ts] | The ventilator's trigger, as the cockpit's own `patientTriggers` computes it (packages/ventilator/src/vent.ts, ported bit-exact from the v1.9 prototype): the effort first has to undo the trapped-gas pressure — net = max(0, Pmus − autoPEEP), which is why a trapping patient makes INEFFECTIVE efforts — and what remains is read by the set trigger. The package's DEFAULT_CONFIG triggers on FLOW at 2.0 L/min, so the test is net/max(2, R) × 60 ≥ 2.0; its pressure trigger (`presTrig` −2 cmH2O) is the alternative. Mirrored here so the same patient triggers the engine's ventilator and the cockpit alike [ENG: device; the ventilator package's own DEFAULT_CONFIG — pinned by packages/ventilator/test/effort-parity.test.ts]. |
+| `TRIGGER_CMH2O` | `2` | cmH2O | — | — |
 | `KINK_R_MULT` | `150` | — | [ENG: device; fit target RS9 "VT ≤ 20 % delivered"; partial kinks scale] | A kinked tube multiplies the tube resistance by 1 + (KINK_R_MULT − 1)·severity — a complete kink (severity 1) × 150, so a 40 cmH2O Pmax moves ≤ 20 % of the set VT [ENG: device; fit target RS9 "VT ≤ 20 % delivered"; partial kinks scale]. |
 | `BUCK_CMH2O` | `30` | cmH2O | McCool 2006; research/44 L2; [FIT: bucking expiratory muscle pressure; McCool 2006 Chest 129:48S; brief research/44 L2-51; src McCool 2006] | Bucking — an expiratory muscle pressure (cmH2O) over the first BUCK_S of a mechanical inspiration [FIT: bucking expiratory muscle pressure; McCool 2006 Chest 129:48S; brief research/44 L2-51; src McCool 2006]. |
 | `BUCK_S` | `0.5` | s | — | — |
@@ -193,7 +194,7 @@ reads it for the tick order, the ventilator link and the events it emits.
 | `validateRespCommand` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | Validation hook. |
 | `applyRespCommand` | [`l2/resp/pipeline.ts`](../../packages/engine-core/src/l2/resp/pipeline.ts) | Apply hook. |
 
-Exported without a doc comment: `createDriver`, `preoxActive`, `frameAt`, `createRespState`, `applyLungSpecs`, `gaLevel`.
+Exported without a doc comment: `createDriver`, `preoxActive`, `frameAt`, `createRespState`, `effortTriggers`, `applyLungSpecs`, `gaLevel`.
 
 ## Source files
 

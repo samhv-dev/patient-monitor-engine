@@ -31,7 +31,7 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | pressure-waveforms | 60 | 26 |
 | lungs | 66 | 22 |
 | gas-exchange | 44 | 12 |
-| breathing | 20 | 8 |
+| breathing | 21 | 8 |
 | blood | 68 | 28 |
 | organs | 138 | 63 |
 | endocrine-thermal | 167 | 68 |
@@ -41,9 +41,9 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | alarms | 17 | 0 |
 | defib-pacer | 23 | 4 |
 | engine-runtime | 6 | 2 |
-| **All** | 1013 | 376 |
+| **All** | 1014 | 376 |
 
-## The ten effector expressions with the most factors (of 1507)
+## The ten effector expressions with the most factors (of 1508)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|

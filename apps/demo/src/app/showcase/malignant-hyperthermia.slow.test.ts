@@ -61,9 +61,17 @@ import { alarmAt, bands, entered, first, near, pvcEvents, range, runCard, type A
  *  reviews of man). The established crisis moves to its own row in the passing untreated arm, re-centred on this build
  *  with the old tolerances; the hyperthermic VF stays an expected failure. No engine change. */
 /* Brief 93 (the owner's ruling of 8 Nov): the patient's effort now reaches the ventilator through a real pressure
- * trigger (−2 cmH2O, the ventilator package's own `presTrig` default) instead of triggering on any committed rate, so an
- * effort too weak to open the trigger no longer adds a breath. On this card that costs the untreated MH run its
- * triggered hyperventilation, and ONE recorded value moved with that cause and is re-recorded at the same width:
+ * trigger — the cockpit's own rule: the effort first undoes the trapped gas, net = max(0, Pmus − autoPEEP), and what
+ * remains is read by its flow threshold of 2.0 L/min — instead of triggering on any committed rate, AND the diaphragm's
+ * force now follows its margin of safety. MEASURED on this card (the trace of 8 Nov, every 2 min): the drive drives
+ * HARDER as the MH runs — effort 1.64 of a resting breath at 24:00, PaCO2 124 — but the card gives rocuronium 0.6 mg/kg
+ * at 6:00, and at 24:00, 18 min into that block, the diaphragm's force is 0.0020, so Pmus is 0.02 cmH2O and nothing
+ * opens; autoPEEP is 0.07 cmH2O, so trapped gas is not what silences him. The first trigger comes at 26:00 (force 0.035,
+ * Pmus 0.43 cmH2O, 2.19 L/min) and full triggering by 28–30:00 — the block's own recovery (Moerer 2005: diaphragm
+ * recovery onset 15.9 min young / 22.0 min over 65; Cantineau 1994: 10 % twitch at 17 ± 10 min; the label's clinical
+ * duration 31 min). It is the NEUROMUSCULAR JUNCTION that silences the patient, not his drive and not the trigger. The
+ * untreated run therefore loses the triggered hyperventilation main had, and these recorded values moved with that
+ * verified cause and are re-recorded at the same width:
  * etco2Max 106 → 117 (centre), measured 120, etco2At20 91 → 113 and phAt20 7.04 → 6.96 (the same hypercapnia, as its
  * own respiratory acidosis: pH 6.96 at 20 min), and the established group's hrAtEstablished 139 → 146 (the same
  * hypercapnia's sympathetic drive). hrAt20 126, kAt20 6.1, kMax 6.9 and every timing held. Not tuned; no clinical band touched (etco2At20, the core-rise rate and
