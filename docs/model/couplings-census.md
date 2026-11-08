@@ -27,7 +27,7 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | Module | Exported numeric constants | Inside an effector product or sum |
 |---|---:|---:|
 | rhythms-ecg | 62 | 32 |
-| circulation | 192 | 50 |
+| circulation | 193 | 52 |
 | pressure-waveforms | 60 | 26 |
 | lungs | 66 | 22 |
 | gas-exchange | 44 | 12 |
@@ -41,7 +41,7 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | alarms | 17 | 0 |
 | defib-pacer | 23 | 4 |
 | engine-runtime | 6 | 2 |
-| **All** | 1005 | 369 |
+| **All** | 1006 | 371 |
 
 ## The ten effector expressions with the most factors (of 1490)
 
