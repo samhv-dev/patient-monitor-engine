@@ -8,14 +8,14 @@ and the test is marked as an expected failure with the measured value in its tit
 module that owns it, until the mechanism is fixed. The release-candidate view of the same list, with where each
 item is tracked, is [known deviations](../guides/known-deviations.md); each module is described in [docs/model](../model/README.md).
 
-**185 known misses.** Split from the test titles: a band recognised in the target of 163, a measured value in 173, a source in 86; "—" = not stated in a form the generator reads.
+**186 known misses.** Split from the test titles: a band recognised in the target of 164, a measured value in 173, a source in 87; "—" = not stated in a form the generator reads.
 
 **The bands themselves were audited** against the literature (target audit, 2026-10-11; the rows are in [target-audit.tsv](target-audit.tsv)): 148 of these misses carry an audit verdict — RIGHT 30, TOO NARROW 27, TOO WIDE 3, MIS-SPECIFIED 61, UNSUPPORTED 27 (a miss can carry several rows). RIGHT: the band matches its source; TOO NARROW / TOO WIDE: the source supports a wider / narrower band; MIS-SPECIFIED: the band measures something other than its source did; UNSUPPORTED: no source found for it. A proposed band is evidence for an owner ruling, not a change: until a ruling, the test keeps its band. The audit itself, row by row with its evidence, is [published here](target-audit/30-target-audit.md) with its CSV twin and synthesis; the numbered evidence notes it cites as "research/NN" live in the project's research folder outside the repository.
 
 | Module | Misses |
 |---|---|
 | [Rhythms and the ECG](#rhythms-ecg) | 3 |
-| [Circulation](#circulation) | 19 |
+| [Circulation](#circulation) | 20 |
 | [Pressure waveforms and pleth](#pressure-waveforms) | 3 |
 | [Lungs: mechanics, ventilation–perfusion, pathology](#lungs) | 31 |
 | [Gas exchange and capnography](#gas-exchange) | 2 |
@@ -63,6 +63,7 @@ Module page: [docs/model/circulation.md](../model/circulation.md)
 | severe tamponade: pulsus paradoxus ≥ 10 mmHg | 3.1 | Spodick 2003 | RIGHT ([audit row 40](../../docs/validation/target-audit/30-target-audit.md#row-40)) | keep (>= 10 mmHg) | [`circ-pulsus.test.ts`](../../packages/engine-core/test/engine/circ-pulsus.test.ts) |
 | AS + CAD propofol → hypotension → ischaemia (kIsch falls, ST ↓) → phenylephrine reverses it | — | — | MIS-SPECIFIED ([audit row 23](../../docs/validation/target-audit/30-target-audit.md#row-23)) | condition the assertion on the insult: kIsch < 0.85 within 2 min WHEN CPP <= 30 (or DBP <= 45) in the CFR 1.4 profile, with the rig deepened to get there (propofol 2 mg/kg or a MAP target); keep the phenylephrine half | [`circ-sanity-2.test.ts`](../../packages/engine-core/test/engine/circ-sanity-2.test.ts) |
 | the same run rescued with ephedrine 10 mg keeps the deficit longer (kIsch still < 0.95 at +3 min) | — | — | UNSUPPORTED ([audit row 24](../../docs/validation/target-audit/30-target-audit.md#row-24)) | an ordering, not a level: after the same insult, phenylephrine restores S/D and kIsch faster than ephedrine, and ephedrine raises HR >= 10/min | [`circ-sanity-2.test.ts`](../../packages/engine-core/test/engine/circ-sanity-2.test.ts) |
+| RV infarct, presenting state: CVP 9–13 | — | Dell'Italia 1985 | not audited | — | [`circ-sanity-2.test.ts`](../../packages/engine-core/test/engine/circ-sanity-2.test.ts) |
 | VF + CPR q 1: CBF 0.30–0.40 of normal | 0.45 | Meaney 2013; research/20 band 0.2 | MIS-SPECIFIED ([audit row 31](../../docs/validation/target-audit/30-target-audit.md#row-31)) | 0.20-0.40 at q 1 (ceiling 0.40); cite Kern 2007, not Meaney 2013 | [`cpr-cerebral-flow.test.ts`](../../packages/engine-core/test/engine/cpr-cerebral-flow.test.ts) |
 | quality map at 10 breaths/min: 0.5 → 12 (8–15), default 0.8 → 20 (17–23), 1.0 → 25 (22–28), 1.2 mechanical-grade → 29 (26–32) | 20.5 / 25.2 / 26.6 / 26.6 at the circulation's CPR flow | — | UNSUPPORTED ([audit row 28](../../docs/validation/target-audit/30-target-audit.md#row-28)) | 0.8 -> 15-26; 1.0 -> 20-30; monotone, with q 1.0 at least 3 mmHg above q 0.5; q 0.5 -> 10-20; q 1.2 -> 22-35 (Berve 29 +/- 17, research/09) | [`cpr-etco2.test.ts`](../../packages/engine-core/test/engine/cpr-etco2.test.ts) |
 | ventilation: +10 breaths/min lowers EtCO2 by ≈ 3 mmHg (−2 to −4.5) at the learner default | −4.8 at the circulation's CPR flow | — | MIS-SPECIFIED ([audit row 29](../../docs/validation/target-audit/30-target-audit.md#row-29)) | relative: -10 % to -25 % per +10 breaths/min | [`cpr-etco2.test.ts`](../../packages/engine-core/test/engine/cpr-etco2.test.ts) |
