@@ -100,7 +100,13 @@ describe('EEG channel on the engine', () => {
     const go = async (withEeg: boolean) => {
       const e = mk(19);
       const evs: EngineEvent[] = [];
-      e.on((x) => evs.push(x));
+      // the EEG device's own output (E6: its readings and its numerics, on their own measurement events) is the EEG's;
+      // everything else must be byte-identical
+      e.on((x) => {
+        if (x.type === 'eegReading') return;
+        if (x.type === 'measurement' && Object.keys(x.values).every((id) => ['sef', 'mf', 'eegSr', 'eegImp'].includes(id))) return;
+        evs.push(x);
+      });
       if (withEeg) ok(e, eeg('on'));
       e.advanceTo(10);
       ok(e, ev({ kind: 'tci', drugId: 'propofol', mode: 'effect', target: 5 }));

@@ -21,7 +21,8 @@ export { draw12Lead, drawTrend, report12Size, PAPER, type TrendSeries } from './
 export { Overlays, drawMark, drawLeadOffDashes } from './overlays.ts';
 export { formatEtco2, formatRr, formatSpo2, formatTemp } from './numerics-resp.ts';
 export { formatIcp, formatPbto2, formatUop } from './numerics-organs.ts';
-export { formatBfa, formatNmt, modulePresent, MODULE_TILES } from './numerics-neuro.ts';
+export { bfaReading, formatBfa, formatNmt, modulePresent, MODULE_TILES } from './numerics-neuro.ts';
+export { createEegDisplay, drawEegRaw, dsaColour, paintDsa, pushEegDisplay, type EegDisplay } from './eeg-strip.ts';
 export { createDrugPanel, type DrugPanel } from './drug-panel.ts';
 export { LAB_ROWS, labFlag, mountLabPanel } from './lab-panel.ts';
 export { mountEndoPanel } from './endo-panel.ts';
