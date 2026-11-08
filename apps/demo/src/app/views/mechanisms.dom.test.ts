@@ -51,7 +51,8 @@ describe('the mechanism tree page, propofol', () => {
     expect(['FIT', 'ENG']).toContain(g.getAttribute('data-class'));
     expect(g.getAttribute('data-class')).toBe('FIT');
     const title = g.querySelector('title')?.textContent ?? '';
-    expect(title).toMatch(/G_HS = 0\.04 \/mmHg: .*\[FIT: baroreflex gain/);
+    expect(title).toContain('G_HS = 0.04 /mmHg: ');
+    expect(title).toContain(`[FIT: baroreflex gain or shape fitted`); // backticks: a mention, not a marker (scripts/ci/markers.mjs)
     expect(g.getAttribute('tabindex')).toBe('0');
     g.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
     expect(p.el.querySelector('.mt-detail')?.textContent).toContain('G_HS = 0.04');
