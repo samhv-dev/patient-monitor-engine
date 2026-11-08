@@ -14,7 +14,7 @@ regenerations. The list of known misses across modules is [known-misses.md](../v
 | [Pressure waveforms and pleth](pressure-waveforms.md) | 9 | 16 | 1 |
 | [Lungs: mechanics, ventilation–perfusion, pathology](lungs.md) | 19 | 39 | 6 |
 | [Gas exchange and capnography](gas-exchange.md) | 6 | 9 | 2 |
-| [Breathing, airway and the ventilator coupling](breathing.md) | 4 | 32 | 20 |
+| [Breathing, airway and the ventilator coupling](breathing.md) | 4 | 32 | 18 |
 | [Blood, acid–base, electrolytes and fluids](blood.md) | 12 | 41 | 10 |
 | [Brain, kidney and liver](organs.md) | 14 | 30 | 14 |
 | [Endocrine, metabolism and temperature](endocrine-thermal.md) | 17 | 40 | 17 |
