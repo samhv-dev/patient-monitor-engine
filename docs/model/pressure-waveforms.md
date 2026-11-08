@@ -68,6 +68,20 @@ pleth trace comes from; an embedding developer reads it for the per-tick order a
 | [`tracker.ts:14`](../../packages/engine-core/src/l2/hemo/tracker.ts#L14) | ff = measured form factor (MAP − DBP)/PP. Feeding back MAP itself would lag by R·C (≈ 2 beats) and |
 | [`pleth.ts:5`](../../packages/engine-core/src/l2/pleth/pleth.ts#L5) | Amplitude = PI × (SV_i/SV_0)^γ with γ = 1, carried in PI units so the L3 PI numeric is measured from |
 
+## Couplings
+
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 5 rows; SOURCED 0, FIT 0, ENG 0, UNTAGGED 5, ABSENT 0.
+The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
+constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
+
+| Id | From → to | Sign · form | Class | Constants | Timing, limits | Note |
+|---|---|---|---|---|---|---|
+| `pressure-waveforms.chemo.sao2` | `l1.coupled.spo2` → `hemo.circ.chemo.sao2` | + · state | UNTAGGED | — | — | The chemoreflex input: SpO2 truth / 100, written at 1 Hz. |
+| `pressure-waveforms.chemo.paco2` | `l1.coupled.etco2` → `hemo.circ.chemo.paco2` | + · term | UNTAGGED | — | — | The chemoreflex input: EtCO2 truth + 5 mmHg (inline), written at 1 Hz. |
+| `pressure-waveforms.coronary` | `hemo.circ.cor.kIsch` → `hemo.circ.ext.kIsch` | + · state | UNTAGGED | — | — | The coronary model's contractility loss handed to the control step. |
+| `pressure-waveforms.beats` | `hr.to`, `rhythm.id` → `hemo.circ.qFwd` | + · state | UNTAGGED | — | — | Each beat the rhythm engine plans at its rate triggers a mechanical activation (circOnBeat; a pulseless rhythm triggers none): output is rate × stroke volume. |
+| `pressure-waveforms.hrRequest` | `hemo.circ.hrModel` → `hr.to` | + · state | UNTAGGED | — | — | MODELED: the model HR drives the rhythm engine's rate (requestHr → a constant ramp). |
+
 ## State
 
 ### `CvpState` ([`l2/hemo/cvp.ts`](../../packages/engine-core/src/l2/hemo/cvp.ts))

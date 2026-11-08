@@ -61,6 +61,19 @@ developer reads it for the gas truths and the capnogram the monitor draws.
 | [`params.ts:35`](../../packages/engine-core/src/l2/gas/params.ts#L35) | alveolar gas store, not a fixed lag: τ = V_alv/VA (an exponential dilution by the continuing breaths), bounded below |
 | [`params.ts:110`](../../packages/engine-core/src/l2/gas/params.ts#L110) | Q for gas exchange = CO ratio × 0.075 L/min/kg × effective weight [FIT: gas-exchange parameter without a source; brief research/44 L2-55] |
 
+## Couplings
+
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 4 rows; SOURCED 0, FIT 0, ENG 0, UNTAGGED 4, ABSENT 0.
+The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
+constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
+
+| Id | From → to | Sign · form | Class | Constants | Timing, limits | Note |
+|---|---|---|---|---|---|---|
+| `gas-exchange.oxygenation` | `resp.lung.perf.shunt`, `resp.o2.pao2` (PaO₂) → `resp.o2.sa` (SaO₂) | ± · state | UNTAGGED | — | — | Mixing of shunted and end-capillary blood: shunt lowers, alveolar PO2 raises the arterial saturation. |
+| `gas-exchange.ventilation` | `resp.spont.ve` (V̇E (MV)) → `resp.co2.pf` (PaCO₂) | − · state | UNTAGGED | — | — | Alveolar ventilation clears CO2. |
+| `gas-exchange.etco2.flow` | `hemo.circ.qFwd`, `resp.co2.pf` (PaCO₂) → `l1.coupled.etco2` | + · state | UNTAGGED | — | — | End-tidal CO2 from the arterial PCO2 and the CO2 delivered to the lungs (a falling CO lowers it). |
+| `gas-exchange.spo2` | `resp.o2.sa` (SaO₂) → `l1.coupled.spo2` | + · state | UNTAGGED | — | — | The arterial saturation as the coupled L1 truth. |
+
 ## State
 
 ### `SamplerState` ([`l2/co2/capno.ts`](../../packages/engine-core/src/l2/co2/capno.ts))
