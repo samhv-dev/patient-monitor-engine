@@ -399,6 +399,7 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | ventilated normal patient (MODELED, PPV from 1 s): rest PI within ± 5 % of 1.80 | 1.49 | — | UNSUPPORTED ([audit row 184](../../docs/validation/target-audit/30-target-audit.md#row-184)) | PI 1.0-3.0 for a normal ventilated adult; PI(PPV) ≤ PI(spontaneous) and ≥ 0.75 × it (the SV ratio) | [`fidelity-lowflow.test.ts`](../../packages/engine-core/test/engine/fidelity-lowflow.test.ts) |
 | MANUAL pulse pressure 10 (77/67): the cuff shows the narrow pulse pressure — S/D within ± 8 of the instructor's 77/67 | 80/56 | — | MIS-SPECIFIED ([audit row 185](../../docs/validation/target-audit/30-target-audit.md#row-185)) | Reference = the arterial line at the reading (already passing, ± 8); add cuff PP ≤ line PP + 3 (no widening); the tracker's reach of 77/67 is a separate MANUAL-tracker test | [`fidelity-nibp.test.ts`](../../packages/engine-core/test/engine/fidelity-nibp.test.ts) |
 | MANUAL AF 150, 11 cycles: \|SBP bias\| ≤ 6 mmHg against the TRUE radial pressure (the audit's AF criterion) | +10.8 | — | MIS-SPECIFIED ([audit row 186](../../docs/validation/target-audit/30-target-audit.md#row-186)) | \|mean bias\| ≤ 5 mmHg vs the displayed arterial line (beat-detected), SD ≤ 8, with the first reading after AF onset excluded or 3-reading averages | [`fidelity-nibp.test.ts`](../../packages/engine-core/test/engine/fidelity-nibp.test.ts) |
+| AF cumulative success over Mittal's 70/120/150/170 J escalation is 94 % (83/88) | — | — | not audited | — | [`shock-state.test.ts`](../../packages/engine-core/test/l3/shock-state.test.ts) |
 
 ## Tests
 
@@ -428,7 +429,7 @@ Exported without a doc comment: `createCo2Num`, `co2Numerics`, `createDevice`, `
 | [`l3/qrs-pacing.test.ts`](../../packages/engine-core/test/l3/qrs-pacing.test.ts) | 0 | 0 |
 | [`l3/qrs.test.ts`](../../packages/engine-core/test/l3/qrs.test.ts) | 0 | 0 |
 | [`l3/resp/impedance.test.ts`](../../packages/engine-core/test/l3/resp/impedance.test.ts) | 0 | 0 |
-| [`l3/shock-state.test.ts`](../../packages/engine-core/test/l3/shock-state.test.ts) | 0 | 0 |
+| [`l3/shock-state.test.ts`](../../packages/engine-core/test/l3/shock-state.test.ts) | 1 | 0 |
 | [`l3/spo2/spo2-skin.test.ts`](../../packages/engine-core/test/l3/spo2/spo2-skin.test.ts) | 0 | 0 |
 | [`l3/spo2/spo2.test.ts`](../../packages/engine-core/test/l3/spo2/spo2.test.ts) | 0 | 0 |
 | [`l3/trends/rewind.test.ts`](../../packages/engine-core/test/l3/trends/rewind.test.ts) | 0 | 0 |
