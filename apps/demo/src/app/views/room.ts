@@ -98,9 +98,13 @@ export function roomView(d: RoomDeps): RoomView {
   const log = new PeerLog();
   const listen = (t: ManagedTransport, via: PeerSeen['via']) => t.onMessage((m: WireMessage) => {
     if (m.from === d.hostPeerId) return;
-    // R8a's `ventilator` and R5c's `defib` are not listed from a hello: no cockpit or window says them before R8d and R5d,
-    // which give them rows; the relay's table lists every socket (R2)
-    if (m.kind === 'hello' && m.role !== 'host' && m.role !== 'ventilator' && m.role !== 'defib') log.heard(m.from, via, m.role, now(), m.role === 'viewer' ? (m.show ?? null) : null);
+    // R8a's `ventilator` is not listed from a hello (its window and tablet are the desk's rows, R8d). R5d's defibrillator
+    // window says `defib`: one on this computer is a window that follows as a viewer does, shown as the defibrillator, and
+    // counts toward "Reopen that layout"; one over the relay is in the relay's table (R2)
+    if (m.kind === 'hello' && m.role === 'defib') {
+      if (via !== 'local') return;
+      log.heard(m.from, via, 'viewer', now(), 'defib');
+    } else if (m.kind === 'hello' && m.role !== 'host' && m.role !== 'ventilator' && m.role !== 'defib') log.heard(m.from, via, m.role, now(), m.role === 'viewer' ? (m.show ?? null) : null);
     else if (m.kind === 'command') log.heard(m.from, via, 'controller', now());
     else return;
     if (via === 'local') writeWindows(kept, windowsOf(log.list()));
