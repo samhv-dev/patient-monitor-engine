@@ -4,7 +4,7 @@ import type { MorphRow } from '../morphology/suite.ts';
 import type { OracleRow } from '../oracle/oracle.ts';
 import type { WaveCompare } from '../regression/baseline.ts';
 import type { DeterminismResult } from '../regression/determinism.ts';
-import type { Grade, TargetResult, Unsupported } from '../segments/types.ts';
+import type { ExpectedMiss, Grade, TargetResult, Unsupported } from '../segments/types.ts';
 
 export interface DocSummary { id: string; title: string; suite: 'sanity' | 'gates'; measurable: boolean; unsupported: Unsupported[]; requires: string[]; wallMs: number }
 
@@ -24,5 +24,12 @@ export interface Report {
   wallS: number;
 }
 
+/** How a row counts (brief 84): its grade, except that a row marked as an expected miss is 'expected' while it misses
+ *  its band and 'red' once it meets it (the mark must then come off). */
+export type RowClass = 'green' | 'yellow' | 'expected' | 'red';
+
+/** One graded row of any suite. */
+export interface Row { suite: string; id: string; measured: string; expected: string; grade: Grade; source: string; expectedMiss?: ExpectedMiss }
+
 /** One calibration-queue entry: every yellow or red row, whatever suite it came from. */
-export interface QueueItem { suite: string; id: string; measured: string; expected: string; grade: Exclude<Grade, 'green'>; source: string }
+export type QueueItem = Row & { grade: Exclude<Grade, 'green'> };
