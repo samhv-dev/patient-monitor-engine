@@ -52,6 +52,12 @@ drug model and before the respiratory pipeline (`l2/neuro/pipeline.ts`).
 
 | Where | Relation |
 |---|---|
+| [`spectra.ts:4`](../../packages/engine-core/src/l2/eeg/spectra.ts#L4) | PSD(f) = 10^((offsetDb − 10·slope·log10 f)/10) + Σ 10^(powerDb/10)·exp(−(f − fHz)²/(2·widthHz²)) |
+| [`spectra.ts:107`](../../packages/engine-core/src/l2/eeg/spectra.ts#L107) | Opioids at low dose lose beta (Ch35 Table 35.1), at opioid = 1, dB [FIT: opioid beta loss; brief research/43 P-7]. |
+| [`spectra.ts:159`](../../packages/engine-core/src/l2/eeg/spectra.ts#L159) | The awake aperiodic offset that gives AWAKE_RMS_UV over RMS_LO_HZ–RMS_HI_HZ: ∫ A·f^−κ df = A·(hi^(1−κ) − lo^(1−κ))/(1 − κ). |
+| [`state.ts:5`](../../packages/engine-core/src/l2/eeg/state.ts#L5) | hyper = (gabaIv + barbiturate + etomidate + benzo)/Ce50prop(age) + (sevo + iso + des MAC) + alpha2Eq |
+| [`state.ts:7`](../../packages/engine-core/src/l2/eeg/state.ts#L7) | suppress = 1 − (1 − drug)·(1 − metabolic voltage loss)·(1 − hypothermic suppression) |
+| [`state.ts:75`](../../packages/engine-core/src/l2/eeg/state.ts#L75) | τ = 3 min. The amplitude of the transient is fitted (spectra.ts, research/43 P-2). |
 | [`bus.ts:8`](../../packages/engine-core/src/l2/neuro/bus.ts#L8) | bus.volatiles[agent]: BusVolatile = { fet, brain, macAge, macFrac } for sevoflurane/isoflurane/desflurane AND n2o: |
 | [`depth.ts:2`](../../packages/engine-core/src/l2/neuro/depth.ts#L2) | 7g's bus via bus.ts) and brain MAC fractions (age-adjusted by 7g: MAC(age) = MAC40·10^(−0.00269·(age − 40)), |
 | [`depth.ts:4`](../../packages/engine-core/src/l2/neuro/depth.ts#L4) | U = Ce_prop/Ce50_prop(age) + (MAC_potent + N2O_DI_W·MAC_N2O)/MAC_DI50 + OPIOID_W·Ce_opioidEEG/EEG_EC50 + Ce_midaz/MIDAZ_DI50 |
@@ -73,6 +79,18 @@ drug model and before the respiratory pipeline (`l2/neuro/pipeline.ts`).
 | [`spont.ts:6`](../../packages/engine-core/src/l2/neuro/spont.ts#L6) | Winter's expected PaCO2 = 1.5·HCO3 + 8 (Albert, Dell & Winters 1967; ±2) — HCO3 from the blood model's |
 | [`spont.ts:7`](../../packages/engine-core/src/l2/neuro/spont.ts#L7) | blood.core.ab.hco3 (24 without it → no shift): paco2Set = min(paco2Rest, 1.5·HCO3 + 8); raised in metabolic |
 | [`spont.ts:10`](../../packages/engine-core/src/l2/neuro/spont.ts#L10) | drive: the lung model's VE = [S·(PaCO2 − B)]₊·H(PaO2)·(1 − opioidDep)·(1 − hypnoticDep)·F with the neuro model's |
+| [`types-eeg.ts:93`](../../packages/engine-core/src/types-eeg.ts#L93) | Aperiodic 1/f^slope background: PSD(f) = offsetDb − 10·slope·log10(f / 1 Hz), dB re 1 µV²/Hz. |
+
+## Couplings
+
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 2 rows; SOURCED 0, FIT 0, ENG 0, UNTAGGED 2, ABSENT 0.
+The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
+constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
+
+| Id | From → to | Sign · form | Class | Constants | Timing, limits | Note |
+|---|---|---|---|---|---|---|
+| `neuro.drive.hypnotic` | `pk.bus.cns.hypVentPropEq` (Propofol-equivalent at the ventilatory site (kept out of the truth tree)) → `neuro.resp.hypnoticDep` | + · factor | UNTAGGED | — | — | Hypnotic ventilatory depression from the propofol equivalent at the ventilatory site. |
+| `neuro.drive.total` | `neuro.resp.hypnoticDep`, `neuro.resp.opioidDep` → `neuro.resp.totalDep` | + · term | UNTAGGED | — | — | Hypnotic and opioid depression combined into the total the drive reads. |
 
 ## State
 
@@ -102,7 +120,115 @@ drug model and before the respiratory pipeline (`l2/neuro/pipeline.ts`).
 | `mhExposure` | `{ sux?: number; volatile?: number; volatileAgent?: string }` | When an MH-susceptible patient was first exposed to each trigger (s) — read by the endocrine model, which owns MH and turns the exposure into the MH state with the trigger's onset latency. Absent = never exposed. |
 | `out` | `EngineEvent[]` | — |
 
+### `CortexState` ([`types-eeg.ts`](../../packages/engine-core/src/types-eeg.ts))
+
+| Field | Type | Meaning |
+|---|---|---|
+| `hyper` | `number` | Thalamocortical hyperpolarisation, in hypnotic C50 units (propofol Ce50(age), 1 MAC, the dexmedetomidine point). |
+| `lor` | `number` | The same hyperpolarising load in loss-of-responsiveness units (1 = at the class's own LOR level). |
+| `deep` | `number` | How far `hyper` is past the alpha-to-delta shift (MAC units), 0 below it. |
+| `volShare` | `number` | The volatile (ether) share of `hyper`, 0–1. |
+| `suppressDrive` | `number` | The burst-suppression drive normalised to its onset: 1 = onset (50 % of adults show a first silent second). |
+| `suppress` | `number` | Cortical suppression, 0–1: the fraction of time suppressed (drug, ischaemic/hypoxic and hypothermic causes). |
+| `ketDepol` | `number` | Ketamine's thalamocortical depolarisation, in ketamine-alone loss-of-responsiveness units. |
+| `n2oTransient` | `number` | The nitrous-oxide transient, 0–1 (abrupt N2O changes). |
+| `n2oRef` | `number` | The N2O MAC fraction the cortex has adapted to (the transient's reference), MAC fraction. |
+| `opioid` | `number` | Opioid load at the EEG, fentanyl-eq ÷ the level that slows the EEG alone (1 = 8 ng/mL). |
+| `arousal` | `number` | Noxious arousal, 0–1: stimulus × (1 − antinociception). |
+| `ageSlope` | `number` | Aperiodic-slope factor with age (1 young; 0.8 = 20 % flatter). |
+| `ageAmp` | `number` | Amplitude factor with age (1 young adult; smaller in the elderly). |
+| `metabolic` | `number` | Ischaemic/hypoxic failure, 0–1: 0 at or above the O2 delivery where the EEG turns abnormal, 1 at the survival limit. |
+| `cold` | `number` | Hypothermic slowing, 0–1 (0 at 37 °C, 1 at the hypothermic burst-suppression temperature). |
+
 ## Parameters
+
+### [`l2/eeg/spectra.ts`](../../packages/engine-core/src/l2/eeg/spectra.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `AWAKE_RMS_UV` | `7.5` | µV | Obert 2022; research/43 P; Miller Ch36 p. 1138 "∼5 to 10 µV" (the mid-point | --- the aperiodic background (Ch36 p. 1139; Obert 2022; research/43 P-7) --- Awake RMS over 0.5–50 Hz, µV: Miller Ch36 p. 1138 "∼5 to 10 µV" (the mid-point). Sets the aperiodic offset. µV |
+| `SLOPE_AWAKE` | `0.6` | — | research/43 P; [FIT: awake aperiodic exponent, flatter than under anaesthesia; brief research/43 P-7; Ch36 p. 1139 "steeper with dose"; no awake value in the sources read] | Aperiodic exponent awake [FIT: awake aperiodic exponent, flatter than under anaesthesia; brief research/43 P-7; Ch36 p. 1139 "steeper with dose"; no awake value in the sources read]. |
+| `SLOPE_MAINT` | `0.9` | — | Obert 2022; [INF] | Aperiodic exponent at ≈ 1 MAC sevoflurane maintenance: κ 0.899 (Obert 2022, 180 adults) — taken at hyper = 1 and at the reference age [INF]. |
+| `SLOPE_HYPER_CAP` | `2` | — | research/43 P; [FIT: slope cap, the suppression range takes over; brief research/43 P-7] | The slope stops steepening past this `hyper` [FIT: slope cap, the suppression range takes over; brief research/43 P-7]. |
+| `REF_AGE_Y` | `40` | — | Miller and Obert give adult values without an age].; [INF: Miller and Obert give adult values without an age] | The age at which the amplitude and slope anchors above hold (the engine's standard adult) [INF: Miller and Obert give adult values without an age]. |
+| `RMS_LO_HZ` | `0.5` | Hz | Miller's spectrograms run to 50 Hz | The band the RMS anchors are integrated over, Hz (Miller's spectrograms run to 50 Hz, Ch36 Fig. 36.3). |
+| `RMS_HI_HZ` | `50` | Hz | Miller Ch36 Fig. 36.3 legend: 50-Hz waves furthest | Upper edge of the RMS band, Hz (Miller Ch36 Fig. 36.3 legend: 50-Hz waves furthest). |
+| `SLOW_HZ` | `0.8` | Hz | Akeju 2014; Miller Ch36 Table 36.1; research/43 P; [FIT: slow-oscillation centre; brief research/43 P-7] | --- slow oscillation / delta (Ch36 pp. 1139, 1144; Akeju 2014) --- Slow-oscillation centre, Hz, inside the slow band 0.1–2 Hz (Miller Ch36 Table 36.1) [FIT: slow-oscillation centre; brief research/43 P-7]. |
+| `SLOW_WIDTH_HZ` | `0.5` | Hz | research/43 P; [FIT: slow-peak width; brief research/43 P-7] | Its Gaussian σ, Hz [FIT: slow-peak width; brief research/43 P-7]. |
+| `SLOW_GA_RISE_DB` | `15.7` | — | Akeju 2014 | Slow power rises 15.7 dB from sedation to general anaesthesia (Akeju 2014 121:978: −2.5 → 13.2 dB, propofol). |
+| `SLOW_ON_HYPER` | `0.3` | — | research/43 P; [FIT: sedation start of the slow rise; brief research/43 P-7] | The rise runs from this `hyper` (sedation) … [FIT: sedation start of the slow rise; brief research/43 P-7] |
+| `SLOW_GA_HYPER` | `1` | — | [INF] | … to this one (general anaesthesia: the propofol BIS-50 Ce50, 1 MAC) [INF]. |
+| `ALPHA_PROP_BELOW_SLOW_DB` | `12.1` | — | Akeju 2014 | --- alpha and spindles (Ch36 pp. 1138, 1143–1144; Akeju 2014) --- Propofol's alpha peak at GA, dB below the GA slow power (Akeju 2014 121:978: 1.1 vs 13.2 dB). |
+| `ALPHA_ETHER_ABOVE_PROP_DB` | `2.2` | — | Akeju 2014; [INF] | Sevoflurane's alpha above propofol's (Akeju 2014 121:990: 4.3 vs 2.1 dB); isoflurane and desflurane the same ("common to all ethers", Ch36 p. 1143) [INF]. |
+| `DEX_SPINDLE_BELOW_PROP_DB` | `11.9` | — | Akeju 2014 | Dexmedetomidine's spindle power below propofol's alpha (Akeju 2014 121:978: −10.8 vs 1.1 dB). |
+| `SPINDLE_HZ` | `13` | Hz | Akeju 2014; Miller Ch36 p. 1144 "near 12 Hz" | Dexmedetomidine spindle frequency ≈ 13 Hz (Akeju 2014 121:978; Miller Ch36 p. 1144 "near 12 Hz"). |
+| `SPINDLE_BURSTINESS` | `0.8` | — | Miller Ch36 p. 1144; research/43 P; [FIT: spindle burstiness; brief research/43 P-7] | Spindles are short bursts, propofol/sevoflurane alpha "often almost continuous" (Miller Ch36 p. 1144) [FIT: spindle burstiness; brief research/43 P-7]. |
+| `ALPHA_BURSTINESS` | `0.1` | — | Miller Ch36 p. 1144; research/43 P; [FIT: alpha burstiness; brief research/43 P-7] | Propofol / ether alpha: "often almost continuous" (Miller Ch36 p. 1144) [FIT: alpha burstiness; brief research/43 P-7]. |
+| `ALPHA_LOR_ON` | `0.8` | — | research/43 P; [FIT: alpha onset ramp; brief research/43 P-7] | Frontal alpha appears through loss of responsiveness (Ch36 p. 1138): from lor 0.8 to full at lor 1.2 [FIT: alpha onset ramp; brief research/43 P-7]. |
+| `ALPHA_LOR_FULL` | `1.2` | — | Miller Ch36 p. 1138; research/43 P; [FIT: alpha onset ramp; brief research/43 P-7] | Alpha at full height from this lor (Miller Ch36 p. 1138) [FIT: alpha onset ramp; brief research/43 P-7]. |
+| `ALPHA_IV_LIGHT_HZ` | `12` | Hz | Akeju 2014; research/43 P; [FIT: alpha-frequency ramp; brief research/43 P-7] | GABA-ergic IV alpha frequency: ≈ 12 Hz light, ≈ 10 Hz deep, never below 10 (Ch36 p. 1143); ≈ 11 Hz at GA (Akeju 2014 121:978). Linear in `hyper` from 0.7 to 1.5 [FIT: alpha-frequency ramp; brief research/43 P-7]; it rises on emergence before alpha fades (Ch36 p. 1142). |
+| `ALPHA_IV_DEEP_HZ` | `10` | Hz | Miller Ch36 p. 1143 | GABA-ergic IV alpha at depth: not below 10 Hz (Miller Ch36 p. 1143). |
+| `ALPHA_ETHER_HZ` | `10` | Hz | Akeju 2014 | Ether alpha ≈ 10 Hz, slowing to ≈ 7–8 Hz (7.5) past the alpha-to-delta shift and fading into delta (Ch36 p. 1143, Fig. 36.7). |
+| `ALPHA_ETHER_DEEP_HZ` | `7.5` | Hz | Miller Ch36 p. 1143 | Ether alpha past the alpha-to-delta shift: ≈ 7–8 Hz (Miller Ch36 p. 1143, Fig. 36.7), the mid-point. |
+| `DEEP_SPAN_MAC` | `0.5` | — | research/43 P; [FIT: alpha-to-delta span; brief research/43 P-7] | The slowing and the fade complete over this much `deep`, MAC [FIT: alpha-to-delta span; brief research/43 P-7]. |
+| `ALPHA_FADE_DB` | `10` | — | research/43 P; [FIT: ether alpha fade; brief research/43 P-7] | The ether alpha's fade over DEEP_SPAN_MAC, dB [FIT: ether alpha fade; brief research/43 P-7]. |
+| `ALPHA_WIDTH_HZ` | `1.2` | Hz | research/43 P; Miller Ch36 p. 1143].; [FIT: narrowband peak width; brief research/43 P-7; src Miller Ch36 p. 1143] | Alpha and spindle σ, Hz [FIT: narrowband peak width; brief research/43 P-7; src Miller Ch36 p. 1143]. |
+| `THETA_HZ` | `4.9` | Hz | Akeju 2014; Miller: peaks near 3; research/43 P; [FIT: ether theta level; brief research/43 P-7] | Sevoflurane's theta peak ≈ 4.9 Hz (Akeju 2014 121:990: theta coherence 4.9 ± 0.6 Hz; Miller: peaks near 3, 8, 11 Hz; "less common with propofol"), at the ether alpha's level minus this [FIT: ether theta level; brief research/43 P-7]. |
+| `THETA_BELOW_ALPHA_DB` | `3` | — | research/43 P; [FIT: ether theta level; brief research/43 P-7] | The ether theta peak below the ether alpha, dB [FIT: ether theta level; brief research/43 P-7]. |
+| `BETA_HZ` | `20` | Hz | Miller Ch36 p. 1138 | --- beta and gamma (Ch36 pp. 1138–1139, 1141, 1144–1145) --- Beta centre, Hz: the "beta buzz" over ≈ 15–25 Hz (Miller Ch36 p. 1138). |
+| `BETA_WIDTH_HZ` | `4` | Hz | Miller Ch36 p. 1138; research/43 P; [FIT: beta width; brief research/43 P-7] | Beta σ, Hz: spans 15–25 Hz (Miller Ch36 p. 1138) [FIT: beta width; brief research/43 P-7]. |
+| `BETA_AWAKE_DB` | `3` | — | research/43 P; [FIT: awake beta level; brief research/43 P-7] | Awake beta base (Ch36 p. 1138; Ch35 p. 1104), dB above the background [FIT: awake beta level; brief research/43 P-7]. |
+| `BETA_SED_RISE_DB` | `10` | — | research/43 P; [FIT: sedation beta rise; brief research/43 P-7]; [FIT: benzodiazepine beta share; brief research/43 P-7] | Sedation beta rise, peaking at lor 0.6 and gone by lor 1.1 [FIT: sedation beta rise; brief research/43 P-7]; benzodiazepines "mainly increased beta" (Ch36 p. 1144): × (1 + 0.5·share) and kept past LOR [FIT: benzodiazepine beta share; brief research/43 P-7]. |
+| `BETA_GA_FALL_DB` | `6` | — | research/43 P; [FIT: beta fall at depth; brief research/43 P-7] | The marked fall of beta at surgical depth (Ch36 p. 1139), per lor unit past 1, dB [FIT: beta fall at depth; brief research/43 P-7]. |
+| `BETA_AROUSAL_DB` | `8` | — | research/43 P; [FIT: arousal beta rise; brief research/43 P-7] | Noxious arousal: beta up (and alpha drop-out below), at arousal 1, dB [FIT: arousal beta rise; brief research/43 P-7] (Ch36 pp. 1141, 1151). |
+| `ALPHA_AROUSAL_DROP_DB` | `10` | — | research/43 P; Miller Ch36 pp. 1141; [FIT: arousal alpha drop-out; brief research/43 P-7] | Noxious arousal: alpha drop-out at arousal 1, dB [FIT: arousal alpha drop-out; brief research/43 P-7] (Miller Ch36 pp. 1141, 1151). |
+| `OPIOID_BETA_DROP_DB` | `3` | — | research/43 P; [FIT: opioid beta loss; brief research/43 P-7] | Opioids at low dose lose beta (Ch35 Table 35.1), at opioid = 1, dB [FIT: opioid beta loss; brief research/43 P-7]. |
+| `OPIOID_DELTA_DB` | `10` | — | research/43 P; [FIT: opioid delta rise; brief research/43 P-7] | Opioid alone above 8 ng/mL: delta up (Ch36 p. 1144), dB above the sedation slow level at opioid 2; little change with a hypnotic (p. 1145): gated by (1 − lor) [FIT: opioid delta rise; brief research/43 P-7]. |
+| `GAMMA_HZ` | `35` | Hz | Miller Ch36 Table 36.1; research/43 P; [FIT: gamma centre; brief research/43 P-7] | Gamma centre, Hz: gamma > 30 Hz (Miller Ch36 Table 36.1) [FIT: gamma centre; brief research/43 P-7]. |
+| `GAMMA_WIDTH_HZ` | `6` | Hz | research/43 P; [FIT: gamma width; brief research/43 P-7] | Gamma σ, Hz [FIT: gamma width; brief research/43 P-7]. |
+| `KET_ALPHA_LOSS_DB` | `10` | — | research/43 P; [FIT: ketamine spectral sizes; brief research/43 P-7] | Ketamine: alpha loss (−10 dB by ketDepol 0.3 — the 25–50 mg adjunct range), theta and gamma up, and at hypnotic doses huge slow waves (GA-sized) alternating with gamma bursts (Ch36 p. 1144) [FIT: ketamine spectral sizes; brief research/43 P-7]. |
+| `KET_SAT` | `0.3` | — | Miller Ch36 p. 1144: adjunct boluses most consistently decrease alpha; research/43 P; [FIT: ketamine saturation; brief research/43 P-7] | ketDepol at which ketamine's alpha loss and theta rise are complete: the 25–50 mg adjunct range (Miller Ch36 p. 1144: adjunct boluses most consistently decrease alpha) [FIT: ketamine saturation; brief research/43 P-7]. |
+| `KET_THETA_DB` | `6` | — | Miller Ch36 p. 1144: theta up; research/43 P; [FIT: ketamine theta rise; brief research/43 P-7] | Ketamine's theta rise above the background at KET_SAT, dB (Miller Ch36 p. 1144: theta up) [FIT: ketamine theta rise; brief research/43 P-7]. |
+| `KET_GAMMA_DB` | `10` | — | Miller Ch36 p. 1144: gamma up; research/43 P; [FIT: ketamine gamma rise; brief research/43 P-7] | Ketamine's gamma above the background at ketDepol 1, dB (Miller Ch36 p. 1144: gamma up) [FIT: ketamine gamma rise; brief research/43 P-7]. |
+| `N2O_FAST_DB` | `5` | — | research/43 P; Pavone 2016; [FIT: N2O fast activity; brief research/43 P-7]; [INF]; [FIT: N2O transient size; brief research/43 P-2] | N2O alone: frontal fast activity > 30 Hz (Ch35 Table 35.1), dB at 0.6 MAC [FIT: N2O fast activity; brief research/43 P-7]; its transient: a GA-sized slow-delta ("coherent large-amplitude", Pavone 2016 [INF]) with alpha loss (Ch36 p. 1144), dB at transient 1 [FIT: N2O transient size; brief research/43 P-2]. |
+| `N2O_ALPHA_LOSS_DB` | `10` | — | Miller Ch36 p. 1144; research/43 P; [FIT: N2O transient alpha loss; brief research/43 P-2] | The N2O transient's alpha loss at transient 1, dB (Miller Ch36 p. 1144) [FIT: N2O transient alpha loss; brief research/43 P-2]. |
+| `SLOWING_FAST_LOSS_DB` | `10` | — | research/43 P; [FIT: metabolic fast-activity loss; brief research/43 P-7] | Ischaemic / hypoxic / hypothermic slowing: fast activity lost, low frequencies dominate (Ch35 pp. 1105, 1126), dB at slowing 1 [FIT: metabolic fast-activity loss; brief research/43 P-7]. |
+| `SLOWING_DELTA_DB` | `10` | — | Miller Ch35 p. 1126: low frequencies dominate; research/43 P; [FIT: metabolic delta rise; brief research/43 P-7] | The same slowing's delta rise above the sedation slow level at slowing 1, dB (Miller Ch35 p. 1126: low frequencies dominate) [FIT: metabolic delta rise; brief research/43 P-7]. |
+| `SUPPRESSED_UV` | `1.5` | µV | research/43 P; Miller Ch36 Fig. 36.6; [FIT: suppressed level, below the criterion; brief research/43 P-8] | --- burst suppression (research/43 P-8; Ch36 pp. 1139–1141, 1145) --- Suppressed stretches < 5 µV (Miller Ch36 Fig. 36.6): the suppressed level, RMS µV [FIT: suppressed level, below the criterion; brief research/43 P-8]. µV |
+| `BURST_PROP_UV_AT0` | `31.97` | µV | Kratzer 2020 | First-burst amplitude, propofol: 31.97 − 0.26·age µV (Kratzer 2020, Ch36 ref 101). µV |
+| `BURST_PROP_UV_PER_Y` | `0.26` | — | Kratzer 2020 | Its fall with age, µV per year (Kratzer 2020: max amplitude 31.97 − 0.26 × age µV). |
+| `BURST_ISO_RATIO` | `42.5 / 22` | — | Fleischmann 2018; Hoffman 1995; [INF] | Ether bursts larger than propofol's (Fleischmann 2018, 99th percentile: isoflurane 42.5, sevoflurane 32.5, propofol 22 µV) — as ratios to propofol [INF]; desflurane as isoflurane (Hoffman 1995) [INF]. |
+| `BURST_SEVO_RATIO` | `32.5 / 22` | — | Fleischmann 2018; [INF: as a ratio] | Sevoflurane burst amplitude ÷ propofol's (Fleischmann 2018: 32.5 vs 22 µV, 99th percentile) [INF: as a ratio]. |
+| `FORME_FRUSTE_ON` | `0.85` | — | research/43 P; [FIT: forme fruste onset; brief research/43 P-8] | The forme fruste (Ch36 pp. 1140–1141) from this fraction of the suppression onset drive [FIT: forme fruste onset; brief research/43 P-8]; it fades as the suppression becomes established. |
+
+### [`l2/eeg/state.ts`](../../packages/engine-core/src/l2/eeg/state.ts)
+
+| Name | Value | Unit | Source / tag | Comment |
+|---|---|---|---|---|
+| `DEXMED_LOR_NG_ML` | `2.09` | ng/mL | Miller Ch36 p. 1144 | --- hyperpolarisation, loss of responsiveness, the alpha-to-delta shift (Ch36 pp. 1142–1144) --- Dexmedetomidine plasma level at which one patient stopped responding to voice with an alpha–delta pattern, ng/mL (Miller Ch36 p. 1144, Fig. 36.9: 2.09 ng/mL; one patient, so the LOR anchor only, not a C50). ng/mL |
+| `DEEP_ONSET` | `1.7 / 1.8` | — | Miller Ch36 p. 1143; Mapleson 1996; [INF: the % is read at 40 y] | The alpha-to-delta shift: sevoflurane "above ≈ 1.7 %" (Miller Ch36 p. 1143) ÷ the engine's sevoflurane MAC40 1.80 % (Mapleson 1996, pk/volatile.ts) = 0.944 MAC [INF: the % is read at 40 y]. In `hyper` units (1 MAC = 1). MAC (state.test.ts checks 1.8 against AGENTS.sevoflurane.mac40) |
+| `BS_ONSET_ISO_MAC` | `1.3` | — | research/43 P; Pilge 2014; Miller Ch36 p. 1141 "about 30 % more" than immobility | --- burst suppression: research/43 P-1 (the owner's Q5 ruling), Ch36 p. 1141, Ch35 Table 35.1 p. 1107 --- Onset (50 % of adults show a first ≥ 1 s silent second) in AGE-ADJUSTED MAC: isoflurane 1.3 (Pilge 2014, = Miller Ch36 p. 1141 "about 30 % more" than immobility; Ch36 ref 50). |
+| `BS_ONSET_SEVO_MAC` | `1.4` | — | Pilge 2014 | Sevoflurane onset 1.4 MAC (Pilge 2014: "> 1.4-fold" MAC; 2.9 vol %). On the engine's MAC40 1.80 % the same 2.9 vol % would be 1.61 MAC — the paper's own MAC ratio is used. |
+| `BS_ONSET_DES_MAC` | `1.25` | — | Rampil 1991; Hoffman 1995; [INF from Rampil 1991: "prominent burst suppression at 1.24 MAC and higher", so onset is at or below it; Hoffman 1995 equates desflurane with isoflurane at equal age-adjusted MAC] | Desflurane onset ≈ 1.25 MAC [INF from Rampil 1991: "prominent burst suppression at 1.24 MAC and higher", so onset is at or below it; Hoffman 1995 equates desflurane with isoflurane at equal age-adjusted MAC]. |
+| `BS_ESTABLISHED_MAC` | `1.5` | — | Miller Ch35 Table 35.1 "> 1.5 MAC" | An ESTABLISHED burst-suppression pattern at ≈ 1.5 MAC, every ether (Miller Ch35 Table 35.1 "> 1.5 MAC"; Ch10 p. 188 isoflurane "∼1.5 MAC"). |
+| `BS_NEAR_ISO_MAC` | `2.0` | — | Miller Ch10 p. 205 "1.5 to 2 MAC"; Kaisti 1999; [INF] | NEAR-ISOELECTRIC at ≈ 2.0 MAC, every ether (Miller Ch10 p. 205 "1.5 to 2 MAC", maximal CMR fall; Kaisti 1999 still bursting at 2 MAC sevoflurane, so full silence is at or above it [INF]). |
+| `SUPP_ESTABLISHED` | `0.5` | — | research/43 P; research/43; [FIT: the mid-point of the curve; brief research/43 P-1; the shape between the anchors is not in the sources — research/43 "INF on the shape"] | Suppression (fraction of time suppressed) at the established point [FIT: the mid-point of the curve; brief research/43 P-1; the shape between the anchors is not in the sources — research/43 "INF on the shape"]. |
+| `SUPP_NEAR_ISO` | `0.9` | — | research/43 P; [FIT: "near" silence read as 90 % of the time suppressed; brief research/43 P-1] | Suppression at the near-isoelectric point [FIT: "near" silence read as 90 % of the time suppressed; brief research/43 P-1]. |
+| `BS_ISOELECTRIC_MAC` | `2.5` | — | research/43 P; [FIT: the 2.0 → 1 slope continued, 0.5 MAC past the near-isoelectric point; brief research/43 P-1] | Full suppression (isoelectric), MAC [FIT: the 2.0 → 1 slope continued, 0.5 MAC past the near-isoelectric point; brief research/43 P-1]. |
+| `BS_ONSET_PROP_NG_ML` | `4900` | ng/mL | Pilge 2014; Miller Ch36 p. 1141 "about 5 mcg/mL"; [INF] | Propofol(-equivalent) onset, ng/mL: CP50_BS 4.9 µg/mL (Pilge 2014; Miller Ch36 p. 1141 "about 5 mcg/mL"). Thiopental and etomidate at the same propofol-equivalent [INF]; not age-adjusted (the source gives a concentration). ng/mL |
+| `DO2_EEG_ABNORMAL` | `20 / 50` | — | Stecker 2001; Miller Ch35 p. 1122; [INF] | --- ischaemia, hypoxia (Ch35 pp. 1105, 1122, 1126) and hypothermia (Ch35 p. 1127; Stecker 2001) --- The EEG turns abnormal at CBF 20 of 50 mL/100 g/min (Miller Ch35 p. 1122) — read as O2 DELIVERY relative to normal, so hypoxaemia acts only once flow compensation is exhausted (Ch35 p. 1126) [INF]. |
+| `DO2_EEG_LOST` | `12 / 50` | — | Miller Ch35 p. 1122 | Cellular survival threatened at CBF 12 mL/100 g/min (Miller Ch35 p. 1122): the voltage is gone. |
+| `METABOLIC_SLOW_SHARE` | `0.5` | — | Miller Ch35 p. 1105 gives the order; [FIT: half; src Miller Ch35 p. 1105 gives the order, not the share] | The share of `metabolic` that only slows (voltage preserved) before the voltage goes (Ch35 p. 1105: "first slowing with preserved voltage, then loss of voltage") [FIT: half; src Miller Ch35 p. 1105 gives the order, not the share]. |
+| `BS_TEMP_ONSET_C` | `24.4` | °C | Stecker 2001 | Hypothermic burst suppression appears at 24.4 °C (Stecker 2001, 109 patients, mean nasopharyngeal ± 4 °C). °C |
+| `BS_TEMP_SILENT_C` | `17.8` | °C | Stecker 2001; Miller Ch35 p. 1127 "complete suppression usually at 15–18 °C" | Electrocerebral silence at 17.8 °C (Stecker 2001; Miller Ch35 p. 1127 "complete suppression usually at 15–18 °C"). °C |
+| `COLD_SLOW_FROM_C` | `37` | °C | Miller Ch35 p. 1127 gives a close correlation with temperature; [FIT: linear from 37 °C to the burst-suppression temperature; src Miller Ch35 p. 1127 gives a close correlation with temperature, no shape] | Hypothermic slowing starts at normothermia [FIT: linear from 37 °C to the burst-suppression temperature; src Miller Ch35 p. 1127 gives a close correlation with temperature, no shape]. °C |
+| `N2O_TRIGGER_MAC` | `0.5` | — | Pavone 2016; [INF: N2O MAC ≈ 104 %] | --- ketamine, N2O, opioids, arousal (Ch36 pp. 1141, 1144–1145) --- The N2O transient's trigger: a step to ≥ 50 % inspired (Pavone 2016, Ch36 ref 86) ≈ 0.5 MAC [INF: N2O MAC ≈ 104 %]. A step of this size saturates the transient. |
+| `N2O_TRANSIENT_TAU_S` | `180` | s | Pavone 2016; research/43 P | Its duration: the slow-delta lasted median 3 min (2–12) (Pavone 2016) — the cortex adapts to the new N2O level with τ = 3 min. The amplitude of the transient is fitted (spectra.ts, research/43 P-2). |
+| `OPIOID_EEG_FENT_NG_ML` | `8` | ng/mL | Miller Ch36 p. 1144 | Opioid alone above 8 ng/mL fentanyl-eq raises delta and lowers the median frequency (Miller Ch36 p. 1144). ng/mL |
+| `AGE_YOUNG_Y` | `18` | — | research/43 P; Purdon 2015; Miller says "much higher"; [FIT: children's amplitude factor; brief research/43 P-3] | --- age (Ch36 p. 1145; research/43 P-7) --- The age span the age terms run over: Purdon 2015's cohort, 18–90 y. Below 18 the adult value (P-3: children's amplitude factor × 1 [FIT: children's amplitude factor; brief research/43 P-3] — Miller says "much higher", with no number). |
+| `AGE_OLD_Y` | `90` | — | Purdon 2015 | The upper end of the age span: Purdon 2015's oldest patients, 90 y. |
+| `AGE_SLOPE_FLATTEN` | `0.2` | — | Miller Ch36 p. 1145; Kreuzer 2020; [INF] | The slope flattens by ≈ 20 % with age (Miller Ch36 p. 1145; Kreuzer 2020, Ch36 ref 95) — reached at AGE_OLD_Y [INF]. |
+| `AGE_AMP_OLD` | `0.4` | — | Purdon 2015; [INF] | Amplitude × 0.4 at AGE_OLD_Y (Purdon 2015, Ch36 ref 94: the elderly's oscillations "≈ 2–3-fold smaller", i.e. × 0.33–0.5; 0.4 inside it), linear in age [INF]. |
 
 ### [`l2/neuro/bus.ts`](../../packages/engine-core/src/l2/neuro/bus.ts)
 
@@ -231,6 +357,18 @@ drug model and before the respiratory pipeline (`l2/neuro/pipeline.ts`).
 
 | Function | File | Doc |
 |---|---|---|
+| `spectrumOf` | [`l2/eeg/spectra.ts`](../../packages/engine-core/src/l2/eeg/spectra.ts) | The spectrum of a cortical state with its agent mix. |
+| `peakOf` | [`l2/eeg/spectra.ts`](../../packages/engine-core/src/l2/eeg/spectra.ts) | --- readers of a spectrum (the generator's and the tests' contract) --- |
+| `psdDb` | [`l2/eeg/spectra.ts`](../../packages/engine-core/src/l2/eeg/spectra.ts) | PSD at f, dB re 1 µV²/Hz. |
+| `bandPower` | [`l2/eeg/spectra.ts`](../../packages/engine-core/src/l2/eeg/spectra.ts) | Power in [lo, hi] Hz, µV² (midpoint rule, 0.01 Hz). |
+| `rmsUv` | [`l2/eeg/spectra.ts`](../../packages/engine-core/src/l2/eeg/spectra.ts) | RMS amplitude over RMS_LO_HZ–RMS_HI_HZ, µV (the continuous activity; |
+| `medianFreq` | [`l2/eeg/spectra.ts`](../../packages/engine-core/src/l2/eeg/spectra.ts) | The frequency below which half the power in [lo, hi] lies, Hz. |
+| `ageFactors` | [`l2/eeg/state.ts`](../../packages/engine-core/src/l2/eeg/state.ts) | The age terms at `ageY`: |
+| `suppressionCurve` | [`l2/eeg/state.ts`](../../packages/engine-core/src/l2/eeg/state.ts) | Suppression (0–1) at a suppressing load `m` in MAC-equivalents, onset `o`: |
+| `brainDo2Rel` | [`l2/eeg/state.ts`](../../packages/engine-core/src/l2/eeg/state.ts) | Cerebral O2 delivery relative to normal: |
+| `cortexInputsOf` | [`l2/eeg/state.ts`](../../packages/engine-core/src/l2/eeg/state.ts) | The cortex's inputs from the drug bus and the physiology (read-only). |
+| `agentMixOf` | [`l2/eeg/state.ts`](../../packages/engine-core/src/l2/eeg/state.ts) | The shares of the hyperpolarising load per class (they sum to 1 when `hyper` > 0), N2O and age: |
+| `cortexStep` | [`l2/eeg/state.ts`](../../packages/engine-core/src/l2/eeg/state.ts) | One step of the cortical state. |
 | `newDoses` | [`l2/neuro/bus.ts`](../../packages/engine-core/src/l2/neuro/bus.ts) | Doses the drug model accepted after `seenT` (the neuro model observes, never consumes). |
 | `pcheOf` | [`l2/neuro/bus.ts`](../../packages/engine-core/src/l2/neuro/bus.ts) | Cholinesterase phenotype for the drug model's PK patient (`PkPatient.pche`; |
 | `locPropofol` | [`l2/neuro/depth.ts`](../../packages/engine-core/src/l2/neuro/depth.ts) | Schnider C50 for loss of consciousness: |
@@ -257,6 +395,8 @@ Exported without a doc comment: `readBus`, `ce50Propofol`, `opioidFentEq`, `dept
 
 | File | Header |
 |---|---|
+| [`l2/eeg/spectra.ts`](../../packages/engine-core/src/l2/eeg/spectra.ts) | EEG stage E2: the spectral description of a cortical state — an aperiodic 1/f background plus named oscillations, burst suppression and its forme fruste (docs/plans/stage-eeg-depth-of-anaesthesia.md §7 E2; research/43 P- |
+| [`l2/eeg/state.ts`](../../packages/engine-core/src/l2/eeg/state.ts) | EEG stage E1: the cortical state — the drug bus and the physiology mapped onto a handful of mechanism-named variables (docs/plans/stage-eeg-depth-of-anaesthesia.md §7 E1, D1; numbers from research/43-eeg-sources-review.m |
 | [`l2/neuro/bus.ts`](../../packages/engine-core/src/l2/neuro/bus.ts) | The neuro model's READER of the drug model's DrugBus. |
 | [`l2/neuro/depth.ts`](../../packages/engine-core/src/l2/neuro/depth.ts) | Anaesthetic depth (tables §5d "Anaesthetic depth"). |
 | [`l2/neuro/drive.ts`](../../packages/engine-core/src/l2/neuro/drive.ts) | Respiratory-drive depression (tables §5d "Respiratory-drive depression" feeding §4.6) and the NMB ventilatory consequence. |
@@ -267,6 +407,7 @@ Exported without a doc comment: `readBus`, `ce50Propofol`, `opioidFentEq`, `dept
 | [`l2/neuro/pipeline.ts`](../../packages/engine-core/src/l2/neuro/pipeline.ts) | Neuro pipeline: the neuro state, its commands, and the 10 Hz step the engine runs inside advance() AFTER the drug model's advancePk (it reads ps.pk.bus) and BEFORE the respiratory pipeline (chain order). |
 | [`l2/neuro/spont.ts`](../../packages/engine-core/src/l2/neuro/spont.ts) | MODELED spontaneous breathing: the lung model's chemoreflex drive, work of breathing and fatigue (l2/lung/drive.ts: drive(), pti(), stepFatigue()) set the rate and tidal volume of spontaneous cycles in MODELED mode, with |
 | [`l2/neuro/tof-device.ts`](../../packages/engine-core/src/l2/neuro/tof-device.ts) | TOF stimulator "device": a train of four every `intervalS` (default 15 s, 12–60 s) while running, a single train on demand, and a post-tetanic count (50 Hz tetanus 5 s, 3 s pause, 15 twitches at 1 Hz: the result is repor |
+| [`types-eeg.ts`](../../packages/engine-core/src/types-eeg.ts) | EEG stage public types (docs/plans/stage-eeg-depth-of-anaesthesia.md §7 E1, E2): the cortical state computed from the drug bus and the physiology (l2/eeg/state.ts) and the spectral description each state produces (l2/eeg |
 | [`types-neuro.ts`](../../packages/engine-core/src/types-neuro.ts) | Neuro public types (neuromuscular block, anaesthetic depth, respiratory-drive depression), in their own file so parallel modules do not collide in types.ts; types.ts adds each to its union with one line. |
 
 ## Known misses
@@ -286,11 +427,15 @@ Exported without a doc comment: `readBus`, `ce50Propofol`, `opioidFentEq`, `dept
 | File | Expected failures | Skipped |
 |---|---|---|
 | [`engine/eeg-baseline.test.ts`](../../packages/engine-core/test/engine/eeg-baseline.test.ts) | 0 | 0 |
+| [`engine/eeg-cortex.test.ts`](../../packages/engine-core/test/engine/eeg-cortex.test.ts) | 0 | 0 |
 | [`engine/neuro-acceptance.test.ts`](../../packages/engine-core/test/engine/neuro-acceptance.test.ts) | 1 | 0 |
 | [`engine/neuro-circ.test.ts`](../../packages/engine-core/test/engine/neuro-circ.test.ts) | 0 | 0 |
 | [`engine/neuro-engine.test.ts`](../../packages/engine-core/test/engine/neuro-engine.test.ts) | 0 | 0 |
 | [`engine/neuro-longrun.test.ts`](../../packages/engine-core/test/engine/neuro-longrun.test.ts) | 0 | 0 |
 | [`engine/neuro-spont.test.ts`](../../packages/engine-core/test/engine/neuro-spont.test.ts) | 0 | 0 |
+| [`l2/eeg/bus-classes.test.ts`](../../packages/engine-core/test/l2/eeg/bus-classes.test.ts) | 0 | 0 |
+| [`l2/eeg/spectra.test.ts`](../../packages/engine-core/test/l2/eeg/spectra.test.ts) | 0 | 0 |
+| [`l2/eeg/state.test.ts`](../../packages/engine-core/test/l2/eeg/state.test.ts) | 0 | 0 |
 | [`l2/neuro/alkalosis-setpoint.test.ts`](../../packages/engine-core/test/l2/neuro/alkalosis-setpoint.test.ts) | 0 | 0 |
 | [`l2/neuro/brainstem-gate.test.ts`](../../packages/engine-core/test/l2/neuro/brainstem-gate.test.ts) | 0 | 0 |
 | [`l2/neuro/bus.test.ts`](../../packages/engine-core/test/l2/neuro/bus.test.ts) | 0 | 0 |

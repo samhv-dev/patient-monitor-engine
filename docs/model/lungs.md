@@ -92,6 +92,23 @@ per-breath mechanics and the per-lung PVR it hands to the circulation.
 | [`volumes.ts:38`](../../packages/engine-core/src/l2/lung/volumes.ts#L38) | rest of the forced expiration: PEF = PEFpred × Σ VC_u·r_u^(−PEAK_TAU_EXP) / FVCpred, r_u = (Rex,u·Crs,u)/(Rex·Crs) |
 | [`volumes.ts:123`](../../packages/engine-core/src/l2/lung/volumes.ts#L123) | Forced-expiratory sensitivity to the unit's passive R·C ratio [FIT: the catalogue's COPD grades = GOLD FEV1 ≥ 80 / 50–79 / 30–49 / < 30 % pred with FEV1/FVC < 0.70, and the ILD grades' FVC bands; brief research/44 L2-32]. |
 
+## Couplings
+
+Generated from the coupling registry (`packages/engine-core/src/couplings/`, docs/plans/mechanism-tree.md piece R1): 8 rows; SOURCED 0, FIT 4, ENG 0, UNTAGGED 4, ABSENT 0.
+The class is computed from the tags of the constants each row names (FIT before ENG before SOURCED; UNTAGGED when a row names no
+constant or one without a source; ABSENT when the engine does not have the mechanism, with the research/44 finding).
+
+| Id | From → to | Sign · form | Class | Constants | Timing, limits | Note |
+|---|---|---|---|---|---|---|
+| `lungs.ptx.pleural` | `trigger.lungCondition.ptxTension` (Tension pneumothorax (lung condition)) → `resp.lung.lp.pPtx` | + · state | FIT | `LUNG_CONDITIONS.ptxTension`, `PTX_VALVE_PER_CMH2O_S` = 0.12 | — | The affected side's pleural pressure builds under positive pressure (PTX_VALVE_PER_CMH2O_S per cmH2O·s of driving pressure) to the condition's ceiling. |
+| `lungs.ptx.collapse` | `trigger.lungCondition.ptxTension` (Tension pneumothorax (lung condition)) → `resp.lung.lp.side.1.consol` | + · state | FIT | `LUNG_CONDITIONS.ptxTension` | — | The ipsilateral lung collapses (non-recruitable until decompressed); Crs × 0.5. |
+| `lungs.peep.recruitment` | `resp.driver.vent.peep` (PEEP) → `resp.lung.aer` | + · state | UNTAGGED | `P_CLOSE` = 15, `P_OPEN_LO` = 5, `TAU_DEREC_S` = 120 | — | End-expiratory pressure above the closing pressure keeps units aerated; derecruitment with τ TAU_DEREC_S below it. |
+| `lungs.shunt.collapse` | `resp.lung.lp.side.1.consol`, `resp.lung.aer` → `resp.lung.perf.shunt` | ± · state | FIT | `ATEL_PERF` = 1.0 | — | Flow through the non-aerated part is true shunt (ATEL_PERF of its share), reduced by HPV: collapse raises it, aeration lowers it. |
+| `lungs.pvr.perSide` | `resp.lung.lp.side.1.consol`, `resp.lung.aer` → `resp.lung.perf.pvrMult` | ± · factor | FIT | `ATEL_PERF` = 1.0, `HPV_PAO2_HI` = 100, `HPV_PAO2_LO` = 40, `TAU_HPV1_S` = 300 | — | Each side's PVR multiplier = 1 / the HPV-weighted conductance of its collapsed, hypoxic and normal parts. |
+| `lungs.pvr.left` | `resp.lung.perf.pvrMult` → `hemo.circ.ext.pvrLungL` | + · state | UNTAGGED | — | — | writeCircPvr: left multiplier into the circulation. |
+| `lungs.pvr.right` | `resp.lung.perf.pvrMult` → `hemo.circ.ext.pvrLungR` | + · state | UNTAGGED | — | — | writeCircPvr: right multiplier into the circulation. |
+| `lungs.pvr.global` | `resp.lung.lp.pvr` → `hemo.circ.ext.pvrLung` | + · state | UNTAGGED | — | — | writeCircPvr: the lungs' global PVR multiplier (COPD, PH group 3, OLV). |
+
 ## State
 
 ### `LungState` ([`l2/lung/lung.ts`](../../packages/engine-core/src/l2/lung/lung.ts))
