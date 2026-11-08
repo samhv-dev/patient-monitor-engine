@@ -5,7 +5,8 @@
 // device (`?e2e-remote`, as instructor-pin.test.ts marks one): the room's QR address opens the picker; Ventilator →
 // "Show here" → P7's PIN form; a wrong PIN is refused; the right one signs it in as the `ventilator` role and the cockpit
 // drives full screen; 5 s offline → the host hands over within 1 s of the silence and the patient stays ventilated;
-// back online the cockpit signs in again and takes over from the engine's settings. (3) The PIN never appears in an
+// back online the cockpit signs in again and takes over from the engine's settings; silent with its socket left open (its
+// sends held), it is handed over by the host's 1 s watchdog and takes over again. (3) The PIN never appears in an
 // address, the QR, the relay's `room.json` or a learner's frames.
 import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -142,16 +143,45 @@ test('a tablet over the relay: picker → Ventilator → PIN → cockpit; a wron
   await expect(ventRow(page)).toContainText('driving');
   const first = await t.evaluate(() => (window as unknown as W).__pmeVentDevice!.sender);
 
-  // 5 s offline: the host hands over within 1 s of the silence; the patient is ventilated throughout
-  await page.evaluate(() => {
-    const w = window as unknown as W;
-    w.__r8d = { unlinkedAt: null };
-    const tick = () => {
-      if (w.__pmeApp.session.ventLink === null && w.__r8d!.unlinkedAt === null) w.__r8d!.unlinkedAt = Date.now();
-      else if (w.__r8d!.unlinkedAt === null) setTimeout(tick, 5);
-    };
-    tick();
+  /** Watch, on the host, for the moment its desk unlinks the cockpit (the hand-over starts). */
+  const watchUnlink = () =>
+    page.evaluate(() => {
+      const w = window as unknown as W;
+      w.__r8d = { unlinkedAt: null };
+      const tick = () => {
+        if (w.__pmeApp.session.ventLink === null && w.__r8d!.unlinkedAt === null) w.__r8d!.unlinkedAt = Date.now();
+        else if (w.__r8d!.unlinkedAt === null) setTimeout(tick, 5);
+      };
+      tick();
+    });
+
+  // Silence with the socket left open (a Wi-Fi that stalls without the browser noticing): the tablet's frames stop
+  // leaving it (the test holds its WebSocket's sends for 3 s); the host's 1 s watchdog hands over; the patient stays
+  // ventilated; when its frames come again the cockpit takes over
+  await watchUnlink();
+  const mutedAt = await t.evaluate(() => {
+    const ws = WebSocket.prototype as unknown as { send: (d: unknown) => void; __send?: (d: unknown) => void };
+    ws.__send = ws.send;
+    ws.send = () => undefined;
+    return Date.now();
   });
+  await expect.poll(() => page.evaluate(() => (window as unknown as W).__r8d!.unlinkedAt), { timeout: 5000 }).not.toBeNull();
+  const silentMs = (await page.evaluate(() => (window as unknown as W).__r8d!.unlinkedAt))! - mutedAt;
+  console.log(`[R8d] ${browserName}: hand-over ${silentMs} ms after the tablet fell silent (socket open)`);
+  // [ENG: ui] COCKPIT_SILENCE_MS (1 s, views/vent.ts), less the up to 20 ms batch already on its way, plus 250 ms for
+  // the watchdog's timer and the host page's 5 ms poll
+  expect(silentMs).toBeGreaterThanOrEqual(950);
+  expect(silentMs).toBeLessThanOrEqual(1250);
+  await expect.poll(async () => (await patient(page)).source, { timeout: 5000 }).toBe('ventilator');
+  await page.waitForTimeout(1500);
+  await t.evaluate(() => {
+    const ws = WebSocket.prototype as unknown as { send: (d: unknown) => void; __send?: (d: unknown) => void };
+    ws.send = ws.__send!;
+  });
+  await expect.poll(async () => (await patient(page)).source, { timeout: 15_000, message: 'its frames again: the tablet drives again' }).toBe('external');
+
+  // 5 s offline: the host hands over within 1 s of the silence; the patient is ventilated throughout
+  await watchUnlink();
   const offAt = Date.now();
   await tctx.setOffline(true);
   const sources = new Set<string>();

@@ -9,16 +9,19 @@
 // shows each, the room code with "New room code" (Q3: the code lives until that press), "Forget the room", and the
 // remembered layout ("Last time in this room: … Reopen that layout"). `#room-instructor` is P7's slot (its PIN panel),
 // left empty here.
+// R8d: the Ventilator card opens the cockpit in a window of its own too ("New window": `vent-hamilton.html?link=<code>`,
+// over BroadcastChannel, no PIN, §4 D9), beside "Open here"; the table lists the ventilator's screens — that window and a
+// tablet signed in with the PIN — as "Ventilator · driving" or "handed over" (the desk's own state, views/vent.ts).
 // Post-demo (4 November): "Show large" (or Q on the Room) puts the same QR, drawn again as vector at the size of the
 // screen, with the code, the address and the live count beneath, for a hall to scan from the back; Escape or the same
 // control returns. At 1920×1080 the card's QR is 220 px (a fifth of the height): scannable from the front rows only.
 import { isTyping } from '@pme/controller';
 import { newSessionCode, type ManagedTransport, type RelayDevice, type WireMessage } from '@pme/controller';
-import { hashOf, qrTarget, relayInfo, type RelayInfo } from '../classroom.ts';
+import { hashOf, qrTarget, relayInfo, ventWindowUrl, type RelayInfo } from '../classroom.ts';
 import { qrSvg } from '../qr.ts';
 import { keepRoomCode } from '../room-code.ts';
 import { forgetRoom, lastTime, noteDevices, readLayout, readWindows, rename, windowsOf, writeLayout, writeWindows, type Windows } from '../room-layout.ts';
-import { deviceRows, HEARTBEAT_MS, PeerLog, roomStatus, WEAK_PING_MS, type DeviceRow, type PeerSeen, type RelayState, type RoomLevel } from '../room-status.ts';
+import { deviceRows, HEARTBEAT_MS, PeerLog, roomStatus, WEAK_PING_MS, type DeviceRow, type PeerSeen, type RelayState, type RoomLevel, type VentScreens } from '../room-status.ts';
 import { hrefOf } from '../router.ts';
 import type { View } from '../shell.ts';
 import { DEFIB_CHOICES, defibDefaults, pacerDefaults } from '../site.ts';
@@ -60,6 +63,8 @@ export interface RoomDeps {
   /** The room's defibrillator model (R5b): the site's choice, and the session's hand-over of a new one (it saves it and
    *  sends it to the patient's engine). Absent: no card. */
   defib?: { model(): string | null; choose(model: string | null): void };
+  /** R8d: the ventilator's own screens and whether each drives (views/vent.ts `ventScreens`). Absent: no rows. */
+  vent?: () => VentScreens;
 }
 
 export interface RoomView extends View {
@@ -79,7 +84,7 @@ const OPENERS: Array<{ show: CardShow; title?: string; text: string; foot: strin
   { show: 'learner', text: 'A window that follows the patient monitor, as the phones do.', foot: 'A second screen or the projector' },
   { show: 'monitor', text: "ECG, pressures, SpO₂, capnography and temperature in the room's monitor style, the whole screen.", foot: 'A second screen or the projector' },
   { show: 'defib', title: 'Defibrillator', text: "The room's defibrillator: energy, charge, shock and sync, with the patient's rhythm.", foot: 'A second screen or a tablet' },
-  { show: 'vent', text: 'Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient.', foot: 'The Ventilator view, in this window' },
+  { show: 'vent', text: 'Modes, settings, pressure and flow loops, with the lung mechanics of the loaded patient.', foot: 'The Ventilator view, or a window of its own' },
   { show: 'depth', text: 'Needs a simulated EEG: planned as an engine stage of its own.', foot: '—' },
   { show: 'iabp', text: "Timing, augmentation and the arterial trace with the balloon's effect.", foot: 'Not in this release' },
 ];
@@ -239,8 +244,15 @@ export function roomView(d: RoomDeps): RoomView {
         return instrumentCard({ show, title, chip: names.length ? names.join(' · ') : 'Not open', on: names.length > 0, text: o.text, foot: o.foot,
           actions: [button('New window', () => openWindow(show), 'small', { 'aria-label': `${title} in a new window` })] });
       }
-      if (o.show === 'vent')
-        return instrumentCard({ show: 'vent', title, chip: 'On this computer', text: o.text, foot: o.foot, actions: [h('a', { class: 'btn small', href: hrefOf('vent') }, 'Open here')] });
+      if (o.show === 'vent') {
+        const v = d.vent?.();
+        const on = v?.window === 'driving' ? 'Window · driving' : v?.device === 'driving' ? 'Tablet · driving' : 'On this computer';
+        return instrumentCard({ show: 'vent', title, chip: on, on: on !== 'On this computer', text: o.text, foot: o.foot, actions: [
+          h('a', { class: 'btn small', href: hrefOf('vent') }, 'Open here'),
+          // `noopener`, as the other windows: its own process; the link is the room code's BroadcastChannel
+          button('New window', () => (d.open ?? ((u: string) => void window.open(u, '_blank', 'noopener,width=1280,height=800')))(ventWindowUrl(d.code, location.pathname)), 'small', { 'aria-label': `${title} in a new window` }),
+        ] });
+      }
       return instrumentCard({ show: o.show, title, chip: w?.chip ?? '', text: o.text, foot: o.foot, actions: [] });
     }));
   };
@@ -302,7 +314,7 @@ export function roomView(d: RoomDeps): RoomView {
     status.dataset.level = s.level;
     setText(sTitle, s.title);
     setText(sSub, s.sub);
-    const rs = deviceRows({ relay, phones: d.followers(), peers, now: t, devices, known: layout, ageMs: t - tableAt });
+    const rs = deviceRows({ relay, phones: d.followers(), peers, now: t, devices, known: layout, ageMs: t - tableAt, ...(d.vent ? { vent: d.vent() } : {}) });
     // a name being typed is not redrawn under the instructor's fingers
     if (!(document.activeElement instanceof HTMLInputElement && rows.contains(document.activeElement))) rows.replaceChildren(...rs.map(row));
     drawCards(rs);
