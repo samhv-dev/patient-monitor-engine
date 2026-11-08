@@ -35,15 +35,15 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | blood | 68 | 28 |
 | organs | 138 | 63 |
 | endocrine-thermal | 167 | 68 |
-| neuro | 77 | 43 |
+| neuro | 78 | 44 |
 | pharmacology | 25 | 10 |
 | monitor | 46 | 5 |
 | alarms | 17 | 0 |
 | defib-pacer | 23 | 4 |
 | engine-runtime | 6 | 2 |
-| **All** | 1006 | 370 |
+| **All** | 1007 | 371 |
 
-## The ten effector expressions with the most factors (of 1496)
+## The ten effector expressions with the most factors (of 1498)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|
@@ -58,7 +58,7 @@ Seams (de-duplicated on module, kind and field): 137; sites: 173.
 | `l2/circ/model.ts#control` | `p.pvrL` | product | 7 |
 | `l2/circ/model.ts#control` | `p.pvrR` | product | 7 |
 
-## The ten products with the most factors (of 824 products)
+## The ten products with the most factors (of 826 products)
 
 | Where | Assigned | Operator | Factors |
 |---|---|---|---:|

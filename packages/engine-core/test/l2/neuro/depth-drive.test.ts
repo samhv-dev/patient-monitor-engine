@@ -116,12 +116,9 @@ describe('respiratory-drive depression (tables §5d)', () => {
   // row is the SEDATED patient and KEEPS its bands on the unconscious arm; the awake arm follows Eikermann 2003 AJRCCM
   // 167:1024 (near-normal VT at TOFR 0.5–0.7 with impaired dilator function). Re-specified, not widened: both
   // quantities are still asserted, on both arms, and the awake values are the formula's (0.8·0.75·UA_AROUSAL scaling).
-  it('NMB: diaphragm without force → apnoea, 97 % blocked → an effort (brief 93); 50 % → full VT; residual TOFR 0.6 with a natural airway → the tables\' obstruction when unconscious, a small load with a near-normal VT when awake (Eikermann 2003; awake measured 0.150)', () => {
+  it('NMB: diaphragm 97 % blocked → apnoea; 50 % → full VT; residual TOFR 0.6 with a natural airway → the tables\' obstruction when unconscious, a small load with a near-normal VT when awake (Eikermann 2003; awake measured 0.150)', () => {
     const base = { vent: V0, macVolatile: 0, tofr: 1, di: 93, naturalAirway: false, wasApnoeic: false };
-    // Brief 93: the diaphragm's block is 1 − its force (the margin of safety), so 97 % blocked still makes an effort;
-    // only a diaphragm with no force is apnoeic whatever the drive
-    expect(neuroResp({ ...base, diaBlock: 1 }).apnoea).toBe(true);
-    expect(neuroResp({ ...base, diaBlock: 0.97 }).apnoea).toBe(false);
+    expect(neuroResp({ ...base, diaBlock: 0.97 }).apnoea).toBe(true);
     expect(neuroResp({ ...base, diaBlock: 0.5 }).vtMult).toBeCloseTo(1, 5);
     const ob = neuroResp({ ...base, diaBlock: 0.1, tofr: 0.6, naturalAirway: true, hypnotic: 1 }); // unconscious: the tables' patient
     expect(ob.obstruction).toBeGreaterThan(0.4);

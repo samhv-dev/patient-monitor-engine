@@ -80,8 +80,14 @@ export function siteBlock(ce: Record<NmbAgent, number>, site: 'thumb' | 'dia', e
  * resistant) at 0.917: safety factors 4.1 and 12 (the same paper). Miller 10e ch. 39 p. 1210 ("Safety margin"): block
  * becomes evident at 70–80 % occupancy and is complete at 90–95 %. The whole muscle's force is the share of its
  * fibres still transmitting (Miller 10e ch. 39 p. 1210: "the response decreases in parallel with the number of fibers
- * blocked"); with the fibres' thresholds spread evenly over the free fraction between 1/12 and 1/4.1 the force is a
- * linear ramp of the free fraction [FIT: the even spread of fibre thresholds between the two sourced edges; brief 93].
+ * blocked"), so the two sourced occupancies are HARD EDGES: full force at or above the free fraction where even the
+ * most sensitive fibres still transmit, exactly zero at or below the most resistant fibre's. Between the edges the fall
+ * follows the muscle's OWN measured concentration-effect steepness (the agent's Hill exponent from its
+ * concentration-effect study: rocuronium 4.8, Plaud 1995; the ED95-scaled exponents of the others), applied to the
+ * normalised position inside the margin window, which keeps the half force at the window's midpoint and so at the
+ * muscle's own EC50. A FLAT spread of fibre thresholds was measured first and is wrong: it made the whole-muscle curve
+ * so shallow that cisatracurium 0.15 mg/kg still moved 39 breaths/min at 5 1/2 min, where apnoea clinically comes in
+ * about 2 min - most fibres do not fail at the margin's far end.
  */
 export const MOS_OCC_THRESHOLD = 0.76;
 export const MOS_OCC_COMPLETE = 0.917;
@@ -91,9 +97,16 @@ const MOS_FREE_HI = 1 - MOS_OCC_THRESHOLD;
 /** u = Ce/Kd at the thumb's half force: the free fraction halfway between the edges, f50 = 1/(1 + u50). */
 const MOS_U50 = 1 / ((MOS_FREE_LO + MOS_FREE_HI) / 2) - 1;
 
-/** The force (0–1) of a muscle whose fibres fail between free fractions `lo` and `hi`. */
-export function marginForce(free: number, lo: number, hi: number): number {
-  return Math.max(0, Math.min(1, (free - lo) / (hi - lo)));
+/**
+ * The force (0–1) of a muscle whose fibres fail between free fractions `lo` (the most resistant) and `hi` (the most
+ * sensitive), with the muscle's own Hill steepness inside that window: w = the normalised position in the window,
+ * force = w^g / (w^g + (1 - w)^g) — exactly 1 at or above `hi`, exactly 0 at or below `lo`, one half at the midpoint.
+ */
+export function marginForce(free: number, lo: number, hi: number, gamma = 1): number {
+  const w = Math.max(0, Math.min(1, (free - lo) / (hi - lo)));
+  if (w <= 0 || w >= 1) return w;
+  const x = w ** gamma;
+  return x / (x + (1 - w) ** gamma);
 }
 
 /**
@@ -109,17 +122,19 @@ export function marginForce(free: number, lo: number, hi: number): number {
 export function diaphragmNdBlock(ce: Record<NmbAgent, number>, ec50Mult: Record<NmbAgent, number>): number {
   let u = 0;
   let ratioW = 0;
+  let gSum = 0;
   for (const id of ['rocuronium', 'vecuronium', 'cisatracurium'] as const) {
     const pd = NMB_PD[id];
     const kd = (pd.ec50Thumb * ec50Mult[id]) / MOS_U50;
     const ui = ce[id] / kd;
     u += ui;
     ratioW += ui * (pd.ec50Dia / pd.ec50Thumb);
+    gSum += ui * pd.gamma; // the agents' own steepness, weighted as they add
   }
   if (!(u > 0)) return 0;
   const ratio = ratioW / u; // the diaphragm's potency ratio (1.73 for every agent)
   const m = (1 + ratio * MOS_U50) / (1 + MOS_U50); // f50,thumb / f50,dia
-  return 1 - marginForce(1 / (1 + u), MOS_FREE_LO / m, MOS_FREE_HI / m);
+  return 1 - marginForce(1 / (1 + u), MOS_FREE_LO / m, MOS_FREE_HI / m, gSum / u);
 }
 
 export interface TofReading {

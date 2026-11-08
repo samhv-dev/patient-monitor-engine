@@ -33,6 +33,7 @@ export const VENT_ALPHA_HYP = 0;
 export const APNOEA_IN = 0.42;
 export const APNOEA_OUT = 0.5;
 export const DIAPH_WEAK = 0.3; // diaphragm strength below which VT falls (reserve) [FIT: respiratory-depression size or diaphragm threshold; brief research/44 L2-37]
+export const DIAPH_APNOEA = 0.05; // No effective breath below 5 % strength [FIT: respiratory-depression size or diaphragm threshold; brief research/44 L2-37]; the effort itself (spont.muscle) exists from force > 0
 /**
  * The return of diaphragm ACTIVITY is not the return of BREATHING (research/26 T1). After a non-depolarising blocker
  * the first efforts (the diaphragm's force leaves 0 when its receptors' occupancy falls below the most resistant
@@ -44,7 +45,7 @@ export const DIAPH_WEAK = 0.3; // diaphragm strength below which VT falls (reser
  * so a SUSTAINED contraction (a breath) has far less force than a single twitch at the same block [TXT: Miller 10e ch.
  * 39 p. 1213, the diaphragm recovers first; the fade mechanism is the reason a twitch overstates the breath]. The
  * spontaneous VT of a non-depolarising block is capped by the weak diaphragm: VT ≤ IBW·max(VT_EFFORT_ML_KG,
- * VT_MAX_ML_KG·x^k), x = the diaphragm's force, k such that the cap reaches a resting tidal
+ * VT_MAX_ML_KG·x^k), x = (strength − DIAPH_APNOEA)/(1 − DIAPH_APNOEA), k such that the cap reaches a resting tidal
  * volume (VT_REST_ML_KG) at DIAPH_EFFECTIVE (spont.ts). Fit targets: first effort ≈ 16 min (band 12–24) with an
  * ineffective VT (owner's hypothesis 10–50 mL, below the dead space: no alveolar ventilation, no CO2 plateau, no awRR;
  * NOT yet checked against the literature — research/26 T1b follow-up); effective ventilation ≈ 30 min (band 20–50;
@@ -177,7 +178,7 @@ export function neuroResp(x: DriveInputs): NeuroResp {
   // `resp.spont.rr` at 0), so the flag and the `apnoea` neuro mark read it; the drug-derived hysteresis stays for
   // MANUAL, where there is no chemoreflex. research/14: the flag was set for 255 s at VE 8.4 L/min.
   let apnoea = x.spontRr !== undefined ? x.spontRr <= 0 : x.wasApnoeic ? veRest < APNOEA_OUT : veRest < APNOEA_IN;
-  if (strength <= 0) apnoea = true; // no force, no breath, whatever the drive (the diaphragm's margin not yet crossed)
+  if (strength < DIAPH_APNOEA) apnoea = true; // no effective breath whatever the drive (diaphragm block); the effort may exist below it
   // Upper airway: residual block (TOFR < 0.9) and sedation (DI < 60 or dOp > 0.3: tables §4.6 uaCollapse).
   // Arousal scales the RESIDUAL-BLOCK share between UA_AROUSAL (awake, Eikermann 2003) and 1 (unconscious — the
   // tables' own value); the sedation arm below is untouched, and a complete-obstruction event (`airway: 'obstructed'`,

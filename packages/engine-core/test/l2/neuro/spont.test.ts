@@ -38,17 +38,13 @@ describe('MODELED spontaneous drive (lung drive/pti/fatigue + Winter\'s)', () =>
     expect(s.paco2Set).toBeCloseTo(30.5, 9);
     expect(s.ve / 6).toBeCloseTo((6 + 1.5 * 9.5) / 6, 6);
   });
-  it('neuro on top: opioid slows the rate; a diaphragm without force stops breathing, 3 % force makes an effort (brief 93); weakness shrinks VT', () => {
+  it('neuro on top: opioid slows the rate; a blocked diaphragm (< 5 % strength) stops breathing; weakness shrinks VT', () => {
     const a = createSpontDrive();
     stepSpontDrive(a, { ...X, neuro: nr({ opioid: 2 }) });
     expect(a.rr).toBeLessThan(0.6 * 12);
     const b = createSpontDrive();
-    stepSpontDrive(b, { ...X, neuro: nr({}, 1) }); // brief 93: a diaphragm without force (its margin not crossed)
-    expect([b.rr, b.vt, b.muscle]).toEqual([0, 0, 0]);
-    const b2 = createSpontDrive();
-    stepSpontDrive(b2, { ...X, neuro: nr({}, 0.97) }); // 3 % force: an effort, the drive × the force
-    expect(b2.rr).toBeGreaterThan(0);
-    expect(b2.muscle).toBeCloseTo((b2.effort as number) * 0.03, 9);
+    stepSpontDrive(b, { ...X, neuro: nr({}, 0.97) });
+    expect([b.rr, b.vt]).toEqual([0, 0]);
     const c = createSpontDrive();
     stepSpontDrive(c, { ...X, neuro: nr({}, 0.85) });
     expect(c.vt).toBeCloseTo(500 * 0.5, 6); // strength 0.15 / DIAPH_WEAK 0.3

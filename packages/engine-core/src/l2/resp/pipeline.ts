@@ -201,7 +201,7 @@ export function ownEffort(rs: RespState, l1: L1State, neuro?: NeuroResp): { musc
   const muscle = rs.spont.muscle;
   const cap = P_MAX_CMH2O * (neuro?.pMaxMult ?? 1) * rs.lung.lp.pMax * rs.spont.fatigue; // The force the muscle can make
   const pmus = Math.min(cap, PMUS_REST_CMH2O * muscle);
-  const rr = rs.spont.rr;
+  const rr = rs.spont.effortRr ?? rs.spont.rr; // the efforts' own rhythm (a weak diaphragm efforts without a breath)
   return { muscle, pmus, ti: rr > 0 ? (SPONT_TI_FRACTION * 60) / rr : 1, triggered: rs.driver.source === 'ventilator' && rr > 0 && pmus >= TRIGGER_CMH2O };
 }
 function driverCtx(rs: RespState, l1: L1State, t: number, neuro?: NeuroResp): DriverCtx {
@@ -217,7 +217,7 @@ function driverCtx(rs: RespState, l1: L1State, t: number, neuro?: NeuroResp): Dr
     ...obstructedEffort(rs, n),
     vdSeriesMl: physicalDeadSpace(rs.pat, rs.driver.source !== 'spontaneous' && rs.driver.source !== 'none'), // ONE dead space — the physical VD, not a second expression
     // Assist-control and bucking — the MODELED drive runs on the ventilator too (gasStep)
-    triggerRr: own?.triggered ? (rs.spont as SpontDrive).rr : 0,
+    triggerRr: own?.triggered ? ((rs.spont as SpontDrive).effortRr ?? (rs.spont as SpontDrive).rr) : 0,
     ...(own ? { effortPmus: own.pmus, effortTi: own.ti, triggered: own.triggered } : {}),
     buck: l1.mode === 'modeled' && rs.driver.source === 'ventilator' && !!n && n.pMaxMult > 0.5 && n.loc < 0.5 && n.pain > 0.2,
   };
