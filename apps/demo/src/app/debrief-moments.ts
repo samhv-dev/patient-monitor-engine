@@ -11,7 +11,7 @@
 import { asV1, isV2, type ScenarioDoc } from '@pme/controller';
 import type { Grade, ScenarioDocV2 } from '@pme/controller/scenario';
 import { endOf, first, gradesOf, isEvent, objectives, report3, stringAnchorAt, type DebriefExport, type Pressure } from './debrief.ts';
-import type { Row, RunData, Sample } from './record.ts';
+import type { Row, RunData, Sample, StateBy } from './record.ts';
 
 export type Who = 'team' | 'patient' | 'scenario';
 export type KeyMoment = DebriefExport['keyMoments'][number];
@@ -37,12 +37,12 @@ export function whoOf(d: RunData, prev: string, id: string): Who {
 
 /** The who of each way a state is entered (record.ts `Row.by`, the runner's own account): the instructor's press of the
  *  team's step → the team; the transition's own rule (every pme-scenario/2 phase) → the patient; a jump → the scenario. */
-const BY: Readonly<Record<NonNullable<Row['by']>, Who>> = { press: 'team', rule: 'patient', goto: 'scenario' };
+const BY: Readonly<Record<StateBy, Who>> = { press: 'team', rule: 'patient', goto: 'scenario' };
 /** Who moved the scenario into the state of `row` from state `prev` (D4): the record's `by` first, read, never matched;
  *  a row without one (a record made before Instructor v2 IP8 kept none) falls back to the card's transitions
  *  (`whoOf`), so an old export prints as it did. */
 export function whoAt(d: RunData, row: Row, prev: string): Who {
-  return row.by ? BY[row.by] : whoOf(d, prev, (row.ev ?? '').slice('state:'.length));
+  return (row.by ? BY[row.by as StateBy] : undefined) ?? whoOf(d, prev, (row.ev ?? '').slice('state:'.length));
 }
 
 /** The pulseless spans of the kept course, [from, to]: a kept pulse loss to the next kept return of circulation; a span
@@ -123,7 +123,7 @@ export function keyMoments(d: RunData): KeyMoment[] {
       if (prev !== undefined) raw.push({ t: r.t, who: whoAt(d, r, prev), text: r.text.startsWith(STATE) ? r.text.slice(STATE.length) : r.text });
       prev = id;
     } else if (r.ev === 'pulseLoss' || r.ev === 'rosc') raw.push({ t: r.t, who: 'patient', text: r.text });
-    else if ((r.kind === 'action' || r.kind === 'remote') && (r.ev?.startsWith('drug:') || r.ev === 'fluid' || r.ev === 'shock' || r.ev === 'cpr')) raw.push({ t: r.t, who: 'team', text: r.text });
+    else if ((r.kind === 'action' || r.kind === 'remote' || r.kind === 'learner') && (r.ev?.startsWith('drug:') || r.ev === 'fluid' || r.ev === 'shock' || r.ev === 'cpr')) raw.push({ t: r.t, who: 'team', text: r.text });
   }
   // the recognition, a team moment (D5): a /2 card's marked action as pressed; a /1 tick or press only in a record that
   // keeps 'recognised' (made with the press), so an older export's moments stay as they were
