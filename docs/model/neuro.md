@@ -461,7 +461,7 @@ constant or one without a source; ABSENT when the engine does not have the mecha
 | `artefactSample` | [`l2/eeg/artefacts.ts`](../../packages/engine-core/src/l2/eeg/artefacts.ts) | The artefacts' sum at one sample, µV. |
 | `createEegState` | [`l2/eeg/pipeline.ts`](../../packages/engine-core/src/l2/eeg/pipeline.ts) | The EEG switched on at 125 Hz sample `m0`. |
 | `validateEegCommand` | [`l2/eeg/pipeline.ts`](../../packages/engine-core/src/l2/eeg/pipeline.ts) | A reason, undefined (accepted) or null (not an EEG command). |
-| `applyEegSetting` | [`l2/eeg/pipeline.ts`](../../packages/engine-core/src/l2/eeg/pipeline.ts) | Apply an accepted impedance or ecgPickup command to a running EEG (on/off are the engine's: |
+| `applyEegSetting` | [`l2/eeg/pipeline.ts`](../../packages/engine-core/src/l2/eeg/pipeline.ts) | Apply an accepted impedance or ecgPickup command to a running EEG (on/off and the model are the engine's: |
 | `advanceEeg` | [`l2/eeg/pipeline.ts`](../../packages/engine-core/src/l2/eeg/pipeline.ts) | Write the samples up to and including 125 Hz index `endM`. |
 | `spectrumOf` | [`l2/eeg/spectra.ts`](../../packages/engine-core/src/l2/eeg/spectra.ts) | The spectrum of a cortical state with its agent mix. |
 | `peakOf` | [`l2/eeg/spectra.ts`](../../packages/engine-core/src/l2/eeg/spectra.ts) | --- readers of a spectrum (the generator's and the tests' contract) --- |

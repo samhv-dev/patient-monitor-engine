@@ -13,7 +13,8 @@ import { applyRhythm, createRhythmState, planUntil, type RhythmCtx, type RhythmS
 import { DEFAULT_FLUTTER_ATRIAL_BPM, RHYTHMS } from './l2/ecg/rhythms.ts';
 import { projectLead } from './l2/ecg/vcg.ts';
 import { advanceEeg, applyEegSetting, createEegState, EEG_RATE, validateEegCommand, type EegCtx, type EegState } from './l2/eeg/pipeline.ts';
-import type { EegDeviceAction } from './types-eeg.ts';
+import { EEG_DEFAULT_MODEL, EEG_DEVICES, EEG_MODEL_IDS, type EegModelId } from './l3/eeg-devices/registry.ts';
+import type { EegDeviceAction, EegReading } from './types-eeg.ts';
 import { createFilterState, designEcgFilter, filterBand, filterSample, type Biquad } from './l3/ecg-filter.ts';
 import { createHrState, hrAveragingOf, hrMeasure, hrOnQrs, type HrAveraging, type HrMethod, type HrState } from './l3/hr.ts';
 import { resolveSkin } from '@pme/skins'; // Data-only dependency
@@ -30,8 +31,10 @@ import {
   type EngineEventType,
   type EngineOptions,
   type LeadId,
+  type Measured,
   type Modifiers,
   type MonitorEngine,
+  type NumericId,
   type PatientSnapshot,
   type Ramp,
   type RhythmId,
@@ -131,8 +134,18 @@ interface PipelineState {
   pkHooks: RhythmHookState;
   neuro: NeuroState; // NMB, depth, drive depression
   organs: OrgansState; // Brain, kidney, liver
-  eeg?: EegState; // The frontal EEG, present only while an EEG device is on (l2/eeg/pipeline.ts, plan D4)
+  eeg?: EegState & { dev: EegDev }; // The frontal EEG and the device reading it, only while on (l2/eeg/pipeline.ts, D4)
 }
+
+/** The EEG device reading the channel (l3/eeg-devices/registry.ts, plan D8): its model, the 125 Hz sample it started
+ * at, the reader's own state and its readings not yet due. */
+interface EegDev {
+  model: EegModelId;
+  m0: number;
+  st: unknown;
+  out: EngineEvent[];
+}
+const newEegDev = (model: EegModelId, m0: number): EegDev => ({ model, m0, st: EEG_DEVICES[model].create(EEG_RATE), out: [] });
 
 /**
  * The sensor-state map the `state` event carries. The states live with four owners — the ECG front end (the device
@@ -743,7 +756,14 @@ class Engine implements MonitorEngine {
       (ch, m, v) => this.hemoWrite(ch, m, v),
     );
     // The EEG (only while on, committed pass only): after the neuro and organ steps, reading what they published
-    if (ps.eeg && !lookahead) advanceEeg(ps.eeg, this.eegCtx(ps), Math.floor((end * EEG_RATE) / ECG_RATE), (m, v) => this.eegWrite(m, v));
+    if (ps.eeg && !lookahead) {
+      const fresh: number[] = [];
+      advanceEeg(ps.eeg, this.eegCtx(ps), Math.floor((end * EEG_RATE) / ECG_RATE), (m, v) => {
+        this.eegWrite(m, v);
+        fresh.push(v);
+      });
+      if (fresh.length > 0) this.readEeg(ps.eeg, fresh);
+    }
     ps.n = end + 1;
   }
 
@@ -768,6 +788,7 @@ class Engine implements MonitorEngine {
     this.st.neuro.out = keep(this.st.neuro.out);
     this.st.endo.out = keep(this.st.endo.out);
     this.st.organs.out = keep(this.st.organs.out);
+    if (this.st.eeg) this.st.eeg.dev.out = keep(this.st.eeg.dev.out);
     due.sort((a, b) => (a as { t: number }).t - (b as { t: number }).t);
     for (const e of due) {
       if (e.type !== 'state') continue;
@@ -860,7 +881,7 @@ class Engine implements MonitorEngine {
     if (pkV !== null) return pkV;
     const neuro = validateNeuroCommand(cmd); // After pk (the chain); null for every drug/vaporiser event
     if (neuro !== null) return neuro;
-    const eeg = validateEegCommand(cmd, this.st.eeg !== undefined); // `device eeg …` only (null otherwise)
+    const eeg = validateEegCommand(cmd, this.st.eeg !== undefined, EEG_MODEL_IDS); // `device eeg …` only (null otherwise)
     if (eeg !== null) return eeg;
     const organs = validateOrgansCommand(cmd); // After pk (and neuro), before blood/endo/resp — its own ids only (null otherwise)
     if (organs !== null) return organs;
@@ -1139,14 +1160,37 @@ class Engine implements MonitorEngine {
     };
   }
 
-  /** `device eeg on|off` creates or drops the EEG state and its channel; the other actions set the running EEG. */
+  /** `device eeg on|off` creates or drops the EEG state, its device and its channel; `model` starts the chosen device
+   * afresh (a different instrument on the same electrodes); the other actions set the running EEG. */
   private applyEeg(ps: PipelineState, a: EegDeviceAction): void {
     if (a.action === 'on') {
-      ps.eeg ??= createEegState(this.seed, Math.ceil((ps.n * EEG_RATE) / ECG_RATE), this.eegCtx(ps));
+      if (!ps.eeg) {
+        const es = createEegState(this.seed, Math.ceil((ps.n * EEG_RATE) / ECG_RATE), this.eegCtx(ps));
+        ps.eeg = { ...es, dev: newEegDev(EEG_DEFAULT_MODEL, es.m) };
+      }
     } else if (a.action === 'off') {
       delete ps.eeg;
       this.bufs.delete('eeg');
+    } else if (a.action === 'model') {
+      if (ps.eeg && ps.eeg.dev.model !== a.value) ps.eeg.dev = newEegDev(a.value as EegModelId, ps.eeg.m);
     } else if (ps.eeg) applyEegSetting(ps.eeg, a);
+  }
+
+  /** Hand the device this pass's new samples; each reading becomes its numerics (a `measurement` with the device's own
+   * ids, D6) and an `eegReading` (the display), stamped at the end of the samples it read. */
+  private readEeg(es: EegState & { dev: EegDev }, fresh: number[]): void {
+    const d = es.dev;
+    const dev = EEG_DEVICES[d.model];
+    for (const r of dev.read(d.st as never, fresh, es.impedanceKOhm) as EegReading[]) {
+      const t = (d.m0 + r.n) / EEG_RATE;
+      const values: Partial<Record<NumericId, Measured>> = {};
+      for (const [id, v] of Object.entries(r.numerics)) {
+        const flag = id === 'eegImp' ? (r.flags.questionable ? 'questionable' : 'valid') : r.flags.invalid ? 'invalid' : r.flags.questionable ? 'questionable' : 'valid';
+        values[id as NumericId] = { value: v ?? null, flag, at: t };
+      }
+      d.out.push({ type: 'measurement', t, values });
+      d.out.push({ type: 'eegReading', t, model: d.model, label: dev.spec.label, flags: r.flags, bands: r.bands, display: r.display });
+    }
   }
 
   /** Write one EEG sample; the buffer is created on the first write. */
