@@ -10,7 +10,7 @@ Generated at the gate (after the FU-5 merge) with `grep -rn "it.fails(" packages
 | 4 | `engine-core/l2/brain/model.test.ts:136` | check 18: PaCO2 25 → CBF 35–40 % of the anaesthetised baseline (model at CVP 6) |  |
 | 5 | `engine-core/engine/fidelity-lowflow.test.ts:56` | MODELED 3 L bleed: no technical raise/clear cycle shorter than 5 s — measured 1 (SpO2 LOW PERF at 601 s, 1.0 s) after FU-4 (was LOW PERF ×7 at 1–2 s before FU-5) | FU-4 |
 | 6 | `engine-core/engine/fidelity-lowflow.test.ts:59` | MODELED 3 L bleed: no red raise/clear cycle shorter than 5 s — measured 1 (EXTREME BRADY at 956 s, 3.6 s: the decaying PEA) after FU-4 (FU-5 follow-up) | FU-4 |
-| 7 | `engine-core/engine/fidelity-lowflow.test.ts:73` | MODELED Ali's case: no red raise/clear cycle shorter than 5 s — measured 3 EXTREME BRADY cycles (948 s +3.3, 989 s +3.1, 1000 s +3.6: the decaying PEA at ≈ 18/min) after FU-4 (FU-5 follow-up) | FU-4 |
+| 7 | `engine-core/engine/fidelity-lowflow.test.ts:73` | MODELED the owner's case: no red raise/clear cycle shorter than 5 s — measured 3 EXTREME BRADY cycles (948 s +3.3, 989 s +3.1, 1000 s +3.6: the decaying PEA at ≈ 18/min) after FU-4 (FU-5 follow-up) | FU-4 |
 | 8 | `engine-core/engine/fidelity-lowflow.test.ts:96` | ventilated normal patient (MODELED, PPV from 1 s): rest PI within ± 5 % of origin/main 1.80 — measured 1.49 (−17 %): SV₀ is the spontaneous settle (80 mL) against 68 mL under PPV; PI follows SV only until FU-4 publishes a cutaneous tone (R-FU5-9) |  |
 | 9 | `engine-core/engine/fidelity-lowflow.test.ts:110` | propofol 2 mg/kg in a ventilated patient: PI RISES after induction (the sympatholysis sign) — measured 1.49 → 1.17 (−21 %) at 180–240 s (MAP 96 → 86, SV 68 → 55): PI follows SV only; the vasodilated finger needs FU-4\ |  |
 | 10 | `engine-core/engine/circ-lowflow-arrest.test.ts:125` | ROSC rig: the continuous CPR CoPP stays inside Paradis 15–25 throughout (≥ 15 was asserted; ≤ 25 added by F1) — measured −0.4–36.6 | FU-4 |
@@ -18,7 +18,7 @@ Generated at the gate (after the FU-5 merge) with `grep -rn "it.fails(" packages
 | 12 | `engine-core/engine/clinical-suite.test.ts:122` | S4b severe tamponade, propofol 1 mg/kg: MAP < 55 within 3 min and CO −25 % (audit S4 proposal; Q2; measured MAP 59.7, CO −15 % — 57 / −15 % on the prototype) | FU-4 |
 | 13 | `engine-core/engine/clinical-suite.test.ts:130` | S5 severe tamponade, PEEP 5 → 10: CO −20 % and MAP ≥ 10 mmHg more than the same PEEP in a healthy patient (Barash; measured ΔMAP 4.1 vs 1.5, CO ×0.88 — 4 vs 1, ×0.89 on the prototype; Q2) | FU-4 |
 | 14 | `engine-core/engine/clinical-suite.test.ts:153` | S6a the same: MAP falls 40–60 % to a nadir of 30–50 over 1–3 min (the expected picture; measured nadir 27.0, −68 % — 28.7 on the prototype; Q1) | FU-4 |
-| 15 | `engine-core/engine/clinical-suite.test.ts:187` | S9 the same: SaO2 < 90 % at 5 min (truth, not the display; the proposed band SpO2 ≤ 92 at FiO2 0.5 is Ali's, item 15; measured 97.8 %) | FU-4 |
+| 15 | `engine-core/engine/clinical-suite.test.ts:187` | S9 the same: SaO2 < 90 % at 5 min (truth, not the display; the proposed band SpO2 ≤ 92 at FiO2 0.5 is the owner's, item 15; measured 97.8 %) | FU-4 |
 | 16 | `engine-core/engine/clinical-suite.test.ts:190` | S9 the same: CVP ≥ 15 and MAP < 65 at 5 min (RV failure; Q15; measured CVP 9.3, MAP 82.1) | FU-4 |
 | 17 | `engine-core/engine/clinical-suite.test.ts:214` | S13 VF + standard-quality CPR (q 0.8, no adrenaline): the continuous coronary perfusion pressure (CoPP) 15–25 mmHg (Paradis 1990; measured 25.1–28.8) | FU-4 |
 | 18 | `engine-core/engine/clinical-suite.test.ts:236` | S14 the same: MAP −30 to −45 % — measured −22.9 % with the humoral arm (−31 % on the prototype; Q1) | FU-4 |
@@ -44,7 +44,7 @@ Generated at the gate (after the FU-5 merge) with `grep -rn "it.fails(" packages
 | 38 | `engine-core/engine/obstructive-aliases.test.ts:72` | SBP < 90 at 3 min (massive PE: sustained SBP < 90) — measured 92.8 with the humoral arm (88.7 before it) | FU-4 |
 | 39 | `engine-core/engine/obstructive-aliases.test.ts:75` | CVP ≥ 15 mmHg — measured 11.5 (RV wall-stress demand added, Task 11 Step 1b) | FU-4 |
 | 40 | `engine-core/engine/obstructive-aliases.test.ts:78` | MAP < 65 mmHg — measured 78.4 (reached only at +15 min, PEA at +15.6 min) | FU-4 |
-| 41 | `engine-core/engine/obstructive-aliases.test.ts:81` | PROPOSED band (Q15, Ali): SaO2 ≤ 92 % at FiO2 0.5 — measured 97.3 (the PE row shunt +0.10 is sourced, tables §18) | FU-4 |
+| 41 | `engine-core/engine/obstructive-aliases.test.ts:81` | PROPOSED band (Q15, samhv-dev): SaO2 ≤ 92 % at FiO2 0.5 — measured 97.3 (the PE row shunt +0.10 is sourced, tables §18) | FU-4 |
 | 42 | `engine-core/engine/circ-sanity-1.test.ts:83` | propofol 2 mg/kg: MAP ≈ 70 % of baseline at 2 min (60–80 %) — measured 0.801 with the humoral arm (Task 18e; 0.72 after Task 2, 0.913 before FU-4; Q1) | FU-4 |
 | 43 | `engine-core/engine/af-rate-control.test.ts:43` | amiodarone 150 mg over 10 min: AF 130 slows by 20–30 % at its peak (10–13 min) (measured 14.0) |  |
 | 44 | `engine-core/engine/organs-renal.test.ts:39` | check 20 (MODELED hfref): low-output premise, UOP 0.1–0.15; dobutamine → CO +20–40 %, UOP 0.2–0.3 in 30–60 min |  |

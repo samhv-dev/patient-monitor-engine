@@ -16,7 +16,7 @@ branch `fu-8-followups`: plan commit `b70bfb5`, V.1 merged in from `origin/main`
 | `pnpm build` then `CI=1 pnpm test:e2e` | build clean; **60 passed, 21 skipped, 1 flaky, 0 failed** (Chromium + WebKit, 21.7 min): the flaky one was `fu5-latched` philips-like (first attempt read `APNEA live` to 308 s; passed on retry). Cause: the test read the bar's text, `data-latched` and lamp in separate round-trips, so the 2 s rotation could pair the latched APNEA's text with the live message's attribute; fixed in the test (one `page.evaluate` per sample, E-FU8-5, `75ee177`) → 4 of 4 passed under 2 workers with no retries. Only this task's screenshots are committed (`git checkout -- docs/gates` for the rest) |
 | tick bench (`tickBench(60)`, Node, same container, base `befbea6` vs FU-8 alternating, 2 × 3 runs each, idle) | p50 base **2.01 ms** (1.91–2.17), FU-8 **2.08 ms** (1.85–2.30): **+3.7 %**, inside the gate's +10 %. This container is ≈ 4× slower than the FU-4 gate's Mac (0.52 ms), so the absolute criterion is compared base-to-branch on one machine |
 | **CI on the PR head `d73f460`** | build ✓ 44.2 min, slow-a ✓ 30.6 min, slow-b ✓ **55.8 min** — against main's last run (`2473f0b`, same day): 36.3 / 22.3 / 36.5 min. slow-b holds the same 45 files; every one of them ran slower by a similar factor (×1.35–1.66, median ×1.54 — `endo-acceptance`, `pk-acceptance-pd` and `organs-renal`, which FU-8 does not touch, included), while the engine's own cost on one machine moved +2.5 % (MODELED) / +5.7 % (MANUAL) wall per sim-second, base vs FU-8, 300 sim-s × 6 runs each. So the slow-b growth is the runner, not this branch; the plan's "slow-b under 40 min" is **not met on this run** and is flagged for the orchestrator (a re-run on another runner, or FU-4's split, decides). slow-a +8.3 min includes the 18 new `fu8-*` files; build +7.9 min includes the un-pinned `fu5-latched` e2e (≈ 4 min) |
-| monitor audit after (`A1-map-ladder A2-ali-b7 A7-probe B1-rhythms`) | see §2 (A1, A2/A6, A3 rows); no `X<X`/`X>X` text and no `**CVP -…` text in any scenario |
+| monitor audit after (`A1-map-ladder A2-owner-b7 A7-probe B1-rhythms`) | see §2 (A1, A2/A6, A3 rows); no `X<X`/`X>X` text and no `**CVP -…` text in any scenario |
 | block checker (`docs/review-inputs/tools/fu-8-check-blocks.py`) | on `b70bfb5` against `origin/main` `2e94f55` (V.1 merged): Part A 146 find/replace + 24 creates, 1 chained, **0 problems**; after the merge (`--base HEAD`) 0 problems — **no block moved, none re-anchored**; Part B 28 + 3 re-checked on the Part A tree at the gate: 0 problems |
 
 The research/19 (CM) and research/20 (DV) audit cells could not be re-run: their scripts live in the orchestrator's
@@ -27,7 +27,7 @@ fixes has an `fu8-*` test that reproduces its rig (named in §2); the rest are l
 
 | Task | Commit | Result |
 |---|---|---|
-| A0 | `473b1dd` | `fu8-*.test.ts` in SLOW and SLOW_A; before-numbers reproduce the plan (A2-ali-b7 `**ABPm 66<70` at 687 s; A7-probe PI 8.21 at 181–185 s; fidelity-lowflow 9 tests with its pins; circ-hypoxic-arrest 8, asphyxial PEA +6.35 min) |
+| A0 | `473b1dd` | `fu8-*.test.ts` in SLOW and SLOW_A; before-numbers reproduce the plan (A2-owner-b7 `**ABPm 66<70` at 687 s; A7-probe PI 8.21 at 181–185 s; fidelity-lowflow 9 tests with its pins; circ-hypoxic-arrest 8, asphyxial PEA +6.35 min) |
 | A1 | `3592d8a` | live limit-alarm text, the limit in force, `held` through the hysteresis |
 | A2 | `9841849` | one QRS per agonal complex; agonal hold counts complexes; LOW PERF on-delay; 3 pins flip (E-FU8-1) |
 | A3 | `06560bc` | PI/PR restart at motion end |
@@ -52,7 +52,7 @@ fixes has an `fu8-*` test that reproduces its rig (named in §2); the rest are l
 | A22 | `24908be` | EtCO2 under CPR from pulmonary flow (E-FU8-10, E-FU8-11; proposed E-FU8-13, §6) |
 | A23 | `2281d83` | CPR artefact on the ECG |
 | A24 | `11e058c` | CPR cerebral flow recorded |
-| **A25** | **skipped** | **gated on Ali's W18** (the HR numeric in an agonal rhythm): not executed; the flicker stands at 34 invalid samples / 16 flips (`fu8-agonal-qrs`) |
+| **A25** | **skipped** | **gated on the owner's W18** (the HR numeric in an agonal rhythm): not executed; the flicker stands at 34 invalid samples / 16 flips (`fu8-agonal-qrs`) |
 | A26 | `45f50a5` | UNPROTOTYPED → measured, then built (§5) |
 | A27 | `17342bb` | UNPROTOTYPED → measured; the cause was not the plan's (§5) |
 | A28 | `7c7c734` | drug resting-output reference in L/min (E-FU8-12) |
@@ -65,8 +65,8 @@ fixes has an `fu8-*` test that reproduces its rig (named in §2); the rest are l
 |---|---|---|---|---|
 | A1 F1 | MANUAL MAP ladder (`fu8-alarm-text`) | text frozen `**ABPm 60<70`, gap 25 mmHg | 470 rows, gap 0, one raise | **470 rows, gap 0 mmHg**, one raise; last text `**ABPm 38<70` |
 | A1 F6 | ABPs low 90: 85 → 90 → 92 | — | `**ABPs 85<90` kept | as plan (`held`) |
-| A1 | FU-4 page, Ali's tamponade (shot a1) | `**ABPm 66<70` frozen | — | `**ABPm 23<70` at ART 25/22 (23) |
-| A2 F3 | fidelity-lowflow Ali's case / 3 L bleed | 3 / 1 EXTREME BRADY cycles | 0 / 0 | **0 / 0** (pins flip) |
+| A1 | FU-4 page, the owner's tamponade (shot a1) | `**ABPm 66<70` frozen | — | `**ABPm 23<70` at ART 25/22 (23) |
+| A2 F3 | fidelity-lowflow the owner's case / 3 L bleed | 3 / 1 EXTREME BRADY cycles | 0 / 0 | **0 / 0** (pins flip) |
 | A2 | 3 L bleed LOW PERF | raised 601 s, cleared 602 s | none | **none** (pin flips) |
 | A2+A6 | MANUAL agonal 30–300 s (`fu8-agonal-qrs`) | 51 complexes, 125 invalid, **56 flips** | 53 / 34 / 16 | **53 / 34 / 16**; at A2 alone still 56 (deviation 1) |
 | A3 F5 | MANUAL motion 120–180 s | PI 8.21/8.21/8.18/8.23, PR 81 at 181–185 s | PI --, 1.95/1.99/2.00/1.91 | **PI -- (179–181), 1.95/1.99/2.00/1.91, PR 73–75** (audit) |
@@ -115,7 +115,7 @@ the plan's +9.92)**; from A19 on it is **+9.83** (plan +9.75), at the gate +9.83
 | Row (test / rig) | origin/main | after FU-8 (measured) | plan | Task | Kind |
 |---|---|---|---|---|---|
 | S8 tension PTX, PEA ≤ 10 min (`clinical-suite`) | +9.75 min | +10.00 at A10, **+9.83** from A19 | +9.92 / +9.75 | A10, A19 | passing, band unchanged |
-| S4a Ali's tamponade, PEA | +165 s | +175 s at A18, **+170 s** from A19 | +170 s | A2–A19 | passing |
+| S4a the owner's tamponade, PEA | +165 s | +175 s at A18, **+170 s** from A19 | +170 s | A2–A19 | passing |
 | S13 VF CPR CoPP (`it.fails` 15–25) | 25.1–28.8 | **24.9–28.0** | 24.9–28.0 | A19 | pin holds; title re-stated (E-FU8-9) |
 | 10-min VF CPR kIsch < 0.9 | `it.fails`, max 0.91 | **0.89** (end 0.85) | 0.89 | A19 | pin FLIPS (E-FU8-9) |
 | class IV ROSC, CPR + 2 L + adrenaline (`circ-lowflow-arrest`) | +119 s (band ≤ 180) | **+260 s** at A19, **+265 s** from A22 | +260 s | A19 | RE-STATED ≤ 300 s (E-FU8-9, ruling 3) |
@@ -126,7 +126,7 @@ the plan's +9.92)**; from A19 on it is **+9.83** (plan +9.75), at the gate +9.83
 | asphyxia FiO2 1 reversal | 7 s | **7 s** | 7 s | A10 | passing |
 | asphyxial PEA decay: agonal / asystole after the arrest | +2 / +75 s | **+76 / +149 s** | +76 / +149 | A6, A10 | passing |
 | af-pulse-deficit non-ejecting beats (MODELED) | 14.4 % | **16.7 %** (MANUAL 11.4 %) | ≈ 16.9 % | A6/A10 | passing (10–20 %) |
-| Ali's tamponade on the monitor (`audit:monitor A2-ali-b7`) | `***ASYSTOLE` 936.2 s; EXTREME BRADY 948/989/1000 s cycles | **`***EXTREME BRADY` from 947.0 s, `***ASYSTOLE` 1096.9 s** | 947 / 1097 | A2, A6 | display (W20) |
+| The owner's tamponade on the monitor (`audit:monitor A2-owner-b7`) | `***ASYSTOLE` 936.2 s; EXTREME BRADY 948/989/1000 s cycles | **`***EXTREME BRADY` from 947.0 s, `***ASYSTOLE` 1096.9 s** | 947 / 1097 | A2, A6 | display (W20) |
 | arrest-etco2 "≥ 17 at +2 min" | `it.fails`, 16.5 | **18.0** | 18.0 | A22 | pin FLIPS (E-FU8-10) |
 | R39-2 quality map; +10 breaths/min (`cpr-etco2`) | 13.2 / 20.3 / 24.8 / 27.4; −3 | **20.5 / 25.2 / 26.6 / 26.6; −4.8** | 20.4 / 25.2 / 26.6 / 26.6; −4.8 | A22 | become `it.fails` (E-FU8-10, W22) |
 | V.1 `resp-child-rest` "CPR keeps the adult reference" | child 0.29 = adult 0.29 | **child 0.071, adult 0.363** | not in the plan | A22 | becomes `it.fails` (**proposed E-FU8-13**, §6) |
@@ -174,7 +174,7 @@ neonate CO ≥ 150 mL/kg/min — **0.31–0.32 L/min = 89–91** (W12); A22 `cpr
 26.6**, +10 breaths **−4.8** (W22); A22 `resp-child-rest` (V.1) — **child 0.071, adult 0.363** (proposed E-FU8-13); A24
 `fu8-cpr-brain` CBF 0.30–0.40 — **0.450**; A26 `fu8-lvad` DV-17 1.5 L — **3.68 L/min, no suction**; A26 DV-16d PI 3–5 —
 **6.8**. **Flipped to `it`:** A2 ×3 (`fidelity-lowflow`: LOW PERF 1 → 0 cycles; EXTREME BRADY 1 → 0 in the 3 L bleed and
-3 → 0 in Ali's case); A19 ×2 (`hemo-acceptance` 7b 30.6 → 25.2; `clinical-suite` VF-CPR kIsch 0.91 → 0.89); A22 ×1
+3 → 0 in the owner's case); A19 ×2 (`hemo-acceptance` 7b 30.6 → 25.2; `clinical-suite` VF-CPR kIsch 0.91 → 0.89); A22 ×1
 (`arrest-etco2` 16.5 → 18.0); A28 ×1 (`neuro-engine` DI nadir 52 → 51). Title re-stated, pin held: S13 (24.9–28.0).
 
 **Exceptions used:** E-FU8-1 (A2), E-FU8-2 (A15, A16), E-FU8-3 (A7; snapshot diff +9 AGENTS lines only), E-FU8-4 (A10),
@@ -192,7 +192,7 @@ edit its property (child ≈ adult) will need re-stating by FU-6 too (child 0.30
 
 ## 7. Screenshots (`docs/gates/fu-8/`, ≤ 60 KB; Chromium, scale 0.6, a23 at 0.5)
 
-- `a1-ali-tamponade-abpm-live.png` — FU-4 page, Ali's tamponade at MAP 23: `**ABPm 23<70` on the bar, ART 25/22 (23).
+- `a1-owner-tamponade-abpm-live.png` — FU-4 page, the owner's tamponade at MAP 23: `**ABPm 23<70` on the bar, ART 25/22 (23).
 - `a4-fu5-latched-{philips,saadat}-like.png` — the fu5-latched e2e pair (A4 run).
 - `a7-agents-tile-{philips,saadat}-like.png` — stage7f induction +720 s: EtAA 1.2 %, MAC 0.7 on both skins.
 - `a19-tamponade-cpr-arterial.png` — tamponade PEA + CPR q 0.8 (+90 s): ART 38/17 (24).
@@ -229,7 +229,7 @@ edit its property (child ≈ adult) will need re-stating by FU-6 too (child 0.30
 8. **A1's latched-text test** failed on main as well (the plan said it would pass there): the text was frozen at the raise.
 9. Renderer counts differ from the plan's by the base (V.1's main has 85; +2 at A7, +2 at A17 = 89).
 
-## 9. Handed to / Waiting on Ali — numbers that moved
+## 9. Handed to / Waiting on samhv-dev — numbers that moved
 
 - **FU-6:** V.1's CPR guard (`l2/resp/pipeline.ts`) — now with its test pinned (§6): child CPR coRatio 0.071 on the
   merged tree. Everything else in the plan's "Handed to" table stands.

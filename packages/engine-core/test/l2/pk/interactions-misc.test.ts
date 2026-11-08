@@ -31,7 +31,7 @@ describe('single-target rows', () => {
     expect(f16).toBeLessThanOrEqual(0.3);
   });
   // R45: with the plan's Hill of 1 on a linear PK no EC50 gives both bands — 4 mg/kg < 5 % needs c4 < 0.25·EC50 and
-  // 16 mg/kg ≥ 15 % needs c4 ≥ 0.375·EC50. The row (emax −0.25, ec50 12) is kept as written; Ali's calibration item.
+  // 16 mg/kg ≥ 15 % needs c4 ≥ 0.375·EC50. The row (emax −0.25, ec50 12) is kept as written; the owner's calibration item.
   it.fails('sugammadex (DI-45): 4 mg/kg gives < 5 % HR fall — measured 13.4 % (16 mg/kg 20.5 %)', () => {
     expect(hrFall('sugammadex', 4)).toBeLessThan(0.05);
   });
@@ -164,7 +164,7 @@ describe('inotrope / vasodilator sizes', () => {
     return out;
   }
   // R45 (Task 17 UNPROTOTYPED): the plan's α2B entry (+0.18 at 0.35) never outweighs the row's own SVR −0.3 at 1 reference
-  // dose during the load, so there is no net early rise. Sizes as written; DI-60's early item stays open (Q to Ali).
+  // dose during the load, so there is no net early rise. Sizes as written; DI-60's early item stays open (Q to samhv-dev).
   it.fails('dexmedetomidine, the α2B arm: a fast load raises SVR early (5–10 min) and the rise then decays (DI-60; T6.3) — measured SVR × 0.994 at most', () => {
     const svr = dexSvr();
     const early = Math.max(...svr.slice(300, 600));

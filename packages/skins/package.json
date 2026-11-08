@@ -3,7 +3,7 @@
   "version": "1.0.0-rc.5",
   "description": "Data-only monitor skins and themes (saadat-like, philips-like, zoll-like, ge-like, mindray-like, lifepak-like) with JSON Schemas and provenance.",
   "license": "MIT",
-  "author": "Ali Mahdavi",
+  "author": "samhv-dev",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/samhv-dev/patient-monitor-engine.git",

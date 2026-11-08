@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - Paths are relative to `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo`; run every command from there. Stage 1, the Stage 1.1 gate fixes (R15–R19, merge `e8f00f9`) and Stage 6a (controllers, merge `8e46032`) are on `main`; every find/replace block in this plan was checked to occur exactly once in `8e46032`. If `main` has moved, re-check each block before applying it.
-- **Branch and PR (R20):** all work happens on branch `stage-2-haemodynamics` (Task 1 creates it from `main`); the last task pushes it and opens a pull request with `gh pr create`. Never push to `main`, never merge — Ali speaks the merge.
+- **Branch and PR (R20):** all work happens on branch `stage-2-haemodynamics` (Task 1 creates it from `main`); the last task pushes it and opens a pull request with `gh pr create`. Never push to `main`, never merge — samhv-dev speaks the merge.
 - **Parallel-work partition (binding).** Stage 5 (rhythm library) is being built at the same time on its own branch and owns `packages/engine-core/src/l2/ecg/**` and `packages/engine-core/templates/**`. Stage 6a (`packages/controller/**`, its demo pages) has already merged; this stage touches it only where the grown unions and the delivered engine `state` event require it (one source file, one test file; Tasks 1 and 13). This stage OWNS `src/l1/**`, `src/l2/hemo/**`, `src/l2/pleth/**`, `src/l3/nibp/**`, `src/l3/pressure-numerics/**`, `src/l3/pulse/**`, `src/types-hemo.ts`. Rules: **never edit `src/l2/ecg/**`** (read beats only through `RhythmState.records` and `RhythmState.id`); edits to `engine.ts`, `types.ts` and `index.ts` are ADDITIVE (new lines, each marked `// Stage 2`; no reordering or refactoring of existing code); new public type variants live in `src/types-hemo.ts` and are added to the existing unions with one line each.
 - Everything in Stages 0–1's constraints still applies: strict TS with `noUncheckedIndexedAccess` and `erasableSyntaxOnly` (no enums, no parameter properties); `.ts` import extensions; conventional commits; clean-room (no code from ECGSYN, NeuroKit2, Python Anesthesia Simulator or any GPL/unlicensed repo — every equation cites the brief/research section it comes from, or `[ENG]`).
 - Commit messages end with the trailer `Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>` (if your harness gives you a different attribution line, use that one instead). Commands below show the trailer via `-m`.
@@ -5483,7 +5483,7 @@ Gate question: "Do the ABP and pleth follow the ECG with the right delay and sha
 | Acceptance 11: a-wave delay; AF | |
 | Determinism hash; 24 h no drift (125 Hz) | |
 | Demo screenshots (docs/gates/stage-2/*.png) reviewed | |
-| Realism review (informative): ABP and pleth shape vs Ali's OR monitor | |
+| Realism review (informative): ABP and pleth shape vs the owner's OR monitor | |
 
 Plan decisions needing a ruling: peaking radial transfer (2), ejection skew (3), E(k) valve-opening map (4), Frank–Starling carry-over (5), NIBP envelope width factor 1.0 (8), exp ramp τ = duration/3 (14).
 Open research item: Weissler PEP intercept by sex (research 03 §11 #10).
@@ -5521,7 +5521,7 @@ BODY
 )"
 ```
 
-Expected: the PR URL. Stop here: Stage 3 starts only after the orchestrator's gate review and Ali's merge (R11, R20).
+Expected: the PR URL. Stop here: Stage 3 starts only after the orchestrator's gate review and the owner's merge (R11, R20).
 
 ---
 

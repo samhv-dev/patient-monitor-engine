@@ -36,7 +36,7 @@ export const OTHER_ROWS: DrugRow[] = [
   { id: 'potassiumChloride', name: 'Potassium chloride', cls: 'electrolyte', amountUnit: 'mmol', pk: blood, shared: 'blood', pd: [],
     rateActsVia: '7c potassium pool (ECF K + Cl, solutes.ts)',
     maxRatePerH: { amount: 20, src: 'peripheral line 10 mmol/h [chapter not verified], central up to 20 mmol/h with ECG monitoring [TXT: Miller 10e ch. 43 p. 1355; Stoelting Co-Existing 8e ch. 20 p. 404]' },
-    doses: '10 mmol/h peripherally, up to 20 mmol/h centrally with monitoring; never an iv bolus', onset: 'plasma K ≈ +0.25 mmol/L per 20 mmol in hypokalaemic ICU patients (Kruse 1990, PMID 2310280; grade C)', ir: '?', src: 'Ali 2026-10-10; Miller 10e ch. 43 p. 1355; Co-Existing 8e ch. 20 p. 404; Kruse 1990 (PMID 2310280)', tag: 'TXT' },
+    doses: '10 mmol/h peripherally, up to 20 mmol/h centrally with monitoring; never an iv bolus', onset: 'plasma K ≈ +0.25 mmol/L per 20 mmol in hypokalaemic ICU patients (Kruse 1990, PMID 2310280; grade C)', ir: '?', src: 'samhv-dev 2026-10-10; Miller 10e ch. 43 p. 1355; Co-Existing 8e ch. 20 p. 404; Kruse 1990 (PMID 2310280)', tag: 'TXT' },
   { id: 'sodiumBicarbonate', name: 'Sodium bicarbonate 8.4 %', cls: 'electrolyte', amountUnit: 'mmol', pk: blood, pd: [], doses: '1 mmol/kg (1 mL/kg of 8.4 %)', onset: 'pH ↑ at once; EtCO2 +5 mmHg at 90 s (7c decision 14)', ir: '?', src: '7c plan decision 14', tag: 'TXT' },
   // The row's insulin is the plain insulin row's insulin — the same PK and the same K⁺ pharmacodynamics (`kShift` →
   // bus.metabolic.kShift → the blood model), so the blood model's empirical whole-effect curve is retired whenever the
@@ -99,7 +99,7 @@ export const OTHER_ROWS: DrugRow[] = [
     maxDose: { amount: 3, perKg: true, scope: 'cumulative', src: 'M10 Table 25.6, plain' },
     doses: 'max 3 mg/kg (200 mg plain / 250 with epinephrine, M10 Table 25.6)', onset: 'as bupivacaine with a higher CV threshold', ir: '?', src: 'M10 ch. 25; LAST_THRESHOLDS', tag: 'TXT' },
   { id: 'lipidEmulsion', name: 'Lipid emulsion 20 %', cls: 'lipid', amountUnit: 'mL', pk: gammaPk(1.5, true, 60, 1800, 0.25), pd: [],
-    doses: '1.5 mL/kg over 1 min, then 0.25 mL/kg/min (ASRA 2020)', onset: 'lipid sink: free LA ↓ up to 50 % [FIT: lipid sink free local anaesthetic fall (contradicts its own Miller citation); brief research/44 X-06]; M10 p. 762: cardiac bupivacaine −11 % in 3 min', ir: '?', src: 'ASRA 2020; M10 ch. 25 p. 762', tag: 'ENG' },
+    doses: '1.5 mL/kg over 1 min, then 0.25 mL/kg/min (ASRA 2020)', onset: 'lipid sink (M10 ch. 25 p. 762): cardiac bupivacaine −11 % within 3 min, cerebral −18 % within 15 min (PBPK estimates; no significant sink in human volunteers, Litonius 2012)', ir: '?', src: 'ASRA 2020 (dose); M10 ch. 25 p. 762 (sink: LIPID_SINK_CARDIAC/CEREBRAL in pk/pipeline.ts)', tag: 'TXT' },
   // --- placeholders (panel only; no engine effect in v1) ---
   // TXA stays INERT until a coagulation model lands. Its dose log (bus.doses) is what that model will read, so the
   // row must not be removed: the fibrinolysis target will be added to THIS row.

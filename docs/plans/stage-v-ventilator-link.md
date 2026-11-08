@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Bring Ali's ventilator simulator (v1.9, Hamilton-style cockpit) into this repo as `@pme/ventilator` — its mechanics engine ported to tick-driven TypeScript and proven bit-exact against traces captured from the original — and link it both ways to the patient engine: ventilator → `externalDrive` VentFrames at 50 Hz, engine → `lungState` into the ventilator's lung; add a sourced 39-row lung-pathology catalogue (R36/R37), the Hamilton front end as `apps/demo/vent-hamilton.html`, and a combined `apps/demo/vent-link.html` (ventilator + monitor, pathology picker, ten scripted demonstrations).
+**Goal:** Bring the owner's ventilator simulator (v1.9, Hamilton-style cockpit) into this repo as `@pme/ventilator` — its mechanics engine ported to tick-driven TypeScript and proven bit-exact against traces captured from the original — and link it both ways to the patient engine: ventilator → `externalDrive` VentFrames at 50 Hz, engine → `lungState` into the ventilator's lung; add a sourced 39-row lung-pathology catalogue (R36/R37), the Hamilton front end as `apps/demo/vent-hamilton.html`, and a combined `apps/demo/vent-link.html` (ventilator + monitor, pathology picker, ten scripted demonstrations).
 
 **Architecture:** `packages/ventilator` holds (1) the engine: the original's `S` config and `P` physics as plain JSON `VentState`, one pure `stepVent` per 5 ms (4 Euler sub-steps), 4 steps per 20 ms engine tick; (2) alarms and the VentFrame builder; (3) the lung input (lungState as a relative change of the profile lung) and an interim PEEP-recruitment → shunt model; (4) the pathology catalogue and its mapping to ventilator mechanics; (5) the link — a transport-agnostic core (`linkTick`/`linkEvent`), an in-process lockstep link for tests, and a window link over BroadcastChannel in which the ENGINE is the master clock (frames are stamped with engine ticks; the ventilator never runs more than 1.5 s ahead). Engine-core gets ONE additive change: an optional `palvCmH2O` (and `mode`) on the VentFrame in a new `types-vent-link.ts`, read with `??` in the external drive, so intrinsic PEEP reaches the venous-return coupling. The demo pages reuse the original markup/CSS verbatim and a TypeScript port of its UI.
 
@@ -21,7 +21,7 @@
 - **Fidelity rule:** `src/mechanics.ts` and `src/vent.ts` keep the original's arithmetic in the original order (the LCG's float multiply included). The only behavioural change to v1.9 physics is Correction C1 (Task 5), which the orchestrator may reject on its own; everything marked `// Stage V` is new behaviour that never runs in the reference scenarios.
 - Visual checks and screenshots use headless system Chrome (`channel: 'chrome'`), never the desktop Browser pane. Gate screenshots ≤ 60 KB (the script lowers JPEG quality until they fit).
 - No logos, no vendor names in UI text beyond "Hamilton-style" in comments/docs; the original's credit line ("Independent educational reimplementation — not affiliated with any manufacturer.") stays on the page.
-- Evidence (R37): every number in the pathology catalogue carries a source or `ENG` with its reasoning; textbook citations use the extracted sentence. The catalogue is data for Ali's review (§4b of the parameter tables), not settled physiology.
+- Evidence (R37): every number in the pathology catalogue carries a source or `ENG` with its reasoning; textbook citations use the extracted sentence. The catalogue is data for the owner's review (§4b of the parameter tables), not settled physiology.
 
 ## What the original engine contains (read of `ventilator-sim-hamilton.html` v1.9, 595 lines)
 
@@ -33,7 +33,7 @@
 ## Decisions this plan makes where the spec was silent or the pieces did not fit
 
 1. **Port first, bit-exact.** Ten reference scenarios are captured from the ORIGINAL file in headless Chrome (its rAF loop disabled, `stepPhysics` called by hand, 50 Hz rows of Paw/flow/volume/Pmus/phase/displayed Paw + final numerics). The port runs the same setup strings (the test binds `S`, `setMode`, `loadPreset`, `runScenario` to the port) and must match to the fixture's 0.001 rounding. Prototype: every trace matches to ≤ 5 × 10⁻⁴ (pure rounding) on all six columns, and breath counts and final PIP/PLAT/RR/VTE/MV/auto-PEEP/Pmean match to 2 decimals.
-2. **Correction C1 (VC volume cycling).** v1.9 cycles a VC breath when the ABSOLUTE lung volume (`vtDelivered = V`) reaches VT, so trapped gas shortens every breath and caps dynamic hyperinflation (COPD at RR 20 delivered 275 of 560 mL; the breath-stacking scenario's stacked breath was 104 mL). The correction measures the breath's own volume (`V − breathVstart`). It changes 3 of 10 reference traces from the first VC breath that starts on trapped gas (3.26 s, 1.08 s, 3.26 s); the fidelity test compares those three bit-for-bit up to that time and a separate test asserts the corrected behaviour. Without C1 the COPD demonstration shows MAP −5 mmHg instead of −20 (both measured). **Ali to confirm at the gate** (it changes his engine's behaviour); Task 5 is separately revertible.
+2. **Correction C1 (VC volume cycling).** v1.9 cycles a VC breath when the ABSOLUTE lung volume (`vtDelivered = V`) reaches VT, so trapped gas shortens every breath and caps dynamic hyperinflation (COPD at RR 20 delivered 275 of 560 mL; the breath-stacking scenario's stacked breath was 104 mL). The correction measures the breath's own volume (`V − breathVstart`). It changes 3 of 10 reference traces from the first VC breath that starts on trapped gas (3.26 s, 1.08 s, 3.26 s); the fidelity test compares those three bit-for-bit up to that time and a separate test asserts the corrected behaviour. Without C1 the COPD demonstration shows MAP −5 mmHg instead of −20 (both measured). **samhv-dev to confirm at the gate** (it changes his engine's behaviour); Task 5 is separately revertible.
 3. **Time base.** One ventilator step is 5 ms; the ventilator advances by whole 20 ms engine ticks (4 steps) and sends ONE frame per tick (50 Hz, R27's ceiling). In process the two run in lockstep (vent to t → frame → `engine.advanceTo(t)` → lungState to the vent). Across windows the ENGINE is the master clock: the monitor side stamps each frame `atTick = ventTick + offset` (offset learnt from the first unstamped dispatch, which returns engine tick + 1, plus a 5-tick lead; it only grows by lateness the engine reports) and publishes a `clock` limit derived from engine event timestamps; the ventilator never runs more than 75 ticks (1.5 s) ahead. Pause and time-scale messages go both ways. Measured in headless Chrome: ×1 and ×4 exact, ventilator 30 ms ahead; at ×10 the headless worker holds only ×4 and the ventilator stays 1.33 s ahead (without the limit it ran 10× ahead and breath detection read RR 100).
 4. **Intrinsic PEEP must reach the circulation → optional `palvCmH2O` on the VentFrame.** Stage 3's coupling acts on the mean of the frames' pressure; mean AIRWAY pressure barely sees gas trapping (Paw = set PEEP throughout expiration). The ventilator knows alveolar pressure, so frames carry it and the external drive integrates `palvCmH2O ?? pawCmH2O` (new file `types-vent-link.ts`, three `??` reads — a Paw-only frame behaves exactly as before; Stage 3's u(t) reference `U_REF_CMH2O` is itself an alveolar swing). Measured: COPD GOLD 3–4 at RR 20 has mean Palv 21.7 vs mean Paw 9.8 cmH2O. `mode` rides along (R27 lists it) and is not consumed.
 5. **Volume in the frame = the breath's own volume** (`V − breathVstart`, floor 0), like a ventilator's VT trace, so trapped gas never inflates the engine's VT; pause and inspiratory hold count as inspiration (Ti includes the pause, as ventilators report it).
@@ -44,7 +44,7 @@
 10. **Window link has its own tiny protocol** (`pme-vent/<session>` BroadcastChannel: `cmds`, `lungState`, `clock`, `time`, `control`), not the controller's HostSession: the ventilator is a device on the host, not a controller, and the controller's samples guard/roles add nothing here. The combined page hosts the ventilator in an `<iframe>` (its own window context, exactly the path a separate window uses).
 11. **Freeze** freezes the ventilator DISPLAY only (v1.9 also stopped the physics; with a patient behind it the physics cannot stop — frames would stop and the engine's 5 s drive watchdog would call apnoea). Holds run on sim time (v1.9 ran 2 steps per animation frame).
 12. **Profiles = pathology rows.** The picker lists all 39 catalogue rows (grouped); each row maps to a patient (`PatientProfile` fields that exist today: size, sex, age, baseline; obese/pregnant/neonate/COPD/HF differ from the 70 kg adult), the ventilator lung (`mechanicsToVent`), the recruitment curve and stand-ins. Expiratory resistance above inspiratory is expressed with v1.9's flow-limitation term using a custom factor (`eflK = R_insp/R_exp`, no stenting).
-13. **Catalogue sourcing (R37).** The three local textbooks were extracted to text with PyMuPDF and searched; each row cites the sentences found (Miller 10e by PDF page — its running heads carry no chapter number in extraction; Co-Existing 8e and Dellinger 5e by chapter and printed page). Where no sentence gives the number, the value is `ENG` with its reasoning, listed for Ali in §4b. Signature bands are the clinically reported ranges at the reference settings; the per-row test runs the ventilator model and requires plateau, driving pressure, auto-PEEP and peak−plateau inside them (it guards the mapping and internal consistency; the bands themselves are the review item).
+13. **Catalogue sourcing (R37).** The three local textbooks were extracted to text with PyMuPDF and searched; each row cites the sentences found (Miller 10e by PDF page — its running heads carry no chapter number in extraction; Co-Existing 8e and Dellinger 5e by chapter and printed page). Where no sentence gives the number, the value is `ENG` with its reasoning, listed for samhv-dev in §4b. Signature bands are the clinically reported ranges at the reference settings; the per-row test runs the ventilator model and requires plateau, driving pressure, auto-PEEP and peak−plateau inside them (it guards the mapping and internal consistency; the bands themselves are the review item).
 14. **Test imports across packages.** The link tests read cardiac output with `cardiacOutput` from `../../engine-core/src/l2/gas/coupling.ts` through the engine snapshot (as Stage 3's `hemoOf` does) — test-only, no runtime dependency.
 
 ## Prototype results (a copy of `main` `32b539f` with exactly the code in this plan)
@@ -103,7 +103,7 @@ Full run: `typecheck` clean in every package; `@pme/ventilator` **87 tests** (13
 | `apps/demo/e2e/vent-link.e2e.ts`, `apps/demo/scripts/vent-shots.mjs` | browser test; gate screenshots |
 | `apps/demo/{package.json,vite.config.ts,index.html}` | one line each |
 | `NOTICES.md` | N-060 (the fork), N-061 (rtmaven inspiration note) |
-| `docs/gates/stage-V.md`, `docs/gates/stage-V/*.jpg`, `docs/physiology/stage-7-parameter-tables.md` §4b | gate evidence; the catalogue for Ali's review |
+| `docs/gates/stage-V.md`, `docs/gates/stage-V/*.jpg`, `docs/physiology/stage-7-parameter-tables.md` §4b | gate evidence; the catalogue for the owner's review |
 
 ## Tasks
 
@@ -125,7 +125,7 @@ Full run: `typecheck` clean in every package; `@pme/ventilator` **87 tests** (13
 16. Window link: BroadcastChannel port, monitor side, ventilator driver
 17. Demo: the Hamilton front end (`vent-hamilton.html`)
 18. Demo: the combined page (`vent-link.html`) with picker and demonstrations
-19. Gate screenshots and the catalogue §4b for Ali
+19. Gate screenshots and the catalogue §4b for samhv-dev
 20. Gate note
 21. Full verification and PR
 
@@ -169,7 +169,7 @@ describe('ventilator-simulator reference copy', () => {
   it('is v1.9 exactly (sha256) and has its licence', () => {
     const sha = createHash('sha256').update(readFileSync(ref('ventilator-sim-hamilton.v1.9.html'))).digest('hex');
     expect(sha).toBe('47b31a2304b94c1e93142c822c10dd405c0fd5f8588821c26d144997de347472');
-    expect(readFileSync(ref('LICENSE'), 'utf8')).toMatch(/MIT License\s+Copyright \(c\) 2026 Ali Mahdavi/);
+    expect(readFileSync(ref('LICENSE'), 'utf8')).toMatch(/MIT License\s+Copyright \(c\) 2026 samhv-dev/);
   });
 });
 ```
@@ -248,12 +248,12 @@ shasum -a 256 packages/ventilator/reference/ventilator-sim-hamilton.v1.9.html   
 
 (`../../../ventilator-simulator` is `projects/ventilator-simulator`. If the hash differs, STOP and report: the source of truth moved after R35.)
 
-The original project has no licence file; Ali's grant for the fork (R35) is recorded beside the copy. **Create `packages/ventilator/reference/LICENSE`:**
+The original project has no licence file; the owner's grant for the fork (R35) is recorded beside the copy. **Create `packages/ventilator/reference/LICENSE`:**
 
 ```
 MIT License
 
-Copyright (c) 2026 Ali Mahdavi
+Copyright (c) 2026 samhv-dev
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -279,7 +279,7 @@ SOFTWARE.
 Append these two rows at the end of the table in `NOTICES.md` (IDs N-060/N-061 are a Stage V block, clear of N-001–N-013 and N-050–N-052 on every branch; the Pulse ports of Stage 7c will take their own block):
 
 ```markdown
-| N-060 | Mechanical ventilator simulator v1.9 (`ventilator-sim-hamilton.html`, projects/ventilator-simulator commit 65d80b6, 2026-07-19) — Ali Mahdavi's own project; reference copy at `packages/ventilator/reference/ventilator-sim-hamilton.v1.9.html` | Local repository (no public URL); author Ali Mahdavi | MIT (the original carried no licence file; the author's grant is recorded in `packages/ventilator/reference/LICENSE`) | Forked (ruling R35): the mechanics engine is ported to TypeScript in `packages/ventilator/src` (bit-exact against captured traces, plus correction C1), the Hamilton-style front end to `apps/demo/vent-hamilton.html` + `src/vent/`; the reference copy is used only to capture fidelity traces and is not bundled | 2026-09-25 |
+| N-060 | Mechanical ventilator simulator v1.9 (`ventilator-sim-hamilton.html`, projects/ventilator-simulator commit 65d80b6, 2026-07-19) — samhv-dev's own project; reference copy at `packages/ventilator/reference/ventilator-sim-hamilton.v1.9.html` | Local repository (no public URL); author samhv-dev | MIT (the original carried no licence file; the author's grant is recorded in `packages/ventilator/reference/LICENSE`) | Forked (ruling R35): the mechanics engine is ported to TypeScript in `packages/ventilator/src` (bit-exact against captured traces, plus correction C1), the Hamilton-style front end to `apps/demo/vent-hamilton.html` + `src/vent/`; the reference copy is used only to capture fidelity traces and is not bundled | 2026-09-25 |
 | N-061 | RT Maven ventilator simulator (inspiration note, carried from the ventilator-simulator README/ROADMAP) | https://sim.rtmaven.com | Not applicable — nothing copied | The ventilator-simulator's v1.0 "Classic" skin was designed from a feature description of this simulator (no code, assets or screen captures); the Hamilton-style front end ported here descends from that project, so the credit travels with it | 2026-09-25 |
 ```
 
@@ -1795,7 +1795,7 @@ git push origin stage-v-ventilator-link
 - Consumes: `createVent`, `advanceVent` (Task 3); `RecruitParams` (Task 8).
 - Produces: `Band { value, lo, hi }`, `Cite { field, src }`, `Wired = 'vent'|'engine-now'|'stage7a'|'stage7b'|'not-modelled'`, `LungPathology` (fields: `id, label, group, complianceMl, rInsp, rExp, autoPeepTendency, shunt, deadSpaceFraction, diffusionFactor, pvrMultiplier, hpvSensitivity, recruitability, recruitP50?, signature { plateau, drivingPressure, autoPeep, peakMinusPlateau }, ref?, wired, monitor, pitfall, sources, disagreements? }`), `REF_SETTINGS`, `LUNG_PATHOLOGIES` (grows to 39 rows by Task 11); `mechanicsToVent(row): Partial<VentConfig>`; `recruitOf(row): RecruitParams | null`; `Signature`; `referenceRun(row): { vs, sig }`.
 
-R36 rows are grouped into three tasks (9: normal, obstructive, airway; 10: parenchymal, restrictive; 11: vascular, pleural, device, special). Every value follows R37: the default is where the sources agree, the band is what they span, citations are extracted textbook sentences (Miller 10e by PDF page; Co-Existing 8e and Dellinger 5e by chapter/printed page), `ENG` marks judgement with its reason. These are for Ali's review (Task 20 publishes them as §4b), so copy them exactly — do not "improve" numbers here.
+R36 rows are grouped into three tasks (9: normal, obstructive, airway; 10: parenchymal, restrictive; 11: vascular, pleural, device, special). Every value follows R37: the default is where the sources agree, the band is what they span, citations are extracted textbook sentences (Miller 10e by PDF page; Co-Existing 8e and Dellinger 5e by chapter/printed page), `ENG` marks judgement with its reason. These are for the owner's review (Task 20 publishes them as §4b), so copy them exactly — do not "improve" numbers here.
 
 - [x] **Step 1: Write the failing test**
 
@@ -1851,7 +1851,7 @@ Expected: FAIL — `LUNG_PATHOLOGIES` is not exported.
 // R_insp × 1 L/s; `signature` bands are the clinically reported ranges and the tests require the model inside
 // them. Textbook citations: "Miller 10e pdf p. N" (running heads carry no chapter number in the extraction),
 // "Co-Existing 8e ch. N p. M", "Dellinger 5e ch. N p. M". `ENG` = engineering judgement, reasoning given; every
-// ENG number is a row for Ali's review in docs/physiology/stage-7-parameter-tables.md §4b.
+// ENG number is a row for the owner's review in docs/physiology/stage-7-parameter-tables.md §4b.
 // `wired`: what acts on the field TODAY — 'vent' (ventilator mechanics), 'engine-now' (Stage 3 shunt input),
 // 'stage7a' (PVR/HPV/RV: the two-sided heart), 'stage7b' (dead space, diffusion: the lung module), 'not-modelled'.
 export interface Band { value: number; lo: number; hi: number }
@@ -2486,7 +2486,7 @@ Insert immediately BEFORE the final `];` of `packages/ventilator/src/pathology/c
     ref: { vtMl: 15, rr: 40, peep: 5, pbwKg: 3, flowLpm: 6 }, wired: W_STD,
     monitor: 'Very low compliance (≈ 0.5 mL/cmH2O/kg), PEEP- and surfactant-responsive; high rates with small VT.',
     pitfall: 'Surfactant changes compliance within minutes: pressures that were needed become injurious.',
-    sources: [{ field: 'complianceMl', src: 'ENG: surfactant-deficient lung ≈ 0.5 mL/cmH2O/kg (3 kg → 1.5); 3.0 ETT ≈ 60 cmH2O/L/s — neonatal texts not in the local library; flagged for Ali' }, { field: 'signature', src: S_MECH }],
+    sources: [{ field: 'complianceMl', src: 'ENG: surfactant-deficient lung ≈ 0.5 mL/cmH2O/kg (3 kg → 1.5); 3.0 ETT ≈ 60 cmH2O/L/s — neonatal texts not in the local library; flagged for samhv-dev' }, { field: 'signature', src: S_MECH }],
   },
 ```
 
@@ -4472,7 +4472,7 @@ Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>"
 git push origin stage-v-ventilator-link
 ```
 
-### Task 19: Gate screenshots and the catalogue §4b for Ali
+### Task 19: Gate screenshots and the catalogue §4b for samhv-dev
 
 **Files:**
 - Create: `apps/demo/scripts/vent-shots.mjs`, `packages/ventilator/scripts/catalogue-md.ts`, `docs/gates/stage-V/*.jpg` (9 files, generated)
@@ -4545,7 +4545,7 @@ Expected: `hamilton`, `combined`, `demo-copd`, `demo-ards`, `demo-hf` (the three
 
 ```ts
 // Prints the lung-pathology catalogue as the Markdown section for docs/physiology/stage-7-parameter-tables.md §4b
-// (R36: for Ali's review). Run: node --experimental-strip-types packages/ventilator/scripts/catalogue-md.ts
+// (R36: for the owner's review). Run: node --experimental-strip-types packages/ventilator/scripts/catalogue-md.ts
 import { LUNG_PATHOLOGIES, REF_SETTINGS, type Band } from '../src/pathology/catalogue.ts';
 
 const f = (b: Band) => `${b.value} (${b.lo}–${b.hi})`;
@@ -4554,7 +4554,7 @@ const out: string[] = [
   '',
   `Generated from \`packages/ventilator/src/pathology/catalogue.ts\` — edit the source, not this table. Reference: passive intubated adult, PBW ${REF_SETTINGS.pbwKg} kg; VC ${REF_SETTINGS.vtMl} mL, ${REF_SETTINGS.rr}/min, PEEP ${REF_SETTINGS.peep}, ${REF_SETTINGS.flowLpm} L/min, pause ${REF_SETTINGS.pauseS} s. Values: default (band). "ENG" in a source = engineering judgement for review.`,
   '',
-  '| Condition | C mL/cmH2O | R insp / exp | Auto-PEEP tend. | Shunt | VD/VT | Diffusion | PVR × | HPV | Recruit. | Plateau / ΔP / P peak−plat | Not acting yet | Sources | Question for Ali |',
+  '| Condition | C mL/cmH2O | R insp / exp | Auto-PEEP tend. | Shunt | VD/VT | Diffusion | PVR × | HPV | Recruit. | Plateau / ΔP / P peak−plat | Not acting yet | Sources | Question for samhv-dev |',
   '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
 ];
 for (const r of LUNG_PATHOLOGIES) {
@@ -4629,7 +4629,7 @@ Branch `stage-v-ventilator-link`, based on `main` `<sha>`, built from `docs/plan
 |---|---|
 | typecheck / `pnpm -r test` / build / check-notices / e2e | exit 0 ×4; ventilator 87, engine-core 372 (+3), …; `check-notices: OK`; `PW_SYSTEM_CHROME=1 test:e2e`: all passed incl. vent-link 2 |
 | Port fidelity (10 traces captured from the original v1.9) | max error ≤ 5.0e-4 on Paw/flow/volume/Pmus/displayed Paw (fixture rounding), phase identical, numerics equal to 2 dp; 3 traces compared up to C1's first trapped-gas breath (3.26/1.08/3.26 s) |
-| C1 (needs Ali) | COPD RR 20 VT 560: VTE 561.7, auto-PEEP 11.9 (v1.9: VTE 293, 4.5); breath-stacking stacked VT 350 (v1.9: 104). Without C1 the COPD demo shows MAP −5 instead of −20 |
+| C1 (needs samhv-dev) | COPD RR 20 VT 560: VTE 561.7, auto-PEEP 11.9 (v1.9: VTE 293, 4.5); breath-stacking stacked VT 350 (v1.9: 104). Without C1 the COPD demo shows MAP −5 instead of −20 |
 | PEEP 5 → 15 | CO 4.90 → 4.44 (−9.4 %), MAP 97.1 → 83.6, CVP 6.0 → 8.1 (Stage 3 gate: −9 %, 97 → 83, 6.0 → 8.2) |
 | FiO2 0.4 → 1.0 (ARDS moderate) | SpO2 89 → 94.3 within 3 min |
 | RR 14 → 22 | EtCO2 37.9 → 34.0 (+2 min) → 31.0 (+10 min) |
@@ -4647,7 +4647,7 @@ Branch `stage-v-ventilator-link`, based on `main` `<sha>`, built from `docs/plan
 
 ## Needs a ruling
 1. **Correction C1** (plan decision 2) — accept or revert Task 5.
-2. **Catalogue values** — §4b of `docs/physiology/stage-7-parameter-tables.md`; rows marked ENG need Ali's number (neonatal RDS, COVID phenotypes, pregnancy chest wall, stand-in haemodynamics).
+2. **Catalogue values** — §4b of `docs/physiology/stage-7-parameter-tables.md`; rows marked ENG need the owner's number (neonatal RDS, COVID phenotypes, pregnancy chest wall, stand-in haemodynamics).
 3. **Stand-ins** (plan decision 8) — shock is SET in MANUAL until Stage 7a; acceptable for the demo?
 4. **Interim recruitment** time constants τ 40 s / 10 s [ENG] until Stage 7b.
 
@@ -4700,12 +4700,12 @@ Tick every checkbox of `docs/plans/stage-v-ventilator-link.md` in the branch, co
 gh pr create --base main --head stage-v-ventilator-link --title "Stage V: ventilator fork (@pme/ventilator) + two-way link to the monitor (R27/R35/R36)" --body "$(cat <<'BODY'
 Implements docs/plans/stage-v-ventilator-link.md (21 tasks). Gate evidence: docs/gates/stage-V.md.
 
-- @pme/ventilator: the v1.9 ventilator engine ported to TypeScript, bit-exact against 10 traces captured from the original (plus correction C1, separately revertible — needs Ali).
+- @pme/ventilator: the v1.9 ventilator engine ported to TypeScript, bit-exact against 10 traces captured from the original (plus correction C1, separately revertible — needs samhv-dev).
 - Two-way link: 50 Hz externalDrive VentFrames (with optional alveolar pressure, engine-core additive) in; lungState out; in-process lockstep and a BroadcastChannel window link with the engine as master clock.
 - R36 lung-pathology catalogue: 39 sourced rows (R37), §4b in the parameter tables for review; interim PEEP recruitment and Stage 7a stand-ins.
 - Demos: vent-hamilton.html (the Hamilton-style front end) and vent-link.html (ventilator + monitor, pathology picker, ten R27/R36 demonstrations).
 
-Not merged: R21 — the orchestrator/Ali gate it.
+Not merged: R21 — the orchestrator/samhv-dev gate it.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 BODY
@@ -4719,5 +4719,5 @@ Do NOT merge. Report: commits, test counts, the gate numbers, deviations, anythi
 ## Self-review (done while writing)
 
 - **Spec coverage.** R27 vent → engine (Tasks 6, 7, 12, 16), engine → vent (8, 12, 16), time base with pause/scale (12, 16), demos incl. comorbidity picker and the three R27 demonstrations (18, 19); R35 fork, NOTICES, licence (1, 4, 17); R36 catalogue in 3 grouped tasks with per-row tests (9–11), picker rows (12, 18), the four extra demonstrations (14, 18, 19), §4b (19); R37 sourcing and a PDF spot-check (9); R39 sidestream delay referenced where disconnection touches CO2 (decision 9, Task 13); tests: fidelity (4), link (13, 14), determinism (15), Playwright (17, 18); gate note with ≤ 60 KB screenshots (19, 20); PR without merge (21).
-- **Ambiguities resolved here (for the orchestrator):** C1 changes Ali's physics (decision 2); the R27 VentFrame's `mode` and the new `palvCmH2O` are optional fields in a new engine-core file rather than a change to Stage 3's `VentFrame` (decision 4); profiles use only today's `PatientProfile` fields, everything else is marked Stage 7 (decision 12); shock in PE/tension/anaphylaxis is set as MANUAL targets (decision 8); the combined page uses an iframe + BroadcastChannel rather than the controller's HostSession (decision 10); Freeze is display-only (decision 11).
+- **Ambiguities resolved here (for the orchestrator):** C1 changes the owner's physics (decision 2); the R27 VentFrame's `mode` and the new `palvCmH2O` are optional fields in a new engine-core file rather than a change to Stage 3's `VentFrame` (decision 4); profiles use only today's `PatientProfile` fields, everything else is marked Stage 7 (decision 12); shock in PE/tension/anaphylaxis is set as MANUAL targets (decision 8); the combined page uses an iframe + BroadcastChannel rather than the controller's HostSession (decision 10); Freeze is display-only (decision 11).
 - **Known limits.** Bronchopleural-fistula leak and one-sided ventilation are not modelled by the single-compartment ventilator (rows say so); the catalogue's signature test is partly a consistency test (bands and mechanics come from the same review), so the review item is the table itself; ×10 in a headless browser ran at ×4.

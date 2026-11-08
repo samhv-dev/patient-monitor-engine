@@ -8,10 +8,10 @@
 (`scratch/wt-reflex-audit`, removed at the end of the run). Scripts lived in the session scratchpad
 (`reflex-audit/`), never in the repo; seed 7, default adult 40 y / 70 kg / 175 cm male unless the arm says
 otherwise; every arm yields to the event loop once per simulated minute. Commissioned by the orchestrator ruling of
-2026-10-04 ~15:00 (research/00 §"Ali feedback … cardiac reflexes", requirement P-2) and answering P-1 and
+2026-10-04 ~15:00 (research/00 §"samhv-dev feedback … cardiac reflexes", requirement P-2) and answering P-1 and
 "P-1 clarified" of the same day. Format follows research/19, research/20 and research/21.*
 
-> **Standing note on the owner's four points.** Ali asked explicitly to be challenged where the literature disagrees
+> **Standing note on the owner's four points.** samhv-dev asked explicitly to be challenged where the literature disagrees
 > ("these are just my feedbacks, you should always check everything against evidence and you may fight me on these",
 > research/00 2026-10-04 ~14:20). This report does that. Three of the four points survive with conditions; one — the
 > HR-shaped "accelerating" curve — is supported for the metabolic path and **contradicted for the reflex path**, where
@@ -25,7 +25,7 @@ otherwise; every arm yields to the event loop once per simulated minute. Commiss
 
 | # | The owner's point | Verdict | The condition that matters |
 |---|---|---|---|
-| **(a)** | A measurable arterial pressure is not perfusion; there is a time-critical **low-perfusion** state and, lower, a **no-perfusion** state; at MAP in the mid-20s to mid-30s arrest is imminent | **SUPPORTED WITH CONDITIONS** | The two-zone *shape* is well evidenced (cerebral penumbra thresholds, Astrup 1981; coronary zero-flow pressure 15–21 mmHg, Nanto 2001 / Hoffman & Spaan 1990; pressure-without-pulsatility, Dhanani 2021). The **number is not a constant**: anaesthetised humans tolerated MAP 40 ± 1 for minutes (Lam & Gelb 1983), bypass runs 40–50 mmHg safely, and dogs held at MAP ≈ 30 took 45–60 min to become irreversible (Wiggers model). "Imminent" must mean *minutes at a metabolic rate and a heart rate*, expressed as **time-at-low-perfusion × demand**, not a threshold rule — which is exactly what Ali's own design principle ("use the body's own mechanism") requires |
+| **(a)** | A measurable arterial pressure is not perfusion; there is a time-critical **low-perfusion** state and, lower, a **no-perfusion** state; at MAP in the mid-20s to mid-30s arrest is imminent | **SUPPORTED WITH CONDITIONS** | The two-zone *shape* is well evidenced (cerebral penumbra thresholds, Astrup 1981; coronary zero-flow pressure 15–21 mmHg, Nanto 2001 / Hoffman & Spaan 1990; pressure-without-pulsatility, Dhanani 2021). The **number is not a constant**: anaesthetised humans tolerated MAP 40 ± 1 for minutes (Lam & Gelb 1983), bypass runs 40–50 mmHg safely, and dogs held at MAP ≈ 30 took 45–60 min to become irreversible (Wiggers model). "Imminent" must mean *minutes at a metabolic rate and a heart rate*, expressed as **time-at-low-perfusion × demand**, not a threshold rule — which is exactly what the owner's own design principle ("use the body's own mechanism") requires |
 | **(b)** | The death spiral **accelerates**; e.g. HR 120→60 slowly, 60→30 faster, 30→asystole faster still | **SUPPORTED WITH CONDITIONS — and partly NOT SUPPORTED as stated** | The *mechanism* is real and classical (Crowell & Guyton 1961; Guyton & Crowell 1964: low pressure → low coronary flow → weaker pump → lower pressure), and it has a quantitative basis: below the coronary autoregulatory limit flow becomes **pressure-passive**, so each further mmHg costs proportionally more flow. But (i) no study was found that quantifies the HR 120→60→30→0 curve — treat the specific shape as expert heuristic, not data; and (ii) the **reflex** route to arrest is a *step*, not an acceleration: tilt and LBNP syncope show MAP 94→50 and HR 90→57 **suddenly** after ~19 min of stable tilt (Sander-Jensen 1986 *Am J Physiol*), and spinal-anaesthesia asystole arrives from a near-normal rate. The engine must therefore carry **two** shapes, not one accelerating ramp |
 | **(c)** | In acute low preload the fast path to arrest is **reflex**, not coronary ischaemia (which takes time) | **SUPPORTED WITH CONDITIONS** | The reflex path is real, fast (seconds) and clinically the one anaesthetists meet: spinal/epidural bradycardia and asystole (Caplan 1988; Auroy 1997 6.4 ± 1.2 per 10,000 spinals; Pollard 2001), the beach-chair hypotensive-bradycardic event (>20 % of sitting shoulder arthroscopies, Liguori 1998), and phase 2 of haemorrhage at ≈ 30 % blood loss (Schadt & Ludbrook 1991). Two conditions: **(1)** "ischaemia takes time" is true of *necrosis* (≈ 20 min) but false of *contractile failure*, which starts at **12 ± 5 s** of zero flow in humans (Wohlgelernter 1986) and within seconds in dogs (Tennant & Wiggers 1935) — so in a no-flow state the two paths converge within one minute; **(2)** calling it "Bezold–Jarisch" is **disputed** in humans: denervated heart-transplant recipients still have full vasovagal responses on tilt (Fitzpatrick 1993, 7/10, MAP −55 ± 9; Scherrer 1990), so the ventricular-mechanoreceptor trigger is not necessary. The engine should model the **sympathoinhibitory / vagal-excitatory reflex** with the empty ventricle as *one* afferent among several |
 | **(d)** | "All the cardiac reflexes should be added; with the autonomic nervous system they play important roles" | **SUPPORTED** | Teaching value is high and the engine is far from it. Of 14 reflex families audited: **2 are real mechanisms** (arterial baroreflex, Cushing), **4 are partial** (cardiopulmonary limb, chemoreflex, stimulus-driven vagal sites, RSA), **8 are absent** (Bezold–Jarisch / sympathoinhibitory, Bainbridge and reverse Bainbridge, vasovagal, diving, Hering–Breuer and lung-inflation cardiac reflexes, carotid-sinus, pneumoperitoneum vagal, Valsalva as an integrated response) — full inventory with file:line in §5.11. The right answer is **not** eight patches but **one autonomic hub** (§6.2) into which each reflex is an afferent — which is also what makes B4 (tonic sympathetic tone) worth doing first |
@@ -39,7 +39,7 @@ otherwise; every arm yields to the event loop once per simulated minute. Commiss
    minutes (asphyxia, class III + propofol spontaneous, tension pneumothorax). There is therefore **no route by which
    a reflex can produce the bradyasystole of a spinal anaesthetic, a vasovagal faint, an oculocardiac arrest or
    phase 2 of haemorrhage**. Arrest is reachable only through `kIsch ≤ 0.1`, `cor.hyp ≥ 0.9`, the no-flow rule
-   (MAP < 25 for 60 s) or the K/temperature hazards (`l2/circ/arrest.ts:75–90`). This single clamp blocks Ali's
+   (MAP < 25 for 60 s) or the K/temperature hazards (`l2/circ/arrest.ts:75–90`). This single clamp blocks the owner's
    point (c) outright.
 2. **The baroreflex curve is monotone in one direction: lower pressure always means a faster heart.** The static
    sweep of `stepBaro` (§5.7) gives HR 70 → 122 at MAP 80, saturating at ×1.6, and 178/min at MAP 20. There is no
@@ -207,7 +207,7 @@ course · modulation · where an anaesthetist meets it.
     PMID 25220555) **[H]**.
   - **Inferior myocardial infarction.** Bradycardia and hypotension from inferoposterior ischaemia, attributed to
     the same ventricular afferents **[T]**.
-- **The biphasic response to acute haemorrhage** — the central claim for Ali's point (c):
+- **The biphasic response to acute haemorrhage** — the central claim for the owner's point (c):
   - **Barcroft, Edholm, McMichael & Sharpey-Schafer 1944** (*Lancet*, "Posthaemorrhagic fainting: study by cardiac
     output and forearm flow"): volunteers bled until they fainted. Cardiac output fell from the start, heart rate
     rose from the start, vascular resistance rose, and arterial pressure held — **until the faint**, when resistance
@@ -529,7 +529,7 @@ course · modulation · where an anaesthetist meets it.
 | Pressure is not pulsatile perfusion: the last QRS coincided with the last arterial pulse in only **19 %** of 480 dying patients; 14 % had transient resumption after pulselessness (longest 4 min 20 s) | Dhanani 2021, *NEJM* 384:345–52 | [H] |
 | Palpable pulses overestimate pressure: with only femoral and carotid pulses, **83 %** had systolic < 70 mmHg (mean 66.4); with only a carotid pulse, 0 of 4 had systolic > 60 | Deakin & Low 2000, *BMJ* 321:673–4 | [H, small] |
 
-**Reading.** The *concept* Ali describes is exactly the penumbra concept, and it is well evidenced in both beds: a
+**Reading.** The *concept* samhv-dev describes is exactly the penumbra concept, and it is well evidenced in both beds: a
 band where flow is insufficient but tissue is viable and **time is the variable**, below which function and then
 membranes fail. The *number* is not a constant. A MAP of 30 in an anaesthetised, normothermic, slow-heart-rate
 patient with a 20 mmHg diastolic pressure and a low LVEDP has a coronary driving pressure of ≈ 5–10 mmHg above
@@ -550,7 +550,7 @@ decide, with the right time constants — and **that is already the architecture
   pressure falls (so a 10 mmHg fall costs nothing); **below** it, flow is pressure-passive and roughly linear in
   (P − Pzf) (Canty 1988; Bellamy 1978) **[A]**. As P approaches Pzf the *fractional* loss of flow per mmHg goes to
   infinity. The same is true of the cerebral penumbra (Astrup 1981). So the second derivative of the decline is
-  genuinely positive once the autoregulatory reserve is spent. **This is the strongest form of Ali's point and it is
+  genuinely positive once the autoregulatory reserve is spent. **This is the strongest form of the owner's point and it is
   correct.**
 - Asphyxial animal models show the ordered, increasingly rapid sequence: tachycardia and hypertension → bradycardia
   and hypotension → loss of pulsations with an organised ECG (DeBehnke 1995; Varvarousi 2011/2015) **[A]**.
@@ -574,7 +574,7 @@ decide, with the right time constants — and **that is already the architecture
 **Reading.** Accept acceleration **for the metabolic/ischaemic path**, implemented as a mechanism (pressure-passive
 flow below the autoregulatory limit, in both the coronary and cerebral beds) rather than as a rate-of-decline rule.
 Add a **separate, fast, reversible reflex state** for the cliff. Do not write "the decline must accelerate" as a
-test; write the two mechanisms and let the shapes emerge — which is Ali's own stated principle.
+test; write the two mechanisms and let the shapes emerge — which is the owner's own stated principle.
 
 ### 3.3 (iii) Reflex bradycardia versus ischaemic pump failure in acute preload loss
 
@@ -591,7 +591,7 @@ test; write the two mechanisms and let the shapes emerge — which is Ali's own 
   legs*, not *give atropine*; and an unexplained bradycardia after a spinal or in the beach-chair position is a
   reflex event until proven otherwise, treated with volume, vasoconstriction, position and — for the cardiac limb
   only — an antimuscarinic.
-- **Engine consequence.** Ali's point (c) is right about the *order of events* and the *clinical lesson*, and
+- **Engine consequence.** the owner's point (c) is right about the *order of events* and the *clinical lesson*, and
   should be implemented. It is wrong if it is taken to mean the coronary path is slow in absolute terms; the engine
   already has the coronary path with τ_down 20 s (`coronary.ts:17`), which is the right order of magnitude, and
   what it lacks is the reflex path entirely.
@@ -619,7 +619,7 @@ Walsh 2013 and Salmasi 2017 showing dose-by-time injury even at MAP 55–65.
    circulation, while a *nadir of seconds to ~1 min* is routinely survived — which is what the engine's own
    class III + propofol case shows (§5.6: 65 s below MAP 30, recovery to 59, no arrest) and which the induction
    literature supports.
-4. **Therefore the old "safeguard" is wrong and the new rule must not be a threshold.** Ali is right that
+4. **Therefore the old "safeguard" is wrong and the new rule must not be a threshold.** samhv-dev is right that
    "nadir 26.6 mmHg, no arrest" is not an acceptance criterion. But the replacement is **not** "arrest below 35";
    it is "the coronary and cerebral consequences must be real at that pressure and must integrate over time" —
    which §5.6 shows they currently are not (CoPP 25 and `kIsch` only 0.82 at a MAP of 26).
@@ -723,7 +723,7 @@ Findings.
 
 - **F5 (P1). The engine's own numbers contradict P-1 badly in the 40 % arm: 1,440 s (24 min) below MAP 35 and
   805 s (13.4 min) below MAP 30 before the arrest**, with `kIsch` only falling to 0.40. This is the cross-cutting
-  audit item Ali asked for, in its worst form.
+  audit item samhv-dev asked for, in its worst form.
 - **F6 (P1). The 30 % arm sits at MAP 38 for 31 minutes with `kIsch` = 1.00 and a coronary driving pressure of
   35 mmHg.** No ischaemia at all. Compare Canty 1988: endocardial function fails below a distal coronary pressure of
   ≈ 40. The reason is visible in `coronary.ts:208`: supply is normalised to the resting CoPP
@@ -799,7 +799,7 @@ Clinical-suite S6a rig exactly: ventilated, bleed 1,500 mL over 600 s from t = 6
 
 Findings.
 
-- **F16 (P1). The nadir is 26.3 mmHg for 65 s and the patient then recovers to 59.** Ali is right that this cannot
+- **F16 (P1). The nadir is 26.3 mmHg for 65 s and the patient then recovers to 59.** samhv-dev is right that this cannot
   be an acceptance criterion in the form "no arrest, therefore fine" — but the right objection is **not** that it
   should have arrested. A 60-second nadir at MAP 26 with a coronary driving pressure of 25 mmHg is, by the
   literature in §3.1, survivable. The real defects are: (i) the coronary driving pressure of **25 mmHg** is well
@@ -825,7 +825,7 @@ residue. The 1,715 mL arm, 215 mL further on, arrests in 105 s.
 **Reading:** the engine has a *latent* positive-feedback loop (`kIsch` → contractility → CoPP → `kIsch`) but it has
 a **dead zone**: because supply is `cfr × (CoPP − 15)/(CoPP₀ − 15) × (DTF/DTF₀)` with `cfr ≈ 3–4`, the loop gains
 less than unity until CoPP is close to `P_ZF`. So the engine's behaviour is bistable — full recovery or arrest in
-~100 s — rather than an accelerating spiral. **Ali's point (b) is not implemented, and neither is the bounded,
+~100 s — rather than an accelerating spiral. **The owner's point (b) is not implemented, and neither is the bounded,
 reversible low-perfusion state the literature describes.**
 
 ### 5.7 The baroreflex curve, static and dynamic (`exp-baro.ts`)
@@ -856,7 +856,7 @@ Gains at the operating point: vagal **3.0 ms/mmHg** (95 → 85), HR **−3.3 bpm
 **−0.48 bpm/mmHg** on the hypertensive side (the `SYMP_WITHDRAW_HR 0.1` asymmetry), SVR **2 %/mmHg**.
 
 - **F19 (P1). Monotone, with no sympathoinhibitory branch and no bradycardic region anywhere below the set point.**
-  Combined with the 30/min clamp this is the structural reason Ali's point (c) is unreachable.
+  Combined with the 30/min clamp this is the structural reason the owner's point (c) is unreachable.
 - **F20 (P2). The HR arm saturates only 15 mmHg below the set point (MAP 80) and the SVR arm at 35 mmHg below
   (MAP 60).** Below MAP 60 the reflex contributes nothing new except the slowly growing contractility term and the
   vagal-withdrawal RR cap: the whole of the "severe shock" range is on a plateau. Literature puts carotid-sinus
@@ -901,7 +901,7 @@ Gains at the operating point: vagal **3.0 ms/mmHg** (95 → 85), HR **−3.3 bpm
   has no chronotropic arm by construction (`baroreflex.ts:45–47`: `G_CP_R` on SVR and `G_CP_V` on venous volume
   only). Given that the human Bainbridge effect is small and disputed (Crystal & Salem 2012), the *absence* is
   defensible; what is not defensible is that the **same missing arm** is what would carry the reverse Bainbridge,
-  i.e. the rate fall of reduced venous return — which is one of the two candidate mechanisms for Ali's point (c).
+  i.e. the rate fall of reduced venous return — which is one of the two candidate mechanisms for the owner's point (c).
 
 ### 5.9 Representability probe (`exp-misc.ts probe`)
 
@@ -1183,13 +1183,13 @@ floor, or resetting bounds. Those are FU-12's, and each needs its own measured g
    never see it)? Recommendation: hazard, with an instructor override.
 4. **The name.** Given the transplant evidence (Fitzpatrick 1993; Scherrer 1990), this audit recommends calling it
    the **sympathoinhibitory (vasovagal) reflex** with the empty ventricle as one afferent, and mentioning
-   Bezold–Jarisch in the glossary as the classical name. Does Ali want the Bezold–Jarisch name in the UI anyway,
+   Bezold–Jarisch in the glossary as the classical name. Does samhv-dev want the Bezold–Jarisch name in the UI anyway,
    because that is what residents are examined on?
 5. **Atropine teaching (R-06).** Barriot & Riou found atropine *harmful* in conscious haemorrhagic shock with
    paradoxical bradycardia (ventricular ectopy in 2, VF in 1 of 20). Should the engine reproduce that hazard, or is
    that too much realism for a teaching tool?
 6. **Resetting bounds (R-01/R-02).** A ±15 mmHg acute bound is proposed. This will move many fitted rows (§6.4,
-   high risk). Does Ali want it inside FU-12, or as its own calibration pass with his review of the moved numbers?
+   high risk). Does samhv-dev want it inside FU-12, or as its own calibration pass with his review of the moved numbers?
 7. **The rate floor.** Lowering it to ≈ 15/min is required for any vagal arrest. It touches the arrest and PEA
    machinery. Approve as part of FU-12, or carve out as a separate small PR with its own gate?
 8. **Neuraxial block as a feature.** `condition neuraxialBlock` is reserved ("arrives in Stage 7") and nothing

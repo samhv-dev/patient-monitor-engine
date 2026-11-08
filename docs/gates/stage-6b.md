@@ -1,6 +1,6 @@
 # Gate 6b — Scenario timeline runner + ACLS demo (date: 2026-09-25)
 
-Gate question (BUILD-PLAN Stage 6): "Can Ali run a 10-minute ACLS scenario from the laptop without touching the iPad monitor, and recover cleanly from a Wi-Fi drop?" The Wi-Fi drop half was answered at Gate 6a. This gate covers the scenario half: a `pme-scenario/1` timeline runs on the host, the instructor drives it from the panel or the remote, and the learner's actions move it on.
+Gate question (BUILD-PLAN Stage 6): "Can samhv-dev run a 10-minute ACLS scenario from the laptop without touching the iPad monitor, and recover cleanly from a Wi-Fi drop?" The Wi-Fi drop half was answered at Gate 6a. This gate covers the scenario half: a `pme-scenario/1` timeline runs on the host, the instructor drives it from the panel or the remote, and the learner's actions move it on.
 
 Branch `stage-6b-scenario-runner`, worktree `projects/patient-monitor-engine/scratch/wt-stage-6b`, base `origin/main` at `8e46032` (Stage 6a merged on top of Stage 1.1). `main` has since gained Stages 5 and 4a. The branch was not merged with them; a trial merge is described under Deviations 8. Plan: `docs/plans/stage-6b-scenario-runner.md`, Tasks 1–20.
 
@@ -17,7 +17,7 @@ Branch `stage-6b-scenario-runner`, worktree `projects/patient-monitor-engine/scr
 | Panel and remote | pass: `scenario-tab.dom.test.ts` 6/6, `remote-scenario.dom.test.ts` 1/1, `view.test.ts` 4/4. In the browser, `stage6b.e2e.ts` passes **1/1** (headless Chrome, ≈ 18 s): the panel loads the ACLS scenario, the remote's "Start VF now" starts VF, and the learner bar's Shock 200 J reaches ROSC, with no page errors. The 6a browser tests still pass **8/8** (`stage6a.e2e.ts`: bc/relay/rtc synced, drift 0; `stage6a-worker`, `iife-smoke`) |
 | ajv containment | pass. `patient-monitor.iife.js` **94.05 kB** (unchanged from 6a), with 0 matches for `ajv`. Controller `dist/index.js` 72.46 kB, 0 matches. `dist/scenario.js` 224.03 kB (57.65 kB gzip), 20 matches |
 | Viewer follows the scenario | pass (headless Chrome, Task 18 Step 3). `stage6b-acls.html?session=GATE6B` and `stage6a-viewer.html?session=GATE6B&via=bc` ran together, with "Start VF now" in the panel and then "Shock 200 J". The viewer line stayed `viewer GATE6B · link broadcastChannel open · synced · lag 99 ms · beat drift 0.0 ms · resyncs 0` before, in VF and after ROSC |
-| iPad host / phone remote on the LAN | **pending Ali** |
+| iPad host / phone remote on the LAN | **pending samhv-dev** |
 
 ## Screenshots (headless Chrome, `docs/gates/stage-6b/`, each ≤ 60 kB)
 
@@ -48,7 +48,7 @@ The roll entry is `{ op: 'roll', t: 9.5, transitionId: 'shockVf', u: 0.061743246
 
 One dispatch is rejected at start, by design: the stable state's `device nibp` (auto 3 min) gets `device nibp is not implemented until later stages`. The demo's status line therefore reads `rejected 1`. Stage 4 implements NIBP.
 
-## Clinical review for Ali (all five scenarios are [draft])
+## Clinical review for samhv-dev (all five scenarios are [draft])
 
 Every title starts with `[draft]` and every file has a `$comment` saying it awaits your review. Every probability and timing below is an `[ENG]` placeholder unless a source is named. Each item is a question.
 
@@ -84,7 +84,7 @@ The driver checks the engine's own `RHYTHM_IDS` at run time. It substitutes an i
 - `time step|jump` are still rejected (Decision 16). They are host clock controls, and nothing in 6b needs them.
 - BP and EtCO2 steps wait for Stage 2. They are in `$comment` as exact commands, and the ACLS `epiCpr` transition waits for an EtCO2 value.
 - The physiology of shocks, drugs and CPR belongs to Stages 4 and 7. The driver accepts `applyEvent`/`attachSensor` as "scenario only" so that transitions can fire (Decision 10).
-- LAN and iPad runs (pending Ali).
+- LAN and iPad runs (pending samhv-dev).
 
 ## Deviations from the plan
 
