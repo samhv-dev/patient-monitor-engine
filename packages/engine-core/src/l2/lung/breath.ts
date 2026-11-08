@@ -18,8 +18,8 @@
 //     Pes = PES_FRC_CMH2O + PES_BMI_SLOPE·(BMI − 22.5)₊ + ΔPpl(t). PES_FRC_CMH2O 6.9 cmH2O is the supine end-expiratory
 //     Pes of lean subjects at the relaxation volume (Owens et al. 2012 Obesity 20:2354, PMC3443522: lean supine
 //     6.9 ± 2.8, seated −3.3 — the mediastinal weight and the dependent position); the BMI slope 0.22 cmH2O per kg/m² is
-//     the line through the same study's two group means (6.9 at BMI 22.5, 9.3 at 33.3) [ENG line through two means;
-//     applied to children too, [ENG], no paediatric balloon data]. ΔPpl(t) on a PASSIVE breath is the lung model's own
+//     the line through the same study's two group means (6.9 at BMI 22.5, 9.3 at 33.3) [FIT: ΔPpl line through two group means; line through two means;
+//     applied to children too, [FIT: ΔPpl line through two group means; brief research/44 L2-34; brief research/44 L2-34], no paediatric balloon data]. ΔPpl(t) on a PASSIVE breath is the lung model's own
 //     chest-wall recoil ΣV/Ccw (+ `lp.pPtx`/`ext.pPtx`, + a cough's `pMus`), so ΔPes/ΔPaw = Ecw/Ers = Crs/Ccw
 //     (≈ 0.27 healthy), as a balloon measures it — NOT the circulation's transmission T_IT 0.65, tuned to pulse-
 //     pressure variation; on a spontaneous breath under GA, the circulation's pleural swing.

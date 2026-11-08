@@ -36,7 +36,7 @@ describe('Sessler\'s three phases on a surgical patient; the elderly threshold',
     expect(s.onsetC).toBeLessThanOrEqual(34.7);
     expect(Math.abs(s.plateau)).toBeLessThanOrEqual(0.1);
   });
-  // R45 / ruling R-5: the onset TIME on the surgical arm depends on the wound loss (`PREP_EVAP_W_70` 40 W [ENG], the
+  // R45 / ruling R-5: the onset TIME on the surgical arm depends on the wound loss (`PREP_EVAP_W_70` 40 W [FIT: prep evaporation; brief research/44 L2-43], the
   // calibration knob, R44) — measured 2.27 h; not tuned here.
   it.fails('open wound: vasoconstriction begins at 3–4 h (Sessler 2000) — measured 2.27 h', async () => {
     const s = await course(true, 40);

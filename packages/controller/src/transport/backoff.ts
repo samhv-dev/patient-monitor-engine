@@ -1,4 +1,4 @@
-// Reconnect delays: exponential with jitter, capped [ENG].
+// Reconnect delays: exponential with jitter, capped [ENG: network].
 export interface BackoffOptions {
   baseMs: number;
   maxMs: number;

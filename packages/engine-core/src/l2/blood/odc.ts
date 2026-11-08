@@ -58,7 +58,7 @@ export function contentDB(po2: number, pco2: number, tempC: number, ctx: OdcCtx)
 
 /**
  * What a two-wavelength pulse oximeter reports (0–1) for a functional saturation `s` (plan decision 12; research 03
- * §3.6): COHb reads as O2Hb; MetHb pulls the reading toward 85 % (weight min(1, MetHb/0.3)) [TXT shape, ENG weight].
+ * §3.6): COHb reads as O2Hb; MetHb pulls the reading toward 85 % (weight min(1, MetHb/0.3)) [TXT shape] [FIT: MetHb pull weight; brief research/44 L2-40].
  * Identity when COHb = MetHb = 0.
  */
 export function pulseOxApparent(s: number, ctx: OdcCtx): number {

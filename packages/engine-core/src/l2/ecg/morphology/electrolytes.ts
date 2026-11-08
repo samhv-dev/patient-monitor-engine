@@ -18,9 +18,9 @@ export const hyperK = (k: number) => ({
 });
 export const hypoK = (k: number) => clamp01((3.5 - k) / 1.5);
 export const coldness = (tempC: number) => clamp01((34 - tempC) / 6);
-/** Osborn J amplitude in V3 (mV): appears below 33 °C, +0.1 mV per °C, capped at 0.6 → II ≈ 0.41×, V5 ≈ 0.49× [ENG]. */
+/** Osborn J amplitude in V3 (mV): appears below 33 °C, +0.1 mV per °C, capped at 0.6 → II ≈ 0.41×, V5 ≈ 0.49× [FIT: ECG morphology vector or amplitude without a source; brief research/44 L2-46]. */
 export const osbornV3Mv = (tempC: number) => Math.min(0.6, 0.1 * Math.max(0, 33 - tempC));
-/** Osborn direction: V3 1.48, V4 1.16, II 0.60 per unit [ENG]. */
+/** Osborn direction: V3 1.48, V4 1.16, II 0.60 per unit [FIT: ECG morphology vector or amplitude without a source; brief research/44 L2-46]. */
 export const OSBORN_DIR: Vec3 = [0.55, 0.35, -0.75];
 
 export const potassiumStage: MorphStage = (k, _info, mods) => {
@@ -35,7 +35,7 @@ export const potassiumStage: MorphStage = (k, _info, mods) => {
   if (s3 > 0 || s4 > 0) stretchQrs(k, 1 + s3 + 0.8 * s4);
   if (s4 > 0 && t >= 0) {
     // Sine wave: R shrinks, the T is pulled into the widened QRS and broadened on both limbs, so QRS and T form one
-    // continuous oscillation with no isoelectric ST segment [ENG, research 03 §1.6 "QRS merged with T"]
+    // continuous oscillation with no isoelectric ST segment (research 03 §1.6 "QRS merged with T"; research 03 §1.6 "QRS merged with T")
     scaleWaves(k, WAVE.R, 1 - 0.35 * s4);
     scaleWaves(k, WAVE.S, 1 + 2.5 * s4); // a deep broad S: the down-stroke of the sine between R and T
     k[t] = (k[t] as number) - 0.08 * s4;

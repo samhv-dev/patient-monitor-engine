@@ -14,7 +14,7 @@ Regenerate the first two tables with `node --experimental-strip-types scripts/de
 fails when a literal-titled expected failure or skip is missing from this page. It cannot see conditional forms such
 as `(cond ? it.fails : it)(…)`, nor the lung-signature `KNOWN` list; those are listed by hand below.
 
-On this tree there are **158 expected-failure calls**, all read by the lister: 157 `it.fails` (the bronchospasm row of
+On this tree there are **155 expected-failure calls**, all read by the lister: 154 `it.fails` (the bronchospasm row of
 `packages/ventilator/test/link-parity.test.ts` is a literal `it.fails`) and 1 `it.fails.each` with three cases
 (`packages/engine-core/test/engine/fidelity-arrest.test.ts`), and **6 skipped tests** (1 skipped test and 5 `.todo` entries: the harms and the device the scenario format declares "not modelled", and epinephrine IM). "Tracked in" names the gate note (and its section)
 that records the miss with its number; the open questions it cites (Q…, R-…, E-…) are listed in that note.
@@ -161,7 +161,7 @@ that records the miss with its number; the open questions it cites (Q…, R-…,
 | `packages/engine-core/test/l2/neuro/interactions.test.ts` | 1 MAC volatile: rocuronium duration +20–45 % (this rig +13.4 %; engine cell DI-51 +48.4 % on the gate tree — the plan's third fixer measured +52.2 % — band 25–80 %) | `docs/gates/fu-7.md` §4 "`it.fails` list", #25 |
 | `packages/engine-core/test/l2/neuro/reversal.test.ts` | underdosed sugammadex (0.5 mg/kg at PTC after rocuronium 1.2) → recovery then recurarisation (TOFR falls ≥ 0.04) — capacity-limited: measured peak 0.833 at +90 min (ideal-binder ceiling 0.834), no fall | `docs/gates/fu-3.md` §1 "What shipped", item 2 (capacity-limited) and §7 "Test counts"; `docs/gates/stage-7e.md` "Expected failures (`it.fails`)" |
 | `packages/engine-core/test/l2/pk/antiarrhythmic.test.ts` | a sub-therapeutic lidocaine level (0.3 µg/mL) never converts VT in 200 seeded runs of its 20 min window — measured 3/200 (1.5 %; u 0.09 × λ_lido) | `docs/gates/fu-7.md` §4 "`it.fails` list", #26 |
-| `packages/engine-core/test/l2/pk/flow-distribution.test.ts` | S6b: 30 % haemorrhage (CO 3.1 vs 5.25) → propofol 2 mg/kg peak Ce ≥ 1.3× healthy — measured 1.29 (q 0.6, V1 share 0.5 [ENG]) | `docs/gates/fu-4.md` §4 "The `it.fails` list" |
+| `packages/engine-core/test/l2/pk/flow-distribution.test.ts` | S6b: 30 % haemorrhage (CO 3.1 vs 5.25) → propofol 2 mg/kg peak Ce ≥ 1.3× healthy — measured 1.29 (q 0.6, V1 share 0.5 [FIT: propofol V1 share; brief research/44 X-17]) | `docs/gates/fu-4.md` §4 "The `it.fails` list" |
 | `packages/engine-core/test/l2/pk/interactions-misc.test.ts` | sugammadex (DI-45): 4 mg/kg gives < 5 % HR fall — measured 13.4 % (16 mg/kg 20.5 %) | `docs/gates/fu-7.md` §4 "`it.fails` list", #27 |
 | `packages/engine-core/test/l2/pk/interactions-misc.test.ts` | second gas: 66 % N2O raises sevoflurane 2 %'s FA/FI at 5 min by +0.03 to +0.15 (Epstein 1964; M10 ch. 19); N2O's own FA/FI is unchanged (a one-way term) — measured +0.021 (0.713 → 0.733), N2O unchanged | `docs/gates/fu-7.md` §4 "`it.fails` list", #28 |
 | `packages/engine-core/test/l2/pk/interactions-misc.test.ts` | concentration effect: 66 % N2O reaches a higher FA/FI at 5 min than 30 % N2O — measured 0.810 both (not modelled in v1) | `docs/gates/fu-7.md` §4 "`it.fails` list", #29 |
@@ -468,7 +468,7 @@ Measured locally on this branch (all suites; PWDB refused with 403, so the pwdb-
 | A: electromechanical delay and transit time, wave reflection (stage) | sourced EMD and aorta → radial transit; radial incisura after valve closure (wave reflection in place of the 5 Hz resonator trough) | V1 · HR 50–70 (104 vs recorded 190, band 170–210); V1-lit · all / vitaldb / mghdb (102 / 104 / 95, band 150–220); V2 · HR 90–110 / 70–90 / 50–70 (270 / 282 / 284, bands 408–448 / 464–504 / 498–538) | V-01, V-02, DEV-04 |
 | B: pleth shape (mechanism) | the finger pulse shape | V3-shape · all / vitaldb / mghdb (r 0.41 / 0.40 / 0.48, band 0.80–1.00) | X-14, DEV-04 |
 | D: RV diastolic/pericardial mechanics (mechanism brief) | RV dilation under pericardial constraint, ventricular interdependence | t15 rest CVP 6.8 (14–18), PCWP 3.3 (8–12) | V-11 |
-| E: septic time course and fluid-refractory vasoplegia (mechanism brief) | onset over hours (the condition's τ 600 s is an [ENG] compression, kept for now); vasoplegia whose depth matches the source | t16-septic-shock-state MAP 17.4 (49–60) | V-12 |
+| E: septic time course and fluid-refractory vasoplegia (mechanism brief) | onset over hours (the condition's τ 600 s compresses those hours into minutes, kept for now); vasoplegia whose depth matches the source | t16-septic-shock-state MAP 17.4 (49–60) | V-12 |
 | F: preload-fixed stroke volume at low CVP (mechanism brief) | SV set by preload, so the slower β-blocked heart loses output | t17-bb-contrast SBP(17b)/SBP(17a) 1.063 (< 1), CO(17b)/CO(17a) 1.033 (< 1) | research 46 §F |
 | G: respiratory effort under controlled ventilation (mechanism brief) | drive and effort visible under the ventilator | t25 rr-back 0 s (60–240 s) | DEV-06 |
 | H: pleth reference SV₀ = the settled resting SV (PR #333) | PI reference SV₀ = the patient's settled resting SV | regression sinus-75/pleth (625/625 samples > 2 %, max 10.2 %) | T-17 |

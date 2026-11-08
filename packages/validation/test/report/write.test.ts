@@ -8,7 +8,7 @@ const R: Report = {
   datasets: [{ id: 'vitaldb', title: 'VitalDB (PhysioNet copy)', licence: 'CC BY 4.0', attribution: 'Lee HC et al. Sci Data 9:279 (2022).', windows: 2 }],
   morphology: [
     { band: 'V1', metric: 'rToFootMs', group: 'HR 70–90', recorded: { n: 400, median: 160, p25: 155, p75: 165 }, engine: { n: 400, median: 158, p25: 157, p75: 159 }, ks: 0.42, w1: 9.7, engineStat: 158, expected: '140–180', grade: 'green', errPct: 0, source: 'brief §9 V1' },
-    { band: 'PPV', metric: 'ppvPct', group: 'all', recorded: { n: 6, median: 8.8, p25: 5, p75: 10 }, engine: { n: 6, median: 16, p25: 14, p75: 18 }, ks: 0.67, w1: 7, engineStat: 16, expected: '5.8–11.8', grade: 'red', errPct: 35, source: '[ENG]' },
+    { band: 'PPV', metric: 'ppvPct', group: 'all', recorded: { n: 6, median: 8.8, p25: 5, p75: 10 }, engine: { n: 6, median: 16, p25: 14, p75: 18 }, ks: 0.67, w1: 7, engineStat: 16, expected: '5.8–11.8', grade: 'red', errPct: 35, source: '[ENG: test]' },
   ],
   intervals: { ptbxl: 100, engine: 12 },
   segments: {

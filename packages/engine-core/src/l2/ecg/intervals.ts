@@ -6,7 +6,7 @@ export function qtFridericiaMs(rrS: number, qtcMs = 400): number {
 }
 
 /**
- * PR = clamp(PR60 − 0.4·(HR − 60), 110, PR60) ms [03 §1.1, ENG].
+ * PR = clamp(PR60 − 0.4·(HR − 60), 110, PR60) ms [03 §1.1] [FIT: PR–HR slope and clamp; brief research/44 V-04].
  * PR60 default 160 ms, the textbook resting adult. With the drawn T ending at QT, at 150–160 bpm the P ONSET (RR − PR
  * after QRS onset: 276 ms at 150, 255 ms at 160) lands on the T downslope before its end (295 / 288 ms), so "P on T"
  * emerges from timing alone (brief §4.1).

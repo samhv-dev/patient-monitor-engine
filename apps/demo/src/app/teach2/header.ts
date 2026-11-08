@@ -15,7 +15,7 @@ import { SPEEDS } from '../sessionbar.ts';
 import { clock, h, setText, toast } from '../ui.ts';
 import { defaultPatient, NO_CASE } from './begin.ts';
 
-/** The top bar's controls the header carries on this route (main.ts: the same toggle and the same pairing code). */
+/** The top bar's controls the header carries on this route (main.ts: the same toggle and the same room code). */
 export interface TopControls {
   soundOn(): boolean;
   toggleSound(): void | Promise<void>;
@@ -102,9 +102,11 @@ export function mountHeader(link: Link, top?: TopControls): Header {
     choose: (v) => void link.send({ type: 'time', action: 'scale', value: Number(v) }).then((r) => r.accepted && toast(`Speed ×${v}`)),
   });
 
-  // The top bar's Sound switch and Room code (option G): the same toggle, the same link to the Remote's pairing
+  // The top bar's Sound switch and Room code (option G): the same toggle, and the code pill opens the Room page as the
+  // top bar's does (main.ts, Room plan R7; the owner, 8 Nov 2026: the pill shows the room's code, so it leads to the Room
+  // page everywhere; the Remote's pairing stays one tap away from the Room page)
   const sound = top ? h('button', { type: 'button', class: 'ip2-topctl ip2-sound', 'aria-pressed': 'false', onclick: () => void Promise.resolve(top.toggleSound()).finally(() => refresh()) }) : null;
-  const room = top ? h('a', { class: 'ip2-topctl ip2-room', href: hrefOf('remote') }) : null;
+  const room = top ? h('a', { class: 'ip2-topctl ip2-room', href: hrefOf('room') }) : null;
   const drawTop = () => {
     if (!top || !sound || !room) return;
     const on = top.soundOn();
@@ -114,7 +116,7 @@ export function mountHeader(link: Link, top?: TopControls): Header {
     const phones = `${n} ${n === 1 ? 'phone' : 'phones'}`;
     room.innerHTML = '';
     room.append('Room ', h('span', { class: 'ip2-room-code' }, top.code), ` · ${phones}`);
-    room.setAttribute('aria-label', `Room code ${top.code.split('').join(' ')}, ${phones}: pair a remote`);
+    room.setAttribute('aria-label', `Room code ${top.code.split('').join(' ')}, ${phones}: Room setup`);
   };
 
   const held = (): StateVar[] => Object.entries(link.ctl.state?.control ?? {}).filter(([, f]) => f === 'pinned' || f === 'ramping').map(([v]) => v as StateVar);

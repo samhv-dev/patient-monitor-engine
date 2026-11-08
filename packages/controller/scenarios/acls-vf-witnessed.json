@@ -1,5 +1,5 @@
 {
-  "$comment": "[draft] Clinical content awaits Ali's review (Stage 6b gate). Brief §7.4 example, expanded. Probabilities are [ENG] placeholders: shock ROSC 0.3 in coarse VF (brief §6.5 'organised with pulse' raised for teaching), 0.15 in fine VF; decay to fine VF at 4 min and asystole 5 min later follow the three-phase model (research 03 §1.8). vfCoarse/vfFine are Stage 5 ids; until Stage 5 merges the host shows stand-ins (standins.ts).",
+  "$comment": "[draft] Clinical content awaits the owner's review (Stage 6b gate). Brief §7.4 example, expanded. Probabilities are [FIT: draft card's teaching-outcome placeholder pending clinical review; brief research/44 X-24] placeholders: shock ROSC 0.3 in coarse VF (brief §6.5 'organised with pulse' raised for teaching), 0.15 in fine VF; decay to fine VF at 4 min and asystole 5 min later follow the three-phase model (research 03 §1.8). vfCoarse/vfFine are Stage 5 ids; until Stage 5 merges the host shows stand-ins (standins.ts).",
   "schema": "pme-scenario/1",
   "id": "acls-vf-witnessed",
   "title": "[draft] Witnessed VF in PACU",

@@ -39,7 +39,7 @@ const SLOW_RR_S = 1.2;
 const ASYSTOLE_S = 4.0;
 /**
  * An R–R longer than this is a gap (asystole, leads off), not a rate: the history restarts, so the first beats after it
- * are not averaged with it (the HR read "3" for a second after an asystole) [ENG, 10 bpm].
+ * are not averaged with it (the HR read "3" for a second after an asystole) [ENG: device; 10 bpm].
  */
 export const RESET_RR_S = 6;
 const MIN_RR_S = 0.2; // shorter intervals are double counts and are ignored

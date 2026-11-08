@@ -224,7 +224,7 @@ describe('MH tachycardia (E117, MODELED)', { timeout: 600_000 }, () => {
 
   // Target audit row 133 band (b) (owner-confirmed with E117): without active cooling the HR need not be normal, but
   // dantrolene brings it down with the activity — at +20 min it is ≥ 15 % below its peak and no higher than
-  // baseline + 8.5 bpm/°C × (core − 36.8) + 15 [ENG, derived by the audit]. MH from t = 0, dantrolene 2.5 mg/kg and
+  // baseline + 8.5 bpm/°C × (core − 36.8) + 15 [FIT: MH HR band formula; derived by the audit; brief research/44 L2-10]. MH from t = 0, dantrolene 2.5 mg/kg and
   // MV × 2 (RR 24) at 20 min, no cooling.
   it('E117 dantrolene (audit row 133 band (b)): MH + dantrolene 2.5 mg/kg + MV × 2 at 20 min: HR ≥ 15 % below its peak by +20 min and ≤ baseline + 8.5 bpm/°C × (core − 36.8) + 15', async () => {
     const ev = await induced(2500, { mh: true, dantroleneAt1200: true });

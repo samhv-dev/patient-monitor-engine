@@ -24,9 +24,9 @@ export const IBP_AUTO_RANGES: Readonly<Record<IbpChannel, ReadonlyArray<readonly
   IBP1: [[0, 60], [0, 100], [0, 160], [0, 200]],
   IBP2: [[-10, 30], [0, 60], [0, 100], [0, 160], [0, 200]],
 };
-/** The window's peak stays this share of the range's span under its top [ENG]. */
+/** The window's peak stays this share of the range's span under its top [ENG: display]. */
 export const IBP_AUTO_HEADROOM = 0.1;
-/** Up to this many one-second blocks of a window above (or below) the rest are outliers, a flush or an odd beat [ENG]. */
+/** Up to this many one-second blocks of a window above (or below) the rest are outliers, a flush or an odd beat [ENG: display]. */
 export const IBP_AUTO_OUTLIER_BLOCKS = 2;
 
 /** The instructor channel of an engine channel: the arterial line is IBP1, the venous one IBP2. */

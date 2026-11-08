@@ -1,5 +1,5 @@
 // Rhythm-library beat templates, layered on the base ones in templates.ts (which stays untouched).
-// Vectors are VCG (X, Y, Z) in mV through the Dower rows (vcg.ts). Values are [ENG] unless cited; the lead
+// Vectors are VCG (X, Y, Z) in mV through the Dower rows (vcg.ts). Values are `[FIT: …]` (brief research/44 L2-46) unless cited; the lead
 // projections quoted in comments are what the numbers produce and what the tests check.
 import { K_STRIDE, WAVE, kernel, qrsSpanMs } from './kernels.ts';
 import { narrowKernels, templateKernels, tEndAfterPeakS, WIDE_QT_EXTRA_MS, VEC, type TemplateId } from './templates.ts';
@@ -7,7 +7,7 @@ import type { Vec3 } from './vcg.ts';
 
 export type BeatTemplateId = TemplateId | 'wpw' | 'aberrant' | 'pacedV' | 'pvc2' | 'pvc3' | 'agonal';
 
-/** RBBB terminal R′ (V1 +0.80, I −0.25, V6 −0.43, II ≈ 0 per unit; solved on the Dower rows) [ENG]. */
+/** RBBB terminal R′ (V1 +0.80, I −0.25, V6 −0.43, II ≈ 0 per unit; solved on the Dower rows) [FIT: ECG morphology vector without a source; brief research/44 L2-46]. */
 export const RBBB_RPRIME_VEC: Vec3 = [-0.33, 0, -0.69];
 /** PR (P onset → delta onset) for pre-excited conduction (research 03 §1.5: PR < 120 ms). */
 export const WPW_PR_MS = 100;
@@ -47,7 +47,7 @@ export function wpwKernels(qtMs: number, scale = 1, pre = 1): number[] {
   const k = narrowKernels(qtMs, scale);
   for (let i = 0; i < k.length; i += K_STRIDE) {
     k[i] = (k[i] as number) + d;
-    if (k[i + 6] === WAVE.T) for (let j = 3; j < 6; j++) k[i + j] = (k[i + j] as number) * (1 - 0.3 * Math.min(1, pre)); // secondary ST-T [ENG]
+    if (k[i + 6] === WAVE.T) for (let j = 3; j < 6; j++) k[i + j] = (k[i + j] as number) * (1 - 0.3 * Math.min(1, pre)); // secondary ST-T [FIT: ECG morphology vector without a source; brief research/44 L2-46]
   }
   k.push(...kernel(d, d / 2.5, 0.012, VEC.R, WAVE.DELTA, 0.25 * scale * Math.min(1.5, pre)));
   return k;

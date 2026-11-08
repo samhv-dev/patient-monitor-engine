@@ -32,7 +32,7 @@ export const LIMIT_KEYS: Readonly<Record<string, { numeric: NumericId; label: st
   ST_mV: { numeric: 'stII', label: 'ST-II', upper: 'ST-II' },
 };
 
-/** %V → mmHg at the simulated barometric pressure (brief §6.8: the engine shows CO2 in mmHg) [ENG 760 mmHg]. */
+/** %V → mmHg at the simulated barometric pressure (brief §6.8: the engine shows CO2 in mmHg) [ENG: conversion; 760 mmHg]. */
 export const BAROMETRIC_MMHG = 760;
 /** Skins whose HR reads dashes and whose HR alarms are off while the pacer runs (research/05 §2.6, LIFEPAK 15). */
 export const PACING_HR_DASHES: ReadonlySet<string> = new Set(['lifepak-like']);
@@ -156,7 +156,7 @@ export function skinBand(b: 'adult' | 'paediatric' | 'neonatal' | AgeBand | unde
 }
 
 /** Limit alarm level: Saadat-like parameter alarms default to 1, gas alarms 2 (brief §6.4.1); IEC-style limit
- * alarms are yellow (2) as on the Philips-like `**` messages (research/05 §2.4) [ENG for the IEC mapping]. */
+ * alarms are yellow (2) as on the Philips-like `**` messages (research/05 §2.4) [ENG: device; for the IEC mapping]. */
 function limitLevel(skin: Skin, gas: boolean): AlarmLevel {
   if (skin.alarms.soundProfile === 'saadat') return gas ? 2 : 1;
   return 2;

@@ -46,7 +46,7 @@ describe('potassium chloride', { timeout: 600_000 }, () => {
   });
 
   // R45 (FU-7.1 A5): the SIZE (Kruse 1990) is missed in both directions — the end-of-infusion rise overshoots it and the
-  // settled rise undershoots it. Both constants are 7c's (`K_TAU_MIN` 43 min [ENG, tables `vK`]; `K_TBK_MMOL` 300
+  // settled rise undershoots it. Both constants are 7c's (`K_TAU_MIN` 43 min (tables `vK`); `K_TBK_MMOL` 300
   // [TXT, Sterns 1981]) and live in l2/blood, which this plan does not touch. Recorded with the numbers for the
   // calibration queue; the band is NOT widened.
   // Title left for Stage 14 (fix-citations): its "Miller 10e ch. 46" is wrong (ch. 46 is coagulation); the ≈ 0.25 is
