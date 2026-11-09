@@ -359,6 +359,8 @@ renderer, audio and skin contracts.
 | `objectiveCounts` | [`apps/demo/src/app/archive.ts`](../../apps/demo/src/app/archive.ts) | The objectives of the run by verdict, as the report marks them (a ticked rule-less objective reads Observed). |
 | `objectivesLine` | [`apps/demo/src/app/archive.ts`](../../apps/demo/src/app/archive.ts) | "4 of 6 met · 1 not met · 1 not assessable" (the parts that are zero left out, but the first). |
 | `markCounts` | [`apps/demo/src/app/archive.ts`](../../apps/demo/src/app/archive.ts) | The marks of the run by kind (an undone one left out), and its notes. |
+| `refusalOf` | [`apps/demo/src/app/archive.ts`](../../apps/demo/src/app/archive.ts) | What a browser's refusal means. |
+| `refusalText` | [`apps/demo/src/app/archive.ts`](../../apps/demo/src/app/archive.ts) | What the instructor reads when a save wrote nothing (the archive is then as it was). |
 | `renderBriefing` | [`apps/demo/src/app/briefing.ts`](../../apps/demo/src/app/briefing.ts) | THE briefing, drawn (host and followers alike): |
 | `briefingLayer` | [`apps/demo/src/app/briefing.ts`](../../apps/demo/src/app/briefing.ts) | The briefing layer over a learners' monitor (the shell's stage: |
 | `followBriefing` | [`apps/demo/src/app/briefing.ts`](../../apps/demo/src/app/briefing.ts) | A follower's side: |
@@ -562,7 +564,7 @@ renderer, audio and skin contracts.
 | `toggle` | [`apps/demo/src/app/ui.ts`](../../apps/demo/src/app/ui.ts) | Toggle button with aria-pressed and a filled dot when on (brief §7 "toggle"). |
 | `infoDialog` | [`apps/demo/src/app/ui.ts`](../../apps/demo/src/app/ui.ts) | Information dialog with one Close button (shortcut sheet, help). |
 | `pausedMark` | [`apps/demo/src/app/ui.ts`](../../apps/demo/src/app/ui.ts) | UI review #32: |
-| `downloadEntry` | [`apps/demo/src/app/views/archive-list.ts`](../../apps/demo/src/app/views/archive-list.ts) | Download one entry (`pme-archive-entry/1`). |
+| `downloadEntry` | [`apps/demo/src/app/views/archive-list.ts`](../../apps/demo/src/app/views/archive-list.ts) | Download one entry (`pme-archive-entry/1`), once its body is read (IndexedDB answers asynchronously). |
 | `exportAll` | [`apps/demo/src/app/views/archive-list.ts`](../../apps/demo/src/app/views/archive-list.ts) | "Export all": |
 | `archiveList` | [`apps/demo/src/app/views/archive-list.ts`](../../apps/demo/src/app/views/archive-list.ts) | The list, its classes `<p>-list`, `<p>-row`, …; |
 | `gridMajorS` | [`apps/demo/src/app/views/debrief-course.ts`](../../apps/demo/src/app/views/debrief-course.ts) | The grid's big square, in seconds of the time axis, which is also a panel's height (the owner, 2 November, his option 1): |
@@ -709,7 +711,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/about.ts`](../../apps/demo/src/app/about.ts) | The release label and the education-only line, shown in the app (Start and Settings → About) as the Debrief's print footer says it. |
 | [`apps/demo/src/app/alarm-caps.ts`](../../apps/demo/src/app/alarm-caps.ts) | FX-4: what the active monitor's alarm keys can do, read from its skin data (the same data the engine's alarm manager uses), so the panel offers only what the modelled device has. |
 | [`apps/demo/src/app/alarms.ts`](../../apps/demo/src/app/alarms.ts) | The instructor's alarm mirror in glossary words (research/11 §5.16 rules 1 and 2). |
-| [`apps/demo/src/app/archive.ts`](../../apps/demo/src/app/archive.ts) | The Debrief archive (the owner's board "Finish 2", approved 30 October): every debrief "Finish the case" saves, kept in THIS browser (localStorage) until the instructor clears it on the Debrief page. |
+| [`apps/demo/src/app/archive.ts`](../../apps/demo/src/app/archive.ts) | The Debrief archive (the owner's board "Finish 2", approved 30 October): every debrief "Finish the case" saves, kept in THIS browser (the debriefs in IndexedDB, their index in localStorage) until the instructor clears it |
 | [`apps/demo/src/app/briefing.ts`](../../apps/demo/src/app/briefing.ts) | The Case briefing (the owner's board Orientation 7b and its phone and Persian twins, 30 October): when a card with a `briefing` loads, every learners' screen — the host's Monitor view, a second-screen learner monitor and |
 | [`apps/demo/src/app/card-read.ts`](../../apps/demo/src/app/card-read.ts) | Reading a scenario card for Instructor v2 (E127, docs/plans/instructor-panel-redesign.md §3.2, §3.4, §7): the stages of the strip (hop states folded in), the rows of the ACTION list for a state (steps, automatic rows, ju |
 | [`apps/demo/src/app/cards.ts`](../../apps/demo/src/app/cards.ts) | The scenario card (research/13 brief §7 "Scenario card"; TrainingMonitor's catalogue, CAE/REALITi objectives): title, draft flag, the learner-facing story, category, patient, duration and objectives. |
@@ -742,6 +744,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/src/app/mechanisms/layout.ts`](../../apps/demo/src/app/mechanisms/layout.ts) | The mechanism tree's layout (docs/plans/mechanism-tree.md §4 D6): pure, no DOM. |
 | [`apps/demo/src/app/mechanisms/registry-data.ts`](../../apps/demo/src/app/mechanisms/registry-data.ts) | GENERATED by scripts/couplings.ts from the coupling registry (packages/engine-core/src/couplings/); do not edit. |
 | [`apps/demo/src/app/mechanisms/svg.ts`](../../apps/demo/src/app/mechanisms/svg.ts) | The mechanism tree as an SVG string (docs/plans/mechanism-tree.md §4 D7; the swimlane's pattern, no DOM state, no graph library). |
+| [`apps/demo/src/app/memory-idb.ts`](../../apps/demo/src/app/memory-idb.ts) | An IndexedDB in memory for the tests (happy-dom and Node have none, and no fake-indexeddb is in the dependency tree): only what the archive uses — open with an upgrade, one transaction over one store, put/get/delete/clea |
 | [`apps/demo/src/app/memory-storage.ts`](../../apps/demo/src/app/memory-storage.ts) | A Storage in memory for the tests (happy-dom here has no localStorage): `limit` characters in all, past which setItem throws as a full localStorage does. |
 | [`apps/demo/src/app/meters.ts`](../../apps/demo/src/app/meters.ts) | Home's three live tiles (E125): Engine (ms per tick), Memory (MB used) and "CPU, this app" (% of one core). |
 | [`apps/demo/src/app/oxygen.ts`](../../apps/demo/src/app/oxygen.ts) | E121b: oxygen is never assumed; it is given like a drug. |
@@ -940,6 +943,7 @@ Exported without a doc comment: `bookmark`, `shortcutsDialog`, `recognitionAt`, 
 | [`apps/demo/e2e/app-one-session.e2e.ts`](../../apps/demo/e2e/app-one-session.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/app-tamponade-propofol.e2e.ts`](../../apps/demo/e2e/app-tamponade-propofol.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/app-view-shots.e2e.ts`](../../apps/demo/e2e/app-view-shots.e2e.ts) | 0 | 0 |
+| [`apps/demo/e2e/archive-beyond-localstorage.e2e.ts`](../../apps/demo/e2e/archive-beyond-localstorage.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/arrest-evidence-page.e2e.ts`](../../apps/demo/e2e/arrest-evidence-page.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/audit-audio-cancel.e2e.ts`](../../apps/demo/e2e/audit-audio-cancel.e2e.ts) | 0 | 0 |
 | [`apps/demo/e2e/audit-audio-disarm.e2e.ts`](../../apps/demo/e2e/audit-audio-disarm.e2e.ts) | 0 | 0 |
